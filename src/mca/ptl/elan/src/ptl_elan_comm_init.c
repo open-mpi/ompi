@@ -1,3 +1,6 @@
+/*
+ * $HEADER$
+ */
 
 #include <signal.h>
 #include <unistd.h>
@@ -13,7 +16,7 @@
 #define ALIGNUP(x,a)	           (((unsigned int)(x) + ((a)-1)) & (-(a)))
 
 static int
-ompi_init_elan_queue_events (mca_ptl_elan_t * ptl,
+ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
                              ompi_ptl_elan_queue_ctrl_t * queue)
 {
     int         i;
@@ -107,7 +110,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_t * ptl,
 }
 
 int
-ompi_init_elan_stat (mca_ptl_elan_module_1_0_0_t * emp,
+ompi_init_elan_stat (mca_ptl_elan_component_t * emp,
                      int num_rails)
 {
     return (OMPI_SUCCESS);
@@ -115,7 +118,7 @@ ompi_init_elan_stat (mca_ptl_elan_module_1_0_0_t * emp,
 
 
 int
-ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t * emp,
+ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
                      int num_rails)
 {
     int         i;
@@ -123,7 +126,7 @@ ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t * emp,
     int         slotsize = 2048;
     RAIL       *rail;
     ELAN4_CTX  *ctx;
-    struct mca_ptl_elan_t *ptl;
+    struct mca_ptl_elan_module_t *ptl;
 
     START_FUNC();
 
@@ -133,7 +136,7 @@ ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t * emp,
         ompi_ptl_elan_recv_queue_t *rxq;
         ompi_ptl_elan_queue_ctrl_t *queue;
 
-        ptl = emp->elan_ptls[i];
+        ptl = emp->elan_ptl_modules[i];
         rail = (RAIL *) ptl->ptl_elan_rail;
         ctx = (ELAN4_CTX *) ptl->ptl_elan_ctx;
 
@@ -242,7 +245,7 @@ ompi_init_elan_qdma (mca_ptl_elan_module_1_0_0_t * emp,
 }
 
 int
-ompi_init_elan_rdma (mca_ptl_elan_module_1_0_0_t * emp,
+ompi_init_elan_rdma (mca_ptl_elan_component_t * emp,
                      int num_rails)
 {
     return (OMPI_SUCCESS);

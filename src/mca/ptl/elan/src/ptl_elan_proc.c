@@ -42,9 +42,9 @@ mca_ptl_elan_proc_construct (mca_ptl_elan_proc_t * proc)
     OBJ_CONSTRUCT (&proc->proc_lock, ompi_mutex_t);
 
     /* add to list of all proc instance */
-    OMPI_THREAD_LOCK (&mca_ptl_elan_module.elan_lock);
-    ompi_list_append (&mca_ptl_elan_module.elan_procs, &proc->super);
-    OMPI_THREAD_UNLOCK (&mca_ptl_elan_module.elan_lock);
+    OMPI_THREAD_LOCK (&mca_ptl_elan_component.elan_lock);
+    ompi_list_append (&mca_ptl_elan_component.elan_procs, &proc->super);
+    OMPI_THREAD_UNLOCK (&mca_ptl_elan_component.elan_lock);
 
     return;
 }
@@ -58,9 +58,9 @@ void
 mca_ptl_elan_proc_destruct (mca_ptl_elan_proc_t * proc)
 {
     /* remove from list of all proc instances */
-    OMPI_THREAD_LOCK (&mca_ptl_elan_module.elan_lock);
-    ompi_list_remove_item (&mca_ptl_elan_module.elan_procs, &proc->super);
-    OMPI_THREAD_UNLOCK (&mca_ptl_elan_module.elan_lock);
+    OMPI_THREAD_LOCK (&mca_ptl_elan_component.elan_lock);
+    ompi_list_remove_item (&mca_ptl_elan_component.elan_procs, &proc->super);
+    OMPI_THREAD_UNLOCK (&mca_ptl_elan_component.elan_lock);
 
     /* release resources */
     if (NULL != proc->proc_peers)
@@ -95,7 +95,7 @@ mca_ptl_elan_proc_create (ompi_proc_t * ompi_proc)
     ptl_proc->proc_guid = ompi_proc->proc_name;
 
     /* Extract exposed addresses from remote proc */
-    rc = mca_base_modex_recv (&mca_ptl_elan_module.super.ptlm_version,
+    rc = mca_base_modex_recv (&mca_ptl_elan_component.super.ptlm_version,
                               ompi_proc, (void **) &ptl_proc->proc_addrs,
                               &size);
 
@@ -126,9 +126,9 @@ mca_ptl_elan_proc_create (ompi_proc_t * ompi_proc)
         return NULL;
     }
 
-    if (NULL == mca_ptl_elan_module.elan_local
+    if (NULL == mca_ptl_elan_component.elan_local
         && ompi_proc == ompi_proc_local ()) {
-        mca_ptl_elan_module.elan_local = ptl_proc;
+        mca_ptl_elan_component.elan_local = ptl_proc;
     }
     return ptl_proc;
 }
@@ -142,21 +142,21 @@ mca_ptl_elan_proc_lookup_ompi (ompi_proc_t * ompi_proc)
 {
     mca_ptl_elan_proc_t *elan_proc;
 
-    OMPI_THREAD_LOCK (&mca_ptl_elan_module.elan_lock);
+    OMPI_THREAD_LOCK (&mca_ptl_elan_component.elan_lock);
 
     elan_proc = (mca_ptl_elan_proc_t *)
-        ompi_list_get_first (&mca_ptl_elan_module.elan_procs);
+        ompi_list_get_first (&mca_ptl_elan_component.elan_procs);
 
     for (; elan_proc != (mca_ptl_elan_proc_t *)
-         ompi_list_get_end (&mca_ptl_elan_module.elan_procs);
+         ompi_list_get_end (&mca_ptl_elan_component.elan_procs);
          elan_proc =
          (mca_ptl_elan_proc_t *) ompi_list_get_next (elan_proc)) {
         if (elan_proc->proc_ompi == ompi_proc) {
-            OMPI_THREAD_UNLOCK (&mca_ptl_elan_module.elan_lock);
+            OMPI_THREAD_UNLOCK (&mca_ptl_elan_component.elan_lock);
             return elan_proc;
         }
     }
-    OMPI_THREAD_UNLOCK (&mca_ptl_elan_module.elan_lock);
+    OMPI_THREAD_UNLOCK (&mca_ptl_elan_component.elan_lock);
 
     return NULL;
 }

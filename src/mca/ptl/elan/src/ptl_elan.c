@@ -20,9 +20,9 @@
 #include "ptl_elan_priv.h"
 
 /* XXX: There must be multiple PTL's. This could be the template */
-mca_ptl_elan_t mca_ptl_elan = {
+mca_ptl_elan_module_t mca_ptl_elan_module = {
     {
-        &mca_ptl_elan_module.super,
+        &mca_ptl_elan_component.super,
 	4,
 	sizeof(mca_ptl_elan_send_frag_t),
         0,                         /* ptl_exclusivity */
@@ -47,7 +47,7 @@ mca_ptl_elan_t mca_ptl_elan = {
 };
 
 int
-mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
+mca_ptl_elan_add_procs (struct mca_ptl_base_module_t *ptl,
                         size_t nprocs,
                         struct ompi_proc_t **procs,
                         struct mca_ptl_base_peer_t **peers,
@@ -105,18 +105,18 @@ mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
 	 *    queue-handle, put/get-handle, memory-statics.
 	 * 2) XXX: Consider matching elan_vp and ompi_proc_name_t.
 	 */
-        ptl_peer->peer_ptl  = (mca_ptl_elan_t *) ptl;
+        ptl_peer->peer_ptl  = (mca_ptl_elan_module_t *) ptl;
 	ptl_peer->peer_proc = ptl_proc;
 
 	/* There is only one peer per elan_peer_proc_t. */
 	ptl_proc->proc_peers[0] = ptl_peer;
-	if (ptl_proc == mca_ptl_elan_module.elan_local) {
-	    ptl_peer->peer_vp = ((mca_ptl_elan_t *)ptl)->elan_vp;
+	if (ptl_proc == mca_ptl_elan_component.elan_local) {
+	    ptl_peer->peer_vp = ((mca_ptl_elan_module_t *)ptl)->elan_vp;
 	} else {
 	    ptl_peer->peer_vp = ptl_proc->proc_addrs->elan_vp;
 	    ptl_proc->proc_addrs->inuse = 1;
 	}
-	ptl_peer->peer_rails = ((mca_ptl_elan_t *)ptl)->ptl_ni_total;
+	ptl_peer->peer_rails = ((mca_ptl_elan_module_t *)ptl)->ptl_ni_total;
 
 	/* There is only one peer per elan_peer_proc_t */
 	ptl_proc->proc_peer_count = 1;
@@ -128,7 +128,7 @@ mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
 }
 
 int
-mca_ptl_elan_del_procs (struct mca_ptl_t *ptl,
+mca_ptl_elan_del_procs (struct mca_ptl_base_module_t *ptl,
                         size_t nprocs,
                         struct ompi_proc_t **procs,
                         struct mca_ptl_base_peer_t **peers)
@@ -141,12 +141,12 @@ mca_ptl_elan_del_procs (struct mca_ptl_t *ptl,
 }
 
 int
-mca_ptl_elan_finalize (struct mca_ptl_t *ptl)
+mca_ptl_elan_finalize (struct mca_ptl_base_module_t *ptl)
 {
     int         rail_index;
-    struct mca_ptl_elan_t *elan_ptl;
+    struct mca_ptl_elan_module_t *elan_ptl;
 
-    elan_ptl = (struct mca_ptl_elan_t *) ptl;
+    elan_ptl = (struct mca_ptl_elan_module_t *) ptl;
 
     /* XXX: Free all the lists, etc, hanged over PTL 
      * before freeing the PTLs */
@@ -154,14 +154,14 @@ mca_ptl_elan_finalize (struct mca_ptl_t *ptl)
     free (elan_ptl);
 
     /* Record the missing of this entry */
-    mca_ptl_elan_module.elan_ptls[rail_index] = NULL;
-    mca_ptl_elan_module.elan_num_ptls--;
+    mca_ptl_elan_component.elan_ptl_modules[rail_index] = NULL;
+    mca_ptl_elan_component.elan_num_ptl_modules--;
 
     return OMPI_SUCCESS;
 }
 
 int
-mca_ptl_elan_req_init (struct mca_ptl_t *ptl,
+mca_ptl_elan_req_init (struct mca_ptl_base_module_t *ptl,
                        struct mca_pml_base_send_request_t *request)
 {
     mca_ptl_elan_send_frag_t *sd;
@@ -186,14 +186,14 @@ mca_ptl_elan_req_init (struct mca_ptl_t *ptl,
 }
 
 void
-mca_ptl_elan_req_fini (struct mca_ptl_t *ptl,
+mca_ptl_elan_req_fini (struct mca_ptl_base_module_t *ptl,
                        struct mca_pml_base_send_request_t *request)
 {
     /* XXX: Lock to be added */
     ompi_ptl_elan_queue_ctrl_t *queue;
     mca_ptl_elan_send_frag_t    *desc;
 
-    queue = ((struct mca_ptl_elan_t * )ptl)->queue;
+    queue = ((struct mca_ptl_elan_module_t * )ptl)->queue;
 
     /* return the fragment and update the status */
     desc = ((mca_ptl_elan_send_request_t *) request)->req_frag;
@@ -204,17 +204,17 @@ mca_ptl_elan_req_fini (struct mca_ptl_t *ptl,
 
 
 void
-mca_ptl_elan_recv_frag_return (struct mca_ptl_t *ptl,
+mca_ptl_elan_recv_frag_return (struct mca_ptl_base_module_t *ptl,
                                struct mca_ptl_elan_recv_frag_t *frag)
 {
-    OMPI_FREE_LIST_RETURN(&mca_ptl_elan_module.elan_recv_frags_free, 
+    OMPI_FREE_LIST_RETURN(&mca_ptl_elan_component.elan_recv_frags_free, 
             (ompi_list_item_t*)frag);
     return;
 }
 
 
 void
-mca_ptl_elan_send_frag_return (struct mca_ptl_t *ptl,
+mca_ptl_elan_send_frag_return (struct mca_ptl_base_module_t *ptl,
                                struct mca_ptl_elan_send_frag_t *frag)
 {
     return;
@@ -225,7 +225,7 @@ mca_ptl_elan_send_frag_return (struct mca_ptl_t *ptl,
  */
 
 int
-mca_ptl_elan_isend (struct mca_ptl_t *ptl,
+mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
                     struct mca_ptl_base_peer_t *ptl_peer,
                     struct mca_pml_base_send_request_t *sendreq,
                     size_t offset,
@@ -236,7 +236,7 @@ mca_ptl_elan_isend (struct mca_ptl_t *ptl,
     mca_ptl_elan_send_frag_t *sd;
 
     /* XXX: 
-     *   PML extract an request from PTL module and then use this
+     *   PML extract an request from PTL component and then use this
      *   a request to ask for a fragment
      *   Is it too deep across stacks to get a request and 
      *   correspondingly multiple LOCKS to go through*/
@@ -251,7 +251,7 @@ mca_ptl_elan_isend (struct mca_ptl_t *ptl,
 	ompi_free_list_t * frag_list;
 	ompi_list_item_t * item;
 
-	frag_list = &mca_ptl_elan_module.elan_send_frags_free;
+	frag_list = &mca_ptl_elan_component.elan_send_frags_free;
 
 	/* More sendfrag then descritpors, no need to block */
 	ompi_mutex_lock(&frag_list->fl_lock);
@@ -285,7 +285,7 @@ mca_ptl_elan_isend (struct mca_ptl_t *ptl,
  */
 
 int
-mca_ptl_elan_put (struct mca_ptl_t *ptl,
+mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
                   struct mca_ptl_base_peer_t *ptl_peer,
                   struct mca_pml_base_send_request_t *sendreq,
                   size_t offset,
@@ -302,7 +302,7 @@ mca_ptl_elan_put (struct mca_ptl_t *ptl,
  */
 
 int
-mca_ptl_elan_get (struct mca_ptl_t *ptl,
+mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
                   struct mca_ptl_base_peer_t *ptl_base_peer,
                   struct mca_pml_base_recv_request_t *request,
                   size_t offset,
@@ -319,7 +319,7 @@ mca_ptl_elan_get (struct mca_ptl_t *ptl,
  */
 
 void
-mca_ptl_elan_matched (mca_ptl_t * ptl,
+mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
                       mca_ptl_base_recv_frag_t * frag)
 {
     mca_pml_base_recv_request_t *request; 

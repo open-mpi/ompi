@@ -25,10 +25,10 @@ extern struct mca_ptl_elan_state_t mca_ptl_elan_global_state;
 /**
  * ELAN PTL Interface
  */
-struct mca_ptl_elan_t {
+struct mca_ptl_elan_module_t {
 
     /**< The elan progress related interface */
-    mca_ptl_t   super;          /**< base PTL interface */
+    mca_ptl_base_module_t   super;          /**< base PTL interface */
 
     /**< The following are elan-related control structures */
     ELAN_RAIL   *ptl_elan_rail; /**< Pointer to this Rail */
@@ -45,20 +45,20 @@ struct mca_ptl_elan_t {
 
     int         max_num_dmas;   /**< total rdma descriptors */
 };
-typedef struct mca_ptl_elan_t mca_ptl_elan_t;
-extern mca_ptl_elan_t mca_ptl_elan;
+typedef struct mca_ptl_elan_module_t mca_ptl_elan_module_t;
+extern mca_ptl_elan_module_t mca_ptl_elan_module;
 
 /**
  * ELAN PTL module.
  */
-struct mca_ptl_elan_module_1_0_0_t {
+struct mca_ptl_elan_component_t {
 
-    mca_ptl_base_module_1_0_0_t super;       /**< base PTL module */
+    mca_ptl_base_component_t super;       /**< base PTL component */
 
     size_t elan_free_list_num;     /**< initial size of free lists */
     size_t elan_free_list_max;     /**< maximum size of free lists */
     size_t elan_free_list_inc;     /**< # to alloc when growing lists */
-    size_t elan_num_ptls;          /**< number of ptls activated */
+    size_t elan_num_ptl_modules;   /**< number of ptls activated */
 
     /* 
      * We create our own simplified structure for managing elan state
@@ -66,7 +66,7 @@ struct mca_ptl_elan_module_1_0_0_t {
      * all those tport, group, atomic, shmem and NIC threads support.
      */
     struct mca_ptl_elan_state_t *elan_ctrl; 
-    struct mca_ptl_elan_t **elan_ptls;  /**< array of available PTLs */
+    struct mca_ptl_elan_module_t **elan_ptl_modules;  /**< array of available PTL modules */
     struct mca_ptl_elan_proc_t *elan_local; 
     ompi_mutex_t elan_lock;             /**< lock for module state */
 
@@ -78,27 +78,27 @@ struct mca_ptl_elan_module_1_0_0_t {
     ompi_free_list_t elan_send_frags_free;
     ompi_free_list_t elan_recv_frags_free;
 };
-typedef struct mca_ptl_elan_module_1_0_0_t mca_ptl_elan_module_1_0_0_t;
+typedef struct mca_ptl_elan_component_t mca_ptl_elan_component_t;
 
 struct mca_ptl_elan_send_frag_t;
 struct mca_ptl_elan_recv_frag_t;
 
-extern mca_ptl_elan_module_1_0_0_t mca_ptl_elan_module;
+extern mca_ptl_elan_component_t mca_ptl_elan_component;
 
 /**
  * Register ELAN module parameters with the MCA framework
  */
-extern int  mca_ptl_elan_module_open (void);
+extern int  mca_ptl_elan_component_open (void);
 
 /**
  * Any final cleanup before being unloaded.
  */
-extern int  mca_ptl_elan_module_close (void);
+extern int  mca_ptl_elan_component_close (void);
 
 /**
  * ELAN module initialization.
  * 
- * @param num_ptls (OUT)
+ * @param num_ptl_modules (OUT)
  *        Number of PTLs returned in PTL array.
  * @param allow_multi_user_threads (OUT)  
  *        Flag indicating wether PTL supports user threads (TRUE)
@@ -106,21 +106,22 @@ extern int  mca_ptl_elan_module_close (void);
  *        Flag indicating whether PTL uses threads (TRUE)
  *
  */
-extern mca_ptl_t **mca_ptl_elan_module_init (int *num_ptls,
-                                             bool * multi_user_threads,
-                                             bool * have_hidden_threads);
+extern mca_ptl_base_module_t **
+mca_ptl_elan_component_init (int *num_ptl_modules,
+                          bool * multi_user_threads,
+                          bool * have_hidden_threads);
 
 /**
  * ELAN module control.
  */
-extern int  mca_ptl_elan_module_control (int param,
+extern int  mca_ptl_elan_component_control (int param,
                                          void *value,
                                          size_t size);
 
 /**
  * ELAN module progress.
  */
-extern int  mca_ptl_elan_module_progress (mca_ptl_tstamp_t tstamp);
+extern int  mca_ptl_elan_component_progress (mca_ptl_tstamp_t tstamp);
 
 /**
  * Cleanup any resources held by the PTL.
@@ -128,7 +129,7 @@ extern int  mca_ptl_elan_module_progress (mca_ptl_tstamp_t tstamp);
  * @param ptl  PTL instance.
  * @return     OMPI_SUCCESS or error status on failure.
  */
-extern int  mca_ptl_elan_finalize (struct mca_ptl_t *ptl);
+extern int  mca_ptl_elan_finalize (struct mca_ptl_base_module_t *ptl);
 
 
 /**
@@ -140,7 +141,7 @@ extern int  mca_ptl_elan_finalize (struct mca_ptl_t *ptl);
  * @return     OMPI_SUCCESS or error status on failure.
  */
 extern int  
-mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
+mca_ptl_elan_add_procs (struct mca_ptl_base_module_t *ptl,
 		       size_t nprocs,
 		       struct ompi_proc_t **procs,
 		       struct mca_ptl_base_peer_t **peers,
@@ -155,7 +156,7 @@ mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
  * @return             Status indicating if cleanup was successful
  */
 extern int  
-mca_ptl_elan_del_procs (struct mca_ptl_t *ptl, 
+mca_ptl_elan_del_procs (struct mca_ptl_base_module_t *ptl, 
 		       size_t nprocs,
 		       struct ompi_proc_t ** procs, 
 		       struct mca_ptl_base_peer_t **peers);
@@ -168,7 +169,7 @@ mca_ptl_elan_del_procs (struct mca_ptl_t *ptl,
  * @return               Status indicating if allocation was successful.
  */
 extern int
-mca_ptl_elan_req_init (struct mca_ptl_t *ptl, 
+mca_ptl_elan_req_init (struct mca_ptl_base_module_t *ptl, 
 		       struct mca_pml_base_send_request_t *req);
 
 /**
@@ -177,7 +178,7 @@ mca_ptl_elan_req_init (struct mca_ptl_t *ptl,
  * @param ptl (IN)       PTL instance
  * @param request (IN)   Pointer to allocated request.
  */
-extern void mca_ptl_elan_req_fini (struct mca_ptl_t *ptl,
+extern void mca_ptl_elan_req_fini (struct mca_ptl_base_module_t *ptl,
                                    struct mca_pml_base_send_request_t *);
 
 /**
@@ -186,7 +187,7 @@ extern void mca_ptl_elan_req_fini (struct mca_ptl_t *ptl,
  * @param ptl (IN)          PTL instance
  * @param recv_frag (IN)    Receive fragment
  */
-extern void mca_ptl_elan_matched (struct mca_ptl_t *ptl,
+extern void mca_ptl_elan_matched (struct mca_ptl_base_module_t *ptl,
                                   struct mca_ptl_base_recv_frag_t *frag);
 
 /**
@@ -204,7 +205,7 @@ extern void mca_ptl_elan_matched (struct mca_ptl_t *ptl,
  *        OMPI_SUCCESS if the PTL was able to queue one or more fragments
  */
 extern int  
-mca_ptl_elan_isend (struct mca_ptl_t* ptl, 
+mca_ptl_elan_isend (struct mca_ptl_base_module_t* ptl, 
 		    struct mca_ptl_base_peer_t* ptl_base_peer, 
 		    struct mca_pml_base_send_request_t* request,
 		    size_t offset,
@@ -226,7 +227,7 @@ mca_ptl_elan_isend (struct mca_ptl_t* ptl,
  *        OMPI_SUCCESS if the PTL was able to queue one or more fragments
  */
 extern int  
-mca_ptl_elan_put (struct mca_ptl_t* ptl, 
+mca_ptl_elan_put (struct mca_ptl_base_module_t* ptl, 
 		  struct mca_ptl_base_peer_t* ptl_base_peer, 
 		  struct mca_pml_base_send_request_t* request,
 		  size_t offset,
@@ -248,7 +249,7 @@ mca_ptl_elan_put (struct mca_ptl_t* ptl,
  *        OMPI_SUCCESS if the PTL was able to queue one or more fragments
  */
 extern int  
-mca_ptl_elan_get (struct mca_ptl_t* ptl, 
+mca_ptl_elan_get (struct mca_ptl_base_module_t* ptl, 
 		  struct mca_ptl_base_peer_t* ptl_base_peer, 
 		  struct mca_pml_base_recv_request_t* request,
 		  size_t offset,
@@ -261,7 +262,7 @@ mca_ptl_elan_get (struct mca_ptl_t* ptl,
  * @param ptl (IN)   PTL instance
  * @param frag (IN)  ELAN receive fragment
  */
-extern void mca_ptl_elan_recv_frag_return (struct mca_ptl_t *ptl,
+extern void mca_ptl_elan_recv_frag_return (struct mca_ptl_base_module_t *ptl,
                                            struct mca_ptl_elan_recv_frag_t
                                            *frag);
 
@@ -271,7 +272,7 @@ extern void mca_ptl_elan_recv_frag_return (struct mca_ptl_t *ptl,
  * @param ptl (IN)   PTL instance
  * @param frag (IN)  ELAN send fragment
  */
-extern void mca_ptl_elan_send_frag_return (struct mca_ptl_t *ptl,
+extern void mca_ptl_elan_send_frag_return (struct mca_ptl_base_module_t *ptl,
                                            struct mca_ptl_elan_send_frag_t
                                            *frag);
 

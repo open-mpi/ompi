@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -13,7 +17,7 @@
 
 static void
 mca_ptl_elan_init_qdma_desc (struct ompi_ptl_elan_qdma_desc_t *desc,
-                             mca_ptl_elan_t * ptl,
+                             mca_ptl_elan_module_t * ptl,
 			     struct mca_ptl_elan_peer_t *ptl_peer,
                              mca_pml_base_send_request_t *pml_req,
 			     size_t offset,
@@ -70,7 +74,7 @@ mca_ptl_elan_init_qdma_desc (struct ompi_ptl_elan_qdma_desc_t *desc,
 	struct iovec iov;
         ompi_convertor_t *convertor;
 
-        if( offset <= mca_ptl_elan.super.ptl_first_frag_size ) {
+        if( offset <= mca_ptl_elan_module.super.ptl_first_frag_size ) {
             convertor = &pml_req->req_convertor;
         } else {
             convertor = &desc->frag_convertor;
@@ -142,7 +146,7 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
 			 size_t *size,
 			 int flags)
 {
-    mca_ptl_elan_t *ptl;
+    mca_ptl_elan_module_t *ptl;
 
     START_FUNC();
 
@@ -184,7 +188,7 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
 
 
 static void
-mca_ptl_elan_data_frag (struct mca_ptl_elan_t *ptl,
+mca_ptl_elan_data_frag (struct mca_ptl_elan_module_t *ptl,
                         mca_ptl_base_header_t * header)
 {
     /* For PML interfacing, refer to mca_ptl_tcp_recv_frag_match(frag, sd);*/
@@ -197,7 +201,8 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_t *ptl,
     bool        matched; 
     int         rc = OMPI_SUCCESS;
 
-    OMPI_FREE_LIST_GET (&mca_ptl_elan_module.elan_recv_frags_free, item, rc);
+    OMPI_FREE_LIST_GET (&mca_ptl_elan_component.elan_recv_frags_free, 
+                        item, rc);
 
     while (OMPI_SUCCESS != rc) {
 
@@ -205,12 +210,12 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_t *ptl,
         ompi_output (0,
                      "[%s:%d] Retry to allocate a recv fragment",
                      __FILE__, __LINE__);
-	OMPI_FREE_LIST_GET (&mca_ptl_elan_module.elan_recv_frags_free, 
+	OMPI_FREE_LIST_GET (&mca_ptl_elan_component.elan_recv_frags_free, 
                 item, rc);
     } 
 
     recv_frag = (mca_ptl_elan_recv_frag_t *) item;
-    recv_frag->frag_recv.frag_base.frag_owner = (mca_ptl_t *) ptl;
+    recv_frag->frag_recv.frag_base.frag_owner = (mca_ptl_base_module_t *) ptl;
 
     /* XXX: 
      * Since elan is not connection oriented, 
@@ -252,7 +257,7 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_t *ptl,
 }
 
 static void
-mca_ptl_elan_ctrl_frag (struct mca_ptl_elan_t *ptl,
+mca_ptl_elan_ctrl_frag (struct mca_ptl_elan_module_t *ptl,
                         mca_ptl_base_header_t * header)
 {
     /* TODO:
@@ -265,25 +270,25 @@ mca_ptl_elan_ctrl_frag (struct mca_ptl_elan_t *ptl,
 }
 
 int
-mca_ptl_elan_drain_recv (mca_ptl_elan_module_1_0_0_t * emp)
+mca_ptl_elan_drain_recv (mca_ptl_elan_component_t * emp)
 {
     struct ompi_ptl_elan_queue_ctrl_t *queue;
     ompi_ptl_elan_recv_queue_t *rxq;
-    struct mca_ptl_elan_t *ptl;
+    struct mca_ptl_elan_module_t *ptl;
     ELAN_CTX   *ctx;
 
-    int         num_ptls;
+    int         num_ptl_modules;
     int         i;
     int         rc;
 
     START_FUNC();
-    num_ptls = emp->elan_num_ptls;
+    num_ptl_modules = emp->elan_num_ptl_modules;
 
     /* Iterate over all the PTL input Queues */
-    for (i = 0; i < num_ptls; i++) {
+    for (i = 0; i < num_ptl_modules; i++) {
 
-        ptl = emp->elan_ptls[i];
-        queue = emp->elan_ptls[i]->queue;
+        ptl = emp->elan_ptl_modules[i];
+        queue = emp->elan_ptl_modules[i]->queue;
         rxq = queue->rxq;
         ctx = ptl->ptl_elan_ctx;
 
@@ -372,25 +377,25 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_module_1_0_0_t * emp)
 }
 
 int
-mca_ptl_elan_update_send (mca_ptl_elan_module_1_0_0_t * emp)
+mca_ptl_elan_update_send (mca_ptl_elan_component_t * emp)
 {
-    struct mca_ptl_elan_t *ptl;
+    struct mca_ptl_elan_module_t *ptl;
     ompi_ptl_elan_queue_ctrl_t *queue;
     mca_ptl_elan_send_frag_t *desc;
     ELAN4_CTX  *ctx;
 
-    int         num_ptls;
+    int         num_ptl_modules;
     int         i;
     int         rc = 0;
 
     START_FUNC();
 
-    num_ptls = emp->elan_num_ptls;
+    num_ptl_modules = emp->elan_num_ptl_modules;
 
     /* Update the send request if any of send's is completed */
-    for (i = 0; i < num_ptls; i++) {
+    for (i = 0; i < num_ptl_modules; i++) {
 
-        ptl = emp->elan_ptls[i];
+        ptl = emp->elan_ptl_modules[i];
         queue = ptl->queue;
         ctx = ptl->ptl_elan_ctx;
 

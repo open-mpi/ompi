@@ -1,3 +1,6 @@
+/*
+ * $HEADER$
+ */
 
 #include <signal.h>
 #include <unistd.h>
@@ -18,16 +21,16 @@ mca_ptl_elan_state_t mca_ptl_elan_global_state;
 static int
 ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
 {
-    mca_ptl_elan_module_1_0_0_t *emp;
+    mca_ptl_elan_component_t *emp;
     int         rail_count;
 
     START_FUNC();
 
     rail_count = ems->elan_nrails;
-    emp = ems->elan_module;
-    emp->elan_num_ptls = 0;
-    emp->elan_ptls = malloc (rail_count * sizeof (mca_ptl_elan_t *));
-    if (NULL == emp->elan_ptls) {
+    emp = ems->elan_component;
+    emp->elan_num_ptl_modules = 0;
+    emp->elan_ptl_modules = malloc (rail_count * sizeof (mca_ptl_elan_module_t *));
+    if (NULL == emp->elan_ptl_modules) {
         ompi_output (0,
                      "[%s:%d] error in malloc for ptl references \n",
                      __FILE__, __LINE__);
@@ -37,9 +40,9 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
     /* Initialiaze PTL's */
     do {
         char        param[256];
-        mca_ptl_elan_t *ptl;
+        mca_ptl_elan_module_t *ptl;
 
-        ptl = malloc (sizeof (mca_ptl_elan_t));
+        ptl = malloc (sizeof (mca_ptl_elan_module_t));
         if (NULL == ptl) {
             ompi_output (0,
                          "[%s:%d] error in malloc for ptl structures \n",
@@ -47,30 +50,30 @@ ompi_mca_ptl_elan_setup (mca_ptl_elan_state_t * ems)
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        memcpy (ptl, &mca_ptl_elan, sizeof (mca_ptl_elan));
-        emp->elan_ptls[emp->elan_num_ptls] = ptl;
+        memcpy (ptl, &mca_ptl_elan_module, sizeof (mca_ptl_elan_module));
+        emp->elan_ptl_modules[emp->elan_num_ptl_modules] = ptl;
 
         /* MCA related structures */
 
-        ptl->ptl_ni_local = emp->elan_num_ptls;
+        ptl->ptl_ni_local = emp->elan_num_ptl_modules;
         ptl->ptl_ni_total = rail_count;
 
         /* allow user to specify per rail bandwidth and latency */
-        sprintf (param, "bandwidth_elanrail%d", emp->elan_num_ptls);
+        sprintf (param, "bandwidth_elanrail%d", emp->elan_num_ptl_modules);
         ptl->super.ptl_bandwidth =
             mca_ptl_elan_param_register_int (param, 1000);
-        sprintf (param, "latency_elanrail%d", emp->elan_num_ptls);
+        sprintf (param, "latency_elanrail%d", emp->elan_num_ptl_modules);
 
         ptl->super.ptl_latency =
             mca_ptl_elan_param_register_int (param, 1);
 
         /* Setup elan related structures such as ctx, rail */
-        ptl->ptl_elan_rail = ems->elan_rail[emp->elan_num_ptls];
-        ptl->ptl_elan_ctx  = ems->elan_rail[emp->elan_num_ptls]->rail_ctx;
+        ptl->ptl_elan_rail = ems->elan_rail[emp->elan_num_ptl_modules];
+        ptl->ptl_elan_ctx  = ems->elan_rail[emp->elan_num_ptl_modules]->rail_ctx;
         ptl->elan_vp = ems->elan_vp;
         ptl->elan_nvp = ems->elan_nvp;
-        emp->elan_num_ptls++;
-    } while (emp->elan_num_ptls < rail_count);
+        emp->elan_num_ptl_modules++;
+    } while (emp->elan_num_ptl_modules < rail_count);
 
     /* Allocating all the communication strcutures for PTL's, */
     if (OMPI_SUCCESS != ompi_init_elan_qdma (emp, rail_count)) {
@@ -232,14 +235,14 @@ ompi_elan_attach_network (mca_ptl_elan_state_t * ems)
 }
 
 static void
-ompi_module_elan_close_ptls (mca_ptl_elan_module_1_0_0_t * emp,
+ompi_module_elan_close_ptls (mca_ptl_elan_component_t * emp,
                              int num_rails)
 {
     /* TODO: find the ones that are still there and free them */
 }
 
 static void
-ompi_module_elan_close_procs (mca_ptl_elan_module_1_0_0_t * emp,
+ompi_module_elan_close_procs (mca_ptl_elan_component_t * emp,
                               int num_rails)
 {
     /* TODO: find the ones that are still there and free them */
@@ -300,7 +303,7 @@ ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
 }
 
 int
-ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
+ompi_mca_ptl_elan_init (mca_ptl_elan_component_t * emp)
 {
     int         i;
     int        *rails;
@@ -318,7 +321,7 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
     ems = &mca_ptl_elan_global_state;
 
     /* Hook two of them togther */
-    ems->elan_module = emp;
+    ems->elan_component = emp;
     emp->elan_ctrl   = ems;
 
     /* Initialise enough of state so we can call elan_exception() */
@@ -536,7 +539,7 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_module_1_0_0_t * emp)
 }
 
 int
-ompi_mca_ptl_elan_finalize (mca_ptl_elan_module_1_0_0_t * emp)
+ompi_mca_ptl_elan_finalize (mca_ptl_elan_component_t * emp)
 {
     int     i;
     int     num_rails;
