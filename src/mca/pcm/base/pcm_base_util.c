@@ -17,7 +17,7 @@
 #include "mca/llm/base/base_internal.h"
 
 char *
-mca_pcm_base_no_unique_name(void)
+mca_pcm_base_no_unique_name(struct mca_pcm_base_module_1_0_0_t* me)
 {
     return strdup("0");
 }

@@ -475,6 +475,29 @@ static inline ompi_list_item_t *ompi_list_remove_last(ompi_list_t *list)
   return (ompi_list_item_t *) item;
 }
 
+  /**
+   * Add an item to the list before a given element
+   *
+   * @param list The list container
+   * @param pos List element to insert \c item before
+   * @param item The item to insert
+   *
+   * Inserts \c item before \c pos.  This is an O(1) operation.
+   */
+static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos,
+                                        ompi_list_item_t *item)
+{
+    /* point item at the existing elements */
+    item->ompi_list_next = pos;
+    item->ompi_list_prev = pos->ompi_list_prev;
+
+    /* splice into the list */
+    pos->ompi_list_prev->ompi_list_next = item;
+    pos->ompi_list_prev = item;
+
+    /* reset list length counter */
+    list->ompi_list_length++;
+}
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

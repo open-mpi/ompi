@@ -27,10 +27,14 @@
 
 #include "runtime/runtime.h"
 
+mca_pcm_base_module_t *mca_pcm;
+
 int ompi_rte_init_stage2(bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
     int ret;
     bool user_threads, hidden_threads;
+    mca_pcm_base_module_t **pcm_modules;
+    int pcm_modules_len;
 
     /*
      * Name Server
@@ -90,11 +94,19 @@ int ompi_rte_init_stage2(bool *allow_multi_user_threads, bool *have_hidden_threa
     user_threads = true;
     hidden_threads = false;
     if (OMPI_SUCCESS != (ret = mca_pcm_base_select(&user_threads, 
-						   &hidden_threads))) {
+						   &hidden_threads, 0,
+                                                   &pcm_modules,
+                                                   &pcm_modules_len))) {
 	printf("show_help: ompi_rte_init failed in pcm_base_select\n");
 	/* JMS show_help */
 	return ret;
     }
+    if (pcm_modules_len != 1) {
+        printf("show_help: unexpectedly high return from pcm_modules_len\n");
+        return -1;
+    }
+    mca_pcm = pcm_modules[0];
+    free(pcm_modules);
     *allow_multi_user_threads &= user_threads;
     *have_hidden_threads |= hidden_threads;
 

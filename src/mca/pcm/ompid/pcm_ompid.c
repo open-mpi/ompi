@@ -50,6 +50,7 @@ OBJ_CLASS_INSTANCE(
  */
                                                                                                                            
 ompi_list_t* mca_pcm_ompid_allocate_resources(
+    struct mca_pcm_base_module_1_0_0_t* me,
     mca_ns_base_jobid_t jobid,
     int nodes,
     int procs)
@@ -116,7 +117,7 @@ ompi_list_t* mca_pcm_ompid_allocate_resources(
  * @return True/False
  */
                                                                                                                            
-bool mca_pcm_ompid_can_spawn(void)
+bool mca_pcm_ompid_can_spawn(struct mca_pcm_base_module_1_0_0_t* me)
 {
     return true;
 }
@@ -131,6 +132,7 @@ bool mca_pcm_ompid_can_spawn(void)
  */
                                                                                                                            
 int mca_pcm_ompid_spawn_procs(
+    struct mca_pcm_base_module_1_0_0_t* me,
     mca_ns_base_jobid_t jobid,
     ompi_list_t *schedule_list)
 {

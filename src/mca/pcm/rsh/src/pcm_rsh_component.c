@@ -41,19 +41,19 @@ mca_pcm_base_component_1_0_0_t mca_pcm_rsh_component = {
   {
     false /* checkpoint / restart */
   },
-  mca_pcm_rsh_init,    /* component init */
-  mca_pcm_rsh_finalize
+  mca_pcm_rsh_init    /* component init */
 };
 
 
 struct mca_pcm_base_module_1_0_0_t mca_pcm_rsh_1_0_0 = {
     mca_pcm_base_no_unique_name,
-    NULL,
+    mca_pcm_rsh_allocate_resources,
     mca_pcm_rsh_can_spawn,
     mca_pcm_rsh_spawn_procs,
     mca_pcm_rsh_kill_proc,
     mca_pcm_rsh_kill_job,
-    NULL
+    mca_pcm_rsh_deallocate_resources,
+    mca_pcm_rsh_finalize
 };
 
 
@@ -99,7 +99,7 @@ char *mca_pcm_rsh_agent;
 int mca_pcm_rsh_output = 0;
 int mca_pcm_rsh_use_ns;
 
-static mca_llm_base_module_t mca_pcm_rsh_llm;
+mca_llm_base_module_t mca_pcm_rsh_llm;
 
 int
 mca_pcm_rsh_component_open(void)
@@ -137,7 +137,8 @@ mca_pcm_rsh_component_close(void)
 mca_pcm_base_module_t*
 mca_pcm_rsh_init(int *priority, 
 		  bool *allow_multi_user_threads, 
-                  bool *have_hidden_threads)
+                 bool *have_hidden_threads,
+                 int constraints)
 {
     int debug;
     int ret;
@@ -173,14 +174,6 @@ mca_pcm_rsh_init(int *priority,
         return NULL;
     }
 
-    /* copy over the function pointers */
-    mca_pcm_rsh_1_0_0.pcm_allocate_resources = 
-        (mca_pcm_base_allocate_resources_fn_t) 
-          mca_pcm_rsh_llm.llm_allocate_resources;
-    mca_pcm_rsh_1_0_0.pcm_deallocate_resources = 
-        (mca_pcm_base_deallocate_resources_fn_t)
-          mca_pcm_rsh_llm.llm_deallocate_resources;
-
     /* DO SOME PARAM "FIXING" */
     /* BWB - remove param fixing before 1.0 */
     if (0 == mca_pcm_rsh_no_profile) {
@@ -197,15 +190,10 @@ mca_pcm_rsh_init(int *priority,
 
 
 int
-mca_pcm_rsh_finalize(void)
+mca_pcm_rsh_finalize(struct mca_pcm_base_module_1_0_0_t* me)
 {
     if (mca_pcm_rsh_output > 0) {
         ompi_output_close(mca_pcm_rsh_output);
-    }
-
-    if (NULL == mca_pcm_rsh_1_0_0.pcm_allocate_resources) {
-        mca_pcm_rsh_1_0_0.pcm_allocate_resources = NULL;
-        mca_pcm_rsh_1_0_0.pcm_deallocate_resources = NULL;
     }
 
     return OMPI_SUCCESS;
