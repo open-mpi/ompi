@@ -40,6 +40,7 @@ endif
 headers = \
     bindings.h \
     constants.h \
+    fint_2_int.h \
     prototypes_mpi.h \
     strings.h
 
