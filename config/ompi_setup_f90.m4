@@ -54,9 +54,17 @@ else
     # symbol conventions, type sizes, etc.  We also pass it down to
     # the wrapper compiler mpif90.
     #
+    # Note that AC_PROG_FC will look for *any* fortran compiler, and
+    # we don't want it to find an F77 compiler.  The AC docs don't
+    # recommend using the "dialect" feature of AC_PROG_FC (and you can
+    # only look for one of Fortran 90 or 95 -- not both), so instead
+    # use the optional first parameter and steal the list of Fortran
+    # compilers (excluding the f77 compiler names) from AC's default
+    # list of 95 and 90 compilers and use it here.
+    #
 
     ompi_fcflags_save="$FCFLAGS"
-    AC_PROG_FC
+    AC_PROG_FC([f95 fort xlf95 ifc efc pgf95 lf95 gfortran f90 xlf90 pgf90 epcf90])
     FCFLAGS="$ompi_fcflags_save"
     if test -z "$FC"; then
         AC_MSG_WARN([*** Fortran 90/95 bindings disabled (could not find compiler)])
