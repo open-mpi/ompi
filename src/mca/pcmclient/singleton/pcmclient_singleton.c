@@ -27,11 +27,8 @@ init_proclist(void)
         (ompi_process_name_t*) malloc(sizeof(ompi_process_name_t));
     if (NULL == mca_pcmclient_singleton_procs) return OMPI_ERROR;
 
-    /* BWB - when name server is running, get value from it... */
-    mca_pcmclient_singleton_procs[0].cellid = 0;
-    mca_pcmclient_singleton_procs[0].jobid = 1;
-    mca_pcmclient_singleton_procs[0].vpid = 0;
-
+    /* the oob has already assigned a unique name to the process */
+    mca_pcmclient_singleton_procs[0] = mca_oob_name_self;
     return OMPI_SUCCESS;
 }
 
