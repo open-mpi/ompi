@@ -61,6 +61,7 @@ FILE *test_out;
 
 int main (int argc, char* argv[])
 {
+    int ret;
 
     test_init("orte_dps");
     test_out = stderr;
@@ -189,8 +190,9 @@ int main (int argc, char* argv[])
       test_failure("orte_dps test14 failed");
     }
 
+    ret = test_finalize();
     fclose(test_out);
-    return test_finalize();
+    return ret;
 }
 
 static bool test1(void)        /* verify different buffer inits */
