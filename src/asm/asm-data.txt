@@ -102,3 +102,4 @@ SPARCV9_64	default-.text-.globl-:--.L-#-1-0-1-1	sparcv9-64-solaris
 # in one register (instead of SPARC and POWER, who use two).  Which
 # means that we can use the same code either way.  Woo hoo!
 
+MIPS3	default-.text-.globl-:--L--1-1-1-1	mips-irix
