@@ -596,9 +596,25 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
     long lastDisp = 0, lastLength = 0;
     dt_elem_desc_t* pElems;
 
-    if( (pData->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC ) {
-        /* basic datatype with count */
-        MEMCPY( pDestBuf, pSrcBuf, pData->size * count );
+    /* empty data ? then do nothing. This should normally be trapped
+     * at a higher level.
+     */
+    if( count == 0 ) return 0;
+
+    /* If we have to copy a contiguous datatype then simply
+     * do a memcpy.
+     */
+    if( (pData->flags & DT_FLAG_CONTIGUOUS) == DT_FLAG_CONTIGUOUS ) {
+        int extent = (pData->ub - pData->lb);
+        if( pData->size == extent ) {  /* all contiguous */
+            MEMCPY( pDestBuf, pSrcBuf, pData->size * count );
+        } else {
+            for( pos_desc = 0; pos_desc < count; pos_desc++ ) {
+                memcpy( pDestBuf, pSrcBuf, pData->size );
+                pDestBuf += extent;
+                pSrcBuf += extent;
+            }
+        }
         return 0;
     }
 
