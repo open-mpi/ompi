@@ -28,8 +28,8 @@ my $sha1_checksums = "sha1sums.txt";
 my $max_log_len = 100;
 
 # email subjects
-my $success_subject = "Success (\@version@)";
-my $fail_subject = "=== TEST FAILURE (\@version@) ===";
+my $success_subject = "Build success (\@version@)";
+my $fail_subject = "=== BUILD FAILURE (\@version@) ===";
 
 # max number of snapshots to keep downloaded
 my $max_snapshots = 3;
