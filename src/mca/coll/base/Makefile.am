@@ -4,6 +4,8 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+EXTRA_DIST = $(pkgdata_DATA)
+
 noinst_LTLIBRARIES = libmca_coll_base.la
 
 pkgdata_DATA = help-mca-coll-base.txt
