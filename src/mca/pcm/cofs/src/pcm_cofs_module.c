@@ -6,8 +6,8 @@
 
 #include "ompi_config.h"
 
-#include "constants.h"
-#include "types.h"
+#include "include/constants.h"
+#include "include/types.h"
 #include "mca/mca.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/cofs/src/pcm_cofs.h"
