@@ -14,6 +14,7 @@
 #ifndef LAM_DATATYPE_H_INCLUDED
 #define LAM_DATATYPE_H_INCLUDED 1
 
+#include <assert.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <string.h>
@@ -275,6 +276,24 @@ int lam_datatype_convert(void *dst,
 
 
 /**
+ * Initialize pack state structure
+ *
+ * @param state         Pointer to state structure
+ * @return              LAM return code
+ */
+static inline int lam_pack_state_init(lam_pack_state_t *state)
+{
+    assert(state);
+
+    state->type_index = 0;
+    state->repeat_index = 0;
+    state->element_index = 0;
+    state->datavec_offset = 0;
+    state->packed_offset = 0;
+}
+
+
+/**
  * Incrementally pack or unpack a buffer to/from an array of
  * datatypes.
  *
@@ -352,6 +371,8 @@ static inline int lam_datatype_unpack(lam_pack_state_t *state,
                                ntype, datatype, memcpy_fn, check,
                                LAM_DATATYPE_UNPACK);
 }
+
+
 /**
  * Incrementally generate an iovec for gathering from an array of
  * datatypes
@@ -423,6 +444,9 @@ int lam_datatype_scatter_iovec(lam_pack_state_t *state,
                                lam_datatype_t *datatype,
                                lam_memcpy_fn_t *memcpy_fn,
                                lam_memcpy_state_t *check);
+
+
+
 
 
 /*
