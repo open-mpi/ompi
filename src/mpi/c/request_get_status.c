@@ -39,7 +39,7 @@ int MPI_Request_get_status(MPI_Request request, int *flag,
 {
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if( NULL == flag ) {
+        if( (NULL == flag) || (NULL == status) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
         }
     }
