@@ -546,7 +546,7 @@ static inline int ompi_cb_fifo_free_same_base_addr( ompi_cb_fifo_t *fifo,
     }
 
     /* free fifo array */
-    if( OMPI_CB_NULL != ptr ){
+    if( OMPI_CB_NULL != fifo->head ){
         ptr=(char *)(fifo->queue);
         memory_allocator->mpool_free(ptr);
         fifo->queue=OMPI_CB_NULL;
