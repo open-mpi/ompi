@@ -46,6 +46,13 @@
  */
 int orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
                                  orte_gpr_replica_segment_t *seg, char *name);
+/**
+ * Typedef of the orte_gpr_replica_create_itag() function signature so
+ * that it can be invoked via a function pointer for a unit test.
+ */
+typedef int (*orte_gpr_replica_create_itag_fn_t)
+    (orte_gpr_replica_itag_t *itag,
+     orte_gpr_replica_segment_t *seg, char *name);
 
 /** Delete a name from a segment's dictionary.
  * This function allows the removal of a definition from the
@@ -64,13 +71,35 @@ int orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
  */
 int orte_gpr_replica_delete_itag(orte_gpr_replica_segment_t *seg, char *name);
 
+/**
+ * Typedef of the orte_gpr_replica_delete_itag() function signature so
+ * that it can be invoked via a function pointer for a unit test.
+ */
+typedef int (*orte_gpr_replica_delete_itag_fn_t)
+    (orte_gpr_replica_segment_t *seg, char *name);
+
 
 int orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
                         orte_gpr_replica_segment_t *seg, char *name);
+/**
+ * Typedef of the orte_gpr_replica_dict_lookup() function signature so
+ * that it can be invoked via a function pointer for a unit test.
+ */
+typedef int (*orte_gpr_replica_dict_lookup_fn_t)
+    (orte_gpr_replica_itag_t *itag,
+     orte_gpr_replica_segment_t *seg, char *name);
 
 
 int orte_gpr_replica_dict_reverse_lookup(char **name,
         orte_gpr_replica_segment_t *seg, orte_gpr_replica_itag_t itag);
+/**
+ * Typedef of the orte_gpr_replica_dict_reverse_lookup() function
+ * signature so that it can be invoked via a function pointer for a
+ * unit test.
+ */
+typedef int (*orte_gpr_replica_dict_reverse_lookup_fn_t)
+    (char **name,
+     orte_gpr_replica_segment_t *seg, orte_gpr_replica_itag_t itag);
 
 
 /*
@@ -96,6 +125,14 @@ int orte_gpr_replica_get_itag_list(orte_gpr_replica_itag_t **itaglist,
                     orte_gpr_replica_segment_t *seg, char **names,
                     int *num_names);
 
+/**
+ * Typedef of the orte_gpr_replica_get_itag_list() function signature
+ * so that it can be invoked via a function pointer for a unit test.
+ */
+typedef int (*orte_gpr_replica_get_itag_list_fn_t)
+    (orte_gpr_replica_itag_t **itaglist,
+     orte_gpr_replica_segment_t *seg, char **names,
+     int *num_names);
 
 
 /*
@@ -117,5 +154,12 @@ int orte_gpr_replica_get_itag_list(orte_gpr_replica_itag_t **itaglist,
 int orte_gpr_replica_find_seg(orte_gpr_replica_segment_t **seg,
                               bool create, char *segment);
 
+/**
+ * Typedef of the orte_gpr_replica_find_seg() function signature so
+ * that it can be invoked via a function pointer for a unit test.
+ */
+typedef int (*orte_gpr_replica_find_seg_fn_t)
+    (orte_gpr_replica_segment_t **seg,
+     bool create, char *segment);
 
 #endif
