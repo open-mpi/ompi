@@ -669,7 +669,7 @@ int mca_ptl_sm_send(
     }
 
     /* if needed, pack data in payload buffer */
-    if( 0 <= size ) {
+    if( 0 < size ) {
         ompi_convertor_t *convertor;
         unsigned int iov_count, max_data;
         int free_after=0;
