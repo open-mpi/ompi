@@ -39,3 +39,9 @@ int mca_allocator_base_open(void)
 }
 
 
+mca_allocator_base_module_t* mca_allocator_component_lookup(const char* name)
+{
+    return NULL;
+}
+
+
