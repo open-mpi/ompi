@@ -84,6 +84,8 @@ int mca_oob_tcp_recv(
     }
 
     /* fill in the struct */
+    msg->msg_hdr.msg_size = htonl(size);
+    msg->msg_hdr.msg_tag = htonl(tag);
     msg->msg_type = MCA_OOB_TCP_POSTED;
     msg->msg_rc = 0;
     msg->msg_flags = flags;
@@ -172,6 +174,8 @@ int mca_oob_tcp_recv_nb(
     }
 
     /* fill in the struct */
+    msg->msg_hdr.msg_size = htonl(size);
+    msg->msg_hdr.msg_tag = htonl(tag);
     msg->msg_type = MCA_OOB_TCP_POSTED;
     msg->msg_rc = 0;
     msg->msg_flags = flags;
