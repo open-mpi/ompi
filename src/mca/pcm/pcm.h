@@ -88,6 +88,13 @@
  * @param constrains (IN) Bit-wise mask of constraints put on the PCM.
  *                       List of available constants is in the run-time interface - 
  *                       constants start with \c OMPI_RTE_SPAWN_.
+ *
+ * \warning The only requirement on the returned type is that the
+ * first sizeof(struct mca_pcm_base_module_1_0_0_t) bytes have the
+ * same structure as a struct mca_pcm_base_module_1_0_0_t.  The pcm is
+ * free to return a pointer to a larger structure in order to maintain
+ * per-module information it may need.  Therefore, the caller should
+ * never copy the structure or assume its size.
  */
 typedef struct mca_pcm_base_module_1_0_0_t* 
 (*mca_pcm_base_component_init_fn_t)(int *priority, 
@@ -101,7 +108,6 @@ typedef struct mca_pcm_base_module_1_0_0_t*
  *
  * Called by the MCA framework to finalize the component.  Will be
  * called once per successful call to pcm_base_compoenent_init.
-
  *
  * @param me (IN)       Pointer to the module being finalized
  */
@@ -138,6 +144,8 @@ typedef mca_pcm_base_component_1_0_0_t mca_pcm_base_component_t;
  * PBS variables required for uniquely identifying the PBS job
  * environment (the same is true of LSF, SGE, etc.).
  *
+ * @param me (IN)    Pointer to the module struct
+ *
  * @returns NULL on error or if no uniqueness available
  *          non-null otherwize
  */
@@ -155,6 +163,7 @@ typedef char *
  * as appropriate should this occur.  This function should only be
  * called once per jobid.
  *
+ * @param me (IN)    Pointer to the module struct
  * @param jobid (IN) Jobid with which to associate the given resources.
  * @param nodes (IN) Number of nodes to try to allocate. If 0, 
  *                   the PCM will try to allocate <code>procs</code>
@@ -179,6 +188,8 @@ typedef ompi_list_t*
  * This tells you whether the pcm module is capable of spawning new
  * processes or not during a run
  *
+ * @param me (IN)    Pointer to the module struct
+ *
  * @return True/False
  */
 
@@ -193,6 +204,11 @@ typedef bool
  * 0 for the forseeable future).  The job is specified using an array
  * of \c mca_pcm_base_schedule_t structures, which give both process
  * and location information.
+ *
+ * @param me (IN)    Pointer to the module struct
+ * @param jobid (IN) Jobid under which the job should be started
+ * @param schedule_list (IN) A list of \c mca_pcm_base_schedule_t
+ *                   structures describing the job to start.
  */
 typedef int
 (*mca_pcm_base_spawn_procs_fn_t)(struct mca_pcm_base_module_1_0_0_t* me,
@@ -203,7 +219,9 @@ typedef int
 /**
  * Kill a specific process in this cell
  *
- * @param process_name Which process needs to be killed.
+ * @param me (IN)    Pointer to the module struct
+ * @param process_name (IN) Which process needs to be killed.
+ *
  * @return Error code
  *
  * @warning flags is currently ignored, but should be set to 0 for
@@ -220,7 +238,9 @@ typedef int
  * the processes in the job by contacting the registry and then call
  * mca_pcm_kill_process for each process in the job (for a cell)
  *
- * @param jobid Job id 
+ * @param me (IN)    Pointer to the module struct
+ * @param jobid (IN) Job id 
+ *
  * @return Error code
  *
  * @warning flags is currently ignored, but should be set to 0 for
@@ -237,6 +257,7 @@ typedef int
  *
  * Return the resources for the given jobid to the system.
  *
+ * @param me (IN)    Pointer to the module struct
  * @param jobid (IN) Jobid associated with the resources to be freed.
  * @param nodes (IN) Nodelist from associated allocate_resource call.
  *                   All associated memory will be freed as appropriate.

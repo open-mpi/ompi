@@ -83,7 +83,9 @@ static int mca_pcm_rms_param_debug;
 static int mca_pcm_rms_param_use_ns;
 
 /*
- * Module variables
+ * Component variables.  All of these are shared among the module
+ * instances, so they don't need to go in a special structure or
+ * anything.
  */
 ompi_list_t mca_pcm_rms_jobs;
 int mca_pcm_rms_output = 0;
@@ -110,7 +112,9 @@ mca_pcm_rms_component_open(void)
 int
 mca_pcm_rms_component_close(void)
 {
-  return OMPI_SUCCESS;
+    OBJ_DESTRUCT(&mca_pcm_rms_jobs);
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -137,6 +141,7 @@ mca_pcm_rms_init(int *priority,
     /* poke around for prun */
     prun = ompi_path_env_findv("prun", X_OK, environ, NULL);
     if (NULL == prun) return NULL;
+    free(prun);
 
     return &mca_pcm_rms_1_0_0;
 }
@@ -148,8 +153,6 @@ mca_pcm_rms_finalize(struct mca_pcm_base_module_1_0_0_t* me)
     if (mca_pcm_rms_output > 0) {
         ompi_output_close(mca_pcm_rms_output);
     }
-
-    OBJ_DESTRUCT(&mca_pcm_rms_jobs);
 
     return OMPI_SUCCESS;
 }
