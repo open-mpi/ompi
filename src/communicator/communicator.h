@@ -80,6 +80,8 @@ struct ompi_communicator_t {
 
     /* Hooks for topo module to hang things */
 
+    mca_base_component_t *c_topo_component;
+
     const mca_topo_base_module_1_0_0_t *c_topo; 
     /**< structure of function pointers */
 

@@ -90,14 +90,7 @@ int mca_topo_base_cart_sub (MPI_Comm comm,
      if (temp_comm != MPI_COMM_NULL) {
         
         temp_comm->c_topo_comm->mtc_ndims_or_nnodes = ndim;
-        temp_comm->c_topo_comm->mtc_dims_or_index = (int *)
-                                            malloc((unsigned) 2 * ndim * sizeof(int));
         
-        if (NULL == temp_comm->c_topo_comm->mtc_dims_or_index) {
-            OBJ_RELEASE(temp_comm);
-            return MPI_ERR_OTHER;
-        }
-        temp_comm->c_topo_comm->mtc_coords = temp_comm->c_topo_comm->mtc_dims_or_index + ndim;
         if (!allfalse) {
            p = temp_comm->c_topo_comm->mtc_dims_or_index;
            d = comm->c_topo_comm->mtc_dims_or_index;

@@ -67,7 +67,6 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
     int num_names;
     mca_base_component_priority_list_item_t *cpli;
     mca_topo_base_component_t *component; 
-    mca_topo_base_component_t *preferred_component = NULL; 
     mca_topo_base_component_t *best_component;
     mca_topo_base_module_t *module; 
     ompi_list_t queried;
@@ -108,7 +107,8 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
          /* query the component for its priority and get its module 
             structure. This is necessary to proceed */
 
-         module = preferred_component->topom_comm_query (&priority);
+        component = (mca_topo_base_component_t *)preferred;
+         module = component->topom_comm_query (&priority);
          if (NULL != module && 
              NULL != module->topo_module_init &&
              NULL != module->topo_graph_map &&
@@ -121,6 +121,8 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
 
              fill_null_pointers (module);
              comm->c_topo = module;
+             comm->c_topo_component = preferred;
+
              return module->topo_module_init(comm);
          } 
             /* His preferred component is present, but is unable to
@@ -334,6 +336,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
             fill_null_pointers (om->om_module);
             comm->c_topo = om->om_module;
             err = om->om_module->topo_module_init(comm);
+            comm->c_topo_component = (mca_base_component_t *)best_component;
 
          } else {
             /*
@@ -380,6 +383,7 @@ static void fill_null_pointers(mca_topo_base_module_t *module)
 
    CHECK_FOR_NULL_FUNCTION_POINTER(cart_coords);
    CHECK_FOR_NULL_FUNCTION_POINTER(cart_create); 
+   CHECK_FOR_NULL_FUNCTION_POINTER(cart_get);
    CHECK_FOR_NULL_FUNCTION_POINTER(cartdim_get);
    CHECK_FOR_NULL_FUNCTION_POINTER(cart_rank);
    CHECK_FOR_NULL_FUNCTION_POINTER(cart_shift);

@@ -244,6 +244,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->error_handler  = NULL;
     comm->c_pml_comm     = NULL;
     comm->c_topo         = NULL;
+    comm->c_topo_component = NULL;
     comm->c_topo_comm    = NULL; 
     comm->c_topo_module  = NULL;
 
@@ -296,6 +297,8 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
         }
 
     }
+
+    comm->c_topo_component = NULL;
 
     /* Release topology information */
     mca_topo_base_comm_unselect(comm);
