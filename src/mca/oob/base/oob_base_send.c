@@ -3,12 +3,13 @@
  */
 
 #include "ompi_config.h"
+#include <string.h>
+#include <netinet/in.h>
 
 #include "include/constants.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
-#include <string.h>
-#include <netinet/in.h>
+#include "util/output.h"
 /*
 *  Similiar to unix send(2).
 *

@@ -22,6 +22,20 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user);
 static void mca_oob_tcp_accept(void);
 
 
+struct mca_oob_tcp_subscription_t {
+    ompi_list_item_t item;
+    mca_ns_base_jobid_t jobid;
+};
+typedef struct mca_oob_tcp_subscription_t mca_oob_tcp_subscription_t;
+
+OBJ_CLASS_INSTANCE(
+    mca_oob_tcp_subscription_t,
+    ompi_list_item_t,
+    NULL,
+    NULL);
+
+
+
 /*
  * Struct of function pointers and all that to let us be initialized
  */
@@ -63,7 +77,7 @@ static inline int mca_oob_tcp_param_register_int(
     const char* param_name,
     int default_value)
 {
-    int id = mca_base_param_register_int("ptl","tcp",param_name,NULL,default_value);
+    int id = mca_base_param_register_int("oob","tcp",param_name,NULL,default_value);
     int param_value = default_value;
     mca_base_param_lookup_int(id,&param_value);
     return param_value;
@@ -74,7 +88,7 @@ static inline char* mca_oob_tcp_param_register_str(
     const char* param_name,
     const char* default_value)
 {
-    int id = mca_base_param_register_string("ptl","tcp",param_name,NULL,default_value);
+    int id = mca_base_param_register_string("oob","tcp",param_name,NULL,default_value);
     char* param_value = NULL;
     mca_base_param_lookup_string(id,&param_value);
     return param_value;
@@ -86,20 +100,24 @@ static inline char* mca_oob_tcp_param_register_str(
  */
 int mca_oob_tcp_component_open(void)
 {
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,  ompi_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_tree,  ompi_rb_tree_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,  ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msgs,       ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_lock,       ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_post,   ompi_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_recv,   ompi_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_subscriptions, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     ompi_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_tree,     ompi_rb_tree_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_names,    ompi_rb_tree_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,     ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msgs,          ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_lock,          ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_post,      ompi_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_recv,      ompi_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_lock,    ompi_mutex_t);
 
     /* register oob module parameters */
     mca_oob_tcp_component.tcp_peer_limit =
         mca_oob_tcp_param_register_int("peer_limit", -1);
     mca_oob_tcp_component.tcp_peer_retries =
         mca_oob_tcp_param_register_int("peer_retries", 60);
+    mca_oob_tcp_component.tcp_debug =
+        mca_oob_tcp_param_register_int("debug", 1);
     memset(&mca_oob_tcp_component.tcp_seed_addr, 0, sizeof(mca_oob_tcp_component.tcp_seed_addr));
 
     /* initialize state */
@@ -117,6 +135,7 @@ int mca_oob_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_list);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_tree);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_peer_free);
+    OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_subscriptions);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msgs);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_lock);
     OBJ_DESTRUCT(&mca_oob_tcp_component.tcp_msg_post);
@@ -188,7 +207,7 @@ static int mca_oob_tcp_create_listen(void)
         return OMPI_ERROR;
     }
 
-    /* resolve system assignend port */
+    /* resolve system assigned port */
     addrlen = sizeof(struct sockaddr_in);
     if(getsockname(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
         ompi_output(0, "mca_oob_tcp_create_listen: getsockname() failed with errno=%d", errno);
@@ -246,12 +265,16 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     free(user);
 
     /* recv the process identifier */
-    rc = recv(sd, guid, sizeof(guid), 0);
-    if(rc != sizeof(guid)) {
-        ompi_output(0, "mca_oob_tcp_recv_handler: recv() return value %d != %d, errno = %d",
-            rc, sizeof(guid), errno);
-        close(sd);
-        return;
+    while((rc = recv(sd, guid, sizeof(guid), 0)) != sizeof(guid)) {
+        if(rc >= 0) {
+            close(sd);
+            return;
+        }
+        if(errno != EINTR) {
+            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n", errno);
+            close(sd);
+            return;
+        }
     }
     OMPI_PROCESS_NAME_NTOH(guid[0]);
     OMPI_PROCESS_NAME_NTOH(guid[1]);
@@ -276,7 +299,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     }
 
     /* lookup the corresponding process */
-    peer = mca_oob_tcp_peer_lookup(guid, true);
+    peer = mca_oob_tcp_peer_lookup(guid);
     if(NULL == peer) {
         ompi_output(0, "mca_oob_tcp_recv_handler: unable to locate peer");
         close(sd);
@@ -306,6 +329,7 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority, bool *allow_multi_user_thre
 
     /* initialize data structures */
     ompi_rb_tree_init(&mca_oob_tcp_component.tcp_peer_tree, (ompi_rb_tree_comp_fn_t)mca_oob_tcp_process_name_compare);
+    ompi_rb_tree_init(&mca_oob_tcp_component.tcp_peer_names, (ompi_rb_tree_comp_fn_t)mca_oob_tcp_process_name_compare);
 
     ompi_free_list_init(&mca_oob_tcp_component.tcp_peer_free,
         sizeof(mca_oob_tcp_peer_t),
@@ -339,25 +363,206 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority, bool *allow_multi_user_thre
     return &mca_oob_tcp;
 }
 
+
+/*
+ * Callback from registry on change to subscribed segments.
+ */
+
+static void mca_oob_tcp_registry_callback(
+    ompi_registry_notify_message_t* msg,
+    void* cbdata)
+{
+    ompi_list_item_t* item;
+    if(mca_oob_tcp_component.tcp_debug > 1) {
+        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_registry_callback\n",
+            OMPI_NAME_COMPONENTS(mca_oob_name_self));
+    }
+
+    /* process the callback */
+    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+    while((item = ompi_list_remove_first(&msg->data)) != NULL) {
+
+        ompi_registry_value_t* value = (ompi_registry_value_t*)item; 
+        ompi_buffer_t buffer;
+        mca_oob_tcp_addr_t* addr, *existing;
+        mca_oob_tcp_peer_t* peer;
+
+        /* transfer ownership of registry object to buffer and unpack */
+        ompi_buffer_init_preallocated(&buffer, value->object, value->object_size);
+        value->object = NULL;
+        value->object_size = 0;
+        addr = mca_oob_tcp_addr_unpack(buffer);
+        ompi_buffer_free(buffer);
+        if(NULL == addr) {
+            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_registry_callback: unable to unpack peer address\n",
+                OMPI_NAME_COMPONENTS(mca_oob_name_self));
+            OBJ_RELEASE(item);
+            continue;
+        }
+
+        if(mca_oob_tcp_component.tcp_debug > 1) {
+            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_registry_callback: received peer [%d,%d,%d]\n",
+                OMPI_NAME_COMPONENTS(mca_oob_name_self),
+                OMPI_NAME_COMPONENTS(addr->addr_name));
+        }
+
+        /* check for existing cache entry */
+        existing = ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name);
+        if(NULL != existing) {
+            /* TSW - need to update existing entry */
+            OBJ_RELEASE(addr);
+            continue;
+        }
+
+        /* insert into cache and notify peer */
+        ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
+        peer = ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_tree, &addr->addr_name);
+        if(NULL != peer)
+            mca_oob_tcp_peer_resolved(peer, addr);
+
+        OBJ_RELEASE(item);
+    }
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+}
+
+/*
+ * Attempt to resolve peer name.
+ */
+
+int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
+{
+     mca_oob_tcp_addr_t* addr;
+     mca_oob_tcp_subscription_t* subscription;
+     ompi_list_item_t* item;
+     char segment[32];
+     int rc;
+  
+     /* if the address is already cached - simply return it */
+     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+     addr = ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_names, &peer->peer_name);
+     if(NULL != addr) {
+         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+         mca_oob_tcp_peer_resolved(peer, addr);
+         return OMPI_SUCCESS;
+     }
+
+     /* check to see if we have subscribed to this registry segment */
+     for( item =  ompi_list_get_first(&mca_oob_tcp_component.tcp_subscriptions);
+          item != ompi_list_get_end(&mca_oob_tcp_component.tcp_subscriptions);
+          item =  ompi_list_get_next(item)) {
+         subscription = (mca_oob_tcp_subscription_t*)item;
+         if(subscription->jobid == peer->peer_name.jobid) {
+             OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+             return OMPI_SUCCESS;
+         }
+     }
+
+     /* otherwise - need to subscribe to this registry segment 
+      * record the subscription 
+     */
+     subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
+     subscription->jobid = peer->peer_name.jobid;
+     ompi_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
+     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+
+     /* subscribe */
+     sprintf(segment, "oob-tcp-%u", peer->peer_name.jobid);
+     rc = ompi_registry.subscribe(
+         OMPI_REGISTRY_OR,
+         OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|OMPI_REGISTRY_NOTIFY_MODIFICATION,
+         segment,
+         NULL,
+         mca_oob_tcp_registry_callback,
+         NULL);
+     if(rc != OMPI_SUCCESS) {
+         ompi_output(0, "mca_oob_tcp_resolve: ompi_registry.subscribe failed with error status: %d\n", rc);
+         return rc;
+     }
+     return OMPI_SUCCESS;
+}
+
+
 /*
  * Setup contact information in the registry.
  */
 int mca_oob_tcp_init(void)
 {
-    char *keys[3];
-    char *addr;
+    char *keys[2];
+    void *addr;
+    int32_t size;
+    char segment[32];
+    ompi_buffer_t buffer;
+    ompi_process_name_t* peers;
+    mca_oob_tcp_subscription_t* subscription;
+    size_t npeers;
     int rc;
+    ompi_list_item_t* item;
 
-    /* put contact info in registry */
-    keys[0] = "tcp";
-    keys[1] = ompi_name_server.get_proc_name_string(&mca_oob_name_self);
-    keys[2] = NULL;
+    /* iterate through the open connections and send an ident message to all peers -
+     * note that we initially come up w/out knowing our process name - and are assigned
+     * a temporary name by our peer. once we have determined our real name - we send it
+     * to the peer.
+    */
+    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+    for(item =  ompi_list_get_first(&mca_oob_tcp_component.tcp_peer_list);
+        item != ompi_list_get_end(&mca_oob_tcp_component.tcp_peer_list);
+        item =  ompi_list_get_next(item)) {
+        mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)item;
+        mca_oob_tcp_peer_send_ident(peer);
+    }
 
-    addr = mca_oob_tcp_get_addr();
-    rc = ompi_registry.put(OMPI_REGISTRY_OVERWRITE, "oob", keys, (ompi_registry_object_t)addr, strlen(addr)+1);
-    free(addr);
+    rc = mca_pcmclient.pcmclient_get_peers(&peers, &npeers);
     if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "mca_oob_tcp_init: unable to contact registry.");
+        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+        return rc;
+    }
+
+    sprintf(segment, "oob-tcp-%u", mca_oob_name_self.jobid);
+    if(mca_oob_tcp_component.tcp_debug > 1) {
+        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_init: calling ompi_registry.synchro(%s,%d)\n", 
+            OMPI_NAME_COMPONENTS(mca_oob_name_self),
+            segment,
+            npeers);
+    }
+
+    /* register synchro callback to receive notification when all processes have registered */
+    subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
+    subscription->jobid = mca_oob_name_self.jobid;
+    ompi_list_append(&mca_oob_tcp_component.tcp_subscriptions, subscription);
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+
+    rc = ompi_registry.synchro(
+        OMPI_REGISTRY_OR,
+        OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+        segment,
+        NULL,
+        npeers,
+        mca_oob_tcp_registry_callback,
+        NULL);
+    if(rc != OMPI_SUCCESS) {
+        ompi_output(0, "mca_oob_tcp_init: registry synchro failed with error code %d.", rc);
+        return rc;
+    }
+
+    /* put our contact info in registry */
+    keys[0] = ompi_name_server.get_proc_name_string(&mca_oob_name_self);
+    keys[1] = NULL;
+
+    if(mca_oob_tcp_component.tcp_debug > 1) {
+        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_init: calling ompi_registry.put(%s,%s)\n", 
+            OMPI_NAME_COMPONENTS(mca_oob_name_self),
+            segment,
+            keys[0]);
+    }
+
+    ompi_buffer_init(&buffer, 128);
+    mca_oob_tcp_addr_pack(buffer);
+    ompi_buffer_get(buffer, &addr, &size);
+    rc = ompi_registry.put(OMPI_REGISTRY_OVERWRITE, segment, keys, addr, size);
+    ompi_buffer_free(buffer);
+    if(rc != OMPI_SUCCESS) {
+        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_init: registry put failed with error code %d.",
+            OMPI_NAME_COMPONENTS(mca_oob_name_self), rc);
         return rc;
     }
     return OMPI_SUCCESS;
@@ -434,6 +639,8 @@ char* mca_oob_tcp_get_addr(void)
     for(i=ompi_ifbegin(); i>0; i=ompi_ifnext(i)) {
         struct sockaddr_in addr;
         ompi_ifindextoaddr(i, (struct sockaddr*)&addr, sizeof(addr));
+        if(addr.sin_addr.s_addr == inet_addr("127.0.0.1"))
+            continue;
         if(ptr != contact_info) {
             ptr += sprintf(ptr, ";");
         }
@@ -488,35 +695,20 @@ int mca_oob_tcp_parse_uri(const char* uri, struct sockaddr_in* inaddr)
 int mca_oob_tcp_set_seed(const char* uri)
 {
     struct sockaddr_in inaddr;
+    mca_oob_tcp_addr_t* addr;
     int rc;
-    int ifindex;
-
     if((rc = mca_oob_tcp_parse_uri(uri,&inaddr)) != OMPI_SUCCESS)
         return rc;
 
-    /* scan through the list of interface address exported by this host 
-     * and look for a match on a directly connected network 
-    */
-
-    for(ifindex=ompi_ifbegin(); ifindex>0; ifindex=ompi_ifnext(ifindex)) {
-        struct sockaddr_in ifaddr;
-        struct sockaddr_in ifmask;
-        ompi_ifindextoaddr(ifindex, (struct sockaddr*)&ifaddr, sizeof(ifaddr));
-        ompi_ifindextomask(ifindex, (struct sockaddr*)&ifmask, sizeof(ifmask));
-        if((ifaddr.sin_addr.s_addr & ifmask.sin_addr.s_addr) ==
-           (inaddr.sin_addr.s_addr & ifmask.sin_addr.s_addr)) {
-           mca_oob_tcp_component.tcp_seed_addr = inaddr;
-           return OMPI_SUCCESS;
-        }
+    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+    addr = (mca_oob_tcp_addr_t*)ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_names, &mca_oob_name_seed);
+    if(NULL == addr) {
+        addr = OBJ_NEW(mca_oob_tcp_addr_t);
+        addr->addr_name = mca_oob_name_seed;
+        ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_names, &addr->addr_name, addr);
     }
- 
-    /* if no match was found - may be still be reachable - go ahead and
-     * set this adddress as seed address.
-    */
-    if (mca_oob_tcp_component.tcp_seed_addr.sin_family == 0) {
-        mca_oob_tcp_component.tcp_seed_addr = inaddr;
-    }
-    return OMPI_SUCCESS;
+    rc = mca_oob_tcp_addr_insert(addr, &inaddr);
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+    return rc;
 }
-
 

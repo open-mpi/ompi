@@ -20,11 +20,17 @@ int mca_oob_tcp_send(
     int tag,
     int flags)
 {
-    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name, true);
+    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name);
     mca_oob_tcp_msg_t* msg;
     int size;
     int rc;
 
+    if(mca_oob_tcp_component.tcp_debug > 1) {
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_send: tag %d\n",
+            OMPI_NAME_COMPONENTS(mca_oob_name_self),
+            OMPI_NAME_COMPONENTS(peer->peer_name),
+            tag);
+    }
     if(NULL == peer)
         return OMPI_ERR_UNREACH;
 
@@ -39,8 +45,12 @@ int mca_oob_tcp_send(
     }
    
     /* turn the size to network byte order so there will be no problems */
-    msg->msg_hdr.msg_size = htonl(size);
-    msg->msg_hdr.msg_tag = htonl(tag);
+    msg->msg_hdr.msg_type = MCA_OOB_TCP_MSG;
+    msg->msg_hdr.msg_size = size;
+    msg->msg_hdr.msg_tag = tag;
+    msg->msg_hdr.msg_src = mca_oob_name_self;
+    msg->msg_hdr.msg_dst = *name;
+    MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
 
     /* create one additional iovect that will hold the header */
     msg->msg_type = MCA_OOB_TCP_POSTED;
@@ -96,7 +106,7 @@ int mca_oob_tcp_send_nb(
     mca_oob_callback_fn_t cbfunc, 
     void* cbdata)
 {
-    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name, true);
+    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name);
     mca_oob_tcp_msg_t* msg;
     int size;
     int rc;
@@ -114,8 +124,12 @@ int mca_oob_tcp_send_nb(
         size += iov[rc].iov_len;
     }
     /* turn the size to network byte order so there will be no problems */
-    msg->msg_hdr.msg_size = htonl(size);
-    msg->msg_hdr.msg_tag = htonl(tag);
+    msg->msg_hdr.msg_type = MCA_OOB_TCP_MSG;
+    msg->msg_hdr.msg_size = size;
+    msg->msg_hdr.msg_tag = tag;
+    msg->msg_hdr.msg_src = mca_oob_name_self;
+    msg->msg_hdr.msg_dst = *name;
+    MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
 
     /* create one additional iovect that will hold the size of the message */
     msg->msg_type = MCA_OOB_TCP_POSTED;
