@@ -9,6 +9,8 @@ noinst_LTLIBRARIES = libmca_llm_base.la
 # For VPATH builds, have to specify where static-modules.h will be found
 
 AM_CPPFLAGS = -I$(top_builddir)/src
+AM_LFLAGS = -Pmca_llm_base_yy
+LEX_OUTPUT_ROOT = lex.mca_llm_base_yy
 
 # Source code files
 

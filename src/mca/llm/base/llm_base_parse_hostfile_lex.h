@@ -5,14 +5,35 @@
 #ifndef MCA_LLM_BASE_PARSE_HOSTFILE_LEX_H_
 #define MCA_LLM_BASE_PARSE_HOSTFILE_LEX_H_
 
+#include "ompi_config.h"
+
+#ifdef malloc
+#undef malloc
+#endif
+#ifdef realloc
+#undef realloc
+#endif
+#ifdef free
+#undef free
+#endif
+
 #include <stdio.h>
 
-extern int yylex(void);
+extern int mca_llm_base_yylex(void);
 
-extern FILE *yyin;
-extern int mca_llm_base_parse_done;
+extern FILE *mca_llm_base_yyin;
+extern bool mca_llm_base_parse_done;
 extern char *mca_llm_base_string;
-extern int yynewlines;
+extern int mca_llm_base_yynewlines;
+
+/*
+ * Make lex-generated files not issue compiler warnings
+ */
+#define YY_STACK_USED 0
+#define YY_ALWAYS_INTERACTIVE 0
+#define YY_NEVER_INTERACTIVE 0
+#define YY_MAIN 0
+#define YY_NO_UNPUT 1
 
 #define MCA_LLM_BASE_DONE           0
 #define MCA_LLM_BASE_ERROR          1
