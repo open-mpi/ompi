@@ -72,7 +72,8 @@ static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
     if(header->hdr_frag_length > 0) {
         /* initialize receive convertor */
         ompi_proc_t *proc =
-            ompi_comm_peer_lookup(request->req_base.req_comm, request->req_base.req_peer);
+            ompi_comm_peer_lookup(request->req_base.req_comm, 
+                                  request->req_base.req_ompi.req_status.MPI_SOURCE);
         ompi_convertor_copy(proc->proc_convertor, &frag->frag_recv.frag_base.frag_convertor);
         ompi_convertor_init_for_recv(
             &frag->frag_recv.frag_base.frag_convertor,  /* convertor */
@@ -120,7 +121,8 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
                  */ 
                 struct iovec iov; 
                 ompi_proc_t *proc = 
-                        ompi_comm_peer_lookup(request->req_base.req_comm, request->req_base.req_peer); 
+                        ompi_comm_peer_lookup(request->req_base.req_comm, 
+                                              request->req_base.req_ompi.req_status.MPI_SOURCE); 
                 ompi_convertor_copy(proc->proc_convertor, &frag->frag_recv.frag_base.frag_convertor); 
                 ompi_convertor_init_for_recv( 
                         &frag->frag_recv.frag_base.frag_convertor,  /* convertor */ 

@@ -2,15 +2,6 @@
 #include "request/grequest.h"
 
 
-static int ompi_grequest_query(ompi_request_t* req, ompi_status_public_t* status)
-{
-    int rc = OMPI_SUCCESS;
-    ompi_grequest_t* greq = (ompi_grequest_t*)req;
-    if(greq->greq_query != NULL)
-        rc = greq->greq_query(greq->greq_state, status);
-    return rc;
-}
-
 static int ompi_grequest_free(ompi_request_t** req)
 {
     int rc = OMPI_SUCCESS;
@@ -36,7 +27,6 @@ static int ompi_grequest_cancel(ompi_request_t* req, int flag)
 static void ompi_grequest_construct(ompi_grequest_t* greq)
 {
     OMPI_REQUEST_INIT(&greq->greq_base);
-    greq->greq_base.req_query = ompi_grequest_query;
     greq->greq_base.req_fini = ompi_grequest_free;
     greq->greq_base.req_free = ompi_grequest_free;
     greq->greq_base.req_cancel = ompi_grequest_cancel;
@@ -75,5 +65,18 @@ int ompi_grequest_start(
     greq->greq_cancel = gcancel_fn; 
     *request = &greq->greq_base;
     return OMPI_SUCCESS;
+}
+
+int ompi_grequest_complete(ompi_grequest_t* grequest)
+{
+    int rc = OMPI_SUCCESS;
+    OMPI_THREAD_LOCK(&ompi_request_lock);
+    grequest->greq_base.req_complete = true;
+    if(grequest->greq_query != NULL)
+        rc = grequest->greq_query(grequest->greq_state, &grequest->greq_base.req_status);
+    if(ompi_request_waiting)
+        ompi_condition_signal(&ompi_request_cond);
+    OMPI_THREAD_UNLOCK(&ompi_request_lock);
+    return rc;
 }
 

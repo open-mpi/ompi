@@ -21,12 +21,21 @@ struct ompi_grequest_t {
 typedef struct ompi_grequest_t ompi_grequest_t;
 
 
+/*
+ * Start a generalized request.
+ */
+
 int ompi_grequest_start(
     MPI_Grequest_query_function *gquery,
     MPI_Grequest_free_function *gfree,
     MPI_Grequest_cancel_function *gcancel,
     void* gstate,
     ompi_request_t** request);
+
+/*
+ * Mark a generalized request as complete.
+ */
+int ompi_grequest_complete(ompi_grequest_t*);
 
 
 #endif

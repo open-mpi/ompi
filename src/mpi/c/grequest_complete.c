@@ -7,7 +7,7 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
-#include "request/request.h"
+#include "request/grequest.h"
 #include "errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -32,7 +32,14 @@ int MPI_Grequest_complete(MPI_Request request)
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
-    rc = ompi_request_complete(request);
+    switch(request->req_type) {
+        OMPI_REQUEST_GEN:
+            rc = ompi_grequest_complete((ompi_grequest_t*)request);
+            break;
+        default:
+            rc = MPI_ERR_REQUEST;
+            break;
+    }
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
 }
 

@@ -51,15 +51,6 @@ typedef enum {
 
 struct ompi_request_t;
 
-
-/*
- * Optional function that is called on request completion to update
- * the request status.
- */
-typedef int (*ompi_request_query_fn_t)(
-    struct ompi_request_t* request, 
-    ompi_status_public_t* status);
-
 /*
  * Required function to free the request and any associated resources.
  */
@@ -81,7 +72,6 @@ struct ompi_request_t {
     volatile bool req_complete;                /**< Flag indicating wether request has completed */
     volatile ompi_request_state_t req_state;   /**< enum indicate state of the request */
     int req_f_to_c_index;                      /**< Index in Fortran <-> C translation array */
-    ompi_request_query_fn_t req_query;         /**< Optional query function to retrieve status */
     ompi_request_free_fn_t req_fini;           /**< Called by test/wait */
     ompi_request_free_fn_t req_free;           /**< Called by free */
     ompi_request_cancel_fn_t req_cancel;       /**< Optional function to cancel the request */

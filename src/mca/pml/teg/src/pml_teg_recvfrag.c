@@ -44,8 +44,8 @@ bool mca_pml_teg_recv_frag_match(
          * Initialize request status.
          */
         request->req_bytes_packed = header->hdr_msg_length;
-        request->req_base.req_peer = header->hdr_src;
-        request->req_base.req_tag = header->hdr_tag;
+        request->req_base.req_ompi.req_status.MPI_SOURCE = header->hdr_src;
+        request->req_base.req_ompi.req_status.MPI_TAG = header->hdr_tag;
 
         /*
          * If probe - signal request is complete - but don't notify PTL
