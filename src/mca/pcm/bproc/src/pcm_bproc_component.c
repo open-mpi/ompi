@@ -112,6 +112,10 @@ mca_pcm_bproc_init(int *priority,
       return NULL;
     }
 
+    /* ok, now let's try to fire up */
+    me = malloc(sizeof(mca_pcm_bproc_module_t));
+    if (NULL == me) return NULL;
+
     ret = mca_llm_base_select("rsh", &(me->llm), have_threads);
 
     if (OMPI_SUCCESS != ret) {
@@ -137,6 +141,7 @@ mca_pcm_bproc_init(int *priority,
     }
 
     me->constraints = constraints;
+    me->jobs = mca_pcm_base_job_list_init();
 
     /*
      * fill in the function pointers
