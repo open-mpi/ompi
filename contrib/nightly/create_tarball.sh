@@ -195,7 +195,7 @@ rm -rf "$root"
 
 # send success mail
 if test "$want_success_mail" = "1"; then
-    Mail -s "Success" "$email" <<EOF
+    Mail -s "Success (created r$version)" "$email" <<EOF
 Creating nightly snapshot SVN tarball was a success.
 
 Snapshot:   $version
