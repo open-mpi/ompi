@@ -79,11 +79,9 @@ typedef enum {
                               * message w/out removing the message from the queue.  */
 #define MCA_OOB_TRUNC 0x02   /**< flag to oob_recv to return the actual size of the message even if 
                               * the receive buffer is smaller than the number of bytes available */
-#if 0 /* NOT YET IMPLEMENTED */
 #define MCA_OOB_ALLOC 0x04   /**< flag to oob_recv to request the oob to allocate a buffer of the appropriate
                               * size for the receive and return the allocated buffer and size in the first
                               * element of the iovec array. */
-#endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

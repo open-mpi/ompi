@@ -30,22 +30,36 @@ int mca_oob_tcp_recv(
     msg = mca_oob_tcp_msg_match_recv(peer, tag);
     if(NULL != msg) {
 
-        /* if we are just doing peek, return bytes without dequeing message */
         if(msg->msg_rc < 0)  {
             OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
             return msg->msg_rc;
         }
+ 
+        /* if we are returning an allocated buffer - just take it from the message */
+        if(flags & MCA_OOB_ALLOC) {
 
-        rc = mca_oob_tcp_msg_copy(msg, iov, count);
-        if(rc >= 0 && MCA_OOB_TRUNC & flags) {
-            rc = 0;
-            for(i=0; i<msg->msg_rwcnt; i++)
-               rc += msg->msg_rwiov[i].iov_len;
+            if(NULL == iov || 0 == count) {
+                return OMPI_ERR_BAD_PARAM;
+            }
+            iov[0].iov_base = msg->msg_rwiov->iov_base;
+            iov[0].iov_len = msg->msg_rwiov->iov_len;
+            msg->msg_rwbuf = NULL;
+ 
+        } else {
+
+            /* if we are just doing peek, return bytes without dequeing message */
+            rc = mca_oob_tcp_msg_copy(msg, iov, count);
+            if(rc >= 0 && MCA_OOB_TRUNC & flags) {
+                rc = 0;
+                for(i=0; i<msg->msg_rwcnt; i++)
+                   rc += msg->msg_rwiov[i].iov_len;
+            }
+            if(MCA_OOB_PEEK & flags) {
+                OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+                return rc;
+            }
         }
-        if(MCA_OOB_PEEK & flags) {
-            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
-            return rc;
-        }
+
         if(NULL != tagp) {
             *tagp = ntohl(msg->msg_hdr.msg_tag);
         }

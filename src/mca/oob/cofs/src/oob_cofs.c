@@ -231,8 +231,22 @@ do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, struct iovec* iov,
     return OMPI_ERROR;
   }
 
+  if(flags & MCA_OOB_ALLOC) {
+      if(NULL == iov || 0 == count) {
+          return OMPI_ERR_BAD_PARAM;
+      }
+      iov->iov_base = malloc(size);
+      if(NULL == iov->iov_base) {
+          return OMPI_ERR_OUT_OF_RESOURCE;
+      }
+      iov->iov_len = size;
+      count = 1;
+  }
+
   if(iov != NULL && count > 0) {
       rlen = readv(fd, iov, count);
+  } else {
+      rlen = 0;
   }
   close(fd);
   return (flags & MCA_OOB_TRUNC) ? size : rlen;
