@@ -65,7 +65,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
 
     LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
     AC_CHECK_LIB([vapi], [VAPI_open_hca], [],
-        AC_MSG_ERROR([*** Cannot find libvapi]), [-lmtl_common -lmpga])
+        AC_MSG_ERROR([*** Cannot find libvapi]), [-lmtl_common -lmpga -lmosal])
     LIBS="$LIBS -lmtl_common -lmpga"
 
     #
@@ -74,5 +74,5 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     #
 
     WRAPPER_EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
-    WRAPPER_EXTRA_LIBS="-lvapi -lmtl_common -lmpga"
+    WRAPPER_EXTRA_LIBS="-lvapi -lmtl_common -lmpga -lmosal"
 ])dnl
