@@ -27,7 +27,7 @@
 /*
  * The following file was created by configure.  It contains extern
  * statements and the definition of an array of pointers to each
- * component's public mca_base_component_t struct.
+ * component's public orte_base_component_t struct.
  */
 
 #include "mca/iof/base/static-components.h"
@@ -37,41 +37,51 @@
  * Global variables
  */
 
-mca_iof_base_t mca_iof_base;
+orte_iof_base_t orte_iof_base;
 
 
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int mca_iof_base_open(void)
+int orte_iof_base_open(void)
 {
     int id;
     int int_value;
     char* str_value;
 
     /* Initialize globals */
-    OBJ_CONSTRUCT(&mca_iof_base.iof_components_opened, ompi_list_t);
-    OBJ_CONSTRUCT(&mca_iof_base.iof_endpoints, ompi_list_t);
-    OBJ_CONSTRUCT(&mca_iof_base.iof_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_iof_base.iof_condition, ompi_condition_t);
-    OBJ_CONSTRUCT(&mca_iof_base.iof_fragments, ompi_free_list_t);
-    mca_iof_base.iof_waiting = 0;
+    OBJ_CONSTRUCT(&orte_iof_base.iof_components_opened, ompi_list_t);
+    OBJ_CONSTRUCT(&orte_iof_base.iof_endpoints, ompi_list_t);
+    OBJ_CONSTRUCT(&orte_iof_base.iof_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&orte_iof_base.iof_condition, ompi_condition_t);
+    OBJ_CONSTRUCT(&orte_iof_base.iof_fragments, ompi_free_list_t);
+    orte_iof_base.iof_waiting = 0;
 
     /* lookup common parameters */
-    id = mca_base_param_register_int("iof","base","window_size",NULL,MCA_IOF_BASE_MSG_MAX << 1);
+    id = mca_base_param_register_int("iof","base","window_size",NULL,ORTE_IOF_BASE_MSG_MAX << 1);
     mca_base_param_lookup_int(id,&int_value);
-    mca_iof_base.iof_window_size = int_value;
+    orte_iof_base.iof_window_size = int_value;
 
     id = mca_base_param_register_string("iof","base","service",NULL,"0.0.0");
     mca_base_param_lookup_string(id,&str_value);
-    mca_iof_base.iof_service = ompi_name_server.convert_string_to_process_name(str_value);
+    orte_ns.convert_string_to_process_name(&orte_iof_base.iof_service, str_value);
  
+    /* Debugging / verbose output */
+
+    id = mca_base_param_register_int("iof", "base", "verbose", NULL, 0);
+    mca_base_param_lookup_int(id, &int_value);
+    if (int_value != 0) {
+        orte_iof_base.iof_output = ompi_output_open(NULL);
+    } else {
+        orte_iof_base.iof_output = -1;
+    }
+
     /* initialize free list */
     ompi_free_list_init(
-        &mca_iof_base.iof_fragments,
-        sizeof(mca_iof_base_frag_t),
-        OBJ_CLASS(mca_iof_base_frag_t),
+        &orte_iof_base.iof_fragments,
+        sizeof(orte_iof_base_frag_t),
+        OBJ_CLASS(orte_iof_base_frag_t),
         0,   /* number to initially allocate */
         -1,  /* maximum elements to allocate */
         32,  /* number per allocation */
@@ -81,7 +91,7 @@ int mca_iof_base_open(void)
     /* Open up all available components */
     if (OMPI_SUCCESS != 
         mca_base_components_open("iof", 0, mca_iof_base_static_components, 
-                                 &mca_iof_base.iof_components_opened)) {
+                                 &orte_iof_base.iof_components_opened)) {
       return OMPI_ERROR;
     }
   

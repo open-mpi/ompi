@@ -20,12 +20,13 @@
 /*
  * includes
  */
-#include "ompi_config.h"
+#include "orte_config.h"
+#include "include/orte_constants.h"
+#include "include/orte_types.h"
 
-#include "include/constants.h"
 #include "class/ompi_list.h"
 #include "mca/mca.h"
-
+/* #include "mca/ns/ns_types.h" */
 #include "mca/soh/soh.h"
 
 
@@ -36,21 +37,46 @@
 extern "C" {
 #endif
 
-OMPI_DECLSPEC    int mca_soh_base_open(void);
-OMPI_DECLSPEC    int mca_soh_base_select(bool *allow_multi_user_threads,
-			                            bool *have_hidden_threads);
-OMPI_DECLSPEC    int mca_soh_base_close(void);
-OMPI_DECLSPEC    int mca_soh_base_update_cell_soh_not_available(mca_ns_base_cellid_t cellid);
+OMPI_DECLSPEC    int orte_soh_base_open(void);
+OMPI_DECLSPEC    int orte_soh_base_select(void);
+OMPI_DECLSPEC    int orte_soh_base_close(void);
+
+int orte_soh_base_get_proc_soh(orte_proc_state_t *state,
+                               int *status,
+                               orte_process_name_t *proc);
+                                                              
+int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
+                               orte_proc_state_t state,
+                               int status);
+
+int orte_soh_base_get_node_soh_not_available(orte_node_state_t *state,
+                                             orte_cellid_t cell,
+                                             char *nodename);
+
+int orte_soh_base_set_node_soh_not_available(orte_cellid_t cell,
+                                             char *nodename,
+                                             orte_node_state_t state);
+
+int orte_soh_base_begin_monitoring(orte_jobid_t job);
+
+
+int orte_soh_base_module_finalize_not_available (void);
 
 /*
  * globals that might be needed
  */
 
-OMPI_DECLSPEC extern int mca_soh_base_output;
-OMPI_DECLSPEC extern mca_soh_base_module_t ompi_soh_monitor;  /* holds selected module's function pointers */
-OMPI_DECLSPEC extern bool mca_soh_base_selected;
-OMPI_DECLSPEC extern ompi_list_t mca_soh_base_components_available;
-OMPI_DECLSPEC extern mca_soh_base_component_t mca_soh_base_selected_component;
+OMPI_DECLSPEC extern int orte_soh_base_output;
+OMPI_DECLSPEC extern orte_soh_base_module_t orte_soh;  /* holds selected module's function pointers */
+OMPI_DECLSPEC extern bool orte_soh_base_selected;
+
+typedef struct orte_soh_base_t {
+    int soh_output;
+    ompi_list_t soh_components;
+} orte_soh_base_t;
+
+OMPI_DECLSPEC extern orte_soh_base_t orte_soh_base;
+
 
 /*
  * external API functions will be documented in the mca/soh/soh.h file

@@ -19,7 +19,9 @@ DIST_SUBDIRS = base $(MCA_ns_ALL_SUBDIRS)
 
 # Source code files
 
-headers = ns.h
+headers = \
+	ns_types.h \
+	ns.h
 
 # Conditionally install the header files
 

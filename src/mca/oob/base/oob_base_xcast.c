@@ -19,9 +19,11 @@
 #include "util/proc_info.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
-#include "mca/pcmclient/pcmclient.h"
-#include "mca/pcmclient/base/base.h"
-#include "mca/ns/base/base.h"
+#include "mca/ns/ns.h"
+#include "mca/gpr/gpr.h"
+#include "mca/errmgr/errmgr.h"
+#include "mca/soh/soh.h"
+#include "runtime/runtime.h"
 
 
 /**
@@ -37,34 +39,47 @@
  */
                                                                                                   
 int mca_oob_xcast(
-    ompi_process_name_t* root,
-    ompi_list_t* peers,
-    ompi_buffer_t buffer,
+    orte_process_name_t* root,
+    orte_process_name_t* peers,
+    size_t num_peers,
+    orte_buffer_t* buffer,
     mca_oob_callback_packed_fn_t cbfunc)
 {
-    ompi_name_server_namelist_t *ptr;
+    size_t i;
     int rc;
     int tag = MCA_OOB_TAG_XCAST;
-    ompi_buffer_t rbuf;
-        
+    int cmpval;
+    int status;
+    orte_proc_state_t state;
+
     /* check to see if I am the root process name */
-    if(NULL != root &&
-       0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, root, ompi_rte_get_self())) {
-        for (ptr = (ompi_name_server_namelist_t*)ompi_list_get_first(peers);
-	     ptr != (ompi_name_server_namelist_t*)ompi_list_get_end(peers);
-	     ptr = (ompi_name_server_namelist_t*)ompi_list_get_next(ptr)) {
-            rc = mca_oob_send_packed(ptr->name, buffer, tag, 0);
-            if(rc < 0) {
+    cmpval = orte_ns.compare(ORTE_NS_CMP_ALL, root, orte_process_info.my_name);
+    if(NULL != root && 0 == cmpval) {
+        for(i=0; i<num_peers; i++) {
+            /* check status of peer to ensure they are alive */
+            if (ORTE_SUCCESS != (rc = orte_soh.get_proc_soh(&state, &status, peers+i))) {
+                ORTE_ERROR_LOG(rc);
                 return rc;
+            }
+            if (state != ORTE_PROC_STATE_TERMINATED) {
+                rc = mca_oob_send_packed(peers+i, buffer, tag, 0);
+                if (rc < 0) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
             }
         }
     } else {
-        rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, &tag);
+        orte_buffer_t rbuf;
+        OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
+        rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, tag);
         if(rc < 0) {
+            OBJ_DESTRUCT(&rbuf);
             return rc;
         }
         if(cbfunc != NULL)
-            cbfunc(rc, root, rbuf, tag, NULL);
+            cbfunc(rc, root, &rbuf, tag, NULL);
+        OBJ_DESTRUCT(&rbuf);
     }
     return OMPI_SUCCESS;
 }

@@ -12,26 +12,27 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
+#include "include/orte_constants.h"
 
 #include "mca/gpr/base/base.h"
 
 
-int mca_gpr_base_close(void)
+int orte_gpr_base_close(void)
 {
   /* If we have a selected component and module, then finalize it */
 
-  if (mca_gpr_base_selected) {
-    mca_gpr_base_selected_component.gpr_finalize();
+  if (orte_gpr_base_selected) {
+    orte_gpr_base_selected_component.gpr_finalize();
   }
 
   /* Close all remaining available components (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
-  mca_base_components_close(mca_gpr_base_output, 
-                         &mca_gpr_base_components_available, NULL);
+  mca_base_components_close(orte_gpr_base_output, 
+                         &orte_gpr_base_components_available, NULL);
 
   /* All done */
 
-  return OMPI_SUCCESS;
+  return ORTE_SUCCESS;
 }

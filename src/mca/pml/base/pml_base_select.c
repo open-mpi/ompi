@@ -105,7 +105,7 @@ int mca_pml_base_select(mca_pml_base_module_t *selected,
 
   if (NULL == best_component) {
     /* JMS Replace with show_help */
-    ompi_abort(1, "No pml component available.  This shouldn't happen.");
+    orte_abort(1, "No pml component available.  This shouldn't happen.");
   } 
 
   /* Finalize all non-selected components */
@@ -150,6 +150,9 @@ int mca_pml_base_select(mca_pml_base_module_t *selected,
   ompi_output_verbose(10, mca_pml_base_output, 
                      "select: component %s selected",
                      component->pmlm_version.mca_component_name);
+
+  /* register the winner's callback */
+  ompi_progress_register(mca_pml.pml_progress);
 
   /* All done */
 

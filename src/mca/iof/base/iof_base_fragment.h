@@ -9,50 +9,48 @@
 #include "mca/iof/base/base.h"
 #include "mca/iof/base/iof_base_header.h"
 
-#ifdef HAVE_SYS_UIO_H
-#include <sys/uio.h>
-#endif
 
 /**
- *
+ *  Fragment used to hold message header/data.
  */
 
-struct mca_iof_base_frag_t {
+struct orte_iof_base_frag_t {
     ompi_list_item_t super;
-    mca_iof_base_header_t frag_hdr;
-    ompi_process_name_t frag_src;
-    unsigned char frag_data[MCA_IOF_BASE_MSG_MAX];
+    orte_iof_base_header_t frag_hdr;
+    orte_process_name_t frag_src;
+    unsigned char frag_data[ORTE_IOF_BASE_MSG_MAX];
     unsigned char* frag_ptr;
     size_t frag_len;
     struct iovec frag_iov[2];
-    struct mca_iof_base_endpoint_t* frag_owner;
+    struct orte_iof_base_endpoint_t* frag_owner;
 };
-typedef struct mca_iof_base_frag_t mca_iof_base_frag_t;
+typedef struct orte_iof_base_frag_t orte_iof_base_frag_t;
 
-OBJ_CLASS_DECLARATION(mca_iof_base_frag_t);
+OBJ_CLASS_DECLARATION(orte_iof_base_frag_t);
 
 
 /**
- *
+ *  Free-list allocation of fragments.
  */
 
-#define MCA_IOF_BASE_FRAG_ALLOC(frag,rc) { \
+#define ORTE_IOF_BASE_FRAG_ALLOC(frag,rc) { \
     ompi_list_item_t* item; \
-    OMPI_FREE_LIST_GET(&mca_iof_base.iof_fragments, item,rc); \
-    if((frag = (mca_iof_base_frag_t*)item) == NULL) { \
-        ompi_output(0, "MCA_IOF_BASE_FRAG_ALLOC failed with status=%d\n", rc); \
+    OMPI_FREE_LIST_GET(&orte_iof_base.iof_fragments, item,rc); \
+    if((frag = (orte_iof_base_frag_t*)item) == NULL) { \
+        ompi_output(0, "ORTE_IOF_BASE_FRAG_ALLOC failed with status=%d\n", rc); \
     } \
 }
 
-#define MCA_IOF_BASE_FRAG_RETURN(frag) \
-    OMPI_FREE_LIST_RETURN(&mca_iof_base.iof_fragments, (ompi_list_item_t*)frag)
+#define ORTE_IOF_BASE_FRAG_RETURN(frag) \
+    OMPI_FREE_LIST_RETURN(&orte_iof_base.iof_fragments, (ompi_list_item_t*)frag)
 
 
 /**
  * Send an acknowledgment to the peer that this fragment has been received.
  */
 
-int mca_iof_base_frag_ack(mca_iof_base_frag_t*);
+#define orte_iof_base_frag_ack(frag) _orte_iof_base_frag_ack(frag,__FILE__,__LINE__)
+int _orte_iof_base_frag_ack(orte_iof_base_frag_t*, const char*, int);
 
 
 #endif

@@ -26,75 +26,68 @@
  * Function for selecting one component from all those that are
  * available.
  */
-int mca_soh_base_select(bool *allow_multi_user_threads, 
-                       bool *have_hidden_threads)
+int orte_soh_base_select(void)
 {
   ompi_list_item_t *item;
   mca_base_component_list_item_t *cli;
-  mca_soh_base_component_t *component, *best_component = NULL;
-  mca_soh_base_module_t *module, *best_module = NULL;
-  bool multi, hidden;
+  orte_soh_base_component_t *component, *best_component = NULL;
+  orte_soh_base_module_t *module, *best_module = NULL;
   int priority, best_priority = -1;
 
   /* Iterate through all the available components */
 
-  for (item = ompi_list_get_first(&mca_soh_base_components_available);
-       item != ompi_list_get_end(&mca_soh_base_components_available);
+  for (item = ompi_list_get_first(&orte_soh_base.soh_components);
+       item != ompi_list_get_end(&orte_soh_base.soh_components);
        item = ompi_list_get_next(item)) {
     cli = (mca_base_component_list_item_t *) item;
-    component = (mca_soh_base_component_t *) cli->cli_component;
+    component = (orte_soh_base_component_t *) cli->cli_component;
 
     /* Call the component's init function and see if it wants to be
        selected */
 
-    module = component->soh_init(&multi, &hidden, &priority);
+    module = component->soh_init(&priority);
 
     /* If we got a non-NULL module back, then the component wants to
        be selected.  So save its multi/hidden values and save the
        module with the highest priority */
 
     if (NULL != module) {
-      /* If this is the best one, save it */
+		continue;
+	}
 
-      if (priority > best_priority) {
+    /* If this is the best one, save it */
 
-        /* If there was a previous best one, finalize */
+    if (priority > best_priority) {
 
-        if (NULL != best_component) {
-          best_component->soh_finalize();
-        }
+    	/* If there was a previous best one, finalize */
 
-        /* Save the new best one */
+	   if (NULL != best_module) {
+		  best_module->finalize();
+	   }
 
-        best_module = module;
-        best_component = component;
-        *allow_multi_user_threads = multi;
-        *have_hidden_threads = hidden;
+	   /* Save the new best one */
 
-	/* update the best priority */
-	best_priority = priority;
-      } 
+	   best_module = module;
+	   best_component = component;
 
-      /* If it's not the best one, finalize it */
+	   /* update the best priority */
+	   best_priority = priority;
 
-      else {
-        component->soh_finalize();
-      }
-    }
-  }
+	} /* if best by priority */ 
+
+    /* If it's not the best one, finalize it */
+
+/*     else { */
+/*         component->soh_finalize(); */
+/*     }  */
+
+  } /* for each possible component */
+
 
   /* If we didn't find one to select, barf */
-
-  if (NULL == best_component) {
-    return OMPI_ERROR;
+  if (NULL != best_module) {
+      orte_soh = *best_module;
   }
-
-  /* We have happiness -- save the component and module for later
-     usage */
-
-  ompi_soh_monitor = *best_module;
-  mca_soh_base_selected_component = *best_component;
-  mca_soh_base_selected = true;
 
   /* all done */
 

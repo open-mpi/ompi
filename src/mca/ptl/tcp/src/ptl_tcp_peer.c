@@ -36,7 +36,7 @@
 
 #include "include/types.h"
 #include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/ns/base/base.h"
+#include "mca/ns/ns.h"
 #include "mca/oob/base/base.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
@@ -285,18 +285,20 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
 {
     mca_ptl_tcp_addr_t* ptl_addr;
     mca_ptl_tcp_proc_t* this_proc = mca_ptl_tcp_proc_local();
-    ompi_ns_cmp_bitmask_t mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
+    orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
+    int cmpval;
 
     OMPI_THREAD_LOCK(&ptl_peer->peer_recv_lock);
     OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
     if((ptl_addr = ptl_peer->peer_addr) != NULL  &&
         ptl_addr->addr_inet.s_addr == addr->sin_addr.s_addr) {
         mca_ptl_tcp_proc_t *peer_proc = ptl_peer->peer_proc;
+        cmpval = orte_ns.compare(mask, 
+                                 &peer_proc->proc_ompi->proc_name,
+                                 &this_proc->proc_ompi->proc_name);
         if((ptl_peer->peer_sd < 0) ||
            (ptl_peer->peer_state != MCA_PTL_TCP_CONNECTED &&
-            ompi_name_server.compare(mask,
-                                     &peer_proc->proc_ompi->proc_name,
-                                     &this_proc->proc_ompi->proc_name) < 0)) {
+            cmpval < 0)) {
             mca_ptl_tcp_peer_close(ptl_peer);
             ptl_peer->peer_sd = sd;
             if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) != OMPI_SUCCESS) {
@@ -414,15 +416,15 @@ static int mca_ptl_tcp_peer_recv_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
 
 static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 {
-    ompi_process_name_t guid;
+    orte_process_name_t guid;
     mca_ptl_tcp_proc_t* ptl_proc = ptl_peer->peer_proc;
 
-    if((mca_ptl_tcp_peer_recv_blocking(ptl_peer, &guid, sizeof(ompi_process_name_t))) != sizeof(ompi_process_name_t)) {
+    if((mca_ptl_tcp_peer_recv_blocking(ptl_peer, &guid, sizeof(orte_process_name_t))) != sizeof(orte_process_name_t)) {
         return OMPI_ERR_UNREACH;
     }
 
     /* compare this to the expected values */
-    if(memcmp(&ptl_proc->proc_name, &guid, sizeof(ompi_process_name_t)) != 0) {
+    if(memcmp(&ptl_proc->proc_name, &guid, sizeof(orte_process_name_t)) != 0) {
         ompi_output(0, "mca_ptl_tcp_peer_connect: received unexpected process identifier");
         mca_ptl_tcp_peer_close(ptl_peer);
         return OMPI_ERR_UNREACH;

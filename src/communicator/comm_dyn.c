@@ -20,6 +20,7 @@
 #endif
 #include "mpi.h"
 
+#include "dps/dps.h"
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"
 #include "errhandler/errhandler.h"
@@ -29,36 +30,36 @@
 #include "threads/mutex.h"
 #include "util/proc_info.h"
 #include "util/bit_ops.h"
-#include "util/bufpack.h"
 #include "util/argv.h"
 #include "include/constants.h"
-#include "mca/pcm/base/base.h"
 #include "mca/pml/pml.h"
-#include "mca/ns/base/base.h"
-#include "mca/gpr/base/base.h"
+#include "mca/ns/ns.h"
+#include "mca/gpr/gpr.h"
+#include "mca/oob/oob_types.h"
 
 #include "mca/pml/pml.h"
-#include "mca/oob/base/base.h"
+#include "mca/rml/rml.h"
 
 #include "runtime/runtime.h"
 #include "util/printf.h"
 extern char **environ;
 
 int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
-                               ompi_process_name_t *port, int send_first,
-                               ompi_communicator_t **newcomm, int tag )
+                               orte_process_name_t *port, int send_first,
+                               ompi_communicator_t **newcomm, orte_rml_tag_t tag )
 {
     int size, rsize, rank, rc;
-    int namebuflen, rnamebuflen;
+    size_t num_vals;
+    size_t namebuflen, rnamebuflen;
     void *namebuf=NULL, *rnamebuf=NULL;
 
-    ompi_buffer_t sbuf;
-    ompi_buffer_t rbuf;
+    orte_buffer_t *sbuf;
+    orte_buffer_t *rbuf;
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t **rprocs=NULL;
     ompi_group_t *group=comm->c_local_group;
-    ompi_process_name_t *rport=NULL;
-    ompi_buffer_t nbuf, nrbuf;
+    orte_process_name_t *rport=NULL;
+    orte_buffer_t *nbuf, *nrbuf;
 
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
@@ -68,38 +69,58 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
            information of the remote process. Therefore, we have to
            exchange that.
         */
-	if ( OMPI_COMM_JOIN_TAG != tag ) {
-	    rport = ompi_comm_get_rport (port,send_first,
+	   if ( OMPI_COMM_JOIN_TAG != (int)tag ) {
+	       rport = ompi_comm_get_rport (port,send_first,
 					 group->grp_proc_pointers[rank], tag);
-	}
-	else {
-	    rport = port;
-	}
+	   }
+	   else {
+	       rport = port;
+	   }
 	    
 
         /* Exchange number of processes and msg length on both sides */
-	ompi_buffer_init (&nbuf, size*sizeof(ompi_process_name_t));
+        nbuf = OBJ_NEW(orte_buffer_t);
+        if (NULL == nbuf) {
+            return ORTE_ERROR;
+        }
         ompi_proc_get_namebuf (group->grp_proc_pointers, size, nbuf);
-	ompi_buffer_get(nbuf, &namebuf, &namebuflen);
+	   if (ORTE_SUCCESS != (rc = orte_dps.unload(nbuf, &namebuf, (size_t*)&namebuflen))) {
+            goto exit;
+        }
 
-        ompi_buffer_init(&sbuf, 64);
-        ompi_pack(sbuf, &size, 1, OMPI_INT32);
-        ompi_pack(sbuf, &namebuflen, 1, OMPI_INT32);
+        sbuf = OBJ_NEW(orte_buffer_t);
+        rbuf = OBJ_NEW(orte_buffer_t);
+        if (NULL == sbuf || NULL == rbuf) {
+            rc = ORTE_ERROR;
+            goto exit;
+        }
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(sbuf, &size, 1, ORTE_INT32))) {
+            goto exit;
+        }
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(sbuf, &namebuflen, 1, ORTE_SIZE))) {
+            goto exit;
+        }
 
         if ( send_first ) {
-            rc = mca_oob_send_packed(rport, sbuf, tag, 0);
-            rc = mca_oob_recv_packed (rport, &rbuf, &tag);
+            rc = orte_rml.send_buffer(rport, sbuf, tag, 0);
+            rc = orte_rml.recv_buffer(rport, rbuf, tag);
         }
         else {
-            rc = mca_oob_recv_packed(rport, &rbuf, &tag);
-            rc = mca_oob_send_packed(rport, sbuf, tag, 0);
+            rc = orte_rml.recv_buffer(rport, rbuf, tag);
+            rc = orte_rml.send_buffer(rport, sbuf, tag, 0);
         }
 
-        ompi_unpack(rbuf, &rsize, 1, OMPI_INT32);
-        ompi_unpack(rbuf, &rnamebuflen, 1, OMPI_INT32);
+        num_vals = 1;
+        if (ORTE_SUCCESS != (rc = orte_dps.unpack(rbuf, &rsize, &num_vals, ORTE_INT32))) {
+            goto exit;
+        }
+        num_vals = 1;
+        if (ORTE_SUCCESS != (rc = orte_dps.unpack(rbuf, &rnamebuflen, &num_vals, ORTE_SIZE))) {
+            goto exit;
+        }
 
-        ompi_buffer_free(sbuf);
-        ompi_buffer_free(rbuf);
+        OBJ_RELEASE(sbuf);
+        OBJ_RELEASE(rbuf);
     }
 
     /* bcast the information to all processes in the local comm */
@@ -112,27 +133,37 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         goto exit;
     }
 
+    nrbuf = OBJ_NEW(orte_buffer_t);
+    nbuf = OBJ_NEW(orte_buffer_t);
+    if (NULL == nrbuf || NULL == nbuf) {
+        rc = ORTE_ERROR;
+        goto exit;
+    }
     if ( rank == root ) {
         /* Exchange list of processes in the groups */
         
         if ( send_first ) {
-            rc = mca_oob_send_packed(rport, nbuf, tag, 0);
-            rc = mca_oob_recv_packed (rport, &nrbuf, &tag);
+            rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
+            rc = orte_rml.recv_buffer(rport, nrbuf, tag);
         }
         else {
-            rc = mca_oob_recv_packed(rport, &nrbuf, &tag);
-            rc = mca_oob_send_packed(rport, nbuf, tag, 0);
+            rc = orte_rml.recv_buffer(rport, nrbuf, tag);
+            rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
         }
-	ompi_buffer_get(nrbuf, &rnamebuf, &rnamebuflen);
+	   if (ORTE_SUCCESS != (rc = orte_dps.unload(nrbuf, &rnamebuf, &rnamebuflen))) {
+            goto exit;
+       }
     }
     else {
-	/* non root processes need to allocate the buffer manually */
-	rnamebuf = (char *) malloc(rnamebuflen);
-	if ( NULL == rnamebuf ) {
-	    rc = OMPI_ERR_OUT_OF_RESOURCE;
-	    goto exit;
-	}
-	ompi_buffer_init_preallocated(&nrbuf, rnamebuf, rnamebuflen);
+	   /* non root processes need to allocate the buffer manually */
+	   rnamebuf = (char *) malloc(rnamebuflen);
+	   if ( NULL == rnamebuf ) {
+	       rc = OMPI_ERR_OUT_OF_RESOURCE;
+	       goto exit;
+	   }
+	   if (ORTE_SUCCESS != (rc = orte_dps.load(nrbuf, rnamebuf, rnamebuflen))) {
+            goto exit;
+       }
     }
     /* bcast list of processes to all procs in local group 
        and reconstruct the data. Note that proc_get_proclist
@@ -148,9 +179,10 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         goto exit;
     }
 
-    ompi_buffer_free (nrbuf);
+    OBJ_RELEASE(nrbuf);
+    OBJ_RELEASE(nbuf);
     if ( rank == root ) {
-	ompi_buffer_free (nbuf);
+	   OBJ_RELEASE(nbuf);
     }
 
     /* allocate comm-structure */
@@ -233,31 +265,45 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
  * Therefore, the two root processes exchange this information at this point.
  *
  */
-ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_first, 
-                                          ompi_proc_t *proc, int tag)
+orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_first, 
+                                          ompi_proc_t *proc, orte_rml_tag_t tag)
 {
     int rc;
-    ompi_process_name_t *rport, tbuf;
+    size_t num_vals;
+    orte_process_name_t *rport, tbuf;
     ompi_proc_t *rproc=NULL;
     bool isnew = false;
 
+
     if ( send_first ) {
-        ompi_buffer_t sbuf;
+        orte_buffer_t *sbuf;
 
         rproc = ompi_proc_find_and_add(port, &isnew);
-        ompi_buffer_init(&sbuf, sizeof(ompi_process_name_t));
-        ompi_pack(sbuf, &(proc->proc_name), 1, OMPI_NAME);
-        rc = mca_oob_send_packed(port, sbuf, tag, 0);
-        ompi_buffer_free(sbuf);
+        sbuf = OBJ_NEW(orte_buffer_t);
+        if (NULL == sbuf) {
+            return NULL;
+        }
+        if (ORTE_SUCCESS != orte_dps.pack(sbuf, &(proc->proc_name), 1, ORTE_NAME)) {
+            return NULL;
+        }
+        rc = orte_rml.send_buffer(port, sbuf, tag, 0);
+        OBJ_RELEASE(sbuf);
 
         rport = port;
     }
     else {
-        ompi_buffer_t rbuf;
+        orte_buffer_t *rbuf;
 
-        rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, &tag);
-        ompi_unpack(rbuf, &tbuf, 1, OMPI_NAME);
-        ompi_buffer_free(rbuf);
+        rbuf = OBJ_NEW(orte_buffer_t);
+        if (NULL == rbuf) {
+            return NULL;
+        }
+        rc = orte_rml.recv_buffer(ORTE_RML_NAME_ANY, rbuf, tag);
+        num_vals = 1;
+        if (ORTE_SUCCESS != orte_dps.unpack(rbuf, &tbuf, &num_vals, ORTE_NAME)) {
+            return NULL;
+        }
+        OBJ_RELEASE(rbuf);
         rproc = ompi_proc_find_and_add(&tbuf, &isnew);
         rport = &(rproc->proc_name);
 
@@ -280,7 +326,9 @@ ompi_comm_start_processes(int count, char **array_of_commands,
                           MPI_Info *array_of_info, 
                           char *port_name)
 {
-    mca_ns_base_jobid_t new_jobid;
+#if 0
+    orte_jobid_t new_jobid;
+    int rc;
     ompi_rte_node_schedule_t *sched;
     ompi_rte_spawn_handle_t *spawn_handle;
     ompi_list_t **nodelists = NULL;
@@ -304,7 +352,9 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     */
 
     /* get the jobid for the new processes */
-    new_jobid = ompi_name_server.create_jobid();
+    if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(&new_jobid))) {
+        return rc;
+    }
 
     /* get the spawn handle to start spawning stuff */
     requires = OMPI_RTE_SPAWN_FROM_MPI | OMPI_RTE_SPAWN_HIGH_QOS;
@@ -471,7 +521,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     }
     if (NULL != spawn_handle) OBJ_RELEASE(spawn_handle); 
     OBJ_DESTRUCT(&schedlist);
-
+#endif
     return OMPI_SUCCESS;
 }
 			       
@@ -480,12 +530,13 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 /**********************************************************************/
 int ompi_comm_dyn_init (void)
 {
-    uint32_t jobid;
+    orte_jobid_t jobid;
     char *envvarname=NULL, *port_name=NULL;
     char *oob_port=NULL;
-    int tag, root=0, send_first=1;
+    int root=0, send_first=1, rc;
+    orte_rml_tag_t tag;
     ompi_communicator_t *newcomm=NULL;
-    ompi_process_name_t *port_proc_name=NULL;
+    orte_process_name_t *port_proc_name=NULL;
     ompi_group_t *group = NULL;
     ompi_errhandler_t *errhandler = NULL;
 
@@ -495,7 +546,9 @@ int ompi_comm_dyn_init (void)
        have to OBJ_RELEASE it as well.  The global
        ompi_proc_local_proc seemed to have been created for exactly
        this kind of purpose, so I took the liberty of using it. */
-    jobid = ompi_name_server.get_jobid(&(ompi_proc_local_proc->proc_name));
+    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, &(ompi_proc_local_proc->proc_name)))) {
+        return rc;
+    }
 
 
     /* check for appropriate env variable */
@@ -510,8 +563,10 @@ int ompi_comm_dyn_init (void)
 	/* split the content of the environment variable into 
 	   its pieces, which are : port_name and tag */
 	oob_port = ompi_parse_port (port_name, &tag);
-	
-	port_proc_name = ompi_name_server.convert_string_to_process_name(oob_port);
+	if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&port_proc_name, oob_port))) {
+          return rc;
+        }
+
 	ompi_comm_connect_accept (MPI_COMM_WORLD, root, port_proc_name,  
 				  send_first, &newcomm, tag );
 	/* Set the parent communicator */
@@ -703,7 +758,7 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
     int i, j, numjobids=0;
     int size, rsize;
     int found;
-    uint32_t jobids[OMPI_COMM_MAXJOBIDS], thisjobid;
+    orte_jobid_t jobids[OMPI_COMM_MAXJOBIDS], thisjobid;
     ompi_group_t *grp=NULL;
 
     /* special case for MPI_COMM_NULL */
@@ -718,7 +773,9 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
        of different jobids.  */
     grp = comm->c_local_group;
     for (i=0; i< size; i++) {
-	thisjobid = ompi_name_server.get_jobid(&(grp->grp_proc_pointers[i]->proc_name));
+	if (ORTE_SUCCESS != orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name))) {
+        return;
+    }
 	found = 0;
 	for ( j=0; j<numjobids; j++) {
 	    if ( thisjobid == jobids[j]) {
@@ -735,7 +792,9 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
        and count number of different jobids */
     grp = comm->c_remote_group;
     for (i=0; i< rsize; i++) {
-	thisjobid = ompi_name_server.get_jobid(&(grp->grp_proc_pointers[i]->proc_name));
+    if (ORTE_SUCCESS != orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name))) {
+        return;
+    }
 	found = 0;
 	for ( j=0; j<numjobids; j++) {
 	    if ( thisjobid == jobids[j]) {

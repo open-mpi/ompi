@@ -16,13 +16,15 @@
 #ifndef NS_REPLICA_H
 #define NS_REPLICA_H
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include "include/types.h"
-#include "include/constants.h"
+#include "include/orte_constants.h"
 #include "threads/mutex.h"
 #include "class/ompi_list.h"
-#include "mca/oob/oob.h"
-#include "mca/ns/ns.h"
+#include "dps/dps.h"
+#include "mca/oob/oob_types.h"
+#include "mca/ns/base/base.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -31,67 +33,80 @@ extern "C" {
  * This structure is used to create a linked list of jobid-max vpid pairs. Basically, we
  * are tracking the max used vpid for each jobid that has been created.
  */
-struct mca_ns_replica_name_tracker_t {
+struct orte_ns_replica_name_tracker_t {
     ompi_list_item_t item;  /**< Allows this item to be placed on a list */
-    mca_ns_base_jobid_t job;  /**< Job id */
-    mca_ns_base_vpid_t last_used_vpid;      /**< Tracks the vpid last given out */
+    orte_jobid_t job;  /**< Job id */
+    orte_vpid_t last_used_vpid;      /**< Tracks the vpid last given out */
 };
-typedef struct mca_ns_replica_name_tracker_t mca_ns_replica_name_tracker_t;
+typedef struct orte_ns_replica_name_tracker_t orte_ns_replica_name_tracker_t;
 
-OBJ_CLASS_DECLARATION(mca_ns_replica_name_tracker_t);
+OBJ_CLASS_DECLARATION(orte_ns_replica_name_tracker_t);
+
+struct orte_ns_replica_tagitem_t {
+    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
+    orte_rml_tag_t tag;  /**< OOB tag */
+    char *name;      /**< Name associated with tag */
+};
+typedef struct orte_ns_replica_tagitem_t orte_ns_replica_tagitem_t;
+
+OBJ_CLASS_DECLARATION(orte_ns_replica_tagitem_t);
 
 /*
  * globals needed within component
  */
-extern mca_ns_base_cellid_t mca_ns_replica_last_used_cellid;
-extern mca_ns_base_jobid_t mca_ns_replica_last_used_jobid;
-extern ompi_list_t mca_ns_replica_name_tracker;
-extern int mca_ns_replica_debug;
-extern ompi_mutex_t mca_ns_replica_mutex;
+extern orte_cellid_t orte_ns_replica_next_cellid;
+extern orte_jobid_t orte_ns_replica_next_jobid;
+extern ompi_list_t orte_ns_replica_name_tracker;
+extern orte_rml_tag_t orte_ns_replica_next_rml_tag;
+extern ompi_list_t orte_ns_replica_taglist;
+extern int orte_ns_replica_debug;
+extern ompi_mutex_t orte_ns_replica_mutex;
 
 /*
  * Module open / close
  */
-int mca_ns_replica_open(void);
-int mca_ns_replica_close(void);
+int orte_ns_replica_open(void);
+int orte_ns_replica_close(void);
 
 
 /*
  * Startup / Shutdown
  */
-mca_ns_base_module_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority);
-int mca_ns_replica_finalize(void);
+mca_ns_base_module_t* orte_ns_replica_init(int *priority);
+int orte_ns_replica_module_init(void);
+int orte_ns_replica_finalize(void);
 
 /*
  * oob interface
  */
 
-void mca_ns_replica_recv(int status, ompi_process_name_t* sender, ompi_buffer_t buffer, int tag, void* cbdata);
+void orte_ns_replica_recv(int status, orte_process_name_t* sender,
+                          orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata);
 
 /*
  * Implementation of create_cellid().
  */
-mca_ns_base_cellid_t mca_ns_replica_create_cellid(void);
+int orte_ns_replica_create_cellid(orte_cellid_t *cellid);
 
 /*
  * Implementation of create_jobid().
  */
-mca_ns_base_jobid_t mca_ns_replica_create_jobid(void);
+int orte_ns_replica_create_jobid(orte_jobid_t *jobid);
 
 
 /*
  * Implementation of reserve_range()
  */
-mca_ns_base_vpid_t mca_ns_replica_reserve_range(
-                                       mca_ns_base_jobid_t job,
-                                       mca_ns_base_vpid_t range);
+int orte_ns_replica_reserve_range(orte_jobid_t job,
+                                  orte_vpid_t range,
+                                  orte_vpid_t *startvpid);
 
 /*
- * Implementation of get_allocated_vpids()
+ * Implementation of assign rml tag
  */
-mca_ns_base_vpid_t mca_ns_replica_get_allocated_vpids(mca_ns_base_jobid_t jobid);
+int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
+                                   char *name);
 
-OMPI_COMP_EXPORT extern mca_ns_base_component_t mca_ns_replica_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

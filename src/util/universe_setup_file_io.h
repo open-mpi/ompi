@@ -16,13 +16,13 @@
  * 
  */
 
-#ifndef OMPI_UNIV_SETUP_FILE_IO_H
-#define OMPI_UNIV_SETUP_FILE_IO_H
+#ifndef ORTE_UNIV_SETUP_FILE_IO_H
+#define ORTE_UNIV_SETUP_FILE_IO_H
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
-OMPI_DECLSPEC int ompi_write_universe_setup_file(char *filename);
+OMPI_DECLSPEC int orte_write_universe_setup_file(char *filename);
 
-OMPI_DECLSPEC int ompi_read_universe_setup_file(char *filename);
+OMPI_DECLSPEC int orte_read_universe_setup_file(char *filename);
 
 #endif

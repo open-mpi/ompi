@@ -14,6 +14,7 @@
 
 #include "ompi_config.h"
 
+#include "include/constants.h"
 #include "class/ompi_list.h"
 
 /*
@@ -189,3 +190,32 @@ ompi_list_splice(ompi_list_t *thislist, ompi_list_item_t *pos,
     }
 }
 
+
+int ompi_list_sort(ompi_list_t* list, ompi_list_item_compare_fn_t compare)
+{
+    ompi_list_item_t* item;
+    ompi_list_item_t** items;
+    size_t i, index=0;
+
+    if (0 == list->ompi_list_length) {
+        return OMPI_SUCCESS;
+    }
+    items = (ompi_list_item_t**)malloc(sizeof(ompi_list_item_t*) * 
+                                       list->ompi_list_length);
+
+    if (NULL == items) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    while(NULL != (item = ompi_list_remove_first(list))) {
+        items[index++] = item;
+    }
+    
+    qsort(items, index, sizeof(ompi_list_item_t*), 
+          (int(*)(const void*,const void*))compare);
+    for (i=0; i<index; i++) {
+        ompi_list_append(list,items[i]);
+    }
+    free(items);
+    return OMPI_SUCCESS;
+}

@@ -109,6 +109,7 @@ SUBDIRS = \
         attribute \
         communicator \
         datatype \
+        dps \
         errhandler \
         event \
         file \
@@ -139,6 +140,7 @@ libmpi_la_LIBADD = \
         class/liblfc.la \
         communicator/libcommunicator.la \
         datatype/libdatatype.la \
+        dps/libdps.la \
         errhandler/liberrhandler.la \
         event/libevent.la \
         file/libfile.la \
@@ -148,23 +150,29 @@ libmpi_la_LIBADD = \
         mca/allocator/base/libmca_allocator_base.la $(MCA_allocator_STATIC_LTLIBS) \
         mca/coll/base/libmca_coll_base.la $(MCA_coll_STATIC_LTLIBS) \
         $(MCA_common_STATIC_LTLIBS) \
+        mca/errmgr/base/libmca_errmgr_base.la \
+        mca/gpr/base/pack_api_cmd/libmca_gpr_base_pack.la \
+        mca/gpr/base/unpack_api_response/libmca_gpr_base_unpack.la \
         mca/gpr/base/libmca_gpr_base.la $(MCA_gpr_STATIC_LTLIBS) \
         mca/io/base/libmca_io_base.la $(MCA_io_STATIC_LTLIBS) \
         mca/iof/base/libmca_iof_base.la $(MCA_iof_STATIC_LTLIBS) \
-        mca/llm/base/libmca_llm_base.la $(MCA_llm_STATIC_LTLIBS) \
         mca/mpool/base/libmca_mpool_base.la $(MCA_mpool_STATIC_LTLIBS) \
         mca/ns/base/libmca_ns_base.la $(MCA_ns_STATIC_LTLIBS) \
         mca/oob/base/libmca_oob_base.la $(MCA_oob_STATIC_LTLIBS) \
-        mca/pcm/base/libmca_pcm_base.la $(MCA_pcm_STATIC_LTLIBS) \
-        mca/pcmclient/base/libmca_pcmclient_base.la $(MCA_pcmclient_STATIC_LTLIBS) \
+        mca/pls/base/libmca_pls_base.la $(MCA_pls_STATIC_LTLIBS) \
         mca/pml/base/libmca_pml_base.la $(MCA_pml_STATIC_LTLIBS) \
         mca/ptl/base/libmca_ptl_base.la $(MCA_ptl_STATIC_LTLIBS) \
+        mca/ras/base/libmca_ras_base.la $(MCA_ras_STATIC_LTLIBS) \
+        mca/rds/base/libmca_rds_base.la $(MCA_rds_STATIC_LTLIBS) \
+        mca/rmaps/base/libmca_rmaps_base.la $(MCA_rmaps_STATIC_LTLIBS) \
+        mca/rmgr/base/libmca_orte_rmgr_base.la $(MCA_rmgr_STATIC_LTLIBS) \
+        mca/rml/base/libmca_rml_base.la $(MCA_rml_STATIC_LTLIBS) \
         mca/soh/base/libmca_soh_base.la $(MCA_soh_STATIC_LTLIBS) \
         mca/topo/base/libmca_topo_base.la $(MCA_topo_STATIC_LTLIBS) \
         mpi/c/libmpi_c.la $(c_mpi_lib) $(c_pmpi_lib) \
         $(f77_base_lib) $(f77_mpi_lib) $(f77_pmpi_lib) \
         $(f90_lib) $(cxx_lib) \
-	mpi/runtime/libmpiruntime.la \
+        mpi/runtime/libmpiruntime.la \
         op/libop.la \
         proc/libproc.la \
         request/librequest.la \

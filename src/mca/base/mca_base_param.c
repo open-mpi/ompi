@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "mpi.h"
 #include "include/constants.h"
 #include "class/ompi_value_array.h"
 #include "class/ompi_hash_table.h"
@@ -158,6 +159,7 @@ int mca_base_param_register_int(const char *type_name,
                                 int default_value)
 {
   mca_base_param_storage_t storage;
+  mca_base_param_find(type_name,component_name,param_name);
 
   storage.intval = default_value;
   return param_register(type_name, component_name, param_name, mca_param_name,
@@ -175,6 +177,8 @@ int mca_base_param_register_string(const char *type_name,
                                    const char *default_value)
 {
   mca_base_param_storage_t storage;
+  mca_base_param_find(type_name,component_name,param_name);
+
   if (NULL != default_value) {
     storage.stringval = (char *) default_value;
   } else {
@@ -255,7 +259,8 @@ int mca_base_param_set_int(int index, int value)
 
     mca_base_param_unset(index);
     storage.intval = value;
-    return param_set_override(index, &storage, MCA_BASE_PARAM_TYPE_INT);
+    param_set_override(index, &storage, MCA_BASE_PARAM_TYPE_INT);
+    return OMPI_SUCCESS;
 }
 
 
@@ -298,8 +303,9 @@ int mca_base_param_set_string(int index, char *value)
     mca_base_param_storage_t storage;
 
     mca_base_param_unset(index);
-    storage.stringval = value;
-    return param_set_override(index, &storage, MCA_BASE_PARAM_TYPE_STRING);
+    storage.stringval = strdup(value);
+    param_set_override(index, &storage, MCA_BASE_PARAM_TYPE_STRING);
+    return OMPI_SUCCESS;
 }
 
 
@@ -337,6 +343,57 @@ int mca_base_param_unset(int index)
     /* All done */
 
     return OMPI_SUCCESS;
+}
+
+
+/*
+ * Make a string suitable for the environment, setting an MCA param
+ */
+char *mca_base_param_environ_variable(const char *type,
+                                      const char *component,
+                                      const char *param)
+{
+    size_t len;
+    int id;
+    char *ret = NULL, *name;
+    mca_base_param_t *array;
+
+    if (NULL == type) {
+        return NULL;
+    }
+
+    id = mca_base_param_find(type, component, param);
+    if (OMPI_ERROR != id) {
+        array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+        ret = strdup(array[id].mbp_env_var_name);
+    } else {
+        len = strlen(mca_prefix) + strlen(type) + 16;
+        if (NULL != component) {
+            len += strlen(component);
+        }
+        if (NULL != param) {
+            len += strlen(param);
+        }
+        name = malloc(len);
+        if (NULL == name) {
+            return NULL;
+        }
+        name[0] = '\0';
+        snprintf(name, len, "%s%s", mca_prefix, type);
+        if (NULL != component) {
+            strcat(name, "_");
+            strcat(name, component);
+        }
+        if (NULL != param) {
+            strcat(name, "_");
+            strcat(name, param);
+        }
+        ret = name;
+    }
+
+    /* All done */
+
+    return ret;
 }
 
 
@@ -475,8 +532,6 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
 
     /* Iterate through all the registered parameters */
 
-    *env = NULL;
-    *num_env = 0;
     len = ompi_value_array_get_size(&mca_base_params);
     array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
     for (i = 0; i < len; ++i) {
@@ -761,9 +816,10 @@ static int param_register(const char *type_name, const char *component_name,
           if (NULL != array[i].mbp_file_value.stringval) {
               free(array[i].mbp_file_value.stringval);
           }
-          if (NULL != array[i].mbp_override_value.stringval) {
-              free(array[i].mbp_override_value.stringval);
-          }
+
+          /* Do *not* free the override value on the found entry here
+             -- we will down below, but only *if* the new entry
+             provides a new override value */
       }
 
       /* Now put in the new value */
@@ -781,19 +837,26 @@ static int param_register(const char *type_name, const char *component_name,
         } else {
           array[i].mbp_file_value.stringval = NULL;
         }
-        if (NULL != param.mbp_override_value.stringval) {
-          array[i].mbp_override_value.stringval =
-            strdup(param.mbp_override_value.stringval);
-        } else {
-          array[i].mbp_override_value.stringval = NULL;
+
+        /* Do we need to replace the override value? */
+
+        if (NULL != override_value && 
+            NULL != param.mbp_override_value.stringval) {
+            if (NULL != array[i].mbp_override_value.stringval) {
+                free(array[i].mbp_override_value.stringval);
+            }
+            array[i].mbp_override_value.stringval =
+                strdup(param.mbp_override_value.stringval);
         }
       } else {
           array[i].mbp_default_value.intval =
             param.mbp_default_value.intval;
           array[i].mbp_file_value.intval =
             param.mbp_file_value.intval;
-          array[i].mbp_override_value.intval =
-            param.mbp_override_value.intval;
+          if (NULL != override_value) {
+              array[i].mbp_override_value.intval =
+                  param.mbp_override_value.intval;
+          }
       }
 
       /* Just in case we changed type */

@@ -22,7 +22,7 @@
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
-	
+
 /**
  * Here we register the ompi_show_stackframe function for signals
  * passed to OpenMPI by the mpi_signal-parameter passed to mpirun

@@ -1,0 +1,47 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English general help file for Open RTE's orterun.
+#
+[orterun:init-failure]
+Open RTE was unable to initialize properly.  The error occured while
+attempting to %s.  Returned value %d instead of ORTE_SUCCESS.
+[orterun:usage]
+Usage: %s [OPTION]...  [PROGRAM]...
+Start the given program using Open RTE
+
+%s
+[orterun:allocate-resources]
+%s was unable to allocate enough resources to start your application.
+This might be a transient error (too many nodes in the cluster were
+unavailable at the time of the request) or a permenant error (you
+requsted more nodes than exist in your cluster).
+
+While probably only useful to Open RTE developers, the error returned
+was %d.
+[orterun:no-application]
+%s could not find the executable "%s".
+
+This may mean you forgot to specify the application to start on the
+command line.  Or it could mean that you have an error with another
+option on the command line and confused the command line parser.  "%s
+--help" will provide a detailed usage guide.
+[orterun:error-spawning]
+%s was unable to start the specified application.  An attempt has been
+made to clean up all processes that did start.  The error returned was
+%d.
+[orterun:appfile-not-found]
+orterun was unable to open the appfile "%s".
+
+Double check that this file exists and is readable.

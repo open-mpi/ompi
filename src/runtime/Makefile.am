@@ -26,31 +26,19 @@ headers = \
     runtime_types.h \
     runtime_internal.h \
     ompi_progress.h \
-    ompi_rte_wait.h
+    orte_wait.h
 
 libruntime_la_SOURCES = \
 	$(headers) \
-    ompi_abort.c \
-    ompi_finalize.c \
-    ompi_init.c \
+    orte_abort.c \
     ompi_progress.c \
-    ompi_rte_finalize.c \
-    ompi_rte_init.c \
-    ompi_rte_init_cleanup.c \
-    ompi_rte_llm.c \
-    ompi_rte_monitor.c \
-    ompi_rte_job_startup.c \
-    ompi_rte_job_shutdown.c \
-    ompi_rte_wait_startup_shutdown_msg.c \
-    ompi_rte_process_status.c \
-    ompi_rte_cmd_line_setup.c \
-    ompi_rte_vm_status.c \
-    universe_exists.c \
-    ompi_rte_parse_environ.c \
-    ompi_rte_parse_cmd_line.c \
-    ompi_rte_parse_daemon_cmd_line.c \
-    ompi_rte_pcm.c \
-    ompi_rte_wait.c
+    orte_finalize.c \
+    orte_init.c \
+    orte_monitor.c \
+    orte_universe_exists.c \
+    orte_restart.c \
+    orte_schema.c \
+    orte_wait.c
 
 # Conditionally install the header files
 

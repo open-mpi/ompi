@@ -21,8 +21,6 @@ noinst_LTLIBRARIES = libthreads.la
 
 headers = \
 	condition.h \
-	condition_pthread.h \
-	condition_spinlock.h \
 	mutex.h \
 	mutex_unix.h \
 	mutex_windows.h \
@@ -30,8 +28,7 @@ headers = \
 
 libthreads_la_SOURCES = \
 	$(headers) \
-	condition_pthread.c \
-	condition_spinlock.c \
+	condition.c \
 	mutex.c \
 	thread.c
 

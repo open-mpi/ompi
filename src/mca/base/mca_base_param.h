@@ -54,7 +54,7 @@
 #ifndef OMPI_MCA_BASE_PARAM_H
 #define OMPI_MCA_BASE_PARAM_H
 
-#include "mpi.h"
+#include "ompi_config.h"
 
 #include "class/ompi_value_array.h"
 #include "class/ompi_list.h"
@@ -378,6 +378,25 @@ extern "C" {
      * parameter.
      */
     OMPI_DECLSPEC int mca_base_param_unset(int index);
+
+    /**
+     * Get the string name corresponding to the MCA parameter
+     * value in the environment.
+     *
+     * @param type_name Name of the type containing the parameter.
+     * @param component_name Name of the component containing the parameter.
+     * @param param_name Name of the parameter.
+     *
+     * @retval string A string suitable for setenv() or appending to
+     * an environ-style string array.
+     * @retval NULL Upon failure.
+     *
+     * The string that is returned is owned by the caller; if
+     * appropriate, it must be eventually freed by the caller.
+     */
+    OMPI_DECLSPEC char *mca_base_param_environ_variable(const char *type,
+                                                        const char *component,
+                                                        const char *param);
 
     /**
      * Find the index for an MCA parameter based on its names.

@@ -66,7 +66,7 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
     char * tmp = print_buffer;
     int size = sizeof (print_buffer);
     int ret;
-    char * str="";
+    char * str = "";
     char eof_msg[] = "*** End of error message ***\n";
 
     /*

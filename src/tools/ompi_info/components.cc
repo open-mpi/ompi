@@ -21,36 +21,49 @@
 #include <string.h>
 
 #include "mpi/runtime/params.h"
+#include "runtime/runtime.h"
+#include "tools/ompi_info/ompi_info.h"
+
 #include "mca/base/base.h"
 #include "mca/allocator/allocator.h"
 #include "mca/allocator/base/base.h"
+#include "mca/coll/coll.h"
+#include "mca/coll/base/base.h"
+#include "mca/io/io.h"
+#include "mca/io/base/base.h"
 #include "mca/mpool/mpool.h"
 #include "mca/mpool/base/base.h"
-#include "mca/llm/llm.h"
-#include "mca/llm/base/base.h"
-#include "mca/pcm/pcm.h"
-#include "mca/pcm/base/base.h"
-#include "mca/pcmclient/pcmclient.h"
-#include "mca/pcmclient/base/base.h"
-#include "mca/oob/oob.h"
-#include "mca/oob/base/base.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/base.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
-#include "mca/soh/soh.h"
-#include "mca/soh/base/base.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
-#include "mca/ns/ns.h"
-#include "mca/ns/base/base.h"
 #include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
+
+#include "mca/errmgr/errmgr.h"
+#include "mca/errmgr/base/base.h"
 #include "mca/gpr/gpr.h"
 #include "mca/gpr/base/base.h"
-#include "mca/io/io.h"
-#include "mca/io/base/base.h"
-#include "tools/ompi_info/ompi_info.h"
+#include "mca/iof/iof.h"
+#include "mca/iof/base/base.h"
+#include "mca/ns/ns.h"
+#include "mca/ns/base/base.h"
+#include "mca/oob/oob.h"
+#include "mca/oob/base/base.h"
+#include "mca/ras/ras.h"
+#include "mca/ras/base/base.h"
+#include "mca/rds/rds.h"
+#include "mca/rds/base/base.h"
+#include "mca/rmaps/rmaps.h"
+#include "mca/rmaps/base/base.h"
+#include "mca/rmgr/rmgr.h"
+#include "mca/rmgr/base/base.h"
+#include "mca/rml/rml.h"
+#include "mca/rml/base/base.h"
+#include "mca/pls/pls.h"
+#include "mca/pls/base/base.h"
+#include "mca/soh/soh.h"
+#include "mca/soh/base/base.h"
 
 using namespace std;
 using namespace ompi_info;
@@ -111,51 +124,19 @@ void ompi_info::open_components()
 
   component_map["base"] = NULL;
 
+  // MPI frameworks
+
   mca_allocator_base_open();
   component_map["allocator"] = &mca_allocator_base_components;
 
   mca_coll_base_open();
   component_map["coll"] = &mca_coll_base_components_opened;
 
-  mca_gpr_base_open();
-  component_map["gpr"] = &mca_gpr_base_components_available;
-
-  mca_llm_base_open();
-  component_map["llm"] = &mca_llm_base_components_available;
-
   mca_io_base_open();
   component_map["io"] = &mca_io_base_components_opened;
 
-  mca_ns_base_open();
-  component_map["ns"] = &mca_ns_base_components_available;
-
   mca_mpool_base_open();
   component_map["mpool"] = &mca_mpool_base_components;
-
-#if 0
-  // one component opening not implemented yet
-  mca_one_base_open();
-  component_map["one"] = &mca_one_base_components_available;
-#else
-  component_map["one"] = NULL;
-#endif
-
-  mca_oob_base_open();
-  component_map["oob"] = &mca_oob_base_components;
-
-#if 0
-  // op component framework not yet implemented
-  mca_op_base_open();
-  component_map["op"] = &mca_oob_base_components;
-#else
-  component_map["op"] = NULL;
-#endif
-
-  mca_pcm_base_open();
-  component_map["pcm"] = &mca_pcm_base_components_available;
-
-  mca_pcmclient_base_open();
-  component_map["pcmclient"] = &mca_pcmclient_base_components_available;
 
   mca_pml_base_open();
   component_map["pml"] = &mca_pml_base_components_available;
@@ -163,14 +144,46 @@ void ompi_info::open_components()
   mca_ptl_base_open();
   component_map["ptl"] = &mca_ptl_base_components_opened;
 
-#if 0
-  // JMS waiting for ralph to finish
-  mca_soh_base_open();
-  component_map["soh"] = &mca_soh_base_components_available;
-#endif
-
   mca_topo_base_open();
   component_map["topo"] = &mca_topo_base_components_opened;
+
+  // ORTE frameworks
+
+  orte_errmgr_base_open();
+  component_map["errmgr"] = &orte_errmgr_base_components_available;
+
+  orte_gpr_base_open();
+  component_map["gpr"] = &orte_gpr_base_components_available;
+
+  orte_iof_base_open();
+  component_map["iof"] = &orte_iof_base.iof_components_opened;
+
+  orte_ns_base_open();
+  component_map["ns"] = &mca_ns_base_components_available;
+
+  mca_oob_base_open();
+  component_map["oob"] = &mca_oob_base_components;
+
+  orte_ras_base_open();
+  component_map["ras"] = &orte_ras_base.ras_opened;
+
+  orte_rds_base_open();
+  component_map["rds"] = &orte_rds_base.rds_components;
+
+  orte_rmaps_base_open();
+  component_map["rmaps"] = &orte_rmaps_base.rmaps_opened;
+
+  orte_rmgr_base_open();
+  component_map["rmgr"] = &orte_rmgr_base.rmgr_components;
+
+  orte_rml_base_open();
+  component_map["rml"] = &orte_rml_base.rml_components;
+
+  orte_pls_base_open();
+  component_map["pls"] = &orte_pls_base.pls_opened;
+
+  orte_soh_base_open();
+  component_map["soh"] = &orte_soh_base.soh_components;
 
   // All done
 
@@ -181,10 +194,9 @@ void ompi_info::open_components()
 void ompi_info::close_components()
 {
   if (opened_components) {
-    mca_pcm_base_close();
     mca_oob_base_close();
-    mca_ns_base_close();
-    mca_gpr_base_close();
+    orte_ns_base_close();
+    orte_gpr_base_close();
 #if 0
     // JMS waiting for ralph to finish
     mca_soh_base_close();
@@ -194,7 +206,6 @@ void ompi_info::close_components()
     mca_ptl_base_close();
     mca_topo_base_close();
     mca_mpool_base_close();
-    mca_llm_base_close();
     mca_allocator_base_close();
     mca_base_close();
 

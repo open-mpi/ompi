@@ -666,7 +666,7 @@ static int mca_ptl_sm_component_exchange()
     int rc;
 
     /* determine length of host name */
-    len=strlen(ompi_system_info.nodename);
+    len=strlen(orte_system_info.nodename);
     /* check if string is zero length or there is an error */
     if( 0 >= len) {
         return OMPI_ERROR;
@@ -679,7 +679,7 @@ static int mca_ptl_sm_component_exchange()
     /* copy string into structure that will be used to send data around */
     ptr=NULL;
     ptr=strncpy(&(mca_ptl_sm_setup_info.host_name[0]),
-            ompi_system_info.nodename, len);
+            orte_system_info.nodename, len);
     if( NULL == ptr ) {
         return OMPI_ERROR;
     }

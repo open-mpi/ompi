@@ -15,7 +15,7 @@
  *
  * Find and/or create Open MPI session directory.
  *
- * The ompi_session_dir() function searches for a temporary directory
+ * The orte_session_dir() function searches for a temporary directory
  * that is used by the Open MPI system for storing system-critical
  * information. For a given system and user, the function attempts to
  * find (or create, if not found and create is requested) a directory
@@ -58,7 +58,7 @@
  * directory is left on the system upon termination of an application
  * and/or an Open MPI universe for future use by the user. Thus, when
  * checking a potential location for the directory, the
- * ompi_session_tree_init() function first checks to see if an
+ * orte_session_tree_init() function first checks to see if an
  * appropriate directory already exists, and uses it if it does.
  *
  * \par \em [universe-name] A directory is created for the specified
@@ -80,7 +80,7 @@
  * proc_info structure will be updated.  If proc_info is false,
  *
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 
 /** @param create A boolean variable that indicates whether or not to
  *                create the specified directory. If set to "false",
@@ -102,7 +102,7 @@
  *                being built. Used to build the name of the
  *                "openmpi-sessions-[user]@[host]:[batch]" branch of
  *                the directory tree. NULL indicates that the nodename
- *                found in ompi_system_info is to be used.
+ *                found in orte_system_info is to be used.
  * @param batchid Batch job name, used in batch scheduling
  *                systems. NULL indicates that the default of "0" is
  *                to be used.
@@ -120,11 +120,11 @@
  * @retval OMPI_ERROR The directory cannot be found (if create is
  *                "false") or created (if create is "true").
  */
-OMPI_DECLSPEC int ompi_session_dir(bool create, char *prefix, char *user, char *hostid, 
+OMPI_DECLSPEC int orte_session_dir(bool create, char *prefix, char *user, char *hostid, 
                      char *batchid, char *universe, char *job, char *vpid);
 
 
-/** The ompi_session_dir_finalize() function performs a cleanup of the
+/** The orte_session_dir_finalize() function performs a cleanup of the
  * session directory tree. It first removes the session directory for
  * the calling process. It then checks to see if the job-level session
  * directory is now empty - if so, it removes that level as
@@ -139,4 +139,4 @@ OMPI_DECLSPEC int ompi_session_dir(bool create, char *prefix, char *user, char *
  * @retval OMPI_ERROR If something prevents the tree from being
  *                properly cleaned up.
  */
-OMPI_DECLSPEC int ompi_session_dir_finalize(void);
+OMPI_DECLSPEC int orte_session_dir_finalize(void);

@@ -32,82 +32,127 @@
  * functions
  */
 
-mca_ns_base_cellid_t mca_ns_replica_create_cellid(void)
+int orte_ns_replica_create_cellid(orte_cellid_t *cellid)
 {
-    OMPI_THREAD_LOCK(&mca_ns_replica_mutex);
+    OMPI_THREAD_LOCK(&orte_ns_replica_mutex);
 
-    if ((MCA_NS_BASE_CELLID_MAX-2) >= mca_ns_replica_last_used_cellid) {
-	mca_ns_replica_last_used_cellid = mca_ns_replica_last_used_cellid + 1;
-	OMPI_THREAD_UNLOCK(&mca_ns_replica_mutex);
-	return(mca_ns_replica_last_used_cellid);
-    } else {
-	OMPI_THREAD_UNLOCK(&mca_ns_replica_mutex);
-	return MCA_NS_BASE_CELLID_MAX;
+    if (ORTE_CELLID_MAX < orte_ns_replica_next_cellid) {
+       *cellid = orte_ns_replica_next_cellid;
+	   orte_ns_replica_next_cellid++;
+	   OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+	   return ORTE_SUCCESS;
     }
+    
+    *cellid = ORTE_CELLID_MAX;
+	OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+	return ORTE_ERR_OUT_OF_RESOURCE;
 }
 
-mca_ns_base_jobid_t mca_ns_replica_create_jobid(void)
+int orte_ns_replica_create_jobid(orte_jobid_t *jobid)
 {
-    mca_ns_replica_name_tracker_t *new_nt;
+    orte_ns_replica_name_tracker_t *new_nt;
 
-    OMPI_THREAD_LOCK(&mca_ns_replica_mutex);
+    OMPI_THREAD_LOCK(&orte_ns_replica_mutex);
 
-    if ((MCA_NS_BASE_JOBID_MAX-2) >= mca_ns_replica_last_used_jobid) {
-	mca_ns_replica_last_used_jobid = mca_ns_replica_last_used_jobid + 1;
-	new_nt = OBJ_NEW(mca_ns_replica_name_tracker_t);
-	new_nt->job = mca_ns_replica_last_used_jobid;
-	new_nt->last_used_vpid = 0;
-	ompi_list_append(&mca_ns_replica_name_tracker, &new_nt->item);
-	OMPI_THREAD_UNLOCK(&mca_ns_replica_mutex);
-	return(mca_ns_replica_last_used_jobid);
-    } else {
-	OMPI_THREAD_UNLOCK(&mca_ns_replica_mutex);
-	return MCA_NS_BASE_JOBID_MAX;
+    if (ORTE_JOBID_MAX > orte_ns_replica_next_jobid) {
+        *jobid = orte_ns_replica_next_jobid;
+	    orte_ns_replica_next_jobid++;
+	    new_nt = OBJ_NEW(orte_ns_replica_name_tracker_t);
+        if (NULL == new_nt) {  /* out of memory */
+            *jobid = ORTE_JOBID_MAX;
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+	    new_nt->job = *jobid;
+	    new_nt->last_used_vpid = 0;
+	    ompi_list_append(&orte_ns_replica_name_tracker, &new_nt->item);
+	    OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+	    return ORTE_SUCCESS;
     }
+    
+    *jobid = ORTE_JOBID_MAX;
+	OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+	return ORTE_ERR_OUT_OF_RESOURCE;
 }
 
 
-mca_ns_base_vpid_t
-mca_ns_replica_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range)
+int orte_ns_replica_reserve_range(orte_jobid_t job, orte_vpid_t range, orte_vpid_t *start)
 {
-    mca_ns_replica_name_tracker_t *ptr;
-    mca_ns_base_vpid_t start;
+    orte_ns_replica_name_tracker_t *ptr;
 
-    OMPI_THREAD_LOCK(&mca_ns_replica_mutex);
+    OMPI_THREAD_LOCK(&orte_ns_replica_mutex);
 
-    for (ptr = (mca_ns_replica_name_tracker_t*)ompi_list_get_first(&mca_ns_replica_name_tracker);
-	 ptr != (mca_ns_replica_name_tracker_t*)ompi_list_get_end(&mca_ns_replica_name_tracker);
-	 ptr = (mca_ns_replica_name_tracker_t*)ompi_list_get_next(ptr)) {
-	if (job == ptr->job) { /* found the specified job */
-	    if ((MCA_NS_BASE_VPID_MAX-range-2) >= ptr->last_used_vpid) {  /* requested range available */
-		start = ptr->last_used_vpid;
-		if (0 == job && start == 0) { /* vpid=0 reserved for job=0 */
-		    start = 1;
-		}
-		ptr->last_used_vpid = start + range;
-		OMPI_THREAD_UNLOCK(&mca_ns_replica_mutex);
-		return(start);
-	    }
-	}
+    for (ptr = (orte_ns_replica_name_tracker_t*)ompi_list_get_first(&orte_ns_replica_name_tracker);
+	   ptr != (orte_ns_replica_name_tracker_t*)ompi_list_get_end(&orte_ns_replica_name_tracker);
+	   ptr = (orte_ns_replica_name_tracker_t*)ompi_list_get_next(ptr)) {
+	   if (job == ptr->job) { /* found the specified job */
+	       if ((ORTE_VPID_MAX-range) >= ptr->last_used_vpid) {  /* requested range available */
+		      *start = ptr->last_used_vpid;
+		      if (0 == job && *start == 0) { /* vpid=0 reserved for job=0 */
+		          *start = 1;
+		      }
+		      ptr->last_used_vpid = *start + range;
+		      OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+		      return ORTE_SUCCESS;
+	       } else {  /* range not available */
+                *start = ORTE_VPID_MAX;
+                return ORTE_ERR_OUT_OF_RESOURCE;
+           }
+	   }
     }
-    OMPI_THREAD_UNLOCK(&mca_ns_replica_mutex);
-    return MCA_NS_BASE_VPID_MAX;
+    
+    /* get here if the job couldn't be found */
+    OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+    return ORTE_ERR_BAD_PARAM;
 }
 
-mca_ns_base_vpid_t
-mca_ns_replica_get_allocated_vpids(mca_ns_base_jobid_t job)
+int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
+                                   char *name)
 {
-    mca_ns_replica_name_tracker_t *ptr;
+    orte_ns_replica_tagitem_t *tagitem;
+    
+    OMPI_THREAD_LOCK(&orte_ns_replica_mutex);
 
-    OMPI_THREAD_LOCK(&mca_ns_replica_mutex);
+    if (NULL != name) {
+        /* see if this name is already in list - if so, return tag */
+        for (tagitem = (orte_ns_replica_tagitem_t*)ompi_list_get_first(&orte_ns_replica_taglist);
+             tagitem != (orte_ns_replica_tagitem_t*)ompi_list_get_end(&orte_ns_replica_taglist);
+             tagitem = (orte_ns_replica_tagitem_t*)ompi_list_get_next(tagitem)) {
+            if (tagitem->name != NULL && 0 == strcmp(name, tagitem->name)) { /* found name on list */
+                *tag = tagitem->tag;
+                return ORTE_SUCCESS;
+            }
+        }
+    }
+      
+    /* not in list or not provided, so allocate next tag
+     * first check to see if one available - else error
+     */
+    if (ORTE_RML_TAG_MAX < orte_ns_replica_next_rml_tag) {
+        /* okay, one available - assign it */
+        tagitem = OBJ_NEW(orte_ns_replica_tagitem_t);
+        if (NULL == tagitem) { /* out of memory */
+            *tag = ORTE_RML_TAG_MAX;
+            OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        tagitem->tag = orte_ns_replica_next_rml_tag;
+        if (NULL != name) {  /* provided - can look it up later */
+            tagitem->name = strdup(name);
+        } else {
+            tagitem->name = NULL;
+        }
+        orte_ns_replica_next_rml_tag++;
+        ompi_list_append(&orte_ns_replica_taglist, &tagitem->item);
+    
+        *tag = tagitem->tag;
+        OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+        return ORTE_SUCCESS;
+    }
+    
+    /* no tag available */
+    *tag = ORTE_RML_TAG_MAX;
+    OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+    return ORTE_ERR_OUT_OF_RESOURCE;
 
-    for (ptr = (mca_ns_replica_name_tracker_t*)ompi_list_get_first(&mca_ns_replica_name_tracker);
-         ptr != (mca_ns_replica_name_tracker_t*)ompi_list_get_end(&mca_ns_replica_name_tracker);
-         ptr = (mca_ns_replica_name_tracker_t*)ompi_list_get_next(ptr)) {
-         if (job == ptr->job) { /* found the specified job */
-             return ptr->last_used_vpid;
-         }
-     }
-    OMPI_THREAD_UNLOCK(&mca_ns_replica_mutex);
-    return MCA_NS_BASE_VPID_MAX;
 }
+

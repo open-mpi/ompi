@@ -18,11 +18,11 @@
 
 #include "threads/mutex.h"
 #include "util/output.h"
+#include "util/proc_info.h"
+#include "dps/dps.h"
 #include "proc/proc.h"
-#include "mca/pcmclient/pcmclient.h"
-#include "mca/pcmclient/base/base.h"
 #include "mca/oob/oob.h"
-#include "mca/ns/base/base.h"
+#include "mca/ns/ns.h"
 #include "mca/pml/pml.h"
 
 
@@ -71,31 +71,26 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 
 int ompi_proc_init(void)
 {
-    ompi_process_name_t *peers;
-    ompi_process_name_t *self;
-    size_t i, npeers;
+    orte_process_name_t *peers;
+    size_t i, npeers, self;
     int rc;
 
     OBJ_CONSTRUCT(&ompi_proc_list, ompi_list_t);
     OBJ_CONSTRUCT(&ompi_proc_lock, ompi_mutex_t);
 
-    if(OMPI_SUCCESS != (rc = mca_pcmclient.pcmclient_get_peers(&peers, 
-                                                               &npeers))) {
-        ompi_output(0, "ompi_proc_init: mca_pcm.pcm_peers failed with errno=%d", rc);
-        return rc;
-    }
-    if(NULL == (self = mca_pcmclient.pcmclient_get_self())) {
-        ompi_output(0, "ompi_proc_init: mca_pcm.pcm_self failed with errno=%d", rc);
+    if(OMPI_SUCCESS != (rc = orte_ns.get_peers(&peers, &npeers, &self))) {
+        ompi_output(0, "ompi_proc_init: get_peers failed with errno=%d", rc);
         return rc;
     }
 
     for(i=0; i<npeers; i++) {
         ompi_proc_t *proc = OBJ_NEW(ompi_proc_t);
         proc->proc_name = peers[i];
-        if( peers + i == self ) {
+        if( i == self ) {
             ompi_proc_local_proc = proc;
         }
     }
+    free(peers);
     return OMPI_SUCCESS;
 }
 
@@ -176,46 +171,44 @@ ompi_proc_t** ompi_proc_self(size_t* size)
     return procs;
 }
 
-ompi_proc_t * ompi_proc_find ( const ompi_process_name_t * name )
+ompi_proc_t * ompi_proc_find ( const orte_process_name_t * name )
 {
     ompi_proc_t *proc, *rproc=NULL;
-    ompi_ns_cmp_bitmask_t mask;
+    orte_ns_cmp_bitmask_t mask;
 
     /* return the proc-struct which matches this jobid+process id */
 
-    mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
+    mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
     OMPI_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)ompi_list_get_first(&ompi_proc_list); 
         proc != (ompi_proc_t*)ompi_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)ompi_list_get_next(proc)) {
-        if (0 == ompi_name_server.compare(mask, &proc->proc_name, name))
-            { 
-		rproc = proc;
-                break;
-            }
+        if (orte_ns.compare(mask, &proc->proc_name, name) == 0) {
+            rproc = proc;
+            break;
+        }
     }
     OMPI_THREAD_UNLOCK(&ompi_proc_lock);
     return rproc;
 }
 
 
-ompi_proc_t * ompi_proc_find_and_add ( const ompi_process_name_t * name, bool* isnew )
+ompi_proc_t * ompi_proc_find_and_add ( const orte_process_name_t * name, bool* isnew )
 {
     ompi_proc_t *proc, *rproc=NULL;
-    ompi_ns_cmp_bitmask_t mask;
+    orte_ns_cmp_bitmask_t mask;
 
     /* return the proc-struct which matches this jobid+process id */
-    mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
+    mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
     OMPI_THREAD_LOCK(&ompi_proc_lock);
     for(proc =  (ompi_proc_t*)ompi_list_get_first(&ompi_proc_list); 
         proc != (ompi_proc_t*)ompi_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)ompi_list_get_next(proc)) {
-        if (0 == ompi_name_server.compare(mask, &proc->proc_name, name))
-            { 
-                *isnew = false;
-                rproc = proc;
-                break;
-            }
+        if(orte_ns.compare(mask, &proc->proc_name, name) == 0) {
+            *isnew = false;
+            rproc = proc;
+            break;
+        }
     }
     OMPI_THREAD_UNLOCK(&ompi_proc_lock);
 
@@ -228,28 +221,27 @@ ompi_proc_t * ompi_proc_find_and_add ( const ompi_process_name_t * name, bool* i
     return rproc;
 }
 
-int ompi_proc_get_namebuf ( ompi_proc_t **proclist, int proclistsize,
-			    ompi_buffer_t buf)
+int ompi_proc_get_namebuf ( ompi_proc_t **proclist, int proclistsize, orte_buffer_t* buf)
 {
     int i;
-
-    /* buf has to be initiated in the calling function */
-
     OMPI_THREAD_LOCK(&ompi_proc_lock);
     for (i=0; i<proclistsize; i++) {
-        ompi_pack(buf, &(proclist[i]->proc_name), 1, OMPI_NAME);
+        int rc = orte_dps.pack(buf, &(proclist[i]->proc_name), 1, ORTE_NAME);
+        if(rc != OMPI_SUCCESS) {
+            OMPI_THREAD_UNLOCK(&ompi_proc_lock);
+            return rc;
+        }
     }
     OMPI_THREAD_UNLOCK(&ompi_proc_lock);
-
     return OMPI_SUCCESS;
 }
 
 
-int ompi_proc_get_proclist (ompi_buffer_t buf, int proclistsize, ompi_proc_t ***proclist)
+int ompi_proc_get_proclist (orte_buffer_t* buf, int proclistsize, ompi_proc_t ***proclist)
 {
     int i;
     ompi_proc_t **plist=NULL;
-    ompi_process_name_t name;
+    orte_process_name_t name;
     bool isnew = false;
 
     /* do not free plist *ever*, since it is used in the remote group structure
@@ -260,14 +252,16 @@ int ompi_proc_get_proclist (ompi_buffer_t buf, int proclistsize, ompi_proc_t ***
     }
 
     for ( i=0; i<proclistsize; i++ ){
-	ompi_unpack(buf, &name, 1, OMPI_NAME);
+        size_t count=1;
+	    int rc = orte_dps.unpack(buf, &name, &count, ORTE_NAME);
+        if(rc != OMPI_SUCCESS) 
+            return rc;
         plist[i] = ompi_proc_find_and_add ( &name, &isnew );
         if(isnew) {
             mca_pml.pml_add_procs(&plist[i], 1);
         }
     }
     *proclist = plist;
-
     return OMPI_SUCCESS;
 }
 

@@ -19,6 +19,7 @@
 #include "include/sys/atomic.h"
 #include "class/ompi_proc_table.h"
 #include "mca/base/mca_base_module_exchange.h"
+#include "mca/ns/ns_types.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
 #include "ptl_tcp_peer.h"
@@ -137,7 +138,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
  * Look for an existing TCP process instance based on the globally unique 
  * process identifier.
  */
-mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(const ompi_process_name_t *name)
+mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(const orte_process_name_t *name)
 {
     mca_ptl_tcp_proc_t* proc;
     OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);

@@ -25,25 +25,25 @@
 #include "mca/iof/base/iof_base_endpoint.h"
 
 
-int mca_iof_base_close(void)
+int orte_iof_base_close(void)
 {
     ompi_list_item_t* item;
 
     /* flush all pending output */
-    mca_iof_base_flush();
+    orte_iof_base_flush();
 
     /* shutdown any remaining opened components */
-    if (0 != ompi_list_get_size(&mca_iof_base.iof_components_opened)) {
-        mca_base_components_close(mca_iof_base.iof_output, 
-                              &mca_iof_base.iof_components_opened, NULL);
+    if (0 != ompi_list_get_size(&orte_iof_base.iof_components_opened)) {
+        mca_base_components_close(orte_iof_base.iof_output, 
+                              &orte_iof_base.iof_components_opened, NULL);
     }
 
     /* final cleanup of resources */
-    OMPI_THREAD_LOCK(&mca_iof_base.iof_lock);
-    while((item = ompi_list_remove_first(&mca_iof_base.iof_endpoints)) != NULL) {
+    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    while((item = ompi_list_remove_first(&orte_iof_base.iof_endpoints)) != NULL) {
         OBJ_RELEASE(item);
     }
-    OMPI_THREAD_UNLOCK(&mca_iof_base.iof_lock);
+    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return OMPI_SUCCESS;
 }
 

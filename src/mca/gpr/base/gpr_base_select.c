@@ -12,7 +12,9 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
+
+#include "include/orte_constants.h"
 
 #include "mca/gpr/base/base.h"
 
@@ -21,20 +23,19 @@
  * Function for selecting one component from all those that are
  * available.
  */
-int mca_gpr_base_select(bool *allow_multi_user_threads, 
-                       bool *have_hidden_threads)
+int orte_gpr_base_select(void)
 {
   ompi_list_item_t *item;
   mca_base_component_list_item_t *cli;
   mca_gpr_base_component_t *component, *best_component = NULL;
-  mca_gpr_base_module_t *module, *best_module = NULL;
+  orte_gpr_base_module_t *module, *best_module = NULL;
   bool multi, hidden;
   int priority, best_priority = -1;
 
   /* Iterate through all the available components */
 
-  for (item = ompi_list_get_first(&mca_gpr_base_components_available);
-       item != ompi_list_get_end(&mca_gpr_base_components_available);
+  for (item = ompi_list_get_first(&orte_gpr_base_components_available);
+       item != ompi_list_get_end(&orte_gpr_base_components_available);
        item = ompi_list_get_next(item)) {
     cli = (mca_base_component_list_item_t *) item;
     component = (mca_gpr_base_component_t *) cli->cli_component;
@@ -60,8 +61,6 @@ int mca_gpr_base_select(bool *allow_multi_user_threads,
         /* Save the new best one */
         best_module = module;
         best_component = component;
-        *allow_multi_user_threads = multi;
-        *have_hidden_threads = hidden;
 
 	/* update the best priority */
 	best_priority = priority;
@@ -78,17 +77,17 @@ int mca_gpr_base_select(bool *allow_multi_user_threads,
   /* If we didn't find one to select, barf */
 
   if (NULL == best_component) {
-    return OMPI_ERROR;
+    return ORTE_ERROR;
   }
 
   /* We have happiness -- save the component and module for later
      usage */
 
-  ompi_registry = *best_module;
-  mca_gpr_base_selected_component = *best_component;
-  mca_gpr_base_selected = true;
+  orte_gpr = *best_module;
+  orte_gpr_base_selected_component = *best_component;
+  orte_gpr_base_selected = true;
 
   /* all done */
 
-  return OMPI_SUCCESS;
+  return ORTE_SUCCESS;
 }

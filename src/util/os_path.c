@@ -12,7 +12,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -31,7 +31,7 @@
 #include "util/os_path.h"
 #include "util/sys_info.h"
 
-char *ompi_os_path(bool relative, ...)
+char *orte_os_path(bool relative, ...)
 {
     va_list ap, ap1;
     char *element, *path;
@@ -41,8 +41,8 @@ char *ompi_os_path(bool relative, ...)
     va_start(ap1, relative);
 
     /* make sure system info is filled and separator is non-NULL */
-    ompi_sys_info();
-    if (NULL == ompi_system_info.path_sep) {
+    orte_sys_info();
+    if (NULL == orte_system_info.path_sep) {
 	return(NULL);
     }
 
@@ -61,11 +61,11 @@ char *ompi_os_path(bool relative, ...)
         path[0] = 0;
 	if (relative) {
 	    strcpy(path, ".");
-        strcat(path, ompi_system_info.path_sep);
+        strcat(path, orte_system_info.path_sep);
 	}
 	else {
 #ifndef WIN32
-	    strcpy(path, ompi_system_info.path_sep);
+	    strcpy(path, orte_system_info.path_sep);
 #endif
 	}
 	return(path);
@@ -95,7 +95,7 @@ char *ompi_os_path(bool relative, ...)
     }
 
     while (NULL != (element=va_arg(ap1, char*))) {
-    	strcat(path, ompi_system_info.path_sep);
+    	strcat(path, orte_system_info.path_sep);
         strcat(path, element);
     }
 

@@ -29,7 +29,7 @@
 #include "class/ompi_object.h"
 #include "class/ompi_bitmap.h"
 #include "class/ompi_hash_table.h"
-#include "mca/gpr/base/base.h"
+#include "mca/gpr/gpr_types.h"
 
 #define ATTR_HASH_SIZE 10
 
@@ -300,7 +300,7 @@ int ompi_attr_create_predefined(void);
  * @returns Nothing
  */
 void ompi_attr_create_predefined_callback(
-	ompi_registry_notify_message_t *msg,
+	orte_gpr_notify_data_t *data,
 	void *cbdata);
 
 

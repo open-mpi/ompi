@@ -18,12 +18,14 @@
 #include "mpi.h"
 
 #include "include/constants.h"
+#include "dps/dps.h"
 #include "proc/proc.h"
 #include "threads/mutex.h"
 #include "util/bit_ops.h"
+#include "util/output.h"
 #include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
-#include "mca/ns/base/base.h"
+#include "mca/ns/ns.h"
 
 #include "attribute/attribute.h"
 #include "communicator/communicator.h"
@@ -742,7 +744,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
                                      ompi_communicator_t *bridge_comm, 
                                      int local_leader,
                                      int remote_leader,
-                                     int tag,
+                                     orte_rml_tag_t tag,
                                      int rsize)
 {
 
@@ -752,7 +754,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     ompi_proc_t **rprocs=NULL;
     char *rnamebuf=NULL;
     int len, rlen;
-    ompi_buffer_t sbuf, rbuf;
+    orte_buffer_t *sbuf=NULL, *rbuf=NULL;
     void *sendbuf;
     char *recvbuf;
     
@@ -760,14 +762,20 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     local_size = ompi_comm_size (local_comm);    
 
     if (local_rank == local_leader) {
-	ompi_buffer_init(&sbuf, local_size*sizeof(ompi_process_name_t));
+        sbuf = OBJ_NEW(orte_buffer_t);
+        if (NULL == sbuf) {
+            rc = ORTE_ERROR;
+            goto err_exit;
+        }
 
         rc = ompi_proc_get_namebuf (local_comm->c_local_group->grp_proc_pointers, 
 				    local_size, sbuf);
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-	ompi_buffer_get(sbuf, &sendbuf, &len);
+	   if (ORTE_SUCCESS != (rc = orte_dps.unload(sbuf, &sendbuf, (size_t*)&len))) {
+            goto err_exit;
+       }
 	
         /* send the remote_leader the length of the buffer */
         rc = mca_pml.pml_irecv (&rlen, 1, MPI_INT, remote_leader, tag,
@@ -799,7 +807,16 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     if ( NULL == recvbuf ) {
 	goto err_exit;
     }
-    ompi_buffer_init_preallocated(&rbuf, recvbuf, rlen);
+    
+    rbuf = OBJ_NEW(orte_buffer_t);
+    if (NULL == rbuf) {
+        rc = ORTE_ERROR;
+        goto err_exit;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_dps.load(rbuf, recvbuf, rlen))) {
+        goto err_exit;
+    }
 
     if ( local_rank == local_leader ) {
         /* local leader exchange name lists */
@@ -818,7 +835,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
             goto err_exit;
         }
 
-	ompi_buffer_free(sbuf);
+	OBJ_RELEASE(sbuf);
     }
 
     /* broadcast name list to all proceses in local_comm */
@@ -830,7 +847,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     
     /* decode the names into a proc-list */
     rc = ompi_proc_get_proclist (rbuf, rsize, &rprocs );
-    ompi_buffer_free (rbuf);
+    OBJ_RELEASE(rbuf);
     
  err_exit:
     if ( NULL != rnamebuf) {
@@ -839,11 +856,18 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     /* rprocs isn't freed unless we have an error, 
        since it is used in the communicator */
     if ( OMPI_SUCCESS !=rc ) {
-        printf("%d: Error in ompi_get_rprocs\n", local_rank);
+        ompi_output(0, "%d: Error in ompi_get_rprocs\n", local_rank);
         if ( NULL != rprocs ) {
             free ( rprocs );
             rprocs=NULL;
         }
+    }
+    /* make sure the buffers have been released */
+    if (NULL != sbuf) {
+        OBJ_RELEASE(sbuf);
+    }
+    if (NULL != rbuf) {
+        OBJ_RELEASE(rbuf);
     }
         
     return rprocs;
@@ -885,7 +909,7 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
     int scount=0;
     int rc;
     ompi_proc_t *ourproc, *theirproc;
-    ompi_ns_cmp_bitmask_t mask;
+    orte_ns_cmp_bitmask_t mask;
 
     rank = ompi_comm_rank        (intercomm);
     rsize= ompi_comm_remote_size (intercomm);
@@ -926,9 +950,8 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
         ourproc   = intercomm->c_local_group->grp_proc_pointers[0];
         theirproc = intercomm->c_remote_group->grp_proc_pointers[0];
 
-        mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
-        rc = ompi_name_server.compare (mask, &(ourproc->proc_name), 
-                                       &(theirproc->proc_name));
+        mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
+        rc = orte_ns.compare (mask, &(ourproc->proc_name), &(theirproc->proc_name));
         if ( 0 > rc ) {
             flag = true;
         }
@@ -949,25 +972,25 @@ int ompi_comm_dump ( ompi_communicator_t *comm )
     ompi_list_t *list;
     int i;
 
-    printf("Dumping information for comm_cid %d\n", comm->c_contextid);
-    printf("  f2c index:%d cube_dim: %d\n", comm->c_f_to_c_index,  
+    ompi_output(0, "Dumping information for comm_cid %d\n", comm->c_contextid);
+    ompi_output(0,"  f2c index:%d cube_dim: %d\n", comm->c_f_to_c_index,  
            comm->c_cube_dim);
-    printf("  Local group: size = %d my_rank = %d\n", 
+    ompi_output(0,"  Local group: size = %d my_rank = %d\n", 
            comm->c_local_group->grp_proc_count, 
            comm->c_local_group->grp_my_rank );
 
-    printf("  Communicator is:");
+    ompi_output(0,"  Communicator is:");
     /* Display flags */
     if ( OMPI_COMM_IS_INTER(comm) )
-        printf(" inter-comm,");
+        ompi_output(0," inter-comm,");
     if ( OMPI_COMM_IS_CART(comm))
-        printf(" topo-cart,");
+        ompi_output(0," topo-cart,");
     if ( OMPI_COMM_IS_GRAPH(comm))
-        printf(" topo-graph");
-    printf("\n");
+        ompi_output(0," topo-graph");
+    ompi_output(0,"\n");
 
     if (OMPI_COMM_IS_INTER(comm)) {
-        printf("  Remote group size:%d\n", comm->c_remote_group->grp_proc_count);
+        ompi_output(0,"  Remote group size:%d\n", comm->c_remote_group->grp_proc_count);
     }
 
 
@@ -976,7 +999,7 @@ int ompi_comm_dump ( ompi_communicator_t *comm )
     seq      = (mca_ptl_sequence_t *) pml_comm->c_frags_cant_match;
     for ( i = 0; i < comm->c_local_group->grp_proc_count; i++ ){
         list = (ompi_list_t *)seq+i;
-        printf("%d: head->list_next:%p head->list_prev:%p"
+        ompi_output(0,"%d: head->list_next:%p head->list_prev:%p"
                "    tail->list_next:%p tail->list_next:%p\n",
                i,
                (char*)list->ompi_list_head.ompi_list_next,

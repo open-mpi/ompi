@@ -12,6 +12,9 @@
  * $HEADER$
  */
 #include "ompi_config.h"
+
+#include "mca/ns/ns_types.h"
+
 #include "mca/oob/tcp/oob_tcp.h"
 
 static int mca_oob_tcp_send_self(
@@ -53,7 +56,7 @@ static int mca_oob_tcp_send_self(
  */
 
 int mca_oob_tcp_send(
-    ompi_process_name_t* name, 
+    orte_process_name_t* name, 
     struct iovec *iov, 
     int count, 
     int tag,
@@ -64,15 +67,15 @@ int mca_oob_tcp_send(
     int size;
     int rc;
 
-    if(mca_oob_tcp_component.tcp_debug > 1) {
-        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_send: tag %d\n",
-            OMPI_NAME_ARGS(mca_oob_name_self),
-            OMPI_NAME_ARGS(peer->peer_name),
-            tag);
-    }
-
     if(NULL == peer)
         return OMPI_ERR_UNREACH;
+
+    if(mca_oob_tcp_component.tcp_debug > 1) {
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_send: tag %d\n",
+            ORTE_NAME_ARGS(orte_process_info.my_name),
+            ORTE_NAME_ARGS(&(peer->peer_name)),
+            tag);
+    }
 
     MCA_OOB_TCP_MSG_ALLOC(msg, rc);
     if(NULL == msg) 
@@ -88,7 +91,11 @@ int mca_oob_tcp_send(
     msg->msg_hdr.msg_type = MCA_OOB_TCP_DATA;
     msg->msg_hdr.msg_size = size;
     msg->msg_hdr.msg_tag = tag;
-    msg->msg_hdr.msg_src = mca_oob_name_self;
+    if (NULL == orte_process_info.my_name) {
+        msg->msg_hdr.msg_src = *MCA_OOB_NAME_ANY;
+    } else {
+        msg->msg_hdr.msg_src = *orte_process_info.my_name;
+    }
     msg->msg_hdr.msg_dst = *name;
 
     /* create one additional iovect that will hold the header */
@@ -109,7 +116,8 @@ int mca_oob_tcp_send(
     msg->msg_complete = false;
     msg->msg_peer = peer->peer_name;
     
-    if (0 == mca_oob_tcp_process_name_compare(name, MCA_OOB_NAME_SELF)) {  /* local delivery */
+    if (NULL != name && NULL != orte_process_info.my_name &&
+        0 == mca_oob_tcp_process_name_compare(name, orte_process_info.my_name)) {  /* local delivery */
         return mca_oob_tcp_send_self(peer,msg,iov,count);
     }
 
@@ -142,7 +150,7 @@ int mca_oob_tcp_send(
  */
 
 int mca_oob_tcp_send_nb(
-    ompi_process_name_t* name, 
+    orte_process_name_t* name, 
     struct iovec* iov, 
     int count,
     int tag,
@@ -171,7 +179,7 @@ int mca_oob_tcp_send_nb(
     msg->msg_hdr.msg_type = MCA_OOB_TCP_DATA;
     msg->msg_hdr.msg_size = size;
     msg->msg_hdr.msg_tag = tag;
-    msg->msg_hdr.msg_src = mca_oob_name_self;
+    msg->msg_hdr.msg_src = *orte_process_info.my_name;
     msg->msg_hdr.msg_dst = *name;
 
     /* create one additional iovect that will hold the size of the message */
@@ -192,7 +200,7 @@ int mca_oob_tcp_send_nb(
     msg->msg_complete = false;
     msg->msg_peer = peer->peer_name;
     
-    if (0 == mca_oob_tcp_process_name_compare(name, MCA_OOB_NAME_SELF)) {  /* local delivery */
+    if (0 == mca_oob_tcp_process_name_compare(name, orte_process_info.my_name)) {  /* local delivery */
         return mca_oob_tcp_send_self(peer,msg,iov,count);
     }
 

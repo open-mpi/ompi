@@ -13,22 +13,11 @@
  */
 
 
-#include "ompi_config.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#include "runtime/runtime.h"
-#include "util/output.h"
-#include "util/proc_info.h"
+#include "orte_config.h"
+
 #include "mca/mca.h"
 #include "mca/base/base.h"
-#include "mca/ns/ns.h"
+
 #include "mca/ns/base/base.h"
 
 
@@ -36,14 +25,12 @@
  * Function for selecting one component from all those that are
  * available.
  */
-int mca_ns_base_select(bool *allow_multi_user_threads, 
-                       bool *have_hidden_threads)
+int orte_ns_base_select(void)
 {
   ompi_list_item_t *item;
   mca_base_component_list_item_t *cli;
   mca_ns_base_component_t *component, *best_component = NULL;
   mca_ns_base_module_t *module, *best_module = NULL;
-  bool multi, hidden;
   int priority, best_priority = -1;
 
   /* Iterate through all the available components */
@@ -57,7 +44,7 @@ int mca_ns_base_select(bool *allow_multi_user_threads,
     /* Call the component's init function and see if it wants to be
        selected */
 
-    module = component->ns_init(&multi, &hidden, &priority);
+    module = component->ns_init(&priority);
 
     /* If we got a non-NULL module back, then the component wants to
        be selected.  So save its multi/hidden values and save the
@@ -78,8 +65,6 @@ int mca_ns_base_select(bool *allow_multi_user_threads,
 
         best_module = module;
         best_component = component;
-        *allow_multi_user_threads = multi;
-        *have_hidden_threads = hidden;
 
 	/* update the best priority */
 	best_priority = priority;
@@ -96,17 +81,17 @@ int mca_ns_base_select(bool *allow_multi_user_threads,
   /* If we didn't find one to select, barf */
 
   if (NULL == best_component) {
-    return OMPI_ERROR;
+    return ORTE_ERROR;
   }
 
   /* We have happiness -- save the component and module for later
      usage */
 
-  ompi_name_server = *best_module;
+  orte_ns = *best_module;
   mca_ns_base_selected_component = *best_component;
   mca_ns_base_selected = true;
 
   /* all done */
 
-  return OMPI_SUCCESS;
+  return ORTE_SUCCESS;
 }

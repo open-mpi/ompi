@@ -35,11 +35,12 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
                     int root, MPI_Comm comm, MPI_Comm *intercomm,
                     int *array_of_errcodes) 
 {
-    int rank, rc, tag, i;
+    int rank, rc, i;
     int send_first=0; /* we wait to be contacted */
     ompi_communicator_t *newcomp;
     char port_name[MPI_MAX_PORT_NAME];
     char *tmp_port;
+    orte_rml_tag_t tag;
  
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

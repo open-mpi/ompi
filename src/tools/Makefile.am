@@ -17,5 +17,5 @@ include $(top_srcdir)/config/Makefile.options
 
 EXTRA_DIST = win_makefile
 
-SUBDIRS		= ompi_info mpirun wrappers ompid bootproxy openmpi console
+SUBDIRS		= ompi_info wrappers orted orterun openmpi console
 

@@ -20,7 +20,8 @@
 #ifndef OMPI_MCA_H
 #define OMPI_MCA_H
 
-#include "mpi.h"
+#include "ompi_config.h"
+
 #include "class/ompi_list.h"
 #include "util/cmd_line.h"
 

@@ -15,16 +15,16 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+
 #include "attribute/attribute.h"
-#include "util/proc_info.h"
-#include "util/bufpack.h"
+
 #include "errhandler/errclass.h"
 #include "communicator/communicator.h"
+#include "util/proc_info.h"
 #include "mca/ns/ns.h"
-#include "mca/ns/base/base.h"
 #include "mca/gpr/gpr.h"
-#include "mca/gpr/base/base.h"
-#include "runtime/runtime.h"
+#include "mca/errmgr/errmgr.h"
+
 
 /*
  * Private functions
@@ -63,37 +63,133 @@ static int attr_impi_host_color = 0;
 
 int ompi_attr_create_predefined(void)
 {
-    ompi_registry_notify_id_t rc;
+    orte_gpr_notify_id_t rc;
+    int ret;
+    orte_gpr_value_t trig, *trig1;
+    orte_gpr_subscription_t sub, *sub1;
+    orte_jobid_t job;
+    
+    if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&job, orte_process_info.my_name))) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
+    OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
+    sub.addr_mode = ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR;
+    sub.segment = strdup(ORTE_NODE_SEGMENT);
+    if (NULL == sub.segment) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    sub.tokens = NULL; /* wildcard - look at all containers */
+    sub.num_tokens = 0;
+    sub.num_keys = 1;
+    sub.keys = (char**)malloc(sizeof(char*));
+    if (NULL == sub.keys) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    sub.keys[0] = strdup(ORTE_NODE_SLOTS_KEY);
+    if (NULL == sub.keys[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    sub.cbfunc = ompi_attr_create_predefined_callback;
+    sub.user_tag = NULL;
+    
+    /* setup the trigger information */
+    OBJ_CONSTRUCT(&trig, orte_gpr_value_t);
+    trig.addr_mode = ORTE_GPR_TOKENS_XAND;
+    if (ORTE_SUCCESS != (ret = orte_schema.get_job_segment_name(&(trig.segment), job))) {
+        ORTE_ERROR_LOG(ret);
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ret;
+    }
+    trig.tokens = (char**)malloc(sizeof(char*));
+    if (NULL == trig.tokens) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig.tokens[0] = strdup(ORTE_JOB_GLOBALS);
+    trig.num_tokens = 1;
 
-     rc = ompi_registry.subscribe(
-         OMPI_REGISTRY_OR,
-	     OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA,
-         OMPI_RTE_VM_STATUS_SEGMENT,
-         NULL,
-         ompi_attr_create_predefined_callback,
-         NULL);
-     if(rc == OMPI_REGISTRY_NOTIFY_ID_MAX) {
+    trig.cnt = 2;
+    trig.keyvals = (orte_gpr_keyval_t**)malloc(2*sizeof(orte_gpr_keyval_t*));
+    if (NULL == trig.keyvals) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == trig.keyvals[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig.keyvals[0]->key = strdup(ORTE_JOB_SLOTS_KEY);
+    trig.keyvals[0]->type = ORTE_NULL;
+    
+    trig.keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == trig.keyvals[1]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig.keyvals[1]->key = strdup(ORTE_PROC_NUM_AT_STG1);
+    trig.keyvals[1]->type = ORTE_NULL;
+    
+    /* do the subscription */
+    sub1 = &sub;
+    trig1 = &trig;
+    ret = orte_gpr.subscribe(
+         ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY |
+         ORTE_GPR_TRIG_ONE_SHOT,
+         1, &sub1,
+         1, &trig1,
+         &rc);
+     if(ORTE_SUCCESS != ret) {
          ompi_output(0, "ompi_attr_create_predefined: subscribe failed");
+         OBJ_DESTRUCT(&sub);
+         OBJ_DESTRUCT(&trig);
          return OMPI_ERROR;
      }
+     OBJ_DESTRUCT(&sub);
+     OBJ_DESTRUCT(&trig);
      return OMPI_SUCCESS;
 }
 
 
 void ompi_attr_create_predefined_callback(
-	ompi_registry_notify_message_t *msg,
-	void *cbdata)
+    orte_gpr_notify_data_t *data,
+    void *cbdata)
 {
     int err;
-    ompi_list_item_t *item;
-    ompi_registry_value_t *reg_value;
-    ompi_rte_vm_status_t *vm_stat;
+    int32_t i, j;
+    orte_gpr_keyval_t **keyval;
+    orte_gpr_value_t **value;
+    orte_jobid_t job;
 
     /* Set some default values */
 
-    attr_appnum = (int) ompi_name_server.get_jobid(ompi_rte_get_self());
+    if (ORTE_SUCCESS != orte_ns.get_jobid(&job, orte_process_info.my_name)) {
+        return;
+    }
 
-    /* Query the registry to find out how many CPUs there will be.
+    /* Per conversation between Jeff, Edgar, and Ralph - this needs
+     * to be fixed to properly determine the appnum
+     */
+    attr_appnum = (int)job;
+    
+    /* Query the gpr to find out how many CPUs there will be.
        This will only return a non-empty list in a persistent
        universe.  If we don't have a persistent universe, then just
        default to the size of MPI_COMM_WORLD. 
@@ -105,7 +201,7 @@ void ompi_attr_create_predefined_callback(
        where the master is supposed to SPAWN the other processes.
        Perhaps need some integration with the LLM here...?  [shrug] */
 
-    /* RHC: Needed to change this code so it wouldn't issue a registry.get
+    /* RHC: Needed to change this code so it wouldn't issue a gpr.get
      * during the compound command phase of mpi_init. Since all you need
      * is to have the data prior to dtypes etc., and since this function
      * is called right before we send the compound command, I've changed
@@ -115,24 +211,23 @@ void ompi_attr_create_predefined_callback(
      */
 
     attr_universe_size = 0;
-    if (0 == ompi_list_get_size(&msg->data)) {
+    if (0 == data->cnt) {  /* no data returned */
         attr_universe_size = ompi_comm_size(MPI_COMM_WORLD);
     } else {
-        for (item = ompi_list_remove_first(&msg->data);
-             NULL != item;
-             item = ompi_list_remove_first(&msg->data)) {
-            reg_value = (ompi_registry_value_t *) item;
-            vm_stat = ompi_rte_unpack_vm_status(reg_value); 
-            
-            /* Process slot count */
-            attr_universe_size += vm_stat->num_cpus;
-            
-            /* Discard the rest */
-            free(vm_stat);
-            OBJ_RELEASE(item);
+        value = data->values;
+        for (i=0; i < data->cnt; i++) {
+            if (0 < value[i]->cnt) {  /* make sure some data was returned here */
+                keyval = value[i]->keyvals;
+                for (j=0; j < value[i]->cnt; j++) {
+                    if (ORTE_UINT32 == keyval[j]->type) { /* make sure we don't get confused */
+                        /* Process slot count */
+                        attr_universe_size += keyval[j]->value.ui32;
+                    }
+                }
+            }
         }
     }
-    OBJ_RELEASE(msg);
+    OBJ_RELEASE(data);
 
     /* DO NOT CHANGE THE ORDER OF CREATING THESE KEYVALS!  This order
        strictly adheres to the order in mpi.h.  If you change the

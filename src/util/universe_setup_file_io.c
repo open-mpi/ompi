@@ -12,10 +12,10 @@
  * 
  * $HEADER$
  *
- * $Id: ompi_universe_setup_file I/O functions $
+ * $Id: orte_universe_setup_file I/O functions $
  * 
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdio.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -27,163 +27,173 @@
 #include <unistd.h>
 #endif
 
-#include "include/constants.h"
+#include "include/orte_constants.h"
 
 #include "util/output.h"
+#include "util/univ_info.h"
 #include "runtime/runtime.h"
 #include "util/universe_setup_file_io.h"
 
-#define OMPI_UNIV_SETUP_FILE_MAX_LINE_LENGTH 1024
+#define ORTE_UNIV_SETUP_FILE_MAX_LINE_LENGTH 1024
 
-static char *ompi_getline(FILE *fp);
+static char *orte_getline(FILE *fp);
 
-int ompi_write_universe_setup_file(char *filename)
+int orte_write_universe_setup_file(char *filename)
 {
     FILE *fp;
 
     fp = fopen(filename, "w");
     if (NULL == fp) {
-	return OMPI_ERROR;
+	    return ORTE_ERROR;
     }
 
-    if (NULL == ompi_universe_info.name) {
-	goto CLEANUP;
-    }
-    fprintf(fp, "%s\n", ompi_universe_info.name);
-
-    if (NULL == ompi_universe_info.host) {
-	goto CLEANUP;
-    }
-    fprintf(fp, "%s\n", ompi_universe_info.host);
-
-    if (NULL == ompi_universe_info.uid) {
-	goto CLEANUP;
-    }
-    fprintf(fp, "%s\n", ompi_universe_info.uid);
-
-    fprintf(fp, "%d\n", ompi_universe_info.pid);
-
-    if (ompi_universe_info.persistence) {
-	fprintf(fp, "persistent\n");
+    if (NULL == orte_universe_info.name) {
+        /* fatal error - must have a name */
+        fclose(fp);
+        return ORTE_ERROR;
     } else {
-	fprintf(fp, "non-persistent\n");
+        fprintf(fp, "%s\n", orte_universe_info.name);
     }
 
-    if (NULL == ompi_universe_info.scope) {
-	goto CLEANUP;
-    }
-    fprintf(fp, "%s\n", ompi_universe_info.scope);
-
-    if (ompi_universe_info.console) {
-	fprintf(fp, "console\n");
+    if (NULL == orte_universe_info.host) {
+	   fprintf(fp, "LOCALHOST\n");
     } else {
-	fprintf(fp, "silent\n");
+        fprintf(fp, "%s\n", orte_universe_info.host);
+    }
+    
+    if (NULL == orte_universe_info.uid) {
+        fprintf(fp, "NO-UID\n");
+    } else {
+        fprintf(fp, "%s\n", orte_universe_info.uid);
     }
 
-    if (NULL == ompi_universe_info.seed_contact_info) {
-	goto CLEANUP;
+    if (orte_universe_info.persistence) {
+	   fprintf(fp, "persistent\n");
+    } else {
+	   fprintf(fp, "non-persistent\n");
     }
-    fprintf(fp, "%s\n", ompi_universe_info.seed_contact_info);
+
+    if (NULL == orte_universe_info.scope) {
+        fprintf(fp, "NO-SCOPE\n");
+    } else {
+        fprintf(fp, "%s\n", orte_universe_info.scope);
+    }
+
+    if (orte_universe_info.console) {
+	   fprintf(fp, "console\n");
+    } else {
+	   fprintf(fp, "silent\n");
+    }
+
+    if (NULL == orte_universe_info.seed_uri) {
+        fprintf(fp, "NO-SEED-URI\n");
+    } else {
+        fprintf(fp, "%s\n", orte_universe_info.seed_uri);
+    }
+    
     fclose(fp);
 
-    return OMPI_SUCCESS;
-
- CLEANUP:
-    fclose(fp);
-    return OMPI_ERROR;
+    return ORTE_SUCCESS;
 }
 
-int ompi_read_universe_setup_file(char *filename)
+int orte_read_universe_setup_file(char *filename)
 {
     char *input;
     FILE *fp;
 
     fp = fopen(filename, "r");
     if (NULL == fp) { /* failed on first read - wait and try again */
-	fp = fopen(filename, "r");
-	if (NULL == fp) { /* failed twice - give up */
-	    return OMPI_ERR_NOT_FOUND;
-	}
+	   fp = fopen(filename, "r");
+	   if (NULL == fp) { /* failed twice - give up */
+	       return ORTE_ERR_NOT_FOUND;
+	   }
     }
 
-    ompi_universe_info.name = ompi_getline(fp);
-    if (NULL == ompi_universe_info.name) {
-	goto CLEANUP;
+    orte_universe_info.name = orte_getline(fp);
+    if (NULL == orte_universe_info.name) {
+	   goto CLEANUP;
     }
 
-    ompi_universe_info.host = ompi_getline(fp);
-    if (NULL == ompi_universe_info.host) {
-	goto CLEANUP;
+    orte_universe_info.host = orte_getline(fp);
+    if (NULL == orte_universe_info.host) {
+       goto CLEANUP;
+    } else if (0 == strcmp("LOCALHOST", orte_universe_info.host)) {
+        free(orte_universe_info.host);
+        orte_universe_info.host = NULL;
     }
 
-    ompi_universe_info.uid = ompi_getline(fp);
-    if (NULL == ompi_universe_info.uid) {
-	goto CLEANUP;
+    orte_universe_info.uid = orte_getline(fp);
+    if (NULL == orte_universe_info.uid) {
+       goto CLEANUP;
+    } else if (0 == strcmp("NO-UID", orte_universe_info.uid)) {
+        free(orte_universe_info.uid);
+        orte_universe_info.uid = NULL;
     }
 
-    input = ompi_getline(fp);
+    input = orte_getline(fp);
     if (NULL == input) {
-	goto CLEANUP;
-    }
-    ompi_universe_info.pid = (pid_t)atoi(input);
-
-    input = ompi_getline(fp);
-    if (NULL == input) {
-	goto CLEANUP;
+       goto CLEANUP;
     }
     if (0 == strncmp(input, "persistent", strlen("persistent"))) {
-	ompi_universe_info.persistence = true;
+	   orte_universe_info.persistence = true;
     } else if (0 == strncmp(input, "non-persistent", strlen("non-persistent"))) {
-	ompi_universe_info.persistence = false;
+	   orte_universe_info.persistence = false;
     } else {
-	free(input);
-	goto CLEANUP;
+	   free(input);
+       goto CLEANUP;
     }
     free(input);
 
-    ompi_universe_info.scope = ompi_getline(fp);
-    if (NULL == ompi_universe_info.scope) {
-	goto CLEANUP;
+    orte_universe_info.scope = orte_getline(fp);
+    if (NULL == orte_universe_info.scope) {
+       goto CLEANUP;
+    } else if (0 == strcmp("NO-SCOPE", orte_universe_info.scope)) {
+        free(orte_universe_info.scope);
+        orte_universe_info.scope = strdup("exclusive");
     }
  
-    input = ompi_getline(fp);
+    input = orte_getline(fp);
     if (NULL == input) {
-	goto CLEANUP;
+       goto CLEANUP;
     }
     if (0 == strncmp(input, "silent", strlen("silent"))) {
-	ompi_universe_info.console = false;
+	    orte_universe_info.console = false;
     } else if (0 == strncmp(input, "console", strlen("console"))) {
-	ompi_universe_info.console = true;
+	    orte_universe_info.console = true;
     } else {
-	free(input);
-	goto CLEANUP;
+	    free(input);
+	    goto CLEANUP;
     }
     free(input);
 
-    ompi_universe_info.seed_contact_info = ompi_getline(fp);
-    if (NULL == ompi_universe_info.seed_contact_info) {
-	goto CLEANUP;
+    orte_universe_info.seed_uri = orte_getline(fp);
+    if (NULL == orte_universe_info.seed_uri) {
+	    goto CLEANUP;
+    } else if (0 == strcmp("NO-SEED-URI", orte_universe_info.seed_uri)) {
+        free(orte_universe_info.seed_uri);
+        orte_universe_info.seed_uri = NULL;
     }
 
     fclose(fp);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 
  CLEANUP:
     fclose(fp);
-    return OMPI_ERROR;
+    return ORTE_ERROR;
 }
 
-static char *ompi_getline(FILE *fp)
+static char *orte_getline(FILE *fp)
 {
     char *ret, *buff;
-    char input[OMPI_UNIV_SETUP_FILE_MAX_LINE_LENGTH];
+    char input[ORTE_UNIV_SETUP_FILE_MAX_LINE_LENGTH];
 
-    ret = fgets(input, OMPI_UNIV_SETUP_FILE_MAX_LINE_LENGTH, fp);
+    ret = fgets(input, ORTE_UNIV_SETUP_FILE_MAX_LINE_LENGTH, fp);
     if (NULL != ret) {
-	input[strlen(input)-1] = '\0';  /* remove newline */
-	buff = strdup(input);
-	return buff;
+	   input[strlen(input)-1] = '\0';  /* remove newline */
+	   buff = strdup(input);
+	   return buff;
     }
+    
     return NULL;
 }
 

@@ -15,5 +15,5 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=gpr_replica.h
-PARAM_CONFIG_FILES=Makefile
+PARAM_INIT_FILE=api_layer/gpr_replica_del_index_api.c
+PARAM_CONFIG_FILES="Makefile api_layer/Makefile transition_layer/Makefile functional_layer/Makefile communications/Makefile"

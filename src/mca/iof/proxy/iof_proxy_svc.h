@@ -29,14 +29,14 @@ extern "C" {
  *  Publish endpoint to forwarding service.
  */
 
-int mca_iof_proxy_svc_publish(
-    const ompi_process_name_t* name,
+int orte_iof_proxy_svc_publish(
+    const orte_process_name_t* name,
     int tag
     );
 
-int mca_iof_proxy_svc_unpublish(
-    const ompi_process_name_t* name,
-    ompi_ns_cmp_bitmask_t mask,
+int orte_iof_proxy_svc_unpublish(
+    const orte_process_name_t* name,
+    orte_ns_cmp_bitmask_t mask,
     int tag
     );
 
@@ -46,12 +46,12 @@ int mca_iof_proxy_svc_unpublish(
  * source processes.
  */
 
-int mca_iof_proxy_svc_subscribe(
-    const ompi_process_name_t* src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
+int orte_iof_proxy_svc_subscribe(
+    const orte_process_name_t* src_name,
+    orte_ns_cmp_bitmask_t src_mask,
     int src_tag,
-    const ompi_process_name_t* dst_name,
-    ompi_ns_cmp_bitmask_t dst_mask,
+    const orte_process_name_t* dst_name,
+    orte_ns_cmp_bitmask_t dst_mask,
     int dst_tag
     );
 
@@ -60,12 +60,12 @@ int mca_iof_proxy_svc_subscribe(
  * service.
  */
 
-int mca_iof_proxy_svc_unsubscribe(
-    const ompi_process_name_t* src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
+int orte_iof_proxy_svc_unsubscribe(
+    const orte_process_name_t* src_name,
+    orte_ns_cmp_bitmask_t src_mask,
     int src_tag,
-    const ompi_process_name_t* dst_name,
-    ompi_ns_cmp_bitmask_t dst_mask,
+    const orte_process_name_t* dst_name,
+    orte_ns_cmp_bitmask_t dst_mask,
     int dst_tag
     );
 
@@ -74,12 +74,12 @@ int mca_iof_proxy_svc_unsubscribe(
  * service.
  */
 
-void mca_iof_proxy_svc_recv(
+void orte_iof_proxy_svc_recv(
     int status,
-    ompi_process_name_t* peer,
+    orte_process_name_t* peer,
     struct iovec* msg,
     int count,
-    int tag,
+    orte_rml_tag_t tag,
     void* cbdata);
 
 

@@ -17,17 +17,20 @@
 #include <stdio.h>
 #include "mpi.h"
 
+#include "dps/dps.h"
+
+#include "mca/ns/ns_types.h"
+
 #include "communicator/communicator.h"
 #include "op/op.h"
 #include "proc/proc.h"
 #include "include/constants.h"
 #include "class/ompi_pointer_array.h"
 #include "class/ompi_list.h"
-#include "mca/pcm/pcm.h"
 #include "mca/pml/pml.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
-#include "mca/oob/oob.h"
+#include "mca/rml/rml.h"
 
 #define OMPI_MAX_COMM 32768
 
@@ -606,10 +609,10 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     int i;
     int rc;
     int local_leader, local_rank;
-    ompi_process_name_t *remote_leader=NULL;
+    orte_process_name_t *remote_leader=NULL;
     
     local_leader  = (*((int*)lleader));
-    remote_leader = (ompi_process_name_t*)rleader;
+    remote_leader = (orte_process_name_t*)rleader;
 
     if ( &ompi_mpi_op_sum != op && &ompi_mpi_op_prod != op &&
          &ompi_mpi_op_max != op && &ompi_mpi_op_min  != op ) {
@@ -630,24 +633,30 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     }
     
     if (local_rank == local_leader ) {
-        ompi_buffer_t sbuf;
-        ompi_buffer_t rbuf;
+        orte_buffer_t *sbuf;
+        orte_buffer_t *rbuf;
 
-        ompi_buffer_init(&sbuf, count * sizeof(int));
-        ompi_pack(sbuf, tmpbuf, count, OMPI_INT32);
+        sbuf = OBJ_NEW(orte_buffer_t);
+        rbuf = OBJ_NEW(orte_buffer_t);
+        
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(sbuf, tmpbuf, count, ORTE_INT32))) {
+            goto exit;
+        }
 
         if ( send_first ) {
-            rc = mca_oob_send_packed(remote_leader, sbuf, 0, 0);
-            rc = mca_oob_recv_packed (remote_leader, &rbuf, NULL);
+            rc = orte_rml.send_buffer(remote_leader, sbuf, 0, 0);
+            rc = orte_rml.recv_buffer(remote_leader, rbuf, 0);
         }
         else {
-            rc = mca_oob_recv_packed(remote_leader, &rbuf, NULL);
-            rc = mca_oob_send_packed(remote_leader, sbuf, 0, 0);
+            rc = orte_rml.recv_buffer(remote_leader, rbuf, 0);
+            rc = orte_rml.send_buffer(remote_leader, sbuf, 0, 0);
         }
 
-        ompi_unpack(rbuf, outbuf, count, OMPI_INT32);
-        ompi_buffer_free(sbuf);
-        ompi_buffer_free(rbuf);
+        if (ORTE_SUCCESS != (rc = orte_dps.unpack(rbuf, outbuf, (size_t*)&count, ORTE_INT32))) {
+            goto exit;
+        }
+        OBJ_RELEASE(sbuf);
+        OBJ_RELEASE(rbuf);
 
         if ( &ompi_mpi_op_max == op ) {
             for ( i = 0 ; i < count; i++ ) {

@@ -1,0 +1,62 @@
+# -*- shell-script -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+
+AC_DEFUN([MCA_CONFIGURE_STUB],[
+
+#
+# ras tm configure.stub
+#
+# NOTE: Use --with-pls-tm so that the user only has to specify the
+# location of the TM support files once -- for the pls (the launcher,
+# which is what most users will associate with the back-end RTE)
+#
+
+AC_ARG_WITH(pls-tm, 
+	    AC_HELP_STRING([--with-pls-tm=DIR],
+			   [directory where the tm software was installed]))
+
+#
+# Need to find tm.h - note that we don't care about CPPFLAGS being reset
+# if this doesn't work, that's all she wrote :)
+#
+if test ! -z "$with_pls_tm"; then
+    CPPFLAGS="$CPPFLAGS -I$with_pls_tm/include"
+fi
+
+AC_CHECK_HEADERS(tm.h,,
+    AC_MSG_ERROR([*** Cannot find working tm.h.]))
+
+
+#
+# Some OS's need -lsocket -lnsl
+#
+
+AC_CHECK_LIB(socket, main, ,)
+AC_CHECK_LIB(nsl, main, ,)
+
+#
+# need to find libpbs
+#
+if test ! -z "$with_pls_tm"; then
+    LDFLAGS="$LDFLAGS -L$with_pls_tm/lib"
+fi
+
+AC_CHECK_LIB(pbs, tm_init, [],
+    AC_MSG_ERROR([*** Cannot find working libpbs.]) )
+
+#
+# done with tm configure.stub
+#
+])dnl

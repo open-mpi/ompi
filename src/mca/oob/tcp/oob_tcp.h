@@ -22,9 +22,9 @@
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
 #include "mca/base/base.h"
-#include "mca/ns/base/base.h"
+#include "mca/ns/ns_types.h"
 #include "class/ompi_free_list.h"
-#include "class/ompi_rb_tree.h"
+#include "class/ompi_hash_table.h"
 #include "event/event.h"
 #include "threads/mutex.h"
 #include "threads/condition.h"
@@ -43,7 +43,7 @@ extern "C" {
  */
 int        mca_oob_tcp_component_open(void);
 int        mca_oob_tcp_component_close(void);
-mca_oob_t* mca_oob_tcp_component_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads);
+mca_oob_t* mca_oob_tcp_component_init(int* priority);
 
 /**
  * Hook function to allow the selected oob components
@@ -89,7 +89,7 @@ int mca_oob_tcp_fini(void);
 * just needs to be consistently applied to maintain an ordering
 * when process names are used as indices.
 */
-int mca_oob_tcp_process_name_compare(const ompi_process_name_t* n1, const ompi_process_name_t* n2);
+int mca_oob_tcp_process_name_compare(const orte_process_name_t* n1, const orte_process_name_t* n2);
                                                                                                            /**
  *  Obtain contact information for this host (e.g. <ipaddress>:<port>)
  */
@@ -100,7 +100,7 @@ char* mca_oob_tcp_get_addr(void);
  *  Setup cached addresses for the peers.
  */
 
-int mca_oob_tcp_set_addr(const ompi_process_name_t*, const char*);
+int mca_oob_tcp_set_addr(const orte_process_name_t*, const char*);
 
 /**
  *  A routine to ping a given process name to determine if it is reachable.
@@ -113,7 +113,7 @@ int mca_oob_tcp_set_addr(const ompi_process_name_t*, const char*);
  *  an error status is returned.
  */
                                                                                                        
-int mca_oob_tcp_ping(const ompi_process_name_t* name, const struct timeval* tv);
+int mca_oob_tcp_ping(const orte_process_name_t* name, const struct timeval* tv);
 
 /**
  *  Similiar to unix writev(2).
@@ -127,7 +127,7 @@ int mca_oob_tcp_ping(const ompi_process_name_t* name, const struct timeval* tv);
  */
 
 int mca_oob_tcp_send(
-    ompi_process_name_t* peer, 
+    orte_process_name_t* peer, 
     struct iovec *msg, 
     int count, 
     int tag,
@@ -146,10 +146,10 @@ int mca_oob_tcp_send(
  */
 
 int mca_oob_tcp_recv(
-    ompi_process_name_t* peer, 
+    orte_process_name_t* peer, 
     struct iovec * msg, 
     int count, 
-    int* tag,
+    int tag,
     int flags);
 
 
@@ -172,7 +172,7 @@ int mca_oob_tcp_recv(
  */
 
 int mca_oob_tcp_send_nb(
-    ompi_process_name_t* peer, 
+    orte_process_name_t* peer, 
     struct iovec* msg, 
     int count,
     int tag,
@@ -194,7 +194,7 @@ int mca_oob_tcp_send_nb(
  */
 
 int mca_oob_tcp_recv_nb(
-    ompi_process_name_t* peer, 
+    orte_process_name_t* peer, 
     struct iovec* msg, 
     int count, 
     int tag,
@@ -211,7 +211,7 @@ int mca_oob_tcp_recv_nb(
  */
 
 int mca_oob_tcp_recv_cancel(
-    ompi_process_name_t* peer, 
+    orte_process_name_t* peer, 
     int tag);
 
 /**
@@ -232,7 +232,7 @@ int mca_oob_tcp_parse_uri(
  * Callback from registry on change to subscribed segments
  */
 void mca_oob_tcp_registry_callback(
-     ompi_registry_notify_message_t* msg,
+     orte_gpr_notify_data_t* data,
      void* cbdata);
 
 
@@ -247,8 +247,8 @@ struct mca_oob_tcp_component_t {
     unsigned short     tcp_listen_port;      /**< listen port */
     ompi_list_t        tcp_subscriptions;    /**< list of registry subscriptions */
     ompi_list_t        tcp_peer_list;        /**< list of peers sorted in mru order */
-    ompi_rb_tree_t     tcp_peer_tree;        /**< tree of peers sorted by name */
-    ompi_rb_tree_t     tcp_peer_names;       /**< cache of peer contact info sorted by name */
+    ompi_hash_table_t  tcp_peers;            /**< peers sorted by name */
+    ompi_hash_table_t  tcp_peer_names;       /**< cache of peer contact info sorted by name */
     ompi_free_list_t   tcp_peer_free;        /**< free list of peers */
     int                tcp_peer_limit;       /**< max size of tcp peer cache */
     int                tcp_peer_retries;     /**< max number of retries before declaring peer gone */

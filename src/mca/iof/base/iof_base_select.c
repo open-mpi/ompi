@@ -20,7 +20,7 @@
 #include "mca/iof/iof.h"
 #include "mca/iof/base/base.h"
 
-mca_iof_base_module_t mca_iof;
+orte_iof_base_module_t orte_iof;
 
 
 /**
@@ -28,44 +28,44 @@ mca_iof_base_module_t mca_iof;
  * they want to run.  Select the single component with the highest 
  * priority.
  */
-int mca_iof_base_select(bool *allow_multi_user_threads, bool* have_hidden_threads)
+int orte_iof_base_select(void)
 {
     ompi_list_item_t *item;
     mca_base_component_list_item_t *cli;
     int selected_priority = -1;
-    mca_iof_base_component_t *selected_component = NULL;
-    mca_iof_base_module_t *selected_module = NULL;
-    bool selected_allow_user = true;
-    bool selected_have_hidden = false;
+    orte_iof_base_component_t *selected_component = NULL;
+    orte_iof_base_module_t *selected_module = NULL;
+    bool selected_allow_user;
+    bool selected_have_hidden;
  
     /* Traverse the list of opened modules; call their init functions. */
-    for(item = ompi_list_get_first(&mca_iof_base.iof_components_opened);
-        item != ompi_list_get_end(&mca_iof_base.iof_components_opened);
+    for(item = ompi_list_get_first(&orte_iof_base.iof_components_opened);
+        item != ompi_list_get_end(&orte_iof_base.iof_components_opened);
         item = ompi_list_get_next(item)) {
-        mca_iof_base_component_t* component;
+        orte_iof_base_component_t* component;
  
         cli = (mca_base_component_list_item_t *) item;
-        component = (mca_iof_base_component_t *) cli->cli_component;
+        component = (orte_iof_base_component_t *) cli->cli_component;
 
-        ompi_output_verbose(10, mca_iof_base.iof_output, 
-            "mca_iof_base_select: initializing %s component %s",
+        ompi_output_verbose(10, orte_iof_base.iof_output, 
+            "orte_iof_base_select: initializing %s component %s",
             component->iof_version.mca_type_name,
             component->iof_version.mca_component_name);
 
         if (NULL == component->iof_init) {
-          ompi_output_verbose(10, mca_iof_base.iof_output, 
-              "mca_iof_base_select: no init function; ignoring component");
+          ompi_output_verbose(10, orte_iof_base.iof_output, 
+              "orte_iof_base_select: no init function; ignoring component");
         } else {
             bool allow_user;
             bool have_hidden;
             int priority;
-            mca_iof_base_module_t* module = component->iof_init(&priority, &allow_user, &have_hidden);
+            orte_iof_base_module_t* module = component->iof_init(&priority, &allow_user, &have_hidden);
 
             /* If the component didn't initialize, remove it from the opened
                list and remove it from the component repository */
             if (NULL == module) {
-                ompi_output_verbose(10, mca_iof_base.iof_output,
-                    "mca_iof_base_select: init returned failure");
+                ompi_output_verbose(10, orte_iof_base.iof_output,
+                    "orte_iof_base_select: init returned failure");
                 continue;
             }
 
@@ -80,29 +80,32 @@ int mca_iof_base_select(bool *allow_multi_user_threads, bool* have_hidden_thread
     }
 
     /* unload all components that were not selected */
-    item = ompi_list_get_first(&mca_iof_base.iof_components_opened);
-    while(item != ompi_list_get_end(&mca_iof_base.iof_components_opened)) {
+    item = ompi_list_get_first(&orte_iof_base.iof_components_opened);
+    while(item != ompi_list_get_end(&orte_iof_base.iof_components_opened)) {
         ompi_list_item_t* next = ompi_list_get_next(item);
-        mca_iof_base_component_t* component;
+        orte_iof_base_component_t* component;
         cli = (mca_base_component_list_item_t *) item;
-        component = (mca_iof_base_component_t *) cli->cli_component;
+        component = (orte_iof_base_component_t *) cli->cli_component;
         if(component != selected_component) {
-            ompi_output_verbose(10, mca_iof_base.iof_output,
-                "mca_iof_base_select: module %s unloaded",
+            ompi_output_verbose(10, orte_iof_base.iof_output,
+                "orte_iof_base_select: module %s unloaded",
                 component->iof_version.mca_component_name);
             mca_base_component_repository_release((mca_base_component_t *) component);
-            ompi_list_remove_item(&mca_iof_base.iof_components_opened, item);
+            ompi_list_remove_item(&orte_iof_base.iof_components_opened, item);
             OBJ_RELEASE(item);
         }
         item = next;
     }
 
     /* setup reference to selected module */
-    if(NULL != selected_module) {
-        *allow_multi_user_threads = selected_allow_user;
-        *have_hidden_threads = selected_have_hidden;
-        mca_iof = *selected_module;
+    if (NULL != selected_module) {
+        orte_iof = *selected_module;
+        return ORTE_SUCCESS;
     }
-    return OMPI_SUCCESS;
+
+    /* Oops -- this shouldn't happen */
+
+    ompi_output(orte_iof_base.iof_output, "iof:select: no components found!");
+    return ORTE_ERR_OUT_OF_RESOURCE;
 }
 

@@ -20,6 +20,8 @@
 #include <string.h>
 #include "class/ompi_bitmap.h"
 #include "util/output.h"
+#include "util/proc_info.h"
+#include "mca/ns/ns.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_header.h"
 #include "ptl_gm.h"
@@ -64,21 +66,21 @@ OBJ_CLASS_INSTANCE (mca_ptl_gm_peer_t, ompi_list_item_t, NULL, NULL);
 int
 mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
                       size_t nprocs,
-                      struct ompi_proc_t **ompi_procs,
+                      struct ompi_proc_t **orte_procs,
                       struct mca_ptl_base_peer_t **peers,
                       ompi_bitmap_t * reachable)
 {
     uint32_t i, j, num_peer_ptls = 1;
-    struct ompi_proc_t *ompi_proc;
+    struct ompi_proc_t *orte_proc;
     mca_ptl_gm_proc_t *ptl_proc;
     mca_ptl_gm_peer_t *ptl_peer;
     unsigned int lid;
     ompi_proc_t* local_proc = ompi_proc_local();
 
     for (i = 0; i < nprocs; i++) {
-        ompi_proc = ompi_procs[i];
-        if( ompi_proc == local_proc ) continue;
-        ptl_proc = mca_ptl_gm_proc_create ((mca_ptl_gm_module_t *) ptl, ompi_proc);
+        orte_proc = orte_procs[i];
+        if( orte_proc == local_proc ) continue;
+        ptl_proc = mca_ptl_gm_proc_create ((mca_ptl_gm_module_t *) ptl, orte_proc);
         if (NULL == ptl_proc) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }

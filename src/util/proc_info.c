@@ -12,7 +12,7 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -23,21 +23,24 @@
 #include <sys/types.h>
 #endif
 
-#include "include/constants.h"
-#include "runtime/runtime.h"
-#include "mca/ns/base/base.h"
-#include "mca/pcm/pcm.h"
-#include "util/proc_info.h"
-#include "util/sys_info.h"
-#include "util/session_dir.h"
+#include "include/orte_constants.h"
+#include "mca/base/base.h"
+#include "mca/base/mca_base_param.h"
 
-ompi_proc_info_t ompi_process_info = {
-    /*  .init =                 */   false,
+#include "util/proc_info.h"
+
+orte_proc_info_t orte_process_info = {
+    /*  .my_name =              */   NULL,
+    /*  .vpid_start =           */   0,
+    /*  .num_procs =            */   1,
     /*  .pid =                  */   0,
     /*  .seed =                 */   false,
+    /*  .daemon =               */   false,
+    /*  .singleton =            */   false,
+    /*  .ns_replica_uri =       */   NULL,
+    /*  .gpr_replica_uri =      */   NULL,
     /*  .ns_replica =           */   NULL,
     /*  .gpr_replica =          */   NULL,
-    /*  .my_universe            */   NULL,
     /*  .tmpdir_base =          */   NULL,
     /*  .top_session_dir =      */   NULL,
     /*  .universe_session_dir = */   NULL,
@@ -48,22 +51,36 @@ ompi_proc_info_t ompi_process_info = {
     /*  .sock_stderr =          */   NULL};
 
 
-int ompi_proc_info(void)
+int orte_proc_info(void)
 {
 
-    /* local variable */
-    int return_code=OMPI_SUCCESS;
-
-    if (ompi_process_info.init) {  /* already done this - don't do it again */
-        return(OMPI_SUCCESS);
+    int id, tmp;
+    
+    /* all other params are set elsewhere */
+    
+    id = mca_base_param_register_int("seed", NULL, NULL, NULL, (int)false);
+    mca_base_param_lookup_int(id, &tmp);
+    if (tmp) {
+        orte_process_info.seed = true;
+    } else {
+        orte_process_info.seed = false;
     }
 
+    if (NULL == orte_process_info.gpr_replica_uri) {
+        id = mca_base_param_register_string("gpr", "replica", "uri", NULL, NULL);
+        mca_base_param_lookup_string(id, &(orte_process_info.gpr_replica_uri));
+    }
+
+    if (NULL == orte_process_info.ns_replica_uri) {
+        id = mca_base_param_register_string("ns", "replica", "uri", NULL, NULL);
+        mca_base_param_lookup_string(id, &(orte_process_info.ns_replica_uri));
+    }
+
+    id = mca_base_param_register_string("tmpdir", "base", NULL, NULL, NULL);
+    mca_base_param_lookup_string(id, &(orte_process_info.tmpdir_base));
+
     /* get the process id */
-    ompi_process_info.pid = getpid();
+    orte_process_info.pid = getpid();
 
-
-    /* set process to inited */
-    ompi_process_info.init = true;
-
-    return return_code;
+    return ORTE_SUCCESS;
 }

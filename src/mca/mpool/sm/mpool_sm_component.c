@@ -120,8 +120,8 @@ mca_mpool_sm_init(bool *allow_multi_user_threads)
     
     /* create initial shared memory mapping */
     len=asprintf(&file_name,"%s/shared_mem_pool.%s",
-            ompi_process_info.job_session_dir,
-            ompi_system_info.nodename);
+            orte_process_info.job_session_dir,
+            orte_system_info.nodename);
     if ( 0 > len ) {
         return NULL;
     }

@@ -14,8 +14,8 @@
 /**
  * @file
  */
-#ifndef MCA_IOF_SVC_H
-#define MCA_IOF_SVC_H
+#ifndef ORTE_IOF_SVC_H
+#define ORTE_IOF_SVC_H
 
 #include "mca/iof/iof.h"
 #ifdef HAVE_SYS_TYPES_H
@@ -42,10 +42,10 @@ extern "C" {
  *
  */
 
-int mca_iof_svc_publish(
-    const ompi_process_name_t* name,
-    mca_iof_base_mode_t mode,
-    mca_iof_base_tag_t tag,
+int orte_iof_svc_publish(
+    const orte_process_name_t* name,
+    orte_iof_base_mode_t mode,
+    orte_iof_base_tag_t tag,
     int fd
 );
 
@@ -59,10 +59,10 @@ int mca_iof_svc_publish(
  *
  */
 
-int mca_iof_svc_unpublish(
-    const ompi_process_name_t* name,
-    ompi_ns_cmp_bitmask_t mask,
-    mca_iof_base_tag_t tag
+int orte_iof_svc_unpublish(
+    const orte_process_name_t* name,
+    orte_ns_cmp_bitmask_t mask,
+    orte_iof_base_tag_t tag
 );
 
 /**
@@ -75,10 +75,10 @@ int mca_iof_svc_unpublish(
  * @param fd        Local file descriptor.
  */
 
-int mca_iof_svc_push(
-    const ompi_process_name_t* dst_name,
-    ompi_ns_cmp_bitmask_t dst_mask,
-    mca_iof_base_tag_t dst_tag,
+int orte_iof_svc_push(
+    const orte_process_name_t* dst_name,
+    orte_ns_cmp_bitmask_t dst_mask,
+    orte_iof_base_tag_t dst_tag,
     int fd
 );
 
@@ -92,10 +92,10 @@ int mca_iof_svc_push(
  * @param fd        Local file descriptor.
  */
 
-int mca_iof_svc_pull(
-    const ompi_process_name_t* src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag,
+int orte_iof_svc_pull(
+    const orte_process_name_t* src_name,
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag,
     int fd
 );
 
@@ -103,10 +103,10 @@ int mca_iof_svc_pull(
  * Setup buffering for a specified set of endpoints.
  */
 
-int mca_iof_svc_buffer(
-    const ompi_process_name_t* src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag,
+int orte_iof_svc_buffer(
+    const orte_process_name_t* src_name,
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag,
     size_t buffer_size
 );
 
@@ -115,35 +115,35 @@ int mca_iof_svc_buffer(
  * from a specified set of peers.
  */
 
-int mca_iof_svc_subscribe(
-    const ompi_process_name_t* src_name,  
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag,
-    mca_iof_base_callback_fn_t cb,
+int orte_iof_svc_subscribe(
+    const orte_process_name_t* src_name,  
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag,
+    orte_iof_base_callback_fn_t cb,
     void* cbdata
 );
 
-int mca_iof_svc_unsubscribe(
-    const ompi_process_name_t* src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag
+int orte_iof_svc_unsubscribe(
+    const orte_process_name_t* src_name,
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag
 );
 
 /**
  * IOF svc Component 
  */
-struct mca_iof_svc_component_t { 
-    mca_iof_base_component_t super;
+struct orte_iof_svc_component_t { 
+    orte_iof_base_component_t super;
     int svc_debug;
     ompi_list_t svc_published;
     ompi_list_t svc_subscribed;
     ompi_mutex_t svc_lock;
     struct iovec svc_iov[1];
 };
-typedef struct mca_iof_svc_component_t mca_iof_svc_component_t;
+typedef struct orte_iof_svc_component_t orte_iof_svc_component_t;
 
-OMPI_COMP_EXPORT extern mca_iof_svc_component_t mca_iof_svc_component;
-OMPI_COMP_EXPORT extern mca_iof_base_module_t mca_iof_svc_module;
+extern orte_iof_svc_component_t mca_iof_svc_component;
+extern orte_iof_base_module_t orte_iof_svc_module;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

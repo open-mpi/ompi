@@ -13,7 +13,7 @@
  */
 
 #include "ompi_config.h"
-#include <string.h>
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -22,12 +22,12 @@
 #endif
     
 #include "include/constants.h"
+#include "mca/ns/ns_types.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
-#include "util/output.h"
 
 
-int mca_oob_ping(ompi_process_name_t* peer, struct timeval* tv)
+int mca_oob_ping(orte_process_name_t* peer, struct timeval* tv)
 {
     return(mca_oob.oob_ping(peer, tv));
 }

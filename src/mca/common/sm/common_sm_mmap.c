@@ -33,7 +33,6 @@
 #include "util/output.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
-#include "mca/pcm/pcm.h"
 #include "common_sm_mmap.h"
 
 

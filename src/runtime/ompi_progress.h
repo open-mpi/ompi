@@ -24,6 +24,10 @@ OMPI_DECLSPEC extern void ompi_progress_events(int);
 
 OMPI_DECLSPEC extern void ompi_progress(void);
 
+typedef int (*ompi_progress_callback_t)(void);
+
+OMPI_DECLSPEC int ompi_progress_register(ompi_progress_callback_t cb);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

@@ -12,9 +12,12 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include "include/constants.h"
+#include "include/orte_constants.h"
+#include "include/orte_schema.h"
+
 #include "mpi.h"
 #include "event/event.h"
 #include "group/group.h"
@@ -26,9 +29,9 @@
 #include "file/file.h"
 #include "info/info.h"
 #include "util/proc_info.h"
+#include "util/sys_info.h"
 #include "runtime/runtime.h"
 #include "runtime/ompi_progress.h"
-#include "runtime/ompi_rte_wait.h"
 #include "attribute/attribute.h"
 
 #include "mca/base/base.h"
@@ -44,17 +47,18 @@
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
 #include "mca/oob/base/base.h"
-#include "mca/ns/base/base.h"
-#include "mca/gpr/base/base.h"
+#include "mca/ns/ns.h"
+#include "mca/gpr/gpr.h"
+#include "mca/rml/rml.h"
+#include "mca/soh/soh.h"
+#include "mca/errmgr/errmgr.h"
 #include "mca/mpool/base/base.h"
+
 
 
 int ompi_mpi_finalize(void)
 {
     int ret;
-    ompi_rte_process_status_t my_status;
-    int my_rank;
-    mca_ns_base_jobid_t my_jobid;
 
     ompi_mpi_finalized = true;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
@@ -62,36 +66,30 @@ int ompi_mpi_finalize(void)
 #endif
 
     /* begin recording compound command */
-    ompi_registry.begin_compound_cmd();
-
-    /* Set process status to "terminating"*/
- 	my_rank = ompi_comm_rank(&ompi_mpi_comm_world);
-    my_status.rank = (int32_t)my_rank;
-    my_status.local_pid = (int32_t)ompi_process_info.pid;
-    my_status.nodename = strdup(ompi_system_info.nodename);
-    my_status.status_key = OMPI_PROC_TERMINATING;
-    my_status.exit_code = 0;
-    if (OMPI_SUCCESS != (ret = ompi_rte_set_process_status(&my_status, ompi_rte_get_self()))) {
-	return ret;
+/*    if (OMPI_SUCCESS != (ret = orte_gpr.begin_compound_cmd())) {
+        return ret;
+    }
+*/
+    /* Set process status to "at stg3" */
+    if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
+                                ORTE_PROC_STATE_AT_STG3, 0))) {
+        ORTE_ERROR_LOG(ret);
     }
 
     /* execute the compound command - no return data requested
      */
-    ompi_registry.exec_compound_cmd(OMPI_REGISTRY_NO_RETURN_REQUESTED);
-
-    /* wait for all processes to reach same state */
-	mca_oob_barrier();
- 
- 	/* need the following code to cleanup the job in the registry.
- 	 * once the state-of-health monitoring system is available, we will
- 	 * have that system perform this function. until then, we will have the
- 	 * rank 0 process do it.
- 	 */
- 	 if (0 == my_rank) {
- 	 	my_jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
- 	 	ompi_rte_job_shutdown(my_jobid);
- 	 }
- 	 
+/*    if (OMPI_SUCCESS != (ret = orte_gpr.exec_compound_cmd())) {
+        return ret;
+    }
+*/
+    /*
+     * Wait for everyone to get here
+     */
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
     /* Shut down any bindings-specific issues: C++, F77, F90 (may or
        may not be necessary...?) */
 
@@ -204,24 +202,18 @@ int ompi_mpi_finalize(void)
 	return ret;
     }
 
+    /* Set process status to "finalized" */
+    if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
+                                ORTE_PROC_STATE_FINALIZED, 0))) {
+        ORTE_ERROR_LOG(ret);
+    }
+
     /* Leave the RTE */
 
-    if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
+    if (OMPI_SUCCESS != (ret = orte_finalize())) {
 	return ret;
     }
 
-    /* Close down the MCA */
-
-    if (OMPI_SUCCESS != (ret = mca_base_close())) {
-	return ret;
-    }
-      
-    /* Leave OMPI land */
-
-    if (OMPI_SUCCESS != (ret = ompi_finalize())) {
-	return ret;
-    }
-      
     /* All done */
 
     return MPI_SUCCESS;

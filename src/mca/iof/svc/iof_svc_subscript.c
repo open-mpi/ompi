@@ -10,13 +10,13 @@
 
 
 
-static void mca_iof_svc_subscript_construct(mca_iof_svc_subscript_t* subscript)
+static void orte_iof_svc_subscript_construct(orte_iof_svc_subscript_t* subscript)
 {
     subscript->sub_endpoint = NULL;
 }
 
 
-static void mca_iof_svc_subscript_destruct(mca_iof_svc_subscript_t* subscript)
+static void orte_iof_svc_subscript_destruct(orte_iof_svc_subscript_t* subscript)
 {
     if(subscript->sub_endpoint != NULL)
         OBJ_RELEASE(subscript->sub_endpoint);
@@ -24,31 +24,31 @@ static void mca_iof_svc_subscript_destruct(mca_iof_svc_subscript_t* subscript)
 
 
 OBJ_CLASS_INSTANCE(
-    mca_iof_svc_subscript_t,
+    orte_iof_svc_subscript_t,
     ompi_list_item_t,
-    mca_iof_svc_subscript_construct,
-    mca_iof_svc_subscript_destruct);
+    orte_iof_svc_subscript_construct,
+    orte_iof_svc_subscript_destruct);
 
 /**
  *  Create a subscription/forwarding entry.
  */
 
-int mca_iof_svc_subscript_create(
-    const ompi_process_name_t *src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag,
-    const ompi_process_name_t *dst_name,
-    ompi_ns_cmp_bitmask_t dst_mask,
-    mca_iof_base_tag_t dst_tag)
+int orte_iof_svc_subscript_create(
+    const orte_process_name_t *src_name,
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag,
+    const orte_process_name_t *dst_name,
+    orte_ns_cmp_bitmask_t dst_mask,
+    orte_iof_base_tag_t dst_tag)
 {
-    mca_iof_svc_subscript_t* sub = OBJ_NEW(mca_iof_svc_subscript_t);
+    orte_iof_svc_subscript_t* sub = OBJ_NEW(orte_iof_svc_subscript_t);
     sub->src_name = *src_name;
     sub->src_mask = src_mask;
     sub->src_tag = src_tag;
     sub->dst_name = *dst_name;
     sub->dst_mask = dst_mask;
     sub->dst_tag = dst_tag;
-    sub->sub_endpoint = mca_iof_base_endpoint_match(&sub->dst_name, sub->dst_mask, sub->dst_tag);
+    sub->sub_endpoint = orte_iof_base_endpoint_match(&sub->dst_name, sub->dst_mask, sub->dst_tag);
     OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
     ompi_list_append(&mca_iof_svc_component.svc_subscribed, &sub->super);
     OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
@@ -59,25 +59,25 @@ int mca_iof_svc_subscript_create(
  *  Delete all matching subscriptions.
  */
 
-int mca_iof_svc_subscript_delete(
-    const ompi_process_name_t *src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag,
-    const ompi_process_name_t *dst_name,
-    ompi_ns_cmp_bitmask_t dst_mask,
-    mca_iof_base_tag_t dst_tag)
+int orte_iof_svc_subscript_delete(
+    const orte_process_name_t *src_name,
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag,
+    const orte_process_name_t *dst_name,
+    orte_ns_cmp_bitmask_t dst_mask,
+    orte_iof_base_tag_t dst_tag)
 {
     ompi_list_item_t *item;
     OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
     item =  ompi_list_get_first(&mca_iof_svc_component.svc_subscribed);
     while(item != ompi_list_get_end(&mca_iof_svc_component.svc_subscribed)) {
         ompi_list_item_t* next =  ompi_list_get_next(item);
-        mca_iof_svc_subscript_t* sub = (mca_iof_svc_subscript_t*)item;
+        orte_iof_svc_subscript_t* sub = (orte_iof_svc_subscript_t*)item;
         if (sub->src_mask == src_mask &&
-            ompi_name_server.compare(sub->src_mask,&sub->src_name,src_name) == 0 &&
+            orte_ns.compare(sub->src_mask,&sub->src_name,src_name) == 0 &&
             sub->src_tag == src_tag &&
             sub->dst_mask == dst_mask &&
-            ompi_name_server.compare(sub->dst_mask,&sub->dst_name,dst_name) == 0 &&
+            orte_ns.compare(sub->dst_mask,&sub->dst_name,dst_name) == 0 &&
             sub->dst_tag == dst_tag) {
             ompi_list_remove_item(&mca_iof_svc_component.svc_subscribed, item);
             OBJ_RELEASE(item);
@@ -93,16 +93,16 @@ int mca_iof_svc_subscript_delete(
  * Callback on send completion. Release send resources (fragment).
  */
                                                                                                         
-static void mca_iof_svc_subscript_send_cb(
+static void orte_iof_svc_subscript_send_cb(
     int status,
-    ompi_process_name_t* peer,
+    orte_process_name_t* peer,
     struct iovec* msg,
     int count,
     int tag,
     void* cbdata)
 {
-    mca_iof_base_frag_t* frag = (mca_iof_base_frag_t*)frag;
-    MCA_IOF_BASE_FRAG_RETURN(frag);
+    orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)frag;
+    ORTE_IOF_BASE_FRAG_RETURN(frag);
 }
 
 /**
@@ -110,28 +110,28 @@ static void mca_iof_svc_subscript_send_cb(
  *  server. Forward data out each matching endpoint.
  */
 
-int mca_iof_svc_subscript_forward(
-    mca_iof_svc_subscript_t* sub,
-    const ompi_process_name_t* src,
-    mca_iof_base_msg_header_t* hdr,
+int orte_iof_svc_subscript_forward(
+    orte_iof_svc_subscript_t* sub,
+    const orte_process_name_t* src,
+    orte_iof_base_msg_header_t* hdr,
     const unsigned char* data)
 {
     ompi_list_item_t* item;
     for(item  = ompi_list_get_first(&mca_iof_svc_component.svc_published);
         item != ompi_list_get_end(&mca_iof_svc_component.svc_published);
         item =  ompi_list_get_next(item)) {
-        mca_iof_svc_publish_t* pub = (mca_iof_svc_publish_t*)item;
+        orte_iof_svc_publish_t* pub = (orte_iof_svc_publish_t*)item;
         int rc;
 
-        if(sub->dst_tag != pub->pub_tag && pub->pub_tag != MCA_IOF_ANY)
+        if(sub->dst_tag != pub->pub_tag && pub->pub_tag != ORTE_IOF_ANY)
             continue;
 
         if(pub->pub_endpoint != NULL) {
-            rc = mca_iof_base_endpoint_forward(pub->pub_endpoint,src,hdr,data);
+            rc = orte_iof_base_endpoint_forward(pub->pub_endpoint,src,hdr,data);
         } else {
             /* forward */
-            mca_iof_base_frag_t* frag;
-            MCA_IOF_BASE_FRAG_ALLOC(frag,rc);
+            orte_iof_base_frag_t* frag;
+            ORTE_IOF_BASE_FRAG_ALLOC(frag,rc);
             frag->frag_hdr.hdr_msg = *hdr;
             frag->frag_len = frag->frag_hdr.hdr_msg.msg_len;
             frag->frag_iov[1].iov_len = frag->frag_len;
@@ -140,9 +140,9 @@ int mca_iof_svc_subscript_forward(
                 &pub->pub_proxy,
                 frag->frag_iov,
                 2,
-                MCA_OOB_TAG_IOF_SVC,
+                ORTE_RML_TAG_IOF_SVC,
                 0,
-                mca_iof_svc_subscript_send_cb,
+                orte_iof_svc_subscript_send_cb,
                 frag);
         }
         if(rc != OMPI_SUCCESS) {
@@ -150,7 +150,7 @@ int mca_iof_svc_subscript_forward(
         }
     }
     if(sub->sub_endpoint != NULL) {
-        return mca_iof_base_endpoint_forward(sub->sub_endpoint,src,hdr,data); 
+        return orte_iof_base_endpoint_forward(sub->sub_endpoint,src,hdr,data); 
     }
     return OMPI_SUCCESS;
 }

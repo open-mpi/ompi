@@ -18,6 +18,9 @@ SUBDIRS = sys
 
 noinst_HEADERS = \
         constants.h \
+        orte_constants.h \
+        orte_schema.h \
+        orte_types.h \
         totalview.h \
         types.h \
         ompi_socket_errno.h

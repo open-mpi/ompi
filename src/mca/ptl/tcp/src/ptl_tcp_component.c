@@ -41,6 +41,8 @@
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_module_exchange.h"
+#include "mca/ns/ns_types.h"
+
 #include "mca/oob/base/base.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
@@ -600,7 +602,7 @@ static void mca_ptl_tcp_component_accept(void)
  */
 static void mca_ptl_tcp_component_recv_handler(int sd, short flags, void* user)
 {
-    ompi_process_name_t guid;
+    orte_process_name_t guid;
     struct sockaddr_in addr;
     int retval;
     mca_ptl_tcp_proc_t* ptl_proc;
