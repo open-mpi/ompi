@@ -47,8 +47,9 @@ else
       echo "There is no test <$target> to run"
       echo "correct use: "
       echo "    run_tests help (this message)"
-      echo "    run_tests all   (to run all mca ns tests)"
-      echo "or  run_tests < test_gpr_replica >"
+      echo "    run_tests all   (to run all mca gpr tests)"
+      echo "or  run_tests with any of the following: "
+      echo "               < test_gpr_replica | test_gpr_proxy >"
       break
     endsw
   end
