@@ -13,6 +13,7 @@ headers = \
     argv.h \
     cmd_line.h \
     few.h \
+    hibit.h \
     if.h \
     output.h \
     path.h \
