@@ -50,8 +50,9 @@ void mpi_cart_sub_f(MPI_Fint *comm, MPI_Fint *remain_dims,
 		    MPI_Fint *new_comm, MPI_Fint *ierr)
 {
     MPI_Comm c_comm, c_new_comm;
+
     c_comm = MPI_Comm_f2c(*comm);
     c_new_comm = MPI_Comm_f2c(*new_comm);
 
-    *ierr = MPI_Cart_sub(c_comm, remain_dims, &c_new_comm);
+    *ierr = OMPI_INT_2_FINT(MPI_Cart_sub(c_comm, remain_dims, &c_new_comm));
 }

@@ -52,5 +52,5 @@ void mpi_barrier_f(MPI_Fint *comm, MPI_Fint *ierr)
 
     c_comm = MPI_Comm_f2c(*comm);
 
-    *ierr = MPI_Barrier(c_comm);
+    *ierr = OMPI_INT_2_FINT(MPI_Barrier(c_comm));
 }

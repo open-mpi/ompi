@@ -50,8 +50,17 @@ void mpi_cart_coords_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxdims,
 		       MPI_Fint *coords, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
-
-    c_comm = MPI_Comm_f2c(*comm);
+    int size;
+    OMPI_ARRAY_NAME_DECL(coords);
     
-    *ierr = MPI_Cart_coords(c_comm, *rank, *maxdims, coords);
+    c_comm = MPI_Comm_f2c(*comm);
+    size = OMPI_FINT_2_INT(*maxdims);
+
+    OMPI_ARRAY_FINT_2_INT_ALLOC(coords, size);
+    *ierr = OMPI_INT_2_FINT(MPI_Cart_coords(c_comm, 
+					    OMPI_FINT_2_INT(*rank),
+					    OMPI_FINT_2_INT(*maxdims),
+					    OMPI_ARRAY_NAME_CONVERT(coords)));
+    
+    OMPI_ARRAY_INT_2_FINT(coords, size);
 }

@@ -50,8 +50,25 @@ void mpi_cart_get_f(MPI_Fint *comm, MPI_Fint *maxdims, MPI_Fint *dims,
 		    MPI_Fint *periods, MPI_Fint *coords, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
+    int size;
+    OMPI_ARRAY_NAME_DECL(dims);
+    OMPI_ARRAY_NAME_DECL(periods);
+    OMPI_ARRAY_NAME_DECL(coords);
     
     c_comm = MPI_Comm_f2c(*comm);
+
+    size = OMPI_FINT_2_INT(*maxdims);
+    OMPI_ARRAY_FINT_2_INT_ALLOC(dims, size);
+    OMPI_ARRAY_FINT_2_INT_ALLOC(periods, size);
+    OMPI_ARRAY_FINT_2_INT_ALLOC(coords, size);
     
-    *ierr = MPI_Cart_get(c_comm, *maxdims, dims, periods, coords);
+    *ierr = OMPI_INT_2_FINT(MPI_Cart_get(c_comm,
+					 OMPI_FINT_2_INT(*maxdims), 
+					 OMPI_ARRAY_NAME_CONVERT(dims),
+					 OMPI_ARRAY_NAME_CONVERT(periods),
+					 OMPI_ARRAY_NAME_CONVERT(coords)));
+
+    OMPI_ARRAY_INT_2_FINT(dims, size);
+    OMPI_ARRAY_INT_2_FINT(periods, size);
+    OMPI_ARRAY_INT_2_FINT(coords, size);
 }

@@ -50,17 +50,13 @@ void mpi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval,
 		    char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
-    int size;
-    OMPI_ARRAY_NAME_DECL(flag);
+    OMPI_SINGLE_NAME_DECL(flag);
 
-    size = 1;
     c_comm = MPI_Comm_f2c(*comm);
     
-    OMPI_ARRAY_FINT_2_INT_ALLOC(flag, size);
-
     *ierr = OMPI_INT_2_FINT(MPI_Attr_get(c_comm, 
 					 OMPI_FINT_2_INT(*keyval),
 					 attribute_val, 
-					 OMPI_ARRAY_NAME_CONVERT(flag)));
-    OMPI_ARRAY_INT_2_FINT(flag, size);
+					 OMPI_SINGLE_NAME_CONVERT(flag)));
+    OMPI_SINGLE_INT_2_FINT(flag);
 }
