@@ -297,34 +297,31 @@ lam_show_title "System-specific tests"
 # of ac_cv_sizeof_int will contain the size of int and later
 # this will be #defined to SIZEOF_INT.
 #
-MPI_FINT_TYPE=
+MPI_FINT_TYPE="not found"
+AC_MSG_CHECKING([checking for type of MPI_Fint])
 if test "$LAM_SIZEOF_FORTRAN_INT" = 4 ; then
-    if test "$ac_cv_type_int32_t" == "yes"; then
-        AC_MSG_CHECKING([Yahoo .... I think we have a winner int32_t])
+    if test "$ac_cv_type_int32_t" = "yes"; then
         MPI_FINT_TYPE=int32_t
-    else
-    if test "$ac_cv_sizeof_int" = 4 ; then
-        AC_MSG_CHECKING([Yahoo .... I think we have a winner int])
+    elif test "$ac_cv_sizeof_int" = 4 ; then
         MPI_FINT_TYPE=int
     fi
-    fi
-fi 
-if test "$LAM_SIZEOF_FORTRAN_INT" = 8 ; then
-    if test "$ac_cv_type_int64_t" == "yes"; then
-        AC_MSG_CHECKING([Yahoo .... I think we have a winner int64_t])
+elif test "$LAM_SIZEOF_FORTRAN_INT" = 8 ; then
+    if test "$ac_cv_type_int64_t" = "yes"; then
         MPI_FINT_TYPE=int64_t
-    else
-    if test "$ac_cv_sizeof_int" = 8 ; then
-        AC_MSG_CHECKING([Yahoo .... I think we have a winner int])
+    elif test "$ac_cv_type_long_long" = "yes" -a "$ac_cv_sizeof_long_long" = 8; then
+        MPI_FINT_TYPE="long long"
+    elif test "$ac_cv_sizeof_long" = 8; then
+        MPI_FINT_TYPE="long long"
+    elif test "$ac_cv_sizeof_int" = 8 ; then
         MPI_FINT_TYPE=int
-    fi
     fi
 fi
-if test -z "$MPI_FINT_TYPE"; then
+AC_MSG_RESULT([$MPI_FINT_TYPE])
+if test "$MPI_FINT_TYPE" = "not found"; then
     AC_MSG_WARN([*** WARNING: Unable to find the right definition for MPI_Fint])
     AC_MSG_ERROR([Cannot continue])
 fi
-AC_DEFINE_UNQUOTED(MPI_Fint, $MPI_FINT_TYPE,[MPI_Fint is int32_t])
+AC_DEFINE_UNQUOTED(MPI_Fint, $MPI_FINT_TYPE, [Type of MPI_Fint])
 
 
 # all: endian

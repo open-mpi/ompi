@@ -22,7 +22,6 @@
  * Typedefs
  */
 typedef long MPI_Aint;
-typedef int MPI_Fint;
 typedef struct lam_communicator_t *MPI_Comm;
 typedef struct lam_datatype_t *MPI_Datatype;
 typedef struct lam_errhandler_t *MPI_Errhandler;
