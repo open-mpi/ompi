@@ -195,7 +195,11 @@ internal_set_nodelist(ompi_list_t *host_list,
     ompi_list_item_t *host_item;
     mca_llm_base_hostfile_node_t *host;
     int growlen = 0;
-    int i, j;
+    int i, j, k, resolved_node;
+    struct hostent *hent;
+    struct bproc_node_set_t nodeset;
+    struct sockaddr_in master_in;
+    int master_in_len;
 
     /* yeah, this sucks.  Need to figure out how to balance iteration
        cost vs. malloc costs */
@@ -209,16 +213,88 @@ internal_set_nodelist(ompi_list_t *host_list,
     *nodelist = realloc(*nodelist, (*nodelist_len + growlen) * sizeof(int));
     if (*nodelist == NULL) return -1;
 
+    /* get the list of host entries in the cluster */
+    if (bproc_nodelist(&nodeset) == -1) return -1;
 
-    /* BWB - need to extend this to do the proper name lookups */
+    /* get the master entry */
+    master_in_len = sizeof(master_in);
+    if (bproc_nodeaddr(BPROC_NODE_MASTER, (struct sockaddr*) &master_in,
+                       &master_in_len) < 0) {
+        return OMPI_ERR_IN_ERRNO;
+    }
+
     i = *nodelist_len;
     for (host_item = ompi_list_get_first(host_list) ;
          host_item != ompi_list_get_end(host_list) ;
          host_item = ompi_list_get_next(host_item)) {
         host = (mca_llm_base_hostfile_node_t*) host_item;
 
+        resolved_node = BPROC_NODE_NONE;
+
+        /* BWB - do we want to special case master and self for
+           older versions of bproc without support for a real
+           resolver? */
+
+        hent = gethostbyname(host->hostname);
+        if (NULL == hent) {
+            printf("gethostbyname failed for %s\n", host->hostname);
+        }
+
+        if (BPROC_NODE_NONE == resolved_node && NULL != hent) {
+            /* see if we are the master (not in the nodelist */
+            for (j = 0 ; hent->h_addr_list[j] != NULL ; ++j) {
+                if (memcmp(hent->h_addr_list[j], &master_in.sin_addr,
+                           hent->h_length) == 0) {
+                    resolved_node = BPROC_NODE_MASTER;
+                    break;
+                }
+            }
+        }
+
+        if (BPROC_NODE_NONE == resolved_node) {
+            /* so if there is just a 0, that will confuse things with
+               the resolver in odd ways.  So do this before searching
+               the list */
+            char *endptr;
+            long tmp;
+            tmp = strtol(host->hostname, &endptr, 10);
+            if (LONG_MIN != tmp && LONG_MAX != tmp) {
+                resolved_node = (int) tmp;
+            }
+            /* make sure there wasn't a parse issue */
+            if (! (host->hostname[0] != '\0' && *endptr == '\0')) {
+                /* there was a parse error in the string.  :( */
+                resolved_node = BPROC_NODE_NONE;
+            }
+        }
+
+        if (BPROC_NODE_NONE == resolved_node && NULL != hent) {
+            /* we aren't the master.  Look in bproc list for host entry */
+            for (j = 0 ; hent->h_addr_list[j] != NULL ; ++j) {
+                for (k = 0 ; k < nodeset.size ; ++k) {
+                    struct sockaddr_in *sin =
+                       (struct sockaddr_in*) &nodeset.node[k].addr;
+                    if (0 == memcmp(hent->h_addr_list[j],
+                                    &sin->sin_addr,
+                                    hent->h_length)) {
+                        resolved_node = nodeset.node[k].node;
+                        /* yeah, i don't like gotos either, but it is
+                           the easiest way to jump out of both for
+                           loops */
+                        goto have_node_list_entry;
+                    }
+                }
+            }
+        }
+have_node_list_entry:
+
+        if (BPROC_NODE_NONE == resolved_node) {
+            printf("Unable to resolve node %s\n", host->hostname);
+            return OMPI_ERR_NOT_FOUND;
+        }
+  
         for (j = 0 ; j < host->count ; ++j) {
-            (*nodelist)[i] = atoi(host->hostname);
+            (*nodelist)[i] = resolved_node;
             printf("pcm: bproc: %s has node number %d (%d) \n", 
                    host->hostname, (*nodelist)[i], i);
             i++;
