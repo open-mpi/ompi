@@ -284,7 +284,6 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     }
     /* is the peer instance willing to accept this connection */
     if(mca_oob_tcp_peer_accept(peer, sd) == false) {
-        ompi_output(0, "mca_oob_tcp_recv_handler: peer instance not willing to accept connection.");
         close(sd);
         return;
     }

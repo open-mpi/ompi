@@ -43,8 +43,10 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
     OMPI_THREAD_LOCK(&msg->msg_lock);
     while(msg->msg_complete == false) {
         if(ompi_event_progress_thread()) {
+            int rc;
             OMPI_THREAD_UNLOCK(&msg->msg_lock);
-            ompi_event_loop(OMPI_EVLOOP_ONCE);
+            rc = ompi_event_loop(OMPI_EVLOOP_ONCE);
+            assert(rc == 0);
             OMPI_THREAD_LOCK(&msg->msg_lock);
         } else {
            ompi_condition_wait(&msg->msg_condition, &msg->msg_lock);
