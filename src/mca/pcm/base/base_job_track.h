@@ -23,8 +23,6 @@
 #ifndef MCA_PCM_BASE_JOB_TRACK_H_
 #define MCA_PCM_BASE_JOB_TRACK_H_
 
-#include "ompi_config.h"
-
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -116,6 +114,7 @@ extern "C" {
     int mca_pcm_base_job_list_get_all_starters(mca_pcm_base_job_list_t *me,
                                                pid_t **pids, size_t *len,
                                                bool remove_started_pids);
+
 
     /**
      * Get all information associated with a given starter handle

@@ -7,6 +7,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <errno.h>
 
 #include "class/ompi_list.h"
 #include "runtime/runtime.h"
@@ -25,7 +26,7 @@ static int parse_keyval(int, mca_llm_base_hostfile_node_t*);
 static void
 parse_error()
 {
-    printf("hostfile: error reading hostfile at line %d, %s\n",
+    printf("Error reading hostfile at line %d, %s\n",
            mca_llm_base_yynewlines, mca_llm_base_string);
 }
 
@@ -155,7 +156,7 @@ mca_llm_base_parse_hostfile(const char *hostfile)
 
     mca_llm_base_yyin = fopen(hostfile, "r");
     if (NULL == mca_llm_base_yyin) {
-        printf("hostfile: could not open %s\n", hostfile);
+        printf("Could not open %s (%s)\n", hostfile, strerror(errno));
         OBJ_RELEASE(list);
         list = NULL;
         goto parse_exit;

@@ -308,7 +308,10 @@ OMPI_DECLSPEC    int ompi_rte_unregister(void);
      * future compatibility.  Will be used to specify how to kill
      * processes (0 will be same as a "kill <pid>"
      */
-OMPI_DECLSPEC    int ompi_rte_kill_proc(ompi_process_name_t *name, int flags);
+    OMPI_DECLSPEC int ompi_rte_kill_proc(ompi_process_name_t *name, 
+                                         int signal, 
+                                         int errorcode, 
+                                         int flags);
 
 
     /**
@@ -323,7 +326,10 @@ OMPI_DECLSPEC    int ompi_rte_kill_proc(ompi_process_name_t *name, int flags);
      * future compatibility.  Will be used to specify how to kill
      * processes (0 will be same as a "kill <pid>"
      */
-OMPI_DECLSPEC    int ompi_rte_kill_job(mca_ns_base_jobid_t jobid, int flags);
+    OMPI_DECLSPEC int ompi_rte_kill_job(mca_ns_base_jobid_t jobid, 
+                                        int signal,
+                                        int errorcode,
+                                        int flags);
 
 
     /**

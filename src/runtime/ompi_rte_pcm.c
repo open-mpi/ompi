@@ -13,6 +13,7 @@
 #include "runtime/runtime_internal.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
+#include "mca/pcm/base/base_kill_track.h"
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/base/base.h"
 
@@ -140,16 +141,22 @@ ompi_rte_spawn_procs(ompi_rte_spawn_handle_t *handle,
 
 
 int
-ompi_rte_kill_proc(ompi_process_name_t *name, int flags)
+ompi_rte_kill_proc(ompi_process_name_t *name, int signal, 
+                   int errorcode, int flags)
 {
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    return mca_pcm_base_kill_send_proc_msg(*name, signal, errorcode, flags);
 }
 
 
 int
-ompi_rte_kill_job(mca_ns_base_jobid_t jobid, int flags)
+ompi_rte_kill_job(mca_ns_base_jobid_t jobid, int signal, 
+                  int errorcode, int flags)
 {
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    if (jobid < 0 || jobid == MCA_NS_BASE_JOBID_MAX) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    return mca_pcm_base_kill_send_job_msg(jobid, signal, errorcode, flags);
 }
 
 

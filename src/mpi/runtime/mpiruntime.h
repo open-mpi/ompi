@@ -65,6 +65,13 @@ OMPI_DECLSPEC extern int ompi_mpi_thread_provided;
    */
   int ompi_mpi_finalize(void);
 
+    /**
+     * Abort the processes of comm
+     */
+    int ompi_mpi_abort(struct ompi_communicator_t* comm,
+                       int errcode, bool kill_remote_of_intercomm);
+
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
