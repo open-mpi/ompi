@@ -190,7 +190,57 @@ OBJ_CLASS_DECLARATION( ompi_convertor_t );
 
 #define ompi_convertor_progress( PCONV, IOVEC, COUNT, PLENGTH, FDSET )	\
     (PCONV)->fAdvance( (PCONV), (IOVEC), (COUNT), (PLENGTH), (FDSET) );
+/* 
+ * Return 0 if everything went OK and if there is still room before the complete
+ *          conversion of the data (need additional call with others input buffers )
+ *        1 if everything went fine and the data was completly converted
+ *       -1 something wrong occurs.
+ */
+static inline int ompi_convertor_pack( ompi_convertor_t* pConv,
+                                       struct iovec* iov, uint32_t* out_size,
+                                       uint32_t* max_data, int32_t* freeAfter )
+{
+    /* protect against over packing data */
+    if( pConv->bConverted == (pConv->pDesc->size * pConv->count) ) {
+	iov[0].iov_len = 0;
+	*out_size = 0;
+	return 1;  /* nothing to do */
+    }
+    
+    /* We dont allocate any memory. The packing function should allocate it
+     * if it need. If it's possible to find iovec in the derived datatype
+     * description then we dont have to allocate any memory.
+     */
+    return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
+}
 
+static inline int ompi_convertor_unpack( ompi_convertor_t* pConv,
+                                         struct iovec* iov, uint32_t* out_size,
+                                         uint32_t* max_data, int32_t* freeAfter )
+{
+   dt_desc_t *pData = pConv->pDesc;
+   uint32_t length;
+   
+   /* protect against over unpacking data */
+   if( pConv->bConverted == (pData->size * pConv->count) ) {
+       iov[0].iov_len = 0;
+       *max_data = 0;
+       return 1;  /* nothing to do */
+   }
+
+   if( pConv->flags & DT_FLAG_CONTIGUOUS ) {
+      if( iov[0].iov_base == NULL ) {
+         length = pConv->count * pData->size - pConv->bConverted;
+         iov[0].iov_base = pConv->pBaseBuf + pData->true_lb + pConv->bConverted;
+         if( iov[0].iov_len < length )
+             length = iov[0].iov_len;
+         iov[0].iov_len = length;
+         pConv->bConverted += length;
+         return (pConv->bConverted == (pData->size * pConv->count));
+      }
+   }
+   return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
+}
 
 /* and finally the convertor functions */
 OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_create( int remote_arch, int mode );
@@ -205,16 +255,6 @@ OMPI_DECLSPEC int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigne
                                                 void* pUserBuf, int remote_starting_point,
                                                 memalloc_fct_t allocfn );
 OMPI_DECLSPEC int ompi_convertor_need_buffers( ompi_convertor_t* pConvertor );
-OMPI_DECLSPEC int ompi_convertor_unpack( ompi_convertor_t* pConv,
-                                         struct iovec* out,
-                                         unsigned int* out_size,
-                                         unsigned int* max_data,
-                                         int* freeAfter );
-OMPI_DECLSPEC int ompi_convertor_pack( ompi_convertor_t* pConv, 
-                                       struct iovec* in, 
-                                       unsigned int* in_size,
-                                       unsigned int* max_data,
-                                       int* freeAfter );
 OMPI_DECLSPEC int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, unsigned int* pSize );
 OMPI_DECLSPEC int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, unsigned int* pSize );
 
@@ -230,12 +270,6 @@ OMPI_DECLSPEC int ompi_ddt_set_args( dt_desc_t* pData,
 OMPI_DECLSPEC int ompi_ddt_sndrcv( void *sbuf, int scount, ompi_datatype_t* sdtype, void *rbuf,
 		     int rcount, ompi_datatype_t* rdtype, int tag, MPI_Comm comm);
 
-static inline
-void* allocate_memory_for_ddt( unsigned int* pSize )
-{
-    if( *pSize == 0 ) return NULL;
-    return malloc( *pSize );
-}
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

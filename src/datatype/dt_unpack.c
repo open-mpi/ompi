@@ -342,39 +342,6 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
     return (pConv->bConverted == (pData->size * pConv->count));
 }
 
-int ompi_convertor_unpack( ompi_convertor_t* pConvertor,
-			   struct iovec* iov,
-			   uint32_t* out_size,
-			   uint32_t* max_data,
-			   int32_t* freeAfter )
-{
-   dt_desc_t *pData = pConvertor->pDesc;
-   uint32_t length;
-
-   *freeAfter = 0;
-   if( pConvertor->bConverted == (pData->size * pConvertor->count) ) {
-       iov[0].iov_len = 0;
-       *max_data = 0;
-       return 1;  /* nothing to do */
-   }
-
-   if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) {
-      if( iov[0].iov_base == NULL ) {
-         length = pConvertor->count * pData->size - pConvertor->bConverted;
-         iov[0].iov_base = pConvertor->pBaseBuf + pData->true_lb + pConvertor->bConverted;
-         if( iov[0].iov_len == 0 ) {  /* give me the whole buffer */
-         } else {  /* what about the next chunk ? */
-             if( iov[0].iov_len < length )
-                 length = iov[0].iov_len;
-         }
-         iov[0].iov_len = length;
-         pConvertor->bConverted += length;
-         return (pConvertor->bConverted == (pData->size * pConvertor->count));
-      }
-   }
-   return ompi_convertor_progress( pConvertor, iov, out_size, max_data, freeAfter );
-}
-
 /* Return value:
  *     0 : nothing has been done
  * positive value: number of item converted.
