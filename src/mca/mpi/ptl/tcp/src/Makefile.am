@@ -7,6 +7,7 @@ include $(top_lam_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = \
         -I$(top_lam_builddir)/src/include \
+        -I$(top_lam_builddir)/src/lam/event \
         -I$(top_lam_srcdir)/src \
         -I$(top_lam_srcdir)/src/include
 
