@@ -407,7 +407,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 	/* default value: If the user did not tell us where to look for the 
 	   executable, we assume the current working directory */
 	if ( !have_wdir ) {
-	    getcwd(cwd, MAXPATHLEN);
+	    getcwd(cwd, OMPI_PATH_MAX);
 	    sched->cwd = strdup(cwd);
 	}
 	sched->nodelist = nodelists[i];
