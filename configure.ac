@@ -289,6 +289,27 @@ AC_SUBST(MCA_topo_STATIC_SUBDIRS)
 AC_SUBST(MCA_topo_DYNAMIC_SUBDIRS)
 AC_SUBST(MCA_topo_ALL_SUBDIRS)
 
+MCA_oob_STATIC_SUBDIRS=
+MCA_oob_DYNAMIC_SUBDIRS=
+MCA_oob_ALL_SUBDIRS=
+AC_SUBST(MCA_oob_STATIC_SUBDIRS)
+AC_SUBST(MCA_oob_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_oob_ALL_SUBDIRS)
+
+MCA_pcm_STATIC_SUBDIRS=
+MCA_pcm_DYNAMIC_SUBDIRS=
+MCA_pcm_ALL_SUBDIRS=
+AC_SUBST(MCA_pcm_STATIC_SUBDIRS)
+AC_SUBST(MCA_pcm_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_pcm_ALL_SUBDIRS)
+
+MCA_registry_STATIC_SUBDIRS=
+MCA_registry_DYNAMIC_SUBDIRS=
+MCA_registry_ALL_SUBDIRS=
+AC_SUBST(MCA_registry_STATIC_SUBDIRS)
+AC_SUBST(MCA_registry_DYNAMIC_SUBDIRS)
+AC_SUBST(MCA_registry_ALL_SUBDIRS)
+
 
 ##################################
 # System-specific tests
@@ -406,6 +427,12 @@ AC_CONFIG_FILES([
     src/mca/Makefile
     src/mca/common/Makefile
     src/mca/lam/Makefile
+    src/mca/lam/oob/Makefile
+    src/mca/lam/oob/base/Makefile
+    src/mca/lam/pcm/Makefile
+    src/mca/lam/pcm/base/Makefile
+    src/mca/lam/registry/Makefile
+    src/mca/lam/registry/base/Makefile
     src/mca/mpi/Makefile
     src/mca/mpi/coll/Makefile
     src/mca/mpi/coll/base/Makefile
