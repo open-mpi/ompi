@@ -14,7 +14,7 @@
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_ib.h"
-#include "ptl_ib_sendfrag.h"
+//#include "ptl_ib_sendfrag.h"
 
 mca_ptl_ib_module_t mca_ptl_ib_module = {
     {
@@ -164,7 +164,8 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
     D_PRINT("");
 
     if (0 == offset) {
-        sendfrag = &((mca_ptl_ib_send_request_t*)sendreq)->req_frag;
+        sendfrag = (mca_ptl_ib_send_frag_t *)
+            &((mca_ptl_ib_send_request_t*)sendreq)->req_frag;
     } else {
 
         /* TODO: Implementation for messages > frag size */

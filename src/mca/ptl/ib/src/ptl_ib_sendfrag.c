@@ -174,3 +174,45 @@ mca_ptl_ib_send_frag_t* mca_ptl_ib_alloc_send_frag(
 
     return ib_send_frag;
 }
+
+
+int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl)
+{
+    int i, rc, num_send_frags;
+    ompi_list_item_t *item;
+    ompi_free_list_t *flist;
+    ib_buffer_t *ib_buf_ptr;
+    mca_ptl_ib_send_frag_t *ib_send_frag;
+    mca_ptl_ib_state_t *ib_state;
+
+    D_PRINT("");
+
+    flist = &((mca_ptl_ib_module_t *)ptl)->send_free;
+
+    ib_state = ((mca_ptl_ib_module_t *)ptl)->ib_state;
+
+    num_send_frags = ompi_list_get_size(&(flist->super));
+
+    /* Register the buffers */
+    for(i = 0; i < num_send_frags; i++) {
+
+        item = ompi_list_remove_first (&((flist)->super));
+
+        ib_send_frag = (mca_ptl_ib_send_frag_t *) item;
+
+        ib_buf_ptr = (ib_buffer_t *) &ib_send_frag->ib_buf;
+
+        rc = mca_ptl_ib_register_mem(ib_state->nic, ib_state->ptag,
+                (void*) ib_buf_ptr->buf, 
+                4096, &ib_buf_ptr->hndl);
+        if(rc != OMPI_SUCCESS) {
+            return OMPI_ERROR;
+        }
+
+        IB_PREPARE_SEND_DESC(ib_buf_ptr, 0);
+
+        ompi_list_append(&((flist)->super), item);
+    }
+
+    return OMPI_SUCCESS;
+}

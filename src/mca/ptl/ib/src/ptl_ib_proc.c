@@ -83,7 +83,6 @@ static mca_ptl_ib_proc_t* mca_ptl_ib_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 
 mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
 {
-    size_t size;
     mca_ptl_ib_proc_t* module_proc = NULL;
 
     /* Check if we have already created a IB proc
