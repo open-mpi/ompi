@@ -822,8 +822,6 @@ AC_CONFIG_FILES([
     src/mca/oob/base/Makefile
     src/mca/pcm/Makefile
     src/mca/pcm/base/Makefile
-    src/mca/registry/Makefile
-    src/mca/registry/base/Makefile
 
     src/mca/allocator/Makefile
     src/mca/allocator/base/Makefile
@@ -847,7 +845,6 @@ AC_CONFIG_FILES([
 
     src/dynamic-mca/oob/Makefile
     src/dynamic-mca/pcm/Makefile
-    src/dynamic-mca/registry/Makefile
 
     src/dynamic-mca/Makefile
     src/dynamic-mca/allocator/Makefile

@@ -15,8 +15,6 @@
 #include "mca/pcm/base/base.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
-#include "mca/registry/registry.h"
-#include "mca/registry/base/base.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/base.h"
 #include "mca/ptl/ptl.h"
@@ -84,10 +82,6 @@ void ompi_info::open_modules()
   mca_oob_base_open();
   module_map["oob"] = &mca_oob_base_modules_available;
 
-  // registry module opening not implemented yet
-  mca_registry_base_open();
-  module_map["registry"] = &mca_registry_base_modules_available;
-
   // coll module opening not implemented yet
   mca_coll_base_open();
   module_map["coll"] = &mca_coll_base_modules_opened;
@@ -135,7 +129,6 @@ void ompi_info::close_modules()
   if (opened_modules) {
     mca_pcm_base_close();
     mca_oob_base_close();
-    mca_registry_base_close();
     mca_coll_base_close();
     mca_pml_base_close();
     mca_ptl_base_close();
