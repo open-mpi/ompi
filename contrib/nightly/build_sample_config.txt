@@ -29,12 +29,12 @@
 #
 # Examples:
 #
-# warnings:1::--enable-debug --enable-picky
+# warnings:1::--enable-picky
 # default build:::
 # absolute vpath:::absolute:CFLAGS=-g
 # static build:::--disable-shared --enable-static
 #
-warnings:1::--enable-debug --enable-picky --disable-f77
-default build:::--disable-f77
+warnings:1::--enable-picky
+default build:::
 static build:::--disable-shared --enable-static
 non-threaded build:::--without-threads
