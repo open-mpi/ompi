@@ -63,10 +63,12 @@
 #endif
 
 #include "event.h"
+#include "lam/threads/mutex.h"
 
 extern struct event_list timequeue;
 extern struct event_list eventqueue;
 extern struct event_list addqueue;
+extern lam_mutex_t lam_event_lock;
 
 #define EVLIST_X_KQINKERNEL	0x1000
 
