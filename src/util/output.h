@@ -220,6 +220,9 @@ extern "C" {
    * using it in successive calls to LAM_OUTPUT(), lam_output(),
    * lam_output_switch(), and lam_output_close().
    *
+   * If lds is NULL, the default descriptions will be used, meaning
+   * that output will only be sent to stderr.
+   *
    * It is safe to have multiple threads invoke this function
    * simultaneously; their execution will be serialized in an
    * unspecified manner.
