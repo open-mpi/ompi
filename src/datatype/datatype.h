@@ -188,8 +188,6 @@ struct ompi_convertor_t {
 };
 OBJ_CLASS_DECLARATION( ompi_convertor_t );
 
-#define ompi_convertor_progress( PCONV, IOVEC, COUNT, PLENGTH, FDSET )	\
-    (PCONV)->fAdvance( (PCONV), (IOVEC), (COUNT), (PLENGTH), (FDSET) );
 /* 
  * Return 0 if everything went OK and if there is still room before the complete
  *          conversion of the data (need additional call with others input buffers )
