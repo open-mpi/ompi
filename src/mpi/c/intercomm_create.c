@@ -80,12 +80,12 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         MPI_Request req;
         
         /* local leader exchange group sizes lists */
-        rc =mca_pml.pml_irecv (&rsize, 1, MPI_INT, remote_leader, tag, bridge_comm,
+        rc =mca_pml.pml_irecv (&rsize, 1, MPI_INT, rleader, tag, bridge_comm,
                                &req );
         if ( rc != MPI_SUCCESS ) {
             goto err_exit;
         }
-        rc = mca_pml.pml_send ( &local_size, 1, MPI_INT, remote_leader, tag,
+        rc = mca_pml.pml_send ( &local_size, 1, MPI_INT, rleader, tag,
                                 MCA_PML_BASE_SEND_STANDARD, bridge_comm );
         if ( rc != MPI_SUCCESS ) {
             goto err_exit;
@@ -98,13 +98,13 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
     
     /* bcast size and list of remote processes to all processes in local_comm */
-    rc = local_comm->c_coll.coll_bcast ( &rsize, 1, MPI_INT, local_leader, 
+    rc = local_comm->c_coll.coll_bcast ( &rsize, 1, MPI_INT, lleader, 
                                          local_comm );
     if ( rc != MPI_SUCCESS ) {
         goto err_exit;
     }
 
-    rprocs = ompi_comm_get_rprocs ( local_comm, bridge_comm, local_leader,
+    rprocs = ompi_comm_get_rprocs ( local_comm, bridge_comm, lleader,
                                    remote_leader, tag, rsize );
     if ( NULL == rprocs ) {
         goto err_exit;
@@ -158,7 +158,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     }
     
  err_exit:
-    if ( NULL == rprocs ) {
+    if ( NULL != rprocs ) {
         free ( rprocs );
     }
     if ( OMPI_SUCCESS != rc ) {

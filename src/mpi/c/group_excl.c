@@ -50,6 +50,12 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
 
     }  /* end if( MPI_CHECK_ARGS) */
 
+    if ( n == group_pointer->grp_proc_count ) {
+        *new_group = MPI_GROUP_EMPTY;
+        OBJ_RETAIN(MPI_GROUP_EMPTY);
+        return MPI_SUCCESS;
+    }
+
     /*
      * pull out elements
      */
