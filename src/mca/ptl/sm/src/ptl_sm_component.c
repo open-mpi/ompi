@@ -372,10 +372,14 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                             (mca_ptl_base_recv_frag_t *)header_ptr);
                     if( frag_matched ) {
                         /* deliver data, and ack */
+                        mca_ptl_base_match_header_t *hdr = &header_ptr->super.frag_base.frag_header.hdr_match;
+                        mca_pml_base_recv_request_t *request = header_ptr->super.frag_request;
+                        request->req_bytes_packed = hdr->hdr_msg_length;
+                        request->req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
+                        request->req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
                         mca_ptl_sm_matched_same_base_addr(
                                 (mca_ptl_base_module_t *)&mca_ptl_sm,
                                 (mca_ptl_base_recv_frag_t *)header_ptr);
-                                    
                     }
                     break;
 
@@ -482,9 +486,13 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                             (mca_ptl_base_recv_frag_t *)header_ptr);
                     if( frag_matched ) {
                         /* deliver data, and ack */
+                        mca_ptl_base_match_header_t *hdr = &header_ptr->super.frag_base.frag_header.hdr_match;
+                        mca_pml_base_recv_request_t *request = header_ptr->super.frag_request;
+                        request->req_bytes_packed = hdr->hdr_msg_length;
+                        request->req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
+                        request->req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
                         mca_ptl_sm_matched((mca_ptl_base_module_t *)&mca_ptl_sm,
                                 (mca_ptl_base_recv_frag_t *)header_ptr);
-                                    
                     }
                     break;
 
