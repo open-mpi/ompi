@@ -166,27 +166,4 @@ typedef mca_pml_1_0_0_t mca_pml_t;
   /* pml v1.0 */ \
   "pml", 1, 0, 0
 
-
-/*
- * Global functions for MCA: overall PML open and close
- */
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-  int mca_pml_base_open(void);
-  int mca_pml_base_select(void);
-  int mca_pml_base_close(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
-/*
- * Globals
- */
-extern int mca_pml_base_output;
-extern lam_list_t mca_pml_base_modules_available;
-extern mca_pml_base_module_t mca_pml_base_selected_module;
-extern mca_pml_t mca_pml;
-
 #endif /* MCA_PML_H */

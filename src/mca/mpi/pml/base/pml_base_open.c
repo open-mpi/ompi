@@ -5,12 +5,11 @@
 #include "lam_config.h"
 
 #include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include "mca/mca.h"
 #include "mca/lam/base/base.h"
 #include "mca/mpi/pml/pml.h"
+#include "mca/mpi/pml/base/base.h"
 
 
 /*
