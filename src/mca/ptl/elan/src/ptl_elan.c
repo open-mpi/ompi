@@ -8,9 +8,9 @@
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_header.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
-#include "mca/ptl/base/ptl_base_recvreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/pml/base/pml_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_elan.h"
@@ -82,7 +82,7 @@ int mca_ptl_elan_finalize (struct mca_ptl_t *ptl)
 }
 
 int mca_ptl_elan_req_alloc (struct mca_ptl_t *ptl, 
-        struct mca_ptl_base_send_request_t **request)
+        struct mca_pml_base_send_request_t **request)
 {
     int             rc;
     return rc;
@@ -90,7 +90,7 @@ int mca_ptl_elan_req_alloc (struct mca_ptl_t *ptl,
 
 
 void mca_ptl_elan_req_return (struct mca_ptl_t *ptl, 
-        struct mca_ptl_base_send_request_t *request)
+        struct mca_pml_base_send_request_t *request)
 {
     return;
 }
@@ -115,7 +115,7 @@ void mca_ptl_elan_send_frag_return (struct mca_ptl_t *ptl,
 
 int mca_ptl_elan_put (struct mca_ptl_t* ptl, 
 		      struct mca_ptl_base_peer_t* ptl_base_peer, 
-		      struct mca_ptl_base_send_request_t* request,
+		      struct mca_pml_base_send_request_t* request,
 		      size_t offset,
 		      size_t size,
 		      int flags)
@@ -129,7 +129,7 @@ int mca_ptl_elan_put (struct mca_ptl_t* ptl,
 
 int mca_ptl_elan_get (struct mca_ptl_t* ptl, 
 		      struct mca_ptl_base_peer_t* ptl_base_peer, 
-		      struct mca_ptl_base_recv_request_t* request,
+		      struct mca_pml_base_recv_request_t* request,
 		      size_t offset,
 		      size_t size,
 		      int flags)

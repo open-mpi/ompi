@@ -20,8 +20,8 @@
 #include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_module_exchange.h"
 
-#include "mca/ptl/base/ptl_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_recvreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/pml/base/pml_base_recvreq.h"
 #include "ptl_elan.h"
 #include "ptl_elan_frag.h"
 
@@ -37,7 +37,7 @@ OBJ_CLASS_DECLARATION(mca_ptl_elan_recv_request_t);
  * fragment on every send request.
  */
 struct mca_ptl_elan_send_request_t {
-   mca_ptl_base_send_request_t super;
+   mca_pml_base_send_request_t super;
    mca_ptl_elan_send_frag_t req_frag; /* first fragment */
 };
 typedef struct mca_ptl_elan_send_request_t mca_ptl_elan_send_request_t;
