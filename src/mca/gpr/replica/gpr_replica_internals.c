@@ -115,23 +115,20 @@ ompi_list_t *gpr_replica_get_key_list(char *segment, char **tokens)
 {
     ompi_list_t *keys;
     char **token;
-    mca_gpr_keytable_t *keyptr, *dict_entry;
-
-    /* protect against errors */
-    if (NULL == segment || NULL == tokens) {
-	return NULL;
-    }
+    mca_gpr_keytable_t *keyptr;
 
     token = tokens;
     keys = OBJ_NEW(ompi_list_t);
+
+    /* protect against errors */
+    if (NULL == segment || NULL == tokens || NULL == *token) {
+	return keys;
+    }
+
     while (NULL != *token) {  /* traverse array of tokens until NULL */
 	keyptr = OBJ_NEW(mca_gpr_keytable_t);
-	if (NULL == (dict_entry = gpr_replica_find_dict_entry(segment, *token))) {
-	    keyptr->key = MCA_GPR_REPLICA_KEY_MAX;  /* indicate unknown token */
-	} else { /* found existing dictionary entry */
-	    keyptr->key = dict_entry->key;
-	    keyptr->token = strdup(dict_entry->token);
-	}
+	keyptr->token = strdup(*token);
+	keyptr->key = gpr_replica_get_key(segment, *token);
 	ompi_list_append(keys, &keyptr->item);
 	token++;
     }
@@ -286,6 +283,7 @@ int gpr_replica_delete_key(char *segment, char *token)
 
 int gpr_replica_empty_segment(mca_gpr_registry_segment_t *seg)
 {
+    /* need to free memory from each entry - remove_last returns pointer to the entry */
 
     /* empty the segment's registry */
     while (0 < ompi_list_get_size(&seg->registry_entries)) {
@@ -306,16 +304,24 @@ int gpr_replica_empty_segment(mca_gpr_registry_segment_t *seg)
     return OMPI_SUCCESS;
 }
 
-bool gpr_replica_check_key_list(ompi_list_t *key_list, mca_gpr_replica_key_t key)
+bool gpr_replica_check_key_list(ompi_registry_mode_t mode, ompi_list_t *key_list, mca_gpr_registry_core_t *entry)
 {
+    mca_gpr_keytable_t *keyptr;
+
+    for (keyptr = (mca_gpr_keytable_t*)ompi_list_get_first(&entry->keys);
+	 keyptr != (mca_gpr_keytable_t*)ompi_list_get_end(&entry->keys);
+	 keyptr = (mca_gpr_keytable_t*)ompi_list_get_next(keyptr)) {
+    }
+
     return true;
 }
 
 ompi_list_t *gpr_replica_test_internals(int level)
 {
-    ompi_list_t *test_results;
+    ompi_list_t *test_results, *keylist;
     ompi_registry_internal_test_results_t *result;
     char name[30], name2[30];
+    char *name3[30];
     int i, j;
     mca_gpr_replica_key_t segkey, key;
     mca_gpr_registry_segment_t *seg;
@@ -398,7 +404,7 @@ ompi_list_t *gpr_replica_test_internals(int level)
     /* check ability to define key within a segment */
     success = true;
     result = OBJ_NEW(ompi_registry_internal_test_results_t);
-    result->test = strdup("test-define-key");
+    result->test = strdup("test-define-key-segment");
     for (i=0; i<5 && success; i++) {
 	sprintf(name, "test-def-seg%d", i);
 	for (j=0; j<10 && success; j++) {
@@ -415,6 +421,29 @@ ompi_list_t *gpr_replica_test_internals(int level)
 	result->message = strdup("failed");
     }
     ompi_list_append(test_results, &result->item);
+
+
+    /* check ability to retrieve key within a segment */
+    success = true;
+    result = OBJ_NEW(ompi_registry_internal_test_results_t);
+    result->test = strdup("test-get-key-segment");
+    for (i=0; i<5 && success; i++) {
+	sprintf(name, "test-def-seg%d", i);
+	for (j=0; j<10 && success; j++) {
+ 	    sprintf(name2, "test-key%d", j);
+	    key = gpr_replica_get_key(name, name2);
+	    if (MCA_GPR_REPLICA_KEY_MAX == key) { /* got an error */
+		success = false;
+	    }
+	}
+    }
+    if (success) {
+	result->message = strdup("success");
+    } else {
+	result->message = strdup("failed");
+    }
+    ompi_list_append(test_results, &result->item);
+
 
     /* check ability to get dictionary entries */
     success = true;
@@ -455,5 +484,31 @@ ompi_list_t *gpr_replica_test_internals(int level)
 	}
 	ompi_list_append(test_results, &result->item);
     }
+
+
+    /* check ability to get key list */
+    success = true;
+    result = OBJ_NEW(ompi_registry_internal_test_results_t);
+    result->test = strdup("test-get-keylist");
+    for (i=0; i<5 && success; i++) {
+	sprintf(name, "test-def-seg%d", i);
+	for (j=0; j<10 && success; j++) {
+ 	    asprintf(&name3[j], "test-key%d", j);
+	}
+	name3[j] = NULL;
+	keylist = gpr_replica_get_key_list(name, name3);
+	if (0 >= ompi_list_get_size(keylist)) { /* error condition */
+	    success = false;
+	}
+    }
+    if (success) {
+	result->message = strdup("success");
+    } else {
+	result->message = strdup("failed");
+    }
+    ompi_list_append(test_results, &result->item);
+
+    /* check ability to empty segment */
+
     return test_results;
 }
