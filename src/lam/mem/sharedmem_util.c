@@ -46,9 +46,9 @@ void *lam_zero_alloc(size_t len, int mem_prot, int mem_flags)
 #else       /* this is __osf__ */
     
     if( mem_flags & MAP_PRIVATE ) {
-        //
-        // private memory allocation
-        //
+        /*
+         * private memory allocation
+         */
         fd = open("/dev/zero", O_RDWR);
         if (fd < 0)
         {
@@ -79,9 +79,9 @@ void *lam_zero_alloc(size_t len, int mem_prot, int mem_flags)
         memset(ptr, 0, paddedLen * sizeof(char));
         ptr = (char *)ptr + (pageSize - 1);
         ptr = (void *)((long)ptr & ~(pageSize - 1));
-        //
-        // shared memory allocation
-        //
+        /*
+         * shared memory allocation
+         */
         fd = -1;
         ptr = mmap(ptr, len, mem_prot, MAP_FIXED | mem_flags, fd, 0);
         
@@ -91,7 +91,7 @@ void *lam_zero_alloc(size_t len, int mem_prot, int mem_flags)
             perror(" mmap failed");
             return (void *)0;
         }
-    }  // end memory allocation
+    }  /* end memory allocation */
 #endif      /* __osf__ */
     
     return ptr;

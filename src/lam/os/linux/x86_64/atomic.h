@@ -132,9 +132,6 @@ inline int fetchNset(volatile int *addr, int setValue)
     return (inputValue);
 }
 
-//#endif		/* __INTEL_COMPILER */
-
-
 /*
  * Clear the lock
  */

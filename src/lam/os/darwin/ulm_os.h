@@ -20,7 +20,7 @@
 #define SMPFirstFragPayload 3496
 #define SMPSecondFragPayload 8192
 #define CACHE_ALIGNMENT 256
-// Reference: http://developer.apple.com/hardware/ve/caches.html gives cacheline as 32 bytes
+/* Reference: http://developer.apple.com/hardware/ve/caches.html gives cacheline as 32 bytes */
 
 #else
 #error

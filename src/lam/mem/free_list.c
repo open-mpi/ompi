@@ -221,10 +221,10 @@ int lam_frl_init_with(
     }
 
 
-    // initialize locks for memory pool and individual list and link locks
+    /* initialize locks for memory pool and individual list and link locks */
     for ( pool = 0; pool < flist->fl_nlists; pool++ ) {
         
-        // gain exclusive use of list
+        /* gain exclusive use of list */
         if ( 1 == lam_sgl_lock_list(flist->fl_free_lists[pool]) ) {
             
             while ( lam_sgl_get_bytes_pushed(flist->fl_free_lists[pool])
@@ -343,15 +343,15 @@ static void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *le
             return chunk;
         }
     }
-    // set len
+    /* set len */
     *len = sz_to_add;
     
     
-    // get chunk of memory
+    /* get chunk of memory */
     chunk = lam_mp_request_chunk(flist->fl_pool, index);
     if ( 0 == chunk )
     {
-        // increment failure count
+        /* increment failure count */
         lam_sgl_inc_consec_fail(flist->fl_free_lists[index]); 
         if ( lam_sgl_get_consec_fail(flist->fl_free_lists[index]) >=
              lam_sgl_get_max_consec_fail(flist->fl_free_lists[index]) )
@@ -394,7 +394,7 @@ static lam_flist_elt_t *lam_flr_request_elt(lam_free_list_t *flist, int pool_idx
 static void lam_frl_append(lam_free_list_t *flist, void *chunk, int pool_idx)
 {
     /* ASSERT: mp_chunk_sz >= fl_elt_per_chunk * fl_elt_size */
-    // push items onto list 
+    /* push items onto list  */
     lam_sgl_append_elt_chunk(flist->fl_free_lists[pool_idx],
         chunk, lam_mp_get_chunk_size(flist->fl_pool),
         flist->fl_elt_per_chunk, flist->fl_elt_size);
@@ -417,7 +417,7 @@ static int lam_frl_create_more_elts(lam_free_list_t *flist, int pool_idx)
         return err;
     }
     
-    // attach memory affinity
+    /* attach memory affinity */
     if ( flist->fl_enforce_affinity )
     {
         if (!lam_set_affinity(ptr, len_added,
