@@ -18,28 +18,39 @@ noinst_HEADERS = atomic_test.h
 
 TESTS = \
 	atomic_barrier \
+	atomic_barrier_noinline \
 	atomic_spinlock_serial \
 	atomic_spinlock_2 \
 	atomic_spinlock_5 \
 	atomic_spinlock_8 \
 	atomic_cmpset_32_serial \
+	atomic_cmpset_32_serial_noinline \
 	atomic_cmpset_64_serial \
-	atomic-test
+	atomic_cmpset_64_serial_noinline \
+	atomic-test \
+	atomic-test_noinline
 
 check_PROGRAMS = \
 	atomic_barrier \
+	atomic_barrier_noinline \
 	atomic_spinlock_serial \
 	atomic_spinlock_2 \
 	atomic_spinlock_5 \
 	atomic_spinlock_8 \
 	atomic_cmpset_32_serial \
+	atomic_cmpset_32_serial_noinline \
 	atomic_cmpset_64_serial \
-	atomic-test
+	atomic_cmpset_64_serial_noinline \
+	atomic-test \
+	atomic-test_noinline
 
 ######################################################################
 
 atomic_barrier_SOURCES = atomic_barrier.c
 atomic_barrier_LDADD = ../libasm.la
+
+atomic_barrier_noinline_SOURCES = atomic_barrier_noinline.c
+atomic_barrier_noinline_LDADD = ../libasm.la
 
 ######################################################################
 
@@ -68,12 +79,21 @@ atomic_spinlock_8_LDADD = ../libasm.la $(libs)
 atomic_cmpset_32_serial_SOURCES = atomic_cmpset_32_serial.c
 atomic_cmpset_32_serial_LDADD = ../libasm.la $(libs)
 
+atomic_cmpset_32_serial_noinline_SOURCES = atomic_cmpset_32_serial_noinline.c
+atomic_cmpset_32_serial_noinline_LDADD = ../libasm.la $(libs)
+
 ######################################################################
 
 atomic_cmpset_64_serial_SOURCES = atomic_cmpset_64_serial.c
 atomic_cmpset_64_serial_LDADD = ../libasm.la $(libs)
 
+atomic_cmpset_64_serial_noinline_SOURCES = atomic_cmpset_64_serial_noinline.c
+atomic_cmpset_64_serial_noinline_LDADD = ../libasm.la $(libs)
+
 ######################################################################
 
 atomic_test_SOURCES = atomic-test.c
 atomic_test_LDADD = ../libasm.la $(libs)
+
+atomic_test_noinline_SOURCES = atomic-test_noinline.c
+atomic_test_noinline_LDADD = ../libasm.la $(libs)
