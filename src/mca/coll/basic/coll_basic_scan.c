@@ -52,8 +52,6 @@ int mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
   /* Otherwise receive previous buffer and reduce. */
 
   else {
-    if (ompi_op_is_commute(op)) {
-
       /* Allocate a temporary buffer.  Rationale for this size is
          listed in coll_basic_reduce.c.  Use this temporary buffer to
          receive into, later. */
@@ -78,9 +76,6 @@ int mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
 	  free(free_buffer);
         }
 	return err;
-      }
-    } else {
-      pml_buffer = sbuf;
     }
 
     /* Receive the prior answer */
