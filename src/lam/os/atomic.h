@@ -24,7 +24,7 @@
 #endif
 
 #ifdef __CYGWIN__
-#include "lam/os/cgywin/atomic.h"
+#include "lam/os/cygwin/atomic.h"
 #endif
 
 #ifdef __ia64
