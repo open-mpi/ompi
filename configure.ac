@@ -1489,5 +1489,7 @@ AC_CONFIG_FILES([
     src/tools/ompid/Makefile
     src/tools/openmpi/Makefile
     src/tools/wrappers/Makefile
+
+    src/asm/test/Makefile
 ])
 AC_OUTPUT
