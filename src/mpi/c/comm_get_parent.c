@@ -37,6 +37,6 @@ int MPI_Comm_get_parent(MPI_Comm *parent)
      * This is also the return value required by MPI-2.
      */
 
-     *parent = &ompi_mpi_comm_parent;
+     *parent = ompi_mpi_comm_parent;
      return MPI_SUCCESS;
 }

@@ -273,7 +273,7 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
     new_jobid = ompi_name_server.create_jobid();
 
     /* get the spawn handle to start spawning stuff */
-    spawn_handle = ompi_rte_get_spawn_handle(OMPI_RTE_SPAWN_HIGH_QOS, true);
+    spawn_handle = ompi_rte_get_spawn_handle(OMPI_RTE_SPAWN_FROM_MPI, true);
 
     /* BWB - fix jobid, procs, and nodes */
     nodelist = ompi_rte_allocate_resources(spawn_handle, new_jobid, 0, maxprocs);
@@ -389,10 +389,10 @@ int ompi_comm_dyn_init (void)
     uint32_t jobid;
     size_t size;
     ompi_proc_t **myproc=NULL;
-    char *envvarname, *port_name=NULL;
+    char *envvarname=NULL, *port_name=NULL;
     char *oob_port=NULL;
     int tag, root=0, send_first=1;
-    ompi_communicator_t *newcomm;
+    ompi_communicator_t *newcomm=NULL;
     ompi_process_name_t *port_proc_name=NULL;
 
     /* get jobid */
