@@ -9,6 +9,7 @@
 #include "datatype/datatype.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/pml/base/pml_base_recvreq.h"
+#include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "ptl_elan.h"
 #include "ptl_elan_peer.h"
 #include "ptl_elan_proc.h"
@@ -77,7 +78,7 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_module_t *ptl,
     recv_frag->frag_recv.frag_base.frag_size = header->hdr_frag.hdr_frag_length;
 
     /* match with preposted requests */
-    matched = mca_ptl_base_recv_frag_match (
+    matched = ptl->super.ptl_match(
 	    recv_frag->frag_recv.frag_base.frag_owner,
 	    &recv_frag->frag_recv,
 	    &recv_frag->frag_recv.frag_base.frag_header.hdr_match); 
@@ -335,7 +336,7 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
     size_in = *size;
     ctx =  ptl->ptl_elan_ctx;
 
-    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_LAST;
+    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FIN;
     hdr->hdr_common.hdr_flags = flags;
     hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_frag_header_t);
     hdr->hdr_frag.hdr_frag_offset = offset;
@@ -712,7 +713,7 @@ mca_ptl_elan_drain_recv (mca_ptl_elan_component_t * emp)
                 /* a control fragment for a message */
                 mca_ptl_elan_ctrl_frag (ptl, header);
                 break;
-            case MCA_PTL_HDR_TYPE_LAST:
+            case MCA_PTL_HDR_TYPE_FIN:
                 /* a control fragment for a message */
                 mca_ptl_elan_last_frag (ptl, header);
 		break;

@@ -15,6 +15,7 @@
 #define MCA_PTL_HDR_TYPE_ACK    2
 #define MCA_PTL_HDR_TYPE_NACK   3
 #define MCA_PTL_HDR_TYPE_GET    4
+#define MCA_PTL_HDR_TYPE_FIN    5
 
 #define MCA_PTL_FLAGS_ACK_MATCHED     1
 #define MCA_PTL_FLAGS_ACK_AGGREGATE   2
