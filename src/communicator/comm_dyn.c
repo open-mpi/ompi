@@ -26,6 +26,7 @@
 
 #include "runtime/runtime.h"
 
+extern char **environ;
 
 int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                                ompi_process_name_t *port, int send_first,
