@@ -9,22 +9,8 @@
 #define ARR_BLK_SZ      20
 
 
-lam_class_info_t lam_array_item_cls = {"lam_array_item_t", &lam_object_cls, 
-    (class_init_t) lam_arr_item_init, (class_destroy_t) lam_obj_destroy};
 lam_class_info_t lam_array_cls = {"lam_array_t", &lam_object_cls, 
     (class_init_t) lam_arr_init, (class_destroy_t) lam_arr_destroy};
-
-/*
- *
- *      lam_list_link_item_t interface
- *
- */
-
-void lam_arr_item_init(lam_array_item_t *item)
-{
-    SUPER_INIT(item, lam_array_item_cls.cls_parent);
-}
-
 
 /*
  *

@@ -20,26 +20,6 @@ extern lam_class_info_t    lam_array_cls;
 
 /*
  *
- *      Array item interface
- *
- */
-
-struct lam_array_item_t
-{
-    lam_object_t            super;
-};
-typedef struct lam_array_item_t lam_array_item_t;
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-  void lam_arr_item_init(lam_array_item_t *item);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
-/*
- *
  *      Array interface
  *
  */
