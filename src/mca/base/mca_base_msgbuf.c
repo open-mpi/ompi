@@ -99,5 +99,5 @@ int  mca_base_msgbuf_unpack_string (mca_base_msgbuf_t bufid, char* strptr,
 int  mca_base_msgbuf_init ()
 {
   if (initialized) return (0);
-
+  return OMPI_ERR_NOT_SUPPORTED;
 }
