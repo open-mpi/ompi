@@ -10,6 +10,7 @@
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
+#include "mca/ns/base/base.h"
 #include "mca/pcm/pcm.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
@@ -49,7 +50,6 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     ompi_process_name_t *self;
 
     /* setup local name */
-    OBJ_CONSTRUCT(&mca_oob_name_self, ompi_process_name_t);
     self = mca_pcm.pcm_self();
     if(NULL == self) {
         ompi_output(0, "mca_oob_base_init: could not get PCM self pointer");
@@ -58,13 +58,12 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     mca_oob_name_self = *self;
 
     /* setup wildcard name */
-    OBJ_CONSTRUCT(&mca_oob_name_any, ompi_process_name_t);
-    mca_oob_name_any.cellid = -1;
-    mca_oob_name_any.jobid = -1;
-    mca_oob_name_any.vpid = -1;
+    mca_oob_name_any = *ompi_name_server.create_process_name(MCA_NS_BASE_CELLID_MAX,
+							    MCA_NS_BASE_JOBID_MAX,
+							    MCA_NS_BASE_VPID_MAX);
 
     /* setup seed daemons name */
-    OBJ_CONSTRUCT(&mca_oob_name_seed, ompi_process_name_t);
+    mca_oob_name_seed = *ompi_name_server.create_process_name(0,0,0);
 
     /* Traverse the list of available modules; call their init functions. */
     for (item = ompi_list_get_first(&mca_oob_base_components);

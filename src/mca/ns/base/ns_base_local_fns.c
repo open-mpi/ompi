@@ -34,7 +34,7 @@ ompi_process_name_t* ns_base_create_process_name(mca_ns_base_cellid_t cell,
 	return(NULL);
     }
 
-    newname = OBJ_NEW(ompi_process_name_t);
+    newname = (ompi_process_name_t*)malloc(sizeof(ompi_process_name_t));
     if (NULL == newname) { /* got an error */
 	return(NULL);
     }
@@ -45,6 +45,24 @@ ompi_process_name_t* ns_base_create_process_name(mca_ns_base_cellid_t cell,
     return(newname);
 }
 
+ompi_process_name_t* ns_base_copy_process_name(ompi_process_name_t* name)
+{
+    mca_ns_base_cellid_t cell;
+    mca_ns_base_jobid_t job;
+    mca_ns_base_vpid_t vpid;
+    ompi_process_name_t *newname;
+
+    if (NULL == name) {
+	return NULL;
+    }
+
+    cell = ns_base_get_cellid(name);
+    job = ns_base_get_jobid(name);
+    vpid = ns_base_get_vpid(name);
+
+    newname = ns_base_create_process_name(cell, job, vpid);
+    return newname;
+}
 
 char* ns_base_get_proc_name_string(const ompi_process_name_t* name)
 {
@@ -254,3 +272,12 @@ int ns_base_compare(ompi_ns_cmp_bitmask_t fields,
     return(0);
 }
 
+
+int ns_base_free_name(ompi_process_name_t* name)
+{
+    if (NULL != name) {
+	free(name);
+    }
+
+    return OMPI_SUCCESS;
+}

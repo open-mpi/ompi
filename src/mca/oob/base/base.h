@@ -39,9 +39,15 @@ extern ompi_process_name_t mca_oob_name_self;
  * Other constants
  */
 /**
- * Recieve from any tag.
+ * Receive from any tag.
  */
 #define MCA_OOB_TAG_ANY 0
+/**
+ * Service tags
+ */
+#define MCA_OOB_TAG_NS  1
+#define MCA_OOB_TAG_GPR 2
+
 
 /*
  * OOB API 

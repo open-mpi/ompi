@@ -69,5 +69,9 @@ mca_ns_base_vpid_t ns_replica_reserve_range(mca_ns_base_jobid_t job, mca_ns_base
 
 int ns_replica_free_name(ompi_process_name_t* name)
 {
+    if (NULL != name) {
+	free(name);
+    }
+
     return OMPI_SUCCESS;
 }
