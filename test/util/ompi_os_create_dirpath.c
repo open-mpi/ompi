@@ -14,6 +14,7 @@
 #include "util/sys_info.h"
 #include "util/os_path.h"
 #include "util/os_create_dirpath.h"
+#include "support.h"
 
 static bool test1(void);   /* trivial test */
 static bool test2(void);   /* test existing path, both with and without correct mode */
@@ -22,36 +23,36 @@ static bool test3(void);   /* test making a directory tree */
 
 int main(int argc, char* argv[])
 {
-    bool test1f, test2f, test3f;
-
-    test1f = test2f = test3f = false;
+    test_init("ompi_os_create_dirpath_t");
 
     ompi_sys_info(); /* initialize system info */
 
     /* All done */
 
     if (test1()) {
-        printf("test1 passed\n");
-        test1f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_os_create_dirpath test1 failed");
     }
 
     if (test2()) {
-        printf("test2 passed\n");
-        test2f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_os_create_dirpath test2 failed");
     }
 
     if (test3()) {
-        printf("test3 passed\n");
-        test3f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_os_create_dirpath test3 failed");
     }
 
-    if (test1f && test2f && test3f) {
-        printf("test succeeded\n");
-        return 0;
-    }
+    test_finalize();
+    return 0;
 
-    printf("test failed\n");
-    return -1;
 }
 
 
