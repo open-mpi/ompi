@@ -83,7 +83,7 @@ mca_pcm_cofs_job_can_spawn(lam_job_handle_t job_handle)
 #if 1
   /* Currently, have not coded up spawning support.  Need to do
      so soon */
-  return NULL;
+  return LAM_ERR_NOT_SUPPORTED;
 #else
   if (job_handle != NULL) {
     return LAM_ERR_NOT_SUPPORTED;
