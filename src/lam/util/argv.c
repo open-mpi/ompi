@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "lam/constants.h"
 #include "lam/util/argv.h"
 #include "lam/util/strncpy.h"
 
@@ -20,8 +21,8 @@
  * @param argv Pointer to an argv array.
  * @param arg Pointer to the string to append.
  *
- * @retval 0 Success
- * @retval -1 Failure
+ * @retval LAM_SUCCESS On success
+ * @retval LAM_ERROR On failure
  *
  * To add the first entry to an argv array, call this function with
  * (*argv == NULL).  This function will allocate an array of length 2;
@@ -44,7 +45,8 @@ lam_argv_add(int *argc, char ***argv, char *arg)
   if (NULL == *argv) {
     *argv = (char **) malloc(2 * sizeof(char *));
     if (NULL == *argv)
-      return (-1);
+      return LAM_ERROR;
+    *argc = 0;
     (*argv)[0] = NULL;
     (*argv)[1] = NULL;
   }
@@ -55,20 +57,20 @@ lam_argv_add(int *argc, char ***argv, char *arg)
     *argv = (char **) realloc((char *) *argv,
 			      (unsigned) (*argc + 2) * sizeof(char *));
     if (NULL == *argv)
-      return (-1);
+      return LAM_ERROR;
   }
 
   /* Set the newest element to point to a copy of the arg string */
 
   (*argv)[*argc] = (char *) malloc((unsigned) strlen(arg) + 1);
   if (NULL == (*argv)[*argc])
-    return (-1);
+    return LAM_ERROR;
 
   strcpy((*argv)[*argc], arg);
   *argc = *argc + 1;
   (*argv)[*argc] = NULL;
 
-  return (0);
+  return LAM_SUCCESS;
 }
 
 
@@ -92,11 +94,11 @@ lam_argv_free(char **argv)
   if (NULL == argv)
     return;
 
-  for (p = argv; *p; ++p) {
+  for (p = argv; NULL != *p; ++p) {
     free(*p);
   }
 
-  free((char *) argv);
+  free(argv);
 }
 
 
@@ -124,7 +126,7 @@ lam_argv_split(char *src_string, int delimiter)
   int argc = 0;
   size_t arglen;
 
-  while (src_string) {
+  while (*src_string) {
     p = src_string;
     arglen = 0;
 
@@ -142,7 +144,7 @@ lam_argv_split(char *src_string, int delimiter)
     /* tail argument, add straight from the original string */
 
     else if ('\0' == *p) {
-      if (0 == lam_argv_add(&argc, &argv, src_string))
+      if (LAM_ERROR == lam_argv_add(&argc, &argv, src_string))
 	return NULL;
     }
 
@@ -156,7 +158,7 @@ lam_argv_split(char *src_string, int delimiter)
       lam_strncpy(argtemp, src_string, arglen);
       argtemp[arglen] = '\0';
 
-      if (0 == lam_argv_add(&argc, &argv, argtemp)) {
+      if (LAM_ERROR == lam_argv_add(&argc, &argv, argtemp)) {
 	free(argtemp);
 	return NULL;
       }
@@ -170,7 +172,7 @@ lam_argv_split(char *src_string, int delimiter)
       lam_strncpy(arg, src_string, arglen);
       arg[arglen] = '\0';
 
-      if (0 == lam_argv_add(&argc, &argv, arg))
+      if (LAM_ERROR == lam_argv_add(&argc, &argv, arg))
 	return NULL;
     }
 
@@ -188,7 +190,8 @@ lam_argv_split(char *src_string, int delimiter)
  *
  * @param argv The input argv array.
  *
- * @return Number of entries in the argv array.
+ * @retval 0 If NULL is passed as argv.
+ * @retval count Number of entries in the argv array.
  *
  * The argv array must be NULL-terminated.
  */
@@ -199,7 +202,7 @@ lam_argv_count(char **argv)
   int i;
 
   if (NULL == argv)
-    return (0);
+    return 0;
 
   for (i = 0, p = argv; *p; i++, p++)
     continue;
@@ -321,7 +324,7 @@ lam_argv_copy(char **argv)
     return NULL;
 
   while (NULL != *argv) {
-    if (0 == lam_argv_add(&dupc, &dupv, *argv)) {
+    if (LAM_ERROR == lam_argv_add(&dupc, &dupv, *argv)) {
       lam_argv_free(dupv);
       return NULL;
     }
