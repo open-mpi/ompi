@@ -1,0 +1,38 @@
+#! /bin/csh -f
+#  Name
+#  ====
+#  run for mca llm tests
+
+# Arguements
+# ==========
+# 
+# test_list  =  no args runs all tests
+#              or
+#               base runs ompi llm base tests
+
+# Usage
+#
+# =====
+# To invoke this script, enter either
+#     run 
+# with no arguments to run all tests, or
+#     run <test_name>
+
+umask 007
+
+if ("x$1" == "x") then
+  cd base;
+  ./run_tests;
+  cd ..;
+else if ("$1" == "base") then
+  cd base;
+  ./run_tests;
+  cd ..;
+else
+  echo "correct use: "
+  echo "    run    (to run all class tests)"
+  echo "or  run < base >"
+  exit -1
+endif
+
+
