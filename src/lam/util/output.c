@@ -25,9 +25,9 @@
 /*
  * Private data
  */
-int verbose_stream = -1;
-int verbose_level = 0;
-lam_output_stream_t verbose = {
+static int verbose_stream = -1;
+static int verbose_level = 0;
+static lam_output_stream_t verbose = {
   /* debugging */
   false,
   /* verbose level */
