@@ -222,16 +222,6 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     frag->frag_segments[1].segment_ptr = frag->frag_recv.frag_base.frag_addr;
     frag->frag_segments[1].segment_length = frag->frag_size;
 
-#if 0
-    mx_return = mx_ipost(
-        ptl->mx_endpoint,
-        frag->frag_segments+1,
-        frag->frag_segment_count,
-        match_value,
-        MX_MATCH_MASK_NONE,
-        frag,
-        &frag->frag_request);
-#else
     mx_return = mx_irecv(
         ptl->mx_endpoint,
         frag->frag_segments+1,
@@ -240,7 +230,6 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
         MX_MATCH_MASK_NONE,
         frag,
         &frag->frag_request);
-#endif
     if(mx_return != MX_SUCCESS) {
         ompi_output(0, "mca_ptl_mx_match: mx_irecv() failed with status=%dn", mx_return);
         MCA_PTL_MX_RECV_FRAG_RETURN(frag);
@@ -312,7 +301,6 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
 
     /* register a callback function for matching */
     mx_register_match_callback(ptl->mx_endpoint, mca_ptl_mx_match, ptl);
-
     return ptl;
 }
 

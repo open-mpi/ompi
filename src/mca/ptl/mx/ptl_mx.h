@@ -11,6 +11,7 @@
 #include <myriexpress.h>
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
+#include "class/ompi_bitmap.h"
 #include "class/ompi_free_list.h"
 #include "class/ompi_proc_table.h"
 
@@ -127,6 +128,7 @@ struct mca_ptl_mx_module_t {
     bool mx_enabled;                     /**< flag to indicate if endpoint enabled */
     mx_endpoint_t mx_endpoint;           /**< endpoint */
     mx_endpoint_addr_t mx_endpoint_addr; /**< endpoint address */
+    volatile int32_t mx_recvs_posted;    /**< count of posted receives */
 #if OMPI_HAVE_THREADS
     ompi_thread_t mx_thread;             /**< thread for progressing outstanding requests */
 #endif
@@ -345,7 +347,4 @@ extern int mca_ptl_mx_send_continue(
 #if HAVE_MX_ICOMPLETED
 extern mx_return_t mx_icompleted(mx_endpoint_t endpoint, mx_status_t *status, uint32_t *result);
 #endif
-
-
 #endif
-
