@@ -155,7 +155,6 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     }
     map->map_addr = addr;
     map->map_size = size - (addr-(unsigned char *)seg);
-    close(fd);
 
     /* initialize the segment - only the first process to open the file */
     if( !file_previously_opened ) {
@@ -167,10 +166,13 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
 
     /* enable access by other processes on this host */
     if(fchmod(fd, 0600) != 0) {
-        ompi_output(0, "mca_common_sm_mmap_init: fchmod failed with errno=%d\n", errno);
+        ompi_output(0, "mca_common_sm_mmap_init: fchmod failed with errno=%d :: fd %d\n",
+                errno,fd);
         OBJ_RELEASE(map);
+        close(fd);
         return NULL;
     }
+    close(fd);
 
     return map;
 }
