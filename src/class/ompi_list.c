@@ -71,6 +71,12 @@ static void ompi_list_construct(ompi_list_t *list)
  */
 static void ompi_list_destruct(ompi_list_t *list)
 {
+    ompi_list_item_t *item;
+
+    while (NULL != (item = ompi_list_remove_first(list))) {
+	OBJ_RELEASE(item);
+    }
+
     ompi_list_construct(list);
 }
 
@@ -82,7 +88,7 @@ bool ompi_list_insert(ompi_list_t *list, ompi_list_item_t *item, long long idx)
 {
     /* Adds item to list at index and retains item. */
     int     i;
-    volatile ompi_list_item_t     *ptr, *next;
+    volatile ompi_list_item_t *ptr, *next;
     
     if ( idx >= list->ompi_list_length ) {
         return false;
@@ -116,7 +122,7 @@ void
 ompi_list_transfer(ompi_list_item_t *pos, ompi_list_item_t *begin,
                    ompi_list_item_t *end)
 {
-    ompi_list_item_t *tmp;
+    volatile ompi_list_item_t *tmp;
 
     if (pos != end) {
         /* remove [begin, end) */
