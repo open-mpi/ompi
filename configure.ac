@@ -224,6 +224,14 @@ if test -n "$F77"; then
     LAM_F77_FIND_EXT_SYMBOL_CONVENTION($F77)
 fi
 
+# checking the sizeof fortran interger. This is needed to define 
+# MPI_Fint. This is needed for C bindings and hence there is no
+# bearing of --enable-fortran flag on this test.
+# 
+LAM_SIZEOF_FORTRAN_INT=0
+LAM_GET_SIZEOF_FORTRAN_TYPE(INTEGER, LAM_SIZEOF_FORTRAN_INT)
+#AC_DEFINE_UNQUOTED(LAM_SIZEOF_FORTRAN_INT, $LAM_SIZEOF_FORTRAN_INT,
+#    [Size of fortran INTEGER])
 LAM_SETUP_F90
 
 
@@ -279,6 +287,45 @@ AC_DEFINE_UNQUOTED(LAM_HAVE_UNDERSCORE_VA_COPY, $LAM_HAVE_UNDERSCORE_VA_COPY,
 ##################################
 
 lam_show_title "System-specific tests"
+#
+# Determine what MPI_Fint shout be defined as. If the size of 
+# fortran integer is 4 then it is defined to either
+# int32_t or int. Similarly if the size of fortran integer
+# is 8 bytes then it is defined to either int64_t or int.
+# ac_cv_type_int32_t=yes implies that unint_32 was present.
+# similary ac_cv_type_int64_t=yes. Similarly the values 
+# of ac_cv_sizeof_int will contain the size of int and later
+# this will be #defined to SIZEOF_INT.
+#
+MPI_FINT_TYPE=
+if test "$LAM_SIZEOF_FORTRAN_INT" = 4 ; then
+    if test "$ac_cv_type_int32_t" == "yes"; then
+        AC_MSG_CHECKING([Yahoo .... I think we have a winner int32_t])
+        MPI_FINT_TYPE=int32_t
+    else
+    if test "$ac_cv_sizeof_int" = 4 ; then
+        AC_MSG_CHECKING([Yahoo .... I think we have a winner int])
+        MPI_FINT_TYPE=int
+    fi
+    fi
+fi 
+if test "$LAM_SIZEOF_FORTRAN_INT" = 8 ; then
+    if test "$ac_cv_type_int64_t" == "yes"; then
+        AC_MSG_CHECKING([Yahoo .... I think we have a winner int64_t])
+        MPI_FINT_TYPE=int64_t
+    else
+    if test "$ac_cv_sizeof_int" = 8 ; then
+        AC_MSG_CHECKING([Yahoo .... I think we have a winner int])
+        MPI_FINT_TYPE=int
+    fi
+    fi
+fi
+if test -z "$MPI_FINT_TYPE"; then
+    AC_MSG_WARN([*** WARNING: Unable to find the right definition for MPI_Fint])
+    AC_MSG_ERROR([Cannot continue])
+fi
+AC_DEFINE_UNQUOTED(MPI_Fint, $MPI_FINT_TYPE,[MPI_Fint is int32_t])
+
 
 # all: endian
 # all: SYSV semaphores
