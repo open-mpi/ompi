@@ -46,7 +46,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SEND_INIT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_send_init_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
+void mpi_send_init_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
+		     MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm,
+		     MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Datatype c_type = MPI_Type_f2c(*datatype);
     MPI_Request c_req;
@@ -54,7 +56,10 @@ void mpi_send_init_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *d
 
     c_comm = MPI_Comm_f2c (*comm);
 
-    *ierr = MPI_Send_init(buf, *count, c_type, *dest, *tag, c_comm, &c_req);
+    *ierr = OMPI_INT_2_FINT(MPI_Send_init(buf, OMPI_FINT_2_INT(*count),
+					  c_type, OMPI_FINT_2_INT(*dest),
+					  OMPI_FINT_2_INT(*tag), 
+					  c_comm, &c_req));
 
     if (MPI_SUCCESS == *ierr) {
         *request = MPI_Request_c2f(c_req);

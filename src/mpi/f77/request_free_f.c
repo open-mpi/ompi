@@ -49,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_FREE,
 void mpi_request_free_f(MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Request c_req = MPI_Request_f2c( *request ); 
-    *ierr = MPI_Request_free( &c_req );
+    *ierr = OMPI_INT_2_FINT(MPI_Request_free( &c_req ));
 
     /* This value comes from the MPI_REQUEST_NULL value in mpif.h.
        Do not change without consulting mpif.h! */

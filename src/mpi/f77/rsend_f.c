@@ -46,12 +46,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_RSEND,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_rsend_f(char *ibuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr)
+void mpi_rsend_f(char *ibuf, MPI_Fint *count, MPI_Fint *datatype,
+		 MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr)
 {
     MPI_Datatype c_type = MPI_Type_f2c(*datatype);
     MPI_Comm c_comm;
 
     c_comm = MPI_Comm_f2c (*comm);
 
-    *ierr = MPI_Rsend(ibuf, *count, c_type, *dest, *tag, c_comm);
+    *ierr = OMPI_INT_2_FINT(MPI_Rsend(ibuf, OMPI_FINT_2_INT(*count),
+				      c_type, OMPI_FINT_2_INT(*dest),
+				      OMPI_FINT_2_INT(*tag), c_comm));
 }

@@ -46,7 +46,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SENDRECV,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_sendrecv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, MPI_Fint *dest, MPI_Fint *sendtag, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *source, MPI_Fint *recvtag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr)
+void mpi_sendrecv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
+		    MPI_Fint *dest, MPI_Fint *sendtag, char *recvbuf,
+		    MPI_Fint *recvcount, MPI_Fint *recvtype,
+		    MPI_Fint *source, MPI_Fint *recvtag, MPI_Fint *comm,
+		    MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
     MPI_Datatype c_sendtype = MPI_Type_f2c(*sendtype);
@@ -54,8 +58,12 @@ void mpi_sendrecv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, MPI_
 
     c_comm = MPI_Comm_f2c (*comm);
 
-    *ierr = MPI_Sendrecv(sendbuf, *sendcount, c_sendtype,
-                         *dest, *sendtag, recvbuf, *recvcount,
-                         c_recvtype, *source, *recvtag, c_comm, 
-                         (MPI_Status*)status);
+    *ierr = OMPI_INT_2_FINT(MPI_Sendrecv(sendbuf, OMPI_FINT_2_INT(*sendcount),
+					 c_sendtype,
+					 OMPI_FINT_2_INT(*dest),
+					 OMPI_FINT_2_INT(*sendtag),
+					 recvbuf, *recvcount,
+					 c_recvtype, OMPI_FINT_2_INT(*source),
+					 OMPI_FINT_2_INT(*recvtag),
+					 c_comm, (MPI_Status*)status));
 }

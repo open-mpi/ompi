@@ -51,7 +51,7 @@ void mpi_start_f(MPI_Fint *request, MPI_Fint *ierr)
     MPI_Request c_req = MPI_Request_f2c(*request);
     MPI_Request tmp_req = c_req;
 
-    *ierr = MPI_Start(&c_req);
+    *ierr = OMPI_INT_2_FINT(MPI_Start(&c_req));
 
     if (MPI_SUCCESS == *ierr) {
         /* For a persistent request, the underlying request descriptor could
