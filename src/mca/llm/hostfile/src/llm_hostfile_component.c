@@ -51,6 +51,7 @@ const mca_llm_base_component_1_0_0_t mca_llm_hostfile_component = {
  * component variables handles
  */
 static int param_filename;
+static int param_filename_deprecated;
 static int param_priority;
 
 int
@@ -58,10 +59,12 @@ mca_llm_hostfile_component_open(void)
 {
     char *default_path = ompi_os_path(false, OMPI_SYSCONFDIR, 
                                       "openmpi-default-hostfile", NULL);
+    /* accept either OMPI_MCA_llm_hostfile_hostfile or
+       OMPI_MCA_hostfile */
     param_filename = mca_base_param_register_string("llm",
                                                     "hostfile",
                                                     "hostfile",
-                                                    NULL,
+                                                    "hostfile",
                                                     default_path);
     if (NULL != default_path) free(default_path);
 

@@ -151,6 +151,18 @@ main(int argc, char *argv[])
         return ret;
     }
 
+    /* get our hostfile, if we have one */
+    if (ompi_cmd_line_is_taken(cmd_line, "hostfile")) {
+        /* BWB - XXX - fix me.  We really should be setting this via
+         * an API rather than setenv.  But we don't have such an API just
+         * yet. */
+        char *buf = NULL;
+        asprintf(&buf, "OMPI_MCA_hostfile=%s", 
+                 ompi_cmd_line_get_param(cmd_line, "hostfile", 0, 0));
+        /* yeah, it leaks.  Can't do nothin' about that */
+        putenv(buf);
+   }
+
     /* get our numprocs */
     if (ompi_cmd_line_is_taken(cmd_line, "np")) {
         num_procs = atoi(ompi_cmd_line_get_param(cmd_line, "np", 0, 0));
