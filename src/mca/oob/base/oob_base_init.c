@@ -35,6 +35,7 @@ OBJ_CLASS_INSTANCE(
 );
 
 ompi_process_name_t mca_oob_name_self  = { MCA_NS_BASE_CELLID_MAX, MCA_NS_BASE_JOBID_MAX, MCA_NS_BASE_VPID_MAX };
+ompi_process_name_t mca_oob_name_seed  = { 0, 0, 0 };
 ompi_process_name_t mca_oob_name_any  = { MCA_NS_BASE_CELLID_MAX, MCA_NS_BASE_JOBID_MAX, MCA_NS_BASE_VPID_MAX };
 
 /**

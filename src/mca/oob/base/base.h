@@ -19,6 +19,7 @@
  */
 
 extern ompi_process_name_t mca_oob_name_any;
+extern ompi_process_name_t mca_oob_name_seed;
 extern ompi_process_name_t mca_oob_name_self;
 
 /**
@@ -29,6 +30,11 @@ extern ompi_process_name_t mca_oob_name_self;
  * Process name of self
  */
 #define MCA_OOB_NAME_SELF &mca_oob_name_self
+/**
+ * Process name of seed
+ */
+#define MCA_OOB_NAME_SEED &mca_oob_name_seed
+
 
 /*
  * Other constants
@@ -47,6 +53,7 @@ extern ompi_process_name_t mca_oob_name_self;
 #define MCA_OOB_TAG_EXEC        5
 #define MCA_OOB_TAG_DAEMON      6
 #define MCA_OOB_TAG_STDIO       7
+#define MCA_OOB_TAG_SCHED       8
 
 /*
  * OOB API 
