@@ -52,7 +52,7 @@ static inline void ompi_atomic_wmb(void)
  *
  *********************************************************************/
 
-#define OMPI_HAVE_ATOMIC_CMPSET_32
+#define OMPI_HAVE_ATOMIC_CMPSET_32 1
 static inline int ompi_atomic_cmpset_acq_32( volatile int32_t *addr,
                                              int32_t oldval, int32_t newval)
 {
@@ -91,7 +91,7 @@ static inline int ompi_atomic_cmpset_32( volatile int32_t *addr,
 #endif
 }
 
-#define OMPI_HAVE_ATOMIC_CMPSET_64
+#define OMPI_HAVE_ATOMIC_CMPSET_64 1
 static inline int ompi_atomic_cmpset_acq_64( volatile int64_t *addr,
                                              int64_t oldval, int64_t newval)
 {
@@ -129,9 +129,9 @@ static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
 #endif
 }
 
-#define OMPI_HAVE_ATOMIC_MATH_32
+#define OMPI_HAVE_ATOMIC_MATH_32 1
 
-#define OMPI_HAVE_ATOMIC_ADD_32
+#define OMPI_HAVE_ATOMIC_ADD_32 1
 static inline int32_t ompi_atomic_add_32(volatile int32_t *addr, int32_t delta)
 {
    return InterlockedExchangeAdd ((LONG volatile *) addr,
@@ -139,9 +139,9 @@ static inline int32_t ompi_atomic_add_32(volatile int32_t *addr, int32_t delta)
    
 }
 
-#define OMPI_HAVE_ATOMIC_MATH_64
+#define OMPI_HAVE_ATOMIC_MATH_64 1
 
-#define OMPI_HAVE_ATOMIC_ADD_64
+#define OMPI_HAVE_ATOMIC_ADD_64 1
 static inline int64_t ompi_atomic_add_64(volatile int64_t *addr, int64_t delta)
 {
 #if 0
@@ -153,7 +153,7 @@ static inline int64_t ompi_atomic_add_64(volatile int64_t *addr, int64_t delta)
    
 }
 
-#define OMPI_HAVE_ATOMIC_SUB_32
+#define OMPI_HAVE_ATOMIC_SUB_32 1
 static inline int32_t ompi_atomic_sub_32(volatile int32_t *addr, int32_t delta)
 {
    return InterlockedExchangeAdd( (LONG volatile *) addr,
@@ -161,7 +161,7 @@ static inline int32_t ompi_atomic_sub_32(volatile int32_t *addr, int32_t delta)
 
 }
 
-#define OMPI_HAVE_ATOMIC_SUB_64
+#define OMPI_HAVE_ATOMIC_SUB_64 1
 static inline int64_t ompi_atomic_sub_64(volatile int64_t *addr, int64_t delta)
 {
 #if 0
