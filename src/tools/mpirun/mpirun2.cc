@@ -6,6 +6,7 @@
 #include "ompi_config.h"
 
 #include "mca/ns/ns.h"
+#include "mca/pcm/base/base.h"
 #include "runtime/runtime.h"
 #include "mca/base/base.h"
 #include "util/cmd_line.h"
@@ -14,6 +15,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/param.h>
+
+extern char** environ;
 
 static long num_running_procs;
 
@@ -36,9 +39,8 @@ main(int argc, char *argv[])
     ompi_list_t *nodelist = NULL;
     ompi_list_t schedlist;
     mca_ns_base_jobid_t new_jobid;
-    int num_procs;
+    int num_procs = 1;
     ompi_rte_node_schedule_t *sched;
-    ompi_list_item_t *nodeitem;
     char cwd[MAXPATHLEN];
 
     /*
@@ -111,8 +113,8 @@ main(int argc, char *argv[])
     new_jobid = getpid();
 
     /* BWB - fix jobid, procs, and nodes */
-    nodelist = ompi_rte_allocate_resources(0, 0, 2);
-    if (NULL != nodelist) {
+    nodelist = ompi_rte_allocate_resources(new_jobid, 0, num_procs);
+    if (NULL == nodelist) {
         /* BWB show_help */
         printf("show_help: ompi_rte_allocate_resources failed\n");
         return -1;
@@ -123,11 +125,18 @@ main(int argc, char *argv[])
      */
     OBJ_CONSTRUCT(&schedlist,  ompi_list_t);
     sched = OBJ_NEW(ompi_rte_node_schedule_t);
-    OBJ_CONSTRUCT(&(sched->nodelist), ompi_list_t);
+    ompi_list_append(&schedlist, (ompi_list_item_t*) sched);
     ompi_cmd_line_get_tail(cmd_line, &(sched->argc), &(sched->argv));
-    sched->env = NULL;
+    mca_pcm_base_build_base_env(environ, &(sched->env));
     getcwd(cwd, MAXPATHLEN);
     sched->cwd = strdup(cwd);
+    sched->nodelist = nodelist;
+
+    if (sched->argc == 0) {
+        printf("no app to start\n");
+        return 1;
+    }
+
 
     /*
      * register the monitor
@@ -157,7 +166,7 @@ main(int argc, char *argv[])
     mca_base_close();
     ompi_finalize();
 
-    OBJ_DESTRUCT(&sched);
+    OBJ_DESTRUCT(&schedlist);
 
     return 0;
 }

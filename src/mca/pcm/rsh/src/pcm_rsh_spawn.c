@@ -25,13 +25,19 @@
 #include "runtime/runtime_types.h"
 #include "util/output.h"
 #include "util/argv.h"
+#include "util/numtostr.h"
 
-
+#if 1
 #define BOOTAGENT "mca_pcm_rsh_bootproxy"
+#else
+#define BOOTAGENT "cat"
+#endif
 #define PRS_BUFSIZE 1024
 
 static int internal_spawn_proc(int jobid, ompi_rte_node_schedule_t *sched,
-                               ompi_list_t *nodelist);
+                               ompi_list_t *nodelist, 
+                               int my_start_vpid, int global_start_vpid,
+                               int num_procs);
 
 
 bool
@@ -49,14 +55,36 @@ mca_pcm_rsh_spawn_procs(int jobid, ompi_list_t *schedlist)
 {
     ompi_list_item_t *sched_item, *node_item;
     ompi_rte_node_schedule_t *sched;
+    ompi_rte_node_allocation_t *node;
     ompi_list_t launch;
     ompi_list_t done;
     int ret, i;
     int width = 1;
+    int local_start_vpid = 0;
+    int global_start_vpid = 0;
+    int num_procs = 0;
 
     OBJ_CONSTRUCT(&launch, ompi_list_t);
     OBJ_CONSTRUCT(&done, ompi_list_t);
 
+
+
+    for (sched_item = ompi_list_get_first(schedlist) ;
+         sched_item != ompi_list_get_end(schedlist) ;
+         sched_item = ompi_list_get_next(sched_item)) {
+        sched = (ompi_rte_node_schedule_t*) sched_item;
+
+        for (node_item = ompi_list_get_first(sched->nodelist) ;
+             node_item != ompi_list_get_end(sched->nodelist) ;
+             node_item = ompi_list_get_next(node_item)) {
+            node = (ompi_rte_node_allocation_t*) node_item;
+            num_procs += node->count;
+        }
+    }
+    
+    /* BWB - make sure vpids are reserved */
+    local_start_vpid = global_start_vpid;
+    
     for (sched_item = ompi_list_get_first(schedlist) ;
          sched_item != ompi_list_get_end(schedlist) ;
          sched_item = ompi_list_get_next(sched_item)) {
@@ -74,7 +102,7 @@ mca_pcm_rsh_spawn_procs(int jobid, ompi_list_t *schedlist)
             /* find enough entries for this slice to go */
             for (i = 0 ;
                  i < width && node_item != ompi_list_get_end(sched->nodelist) ;
-                 node_item = ompi_list_get_next(node_item)) { }
+                 node_item = ompi_list_get_next(node_item), ++i) { }
             /* if we don't have anyone, get us out of here.. */
             if (i ==  0) {
                 continue;
@@ -88,7 +116,9 @@ mca_pcm_rsh_spawn_procs(int jobid, ompi_list_t *schedlist)
 
             /* do the launch to the first node in the list, passing
                him the rest of the list */
-            ret = internal_spawn_proc(jobid, sched, &launch);
+            ret = internal_spawn_proc(jobid, sched, &launch, 
+                                      local_start_vpid, global_start_vpid, 
+                                      num_procs);
             if  (OMPI_SUCCESS != ret) {
                 /* well, crap!  put ourselves back together, I guess.
                    Should call killjob */
@@ -98,6 +128,8 @@ mca_pcm_rsh_spawn_procs(int jobid, ompi_list_t *schedlist)
                                &done);
                 return ret;
             }
+            local_start_vpid += 
+                ((ompi_rte_node_allocation_t*) ompi_list_get_first(&launch))->count;
 
             /* copy the list over to the done part */
             ompi_list_join(&done, ompi_list_get_end(&done), &launch);
@@ -219,7 +251,8 @@ cleanup:
 
 static int
 internal_spawn_proc(int jobid, ompi_rte_node_schedule_t *sched,
-                    ompi_list_t *nodelist)
+                    ompi_list_t *nodelist, int my_start_vpid, 
+                    int global_start_vpid, int num_procs)
 {
     int kidstdin[2];            /* child stdin pipe */
     bool needs_profile = false;
@@ -235,6 +268,7 @@ internal_spawn_proc(int jobid, ompi_rte_node_schedule_t *sched,
     FILE *fp;
     int status;			/* exit status */
     int i;
+    char *tmp;
 
     start_node = (ompi_rte_node_allocation_t*) ompi_list_get_first(nodelist);
 
@@ -270,8 +304,24 @@ internal_spawn_proc(int jobid, ompi_rte_node_schedule_t *sched,
 
     /* build the command to start */
     ompi_argv_append(&cmdc, &cmdv, BOOTAGENT);
-    /* BWB - turn on debugging for now */
-    ompi_argv_append(&cmdc, &cmdv, "-v");
+
+    /* starting vpid for launchee's procs */
+    tmp = ltostr(my_start_vpid);
+    ompi_argv_append(&cmdc, &cmdv, "--local_start_vpid");
+    ompi_argv_append(&cmdc, &cmdv, tmp);
+    free(tmp);
+
+    /* global starting vpid for this pcm spawn */
+    tmp = ltostr(global_start_vpid);
+    ompi_argv_append(&cmdc, &cmdv, "--global_start_vpid");
+    ompi_argv_append(&cmdc, &cmdv, tmp);
+    free(tmp);
+
+    /* number of procs in this pcm spawn */
+    tmp = ltostr(num_procs);
+    ompi_argv_append(&cmdc, &cmdv, "--num_procs");
+    ompi_argv_append(&cmdc, &cmdv, tmp);
+    free(tmp);
 
     /* add the end of the .profile thing if required */
     if (needs_profile) {
@@ -293,7 +343,7 @@ internal_spawn_proc(int jobid, ompi_rte_node_schedule_t *sched,
     } else if (pid == 0) {
         /* child */
 
-        if ((dup2(kidstdin[1], 0) < 0)) {
+        if ((dup2(kidstdin[0], 0) < 0)) {
             perror(cmdv[0]);
             exit(errno);
         }
@@ -314,14 +364,17 @@ internal_spawn_proc(int jobid, ompi_rte_node_schedule_t *sched,
     } else {
         /* parent */
 
-        if (close(kidstdin[1])) {
+#if 0
+        if (close(kidstdin[0])) {
             kill(pid, SIGTERM);
             ret = OMPI_ERROR;
             goto proc_cleanup;
         }
+#endif
 
         /* send our stuff down the wire */
-        fp = fdopen(kidstdin[0], "w");
+        fp = fdopen(kidstdin[1], "a");
+        if (fp == NULL) { perror("fdopen"); abort(); }
         ret = mca_pcm_base_send_schedule(fp, jobid, sched, nodelist);
         fclose(fp);
         if (OMPI_SUCCESS != ret) {
