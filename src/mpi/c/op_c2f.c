@@ -27,9 +27,11 @@ MPI_Fint MPI_Op_c2f(MPI_Op op)
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == op || MPI_OP_NULL == op) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OP,
-                                    FUNC_NAME);
+
+    /* mapping an invalid handle to a null handle */
+    /* not invoking an error handler */
+    if (NULL == op) {
+		op = MPI_OP_NULL;
     }
   }
 
