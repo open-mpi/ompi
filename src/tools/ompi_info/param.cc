@@ -284,17 +284,17 @@ void ompi_info::do_config(bool want_all)
                        "double underscore")))) + string(")")
                    : "no");
   const string f90(OMPI_WANT_F90_BINDINGS ? "yes" : "no");
-  const string sthreads(OMPI_HAVE_SOLARIS_THREADS ? "yes" : "no");
-  const string pthreads(OMPI_HAVE_POSIX_THREADS ? "yes" : "no");
+  const string threads(OMPI_HAVE_SOLARIS_THREADS ? "solaris" :
+                       (OMPI_HAVE_POSIX_THREADS ? "posix" : "no"));
   const string memprofile(OMPI_ENABLE_MEM_PROFILE ? "yes" : "no");
   const string memdebug(OMPI_ENABLE_MEM_DEBUG ? "yes" : "no");
   const string debug(OMPI_ENABLE_DEBUG ? "yes" : "no");
   const string cprofiling(OMPI_ENABLE_MPI_PROFILING ? "yes" : "no");
   const string cxxprofiling(OMPI_ENABLE_MPI_PROFILING ? "yes" : "no");
-  const string f77profiling((OMPI_ENABLE_MPI_PROFILING && OMPI_WANT_F77_BINDINGS) ?
-                          "yes" : "no");
+  const string f77profiling((OMPI_ENABLE_MPI_PROFILING && 
+                             OMPI_WANT_F77_BINDINGS) ? "yes" : "no");
   const string f90profiling((OMPI_ENABLE_MPI_PROFILING && OMPI_WANT_F90_BINDINGS) ?
-                          "yes" : "no");
+                            "yes" : "no");
   const string cxxexceptions(OMPI_HAVE_CXX_EXCEPTION_SUPPORT ? "yes" : "no");
   int ompi_mpi_param_check = 3;
   const string paramcheck(0 == MPI_PARAM_CHECK ? "never" :
@@ -389,8 +389,7 @@ void ompi_info::do_config(bool want_all)
   out("Fortran90 profiling", "option:profiling:f90", f90profiling);
 
   out("C++ exceptions", "option:cxx_exceptions", cxxexceptions);
-  out("POSIX thread support", "option:pthreads", pthreads);
-  out("Solaris thread support", "option:solaris_threads", sthreads);
+  out("Thread support", "option:threads", threads);
 
   if (want_all) {
     
