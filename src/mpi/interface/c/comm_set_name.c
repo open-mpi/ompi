@@ -1,7 +1,5 @@
 /*
  * $HEADER$
- * 
- * $Id: comm_set_name.c,v 1.4 2004/01/07 08:37:02 jsquyres Exp $
  */
 
 #include <string.h>
