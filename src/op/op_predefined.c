@@ -70,7 +70,7 @@
     int i; \
     ompi_op_predefined_##type_name##_t *a = (ompi_op_predefined_##type_name##_t*) in; \
     ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
-    for (i = 0; i < *count; ++i, a++, b++ ) { \
+    for (i = 0; i < *count; ++i, ++a, ++b) { \
       if (a->v op b->v) { \
         b->v = a->v; \
         b->k = a->k; \
@@ -151,7 +151,7 @@ void ompi_mpi_op_sum_fortran_complex(void *in, void *out, int *count,
   int i;
   ompi_fortran_complex_t *a = (ompi_fortran_complex_t*) in;
   ompi_fortran_complex_t *b = (ompi_fortran_complex_t*) out;
-  for (i = 0; i < *count; ++i) {
+  for (i = 0; i < *count; ++i, ++b, ++a) {
     b->real += a->real;
     b->imag += a->imag;
   }
@@ -184,7 +184,7 @@ void ompi_mpi_op_prod_fortran_complex(void *in, void *out, int *count,
   ompi_fortran_complex_t *a = (ompi_fortran_complex_t*) in;
   ompi_fortran_complex_t *b = (ompi_fortran_complex_t*) out;
   ompi_fortran_complex_t temp;
-  for (i = 0; i < *count; ++i) {
+  for (i = 0; i < *count; ++i, ++a, ++b) {
     temp.real = a->real * b->real - a->imag * b->imag;
     temp.imag = a->imag * b->real + a->real * b->imag;
     *b = temp;
