@@ -14,27 +14,29 @@
 
 extern char *mca_llm_hostfile_filename;
 
-int 
-mca_llm_hostfile_allocate_resources(int jobid,
-                                    int nodes,
-                                    int procs,
-                                    ompi_list_t **nodelist)
+ompi_list_t*
+mca_llm_hostfile_allocate_resources(int jobid, int nodes, int procs)
 {
-    ompi_list_t *hostlist = NULL;
+    ompi_list_t *nodelist = NULL;
     int ret;
 
     /* start by getting the full list of available resources */
-    hostlist = mca_llm_base_parse_hostfile(mca_llm_hostfile_filename);
-    if (NULL == hostlist) {
-        return OMPI_ERROR;
+    nodelist = mca_llm_base_parse_hostfile(mca_llm_hostfile_filename);
+    if (NULL == nodelist) {
+        return NULL;
     }
 
-    ret = mca_llm_base_collapse_resources(hostlist);
+    ret = mca_llm_base_collapse_resources(nodelist);
     if (OMPI_SUCCESS != ret) {
-        return ret;
+        mca_llm_base_deallocate(nodelist);
+        return NULL;
     }
 
-    ret = mca_llm_base_map_resources(nodes, procs, hostlist);
-    *nodelist = hostlist;
-    return ret;
+    ret = mca_llm_base_map_resources(nodes, procs, nodelist);
+    if (OMPI_SUCCESS != ret) {
+        mca_llm_base_deallocate(nodelist);
+        return NULL;
+    }
+
+    return nodelist;
 }

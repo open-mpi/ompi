@@ -14,6 +14,9 @@
 static char *cmd1_str="diff ./test1_out ./test1_out_std";
 static char *cmd2_str="diff ./test2_out ./test2_out_std";
 
+extern void mca_llm_base_setup(void);
+
+
 int
 main(int argc, char *argv[])
 {
@@ -26,6 +29,9 @@ main(int argc, char *argv[])
     int result;           /* result of system call */
 
     test_init("parse_hostfile_t");
+
+    /* setup the llm */
+    mca_llm_base_setup();
 
     /* Open output files for the tests */
     test1_out = fopen("./test1_out", "w+" );
@@ -52,8 +58,8 @@ main(int argc, char *argv[])
         node = (ompi_rte_node_allocation_t*) nodeitem;
         fprintf(test1_out, "\t%s %d\n", node->hostname, node->count);
 
-        for (valpairitem = ompi_list_get_first(&(node->info));
-             valpairitem != ompi_list_get_end(&(node->info));
+        for (valpairitem = ompi_list_get_first(node->info);
+             valpairitem != ompi_list_get_end(node->info);
              valpairitem = ompi_list_get_next(valpairitem)) {
             valpair = (ompi_rte_valuepair_t*) valpairitem;
             fprintf(test1_out, "\t\t%s = %s\n", valpair->key, valpair->value);
@@ -81,8 +87,8 @@ main(int argc, char *argv[])
         node = (ompi_rte_node_allocation_t*) nodeitem;
         fprintf(test2_out, "\t%s %d\n", node->hostname, node->count);
 
-        for (valpairitem = ompi_list_get_first(&(node->info));
-             valpairitem != ompi_list_get_end(&(node->info));
+        for (valpairitem = ompi_list_get_first(node->info);
+             valpairitem != ompi_list_get_end(node->info);
              valpairitem = ompi_list_get_next(valpairitem)) {
             valpair = (ompi_rte_valuepair_t*) valpairitem;
             fprintf(test2_out, "\t\t%s = %s\n", valpair->key, valpair->value);

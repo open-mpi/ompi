@@ -45,7 +45,7 @@ struct ompi_rte_node_allocation_t {
     ompi_list_item_t super;
     char hostname[MAXHOSTNAMELEN];
     int count;
-    ompi_list_t info;    
+    ompi_list_t *info;    
 };
 typedef struct ompi_rte_node_allocation_t ompi_rte_node_allocation_t;
 OBJ_CLASS_DECLARATION(ompi_rte_node_allocation_t);
@@ -61,7 +61,7 @@ struct ompi_rte_node_schedule_t {
     int argc;
     char **env;
     char *cwd;
-    ompi_list_t nodelist;
+    ompi_list_t *nodelist;
 };
 typedef struct ompi_rte_node_schedule_t ompi_rte_node_schedule_t;
 OBJ_CLASS_DECLARATION(ompi_rte_node_schedule_t);

@@ -32,7 +32,8 @@ libmca_llm_base_la_SOURCES = \
 	llm_base_open.c \
 	llm_base_parse_hostfile.c \
 	llm_base_parse_hostfile_lex.l \
-	llm_base_select.c
+	llm_base_select.c \
+	llm_base_util.c
 
 # Conditionally install the header files
 

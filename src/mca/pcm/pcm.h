@@ -166,11 +166,10 @@ typedef char *
  *
  * @warning The type for jobid will change in the near future
  */
-typedef int
+typedef ompi_list_t*
 (*mca_pcm_base_allocate_resources_fn_t)(int jobid,
                                         int nodes,
-                                        int procs,
-                                        ompi_list_t **nodelist);
+                                        int procs);
 
 /**
  * Register a watch function for changes in the job status
@@ -208,8 +207,7 @@ typedef bool
  */
 typedef int
 (*mca_pcm_base_spawn_procs_fn_t)(int jobid, 
-                                 ompi_list_t schedule_list,
-                                 ompi_vpid_t start_vpid);
+                                 ompi_list_t *schedule_list);
 
 
 /**

@@ -172,3 +172,90 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
    */
   return OMPI_SUCCESS;
 }
+
+
+
+/*
+ *  interface type support
+ */
+
+static
+void
+ompi_rte_int_node_schedule_construct(ompi_object_t *obj)
+{
+    ompi_rte_node_schedule_t *sched = (ompi_rte_node_schedule_t*) obj;
+    sched->nodelist = OBJ_NEW(ompi_list_t);
+}
+
+
+static
+void
+ompi_rte_int_node_schedule_destruct(ompi_object_t *obj)
+{
+    ompi_rte_node_schedule_t *sched = (ompi_rte_node_schedule_t*) obj;
+    ompi_rte_node_allocation_t *node;
+    ompi_list_item_t *item;
+
+    while (NULL != (item = ompi_list_remove_first(sched->nodelist))) {
+        node = (ompi_rte_node_allocation_t*) item;
+        OBJ_RELEASE(node);
+    }
+
+    OBJ_RELEASE(sched->nodelist);
+}
+
+
+static
+void
+ompi_rte_int_node_allocation_construct(ompi_object_t *obj)
+{
+    ompi_rte_node_allocation_t *node = (ompi_rte_node_allocation_t*) obj;
+    node->info = OBJ_NEW(ompi_list_t);
+}
+
+
+static
+void
+ompi_rte_int_node_allocation_destruct(ompi_object_t *obj)
+{
+    ompi_rte_node_allocation_t *node = (ompi_rte_node_allocation_t*) obj;
+    ompi_rte_valuepair_t *valpair;
+    ompi_list_item_t *item;
+
+    while (NULL != (item = ompi_list_remove_first(node->info))) {
+        valpair = (ompi_rte_valuepair_t*) item;
+        OBJ_RELEASE(valpair);
+    }
+
+    OBJ_RELEASE(node->info);
+}
+
+
+static
+void
+ompi_rte_int_valuepair_construct(ompi_object_t *obj)
+{
+    ompi_rte_valuepair_t *valpair = (ompi_rte_valuepair_t*) obj;
+    valpair->key = NULL;
+    valpair->value = NULL;
+}
+
+
+static
+void
+ompi_rte_int_valuepair_destruct(ompi_object_t *obj)
+{
+    ompi_rte_valuepair_t *valpair = (ompi_rte_valuepair_t*) obj;
+    if (NULL != valpair->key) free(valpair->key);
+    if (NULL != valpair->value) free(valpair->value);
+}
+
+OBJ_CLASS_INSTANCE(ompi_rte_node_schedule_t, ompi_list_item_t,
+                   ompi_rte_int_node_schedule_construct,
+                   ompi_rte_int_node_schedule_destruct);
+OBJ_CLASS_INSTANCE(ompi_rte_node_allocation_t, ompi_list_item_t, 
+                   ompi_rte_int_node_allocation_construct, 
+                   ompi_rte_int_node_allocation_destruct);
+OBJ_CLASS_INSTANCE(ompi_rte_valuepair_t, ompi_list_item_t, 
+                   ompi_rte_int_valuepair_construct,
+                   ompi_rte_int_valuepair_destruct);

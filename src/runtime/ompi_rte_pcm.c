@@ -21,14 +21,13 @@ ompi_rte_can_spawn(void)
 
 
 int
-ompi_rte_spawn_procs(int jobid, ompi_list_t schedule_list,
-                     ompi_vpid_t start_vpid)
+ompi_rte_spawn_procs(int jobid, ompi_list_t *schedule_list)
 {
     if (NULL == mca_pcm.pcm_spawn_procs) {
         return OMPI_ERROR;
     }
 
-    return mca_pcm.pcm_spawn_procs(jobid, schedule_list, start_vpid);
+    return mca_pcm.pcm_spawn_procs(jobid, schedule_list);
 }
 
 
@@ -36,7 +35,7 @@ ompi_process_name_t*
 ompi_rte_get_self(void)
 {
     if (NULL == mca_pcm.pcm_self) {
-        return OMPI_ERROR;
+        return NULL;
     }
 
     return mca_pcm.pcm_self();

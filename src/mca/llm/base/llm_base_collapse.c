@@ -18,13 +18,13 @@ has_conflicts(ompi_rte_node_allocation_t *a, ompi_rte_node_allocation_t *b)
     ompi_rte_valuepair_t *a_val, *b_val;
     ompi_list_item_t *a_item, *b_item;
 
-    for (a_item = ompi_list_get_first(&(a->info)) ;
-         a_item != ompi_list_get_end(&(a->info)) ;
+    for (a_item = ompi_list_get_first(a->info) ;
+         a_item != ompi_list_get_end(a->info) ;
          a_item = ompi_list_get_next(a_item)) {
         a_val = (ompi_rte_valuepair_t*) a_item;
 
-        for (b_item = ompi_list_get_first(&(b->info)) ;
-             b_item != ompi_list_get_end(&(b->info)) ;
+        for (b_item = ompi_list_get_first(b->info) ;
+             b_item != ompi_list_get_end(b->info) ;
              b_item = ompi_list_get_next(b_item)) {
             b_val = (ompi_rte_valuepair_t*) b_item;
 
@@ -47,8 +47,8 @@ keyval_merge(ompi_rte_node_allocation_t *new, ompi_rte_node_allocation_t *old)
 {
     ompi_list_item_t *old_item;
 
-    while (NULL != (old_item = ompi_list_remove_first(&(old->info)))) {
-        ompi_list_append(&(new->info), old_item);
+    while (NULL != (old_item = ompi_list_remove_first(old->info))) {
+        ompi_list_append(new->info, old_item);
     }
 }
 

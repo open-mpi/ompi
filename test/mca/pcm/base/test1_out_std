@@ -2,44 +2,10 @@
 1
 1
 12 ./sched_comm
-37
-24 SECURITYSESSIONID=20f500
-20 HOME=/Users/bbarrett
-15 SHELL=/bin/tcsh
-13 USER=bbarrett
-192 PATH=/Users/bbarrett/research/Software/powerpc-apple-darwin7/bin:/Users/bbarrett/Software/powerpc-apple-darwin7/bin:/sw/bin:/sw/sbin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin:/usr/local/bin
-33 __CF_USER_TEXT_ENCODING=0x1F5:0:0
-27 TERM_PROGRAM=Apple_Terminal
-24 TERM_PROGRAM_VERSION=100
-16 TERM=xterm-color
-16 LOGNAME=bbarrett
-17 HOSTTYPE=powermac
-12 VENDOR=apple
-13 OSTYPE=darwin
-16 MACHTYPE=powerpc
-7 SHLVL=1
-57 PWD=/Users/bbarrett/research/ompi/trunk/test/mca/pcm/base
-14 GROUP=bbarrett
-17 HOST=fluffy.local
-27 OMPI_MCA_verbose=level:1000
-25 BWB_HAVE_RUN_TCSHRC_PRE=1
-164 MANPATH=::/Users/bbarrett/research/Software/powerpc-apple-darwin7/man:/Users/bbarrett/Software/powerpc-apple-darwin7/man:/sw/share/man:/usr/share/man:/usr/X11R6/man
-48 INFOPATH=/sw/share/info:/sw/info:/usr/share/info
-43 PERL5LIB=/sw/lib/perl5:/sw/lib/perl5/darwin
-33 XAPPLRESDIR=/sw/etc/app-defaults/
-10 DISPLAY=:0
-30 BWB_ARCH=powerpc-apple-darwin7
-26 ARCH=powerpc-apple-darwin7
-21 BWB_HAVE_RUN_TCSHRC=1
-50 MSP=/Users/bbarrett/Software/powerpc-apple-darwin7
-126 LD_LIBRARY_PATH=/Users/bbarrett/research/Software/powerpc-apple-darwin7/lib:/Users/bbarrett/Software/powerpc-apple-darwin7/lib
-60 DDIR=/Users/bbarrett/research/Software/powerpc-apple-darwin7
-11 CVS_RSH=ssh
-12 CVSEDITOR=vi
-13 SVN_EDITOR=vi
-12 EDITOR=emacs
-10 LAMRSH=ssh
-443 LS_COLORS=no=00:fi=00:di=01;34:ln=01;36:pi=40;33:so=01;35:bd=40;33;01:cd=40;33;01:or=41;37;01:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arj=01;31:*.taz=01;31:*.lzh=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.gz=01;31:*.deb=01;31:*.bz2=01;31:*.jpg=01;35:*.JPG=01;35:*.gif=01;35:*.bmp=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.mpg=01;37:*.avi=01;37:*.gl=01;37:*.dl=01;37:*.cc=01;35:*.c=01;35:*.h=01;35:*.C=01;35:*.hh=01;35:*.o=35:
+3
+19 ENV1=blah blah blah
+19 ENV2=foo bar is fun
+8 ENV3=123
 12 /foo/bar/baz
 0
 @MCA_PCM_END@

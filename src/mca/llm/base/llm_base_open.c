@@ -27,51 +27,15 @@ ompi_list_t mca_llm_base_components_available;
 mca_llm_base_component_t mca_llm_base_selected_component;
 mca_llm_base_module_t mca_llm;
 
-/*
- * LLM interface type support
- */
-static
-void
-mca_llm_base_node_construct(ompi_object_t *obj)
-{
-    ompi_rte_node_allocation_t *node = (ompi_rte_node_allocation_t*) obj;
-    OBJ_CONSTRUCT(&(node->info), ompi_list_t);
-}
-
-static
-void
-mca_llm_base_node_destruct(ompi_object_t *obj)
-{
-    ompi_rte_node_allocation_t *node = (ompi_rte_node_allocation_t*) obj;
-    OBJ_DESTRUCT(&(node->info));
-}
-
-static
-void
-mca_llm_base_valuepair_construct(ompi_object_t *obj)
-{
-    ompi_rte_valuepair_t *valpair = (ompi_rte_valuepair_t*) obj;
-    valpair->key = NULL;
-    valpair->value = NULL;
-}
-
-static
-void
-mca_llm_base_valuepair_destruct(ompi_object_t *obj)
-{
-    ompi_rte_valuepair_t *valpair = (ompi_rte_valuepair_t*) obj;
-    if (NULL != valpair->key) free(valpair->key);
-    if (NULL != valpair->value) free(valpair->value);
-}
-
-OBJ_CLASS_INSTANCE(ompi_rte_node_allocation_t, ompi_list_item_t, 
-                   mca_llm_base_node_construct, mca_llm_base_node_destruct);
-OBJ_CLASS_INSTANCE(ompi_rte_valuepair_t, ompi_list_item_t, 
-                   mca_llm_base_valuepair_construct,
-                   mca_llm_base_valuepair_destruct);
-
 ompi_mutex_t mca_llm_base_parse_mutex;
 
+/* give us a way to hook in for base unit tests */
+void
+mca_llm_base_setup(void)
+{
+    /* initialize the internal mutex */
+    OBJ_CONSTRUCT(&mca_llm_base_parse_mutex, ompi_mutex_t);
+}
 
 /**
  * Function for finding and opening either all MCA modules, or the one
@@ -79,8 +43,7 @@ ompi_mutex_t mca_llm_base_parse_mutex;
  */
 int mca_llm_base_open(void)
 {
-    /* initialize the internal mutex */
-    OBJ_CONSTRUCT(&mca_llm_base_parse_mutex, ompi_mutex_t);
+    mca_llm_base_setup();
 
   /* Open up all available components */
   if (OMPI_SUCCESS != 

@@ -8,15 +8,15 @@
 #include "runtime/runtime_types.h"
 #include "mca/pcm/pcm.h"
 
-int
-ompi_rte_allocate_resources(int jobid, int nodes, int procs,
-                            ompi_list_t **nodelist)
+
+ompi_list_t*
+ompi_rte_allocate_resources(int jobid, int nodes, int procs)
 {
     if (NULL == mca_pcm.pcm_allocate_resources) {
         return OMPI_ERROR;
     }
 
-    return mca_pcm.pcm_allocate_resources(jobid, nodes, procs, nodelist);
+    return mca_pcm.pcm_allocate_resources(jobid, nodes, procs);
 }
 
 

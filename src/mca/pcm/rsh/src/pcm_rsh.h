@@ -36,13 +36,12 @@ extern "C" {
      * Interface
      */
     char *mca_pcm_rsh_get_unique_name(void);
-    int mca_pcm_rsh_allocate_resources(int jobid, int nodes, int procs,
-                                       ompi_list_t **nodelist);
+    ompi_list_t* mca_pcm_rsh_allocate_resources(int jobid, int nodes, 
+                                                int procs);
     int mca_pcm_rsh_register_monitor(int jobid,
                                      ompi_rte_monitor_fn_t func);
     bool mca_pcm_rsh_can_spawn(void);
-    int mca_pcm_rsh_spawn_procs(int jobid, ompi_list_t schedule_list,
-                                ompi_vpid_t start_vpid);
+    int mca_pcm_rsh_spawn_procs(int jobid, ompi_list_t *schedule_list);
     ompi_process_name_t* mca_pcm_rsh_get_self(void);
     int mca_pcm_rsh_get_peers(ompi_process_name_t **peers,
                               size_t *npeers);
