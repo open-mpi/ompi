@@ -21,10 +21,11 @@
  *
  * @return Array index where ptr is inserted
  */
-int lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
+size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
 {
     void **p;
-    int	index, i;
+    int	i;
+    size_t index;
     enum { TABLE_INIT = 1, TABLE_GROW = 2 };
 
     if (LAM_ENABLE_DEBUG) {
@@ -180,7 +181,7 @@ int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
  *
  * @return Pointer
  */
-void *lam_pointer_array_get_item(lam_pointer_array_t *table, int index)
+void *lam_pointer_array_get_item(lam_pointer_array_t *table, size_t index)
 {
     void *p;
 
