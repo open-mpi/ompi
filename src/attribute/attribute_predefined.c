@@ -126,6 +126,8 @@ int ompi_attr_create_predefined(void)
         OMPI_SUCCESS != (err = set(MPI_UNIVERSE_SIZE, &attr_universe_size)) ||
 #if 0
         /* JMS for when we implement windows */
+        /* JMS BE SURE TO READ ALL OF MPI-2 4.12.7 BEFORE IMPLEMENTING
+           THESE ADDRESS-VALUED ATTRIBUTES! */
         OMPI_SUCCESS != (err = set(MPI_WIN_BASE, &attr_win_base)) ||
         OMPI_SUCCESS != (err = set(MPI_WIN_SIZE, &attr_win_size)) ||
         OMPI_SUCCESS != (err = set(MPI_WIN_DISP_UNIT, &attr_win_disp_unit)) ||

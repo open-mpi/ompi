@@ -20,7 +20,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SET_ATTR,
                            pmpi_comm_set_attr_,
                            pmpi_comm_set_attr__,
                            pmpi_comm_set_attr_f,
-                           (MPI_Fint *comm, MPI_Fint *comm_keyval, char *attribute_val, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr),
                            (comm, comm_keyval, attribute_val, ierr) )
 #endif
 
@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_ATTR,
                            mpi_comm_set_attr_,
                            mpi_comm_set_attr__,
                            mpi_comm_set_attr_f,
-                           (MPI_Fint *comm, MPI_Fint *comm_keyval, char *attribute_val, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr),
                            (comm, comm_keyval, attribute_val, ierr) )
 #endif
 
@@ -47,11 +47,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_ATTR,
 #endif
 
 void mpi_comm_set_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval,
-			 char *attribute_val, MPI_Fint *ierr)
+			 MPI_Aint *attribute_val, MPI_Fint *ierr)
 {
-    MPI_Comm c_comm;
-
-    c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
     
     *ierr = OMPI_INT_2_FINT(MPI_Comm_set_attr(c_comm,
 					      OMPI_FINT_2_INT(*comm_keyval),

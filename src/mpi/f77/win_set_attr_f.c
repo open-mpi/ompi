@@ -20,7 +20,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_SET_ATTR,
                            pmpi_win_set_attr_,
                            pmpi_win_set_attr__,
                            pmpi_win_set_attr_f,
-                           (MPI_Fint *win, MPI_Fint *win_keyval, char *attribute_val, MPI_Fint *ierr),
+                           (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr),
                            (win, win_keyval, attribute_val, ierr) )
 #endif
 
@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_ATTR,
                            mpi_win_set_attr_,
                            mpi_win_set_attr__,
                            mpi_win_set_attr_f,
-                           (MPI_Fint *win, MPI_Fint *win_keyval, char *attribute_val, MPI_Fint *ierr),
+                           (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr),
                            (win, win_keyval, attribute_val, ierr) )
 #endif
 
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_ATTR,
 #endif
 
 void mpi_win_set_attr_f(MPI_Fint *win, MPI_Fint *win_keyval,
-			char *attribute_val, MPI_Fint *ierr)
+			MPI_Aint *attribute_val, MPI_Fint *ierr)
 {
     MPI_Win c_win = MPI_Win_f2c( *win );
 

@@ -20,7 +20,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_ATTR,
                            pmpi_type_get_attr_,
                            pmpi_type_get_attr__,
                            pmpi_type_get_attr_f,
-                           (MPI_Fint *type, MPI_Fint *type_keyval, char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, MPI_Fint *flag, MPI_Fint *ierr),
                            (type, type_keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ATTR,
                            mpi_type_get_attr_,
                            mpi_type_get_attr__,
                            mpi_type_get_attr_f,
-                           (MPI_Fint *type, MPI_Fint *type_keyval, char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr),
+                           (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, MPI_Fint *flag, MPI_Fint *ierr),
                            (type, type_keyval, attribute_val, flag, ierr) )
 #endif
 
@@ -47,15 +47,35 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_ATTR,
 #endif
 
 void mpi_type_get_attr_f(MPI_Fint *type, MPI_Fint *type_keyval,
-			 char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
+			 MPI_Aint *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
 {
-    MPI_Datatype c_type = MPI_Type_f2c( *type );
-    OMPI_SINGLE_NAME_DECL(flag);
+    int c_err, c_flag;
+    MPI_Datatype c_type;
+    int *c_value;
 
-    *ierr = OMPI_INT_2_FINT(MPI_Type_get_attr(c_type, 
-					      OMPI_FINT_2_INT(*type_keyval),
-					      attribute_val, 
-					      OMPI_SINGLE_NAME_CONVERT(flag)));
+    c_type = MPI_Type_f2c(*type);
 
-    OMPI_SINGLE_INT_2_FINT(flag);
+    /* This stuff is very confusing.  Be sure to see MPI-2 4.12.7. */
+
+    /* Didn't use all the FINT macros that could have prevented a few
+       extra variables in this function, but I figured that the
+       clarity of code, and the fact that this is not expected to be a
+       high-performance function, was worth it */
+
+    /* Note that there is no conversion on attribute_val -- MPI-2 says
+       that it is supposed to be the right size already */
+
+    c_err = MPI_Type_get_attr(c_type, OMPI_FINT_2_INT(*type_keyval),
+                              &c_value, &c_flag);
+    *ierr = OMPI_INT_2_FINT(c_err);
+    *flag = OMPI_INT_2_FINT(c_flag);
+
+    /* Note that MPI-2 4.12.7 specifically says that Fortran's
+       xxx_GET_ATTR functions will take the address returned from C
+       and "convert it to an integer" (which assumedly means
+       dereference) */
+
+    if (MPI_SUCCESS == c_err && 1 == c_flag) {
+        *attribute_val = (MPI_Aint) *c_value;
+    }
 }
