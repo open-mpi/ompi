@@ -258,8 +258,8 @@ int mca_oob_tcp_recv_cancel(
         mca_oob_tcp_msg_t* msg = (mca_oob_tcp_msg_t*)item;
         next = ompi_list_get_next(item);
 
-        if((0 == mca_oob_tcp_process_name_compare(name,MCA_OOB_NAME_ANY) ||
-           (0 == mca_oob_tcp_process_name_compare(&msg->msg_peer,name)))) {
+        if((0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, name,MCA_OOB_NAME_ANY) ||
+	    (0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, &msg->msg_peer,name)))) {
             if (tag == MCA_OOB_TAG_ANY || msg->msg_hdr.msg_tag == tag) {
                 ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);
                 MCA_OOB_TCP_MSG_RETURN(msg);

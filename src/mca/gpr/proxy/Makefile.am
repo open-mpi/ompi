@@ -7,9 +7,19 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 sources = \
-        gpr_proxy.c \
-        gpr_proxy.h \
-        gpr_proxy_component.c
+        gpr_proxy_component.c \
+        gpr_proxy_compound_cmd.c \
+        gpr_proxy_del_index.c \
+        gpr_proxy_cleanup.c \
+        gpr_proxy_dump.c \
+        gpr_proxy_messaging.c \
+        gpr_proxy_internals.c \
+        gpr_proxy_put_get.c \
+        gpr_proxy_xmit_alerts.c \
+        gpr_proxy_mode_ops.c \
+        gpr_proxy_subscribe.c \
+        gpr_proxy_synchro.c \
+        gpr_proxy.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

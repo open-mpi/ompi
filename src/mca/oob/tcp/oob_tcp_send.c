@@ -60,7 +60,7 @@ int mca_oob_tcp_send(
     msg->msg_uiov = iov;
     msg->msg_ucnt = count;
     msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg, count+1);
-    msg->msg_rwiov[0].iov_base = &msg->msg_hdr;
+    msg->msg_rwiov[0].iov_base = (void*)&msg->msg_hdr;
     msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
     msg->msg_rwptr = msg->msg_rwiov;
     msg->msg_rwcnt = msg->msg_rwnum = count + 1;
@@ -139,7 +139,7 @@ int mca_oob_tcp_send_nb(
     msg->msg_uiov = iov;
     msg->msg_ucnt = count;
     msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,count+1);
-    msg->msg_rwiov[0].iov_base = &msg->msg_hdr;
+    msg->msg_rwiov[0].iov_base = (void*)&msg->msg_hdr;
     msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
     msg->msg_rwptr = msg->msg_rwiov;
     msg->msg_rwcnt = msg->msg_rwnum = count + 1;

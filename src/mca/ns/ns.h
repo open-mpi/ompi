@@ -29,7 +29,6 @@
 #include "class/ompi_list.h"
 
 #include "mca/mca.h"
-#include "util/bufpack.h"
 
 
 /*
@@ -374,6 +373,23 @@ typedef char* (*mca_ns_base_module_get_jobid_string_fn_t)(const ompi_process_nam
 typedef char* (*mca_ns_base_module_convert_jobid_to_string_fn_t)(const mca_ns_base_jobid_t jobid);
 
 /**
+ * Convert a string to a jobid
+ * Converts a character string into a jobid. The character string must be a hexadecimal
+ * representation of a valid jobid.
+ *
+ * @param jobidstring The string to be converted.
+ *
+ * @retval jobid The resulting jobid.
+ * @retval MCA_NS_BASE_JOBID_MAX String could not be converted.
+ *
+ * @code
+ * jobid = ompi_name_server.convert_string_to_jobid(jobidstring);
+ * @endcode
+ *
+ */
+typedef mca_ns_base_jobid_t (*mca_ns_base_module_convert_string_to_jobid_fn_t)(const char *jobidstring);
+
+/**
  * Get the cell id as a character string.
  * The get_cellid_string() function returns the cell id in a character string
  * representation. The string is created by expressing the field in hexadecimal. Memory
@@ -477,6 +493,88 @@ typedef mca_ns_base_cellid_t (*mca_ns_base_module_get_cellid_fn_t)(const ompi_pr
 typedef int (*mca_ns_base_module_compare_fn_t)(ompi_ns_cmp_bitmask_t fields, const ompi_process_name_t *name1, const ompi_process_name_t *name2);
 
 /*
+ * Pack a name structure for transmission and/or registry storage
+ * Given a source location and the number of contiguous names stored there,
+ * this function packs those names into the given destination, converting
+ * each name into network byte order.
+ *
+ * @param dest A void* pointing to the starting location for the destination
+ * memory. Note that this memory MUST be preallocated and adequately sized.
+ * @param src A void* pointing to the starting location of the source data.
+ * @param n The number of names to be packed.
+ *
+ * @retval OMPI_SUCCESS Indicates that the names were successfully packed.
+ *
+ * @code
+ * status_code = ompi_name_server.pack_name(&dest, &src, n);
+ * @endcode
+ *
+ */
+typedef int (*mca_ns_base_module_pack_name_fn_t)(void *dest, void *src, int n);
+
+/*
+ * Unpack a name structure
+ * Given a source location and the number of contiguous names stored there,
+ * this function unpacks those names into the given destination, converting
+ * each name from network byte order to the host environment.
+ *
+ * @param dest A void* pointing to the starting location for the destination
+ * memory. Note that this memory MUST be preallocated and adequately sized.
+ * @param src A void* pointing to the starting location of the source data.
+ * @param n The number of names to be unpacked.
+ *
+ * @retval OMPI_SUCCESS Indicates that the names were successfully unpacked.
+ *
+ * @code
+ * status_code = ompi_name_server.unpack_name(&dest, &src, n);
+ * @endcode
+ *
+ */
+typedef int (*mca_ns_base_module_unpack_name_fn_t)(void *dest, void *src, int n);
+
+/*
+ * Pack a jobid for transmission and/or registry storage
+ * Given a source location and the number of contiguous jobids stored there,
+ * this function packs those values into the given destination, converting
+ * each value into network byte order.
+ *
+ * @param dest A void* pointing to the starting location for the destination
+ * memory. Note that this memory MUST be preallocated and adequately sized.
+ * @param src A void* pointing to the starting location of the source data.
+ * @param n The number of jobids to be packed.
+ *
+ * @retval OMPI_SUCCESS Indicates that the jobids were successfully packed.
+ *
+ * @code
+ * status_code = ompi_name_server.pack_jobid(&dest, &src, n);
+ * @endcode
+ *
+ */
+typedef int (*mca_ns_base_module_pack_jobid_fn_t)(void *dest, void *src, int n);
+
+/*
+ * Unpack a jobid
+ * Given a source location and the number of contiguous jobids stored there,
+ * this function unpacks those values into the given destination, converting
+ * each jobid from network byte order to the host environment.
+ *
+ * @param dest A void* pointing to the starting location for the destination
+ * memory. Note that this memory MUST be preallocated and adequately sized.
+ * @param src A void* pointing to the starting location of the source data.
+ * @param n The number of jobids to be unpacked.
+ *
+ * @retval OMPI_SUCCESS Indicates that the jobids were successfully unpacked.
+ *
+ * @code
+ * status_code = ompi_name_server.unpack_jobid(&dest, &src, n);
+ * @endcode
+ *
+ */
+typedef int (*mca_ns_base_module_unpack_jobid_fn_t)(void *dest, void *src, int n);
+
+
+
+/*
  * Ver 1.0.0
  */
 struct mca_ns_base_module_1_0_0_t {
@@ -492,11 +590,16 @@ struct mca_ns_base_module_1_0_0_t {
     mca_ns_base_module_get_vpid_string_fn_t get_vpid_string;
     mca_ns_base_module_get_jobid_string_fn_t get_jobid_string;
     mca_ns_base_module_convert_jobid_to_string_fn_t convert_jobid_to_string;
+    mca_ns_base_module_convert_string_to_jobid_fn_t convert_string_to_jobid;
     mca_ns_base_module_get_cellid_string_fn_t get_cellid_string;
     mca_ns_base_module_get_vpid_fn_t get_vpid;
     mca_ns_base_module_get_jobid_fn_t get_jobid;
     mca_ns_base_module_get_cellid_fn_t get_cellid;
     mca_ns_base_module_compare_fn_t compare;
+    mca_ns_base_module_pack_name_fn_t pack_name;
+    mca_ns_base_module_unpack_name_fn_t unpack_name;
+    mca_ns_base_module_pack_jobid_fn_t pack_jobid;
+    mca_ns_base_module_unpack_jobid_fn_t unpack_jobid;
 };
 
 typedef struct mca_ns_base_module_1_0_0_t mca_ns_base_module_1_0_0_t;
