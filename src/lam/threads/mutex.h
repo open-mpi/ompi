@@ -74,7 +74,7 @@ static inline bool lam_using_threads(void)
  * process, invoke the action without acquiring the lock.
  */
 #define THREAD_SCOPED_LOCK(mutex,action) \
-	if(lam_use_threads()) { \
+	if(lam_using_threads()) { \
             lam_mutex_lock(mutex); \
             (action); \
             lam_mutex_unlock(mutex); \
