@@ -115,44 +115,6 @@ int test_verify_int(int expected_result, int test_result)
 }
 
 
-int test_verify_ptr(void *expected_result, void *test_result)
-{
-    int return_value;
-
-    return_value = 1;
-    if (expected_result != test_result) {
-        test_failure("Comparison failure");
-        fprintf(stderr, " Expected result: %d\n", expected_result);
-        fprintf(stderr, " Test result: %d\n", test_result);
-        fflush(stderr);
-        return_value = 0;
-    } else {
-        test_success();
-    }
-
-    return return_value;
-}
-
-
-int test_verify_ptr(void *expected_result, void *test_result)
-{
-    int return_value;
-
-    return_value = 1;
-    if (expected_result != test_result) {
-        test_failure("Comparison failure");
-        fprintf(stderr, " Expected result: %d\n", expected_result);
-        fprintf(stderr, " Test result: %d\n", test_result);
-        fflush(stderr);
-        return_value = 0;
-    } else {
-        test_success();
-    }
-
-    return return_value;
-}
-
-
 int test_finalize(void)
 {
     int return_value;
