@@ -2,31 +2,34 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
+include $(top_srcdir)/config/Makefile.options
 
-include $(top_ompi_srcdir)/config/Makefile.options
+noinst_LTLIBRARIES = libmca_ns_base.la
 
-SUBDIRS = src
+# For VPATH builds, have to specify where static-modules.h will be found
 
-# Make the output library in this directory, and name it either
-# mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
-# (for static builds).
+AM_CPPFLAGS = -I$(top_builddir)/src
 
-if OMPI_BUILD_ns_base_DSO
-component_noinst = 
-component_install = mca_ns_base.la
+# Source code files
+
+headers = \
+        base.h
+
+# Library
+
+libmca_ns_base_la_SOURCES = \
+        $(headers) \
+        ns_base_close.c \
+        ns_base_select.c \
+        ns_base_open.c \
+        ns_base_functions.c
+
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/mca/ns/base
+ompi_HEADERS = $(headers)
 else
-component_noinst = libmca_ns_base.la
-component_install =
+ompidir = $(includedir)
 endif
-
-mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component_install)
-mca_ns_base_la_SOURCES =
-mca_ns_base_la_LIBADD = src/libmca_ns_base.la
-mca_ns_base_la_LDFLAGS = -module -avoid-version
-
-noinst_LTLIBRARIES = $(component_noinst)
-libmca_ns_base_la_SOURCES =
-libmca_ns_base_la_LIBADD = src/libmca_ns_base.la
-libmca_ns_base_la_LDFLAGS = -module -avoid-version
