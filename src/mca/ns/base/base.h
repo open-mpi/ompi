@@ -4,7 +4,7 @@
 /** @file:
  */
 
-#ifndev MCA_NS_BASE_H
+#ifndef MCA_NS_BASE_H
 #define MCA_NS_BASE_H
 
 /*
