@@ -585,88 +585,98 @@ extern "C" {
   int MPI_Finalized(int *flag);
   int MPI_Free_mem(void *base);
   int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
-		         void *recvbuf, int recvcount, MPI_Datatype recvtype, 
+                 void *recvbuf, int recvcount, MPI_Datatype recvtype, 
                  int root, MPI_Comm comm);
   int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
-		          void *recvbuf, int *recvcounts, int *displs, 
+                  void *recvbuf, int *recvcounts, int *displs, 
                   MPI_Datatype recvtype, int root, MPI_Comm comm);
   int MPI_Get_address(void *location, MPI_Aint *address);
   int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count);
   int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, 
-		               int *count);
+                       int *count);
   int MPI_Get(void *origin_addr, int origin_count, 
-		      MPI_Datatype origin_datatype, int target_rank, 
-			  MPI_Aint target_disp, int target_count, 
+              MPI_Datatype origin_datatype, int target_rank, 
+              MPI_Aint target_disp, int target_count, 
               MPI_Datatype target_datatype, MPI_Win win);
   int MPI_Get_processor_name(char *name, int *resultlen);
   int MPI_Get_version(int *version, int *subversion);
   int MPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index, 
-		              int *edges, int reorder, MPI_Comm *comm_graph);
+                      int *edges, int reorder, MPI_Comm *comm_graph);
   int MPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges, 
-		            int *index, int *edges);
+                    int *index, int *edges);
   int MPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges, 
-		            int *newrank);
+                    int *newrank);
   int MPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors);
   int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors, 
-		                  int *neighbors);
+                          int *neighbors);
   int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges);
   int MPI_Grequest_complete(MPI_Request request);
   int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
-		                 MPI_Grequest_free_function *free_fn,
-						 MPI_Grequest_cancel_function *cancel_fn,
-						 void *extra_state, MPI_Request *request);
+                         MPI_Grequest_free_function *free_fn,
+                         MPI_Grequest_cancel_function *cancel_fn,
+                         void *extra_state, MPI_Request *request);
   MPI_Fint MPI_Group_c2f(MPI_Group group);
   int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result);
   int MPI_Group_difference(MPI_Group group1, MPI_Group group2, 
-		                   MPI_Group *newgroup);
+                           MPI_Group *newgroup);
   int MPI_Group_excl(MPI_Group group, int n, int *ranks, 
-		                  MPI_Group *newgroup);
+                          MPI_Group *newgroup);
   MPI_Group MPI_Group_f2c(MPI_Fint group);
   int MPI_Group_free(MPI_Group *group);
   int MPI_Group_incl(MPI_Group group, int n, int *ranks, 
-		                  MPI_Group *newgroup);
+                          MPI_Group *newgroup);
   int MPI_Group_intersection(MPI_Group group1, MPI_Group group2, 
-		                     MPI_Group *newgroup);
+                             MPI_Group *newgroup);
   int MPI_Group_range_excl(MPI_Group group, int n, int ranges[][3], 
-		                   MPI_Group *newgroup);
+                           MPI_Group *newgroup);
   int MPI_Group_range_incl(MPI_Group group, int n, int ranges[][3], 
-		                   MPI_Group *newgroup);
+                           MPI_Group *newgroup);
   int MPI_Group_rank(MPI_Group group, int *rank);
   int MPI_Group_size(MPI_Group group, int *size);
   int MPI_Group_translate_ranks(MPI_Group group1, int n, int *ranks1, 
-		                        MPI_Group group2, int *ranks2);
+                                MPI_Group group2, int *ranks2);
   int MPI_Group_union(MPI_Group group1, MPI_Group group2, 
-		              MPI_Group *newgroup);
-  int MPI_Ibsend(void *, int, MPI_Datatype, int, int, MPI_Comm, 
-                 MPI_Request *);
-  MPI_Fint MPI_Info_c2f(MPI_Info);
-  int MPI_Info_create(MPI_Info *);
-  int MPI_Info_delete(MPI_Info, char *);
-  int MPI_Info_dup(MPI_Info, MPI_Info *);
-  MPI_Info MPI_Info_f2c(MPI_Fint);
-  int MPI_Info_free(MPI_Info *);
-  int MPI_Info_get(MPI_Info, char *, int, char *, int *);
-  int MPI_Info_get_nkeys(MPI_Info, int *);
-  int MPI_Info_get_nthkey(MPI_Info, int, char *);
-  int MPI_Info_get_valuelen(MPI_Info, char *, int *, int *);
-  int MPI_Info_set(MPI_Info, char *, char *);
-  int MPI_Init(int *, char ***);
-  int MPI_Initialized(int *);
-  int MPI_Init_thread(int *, char ***, int, int *);
-  int MPI_Intercomm_create(MPI_Comm, int, MPI_Comm, int, int, MPI_Comm *);
-  int MPI_Intercomm_merge(MPI_Comm, int, MPI_Comm *);
-  int MPI_Iprobe(int, int, MPI_Comm, int *, MPI_Status *);
-  int MPI_Irecv(void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *);
-  int MPI_Irsend(void *, int, MPI_Datatype, int, int, MPI_Comm,
-                 MPI_Request *);
-  int MPI_Isend(void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *);
-  int MPI_Issend(void *, int, MPI_Datatype, int, int, MPI_Comm, 
-                 MPI_Request *);
-  int MPI_Is_thread_main(int *);
-  int MPI_Keyval_create(MPI_Copy_function *, MPI_Delete_function *, 
-                        int *, void *);
-  int MPI_Keyval_free(int *);
-  int MPI_Lookup_name(char *, MPI_Info, char *);
+                      MPI_Group *newgroup);
+  int MPI_Ibsend(void *buf, int count, MPI_Datatype datatype, int dest, 
+                 int tag, MPI_Comm comm, MPI_Request *request);
+  MPI_Fint MPI_Info_c2f(MPI_Info info);
+  int MPI_Info_create(MPI_Info *info);
+  int MPI_Info_delete(MPI_Info info, char *key);
+  int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo);
+  MPI_Info MPI_Info_f2c(MPI_Fint info);
+  int MPI_Info_free(MPI_Info *info);
+  int MPI_Info_get(MPI_Info info, char *key, int valuelen, 
+                   char *value, int *flag);
+  int MPI_Info_get_nkeys(MPI_Info info, int *nkeys);
+  int MPI_Info_get_nthkey(MPI_Info info, int n, char *key);
+  int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, 
+                            int *flag);
+  int MPI_Info_set(MPI_Info info, char *key, char *value);
+  int MPI_Init(int *argc, char ***argv);
+  int MPI_Initialized(int *flag);
+  int MPI_Init_thread(int *argc, char ***argv, int required, 
+                      int *provided);
+  int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader, 
+                           MPI_Comm bridge_comm, int remote_leader, 
+                           int tag, MPI_Comm *newintercomm);
+  int MPI_Intercomm_merge(MPI_Comm intercomm, int high, 
+                          MPI_Comm *newintercomm);
+  int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, 
+                 MPI_Status *status);
+  int MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, 
+                int tag, MPI_Comm comm, MPI_Request *request);
+  int MPI_Irsend(void *buf, int count, MPI_Datatype datatype, int dest, 
+                 int tag, MPI_Comm comm, MPI_Request *request);
+  int MPI_Isend(void *buf, int count, MPI_Datatype datatype, int dest, 
+                 int tag, MPI_Comm comm, MPI_Request *request);
+  int MPI_Issend(void *buf, int count, MPI_Datatype datatype, int dest, 
+                 int tag, MPI_Comm comm, MPI_Request *request);
+  int MPI_Is_thread_main(int *flag);
+  int MPI_Keyval_create(MPI_Copy_function *copy_fn, 
+                        MPI_Delete_function *delete_fn, 
+                        int *keyval, void *extra_state);
+  int MPI_Keyval_free(int *keyval);
+  int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
   MPI_Fint MPI_Op_c2f(MPI_Op op); 
   int MPI_Op_create(MPI_User_function *, int, MPI_Op *);
   int MPI_Open_port(MPI_Info, char *);
@@ -1038,88 +1048,98 @@ extern "C" {
   int PMPI_Finalized(int *flag);
   int PMPI_Free_mem(void *base);
   int PMPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
-		         void *recvbuf, int recvcount, MPI_Datatype recvtype, 
+                 void *recvbuf, int recvcount, MPI_Datatype recvtype, 
                  int root, MPI_Comm comm);
   int PMPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
-		          void *recvbuf, int *recvcounts, int *displs, 
+                  void *recvbuf, int *recvcounts, int *displs, 
                   MPI_Datatype recvtype, int root, MPI_Comm comm);
   int PMPI_Get_address(void *location, MPI_Aint *address);
   int PMPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count);
   int PMPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, 
-		               int *count);
+                       int *count);
   int PMPI_Get(void *origin_addr, int origin_count, 
-		      MPI_Datatype origin_datatype, int target_rank, 
-			  MPI_Aint target_disp, int target_count, 
+              MPI_Datatype origin_datatype, int target_rank, 
+              MPI_Aint target_disp, int target_count, 
               MPI_Datatype target_datatype, MPI_Win win);
   int PMPI_Get_processor_name(char *name, int *resultlen);
   int PMPI_Get_version(int *version, int *subversion);
   int PMPI_Graph_create(MPI_Comm comm_old, int nnodes, int *index, 
-		              int *edges, int reorder, MPI_Comm *comm_graph);
+                      int *edges, int reorder, MPI_Comm *comm_graph);
   int PMPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges, 
-		            int *index, int *edges);
+                    int *index, int *edges);
   int PMPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges, 
-		            int *newrank);
+                    int *newrank);
   int PMPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors);
   int PMPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors, 
-		                  int *neighbors);
+                          int *neighbors);
   int PMPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges);
   int PMPI_Grequest_complete(MPI_Request request);
   int PMPI_Grequest_start(MPI_Grequest_query_function *query_fn,
-		                 MPI_Grequest_free_function *free_fn,
-						 MPI_Grequest_cancel_function *cancel_fn,
-						 void *extra_state, MPI_Request *request);
+                         MPI_Grequest_free_function *free_fn,
+                         MPI_Grequest_cancel_function *cancel_fn,
+                         void *extra_state, MPI_Request *request);
   MPI_Fint PMPI_Group_c2f(MPI_Group group);
   int PMPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result);
   int PMPI_Group_difference(MPI_Group group1, MPI_Group group2, 
-		                   MPI_Group *newgroup);
+                           MPI_Group *newgroup);
   int PMPI_Group_excl(MPI_Group group, int n, int *ranks, 
-		                  MPI_Group *newgroup);
+                          MPI_Group *newgroup);
   MPI_Group PMPI_Group_f2c(MPI_Fint group);
   int PMPI_Group_free(MPI_Group *group);
   int PMPI_Group_incl(MPI_Group group, int n, int *ranks, 
-		                  MPI_Group *newgroup);
+                          MPI_Group *newgroup);
   int PMPI_Group_intersection(MPI_Group group1, MPI_Group group2, 
-		                     MPI_Group *newgroup);
+                             MPI_Group *newgroup);
   int PMPI_Group_range_excl(MPI_Group group, int n, int ranges[][3], 
-		                   MPI_Group *newgroup);
+                           MPI_Group *newgroup);
   int PMPI_Group_range_incl(MPI_Group group, int n, int ranges[][3], 
-		                   MPI_Group *newgroup);
+                           MPI_Group *newgroup);
   int PMPI_Group_rank(MPI_Group group, int *rank);
   int PMPI_Group_size(MPI_Group group, int *size);
   int PMPI_Group_translate_ranks(MPI_Group group1, int n, int *ranks1, 
-		                        MPI_Group group2, int *ranks2);
+                                MPI_Group group2, int *ranks2);
   int PMPI_Group_union(MPI_Group group1, MPI_Group group2, 
-		              MPI_Group *newgroup);
-  int PMPI_Ibsend(void *, int, MPI_Datatype, int, int, MPI_Comm, 
-                  MPI_Request *);
-  MPI_Fint PMPI_Info_c2f(MPI_Info);
-  int PMPI_Info_create(MPI_Info *);
-  int PMPI_Info_delete(MPI_Info, char *);
-  int PMPI_Info_dup(MPI_Info, MPI_Info *);
-  MPI_Info PMPI_Info_f2c(MPI_Fint);
-  int PMPI_Info_free(MPI_Info *);
-  int PMPI_Info_get(MPI_Info, char *, int, char *, int *);
-  int PMPI_Info_get_nkeys(MPI_Info, int *);
-  int PMPI_Info_get_nthkey(MPI_Info, int, char *);
-  int PMPI_Info_get_valuelen(MPI_Info, char *, int *, int *);
-  int PMPI_Info_set(MPI_Info, char *, char *);
-  int PMPI_Init(int *, char ***);
-  int PMPI_Initialized(int *);
-  int PMPI_Init_thread(int *, char ***, int, int *);
-  int PMPI_Intercomm_create(MPI_Comm, int, MPI_Comm, int, int, MPI_Comm *);
-  int PMPI_Intercomm_merge(MPI_Comm, int, MPI_Comm *);
-  int PMPI_Iprobe(int, int, MPI_Comm, int *, MPI_Status *);
-  int PMPI_Irecv(void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *);
-  int PMPI_Irsend(void *, int, MPI_Datatype, int, int, MPI_Comm,
-                  MPI_Request *);
-  int PMPI_Isend(void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Request *);
-  int PMPI_Issend(void *, int, MPI_Datatype, int, int, MPI_Comm, 
-                  MPI_Request *);
-  int PMPI_Is_thread_main(int *);
-  int PMPI_Keyval_create(MPI_Copy_function *, MPI_Delete_function *, 
-                         int *, void *);
-  int PMPI_Keyval_free(int *);
-  int PMPI_Lookup_name(char *, MPI_Info, char *);
+                      MPI_Group *newgroup);
+  int PMPI_Ibsend(void *buf, int count, MPI_Datatype datatype, int dest, 
+                 int tag, MPI_Comm comm, MPI_Request *request);
+  MPI_Fint PMPI_Info_c2f(MPI_Info info);
+  int PMPI_Info_create(MPI_Info *info);
+  int PMPI_Info_delete(MPI_Info info, char *key);
+  int PMPI_Info_dup(MPI_Info info, MPI_Info *newinfo);
+  MPI_Info PMPI_Info_f2c(MPI_Fint info);
+  int PMPI_Info_free(MPI_Info *info);
+  int PMPI_Info_get(MPI_Info info, char *key, int valuelen, 
+                   char *value, int *flag);
+  int PMPI_Info_get_nkeys(MPI_Info info, int *nkeys);
+  int PMPI_Info_get_nthkey(MPI_Info info, int n, char *key);
+  int PMPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, 
+                            int *flag);
+  int PMPI_Info_set(MPI_Info info, char *key, char *value);
+  int PMPI_Init(int *argc, char ***argv);
+  int PMPI_Initialized(int *flag);
+  int PMPI_Init_thread(int *argc, char ***argv, int required, 
+                      int *provided);
+  int PMPI_Intercomm_create(MPI_Comm local_comm, int local_leader, 
+                           MPI_Comm bridge_comm, int remote_leader, 
+                           int tag, MPI_Comm *newintercomm);
+  int PMPI_Intercomm_merge(MPI_Comm intercomm, int high, 
+                          MPI_Comm *newintercomm);
+  int PMPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, 
+                 MPI_Status *status);
+  int PMPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, 
+                int tag, MPI_Comm comm, MPI_Request *request);
+  int PMPI_Irsend(void *buf, int count, MPI_Datatype datatype, int dest, 
+                 int tag, MPI_Comm comm, MPI_Request *request);
+  int PMPI_Isend(void *buf, int count, MPI_Datatype datatype, int dest, 
+                 int tag, MPI_Comm comm, MPI_Request *request);
+  int PMPI_Issend(void *buf, int count, MPI_Datatype datatype, int dest, 
+                 int tag, MPI_Comm comm, MPI_Request *request);
+  int PMPI_Is_thread_main(int *flag);
+  int PMPI_Keyval_create(MPI_Copy_function *copy_fn, 
+                        MPI_Delete_function *delete_fn, 
+                        int *keyval, void *extra_state);
+  int PMPI_Keyval_free(int *keyval);
+  int PMPI_Lookup_name(char *service_name, MPI_Info info, char *port_name);
   MPI_Fint PMPI_Op_c2f(MPI_Op op); 
   int PMPI_Op_create(MPI_User_function *, int, MPI_Op *);
   int PMPI_Open_port(MPI_Info, char *);
