@@ -38,7 +38,7 @@ int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group)
 
 
     /* get new group struct */
-    new_group_pointer=group_allocate(n);
+    new_group_pointer=lam_group_allocate(n);
     if( NULL == new_group_pointer ) {
         return MPI_ERR_GROUP;
     }

@@ -123,7 +123,7 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
     new_group_size=group_pointer->grp_proc_count-new_group_size;
 
     /* allocate a new lam_group_t structure */
-    new_group_pointer=group_allocate(new_group_size);
+    new_group_pointer=lam_group_allocate(new_group_size);
     if( NULL == new_group_pointer ) {
         free(elements_int_list);
         return MPI_ERR_GROUP;

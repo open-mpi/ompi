@@ -41,7 +41,7 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
      */
 
     /* get new group struct */
-    new_group_pointer=group_allocate(group_pointer->grp_proc_count-n);
+    new_group_pointer=lam_group_allocate(group_pointer->grp_proc_count-n);
     if( NULL == new_group_pointer ) {
         return MPI_ERR_GROUP;
     }
