@@ -88,27 +88,6 @@ int mca_coll_basic_allgather_inter(void *sbuf, int scount,
         }
     }
     else {
-        /* Do a send-recv between the two root procs. to avoid deadlock */
-        err = mca_pml.pml_isend (sbuf, scount, sdtype, 0, 
-                                 MCA_COLL_BASE_TAG_ALLGATHER,
-                                 MCA_PML_BASE_SEND_STANDARD, 
-                                 comm, &req );
-        if ( OMPI_SUCCESS != err ) {
-            return err;
-        }
-
-        err = mca_pml.pml_recv(rbuf, rcount, rdtype, 0,
-                               MCA_COLL_BASE_TAG_ALLGATHER, comm, 
-                               MPI_STATUS_IGNORE);
-        if (OMPI_SUCCESS != err) {
-            return err;
-        }
-        
-        err = mca_pml.pml_wait_all(1, &req, MPI_STATUS_IGNORE);
-        if (OMPI_SUCCESS != err ) {
-            return err;
-        }
-
         /* receive a msg. from all other procs.*/
         err = ompi_ddt_get_extent(rdtype, &rlb, &rextent);
         if (OMPI_SUCCESS != err) {
@@ -119,18 +98,34 @@ int mca_coll_basic_allgather_inter(void *sbuf, int scount,
             return err;
         }
 
+        /* Do a send-recv between the two root procs. to avoid deadlock */
+        err = mca_pml.pml_isend (sbuf, scount, sdtype, 0, 
+                                 MCA_COLL_BASE_TAG_ALLGATHER,
+                                 MCA_PML_BASE_SEND_STANDARD, 
+                                 comm, &reqs[rsize] );
+        if ( OMPI_SUCCESS != err ) {
+            return err;
+        }
+
+        err = mca_pml.pml_irecv(rbuf, rcount, rdtype, 0,
+                                MCA_COLL_BASE_TAG_ALLGATHER, comm, 
+                                &reqs[0]);
+        if (OMPI_SUCCESS != err) {
+            return err;
+        }
+        
         incr = rextent * rcount;
         ptmp = (char *) rbuf + incr;
         for (i = 1; i < rsize; ++i, ptmp += incr) {
 	    err = mca_pml.pml_irecv(ptmp, rcount, rdtype, i,
                                     MCA_COLL_BASE_TAG_ALLGATHER, 
-                                    comm, &reqs[i-1]);
+                                    comm, &reqs[i]);
             if (MPI_SUCCESS != err) {
                 return err;
             }
         }
         
-        err = mca_pml.pml_wait_all (rsize-1, reqs, MPI_STATUSES_IGNORE);
+        err = mca_pml.pml_wait_all (rsize+1, reqs, MPI_STATUSES_IGNORE);
         if ( OMPI_SUCCESS != err ) {
             return err;
         }
