@@ -13,7 +13,8 @@ AM_CPPFLAGS = -I$(top_builddir)/src
 # Source code files
 
 headers = \
-        base.h
+        base.h \
+	base_job_track.h
 
 # Library
 
@@ -22,6 +23,7 @@ libmca_pcm_base_la_SOURCES = \
         pcm_base_close.c \
 	pcm_base_comm.c \
 	pcm_base_ioexecvp.c \
+	pcm_base_job_track.c \
         pcm_base_open.c \
         pcm_base_select.c \
 	pcm_base_util.c

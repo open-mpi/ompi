@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 #include "pcm_rms.h"
+#include "mca/pcm/base/base_job_track.h"
 #include "include/constants.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
@@ -149,10 +150,10 @@ mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
     } 
 
     /* ok, I'm the parent - stick the pids where they belong */
-    ret = mca_pcm_rms_add_started_pids(jobid, child, nodes->start,
-                                       nodes->start + (nodes->nodes == 0) ? 
-                                         nodes->count : 
-                                         nodes->nodes * nodes->count);
+    ret = mca_pcm_base_add_started_pids(jobid, child, nodes->start,
+                                        nodes->start + (nodes->nodes == 0) ? 
+                                        nodes->count : 
+                                        nodes->nodes * nodes->count);
     if (OMPI_SUCCESS != ret) {
         /* BWB show_help */
         printf("show_help: unable to record child pid\n");
@@ -169,8 +170,8 @@ mca_pcm_rms_kill_proc(struct mca_pcm_base_module_1_0_0_t* me,
 {
     pid_t doomed;
 
-    doomed = mca_pcm_rms_get_started_pid(ns_base_get_jobid(name), 
-                                         ns_base_get_vpid(name), true);
+    doomed = mca_pcm_base_get_started_pid(ns_base_get_jobid(name), 
+                                          ns_base_get_vpid(name), true);
     if (doomed > 0) {
         kill(doomed, SIGTERM);
     } else {
@@ -189,7 +190,7 @@ mca_pcm_rms_kill_job(struct mca_pcm_base_module_1_0_0_t* me,
     size_t doomed_len;
     int ret, i;
 
-    ret = mca_pcm_rms_get_started_pid_list(jobid, &doomed, &doomed_len, true);
+    ret = mca_pcm_base_get_started_pid_list(jobid, &doomed, &doomed_len, true);
     if (OMPI_SUCCESS != ret) return ret;
 
     for (i = 0 ; i < doomed_len ; ++i) {
@@ -211,7 +212,7 @@ mca_pcm_rms_deallocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
 {
     if (nodelist != NULL) OBJ_RELEASE(nodelist);
 
-    mca_pcm_rms_remove_job(jobid);
+    mca_pcm_base_remove_job(jobid);
 
     return OMPI_SUCCESS;
 }

@@ -4,20 +4,32 @@
 
 #include "ompi_config.h"
 
-#include "include/constants.h"
-#include "runtime/runtime.h"
-#include "mca/pcm/base/base.h"
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/wait.h>
+#include <signal.h>
+
+#include "include/constants.h"
+#include "runtime/runtime.h"
+#include "mca/pcm/base/base.h"
+#include "class/ompi_list.h"
+
+
+struct pid_item_t {
+    ompi_list_item_t super;
+    pid_t pid;
+};
+typedef struct pid_item_t pid_item_t;
+OBJ_CLASS_INSTANCE(pid_item_t, ompi_list_item_t, NULL, NULL);
+
 
 static void
 show_usage(char *myname)
 {
     printf("usage: %s --local_offset [vpid] --global_start_vpid [vpid]\n"
-           "         --num_procs [num]\n\n", myname);
+           "         --num_procs [num] [--high-qos]\n\n", myname);
 }
 
 
@@ -35,6 +47,11 @@ main(int argc, char *argv[])
     int total_num_procs;
     int fork_num_procs;
     char *env_buf;
+    bool high_qos = false;
+    int status;
+    ompi_list_t pid_list;
+    pid_item_t *pid_list_item;
+    ompi_list_item_t *list_item;
 
     ompi_init(argc, argv);
 
@@ -48,6 +65,8 @@ main(int argc, char *argv[])
                            "starting vpid to use when launching");
     ompi_cmd_line_make_opt(cmd_line, '\0', "num_procs", 1, 
                            "number of procs in job");
+    ompi_cmd_line_make_opt(cmd_line, '\0', "high_qos", 0, 
+                           "Do we want High QOS system (keepalive, etc)");
 
     if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, false, argc, argv)) {
         show_usage(argv[0]);
@@ -73,6 +92,7 @@ main(int argc, char *argv[])
         exit(1);
     }
     total_num_procs = atoi(ompi_cmd_line_get_param(cmd_line, "num_procs", 0, 0));
+    if (ompi_cmd_line_is_taken(cmd_line, "high_qos"))  high_qos = true;
 
     /*
      * Receive the startup schedule for here
@@ -114,28 +134,72 @@ main(int argc, char *argv[])
         }
     }
 
-    /* let's go! - if we are the parent, don't stick around... */
+    OBJ_CONSTRUCT(&pid_list, ompi_list_t);
+
+    /* launch processes, and do the right cleanup things */
     for (i = 0 ; i < fork_num_procs ; ++i) {
         pid = fork();
         if (pid < 0) {
             /* error :( */
             perror("fork");
         } else if (pid == 0) {
+            /* child */
+
             /* do the putenv here so that we don't look like we have a
                giant memory leak */
             asprintf(&env_buf, "OMPI_MCA_pcmclient_env_procid=%d", 
                      local_vpid_start + i);
             putenv(env_buf);
 
-            /* child */
+            if (!high_qos) {
+                for (i = 0; i < FD_SETSIZE; i++)
+                    close(i);
+            }
+
             execvp(sched->argv[0], sched->argv);
             perror("exec");
+        } else {
+            /* parent */
+
+            if (high_qos) {
+                pid_list_item = OBJ_NEW(pid_item_t);
+                pid_list_item->pid = pid;
+                ompi_list_append(&pid_list, 
+                                 (ompi_list_item_t*) pid_list_item);
+            }
         }
     }
 
     OBJ_RELEASE(sched);
 
+    status = 1;
+
+    /* if we want qos, hang around until the first process exits.  We
+       can clean the rest up later if we want */
+    if (high_qos) {
+        for (i = 0 ; i < fork_num_procs ; ++i) {
+            while (1) {
+                pid = waitpid(-1, &status, 0);
+                if (! (pid == -1 && errno == EINTR)) break;
+            }
+            if (! (WIFEXITED(status) && WEXITSTATUS(status) == 0)) break;
+        }
+
+        while (NULL != (list_item = ompi_list_remove_first(&pid_list))) {
+            pid_list_item = (pid_item_t*) list_item;
+            if (pid_list_item->pid != pid) {
+                kill(pid_list_item->pid, SIGTERM);
+            }
+            OBJ_RELEASE(list_item);
+        }
+
+    } else {
+        status = 0;
+    }
+
+    OBJ_DESTRUCT(&pid_list);
+
     ompi_finalize();
 
-    return 0;
+    return status;
 } 
