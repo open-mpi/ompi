@@ -14,11 +14,13 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-include_HEADERS = \
-	ompi_config.h \
+dist_include_HEADERS = \
 	ompi_config_bottom.h \
         ompi_stdint.h \
-	mpi.h \
+	mpi.h
+
+nodist_include_HEADERS = \
+	ompi_config.h \
 	mpif.h
 
 # Add a hook to run *after* the file ompi_config.h has been installed

@@ -40,9 +40,9 @@ atomic-asm.s: generated/@OMPI_ASM_FILE@
 	fi
 
 if OMPI_HAVE_ASM_FILE
-libasm_la_SOURCES = atomic-asm.s
+nodist_libasm_la_SOURCES = atomic-asm.s
 else
-libasm_la_SOURCES =
+nodist_libasm_la_SOURCES =
 endif
 
 libasm_la_DEPENDENCIES = generated/@OMPI_ASM_FILE@
