@@ -8,6 +8,7 @@
 #include "lam/runtime/runtime.h"
 #include "mpi.h"
 #include "mpi/runtime/runtime.h"
+#include "mpi/communicator/communicator.h"
 #include "mca/lam/base/base.h"
 #include "mca/mpi/base/base.h"
 #include "mca/mpi/ptl/ptl.h"
@@ -92,6 +93,7 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
   *provided = lam_mpi_thread_provided;
   lam_mpi_thread_multiple = (lam_mpi_thread_provided == MPI_THREAD_MULTIPLE);
 
+#if 0
   /* Setup MPI_COMM_WORLD */
 
   lam_comm_init(MPI_COMM_WORLD);
@@ -99,6 +101,7 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
   /* Setup MPI_COMM_SELF */
 
   lam_comm_init(MPI_COMM_SELF);
+#endif
 
   /* All done */
 
