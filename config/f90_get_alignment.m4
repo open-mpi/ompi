@@ -38,15 +38,11 @@ fi
 #
 
 cat > conftestf.f90 <<EOF
-module OMPI_TEST_ALIGN
+program f90align
   type TestAlign
     character a
     $1 :: x
   end type
-end module
-
-program f90align
-  use OMPI_TEST_ALIGN
   external ALIGN
   type(TestAlign) :: a
   call ALIGN(a%a, a%x)
