@@ -6,7 +6,6 @@
 #define MCA_PML_H
 
 #include "lam_config.h"
-
 #include "lam/lam.h"
 #include "lam/lfc/list.h"
 #include "mpi/communicator/communicator.h"
@@ -17,19 +16,10 @@
 
 
 /*
- * PML module functions
- */
-
-typedef struct mca_pml_t * (*mca_pml_base_init_fn_t)(int* priority, int* min_thread, int* max_thread);
-typedef int (*mca_pml_base_fini_fn_t)(void);
-
-/*
- * PML types
+ * PML module types
  */
 
 struct mca_ptl_t;
-
-typedef uint64_t mca_pml_base_tstamp_t;
 
 typedef enum {
     MCA_PML_BASE_SEND_STANDARD,
@@ -45,9 +35,33 @@ typedef struct mca_pml_base_status_t mca_pml_base_status_t;
 
 #define LAM_ANY_TAG MPI_ANY_TAG
 
+/**
+ * MCA->PML Called by MCA framework to initialize the module.
+ * 
+ * @param priority (OUT)   Relative priority or ranking used by MCA to selected a module.
+ * @param thread_min (OUT) Minimum thread level supported by the module.
+ * @param thread_max (OUT) Maximum thread level supported by the module.
+ */
+
+typedef struct mca_pml_t * (*mca_pml_base_module_init_fn_t)(
+    int* priority, 
+    int* min_thread, 
+    int* max_thread);
+
+/**
+ * PML module version and interface functions.
+ */
+
+struct mca_pml_base_module_1_0_0_t {
+   mca_base_module_t pmlm_version;
+   mca_base_module_data_1_0_0_t pmlm_data;
+   mca_pml_base_module_init_fn_t pmlm_init;
+};
+typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
+
 
 /*
- * PML interface functions
+ * PML instance interface functions and datatype
  */
 
 typedef int (*mca_pml_base_add_comm_fn_t)(struct lam_communicator_t*);
@@ -55,7 +69,8 @@ typedef int (*mca_pml_base_del_comm_fn_t)(struct lam_communicator_t*);
 typedef int (*mca_pml_base_add_procs_fn_t)(struct lam_proc_t **procs, size_t nprocs);
 typedef int (*mca_pml_base_del_procs_fn_t)(struct lam_proc_t **procs, size_t nprocs);
 typedef int (*mca_pml_base_add_ptls_fn_t)(struct mca_ptl_t **ptls, size_t nptls);
-typedef int (*mca_pml_base_progress_fn_t)(mca_pml_base_tstamp_t);
+typedef int (*mca_pml_base_fini_fn_t)(void);
+typedef int (*mca_pml_base_progress_fn_t)(void);
 
 typedef int (*mca_pml_base_irecv_init_fn_t)(
     void *buf,
@@ -116,21 +131,9 @@ typedef int (*mca_pml_base_wait_fn_t)(
     mca_pml_base_status_t* status
 );
 
-/*
- * PML module definition.
- */
 
-struct mca_pml_base_module_1_0_0_t {
-   mca_base_module_t pmlm_version;
-   mca_base_module_data_1_0_0_t pmlm_data;
-   mca_pml_base_init_fn_t pmlm_init;
-};
-typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
-
-
-/*
- * Struct that represents the common state and interface functions
- * provided by a PML.
+/**
+ *  PML instance interface functions.
  */
 
 struct mca_pml_t {

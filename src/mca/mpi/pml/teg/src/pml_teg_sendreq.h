@@ -5,12 +5,12 @@
 #ifndef LAM_PML_TEG_SEND_REQUEST_H
 #define LAM_PML_TEG_SEND_REQUEST_H
 
+#include "pml_teg_proc.h"
 #include "mca/mpi/ptl/base/ptl_base_sendreq.h"
 #include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
 
 
 int mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req, bool* complete);
-int mca_pml_teg_send_request_progress(void);
 
 
 static inline int mca_pml_teg_send_request_alloc(
@@ -27,7 +27,7 @@ static inline int mca_pml_teg_send_request_alloc(
     int rc = ptl->ptl_request_alloc(ptl,sendreq);
     if(rc != LAM_SUCCESS)
         return rc;
-    (*sendreq)->req_first_ptl = ptl;
+    (*sendreq)->req_owner = ptl;
     return LAM_SUCCESS;
 }
 
@@ -35,17 +35,23 @@ static inline int mca_pml_teg_send_request_alloc(
 static inline int mca_pml_teg_send_request_start(
     mca_ptl_base_send_request_t* req)
 {
-    mca_ptl_t* ptl = req->req_first_ptl;
+    mca_ptl_t* ptl = req->req_owner;
     size_t first_fragment_size = ptl->ptl_frag_first_size;
-
-    // queue for pending acknowledgment
-    THREAD_SCOPED_LOCK(&mca_pml_teg.teg_lock,
-        lam_list_append(&mca_pml_teg.teg_pending_acks, (lam_list_item_t*)req));
+    int rc;
+    bool complete;
 
     // start the first fragment
     if(req->req_length < first_fragment_size)
         first_fragment_size = req->req_length;
-    return req->req_first_ptl->ptl_send(ptl, req, first_fragment_size);
+    rc = ptl->ptl_send(ptl, req, first_fragment_size, &complete);
+    if(rc != LAM_SUCCESS)
+        return rc;
+
+    // if incomplete queue to retry later
+    if(complete == false) {
+        THREAD_SCOPED_LOCK(&mca_pml_teg.teg_lock,
+            lam_list_append(&mca_pml_teg.teg_incomplete_sends, (lam_list_item_t*)req));
+    }
 }
 
 

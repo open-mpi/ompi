@@ -14,6 +14,9 @@
 struct mca_ptl_base_send_request_t {
     /* request object - common data structure for use by wait/test */
     mca_pml_base_request_t super;
+    /* allow send request to be placed on ack list */
+    lam_list_item_t req_ack_item;
+
     /* pointer to user data */
     void *req_data;
     /* size of send/recv in bytes */
@@ -28,15 +31,12 @@ struct mca_ptl_base_send_request_t {
     bool req_clear_to_send;
     /* type of send */
     mca_pml_base_send_mode_t req_send_mode;
-    /* time at which watchdog timer expires */
-    mca_pml_base_tstamp_t req_time_out;
     /* sequence number for MPI pt-2-pt ordering */
     mca_ptl_base_sequence_t req_msg_sequence_number;
     /* queue of fragments that are waiting to be acknowledged */
     mca_ptl_base_queue_t req_unacked_frags;
-    /* first ptl/fragment descriptor */
-    struct mca_ptl_t* req_first_ptl;
-    struct mca_ptl_base_send_frag_t* req_first_frag;
+    /* PTL that allocated this descriptor */
+    struct mca_ptl_t* req_owner;
 };
 typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
 
