@@ -79,7 +79,7 @@ mca_pcmclient_singleton_init(int *priority,
 int
 mca_pcmclient_singleton_finalize(void)
 {
-    if (NULL == mca_pcmclient_singleton_procs) {
+    if (NULL != mca_pcmclient_singleton_procs) {
         free(mca_pcmclient_singleton_procs);
     }
 
