@@ -10,6 +10,9 @@
 #endif
 #include <stdlib.h>
 
+int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
+                                                  int starting_point, int* sizes );
+
 static inline long GET_LOOP_DISP( dt_elem_desc_t* _pElem )
 {
    while( _pElem->type == DT_LOOP ) ++_pElem;
@@ -17,7 +20,7 @@ static inline long GET_LOOP_DISP( dt_elem_desc_t* _pElem )
 }
 
 int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
-						  int starting_point, int* sizes )
+                                                  int starting_point, int* sizes )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */
