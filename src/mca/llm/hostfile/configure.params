@@ -6,4 +6,4 @@
 # Specific to this module
 
 PARAM_INIT_FILE=src/llm_hostfile.c
-PARAM_CONFIG_FILES="Makefile src/Makefile etc/Makefile"
+PARAM_CONFIG_FILES="Makefile src/Makefile"

@@ -50,20 +50,26 @@ const mca_llm_base_component_1_0_0_t mca_llm_hostfile_component = {
 /*
  * component variables handles
  */
-static int mca_llm_hostfile_param_filename;
+static int param_filename;
+static int param_priority;
 
 int
 mca_llm_hostfile_component_open(void)
 {
-    char *default_path = ompi_os_path(false, OMPI_SYSCONFDIR, 
-                                      "llm_hostfile", NULL);
-
-    mca_llm_hostfile_param_filename = mca_base_param_register_string("llm",
-                                                                     "hostfile",
-                                                                     "hostfile",
-                                                                     NULL,
-                                                                     default_path);
+    char *default_path = ompi_os_path(false, OMPI_PKGDATADIR, 
+                                      "openmpi-default-hostfile", NULL);
+    param_filename = mca_base_param_register_string("llm",
+                                                    "hostfile",
+                                                    "hostfile",
+                                                    NULL,
+                                                    default_path);
     if (NULL != default_path) free(default_path);
+
+    param_priority = mca_base_param_register_int("llm",
+                                                 "hostfile",
+                                                 "priority",
+                                                 NULL,
+                                                 1);
 
     return OMPI_SUCCESS;
 }
@@ -83,13 +89,16 @@ mca_llm_hostfile_component_init(const char *active_pcm,
 {
     mca_llm_hostfile_module_t *me;
     
+
+    mca_base_param_lookup_int(param_priority, priority);
+
+    if (0 == *priority) return NULL;
+
     me = malloc(sizeof(mca_llm_hostfile_module_t));
     if (NULL == me) return NULL;
 
-    *priority = 1;
-
-    /* fill in params */
-    mca_base_param_lookup_string(mca_llm_hostfile_param_filename,
+    /* fill in the struct */
+    mca_base_param_lookup_string(param_filename,
                                  &(me->hostfile_filename));
 
     me->super.llm_allocate_resources = mca_llm_hostfile_allocate_resources;
