@@ -75,6 +75,18 @@ extern "C" {
 #endif
         
 /**
+*  Obtains the contact info (oob implementation specific) URI strings through
+*  which this process can be contacted on an OOB channel.
+*
+*  @return  A null terminated array of strings.
+*
+*  The caller is responsible for freeing both the array and the strings that
+*  it points to.
+*/
+
+char** mca_oob_get_contact_info(void);
+
+/**
 *  Similiar to unix writev(2).
 *
 *  @param peer (IN)    Opaque name of peer process.
