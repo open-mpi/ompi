@@ -15,6 +15,8 @@
 #include "ompi_config.h"
 
 #include "include/constants.h"
+#include "util/sys_info.h"
+#include "util/proc_info.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/ns/base/base.h"
@@ -22,6 +24,13 @@
 int main(int argc, char **argv)
 {
     ompi_process_name_t *test_name;
+
+    /* get system info */
+    ompi_sys_info();
+    ompi_proc_info();
+
+    /* set us to be seed */
+    ompi_process_info.seed = true;
 
     /* startup the MCA */
     if (OMPI_SUCCESS == mca_base_open()) {
@@ -40,7 +49,7 @@ int main(int argc, char **argv)
     }
 
     /* startup the name server */
-    if (NULL == mca_ns_replica_init()) {
+    if (OMPI_SUCCESS != mca_ns_base_select(false, false)) {
 	fprintf(stderr, "NS could not start\n");
 	exit(1);
     } else {
