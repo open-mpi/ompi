@@ -77,6 +77,7 @@ int orte_ras_base_allocate_nodes(orte_jobid_t jobid, ompi_list_t* nodes)
         }
 
         /* allocate nodes to the job */
+        item = ompi_list_get_first(nodes);
         while(item != ompi_list_get_last(nodes) && 
             ompi_list_get_size(&allocated) < orte_ras_base.ras_num_nodes) {
             orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
