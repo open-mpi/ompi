@@ -130,9 +130,9 @@
        parameter (MPI_COMM_NULL=2)
        parameter (MPI_DATATYPE_NULL=0)
        parameter (MPI_REQUEST_NULL=-1)
-       parameter (MPI_OP_NULL=-1)
-       parameter (MPI_ERRHANDLER_NULL=-1)
-       parameter (MPI_INFO_NULL=-1)
+       parameter (MPI_OP_NULL=0)
+       parameter (MPI_ERRHANDLER_NULL=0)
+       parameter (MPI_INFO_NULL=0)
 !
 ! MPI_Init_thread constants
 !
