@@ -111,14 +111,14 @@ struct mca_base_param_t {
 
   mca_base_param_storage_t lsbp_default_value;
 };
-struct mca_base_param_t mca_base_param_t;
+typedef struct mca_base_param_t mca_base_param_t;
 
 
 /*
  * Variable holding the array of registered MCA parameters
  */
 
-extern lam_array_t *mca_base_params;
+extern lam_array_t mca_base_params;
 
 
 /*
