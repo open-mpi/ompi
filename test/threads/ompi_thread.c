@@ -5,10 +5,10 @@
 #include "include/sys/atomic.h"
 
 
-static volatile int count = 0;
-
-
 #if !OMPI_HAVE_THREAD_SUPPORT
+
+/* If we don't have thread support, there's no point in running this
+   test */
 
 int main(int argc, char *argv[])
 {
@@ -17,6 +17,11 @@ int main(int argc, char *argv[])
 }
 
 #else
+
+/* Only have the body of this test if we have thread support */
+
+static volatile int count = 0;
+
 
 static void* thr1_run(ompi_object_t* obj)
 {

@@ -8,12 +8,27 @@
 #include "include/sys/atomic.h"
 
 
+#if !OMPI_HAVE_THREAD_SUPPORT
+
+/* If we don't have thread support, there's no point in running this
+   test */
+
+int main(int argc, char *argv[])
+{
+    printf("OMPI was compiled without thread support -- skipping this test\n");
+    return 77;
+}
+
+#else
+
+/* Only have the body of this test if we have thread support */
+
 ompi_mutex_t mutex;
 ompi_condition_t thr1_cond;
 ompi_condition_t thr2_cond;
 
-int thr1_count = 0;
-int thr2_count = 0;
+static volatile int thr1_count = 0;
+static volatile int thr2_count = 0;
 
 
 #define TEST_COUNT 1000000
@@ -88,5 +103,4 @@ int main(int argc, char** argv)
     return test_finalize();
 }
 
-
-
+#endif /* OMPI_HAVE_THREAD_SUPPORT */
