@@ -96,6 +96,7 @@ static void parse_verbose(char *e, lam_output_stream_t *lds)
 {
   char *edup;
   char *ptr, *next;
+  bool have_output = false;
 
   if (NULL == e)
     return;
@@ -112,9 +113,11 @@ static void parse_verbose(char *e, lam_output_stream_t *lds)
 
     if (0 == strcasecmp(ptr, "syslog")) {
       lds->lds_want_syslog = true;
+      have_output = true;
     }
     else if (strncasecmp(ptr, "syslogpri:", 10) == 0) {
       lds->lds_want_syslog = true;
+      have_output = true;
       if (strcasecmp(ptr + 10, "notice") == 0)
 	lds->lds_syslog_priority = LOG_NOTICE;
       else if (strcasecmp(ptr + 10, "INFO") == 0)
@@ -128,18 +131,23 @@ static void parse_verbose(char *e, lam_output_stream_t *lds)
 
     else if (strcasecmp(ptr, "stdout") == 0) {
       lds->lds_want_stdout = true;
+      have_output = true;
     } else if (strcasecmp(ptr, "stderr") == 0) {
       lds->lds_want_stderr = true;
+      have_output = true;
     }
 
     else if (strcasecmp(ptr, "file") == 0) {
       lds->lds_want_file = true;
+      have_output = true;
     } else if (strncasecmp(ptr, "file:", 5) == 0) {
       lds->lds_want_file = true;
       lds->lds_file_suffix = ptr + 5;
+      have_output = true;
     } else if (strcasecmp(ptr, "fileappend") == 0) {
       lds->lds_want_file = true;
       lds->lds_want_file_append = 1;
+      have_output = true;
     } 
 
     else if (strncasecmp(ptr, "level", 5) == 0) {
@@ -151,6 +159,12 @@ static void parse_verbose(char *e, lam_output_stream_t *lds)
     if (NULL == next)
       break;
     ptr = next + 1;
+  }
+
+  /* If we didn't get an output, default to stderr */
+
+  if (!have_output) {
+    lds->lds_want_stderr = true;
   }
 
   /* All done */
