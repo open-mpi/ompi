@@ -16,9 +16,9 @@ MPI_Group MPI_Group_f2c(MPI_Fint group_f)
 {
     /* local variables */
     lam_group_t *group_c;
-    int group_index;
+    size_t group_index;
 
-    group_index = (int) group_f;
+    group_index = (size_t) group_f;
 
     /* error checks */
     if (MPI_PARAM_CHECK) {
