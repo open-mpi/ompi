@@ -60,6 +60,8 @@ void mca_ptl_ib_process_recv(mca_ptl_base_module_t *module, void* addr)
     ompi_list_item_t *item;
     mca_ptl_ib_recv_frag_t *recv_frag;
 
+    D_PRINT("");
+
     ib_buf = (ib_buffer_t *) (unsigned int) addr;
 
     header = (mca_ptl_base_header_t *) &ib_buf->buf[0];

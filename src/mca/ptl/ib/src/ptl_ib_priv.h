@@ -82,6 +82,9 @@ struct ib_buffer_t {
 
     char                            buf[4096];
     /* Buffer space */
+
+    VAPI_qp_hndl_t                  qp_hndl;
+    /* Queue pair used for this IB buffer */
 };
 
 typedef struct ib_buffer_t ib_buffer_t;
@@ -192,6 +195,6 @@ int mca_ptl_ib_post_send(mca_ptl_ib_state_t *ib_state,
 void mca_ptl_ib_drain_network(VAPI_hca_hndl_t nic,
         VAPI_cq_hndl_t cq_hndl, int* comp_type, void** comp_addr);
 void mca_ptl_ib_buffer_repost(VAPI_hca_hndl_t nic,
-        VAPI_qp_hndl_t qp_hndl, void* addr);
+        void* addr);
 
 #endif  /* MCA_PTL_IB_PRIV_H */

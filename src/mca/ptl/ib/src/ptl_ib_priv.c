@@ -485,6 +485,8 @@ int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t *ib_state,
 
         ib_buf_ptr = &peer_conn->lres->recv[i];
 
+        ib_buf_ptr->qp_hndl = peer_conn->lres->qp_hndl;
+
         IB_PREPARE_RECV_DESC(ib_buf_ptr);
     }
 
@@ -577,29 +579,21 @@ void mca_ptl_ib_drain_network(VAPI_hca_hndl_t nic,
 }
 
 void mca_ptl_ib_buffer_repost(VAPI_hca_hndl_t nic,
-        VAPI_qp_hndl_t qp_hndl, void* addr)
+        void* addr)
 {
     VAPI_ret_t ret;
     ib_buffer_t *ib_buf;
 
-    D_PRINT("Entering, comp_addr = %p", addr);
+    D_PRINT("");
 
     ib_buf = (ib_buffer_t *) (unsigned int) addr;
 
-    D_PRINT("NIC : %d, Qp hndl : %d, &desc.rr : %p",
-            nic, qp_hndl,
-            &(ib_buf->desc.rr));
-
     IB_PREPARE_RECV_DESC(ib_buf);
 
-    ret = VAPI_post_rr(nic, qp_hndl, &(ib_buf->desc.rr));
-
-    D_PRINT("");
+    ret = VAPI_post_rr(nic, ib_buf->qp_hndl, &(ib_buf->desc.rr));
 
     if(VAPI_OK != ret) {
         MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_rr");
         ompi_output(0, "Error in buffer reposting");
     }
-
-    D_PRINT("Leaving");
 }

@@ -312,7 +312,7 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
     mca_ptl_ib_peer_t *peer;
     mca_ptl_ib_proc_t *proc;
     mca_ptl_ib_module_t *module;
-    int comp_type;
+    int comp_type = IB_COMP_NOTHING;
     void* comp_addr;
 
     num_procs = ompi_list_get_size(&(mca_ptl_ib_component.ib_procs));
@@ -366,11 +366,9 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
                 /* Process incoming receives */
                 mca_ptl_ib_process_recv((mca_ptl_base_module_t *)module, 
                         comp_addr);
-#if 0
                 /* Re post recv buffers */
                 mca_ptl_ib_buffer_repost(module->ib_state->nic,
-                        peer->peer_conn->lres->qp_hndl, comp_addr);
-#endif
+                        comp_addr);
                 
                 break;
             case IB_COMP_NOTHING:
