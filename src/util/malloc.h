@@ -15,7 +15,6 @@
 #ifndef OMPI_MALLOC_H
 #define OMPI_MALLOC_H
 
-#include "ompi_config.h"
 #include <stdlib.h>
 
 /*
@@ -35,6 +34,15 @@
 
 #ifndef OMPI_MALLOC_DEBUG_LEVEL
 #define OMPI_MALLOC_DEBUG_LEVEL 2
+#endif
+
+/*
+ * If we're mem debugging, make the OMPI_DEBUG_ZERO resolve to memset
+ */
+#if defined(OMPI_ENABLE_MEM_DEBUG) && OMPI_ENABLE_MEM_DEBUG
+#define OMPI_DEBUG_ZERO(obj) memset(&obj, 0, sizeof(obj))
+#else
+#define OMPI_DEBUG_ZERO(obj)
 #endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
