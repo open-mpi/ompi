@@ -25,6 +25,7 @@
 #include "errhandler/errhandler.h"
 #include "group/group.h"
 #include "proc/proc.h"
+#include "info/info.h"
 #include "threads/mutex.h"
 #include "util/proc_info.h"
 #include "util/bit_ops.h"
@@ -286,8 +287,9 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     ompi_list_t schedlist;
     char *tmp, *envvarname, *segment, *my_contact_info;
     char cwd[MAXPATHLEN];
+    int have_wdir=0;
     ompi_registry_notify_id_t rc_tag;
-    int i;
+    int i, valuelen=MAXPATHLEN, flag=0;
     int total_start_procs = 0;
     int requires;
 
@@ -385,10 +387,25 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         free(tmp);
         free(envvarname);
 
-        getcwd(cwd, MAXPATHLEN);
-        sched->cwd = strdup(cwd);
-        sched->nodelist = nodelists[i];
-
+	/* Verify for the 'wdir' and later potentially for the
+	   'path' Info object */
+	have_wdir = 0; 
+	if ( array_of_info != NULL && array_of_info[i] == MPI_INFO_NULL ) {
+	    ompi_info_get (array_of_info[i], "wdir", valuelen, cwd, &flag);
+	    if ( flag ) {
+		sched->cwd = cwd;
+		have_wdir = 1;
+	    }
+	}
+	
+	/* default value: If the user did not tell us where to look for the 
+	   executable, we assume the current working directory */
+	if ( !have_wdir ) {
+	    getcwd(cwd, MAXPATHLEN);
+	    sched->cwd = strdup(cwd);
+	}
+	sched->nodelist = nodelists[i];
+	    
         if (sched->argc == 0) {
             printf("no app to start\n");
             return MPI_ERR_ARG;
