@@ -46,6 +46,7 @@
  *  @param info with information regarding the reason/send of the signal
  *  @param p 
  *
+ * FIXME: Should distinguish for systems, which don't have siginfo...
  */
 #ifndef WIN32
 static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
@@ -60,7 +61,7 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
     char * tmp = print_buffer;
     int size = sizeof (print_buffer);
     int ret;
-    char * str;
+    char * str="";
 
     /*
      * Yes, we are doing printf inside a signal-handler.
