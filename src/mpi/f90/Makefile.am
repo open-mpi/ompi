@@ -17,7 +17,22 @@ include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = scripts
 
-AM_FCFLAGS = $(FCFLAGS_f90)
+AM_FCFLAGS = -I$(top_srcdir)/include
+
+# Override the default f90 rules because we have to insert
+# $(FCFLAGS_f90) right before the source filename.  This is necessary
+# for cases where the compiler expects source files to end in .f, and
+# if we want our .f90 files to be compilable, we have to insert a
+# special flag right before the source filename (e.g., xlf).
+
+.f90.o:
+	$(FCCOMPILE) -c -o $@ $(FCFLAGS_f90) $<
+
+.f90.obj:
+	$(FCCOMPILE) -c -o $@ `$(CYGPATH_W) $(FCFLAGS_f90) '$<'`
+
+.f90.lo:
+	$(LTFCCOMPILE) -c -o $@ $(FCFLAGS_f90) $<
 
 lib_LTLIBRARIES =
 if OMPI_WANT_F90_BINDINGS
