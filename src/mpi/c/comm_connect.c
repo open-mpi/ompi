@@ -93,9 +93,10 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
         }
     }
     
-    /* bcast list of remote procs to all processes in comm */
+    /* bcast list of remote procs to all processes in comm.
+       TO BE CHANGED. */
     rc = comp->c_coll.coll_bcast ( &rprocs, maxprocs, MPI_UNSIGNED, root, comm);
-    if ( OMPI_SUCCESS != rc ) {
+    if ( MPI_SUCCESS != rc ) {
        goto exit;
     }
     
@@ -104,18 +105,9 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
         /* if process rprocs[i] not yet in our list, add it. */
     }
 
-   /* setup the intercomm-structure using ompi_comm_set (); */
-    newcomp = ompi_comm_set ( comp,                                   /* old comm */
-                              comp->c_local_group->grp_proc_count,    /* local_size */
-                              comp->c_local_group->grp_proc_pointers, /* local_procs*/
-                              maxprocs,                               /* remote_size */
-                              rprocs,                                 /* remote_procs */
-                              NULL,                                   /* attrs */
-                              comp->error_handler,                    /* error handler */
-                              NULL,                                   /* coll module */
-                              NULL                                    /* topo module */
-                              );
-    if ( MPI_COMM_NULL == newcomp ) { 
+    newcomp = ompi_comm_allocate ( comp->c_local_group->grp_proc_count, maxprocs );
+    if ( NULL == newcomp ) {
+        rc = MPI_ERR_INTERN;
         goto exit;
     }
 
@@ -123,12 +115,29 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
     rc = ompi_comm_nextcid ( newcomp,                  /* new comm */ 
                              comp,                     /* old comm */
                              NULL,                     /* bridge comm */
-                             &lleader,                /* local leader */
+                             &lleader,                 /* local leader */
                              &rleader,                 /* remote_leader */
                              OMPI_COMM_CID_INTRA_OOB); /* mode */
-    if ( OMPI_SUCCESS != rc ) {
+    if ( MPI_SUCCESS != rc ) {
         goto exit;
     }
+
+   /* setup the intercomm-structure using ompi_comm_set (); */
+    rc = ompi_comm_set ( newcomp,                               /* new comm */
+                         comp,                                   /* old comm */
+                         comp->c_local_group->grp_proc_count,    /* local_size */
+                         comp->c_local_group->grp_proc_pointers, /* local_procs*/
+                         maxprocs,                               /* remote_size */
+                         rprocs,                                 /* remote_procs */
+                         NULL,                                   /* attrs */
+                         comp->error_handler,                    /* error handler */
+                         NULL,                                   /* coll module */
+                         NULL                                    /* topo module */
+                         );
+    if ( MPI_SUCCESS != rc ) { 
+        goto exit;
+    }
+
 
    /* PROBLEM: do we have to re-start some low level stuff
       to enable the usage of fast communication devices

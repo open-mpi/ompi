@@ -24,12 +24,7 @@ static const char FUNC_NAME[] = "MPI_Group_translate_ranks";
 int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
                               MPI_Group group2, int *ranks2) 
 {
-    int rank, proc, proc2;
-    ompi_proc_t *proc1_pointer, *proc2_pointer;
-    ompi_group_t *group1_pointer, *group2_pointer;
-
-    group1_pointer=(ompi_group_t *)group1;
-    group2_pointer=(ompi_group_t *)group2;
+    int err;
 
     /* check for errors */
     if( MPI_PARAM_CHECK ) {
@@ -40,7 +35,7 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
                                           FUNC_NAME);
         }
-        if( (n_ranks > group1_pointer->grp_proc_count) || (0 >= n_ranks) ){
+        if( (n_ranks > group1->grp_proc_count) || (0 >= n_ranks) ){
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
                                           FUNC_NAME);
         }
@@ -50,21 +45,7 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
         }
     }
 
-    /* loop over all ranks */
-    for (proc = 0; proc < n_ranks; proc++) {
-        rank=ranks1[proc];
-        proc1_pointer=group1_pointer->grp_proc_pointers[rank];
-        /* initialize to no "match" */
-        ranks2[proc] = MPI_UNDEFINED;
-        for (proc2 = 0; proc2 < group2_pointer->grp_proc_count; proc2++) 
-        {
-            proc2_pointer=group2_pointer->grp_proc_pointers[proc2];
-            if ( proc1_pointer == proc2_pointer) {
-                ranks2[proc] = proc2;
-                break;
-            }
-        }  /* end proc2 loop */
-    } /* end proc loop */
-
-    return MPI_SUCCESS;
+    err = ompi_group_translate_ranks ( group1, n_ranks, ranks1,
+                                       group2, ranks2 );
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME );
 }

@@ -124,20 +124,11 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
    for ( i=0; i<maxprocs; i++ ) {
    }
 
-   /* setup the intercomm-structure using ompi_comm_set (); */
-    newcomp = ompi_comm_set ( comp,                                   /* old comm */
-                              comp->c_local_group->grp_proc_count,    /* local_size */
-                              comp->c_local_group->grp_proc_pointers, /* local_procs*/
-                              maxprocs,                               /* remote_size */
-                              rprocs,                                 /* remote_procs */
-                              NULL,                                   /* attrs */
-                              comp->error_handler,                    /* error handler */
-                              NULL,                                   /* coll module */
-                              NULL                                    /* topo module */
-                             );
-    if ( MPI_COMM_NULL == newcomp ) { 
-        goto exit;
-    }
+   newcomp = ompi_comm_allocate ( comp->c_local_group->grp_proc_count, maxprocs );
+   if ( NULL == newcomp ) {
+       rc = MPI_ERR_INTERN;
+       goto exit;
+   }
 
     /* Determine context id. It is identical to f_2_c_handle */
     rc = ompi_comm_nextcid ( newcomp,                   /* new comm */ 
@@ -149,6 +140,23 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
+
+   /* setup the intercomm-structure using ompi_comm_set (); */
+   rc = ompi_comm_set ( newcomp,                                /* new comm */
+                        comp,                                   /* old comm */
+                        comp->c_local_group->grp_proc_count,    /* local_size */
+                        comp->c_local_group->grp_proc_pointers, /* local_procs*/
+                        maxprocs,                               /* remote_size */
+                        rprocs,                                 /* remote_procs */
+                        NULL,                                   /* attrs */
+                        comp->error_handler,                    /* error handler */
+                        NULL,                                   /* coll module */
+                        NULL                                    /* topo module */
+                        );
+    if ( MPI_SUCCESS != rc ) { 
+        goto exit;
+    }
+
     
 
    /* PROBLEM: do we have to re-start some low level stuff
