@@ -51,9 +51,9 @@ libmpi_la_LIBADD = \
         request/librequest.la \
         runtime/libruntime.la \
         threads/libthreads.la \
-        util/libutil.la \
-        win/libwin.la
+        util/libutil.la
 
 not_implemented_yet =\
         ctnetwork/libctnetwork.la \
-        file/libfile.la
+        file/libfile.la \
+        win/libwin.la
