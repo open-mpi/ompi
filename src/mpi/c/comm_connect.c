@@ -9,6 +9,7 @@
 #include "runtime/runtime.h"
 #include "info/info.h"
 #include "communicator/communicator.h"
+#include "mca/ns/base/base.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_connect = PMPI_Comm_connect
@@ -70,6 +71,11 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
      * translate the port_name string into the according process_name_t 
      * structure. This functionality is currently missing from ns.
      */ 
+    port_proc_name = ompi_name_server.convert_string_to_process_name(port_name);
+    if ( NULL == port_proc_name ) {
+        *newcomm = MPI_COMM_NULL;
+        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);
+    }
     rc = ompi_comm_connect_accept (comm, root, port_proc_name, send_first,
                                    &newcomp);
     
