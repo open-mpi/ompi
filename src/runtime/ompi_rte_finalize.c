@@ -44,7 +44,9 @@ int ompi_rte_finalize(void)
 
   ompi_event_fini();
 
+#ifndef WIN32
     ompi_session_dir_finalize();
+#endif
 
   /* All done */
 
