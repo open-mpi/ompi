@@ -83,6 +83,7 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
       if (0 == strcmp(component->mca_component_name, "basic")) {
         mca_coll_base_basic_component = 
           (mca_coll_base_component_1_0_0_t *) component;
+        OBJ_RELEASE(entry);
       }
 
       /* Otherwise, save the results in the list.  The priority isn't
