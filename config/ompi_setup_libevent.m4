@@ -269,7 +269,10 @@ if test "x$needsignal" = "xyes" ; then
     sources="signal.c $sources"
 fi
 
-AC_REPLACE_FUNCS(err)
+# OMPI: AC_REPLACE_FUNCS doesn't have much meaning here because it
+# uses AC_LIBOBJ; use our own test
+#AC_REPLACE_FUNCS(err)
+AC_CHECK_FUNC(err, [], [sources="err.c $sources"])
 
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
