@@ -1,6 +1,6 @@
 /*
-$HEADER$
-*/
+ * $HEADER$
+ */
 
 #ifndef OMPI_MISC_H
 #define OMPI_MISC_H

@@ -1,4 +1,6 @@
 /**
+ * $HEADER$
+ *
  * send_t.c - tests mpi_send variants
  *
  * Actual tests do not use MPI, they just test parameters and types.

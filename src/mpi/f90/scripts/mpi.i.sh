@@ -1,4 +1,7 @@
 #! /bin/sh
+#
+# $HEADER$
+#
 
 . fortran_kinds.sh
 

@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #ifndef MCA_PTL_IB_PRIV_H
 #define MCA_PTL_IB_PRIV_H
 

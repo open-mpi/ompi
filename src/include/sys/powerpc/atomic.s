@@ -1,3 +1,6 @@
+;; 
+;; $HEADER$
+;; 
 	.section __TEXT,__text,regular,pure_instructions
 	.section __TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32
 .section __TEXT,__text,regular,pure_instructions

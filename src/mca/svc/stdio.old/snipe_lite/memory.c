@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #include "ompi_config.h"
 #if !defined(NDEBUG)
 #include <stdio.h>

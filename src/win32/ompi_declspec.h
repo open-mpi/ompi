@@ -1,3 +1,7 @@
+/* 
+ * $HEADER$
+ */
+
 #ifndef OMPI_DECLSPEC_H
 #define OMPI_DECLSPEC_H
 

@@ -1,4 +1,7 @@
 #!/bin/sh
+#
+# $HEADER$
+#
 
 CFILE=/tmp/ompi_atomic_$$.c
 

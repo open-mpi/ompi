@@ -1,3 +1,7 @@
+;;
+;; $HEADER$
+;;
+	
 #include <asm.h>
 
 .text

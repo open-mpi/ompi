@@ -1,4 +1,6 @@
 /*
+  $HEADER$
+
   openmpi.c - main program for spawning persistent universe.
 
   --------------------------------------------------------------------------

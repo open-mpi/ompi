@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #ifndef MCA_PTL_IB_RECV_FRAG_H
 #define MCA_PTL_IB_RECV_FRAG_H
 

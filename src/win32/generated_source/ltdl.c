@@ -1,3 +1,7 @@
+/* 
+ * $HEADER$
+ */
+
 /* ltdl.c -- system independent dlopen wrapper
    Copyright (C) 1998, 1999, 2000 Free Software Foundation, Inc.
    Originally by Thomas Tanner <tanner@ffii.org>

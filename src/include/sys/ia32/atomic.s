@@ -1,3 +1,6 @@
+;; 
+;; $HEADER$
+;; 
 	.file	"atomic.c"
 	.text
 .globl ompi_atomic_mb

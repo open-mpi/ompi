@@ -1,4 +1,6 @@
 /*
+ * $HEADER$
+ *
  * MPI ping program
  *
  * Patterned after the example in the Quadrics documentation

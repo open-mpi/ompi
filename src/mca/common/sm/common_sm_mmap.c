@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #include "ompi_config.h"
 #include <errno.h>
 #ifdef HAVE_UNISTD_H

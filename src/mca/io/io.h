@@ -1,5 +1,5 @@
 /*
- * $HEADER
+ * $HEADER$
  */
 
 #ifndef MCA_IO_H

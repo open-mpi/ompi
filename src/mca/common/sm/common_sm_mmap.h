@@ -1,3 +1,7 @@
+/*
+ * $HEADER$
+ */
+
 #ifndef _COMMON_SM_MMAP_H_
 #define _COMMON_SM_MMAP_H_
 

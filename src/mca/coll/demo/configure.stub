@@ -1,4 +1,6 @@
 #
+# $HEADER$
+#
 # Don't really need anything in here -- we just want a configure
 # script so that this can be a standalone component.
 #

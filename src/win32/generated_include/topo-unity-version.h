@@ -1,3 +1,7 @@
+/* 
+ * $HEADER$
+ */
+
 /*
  * This file is automatically created by autogen.sh; it should not
  * be edited by hand!!

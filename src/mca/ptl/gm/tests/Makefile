@@ -1,3 +1,7 @@
+#
+# $HEADER$
+#
+
 PROGS = mpi-ping
 
 all: $(PROGS)

@@ -1,5 +1,5 @@
 /* 
- * $HEADER 
+ * $HEADER$
  */
 
 #ifndef MCA_COLL_SM_EXPORT_H

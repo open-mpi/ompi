@@ -1,4 +1,8 @@
 #!/bin/bash 
+#
+# $HEADER$
+#
+
 prog=./lat
 i=$((0))
 while [ $i -le $((1<<20)) ] ; 

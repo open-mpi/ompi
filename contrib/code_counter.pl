@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 #
+# $HEADER$
+#
 # Primitive script to give approximate code counts in the Open MPI tree
 #
 
