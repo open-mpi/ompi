@@ -8,6 +8,7 @@
  */
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 
 #include "lam/lfc/lam_pointer_array.h"
@@ -52,6 +53,7 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
 
 	p = malloc(TABLE_INIT * sizeof(void *));
 	if (p == NULL) {
+        THREAD_UNLOCK(&(table->lock));
         return -1;
 	}
 	table->lowest_free = 0;
@@ -135,10 +137,14 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
  * @param ptr Pointer to be added to table    (IN)
  *
  * @return Error code
+ *
+ * Assumption: NULL element is free element.
  */
 int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
         void * value)
 {
+    int return_value;
+
     assert(table != NULL);
     assert(table->addr != NULL);
     assert(index >= 0);
@@ -154,11 +160,22 @@ int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
 
     THREAD_LOCK(&(table->lock));
 
-    table->addr[index] = value;
-    if (index < table->lowest_free) {
-        table->lowest_free = index;
+    /* reset this parameter only if in use - otherwise need to use the
+     * add interface funtion
+     */
+    if( NULL != table->addr[index] ){
+        return_value=0;
+        table->addr[index] = value;
+        /* mark element as free, if NULL element */
+        if( NULL == value ) {
+            if (index < table->lowest_free) {
+                table->lowest_free = index;
+            }
+            table->number_free++;
+        }
+    } else {
+        return_value=1;
     }
-    table->number_free++;
 
     if (LAM_ENABLE_DEBUG) {
         lam_output(0,"lam_pointer_array_set_item: OUT: "
@@ -170,7 +187,7 @@ int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
 
     THREAD_UNLOCK(&(table->lock));
 
-    return 0;
+    return return_value;
 }
 
 /**
