@@ -255,7 +255,7 @@ enum {
  * NULL handles
  */
 #define MPI_GROUP_NULL ((MPI_Group) &(lam_mpi_group_null))
-#define MPI_COMM_NULL ((MPI_Comm) 0)
+#define MPI_COMM_NULL ((MPI_Comm) (&lam_mpi_comm_null))
 #define MPI_DATATYPE_NULL ((MPI_Datatype) 0)
 #define MPI_REQUEST_NULL ((MPI_Request) 0)
 #define MPI_OP_NULL ((MPI_Op) 0)
@@ -280,6 +280,7 @@ enum {
  */
 extern struct lam_communicator_t lam_mpi_comm_world;
 extern struct lam_communicator_t lam_mpi_comm_self;
+extern struct lam_communicator_t lam_mpi_comm_null;
 
 extern struct lam_group_t lam_mpi_group_empty;
 extern struct lam_group_t lam_mpi_group_null;

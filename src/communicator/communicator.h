@@ -13,22 +13,35 @@
 #include "group/group.h"
 #include "mca/coll/coll.h"
 #include "lfc/lam_hash_table.h"
-
+#include "attribute/attribute.h"
 
 extern lam_class_t lam_communicator_t_class;
 
+#define LAM_COMM_INTER     0x00000001
+#define LAM_COMM_CART      0x00000002
+#define LAM_COMM_GRAPH     0x00000004
+#define LAM_COMM_NAMEISSET 0x00000008
+#define LAM_COMM_ISFREED   0x00000010
+
+/* modes reqquired for accquiring the new comm-id */
+#define LAM_COMM_INTRA_INTRA 0x00000020
+#define LAM_COMM_INTRA_INTER 0x00000040
+#define LAM_COMM_INTER_INTRA 0x00000080
+#define LAM_COMM_INTER_INTER 0x00000100
 
 struct lam_communicator_t {
-    lam_object_t c_base;
-    char c_name[MPI_MAX_OBJECT_NAME];
-    uint32_t c_contextid;
-    int c_my_rank;
+    lam_object_t               c_base; 
+    char  c_name[MPI_MAX_OBJECT_NAME];
+    uint32_t              c_contextid;
+    int                     c_my_rank;
+    uint32_t                  c_flags; /* flags, e.g. intercomm, 
+                                          topology, etc. */
 
-    lam_group_t *c_local_group;
-    lam_group_t *c_remote_group;
+    lam_group_t        *c_local_group;
+    lam_group_t       *c_remote_group;
   
     /* Attributes */
-    lam_hash_table_t *c_keyhash;
+    lam_hash_table_t       *c_keyhash;
 
     /* Topology information */
     int c_cube_dim; /**< Inscribing cube dimension */
@@ -81,9 +94,20 @@ static inline int lam_comm_rank(lam_communicator_t* comm)
  */
 static inline int lam_comm_size(lam_communicator_t* comm)
 {
-    return comm->c_remote_group->grp_proc_count;
+    return comm->c_local_group->grp_proc_count;
 }
 
+/**
+ * size of the remote group for inter-communicators.
+ * returns zero for an intra-communicator
+ */
+static inline int lam_comm_remote_size(lam_communicator_t* comm)
+{
+    if ( comm->c_flags & LAM_COMM_INTER ) 
+        return comm->c_remote_group->grp_proc_count;
+    else 
+        return 0;
+}
 
 /* return pointer to communicator associated with context id cid,
  * No error checking is done*/
@@ -118,8 +142,68 @@ static inline bool lam_comm_peer_invalid(lam_communicator_t* comm, int peer_id)
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+    /** 
+     * Initialise MPI_COMM_WORLD and MPI_COMM_SELF 
+     */
     int lam_comm_init(void);
     int lam_comm_link_function(void);
+
+    /** 
+     * extract the local group from a communicator 
+     */
+    int lam_comm_group ( MPI_Comm comm, MPI_Group *group );
+
+    /**
+     * create a communicator based on a group 
+     */
+    int lam_comm_create ( MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm );
+
+    /**
+     * split a communicator based on color and key. Parameters
+     * are identical to the MPI-counterpart of the function.
+     * 
+     * @param comm: input communicator
+     * @param color
+     * @param key
+     *
+     * @
+     */
+    int lam_comm_split ( MPI_Comm comm, int color, int key, MPI_Comm *newcomm );
+    
+    /**
+     * free a communicator 
+     */
+    int lam_comm_free ( MPI_Comm *comm );
+
+    /**
+     * allocate a new communicator structure 
+     * @param local_group_size
+     * @param remote_group_size
+     *
+     * this routine allocates the structure, the according local and
+     * remote groups, the proc-arrays in the local and remote group.
+     * It furthermore sets the fortran index correctly, 
+     * and sets all other elements to zero.
+     */
+    lam_communicator_t* lam_comm_allocate ( int local_group_size, 
+                                            int remote_group_size );
+
+    /**
+     * allocate new communicator ID
+     * @param mode: combination of input and output communicator
+     *              LAM_COMM_INTRA_INTRA, LAM_COMM_INTRA_INTER,
+     *              LAM_COMM_INTER_INTRA, LAM_COMM_INTER_INTER
+     *
+     * This routine has to be thread safe in the final version.
+     */
+    int lam_comm_nextcid (MPI_Comm comm, int mode);
+
+
+    /**
+     * shut down the communicator infrastructure.
+     */
+    int lam_comm_finalize (void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
