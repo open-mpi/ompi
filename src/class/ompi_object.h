@@ -28,7 +28,7 @@
  *     ...
  *   };
  *
- *   OBJ_CLASS_DECLARATION(sally_t_class);
+ *   OBJ_CLASS_DECLARATION(sally_t);
  * @endcode
  * All classes must have a parent which is also class.
  * 
