@@ -40,5 +40,5 @@ MPI_Op MPI_Op_f2c(MPI_Fint op_f)
         return MPI_OP_NULL;
     }
 
-    return ompi_op_f_to_c_table->addr[op_index];
+    return ompi_pointer_array_get_item(ompi_op_f_to_c_table, op_index);
 }

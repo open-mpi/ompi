@@ -39,5 +39,6 @@ MPI_Errhandler MPI_Errhandler_f2c(MPI_Fint errhandler_f)
         return MPI_ERRHANDLER_NULL;
     }
 
-    return ompi_errhandler_f_to_c_table->addr[eh_index];
+    return ompi_pointer_array_get_item(ompi_errhandler_f_to_c_table,
+                                       eh_index);
 }

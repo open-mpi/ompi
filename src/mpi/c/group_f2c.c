@@ -23,7 +23,6 @@ static const char FUNC_NAME[] = "MPI_Group_f2c";
 MPI_Group MPI_Group_f2c(MPI_Fint group_f)
 {
     /* local variables */
-    ompi_group_t *group_c;
     size_t group_index;
 
     group_index = (size_t) group_f;
@@ -41,6 +40,5 @@ MPI_Group MPI_Group_f2c(MPI_Fint group_f)
         return MPI_GROUP_NULL;
     }
 
-    group_c = ompi_group_f_to_c_table->addr[group_index];
-    return (MPI_Group) group_c;
+    return ompi_pointer_array_get_item(ompi_group_f_to_c_table, group_index);
 }

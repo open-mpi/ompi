@@ -47,5 +47,5 @@ MPI_Info MPI_Info_f2c(MPI_Fint info)
         return MPI_INFO_NULL;
     }
 
-    return ompi_info_f_to_c_table.addr[info_index];
+    return ompi_pointer_array_get_item(&ompi_info_f_to_c_table, info_index);
 }

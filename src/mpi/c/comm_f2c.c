@@ -37,5 +37,5 @@ MPI_Comm MPI_Comm_f2c(MPI_Fint comm)
         return MPI_COMM_NULL;
     }
         
-    return ompi_mpi_communicators.addr[o_index];
+    return ompi_pointer_array_get_item(&ompi_mpi_communicators, o_index);
 }
