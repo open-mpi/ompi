@@ -43,8 +43,7 @@ mca_pcm_base_component_1_0_0_t mca_pcm_rms_component = {
   {
     false /* checkpoint / restart */
   },
-  mca_pcm_rms_init,    /* component init */
-  mca_pcm_rms_finalize
+  mca_pcm_rms_init    /* component init */
 };
 
 
@@ -55,7 +54,8 @@ struct mca_pcm_base_module_1_0_0_t mca_pcm_rms_1_0_0 = {
     mca_pcm_rms_spawn_procs,
     mca_pcm_rms_kill_proc,
     mca_pcm_rms_kill_job,
-    mca_pcm_rms_deallocate_resources
+    mca_pcm_rms_deallocate_resources,
+    mca_pcm_rms_finalize
 };
 
 
@@ -116,8 +116,9 @@ mca_pcm_rms_component_close(void)
 
 mca_pcm_base_module_t*
 mca_pcm_rms_init(int *priority, 
-		  bool *allow_multi_user_threads, 
-                  bool *have_hidden_threads)
+                 bool *allow_multi_user_threads, 
+                 bool *have_hidden_threads,
+                 int constraints)
 {
     int debug;
     char *prun;
@@ -128,7 +129,7 @@ mca_pcm_rms_init(int *priority,
 
     mca_base_param_lookup_int(mca_pcm_rms_param_priority, priority);
 
-    mca_base_param_lookup_int(mca_pcm_rms_param_use_ns, &mca_pcm_use_ns);
+    mca_base_param_lookup_int(mca_pcm_rms_param_use_ns, &mca_pcm_rms_use_ns);
 
     *allow_multi_user_threads = false;
     *have_hidden_threads = false;
@@ -142,7 +143,7 @@ mca_pcm_rms_init(int *priority,
 
 
 int
-mca_pcm_rms_finalize(void)
+mca_pcm_rms_finalize(struct mca_pcm_base_module_1_0_0_t* me)
 {
     if (mca_pcm_rms_output > 0) {
         ompi_output_close(mca_pcm_rms_output);

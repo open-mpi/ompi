@@ -37,8 +37,7 @@ mca_pcm_base_component_1_0_0_t mca_pcm_ompid_component = {
   {
     false /* checkpoint / restart */
   },
-  mca_pcm_ompid_init,    /* component init */
-  mca_pcm_ompid_finalize
+  mca_pcm_ompid_init    /* component init */
 };
 
 
@@ -49,7 +48,8 @@ struct mca_pcm_base_module_1_0_0_t mca_pcm_ompid_1_0_0 = {
     mca_pcm_ompid_spawn_procs, /* spawn_procs */
     NULL, /* kill_proc */
     NULL, /* kill_job */
-    NULL  /* deallocate_resources */
+    NULL,  /* deallocate_resources */
+    mca_pcm_ompid_finalize
 };
 
 
@@ -69,13 +69,14 @@ struct mca_pcm_base_module_1_0_0_t *
 mca_pcm_ompid_init(
     int *priority, 
     bool *allow_multi_user_threads, 
-    bool *have_hidden_threads)
+    bool *have_hidden_threads,
+    int constraints)
 {
     return NULL;
 }
 
 
-int mca_pcm_ompid_finalize(void)
+int mca_pcm_ompid_finalize(struct mca_pcm_base_module_1_0_0_t* me)
 {
   return OMPI_SUCCESS;
 }

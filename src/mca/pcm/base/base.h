@@ -19,13 +19,17 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  int mca_pcm_base_open(void);
-  int mca_pcm_base_select(bool *allow_multi_user_threads, 
-                          bool *have_hidden_threads);
-  int mca_pcm_base_close(void);
+    int mca_pcm_base_open(void);
+    /* modules is a pointer to an array of pointers to mca_pcm_base_module_t structs */
+    int mca_pcm_base_select(bool *allow_multi_user_threads, 
+                            bool *have_hidden_threads,
+                            int constraint,
+                            mca_pcm_base_module_t ***modules,
+                            int *modules_len);
 
-    char* mca_pcm_base_no_unique_name(void);
+    int mca_pcm_base_close(void);
 
+    char* mca_pcm_base_no_unique_name(struct mca_pcm_base_module_1_0_0_t* me);
 
     int mca_pcm_base_send_schedule(FILE *fd, 
                                    mca_ns_base_jobid_t jobid,
@@ -54,7 +58,5 @@ extern "C" {
  */
 extern int mca_pcm_base_output;
 extern ompi_list_t mca_pcm_base_components_available;
-extern mca_pcm_base_component_t mca_pcm_base_selected_component;
-extern mca_pcm_base_module_t mca_pcm;
 
 #endif /* MCA_PCM_BASE_H */

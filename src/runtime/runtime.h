@@ -22,6 +22,8 @@
    mpiruntime/mpiruntime.h directly */
 #include "mpi/runtime/mpiruntime.h"
 
+#define OMPI_RTE_SPAWN_MULTI_CELL 0x0001
+
 #ifdef __cplusplus
 extern "C" {
 #endif

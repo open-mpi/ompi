@@ -126,7 +126,8 @@ remove_started_pid(pid_t pid)
 
 /* ok, this is fairly simple in the RMS world */
 ompi_list_t *
-mca_pcm_rms_allocate_resources(mca_ns_base_jobid_t jobid,
+mca_pcm_rms_allocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
+                               mca_ns_base_jobid_t jobid,
                                int nodes, int procs)
 {
     ompi_list_t *ret;
@@ -166,7 +167,7 @@ mca_pcm_rms_allocate_resources(mca_ns_base_jobid_t jobid,
 
 
 bool
-mca_pcm_rms_can_spawn(void)
+mca_pcm_rms_can_spawn(struct mca_pcm_base_module_1_0_0_t* me)
 {
     /* it looks like a prun'd job can call prun again...  let's see
        what happens for now.. */
@@ -175,7 +176,8 @@ mca_pcm_rms_can_spawn(void)
 
 
 int
-mca_pcm_rms_spawn_procs(mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
+mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
+                        mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
 {
     ompi_rte_node_allocation_t *nodes;
     ompi_rte_node_schedule_t *sched;
@@ -277,7 +279,8 @@ mca_pcm_rms_spawn_procs(mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
 
 
 int
-mca_pcm_rms_kill_proc(ompi_process_name_t *name, int flags)
+mca_pcm_rms_kill_proc(struct mca_pcm_base_module_1_0_0_t* me,
+                      ompi_process_name_t *name, int flags)
 {
     mca_pcm_rms_job_item_t *job = get_job_item(ns_base_get_jobid(name));
     pid_t doomed;
@@ -299,7 +302,8 @@ mca_pcm_rms_kill_proc(ompi_process_name_t *name, int flags)
 
 
 int
-mca_pcm_rms_kill_job(mca_ns_base_jobid_t jobid, int flags)
+mca_pcm_rms_kill_job(struct mca_pcm_base_module_1_0_0_t* me,
+                     mca_ns_base_jobid_t jobid, int flags)
 {
     mca_pcm_rms_job_item_t *job = get_job_item(jobid);
     ompi_list_item_t *item;
@@ -321,7 +325,8 @@ mca_pcm_rms_kill_job(mca_ns_base_jobid_t jobid, int flags)
 
 
 int
-mca_pcm_rms_deallocate_resources(mca_ns_base_jobid_t jobid,
+mca_pcm_rms_deallocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
+                                 mca_ns_base_jobid_t jobid,
                                  ompi_list_t *nodelist)
 {
     mca_pcm_rms_job_item_t *job;

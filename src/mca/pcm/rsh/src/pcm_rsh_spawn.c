@@ -44,7 +44,7 @@ static int internal_spawn_proc(mca_ns_base_jobid_t jobid, ompi_rte_node_schedule
 
 
 bool
-mca_pcm_rsh_can_spawn(void)
+mca_pcm_rsh_can_spawn(struct mca_pcm_base_module_1_0_0_t* me)
 {
     /* we can always try to rsh some more...  Might not always work as
      * the caller hopes
@@ -54,7 +54,8 @@ mca_pcm_rsh_can_spawn(void)
 
 
 int
-mca_pcm_rsh_spawn_procs(mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
+mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me, 
+                        mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)
 {
     ompi_list_item_t *sched_item, *node_item, *host_item;
     ompi_rte_node_schedule_t *sched;

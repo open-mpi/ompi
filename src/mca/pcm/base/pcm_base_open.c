@@ -23,9 +23,7 @@
  * Global variables
  */
 int mca_pcm_base_output = 0;
-mca_pcm_base_module_t mca_pcm;
 ompi_list_t mca_pcm_base_components_available;
-mca_pcm_base_component_t mca_pcm_base_selected_component;
 
 
 /**

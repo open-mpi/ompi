@@ -12,123 +12,156 @@
 #include "mca/base/base.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
+#include "class/ompi_list.h"
+
+
+struct avail_module_t {
+    ompi_list_item_t super;
+    mca_pcm_base_module_t *module;
+    int priority;
+    bool user_threads;
+    bool hidden_threads;
+};
+typedef struct avail_module_t avail_module_t;
+OBJ_CLASS_INSTANCE(avail_module_t, ompi_list_item_t, NULL, NULL);
+
+
+/* insert into the list sorted on priority */
+static void
+insert_module(ompi_list_t *avail_modules, avail_module_t *module)
+{
+    ompi_list_item_t *item;
+    avail_module_t *module_item;
+
+    for (item = ompi_list_get_first(avail_modules) ;
+         item != ompi_list_get_end(avail_modules) ;
+         item = ompi_list_get_next(item) ) {
+        module_item = (avail_module_t*) item;
+
+        if (module->priority >= module_item->priority) break;
+    }
+
+    ompi_list_insert_pos(avail_modules, item, (ompi_list_item_t*) module);
+}
+
 
 /**
  * Function for selecting one module from all those that are
  * available.
  *
  * Call the init function on all available modules and get their
- * priorities.  Select the module with the highest priority.  All
- * other modules will be closed and unloaded.
+ * priorities.  If we are runnning in multi-cell, return all available
+ * modules.  Otherwise, rerturn module with highest priority.
  */
-int mca_pcm_base_select(bool *allow_multi_user_threads, 
-                        bool *have_hidden_threads)
+int
+mca_pcm_base_select(bool *allow_multi_user_threads, 
+                    bool *have_hidden_threads,
+                    int constraints,
+                    mca_pcm_base_module_t ***modules,
+                    int *modules_len)
 {
-  int priority, best_priority;
-  bool user_threads, hidden_threads;
-  bool best_user_threads, best_hidden_threads;
-  ompi_list_item_t *item;
-  mca_base_component_list_item_t *cli;
-  mca_pcm_base_component_t *component, *best_component;
-  mca_pcm_base_module_t *module, *best_module;
-  extern ompi_list_t mca_pcm_base_components_available;
+    int priority;
+    bool user_threads, hidden_threads;
+    avail_module_t *avail_module;
+    ompi_list_item_t *item;
+    mca_base_component_list_item_t *cli;
+    mca_pcm_base_component_t *component;
+    mca_pcm_base_module_t *module;
+    extern ompi_list_t mca_pcm_base_components_available;
+    ompi_list_t avail_module_list, unused_module_list;
+    int i;
 
-  ompi_output_verbose(10, mca_pcm_base_output,
-                      "pcm: base: select: starting selection code");
+    ompi_output_verbose(10, mca_pcm_base_output,
+                        "pcm: base: select: starting select code");
 
-  /* Traverse the list of available components; call their init
-     functions. */
+    OBJ_CONSTRUCT(&avail_module_list, ompi_list_t);
+    OBJ_CONSTRUCT(&unused_module_list, ompi_list_t);
 
-  best_priority = -1;
-  best_component = NULL;
-  for (item = ompi_list_get_first(&mca_pcm_base_components_available);
-       ompi_list_get_end(&mca_pcm_base_components_available) != item;
-       item = ompi_list_get_next(item)) {
-    cli = (mca_base_component_list_item_t *) item;
-    component = (mca_pcm_base_component_t *) cli->cli_component;
+    /* traverse the list of available components ; call their init functions */
+    
+    for (item = ompi_list_get_first(&mca_pcm_base_components_available);
+         ompi_list_get_end(&mca_pcm_base_components_available) != item;
+         item = ompi_list_get_next(item)) {
+        cli = (mca_base_component_list_item_t *) item;
+        component = (mca_pcm_base_component_t *) cli->cli_component;
 
-    ompi_output_verbose(10, mca_pcm_base_output, 
-                       "pcm: base: select: initializing %s component %s",
-                       component->pcm_version.mca_type_name,
-                       component->pcm_version.mca_component_name);
-    if (NULL == component->pcm_init) {
-      ompi_output_verbose(10, mca_pcm_base_output,
-                         "pcm: base: select: "
-                          "no init function; ignoring component");
-    } else {
-      module = component->pcm_init(&priority, &user_threads, &hidden_threads);
-      if (NULL == module) {
-        ompi_output_verbose(10, mca_pcm_base_output,
-                           "pcm: base: select: init returned failure");
-      } else {
-        ompi_output_verbose(10, mca_pcm_base_output,
-                           "pcm: base: select: init returned priority %d", 
-                            priority);
-        if (priority > best_priority) {
-          best_priority = priority;
-          best_user_threads = user_threads;
-          best_hidden_threads = hidden_threads;
-          best_component = component;
-          best_module = module;
-        }
-      }
-    }
-  }
+        hidden_threads = user_threads = false;
+        priority = 0;
 
-  /* Finished querying all components.  Check for the bozo case. */
-
-  if (NULL == best_component) {
-    /* JMS Replace with show_help */
-    ompi_abort(1, "No PCM component available.  This shouldn't happen.");
-  } 
-
-  /* Finalize all non-selected components */
-
-  for (item = ompi_list_get_first(&mca_pcm_base_components_available);
-       ompi_list_get_end(&mca_pcm_base_components_available) != item;
-       item = ompi_list_get_next(item)) {
-    cli = (mca_base_component_list_item_t *) item;
-    component = (mca_pcm_base_component_t *) cli->cli_component;
-
-    if (component != best_component) {
-
-      /* Finalize */
-
-      if (NULL != component->pcm_finalize) {
-
-        /* Blatently ignore the return code (what would we do to
-           recover, anyway?  This component is going away, so errors
-           don't matter anymore) */
-
-        component->pcm_finalize();
         ompi_output_verbose(10, mca_pcm_base_output, 
-                           "pcm: base: select: component %s finalized",
-                           component->pcm_version.mca_component_name);
-      }
+                            "pcm: base: select: initializing %s component %s",
+                            component->pcm_version.mca_type_name,
+                            component->pcm_version.mca_component_name);
+        if (NULL == component->pcm_init) {
+            ompi_output_verbose(10, mca_pcm_base_output,
+                                "pcm: base: select: "
+                                "no init function; ignoring component");
+        } else {
+            module = component->pcm_init(&priority, &user_threads, 
+                                         &hidden_threads, constraints);
+            if (NULL == module) {
+                ompi_output_verbose(10, mca_pcm_base_output,
+                                    "pcm: base: select: init returned failure");
+            } else {
+                ompi_output_verbose(10, mca_pcm_base_output,
+                                    "pcm: base: select: init returned priority %d", 
+                                    priority);
+                avail_module = OBJ_NEW(avail_module_t);
+                avail_module->priority = priority;
+                avail_module->hidden_threads = hidden_threads;
+                avail_module->user_threads = user_threads;
+                avail_module->module = module;
+
+                insert_module(&avail_module_list, avail_module);
+            }
+        }
     }
-  }
 
-  /* This base function closes, unloads, and removes from the
-     available list all unselected components.  The available list will
-     contain only the selected component. */
+    /* Finished querying all components.  Check for the bozo case */
+    if (0 == ompi_list_get_size(&avail_module_list)) {
+        /* JMS Replace with show_help */
+        ompi_abort(1, "No PCM component available.  This shouldn't happen.");
+    }
 
-  mca_base_components_close(mca_pcm_base_output, 
-                            &mca_pcm_base_components_available, 
-                            (mca_base_component_t *) best_component);
+    /* Deal with multicell / make our priority choice */
+    if (0 == (constraints & OMPI_RTE_SPAWN_MULTI_CELL)) {
+        /* kick out all but the top */
+        ompi_list_splice(&unused_module_list, 
+                         ompi_list_get_end(&unused_module_list),
+                         &avail_module_list,
+                         ompi_list_get_next(ompi_list_get_first(&avail_module_list)),
+                         ompi_list_get_end(&avail_module_list));
+    }
+    
+    /* Finalize all non-selected components */
+    for (item = ompi_list_get_first(&unused_module_list) ;
+         item != ompi_list_get_end(&unused_module_list) ;
+         item = ompi_list_get_next(item) ) {
+    }
 
-  /* Save the winner */
+    while (NULL != (item = ompi_list_remove_first(&unused_module_list))) {
+        avail_module = (avail_module_t*) item;
+        avail_module->module->pcm_finalize(avail_module->module);
+        OBJ_RELEASE(item);
+    }
 
-  mca_pcm_base_selected_component = *best_component;
-  mca_pcm = *best_module;
-  *allow_multi_user_threads = best_user_threads;
-  *have_hidden_threads = best_hidden_threads;
-  ompi_output_verbose(5, mca_pcm_base_output, 
-                     "pcm: base: select: component %s selected and initialized",
-                      best_component->pcm_version.mca_component_name);
+    /* put the created guys in their place... */
+    *modules_len = ompi_list_get_size(&avail_module_list);
+    *modules = malloc(sizeof(mca_pcm_base_module_t*) * *modules_len);
+    if (*modules == NULL) return OMPI_ERROR;
 
-  ompi_output_verbose(10, mca_pcm_base_output,
-                      "pcm: base: select: completed");
-  /* All done */
+    i = 0;
+    while (NULL != (item = ompi_list_remove_first(&avail_module_list))) {
+        avail_module = (avail_module_t*) item;
+        (*modules)[i] = avail_module->module;
+        ++i;
+        OBJ_RELEASE(item);
+    }
 
-  return OMPI_SUCCESS;
+    /* All done */
+
+    OBJ_DESTRUCT(&unused_module_list);
+    OBJ_DESTRUCT(&avail_module_list);
+
+    return OMPI_SUCCESS;
 }

@@ -77,9 +77,6 @@
  * Called by the MCA framework to initialize the component.  Will
  * be called exactly once in the lifetime of the process.
  *
- * @param active_pcm (IN) Name of the currently active PCM module,
- *                       as it might be useful in determining
- *                       useability.
  * @param priority (OUT) Relative priority or ranking use by MCA to
  *                       select a module.
  * @param allow_multiple_user_threads (OUT) Whether this module can
@@ -88,11 +85,15 @@
  *                       from MPI-land).
  * @param have_hidden_threads (OUT) Whether this module needs to start
  *                       a background thread for operation.
+ * @param constrains (IN) Bit-wise mask of constraints put on the PCM.
+ *                       List of available constants is in the run-time interface - 
+ *                       constants start with \c OMPI_RTE_SPAWN_.
  */
 typedef struct mca_pcm_base_module_1_0_0_t* 
 (*mca_pcm_base_component_init_fn_t)(int *priority, 
                                     bool *allow_multiple_user_threads,
-                                    bool *have_hidden_threads);
+                                    bool *have_hidden_threads,
+                                    int constraints);
 
 
 /**
@@ -100,8 +101,11 @@ typedef struct mca_pcm_base_module_1_0_0_t*
  *
  * Called by the MCA framework to finalize the component.  Will be
  * called once per successful call to pcm_base_compoenent_init.
+
+ *
+ * @param me (IN)       Pointer to the module being finalized
  */
-typedef int (*mca_pcm_base_component_finalize_fn_t)(void);
+typedef int (*mca_pcm_base_component_finalize_fn_t)(struct mca_pcm_base_module_1_0_0_t* me);
 
 
 /** 
@@ -115,7 +119,6 @@ struct mca_pcm_base_component_1_0_0_t {
   mca_base_component_t pcm_version;
   mca_base_component_data_1_0_0_t pcm_data;
   mca_pcm_base_component_init_fn_t pcm_init;
-  mca_pcm_base_component_finalize_fn_t pcm_finalize;
 };
 typedef struct mca_pcm_base_component_1_0_0_t mca_pcm_base_component_1_0_0_t;
 typedef mca_pcm_base_component_1_0_0_t mca_pcm_base_component_t;
@@ -139,7 +142,7 @@ typedef mca_pcm_base_component_1_0_0_t mca_pcm_base_component_t;
  *          non-null otherwize
  */
 typedef char *
-(*mca_pcm_base_get_unique_name_fn_t)(void);
+(*mca_pcm_base_get_unique_name_fn_t)(struct mca_pcm_base_module_1_0_0_t* me);
 
 
 
@@ -166,7 +169,8 @@ typedef char *
  *                   the allocated resources.
  */
 typedef ompi_list_t*
-(*mca_pcm_base_allocate_resources_fn_t)(mca_ns_base_jobid_t jobid,
+(*mca_pcm_base_allocate_resources_fn_t)(struct mca_pcm_base_module_1_0_0_t* me,
+                                        mca_ns_base_jobid_t jobid,
                                         int nodes,
                                         int procs);
 
@@ -179,7 +183,7 @@ typedef ompi_list_t*
  */
 
 typedef bool
-(*mca_pcm_base_can_spawn_fn_t)(void);
+(*mca_pcm_base_can_spawn_fn_t)(struct mca_pcm_base_module_1_0_0_t* me);
 
 
 /**
@@ -191,7 +195,8 @@ typedef bool
  * and location information.
  */
 typedef int
-(*mca_pcm_base_spawn_procs_fn_t)(mca_ns_base_jobid_t jobid, 
+(*mca_pcm_base_spawn_procs_fn_t)(struct mca_pcm_base_module_1_0_0_t* me,
+                                 mca_ns_base_jobid_t jobid, 
                                  ompi_list_t *schedule_list);
 
 
@@ -206,7 +211,8 @@ typedef int
  * processes (0 will be same as a "kill <pid>"
  */
 typedef int
-(*mca_pcm_base_kill_proc_fn_t)(ompi_process_name_t *name, int flags);
+(*mca_pcm_base_kill_proc_fn_t)(struct mca_pcm_base_module_1_0_0_t* me,
+                               ompi_process_name_t *name, int flags);
 
 
 /**
@@ -222,7 +228,8 @@ typedef int
  * processes (0 will be same as a "kill <pid>"
  */
 typedef int
-(*mca_pcm_base_kill_job_fn_t)(mca_ns_base_jobid_t jobid, int flags);
+(*mca_pcm_base_kill_job_fn_t)(struct mca_pcm_base_module_1_0_0_t* me,
+                              mca_ns_base_jobid_t jobid, int flags);
 
 
 /**
@@ -235,7 +242,8 @@ typedef int
  *                   All associated memory will be freed as appropriate.
  */
 typedef int
-(*mca_pcm_base_deallocate_resources_fn_t)(mca_ns_base_jobid_t jobid,
+(*mca_pcm_base_deallocate_resources_fn_t)(struct mca_pcm_base_module_1_0_0_t* me,
+                                          mca_ns_base_jobid_t jobid,
                                           ompi_list_t *nodelist);
 
 
@@ -253,6 +261,7 @@ struct mca_pcm_base_module_1_0_0_t {
     mca_pcm_base_kill_proc_fn_t pcm_kill_proc;
     mca_pcm_base_kill_job_fn_t pcm_kill_job;
     mca_pcm_base_deallocate_resources_fn_t pcm_deallocate_resources;
+    mca_pcm_base_component_finalize_fn_t pcm_finalize;
 };
 typedef struct mca_pcm_base_module_1_0_0_t mca_pcm_base_module_1_0_0_t;
 typedef struct mca_pcm_base_module_1_0_0_t mca_pcm_base_module_t;

@@ -30,9 +30,10 @@ OBJ_CLASS_DECLARATION(mca_pcm_ompid_node_t);
 struct mca_pcm_base_module_1_0_0_t* mca_pcm_ompid_init(
     int *priority, 
     bool *allow_multi_user_threads, 
-    bool *have_hidden_threads);
+    bool *have_hidden_threads,
+    int constraints);
 
-int mca_pcm_ompid_finalize(void);
+int mca_pcm_ompid_finalize(struct mca_pcm_base_module_1_0_0_t* me);
                                                                                                                  
 
 /**
@@ -59,6 +60,7 @@ int mca_pcm_ompid_finalize(void);
  */
 
 ompi_list_t* mca_pcm_ompid_allocate_resources(
+    struct mca_pcm_base_module_1_0_0_t* me,
     mca_ns_base_jobid_t jobid,
     int nodes,
     int procs);
@@ -71,7 +73,7 @@ ompi_list_t* mca_pcm_ompid_allocate_resources(
  * @return True/False
  */
                                                                                                          
-bool mca_pcm_ompid_can_spawn(void);
+bool mca_pcm_ompid_can_spawn(struct mca_pcm_base_module_1_0_0_t* me);
 
 /**
  * Spawn a job
@@ -83,6 +85,7 @@ bool mca_pcm_ompid_can_spawn(void);
  */
 
 int mca_pcm_ompid_spawn_procs(
+    struct mca_pcm_base_module_1_0_0_t* me,
     mca_ns_base_jobid_t jobid,
     ompi_list_t *schedule_list);
                                                                                                          

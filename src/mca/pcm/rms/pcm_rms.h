@@ -29,20 +29,26 @@ extern "C" {
      * Startup / Shutdown
      */
     struct mca_pcm_base_module_1_0_0_t* mca_pcm_rms_init(int *priority, 
-                                          bool *allow_multi_user_threads,
-                                          bool *have_hidden_threads);
-    int mca_pcm_rms_finalize(void);
+                                                         bool *allow_multi_user_threads,
+                                                         bool *have_hidden_threads,
+                                                         int constraints);
+    int mca_pcm_rms_finalize(struct mca_pcm_base_module_1_0_0_t* me);
 
     /*
      * Interface
      */
-    ompi_list_t* mca_pcm_rms_allocate_resources(mca_ns_base_jobid_t jobid,
+    ompi_list_t* mca_pcm_rms_allocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
+                                                mca_ns_base_jobid_t jobid,
                                                 int nodes, int procs);
-    bool mca_pcm_rms_can_spawn(void);
-    int mca_pcm_rms_spawn_procs(mca_ns_base_jobid_t jobid, ompi_list_t *schedule_list);
-    int mca_pcm_rms_kill_proc(ompi_process_name_t *name, int flags);
-    int mca_pcm_rms_kill_job(mca_ns_base_jobid_t jobid, int flags);
-    int mca_pcm_rms_deallocate_resources(mca_ns_base_jobid_t jobid,
+    bool mca_pcm_rms_can_spawn(struct mca_pcm_base_module_1_0_0_t* me);
+    int mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
+                                mca_ns_base_jobid_t jobid, ompi_list_t *schedule_list);
+    int mca_pcm_rms_kill_proc(struct mca_pcm_base_module_1_0_0_t* me,
+                              ompi_process_name_t *name, int flags);
+    int mca_pcm_rms_kill_job(struct mca_pcm_base_module_1_0_0_t* me,
+                             mca_ns_base_jobid_t jobid, int flags);
+    int mca_pcm_rms_deallocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
+                                         mca_ns_base_jobid_t jobid,
                                          ompi_list_t *nodelist);
 
     struct mca_pcm_rms_pids_t {

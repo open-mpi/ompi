@@ -11,27 +11,27 @@
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/base/base.h"
 
-extern mca_pcm_base_module_t mca_pcm;
+extern mca_pcm_base_module_t *mca_pcm;
 
 bool
 ompi_rte_can_spawn(void)
 {
-    if (NULL == mca_pcm.pcm_can_spawn) {
+    if (NULL == mca_pcm->pcm_can_spawn) {
         return OMPI_ERROR;
     }
 
-    return mca_pcm.pcm_can_spawn();
+    return mca_pcm->pcm_can_spawn(mca_pcm);
 }
 
 
 int
 ompi_rte_spawn_procs(mca_ns_base_jobid_t jobid, ompi_list_t *schedule_list)
 {
-    if (NULL == mca_pcm.pcm_spawn_procs) {
+    if (NULL == mca_pcm->pcm_spawn_procs) {
         return OMPI_ERROR;
     }
 
-    return mca_pcm.pcm_spawn_procs(jobid, schedule_list);
+    return mca_pcm->pcm_spawn_procs(mca_pcm, jobid, schedule_list);
 }
 
 
@@ -60,20 +60,20 @@ ompi_rte_get_peers(ompi_process_name_t **peers, size_t *npeers)
 int
 ompi_rte_kill_proc(ompi_process_name_t *name, int flags)
 {
-    if (NULL == mca_pcm.pcm_kill_proc) {
+    if (NULL == mca_pcm->pcm_kill_proc) {
         return OMPI_ERROR;
     }
 
-    return mca_pcm.pcm_kill_proc(name, flags);
+    return mca_pcm->pcm_kill_proc(mca_pcm, name, flags);
 }
 
 
 int
 ompi_rte_kill_job(mca_ns_base_jobid_t jobid, int flags)
 {
-    if (NULL == mca_pcm.pcm_kill_job) {
+    if (NULL == mca_pcm->pcm_kill_job) {
         return OMPI_ERROR;
     }
 
-    return mca_pcm.pcm_kill_job(jobid, flags);
+    return mca_pcm->pcm_kill_job(mca_pcm, jobid, flags);
 }
