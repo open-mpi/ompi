@@ -8,7 +8,7 @@
 #include "mpi/interface/c/bindings.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
-#pragma weak MPI_Type_f2c.c = PMPI_Type_f2c.c
+#pragma weak MPI_Type_f2c = PMPI_Type_f2c
 #endif
 
 MPI_Datatype MPI_Type_f2c(MPI_Fint datatype) {
