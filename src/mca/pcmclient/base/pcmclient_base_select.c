@@ -41,6 +41,9 @@ int mca_pcmclient_base_select(bool *allow_multi_user_threads,
 
   best_priority = -1;
   best_component = NULL;
+  best_module = NULL;
+  best_user_threads = true;
+  best_hidden_threads = false;
   for (item = ompi_list_get_first(&mca_pcmclient_base_components_available);
        ompi_list_get_end(&mca_pcmclient_base_components_available) != item;
        item = ompi_list_get_next(item)) {

@@ -29,7 +29,7 @@ int ompi_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
                     int rcount, MPI_Datatype rdtype, int tag, MPI_Comm comm)
 {
     int err;
-    int size;
+    unsigned int size;
     int rank;
     int position = 0;
     ompi_convertor_t *local_convertor;

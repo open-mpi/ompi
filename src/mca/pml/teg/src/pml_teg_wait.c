@@ -20,7 +20,7 @@ int mca_pml_teg_wait(size_t count,
 #endif
     int i;
     int completed = -1;
-    mca_pml_base_request_t *pml_request;
+    mca_pml_base_request_t *pml_request = NULL;
 
 #if MCA_PML_TEG_STATISTICS
     mca_pml_teg.teg_waits++;

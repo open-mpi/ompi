@@ -85,8 +85,8 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     mca_oob_t *module;
     extern ompi_list_t mca_oob_base_components;
     mca_oob_t *s_module = NULL;
-    bool s_user_threads;
-    bool s_hidden_threads;
+    bool s_user_threads = true;
+    bool s_hidden_threads = false;
     int  s_priority = -1;
 
     char** include = ompi_argv_split(mca_oob_base_include, ',');
