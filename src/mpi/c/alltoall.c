@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Alltoall";
+static const char FUNC_NAME[] = "MPI_Alltoall";
 
 
 int MPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,

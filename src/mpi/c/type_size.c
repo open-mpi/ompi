@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Type_size";
+static const char FUNC_NAME[] = "MPI_Type_size";
 
 int
 MPI_Type_size(MPI_Datatype type, int *size)

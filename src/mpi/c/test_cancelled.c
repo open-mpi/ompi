@@ -16,5 +16,6 @@
 #endif
 
 int MPI_Test_cancelled(MPI_Status *status, int *flag) {
+    *flag = 0;
     return MPI_SUCCESS;
 }

@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Address";
+static const char FUNC_NAME[] = "MPI_Address";
 
 int MPI_Address(void *location, MPI_Aint *address)
 {

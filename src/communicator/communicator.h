@@ -100,7 +100,7 @@ extern ompi_communicator_t *ompi_mpi_comm_parent;
  */
 static inline int ompi_comm_invalid(ompi_communicator_t* comm)
 {
-    if ( comm->c_flags & OMPI_COMM_ISFREED ) 
+    if ((NULL == comm) || (MPI_COMM_NULL == comm) || (comm->c_flags & OMPI_COMM_ISFREED ))
         return true;
     else
         return false;

@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Type_get_envelope";
+static const char FUNC_NAME[] = "MPI_Type_get_envelope";
 
 int
 MPI_Type_get_envelope(MPI_Datatype type,

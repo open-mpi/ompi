@@ -131,11 +131,12 @@ struct ompi_event_list ompi_signalqueue;
 struct ompi_event_list ompi_eventqueue;
 static struct timeval ompi_event_tv;
 ompi_mutex_t ompi_event_lock;
+static int ompi_event_inited;
 #if OMPI_HAVE_THREADS
-ompi_thread_t ompi_event_thread;
-ompi_event_t ompi_event_pipe_event;
-int ompi_event_pipe[2];
-int ompi_event_pipe_signalled;
+static ompi_thread_t ompi_event_thread;
+static ompi_event_t ompi_event_pipe_event;
+static int ompi_event_pipe[2];
+static int ompi_event_pipe_signalled;
 #endif
 
 static int
@@ -198,13 +199,12 @@ static void ompi_event_pipe_handler(int sd, short flags, void* user)
 int
 ompi_event_init(void)
 {
-    static int inited = false;
     int i;
 #if OMPI_HAVE_THREADS
     int rc;
 #endif
 
-    if(inited)
+    if(ompi_event_inited++ != 0)
         return OMPI_SUCCESS;
 
     ompi_event_sigcb = NULL;
@@ -253,9 +253,25 @@ ompi_event_init(void)
     log_to(stderr);
     log_debug_cmd(LOG_MISC, 80);
 #endif
-    inited = true;
     return OMPI_SUCCESS;
 }
+
+int ompi_event_fini(void)
+{
+#if OMPI_HAVE_THREADS
+    if(ompi_event_inited && --ompi_event_inited == 0) {
+        if(ompi_event_pipe_signalled == 0) {
+            unsigned char byte = 0;
+            if(write(ompi_event_pipe[1], &byte, 1) != 1)
+                ompi_output(0, "ompi_event_add: write() to ompi_event_pipe[1] failed with errno=%d\n", errno);
+            ompi_event_pipe_signalled++;
+        }
+        ompi_thread_join(&ompi_event_thread, NULL);
+    }
+#endif
+    return OMPI_SUCCESS;
+}
+
 
 int
 ompi_event_haveevents(void)
@@ -315,7 +331,7 @@ ompi_event_loop(int flags)
     }
 
     done = 0;
-    while (!done) {
+    while (!done && ompi_event_inited) {
         while (ompi_event_gotsig) {
             ompi_event_gotsig = 0;
             if (ompi_event_sigcb) {

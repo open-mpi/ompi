@@ -23,7 +23,9 @@ enum {
     OMPI_ERR_WOULD_BLOCK = -13,
     OMPI_ERR_IN_ERRNO = -14,
     OMPI_ERR_UNREACH = -15,
-    OMPI_ERR_NOT_FOUND = -16
+    OMPI_ERR_NOT_FOUND = -16,
+    OMPI_ERR_BUFFER = -17, /* equivalent to MPI_ERR_BUFFER */
+    OMPI_ERR_REQUEST = -18 /* equivalent to MPI_ERR_REQUEST */
 };
 
 #endif /* OMPI_CONSTANTS_H */

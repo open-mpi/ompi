@@ -42,6 +42,7 @@
  */
 static inline int mca_pml_teg_recv_request_start(mca_ptl_base_recv_request_t* request)
 {
+    request->super.super.req_state = OMPI_REQUEST_ACTIVE;
     if(request->super.req_peer == OMPI_ANY_SOURCE) {
         mca_ptl_base_recv_request_match_wild(request);
     } else {

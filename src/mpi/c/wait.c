@@ -17,20 +17,19 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Wait";
+
+
 int MPI_Wait(MPI_Request *request, MPI_Status *status) 
 {
     int index, rc;
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
-        if ( OMPI_MPI_INVALID_STATE ) {
-            rc = MPI_ERR_INTERN;
-        } else if (request == NULL) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (request == NULL) {
             rc = MPI_ERR_REQUEST;
         }
-        /* JMS: Tim will fix to invoke on the communicator/window/file
-           on the request (i.e., not COMM_WORLD), if the request is
-           available/valid */
-        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Wait");
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
     if (NULL == *request) {
@@ -42,9 +41,8 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
         }
         return MPI_SUCCESS;
     }
+
     rc = mca_pml.pml_wait(1, request, &index, status);
-    /* JMS: Tim will fix to invoke on the communicator/window/file on
-       the request (i.e., not COMM_WORLD) */
-    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, "MPI_Wait");
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
 

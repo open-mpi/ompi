@@ -17,7 +17,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Attr_put";
+static const char FUNC_NAME[] = "MPI_Attr_put";
 
 int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val) 
 {

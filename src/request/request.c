@@ -7,12 +7,13 @@
 
 static void ompi_request_construct(ompi_request_t* req)
 {
-    req->req_mode = OMPI_REQUEST_INVALID;
+    req->req_state = OMPI_REQUEST_INVALID;
 }
 
 
 static void ompi_request_destruct(ompi_request_t* req)
 {
+    req->req_state = OMPI_REQUEST_INVALID;
 }
 
 

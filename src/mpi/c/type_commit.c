@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Type_commit";
+static const char FUNC_NAME[] = "MPI_Type_commit";
 
 int
 MPI_Type_commit(MPI_Datatype *type)

@@ -17,7 +17,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Get_address";
+static const char FUNC_NAME[] = "MPI_Get_address";
 
 int MPI_Get_address(void *location, MPI_Aint *address)
 {

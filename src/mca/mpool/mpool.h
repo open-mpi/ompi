@@ -22,6 +22,11 @@ typedef void* (*mca_mpool_base_address_fn_t)(void);
 typedef void* (*mca_mpool_base_alloc_fn_t)(size_t size, size_t align);
 
 /**
+  * allocate function typedef
+  */
+typedef void* (*mca_mpool_base_alloc_and_register_fn_t)(size_t size, size_t align, void* user);
+
+/**
   * realloc function typedef
   */
 typedef void* (*mca_mpool_base_realloc_fn_t)(void* addr, size_t size);
@@ -34,12 +39,12 @@ typedef void (*mca_mpool_base_free_fn_t)(void *);
 /**
   * register memory
   */
-typedef void (*mca_mpool_base_register_fn_t)(void * addr, size_t size, void* user);
+typedef int (*mca_mpool_base_register_fn_t)(void * addr, size_t size, void* user);
 
 /**
   * deregister memory
   */
-typedef void (*mca_mpool_base_deregister_fn_t)(void * addr, size_t size);
+typedef int (*mca_mpool_base_deregister_fn_t)(void * addr, size_t size);
 
 /**
   * finalize

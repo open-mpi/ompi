@@ -143,6 +143,7 @@ struct ompi_eventop {
 
 
 int ompi_event_init(void);
+int ompi_event_fini(void);
 int ompi_event_dispatch(void);
 int ompi_event_loop(int);
 

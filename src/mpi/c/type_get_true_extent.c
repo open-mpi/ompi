@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Type_get_true_extent";
+static const char FUNC_NAME[] = "MPI_Type_get_true_extent";
 
 int
 MPI_Type_get_true_extent(MPI_Datatype datatype,

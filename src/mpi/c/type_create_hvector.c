@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Type_create_hvector";
+static const char FUNC_NAME[] = "MPI_Type_create_hvector";
 
 int
 MPI_Type_create_hvector(int count,

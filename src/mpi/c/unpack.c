@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Unpack";
+static const char FUNC_NAME[] = "MPI_Unpack";
 
 
 int MPI_Unpack(void *inbuf, int insize, int *position,

@@ -15,6 +15,7 @@
 #include "request/request.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/pml_base_request.h"
+#include "mca/pml/base/pml_base_bsend.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/ptl.h"
 
@@ -249,17 +250,37 @@ extern int mca_pml_teg_free(
     ompi_request_t** request
 );
 
+
+#define MCA_PML_TEG_FINI(request) \
+{ \
+    mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)(request); \
+    if(pml_request->req_persistent) { \
+       if(pml_request->req_free_called) { \
+           MCA_PML_TEG_FREE(request); \
+       } else { \
+           pml_request->super.req_state = OMPI_REQUEST_INACTIVE; \
+       } \
+    } else { \
+        MCA_PML_TEG_FREE(request); \
+    } \
+}
+
+ 
 #define MCA_PML_TEG_FREE(request) \
 { \
     mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)(request); \
     pml_request->req_free_called = true; \
     if(pml_request->req_pml_done == true) \
     { \
+        OMPI_REQUEST_FINI(*request); \
         switch(pml_request->req_type) { \
         case MCA_PML_REQUEST_SEND: \
             { \
             mca_ptl_base_send_request_t* sendreq = (mca_ptl_base_send_request_t*)pml_request; \
             mca_ptl_t* ptl = sendreq->req_owner; \
+            if(sendreq->req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
+                mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq); \
+            } \
             ptl->ptl_request_return(ptl, sendreq); \
             break; \
             } \
