@@ -5,7 +5,7 @@ static void env_init_for_elan()
 {
     char  *rms_rank;
 
-    setenv("OMPI_MCA_oob_cofs_dir", "/home/1/yuw/tmp", 1);
+    setenv("OMPI_MCA_oob_cofs_dir", "/u/yuw/tmp", 1);
     setenv("OMPI_MCA_pcm_cofs_cellid", "1", 1);
     setenv("OMPI_MCA_pcm_cofs_jobid", "1", 1);
     setenv("OMPI_MCA_pcm_cofs_num_procs", "2", 1);

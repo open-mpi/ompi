@@ -135,14 +135,14 @@ int
 mca_ptl_elan_component_close (void)
 {
     START_FUNC (PTL_ELAN_DEBUG_FIN);
-#if OMPI_PTL_ELAN_THREADING
-    if ((mca_ptl_elan_thread_close(elan_mp)) != OMPI_SUCCESS) {
-        ompi_output(0, "unable to close asynchronous threads\n");
-    }
-#endif
 
     if (mca_ptl_elan_component_initialized) {
 
+#if OMPI_PTL_ELAN_THREADING
+	if ((mca_ptl_elan_thread_close(elan_mp)) != OMPI_SUCCESS) {
+	    ompi_output(0, "unable to close asynchronous threads\n");
+	}
+#endif
 	/* cleanup the proc, ptl, and the module */
 	mca_ptl_elan_state_finalize(&mca_ptl_elan_component);
 	if (elan_mp->elan_local) {
@@ -201,7 +201,7 @@ mca_ptl_elan_component_init (int *num_ptls,
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
     /* XXX: Set the global variable to be true for threading */
-    if(OMPI_HAVE_THREADS)
+    if (OMPI_HAVE_THREADS)
         ompi_set_using_threads(true);
 
     ompi_free_list_init (&(elan_mp->elan_recv_frags_free),
@@ -239,7 +239,6 @@ mca_ptl_elan_component_init (int *num_ptls,
     memcpy (ptls, elan_mp->modules,
             elan_mp->num_modules * sizeof (mca_ptl_elan_module_t *));
     *num_ptls = elan_mp->num_modules;
-    mca_ptl_elan_component_initialized = true;
 
     /* XXX + TODO: 
      * have threads listening on send/recv completion from this point on.
@@ -263,6 +262,7 @@ mca_ptl_elan_component_init (int *num_ptls,
     }
 #endif
 
+    mca_ptl_elan_component_initialized = true;
     END_FUNC(PTL_ELAN_DEBUG_INIT);
     return ptls;
 }

@@ -519,7 +519,8 @@ mca_ptl_elan_state_init (mca_ptl_elan_component_t * emp)
     ems->elan_estate = (void *) ems->all_estates[0];
 
     /* Attach to the device and open to the network */
-    ompi_elan_attach_network (ems);
+    if(OMPI_SUCCESS != ompi_elan_attach_network (ems))
+       	return OMPI_ERROR;
 
     /* Set the rms_resourceId */
     if (rms_getprgid (getpid (), &ems->elan_rmsid) < 0) {
