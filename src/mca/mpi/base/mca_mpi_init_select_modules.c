@@ -8,7 +8,6 @@
 
 #include "lam/constants.h"
 #include "lam/lfc/lam_list.h"
-#include "lam/mem/malloc.h"
 #include "mca/mpi/base/base.h"
 #include "mca/mpi/coll/coll.h"
 #include "mca/mpi/coll/base/base.h"

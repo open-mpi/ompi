@@ -8,7 +8,6 @@
 #include <stdio.h>
 
 #include "lam/constants.h"
-#include "lam/mem/malloc.h"
 #include "mpi.h"
 #include "mca/mpi/coll/coll.h"
 #include "mca/mpi/coll/base/coll_tags.h"

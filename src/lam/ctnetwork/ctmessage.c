@@ -3,7 +3,6 @@
  */
 
 #include "lam/ctnetwork/ctmessage.h"
-#include "lam/mem/malloc.h"
 
 
 lam_class_t lam_ct_ctrl_t_class = {

@@ -11,7 +11,6 @@
 
 #include "lam/lfc/lam_object.h"
 #include "lam/lfc/lam_list.h"
-#include "lam/mem/malloc.h"
 #include "lam/threads/mutex.h"
 #include "lam/util/argv.h"
 #include "lam/util/cmd_line.h"
