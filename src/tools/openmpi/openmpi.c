@@ -59,11 +59,6 @@ int main(int argc, char **argv)
         return ret;
     }
 
-    /* get the system info and setup defaults */
-    ompi_sys_info();
-    ompi_universe_info.host = strdup(ompi_system_info.nodename);
-    ompi_universe_info.uid = strdup(ompi_system_info.user);
-
     /* give myself default bootstrap name */
     ompi_process_info.name = ns_base_create_process_name(MCA_NS_BASE_CELLID_MAX,
 							 MCA_NS_BASE_JOBID_MAX,
@@ -114,18 +109,29 @@ int main(int argc, char **argv)
 	exit(1);
     }
 
-    /* parse the cmd_line for rte options - override settings from enviro, where necessary
-     * copy everything into enviro variables for passing later on
-     */
-    ompi_rte_parse_cmd_line(cmd_line);
-
     /* start the initial barebones RTE (just OOB) so we can check universe existence */
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
         /* JMS show_help */
         printf("show_help: mca_base_open failed\n");
         exit(ret);
     }
-    ompi_rte_init_stage1(&multi_thread, &hidden_thread); /* gets universe and tmpdir enviro variables */
+
+    multi_thread = true;
+    hidden_thread = false;
+    if (OMPI_SUCCESS != ompi_rte_init_stage1(&multi_thread, &hidden_thread)) {
+	printf("show_help: openmpi failed in ompi_rte_init\n");
+	exit(1);
+    }
+
+    /* parse environmental variables and fill corresponding info structures
+     * need the oob to be open so we can pass the contact info we extract
+     */
+    ompi_rte_parse_environ();
+
+    /* parse the cmd_line for rte options - override settings from enviro, where necessary
+     * copy everything into enviro variables for passing later on
+     */
+    ompi_rte_parse_cmd_line(cmd_line);
 
     /* parse the cmd_line for daemon options - gets all the options relating
      * specifically to seed behavior, but also gets
@@ -172,25 +178,16 @@ int main(int argc, char **argv)
 	    fprintf(stderr, "unable to fork - please report error to bugs@open-mpi.org\n");
 	    exit(1);
 	} else if (pid != 0) {
-	    ompi_rte_finalize();
-	    mca_base_close();
-	    ompi_finalize();
 	    exit(0);   /* parent goes bye-bye */
 	}
 	if (0 > execvp("ompid", argv)) {
 	    fprintf(stderr, "unable to exec daemon - please report error to bugs@open-mpi.org\n");
 	    fprintf(stderr, "errno: %s\n", strerror(errno));
-	    ompi_rte_finalize();
-	    mca_base_close();
-	    ompi_finalize();
 	    exit(1);
 
 	}
     } else {
 	fprintf(stderr, "local universe check reports not implemented code\n");
     }
-    ompi_rte_finalize();
-    mca_base_close();
-    ompi_finalize();
     return -1;
 }
