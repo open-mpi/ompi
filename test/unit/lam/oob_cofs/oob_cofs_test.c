@@ -49,9 +49,10 @@ main(int argc, char* argv[])
     exit(1);
   }
 
-  printf("#\n# Sending Messages\n#\n");
+  printf("#\n# Sending Messages\n#\n\n");
   for (msg_count = 0 ; msg_count < 20 ; ++msg_count) {
     sprintf(buffer, "%s's message number %d\n", argv[1], msg_count);
+    printf("%d %d: %s\n", target_vpid, 1, buffer);
     ret = mca_oob_cofs_send("foobar", target_vpid, 1, buffer, strlen(buffer) + 1);
     if (ret != LAM_SUCCESS) {
       printf("mca_oob_cofs_send failed on msg_count %d\n", msg_count);
@@ -59,7 +60,7 @@ main(int argc, char* argv[])
     }
   }
 
-  printf("#\n# Receiving Messages\n#\n");
+  printf("#\n# Receiving Messages\n#\n\n");
   for (msg_count = 0 ; msg_count < 20 ; ++msg_count) {
     source_tag = 1;
     ret = mca_oob_cofs_recv("foobar", &source_tag, &source_vpid, (void**) &source_data, &source_len);
@@ -71,6 +72,6 @@ main(int argc, char* argv[])
     free(source_data);
   }
 
-  printf("#\n# Finished\n#\n");
+  printf("#\n# Finished\n#\n\n");
   return 0;
 }

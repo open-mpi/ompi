@@ -2,17 +2,16 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+include $(top_lam_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = libcofs.la
+AM_CPPFLAGS = \
+        -I$(top_lam_builddir)/src/include \
+        -I$(top_lam_srcdir)/src \
+        -I$(top_lam_srcdir)/src/include
 
-# Source code files
-
-headers = \
-	oob_cofs.h
-
-libcofs_la_SOURCES = \
-        $(headers) \
+noinst_LTLIBRARIES = libmca_oob_cofs.la
+libmca_oob_cofs_la_SOURCES = \
+	oob_cofs.h \
 	oob_cofs_module.c \
 	oob_cofs.c
 

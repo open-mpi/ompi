@@ -9,7 +9,7 @@ include $(top_srcdir)/config/Makefile.options
 # the base first).  common_lam must be second, however, because
 # modules under there may be statically linked to other modules.
 
-SUBDIRS = base common_lam pcm registry
+SUBDIRS = base common_lam oob pcm registry 
 
 # Source code files
 

@@ -95,7 +95,7 @@ mca_oob_cofs_recv_nb(lam_job_handle_t job_handle, int* tag, int* vpid,
 
 int
 mca_oob_cofs_recv_cb(lam_job_handle_t job_handle, int tag, 
-                     mca_oob_recv_cb_t callback)
+                     mca_oob_base_recv_cb_t callback)
 {
   return LAM_ERR_NOT_SUPPORTED;
 }

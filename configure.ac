@@ -403,9 +403,6 @@ AC_CONFIG_FILES([
     src/mca/mpi/topo/Makefile
     src/mca/mpi/topo/base/Makefile
 
-    src/mca/lam/oob/cofs/Makefile
-    src/mca/lam/oob/cofs/src/Makefile
-
     src/tools/Makefile
     src/tools/wrappers/Makefile
 
