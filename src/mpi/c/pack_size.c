@@ -42,7 +42,7 @@ int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
     }
 
     ompi_convertor_init_for_send(local_convertor, 0, datatype, 
-				incount, 0, NULL);
+				incount, NULL, 0);
     ret = ompi_convertor_get_packed_size(local_convertor, size);
     OBJ_RELEASE(local_convertor);
 
