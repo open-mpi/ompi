@@ -38,7 +38,7 @@
 #include "oob_tcp.h"
 #include "oob_tcp_peer.h"
 
-#define IMPORTANT_WINDOWS_COMMENT() \ 
+#define IMPORTANT_WINDOWS_COMMENT() \
             /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
                things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
                not conflict with other error codes that are returned by these functions \
