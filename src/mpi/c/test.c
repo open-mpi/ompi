@@ -22,7 +22,7 @@ static const char FUNC_NAME[] = "MPI_Test";
 
 int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status) 
 {
-    int rc, index;
+    int rc;
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
