@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include <stdio.h>
@@ -25,7 +25,7 @@ int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
                           MPI_Datatype dtype, MPI_Op op, MPI_Comm comm)
 {
 #if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
+  return OMPI_ERR_NOT_IMPLEMENTED;
 #else
   int size;
   int rank;
@@ -38,16 +38,16 @@ int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
   MPI_Comm_rank(comm, &rank);
   MPI_Comm_size(comm, &size);
 
-  /* JMS: Need to replace lots things in this file: lam_dt* stuff with
-     lam_datatype_*() functions.  Also need to replace lots of
+  /* JMS: Need to replace lots things in this file: ompi_dt* stuff with
+     ompi_datatype_*() functions.  Also need to replace lots of
      MPI_Send/MPI_Recv with negative tags and PML entry points. */
 
   /* Otherwise receive previous buffer and reduce. Store the recieved
      buffer in different array and then send the reduced array to the
      next process */
   
-  /* JMS Need to replace this with some lam_datatype_*() function */
-  err = lam_dtbuffer(dtype, count, &gathered_buffer, &gathered_origin);
+  /* JMS Need to replace this with some ompi_datatype_*() function */
+  err = ompi_dtbuffer(dtype, count, &gathered_buffer, &gathered_origin);
   if (MPI_SUCCESS != err) {
     return err;
   }
@@ -55,26 +55,26 @@ int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
   if (0 != rank) {
     if (!op->op_commute) {
 
-      /* JMS Need to replace with this some lam_datatype_*() function */
-      err = lam_dtbuffer(dtype, count, &tmpbuf, &origin);
+      /* JMS Need to replace with this some ompi_datatype_*() function */
+      err = ompi_dtbuffer(dtype, count, &tmpbuf, &origin);
       if (MPI_SUCCESS != err) {
 	if (NULL != gathered_buffer) {
-	  LAM_FREE(gathered_buffer);
+	  OMPI_FREE(gathered_buffer);
         }
 	return err;
       }
       
       /* Copy the send buffer into the receive buffer. */
       
-      /* JMS Need to replace with this some lam_datatype_*() function */
-      err = lam_dtsndrcv(sbuf, count, dtype, rbuf,
+      /* JMS Need to replace with this some ompi_datatype_*() function */
+      err = ompi_dtsndrcv(sbuf, count, dtype, rbuf,
 			 count, dtype, BLKMPIEXSCAN, comm);
       if (MPI_SUCCESS != err) {
 	if (NULL != gathered_buffer) {
-	  LAM_FREE(gathered_buffer);
+	  OMPI_FREE(gathered_buffer);
         }
 	if (NULL != tmpbuf) {
-	  LAM_FREE(tmpbuf);
+	  OMPI_FREE(tmpbuf);
         }
 	return err;
       }
@@ -85,8 +85,8 @@ int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
 		     rank - 1, BLKMPIEXSCAN, comm, MPI_STATUS_IGNORE);
       /* JMS Need to add error checking here */
 
-      /* JMS Need to replace with this some lam_datatype_*() function */
-      err = lam_dtsndrcv(origin, count, dtype, gathered_origin,
+      /* JMS Need to replace with this some ompi_datatype_*() function */
+      err = ompi_dtsndrcv(origin, count, dtype, gathered_origin,
 			 count, dtype, BLKMPIEXSCAN, comm);
     } else {
       origin = sbuf;
@@ -98,30 +98,30 @@ int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
       
       if (MPI_SUCCESS != err) {
 	if (NULL != gathered_buffer) {
-	  LAM_FREE(gathered_buffer);
+	  OMPI_FREE(gathered_buffer);
         }
 	if (NULL != tmpbuf) {
-	  LAM_FREE(tmpbuf);
+	  OMPI_FREE(tmpbuf);
         }
 	return err;
       }
       
-      /* JMS Need to replace with this some lam_datatype_*() function */
-      err = lam_dtsndrcv(rbuf, count, dtype, gathered_origin,
+      /* JMS Need to replace with this some ompi_datatype_*() function */
+      err = ompi_dtsndrcv(rbuf, count, dtype, gathered_origin,
 			 count, dtype, BLKMPIEXSCAN, comm);
     }
     
     if (err != MPI_SUCCESS) {
       if (NULL != gathered_buffer) {
-	LAM_FREE(gathered_buffer);
+	OMPI_FREE(gathered_buffer);
       }
       if (NULL != tmpbuf) {
-	LAM_FREE(tmpbuf);
+	OMPI_FREE(tmpbuf);
       }
       return err;
     }
     
-    if (op->op_flags & LAM_LANGF77) {
+    if (op->op_flags & OMPI_LANGF77) {
       (op->op_func)(origin, rbuf, &count, &dtype->dt_f77handle);
     } else {
       (op->op_func)(origin, rbuf, &count, &dtype);
@@ -137,33 +137,33 @@ int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
       err = MPI_Send(rbuf, count, dtype, rank + 1, BLKMPIEXSCAN, comm);
     if (MPI_SUCCESS != err) {
       if (NULL != gathered_buffer) {
-	LAM_FREE(gathered_buffer);
+	OMPI_FREE(gathered_buffer);
       }
       if (NULL != tmpbuf) {
-	LAM_FREE(tmpbuf);
+	OMPI_FREE(tmpbuf);
       }
       return err;
     }
   }
   
   if (rank != 0) {
-    err = lam_dtsndrcv(gathered_origin, count, dtype, rbuf,
+    err = ompi_dtsndrcv(gathered_origin, count, dtype, rbuf,
 		       count, dtype, BLKMPIEXSCAN, comm);
     if (MPI_SUCCESS != err) {
       if (NULL != gathered_buffer) {
-	LAM_FREE(gathered_buffer);
+	OMPI_FREE(gathered_buffer);
       }
       if (NULL != tmpbuf) {
-	LAM_FREE(tmpbuf);
+	OMPI_FREE(tmpbuf);
       }
       return err;
     }
   }
   
   if (NULL != gathered_buffer)
-    LAM_FREE(gathered_buffer);
+    OMPI_FREE(gathered_buffer);
   if (NULL != tmpbuf)
-    LAM_FREE(tmpbuf);
+    OMPI_FREE(tmpbuf);
 
   /* All done */
 

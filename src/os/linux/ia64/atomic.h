@@ -16,14 +16,14 @@ typedef struct {
     volatile int lockData_m;
     char padding[4];
   } data;
-} lam_lock_data_t;
+} ompi_lock_data_t;
 
 
 /*
  * 64 bit integer
  */
 typedef struct {
-  lam_lock_data_t lock;
+  ompi_lock_data_t lock;
   volatile unsigned long long data;
 } bigAtomicUnsignedInt;
 
@@ -35,8 +35,8 @@ extern "C"
 {
 #endif
 
-  void spinlock(lam_lock_data_t *lockData);
-  int spintrylock(lam_lock_data_t *lockData);
+  void spinlock(ompi_lock_data_t *lockData);
+  int spintrylock(ompi_lock_data_t *lockData);
   int fetchNadd(volatile int *addr, int inc);
   int fetchNset(volatile int *addr, int setValue);
 
@@ -50,7 +50,7 @@ extern "C"
 /*
  *  Spin until I can get the lock
  */
-inline void spinlock(lam_lock_data_t *lockData)
+inline void spinlock(ompi_lock_data_t *lockData)
 {
 
   __asm__ __volatile__ (								
@@ -70,7 +70,7 @@ inline void spinlock(lam_lock_data_t *lockData)
 /*
  * This routine tries once to obtain the lock
  */
-inline int spintrylock(lam_lock_data_t *lockData)
+inline int spintrylock(ompi_lock_data_t *lockData)
 {
 
   int gotLock;
@@ -119,7 +119,7 @@ inline int fetchNset(volatile int *addr, int setValue)
 /*
  * Clear the lock
  */
-inline void spinunlock(lam_lock_data_t *lockData)
+inline void spinunlock(ompi_lock_data_t *lockData)
 {
     lockData->data.lockData_m = LOCK_UNLOCKED;
 }

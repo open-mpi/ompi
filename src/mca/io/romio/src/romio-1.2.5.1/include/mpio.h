@@ -5,12 +5,12 @@
  * all of these routines have been renamed: prefix with "mca_io_romio"
  *
  * Two ROMIO specific types have also been renamed:  (cant do this with #define
- * since this file is included by LAM's I/O module)
+ * since this file is included by OMPI's I/O module)
  * all ROMIO references to:
  *    MPIO_Request changed to:  mca_io_romio_MPIO_Request
  *    MPI_File     changed to:  mca_io_romio_MPI_File
  *
- *  All other types have been deleted, since they appear in LAM's mpi.h
+ *  All other types have been deleted, since they appear in OMPI's mpi.h
  *  
  */
 

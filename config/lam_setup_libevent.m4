@@ -2,9 +2,9 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([LAM_SETUP_LIBEVENT],[
+AC_DEFUN([OMPI_SETUP_LIBEVENT],[
 
-dnl LAM: don't use AC_LIBOBJ
+dnl OMPI: don't use AC_LIBOBJ
 sources=
 
 dnl Check for optional stuff
@@ -58,7 +58,7 @@ needsignal=no
 haveselect=no
 AC_CHECK_FUNCS(select, [haveselect=yes], )
 if test "x$haveselect" = "xyes" ; then
-	# LAM: Don't use AC_LIBOBJ
+	# OMPI: Don't use AC_LIBOBJ
 	sources="select.c $sources"
 	needsignal=yes
 fi
@@ -67,7 +67,7 @@ havepoll=no
 havertsig=no
 AC_CHECK_FUNCS(poll, [havepoll=yes], )
 if test "x$havepoll" = "xyes" ; then
-	# LAM: Don't use AC_LIBOBJ
+	# OMPI: Don't use AC_LIBOBJ
 	sources="poll.c $sources"
 	needsignal=yes
 
@@ -88,7 +88,7 @@ yes
 fi
 if test "x$havertsig" = "xyes" ; then
 	AC_DEFINE(HAVE_RTSIG, 1, [Define if your system supports POSIX realtime signals])
-	# LAM: Don't use AC_LIBOBJ
+	# OMPI: Don't use AC_LIBOBJ
 	sources="rtsig.c $sources"
 	AC_MSG_CHECKING(for working rtsig on pipes)
 	AC_TRY_RUN(
@@ -125,7 +125,7 @@ AC_CHECK_FUNCS(epoll_ctl, [haveepoll=yes], )
 if test "x$haveepoll" = "xyes" ; then
 	AC_DEFINE(HAVE_EPOLL, 1,
 		[Define if your system supports the epoll system calls])
-	# LAM: Don't use AC_LIBOBJ
+	# OMPI: Don't use AC_LIBOBJ
 	sources="epoll.c $sources"
 	needsignal=yes
 fi
@@ -184,7 +184,7 @@ main(int argc, char **argv)
     AC_DEFINE(HAVE_WORKING_KQUEUE, 1,
 		[Define if kqueue works correctly with pipes])
     sources="kqueue.c $sources"], AC_MSG_RESULT(no), AC_MSG_RESULT(no))
-    # LAM: don't use AC_LIBOBJ
+    # OMPI: don't use AC_LIBOBJ
 	fi
 fi
 
@@ -217,14 +217,14 @@ main(int argc, char **argv)
     AC_DEFINE(HAVE_EPOLL, 1,
 	[Define if your system supports the epoll system calls])
     needsignal=yes
-    # LAM: don't use AC_LIBOBJ
+    # OMPI: don't use AC_LIBOBJ
     sources="epoll_sub.c epoll.c $sources"
     ], AC_MSG_RESULT(no), AC_MSG_RESULT(no))
 	fi
 fi
 
 if test "x$needsignal" = "xyes" ; then
-    # LAM: don't use AC_LIBOBJ
+    # OMPI: don't use AC_LIBOBJ
     sources="signal.c $sources"
 fi
 
@@ -249,9 +249,9 @@ AC_TRY_COMPILE([
 	[Define to unsigned int if you dont have it])]
 )
 
-# LAM: Save the libobj sources
-LAM_LIBEVENT_SOURCES="$sources"
-AC_SUBST(LAM_LIBEVENT_SOURCES)
+# OMPI: Save the libobj sources
+OMPI_LIBEVENT_SOURCES="$sources"
+AC_SUBST(OMPI_LIBEVENT_SOURCES)
 
-# LAM: All done
+# OMPI: All done
 unset sources])dnl

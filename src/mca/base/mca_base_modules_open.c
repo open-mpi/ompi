@@ -2,13 +2,13 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "util/strncpy.h"
 #include "util/argv.h"
 #include "util/output.h"
@@ -17,7 +17,7 @@
 
 
 struct module_name_t {
-  lam_list_item_t super;
+  ompi_list_item_t super;
 
   char mn_name[MCA_BASE_MAX_MODULE_NAME_LEN];
 };
@@ -28,8 +28,8 @@ typedef struct module_name_t module_name_t;
  * Local functions
  */
 static int open_modules(const char *type_name, int output_id, 
-                        lam_list_t *modules_found, 
-                        lam_list_t *modules_available,
+                        ompi_list_t *modules_found, 
+                        ompi_list_t *modules_available,
                         char **requested_module_names);
 static int parse_requested(int mca_param, char ***requested_module_names);
 
@@ -40,11 +40,11 @@ static int parse_requested(int mca_param, char ***requested_module_names);
  */
 int mca_base_modules_open(const char *type_name, int output_id,
                           const mca_base_module_t **static_modules,
-                          lam_list_t *modules_available)
+                          ompi_list_t *modules_available)
 {
   int ret;
-  lam_list_item_t *item;
-  lam_list_t modules_found;
+  ompi_list_item_t *item;
+  ompi_list_t modules_found;
   char **requested_module_names;
   int param_verbose = -1;
   int param_type;
@@ -62,31 +62,31 @@ int mca_base_modules_open(const char *type_name, int output_id,
   mca_base_set_verbose(param_verbose, &lds,
                        &mca_pcm_verbose, &mca_pcm_did);
 #endif
-  lam_output_verbose(10, output_id, "open: Looking for modules");
+  ompi_output_verbose(10, output_id, "open: Looking for modules");
 
   /* Find and load all available modules */
 
-  if (LAM_SUCCESS != 
+  if (OMPI_SUCCESS != 
       mca_base_module_find(NULL, type_name, static_modules, &modules_found)) {
-    return LAM_ERROR;
+    return OMPI_ERROR;
   }
 
   /* See if one or more specific modules were requested */
 
   ret = parse_requested(param_type, &requested_module_names);
-  if (LAM_SUCCESS == ret) {
+  if (OMPI_SUCCESS == ret) {
     ret = open_modules(type_name, output_id, &modules_found, modules_available,
                        requested_module_names);
   }
 
   /* Free resources */
 
-  for (item = lam_list_remove_first(&modules_found); NULL != item;
-       item = lam_list_remove_first(&modules_found)) {
+  for (item = ompi_list_remove_first(&modules_found); NULL != item;
+       item = ompi_list_remove_first(&modules_found)) {
     free(item);
   }
   if (NULL != requested_module_names) {
-    lam_argv_free(requested_module_names);
+    ompi_argv_free(requested_module_names);
   }
 
   /* All done */
@@ -106,11 +106,11 @@ static int parse_requested(int mca_param, char ***requested_module_names)
 
   /* See if the user requested anything */
 
-  if (LAM_ERROR == mca_base_param_lookup_string(mca_param, &requested)) {
-    return LAM_ERROR;
+  if (OMPI_ERROR == mca_base_param_lookup_string(mca_param, &requested)) {
+    return OMPI_ERROR;
   }
   if (NULL == requested) {
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
   }
 
   /* Loop over all names (yes, this could be more clever, but it's
@@ -120,7 +120,7 @@ static int parse_requested(int mca_param, char ***requested_module_names)
   comma = strchr(start, ',');
   while (NULL != comma) {
     *comma = '\0';
-    lam_argv_append(&argc, requested_module_names, start);
+    ompi_argv_append(&argc, requested_module_names, start);
 
     start = comma + 1;
     comma = strchr(start, ',');
@@ -128,11 +128,11 @@ static int parse_requested(int mca_param, char ***requested_module_names)
 
   /* The last name */
 
-  lam_argv_append(&argc, requested_module_names, start);
+  ompi_argv_append(&argc, requested_module_names, start);
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
@@ -144,12 +144,12 @@ static int parse_requested(int mca_param, char ***requested_module_names)
  * add it to the modules_available list.
  */
 static int open_modules(const char *type_name, int output_id, 
-                        lam_list_t *modules_found, 
-                        lam_list_t *modules_available,
+                        ompi_list_t *modules_found, 
+                        ompi_list_t *modules_available,
                         char **requested_module_names)
 {
   int i;
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
   const mca_base_module_t *module;
   mca_base_module_list_item_t *mli;
   bool acceptable;
@@ -159,23 +159,23 @@ static int open_modules(const char *type_name, int output_id,
   /* Announce */
 
   if (NULL == requested_module_names) {
-    lam_output_verbose(10, output_id,
+    ompi_output_verbose(10, output_id,
                        "open: looking for any %s modules", type_name);
   } else {
-    lam_output_verbose(10, output_id,
+    ompi_output_verbose(10, output_id,
                        "open: looking for specific %s modules:", type_name);
     for (i = 0; NULL != requested_module_names[i]; ++i) {
-      lam_output_verbose(10, output_id, "open:   %s", 
+      ompi_output_verbose(10, output_id, "open:   %s", 
                          requested_module_names[i]);
     }
   }
 
   /* Traverse the list of found modules */
 
-  OBJ_CONSTRUCT(modules_available, lam_list_t);
-  for (item = lam_list_get_first(modules_found);
-       lam_list_get_end(modules_found) != item;
-       item = lam_list_get_next(item)) {
+  OBJ_CONSTRUCT(modules_available, ompi_list_t);
+  for (item = ompi_list_get_first(modules_found);
+       ompi_list_get_end(modules_found) != item;
+       item = ompi_list_get_next(item)) {
     mli = (mca_base_module_list_item_t *) item;
     module = mli->mli_module;
 
@@ -197,23 +197,23 @@ static int open_modules(const char *type_name, int output_id,
 
     if (acceptable) {
       opened = called_open = false;
-      lam_output_verbose(10, output_id, "open: found loaded module %s",
+      ompi_output_verbose(10, output_id, "open: found loaded module %s",
                          module->mca_module_name);
 
       if (NULL == module->mca_open_module) {
         opened = true; 
-        lam_output_verbose(10, output_id, 
+        ompi_output_verbose(10, output_id, 
                            "open: module %s has no open function",
                            module->mca_module_name);
       } else {
         called_open = true;
         if (MCA_SUCCESS == module->mca_open_module()) {
           opened = true;
-          lam_output_verbose(10, output_id, 
+          ompi_output_verbose(10, output_id, 
                              "open: module %s open function successful",
                              module->mca_module_name);
         } else {
-          lam_output_verbose(10, output_id, 
+          ompi_output_verbose(10, output_id, 
                              "open: module %s open function failed",
                              module->mca_module_name);
         }
@@ -226,13 +226,13 @@ static int open_modules(const char *type_name, int output_id,
           if (NULL != module->mca_close_module) {
             module->mca_close_module();
           }
-          lam_output_verbose(10, output_id, 
+          ompi_output_verbose(10, output_id, 
                              "open: module %s closed",
                              module->mca_module_name);
           called_open = false;
         }
         mca_base_module_repository_release(module);
-        lam_output_verbose(10, output_id, 
+        ompi_output_verbose(10, output_id, 
                            "open: module %s unloaded", 
                            module->mca_module_name);
       }
@@ -242,7 +242,7 @@ static int open_modules(const char *type_name, int output_id,
          list */
 
       else {
-        if (LAM_ERROR == mca_base_param_find(type_name, 
+        if (OMPI_ERROR == mca_base_param_find(type_name, 
                                              module->mca_module_name,
                                              "priority")) {
           mca_base_param_register_int(type_name,
@@ -252,16 +252,16 @@ static int open_modules(const char *type_name, int output_id,
 
         mli = malloc(sizeof(mca_base_module_list_item_t));
         if (NULL == mli) {
-          return LAM_ERROR;
+          return OMPI_ERROR;
         }
-        OBJ_CONSTRUCT(&mli->super, lam_list_item_t);
+        OBJ_CONSTRUCT(&mli->super, ompi_list_item_t);
         mli->mli_module = module;
-        lam_list_append(modules_available, (lam_list_item_t *) mli);
+        ompi_list_append(modules_available, (ompi_list_item_t *) mli);
       }
     }
   }
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

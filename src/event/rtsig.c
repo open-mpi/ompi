@@ -1,4 +1,4 @@
-#include "lam_config.h"
+#include "ompi_config.h"
 
 /* Enable F_SETSIG and F_SETOWN */
 #define _GNU_SOURCE
@@ -123,7 +123,7 @@ static int rtsig_del(void *, struct event *);
 static int rtsig_recalc(void *, int);
 static int rtsig_dispatch(void *, struct timeval *);
 
-struct lam_eventop rtsigops = {
+struct ompi_eventop rtsigops = {
     "rtsig",
     rtsig_init,
     rtsig_add,

@@ -6,14 +6,14 @@
 set srcdir="`pwd`"
 set distdir="$srcdir/$1"
 set verfile="$srcdir/VERSION"
-set verscript="config/lam_get_version.sh"
+set verscript="config/ompi_get_version.sh"
 
-set LAM_VERSION="`sh $verscript $verfile --full`"
-set LAM_MAJOR_VERSION="`sh $verscript $verfile --major`"
-set LAM_MINOR_VERSION="`sh $verscript $verfile --minor`"
-set LAM_RELEASE_VERSION="`sh $verscript $verfile --release`"
-set LAM_ALPHA_VERSION="`sh $verscript $verfile --alpha`"
-set LAM_BETA_VERSION="`sh $verscript $verfile --beta`"
+set OMPI_VERSION="`sh $verscript $verfile --full`"
+set OMPI_MAJOR_VERSION="`sh $verscript $verfile --major`"
+set OMPI_MINOR_VERSION="`sh $verscript $verfile --minor`"
+set OMPI_RELEASE_VERSION="`sh $verscript $verfile --release`"
+set OMPI_ALPHA_VERSION="`sh $verscript $verfile --alpha`"
+set OMPI_BETA_VERSION="`sh $verscript $verfile --beta`"
 
 if ("$distdir" == "") then
     echo "Must supply relative distdir as argv[1] -- aborting"
@@ -23,7 +23,7 @@ endif
 set start=`date`
 cat <<EOF
  
-Creating LAM/MPI distribution
+Creating OMPI/MPI distribution
 In directory: `pwd`
 Started: $start
  
@@ -91,7 +91,7 @@ end
 # JMS don't have man pages yet -- this is a straight copy from LAM7
 #
 
-set ver="$LAM_VERSION"
+set ver="$OMPI_VERSION"
 #echo "*** Updating version date/number in man pages"
 #rm -f manfiles
 #find man -type f | grep -v Makefile > manfiles
@@ -158,7 +158,7 @@ echo "*** Updating version number in $files..."
 foreach file ($files)
     echo " - Setting $file"
     if (-f $file) then
-	sed -e "s/LAMVERSION/$ver/g" $file > bar
+	sed -e "s/OMPI_VERSION/$ver/g" $file > bar
 	mv -f bar $file
     endif
 end
@@ -168,7 +168,7 @@ end
 #
 
 cat <<EOF
-*** LAM/MPI version $ver distribution created
+*** OMPI/MPI version $ver distribution created
  
 Started: $start
 Ended:   `date`

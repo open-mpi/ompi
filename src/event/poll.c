@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_TIME_H
@@ -52,32 +52,32 @@
 #endif
 
 #include "event.h"
-#if LAM_EVENT_USE_SIGNALS
+#if OMPI_EVENT_USE_SIGNALS
 #include "evsignal.h"
 #endif
 #include "threads/mutex.h"
 
 
-extern struct lam_event_list lam_eventqueue;
-extern volatile sig_atomic_t lam_evsignal_caught;
-extern lam_mutex_t lam_event_lock;
+extern struct ompi_event_list ompi_eventqueue;
+extern volatile sig_atomic_t ompi_evsignal_caught;
+extern ompi_mutex_t ompi_event_lock;
 
 struct pollop {
 	int event_count;		/* Highest number alloc */
 	struct pollfd *event_set;
-	struct lam_event **event_back;
-#if LAM_EVENT_USE_SIGNALS
+	struct ompi_event **event_back;
+#if OMPI_EVENT_USE_SIGNALS
 	sigset_t evsigmask;
 #endif
 } pollop;
 
 static void *poll_init	(void);
-static int poll_add		(void *, struct lam_event *);
-static int poll_del		(void *, struct lam_event *);
+static int poll_add		(void *, struct ompi_event *);
+static int poll_del		(void *, struct ompi_event *);
 static int poll_recalc	(void *, int);
 static int poll_dispatch	(void *, struct timeval *);
 
-const struct lam_eventop lam_pollops = {
+const struct ompi_eventop ompi_pollops = {
 	"poll",
 	poll_init,
 	poll_add,
@@ -94,8 +94,8 @@ poll_init(void)
 		return (NULL);
 
 	memset(&pollop, 0, sizeof(pollop));
-#if LAM_EVENT_USE_SIGNALS
-	lam_evsignal_init(&pollop.evsigmask);
+#if OMPI_EVENT_USE_SIGNALS
+	ompi_evsignal_init(&pollop.evsigmask);
 #endif
 	return (&pollop);
 }
@@ -108,9 +108,9 @@ poll_init(void)
 static int
 poll_recalc(void *arg, int max)
 {
-#if LAM_EVENT_USE_SIGNALS
+#if OMPI_EVENT_USE_SIGNALS
 	struct pollop *pop = arg;
-	return (lam_evsignal_recalc(&pop->evsigmask));
+	return (ompi_evsignal_recalc(&pop->evsigmask));
 #else
 	return (0);
 #endif
@@ -120,12 +120,12 @@ static int
 poll_dispatch(void *arg, struct timeval *tv)
 {
 	int res, i, count, sec, nfds;
-	struct lam_event *ev;
+	struct ompi_event *ev;
 	struct pollop *pop = arg;
 
 	count = pop->event_count;
 	nfds = 0;
-	TAILQ_FOREACH(ev, &lam_eventqueue, ev_next) {
+	TAILQ_FOREACH(ev, &ompi_eventqueue, ev_next) {
 		if (nfds + 1 >= count) {
 			if (count < 256)
 				count = 256;
@@ -140,14 +140,14 @@ poll_dispatch(void *arg, struct timeval *tv)
 				return (-1);
 			}
 			pop->event_back = realloc(pop->event_back,
-			    count * sizeof(struct lam_event *));
+			    count * sizeof(struct ompi_event *));
 			if (pop->event_back == NULL) {
 				log_error("realloc");
 				return (-1);
 			}
 			pop->event_count = count;
 		}
-		if (ev->ev_events & LAM_EV_WRITE) {
+		if (ev->ev_events & OMPI_EV_WRITE) {
 			struct pollfd *pfd = &pop->event_set[nfds];
 			pfd->fd = ev->ev_fd;
 			pfd->events = POLLOUT;
@@ -157,7 +157,7 @@ poll_dispatch(void *arg, struct timeval *tv)
 
 			nfds++;
 		}
-		if (ev->ev_events & LAM_EV_READ) {
+		if (ev->ev_events & OMPI_EV_READ) {
 			struct pollfd *pfd = &pop->event_set[nfds];
 
 			pfd->fd = ev->ev_fd;
@@ -170,22 +170,22 @@ poll_dispatch(void *arg, struct timeval *tv)
 		}
 	}
 
-#if LAM_EVENT_USE_SIGNALS
-	if (lam_evsignal_deliver(&pop->evsigmask) == -1)
+#if OMPI_EVENT_USE_SIGNALS
+	if (ompi_evsignal_deliver(&pop->evsigmask) == -1)
 		return (-1);
 #endif
 
 	sec = tv->tv_sec * 1000 + tv->tv_usec / 1000;
-        if(lam_using_threads()) {
-            lam_mutex_unlock(&lam_event_lock);
+        if(ompi_using_threads()) {
+            ompi_mutex_unlock(&ompi_event_lock);
 	    res = poll(pop->event_set, nfds, sec);
-            lam_mutex_lock(&lam_event_lock);
+            ompi_mutex_lock(&ompi_event_lock);
         } else {
 	    res = poll(pop->event_set, nfds, sec);
         }
 
-#if LAM_EVENT_USE_SIGNALS
-	if (lam_evsignal_recalc(&pop->evsigmask) == -1)
+#if OMPI_EVENT_USE_SIGNALS
+	if (ompi_evsignal_recalc(&pop->evsigmask) == -1)
 		return (-1);
 #endif
 
@@ -195,15 +195,15 @@ poll_dispatch(void *arg, struct timeval *tv)
 			return (-1);
 		}
 
-#if LAM_EVENT_USE_SIGNALS
-		lam_evsignal_process();
+#if OMPI_EVENT_USE_SIGNALS
+		ompi_evsignal_process();
 #endif
 		return (0);
 	} 
 
-#if LAM_EVENT_USE_SIGNALS
-	else if (lam_evsignal_caught)
-		lam_evsignal_process();
+#if OMPI_EVENT_USE_SIGNALS
+	else if (ompi_evsignal_caught)
+		ompi_evsignal_process();
 #endif
 
 	LOG_DBG((LOG_MISC, 80, "%s: poll reports %d", __func__, res));
@@ -222,9 +222,9 @@ poll_dispatch(void *arg, struct timeval *tv)
                 if (what & POLLERR) 
                         what |= POLLIN|POLLOUT;
 		if (what & POLLIN)
-			res |= LAM_EV_READ;
+			res |= OMPI_EV_READ;
 		if (what & POLLOUT)
-			res |= LAM_EV_WRITE;
+			res |= OMPI_EV_WRITE;
 		if (res == 0)
 			continue;
 
@@ -232,9 +232,9 @@ poll_dispatch(void *arg, struct timeval *tv)
 		res &= ev->ev_events;
 
 		if (res) {
-			if (!(ev->ev_events & LAM_EV_PERSIST))
-				lam_event_del_i(ev);
-			lam_event_active_i(ev, res, 1);
+			if (!(ev->ev_events & OMPI_EV_PERSIST))
+				ompi_event_del_i(ev);
+			ompi_event_active_i(ev, res, 1);
 		}	
 	}
 
@@ -242,12 +242,12 @@ poll_dispatch(void *arg, struct timeval *tv)
 }
 
 static int
-poll_add(void *arg, struct lam_event *ev)
+poll_add(void *arg, struct ompi_event *ev)
 {
-#if LAM_EVENT_USE_SIGNALS
+#if OMPI_EVENT_USE_SIGNALS
 	struct pollop *pop = arg;
-	if (ev->ev_events & LAM_EV_SIGNAL)
-		return (lam_evsignal_add(&pop->evsigmask, ev));
+	if (ev->ev_events & OMPI_EV_SIGNAL)
+		return (ompi_evsignal_add(&pop->evsigmask, ev));
 #endif
 	return (0);
 }
@@ -257,15 +257,15 @@ poll_add(void *arg, struct lam_event *ev)
  */
 
 static int
-poll_del(void *arg, struct lam_event *ev)
+poll_del(void *arg, struct ompi_event *ev)
 {
-#if LAM_EVENT_USE_SIGNALS
+#if OMPI_EVENT_USE_SIGNALS
 	struct pollop *pop = arg;
 #endif
-	if (!(ev->ev_events & LAM_EV_SIGNAL))
+	if (!(ev->ev_events & OMPI_EV_SIGNAL))
 		return (0);
-#if LAM_EVENT_USE_SIGNALS
-	return (lam_evsignal_del(&pop->evsigmask, ev));
+#if OMPI_EVENT_USE_SIGNALS
+	return (ompi_evsignal_del(&pop->evsigmask, ev));
 #else
 	return (0);
 #endif

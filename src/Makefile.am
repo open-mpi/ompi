@@ -17,7 +17,7 @@ SUBDIRS = \
         file \
         group \
         info \
-        lfc \
+        class \
         mca \
         mem \
         mpi \
@@ -44,7 +44,7 @@ libmpi_la_LIBADD = \
         event/libevent.la \
         group/libgroup.la \
         info/libinfo.la \
-        lfc/liblfc.la \
+        class/liblfc.la \
         mca/libmca.la \
         mem/libmem.la \
         mpi/libmpi_bindings.la \

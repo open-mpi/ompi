@@ -43,7 +43,7 @@ int topo_base_cart_shift (MPI_Comm comm,
     * Handle the trivial case.
     */
 #if 0
-    ord = lam_comm_rank(comm);
+    ord = ompi_comm_rank(comm);
 #endif 
     if (disp == 0) {
         *rank_dest = *rank_source = ord;
@@ -80,7 +80,7 @@ int topo_base_cart_shift (MPI_Comm comm,
        destord %= thisdirection;
        if (destord < 0) destord += thisdirection;
 #if 0
-       *rank_dest = lam_comm_rank(comm);
+       *rank_dest = ompi_comm_rank(comm);
 #endif
        *rank_dest += ((destord - ord) * factor);
     }
@@ -90,7 +90,7 @@ int topo_base_cart_shift (MPI_Comm comm,
        srcord %= thisdirection;
        if (srcord < 0) srcord += thisdirection;
 #if 0
-       *rank_dest = lam_comm_rank(comm);
+       *rank_dest = ompi_comm_rank(comm);
 #endif
        *rank_dest += ((srcord - ord) * factor);
     }

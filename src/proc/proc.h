@@ -2,69 +2,69 @@
  * $HEADER$
  */
 
-#ifndef LAM_PROC
-#define LAM_PROC
+#ifndef OMPI_PROC
+#define OMPI_PROC
 
 #include "include/types.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "datatype/datatype.h"
 #include "threads/mutex.h"
 
 
-extern lam_class_t lam_proc_t_class;
+extern ompi_class_t ompi_proc_t_class;
 
 
-struct lam_proc_t {
-    lam_list_item_t           super;       /* allow proc to be placed on a list */
-    lam_job_handle_t          proc_job;    /* identifies a unique job */
+struct ompi_proc_t {
+    ompi_list_item_t           super;       /* allow proc to be placed on a list */
+    ompi_job_handle_t          proc_job;    /* identifies a unique job */
     uint32_t                  proc_vpid;   /* process identifier w/in the job */
     struct mca_pml_proc_t*    proc_pml;    /* PML specific proc data */
     struct mca_base_modex_t*  proc_modex;  /* MCA module exchange data */
     int                       proc_arch;
-    lam_convertor_t*          proc_convertor;
-    lam_mutex_t               proc_lock;
+    ompi_convertor_t*          proc_convertor;
+    ompi_mutex_t               proc_lock;
 
   /* JMS: need to have the following information:
      - how am i [mpi] connected (bitmap): spawn (parent/child), 
                                           connect, accept, joint
   */
 };
-typedef struct lam_proc_t lam_proc_t;
+typedef struct ompi_proc_t ompi_proc_t;
 
 
 /**
  * Query the run-time environment and build list of available proc instances.
  */
-int lam_proc_init(void);
+int ompi_proc_init(void);
 
 /**
  * Returns the list of proc instances associated with this job.
  */
-lam_proc_t** lam_proc_world(size_t* size);
+ompi_proc_t** ompi_proc_world(size_t* size);
 
 /**
  * Returns the list of all known proc instances.
  */
-lam_proc_t** lam_proc_all(size_t* size);
+ompi_proc_t** ompi_proc_all(size_t* size);
 
 /**
  * Returns a list (of one) proc instances.
  */
-lam_proc_t** lam_proc_self(size_t* size);
+ompi_proc_t** ompi_proc_self(size_t* size);
 
 /**
  * Returns the proc instance corresponding to the local proc.
  */
-static inline lam_proc_t* lam_proc_local(void) 
+static inline ompi_proc_t* ompi_proc_local(void) 
 {
-    extern lam_proc_t* lam_proc_local_proc;
-    return lam_proc_local_proc;
+    extern ompi_proc_t* ompi_proc_local_proc;
+    return ompi_proc_local_proc;
 }
 
 /**
  * Returns the proc instance for a given vpid 
 */
-lam_proc_t * lam_proc_find ( lam_job_handle_t jobid, uint32_t vpid );
+ompi_proc_t * ompi_proc_find ( ompi_job_handle_t jobid, uint32_t vpid );
 
-#endif /* LAM_PROC */
+#endif /* OMPI_PROC */
 

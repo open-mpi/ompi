@@ -22,11 +22,11 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd);
 static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd);
 
 
-lam_class_t  mca_ptl_tcp_recv_frag_t_class = {
+ompi_class_t  mca_ptl_tcp_recv_frag_t_class = {
     "mca_ptl_tcp_recv_frag_t",
     OBJ_CLASS(mca_ptl_base_recv_frag_t),
-    (lam_construct_t)mca_ptl_tcp_recv_frag_construct,
-    (lam_destruct_t)mca_ptl_tcp_recv_frag_destruct
+    (ompi_construct_t)mca_ptl_tcp_recv_frag_construct,
+    (ompi_destruct_t)mca_ptl_tcp_recv_frag_destruct
 };
                                                                                                            
 
@@ -87,7 +87,7 @@ bool mca_ptl_tcp_recv_frag_handler(mca_ptl_tcp_recv_frag_t* frag, int sd)
     case MCA_PTL_HDR_TYPE_NACK:
         return mca_ptl_tcp_recv_frag_ack(frag, sd);
     default:
-        lam_output(0, "mca_ptl_tcp_recv_frag_handler: invalid message type: %08X", 
+        ompi_output(0, "mca_ptl_tcp_recv_frag_handler: invalid message type: %08X", 
             *(unsigned long*)&frag->super.super.frag_header);
          return false;
     }
@@ -105,7 +105,7 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
         int cnt = recv(sd, ptr + frag->frag_hdr_cnt, size - frag->frag_hdr_cnt, 0);
         if(cnt == 0) {
             mca_ptl_tcp_peer_close(frag->super.super.frag_peer);
-            LAM_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
+            OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
             return false;
         }
         if(cnt < 0) {
@@ -113,12 +113,12 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
             case EINTR:
                 continue;
             case EWOULDBLOCK:
-                /* lam_output(0, "mca_ptl_tcp_recv_frag_header: EWOULDBLOCK\n"); */
+                /* ompi_output(0, "mca_ptl_tcp_recv_frag_header: EWOULDBLOCK\n"); */
                 return false;
             default:
-                lam_output(0, "mca_ptl_tcp_recv_frag_header: recv() failed with errno=%d", errno);
+                ompi_output(0, "mca_ptl_tcp_recv_frag_header: recv() failed with errno=%d", errno);
                 mca_ptl_tcp_peer_close(frag->super.super.frag_peer);
-                LAM_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
+                OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
                 return false;
             }
         }
@@ -229,7 +229,7 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
             frag->super.super.frag_size-frag->frag_msg_cnt, 0);
         if(cnt == 0) {
             mca_ptl_tcp_peer_close(frag->super.super.frag_peer);
-            LAM_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
+            OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
             return false;
         }
         if(cnt < 0) {
@@ -239,9 +239,9 @@ static bool mca_ptl_tcp_recv_frag_data(mca_ptl_tcp_recv_frag_t* frag, int sd)
             case EWOULDBLOCK:
                 return false;
             default:
-                lam_output(0, "mca_ptl_tcp_recv_frag_data: recv() failed with errno=%d", errno);
+                ompi_output(0, "mca_ptl_tcp_recv_frag_data: recv() failed with errno=%d", errno);
                 mca_ptl_tcp_peer_close(frag->super.super.frag_peer);
-                LAM_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
+                OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
                 return false;
             }
         }
@@ -268,7 +268,7 @@ static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd)
         free(rbuf);
         if(cnt == 0) {
             mca_ptl_tcp_peer_close(frag->super.super.frag_peer);
-            LAM_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
+            OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
             return false;
         }
         if(cnt < 0) {
@@ -276,12 +276,12 @@ static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd)
             case EINTR:
                 continue;
             case EWOULDBLOCK:
-                /* lam_output(0, "mca_ptl_tcp_recv_frag_discard: EWOULDBLOCK\n"); */
+                /* ompi_output(0, "mca_ptl_tcp_recv_frag_discard: EWOULDBLOCK\n"); */
                 return false;
             default:
-                lam_output(0, "mca_ptl_tcp_recv_frag_discard: recv() failed with errno=%d", errno);
+                ompi_output(0, "mca_ptl_tcp_recv_frag_discard: recv() failed with errno=%d", errno);
                 mca_ptl_tcp_peer_close(frag->super.super.frag_peer);
-                LAM_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);
+                OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_recv_frags, (ompi_list_item_t*)frag);
                 return false;
             }
         }

@@ -27,11 +27,11 @@
 #ifndef _EVSIGNAL_H_
 #define _EVSIGNAL_H_
 
-void lam_evsignal_init(sigset_t *);
-void lam_evsignal_process(void);
-int lam_evsignal_recalc(sigset_t *);
-int lam_evsignal_deliver(sigset_t *);
-int lam_evsignal_add(sigset_t *, struct lam_event *);
-int lam_evsignal_del(sigset_t *, struct lam_event *);
+void ompi_evsignal_init(sigset_t *);
+void ompi_evsignal_process(void);
+int ompi_evsignal_recalc(sigset_t *);
+int ompi_evsignal_deliver(sigset_t *);
+int ompi_evsignal_add(sigset_t *, struct ompi_event *);
+int ompi_evsignal_del(sigset_t *, struct ompi_event *);
 
 #endif /* _EVSIGNAL_H_ */

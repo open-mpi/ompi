@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include "constants.h"
@@ -26,7 +26,7 @@ int mca_coll_basic_scatterv(void *sbuf, int *scounts,
                             MPI_Comm comm)
 {
 #if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
+  return OMPI_ERR_NOT_IMPLEMENTED;
 #else
   int i;
   int rank;
@@ -59,8 +59,8 @@ int mca_coll_basic_scatterv(void *sbuf, int *scounts,
 
     if (i == rank) {
 #if 0
-      /* JMS Need to replace this with lam_datatype_*() functions */
-      err = lam_dtsndrcv(ptmp, scounts[i], sdtype, rbuf,
+      /* JMS Need to replace this with ompi_datatype_*() functions */
+      err = ompi_dtsndrcv(ptmp, scounts[i], sdtype, rbuf,
 			 rcount, rdtype, BLKMPISCATTERV, comm);
 #endif
     } else {

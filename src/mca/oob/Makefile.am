@@ -24,8 +24,8 @@ libmca_oob_la_DEPENDENCIES = $(libmca_oob_la_LIBADD)
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mca/oob
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/mca/oob
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif

@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_IRECV = mpi_irecv_f
 #pragma weak pmpi_irecv = mpi_irecv_f
 #pragma weak pmpi_irecv_ = mpi_irecv_f
 #pragma weak pmpi_irecv__ = mpi_irecv_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_IRECV,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_IRECV,
                            pmpi_irecv,
                            pmpi_irecv_,
                            pmpi_irecv__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_IRECV,
                            (buf, count, datatype, source, tag, comm, request, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_IRECV = mpi_irecv_f
 #pragma weak mpi_irecv = mpi_irecv_f
 #pragma weak mpi_irecv_ = mpi_irecv_f
 #pragma weak mpi_irecv__ = mpi_irecv_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_IRECV,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_IRECV,
                            mpi_irecv,
                            mpi_irecv_,
                            mpi_irecv__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_IRECV,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

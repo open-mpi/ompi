@@ -4,7 +4,7 @@
 
 /** @file **/
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
@@ -16,14 +16,14 @@
 
 
 /**
- * Initialze and setup a process in the LAM RTE.
+ * Initialze and setup a process in the OMPI RTE.
  *
- * @retval LAM_SUCCESS Upon success.
- * @retval LAM_ERROR Upon failure.
+ * @retval OMPI_SUCCESS Upon success.
+ * @retval OMPI_ERROR Upon failure.
  *
  * This function performs 
  */
-int lam_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
+int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
   int ret;
   bool user_threads, hidden_threads;
@@ -33,11 +33,11 @@ int lam_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 
   /* Added by JMS -- feel free to move around */
 
-  if (LAM_SUCCESS != (ret = mca_pcm_base_open())) {
+  if (OMPI_SUCCESS != (ret = mca_pcm_base_open())) {
     /* JMS show_help */
     return ret;
   }
-  if (LAM_SUCCESS != (ret = mca_pcm_base_select(&user_threads, 
+  if (OMPI_SUCCESS != (ret = mca_pcm_base_select(&user_threads, 
                                                 &hidden_threads))) {
     /* JMS show_help */
     return ret;
@@ -45,11 +45,11 @@ int lam_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
   *allow_multi_user_threads |= user_threads;
   *have_hidden_threads |= hidden_threads;
 
-  if (LAM_SUCCESS != (ret = mca_oob_base_open())) {
+  if (OMPI_SUCCESS != (ret = mca_oob_base_open())) {
     /* JMS show_help */
     return ret;
   }
-  if (LAM_SUCCESS != (ret = mca_oob_base_select(&user_threads, 
+  if (OMPI_SUCCESS != (ret = mca_oob_base_select(&user_threads, 
                                                 &hidden_threads))) {
     /* JMS show_help */
     return ret;
@@ -57,11 +57,11 @@ int lam_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
   *allow_multi_user_threads |= user_threads;
   *have_hidden_threads |= hidden_threads;
 
-  if (LAM_SUCCESS != (ret = mca_registry_base_open())) {
+  if (OMPI_SUCCESS != (ret = mca_registry_base_open())) {
     /* JMS show_help */
     return ret;
   }
-  if (LAM_SUCCESS != (ret = mca_registry_base_select(&user_threads, 
+  if (OMPI_SUCCESS != (ret = mca_registry_base_select(&user_threads, 
                                                      &hidden_threads))) {
     /* JMS show_help */
     return ret;
@@ -132,5 +132,5 @@ int lam_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

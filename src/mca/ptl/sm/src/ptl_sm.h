@@ -28,13 +28,13 @@ struct mca_ptl_sm_module_1_0_0_t {
     int sm_free_list_max;                /**< maximum size of free lists */
     int sm_free_list_inc;                /**< number of elements to alloc when growing free lists */
     void* sm_base_addr;                  /**< base address of mmaped region */
-    lam_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
-    lam_free_list_t sm_send_frags;       /**< free list of sm send fragments */
-    lam_free_list_t sm_recv_frags;       /**< free list of sm recv fragments */
-    lam_allocator_t sm_allocator;        /**< shared memory allocator */
+    ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
+    ompi_free_list_t sm_send_frags;       /**< free list of sm send fragments */
+    ompi_free_list_t sm_recv_frags;       /**< free list of sm recv fragments */
+    ompi_allocator_t sm_allocator;        /**< shared memory allocator */
     char sm_mmap_file[PATH_MAX];         /**< full path to backing file */
     mca_ptl_sm_mmap_t *sm_mmap;
-    lam_mutex_t sm_lock;
+    ompi_mutex_t sm_lock;
 };
 typedef struct mca_ptl_sm_module_1_0_0_t mca_ptl_sm_module_1_0_0_t;
 typedef struct mca_ptl_sm_module_1_0_0_t mca_ptl_sm_module_t;
@@ -95,7 +95,7 @@ extern mca_ptl_sm_t mca_ptl_sm;
  * Cleanup any resources held by the PTL.
  * 
  * @param ptl  PTL instance.
- * @return     LAM_SUCCESS or error status on failure.
+ * @return     OMPI_SUCCESS or error status on failure.
  */
 
 extern int mca_ptl_sm_finalize(
@@ -109,16 +109,16 @@ extern int mca_ptl_sm_finalize(
  * @param ptl (IN)
  * @param proc (IN)  
  * @param peer (OUT)
- * @return     LAM_SUCCESS or error status on failure.
+ * @return     OMPI_SUCCESS or error status on failure.
  * 
  */
 
 extern int mca_ptl_sm_add_procs(
     struct mca_ptl_t* ptl,
     size_t nprocs,
-    struct lam_proc_t **procs,
+    struct ompi_proc_t **procs,
     struct mca_ptl_base_peer_t** peers,
-    lam_bitmap_t* reachability
+    ompi_bitmap_t* reachability
 );
 
                                                                                                                
@@ -134,7 +134,7 @@ extern int mca_ptl_sm_add_procs(
 extern int mca_ptl_sm_del_procs(
     struct mca_ptl_t* ptl,
     size_t nprocs,
-    struct lam_proc_t **procs,
+    struct ompi_proc_t **procs,
     struct mca_ptl_base_peer_t **peers
 );
 
@@ -183,7 +183,7 @@ extern void mca_ptl_sm_matched(
  * @param send_request (IN/OUT)  Send request (allocated by PML via mca_ptl_base_request_alloc_fn_t)
  * @param size (IN)              Number of bytes PML is requesting PTL to deliver
  * @param flags (IN)             Flags that should be passed to the peer via the message header.
- * @param request (OUT)          LAM_SUCCESS if the PTL was able to queue one or more fragments
+ * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
  */
 extern int mca_ptl_sm_send(
     struct mca_ptl_t* ptl,

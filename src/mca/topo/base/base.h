@@ -5,10 +5,10 @@
 #ifndef MCA_TOPO_BASE_H
 #define MCA_TOPO_BASE_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "mca/topo/topo.h"
 
 /*
@@ -103,7 +103,7 @@ extern "C" {
  * Globals
  */
 extern int mca_topo_base_output;
-extern lam_list_t mca_topo_base_modules_available;
+extern ompi_list_t mca_topo_base_modules_available;
 extern mca_topo_base_module_t mca_topo_base_selected_module;
 extern mca_topo_t mca_topo;
 

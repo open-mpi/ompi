@@ -2,37 +2,37 @@
  * $HEADER$
  */
 
-#ifndef _LAM_MUTEX_PTHREAD_
-#define _LAM_MUTEX_PTHREAD_
+#ifndef _OMPI_MUTEX_PTHREAD_
+#define _OMPI_MUTEX_PTHREAD_
 
 #include <pthread.h>
-#include "lfc/lam_object.h"
+#include "class/ompi_object.h"
 #include "os/atomic.h"
 
 
-struct lam_mutex_t {
-     lam_object_t     super;
+struct ompi_mutex_t {
+     ompi_object_t     super;
      pthread_mutex_t  m_lock;
 };
-typedef struct lam_mutex_t lam_mutex_t;
+typedef struct ompi_mutex_t ompi_mutex_t;
 
-OBJ_CLASS_DECLARATION(lam_mutex_t);
+OBJ_CLASS_DECLARATION(ompi_mutex_t);
 
 
 
-static inline void lam_mutex_lock(lam_mutex_t* m)
+static inline void ompi_mutex_lock(ompi_mutex_t* m)
 {
     pthread_mutex_lock(&m->m_lock);
 }
 
 
-static inline int lam_mutex_trylock(lam_mutex_t* m)
+static inline int ompi_mutex_trylock(ompi_mutex_t* m)
 {
     return pthread_mutex_trylock(&m->m_lock);
 }
 
 
-static inline void lam_mutex_unlock(lam_mutex_t* m)
+static inline void ompi_mutex_unlock(ompi_mutex_t* m)
 {
     pthread_mutex_unlock(&m->m_lock);
 }

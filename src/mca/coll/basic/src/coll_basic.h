@@ -5,7 +5,7 @@
 #ifndef MCA_COLL_BASIC_EXPORT_H
 #define MCA_COLL_BASIC_EXPORT_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mca/mca.h"
 #include "mca/coll/coll.h"

@@ -10,14 +10,14 @@
 
 static void mca_pml_teg_proc_construct(mca_pml_proc_t* proc)
 {
-    proc->proc_lam = NULL;
+    proc->proc_ompi = NULL;
     proc->proc_ptl_flags = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&proc->proc_ptl_first, mca_pml_teg_ptl_array_t);
     OBJ_CONSTRUCT(&proc->proc_ptl_next,  mca_pml_teg_ptl_array_t);
 
     THREAD_LOCK(&mca_pml_teg.teg_lock);
-    lam_list_append(&mca_pml_teg.teg_procs, (lam_list_item_t*)proc);
+    ompi_list_append(&mca_pml_teg.teg_procs, (ompi_list_item_t*)proc);
     THREAD_UNLOCK(&mca_pml_teg.teg_lock);
 }
 
@@ -25,7 +25,7 @@ static void mca_pml_teg_proc_construct(mca_pml_proc_t* proc)
 static void mca_pml_teg_proc_destruct(mca_pml_proc_t* proc)
 {
     THREAD_LOCK(&mca_pml_teg.teg_lock);
-    lam_list_remove_item(&mca_pml_teg.teg_procs, (lam_list_item_t*)proc);
+    ompi_list_remove_item(&mca_pml_teg.teg_procs, (ompi_list_item_t*)proc);
     THREAD_UNLOCK(&mca_pml_teg.teg_lock);
 
     OBJ_DESTRUCT(&proc->proc_lock);
@@ -35,7 +35,7 @@ static void mca_pml_teg_proc_destruct(mca_pml_proc_t* proc)
 
 OBJ_CLASS_INSTANCE(
     mca_pml_teg_proc_t,
-    lam_list_item_t,
+    ompi_list_item_t,
     mca_pml_teg_proc_construct, 
     mca_pml_teg_proc_destruct 
 );

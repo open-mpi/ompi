@@ -7,14 +7,14 @@
 #ifndef MCA_PML_BASE_SEND_REQUEST_H
 #define MCA_PML_BASE_SEND_REQUEST_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "datatype/datatype.h"
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_request.h"
 #include "mca/ptl/base/ptl_base_comm.h"
 
 
-extern lam_class_t mca_ptl_base_send_request_t_class;
+extern ompi_class_t mca_ptl_base_send_request_t_class;
 struct mca_ptl_base_send_frag_t;
 
 
@@ -29,10 +29,10 @@ struct mca_ptl_base_send_request_t {
     mca_pml_base_send_mode_t req_send_mode; /**< type of send */
     struct mca_ptl_t* req_owner; /**< PTL that allocated this descriptor */
     struct mca_ptl_base_peer_t* req_peer; /**< PTL peer instance that will be used for first fragment */
-    lam_ptr_t req_peer_match; /**< matched receive at peer */
-    lam_ptr_t req_peer_addr;
+    ompi_ptr_t req_peer_match; /**< matched receive at peer */
+    ompi_ptr_t req_peer_addr;
     size_t req_peer_size;
-    lam_convertor_t req_convertor; /**< convertor that describes this datatype */
+    ompi_convertor_t req_convertor; /**< convertor that describes this datatype */
 };
 typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
 
@@ -75,7 +75,7 @@ typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
     request->super.req_peer = peer; \
     request->super.req_tag = tag; \
     request->super.req_comm = comm; \
-    request->super.req_proc = lam_comm_peer_lookup(comm,peer); \
+    request->super.req_proc = ompi_comm_peer_lookup(comm,peer); \
     request->super.req_persistent = persistent; \
     request->super.req_mpi_done = false; \
     request->super.req_pml_done = false; \
@@ -84,15 +84,15 @@ typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
     /* initialize datatype convertor for this request */ \
     if(count > 0) { \
         int packed_size; \
-        lam_convertor_copy(request->super.req_proc->proc_convertor, &request->req_convertor); \
-        lam_convertor_init_for_send( \
+        ompi_convertor_copy(request->super.req_proc->proc_convertor, &request->req_convertor); \
+        ompi_convertor_init_for_send( \
             &request->req_convertor,  \
             0, \
             request->super.req_datatype, \
             request->super.req_count, \
             request->super.req_addr, \
             0); \
-        lam_convertor_get_packed_size(&request->req_convertor, &packed_size); \
+        ompi_convertor_get_packed_size(&request->req_convertor, &packed_size); \
         request->req_bytes_packed = packed_size; \
     } else { \
         request->req_bytes_packed = 0; \

@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ALLTOALL = mpi_alltoall_f
 #pragma weak pmpi_alltoall = mpi_alltoall_f
 #pragma weak pmpi_alltoall_ = mpi_alltoall_f
 #pragma weak pmpi_alltoall__ = mpi_alltoall_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_ALLTOALL,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_ALLTOALL,
                            pmpi_alltoall,
                            pmpi_alltoall_,
                            pmpi_alltoall__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_ALLTOALL,
                            (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_ALLTOALL = mpi_alltoall_f
 #pragma weak mpi_alltoall = mpi_alltoall_f
 #pragma weak mpi_alltoall_ = mpi_alltoall_f
 #pragma weak mpi_alltoall__ = mpi_alltoall_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_ALLTOALL,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_ALLTOALL,
                            mpi_alltoall,
                            mpi_alltoall_,
                            mpi_alltoall__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_ALLTOALL,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

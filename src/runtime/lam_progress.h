@@ -1,7 +1,7 @@
-#ifndef _LAM_PROGRESS_H_
-#define _LAM_PROGRESS_H_
+#ifndef _OMPI_PROGRESS_H_
+#define _OMPI_PROGRESS_H_
 
-extern void lam_progress(void);
+extern void ompi_progress(void);
 
 #endif
 

@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
@@ -24,13 +24,13 @@ int mca_pml_base_close(void)
   }
 
   /* Close all remaining available modules (may be one if this is a
-     LAM RTE program, or [possibly] multiple if this is laminfo) */
+     OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
   mca_base_modules_close(mca_pml_base_output, 
                          &mca_pml_base_modules_available, NULL);
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 

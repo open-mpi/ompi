@@ -7,15 +7,15 @@
 #ifndef MCA_PTL_BASE_H
 #define MCA_PTL_BASE_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "mca/mca.h"
 #include "mca/ptl/ptl.h"
 
 
 struct mca_ptl_base_selected_module_t {
-  lam_list_item_t super;
+  ompi_list_item_t super;
 
   mca_ptl_base_module_t *pbsm_module;
   mca_ptl_t *pbsm_actions;
@@ -43,7 +43,7 @@ extern "C" {
  * Globals
  */
 extern int mca_ptl_base_output;
-extern lam_list_t mca_ptl_base_modules_available;
-extern lam_list_t mca_ptl_base_modules_initialized;
+extern ompi_list_t mca_ptl_base_modules_available;
+extern ompi_list_t mca_ptl_base_modules_initialized;
 
 #endif /* MCA_PTL_BASE_H */

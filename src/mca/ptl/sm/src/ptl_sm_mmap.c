@@ -16,7 +16,7 @@
 
 OBJ_CLASS_INSTANCE(
     mca_ptl_sm_mmap_t,
-    lam_object_t,
+    ompi_object_t,
     NULL,
     NULL
 );
@@ -32,7 +32,7 @@ static mca_ptl_sm_mmap_t* mca_ptl_sm_mmap_open(size_t size)
         struct timespec ts;
         fd = shm_open(mca_ptl_sm_module.sm_mmap_file, O_CREAT|O_RDWR, 0000);
         if(fd < 0 && errno != EACCES) {
-            lam_output(0, "mca_ptl_sm_mmap_open: open failed with errno=%d\n", errno);
+            ompi_output(0, "mca_ptl_sm_mmap_open: open failed with errno=%d\n", errno);
             return NULL;
         }
         ts.tv_sec = 0; 
@@ -43,7 +43,7 @@ static mca_ptl_sm_mmap_t* mca_ptl_sm_mmap_open(size_t size)
     /* map the file and initialize segment state */
     seg = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if(NULL == seg) {
-        lam_output(0, "mca_ptl_sm_module_mmap: mmap failed with errno=%d\n", errno);
+        ompi_output(0, "mca_ptl_sm_module_mmap: mmap failed with errno=%d\n", errno);
         return NULL;
     }
     close(fd);
@@ -61,7 +61,7 @@ mca_ptl_sm_mmap_t* mca_ptl_sm_mmap_init(size_t size)
 {
     static int segnum = 0;
 
-    lam_job_handle_t job_handle = mca_pcm.pcm_handle_get();
+    ompi_job_handle_t job_handle = mca_pcm.pcm_handle_get();
     char hostname[64];
     int fd;
     mca_ptl_sm_segment_t* seg;
@@ -73,20 +73,20 @@ mca_ptl_sm_mmap_t* mca_ptl_sm_mmap_init(size_t size)
     if(fd < 0) {
         if(errno == EACCES)
             return mca_ptl_sm_mmap_open(size);
-        lam_output(0, "mca_ptl_sm_module_mmap: open failed with errno=%d\n", errno);
+        ompi_output(0, "mca_ptl_sm_module_mmap: open failed with errno=%d\n", errno);
         return NULL;
     }
                                                                                                                                           
     /* truncate the file to the requested size */
     if(ftruncate(fd, size) != 0) {
-        lam_output(0, "mca_ptl_sm_module_mmap: ftruncate failed with errno=%d\n", errno);
+        ompi_output(0, "mca_ptl_sm_module_mmap: ftruncate failed with errno=%d\n", errno);
         return NULL;
     }
 
     /* map the file and initialize segment state */
     seg = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if(NULL == seg) {
-        lam_output(0, "mca_ptl_sm_module_mmap: mmap failed with errno=%d\n", errno);
+        ompi_output(0, "mca_ptl_sm_module_mmap: mmap failed with errno=%d\n", errno);
         return NULL;
     }
     fprintf(stderr, "mapped at %08x", (unsigned int)seg);
@@ -102,7 +102,7 @@ mca_ptl_sm_mmap_t* mca_ptl_sm_mmap_init(size_t size)
 
     /* enable access by other processes on this host */
     if(fchmod(fd, 0600) != 0) {
-        lam_output(0, "mca_ptl_sm_module_mmap: fchmod failed with errno=%d\n", errno);
+        ompi_output(0, "mca_ptl_sm_module_mmap: fchmod failed with errno=%d\n", errno);
         OBJ_RELEASE(map);
         close(fd);
         return NULL;
@@ -112,7 +112,7 @@ mca_ptl_sm_mmap_t* mca_ptl_sm_mmap_init(size_t size)
 }
 
 
-void* mca_ptl_sm_mmap_alloc(lam_allocator_t* allocator, size_t size)
+void* mca_ptl_sm_mmap_alloc(ompi_allocator_t* allocator, size_t size)
 {
     mca_ptl_sm_mmap_t* map = mca_ptl_sm_module.sm_mmap;
     mca_ptl_sm_segment_t* seg = map->sm_segment;
@@ -126,7 +126,7 @@ void* mca_ptl_sm_mmap_alloc(lam_allocator_t* allocator, size_t size)
 }
 
                                                                                                                                           
-void mca_ptl_sm_mmap_free(lam_allocator_t* allocator, void* ptr)
+void mca_ptl_sm_mmap_free(ompi_allocator_t* allocator, void* ptr)
 {
     /* empty for now */
 }

@@ -4,28 +4,28 @@
 
 /** @file */
 
-#ifndef LAM_MALLOC_H
-#define LAM_MALLOC_H
+#ifndef OMPI_MALLOC_H
+#define OMPI_MALLOC_H
 
 #include <stdlib.h>
 
 /*
- * THIS FILE CANNOT INCLUDE ANY OTHER LAM HEADER FILES!!!
+ * THIS FILE CANNOT INCLUDE ANY OTHER OMPI HEADER FILES!!!
  *
- * It is included via <lam_config_bottom.h>.  Hence, it should not
- * include ANY other files, nor should it include "lam_config.h".
+ * It is included via <ompi_config_bottom.h>.  Hence, it should not
+ * include ANY other files, nor should it include "ompi_config.h".
  *
  */
 
 /*
- * Set LAM_MALLOC_DEBUG_LEVEL to
+ * Set OMPI_MALLOC_DEBUG_LEVEL to
  * 0 for no checking
  * 1 for basic error checking
  * 2 for more error checking
  */
 
-#ifndef LAM_MALLOC_DEBUG_LEVEL
-#define LAM_MALLOC_DEBUG_LEVEL 2
+#ifndef OMPI_MALLOC_DEBUG_LEVEL
+#define OMPI_MALLOC_DEBUG_LEVEL 2
 #endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -34,10 +34,10 @@ extern "C" {
   /**
    * Shut down malloc debug output.
    *
-   * This function is invoked as part of lam_finalize() to shut down the
+   * This function is invoked as part of ompi_finalize() to shut down the
    * output stream for malloc debug messages.
    */
-  void lam_malloc_init(void);
+  void ompi_malloc_init(void);
 
   /**
    * Initialize malloc debug output.
@@ -47,18 +47,18 @@ extern "C" {
    * other than that (i.e., no internal accounting for tracking
    * malloc/free statements, etc.).
    *
-   * It is invoked as part of lam_init().  Although this function is
-   * not \em necessary for LAM_MALLOC() and LAM_FREE(), it is strong
+   * It is invoked as part of ompi_init().  Although this function is
+   * not \em necessary for OMPI_MALLOC() and OMPI_FREE(), it is strong
    * recommended because no output messages -- regardless of the
-   * malloc debug level set by lam_malloc_debug() -- will be displayed
+   * malloc debug level set by ompi_malloc_debug() -- will be displayed
    * unless this function is invoked first.
    */
-  void lam_malloc_finalize(void);
+  void ompi_malloc_finalize(void);
 
   /**
    * \internal
    *
-   * Back-end error-checking malloc function for LAM (you should use
+   * Back-end error-checking malloc function for OMPI (you should use
    * the normal malloc() instead of this function).
    *
    * @param size The number of bytes to allocate
@@ -68,12 +68,12 @@ extern "C" {
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-  void *lam_malloc(size_t size, char *file, int line);
+  void *ompi_malloc(size_t size, char *file, int line);
 
   /**
    * \internal
    *
-   * Back-end error-checking calloc function for LAM (you should use
+   * Back-end error-checking calloc function for OMPI (you should use
    * the normal calloc() instead of this function).
    *
    * @param nmembers Number of elements to malloc
@@ -84,12 +84,12 @@ extern "C" {
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-  void *lam_calloc(size_t nmembers, size_t size, char *file, int line);
+  void *ompi_calloc(size_t nmembers, size_t size, char *file, int line);
 
   /**
    * \internal
    *
-   * Back-end error-checking realloc function for LAM (you should use
+   * Back-end error-checking realloc function for OMPI (you should use
    * the normal realloc() instead of this function).
    *
    * @param ptr Pointer to reallocate
@@ -100,12 +100,12 @@ extern "C" {
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-  void *lam_realloc(void *ptr, size_t size, char *file, int line);
+  void *ompi_realloc(void *ptr, size_t size, char *file, int line);
 
   /**
    * \internal
    *
-   * Back-end error-checking free function for LAM (you should use
+   * Back-end error-checking free function for OMPI (you should use
    * free() instead of this function).
    *
    * @param addr Address on the heap to free()
@@ -116,15 +116,15 @@ extern "C" {
    * to configure (or by default if you're building in a SVN
    * checkout).
    */
-  void lam_free(void *addr, char *file, int line);
+  void ompi_free(void *addr, char *file, int line);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
-extern int lam_malloc_debug_level;
-extern int lam_malloc_output;
+extern int ompi_malloc_debug_level;
+extern int ompi_malloc_output;
 
-static inline void lam_malloc_debug(int level);
+static inline void ompi_malloc_debug(int level);
 
 
 /**
@@ -132,11 +132,11 @@ static inline void lam_malloc_debug(int level);
  *
  * @param level The level of debugging (0 = none, 1 = some, 2 = more)
  *
- * This value defaults to the LAM_MALLOC_DEBUG_LEVEL.
+ * This value defaults to the OMPI_MALLOC_DEBUG_LEVEL.
  */
-static inline void lam_malloc_debug(int level)
+static inline void ompi_malloc_debug(int level)
 {
-  lam_malloc_debug_level = level;
+  ompi_malloc_debug_level = level;
 }
 
-#endif /* LAM_MALLOC_H */
+#endif /* OMPI_MALLOC_H */

@@ -130,23 +130,23 @@ close(mpif_h);
 # the template for prototypes_mpi.h is as follows
 #
 $header = 
-"#ifndef LAM_F77_PROTOTYPES_MPI_H
-#define LAM_F77_PROTOTYPES_MPI_H
+"#ifndef OMPI_F77_PROTOTYPES_MPI_H
+#define OMPI_F77_PROTOTYPES_MPI_H
 /*
  * \$HEADER\$
  * This file prototypes all MPI fortran functions in all four fortran
- * symbol conventions as well as all the internal real LAM wrapper
+ * symbol conventions as well as all the internal real OMPI wrapper
  * functions (different from any of the four fortran symbol
  * conventions for clarity, at the cost of more typing for me...).
  * This file is included in the top-level build ONLY. The prototyping
  * is done ONLY for MPI_* bindings
  *
- * Zeroth, the LAM wrapper functions, with a _f suffix.
+ * Zeroth, the OMPI wrapper functions, with a _f suffix.
  *
  * This is needed ONLY if the lower-level prototypes_pmpi.h has not
  * already been included
  */
-#ifndef LAM_F77_PROTOTYPES_PMPI_H
+#ifndef OMPI_F77_PROTOTYPES_PMPI_H
 /* 
  * mpi_*_f definitions go here --- .mpif_f.h 
  */\n";
@@ -220,17 +220,17 @@ $boiler_plate =
  * \$HEADER\$
  */
 
-#include \"lam_config.h\"
+#include \"ompi_config.h\"
 
 #include <stdio.h>
 
 #include \"mpi.h\"
 #include \"mpi/f77/bindings.h\"\n\n";
 
-$have_weak_and_want_profile = "#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER";
-$no_weak_and_want_profile = "#elif LAM_PROFILE_LAYER";
-$have_weak = "#if LAM_HAVE_WEAK_SYMBOLS";
-$no_weak_and_no_profile = "#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER";
+$have_weak_and_want_profile = "#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER";
+$no_weak_and_want_profile = "#elif OMPI_PROFILE_LAYER";
+$have_weak = "#if OMPI_HAVE_WEAK_SYMBOLS";
+$no_weak_and_no_profile = "#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER";
 
 #
 # Now lets get down to the actual dirty job 
@@ -267,7 +267,7 @@ while (<MPIF_H>) {
 
     #create the non-weak symbol variables
     $redefine_pmpi = "
-LAM_GENERATE_F77_BINDINGS (P$FUNCTION_NAME,
+OMPI_GENERATE_F77_BINDINGS (P$FUNCTION_NAME,
                            p$function_name,
                            p$function_name_,
                            p$function_name__,
@@ -276,7 +276,7 @@ LAM_GENERATE_F77_BINDINGS (P$FUNCTION_NAME,
                            $function_params_without_types )\n";
 
     $redefine_mpi = "
-LAM_GENERATE_F77_BINDINGS ($FUNCTION_NAME,
+OMPI_GENERATE_F77_BINDINGS ($FUNCTION_NAME,
                            $function_name,
                            $function_name_,
                            $function_name__,
@@ -313,18 +313,18 @@ close(MPIF_H);
 # of the mpi_*_f functions to be pmpi functions
 
 $header = 
-"#ifndef LAM_F77_PROTOTYPES_PMPI_H
-#define LAM_F77_PROTOTYPES_PMPI_H
+"#ifndef OMPI_F77_PROTOTYPES_PMPI_H
+#define OMPI_F77_PROTOTYPES_PMPI_H
 /*
  * \$HEADER\$
  * This file prototypes all MPI fortran functions in all four fortran
- * symbol conventions as well as all the internal real LAM wrapper
+ * symbol conventions as well as all the internal real OMPI wrapper
  * functions (different from any of the four fortran symbol
  * conventions for clarity, at the cost of more typing for me...).
  * This file is included in the top-level build ONLY. The prototyping
  * is done ONLY for MPI_* bindings
  *
- * Zeroth, the LAM wrapper functions, with a _f suffix.
+ * Zeroth, the OMPI wrapper functions, with a _f suffix.
  *
  * This is needed ONLY if the lower-level prototypes_pmpi.h has not
  * already been included
@@ -398,8 +398,8 @@ $boiler_plate = "
 /*
  * \$HEADER\$
  */
-#ifndef LAM_F77_PROFILE_DEFINES_H
-#define LAM_F77_PROFILE_DEFINES_H\n\n";
+#ifndef OMPI_F77_PROFILE_DEFINES_H
+#define OMPI_F77_PROFILE_DEFINES_H\n\n";
 
 print PMPI_H $boiler_plate;
 

@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#ifndef LAM_STRNCPY_H
-#define LAM_STRNCPY_H
+#ifndef OMPI_STRNCPY_H
+#define OMPI_STRNCPY_H
 
 #include <sys/types.h>
 
 /*
- * Use lam_strncpy() instead of strncpy()
+ * Use ompi_strncpy() instead of strncpy()
  */
 #if defined(strncpy)
 #undef strncpy
 #endif
-#define strncpy lam_strncpy
+#define strncpy ompi_strncpy
 
 
-char *lam_strncpy(char *dest, const char *src, size_t len);
+char *ompi_strncpy(char *dest, const char *src, size_t len);
 
-#endif /* LAM_STRNCPY_H */
+#endif /* OMPI_STRNCPY_H */

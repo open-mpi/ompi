@@ -3,6 +3,6 @@
 # $HEADER$
 #
 
-include $(top_lam_srcdir)/config/Makefile.options
+include $(top_ompi_srcdir)/config/Makefile.options
 
 SUBDIRS = include

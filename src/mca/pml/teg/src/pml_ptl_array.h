@@ -4,16 +4,16 @@
 /**
  * @file
  */
-#ifndef LAM_PTL_ARRAY_H
-#define LAM_PTL_ARRAY_H
+#ifndef OMPI_PTL_ARRAY_H
+#define OMPI_PTL_ARRAY_H
 
 #include "util/output.h"
 #include "mca/ptl/ptl.h"
 
-extern lam_class_t mca_pml_teg_ptl_array_t_class;
+extern ompi_class_t mca_pml_teg_ptl_array_t_class;
 
 /**
- * A data structure associated with a lam_proc_t that caches
+ * A data structure associated with a ompi_proc_t that caches
  * addressing/scheduling attributes for a specific PTL instance
  * that can be used to reach the process.
  */
@@ -30,7 +30,7 @@ typedef struct mca_ptl_proc_t mca_ptl_proc_t;
  * scheduling across contents.
  */
 struct mca_ptl_array_t {
-    lam_object_t     super;
+    ompi_object_t     super;
     mca_ptl_proc_t*  ptl_procs;   /**< array of ptl procs */
     size_t           ptl_size;    /**< number available */
     size_t           ptl_reserve; /**< size of allocated ptl_proc array */
@@ -73,9 +73,9 @@ static inline void mca_ptl_array_set_size(mca_ptl_array_t* array, size_t size)
  */
 static inline mca_ptl_proc_t* mca_ptl_array_insert(mca_ptl_array_t* array)
 {
-#if LAM_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
     if(array->ptl_size >= array->ptl_reserve) {
-        lam_output(0, "mca_ptl_array_insert: invalid array index %d >= %d", 
+        ompi_output(0, "mca_ptl_array_insert: invalid array index %d >= %d", 
             array->ptl_size, array->ptl_reserve);
         return 0;
     }
@@ -91,9 +91,9 @@ static inline mca_ptl_proc_t* mca_ptl_array_insert(mca_ptl_array_t* array)
  */
 static inline mca_ptl_proc_t* mca_ptl_array_get_index(mca_ptl_array_t* array, size_t index)
 {
-#if LAM_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
     if(index >= array->ptl_size) {
-        lam_output(0, "mca_ptl_array_get_index: invalid array index %d >= %d",
+        ompi_output(0, "mca_ptl_array_get_index: invalid array index %d >= %d",
             index, array->ptl_size);
         return 0;
     }
@@ -110,9 +110,9 @@ static inline mca_ptl_proc_t* mca_ptl_array_get_index(mca_ptl_array_t* array, si
 static inline mca_ptl_proc_t* mca_ptl_array_get_next(mca_ptl_array_t* array)
 {
     mca_ptl_proc_t* ptl_proc;
-#if LAM_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
     if(array->ptl_size == 0) {
-        lam_output(0, "mca_ptl_array_get_next: invalid array size");
+        ompi_output(0, "mca_ptl_array_get_next: invalid array size");
         return 0;
     }
 #endif

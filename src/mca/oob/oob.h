@@ -7,9 +7,9 @@
 /** 
  *  \brief Out of Band Messaging Interface
  *
- * LAM/MPI provides a simple point-to-point tagged messaging system
+ * OMPI/MPI provides a simple point-to-point tagged messaging system
  * intended for out-of-band communication.  This interface should be
- * used minimally in general LAM code and should not be used
+ * used minimally in general OMPI code and should not be used
  * explicitly in the MPI layer.  Not all run-time environments provide
  * a sufficient out-of-band messaging system, so some environments may
  * choose not to implement this interface, at the cost of reduced
@@ -33,7 +33,7 @@
 #ifndef MCA_OOB_H_
 #define MCA_OOB_H_
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "include/types.h"
 #include "mca/mca.h"
@@ -49,7 +49,7 @@
   /* "Special" vpids */
 #define MCA_OOB_MPIRUN       -1
 
-typedef void (*mca_oob_base_recv_cb_t)(lam_job_handle_t job_handle, int tag, 
+typedef void (*mca_oob_base_recv_cb_t)(ompi_job_handle_t job_handle, int tag, 
                                        int vpid, void* data, size_t data_len, int status);
 
 
@@ -59,13 +59,13 @@ typedef void (*mca_oob_base_recv_cb_t)(lam_job_handle_t job_handle, int tag,
 typedef struct mca_oob_1_0_0_t*
   (*mca_oob_base_init_fn_t)(int *priority, bool *allow_multi_user_threads,
                             bool *have_hidden_threads);
-typedef int (*mca_oob_base_send_fn_t)(lam_job_handle_t job_handle, int vpid, int tag, 
+typedef int (*mca_oob_base_send_fn_t)(ompi_job_handle_t job_handle, int vpid, int tag, 
                                       void* data, size_t data_len);
-typedef int (*mca_oob_base_recv_fn_t)(lam_job_handle_t job_handle,  int vpid, int* tag, 
+typedef int (*mca_oob_base_recv_fn_t)(ompi_job_handle_t job_handle,  int vpid, int* tag, 
                                       void** data, size_t* data_len);
-typedef int (*mca_oob_base_recv_nb_fn_t)(lam_job_handle_t job_handle, int vpid, int* tag,  
+typedef int (*mca_oob_base_recv_nb_fn_t)(ompi_job_handle_t job_handle, int vpid, int* tag,  
                                          void** data, size_t* data_len);
-typedef int (*mca_oob_base_recv_cb_fn_t)(lam_job_handle_t job_handle, int vpid, int tag, 
+typedef int (*mca_oob_base_recv_cb_fn_t)(ompi_job_handle_t job_handle, int vpid, int tag, 
                                          mca_oob_base_recv_cb_t callback);
 typedef int (*mca_oob_base_finalize_fn_t)(void);
 

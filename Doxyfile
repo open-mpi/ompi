@@ -17,7 +17,7 @@
 # The PROJECT_NAME tag is a single word (or a sequence of words surrounded 
 # by quotes) that should identify the project.
 
-PROJECT_NAME           = LAM/MPI
+PROJECT_NAME           = OMPI/MPI
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. 
 # This could be handy for archiving the generated documentation or 
@@ -396,7 +396,7 @@ EXCLUDE_SYMLINKS       = YES
 # EXCLUDE_PATTERNS tag to specify one or more wildcard patterns to exclude 
 # certain files from those directories.
 
-EXCLUDE_PATTERNS       = static-modules.h *config*.h lam_stdint.h ltdl.h
+EXCLUDE_PATTERNS       = static-modules.h *config*.h ompi_stdint.h ltdl.h
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or 
 # directories that contain example code fragments that are included (see 

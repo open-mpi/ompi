@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WAITANY = mpi_waitany_f
 #pragma weak pmpi_waitany = mpi_waitany_f
 #pragma weak pmpi_waitany_ = mpi_waitany_f
 #pragma weak pmpi_waitany__ = mpi_waitany_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_WAITANY,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_WAITANY,
                            pmpi_waitany,
                            pmpi_waitany_,
                            pmpi_waitany__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_WAITANY,
                            (count, array_of_requests, index, status, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_WAITANY = mpi_waitany_f
 #pragma weak mpi_waitany = mpi_waitany_f
 #pragma weak mpi_waitany_ = mpi_waitany_f
 #pragma weak mpi_waitany__ = mpi_waitany_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_WAITANY,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_WAITANY,
                            mpi_waitany,
                            mpi_waitany_,
                            mpi_waitany__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_WAITANY,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

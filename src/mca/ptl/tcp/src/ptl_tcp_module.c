@@ -105,12 +105,12 @@ int mca_ptl_tcp_module_open(void)
     mca_ptl_tcp_module.tcp_num_ptls = 0;
 
     /* initialize objects */
-    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_lock, lam_mutex_t);
-    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_procs, lam_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_pending_acks, lam_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_send_requests, lam_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_send_frags, lam_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_recv_frags, lam_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_procs, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_pending_acks, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_send_requests, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_send_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_recv_frags, ompi_free_list_t);
 
     /* register TCP module parameters */
     mca_ptl_tcp_module.tcp_if_include =
@@ -136,7 +136,7 @@ int mca_ptl_tcp_module_open(void)
     mca_ptl_tcp.super.ptl_max_frag_size =
         mca_ptl_tcp_param_register_int("max_frag_size", -1);
 
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -146,22 +146,22 @@ int mca_ptl_tcp_module_open(void)
 int mca_ptl_tcp_module_close(void)
 {
     if (mca_ptl_tcp_module.tcp_send_requests.fl_num_allocated != 
-        mca_ptl_tcp_module.tcp_send_requests.super.lam_list_length) {
-        lam_output(0, "tcp send requests: %d allocated %d returned\n",
+        mca_ptl_tcp_module.tcp_send_requests.super.ompi_list_length) {
+        ompi_output(0, "tcp send requests: %d allocated %d returned\n",
             mca_ptl_tcp_module.tcp_send_requests.fl_num_allocated, 
-            mca_ptl_tcp_module.tcp_send_requests.super.lam_list_length);
+            mca_ptl_tcp_module.tcp_send_requests.super.ompi_list_length);
     }
     if (mca_ptl_tcp_module.tcp_send_frags.fl_num_allocated != 
-        mca_ptl_tcp_module.tcp_send_frags.super.lam_list_length) {
-        lam_output(0, "tcp send frags: %d allocated %d returned\n",
+        mca_ptl_tcp_module.tcp_send_frags.super.ompi_list_length) {
+        ompi_output(0, "tcp send frags: %d allocated %d returned\n",
             mca_ptl_tcp_module.tcp_send_frags.fl_num_allocated, 
-            mca_ptl_tcp_module.tcp_send_frags.super.lam_list_length);
+            mca_ptl_tcp_module.tcp_send_frags.super.ompi_list_length);
     }
     if (mca_ptl_tcp_module.tcp_recv_frags.fl_num_allocated != 
-        mca_ptl_tcp_module.tcp_recv_frags.super.lam_list_length) {
-        lam_output(0, "tcp recv frags: %d allocated %d returned\n",
+        mca_ptl_tcp_module.tcp_recv_frags.super.ompi_list_length) {
+        ompi_output(0, "tcp recv frags: %d allocated %d returned\n",
             mca_ptl_tcp_module.tcp_recv_frags.fl_num_allocated, 
-            mca_ptl_tcp_module.tcp_recv_frags.super.lam_list_length);
+            mca_ptl_tcp_module.tcp_recv_frags.super.ompi_list_length);
     }
 
     free(mca_ptl_tcp_module.tcp_if_include);
@@ -174,7 +174,7 @@ int mca_ptl_tcp_module_close(void)
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_send_frags);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_recv_frags);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_lock);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -187,7 +187,7 @@ static int mca_ptl_tcp_create(int if_index, const char* if_name)
     mca_ptl_tcp_t* ptl = malloc(sizeof(mca_ptl_tcp_t));
     char param[256];
     if(NULL == ptl)
-        return LAM_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     memcpy(ptl, &mca_ptl_tcp, sizeof(mca_ptl_tcp));
     mca_ptl_tcp_module.tcp_ptls[mca_ptl_tcp_module.tcp_num_ptls++] = ptl;
 
@@ -198,8 +198,8 @@ static int mca_ptl_tcp_create(int if_index, const char* if_name)
     ptl->ptl_bytes_sent = 0;
     ptl->ptl_send_handler = 0;
 #endif
-    lam_ifindextoaddr(if_index, (struct sockaddr*)&ptl->ptl_ifaddr, sizeof(ptl->ptl_ifaddr));
-    lam_ifindextomask(if_index, (struct sockaddr*)&ptl->ptl_ifmask, sizeof(ptl->ptl_ifmask));
+    ompi_ifindextoaddr(if_index, (struct sockaddr*)&ptl->ptl_ifaddr, sizeof(ptl->ptl_ifaddr));
+    ompi_ifindextomask(if_index, (struct sockaddr*)&ptl->ptl_ifmask, sizeof(ptl->ptl_ifmask));
 
     /* allow user to specify interface bandwidth */
     sprintf(param, "bandwidth_%s", if_name);
@@ -209,11 +209,11 @@ static int mca_ptl_tcp_create(int if_index, const char* if_name)
     sprintf(param, "latency_%s", if_name);
     ptl->super.ptl_latency = mca_ptl_tcp_param_register_int(param, 0);
 
-#if LAM_ENABLE_DEBUG
-    lam_output(0,"interface: %s bandwidth %d latency %d\n", 
+#if OMPI_ENABLE_DEBUG
+    ompi_output(0,"interface: %s bandwidth %d latency %d\n", 
         if_name, ptl->super.ptl_bandwidth, ptl->super.ptl_latency);
 #endif
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -225,44 +225,44 @@ static int mca_ptl_tcp_create(int if_index, const char* if_name)
 
 static int mca_ptl_tcp_module_create_instances(void)
 {
-    int if_count = lam_ifcount();
+    int if_count = ompi_ifcount();
     int if_index;
     char **include;
     char **exclude;
     char **argv;
 
     if(if_count <= 0)
-        return LAM_ERROR;
+        return OMPI_ERROR;
 
     /* allocate memory for ptls */
     mca_ptl_tcp_module.tcp_max_ptls = if_count;
     mca_ptl_tcp_module.tcp_ptls = malloc(if_count * sizeof(mca_ptl_tcp_t*));
     if(NULL == mca_ptl_tcp_module.tcp_ptls)
-        return LAM_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
 
     /* if the user specified an interface list - use these exclusively */
-    argv = include = lam_argv_split(mca_ptl_tcp_module.tcp_if_include,',');
+    argv = include = ompi_argv_split(mca_ptl_tcp_module.tcp_if_include,',');
     while(argv && *argv) {
         char* if_name = *argv;
-        int if_index = lam_ifnametoindex(if_name);
+        int if_index = ompi_ifnametoindex(if_name);
         if(if_index < 0) {
-            lam_output(0,"mca_ptl_tcp_module_init: invalid interface \"%s\"", if_name);
+            ompi_output(0,"mca_ptl_tcp_module_init: invalid interface \"%s\"", if_name);
         } else {
             mca_ptl_tcp_create(if_index, if_name);
         }
         argv++;
     }
-    lam_argv_free(include);
+    ompi_argv_free(include);
     if(mca_ptl_tcp_module.tcp_num_ptls)
-        return LAM_SUCCESS;
+        return OMPI_SUCCESS;
 
     /* if the interface list was not specified by the user, create 
      * a PTL for each interface that was not excluded.
     */
-    exclude = lam_argv_split(mca_ptl_tcp_module.tcp_if_exclude,',');
-    for(if_index = lam_ifbegin(); if_index >= 0; if_index = lam_ifnext(if_index)) {
+    exclude = ompi_argv_split(mca_ptl_tcp_module.tcp_if_exclude,',');
+    for(if_index = ompi_ifbegin(); if_index >= 0; if_index = ompi_ifnext(if_index)) {
         char if_name[32];
-        lam_ifindextoname(if_index, if_name, sizeof(if_name));
+        ompi_ifindextoname(if_index, if_name, sizeof(if_name));
 
         /* check to see if this interface exists in the exclude list */
         argv = exclude;
@@ -276,8 +276,8 @@ static int mca_ptl_tcp_module_create_instances(void)
             mca_ptl_tcp_create(if_index, if_name);
         }
     }
-    lam_argv_free(exclude);
-    return LAM_SUCCESS;
+    ompi_argv_free(exclude);
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -288,13 +288,13 @@ static int mca_ptl_tcp_module_create_listen(void)
 {
     int flags;
     struct sockaddr_in inaddr; 
-    lam_socklen_t addrlen;
+    ompi_socklen_t addrlen;
 
     /* create a listen socket for incoming connections */
     mca_ptl_tcp_module.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
     if(mca_ptl_tcp_module.tcp_listen_sd < 0) {
-        lam_output(0,"mca_ptl_tcp_module_init: socket() failed with errno=%d", errno);
-        return LAM_ERROR;
+        ompi_output(0,"mca_ptl_tcp_module_init: socket() failed with errno=%d", errno);
+        return OMPI_ERROR;
     }
     mca_ptl_tcp_set_socket_options(mca_ptl_tcp_module.tcp_listen_sd);
                                                                                                       
@@ -305,44 +305,44 @@ static int mca_ptl_tcp_module_create_listen(void)
     inaddr.sin_port = 0;
                                                                                                       
     if(bind(mca_ptl_tcp_module.tcp_listen_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
-        lam_output(0,"mca_ptl_tcp_module_init: bind() failed with errno=%d", errno);
-        return LAM_ERROR;
+        ompi_output(0,"mca_ptl_tcp_module_init: bind() failed with errno=%d", errno);
+        return OMPI_ERROR;
     }
                                                                                                       
     /* resolve system assignend port */
     addrlen = sizeof(struct sockaddr_in);
     if(getsockname(mca_ptl_tcp_module.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
-        lam_output(0, "mca_ptl_tcp_module_init: getsockname() failed with errno=%d", errno);
-        return LAM_ERROR;
+        ompi_output(0, "mca_ptl_tcp_module_init: getsockname() failed with errno=%d", errno);
+        return OMPI_ERROR;
     }
     mca_ptl_tcp_module.tcp_listen_port = inaddr.sin_port;
 
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(mca_ptl_tcp_module.tcp_listen_sd, SOMAXCONN) < 0) {
-        lam_output(0, "mca_ptl_tcp_module_init: listen() failed with errno=%d", errno);
-        return LAM_ERROR;
+        ompi_output(0, "mca_ptl_tcp_module_init: listen() failed with errno=%d", errno);
+        return OMPI_ERROR;
     }
 
     /* set socket up to be non-blocking, otherwise accept could block */
     if((flags = fcntl(mca_ptl_tcp_module.tcp_listen_sd, F_GETFL, 0)) < 0) {
-        lam_output(0, "mca_ptl_tcp_module_init: fcntl(F_GETFL) failed with errno=%d", errno);
-        return LAM_ERROR;
+        ompi_output(0, "mca_ptl_tcp_module_init: fcntl(F_GETFL) failed with errno=%d", errno);
+        return OMPI_ERROR;
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(mca_ptl_tcp_module.tcp_listen_sd, F_SETFL, flags) < 0) {
-            lam_output(0, "mca_ptl_tcp_module_init: fcntl(F_SETFL) failed with errno=%d", errno);
-            return LAM_ERROR;
+            ompi_output(0, "mca_ptl_tcp_module_init: fcntl(F_SETFL) failed with errno=%d", errno);
+            return OMPI_ERROR;
         }
     }
    
     /* register listen port */
-    lam_event_set(
+    ompi_event_set(
         &mca_ptl_tcp_module.tcp_recv_event,
         mca_ptl_tcp_module.tcp_listen_sd, 
-        LAM_EV_READ|LAM_EV_PERSIST, 
+        OMPI_EV_READ|OMPI_EV_PERSIST, 
         mca_ptl_tcp_module_recv_handler, 
         0);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -383,19 +383,19 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
 
     *num_ptls = 0;
     *allow_multi_user_threads = true;
-    *have_hidden_threads = LAM_HAVE_THREADS;
+    *have_hidden_threads = OMPI_HAVE_THREADS;
 
-    /* need to set lam_using_threads() as lam_event_init() will spawn a thread if supported */
-    if(LAM_HAVE_THREADS)
-        lam_set_using_threads(true);
+    /* need to set ompi_using_threads() as ompi_event_init() will spawn a thread if supported */
+    if(OMPI_HAVE_THREADS)
+        ompi_set_using_threads(true);
 
-    if((rc = lam_event_init()) != LAM_SUCCESS) {
-        lam_output(0, "mca_ptl_tcp_module_init: unable to initialize event dispatch thread: %d\n", rc);
+    if((rc = ompi_event_init()) != OMPI_SUCCESS) {
+        ompi_output(0, "mca_ptl_tcp_module_init: unable to initialize event dispatch thread: %d\n", rc);
         return NULL;
     }
 
     /* initialize free lists */
-    lam_free_list_init(&mca_ptl_tcp_module.tcp_send_requests, 
+    ompi_free_list_init(&mca_ptl_tcp_module.tcp_send_requests, 
         sizeof(mca_ptl_tcp_send_request_t),
         OBJ_CLASS(mca_ptl_tcp_send_request_t),
         mca_ptl_tcp_module.tcp_free_list_num,
@@ -403,7 +403,7 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
         mca_ptl_tcp_module.tcp_free_list_inc,
         NULL); /* use default allocator */
 
-    lam_free_list_init(&mca_ptl_tcp_module.tcp_send_frags, 
+    ompi_free_list_init(&mca_ptl_tcp_module.tcp_send_frags, 
         sizeof(mca_ptl_tcp_send_frag_t),
         OBJ_CLASS(mca_ptl_tcp_send_frag_t),
         mca_ptl_tcp_module.tcp_free_list_num,
@@ -411,7 +411,7 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
         mca_ptl_tcp_module.tcp_free_list_inc,
         NULL); /* use default allocator */
 
-    lam_free_list_init(&mca_ptl_tcp_module.tcp_recv_frags, 
+    ompi_free_list_init(&mca_ptl_tcp_module.tcp_recv_frags, 
         sizeof(mca_ptl_tcp_recv_frag_t),
         OBJ_CLASS(mca_ptl_tcp_recv_frag_t),
         mca_ptl_tcp_module.tcp_free_list_num,
@@ -420,15 +420,15 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
         NULL); /* use default allocator */
 
     /* create a PTL TCP module for selected interfaces */
-    if(mca_ptl_tcp_module_create_instances() != LAM_SUCCESS)
+    if(mca_ptl_tcp_module_create_instances() != OMPI_SUCCESS)
         return 0;
 
     /* create a TCP listen socket for incoming connection attempts */
-    if(mca_ptl_tcp_module_create_listen() != LAM_SUCCESS)
+    if(mca_ptl_tcp_module_create_listen() != OMPI_SUCCESS)
         return 0;
 
     /* publish TCP parameters with the MCA framework */
-    if(mca_ptl_tcp_module_exchange() != LAM_SUCCESS)
+    if(mca_ptl_tcp_module_exchange() != OMPI_SUCCESS)
         return 0;
 
     ptls = malloc(mca_ptl_tcp_module.tcp_num_ptls * sizeof(mca_ptl_t*));
@@ -449,14 +449,14 @@ int mca_ptl_tcp_module_control(int param, void* value, size_t size)
     switch(param) {
         case MCA_PTL_ENABLE:
             if(*(int*)value)
-                lam_event_add(&mca_ptl_tcp_module.tcp_recv_event, 0);
+                ompi_event_add(&mca_ptl_tcp_module.tcp_recv_event, 0);
             else
-                lam_event_del(&mca_ptl_tcp_module.tcp_recv_event);
+                ompi_event_del(&mca_ptl_tcp_module.tcp_recv_event);
             break;
         default:
             break;
     }
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -466,8 +466,8 @@ int mca_ptl_tcp_module_control(int param, void* value, size_t size)
 
 int mca_ptl_tcp_module_progress(mca_ptl_tstamp_t tstamp)
 {
-    lam_event_loop(LAM_EVLOOP_ONCE);
-    return LAM_SUCCESS;
+    ompi_event_loop(OMPI_EVLOOP_ONCE);
+    return OMPI_SUCCESS;
 }
 
 
@@ -480,23 +480,23 @@ int mca_ptl_tcp_module_progress(mca_ptl_tstamp_t tstamp)
 static void mca_ptl_tcp_module_accept(void)
 {
     while(true) {
-        lam_socklen_t addrlen = sizeof(struct sockaddr_in);
+        ompi_socklen_t addrlen = sizeof(struct sockaddr_in);
         struct sockaddr_in addr;
-        lam_event_t* event;
+        ompi_event_t* event;
         int sd = accept(mca_ptl_tcp_module.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
             if(errno == EINTR)
                 continue;
             if(errno != EAGAIN || errno != EWOULDBLOCK)
-                lam_output(0, "mca_ptl_tcp_module_accept: accept() failed with errno %d.", errno);
+                ompi_output(0, "mca_ptl_tcp_module_accept: accept() failed with errno %d.", errno);
             return;
         }
         mca_ptl_tcp_set_socket_options(sd);
 
         /* wait for receipt of peers process identifier to complete this connection */
-        event = malloc(sizeof(lam_event_t));
-        lam_event_set(event, sd, LAM_EV_READ|LAM_EV_PERSIST, mca_ptl_tcp_module_recv_handler, event);
-        lam_event_add(event, 0);
+        event = malloc(sizeof(ompi_event_t));
+        ompi_event_set(event, sd, OMPI_EV_READ|OMPI_EV_PERSIST, mca_ptl_tcp_module_recv_handler, event);
+        ompi_event_add(event, 0);
     }
 }
 
@@ -512,14 +512,14 @@ static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
     struct sockaddr_in addr;
     int retval;
     mca_ptl_tcp_proc_t* ptl_proc;
-    lam_socklen_t addr_len = sizeof(addr);
+    ompi_socklen_t addr_len = sizeof(addr);
 
     /* accept new connections on the listen socket */
     if(mca_ptl_tcp_module.tcp_listen_sd == sd) {
         mca_ptl_tcp_module_accept();
         return;
     }
-    lam_event_del((lam_event_t*)user);
+    ompi_event_del((ompi_event_t*)user);
     free(user);
 
     /* recv the size of the process identifier */
@@ -529,7 +529,7 @@ static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
         return;
     }
     if(retval != sizeof(size)) {
-        lam_output(0, "mca_ptl_tcp_module_recv_handler: recv() return value %d != %d, errno = %d", 
+        ompi_output(0, "mca_ptl_tcp_module_recv_handler: recv() return value %d != %d, errno = %d", 
             retval, sizeof(size), errno);
         close(sd);
         return;
@@ -544,7 +544,7 @@ static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
     }
     retval = recv(sd, guid, size, 0);
     if(retval != size) {
-        lam_output(0, "mca_ptl_tcp_module_recv_handler: recv() return value %d != %d, errno = %d", 
+        ompi_output(0, "mca_ptl_tcp_module_recv_handler: recv() return value %d != %d, errno = %d", 
             retval, sizeof(size), errno);
         close(sd);
         return;
@@ -552,25 +552,25 @@ static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        lam_output(0, "mca_ptl_tcp_module_recv_handler: fcntl(F_GETFL) failed with errno=%d", errno);
+        ompi_output(0, "mca_ptl_tcp_module_recv_handler: fcntl(F_GETFL) failed with errno=%d", errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            lam_output(0, "mca_ptl_tcp_module_recv_handler: fcntl(F_SETFL) failed with errno=%d", errno);
+            ompi_output(0, "mca_ptl_tcp_module_recv_handler: fcntl(F_SETFL) failed with errno=%d", errno);
         }
     }
    
     /* lookup the corresponding process */
     ptl_proc = mca_ptl_tcp_proc_lookup(guid, size);
     if(NULL == ptl_proc) {
-        lam_output(0, "mca_ptl_tcp_module_recv_handler: unable to locate process");
+        ompi_output(0, "mca_ptl_tcp_module_recv_handler: unable to locate process");
         close(sd);
         return;
     }
 
     /* lookup peer address */
     if(getpeername(sd, (struct sockaddr*)&addr, &addr_len) != 0) {
-        lam_output(0, "mca_ptl_tcp_module_recv_handler: getpeername() failed with errno=%d", errno);
+        ompi_output(0, "mca_ptl_tcp_module_recv_handler: getpeername() failed with errno=%d", errno);
         close(sd);
         return;
     }

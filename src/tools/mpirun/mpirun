@@ -15,9 +15,9 @@
 # Some basic defaults
 #
 ######################################################################
-lam_numprocs="1"
-lam_hosts="localhost"
-lam_debug=0
+ompi_numprocs="1"
+ompi_hosts="localhost"
+ompi_debug=0
 
 
 ######################################################################
@@ -25,21 +25,21 @@ lam_debug=0
 # Global variables
 #
 ######################################################################
-lam_hostfile=""
-lam_jobhandle=""
-lam_app_args=""
-lam_mydir=""
-lam_cwd="`pwd`"
-lam_prepped=""
+ompi_hostfile=""
+ompi_jobhandle=""
+ompi_app_args=""
+ompi_mydir=""
+ompi_cwd="`pwd`"
+ompi_prepped=""
 
 # Get the dir where this script is
 dir="`dirname $0`"
 if test "$dir" = "."; then
-    lam_mydir=`pwd`
+    ompi_mydir=`pwd`
 else
-    lam_mydir="$dir"
-    pushd $lam_mydir 2>&1 > /dev/null
-    lam_mydir="`pwd`"
+    ompi_mydir="$dir"
+    pushd $ompi_mydir 2>&1 > /dev/null
+    ompi_mydir="`pwd`"
     popd 2>&1 > /dev/null
 fi
 unset dir
@@ -54,17 +54,17 @@ for i ; do
     case "${i}" in
         -np)
             shift
-            lam_numprocs=${1}
+            ompi_numprocs=${1}
             shift
             ;;
         -hostfile)
             shift
-            lam_hostfile=${1}
+            ompi_hostfile=${1}
             shift
             ;;
         -d)
             shift
-            lam_debug=1
+            ompi_debug=1
             echo "Debugging output enabled"
             ;;
         -h)
@@ -73,7 +73,7 @@ for i ; do
             ;;
         --)
             shift
-            lam_app_args="$@"
+            ompi_app_args="$@"
             ;;
     esac
 done
@@ -92,7 +92,7 @@ fi
 #
 ######################################################################
 debug_echo() {
-    if test "$lam_debug" != "0"; then
+    if test "$ompi_debug" != "0"; then
         echo "$*"
     fi
 }
@@ -109,13 +109,13 @@ do_add_env() {
     name="`echo ${str} | cut -d= -f1`"
     val="`echo ${str} | cut -d= -f2-`"
 
-    lam_prepped="${lam_prepped} -x ${name} \"${val}\""
+    ompi_prepped="${ompi_prepped} -x ${name} \"${val}\""
 }
 
 
 do_prep_environ() {
     local a=""
-    local envfile="/tmp/lam_mpirun_env_$$"
+    local envfile="/tmp/ompi_mpirun_env_$$"
 
     rm -f "${envfile}"
     printenv > "${envfile}"
@@ -124,7 +124,7 @@ do_prep_environ() {
       do
         if test "`echo ${envpair} | grep \"^mca_\"`" != "" ; then
             do_add_env "${envpair}"
-        elif test "`echo ${envpair} | grep \"^LAM_MPI\"`" != "" ; then
+        elif test "`echo ${envpair} | grep \"^OMPI_MPI\"`" != "" ; then
             do_add_env "${envpair}"
         fi
     done < "${envfile}"
@@ -150,15 +150,15 @@ do_start_proc() {
     local rmt_hostname=$1 ; shift
     local rmt_vpid=$1 ; shift
     local argv="$*"
-    local rmt_boot="${lam_mydir}/mpiboot"
+    local rmt_boot="${ompi_mydir}/mpiboot"
     local cmd=""
 
     cmd="ssh ${rmt_hostname} -f -n ${rmt_boot} "
     cmd="${cmd} -myvpid ${rmt_vpid}"
-    cmd="${cmd} -numprocs ${lam_numprocs} -jobhandle ${lam_jobhandle}"
-    cmd="${cmd} -pwd ${lam_cwd} ${lam_prepped}"
-    if test ! -z "${MCA_common_lam_cofs_comm_dir}" ; then
-        cmd="${cmd} -commdir ${MCA_common_lam_cofs_comm_dir}"
+    cmd="${cmd} -numprocs ${ompi_numprocs} -jobhandle ${ompi_jobhandle}"
+    cmd="${cmd} -pwd ${ompi_cwd} ${ompi_prepped}"
+    if test ! -z "${MCA_common_ompi_cofs_comm_dir}" ; then
+        cmd="${cmd} -commdir ${MCA_common_ompi_cofs_comm_dir}"
     fi
     cmd="${cmd} -- ${argv}"
     ${cmd}
@@ -168,30 +168,30 @@ do_start_proc() {
 #
 # make_hosts_list
 #
-# make the lam_hosts list, if a hostfile was specified
+# make the ompi_hosts list, if a hostfile was specified
 #
 ######################################################################
 make_hosts_list() {
-    if test -z "${lam_hostfile}" ; then
+    if test -z "${ompi_hostfile}" ; then
         return 0
     fi
 
-    if ! test -f "${lam_hostfile}" ; then
-        echo "Could not fine ${lam_hostfile}.  Aborting"
+    if ! test -f "${ompi_hostfile}" ; then
+        echo "Could not fine ${ompi_hostfile}.  Aborting"
         exit 1
     fi
 
-    lam_hosts=""
-    for i in `cat "${lam_hostfile}"` ; do
-        if test -z "${lam_hosts}" ; then
-            lam_hosts="${i}"
+    ompi_hosts=""
+    for i in `cat "${ompi_hostfile}"` ; do
+        if test -z "${ompi_hosts}" ; then
+            ompi_hosts="${i}"
         else
-            lam_hosts="${lam_hosts} ${i}"
+            ompi_hosts="${ompi_hosts} ${i}"
         fi
     done
 
-    if test -z "${lam_hosts}" ; then
-        echo "Did not find any valid hostnames in ${lam_hostfile}.  Aborting"
+    if test -z "${ompi_hosts}" ; then
+        echo "Did not find any valid hostnames in ${ompi_hostfile}.  Aborting"
         exit 1
     fi
 }
@@ -206,7 +206,7 @@ make_hosts_list() {
 ######################################################################
 launch_procs() {
     local args="$*"
-    set -- ${lam_hosts}
+    set -- ${ompi_hosts}
     local i
 
     if test -z "${args}" ; then
@@ -216,11 +216,11 @@ launch_procs() {
 
     do_prep_environ
 
-    for (( i=0 ; i < ${lam_numprocs} ; i++)) ; do
+    for (( i=0 ; i < ${ompi_numprocs} ; i++)) ; do
         do_start_proc "${1}" "${i}" "${args}"
         shift
         if test -z "${1}" ; then
-            set -- ${lam_hosts}
+            set -- ${ompi_hosts}
         fi
     done
 }
@@ -231,7 +231,7 @@ launch_procs() {
 # Do the prep work
 #
 ######################################################################
-lam_jobhandle="pcm-cofs-job-handle-${$}-0"
+ompi_jobhandle="pcm-cofs-job-handle-${$}-0"
 
 
 ######################################################################
@@ -242,7 +242,7 @@ lam_jobhandle="pcm-cofs-job-handle-${$}-0"
 
 make_hosts_list
 
-launch_procs "${lam_app_args}"
+launch_procs "${ompi_app_args}"
 
 echo ""
 echo "Processes should be running.  I'm going to exit now.  Need to add sleeping"

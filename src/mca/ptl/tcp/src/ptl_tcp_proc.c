@@ -3,7 +3,7 @@
  */
 #include <string.h>
 #include "atomic.h"
-#include "lfc/lam_hash_table.h"
+#include "class/ompi_hash_table.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
@@ -13,13 +13,13 @@
 
 static void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc);
 static void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc);
-static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_lam(lam_proc_t* lam_proc);
+static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_ompi(ompi_proc_t* ompi_proc);
 
-lam_class_t  mca_ptl_tcp_proc_t_class = {
+ompi_class_t  mca_ptl_tcp_proc_t_class = {
     "mca_ptl_tcp_proc_t",
-    OBJ_CLASS(lam_list_item_t),
-    (lam_construct_t)mca_ptl_tcp_proc_construct,
-    (lam_destruct_t)mca_ptl_tcp_proc_destruct
+    OBJ_CLASS(ompi_list_item_t),
+    (ompi_construct_t)mca_ptl_tcp_proc_construct,
+    (ompi_destruct_t)mca_ptl_tcp_proc_destruct
 };
  
 
@@ -29,16 +29,16 @@ lam_class_t  mca_ptl_tcp_proc_t_class = {
 
 void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
 {
-    proc->proc_lam = 0;
+    proc->proc_ompi = 0;
     proc->proc_addrs = 0;
     proc->proc_addr_count = 0;
     proc->proc_peers = 0;
     proc->proc_peer_count = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
 
     /* add to list of all proc instance */
     THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
-    lam_list_append(&mca_ptl_tcp_module.tcp_procs, &proc->super);
+    ompi_list_append(&mca_ptl_tcp_module.tcp_procs, &proc->super);
     THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
 }
 
@@ -51,7 +51,7 @@ void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
 {
     /* remove from list of all proc instances */
     THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
-    lam_list_remove_item(&mca_ptl_tcp_module.tcp_procs, &proc->super);
+    ompi_list_remove_item(&mca_ptl_tcp_module.tcp_procs, &proc->super);
     THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
 
     /* release resources */
@@ -64,23 +64,23 @@ void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
 
 /*
  *  Create a TCP process structure. There is a one-to-one correspondence
- *  between a lam_proc_t and a mca_ptl_tcp_proc_t instance. We cache additional
+ *  between a ompi_proc_t and a mca_ptl_tcp_proc_t instance. We cache additional
  *  data (specifically the list of mca_ptl_tcp_peer_t instances, and publiched 
  *  addresses) associated w/ a given destination on this datastructure.
  */
 
-mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
+mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
 {
     int rc;
-    size_t size = strlen(lam_proc->proc_job) + 1;
-    uint32_t vpid = htonl(lam_proc->proc_vpid);
+    size_t size = strlen(ompi_proc->proc_job) + 1;
+    uint32_t vpid = htonl(ompi_proc->proc_vpid);
 
-    mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_lookup_lam(lam_proc);
+    mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_lookup_ompi(ompi_proc);
     if(ptl_proc != NULL)
         return ptl_proc;
 
     ptl_proc = OBJ_NEW(mca_ptl_tcp_proc_t);
-    ptl_proc->proc_lam = lam_proc;
+    ptl_proc->proc_ompi = ompi_proc;
 
     /* build a unique identifier (of arbitrary size) to represent the proc */
     ptl_proc->proc_guid_size = size + sizeof(uint32_t);
@@ -89,22 +89,22 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
         OBJ_RELEASE(ptl_proc);
         return 0;
     }
-    memcpy(ptl_proc->proc_guid, lam_proc->proc_job, size);
+    memcpy(ptl_proc->proc_guid, ompi_proc->proc_job, size);
     memcpy(((unsigned char*)ptl_proc->proc_guid)+size, &vpid, sizeof(uint32_t));
 
     /* lookup tcp parameters exported by this proc */
     rc = mca_base_modex_recv(
         &mca_ptl_tcp_module.super.ptlm_version, 
-        lam_proc, 
+        ompi_proc, 
         (void**)&ptl_proc->proc_addrs, 
         &size);
-    if(rc != LAM_SUCCESS) {
-        lam_output(0, "mca_ptl_tcp_proc_create: mca_base_modex_recv: failed with return value=%d", rc);
+    if(rc != OMPI_SUCCESS) {
+        ompi_output(0, "mca_ptl_tcp_proc_create: mca_base_modex_recv: failed with return value=%d", rc);
         OBJ_RELEASE(ptl_proc);
         return NULL;
     }
     if(0 != (size % sizeof(mca_ptl_tcp_addr_t))) {
-        lam_output(0, "mca_ptl_tcp_proc_create: mca_base_modex_recv: invalid size %d\n", size);
+        ompi_output(0, "mca_ptl_tcp_proc_create: mca_base_modex_recv: invalid size %d\n", size);
         return NULL;
     }
     ptl_proc->proc_addr_count = size / sizeof(mca_ptl_tcp_addr_t);
@@ -116,23 +116,23 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
         OBJ_RELEASE(ptl_proc);
         return NULL;
     }
-    if(NULL == mca_ptl_tcp_module.tcp_local && lam_proc == lam_proc_local())
+    if(NULL == mca_ptl_tcp_module.tcp_local && ompi_proc == ompi_proc_local())
         mca_ptl_tcp_module.tcp_local = ptl_proc;
     return ptl_proc;
 }
 
 /*
  * Look for an existing TCP process instances based on the associated
- * lam_proc_t instance.
+ * ompi_proc_t instance.
  */
-static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_lam(lam_proc_t* lam_proc)
+static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 {
     mca_ptl_tcp_proc_t* tcp_proc;
     THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
-    for(tcp_proc  = (mca_ptl_tcp_proc_t*)lam_list_get_first(&mca_ptl_tcp_module.tcp_procs);
-        tcp_proc != (mca_ptl_tcp_proc_t*)lam_list_get_end(&mca_ptl_tcp_module.tcp_procs);
-        tcp_proc  = (mca_ptl_tcp_proc_t*)lam_list_get_next(tcp_proc)) {
-        if(tcp_proc->proc_lam == lam_proc) {
+    for(tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_first(&mca_ptl_tcp_module.tcp_procs);
+        tcp_proc != (mca_ptl_tcp_proc_t*)ompi_list_get_end(&mca_ptl_tcp_module.tcp_procs);
+        tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_next(tcp_proc)) {
+        if(tcp_proc->proc_ompi == ompi_proc) {
             THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
             return tcp_proc;
         }
@@ -150,9 +150,9 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(void *guid, size_t size)
 {
     mca_ptl_tcp_proc_t* tcp_proc;
     THREAD_LOCK(&mca_ptl_tcp_module.tcp_lock);
-    for(tcp_proc  = (mca_ptl_tcp_proc_t*)lam_list_get_first(&mca_ptl_tcp_module.tcp_procs);
-        tcp_proc != (mca_ptl_tcp_proc_t*)lam_list_get_end(&mca_ptl_tcp_module.tcp_procs);
-        tcp_proc  = (mca_ptl_tcp_proc_t*)lam_list_get_next(tcp_proc)) {
+    for(tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_first(&mca_ptl_tcp_module.tcp_procs);
+        tcp_proc != (mca_ptl_tcp_proc_t*)ompi_list_get_end(&mca_ptl_tcp_module.tcp_procs);
+        tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_next(tcp_proc)) {
         if(tcp_proc->proc_guid_size == size && memcmp(tcp_proc->proc_guid, guid, size) == 0) {
             THREAD_UNLOCK(&mca_ptl_tcp_module.tcp_lock);
             return tcp_proc;
@@ -194,7 +194,7 @@ int mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
             ptl_peer->peer_addr = peer_addr;
     }
     ptl_peer->peer_addr->addr_inuse++;
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -215,7 +215,7 @@ int mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
     ptl_proc->proc_peer_count--;
     ptl_peer->peer_addr->addr_inuse--;
     THREAD_UNLOCK(&ptl_proc->proc_lock);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 

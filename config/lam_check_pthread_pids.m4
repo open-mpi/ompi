@@ -2,20 +2,20 @@ dnl
 dnl $HEADER$
 dnl
 
-define(LAM_CHECK_PTHREAD_PIDS,[
+define(OMPI_CHECK_PTHREAD_PIDS,[
 #
 # Arguments: none
 #
 # Dependencies: None
 #
 # Sets:
-#  LAM_THREADS_HAVE_DIFFERENT_PIDS (variable)
+#  OMPI_THREADS_HAVE_DIFFERENT_PIDS (variable)
 #
 # Test for Linux-like threads in the system. We will need to handle things like
 # getpid() differently in the case of a Linux-like threads model.
 #
 
-AH_TEMPLATE([LAM_THREADS_HAVE_DIFFERENT_PIDS],
+AH_TEMPLATE([OMPI_THREADS_HAVE_DIFFERENT_PIDS],
     [Do threads have different pids (pthreads on linux)])
 
 AC_MSG_CHECKING([if threads have different pids (pthreads on linux)])
@@ -47,15 +47,15 @@ void *checkpid(void *arg) {
      ret = 1;
      pthread_exit((void *) ret);
 }], 
-[MSG=no LAM_THREADS_HAVE_DIFFERENT_PIDS=0], 
-[MSG=yes LAM_THREADS_HAVE_DIFFERENT_PIDS=1])
+[MSG=no OMPI_THREADS_HAVE_DIFFERENT_PIDS=0], 
+[MSG=yes OMPI_THREADS_HAVE_DIFFERENT_PIDS=1])
 
 CPPFLAGS="$CPPFLAGS_save"
 LDFLAGS="$LDFLAGS_save"
 LIBS="$LIBS_save"
 
 AC_MSG_RESULT([$MSG])
-AC_DEFINE_UNQUOTED(LAM_THREADS_HAVE_DIFFERENT_PIDS, $LAM_THREADS_HAVE_DIFFERENT_PIDS)
+AC_DEFINE_UNQUOTED(OMPI_THREADS_HAVE_DIFFERENT_PIDS, $OMPI_THREADS_HAVE_DIFFERENT_PIDS)
 
 #
 # if pthreads is not available, then the system does not have an insane threads

@@ -6,7 +6,7 @@
 #ifndef MCA_PCM_BASE_H_
 #define MCA_PCM_BASE_H_
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "include/types.h"
 #include "mca/mca.h"
@@ -38,7 +38,7 @@ extern "C" {
  * Globals
  */
 extern int mca_pcm_base_output;
-extern lam_list_t mca_pcm_base_modules_available;
+extern ompi_list_t mca_pcm_base_modules_available;
 extern mca_pcm_base_module_t mca_pcm_base_selected_module;
 extern mca_pcm_t mca_pcm;
 

@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "include/constants.h"
 #include "util/argv.h"
 
@@ -44,7 +44,7 @@ static bool test1(void)
   /* Test basic functionality.  Start with a NULL argv and add the
      contents of the a array.  
 
-     Set argc to be an initiall bogus number -- lam_argv_add() should
+     Set argc to be an initiall bogus number -- ompi_argv_add() should
      reset it back to zero after the first iteration.
 
      After adding the a[i], ensure that argv[0 - (i-1)] are the same
@@ -54,7 +54,7 @@ static bool test1(void)
      value. */
 
   for (i = 0; a[i] != NULL; ++i) {
-    if (lam_argv_append(&argc, &argv, a[i]) != LAM_SUCCESS) {
+    if (ompi_argv_append(&argc, &argv, a[i]) != OMPI_SUCCESS) {
       return false;
     }
     for (j = 0; j <= i; ++j) {
@@ -82,9 +82,9 @@ static bool test2(void)
   char *a[] = { "aaa", "bbb", "ccc", NULL };
   char *b[4];
 
-  /* Similar test to above, but ensure that lam_argv_add is actually
+  /* Similar test to above, but ensure that ompi_argv_add is actually
      *copying* the string by value, not by reference.  So copy the a
-     array into b, and then lam_argv_add() from b.  After that,
+     array into b, and then ompi_argv_add() from b.  After that,
      scribble in the first character of the b[] string that we just
      added, and compare all entries in a to argv -- they should be
      identical (even though b is now corrupted). */
@@ -95,7 +95,7 @@ static bool test2(void)
   b[i] = NULL;
 
   for (i = 0; b[i] != NULL; ++i) {
-    if (lam_argv_append(&argc, &argv, b[i]) != LAM_SUCCESS) {
+    if (ompi_argv_append(&argc, &argv, b[i]) != OMPI_SUCCESS) {
       return false;
     }
     ++b[i][0];
@@ -127,34 +127,34 @@ static bool test3(void)
   /* Try to free a null argv -- should be harmless (we'll seg fault if
      it's not!) */
 
-  lam_argv_free(argv);
+  ompi_argv_free(argv);
 
   /* Now add some stuff and try to free it.  We'll seg fault if
      anything goes wrong.  a is on the stack, so if it mistakenly
      tries to free it, we should get a seg fault. */
 
   for (i = 0; a[i] != NULL; ++i) {
-    if (lam_argv_append(&argc, &argv, a[i]) != LAM_SUCCESS) {
+    if (ompi_argv_append(&argc, &argv, a[i]) != OMPI_SUCCESS) {
       return false;
     }
   }
-  lam_argv_free(argv);
+  ompi_argv_free(argv);
 
   /* Do the same thing but guarantee that the copied array was from
-     the heap and was freed before we call lam_argv_free(). */
+     the heap and was freed before we call ompi_argv_free(). */
 
   for (i = 0; a[i] != NULL; ++i) {
     b[i] = strdup(a[i]);
   }
   for (i = 0; b[i] != NULL; ++i) {
-    if (lam_argv_append(&argc, &argv, b[i]) != LAM_SUCCESS) {
+    if (ompi_argv_append(&argc, &argv, b[i]) != OMPI_SUCCESS) {
       return false;
     }
   }
   for (i = 0; b[i] != NULL; ++i) {
     free(b[i]);
   }
-  lam_argv_free(argv);
+  ompi_argv_free(argv);
 
   /* All done */
 
@@ -170,10 +170,10 @@ static bool test4(void)
   char *start;
 
   /* split a string into an argv, and compare it against the original
-     string.  Add double spaces into the string; lam_argv_split()
+     string.  Add double spaces into the string; ompi_argv_split()
      should skip them. */
 
-  b = lam_argv_split(a, ' ');
+  b = ompi_argv_split(a, ' ');
 
   for (count = i = 1; i < strlen(a); ++i) {
     if (a[i] != ' ' && a[i - 1] == ' ') {
@@ -208,7 +208,7 @@ static bool test4(void)
 
   /* all done */
 
-  lam_argv_free(b);
+  ompi_argv_free(b);
   free(a);
   return true;
 }
@@ -218,7 +218,7 @@ static bool test5(void)
 {
   char *a[] = { "aaa", "bbb", "ccc", NULL };
 
-  return (lam_argv_count(NULL) == 0 && lam_argv_count(a) == 3);
+  return (ompi_argv_count(NULL) == 0 && ompi_argv_count(a) == 3);
 }
 
 
@@ -231,8 +231,8 @@ static bool test6(void)
   /* split the string above and then join it -- the joined version
      should be just like the original */
 
-  b = lam_argv_split(a, ' ');
-  c = lam_argv_join(b, ' ');
+  b = ompi_argv_split(a, ' ');
+  c = ompi_argv_join(b, ' ');
 
   if (strcmp(a, c) != 0) {
     return false;
@@ -241,7 +241,7 @@ static bool test6(void)
   /* All done */
 
   free(c);
-  lam_argv_free(b);
+  ompi_argv_free(b);
   return true;
 }
 
@@ -253,7 +253,7 @@ static bool test7(void)
 
   /* check a NULL pointer first -- should return 0 */
 
-  if (lam_argv_len(NULL) != (size_t) 0) {
+  if (ompi_argv_len(NULL) != (size_t) 0) {
     return false;
   }
 
@@ -261,7 +261,7 @@ static bool test7(void)
   /* size should be (sizeof(char **) + (sizeof(char) + sizeof('\0') +
      sizeof(char*)) * 3) */
 
-  if (lam_argv_len(a) != a_len) {
+  if (ompi_argv_len(a) != a_len) {
     return false;
   }
 
@@ -279,15 +279,15 @@ static bool test8(void)
 
   /* bozo case */
 
-  if (NULL != lam_argv_copy(NULL)) {
+  if (NULL != ompi_argv_copy(NULL)) {
     return false;
   }
 
   /* dup the a array and compare it (array length, contents, etc.) */
 
-  b = lam_argv_copy(a);
+  b = ompi_argv_copy(a);
 
-  if (lam_argv_count(a) != lam_argv_count(b)) {
+  if (ompi_argv_count(a) != ompi_argv_count(b)) {
     return false;
   }
   for (i = 0; a[i] != NULL; ++i) {
@@ -298,6 +298,6 @@ static bool test8(void)
 
   /* All done */
 
-  lam_argv_free(b);
+  ompi_argv_free(b);
   return true;
 }

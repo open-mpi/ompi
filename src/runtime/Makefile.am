@@ -16,20 +16,20 @@ headers = \
 
 libruntime_la_SOURCES = \
 	$(headers) \
-        lam_abort.c \
-        lam_finalize.c \
-        lam_init.c \
-        lam_mpi_init.c \
-        lam_mpi_finalize.c \
-	lam_progress.c \
-        lam_rte_finalize.c \
-        lam_rte_init.c
+        ompi_abort.c \
+        ompi_finalize.c \
+        ompi_init.c \
+        ompi_mpi_init.c \
+        ompi_mpi_finalize.c \
+	ompi_progress.c \
+        ompi_rte_finalize.c \
+        ompi_rte_init.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/runtime
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/runtime
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif

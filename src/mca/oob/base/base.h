@@ -6,7 +6,7 @@
 #ifndef MCA_OOB_BASE_H_
 #define MCA_OOB_BASE_H_
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "include/types.h"
 #include "mca/mca.h"
@@ -37,7 +37,7 @@ extern "C" {
  * Global struct holding the selected module's function pointers
  */
 extern int mca_oob_base_output;
-extern lam_list_t mca_oob_base_modules_available;
+extern ompi_list_t mca_oob_base_modules_available;
 extern mca_oob_base_module_t mca_oob_base_selected_module;
 extern mca_oob_t mca_oob;
 

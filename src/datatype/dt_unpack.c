@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "datatype.h"
 #include "datatype_internal.h"
 
@@ -39,7 +39,7 @@ void dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char*
  *        1 if everything went fine and the data was completly converted
  *       -1 something wrong occurs.
  */
-static int lam_convertor_unpack_general( lam_convertor_t* pConvertor,
+static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
                                          struct iovec* pInputv, unsigned int inputCount )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
@@ -160,7 +160,7 @@ static int lam_convertor_unpack_general( lam_convertor_t* pConvertor,
     return 0;
 }
 
-static int lam_convertor_unpack_homogeneous( lam_convertor_t* pConv,
+static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
                                              struct iovec* iov, unsigned int out_size )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
@@ -270,7 +270,7 @@ static int lam_convertor_unpack_homogeneous( lam_convertor_t* pConv,
     return 0;
 }
 
-static int lam_convertor_unpack_homogeneous_contig( lam_convertor_t* pConv,
+static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
                                                     struct iovec* iov, unsigned int out_size )
 {
     dt_desc_t *pData = pConv->pDesc;
@@ -302,7 +302,7 @@ static int lam_convertor_unpack_homogeneous_contig( lam_convertor_t* pConv,
     return (pConv->bConverted == (pData->size * pConv->count));
 }
 
-int lam_convertor_unpack( lam_convertor_t* pConvertor,
+int ompi_convertor_unpack( ompi_convertor_t* pConvertor,
                           struct iovec* pInputv,
                           unsigned int inputCount )
 {
@@ -332,7 +332,7 @@ int lam_convertor_unpack( lam_convertor_t* pConvertor,
     if( (pInput >= pOutput) && (pInput < (pOutput + pConvertor->count * (pData->ub - pData->lb))) ) {
         return 1;
     }
-    return lam_convertor_progress( pConvertor, pInputv, inputCount );
+    return ompi_convertor_progress( pConvertor, pInputv, inputCount );
 }
 
 /* Return value:
@@ -385,8 +385,8 @@ COPY_TYPE( long, long )
 /*COPY_TYPE( double, double );*/
 COPY_TYPE( long_long, long long )
 COPY_TYPE( long_double, long double )
-COPY_TYPE( complex_float, lam_complex_float_t )
-COPY_TYPE( complex_double, lam_complex_double_t )
+COPY_TYPE( complex_float, ompi_complex_float_t )
+COPY_TYPE( complex_double, ompi_complex_double_t )
 
 static int copy_double( unsigned int count,
                         char* from, unsigned int from_len, long from_extent,
@@ -444,14 +444,14 @@ conversion_fct_t copy_functions[DT_MAX_PREDEFINED] = {
 /* Should we supply buffers to the convertor or can we use directly
  * the user buffer ?
  */
-int lam_convertor_need_buffers( lam_convertor_t* pConvertor )
+int ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
 {
    if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) return 0;
    return 1;
 }
 
 extern int local_sizes[DT_MAX_PREDEFINED];
-int lam_convertor_init_for_recv( lam_convertor_t* pConv, unsigned int flags,
+int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
                                  dt_desc_t* pData, int count,
                                  void* pUserBuf, int starting_point )
 {
@@ -476,11 +476,11 @@ int lam_convertor_init_for_recv( lam_convertor_t* pConv, unsigned int flags,
     /* TODO: work only on homogeneous architectures */
     if( pData->flags & DT_FLAG_CONTIGUOUS ) {
         pConv->flags |= DT_FLAG_CONTIGUOUS;
-        pConv->fAdvance = lam_convertor_unpack_homogeneous_contig;
+        pConv->fAdvance = ompi_convertor_unpack_homogeneous_contig;
     } else {
-        pConv->fAdvance = lam_convertor_unpack_homogeneous;
+        pConv->fAdvance = ompi_convertor_unpack_homogeneous;
     }
-    lam_create_stack_with_pos( pConv, starting_point, local_sizes );
+    ompi_create_stack_with_pos( pConv, starting_point, local_sizes );
     return 0;
 }
 
@@ -493,7 +493,7 @@ int lam_convertor_init_for_recv( lam_convertor_t* pConv, unsigned int flags,
  *   positive = number of basic elements inside
  *   negative = some error occurs
  */
-int lam_ddt_get_element_count( dt_desc_t* pData, int iSize )
+int ompi_ddt_get_element_count( dt_desc_t* pData, int iSize )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */
@@ -557,7 +557,7 @@ int lam_ddt_get_element_count( dt_desc_t* pData, int iSize )
    return nbElems;
 }
 
-int lam_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
+int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
                                    char* pDestBuf, char* pSrcBuf )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */

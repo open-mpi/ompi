@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <string.h>
 #include <unistd.h>

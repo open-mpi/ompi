@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include "constants.h"
@@ -26,8 +26,8 @@ int mca_coll_basic_barrier_lin(MPI_Comm comm)
 {
   int i;
   int err;
-  int size = lam_comm_size(comm);
-  int rank = lam_comm_rank(comm);
+  int size = ompi_comm_size(comm);
+  int rank = ompi_comm_rank(comm);
 
   /* All non-root send & receive zero-length message. */
 
@@ -88,14 +88,14 @@ mca_coll_basic_barrier_log(MPI_Comm comm)
   int dim;
   int hibit;
   int mask;
-  int size = lam_comm_size(comm);
-  int rank = lam_comm_rank(comm);
+  int size = ompi_comm_size(comm);
+  int rank = ompi_comm_rank(comm);
 
   /* Send null-messages up and down the tree.  Synchronization at the
      root (rank 0). */
 
   dim = comm->c_cube_dim;
-  hibit = lam_hibit(rank, dim);
+  hibit = ompi_hibit(rank, dim);
   --dim;
 
   /* Receive from children. */

@@ -2,10 +2,10 @@
  * $HEADER$
  */
 
-#ifndef LAM_C_BINDINGS_H
-#define LAM_C_BINDINGS_H
+#ifndef OMPI_C_BINDINGS_H
+#define OMPI_C_BINDINGS_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "mpi.h"
 
 /* If compiling in the profile directory, then we don't have weak
@@ -14,9 +14,9 @@
    doesn't work to simply list all of the pragmas in a top-level
    header file. */
 
-/* This variable is actually in src/mpi/runtime/lam_mpi_init.c, but it
+/* This variable is actually in src/mpi/runtime/ompi_mpi_init.c, but it
    is used by every MPI function. */
 
-extern bool lam_mpi_param_check;
+extern bool ompi_mpi_param_check;
 
-#endif /* LAM_C_BINDINGS_H */
+#endif /* OMPI_C_BINDINGS_H */

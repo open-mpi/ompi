@@ -28,11 +28,11 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user);
 
 
 
-lam_class_t  mca_ptl_tcp_peer_t_class = {
+ompi_class_t  mca_ptl_tcp_peer_t_class = {
     "mca_tcp_ptl_peer_t", 
-    OBJ_CLASS(lam_list_item_t),
-    (lam_construct_t)mca_ptl_tcp_peer_construct, 
-    (lam_destruct_t)mca_ptl_tcp_peer_destruct
+    OBJ_CLASS(ompi_list_item_t),
+    (ompi_construct_t)mca_ptl_tcp_peer_construct, 
+    (ompi_destruct_t)mca_ptl_tcp_peer_destruct
 };
 
 /*
@@ -51,9 +51,9 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
     ptl_peer->peer_recv_event.ev_flags = 0;
     ptl_peer->peer_state = MCA_PTL_TCP_CLOSED;
     ptl_peer->peer_retries = 0;
-    OBJ_CONSTRUCT(&ptl_peer->peer_frags, lam_list_t);
-    OBJ_CONSTRUCT(&ptl_peer->peer_send_lock, lam_mutex_t);
-    OBJ_CONSTRUCT(&ptl_peer->peer_recv_lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&ptl_peer->peer_frags, ompi_list_t);
+    OBJ_CONSTRUCT(&ptl_peer->peer_send_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&ptl_peer->peer_recv_lock, ompi_mutex_t);
 }
 
 
@@ -68,8 +68,8 @@ static void mca_ptl_tcp_peer_dump(mca_ptl_base_peer_t* ptl_peer, const char* msg
     char buff[255];
     int sndbuf,rcvbuf,nodelay,flags;
     struct sockaddr_in inaddr;
-    lam_socklen_t optlen;
-    lam_socklen_t addrlen = sizeof(struct sockaddr_in);
+    ompi_socklen_t optlen;
+    ompi_socklen_t addrlen = sizeof(struct sockaddr_in);
 
     getsockname(ptl_peer->peer_sd, (struct sockaddr*)&inaddr, &addrlen);
     sprintf(src, "%s", inet_ntoa(inaddr.sin_addr));
@@ -77,13 +77,13 @@ static void mca_ptl_tcp_peer_dump(mca_ptl_base_peer_t* ptl_peer, const char* msg
     sprintf(dst, "%s", inet_ntoa(inaddr.sin_addr));
 
     if((flags = fcntl(ptl_peer->peer_sd, F_GETFL, 0)) < 0) {
-        lam_output(0, "mca_ptl_tcp_peer_connect: fcntl(F_GETFL) failed with errno=%d\n", errno);
+        ompi_output(0, "mca_ptl_tcp_peer_connect: fcntl(F_GETFL) failed with errno=%d\n", errno);
     }
 
 #if defined(SO_SNDBUF)
     optlen = sizeof(sndbuf);
     if(getsockopt(ptl_peer->peer_sd, SOL_SOCKET, SO_SNDBUF, (char *)&sndbuf, &optlen) < 0) {
-        lam_output(0, "mca_ptl_tcp_peer_dump: SO_SNDBUF option: errno %d\n", errno);
+        ompi_output(0, "mca_ptl_tcp_peer_dump: SO_SNDBUF option: errno %d\n", errno);
     }
 #else
     sndbuf = -1;
@@ -91,7 +91,7 @@ static void mca_ptl_tcp_peer_dump(mca_ptl_base_peer_t* ptl_peer, const char* msg
 #if defined(SO_RCVBUF)
     optlen = sizeof(rcvbuf);
     if(getsockopt(ptl_peer->peer_sd, SOL_SOCKET, SO_RCVBUF, (char *)&rcvbuf, &optlen) < 0) {
-        lam_output(0, "mca_ptl_tcp_peer_dump: SO_RCVBUF option: errno %d\n", errno);
+        ompi_output(0, "mca_ptl_tcp_peer_dump: SO_RCVBUF option: errno %d\n", errno);
     }
 #else
     rcvbuf = -1;
@@ -99,7 +99,7 @@ static void mca_ptl_tcp_peer_dump(mca_ptl_base_peer_t* ptl_peer, const char* msg
 #if defined(TCP_NODELAY)
     optlen = sizeof(nodelay);
     if(getsockopt(ptl_peer->peer_sd, IPPROTO_TCP, TCP_NODELAY, &nodelay, &optlen) < 0) {
-        lam_output(0, "mca_ptl_tcp_peer_dump: TCP_NODELAY option: errno %d\n", errno);
+        ompi_output(0, "mca_ptl_tcp_peer_dump: TCP_NODELAY option: errno %d\n", errno);
     }
 #else
     nodelay = 0;
@@ -107,7 +107,7 @@ static void mca_ptl_tcp_peer_dump(mca_ptl_base_peer_t* ptl_peer, const char* msg
 
     sprintf(buff, "%s: %s - %s nodelay %d sndbuf %d rcvbuf %d flags %08x\n", 
         msg, src, dst, nodelay, sndbuf, rcvbuf, flags);
-    lam_output(0, buff);
+    ompi_output(0, buff);
 }
 
 /*
@@ -116,16 +116,16 @@ static void mca_ptl_tcp_peer_dump(mca_ptl_base_peer_t* ptl_peer, const char* msg
 
 static inline void mca_ptl_tcp_peer_event_init(mca_ptl_base_peer_t* ptl_peer, int sd)
 {
-    lam_event_set(
+    ompi_event_set(
         &ptl_peer->peer_recv_event, 
         ptl_peer->peer_sd, 
-        LAM_EV_READ|LAM_EV_PERSIST, 
+        OMPI_EV_READ|OMPI_EV_PERSIST, 
         mca_ptl_tcp_peer_recv_handler,
         ptl_peer);
-    lam_event_set(
+    ompi_event_set(
         &ptl_peer->peer_send_event, 
         ptl_peer->peer_sd, 
-        LAM_EV_WRITE|LAM_EV_PERSIST, 
+        OMPI_EV_WRITE|OMPI_EV_PERSIST, 
         mca_ptl_tcp_peer_send_handler,
         ptl_peer);
 }
@@ -148,22 +148,22 @@ static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
 
 int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t* frag)
 {
-    int rc = LAM_SUCCESS;
+    int rc = OMPI_SUCCESS;
     THREAD_LOCK(&ptl_peer->peer_send_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECTING:
     case MCA_PTL_TCP_CONNECT_ACK:
     case MCA_PTL_TCP_CLOSED:
-        lam_list_append(&ptl_peer->peer_frags, (lam_list_item_t*)frag);
+        ompi_list_append(&ptl_peer->peer_frags, (ompi_list_item_t*)frag);
         if(ptl_peer->peer_state == MCA_PTL_TCP_CLOSED)
             rc = mca_ptl_tcp_peer_start_connect(ptl_peer);
         break;
     case MCA_PTL_TCP_FAILED:
-        rc = LAM_ERR_UNREACH;
+        rc = OMPI_ERR_UNREACH;
         break;
     case MCA_PTL_TCP_CONNECTED:
         if (NULL != ptl_peer->peer_send_frag) {
-            lam_list_append(&ptl_peer->peer_frags, (lam_list_item_t*)frag);
+            ompi_list_append(&ptl_peer->peer_frags, (ompi_list_item_t*)frag);
         } else {
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd)) {
                 THREAD_UNLOCK(&ptl_peer->peer_send_lock);
@@ -171,7 +171,7 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
                 return rc;
             } else {
                 ptl_peer->peer_send_frag = frag;
-                lam_event_add(&ptl_peer->peer_send_event, 0);
+                ompi_event_add(&ptl_peer->peer_send_event, 0);
             }
         }
         break;
@@ -193,7 +193,7 @@ static int mca_ptl_tcp_peer_send_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
         int retval = send(ptl_peer->peer_sd, ptr+cnt, size-cnt, 0);
         if(retval < 0) {
             if(errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
-                lam_output(0, "mca_ptl_tcp_peer_send_blocking: send() failed with errno=%d\n",errno);
+                ompi_output(0, "mca_ptl_tcp_peer_send_blocking: send() failed with errno=%d\n",errno);
                 mca_ptl_tcp_peer_close(ptl_peer);
                 return -1;
             }
@@ -218,9 +218,9 @@ static int mca_ptl_tcp_peer_send_connect_ack(mca_ptl_base_peer_t* ptl_peer)
     if(mca_ptl_tcp_peer_send_blocking(ptl_peer, &size_n, sizeof(size_n)) != sizeof(size_n) ||
        mca_ptl_tcp_peer_send_blocking(ptl_peer, ptl_proc->proc_guid, ptl_proc->proc_guid_size) != 
           ptl_proc->proc_guid_size) {
-        return LAM_ERR_UNREACH;
+        return OMPI_ERR_UNREACH;
     }
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -243,19 +243,19 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
         mca_ptl_tcp_proc_t *peer_proc = ptl_peer->peer_proc;
         if((ptl_peer->peer_sd < 0) ||
            (ptl_peer->peer_state != MCA_PTL_TCP_CONNECTED &&
-            peer_proc->proc_lam->proc_vpid < this_proc->proc_lam->proc_vpid)) {
+            peer_proc->proc_ompi->proc_vpid < this_proc->proc_ompi->proc_vpid)) {
             mca_ptl_tcp_peer_close(ptl_peer);
             ptl_peer->peer_sd = sd;
-            if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) != LAM_SUCCESS) {
+            if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) != OMPI_SUCCESS) {
                  mca_ptl_tcp_peer_close(ptl_peer);
                  THREAD_UNLOCK(&ptl_peer->peer_send_lock);
                  THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
                  return false;
             }
             mca_ptl_tcp_peer_event_init(ptl_peer, sd);
-            lam_event_add(&ptl_peer->peer_recv_event, 0);
+            ompi_event_add(&ptl_peer->peer_recv_event, 0);
             mca_ptl_tcp_peer_connected(ptl_peer);
-#if LAM_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
             mca_ptl_tcp_peer_dump(ptl_peer, "accepted");
 #endif
             THREAD_UNLOCK(&ptl_peer->peer_send_lock);
@@ -278,8 +278,8 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
 void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
 {
     if(ptl_peer->peer_sd >= 0) {
-        lam_event_del(&ptl_peer->peer_recv_event);
-        lam_event_del(&ptl_peer->peer_send_event);
+        ompi_event_del(&ptl_peer->peer_recv_event);
+        ompi_event_del(&ptl_peer->peer_send_event);
         close(ptl_peer->peer_sd);
         ptl_peer->peer_sd = -1;
     }
@@ -297,11 +297,11 @@ static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t* ptl_peer)
     /* setup socket options */
     ptl_peer->peer_state = MCA_PTL_TCP_CONNECTED;
     ptl_peer->peer_retries = 0;
-    if(lam_list_get_size(&ptl_peer->peer_frags) > 0) {
+    if(ompi_list_get_size(&ptl_peer->peer_frags) > 0) {
         if(NULL == ptl_peer->peer_send_frag)
             ptl_peer->peer_send_frag = (mca_ptl_tcp_send_frag_t*)
-                lam_list_remove_first(&ptl_peer->peer_frags);
-        lam_event_add(&ptl_peer->peer_send_event, 0);
+                ompi_list_remove_first(&ptl_peer->peer_frags);
+        ompi_event_add(&ptl_peer->peer_send_event, 0);
     }
 }
 
@@ -326,7 +326,7 @@ static int mca_ptl_tcp_peer_recv_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
         /* socket is non-blocking so handle errors */
         if(retval < 0) {
             if(errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
-                lam_output(0, "mca_ptl_tcp_peer_recv_blocking: recv() failed with errno=%d\n",errno);
+                ompi_output(0, "mca_ptl_tcp_peer_recv_blocking: recv() failed with errno=%d\n",errno);
                 mca_ptl_tcp_peer_close(ptl_peer);
                 return -1;
             }
@@ -335,7 +335,7 @@ static int mca_ptl_tcp_peer_recv_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
         cnt += retval;
     }
     if((int)cnt == -1)
-        lam_output(0, "mca_ptl_tcp_peer_recv_blocking: invalid cnt\n");
+        ompi_output(0, "mca_ptl_tcp_peer_recv_blocking: invalid cnt\n");
     return cnt;
 }
 
@@ -355,32 +355,32 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
     mca_ptl_tcp_proc_t* ptl_proc = ptl_peer->peer_proc;
 
     if((rc = mca_ptl_tcp_peer_recv_blocking(ptl_peer, &size_n, sizeof(size_n))) != sizeof(size_n)) 
-        return LAM_ERR_UNREACH;
+        return OMPI_ERR_UNREACH;
     size_h = ntohl(size_n);
     guid = malloc(size_h);
     if(NULL == guid) {
-        lam_output(0, "mca_ptl_tcp_peer_recv_connect_ack: malloc(%d) failed\n", size_h);
-        return LAM_ERR_OUT_OF_RESOURCE;
+        ompi_output(0, "mca_ptl_tcp_peer_recv_connect_ack: malloc(%d) failed\n", size_h);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     if((rc = mca_ptl_tcp_peer_recv_blocking(ptl_peer, guid, size_h)) != size_h) {
         free(guid);
-        return LAM_ERR_UNREACH;
+        return OMPI_ERR_UNREACH;
     }
 
     /* compare this to the expected values */
     if(size_h != ptl_proc->proc_guid_size || memcmp(ptl_proc->proc_guid, guid, size_h) != 0) {
-        lam_output(0, "mca_ptl_tcp_peer_connect: received unexpected process identifier");
+        ompi_output(0, "mca_ptl_tcp_peer_connect: received unexpected process identifier");
         mca_ptl_tcp_peer_close(ptl_peer);
-        return LAM_ERR_UNREACH;
+        return OMPI_ERR_UNREACH;
     }
 
     /* connected */
     mca_ptl_tcp_peer_connected(ptl_peer);
-#if LAM_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
     mca_ptl_tcp_peer_dump(ptl_peer, "connected");
 #endif
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -390,7 +390,7 @@ void mca_ptl_tcp_set_socket_options(int sd)
 #if defined(TCP_NODELAY)
     optval = 1;
     if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval)) < 0) {
-        lam_output(0, 
+        ompi_output(0, 
             "mca_ptl_tcp_set_socket_options: setsockopt(TCP_NODELAY) failed with errno=%d\n", 
             errno);
     }
@@ -398,7 +398,7 @@ void mca_ptl_tcp_set_socket_options(int sd)
 #if defined(SO_SNDBUF)
     if(mca_ptl_tcp_module.tcp_sndbuf > 0 &&
        setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&mca_ptl_tcp_module.tcp_sndbuf, sizeof(int)) < 0) {
-        lam_output(0, 
+        ompi_output(0, 
             "mca_ptl_tcp_set_socket_options: SO_SNDBUF option: errno %d\n", 
             errno);
     }
@@ -406,7 +406,7 @@ void mca_ptl_tcp_set_socket_options(int sd)
 #if defined(SO_RCVBUF)
     if(mca_ptl_tcp_module.tcp_rcvbuf > 0 &&
        setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&mca_ptl_tcp_module.tcp_rcvbuf, sizeof(int)) < 0) {
-        lam_output(0, 
+        ompi_output(0, 
             "mca_ptl_tcp_set_socket_options: SO_RCVBUF option: errno %d\n", 
             errno);
     }
@@ -431,7 +431,7 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
     ptl_peer->peer_sd = socket(AF_INET, SOCK_STREAM, 0);
     if (ptl_peer->peer_sd < 0) {
         ptl_peer->peer_retries++;
-        return LAM_ERR_UNREACH;
+        return OMPI_ERR_UNREACH;
     }
 
     /* setup socket buffer sizes */
@@ -442,11 +442,11 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
 
     /* setup the socket as non-blocking */
     if((flags = fcntl(ptl_peer->peer_sd, F_GETFL, 0)) < 0) {
-        lam_output(0, "mca_ptl_tcp_peer_connect: fcntl(F_GETFL) failed with errno=%d\n", errno);
+        ompi_output(0, "mca_ptl_tcp_peer_connect: fcntl(F_GETFL) failed with errno=%d\n", errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(ptl_peer->peer_sd, F_SETFL, flags) < 0)
-            lam_output(0, "mca_ptl_tcp_peer_connect: fcntl(F_SETFL) failed with errno=%d\n", errno);
+            ompi_output(0, "mca_ptl_tcp_peer_connect: fcntl(F_SETFL) failed with errno=%d\n", errno);
     }
                                                                                                               
     /* start the connect - will likely fail with EINPROGRESS */
@@ -457,18 +457,18 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
         /* non-blocking so wait for completion */
         if(errno == EINPROGRESS) {
             ptl_peer->peer_state = MCA_PTL_TCP_CONNECTING;
-            lam_event_add(&ptl_peer->peer_send_event, 0);
-            return LAM_SUCCESS;
+            ompi_event_add(&ptl_peer->peer_send_event, 0);
+            return OMPI_SUCCESS;
         }
         mca_ptl_tcp_peer_close(ptl_peer);
         ptl_peer->peer_retries++;
-        return LAM_ERR_UNREACH;
+        return OMPI_ERR_UNREACH;
     }
 
     /* send our globally unique process identifier to the peer */
-    if((rc = mca_ptl_tcp_peer_send_connect_ack(ptl_peer)) == LAM_SUCCESS) {
+    if((rc = mca_ptl_tcp_peer_send_connect_ack(ptl_peer)) == OMPI_SUCCESS) {
         ptl_peer->peer_state = MCA_PTL_TCP_CONNECT_ACK;
-        lam_event_add(&ptl_peer->peer_recv_event, 0);
+        ompi_event_add(&ptl_peer->peer_recv_event, 0);
     } else {
         mca_ptl_tcp_peer_close(ptl_peer);
     }
@@ -485,30 +485,30 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
 static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
 {
     int so_error = 0;
-    lam_socklen_t so_length = sizeof(so_error);
+    ompi_socklen_t so_length = sizeof(so_error);
 
     /* unregister from receiving event notifications */
-    lam_event_del(&ptl_peer->peer_send_event);
+    ompi_event_del(&ptl_peer->peer_send_event);
 
     /* check connect completion status */
     if(getsockopt(ptl_peer->peer_sd, SOL_SOCKET, SO_ERROR, &so_error, &so_length) < 0) {
-        lam_output(0, "mca_ptl_tcp_peer_complete_connect: getsockopt() failed with errno=%d\n", errno);
+        ompi_output(0, "mca_ptl_tcp_peer_complete_connect: getsockopt() failed with errno=%d\n", errno);
         mca_ptl_tcp_peer_close(ptl_peer);
         return;
     }
     if(so_error == EINPROGRESS) {
-        lam_event_add(&ptl_peer->peer_send_event, 0);
+        ompi_event_add(&ptl_peer->peer_send_event, 0);
         return;
     }
     if(so_error != 0) {
-        lam_output(0, "mca_ptl_tcp_peer_complete_connect: connect() failed with errno=%d\n", so_error);
+        ompi_output(0, "mca_ptl_tcp_peer_complete_connect: connect() failed with errno=%d\n", so_error);
         mca_ptl_tcp_peer_close(ptl_peer);
         return;
     }
 
-    if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) == LAM_SUCCESS) {
+    if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) == OMPI_SUCCESS) {
         ptl_peer->peer_state = MCA_PTL_TCP_CONNECT_ACK;
-        lam_event_add(&ptl_peer->peer_recv_event, 0);
+        ompi_event_add(&ptl_peer->peer_recv_event, 0);
     } else {
         mca_ptl_tcp_peer_close(ptl_peer);
     }
@@ -552,7 +552,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
         }
     default:
         {
-        lam_output(0, "mca_ptl_tcp_peer_recv_handler: invalid socket state(%d)", ptl_peer->peer_state);
+        ompi_output(0, "mca_ptl_tcp_peer_recv_handler: invalid socket state(%d)", ptl_peer->peer_state);
         mca_ptl_tcp_peer_close(ptl_peer);
         break;
         }
@@ -590,19 +590,19 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
 
             /* progress any pending sends */
             ptl_peer->peer_send_frag = (mca_ptl_tcp_send_frag_t*)
-                lam_list_remove_first(&ptl_peer->peer_frags);
+                ompi_list_remove_first(&ptl_peer->peer_frags);
         } while (NULL != ptl_peer->peer_send_frag);
 
         /* if nothing else to do unregister for send event notifications */
         if(NULL == ptl_peer->peer_send_frag) {
-            lam_event_del(&ptl_peer->peer_send_event);
+            ompi_event_del(&ptl_peer->peer_send_event);
         }
         break;
         }
     default:
-        lam_output(0, "mca_ptl_tcp_peer_send_handler: invalid connection state (%d)", 
+        ompi_output(0, "mca_ptl_tcp_peer_send_handler: invalid connection state (%d)", 
             ptl_peer->peer_state);
-        lam_event_del(&ptl_peer->peer_send_event);
+        ompi_event_del(&ptl_peer->peer_send_event);
         break;
     }
     THREAD_UNLOCK(&ptl_peer->peer_send_lock);

@@ -14,40 +14,40 @@ AC_INIT(./src/mpi/c/init.c)
 AC_PREREQ(2.58)
 AC_CONFIG_AUX_DIR(./config)
 
-# Get the version of LAM that we are installing
+# Get the version of OMPI that we are installing
 
-LAM_GET_VERSION($srcdir/config, $srcdir/VERSION, LAM)
+OMPI_GET_VERSION($srcdir/config, $srcdir/VERSION, OMPI)
 
-AC_DEFINE_UNQUOTED(LAM_MAJOR_VERSION, $LAM_MAJOR_VERSION, 
-    [Major LAM version])
-AC_DEFINE_UNQUOTED(LAM_MINOR_VERSION, $LAM_MINOR_VERSION, 
-    [Minor LAM version])
-AC_DEFINE_UNQUOTED(LAM_RELEASE_VERSION, $LAM_RELEASE_VERSION, 
-    [Release LAM version])
-AC_DEFINE_UNQUOTED(LAM_ALPHA_VERSION, $LAM_ALPHA_VERSION, 
-    [Alpha LAM version])
-AC_DEFINE_UNQUOTED(LAM_BETA_VERSION, $LAM_BETA_VERSION, 
-    [Beta LAM version])
-AC_DEFINE_UNQUOTED(LAM_SVN_VERSION, $LAM_SVN_VERSION, 
-    [CVS LAM version])
-AC_DEFINE_UNQUOTED(LAM_VERSION, "$LAM_VERSION", 
-    [Overall LAM version number])
+AC_DEFINE_UNQUOTED(OMPI_MAJOR_VERSION, $OMPI_MAJOR_VERSION, 
+    [Major OMPI version])
+AC_DEFINE_UNQUOTED(OMPI_MINOR_VERSION, $OMPI_MINOR_VERSION, 
+    [Minor OMPI version])
+AC_DEFINE_UNQUOTED(OMPI_RELEASE_VERSION, $OMPI_RELEASE_VERSION, 
+    [Release OMPI version])
+AC_DEFINE_UNQUOTED(OMPI_ALPHA_VERSION, $OMPI_ALPHA_VERSION, 
+    [Alpha OMPI version])
+AC_DEFINE_UNQUOTED(OMPI_BETA_VERSION, $OMPI_BETA_VERSION, 
+    [Beta OMPI version])
+AC_DEFINE_UNQUOTED(OMPI_SVN_VERSION, $OMPI_SVN_VERSION, 
+    [CVS OMPI version])
+AC_DEFINE_UNQUOTED(OMPI_VERSION, "$OMPI_VERSION", 
+    [Overall OMPI version number])
 
-AC_SUBST(LAM_MAJOR_VERSION)
-AC_SUBST(LAM_MINOR_VERSION)
-AC_SUBST(LAM_RELEASE_VERSION)
-AC_SUBST(LAM_ALPHA_VERSION)
-AC_SUBST(LAM_BETA_VERSION)
-AC_SUBST(LAM_CVS_VERSION)
-AC_SUBST(LAM_VERSION)
+AC_SUBST(OMPI_MAJOR_VERSION)
+AC_SUBST(OMPI_MINOR_VERSION)
+AC_SUBST(OMPI_RELEASE_VERSION)
+AC_SUBST(OMPI_ALPHA_VERSION)
+AC_SUBST(OMPI_BETA_VERSION)
+AC_SUBST(OMPI_CVS_VERSION)
+AC_SUBST(OMPI_VERSION)
 
 #
 # Start it up
 #
 
-LAM_CONFIGURE_SETUP
-lam_show_title "Configuring LAM version $LAM_VERSION"
-lam_show_subtitle "Initialization, setup"
+OMPI_CONFIGURE_SETUP
+ompi_show_title "Configuring OMPI version $OMPI_VERSION"
+ompi_show_subtitle "Initialization, setup"
 
 #
 # Init automake
@@ -55,22 +55,22 @@ lam_show_subtitle "Initialization, setup"
 # VERSION macors
 #
 
-AM_INIT_AUTOMAKE(lam, $LAM_VERSION, 'no')
+AM_INIT_AUTOMAKE(ompi, $OMPI_VERSION, 'no')
 
-LAM_TOP_BUILDDIR="`pwd`"
-AC_SUBST(LAM_TOP_BUILDDIR)
+OMPI_TOP_BUILDDIR="`pwd`"
+AC_SUBST(OMPI_TOP_BUILDDIR)
 cd "$srcdir"
-LAM_TOP_SRCDIR="`pwd`"
-AC_SUBST(LAM_TOP_SRCDIR)
-cd "$LAM_TOP_BUILDDIR"
+OMPI_TOP_SRCDIR="`pwd`"
+AC_SUBST(OMPI_TOP_SRCDIR)
+cd "$OMPI_TOP_BUILDDIR"
 
-AC_MSG_NOTICE([builddir: $LAM_TOP_BUILDDIR])
-AC_MSG_NOTICE([srcdir: $LAM_TOP_SRCDIR])
-if test "$LAM_TOP_BUILDDIR" != "$LAM_TOP_SRCDIR"; then
+AC_MSG_NOTICE([builddir: $OMPI_TOP_BUILDDIR])
+AC_MSG_NOTICE([srcdir: $OMPI_TOP_SRCDIR])
+if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
     AC_MSG_NOTICE([Detected VPATH build])
 fi
 
-# Setup the top of the include/lam_config.h file
+# Setup the top of the include/ompi_config.h file
 
 AH_TOP([/* -*- c -*-
  *
@@ -79,28 +79,28 @@ AH_TOP([/* -*- c -*-
  * Function: - OS, CPU and compiler dependent configuration 
  */
 
-#ifndef LAM_CONFIG_H
-#define LAM_CONFIG_H
+#ifndef OMPI_CONFIG_H
+#define OMPI_CONFIG_H
 ])
 AH_BOTTOM([
-#include "lam_config_bottom.h"
-#endif /* LAM_CONFIG_H */
+#include "ompi_config_bottom.h"
+#endif /* OMPI_CONFIG_H */
 ])
 
 # Other basic setup stuff (shared with modules)
 
-LAM_BASIC_SETUP
+OMPI_BASIC_SETUP
 
-top_lam_srcdir="$LAM_TOP_SRCDIR"
-AC_SUBST(top_lam_srcdir)
-top_lam_builddir="$LAM_TOP_BUILDDIR"
-AC_SUBST(top_lam_builddir)
+top_ompi_srcdir="$OMPI_TOP_SRCDIR"
+AC_SUBST(top_ompi_srcdir)
+top_ompi_builddir="$OMPI_TOP_BUILDDIR"
+AC_SUBST(top_ompi_builddir)
 
 ############################################################################
 # Configuration options
 ############################################################################
 
-LAM_CONFIGURE_OPTIONS
+OMPI_CONFIGURE_OPTIONS
 
 ############################################################################
 # Libtool: part one
@@ -116,8 +116,8 @@ LAM_CONFIGURE_OPTIONS
 # the user requested something or if the default was set here.
 #
 
-lam_enable_shared="$enable_shared"
-lam_enable_static="$enable_static"
+ompi_enable_shared="$enable_shared"
+ompi_enable_static="$enable_static"
 AM_DISABLE_SHARED
 AM_ENABLE_STATIC
 
@@ -125,13 +125,13 @@ AM_ENABLE_STATIC
 ############################################################################
 # Check for compilers and preprocessors
 ############################################################################
-lam_show_title "Compiler and preprocessor tests"
+ompi_show_title "Compiler and preprocessor tests"
 
 ##################################
 # C compiler characteristics
 ##################################
 
-LAM_SETUP_CC
+OMPI_SETUP_CC
 
 #
 # Check for some types
@@ -170,20 +170,20 @@ AC_CHECK_SIZEOF(void *)
 # Check for type alignments
 #
 
-LAM_C_GET_ALIGNMENT(char, LAM_ALIGNMENT_CHAR)
-LAM_C_GET_ALIGNMENT(short, LAM_ALIGNMENT_SHORT)
-LAM_C_GET_ALIGNMENT(wchar_t, LAM_ALIGNMENT_WCHAR)
-LAM_C_GET_ALIGNMENT(int, LAM_ALIGNMENT_INT)
-LAM_C_GET_ALIGNMENT(long, LAM_ALIGNMENT_LONG)
+OMPI_C_GET_ALIGNMENT(char, OMPI_ALIGNMENT_CHAR)
+OMPI_C_GET_ALIGNMENT(short, OMPI_ALIGNMENT_SHORT)
+OMPI_C_GET_ALIGNMENT(wchar_t, OMPI_ALIGNMENT_WCHAR)
+OMPI_C_GET_ALIGNMENT(int, OMPI_ALIGNMENT_INT)
+OMPI_C_GET_ALIGNMENT(long, OMPI_ALIGNMENT_LONG)
 if test $ac_cv_type_long_long = yes; then
-    LAM_C_GET_ALIGNMENT(long long, LAM_ALIGNMENT_LONG_LONG)
+    OMPI_C_GET_ALIGNMENT(long long, OMPI_ALIGNMENT_LONG_LONG)
 fi
-LAM_C_GET_ALIGNMENT(float, LAM_ALIGNMENT_FLOAT)
-LAM_C_GET_ALIGNMENT(double, LAM_ALIGNMENT_DOUBLE)
+OMPI_C_GET_ALIGNMENT(float, OMPI_ALIGNMENT_FLOAT)
+OMPI_C_GET_ALIGNMENT(double, OMPI_ALIGNMENT_DOUBLE)
 if test $ac_cv_type_long_double = yes; then
-    LAM_C_GET_ALIGNMENT(long double, LAM_ALIGNMENT_LONG_DOUBLE)
+    OMPI_C_GET_ALIGNMENT(long double, OMPI_ALIGNMENT_LONG_DOUBLE)
 fi
-LAM_C_GET_ALIGNMENT(void *, LAM_ALIGNMENT_VOID_P)
+OMPI_C_GET_ALIGNMENT(void *, OMPI_ALIGNMENT_VOID_P)
 
 #
 # Check for other compiler characteristics
@@ -191,7 +191,7 @@ LAM_C_GET_ALIGNMENT(void *, LAM_ALIGNMENT_VOID_P)
 
 AC_C_INLINE
 AC_C_RESTRICT
-LAM_C_WEAK_SYMBOLS
+OMPI_C_WEAK_SYMBOLS
 
 # If we want the profiling layer:
 # - If the C compiler has weak symbols, use those.
@@ -199,16 +199,16 @@ LAM_C_WEAK_SYMBOLS
 #   separate directory.
 
 if test "$WANT_WEAK_SYMBOLS" = "0"; then
-    LAM_C_HAVE_WEAK_SYMBOLS=0
+    OMPI_C_HAVE_WEAK_SYMBOLS=0
 fi
 if test "$WANT_MPI_PROFILING" = "1"; then
-    if test "$LAM_C_HAVE_WEAK_SYMBOLS" = "1"; then
-	LAM_PROFILING_COMPILE_SEPARATELY=0
+    if test "$OMPI_C_HAVE_WEAK_SYMBOLS" = "1"; then
+	OMPI_PROFILING_COMPILE_SEPARATELY=0
     else
-	LAM_PROFILING_COMPILE_SEPARATELY=1
+	OMPI_PROFILING_COMPILE_SEPARATELY=1
     fi
 else
-    LAM_PROFILING_COMPILE_SEPARATELY=0
+    OMPI_PROFILING_COMPILE_SEPARATELY=0
 fi
 #
 # There are 2 layers to the MPI Language binidings
@@ -225,15 +225,15 @@ fi
 # each of these layers need to be built or NOT
 #
 AM_CONDITIONAL(WANT_MPI_BINDINGS_LAYER,
-	test "$WANT_MPI_PROFILING" = 0 -o "$LAM_PROFILING_COMPILE_SEPARATELY" = 1)
+	test "$WANT_MPI_PROFILING" = 0 -o "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
 
 AM_CONDITIONAL(WANT_PMPI_BINDINGS_LAYER,
 	test "$WANT_MPI_PROFILING" = 1)
 AM_CONDITIONAL(COMPILE_PROFILING_SEPARATELY, 
-    test "$LAM_PROFILING_COMPILE_SEPARATELY" = 1)
-AC_DEFINE_UNQUOTED(LAM_ENABLE_MPI_PROFILING, $WANT_MPI_PROFILING,
+    test "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
+AC_DEFINE_UNQUOTED(OMPI_ENABLE_MPI_PROFILING, $WANT_MPI_PROFILING,
     [Whether we want MPI profiling or not])
-AC_DEFINE_UNQUOTED(LAM_HAVE_WEAK_SYMBOLS, $LAM_C_HAVE_WEAK_SYMBOLS,
+AC_DEFINE_UNQUOTED(OMPI_HAVE_WEAK_SYMBOLS, $OMPI_C_HAVE_WEAK_SYMBOLS,
     [Wehther we have weak symbols or not])
 
 
@@ -241,7 +241,7 @@ AC_DEFINE_UNQUOTED(LAM_HAVE_WEAK_SYMBOLS, $LAM_C_HAVE_WEAK_SYMBOLS,
 # C++ compiler characteristics
 ##################################
 
-LAM_SETUP_CXX
+OMPI_SETUP_CXX
 
 # check for type sizes
 
@@ -251,7 +251,7 @@ AC_CHECK_SIZEOF(bool)
 
 # check for type alignments
 
-LAM_C_GET_ALIGNMENT(bool, LAM_ALIGNMENT_CXX_BOOL)
+OMPI_C_GET_ALIGNMENT(bool, OMPI_ALIGNMENT_CXX_BOOL)
 AC_LANG_RESTORE
 
 
@@ -259,70 +259,70 @@ AC_LANG_RESTORE
 # Fortran
 ##################################
 
-LAM_SIZEOF_FORTRAN_INT=0
-LAM_SIZEOF_FORTRAN_REAL=0
-LAM_SIZEOF_FORTRAN_DBLPREC=0
-LAM_SIZEOF_FORTRAN_COMPLEX=0
-LAM_SIZEOF_FORTRAN_DBLCOMPLEX=0
+OMPI_SIZEOF_FORTRAN_INT=0
+OMPI_SIZEOF_FORTRAN_REAL=0
+OMPI_SIZEOF_FORTRAN_DBLPREC=0
+OMPI_SIZEOF_FORTRAN_COMPLEX=0
+OMPI_SIZEOF_FORTRAN_DBLCOMPLEX=0
 
-LAM_ALIGNMENT_FORTRAN_INT=0
-LAM_ALIGNMENT_FORTRAN_REAL=0
-LAM_ALIGNMENT_FORTRAN_DBLPREC=0
-LAM_ALIGNMENT_FORTRAN_COMPLEX=0
-LAM_ALIGNMENT_FORTRAN_DBLCOMPLEX=0
+OMPI_ALIGNMENT_FORTRAN_INT=0
+OMPI_ALIGNMENT_FORTRAN_REAL=0
+OMPI_ALIGNMENT_FORTRAN_DBLPREC=0
+OMPI_ALIGNMENT_FORTRAN_COMPLEX=0
+OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX=0
 
-LAM_SETUP_F77
-if test "$LAM_F77" != "none" ; then
-    LAM_F77_FIND_EXT_SYMBOL_CONVENTION($LAM_F77)
+OMPI_SETUP_F77
+if test "$OMPI_F77" != "none" ; then
+    OMPI_F77_FIND_EXT_SYMBOL_CONVENTION($OMPI_F77)
 
     # checking the sizeof fortran interger. This is needed to define 
     # MPI_Fint. This is needed for C bindings and hence there is no
     # bearing of --enable-fortran flag on this test.
 
-    LAM_F77_GET_SIZEOF(INTEGER, LAM_SIZEOF_FORTRAN_INT)
+    OMPI_F77_GET_SIZEOF(INTEGER, OMPI_SIZEOF_FORTRAN_INT)
 fi
 
 # If we want fortran support, then get the sizes and alignments of all
 # the rest of the fortran types
 
-if test "$LAM_WANT_F77_BINDINGS" = "1" ; then
+if test "$OMPI_WANT_F77_BINDINGS" = "1" ; then
     # INTEGER is already done, per above
-    LAM_F77_GET_SIZEOF(REAL, LAM_SIZEOF_FORTRAN_REAL)
-    LAM_F77_GET_SIZEOF(DOUBLE PRECISION, LAM_SIZEOF_FORTRAN_DBLPREC)
-    LAM_F77_GET_SIZEOF(COMPLEX, LAM_SIZEOF_FORTRAN_COMPLEX)
-    LAM_F77_GET_SIZEOF(DOUBLE COMPLEX, LAM_SIZEOF_FORTRAN_DBLCOMPLEX)
+    OMPI_F77_GET_SIZEOF(REAL, OMPI_SIZEOF_FORTRAN_REAL)
+    OMPI_F77_GET_SIZEOF(DOUBLE PRECISION, OMPI_SIZEOF_FORTRAN_DBLPREC)
+    OMPI_F77_GET_SIZEOF(COMPLEX, OMPI_SIZEOF_FORTRAN_COMPLEX)
+    OMPI_F77_GET_SIZEOF(DOUBLE COMPLEX, OMPI_SIZEOF_FORTRAN_DBLCOMPLEX)
 
-    LAM_F77_GET_ALIGNMENT(INTEGER, LAM_ALIGNMENT_FORTRAN_INT)
-    LAM_F77_GET_ALIGNMENT(REAL, LAM_ALIGNMENT_FORTRAN_REAL)
-    LAM_F77_GET_ALIGNMENT(DOUBLE PRECISION, LAM_ALIGNMENT_FORTRAN_DBLPREC)
-    LAM_F77_GET_ALIGNMENT(COMPLEX, LAM_ALIGNMENT_FORTRAN_COMPLEX)
-    LAM_F77_GET_ALIGNMENT(DOUBLE COMPLEX, LAM_ALIGNMENT_FORTRAN_DBLCOMPLEX)
+    OMPI_F77_GET_ALIGNMENT(INTEGER, OMPI_ALIGNMENT_FORTRAN_INT)
+    OMPI_F77_GET_ALIGNMENT(REAL, OMPI_ALIGNMENT_FORTRAN_REAL)
+    OMPI_F77_GET_ALIGNMENT(DOUBLE PRECISION, OMPI_ALIGNMENT_FORTRAN_DBLPREC)
+    OMPI_F77_GET_ALIGNMENT(COMPLEX, OMPI_ALIGNMENT_FORTRAN_COMPLEX)
+    OMPI_F77_GET_ALIGNMENT(DOUBLE COMPLEX, OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX)
 fi
 
-AC_DEFINE_UNQUOTED(LAM_SIZEOF_FORTRAN_INT, $LAM_SIZEOF_FORTRAN_INT,
+AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_INT, $OMPI_SIZEOF_FORTRAN_INT,
     [Size of fortran integer])
-AC_DEFINE_UNQUOTED(LAM_SIZEOF_FORTRAN_REAL, $LAM_SIZEOF_FORTRAN_REAL,
+AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_REAL, $OMPI_SIZEOF_FORTRAN_REAL,
     [Size of fortran real])
-AC_DEFINE_UNQUOTED(LAM_SIZEOF_FORTRAN_DBLPREC, $LAM_SIZEOF_FORTRAN_DBLPREC,
+AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_DBLPREC, $OMPI_SIZEOF_FORTRAN_DBLPREC,
     [Size of fortran double precision])
-AC_DEFINE_UNQUOTED(LAM_SIZEOF_FORTRAN_COMPLEX, $LAM_SIZEOF_FORTRAN_COMPLEX,
+AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_COMPLEX, $OMPI_SIZEOF_FORTRAN_COMPLEX,
     [Size of fortran complex])
-AC_DEFINE_UNQUOTED(LAM_SIZEOF_FORTRAN_DBLCOMPLEX, 
-    $LAM_SIZEOF_FORTRAN_DBLCOMPLEX,
+AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_DBLCOMPLEX, 
+    $OMPI_SIZEOF_FORTRAN_DBLCOMPLEX,
     [Size of fortran double complex])
 
-AC_DEFINE_UNQUOTED(LAM_ALIGNMENT_FORTRAN_INT, $LAM_ALIGNMENT_FORTRAN_INT,
+AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_INT, $OMPI_ALIGNMENT_FORTRAN_INT,
     [Size of fortran integer])
-AC_DEFINE_UNQUOTED(LAM_ALIGNMENT_FORTRAN_REAL, $LAM_ALIGNMENT_FORTRAN_REAL,
+AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_REAL, $OMPI_ALIGNMENT_FORTRAN_REAL,
     [Size of fortran real])
-AC_DEFINE_UNQUOTED(LAM_ALIGNMENT_FORTRAN_DBLPREC, 
-    $LAM_ALIGNMENT_FORTRAN_DBLPREC,
+AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_DBLPREC, 
+    $OMPI_ALIGNMENT_FORTRAN_DBLPREC,
     [Size of fortran double precision])
-AC_DEFINE_UNQUOTED(LAM_ALIGNMENT_FORTRAN_COMPLEX, 
-    $LAM_ALIGNMENT_FORTRAN_COMPLEX,
+AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_COMPLEX, 
+    $OMPI_ALIGNMENT_FORTRAN_COMPLEX,
     [Size of fortran complex])
-AC_DEFINE_UNQUOTED(LAM_ALIGNMENT_FORTRAN_DBLCOMPLEX, 
-    $LAM_ALIGNMENT_FORTRAN_DBLCOMPLEX,
+AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX, 
+    $OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX,
     [Size of fortran double complex])
 
 #
@@ -345,23 +345,23 @@ AC_DEFINE_UNQUOTED(LAM_ALIGNMENT_FORTRAN_DBLCOMPLEX,
 # each of these layers need to be built or NOT
 #
 AM_CONDITIONAL(WANT_MPI_F77_BINDINGS_LAYER,
-               test "$WANT_MPI_PROFILING" = 0 -o "$LAM_PROFILING_COMPILE_SEPARATELY" = 1  -a "$LAM_WANT_F77_BINDINGS" = 1)
+               test "$WANT_MPI_PROFILING" = 0 -o "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1  -a "$OMPI_WANT_F77_BINDINGS" = 1)
                     
 AM_CONDITIONAL(WANT_PMPI_F77_BINDINGS_LAYER,
-               test "$LAM_WANT_F77_BINDINGS" = 1 -a "$WANT_MPI_PROFILING" = 1)
+               test "$OMPI_WANT_F77_BINDINGS" = 1 -a "$WANT_MPI_PROFILING" = 1)
 
 #
 # Fortran 90 setup
 #
 
-LAM_SETUP_F90
+OMPI_SETUP_F90
 
 
 ##################################
 # Header files
 ##################################
 
-lam_show_title "Header file tests"
+ompi_show_title "Header file tests"
 
 # snprintf declaration
 # gethostname declaration
@@ -379,7 +379,7 @@ AC_CHECK_HEADERS([stdbool.h alloca.h])
 # Libraries
 ##################################
 
-lam_show_title "Library and Function tests"
+ompi_show_title "Library and Function tests"
 
 # -lsocket
 # -lnsl
@@ -398,14 +398,14 @@ lam_show_title "Library and Function tests"
 # Make sure we can copy va_lists (need check declared, not linkable)
 #
 
-AC_CHECK_DECL(va_copy, LAM_HAVE_VA_COPY=1, LAM_HAVE_VA_COPY=0, 
+AC_CHECK_DECL(va_copy, OMPI_HAVE_VA_COPY=1, OMPI_HAVE_VA_COPY=0, 
 	      [#include <stdarg.h>])
-AC_DEFINE_UNQUOTED(LAM_HAVE_VA_COPY, $LAM_HAVE_VA_COPY,
+AC_DEFINE_UNQUOTED(OMPI_HAVE_VA_COPY, $OMPI_HAVE_VA_COPY,
     [Whether we have va_copy or not])
 
-AC_CHECK_DECL(__va_copy, LAM_HAVE_UNDERSCORE_VA_COPY=1,
-	      LAM_HAVE_UNDERSCORE_VA_COPY=0, [#include <stdarg.h>])
-AC_DEFINE_UNQUOTED(LAM_HAVE_UNDERSCORE_VA_COPY, $LAM_HAVE_UNDERSCORE_VA_COPY,
+AC_CHECK_DECL(__va_copy, OMPI_HAVE_UNDERSCORE_VA_COPY=1,
+	      OMPI_HAVE_UNDERSCORE_VA_COPY=0, [#include <stdarg.h>])
+AC_DEFINE_UNQUOTED(OMPI_HAVE_UNDERSCORE_VA_COPY, $OMPI_HAVE_UNDERSCORE_VA_COPY,
     [Whether we have __va_copy or not])
 
 
@@ -413,7 +413,7 @@ AC_DEFINE_UNQUOTED(LAM_HAVE_UNDERSCORE_VA_COPY, $LAM_HAVE_UNDERSCORE_VA_COPY,
 # System-specific tests
 ##################################
 
-lam_show_title "System-specific tests"
+ompi_show_title "System-specific tests"
 #
 # Determine what MPI_Fint shout be defined as. If the size of 
 # fortran integer is 4 then it is defined to either
@@ -427,16 +427,16 @@ lam_show_title "System-specific tests"
 # This test should be carried out ONLY if there is a f77 compiler
 # available. Else we should default to MPI_Fint being an int.
 #
-if test "$LAM_F77" != "none"; then
+if test "$OMPI_F77" != "none"; then
 	MPI_FINT_TYPE="not found"
 	AC_MSG_CHECKING([checking for type of MPI_Fint])
-	if test "$LAM_SIZEOF_FORTRAN_INT" = 4 ; then
+	if test "$OMPI_SIZEOF_FORTRAN_INT" = 4 ; then
             if test "$ac_cv_type_int32_t" = "yes"; then
         	MPI_FINT_TYPE=int32_t
             elif test "$ac_cv_sizeof_int" = 4 ; then
         	MPI_FINT_TYPE=int
             fi
-	elif test "$LAM_SIZEOF_FORTRAN_INT" = 8 ; then
+	elif test "$OMPI_SIZEOF_FORTRAN_INT" = 8 ; then
             if test "$ac_cv_type_int64_t" = "yes"; then
                 MPI_FINT_TYPE=int64_t
             elif test "$ac_cv_type_long_long" = "yes" -a "$ac_cv_sizeof_long_long" = 8; then
@@ -507,7 +507,7 @@ AC_DEFINE_UNQUOTED(MPI_Offset, $MPI_OFFSET_TYPE, [Type of MPI_Offset])
 # Check out what thread support we have
 #
 
-LAM_CONFIG_THREADS
+OMPI_CONFIG_THREADS
 CFLAGS="$CFLAGS $THREAD_CFLAGS"
 CXXFLAGS="$CXXFLAGS $THREAD_CXXFLAGS"
 CPPFLAGS="$CPPFLAGS $THREAD_CPPFLAGS"
@@ -532,7 +532,7 @@ AC_PROG_LN_S
 # File system case sensitivity
 #
 
-LAM_CASE_SENSITIVE_FS_SETUP
+OMPI_CASE_SENSITIVE_FS_SETUP
 
 # AIX: FIONBIO in sys/ioctl.h
 # glibc: memcpy
@@ -542,29 +542,29 @@ LAM_CASE_SENSITIVE_FS_SETUP
 # MCA
 ##################################
 
-lam_show_title "MPI Component Architecture (MCA) setup" 
+ompi_show_title "MPI Component Architecture (MCA) setup" 
 
 AC_MSG_CHECKING([for subdir args])
-LAM_CONFIG_SUBDIR_ARGS([lam_subdir_args])
-AC_MSG_RESULT([$lam_subdir_args])
+OMPI_CONFIG_SUBDIR_ARGS([ompi_subdir_args])
+AC_MSG_RESULT([$ompi_subdir_args])
 
-LAM_MCA
+OMPI_MCA
 
 
 ############################################################################
-# Final top-level LAM configuration
+# Final top-level OMPI configuration
 ############################################################################
 
-lam_show_title "Final top-level LAM configuration"
+ompi_show_title "Final top-level OMPI configuration"
 
 ############################################################################
 # Libevent setup
 ############################################################################
 
-lam_show_subtitle "Libevent 3rd party event handler"
+ompi_show_subtitle "Libevent 3rd party event handler"
 CFLAGS_save="$CFLAGS"
-CFLAGS="$LAM_CFLAGS_BEFORE_PICKY"
-LAM_SETUP_LIBEVENT
+CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY"
+OMPI_SETUP_LIBEVENT
 CFLAGS="$CFLAGS_save"
 
 
@@ -573,7 +573,7 @@ CFLAGS="$CFLAGS_save"
 # (after C compiler setup)
 ############################################################################
 
-lam_show_subtitle "Libtool configuration"
+ompi_show_subtitle "Libtool configuration"
 
 # Use convenience libltdl for the moment, because we need to force the
 # use of the newest libltdl (i.e., the one that ships with libtool
@@ -590,7 +590,7 @@ AM_PROG_LIBTOOL
 # passing precious variables down to the sub-configure).  
 #
 # Note that we also did some magic scripty-foo in autogen.sh to rename
-# the output libtool library "liblamltdl", so add -llamltdl here.
+# the output libtool library "libompi_ltdl", so add -lompi_ltdl here.
 # This is because so many systems have older versions of libltdl
 # installed very early in ld.so's search path; if we installed our own
 # libltdl in some non-standard path (e.g., $HOME/local or even
@@ -598,28 +598,28 @@ AM_PROG_LIBTOOL
 # it's older -- or just not matching the version that we need, Bad
 # Things happen.  [sigh]
 #
-# Finally, make liblamltdl follow the same shared/static convention
-# that was user for the main LAM libraries.  So manually examine
+# Finally, make libompi_ltdl follow the same shared/static convention
+# that was user for the main OMPI libraries.  So manually examine
 # $enable_shared and $enable_static and pass down the corresponding
 # flags.
 
-lam_show_subtitle "GNU libltdl setup" 
+ompi_show_subtitle "GNU libltdl setup" 
 
-lam_subdir_args="$lam_subdir_args --enable-ltdl-convenience --disable-ltdl-install"
+ompi_subdir_args="$ompi_subdir_args --enable-ltdl-convenience --disable-ltdl-install"
 if test "$enable_shared" = "yes"; then
-    lam_subdir_args="$lam_subdir_args --enable-shared"
+    ompi_subdir_args="$ompi_subdir_args --enable-shared"
 else
-    lam_subdir_args="$lam_subdir_args --disable-shared"
+    ompi_subdir_args="$ompi_subdir_args --disable-shared"
 fi
 if test "$enable_static" = "yes"; then
-    lam_subdir_args="$lam_subdir_args --enable-static"
+    ompi_subdir_args="$ompi_subdir_args --enable-static"
 else
-    lam_subdir_args="$lam_subdir_args --disable-static"
+    ompi_subdir_args="$ompi_subdir_args --disable-static"
 fi
 
 CFLAGS_save="$CFLAGS"
-CFLAGS="$LAM_CFLAGS_BEFORE_PICKY"
-LAM_CONFIG_SUBDIR(src/libltdl, [$lam_subdir_args], [HAPPY=1], [HAPPY=0])
+CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY"
+OMPI_CONFIG_SUBDIR(src/libltdl, [$ompi_subdir_args], [HAPPY=1], [HAPPY=0])
 if test "$HAPPY" = "1"; then
     LIBLTDL_SUBDIR=libltdl
     LIBLTDL_LTLIB=libltdl/libltdlc.la
@@ -629,7 +629,7 @@ if test "$HAPPY" = "1"; then
     # it.  :-(
 
     flags="`egrep ^LIBADD_DL src/libltdl/Makefile | cut -d= -f2-`"
-    LAM_CHECK_LINKER_FLAGS([src/libltdl/libtool], [-export-dynamic $flags])
+    OMPI_CHECK_LINKER_FLAGS([src/libltdl/libtool], [-export-dynamic $flags])
     WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $extra_ldflags"
     LDFLAGS="-export-dynamic $LDFLAGS"
 else
@@ -641,7 +641,7 @@ CFLAGS="$CFLAGS_save"
 AC_SUBST(LIBLTDL_SUBDIR)
 AC_SUBST(LIBLTDL_LTLIB)
 AM_CONDITIONAL(WANT_LIBLTDL, test "$WANT_LIBLTDL" = "1")
-AC_DEFINE_UNQUOTED(LAM_WANT_LIBLTDL, $WANT_LIBLTDL,
+AC_DEFINE_UNQUOTED(OMPI_WANT_LIBLTDL, $WANT_LIBLTDL,
     [Whether to include support for libltdl or not])
 
 
@@ -649,7 +649,7 @@ AC_DEFINE_UNQUOTED(LAM_WANT_LIBLTDL, $WANT_LIBLTDL,
 # final wrapper compiler config
 ############################################################################
 
-lam_show_subtitle "Wrapper compiler flags"
+ompi_show_subtitle "Wrapper compiler flags"
 
 #
 # This is needed for VPATH builds, so that it will -I the appropriate
@@ -668,7 +668,7 @@ CXXCPPFLAGS='-I$(top_srcdir)/src  -I$(top_srcdir)/include -I$(top_builddir)/src'
 # WRAPPER_EXTRA_CFLAGS
 #
 AC_MSG_CHECKING([for mpicc CFLAGS])
-LAM_UNIQ(WRAPPER_EXTRA_CFLAGS)
+OMPI_UNIQ(WRAPPER_EXTRA_CFLAGS)
 AC_SUBST(WRAPPER_EXTRA_CFLAGS)
 AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS, "$WRAPPER_EXTRA_CFLAGS",
     [Additional CFLAGS to pass through the wrapper compilers])
@@ -678,7 +678,7 @@ AC_MSG_RESULT([$WRAPPER_EXTRA_CFLAGS])
 # WRAPPER_EXTRA_CXXFLAGS
 #
 AC_MSG_CHECKING([for mpiCC CXXFLAGS])
-LAM_UNIQ(WRAPPER_EXTRA_CXXFLAGS)
+OMPI_UNIQ(WRAPPER_EXTRA_CXXFLAGS)
 AC_SUBST(WRAPPER_EXTRA_CXXFLAGS)
 AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS, "$WRAPPER_EXTRA_CXXFLAGS",
     [Additional CXXFLAGS to pass through the wrapper compilers])
@@ -688,7 +688,7 @@ AC_MSG_RESULT([$WRAPPER_EXTRA_CXXFLAGS])
 # WRAPPER_EXTRA_FFLAGS
 #
 AC_MSG_CHECKING([for mpif77/mpif90 FFLAGS])
-LAM_UNIQ(WRAPPER_EXTRA_FFLAGS)
+OMPI_UNIQ(WRAPPER_EXTRA_FFLAGS)
 AC_SUBST(WRAPPER_EXTRA_FFLAGS)
 AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FFLAGS, "$WRAPPER_EXTRA_FFLAGS",
     [Additional FFLAGS to pass through the wrapper compilers])
@@ -698,7 +698,7 @@ AC_MSG_RESULT([$WRAPPER_EXTRA_FFLAGS])
 # WRAPPER_EXTRA_FCFLAGS
 #
 AC_MSG_CHECKING([for mpif77/mpif90 FCFLAGS])
-LAM_UNIQ(WRAPPER_EXTRA_FCFLAGS)
+OMPI_UNIQ(WRAPPER_EXTRA_FCFLAGS)
 AC_SUBST(WRAPPER_EXTRA_FCFLAGS)
 AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FCFLAGS, "$WRAPPER_EXTRA_FCFLAGS",
     [Additional FCFLAGS to pass through the wrapper compilers])
@@ -708,7 +708,7 @@ AC_MSG_RESULT([$WRAPPER_EXTRA_FCFLAGS])
 # WRAPPER_EXTRA_LDFLAGS
 #
 AC_MSG_CHECKING([for wrapper compiler LDFLAGS])
-LAM_UNIQ(WRAPPER_EXTRA_LDFLAGS)
+OMPI_UNIQ(WRAPPER_EXTRA_LDFLAGS)
 AC_SUBST(WRAPPER_EXTRA_LDFLAGS)
 AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LDFLAGS, "$WRAPPER_EXTRA_LDFLAGS",
     [Additional LDFLAGS to pass through the wrapper compilers])
@@ -740,9 +740,9 @@ AC_SUBST(FCFLAGS)
 # Party on
 ############################################################################
 
-lam_show_subtitle "Final output" 
+ompi_show_subtitle "Final output" 
 
-AM_CONFIG_HEADER([include/lam_config.h])
+AM_CONFIG_HEADER([include/ompi_config.h])
 AC_CONFIG_FILES([
     Makefile
 
@@ -755,7 +755,7 @@ AC_CONFIG_FILES([
     src/include/Makefile
 
     src/ctnetwork/Makefile
-    src/lfc/Makefile
+    src/class/Makefile
     src/mem/Makefile
     src/os/Makefile
     src/os/cygwin/Makefile
@@ -824,7 +824,7 @@ AC_CONFIG_FILES([
     src/mpi/f90/Makefile
 
     src/tools/Makefile
-    src/tools/laminfo/Makefile
+    src/tools/ompi_info/Makefile
     src/tools/mpirun/Makefile
     src/tools/wrappers/Makefile
 
@@ -833,7 +833,7 @@ AC_CONFIG_FILES([
 
     test/Makefile
     test/support/Makefile
-    test/lfc/Makefile
+    test/class/Makefile
     test/threads/Makefile
     test/util/Makefile
     test/rte/Makefile

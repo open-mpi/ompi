@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "communicator/communicator.h"
 #include "win/win.h"
@@ -10,20 +10,20 @@
 #include "errhandler/errhandler.h"
 
 
-int lam_errhandler_invoke(lam_errhandler_t *errhandler, void *mpi_object, 
+int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object, 
                           int err_code, char *message)
 {
   int fortran_handle;
-  lam_communicator_t *comm;
-  lam_win_t *win;
-  lam_file_t *file;
+  ompi_communicator_t *comm;
+  ompi_win_t *win;
+  ompi_file_t *file;
 
   /* Figure out what kind of errhandler it is, figure out if it's
      fortran or C, and then invoke it */
 
   switch (errhandler->eh_mpi_object_type) {
-  case LAM_ERRHANDLER_TYPE_COMM:
-    comm = (lam_communicator_t *) mpi_object;
+  case OMPI_ERRHANDLER_TYPE_COMM:
+    comm = (ompi_communicator_t *) mpi_object;
     if (errhandler->eh_fortran_function) {
       fortran_handle = comm->c_f_to_c_index;
       errhandler->eh_func.fort_fn(&fortran_handle, &err_code);
@@ -32,8 +32,8 @@ int lam_errhandler_invoke(lam_errhandler_t *errhandler, void *mpi_object,
     }
     break;
 
-  case LAM_ERRHANDLER_TYPE_WIN:
-    win = (lam_win_t *) mpi_object;
+  case OMPI_ERRHANDLER_TYPE_WIN:
+    win = (ompi_win_t *) mpi_object;
     if (errhandler->eh_fortran_function) {
       fortran_handle = win->w_f_to_c_index;
       errhandler->eh_func.fort_fn(&fortran_handle, &err_code);
@@ -42,8 +42,8 @@ int lam_errhandler_invoke(lam_errhandler_t *errhandler, void *mpi_object,
     }
     break;
 
-  case LAM_ERRHANDLER_TYPE_FILE:
-    file = (lam_file_t *) mpi_object;
+  case OMPI_ERRHANDLER_TYPE_FILE:
+    file = (ompi_file_t *) mpi_object;
     if (errhandler->eh_fortran_function) {
       fortran_handle = file->f_f_to_c_index;
       errhandler->eh_func.fort_fn(&fortran_handle, &err_code);

@@ -26,12 +26,12 @@ int called = 0;
 void
 signal_cb(int fd, short event, void *arg)
 {
-	struct lam_event *signal = arg;
+	struct ompi_event *signal = arg;
 
-	printf("%s: got signal %d\n", __func__, LAM_EVENT_SIGNAL(signal));
+	printf("%s: got signal %d\n", __func__, OMPI_EVENT_SIGNAL(signal));
 
 	if (called >= 2)
-		lam_event_del(signal);
+		ompi_event_del(signal);
 	
 	called++;
 }
@@ -39,18 +39,18 @@ signal_cb(int fd, short event, void *arg)
 int
 main (int argc, char **argv)
 {
-	struct lam_event signal_int;
+	struct ompi_event signal_int;
  
 	/* Initalize the event library */
-	lam_event_init();
+	ompi_event_init();
 
 	/* Initalize one event */
-	lam_event_set(&signal_int, SIGINT, LAM_EV_SIGNAL|LAM_EV_PERSIST, signal_cb,
+	ompi_event_set(&signal_int, SIGINT, OMPI_EV_SIGNAL|OMPI_EV_PERSIST, signal_cb,
 	    &signal_int);
 
-	lam_event_add(&signal_int, NULL);
+	ompi_event_add(&signal_int, NULL);
 
-	lam_event_dispatch();
+	ompi_event_dispatch();
 
 	return (0);
 }

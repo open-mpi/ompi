@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include <stdio.h>
@@ -27,7 +27,7 @@ int mca_coll_basic_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
                                   MPI_Comm comm)
 {
 #if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
+  return OMPI_ERR_NOT_IMPLEMENTED;
 #else
   int i;
   int err;
@@ -58,8 +58,8 @@ int mca_coll_basic_reduce_scatter(void *sbuf, void *rbuf, int *rcounts,
     }
 
 #if 0
-    /* JMS Need to replace this with lam_datatype_*() functions */
-    err = lam_dtbuffer(dtype, count, &buffer, &origin);
+    /* JMS Need to replace this with ompi_datatype_*() functions */
+    err = ompi_dtbuffer(dtype, count, &buffer, &origin);
     if (MPI_SUCCESS != err) {
       free(disps);
       return err;

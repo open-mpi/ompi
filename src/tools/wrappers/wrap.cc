@@ -5,7 +5,7 @@
 
 /** @file **/
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <iostream>
 #include <string>
@@ -19,7 +19,7 @@
 #include <errno.h>
 
 #include "util/path.h"
-#include "tools/wrappers/lamwrap.h"
+#include "tools/wrappers/ompi_wrap.h"
 #include "util/argv.h"
 #include "util/few.h"
 #include "util/path.h"
@@ -59,7 +59,7 @@ static string cmd_name("<unknown>");
 /// \param want_flags True if extra flags are needed
 ///
 void
-lam_wrap_parse_args(int argc, char* argv[], bool& want_flags)
+ompi_wrap_parse_args(int argc, char* argv[], bool& want_flags)
 {
   string str;
   bool have_arg;
@@ -109,7 +109,7 @@ lam_wrap_parse_args(int argc, char* argv[], bool& want_flags)
       fl_want_show_error = true;
     }
   }
-#if !LAM_ENABLE_MPI_PROFILING
+#if !OMPI_ENABLE_MPI_PROFILING
   // Sanity check
   if (fl_profile) {
 #if 0
@@ -132,8 +132,8 @@ lam_wrap_parse_args(int argc, char* argv[], bool& want_flags)
 /// \param out Compiler to use (return value)
 ///
 void
-lam_wrap_get_compiler(const lam_sv_t& env_list, const string& default_comp,
-			  lam_sv_t& out)
+ompi_wrap_get_compiler(const ompi_sv_t& env_list, const string& default_comp,
+			  ompi_sv_t& out)
 {
   int i;
   char *env;
@@ -150,7 +150,7 @@ lam_wrap_get_compiler(const lam_sv_t& env_list, const string& default_comp,
     env = getenv(env_list[i].c_str());
     if (0 != env) {
       comp = env;
-      lam_wrap_split(comp, ' ', out);
+      ompi_wrap_split(comp, ' ', out);
       break;
     }
   }
@@ -158,7 +158,7 @@ lam_wrap_get_compiler(const lam_sv_t& env_list, const string& default_comp,
   // If we didn't find any of the environment variables, use the default
 
   if (out.empty())
-    lam_wrap_split(default_comp, ' ', out);
+    ompi_wrap_split(default_comp, ' ', out);
 
   // If we're preprocessing, we need to know the basename of argv0
   // (see below).
@@ -203,9 +203,9 @@ lam_wrap_get_compiler(const lam_sv_t& env_list, const string& default_comp,
 /// \param cflags Vector of strings containing the cflags (returned)
 ///
 void
-lam_wrap_build_cflags(bool want_f77_includes, lam_sv_t& cflags)
+ompi_wrap_build_cflags(bool want_f77_includes, ompi_sv_t& cflags)
 {
-  string incdir(LAM_INCDIR);
+  string incdir(OMPI_INCDIR);
 
   cflags.clear();
 
@@ -232,7 +232,7 @@ lam_wrap_build_cflags(bool want_f77_includes, lam_sv_t& cflags)
 ///        the back-end compiler (return value)
 ///
 void
-lam_wrap_build_user_args(int argc, char* argv[], lam_sv_t& user_args)
+ompi_wrap_build_user_args(int argc, char* argv[], ompi_sv_t& user_args)
 {
   string str;
 
@@ -261,12 +261,12 @@ lam_wrap_build_user_args(int argc, char* argv[], lam_sv_t& user_args)
 /// \param ldflags Vector of strings comtaining the LDFLAGS
 ///
 void
-lam_wrap_build_ldflags(lam_sv_t& ldflags)
+ompi_wrap_build_ldflags(ompi_sv_t& ldflags)
 {
   string s;
-  string libdir(LAM_LIBDIR);
-  lam_sv_t sv;
-  lam_sv_t::iterator svi;
+  string libdir(OMPI_LIBDIR);
+  ompi_sv_t sv;
+  ompi_sv_t::iterator svi;
 
   ldflags.clear();
 
@@ -281,12 +281,12 @@ lam_wrap_build_ldflags(lam_sv_t& ldflags)
   // the command line.
 
   s = WRAPPER_EXTRA_LDFLAGS;
-  lam_wrap_split(s, ' ', sv);
+  ompi_wrap_split(s, ' ', sv);
 
   if (!sv.empty()){
     for (svi = sv.begin(); svi != sv.end(); ++svi) {
       if ("-L/usr" != *svi){
-		  lam_wrap_split_append_sv(*svi, ldflags);
+		  ompi_wrap_split_append_sv(*svi, ldflags);
       }
     }
   }
@@ -315,11 +315,11 @@ lam_wrap_build_ldflags(lam_sv_t& ldflags)
 /// \param libs Vector of strings containing the libraries to be
 ///             linked to the backend compiler
 void 
-lam_wrap_build_libs(bool want_cxx_libs, lam_sv_t& libs)
+ompi_wrap_build_libs(bool want_cxx_libs, ompi_sv_t& libs)
 {
-  string libdir(LAM_LIBDIR);
+  string libdir(OMPI_LIBDIR);
 #if 0
-#if LAM_WANT_ROMIO && HAVE_LIBAIO
+#if OMPI_WANT_ROMIO && HAVE_LIBAIO
   bool want_aio(false);
 #endif
 #endif
@@ -337,14 +337,14 @@ lam_wrap_build_libs(bool want_cxx_libs, lam_sv_t& libs)
   // ROMIO comes first.  Check to ensure that it exists (and that the
   // profiling library was previously found).
 #if 0
-#if LAM_WANT_ROMIO
-  if (!lam_wrap_check_file(libdir, "liblammpio.a") &&
-      !lam_wrap_check_file(libdir, "liblammpio.so")) {
+#if OMPI_WANT_ROMIO
+  if (!ompi_wrap_check_file(libdir, "libompi_mpio.a") &&
+      !ompi_wrap_check_file(libdir, "libompi_mpio.so")) {
     cerr << "WARNING: " << cmd_name
-	 << " expected to find liblammpio.* in " << libdir << endl
+	 << " expected to find libompi_mpio.* in " << libdir << endl
 	 << "WARNING: MPI-2 IO support will be disabled" << endl;
   } else {
-    libs.push_back("-llammpio");
+    libs.push_back("-lompi_mpio");
 #if HAVE_LIBAIO
     want_aio = true;
 #endif
@@ -355,25 +355,25 @@ lam_wrap_build_libs(bool want_cxx_libs, lam_sv_t& libs)
   // The C++ bindings come next
 #if 0
   if (want_cxx_libs) {
-    if (!lam_wrap_check_file(libdir, "liblammpi++.a") &&
-	!lam_wrap_check_file(libdir, "liblammpi++.so"))
+    if (!ompi_wrap_check_file(libdir, "libompi_mpi++.a") &&
+	!ompi_wrap_check_file(libdir, "libompi_mpi++.so"))
       cerr << "WARNING: " << cmd_name
-	   << " expected to find liblammpi++.* in " << libdir << endl
+	   << " expected to find libompi_mpi++.* in " << libdir << endl
 	   << "WARNING: MPI C++ support will be disabled" << endl;
     else
-      libs.push_back("-llammpi++");
+      libs.push_back("-lompi_mpi++");
   }
 #endif
   // Next comes the fortran MPI library
 #if 0
 #if BUILD_MPI_F77
-  if (!lam_wrap_check_file(libdir, "liblamf77mpi.a") &&
-      !lam_wrap_check_file(libdir, "liblamf77mpi.so"))
+  if (!ompi_wrap_check_file(libdir, "libompif77mpi.a") &&
+      !ompi_wrap_check_file(libdir, "libompif77mpi.so"))
       cerr << "WARNING: " << cmd_name
-	   << " expected to find liblamf77mpi.* in " << libdir << endl
+	   << " expected to find libompif77mpi.* in " << libdir << endl
 	   << "WARNING: MPI Fortran support will be disabled" << endl;
   else
-    libs.push_back("-llamf77mpi");
+    libs.push_back("-lompif77mpi");
 #endif
 #endif
 
@@ -383,12 +383,12 @@ lam_wrap_build_libs(bool want_cxx_libs, lam_sv_t& libs)
 
   // Finally, any system libraries
 #if 0
-#if LAM_WANT_ROMIO && HAVE_LIBAIO
+#if OMPI_WANT_ROMIO && HAVE_LIBAIO
   if (want_aio)
     libs.push_back("-laio");
 #endif
 #endif
-  lam_wrap_split_append_sv(WRAPPER_EXTRA_LIBS, libs);
+  ompi_wrap_split_append_sv(WRAPPER_EXTRA_LIBS, libs);
 }
 
 
@@ -404,10 +404,10 @@ lam_wrap_build_libs(bool want_cxx_libs, lam_sv_t& libs)
 ///        compiler (return value)
 ///
 void
-lam_wrap_build_extra_flags(const string& extra_string, lam_sv_t& extra_flags)
+ompi_wrap_build_extra_flags(const string& extra_string, ompi_sv_t& extra_flags)
 {
   if (!extra_string.empty())
-    lam_wrap_split_append_sv(extra_string, extra_flags);
+    ompi_wrap_split_append_sv(extra_string, extra_flags);
 }
 
 
@@ -419,7 +419,7 @@ lam_wrap_build_extra_flags(const string& extra_string, lam_sv_t& extra_flags)
 /// \param sv Vector of strings to be printed out
 ///
 void
-lam_wrap_print_sv(const lam_sv_t& sv)
+ompi_wrap_print_sv(const ompi_sv_t& sv)
 {
   for (int i = 0; (string::size_type) i < sv.size(); ++i)
     cout << sv[i] << " ";
@@ -435,7 +435,7 @@ lam_wrap_print_sv(const lam_sv_t& sv)
 /// \param sv Vector of strings to be exec()'ed
 ///
 int
-lam_wrap_exec_sv(const lam_sv_t& sv)
+ompi_wrap_exec_sv(const ompi_sv_t& sv)
 {
   int status;
   int ret;
@@ -446,13 +446,13 @@ lam_wrap_exec_sv(const lam_sv_t& sv)
   // Build up a C array of the args
 
   for (i = 0; (string::size_type) i < sv.size(); ++i)
-    lam_argv_append(&ac, &av, (char*) sv[i].c_str());
+    ompi_argv_append(&ac, &av, (char*) sv[i].c_str());
 
-  // There is no way to tell whether lam_few returned non-zero because
+  // There is no way to tell whether ompi_few returned non-zero because
   // the called app returned non-zero or if there was a failure in the
   // exec (like the file not being found).  So we look for the
   // compiler first, just to try to eliminate that case.
-  tmp = lam_path_env_findv(av[0], 0, environ, NULL);
+  tmp = ompi_path_env_findv(av[0], 0, environ, NULL);
   if (NULL == tmp) {
 #if 0
     show_help("compile", "no-compiler-found", av[0], NULL);
@@ -461,13 +461,13 @@ lam_wrap_exec_sv(const lam_sv_t& sv)
     status = -1;
   } else {
     free(tmp);
-    ret = lam_few(av, &status);
+    ret = ompi_few(av, &status);
     if (0 != ret && 0 != errno && fl_want_show_error)
       perror(cmd_name.c_str());
   }
 
   // Free the C array
-  lam_argv_free(av);
+  ompi_argv_free(av);
 
   return status;
 }
@@ -483,7 +483,7 @@ lam_wrap_exec_sv(const lam_sv_t& sv)
 ///            be removed
 ///
 void 
-lam_wrap_strip_white(string& str)
+ompi_wrap_strip_white(string& str)
 {
   int start, end, size(str.size());
 
@@ -517,7 +517,7 @@ lam_wrap_strip_white(string& str)
 /// \param out Vector of strings (return value)
 ///
 bool 
-lam_wrap_split(const string& str, char c, lam_sv_t& out)
+ompi_wrap_split(const string& str, char c, ompi_sv_t& out)
 {
   int start, i(0), size(str.size());
   out.clear();
@@ -559,12 +559,12 @@ lam_wrap_split(const string& str, char c, lam_sv_t& out)
 /// \param out Vector of strings to which the tokens are appended
 ///
 void
-lam_wrap_split_append_sv(const string& str, lam_sv_t& out)
+ompi_wrap_split_append_sv(const string& str, ompi_sv_t& out)
 {
   int i;
-  lam_sv_t temp;
+  ompi_sv_t temp;
 
-  lam_wrap_split(str, ' ', temp);
+  ompi_wrap_split(str, ' ', temp);
   for (i = 0; (string::size_type) i < temp.size(); ++i){
     out.push_back(temp[i]);
   }
@@ -580,7 +580,7 @@ lam_wrap_split_append_sv(const string& str, lam_sv_t& out)
 /// \param out Vector of strings to which "in" will be appended
 ///
 void 
-lam_wrap_append_sv(const lam_sv_t& in, lam_sv_t& out)
+ompi_wrap_append_sv(const ompi_sv_t& in, ompi_sv_t& out)
 {
   // JMS Is there a better way to do this?
   for (int i = 0; (string::size_type) i < in.size(); ++i){
@@ -598,7 +598,7 @@ lam_wrap_append_sv(const lam_sv_t& in, lam_sv_t& out)
 /// \param file Name of the file
 ///
 bool
-lam_wrap_check_file(const string& dir, const string& file)
+ompi_wrap_check_file(const string& dir, const string& file)
 {
   int ret;
   struct stat buf;

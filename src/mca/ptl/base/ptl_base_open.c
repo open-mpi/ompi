@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
@@ -25,8 +25,8 @@
  * Global variables
  */
 int mca_ptl_base_output = -1;
-lam_list_t mca_ptl_base_modules_available;
-lam_list_t mca_ptl_base_modules_initialized;
+ompi_list_t mca_ptl_base_modules_available;
+ompi_list_t mca_ptl_base_modules_initialized;
 
 
 /**
@@ -37,19 +37,19 @@ int mca_ptl_base_open(void)
 {
   /* Open up all available modules */
 
-  if (LAM_SUCCESS != 
+  if (OMPI_SUCCESS != 
       mca_base_modules_open("ptl", 0, mca_ptl_base_static_modules, 
                             &mca_ptl_base_modules_available)) {
-    return LAM_ERROR;
+    return OMPI_ERROR;
   }
 
   /* Initialize the list so that in mca_ptl_base_close(), we can
      iterate over it (even if it's empty, as in the case of
-     laminfo) */
+     ompi_info) */
 
-  OBJ_CONSTRUCT(&mca_ptl_base_modules_initialized, lam_list_t);
+  OBJ_CONSTRUCT(&mca_ptl_base_modules_initialized, ompi_list_t);
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

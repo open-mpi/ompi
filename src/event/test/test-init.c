@@ -20,7 +20,7 @@ int
 main(int argc, char **argv)
 {
 	/* Initalize the event library */
-	lam_event_init();
+	ompi_event_init();
 
 	return (0);
 }

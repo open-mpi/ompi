@@ -2,10 +2,10 @@
  * $HEADER$
  */
 
-#include "lfc/lam_value_array.h"
+#include "class/ompi_value_array.h"
 
 
-static void lam_value_array_construct(lam_value_array_t* array)
+static void ompi_value_array_construct(ompi_value_array_t* array)
 {
     array->array_items = NULL;
     array->array_size = 0;
@@ -13,26 +13,26 @@ static void lam_value_array_construct(lam_value_array_t* array)
     array->array_alloc_size = 0;
 }
 
-static void lam_value_array_destruct(lam_value_array_t* array)
+static void ompi_value_array_destruct(ompi_value_array_t* array)
 {
     if (NULL != array->array_items)
         free(array->array_items);
 }
 
-lam_class_t lam_value_array_t_class = {
-    "lam_value_array_t",
-     OBJ_CLASS(lam_object_t),
-     (lam_construct_t)lam_value_array_construct,
-     (lam_destruct_t)lam_value_array_destruct
+ompi_class_t ompi_value_array_t_class = {
+    "ompi_value_array_t",
+     OBJ_CLASS(ompi_object_t),
+     (ompi_construct_t)ompi_value_array_construct,
+     (ompi_destruct_t)ompi_value_array_destruct
 };
 
 
-int lam_value_array_set_size(lam_value_array_t* array, size_t size)
+int ompi_value_array_set_size(ompi_value_array_t* array, size_t size)
 {
-#if LAM_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
     if(array->array_item_sizeof == 0) {
-        lam_output(0, "lam_value_array_set_size: item size must be initialized");
-        return LAM_ERR_BAD_PARAM;
+        ompi_output(0, "ompi_value_array_set_size: item size must be initialized");
+        return OMPI_ERR_BAD_PARAM;
     }
 #endif
 
@@ -42,9 +42,9 @@ int lam_value_array_set_size(lam_value_array_t* array, size_t size)
         array->array_items = realloc(array->array_items,
             array->array_alloc_size * array->array_item_sizeof);
         if (NULL == array->array_items)
-            return LAM_ERR_OUT_OF_RESOURCE;
+            return OMPI_ERR_OUT_OF_RESOURCE;
     }
     array->array_size = size;
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 

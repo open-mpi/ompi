@@ -13,13 +13,13 @@ use File::Basename;
 # Local variables
 ############################################################################
 
-my $lam_topdir;
+my $ompi_topdir;
 my $module_topdir;
 my %config_values;
 my %config_params;
 
 my $initial_cwd = cwd();
-my $announce_str = "LAM/MPI MCA module configure generator";
+my $announce_str = "OMPI/MPI MCA module configure generator";
 my %config_param_names = (PIFILE => "PARAM_INIT_FILE",
                           PCFGAUXDIR => "PARAM_CONFIG_AUX_DIR",
                           PC => "PARAM_WANT_C",
@@ -36,45 +36,45 @@ my %config_param_names = (PIFILE => "PARAM_INIT_FILE",
 ############################################################################
 
 Getopt::Long::Configure("bundling", "require_order");
-my $ok = Getopt::Long::GetOptions("lamdir|l=s" => \$lam_topdir,
+my $ok = Getopt::Long::GetOptions("ompidir|l=s" => \$ompi_topdir,
                                   "moduledir|m=s" => \$module_topdir);
 if (!$ok) {
-    print "Usage: $0 [--lamdir=DIR] [--moduledir=DIR]\n";
+    print "Usage: $0 [--ompidir=DIR] [--moduledir=DIR]\n";
     exit(1);
 }
 
 ############################################################################
-# Try to figure out the lam and module topdirs
+# Try to figure out the ompi and module topdirs
 ############################################################################
 
 print "$announce_str starting\n";
 
-if (!$lam_topdir) {
-    $lam_topdir = dirname($0);
+if (!$ompi_topdir) {
+    $ompi_topdir = dirname($0);
 }
-chdir($lam_topdir);
-$lam_topdir = cwd();
+chdir($ompi_topdir);
+$ompi_topdir = cwd();
 chdir($initial_cwd);
-if (!$lam_topdir || ! -f "$lam_topdir/autogen.sh") {
-    croak("Unable to find LAM base directory (try using --lamdir)");
+if (!$ompi_topdir || ! -f "$ompi_topdir/autogen.sh") {
+    croak("Unable to find OMPI base directory (try using --ompidir)");
 }
 
 if (!$module_topdir) {
     $module_topdir = $initial_cwd;
-    if ($module_topdir eq $lam_topdir) {
+    if ($module_topdir eq $ompi_topdir) {
         croak("Unable to determine which module to operate on");
     }
 }
 chdir($module_topdir);
 $module_topdir = cwd();
 chdir($initial_cwd);
-if (!$lam_topdir || ! -d $module_topdir) {
+if (!$ompi_topdir || ! -d $module_topdir) {
     croak("Unable to find module directory (try using --moduledir)");
 }
 
 # Print them out
 
-print "--> Found LAM top dir: $lam_topdir\n";
+print "--> Found OMPI top dir: $ompi_topdir\n";
 print "--> Found module top dir: $module_topdir\n";
 
 # If we have a configure.params file in the module topdir, we're good to
@@ -107,11 +107,11 @@ if (-f "$module_topdir/configure.ac") {
 $config_values{"MCA_TYPE"} = dirname($module_topdir);
 $config_values{"MCA_TYPE"} = basename($config_values{"MCA_TYPE"});
 
-# PROCESSED_MCA_TYPE: For "special" MCA types, like "crlam" and
+# PROCESSED_MCA_TYPE: For "special" MCA types, like "crompi" and
 # "crmpi".
 
 $config_values{"PROCESSED_MCA_TYPE"} = $config_values{"MCA_TYPE"};
-if ($config_values{"PROCESSED_MCA_TYPE"} eq "crlam" ||
+if ($config_values{"PROCESSED_MCA_TYPE"} eq "crompi" ||
     $config_values{"PROCESSED_MCA_TYPE"} eq "crmpi") {
     $config_values{"PROCESSED_MCA_TYPE"} = "cr";
 }
@@ -167,7 +167,7 @@ if (-f "$module_topdir/configure.stub") {
 
 sinclude(configure.stub)\n";
     $config_values{CONFIGURE_STUB_MACRO} = 
-        "lam_show_subtitle \"MCA " . $config_values{"MCA_TYPE"} . " " .
+        "ompi_show_subtitle \"MCA " . $config_values{"MCA_TYPE"} . " " .
         $config_values{"MCA_MODULE_NAME"} . "-specific setup\"
 MCA_CONFIGURE_STUB";
 
@@ -182,7 +182,7 @@ MCA_CONFIGURE_STUB";
     close(STUB);
     if ($found == 1) {
         $config_values{CONFIGURE_DIST_STUB_MACRO} = 
-            "lam_show_subtitle \"MCA " . $config_values{"MCA_TYPE"} . " " .
+            "ompi_show_subtitle \"MCA " . $config_values{"MCA_TYPE"} . " " .
             $config_values{"MCA_MODULE_NAME"} . 
             "-specific setup (dist specific!)\"
 MCA_CONFIGURE_DIST_STUB";
@@ -320,12 +320,12 @@ sub make_template {
 
     $search = "\@C_COMPILER_SETUP\@";
     $replace = $config_params{$config_param_names{"PC"}} ?
-        "LAM_SETUP_CC" : "";
+        "OMPI_SETUP_CC" : "";
     $template =~ s/$search/$replace/;
 
     $search = "\@CXX_COMPILER_SETUP\@";
     $replace = $config_params{$config_param_names{"PCXX"}} ?
-        "LAM_SETUP_CXX" : "";
+        "OMPI_SETUP_CXX" : "";
     $template =~ s/$search/$replace/;
 
     print "--> Writing output file: $dest\n";
@@ -339,9 +339,9 @@ sub make_template {
 
 # Read and fill in the templates
 
-make_template("$lam_topdir/config/mca_configure.ac", 
+make_template("$ompi_topdir/config/mca_configure.ac", 
               "$module_topdir/configure.ac", 0644);
-make_template("$lam_topdir/config/mca_acinclude.m4",
+make_template("$ompi_topdir/config/mca_acinclude.m4",
               "$module_topdir/acinclude.m4", 0644);
 
 ############################################################################

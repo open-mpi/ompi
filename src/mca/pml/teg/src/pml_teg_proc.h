@@ -14,13 +14,13 @@
 #include "pml_ptl_array.h"
 
 /**
- *  Structure associated w/ lam_proc_t that contains data specific
+ *  Structure associated w/ ompi_proc_t that contains data specific
  *  to the PML. Note that this name is not PML specific.
  */
 struct mca_pml_proc_t {
-   lam_list_item_t super;
-   lam_proc_t *proc_lam;             /**< back-pointer to lam_proc_t */
-   lam_mutex_t proc_lock;            /**< lock to protect against concurrent access */
+   ompi_list_item_t super;
+   ompi_proc_t *proc_ompi;             /**< back-pointer to ompi_proc_t */
+   ompi_mutex_t proc_lock;            /**< lock to protect against concurrent access */
    mca_ptl_array_t proc_ptl_first;   /**< array of ptls to use for first fragments */
    mca_ptl_array_t proc_ptl_next;    /**< array of ptls to use for remaining fragments */
    uint32_t proc_ptl_flags;          /**< aggregate ptl flags */
@@ -28,7 +28,7 @@ struct mca_pml_proc_t {
 typedef struct mca_pml_proc_t mca_pml_proc_t;
 
 
-extern lam_class_t mca_pml_teg_proc_t_class;
+extern ompi_class_t mca_pml_teg_proc_t_class;
 typedef struct mca_pml_proc_t mca_pml_teg_proc_t;
 
 /**
@@ -39,9 +39,9 @@ typedef struct mca_pml_proc_t mca_pml_teg_proc_t;
  * @return       mca_pml_proc_t instance
  */
 
-static inline mca_pml_proc_t* mca_pml_teg_proc_lookup_local(lam_communicator_t* comm, int rank)
+static inline mca_pml_proc_t* mca_pml_teg_proc_lookup_local(ompi_communicator_t* comm, int rank)
 {
-    lam_proc_t* proc = comm->c_local_group->grp_proc_pointers[rank];
+    ompi_proc_t* proc = comm->c_local_group->grp_proc_pointers[rank];
     return proc->proc_pml;
 }
 
@@ -53,9 +53,9 @@ static inline mca_pml_proc_t* mca_pml_teg_proc_lookup_local(lam_communicator_t* 
  * @return       mca_pml_proc_t instance
  */
 
-static inline mca_pml_proc_t* mca_pml_teg_proc_lookup_remote(lam_communicator_t* comm, int rank)
+static inline mca_pml_proc_t* mca_pml_teg_proc_lookup_remote(ompi_communicator_t* comm, int rank)
 {
-    lam_proc_t* proc = comm->c_remote_group->grp_proc_pointers[rank];
+    ompi_proc_t* proc = comm->c_remote_group->grp_proc_pointers[rank];
     return proc->proc_pml;
 }
 

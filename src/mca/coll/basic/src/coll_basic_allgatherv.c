@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include "constants.h"
@@ -27,7 +27,7 @@ int mca_coll_basic_allgatherv(void *sbuf, int scount,
                               MPI_Comm comm)
 {
 #if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
+  return OMPI_ERR_NOT_IMPLEMENTED;
 #else
   int i, size;
   int err;

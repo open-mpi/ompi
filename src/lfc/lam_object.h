@@ -39,7 +39,7 @@
  * @endcode
  * This macro actually expands to 
  * @code
- *   lam_class_t sally_t_class = {
+ *   ompi_class_t sally_t_class = {
  *     "sally_t",
  *     OBJ_CLASS(parent_t),  // pointer to parent_t_class
  *     sally_construct,
@@ -97,14 +97,14 @@
  * @endcode
  */
 
-#ifndef LAM_OBJECT_H
-#define LAM_OBJECT_H
+#ifndef OMPI_OBJECT_H
+#define OMPI_OBJECT_H
 
 #include <assert.h>
 #include <stdlib.h>
 
 #ifdef HAVE_CONFIG_H
-#include "lam_config.h"
+#include "ompi_config.h"
 #endif
 
 /*
@@ -146,11 +146,11 @@
  * Put this in NAME.c
  */
 #define OBJ_CLASS_INSTANCE(NAME, PARENT, CONSTRUCTOR, DESTRUCTOR)       \
-    lam_class_t NAME ## _class = {                                      \
+    ompi_class_t NAME ## _class = {                                      \
         # NAME,                                                         \
         OBJ_CLASS(PARENT),                                              \
-        (lam_construct_t)CONSTRUCTOR,                                   \
-        (lam_destruct_t)DESTRUCTOR,                                     \
+        (ompi_construct_t)CONSTRUCTOR,                                   \
+        (ompi_destruct_t)DESTRUCTOR,                                     \
         0, 0, NULL, NULL                                                \
     }
 
@@ -163,7 +163,7 @@
  * Put this in NAME.h
  */
 #define OBJ_CLASS_DECLARATION(NAME) \
-    extern lam_class_t NAME ## _class
+    extern ompi_class_t NAME ## _class
 
 
 /**
@@ -174,7 +174,7 @@
  * @return              Pointer to the object 
  */
 #define OBJ_NEW(type)                                   \
-    ((type *) lam_obj_new(sizeof(type), OBJ_CLASS(type)))
+    ((type *) ompi_obj_new(sizeof(type), OBJ_CLASS(type)))
 
 
 /**
@@ -185,11 +185,11 @@
 #define OBJ_RETAIN(object)                                              \
     do {                                                                \
         assert(NULL != object);                                         \
-        assert(NULL != ((lam_object_t *) (object))->obj_class);         \
+        assert(NULL != ((ompi_object_t *) (object))->obj_class);         \
         if (object) {                                                   \
-            lam_obj_update((lam_object_t *) (object), 1);               \
+            ompi_obj_update((ompi_object_t *) (object), 1);               \
         }                                                               \
-        assert(((lam_object_t *) (object))->obj_reference_count >= 0);  \
+        assert(((ompi_object_t *) (object))->obj_reference_count >= 0);  \
     } while (0)
 
 
@@ -206,9 +206,9 @@
 #define OBJ_RELEASE(object)                                             \
     do {                                                                \
         assert(NULL != object);                                         \
-        assert(NULL != ((lam_object_t *) (object))->obj_class);         \
-        if (0 == lam_obj_update((lam_object_t *) (object), -1)) {       \
-            lam_obj_run_destructors((lam_object_t *) (object));         \
+        assert(NULL != ((ompi_object_t *) (object))->obj_class);         \
+        if (0 == ompi_obj_update((ompi_object_t *) (object), -1)) {       \
+            ompi_obj_run_destructors((ompi_object_t *) (object));         \
             free(object);                                               \
             object = NULL;                                              \
         }                                                               \
@@ -228,12 +228,12 @@
 #define OBJ_CONSTRUCT_INTERNAL(object, type)                            \
     do {                                                                \
         if (0 == (type)->cls_initialized) {                             \
-            lam_class_initialize((type));                               \
+            ompi_class_initialize((type));                               \
         }                                                               \
         if (object) {                                                   \
-            ((lam_object_t *) (object))->obj_class = (type);            \
-            ((lam_object_t *) (object))->obj_reference_count = 1;       \
-            lam_obj_run_constructors((lam_object_t *) (object));        \
+            ((ompi_object_t *) (object))->obj_class = (type);            \
+            ((ompi_object_t *) (object))->obj_reference_count = 1;       \
+            ompi_obj_run_constructors((ompi_object_t *) (object));        \
         }                                                               \
     } while (0)
 
@@ -246,17 +246,17 @@
 #define OBJ_DESTRUCT(object)                                    \
     do {                                                        \
         if (object) {                                           \
-            lam_obj_run_destructors((lam_object_t *) (object)); \
+            ompi_obj_run_destructors((ompi_object_t *) (object)); \
         }                                                       \
     } while (0)
 
 
 /* typedefs ***********************************************************/
 
-typedef struct lam_object_t lam_object_t;
-typedef struct lam_class_t lam_class_t;
-typedef void (*lam_construct_t) (lam_object_t *);
-typedef void (*lam_destruct_t) (lam_object_t *);
+typedef struct ompi_object_t ompi_object_t;
+typedef struct ompi_class_t ompi_class_t;
+typedef void (*ompi_construct_t) (ompi_object_t *);
+typedef void (*ompi_destruct_t) (ompi_object_t *);
 
 
 /* types **************************************************************/
@@ -267,16 +267,16 @@ typedef void (*lam_destruct_t) (lam_object_t *);
  * There should be a single instance of this descriptor for each class
  * definition.
  */
-struct lam_class_t {
+struct ompi_class_t {
     const char *cls_name;          /**< symbolic name for class */
-    lam_class_t *cls_parent;       /**< parent class descriptor */
-    lam_construct_t cls_construct; /**< class constructor */
-    lam_destruct_t cls_destruct;   /**< class destructor */
+    ompi_class_t *cls_parent;       /**< parent class descriptor */
+    ompi_construct_t cls_construct; /**< class constructor */
+    ompi_destruct_t cls_destruct;   /**< class destructor */
     int cls_initialized;           /**< is class initialized */
     int cls_depth;                 /**< depth of class hierarchy tree */
-    lam_construct_t *cls_construct_array;
+    ompi_construct_t *cls_construct_array;
                                    /**< array of parent class constructors */
-    lam_destruct_t *cls_destruct_array;
+    ompi_destruct_t *cls_destruct_array;
                                    /**< array of parent class destructors */
 };
 
@@ -286,12 +286,12 @@ struct lam_class_t {
  *
  * This is special and does not follow the pattern for other classes.
  */
-struct lam_object_t {
-    lam_class_t *obj_class;        /**< class descriptor */
+struct ompi_object_t {
+    ompi_class_t *obj_class;        /**< class descriptor */
     int obj_reference_count;       /**< reference count */
 };
 
-OBJ_CLASS_DECLARATION(lam_object_t);
+OBJ_CLASS_DECLARATION(ompi_object_t);
 
 
 /* declarations *******************************************************/
@@ -306,7 +306,7 @@ BEGIN_C_DECLS
  *
  * @param class    Pointer to class descriptor
  */
-void lam_class_initialize(lam_class_t *);
+void ompi_class_initialize(ompi_class_t *);
 
 END_C_DECLS
 
@@ -322,9 +322,9 @@ END_C_DECLS
  * Hardwired for fairly shallow inheritance trees
  * @param size          Pointer to the object.
  */
-static inline void lam_obj_run_constructors(lam_object_t *object)
+static inline void ompi_obj_run_constructors(ompi_object_t *object)
 {
-    lam_class_t *cls;
+    ompi_class_t *cls;
     int i;
 
     assert(NULL != object);
@@ -347,9 +347,9 @@ static inline void lam_obj_run_constructors(lam_object_t *object)
  *
  * @param size          Pointer to the object.
  */
-static inline void lam_obj_run_destructors(lam_object_t *object)
+static inline void ompi_obj_run_destructors(ompi_object_t *object)
 {
-    lam_class_t *cls;
+    ompi_class_t *cls;
     int i;
 
     assert(NULL != object);
@@ -374,26 +374,26 @@ static inline void lam_obj_run_destructors(lam_object_t *object)
  * @param cls           Pointer to the class descriptor of this object
  * @return              Pointer to the object 
  */
-static inline lam_object_t *lam_obj_new(size_t size, lam_class_t *cls)
+static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t *cls)
 {
-    lam_object_t *object;
+    ompi_object_t *object;
 
-    assert(size >= sizeof(lam_object_t));
+    assert(size >= sizeof(ompi_object_t));
 
-    object = (lam_object_t *) malloc(size);
+    object = (ompi_object_t *) malloc(size);
     if (0 == cls->cls_initialized) {
-        lam_class_initialize(cls);
+        ompi_class_initialize(cls);
     }
     if (NULL != object) {
 	object->obj_class = cls;
         object->obj_reference_count = 1;
-        lam_obj_run_constructors(object);
+        ompi_obj_run_constructors(object);
     }
     return object;
 }
 
 
-static inline int lam_atomic_cmpset_int(int *addr, int oldval, int newval)
+static inline int ompi_atomic_cmpset_int(int *addr, int oldval, int newval)
 {
     *addr = newval;
     return 1;
@@ -409,7 +409,7 @@ static inline int lam_atomic_cmpset_int(int *addr, int oldval, int newval)
  * @param inc           Increment by which to update reference count
  * @return              New value of the reference count
  */
-static inline int lam_obj_update(lam_object_t *object, int inc)
+static inline int ompi_obj_update(ompi_object_t *object, int inc)
 {
     int oldval;
     int newval;
@@ -419,11 +419,11 @@ static inline int lam_obj_update(lam_object_t *object, int inc)
     do {
         oldval = *addr;
         newval = oldval + inc;
-    } while (lam_atomic_cmpset_int(addr, oldval, newval) == 0);
+    } while (ompi_atomic_cmpset_int(addr, oldval, newval) == 0);
 
     return newval;
 }
 
 /**********************************************************************/
 
-#endif				/* LAM_OBJECT_H */
+#endif				/* OMPI_OBJECT_H */

@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
@@ -22,64 +22,64 @@
 #include "mca/coll/base/base.h"
 
 
-int lam_mpi_finalize(void)
+int ompi_mpi_finalize(void)
 {
   int ret;
 
-  lam_mpi_finalized = true;
+  ompi_mpi_finalized = true;
 
   /* Close down MCA modules */
 
-  if (LAM_SUCCESS != (ret = mca_coll_base_close())) {
+  if (OMPI_SUCCESS != (ret = mca_coll_base_close())) {
     return ret;
   }
-  if (LAM_SUCCESS != (ret = mca_ptl_base_close())) {
+  if (OMPI_SUCCESS != (ret = mca_ptl_base_close())) {
     return ret;
   }
-  if (LAM_SUCCESS != (ret = mca_pml_base_close())) {
+  if (OMPI_SUCCESS != (ret = mca_pml_base_close())) {
     return ret;
   }
 
   /* Leave the RTE */
 
-  if (LAM_SUCCESS != (ret = lam_rte_finalize())) {
+  if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
     return ret;
   }
 
   /* Close down the MCA */
 
-  if (LAM_SUCCESS != (ret = mca_base_close())) {
+  if (OMPI_SUCCESS != (ret = mca_base_close())) {
     return ret;
   }
 
-  /* Leave LAM */
+  /* Leave OMPI */
 
   /* free op resources */
-  if (LAM_SUCCESS != (ret = lam_op_finalize())) {
+  if (OMPI_SUCCESS != (ret = ompi_op_finalize())) {
       return ret;
   }
 
   /* free ddt resources */
-  if (LAM_SUCCESS != (ret = lam_ddt_finalize())) {
+  if (OMPI_SUCCESS != (ret = ompi_ddt_finalize())) {
       return ret;
   }
 
   /* free communicator resources */
-  if (LAM_SUCCESS != (ret = lam_comm_finalize())) {
+  if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
       return ret;
   }
 
   /* free group resources */
-  if (LAM_SUCCESS != (ret = lam_group_finalize())) {
+  if (OMPI_SUCCESS != (ret = ompi_group_finalize())) {
       return ret;
   }
 
   /* free errhandler resources */
-  if (LAM_SUCCESS != (ret = lam_errhandler_finalize())) {
+  if (OMPI_SUCCESS != (ret = ompi_errhandler_finalize())) {
       return ret;
   }
 
-  if (LAM_SUCCESS != (ret = lam_finalize())) {
+  if (OMPI_SUCCESS != (ret = ompi_finalize())) {
     return ret;
   }
 

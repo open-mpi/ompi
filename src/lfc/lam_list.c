@@ -2,101 +2,101 @@
  * $HEADER$
  */
 
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 
 /*
  *  List classes
  */
 
-static void lam_list_item_construct(lam_list_item_t*);
-static void lam_list_item_destruct(lam_list_item_t*);
+static void ompi_list_item_construct(ompi_list_item_t*);
+static void ompi_list_item_destruct(ompi_list_item_t*);
 
-lam_class_t  lam_list_item_t_class = {
-    "lam_list_item_t",
-    OBJ_CLASS(lam_object_t), 
-    (lam_construct_t) lam_list_item_construct,
-    (lam_destruct_t) lam_list_item_destruct
+ompi_class_t  ompi_list_item_t_class = {
+    "ompi_list_item_t",
+    OBJ_CLASS(ompi_object_t), 
+    (ompi_construct_t) ompi_list_item_construct,
+    (ompi_destruct_t) ompi_list_item_destruct
 };
 
-static void lam_list_construct(lam_list_t*);
-static void lam_list_destruct(lam_list_t*);
+static void ompi_list_construct(ompi_list_t*);
+static void ompi_list_destruct(ompi_list_t*);
 
 OBJ_CLASS_INSTANCE(
-    lam_list_t,
-    lam_object_t,
-    lam_list_construct,
-    lam_list_destruct
+    ompi_list_t,
+    ompi_object_t,
+    ompi_list_construct,
+    ompi_list_destruct
 );
 
 
 /*
  *
- *      lam_list_link_item_t interface
+ *      ompi_list_link_item_t interface
  *
  */
 
-static void lam_list_item_construct(lam_list_item_t *item)
+static void ompi_list_item_construct(ompi_list_item_t *item)
 {
-    item->lam_list_next = item->lam_list_prev = NULL;
-    item->lam_list_type = 0;
+    item->ompi_list_next = item->ompi_list_prev = NULL;
+    item->ompi_list_type = 0;
 }
 
-static void lam_list_item_destruct(lam_list_item_t *item)
+static void ompi_list_item_destruct(ompi_list_item_t *item)
 {
 }
 
 
 /*
  *
- *      lam_list_list_t interface
+ *      ompi_list_list_t interface
  *
  */
 
-static void lam_list_construct(lam_list_t *list)
+static void ompi_list_construct(ompi_list_t *list)
 {
-    list->lam_list_head.lam_list_prev = NULL;
-    list->lam_list_head.lam_list_next = &list->lam_list_tail;
-    list->lam_list_tail.lam_list_prev = &list->lam_list_head;
-    list->lam_list_tail.lam_list_next = NULL;
-    list->lam_list_type = 0;
-    list->lam_list_length = 0;
+    list->ompi_list_head.ompi_list_prev = NULL;
+    list->ompi_list_head.ompi_list_next = &list->ompi_list_tail;
+    list->ompi_list_tail.ompi_list_prev = &list->ompi_list_head;
+    list->ompi_list_tail.ompi_list_next = NULL;
+    list->ompi_list_type = 0;
+    list->ompi_list_length = 0;
 }
 
 
-static void lam_list_destruct(lam_list_t *list)
+static void ompi_list_destruct(ompi_list_t *list)
 {
     /* release all items in list */
-    lam_list_construct(list);
+    ompi_list_construct(list);
 }
 
-int lam_list_insert(lam_list_t *list, lam_list_item_t *item, long long idx)
+int ompi_list_insert(ompi_list_t *list, ompi_list_item_t *item, long long idx)
 {
     /* Adds item to list at index and retains item. */
     int     i;
-    volatile lam_list_item_t     *ptr, *next;
+    volatile ompi_list_item_t     *ptr, *next;
     
-    if ( idx >= list->lam_list_length )
+    if ( idx >= list->ompi_list_length )
         return 0;
     
     if ( 0 == idx )
     {
-        lam_list_prepend(list, item);
+        ompi_list_prepend(list, item);
     }
     else
     {
         /* pointer to element 0 */
-        ptr = list->lam_list_head.lam_list_next;
+        ptr = list->ompi_list_head.ompi_list_next;
         for ( i = 0; i < idx-1; i++ )
-            ptr = ptr->lam_list_next;
+            ptr = ptr->ompi_list_next;
 
-        next = ptr->lam_list_next;
-        item->lam_list_next = next;
-        item->lam_list_prev = ptr;
-        next->lam_list_prev = item;
-        ptr->lam_list_next = item;
+        next = ptr->ompi_list_next;
+        item->ompi_list_next = next;
+        item->ompi_list_prev = ptr;
+        next->ompi_list_prev = item;
+        ptr->ompi_list_next = item;
     }
     
-    list->lam_list_length++;    
+    list->ompi_list_length++;    
     return 1;
 }
 

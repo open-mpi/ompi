@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "datatype.h"
 #include "datatype_internal.h"
@@ -10,7 +10,7 @@
 #endif
 #include <stdlib.h>
 
-static int lam_convertor_pack_general( lam_convertor_t* pConvertor,
+static int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
                                        struct iovec* out, unsigned int outCount )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
@@ -135,7 +135,7 @@ static int lam_convertor_pack_general( lam_convertor_t* pConvertor,
 
 /* We suppose here that we work with an already optimized version of the data
  */
-static int lam_convertor_pack_homogeneous( lam_convertor_t* pConv,
+static int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
                                            struct iovec* iov, unsigned int out_size )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
@@ -271,10 +271,10 @@ static int lam_convertor_pack_homogeneous( lam_convertor_t* pConv,
     return 0;
 }
 
-static int lam_convertor_pack_homogeneous_contig( lam_convertor_t* pConv,
+static int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
                                                   struct iovec* out, unsigned int out_size )
 {
-    lam_datatype_t* pData = pConv->pDesc;
+    ompi_datatype_t* pData = pConv->pDesc;
     char* pSrc = pConv->pBaseBuf + pData->true_lb + pConv->bConverted;
     size_t length = pData->size * pConv->count;
     long extent;
@@ -308,7 +308,7 @@ static int lam_convertor_pack_homogeneous_contig( lam_convertor_t* pConv,
  *        1 if everything went fine and the data was completly converted
  *       -1 something wrong occurs.
  */
-int lam_convertor_pack( lam_convertor_t* pConv, struct iovec* out, unsigned int out_size )
+int ompi_convertor_pack( ompi_convertor_t* pConv, struct iovec* out, unsigned int out_size )
 {
     dt_desc_t* pData = pConv->pDesc;
 
@@ -324,11 +324,11 @@ int lam_convertor_pack( lam_convertor_t* pConv, struct iovec* out, unsigned int 
             pConv->freebuf = out[0].iov_base;
         }
     }
-    return lam_convertor_progress( pConv, out, out_size );
+    return ompi_convertor_progress( pConv, out, out_size );
 }
 
 extern int local_sizes[DT_MAX_PREDEFINED];
-int lam_convertor_init_for_send( lam_convertor_t* pConv, unsigned int flags,
+int ompi_convertor_init_for_send( ompi_convertor_t* pConv, unsigned int flags,
                                  dt_desc_t* dt, int count,
                                  void* pUserBuf, int local_starting_point )
 {
@@ -352,23 +352,23 @@ int lam_convertor_init_for_send( lam_convertor_t* pConv, unsigned int flags,
     pConv->bConverted = 0;
     if( dt->flags & DT_FLAG_CONTIGUOUS ) {
         pConv->flags |= DT_FLAG_CONTIGUOUS;
-        pConv->fAdvance = lam_convertor_pack_homogeneous_contig;
+        pConv->fAdvance = ompi_convertor_pack_homogeneous_contig;
     } else {
         /* TODO handle the sender convert case */
-        pConv->fAdvance = lam_convertor_pack_general;
-        pConv->fAdvance = lam_convertor_pack_homogeneous;
+        pConv->fAdvance = ompi_convertor_pack_general;
+        pConv->fAdvance = ompi_convertor_pack_homogeneous;
     }
     if( pConv->freebuf != NULL ) {
         free( pConv->freebuf );
         pConv->freebuf = NULL;
     }
-    lam_create_stack_with_pos( pConv, local_starting_point, local_sizes );
+    ompi_create_stack_with_pos( pConv, local_starting_point, local_sizes );
     return 0;
 }
 
-lam_convertor_t* lam_convertor_create( int remote_arch, int mode )
+ompi_convertor_t* ompi_convertor_create( int remote_arch, int mode )
 {
-   lam_convertor_t* pConv = OBJ_NEW(lam_convertor_t);
+   ompi_convertor_t* pConv = OBJ_NEW(ompi_convertor_t);
 
    pConv->pDesc      = NULL;
    pConv->pStack     = NULL;
@@ -378,7 +378,7 @@ lam_convertor_t* lam_convertor_create( int remote_arch, int mode )
    return pConv;
 }
 
-static int lam_convertor_destroy( lam_convertor_t* pConv )
+static int ompi_convertor_destroy( ompi_convertor_t* pConv )
 {
    if( pConv == NULL ) return 0;
    if( pConv->pStack != NULL ) free( pConv->pStack );
@@ -387,11 +387,11 @@ static int lam_convertor_destroy( lam_convertor_t* pConv )
    return 0;
 }
 
-OBJ_CLASS_INSTANCE(lam_convertor_t, lam_object_t, NULL, lam_convertor_destroy );
+OBJ_CLASS_INSTANCE(ompi_convertor_t, ompi_object_t, NULL, ompi_convertor_destroy );
 
-inline int lam_convertor_copy( lam_convertor_t* pSrcConv, lam_convertor_t* pDestConv )
+inline int ompi_convertor_copy( ompi_convertor_t* pSrcConv, ompi_convertor_t* pDestConv )
 {
-   MEMCPY( pDestConv, pSrcConv, sizeof(lam_convertor_t) );
+   MEMCPY( pDestConv, pSrcConv, sizeof(ompi_convertor_t) );
    pDestConv->pStack     = NULL;
    pDestConv->pDesc      = NULL;
    pDestConv->count      = 0;
@@ -399,27 +399,27 @@ inline int lam_convertor_copy( lam_convertor_t* pSrcConv, lam_convertor_t* pDest
    pDestConv->bConverted = 0;
    pDestConv->fAdvance   = NULL;
    pDestConv->freebuf    = NULL;
-   return LAM_SUCCESS;
+   return OMPI_SUCCESS;
 }
 
-lam_convertor_t* lam_convertor_get_copy( lam_convertor_t* pConvertor )
+ompi_convertor_t* ompi_convertor_get_copy( ompi_convertor_t* pConvertor )
 {
-   lam_convertor_t* pDestConv = OBJ_NEW(lam_convertor_t);
-   (void)lam_convertor_copy( pConvertor, pDestConv );
+   ompi_convertor_t* pDestConv = OBJ_NEW(ompi_convertor_t);
+   (void)ompi_convertor_copy( pConvertor, pDestConv );
    return pDestConv;
 }
 
 /* Actually we suppose that we can only do receiver side conversion */
-int lam_convertor_get_packed_size( lam_convertor_t* pConv, int* pSize )
+int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, int* pSize )
 {
-   if( lam_ddt_type_size( pConv->pDesc, pSize ) != 0 )
+   if( ompi_ddt_type_size( pConv->pDesc, pSize ) != 0 )
       return -1;
    /* actually *pSize contain the size of one instance of the data */
    *pSize = (*pSize) * pConv->count;
    return 0;
 }
 
-int lam_convertor_get_unpacked_size( lam_convertor_t* pConv, int* pSize )
+int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, int* pSize )
 {
    int i;
    dt_desc_t* pData = pConv->pDesc;

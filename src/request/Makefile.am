@@ -19,8 +19,8 @@ librequest_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/request
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/request
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif

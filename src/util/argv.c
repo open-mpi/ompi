@@ -15,14 +15,14 @@
 /*
  * Append a string to the end of a new or existing argv array.
  */
-int lam_argv_append(int *argc, char ***argv, const char *arg)
+int ompi_argv_append(int *argc, char ***argv, const char *arg)
 {
   /* Create new argv. */
 
   if (NULL == *argv) {
     *argv = malloc(2 * sizeof(char *));
     if (NULL == *argv)
-      return LAM_ERROR;
+      return OMPI_ERROR;
     *argc = 0;
     (*argv)[0] = NULL;
     (*argv)[1] = NULL;
@@ -33,27 +33,27 @@ int lam_argv_append(int *argc, char ***argv, const char *arg)
   else {
     *argv = realloc(*argv, (*argc + 2) * sizeof(char *));
     if (NULL == *argv)
-      return LAM_ERROR;
+      return OMPI_ERROR;
   }
 
   /* Set the newest element to point to a copy of the arg string */
 
   (*argv)[*argc] = malloc(strlen(arg) + 1);
   if (NULL == (*argv)[*argc])
-    return LAM_ERROR;
+    return OMPI_ERROR;
 
   strcpy((*argv)[*argc], arg);
   *argc = *argc + 1;
   (*argv)[*argc] = NULL;
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
 /*
  * Free a NULL-terminated argv array.
  */
-void lam_argv_free(char **argv)
+void ompi_argv_free(char **argv)
 {
   char **p;
 
@@ -71,7 +71,7 @@ void lam_argv_free(char **argv)
 /*
  * Split a string into a NULL-terminated argv array.
  */
-char **lam_argv_split(const char *src_string, int delimiter)
+char **ompi_argv_split(const char *src_string, int delimiter)
 {
   char arg[ARGSIZE];
   char **argv = NULL;
@@ -98,7 +98,7 @@ char **lam_argv_split(const char *src_string, int delimiter)
     /* tail argument, add straight from the original string */
 
     else if ('\0' == *p) {
-      if (LAM_ERROR == lam_argv_append(&argc, &argv, src_string))
+      if (OMPI_ERROR == ompi_argv_append(&argc, &argv, src_string))
 	return NULL;
     }
 
@@ -112,7 +112,7 @@ char **lam_argv_split(const char *src_string, int delimiter)
       strncpy(argtemp, src_string, arglen);
       argtemp[arglen] = '\0';
 
-      if (LAM_ERROR == lam_argv_append(&argc, &argv, argtemp)) {
+      if (OMPI_ERROR == ompi_argv_append(&argc, &argv, argtemp)) {
 	free(argtemp);
 	return NULL;
       }
@@ -126,7 +126,7 @@ char **lam_argv_split(const char *src_string, int delimiter)
       strncpy(arg, src_string, arglen);
       arg[arglen] = '\0';
 
-      if (LAM_ERROR == lam_argv_append(&argc, &argv, arg))
+      if (OMPI_ERROR == ompi_argv_append(&argc, &argv, arg))
 	return NULL;
     }
 
@@ -142,7 +142,7 @@ char **lam_argv_split(const char *src_string, int delimiter)
 /*
  * Return the length of a NULL-terminated argv array.
  */
-int lam_argv_count(char **argv)
+int ompi_argv_count(char **argv)
 {
   char **p;
   int i;
@@ -161,7 +161,7 @@ int lam_argv_count(char **argv)
  * Join all the elements of an argv array into a single
  * newly-allocated string.
  */
-char *lam_argv_join(char **argv, int delimiter)
+char *ompi_argv_join(char **argv, int delimiter)
 {
   char **p;
   char *pp;
@@ -210,7 +210,7 @@ char *lam_argv_join(char **argv, int delimiter)
 /*
  * Return the number of bytes consumed by an argv array.
  */
-size_t lam_argv_len(char **argv)
+size_t ompi_argv_len(char **argv)
 {
   char **p;
   size_t length;
@@ -231,7 +231,7 @@ size_t lam_argv_len(char **argv)
 /*
  * Copy a NULL-terminated argv array.
  */
-char **lam_argv_copy(char **argv)
+char **ompi_argv_copy(char **argv)
 {
   char **dupv = NULL;
   int dupc = 0;
@@ -240,8 +240,8 @@ char **lam_argv_copy(char **argv)
     return NULL;
 
   while (NULL != *argv) {
-    if (LAM_ERROR == lam_argv_append(&dupc, &dupv, *argv)) {
-      lam_argv_free(dupv);
+    if (OMPI_ERROR == ompi_argv_append(&dupc, &dupv, *argv)) {
+      ompi_argv_free(dupv);
       return NULL;
     }
 

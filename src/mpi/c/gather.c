@@ -1,7 +1,7 @@
 /*
  * $HEADERS$
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "mpi.h"
@@ -9,11 +9,11 @@
 #include "mca/coll/coll.h"
 #include "communicator/communicator.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Gather = PMPI_Gather
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -30,42 +30,42 @@ int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     
     if (MPI_PARAM_CHECK) {
 	if (MPI_COMM_NULL == comm) {
-	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
 					 FUNC_NAME);
 	}
     }	
 
     func = comm->c_coll.coll_gather_intra;
 
-    if (LAM_COMM_IS_INTRA(comm)) {
+    if (OMPI_COMM_IS_INTRA(comm)) {
 	/* conditions for intracomm */
 	MPI_Comm_size(comm, &size);
 	MPI_Comm_rank(comm, &rank);
 	if ((root >= size) || (root < 0)) {
-	    return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
 	}
 	if ((sendcount < 0) || (rank == root && recvcount < 0)) {
-	    return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
 	}
 	if ((sendtype == MPI_DATATYPE_NULL) ||
 	    (rank == root && recvtype == MPI_DATATYPE_NULL)) {
-	    return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
+	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
 	}
     } else {
 	/* Conditions for intercomm */
 	MPI_Comm_remote_size(comm, &size);
 	if (((root != MPI_PROC_NULL) && (sendtype == MPI_DATATYPE_NULL)) ||
 	    (root == MPI_ROOT  && recvtype == MPI_DATATYPE_NULL)) {
-	    return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
+	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME); 
 	}
 	if (!(((root < size) && (root >= 0)) 
 	      || (root == MPI_ROOT) || (root == MPI_PROC_NULL))) {
-	    return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME); 
+	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME); 
 	}
     }
 
     if (func == NULL) {
-	return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_OTHER, FUNC_NAME); 
+	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OTHER, FUNC_NAME); 
     }
 
 
@@ -74,5 +74,5 @@ int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     err = func(sendbuf, sendcount, sendtype, recvbuf,
 	       recvcount, recvtype, root, comm);
 
-    LAM_ERRHANDLER_RETURN(err, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(err, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }

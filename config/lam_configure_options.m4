@@ -3,8 +3,8 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([LAM_CONFIGURE_OPTIONS],[
-lam_show_subtitle "Configuration options"
+AC_DEFUN([OMPI_CONFIGURE_OPTIONS],[
+ompi_show_subtitle "Configuration options"
 
 #
 # Memory debugging
@@ -27,7 +27,7 @@ if test "$WANT_MEM_DEBUG" = "0" -a -z "$enable_mem_zero" -a -d .svn; then
     echo "--> developer override: enable mem profiling by default"
 fi
 #################### Early development override ####################
-AC_DEFINE_UNQUOTED(LAM_ENABLE_MEM_DEBUG, $WANT_MEM_DEBUG,
+AC_DEFINE_UNQUOTED(OMPI_ENABLE_MEM_DEBUG, $WANT_MEM_DEBUG,
     [Whether we want the memory profiling or not])
 
 #
@@ -51,7 +51,7 @@ if test "$WANT_MEM_PROFILE" = "0" -a -z "$enable_mem_zero" -a -d .svn; then
     echo "--> developer override: enable mem profiling by default"
 fi
 #################### Early development override ####################
-AC_DEFINE_UNQUOTED(LAM_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
+AC_DEFINE_UNQUOTED(OMPI_ENABLE_MEM_PROFILE, $WANT_MEM_PROFILE,
     [Whether we want the memory profiling or not])
 
 #
@@ -101,7 +101,7 @@ if test "$WANT_DEBUG" = "0"; then
     CFLAGS="-DNDEBUG $CFLAGS"
     CXXFLAGS="-DNDEBUG $CFLAGS"
 fi
-AC_DEFINE_UNQUOTED(LAM_ENABLE_DEBUG, $WANT_DEBUG,
+AC_DEFINE_UNQUOTED(OMPI_ENABLE_DEBUG, $WANT_DEBUG,
     [Whether we want developer-level debugging code or not])
 
 
@@ -115,10 +115,10 @@ AC_ARG_ENABLE(f77,
                    [enable f77 MPI bindings (default: enabled)]))
 if test "$enable_f77" != "no"; then
     AC_MSG_RESULT([yes])
-    LAM_WANT_F77_BINDINGS=1
+    OMPI_WANT_F77_BINDINGS=1
 else
     AC_MSG_RESULT([no])
-    LAM_WANT_F77_BINDINGS=0
+    OMPI_WANT_F77_BINDINGS=0
 fi
 
 
@@ -132,10 +132,10 @@ AC_ARG_ENABLE(f90,
                    [enable f90 MPI bindings (default: enabled)]))
 if test "$enable_f90" != "no"; then
     AC_MSG_RESULT([yes])
-    LAM_WANT_F90_BINDINGS=1
+    OMPI_WANT_F90_BINDINGS=1
 else
     AC_MSG_RESULT([no])
-    LAM_WANT_F90_BINDINGS=0
+    OMPI_WANT_F90_BINDINGS=0
 fi
 
 
@@ -180,7 +180,7 @@ AC_MSG_CHECKING([if want run-time MPI parameter checking])
 AC_ARG_ENABLE(mpi-param-check,
     AC_HELP_STRING([--with-mpi-param-check],
                    [behavior of MPI function parameter checking.  Valid values are: always, never, runtime (default: runtime)]))
-mpi_param_check=lam_mpi_param_check
+mpi_param_check=ompi_mpi_param_check
 if test "$with_mpi_param_check" = "no" -o \
     "$with_mpi_param_check" = "never"; then
     mpi_param_check=0
@@ -203,10 +203,10 @@ AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK, $mpi_param_check,
 
 
 #
-# Do we want to install all of LAM's header files?
+# Do we want to install all of OMPI's header files?
 #
 
-AC_MSG_CHECKING([if want to install LAM header files])
+AC_MSG_CHECKING([if want to install OMPI header files])
 AC_ARG_WITH(devel-headers,
     AC_HELP_STRING([--with-devel-headers],
                    [normal MPI users/applications do not need this (mpi.h and mpif.h are ALWAYS installed).  Developer headers are only necessary for MCA module authors (default: disabled).]))
@@ -223,7 +223,7 @@ AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
 # ...?
 
 # amorphous, seem-to-be-good-idea options
-# --with-lam=maintainer_options
+# --with-ompi=maintainer_options
 # --with-mca-*
 # ...?
 
@@ -232,7 +232,7 @@ AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
 # 
 AC_MSG_CHECKING(if want deprecated executable names)
 AC_ARG_ENABLE(deprecated-executable-names,
-    AC_HELP_STRING([--enable-deprecated-executable-names], [make sym links to deprecated LAM executables (e.g., hcc, hcp, hf77, wipe) (default: disabled)]))
+    AC_HELP_STRING([--enable-deprecated-executable-names], [make sym links to deprecated OMPI executables (e.g., hcc, hcp, hf77, wipe) (default: disabled)]))
 if test "$enable_deprecated_executable_names" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_DEN=1

@@ -11,13 +11,13 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "os/atomic.h"
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_recvfrag.h"
 
-extern lam_class_t mca_ptl_tcp_send_frag_t_class;
+extern ompi_class_t mca_ptl_tcp_send_frag_t_class;
 struct mca_ptl_base_peer_t;
 
 
@@ -35,7 +35,7 @@ typedef struct mca_ptl_tcp_send_frag_t mca_ptl_tcp_send_frag_t;
 
 
 #define MCA_PTL_TCP_SEND_FRAG_ALLOC(item, rc)  \
-    LAM_FREE_LIST_GET(&mca_ptl_tcp_module.tcp_send_frags, item, rc);
+    OMPI_FREE_LIST_GET(&mca_ptl_tcp_module.tcp_send_frags, item, rc);
 
 
 bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t*, int sd);
@@ -122,7 +122,7 @@ static inline void mca_ptl_tcp_send_frag_init_ack(
     ack->super.super.frag_addr = NULL;
     ack->super.super.frag_size = 0;
     ack->frag_vec_ptr = ack->frag_vec;
-    ack->frag_vec[0].iov_base = (lam_iov_base_ptr_t)hdr;
+    ack->frag_vec[0].iov_base = (ompi_iov_base_ptr_t)hdr;
     ack->frag_vec[0].iov_len = sizeof(mca_ptl_base_header_t);
     ack->frag_vec_cnt = 1;
 }

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <sys/param.h>
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "util/sys_info.h"
 #include "util/os_path.h"
 

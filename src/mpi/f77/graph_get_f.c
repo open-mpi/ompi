@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_GRAPH_GET = mpi_graph_get_f
 #pragma weak pmpi_graph_get = mpi_graph_get_f
 #pragma weak pmpi_graph_get_ = mpi_graph_get_f
 #pragma weak pmpi_graph_get__ = mpi_graph_get_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_GRAPH_GET,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_GRAPH_GET,
                            pmpi_graph_get,
                            pmpi_graph_get_,
                            pmpi_graph_get__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_GRAPH_GET,
                            (comm, maxindex, maxedges, index, edges, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_GRAPH_GET = mpi_graph_get_f
 #pragma weak mpi_graph_get = mpi_graph_get_f
 #pragma weak mpi_graph_get_ = mpi_graph_get_f
 #pragma weak mpi_graph_get__ = mpi_graph_get_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_GRAPH_GET,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_GET,
                            mpi_graph_get,
                            mpi_graph_get_,
                            mpi_graph_get__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_GRAPH_GET,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

@@ -1,7 +1,7 @@
 Overview
 ========
 
-This file is here for those who are building/exploring LAM/MPI in its
+This file is here for those who are building/exploring OMPI/MPI in its
 source code form, most likely through a developer's tree (i.e., a CVS
 checkout).
 
@@ -9,7 +9,7 @@ checkout).
 Use of GNU Autoconf, Automake, and Libtool
 ==========================================
 
-If you are building LAM/MPI from a developer's tree, you must first
+If you are building OMPI/MPI from a developer's tree, you must first
 use fairly recent versions of the GNU tools Autoconf, Automake, and
 Libtool.  As of this writing, you need at least Autoconf v2.58,
 Automake v1.6, and Libtool 1.5.  You can check what versions you have
@@ -79,9 +79,9 @@ following advice:
    Autoconf and Automake build and install very quickly; Libtool will
    take a minute or two.
 
-5. You can now run LAM's top-level "autogen.sh" script.  This script
+5. You can now run OMPI's top-level "autogen.sh" script.  This script
    will invoke the GNU Autoconf, Automake, and Libtool commands in the
-   proper order and setup to run LAM's top-level "configure" script.
+   proper order and setup to run OMPI's top-level "configure" script.
 
    Running autogen.sh typically takes several minutes.  It's not very
    exciting to watch.  :-)
@@ -89,14 +89,14 @@ following advice:
    5a. You generally need to run autogen.sh whenever the file
        "configure.ac" changes, or any files in the config/ directory
        change (the config/ directory is where a lot of "include" files
-       for LAM's configure script live).
+       for OMPI's configure script live).
 
    5b. You do *NOT* need to re-run autogen.sh if you modify a
        Makefile.am.
 
-   5c. Note that "autogen.sh" automatically traverses the entire LAM
+   5c. Note that "autogen.sh" automatically traverses the entire OMPI
        tree, running the GNU tools in all MCA modules.  This is not
-       always necessary.  As you become more familiar with the LAM
+       always necessary.  As you become more familiar with the OMPI
        sources, you will come to understand the when you only need to
        re-generate the top-level configure script, and when you need
        to re-generate *all* configure scripts (it's complicated -- not

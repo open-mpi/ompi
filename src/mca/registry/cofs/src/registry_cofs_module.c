@@ -4,7 +4,7 @@
  *
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "constants.h"
 #include "mca/mca.h"
@@ -44,20 +44,20 @@ struct mca_registry_1_0_0_t mca_registry_cofs_1_0_0 = {
   mca_registry_cofs_unpublish
 };
 
-char mca_registry_cofs_comm_loc[LAM_PATH_MAX];
+char mca_registry_cofs_comm_loc[OMPI_PATH_MAX];
 int mca_registry_cofs_my_vpid;
 
 int
 mca_registry_cofs_open(void)
 {
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
 int
 mca_registry_cofs_close(void)
 {
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
@@ -75,7 +75,7 @@ mca_registry_cofs_init(int *priority, bool *allow_multi_user_threads,
   /*
    * BWB - fix me, make register the "right" way...
    */
-  tmp = getenv("MCA_common_lam_cofs_comm_dir");
+  tmp = getenv("MCA_common_ompi_cofs_comm_dir");
   if (tmp == NULL) {
     /* make it $HOME */
     tmp = getenv("HOME");
@@ -83,9 +83,9 @@ mca_registry_cofs_init(int *priority, bool *allow_multi_user_threads,
       printf("registry_cofs can not find communication dir\n");
       return NULL;
     }
-    snprintf(mca_registry_cofs_comm_loc, LAM_PATH_MAX, "%s/cofs", tmp);
+    snprintf(mca_registry_cofs_comm_loc, OMPI_PATH_MAX, "%s/cofs", tmp);
   } else {
-    snprintf(mca_registry_cofs_comm_loc, LAM_PATH_MAX, "%s", tmp);
+    snprintf(mca_registry_cofs_comm_loc, OMPI_PATH_MAX, "%s", tmp);
   }
 
   /*
@@ -108,7 +108,7 @@ mca_registry_cofs_init(int *priority, bool *allow_multi_user_threads,
    * BWB - fix me, make register the "right" way...
    */
   /* find our vpid */
-  tmp = getenv("MCA_common_lam_cofs_my_vpid");
+  tmp = getenv("MCA_common_ompi_cofs_my_vpid");
   if (tmp == NULL) {
     printf("registry_cofs can not find vpid\n");
     return NULL;
@@ -122,5 +122,5 @@ mca_registry_cofs_init(int *priority, bool *allow_multi_user_threads,
 int
 mca_registry_cofs_finalize(void)
 {
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

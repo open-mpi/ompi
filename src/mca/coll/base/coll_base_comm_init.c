@@ -3,7 +3,7 @@
  *
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -16,7 +16,7 @@
 #include "mca/coll/base/base.h"
 #include "communicator/communicator.h"
 
-extern lam_list_t mca_coll_base_available;
+extern ompi_list_t mca_coll_base_available;
 
 /* 
  * Public variables
@@ -35,19 +35,19 @@ static mca_coll_1_0_0_t lb_functions;
 
 
 #if 0
-static int check_module_name(lam_communicator_t *comm, char *name);
+static int check_module_name(ompi_communicator_t *comm, char *name);
 #endif
 
-static int check_all_modules(lam_communicator_t *comm);
-static int check_module(lam_communicator_t *comm, mca_base_module_t *coll,
+static int check_all_modules(ompi_communicator_t *comm);
+static int check_module(ompi_communicator_t *comm, mca_base_module_t *coll,
                         const mca_coll_1_0_0_t **actions);
 static const mca_coll_1_0_0_t *
-  query_1_0_0(mca_base_module_t *coll, lam_communicator_t *comm, int *priority);
-static int init_module(mca_base_module_t *module, lam_communicator_t *comm, 
+  query_1_0_0(mca_base_module_t *coll, ompi_communicator_t *comm, int *priority);
+static int init_module(mca_base_module_t *module, ompi_communicator_t *comm, 
                        const mca_coll_1_0_0_t **actions);
-static int init_1_0_0(lam_communicator_t *comm, 
+static int init_1_0_0(ompi_communicator_t *comm, 
                       const mca_coll_1_0_0_t **actions);
-static void replace_null_with_lam_basic(mca_coll_1_0_0_t *sel_module);
+static void replace_null_with_ompi_basic(mca_coll_1_0_0_t *sel_module);
 
 
 /*
@@ -61,7 +61,7 @@ static void replace_null_with_lam_basic(mca_coll_1_0_0_t *sel_module);
  * we construct is probably ok. 
  */
 int
-mca_coll_base_init_comm(lam_communicator_t *comm)
+mca_coll_base_init_comm(ompi_communicator_t *comm)
 {
   int i;
 #if 0
@@ -80,7 +80,7 @@ mca_coll_base_init_comm(lam_communicator_t *comm)
     else
       snprintf(name, sizeof(name), "<no name> (cid %d)", comm->c_contextid);
     name[sizeof(name) - 1] = '\0';
-    lam_debug(mca_coll_did, "init_comm: new communicator: %s", name);
+    ompi_debug(mca_coll_did, "init_comm: new communicator: %s", name);
   }
 
   /* WARNING: This will go away someday.  It is *only* here for a
@@ -95,7 +95,7 @@ mca_coll_base_init_comm(lam_communicator_t *comm)
 
   else {
 
-    MPI_Comm_get_attr(comm, LAM_MPI_SSI_COLL, &module_name, &found);
+    MPI_Comm_get_attr(comm, OMPI_MPI_SSI_COLL, &module_name, &found);
     if (found == 1)
       i = check_module_name(comm, module_name);
   
@@ -115,22 +115,22 @@ mca_coll_base_init_comm(lam_communicator_t *comm)
   /* If we have no collective modules available, it's an error.
      Thanks for playing! */
 
-  if (i == LAM_ERROR) {
+  if (i == OMPI_ERROR) {
 #if 0
       if (mca_coll_verbose >= 10)
-      lam_debug(mca_coll_did, "init_comm: No modules available!");
+      ompi_debug(mca_coll_did, "init_comm: No modules available!");
     show_help("ssi-coll", "none-available", NULL);
-    return LAM_ERROR;
+    return OMPI_ERROR;
   }
 
   /* Otherwise, announce the winner */
   
   if (mca_coll_verbose > 0)
-    lam_debug(mca_coll_did, "init_comm: Selected coll module %s", 
+    ompi_debug(mca_coll_did, "init_comm: Selected coll module %s", 
 	      mca_coll_modules[i]->ssi_module_name);
   
 #endif
-  return LAM_ERROR;
+  return OMPI_ERROR;
   }
 return 0;
 }
@@ -145,7 +145,7 @@ return 0;
  * error (i.e., don't try to find any other available modules).
  */
 static int
-check_module_name(lam_communicator_t *comm, char *name)
+check_module_name(ompi_communicator_t *comm, char *name)
 {
   mca_module_t *module;
   mca_base_module_t *coll;
@@ -153,8 +153,8 @@ check_module_name(lam_communicator_t *comm, char *name)
 
   /* Find the target module by its name */
 
-  for (module = al_top(lam_ssi_coll_base_available); module != NULL;
-       module = al_next(lam_ssi_coll_base_available, module)) {
+  for (module = al_top(ompi_ssi_coll_base_available); module != NULL;
+       module = al_next(ompi_ssi_coll_base_available, module)) {
     coll = module->lsm_module;
     if (strcmp(coll->ssi_module_name, name) == 0) {
 
@@ -169,11 +169,11 @@ check_module_name(lam_communicator_t *comm, char *name)
 	comm->c_ssi_coll = *actions;
 	actions = NULL;
         if (init_module(coll, comm, &actions) != 0)
-	  return LAM_ERROR;
+	  return OMPI_ERROR;
 	if (actions != NULL)
 	  comm->c_ssi_coll = *actions;
 
-	/* Some logic is required if we decide to use lam_basic pointers 
+	/* Some logic is required if we decide to use ompi_basic pointers 
 	   for the NULL pointers */
         return 0;
       }
@@ -185,7 +185,7 @@ check_module_name(lam_communicator_t *comm, char *name)
     }
   }
 
-  return LAM_ERROR;
+  return OMPI_ERROR;
 }
 
 #endif
@@ -199,23 +199,23 @@ check_module_name(lam_communicator_t *comm, char *name)
  * structs with the data from the winner.  Call finalize and close on
  * all the losers that we invoked initialize on.
  *
- * Return LAM_ERROR if there are no modules available.
+ * Return OMPI_ERROR if there are no modules available.
  */
 static int 
-check_all_modules(lam_communicator_t *comm)
+check_all_modules(ompi_communicator_t *comm)
 {
   int priority, best_priority = -1;
   mca_base_module_t *best_module;
-  lam_list_item_t *module;
+  ompi_list_item_t *module;
   const mca_coll_1_0_0_t *cur, *best = NULL;
 
   /* Call the query function in every collective module and see if
      they want to run on this communicator */
 
   for (best_priority = -1, 
-	   module = lam_list_get_first(&mca_coll_base_available); 
-       module != lam_list_get_end(&mca_coll_base_available);
-       module = lam_list_get_next(module)) {
+	   module = ompi_list_get_first(&mca_coll_base_available); 
+       module != ompi_list_get_end(&mca_coll_base_available);
+       module = ompi_list_get_next(module)) {
     priority = check_module(comm, 
 			    ((mca_base_module_priority_list_item_t *)
 			    module)->mpli_module,
@@ -232,7 +232,7 @@ check_all_modules(lam_communicator_t *comm)
   /* If we didn't find any available modules, return an error */
 
   if (best_priority == -1)
-    return LAM_ERROR;
+    return OMPI_ERROR;
 
   /* Otherwise, we have a winner.  Assign all the function pointers in
      the comm to that module, and call its init function. */
@@ -240,14 +240,14 @@ check_all_modules(lam_communicator_t *comm)
   comm->c_coll = *best;
   best = NULL;
   if (init_module(best_module, comm, &best) != 0)
-    return LAM_ERROR;
+    return OMPI_ERROR;
 
   if (best != NULL) 
     comm->c_coll = *best;
 
-  /* Replace all the Non null collective functions by corresponding lam_basic
+  /* Replace all the Non null collective functions by corresponding ompi_basic
      ones */
-  replace_null_with_lam_basic(&(comm->c_coll));
+  replace_null_with_ompi_basic(&(comm->c_coll));
 
   return 0;
 }
@@ -257,7 +257,7 @@ check_all_modules(lam_communicator_t *comm)
  * Check a single module
  */
 static int 
-check_module(lam_communicator_t *comm, mca_base_module_t *coll,
+check_module(ompi_communicator_t *comm, mca_base_module_t *coll,
              const mca_coll_1_0_0_t **actions)
 {
   int priority = -1;
@@ -270,7 +270,7 @@ check_module(lam_communicator_t *comm, mca_base_module_t *coll,
   if (*actions != NULL) {
     
     /* If the module is basic then store the pointers so that you can
-       replace NULL pointers by lam_basic ones */
+       replace NULL pointers by ompi_basic ones */
     if (strcmp(coll->mca_module_name, "basic") == 0) {
       lb_functions = **actions;
     }
@@ -278,8 +278,8 @@ check_module(lam_communicator_t *comm, mca_base_module_t *coll,
 
     /* VPS: add after debug streams done  */
 #if 0
-    if (lam_ssi_coll_verbose >= 10)
-	lam_debug(lam_ssi_coll_did, 
+    if (ompi_ssi_coll_verbose >= 10)
+	ompi_debug(ompi_ssi_coll_did, 
 		"init_comm: module available: %s, priority: %d", 
 		  coll->ssi_module_name, priority);
     fprintf(stderr, "init_comm: module available: %s, priority: %d", 
@@ -288,8 +288,8 @@ check_module(lam_communicator_t *comm, mca_base_module_t *coll,
 
   } else {
 #if 0
-    if (lam_ssi_coll_verbose >= 10)
-      lam_debug(lam_ssi_coll_did, 
+    if (ompi_ssi_coll_verbose >= 10)
+      ompi_debug(ompi_ssi_coll_did, 
 		"init_comm: module not available: %s, priority: %d", 
 		coll->ssi_module_name, priority);
     fprintf(stderr, "init_comm: module not available: %s, priority: %d", 
@@ -310,7 +310,7 @@ check_module(lam_communicator_t *comm, mca_base_module_t *coll,
  * 1.1.0 actions struct.
  */
 static const mca_coll_1_0_0_t *
-query_1_0_0(mca_base_module_t *coll, lam_communicator_t *comm, int *priority) 
+query_1_0_0(mca_base_module_t *coll, ompi_communicator_t *comm, int *priority) 
 {
   mca_coll_base_module_1_0_0_t *coll100 = (mca_coll_base_module_1_0_0_t *)coll;
 
@@ -326,7 +326,7 @@ query_1_0_0(mca_base_module_t *coll, lam_communicator_t *comm, int *priority)
  * Initialize a module
  */
 static int
-init_module(mca_base_module_t *module, lam_communicator_t *comm, 
+init_module(mca_base_module_t *module, ompi_communicator_t *comm, 
             const mca_coll_1_0_0_t **actions)
 {
   if (module->mca_major_version == 1 &&
@@ -334,7 +334,7 @@ init_module(mca_base_module_t *module, lam_communicator_t *comm,
       module->mca_release_version == 0)
     return init_1_0_0(comm, actions);
   else
-    return LAM_ERROR;
+    return OMPI_ERROR;
 }
 
 
@@ -343,7 +343,7 @@ init_module(mca_base_module_t *module, lam_communicator_t *comm,
  * convert it before returning.
  */
 static int 
-init_1_0_0(lam_communicator_t *comm, const mca_coll_1_0_0_t **actions)
+init_1_0_0(ompi_communicator_t *comm, const mca_coll_1_0_0_t **actions)
 {
   const mca_coll_1_0_0_t *actions100;
   mca_coll_base_init_1_0_0_fn_t init100;
@@ -356,18 +356,18 @@ init_1_0_0(lam_communicator_t *comm, const mca_coll_1_0_0_t **actions)
   init100 = (mca_coll_base_init_1_0_0_fn_t) comm->c_coll.coll_init;
 
   if (init100(comm, &actions100) != 0)
-    return LAM_ERROR;
+    return OMPI_ERROR;
 
   return 0;
 }
 
 
 /* 
- * Replace the NULL pointers by corresponsing lam_basic pointers 
+ * Replace the NULL pointers by corresponsing ompi_basic pointers 
  */
 
 static void 
-replace_null_with_lam_basic(mca_coll_1_0_0_t *selected_module) {
+replace_null_with_ompi_basic(mca_coll_1_0_0_t *selected_module) {
   if (selected_module->coll_allgather_intra == NULL)
     selected_module->coll_allgather_intra = lb_functions.coll_allgather_intra;
   if (selected_module->coll_allgatherv_intra == NULL)

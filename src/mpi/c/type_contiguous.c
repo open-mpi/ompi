@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
 #include "runtime/runtime.h"
@@ -11,11 +11,11 @@
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_contiguous = PMPI_Type_contiguous
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -29,25 +29,25 @@ MPI_Type_contiguous(int count,
    int rc;
 
    if( MPI_PARAM_CHECK ) {
-      if( LAM_MPI_INVALID_STATE ) {
-         LAM_ERRHANDLER_RETURN( MPI_ERR_INTERN, (lam_communicator_t*)NULL,
+      if( OMPI_MPI_INVALID_STATE ) {
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
                                 MPI_ERR_INTERN, FUNC_NAME );
       }
       if( count < 0 ) {
-         LAM_ERRHANDLER_RETURN( MPI_ERR_COUNT, (lam_communicator_t*)NULL,
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_COUNT, (ompi_communicator_t*)NULL,
                                 MPI_ERR_COUNT, FUNC_NAME );
       }
    }
    
-   rc = lam_ddt_create_contiguous( count, oldtype, newtype );
-   LAM_ERRHANDLER_CHECK(rc, (lam_communicator_t*)NULL, rc, FUNC_NAME );
+   rc = ompi_ddt_create_contiguous( count, oldtype, newtype );
+   OMPI_ERRHANDLER_CHECK(rc, (ompi_communicator_t*)NULL, rc, FUNC_NAME );
 
    /* data description */
    {
       int* a_i[1];
       a_i[0] = &count;
-      lam_ddt_set_args( *newtype, 1, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_CONTIGUOUS );
+      ompi_ddt_set_args( *newtype, 1, a_i, 0, NULL, 1, &oldtype, MPI_COMBINER_CONTIGUOUS );
    }
 
-   LAM_ERRHANDLER_RETURN(rc, (lam_communicator_t*)NULL, rc, FUNC_NAME );
+   OMPI_ERRHANDLER_RETURN(rc, (ompi_communicator_t*)NULL, rc, FUNC_NAME );
 }

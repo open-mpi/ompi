@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -23,7 +23,7 @@
  */
 int mca_pcm_base_output = -1;
 mca_pcm_t mca_pcm;
-lam_list_t mca_pcm_base_modules_available;
+ompi_list_t mca_pcm_base_modules_available;
 mca_pcm_base_module_t mca_pcm_base_selected_module;
 
 
@@ -35,13 +35,13 @@ int mca_pcm_base_open(void)
 {
   /* Open up all available modules */
 
-  if (LAM_SUCCESS != 
+  if (OMPI_SUCCESS != 
       mca_base_modules_open("pcm", 0, mca_pcm_base_static_modules, 
                             &mca_pcm_base_modules_available)) {
-    return LAM_ERROR;
+    return OMPI_ERROR;
   }
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <sys/types.h>
 #include <string.h>
@@ -13,7 +13,7 @@
 #include "libltdl/ltdl.h"
 
 #include "include/constants.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 
@@ -22,18 +22,18 @@
  * Private types
  */
 struct repository_item_t {
-  lam_list_item_t super;
+  ompi_list_item_t super;
 
   char ri_type[MCA_BASE_MAX_TYPE_NAME_LEN];
   lt_dlhandle ri_dlhandle;
   const mca_base_module_t *ri_module_struct;
   int ri_refcount;
-  lam_list_t ri_dependencies;
+  ompi_list_t ri_dependencies;
 };
 typedef struct repository_item_t repository_item_t;
 
 struct dependency_item_t {
-  lam_list_item_t super;
+  ompi_list_item_t super;
 
   repository_item_t *di_repository_entry;
 };
@@ -44,7 +44,7 @@ typedef struct dependency_item_t dependency_item_t;
  * Private variables
  */
 static bool initialized = false;
-static lam_list_t repository;
+static ompi_list_t repository;
 
 
 /*
@@ -67,15 +67,15 @@ int mca_base_module_repository_construct(void)
     /* Initialize libltdl */
 
     if (lt_dlinit() != 0)
-      return LAM_ERR_OUT_OF_RESOURCE;
+      return OMPI_ERR_OUT_OF_RESOURCE;
 
-    OBJ_CONSTRUCT(&repository, lam_list_t);
+    OBJ_CONSTRUCT(&repository, ompi_list_t);
     initialized = true;
   }
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
@@ -92,24 +92,24 @@ int mca_base_module_repository_retain(char *type, lt_dlhandle module_handle,
 
   ri = malloc(sizeof(repository_item_t));
   if (NULL == ri)
-    return LAM_ERR_OUT_OF_RESOURCE;
+    return OMPI_ERR_OUT_OF_RESOURCE;
 
   /* Initialize the repository item */
 
-  OBJ_CONSTRUCT(ri, lam_list_item_t);
+  OBJ_CONSTRUCT(ri, ompi_list_item_t);
   strcpy(ri->ri_type, type);
   ri->ri_dlhandle = module_handle;
   ri->ri_module_struct = module_struct;
   ri->ri_refcount = 1;
-  OBJ_CONSTRUCT(&ri->ri_dependencies, lam_list_t);
+  OBJ_CONSTRUCT(&ri->ri_dependencies, ompi_list_t);
 
   /* Append the new item to the repository */
 
-  lam_list_append(&repository, (lam_list_item_t *) ri);
+  ompi_list_append(&repository, (ompi_list_item_t *) ri);
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
@@ -127,10 +127,10 @@ int mca_base_module_repository_link(const char *src_type,
 
   src = find_module(src_type, src_name);
   if (NULL == src)
-    return LAM_ERR_BAD_PARAM;
+    return OMPI_ERR_BAD_PARAM;
   depend = find_module(depend_type, depend_name);
   if (NULL == depend)
-    return LAM_ERR_BAD_PARAM;
+    return OMPI_ERR_BAD_PARAM;
 
   /* Link them */
 
@@ -156,7 +156,7 @@ void mca_base_module_repository_release(const mca_base_module_t *module)
  */
 void mca_base_module_repository_finalize(void)
 {
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
   repository_item_t *ri;
   bool changed;
 
@@ -177,9 +177,9 @@ void mca_base_module_repository_finalize(void)
 
     do {
       changed = false;
-      for (item = lam_list_get_first(&repository);
-           lam_list_get_end(&repository) != item && changed;
-           item = lam_list_get_next(item)) {
+      for (item = ompi_list_get_first(&repository);
+           ompi_list_get_end(&repository) != item && changed;
+           item = ompi_list_get_next(item)) {
         ri = (repository_item_t *) ri;
 
         if (ri->ri_refcount == 1) {
@@ -187,7 +187,7 @@ void mca_base_module_repository_finalize(void)
           changed = true;
         }
       }
-    } while (lam_list_get_size(&repository) > 0 && changed);
+    } while (ompi_list_get_size(&repository) > 0 && changed);
 
     /* Close down libltdl */
 
@@ -199,12 +199,12 @@ void mca_base_module_repository_finalize(void)
 
 static repository_item_t *find_module(const char *type, const char *name)
 {
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
   repository_item_t *ri;
 
-  for (item = lam_list_get_first(&repository);
-       lam_list_get_end(&repository) != item;
-       item = lam_list_get_next(item)) {
+  for (item = ompi_list_get_first(&repository);
+       ompi_list_get_end(&repository) != item;
+       item = ompi_list_get_next(item)) {
     ri = (repository_item_t *) ri;
     if (0 == strcmp(ri->ri_type, type) && 
         0 == strcmp(ri->ri_module_struct->mca_module_name, name))
@@ -224,22 +224,22 @@ static int link_items(repository_item_t *src, repository_item_t *depend)
   /* Bozo check */
 
   if (NULL == src || NULL == depend)
-    return LAM_ERR_BAD_PARAM;
+    return OMPI_ERR_BAD_PARAM;
 
   /* Make a new depedency item */
 
   di = malloc(sizeof(dependency_item_t));
   if (NULL == di)
-    return LAM_ERR_OUT_OF_RESOURCE;
+    return OMPI_ERR_OUT_OF_RESOURCE;
 
   /* Initialize the new dependency item */
 
-  OBJ_CONSTRUCT((lam_list_item_t *) di, lam_list_item_t);
+  OBJ_CONSTRUCT((ompi_list_item_t *) di, ompi_list_item_t);
   di->di_repository_entry = depend;
 
   /* Add it to the dependency list on the source repository entry */
 
-  lam_list_append(&src->ri_dependencies, (lam_list_item_t *) di);
+  ompi_list_append(&src->ri_dependencies, (ompi_list_item_t *) di);
 
   /* Increment the refcount in the dependency */
 
@@ -247,14 +247,14 @@ static int link_items(repository_item_t *src, repository_item_t *depend)
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
 static void release_repository_item(repository_item_t *ri)
 {
   dependency_item_t *di;
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
 
   /* Bozo check */
 
@@ -270,9 +270,9 @@ static void release_repository_item(repository_item_t *ri)
     /* Now go release/close (at a minimum: decrement the refcount) any
        dependencies of this module */
 
-    for (item = lam_list_remove_first(&ri->ri_dependencies);
+    for (item = ompi_list_remove_first(&ri->ri_dependencies);
          NULL != item; 
-         item = lam_list_remove_first(&ri->ri_dependencies)) {
+         item = ompi_list_remove_first(&ri->ri_dependencies)) {
       di = (dependency_item_t *) item;
       --di->di_repository_entry->ri_refcount;
       free(di);
@@ -284,7 +284,7 @@ static void release_repository_item(repository_item_t *ri)
        unloaded from memory.  So don't try to use it.  :-) */
 
     OBJ_DESTRUCT(&di->di_repository_entry->ri_dependencies);
-    lam_list_remove_item(&repository, (lam_list_item_t *) ri);
+    ompi_list_remove_item(&repository, (ompi_list_item_t *) ri);
     free(ri);
   }
 }

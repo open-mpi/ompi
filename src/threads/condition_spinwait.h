@@ -1,23 +1,23 @@
 /* 
  * $HEADER$
  */
-#ifndef LAM_CONDITION_SPINWAIT_H
-#define LAM_CONDITION_SPINWAIT_H
+#ifndef OMPI_CONDITION_SPINWAIT_H
+#define OMPI_CONDITION_SPINWAIT_H
 
 #include <pthread.h>
 #include "threads/mutex.h"
 
 
-struct lam_condition_t {
-    lam_object_t super;
+struct ompi_condition_t {
+    ompi_object_t super;
     pthread_cond_t c_cond;
 };
-typedef struct lam_condition_t lam_condition_t;
+typedef struct ompi_condition_t ompi_condition_t;
 
-OBJ_CLASS_DECLARATION(lam_condition_t);
+OBJ_CLASS_DECLARATION(ompi_condition_t);
 
 
-static inline int lam_condition_wait(lam_condition_t* c, lam_mutex_t* m)
+static inline int ompi_condition_wait(ompi_condition_t* c, ompi_mutex_t* m)
 {
     
     int rc;
@@ -31,7 +31,7 @@ static inline int lam_condition_wait(lam_condition_t* c, lam_mutex_t* m)
     return rc;
 }
 
-static inline int lam_condition_timedwait(lam_condition_t* c, lam_mutex_t* m, const struct timespec *abstime)
+static inline int ompi_condition_timedwait(ompi_condition_t* c, ompi_mutex_t* m, const struct timespec *abstime)
 {
     int rc;
     pthread_mutex_lock(&m->m_lock);
@@ -44,12 +44,12 @@ static inline int lam_condition_timedwait(lam_condition_t* c, lam_mutex_t* m, co
     return rc;
 }
 
-static inline int lam_condition_signal(lam_condition_t* c)
+static inline int ompi_condition_signal(ompi_condition_t* c)
 {
     return pthread_cond_signal(&c->c_cond);
 }
 
-static inline int lam_condition_broadcast(lam_condition_t* c)
+static inline int ompi_condition_broadcast(ompi_condition_t* c)
 {
     return pthread_cond_broadcast(&c->c_cond);
 }

@@ -3,7 +3,7 @@
 #include "pml_teg_sendreq.h"
 
 
-int mca_pml_teg_start(size_t count, lam_request_t** requests)
+int mca_pml_teg_start(size_t count, ompi_request_t** requests)
 {
     int rc;
     size_t i;
@@ -15,18 +15,18 @@ int mca_pml_teg_start(size_t count, lam_request_t** requests)
         switch(pml_request->req_type) {
             case MCA_PML_REQUEST_SEND:
                 if((rc = mca_pml_teg_send_request_start((mca_ptl_base_send_request_t*)pml_request)) 
-                    != LAM_SUCCESS)
+                    != OMPI_SUCCESS)
                     return rc;
                 break;
             case MCA_PML_REQUEST_RECV:
                 if((rc = mca_pml_teg_recv_request_start((mca_ptl_base_recv_request_t*)pml_request)) 
-                    != LAM_SUCCESS)
+                    != OMPI_SUCCESS)
                     return rc;
                 break;
             default:
-                return LAM_ERROR;
+                return OMPI_ERROR;
         }
     }
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 

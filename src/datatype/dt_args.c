@@ -1,4 +1,4 @@
-#include <lam_config.h>
+#include <ompi_config.h>
 #include <mpi.h>
 #include <datatype.h>
 #include <datatype_internal.h>
@@ -11,17 +11,17 @@ typedef struct __dt_args {
    int* i;
    MPI_Aint* a;
    MPI_Datatype* d;
-} lam_ddt_args_t;
+} ompi_ddt_args_t;
 
 #define ALLOC_ARGS(PDATA, IC, AC, DC) \
 do { \
-  int length = sizeof(lam_ddt_args_t) + (IC) * sizeof(int) + (AC) * sizeof(MPI_Aint) + (DC) * sizeof(MPI_Datatype); \
+  int length = sizeof(ompi_ddt_args_t) + (IC) * sizeof(int) + (AC) * sizeof(MPI_Aint) + (DC) * sizeof(MPI_Datatype); \
   char* buf = (char*)malloc( length ); \
-  lam_ddt_args_t* pArgs = (lam_ddt_args_t*)buf; \
+  ompi_ddt_args_t* pArgs = (ompi_ddt_args_t*)buf; \
   pArgs->ci = (IC); \
   pArgs->ca = (AC); \
   pArgs->cd = (DC); \
-  buf += sizeof(lam_ddt_args_t); \
+  buf += sizeof(ompi_ddt_args_t); \
   if( pArgs->ci == 0 ) pArgs->i = NULL; \
   else { \
     pArgs->i = (int*)buf; \
@@ -40,18 +40,18 @@ do { \
 #define FREE_ARGS(PDATA) \
 if( (PDATA)->args != NULL ) free( (PDATA)->args );
 
-int lam_ddt_set_args( lam_datatype_t* pData,
+int ompi_ddt_set_args( ompi_datatype_t* pData,
                       int ci, int ** i, 
                       int ca, MPI_Aint* a,
                       int cd, MPI_Datatype* d,int type)
 {
    int pos;
-   lam_ddt_args_t* pArgs;
+   ompi_ddt_args_t* pArgs;
 
    FREE_ARGS( pData );
    ALLOC_ARGS( pData, ci, ca, cd );
 
-   pArgs = (lam_ddt_args_t*)pData->args;
+   pArgs = (ompi_ddt_args_t*)pData->args;
    pArgs->create_type = type;
 
    switch(type){
@@ -157,12 +157,12 @@ int lam_ddt_set_args( lam_datatype_t* pData,
    return MPI_SUCCESS;
 }
 
-int lam_ddt_get_args( lam_datatype_t* pData, int which,
+int ompi_ddt_get_args( ompi_datatype_t* pData, int which,
                       int * ci, int * i,
                       int * ca, MPI_Aint * a,
                       int * cd, MPI_Datatype * d, int * type)
 {
-   lam_ddt_args_t* pArgs = pData->args;
+   ompi_ddt_args_t* pArgs = pData->args;
 
    if( (pData->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC ) {
       switch(which){

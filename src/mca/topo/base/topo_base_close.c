@@ -1,7 +1,7 @@
 /*
  * $HEADER$
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
@@ -12,7 +12,7 @@
 #include "mca/topo/base/base.h"
 
 int mca_topo_base_close(void) {
-    extern lam_list_t mca_topo_base_modules_available;
+    extern ompi_list_t mca_topo_base_modules_available;
 
     /*
      * Close all the available modules
@@ -23,5 +23,5 @@ int mca_topo_base_close(void) {
     /*
      * All done
      */
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }

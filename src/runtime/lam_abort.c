@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +12,7 @@
 #include "util/output.h"
 
 
-int lam_abort(int status, char *fmt, ...)
+int ompi_abort(int status, char *fmt, ...)
 {
   va_list arglist;
 
@@ -24,12 +24,12 @@ int lam_abort(int status, char *fmt, ...)
   va_start(arglist);
 #endif
   if (NULL != fmt) {
-    lam_output(0, fmt);
+    ompi_output(0, fmt);
   }
   va_end(arglist);
 
   /* Shut down and exit */
 
-  lam_finalize();
+  ompi_finalize();
   exit(status);
 }

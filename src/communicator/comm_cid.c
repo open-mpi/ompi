@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include <string.h>
 #include <stdio.h>
 #include "mpi.h"
@@ -11,7 +11,7 @@
 #include "op/op.h"
 #include "proc/proc.h"
 #include "include/constants.h"
-#include "lfc/lam_pointer_array.h"
+#include "class/ompi_pointer_array.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pml/pml.h"
 #include "mca/coll/coll.h"
@@ -30,28 +30,28 @@
  */
 
 typedef int ompi_comm_cid_allredfct (int *inbuf, int* outbuf, int count,
-                                     lam_op_t *op, lam_communicator_t *comm,
-                                     lam_communicator_t *bridgecomm, 
+                                     ompi_op_t *op, ompi_communicator_t *comm,
+                                     ompi_communicator_t *bridgecomm, 
                                      int lleader, int rleader );
 
 static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, int count, 
-                                     lam_op_t *op, lam_communicator_t *intercomm,
-                                     lam_communicator_t *bridgecomm, 
+                                     ompi_op_t *op, ompi_communicator_t *intercomm,
+                                     ompi_communicator_t *bridgecomm, 
                                      int local_leader, int remote_leader );
 
 static int ompi_comm_allreduce_emulate_inter ( int *inbuf, int* outbuf, int count,
-                                              lam_op_t *op, lam_communicator_t *intercomm,
-                                              lam_communicator_t *bridgecomm, 
+                                              ompi_op_t *op, ompi_communicator_t *intercomm,
+                                              ompi_communicator_t *bridgecomm, 
                                               int local_leader, int remote_leader );
 
 static int ompi_comm_allreduce_intra ( int *inbuf, int* outbuf, int count,
-                                      lam_op_t *op, lam_communicator_t *intercomm,
-                                      lam_communicator_t *bridgecomm, 
+                                      ompi_op_t *op, ompi_communicator_t *intercomm,
+                                      ompi_communicator_t *bridgecomm, 
                                       int local_leader, int remote_ledaer );
 
 
-int lam_comm_nextcid ( lam_communicator_t* comm, 
-                       lam_communicator_t* bridgecomm, 
+int ompi_comm_nextcid ( ompi_communicator_t* comm, 
+                       ompi_communicator_t* bridgecomm, 
                        int local_leader,
                        int remote_leader,
                        int mode )
@@ -62,7 +62,7 @@ int lam_comm_nextcid ( lam_communicator_t* comm,
     int done=0;
     int response=0, glresponse=0;
     int flag;
-    int start=lam_mpi_communicators.lowest_free;
+    int start=ompi_mpi_communicators.lowest_free;
     int i;
     
     ompi_comm_cid_allredfct* allredfnct;
@@ -73,14 +73,14 @@ int lam_comm_nextcid ( lam_communicator_t* comm,
      */
     switch (mode) 
         {
-        case LAM_COMM_INTRA_INTRA: 
+        case OMPI_COMM_INTRA_INTRA: 
             allredfnct = (ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra;
             break;
-        case LAM_COMM_INTRA_INTER: 
+        case OMPI_COMM_INTRA_INTER: 
             allredfnct = (ompi_comm_cid_allredfct*)ompi_comm_allreduce_emulate_inter;
             break;
-        case LAM_COMM_INTER_INTER:
-        case LAM_COMM_INTER_INTRA: 
+        case OMPI_COMM_INTER_INTER:
+        case OMPI_COMM_INTER_INTRA: 
             allredfnct = (ompi_comm_cid_allredfct*)ompi_comm_allreduce_inter;
             break;
         default: 
@@ -94,7 +94,7 @@ int lam_comm_nextcid ( lam_communicator_t* comm,
     while ( !done ){
         sleep ( 30 );
         for (i=start; i<OMPI_MAX_COMM ;i++) {
-            flag = lam_pointer_array_test_and_set_item (&lam_mpi_communicators, i, comm);
+            flag = ompi_pointer_array_test_and_set_item (&ompi_mpi_communicators, i, comm);
             if (true == flag) {
                 nextlocal_cid = i;
                 break;
@@ -107,8 +107,8 @@ int lam_comm_nextcid ( lam_communicator_t* comm,
             response = 1; /* fine with me */
         }
         else {
-            lam_pointer_array_set_item ( &lam_mpi_communicators, nextlocal_cid, NULL);
-            flag = lam_pointer_array_test_and_set_item ( &lam_mpi_communicators, 
+            ompi_pointer_array_set_item ( &ompi_mpi_communicators, nextlocal_cid, NULL);
+            flag = ompi_pointer_array_test_and_set_item ( &ompi_mpi_communicators, 
                                                          nextcid, comm );
             if (true == flag) {
                 response = 1; /* works as well */
@@ -139,8 +139,8 @@ int lam_comm_nextcid ( lam_communicator_t* comm,
    - remote_leader
 */
 static int ompi_comm_allreduce_intra ( int *inbuf, int *outbuf, int count, 
-                                      lam_op_t *op, lam_communicator_t *comm,
-                                      lam_communicator_t *bridgecomm, 
+                                      ompi_op_t *op, ompi_communicator_t *comm,
+                                      ompi_communicator_t *bridgecomm, 
                                       int local_leader, int remote_leader )
 {
     return comm->c_coll.coll_allreduce_intra ( inbuf, outbuf, count, MPI_INT, op,
@@ -153,26 +153,26 @@ static int ompi_comm_allreduce_intra ( int *inbuf, int *outbuf, int count,
    - remote_leader
 */
 static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, int count, 
-                                     lam_op_t *op, lam_communicator_t *intercomm,
-                                     lam_communicator_t *bridgecomm, 
+                                     ompi_op_t *op, ompi_communicator_t *intercomm,
+                                     ompi_communicator_t *bridgecomm, 
                                      int local_leader, int remote_leader )
 {
     int local_rank;
-    lam_proc_t *lvpid, *rvpid;
+    ompi_proc_t *lvpid, *rvpid;
     int i;
     int *tmpbuf;
     int rc;
 
-    if ( &lam_mpi_op_sum != op && &lam_mpi_op_prod != op &&
-         &lam_mpi_op_max != op && &lam_mpi_op_min  != op ) {
+    if ( &ompi_mpi_op_sum != op && &ompi_mpi_op_prod != op &&
+         &ompi_mpi_op_max != op && &ompi_mpi_op_min  != op ) {
         return MPI_ERR_OP;
     }
 
-    if ( !LAM_COMM_IS_INTER (intercomm)) {
+    if ( !OMPI_COMM_IS_INTER (intercomm)) {
         return MPI_ERR_COMM;
     }
 
-    local_rank = lam_comm_rank ( intercomm );
+    local_rank = ompi_comm_rank ( intercomm );
     tmpbuf = (int *) malloc ( count * sizeof(int));
     if ( NULL == tmpbuf ) {
         return MPI_ERR_INTERN;
@@ -180,7 +180,7 @@ static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, int count,
 
     rc = intercomm->c_coll.coll_allreduce_inter ( inbuf, tmpbuf, count, MPI_INT,
                                                   op, intercomm );
-    if ( LAM_SUCCESS != rc ) {
+    if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
 
@@ -194,35 +194,35 @@ static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, int count,
         /* local leader exchange data */
         rc = mca_pml.pml_irecv (outbuf, count, MPI_INT, 0, OMPI_COMM_CID_TAG,
                                 intercomm, &req );
-        if ( LAM_SUCCESS != rc ) {
+        if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
         rc = mca_pml.pml_send (tmpbuf, count, MPI_INT, 0, OMPI_COMM_CID_TAG, 
                                MCA_PML_BASE_SEND_STANDARD, intercomm );
-        if ( LAM_SUCCESS != rc ) {
+        if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
         rc = mca_pml.pml_wait ( 1, &req, NULL, &status);
-        if ( LAM_SUCCESS != rc ) {
+        if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
 
-        if ( &lam_mpi_op_max == op ) {
+        if ( &ompi_mpi_op_max == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 if (tmpbuf[i] > outbuf[i]) outbuf[i] = tmpbuf[i];
             }
         }
-        else if ( &lam_mpi_op_min == op ) {
+        else if ( &ompi_mpi_op_min == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 if (tmpbuf[i] < outbuf[i]) outbuf[i] = tmpbuf[i];
             }
         }
-        else if ( &lam_mpi_op_sum == op ) {
+        else if ( &ompi_mpi_op_sum == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 outbuf[i] += tmpbuf[i];
             }
         }
-        else if ( &lam_mpi_op_prod == op ) {
+        else if ( &ompi_mpi_op_prod == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 outbuf[i] *= tmpbuf[i];
             }
@@ -234,14 +234,14 @@ static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, int count,
         if ( 0 == local_rank  ) {
             rc = intercomm->c_coll.coll_bcast_inter ( &outbuf, count, MPI_INT, MPI_ROOT,
                                                       intercomm );
-            if ( LAM_SUCCESS != rc ) {
+            if ( OMPI_SUCCESS != rc ) {
                 goto exit;
             }
         }
         else {
             rc = intercomm->c_coll.coll_bcast_inter ( &outbuf, count, MPI_INT, MPI_PROC_NULL,
                                                       intercomm );
-            if ( LAM_SUCCESS != rc ) {
+            if ( OMPI_SUCCESS != rc ) {
                 goto exit;
             }
         }
@@ -250,7 +250,7 @@ static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, int count,
     }
     else {
         rc = intercomm->c_coll.coll_bcast_inter ( &outbuf, count, MPI_INT, 0, intercomm );
-        if ( LAM_SUCCESS != rc ) {
+        if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
         
@@ -273,8 +273,8 @@ static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, int count,
    all arguments are in use.
 */
 static int ompi_comm_allreduce_emulate_inter (int *inbuf, int *outbuf, int count, 
-                                              lam_op_t *op, lam_communicator_t *comm,
-                                              lam_communicator_t *bridgecomm, 
+                                              ompi_op_t *op, ompi_communicator_t *comm,
+                                              ompi_communicator_t *bridgecomm, 
                                               int local_leader, int remote_leader )
 {
     int *tmpbuf=NULL;
@@ -282,12 +282,12 @@ static int ompi_comm_allreduce_emulate_inter (int *inbuf, int *outbuf, int count
     int i;
     int rc;
 
-    if ( &lam_mpi_op_sum != op && &lam_mpi_op_prod != op &&
-         &lam_mpi_op_max != op && &lam_mpi_op_min  != op ) {
+    if ( &ompi_mpi_op_sum != op && &ompi_mpi_op_prod != op &&
+         &ompi_mpi_op_max != op && &ompi_mpi_op_min  != op ) {
         return MPI_ERR_OP;
     }
     
-    local_rank = lam_comm_rank ( comm );
+    local_rank = ompi_comm_rank ( comm );
     tmpbuf     = (int *) malloc ( count * sizeof(int));
     if ( NULL == tmpbuf ) {
         return MPI_ERR_INTERN;
@@ -296,7 +296,7 @@ static int ompi_comm_allreduce_emulate_inter (int *inbuf, int *outbuf, int count
     /* Intercomm_create */
     rc = comm->c_coll.coll_allreduce_intra ( inbuf, tmpbuf, count, MPI_INT,
                                              op, comm );
-    if ( LAM_SUCCESS != rc ) {
+    if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
 
@@ -306,36 +306,36 @@ static int ompi_comm_allreduce_emulate_inter (int *inbuf, int *outbuf, int count
         
         rc = mca_pml.pml_irecv ( outbuf, count, MPI_INT, remote_leader,
                                  OMPI_COMM_CID_TAG, bridgecomm, &req );
-        if ( LAM_SUCCESS != rc ) {
+        if ( OMPI_SUCCESS != rc ) {
             goto exit;       
         }
         rc = mca_pml.pml_send (tmpbuf, count, MPI_INT, remote_leader, 
                                OMPI_COMM_CID_TAG, MCA_PML_BASE_SEND_STANDARD, 
                                bridgecomm );
-        if ( LAM_SUCCESS != rc ) {
+        if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
         rc = mca_pml.pml_wait ( 1, &req, NULL, &status);
-        if ( LAM_SUCCESS != rc ) {
+        if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
 
-        if ( &lam_mpi_op_max == op ) {
+        if ( &ompi_mpi_op_max == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 if (tmpbuf[i] > outbuf[i]) outbuf[i] = tmpbuf[i];
             }
         }
-        else if ( &lam_mpi_op_min == op ) {
+        else if ( &ompi_mpi_op_min == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 if (tmpbuf[i] < outbuf[i]) outbuf[i] = tmpbuf[i];
             }
         }
-        else if ( &lam_mpi_op_sum == op ) {
+        else if ( &ompi_mpi_op_sum == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 outbuf[i] += tmpbuf[i];
             }
         }
-        else if ( &lam_mpi_op_prod == op ) {
+        else if ( &ompi_mpi_op_prod == op ) {
             for ( i = 0 ; i < count; i++ ) {
                 outbuf[i] *= tmpbuf[i];
             }

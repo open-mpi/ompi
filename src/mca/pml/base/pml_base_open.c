@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
@@ -26,7 +26,7 @@
  */
 int mca_pml_base_output = -1;
 mca_pml_t mca_pml;
-lam_list_t mca_pml_base_modules_available;
+ompi_list_t mca_pml_base_modules_available;
 mca_pml_base_module_t mca_pml_base_selected_module;
 
 
@@ -38,18 +38,18 @@ int mca_pml_base_open(void)
 {
   /* Open up all available modules */
 
-  if (LAM_SUCCESS != 
+  if (OMPI_SUCCESS != 
       mca_base_modules_open("pml", 0, mca_pml_base_static_modules, 
                             &mca_pml_base_modules_available)) {
-    return LAM_ERROR;
+    return OMPI_ERROR;
   }
 
   /* Set a sentinel in case we don't select any modules (e.g.,
-     laminfo) */
+     ompi_info) */
 
   mca_pml_base_selected_module.pmlm_finalize = NULL;
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

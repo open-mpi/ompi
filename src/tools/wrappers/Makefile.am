@@ -11,9 +11,9 @@ libs = $(top_builddir)/src/libmpi.la
 # autoconf.
 
 AM_CPPFLAGS   = \
-      -DLAM_PREFIX="\"$(prefix)\"" \
-      -DLAM_INCDIR="\"$(includedir)\"" \
-      -DLAM_LIBDIR="\"$(libdir)\""
+      -DOMPI_PREFIX="\"$(prefix)\"" \
+      -DOMPI_INCDIR="\"$(includedir)\"" \
+      -DOMPI_LIBDIR="\"$(libdir)\""
 
 bin_PROGRAMS    = mpicc mpic++ mpif77 mpif90
 
@@ -29,24 +29,24 @@ bin_PROGRAMS    = mpicc mpic++ mpif77 mpif90
 
 EXTRA_DIST    = wrap.cc wrap_engine.cc
 
-mpicc_SOURCES       = mpicc.cc wrap_cc.cc wrap_engine_cc.cc lamwrap.h
-mpicc_LDADD         = $(libs) $(LIBLAM_EXTRA_LIBS)
-mpicc_LDFLAGS       = $(LIBLAM_EXTRA_LDFLAGS)
+mpicc_SOURCES       = mpicc.cc wrap_cc.cc wrap_engine_cc.cc ompi_wrap.h
+mpicc_LDADD         = $(libs) $(LIBOMPI_EXTRA_LIBS)
+mpicc_LDFLAGS       = $(LIBOMPI_EXTRA_LDFLAGS)
 mpicc_DEPENDENCIES  = $(libs)
 
-mpic___SOURCES      = mpicxx.cc wrap_cxx.cc wrap_engine_cxx.cc lamwrap.h
-mpic___LDADD        = $(libs) $(LIBLAM_EXTRA_LIBS)
-mpic___LDFLAGS      = $(LIBLAM_EXTRA_LDFLAGS)
+mpic___SOURCES      = mpicxx.cc wrap_cxx.cc wrap_engine_cxx.cc ompi_wrap.h
+mpic___LDADD        = $(libs) $(LIBOMPI_EXTRA_LIBS)
+mpic___LDFLAGS      = $(LIBOMPI_EXTRA_LDFLAGS)
 mpic___DEPENDENCIES = $(libs)
 
-mpif77_SOURCES      = mpif77.cc wrap_f77.cc wrap_engine_f77.cc lamwrap.h
-mpif77_LDADD        = $(libs) $(LIBLAM_EXTRA_LIBS)
-mpif77_LDFLAGS      = $(LIBLAM_EXTRA_LDFLAGS)
+mpif77_SOURCES      = mpif77.cc wrap_f77.cc wrap_engine_f77.cc ompi_wrap.h
+mpif77_LDADD        = $(libs) $(LIBOMPI_EXTRA_LIBS)
+mpif77_LDFLAGS      = $(LIBOMPI_EXTRA_LDFLAGS)
 mpif77_DEPENDENCIES = $(libs)
 
-mpif90_SOURCES      = mpif90.cc wrap_f90.cc wrap_engine_f90.cc lamwrap.h
-mpif90_LDADD        = $(libs) $(LIBLAM_EXTRA_LIBS)
-mpif90_LDFLAGS      = $(LIBLAM_EXTRA_LDFLAGS)
+mpif90_SOURCES      = mpif90.cc wrap_f90.cc wrap_engine_f90.cc ompi_wrap.h
+mpif90_LDADD        = $(libs) $(LIBOMPI_EXTRA_LIBS)
+mpif90_LDFLAGS      = $(LIBOMPI_EXTRA_LDFLAGS)
 mpif90_DEPENDENCIES = $(libs)
 
 # Make the sym links
@@ -72,16 +72,16 @@ wrap_engine_f90.cc:
 # template repository directory
 
 clean-local:
-	test -z "$(LAM_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(LAM_CXX_TEMPLATE_REPOSITORY)
+	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
 	rm -f wrap_cc.cc wrap_engine_cc.cc
 	rm -f wrap_cxx.cc wrap_engine_cxx.cc
 	rm -f wrap_f77.cc wrap_engine_f77.cc
 	rm -f wrap_f90.cc wrap_engine_f90.cc
 
 
-# Per bug 476, the "wipe" command is now "lamwipe".  So that we don't
+# Per bug 476, the "wipe" command is now "ompi_wipe".  So that we don't
 # break backwards compatability, we provide sym link names to the old
-# names (i.e., lamwipe -> wipe).  However, we provide a
+# names (i.e., ompi_wipe -> wipe).  However, we provide a
 # --disable-deprecated-executable-names option that will disable this
 # behavior.  Someday, we'll change the default and the option will
 # become --enable-deprecated-executable-names.

@@ -19,7 +19,7 @@ int called = 0;
 
 #define NEVENT	20000
 
-struct lam_event *ev[NEVENT];
+struct ompi_event *ev[NEVENT];
 
 void
 time_cb(int fd, short event, void *arg)
@@ -35,9 +35,9 @@ time_cb(int fd, short event, void *arg)
 			tv.tv_sec = 0;
 			tv.tv_usec = random() % 50000L;
 			if (tv.tv_usec % 2)
-				lam_evtimer_add(ev[j], &tv);
+				ompi_evtimer_add(ev[j], &tv);
 			else
-				lam_evtimer_del(ev[j]);
+				ompi_evtimer_del(ev[j]);
 		}
 	}
 }
@@ -49,19 +49,19 @@ main (int argc, char **argv)
 	int i;
 
 	/* Initalize the event library */
-	lam_event_init();
+	ompi_event_init();
 
 	for (i = 0; i < NEVENT; i++) {
-		ev[i] = malloc(sizeof(struct lam_event));
+		ev[i] = malloc(sizeof(struct ompi_event));
 
 		/* Initalize one event */
-		lam_evtimer_set(ev[i], time_cb, ev[i]);
+		ompi_evtimer_set(ev[i], time_cb, ev[i]);
 		tv.tv_sec = 0;
 		tv.tv_usec = random() % 50000L;
-		lam_evtimer_add(ev[i], &tv);
+		ompi_evtimer_add(ev[i], &tv);
 	}
 
-	lam_event_dispatch();
+	ompi_event_dispatch();
 
 	return (called < NEVENT);
 }

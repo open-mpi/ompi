@@ -15,25 +15,25 @@
  *  outside the initialized range will result in an error.
  */
 
-#ifndef LAM_BITMAP_H
-#define LAM_BITMAP_H
+#ifndef OMPI_BITMAP_H
+#define OMPI_BITMAP_H
 
 #include <string.h>
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "include/types.h"
-#include "lfc/lam_object.h"
+#include "class/ompi_object.h"
 
 /* VPS: Just to compile right now, has to move later on */
 
-#define LAM_ERR_SYSRESOURCE -1
-#define LAM_INVALID_BIT -1
-#define LAM_ERR_ARG -2
+#define OMPI_ERR_SYSRESOURCE -1
+#define OMPI_INVALID_BIT -1
+#define OMPI_ERR_ARG -2
 
-extern lam_class_t lam_bitmap_t_class;
+extern ompi_class_t ompi_bitmap_t_class;
 
-struct lam_bitmap_t {
-    lam_object_t super; /**< Subclass of lam_object_t */
+struct ompi_bitmap_t {
+    ompi_object_t super; /**< Subclass of ompi_object_t */
     unsigned char *bitmap; /**< The actual bitmap array of characters */
     size_t array_size;  /**< The actual array size that maintains the bitmap */
     size_t legal_numbits; /**< The number of bits which are legal (the
@@ -42,7 +42,7 @@ struct lam_bitmap_t {
 			    char  */
 };
 
-typedef struct lam_bitmap_t lam_bitmap_t;
+typedef struct ompi_bitmap_t ompi_bitmap_t;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -55,10 +55,10 @@ extern "C" {
  *
  * @param  bitmap The input bitmap (IN)
  * @param  size   The initial size of the bitmap in terms of bits (IN)
- * @return LAM error code or success
+ * @return OMPI error code or success
  *
  */
-int lam_bitmap_init (lam_bitmap_t *bm, size_t size);
+int ompi_bitmap_init (ompi_bitmap_t *bm, size_t size);
 
 
 /**
@@ -68,10 +68,10 @@ int lam_bitmap_init (lam_bitmap_t *bm, size_t size);
  *
  * @param  bitmap The input bitmap (IN)
  * @param  bit    The bit which is to be set (IN)
- * @return LAM error code or success
+ * @return OMPI error code or success
  *
  */
-int lam_bitmap_set_bit(lam_bitmap_t *bm, int bit); 
+int ompi_bitmap_set_bit(ompi_bitmap_t *bm, int bit); 
 
 
 /**
@@ -80,10 +80,10 @@ int lam_bitmap_set_bit(lam_bitmap_t *bm, int bit);
  *
  * @param  bitmap The input bitmap (IN)
  * @param  bit    The bit which is to be cleared (IN)
- * @return LAM error code if the bit is out of range, else success
+ * @return OMPI error code if the bit is out of range, else success
  *
  */
-int lam_bitmap_clear_bit(lam_bitmap_t *bm, int bit);
+int ompi_bitmap_clear_bit(ompi_bitmap_t *bm, int bit);
 
 
 /**
@@ -91,12 +91,12 @@ int lam_bitmap_clear_bit(lam_bitmap_t *bm, int bit);
   *
   * @param  bitmap  The input bitmap (IN)
   * @param  bit     The bit which is to be checked (IN)
-  * @return LAM error code if the bit is out of range
+  * @return OMPI error code if the bit is out of range
   *         1 if the bit is set
   *         0 if the bit is not set
   *
   */
-int lam_bitmap_is_set_bit(lam_bitmap_t *bm, int bit);
+int ompi_bitmap_is_set_bit(ompi_bitmap_t *bm, int bit);
 
 
 /**
@@ -105,26 +105,26 @@ int lam_bitmap_is_set_bit(lam_bitmap_t *bm, int bit);
  * @param  bitmap     The input bitmap (IN)
  * @return bit number The bit number of the first unset bit
  */
-int lam_bitmap_find_and_set_first_unset_bit(lam_bitmap_t *bm); 
+int ompi_bitmap_find_and_set_first_unset_bit(ompi_bitmap_t *bm); 
 
 
 /**
  * Clear all bits in the bitmap
  *
  * @param bitmap The input bitmap (IN)
- * @return LAM error code if bm is NULL
+ * @return OMPI error code if bm is NULL
  * 
  */
-int lam_bitmap_clear_all_bits(lam_bitmap_t *bm);
+int ompi_bitmap_clear_all_bits(ompi_bitmap_t *bm);
 
 
 /**
  * Set all bits in the bitmap
  * @param bitmap The input bitmap (IN)
- * @return LAM error code if bm is NULL
+ * @return OMPI error code if bm is NULL
  *
  */
-int lam_bitmap_set_all_bits(lam_bitmap_t *bm);
+int ompi_bitmap_set_all_bits(ompi_bitmap_t *bm);
 
 
 /**
@@ -132,10 +132,10 @@ int lam_bitmap_set_all_bits(lam_bitmap_t *bm);
  * legal (accessible) number of bits
  *
  * @param bitmap The input bitmap (IN)
- * @return LAM error code if bm is NULL
+ * @return OMPI error code if bm is NULL
  *
  */
-size_t lam_bitmap_size (lam_bitmap_t *bm);
+size_t ompi_bitmap_size (ompi_bitmap_t *bm);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_COMMIT = mpi_type_commit_f
 #pragma weak pmpi_type_commit = mpi_type_commit_f
 #pragma weak pmpi_type_commit_ = mpi_type_commit_f
 #pragma weak pmpi_type_commit__ = mpi_type_commit_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_TYPE_COMMIT,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_COMMIT,
                            pmpi_type_commit,
                            pmpi_type_commit_,
                            pmpi_type_commit__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_TYPE_COMMIT,
                            (type, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_TYPE_COMMIT = mpi_type_commit_f
 #pragma weak mpi_type_commit = mpi_type_commit_f
 #pragma weak mpi_type_commit_ = mpi_type_commit_f
 #pragma weak mpi_type_commit__ = mpi_type_commit_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_TYPE_COMMIT,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_COMMIT,
                            mpi_type_commit,
                            mpi_type_commit_,
                            mpi_type_commit__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_TYPE_COMMIT,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

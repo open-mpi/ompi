@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include "constants.h"
@@ -30,11 +30,11 @@ int mca_coll_basic_bcast_lin(void *buff, int count,
     int size;
     int rank;
     int err;
-    lam_request_t **preq;
-    lam_request_t **reqs = comm->bcast_lin_reqs;
+    ompi_request_t **preq;
+    ompi_request_t **reqs = comm->bcast_lin_reqs;
 
-    size = lam_comm_size(comm);
-    rank = lam_comm_rank(comm);
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
   
     /* Non-root receive the data. */
 
@@ -101,15 +101,15 @@ int mca_coll_basic_bcast_log(void *buff, int count,
     int mask;
     int err;
     int nreqs;
-    lam_request_t **preq;
-    lam_request_t **reqs = comm->bcast_log_reqs;
+    ompi_request_t **preq;
+    ompi_request_t **reqs = comm->bcast_log_reqs;
 
-    size = lam_comm_size(comm);
-    rank = lam_comm_rank(comm);
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
     vrank = (rank + size - root) % size;
 
     dim = comm->c_cube_dim;
-    hibit = lam_hibit(vrank, dim);
+    hibit = ompi_hibit(vrank, dim);
     --dim;
 
     /* Receive data from parent in the tree. */

@@ -64,7 +64,7 @@ int topo_base_graph_create (MPI_Comm comm_old,
      * Create the group for the new communicator.
      */
 #if 0
-    err = lam_comm_size (comm_old, &size);
+    err = ompi_comm_size (comm_old, &size);
 #endif
     if (err != MPI_SUCCESS) {
         free((char *) topo);
@@ -78,14 +78,14 @@ int topo_base_graph_create (MPI_Comm comm_old,
 
     if (nnodes == size) {
 #if 0
-        err = lam_comm_group (comm_old, &newgroup);
+        err = ompi_comm_group (comm_old, &newgroup);
 #endif
     } else {
         range[0][0] = 0;
         range[0][1] = nnodes - 1;
         range[0][2] = 1;
 #if 0
-        err = lam_group_range_incl(comm_old->c_group, 1, range, &newgroup);
+        err = ompi_group_range_incl(comm_old->c_group, 1, range, &newgroup);
 #endif
     }
     if (err != MPI_SUCCESS) {
@@ -96,12 +96,12 @@ int topo_base_graph_create (MPI_Comm comm_old,
      * Create the new communicator.
      */
 #if 0
-    err = lam_comm_create (comm_old, newgroup, comm_graph);
+    err = ompi_comm_create (comm_old, newgroup, comm_graph);
 #endif
     if (err != MPI_SUCCESS) {
          free((char *) topo);
 #if 0
-         lam_group_free (&newgroup);
+         ompi_group_free (&newgroup);
 #endif
          return err;
     }
@@ -109,7 +109,7 @@ int topo_base_graph_create (MPI_Comm comm_old,
      * Set the communicator topology information.
      */
     if (*comm_graph != MPI_COMM_NULL) {
-        (*comm_graph)->c_flags |= LAM_COMM_GRAPH;
+        (*comm_graph)->c_flags |= OMPI_COMM_GRAPH;
         (*comm_graph)->c_topo_comm->mtc_type = MPI_GRAPH;
         (*comm_graph)->c_topo_comm->mtc_nprocs = nnodes;
         (*comm_graph)->c_topo_comm->mtc_nedges = nedges;
@@ -118,7 +118,7 @@ int topo_base_graph_create (MPI_Comm comm_old,
      }
 
 #if 0
-    err = lam_group_free (&newgroup);
+    err = ompi_group_free (&newgroup);
 #endif
     if (err != MPI_SUCCESS) {
         return err;

@@ -18,7 +18,7 @@
 #include "ptl_tcp.h"
 
 
-extern lam_class_t mca_ptl_tcp_recv_frag_t_class;
+extern ompi_class_t mca_ptl_tcp_recv_frag_t_class;
 
 
 /**
@@ -36,8 +36,8 @@ typedef struct mca_ptl_tcp_recv_frag_t mca_ptl_tcp_recv_frag_t;
 
 #define MCA_PTL_TCP_RECV_FRAG_ALLOC(frag, rc) \
     { \
-    lam_list_item_t* item; \
-    LAM_FREE_LIST_GET(&mca_ptl_tcp_module.tcp_recv_frags, item, rc); \
+    ompi_list_item_t* item; \
+    OMPI_FREE_LIST_GET(&mca_ptl_tcp_module.tcp_recv_frags, item, rc); \
     frag = (mca_ptl_tcp_recv_frag_t*)item; \
     }
 
@@ -58,10 +58,10 @@ static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
                                                                                                                            
         /* initialize receive convertor */
         struct iovec iov;
-        lam_proc_t *proc =
-            lam_comm_peer_lookup(request->super.req_comm, request->super.req_peer);
-        lam_convertor_copy(proc->proc_convertor, &frag->super.super.frag_convertor);
-        lam_convertor_init_for_recv(
+        ompi_proc_t *proc =
+            ompi_comm_peer_lookup(request->super.req_comm, request->super.req_peer);
+        ompi_convertor_copy(proc->proc_convertor, &frag->super.super.frag_convertor);
+        ompi_convertor_init_for_recv(
             &frag->super.super.frag_convertor,  /* convertor */
             0,                            /* flags */
             request->super.req_datatype,  /* datatype */
@@ -75,7 +75,7 @@ static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
         */
         iov.iov_base = NULL;
         iov.iov_len = header->hdr_frag_length;
-        lam_convertor_unpack(&frag->super.super.frag_convertor, &iov, 1);
+        ompi_convertor_unpack(&frag->super.super.frag_convertor, &iov, 1);
                                                                                                                            
         /* non-contiguous - allocate buffer for receive */
         if(NULL == iov.iov_base) {
@@ -104,10 +104,10 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
                  * Initialize convertor and use it to unpack data  
                  */ 
                 struct iovec iov; 
-                lam_proc_t *proc = 
-                        lam_comm_peer_lookup(request->super.req_comm, request->super.req_peer); 
-                lam_convertor_copy(proc->proc_convertor, &(frag)->super.super.frag_convertor); 
-                lam_convertor_init_for_recv( 
+                ompi_proc_t *proc = 
+                        ompi_comm_peer_lookup(request->super.req_comm, request->super.req_peer); 
+                ompi_convertor_copy(proc->proc_convertor, &(frag)->super.super.frag_convertor); 
+                ompi_convertor_init_for_recv( 
                         &(frag)->super.super.frag_convertor,  /* convertor */ 
                         0,                                  /* flags */ 
                         request->super.req_datatype,        /* datatype */ 
@@ -117,7 +117,7 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
  
                 iov.iov_base = (frag)->super.super.frag_addr; 
                 iov.iov_len = (frag)->super.super.frag_size; 
-                lam_convertor_unpack(&(frag)->super.super.frag_convertor, &iov, 1); 
+                ompi_convertor_unpack(&(frag)->super.super.frag_convertor, &iov, 1); 
             } 
 
             /* progress the request */ 

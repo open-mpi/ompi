@@ -2,11 +2,11 @@
  * $HEADER$
  */
 
-#ifndef LAM_MCA_H
-#define LAM_MCA_H
+#ifndef OMPI_MCA_H
+#define OMPI_MCA_H
 
 #include "mpi.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "util/cmd_line.h"
 
 /*
@@ -114,13 +114,13 @@ enum {
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  int mca_base_arg_setup(lam_cmd_line_t *cmd);
-  int mca_base_arg_process(lam_cmd_line_t *cmd);
+  int mca_base_arg_setup(ompi_cmd_line_t *cmd);
+  int mca_base_arg_process(ompi_cmd_line_t *cmd);
   int mca_base_arg_process_one(char *type, char *arg);
 
 #if 0
   /* JMS Add after debug streams added */
-  int mca_base_set_verbose(int index, lam_debug_stream_info_t *lds,
+  int mca_base_set_verbose(int index, ompi_debug_stream_info_t *lds,
                            int *level, int *did);
 #endif
 
@@ -128,4 +128,4 @@ extern "C" {
 }
 #endif
 
-#endif /* LAM_MCA_H */
+#endif /* OMPI_MCA_H */

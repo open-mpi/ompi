@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -62,84 +62,84 @@
 #include "event.h"
 #include "include/types.h"
 #include "include/constants.h"
-#include "lfc/lam_object.h"
+#include "class/ompi_object.h"
 #include "threads/mutex.h"
 #include "threads/thread.h"
 #include "util/output.h"
 
 #if HAVE_SELECT
-extern const struct lam_eventop lam_selectops;
+extern const struct ompi_eventop ompi_selectops;
 #endif
 #if HAVE_POLL
-extern const struct lam_eventop lam_pollops;
+extern const struct ompi_eventop ompi_pollops;
 #endif
 #if HAVE_RTSIG
-extern const struct lam_eventop lam_rtsigops;
+extern const struct ompi_eventop ompi_rtsigops;
 #endif
 #if HAVE_EPOLL
-extern const struct lam_eventop lam_epollops;
+extern const struct ompi_eventop ompi_epollops;
 #endif
 #if HAVE_WORKING_KQUEUE
-extern const struct lam_eventop lam_kqops;
+extern const struct ompi_eventop ompi_kqops;
 #endif
 #if WIN32
-extern const struct lam_eventop lam_win32ops;
+extern const struct ompi_eventop ompi_win32ops;
 #endif
 
 /* In order of preference */
-static const struct lam_eventop *lam_eventops[] = {
+static const struct ompi_eventop *ompi_eventops[] = {
 #if HAVE_WORKING_KQUEUE
-    &lam_kqops,
+    &ompi_kqops,
 #endif
 #if HAVE_EPOLL
-    &lam_epollops,
+    &ompi_epollops,
 #endif
 #if HAVE_RTSIG
-    &lam_rtsigops,
+    &ompi_rtsigops,
 #endif
 #if HAVE_POLL
-    &lam_pollops,
+    &ompi_pollops,
 #endif
 #if HAVE_SELECT
-    &lam_selectops,
+    &ompi_selectops,
 #endif
 #if WIN32
-    &lam_win32ops,
+    &ompi_win32ops,
 #endif
     NULL
 };
 
-const struct lam_eventop *lam_evsel;
-void *lam_evbase;
+const struct ompi_eventop *ompi_evsel;
+void *ompi_evbase;
 
 /* Handle signals */
-int (*lam_event_sigcb)(void);    /* Signal callback when gotsig is set */
-int lam_event_gotsig;        /* Set in signal handler */
+int (*ompi_event_sigcb)(void);    /* Signal callback when gotsig is set */
+int ompi_event_gotsig;        /* Set in signal handler */
 
 /* Prototypes */
-static void lam_event_process_active(void);
-static void lam_timeout_correct(struct timeval *off);
-static void lam_timeout_insert(struct lam_event *);
-static void lam_event_queue_insert(struct lam_event *, int);
-static void lam_event_queue_remove(struct lam_event *, int);
-static void lam_timeout_process(void);
-int lam_event_haveevents(void);
+static void ompi_event_process_active(void);
+static void ompi_timeout_correct(struct timeval *off);
+static void ompi_timeout_insert(struct ompi_event *);
+static void ompi_event_queue_insert(struct ompi_event *, int);
+static void ompi_event_queue_remove(struct ompi_event *, int);
+static void ompi_timeout_process(void);
+int ompi_event_haveevents(void);
 
-static RB_HEAD(lam_event_tree, lam_event) lam_timetree;
-static struct lam_event_list lam_activequeue;
-struct lam_event_list lam_signalqueue;
-struct lam_event_list lam_eventqueue;
-static struct timeval lam_event_tv;
-lam_mutex_t lam_event_lock;
-#if LAM_HAVE_THREADS
-lam_thread_t lam_event_thread;
-lam_event_t lam_event_pipe_event;
-int lam_event_pipe[2];
-int lam_event_pipe_signalled;
+static RB_HEAD(ompi_event_tree, ompi_event) ompi_timetree;
+static struct ompi_event_list ompi_activequeue;
+struct ompi_event_list ompi_signalqueue;
+struct ompi_event_list ompi_eventqueue;
+static struct timeval ompi_event_tv;
+ompi_mutex_t ompi_event_lock;
+#if OMPI_HAVE_THREADS
+ompi_thread_t ompi_event_thread;
+ompi_event_t ompi_event_pipe_event;
+int ompi_event_pipe[2];
+int ompi_event_pipe_signalled;
 #endif
 
 static int
-compare(struct lam_event *a, struct lam_event *b)
+compare(struct ompi_event *a, struct ompi_event *b)
 {
     if (timercmp(&a->ev_timeout, &b->ev_timeout, <))
         return (-1);
@@ -148,17 +148,17 @@ compare(struct lam_event *a, struct lam_event *b)
     return (0);
 }
 
-static RB_PROTOTYPE(lam_event_tree, lam_event, ev_timeout_node, compare)
+static RB_PROTOTYPE(ompi_event_tree, ompi_event, ev_timeout_node, compare)
 
-static RB_GENERATE(lam_event_tree, lam_event, ev_timeout_node, compare)
+static RB_GENERATE(ompi_event_tree, ompi_event, ev_timeout_node, compare)
 
-static int lam_timeout_next(struct timeval *tv) 
+static int ompi_timeout_next(struct timeval *tv) 
 { 
-    struct timeval dflt = LAM_TIMEOUT_DEFAULT; 
+    struct timeval dflt = OMPI_TIMEOUT_DEFAULT; 
     struct timeval now; 
-    struct lam_event *ev; 
+    struct ompi_event *ev; 
 
-    if ((ev = RB_MIN(lam_event_tree, &lam_timetree)) == NULL) { 
+    if ((ev = RB_MIN(ompi_event_tree, &ompi_timetree)) == NULL) { 
         *tv = dflt; 
         return(0);
     } 
@@ -176,76 +176,76 @@ static int lam_timeout_next(struct timeval *tv)
 } 
 
 /* run loop for dispatch thread */
-static void* lam_event_run(lam_object_t* arg)
+static void* ompi_event_run(ompi_object_t* arg)
 {
-    lam_event_loop(0);
+    ompi_event_loop(0);
     return NULL;
 }
 
 
-#if LAM_HAVE_THREADS
-static void lam_event_pipe_handler(int sd, short flags, void* user)
+#if OMPI_HAVE_THREADS
+static void ompi_event_pipe_handler(int sd, short flags, void* user)
 {
     unsigned char byte;
     if(read(sd, &byte, 1) != 1) {
-        lam_output(0, "lam_event_pipe: read failed with: errno=%d\n", errno);
-        lam_event_del(&lam_event_pipe_event);
+        ompi_output(0, "ompi_event_pipe: read failed with: errno=%d\n", errno);
+        ompi_event_del(&ompi_event_pipe_event);
     }
 }
 #endif
 
 
 int
-lam_event_init(void)
+ompi_event_init(void)
 {
     static int inited = false;
     int i;
-#if LAM_HAVE_THREADS
+#if OMPI_HAVE_THREADS
     int rc;
 #endif
 
     if(inited)
-        return LAM_SUCCESS;
+        return OMPI_SUCCESS;
 
-    lam_event_sigcb = NULL;
-    lam_event_gotsig = 0;
-    gettimeofday(&lam_event_tv, NULL);
+    ompi_event_sigcb = NULL;
+    ompi_event_gotsig = 0;
+    gettimeofday(&ompi_event_tv, NULL);
     
-    OBJ_CONSTRUCT(&lam_event_lock, lam_mutex_t);
-    RB_INIT(&lam_timetree);
-    TAILQ_INIT(&lam_eventqueue);
-    TAILQ_INIT(&lam_activequeue);
-    TAILQ_INIT(&lam_signalqueue);
+    OBJ_CONSTRUCT(&ompi_event_lock, ompi_mutex_t);
+    RB_INIT(&ompi_timetree);
+    TAILQ_INIT(&ompi_eventqueue);
+    TAILQ_INIT(&ompi_activequeue);
+    TAILQ_INIT(&ompi_signalqueue);
     
-    lam_evbase = NULL;
-    for (i = 0; lam_eventops[i] && !lam_evbase; i++) {
-        lam_evsel = lam_eventops[i];
-        lam_evbase = lam_evsel->init();
+    ompi_evbase = NULL;
+    for (i = 0; ompi_eventops[i] && !ompi_evbase; i++) {
+        ompi_evsel = ompi_eventops[i];
+        ompi_evbase = ompi_evsel->init();
     }
 
-    if (lam_evbase == NULL)
+    if (ompi_evbase == NULL)
         errx(1, "%s: no event mechanism available", __func__);
 
-#if LAM_HAVE_THREADS
-    if(pipe(lam_event_pipe) != 0) {
-        lam_output(0, "lam_event_init: pipe() failed with errno=%d\n", errno);
-        return LAM_ERROR;
+#if OMPI_HAVE_THREADS
+    if(pipe(ompi_event_pipe) != 0) {
+        ompi_output(0, "ompi_event_init: pipe() failed with errno=%d\n", errno);
+        return OMPI_ERROR;
     }
 
-    lam_event_pipe_signalled = 1;
-    lam_event_set(
-        &lam_event_pipe_event,
-         lam_event_pipe[0],
-         LAM_EV_READ|LAM_EV_PERSIST,
-         lam_event_pipe_handler,
+    ompi_event_pipe_signalled = 1;
+    ompi_event_set(
+        &ompi_event_pipe_event,
+         ompi_event_pipe[0],
+         OMPI_EV_READ|OMPI_EV_PERSIST,
+         ompi_event_pipe_handler,
          0);
-    lam_event_add_i(&lam_event_pipe_event, 0);
-    lam_event_pipe_signalled = 0;
+    ompi_event_add_i(&ompi_event_pipe_event, 0);
+    ompi_event_pipe_signalled = 0;
 
     /* spin up a thread to dispatch events */
-    OBJ_CONSTRUCT(&lam_event_thread, lam_thread_t);
-    lam_event_thread.t_run = lam_event_run;
-    if((rc = lam_thread_start(&lam_event_thread)) != LAM_SUCCESS)
+    OBJ_CONSTRUCT(&ompi_event_thread, ompi_thread_t);
+    ompi_event_thread.t_run = ompi_event_run;
+    if((rc = ompi_thread_start(&ompi_event_thread)) != OMPI_SUCCESS)
         return rc;
 #endif
 
@@ -254,25 +254,25 @@ lam_event_init(void)
     log_debug_cmd(LOG_MISC, 80);
 #endif
     inited = true;
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 int
-lam_event_haveevents(void)
+ompi_event_haveevents(void)
 {
-    return (RB_ROOT(&lam_timetree) || TAILQ_FIRST(&lam_eventqueue) ||
-        TAILQ_FIRST(&lam_signalqueue) || TAILQ_FIRST(&lam_activequeue));
+    return (RB_ROOT(&ompi_timetree) || TAILQ_FIRST(&ompi_eventqueue) ||
+        TAILQ_FIRST(&ompi_signalqueue) || TAILQ_FIRST(&ompi_activequeue));
 }
 
 static void
-lam_event_process_active(void)
+ompi_event_process_active(void)
 {
-    struct lam_event *ev;
+    struct ompi_event *ev;
     short ncalls;
 
-    for (ev = TAILQ_FIRST(&lam_activequeue); ev;
-        ev = TAILQ_FIRST(&lam_activequeue)) {
-        lam_event_queue_remove(ev, LAM_EVLIST_ACTIVE);
+    for (ev = TAILQ_FIRST(&ompi_activequeue); ev;
+        ev = TAILQ_FIRST(&ompi_activequeue)) {
+        ompi_event_queue_remove(ev, OMPI_EVLIST_ACTIVE);
         
         /* Allows deletes to work */
         ncalls = ev->ev_ncalls;
@@ -280,10 +280,10 @@ lam_event_process_active(void)
         while (ncalls) {
             ncalls--;
             ev->ev_ncalls = ncalls;
-            if(lam_using_threads()) {
-                lam_mutex_unlock(&lam_event_lock);
+            if(ompi_using_threads()) {
+                ompi_mutex_unlock(&ompi_event_lock);
                 (*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
-                lam_mutex_lock(&lam_event_lock);
+                ompi_mutex_lock(&ompi_event_lock);
             } else {
                 (*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
             }
@@ -292,121 +292,121 @@ lam_event_process_active(void)
 }
 
 int
-lam_event_dispatch(void)
+ompi_event_dispatch(void)
 {
-    return (lam_event_loop(0));
+    return (ompi_event_loop(0));
 }
 
 int
-lam_event_loop(int flags)
+ompi_event_loop(int flags)
 {
     struct timeval tv;
     int res, done;
 
-    if(lam_using_threads()) {
-        THREAD_LOCK(&lam_event_lock);
+    if(ompi_using_threads()) {
+        THREAD_LOCK(&ompi_event_lock);
     } 
 
     /* Calculate the initial events that we are waiting for */
-    if (lam_evsel->recalc && lam_evsel->recalc(lam_evbase, 0) == -1) {
-        lam_output(0, "lam_event_loop: lam_evsel->recalc() failed.");
-        THREAD_UNLOCK(&lam_event_lock);
+    if (ompi_evsel->recalc && ompi_evsel->recalc(ompi_evbase, 0) == -1) {
+        ompi_output(0, "ompi_event_loop: ompi_evsel->recalc() failed.");
+        THREAD_UNLOCK(&ompi_event_lock);
         return (-1);
     }
 
     done = 0;
     while (!done) {
-        while (lam_event_gotsig) {
-            lam_event_gotsig = 0;
-            if (lam_event_sigcb) {
-                res = (*lam_event_sigcb)();
+        while (ompi_event_gotsig) {
+            ompi_event_gotsig = 0;
+            if (ompi_event_sigcb) {
+                res = (*ompi_event_sigcb)();
                 if (res == -1) {
-                    lam_output(0, "lam_event_loop: lam_event_sigcb() failed.");
+                    ompi_output(0, "ompi_event_loop: ompi_event_sigcb() failed.");
                     errno = EINTR;
-                    THREAD_UNLOCK(&lam_event_lock);
+                    THREAD_UNLOCK(&ompi_event_lock);
                     return (-1);
                 }
             }
         }
 
-        if (!(flags & LAM_EVLOOP_NONBLOCK)) {
-            static struct timeval dflt = LAM_TIMEOUT_DEFAULT;
+        if (!(flags & OMPI_EVLOOP_NONBLOCK)) {
+            static struct timeval dflt = OMPI_TIMEOUT_DEFAULT;
             tv = dflt;
         } else
             timerclear(&tv);
         
-#if LAM_HAVE_THREADS
-        lam_event_pipe_signalled = 0;
+#if OMPI_HAVE_THREADS
+        ompi_event_pipe_signalled = 0;
 #endif
-        res = lam_evsel->dispatch(lam_evbase, &tv);
-#if LAM_HAVE_THREADS
-        lam_event_pipe_signalled = 1;
+        res = ompi_evsel->dispatch(ompi_evbase, &tv);
+#if OMPI_HAVE_THREADS
+        ompi_event_pipe_signalled = 1;
 #endif
         if (res == -1) {
-            lam_output(0, "lam_event_loop: lam_evesel->dispatch() failed.");
-            THREAD_UNLOCK(&lam_event_lock);
+            ompi_output(0, "ompi_event_loop: ompi_evesel->dispatch() failed.");
+            THREAD_UNLOCK(&ompi_event_lock);
             return (-1);
         }
 
-        if(NULL != RB_MIN(lam_event_tree, &lam_timetree)) {
+        if(NULL != RB_MIN(ompi_event_tree, &ompi_timetree)) {
             /* Check if time is running backwards */
             gettimeofday(&tv, NULL);
-            if (timercmp(&tv, &lam_event_tv, <)) {
+            if (timercmp(&tv, &ompi_event_tv, <)) {
                 struct timeval off;
                 LOG_DBG((LOG_MISC, 10,
                         "%s: time is running backwards, corrected",
                         __func__));
     
-                timersub(&lam_event_tv, &tv, &off);
-                lam_timeout_correct(&off);
+                timersub(&ompi_event_tv, &tv, &off);
+                ompi_timeout_correct(&off);
             }
-            lam_event_tv = tv;
-            lam_timeout_process();
+            ompi_event_tv = tv;
+            ompi_timeout_process();
         }
 
-        if (TAILQ_FIRST(&lam_activequeue)) {
-            lam_event_process_active();
-            if (flags & LAM_EVLOOP_ONCE)
+        if (TAILQ_FIRST(&ompi_activequeue)) {
+            ompi_event_process_active();
+            if (flags & OMPI_EVLOOP_ONCE)
                 done = 1;
-        } else if (flags & (LAM_EVLOOP_NONBLOCK|LAM_EVLOOP_ONCE))
+        } else if (flags & (OMPI_EVLOOP_NONBLOCK|OMPI_EVLOOP_ONCE))
             done = 1;
 
-        if (lam_evsel->recalc && lam_evsel->recalc(lam_evbase, 0) == -1) {
-            lam_output(0, "lam_event_loop: lam_evesel->recalc() failed.");
-            THREAD_UNLOCK(&lam_event_lock);
+        if (ompi_evsel->recalc && ompi_evsel->recalc(ompi_evbase, 0) == -1) {
+            ompi_output(0, "ompi_event_loop: ompi_evesel->recalc() failed.");
+            THREAD_UNLOCK(&ompi_event_lock);
             return (-1);
         }
     }
-    THREAD_UNLOCK(&lam_event_lock);
+    THREAD_UNLOCK(&ompi_event_lock);
     return (0);
 }
 
 
 int
-lam_event_add_i(struct lam_event *ev, struct timeval *tv)
+ompi_event_add_i(struct ompi_event *ev, struct timeval *tv)
 {
     int rc = 0;
     LOG_DBG((LOG_MISC, 55,
          "event_add: event: %p, %s%s%scall %p",
          ev,
-         ev->ev_events & LAM_EV_READ ? "LAM_EV_READ " : " ",
-         ev->ev_events & LAM_EV_WRITE ? "LAM_EV_WRITE " : " ",
-         tv ? "LAM_EV_TIMEOUT " : " ",
+         ev->ev_events & OMPI_EV_READ ? "OMPI_EV_READ " : " ",
+         ev->ev_events & OMPI_EV_WRITE ? "OMPI_EV_WRITE " : " ",
+         tv ? "OMPI_EV_TIMEOUT " : " ",
          ev->ev_callback));
 
-    assert(!(ev->ev_flags & ~LAM_EVLIST_ALL));
+    assert(!(ev->ev_flags & ~OMPI_EVLIST_ALL));
     
     if (tv != NULL) {
         struct timeval now;
 
-        if (ev->ev_flags & LAM_EVLIST_TIMEOUT)
-            lam_event_queue_remove(ev, LAM_EVLIST_TIMEOUT);
+        if (ev->ev_flags & OMPI_EVLIST_TIMEOUT)
+            ompi_event_queue_remove(ev, OMPI_EVLIST_TIMEOUT);
 
         /* Check if it is active due to a timeout.  Rescheduling
          * this timeout before the callback can be executed
          * removes it from the active list. */
-        if ((ev->ev_flags & LAM_EVLIST_ACTIVE) &&
-            (ev->ev_res & LAM_EV_TIMEOUT)) {
+        if ((ev->ev_flags & OMPI_EVLIST_ACTIVE) &&
+            (ev->ev_res & OMPI_EV_TIMEOUT)) {
             /* See if we are just active executing this
              * event in a loop
              */
@@ -415,7 +415,7 @@ lam_event_add_i(struct lam_event *ev, struct timeval *tv)
                 *ev->ev_pncalls = 0;
             }
             
-            lam_event_queue_remove(ev, LAM_EVLIST_ACTIVE);
+            ompi_event_queue_remove(ev, OMPI_EVLIST_ACTIVE);
         }
 
         gettimeofday(&now, NULL);
@@ -425,37 +425,37 @@ lam_event_add_i(struct lam_event *ev, struct timeval *tv)
              "event_add: timeout in %d seconds, call %p",
              tv->tv_sec, ev->ev_callback));
 
-        lam_event_queue_insert(ev, LAM_EVLIST_TIMEOUT);
+        ompi_event_queue_insert(ev, OMPI_EVLIST_TIMEOUT);
     }
 
-    if ((ev->ev_events & (LAM_EV_READ|LAM_EV_WRITE)) &&
-        !(ev->ev_flags & (LAM_EVLIST_INSERTED|LAM_EVLIST_ACTIVE))) {
-        lam_event_queue_insert(ev, LAM_EVLIST_INSERTED);
-        rc = (lam_evsel->add(lam_evbase, ev));
-    } else if ((ev->ev_events & LAM_EV_SIGNAL) &&
-        !(ev->ev_flags & LAM_EVLIST_SIGNAL)) {
-        lam_event_queue_insert(ev, LAM_EVLIST_SIGNAL);
-        rc = (lam_evsel->add(lam_evbase, ev));
+    if ((ev->ev_events & (OMPI_EV_READ|OMPI_EV_WRITE)) &&
+        !(ev->ev_flags & (OMPI_EVLIST_INSERTED|OMPI_EVLIST_ACTIVE))) {
+        ompi_event_queue_insert(ev, OMPI_EVLIST_INSERTED);
+        rc = (ompi_evsel->add(ompi_evbase, ev));
+    } else if ((ev->ev_events & OMPI_EV_SIGNAL) &&
+        !(ev->ev_flags & OMPI_EVLIST_SIGNAL)) {
+        ompi_event_queue_insert(ev, OMPI_EVLIST_SIGNAL);
+        rc = (ompi_evsel->add(ompi_evbase, ev));
     }
 
-#if LAM_HAVE_THREADS
-    if(lam_event_pipe_signalled == 0) {
+#if OMPI_HAVE_THREADS
+    if(ompi_event_pipe_signalled == 0) {
         unsigned char byte = 0;
-        if(write(lam_event_pipe[1], &byte, 1) != 1)
-            lam_output(0, "lam_event_add: write() to lam_event_pipe[1] failed with errno=%d\n", errno);
-        lam_event_pipe_signalled++;
+        if(write(ompi_event_pipe[1], &byte, 1) != 1)
+            ompi_output(0, "ompi_event_add: write() to ompi_event_pipe[1] failed with errno=%d\n", errno);
+        ompi_event_pipe_signalled++;
     }
 #endif
     return rc;
 }
 
 
-int lam_event_del_i(struct lam_event *ev)
+int ompi_event_del_i(struct ompi_event *ev)
 {
     LOG_DBG((LOG_MISC, 80, "event_del: %p, callback %p",
          ev, ev->ev_callback));
 
-    assert(!(ev->ev_flags & ~LAM_EVLIST_ALL));
+    assert(!(ev->ev_flags & ~OMPI_EVLIST_ALL));
 
     /* See if we are just active executing this event in a loop */
     if (ev->ev_ncalls && ev->ev_pncalls) {
@@ -463,26 +463,26 @@ int lam_event_del_i(struct lam_event *ev)
         *ev->ev_pncalls = 0;
     }
 
-    if (ev->ev_flags & LAM_EVLIST_TIMEOUT)
-        lam_event_queue_remove(ev, LAM_EVLIST_TIMEOUT);
+    if (ev->ev_flags & OMPI_EVLIST_TIMEOUT)
+        ompi_event_queue_remove(ev, OMPI_EVLIST_TIMEOUT);
 
-    if (ev->ev_flags & LAM_EVLIST_ACTIVE)
-        lam_event_queue_remove(ev, LAM_EVLIST_ACTIVE);
+    if (ev->ev_flags & OMPI_EVLIST_ACTIVE)
+        ompi_event_queue_remove(ev, OMPI_EVLIST_ACTIVE);
 
-    if (ev->ev_flags & LAM_EVLIST_INSERTED) {
-        lam_event_queue_remove(ev, LAM_EVLIST_INSERTED);
-        return (lam_evsel->del(lam_evbase, ev));
-    } else if (ev->ev_flags & LAM_EVLIST_SIGNAL) {
-        lam_event_queue_remove(ev, LAM_EVLIST_SIGNAL);
-        return (lam_evsel->del(lam_evbase, ev));
+    if (ev->ev_flags & OMPI_EVLIST_INSERTED) {
+        ompi_event_queue_remove(ev, OMPI_EVLIST_INSERTED);
+        return (ompi_evsel->del(ompi_evbase, ev));
+    } else if (ev->ev_flags & OMPI_EVLIST_SIGNAL) {
+        ompi_event_queue_remove(ev, OMPI_EVLIST_SIGNAL);
+        return (ompi_evsel->del(ompi_evbase, ev));
     }
 
-#if LAM_HAVE_THREADS
-    if(lam_event_pipe_signalled == 0) {
+#if OMPI_HAVE_THREADS
+    if(ompi_event_pipe_signalled == 0) {
         unsigned char byte = 0;
-        if(write(lam_event_pipe[1], &byte, 1) != 1)
-            lam_output(0, "lam_event_add: write() to lam_event_pipe[1] failed with errno=%d\n", errno);
-        lam_event_pipe_signalled++;
+        if(write(ompi_event_pipe[1], &byte, 1) != 1)
+            ompi_output(0, "ompi_event_add: write() to ompi_event_pipe[1] failed with errno=%d\n", errno);
+        ompi_event_pipe_signalled++;
     }
 #endif
     return (0);
@@ -490,48 +490,48 @@ int lam_event_del_i(struct lam_event *ev)
 
 
 static void
-lam_timeout_correct(struct timeval *off)
+ompi_timeout_correct(struct timeval *off)
 {
-    struct lam_event *ev;
+    struct ompi_event *ev;
 
     /* We can modify the key element of the node without destroying
      * the key, beause we apply it to all in the right order.
      */
-    RB_FOREACH(ev, lam_event_tree, &lam_timetree)
+    RB_FOREACH(ev, ompi_event_tree, &ompi_timetree)
         timersub(&ev->ev_timeout, off, &ev->ev_timeout);
 }
 
 
 static void
-lam_timeout_process(void)
+ompi_timeout_process(void)
 {
     struct timeval now;
-    struct lam_event *ev, *next;
+    struct ompi_event *ev, *next;
 
     gettimeofday(&now, NULL);
 
-    for (ev = RB_MIN(lam_event_tree, &lam_timetree); ev; ev = next) {
+    for (ev = RB_MIN(ompi_event_tree, &ompi_timetree); ev; ev = next) {
         if (timercmp(&ev->ev_timeout, &now, >))
             break;
-        next = RB_NEXT(lam_event_tree, &lam_timetree, ev);
+        next = RB_NEXT(ompi_event_tree, &ompi_timetree, ev);
 
-        lam_event_queue_remove(ev, LAM_EVLIST_TIMEOUT);
+        ompi_event_queue_remove(ev, OMPI_EVLIST_TIMEOUT);
 
         /* delete this event from the I/O queues */
-        lam_event_del_i(ev);
+        ompi_event_del_i(ev);
 
         LOG_DBG((LOG_MISC, 60, "timeout_process: call %p",
              ev->ev_callback));
-        lam_event_active_i(ev, LAM_EV_TIMEOUT, 1);
+        ompi_event_active_i(ev, OMPI_EV_TIMEOUT, 1);
     }
 }
 
 static void
-lam_timeout_insert(struct lam_event *ev)
+ompi_timeout_insert(struct ompi_event *ev)
 {
-    struct lam_event *tmp;
+    struct ompi_event *tmp;
 
-    tmp = RB_FIND(lam_event_tree, &lam_timetree, ev);
+    tmp = RB_FIND(ompi_event_tree, &ompi_timetree, ev);
 
     if (tmp != NULL) {
         struct timeval tv;
@@ -541,18 +541,18 @@ lam_timeout_insert(struct lam_event *ev)
         tv = ev->ev_timeout;
         do {
             timeradd(&tv, &add, &tv);
-            tmp = RB_NEXT(lam_event_tree, &lam_timetree, tmp);
+            tmp = RB_NEXT(ompi_event_tree, &ompi_timetree, tmp);
         } while (tmp != NULL && timercmp(&tmp->ev_timeout, &tv, ==));
 
         ev->ev_timeout = tv;
     }
 
-    tmp = RB_INSERT(lam_event_tree, &lam_timetree, ev);
+    tmp = RB_INSERT(ompi_event_tree, &ompi_timetree, ev);
     assert(tmp == NULL);
 }
 
 static void
-lam_event_queue_remove(struct lam_event *ev, int queue)
+ompi_event_queue_remove(struct ompi_event *ev, int queue)
 {
     if (!(ev->ev_flags & queue))
         errx(1, "%s: %p(fd %d) not on queue %x", __func__,
@@ -560,17 +560,17 @@ lam_event_queue_remove(struct lam_event *ev, int queue)
 
     ev->ev_flags &= ~queue;
     switch (queue) {
-    case LAM_EVLIST_ACTIVE:
-        TAILQ_REMOVE(&lam_activequeue, ev, ev_active_next);
+    case OMPI_EVLIST_ACTIVE:
+        TAILQ_REMOVE(&ompi_activequeue, ev, ev_active_next);
         break;
-    case LAM_EVLIST_SIGNAL:
-        TAILQ_REMOVE(&lam_signalqueue, ev, ev_signal_next);
+    case OMPI_EVLIST_SIGNAL:
+        TAILQ_REMOVE(&ompi_signalqueue, ev, ev_signal_next);
         break;
-    case LAM_EVLIST_TIMEOUT:
-        RB_REMOVE(lam_event_tree, &lam_timetree, ev);
+    case OMPI_EVLIST_TIMEOUT:
+        RB_REMOVE(ompi_event_tree, &ompi_timetree, ev);
         break;
-    case LAM_EVLIST_INSERTED:
-        TAILQ_REMOVE(&lam_eventqueue, ev, ev_next);
+    case OMPI_EVLIST_INSERTED:
+        TAILQ_REMOVE(&ompi_eventqueue, ev, ev_next);
         break;
     default:
         errx(1, "%s: unknown queue %x", __func__, queue);
@@ -578,7 +578,7 @@ lam_event_queue_remove(struct lam_event *ev, int queue)
 }
 
 static void
-lam_event_queue_insert(struct lam_event *ev, int queue)
+ompi_event_queue_insert(struct ompi_event *ev, int queue)
 {
     if (ev->ev_flags & queue)
         errx(1, "%s: %p(fd %d) already on queue %x", __func__,
@@ -586,27 +586,27 @@ lam_event_queue_insert(struct lam_event *ev, int queue)
 
     ev->ev_flags |= queue;
     switch (queue) {
-    case LAM_EVLIST_ACTIVE:
-        TAILQ_INSERT_TAIL(&lam_activequeue, ev, ev_active_next);
+    case OMPI_EVLIST_ACTIVE:
+        TAILQ_INSERT_TAIL(&ompi_activequeue, ev, ev_active_next);
         break;
-    case LAM_EVLIST_SIGNAL:
-        TAILQ_INSERT_TAIL(&lam_signalqueue, ev, ev_signal_next);
+    case OMPI_EVLIST_SIGNAL:
+        TAILQ_INSERT_TAIL(&ompi_signalqueue, ev, ev_signal_next);
         break;
-    case LAM_EVLIST_TIMEOUT:
-        lam_timeout_insert(ev);
+    case OMPI_EVLIST_TIMEOUT:
+        ompi_timeout_insert(ev);
         break;
-    case LAM_EVLIST_INSERTED:
-        TAILQ_INSERT_TAIL(&lam_eventqueue, ev, ev_next);
+    case OMPI_EVLIST_INSERTED:
+        TAILQ_INSERT_TAIL(&ompi_eventqueue, ev, ev_next);
         break;
     default:
         errx(1, "%s: unknown queue %x", __func__, queue);
     }
 }
 
-void lam_event_active_i(struct lam_event * ev, int res, short ncalls)
+void ompi_event_active_i(struct ompi_event * ev, int res, short ncalls)
 {
     /* We get different kinds of events, add them together */
-    if (ev->ev_flags & LAM_EVLIST_ACTIVE) {
+    if (ev->ev_flags & OMPI_EVLIST_ACTIVE) {
         ev->ev_res |= res;
         return;
     }
@@ -614,7 +614,7 @@ void lam_event_active_i(struct lam_event * ev, int res, short ncalls)
     ev->ev_res = res;
     ev->ev_ncalls = ncalls;
     ev->ev_pncalls = NULL;
-    lam_event_queue_insert(ev, LAM_EVLIST_ACTIVE);
+    ompi_event_queue_insert(ev, OMPI_EVLIST_ACTIVE);
 }
                                                                                               
 

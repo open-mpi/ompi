@@ -4,7 +4,7 @@
 
 /** @file **/
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
@@ -15,26 +15,26 @@
 
 
 /**
- * First function that must be called in a LAM process.
+ * First function that must be called in a OMPI process.
  *
  * @param argc Passed in from main()
  * @param argv Passed in from main()
  *
- * @retval LAM_SUCCESS Upon success.
- * @retval LAM_ERROR Upon failure.
+ * @retval OMPI_SUCCESS Upon success.
+ * @retval OMPI_ERROR Upon failure.
  *
- * This is the first function that must be called for a LAM process.
+ * This is the first function that must be called for a OMPI process.
  * It sets up the following:
  *
- * - calls lam_output_init(): sets up default verbose/0 stream
+ * - calls ompi_output_init(): sets up default verbose/0 stream
  *
- * - calls lam_set_using_threads(): sets value to false (someone else,
+ * - calls ompi_set_using_threads(): sets value to false (someone else,
  *   such as MPI_INIT, may reset this value later)
  *
- * More will likely be filled in here in the future.  Note that LAM
+ * More will likely be filled in here in the future.  Note that OMPI
  * RTE MCA module setup is distinctly \em not covered in this function
- * -- not all LAM processes need LAM RTE MCA modules (e.g., wrapper
- * compilers).  LAM RTE MCA modules are initialized in lam_rte_init().
+ * -- not all OMPI processes need OMPI RTE MCA modules (e.g., wrapper
+ * compilers).  OMPI RTE MCA modules are initialized in ompi_rte_init().
  * 
  * Just a note for developer: 
 
@@ -89,22 +89,22 @@
  * universe_name (either mpirun would have started the universe, or it
  * would have been already started by rte_boot)
  */
-int lam_init(int argc, char *argv[])
+int ompi_init(int argc, char *argv[])
 {
   /* Open up the output streams */
 
-  if (!lam_output_init())
-    return LAM_ERROR;
+  if (!ompi_output_init())
+    return OMPI_ERROR;
 
-  /* For the moment, the LAM library is not multi-threaded.  MPI_INIT
+  /* For the moment, the OMPI library is not multi-threaded.  MPI_INIT
      may reset this value later, but for now, we say that we are not
      using threads. */
 
-  lam_set_using_threads(false);
+  ompi_set_using_threads(false);
 
   /* For malloc debugging */
 
-  lam_malloc_init();
+  ompi_malloc_init();
 
   /* Other things that we'll probably need:
 
@@ -114,5 +114,5 @@ int lam_init(int argc, char *argv[])
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

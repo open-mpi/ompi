@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include <stdio.h>
@@ -19,7 +19,7 @@
 /*
  *	alltoallw
  *
- *	Function:	- MPI_Alltoallw for non-lamd RPIs
+ *	Function:	- MPI_Alltoallw for non-ompid RPIs
  *	Accepts:	- same as MPI_Alltoallw()
  *	Returns:	- MPI_SUCCESS or an MPI error code
  */
@@ -29,7 +29,7 @@ int mca_coll_basic_alltoallw(void *sbuf, int *scounts, int *sdisps,
                              MPI_Datatype *rdtypes, MPI_Comm comm)
 {
 #if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
+  return OMPI_ERR_NOT_IMPLEMENTED;
 #else
   int i;
   int size;
@@ -64,13 +64,13 @@ int mca_coll_basic_alltoallw(void *sbuf, int *scounts, int *sdisps,
   psnd = ((char *) sbuf) + sdisps[rank];
   prcv = ((char *) rbuf) + rdisps[rank];
 #if 0
-  /* JMS: Need a lam_datatype_something() here that allows two
+  /* JMS: Need a ompi_datatype_something() here that allows two
      different datatypes */
-  err = lam_dtsndrcv(psnd, scounts[rank], sdtypes[rank],
+  err = ompi_dtsndrcv(psnd, scounts[rank], sdtypes[rank],
 		     prcv, rcounts[rank], rdtypes[rank], BLKMPIALLTOALLW, comm);
   if (MPI_SUCCESS != err) {
     if (MPI_REQUEST_NULL != req)
-      LAM_FREE(req);
+      OMPI_FREE(req);
     return err;
   }
 #endif
@@ -95,7 +95,7 @@ int mca_coll_basic_alltoallw(void *sbuf, int *scounts, int *sdisps,
     err = MPI_Recv_init(prcv, rcounts[i], rdtypes[i],
 			i, BLKMPIALLTOALLW, comm, preq++);
     if (MPI_SUCCESS != err) {
-      LAM_FREE(req);
+      OMPI_FREE(req);
       return err;
     }
 #endif
@@ -112,7 +112,7 @@ int mca_coll_basic_alltoallw(void *sbuf, int *scounts, int *sdisps,
     err = MPI_Send_init(psnd, scounts[i], sdtypes[i],
 			i, BLKMPIALLTOALLW, comm, preq++);
     if (MPI_SUCCESS != err) {
-      LAM_FREE(req);
+      OMPI_FREE(req);
       return err;
     }
 #endif

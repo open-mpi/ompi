@@ -26,7 +26,7 @@ void
 timeout_cb(int fd, short event, void *arg)
 {
 	struct timeval tv;
-	struct lam_event *timeout = arg;
+	struct ompi_event *timeout = arg;
 	int newtime = time(NULL);
 
 	printf("%s: called at %d: %d\n", __func__, newtime,
@@ -35,28 +35,28 @@ timeout_cb(int fd, short event, void *arg)
 
 	timerclear(&tv);
 	tv.tv_sec = 2;
-	lam_event_add(timeout, &tv);
+	ompi_event_add(timeout, &tv);
 }
 
 int
 main (int argc, char **argv)
 {
-	struct lam_event timeout;
+	struct ompi_event timeout;
 	struct timeval tv;
  
 	/* Initalize the event library */
-	lam_event_init();
+	ompi_event_init();
 
 	/* Initalize one event */
-	lam_evtimer_set(&timeout, timeout_cb, &timeout);
+	ompi_evtimer_set(&timeout, timeout_cb, &timeout);
 
 	timerclear(&tv);
 	tv.tv_sec = 2;
-	lam_event_add(&timeout, &tv);
+	ompi_event_add(&timeout, &tv);
 
 	lasttime = time(NULL);
 	
-	lam_event_dispatch();
+	ompi_event_dispatch();
 
 	return (0);
 }

@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include "constants.h"
@@ -33,8 +33,8 @@ int mca_coll_basic_gather(void *sbuf, int scount, MPI_Datatype sdtype,
     MPI_Aint extent;
     MPI_Aint lb;
 
-    size = lam_comm_size(comm);
-    rank = lam_comm_rank(comm);
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
 
     /* Everyone but root sends data and returns. */
 
@@ -47,9 +47,9 @@ int mca_coll_basic_gather(void *sbuf, int scount, MPI_Datatype sdtype,
 
     /* I am the root, loop receiving the data. */
 
-    err = lam_ddt_get_extent(rdtype, &lb, &extent);
+    err = ompi_ddt_get_extent(rdtype, &lb, &extent);
     if (0 != err)
-	return LAM_ERROR;
+	return OMPI_ERROR;
 
     incr = extent * rcount;
     for (i = 0, ptmp = (char *) rbuf; i < size; ++i, ptmp += incr) {
@@ -57,7 +57,7 @@ int mca_coll_basic_gather(void *sbuf, int scount, MPI_Datatype sdtype,
 	/* simple optimization */
 
 	if (i == rank) {
-	    err = lam_ddt_sndrcv(sbuf, scount, sdtype, ptmp,
+	    err = ompi_ddt_sndrcv(sbuf, scount, sdtype, ptmp,
 				 rcount, rdtype, 
 				 MCA_COLL_BASE_TAG_GATHER, comm);
 	} else {

@@ -3,51 +3,51 @@
  */
 /** @file **/
 
-#ifndef LAM_ERRHANDLER_H
-#define LAM_ERRHANDLER_H
+#ifndef OMPI_ERRHANDLER_H
+#define OMPI_ERRHANDLER_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
-#include "lfc/lam_object.h"
-#include "lfc/lam_pointer_array.h"
+#include "class/ompi_object.h"
+#include "class/ompi_pointer_array.h"
 
 /*
  * These must correspond to the fortran handle indices
  */
-#define LAM_ERRHANDLER_NULL_FORTRAN 0
-#define LAM_ERRORS_ARE_FATAL_FORTRAN 1
-#define LAM_ERRORS_RETURN_FORTRAN 2
+#define OMPI_ERRHANDLER_NULL_FORTRAN 0
+#define OMPI_ERRORS_ARE_FATAL_FORTRAN 1
+#define OMPI_ERRORS_RETURN_FORTRAN 2
 
 
 /**
  * Typedef for all fortran errhandler functions
  */
-typedef void (lam_errhandler_fortran_handler_fn_t)(int *, int *, ...);
+typedef void (ompi_errhandler_fortran_handler_fn_t)(int *, int *, ...);
 
 
 /**
  * Enum used to describe what kind MPI object an error handler is used for
  */
-enum lam_errhandler_type_t {
-    LAM_ERRHANDLER_TYPE_COMM,
-    LAM_ERRHANDLER_TYPE_WIN,
-    LAM_ERRHANDLER_TYPE_FILE
+enum ompi_errhandler_type_t {
+    OMPI_ERRHANDLER_TYPE_COMM,
+    OMPI_ERRHANDLER_TYPE_WIN,
+    OMPI_ERRHANDLER_TYPE_FILE
 };
-typedef enum lam_errhandler_type_t lam_errhandler_type_t;
+typedef enum ompi_errhandler_type_t ompi_errhandler_type_t;
 
 
 /**
  * Back-end type for MPI_Errorhandler.
  */
-struct lam_errhandler_t {
-  lam_object_t super;
+struct ompi_errhandler_t {
+  ompi_object_t super;
 
   char eh_name[MPI_MAX_OBJECT_NAME];
 
   /* Type of MPI object that this handler is for */
 
-  lam_errhandler_type_t eh_mpi_object_type;
+  ompi_errhandler_type_t eh_mpi_object_type;
 
   /* Flags about the error handler */
 
@@ -61,35 +61,35 @@ struct lam_errhandler_t {
     MPI_File_errhandler_fn *c_file_fn;
     MPI_Win_errhandler_fn *c_win_fn;
 
-    lam_errhandler_fortran_handler_fn_t *fort_fn;
+    ompi_errhandler_fortran_handler_fn_t *fort_fn;
   } eh_func;
 
   /* index in Fortran <-> C translation array */
 
   int eh_f_to_c_index;
 };
-typedef struct lam_errhandler_t lam_errhandler_t;
+typedef struct ompi_errhandler_t ompi_errhandler_t;
 
 
 /**
  * Global variable for MPI_ERRHANDLER_NULL
  */
-extern lam_errhandler_t lam_mpi_errhandler_null;
+extern ompi_errhandler_t ompi_mpi_errhandler_null;
 
 /**
  * Global variable for MPI_ERRORS_ARE_FATAL
  */
-extern lam_errhandler_t lam_mpi_errors_are_fatal;
+extern ompi_errhandler_t ompi_mpi_errors_are_fatal;
 
 /**
  * Global variable for MPI_ERRORS_RETURN
  */
-extern lam_errhandler_t lam_mpi_errors_return;
+extern ompi_errhandler_t ompi_mpi_errors_return;
 
 /**
  * Table for Fortran <-> C errhandler handle conversion
  */
-extern lam_pointer_array_t *lam_errhandler_f_to_c_table;
+extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
 
 
 /**
@@ -104,11 +104,11 @@ extern lam_pointer_array_t *lam_errhandler_f_to_c_table;
  *
  * This macro is used when you want to directly invoke the error
  * handler.  It is exactly equivalent to calling
- * lam_errhandler_invoke() directly, but is provided to have a
- * parallel invocation to LAM_ERRHANDLER_CHECK() and LAM_ERRHANDLER_RETURN().
+ * ompi_errhandler_invoke() directly, but is provided to have a
+ * parallel invocation to OMPI_ERRHANDLER_CHECK() and OMPI_ERRHANDLER_RETURN().
  */
-#define LAM_ERRHANDLER_INVOKE(mpi_object, err_code, message) \
-  lam_errhandler_invoke((mpi_object) != NULL ? (mpi_object)->error_handler : NULL, (mpi_object), \
+#define OMPI_ERRHANDLER_INVOKE(mpi_object, err_code, message) \
+  ompi_errhandler_invoke((mpi_object) != NULL ? (mpi_object)->error_handler : NULL, (mpi_object), \
                         (err_code), (message));
 
 /**
@@ -122,11 +122,11 @@ extern lam_pointer_array_t *lam_errhandler_f_to_c_table;
  *    MPI function that is invoking the error.
  *
  * This macro will invoke the error handler if the return code is not
- * LAM_SUCCESS.
+ * OMPI_SUCCESS.
  */
-#define LAM_ERRHANDLER_CHECK(rc, mpi_object, err_code, message) \
-  if (rc != LAM_SUCCESS) { \
-    lam_errhandler_invoke((mpi_object) != NULL ? (mpi_object)->error_handler : NULL, (mpi_object), \
+#define OMPI_ERRHANDLER_CHECK(rc, mpi_object, err_code, message) \
+  if (rc != OMPI_SUCCESS) { \
+    ompi_errhandler_invoke((mpi_object) != NULL ? (mpi_object)->error_handler : NULL, (mpi_object), \
                           (err_code), (message)); \
     return (err_code); \
   }
@@ -143,12 +143,12 @@ extern lam_pointer_array_t *lam_errhandler_f_to_c_table;
  *    MPI function that is invoking the error.
  *
  * This macro will invoke the error handler if the return code is not
- * LAM_SUCCESS.  If the return code is LAM_SUCCESS, then return
+ * OMPI_SUCCESS.  If the return code is OMPI_SUCCESS, then return
  * MPI_SUCCESS.
  */
-#define LAM_ERRHANDLER_RETURN(rc, mpi_object, err_code, message) \
-  if (rc != LAM_SUCCESS) { \
-    lam_errhandler_invoke((mpi_object != NULL) ? (mpi_object)->error_handler : NULL, (mpi_object), \
+#define OMPI_ERRHANDLER_RETURN(rc, mpi_object, err_code, message) \
+  if (rc != OMPI_SUCCESS) { \
+    ompi_errhandler_invoke((mpi_object != NULL) ? (mpi_object)->error_handler : NULL, (mpi_object), \
                           (err_code), (message)); \
     return (err_code); \
   } else { \
@@ -163,31 +163,31 @@ extern "C" {
   /**
    * Initialize the error handler interface.
    *
-   * @returns LAM_SUCCESS Upon success
-   * @returns LAM_ERROR Otherwise
+   * @returns OMPI_SUCCESS Upon success
+   * @returns OMPI_ERROR Otherwise
    *
-   * Invoked from lam_mpi_init(); sets up the error handler interface,
+   * Invoked from ompi_mpi_init(); sets up the error handler interface,
    * creates the predefined MPI errorhandlers, and creates the
    * corresopnding F2C translation table.
    */
-  int lam_errhandler_init(void);
+  int ompi_errhandler_init(void);
 
   /**
    * Finalize the error handler interface.
    *
-   * @returns LAM_SUCCESS Always
+   * @returns OMPI_SUCCESS Always
    *
-   * Invokes from lam_mpi_finalize(); tears down the error handler
+   * Invokes from ompi_mpi_finalize(); tears down the error handler
    * interface, and destroys the F2C translation table.
    */
-  int lam_errhandler_finalize(void);
+  int ompi_errhandler_finalize(void);
 
   /**
    * \internal
    *
    * This function should not be invoked directly; it should only be
-   * invoked by LAM_ERRHANDLER_INVOKE(), LAM_ERRHANDLER_CHECK(), or
-   * LAM_ERRHANDLER_RETURN().
+   * invoked by OMPI_ERRHANDLER_INVOKE(), OMPI_ERRHANDLER_CHECK(), or
+   * OMPI_ERRHANDLER_RETURN().
    *
    * @param errhandler The MPI_Errhandler to invoke
    * @param mpi_object The MPI object to invoke the errhandler on (a
@@ -206,22 +206,22 @@ extern "C" {
    * If this function returns, it returns the err_code.  Note that it
    * may not return (e.g., for MPI_ERRORS_ARE_FATAL).
    */
-  int lam_errhandler_invoke(lam_errhandler_t *errhandler, void *mpi_object, 
+  int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object, 
                             int err_code, char *message);
 
 
   /**
-   * Create a lam_errhandler_t
+   * Create a ompi_errhandler_t
    *
    * @param object_type Enum of the type of MPI object
    * @param func Function pointer of the error handler
    *
-   * @returns errhandler Pointer to the lam_errorhandler_t that will be
+   * @returns errhandler Pointer to the ompi_errorhandler_t that will be
    *   created and returned
    *
    * This function is called as the back-end of all the
    * MPI_*_CREATE_ERRHANDLER functions.  It creates a new
-   * lam_errhandler_t object, initializes it to the correct object
+   * ompi_errhandler_t object, initializes it to the correct object
    * type, and sets the callback function on it.  
    *
    * The type of the function pointer is (arbitrarily) the fortran
@@ -236,8 +236,8 @@ extern "C" {
    * wrappers for MPI_*_CREATE_ERRHANDLER are expected to reset this
    * flag to true manually.
    */
-  lam_errhandler_t *lam_errhandler_create(lam_errhandler_type_t object_type,
-                                          lam_errhandler_fortran_handler_fn_t *func);
+  ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
+                                          ompi_errhandler_fortran_handler_fn_t *func);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
@@ -255,9 +255,9 @@ extern "C" {
  * this function is provided to hide the internal structure field
  * names.
  */
-static inline bool lam_errhandler_is_intrinsic(lam_errhandler_t *errhandler)
+static inline bool ompi_errhandler_is_intrinsic(ompi_errhandler_t *errhandler)
 {
   return errhandler->eh_is_intrinsic;
 }
 
-#endif /* LAM_ERRHANDLER_H */
+#endif /* OMPI_ERRHANDLER_H */

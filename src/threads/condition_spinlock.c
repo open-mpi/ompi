@@ -5,26 +5,26 @@
 #include "mutex.h"
 #include "condition.h"
 
-#if (LAM_HAVE_THREADS == 0)
+#if (OMPI_HAVE_THREADS == 0)
 
                                                                                                              
-static void lam_condition_construct(lam_condition_t* c)
+static void ompi_condition_construct(ompi_condition_t* c)
 {
     c->c_waiting = 0;
     c->c_signaled = 0;
 }
                                                                                                              
                                                                                                              
-static void lam_condition_destruct(lam_condition_t* c)
+static void ompi_condition_destruct(ompi_condition_t* c)
 {
 }
                                                                                                              
                                                                                                              
 OBJ_CLASS_INSTANCE(
-    lam_condition_t,
-    lam_object_t,
-    lam_condition_construct,
-    lam_condition_destruct
+    ompi_condition_t,
+    ompi_object_t,
+    ompi_condition_construct,
+    ompi_condition_destruct
 );
                                                                                                              
 

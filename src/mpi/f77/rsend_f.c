@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_RSEND = mpi_rsend_f
 #pragma weak pmpi_rsend = mpi_rsend_f
 #pragma weak pmpi_rsend_ = mpi_rsend_f
 #pragma weak pmpi_rsend__ = mpi_rsend_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_RSEND,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_RSEND,
                            pmpi_rsend,
                            pmpi_rsend_,
                            pmpi_rsend__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_RSEND,
                            (ibuf, count, datatype, dest, tag, comm, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_RSEND = mpi_rsend_f
 #pragma weak mpi_rsend = mpi_rsend_f
 #pragma weak mpi_rsend_ = mpi_rsend_f
 #pragma weak mpi_rsend__ = mpi_rsend_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_RSEND,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_RSEND,
                            mpi_rsend,
                            mpi_rsend_,
                            mpi_rsend__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_RSEND,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

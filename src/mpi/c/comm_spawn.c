@@ -1,17 +1,17 @@
 /*
  * $HEADERS$
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_spawn = PMPI_Comm_spawn
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 

@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-define([LAM_C_WEAK_SYMBOLS],[
+define([OMPI_C_WEAK_SYMBOLS],[
 #
 # Arguments: None
 #
@@ -11,7 +11,7 @@ define([LAM_C_WEAK_SYMBOLS],[
 #
 # Check to see if the C compiler can handle weak symbols
 #
-# Sets LAM_C_WEAK_SYMBOLS=1 if the C compiler has support for weak
+# Sets OMPI_C_WEAK_SYMBOLS=1 if the C compiler has support for weak
 # symbols.
 #
 
@@ -22,13 +22,13 @@ int real(int i);
 int real(int i) { return i; }
 int main(int argc, char* argv[]) {
   return fake(3);
-}]]), lam_happy=1, lam_happy=0)
-if test "$lam_happy" = "1"; then
+}]]), ompi_happy=1, ompi_happy=0)
+if test "$ompi_happy" = "1"; then
     AC_MSG_RESULT([yes])
-    LAM_C_HAVE_WEAK_SYMBOLS=1
+    OMPI_C_HAVE_WEAK_SYMBOLS=1
 else
     AC_MSG_RESULT([no])
-    LAM_C_HAVE_WEAK_SYMBOLS=0
+    OMPI_C_HAVE_WEAK_SYMBOLS=0
 fi
 
-unset lam_happy])dnl
+unset ompi_happy])dnl

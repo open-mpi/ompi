@@ -116,18 +116,18 @@ int mca_ptl_sm_module_open(void)
         mca_ptl_sm_param_register_int("free_list_inc", 256);
 
     /* initialize objects */
-    OBJ_CONSTRUCT(&mca_ptl_sm_module.sm_lock, lam_mutex_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm_module.sm_allocator, lam_allocator_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm_module.sm_send_requests, lam_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm_module.sm_send_frags, lam_free_list_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm_module.sm_recv_frags, lam_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm_module.sm_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm_module.sm_allocator, ompi_allocator_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm_module.sm_send_requests, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm_module.sm_send_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm_module.sm_recv_frags, ompi_free_list_t);
    
     mca_ptl_sm_module.sm_allocator.alc_alloc_fn = mca_ptl_sm_mmap_alloc;
     mca_ptl_sm_module.sm_allocator.alc_free_fn = mca_ptl_sm_mmap_free;
 
     /* initialize state */
     mca_ptl_sm_module.sm_mmap = NULL;
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -141,7 +141,7 @@ int mca_ptl_sm_module_close(void)
     OBJ_DESTRUCT(&mca_ptl_sm_module.sm_send_requests);
     OBJ_DESTRUCT(&mca_ptl_sm_module.sm_send_frags);
     OBJ_DESTRUCT(&mca_ptl_sm_module.sm_recv_frags);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -157,7 +157,7 @@ mca_ptl_t** mca_ptl_sm_module_init(
 
     *num_ptls = 0;
     *allow_multi_user_threads = true;
-    *have_hidden_threads = LAM_HAVE_THREADS;
+    *have_hidden_threads = OMPI_HAVE_THREADS;
 
     /* allocate a block of shared memory */
     mca_ptl_sm_module.sm_mmap = mca_ptl_sm_mmap_init(mca_ptl_sm_module.sm_min_alloc);
@@ -165,7 +165,7 @@ mca_ptl_t** mca_ptl_sm_module_init(
          return NULL;
 
     /* initialize free lists */
-    lam_free_list_init(&mca_ptl_sm_module.sm_send_requests, 
+    ompi_free_list_init(&mca_ptl_sm_module.sm_send_requests, 
         sizeof(mca_ptl_sm_send_request_t),
         OBJ_CLASS(mca_ptl_sm_send_request_t),
         mca_ptl_sm_module.sm_free_list_num,
@@ -173,7 +173,7 @@ mca_ptl_t** mca_ptl_sm_module_init(
         mca_ptl_sm_module.sm_free_list_inc,
         &mca_ptl_sm_module.sm_allocator); /* use shared-memory allocator */
 
-    lam_free_list_init(&mca_ptl_sm_module.sm_recv_frags, 
+    ompi_free_list_init(&mca_ptl_sm_module.sm_recv_frags, 
         sizeof(mca_ptl_sm_recv_frag_t),
         OBJ_CLASS(mca_ptl_sm_recv_frag_t),
         mca_ptl_sm_module.sm_free_list_num,
@@ -182,7 +182,7 @@ mca_ptl_t** mca_ptl_sm_module_init(
         &mca_ptl_sm_module.sm_allocator); /* use default allocator */
 
     /* publish shared memory parameters with the MCA framework */
-    if(mca_ptl_sm_module_exchange() != LAM_SUCCESS)
+    if(mca_ptl_sm_module_exchange() != OMPI_SUCCESS)
         return 0;
 
     ptls = malloc(sizeof(mca_ptl_t*));
@@ -206,7 +206,7 @@ int mca_ptl_sm_module_control(int param, void* value, size_t size)
         default:
             break;
     }
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -216,7 +216,7 @@ int mca_ptl_sm_module_control(int param, void* value, size_t size)
 
 int mca_ptl_sm_module_progress(mca_ptl_tstamp_t tstamp)
 {
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -226,7 +226,7 @@ int mca_ptl_sm_module_progress(mca_ptl_tstamp_t tstamp)
 
 static int mca_ptl_sm_module_exchange()
 {
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 

@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <string.h>
 #include "support.h"
-#include "lfc/lam_object.h"
-#include "lfc/lam_hash_table.h"
+#include "class/ompi_object.h"
+#include "class/ompi_hash_table.h"
 
 char *num_keys[] = {
     "1234", "1234",
@@ -40,7 +40,7 @@ char *perm_keys[] = {
     NULL
 };
 
-static void validate_table(lam_hash_table_t *table, char *keys[], int is_numeric_keys)
+static void validate_table(ompi_hash_table_t *table, char *keys[], int is_numeric_keys)
 {
     int         j;
     const char  *val;
@@ -48,52 +48,52 @@ static void validate_table(lam_hash_table_t *table, char *keys[], int is_numeric
     for ( j = 0; keys[j]; j += 2)
     {
         if ( 1 == is_numeric_keys )
-            val = lam_hash_table_get_value_uint32(table, atoi(keys[j]));
+            val = ompi_hash_table_get_value_uint32(table, atoi(keys[j]));
         else
-            val = lam_hash_table_get_value_ptr(table, keys[j], strlen(keys[j]));
+            val = ompi_hash_table_get_value_ptr(table, keys[j], strlen(keys[j]));
         test_verify_str(keys[j+1], val);
     }
-    test_verify_int(j/2, lam_hash_table_get_size(table));
+    test_verify_int(j/2, ompi_hash_table_get_size(table));
 }
 
-static void test_htable(lam_hash_table_t *table)
+static void test_htable(ompi_hash_table_t *table)
 {
     int j;
     printf("\nTesting integer keys...\n");
     for ( j = 0; num_keys[j]; j += 2)
     {
-        lam_hash_table_set_value_uint32(table, atoi(num_keys[j]), num_keys[j+1]);
+        ompi_hash_table_set_value_uint32(table, atoi(num_keys[j]), num_keys[j+1]);
     }
     validate_table(table, num_keys, 1);
     
     /* remove all values for next test */
-    lam_hash_table_remove_all(table);
-    test_verify_int(0, lam_hash_table_get_size(table));
+    ompi_hash_table_remove_all(table);
+    test_verify_int(0, ompi_hash_table_get_size(table));
     
     printf("\nTesting string keys...\n");
     for ( j = 0; str_keys[j]; j += 2)
     {
-        lam_hash_table_set_value_ptr(table, str_keys[j], strlen(str_keys[j]), str_keys[j+1]);
+        ompi_hash_table_set_value_ptr(table, str_keys[j], strlen(str_keys[j]), str_keys[j+1]);
     }
     validate_table(table, str_keys, 0);
     
     /* remove all values for next test */
-    lam_hash_table_remove_all(table);
-    test_verify_int(0, lam_hash_table_get_size(table));
+    ompi_hash_table_remove_all(table);
+    test_verify_int(0, ompi_hash_table_get_size(table));
     
     printf("\nTesting collision resolution...\n");
     /* All of the string keys in keys array should
         have the same hash value. */
     for ( j = 0; perm_keys[j]; j += 2)
     {
-        lam_hash_table_set_value_ptr(table, perm_keys[j], strlen(perm_keys[j]), perm_keys[j+1]);
+        ompi_hash_table_set_value_ptr(table, perm_keys[j], strlen(perm_keys[j]), perm_keys[j+1]);
     }
 
     validate_table(table, perm_keys, 0);
     
     /* remove all values for next test */
-    lam_hash_table_remove_all(table);
-    test_verify_int(0, lam_hash_table_get_size(table));
+    ompi_hash_table_remove_all(table);
+    test_verify_int(0, ompi_hash_table_get_size(table));
     
     printf("\n\n");
 }
@@ -101,16 +101,16 @@ static void test_htable(lam_hash_table_t *table)
 
 static void test_dynamic(void)
 {
-    lam_hash_table_t     *table;
+    ompi_hash_table_t     *table;
     
-    table = OBJ_NEW(lam_hash_table_t);
+    table = OBJ_NEW(ompi_hash_table_t);
     if ( NULL == table )
     {
         printf("Error: Unable to create hash table.\n");
         exit(-1);
     }
     printf("Testing with dynamically created table...\n");
-    lam_hash_table_init(table, 4);
+    ompi_hash_table_init(table, 4);
     test_htable(table);
     
     OBJ_RELEASE(table);
@@ -119,10 +119,10 @@ static void test_dynamic(void)
 
 static void test_static(void)
 {
-    lam_hash_table_t     table;
+    ompi_hash_table_t     table;
     
-    OBJ_CONSTRUCT(&table, lam_hash_table_t);
-    lam_hash_table_init(&table, 128);
+    OBJ_CONSTRUCT(&table, ompi_hash_table_t);
+    ompi_hash_table_init(&table, 128);
 
     printf("Testing with statically created table...\n");
     test_htable(&table);
@@ -134,7 +134,7 @@ static void test_static(void)
 int main(int argc, char **argv)
 {
     /* local variables */
-    test_init("lam_hash_table_t");
+    test_init("ompi_hash_table_t");
     
     test_dynamic();
     test_static();

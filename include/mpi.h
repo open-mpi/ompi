@@ -2,15 +2,15 @@
  * $HEADER$
  */
 
-#ifndef LAM_MPI_H
-#define LAM_MPI_H
+#ifndef OMPI_MPI_H
+#define OMPI_MPI_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 /*
  * Just in case you need it.  :-)
  */
-#define LAM_MPI 1
+#define OMPI_MPI 1
 
 /*
  * MPI version
@@ -22,27 +22,27 @@
  * Typedefs
  */
 typedef long MPI_Aint;
-typedef struct lam_communicator_t *MPI_Comm;
-typedef struct lam_datatype_t *MPI_Datatype;
-typedef struct lam_errhandler_t *MPI_Errhandler;
-typedef struct lam_file_t *MPI_File;
-typedef struct lam_group_t *MPI_Group;
-typedef struct lam_info_t *MPI_Info;
-typedef struct lam_op_t *MPI_Op;
-typedef struct lam_request_t *MPI_Request;
-typedef struct lam_status_public_t MPI_Status;
-typedef struct lam_win_t *MPI_Win;
+typedef struct ompi_communicator_t *MPI_Comm;
+typedef struct ompi_datatype_t *MPI_Datatype;
+typedef struct ompi_errhandler_t *MPI_Errhandler;
+typedef struct ompi_file_t *MPI_File;
+typedef struct ompi_group_t *MPI_Group;
+typedef struct ompi_info_t *MPI_Info;
+typedef struct ompi_op_t *MPI_Op;
+typedef struct ompi_request_t *MPI_Request;
+typedef struct ompi_status_public_t MPI_Status;
+typedef struct ompi_win_t *MPI_Win;
 
 /*
  * MPI_Status
  */
-struct lam_status_public_t { 
+struct ompi_status_public_t { 
   int MPI_SOURCE;
   int MPI_TAG;
   int MPI_ERROR;
   int _count;
 };
-typedef struct lam_status_public_t lam_status_public_t;
+typedef struct ompi_status_public_t ompi_status_public_t;
 
 /*
  * User typedefs
@@ -148,18 +148,18 @@ enum {
   IMPI_HOST_COLOR,
 
   /*
-   * Predefined attribute keyvals, but LAM-specific
+   * Predefined attribute keyvals, but OMPI-specific
    */
-  LAM_UNIVERSE_NCPUS,
-  LAM_UNIVERSE_NNODES,
+  OMPI_UNIVERSE_NCPUS,
+  OMPI_UNIVERSE_NNODES,
 
   /*
-   * Predefined attribute keyvals, but LAM/MPI-specific
+   * Predefined attribute keyvals, but OMPI/MPI-specific
    */
-  LAM_MPI_SSI_COLL,
-  LAM_MPI_SSI_COLL_CROSSOVER,
-  LAM_MPI_SSI_COLL_ASSOCIATIVE,
-  LAM_MPI_SSI_COLL_REDUCE_CROSSOVER
+  OMPI_MPI_SSI_COLL,
+  OMPI_MPI_SSI_COLL_CROSSOVER,
+  OMPI_MPI_SSI_COLL_ASSOCIATIVE,
+  OMPI_MPI_SSI_COLL_REDUCE_CROSSOVER
 };
 
 /*
@@ -181,7 +181,7 @@ enum {
   MPI_ERR_ARG, /* invalid argument */
   MPI_ERR_UNKNOWN, /* unknown error */
   MPI_ERR_TRUNCATE, /* message truncated on receive */
-  MPI_ERR_OTHER, /* LAM error */
+  MPI_ERR_OTHER, /* OMPI error */
   MPI_ERR_INTERN, /* internal MPI error */
   MPI_ERR_IN_STATUS, /* error code is in status */
   MPI_ERR_PENDING, /* pending request */
@@ -254,12 +254,12 @@ enum {
 /*
  * NULL handles
  */
-#define MPI_GROUP_NULL (&lam_mpi_group_null)
-#define MPI_COMM_NULL (&lam_mpi_comm_null)
+#define MPI_GROUP_NULL (&ompi_mpi_group_null)
+#define MPI_COMM_NULL (&ompi_mpi_comm_null)
 #define MPI_DATATYPE_NULL ((MPI_Datatype) 0)
 #define MPI_REQUEST_NULL ((MPI_Request) 0)
-#define MPI_OP_NULL (&lam_mpi_op_null)
-#define MPI_ERRHANDLER_NULL (&lam_mpi_errhandler_null)
+#define MPI_OP_NULL (&ompi_mpi_op_null)
+#define MPI_ERRHANDLER_NULL (&ompi_mpi_errhandler_null)
 #define MPI_INFO_NULL ((MPI_Info) 0)
 #define MPI_WIN_NULL ((MPI_Win) 0)
 #define MPI_FILE_NULL ((MPI_File) 0)
@@ -279,50 +279,50 @@ enum {
 /*
  * External variables
  */
-extern struct lam_communicator_t lam_mpi_comm_world;
-extern struct lam_communicator_t lam_mpi_comm_self;
-extern struct lam_communicator_t lam_mpi_comm_null;
+extern struct ompi_communicator_t ompi_mpi_comm_world;
+extern struct ompi_communicator_t ompi_mpi_comm_self;
+extern struct ompi_communicator_t ompi_mpi_comm_null;
 
-extern struct lam_group_t lam_mpi_group_empty;
-extern struct lam_group_t lam_mpi_group_null;
+extern struct ompi_group_t ompi_mpi_group_empty;
+extern struct ompi_group_t ompi_mpi_group_null;
 
-extern struct lam_op_t lam_mpi_op_null;
-extern struct lam_op_t lam_mpi_op_max, lam_mpi_op_min;
-extern struct lam_op_t lam_mpi_op_sum, lam_mpi_op_prod;
-extern struct lam_op_t lam_mpi_op_land, lam_mpi_op_band;
-extern struct lam_op_t lam_mpi_op_lor, lam_mpi_op_bor;
-extern struct lam_op_t lam_mpi_op_lxor, lam_mpi_op_bxor;
-extern struct lam_op_t lam_mpi_op_maxloc, lam_mpi_op_minloc;
-extern struct lam_op_t lam_mpi_op_replace;
+extern struct ompi_op_t ompi_mpi_op_null;
+extern struct ompi_op_t ompi_mpi_op_max, ompi_mpi_op_min;
+extern struct ompi_op_t ompi_mpi_op_sum, ompi_mpi_op_prod;
+extern struct ompi_op_t ompi_mpi_op_land, ompi_mpi_op_band;
+extern struct ompi_op_t ompi_mpi_op_lor, ompi_mpi_op_bor;
+extern struct ompi_op_t ompi_mpi_op_lxor, ompi_mpi_op_bxor;
+extern struct ompi_op_t ompi_mpi_op_maxloc, ompi_mpi_op_minloc;
+extern struct ompi_op_t ompi_mpi_op_replace;
 
-extern struct lam_datatype_t *lam_mpi_char, *lam_mpi_byte;
-extern struct lam_datatype_t *lam_mpi_int, *lam_mpi_logic;
-extern struct lam_datatype_t *lam_mpi_short, *lam_mpi_long;
-extern struct lam_datatype_t *lam_mpi_float, *lam_mpi_double;
-extern struct lam_datatype_t *lam_mpi_long_double;
-extern struct lam_datatype_t *lam_mpi_cplex, *lam_mpi_packed;
-extern struct lam_datatype_t *lam_mpi_unsigned_char;
-extern struct lam_datatype_t *lam_mpi_unsigned_short;
-extern struct lam_datatype_t *lam_mpi_unsigned;
-extern struct lam_datatype_t *lam_mpi_unsigned_long;
-extern struct lam_datatype_t *lam_mpi_ub, *lam_mpi_lb;
-extern struct lam_datatype_t *lam_mpi_float_int, *lam_mpi_double_int;
-extern struct lam_datatype_t *lam_mpi_long_int, *lam_mpi_2int;
-extern struct lam_datatype_t *lam_mpi_short_int, *lam_mpi_dblcplex;
-extern struct lam_datatype_t *lam_mpi_integer, *lam_mpi_real;
-extern struct lam_datatype_t *lam_mpi_dblprec, *lam_mpi_character;
-extern struct lam_datatype_t *lam_mpi_2real, *lam_mpi_2dblprec;
-extern struct lam_datatype_t *lam_mpi_2integer, *lam_mpi_longdbl_int;
-extern struct lam_datatype_t *lam_mpi_wchar, *lam_mpi_long_long_int;
-extern struct lam_datatype_t *lam_mpi_long_long, *lam_mpi_unsigned_long_long;
-extern struct lam_datatype_t *lam_mpi_cxx_cplex, *lam_mpi_cxx_dblcplex;
-extern struct lam_datatype_t *lam_mpi_cxx_ldblcplex;
-extern struct lam_datatype_t *lam_mpi_cxx_bool;
-extern struct lam_datatype_t *lam_mpi_2cplex, *lam_mpi_2dblcplex;
+extern struct ompi_datatype_t *ompi_mpi_char, *ompi_mpi_byte;
+extern struct ompi_datatype_t *ompi_mpi_int, *ompi_mpi_logic;
+extern struct ompi_datatype_t *ompi_mpi_short, *ompi_mpi_long;
+extern struct ompi_datatype_t *ompi_mpi_float, *ompi_mpi_double;
+extern struct ompi_datatype_t *ompi_mpi_long_double;
+extern struct ompi_datatype_t *ompi_mpi_cplex, *ompi_mpi_packed;
+extern struct ompi_datatype_t *ompi_mpi_unsigned_char;
+extern struct ompi_datatype_t *ompi_mpi_unsigned_short;
+extern struct ompi_datatype_t *ompi_mpi_unsigned;
+extern struct ompi_datatype_t *ompi_mpi_unsigned_long;
+extern struct ompi_datatype_t *ompi_mpi_ub, *ompi_mpi_lb;
+extern struct ompi_datatype_t *ompi_mpi_float_int, *ompi_mpi_double_int;
+extern struct ompi_datatype_t *ompi_mpi_long_int, *ompi_mpi_2int;
+extern struct ompi_datatype_t *ompi_mpi_short_int, *ompi_mpi_dblcplex;
+extern struct ompi_datatype_t *ompi_mpi_integer, *ompi_mpi_real;
+extern struct ompi_datatype_t *ompi_mpi_dblprec, *ompi_mpi_character;
+extern struct ompi_datatype_t *ompi_mpi_2real, *ompi_mpi_2dblprec;
+extern struct ompi_datatype_t *ompi_mpi_2integer, *ompi_mpi_longdbl_int;
+extern struct ompi_datatype_t *ompi_mpi_wchar, *ompi_mpi_long_long_int;
+extern struct ompi_datatype_t *ompi_mpi_long_long, *ompi_mpi_unsigned_long_long;
+extern struct ompi_datatype_t *ompi_mpi_cxx_cplex, *ompi_mpi_cxx_dblcplex;
+extern struct ompi_datatype_t *ompi_mpi_cxx_ldblcplex;
+extern struct ompi_datatype_t *ompi_mpi_cxx_bool;
+extern struct ompi_datatype_t *ompi_mpi_2cplex, *ompi_mpi_2dblcplex;
 
-extern struct lam_errhandler_t lam_mpi_errhandler_null;
-extern struct lam_errhandler_t lam_mpi_errors_are_fatal;
-extern struct lam_errhandler_t lam_mpi_errors_return;
+extern struct ompi_errhandler_t ompi_mpi_errhandler_null;
+extern struct ompi_errhandler_t ompi_mpi_errors_are_fatal;
+extern struct ompi_errhandler_t ompi_mpi_errors_return;
 
 extern MPI_Fint *MPI_F_STATUS_IGNORE;
 extern MPI_Fint *MPI_F_STATUSES_IGNORE;
@@ -330,55 +330,55 @@ extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 /*
  * MPI predefined handles
  */
-#define MPI_COMM_WORLD (&lam_mpi_comm_world)
-#define MPI_COMM_SELF (&lam_mpi_comm_self)
+#define MPI_COMM_WORLD (&ompi_mpi_comm_world)
+#define MPI_COMM_SELF (&ompi_mpi_comm_self)
 
-#define MPI_GROUP_EMPTY (&lam_mpi_group_empty)
+#define MPI_GROUP_EMPTY (&ompi_mpi_group_empty)
 
-#define MPI_MAX (&lam_mpi_op_max)
-#define MPI_MIN (&lam_mpi_op_min)
-#define MPI_SUM (&lam_mpi_op_sum)
-#define MPI_PROD (&lam_mpi_op_prod)
-#define MPI_LAND (&lam_mpi_op_land)
-#define MPI_BAND (&lam_mpi_op_band)
-#define MPI_LOR (&lam_mpi_op_lor)
-#define MPI_BOR (&lam_mpi_op_bor)
-#define MPI_LXOR (&lam_mpi_op_lxor)
-#define MPI_BXOR (&lam_mpi_op_bxor)
-#define MPI_MAXLOC (&lam_mpi_op_maxloc)
-#define MPI_MINLOC (&lam_mpi_op_minloc)
-#define MPI_REPLACE (&lam_mpi_op_replace)
+#define MPI_MAX (&ompi_mpi_op_max)
+#define MPI_MIN (&ompi_mpi_op_min)
+#define MPI_SUM (&ompi_mpi_op_sum)
+#define MPI_PROD (&ompi_mpi_op_prod)
+#define MPI_LAND (&ompi_mpi_op_land)
+#define MPI_BAND (&ompi_mpi_op_band)
+#define MPI_LOR (&ompi_mpi_op_lor)
+#define MPI_BOR (&ompi_mpi_op_bor)
+#define MPI_LXOR (&ompi_mpi_op_lxor)
+#define MPI_BXOR (&ompi_mpi_op_bxor)
+#define MPI_MAXLOC (&ompi_mpi_op_maxloc)
+#define MPI_MINLOC (&ompi_mpi_op_minloc)
+#define MPI_REPLACE (&ompi_mpi_op_replace)
 
-#define MPI_BYTE (lam_mpi_byte)
-#define MPI_PACKED (lam_mpi_packed)
-#define MPI_CHAR (lam_mpi_char)
-#define MPI_SHORT (lam_mpi_short)
-#define MPI_INT (lam_mpi_int)
-#define MPI_LONG (lam_mpi_long)
-#define MPI_FLOAT (lam_mpi_float)
-#define MPI_DOUBLE (lam_mpi_double)
-#define MPI_LONG_DOUBLE (lam_mpi_long_double)
-#define MPI_UNSIGNED_CHAR (lam_mpi_unsigned_char)
-#define MPI_UNSIGNED_SHORT (lam_mpi_unsigned_short)
-#define MPI_UNSIGNED_LONG (lam_mpi_unsigned_long)
-#define MPI_UNSIGNED (lam_mpi_unsigned)
-#define MPI_FLOAT_INT (lam_mpi_float_int)
-#define MPI_DOUBLE_INT (lam_mpi_double_int)
-#define MPI_LONG_DOUBLE_INT (lam_mpi_longdbl_int)
-#define MPI_LONG_INT (lam_mpi_long_int)
-#define MPI_SHORT_INT (lam_mpi_short_int)
-#define MPI_2INT (lam_mpi_2int)
-#define MPI_UB (lam_mpi_ub)
-#define MPI_LB (lam_mpi_lb)
-#define MPI_WCHAR (lam_mpi_wchar)
+#define MPI_BYTE (ompi_mpi_byte)
+#define MPI_PACKED (ompi_mpi_packed)
+#define MPI_CHAR (ompi_mpi_char)
+#define MPI_SHORT (ompi_mpi_short)
+#define MPI_INT (ompi_mpi_int)
+#define MPI_LONG (ompi_mpi_long)
+#define MPI_FLOAT (ompi_mpi_float)
+#define MPI_DOUBLE (ompi_mpi_double)
+#define MPI_LONG_DOUBLE (ompi_mpi_long_double)
+#define MPI_UNSIGNED_CHAR (ompi_mpi_unsigned_char)
+#define MPI_UNSIGNED_SHORT (ompi_mpi_unsigned_short)
+#define MPI_UNSIGNED_LONG (ompi_mpi_unsigned_long)
+#define MPI_UNSIGNED (ompi_mpi_unsigned)
+#define MPI_FLOAT_INT (ompi_mpi_float_int)
+#define MPI_DOUBLE_INT (ompi_mpi_double_int)
+#define MPI_LONG_DOUBLE_INT (ompi_mpi_longdbl_int)
+#define MPI_LONG_INT (ompi_mpi_long_int)
+#define MPI_SHORT_INT (ompi_mpi_short_int)
+#define MPI_2INT (ompi_mpi_2int)
+#define MPI_UB (ompi_mpi_ub)
+#define MPI_LB (ompi_mpi_lb)
+#define MPI_WCHAR (ompi_mpi_wchar)
 #if HAVE_LONG_LONG
-#define MPI_LONG_LONG_INT (lam_mpi_long_long_int)
-#define MPI_LONG_LONG (lam_mpi_long_long)
-#define MPI_UNSIGNED_LONG_LONG (lam_mpi_unsigned_long_long)
+#define MPI_LONG_LONG_INT (ompi_mpi_long_long_int)
+#define MPI_LONG_LONG (ompi_mpi_long_long)
+#define MPI_UNSIGNED_LONG_LONG (ompi_mpi_unsigned_long_long)
 #endif  /* HAVE_LONG_LONG */
 
-#define MPI_ERRORS_ARE_FATAL (&lam_mpi_errors_are_fatal)
-#define MPI_ERRORS_RETURN (&lam_mpi_errors_return)
+#define MPI_ERRORS_ARE_FATAL (&ompi_mpi_errors_are_fatal)
+#define MPI_ERRORS_RETURN (&ompi_mpi_errors_return)
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -1413,4 +1413,4 @@ extern "C" {
 }
 #endif
 
-#endif /* LAM_MPI_H */
+#endif /* OMPI_MPI_H */

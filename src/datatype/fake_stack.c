@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "datatype.h"
 #include "datatype_internal.h"
@@ -16,19 +16,19 @@ static inline long GET_LOOP_DISP( dt_elem_desc_t* _pElem )
    return _pElem->disp;
 }
 
-int lam_create_stack_with_pos( lam_convertor_t* pConvertor,
+int ompi_create_stack_with_pos( ompi_convertor_t* pConvertor,
                                int starting_point, int* sizes );
-int lam_create_stack_with_pos_general( lam_convertor_t* pConvertor,
+int ompi_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                                        int starting_point, int* sizes );
 
-int lam_create_stack_with_pos_general( lam_convertor_t* pConvertor,
+int ompi_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                                        int starting_point, int* sizes )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */
     int type, lastLength = 0;
     long totalDisp;
-    lam_datatype_t* pData = pConvertor->pDesc;
+    ompi_datatype_t* pData = pConvertor->pDesc;
     int* remoteLength;
     int loop_length;
     int resting_place = starting_point;
@@ -141,14 +141,14 @@ int lam_create_stack_with_pos_general( lam_convertor_t* pConvertor,
  * because we can split a basic data in the middle if we
  * have a optimized representation.
  */
-int lam_create_stack_with_pos( lam_convertor_t* pConvertor,
+int ompi_create_stack_with_pos( ompi_convertor_t* pConvertor,
                                int starting_point, int* sizes )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */
     int type, lastLength = 0;
     long totalDisp;
-    lam_datatype_t* pData = pConvertor->pDesc;
+    ompi_datatype_t* pData = pConvertor->pDesc;
     int* remoteLength;
     int loop_length;
     int resting_place = starting_point;

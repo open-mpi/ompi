@@ -34,10 +34,10 @@ extern "C" {
 #endif
 
 #ifdef HAVE_CONFIG_H
-  /* LAM: Conform to LAM's header file scheme -- specify the full
+  /* OMPI: Conform to OMPI's header file scheme -- specify the full
      include path from "src/".  Also, config.h is a terrible
      unqualified name for a header file.  :-) */
-#include "lam_config.h"
+#include "ompi_config.h"
 #endif
 #include "threads/mutex.h"
 
@@ -49,23 +49,23 @@ extern "C" {
 #include <windows.h>
 #endif
 
-#define LAM_EVLIST_TIMEOUT	0x01
-#define LAM_EVLIST_INSERTED	0x02
-#define LAM_EVLIST_SIGNAL	0x04
-#define LAM_EVLIST_ACTIVE	0x08
-#define LAM_EVLIST_INIT		0x80
+#define OMPI_EVLIST_TIMEOUT	0x01
+#define OMPI_EVLIST_INSERTED	0x02
+#define OMPI_EVLIST_SIGNAL	0x04
+#define OMPI_EVLIST_ACTIVE	0x08
+#define OMPI_EVLIST_INIT		0x80
 
 /* EVLIST_X_ Private space: 0x1000-0xf000 */
-#define LAM_EVLIST_ALL	(0xf000 | 0x8f)
+#define OMPI_EVLIST_ALL	(0xf000 | 0x8f)
 
-#define LAM_EV_TIMEOUT	0x01
-#define LAM_EV_READ	0x02
-#define LAM_EV_WRITE	0x04
-#define LAM_EV_SIGNAL	0x08
-#define LAM_EV_PERSIST	0x10	/* Persistant event */
+#define OMPI_EV_TIMEOUT	0x01
+#define OMPI_EV_READ	0x02
+#define OMPI_EV_WRITE	0x04
+#define OMPI_EV_SIGNAL	0x08
+#define OMPI_EV_PERSIST	0x10	/* Persistant event */
 
-#ifndef LAM_EVENT_USE_SIGNALS
-#define LAM_EVENT_USE_SIGNALS 0
+#ifndef OMPI_EVENT_USE_SIGNALS
+#define OMPI_EVENT_USE_SIGNALS 0
 #endif
 
 /* Fix so that ppl dont have to run with <sys/queue.h> */
@@ -88,11 +88,11 @@ struct {								\
 }
 #endif /* !RB_ENTRY */
 
-struct lam_event {
-	TAILQ_ENTRY (lam_event) ev_next;
-	TAILQ_ENTRY (lam_event) ev_active_next;
-	TAILQ_ENTRY (lam_event) ev_signal_next;
-	RB_ENTRY (lam_event) ev_timeout_node;
+struct ompi_event {
+	TAILQ_ENTRY (ompi_event) ev_next;
+	TAILQ_ENTRY (ompi_event) ev_active_next;
+	TAILQ_ENTRY (ompi_event) ev_signal_next;
+	RB_ENTRY (ompi_event) ev_timeout_node;
 
 #ifdef WIN32
 	HANDLE ev_fd;
@@ -112,67 +112,67 @@ struct lam_event {
 	int ev_res;		/* result passed to event callback */
 	int ev_flags;
 };
-typedef struct lam_event lam_event_t;
+typedef struct ompi_event ompi_event_t;
 
-#define LAM_EVENT_SIGNAL(ev)	(int)ev->ev_fd
-#define LAM_EVENT_FD(ev)	(int)ev->ev_fd
+#define OMPI_EVENT_SIGNAL(ev)	(int)ev->ev_fd
+#define OMPI_EVENT_FD(ev)	(int)ev->ev_fd
 
 #ifdef _EVENT_DEFINED_TQENTRY
 #undef TAILQ_ENTRY
 #undef _EVENT_DEFINED_TQENTRY
 #else
-TAILQ_HEAD (lam_event_list, lam_event);
+TAILQ_HEAD (ompi_event_list, ompi_event);
 #endif /* _EVENT_DEFINED_TQENTRY */
 #ifdef _EVENT_DEFINED_RBENTRY
 #undef RB_ENTRY
 #undef _EVENT_DEFINED_RBENTRY
 #endif /* _EVENT_DEFINED_RBENTRY */
 
-struct lam_eventop {
+struct ompi_eventop {
 	char *name;
 	void *(*init)(void);
-	int (*add)(void *, struct lam_event *);
-	int (*del)(void *, struct lam_event *);
+	int (*add)(void *, struct ompi_event *);
+	int (*del)(void *, struct ompi_event *);
 	int (*recalc)(void *, int);
 	int (*dispatch)(void *, struct timeval *);
 };
 
-#define LAM_TIMEOUT_DEFAULT	{10, 0}
-#define LAM_EVLOOP_ONCE		0x01
-#define LAM_EVLOOP_NONBLOCK	0x02
+#define OMPI_TIMEOUT_DEFAULT	{10, 0}
+#define OMPI_EVLOOP_ONCE		0x01
+#define OMPI_EVLOOP_NONBLOCK	0x02
 
 
-int lam_event_init(void);
-int lam_event_dispatch(void);
-int lam_event_loop(int);
+int ompi_event_init(void);
+int ompi_event_dispatch(void);
+int ompi_event_loop(int);
 
-#define lam_evtimer_add(ev, tv)		lam_event_add(ev, tv)
-#define lam_evtimer_set(ev, cb, arg)	lam_event_set(ev, -1, 0, cb, arg)
-#define lam_evtimer_del(ev)		lam_event_del(ev)
-#define lam_evtimer_pending(ev, tv)	lam_event_pending(ev, LAM_EV_TIMEOUT, tv)
-#define lam_evtimer_initialized(ev)	(ev)->ev_flags & LAM_EVLIST_INIT)
+#define ompi_evtimer_add(ev, tv)		ompi_event_add(ev, tv)
+#define ompi_evtimer_set(ev, cb, arg)	ompi_event_set(ev, -1, 0, cb, arg)
+#define ompi_evtimer_del(ev)		ompi_event_del(ev)
+#define ompi_evtimer_pending(ev, tv)	ompi_event_pending(ev, OMPI_EV_TIMEOUT, tv)
+#define ompi_evtimer_initialized(ev)	(ev)->ev_flags & OMPI_EVLIST_INIT)
 
-#define lam_timeout_add(ev, tv)		lam_event_add(ev, tv)
-#define lam_timeout_set(ev, cb, arg)	lam_event_set(ev, -1, 0, cb, arg)
-#define lam_timeout_del(ev)		lam_event_del(ev)
-#define lam_timeout_pending(ev, tv)	lam_event_pending(ev, LAM_EV_TIMEOUT, tv)
-#define lam_timeout_initialized(ev)	((ev)->ev_flags & LAM_EVLIST_INIT)
+#define ompi_timeout_add(ev, tv)		ompi_event_add(ev, tv)
+#define ompi_timeout_set(ev, cb, arg)	ompi_event_set(ev, -1, 0, cb, arg)
+#define ompi_timeout_del(ev)		ompi_event_del(ev)
+#define ompi_timeout_pending(ev, tv)	ompi_event_pending(ev, OMPI_EV_TIMEOUT, tv)
+#define ompi_timeout_initialized(ev)	((ev)->ev_flags & OMPI_EVLIST_INIT)
 
-#define lam_signal_add(ev, tv)		lam_event_add(ev, tv)
-#define lam_signal_set(ev, x, cb, arg)	\
-	lam_event_set(ev, x, LAM_EV_SIGNAL|LAM_EV_PERSIST, cb, arg)
-#define lam_signal_del(ev)		lam_event_del(ev)
-#define lam_signal_pending(ev, tv)	lam_event_pending(ev, LAM_EV_SIGNAL, tv)
-#define lam_signal_initialized(ev)	((ev)->ev_flags & LAM_EVLIST_INIT)
+#define ompi_signal_add(ev, tv)		ompi_event_add(ev, tv)
+#define ompi_signal_set(ev, x, cb, arg)	\
+	ompi_event_set(ev, x, OMPI_EV_SIGNAL|OMPI_EV_PERSIST, cb, arg)
+#define ompi_signal_del(ev)		ompi_event_del(ev)
+#define ompi_signal_pending(ev, tv)	ompi_event_pending(ev, OMPI_EV_SIGNAL, tv)
+#define ompi_signal_initialized(ev)	((ev)->ev_flags & OMPI_EVLIST_INIT)
 
 /* for internal use only */
-int   lam_event_add_i(struct lam_event *, struct timeval *);
-int   lam_event_del_i(struct lam_event *);
-void  lam_event_active_i(struct lam_event*, int, short);
+int   ompi_event_add_i(struct ompi_event *, struct timeval *);
+int   ompi_event_del_i(struct ompi_event *);
+void  ompi_event_active_i(struct ompi_event*, int, short);
 
 /* public functions */
 static inline void
-lam_event_set(struct lam_event *ev, int fd, short events,
+ompi_event_set(struct ompi_event *ev, int fd, short events,
       void (*callback)(int, short, void *), void *arg)
 {
     ev->ev_callback = callback;
@@ -184,70 +184,70 @@ lam_event_set(struct lam_event *ev, int fd, short events,
     ev->ev_fd = fd;
 #endif
     ev->ev_events = events;
-    ev->ev_flags = LAM_EVLIST_INIT;
+    ev->ev_flags = OMPI_EVLIST_INIT;
     ev->ev_ncalls = 0;
     ev->ev_pncalls = NULL;
 }
 
 static inline int
-lam_event_add(struct lam_event *ev, struct timeval *tv)
+ompi_event_add(struct ompi_event *ev, struct timeval *tv)
 {
-    extern lam_mutex_t lam_event_lock;
+    extern ompi_mutex_t ompi_event_lock;
     int rc;
-    if(lam_using_threads()) {
-        lam_mutex_lock(&lam_event_lock);
-        rc = lam_event_add_i(ev, tv);
-        lam_mutex_unlock(&lam_event_lock);
+    if(ompi_using_threads()) {
+        ompi_mutex_lock(&ompi_event_lock);
+        rc = ompi_event_add_i(ev, tv);
+        ompi_mutex_unlock(&ompi_event_lock);
     } else {
-        rc = lam_event_add_i(ev, tv);
+        rc = ompi_event_add_i(ev, tv);
     }
     return rc;
 }
 
 static inline int 
-lam_event_del(struct lam_event *ev)
+ompi_event_del(struct ompi_event *ev)
 {
-    extern lam_mutex_t lam_event_lock;
+    extern ompi_mutex_t ompi_event_lock;
     int rc;
-    if(lam_using_threads()) {
-        lam_mutex_lock(&lam_event_lock);
-        rc = lam_event_del_i(ev);
-        lam_mutex_unlock(&lam_event_lock);
+    if(ompi_using_threads()) {
+        ompi_mutex_lock(&ompi_event_lock);
+        rc = ompi_event_del_i(ev);
+        ompi_mutex_unlock(&ompi_event_lock);
     } else {
-        rc = lam_event_del_i(ev);
+        rc = ompi_event_del_i(ev);
     }
     return rc;
 }
                                                                                           
 static inline void 
-lam_event_active(struct lam_event* ev, int res, short ncalls)
+ompi_event_active(struct ompi_event* ev, int res, short ncalls)
 {
-    extern lam_mutex_t lam_event_lock;
-    if(lam_using_threads()) {
-        lam_mutex_lock(&lam_event_lock);
-        lam_event_active_i(ev, res, ncalls);
-        lam_mutex_unlock(&lam_event_lock);
+    extern ompi_mutex_t ompi_event_lock;
+    if(ompi_using_threads()) {
+        ompi_mutex_lock(&ompi_event_lock);
+        ompi_event_active_i(ev, res, ncalls);
+        ompi_mutex_unlock(&ompi_event_lock);
     } else {
-        lam_event_active_i(ev, res, ncalls);
+        ompi_event_active_i(ev, res, ncalls);
     }
 }
                                                                                           
 static inline int
-lam_event_pending(struct lam_event *ev, short event, struct timeval *tv)
+ompi_event_pending(struct ompi_event *ev, short event, struct timeval *tv)
 {
     int flags = 0;
                                                                                           
-    if (ev->ev_flags & LAM_EVLIST_INSERTED)
-        flags |= (ev->ev_events & (LAM_EV_READ|LAM_EV_WRITE));
-    if (ev->ev_flags & LAM_EVLIST_ACTIVE)
+    if (ev->ev_flags & OMPI_EVLIST_INSERTED)
+        flags |= (ev->ev_events & (OMPI_EV_READ|OMPI_EV_WRITE));
+    if (ev->ev_flags & OMPI_EVLIST_ACTIVE)
         flags |= ev->ev_res;
-    if (ev->ev_flags & LAM_EVLIST_TIMEOUT)
-        flags |= LAM_EV_TIMEOUT;
+    if (ev->ev_flags & OMPI_EVLIST_TIMEOUT)
+        flags |= OMPI_EV_TIMEOUT;
                                                                                           
-    event &= (LAM_EV_TIMEOUT|LAM_EV_READ|LAM_EV_WRITE);
+    event &= (OMPI_EV_TIMEOUT|OMPI_EV_READ|OMPI_EV_WRITE);
                                                                                           
     /* See if there is a timeout that we should report */
-    if (tv != NULL && (flags & event & LAM_EV_TIMEOUT))
+    if (tv != NULL && (flags & event & OMPI_EV_TIMEOUT))
         *tv = ev->ev_timeout;
                                                                                           
     return (flags & event);
@@ -255,9 +255,9 @@ lam_event_pending(struct lam_event *ev, short event, struct timeval *tv)
 
 
 #ifdef WIN32
-#define lam_event_initialized(ev)	((ev)->ev_flags & LAM_EVLIST_INIT && (ev)->ev_fd != INVALID_HANDLE_VALUE)
+#define ompi_event_initialized(ev)	((ev)->ev_flags & OMPI_EVLIST_INIT && (ev)->ev_fd != INVALID_HANDLE_VALUE)
 #else
-#define lam_event_initialized(ev)	((ev)->ev_flags & LAM_EVLIST_INIT)
+#define ompi_event_initialized(ev)	((ev)->ev_flags & OMPI_EVLIST_INIT)
 #endif
 
 #ifdef __cplusplus

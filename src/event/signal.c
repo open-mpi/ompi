@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_TIME_H
@@ -53,28 +53,28 @@
 #include "event.h"
 #include "evsignal.h"
 
-extern struct lam_event_list lam_signalqueue;
+extern struct ompi_event_list ompi_signalqueue;
 
-static short lam_evsigcaught[NSIG];
-static int lam_needrecalc;
-volatile sig_atomic_t lam_evsignal_caught = 0;
+static short ompi_evsigcaught[NSIG];
+static int ompi_needrecalc;
+volatile sig_atomic_t ompi_evsignal_caught = 0;
 
-void lam_evsignal_handler(int sig);
+void ompi_evsignal_handler(int sig);
 
 void
-lam_evsignal_init(sigset_t *evsigmask)
+ompi_evsignal_init(sigset_t *evsigmask)
 {
 	sigemptyset(evsigmask);
 }
 
 int
-lam_evsignal_add(sigset_t *evsigmask, struct lam_event *ev)
+ompi_evsignal_add(sigset_t *evsigmask, struct ompi_event *ev)
 {
 	int evsignal;
 	
-	if (ev->ev_events & (LAM_EV_READ|LAM_EV_WRITE))
-		errx(1, "%s: LAM_EV_SIGNAL incompatible use", __func__);
-	evsignal = LAM_EVENT_SIGNAL(ev);
+	if (ev->ev_events & (OMPI_EV_READ|OMPI_EV_WRITE))
+		errx(1, "%s: OMPI_EV_SIGNAL incompatible use", __func__);
+	evsignal = OMPI_EVENT_SIGNAL(ev);
 	sigaddset(evsigmask, evsignal);
 	
 	return (0);
@@ -85,54 +85,54 @@ lam_evsignal_add(sigset_t *evsigmask, struct lam_event *ev)
  */
 
 int
-lam_evsignal_del(sigset_t *evsigmask, struct lam_event *ev)
+ompi_evsignal_del(sigset_t *evsigmask, struct ompi_event *ev)
 {
 	int evsignal;
 
-	evsignal = LAM_EVENT_SIGNAL(ev);
+	evsignal = OMPI_EVENT_SIGNAL(ev);
 	sigdelset(evsigmask, evsignal);
-	lam_needrecalc = 1;
+	ompi_needrecalc = 1;
 
-	return (sigaction(LAM_EVENT_SIGNAL(ev),(struct sigaction *)SIG_DFL, NULL));
+	return (sigaction(OMPI_EVENT_SIGNAL(ev),(struct sigaction *)SIG_DFL, NULL));
 }
 
 void
-lam_evsignal_handler(int sig)
+ompi_evsignal_handler(int sig)
 {
-	lam_evsigcaught[sig]++;
-	lam_evsignal_caught = 1;
+	ompi_evsigcaught[sig]++;
+	ompi_evsignal_caught = 1;
 }
 
 int
-lam_evsignal_recalc(sigset_t *evsigmask)
+ompi_evsignal_recalc(sigset_t *evsigmask)
 {
 	struct sigaction sa;
-	struct lam_event *ev;
+	struct ompi_event *ev;
 
-	if (TAILQ_FIRST(&lam_signalqueue) == NULL && !lam_needrecalc)
+	if (TAILQ_FIRST(&ompi_signalqueue) == NULL && !ompi_needrecalc)
 		return (0);
-	lam_needrecalc = 0;
+	ompi_needrecalc = 0;
 
 	if (sigprocmask(SIG_BLOCK, evsigmask, NULL) == -1)
 		return (-1);
 	
 	/* Reinstall our signal handler. */
 	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = lam_evsignal_handler;
+	sa.sa_handler = ompi_evsignal_handler;
 	sa.sa_mask = *evsigmask;
 	sa.sa_flags |= SA_RESTART;
 	
-	TAILQ_FOREACH(ev, &lam_signalqueue, ev_signal_next) {
-		if (sigaction(LAM_EVENT_SIGNAL(ev), &sa, NULL) == -1)
+	TAILQ_FOREACH(ev, &ompi_signalqueue, ev_signal_next) {
+		if (sigaction(OMPI_EVENT_SIGNAL(ev), &sa, NULL) == -1)
 			return (-1);
 	}
 	return (0);
 }
 
 int
-lam_evsignal_deliver(sigset_t *evsigmask)
+ompi_evsignal_deliver(sigset_t *evsigmask)
 {
-	if (TAILQ_FIRST(&lam_signalqueue) == NULL)
+	if (TAILQ_FIRST(&ompi_signalqueue) == NULL)
 		return (0);
 
 	return (sigprocmask(SIG_UNBLOCK, evsigmask, NULL));
@@ -140,21 +140,21 @@ lam_evsignal_deliver(sigset_t *evsigmask)
 }
 
 void
-lam_evsignal_process(void)
+ompi_evsignal_process(void)
 {
-	struct lam_event *ev;
+	struct ompi_event *ev;
 	short ncalls;
 
-	TAILQ_FOREACH(ev, &lam_signalqueue, ev_signal_next) {
-		ncalls = lam_evsigcaught[LAM_EVENT_SIGNAL(ev)];
+	TAILQ_FOREACH(ev, &ompi_signalqueue, ev_signal_next) {
+		ncalls = ompi_evsigcaught[OMPI_EVENT_SIGNAL(ev)];
 		if (ncalls) {
-			if (!(ev->ev_events & LAM_EV_PERSIST))
-				lam_event_del_i(ev);
-			lam_event_active_i(ev, LAM_EV_SIGNAL, ncalls);
+			if (!(ev->ev_events & OMPI_EV_PERSIST))
+				ompi_event_del_i(ev);
+			ompi_event_active_i(ev, OMPI_EV_SIGNAL, ncalls);
 		}
 	}
 
-	memset(lam_evsigcaught, 0, sizeof(lam_evsigcaught));
-	lam_evsignal_caught = 0;
+	memset(ompi_evsigcaught, 0, sizeof(ompi_evsigcaught));
+	ompi_evsignal_caught = 0;
 }
 

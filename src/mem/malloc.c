@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdlib.h>
 
@@ -30,14 +30,14 @@
 /*
  * Public variables
  */
-int lam_malloc_debug_level = LAM_MALLOC_DEBUG_LEVEL;
-int lam_malloc_output = -1;
+int ompi_malloc_debug_level = OMPI_MALLOC_DEBUG_LEVEL;
+int ompi_malloc_output = -1;
 
 
 /*
  * Private variables
  */
-static lam_output_stream_t malloc_stream = {
+static ompi_output_stream_t malloc_stream = {
   /* debugging */
   true,
   /* verbose level */
@@ -57,20 +57,20 @@ static lam_output_stream_t malloc_stream = {
 /*
  * Initialize the malloc debug interface
  */
-void lam_malloc_init(void)
+void ompi_malloc_init(void)
 {
-  lam_malloc_output = lam_output_open(&malloc_stream);
+  ompi_malloc_output = ompi_output_open(&malloc_stream);
 }
 
 
 /*
  * Finalize the malloc debug interface
  */
-void lam_malloc_finalize(void)
+void ompi_malloc_finalize(void)
 {
-  if (-1 != lam_malloc_output) {
-    lam_output_close(lam_malloc_output);
-    lam_malloc_output = -1;
+  if (-1 != ompi_malloc_output) {
+    ompi_output_close(ompi_malloc_output);
+    ompi_malloc_output = -1;
   }
 }
 
@@ -78,19 +78,19 @@ void lam_malloc_finalize(void)
 /*
  * Debug version of malloc
  */
-void *lam_malloc(size_t size, char *file, int line)
+void *ompi_malloc(size_t size, char *file, int line)
 {
     void *addr;
-    if (lam_malloc_debug_level > 1) {
+    if (ompi_malloc_debug_level > 1) {
         if (size <= 0) {
-          lam_output(lam_malloc_output, "Request for %ld bytes (%s, %d)", 
+          ompi_output(ompi_malloc_output, "Request for %ld bytes (%s, %d)", 
                      (long) size, file, line);
         }
     }
     addr = malloc(size);
-    if (lam_malloc_debug_level > 0) {
+    if (ompi_malloc_debug_level > 0) {
         if (NULL == addr) {
-            lam_output(lam_malloc_output, 
+            ompi_output(ompi_malloc_output, 
                        "Request for %ld bytes failed (%s, %d)",
                        (long) size, file, line);
         }
@@ -103,20 +103,20 @@ void *lam_malloc(size_t size, char *file, int line)
 /*
  * Debug version of calloc
  */
-void *lam_calloc(size_t nmembers, size_t size, char *file, int line)
+void *ompi_calloc(size_t nmembers, size_t size, char *file, int line)
 {
     void *addr;
-    if (lam_malloc_debug_level > 1) {
+    if (ompi_malloc_debug_level > 1) {
         if (size <= 0) {
-          lam_output(lam_malloc_output,
+          ompi_output(ompi_malloc_output,
                      "Request for %ld zeroed elements of size %ld (%s, %d)", 
                      (long) nmembers, (long) size, file, line);
         }
     }
     addr = calloc(nmembers, size);
-    if (lam_malloc_debug_level > 0) {
+    if (ompi_malloc_debug_level > 0) {
         if (NULL == addr) {
-            lam_output(lam_malloc_output, 
+            ompi_output(ompi_malloc_output, 
                        "Request for %ld zeroed elements of size %ld failed (%s, %d)",
                        (long) nmembers, (long) size, file, line);
         }
@@ -129,26 +129,26 @@ void *lam_calloc(size_t nmembers, size_t size, char *file, int line)
 /*
  * Debug version of realloc
  */
-void *lam_realloc(void *ptr, size_t size, char *file, int line)
+void *ompi_realloc(void *ptr, size_t size, char *file, int line)
 {
     void *addr;
 
-    if (lam_malloc_debug_level > 1) {
+    if (ompi_malloc_debug_level > 1) {
         if (size <= 0) {
           if (NULL == ptr) {
-            lam_output(lam_malloc_output, 
+            ompi_output(ompi_malloc_output, 
                        "Realloc NULL for %ld bytes (%s, %d)", 
                        (long) size, file, line);
           } else {
-            lam_output(lam_malloc_output, "Realloc %p for %ld bytes (%s, %d)", 
+            ompi_output(ompi_malloc_output, "Realloc %p for %ld bytes (%s, %d)", 
                        ptr, (long) size, file, line);
           }
         }
     }
     addr = realloc(ptr, size);
-    if (lam_malloc_debug_level > 0) {
+    if (ompi_malloc_debug_level > 0) {
         if (NULL == addr) {
-            lam_output(lam_malloc_output, 
+            ompi_output(ompi_malloc_output, 
                        "Realloc %p for %ld bytes failed (%s, %d)",
                        ptr, (long) size, file, line);
         }
@@ -161,10 +161,10 @@ void *lam_realloc(void *ptr, size_t size, char *file, int line)
 /*
  * Debug version of free
  */
-void lam_free(void *addr, char *file, int line)
+void ompi_free(void *addr, char *file, int line)
 {
-    if (lam_malloc_debug_level > 1 && NULL == addr) {
-      lam_output(lam_malloc_output, "Invalid free (%s, %d)", file, line);
+    if (ompi_malloc_debug_level > 1 && NULL == addr) {
+      ompi_output(ompi_malloc_output, "Invalid free (%s, %d)", file, line);
     } else {
       free(addr);
     }

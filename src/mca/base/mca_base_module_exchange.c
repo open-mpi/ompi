@@ -3,8 +3,8 @@
  */
 
 #include <string.h>
-#include "lam_config.h"
-#include "lfc/lam_hash_table.h"
+#include "ompi_config.h"
+#include "class/ompi_hash_table.h"
 #include "util/output.h"
 #include "proc/proc.h"
 #include "mca/mca.h"
@@ -21,7 +21,7 @@
  */
 
 struct mca_base_modex_module_t {
-    lam_list_item_t super;
+    ompi_list_item_t super;
     mca_base_module_t *module;
     void *module_data;
     size_t module_data_size;
@@ -41,7 +41,7 @@ static void mca_base_modex_module_destruct(mca_base_modex_module_t *module)
 
 OBJ_CLASS_INSTANCE(
     mca_base_modex_module_t, 
-    lam_list_item_t, 
+    ompi_list_item_t, 
     mca_base_modex_module_construct, 
     mca_base_modex_module_destruct
 );
@@ -53,14 +53,14 @@ OBJ_CLASS_INSTANCE(
  * received from peers.
  */
 struct mca_base_modex_t {
-    lam_object_t super;
-    lam_list_t modex_modules;
+    ompi_object_t super;
+    ompi_list_t modex_modules;
 };
 typedef struct mca_base_modex_t mca_base_modex_t;
 
 static void mca_base_modex_construct(mca_base_modex_t* modex)
 {
-    OBJ_CONSTRUCT(&modex->modex_modules, lam_list_t);
+    OBJ_CONSTRUCT(&modex->modex_modules, ompi_list_t);
 }
 
 static void mca_base_modex_destruct(mca_base_modex_t* modex)
@@ -70,7 +70,7 @@ static void mca_base_modex_destruct(mca_base_modex_t* modex)
 
 OBJ_CLASS_INSTANCE(
     mca_base_modex_t, 
-    lam_object_t, 
+    ompi_object_t, 
     mca_base_modex_construct, 
     mca_base_modex_destruct
 );
@@ -85,9 +85,9 @@ static inline mca_base_modex_module_t* mca_base_modex_lookup_module(
     mca_base_module_t* module)
 {
     mca_base_modex_module_t* modex_module;
-    for(modex_module =  (mca_base_modex_module_t*)lam_list_get_first(&modex->modex_modules);
-        modex_module != (mca_base_modex_module_t*)lam_list_get_end(&modex->modex_modules);
-        modex_module =  (mca_base_modex_module_t*)lam_list_get_next(modex_module)) {
+    for(modex_module =  (mca_base_modex_module_t*)ompi_list_get_first(&modex->modex_modules);
+        modex_module != (mca_base_modex_module_t*)ompi_list_get_end(&modex->modex_modules);
+        modex_module =  (mca_base_modex_module_t*)ompi_list_get_next(modex_module)) {
         if(mca_base_module_compare(modex_module->module, module) == 0) {
             return modex_module;
         }
@@ -109,7 +109,7 @@ static inline mca_base_modex_module_t* mca_base_modex_create_module(
         modex_module = OBJ_NEW(mca_base_modex_module_t);
         if(NULL != modex_module) {
             modex_module->module = module;
-            lam_list_append(&modex->modex_modules, (lam_list_item_t*)modex_module);
+            ompi_list_append(&modex->modex_modules, (ompi_list_item_t*)modex_module);
         }
     }
     return modex_module;
@@ -124,12 +124,12 @@ static inline mca_base_modex_module_t* mca_base_modex_create_module(
 
 int mca_base_modex_send(mca_base_module_t *source_module, const void *buffer, size_t size)
 {
-    lam_proc_t *self = lam_proc_local();
+    ompi_proc_t *self = ompi_proc_local();
     mca_base_modex_t* modex;
     mca_base_modex_module_t* modex_module;
 
     if(NULL == self)
-        return LAM_ERROR;
+        return OMPI_ERROR;
 
     THREAD_LOCK(&self->proc_lock);
     if(NULL == (modex = self->proc_modex)) {
@@ -138,18 +138,18 @@ int mca_base_modex_send(mca_base_module_t *source_module, const void *buffer, si
 
     if(NULL == (modex_module = mca_base_modex_create_module(modex, source_module))) {
         THREAD_UNLOCK(&self->proc_lock);
-        return LAM_ERROR;
+        return OMPI_ERROR;
     }
 
     modex_module->module_data = malloc(size);
     if(NULL == modex_module->module_data) {
         THREAD_UNLOCK(&self->proc_lock);
-        return LAM_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     memcpy(modex_module->module_data, buffer, size);
     modex_module->module_data_size = size;
     THREAD_UNLOCK(&self->proc_lock);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -159,7 +159,7 @@ int mca_base_modex_send(mca_base_module_t *source_module, const void *buffer, si
  *  mca_base_modex_exchange().
  */
 
-int mca_base_modex_recv(mca_base_module_t *module, lam_proc_t *source_proc, void **buffer, size_t *size)
+int mca_base_modex_recv(mca_base_module_t *module, ompi_proc_t *source_proc, void **buffer, size_t *size)
 {
     mca_base_modex_t* modex;
     mca_base_modex_module_t* modex_module;
@@ -169,26 +169,26 @@ int mca_base_modex_recv(mca_base_module_t *module, lam_proc_t *source_proc, void
     if(NULL == (modex = source_proc->proc_modex) ||
        NULL == (modex_module = mca_base_modex_lookup_module(modex, module))) {
         THREAD_UNLOCK(&source_proc->proc_lock);
-        return LAM_ERR_NOT_FOUND;
+        return OMPI_ERR_NOT_FOUND;
     }
 
     if(0 == modex_module->module_data_size) {
         *buffer = NULL;
         *size = 0;
         THREAD_UNLOCK(&source_proc->proc_lock);
-        return LAM_SUCCESS;
+        return OMPI_SUCCESS;
     }
 
     copy = malloc(modex_module->module_data_size);
     if(NULL == copy) {
        THREAD_UNLOCK(&source_proc->proc_lock);
-       return LAM_ERR_OUT_OF_RESOURCE;
+       return OMPI_ERR_OUT_OF_RESOURCE;
     }
     memcpy(copy, modex_module->module_data, modex_module->module_data_size);
     *buffer = copy;
     *size = modex_module->module_data_size;
     THREAD_UNLOCK(&source_proc->proc_lock);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -200,20 +200,20 @@ int mca_base_modex_recv(mca_base_module_t *module, lam_proc_t *source_proc, void
 
 int mca_base_modex_exchange(void)
 {
-    lam_proc_t *self = lam_proc_local();
+    ompi_proc_t *self = ompi_proc_local();
     mca_base_modex_t* modex;
     mca_base_modex_module_t* self_module;
     size_t nprocs;
-    lam_proc_t **procs = lam_proc_all(&nprocs);
+    ompi_proc_t **procs = ompi_proc_all(&nprocs);
 
     if(nprocs <= 1) {
         if(procs) free(procs);
-        return LAM_SUCCESS;
+        return OMPI_SUCCESS;
     }
 
     if(NULL == self) {
         free(procs);
-        return LAM_ERROR;
+        return OMPI_ERROR;
     }
 
     if(NULL == (modex = self->proc_modex)) {
@@ -222,12 +222,12 @@ int mca_base_modex_exchange(void)
     
     /* loop through all modules with data cached on local process and send to all peers */
     THREAD_LOCK(&self->proc_lock);
-    for(self_module =  (mca_base_modex_module_t*)lam_list_get_first(&modex->modex_modules);
-        self_module != (mca_base_modex_module_t*)lam_list_get_end(&modex->modex_modules);
-        self_module =  (mca_base_modex_module_t*)lam_list_get_next(self_module)) {
+    for(self_module =  (mca_base_modex_module_t*)ompi_list_get_first(&modex->modex_modules);
+        self_module != (mca_base_modex_module_t*)ompi_list_get_end(&modex->modex_modules);
+        self_module =  (mca_base_modex_module_t*)ompi_list_get_next(self_module)) {
         size_t i;
         for(i=0; i<nprocs; i++) {
-            lam_proc_t *proc = procs[i];
+            ompi_proc_t *proc = procs[i];
             int rc;
 
             if(proc == self) 
@@ -239,7 +239,7 @@ int mca_base_modex_exchange(void)
                 0, 
                 self_module->module_data, 
                 self_module->module_data_size);
-            if(rc != LAM_SUCCESS) {
+            if(rc != OMPI_SUCCESS) {
                free(procs); 
                THREAD_UNLOCK(&self->proc_lock);
                return rc;
@@ -248,12 +248,12 @@ int mca_base_modex_exchange(void)
     }
 
     /* loop through the same modules and receive data from all peers */
-    for(self_module =  (mca_base_modex_module_t*)lam_list_get_first(&modex->modex_modules);
-        self_module != (mca_base_modex_module_t*)lam_list_get_end(&modex->modex_modules);
-        self_module =  (mca_base_modex_module_t*)lam_list_get_next(self_module)) {
+    for(self_module =  (mca_base_modex_module_t*)ompi_list_get_first(&modex->modex_modules);
+        self_module != (mca_base_modex_module_t*)ompi_list_get_end(&modex->modex_modules);
+        self_module =  (mca_base_modex_module_t*)ompi_list_get_next(self_module)) {
         size_t i;
         for(i=0; i<nprocs; i++) {
-            lam_proc_t *proc = procs[i];
+            ompi_proc_t *proc = procs[i];
             mca_base_modex_module_t* proc_module;
             int tag = 0;
             int rc;
@@ -267,7 +267,7 @@ int mca_base_modex_exchange(void)
                 if(NULL == proc->proc_modex) {
                     free(procs);
                     THREAD_UNLOCK(&self->proc_lock);
-                    return LAM_ERR_OUT_OF_RESOURCE;
+                    return OMPI_ERR_OUT_OF_RESOURCE;
                 }
             }
             proc_module = mca_base_modex_create_module(proc->proc_modex, self_module->module);
@@ -275,7 +275,7 @@ int mca_base_modex_exchange(void)
                 free(procs);
                 THREAD_UNLOCK(&proc->proc_lock);
                 THREAD_UNLOCK(&self->proc_lock);
-                return LAM_ERR_OUT_OF_RESOURCE;
+                return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
             rc = mca_oob.oob_recv(
@@ -284,7 +284,7 @@ int mca_base_modex_exchange(void)
                 &tag, 
                 &proc_module->module_data, 
                 &proc_module->module_data_size);
-            if(rc != LAM_SUCCESS) {
+            if(rc != OMPI_SUCCESS) {
                 free(procs);
                 THREAD_UNLOCK(&proc->proc_lock);
                 THREAD_UNLOCK(&self->proc_lock);
@@ -295,7 +295,7 @@ int mca_base_modex_exchange(void)
     }
     free(procs);
     THREAD_UNLOCK(&self->proc_lock);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 

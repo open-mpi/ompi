@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "info/info.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Info_free = PMPI_Info_free
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -40,7 +40,7 @@ int MPI_Info_free(MPI_Info *info) {
      */
     if (MPI_PARAM_CHECK) {
         if (NULL == info){
-            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                          "MPI_Info_free");
         }
     }
@@ -50,7 +50,7 @@ int MPI_Info_free(MPI_Info *info) {
      * there can be any error from this, but then who knows. Have
      * to recheck this part too.
      */
-    err = lam_info_free (info);
+    err = ompi_info_free (info);
     
     return MPI_SUCCESS;
 }

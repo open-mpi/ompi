@@ -2,14 +2,14 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
 #include "include/constants.h"
-#include "lfc/lam_value_array.h"
+#include "class/ompi_value_array.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"
 
@@ -18,16 +18,16 @@
  * Public variables
  *
  * This variable is public, but not advertised in mca_base_param.h.
- * It's only public so that laminfo can see it.  The relevant module
- * in laminfo will provide an extern to see this variable.
+ * It's only public so that ompi_info can see it.  The relevant module
+ * in ompi_info will provide an extern to see this variable.
  */
-lam_value_array_t mca_base_params;
+ompi_value_array_t mca_base_params;
 
 
 /*
  * local variables
  */
-static char *mca_prefix = "LAM_MPI_MCA_";
+static char *mca_prefix = "OMPI_MPI_MCA_";
 static bool initialized = false;
 
 
@@ -87,9 +87,9 @@ int mca_base_param_lookup_int(int index, int *value)
   
   if (param_lookup(index, &storage)) {
     *value = storage.intval;
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
   }
-  return LAM_ERROR;
+  return OMPI_ERROR;
 }
 
 
@@ -102,9 +102,9 @@ int mca_base_param_lookup_string(int index, char **value)
   
   if (param_lookup(index, &storage)) {
     *value = storage.stringval;
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
   }
-  return LAM_ERROR;
+  return OMPI_ERROR;
 }
 
 
@@ -120,15 +120,15 @@ int mca_base_param_find(const char *type_name, const char *module_name,
   /* Check for bozo cases */
 
   if (!initialized)
-    return LAM_ERROR;
+    return OMPI_ERROR;
   if (NULL == type_name || NULL == param_name)
-    return LAM_ERROR;
+    return OMPI_ERROR;
 
   /* Loop through looking for a parameter of a given
      type/module/param */
 
-  size = lam_value_array_get_size(&mca_base_params);
-  array = LAM_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+  size = ompi_value_array_get_size(&mca_base_params);
+  array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
   for (i = 0; i < size; ++i) {
     if (0 == strcmp(type_name, array[i].mbp_type_name) &&
         ((NULL == module_name && NULL == array[i].mbp_module_name) ||
@@ -140,7 +140,7 @@ int mca_base_param_find(const char *type_name, const char *module_name,
 
   /* Didn't find it */
 
-  return LAM_ERROR;
+  return OMPI_ERROR;
 }
 
 
@@ -153,16 +153,16 @@ int mca_base_param_finalize(void)
   mca_base_param_t *array;
 
   if (initialized) {
-    array = LAM_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
-    while (0 < lam_value_array_get_size(&mca_base_params)) {
+    array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    while (0 < ompi_value_array_get_size(&mca_base_params)) {
       param_free(&array[0]);
-      lam_value_array_remove_item(&mca_base_params, 0);
+      ompi_value_array_remove_item(&mca_base_params, 0);
     }
     OBJ_DESTRUCT(&mca_base_params);
     initialized = false;
   }
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
@@ -179,8 +179,8 @@ static int param_register(const char *type_name, const char *module_name,
   /* Initialize the array if it has never been initialized */
 
   if (!initialized) {
-    OBJ_CONSTRUCT(&mca_base_params, lam_value_array_t);
-    lam_value_array_init(&mca_base_params, sizeof(mca_base_param_t));
+    OBJ_CONSTRUCT(&mca_base_params, ompi_value_array_t);
+    ompi_value_array_init(&mca_base_params, sizeof(mca_base_param_t));
     initialized = true;
   }
 
@@ -192,13 +192,13 @@ static int param_register(const char *type_name, const char *module_name,
 
   param.mbp_type_name = strdup(type_name);
   if (NULL == param.mbp_type_name) {
-    return LAM_ERROR;
+    return OMPI_ERROR;
   }
   if (NULL != module_name) {
     param.mbp_module_name = strdup(module_name);
     if (NULL == param.mbp_module_name) {
       free(param.mbp_type_name);
-      return LAM_ERROR;
+      return OMPI_ERROR;
     }
   } else {
     param.mbp_module_name = NULL;
@@ -208,7 +208,7 @@ static int param_register(const char *type_name, const char *module_name,
     if (NULL == param.mbp_param_name) {
       free(param.mbp_type_name);
       free(param.mbp_module_name);
-      return LAM_ERROR;
+      return OMPI_ERROR;
     }
   } else {
     param.mbp_param_name = NULL;
@@ -243,7 +243,7 @@ static int param_register(const char *type_name, const char *module_name,
       if (NULL != param.mbp_param_name) {
         free(param.mbp_param_name);
       }
-      return LAM_ERROR;
+      return OMPI_ERROR;
     }
     strncpy(param.mbp_full_name, type_name, len);
 
@@ -269,7 +269,7 @@ static int param_register(const char *type_name, const char *module_name,
       free(param.mbp_type_name);
       free(param.mbp_module_name);
       free(param.mbp_param_name);
-      return LAM_ERROR;
+      return OMPI_ERROR;
     }
     snprintf(param.mbp_env_var_name, len, "%s%s", mca_prefix, 
              param.mbp_full_name);
@@ -290,8 +290,8 @@ static int param_register(const char *type_name, const char *module_name,
 
   /* See if this entry is already in the Array */
 
-  len = lam_value_array_get_size(&mca_base_params);
-  array = LAM_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+  len = ompi_value_array_get_size(&mca_base_params);
+  array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
   for (i = 0; i < len; ++i) {
     if (0 == strcmp(param.mbp_full_name, array[i].mbp_full_name)) {
 
@@ -314,17 +314,17 @@ static int param_register(const char *type_name, const char *module_name,
 
   /* Add it to the array */
 
-  if (LAM_SUCCESS != lam_value_array_append_item(&mca_base_params, &param)) {
-    return LAM_ERROR;
+  if (OMPI_SUCCESS != ompi_value_array_append_item(&mca_base_params, &param)) {
+    return OMPI_ERROR;
   }
-  return lam_value_array_get_size(&mca_base_params) - 1;
+  return ompi_value_array_get_size(&mca_base_params) - 1;
 }
 
 
 /*
  * DO NOT MODIFY THIS FUNCTION WITHOUT ALSO MODIFYING mca_base_param.c!
  *
- * This function appears in liblam.  Because of unix linker semantics,
+ * This function appears in libompi.  Because of unix linker semantics,
  * it's simply easier to essentially duplicate this function in libmpi
  * because in libmpi, we need to lookup on a keyval before looking in
  * the environment.  The logic is simpler if we just duplicate/alter
@@ -343,11 +343,11 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage)
   if (!initialized) {
     return false;
   }
-  if (lam_value_array_get_size(&mca_base_params) < index) {
+  if (ompi_value_array_get_size(&mca_base_params) < index) {
     return false;
   }
-  size = lam_value_array_get_size(&mca_base_params);
-  array = LAM_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+  size = ompi_value_array_get_size(&mca_base_params);
+  array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
 
   /* We either don't have a keyval or didn't find it.  So look in the
      environment. */

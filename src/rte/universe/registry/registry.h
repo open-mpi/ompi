@@ -44,9 +44,9 @@
  * includes
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "include/constants.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 
 /** Define the notification actions for the subscription system
  */
@@ -71,7 +71,7 @@
  * from the dictionary in response to an ompi_registry_index() call.
  */
 struct ompi_keytable_t {
-    lam_list_item_t item;  /**< Allows this item to be placed on a list */
+    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
     char *token;  /**< Char string that defines the key */
     unsigned long int key;      /**< Numerical value assigned by registry to represent token string */
 };
@@ -92,10 +92,10 @@ static void ompi_keytable_destructor(ompi_keytable_t* keytable)
     }
 }
 
-/* define instance of lam_class_t */
+/* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
 		   ompi_keytable_t,  /* type name */
-		   lam_list_item_t, /* parent "class" name */
+		   ompi_list_item_t, /* parent "class" name */
 		   ompi_keytable_construct, /* constructor */
 		   ompi_keytable_destructor); /* destructor */
 
@@ -109,7 +109,7 @@ OBJ_CLASS_INSTANCE(
  * may require the recipient to release the structure's memory when done.
  */
 struct ompi_registry_value_t {
-    lam_list_item_t item;    /**< Allows this item to be placed on a list */
+    ompi_list_item_t item;    /**< Allows this item to be placed on a list */
     uint8_t *object;   /**< Pointer to object being returned */
     int object_size;   /**< Size of returned object, in bytes */
 };
@@ -130,10 +130,10 @@ static void ompi_registry_value_destructor(ompi_registry_value_t* reg_val)
     }
 }
 
-/* define instance of lam_class_t */
+/* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
 		   ompi_registry_value_t,  /* type name */
-		   lam_list_item_t, /* parent "class" name */
+		   ompi_list_item_t, /* parent "class" name */
 		   ompi_registry_value_construct, /* constructor */
 		   ompi_registry_value_destructor); /* destructor */
 
@@ -153,8 +153,8 @@ OBJ_CLASS_INSTANCE(
  * @param segment A pointer to a character string containing the name of the segment
  * to be created.
  *
- * @retval LAM_SUCCESS Indicates that the operation was successfully completed.
- * @retval LAM_ERROR Indicates that the operation failed - most likely due to the
+ * @retval OMPI_SUCCESS Indicates that the operation was successfully completed.
+ * @retval OMPI_ERROR Indicates that the operation failed - most likely due to the
  * prior existence of a segment with an identical name.
  */
 int ompi_registry_definesegment(char *segment);
@@ -191,8 +191,8 @@ int ompi_registry_definesegment(char *segment);
  * @param NULL The last parameter in the function call MUST be a NULL to terminate the
  * variable list of arguments.
  *
- * @retval LAM_SUCCESS Indicates that the operation was successful.
- * @retval LAM_ERROR Indicates that the registry was unable to store the object - most
+ * @retval OMPI_SUCCESS Indicates that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the registry was unable to store the object - most
  * likely due to specifying a non-existent segment or lack of available memory.
  */
 int ompi_registry_put(bool overwrite, uint8_t *object, int size, char *segment, char *token, ...);
@@ -243,8 +243,8 @@ ompi_registry_value_t *ompi_registry_get(char *segment, char *token, ...);
  * provided to further identify the object being deleted.
  * @param NULL The last parameter in the function call MUST be a NULL to terminate the
  * variable list of arguments.
- * @retval LAM_SUCCESS Indicates that the operation was successful.
- * @retval LAM_ERROR Indicates that the registry was unable to delete the object - most
+ * @retval OMPI_SUCCESS Indicates that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the registry was unable to delete the object - most
  * likely due to specifying a non-existent segment or object.
  */
 int ompi_registry_del(char *segment, char *token, ...);
@@ -309,8 +309,8 @@ ompi_keytable_t *ompi_registry_segment_index(void);
  * @param NULL The last parameter in the function call MUST be a NULL to terminate the
  * variable list of arguments.
  *
- * @retval LAM_SUCCESS Indicates that the operation was successful.
- * @retval LAM_ERROR Indicates that the operation failed - most likely caused by specifying
+ * @retval OMPI_SUCCESS Indicates that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the operation failed - most likely caused by specifying
  * an object that did not exist within the specified segment, or a non-existent segment.
  */
 int ompi_registry_subscribe(int caller, uint8_t action, char *segment, char *token, ...);
@@ -331,10 +331,10 @@ int ompi_registry_subscribe(int caller, uint8_t action, char *segment, char *tok
  * @param NULL The last parameter in the function call MUST be a NULL to terminate the
  * variable list of arguments.
  *
- * @retval LAM_SUCCESS Indicates that the operation was successful. Note that this value will
+ * @retval OMPI_SUCCESS Indicates that the operation was successful. Note that this value will
  * also be returned if the caller was not previously subscribed to the specified object since an
  * unsubscribe request would have resulted in the same end condition.
- * @retval LAM_ERROR Indicates that the operation failed - most likely caused by specifying
+ * @retval OMPI_ERROR Indicates that the operation failed - most likely caused by specifying
  * an object that did not exist within the specified segment, or a non-existent segment.
  */
 int ompi_registry_unsubscribe(int caller, uint8_t action, char *segment, char *token, ...);

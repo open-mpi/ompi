@@ -3,8 +3,8 @@
  * $HEADER$
  */
 
-#ifndef _LAM_IF_UTIL_
-#define _LAM_IF_UTIL_
+#ifndef _OMPI_IF_UTIL_
+#define _OMPI_IF_UTIL_
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -16,7 +16,7 @@
  *  @param if_addr (OUT)  Interface address buffer
  *  @param size    (IN)   Interface address buffer size
  */
-int lam_ifnametoaddr(const char* if_name, struct sockaddr*, int);
+int ompi_ifnametoaddr(const char* if_name, struct sockaddr*, int);
 
 /**
  *  Lookup an interface by address and return its name.
@@ -25,7 +25,7 @@ int lam_ifnametoaddr(const char* if_name, struct sockaddr*, int);
  *  @param if_addr (OUT)  Interface name buffer
  *  @param size    (IN)   Interface name buffer size
  */
-int lam_ifaddrtoname(const char* if_addr, char* if_name, int);
+int ompi_ifaddrtoname(const char* if_addr, char* if_name, int);
 
 /**
  *  Lookup an interface by name and return its kernel index.
@@ -33,17 +33,17 @@ int lam_ifaddrtoname(const char* if_addr, char* if_name, int);
  *  @param if_name (IN)  Interface name
  *  @return              Interface index
  */
-int lam_ifnametoindex(const char* if_name);
+int ompi_ifnametoindex(const char* if_name);
 
 /**
  *  Returns the number of available interfaces.
  */
-int lam_ifcount(void);
+int ompi_ifcount(void);
 
 /**
  *  Returns the index of the first available interface.
  */
-int lam_ifbegin(void); 
+int ompi_ifbegin(void); 
 
 /**
  *  Lookup the current position in the interface list by
@@ -52,7 +52,7 @@ int lam_ifbegin(void);
  *  @param if_index   Returns the next available index from the 
  *                    current position.
  */
-int lam_ifnext(int if_index);
+int ompi_ifnext(int if_index);
 
 /**
  *  Lookup an interface by index and return its name.
@@ -61,7 +61,7 @@ int lam_ifnext(int if_index);
  *  @param if_name (OUT)  Interface name buffer
  *  @param size (IN)      Interface name buffer size
  */
-int lam_ifindextoname(int if_index, char* if_name, int);
+int ompi_ifindextoname(int if_index, char* if_name, int);
 
 /**
  *  Lookup an interface by index and return its primary address .
@@ -70,7 +70,7 @@ int lam_ifindextoname(int if_index, char* if_name, int);
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-int lam_ifindextoaddr(int if_index, struct sockaddr*, int);
+int ompi_ifindextoaddr(int if_index, struct sockaddr*, int);
 
 /**
  *  Lookup an interface by index and return its network mask.
@@ -79,7 +79,7 @@ int lam_ifindextoaddr(int if_index, struct sockaddr*, int);
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-int lam_ifindextomask(int if_index, struct sockaddr*, int);
+int ompi_ifindextomask(int if_index, struct sockaddr*, int);
 
 #endif
 

@@ -2,10 +2,10 @@
  * $HEADER$
  */
 
-#ifndef LAM_F77_BINDINGS_H
-#define LAM_F77_BINDINGS_H
+#ifndef OMPI_F77_BINDINGS_H
+#define OMPI_F77_BINDINGS_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "mpi.h"
 /*
  * We now build all four fortran bindings and dont care too much about 
@@ -14,7 +14,7 @@
  * have the mpi_*_f functions be the default symbols and then wrap
  * the four signature types around it. The macro below achieves this.
  */
-#define LAM_GENERATE_F77_BINDINGS(upper_case, \
+#define OMPI_GENERATE_F77_BINDINGS(upper_case, \
                                   lower_case, \
                                   single_underscore, \
                                   double_underscore, \
@@ -36,4 +36,4 @@
 #include "mpi/f77/prototypes_mpi.h"
 #include "mpi/f77/profile/prototypes_pmpi.h"
 
-#endif /* LAM_F77_BINDINGS_H */
+#endif /* OMPI_F77_BINDINGS_H */

@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
@@ -26,48 +26,48 @@
  * Global variables and symbols for the MPI layer
  */
 
-bool lam_mpi_initialized = false;
-bool lam_mpi_finalized = false;
+bool ompi_mpi_initialized = false;
+bool ompi_mpi_finalized = false;
 /* As a deviation from the norm, this variable is extern'ed in
    src/mpi/interface/c/bindings.h because it is already included in
    all MPI function imlementation files */
-bool lam_mpi_param_check = true;
+bool ompi_mpi_param_check = true;
 
-bool lam_mpi_thread_multiple = false;
-int lam_mpi_thread_requested = MPI_THREAD_SINGLE;
-int lam_mpi_thread_provided = MPI_THREAD_SINGLE;
+bool ompi_mpi_thread_multiple = false;
+int ompi_mpi_thread_requested = MPI_THREAD_SINGLE;
+int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 
 
-int lam_mpi_init(int argc, char **argv, int requested, int *provided)
+int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
     int ret, param, value;
     bool allow_multi_user_threads;
     bool have_hidden_threads;
-    lam_proc_t** procs;
+    ompi_proc_t** procs;
     size_t nprocs;
 
-    /* Become a LAM process */
+    /* Become a OMPI process */
 
-    if (LAM_SUCCESS != (ret = lam_init(argc, argv))) {
+    if (OMPI_SUCCESS != (ret = ompi_init(argc, argv))) {
         return ret;
     }
 
     /* Open up the MCA */
 
-    if (LAM_SUCCESS != (ret = mca_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_open())) {
         return ret;
     }
-    if (LAM_SUCCESS != (ret = mca_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_base_open())) {
         return ret;
     }
 
     /* Join the run-time environment */
-    if (LAM_SUCCESS != (ret = lam_rte_init(&allow_multi_user_threads, &have_hidden_threads))) {
+    if (OMPI_SUCCESS != (ret = ompi_rte_init(&allow_multi_user_threads, &have_hidden_threads))) {
         return ret;
     }
 
-    /* initialize lam procs */
-    if (LAM_SUCCESS != (ret = lam_proc_init())) {
+    /* initialize ompi procs */
+    if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
         return ret;
     }
 
@@ -75,15 +75,15 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
          module types here -- they are loaded upon demand (i.e., upon
          relevant constructors). */
 
-    if (LAM_SUCCESS != (ret = mca_pml_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_pml_base_open())) {
         /* JMS show_help */
         return ret;
     }
-    if (LAM_SUCCESS != (ret = mca_ptl_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_ptl_base_open())) {
         /* JMS show_help */
         return ret;
     }
-    if (LAM_SUCCESS != (ret = mca_coll_base_open())) {
+    if (OMPI_SUCCESS != (ret = mca_coll_base_open())) {
         /* JMS show_help */
         return ret;
     }
@@ -91,7 +91,7 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Select which pml, ptl, and coll modules to use, and determine the
          final thread level */
 
-    if (LAM_SUCCESS != 
+    if (OMPI_SUCCESS != 
             (ret = mca_base_init_select_modules(requested, allow_multi_user_threads,
              have_hidden_threads, provided))) {
         /* JMS show_help */
@@ -100,36 +100,36 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Query the coll */
 
-    if (LAM_SUCCESS != (ret = mca_coll_base_query()))
+    if (OMPI_SUCCESS != (ret = mca_coll_base_query()))
 	return ret;
 
      /* initialize error handlers */
-     if (LAM_SUCCESS != (ret = lam_errhandler_init())) {
+     if (OMPI_SUCCESS != (ret = ompi_errhandler_init())) {
          return ret;
      }
      
      /* initialize groups  */
-     if (LAM_SUCCESS != (ret = lam_group_init())) {
+     if (OMPI_SUCCESS != (ret = ompi_group_init())) {
          return ret;
      }
 
      /* initialize attribute meta-data structure for comm/win/dtype */
-     if (LAM_SUCCESS != (ret = lam_attr_init())) {
+     if (OMPI_SUCCESS != (ret = ompi_attr_init())) {
 	 return ret;
      }
 
      /* initialize communicators */
-     if (LAM_SUCCESS != (ret = lam_comm_init())) {
+     if (OMPI_SUCCESS != (ret = ompi_comm_init())) {
          return ret;
      }
 
      /* initialize datatypes */
-     if (LAM_SUCCESS != (ret = lam_ddt_init())) {
+     if (OMPI_SUCCESS != (ret = ompi_ddt_init())) {
          return ret;
      }
 
      /* initialize ops */
-     if (LAM_SUCCESS != (ret = lam_op_init())) {
+     if (OMPI_SUCCESS != (ret = ompi_op_init())) {
          return ret;
      }
 
@@ -138,17 +138,17 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
         default */
      param = mca_base_param_register_int("mpi", NULL, "error_check", NULL, 1);
      mca_base_param_lookup_int(param, &value);
-     lam_mpi_param_check = (bool) value; 
+     ompi_mpi_param_check = (bool) value; 
 
      /* do module exchange */
-     if (LAM_SUCCESS != (ret = mca_base_modex_exchange())) {
+     if (OMPI_SUCCESS != (ret = mca_base_modex_exchange())) {
          return ret;
      }
 
-     /* add all lam_proc_t's to PML */
-     if (NULL == (procs = lam_proc_world(&nprocs)))
-         return LAM_ERROR;
-     if (LAM_SUCCESS != (ret = mca_pml.pml_add_procs(procs, nprocs))) {
+     /* add all ompi_proc_t's to PML */
+     if (NULL == (procs = ompi_proc_world(&nprocs)))
+         return OMPI_ERROR;
+     if (OMPI_SUCCESS != (ret = mca_pml.pml_add_procs(procs, nprocs))) {
          free(procs);
          return ret;
      }
@@ -156,22 +156,22 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
 
      /* start PTL's */
      param = 1;
-     if (LAM_SUCCESS != (ret = mca_pml.pml_control(MCA_PTL_ENABLE, &param, sizeof(param))))
+     if (OMPI_SUCCESS != (ret = mca_pml.pml_control(MCA_PTL_ENABLE, &param, sizeof(param))))
          return ret;
 
      /* save the resulting thread levels */
 
-    lam_mpi_thread_requested = requested;
-    *provided = lam_mpi_thread_provided;
-    lam_mpi_thread_multiple = (lam_mpi_thread_provided == MPI_THREAD_MULTIPLE);
+    ompi_mpi_thread_requested = requested;
+    *provided = ompi_mpi_thread_provided;
+    ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == MPI_THREAD_MULTIPLE);
 
     /* Init coll for the comms */
 
-    if (LAM_ERROR == mca_coll_base_init_comm(MPI_COMM_SELF))
-	return LAM_ERROR;
+    if (OMPI_ERROR == mca_coll_base_init_comm(MPI_COMM_SELF))
+	return OMPI_ERROR;
 
-    if (LAM_ERROR == mca_coll_base_init_comm(MPI_COMM_WORLD))
-	return LAM_ERROR;
+    if (OMPI_ERROR == mca_coll_base_init_comm(MPI_COMM_WORLD))
+	return OMPI_ERROR;
 
     /* Wait for everyone to initialize */
     /* Change the Barrier call to the backend call */
@@ -181,7 +181,7 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* All done */
 
-    lam_mpi_initialized = true;
-    lam_mpi_finalized = false;
+    ompi_mpi_initialized = true;
+    ompi_mpi_finalized = false;
     return MPI_SUCCESS;
 }

@@ -51,8 +51,8 @@ int mca_io_romio_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf, int co
 
     /* create MPI_request */
     rq = malloc(sizeof(mca_io_romio_request_t));
-    (*request) = (lam_request_t *) rq;
-    (*request)->req_type = LAM_REQUEST_IO;
+    (*request) = (ompi_request_t *) rq;
+    (*request)->req_type = OMPI_REQUEST_IO;
     /* extract the ROMIO request */
     romio_rq = rq->romio_rq;
 
@@ -113,8 +113,8 @@ int mca_io_romio_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype data
 
     /* create MPI_request */
     rq = malloc(sizeof(mca_io_romio_request_t));
-    (*request) = (lam_request_t *) rq;
-    (*request)->req_type = LAM_REQUEST_IO;
+    (*request) = (ompi_request_t *) rq;
+    (*request)->req_type = OMPI_REQUEST_IO;
     /* extract the ROMIO request */
     romio_rq = rq->romio_rq;
 
@@ -154,8 +154,8 @@ int mca_io_romio_File_iread_shared(MPI_File fh, void *buf, int count, MPI_Dataty
 
     /* create MPI_request */
     rq = malloc(sizeof(mca_io_romio_request_t));
-    (*request) = (lam_request_t *) rq;
-    (*request)->req_type = LAM_REQUEST_IO;
+    (*request) = (ompi_request_t *) rq;
+    (*request)->req_type = OMPI_REQUEST_IO;
     /* extract the ROMIO request */
     romio_rq = rq->romio_rq;
 

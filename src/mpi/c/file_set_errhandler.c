@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
@@ -10,11 +10,11 @@
 #include "errhandler/errhandler.h"
 #include "file/file.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_set_errhandler = PMPI_File_set_errhandler
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -24,12 +24,12 @@ int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler) {
   if (MPI_PARAM_CHECK) {
     if (NULL == file || 
         MPI_FILE_NULL == file) {
-      return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                    "MPI_File_set_errhandler");
     } else if (NULL == errhandler ||
                MPI_ERRHANDLER_NULL == errhandler ||
-               LAM_ERRHANDLER_TYPE_FILE != errhandler->eh_mpi_object_type) {
-      return LAM_ERRHANDLER_INVOKE(file, MPI_ERR_ARG,
+               OMPI_ERRHANDLER_TYPE_FILE != errhandler->eh_mpi_object_type) {
+      return OMPI_ERRHANDLER_INVOKE(file, MPI_ERR_ARG,
                                "MPI_File_set_errhandler");
     }
   }

@@ -5,31 +5,31 @@
 /** @file **/
 
 /** 
- *  \brief LAM/MPI Interface for Parallel Job & Process Control (pcm)
+ *  \brief OMPI/MPI Interface for Parallel Job & Process Control (pcm)
  *
- * LAM/MPI assumes it is running under a fully operational parallel
+ * OMPI/MPI assumes it is running under a fully operational parallel
  * run-time environment (RTE).  This environment may be provided by
  * batch schedulers such as PBS and LSF, single system image tools
  * such as bproc, or specially designed MPI control daemons (the MPICH
- * mpd or the included LAM daemon).  The functionality provided
+ * mpd or the included OMPI daemon).  The functionality provided
  * through the process control interface is dependant on the support
- * of the underlying infrastructure.  For example, lam_pcm_spawn
+ * of the underlying infrastructure.  For example, ompi_pcm_spawn
  * (essentially, the "go do it" part of MPI_COMM_SPAWN) is not
- * available for jobs running under the Qadrics/RMS RTE.  The LAM
+ * available for jobs running under the Qadrics/RMS RTE.  The OMPI
  * daemons will always provide the complete pcm interface.
  *
- * Like the other LAM run-time interfaces, the pcm interface is
+ * Like the other OMPI run-time interfaces, the pcm interface is
  * implemented through mca modules (pcm).  For details on the
  * capabilities of a particular module, please see the individual
  * module's documentation.
  *
- * A run-time environment suitable for use by LAM/MPI must provide the
+ * A run-time environment suitable for use by OMPI/MPI must provide the
  * following capabilities:
  *
  *  - Remote process startup at job-start time with the ability to:
  *    - push an environment (or a large chunk of an environment) to the started process
  *    - redirect the stdout and stderr of the process to either a file (batch 
- *      schedulers) or the mpirun application (LAM daemons) without interaction from the
+ *      schedulers) or the mpirun application (OMPI daemons) without interaction from the
  *      started process
  *  - A working registry interface
  *  - A "unique" job id for each parallel job
@@ -54,7 +54,7 @@
 #ifndef MCA_PCM_H_
 #define MCA_PCM_H_
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mca/mca.h"
 #include "include/types.h"
@@ -64,9 +64,9 @@
 /*
  * "PCM" global types
  */
-#define LAM_PCM_PROC_MPIRUN 0
-#define LAM_PCM_PROC_MPIAPP 1
-#define LAM_PCM_PROC_OTHER  2
+#define OMPI_PCM_PROC_MPIRUN 0
+#define OMPI_PCM_PROC_MPIAPP 1
+#define OMPI_PCM_PROC_OTHER  2
 
 struct mca_pcm_rte_node_t {
   char name[MAXHOSTNAMELEN];
@@ -82,7 +82,7 @@ struct mca_pcm_control_args_t {
 typedef struct mca_pcm_control_args_t mca_pcm_control_args_t;
 
 struct mca_pcm_proc_t {
-  lam_job_handle_t job_handle;
+  ompi_job_handle_t job_handle;
   int vpid;
 };
 typedef struct mca_pcm_proc_t mca_pcm_proc_t;
@@ -104,8 +104,8 @@ typedef struct mca_pcm_1_0_0_t*
    * @param nodes_len Length of nodes array
    * @param available_procs Number of available processors in the RTE
    *
-   * @retval LAM_SUCCESS success
-   * @retval LAM_NOT_SUPPORTED Not available
+   * @retval OMPI_SUCCESS success
+   * @retval OMPI_NOT_SUPPORTED Not available
    *
    * Obtain a list of nodes available for execution.  No promises are
    * made that such information is available - for some environments
@@ -141,7 +141,7 @@ typedef int (*mca_pcm_base_query_get_nodes_fn_t)(mca_pcm_rte_node_t **nodes,
    *
    * \warning The handle must be released using mca_pcm_handle_free
    */
-typedef lam_job_handle_t (*mca_pcm_base_handle_new_fn_t)(lam_job_handle_t parent);
+typedef ompi_job_handle_t (*mca_pcm_base_handle_new_fn_t)(ompi_job_handle_t parent);
 
 
   /**
@@ -154,18 +154,18 @@ typedef lam_job_handle_t (*mca_pcm_base_handle_new_fn_t)(lam_job_handle_t parent
    *
    * \warning The handle must be released using mca_pcm_handle_free
    */
-typedef lam_job_handle_t (*mca_pcm_base_handle_get_fn_t)(void);
+typedef ompi_job_handle_t (*mca_pcm_base_handle_get_fn_t)(void);
 
 
   /**
    * Free a job handle
    *
-   * @param job_handle Poiner to a lam_job_handle_t
+   * @param job_handle Poiner to a ompi_job_handle_t
    * 
    * Free a job handle returned by mca_pcm_handle_new or
    * mca_pcm_handle_get.
    */
-typedef void (*mca_pcm_base_handle_free_fn_t)(lam_job_handle_t *job_handle);
+typedef void (*mca_pcm_base_handle_free_fn_t)(ompi_job_handle_t *job_handle);
 
 
   /**
@@ -173,15 +173,15 @@ typedef void (*mca_pcm_base_handle_free_fn_t)(lam_job_handle_t *job_handle);
    * 
    * @param job_handle Parallel job handle of running process
    *
-   * @retval LAM_SUCCESS LAM can spawn more jobs
-   * @retval LAM_NOT_SUPPORTED LAM can not spawn more jobs
+   * @retval OMPI_SUCCESS OMPI can spawn more jobs
+   * @retval OMPI_NOT_SUPPORTED OMPI can not spawn more jobs
    *
    * Ask the currently running mca module for the runtime environment
    * if it supports spawning more processes.  This question should
-   * always return LAM_SUCCESS (yes) if called from mpirun.  Useful
+   * always return OMPI_SUCCESS (yes) if called from mpirun.  Useful
    * for asking if MPI_SPAWN and friends can run.
    */
-typedef int (*mca_pcm_base_job_can_spawn_fn_t)(lam_job_handle_t job_handle);
+typedef int (*mca_pcm_base_job_can_spawn_fn_t)(ompi_job_handle_t job_handle);
 
 
   /**
@@ -191,8 +191,8 @@ typedef int (*mca_pcm_base_job_can_spawn_fn_t)(lam_job_handle_t job_handle);
    * @param opts Array of key=value structures requesting job behaviour
    * @param opts_len Length of opts array
    *
-   * @retval LAM_SUCCESS Sucess
-   * @retval LAM_ERROR Unkonwn failure
+   * @retval OMPI_SUCCESS Sucess
+   * @retval OMPI_ERROR Unkonwn failure
    *
    * Configure the job using key=value arguments.  The meanings of the
    * arguments are up to the specific mca module providing run-time support.
@@ -204,7 +204,7 @@ typedef int (*mca_pcm_base_job_can_spawn_fn_t)(lam_job_handle_t job_handle);
    * \Warning It is an error to call this function more than once on a single
    * job handle.
    */
-typedef int (*mca_pcm_base_job_set_arguments_fn_t)(lam_job_handle_t job_handle, 
+typedef int (*mca_pcm_base_job_set_arguments_fn_t)(ompi_job_handle_t job_handle, 
                                               mca_pcm_control_args_t* opts, 
                                               size_t opts_len);
 
@@ -220,10 +220,10 @@ typedef int (*mca_pcm_base_job_set_arguments_fn_t)(lam_job_handle_t job_handle,
    * @param argv Argv array for launched processes
    * @param env Environment array for launched process.  See note below
    *
-   * @retval LAM_SUCCESS Success
-   * @retval LAM_ERR_RESOURCE_BUSY Try again real soon now
-   * @retval LAM_ERR_NOT_SUPPORTED non-MPIRUN process can not spawn jobs
-   * @retval LAM_FAILURE Unkonwn failure
+   * @retval OMPI_SUCCESS Success
+   * @retval OMPI_ERR_RESOURCE_BUSY Try again real soon now
+   * @retval OMPI_ERR_NOT_SUPPORTED non-MPIRUN process can not spawn jobs
+   * @retval OMPI_FAILURE Unkonwn failure
    *
    * Launch num_procs nodes[?].processes on nodes[?].node_num for each
    * nodes entry, as part of job_handle's job.  The env array should
@@ -231,10 +231,10 @@ typedef int (*mca_pcm_base_job_set_arguments_fn_t)(lam_job_handle_t job_handle,
    * remote processes.  The mca may provide a more detailed
    * environment if necessary (bporc, etc.).
    *
-   * LAM_ERR_NOT_SUPPORTED will be returned if the mca module does not
+   * OMPI_ERR_NOT_SUPPORTED will be returned if the mca module does not
    * support spawning of new applications from
    */
-typedef int (*mca_pcm_base_job_launch_procs_fn_t)(lam_job_handle_t job_handle, 
+typedef int (*mca_pcm_base_job_launch_procs_fn_t)(ompi_job_handle_t job_handle, 
                                              mca_pcm_rte_node_t *nodes, 
                                              size_t nodes_len, const char* file, 
                                              int argc, const char* argv[], 
@@ -246,8 +246,8 @@ typedef int (*mca_pcm_base_job_launch_procs_fn_t)(lam_job_handle_t job_handle,
    *
    * @param job_handle Parallel job handle to run through startup
    *
-   * @retval LAM_SUCCESS Success
-   * @retval LAM_FAILURE Unknown failure
+   * @retval OMPI_SUCCESS Success
+   * @retval OMPI_FAILURE Unknown failure
    *
    * Do the civic duties required to complete the rendezvous part of
    * the startup protocol.  After this, the MPI application should
@@ -259,7 +259,7 @@ typedef int (*mca_pcm_base_job_launch_procs_fn_t)(lam_job_handle_t job_handle,
    *
    * This function only needs to be called by the launching procs.
    */
-typedef int (*mca_pcm_base_job_rendezvous_fn_t)(lam_job_handle_t job_handle);
+typedef int (*mca_pcm_base_job_rendezvous_fn_t)(ompi_job_handle_t job_handle);
 
 
   /**
@@ -267,14 +267,14 @@ typedef int (*mca_pcm_base_job_rendezvous_fn_t)(lam_job_handle_t job_handle);
    *
    * @param job_handle Parallel job handle to wait on
    *
-   * @retval LAM_SUCCESS Success
-   * @retval LAM_ERR_INTERUPTED Interupted (due to signal, etc.)
+   * @retval OMPI_SUCCESS Success
+   * @retval OMPI_ERR_INTERUPTED Interupted (due to signal, etc.)
    *
-   * The LAM parallel version of "wait".  It is not required to wait
+   * The OMPI parallel version of "wait".  It is not required to wait
    * on a job at termination, as job results will be expunged over
    * time as resource limits dictate.
    */
-typedef int (*mca_pcm_base_job_wait_fn_t)(lam_job_handle_t job_handle);
+typedef int (*mca_pcm_base_job_wait_fn_t)(ompi_job_handle_t job_handle);
 
 
   /**
@@ -283,13 +283,13 @@ typedef int (*mca_pcm_base_job_wait_fn_t)(lam_job_handle_t job_handle);
    * @param job_handle Parallel job handle to query
    * @param running Job is running, if true
    *
-   * @retval LAM_SUCCESS Success
-   * @retval LAM_ERR_BAD_PARAM Invalid job handle
+   * @retval OMPI_SUCCESS Success
+   * @retval OMPI_ERR_BAD_PARAM Invalid job handle
    *
    * Ask if job is running.  If job has recently finished, this does
    * not imply wait the pcm interface will call wait for you.
    */
-typedef int (*mca_pcm_base_job_running_fn_t)(lam_job_handle_t job_handle, 
+typedef int (*mca_pcm_base_job_running_fn_t)(ompi_job_handle_t job_handle, 
                                         int* running);
 
 
@@ -299,7 +299,7 @@ typedef int (*mca_pcm_base_job_running_fn_t)(lam_job_handle_t job_handle,
    * @param handles Pointer to job handles array
    * @param handles_len length of handles array
    *
-   * @retval LAM_ERR_NOT_IMPLEMENTED Not implemented
+   * @retval OMPI_ERR_NOT_IMPLEMENTED Not implemented
    *
    * Query the environment about currently running jobs.  Intended for
    * applications outside MPI and mpirun, to be user friendly and all
@@ -307,16 +307,16 @@ typedef int (*mca_pcm_base_job_running_fn_t)(lam_job_handle_t job_handle,
    *
    * \warning This function is not yet implemented.
    */
-typedef int (*mca_pcm_base_job_list_running_fn_t)(lam_job_handle_t **handles, 
+typedef int (*mca_pcm_base_job_list_running_fn_t)(ompi_job_handle_t **handles, 
                                              size_t handles_len);
 
 
   /**
    * Do process startup code
    *
-   * @retval LAM_SUCCESS Success
-   * @retval LAM_ERR_FATAL Fatal error occurred
-   * @retval LAM_ERROR Unkonwn failure
+   * @retval OMPI_SUCCESS Success
+   * @retval OMPI_ERR_FATAL Fatal error occurred
+   * @retval OMPI_ERROR Unkonwn failure
    *
    * Do all communication work required to get peer list and establish
    * the out of band communictaion mechanism.  If a pcm interface uses
@@ -335,10 +335,10 @@ typedef int (*mca_pcm_base_proc_startup_fn_t)(void);
   /**
    * Get peers list
    *
-   * @param procs Ordered array of lam_proc_t entries describing the job peers
+   * @param procs Ordered array of ompi_proc_t entries describing the job peers
    *
-   * @retval LAM_SUCCESS success
-   * @retval LAM_ERROR Unknown error
+   * @retval OMPI_SUCCESS success
+   * @retval OMPI_ERROR Unknown error
    *
    * Get list of peers in the parallel job.  Should not require any
    * communication with other nodes (communication with processes on
@@ -353,7 +353,7 @@ typedef int (*mca_pcm_base_proc_get_peers_fn_t)(mca_pcm_proc_t **procs, size_t *
   /**
    * Get my entry in the peers list
    *
-   * @retval LAM_ERR_NOT_IMPLEMENTED Function not implemented
+   * @retval OMPI_ERR_NOT_IMPLEMENTED Function not implemented
    *
    * Get my entry in the peers list
    *
@@ -363,7 +363,7 @@ typedef  mca_pcm_proc_t* (*mca_pcm_base_proc_get_me_fn_t)(void);
   /**
    * Get my entry in the peers list
    *
-   * @retval LAM_ERR_NOT_IMPLEMENTED Function not implemented
+   * @retval OMPI_ERR_NOT_IMPLEMENTED Function not implemented
    *
    * Get my entry in the peers list
    *
@@ -450,7 +450,7 @@ extern "C" {
  * Globals
  */
 extern int mca_pcm_base_output;
-extern lam_list_t mca_pcm_base_modules_available;
+extern ompi_list_t mca_pcm_base_modules_available;
 extern mca_pcm_base_module_t mca_pcm_base_selected_module;
 extern mca_pcm_t mca_pcm;
 

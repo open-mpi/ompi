@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_OP_FREE = mpi_op_free_f
 #pragma weak pmpi_op_free = mpi_op_free_f
 #pragma weak pmpi_op_free_ = mpi_op_free_f
 #pragma weak pmpi_op_free__ = mpi_op_free_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_OP_FREE,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_OP_FREE,
                            pmpi_op_free,
                            pmpi_op_free_,
                            pmpi_op_free__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_OP_FREE,
                            (op, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_OP_FREE = mpi_op_free_f
 #pragma weak mpi_op_free = mpi_op_free_f
 #pragma weak mpi_op_free_ = mpi_op_free_f
 #pragma weak mpi_op_free__ = mpi_op_free_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_OP_FREE,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_OP_FREE,
                            mpi_op_free,
                            mpi_op_free_,
                            mpi_op_free__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_OP_FREE,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

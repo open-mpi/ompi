@@ -4,7 +4,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-AM_CPPFLAGS = -DLAM_PKGLIBDIR=\"$(pkglibdir)\"
+AM_CPPFLAGS = -DOMPI_PKGLIBDIR=\"$(pkglibdir)\"
 
 noinst_LTLIBRARIES = libmca_base.la
 
@@ -35,8 +35,8 @@ libmca_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mca/base
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/mca/base
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif

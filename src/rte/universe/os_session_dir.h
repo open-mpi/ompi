@@ -22,7 +22,7 @@
  * \par
  * If the <prefix> is not provided by the user, the function searches for a suitable 
  * directory in a specific order, taking the first option that meets the access
- * permission requirement, using: (a) the "LAM_PREFIX_ENV" environment variable;
+ * permission requirement, using: (a) the "OMPI_PREFIX_ENV" environment variable;
  * (b) the "TMPDIR" environment variable; (c) the "TMP" environment variable; and
  * (d) the "HOME" environment variable, appended with a "tmp" directory. If none of
  * those environmental variables have been defined and/or the function was unable
@@ -70,10 +70,10 @@
  * to store information required for universe operations. A NULL value will result in an
  * error condition being returned.
  *
- * @retval LAM_ERROR If the directory could not be created, or if an existing directory
+ * @retval OMPI_ERROR If the directory could not be created, or if an existing directory
  * of the correct name is found, but cannot be set to the required access permissions.
  *
- * @retval LAM_SUCCESS If the directory was successfully created with the required access
+ * @retval OMPI_SUCCESS If the directory was successfully created with the required access
  * permissions
  *
  * In addition to the return values, the ompi_session_dir_init() function stores the

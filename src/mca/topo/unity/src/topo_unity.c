@@ -13,5 +13,5 @@ int mca_topo_unity_init (MPI_Comm comm,
     /* 
      * Nothing to init on the communicator
      */
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }

@@ -2,28 +2,28 @@
  * $HEADER$
  */
 
-#ifndef LAM_THREAD_H
-#define LAM_THREAD_H
+#ifndef OMPI_THREAD_H
+#define OMPI_THREAD_H
 
 #include <pthread.h>
-#include "lfc/lam_object.h"
+#include "class/ompi_object.h"
 
-typedef void* (*lam_thread_fn_t)(lam_object_t*);
+typedef void* (*ompi_thread_fn_t)(ompi_object_t*);
 
 
-struct lam_thread_t
+struct ompi_thread_t
 {
-    lam_object_t super;
-    lam_thread_fn_t t_run;
+    ompi_object_t super;
+    ompi_thread_fn_t t_run;
     pthread_t t_handle;
 };
-typedef struct lam_thread_t lam_thread_t;
+typedef struct ompi_thread_t ompi_thread_t;
 
 
-OBJ_CLASS_DECLARATION(lam_thread_t);
+OBJ_CLASS_DECLARATION(ompi_thread_t);
 
 
-int lam_thread_start(lam_thread_t*);
-int lam_thread_join(lam_thread_t*, void** thread_return);
+int ompi_thread_start(ompi_thread_t*);
+int ompi_thread_join(ompi_thread_t*, void** thread_return);
 
-#endif /* LAM_THREAD_H */
+#endif /* OMPI_THREAD_H */

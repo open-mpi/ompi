@@ -20,14 +20,14 @@
 #include <errno.h>
 #include <dirent.h>
    
-#include <lamdebug.h>
-#include <laminternal.h>
+#include <ompi_debug.h>
+#include <ompi_internal.h>
 #include <terror.h>
 #include <typical.h>
 #include <etc_misc.h>
 */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "include/constants.h"
 
 #include "util/sys_info.h"
@@ -46,13 +46,13 @@ static int ompi_check_dir(bool create, char *directory)
 
     if (0 == stat(directory, &buf)) { /* exists - check access */
         if ((buf.st_mode & my_mode) == my_mode) { /* okay, I can work here */
-            return(LAM_SUCCESS);
+            return(OMPI_SUCCESS);
         }
     }
     if (create) {
 	return(ompi_os_create_dirpath(directory, mode_all)); /* try to create it, but ensure open to all */
     }
-    return(LAM_ERROR);  /* couldn't find it, or don't have access rights, and not asked to create it */
+    return(OMPI_ERROR);  /* couldn't find it, or don't have access rights, and not asked to create it */
 }
 
 char *ompi_find_session_dir(bool create, char *prefix)
@@ -64,7 +64,7 @@ char *ompi_find_session_dir(bool create, char *prefix)
 
     if (NULL != prefix) {
 	tmpprefix = strdup(ompi_os_path(false, prefix, sessions, NULL)); /* make sure it's an absolute pathname */
-	if (LAM_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
+	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(sessions);
 	    return(tmpprefix);
 	}
@@ -73,10 +73,10 @@ char *ompi_find_session_dir(bool create, char *prefix)
 	}
     }
  
-    if (NULL != getenv("LAM_PREFIX_ENV")) {
-	tmp = strdup(getenv("LAM_PREFIX_ENV"));
+    if (NULL != getenv("OMPI_PREFIX_ENV")) {
+	tmp = strdup(getenv("OMPI_PREFIX_ENV"));
 	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-	if (LAM_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
+	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(tmp);
 	    free(sessions);
 	    return(tmpprefix);
@@ -92,7 +92,7 @@ char *ompi_find_session_dir(bool create, char *prefix)
     if (NULL != getenv("TMPDIR")) {
 	tmp = strdup(getenv("TMPDIR"));
 	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-	if (LAM_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
+	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(tmp);
 	    free(sessions);
 	    return(tmpprefix);
@@ -108,7 +108,7 @@ char *ompi_find_session_dir(bool create, char *prefix)
     if (NULL != getenv("TMP")) {
 	tmp = strdup(getenv("TMP"));
 	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-	if (LAM_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
+	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(tmp);
 	    free(sessions);
 	    return(tmpprefix);
@@ -124,7 +124,7 @@ char *ompi_find_session_dir(bool create, char *prefix)
     if (NULL != getenv("HOME")) {
 	tmp = strdup(getenv("HOME"));
 	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-	if (LAM_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
+	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	    free(tmp);
 	    free(sessions);
 	    return(tmpprefix);
@@ -139,7 +139,7 @@ char *ompi_find_session_dir(bool create, char *prefix)
 
     tmp = strdup(OMPI_DEFAULT_TMPDIR);
     tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-    if (LAM_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
+    if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
 	free(tmp);
 	free(sessions);
 	return(tmpprefix);
@@ -172,20 +172,20 @@ int ompi_session_dir_init(char *prefix, char *universe)
 
     /* check if universe is specified - if not, error out */
     if (NULL == universe) {
-	return(LAM_ERROR);
+	return(OMPI_ERROR);
     }
 
     /* locate the ompi-sessions directory - create it if it doesn't exist */
     if (NULL == (tmpprefix = ompi_find_session_dir(true, prefix))) { /* couldn't find nor create the sessions directory */
-	return (LAM_ERROR);
+	return (OMPI_ERROR);
     }
 
     /* set up the name of the user's session directory, which is prefix/<uid>, and try to create it */
     name = ompi_os_path(false, tmpprefix, ompi_system_info.user, universe, NULL);
-    if (LAM_ERROR == ompi_os_create_dirpath(name, S_IRWXU)) { /* couldn't create the user directory */
+    if (OMPI_ERROR == ompi_os_create_dirpath(name, S_IRWXU)) { /* couldn't create the user directory */
 	free(tmpprefix);
 	free(name);
-	return(LAM_ERROR);
+	return(OMPI_ERROR);
     }
 
     /* store the sessions directory information */
@@ -216,5 +216,5 @@ int ompi_session_dir_init(char *prefix, char *universe)
 	free(name);
     }
 
-    return(LAM_SUCCESS);
+    return(OMPI_SUCCESS);
 }

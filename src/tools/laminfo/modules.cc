@@ -2,7 +2,7 @@
 // $HEADER$
 //
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <iostream>
 #include <string>
@@ -23,17 +23,17 @@
 #include "mca/ptl/base/base.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
-#include "tools/laminfo/laminfo.h"
+#include "tools/ompi_info/ompi_info.h"
 
 using namespace std;
-using namespace laminfo;
+using namespace ompi_info;
 
 
 //
 // Public variables
 //
 
-laminfo::module_map_t laminfo::module_map;
+ompi_info::module_map_t ompi_info::module_map;
 
 
 //
@@ -47,12 +47,12 @@ static bool opened_modules = false;
 // Open all MCA modules so that they can register their MCA
 // parameters.  Take a shotgun approach here and indiscriminately open
 // all modules -- don't be selective.  To this end, we need to clear
-// out the environment of all LAM_MPI_mca_<type> variables to ensure
+// out the environment of all OMPI_MPI_mca_<type> variables to ensure
 // that the open algorithms don't try to only open one module.
 //
-void laminfo::open_modules()
+void ompi_info::open_modules()
 {
-  laminfo::type_vector_t::size_type i;
+  ompi_info::type_vector_t::size_type i;
   string env;
   char *target;
 
@@ -64,7 +64,7 @@ void laminfo::open_modules()
   // not by value.
 
   for (i = 0; i < mca_types.size(); ++i) {
-    env = "LAM_MPI_MCA_" + mca_types[i];
+    env = "OMPI_MPI_MCA_" + mca_types[i];
     if (NULL != getenv(env.c_str())) {
       env += "=";
       target = strdup(env.c_str());
@@ -130,7 +130,7 @@ void laminfo::open_modules()
 }
 
 
-void laminfo::close_modules()
+void ompi_info::close_modules()
 {
   if (opened_modules) {
     mca_pcm_base_close();

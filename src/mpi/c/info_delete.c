@@ -2,22 +2,22 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "info/info.h"
 #include <stdlib.h>
 #include <string.h>
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Info_delete = PMPI_Info_delete
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -40,21 +40,21 @@ int MPI_Info_delete(MPI_Info info, char *key) {
      */
     if (MPI_PARAM_CHECK) {
         if (NULL == info || NULL == key){
-            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                          "MPI_Info_delete");
         }
     }
 
     key_length = (key) ? strlen (key) : 0;
     if ( (0 == key_length) || (MPI_MAX_INFO_KEY <= key_length)) {
-        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
                                      "MPI_Info_delete");
     }
 
-    err = lam_info_delete (info, key);
+    err = ompi_info_delete (info, key);
 
     if (MPI_ERR_INFO_NOKEY == err) {
-        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_NOKEY,
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_NOKEY,
                                      "MPI_Info_delete");
     }
     return err;

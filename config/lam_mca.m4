@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([LAM_MCA],[
+AC_DEFUN([OMPI_MCA],[
 
 # Find which modules should be built as run-time loadable modules
 # Acceptable combinations:
@@ -17,7 +17,7 @@ AC_DEFUN([LAM_MCA],[
 AC_MSG_CHECKING([which modules should be run-time loadable])
 AC_ARG_WITH(modules,
     AC_HELP_STRING([--with-modules=LIST],
-		   [comma-separated list of types and/or type-module pairs of modules that will be built as run-time loadable modules (as opposed to statically linked in LAM/MPI (if supported on this platform).  This directly implies "--enable-shared=LIST and --disable-static=LIST".]))
+		   [comma-separated list of types and/or type-module pairs of modules that will be built as run-time loadable modules (as opposed to statically linked in OMPI/MPI (if supported on this platform).  This directly implies "--enable-shared=LIST and --disable-static=LIST".]))
 
 if test "$with_modules" = "" -o "$with_modules" = "no"; then
     LOADABLE_MODULE_all=0
@@ -97,14 +97,14 @@ for type in $found_types; do
 	$outfile.all $outfile.static $outfile.dynamic
 
     # Manual conversion of $type to its generic name (e.g., crmpi->cr,
-    # crlam->cr).
+    # crompi->cr).
     # JMS Fix this
 
     case "$type" in
     crmpi)
 	generic_type="cr"
 	;;
-    crlam)
+    crompi)
 	generic_type="cr"
 	;;
     *)
@@ -120,8 +120,8 @@ for type in $found_types; do
     for module in $found_modules; do
         m=`basename "$module"`
 
-        if test -d $srcdir/$module -a ! -f $srcdir/$module/.lam_ignore; then
-            lam_show_subtitle "MCA module $type:$m (no configure script)"
+        if test -d $srcdir/$module -a ! -f $srcdir/$module/.ompi_ignore; then
+            ompi_show_subtitle "MCA module $type:$m (no configure script)"
 
 	    # Remove any possible sym link in the mca-dynamic tree
             
@@ -157,8 +157,8 @@ for type in $found_types; do
 	HAPPY=0
 	m="`basename $module`"
 	if test -d $module -a -x $module/configure -a \
-	    ! -f $module/.lam_ignore; then
-            lam_show_subtitle "MCA module $type:$m (need to configure)"
+	    ! -f $module/.ompi_ignore; then
+            ompi_show_subtitle "MCA module $type:$m (need to configure)"
 
 	    # We found one!
 
@@ -170,8 +170,8 @@ for type in $found_types; do
 
             # Configure the module subdirectory
 
-            LAM_CONFIG_SUBDIR([src/mca/$type/$m],
-				  [$lam_subdir_args], 
+            OMPI_CONFIG_SUBDIR([src/mca/$type/$m],
+				  [$ompi_subdir_args], 
 				  [HAPPY=1], [HAPPY=0])
 	fi
 
@@ -226,9 +226,9 @@ unset foo type m modules structs outfile outdir total_dir file \
 
 # Grumble.  It seems that AC_SUBST and AC_DEFINE don't let you
 # substitue on a variable name that contains a variable (e.g.,
-# LAM_MCA_$type_SUBDIRS).  So we have to do this manually.  :-(
+# OMPI_MCA_$type_SUBDIRS).  So we have to do this manually.  :-(
 
-# LAM types
+# OMPI types
 
 AC_SUBST(MCA_oob_ALL_SUBDIRS)
 AC_SUBST(MCA_oob_STATIC_SUBDIRS)
@@ -329,7 +329,7 @@ if test "$HAPPY" = "1"; then
 	compile_mode="dynamic"
 	echo $m >> $outfile.dynamic
 	ls -l "src/mca/dynamic/$type/$m"
-	$LN_S "$LAM_TOP_BUILDDIR/src/mca/$type/$m" \
+	$LN_S "$OMPI_TOP_BUILDDIR/src/mca/$type/$m" \
 	    "src/mca/dynamic/$type/$m"
 	ls -l "src/mca/dynamic/$type/$m"
     else
@@ -362,7 +362,7 @@ if test "$HAPPY" = "1"; then
 
 	# Now check for the rest of the tags
 
-	for scope in LIBLAM LIBMPI WRAPPER; do
+	for scope in LIBOMPI LIBMPI WRAPPER; do
 	    for flags in CFLAGS CXXFLAGS FFLAGS LDFLAGS LIBS; do
 		var="${scope}_EXTRA_${flags}"
 		line="`grep $var= $infile | cut -d= -f2-`"

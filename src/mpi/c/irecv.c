@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
 #include "runtime/runtime.h"
@@ -10,11 +10,11 @@
 #include "mca/pml/pml.h"
 
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Irecv = PMPI_Irecv
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -28,7 +28,7 @@ int MPI_Irecv(void *buf, int count, MPI_Datatype type, int source,
 
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
-        if ( LAM_MPI_INVALID_STATE ) {
+        if ( OMPI_MPI_INVALID_STATE ) {
             rc = MPI_ERR_INTERN;
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
@@ -36,17 +36,17 @@ int MPI_Irecv(void *buf, int count, MPI_Datatype type, int source,
             rc = MPI_ERR_TYPE;
         } else if (tag < 0 || tag > MPI_TAG_UB_VALUE) {
             rc = MPI_ERR_TAG;
-        } else if (lam_comm_invalid(comm)) {
+        } else if (ompi_comm_invalid(comm)) {
             rc = MPI_ERR_COMM;
         } else if (source != MPI_ANY_SOURCE && 
                    source != MPI_PROC_NULL &&  
-                   lam_comm_peer_invalid(comm, source)) {
+                   ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
         }
-        LAM_ERRHANDLER_CHECK(rc, comm, rc, "MPI_Irecv");
+        OMPI_ERRHANDLER_CHECK(rc, comm, rc, "MPI_Irecv");
     }
 
     rc = mca_pml.pml_irecv(buf,count,type,source,tag,comm,request);
-    LAM_ERRHANDLER_RETURN(rc, comm, rc, "MPI_Irecv");
+    OMPI_ERRHANDLER_RETURN(rc, comm, rc, "MPI_Irecv");
 }
 

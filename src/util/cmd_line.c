@@ -4,13 +4,13 @@
 
 /** @file **/
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 #include <string.h>
 
-#include "lfc/lam_object.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_object.h"
+#include "class/ompi_list.h"
 #include "threads/mutex.h"
 #include "util/argv.h"
 #include "util/cmd_line.h"
@@ -22,7 +22,7 @@
  * Description of a command line option
  */
 struct cmd_line_option_t {
-  lam_list_item_t super;
+  ompi_list_item_t super;
 
   char clo_short_name;
   char *clo_long_name;
@@ -35,7 +35,7 @@ typedef struct cmd_line_option_t cmd_line_option_t;
  * An option that was used in the argv that was parsed
  */
 struct cmd_line_param_t {
-  lam_list_item_t super;
+  ompi_list_item_t super;
 
   /* Note that clp_arg points to storage "owned" by someone else; it
      has the original option string by referene, not by value.  Hence,
@@ -68,35 +68,35 @@ static char special_empty_token[] = {
 /*
  * Private functions
  */
-static void free_parse_results(lam_cmd_line_t *cmd);
-static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown);
-static cmd_line_option_t *find_option(lam_cmd_line_t *cmd, 
+static void free_parse_results(ompi_cmd_line_t *cmd);
+static int split_shorts(ompi_cmd_line_t *cmd, bool ignore_unknown);
+static cmd_line_option_t *find_option(ompi_cmd_line_t *cmd, 
                                       const char *option_name);
 
 
 /**
- * Create a LAM command line handle.
+ * Create a OMPI command line handle.
  *
  * @retval NULL Upon failure.
  * @retval cmd A pointer to an empty command line handle upon success.
  *
  * This is the first function invoked to start command line parsing.
  * It creates an independant handle that is used in all other
- * lam_cmd_line*() functions.  Multiple handles can be created and
+ * ompi_cmd_line*() functions.  Multiple handles can be created and
  * simultaneously processed; each handle is independant from others.
  *
- * The lam_cmd_line_t handles are [simplisticly] thread safe;
+ * The ompi_cmd_line_t handles are [simplisticly] thread safe;
  * processing is guaranteed to be mutually exclusive if multiple
  * threads invoke functions on the same handle at the same time --
  * access will be serialized in an unspecified order.
  *
- * It is necessary to call lam_cmd_line_free() with the handle
+ * It is necessary to call ompi_cmd_line_free() with the handle
  * returned from this function in order to free all memory associated
  * with it.
  */
-lam_cmd_line_t *lam_cmd_line_create(void)
+ompi_cmd_line_t *ompi_cmd_line_create(void)
 {
-  lam_cmd_line_t *cmd = malloc(sizeof(lam_cmd_line_t));
+  ompi_cmd_line_t *cmd = malloc(sizeof(ompi_cmd_line_t));
 
   if (NULL == cmd)
     return NULL;
@@ -105,12 +105,12 @@ lam_cmd_line_t *lam_cmd_line_create(void)
      only thread that has this instance), there's no need to lock it
      right now. */
 
-  OBJ_CONSTRUCT(&cmd->lcl_mutex, lam_mutex_t);
+  OBJ_CONSTRUCT(&cmd->lcl_mutex, ompi_mutex_t);
 
   /* Initialize the lists */
 
-  OBJ_CONSTRUCT(&cmd->lcl_options, lam_list_t);
-  OBJ_CONSTRUCT(&cmd->lcl_params, lam_list_t);
+  OBJ_CONSTRUCT(&cmd->lcl_options, ompi_list_t);
+  OBJ_CONSTRUCT(&cmd->lcl_params, ompi_list_t);
 
   /* Initialize the argc/argv pairs */
 
@@ -126,41 +126,41 @@ lam_cmd_line_t *lam_cmd_line_create(void)
 
 
 /**
- * Free a (lam_cmd_line_t*) that was initially allocated via
- * lam_cmd_line_create().
+ * Free a (ompi_cmd_line_t*) that was initially allocated via
+ * ompi_cmd_line_create().
  *
- * @param cmd The LAM command line handle to free.
+ * @param cmd The OMPI command line handle to free.
  *
- * This function frees a LAM command line handle and all its
+ * This function frees a OMPI command line handle and all its
  * associated memory.  This function can be called with any non-NULL
- * pointer that was returned from lam_cmd_line_create().  Once called,
+ * pointer that was returned from ompi_cmd_line_create().  Once called,
  * the handle is no longer valid.
  *
  * Access into this function is not thread safe.  Since, by
  * definition, calling this function will destroy the handle, it does
  * not make sense to try to have thread A invoke a different
- * lam_cmd_line*() function and thread B invoke lam_cmd_line_free() --
+ * ompi_cmd_line*() function and thread B invoke ompi_cmd_line_free() --
  * even if the calls are serialized, there's a race condition where
  * thread A may try to use a now-invalid handle.
  */
-void lam_cmd_line_free(lam_cmd_line_t *cmd)
+void ompi_cmd_line_free(ompi_cmd_line_t *cmd)
 {
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
   cmd_line_option_t *option;
 
 #if 0
   /* JMS This function doesn't seem to exist...? */
   /* We don't lock the mutex; there's no point.  Just free it. */
 
-  lam_mutex_free(&cmd->lcl_mutex);
+  ompi_mutex_free(&cmd->lcl_mutex);
 #endif
 
   /* Free the contents of the options list (do not free the list
      itself; it was not allocated from the heap) */
 
-  for (item = lam_list_remove_first(&cmd->lcl_options);
+  for (item = ompi_list_remove_first(&cmd->lcl_options);
        NULL != item;
-       item = lam_list_remove_first(&cmd->lcl_options)) {
+       item = ompi_list_remove_first(&cmd->lcl_options)) {
     option = (cmd_line_option_t *) item;
     if (NULL != option->clo_long_name)
       free(option->clo_long_name);
@@ -182,17 +182,17 @@ void lam_cmd_line_free(lam_cmd_line_t *cmd)
 /**
  * Create a command line option.
  *
- * @param cmd LAM command line handle.
+ * @param cmd OMPI command line handle.
  * @param short_name "Short" name of the command line option.
  * @param long_name "Long" name of the command line option.
  * @param num_params How many parameters this option takes.
  * @param dest Short string description of this option.
  *
- * @retval LAM_ERR_OUT_OF_RESOURCE If out of memory.
- * @retval LAM_ERR_BAD_PARAM If bad parameters passed.
- * @retval LAM_SUCCESS Upon success.
+ * @retval OMPI_ERR_OUT_OF_RESOURCE If out of memory.
+ * @retval OMPI_ERR_BAD_PARAM If bad parameters passed.
+ * @retval OMPI_SUCCESS Upon success.
  *
- * Adds a command line option to the list of options that a a LAM
+ * Adds a command line option to the list of options that a a OMPI
  * command line handle will accept.  The short_name may take the
  * special value '\0' to not have a short name.  Likewise, the
  * long_name may take the special value NULL to not have a long name.
@@ -202,9 +202,9 @@ void lam_cmd_line_free(lam_cmd_line_t *cmd)
  * must be greater than or equal to 0.
  *
  * Finally, desc is a short string description of this option.  It is
- * used to generate the output from lam_cmd_line_get_usage_msg().
+ * used to generate the output from ompi_cmd_line_get_usage_msg().
  */
-int lam_cmd_line_make_opt(lam_cmd_line_t *cmd, char short_name, 
+int ompi_cmd_line_make_opt(ompi_cmd_line_t *cmd, char short_name, 
                           const char *long_name, int num_params, 
                           const char *desc)
 {
@@ -213,18 +213,18 @@ int lam_cmd_line_make_opt(lam_cmd_line_t *cmd, char short_name,
   /* Bozo check */
 
   if ('\0' == short_name && NULL == long_name)
-    return LAM_ERR_BAD_PARAM;
+    return OMPI_ERR_BAD_PARAM;
   if (NULL == cmd)
-    return LAM_ERR_BAD_PARAM;
+    return OMPI_ERR_BAD_PARAM;
   if (num_params < 0)
-    return LAM_ERR_BAD_PARAM;
+    return OMPI_ERR_BAD_PARAM;
 
   /* Allocate and fill an option item */
 
   option = malloc(sizeof(cmd_line_option_t));
   if (NULL == option)
-    return LAM_ERR_OUT_OF_RESOURCE;
-  OBJ_CONSTRUCT((lam_list_item_t *) option, lam_list_item_t);
+    return OMPI_ERR_OUT_OF_RESOURCE;
+  OBJ_CONSTRUCT((ompi_list_item_t *) option, ompi_list_item_t);
 
   option->clo_short_name = short_name;
   if (NULL != long_name) {
@@ -240,30 +240,30 @@ int lam_cmd_line_make_opt(lam_cmd_line_t *cmd, char short_name,
 
   /* Append the item, serializing thread access */
 
-  lam_mutex_lock(&cmd->lcl_mutex);
-  lam_list_append(&cmd->lcl_options, (lam_list_item_t*) option);
-  lam_mutex_unlock(&cmd->lcl_mutex);
+  ompi_mutex_lock(&cmd->lcl_mutex);
+  ompi_list_append(&cmd->lcl_options, (ompi_list_item_t*) option);
+  ompi_mutex_unlock(&cmd->lcl_mutex);
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
 /**
- * Parse a command line according to a pre-built LAM command line
+ * Parse a command line according to a pre-built OMPI command line
  * handle.
  *
- * @param cmd LAM command line handle.
+ * @param cmd OMPI command line handle.
  * @param ignore_unknown Whether to ignore unknown tokens in the
  * middle of the command line or not.
  * @param argc Length of the argv array.
  * @param argv Array of strings from the command line.
  *
- * @retval LAM_SUCCESS Upon success.
+ * @retval OMPI_SUCCESS Upon success.
  *
  * Parse a series of command line tokens according to the option
- * descriptions from a LAM command line handle.  The LAM command line
+ * descriptions from a OMPI command line handle.  The OMPI command line
  * handle can then be queried to see what options were used, what
  * their parameters were, etc.
  *
@@ -288,16 +288,16 @@ int lam_cmd_line_make_opt(lam_cmd_line_t *cmd, char short_name,
  * an unrecognized option.
  *
  * Unprocessed tokens are known as the "tail."  Any unprocessed tokens
- * can be obtained from the lam_cmd_line_get_tail() function.
+ * can be obtained from the ompi_cmd_line_get_tail() function.
  *
  * Invoking this function multiple times on different sets of argv
  * tokens is safe, but will erase any previous parsing results.
  */
-int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
+int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                        int argc, char **argv)
 {
   int i, j, orig, ret;
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
   cmd_line_option_t *option;
   cmd_line_param_t *param;
   bool is_unknown;
@@ -305,7 +305,7 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
 
   /* Thread serialization */
 
-  lam_mutex_lock(&cmd->lcl_mutex);
+  ompi_mutex_lock(&cmd->lcl_mutex);
 
   /* Free any parsed results that are already on this handle */
 
@@ -314,12 +314,12 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
   /* Analyze each token */
 
   cmd->lcl_argc = argc;
-  cmd->lcl_argv = lam_argv_copy(argv);
+  cmd->lcl_argv = ompi_argv_copy(argv);
 
   /* Split groups of multiple short names into individual tokens */
 
-  if (LAM_SUCCESS != (ret = split_shorts(cmd, ignore_unknown))) {
-    lam_mutex_unlock(&cmd->lcl_mutex);
+  if (OMPI_SUCCESS != (ret = split_shorts(cmd, ignore_unknown))) {
+    ompi_mutex_unlock(&cmd->lcl_mutex);
     return ret;
   }
 
@@ -340,7 +340,7 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
     if (0 == strcmp(cmd->lcl_argv[i], "--")) {
       ++i;
       while (i < cmd->lcl_argc) {
-        lam_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
+        ompi_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
                         cmd->lcl_argv[i]);
         ++i;
       }
@@ -388,11 +388,11 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
 
         param = malloc(sizeof(cmd_line_param_t));
         if (NULL == param) {
-          lam_mutex_unlock(&cmd->lcl_mutex);
-          return LAM_ERR_OUT_OF_RESOURCE;
+          ompi_mutex_unlock(&cmd->lcl_mutex);
+          return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        item = (lam_list_item_t *) param;
-        OBJ_CONSTRUCT(item, lam_list_item_t);
+        item = (ompi_list_item_t *) param;
+        OBJ_CONSTRUCT(item, ompi_list_item_t);
         param->clp_arg = cmd->lcl_argv[i];
         param->clp_option = option;
         param->clp_argc = 0;
@@ -406,21 +406,21 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
           /* If we run out of parameters, error */
 
           if (i >= cmd->lcl_argc) {
-            lam_output(0, "Error: option \"%s\" did not have enough "
+            ompi_output(0, "Error: option \"%s\" did not have enough "
                        "parameters (%d)",
                        cmd->lcl_argv[orig], option->clo_num_params);
             if (NULL != param->clp_argv)
-              lam_argv_free(param->clp_argv);
+              ompi_argv_free(param->clp_argv);
             free(param);
             i = cmd->lcl_argc;
             break;
           } else {
             if (0 == strcmp(cmd->lcl_argv[i], special_empty_token)) {
-              lam_output(0, "Error: option \"%s\" did not have enough "
+              ompi_output(0, "Error: option \"%s\" did not have enough "
                          "parameters (%d)",
                          cmd->lcl_argv[orig], option->clo_num_params);
               if (NULL != param->clp_argv)
-                lam_argv_free(param->clp_argv);
+                ompi_argv_free(param->clp_argv);
               free(param);
               i = cmd->lcl_argc;
               break;
@@ -430,16 +430,16 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
                entry */
 
             else {
-              lam_argv_append(&param->clp_argc, &param->clp_argv, 
+              ompi_argv_append(&param->clp_argc, &param->clp_argv, 
                               cmd->lcl_argv[i]);
             }
           }
         }
 
         /* If we succeeded in all that, save the param to the list on
-           the lam_cmd_line_t handle */
+           the ompi_cmd_line_t handle */
 
-        lam_list_append(&cmd->lcl_params, item);
+        ompi_list_append(&cmd->lcl_params, item);
       }
     }
 
@@ -449,10 +449,10 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
 
     if (is_unknown) {
       if (!ignore_unknown) {
-        lam_output(0, "Error: unknown option \"%s\"", cmd->lcl_argv[i]);
+        ompi_output(0, "Error: unknown option \"%s\"", cmd->lcl_argv[i]);
       }
       while (i < cmd->lcl_argc) {
-        lam_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
+        ompi_argv_append(&cmd->lcl_tail_argc, &cmd->lcl_tail_argv, 
                         cmd->lcl_argv[i]);
         ++i;
       }
@@ -461,47 +461,47 @@ int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
 
   /* Thread serialization */
 
-  lam_mutex_unlock(&cmd->lcl_mutex);
+  ompi_mutex_unlock(&cmd->lcl_mutex);
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
 /**
- * Return a consolidated "usage" message for a LAM command line handle.
+ * Return a consolidated "usage" message for a OMPI command line handle.
  *
- * @param cmd LAM command line handle.
+ * @param cmd OMPI command line handle.
  *
  * @retval str Usage message.
  *
  * Returns a formatted string suitable for printing that lists the
  * expected usage message and a short description of each option on
- * the LAM command line handle.  Options that passed a NULL
- * description to lam_cmd_line_make_opt() will not be included in the
+ * the OMPI command line handle.  Options that passed a NULL
+ * description to ompi_cmd_line_make_opt() will not be included in the
  * display (to allow for undocumented options).
  *
  * This function is typically only invoked internally by the
- * lam_show_help() function.
+ * ompi_show_help() function.
  *
  * This function should probably be fixed up to produce prettier
  * output.
  *
  * The returned string must be freed by the caller.
  */
-char *lam_cmd_line_get_usage_msg(lam_cmd_line_t *cmd)
+char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
 {
   int i, len, prev_len;
   int argc;
   char **argv;
   char *ret, *line, *temp;
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
   cmd_line_option_t *option;
 
   /* Thread serialization */
 
-  lam_mutex_lock(&cmd->lcl_mutex);
+  ompi_mutex_lock(&cmd->lcl_mutex);
 
   /* Make an argv of all the usage strings */
 
@@ -510,9 +510,9 @@ char *lam_cmd_line_get_usage_msg(lam_cmd_line_t *cmd)
   argv = NULL;
   ret = NULL;
   line = NULL;
-  for (item = lam_list_get_first(&cmd->lcl_options); 
-       lam_list_get_end(&cmd->lcl_options) != item;
-       item = lam_list_get_next(item)) {
+  for (item = ompi_list_get_first(&cmd->lcl_options); 
+       ompi_list_get_end(&cmd->lcl_options) != item;
+       item = ompi_list_get_next(item)) {
     option = (cmd_line_option_t *) item;
     if (NULL != option->clo_description) {
 
@@ -533,7 +533,7 @@ char *lam_cmd_line_get_usage_msg(lam_cmd_line_t *cmd)
         }
         line = malloc(len * 2);
         if (NULL == line) {
-          lam_mutex_unlock(&cmd->lcl_mutex);
+          ompi_mutex_unlock(&cmd->lcl_mutex);
           return NULL;
         }
         temp = line + len;
@@ -566,20 +566,20 @@ char *lam_cmd_line_get_usage_msg(lam_cmd_line_t *cmd)
 
       /* Save the line */
 
-      lam_argv_append(&argc, &argv, line);
+      ompi_argv_append(&argc, &argv, line);
     }
   }
   if (line != NULL) {
     free(line);
   }
   if (argv != NULL) {
-    ret = lam_argv_join(argv, '\n');
-    lam_argv_free(argv);
+    ret = ompi_argv_join(argv, '\n');
+    ompi_argv_free(argv);
   }
 
   /* Thread serialization */
 
-  lam_mutex_unlock(&cmd->lcl_mutex);
+  ompi_mutex_unlock(&cmd->lcl_mutex);
 
   /* All done */
  
@@ -590,58 +590,58 @@ char *lam_cmd_line_get_usage_msg(lam_cmd_line_t *cmd)
 /**
  * Test if a given option was taken on the parsed command line.
  *
- * @param cmd LAM command line handle.
+ * @param cmd OMPI command line handle.
  * @param opt Short or long name of the option to check for.
  *
  * @retval true If the command line option was found during
- * lam_cmd_line_parse().
+ * ompi_cmd_line_parse().
  *
  * @retval false If the command line option was not found during
- * lam_cmd_line_parse(), or lam_cmd_line_parse() was not invoked on
+ * ompi_cmd_line_parse(), or ompi_cmd_line_parse() was not invoked on
  * this handle.
  *
- * This function should only be called after lam_cmd_line_parse().  
+ * This function should only be called after ompi_cmd_line_parse().  
  *
  * The function will return true if the option matching opt was found
  * (either by its short or long name) during token parsing.
  * Otherwise, it will return false.
  */
-bool lam_cmd_line_is_taken(lam_cmd_line_t *cmd, const char *opt)
+bool ompi_cmd_line_is_taken(ompi_cmd_line_t *cmd, const char *opt)
 {
-  return (lam_cmd_line_get_ninsts(cmd, opt) > 0);
+  return (ompi_cmd_line_get_ninsts(cmd, opt) > 0);
 }
 
 
 /**
  * Return the number of instances of an option found during parsing.
  *
- * @param cmd LAM command line handle.
+ * @param cmd OMPI command line handle.
  * @param opt Short or long name of the option to check for.
  *
  * @retval num Number of instances (to include 0) of a given potion
- * found during lam_cmd_line_parse().
+ * found during ompi_cmd_line_parse().
  *
- * @retval LAM_ERR If the command line option was not found during
- * lam_cmd_line_parse(), or lam_cmd_line_parse() was not invoked on
+ * @retval OMPI_ERR If the command line option was not found during
+ * ompi_cmd_line_parse(), or ompi_cmd_line_parse() was not invoked on
  * this handle.
  *
- * This function should only be called after lam_cmd_line_parse().
+ * This function should only be called after ompi_cmd_line_parse().
  *
  * The function will return the number of instances of a given option
- * (either by its short or long name) -- to include 0 -- or LAM_ERR if
- * either the option was not specified as part of the LAM command line
- * handle, or lam_cmd_line_parse() was not invoked on this handle.
+ * (either by its short or long name) -- to include 0 -- or OMPI_ERR if
+ * either the option was not specified as part of the OMPI command line
+ * handle, or ompi_cmd_line_parse() was not invoked on this handle.
  */
-int lam_cmd_line_get_ninsts(lam_cmd_line_t *cmd, const char *opt)
+int ompi_cmd_line_get_ninsts(ompi_cmd_line_t *cmd, const char *opt)
 {
   int ret;
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
   cmd_line_param_t *param;
   cmd_line_option_t *option;
 
   /* Thread serialization */
 
-  lam_mutex_lock(&cmd->lcl_mutex);
+  ompi_mutex_lock(&cmd->lcl_mutex);
 
   /* Find the corresponding option.  If we find it, look through all
      the parsed params and see if we have any matches. */
@@ -649,9 +649,9 @@ int lam_cmd_line_get_ninsts(lam_cmd_line_t *cmd, const char *opt)
   ret = 0;
   option = find_option(cmd, opt);
   if (NULL != option) {
-    for (item = lam_list_get_first(&cmd->lcl_params); 
-         lam_list_get_end(&cmd->lcl_params) != item;
-         item = lam_list_get_next(item)) {
+    for (item = ompi_list_get_first(&cmd->lcl_params); 
+         ompi_list_get_end(&cmd->lcl_params) != item;
+         item = ompi_list_get_next(item)) {
       param = (cmd_line_param_t *) item;
       if (param->clp_option == option) {
         ++ret;
@@ -661,7 +661,7 @@ int lam_cmd_line_get_ninsts(lam_cmd_line_t *cmd, const char *opt)
 
   /* Thread serialization */
 
-  lam_mutex_unlock(&cmd->lcl_mutex);
+  ompi_mutex_unlock(&cmd->lcl_mutex);
 
   /* All done */
 
@@ -673,7 +673,7 @@ int lam_cmd_line_get_ninsts(lam_cmd_line_t *cmd, const char *opt)
  * Return a specific parameter for a specific instance of a option
  * from the parsed command line.
  *
- * @param cmd LAM command line handle.
+ * @param cmd OMPI command line handle.
  * @param opt Short or long name of the option to check for.
  * @param instance_num Instance number of the option to query.
  * @param param_num Which parameter to return.
@@ -681,7 +681,7 @@ int lam_cmd_line_get_ninsts(lam_cmd_line_t *cmd, const char *opt)
  * @retval param String of the parameter.
  * @retval NULL If any of the input values are invalid.
  *
- * This function should only be called after lam_cmd_line_parse().  
+ * This function should only be called after ompi_cmd_line_parse().  
  *
  * This function returns the Nth parameter for the Ith instance of a
  * given option on the parsed command line (both N and I are
@@ -689,24 +689,24 @@ int lam_cmd_line_get_ninsts(lam_cmd_line_t *cmd, const char *opt)
  *
  * executable --foo bar1 bar2 --foo bar3 bar4
  *
- * The call to lam_cmd_line_get_param(cmd, "foo", 1, 1) would return
- * "bar4".  lam_cmd_line_get_param(cmd, "bar", 0, 0) would return
- * NULL, as would lam_cmd_line_get_param(cmd, "foo", 2, 2);
+ * The call to ompi_cmd_line_get_param(cmd, "foo", 1, 1) would return
+ * "bar4".  ompi_cmd_line_get_param(cmd, "bar", 0, 0) would return
+ * NULL, as would ompi_cmd_line_get_param(cmd, "foo", 2, 2);
  *
  * The returned string should \em not be modified or freed by the
  * caller.
  */
-char *lam_cmd_line_get_param(lam_cmd_line_t *cmd, const char *opt, int inst, 
+char *ompi_cmd_line_get_param(ompi_cmd_line_t *cmd, const char *opt, int inst, 
                              int idx)
 {
   int num_found;
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
   cmd_line_param_t *param;
   cmd_line_option_t *option;
 
   /* Thread serialization */
 
-  lam_mutex_lock(&cmd->lcl_mutex);
+  ompi_mutex_lock(&cmd->lcl_mutex);
 
   /* Find the corresponding option.  If we find it, look through all
      the parsed params and see if we have any matches. */
@@ -719,13 +719,13 @@ char *lam_cmd_line_get_param(lam_cmd_line_t *cmd, const char *opt, int inst,
        parameter index greater than we will have */
 
     if (idx < option->clo_num_params) {
-      for (item = lam_list_get_first(&cmd->lcl_params); 
-           lam_list_get_end(&cmd->lcl_params) != item;
-           item = lam_list_get_next(item)) {
+      for (item = ompi_list_get_first(&cmd->lcl_params); 
+           ompi_list_get_end(&cmd->lcl_params) != item;
+           item = ompi_list_get_next(item)) {
         param = (cmd_line_param_t *) item;
         if (param->clp_option == option) {
           if (num_found == inst) {
-            lam_mutex_unlock(&cmd->lcl_mutex);
+            ompi_mutex_unlock(&cmd->lcl_mutex);
             return param->clp_argv[idx];
           }
           ++num_found;
@@ -736,7 +736,7 @@ char *lam_cmd_line_get_param(lam_cmd_line_t *cmd, const char *opt, int inst,
 
   /* Thread serialization */
 
-  lam_mutex_unlock(&cmd->lcl_mutex);
+  ompi_mutex_unlock(&cmd->lcl_mutex);
 
   /* All done */
 
@@ -748,28 +748,28 @@ char *lam_cmd_line_get_param(lam_cmd_line_t *cmd, const char *opt, int inst,
  * Static functions
  **************************************************************************/
 
-static void free_parse_results(lam_cmd_line_t *cmd)
+static void free_parse_results(ompi_cmd_line_t *cmd)
 {
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
 
   /* Free the contents of the params list (do not free the list
      itself; it was not allocated from the heap) */
 
-  for (item = lam_list_remove_first(&cmd->lcl_params);
+  for (item = ompi_list_remove_first(&cmd->lcl_params);
        NULL != item; 
-       item = lam_list_remove_first(&cmd->lcl_params)) {
+       item = ompi_list_remove_first(&cmd->lcl_params)) {
     free(item);
   }
 
   /* Free the argv's */
 
   if (NULL != cmd->lcl_argv)
-    lam_argv_free(cmd->lcl_argv);
+    ompi_argv_free(cmd->lcl_argv);
   cmd->lcl_argv = NULL;
   cmd->lcl_argc = 0;
 
   if (NULL != cmd->lcl_tail_argv)
-    lam_argv_free(cmd->lcl_tail_argv);
+    ompi_argv_free(cmd->lcl_tail_argv);
   cmd->lcl_tail_argv = NULL;
   cmd->lcl_tail_argc = 0;
 }
@@ -779,7 +779,7 @@ static void free_parse_results(lam_cmd_line_t *cmd)
  * Look for collections of short names and split them into individual
  * short options
  */
-static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
+static int split_shorts(ompi_cmd_line_t *cmd, bool ignore_unknown)
 {
   int i, j, k, len;
   int argc;
@@ -797,7 +797,7 @@ static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
   argv = NULL;
   changed = false;
   if (cmd->lcl_argc > 0) {
-    lam_argv_append(&argc, &argv, cmd->lcl_argv[0]);
+    ompi_argv_append(&argc, &argv, cmd->lcl_argv[0]);
   }
   for (i = 1; i < cmd->lcl_argc; ) {
     token = cmd->lcl_argv[i];
@@ -808,7 +808,7 @@ static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
 
     if (0 == strcmp(token, "--")) {
       while (i < cmd->lcl_argc) {
-        lam_argv_append(&argc, &argv, cmd->lcl_argv[i]);
+        ompi_argv_append(&argc, &argv, cmd->lcl_argv[i]);
         ++i;
       }
     }
@@ -824,10 +824,10 @@ static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
 
       if (NULL == option) {
         if (!ignore_unknown) {
-          lam_output(0, "Unrecognized option: '%s'", token);
-          return LAM_ERR_BAD_PARAM;
+          ompi_output(0, "Unrecognized option: '%s'", token);
+          return OMPI_ERR_BAD_PARAM;
         } else {
-          lam_argv_append(&argc, &argv, new_token);
+          ompi_argv_append(&argc, &argv, new_token);
         }
       } 
 
@@ -837,13 +837,13 @@ static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
          at a higher level) */
 
       else {
-        lam_argv_append(&argc, &argv, token);
+        ompi_argv_append(&argc, &argv, token);
         ++i;
         for (k = 0; k < option->clo_num_params; ++k, ++i) {
           if (i < cmd->lcl_argc) {
-            lam_argv_append(&argc, &argv, cmd->lcl_argv[i]);
+            ompi_argv_append(&argc, &argv, cmd->lcl_argv[i]);
           } else {
-            lam_argv_append(&argc, &argv, special_empty_token);
+            ompi_argv_append(&argc, &argv, special_empty_token);
           }
         }
       }
@@ -866,10 +866,10 @@ static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
 
         if (NULL == option) {
           if (!ignore_unknown) {
-            lam_output(0, "Unrecognized option: '-%c'", token[j]);
-            return LAM_ERR_BAD_PARAM;
+            ompi_output(0, "Unrecognized option: '-%c'", token[j]);
+            return OMPI_ERR_BAD_PARAM;
           } else {
-            lam_argv_append(&argc, &argv, new_token);
+            ompi_argv_append(&argc, &argv, new_token);
           }
         } 
 
@@ -879,13 +879,13 @@ static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
            handled at a higher level) */
 
         else {
-          lam_argv_append(&argc, &argv, new_token);
+          ompi_argv_append(&argc, &argv, new_token);
           for (k = 0; k < option->clo_num_params; ++k) {
             if (i < cmd->lcl_argc) {
-              lam_argv_append(&argc, &argv, cmd->lcl_argv[i]);
+              ompi_argv_append(&argc, &argv, cmd->lcl_argv[i]);
               ++i;
             } else {
-              lam_argv_append(&argc, &argv, special_empty_token);
+              ompi_argv_append(&argc, &argv, special_empty_token);
             }
           }
         }
@@ -896,10 +896,10 @@ static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
 
     else {
       if (!ignore_unknown) {
-        lam_output(0, "Unrecognized option: '%s'", token);
-        return LAM_ERR_BAD_PARAM;
+        ompi_output(0, "Unrecognized option: '%s'", token);
+        return OMPI_ERR_BAD_PARAM;
       } else {
-        lam_argv_append(&argc, &argv, token);
+        ompi_argv_append(&argc, &argv, token);
       }
     }
   }
@@ -907,34 +907,34 @@ static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
   /* If we changed anything, then replace the argc/argv on cmd */
 
   if (changed) {
-    lam_argv_free(cmd->lcl_argv);
+    ompi_argv_free(cmd->lcl_argv);
     cmd->lcl_argc = argc;
     cmd->lcl_argv = argv;
   } else {
     if (NULL != argv) {
-      lam_argv_free(argv);
+      ompi_argv_free(argv);
     }
   }
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
-static cmd_line_option_t *find_option(lam_cmd_line_t *cmd, 
+static cmd_line_option_t *find_option(ompi_cmd_line_t *cmd, 
                                       const char *option_name)
 {
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
   cmd_line_option_t *option;
 
   /* Iterate through the list of options hanging off the
-     lam_cmd_line_t and see if we find a match in either the short or
+     ompi_cmd_line_t and see if we find a match in either the short or
      long names */
 
-  for (item = lam_list_get_first(&cmd->lcl_options);
-       lam_list_get_end(&cmd->lcl_options) != item;
-       item = lam_list_get_next(item)) {
+  for (item = ompi_list_get_first(&cmd->lcl_options);
+       ompi_list_get_end(&cmd->lcl_options) != item;
+       item = ompi_list_get_next(item)) {
     option = (cmd_line_option_t *) item;
     if ((NULL != option->clo_long_name &&
          0 == strcmp(option_name, option->clo_long_name)) ||

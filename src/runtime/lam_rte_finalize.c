@@ -4,7 +4,7 @@
 
 /** @file **/
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
@@ -16,14 +16,14 @@
 
 
 /**
- * Leave a LAM RTE.
+ * Leave a OMPI RTE.
  *
- * @retval LAM_SUCCESS Upon success.
- * @retval LAM_ERROR Upon failure.
+ * @retval OMPI_SUCCESS Upon success.
+ * @retval OMPI_ERROR Upon failure.
  *
  * This function performs 
  */
-int lam_rte_finalize(void)
+int ompi_rte_finalize(void)
 {
   mca_registry_base_close();
   mca_oob_base_close();
@@ -31,5 +31,5 @@ int lam_rte_finalize(void)
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

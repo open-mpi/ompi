@@ -31,11 +31,11 @@
  * 
  * After all of the MCA components are initialized, the MPI/RTE will make 
  * downcalls into the PML to provide the initial list of processes 
- * (lam_proc_t instances), and notification of changes (add/delete).
+ * (ompi_proc_t instances), and notification of changes (add/delete).
  * 
  * The PML module must select the set of PTL modules that are to be used
  * to reach a given destination. These should be cached on a PML specific
- * data structure that is hung off the lam_proc_t.
+ * data structure that is hung off the ompi_proc_t.
  *
  * The PML should then apply a scheduling algorithm (round-robin,
  * weighted distribution, etc), to schedule the delivery of messages
@@ -46,9 +46,9 @@
 #ifndef MCA_PML_H
 #define MCA_PML_H
 
-#include "lam_config.h"
-#include "include/lam.h"
-#include "lfc/lam_list.h"
+#include "ompi_config.h"
+#include "include/ompi.h"
+#include "class/ompi_list.h"
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"
 #include "request/request.h"
@@ -72,9 +72,9 @@ typedef enum {
 } mca_pml_base_send_mode_t;
 
 /* renamed MPI constants */
-#define LAM_ANY_TAG    MPI_ANY_TAG
-#define LAM_ANY_SOURCE MPI_ANY_SOURCE
-#define LAM_PROC_NULL  MPI_PROC_NULL
+#define OMPI_ANY_TAG    MPI_ANY_TAG
+#define OMPI_ANY_SOURCE MPI_ANY_SOURCE
+#define OMPI_PROC_NULL  MPI_PROC_NULL
 
 /**
  * MCA->PML Called by MCA framework to initialize the module.
@@ -119,13 +119,13 @@ typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;
  *
  * @param  procs   Array of new processes
  * @param  nprocs  Size of process array
- * @return         LAM_SUCCESS or failure status.
+ * @return         OMPI_SUCCESS or failure status.
  *
  * Provides a notification to the PML that new processes have been
  * created, and provides the PML the opportunity to cache data
- * (e.g. list of PTLs to use) on the lam_proc_t data structure.
+ * (e.g. list of PTLs to use) on the ompi_proc_t data structure.
  */
-typedef int (*mca_pml_base_add_procs_fn_t)(struct lam_proc_t **procs, size_t nprocs);
+typedef int (*mca_pml_base_add_procs_fn_t)(struct ompi_proc_t **procs, size_t nprocs);
 
 
 /**
@@ -133,26 +133,26 @@ typedef int (*mca_pml_base_add_procs_fn_t)(struct lam_proc_t **procs, size_t npr
  *
  * @param  procs   Array of processes
  * @param  nprocs  Size of process array
- * @return         LAM_SUCCESS or failure status.
+ * @return         OMPI_SUCCESS or failure status.
  *
  * Provides a notification to the PML that processes have 
  * gone away, and provides the PML the opportunity to cleanup
- * any data cached on the lam_proc_t data structure.
+ * any data cached on the ompi_proc_t data structure.
  */
-typedef int (*mca_pml_base_del_procs_fn_t)(struct lam_proc_t **procs, size_t nprocs);
+typedef int (*mca_pml_base_del_procs_fn_t)(struct ompi_proc_t **procs, size_t nprocs);
 
 
 /**
  * Downcall from MCA layer after all PTLs have been loaded/selected.
  *
  * @param  ptls    List of selected PTLs
- * @return         LAM_SUCCESS or failure status.
+ * @return         OMPI_SUCCESS or failure status.
  *
  * Provides a notification to the PML that processes have 
  * gone away, and provides the PML the opportunity to cleanup
- * any data cached on the lam_proc_t data structure.
+ * any data cached on the ompi_proc_t data structure.
  */
-typedef int (*mca_pml_base_add_ptls_fn_t)(lam_list_t *ptls);
+typedef int (*mca_pml_base_add_ptls_fn_t)(ompi_list_t *ptls);
 
 
 /**
@@ -161,7 +161,7 @@ typedef int (*mca_pml_base_add_ptls_fn_t)(lam_list_t *ptls);
  * @param   param   parameter to change
  * @param   value   optional value
  * @param   size    size of value
- * @return          LAM_SUCCESS or failure status.
+ * @return          OMPI_SUCCESS or failure status.
 */
 typedef int (*mca_pml_base_control_fn_t)(
     int param,
@@ -174,7 +174,7 @@ typedef int (*mca_pml_base_control_fn_t)(
  * For non-threaded case, provides MCA the opportunity to
  * progress outstanding requests on all ptls.
  *
- * @return         LAM_SUCCESS or failure status.
+ * @return         OMPI_SUCCESS or failure status.
 */
 typedef int (*mca_pml_base_progress_fn_t)(void);
 
@@ -187,24 +187,24 @@ typedef int (*mca_pml_base_progress_fn_t)(void);
  * Downcall from MPI layer when a new communicator is created.
  *
  * @param comm  Communicator
- * @return      LAM_SUCCESS or failure status.
+ * @return      OMPI_SUCCESS or failure status.
  *
  * Provides the PML the opportunity to initialize/cache a data structure
  * on the communicator.
  */
-typedef int (*mca_pml_base_add_comm_fn_t)(struct lam_communicator_t* comm);
+typedef int (*mca_pml_base_add_comm_fn_t)(struct ompi_communicator_t* comm);
 
 
 /**
  * Downcall from MPI layer when a communicator is destroyed.
  *
  * @param comm  Communicator
- * @return      LAM_SUCCESS or failure status.
+ * @return      OMPI_SUCCESS or failure status.
  *
  * Provides the PML the opportunity to cleanup any datastructures
  * associated with the communicator.
  */
-typedef int (*mca_pml_base_del_comm_fn_t)(struct lam_communicator_t* comm);
+typedef int (*mca_pml_base_del_comm_fn_t)(struct ompi_communicator_t* comm);
 
 /**
  *  Initialize a persistent receive request. 
@@ -216,16 +216,16 @@ typedef int (*mca_pml_base_del_comm_fn_t)(struct lam_communicator_t* comm);
  *  @param tag (IN)         User defined tag.
  *  @param comm (IN)        Communicator.
  *  @param request (OUT)    Request handle.
- *  @return                 LAM_SUCCESS or failure status.
+ *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_irecv_init_fn_t)(
     void *buf,                           
     size_t count,                         
-    lam_datatype_t *datatype,              
+    ompi_datatype_t *datatype,              
     int src,
     int tag,                                
-    struct lam_communicator_t* comm,
-    struct lam_request_t **request           
+    struct ompi_communicator_t* comm,
+    struct ompi_request_t **request           
 );
 
 /**
@@ -238,16 +238,16 @@ typedef int (*mca_pml_base_irecv_init_fn_t)(
  *  @param tag (IN)         User defined tag.
  *  @param comm (IN)        Communicator.
  *  @param request (OUT)    Request handle.
- *  @return                 LAM_SUCCESS or failure status.
+ *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_irecv_fn_t)(
     void *buf,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int src,
     int tag,
-    struct lam_communicator_t* comm,
-    struct lam_request_t **request
+    struct ompi_communicator_t* comm,
+    struct ompi_request_t **request
 );
 
 /**
@@ -260,16 +260,16 @@ typedef int (*mca_pml_base_irecv_fn_t)(
  *  @param tag (IN)         User defined tag
  *  @param comm (IN)        Communicator
  *  @param status (OUT)     Completion status
- *  @return                 LAM_SUCCESS or failure status.
+ *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_recv_fn_t)(
     void *buf,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int src,
     int tag,
-    struct lam_communicator_t* comm,
-    lam_status_public_t* status
+    struct ompi_communicator_t* comm,
+    ompi_status_public_t* status
 );
 
 /**
@@ -283,17 +283,17 @@ typedef int (*mca_pml_base_recv_fn_t)(
  *  @param mode (IN)        Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
  *  @param comm (IN)        Communicator.
  *  @param request (OUT)    Request handle.
- *  @return                 LAM_SUCCESS or failure status.
+ *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_isend_init_fn_t)(
     void *buf,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
-    struct lam_communicator_t* comm,
-    struct lam_request_t **request
+    struct ompi_communicator_t* comm,
+    struct ompi_request_t **request
 );
 
 
@@ -308,17 +308,17 @@ typedef int (*mca_pml_base_isend_init_fn_t)(
  *  @param mode (IN)        Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
  *  @param comm (IN)        Communicator.
  *  @param request (OUT)    Request handle.
- *  @return                 LAM_SUCCESS or failure status.
+ *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_isend_fn_t)(
     void *buf,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
-    struct lam_communicator_t* comm,
-    struct lam_request_t **request
+    struct ompi_communicator_t* comm,
+    struct ompi_request_t **request
 );
 
 
@@ -332,16 +332,16 @@ typedef int (*mca_pml_base_isend_fn_t)(
  *  @param tag (IN)         User defined tag.
  *  @param mode (IN)        Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
  *  @param comm (IN)        Communicator.
- *  @return                 LAM_SUCCESS or failure status.
+ *  @return                 OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_send_fn_t)(
     void *buf,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
-    struct lam_communicator_t* comm
+    struct ompi_communicator_t* comm
 );
 
 /**
@@ -349,11 +349,11 @@ typedef int (*mca_pml_base_send_fn_t)(
  *
  * @param count    Number of requests
  * @param request  Array of persistent requests
- * @return         LAM_SUCCESS or failure status.
+ * @return         OMPI_SUCCESS or failure status.
  */
 typedef int (*mca_pml_base_start_fn_t)(
     size_t count,
-    lam_request_t** requests
+    ompi_request_t** requests
 );
 
 /**
@@ -364,17 +364,17 @@ typedef int (*mca_pml_base_start_fn_t)(
  * @param index (OUT)    Index of first completed request.
  * @param complete (OUT) Flag indicating if index is valid (a request completed).
  * @param status (OUT)   Status of completed request.
- * @return               LAM_SUCCESS or failure status.
+ * @return               OMPI_SUCCESS or failure status.
  *
  * Note that upon completion, the request is freed, and the
  * request handle at index set to NULL.
  */
 typedef int (*mca_pml_base_test_fn_t)(
     size_t count,
-    lam_request_t** requests,
+    ompi_request_t** requests,
     int *index,
     int *completed,
-    lam_status_public_t* status
+    ompi_status_public_t* status
 );
 
 
@@ -385,7 +385,7 @@ typedef int (*mca_pml_base_test_fn_t)(
  * @param requests (IN)   Array of requests
  * @param completed (OUT) Flag indicating wether all requests completed.
  * @param statuses (OUT)  Array of completion statuses.
- * @return                LAM_SUCCESS or failure status.
+ * @return                OMPI_SUCCESS or failure status.
  *
  * This routine returns completed==true if all requests have completed.
  * The statuses parameter is only updated if all requests completed. Likewise, 
@@ -394,9 +394,9 @@ typedef int (*mca_pml_base_test_fn_t)(
  */
 typedef int (*mca_pml_base_test_all_fn_t)(
     size_t count,
-    lam_request_t** requests,
+    ompi_request_t** requests,
     int *completed,
-    lam_status_public_t* statuses
+    ompi_status_public_t* statuses
 );
 
 
@@ -407,14 +407,14 @@ typedef int (*mca_pml_base_test_all_fn_t)(
  * @param requests (IN)   Array of requests
  * @param index (OUT)     Index into request array of completed request.
  * @param status (OUT)    Status of completed request.
- * @return                LAM_SUCCESS or failure status.
+ * @return                OMPI_SUCCESS or failure status.
  *
  */
 typedef int (*mca_pml_base_wait_fn_t)(
     size_t count,
-    lam_request_t** request,
+    ompi_request_t** request,
     int *index,
-    lam_status_public_t* status
+    ompi_status_public_t* status
 );
 
 
@@ -424,13 +424,13 @@ typedef int (*mca_pml_base_wait_fn_t)(
  * @param count (IN)      Number of requests
  * @param requests (IN)   Array of requests
  * @param statuses (OUT)  Array of completion statuses.
- * @return                LAM_SUCCESS or failure status.
+ * @return                OMPI_SUCCESS or failure status.
  *
  */
 typedef int (*mca_pml_base_wait_all_fn_t)(
     size_t count,                
-    lam_request_t** request,    
-    lam_status_public_t *status
+    ompi_request_t** request,    
+    ompi_status_public_t *status
 );
 
 
@@ -438,11 +438,11 @@ typedef int (*mca_pml_base_wait_all_fn_t)(
  * Release resources held by a persistent mode request.
  *
  * @param request (IN)    Request
- * @return                LAM_SUCCESS or failure status.
+ * @return                OMPI_SUCCESS or failure status.
  *
  */
 typedef int (*mca_pml_base_free_fn_t)(
-    lam_request_t** request
+    ompi_request_t** request
 );
 
 
@@ -450,11 +450,11 @@ typedef int (*mca_pml_base_free_fn_t)(
  * A special NULL request handle.
  *
  * @param request (OUT)   Request
- * @return                LAM_SUCCESS or failure status.
+ * @return                OMPI_SUCCESS or failure status.
  *
  */
 typedef int (*mca_pml_base_null_fn_t)(
-    lam_request_t** request
+    ompi_request_t** request
 );
 
 

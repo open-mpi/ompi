@@ -46,7 +46,7 @@ int mca_topo_unity_cart_map (MPI_Comm comm,
      * Check that number of processes <= size of communicator.
      */
 #if 0
-    errcode = lam_comm_size (comm, &size);
+    errcode = ompi_comm_size (comm, &size);
 #endif
     if (errcode != MPI_SUCCESS) {
         return errcode;
@@ -60,7 +60,7 @@ int mca_topo_unity_cart_map (MPI_Comm comm,
      * Compute my new rank.
      */
 #if 0
-    errcode = lam_comm_rank (comm, &rank);
+    errcode = ompi_comm_rank (comm, &rank);
 #endif
     if (errcode != MPI_SUCCESS) {
         printf ("failed to get a comm rank\n");

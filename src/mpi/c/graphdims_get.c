@@ -1,7 +1,7 @@
 /*
  * $HEADERS$
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "mpi.h"
@@ -10,11 +10,11 @@
 #include "errhandler/errhandler.h"
 #include "mca/topo/topo.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Graphdims_get = PMPI_Graphdims_get
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -25,33 +25,33 @@ int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges) {
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
         if (MPI_COMM_NULL == comm) {
-            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
                                           "MPI_Graphdims_get");
         }
-        if (LAM_COMM_IS_INTER(comm)) {
-            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+        if (OMPI_COMM_IS_INTER(comm)) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
                                           "MPI_Graphdims_get");
         }
-        if (!LAM_COMM_IS_GRAPH(comm)) {
-            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
+        if (!OMPI_COMM_IS_GRAPH(comm)) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
                                           "MPI_Graphdims_get");
         }
         if (NULL == nnodes || NULL == nedges) {
-            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
                                           "MPI_Graphdims_get");
         }
     }
     /* get the function pointer to do the right thing */
     func = comm->c_topo.topo_graphdims_get;
     if (NULL == func) {
-        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
                                      "MPI_Graphdims_get");
     }
 
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, nnodes, nedges))) {
-        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Graphdims_get");
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Graphdims_get");
     }
     
     /* All done */

@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,13 +21,13 @@ int mca_base_alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
   if (0 == size)
     return MPI_SUCCESS;
   else if (size < 0)
-    return LAM_ERROR;
+    return OMPI_ERROR;
 
   /* Do the alloc */
 
   temp = malloc(size);
   if (NULL == temp)
-    return LAM_ERROR;
+    return OMPI_ERROR;
 
   /* All done */
 

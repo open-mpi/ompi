@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([LAM_CASE_SENSITIVE_FS_SETUP],[
+AC_DEFUN([OMPI_CASE_SENSITIVE_FS_SETUP],[
 #
 # Arguments: none
 #
@@ -50,29 +50,29 @@ AC_ARG_WITH(cs_fs,
                            [Destination FS is case sensitive (default: set to value of the build FS's case sensitivity)]))
 
 if test "$with_cs_fs" = "yes"; then
-    LAM_WANT_CS_FS=1
+    OMPI_WANT_CS_FS=1
 elif test -z "$with_cs_fs"; then
-    LAM_WANT_CS_FS=$have_cs_fs
+    OMPI_WANT_CS_FS=$have_cs_fs
 else
-    LAM_WANT_CS_FS=0
+    OMPI_WANT_CS_FS=0
 fi
 
-if test "$LAM_WANT_CS_FS" = "1"; then
+if test "$OMPI_WANT_CS_FS" = "1"; then
     AC_MSG_RESULT([yes])
 else
     AC_MSG_RESULT([no])
 fi
 
-AM_CONDITIONAL(CASE_SENSITIVE_FS, test "$LAM_WANT_CS_FS" = "1")
+AM_CONDITIONAL(CASE_SENSITIVE_FS, test "$OMPI_WANT_CS_FS" = "1")
 
-if test "$LAM_WANT_CS_FS" = "0"; then
+if test "$OMPI_WANT_CS_FS" = "0"; then
 	cat <<EOF
 
 *******************************************************************************
 NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE NOTE
 *******************************************************************************
 
-Because LAM/MPI is being installed on a non-case sensitive file system, the
+Because OMPI/MPI is being installed on a non-case sensitive file system, the
 C++ wrapper compiler will be named mpic++ instead of the traditional mpiCC.
 
 Please update any makefiles appropriately.

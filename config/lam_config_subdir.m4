@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([LAM_CONFIG_SUBDIR],[
+AC_DEFUN([OMPI_CONFIG_SUBDIR],[
 #
 # Invoke configure in a specific subdirectory.
 #
@@ -22,7 +22,7 @@ subdir_failure="$4"
 #
 
 if test "$subdir_dir" != ":" -a -d $srcdir/$subdir_dir; then
-    AC_MSG_NOTICE([LAM configuring in $subdir_dir])
+    AC_MSG_NOTICE([OMPI configuring in $subdir_dir])
 
     #
     # Gotta check where srcdir is for VPATH builds.  If srcdir is not

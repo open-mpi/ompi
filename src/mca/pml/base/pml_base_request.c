@@ -7,18 +7,18 @@
 
 static void mca_pml_base_request_construct(mca_pml_base_request_t* req)
 {
-    req->super.req_type = LAM_REQUEST_PML;
+    req->super.req_type = OMPI_REQUEST_PML;
 }
 
 static void mca_pml_base_request_destruct(mca_pml_base_request_t* req)
 {
 }
 
-lam_class_t mca_pml_base_request_t_class = { 
+ompi_class_t mca_pml_base_request_t_class = { 
     "mca_pml_base_request_t", 
-    OBJ_CLASS(lam_request_t),
-    (lam_construct_t) mca_pml_base_request_construct, 
-    (lam_destruct_t) mca_pml_base_request_destruct 
+    OBJ_CLASS(ompi_request_t),
+    (ompi_construct_t) mca_pml_base_request_construct, 
+    (ompi_destruct_t) mca_pml_base_request_destruct 
 };
                                                                                                  
 

@@ -14,15 +14,15 @@ headers = \
 
 libcommunicator_la_SOURCES = \
         $(headers) \
-        lam_comm_init.c \
+        ompi_comm_init.c \
 	comm.c \
 	comm_cid.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/communicator
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/communicator
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif

@@ -4,7 +4,7 @@
 #include "threads/mutex.h"
 #include "io_romio.h"
 
-lam_mutex_t mca_io_romio_mutex;
+ompi_mutex_t mca_io_romio_mutex;
 
 mca_io_1_0_0_t romio_actions = {
  mca_io_romio_File_open,

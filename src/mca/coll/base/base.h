@@ -5,10 +5,10 @@
 #ifndef MCA_COLL_BASE_H
 #define MCA_COLL_BASE_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "mca/coll/coll.h"
 
 
@@ -20,7 +20,7 @@
 extern "C" {
 #endif
     int mca_coll_base_open(void);
-    int mca_coll_base_select(lam_list_t *selected, 
+    int mca_coll_base_select(ompi_list_t *selected, 
 			     bool *allow_multi_user_threads, 
 			     bool *have_hidden_threads);
     int mca_coll_base_query(void);
@@ -40,7 +40,7 @@ extern int mca_coll_base_output;
 extern int mca_coll_base_crossover;
 extern int mca_coll_base_associative;
 extern int mca_coll_base_reduce_crossover;
-extern lam_list_t mca_coll_base_modules_opened;
+extern ompi_list_t mca_coll_base_modules_opened;
 extern int mca_coll_base_bcast_collmaxlin;
 extern int mca_coll_base_bcast_collmaxdim;
 

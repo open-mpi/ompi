@@ -4,9 +4,9 @@
 #include "mca/ptl/base/ptl_base_sendreq.h"
 
 
-int mca_pml_teg_free(lam_request_t** request)
+int mca_pml_teg_free(ompi_request_t** request)
 {
     MCA_PML_TEG_FREE(request);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 

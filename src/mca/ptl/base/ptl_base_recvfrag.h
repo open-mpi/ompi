@@ -12,7 +12,7 @@
 #include "mca/ptl/base/ptl_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_match.h"
 
-extern lam_class_t mca_ptl_base_recv_frag_t_class;
+extern ompi_class_t mca_ptl_base_recv_frag_t_class;
 
 /**
  * Base type for receive fragment descriptors.
@@ -30,17 +30,17 @@ typedef struct mca_ptl_base_recv_frag_t mca_ptl_base_recv_frag_t;
  * 
  * @param frag (IN)     Receive fragment descriptor.
  * @param header (IN)   Header corresponding to the receive fragment.
- * @return              LAM_SUCCESS or error status on failure.
+ * @return              OMPI_SUCCESS or error status on failure.
  */
 static inline bool mca_ptl_base_recv_frag_match(
     mca_ptl_base_recv_frag_t* frag, 
     mca_ptl_base_match_header_t* header)
 {
     bool matched;
-    lam_list_t matched_frags;
-    OBJ_CONSTRUCT(&matched_frags, lam_list_t);
+    ompi_list_t matched_frags;
+    OBJ_CONSTRUCT(&matched_frags, ompi_list_t);
     if((matched = mca_ptl_base_match(header, frag, &matched_frags)) == false)
-        frag = (mca_ptl_base_recv_frag_t*)lam_list_remove_first(&matched_frags);
+        frag = (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags);
 
     while(NULL != frag) {
         mca_ptl_t* ptl = frag->super.frag_owner;
@@ -58,7 +58,7 @@ static inline bool mca_ptl_base_recv_frag_match(
         ptl->ptl_matched(ptl, frag);
 
         /* process any additional fragments that arrived out of order */
-        frag = (mca_ptl_base_recv_frag_t*)lam_list_remove_first(&matched_frags);
+        frag = (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags);
     };
     return matched;
 }

@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_UNPUBLISH_NAME = mpi_unpublish_name_f
 #pragma weak pmpi_unpublish_name = mpi_unpublish_name_f
 #pragma weak pmpi_unpublish_name_ = mpi_unpublish_name_f
 #pragma weak pmpi_unpublish_name__ = mpi_unpublish_name_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_UNPUBLISH_NAME,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_UNPUBLISH_NAME,
                            pmpi_unpublish_name,
                            pmpi_unpublish_name_,
                            pmpi_unpublish_name__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_UNPUBLISH_NAME,
                            (service_name, info, port_name, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_UNPUBLISH_NAME = mpi_unpublish_name_f
 #pragma weak mpi_unpublish_name = mpi_unpublish_name_f
 #pragma weak mpi_unpublish_name_ = mpi_unpublish_name_f
 #pragma weak mpi_unpublish_name__ = mpi_unpublish_name_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_UNPUBLISH_NAME,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_UNPUBLISH_NAME,
                            mpi_unpublish_name,
                            mpi_unpublish_name_,
                            mpi_unpublish_name__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_UNPUBLISH_NAME,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

@@ -14,8 +14,8 @@ headers = one.h
 # Conditonenally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mca/one
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/mca/one
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif

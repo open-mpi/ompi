@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_CANCEL = mpi_cancel_f
 #pragma weak pmpi_cancel = mpi_cancel_f
 #pragma weak pmpi_cancel_ = mpi_cancel_f
 #pragma weak pmpi_cancel__ = mpi_cancel_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_CANCEL,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_CANCEL,
                            pmpi_cancel,
                            pmpi_cancel_,
                            pmpi_cancel__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_CANCEL,
                            (request, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_CANCEL = mpi_cancel_f
 #pragma weak mpi_cancel = mpi_cancel_f
 #pragma weak mpi_cancel_ = mpi_cancel_f
 #pragma weak mpi_cancel__ = mpi_cancel_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_CANCEL,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_CANCEL,
                            mpi_cancel,
                            mpi_cancel_,
                            mpi_cancel__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_CANCEL,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

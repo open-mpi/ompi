@@ -12,6 +12,6 @@ int mca_pml_teg_progress(void)
      */
     for(i=0; i<mca_pml_teg.teg_num_ptl_modules; i++)
         mca_pml_teg.teg_ptl_modules[i]->ptlm_progress(tstamp);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 

@@ -3,7 +3,7 @@
  * $HEADER$
  *
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mca/oob/oob.h"
 #include "types.h"
@@ -27,16 +27,16 @@ int mca_oob_cofs_finalize(void);
 /*
  * "Action" functions
  */
-int mca_oob_cofs_send(lam_job_handle_t job_handle, int vpid, int tag, 
+int mca_oob_cofs_send(ompi_job_handle_t job_handle, int vpid, int tag, 
                       void* data, size_t data_len);
-int mca_oob_cofs_recv(lam_job_handle_t job_handle, int vpid, int* tag,
+int mca_oob_cofs_recv(ompi_job_handle_t job_handle, int vpid, int* tag,
                       void** data, size_t* data_len);
-int mca_oob_cofs_recv_nb(lam_job_handle_t job_handle,  int vpid, int* tag,
+int mca_oob_cofs_recv_nb(ompi_job_handle_t job_handle,  int vpid, int* tag,
                          void** data, size_t* data_len);
-int mca_oob_cofs_recv_cb(lam_job_handle_t job_handle, int vpid, int tag, 
+int mca_oob_cofs_recv_cb(ompi_job_handle_t job_handle, int vpid, int tag, 
                          mca_oob_base_recv_cb_t callback);
 
 
-extern char mca_oob_cofs_comm_loc[LAM_PATH_MAX]; /* location for file drop-off */
+extern char mca_oob_cofs_comm_loc[OMPI_PATH_MAX]; /* location for file drop-off */
 extern int mca_oob_cofs_my_vpid;
 extern uint64_t mca_oob_cofs_serial;

@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include <stdio.h>
@@ -25,7 +25,7 @@ int mca_coll_basic_scan(void *sbuf, void *rbuf, int count,
                         MPI_Datatype dtype, MPI_Op op, MPI_Comm comm)
 {
 #if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
+  return OMPI_ERR_NOT_IMPLEMENTED;
 #else
   int size;
   int rank;
@@ -42,8 +42,8 @@ int mca_coll_basic_scan(void *sbuf, void *rbuf, int count,
 
   if (0 == rank) {
 #if 0
-    /* JMS Need to replace this with lam_datatype_*() functions */
-    err = lam_dtsndrcv(sbuf, count, dtype,
+    /* JMS Need to replace this with ompi_datatype_*() functions */
+    err = ompi_dtsndrcv(sbuf, count, dtype,
 		       rbuf, count, dtype, BLKMPISCAN, comm);
     if (MPI_SUCCESS != err) {
       return err;
@@ -63,8 +63,8 @@ int mca_coll_basic_scan(void *sbuf, void *rbuf, int count,
       /* Allocate a temporary buffer. */
 
 #if 0
-      /* JMS Need to replace this with lam_datatype_*() functions */
-      err = lam_dtbuffer(dtype, count, &tmpbuf, &origin);
+      /* JMS Need to replace this with ompi_datatype_*() functions */
+      err = ompi_dtbuffer(dtype, count, &tmpbuf, &origin);
       if (MPI_SUCCESS != err) {
 	return err;
       }
@@ -73,8 +73,8 @@ int mca_coll_basic_scan(void *sbuf, void *rbuf, int count,
       /* Copy the send buffer into the receive buffer. */
 
 #if 0
-      /* JMS Need to replace this with lam_datatype_*() functions */
-      err = lam_dtsndrcv(sbuf, count, dtype, rbuf,
+      /* JMS Need to replace this with ompi_datatype_*() functions */
+      err = ompi_dtsndrcv(sbuf, count, dtype, rbuf,
 			 count, dtype, BLKMPISCAN, comm);
       if (MPI_SUCCESS != err) {
 	if (NULL != tmpbuf)
@@ -108,7 +108,7 @@ int mca_coll_basic_scan(void *sbuf, void *rbuf, int count,
 
 #if 0
     /* JMS Need MPI_Op */
-    if (op->op_flags & LAM_LANGF77) {
+    if (op->op_flags & OMPI_LANGF77) {
       (op->op_func)(origin, rbuf, &count, &dtype->dt_f77handle);
     } else {
       (op->op_func)(origin, rbuf, &count, &dtype);

@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([LAM_CHECK_OPTFLAGS],[
+AC_DEFUN([OMPI_CHECK_OPTFLAGS],[
 
 # Modularize this setup so that sub-configure.in scripts can use this
 # same setup code.

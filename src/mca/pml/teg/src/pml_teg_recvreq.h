@@ -4,8 +4,8 @@
 /**
  * @file
  */
-#ifndef LAM_PML_TEG_RECV_REQUEST_H
-#define LAM_PML_TEG_RECV_REQUEST_H
+#ifndef OMPI_PML_TEG_RECV_REQUEST_H
+#define OMPI_PML_TEG_RECV_REQUEST_H
 
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
@@ -16,13 +16,13 @@
 /**
  *  Allocate a recv request from the modules free list.
  *
- *  @param rc (OUT)  LAM_SUCCESS or error status on failure.
+ *  @param rc (OUT)  OMPI_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
 #define MCA_PML_TEG_RECV_REQUEST_ALLOC(recvreq, rc) \
     { \
-    lam_list_item_t* item; \
-    LAM_FREE_LIST_GET(&mca_pml_teg.teg_recv_requests, item, rc); \
+    ompi_list_item_t* item; \
+    OMPI_FREE_LIST_GET(&mca_pml_teg.teg_recv_requests, item, rc); \
     recvreq = (mca_ptl_base_recv_request_t*)item; \
     }
 
@@ -32,22 +32,22 @@
  *  @param request (IN)  Receive request.
  */
 #define MCA_PML_TEG_RECV_REQUEST_RETURN(request) \
-    LAM_FREE_LIST_RETURN(&mca_pml_teg.teg_recv_requests, (lam_list_item_t*)request);
+    OMPI_FREE_LIST_RETURN(&mca_pml_teg.teg_recv_requests, (ompi_list_item_t*)request);
 
 /**
  * Start an initialized request.
  *
  * @param request  Receive request.
- * @return         LAM_SUCESS or error status on failure.
+ * @return         OMPI_SUCESS or error status on failure.
  */
 static inline int mca_pml_teg_recv_request_start(mca_ptl_base_recv_request_t* request)
 {
-    if(request->super.req_peer == LAM_ANY_SOURCE) {
+    if(request->super.req_peer == OMPI_ANY_SOURCE) {
         mca_ptl_base_recv_request_match_wild(request);
     } else {
         mca_ptl_base_recv_request_match_specific(request);
     }
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 /**

@@ -2,11 +2,11 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "info/info.h"
 #include "util/strncpy.h"
 #include <stdlib.h>
@@ -14,11 +14,11 @@
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Info_get = PMPI_Info_get
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -52,21 +52,21 @@ int MPI_Info_get(MPI_Info info, char *key, int valuelen,
      */
     if (MPI_PARAM_CHECK) {
         if (NULL == info || NULL == key || 0 > valuelen){
-            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                          "MPI_Info_get");
         }
 
         key_length = (key) ? strlen (key) : 0;
         if ( (0 == key_length) || (MPI_MAX_INFO_KEY <= key_length)) {
-            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
                                          "MPI_Info_get");
         }
     }
 
-    err = lam_info_get (info, key, valuelen, value, flag);
+    err = ompi_info_get (info, key, valuelen, value, flag);
     
     /*
-     * Once again, lam_info_get does not return any error. So, as of
+     * Once again, ompi_info_get does not return any error. So, as of
      * now there is no error condition to check for. But maybe this 
      * needs to be re-evaluated and then something can be done 
      */

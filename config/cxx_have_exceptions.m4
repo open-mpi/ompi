@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-define([LAM_CXX_HAVE_EXCEPTIONS],[
+define([OMPI_CXX_HAVE_EXCEPTIONS],[
 #
 # Arguments: None
 #
@@ -11,15 +11,15 @@ define([LAM_CXX_HAVE_EXCEPTIONS],[
 #
 # Check to see if the C++ compiler can handle exceptions 
 #
-# Sets LAM_CXX_EXCEPTIONS to 1 if compiler has exceptions, 0 if not
+# Sets OMPI_CXX_EXCEPTIONS to 1 if compiler has exceptions, 0 if not
 #
 
 AC_MSG_CHECKING([for throw/catch])
 AC_LANG_SAVE
 AC_LANG_CPLUSPLUS
 AC_COMPILE_IFELSE(AC_LANG_PROGRAM([[]], [[int i=1; throw(i);]]), 
-    LAM_CXX_EXCEPTIONS=1, LAM_CXX_EXCPTIONS=0)
-if test "$LAM_CXX_EXCEPTIONS" = "1"; then
+    OMPI_CXX_EXCEPTIONS=1, OMPI_CXX_EXCPTIONS=0)
+if test "$OMPI_CXX_EXCEPTIONS" = "1"; then
     AC_MSG_RESULT([yes])
 else
     AC_MSG_RESULT([no])

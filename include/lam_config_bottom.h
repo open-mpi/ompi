@@ -1,12 +1,12 @@
 /*
  * $HEADER$
  *
- * This file is included at the bottom of lam_config.h, and is
+ * This file is included at the bottom of ompi_config.h, and is
  * therefore a) after all the #define's that were output from
- * configure, and b) included in most/all files in LAM/MPI.
+ * configure, and b) included in most/all files in OMPI/MPI.
  *
- * Since this file is *only* ever included by lam_config.h, and
- * lam_config.h already has #ifndef/#endif protection, there is no
+ * Since this file is *only* ever included by ompi_config.h, and
+ * ompi_config.h already has #ifndef/#endif protection, there is no
  * need to #ifndef/#endif protection here.
  */
 
@@ -27,20 +27,20 @@ typedef enum { false, true } bool;
  */
 #include <limits.h>
 #if defined(PATH_MAX)
-#define LAM_PATH_MAX	(PATH_MAX + 1)
+#define OMPI_PATH_MAX	(PATH_MAX + 1)
 #elif defined(_POSIX_PATH_MAX)
-#define LAM_PATH_MAX	(_POSIX_PATH_MAX + 1)
+#define OMPI_PATH_MAX	(_POSIX_PATH_MAX + 1)
 #else
-#define LAM_PATH_MAX	256
+#define OMPI_PATH_MAX	256
 #endif
 
 /*
  * Do we have thread support?
  */
-#define LAM_HAVE_THREADS (LAM_HAVE_SOLARIS_THREADS || LAM_HAVE_POSIX_THREADS)
+#define OMPI_HAVE_THREADS (OMPI_HAVE_SOLARIS_THREADS || OMPI_HAVE_POSIX_THREADS)
 
 /* parameter indicating if to check MPI arguments */
-extern bool lam_mpi_param_check;
+extern bool ompi_mpi_param_check;
 
 /*
  * Do we have <stdint.h>?
@@ -48,30 +48,30 @@ extern bool lam_mpi_param_check;
 #if HAVE_STDINT_H
 #include <stdint.h>
 #else
-#include "lam_stdint.h"
+#include "ompi_stdint.h"
 #endif
 
 /*
  * Do we want memory debugging?
  */
-#if LAM_ENABLE_MEM_DEBUG && defined(LAM_BUILDING) && LAM_BUILDING
+#if OMPI_ENABLE_MEM_DEBUG && defined(OMPI_BUILDING) && OMPI_BUILDING
 
 /* It is safe to include mem/malloc.h here because a) it will only
-   happen when we are building LAM and therefore have a full LAM
+   happen when we are building OMPI and therefore have a full OMPI
    source tree [including headers] available, and b) we guaranteed to
    *not* to include anything else via mem/malloc.h, so we won't
    have Cascading Includes Of Death. */
 #include "mem/malloc.h"
-#define malloc(size) lam_malloc((size), __FILE__, __LINE__)
-#define realloc(ptr, size) lam_realloc((ptr), (size), __FILE__, __LINE__)
-#define free(ptr) lam_free((ptr), __FILE__, __LINE__)
+#define malloc(size) ompi_malloc((size), __FILE__, __LINE__)
+#define realloc(ptr, size) ompi_realloc((ptr), (size), __FILE__, __LINE__)
+#define free(ptr) ompi_free((ptr), __FILE__, __LINE__)
 #endif
 
 
 /*
  * Do we want to override debugging controls?
  */
-#if defined(LAM_ENABLE_DEBUG_OVERRIDE) && LAM_ENABLE_DEBUG_OVERRIDE
-#undef LAM_ENABLE_DEBUG
-#define LAM_ENABLE_DEBUG 1
+#if defined(OMPI_ENABLE_DEBUG_OVERRIDE) && OMPI_ENABLE_DEBUG_OVERRIDE
+#undef OMPI_ENABLE_DEBUG
+#define OMPI_ENABLE_DEBUG 1
 #endif

@@ -4,12 +4,12 @@
  *
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "constants.h"
 #include "types.h"
 #include "mem/malloc.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/pcm/pcm.h"
@@ -63,9 +63,9 @@ struct mca_pcm_1_0_0_t mca_pcm_rsh_1_0_0 = {
   mca_pcm_rsh_proc_get_parent
 };
 
-lam_list_t mca_pcm_rsh_connections;
+ompi_list_t mca_pcm_rsh_connections;
 
-lam_job_handle_t mca_pcm_rsh_my_job_handle = NULL;
+ompi_job_handle_t mca_pcm_rsh_my_job_handle = NULL;
 int mca_pcm_rsh_my_vpid = -1;
 
 char *mca_pcm_rsh_rsh = NULL;
@@ -88,7 +88,7 @@ mca_pcm_rsh_open(void)
   id = mca_base_param_register_string("pcm", "rsh", "hostfile", NULL, NULL);
   mca_base_param_lookup_string(id, &mca_pcm_rsh_hostfile);
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
@@ -100,7 +100,7 @@ mca_pcm_rsh_close(void)
 
   OBJ_DESTRUCT(&mca_pcm_rsh_connections);
 #endif
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
@@ -126,6 +126,6 @@ mca_pcm_rsh_init(int *priority, bool *allow_multi_user_threads,
 int
 mca_pcm_rsh_finalize(void)
 {
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 

@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_TIME_H
@@ -66,7 +66,7 @@
 extern struct event_list timequeue;
 extern struct event_list eventqueue;
 extern struct event_list addqueue;
-extern lam_mutex_t lam_event_lock;
+extern ompi_mutex_t ompi_event_lock;
 
 #define EVLIST_X_KQINKERNEL	0x1000
 
@@ -81,13 +81,13 @@ struct kqop {
 } kqueueop;
 
 static void *kq_init	(void);
-static int kq_add	(void *, struct lam_event *);
-static int kq_del	(void *, struct lam_event *);
+static int kq_add	(void *, struct ompi_event *);
+static int kq_del	(void *, struct ompi_event *);
 static int kq_recalc	(void *, int);
 static int kq_dispatch	(void *, struct timeval *);
 static int kq_insert	(struct kqop *, struct kevent *);
 
-const struct lam_eventop lam_kqops = {
+const struct ompi_eventop ompi_kqops = {
 	"kqueue",
 	kq_init,
 	kq_add,
@@ -193,18 +193,18 @@ kq_dispatch(void *arg, struct timeval *tv)
 	struct kqop *kqop = arg;
 	struct kevent *changes = kqop->changes;
 	struct kevent *events = kqop->events;
-	struct lam_event *ev;
+	struct ompi_event *ev;
 	struct timespec ts;
 	int i, res;
 
 	TIMEVAL_TO_TIMESPEC(tv, &ts);
 
         /* release lock while waiting in kernel */
-        if(lam_using_threads()) {
-	    lam_mutex_unlock(&lam_event_lock);
+        if(ompi_using_threads()) {
+	    ompi_mutex_unlock(&ompi_event_lock);
 	    res = kevent(kqop->kq, changes, kqop->nchanges,
 	        events, kqop->nevents, &ts);
-	    lam_mutex_lock(&lam_event_lock);
+	    ompi_mutex_lock(&ompi_event_lock);
         } else {
 	    res = kevent(kqop->kq, changes, kqop->nchanges,
 	        events, kqop->nevents, &ts);
@@ -242,26 +242,26 @@ kq_dispatch(void *arg, struct timeval *tv)
 			return (-1);
 		}
 
-		ev = (struct lam_event *)events[i].udata;
+		ev = (struct ompi_event *)events[i].udata;
 
 		if (events[i].filter == EVFILT_READ) {
-			which |= LAM_EV_READ;
+			which |= OMPI_EV_READ;
 		} else if (events[i].filter == EVFILT_WRITE) {
-			which |= LAM_EV_WRITE;
+			which |= OMPI_EV_WRITE;
 		} else if (events[i].filter == EVFILT_SIGNAL) {
-			which |= LAM_EV_SIGNAL;
+			which |= OMPI_EV_SIGNAL;
 		}
 
 		if (!which)
 			continue;
 
-		if (!(ev->ev_events & LAM_EV_PERSIST)) {
+		if (!(ev->ev_events & OMPI_EV_PERSIST)) {
 			ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
-			lam_event_del_i(ev);
+			ompi_event_del_i(ev);
 		}
 
-		lam_event_active_i(ev, which,
-		    ev->ev_events & LAM_EV_SIGNAL ? events[i].data : 1);
+		ompi_event_active_i(ev, which,
+		    ev->ev_events & OMPI_EV_SIGNAL ? events[i].data : 1);
 	}
 
 	return (0);
@@ -269,19 +269,19 @@ kq_dispatch(void *arg, struct timeval *tv)
 
 
 static int
-kq_add(void *arg, struct lam_event *ev)
+kq_add(void *arg, struct ompi_event *ev)
 {
 	struct kqop *kqop = arg;
 	struct kevent kev;
 
-	if (ev->ev_events & LAM_EV_SIGNAL) {
-		int nsignal = LAM_EVENT_SIGNAL(ev);
+	if (ev->ev_events & OMPI_EV_SIGNAL) {
+		int nsignal = OMPI_EVENT_SIGNAL(ev);
 
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = nsignal;
 		kev.filter = EVFILT_SIGNAL;
 		kev.flags = EV_ADD;
-		if (!(ev->ev_events & LAM_EV_PERSIST))
+		if (!(ev->ev_events & OMPI_EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
 		kev.udata = (void *) INTPTR(ev);
 		
@@ -295,12 +295,12 @@ kq_add(void *arg, struct lam_event *ev)
 		return (0);
 	}
 
-	if (ev->ev_events & LAM_EV_READ) {
+	if (ev->ev_events & OMPI_EV_READ) {
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_READ;
 		kev.flags = EV_ADD;
-		if (!(ev->ev_events & LAM_EV_PERSIST))
+		if (!(ev->ev_events & OMPI_EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
 		kev.udata = (void *) INTPTR(ev);
 		
@@ -310,12 +310,12 @@ kq_add(void *arg, struct lam_event *ev)
 		ev->ev_flags |= EVLIST_X_KQINKERNEL;
 	}
 
-	if (ev->ev_events & LAM_EV_WRITE) {
+	if (ev->ev_events & OMPI_EV_WRITE) {
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_WRITE;
 		kev.flags = EV_ADD;
-		if (!(ev->ev_events & LAM_EV_PERSIST))
+		if (!(ev->ev_events & OMPI_EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
 		kev.udata = (void *) INTPTR(ev);
 		
@@ -329,7 +329,7 @@ kq_add(void *arg, struct lam_event *ev)
 }
 
 static int
-kq_del(void *arg, struct lam_event *ev)
+kq_del(void *arg, struct ompi_event *ev)
 {
 	struct kqop *kqop = arg;
 	struct kevent kev;
@@ -337,8 +337,8 @@ kq_del(void *arg, struct lam_event *ev)
 	if (!(ev->ev_flags & EVLIST_X_KQINKERNEL))
 		return (0);
 
-	if (ev->ev_events & LAM_EV_SIGNAL) {
-		int nsignal = LAM_EVENT_SIGNAL(ev);
+	if (ev->ev_events & OMPI_EV_SIGNAL) {
+		int nsignal = OMPI_EVENT_SIGNAL(ev);
 
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = (int)signal;
@@ -355,7 +355,7 @@ kq_del(void *arg, struct lam_event *ev)
 		return (0);
 	}
 
-	if (ev->ev_events & LAM_EV_READ) {
+	if (ev->ev_events & OMPI_EV_READ) {
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_READ;
@@ -367,7 +367,7 @@ kq_del(void *arg, struct lam_event *ev)
 		ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
 	}
 
-	if (ev->ev_events & LAM_EV_WRITE) {
+	if (ev->ev_events & OMPI_EV_WRITE) {
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_WRITE;

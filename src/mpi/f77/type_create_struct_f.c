@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_CREATE_STRUCT = mpi_type_create_struct_f
 #pragma weak pmpi_type_create_struct = mpi_type_create_struct_f
 #pragma weak pmpi_type_create_struct_ = mpi_type_create_struct_f
 #pragma weak pmpi_type_create_struct__ = mpi_type_create_struct_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_STRUCT,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_STRUCT,
                            pmpi_type_create_struct,
                            pmpi_type_create_struct_,
                            pmpi_type_create_struct__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_STRUCT,
                            (count, array_of_block_lengths, array_of_displacements, array_of_types, newtype, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_TYPE_CREATE_STRUCT = mpi_type_create_struct_f
 #pragma weak mpi_type_create_struct = mpi_type_create_struct_f
 #pragma weak mpi_type_create_struct_ = mpi_type_create_struct_f
 #pragma weak mpi_type_create_struct__ = mpi_type_create_struct_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_STRUCT,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_STRUCT,
                            mpi_type_create_struct,
                            mpi_type_create_struct_,
                            mpi_type_create_struct__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_STRUCT,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

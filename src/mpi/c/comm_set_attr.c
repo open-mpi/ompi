@@ -1,18 +1,18 @@
 /*
  * $HEADERS$
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "attribute/attribute.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_set_attribute = PMPI_Comm_set_attribute
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -24,13 +24,13 @@ int MPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val)
 
     if (MPI_PARAM_CHECK) {
 	if (MPI_COMM_NULL == comm) {
-	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
 					 FUNC_NAME);
 	}
     }
     
-    ret = lam_attr_set(COMM_ATTR, comm, comm->c_keyhash, 
+    ret = ompi_attr_set(COMM_ATTR, comm, comm->c_keyhash, 
 		       comm_keyval, attribute_val, 0);
 
-    LAM_ERRHANDLER_RETURN(ret, comm, MPI_ERR_OTHER, FUNC_NAME);  
+    OMPI_ERRHANDLER_RETURN(ret, comm, MPI_ERR_OTHER, FUNC_NAME);  
 }

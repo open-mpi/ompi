@@ -17,9 +17,9 @@
 
 #define MPI_DATATYPE_NULL_COPY_FN MPI_TYPE_NULL_COPY_FN
 
-#define CREATE_KEY() lam_bitmap_find_and_set_first_unset_bit(key_bitmap)
+#define CREATE_KEY() ompi_bitmap_find_and_set_first_unset_bit(key_bitmap)
 
-#define FREE_KEY(key) lam_bitmap_clear_bit(key_bitmap, (key))
+#define FREE_KEY(key) ompi_bitmap_clear_bit(key_bitmap, (key))
 
 
 /* Not checking for NULL_DELETE_FN here, since according to the
@@ -28,7 +28,7 @@
 
 #define DELETE_ATTR_OBJECT(type, attribute) \
     if ((err = (*((key_item->delete_attr_fn).attr_##type##_delete_fn)) \
-                                    ((lam_##type##_t *)object, \
+                                    ((ompi_##type##_t *)object, \
 				    key, attribute, \
 				    key_item->extra_state)) != MPI_SUCCESS) {\
 	return err;\
@@ -36,7 +36,7 @@
 
 #define COPY_ATTR_OBJECT(type, old_object, hash_value) \
     if ((err = (*((hash_value->copy_attr_fn).attr_##type##_copy_fn)) \
-          ((lam_##type##_t *)old_object, key, hash_value->extra_state, \
+          ((ompi_##type##_t *)old_object, key, hash_value->extra_state, \
             old_attr, &new_attr, &flag)) != MPI_SUCCESS) { \
         return err; \
     }
@@ -45,74 +45,74 @@
 /* 
  * Static 
  */
-static void lam_attribute_construct(lam_attrkey_t *attribute);
-static void lam_attribute_destruct(lam_attrkey_t *attribute);
-static void lam_attrkey_item_construct(lam_attrkey_item_t *item);
-static void lam_attrkey_item_destruct(lam_attrkey_item_t *item);
+static void ompi_attribute_construct(ompi_attrkey_t *attribute);
+static void ompi_attribute_destruct(ompi_attrkey_t *attribute);
+static void ompi_attrkey_item_construct(ompi_attrkey_item_t *item);
+static void ompi_attrkey_item_destruct(ompi_attrkey_item_t *item);
 
 
 /*
- * lam_attrkey_t classes
+ * ompi_attrkey_t classes
  */
 
-OBJ_CLASS_INSTANCE(lam_attrkey_t, 
-		   lam_list_t, 
-		   lam_attribute_construct,
-		   lam_attribute_destruct);
+OBJ_CLASS_INSTANCE(ompi_attrkey_t, 
+		   ompi_list_t, 
+		   ompi_attribute_construct,
+		   ompi_attribute_destruct);
 /*
- * lam_attribute_entry_t classes
+ * ompi_attribute_entry_t classes
  */
 
-OBJ_CLASS_INSTANCE(lam_attrkey_item_t, 
-		   lam_object_t,
-		   lam_attrkey_item_construct,
-		   lam_attrkey_item_destruct);
+OBJ_CLASS_INSTANCE(ompi_attrkey_item_t, 
+		   ompi_object_t,
+		   ompi_attrkey_item_construct,
+		   ompi_attrkey_item_destruct);
 
 
 /* 
  * Static variables 
  */
 
-static lam_attrkey_t *attr_hash;
-static lam_bitmap_t *key_bitmap;
+static ompi_attrkey_t *attr_hash;
+static ompi_bitmap_t *key_bitmap;
 
 
 /*
- * lam_attrkey_t interface functions
+ * ompi_attrkey_t interface functions
  */
 
 static void 
-lam_attribute_construct(lam_attrkey_t *attribute) 
+ompi_attribute_construct(ompi_attrkey_t *attribute) 
 {
     attribute->a_fhandle = -1;
-    OBJ_CONSTRUCT(&(attribute->super), lam_hash_table_t);
+    OBJ_CONSTRUCT(&(attribute->super), ompi_hash_table_t);
 }
 
 
 static void 
-lam_attribute_destruct(lam_attrkey_t *attribute) 
+ompi_attribute_destruct(ompi_attrkey_t *attribute) 
 {
     OBJ_DESTRUCT(&(attribute->super));
 }
 
 /*
- * lam_attrkey_item_t interface functions
+ * ompi_attrkey_item_t interface functions
  */
 
 static void
-lam_attrkey_item_construct(lam_attrkey_item_t *item) 
+ompi_attrkey_item_construct(ompi_attrkey_item_t *item) 
 {
     memset(&(item->attr_type), 0, 
-	   sizeof(lam_attrkey_item_t) - sizeof(lam_object_t));
+	   sizeof(ompi_attrkey_item_t) - sizeof(ompi_object_t));
 }
 
 
 static void 
-lam_attrkey_item_destruct(lam_attrkey_item_t *item) 
+ompi_attrkey_item_destruct(ompi_attrkey_item_t *item) 
 {
     /* Remove the key entry from the hash and free the key */
 
-    lam_hash_table_remove_value_uint32(&(attr_hash->super), item->key);
+    ompi_hash_table_remove_value_uint32(&(attr_hash->super), item->key);
     FREE_KEY(item->key);
 }
 
@@ -123,22 +123,22 @@ lam_attrkey_item_destruct(lam_attrkey_item_t *item)
  */
 
 int 
-lam_attr_init()
+ompi_attr_init()
 {
-    attr_hash = OBJ_NEW(lam_attrkey_t);
+    attr_hash = OBJ_NEW(ompi_attrkey_t);
     if (NULL == attr_hash) {
 	fprintf(stderr, "Error while creating the main attribute list\n");
 	return MPI_ERR_SYSRESOURCE;
     }
-    key_bitmap = OBJ_NEW(lam_bitmap_t);
-    if (0 != lam_bitmap_init(key_bitmap, 10)) {
+    key_bitmap = OBJ_NEW(ompi_bitmap_t);
+    if (0 != ompi_bitmap_init(key_bitmap, 10)) {
 	return MPI_ERR_SYSRESOURCE;
     }
-    if (lam_hash_table_init(&attr_hash->super,
-			    ATTR_TABLE_SIZE) != LAM_SUCCESS)
+    if (ompi_hash_table_init(&attr_hash->super,
+			    ATTR_TABLE_SIZE) != OMPI_SUCCESS)
 	return MPI_ERR_SYSRESOURCE;
   
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -147,7 +147,7 @@ lam_attr_init()
  */
 
 void 
-lam_attr_destroy()
+ompi_attr_destroy()
 {
     OBJ_RELEASE(attr_hash);
     OBJ_RELEASE(key_bitmap);
@@ -155,22 +155,22 @@ lam_attr_destroy()
   
 
 int 
-lam_attr_create_keyval(lam_attribute_type_t type,
-		       lam_attribute_fn_ptr_union_t copy_attr_fn,
-		       lam_attribute_fn_ptr_union_t delete_attr_fn,
+ompi_attr_create_keyval(ompi_attribute_type_t type,
+		       ompi_attribute_fn_ptr_union_t copy_attr_fn,
+		       ompi_attribute_fn_ptr_union_t delete_attr_fn,
 		       int *key, void *extra_state, int predefined)
 {
-    lam_attrkey_item_t *attr;
+    ompi_attrkey_item_t *attr;
     int ret;
 
-    /* Protect against the user calling lam_attr_destroy and then
+    /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
     if (NULL == attr_hash)
 	return MPI_ERR_INTERN;
 
     /* Allocate space for the list item */
 
-    attr = OBJ_NEW(lam_attrkey_item_t);
+    attr = OBJ_NEW(ompi_attrkey_item_t);
     if (NULL == attr) {
 	fprintf(stderr, "Error during new object creation for attribute \n");
 	return MPI_ERR_SYSRESOURCE;
@@ -179,8 +179,8 @@ lam_attr_create_keyval(lam_attribute_type_t type,
     /* Create a new unique key and fill the hash */
   
     *key = CREATE_KEY();
-    ret = lam_hash_table_set_value_uint32(&attr_hash->super, *key, attr);
-    if (ret != LAM_SUCCESS)
+    ret = ompi_hash_table_set_value_uint32(&attr_hash->super, *key, attr);
+    if (ret != OMPI_SUCCESS)
 	return ret;
 
     /* Fill in the list item */
@@ -190,7 +190,7 @@ lam_attr_create_keyval(lam_attribute_type_t type,
     attr->extra_state = extra_state;
     attr->attr_type = type;
     attr->key = *key;
-    attr->attr_flag = (1 == predefined) ? LAM_PREDEFINED : 0;
+    attr->attr_flag = (1 == predefined) ? OMPI_PREDEFINED : 0;
 
     /* Bump up the reference count, since we want the object to be
        destroyed only when free_keyval is called and not when all
@@ -205,22 +205,22 @@ lam_attr_create_keyval(lam_attribute_type_t type,
 
 
 int 
-lam_attr_free_keyval(lam_attribute_type_t type, int *key, int predefined)
+ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, int predefined)
 {
-    lam_attrkey_item_t *key_item;
+    ompi_attrkey_item_t *key_item;
 
-    /* Protect against the user calling lam_attr_destroy and then
+    /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
     if (NULL == attr_hash)
 	return MPI_ERR_INTERN;
 
     /* Find the key-value pair */
 
-    key_item = (lam_attrkey_item_t*) 
-	lam_hash_table_get_value_uint32(&attr_hash->super, *key);
+    key_item = (ompi_attrkey_item_t*) 
+	ompi_hash_table_get_value_uint32(&attr_hash->super, *key);
   
     if ((NULL == key_item) || (key_item->attr_type != type) ||
-	((!predefined) && (key_item->attr_flag & LAM_PREDEFINED)))
+	((!predefined) && (key_item->attr_flag & OMPI_PREDEFINED)))
 	return MPI_INVALID_ATTR_KEYVAL;
 
     /* Not releasing the object here, it will be done in MPI_*_attr_delete */
@@ -238,32 +238,32 @@ lam_attr_free_keyval(lam_attribute_type_t type, int *key, int predefined)
 
 
 int 
-lam_attr_delete(lam_attribute_type_t type, void *object, 
-		lam_hash_table_t *keyhash, int key,
+ompi_attr_delete(ompi_attribute_type_t type, void *object, 
+		ompi_hash_table_t *keyhash, int key,
 		int predefined) 
 {
-    lam_attrkey_item_t *key_item;
+    ompi_attrkey_item_t *key_item;
     int ret, err;
     void *attr;
 
-    /* Protect against the user calling lam_attr_destroy and then
+    /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
     if (NULL == attr_hash)
 	return MPI_ERR_INTERN;
 
     /* Check if the key is valid in the key-attribute hash */
 
-    key_item = (lam_attrkey_item_t*) 
-	lam_hash_table_get_value_uint32(&attr_hash->super, key);
+    key_item = (ompi_attrkey_item_t*) 
+	ompi_hash_table_get_value_uint32(&attr_hash->super, key);
   
     if ((NULL == key_item) || (key_item->attr_type!= type) ||
-	((!predefined) && (key_item->attr_flag & LAM_PREDEFINED)))
+	((!predefined) && (key_item->attr_flag & OMPI_PREDEFINED)))
 	return MPI_INVALID_ATTR_KEYVAL;
 
     /* Check if the key is valid for the communicator/window/dtype. If
        yes, then delete the attribute and key entry from the CWD hash */
 
-    attr = lam_hash_table_get_value_uint32(keyhash, key);
+    attr = ompi_hash_table_get_value_uint32(keyhash, key);
 
     switch(type) {
   
@@ -281,13 +281,13 @@ lam_attr_delete(lam_attribute_type_t type, void *object,
 	break;
 
     default:
-	fprintf(stderr, "lam_attribute: lam_attr_seet: Invalid type -- "
+	fprintf(stderr, "ompi_attribute: ompi_attr_seet: Invalid type -- "
 		" Should be one of COMM/WIN/TYPE \n");
 	assert(0);
     }
 
-    ret = lam_hash_table_remove_value_uint32(keyhash, key);
-    if (ret != LAM_SUCCESS) {
+    ret = ompi_hash_table_remove_value_uint32(keyhash, key);
+    if (ret != OMPI_SUCCESS) {
         return ret; 
     }
     
@@ -301,34 +301,34 @@ lam_attr_delete(lam_attribute_type_t type, void *object,
 
 
 int
-lam_attr_set(lam_attribute_type_t type, void *object, 
-	     lam_hash_table_t *keyhash, int key, void *attribute,
+ompi_attr_set(ompi_attribute_type_t type, void *object, 
+	     ompi_hash_table_t *keyhash, int key, void *attribute,
 	     int predefined)
 {
-    lam_attrkey_item_t *key_item;
+    ompi_attrkey_item_t *key_item;
     int ret, err;
     void *oldattr;
     int had_old = 0;
 
-    /* Protect against the user calling lam_attr_destroy and then
+    /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
     if (NULL == attr_hash)
 	return MPI_ERR_INTERN;
 
-    key_item = (lam_attrkey_item_t *) 
-	lam_hash_table_get_value_uint32(&(attr_hash->super), key);
+    key_item = (ompi_attrkey_item_t *) 
+	ompi_hash_table_get_value_uint32(&(attr_hash->super), key);
 
     /* If key not found */
 
     if ((NULL == key_item) || (key_item->attr_type != type) ||
-	((!predefined) && (key_item->attr_flag & LAM_PREDEFINED))) {
-	fprintf(stderr, "lam_attribute: lam_attr_set: key not found \n");
+	((!predefined) && (key_item->attr_flag & OMPI_PREDEFINED))) {
+	fprintf(stderr, "ompi_attribute: ompi_attr_set: key not found \n");
 	return MPI_INVALID_ATTR_KEYVAL;
     }
 
     /* Now see if the key is present in the CWD object. If so, delete
        the old attribute in the key */
-    oldattr = lam_hash_table_get_value_uint32(keyhash, key);
+    oldattr = ompi_hash_table_get_value_uint32(keyhash, key);
 
     if (oldattr != NULL) {
 	
@@ -347,15 +347,15 @@ lam_attr_set(lam_attribute_type_t type, void *object,
 	    break;
 
 	default:
-	    fprintf(stderr, "lam_attribute: lam_attr_set: Invalid type -- "
+	    fprintf(stderr, "ompi_attribute: ompi_attr_set: Invalid type -- "
 		    " Should be one of COMM/WIN/TYPE \n");
 	    assert(0);
 	}
 	had_old = 1;
     }
 
-    ret = lam_hash_table_set_value_uint32(keyhash, key, attribute); 
-    if (ret != LAM_SUCCESS) {
+    ret = ompi_hash_table_set_value_uint32(keyhash, key, attribute); 
+    if (ret != OMPI_SUCCESS) {
 	return ret; 
     }
 
@@ -370,25 +370,25 @@ lam_attr_set(lam_attribute_type_t type, void *object,
 
 
 int
-lam_attr_get(lam_hash_table_t *keyhash, int key, void *attribute,
+ompi_attr_get(ompi_hash_table_t *keyhash, int key, void *attribute,
 	     int *flag)
 {
     void *attr;
-    lam_attrkey_item_t *key_item;
+    ompi_attrkey_item_t *key_item;
 
     /* According to MPI specs, the call is invalid if key is not
        present in the main hash at all. If no attribute is associated
        with the key, then the call is valid and returns FALSE in the
        flag argument */
 
-    key_item = (lam_attrkey_item_t *) 
-	lam_hash_table_get_value_uint32(&(attr_hash->super), key);
+    key_item = (ompi_attrkey_item_t *) 
+	ompi_hash_table_get_value_uint32(&(attr_hash->super), key);
 
     if (NULL == key_item) {
 	return MPI_KEYVAL_INVALID;
     }
 
-    attr = lam_hash_table_get_value_uint32(keyhash, key);
+    attr = ompi_hash_table_get_value_uint32(keyhash, key);
 
     if (NULL == attr) {
 	*flag = 0;
@@ -406,35 +406,35 @@ lam_attr_get(lam_hash_table_t *keyhash, int key, void *attribute,
 /* There is too much of code copy/paste in here, see if some other
    logic could work here  */
 int
-lam_attr_copy_all(lam_attribute_type_t type, void *old_object, 
-		  void *new_object, lam_hash_table_t *oldkeyhash,
-		  lam_hash_table_t *newkeyhash)
+ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object, 
+		  void *new_object, ompi_hash_table_t *oldkeyhash,
+		  ompi_hash_table_t *newkeyhash)
 {
     int ret;
     int err;
     uint32_t key;
     int flag;
     void *node, *in_node, *old_attr, *new_attr;
-    lam_attrkey_item_t *hash_value;
+    ompi_attrkey_item_t *hash_value;
 
-    /* Protect against the user calling lam_attr_destroy and then
+    /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
     if (NULL == attr_hash)
 	return MPI_ERR_INTERN;
 
 	/* Get the first key-attr in the CWD hash */
-	ret = lam_hash_table_get_first_key_uint32(oldkeyhash, &key, &old_attr,
+	ret = ompi_hash_table_get_first_key_uint32(oldkeyhash, &key, &old_attr,
 						  &node);
 
 	/* While we still have some key-attr pair in the CWD hash */
-	while (ret != LAM_ERROR) {
+	while (ret != OMPI_ERROR) {
 	    in_node = node;
 
 	    /* Get the attr_item in the main hash - so that we know
 	       what the copy_attr_fn is */
 
-	    hash_value = (lam_attrkey_item_t *)
-		lam_hash_table_get_value_uint32(&(attr_hash->super), key);
+	    hash_value = (ompi_attrkey_item_t *)
+		ompi_hash_table_get_value_uint32(&(attr_hash->super), key);
 
 	    assert (hash_value != NULL);
 	    
@@ -472,11 +472,11 @@ lam_attr_copy_all(lam_attribute_type_t type, void *old_object,
 	       assuming that new_attr should have actually been a
 	       double pointer in the copy fn, but since its a pointer
 	       in that MPI specs, we need to pass *new_attr here  */
-	    lam_attr_set(type, new_object, newkeyhash, key, 
+	    ompi_attr_set(type, new_object, newkeyhash, key, 
 			  new_attr, 1);
 
 	    
-	    ret = lam_hash_table_get_next_key_uint32(oldkeyhash, &key, 
+	    ret = ompi_hash_table_get_next_key_uint32(oldkeyhash, &key, 
 						     &old_attr, in_node, 
 						     &node);
 	}
@@ -485,23 +485,23 @@ lam_attr_copy_all(lam_attribute_type_t type, void *old_object,
 
 
 int
-lam_attr_delete_all(lam_attribute_type_t type, void *object, 
-		    lam_hash_table_t *keyhash)
+ompi_attr_delete_all(ompi_attribute_type_t type, void *object, 
+		    ompi_hash_table_t *keyhash)
 {
     int ret;
     uint32_t key, oldkey;
     void *node, *in_node, *old_attr;
 
-    /* Protect against the user calling lam_attr_destroy and then
+    /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
     if (NULL == attr_hash)
 	return MPI_ERR_INTERN;
 	
     /* Get the first key in local CWD hash  */
-    ret = lam_hash_table_get_first_key_uint32(keyhash,
+    ret = ompi_hash_table_get_first_key_uint32(keyhash,
 					      &key, &old_attr,
 					      &node);
-    while (ret != LAM_ERROR) {
+    while (ret != OMPI_ERROR) {
 
 	/* Save this node info for deletion, before we move onto the
 	   next node */
@@ -511,12 +511,12 @@ lam_attr_delete_all(lam_attribute_type_t type, void *object,
 	
 	/* Move to the next node */
 
-	ret = lam_hash_table_get_next_key_uint32(keyhash,
+	ret = ompi_hash_table_get_next_key_uint32(keyhash,
 						 &key, &old_attr, 
 						 in_node, &node);
 	/* Now delete this attribute */
 
-	lam_attr_delete(type, object, keyhash, oldkey, 1);
+	ompi_attr_delete(type, object, keyhash, oldkey, 1);
 
     }
 	

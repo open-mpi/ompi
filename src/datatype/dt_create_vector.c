@@ -8,7 +8,7 @@
  *
  */
 
-int lam_ddt_create_vector( int count, int bLength, long stride,
+int ompi_ddt_create_vector( int count, int bLength, long stride,
                            dt_desc_t* oldType, dt_desc_t** newType )
 {
    long extent = oldType->ub - oldType->lb;
@@ -16,30 +16,30 @@ int lam_ddt_create_vector( int count, int bLength, long stride,
 
    if( bLength == stride ) {
       /* the elements are contiguous */
-      pData = lam_ddt_create( oldType->desc.used + 2 );
-      lam_ddt_add( pData, oldType, count * bLength, 0, extent );
+      pData = ompi_ddt_create( oldType->desc.used + 2 );
+      ompi_ddt_add( pData, oldType, count * bLength, 0, extent );
    } else {
       if( count > 1 ) {
          if( bLength == 1 ) {
-            pData = lam_ddt_create( oldType->desc.used + 2 );
-            lam_ddt_add( pData, oldType, count - 1, 0, stride * extent );
+            pData = ompi_ddt_create( oldType->desc.used + 2 );
+            ompi_ddt_add( pData, oldType, count - 1, 0, stride * extent );
          } else {
-            pTempData = lam_ddt_create( oldType->desc.used + 2 );
-            pData = lam_ddt_create( oldType->desc.used + 2 + 2 );
-            lam_ddt_add( pTempData, oldType, bLength, 0, extent );
-            lam_ddt_add( pData, pTempData, count - 1, 0, stride * extent );
+            pTempData = ompi_ddt_create( oldType->desc.used + 2 );
+            pData = ompi_ddt_create( oldType->desc.used + 2 + 2 );
+            ompi_ddt_add( pTempData, oldType, bLength, 0, extent );
+            ompi_ddt_add( pData, pTempData, count - 1, 0, stride * extent );
             OBJ_RELEASE( pTempData );
          }
       } else {
-         pData = lam_ddt_create( oldType->desc.used + 2 );
+         pData = ompi_ddt_create( oldType->desc.used + 2 );
       }
-      lam_ddt_add( pData, oldType, bLength, (count - 1) * extent * stride, extent );
+      ompi_ddt_add( pData, oldType, bLength, (count - 1) * extent * stride, extent );
    }
    *newType = pData;
    return 0;
 }
 
-int lam_ddt_create_hvector( int count, int bLength, long stride,
+int ompi_ddt_create_hvector( int count, int bLength, long stride,
                             dt_desc_t* oldType, dt_desc_t** newType )
 {
    long extent = oldType->ub - oldType->lb;
@@ -47,19 +47,19 @@ int lam_ddt_create_hvector( int count, int bLength, long stride,
 
    if( (extent * bLength) == stride ) {
       /* contiguous */
-      pData = lam_ddt_create( oldType->desc.used + 2 );
-      lam_ddt_add( pData, oldType, count * bLength, 0, extent );
+      pData = ompi_ddt_create( oldType->desc.used + 2 );
+      ompi_ddt_add( pData, oldType, count * bLength, 0, extent );
    } else {
       if( count > 1 ) {
-         pTempData = lam_ddt_create( oldType->desc.used + 2 );
-         pData = lam_ddt_create( oldType->desc.used + 2 + 2 );
-         lam_ddt_add( pTempData, oldType, bLength, 0, extent );
-         lam_ddt_add( pData, pTempData, count - 1, 0, stride );
+         pTempData = ompi_ddt_create( oldType->desc.used + 2 );
+         pData = ompi_ddt_create( oldType->desc.used + 2 + 2 );
+         ompi_ddt_add( pTempData, oldType, bLength, 0, extent );
+         ompi_ddt_add( pData, pTempData, count - 1, 0, stride );
          OBJ_RELEASE( pTempData );
       } else {
-         pData = lam_ddt_create( oldType->desc.used + 2 );
+         pData = ompi_ddt_create( oldType->desc.used + 2 );
       }
-      lam_ddt_add( pData, oldType, bLength, (count - 1) * stride, extent );
+      ompi_ddt_add( pData, oldType, bLength, (count - 1) * stride, extent );
    }
    *newType = pData;
    return 0;

@@ -3,12 +3,12 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([LAM_SETUP_CC],[
+AC_DEFUN([OMPI_SETUP_CC],[
 
 # Modularize this setup so that sub-configure.in scripts can use this
 # same setup code.
 
-lam_show_subtitle "C compiler and preprocessor" 
+ompi_show_subtitle "C compiler and preprocessor" 
 
 # $%@#!@#% AIX!!  This has to be called before anything invokes the C
 # compiler.
@@ -19,25 +19,25 @@ dnl AC_AIX
 # Check for the compiler
 #
 
-lam_cflags_save="$CFLAGS"
+ompi_cflags_save="$CFLAGS"
 AC_PROG_CC
 BASECC="`basename $CC`"
-CFLAGS="$lam_cflags_save"
-AC_DEFINE_UNQUOTED(LAM_CC, "$CC", [LAM underlying C compiler])
+CFLAGS="$ompi_cflags_save"
+AC_DEFINE_UNQUOTED(OMPI_CC, "$CC", [OMPI underlying C compiler])
 
-# When building LAM, we need this everywhere
+# When building OMPI, we need this everywhere
 
-CPPFLAGS="$CPPFLAGS -DLAM_BUILDING=1"
+CPPFLAGS="$CPPFLAGS -DOMPI_BUILDING=1"
 
 # Do we want debugging?
 
 if test "$WANT_DEBUG" = "1"; then
     CFLAGS="$CFLAGS -g"
-    LAM_UNIQ(CFLAGS)
+    OMPI_UNIQ(CFLAGS)
     AC_MSG_WARN([-g has been added to CFLAGS (--enable-debug)])
 fi
 
-LAM_CFLAGS_BEFORE_PICKY="$CFLAGS"
+OMPI_CFLAGS_BEFORE_PICKY="$CFLAGS"
 if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     add="-Wall -Wundef -Wno-long-long"
     add="$add -Wmissing-prototypes -Wstrict-prototypes"
@@ -52,7 +52,7 @@ if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     add="$add -Werror-implicit-function-declaration "
 
     CFLAGS="$CFLAGS $add"
-    LAM_UNIQ(CFLAGS)
+    OMPI_UNIQ(CFLAGS)
     AC_MSG_WARN([$add has been added to CFLAGS (developer copy)])
     unset add
 fi
@@ -64,7 +64,7 @@ if test "$GCC" = "yes"; then
     add=
     AC_TRY_COMPILE([], [], add=" -finline-functions")
     CFLAGS="$CFLAGS_orig$add"
-    LAM_UNIQ(CFLAGS)
+    OMPI_UNIQ(CFLAGS)
     AC_MSG_WARN([$add has been added to CFLAGS])
     unset add
 fi
@@ -82,10 +82,10 @@ else
     OPTFLAGS="-O"
 fi
 
-LAM_CHECK_OPTFLAGS("$LAM_CFLAGS_BEFORE_PICKY")
-LAM_CFLAGS_BEFORE_PICKY="$co_result"
+OMPI_CHECK_OPTFLAGS("$OMPI_CFLAGS_BEFORE_PICKY")
+OMPI_CFLAGS_BEFORE_PICKY="$co_result"
 
 AC_MSG_CHECKING([for C optimization flags])
-LAM_CHECK_OPTFLAGS("$CFLAGS")
+OMPI_CHECK_OPTFLAGS("$CFLAGS")
 AC_MSG_RESULT([$co_result])
 CFLAGS="$co_result"])

@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
@@ -11,11 +11,11 @@
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_get_contents = PMPI_Type_get_contents
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -33,17 +33,17 @@ MPI_Type_get_contents(MPI_Datatype mtype,
    int rc;
 
    if( MPI_PARAM_CHECK ) {
-      if( LAM_MPI_INVALID_STATE ) {
-         LAM_ERRHANDLER_RETURN( MPI_ERR_INTERN, (lam_communicator_t*)NULL,
+      if( OMPI_MPI_INVALID_STATE ) {
+         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
                                 MPI_ERR_INTERN, FUNC_NAME );
       }
    }
 
-   rc = lam_ddt_get_args( mtype, 1, &max_integers, array_of_integers,
+   rc = ompi_ddt_get_args( mtype, 1, &max_integers, array_of_integers,
                           &max_addresses, array_of_addresses,
                           &max_datatypes, array_of_datatypes, NULL );
    if( rc != MPI_SUCCESS ) {
-      LAM_ERRHANDLER_RETURN( MPI_ERR_INTERN, (lam_communicator_t*)NULL,
+      OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
                              MPI_ERR_INTERN, FUNC_NAME );
    }
 

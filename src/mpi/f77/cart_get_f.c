@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_CART_GET = mpi_cart_get_f
 #pragma weak pmpi_cart_get = mpi_cart_get_f
 #pragma weak pmpi_cart_get_ = mpi_cart_get_f
 #pragma weak pmpi_cart_get__ = mpi_cart_get_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_CART_GET,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_CART_GET,
                            pmpi_cart_get,
                            pmpi_cart_get_,
                            pmpi_cart_get__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_CART_GET,
                            (comm, maxdims, dims, periods, coords, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_CART_GET = mpi_cart_get_f
 #pragma weak mpi_cart_get = mpi_cart_get_f
 #pragma weak mpi_cart_get_ = mpi_cart_get_f
 #pragma weak mpi_cart_get__ = mpi_cart_get_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_CART_GET,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_CART_GET,
                            mpi_cart_get,
                            mpi_cart_get_,
                            mpi_cart_get__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_CART_GET,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

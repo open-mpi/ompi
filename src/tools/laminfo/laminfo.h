@@ -2,19 +2,19 @@
 // $HEADER$
 //
 
-#ifndef LAMINFO_H
-#define LAMINFO_H
+#ifndef OMPI_INFO_H
+#define OMPI_INFO_H
 
 #include <string>
 #include <vector>
 #include <map>
 
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "util/cmd_line.h"
 #include "mca/mca.h"
 
 
-namespace laminfo {
+namespace ompi_info {
 
   //
   // Globals
@@ -23,10 +23,10 @@ namespace laminfo {
   typedef std::vector<std::string> type_vector_t;
 
   extern bool pretty;
-  extern lam_cmd_line_t *cmd_line;
+  extern ompi_cmd_line_t *cmd_line;
 
   extern const std::string type_all;
-  extern const std::string type_lam;
+  extern const std::string type_ompi;
   extern const std::string type_base;
   extern type_vector_t mca_types;
 
@@ -42,8 +42,8 @@ namespace laminfo {
   extern const std::string ver_beta;
   extern const std::string ver_svn;
 
-  void do_version(bool want_all, lam_cmd_line_t *cmd_line);
-  void show_lam_version(const std::string& scope);
+  void do_version(bool want_all, ompi_cmd_line_t *cmd_line);
+  void show_ompi_version(const std::string& scope);
   void show_module_version(const std::string& type_name, 
                            const std::string& module_name,
                            const std::string& scope, 
@@ -67,10 +67,10 @@ namespace laminfo {
   void show_mca_params(const std::string& type, const std::string& module, 
                        const std::string& param);
 
-  void do_path(bool want_all, lam_cmd_line_t *cmd_line);
+  void do_path(bool want_all, ompi_cmd_line_t *cmd_line);
   void show_path(const std::string& type, const std::string& value);
 
-  void do_arch(lam_cmd_line_t *cmd_line);
+  void do_arch(ompi_cmd_line_t *cmd_line);
   void do_config(bool want_all);
 
   //
@@ -87,7 +87,7 @@ namespace laminfo {
   // Module-related functions
   //
 
-  typedef std::map<std::string, lam_list_t *> module_map_t;
+  typedef std::map<std::string, ompi_list_t *> module_map_t;
 
   extern module_map_t module_map;
 
@@ -96,4 +96,4 @@ namespace laminfo {
 
 }
 
-#endif /* LAMINFO_H */
+#endif /* OMPI_INFO_H */
