@@ -1,7 +1,7 @@
 /*
  * $HEADER$
  * 
- * $Id: comm_set_name.c,v 1.3 2004/01/07 08:08:59 jsquyres Exp $
+ * $Id: comm_set_name.c,v 1.4 2004/01/07 08:37:02 jsquyres Exp $
  */
 
 #include <string.h>
@@ -29,7 +29,7 @@ MPI_Comm_set_name(MPI_Comm comm, char *name)
   strncpy(comm->c_name, name, MPI_MAX_OBJECT_NAME);
   comm->c_name[MPI_MAX_OBJECT_NAME - 1] = 0;
 
-  /* -- Tracing information for new communicator name -- *
+  /* -- Tracing information for new communicator name -- */
   
   /* Force TotalView DLL to take note of this name setting */
 
