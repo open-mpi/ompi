@@ -45,7 +45,7 @@
 #include "mca/gpr/base/base.h"
 
 #include "runtime/runtime.h"
-
+#include "event/event.h"
 
 /*
  * Global variables and symbols for the MPI layer

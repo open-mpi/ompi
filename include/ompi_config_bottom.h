@@ -197,7 +197,8 @@ extern "C" {
 }
 #endif
 
-/* this is needed for windows ONLY. It is defined in src/win32/win_compat.h
-   if we are running on windwos, else it is defined to nothing here */
+#ifndef ompi_errno
+#define ompi_errno errno
+#endif
 
 #endif /* OMPI_CONFIG_BOTTOM_H */
