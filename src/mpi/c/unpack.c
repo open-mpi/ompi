@@ -26,10 +26,10 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
                void *outbuf, int outcount, MPI_Datatype datatype,
                MPI_Comm comm) 
 {
-  int size, rc, freeAfter;
+  int rc, freeAfter;
   ompi_convertor_t *local_convertor;
   struct iovec outvec;
-  unsigned int max_data, iov_count;
+  unsigned int size, iov_count;
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -70,9 +70,8 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
 
   /* Do the actual unpacking */
   iov_count = 1;
-  max_data = outvec.iov_len;
   rc = ompi_convertor_unpack( local_convertor, &outvec, &iov_count,
-			      &max_data, &freeAfter );
+			      &size, &freeAfter );
   *position += local_convertor->bConverted;
   OBJ_RELEASE(local_convertor);
 

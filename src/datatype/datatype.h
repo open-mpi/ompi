@@ -214,8 +214,8 @@ int ompi_convertor_pack( ompi_convertor_t* pConv,
 			 unsigned int* in_size,
 			 unsigned int* max_data,
 			 int* freeAfter );
-int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, int* pSize );
-int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, int* pSize );
+int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, unsigned int* pSize );
+int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, unsigned int* pSize );
 int ompi_convertor_create_stack_with_pos( ompi_convertor_t* pConvertor,
 					  int starting_point, int* sizes );
 
