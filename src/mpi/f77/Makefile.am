@@ -56,7 +56,8 @@ headers = \
 # by default
 #
 
-libmpi_f77_la_SOURCES   = 
+libmpi_f77_la_SOURCES   = \
+		attr_fn_f.c
 
 libmpi_f77_la_LIBADD    = \
                     $(mpi_lib) \
