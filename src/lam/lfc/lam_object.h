@@ -177,14 +177,19 @@ struct lam_object_t {
 /**
  * Static initializer for a class descriptor
  *
- * @param NAME          Symbolic name for class
- * @param PARENT        Type of parent class
+ * @param NAME          Name of class
+ * @param PARENT        Name of parent class
  * @param CONSTRUCTOR   Pointer to constructor
  * @param DESTRUCTOR    Pointer to destructor
- * @return              Static initializer string
  */
-#define OBJ_CLASS_INIT(NAME, PARENT, CONSTRUCTOR, DESTRUCTOR)   \
-    { NAME, PARENT, CONSTRUCTOR, DESTRUCTOR, 0, 0, NULL, NULL }
+#define OBJ_CLASS_INSTANCE(NAME, PARENT, CONSTRUCTOR, DESTRUCTOR)   \
+    lam_class_t NAME ## _class = { \
+        # NAME, \
+        OBJ_CLASS(PARENT), \
+        (lam_construct_t)CONSTRUCTOR, \
+        (lam_destruct_t)DESTRUCTOR, \
+        0, 0, NULL, NULL \
+    }
 
 
 /**
