@@ -30,9 +30,9 @@ int ompi_write_universe_setup_file(char *filename, ompi_universe_t *universe)
 	ompi_output(0, "cannot open file to save contact info");
 	return OMPI_ERROR;
     }
-    fprintf(fp, "%ld name: %s\n", strlen(universe->name), universe->name);
-    fprintf(fp, "%ld host: %s\n", strlen(universe->host), universe->host);
-    fprintf(fp, "%ld user: %s\n", strlen(universe->uid), universe->uid);
+    fprintf(fp, "%d name: %s\n", (int)strlen(universe->name), universe->name);
+    fprintf(fp, "%d host: %s\n", (int)strlen(universe->host), universe->host);
+    fprintf(fp, "%d user: %s\n", (int)strlen(universe->uid), universe->uid);
     if (universe->persistence) {
 	fprintf(fp, "state: persistent\n");
     } else {
@@ -44,12 +44,12 @@ int ompi_write_universe_setup_file(char *filename, ompi_universe_t *universe)
 	fprintf(fp, "mode: console\n");
     }
     if (universe->web_server) {
-	fprintf(fp, "%ld socket: %s\n", strlen(universe->socket_contact_info),
+	fprintf(fp, "%d socket: %s\n", (int)strlen(universe->socket_contact_info),
 		universe->socket_contact_info);
     } else {
-	fprintf(fp, "0\n");
+	fprintf(fp, "4 socket: none\n");
     }
-    fprintf(fp, "%ld oob: %s\n", strlen(universe->oob_contact_info),
+    fprintf(fp, "%d oob: %s\n", (int)strlen(universe->oob_contact_info),
 	    universe->oob_contact_info);
     fclose(fp);
     return OMPI_SUCCESS;
@@ -97,11 +97,11 @@ int ompi_read_universe_setup_file(char *filename, ompi_universe_t *universe)
     }
 
     universe->socket_contact_info = ompi_getline_buffer(fp);
-    if (NULL != universe->socket_contact_info) {
-	fscanf(fp, "socket: %s", universe->socket_contact_info);
-	universe->web_server = true;
-    } else {
+    fscanf(fp, "socket: %s", universe->socket_contact_info);
+    if (0 == strcmp("none", universe->socket_contact_info)) {
 	universe->web_server = false;
+    } else {
+	universe->web_server = true;
     }
 
     universe->oob_contact_info = ompi_getline_buffer(fp);
