@@ -30,7 +30,8 @@ ompi_bitmap_DEPENDENCIES = $(ompi_bitmap_LDADD)
 ompi_circular_buffer_fifo_SOURCES = ompi_circular_buffer_fifo.c 
 ompi_circular_buffer_fifo_LDADD = \
         $(top_builddir)/src/threads/mutex_spinlock.lo \
-        $(top_builddir)/test/support/libsupport.la
+        $(top_builddir)/test/support/libsupport.la \
+        $(top_builddir)/src/util/libutil.la
 ompi_circular_buffer_fifo_DEPENDENCIES = $(ompi_circular_buffer_fifo_LDADD)
 
 ompi_list_SOURCES = ompi_list.c 
