@@ -77,7 +77,7 @@ extern "C" {
 #elif OMPI_ASSEMBLY_ARCH == OMPI_POWERPC64
 #include "include/sys/powerpc/atomic.h"
 #elif OMPI_ASSEMBLY_ARCH == OMPI_SPARC32
-#error "32 bit Sparc support not implemented yet"
+#include "include/sys/sparc/atomic.h"
 #elif OMPI_ASSEMBLY_ARCH == OMPI_SPARC64
 #include "include/sys/sparc64/atomic.h"
 #endif
@@ -153,20 +153,28 @@ void ompi_atomic_wmb(void);
  *********************************************************************/
 /**
  * Volatile lock object (with optional padding).
+ *
+ * \note The internals of the lock are included here, but should be
+ * considered private.  The implementation currently in use may choose
+ * to use an int or unsigned char as the lock value - the user is not
+ * informed either way.
  */
 struct ompi_lock_t {
     union {
         volatile int lock;         /**< The lock address (an integer) */
+        volatile unsigned char sparc_lock; /**< The lock address on sparc */
         char padding[sizeof(int)]; /**< Array for optional padding */
     } u;
 };
 typedef struct ompi_lock_t ompi_lock_t;
 
 #if !defined(OMPI_HAVE_ATOMIC_SPINLOCKS) && !defined(DOXYGEN)
-#define OMPI_HAVE_ATOMIC_SPINLOCKS (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64)
+/* 0 is more like "pending" - we'll fix up at the end after all
+   the static inline functions are declared */
+#define OMPI_HAVE_ATOMIC_SPINLOCKS 0
 #endif
 
-#if defined(DOXYGEN) || OMPI_HAVE_ATOMIC_SPINLOCKS
+#if defined(DOXYGEN) || OMPI_HAVE_ATOMIC_SPINLOCKS || (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64)
 
 /**
  * Enumeration of lock states
@@ -183,7 +191,10 @@ enum {
  * @param lock         Address of the lock
  * @param value        Initial value to set lock to
  */
-static inline void ompi_atomic_init(ompi_lock_t* lock, int value);
+#if OMPI_HAVE_ATOMIC_SPINLOCKS == 0
+static inline 
+#endif
+void ompi_atomic_init(ompi_lock_t* lock, int value);
 
 
 /**
@@ -192,7 +203,10 @@ static inline void ompi_atomic_init(ompi_lock_t* lock, int value);
  * @param lock          Address of the lock.
  * @return              0 if the lock was acquired, 1 otherwise.
  */
-static inline int ompi_atomic_trylock(ompi_lock_t *lock);
+#if OMPI_HAVE_ATOMIC_SPINLOCKS == 0
+static inline
+#endif
+int ompi_atomic_trylock(ompi_lock_t *lock);
 
 
 /**
@@ -200,7 +214,10 @@ static inline int ompi_atomic_trylock(ompi_lock_t *lock);
  *
  * @param lock          Address of the lock.
  */
-static inline void ompi_atomic_lock(ompi_lock_t *lock);
+#if OMPI_HAVE_ATOMIC_SPINLOCKS == 0
+static inline
+#endif
+void ompi_atomic_lock(ompi_lock_t *lock);
 
 
 /**
@@ -208,7 +225,16 @@ static inline void ompi_atomic_lock(ompi_lock_t *lock);
  *
  * @param lock          Address of the lock.
  */
-static inline void ompi_atomic_unlock(ompi_lock_t *lock);
+#if OMPI_HAVE_ATOMIC_SPINLOCKS == 0
+static inline
+#endif
+void ompi_atomic_unlock(ompi_lock_t *lock);
+
+
+#if OMPI_HAVE_ATOMIC_SPINLOCKS == 0
+#define OMPI_HAVE_ATOMIC_SPINLOCKS (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64)
+#define OMPI_NEED_INLINE_ATOMIC_SPINLOCKS
+#endif
 
 #endif /* OMPI_HAVE_ATOMIC_SPINLOCKS */
 
