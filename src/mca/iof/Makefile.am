@@ -14,35 +14,17 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-	allocator \
-        base \
-        coll \
-        common \
-        gpr \
-        io \
-        iof \
-	llm \
-        mpool \
-        ns \
-        one \
-        oob \
-        pcm \
-	pcmclient \
-        pml \
-        ptl \
-        soh \
-        svc \
-        topo
+SUBDIRS = base $(MCA_iof_STATIC_SUBDIRS)
+DIST_SUBDIRS = base $(MCA_iof_ALL_SUBDIRS)
 
 # Source code files
 
-headers = mca.h
+headers = iof.h
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca
+ompidir = $(includedir)/openmpi/mca/iof
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
