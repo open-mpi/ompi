@@ -56,6 +56,9 @@ int mca_base_open(void)
   param_index = mca_base_param_register_string("base", NULL, "verbose",
                                                "verbose", NULL);
 
+  mca_base_param_register_int("base", NULL, "component_show_load_errors", 
+                              "component_show_load_errors", 0);
+
   /* What verbosity level do we want? */
 
   mca_base_param_lookup_string(param_index, &value);
