@@ -208,7 +208,7 @@ int mca_ptl_tcp_send(
 {
     mca_ptl_tcp_send_frag_t* sendfrag;
     int rc;
-    if (offset == 0) {
+    if (offset == 0 && sendreq->req_cached) {
         sendfrag = &((mca_ptl_tcp_send_request_t*)sendreq)->req_frag;
     } else {
         ompi_list_item_t* item;

@@ -381,8 +381,6 @@ mca_ptl_base_module_t** mca_ptl_tcp_component_init(int *num_ptl_modules,
                                                 bool *have_hidden_threads)
 {
     mca_ptl_base_module_t **ptls;
-    int rc;
-
     *num_ptl_modules = 0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
