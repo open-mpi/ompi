@@ -18,7 +18,7 @@
 #include "ompi_config.h"
 #include "include/constants.h"
 #include "mca/mca.h"
-#include "mca/ns/ns.h"
+#include "mca/ns/base/base.h"
 #include "ns_replica.h"
 
 
