@@ -936,7 +936,8 @@ static cmd_line_option_t *find_option(lam_cmd_line_t *cmd,
        lam_list_get_end(&cmd->lcl_options) != item;
        item = lam_list_get_next(item)) {
     option = (cmd_line_option_t *) item;
-    if (0 == strcmp(option_name, option->clo_long_name) ||
+    if ((NULL != option->clo_long_name &&
+         0 == strcmp(option_name, option->clo_long_name) ||
         (strlen(option_name) == 1 &&
          option_name[0] == option->clo_short_name)) {
       return option;
