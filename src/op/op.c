@@ -51,73 +51,73 @@ OBJ_CLASS_INSTANCE(ompi_op_t, ompi_object_t,
  * Helpful defines, because there's soooo many names!
  */
 #define C_INTEGER(name) \
-  { ompi_mpi_op_##name##_int }, \
-  { ompi_mpi_op_##name##_long }, \
-  { ompi_mpi_op_##name##_short }, \
-  { ompi_mpi_op_##name##_unsigned_short }, \
-  { ompi_mpi_op_##name##_unsigned }, \
-  { ompi_mpi_op_##name##_unsigned_long }
+  { ompi_mpi_op_##name##_int },            /* OMPI_OP_TYPE_INT */ \
+  { ompi_mpi_op_##name##_long },           /* OMPI_OP_TYPE_LONG */ \
+  { ompi_mpi_op_##name##_short },          /* OMPI_OP_TYPE_SHORT */ \
+  { ompi_mpi_op_##name##_unsigned_short }, /* OMPI_OP_TYPE_UNSIGNED_SHORT */ \
+  { ompi_mpi_op_##name##_unsigned },       /* OMPI_OP_TYPE_UNSIGNED */ \
+  { ompi_mpi_op_##name##_unsigned_long }   /* OMPI_OP_TYPE_UNSIGNED_LONG */
 #define C_INTEGER_NULL \
-  { NULL }, \
-  { NULL }, \
-  { NULL }, \
-  { NULL }, \
-  { NULL }, \
-  { NULL }
+  { NULL }, /* OMPI_OP_TYPE_INT */ \
+  { NULL }, /* OMPI_OP_TYPE_LONG */ \
+  { NULL }, /* OMPI_OP_TYPE_SHORT */ \
+  { NULL }, /* OMPI_OP_TYPE_UNSIGNED_SHORT */ \
+  { NULL }, /* OMPI_OP_TYPE_UNSIGNED */ \
+  { NULL }  /* OMPI_OP_TYPE_UNSIGNED_LONG */
 
 #define FORTRAN_INTEGER(name) \
-  { ompi_mpi_op_##name##_fortran_integer }
+  { ompi_mpi_op_##name##_fortran_integer }  /* OMPI_OP_TYPE_INTEGER */
 #define FORTRAN_INTEGER_NULL \
-  { NULL }
+  { NULL }  /* OMPI_OP_TYPE_INTEGER */
 
 #define FLOATING_POINT(name) \
-  { ompi_mpi_op_##name##_float }, \
-  { ompi_mpi_op_##name##_double }, \
-  { ompi_mpi_op_##name##_fortran_real }, \
-  { ompi_mpi_op_##name##_fortran_double_precision }, \
-  { ompi_mpi_op_##name##_long_double }
+  { ompi_mpi_op_##name##_float },                    /* OMPI_OP_TYPE_FLOAT */\
+  { ompi_mpi_op_##name##_double },                   /* OMPI_OP_TYPE_DOUBLE */\
+  { ompi_mpi_op_##name##_fortran_real },             /* OMPI_OP_TYPE_REAL */ \
+  { ompi_mpi_op_##name##_fortran_double_precision }, /* OMPI_OP_TYPE_DOUBLE_PRECISION */ \
+  { ompi_mpi_op_##name##_long_double }               /* OMPI_OP_TYPE_LONG_DOUBLE */
 #define FLOATING_POINT_NULL \
-  { NULL }, \
-  { NULL }, \
-  { NULL }, \
-  { NULL }, \
-  { NULL }
+  { NULL }, /* OMPI_OP_TYPE_FLOAT */ \
+  { NULL }, /* OMPI_OP_TYPE_DOUBLE */ \
+  { NULL }, /* OMPI_OP_TYPE_REAL */ \
+  { NULL }, /* OMPI_OP_TYPE_DOUBLE_PRECISION */ \
+  { NULL }  /* OMPI_OP_TYPE_LONG_DOUBLE */
 
 #define LOGICAL(name) \
-  { ompi_mpi_op_##name##_fortran_logical }
+  { ompi_mpi_op_##name##_fortran_logical }  /* OMPI_OP_TYPE_LOGICAL */
 #define LOGICAL_NULL \
-  { NULL }
+  { NULL }  /* OMPI_OP_TYPE_LOGICAL */
 
 #define COMPLEX(name) \
-  { ompi_mpi_op_##name##_fortran_complex }
+  { ompi_mpi_op_##name##_fortran_complex }  /* OMPI_OP_TYPE_COMPLEX */
 #define COMPLEX_NULL \
-  { NULL }
+  { NULL }  /* OMPI_OP_TYPE_COMPLEX */
 
 #define BYTE(name) \
-  { ompi_mpi_op_##name##_byte }
+  { ompi_mpi_op_##name##_byte }  /* OMPI_OP_TYPE_BYTE */
 #define BYTE_NULL \
-  { NULL }
+  { NULL }  /* OMPI_OP_TYPE_BYTE */
 
 #define TWOLOC(name) \
-  { ompi_mpi_op_##name##_2real }, \
-  { ompi_mpi_op_##name##_2double_precision }, \
-  { ompi_mpi_op_##name##_2integer }, \
-  { ompi_mpi_op_##name##_float_int }, \
-  { ompi_mpi_op_##name##_double_int }, \
-  { ompi_mpi_op_##name##_2int }, \
-  { ompi_mpi_op_##name##_long_int }, \
-  { ompi_mpi_op_##name##_short_int }, \
-  { ompi_mpi_op_##name##_long_double_int }
+  { ompi_mpi_op_##name##_2real },             /* OMPI_OP_TYPE_2REAL */ \
+  { ompi_mpi_op_##name##_2double_precision }, /* OMPI_OP_TYPE_2DOUBLE_PRECISION */ \
+  { ompi_mpi_op_##name##_2integer },          /* OMPI_OP_TYPE_2INTEGER */ \
+  { ompi_mpi_op_##name##_float_int },         /* OMPI_OP_TYPE_FLOAT_INT */ \
+  { ompi_mpi_op_##name##_double_int },        /* OMPI_OP_TYPE_DOUBLE_INT */ \
+  { ompi_mpi_op_##name##_long_int },          /* OMPI_OP_TYPE_LONG_INT */ \
+  { ompi_mpi_op_##name##_2int },              /* OMPI_OP_TYPE_2INT */ \
+  { ompi_mpi_op_##name##_short_int },         /* OMPI_OP_TYPE_SHORT_INT */ \
+  { ompi_mpi_op_##name##_long_double_int }    /* OMPI_OP_TYPE_LONG_DOUBLE_INT */
 #define TWOLOC_NULL \
-  { NULL }, \
-  { NULL }, \
-  { NULL }, \
-  { NULL }, \
-  { NULL }, \
-  { NULL }, \
-  { NULL }, \
-  { NULL }, \
-  { NULL }
+  { NULL }, /* OMPI_OP_TYPE_2REAL */\
+  { NULL }, /* OMPI_OP_TYPE_2DOUBLE_PRECISION */ \
+  { NULL }, /* OMPI_OP_TYPE_2INTEGER */ \
+  { NULL }, /* OMPI_OP_TYPE_FLOAT_INT */ \
+  { NULL }, /* OMPI_OP_TYPE_DOUBLE_INT */ \
+  { NULL }, /* OMPI_OP_TYPE_LONG_INT */ \
+  { NULL }, /* OMPI_OP_TYPE_2INT */ \
+  { NULL }, /* OMPI_OP_TYPE_SHORT_INT */ \
+  { NULL }  /* OMPI_OP_TYPE_LONG_DOUBLE_INT */
 
 
 /*
