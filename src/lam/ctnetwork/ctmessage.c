@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "runtime/ctnetwork/ctmessage.h"
+#include "lam/ctnetwork/ctmessage.h"
 #include "lam/util/malloc.h"
 
 
@@ -268,7 +268,3 @@ uint8_t *lam_pk_ctm_get_data(uint8_t *buffer, uint32_t *len)
 {
     
 }
-
-
-
-

@@ -2,11 +2,11 @@
  * $HEADER$
  */
 
-#ifndef CT_CONTROLLER_H
-#define CT_CONTROLLER_H
+#ifndef LAM_CT_CONTROLLER_H
+#define LAM_CT_CONTROLLER_H
 
 #include "lam/lfc/object.h"
-#include "runtime/ctnetwork/ctnode.h"
+#include "lam/ctnetwork/ctnode.h"
 
 typedef void    (*lam_ctmsg_recvd_fn)(struct lam_ctcontroller *,
                                             lam_ctmsg_t *,
@@ -40,6 +40,4 @@ inline void lam_ctl_set_failed_callback(lam_ctctrl_t *ctrl, lam_ctnode_failed_fn
 }
 
 
-#endif  /* CT_CONTROLLER_H */
-
-
+#endif  /* LAM_CT_CONTROLLER_H */

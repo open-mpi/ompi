@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef CT_MESSAGE_H
-#define CT_MESSAGE_H
+#ifndef LAM_CT_MESSAGE_H
+#define LAM_CT_MESSAGE_H
 
 #include "lam/lfc/object.h"
 
@@ -99,42 +99,69 @@ void lam_pk_ctc_set_info(uint8_t *buffer, uint8_t *info);
  * Accessor functions
  */
 
-inline uint16_t lam_ctc_get_is_user_msg(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_is_user_msg;}
-inline uint16_t lam_ctc_set_is_user_msg(lam_ct_ctrl_t *ctrl, uint16_t yn)
+lam_bool_t lam_ctc_get_is_user_msg(lam_ct_ctrl_t *ctrl);
+inline lam_bool_t lam_ctc_get_is_user_msg(lam_ct_ctrl_t *ctrl)
+{
+  return ctrl->ctc_is_user_msg;
+}
+void lam_ctc_set_is_user_msg(lam_ct_ctrl_t *ctrl, lam_bool_t yn);
+inline void lam_ctc_set_is_user_msg(lam_ct_ctrl_t *ctrl, lam_bool_t yn)
 {
     ctrl->ctc_is_user_msg = yn;
 }
 
-inline uint16_t lam_ctc_get_routing_type(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_routing_type;}
-inline uint16_t lam_ctc_set_routing_type(lam_ct_ctrl_t *ctrl, int rtype)
+uint16_t lam_ctc_get_routing_type(lam_ct_ctrl_t *ctrl);
+inline uint16_t lam_ctc_get_routing_type(lam_ct_ctrl_t *ctrl) 
+{
+  return ctrl->ctc_routing_type;
+}
+void lam_ctc_set_routing_type(lam_ct_ctrl_t *ctrl, int rtype);
+inline void lam_ctc_set_routing_type(lam_ct_ctrl_t *ctrl, int rtype)
 {
     ctrl->ctc_routing_type = rtype;
 }
 
-inline uint32_t lam_ctc_get_sender(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_sender;}
+uint32_t lam_ctc_get_sender(lam_ct_ctrl_t *ctrl);
+inline uint32_t lam_ctc_get_sender(lam_ct_ctrl_t *ctrl) 
+{
+  return ctrl->ctc_sender;
+}
+void lam_ctc_set_sender(lam_ct_ctrl_t *ctrl, uint32_t sender);
 inline void lam_ctc_set_sender(lam_ct_ctrl_t *ctrl, uint32_t sender)
 {
     ctrl->ctc_sender = sender;
 }
 
-inline uint32_t lam_ctc_get_dest(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_dest;}
+uint32_t lam_ctc_get_dest(lam_ct_ctrl_t *ctrl);
+inline uint32_t lam_ctc_get_dest(lam_ct_ctrl_t *ctrl) 
+{
+  return ctrl->ctc_dest;
+}
+void lam_ctc_set_dest(lam_ct_ctrl_t *ctrl, uint32_t dest);
 inline void lam_ctc_set_dest(lam_ct_ctrl_t *ctrl, uint32_t dest)
 {
     ctrl->ctc_dest = dest;
 }
 
-inline uint32_t lam_ctc_get_forwarding(lam_ct_ctrl_t *ctrl) {return ctrl->ctc_forwarding;}
+uint32_t lam_ctc_get_forwarding(lam_ct_ctrl_t *ctrl);
+inline uint32_t lam_ctc_get_forwarding(lam_ct_ctrl_t *ctrl) 
+{
+  return ctrl->ctc_forwarding;
+}
+void lam_ctc_set_forwarding(lam_ct_ctrl_t *ctrl, uint32_t node);
 inline void lam_ctc_set_forwarding(lam_ct_ctrl_t *ctrl, uint32_t node)
 {
     ctrl->ctc_forwarding = node;
 }
 
+uint8_t *lam_ctc_get_info(lam_ct_ctrl_t *ctrl, uint32_t *len);
 inline uint8_t *lam_ctc_get_info(lam_ct_ctrl_t *ctrl, uint32_t *len)
 {
     *len = ctrl->ctc_info_len;
     return ctrl->ctc_info;
 }
 
+void lam_ctc_set_info(lam_ct_ctrl_t *ctrl, uint32_t len, uint8_t *info);
 inline void lam_ctc_set_info(lam_ct_ctrl_t *ctrl, uint32_t len, uint8_t *info)
 {
     ctrl->ctc_info_len = len;
@@ -186,13 +213,16 @@ uint8_t *lam_pk_ctm_get_data(uint8_t *buffer, uint32_t *len);
  *
  */
 
-inline lam_ct_ctrl_t *lam_ctm_get_control(lam_ctmsg_t *msg) {return msg->ctm_ctrl;}
+lam_ct_ctrl_t *lam_ctm_get_control(lam_ctmsg_t *msg);
+inline lam_ct_ctrl_t *lam_ctm_get_control(lam_ctmsg_t *msg) 
+{
+  return msg->ctm_ctrl;
+}
+void lam_ctm_set_control(lam_ctmsg_t *msg, lam_ct_ctrl_t *ctrl);
 inline void lam_ctm_set_control(lam_ctmsg_t *msg, lam_ct_ctrl_t *ctrl)
 {
     msg->ctm_ctrl = ctrl;
 }
 
 
-#endif  /* CT_MESSAGE_H */
-
-
+#endif  /* LAM_CT_MESSAGE_H */

@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef CT_NODE_H
-#define CT_NODE_H
+#ifndef LAM_CT_NODE_H
+#define LAM_CT_NODE_H
 
 #include "lam/lfc/object.h"
 #include "lam/lfc/hash_table.h"
@@ -151,5 +151,4 @@ typedef struct lam_hcube
 
 extern lam_class_info_t     hcube_cls;
 
-#endif  /* CT_NODE_H */
-
+#endif  /* LAM_CT_NODE_H */
