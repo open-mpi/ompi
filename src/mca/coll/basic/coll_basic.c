@@ -133,7 +133,7 @@ int mca_coll_basic_init_query(bool *allow_multi_user_threads,
 const mca_coll_base_module_1_0_0_t *
 mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
-  /* This module should always have the lowest available priority */
+  /* Use a low priority, but allow other components to be lower */
 
   *priority = 10;
 
