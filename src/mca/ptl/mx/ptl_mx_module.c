@@ -143,6 +143,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     mca_ptl_mx_module_t* ptl = (mca_ptl_mx_module_t*)context;
     mca_ptl_mx_recv_frag_t *frag;
     mx_return_t mx_return;
+    ompi_ptr_t match;
     int rc;
 
     MCA_PTL_MX_RECV_FRAG_ALLOC(frag, rc);
@@ -152,6 +153,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     }
     frag->frag_recv.frag_base.frag_owner = &ptl->super;
     frag->frag_recv.frag_base.frag_peer = NULL;
+    match.lval = match_value;
 
     /* first fragment - post a buffer */
     if(match_value == 0) {
@@ -163,9 +165,8 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     /* fragment has already been matched */
     } else {
 
-        mca_pml_base_recv_request_t* request = (mca_pml_base_recv_request_t*)
-            (uint32_t)(match_value >> 32);
-        uint32_t offset = (uint32_t)match_value;
+        mca_pml_base_recv_request_t* request = (mca_pml_base_recv_request_t*)match.sval.uval;
+        uint32_t offset = match.sval.lval;
         ompi_proc_t *proc = ompi_comm_peer_lookup(request->req_base.req_comm,
             request->req_base.req_ompi.req_status.MPI_SOURCE);
         ompi_convertor_t* convertor = &frag->frag_recv.frag_base.frag_convertor;

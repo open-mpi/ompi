@@ -276,6 +276,7 @@ int mca_ptl_mx_send_continue(
     mca_ptl_mx_module_t* mx_ptl = (mca_ptl_mx_module_t*)ptl;
     mca_ptl_mx_send_frag_t* sendfrag;
     mca_ptl_base_header_t* hdr;
+    ompi_ptr_t match;
     mx_return_t mx_return;
     uint64_t match_value;
     int rc;
@@ -365,13 +366,14 @@ int mca_ptl_mx_send_continue(
     sendreq->req_offset += size;
 
     /* start the fragment */
-    match_value = ((uint64_t)sendreq << 32) | (uint64_t)offset;
+    match.sval.uval = (uint32_t)sendreq;
+    match.sval.lval = offset;
     mx_return = mx_isend(
         mx_ptl->mx_endpoint,
         sendfrag->frag_segments,
         sendfrag->frag_segment_count,
         sendfrag->frag_send.frag_base.frag_peer->peer_addr,
-        match_value,
+        match.lval,
         sendfrag,
         &sendfrag->frag_request);
     if(mx_return != MX_SUCCESS) {
