@@ -66,6 +66,9 @@
  * \par \em [process] A directory for the specific process, will house
  * all information for that process.
  *
+ * \par If \c create is \c true, the directory will be created and the
+ * proc_info structure will be updated.  If proc_info is false,
+ *
  */
 
 /** @param create A boolean variable that indicates whether or not to
