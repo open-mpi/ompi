@@ -17,8 +17,8 @@
 [usage]
 Usage: %s --local-offset <vpid> [--high-qos]
 
-  --local_offset <vpid>	      Starting vpid from which to assign for all
-                              processes started by this bootproxy
+  --local_offset <vpid>	      Starting vpid from which to assign to all
+                              processes started by this bootproxy.
   --high-qos                  Do not exit until all processes started
                               have exited.  Do not close
                               std{in,out,err}.  If one process exits
@@ -26,12 +26,12 @@ Usage: %s --local-offset <vpid> [--high-qos]
                               started processes.
 [could-not-receive-schedule]
 Open MPI was unable to start a process on one or more nodes using the
-bootproxy strartup mechanism.  The bootproxy client was able to
+bootproxy startup mechanism.  The bootproxy client was able to
 start but was not able to receive the scheduling information from the
 starting process.  The error returned was %d.
 [could-not-chdir]
 Open MPI was unable to start a process on one or more nodes using the
-bootproxy strartup mechanism.  The bootproxy client was able to
+bootproxy startup mechanism.  The bootproxy client was able to
 start and receive startup information, but was unable to set the
 current working directory of the new process.
 
@@ -39,7 +39,7 @@ current working directory of the new process.
   The error from chdir was:      %s
 [could-not-fork]
 Open MPI was unable to start a process on one or more nodes using the
-bootproxy strartup mechanism.  The bootproxy client was able to
+bootproxy startup mechanism.  The bootproxy client was able to
 start and receive startup information, but was unable to fork the new
 process.
 
@@ -47,7 +47,7 @@ process.
   The error from fork was:       %s
 [could-not-exec]
 Open MPI was unable to start a process on one or more nodes using the
-bootproxy strartup mechanism.  The bootproxy client was able to
+bootproxy startup mechanism.  The bootproxy client was able to
 start and receive startup information, but was unable to exec the new
 process.
 
