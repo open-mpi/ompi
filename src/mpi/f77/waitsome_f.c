@@ -52,11 +52,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAITSOME,
 static const char FUNC_NAME[] = "MPI_WAITSOME";
 
 
-void mpi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *outcount, MPI_Fint *array_of_indices, MPI_Fint *array_of_statuses, MPI_Fint *ierr)
+void mpi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
+		    MPI_Fint *outcount, MPI_Fint *array_of_indices,
+		    MPI_Fint *array_of_statuses, MPI_Fint *ierr)
 {
     MPI_Request *c_req;
     MPI_Status  *c_status;
     int i;
+    OMPI_SINGLE_NAME_DECL(outcount);
+    OMPI_ARRAY_NAME_DECL(array_of_indices);
 
     c_req = malloc(*incount * (sizeof(MPI_Request) + sizeof(MPI_Status)));
     if (NULL == c_req) {
@@ -70,10 +74,15 @@ void mpi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests, MPI_Fint *ou
         c_req[i] = MPI_Request_f2c(array_of_requests[i]);
     }
 
-    *ierr = MPI_Waitsome(*incount, c_req, outcount, array_of_indices, 
-                         c_status);
+    OMPI_ARRAY_FINT_2_INT_ALLOC(array_of_indices, *incount);
+    *ierr = OMPI_INT_2_FINT(MPI_Waitsome(OMPI_FINT_2_INT(*incount), c_req, 
+				 OMPI_SINGLE_NAME_CONVERT(outcount),
+				 OMPI_ARRAY_NAME_CONVERT(array_of_indices), 
+				 c_status));
 
     if (MPI_SUCCESS == *ierr) {
+	OMPI_SINGLE_INT_2_FINT(outcount);
+	OMPI_ARRAY_INT_2_FINT(array_of_indices, *incount);
         /*
          * Increment indexes by one for fortran conventions
          */

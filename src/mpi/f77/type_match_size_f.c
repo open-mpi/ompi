@@ -50,7 +50,9 @@ void mpi_type_match_size_f(MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type, 
 {
     MPI_Datatype c_type;
 
-    *ierr = MPI_Type_match_size(*typeclass, *size, &c_type);
+    *ierr = OMPI_INT_2_FINT(MPI_Type_match_size(OMPI_FINT_2_INT(*typeclass),
+						OMPI_FINT_2_INT(*size),
+						&c_type));
 
     if (MPI_SUCCESS == *ierr) {
       *type = MPI_Type_c2f(c_type);

@@ -46,9 +46,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_ATTR,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_win_set_attr_f(MPI_Fint *win, MPI_Fint *win_keyval, char *attribute_val, MPI_Fint *ierr)
+void mpi_win_set_attr_f(MPI_Fint *win, MPI_Fint *win_keyval,
+			char *attribute_val, MPI_Fint *ierr)
 {
     MPI_Win c_win = MPI_Win_f2c( *win );
 
-    *ierr = MPI_Win_set_attr( c_win, *win_keyval, attribute_val );
+    *ierr = OMPI_INT_2_FINT(MPI_Win_set_attr( c_win, 
+					      OMPI_FINT_2_INT(*win_keyval),
+					      attribute_val ));
 }

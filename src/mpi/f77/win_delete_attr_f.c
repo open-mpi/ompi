@@ -51,12 +51,13 @@ static const char FUNC_NAME[] = "MPI_Win_delete_attr_f";
 void mpi_win_delete_attr_f(MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr)
 {
     MPI_Win c_win = MPI_Win_f2c( *win );
-    int ret; 
+    int ret, c_err; 
 
     if (MPI_PARAM_CHECK) {
         if (MPI_WIN_NULL == c_win) {
-            *ierr = OMPI_ERRHANDLER_INVOKE(c_win, MPI_ERR_WIN, 
-                                         FUNC_NAME);
+            c_err = OMPI_ERRHANDLER_INVOKE(c_win, MPI_ERR_WIN, 
+					   FUNC_NAME);
+	    *ierr = OMPI_INT_2_FINT(c_err);
         }
     }
   
@@ -68,5 +69,4 @@ void mpi_win_delete_attr_f(MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr)
     } else {
         *ierr = MPI_SUCCESS;
     }
-
 }

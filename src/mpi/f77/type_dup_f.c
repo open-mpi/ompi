@@ -51,7 +51,7 @@ void mpi_type_dup_f(MPI_Fint *type, MPI_Fint *newtype, MPI_Fint *ierr)
     MPI_Datatype c_type = MPI_Type_f2c(*type);
     MPI_Datatype c_new;
 
-    *ierr = OMPI_FINT_2_INT(MPI_Type_dup(c_type, &c_new));
+    *ierr = OMPI_INT_2_FINT(MPI_Type_dup(c_type, &c_new));
 
     if (MPI_SUCCESS == *ierr) {
       *newtype = MPI_Type_c2f(c_new);

@@ -51,7 +51,7 @@ void mpi_wait_f(MPI_Fint *request, MPI_Fint *status, MPI_Fint *ierr)
     MPI_Request c_req = MPI_Request_f2c(*request);
     MPI_Status  c_status;
 
-    *ierr = MPI_Wait(&c_req, &c_status);
+    *ierr = OMPI_INT_2_FINT(MPI_Wait(&c_req, &c_status));
 
     if (MPI_SUCCESS == *ierr) {
         /* reset request handle to MPI_REQUEST_NULL */

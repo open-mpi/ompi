@@ -51,7 +51,7 @@ void mpi_type_ub_f(MPI_Fint *mtype, MPI_Fint *ub, MPI_Fint *ierr)
     MPI_Datatype c_mtype = MPI_Type_f2c(*mtype);
     MPI_Aint c_ub;
 
-    *ierr = MPI_Type_ub(c_mtype, &c_ub);
+    *ierr = OMPI_INT_2_FINT(MPI_Type_ub(c_mtype, &c_ub));
 
     if (MPI_SUCCESS == *ierr) {
       *ub = (MPI_Fint)c_ub;

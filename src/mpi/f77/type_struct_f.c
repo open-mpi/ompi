@@ -52,18 +52,23 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_STRUCT,
 static const char FUNC_NAME[] = "MPI_TYPE_STRUCT";
 
 
-void mpi_type_struct_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr)
+void mpi_type_struct_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths,
+		       MPI_Fint *array_of_displacements, 
+		       MPI_Fint *array_of_types, MPI_Fint *newtype,
+		       MPI_Fint *ierr)
 {
     MPI_Aint *c_disp_array;
     MPI_Datatype *c_type_old_array;
     MPI_Datatype c_new;
-    int i;
+    int i, c_err;
+    OMPI_ARRAY_NAME_DECL(array_of_blocklengths);
 
     c_type_old_array = malloc(*count * (sizeof(MPI_Datatype) + 
                                         sizeof(MPI_Aint)));
     if (NULL == c_type_old_array) {
-        *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
+        c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
                                        FUNC_NAME);
+	*ierr = OMPI_INT_2_FINT(c_err);
         return;
     }
     c_disp_array = (MPI_Aint*) c_type_old_array + *count;
@@ -73,8 +78,14 @@ void mpi_type_struct_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fin
         c_type_old_array[i] = MPI_Type_f2c(array_of_types[i]);
     }
 
-    *ierr = MPI_Type_struct(*count, array_of_blocklengths, c_disp_array,
-                          c_type_old_array, &c_new);
+    OMPI_ARRAY_FINT_2_INT(array_of_blocklengths, *count);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Type_struct(OMPI_FINT_2_INT(*count),
+			    OMPI_ARRAY_NAME_CONVERT(array_of_blocklengths),
+			    c_disp_array,
+			    c_type_old_array, &c_new));
+
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_blocklengths);
 
     if (MPI_SUCCESS == *ierr) {
         *newtype = MPI_Type_c2f(c_new);
@@ -82,3 +93,4 @@ void mpi_type_struct_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fin
 
     free(c_type_old_array);
 }
+    
