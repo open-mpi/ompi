@@ -50,16 +50,13 @@ static char *cmd_str="diff ./test_gpr_replica_out ./test_gpr_replica_out_std";
 int main(int argc, char **argv)
 {
     int rc, num_names, num_found;
-    int32_t i, j, cnt;
+    int32_t i;
     char *tmp=NULL, *tmp2=NULL, *names[15], *keys[5];
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t itag[10], itag2, *itaglist;
-    orte_gpr_replica_container_t *cptr=NULL, **cptrs=NULL;
-    orte_gpr_keyval_t *kptr=NULL, **kvals;
+    orte_gpr_replica_container_t *cptr=NULL;
+    orte_gpr_keyval_t *kptr=NULL;
     orte_gpr_replica_itagval_t **ivals=NULL, *iptr;
-    orte_gpr_value_t **values, *val;
-    orte_process_name_t seed={0,0,0};
-    bool found;
     
     test_init("test_gpr_replica");
 
@@ -97,9 +94,16 @@ int main(int argc, char **argv)
         return rc;
     }
     
-
+    /* initialize the pointer variables */
+    for (i=0; i < 15; i++) names[i]=NULL;
+    for (i=0; i < 5; i++) keys[i] = NULL;
+    
+    /* initialize the system variables */
     orte_process_info.seed = true;
-    orte_process_info.my_name = &seed;
+    orte_process_info.my_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    orte_process_info.my_name->cellid = 0;
+    orte_process_info.my_name->jobid = 0;
+    orte_process_info.my_name->vpid = 0;
 
     /* startup the MCA */
     if (OMPI_SUCCESS == mca_base_open()) {
@@ -187,6 +191,7 @@ int main(int argc, char **argv)
             fprintf(test_out, "gpr_test: reverse lookup passed\n");
         }
         free(tmp);
+        free(tmp2);
     }
     
     
@@ -300,6 +305,7 @@ int main(int argc, char **argv)
     } else {
         fprintf(test_out, "gpr_test: update single keyval passed\n");
     }
+    OBJ_RELEASE(kptr);
     
     ivals = (orte_gpr_replica_itagval_t**)((cptr->itagvals)->addr);
     for (i=0; i < (cptr->itagvals)->size; i++) {
@@ -315,23 +321,51 @@ int main(int argc, char **argv)
     }
 
 
+    fprintf(stderr, "add multiple keyvals to a container\n");
+    for (i=0; i < 10; i++) {
+        kptr = OBJ_NEW(orte_gpr_keyval_t);
+        kptr->key = strdup("stupid-value");
+        kptr->type = ORTE_INT16;
+        kptr->value.i16 = i * 100;
+        if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_keyval(&iptr, seg, cptr, kptr))) {
+            fprintf(test_out, "gpr_test: add keyval failed with error code %s\n",
+                        ORTE_ERROR_NAME(rc));
+            test_failure("gpr_test: add keyval failed");
+            test_finalize();
+            return rc;
+        } else {
+            fprintf(test_out, "gpr_test: add keyval passed\n");
+        }
+        OBJ_RELEASE(kptr);
+    }
+    
     fprintf(stderr, "update multiple keyvals in a container\n");
-    if(ORTE_SUCCESS != orte_gpr_replica_find_seg(&seg, false, "test-put-segment")) {
+    if(ORTE_SUCCESS != orte_gpr_replica_find_seg(&seg, false, "test-segment")) {
         fprintf(test_out, "Failure in orte_gpr_replica_find_seg\n");
         return -1;
     }
     
-    cptrs = (orte_gpr_replica_container_t**)((seg->containers)->addr);
-    for (i=0; i < (seg->containers)->size; i++) {
-        if (NULL != cptrs[i]) {
-            cptr = cptrs[i];
-        }
-    }
+    orte_gpr.dump_all(0);
 
     kptr = OBJ_NEW(orte_gpr_keyval_t);
-    kptr->key = strdup("really-stupid-value");
+    kptr->key = strdup("stupid-value");
     kptr->type = ORTE_INT32;
     kptr->value.i32 = 123456;
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_create_itag(&itag2, seg, kptr->key))) {
+        fprintf(test_out, "gpr_internal_fns: update multiple keyvals - failed to get itag with error %s\n",
+                    ORTE_ERROR_NAME(rc));
+        test_failure("gpr_test: update multiple keyvals failed");
+        test_finalize();
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_search_container(&num_found, ORTE_GPR_REPLICA_OR,
+                                                &itag2, 1, cptr))) {
+        fprintf(test_out, "gpr_internal_fns: update multiple keyvals - failed to find itag with error %s\n",
+                    ORTE_ERROR_NAME(rc));
+        test_failure("gpr_test: update multiple keyvals failed");
+        test_finalize();
+        return rc;
+    }
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_keyval(seg, cptr, kptr))) {
         fprintf(test_out, "gpr_test: update multiple keyvals failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
@@ -341,6 +375,7 @@ int main(int argc, char **argv)
     } else {
         fprintf(test_out, "gpr_test: update multiple keyvals passed\n");
     }
+    OBJ_RELEASE(kptr);
     
     orte_gpr.dump_all(0);
     
@@ -393,6 +428,22 @@ int main(int argc, char **argv)
     } else {
         fprintf(test_out, "gpr_test: release segment passed\n");
     }
+
+    fprintf(stderr, "now finalize and see if all memory cleared\n");
+    for (i=0; i < 15; i++) {
+        if (NULL != names[i]) free(names[i]);
+    }
+    for (i=0; i < 5; i++) {
+        if (NULL != keys[i]) free(keys[i]);
+    }
+    free(itaglist);
+    orte_dps_close();
+    orte_gpr_base_close();
+    orte_sys_info_finalize();
+    orte_proc_info_finalize();
+    mca_base_close();
+    ompi_malloc_finalize();
+    ompi_output_finalize();
     
     fclose( test_out );
 /*    result = system( cmd_str );

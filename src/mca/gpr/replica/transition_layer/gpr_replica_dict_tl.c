@@ -81,6 +81,7 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
 
 int orte_gpr_replica_delete_itag(orte_gpr_replica_segment_t *seg, char *name)
 {
+    orte_gpr_replica_dict_t **ptr;
     orte_gpr_replica_itag_t itag;
     int rc;
 
@@ -102,8 +103,18 @@ int orte_gpr_replica_delete_itag(orte_gpr_replica_segment_t *seg, char *name)
         return rc;
      }
 
+     /* free the dictionary element data */
+     ptr = (orte_gpr_replica_dict_t**)((seg->dict)->addr);
+     if (NULL == ptr[itag]) {  /* dict element no longer valid */
+         return ORTE_ERR_NOT_FOUND;
+     }
+     if (NULL != ptr[itag]->entry) {
+         free(ptr[itag]->entry);
+     }
+     free(ptr[itag]);
+     
      /* remove itag from segment dictionary */
-     return orte_pointer_array_set_item(seg->dict, itag, NULL);
+    return orte_pointer_array_set_item(seg->dict, itag, NULL);
 }
 
 
