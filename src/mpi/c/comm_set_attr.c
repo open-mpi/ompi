@@ -9,7 +9,7 @@
 #include "attribute/attribute.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_Comm_set_attribute = PMPI_Comm_set_attribute
+#pragma weak MPI_Comm_set_attr = PMPI_Comm_set_attr
 #endif
 
 #if OMPI_PROFILING_DEFINES

@@ -9,7 +9,7 @@
 #include "attribute/attribute.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
-#pragma weak MPI_Create_keyval = PMPI_Create_keyval
+#pragma weak MPI_Comm_create_keyval = PMPI_Comm_create_keyval
 #endif
 
 #if OMPI_PROFILING_DEFINES
