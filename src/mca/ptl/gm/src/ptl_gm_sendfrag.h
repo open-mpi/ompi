@@ -47,9 +47,8 @@ extern "C" {
      * memory pointer.
      */
     struct mca_ptl_gm_rdv_header_t {
-        mca_ptl_base_match_header_t  hdr_match;
-        ompi_ptr_t                   registered_memory;
-        ompi_ptr_t                   fragment;
+        mca_ptl_base_rendezvous_header_t  hdr_rndv;
+        ompi_ptr_t                        registered_memory;
     };
     typedef struct mca_ptl_gm_rdv_header_t mca_ptl_gm_rdv_header_t;
 

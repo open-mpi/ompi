@@ -124,7 +124,7 @@ int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
     hdr->hdr_src_ptr.pval = frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr.pval;
 
     hdr->hdr_dst_match.lval = 0;
-    hdr->hdr_dst_match.pval = request; /*should this be dst_match */
+    hdr->hdr_dst_match.pval = frag;
     hdr->hdr_dst_addr.lval = 0; /*we are filling both p and val of dest address */
     hdr->hdr_dst_addr.pval = (void *)buffer;
     hdr->hdr_dst_size = size;
@@ -146,45 +146,38 @@ int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
 
 
 int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t* putfrag,
-			      struct mca_ptl_gm_peer_t * ptl_peer,
-			      struct mca_ptl_gm_module_t * gm_ptl,
-			      struct mca_pml_base_send_request_t * request,
+			      struct mca_ptl_gm_peer_t* ptl_peer,
+			      struct mca_ptl_gm_module_t* gm_ptl,
+			      struct mca_pml_base_send_request_t* sendreq,
 			      size_t offset,
 			      size_t* size,
 			      int flags )
 {
-    mca_ptl_base_header_t *hdr;
-    hdr = (mca_ptl_base_header_t *)putfrag->send_buf;
+    ompi_convertor_t *convertor = NULL;
 
-    putfrag->status = -1;
-    putfrag->type = -1;
-    putfrag->wait_for_ack = 0;
-    putfrag->put_sent = -1;
-    putfrag->send_complete = -1;
-
-    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FIN;
-    hdr->hdr_common.hdr_flags = 0;
-  
-    hdr->hdr_ack.hdr_dst_match.lval = 0;
-    hdr->hdr_ack.hdr_dst_match.pval = request->req_peer_match.pval;
-    hdr->hdr_ack.hdr_dst_addr.lval  = 0;
-    hdr->hdr_ack.hdr_dst_addr.pval  = (void *)(request->req_peer_addr.pval);
-    hdr->hdr_ack.hdr_dst_size       = *size; 
-    hdr->hdr_ack.hdr_src_ptr.lval   = 0;
-    hdr->hdr_ack.hdr_src_ptr.pval   = (void*)putfrag;
-
-    putfrag->send_frag.frag_request         = request; 
-    putfrag->send_frag.frag_base.frag_peer  = (struct mca_ptl_base_peer_t *)ptl_peer;
-    putfrag->send_frag.frag_base.frag_owner = (mca_ptl_base_module_t *)gm_ptl;
+    putfrag->send_frag.frag_request         = sendreq;
+    putfrag->send_frag.frag_base.frag_peer  = (struct mca_ptl_base_peer_t*)ptl_peer;
+    putfrag->send_frag.frag_base.frag_owner = (mca_ptl_base_module_t*)gm_ptl;
     putfrag->send_frag.frag_base.frag_addr  = NULL;
     putfrag->send_frag.frag_base.frag_size  = 0;
-    putfrag->ptl = gm_ptl;
+    if( (*size) > 0 ) {
+        convertor = &(putfrag->send_frag.frag_base.frag_convertor);
+        ompi_convertor_init_for_send( convertor, 0,
+                                      sendreq->req_base.req_datatype,
+                                      sendreq->req_base.req_count,
+                                      sendreq->req_base.req_addr,
+                                      offset, NULL );
+    }
 
-    putfrag->wait_for_ack = 0;
-    putfrag->put_sent     = 0;
-    putfrag->type         = PUT;
-    putfrag->req          = request; 
-    assert(putfrag->req != NULL);  
+    putfrag->status        = -1;
+    putfrag->send_complete = -1;
+    putfrag->wait_for_ack  = 0;
+    putfrag->put_sent      = 0;
+    putfrag->type          = PUT;
+    putfrag->req           = sendreq;
+    putfrag->ptl           = gm_ptl;
+    putfrag->peer          = ptl_peer;
+
     return OMPI_SUCCESS; 
 }
 
