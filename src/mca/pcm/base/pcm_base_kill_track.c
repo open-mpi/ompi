@@ -54,6 +54,8 @@ static OBJ_CLASS_INSTANCE(mca_pcm_base_kill_item_t,
  */
 static ompi_list_t job_list;
 static ompi_mutex_t mutex;
+static volatile bool have_initialized_recv;
+
 
 static mca_pcm_base_kill_item_t*
 get_kill_item(mca_ns_base_jobid_t jobid)
@@ -222,6 +224,43 @@ mca_pcm_base_kill_cb(int status, ompi_process_name_t *peer,
 }
 
 
+static int
+kill_start_recv(void)
+{
+    int rc;
+
+    if (! have_initialized_recv) {
+        OMPI_LOCK(&mutex);
+        if (!have_initialized_recv) {
+            rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, 
+                                        MCA_OOB_TAG_PCM_KILL, 0,
+                                        mca_pcm_base_kill_cb, NULL);
+            have_initialized_recv = true;
+        }
+        OMPI_UNLOCK(&mutex);
+        if (rc != OMPI_SUCCESS) return rc;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+static int
+kill_stop_recv(bool really_do_it)
+{
+    int rc = OMPI_SUCCESS;
+
+    if (!have_initialized_recv) return OMPI_SUCCESS;
+
+    if (really_do_it || ompi_list_get_size(&job_list) == 0) {
+        rc =  mca_oob_recv_cancel(MCA_OOB_NAME_ANY, MCA_OOB_TAG_PCM_KILL);
+        have_initialized_recv = false;
+    }
+
+    return rc;
+}
+
+
 int
 mca_pcm_base_kill_send_job_msg(mca_ns_base_jobid_t jobid,
                                int sig, int errorcode, int flags)
@@ -322,6 +361,9 @@ mca_pcm_base_kill_register(mca_pcm_base_module_t* pcm,
     int bufsize;
     int rc;
 
+    rc = kill_start_recv();
+    if (rc != OMPI_SUCCESS) return rc;
+
     /* setup data for the buffer */
     high.cellid = low.cellid = 0;
     high.jobid = low.jobid = jobid;
@@ -360,6 +402,7 @@ mca_pcm_base_kill_unregister(mca_pcm_base_module_t* pcm,
                              mca_ns_base_vpid_t upper_vpid)
 {
     remove_job_info(jobid, lower_vpid, upper_vpid);
+    kill_stop_recv(false);
 
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
@@ -368,13 +411,10 @@ mca_pcm_base_kill_unregister(mca_pcm_base_module_t* pcm,
 int
 mca_pcm_base_kill_init(void)
 {
-    int ret;
-
     OBJ_CONSTRUCT(&job_list, ompi_list_t);
     OBJ_CONSTRUCT(&mutex, ompi_mutex_t);
 
-    ret = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_PCM_KILL, 0,
-                                 mca_pcm_base_kill_cb, NULL);
+    have_initialized_recv = false;
 
     return OMPI_SUCCESS;
 }
@@ -386,7 +426,7 @@ mca_pcm_base_kill_fini(void)
     OBJ_DESTRUCT(&mutex);
     OBJ_DESTRUCT(&job_list);
 
-    mca_oob_recv_cancel(MCA_OOB_NAME_ANY, MCA_OOB_TAG_PCM_KILL);
+    kill_stop_recv(true);
 
     return OMPI_SUCCESS;
 }
