@@ -47,15 +47,20 @@ extern "C" {
  * This function creates a managed buffer
  * users then pack this buffer as many times as needed
  * as the buffer is managed, we grow it as needed
+ * if the initial requested buffer size is '0' then the system allocates
+ * what it wants. If a size is given then it attempts to get that space
+ * (useful for when receiving a known in advance data size into the buffer)
+ * (hint, as in the oob wrappers)
  *
- * @param pointer to new buffer handle
+ * @param pointer to new buffer handle (OUT)
+ * @param to initial buffer size request (IN)
  * 
  * @retval OMPI_SUCCESS 
  * @retval OMPI_ERROR
  * 
  */
 
-    int ompi_buffer_init (ompi_buffer_t *buffer);
+    int ompi_buffer_init (ompi_buffer_t *buffer, size_t reqinitsize);
 
 /** 
  * This function gets the size of packed data in a ompi_buffer

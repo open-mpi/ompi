@@ -91,13 +91,17 @@ static void ompi_buffer_destruct (ompi_buffer_internal_t* buffer)
  * 
  */
 
-    int ompi_buffer_init (ompi_buffer_t *buffer)
+    int ompi_buffer_init (ompi_buffer_t *buffer, size_t reqinitsize)
 {
 ompi_buffer_internal_t* bptr;
-size_t isize=getpagesize();	/* we should check the mca params here */
+size_t defaultinitsize = getpagesize();	/* should check the mca params here */
+size_t isize = 0;
 
 	/* check that we can return a buffer atall.. */
 	if (!buffer) { return (OMPI_ERROR); }
+
+        /* check the requested initial size */
+        if (reqinitsize<0) { return (OMPI_ERROR); }
 
 	/* create new buffer object */
 	bptr = (ompi_buffer_internal_t *) OBJ_NEW (ompi_buffer_internal_t);
@@ -106,8 +110,16 @@ size_t isize=getpagesize();	/* we should check the mca params here */
 
 	ompi_buffer_cnts++;
 
+
 	/* we have a buffer now, so lets populate it */
-	bptr->base_ptr = (void*) malloc (isize); /* BAD fixed initial size */
+
+	/* allocate initial buffer space */
+	if (!reqinitsize) { isize = defaultinitsize; }
+	else { isize = reqinitsize; }
+
+	/* question, should we round upto a page? */
+
+	bptr->base_ptr = (void*) malloc (isize); 
 
 	bptr->data_ptr = bptr->base_ptr; /* set the start of the buffer */
 	/* leave from_ptr NULL so we catch an unpack before pack! */
@@ -215,9 +227,9 @@ ssize_t mdiff;		/* difference in memory */
 size_t  sdiff;          /* difference (increase) in space */
 
 /* calculate size of increase by pushing up page count */
-pages = (increase / (size_t) getpagesize())+1;
+pages = ((increase+bptr->size) / (size_t) getpagesize())+1;
 
-newsize = bptr->size + (pages*(size_t)getpagesize());
+newsize = (pages*(size_t)getpagesize());
 
 sdiff = newsize - bptr->size; /* actual increase in space */
 /* have to use relative change as no absolute without */
