@@ -9,6 +9,7 @@
 #include "ompi_config.h"
 #include "include/constants.h"
 #include "mca/ns/ns.h"
+#include "mca/pcm/pcm.h"
 #include "util/proc_info.h"
 
 ompi_proc_info_t ompi_process_info = {
@@ -26,7 +27,6 @@ ompi_proc_info_t ompi_process_info = {
 
 int ompi_proc_info(void)
 {
-
     if (ompi_process_info.init) {  /* already done this - don't do it again */
 	return(OMPI_SUCCESS);
     }
@@ -34,14 +34,10 @@ int ompi_proc_info(void)
     /* get the process id */
     ompi_process_info.pid = getpid();
 
-    /* define process name */
-    if (ompi_process_info.seed) { /* i'm the seed daemon */
-	ompi_process_info.name = OBJ_NEW(ompi_process_name_t);
-	ompi_process_info.name->cellid = 0;
-	ompi_process_info.name->jobid = 0;
-	ompi_process_info.name->vpid = 0;
-    }
+    /* set process name */
+    ompi_process_info.name=mca_pcm.pcm_self();
 
+    /* set process to inited */
     ompi_process_info.init = true;
     return(OMPI_SUCCESS);
 }
