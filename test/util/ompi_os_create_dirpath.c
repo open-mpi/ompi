@@ -10,7 +10,7 @@
 #include <sys/stat.h>
 
 #include "lam_config.h"
-#include "constants.h"
+#include "include/constants.h"
 #include "util/sys_info.h"
 #include "util/os_path.h"
 #include "util/os_create_dirpath.h"
