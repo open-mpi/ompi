@@ -194,7 +194,7 @@ void mca_ptl_tcp_send_frag_return(struct mca_ptl_base_module_t* ptl, struct mca_
         }
         OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
         mca_ptl_tcp_send_frag_init_ack(frag, ptl, pending->frag_recv.frag_base.frag_peer, pending);
-        mca_ptl_tcp_peer_send(pending->frag_recv.frag_base.frag_peer, frag);
+        mca_ptl_tcp_peer_send(pending->frag_recv.frag_base.frag_peer, frag, 0);
         mca_ptl_tcp_recv_frag_return(ptl, pending);
     } else {
         OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_component.tcp_send_frags, (ompi_list_item_t*)frag);
@@ -233,7 +233,7 @@ int mca_ptl_tcp_send(
      * before attempting to send the fragment 
      */
     sendreq->req_offset += size;
-    return mca_ptl_tcp_peer_send(ptl_peer, sendfrag);
+    return mca_ptl_tcp_peer_send(ptl_peer, sendfrag, offset);
 }
 
 
@@ -263,7 +263,7 @@ void mca_ptl_tcp_matched(
             OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
         } else {
             mca_ptl_tcp_send_frag_init_ack(ack, ptl, recv_frag->frag_recv.frag_base.frag_peer, recv_frag);
-            mca_ptl_tcp_peer_send(ack->frag_send.frag_base.frag_peer, ack);
+            mca_ptl_tcp_peer_send(ack->frag_send.frag_base.frag_peer, ack, 0);
         }
     }
 
