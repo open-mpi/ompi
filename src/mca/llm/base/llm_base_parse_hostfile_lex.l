@@ -1,7 +1,10 @@
 %{ /* -*- C -*- */
+#include "ompi_config.h"
 
 #include <stdio.h>
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "mca/llm/base/llm_base_parse_hostfile_lex.h"
 
