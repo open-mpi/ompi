@@ -36,6 +36,10 @@ int main(int argc, char *argv[])
   int ret = 0;
   bool acted = false;
 
+  bool multi_thread = false;
+  bool hidden_thread = false;
+
+
   /* Start OMPI process */
 
   if (OMPI_SUCCESS != ompi_init(argc, argv)) {
@@ -103,6 +107,14 @@ int main(int argc, char *argv[])
     ;
     /*ompid::show_ompi_version(ver_full);*/
   }
+
+  /* before calling anything (like proc_info) we to call rte init */
+
+  if (OMPI_SUCCESS != ompi_rte_init(&multi_thread, &hidden_thread)) {
+        printf("ompid: ompi_rte_init failed\n");
+        return ret;
+  }
+
 
   /* Set proc_info's seed to true.  This is the seed daemon. */
   if ( ompi_proc_info () == MPI_SUCCESS ){
