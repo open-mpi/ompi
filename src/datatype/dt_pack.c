@@ -1,7 +1,14 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
+#include "lam_config.h"
+
 #include "datatype.h"
 #include "datatype_internal.h"
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+#include <stdlib.h>
 
 static int convertor_pack_general( lam_convertor_t* pConvertor, struct iovec* out, unsigned int outCount )
 {

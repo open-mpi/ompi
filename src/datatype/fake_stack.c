@@ -1,7 +1,14 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
+#include "lam_config.h"
+
 #include "datatype.h"
 #include "datatype_internal.h"
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+#include <stdlib.h>
 
 static inline long GET_LOOP_DISP( dt_elem_desc_t* _pElem )
 {

@@ -180,7 +180,7 @@ LAM_C_GET_ALIGNMENT(void *, LAM_ALIGNMENT_VOID_P)
 
 AC_C_INLINE
 AC_C_RESTRICT
-AC_CHECK_HEADERS(stdbool.h)
+AC_CHECK_HEADERS([stdbool.h alloca.h])
 LAM_C_WEAK_SYMBOLS
 
 # If we want the profiling layer:

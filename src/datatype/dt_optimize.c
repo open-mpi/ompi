@@ -1,7 +1,13 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
+#include "lam_config.h"
+
 #include "datatype.h"
 #include "datatype_internal.h"
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+#include <stdlib.h>
 
 /*   printf( "save in %s:%d at %p DT_BYTE disp %ld count %d\n", __FILE__, __LINE__, (PELEM), (DISP), (COUNT) ); \ */
 #define SAVE_DESC( PELEM, DISP, COUNT ) \
