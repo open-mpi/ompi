@@ -95,7 +95,7 @@
        parameter (MPI_CART=1)
        parameter (MPI_GRAPH=2)
        parameter (MPI_KEYVAL_INVALID=-1)
-       parameter (MPI_STATUS_SIZE=4)
+       parameter (MPI_STATUS_SIZE=5)
        parameter (MPI_SOURCE=1)
        parameter (MPI_TAG=2)
        parameter (MPI_ERROR=3)

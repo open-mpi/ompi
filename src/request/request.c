@@ -70,6 +70,7 @@ int ompi_request_init(void)
     ompi_request_null.req_status.MPI_TAG = MPI_ANY_TAG;
     ompi_request_null.req_status.MPI_ERROR = MPI_SUCCESS;
     ompi_request_null.req_status._count = 0;
+    ompi_request_null.req_status._cancelled = 0;
 
     ompi_request_null.req_state = OMPI_REQUEST_INACTIVE;
     ompi_request_null.req_complete = true;
@@ -88,6 +89,7 @@ int ompi_request_init(void)
     ompi_status_empty.MPI_TAG = MPI_ANY_TAG;
     ompi_status_empty.MPI_ERROR = MPI_SUCCESS;
     ompi_status_empty._count = 0;
+    ompi_status_empty._cancelled = 0;
 
     return OMPI_SUCCESS;
 }

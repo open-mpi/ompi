@@ -32,15 +32,16 @@ static const char FUNC_NAME[] = "MPI_Test_cancelled";
 
 int MPI_Test_cancelled(MPI_Status *status, int *flag) 
 {
-  int rc = MPI_SUCCESS;
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == flag || NULL == status) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-    }
-  }
+    int rc = MPI_SUCCESS;
 
-  *flag = 0;
-  return rc;
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == flag || NULL == status) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+        }
+    }
+
+    *flag = status->_cancelled;
+    return rc;
 }
 
