@@ -48,5 +48,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SENDRECV,
 
 void mpi_sendrecv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, MPI_Fint *dest, MPI_Fint *sendtag, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *source, MPI_Fint *recvtag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr)
 {
+    MPI_Comm c_comm;
+    MPI_Datatype c_sendtype = MPI_Type_f2c(*sendtype);
+    MPI_Datatype c_recvtype = MPI_Type_f2c(*recvtype);
 
+    c_comm = MPI_Comm_f2c (*comm);
+
+    *ierr = MPI_Sendrecv(sendbuf, *sendcount, c_sendtype,
+                         *dest, *sendtag, recvbuf, *recvcount,
+                         c_recvtype, *source, *recvtag, c_comm, 
+                         (MPI_Status*) *status);
 }

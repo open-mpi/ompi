@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_QUERY_THREAD,
 
 void mpi_query_thread_f(MPI_Fint *provided, MPI_Fint *ierr)
 {
-
+    *ierr = MPI_Query_thread(provided);
 }

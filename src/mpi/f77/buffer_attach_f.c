@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_ATTACH,
 
 void mpi_buffer_attach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
 {
-
+  *ierr = MPI_Buffer_attach(buffer, *size);
 }
