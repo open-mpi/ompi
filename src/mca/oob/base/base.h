@@ -68,8 +68,13 @@ typedef enum {
 
 #define MCA_OOB_PEEK  0x01   /**< flag to oob_recv to allow caller to peek a portion of the next available
                               * message w/out removing the message from the queue.  */
-#define MCA_OOB_TRUNC 0x02   /**< flag to oob_recv to return the actual size of the message even if the receive
-                                buffer is smaller than the number of bytes available */
+#define MCA_OOB_TRUNC 0x02   /**< flag to oob_recv to return the actual size of the message even if 
+                              * the receive buffer is smaller than the number of bytes available */
+#if 0 /* NOT YET IMPLEMENTED */
+#define MCA_OOB_ALLOC 0x04   /**< flag to oob_recv to request the oob to allocate a buffer of the appropriate
+                              * size for the receive and return the allocated buffer and size in the first
+                              * element of the iovec array. */
+#endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -107,8 +112,8 @@ char* mca_oob_get_contact_info(void);
 */
 
 int mca_oob_send(
-    const ompi_process_name_t* peer, 
-    const struct iovec *msg, 
+    ompi_process_name_t* peer, 
+    struct iovec *msg, 
     int count, 
     int tag,
     int flags);
@@ -122,46 +127,26 @@ int mca_oob_send(
 * @return            OMPI error code (<0) on error or number of bytes actually sent.
 */
 
-
-int mca_oob_send_packed (const ompi_process_name_t* peer, const ompi_buffer_t buffer, int tag, int flags);
-
-
-/**
-* Convert data (if required) to network byte order prior to sending to peer.
-*
-* @param peer (IN)    Opaque name of peer process.
-* @param msg (IN)     Array of iovecs describing user buffers and lengths.
-* @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
-* @param count (IN)   Number of elements in iovec array.
-* @param tag (IN)     User defined tag for matching send/recv.
-* @param flags (IN)   Currently unused.
-* @return             OMPI error code (<0) on error number of bytes actually sent.
-*
-* This routine is equivalent to mca_oob_send, with the exception that it excepts
-* an additional array of type codes describing the data types contained within the
-* iovec array. This information is used to convert the data to network byte order
-* (if required) prior to transmission over the underlying network transport.
-*/
-
-int mca_oob_send_hton(
-    const ompi_process_name_t* peer, 
-    const struct iovec *msg, 
-    const mca_oob_base_type_t *types, 
-    int count, 
-    int tag,
+int mca_oob_send_packed(
+    ompi_process_name_t* peer, 
+    ompi_buffer_t buffer, 
+    int tag, 
     int flags);
 
 
 /**
 * Similiar to unix readv(2)
 *
-* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
-* @param msg (IN)     Array of iovecs describing user buffers and lengths.
-* @param count (IN)   Number of elements in iovec array.
-* @param tag (IN)     User defined tag for matching send/recv.
-* @param flags (IN)   May be MCA_OOB_PEEK to return up to the number of bytes provided in the
-*                     iovec array without removing the message from the queue.
-* @return             OMPI error code (<0) on error or number of bytes actually received.
+* @param peer (IN/OUT)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive. In the
+*                         case of a wildcard receive, will be modified to return the matched peer name.
+* @param msg (IN)         Array of iovecs describing user buffers and lengths.
+* @param count (IN)       Number of elements in iovec array.
+* @param tag (IN/OUT)     User defined tag for matching send/recv. In the case of a wildcard receive, will
+*                         be modified to return the matched tag. May be optionally by NULL to specify a 
+*                         wildcard receive with no return value.
+* @param flags (IN)       May be MCA_OOB_PEEK to return up to the number of bytes provided in the
+*                         iovec array without removing the message from the queue.
+* @return                 OMPI error code (<0) on error or number of bytes actually received.
 *
 * The OOB recv call is similar to unix recv/readv in that it requires the caller to manage
 * memory associated w/ the message. The routine accepts an array of iovecs (<i>msg</i>); however,
@@ -180,45 +165,17 @@ int mca_oob_send_hton(
 
 int mca_oob_recv(
     ompi_process_name_t* peer, 
-    const struct iovec *msg, 
+    struct iovec *msg, 
     int count, 
-    int tag, 
+    int* tag, 
     int flags);
-
-/**
-* Receive data and convert (if required) to host byte order.
-*
-* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
-* @param msg (IN)     Array of iovecs describing user buffers and lengths.
-* @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
-* @param count (IN)   Number of elements in iovec array.
-* @param tag (IN)     User defined tag for matching send/recv.
-* @param flags (IN)   May be MCA_OOB_PEEK to return up to the number of bytes provided in the
-*                     iovec array without removing the message from the queue.
-* @return             OMPI error code (<0) on error or number of bytes actually received.
-*
-* This routine is equivalent to mca_oob_recv, with the exception that it accepts
-* an additional array of type codes describing the data types contained within the
-* iovec array. This information is used to convert the data from network byte order
-* (if required) to host byte order prior to receiving into the users buffer.
-* 
-*/
-
-int mca_oob_recv_ntoh(
-   ompi_process_name_t* peer, 
-   const struct iovec *msg, 
-   const mca_oob_base_type_t *types, 
-   int count, 
-   int tag,
-   int flags);
-
 
 /**
 * Similiar to unix read(2)
 *
 * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
-* @param buf (OUT)     Array of iovecs describing user buffers and lengths.
-* @param tag (IN)     User defined tag for matching send/recv.
+* @param buf (OUT)    Array of iovecs describing user buffers and lengths.
+* @param tag (IN/OUT) User defined tag for matching send/recv.
 * @return             OMPI error code (<0) on error or number of bytes actually received.
 *
 *
@@ -233,9 +190,7 @@ int mca_oob_recv_ntoh(
 int mca_oob_recv_packed (
 	ompi_process_name_t* peer, 
 	ompi_buffer_t *buf, 
-	int tag);
-
-
+	int* tag);
 
 /*
  * Non-blocking versions of send/recv.
@@ -255,8 +210,8 @@ int mca_oob_recv_packed (
 
 typedef void (*mca_oob_callback_fn_t)(
     int status,
-    const ompi_process_name_t* peer, 
-    const struct iovec* msg, 
+    ompi_process_name_t* peer, 
+    struct iovec* msg, 
     int count,
     int tag,
     void* cbdata);
@@ -275,7 +230,7 @@ typedef void (*mca_oob_callback_fn_t)(
 
 typedef void (*mca_oob_callback_packed_fn_t)(
     int status,
-    const ompi_process_name_t* peer, 
+    ompi_process_name_t* peer, 
     ompi_buffer_t* buffer,
     int count,
     int tag,
@@ -300,37 +255,8 @@ typedef void (*mca_oob_callback_packed_fn_t)(
 */
 
 int mca_oob_send_nb(
-    const ompi_process_name_t* peer, 
-    const struct iovec* msg, 
-    int count, 
-    int tag,
-    int flags, 
-    mca_oob_callback_fn_t cbfunc,
-    void* cbdata);
-
-/**
-*  Non-blocking version of mca_oob_send_hton().
-*
-*  @param peer (IN)    Opaque name of peer process.
-*  @param msg (IN)     Array of iovecs describing user buffers and lengths.
-*  @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
-*  @param count (IN)   Number of elements in iovec array.
-*  @param tag (IN)     User defined tag for matching send/recv.
-*  @param flags (IN)   Currently unused.
-*  @param cbfunc (IN)  Callback function on send completion.
-*  @param cbdata (IN)  User data that is passed to callback function.
-*  @return             OMPI error code (<0) on error number of bytes actually sent.
-*
-*  The user supplied callback function is called when the send completes. Note that
-*  the callback may occur before the call to mca_oob_send returns to the caller, 
-*  if the send completes during the call.
-*
-*/
-
-int mca_oob_send_hton_nb(
-    const ompi_process_name_t* peer, 
-    const struct iovec* msg, 
-    const mca_oob_base_type_t* types,
+    ompi_process_name_t* peer, 
+    struct iovec* msg, 
     int count, 
     int tag,
     int flags, 
@@ -355,45 +281,12 @@ int mca_oob_send_hton_nb(
 
 int mca_oob_recv_nb(
     ompi_process_name_t* peer, 
-    const struct iovec* msg,  
+    struct iovec* msg,  
     int count, 
     int tag,
     int flags, 
     mca_oob_callback_fn_t cbfunc,
     void* cbdata);
-
-/**
-* Non-blocking version of mca_oob_recv_ntoh().
-*
-* @param peer (IN/OUT) Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
-* @param msg (IN)      Array of iovecs describing user buffers and lengths.
-* @param types (IN)    Parallel array to iovecs describing data type of each iovec element.
-* @param count (IN)    Number of elements in iovec array.
-* @param tag (IN)      User defined tag for matching send/recv.
-* @param flags (IN)    May be MCA_OOB_PEEK to return up to size bytes of msg w/out removing it from the queue,
-* @param cbfunc (IN)   Callback function on recv completion.
-* @param cbdata (IN)   User data that is passed to callback function.
-* @return              OMPI error code (<0) on error or number of bytes actually received.
-* 
-* The user supplied callback function is called asynchronously when a message is received 
-* that matches the call parameters.
-*/
-
-int mca_oob_recv_ntoh_nb(
-    ompi_process_name_t* peer, 
-    const struct iovec* msg,  
-    const mca_oob_base_type_t* types,
-    int count, 
-    int tag,
-    int flags, 
-    mca_oob_callback_fn_t cbfunc,
-    void* cbdata);
-
-
-
-
-
-
 
 /*
  * functions for pack and unpack routines
@@ -409,7 +302,8 @@ int mca_oob_recv_ntoh_nb(
  * @retval OMPI_SUCCESS
  * @retval OMPI_ERROR
  */
-    int mca_oob_base_pack(void * dest, void * src, size_t n, mca_oob_base_type_t type);
+
+int mca_oob_base_pack(void * dest, void * src, size_t n, mca_oob_base_type_t type);
 
 /**
  * This function unpacks the passed data according to the type enum.
@@ -422,7 +316,8 @@ int mca_oob_recv_ntoh_nb(
  * @retval OMPI_SUCCESS
  * @retval OMPI_ERROR
  */
-    int mca_oob_base_unpack(void * dest, void * src, size_t n, mca_oob_base_type_t type);
+
+int mca_oob_base_unpack(void * dest, void * src, size_t n, mca_oob_base_type_t type);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

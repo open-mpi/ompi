@@ -172,19 +172,6 @@ void do_sends(ompi_process_name_t * peer) {
         test_success();
     }
 
-    /* nonblocking send with packing */
-    if( 0 > mca_oob_send_hton_nb(peer, send_msg1, types, 4, 0, 0, &callback,
-                                 (void *) (2 + (NUM_TESTS * i)))) {
-        test_failure("mca_oob_send_hton_nb.");
-    } else {
-        test_success();
-    }
-    if( 0 > mca_oob_send_hton_nb(peer, send_msg1, types, 4, 0, 0, &callback,
-                                 (void *) (3 + (NUM_TESTS * i)))) {
-        test_failure("mca_oob_send_hton_nb.");
-    } else {
-        test_success();
-    }
 
     /* blocking send  */
     if( 0 > mca_oob_send(peer, send_msg2, 3, 0, 0)) {
@@ -198,17 +185,6 @@ void do_sends(ompi_process_name_t * peer) {
         test_success();
     }
 
-    /* blocking send with packing */
-    if( 0 > mca_oob_send_hton(peer, send_msg1, types, 4, 0, 0)) {
-        test_failure("mca_oob_send_hton.");
-    } else {
-        test_success();
-    }
-    if( 0 > mca_oob_send_hton(peer, send_msg1, types, 4, 0, 0)) {
-        test_failure("mca_oob_send_hton.");
-    } else {
-        test_success();
-    }
 }
 
 void do_recvs(ompi_process_name_t * peer) {
@@ -227,21 +203,6 @@ void do_recvs(ompi_process_name_t * peer) {
     }
     if(!compare_iovec(recv_msg1, send_msg1, 4)) {
         test_failure("compare  1 is wrong");
-    }
-    /* now we'll recieve the packed send  - assuming we know the message type */
-    if( 0 > mca_oob_recv_ntoh(peer, recv_msg1, types, 4, 0,0)) {
-        test_failure("mca_oob_recv_ntoh.");
-    } else {
-        test_success();
-    }
-    if(!compare_iovec(recv_msg1, send_msg1, 4)) {
-        test_failure("compare 2 is wrong");
-    }
-    if( 0 > mca_oob_recv_ntoh_nb(peer, recv_msg1, types, 4, 0, 0, &callback, 
-                                 (void *) (5 + (NUM_TESTS * i)))) {
-        test_failure("mca_oob_recv_ntoh_nb.");
-    } else {
-        test_success();
     }
 
     /* now we'll do a blocking recv - waiting for the 3rd message to arrive 
@@ -281,22 +242,6 @@ void do_recvs(ompi_process_name_t * peer) {
     if( 0 > mca_oob_recv_nb(peer, recv_msg2, 3, 0, 0, &callback, 
                             (void *) (6 + (NUM_TESTS * i)))) {
         test_failure("mca_oob_recv_nb.");
-    } else {
-        test_success();
-    }
-
-    /* now we will recieve the packed data */
-    if( 0 > mca_oob_recv_ntoh(peer, recv_msg1, types, 4, 0, 0)) {
-        test_failure("mca_oob_recv_ntoh.");
-    } else {
-        test_success();
-    }
-    if(!compare_iovec(recv_msg1, send_msg1, 4)) {
-        test_failure("compare 5 is wrong");
-    }
-    if( 0 > mca_oob_recv_ntoh_nb(peer, recv_msg1, types, 4, 0, 0, &callback, 
-                                 (void *) (7 + (NUM_TESTS * i)))) {
-        test_failure("mca_oob_recv_ntoh_nb.");
     } else {
         test_success();
     }

@@ -11,8 +11,8 @@
  */
 
 int mca_oob_tcp_send(
-    const ompi_process_name_t* name, 
-    const struct iovec *iov, 
+    ompi_process_name_t* name, 
+    struct iovec *iov, 
     int count, 
     int tag,
     int flags)
@@ -85,8 +85,8 @@ int mca_oob_tcp_send(
  */
 
 int mca_oob_tcp_send_nb(
-    const ompi_process_name_t* name, 
-    const struct iovec* iov, 
+    ompi_process_name_t* name, 
+    struct iovec* iov, 
     int count,
     int tag,
     int flags, 

@@ -32,7 +32,7 @@ struct mca_oob_tcp_msg_t {
     int                   msg_flags;     /**< flags to send/recv */
     int                   msg_rc;        /**< the return code for the send/recv (amount sent/recvd or errno) */
     mca_oob_tcp_hdr_t     msg_hdr;       /**< header used to convey message properties to peer */
-    const struct iovec*   msg_uiov;      /**< the user supplied iovec array */
+    struct iovec*         msg_uiov;      /**< the user supplied iovec array */
     int                   msg_ucnt;      /**< the number of items in the user iovec array */
     struct iovec *        msg_rwiov;     /**< copy of iovec array - not data */
     struct iovec *        msg_rwptr;     /**< current read/write pointer into msg_iov */
@@ -102,7 +102,7 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, ompi_process_name_t * peer)
  *  @retval count      Number of elements in iovec array.
  */
 
-int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, const struct iovec* iov, int count);
+int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, struct iovec* iov, int count);
 
 /**
  *  Called asynchronously to progress sending a message from the event library thread.
@@ -131,7 +131,7 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
  *  Note - this routine requires the caller to be holding the module lock.
  */
 
-mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(const ompi_process_name_t* name, int tag);
+mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(ompi_process_name_t* name, int tag);
 
 /**
  *  Match name to a posted recv request.
@@ -144,7 +144,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(const ompi_process_name_t* name, i
  *  Note - this routine requires the caller to be holding the module lock.
  */
 
-mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(const ompi_process_name_t* name, int tag, bool peek);
+mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(ompi_process_name_t* name, int tag, bool peek);
 
 /**
  *  Allocate space for iovec array - if the request number of elements is less than

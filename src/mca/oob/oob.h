@@ -50,8 +50,8 @@ typedef struct mca_oob_1_0_0_t mca_oob_t;
 */
 
 typedef int (*mca_oob_base_module_send_fn_t)(
-    const ompi_process_name_t* peer,
-    const struct iovec *msg,
+    ompi_process_name_t* peer,
+    struct iovec *msg,
     int count,
     int tag,
     int flags);
@@ -71,9 +71,9 @@ typedef int (*mca_oob_base_module_send_fn_t)(
 
 typedef int (*mca_oob_base_module_recv_fn_t)(
     ompi_process_name_t* peer,
-    const struct iovec *msg,
+    struct iovec *msg,
     int count,
-    int tag,
+    int* tag,
     int flags);
 
 /**
@@ -91,8 +91,8 @@ typedef int (*mca_oob_base_module_recv_fn_t)(
 */
 
 typedef int (*mca_oob_base_module_send_nb_fn_t)(
-    const ompi_process_name_t* peer,
-    const struct iovec* msg,
+    ompi_process_name_t* peer,
+    struct iovec* msg,
     int count,
     int tag,
     int flags,
@@ -114,7 +114,7 @@ typedef int (*mca_oob_base_module_send_nb_fn_t)(
 
 typedef int (*mca_oob_base_module_recv_nb_fn_t)(
     ompi_process_name_t* peer,
-    const struct iovec* msg,
+    struct iovec* msg,
     int count,
     int tag,
     int flags,

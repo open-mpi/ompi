@@ -131,7 +131,7 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
  *              this should be true unless the caller already owns the lock.
  * @retval      Pointer to the newly created struture or NULL on error.
  */
-mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name, bool get_lock)
+mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(ompi_process_name_t* name, bool get_lock)
 {
     int rc;
     mca_oob_tcp_peer_t * peer, * old;

@@ -501,24 +501,24 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     }
     
     if (local_rank == local_leader ) {
-        struct iovec smsg, rmsg;
-        mca_oob_base_type_t otype;
-        
-        smsg.iov_base = tmpbuf;
-        smsg.iov_len  = count * sizeof(int);
-        otype         = MCA_OOB_BASE_INT32;
+        ompi_buffer_t sbuf;
+        ompi_buffer_t rbuf;
 
-        rmsg.iov_base = outbuf;
-        rmsg.iov_len  = count * sizeof(int);
+        ompi_buffer_init(&sbuf, count * sizeof(int));
+        ompi_pack(sbuf, tmpbuf, count, OMPI_INT32);
 
-        if ( send_first ) { 
-            rc = mca_oob_send_hton (remote_leader, &smsg, &otype, 1,0,0);
-            rc = mca_oob_recv_ntoh (remote_leader, &rmsg, &otype, 1,0,0);
+        if ( send_first ) {
+            rc = mca_oob_send_packed(remote_leader, sbuf, 0, 0);
+            rc = mca_oob_recv_packed (remote_leader, &rbuf, NULL);
         }
         else {
-            rc = mca_oob_recv_ntoh (remote_leader, &rmsg, &otype, 1,0,0);
-            rc = mca_oob_send_hton (remote_leader, &smsg, &otype, 1,0,0);
+            rc = mca_oob_recv_packed(remote_leader, &rbuf, NULL);
+            rc = mca_oob_send_packed(remote_leader, sbuf, 0, 0);
         }
+
+        ompi_unpack(rbuf, outbuf, count, OMPI_INT32);
+        ompi_buffer_free(sbuf);
+        ompi_buffer_free(rbuf);
 
         if ( &ompi_mpi_op_max == op ) {
             for ( i = 0 ; i < count; i++ ) {

@@ -79,8 +79,8 @@ int mca_oob_tcp_process_name_compare(const ompi_process_name_t* n1, const ompi_p
  */
 
 int mca_oob_tcp_send(
-    const ompi_process_name_t* peer, 
-    const struct iovec *msg, 
+    ompi_process_name_t* peer, 
+    struct iovec *msg, 
     int count, 
     int tag,
     int flags);
@@ -99,9 +99,9 @@ int mca_oob_tcp_send(
 
 int mca_oob_tcp_recv(
     ompi_process_name_t* peer, 
-    const struct iovec * msg, 
+    struct iovec * msg, 
     int count, 
-    int tag,
+    int* tag,
     int flags);
 
 
@@ -124,8 +124,8 @@ int mca_oob_tcp_recv(
  */
 
 int mca_oob_tcp_send_nb(
-    const ompi_process_name_t* peer, 
-    const struct iovec* msg, 
+    ompi_process_name_t* peer, 
+    struct iovec* msg, 
     int count,
     int tag,
     int flags, 
@@ -147,7 +147,7 @@ int mca_oob_tcp_send_nb(
 
 int mca_oob_tcp_recv_nb(
     ompi_process_name_t* peer, 
-    const struct iovec* msg, 
+    struct iovec* msg, 
     int count, 
     int tag,
     int flags,

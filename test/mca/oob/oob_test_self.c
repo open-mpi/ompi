@@ -71,11 +71,11 @@ bool compare_iovec(const struct iovec * msg1, const struct iovec * msg2,
     return true;
 }
 
-void callback(int status, const ompi_process_name_t * peer,
-              const struct iovec * msg, int count, int tag, void * cbdata);
+void callback(int status, ompi_process_name_t * peer,
+              struct iovec * msg, int count, int tag, void * cbdata);
 
-void callback(int status, const ompi_process_name_t * peer,
-              const struct iovec * msg, int count, int tag, void * cbdata)
+void callback(int status, ompi_process_name_t * peer,
+              struct iovec * msg, int count, int tag, void * cbdata)
 {
     if(0 != tag) {
         test_failure("Bad tag.");
@@ -115,22 +115,6 @@ int main(int argc, char ** argv)
         test_success();
     }
 
-    /* Nonblocking send followed by a blocking recieve with packing */
-    if( 0 > mca_oob_send_hton_nb(&peer, send_msg1, types, 4, 0, 0, &callback,
-(void *) 1)) {
-        test_failure("mca_oob_send_hton_nb.");
-    } else {
-        test_success();
-    }
-    if( 0 > mca_oob_recv_ntoh(&peer, recv_msg1, types, 4, 0, 0)) {
-        test_failure("mca_oob_recv_ntoh.");
-    } else {
-        test_success();
-    }
-    if(!compare_iovec(recv_msg1, send_msg1, 4)) {
-        test_failure("compare 1 is wrong");
-    }
-    
     /* non blocking send of message type 2  followed by blocking recieve*/
     if( 0 > mca_oob_send_nb(&peer, send_msg2, 3, 0, 0, &callback, 
                             (void *) 4)) {
