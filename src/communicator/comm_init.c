@@ -265,6 +265,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     memset (&(comm->c_coll), 0, sizeof(mca_coll_base_module_1_0_0_t));
 #endif
 
+    comm->c_coll_selected_component = NULL;
     comm->c_coll_selected_module    = NULL;
     comm->c_coll_selected_data      = NULL;
     comm->c_coll_basic_module       = NULL;

@@ -77,7 +77,7 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
                           rprocs,                                 /* remote_procs */
                           comp->c_keyhash,                        /* attrs */
                           comp->error_handler,                    /* error handler */
-                          comp->c_topo_component                  /* topo module */
+                          comp->c_topo_component                  /* topo component */
                           );
     if ( MPI_SUCCESS != rc) { 
         return OMPI_ERRHANDLER_INVOKE (comm, rc, FUNC_NAME);
@@ -91,7 +91,7 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
                              NULL,     /* remote_leader */
                              mode,     /* mode */
                              -1,      /* send_first */
-                             (mca_base_component_t*) comp->c_coll_selected_module /* coll module */
+                             comp->c_coll_selected_component /* coll component */
                              );
     if ( MPI_SUCCESS != rc ) {
         return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);

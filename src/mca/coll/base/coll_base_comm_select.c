@@ -119,6 +119,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
   
   comm->c_coll = null_module;
 
+  comm->c_coll_selected_component = NULL;
   comm->c_coll_selected_data = NULL;
   comm->c_coll_selected_module = NULL;
 
@@ -250,6 +251,7 @@ int mca_coll_base_comm_select(ompi_communicator_t *comm,
      NULL function pointers with those from basic, and then initialize
      it. */
 
+  comm->c_coll_selected_component = selected_component;
   if (!using_basic) {
     comm->c_coll = *selected_module;
     replace_null_with_basic(comm);

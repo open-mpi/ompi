@@ -110,6 +110,8 @@ struct ompi_communicator_t {
     /**< Selected collective module, saved by value for speed (instead
          of by reference) */
 
+    const mca_coll_base_component_1_0_0_t *c_coll_selected_component;
+    /**< Selected coll component */
     const mca_coll_base_module_1_0_0_t *c_coll_selected_module;
     /**< The selected module, but only when the selected module
          is not* the basic module.  Used during comm_unselect(). */
