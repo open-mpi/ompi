@@ -10,7 +10,9 @@ headers = \
         base.h
 
 libmca_mpi_coll_base_la_SOURCES = \
-        coll_base_open.c
+        coll_base_close.c \
+        coll_base_open.c \
+        coll_base_select.c
 
 # Conditionally install the header files
 

@@ -6,13 +6,46 @@
 
 #include <stdio.h>
 
-#include "lam/constants.h"
-#include "lam/util/cmd_line.h"
+#include "mca/mca.h"
+#include "mca/lam/base/base.h"
+#include "mca/mpi/coll/coll.h"
 #include "mca/mpi/coll/base/base.h"
 
 
-int mca_coll_base_open(lam_cmd_line_t *cmd)
+/*
+ * The following file was created by configure.  It contains extern
+ * statements and the definition of an array of pointers to each
+ * module's public mca_base_module_t struct.
+ */
+
+#include "mca/mpi/coll/base/static-modules.h"
+
+
+/*
+ * Global variables
+ */
+int mca_coll_base_output = -1;
+int mca_coll_base_crossover = 4;
+int mca_coll_base_associative = 1;
+int mca_coll_base_reduce_crossover = 4;
+lam_list_t mca_coll_base_modules_available;
+
+
+/**
+ * Function for finding and opening either all MCA modules, or the one
+ * that was specifically requested via a MCA parameter.
+ */
+int mca_coll_base_open(void)
 {
-  printf("In mca_coll_base_open\n");
+  /* Open up all available modules */
+
+  if (LAM_SUCCESS != 
+      mca_base_modules_open("coll", 0, mca_coll_base_static_modules, 
+                            &mca_coll_base_modules_available)) {
+    return LAM_ERROR;
+  }
+
+  /* All done */
+
   return LAM_SUCCESS;
 }
