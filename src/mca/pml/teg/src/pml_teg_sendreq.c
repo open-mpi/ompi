@@ -146,7 +146,8 @@ void mca_pml_teg_send_request_progress(
         } else if (req->req_base.req_free_called) {
             MCA_PML_TEG_FREE((ompi_request_t**)&req);
         } 
-        OMPI_THREAD_UNLOCK(&ompi_request_lock);
+        /* dont try and schedule if done */
+        first_frag = false;
     } 
     OMPI_THREAD_UNLOCK(&ompi_request_lock);
 
