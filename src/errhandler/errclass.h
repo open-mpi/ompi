@@ -1,0 +1,79 @@
+/*
+ * $HEADER$
+ */
+/** @file **/
+
+#ifndef OMPI_ERRCLASS_H
+#define OMPI_ERRCLASS_H
+
+#include "ompi_config.h"
+
+#include "mpi.h"
+#include "class/ompi_object.h"
+#include "class/ompi_pointer_array.h"
+
+
+/**
+ * Back-end type for MPI error class. It is close
+ * to trivial.
+ */
+struct ompi_errclass_t {
+    ompi_object_t                      super;
+    int                                class;
+};
+typedef struct ompi_errclass_t ompi_errclass_t;
+
+extern ompi_pointer_array_t ompi_errclasses;
+extern int ompi_errclass_lastused;
+/** 
+ * Check for a valid error class
+ */
+static inline bool ompi_errclass_is_invalid(int errclass)
+{
+    if ( errclass >= 0 && errclass < ompi_errclass_lastused )
+        return 0;
+    else
+        return 1;
+}
+
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
+    /**
+     * Initialize the error classes
+     *
+     * @returns OMPI_SUCCESS Upon success
+     * @returns OMPI_ERROR Otherwise
+     *
+     * Invoked from ompi_mpi_init(); sets up all static MPI error classes,
+     */
+    int ompi_errclass_init(void);
+    
+    /**
+     * Finalize the error classes.
+     *
+     * @returns OMPI_SUCCESS Always
+     *
+     * Invokes from ompi_mpi_finalize(); tears down the error class array.
+     */
+    int ompi_errclass_finalize(void);
+    
+    /** 
+     * Add an error class
+     *
+     * @param: error class to which this new error code belongs to
+     *
+     * @returns the new error class on SUCCESS (>0)
+     * @returns OMPI_ERROR otherwise
+     * 
+     */
+    int ompi_errclass_add (void);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
+
+#endif /* OMPI_ERRCLASS_H */
