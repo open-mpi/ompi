@@ -56,7 +56,11 @@ int ompi_show_help_finish_parsing(void)
 {
     if (NULL != YY_CURRENT_BUFFER) {
         yy_delete_buffer(YY_CURRENT_BUFFER); 
+#if defined(YY_CURRENT_BUFFER_LVALUE)
         YY_CURRENT_BUFFER_LVALUE = NULL;
+#else
+        YY_CURRENT_BUFFER = NULL;
+#endif  /* YY_CURRENT_BUFFER_LVALUE */
     }
     return YY_NULL;
 }
