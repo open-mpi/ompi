@@ -46,7 +46,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_CREATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_intercomm_create_f(MPI_Fint *local_comm, MPI_Fint *local_leader, MPI_Fint *bridge_comm, MPI_Fint *remote_leader, MPI_Fint *tag, MPI_Fint *newintercomm, MPI_Fint *ierr)
+void mpi_intercomm_create_f(MPI_Fint *local_comm, MPI_Fint *local_leader, MPI_Fint *bridge_comm, 
+                            MPI_Fint *remote_leader, MPI_Fint *tag, MPI_Fint *newintercomm, 
+                            MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_newcomm;
+    MPI_Comm c_local_comm = MPI_Comm_f2c (*local_comm );
+    MPI_Comm c_bridge_comm = MPI_Comm_f2c (*bridge_comm);
+
+    *ierr = MPI_Intercomm_create ( c_local_comm, (int) *local_leader, c_bridge_comm,
+                                   (int) *remote_leader, (int) *tag, &c_newcomm );
+    *newintercomm = MPI_Comm_c2f (c_newcomm);
 }

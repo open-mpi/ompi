@@ -46,7 +46,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPLIT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_comm_split_f(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr)
+void mpi_comm_split_f(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, 
+                      MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_newcomm;
+    MPI_Comm c_comm = MPI_Comm_f2c ( *comm );
+
+    *ierr = MPI_Comm_split ( c_comm, (int) color, (int) key, &c_newcomm );
+    *newcomm = MPI_Comm_c2f (c_newcomm);
 }

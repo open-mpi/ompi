@@ -48,5 +48,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_COMPARE,
 
 void mpi_comm_compare_f(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm1 = MPI_Comm_f2c ( *comm1 );
+    MPI_Comm c_comm2 = MPI_Comm_f2c ( *comm2 );
+
+    *ierr = MPI_Comm_compare ( c_comm1, c_comm2, result );
 }
