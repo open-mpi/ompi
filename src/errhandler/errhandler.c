@@ -82,7 +82,7 @@ lam_errhandler_t lam_mpi_errors_return = {
 int lam_errhandler_init(void)
 {
   int ret_val;
-
+  
   /* initialize lam_errhandler_f_to_c_table */
 
   lam_errhandler_f_to_c_table = OBJ_NEW(lam_pointer_array_t);
@@ -90,52 +90,19 @@ int lam_errhandler_init(void)
     return LAM_ERROR;
   }
 
-  /* Add MPI_ERRHANDLER_NULL to table */
+  /* Initialize the predefined error handlers */
+  OBJ_CONSTRUCT( &lam_mpi_errhandler_null, lam_errhandler_t );
+  if( lam_mpi_errhandler_null.eh_f_to_c_index != LAM_ERRHANDLER_NULL_FORTRAN )
+      return LAM_ERROR;
 
-  ret_val = lam_pointer_array_add(lam_errhandler_f_to_c_table,
-                                  &lam_mpi_errhandler_null);
-  if (-1 == ret_val){
-    return LAM_ERROR;
-  }
-
-  /* Make sure that MPI_ERRHANDLER_NULL is in location in the table */
-
-  if (LAM_ERRHANDLER_NULL_FORTRAN != ret_val) {
-    return LAM_ERROR;
-  };
-  lam_mpi_errhandler_null.eh_f_to_c_index = ret_val;
+  OBJ_CONSTRUCT( &lam_mpi_errors_are_fatal, lam_errhandler_t );
+  if( lam_mpi_errors_are_fatal.eh_f_to_c_index != LAM_ERRORS_ARE_FATAL_FORTRAN )
+      return LAM_ERROR;
   
-  /* Add MPI_ERRORS_ARE_FATAL to table */
+  OBJ_CONSTRUCT( &lam_mpi_errors_return, lam_errhandler_t );
+  if( lam_mpi_errors_return.eh_f_to_c_index != LAM_ERRORS_RETURN_FORTRAN )
+      return LAM_ERROR;
 
-  ret_val = lam_pointer_array_add(lam_errhandler_f_to_c_table,
-                                  &lam_mpi_errors_are_fatal);
-  if (-1 == ret_val){
-    return LAM_ERROR;
-  }
-
-  /* Make sure that MPI_ERRORS_ARE_FATAL is in location in the
-     table */
-
-  if (LAM_ERRORS_ARE_FATAL_FORTRAN != ret_val) {
-    return LAM_ERROR;
-  };
-  lam_mpi_errors_are_fatal.eh_f_to_c_index = ret_val;
-  
-  /* Add MPI_ERRORS_RETURN to table */
-
-  ret_val = lam_pointer_array_add(lam_errhandler_f_to_c_table,
-                                  &lam_mpi_errors_return);
-  if (-1 == ret_val){
-    return LAM_ERROR;
-  }
-
-  /* Make sure that MPI_ERRORS_RETURN is in location in the table */
-
-  if (LAM_ERRORS_RETURN_FORTRAN != ret_val) {
-    return LAM_ERROR;
-  };
-  lam_mpi_errors_return.eh_f_to_c_index = ret_val;
-  
   /* All done */
 
   return LAM_SUCCESS;
