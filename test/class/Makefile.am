@@ -8,7 +8,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
 
 noinst_PROGRAMS = \
 	ompi_bitmap \
-	ompi_registry \
 	ompi_hash_table \
 	ompi_list \
 	ompi_value_array \
@@ -37,18 +36,6 @@ ompi_list_LDADD = \
         $(top_builddir)/src/threads/mutex_spinlock.lo \
         $(top_builddir)/test/support/libsupport.la
 ompi_list_DEPENDENCIES = $(ompi_list_LDADD)
-
-ompi_registry_SOURCES = registry.c 
-ompi_registry_LDADD = \
-        $(top_builddir)/src/class/ompi_list.lo \
-        $(top_builddir)/src/class/ompi_object.lo \
-        $(top_builddir)/src/mem/malloc.lo \
-        $(top_builddir)/src/util/output.lo \
-        $(top_builddir)/src/threads/mutex.lo \
-        $(top_builddir)/src/threads/mutex_pthread.lo \
-        $(top_builddir)/src/threads/mutex_spinlock.lo \
-        $(top_builddir)/test/support/libsupport.la
-ompi_registry_DEPENDENCIES = $(ompi_list_LDADD)
 
 ompi_hash_table_SOURCES = ompi_hash_table.c
 ompi_hash_table_LDADD = \
