@@ -90,7 +90,8 @@ mca_pcmclient_singleton_init_cleanup(void)
 
     /* register a synchro on the segment so we get notified for startup */
     rc_tag = ompi_registry.synchro(
-	     OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+	     OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT|
+	     OMPI_REGISTRY_SYNCHRO_MODE_STARTUP,
 	     OMPI_REGISTRY_OR,
 	     segment,
 	     NULL,
@@ -99,7 +100,8 @@ mca_pcmclient_singleton_init_cleanup(void)
 
     /* register a synchro on the segment so we get notified on shutdown */
     rc_tag = ompi_registry.synchro(
-	     OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+	     OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT|
+	     OMPI_REGISTRY_SYNCHRO_MODE_SHUTDOWN,
 	     OMPI_REGISTRY_OR,
 	     segment,
 	     NULL,

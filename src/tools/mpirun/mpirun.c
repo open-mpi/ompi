@@ -295,7 +295,8 @@ main(int argc, char *argv[])
 
     /* register a synchro on the segment so we get notified when everyone registers */
     rc_tag = ompi_registry.synchro(
-	     OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+	     OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT|
+	     OMPI_REGISTRY_SYNCHRO_MODE_STARTUP,
 	     OMPI_REGISTRY_OR,
 	     segment,
 	     NULL,
@@ -304,7 +305,8 @@ main(int argc, char *argv[])
     /* register a synchro on the segment so we get notified when everyone is gone
      */
     rc_tag = ompi_registry.synchro(
-             OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+             OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT|
+             OMPI_REGISTRY_SYNCHRO_MODE_SHUTDOWN,
 	     OMPI_REGISTRY_OR,
 	     segment,
 	     NULL,

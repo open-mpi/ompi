@@ -1148,7 +1148,6 @@ static void mca_gpr_replica_recv_dump_cmd(ompi_buffer_t answer)
 
 static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_buffer_t answer)
 {
-    char *jobidstring=NULL;
     mca_ns_base_jobid_t jobid=0;
     ompi_list_t *recipients=NULL;
     ompi_buffer_t msg;
@@ -1156,11 +1155,9 @@ static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_
     void *addr=NULL;
     int32_t size=0, num_recipients=0, i=0;
 
-    if (OMPI_SUCCESS != ompi_unpack_string(buffer, &jobidstring)) {
-	return;
+    if (OMPI_SUCCESS != ompi_unpack(buffer, &jobid, 1, OMPI_JOBID)) {
+		return;
     }
-
-    jobid = ompi_name_server.convert_string_to_jobid(jobidstring);
 
     recipients = OBJ_NEW(ompi_list_t);
 
@@ -1191,7 +1188,6 @@ static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_
 
 static void mca_gpr_replica_recv_get_shutdown_msg_cmd(ompi_buffer_t buffer, ompi_buffer_t answer)
 {
-    char *jobidstring=NULL;
     mca_ns_base_jobid_t jobid=0;
     ompi_list_t *recipients=NULL;
     ompi_buffer_t msg;
@@ -1199,13 +1195,11 @@ static void mca_gpr_replica_recv_get_shutdown_msg_cmd(ompi_buffer_t buffer, ompi
     void *addr=NULL;
     int32_t size=0, num_recipients=0, i=0;
 
-    if (OMPI_SUCCESS != ompi_unpack_string(buffer, &jobidstring)) {
+    if (OMPI_SUCCESS != ompi_unpack(buffer, &jobid, 1, OMPI_JOBID)) {
     		ompi_output(0, "[%d,%d,%d] recv_get_shutdown_msg: failed to unpack jobidstring",
     					OMPI_NAME_ARGS(*ompi_rte_get_self()));
 		return;
     }
-
-    jobid = ompi_name_server.convert_string_to_jobid(jobidstring);
 
     recipients = OBJ_NEW(ompi_list_t);
 

@@ -46,16 +46,12 @@ int mca_oob_xcast(
     int rc;
     int tag = MCA_OOB_TAG_XCAST;
 
-	ompi_output(0, "[%d,%d,%d] xcast: entered function", OMPI_NAME_ARGS(*ompi_rte_get_self()));
-	
     /* check to see if I am the root process name */
     if(NULL != root &&
        0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, root, ompi_rte_get_self())) {
         for (ptr = (ompi_name_server_namelist_t*)ompi_list_get_first(peers);
 	     ptr != (ompi_name_server_namelist_t*)ompi_list_get_end(peers);
 	     ptr = (ompi_name_server_namelist_t*)ompi_list_get_next(ptr)) {
-		ompi_output(0, "[%d,%d,%d] xcast: sending message to [%d,%d,%d]",
-			OMPI_NAME_ARGS(*ompi_rte_get_self()), *(ptr->name));
             rc = mca_oob_send_packed(ptr->name, buffer, tag, 0);
             if(rc < 0) {
                 return rc;
@@ -67,7 +63,6 @@ int mca_oob_xcast(
         if(rc < 0) {
             return rc;
         }
-		ompi_output(0, "[%d,%d,%d] xcast: got message", OMPI_NAME_ARGS(*ompi_rte_get_self()));
         if(cbfunc != NULL)
             cbfunc(rc, root, rbuf, tag, NULL);
         ompi_buffer_free(rbuf);

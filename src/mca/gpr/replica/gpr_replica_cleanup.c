@@ -82,6 +82,11 @@ void mca_gpr_replica_cleanup_proc_nl(bool purge, ompi_process_name_t *proc)
     char *procname;
     mca_ns_base_jobid_t jobid;
 
+	if (mca_gpr_replica_debug) {
+		ompi_output(0, "[%d,%d,%d] gpr_replica_cleanup_proc: function entered",
+					OMPI_NAME_ARGS(*ompi_rte_get_self()));
+	}
+	
     procname = ompi_name_server.get_proc_name_string(proc);
     jobid = ompi_name_server.get_jobid(proc);
 
@@ -95,13 +100,25 @@ void mca_gpr_replica_cleanup_proc_nl(bool purge, ompi_process_name_t *proc)
 	    /* adjust any startup synchro and/or shutdown synchros owned
 	     * by the associated jobid by one.
 	     */
-	    for (trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_first(&seg->triggers);
-		 trig != (mca_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers);
-		 trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig)) {
-		if ((OMPI_REGISTRY_SYNCHRO_MODE_STARTUP & trig->synch_mode) ||
-		    (OMPI_REGISTRY_SYNCHRO_MODE_SHUTDOWN & trig->synch_mode)) {
-		    trig->count--;
+		if (mca_gpr_replica_debug) {
+			ompi_output(0, "[%d,%d,%d] gpr_replica_cleanup_proc: adjusting synchros for segment %s",
+						OMPI_NAME_ARGS(*ompi_rte_get_self()), seg->name);
 		}
+		
+	    for (trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_first(&seg->triggers);
+		 	trig != (mca_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers);
+		 	trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig)) {
+			if ((OMPI_REGISTRY_SYNCHRO_MODE_STARTUP & trig->synch_mode) ||
+		    		(OMPI_REGISTRY_SYNCHRO_MODE_SHUTDOWN & trig->synch_mode)) {
+				if (mca_gpr_replica_debug) {
+					if (OMPI_REGISTRY_SYNCHRO_MODE_STARTUP & trig->synch_mode) {
+						ompi_output(0, "\tadjusting startup synchro");
+					} else {
+						ompi_output(0, "\tadjusting shutdown synchro");
+					}
+				}
+		    		trig->count--;
+			}
 	    }
 	    mca_gpr_replica_check_synchros(seg);
 	}

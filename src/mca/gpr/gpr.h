@@ -71,18 +71,18 @@ typedef uint32_t ompi_registry_notify_id_t;
 /*
  * Define synchro mode flags
  */
-#define OMPI_REGISTRY_SYNCHRO_MODE_NONE        (uint8_t)0x00   /**< No synchronization */
-#define OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING   (uint8_t)0x01   /**< Notify when trigger is reached, ascending mode */
-#define OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING  (uint8_t)0x02   /**< Notify when trigger is reached, descending mode */
-#define OMPI_REGISTRY_SYNCHRO_MODE_LEVEL       (uint8_t)0x04   /**< Notify when trigger is reached, regardless of direction */
-#define OMPI_REGISTRY_SYNCHRO_MODE_GT_EQUAL    (uint8_t)0x08   /**< Notify if level greater than or equal */
-#define OMPI_REGISTRY_SYNCHRO_MODE_LT_EQUAL    (uint8_t)0x10   /**< Notify if level less than or equal */
-#define OMPI_REGISTRY_SYNCHRO_MODE_CONTINUOUS  (uint8_t)0x80   /**< Notify whenever conditions are met */
-#define OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT    (uint8_t)0x81   /**< Fire once, then terminate synchro command */
-#define OMPI_REGISTRY_SYNCHRO_MODE_STARTUP     (uint8_t)0x82   /**< Indicates associated with application startup */
-#define OMPI_REGISTRY_SYNCHRO_MODE_SHUTDOWN    (uint8_t)0x84   /**< Indicates associated with application shutdown */
+#define OMPI_REGISTRY_SYNCHRO_MODE_NONE        (uint16_t)0x0000   /**< No synchronization */
+#define OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING   (uint16_t)0x0001   /**< Notify when trigger is reached, ascending mode */
+#define OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING  (uint16_t)0x0002   /**< Notify when trigger is reached, descending mode */
+#define OMPI_REGISTRY_SYNCHRO_MODE_LEVEL       (uint16_t)0x0004   /**< Notify when trigger is reached, regardless of direction */
+#define OMPI_REGISTRY_SYNCHRO_MODE_GT_EQUAL    (uint16_t)0x0008   /**< Notify if level greater than or equal */
+#define OMPI_REGISTRY_SYNCHRO_MODE_LT_EQUAL    (uint16_t)0x0010   /**< Notify if level less than or equal */
+#define OMPI_REGISTRY_SYNCHRO_MODE_CONTINUOUS  (uint16_t)0x0020   /**< Notify whenever conditions are met */
+#define OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT    (uint16_t)0x0040   /**< Fire once, then terminate synchro command */
+#define OMPI_REGISTRY_SYNCHRO_MODE_STARTUP     (uint16_t)0x0080   /**< Indicates associated with application startup */
+#define OMPI_REGISTRY_SYNCHRO_MODE_SHUTDOWN    (uint16_t)0x0100   /**< Indicates associated with application shutdown */
 
-typedef uint8_t ompi_registry_synchro_mode_t;
+typedef uint16_t ompi_registry_synchro_mode_t;
 
 /** Return value for notify requests
  */
@@ -136,11 +136,11 @@ typedef uint16_t ompi_registry_mode_t;
 #define MCA_GPR_GET_CMD                (uint16_t)0x0100
 #define MCA_GPR_TEST_INTERNALS_CMD     (uint16_t)0x0200
 #define MCA_GPR_NOTIFY_CMD             (uint16_t)0x0400   /**< Indicates a notify message */
-#define MCA_GPR_DUMP_CMD               (uint16_t)0x2000
-#define MCA_GPR_ASSUME_OWNERSHIP_CMD   (uint16_t)0x4000
-#define MCA_GPR_NOTIFY_ON_CMD          (uint16_t)0x8000
-#define MCA_GPR_NOTIFY_OFF_CMD         (uint16_t)0x8001
-#define MCA_GPR_COMPOUND_CMD           (uint16_t)0x8010
+#define MCA_GPR_DUMP_CMD               (uint16_t)0x0800
+#define MCA_GPR_ASSUME_OWNERSHIP_CMD   (uint16_t)0x1000
+#define MCA_GPR_NOTIFY_ON_CMD          (uint16_t)0x2000
+#define MCA_GPR_NOTIFY_OFF_CMD         (uint16_t)0x4000
+#define MCA_GPR_COMPOUND_CMD           (uint16_t)0x8000
 #define MCA_GPR_GET_STARTUP_MSG_CMD    (uint16_t)0x8020
 #define MCA_GPR_GET_SHUTDOWN_MSG_CMD   (uint16_t)0x8040
 #define MCA_GPR_TRIGGERS_ACTIVE_CMD    (uint16_t)0x8080
@@ -161,7 +161,7 @@ typedef uint16_t mca_gpr_cmd_flag_t;
 #define MCA_GPR_OOB_PACK_ACTION             OMPI_INT16
 #define MCA_GPR_OOB_PACK_MODE               OMPI_INT16
 #define MCA_GPR_OOB_PACK_OBJECT_SIZE        OMPI_INT32
-#define MCA_GPR_OOB_PACK_SYNCHRO_MODE       OMPI_INT8
+#define MCA_GPR_OOB_PACK_SYNCHRO_MODE       OMPI_INT16
 #define MCA_GPR_OOB_PACK_NOTIFY_ID          OMPI_INT32
 #define MCA_GPR_OOB_PACK_BOOL               OMPI_INT8
 #define MCA_GPR_OOB_PACK_STATUS_KEY         OMPI_INT8
