@@ -41,9 +41,7 @@ static void send_continue_callback( struct gm_port *port, void * context, gm_sta
 
     switch( status ) {
     case GM_SUCCESS:
-	/*OMPI_OUTPUT( (0, "[%s:%d] send_continue_callback release header %p from fragment %p (available %d)\n",
-	  __FILE__, __LINE__, (void*)header, (void*)frag, gm_ptl->num_send_tokens) );*/
-	if( header->hdr_frag.hdr_frag_length <= (5 * GM_BUF_SIZE) ) {
+	if( header->hdr_frag.hdr_frag_length <= mca_ptl_gm_component.gm_max_eager_size ) {
 	    /* small message */
 	    frag->frag_bytes_processed += header->hdr_frag.hdr_frag_length;
 	}
@@ -106,7 +104,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     /* The first DMA memory buffer has been alocated in same time as the fragment */
     item = (ompi_list_item_t*)fragment->send_buf;
 
-    if( (*size) <= (5 * GM_BUF_SIZE) ) {  /* small protocol */
+    if( (*size) <= mca_ptl_gm_component.gm_max_eager_size ) {  /* small protocol */
 	size_t max_data, remaining_bytes = fragment->send_frag.frag_base.frag_size;
 	int freeAfter;
 	unsigned int in_size;
@@ -487,10 +485,14 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
     if( !matched ) {
         size_t length = recv_frag->frag_recv.frag_base.frag_size;
 	/* get some memory and copy the data inside. We can then release the receive buffer */
-        char* ptr = (char*)malloc( sizeof(char) * length );
-        recv_frag->have_allocated_buffer = true;
-        memcpy( ptr, recv_frag->frag_recv.frag_base.frag_addr, length );
-        recv_frag->frag_recv.frag_base.frag_addr = ptr;
+        if( 0 != length ) {
+            char* ptr = (char*)malloc( sizeof(char) * length );
+            recv_frag->have_allocated_buffer = true;
+            memcpy( ptr, recv_frag->frag_recv.frag_base.frag_addr, length );
+            recv_frag->frag_recv.frag_base.frag_addr = ptr;
+        } else {
+            recv_frag->frag_recv.frag_base.frag_addr = NULL;
+        }
         return recv_frag;
     }
     return NULL;
