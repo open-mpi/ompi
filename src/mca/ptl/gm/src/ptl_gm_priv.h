@@ -20,12 +20,13 @@
 struct mca_ptl_gm_send_frag_t;
 struct mca_ptl_gm_peer_t;
 
-#define PTL_GM_FIRST_FRAG_SIZE     (1<<14)
+/* Some flags that have to go in the header hdr_common.hdr_flags field */
 #define PTL_FLAG_GM_HAS_FRAGMENT    0x04
 #define PTL_FLAG_GM_LAST_FRAGMENT   0x08
 
-/*#define DO_DEBUG(inst)  inst*/
-#define DO_DEBUG(inst)
+/* Internal flags for handling long messages */
+#define GM_PTL_REGISTER_MEMORY      0x01
+#define GM_PTL_SEND_MESSAGE         0x02
 
 int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_event_t* event );
 

@@ -43,12 +43,12 @@ extern "C" {
     };
     typedef struct mca_ptl_gm_eager_header_t mca_ptl_gm_eager_header_t;
 
-    /* specific header for GM rendezvous protocol. It must hold the registered
-     * memory pointer.
+    /* specific header for GM rendezvous protocol. It will be filled up by the sender
+     * and should be ab;e to hold a pointer to the last registered memory location.
      */
     struct mca_ptl_gm_rdv_header_t {
-        mca_ptl_base_rendezvous_header_t  hdr_rndv;
-        ompi_ptr_t                        registered_memory;
+        mca_ptl_base_frag_header_t hdr_frag;
+        ompi_ptr_t                 registered_memory;
     };
     typedef struct mca_ptl_gm_rdv_header_t mca_ptl_gm_rdv_header_t;
 
@@ -62,8 +62,9 @@ extern "C" {
         void* send_buf;
         ompi_ptr_t* registered_buf;
 	
-        size_t   frag_bytes_processed;  /**< data sended so far */
-	size_t   frag_offset;
+        uint64_t frag_bytes_processed;  /**< data sended so far */
+	uint64_t frag_bytes_validated;  /**< amount of data for which we receive an ack */
+	uint64_t frag_offset;           /**< initial offset of the fragment as specified by the upper level */
         int      status;
         int      type;
         int      wait_for_ack; 
@@ -73,16 +74,17 @@ extern "C" {
     
     struct mca_ptl_gm_recv_frag_t {
         mca_ptl_base_recv_frag_t frag_recv;
-        size_t frag_bytes_processed;
-	size_t frag_offset;
+        uint64_t     frag_bytes_processed;
+	uint64_t     frag_bytes_validated;  /**< amount of data for which we receive an ack */
+	uint64_t     frag_offset;
         volatile int frag_progressed;
-        bool frag_ack_pending;
-        void *alloc_recv_buffer;
-        void * registered_buf;
-        bool matched;
-        bool have_allocated_buffer;
-        bool have_registered_buffer;
-        ompi_ptr_t remote_registered_memory;
+        void*        alloc_recv_buffer;
+        void*        registered_buf;
+        bool         frag_ack_pending;
+        bool         matched;
+        bool         have_allocated_buffer;
+        bool         have_registered_buffer;
+        ompi_ptr_t   remote_registered_memory;
     };
     typedef struct mca_ptl_gm_recv_frag_t mca_ptl_gm_recv_frag_t;
 
@@ -175,6 +177,9 @@ extern "C" {
         
         frag = (mca_ptl_gm_recv_frag_t*)item;
         frag->frag_recv.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
+        frag->frag_bytes_processed = 0;
+        frag->frag_bytes_validated = 0;
+	frag->frag_offset          = 0;
         return frag;
     }
 
