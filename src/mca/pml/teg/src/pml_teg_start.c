@@ -9,7 +9,6 @@ int mca_pml_teg_start(size_t count, ompi_request_t** requests)
     size_t i;
     for(i=0; i<count; i++) {
         mca_pml_base_request_t *pml_request = (mca_pml_base_request_t*)requests[i];
-        int state;
         if(NULL == pml_request)
             continue;
 
@@ -42,7 +41,7 @@ int mca_pml_teg_start(size_t count, ompi_request_t** requests)
                 switch(pml_request->req_type) {
                     case MCA_PML_REQUEST_SEND: {
                          mca_pml_base_send_mode_t sendmode = 
-                             ((mca_ptl_base_send_request_t*)pml_request)->req_send_mode;
+                             ((mca_pml_base_send_request_t*)pml_request)->req_send_mode;
                          rc = mca_pml_teg_isend_init(
                               pml_request->req_addr,
                               pml_request->req_count,
@@ -82,12 +81,12 @@ int mca_pml_teg_start(size_t count, ompi_request_t** requests)
         /* start the request */
         switch(pml_request->req_type) {
             case MCA_PML_REQUEST_SEND:
-                if((rc = mca_pml_teg_send_request_start((mca_ptl_base_send_request_t*)pml_request)) 
+                if((rc = mca_pml_teg_send_request_start((mca_pml_base_send_request_t*)pml_request)) 
                     != OMPI_SUCCESS)
                     return rc;
                 break;
             case MCA_PML_REQUEST_RECV:
-                if((rc = mca_pml_teg_recv_request_start((mca_ptl_base_recv_request_t*)pml_request)) 
+                if((rc = mca_pml_teg_recv_request_start((mca_pml_base_recv_request_t*)pml_request)) 
                     != OMPI_SUCCESS)
                     return rc;
                 break;

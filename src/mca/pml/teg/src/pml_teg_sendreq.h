@@ -9,8 +9,9 @@
 
 #include "pml_teg_proc.h"
 #include "mca/ptl/ptl.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
+#include "mca/ptl/base/ptl_base_comm.h"
 
 
 #define MCA_PML_TEG_SEND_REQUEST_ALLOC( \
@@ -36,7 +37,7 @@
 
 
 static inline int mca_pml_teg_send_request_start(
-    mca_ptl_base_send_request_t* req)
+    mca_pml_base_send_request_t* req)
 {
     mca_ptl_t* ptl = req->req_owner;
     size_t first_fragment_size = ptl->ptl_first_frag_size;
@@ -65,12 +66,12 @@ static inline int mca_pml_teg_send_request_start(
 }
 
 
-void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req);
+void mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req);
 
 
 void mca_pml_teg_send_request_progress(
     struct mca_ptl_t* ptl,
-    mca_ptl_base_send_request_t* send_request,
+    mca_pml_base_send_request_t* send_request,
     mca_ptl_base_send_frag_t* send_frag
 );
 

@@ -50,7 +50,7 @@ bool mca_ptl_tcp_recv_frag_send_ack(mca_ptl_tcp_recv_frag_t* frag);
 
 static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
 {
-    mca_ptl_base_recv_request_t* request = frag->super.frag_request;
+    mca_pml_base_recv_request_t* request = frag->super.frag_request;
     mca_ptl_base_frag_header_t* header = &frag->super.super.frag_header.hdr_frag;
   
     /* if there is data associated with the fragment -- setup to receive */
@@ -96,7 +96,7 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
     if((frag)->frag_msg_cnt >= (frag)->super.super.frag_header.hdr_frag.hdr_frag_length) { 
         /* make sure this only happens once for threaded case */ 
         if(fetchNset(&frag->frag_progressed, 1) == 0) {
-            mca_ptl_base_recv_request_t* request = (frag)->super.frag_request; 
+            mca_pml_base_recv_request_t* request = (frag)->super.frag_request; 
             if((frag)->super.frag_is_buffered) { 
                 mca_ptl_base_match_header_t* header = &(frag)->super.super.frag_header.hdr_match; 
  

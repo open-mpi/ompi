@@ -1,9 +1,11 @@
+#include "threads/mutex.h"
+#include "threads/condition.h"
 #include "mca/allocator/base/base.h"
 #include "mca/allocator/allocator.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/pml_base_request.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
 #include "pml_base_bsend.h"
  
 static ompi_mutex_t     mca_pml_bsend_mutex;      /* lock for thread safety */
@@ -179,7 +181,7 @@ int mca_pml_base_bsend_detach(void* addr, int* size)
  */                                                                                                        
 int mca_pml_base_bsend_request_init(ompi_request_t* request, bool persistent)
 {
-    mca_ptl_base_send_request_t* sendreq = (mca_ptl_base_send_request_t*)request;
+    mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
     struct iovec iov;
     void* buf;
     int rc;
@@ -229,7 +231,7 @@ int mca_pml_base_bsend_request_init(ompi_request_t* request, bool persistent)
  */                                                                                                        
 int mca_pml_base_bsend_request_fini(ompi_request_t* request)
 {
-    mca_ptl_base_send_request_t* sendreq = (mca_ptl_base_send_request_t*)request;
+    mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
 
     /* remove from list of pending requests */
     THREAD_LOCK(&mca_pml_bsend_mutex);

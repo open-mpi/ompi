@@ -22,19 +22,19 @@
  * Specialized matching routines for internal use only.
  */
 
-static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match(
+static mca_pml_base_recv_request_t *mca_ptl_base_check_receives_for_match(
     mca_ptl_base_match_header_t *frag_header,
     mca_pml_ptl_comm_t *ptl_comm);
                                                                                                                             
-static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
+static mca_pml_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
     mca_ptl_base_match_header_t *frag_header,
     mca_pml_ptl_comm_t *ptl_comm);
                                                                                                                             
-static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_match(
+static mca_pml_base_recv_request_t *mca_ptl_base_check_specific_receives_for_match(
     mca_ptl_base_match_header_t *frag_header,
     mca_pml_ptl_comm_t *ptl_comm);
                                                                                                                             
-static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receives_for_match(
+static mca_pml_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receives_for_match(
     mca_ptl_base_match_header_t *frag_header,
     mca_pml_ptl_comm_t *ptl_comm);
                                                                                                                             
@@ -81,7 +81,7 @@ bool mca_ptl_base_match(
     /* local variables */
     mca_ptl_sequence_t frag_msg_seq,next_msg_seq_expected;
     ompi_communicator_t *comm_ptr;
-    mca_ptl_base_recv_request_t *matched_receive;
+    mca_pml_base_recv_request_t *matched_receive;
     mca_pml_ptl_comm_t *pml_comm;
     int frag_src;
     bool match_made=false;
@@ -185,15 +185,15 @@ bool mca_ptl_base_match(
  * This routine assumes that the appropriate matching locks are
  * set by the upper level routine.
  */
-static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match
+static mca_pml_base_recv_request_t *mca_ptl_base_check_receives_for_match
   (mca_ptl_base_match_header_t *frag_header, mca_pml_ptl_comm_t *pml_comm)
 {
     /* local parameters */
-    mca_ptl_base_recv_request_t *return_match;
+    mca_pml_base_recv_request_t *return_match;
     int frag_src;
 
     /* initialization */
-    return_match=(mca_ptl_base_recv_request_t *)NULL;
+    return_match=(mca_pml_base_recv_request_t *)NULL;
 
     /*
      * figure out what sort of matching logic to use, if need to
@@ -240,16 +240,16 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match
  * This routine assumes that the appropriate matching locks are
  * set by the upper level routine.
  */
-static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
+static mca_pml_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
         mca_ptl_base_match_header_t *frag_header,
         mca_pml_ptl_comm_t *pml_comm)
 {
     /* local parameters */
-    mca_ptl_base_recv_request_t *return_match, *wild_recv;
+    mca_pml_base_recv_request_t *return_match, *wild_recv;
     int frag_tag,recv_tag;
 
     /* initialization */
-    return_match=(mca_ptl_base_recv_request_t *)NULL;
+    return_match=(mca_pml_base_recv_request_t *)NULL;
     frag_tag=frag_header->hdr_tag;
 
     /*
@@ -257,11 +257,11 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
      * locking is protecting from having other threads trying to
      * change this list.
      */
-    for(wild_recv = (mca_ptl_base_recv_request_t *) 
+    for(wild_recv = (mca_pml_base_recv_request_t *) 
             ompi_list_get_first(&(pml_comm->c_wild_receives));
-            wild_recv != (mca_ptl_base_recv_request_t *)
+            wild_recv != (mca_pml_base_recv_request_t *)
             ompi_list_get_end(&(pml_comm->c_wild_receives));
-            wild_recv = (mca_ptl_base_recv_request_t *) 
+            wild_recv = (mca_pml_base_recv_request_t *) 
             ((ompi_list_item_t *)wild_recv)->ompi_list_next) {
 
         recv_tag = wild_recv->super.req_tag;
@@ -306,28 +306,28 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
  * This routine assumes that the appropriate matching locks are
  * set by the upper level routine.
  */
-static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_match(
+static mca_pml_base_recv_request_t *mca_ptl_base_check_specific_receives_for_match(
         mca_ptl_base_match_header_t *frag_header,
         mca_pml_ptl_comm_t *pml_comm)
 {
     /* local variables */
-    mca_ptl_base_recv_request_t *specific_recv, *return_match;
+    mca_pml_base_recv_request_t *specific_recv, *return_match;
     int frag_src,recv_tag,frag_tag;
 
 
     /* initialization */
-    return_match=(mca_ptl_base_recv_request_t *)NULL;
+    return_match=(mca_pml_base_recv_request_t *)NULL;
     frag_src = frag_header->hdr_src;
     frag_tag=frag_header->hdr_tag;
 
     /*
      * Loop over the specific irecvs.
      */
-    for(specific_recv = (mca_ptl_base_recv_request_t *) 
+    for(specific_recv = (mca_pml_base_recv_request_t *) 
             ompi_list_get_first((pml_comm->c_specific_receives)+frag_src);
-            specific_recv != (mca_ptl_base_recv_request_t *)
+            specific_recv != (mca_pml_base_recv_request_t *)
             ompi_list_get_end((pml_comm->c_specific_receives)+frag_src);
-            specific_recv = (mca_ptl_base_recv_request_t *) 
+            specific_recv = (mca_pml_base_recv_request_t *) 
             ((ompi_list_item_t *)specific_recv)->ompi_list_next) {
         /*
          * Check for a match
@@ -368,17 +368,17 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_mat
  * This routine assumes that the appropriate matching locks are
  * set by the upper level routine.
  */
-static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receives_for_match(
+static mca_pml_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receives_for_match(
         mca_ptl_base_match_header_t *frag_header,
         mca_pml_ptl_comm_t *pml_comm)
 {
     /* local variables */
-    mca_ptl_base_recv_request_t *specific_recv, *wild_recv, *return_match;
+    mca_pml_base_recv_request_t *specific_recv, *wild_recv, *return_match;
     mca_ptl_sequence_t wild_recv_seq, specific_recv_seq;
     int frag_src,frag_tag, wild_recv_tag, specific_recv_tag;
 
     /* initialization */
-    return_match=(mca_ptl_base_recv_request_t *)NULL;
+    return_match=(mca_pml_base_recv_request_t *)NULL;
     frag_src = frag_header->hdr_src;
     frag_tag=frag_header->hdr_tag;
 
@@ -386,9 +386,9 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
      * We know that when this is called, both specific and wild irecvs
      *  have been posted.
      */
-    specific_recv = (mca_ptl_base_recv_request_t *) 
+    specific_recv = (mca_pml_base_recv_request_t *) 
             ompi_list_get_first((pml_comm->c_specific_receives)+frag_src);
-    wild_recv = (mca_ptl_base_recv_request_t *) 
+    wild_recv = (mca_pml_base_recv_request_t *) 
             ompi_list_get_first(&(pml_comm->c_wild_receives));
 
     specific_recv_seq = specific_recv->super.req_sequence;
@@ -421,14 +421,14 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
             /*
              * No match, go to the next.
              */
-            wild_recv=(mca_ptl_base_recv_request_t *)
+            wild_recv=(mca_pml_base_recv_request_t *)
                 ((ompi_list_item_t *)wild_recv)->ompi_list_next;
 
             /*
              * If that was the last wild one, just look at the
              * rest of the specific ones.
              */
-            if (wild_recv == (mca_ptl_base_recv_request_t *)
+            if (wild_recv == (mca_pml_base_recv_request_t *)
                     ompi_list_get_end(&(pml_comm->c_wild_receives)) ) 
             { 
                 return_match = mca_ptl_base_check_specific_receives_for_match(frag_header,
@@ -467,14 +467,14 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
             /*
              * No match, go on to the next specific irecv.
              */
-            specific_recv = (mca_ptl_base_recv_request_t *)
+            specific_recv = (mca_pml_base_recv_request_t *)
                 ((ompi_list_item_t *)specific_recv)->ompi_list_next;
 
             /*
              * If that was the last specific irecv, process the
              * rest of the wild ones.
              */
-            if (specific_recv == (mca_ptl_base_recv_request_t *)
+            if (specific_recv == (mca_pml_base_recv_request_t *)
                     ompi_list_get_end((pml_comm->c_specific_receives)+frag_src) )
             {
                 return_match = mca_ptl_base_check_wild_receives_for_match(frag_header,
@@ -515,7 +515,7 @@ static void mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_match
     int match_found;
     mca_ptl_sequence_t next_msg_seq_expected, frag_seq;
     mca_ptl_base_recv_frag_t *frag_desc;
-    mca_ptl_base_recv_request_t *matched_receive;
+    mca_pml_base_recv_request_t *matched_receive;
 
     /*
      * Loop over all the out of sequence messages.  No ordering is assumed

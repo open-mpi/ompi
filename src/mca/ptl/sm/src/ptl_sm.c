@@ -7,10 +7,10 @@
 #include "util/if.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
+#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/pml/base/pml_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_header.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
-#include "mca/ptl/base/ptl_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_sm.h"
@@ -142,13 +142,13 @@ int mca_ptl_sm_finalize(struct mca_ptl_t* ptl)
 }
 
 
-int mca_ptl_sm_request_alloc(struct mca_ptl_t* ptl, struct mca_ptl_base_send_request_t** request)
+int mca_ptl_sm_request_alloc(struct mca_ptl_t* ptl, struct mca_pml_base_send_request_t** request)
 {
     return OMPI_SUCCESS;
 }
 
 
-void mca_ptl_sm_request_return(struct mca_ptl_t* ptl, struct mca_ptl_base_send_request_t* request)
+void mca_ptl_sm_request_return(struct mca_ptl_t* ptl, struct mca_pml_base_send_request_t* request)
 {
 }
 
@@ -163,9 +163,9 @@ void mca_ptl_sm_request_return(struct mca_ptl_t* ptl, struct mca_ptl_base_send_r
 int mca_ptl_sm_send(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_ptl_base_send_request_t* sendreq,
+    struct mca_pml_base_send_request_t* sendreq,
     size_t offset,
-    size_t *size,
+    size_t size,
     int flags)
 {
     return OMPI_SUCCESS;

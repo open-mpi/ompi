@@ -12,7 +12,7 @@
 #include <netinet/in.h>
 #include "os/atomic.h"
 #include "ompi_config.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_recvfrag.h"
@@ -55,7 +55,7 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t*, int sd);
 int mca_ptl_tcp_send_frag_init(
     mca_ptl_tcp_send_frag_t*, 
     struct mca_ptl_base_peer_t*, 
-    struct mca_ptl_base_send_request_t*, 
+    struct mca_pml_base_send_request_t*, 
     size_t offset,
     size_t* size,
     int flags);
@@ -70,7 +70,7 @@ int mca_ptl_tcp_send_frag_init(
 
 static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag) 
 { 
-    mca_ptl_base_send_request_t* request = frag->super.frag_request; 
+    mca_pml_base_send_request_t* request = frag->super.frag_request; 
 
     /* if this is an ack - simply return to pool */ 
     if(request == NULL) { 
@@ -81,7 +81,7 @@ static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag)
      */ 
     } else if (frag->frag_vec_cnt == 0 &&  
          ((frag->super.super.frag_header.hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) == 0 || 
-          mca_ptl_base_send_request_matched(request))) { 
+          mca_pml_base_send_request_matched(request))) { 
 
         /* make sure this only happens once in threaded case */ 
         if(fetchNset(&frag->frag_progressed,1) == 0) {
@@ -106,7 +106,7 @@ static inline void mca_ptl_tcp_send_frag_init_ack(
     mca_ptl_tcp_recv_frag_t* frag)
 {
     mca_ptl_base_header_t* hdr = &ack->super.super.frag_header;
-    mca_ptl_base_recv_request_t* request = frag->super.frag_request;
+    mca_pml_base_recv_request_t* request = frag->super.frag_request;
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);

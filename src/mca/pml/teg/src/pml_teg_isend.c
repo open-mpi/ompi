@@ -19,12 +19,12 @@ int mca_pml_teg_isend_init(
 {
     int rc;
 
-    mca_ptl_base_send_request_t* sendreq;
+    mca_pml_base_send_request_t* sendreq;
     MCA_PML_TEG_SEND_REQUEST_ALLOC(comm,dst,sendreq,rc);
     if(rc != OMPI_SUCCESS)
         return rc;
  
-    MCA_PTL_BASE_SEND_REQUEST_INIT(
+    MCA_PML_BASE_SEND_REQUEST_INIT(
         sendreq,
         buf,
         count,
@@ -52,14 +52,14 @@ int mca_pml_teg_isend(
     ompi_request_t **request)
 {
     int rc;
-    mca_ptl_base_send_request_t* sendreq;
+    mca_pml_base_send_request_t* sendreq;
     MCA_PML_TEG_SEND_REQUEST_ALLOC(comm,dst,sendreq,rc);
 #if MCA_PML_TEG_STATISTICS
     mca_pml_teg.teg_isends++;
 #endif
     if(rc != OMPI_SUCCESS)
         return rc;
-    MCA_PTL_BASE_SEND_REQUEST_INIT(
+    MCA_PML_BASE_SEND_REQUEST_INIT(
         sendreq,
         buf,
         count,
@@ -88,7 +88,7 @@ int mca_pml_teg_send(
     ompi_communicator_t* comm)
 {
     int rc;
-    mca_ptl_base_send_request_t* sendreq;
+    mca_pml_base_send_request_t* sendreq;
     MCA_PML_TEG_SEND_REQUEST_ALLOC(comm,dst,sendreq,rc);
 #if MCA_PML_TEG_STATISTICS
     mca_pml_teg.teg_sends++;
@@ -96,7 +96,7 @@ int mca_pml_teg_send(
     if(rc != OMPI_SUCCESS)
         return rc;
 
-    MCA_PTL_BASE_SEND_REQUEST_INIT(
+    MCA_PML_BASE_SEND_REQUEST_INIT(
         sendreq,
         buf,
         count,

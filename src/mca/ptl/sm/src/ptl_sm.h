@@ -145,7 +145,7 @@ extern int mca_ptl_sm_del_procs(
  */
 extern int mca_ptl_sm_request_alloc(
     struct mca_ptl_t* ptl,
-    struct mca_ptl_base_send_request_t**
+    struct mca_pml_base_send_request_t**
 );
 
 /**
@@ -157,7 +157,7 @@ extern int mca_ptl_sm_request_alloc(
  */
 extern void mca_ptl_sm_request_return(
     struct mca_ptl_t* ptl,
-    struct mca_ptl_base_send_request_t*
+    struct mca_pml_base_send_request_t*
 );
 
 /**
@@ -185,9 +185,9 @@ extern void mca_ptl_sm_matched(
 extern int mca_ptl_sm_send(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_ptl_base_send_request_t*,
+    struct mca_pml_base_send_request_t*,
     size_t offset,
-    size_t *size,
+    size_t size,
     int flags
 );
 

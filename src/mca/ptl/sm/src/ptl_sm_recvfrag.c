@@ -4,7 +4,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/errno.h>
-#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_sm.h"
 #include "ptl_sm_recvfrag.h"
 

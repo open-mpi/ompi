@@ -8,9 +8,9 @@
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_header.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
-#include "mca/ptl/base/ptl_base_recvreq.h"
+#include "mca/pml/base/pml_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
@@ -108,20 +108,20 @@ int mca_ptl_tcp_finalize(struct mca_ptl_t* ptl)
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_tcp_request_alloc(struct mca_ptl_t* ptl, struct mca_ptl_base_send_request_t** request)
+int mca_ptl_tcp_request_alloc(struct mca_ptl_t* ptl, struct mca_pml_base_send_request_t** request)
 {
     int rc;
-    mca_ptl_base_send_request_t* sendreq;
+    mca_pml_base_send_request_t* sendreq;
     ompi_list_item_t* item;
     OMPI_FREE_LIST_GET(&mca_ptl_tcp_module.tcp_send_requests, item, rc);
-    if(NULL != (sendreq = (mca_ptl_base_send_request_t*)item))
+    if(NULL != (sendreq = (mca_pml_base_send_request_t*)item))
         sendreq->req_owner = ptl;
     *request = sendreq;
     return rc;
 }
 
 
-void mca_ptl_tcp_request_return(struct mca_ptl_t* ptl, struct mca_ptl_base_send_request_t* request)
+void mca_ptl_tcp_request_return(struct mca_ptl_t* ptl, struct mca_pml_base_send_request_t* request)
 {
     /* OBJ_DESTRUCT(&request->req_convertor); */
     OMPI_FREE_LIST_RETURN(&mca_ptl_tcp_module.tcp_send_requests, (ompi_list_item_t*)request);
@@ -167,7 +167,7 @@ void mca_ptl_tcp_send_frag_return(struct mca_ptl_t* ptl, struct mca_ptl_tcp_send
 int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_ptl_base_send_request_t* sendreq,
+    struct mca_pml_base_send_request_t* sendreq,
     size_t offset,
     size_t size,
     int flags)

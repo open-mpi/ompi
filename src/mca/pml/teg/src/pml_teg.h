@@ -16,7 +16,7 @@
 #include "mca/pml/pml.h"
 #include "mca/pml/base/pml_base_request.h"
 #include "mca/pml/base/pml_base_bsend.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ptl/ptl.h"
 
 #define MCA_PML_TEG_STATISTICS 0
@@ -276,7 +276,7 @@ extern int mca_pml_teg_free(
         switch(pml_request->req_type) { \
         case MCA_PML_REQUEST_SEND: \
             { \
-            mca_ptl_base_send_request_t* sendreq = (mca_ptl_base_send_request_t*)pml_request; \
+            mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)pml_request; \
             mca_ptl_t* ptl = sendreq->req_owner; \
             if(sendreq->req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
                 mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq); \

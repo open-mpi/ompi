@@ -6,7 +6,6 @@
 #include <sys/errno.h>
 #include "types.h"
 #include "datatype/datatype.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_sm.h"
 #include "ptl_sm_sendfrag.h"
 
