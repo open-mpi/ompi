@@ -26,11 +26,7 @@ int ompi_progress_pending_io_reqs = false;
 
 void ompi_progress_events(int flag)
 {
-#if 0
-    if(flag != 0 || ompi_progress_event_flag == OMPI_EVLOOP_ONCE) {
-        ompi_progress_event_flag = flag;
-    }
-#endif
+    ompi_progress_event_flag = flag;
 }
 
 
