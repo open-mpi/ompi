@@ -58,15 +58,14 @@ typedef uint16_t ompi_registry_mode_t;
 /*
  * Define flag values for remote commands - only used internally
  */
-#define MCA_GPR_DEFINE_SEGMENT_CMD     0x0001
-#define MCA_GPR_DELETE_SEGMENT_CMD     0x0002
-#define MCA_GPR_PUT_CMD                0x0004
-#define MCA_GPR_DELETE_OBJECT_CMD      0x0008
-#define MCA_GPR_INDEX_CMD              0x0010
-#define MCA_GPR_SUBSCRIBE_CMD          0x0020
-#define MCA_GPR_UNSUBSCRIBE_CMD        0x0040
-#define MCA_GPR_GET_CMD                0x0080
-#define MCA_GPR_TEST_INTERNALS_CMD     0x0100
+#define MCA_GPR_DELETE_SEGMENT_CMD     0x0001
+#define MCA_GPR_PUT_CMD                0x0002
+#define MCA_GPR_DELETE_OBJECT_CMD      0x0004
+#define MCA_GPR_INDEX_CMD              0x0008
+#define MCA_GPR_SUBSCRIBE_CMD          0x0010
+#define MCA_GPR_UNSUBSCRIBE_CMD        0x0020
+#define MCA_GPR_GET_CMD                0x0040
+#define MCA_GPR_TEST_INTERNALS_CMD     0x0080
 #define MCA_GPR_ERROR                  0xffff
 
 typedef uint16_t mca_gpr_cmd_flag_t;
@@ -137,7 +136,6 @@ OBJ_CLASS_DECLARATION(ompi_registry_internal_test_results_t);
 /*
  * Component functions that MUST be provided
  */
-typedef int (*mca_gpr_base_module_define_segment_fn_t)(char *segment);
 typedef int (*mca_gpr_base_module_delete_segment_fn_t)(char *segment);
 typedef int (*mca_gpr_base_module_put_fn_t)(ompi_registry_mode_t mode, char *segment,
 				     char **tokens, ompi_registry_object_t *object,
@@ -167,7 +165,6 @@ typedef ompi_list_t* (*mca_gpr_base_module_test_internals_fn_t)(int level);
 struct mca_gpr_base_module_1_0_0_t {
     mca_gpr_base_module_get_fn_t get;
     mca_gpr_base_module_put_fn_t put;
-    mca_gpr_base_module_define_segment_fn_t define_segment;
     mca_gpr_base_module_delete_segment_fn_t delete_segment;
     mca_gpr_base_module_subscribe_fn_t subscribe;
     mca_gpr_base_module_unsubscribe_fn_t unsubscribe;

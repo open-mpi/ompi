@@ -30,6 +30,31 @@
 /*
  *
  */
+
+int gpr_replica_define_segment(char *segment)
+{
+    mca_gpr_registry_segment_t *seg;
+    mca_gpr_replica_key_t key;
+    int response;
+
+     response = gpr_replica_define_key(segment, NULL);
+     if (0 > response) {  /* got some kind of error code */
+ 	return response;
+     }
+
+     /* need to add the segment to the registry */
+     key = gpr_replica_get_key(segment, NULL);
+     if (MCA_GPR_REPLICA_KEY_MAX == key) {  /* couldn't retrieve it */
+	 return OMPI_ERROR;
+     }
+     seg = OBJ_NEW(mca_gpr_registry_segment_t);
+     seg->segment = key;
+     ompi_list_append(&mca_gpr_replica_head.registry, &seg->item);
+
+     return OMPI_SUCCESS;
+}
+
+
 mca_gpr_registry_segment_t *gpr_replica_find_seg(char *segment)
 {
     mca_gpr_keytable_t *ptr_seg;
@@ -49,8 +74,10 @@ mca_gpr_registry_segment_t *gpr_replica_find_seg(char *segment)
 		}
 	    }
 	}
+	return NULL;  /* segment in dictionary, but can't locate it */
     }
-    return(NULL); /* couldn't find the specified segment */
+    /* didn't find the dictionary entry */
+    return NULL;
 }
 
 mca_gpr_keytable_t *gpr_replica_find_dict_entry(char *segment, char *token)

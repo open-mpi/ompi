@@ -99,16 +99,6 @@ typedef struct ompi_process_name_t ompi_process_name_t;
 
 typedef uint8_t ompi_ns_cmd_bitmask_t;
 
-/*
- * define the actual name server message buffer
- */
-
-struct ompi_ns_msg_buffer_t {
-    ompi_ns_cmd_bitmask_t command;
-    int buflen;
-    uint8_t *buf;
-};
-typedef struct ompi_ns_msg_buffer_t ompi_ns_msg_buffer_t;
 
 /*
  * Component functions - all MUST be provided!

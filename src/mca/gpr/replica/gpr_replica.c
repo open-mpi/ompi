@@ -25,28 +25,6 @@
 #include "gpr_replica.h"
 #include "gpr_replica_internals.h"
 
-int gpr_replica_define_segment(char *segment)
-{
-    mca_gpr_registry_segment_t *seg;
-    mca_gpr_replica_key_t key;
-    int response;
-
-     response = gpr_replica_define_key(segment, NULL);
-     if (0 > response) {  /* got some kind of error code */
- 	return response;
-     }
-
-     /* need to add the segment to the registry */
-     key = gpr_replica_get_key(segment, NULL);
-     if (MCA_GPR_REPLICA_KEY_MAX == key) {  /* couldn't retrieve it */
-	 return OMPI_ERROR;
-     }
-     seg = OBJ_NEW(mca_gpr_registry_segment_t);
-     seg->segment = key;
-     ompi_list_append(&mca_gpr_replica_head.registry, &seg->item);
-
-     return(OMPI_SUCCESS);
-}
 
 int gpr_replica_delete_segment(char *segment)
 {
@@ -106,9 +84,16 @@ int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
 
     /* find the segment */
     seg = gpr_replica_find_seg(segment);
-    if (NULL == seg) { /* couldn't find segment */
+    if (NULL == seg) { /* couldn't find segment - try to create it */
+	if (0 > gpr_replica_define_segment(segment)) {  /* couldn't create it */
 	return_code = OMPI_ERROR;
 	goto CLEANUP;
+	}
+	seg = gpr_replica_find_seg(segment);
+	if (NULL == seg) { /* ok, we tried - time to give up */
+	    return_code = OMPI_ERROR;
+	    goto CLEANUP;
+	}
     }
 
     /* see if specified entry already exists */
