@@ -16,7 +16,7 @@ mca_llm_base_map_resources(int nodes,
                            int procs,
                            ompi_list_t *hostlist)
 {
-    mca_llm_base_node_t *node;
+    ompi_rte_node_allocation_t *node;
     ompi_list_item_t *nodeitem, *tmp;
 
     if (NULL == hostlist) {
@@ -35,7 +35,7 @@ mca_llm_base_map_resources(int nodes,
         for (nodeitem = ompi_list_get_first(hostlist);
              nodeitem != ompi_list_get_end(hostlist);
              nodeitem = ompi_list_get_next(nodeitem)) {
-            node = (mca_llm_base_node_t*) nodeitem;
+            node = (ompi_rte_node_allocation_t*) nodeitem;
 
             if (alloc_procs >= procs) { 
                 /* we've allocated enough - release this guy from the
@@ -61,7 +61,7 @@ mca_llm_base_map_resources(int nodes,
         for (nodeitem = ompi_list_get_first(hostlist);
              nodeitem != ompi_list_get_end(hostlist);
              nodeitem = ompi_list_get_next(nodeitem)) {
-            node = (mca_llm_base_node_t*) nodeitem;
+            node = (ompi_rte_node_allocation_t*) nodeitem;
             node->count = 1;
         }
 

@@ -33,6 +33,9 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
   mca_pcm_base_module_t *module, *best_module;
   extern ompi_list_t mca_pcm_base_components_available;
 
+  ompi_output_verbose(100, mca_pcm_base_output,
+                      "mca_pcm_base_select started");
+
   /* Traverse the list of available components; call their init
      functions. */
 
