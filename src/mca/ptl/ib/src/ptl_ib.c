@@ -15,24 +15,32 @@
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_ib.h"
 
-mca_ptl_ib_t mca_ptl_ib = {
+mca_ptl_ib_module_t mca_ptl_ib_module = {
     {
-        &mca_ptl_ib_module.super,
-        0, /* ptl_exclusivity */
-        0, /* ptl_latency */
-        0, /* ptl_andwidth */
-        0, /* ptl_frag_first_size */
-        0, /* ptl_frag_min_size */
-        0, /* ptl_frag_max_size */
+        &mca_ptl_ib_component.super,
+        1, /* max size of request cache */
+        sizeof(mca_ptl_ib_send_frag_t), /* bytes required by ptl for a request */
+        0, /* max size of first fragment */
+        0, /* min fragment size */
+        0, /* max fragment size */
+        0, /* exclusivity */
+        0, /* latency */
+        0, /* bandwidth */
         MCA_PTL_PUT,  /* ptl flags */
         mca_ptl_ib_add_procs,
         mca_ptl_ib_del_procs,
         mca_ptl_ib_finalize,
         mca_ptl_ib_send,
         NULL,
+#if 0
         mca_ptl_ib_matched,
         mca_ptl_ib_request_alloc,
         mca_ptl_ib_request_return
+#else
+        NULL, /* Sayantan: need to update matched */
+        NULL, /* Sayantan: need request_init */
+        NULL, /* Sayantan: need request_fini */
+#endif
     }
 };
 
@@ -53,7 +61,7 @@ OBJ_CLASS_INSTANCE(mca_ptl_ib_proc_t,
         NULL, NULL);
 
 int mca_ptl_ib_add_procs(
-    struct mca_ptl_t* ptl, 
+    struct mca_ptl_base_module_t* ptl, 
     size_t nprocs, 
     struct ompi_proc_t **ompi_procs, 
     struct mca_ptl_base_peer_t** peers, 
@@ -98,7 +106,7 @@ int mca_ptl_ib_add_procs(
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        ptl_peer->peer_ptl = (mca_ptl_ib_t*)ptl;
+        ptl_peer->peer_ptl = (mca_ptl_ib_module_t*)ptl;
 
         /*
         rc = mca_ptl_ib_proc_insert(ptl_proc, ptl_peer);
@@ -115,7 +123,7 @@ int mca_ptl_ib_add_procs(
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_ib_del_procs(struct mca_ptl_t* ptl, 
+int mca_ptl_ib_del_procs(struct mca_ptl_base_module_t* ptl, 
         size_t nprocs, 
         struct ompi_proc_t **procs, 
         struct mca_ptl_base_peer_t ** peers)
@@ -125,14 +133,14 @@ int mca_ptl_ib_del_procs(struct mca_ptl_t* ptl,
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_ib_finalize(struct mca_ptl_t* ptl)
+int mca_ptl_ib_finalize(struct mca_ptl_base_module_t* ptl)
 {
     /* Stub */
     fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_ib_request_alloc(struct mca_ptl_t* ptl, 
+int mca_ptl_ib_request_alloc(struct mca_ptl_base_module_t* ptl, 
         struct mca_pml_base_send_request_t** request)
 {
     /* Stub */
@@ -141,7 +149,7 @@ int mca_ptl_ib_request_alloc(struct mca_ptl_t* ptl,
 }
 
 
-void mca_ptl_ib_request_return(struct mca_ptl_t* ptl, 
+void mca_ptl_ib_request_return(struct mca_ptl_base_module_t* ptl, 
         struct mca_pml_base_send_request_t* request)
 {
     /* Stub */
@@ -156,7 +164,7 @@ void mca_ptl_ib_request_return(struct mca_ptl_t* ptl,
  */
 
 int mca_ptl_ib_send(
-    struct mca_ptl_t* ptl,
+    struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_pml_base_send_request_t* sendreq,
     size_t offset,
@@ -175,7 +183,7 @@ int mca_ptl_ib_send(
  */
 
 void mca_ptl_ib_matched(
-    mca_ptl_t* ptl,
+    mca_ptl_base_module_t* ptl,
     mca_ptl_base_recv_frag_t* frag)
 {
     fprintf(stderr,"[%s][%d]\n", __FILE__, __LINE__);
