@@ -20,9 +20,9 @@ int mca_base_close(void)
 
     mca_base_param_finalize();
 
-    /* Close down the module registry */
+    /* Close down the module repository */
 
-    mca_base_module_registry_finalize();
+    mca_base_module_repository_finalize();
   }
   mca_base_opened = false;
 

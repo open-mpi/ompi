@@ -41,7 +41,7 @@ int mca_base_modules_close(int output_id, lam_list_t *modules_available,
 
       /* Unload */
 
-      mca_base_module_registry_release((mca_base_module_t *) module);
+      mca_base_module_repository_release((mca_base_module_t *) module);
       lam_output_verbose(10, output_id, "close: module %s unloaded",
                          module->mca_module_name);
     }

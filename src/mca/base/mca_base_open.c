@@ -61,9 +61,9 @@ int mca_base_open(void)
   lam_output_reopen(0, &lds);
   lam_output_verbose(0, 5, " Opening");
 
-  /* Open up the module registry */
+  /* Open up the module repository */
 
-  return mca_base_module_registry_construct();
+  return mca_base_module_repository_construct();
 }
 
 

@@ -231,7 +231,7 @@ static int open_modules(const char *type_name, int output_id,
                              module->mca_module_name);
           called_open = false;
         }
-        mca_base_module_registry_release(module);
+        mca_base_module_repository_release(module);
         lam_output_verbose(10, output_id, 
                            "open: module %s unloaded", 
                            module->mca_module_name);

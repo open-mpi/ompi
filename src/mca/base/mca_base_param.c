@@ -233,7 +233,7 @@ int mca_base_param_find(const char *type_name, const char *module_name,
  *
  * @returns LAM_SUCCESS This function never fails.
  *
- * This function shuts down the MCA parameter registry and frees all
+ * This function shuts down the MCA parameter repository and frees all
  * associated memory.  No other mca_base_param*() functions can be
  * invoked after this function.
  *

@@ -89,15 +89,16 @@ extern "C" {
 
     /* mca_base_module_register.c */
 
-    int mca_base_module_registry_construct(void);
-    int mca_base_module_registry_retain(char *type, lt_dlhandle module_handle, 
-                                        const mca_base_module_t *module_struct);
-    int mca_base_module_registry_link(const char *src_type, 
-                                      const char *src_name,
-                                      const char *depend_type,
-                                      const char *depend_name);
-    void mca_base_module_registry_release(const mca_base_module_t *module);
-    void mca_base_module_registry_finalize(void);
+    int mca_base_module_repository_construct(void);
+    int mca_base_module_repository_retain(char *type, 
+                                          lt_dlhandle module_handle, 
+                                          const mca_base_module_t *module_struct);
+    int mca_base_module_repository_link(const char *src_type, 
+                                        const char *src_name,
+                                        const char *depend_type,
+                                        const char *depend_name);
+    void mca_base_module_repository_release(const mca_base_module_t *module);
+    void mca_base_module_repository_finalize(void);
 
     /* mca_base_modules_open.c */
 
