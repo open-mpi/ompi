@@ -19,6 +19,7 @@ SUBDIRS = \
         class \
         mca \
         mpi \
+	mpiruntime \
         op \
         os \
         proc \
@@ -45,6 +46,7 @@ libmpi_la_LIBADD = \
         class/liblfc.la \
         mca/libmca.la \
         mpi/libmpi_bindings.la \
+	mpiruntime/libmpiruntime.la \
         op/libop.la \
         proc/libproc.la \
         request/librequest.la \
