@@ -6,6 +6,14 @@
 
 #include "mpi.h"
 #include "attribute/attribute.h"
+#include "util/proc_info.h"
+#include "util/pack.h"
+#include "errhandler/errclass.h"
+#include "communicator/communicator.h"
+#include "mca/ns/ns.h"
+#include "mca/ns/base/base.h"
+#include "mca/gpr/gpr.h"
+#include "mca/gpr/base/base.h"
 
 
 /*
@@ -22,9 +30,11 @@ static char *attr_host = NULL;
 static int attr_io = 1;
 static int attr_wtime_is_global = 0;
 
-static int attr_appnum = 0;
-static int attr_lastusedcode = 0;
-static int attr_universe_size = 0;
+/* Filled in at run-time, below */
+static int attr_appnum = -1;
+/* Filled in at run-time, below */
+static int attr_universe_size = -1;
+
 #if 0
 /* JMS for when we implement windows */
 static int attr_win_base = 0;
@@ -43,11 +53,63 @@ static int attr_impi_host_color = 0;
 
 int ompi_attr_create_predefined(void)
 {
-    int err;
+    int num, err;
+    ompi_list_t *universe;
+    ompi_list_item_t *item;
+    ompi_registry_value_t *reg_value;
+    ompi_buffer_t buffer;
+    char *bogus;
+    ompi_process_name_t *name;
 
     /* Set some default values */
 
-    /* JMS fill in values here */
+    attr_appnum = (int) ompi_name_server.get_jobid(ompi_process_info.name);
+
+    /* Query the registry to find out how many CPUs there will be.
+       This will only return a non-empty list in a persistent
+       universe.  If we don't have a persistent universe, then just
+       default to the size of MPI_COMM_WORLD. 
+
+       JMS: I think we need more here -- there are cases where you
+       wouldn't have a persistent universe but still may have a
+       comm_size(COMM_WORLD) != UNIVERSE_SIZE.  For example, say you
+       reserve 8 CPUs in a batch environment and then run ./master,
+       where the master is supposed to SPAWN the other processes.
+       Perhaps need some integration with the LLM here...?  [shrug] */
+
+    universe = ompi_registry.get(OMPI_REGISTRY_OR, "ompi-vm", NULL);
+    attr_universe_size = 0;
+    if (0 == ompi_list_get_size(universe)) {
+        attr_universe_size = ompi_comm_size(MPI_COMM_WORLD);
+    } else {
+        for (item = ompi_list_remove_first(universe);
+             NULL != item;
+             item = ompi_list_remove_first(universe)) {
+            reg_value = (ompi_registry_value_t *) item;
+            buffer = (ompi_buffer_t) reg_value->object;
+            
+            /* Node name */
+            ompi_unpack_string(buffer, &bogus);
+            free(bogus);
+            
+            /* Process name */
+            ompi_unpack(buffer, &name, 1, OMPI_NAME);
+            free(name);
+            
+            /* OOB contact info */
+            ompi_unpack_string(buffer, &bogus);
+            free(bogus);
+            
+            /* Process slot count */
+            ompi_unpack(buffer, &num, 1, OMPI_INT32);
+            attr_universe_size += num;
+            
+            /* Discard the rest */
+            ompi_buffer_free(buffer);
+            OBJ_RELEASE(item);
+        }
+    }
+    OBJ_RELEASE(universe);
 
     /* DO NOT CHANGE THE ORDER OF CREATING THESE KEYVALS!  This order
        strictly adheres to the order in mpi.h.  If you change the
@@ -59,7 +121,8 @@ int ompi_attr_create_predefined(void)
         OMPI_SUCCESS != (err = set(MPI_WTIME_IS_GLOBAL,
                                    &attr_wtime_is_global)) ||
         OMPI_SUCCESS != (err = set(MPI_APPNUM, &attr_appnum)) ||
-        OMPI_SUCCESS != (err = set(MPI_LASTUSEDCODE, &attr_lastusedcode)) ||
+        OMPI_SUCCESS != (err = set(MPI_LASTUSEDCODE,
+                                   &ompi_errclass_lastused)) ||
         OMPI_SUCCESS != (err = set(MPI_UNIVERSE_SIZE, &attr_universe_size)) ||
 #if 0
         /* JMS for when we implement windows */
@@ -81,7 +144,7 @@ int ompi_attr_create_predefined(void)
         0) {
         return err;
     }
-    
+
     return OMPI_SUCCESS;
 }
 
@@ -99,13 +162,12 @@ static int set(int target_keyval, void *value)
     err = ompi_attr_create_keyval(COMM_ATTR, copy, del,
                                   &keyval, NULL, OMPI_KEYVAL_PREDEFINED);
     if (keyval != target_keyval || OMPI_SUCCESS != err) {
-        printf("BADNESS 1: keyval %d, expected %d\n", keyval, target_keyval);
         return err;
     }
     err = ompi_attr_set(COMM_ATTR, MPI_COMM_WORLD,
                         MPI_COMM_WORLD->c_keyhash, keyval, value, 1);
     if (OMPI_SUCCESS != err) {
-        printf("BADNESS 2: keyval: %d\n", keyval);
+        return err;
     }
 
     return OMPI_SUCCESS;
