@@ -9,8 +9,6 @@
 #include "lam/mem/malloc.h"
 
 int mca_io_romio_File_iwrite(MPI_File fh, void *buf, int count, 
-                              MPI_Datatype datatype, lam_request_t **request);
-int mca_io_romio_File_iwrite(MPI_File fh, void *buf, int count, 
                          MPI_Datatype datatype, lam_request_t **request)
 {
     mca_io_romio_request_t *rq;
@@ -21,7 +19,7 @@ int mca_io_romio_File_iwrite(MPI_File fh, void *buf, int count,
     *request = (lam_request_t*) rq;
     (*request)->req_type = LAM_REQUEST_IO;
 
-    romio_fh = fh->f_io_file->romio_fh;
+    romio_fh = ((mca_io_romio_file_t *) fh)->romio_fh;
 
     THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_iwrite(romio_fh, buf, count, datatype,
