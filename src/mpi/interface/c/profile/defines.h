@@ -219,7 +219,7 @@
 #define MPI_Reduce PMPI_Reduce
 #define MPI_Reduce_scatter PMPI_Reduce_scatter
 #define MPI_Register_datarep PMPI_Register_datarep
-#define MPI_Request_c2f PMPI_Requset_c2f
+#define MPI_Request_c2f PMPI_Request_c2f
 #define MPI_Request_f2c PMPI_Request_f2c
 #define MPI_Request_free PMPI_Request_free
 #define MPI_Request_get_status PMPI_Request_get_status 
@@ -232,7 +232,6 @@
 #define MPI_Send PMPI_Send 
 #define MPI_Sendrecv PMPI_Sendrecv 
 #define MPI_Sendrecv_replace PMPI_Sendrecv_replace
-#define MPI_Sizeof PMPI_Sizeof 
 #define MPI_Ssend_init PMPI_Ssend_init
 #define MPI_Ssend PMPI_Ssend
 #define MPI_Start PMPI_Start
