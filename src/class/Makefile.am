@@ -16,7 +16,7 @@ headers = \
 	ompi_list.h \
 	ompi_object.h \
 	ompi_pointer_array.h \
-    ompi_proc_table.h \
+	ompi_proc_table.h \
 	ompi_value_array.h \
 	ompi_rb_tree.h
 
@@ -27,7 +27,7 @@ liblfc_la_SOURCES = \
 	ompi_list.c \
 	ompi_object.c \
 	ompi_pointer_array.c \
-    ompi_proc_table.c \
+	ompi_proc_table.c \
 	ompi_bitmap.c \
 	ompi_value_array.c \
 	ompi_rb_tree.c
@@ -35,7 +35,7 @@ liblfc_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/class
+ompidir = $(includedir)/openmpi/class
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

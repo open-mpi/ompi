@@ -8,6 +8,8 @@ EXTRA_DIST = \
 		openmpi-default-hostfile \
 		openmpi-mca-params.conf
 
+sysconf_DATA = 
+
 # Steal a little trickery from a generated Makefile to only install
 # lam-bhost.def if one does not already exist at the target.
 
