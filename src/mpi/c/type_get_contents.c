@@ -39,31 +39,42 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
                           MPI_Aint array_of_addresses[],
                           MPI_Datatype array_of_datatypes[])
 {
-   int rc;
+    int rc, i;
+    MPI_Datatype newtype;
 
-   if( MPI_PARAM_CHECK ) {
-      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if (NULL == mtype || MPI_DATATYPE_NULL == mtype) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
-                                      FUNC_NAME );
-      } else if (NULL == array_of_integers || NULL == array_of_addresses ||
-                 NULL == array_of_datatypes) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                      FUNC_NAME );
-      }
-   }
+    if( MPI_PARAM_CHECK ) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == mtype || MPI_DATATYPE_NULL == mtype) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
+                                          FUNC_NAME );
+        } else if (NULL == array_of_integers || NULL == array_of_addresses ||
+                   NULL == array_of_datatypes) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                          FUNC_NAME );
+        }
+    }
 
-   rc = ompi_ddt_get_args( mtype, 1, &max_integers, array_of_integers,
-                          &max_addresses, array_of_addresses,
-                          &max_datatypes, array_of_datatypes, NULL );
-   if( rc != MPI_SUCCESS ) {
-      OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
-                             MPI_ERR_INTERN, FUNC_NAME );
-   }
+    rc = ompi_ddt_get_args( mtype, 1, &max_integers, array_of_integers,
+                            &max_addresses, array_of_addresses,
+                            &max_datatypes, array_of_datatypes, NULL );
+    if( rc != MPI_SUCCESS ) {
+        OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
+                                MPI_ERR_INTERN, FUNC_NAME );
+    }
 
-   /* TODO: we have to return a copy of the datatypes not the original
-      datatypes */
-   /* This function is not yet implemented */
+    for( i = 0; i < max_datatypes; i++ ) {
+        /* if we have a predefined datatype then we return directly a pointer to
+         * the datatype, otherwise we should create a copy and give back the copy.
+         */
+        if( DT_FLAG_BASIC != (array_of_datatypes[i]->flags & DT_FLAG_BASIC) ) {
+            if( (rc = ompi_ddt_duplicate( array_of_datatypes[i], &newtype )) != MPI_SUCCESS ) {
+                ompi_ddt_destroy( &newtype );
+                OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
+                                        MPI_ERR_INTERN, FUNC_NAME );
+            }
+            array_of_datatypes[i] = newtype;
+        }
+    }
 
-   return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
 }
