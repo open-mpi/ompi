@@ -68,6 +68,7 @@ static mca_topo_t unity =  {
     NULL, /* topo_graph_create */
     NULL, /* topo_graph_get */
     mca_topo_unity_graph_map,
+    NULL, /* topo_graphdims_get */
     NULL, /* topo_graph_neighbors */
     NULL /* topo_graph_neighbors_count */
 };
