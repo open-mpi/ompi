@@ -39,7 +39,7 @@ static inline int ompi_errcode_get_mpi_code(int errcode)
     ompi_errcode_intern_t *__errc;
 
     for ( __i=0; __i<ompi_errcode_intern_lastused; __i++) {
-        __errc = ompi_pointer_array_get_item(&ompi_errcodes_intern, __i);
+        __errc = (ompi_errcode_intern_t *)ompi_pointer_array_get_item(&ompi_errcodes_intern, __i);
         if ( __errc->code == errcode ) {
             __ret = __errc->mpi_code;
             break;

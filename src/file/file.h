@@ -64,7 +64,8 @@ struct ompi_file_t {
     int f_f_to_c_index;
     /**< Index in Fortran <-> C translation array */
 
-    ompi_errhandler_t *error_handler;
+    ompi_errhandler_t                    *error_handler;
+    ompi_errhandler_type_t                errhandler_type;
     /**< Error handler.  This field does not have the "f_" prefix so
          that the OMPI_ERRHDL_* macros can find it, regardless of
          whether it's a comm, window, or file. */

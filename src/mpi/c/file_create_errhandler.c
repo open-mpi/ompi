@@ -40,7 +40,7 @@ int MPI_File_create_errhandler(MPI_File_errhandler_fn *function,
 
   *errhandler = 
     ompi_errhandler_create(OMPI_ERRHANDLER_TYPE_FILE,
-                          (ompi_errhandler_fortran_handler_fn_t*) function);
+                          (ompi_errhandler_generic_handler_fn_t*) function);
   if (NULL == *errhandler) {
     err = MPI_ERR_INTERN;
   }

@@ -93,7 +93,8 @@ struct ompi_communicator_t {
        that the OMPI_ERRHDL_* macros can find it, regardless of whether
        it's a comm, window, or file. */
 
-    ompi_errhandler_t *error_handler;
+    ompi_errhandler_t                  *error_handler;
+    ompi_errhandler_type_t             errhandler_type;
 
     /* Hooks for PML to hang things */
 

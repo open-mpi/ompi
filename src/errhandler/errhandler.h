@@ -13,6 +13,7 @@
 #include "class/ompi_pointer_array.h"
 #include "mpi/runtime/mpiruntime.h"
 #include "errhandler/errhandler_predefined.h"
+#include "errhandler/errcode-internal.h"
 
 /*
  * These must correspond to the fortran handle indices
@@ -29,11 +30,17 @@ enum {
  */
 typedef void (ompi_errhandler_fortran_handler_fn_t)(int *, int *, ...);
 
+/**
+ * Typedef for generic errhandler function
+ */
+typedef void (ompi_errhandler_generic_handler_fn_t)(void *, int *, ...);
+
 
 /**
  * Enum used to describe what kind MPI object an error handler is used for
  */
 enum ompi_errhandler_type_t {
+    OMPI_ERRHANDLER_TYPE_PREDEFINED,
     OMPI_ERRHANDLER_TYPE_COMM,
     OMPI_ERRHANDLER_TYPE_WIN,
     OMPI_ERRHANDLER_TYPE_FILE
@@ -45,32 +52,24 @@ typedef enum ompi_errhandler_type_t ompi_errhandler_type_t;
  * Back-end type for MPI_Errorhandler.
  */
 struct ompi_errhandler_t {
-  ompi_object_t super;
+    ompi_object_t super;
 
-  char eh_name[MPI_MAX_OBJECT_NAME];
+    char eh_name[MPI_MAX_OBJECT_NAME];
+    /* Type of MPI object that this handler is for */
+    
+    ompi_errhandler_type_t eh_mpi_object_type;
 
-  /* Type of MPI object that this handler is for */
+    /* Flags about the error handler */
+    bool eh_fortran_function;
 
-  ompi_errhandler_type_t eh_mpi_object_type;
+    /* Function pointers */
+    MPI_Comm_errhandler_fn *eh_comm_fn;
+    MPI_File_errhandler_fn *eh_file_fn;
+    MPI_Win_errhandler_fn *eh_win_fn;
+    ompi_errhandler_fortran_handler_fn_t *eh_fort_fn;
 
-  /* Flags about the error handler */
-
-  bool eh_is_intrinsic;
-  bool eh_fortran_function;
-
-  /* Function pointers */
-
-  union {
-    MPI_Comm_errhandler_fn *c_comm_fn;
-    MPI_File_errhandler_fn *c_file_fn;
-    MPI_Win_errhandler_fn *c_win_fn;
-
-    ompi_errhandler_fortran_handler_fn_t *fort_fn;
-  } eh_func;
-
-  /* index in Fortran <-> C translation array */
-
-  int eh_f_to_c_index;
+    /* index in Fortran <-> C translation array */
+    int eh_f_to_c_index;
 };
 typedef struct ompi_errhandler_t ompi_errhandler_t;
 
@@ -106,7 +105,7 @@ extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
  */
 #define OMPI_ERR_INIT_FINALIZE(name) \
   if (!ompi_mpi_initialized || ompi_mpi_finalized) { \
-    ompi_mpi_errors_are_fatal_handler(NULL, NULL, name); \
+    ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, name); \
   }
 
 /**
@@ -125,8 +124,11 @@ extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
  * parallel invocation to OMPI_ERRHANDLER_CHECK() and OMPI_ERRHANDLER_RETURN().
  */
 #define OMPI_ERRHANDLER_INVOKE(mpi_object, err_code, message) \
-  ompi_errhandler_invoke((mpi_object) != NULL ? (mpi_object)->error_handler : NULL, (mpi_object), \
-                        (err_code), (message));
+  ompi_errhandler_invoke((mpi_object) != NULL ? (mpi_object)->error_handler : NULL, \
+			 (mpi_object), \
+                         (int)(mpi_object)->errhandler_type, \
+                         (err_code < 0 ? (ompi_errcode_get_mpi_code(err_code)) : err_code), \
+			 (message));
 
 /**
  * Conditionally invoke an MPI error handler.
@@ -143,10 +145,13 @@ extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
  */
 #define OMPI_ERRHANDLER_CHECK(rc, mpi_object, err_code, message) \
   if (rc != OMPI_SUCCESS) { \
-    ompi_errhandler_invoke((mpi_object) != NULL ? \
-                          (mpi_object)->error_handler : NULL, (mpi_object), \
-                          (err_code), (message)); \
-    return (err_code); \
+    int __mpi_err_code = (err_code < 0 ? (ompi_errcode_get_mpi_code(err_code)) : err_code); \
+    ompi_errhandler_invoke((mpi_object) != NULL ? (mpi_object)->error_handler : NULL, \
+			   (mpi_object), \
+                           (int) (mpi_object)->errhandler_type, \
+                           (__mpi_err_code), \
+                           (message)); \
+    return (__mpi_err_code); \
   }
 
 /**
@@ -166,9 +171,13 @@ extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
  */
 #define OMPI_ERRHANDLER_RETURN(rc, mpi_object, err_code, message) \
   if (rc != OMPI_SUCCESS) { \
-    ompi_errhandler_invoke((mpi_object != NULL) ? (mpi_object)->error_handler : NULL, (mpi_object), \
-                          (err_code), (message)); \
-    return (err_code); \
+    int __mpi_err_code = (err_code < 0 ? (ompi_errcode_get_mpi_code(err_code)) : err_code); \
+    ompi_errhandler_invoke((mpi_object != NULL) ? (mpi_object)->error_handler : NULL, \
+                           (mpi_object), \
+                           (int)(mpi_object)->errhandler_type, \
+                           (__mpi_err_code), \
+                           (message)); \
+    return (__mpi_err_code); \
   } else { \
     return MPI_SUCCESS; \
   }
@@ -210,6 +219,10 @@ extern "C" {
    * @param errhandler The MPI_Errhandler to invoke
    * @param mpi_object The MPI object to invoke the errhandler on (a
    *    comm, win, or win)
+   * @param type       The type of the MPI object. Necessary, since
+   *                   you can not assign a single type to the predefined
+   *                   error handlers. This information is therefore 
+   *                   stored on the MPI object itself.
    * @param err_code The error code
    * @param message Any additional message; typically the name of the
    *    MPI function that is invoking the error.
@@ -225,7 +238,7 @@ extern "C" {
    * may not return (e.g., for MPI_ERRORS_ARE_FATAL).
    */
   int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object, 
-                            int err_code, const char *message);
+			     int type, int err_code, const char *message);
 
 
   /**
@@ -255,7 +268,7 @@ extern "C" {
    * flag to true manually.
    */
   ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
-                                          ompi_errhandler_fortran_handler_fn_t *func);
+					    ompi_errhandler_generic_handler_fn_t *func);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
@@ -275,7 +288,10 @@ extern "C" {
  */
 static inline bool ompi_errhandler_is_intrinsic(ompi_errhandler_t *errhandler)
 {
-  return errhandler->eh_is_intrinsic;
+    if ( OMPI_ERRHANDLER_TYPE_PREDEFINED == errhandler->eh_mpi_object_type ) 
+	return true;
+
+    return false;
 }
 
 #endif /* OMPI_ERRHANDLER_H */

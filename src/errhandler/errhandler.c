@@ -39,11 +39,16 @@ ompi_errhandler_t ompi_mpi_errhandler_null = {
     { NULL, 0 },
 
     "MPI_ERRHANDLER_NULL",
-    OMPI_ERRHANDLER_TYPE_COMM,
-    true,
+    OMPI_ERRHANDLER_TYPE_PREDEFINED,
     false,
-    { NULL }
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    -1
 };
+void ompi_mpi_errors_return_handler(struct ompi_communicator_t **comm,
+                                   int *error_code, ...);
 
 
 /*
@@ -53,10 +58,12 @@ ompi_errhandler_t ompi_mpi_errors_are_fatal = {
     { NULL, 0 },
 
     "MPI_ERRORS_ARE_FATAL",
-    OMPI_ERRHANDLER_TYPE_COMM,
-    true,
+    OMPI_ERRHANDLER_TYPE_PREDEFINED,
     false,
-    { ompi_mpi_errors_are_fatal_handler },
+    ompi_mpi_errors_are_fatal_comm_handler,
+    ompi_mpi_errors_are_fatal_file_handler,
+    ompi_mpi_errors_are_fatal_win_handler,
+    NULL,
     -1
 };
 
@@ -68,10 +75,12 @@ ompi_errhandler_t ompi_mpi_errors_return = {
     { NULL, 0 },
 
     "MPI_ERRORS_RETURN",
-    OMPI_ERRHANDLER_TYPE_COMM,
-    true,
+    OMPI_ERRHANDLER_TYPE_PREDEFINED,
     false,
-    { ompi_mpi_errors_return_handler },
+    ompi_mpi_errors_return_comm_handler,
+    ompi_mpi_errors_return_file_handler,
+    ompi_mpi_errors_return_win_handler,
+    NULL,
     -1
 };
 
@@ -123,7 +132,7 @@ int ompi_errhandler_finalize(void)
 
 
 ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
-                                        ompi_errhandler_fortran_handler_fn_t *func)
+					  ompi_errhandler_generic_handler_fn_t *func)
 {
   ompi_errhandler_t *new_errhandler;
 
@@ -145,9 +154,22 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
          type when we *use* it). */
 
       new_errhandler->eh_mpi_object_type = object_type;
-      new_errhandler->eh_is_intrinsic = false;
       new_errhandler->eh_fortran_function = false;
-      new_errhandler->eh_func.fort_fn = func;
+      switch (object_type ) {
+	  case (OMPI_ERRHANDLER_TYPE_COMM):
+	      new_errhandler->eh_comm_fn = (MPI_Comm_errhandler_fn *)func;
+	      break;
+	  case (OMPI_ERRHANDLER_TYPE_FILE):
+	      new_errhandler->eh_file_fn = (MPI_File_errhandler_fn *)func;
+	      break;
+	  case (OMPI_ERRHANDLER_TYPE_WIN):
+	      new_errhandler->eh_win_fn = (MPI_Win_errhandler_fn *)func;
+	      break;
+	  default:
+	      break;
+      }
+
+      new_errhandler->eh_fort_fn = (ompi_errhandler_fortran_handler_fn_t *)func;
     }
   }
 
@@ -175,6 +197,15 @@ static void ompi_errhandler_construct(ompi_errhandler_t *new_errhandler)
   ret_val = ompi_pointer_array_add(ompi_errhandler_f_to_c_table, 
                                   new_errhandler);
   new_errhandler->eh_f_to_c_index = ret_val;
+
+  new_errhandler->eh_fortran_function = 0;
+
+  new_errhandler->eh_comm_fn      = NULL;
+  new_errhandler->eh_win_fn       = NULL;
+  new_errhandler->eh_file_fn      = NULL;
+  new_errhandler->eh_fort_fn      = NULL;
+
+  memset (new_errhandler->eh_name, 0, MPI_MAX_OBJECT_NAME);
 }
 
 
