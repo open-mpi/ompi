@@ -16,20 +16,20 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
 				 unsigned int* max_data,
 				 int* freeAfter )
 {
-    dt_stack_t* pStack;   /* pointer to the position on the stack */
-    int pos_desc;         /* actual position in the description of the derived datatype */
-    int count_desc;       /* the number of items already done in the actual pos_desc */
-    int type;             /* type at current position */
-    unsigned int advance; /* number of bytes that we should advance the buffer */
-    int rc;
-    long disp_desc = 0;   /* compute displacement for truncated data */
-    int bConverted = 0;   /* number of bytes converted this time */
+    dt_stack_t* pStack;    /* pointer to the position on the stack */
+    unsigned int pos_desc; /* actual position in the description of the derived datatype */
+    int count_desc;        /* the number of items already done in the actual pos_desc */
+    int type;              /* type at current position */
+    unsigned int advance;  /* number of bytes that we should advance the buffer */
+    long disp_desc = 0;    /* compute displacement for truncated data */
+    int bConverted = 0;    /* number of bytes converted this time */
     dt_desc_t *pData = pConvertor->pDesc;
     dt_elem_desc_t* pElem;
     char* pOutput = pConvertor->pBaseBuf;
     int oCount = (pData->ub - pData->lb) * pConvertor->count;
-    char* pInput = iov[0].iov_base;
-    int iCount = iov[0].iov_len;
+    char* pInput;
+    int iCount, rc;
+    unsigned int iov_count, total_bytes_converted = 0;
 
     DUMP( "convertor_decode( %p, {%p, %d}, %d )\n", pConvertor,
           iov[0].iov_base, iov[0].iov_len, *out_size );
@@ -49,66 +49,82 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
     DUMP( "top stack info {index = %d, count = %d}\n", 
           pStack->index, pStack->count );
 
-    while( pos_desc >= 0 ) {
-	if( pElem[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
-	    if( --(pStack->count) == 0 ) { /* end of loop */
-		if( pConvertor->stack_pos == 0 )
-		    goto complete_loop;  /* completed */
-		pConvertor->stack_pos--;
-		pStack--;
-	    }
-	    pos_desc = pStack->index;
-	    if( pos_desc == -1 )
-		pStack->disp += (pData->ub - pData->lb);
-	    else
-		pStack->disp += pElem[pos_desc].extent;
-	    pos_desc++;
-	    count_desc = pElem[pos_desc].count;
-	    disp_desc = pElem[pos_desc].disp;
-	    continue;
-	}
-	if( pElem[pos_desc].type == DT_LOOP ) {
-	    do {
-		PUSH_STACK( pStack, pConvertor->stack_pos,
-			    pos_desc, pElem[pos_desc].count,
-			    pStack->disp, pos_desc + pElem[pos_desc].disp + 1);
-		pos_desc++;
-	    } while( pElem[pos_desc].type == DT_LOOP ); /* let's start another loop */
-	    DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loops" );
-	    /* update the current state */
-	    count_desc = pElem[pos_desc].count;
-	    disp_desc = pElem[pos_desc].disp;
-	    continue;
-	}
-	while( pElem[pos_desc].flags & DT_FLAG_DATA ) {
-	    /* now here we have a basic datatype */
-	    type = pElem[pos_desc].type;
-	    rc = pConvertor->pFunctions[type]( count_desc,
-					       pOutput + pStack->disp + disp_desc, oCount, pElem[pos_desc].extent,
-					       pInput, iCount, pElem[pos_desc].extent,
-					       &advance );
-	    iCount -= advance;      /* decrease the available space in the buffer */
-	    pInput += advance;      /* increase the pointer to the buffer */
-	    bConverted += advance;
-	    if( rc != count_desc ) {
-		/* not all data has been converted. Keep the state */
-		count_desc -= rc;
-		disp_desc += rc * pElem[pos_desc].extent;
-		if( iCount != 0 )
-		    printf( "there is still room in the input buffer %d bytes\n", iCount );
-		goto complete_loop;
-	    }
-	    pConvertor->converted += rc;  /* number of elementd converted so far */
-	    pos_desc++;  /* advance to the next data */
-	    count_desc = pElem[pos_desc].count;
-	    disp_desc = pElem[pos_desc].disp;
-	    if( iCount == 0 ) goto complete_loop;  /* break if there is no more data in the buffer */
-	}
+    for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
+        bConverted = 0;
+        if( iov[iov_count].iov_base == NULL ) {
+            unsigned int length = iov[iov_count].iov_len;
+            if( length <= 0 )
+                length = pConvertor->count * pData->size - pConvertor->bConverted - bConverted;
+            if( (*max_data) < length )
+                length = *max_data;
+            iov[iov_count].iov_len = length;
+            iov[iov_count].iov_base = pConvertor->memAlloc_fn( &(iov[iov_count].iov_len) );
+            *freeAfter = (*freeAfter) | ( 1 << iov_count);
+        }
+        pInput = iov[iov_count].iov_base;
+        iCount = iov[iov_count].iov_len;
+        while( 1 ) {
+            if( pElem[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
+                if( --(pStack->count) == 0 ) { /* end of loop */
+                    if( pConvertor->stack_pos == 0 )
+                        goto complete_loop;  /* completed */
+                    pConvertor->stack_pos--;
+                    pStack--;
+                }
+                if( pStack->index == -1 ) {
+                    pStack->disp += (pData->ub - pData->lb);
+                } else {
+                    pStack->disp += pElem[pos_desc].extent;
+                }
+                pos_desc = pStack->index + 1;
+                count_desc = pElem[pos_desc].count;
+                disp_desc = pElem[pos_desc].disp;
+                continue;
+            }
+            if( pElem[pos_desc].type == DT_LOOP ) {
+                do {
+                    PUSH_STACK( pStack, pConvertor->stack_pos,
+                                pos_desc, pElem[pos_desc].count,
+                                pStack->disp, pos_desc + pElem[pos_desc].disp + 1);
+                    pos_desc++;
+                } while( pElem[pos_desc].type == DT_LOOP ); /* let's start another loop */
+                DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loops" );
+                /* update the current state */
+                count_desc = pElem[pos_desc].count;
+                disp_desc = pElem[pos_desc].disp;
+                continue;
+            }
+            while( pElem[pos_desc].flags & DT_FLAG_DATA ) {
+                /* now here we have a basic datatype */
+                type = pElem[pos_desc].type;
+                rc = pConvertor->pFunctions[type]( count_desc,
+                                                   pOutput + pStack->disp + disp_desc, oCount, pElem[pos_desc].extent,
+                                                   pInput, iCount, pElem[pos_desc].extent,
+                                                   &advance );
+                iCount -= advance;      /* decrease the available space in the buffer */
+                pInput += advance;      /* increase the pointer to the buffer */
+                bConverted += advance;
+                if( rc != count_desc ) {
+                    /* not all data has been converted. Keep the state */
+                    count_desc -= rc;
+                    disp_desc += rc * pElem[pos_desc].extent;
+                    if( iCount != 0 )
+                        printf( "there is still room in the input buffer %d bytes\n", iCount );
+                    goto complete_loop;
+                }
+                pConvertor->converted += rc;  /* number of elementd converted so far */
+                pos_desc++;  /* advance to the next data */
+                count_desc = pElem[pos_desc].count;
+                disp_desc = pElem[pos_desc].disp;
+                if( iCount == 0 ) goto complete_loop;  /* break if there is no more data in the buffer */
+            }
+        }
+    complete_loop:
+        pConvertor->bConverted += bConverted;  /* update the already converted bytes */
+        iov[iov_count].iov_len = bConverted;   /* update the length in the iovec */
+        total_bytes_converted += bConverted;
     }
-  complete_loop:
-    pConvertor->bConverted += bConverted;  /* update the already converted bytes */
-    iov[0].iov_len = bConverted;           /* update the length in the iovec */
-    *max_data = bConverted;
+    *max_data = total_bytes_converted;
     /* out of the loop: we have complete the data conversion or no more space
      * in the buffer.
      */
@@ -194,14 +210,16 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
 		}
 		pStack--;
                 pConv->stack_pos--;
+                pos_desc++;  /* go to the next element */
 	    } else {
-		pos_desc = pStack->index;  /* DT_LOOP index */
-		if( pos_desc == -1 )
+		if( pStack->index == -1 ) {
 		    pStack->disp += (pData->ub - pData->lb);
-		else
+                    pos_desc = 0;
+                } else {
 		    pStack->disp += pElems[pos_desc].extent;
+                    pos_desc = pStack->index + 1;
+                }
 	    }
-	    pos_desc++;  /* go to the next element */
 	    last_count = pElems[pos_desc].count;
 	    last_blength = last_count;
 	    lastDisp = pStack->disp + pElems[pos_desc].disp;
