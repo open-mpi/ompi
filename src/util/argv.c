@@ -292,18 +292,18 @@ int ompi_argv_delete(int *argc, char ***argv, int start, int num_to_delete)
     /* Free all items that are being deleted */
 
     for (i = start; i < count && i < start + num_to_delete; ++i) {
-        free(*argv[i]);
+        free((*argv)[i]);
     }
 
     /* Copy the suffix over the deleted items */
 
     for (i = start; i < start + suffix_count; ++i) {
-        *argv[i] = *argv[i + num_to_delete];
+        (*argv)[i] = (*argv)[i + num_to_delete];
     }
 
     /* Add the trailing NULL */
 
-    *argv[i] = NULL;
+    (*argv)[i] = NULL;
 
     /* adjust the argv array */
     tmp = realloc(*argv, sizeof(char**) * (i + 1));
