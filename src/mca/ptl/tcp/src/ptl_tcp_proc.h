@@ -41,6 +41,10 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc);
 mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(void *guid, size_t size);
 
 
+/**
+ * Inlined function to return local TCP proc instance.
+ */
+
 static inline mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_local(void) 
 {
     if(NULL == mca_ptl_tcp_module.tcp_local)

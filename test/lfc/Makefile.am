@@ -8,6 +8,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support -DLAM_ENABLE_DEBUG_OVERRIDE=1
 
 noinst_PROGRAMS = \
 	lam_bitmap \
+	lam_registry \
 	lam_hash_table \
 	lam_list \
 	lam_value_array \
@@ -36,6 +37,18 @@ lam_list_LDADD = \
         $(top_builddir)/src/threads/mutex_spinlock.lo \
         $(top_builddir)/test/support/libsupport.la
 lam_list_DEPENDENCIES = $(lam_list_LDADD)
+
+lam_registry_SOURCES = registry.c 
+lam_registry_LDADD = \
+        $(top_builddir)/src/lfc/lam_list.lo \
+        $(top_builddir)/src/lfc/lam_object.lo \
+        $(top_builddir)/src/mem/malloc.lo \
+        $(top_builddir)/src/util/output.lo \
+        $(top_builddir)/src/threads/mutex.lo \
+        $(top_builddir)/src/threads/mutex_pthread.lo \
+        $(top_builddir)/src/threads/mutex_spinlock.lo \
+        $(top_builddir)/test/support/libsupport.la
+lam_registry_DEPENDENCIES = $(lam_list_LDADD)
 
 lam_hash_table_SOURCES = lam_hash_table.c
 lam_hash_table_LDADD = \

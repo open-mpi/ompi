@@ -57,7 +57,6 @@ struct mca_ptl_base_match_header_t {
     int32_t hdr_tag;                     /**< user tag */
     uint32_t hdr_msg_length;             /**< message length */
     mca_ptl_sequence_t hdr_msg_seq;      /**< message sequence number */
-    lam_ptr_t hdr_src_ptr;
 };
 typedef struct mca_ptl_base_match_header_t mca_ptl_base_match_header_t;
 

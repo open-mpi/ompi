@@ -27,9 +27,6 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user);
 static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user);
 
 
-#define PROGRESS_THREAD_LOCK   THREAD_LOCK
-#define PROGRESS_THREAD_UNLOCK THREAD_UNLOCK
-
 
 lam_class_t  mca_ptl_tcp_peer_t_class = {
     "mca_tcp_ptl_peer_t", 
@@ -112,6 +109,10 @@ static void mca_ptl_tcp_peer_dump(mca_ptl_base_peer_t* ptl_peer, const char* msg
         msg, src, dst, nodelay, sndbuf, rcvbuf, flags);
     lam_output(0, buff);
 }
+
+/*
+ * Initialize events to be used by the peer instance for TCP select/poll callbacks.
+ */
 
 static inline void mca_ptl_tcp_peer_event_init(mca_ptl_base_peer_t* ptl_peer, int sd)
 {
@@ -235,7 +236,7 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
 {
     mca_ptl_tcp_addr_t* ptl_addr;
     mca_ptl_tcp_proc_t* this_proc = mca_ptl_tcp_proc_local();
-    PROGRESS_THREAD_LOCK(&ptl_peer->peer_recv_lock);
+    THREAD_LOCK(&ptl_peer->peer_recv_lock);
     THREAD_LOCK(&ptl_peer->peer_send_lock);
     if((ptl_addr = ptl_peer->peer_addr) != NULL  &&
         ptl_addr->addr_inet.s_addr == addr->sin_addr.s_addr) {
@@ -248,7 +249,7 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
             if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) != LAM_SUCCESS) {
                  mca_ptl_tcp_peer_close(ptl_peer);
                  THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-                 PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+                 THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
                  return false;
             }
             mca_ptl_tcp_peer_event_init(ptl_peer, sd);
@@ -258,12 +259,12 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
             mca_ptl_tcp_peer_dump(ptl_peer, "accepted");
 #endif
             THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-            PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+            THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
             return true;
         }
     }
     THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-    PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+    THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
     return false;
 }
 
@@ -287,7 +288,8 @@ void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
 }
 
 /*
- * 
+ *  Setup peer state to reflect that connection has been established,
+ *  and start any pending sends.
  */
 
 static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t* ptl_peer)
@@ -521,7 +523,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
 static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
 {
     mca_ptl_base_peer_t* ptl_peer = user;
-    PROGRESS_THREAD_LOCK(&ptl_peer->peer_recv_lock);
+    THREAD_LOCK(&ptl_peer->peer_recv_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECT_ACK:
         {
@@ -535,7 +537,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
             int rc;
             MCA_PTL_TCP_RECV_FRAG_ALLOC(recv_frag, rc);
             if(NULL == recv_frag) {
-                PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+                THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
                 return;
             }
             mca_ptl_tcp_recv_frag_init(recv_frag, ptl_peer);
@@ -555,7 +557,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
         break;
         }
     }
-    PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+    THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
 }
 
 

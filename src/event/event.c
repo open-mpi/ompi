@@ -303,7 +303,9 @@ lam_event_loop(int flags)
     struct timeval tv;
     int res, done;
 
-    THREAD_LOCK(&lam_event_lock);
+    if(lam_using_threads()) {
+        THREAD_LOCK(&lam_event_lock);
+    } 
 
     /* Calculate the initial events that we are waiting for */
     if (lam_evsel->recalc && lam_evsel->recalc(lam_evbase, 0) == -1) {

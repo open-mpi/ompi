@@ -17,6 +17,9 @@
 #include "ptl_tcp_recvfrag.h"
 #include "ptl_tcp_sendfrag.h"
 
+/**
+ * State of TCP peer connection.
+ */
 
 typedef enum { 
     MCA_PTL_TCP_CLOSED, 

@@ -75,7 +75,7 @@ void mca_pml_teg_send_request_progress(
 {
     bool first_frag;
     THREAD_LOCK(&mca_pml_teg.teg_request_lock);
-    first_frag = (req->req_bytes_sent == 0);
+    first_frag = (req->req_bytes_sent == 0 && req->req_bytes_packed > 0);
     req->req_bytes_sent += frag->super.frag_size;
     if (req->req_bytes_sent >= req->req_bytes_packed) {
         req->super.req_pml_done = true;
@@ -96,7 +96,7 @@ void mca_pml_teg_send_request_progress(
     THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
 
     /* if first fragment - shedule remaining fragments */
-    if(first_frag == 1) {
+    if(first_frag == true) {
         mca_pml_teg_send_request_schedule(req);
     }
 }
