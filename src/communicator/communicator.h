@@ -35,6 +35,7 @@ extern ompi_class_t ompi_communicator_t_class;
 #define OMPI_COMM_IS_GRAPH(comm) ((comm)->c_flags & OMPI_COMM_GRAPH)
 #define OMPI_COMM_IS_INTRINSIC(comm) ((comm)->c_flags & OMPI_COMM_INTRINSIC)
 #define OMPI_COMM_IS_HIDDEN(comm) ((comm)->c_flags & OMPI_COMM_HIDDEN)
+#define OMPI_COMM_IS_FREED(comm) ((comm)->c_flags & OMPI_COMM_ISFREED)
 
 #define OMPI_COMM_SET_HIDDEN(comm) ((comm)->c_flags |= OMPI_COMM_HIDDEN)
 

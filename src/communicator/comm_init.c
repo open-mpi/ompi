@@ -162,6 +162,9 @@ ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
 
 int ompi_comm_finalize(void) 
 {
+    int max, i;
+    ompi_communicator_t *comm;
+
     /* Destroy all predefined communicators */    
     OBJ_DESTRUCT( &ompi_mpi_comm_null );
     
@@ -172,6 +175,30 @@ int ompi_comm_finalize(void)
     ompi_mpi_comm_self.c_local_group->grp_flags = 0;
     ompi_mpi_comm_self.c_flags = 0;
     OBJ_DESTRUCT( &ompi_mpi_comm_self );
+
+    ompi_mpi_comm_null.c_local_group->grp_flags = 0;
+    ompi_mpi_comm_null.c_flags = 0;
+    OBJ_DESTRUCT( &ompi_mpi_comm_null );
+    
+    /* Check whether we have some communicators left */
+    max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
+    for ( i=3; i<max; i++ ) {
+        comm = ompi_pointer_array_get_item(&ompi_mpi_communicators, i);
+        if ( NULL != comm ) {
+            /* Communicator has not been freed before finalize */
+            OBJ_RELEASE(comm);
+            comm=ompi_pointer_array_get_item(&ompi_mpi_communicators, i);
+            if ( NULL != comm ) {
+                /* Still here ? */
+                if ( ompi_debug_show_handle_leaks && !(OMPI_COMM_IS_FREED(comm)) ){
+                    ompi_output(0,"WARNING: MPI_Comm still allocated in MPI_Finalize\n");
+                    ompi_comm_dump ( comm);
+                    OBJ_RELEASE(comm);
+                }
+            }
+        }
+    }
+
 
     OBJ_DESTRUCT (&ompi_mpi_communicators);
 
