@@ -46,7 +46,7 @@ static void show_mca_version(const mca_base_module_t *module,
                              const string& scope, const string& ver_type);
 static string make_version_str(const string& scope,
                                int major, int minor, int release, int alpha, 
-                               int beta, int svn);
+                               int beta, const string& svn);
 
 //
 // do_version
@@ -111,7 +111,8 @@ void ompi_info::show_ompi_version(const string& scope)
       make_version_str(scope, 
                        OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, 
                        OMPI_RELEASE_VERSION, 
-                       OMPI_ALPHA_VERSION, OMPI_BETA_VERSION, OMPI_SVN_VERSION));
+                       OMPI_ALPHA_VERSION, OMPI_BETA_VERSION, 
+                       OMPI_SVN_VERSION));
 }
 
 
@@ -182,14 +183,14 @@ static void show_mca_version(const mca_base_module_t* module,
 
   mca_version = make_version_str(scope, module->mca_major_version,
                                  module->mca_minor_version,
-                                 module->mca_release_version, 0, 0, 0);
+                                 module->mca_release_version, 0, 0, "");
   api_version = make_version_str(scope, module->mca_type_major_version,
                                  module->mca_type_minor_version,
-                                 module->mca_type_release_version, 0, 0, 0);
+                                 module->mca_type_release_version, 0, 0, "");
   module_version = make_version_str(scope, module->mca_module_major_version,
                                     module->mca_module_minor_version,
                                     module->mca_module_release_version, 
-                                    0, 0, 0);
+                                    0, 0, "");
 
   if (pretty) {
     message = "MCA ";
@@ -232,7 +233,7 @@ static void show_mca_version(const mca_base_module_t* module,
 
 static string make_version_str(const string& scope,
                                int major, int minor, int release, int alpha, 
-                               int beta, int svn)
+                               int beta, const string& svn)
 {
   string str;
   char temp[BUFSIZ];
@@ -253,12 +254,8 @@ static string make_version_str(const string& scope,
       snprintf(temp, BUFSIZ - 1, "b%d", beta);
       str += temp;
     }
-    if (svn > 0) {
-      str += "svn";
-      if (svn > 1) {
-        snprintf(temp, BUFSIZ - 1, "%d", svn);
-        str += temp;
-      }
+    if (!svn.empty()) {
+      str += svn;
     }
   } else if (scope == ver_major)
     snprintf(temp, BUFSIZ - 1, "%d", major);
@@ -271,7 +268,7 @@ static string make_version_str(const string& scope,
   else if (scope == ver_beta)
     snprintf(temp, BUFSIZ - 1, "%d", beta);
   else if (scope == ver_svn)
-    snprintf(temp, BUFSIZ - 1, "%d", svn);
+    str = svn;
   else {
 #if 0
     show_help("ompi_info", "usage");

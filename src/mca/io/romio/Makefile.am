@@ -25,7 +25,7 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_io_romio_la_SOURCES = 
-mca_io_romio_la_LIBADD = src/libmca_io_romio.la $(LIBOMPI_LA)
+mca_io_romio_la_LIBADD = src/libmca_io_romio.la
 mca_io_romio_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)

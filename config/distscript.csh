@@ -9,11 +9,6 @@ set verfile="$srcdir/VERSION"
 set verscript="config/ompi_get_version.sh"
 
 set OMPI_VERSION="`sh $verscript $verfile --full`"
-set OMPI_MAJOR_VERSION="`sh $verscript $verfile --major`"
-set OMPI_MINOR_VERSION="`sh $verscript $verfile --minor`"
-set OMPI_RELEASE_VERSION="`sh $verscript $verfile --release`"
-set OMPI_ALPHA_VERSION="`sh $verscript $verfile --alpha`"
-set OMPI_BETA_VERSION="`sh $verscript $verfile --beta`"
 
 if ("$distdir" == "") then
     echo "Must supply relative distdir as argv[1] -- aborting"

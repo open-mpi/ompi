@@ -25,7 +25,7 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pml_teg_la_SOURCES = 
-mca_pml_teg_la_LIBADD = src/libmca_pml_teg.la $(LIBOMPI_LA)
+mca_pml_teg_la_LIBADD = src/libmca_pml_teg.la
 mca_pml_teg_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)

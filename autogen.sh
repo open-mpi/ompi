@@ -465,7 +465,6 @@ EOF
                 pd_module_name="`basename $pd_dir`"
                 pd_module_type="`dirname $pd_dir`"
                 pd_module_type="`basename $pd_module_type`"
-                pd_get_ver="../../../../config/ompi_get_version.sh"
                 pd_ver_file="`grep PARAM_VERSION_FILE configure.params`"
                 if test -z "$pd_ver_file"; then
                     pd_ver_file="VERSION"
@@ -498,6 +497,7 @@ EOF
 
                 # Get all the version numbers
 
+                pd_get_ver="../../../../config/ompi_get_version.sh"
                 pd_ver="`sh $pd_get_ver $pd_ver_file --all`"
                 pd_ver_full="`echo $pd_ver | cut -d: -f1`"
                 pd_ver_major="`echo $pd_ver | cut -d: -f2`"
@@ -533,7 +533,7 @@ AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_BETA_VERSION,
     $pd_ver_beta,
     [Beta OMPI MCA $pd_module_type $pd_module_name version])
 AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_SVN_VERSION, 
-    $pd_ver_svn,
+    "$pd_ver_svn",
     [SVN OMPI MCA $pd_module_type $pd_module_name version])
 AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_FULL_VERSION, 
     "$pd_ver_full",
