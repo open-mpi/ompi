@@ -33,7 +33,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "include/lam_config.h"
+#include "lam_config.h"
 #include "include/lam_constants.h"
 #include "lam/lfc/hash_table.h"
 
