@@ -59,7 +59,7 @@ static void show_mca_version(const mca_base_component_t *component,
                              const string& scope, const string& ver_type);
 static string make_version_str(const string& scope,
                                int major, int minor, int release, int alpha, 
-                               int beta, const string& svn);
+                               int beta, bool want_svn, const string& svn);
 
 //
 // do_version
@@ -120,12 +120,14 @@ void ompi_info::do_version(bool want_all, ompi_cmd_line_t *cmd_line)
 //
 void ompi_info::show_ompi_version(const string& scope)
 {
-  out("Open MPI", "version:" + type_ompi, 
+  out("Open MPI", type_ompi + ":version:full",
       make_version_str(scope, 
                        OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION, 
                        OMPI_RELEASE_VERSION, 
                        OMPI_ALPHA_VERSION, OMPI_BETA_VERSION, 
-                       OMPI_SVN_VERSION));
+                       OMPI_WANT_SVN, OMPI_SVN_R));
+  out("SVN revision number", type_ompi + ":version:svn",
+      OMPI_SVN_R);
 }
 
 
@@ -197,14 +199,16 @@ static void show_mca_version(const mca_base_component_t* component,
 
   mca_version = make_version_str(scope, component->mca_major_version,
                                  component->mca_minor_version,
-                                 component->mca_release_version, 0, 0, "");
+                                 component->mca_release_version, 0, 0, 
+                                 false, "");
   api_version = make_version_str(scope, component->mca_type_major_version,
                                  component->mca_type_minor_version,
-                                 component->mca_type_release_version, 0, 0, "");
+                                 component->mca_type_release_version, 0, 0,
+                                 false, "");
   component_version = make_version_str(scope, component->mca_component_major_version,
                                     component->mca_component_minor_version,
                                     component->mca_component_release_version, 
-                                    0, 0, "");
+                                    0, 0, false, "");
 
   if (pretty) {
     message = "MCA ";
@@ -247,7 +251,7 @@ static void show_mca_version(const mca_base_component_t* component,
 
 static string make_version_str(const string& scope,
                                int major, int minor, int release, int alpha, 
-                               int beta, const string& svn)
+                               int beta, bool want_svn, const string& svn)
 {
   string str;
   char temp[BUFSIZ];
@@ -268,30 +272,31 @@ static string make_version_str(const string& scope,
       snprintf(temp, BUFSIZ - 1, "b%d", beta);
       str += temp;
     }
-    if (!svn.empty()) {
+    if (want_svn && !svn.empty()) {
       str += svn;
     }
-  } else if (scope == ver_major)
+  } else if (scope == ver_major) {
     snprintf(temp, BUFSIZ - 1, "%d", major);
-  else if (scope == ver_minor)
+  } else if (scope == ver_minor) {
     snprintf(temp, BUFSIZ - 1, "%d", minor);
-  else if (scope == ver_release)
+  } else if (scope == ver_release) {
     snprintf(temp, BUFSIZ - 1, "%d", release);
-  else if (scope == ver_alpha)
+  } else if (scope == ver_alpha) {
     snprintf(temp, BUFSIZ - 1, "%d", alpha);
-  else if (scope == ver_beta)
+  } else if (scope == ver_beta) {
     snprintf(temp, BUFSIZ - 1, "%d", beta);
-  else if (scope == ver_svn)
+  } else if (scope == ver_svn) {
     str = svn;
-  else {
+  } else {
 #if 0
     show_help("ompi_info", "usage");
 #endif
     exit(1);
   }
 
-  if (str.empty())
+  if (str.empty()) {
     str = temp;
+  }
 
   return str;
 }
