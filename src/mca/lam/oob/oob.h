@@ -2,6 +2,7 @@
  *
  * $HEADER$
  */
+/** @file **/
 
 /** 
  *  \brief Out of Band Messaging Interface
