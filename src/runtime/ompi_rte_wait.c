@@ -145,7 +145,7 @@ static void register_sig_event(void);
 static int unregister_callback(pid_t pid);
 void ompi_rte_wait_signal_callback(int fd, short event, void *arg);
 static pid_t internal_waitpid(pid_t pid, int *status, int options);
-#if  OMPI_HAVE_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if  OMPI_HAVE_THREAD_SUPPORT && OMPI_THREADS_HAVE_DIFFERENT_PIDS
 static void internal_waitpid_callback(int fd, short event, void *arg);
 #endif
 
@@ -252,7 +252,7 @@ ompi_rte_waitpid(pid_t wpid, int *status, int options)
             ompi_condition_timedwait(data->cond, 
                                      cond_mutex, 
                                      &spintime);
-#if OMPI_HAVE_THREADS
+#if OMPI_HAVE_THREAD_SUPPORT
             if (ompi_event_progress_thread()) {
                 ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
             }
@@ -272,7 +272,7 @@ ompi_rte_waitpid(pid_t wpid, int *status, int options)
                pthreads gets really unhappy when we pull the rug out
                from under it. Yes, it's spinning.  No, we won't spin
                for long */
-#if OMPI_HAVE_THREADS
+#if OMPI_HAVE_THREAD_SUPPORT
             if (ompi_event_progress_thread()) {
                 ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
             }
@@ -548,7 +548,7 @@ register_sig_event(void)
 
     /* it seems that signal events are only added to the queue at the next
        progress call.  So push the event library */
-#if OMPI_HAVE_THREADS
+#if OMPI_HAVE_THREAD_SUPPORT
     if (ompi_event_progress_thread()) {
         ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
     }
@@ -564,7 +564,7 @@ register_sig_event(void)
 static pid_t
 internal_waitpid(pid_t pid, int *status, int options)
 {
-#if  OMPI_HAVE_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if  OMPI_HAVE_THREAD_SUPPORT && OMPI_THREADS_HAVE_DIFFERENT_PIDS
     waitpid_callback_data_t data;
     struct timeval tv;
     struct ompi_event ev;
@@ -606,7 +606,7 @@ internal_waitpid(pid_t pid, int *status, int options)
 }
 
 
-#if  OMPI_HAVE_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if  OMPI_HAVE_THREAD_SUPPORT && OMPI_THREADS_HAVE_DIFFERENT_PIDS
 static void
 internal_waitpid_callback(int fd, short event, void *arg)
 {

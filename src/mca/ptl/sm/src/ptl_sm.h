@@ -53,7 +53,7 @@ extern mca_ptl_sm_module_resource_t mca_ptl_sm_module_resource;
 #define SM_CONNECTED_SAME_BASE_ADDR  2
 #define SM_CONNECTED_DIFFERENT_BASE_ADDR  3
 
-#if OMPI_HAVE_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
 #define DATA (char)0
 #define DONE (char)1
 #endif
@@ -126,7 +126,7 @@ struct mca_ptl_sm_component_t {
                                    acked */
 
     struct mca_ptl_base_peer_t **sm_peers;
-#if OMPI_HAVE_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     char sm_fifo_path[PATH_MAX];   /**< path to fifo used to signal this process */
     int  sm_fifo_fd;               /**< file descriptor corresponding to opened fifo */
     ompi_thread_t sm_fifo_thread;
@@ -421,11 +421,11 @@ typedef struct mca_ptl_sm_exchange{
     char host_name[MCA_PTL_SM_MAX_HOSTNAME_LEN];
 }mca_ptl_sm_exchange_t;
 
-#if OMPI_HAVE_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
 void mca_ptl_sm_component_event_thread(ompi_object_t*);
 #endif
                                                                                                               
-#if OMPI_HAVE_THREADS == 1 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1 
 #define MCA_PTL_SM_SIGNAL_PEER(peer) \
 { \
     unsigned char cmd = DATA; \

@@ -116,7 +116,7 @@ int mca_ptl_mx_module_init(void)
  * Thread to progress outstanding requests.
  */
 
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
 
 static void* mca_ptl_mx_thread(ompi_object_t *arg)
 {
@@ -346,7 +346,7 @@ void mca_ptl_mx_enable()
     for(i=0; i<mca_ptl_mx_component.mx_num_ptls; i++) {
         mca_ptl_mx_module_t* ptl = mca_ptl_mx_component.mx_ptls[i];
         ptl->mx_enabled = true;
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
         /* create a thread to progress requests */
         OBJ_CONSTRUCT(&ptl->mx_thread, ompi_thread_t);
         ptl->mx_thread.t_run = mca_ptl_mx_thread;
@@ -365,7 +365,7 @@ void mca_ptl_mx_disable(void)
     for(i=0; i<mca_ptl_mx_component.mx_num_ptls; i++) {
         mca_ptl_mx_module_t* ptl = mca_ptl_mx_component.mx_ptls[i];
         ptl->mx_enabled = false;
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
         mx_wakeup(ptl->mx_endpoint);
         ompi_thread_join(&ptl->mx_thread, NULL);
 #endif
@@ -380,7 +380,7 @@ int mca_ptl_mx_finalize(struct mca_ptl_base_module_t* ptl)
 {
     mca_ptl_mx_module_t* mx_ptl = (mca_ptl_mx_module_t*)ptl;
     mx_ptl->mx_enabled = false;
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     mx_wakeup(mx_ptl->mx_endpoint);
     ompi_thread_join(&mx_ptl->mx_thread, NULL);
 #endif

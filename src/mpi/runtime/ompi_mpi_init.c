@@ -337,7 +337,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_mpi_thread_provided = *provided;
     ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
                                 MPI_THREAD_MULTIPLE);
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_MPI_THREADS
     ompi_mpi_main_thread = ompi_thread_get_self();
 #else
     ompi_mpi_main_thread = NULL;
@@ -357,7 +357,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-#if OMPI_HAVE_THREADS 
+#if OMPI_ENABLE_PROGRESS_THREADS /* BWB - XXX - FIXME - is this actually correct? */
     /* setup I/O forwarding */
     if(ompi_process_info.seed == false) {
         if (OMPI_SUCCESS != (ret = ompi_mpi_init_io())) {
@@ -370,7 +370,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Wait for everyone to initialize */
     mca_oob_barrier();
 
-#if OMPI_HAVE_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
     ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
 #endif
 

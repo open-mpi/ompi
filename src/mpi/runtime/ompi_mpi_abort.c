@@ -89,7 +89,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
                is actually dead.  But just in case there are some
                race conditions, keep progressing the event loop until
                we get killed */
-            if (!OMPI_HAVE_THREADS || ompi_event_progress_thread()) {
+            if (!OMPI_ENABLE_PROGRESS_THREADS || ompi_event_progress_thread()) {
                 ompi_event_loop(0);
             } else {
                 sleep(1000);

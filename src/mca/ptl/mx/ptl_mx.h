@@ -139,7 +139,7 @@ struct mca_ptl_mx_module_t {
     mx_endpoint_t mx_endpoint;           /**< endpoint */
     mx_endpoint_addr_t mx_endpoint_addr; /**< endpoint address */
     volatile int32_t mx_recvs_posted;    /**< count of posted match fragments */
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     ompi_thread_t mx_thread;             /**< thread for progressing outstanding requests */
 #endif
 };

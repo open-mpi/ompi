@@ -104,7 +104,7 @@ typedef long long bool;
 /*
  * Do we have thread support?
  */
-#define OMPI_HAVE_THREADS (OMPI_HAVE_SOLARIS_THREADS || OMPI_HAVE_POSIX_THREADS)
+#define OMPI_HAVE_THREAD_SUPPORT (OMPI_ENABLE_MPI_THREADS || OMPI_ENABLE_PROGRESS_THREADS)
 
 /*
  * Do we have <stdint.h>?

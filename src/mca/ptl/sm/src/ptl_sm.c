@@ -184,7 +184,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
            if( 0 == strncmp(ompi_system_info.nodename,
                        (char *)(sm_proc_info[proc]),len) ) {
                struct mca_ptl_base_peer_t *peer = peers[proc];
-#if OMPI_HAVE_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
                char path[PATH_MAX];
                /* int flags; */
 #endif
@@ -198,7 +198,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
                peer->peer_smp_rank=n_local_procs+
                    mca_ptl_sm_component.num_smp_procs;
 
-#if OMPI_HAVE_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
                sprintf(path, "%s/sm_fifo.%d", ompi_process_info.job_session_dir, 
                    procs[proc]->proc_name.vpid);
                peer->fifo_fd = open(path, O_WRONLY);

@@ -209,7 +209,7 @@ int mca_ptl_sm_component_close(void)
         unlink(mca_ptl_sm_component.mmap_file->map_path);
     }
 
-#if OMPI_HAVE_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* close/cleanup fifo create for event notification */
     if(mca_ptl_sm_component.sm_fifo_fd >= 0) {
         /* write a done message down the pipe */
@@ -246,7 +246,7 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 
     *num_ptls = 0;
     *allow_multi_user_threads = true;
-    *have_hidden_threads = OMPI_HAVE_THREADS;
+    *have_hidden_threads = OMPI_ENABLE_PROGRESS_THREADS;
 
     /* lookup shared memory pool */
     mca_ptl_sm_component.sm_mpool =
@@ -258,7 +258,7 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     if(mca_ptl_sm_component_exchange() != OMPI_SUCCESS)
         return NULL;
 
-#if OMPI_HAVE_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
     sprintf(mca_ptl_sm_component.sm_fifo_path, 
         "%s/sm_fifo.%d", ompi_process_info.job_session_dir,
@@ -335,7 +335,7 @@ int mca_ptl_sm_component_control(int param, void* value, size_t size)
  *  SM component progress.
  */
 
-#if OMPI_HAVE_THREADS == 1
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
 void mca_ptl_sm_component_event_thread(ompi_object_t* thread)
 {
     while(1) {

@@ -486,7 +486,7 @@ mca_ptl_base_module_t** mca_ptl_tcp_component_init(int *num_ptl_modules,
     mca_ptl_base_module_t **ptls;
     *num_ptl_modules = 0;
     *allow_multi_user_threads = true;
-    *have_hidden_threads = OMPI_HAVE_THREADS;
+    *have_hidden_threads = OMPI_ENABLE_PROGRESS_THREADS;
 
     ompi_free_list_init(&mca_ptl_tcp_component.tcp_send_frags, 
         sizeof(mca_ptl_tcp_send_frag_t),

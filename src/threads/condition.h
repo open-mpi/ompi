@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 
-#if OMPI_HAVE_POSIX_THREADS
+#if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
 #include "condition_pthread.h"
 #else
 #include "condition_spinlock.h"

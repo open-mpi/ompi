@@ -74,7 +74,7 @@ internal_bproc_vexecmove_io(int nnodes, int *nodes, int *pids,
                             char ***env, int *envc, int offset);
 
 
-#if OMPI_HAVE_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if OMPI_HAVE_THREAD_SUPPORT && OMPI_THREADS_HAVE_DIFFERENT_PIDS
 static void spawn_procs_callback(int fd, short flags, void *data);
 #endif
                                                                                                                 
@@ -84,7 +84,7 @@ mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
                           mca_ns_base_jobid_t jobid, 
                           ompi_list_t *schedlist)
 {
-#if OMPI_HAVE_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if OMPI_HAVE_THREAD_SUPPORT && OMPI_THREADS_HAVE_DIFFERENT_PIDS
     spawn_procs_data_t data;
     struct timeval tv;
     struct ompi_event ev;
@@ -125,7 +125,7 @@ mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
 }
 
 
-#if OMPI_HAVE_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+#if OMPI_HAVE_THREAD_SUPPORT && OMPI_THREADS_HAVE_DIFFERENT_PIDS
 static void
 spawn_procs_callback(int fd, short flags, void *data)
 {

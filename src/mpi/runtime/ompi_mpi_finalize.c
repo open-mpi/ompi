@@ -57,7 +57,7 @@ int ompi_mpi_finalize(void)
     mca_ns_base_jobid_t my_jobid;
 
     ompi_mpi_finalized = true;
-#if OMPI_HAVE_THREADS == 0
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
     ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
 #endif
 

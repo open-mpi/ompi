@@ -17,7 +17,7 @@
 #include "threads/mutex.h"
 #include "threads/condition.h"
 
-#if (OMPI_HAVE_THREADS == 0)
+#if (OMPI_HAVE_POSIX_THREADS == 0) || (OMPI_ENABLE_PROGRESS_THREADS == 0)
 
 static void ompi_condition_construct(ompi_condition_t *c)
 {

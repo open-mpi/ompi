@@ -23,7 +23,7 @@ int ompi_request_wait_any(
     int *index, 
     ompi_status_public_t * status)
 {
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     int c;
 #endif
     size_t i=0, num_requests_null_inactive=0;
@@ -32,7 +32,7 @@ int ompi_request_wait_any(
     ompi_request_t **rptr=NULL;
     ompi_request_t *request=NULL;
 
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
     /* poll for completion */
     ompi_atomic_mb();
     for (c = 0; completed < 0 && c < ompi_request_poll_iterations; c++) {
@@ -83,9 +83,10 @@ int ompi_request_wait_any(
     ompi_request_waiting--;
     OMPI_THREAD_UNLOCK(&ompi_request_lock);
 
-#if OMPI_HAVE_THREADS
+#if OMPI_ENABLE_PROGRESS_THREADS
 finished:
-#endif  /* OMPI_HAVE_THREADS */
+#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+
     if(num_requests_null_inactive == count) {
         *index = MPI_UNDEFINED;
         if (MPI_STATUS_IGNORE != status) {

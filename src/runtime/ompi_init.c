@@ -61,7 +61,7 @@ int ompi_init(int argc, char *argv[])
    * otherwise.
    */
 
-  ompi_set_using_threads(OMPI_HAVE_THREADS);
+  ompi_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
 
   /* For malloc debugging */
 
