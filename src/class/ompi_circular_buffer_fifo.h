@@ -9,6 +9,7 @@
 #include "include/sys/cache.h"
 #include "os/atomic.h"
 #include "mca/mpool/mpool.h"
+#include "util/pow2.h"
 
 
 /** @file
@@ -102,22 +103,21 @@ static inline int ompi_cb_fifo_init(int size_of_fifo, int lazy_free_freq,
         mca_mpool_base_module_t *memory_allocator) 
 {
 
-    int tmp_size, errorCode = OMPI_SUCCESS;
-    size_t len_to_allocate,i;
+    int errorCode = OMPI_SUCCESS,i;
+    size_t len_to_allocate;
 
     /* verify that size is power of 2, and greatter that 0 - if not, 
      * round up */
     if ( 0 >= size_of_fifo) {
         return OMPI_ERROR;
     }
-    tmp_size/=2;
-    tmp_size*=2;
-    if( tmp_size != size_of_fifo ) {
-        size_of_fifo=2*tmp_size;
-    }
 
     /* set fifo size */
-    fifo->size = size_of_fifo;
+    fifo->size = ompi_round_up_to_nearest_pow2(size_of_fifo);
+    /* debug */
+    fprintf(stderr," BBB lazy %d size %d\n",lazy_free_freq,fifo->size);
+    fflush(stderr);
+    /* end debug */
 
     /* set lazy free frequence */
     if( ( 0 >= lazy_free_freq ) || 
@@ -130,6 +130,10 @@ static inline int ompi_cb_fifo_init(int size_of_fifo, int lazy_free_freq,
      * and use the & operator for the wrap-around */
     fifo->mask = (size_of_fifo - 1);
 
+    /* debug */
+    fprintf(stderr," AAA \n");
+    fflush(stderr);
+    /* end debug */
     /* allocate fifo array */
     len_to_allocate = sizeof(void *) * size_of_fifo;
     fifo->queue=memory_allocator->mpool_alloc(len_to_allocate,CACHE_LINE_SIZE);
@@ -165,6 +169,45 @@ static inline int ompi_cb_fifo_init(int size_of_fifo, int lazy_free_freq,
     spinunlock(&(fifo->tail->lock));
     fifo->tail->fifo_index=0;
     fifo->tail->num_to_clear=0;
+
+    /* return */
+    return errorCode;
+}
+
+/**
+ * function to cleanup the fifo
+ *
+ * @param fifo Pointer to data structure defining this fifo (IN)
+ *
+ * @param memory_allocator Pointer to the memory allocator to use
+ *                         to allocate memory for this fifo. (IN)
+ *
+ */
+static inline int ompi_cb_fifo_free( ompi_cb_fifo_t *fifo, 
+        mca_mpool_base_module_t *memory_allocator) 
+{
+
+    int errorCode = OMPI_SUCCESS;
+
+    /* make sure null fifo is not passed in */
+    if ( NULL == fifo) {
+        return OMPI_ERROR;
+    }
+
+    /* free fifo array */
+    if( NULL != fifo->queue){
+        memory_allocator->mpool_free(fifo->queue);
+    }
+
+    /* free head control structure */
+    if( NULL != fifo->head) {
+            memory_allocator->mpool_free(fifo->head);
+    }
+
+    /* free tail control structure */
+    if( NULL != fifo->tail) {
+            memory_allocator->mpool_free(fifo->tail);
+    }
 
     /* return */
     return errorCode;
