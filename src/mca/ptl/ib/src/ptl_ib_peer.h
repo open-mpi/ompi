@@ -67,6 +67,9 @@ struct mca_ptl_base_peer_t {
 
     ompi_mutex_t                peer_recv_lock;
     /**< lock for concurrent access to peer state */
+
+    ompi_list_t                 pending_send_frags;
+    /**< list of pending send frags for this peer */
 };
 
 typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;

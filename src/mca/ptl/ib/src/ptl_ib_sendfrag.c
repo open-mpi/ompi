@@ -20,6 +20,8 @@ OBJ_CLASS_INSTANCE(mca_ptl_ib_send_frag_t,
 
 static void mca_ptl_ib_send_frag_construct(mca_ptl_ib_send_frag_t* frag)
 {
+    frag->frag_progressed = 0;
+    frag->frag_ack_pending = 0;
 }
 
 static void mca_ptl_ib_send_frag_destruct(mca_ptl_ib_send_frag_t* frag)
@@ -44,6 +46,7 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
     /* Start of the IB buffer */
     hdr = (mca_ptl_base_header_t *) &sendfrag->ib_buf.buf[0];
 
+    /* Fill up the header for PML to make a match */
     if(offset == 0) { 
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
         hdr->hdr_common.hdr_flags = flags;
@@ -139,7 +142,6 @@ int mca_ptl_ib_send_frag_init(mca_ptl_ib_send_frag_t* sendfrag,
 
     *size = size_out;
 
-
     return OMPI_SUCCESS;
 }
 
@@ -154,8 +156,6 @@ mca_ptl_ib_send_frag_t* mca_ptl_ib_alloc_send_frag(
     ompi_free_list_t *flist;
     ompi_list_item_t *item;
     mca_ptl_ib_send_frag_t *ib_send_frag;
-
-    D_PRINT("");
 
     flist = &((mca_ptl_ib_module_t *)ptl)->send_free;
 
@@ -193,12 +193,15 @@ int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl)
 
     num_send_frags = ompi_list_get_size(&(flist->super));
 
-    /* Register the buffers */
-    for(i = 0; i < num_send_frags; i++) {
+    item = ompi_list_get_first(&((flist)->super));
 
-        item = ompi_list_remove_first (&((flist)->super));
+    /* Register the buffers */
+    for(i = 0; i < num_send_frags; 
+            item = ompi_list_get_next(item), i++) {
 
         ib_send_frag = (mca_ptl_ib_send_frag_t *) item;
+
+        ib_send_frag->frag_progressed = 0;
 
         ib_buf_ptr = (ib_buffer_t *) &ib_send_frag->ib_buf;
 
@@ -209,9 +212,11 @@ int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl)
             return OMPI_ERROR;
         }
 
-        IB_PREPARE_SEND_DESC(ib_buf_ptr, 0);
+        if(i == 0) {
+            D_PRINT("lkey = %d", ib_buf_ptr->hndl.lkey);
+        }
 
-        ompi_list_append(&((flist)->super), item);
+        IB_PREPARE_SEND_DESC(ib_buf_ptr, 0);
     }
 
     return OMPI_SUCCESS;

@@ -171,5 +171,8 @@ int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t*,
         mca_ptl_ib_peer_conn_t*);
 int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
         void* buf, int len, vapi_memhandle_t* memhandle);
+int mca_ptl_ib_post_send(mca_ptl_ib_state_t *ib_state,
+        mca_ptl_ib_peer_conn_t *peer_conn, 
+        ib_buffer_t *ib_buf);
 
 #endif  /* MCA_PTL_IB_PRIV_H */

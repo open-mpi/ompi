@@ -504,3 +504,25 @@ int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t *ib_state,
 
     return OMPI_SUCCESS;
 }
+
+int mca_ptl_ib_post_send(mca_ptl_ib_state_t *ib_state,
+        mca_ptl_ib_peer_conn_t *peer_conn, 
+        ib_buffer_t *ib_buf)
+{
+    VAPI_ret_t ret;
+
+    IB_PREPARE_SEND_DESC(ib_buf, (peer_conn->rres->qp_num));
+
+    D_PRINT("lkey = %d", ib_buf->hndl.lkey);
+
+    ret = VAPI_post_sr(ib_state->nic,
+            peer_conn->lres->qp_hndl,
+            &ib_buf->desc.sr);
+
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_sr");
+        return OMPI_ERROR;
+    }
+    
+    return OMPI_SUCCESS;
+}
