@@ -39,9 +39,24 @@ static void mca_oob_tcp_msg_destruct(mca_oob_tcp_msg_t* msg)
 
 int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
 {
+#if OMPI_HAVE_THREADS
+    OMPI_THREAD_LOCK(&msg->msg_lock);
+    while(msg->msg_complete == false) {
+        if(ompi_event_progress_thread()) {
+            OMPI_THREAD_UNLOCK(&msg->msg_lock);
+            ompi_event_loop(OMPI_EVLOOP_ONCE);
+            OMPI_THREAD_LOCK(&msg->msg_lock);
+        } else {
+           ompi_condition_wait(&msg->msg_condition, &msg->msg_lock);
+        }
+    }
+    OMPI_THREAD_UNLOCK(&msg->msg_lock);
+
+#else
     /* wait for message to complete */
     while(msg->msg_complete == false)
         ompi_event_loop(OMPI_EVLOOP_ONCE);
+#endif
 
     /* return status */
     if(NULL != rc) {
