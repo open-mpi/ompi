@@ -27,10 +27,11 @@
 #include "include/types.h"
 #include "include/constants.h"
 #include "class/ompi_list.h"
+#include "util/pack.h"
 
 #include "mca/mca.h"
+#include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"
-#include "mca/gpr/base/base.h"
 
 /** Define the notification actions for the subscription system
  */
@@ -61,79 +62,68 @@
  * typedefs
  */
 
-typedef uint16_t ompi_registry_action_t;
+typedef uint16_t ompi_registry_notify_action_t;
 typedef uint16_t ompi_registry_mode_t;
+typedef ompi_buffer_t ompi_registry_object_t;
+typedef uint32_t ompi_registry_object_size_t;
+typedef char* ompi_registry_token_t;
 
 
 /*
- * Global constants / types
- */
-typedef mca_oob_base_msgbuf_t ompi_registry_buf_t;
-typedef mca_oob_msgbuf_data_t ompi_registry_bufdata_t;
-typedef ompi_registry_buf_t ompi_registry_object_t;
-
-/*
- * Component functions
+ * structures
  */
 
-/*
- * utility functions that may be provided, or use defaults
+/** Return value structure for registry requests.
+ * A request for information stored within the registry returns a linked list of values that
+ * correspond to the provided tokens. The linked list is terminated by a "next" value of NULL.
+ * Each link in the list contains a pointer to a copy of the registry object, and the size
+ * of that object in bytes. Note that the pointer is to a \em copy of the object, and not
+ * to the registry object itself. This prevents inadvertent modification of the registry, but
+ * may require the recipient to release the structure's memory when done.
  */
-typedef int (*mca_gpr_base_module_send_fn_t)(ompi_process_name_t *target,
-				       ompi_registry_buf_t *buf);
-typedef ompi_registry_buf_t (*mca_gpr_base_module_recv_fn_t)(void);
+struct ompi_registry_value_t {
+    ompi_list_item_t item;                    /**< Allows this item to be placed on a list */
+    ompi_registry_object_t *object;           /**< Pointer to object being returned */
+    ompi_registry_object_size_t object_size;  /**< Size of returned object, in bytes */
+};
+typedef struct ompi_registry_value_t ompi_registry_value_t;
 
+OBJ_CLASS_DECLARATION(ompi_registry_value_t);
+
+/** Return value structure for index requests.
+ */
+struct ompi_registry_index_t {
+    ompi_list_item_t item;           /**< Allows this item to be placed on a list */
+    ompi_registry_token_t *token;    /**< Pointer to the token string */
+};
+typedef struct ompi_registry_index_t ompi_registry_index_t;
+
+OBJ_CLASS_DECLARATION(ompi_registry_index_t);
 
 /*
- * public functions that MUST be provided
+ * Component functions that MUST be provided
  */
 typedef int (*mca_gpr_base_module_define_segment_fn_t)(char *segment);
 typedef int (*mca_gpr_base_module_delete_segment_fn_t)(char *segment);
 typedef int (*mca_gpr_base_module_put_fn_t)(ompi_registry_mode_t mode, char *segment,
 				     char **tokens, ompi_registry_object_t *object,
-				     int size);
+				     ompi_registry_object_size_t size);
 typedef ompi_registry_value_t* (*mca_gpr_base_module_get_fn_t)(ompi_registry_mode_t mode,
 							char *segment, char **tokens);
 typedef int (*mca_gpr_base_module_delete_fn_t)(ompi_registry_mode_t mode,
 					char *segment, char **tokens);
-typedef ompi_keytable_t* (*mca_gpr_base_module_index_fn_t)(char *segment);
+typedef ompi_registry_index_t* (*mca_gpr_base_module_index_fn_t)(char *segment);
 typedef int (*mca_gpr_base_module_subscribe_fn_t)(ompi_registry_mode_t mode,
-					   ompi_registry_action_t action,
+					   ompi_registry_notify_action_t action,
 					   char *segment, char **tokens);
 typedef int (*mca_gpr_base_module_unsubscribe_fn_t)(ompi_registry_mode_t mode,
 					     char *segment, char **tokens);
-
-/*
- * block functions that may be provided, or use defaults
- */
-typedef ompi_registry_buf_t (*mca_gpr_base_module_getbuf_fn_t)(size_t size);
-typedef int (*mca_gpr_base_module_packbuf_fn_t)(ompi_registry_buf_t *buf, void *ptr,
-					 size_t num_items, ompi_registry_bufdata_t datatype);
-typedef int (*mca_gpr_base_module_packstring_fn_t)(ompi_registry_buf_t *buf, char *string);
-typedef int (*mca_gpr_base_module_unpackstring_fn_t)(ompi_registry_buf_t *buf, char *string, size_t maxlen);
-typedef int (*mca_gpr_base_module_unpackbuf_fn_t)(ompi_registry_buf_t *buf, void *ptr, size_t num_items,
-					   ompi_registry_bufdata_t datatype);
-typedef int (*mca_gpr_base_module_sendbuf_fn_t)(ompi_process_name_t *target, ompi_registry_buf_t *buf, bool freebuf);
 
 
 /*
  * Ver 1.0.0
  */
-struct mca_gpr_base_component_1_0_0_t {
-  mca_base_component_t gprc_version;
-  mca_base_component_data_1_0_0_t gprc_data;
-
-  mca_gpr_base_component_init_fn_t gprc_init;
-  mca_gpr_base_component_finalize_fn_t gprc_finalize;
-};
-typedef struct mca_gpr_base_component_1_0_0_t mca_gpr_base_component_1_0_0_t;
-typedef mca_gpr_base_component_1_0_0_t mca_gpr_base_component_t;
-
 struct mca_gpr_base_module_1_0_0_t {
-    /* non-public utility functions - must be provided */
-    mca_gpr_base_module_send_fn_t send;
-    mca_gpr_base_module_recv_fn_t recv;
-    /* public functions - must be provided */
     mca_gpr_base_module_get_fn_t get;
     mca_gpr_base_module_put_fn_t put;
     mca_gpr_base_module_define_segment_fn_t define_segment;
@@ -141,16 +131,36 @@ struct mca_gpr_base_module_1_0_0_t {
     mca_gpr_base_module_subscribe_fn_t subscribe;
     mca_gpr_base_module_unsubscribe_fn_t unsubscribe;
     mca_gpr_base_module_delete_fn_t delete;
-    /* block functions - may be provided */
-    mca_gpr_base_module_getbuf_fn_t getbuf;
-    mca_gpr_base_module_packbuf_fn_t packbuf;
-    mca_gpr_base_module_packstring_fn_t pack_string;
-    mca_gpr_base_module_unpackstring_fn_t unpack_string;
-    mca_gpr_base_module_unpackbuf_fn_t unpack_buf;
-    mca_gpr_base_module_sendbuf_fn_t sendbuf;
 };
 typedef struct mca_gpr_base_module_1_0_0_t mca_gpr_base_module_1_0_0_t;
 typedef mca_gpr_base_module_1_0_0_t mca_gpr_base_module_t;
+
+/*
+ * GPR Component
+ */
+
+typedef mca_gpr_base_module_t* (*mca_gpr_base_component_init_fn_t)(
+    bool *allow_multi_user_threads,
+    bool *have_hidden_threads,
+    int *priority);
+
+typedef int (*mca_gpr_base_component_finalize_fn_t)(void);
+ 
+/*
+ * the standard component data structure
+ */
+
+
+struct mca_gpr_base_component_1_0_0_t {
+  mca_base_component_t gpr_version;
+  mca_base_component_data_1_0_0_t gpr_data;
+
+  mca_gpr_base_component_init_fn_t gpr_init;
+  mca_gpr_base_component_finalize_fn_t gpr_finalize;
+};
+typedef struct mca_gpr_base_component_1_0_0_t mca_gpr_base_component_1_0_0_t;
+typedef mca_gpr_base_component_1_0_0_t mca_gpr_base_component_t;
+
 
 /*
  * Macro for use in modules that are of type coll v1.0.0

@@ -72,14 +72,9 @@ extern "C" {
  */
 extern int mca_gpr_base_output;
 extern mca_gpr_base_module_t ompi_registry; /* holds selected module's function pointers */
-extern ompi_list_t mca_gpr_base_modules_available;
+extern bool mca_gpr_base_selected;
+extern ompi_list_t mca_gpr_base_components_available;
 extern mca_gpr_base_component_t mca_gpr_base_selected_component;
 
-/*
- * Base functions that are common to all implementations - can be overridden
- */
-
-int gpr_base_send(ompi_process_name_t *target, mca_gpr_buffer_t *buf, mca_gpr_buffer_size_t size);
-mca_gpr_buffer_t gpr_base_recv(void);
 
 #endif

@@ -45,14 +45,14 @@ int gpr_proxy_delete(ompi_registry_mode_t mode,
 }
 
 
-ompi_keytable_t* gpr_proxy_index(char *segment)
+ompi_registry_index_t* gpr_proxy_index(char *segment)
 {
     return NULL;
 }
 
 
 int gpr_proxy_subscribe(ompi_registry_mode_t mode,
-			  ompi_registry_action_t action,
+			  ompi_registry_notify_action_t action,
 			  char *segment, char **tokens)
 {
     return OMPI_SUCCESS;
