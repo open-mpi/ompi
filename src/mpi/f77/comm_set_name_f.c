@@ -20,12 +20,12 @@
 #pragma weak pmpi_comm_set_name__ = mpi_comm_set_name_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SET_NAME,
-                           pmpi_comm_set_name,
-                           pmpi_comm_set_name_,
-                           pmpi_comm_set_name__,
-                           pmpi_comm_set_name_f,
-                           (MPI_Fint *comm, char *comm_name, MPI_Fint *ierr),
-                           (comm, comm_name, ierr) )
+                            pmpi_comm_set_name,
+                            pmpi_comm_set_name_,
+                            pmpi_comm_set_name__,
+                            pmpi_comm_set_name_f,
+                            (MPI_Fint *comm, char *comm_name, MPI_Fint *ierr, int name_len),
+                            (comm, comm_name, ierr, name_len) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -37,12 +37,12 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_SET_NAME,
 
 #if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_NAME,
-                           mpi_comm_set_name,
-                           mpi_comm_set_name_,
-                           mpi_comm_set_name__,
-                           mpi_comm_set_name_f,
-                           (MPI_Fint *comm, char *comm_name, MPI_Fint *ierr),
-                           (comm, comm_name, ierr) )
+                            mpi_comm_set_name,
+                            mpi_comm_set_name_,
+                            mpi_comm_set_name__,
+                            mpi_comm_set_name_f,
+                            (MPI_Fint *comm, char *comm_name, MPI_Fint *ierr, int name_len),
+                            (comm, comm_name, ierr, name_len) )
 #endif
 
 
