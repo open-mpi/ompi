@@ -30,6 +30,7 @@ lam_jobhandle=""
 lam_app_args=""
 lam_mydir=""
 lam_cwd="`pwd`"
+lam_prepped=""
 
 # Get the dir where this script is
 dir="`dirname $0`"
@@ -96,6 +97,41 @@ debug_echo() {
     fi
 }
 
+######################################################################
+#
+# prep_environ
+#
+# make environment push happen
+#
+######################################################################
+do_add_env() {
+    str="$*"
+    name="`echo ${str} | cut -d= -f1`"
+    val="`echo ${str} | cut -d= -f2-`"
+
+    lam_prepped="${lam_prepped} -x ${name} \"${val}\""
+}
+
+
+do_prep_environ() {
+    local a=""
+    local envfile="/tmp/lam_mpirun_env_$$"
+
+    rm -f "${envfile}"
+    printenv > "${envfile}"
+
+    while IFS= read envpair
+      do
+        if test "`echo ${envpair} | grep \"^mca_\"`" != "" ; then
+            do_add_env "${envpair}"
+        elif test "`echo ${envpair} | grep \"^LAM_MPI\"`" != "" ; then
+            do_add_env "${envpair}"
+        fi
+    done < "${envfile}"
+    
+    rm -f "${envfile}"
+}
+
 
 ######################################################################
 #
@@ -110,23 +146,23 @@ debug_echo() {
 #   argv       argv to start
 #
 ######################################################################
-start_proc() {
+do_start_proc() {
     local rmt_hostname=$1 ; shift
     local rmt_vpid=$1 ; shift
     local argv="$*"
     local rmt_boot="${lam_mydir}/mpiboot"
+    local cmd=""
 
-    local cmd="ssh ${rmt_hostname} -f -n ${rmt_boot} -myvpid ${rmt_vpid}"
+    cmd="ssh ${rmt_hostname} -f -n ${rmt_boot} "
+    cmd="${cmd} -myvpid ${rmt_vpid}"
     cmd="${cmd} -numprocs ${lam_numprocs} -jobhandle ${lam_jobhandle}"
-    cmd="${cmd} -pwd ${lam_cwd}"
+    cmd="${cmd} -pwd ${lam_cwd} ${lam_prepped}"
     if test ! -z "${MCA_common_lam_cofs_comm_dir}" ; then
         cmd="${cmd} -commdir ${MCA_common_lam_cofs_comm_dir}"
     fi
     cmd="${cmd} -- ${argv}"
-    debug_echo "* ${cmd}"
     ${cmd}
 }
-
 
 ######################################################################
 #
@@ -178,8 +214,10 @@ launch_procs() {
         exit 1
     fi
 
+    do_prep_environ
+
     for (( i=0 ; i < ${lam_numprocs} ; i++)) ; do
-        start_proc "${1}" "${i}" "${args}"
+        do_start_proc "${1}" "${i}" "${args}"
         shift
         if test -z "${1}" ; then
             set -- ${lam_hosts}
@@ -201,7 +239,9 @@ lam_jobhandle="pcm-cofs-job-handle-${$}-0"
 # exit cleanly
 #
 ######################################################################
+
 make_hosts_list
+
 launch_procs "${lam_app_args}"
 
 echo ""
