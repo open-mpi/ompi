@@ -5,7 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS	= ctnetwork lfc mem os threads util runtime
+SUBDIRS	= ctnetwork lfc mem os threads util
 
 # If the --enable-single-library flag was given to configure, then the
 # user wants to merge liblam and libmpi into a single big, honkin'

@@ -397,7 +397,6 @@ AC_CONFIG_FILES([
     src/lam/ctnetwork/Makefile
     src/lam/lfc/Makefile
     src/lam/mem/Makefile
-    src/lam/runtime/Makefile
 
     src/lam/os/Makefile
     src/lam/os/cygwin/Makefile
