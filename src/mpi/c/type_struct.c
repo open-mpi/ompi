@@ -36,36 +36,10 @@ int MPI_Type_struct(int count,
                     MPI_Datatype array_of_types[],
                     MPI_Datatype *newtype)
 {
-  int i;
-
-  if ( MPI_PARAM_CHECK ) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == newtype || NULL == array_of_types) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
-                                      FUNC_NAME );
-    } else if (count < 0) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT,
-                                    FUNC_NAME );
-    } else if (NULL == array_of_blocklengths ||
-               NULL == array_of_displacements) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                    FUNC_NAME );
-    }
-    for (i = 0; i < count; ++i) {
-      if (NULL == array_of_types[i] || 
-          MPI_DATATYPE_NULL == array_of_types[i]) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
-                                      FUNC_NAME );
-      } else if (array_of_blocklengths[i] < 0) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                      FUNC_NAME );
-      }
-    }
-  }
-
-  return MPI_Type_create_struct(count,
-                                array_of_blocklengths,
-                                array_of_displacements,
-                                array_of_types,
-                                newtype);
+    /* the param check will be done if necessary on the MPI_Type_create_struct */
+    return MPI_Type_create_struct(count,
+                                  array_of_blocklengths,
+                                  array_of_displacements,
+                                  array_of_types,
+                                  newtype);
 }
