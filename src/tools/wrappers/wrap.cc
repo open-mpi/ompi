@@ -69,7 +69,7 @@ ompi_wrap_parse_args(int argc, char *argv[], bool & want_flags)
 	    if ("-showme:" == str.substr(0, 8)) {
 		str = str.substr(8);
 		have_arg = true;
-	    } else if ("--showme" == str.substr(0, 9)) {
+	    } else if ("--showme:" == str.substr(0, 9)) {
 		str = str.substr(9);
 		have_arg = true;
 	    } else {
