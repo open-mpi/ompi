@@ -44,13 +44,12 @@ int MPI_Init(int *argc, char ***argv)
 
   /* check for environment overrides for required thread level.  If
      there is, check to see that it is a valid/supported thread level.
-     If not, default to MPI_THREAD_SINGLE. */
+     If not, default to MPI_THREAD_MULTIPLE. */
 
   if (NULL != (env = getenv("OMPI_MPI_THREAD_LEVEL"))) {
     required = atoi(env);
     if (required < MPI_THREAD_SINGLE || required > MPI_THREAD_MULTIPLE) {
-      /* JMS show_help */
-      return OMPI_ERRHANDLER_INVOKE(null, err, FUNC_NAME);
+      required = MPI_THREAD_MULTIPLE;
     }
   } 
 
