@@ -47,6 +47,7 @@
 #include "runtime/runtime.h"
 #include "runtime/runtime_internal.h"
 #include "runtime/ompi_rte_wait.h"
+#include "runtime/ompi_progress.h"
 
 /**
  * Initialze and setup a process in the OMPI RTE.
