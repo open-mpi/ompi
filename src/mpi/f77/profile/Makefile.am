@@ -320,6 +320,7 @@ $(nodist_libmpi_f77_pmpi_la_SOURCES):
 #
 # 
 headers = \
+    defines.h \
     prototypes_pmpi.h
 #
 # These files were created by targets above
