@@ -41,7 +41,7 @@
 #define  PTL_ELAN_DEBUG_NONE    (0x000)
 #define  PTL_ELAN_DEBUG_INIT    (0x001)
 #define  PTL_ELAN_DEBUG_FIN     (0x002)
-#define  PTL_ELAN_DEBUG_QDESC   (0x004)
+#define  PTL_ELAN_DEBUG_DESC    (0x004)
 #define  PTL_ELAN_DEBUG_THREAD  (0x008)
 #define  PTL_ELAN_DEBUG_SEND    (0x010)
 #define  PTL_ELAN_DEBUG_RECV    (0x020)
