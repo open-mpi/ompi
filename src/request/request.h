@@ -18,9 +18,17 @@ typedef enum {
     OMPI_REQUEST_MAX
 } ompi_request_type_t;
 
+typedef enum {
+    OMPI_REQUEST_INVALID,
+    OMPI_REQUEST_INACTIVE,
+    OMPI_REQUEST_ACTIVE,
+    OMPI_REQUEST_CANCELLED
+} ompi_request_mode_t;
+
 struct ompi_request_t {
     ompi_list_item_t super;
     ompi_request_type_t req_type;
+    ompi_request_mode_t req_mode;
 };
 typedef struct ompi_request_t ompi_request_t;
 

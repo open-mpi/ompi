@@ -37,6 +37,10 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_test_all,
     mca_pml_teg_wait,
     mca_pml_teg_wait_all,
+    mca_pml_teg_iprobe,
+    mca_pml_teg_probe,
+    mca_pml_teg_cancel,
+    mca_pml_teg_cancelled,
     mca_pml_teg_free,
     mca_pml_teg_null
     }

@@ -435,6 +435,66 @@ typedef int (*mca_pml_base_wait_all_fn_t)(
 
 
 /**
+ * Probe to poll for pending recv.
+ *
+ * @param src (IN)        Source rank w/in communicator.
+ * @param tag (IN)        User defined tag.
+ * @param comm (IN)       Communicator.
+ * @param matched (OUT)   Flag indicating if matching recv exists.
+ * @param status (OUT)    Completion statuses.
+ * @return                OMPI_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_pml_base_iprobe_fn_t)(
+    int src,
+    int tag,
+    ompi_communicator_t* comm,
+    int *matched,
+    ompi_status_public_t *status
+);
+
+/**
+ * Blocking probe to wait for pending recv.
+ *
+ * @param src (IN)        Source rank w/in communicator.
+ * @param tag (IN)        User defined tag.
+ * @param comm (IN)       Communicator.
+ * @param status (OUT)    Completion statuses.
+ * @return                OMPI_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_pml_base_probe_fn_t)(
+    int src,
+    int tag,
+    ompi_communicator_t* comm,
+    ompi_status_public_t *status
+);
+
+/**
+ * Cancel pending operation.
+ * 
+ * @param request (IN)    Request
+ * @return                OMPI_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_pml_base_cancel_fn_t)(
+    ompi_request_t* request
+);
+
+
+/**
+ * Has a request been cancelled?
+ * 
+ * @param request (IN)    Request
+ * @return                OMPI_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_pml_base_cancelled_fn_t)(
+    ompi_request_t* request,
+    int *flag
+);
+
+/**
  * Release resources held by a persistent mode request.
  *
  * @param request (IN)    Request
@@ -485,6 +545,10 @@ struct mca_pml_1_0_0_t {
     mca_pml_base_test_all_fn_t     pml_test_all;
     mca_pml_base_wait_fn_t         pml_wait;
     mca_pml_base_wait_all_fn_t     pml_wait_all;
+    mca_pml_base_iprobe_fn_t       pml_iprobe;
+    mca_pml_base_probe_fn_t        pml_probe;
+    mca_pml_base_cancel_fn_t       pml_cancel;
+    mca_pml_base_cancelled_fn_t    pml_cancelled;
     mca_pml_base_free_fn_t         pml_free;
     mca_pml_base_null_fn_t         pml_null;
 };

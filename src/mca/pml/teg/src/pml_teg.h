@@ -119,6 +119,31 @@ extern int mca_pml_teg_control(
 
 extern int mca_pml_teg_progress(void);
 
+extern int mca_pml_teg_iprobe(
+    int dst,
+    int tag,
+    struct ompi_communicator_t* comm,
+    int *matched,
+    ompi_status_public_t* status
+);
+
+extern int mca_pml_teg_probe(
+    int dst,
+    int tag,
+    struct ompi_communicator_t* comm,
+    ompi_status_public_t* status
+);
+
+extern int mca_pml_teg_cancel(
+    ompi_request_t* request
+);
+
+extern int mca_pml_teg_cancelled(
+    ompi_request_t* request,
+    int *flag
+);
+
+
 extern int mca_pml_teg_isend_init(
     void *buf,
     size_t count,

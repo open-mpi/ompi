@@ -54,11 +54,22 @@ static inline bool mca_ptl_base_recv_frag_match(
         request->super.req_peer = header->hdr_src;
         request->super.req_tag = header->hdr_tag;
 
-        /* notify ptl of match */
-        ptl->ptl_matched(ptl, frag);
+        /*
+         * If probe - signal request is complete - but don't notify PTL
+         */
+        if(request->super.req_type == MCA_PML_REQUEST_PROBE) {
 
-        /* process any additional fragments that arrived out of order */
-        frag = (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags);
+             ptl->ptl_recv_progress(request, frag);
+             matched = mca_ptl_base_recv_frag_match(frag, header);
+
+        } else {
+
+            /* notify ptl of match */
+            ptl->ptl_matched(ptl, frag);
+
+            /* process any additional fragments that arrived out of order */
+            frag = (mca_ptl_base_recv_frag_t*)ompi_list_remove_first(&matched_frags);
+        };
     };
     return matched;
 }
