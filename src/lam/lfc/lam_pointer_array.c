@@ -65,7 +65,7 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
     int	i;
     size_t index;
 
-    if (LAM_ENABLE_DEBUG) {
+    if (0) {
         lam_output(0,"lam_pointer_array_add:  IN:  "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " ptr = %p\n",
@@ -83,7 +83,7 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
 	 * first time
 	 */
 
-        if (LAM_ENABLE_DEBUG) {
+        if (0) {
 	    lam_output(0,"lam_pointer_array_add:  INIT: table %p\n", table);
         }
 
@@ -106,7 +106,7 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
          * grow table
          */
 
-        if (LAM_ENABLE_DEBUG) {
+        if (0) {
             lam_output(0,"lam_pointer_array_add:  GROW: table %p growing %d -> %d\n",
                     table, table->size, table->size * TABLE_GROW);
         }
@@ -152,7 +152,7 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
         table->lowest_free = table->size;
     }
 
-    if (LAM_ENABLE_DEBUG) {
+    if (0) {
         lam_output(0,"lam_pointer_array_add:  OUT: "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
