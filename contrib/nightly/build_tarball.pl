@@ -370,6 +370,14 @@ sub try_build {
     # save the compile warnings
     my $make_all_stderr = $ret->{stderr};
 
+    # build it
+    $ret = do_command($merge_output, "make check");
+    if ($ret->{status} != 0) {
+        $ret->{make_all_stderr} = $make_all_stderr;
+        $ret->{message} = "Failed to \"make check\"";
+        return $ret;
+    }
+
     # install it
     $ret = do_command(1, "make install");
     if ($ret->{status} != 0) {
