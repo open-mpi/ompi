@@ -29,8 +29,7 @@ int MPI_Group_free(MPI_Group *group)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if ((MPI_GROUP_NULL == *group) || (MPI_GROUP_EMPTY == *group) ||
-                (NULL == *group) ) {
+        if ((MPI_GROUP_NULL == *group) || (NULL == *group) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
                                           FUNC_NAME);
         }
