@@ -213,6 +213,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
                 ompi_proc_t *proc = procs[p];
                 mca_pml_proc_t* proc_pml = proc->proc_pml;
                 mca_ptl_proc_t* proc_ptl;
+                size_t size;
 
                 /* initialize each proc */
                 if(NULL == proc_pml) {
@@ -232,6 +233,19 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
                     proc->proc_pml = proc_pml;
                 }
 
+                /* dont allow an additional PTL with a lower exclusivity ranking */
+                size = mca_ptl_array_get_size(&proc_pml->proc_ptl_next);
+                if(size > 0) {
+                    proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, size-1);
+                    /* skip this ptl if the exclusivity is less than the previous */
+                    if(proc_ptl->ptl->ptl_exclusivity > ptl->ptl_exclusivity) {
+                        if(ptl_peers[p] != NULL) {
+                            ptl->ptl_del_procs(ptl, 1, &proc, &ptl_peers[p]);
+                        }
+                        continue;
+                    }
+                }
+               
                 /* cache the ptl on the proc */
                 proc_ptl = mca_ptl_array_insert(&proc_pml->proc_ptl_next);
                 proc_ptl->ptl = ptl;
