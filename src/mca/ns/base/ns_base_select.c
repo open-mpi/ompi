@@ -44,6 +44,7 @@ int mca_ns_base_select(bool *allow_multi_user_threads,
     /* Call the component's init function and see if it wants to be
        selected */
 
+    ompi_output(mca_ns_base_output, "calling component init\n");
     module = component->ns_init(&multi, &hidden, &priority);
 
     /* If we got a non-NULL module back, then the component wants to
