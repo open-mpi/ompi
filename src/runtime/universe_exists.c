@@ -88,6 +88,10 @@ int ompi_rte_universe_exists()
 	return OMPI_ERR_NOT_IMPLEMENTED;
     }
 
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "looking for session directory");
+    }
+
     /* check to see if local universe already exists */
     if (OMPI_SUCCESS == ompi_session_dir(false,
 					 ompi_process_info.tmpdir_base,
@@ -98,6 +102,10 @@ int ompi_rte_universe_exists()
 					 NULL,
 					 NULL)) { /* found */
 
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "check for contact info file");
+	}
+
 	/* check for "contact-info" file. if present, read it in. */
 	contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
 				    "universe-setup.txt", NULL);
@@ -107,6 +115,10 @@ int ompi_rte_universe_exists()
 		ompi_output(0, "could not read contact file %s", contact_file);
 	    }
 	    return ret;
+	}
+
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "contact info read");
 	}
 
 	if (!ompi_universe_info.persistence ||   /* not persistent... */
@@ -120,6 +132,11 @@ int ompi_rte_universe_exists()
 	    return OMPI_ERR_NO_CONNECTION_ALLOWED;
 	}
 
+    if (ompi_rte_debug_flag) {
+	ompi_output(0, "contact info to set: %s", ompi_universe_info.seed_contact_info);
+    }
+
+
 	/* if persistent, set contact info... */
 	if (OMPI_SUCCESS != mca_oob_set_contact_info(ompi_universe_info.seed_contact_info)) { /* set contact info */
 	    if (ompi_rte_debug_flag) {
@@ -129,6 +146,13 @@ int ompi_rte_universe_exists()
 	}
 
 	mca_oob_parse_contact_info(ompi_universe_info.seed_contact_info, &proc, NULL);
+
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "contact info set: %s", ompi_universe_info.seed_contact_info);
+	    ompi_output(0, "issuing ping: %d %d %d", proc.cellid, proc.jobid, proc.vpid);
+	}
+
+
 	/* ...and ping to verify it's alive */
 	if (OMPI_SUCCESS != mca_oob_ping(&proc, &ompi_rte_ping_wait)) {
 	    if (ompi_rte_debug_flag) {
