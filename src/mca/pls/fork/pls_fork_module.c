@@ -140,7 +140,7 @@ static int orte_pls_fork_proc(
             uri = orte_rml.get_uri();
         }
         param = mca_base_param_environ_variable("ns","replica","uri");
-        setenv(param,uri,true);
+        ompi_setenv(param, uri, true, &environ);
         free(param);
         free(uri);
                                                                                                     
@@ -151,7 +151,7 @@ static int orte_pls_fork_proc(
             uri = orte_rml.get_uri();
         }
         param = mca_base_param_environ_variable("gpr","replica","uri");
-        setenv(param,uri,true);
+        ompi_setenv(param, uri, true, &environ);
         free(param);
         free(uri);
 
