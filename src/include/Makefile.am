@@ -12,11 +12,13 @@ noinst_HEADERS	= \
 		lam_constants.h \
 		lam.h \
 		lam_stdint.h \
+		lam_types.h \
 		proc.h \
 		totalview.h
 
 include_HEADERS	= \
 		lam_config.h \
+		lam_config_bottom.h \
 		lam_stdint.h \
 		mpi.h \
 		mpif.h
