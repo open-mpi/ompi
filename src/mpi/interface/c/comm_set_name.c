@@ -6,6 +6,7 @@
 
 #include <string.h>
 
+#include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "lam/util/strncpy.h"
 #include "lam/communicator.h"
