@@ -79,7 +79,7 @@ extern "C" {
                                 int reorder,
                                 MPI_Comm *comm_graph);
 
-    int topo_base_graph_dims_get (MPI_Comm comm, 
+    int topo_base_graphdims_get (MPI_Comm comm, 
                                   int *nodes,
                                   int *nedges);
 

@@ -19,7 +19,7 @@ libmca_topo_base_la_SOURCES = \
         topo_base_cart_shift.c \
         topo_base_cart_sub.c \
         topo_base_graph_create.c \
-        topo_base_graph_dims_get.c \
+        topo_base_graphdims_get.c \
         topo_base_graph_get.c \
         topo_base_graph_neighbors.c \
         topo_base_graph_neighbors_count.c \

@@ -145,7 +145,7 @@ static inline int lam_cube_dim(int nprocs) {
     size_t size;
 
     if (1 > nprocs) return LAM_ERROR;
-    for(dim = 0, size = 1; size < nprocs; ++dim, size <<= 1);
+    for(dim = 0, size = 1; size < (size_t)nprocs; ++dim, size <<= 1);
 
     return dim;
 }

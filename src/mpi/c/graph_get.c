@@ -6,6 +6,9 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "communicator/communicator.h"
+#include "errhandler/errhandler.h"
+#include "mca/topo/topo.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Graph_get = PMPI_Graph_get
@@ -17,5 +20,41 @@
 
 int MPI_Graph_get(MPI_Comm comm, int maxindex, int maxedges,
                   int *index, int *edges) {
+    int err;
+    mca_topo_base_graph_get_fn_t func;
+
+    /* check the arguments */
+    if (MPI_PARAM_CHECK) {
+        if (MPI_COMM_NULL == comm) {
+            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+                                          "MPI_Graph_get");
+        }
+        if (LAM_COMM_IS_INTER(comm)) {
+            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+                                          "MPI_Graph_get");
+        }
+        if (!LAM_COMM_IS_GRAPH(comm)) {
+            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
+                                          "MPI_Graph_get");
+        }
+        if (0 > maxindex || 0 > maxedges || NULL == index || NULL == edges) {
+            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+                                          "MPI_Graph_get");
+        }
+    }
+    /* get the function pointer to do the right thing */
+    func = comm->c_topo.topo_graph_get;
+    if (NULL == func) {
+        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
+                                     "MPI_Graph_get");
+    }
+
+    /* call the function */
+    if ( MPI_SUCCESS != 
+            (err = func(comm, maxindex, maxedges, index, edges))) {
+        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Graph_get");
+    }
+    
+    /* All done */
     return MPI_SUCCESS;
 }

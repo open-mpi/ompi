@@ -20,8 +20,8 @@ LAM_GENERATE_F77_BINDINGS (PMPI_CART_CREATE,
                            pmpi_cart_create_,
                            pmpi_cart_create__,
                            pmpi_cart_create_f,
-                           (MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *periods, MPI_Fint *redorder, MPI_Fint *comm_cart, MPI_Fint *ierr),
-                           (old_comm, ndims, dims, periods, redorder, comm_cart, ierr) )
+                           (MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *periods, MPI_Fint *reorder, MPI_Fint *comm_cart, MPI_Fint *ierr),
+                           (old_comm, ndims, dims, periods, reorder, comm_cart, ierr) )
 #endif
 
 #if LAM_HAVE_WEAK_SYMBOLS
@@ -37,8 +37,8 @@ LAM_GENERATE_F77_BINDINGS (MPI_CART_CREATE,
                            mpi_cart_create_,
                            mpi_cart_create__,
                            mpi_cart_create_f,
-                           (MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *periods, MPI_Fint *redorder, MPI_Fint *comm_cart, MPI_Fint *ierr),
-                           (old_comm, ndims, dims, periods, redorder, comm_cart, ierr) )
+                           (MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *periods, MPI_Fint *reorder, MPI_Fint *comm_cart, MPI_Fint *ierr),
+                           (old_comm, ndims, dims, periods, reorder, comm_cart, ierr) )
 #endif
 
 
@@ -46,7 +46,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_CART_CREATE,
 #include "mpi/c/profile/defines.h"
 #endif
 
-void mpi_cart_create_f(MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *periods, MPI_Fint *redorder, MPI_Fint *comm_cart, MPI_Fint *ierr)
+void mpi_cart_create_f(MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *periods, MPI_Fint *reorder, MPI_Fint *comm_cart, MPI_Fint *ierr)
 {
 
 }
