@@ -65,15 +65,23 @@
 #define LAM_PCM_PROC_MPIAPP 1
 #define LAM_PCM_PROC_OTHER  2
 
-typedef struct lam_pcm_node {
+struct mca_pcm_rte_node_t {
   int32_t node_num;
   int32_t num_procs;
-} lam_pcm_node_t;
+};
+typedef struct mca_pcm_rte_node_t mca_pcm_rte_node_t;
 
-typedef struct lam_pcm_control_args {
+struct mca_pcm_control_args_t {
   char* request;
   char* value;
-} lam_pcm_control_args_t;
+};
+typedef struct mca_pcm_control_args_t mca_pcm_control_args_t;
+
+struct mca_pcm_proc_t {
+  lam_job_handle_t job_handle;
+  int vpid;
+};
+typedef struct mca_pcm_proc_t mca_pcm_proc_t;
 
 /*
  * functions every module must provide
@@ -83,7 +91,7 @@ typedef int (*mca_pcm_base_query_fn_t)(int *priority);
 typedef struct mca_pcm_1_0_0_t* (*mca_pcm_base_init_fn_t)(void);
 
   /**
-   * \func lam_pcm_query_get_nodes
+   * \func mca_pcm_query_get_nodes
    *
    * Get list of nodes available for execution
    *
@@ -104,7 +112,7 @@ typedef struct mca_pcm_1_0_0_t* (*mca_pcm_base_init_fn_t)(void);
    * In the case where both are available, available_procs will be
    * equal to the sum of nodes[0...n].num_procs.
    */
-typedef int (*mca_pcm_base_query_get_nodes_fn_t)(lam_pcm_node_t **nodes, 
+typedef int (*mca_pcm_base_query_get_nodes_fn_t)(mca_pcm_rte_node_t **nodes, 
                                                  size_t *nodes_len, 
                                                  int *available_procs);
 
@@ -126,7 +134,7 @@ typedef int (*mca_pcm_base_query_get_nodes_fn_t)(lam_pcm_node_t **nodes,
    * process tree (spawn, etc.) if the user really wants such
    * information.  For mpirun, it should just be NULL.
    *
-   * \warning The handle must be released using lam_pcm_handle_free
+   * \warning The handle must be released using mca_pcm_handle_free
    */
 typedef lam_job_handle_t (*mca_pcm_base_handle_new_fn_t)(lam_job_handle_t parent);
 
@@ -139,7 +147,7 @@ typedef lam_job_handle_t (*mca_pcm_base_handle_new_fn_t)(lam_job_handle_t parent
    *
    * Return the parallel job handle for the currently running process
    *
-   * \warning The handle must be released using lam_pcm_handle_free
+   * \warning The handle must be released using mca_pcm_handle_free
    */
 typedef lam_job_handle_t (*mca_pcm_base_handle_get_fn_t)(void);
 
@@ -149,8 +157,8 @@ typedef lam_job_handle_t (*mca_pcm_base_handle_get_fn_t)(void);
    *
    * @param job_handle Poiner to a lam_job_handle_t
    * 
-   * Free a job handle returned by lam_pcm_handle_new or
-   * lam_pcm_handle_get.
+   * Free a job handle returned by mca_pcm_handle_new or
+   * mca_pcm_handle_get.
    */
 typedef void (*mca_pcm_base_handle_free_fn_t)(lam_job_handle_t *job_handle);
 
@@ -192,7 +200,7 @@ typedef int (*mca_pcm_base_job_can_spawn_fn_t)(lam_job_handle_t job_handle);
    * job handle.
    */
 typedef int (*mca_pcm_base_job_set_arguments_fn_t)(lam_job_handle_t job_handle, 
-                                              lam_pcm_control_args_t* opts, 
+                                              mca_pcm_control_args_t* opts, 
                                               size_t opts_len);
 
 
@@ -222,7 +230,7 @@ typedef int (*mca_pcm_base_job_set_arguments_fn_t)(lam_job_handle_t job_handle,
    * support spawning of new applications from
    */
 typedef int (*mca_pcm_base_job_launch_procs_fn_t)(lam_job_handle_t job_handle, 
-                                             lam_pcm_node_t *nodes, 
+                                             mca_pcm_rte_node_t *nodes, 
                                              size_t nodes_len, const char* file, 
                                              int argc, const char* argv[], 
                                              const char *env[]);
@@ -243,6 +251,8 @@ typedef int (*mca_pcm_base_job_launch_procs_fn_t)(lam_job_handle_t job_handle,
    * this all along and didn't bother to tell you.  When this function
    * returns, it is safe to assume that all rendezvous is complete
    * (ie, you can exit and not mess anything up
+   *
+   * This function only needs to be called by the launching procs.
    */
 typedef int (*mca_pcm_base_job_rendezvous_fn_t)(lam_job_handle_t job_handle);
 
@@ -320,16 +330,19 @@ typedef int (*mca_pcm_base_proc_startup_fn_t)(void);
   /**
    * Get peers list
    *
-   * @retval LAM_ERR_NOT_IMPLEMENTED Function not implemented
+   * @param procs Ordered array of lam_proc_t entries describing the job peers
+   *
+   * @retval LAM_SUCCESS success
+   * @retval LAM_ERROR Unknown error
    *
    * Get list of peers in the parallel job.  Should not require any
    * communication with other nodes (communication with processes on
    * this node are allowed).
    *
    * \warning This function is not implemented and its argument list
-   * will obviously change in the very near future.
+   * may change in the very near future.
    */
-typedef int (*mca_pcm_base_proc_get_peers_fn_t)(void);
+typedef int (*mca_pcm_base_proc_get_peers_fn_t)(mca_pcm_proc_t **procs, size_t *nprocs);
 
 
   /**
@@ -339,10 +352,8 @@ typedef int (*mca_pcm_base_proc_get_peers_fn_t)(void);
    *
    * Get my entry in the peers list
    *
-   * \warning This function is not implemented and its argument list
-   * will obviously change in the very near future.
    */
-typedef  int (*mca_pcm_base_proc_get_me_fn_t)(void);
+typedef  mca_pcm_proc_t* (*mca_pcm_base_proc_get_me_fn_t)(void);
 
   /**
    * Get my entry in the peers list

@@ -7,10 +7,11 @@
 #include "lam_config.h"
 
 #include "lam/constants.h"
+#include "lam/types.h"
+#include "lam/util/malloc.h"
 #include "mca/mca.h"
 #include "mca/lam/pcm/pcm.h"
 #include "mca/lam/pcm/cofs/src/pcm_cofs.h"
-#include "lam/types.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,7 +84,29 @@ mca_pcm_cofs_close(void)
 int
 mca_pcm_cofs_query(int *priority)
 {
+  char *test_ret;
+
   *priority = 0;
+
+  /* BWB - remove printfs once things settle down some... */
+  test_ret = getenv("MCA_common_lam_cofs_my_vpid");
+  if (test_ret == NULL) {
+    printf("COFS PCM will not be running because MCA_common_lam_cofs_my_vpid not set\n");
+    return LAM_ERROR;
+  }
+
+  test_ret = getenv("MCA_common_lam_cofs_job_handle");
+  if (test_ret == NULL) {
+    printf("COFS PCM will not be running because MCA_common_lam_cofs_job_handle not set\n");
+    return LAM_ERROR;
+  }
+
+  test_ret = getenv("MCA_common_lam_cofs_num_procs");
+  if (test_ret == NULL) {
+    printf("COFS PCM will not be running because MCA_common_lam_cofs_num_procs not set\n");
+    return LAM_ERROR;
+  }
+
   return LAM_SUCCESS;
 }
 
@@ -113,29 +136,40 @@ mca_pcm_cofs_init(void)
   /*
    * See if we can write in our directory...
    */
-  tmp = malloc(strlen(mca_pcm_cofs_comm_loc) + 5);
+  tmp = LAM_MALLOC(strlen(mca_pcm_cofs_comm_loc) + 5);
   if (tmp == NULL) return NULL;
   sprintf(tmp, "%s/me", mca_pcm_cofs_comm_loc);
   fp = fopen(tmp, "w");
   if (fp == NULL) {
     printf("pcm_cofs can not write in communication dir\n");
-    free(tmp);
+    LAM_FREE(tmp);
     return NULL;
   }
   fclose(fp);
   unlink(tmp);
-  free(tmp);
+  LAM_FREE(tmp);
 
   /*
    * BWB - fix me, make register the "right" way...
    */
   /* find our vpid */
-  tmp = getenv("MCA_PCM_BASE_VPID");
+  tmp = getenv("MCA_common_lam_cofs_my_vpid");
   if (tmp == NULL) {
     printf("pcm_cofs can not find vpid\n");
     return NULL;
   }
   mca_pcm_cofs_my_vpid = atoi(tmp);
+
+  mca_pcm_cofs_my_handle = getenv("MCA_common_lam_cofs_job_handle");
+
+  mca_pcm_cofs_procs = NULL;
+
+  tmp = getenv("MCA_common_lam_cofs_num_procs");
+  if (tmp == NULL) {
+    printf("pcm_cofs can not find nprocs\n");
+    return NULL;
+  }
+  mca_pcm_cofs_nprocs = atoi(tmp);
 
   return &mca_pcm_cofs_1_0_0;
 }
@@ -144,5 +178,12 @@ mca_pcm_cofs_init(void)
 int
 mca_pcm_cofs_finalize(void)
 {
+  if (mca_pcm_cofs_procs != NULL) {
+    LAM_FREE(mca_pcm_cofs_procs);
+    mca_pcm_cofs_procs = NULL;
+    mca_pcm_cofs_nprocs = 0;
+  }
+
   return LAM_SUCCESS;
 }
+
