@@ -26,5 +26,4 @@ struct mca_ptl_gm_send_request_t {
 };
 typedef struct mca_ptl_gm_send_request_t mca_ptl_gm_send_request_t;
 
-
 #endif
