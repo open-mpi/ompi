@@ -4,6 +4,8 @@
 
 #include "ompi_config.h"
 
+#include <errno.h>
+
 #include "include/constants.h"
 #include "runtime/runtime.h"
 #include "runtime/runtime_types.h"

@@ -4,6 +4,8 @@
 
 #include "ompi_config.h"
 
+#include <errno.h>
+
 #include "include/constants.h"
 #include "class/ompi_pointer_array.h"
 #include "runtime/runtime.h"
