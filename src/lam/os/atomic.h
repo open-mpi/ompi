@@ -40,7 +40,7 @@
 #ifdef __ppc_64__
 #include "lam/os/darwin/ppc_64/atomic.h"
 #else
-#include "lam/os/darwin/powerpc/atomic.h"
+#include "lam/os/darwin/ppc_32/atomic.h"
 #endif
 
 #endif      /* __APPLE__ */
