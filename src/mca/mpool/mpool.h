@@ -79,8 +79,9 @@ typedef struct mca_mpool_base_component_1_0_0_t mca_mpool_base_component_1_0_0_t
 typedef struct mca_mpool_base_component_1_0_0_t mca_mpool_base_component_t;
 
 /**
- *  mpool module descriptor. Contains functions exported
- *  by the component.
+ *  mpool module descriptor. Contains the interface functions exported
+ *  by the component.  This does not expose memory management
+ *  details.
  */
 struct mca_mpool_base_module_t {
     mca_mpool_base_component_t *mpool_component;  /**< component stuct */
