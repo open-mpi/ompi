@@ -854,6 +854,7 @@ AC_CONFIG_FILES([
     src/os/linux/ia64/Makefile
     src/os/linux/x86_64/Makefile
     src/os/tru64/Makefile
+    src/mpiruntime/Makefile
     src/runtime/Makefile
     src/threads/Makefile
     src/util/Makefile

@@ -24,8 +24,6 @@ libruntime_la_SOURCES = \
         ompi_init.c \
         universe_connect.c \
         universe_init.c \
-        ompi_mpi_init.c \
-        ompi_mpi_finalize.c \
 	ompi_progress.c \
         ompi_rte_finalize.c \
         ompi_rte_init.c
