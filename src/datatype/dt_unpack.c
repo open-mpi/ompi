@@ -171,7 +171,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
     char* pSrcBuf;
     dt_desc_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
-    int next_length;
+    int next_length = 0;
     int init_bconvert = pConv->bConverted;
 
     pSrcBuf = iov[0].iov_base;
@@ -478,6 +478,7 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
         pConv->flags |= DT_FLAG_CONTIGUOUS;
         pConv->fAdvance = ompi_convertor_unpack_homogeneous_contig;
     } else {
+        pConv->fAdvance = ompi_convertor_unpack_general;  /* TODO: just tp make the compiler happy */
         pConv->fAdvance = ompi_convertor_unpack_homogeneous;
     }
     ompi_create_stack_with_pos( pConv, starting_point, local_sizes );

@@ -147,7 +147,7 @@ static int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
     char* pDestBuf;
     dt_desc_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
-    int next_length;
+    int next_length = 0;
     int init_bconvert = pConv->bConverted;
 
     pDestBuf = iov[0].iov_base;
