@@ -7,7 +7,7 @@
 # information, see the LICENSE file in the top level directory of the
 # LAM source distribution.
 #
-# $Id: configure.ac,v 1.4 2003/12/22 16:29:11 twoodall Exp $
+# $Id: configure.ac,v 1.5 2003/12/28 15:12:06 jsquyres Exp $
 #
 
 
@@ -157,6 +157,7 @@ CFLAGS="$cflags_save"
 # check for type alignments
 # check for c99 features
 AC_C_INLINE
+AX_CREATE_STDINT_H([src/include/lam_stdint.h])
 
 ##################################
 # C++ compiler characteristics
@@ -294,7 +295,6 @@ AC_SUBST(FFLAGS)
 
 lam_show_subtitle "Final output" 
 
-AX_CREATE_STDINT_H([src/include/lam_stdint.h])
 AM_CONFIG_HEADER([src/include/lam_config.h])
 AC_CONFIG_FILES([
     Makefile
