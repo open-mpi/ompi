@@ -9,7 +9,7 @@
 #include "lam_config.h"
 #include "lam/constants.h"
 #include "lam/types.h"
-#include "lam/lfc/object.h"
+#include "lam/lfc/lam_object.h"
 #if LAM_ENABLE_DEBUG
 #include "lam/util/output.h"
 #endif
