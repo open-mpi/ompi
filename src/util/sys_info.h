@@ -25,7 +25,7 @@ struct ompi_sys_info_t {
 			    * Certifies that the ompi_sys_info() function has been
 			    * called at least once so fields have valid values
 			    */
-    int pid;               /* Process ID for this process */
+    pid_t pid;             /* Process ID for this process */
     char *sysname;         /**< Name of OS in use on this node. */
     char *nodename;        /**< Fully qualified host name on the network. */
     char *release;	   /**< Release level of the operating system. */
