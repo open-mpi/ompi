@@ -307,7 +307,8 @@ static inline int ompi_atomic_sub_ptr(volatile void* addr,
  * Atomic spinlocks
  *
  *********************************************************************/
-#if OMPI_HAVE_ATOMIC_SPINLOCKS
+#ifdef OMPI_NEED_INLINE_ATOMIC_SPINLOCKS
+
 /* 
  * Lock initialization function. It set the lock to UNLOCKED.
  */

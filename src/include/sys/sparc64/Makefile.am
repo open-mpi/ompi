@@ -14,7 +14,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_HEADERS = atomic.h atomic.s
+noinst_HEADERS = atomic.h
 
 # Conditionally install the header files
 
