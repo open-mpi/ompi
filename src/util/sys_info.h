@@ -22,6 +22,10 @@
 #ifndef _OMPI_SYS_INFO_H_
 #define _OMPI_SYS_INFO_H_
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * System information structure
  *
@@ -75,4 +79,8 @@ OMPI_DECLSPEC extern ompi_sys_info_t ompi_system_info;
  * @retval OMPI_ERROR If the system does not provide the requested information.
  */
 OMPI_DECLSPEC int ompi_sys_info(void);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

@@ -33,6 +33,10 @@
 #include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /** Define the notification actions for the subscription system
  */
 #define OMPI_REGISTRY_NOTIFY_NONE           0x0000   /**< Null case */
@@ -74,7 +78,7 @@ struct ompi_registry_notify_message_t {
 };
 typedef struct ompi_registry_notify_message_t ompi_registry_notify_message_t;
 
-OBJ_CLASS_DECLARATION(ompi_registry_notify_message_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_registry_notify_message_t);
 
 /** Notify callback function */
 typedef void (*ompi_registry_notify_cb_fn_t)(ompi_registry_notify_message_t *notify_msg, void *user_tag);
@@ -152,7 +156,7 @@ struct ompi_registry_value_t {
 };
 typedef struct ompi_registry_value_t ompi_registry_value_t;
 
-OBJ_CLASS_DECLARATION(ompi_registry_value_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_registry_value_t);
 
 /** Return value structure for index requests.
  */
@@ -162,7 +166,7 @@ struct ompi_registry_index_value_t {
 };
 typedef struct ompi_registry_index_value_t ompi_registry_index_value_t;
 
-OBJ_CLASS_DECLARATION(ompi_registry_index_value_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_registry_index_value_t);
 
 /** Return value for test results on internal test
  */
@@ -173,7 +177,7 @@ struct ompi_registry_internal_test_results_t {
 };
 typedef struct ompi_registry_internal_test_results_t ompi_registry_internal_test_results_t;
 
-OBJ_CLASS_DECLARATION(ompi_registry_internal_test_results_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_registry_internal_test_results_t);
 
 
 struct mca_gpr_notify_request_tracker_t {
@@ -186,7 +190,7 @@ struct mca_gpr_notify_request_tracker_t {
 };
 typedef struct mca_gpr_notify_request_tracker_t mca_gpr_notify_request_tracker_t;
 
-OBJ_CLASS_DECLARATION(mca_gpr_notify_request_tracker_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_gpr_notify_request_tracker_t);
 
 
 struct mca_gpr_idtag_list_t {
@@ -195,7 +199,7 @@ struct mca_gpr_idtag_list_t {
 };
 typedef struct mca_gpr_idtag_list_t mca_gpr_idtag_list_t;
 
-OBJ_CLASS_DECLARATION(mca_gpr_idtag_list_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_gpr_idtag_list_t);
 
 /*
  * Component functions that MUST be provided
@@ -280,6 +284,9 @@ struct mca_gpr_base_component_1_0_0_t {
 typedef struct mca_gpr_base_component_1_0_0_t mca_gpr_base_component_1_0_0_t;
 typedef mca_gpr_base_component_1_0_0_t mca_gpr_base_component_t;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 /*
  * Macro for use in modules that are of type coll v1.0.0

@@ -16,8 +16,12 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_LIBGEN_H
 #include <libgen.h>
+#endif
 
 #include "include/constants.h"
 
@@ -201,7 +205,7 @@ ompi_list_t *gpr_replica_get_key_list(char *segment, char **tokens)
 mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 {
     mca_gpr_replica_segment_t *seg;
-    mca_gpr_replica_keytable_t *ptr_seg, *ptr_key, *new;
+    mca_gpr_replica_keytable_t *ptr_seg, *ptr_key, *novel;
 
     /* protect against errors */
     if (NULL == segment) {
@@ -221,21 +225,21 @@ mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 	}
 
 	/* okay, name is not previously taken. Define a key value for it and return */
-	new = OBJ_NEW(mca_gpr_replica_keytable_t);
-	new->token = strdup(segment);
+	novel = OBJ_NEW(mca_gpr_replica_keytable_t);
+	novel->token = strdup(segment);
 	if (0 == ompi_list_get_size(&mca_gpr_replica_head.freekeys)) { /* no keys waiting for reuse */
 	    if (MCA_GPR_REPLICA_KEY_MAX-2 > mca_gpr_replica_head.lastkey) {  /* have a key left */
 		mca_gpr_replica_head.lastkey++;
-		new->key = mca_gpr_replica_head.lastkey;
+		novel->key = mca_gpr_replica_head.lastkey;
 	    } else {  /* out of keys */
 		return MCA_GPR_REPLICA_KEY_MAX;
 	    }
 	} else {
 	    ptr_key = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&mca_gpr_replica_head.freekeys);
-	    new->key = ptr_key->key;
+	    novel->key = ptr_key->key;
 	}
-	ompi_list_append(&mca_gpr_replica_head.segment_dict, &new->item);
-	return new->key;
+	ompi_list_append(&mca_gpr_replica_head.segment_dict, &novel->item);
+	return novel->key;
     }
 
     /* okay, token is specified */
@@ -251,17 +255,17 @@ mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 	    }
 	}
 	/* okay, token is unique - create dictionary entry */
-	new = OBJ_NEW(mca_gpr_replica_keytable_t);
-	new->token = strdup(token);
+	novel = OBJ_NEW(mca_gpr_replica_keytable_t);
+	novel->token = strdup(token);
 	if (0 == ompi_list_get_size(&seg->freekeys)) { /* no keys waiting for reuse */
 	    seg->lastkey++;
-	    new->key = seg->lastkey;
+	    novel->key = seg->lastkey;
 	} else {
 	    ptr_key = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&seg->freekeys);
-	    new->key = ptr_key->key;
+	    novel->key = ptr_key->key;
 	}
-	ompi_list_append(&seg->keytable, &new->item);
-	return new->key;
+	ompi_list_append(&seg->keytable, &novel->item);
+	return novel->key;
     }
     /* couldn't find segment */
     return MCA_GPR_REPLICA_KEY_MAX;
@@ -271,7 +275,7 @@ int gpr_replica_delete_key(char *segment, char *token)
 {
     mca_gpr_replica_segment_t *seg;
     mca_gpr_replica_core_t *reg;
-    mca_gpr_replica_keytable_t *ptr_seg, *ptr_key, *new;
+    mca_gpr_replica_keytable_t *ptr_seg, *ptr_key, *novel;
     mca_gpr_replica_key_t *key;
     int i;
 
@@ -297,10 +301,10 @@ int gpr_replica_delete_key(char *segment, char *token)
 	    }
 
 	    /* add key to global registry's freekey list */
-	    new = OBJ_NEW(mca_gpr_replica_keytable_t);
-	    new->token = NULL;
-	    new->key = ptr_seg->key;
-	    ompi_list_append(&mca_gpr_replica_head.freekeys, &new->item);
+	    novel = OBJ_NEW(mca_gpr_replica_keytable_t);
+	    novel->token = NULL;
+	    novel->key = ptr_seg->key;
+	    ompi_list_append(&mca_gpr_replica_head.freekeys, &novel->item);
 
 	    /* remove the dictionary entry */
 	    ompi_list_remove_item(&mca_gpr_replica_head.segment_dict, &ptr_seg->item);
@@ -325,10 +329,10 @@ int gpr_replica_delete_key(char *segment, char *token)
 		    }
 
 		    /* add key to this segment's freekey list */
-		    new = OBJ_NEW(mca_gpr_replica_keytable_t);
-		    new->token = NULL;
-		    new->key = ptr_key->key;
-		    ompi_list_append(&seg->freekeys, &new->item);
+		    novel = OBJ_NEW(mca_gpr_replica_keytable_t);
+		    novel->token = NULL;
+		    novel->key = ptr_key->key;
+		    ompi_list_append(&seg->freekeys, &novel->item);
 
 		    /* now remove the dictionary entry from the segment's dictionary */
 		    ompi_list_remove_item(&seg->keytable, &ptr_key->item);

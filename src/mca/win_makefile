@@ -6,7 +6,9 @@
 #
 
 # this is hardcoded for now. but will change shortly
-topdir = C:\cygwin\home\pkambadu\ompi
+topdir = C:\cygwin\home\pkambadu\ompi-new
+gen_base = ${topdir}/src/win32/generated_include
+copy_base = ${topdir}/src/mca/
 
 # list of components to build with the c compiler
 C_SUBDIRS = \
@@ -14,6 +16,7 @@ C_SUBDIRS = \
         coll/basic \
         llm/hostfile/src \
         ns/proxy/src \
+        gpr/proxy/ \
         pcmclient/env \
         pcmclient/seed \
         pcmclient/singleton \
@@ -25,7 +28,8 @@ CPP_SUBDIRS = \
         ptl/tcp/src \
         oob/tcp/ \
         pml/teg/src \
-        ns/replica/src 
+        ns/replica/src \
+        gpr/replica/
 
 #list of components that are not working as yet
 CPP_EXCLUDE = \
@@ -44,7 +48,6 @@ CFLAGS = \
         /DWIN32 \
         /DOMPI_SYSCONFDIR \
         /nologo \
-        /Fo"Debug" \
         /c 
 
 CPPFLAGS = \
@@ -85,12 +88,22 @@ all: \
     clibs \
     cpplibs
 
-clibs: ${C_SUBDIRS}
+prebuild:
+	cp ${gen_base}/coll-basic-version.h ${copy_base}/coll/basic/
+	cp ${gen_base}/io-romio-version.h ${copy_base}/io/romio/
+	cp ${gen_base}/pcmclient-env-version.h ${copy_base}/pcmclient/env/
+	cp ${gen_base}/pcmclient-seed-version.h ${copy_base}/pcmclient/seed/
+	cp ${gen_base}/pcmclient-singleton-version.h ${copy_base}/pcmclient/singleton/
+	cp ${gen_base}/llm-hostfile-version.h ${copy_base}/llm/hostfile/
+	cp ${gen_base}/topo-unity-version.h ${copy_base}/topo/unity/
+            
+
+clibs: ${C_SUBDIRS} prebuild
 	@for dirs in ${C_SUBDIRS}; do \
 	    (echo "Entering $${dirs}"; cd $$dirs; ${CC} ${CFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} *.obj); \
 	done
 
-cpplibs: ${CPP_SUBDIRS}
+cpplibs: ${CPP_SUBDIRS} prebuild
 	@for dirs in ${CPP_SUBDIRS}; do \
 	    (echo "Entering $${dirs}"; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} *.obj); \
 	done

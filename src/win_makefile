@@ -6,7 +6,7 @@
 #
 
 # this is hardcoded for now. but will change shortly
-topdir = C:\cygwin\home\pkambadu\ompi
+topdir = C:\cygwin\home\pkambadu\ompi-new
 
 # list of components to build with the c compiler
 C_SUBDIRS =  \
@@ -76,7 +76,7 @@ CFLAGS = \
         /D_WINDLL \
         /EHsc \
         /MLd \
-        /W3 \
+        /W0 \
         /Wp64 \
         /ZI \
         /TC \
@@ -109,6 +109,7 @@ ADDLIBS = \
         uuid.lib \
         odbc32.lib \
         odbccp32.lib 
+
 all: clibs
 
 temp:

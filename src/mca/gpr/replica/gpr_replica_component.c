@@ -572,7 +572,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    goto RETURN_ERROR;
 	}
 
-	object = (ompi_registry_object_t)malloc(object_size);
+	object = (ompi_registry_object_t *)malloc(object_size);
 	if (OMPI_SUCCESS != ompi_unpack(buffer, object, object_size, OMPI_BYTE)) {
 	    goto RETURN_ERROR;
 	}
