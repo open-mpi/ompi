@@ -1,8 +1,12 @@
 Makefile
 config.log
 config.status
+autom4te.cache
+libtool
 stamp-h
 stamp-h1
+*.lo
+.deps
 .libs
 event.lo
 libevent.la
