@@ -423,7 +423,7 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
                 if (NULL != line) {
                     free(line);
                 }
-                line = malloc(len * 2);
+                line = (char*) malloc(len * 2);
                 if (NULL == line) {
                     ompi_mutex_unlock(&cmd->lcl_mutex);
                     return NULL;

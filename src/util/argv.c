@@ -20,7 +20,7 @@ int ompi_argv_append(int *argc, char ***argv, const char *arg)
   /* Create new argv. */
 
   if (NULL == *argv) {
-    *argv = malloc(2 * sizeof(char *));
+      *argv = (char**) malloc(2 * sizeof(char *));
     if (NULL == *argv)
       return OMPI_ERROR;
     *argc = 0;
@@ -31,14 +31,14 @@ int ompi_argv_append(int *argc, char ***argv, const char *arg)
   /* Extend existing argv. */
 
   else {
-    *argv = realloc(*argv, (*argc + 2) * sizeof(char *));
+      *argv = (char**) realloc(*argv, (*argc + 2) * sizeof(char *));
     if (NULL == *argv)
       return OMPI_ERROR;
   }
 
   /* Set the newest element to point to a copy of the arg string */
 
-  (*argv)[*argc] = malloc(strlen(arg) + 1);
+  (*argv)[*argc] = (char*) malloc(strlen(arg) + 1);
   if (NULL == (*argv)[*argc])
     return OMPI_ERROR;
 
@@ -105,7 +105,7 @@ char **ompi_argv_split(const char *src_string, int delimiter)
     /* long argument, malloc buffer, copy and add */
 
     else if (arglen > (ARGSIZE - 1)) {
-      argtemp = malloc(arglen + 1);
+        argtemp = (char*) malloc(arglen + 1);
       if (NULL == argtemp)
 	return NULL;
 
@@ -178,7 +178,7 @@ char *ompi_argv_join(char **argv, int delimiter)
 
   /* Allocate the string. */
 
-  if (NULL == (str = malloc(str_len)))
+  if (NULL == (str = (char*) malloc(str_len)))
     return NULL;
 
   /* Loop filling in the string. */
@@ -326,8 +326,8 @@ int ompi_argv_insert(char ***target, int start, char **source)
 
         /* Alloc out new space */
 
-        *target = realloc(*target, 
-                          sizeof(char *) * (target_count + source_count + 1));
+        *target = (char**) realloc(*target, 
+                                   sizeof(char *) * (target_count + source_count + 1));
 
         /* Move suffix items down to the end */
 

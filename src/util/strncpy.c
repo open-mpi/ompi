@@ -31,7 +31,7 @@
 char *
 ompi_strncpy(char *dest, const char *src, size_t len)
 {
-  int i;
+  size_t i;
   int pad = 0;
   char *new_dest = dest;
 

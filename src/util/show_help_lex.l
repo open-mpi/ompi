@@ -16,7 +16,13 @@ int ompi_show_help_finish_parsing(void);
 /*
  * local functions
  */
-static int ompi_show_help_yywrap(void);
+#ifdef __cplusplus
+ extern "C" {
+#endif
+     static int ompi_show_help_yywrap(void);
+#ifdef __cplusplus
+ }
+#endif
 
 /*
  * global variables

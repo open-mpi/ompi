@@ -240,7 +240,7 @@ static int output(bool want_error_header, ompi_pointer_array_t *lines,
 
     len = want_error_header ? 2 * strlen(star_line) : 0;
     for (i = 0; i < ompi_pointer_array_get_size(lines); ++i) {
-        tmp = ompi_pointer_array_get_item(lines, i);
+        tmp = (char*) ompi_pointer_array_get_item(lines, i);
         if (NULL == tmp) {
             break;
         }
@@ -249,7 +249,7 @@ static int output(bool want_error_header, ompi_pointer_array_t *lines,
 
     /* Malloc it out */
 
-    concat = malloc(len + 1);
+    concat = (char*) malloc(len + 1);
     if (NULL == concat) {
         fprintf(stderr, star_line);
         fprintf(stderr, "Sorry!  You were supposed to get help about:\n    %s\nfrom the file:\n    %s\n", topic, base);
@@ -265,7 +265,7 @@ static int output(bool want_error_header, ompi_pointer_array_t *lines,
         strcat(concat, star_line);
     }
     for (i = 0; i < ompi_pointer_array_get_size(lines); ++i) {
-        tmp = ompi_pointer_array_get_item(lines, i);
+        tmp = (char*) ompi_pointer_array_get_item(lines, i);
         if (NULL == tmp) {
             break;
         }
@@ -301,7 +301,7 @@ static int destroy_message(ompi_pointer_array_t *lines)
     char *tmp;
 
     for (i = 0; i < ompi_pointer_array_get_size(lines); ++i) {
-        tmp = ompi_pointer_array_get_item(lines, i);
+        tmp = (char*) ompi_pointer_array_get_item(lines, i);
         if (NULL == tmp) {
             break;
         }
