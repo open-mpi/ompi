@@ -190,7 +190,7 @@ int mca_base_param_lookup_string(int index, char **value)
  */
 int mca_base_param_find(char *type_name, char *module_name, char *param_name) 
 {
-  int i, size;
+  size_t i, size;
   mca_base_param_t **array;
 
   /* Check for bozo cases */
@@ -235,7 +235,7 @@ int mca_base_param_find(char *type_name, char *module_name, char *param_name)
  */
 int mca_base_param_finalize(void)
 {
-  int i, size;
+  size_t i, size;
   mca_base_param_t **array;
 
   if (initialized) {
@@ -259,7 +259,7 @@ param_register(char *type_name, char *module_name, char *param_name,
                mca_base_param_type_t type,
                mca_base_param_storage_t *default_value)
 {
-  int i, len;
+  size_t i, len;
   mca_base_param_t param, **array;
 
   /* Initialize the array if it has never been initialized */
@@ -402,7 +402,7 @@ param_register(char *type_name, char *module_name, char *param_name,
 static bool
 param_lookup(int index, mca_base_param_storage_t *storage)
 {
-  int size;
+  size_t size;
   char *env;
   mca_base_param_t *p;
 
