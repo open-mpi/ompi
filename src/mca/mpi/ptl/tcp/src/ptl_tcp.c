@@ -7,7 +7,11 @@
 #include "lam/util/if.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
+#include "mca/lam/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
+#include "ptl_tcp_addr.h"
+#include "ptl_tcp_peer.h"
+#include "ptl_tcp_proc.h"
 
 
 mca_ptl_tcp_t mca_ptl_tcp = {
@@ -37,19 +41,57 @@ int mca_ptl_tcp_create(int if_index)
     mca_ptl_tcp_module.tcp_ptls[mca_ptl_tcp_module.tcp_num_ptls++] = ptl;
 
     /* initialize the ptl */
-    ptl->tcp_ifindex = if_index;
-    lam_ifindextoaddr(if_index, (struct sockaddr*)&ptl->tcp_addr, sizeof(ptl->tcp_addr));
+    ptl->ptl_ifindex = if_index;
+    lam_ifindextoaddr(if_index, (struct sockaddr*)&ptl->ptl_ifaddr, sizeof(ptl->ptl_ifaddr));
+    lam_ifindextomask(if_index, (struct sockaddr*)&ptl->ptl_ifmask, sizeof(ptl->ptl_ifmask));
     return LAM_SUCCESS;
 }
 
 
-int mca_ptl_tcp_add_proc(struct mca_ptl_t* ptl, struct lam_proc_t *proc, struct mca_ptl_peer_t** ptl_peer)
+int mca_ptl_tcp_add_proc(struct mca_ptl_t* ptl, struct lam_proc_t *lam_proc, struct mca_ptl_peer_t** peer_ret)
 {
+    mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_create(lam_proc);
+    mca_ptl_peer_t* ptl_peer;
+    int rc;
+
+    if(NULL == ptl_proc)
+        return LAM_ERR_OUT_OF_RESOURCE;
+
+    /* 
+     * Check to make sure that the peer has at least as many interface addresses
+     * exported as we are trying to use. If not, then don't bind this PTL instance
+     * to the proc.
+    */
+    THREAD_LOCK(&ptl_proc->proc_lock);
+    if(ptl_proc->proc_addr_count == ptl_proc->proc_peer_count) {
+        THREAD_UNLOCK(&ptl_proc->proc_lock);
+        return LAM_ERR_UNREACH;
+    }
+
+    /* The ptl_proc datastructure is shared by all TCP PTL instances that are trying 
+     * to reach this destination. Cache the peer instance on the ptl_proc.
+     */
+    ptl_peer = OBJ_CREATE(mca_ptl_peer_t, &mca_ptl_peer_cls);
+    if(NULL == ptl_peer) {
+        THREAD_UNLOCK(&ptl_proc->proc_lock);
+        return LAM_ERR_OUT_OF_RESOURCE;
+    }
+    ptl_peer->peer_ptl = (mca_ptl_tcp_t*)ptl;
+    rc = mca_ptl_tcp_proc_insert(ptl_proc, ptl_peer);
+    if(rc != LAM_SUCCESS) {
+        OBJ_RELEASE(ptl_peer);
+        THREAD_UNLOCK(&ptl_proc->proc_lock);
+        return rc;
+    }
+    THREAD_UNLOCK(&ptl_proc->proc_lock);
+    *peer_ret = ptl_peer;
     return LAM_SUCCESS;
 }
+
 
 int mca_ptl_tcp_del_proc(struct mca_ptl_t* ptl, struct lam_proc_t *proc, struct mca_ptl_peer_t* ptl_peer)
 {
+    OBJ_RELEASE(ptl_peer);
     return LAM_SUCCESS;
 }
 

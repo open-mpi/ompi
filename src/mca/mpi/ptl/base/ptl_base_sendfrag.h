@@ -13,6 +13,8 @@ extern lam_class_info_t mca_ptl_base_send_frag_cls;
 struct mca_ptl_base_send_frag_t {
     mca_ptl_base_frag_t super;
     struct mca_ptl_base_send_request_t *frag_request;
+    unsigned char* frag_data;
+    size_t frag_size;
 };
 typedef struct mca_ptl_base_send_frag_t mca_ptl_base_send_frag_t;
 

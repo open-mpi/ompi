@@ -21,24 +21,13 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_del_procs,
     mca_pml_teg_fini,
     mca_pml_teg_progress,
-#if TIM_HASNT_IMPLEMENTED_THIS_YET
     mca_pml_teg_irecv_init,
     mca_pml_teg_irecv,
-#else
-    NULL,
-    NULL,
-#endif
     mca_pml_teg_isend_init,
     mca_pml_teg_isend,
-#if TIM_HASNT_IMPLEMENTED_YET
     mca_pml_teg_start,
     mca_pml_teg_test,
     mca_pml_teg_wait,
-#else
-    NULL,
-    NULL,
-    NULL
-#endif
     }
 };
 
@@ -126,7 +115,8 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
             mca_ptl_t* ptl = mca_pml_teg.teg_ptls[p_index];
  
             /* if the ptl can reach the destination proc it will return 
-             * addressing information that will be cached on the proc
+             * addressing information that will be cached on the proc, if it
+             * cannot reach the proc - but another peer
              */
             struct mca_ptl_peer_t* ptl_peer;
             int rc = ptl->ptl_add_proc(ptl, proc, &ptl_peer);

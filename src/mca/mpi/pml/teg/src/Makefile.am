@@ -14,6 +14,7 @@ noinst_LTLIBRARIES = libmca_pml_teg.la
 libmca_pml_teg_la_SOURCES = \
 	pml_teg.c \
 	pml_teg.h \
+	pml_teg_irecv.c \
 	pml_teg_isend.c \
 	pml_teg_module.c \
 	pml_teg_proc.c \
@@ -21,5 +22,8 @@ libmca_pml_teg_la_SOURCES = \
 	pml_teg_progress.c \
 	pml_teg_sendreq.c \
 	pml_teg_sendreq.h \
+	pml_teg_start.c \
+	pml_teg_test.c \
+	pml_teg_wait.c \
 	pml_ptl_array.c  \
 	pml_ptl_array.h 

@@ -69,7 +69,7 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index);
 
 /* returns 1 if pool uses shared memory, 0 otherwise. */
 #define lam_mp_uses_shared_mem(pool) \
-    lam_alc_get_is_shared(pool->mp_private_alloc)
+    lam_allocator_get_is_shared(pool->mp_private_alloc)
 
 #define lam_mp_get_dev_allocator(pool) \
     ((pool)->mp_dev_alloc)

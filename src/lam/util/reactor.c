@@ -15,10 +15,10 @@
 #include "lam/runtime/runtime.h"
 
 
-const int LAM_NOTIFY_RECV = 1;
-const int LAM_NOTIFY_SEND = 2;
-const int LAM_NOTIFY_EXCEPT = 4;
-const int LAM_NOTIFY_ALL = 7;
+const int LAM_REACTOR_NOTIFY_RECV = 1;
+const int LAM_REACTOR_NOTIFY_SEND = 2;
+const int LAM_REACTOR_NOTIFY_EXCEPT = 4;
+const int LAM_REACTOR_NOTIFY_ALL = 7;
 
 #define MAX_DESCRIPTOR_POOL_SIZE 256
 
@@ -79,7 +79,7 @@ void lam_reactor_init(lam_reactor_t* r)
     lam_list_init(&r->r_free);
     lam_list_init(&r->r_pending);
     lam_fh_init(&r->r_hash);
-    lam_fh_init_with(&r->r_hash, 1024);
+    lam_fh_resize(&r->r_hash, 1024);
 
     r->r_max = -1;
     r->r_run = true;
@@ -123,17 +123,17 @@ int lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* listene
     }
 
     descriptor->rd_flags |= flags;
-    if(flags & LAM_NOTIFY_RECV) {
+    if(flags & LAM_REACTOR_NOTIFY_RECV) {
         descriptor->rd_recv = listener;
         descriptor->rd_recv_user = user;
         LAM_FD_SET(sd, &r->r_recv_set);
     }
-    if(flags & LAM_NOTIFY_SEND) {
+    if(flags & LAM_REACTOR_NOTIFY_SEND) {
         descriptor->rd_send = listener;
         descriptor->rd_send_user = user;
         LAM_FD_SET(sd, &r->r_send_set);
     }
-    if(flags & LAM_NOTIFY_EXCEPT) {
+    if(flags & LAM_REACTOR_NOTIFY_EXCEPT) {
         descriptor->rd_except = listener;
         descriptor->rd_except_user = user;
         LAM_FD_SET(sd, &r->r_except_set);
@@ -161,15 +161,15 @@ int lam_reactor_remove(lam_reactor_t* r, int sd, int flags)
       return LAM_ERR_BAD_PARAM;
     }
     descriptor->rd_flags &= ~flags;
-    if(flags & LAM_NOTIFY_RECV) {
+    if(flags & LAM_REACTOR_NOTIFY_RECV) {
         descriptor->rd_recv = 0;
         LAM_FD_CLR(sd, &r->r_recv_set);
     }
-    if(flags & LAM_NOTIFY_SEND) {
+    if(flags & LAM_REACTOR_NOTIFY_SEND) {
         descriptor->rd_send = 0;
         LAM_FD_CLR(sd, &r->r_send_set);
     }
-    if(flags & LAM_NOTIFY_EXCEPT) {
+    if(flags & LAM_REACTOR_NOTIFY_EXCEPT) {
         descriptor->rd_except = 0;
         LAM_FD_CLR(sd, &r->r_except_set);
     }
@@ -194,17 +194,17 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
         descriptor =  (lam_reactor_descriptor_t*)lam_list_get_next(descriptor)) {
         int rd = descriptor->rd; 
         int flags = 0;
-        if(LAM_FD_ISSET(rd, rset) && descriptor->rd_flags & LAM_NOTIFY_RECV) {
+        if(LAM_FD_ISSET(rd, rset) && descriptor->rd_flags & LAM_REACTOR_NOTIFY_RECV) {
             descriptor->rd_recv->rl_recv_handler(descriptor->rd_recv_user, rd);
-            flags |= LAM_NOTIFY_RECV;
+            flags |= LAM_REACTOR_NOTIFY_RECV;
         }
-        if(LAM_FD_ISSET(rd, sset) && descriptor->rd_flags & LAM_NOTIFY_SEND) {
+        if(LAM_FD_ISSET(rd, sset) && descriptor->rd_flags & LAM_REACTOR_NOTIFY_SEND) {
             descriptor->rd_send->rl_send_handler(descriptor->rd_send_user, rd);
-            flags |= LAM_NOTIFY_SEND;
+            flags |= LAM_REACTOR_NOTIFY_SEND;
         }
-        if(LAM_FD_ISSET(rd, eset) && descriptor->rd_flags & LAM_NOTIFY_EXCEPT) {
+        if(LAM_FD_ISSET(rd, eset) && descriptor->rd_flags & LAM_REACTOR_NOTIFY_EXCEPT) {
             descriptor->rd_except->rl_except_handler(descriptor->rd_except_user, rd);
-            flags |= LAM_NOTIFY_EXCEPT;
+            flags |= LAM_REACTOR_NOTIFY_EXCEPT;
         }
         if(flags) cnt--;
     }

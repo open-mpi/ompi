@@ -12,7 +12,6 @@ struct lam_group_t {
    char g_name[MPI_MAX_OBJECT_NAME];
 
    /* Processes */
-
    lam_proc_t  **g_procs;
    size_t        g_proc_count;
 

@@ -16,7 +16,7 @@ extern lam_class_info_t mca_ptl_base_recv_frag_cls;
 typedef struct {
     mca_ptl_base_frag_t super;
     /* matched receve request corresponding to this fragment */
-    mca_ptl_base_recv_request_t *matched_recv;
+    mca_ptl_base_recv_request_t *frag_match;
 } mca_ptl_base_recv_frag_t;
 
 

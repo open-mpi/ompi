@@ -38,8 +38,8 @@ void lam_mp_shared_init(lam_mem_pool_t *pool)
     
     pool->mp_private_alloc = OBJ_CREATE(lam_allocator_t, &allocator_cls);
     lam_mutex_init(&(pool->mp_lock));
-    lam_alc_set_is_shared(pool->mp_private_alloc, 1);
-    lam_alc_set_mem_prot(pool->mp_private_alloc, MMAP_SHARED_PROT);
+    lam_allocator_set_is_shared(pool->mp_private_alloc, 1);
+    lam_allocator_set_mem_prot(pool->mp_private_alloc, MMAP_SHARED_PROT);
     pool->mp_dev_alloc = NULL;    
 }
 
@@ -104,15 +104,15 @@ int lam_mp_init_with(lam_mem_pool_t *pool, uint64_t pool_size,
     /* add red-zone pages */
     
     /* set up dev allocator to use pinned memory */
-    lam_alc_set_should_pin(pool->mp_dev_alloc, 1);
-    lam_alc_set_pin_offset(pool->mp_dev_alloc, page_size);
+    lam_allocator_set_should_pin(pool->mp_dev_alloc, 1);
+    lam_allocator_set_pin_offset(pool->mp_dev_alloc, page_size);
     
     while (!ptr && wrk_size) {
         to_alloc = wrk_size + 2 * page_size;
         
         /* allocate memory.  Reset pinned memory size. */
-        lam_alc_set_pin_size(pool->mp_dev_alloc, wrk_size);
-        ptr = lam_alc_alloc(pool->mp_dev_alloc, to_alloc);
+        lam_allocator_set_pin_size(pool->mp_dev_alloc, wrk_size);
+        ptr = lam_allocator_alloc(pool->mp_dev_alloc, to_alloc);
         if (ptr == 0)
             wrk_size /= 2;
         else
@@ -147,7 +147,7 @@ int lam_mp_init_with(lam_mem_pool_t *pool, uint64_t pool_size,
     
     /* initialize chunk descriptors */
     to_alloc = sizeof(lam_chunk_desc_t) * pool->mp_num_chunks;
-    pool->mp_chunks = lam_alc_alloc(pool->mp_private_alloc, to_alloc);
+    pool->mp_chunks = lam_allocator_alloc(pool->mp_private_alloc, to_alloc);
     if ( !pool->mp_chunks )
     {
       lam_output(0, "Error: Out of memory");
@@ -197,7 +197,7 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
         /* allocate larger array of chunk descriptors and
             copy old array into new array */
         to_alloc = sizeof(lam_chunk_desc_t) * (pool->mp_num_chunks + 1);
-        chunk_desc = lam_alc_alloc(pool->mp_private_alloc, to_alloc);
+        chunk_desc = lam_allocator_alloc(pool->mp_private_alloc, to_alloc);
         if ( !chunk_desc )
         {
             lam_output(0, "Error! Out of memory!");
@@ -210,16 +210,16 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
         }
         
         /* free old array and set old array pointer to point to new array */
-        lam_alc_free(pool->mp_private_alloc, pool->mp_chunks);
+        lam_allocator_free(pool->mp_private_alloc, pool->mp_chunks);
         pool->mp_chunks = chunk_desc;
         
         /* allocate new memory chunk using device allocator. */
-        lam_alc_set_should_pin(pool->mp_dev_alloc, 1);
-        lam_alc_set_pin_offset(pool->mp_dev_alloc, 0);
-        lam_alc_set_pin_size(pool->mp_dev_alloc, 0);
+        lam_allocator_set_should_pin(pool->mp_dev_alloc, 1);
+        lam_allocator_set_pin_offset(pool->mp_dev_alloc, 0);
+        lam_allocator_set_pin_size(pool->mp_dev_alloc, 0);
         
         pool->mp_chunks[pool->mp_num_chunks].chd_base_ptr =
-            lam_alc_alloc(pool->mp_dev_alloc, pool->mp_chunk_sz);
+            lam_allocator_alloc(pool->mp_dev_alloc, pool->mp_chunk_sz);
         if ( !pool->mp_chunks[pool->mp_num_chunks].chd_base_ptr )
         {
           lam_output(0, "Error: Out of memory");
@@ -277,8 +277,8 @@ void lam_fmp_init(lam_fixed_mpool_t *pool)
     SUPER_INIT(pool, &lam_object_cls);
     
     pool->fmp_private_alloc = OBJ_CREATE(lam_allocator_t, &allocator_cls);
-    lam_alc_set_is_shared(pool->fmp_private_alloc, 1);
-    lam_alc_set_mem_prot(pool->fmp_private_alloc, MMAP_SHARED_PROT);
+    lam_allocator_set_is_shared(pool->fmp_private_alloc, 1);
+    lam_allocator_set_mem_prot(pool->fmp_private_alloc, MMAP_SHARED_PROT);
     
     pool->fmp_segments = NULL;
     pool->fmp_n_segments = NULL;
