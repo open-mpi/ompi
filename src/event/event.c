@@ -319,6 +319,9 @@ ompi_event_loop(int flags)
     struct timeval tv;
     int res, done;
 
+    if (ompi_event_inited == false)
+        return(-1);
+
     if(ompi_using_threads()) {
         OMPI_THREAD_LOCK(&ompi_event_lock);
     } 
