@@ -58,7 +58,7 @@ OBJ_CLASS_INSTANCE(
  *
  */
 
-void mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
+int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
 {
     ompi_proc_t *proc = ompi_comm_peer_lookup(req->req_base.req_comm, req->req_base.req_peer);
     mca_pml_proc_t* proc_pml = proc->proc_pml;
@@ -99,13 +99,12 @@ void mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
 
     /* unable to complete send - signal request failed */
     if(bytes_remaining > 0) {
-        OMPI_THREAD_LOCK(&ompi_request_lock);
-        req->req_base.req_ompi.req_complete = true;
-        /* FIX - set status correctly */
-        if(ompi_request_waiting)
-            ompi_condition_broadcast(&ompi_request_cond);
-        OMPI_THREAD_UNLOCK(&ompi_request_lock);
+        OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock);
+        ompi_list_append(&mca_pml_teg.teg_send_pending, (ompi_list_item_t*)req);
+        OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    return OMPI_SUCCESS;
 }
 
 
@@ -143,6 +142,17 @@ void mca_pml_teg_send_request_progress(
             MCA_PML_TEG_FREE((ompi_request_t**)&req);
         }
         OMPI_THREAD_UNLOCK(&ompi_request_lock);
+
+        /* check for pending requests that need to be progressed */
+        while(ompi_list_get_size(&mca_pml_teg.teg_send_pending) != 0) {
+            OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock); 
+            req = ompi_list_remove_first(&mca_pml_teg.teg_lock);
+            OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
+            if(req == NULL)
+                break;
+            if(mca_pml_teg_send_request_schedule(req) != OMPI_SUCCESS)
+                break;
+        }
         return;
     } 
     OMPI_THREAD_UNLOCK(&ompi_request_lock);

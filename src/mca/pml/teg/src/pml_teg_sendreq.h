@@ -106,6 +106,9 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
 }
 
 
+/**
+ * Start a send request. 
+ */
 static inline int mca_pml_teg_send_request_start(
     mca_pml_base_send_request_t* req)
 {
@@ -136,9 +139,17 @@ static inline int mca_pml_teg_send_request_start(
 }
 
 
-void mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req);
+/**
+ *  Schedule any data that was not delivered in the first fragment
+ *  across the available PTLs.
+ */
+int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req);
 
 
+/**
+ *  Update the request to reflect the number of bytes delivered. If this
+ *  was the first fragment - schedule the rest of the data.
+ */
 void mca_pml_teg_send_request_progress(
     struct mca_ptl_base_module_t* ptl,
     mca_pml_base_send_request_t* send_request,
