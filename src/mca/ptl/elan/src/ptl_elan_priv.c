@@ -69,6 +69,13 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_module_t *ptl,
     /* Copy the header, mca_ptl_base_match() does not do what it claims */
     recv_frag->frag_recv.frag_base.frag_header = *header;
 
+    LOG_PRINT(PTL_ELAN_DEBUG_RECV,
+	    "[recv header...] type %d src_ptr %p dst_ptr %p data %x\n", 
+	    header->hdr_common.hdr_type,
+	    header->hdr_frag.hdr_src_ptr.pval,
+	    header->hdr_frag.hdr_dst_ptr.pval,
+	    (int)((char *) header + sizeof (mca_ptl_base_header_t)));
+
     /* Taking the data starting point be default */
     recv_frag->frag_recv.frag_base.frag_addr = 
 	(char *) header + sizeof (mca_ptl_base_header_t);
@@ -131,18 +138,18 @@ mca_ptl_elan_last_frag_ack (struct mca_ptl_elan_module_t *ptl,
 
      /* XXX: Check if the sourc pointer points to the correct fragment */
      desc = (mca_ptl_elan_send_frag_t*) header->hdr_ack.hdr_src_ptr.pval;
-
      req  = (mca_pml_base_send_request_t *) desc->desc->req;
 
      req->req_peer_match = header->hdr_ack.hdr_dst_match;
      req->req_peer_addr  = header->hdr_ack.hdr_dst_addr;
      req->req_peer_size  = header->hdr_ack.hdr_dst_size;
 
-     LOG_PRINT(PTL_ELAN_DEBUG_ACK, "desc %p remote req %p addr %p, len %d\n", 
-		header->hdr_ack.hdr_src_ptr.pval,
-		req->req_peer_match.pval,
-		req->req_peer_addr.pval,
-		req->req_peer_size);
+     LOG_PRINT(PTL_ELAN_DEBUG_ACK, 
+	     "desc %p remote req %p addr %p, len %d\n", 
+	     header->hdr_ack.hdr_src_ptr.pval,
+	     req->req_peer_match.pval,
+	     req->req_peer_addr.pval,
+	     req->req_peer_size);
 
 #if 1
     if(fetchNset(&desc->frag_progressed, 1) == 0)
@@ -268,10 +275,12 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 	header_length = sizeof (mca_ptl_base_frag_header_t);
     }
 
-    LOG_PRINT(PTL_ELAN_DEBUG_SEND, "frag %p req %p addr %p offset %d\n",
-	hdr->hdr_frag.hdr_src_ptr.pval,
-	hdr->hdr_frag.hdr_dst_ptr.pval,
-       	pml_req->req_base.req_addr, offset);
+    LOG_PRINT(PTL_ELAN_DEBUG_SEND, 
+	    "req %p frag %p dst_ptr %p addr %p offset %d \n",
+	    pml_req,
+	    hdr->hdr_frag.hdr_src_ptr.pval,
+	    hdr->hdr_frag.hdr_dst_ptr.pval,
+	    pml_req->req_base.req_addr, offset);
 
     /* initialize convertor */
     if(size_in > 0) {
@@ -318,8 +327,15 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
     /* XXX: Chain a QDMA to each queue and 
-     * Have all the srcEvent fired to the Queue */
-
+     * Have all the srcEvent fired to the Queue 
+     *
+     * XXX: The chain dma will go directly into a command stream
+     * so we need addend the command queue control bits.
+     * Allocate space from command queues hanged off the CTX.
+     */
+    desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+    desc->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
+	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
     desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,
 	    E4_COOKIE_TYPE_LOCAL_DMA, ptl->elan_vp);
     desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, 
@@ -327,22 +343,18 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
     memcpy ((void *)desc->comp_buff, (void *)&desc->comp_dma, 
 	    sizeof (E4_DMA64));
 
-    /* XXX: The chain dma will go directly into a command stream
-     * so we need addend the command queue control bits.
-     * Allocate space from command queues hanged off the CTX.
-     */
-    desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
-    desc->main_dma.dma_srcEvent= elan4_main2elan(
-	    ctx, (E4_Event *)desc->comp_event);
-    desc->main_dma.dma_srcAddr = MAIN2ELAN (ctx, &desc->buff[0]);
-    /* XXX: Hardcoded DMA retry count */
+    /* Initialize some of the dma structures 
+     * XXX: Hardcoded DMA retry count */
     desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE ((header_length +
                                                      size_out),
                                                     DMA_DataTypeByte,
                                                     DMA_QueueWrite, 16);
+    desc->main_dma.dma_vproc = destvp;
     desc->main_dma.dma_cookie= elan4_local_cookie (ptl->queue->tx_cpool, 
 	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
-    desc->main_dma.dma_vproc = destvp;
+    desc->main_dma.dma_srcEvent= elan4_main2elan(
+	    ctx, (E4_Event *)desc->comp_event);
+    desc->main_dma.dma_srcAddr = MAIN2ELAN (ctx, &desc->buff[0]);
 #else
     desc->main_dma.dma_srcAddr = MAIN2ELAN (ctx, &desc->buff[0]);
     /* XXX: Hardcoded DMA retry count */
@@ -944,8 +956,6 @@ mca_ptl_elan_drain_recv (struct mca_ptl_elan_module_t *ptl)
     ELAN_CTX   *ctx;
     int         rc;
 
-    START_FUNC(PTL_ELAN_DEBUG_RECV);
-
     queue = ptl->queue;
     rxq   = queue->rxq;
     ctx   = ptl->ptl_elan_ctx;
@@ -962,12 +972,6 @@ mca_ptl_elan_drain_recv (struct mca_ptl_elan_module_t *ptl)
 
 	header = (mca_ptl_base_header_t *) rxq->qr_fptr;
 
-	LOG_PRINT(PTL_ELAN_DEBUG_MAC,
-		    "[recv...] type %d flag %d size %d\n",
-		    header->hdr_common.hdr_type,
-		    header->hdr_common.hdr_flags,
-		    header->hdr_common.hdr_size);
-    
 	switch (header->hdr_common.hdr_type) {
 	case MCA_PTL_HDR_TYPE_MATCH:
 	case MCA_PTL_HDR_TYPE_FRAG:
@@ -1020,7 +1024,6 @@ mca_ptl_elan_drain_recv (struct mca_ptl_elan_module_t *ptl)
     }
     OMPI_UNLOCK (&queue->rx_lock);
 
-    END_FUNC(PTL_ELAN_DEBUG_RECV);
     return OMPI_SUCCESS;
 }
 
@@ -1046,8 +1049,9 @@ mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
     rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 1);
 #endif
     if (rc) {
-
+	mca_ptl_elan_send_frag_t *frag;
 	mca_ptl_base_header_t *header;
+	ompi_ptl_elan_base_desc_t *basic;
 
 	OMPI_LOCK (&comp->rx_lock);
 	header = (mca_ptl_base_header_t *) rxq->qr_fptr;
@@ -1058,9 +1062,15 @@ mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
 		    header->hdr_common.hdr_flags,
 		    header->hdr_common.hdr_size);
 
-	/* FIXME: please fix this completion queue processing */
+	frag = (mca_ptl_elan_send_frag_t *)header->hdr_frag.hdr_src_ptr.pval; 
+	basic = (ompi_ptl_elan_base_desc_t*)frag->desc;
 
-	/* FIXME: please reorganize this into a common routine */
+	/* XXX: please reset additional chained event for put/get desc */
+	mca_ptl_elan_send_desc_done (frag, 
+		(mca_pml_base_send_request_t *) basic->req);
+
+	/* XXX: Reset the comp event, buggy */
+	/*PRIMEEVENT_WORD (ctx, basic->comp_event, 1);*/
 
 	/* Work out the new front pointer */
 	if (rxq->qr_fptr == rxq->qr_top) {

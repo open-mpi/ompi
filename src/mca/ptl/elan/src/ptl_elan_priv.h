@@ -52,32 +52,33 @@
 #define  PTL_ELAN_DEBUG_GET     (0x400)
 #define  PTL_ELAN_DEBUG_CHAIN   (0x800)
 
-#define  PTL_ELAN_DEBUG_FLAG    (PTL_ELAN_DEBUG_MAC|PTL_ELAN_DEBUG_SEND)
+#define  PTL_ELAN_DEBUG_FLAG \
+(PTL_ELAN_DEBUG_MAC|PTL_ELAN_DEBUG_SEND|PTL_ELAN_DEBUG_RECV|PTL_ELAN_DEBUG_PUT|PTL_ELAN_DEBUG_GET)
 
 #define START_FUNC(flag)                                       \
 do {                                                           \
     if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
-	char hostname[32]; gethostname(hostname, 32);          \
-	fprintf(stderr, "[%s:%s:%d] Entering ...\n",           \
-	    hostname, __FUNCTION__, __LINE__);                 \
+	char *rms_rank = getenv("RMS_RANK");                   \
+	fprintf(stderr, "[proc%s:%s:%d] Entering ...\n",       \
+	    rms_rank, __FUNCTION__, __LINE__);                 \
     }                                                          \
 } while (0) 
 
 #define END_FUNC(flag)                                         \
 do {                                                           \
     if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
-	char hostname[32]; gethostname(hostname, 32);          \
-	fprintf(stderr, "[%s:%s:%d] Completes ...\n",          \
-	    hostname, __FUNCTION__, __LINE__);                 \
+	char *rms_rank = getenv("RMS_RANK");                   \
+	fprintf(stderr, "[proc%s:%s:%d] Completes ...\n",      \
+	    rms_rank, __FUNCTION__, __LINE__);                 \
     }                                                          \
 } while (0)
 
 #define  LOG_PRINT(flag, args...)                              \
 do {                                                           \
     if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
-	char hostname[32]; gethostname(hostname, 32);          \
-	fprintf(stderr, "[%s:%s:%d] ",                         \
-		hostname, __FUNCTION__, __LINE__);             \
+	char *rms_rank = getenv("RMS_RANK");                   \
+	fprintf(stderr, "[proc%s:%s:%d] ",                     \
+		rms_rank, __FUNCTION__, __LINE__);             \
 	fprintf(stderr, args);                                 \
     }                                                          \
 } while (0)

@@ -246,6 +246,11 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
      */
 
     START_FUNC(PTL_ELAN_DEBUG_SEND);
+    {
+	/* FIXME: YUW, remove this block */
+	fprintf(stderr, "[proc%s:%s:%d] here\n", 
+		getenv("RMS_RANK"), __FILE__, __LINE__);
+    }
 
     if (offset == 0) { /* The first fragment uses a cached desc */
         desc = ((mca_ptl_elan_send_request_t*)sendreq)->req_frag;

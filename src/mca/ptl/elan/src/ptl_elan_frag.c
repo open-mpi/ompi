@@ -163,6 +163,8 @@ mca_ptl_elan_send_desc_done (
     ptl = ((ompi_ptl_elan_qdma_desc_t *)desc->desc)->ptl;
     header = &desc->frag_base.frag_header;
 
+    LOG_PRINT(PTL_ELAN_DEBUG_SEND, "req %p done frag %p \n", req, desc);
+
     if(NULL == req) { /* An ack descriptor */
 	OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
 		(ompi_list_item_t *) desc);
