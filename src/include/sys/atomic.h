@@ -115,9 +115,9 @@ typedef struct ompi_lock_t ompi_lock_t;
 #elif OMPI_ASSEMBLY_ARCH == OMPI_SPARC
 #include "include/sys/sparc/atomic.h"
 #elif OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_32
-#include "include/sys/sparc64/atomic.h"
+#include "include/sys/sparcv9/atomic.h"
 #elif OMPI_ASSEMBLY_ARCH == OMPI_SPARCV9_64
-#include "include/sys/sparc64/atomic.h"
+#include "include/sys/sparcv9/atomic.h"
 #endif
 
 #ifndef DOXYGEN
