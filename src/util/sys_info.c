@@ -30,7 +30,9 @@
 
 
 #include "include/orte_constants.h"
+#include "mca/errmgr/errmgr.h"
 #include "util/output.h"
+#include "util/printf.h"
 
 #include "util/sys_info.h"
 
@@ -49,6 +51,7 @@ orte_sys_info_t orte_system_info = {
 int orte_sys_info(void)
 {
     struct utsname sys_info;
+    int uid;
 
 #ifndef WIN32
 	struct passwd *pwdent;
@@ -100,10 +103,14 @@ int orte_sys_info(void)
 
 	/* get the name of the user */
 #ifndef WIN32
-	if ((pwdent = getpwuid(getuid())) != 0) {
+    uid = getuid();
+	if ((pwdent = getpwuid(uid)) != 0) {
 	    orte_system_info.user = strdup(pwdent->pw_name);
     } else {
-	    orte_system_info.user = strdup("unknown");
+	     if (0 > asprintf(&(orte_system_info.user), "%d", uid)) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+         }
     }
 #else 
     if (!GetUserName(info_buf, &info_buf_length)) {
