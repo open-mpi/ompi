@@ -678,7 +678,37 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
 */
 int ompi_comm_free ( ompi_communicator_t **comm )
 {
+    int ret;
+
+    /* Release attributes.  We do this now instead of during the
+       communicator destructor for 2 reasons:
+
+       1. The destructor will only NOT be called immediately during
+          ompi_comm_free() if the reference count is still greater
+          than zero at that point, meaning that there are ongoing
+          communications.  However, pending communications will never
+          need attributes, so it's safe to release them directly here.
+
+       2. Releasing attributes in ompi_comm_free() enables us to check
+          the return status of the attribute delete functions.  At
+          least one interpretation of the MPI standard (i.e., the one
+          of the Intel test suite) is that if any of the attribute
+          deletion functions fail, then MPI_COMM_FREE /
+          MPI_COMM_DISCONNECT should also fail.  We can't do that if
+          we delay releasing the attributes -- we need to release the
+          attributes right away so that we can report the error right
+          away. */
+
+    if (NULL != (*comm)->c_keyhash) {
+        ret = ompi_attr_delete_all(COMM_ATTR, *comm, (*comm)->c_keyhash);
+        if (OMPI_SUCCESS != ret) {
+            return ret;
+        }
+        OBJ_RELEASE((*comm)->c_keyhash);
+    }
+
     /* Release the communicator */
+
     OBJ_RELEASE ( (*comm) );
 
     *comm = MPI_COMM_NULL;
