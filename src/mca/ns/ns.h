@@ -33,7 +33,8 @@
  */
 #define OMPI_NS_CMP_CELLID     0x01
 #define OMPI_NS_CMP_JOBID      0x02
-#define OMPI_NS_CMP_VPID     0x04
+#define OMPI_NS_CMP_VPID       0x04
+#define OMPI_NS_CMP_ALL        0Xff
 
 /*
  * define maximum value for id's in any field
