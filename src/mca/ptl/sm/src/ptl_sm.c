@@ -769,8 +769,10 @@ int mca_ptl_sm_send(
         ompi_atomic_unlock(&(send_fifo->head_lock));
     }
 
-    if(sendreq->req_bytes_packed == size)
+    /* if this is the entire message - signal request is complete */
+    if(sendreq->req_bytes_packed == size) {
         ompi_request_complete(sendreq);
+    }
 
     /* return */
     return return_status;
