@@ -44,53 +44,43 @@ OMPI_DECLSPEC    int mca_ns_base_close(void);
      * Base functions that are common to all implementations - can be overridden
      */
 
-OMPI_DECLSPEC    int mca_ns_base_assign_cellid_to_process(ompi_process_name_t* name);
+OMPI_DECLSPEC    int ns_base_assign_cellid_to_process(ompi_process_name_t* name);
 
-OMPI_DECLSPEC    ompi_process_name_t* mca_ns_base_create_process_name(mca_ns_base_cellid_t cell,
+OMPI_DECLSPEC    ompi_process_name_t* ns_base_create_process_name(mca_ns_base_cellid_t cell,
 						     mca_ns_base_jobid_t job,
 						     mca_ns_base_vpid_t vpid);
 
-OMPI_DECLSPEC    ompi_process_name_t* mca_ns_base_copy_process_name(ompi_process_name_t* name);
+OMPI_DECLSPEC    ompi_process_name_t* ns_base_copy_process_name(ompi_process_name_t* name);
 
-OMPI_DECLSPEC    ompi_process_name_t* mca_ns_base_convert_string_to_process_name(const char* name);
+OMPI_DECLSPEC    ompi_process_name_t* ns_base_convert_string_to_process_name(const char* name);
 
-OMPI_DECLSPEC    char* mca_ns_base_get_proc_name_string(const ompi_process_name_t* name);
+OMPI_DECLSPEC    char* ns_base_get_proc_name_string(const ompi_process_name_t* name);
 
-OMPI_DECLSPEC    char* mca_ns_base_get_vpid_string(const ompi_process_name_t* name);
+OMPI_DECLSPEC    char* ns_base_get_vpid_string(const ompi_process_name_t* name);
 
-OMPI_DECLSPEC    char* mca_ns_base_get_jobid_string(const ompi_process_name_t* name);
+OMPI_DECLSPEC    char* ns_base_get_jobid_string(const ompi_process_name_t* name);
 
-OMPI_DECLSPEC    char* mca_ns_base_convert_jobid_to_string(const mca_ns_base_jobid_t jobid);
+OMPI_DECLSPEC    char* ns_base_convert_jobid_to_string(const mca_ns_base_jobid_t jobid);
 
-OMPI_DECLSPEC    mca_ns_base_jobid_t mca_ns_base_convert_string_to_jobid(const char* jobid_string);
+OMPI_DECLSPEC    char* ns_base_get_cellid_string(const ompi_process_name_t* name);
 
-OMPI_DECLSPEC    char* mca_ns_base_get_cellid_string(const ompi_process_name_t* name);
+OMPI_DECLSPEC    mca_ns_base_vpid_t ns_base_get_vpid(const ompi_process_name_t* name);
 
-OMPI_DECLSPEC    mca_ns_base_vpid_t mca_ns_base_get_vpid(const ompi_process_name_t* name);
+OMPI_DECLSPEC    mca_ns_base_jobid_t ns_base_get_jobid(const ompi_process_name_t* name);
 
-OMPI_DECLSPEC    mca_ns_base_jobid_t mca_ns_base_get_jobid(const ompi_process_name_t* name);
+OMPI_DECLSPEC    mca_ns_base_cellid_t ns_base_get_cellid(const ompi_process_name_t* name);
 
-OMPI_DECLSPEC    mca_ns_base_cellid_t mca_ns_base_get_cellid(const ompi_process_name_t* name);
-
-OMPI_DECLSPEC    int mca_ns_base_compare(ompi_ns_cmp_bitmask_t fields,
+OMPI_DECLSPEC    int ns_base_compare(ompi_ns_cmp_bitmask_t fields,
 			const ompi_process_name_t* name1,
 			const ompi_process_name_t* name2);
 
-OMPI_DECLSPEC    int mca_ns_base_pack_name(void *dest, void *src, int n);
+OMPI_DECLSPEC    mca_ns_base_cellid_t ns_base_create_cellid(void);
 
-OMPI_DECLSPEC    int mca_ns_base_unpack_name(void *dest, void *src, int n);
+OMPI_DECLSPEC    mca_ns_base_jobid_t ns_base_create_jobid(void);
 
-OMPI_DECLSPEC    int mca_ns_base_pack_jobid(void *dest, void *src, int n);
+OMPI_DECLSPEC    mca_ns_base_vpid_t ns_base_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range);
 
-OMPI_DECLSPEC    int mca_ns_base_unpack_jobid(void *dest, void *src, int n);
-
-OMPI_DECLSPEC    mca_ns_base_cellid_t mca_ns_base_create_cellid(void);
-
-OMPI_DECLSPEC    mca_ns_base_jobid_t mca_ns_base_create_jobid(void);
-
-OMPI_DECLSPEC    mca_ns_base_vpid_t mca_ns_base_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range);
-
-OMPI_DECLSPEC    int mca_ns_base_free_name(ompi_process_name_t* name);
+OMPI_DECLSPEC    int ns_base_free_name(ompi_process_name_t* name);
 
 
 

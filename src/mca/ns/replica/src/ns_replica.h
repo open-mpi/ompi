@@ -61,20 +61,33 @@ void mca_ns_replica_recv(int status, ompi_process_name_t* sender, ompi_buffer_t 
 /*
  * Implementation of create_cellid().
  */
-mca_ns_base_cellid_t mca_ns_replica_create_cellid(void);
+mca_ns_base_cellid_t ns_replica_create_cellid(void);
 
 /*
  * Implementation of create_jobid().
  */
-mca_ns_base_jobid_t mca_ns_replica_create_jobid(void);
+mca_ns_base_jobid_t ns_replica_create_jobid(void);
 
 
 /*
  * Implementation of reserve_range()
  */
-mca_ns_base_vpid_t mca_ns_replica_reserve_range(
+mca_ns_base_vpid_t ns_replica_reserve_range(
                                        mca_ns_base_jobid_t job,
                                        mca_ns_base_vpid_t range);
+
+/*
+ * Implementation of free_name()
+ */
+int ns_replica_free_name(ompi_process_name_t* name);
+
+
+/*
+ * Implementation of compare()
+ */
+int ns_replica_compare(ompi_ns_cmp_bitmask_t fields,
+		       const ompi_process_name_t* name1,
+		       const ompi_process_name_t* name2);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

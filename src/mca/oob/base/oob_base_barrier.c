@@ -19,7 +19,7 @@ int mca_oob_barrier(void)
         return rc;
 
     self = mca_pcmclient.pcmclient_get_self();
-    iov.iov_base = (void*)&foo;
+    iov.iov_base = &foo;
     iov.iov_len = sizeof(foo);
 
     /* All non-root send & receive zero-length message. */

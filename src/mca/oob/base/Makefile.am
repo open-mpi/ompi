@@ -27,7 +27,6 @@ libmca_oob_base_la_SOURCES = \
         oob_base_recv.c \
         oob_base_recv_nb.c \
         oob_base_send.c \
-        oob_base_xcast.c \
         oob_base_send_nb.c 
 
 # Conditionally install the header files

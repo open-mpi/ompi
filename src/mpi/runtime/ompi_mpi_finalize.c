@@ -16,6 +16,7 @@
 #include "op/op.h"
 #include "file/file.h"
 #include "info/info.h"
+#include "util/proc_info.h"
 #include "runtime/runtime.h"
 #include "runtime/ompi_progress.h"
 #include "runtime/ompi_rte_wait.h"
@@ -35,156 +36,145 @@
 #include "mca/io/base/base.h"
 #include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"
-#include "mca/gpr/base/base.h"
 
 
 int ompi_mpi_finalize(void)
 {
-    int ret;
-    ompi_rte_process_status_t my_status;
+  int ret;
 
-    ompi_mpi_finalized = true;
+  ompi_mpi_finalized = true;
 #if OMPI_HAVE_THREADS == 0
-    ompi_progress_events(OMPI_EVLOOP_ONCE);
+  ompi_progress_events(OMPI_EVLOOP_ONCE);
 #endif
 
-    /* begin recording compound command */
-    ompi_registry.begin_compound_cmd();
+  /* unregister process */
+  if (OMPI_SUCCESS != (ret = ompi_registry.rte_unregister(
+			     ns_base_get_proc_name_string(ompi_rte_get_self())))) {
+      return ret;
+  }
 
-    /* Set process status to "terminating"*/
-    my_status.status_key = OMPI_PROC_TERMINATING;
-    my_status.exit_code = 0;
-    if (OMPI_SUCCESS != (ret = ompi_rte_set_process_status(&my_status, ompi_rte_get_self()))) {
-	return ret;
-    }
+  /* wait for all processes to reach same state */
+  if (OMPI_SUCCESS != (ret = ompi_rte_monitor_procs_unregistered())) {
+      if (ompi_rte_debug_flag) {
+	  ompi_output(0, "mpi_finalize: gave up waiting for other processes to complete");
+      }
+  }
 
-    /* execute the compound command - no return data requested
-     * we'll get it through the shutdown message
-     */
-    ompi_registry.exec_compound_cmd(OMPI_REGISTRY_NO_RETURN_REQUESTED);
+  /* shutdown communications */
+  if (OMPI_SUCCESS != (ret = mca_ptl_base_close())) {
+    return ret;
+  }
+  if (OMPI_SUCCESS != (ret = mca_pml_base_close())) {
+    return ret;
+  }
 
-    /* wait for all processes to reach same state */
-    if (OMPI_SUCCESS != (ret = ompi_rte_wait_shutdown_msg())) {
-	if (ompi_rte_debug_flag) {
-	    ompi_output(0, "mpi_finalize: gave up waiting for other processes to complete");
-	}
-    }
+  /* Shut down any bindings-specific issues: C++, F77, F90 (may or
+     may not be necessary...?) */
 
-    /* shutdown communications */
-    if (OMPI_SUCCESS != (ret = mca_ptl_base_close())) {
-	return ret;
-    }
-    if (OMPI_SUCCESS != (ret = mca_pml_base_close())) {
-	return ret;
-    }
+  /* Free communication objects */
 
-    /* Shut down any bindings-specific issues: C++, F77, F90 (may or
-       may not be necessary...?) */
+  /* free window resources */
 
-    /* Free communication objects */
+  /* free file resources */
+  if (OMPI_SUCCESS != (ret = ompi_file_finalize())) {
+    return ret;
+  }
 
-    /* free window resources */
+  /* free communicator resources */
+  if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
+      return ret;
+  }
 
-    /* free file resources */
-    if (OMPI_SUCCESS != (ret = ompi_file_finalize())) {
-	return ret;
-    }
+  /* free requests */
+  if (OMPI_SUCCESS != (ret = ompi_request_finalize())) {
+      return ret;
+  }
 
-    /* free communicator resources */
-    if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
-	return ret;
-    }
+  /* Free secondary resources */
 
-    /* free requests */
-    if (OMPI_SUCCESS != (ret = ompi_request_finalize())) {
-	return ret;
-    }
+  /* free attr resources */
+  if (OMPI_SUCCESS != (ret = ompi_attr_finalize())) {
+      return ret;
+  }
 
-    /* Free secondary resources */
+  /* free group resources */
+  if (OMPI_SUCCESS != (ret = ompi_group_finalize())) {
+      return ret;
+  }
 
-    /* free attr resources */
-    if (OMPI_SUCCESS != (ret = ompi_attr_finalize())) {
-	return ret;
-    }
-
-    /* free group resources */
-    if (OMPI_SUCCESS != (ret = ompi_group_finalize())) {
-	return ret;
-    }
-
-    /* free internal error resources */
-    if (OMPI_SUCCESS != (ret = ompi_errcode_intern_finalize())) {
-	return ret;
-    }
+  /* free internal error resources */
+  if (OMPI_SUCCESS != (ret = ompi_errcode_intern_finalize())) {
+      return ret;
+  }
      
-    /* free error class resources */
-    if (OMPI_SUCCESS != (ret = ompi_errclass_finalize())) {
-	return ret;
-    }
+  /* free error class resources */
+  if (OMPI_SUCCESS != (ret = ompi_errclass_finalize())) {
+      return ret;
+  }
 
-    /* free error code resources */
-    if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_finalize())) {
-	return ret;
-    }
+  /* free error code resources */
+  if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_finalize())) {
+      return ret;
+  }
 
-    /* free errhandler resources */
-    if (OMPI_SUCCESS != (ret = ompi_errhandler_finalize())) {
-	return ret;
-    }
+  /* free errhandler resources */
+  if (OMPI_SUCCESS != (ret = ompi_errhandler_finalize())) {
+      return ret;
+  }
 
-    /* Free all other resources */
+  /* Free all other resources */
 
-    /* free op resources */
-    if (OMPI_SUCCESS != (ret = ompi_op_finalize())) {
-	return ret;
-    }
+  /* free op resources */
+  if (OMPI_SUCCESS != (ret = ompi_op_finalize())) {
+      return ret;
+  }
 
-    /* free ddt resources */
-    if (OMPI_SUCCESS != (ret = ompi_ddt_finalize())) {
-	return ret;
-    }
+  /* free ddt resources */
+  if (OMPI_SUCCESS != (ret = ompi_ddt_finalize())) {
+      return ret;
+  }
 
-    /* free info resources */
-    if (OMPI_SUCCESS != (ret = ompi_info_finalize())) {
-	return ret;
-    }
+  /* free info resources */
+  if (OMPI_SUCCESS != (ret = ompi_info_finalize())) {
+      return ret;
+  }
 
-    /* free module exchange resources */
-    if (OMPI_SUCCESS != (ret = mca_base_modex_finalize())) {
-	return ret;
-    }
+  /* free module exchange resources */
+  if (OMPI_SUCCESS != (ret = mca_base_modex_finalize())) {
+      return ret;
+  }
 
-    /* Close down MCA modules */
+  /* Close down MCA modules */
 
-    if (OMPI_SUCCESS != (ret = mca_io_base_close())) {
-	return ret;
-    }
-    if (OMPI_SUCCESS != (ret = mca_topo_base_close())) {
-	return ret;
-    }
-    if (OMPI_SUCCESS != (ret = mca_coll_base_close())) {
-	return ret;
-    }
+  if (OMPI_SUCCESS != (ret = mca_io_base_close())) {
+    return ret;
+  }
+  if (OMPI_SUCCESS != (ret = mca_topo_base_close())) {
+    return ret;
+  }
+  if (OMPI_SUCCESS != (ret = mca_coll_base_close())) {
+    return ret;
+  }
 
-    /* Leave the RTE */
+  /* Leave the RTE */
 
-    if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
-	return ret;
-    }
+  if (OMPI_SUCCESS != (ret = ompi_rte_finalize())) {
+    return ret;
+  }
 
-    /* Close down the MCA */
+  /* Close down the MCA */
 
-    if (OMPI_SUCCESS != (ret = mca_base_close())) {
-	return ret;
-    }
+  if (OMPI_SUCCESS != (ret = mca_base_close())) {
+    return ret;
+  }
       
-    /* Leave OMPI land */
+  /* Leave OMPI land */
 
-    if (OMPI_SUCCESS != (ret = ompi_finalize())) {
-	return ret;
-    }
+  if (OMPI_SUCCESS != (ret = ompi_finalize())) {
+    return ret;
+  }
       
-    /* All done */
+  /* All done */
 
-    return MPI_SUCCESS;
+  return MPI_SUCCESS;
 }

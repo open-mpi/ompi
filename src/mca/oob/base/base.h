@@ -28,7 +28,7 @@ OMPI_DECLSPEC extern ompi_process_name_t mca_oob_name_seed;
 OMPI_DECLSPEC extern ompi_process_name_t mca_oob_name_self;
 
 /**
- * The wildcard for receives from any peer.
+ * The wildcard for recieves from any peer.
  */
 #define MCA_OOB_NAME_ANY  &mca_oob_name_any
 /**
@@ -51,7 +51,6 @@ OMPI_DECLSPEC extern ompi_process_name_t mca_oob_name_self;
 /**
  * Service tags
  */
-#define MCA_OOB_TAG_XCAST      -1
 #define MCA_OOB_TAG_NS          1
 #define MCA_OOB_TAG_GPR         2
 #define MCA_OOB_TAG_GPR_NOTIFY  3
@@ -409,24 +408,6 @@ OMPI_DECLSPEC int mca_oob_recv_packed_nb(
     int flags, 
     mca_oob_callback_packed_fn_t cbfunc,
     void* cbdata);
-
-/**
- *  A "broadcast-like" function over the specified set of peers. 
- *  @param  root    The process acting as the root of the broadcast.
- *  @param  peers   The list of processes receiving the broadcast (excluding root).
- *  @param  buffer  The data to broadcast - only significant at root.
- *  @param  cbfunc  Callback function on receipt of data - not significant at root.
- * 
- *  Note that the callback function is provided so that the data can be
- *  received and interpreted by the application prior to the broadcast
- *  continuing to forward data along the distribution tree.
- */
-
-OMPI_DECLSPEC int mca_oob_xcast(
-    ompi_process_name_t* root, 
-    ompi_list_t* peers,
-    ompi_buffer_t buffer,
-    mca_oob_callback_packed_fn_t cbfunc);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

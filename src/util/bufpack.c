@@ -372,6 +372,8 @@ return (OMPI_SUCCESS);
     uint32_t * d32;
     uint16_t * s16;
     uint32_t * s32;
+    ompi_process_name_t *dn;
+    ompi_process_name_t *sn;
 
     /* first find the destination location in the buffer */
     if (!buffer) { return (OMPI_ERROR); }
@@ -384,7 +386,6 @@ return (OMPI_SUCCESS);
     /* calculate op_size data size */
     switch(type) {
         case OMPI_BYTE:
-        case OMPI_INT8:
 	    op_size = n;
 	    break;
         case OMPI_STRING:
@@ -410,14 +411,11 @@ return (OMPI_SUCCESS);
         case OMPI_INT32:
 	    op_size = n*sizeof(uint32_t);
 	    break;
-        case OMPI_JOBID:
-	    op_size = n*sizeof(mca_ns_base_jobid_t);
-	    break;
         case OMPI_NAME:
-            op_size = n*sizeof(ompi_process_name_t);
-            break;
+        op_size = n*sizeof(ompi_process_name_t);
+        break;
         default:
-            return OMPI_ERROR;
+        return OMPI_ERROR;
     }
 
     if (op_size > bptr->space) { /* need to expand the buffer */
@@ -431,7 +429,6 @@ return (OMPI_SUCCESS);
     
     switch(type) {
         case OMPI_BYTE:
-        case OMPI_INT8:
             memcpy(dest, src, n);
             break;
         case OMPI_PACKED:
@@ -457,11 +454,15 @@ return (OMPI_SUCCESS);
             strncpy((char*) dest, (char*) src, n);
             *((char *) dest + n - 1) = '\0';
             break;
-        case OMPI_JOBID:
-	    mca_ns_base_pack_jobid(dest, src, n);
-	    break;
         case OMPI_NAME:
-	    mca_ns_base_pack_name(dest, src, n);
+            dn = (ompi_process_name_t*) dest;
+            sn = (ompi_process_name_t*) src;
+            for (i=0; i<n; i++) {
+                dn->cellid = htonl(sn->cellid);
+                dn->jobid = htonl(sn->jobid);
+                dn->vpid = htonl(sn->vpid);
+                dn++; sn++;
+            }
             break;
         default:
             return OMPI_ERROR;
@@ -500,6 +501,8 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
     uint32_t * d32;
     uint16_t * s16;
     uint32_t * s32;
+    ompi_process_name_t *dn;
+    ompi_process_name_t *sn;
 
     /* first find the source location in the buffer */
     if (!buffer) { return (OMPI_ERROR); }
@@ -512,7 +515,6 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
     switch(type) {
         case OMPI_BYTE:
         case OMPI_STRING:
-        case OMPI_INT8:
 	    op_size = n;
 	    break;
 	case OMPI_PACKED:
@@ -525,12 +527,9 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
         case OMPI_INT32:
 	    op_size = n*sizeof(uint32_t);
 	    break;
-        case OMPI_JOBID:
-	    op_size = n*sizeof(mca_ns_base_jobid_t);
-	    break;
         case OMPI_NAME:
-            op_size = n*sizeof(ompi_process_name_t);
-            break;
+        op_size = n*sizeof(ompi_process_name_t);
+        break;
         default:
             return OMPI_ERROR;
     }
@@ -548,9 +547,8 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
 
     switch(type) {
         case OMPI_BYTE:
-        case OMPI_INT8:
             memcpy(dest, src, n);
-	    break;
+			break;
         case OMPI_PACKED:
             return OMPI_ERROR;
         case OMPI_INT16:
@@ -573,11 +571,15 @@ ompi_unpack(ompi_buffer_t buffer, void * dest, size_t n, ompi_pack_type_t type)
             strncpy((char*) dest, (char*) src, n);
             *((char *) dest + n - 1) = '\0';
             break;
-        case OMPI_JOBID:
-	    mca_ns_base_unpack_jobid(dest, src, n);
-	    break;
         case OMPI_NAME:
-	    mca_ns_base_unpack_name(dest, src, n);
+            dn = (ompi_process_name_t*) dest;
+            sn = (ompi_process_name_t*) src;
+            for (i=0; i<n; i++) {
+                dn->cellid = ntohl(sn->cellid);
+                dn->jobid = ntohl(sn->jobid);
+                dn->vpid = ntohl(sn->vpid);
+                dn++; sn++;
+            }
             break;
         default:
             return OMPI_ERROR;

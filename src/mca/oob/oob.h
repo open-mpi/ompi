@@ -13,7 +13,6 @@
 
 #include "include/types.h"
 #include "mca/mca.h"
-#include "mca/gpr/base/base.h"
 #include "mca/oob/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -172,31 +171,6 @@ typedef int (*mca_oob_base_module_init_fn_t)(void);
 typedef int (*mca_oob_base_module_fini_fn_t)(void);
 
 /**
- * Pack the host's contact information into a buffer for use on the registry
- *
- * @param buffer (IN) Buffer to be used
- * @return Nothing
- */
-typedef void (*mca_oob_addr_pack_fn_t)(ompi_buffer_t buffer);
-
-/**
- * Callback function for updating the peer address cache
- *
- * @param 
- */
-typedef void (*mca_oob_update_callback_fn_t)(
-    ompi_registry_notify_message_t* msg,
-    void* cbdata);
-
-    /**
-     * xcast function for sending common messages to all processes
-     */
-typedef int (*mca_oob_base_module_xcast_fn_t)(ompi_process_name_t* root, 
-    ompi_list_t* peers,
-    ompi_buffer_t buffer,
-    mca_oob_callback_packed_fn_t cbfunc);
-
-/**
  * OOB Module
  */
 struct mca_oob_1_0_0_t {
@@ -210,9 +184,6 @@ struct mca_oob_1_0_0_t {
     mca_oob_base_module_recv_cancel_fn_t oob_recv_cancel;
     mca_oob_base_module_init_fn_t        oob_init;
     mca_oob_base_module_fini_fn_t        oob_fini;
-    mca_oob_addr_pack_fn_t               oob_addr_pack;
-    mca_oob_update_callback_fn_t         oob_update;
-    mca_oob_base_module_xcast_fn_t       oob_xcast;
 };
 
 /**

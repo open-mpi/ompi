@@ -106,8 +106,8 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
 #else
     /* wait for message to complete */
     while(msg->msg_complete == false &&
-          ((uint32_t)tv.tv_sec <= secs ||
-	   ((uint32_t)tv.tv_sec == secs && (uint32_t)tv.tv_usec < usecs))) {
+          (tv.tv_sec <= secs ||
+          (tv.tv_sec == secs && tv.tv_usec < usecs))) {
         ompi_event_loop(OMPI_EVLOOP_ONCE);
         gettimeofday(&tv,NULL);
     }
@@ -172,7 +172,7 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
 
         msg->msg_rc += rc;
         do {/* while there is still more iovecs to write */
-            if(rc < (int)msg->msg_rwptr->iov_len) {
+            if(rc < msg->msg_rwptr->iov_len) {
                 msg->msg_rwptr->iov_len -= rc;
                 msg->msg_rwptr->iov_base = (void *) ((char *) msg->msg_rwptr->iov_base + rc);
                 break;
@@ -270,7 +270,7 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
         }
 
         do {
-            if(rc < (int)msg->msg_rwptr->iov_len) {
+            if(rc < msg->msg_rwptr->iov_len) {
                 msg->msg_rwptr->iov_len -= rc;
                 msg->msg_rwptr->iov_base = (void *) ((char *) msg->msg_rwptr->iov_base + rc);
                 break;
@@ -318,7 +318,7 @@ static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pe
 {
     ompi_process_name_t src = msg->msg_hdr.msg_src;
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    if(ompi_name_server.compare(OMPI_NS_CMP_ALL, &peer->peer_name, &src) != 0) {
+    if(mca_oob_tcp_process_name_compare(&peer->peer_name, &src) != 0) {
         ompi_rb_tree_delete(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name);
         peer->peer_name = src;
         ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name, peer);
@@ -362,7 +362,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                 */
                 post->msg_uiov[0].iov_base = msg->msg_rwbuf;
                 post->msg_uiov[0].iov_len = msg->msg_hdr.msg_size;
-		post->msg_rc = msg->msg_hdr.msg_size;
+                post->msg_rc = msg->msg_hdr.msg_size;
                 msg->msg_rwbuf = NULL;
             }
                                                                                                                           
@@ -458,8 +458,8 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(ompi_process_name_t* name, int tag
         msg != (mca_oob_tcp_msg_t*) ompi_list_get_end(&mca_oob_tcp_component.tcp_msg_recv);
         msg =  (mca_oob_tcp_msg_t*) ompi_list_get_next(msg)) {
 
-        if((0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, name,MCA_OOB_NAME_ANY) ||
-	    (0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, name, &msg->msg_peer)))) {
+        if((0 == mca_oob_tcp_process_name_compare(name,MCA_OOB_NAME_ANY) ||
+           (0 == mca_oob_tcp_process_name_compare(name, &msg->msg_peer)))) {
             if (tag == MCA_OOB_TAG_ANY || tag == msg->msg_hdr.msg_tag) {
                 return msg;
             }
@@ -484,8 +484,8 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(ompi_process_name_t* name, int tag
         msg != (mca_oob_tcp_msg_t*) ompi_list_get_end(&mca_oob_tcp_component.tcp_msg_post);
         msg =  (mca_oob_tcp_msg_t*) ompi_list_get_next(msg)) {
 
-        if((0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, &msg->msg_peer,MCA_OOB_NAME_ANY) ||
-	    (0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, &msg->msg_peer,name)))) {
+        if((0 == mca_oob_tcp_process_name_compare(&msg->msg_peer,MCA_OOB_NAME_ANY) ||
+           (0 == mca_oob_tcp_process_name_compare(&msg->msg_peer,name)))) {
             if (msg->msg_hdr.msg_tag == MCA_OOB_TAG_ANY || msg->msg_hdr.msg_tag == tag) {
                 if((msg->msg_flags & MCA_OOB_PEEK) == 0 || peek) {
                     ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);

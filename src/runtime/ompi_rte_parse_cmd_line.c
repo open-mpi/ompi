@@ -122,7 +122,7 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	}
 	ompi_universe_info.ns_replica = strdup(nsreplica);
 	if (NULL == ompi_process_info.ns_replica) {
-	    ompi_process_info.ns_replica = mca_ns_base_create_process_name(0,0,0);
+	    ompi_process_info.ns_replica = ns_base_create_process_name(0,0,0);
 	}
 	mca_oob_parse_contact_info(ompi_universe_info.ns_replica,
 				   ompi_process_info.ns_replica, NULL);
@@ -142,7 +142,7 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	}
 	ompi_universe_info.gpr_replica = strdup(nsreplica);
 	if (NULL == ompi_process_info.gpr_replica) {
-	    ompi_process_info.gpr_replica = mca_ns_base_create_process_name(0,0,0);
+	    ompi_process_info.gpr_replica = ns_base_create_process_name(0,0,0);
 	}
 	mca_oob_parse_contact_info(ompi_universe_info.gpr_replica,
 				   ompi_process_info.gpr_replica, NULL);

@@ -31,14 +31,7 @@ enum {
     OMPI_ERR_CONNECTION_REFUSED = -21, /* contact made with process, but it refuses any further communication */
     OMPI_ERR_CONNECTION_FAILED = -22,  /* message sent, but delivery failed */
     OMPI_ERR_TIMEOUT = -23,
-    OMPI_STARTUP_DETECTED = -24,
-    OMPI_SHUTDOWN_DETECTED = -25,
-    OMPI_PROC_STARTING = -26,
-    OMPI_PROC_STOPPED = -27,
-    OMPI_PROC_TERMINATING = -28,
-    OMPI_PROC_ALIVE = -29,
-    OMPI_PROC_RUNNING = -30,
-    OMPI_PROC_KILLED = -31
+    OMPI_ERR_INIT = -24
 };
 
 #endif /* OMPI_CONSTANTS_H */

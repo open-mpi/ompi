@@ -29,14 +29,14 @@
  * functions
  */
 
-int mca_ns_base_assign_cellid_to_process(ompi_process_name_t* name)
+int ns_base_assign_cellid_to_process(ompi_process_name_t* name)
 {
     name->cellid = 0;
     return OMPI_SUCCESS;
 }
 
 
-ompi_process_name_t* mca_ns_base_create_process_name(mca_ns_base_cellid_t cell,
+ompi_process_name_t* ns_base_create_process_name(mca_ns_base_cellid_t cell,
 		             mca_ns_base_jobid_t job, mca_ns_base_vpid_t vpid)
 {
     ompi_process_name_t *newname;
@@ -58,7 +58,7 @@ ompi_process_name_t* mca_ns_base_create_process_name(mca_ns_base_cellid_t cell,
     return(newname);
 }
 
-ompi_process_name_t* mca_ns_base_copy_process_name(ompi_process_name_t* name)
+ompi_process_name_t* ns_base_copy_process_name(ompi_process_name_t* name)
 {
     mca_ns_base_cellid_t cell;
     mca_ns_base_jobid_t job;
@@ -69,15 +69,15 @@ ompi_process_name_t* mca_ns_base_copy_process_name(ompi_process_name_t* name)
 	return NULL;
     }
 
-    cell = mca_ns_base_get_cellid(name);
-    job = mca_ns_base_get_jobid(name);
-    vpid = mca_ns_base_get_vpid(name);
+    cell = ns_base_get_cellid(name);
+    job = ns_base_get_jobid(name);
+    vpid = ns_base_get_vpid(name);
 
-    newname = mca_ns_base_create_process_name(cell, job, vpid);
+    newname = ns_base_create_process_name(cell, job, vpid);
     return newname;
 }
 
-char* mca_ns_base_get_proc_name_string(const ompi_process_name_t* name)
+char* ns_base_get_proc_name_string(const ompi_process_name_t* name)
 {
     char *name_string;
 
@@ -92,7 +92,7 @@ char* mca_ns_base_get_proc_name_string(const ompi_process_name_t* name)
     return(name_string);
 }
 
-ompi_process_name_t* mca_ns_base_convert_string_to_process_name(const char* name)
+ompi_process_name_t* ns_base_convert_string_to_process_name(const char* name)
 {
     char *temp, *token;
     mca_ns_base_cellid_t cell;
@@ -148,7 +148,7 @@ ompi_process_name_t* mca_ns_base_convert_string_to_process_name(const char* name
 	goto CLEANUP;
     }
 
-    return_code = mca_ns_base_create_process_name(cell, job, vpid);
+    return_code = ns_base_create_process_name(cell, job, vpid);
 
  CLEANUP:
     if (temp) {
@@ -159,7 +159,7 @@ ompi_process_name_t* mca_ns_base_convert_string_to_process_name(const char* name
 }
 
 
-char* mca_ns_base_get_vpid_string(const ompi_process_name_t* name)
+char* ns_base_get_vpid_string(const ompi_process_name_t* name)
 {
     char *name_string;
 
@@ -175,7 +175,7 @@ char* mca_ns_base_get_vpid_string(const ompi_process_name_t* name)
 }
 
 
-char* mca_ns_base_get_jobid_string(const ompi_process_name_t* name)
+char* ns_base_get_jobid_string(const ompi_process_name_t* name)
 {
     char *name_string;
 
@@ -191,7 +191,7 @@ char* mca_ns_base_get_jobid_string(const ompi_process_name_t* name)
 }
 
 
-char* mca_ns_base_convert_jobid_to_string(const mca_ns_base_jobid_t jobid)
+char* ns_base_convert_jobid_to_string(const mca_ns_base_jobid_t jobid)
 {
     char *jobid_string;
 
@@ -203,23 +203,7 @@ char* mca_ns_base_convert_jobid_to_string(const mca_ns_base_jobid_t jobid)
 }
 
 
-mca_ns_base_jobid_t mca_ns_base_convert_string_to_jobid(const char* jobidstring)
-{
-    unsigned long int tmpint;
-    mca_ns_base_jobid_t jobid;
-
-    tmpint = strtoul(jobidstring, NULL, 16);
-    if (MCA_NS_BASE_JOBID_MAX >= tmpint) {
-	jobid = (mca_ns_base_jobid_t)tmpint;
-    } else {
-	jobid = MCA_NS_BASE_JOBID_MAX;
-    }
-
-    return jobid;
-}
-
-
-char* mca_ns_base_get_cellid_string(const ompi_process_name_t* name)
+char* ns_base_get_cellid_string(const ompi_process_name_t* name)
 {
     char *name_string;
 
@@ -235,7 +219,7 @@ char* mca_ns_base_get_cellid_string(const ompi_process_name_t* name)
 }
 
 
-mca_ns_base_vpid_t mca_ns_base_get_vpid(const ompi_process_name_t* name)
+mca_ns_base_vpid_t ns_base_get_vpid(const ompi_process_name_t* name)
 {
     if (NULL == name) { /* got an error */
 	return(MCA_NS_BASE_VPID_MAX);
@@ -245,7 +229,7 @@ mca_ns_base_vpid_t mca_ns_base_get_vpid(const ompi_process_name_t* name)
 }
 
 
-mca_ns_base_jobid_t mca_ns_base_get_jobid(const ompi_process_name_t* name)
+mca_ns_base_jobid_t ns_base_get_jobid(const ompi_process_name_t* name)
 {
     if (NULL == name) { /* got an error */
 	return(MCA_NS_BASE_JOBID_MAX);
@@ -254,7 +238,7 @@ mca_ns_base_jobid_t mca_ns_base_get_jobid(const ompi_process_name_t* name)
     return(name->jobid);
 }
 
-mca_ns_base_cellid_t mca_ns_base_get_cellid(const ompi_process_name_t* name)
+mca_ns_base_cellid_t ns_base_get_cellid(const ompi_process_name_t* name)
 {
     if (NULL == name) { /* got an error */
 	return(MCA_NS_BASE_CELLID_MAX);
@@ -264,7 +248,7 @@ mca_ns_base_cellid_t mca_ns_base_get_cellid(const ompi_process_name_t* name)
 }
 
 
-int mca_ns_base_compare(ompi_ns_cmp_bitmask_t fields,
+int ns_base_compare(ompi_ns_cmp_bitmask_t fields,
 		    const ompi_process_name_t* name1,
 		    const ompi_process_name_t* name2)
 {
@@ -314,79 +298,7 @@ int mca_ns_base_compare(ompi_ns_cmp_bitmask_t fields,
 }
 
 
-int mca_ns_base_pack_name(void *dest, void *src, int n)
-{
-    ompi_process_name_t *dn, *sn;
-    int i;
-
-    dn = (ompi_process_name_t*) dest;
-    sn = (ompi_process_name_t*) src;
-
-    for (i=0; i<n; i++) {
-	dn->cellid = htonl(sn->cellid);
-	dn->jobid = htonl(sn->jobid);
-	dn->vpid = htonl(sn->vpid);
-	dn++; sn++;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-int mca_ns_base_unpack_name(void *dest, void *src, int n)
-{
-    ompi_process_name_t *dn, *sn;
-    int i;
-
-    dn = (ompi_process_name_t*) dest;
-    sn = (ompi_process_name_t*) src;
-
-    for (i=0; i<n; i++) {
-	dn->cellid = ntohl(sn->cellid);
-	dn->jobid = ntohl(sn->jobid);
-	dn->vpid = ntohl(sn->vpid);
-	dn++; sn++;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-int mca_ns_base_pack_jobid(void *dest, void *src, int n)
-{
-    mca_ns_base_jobid_t *dj, *sj;
-    int i;
-
-    dj = (mca_ns_base_jobid_t*) dest;
-    sj = (mca_ns_base_jobid_t*) src;
-
-    for (i=0; i<n; i++) {
-	*dj = htonl(*sj);
-	dj++; sj++;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-int mca_ns_base_unpack_jobid(void *dest, void *src, int n)
-{
-    mca_ns_base_jobid_t *dj, *sj;
-    int i;
-
-    dj = (mca_ns_base_jobid_t*) dest;
-    sj = (mca_ns_base_jobid_t*) src;
-
-    for (i=0; i<n; i++) {
-	*dj = ntohl(*sj);
-	dj++; sj++;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-int mca_ns_base_free_name(ompi_process_name_t* name)
+int ns_base_free_name(ompi_process_name_t* name)
 {
     if (NULL != name) {
 	free(name);
