@@ -6,12 +6,14 @@
  * information, see the LICENSE file in the top level directory of the
  * CMPI source distribution.
  * 
- * $Id: comm_set_name.c,v 1.1 2003/11/22 16:36:26 jsquyres Exp $
+ * $Id: comm_set_name.c,v 1.2 2003/11/22 16:57:54 jsquyres Exp $
  */
 
 #include <string.h>
 
 #include <mpi.h>
+#include <communicator.h>
+#include <totalview.h>
 
 
 int
