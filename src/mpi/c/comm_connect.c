@@ -76,13 +76,15 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
      * translate the port_name string into the according process_name_t 
      * structure. 
      */ 
-    tmp_port = ompi_parse_port (port_name, &tag);
-    port_proc_name = ompi_name_server.convert_string_to_process_name(tmp_port);
-    if ( NULL == port_proc_name ) {
-        *newcomm = MPI_COMM_NULL;
-        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);
+    if ( rank == root ) { 
+	tmp_port = ompi_parse_port (port_name, &tag);
+	port_proc_name = ompi_name_server.convert_string_to_process_name(tmp_port);
+	if ( NULL == port_proc_name ) {
+	    *newcomm = MPI_COMM_NULL;
+	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);
+	}
+	free (tmp_port);
     }
-    free (tmp_port);
 
     rc = ompi_comm_connect_accept (comm, root, port_proc_name, send_first,
                                    &newcomp, tag);
