@@ -64,19 +64,15 @@ void lam_info_entry_destruct(lam_info_entry_t *entry) {
  */
 int lam_info_dup (lam_info_t *info, lam_info_t **newinfo) {
     int err;
-    int nkeys;
     lam_info_entry_t *iterator;
 
-    err = lam_info_get_nkeys (info, &nkeys);
-
     for (iterator = (lam_info_entry_t *)lam_list_get_first(&(info->super));
-         nkeys > 0;
-         nkeys--) {
+         NULL != iterator;
+         iterator = (lam_info_entry_t *)lam_list_get_next(iterator)) {
          err = lam_info_set(*newinfo, iterator->ie_key, iterator->ie_value);
          if (MPI_SUCCESS != err) {
             return err;
          }
-         iterator = (lam_info_entry_t *)iterator->super.lam_list_next;
      }
      return MPI_SUCCESS;
 }
@@ -137,10 +133,8 @@ int lam_info_set (lam_info_t *info, char *key, char *value) {
  */
 int lam_info_free (lam_info_t **info) {
     lam_info_entry_t *iterator;
-    int nkeys;
-    int err;
+    lam_info_entry_t *trailer_iterator;
 
-    err = lam_info_get_nkeys(*info, &nkeys);
     /*
      * We could just get each element from the list and then call
      * MPI_Info_delete. But this causes unnecessary delay because
@@ -148,10 +142,10 @@ int lam_info_free (lam_info_t **info) {
      * remove operation to save time.
      */
      for (iterator = (lam_info_entry_t *)lam_list_get_first(&((*info)->super));
-          nkeys > 0;
-          nkeys--) {
-          iterator = (lam_info_entry_t *)iterator->super.lam_list_next;
-          OBJ_RELEASE(iterator->super.lam_list_prev);
+          NULL != iterator;
+          iterator = (lam_info_entry_t *)lam_list_get_next(iterator)) {
+          trailer_iterator = (lam_info_entry_t *)lam_get_prev(iterator);
+          OBJ_RELEASE(trailer_iterator);
      }
      /*
       * Anju:
