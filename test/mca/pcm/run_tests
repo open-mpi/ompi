@@ -24,15 +24,34 @@ if ("x$1" == "x") then
   cd base;
   ./run_tests;
   cd ..;
-else if ("$1" == "base") then
-  cd base;
-  ./run_tests;
-  cd ..;
-else
-  echo "correct use: "
-  echo "    run_tests    (to run all mca pcm tests)"
-  echo "or  run_tests < base >"
-  exit -1
+else 
+  foreach target ($argv)
+    switch ($target)
+    case "all":
+      cd base;
+      ./run_tests;
+      cd ..;
+      breaksw
+    case "base":
+      cd $target;
+      ./run_tests;
+      cd ..;
+      breaksw
+    case "help":
+      echo "correct use: "
+      echo "    run_tests help (this message)"
+      echo "    run_tests    (to run all mca pcm tests)"
+      echo "or  run_tests < base >"
+      break;
+      breaksw
+    default:
+      echo "There is no part of mca pcm named <$target>"
+      echo "correct use: "
+      echo "    run_tests    (to run all mca pcm tests)"
+      echo "or  run_tests < base >"
+      break;
+    endsw
+  end
 endif
 
 
