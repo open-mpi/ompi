@@ -275,11 +275,11 @@ void laminfo::do_config(bool want_all)
   const string impi(LAM_WANT_IMPI ? "yes" : "no");
 #endif
   const string debug(LAM_ENABLE_DEBUG ? "yes" : "no");
-  const string cprofiling(LAM_WANT_MPI_PROFILING ? "yes" : "no");
-  const string cxxprofiling(LAM_WANT_MPI_PROFILING ? "yes" : "no");
-  const string f77profiling((LAM_WANT_MPI_PROFILING && LAM_ENABLE_MPI_F77) ?
+  const string cprofiling(LAM_ENABLE_MPI_PROFILING ? "yes" : "no");
+  const string cxxprofiling(LAM_ENABLE_MPI_PROFILING ? "yes" : "no");
+  const string f77profiling((LAM_ENABLE_MPI_PROFILING && LAM_ENABLE_MPI_F77) ?
                           "yes" : "no");
-  const string f90profiling((LAM_WANT_MPI_PROFILING && LAM_ENABLE_MPI_F90) ?
+  const string f90profiling((LAM_ENABLE_MPI_PROFILING && LAM_ENABLE_MPI_F90) ?
                           "yes" : "no");
   const string cxxexceptions(LAM_HAVE_CXX_EXCEPTION_SUPPORT ? "yes" : "no");
 
