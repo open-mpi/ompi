@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include "lam/types.h"
 #include "lam/atomic.h"
+#include "lam/mem/malloc.h"
 
 /*
  *
@@ -28,16 +29,6 @@ typedef struct lam_class_info
     class_destroy_t      cls_destroy;
 } lam_class_info_t;
 
-#define OBJECT(obj)       ((lam_object_t *)(obj))
-#define CREATE_OBJECT(obj, lam_obj_type, cls_ptr)    \
-    do {    \
-        obj = (lam_obj_type *)malloc(sizeof(lam_obj_type));     \
-        if ( obj )                                  \
-        {                                           \
-            OBJECT(obj)->obj_class = cls_ptr;  \
-            OBJECT(obj)->obj_class->cls_init(OBJECT(obj));     \
-        }                                           \
-    } while (0)
 
 /*
  *
@@ -71,6 +62,7 @@ extern lam_class_info_t lam_object_cls;
         } while (0)
 
 #define SUPER_DESTROY(obj, super_cls)      (super_cls)->cls_destroy(OBJECT(obj))
+#define OBJECT(obj) ((lam_object_t *)(obj))
 #define OBJ_RETAIN(obj)         if ( obj ) lam_obj_retain(OBJECT(obj))
 #define OBJ_RELEASE(obj)        if ( obj ) lam_obj_release(OBJECT(obj))
 
@@ -82,6 +74,22 @@ typedef struct lam_object
 
 void lam_obj_init(lam_object_t *obj);
 void lam_obj_destroy(lam_object_t *obj);
+
+
+static inline lam_object_t* lam_create_object(size_t size, lam_class_info_t* class_info)
+{
+    lam_object_t *obj = (lam_object_t*)LAM_MALLOC(size);
+    if ( NULL != obj ) {
+        obj->obj_class = class_info;
+        obj->obj_class->cls_init(obj);
+    }
+    return obj;
+}
+
+#define NEW(obj_type, class_info) \
+    ((obj_type*)lam_create_object(sizeof(obj_type), class_info))
+#define CREATE_OBJECT(obj, obj_type, class_info) \
+    (obj = (obj_type*)lam_create_object(sizeof(obj_type, class_info)))
 
 /*
  * This function is used by inline functions later in this file, and
