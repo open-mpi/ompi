@@ -6,7 +6,7 @@
 #include <sys/errno.h>
 #include "include/types.h"
 #include "datatype/datatype.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
 #include "ptl_tcp_proc.h"
@@ -51,7 +51,7 @@ static void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t* frag)
 int mca_ptl_tcp_send_frag_init(
     mca_ptl_tcp_send_frag_t* sendfrag,
     mca_ptl_base_peer_t* ptl_peer,
-    mca_ptl_base_send_request_t* sendreq,
+    mca_pml_base_send_request_t* sendreq,
     size_t offset,
     size_t* size,
     int flags)

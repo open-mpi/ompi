@@ -9,7 +9,7 @@
 
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
-#include "mca/ptl/base/ptl_base_recvreq.h"
+#include "mca/pml/base/pml_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 
 
@@ -23,7 +23,7 @@
     { \
     ompi_list_item_t* item; \
     OMPI_FREE_LIST_GET(&mca_pml_teg.teg_recv_requests, item, rc); \
-    recvreq = (mca_ptl_base_recv_request_t*)item; \
+    recvreq = (mca_pml_base_recv_request_t*)item; \
     }
 
 /**
@@ -33,20 +33,36 @@
  */
 #define MCA_PML_TEG_RECV_REQUEST_RETURN(request) \
     OMPI_FREE_LIST_RETURN(&mca_pml_teg.teg_recv_requests, (ompi_list_item_t*)request);
-
+                                                                                                                                    
+/**
+ * Attempt to match the request against the unexpected fragment list
+ * for all source ranks w/in the communicator.
+ *
+ * @param request (IN)   Request to match.
+ */
+void mca_pml_teg_recv_request_match_wild(mca_pml_base_recv_request_t* request);
+                                                                                                                                 
+/**
+ * Attempt to match the request against the unexpected fragment list
+ * for a specific source rank.
+ *
+ * @param request (IN)   Request to match.
+ */
+void mca_pml_teg_recv_request_match_specific(mca_pml_base_recv_request_t* request);
+                                                                                                                                 
 /**
  * Start an initialized request.
  *
  * @param request  Receive request.
  * @return         OMPI_SUCESS or error status on failure.
  */
-static inline int mca_pml_teg_recv_request_start(mca_ptl_base_recv_request_t* request)
+static inline int mca_pml_teg_recv_request_start(mca_pml_base_recv_request_t* request)
 {
     request->super.super.req_state = OMPI_REQUEST_ACTIVE;
     if(request->super.req_peer == OMPI_ANY_SOURCE) {
-        mca_ptl_base_recv_request_match_wild(request);
+        mca_pml_teg_recv_request_match_wild(request);
     } else {
-        mca_ptl_base_recv_request_match_specific(request);
+        mca_pml_teg_recv_request_match_specific(request);
     }
     return OMPI_SUCCESS;
 }
@@ -61,10 +77,9 @@ static inline int mca_pml_teg_recv_request_start(mca_ptl_base_recv_request_t* re
  */
 void mca_pml_teg_recv_request_progress(
     struct mca_ptl_t* ptl,
-    mca_ptl_base_recv_request_t* request,
+    mca_pml_base_recv_request_t* request,
     mca_ptl_base_recv_frag_t* frag
 );
-
 
 #endif
 

@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/errno.h>
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
 #include "ptl_tcp_recvfrag.h"
@@ -138,7 +138,7 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
 static bool mca_ptl_tcp_recv_frag_ack(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     mca_ptl_tcp_send_frag_t* sendfrag;
-    mca_ptl_base_send_request_t* sendreq;
+    mca_pml_base_send_request_t* sendreq;
     sendfrag = (mca_ptl_tcp_send_frag_t*)frag->super.super.frag_header.hdr_ack.hdr_src_ptr.pval;
     sendreq = sendfrag->super.frag_request;
     sendreq->req_peer_match = frag->super.super.frag_header.hdr_ack.hdr_dst_match;

@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <sys/errno.h>
 #include "types.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_sm.h"
 #include "ptl_sm_sendreq.h"
 
@@ -16,7 +16,7 @@ static void mca_ptl_sm_send_request_destruct(mca_ptl_sm_send_request_t*);
 
 OBJ_CLASS_INSTANCE(
     mca_ptl_sm_send_request_t,
-    mca_ptl_base_send_request_t,
+    mca_pml_base_send_request_t,
     mca_ptl_sm_send_request_construct,
     mca_ptl_sm_send_request_destruct
 );

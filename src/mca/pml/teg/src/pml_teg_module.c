@@ -8,8 +8,8 @@
 #include "mca/ptl/ptl.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/pml/base/pml_base_bsend.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
-#include "mca/ptl/base/ptl_base_recvreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/pml/base/pml_base_recvreq.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
 
@@ -147,8 +147,8 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
     /* recv requests */
     ompi_free_list_init(
         &mca_pml_teg.teg_recv_requests,
-        sizeof(mca_ptl_base_recv_request_t),
-        OBJ_CLASS(mca_ptl_base_recv_request_t), 
+        sizeof(mca_pml_base_recv_request_t),
+        OBJ_CLASS(mca_pml_base_recv_request_t), 
         mca_pml_teg.teg_free_list_num,
         mca_pml_teg.teg_free_list_max,
         mca_pml_teg.teg_free_list_inc,

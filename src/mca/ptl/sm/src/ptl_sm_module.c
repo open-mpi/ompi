@@ -16,7 +16,7 @@
 #include "util/sys_info.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "mca/ptl/sm/src/ptl_sm.h"

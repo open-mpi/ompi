@@ -17,10 +17,10 @@
 #include "util/output.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/base/mca_base_param.h"
-#include "mca/pml/teg/src/pml_teg_sendreq.h"
 #include "ptl_self.h"
 
 mca_ptl_t mca_ptl_self = {
@@ -73,21 +73,21 @@ int mca_ptl_self_finalize(struct mca_ptl_t* ptl)
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_self_request_alloc(struct mca_ptl_t* ptl, struct mca_ptl_base_send_request_t** request)
+int mca_ptl_self_request_alloc(struct mca_ptl_t* ptl, struct mca_pml_base_send_request_t** request)
 {
     int rc;
-    mca_ptl_base_send_request_t* sendreq;
+    mca_pml_base_send_request_t* sendreq;
     ompi_list_item_t* send_item;
 
     OMPI_FREE_LIST_GET( &mca_ptl_self_module.self_send_requests, send_item, rc );
 
-    sendreq = (mca_ptl_base_send_request_t*)send_item; 
+    sendreq = (mca_pml_base_send_request_t*)send_item; 
     sendreq->req_owner = ptl;
     *request = sendreq;
     return rc;
 }
 
-void mca_ptl_self_request_return(struct mca_ptl_t* ptl, struct mca_ptl_base_send_request_t* request)
+void mca_ptl_self_request_return(struct mca_ptl_t* ptl, struct mca_pml_base_send_request_t* request)
 {
     OMPI_FREE_LIST_RETURN( &mca_ptl_self_module.self_send_requests, (ompi_list_item_t*)request);
 }
@@ -102,7 +102,7 @@ void mca_ptl_self_request_return(struct mca_ptl_t* ptl, struct mca_ptl_base_send
 int mca_ptl_self_send(
                       struct mca_ptl_t* ptl,
                       struct mca_ptl_base_peer_t* ptl_base_peer,
-                      struct mca_ptl_base_send_request_t* request,
+                      struct mca_pml_base_send_request_t* request,
                       size_t offset,
                       size_t size,
                       int flags )
@@ -142,7 +142,7 @@ void mca_ptl_self_matched( mca_ptl_t* ptl,
                            mca_ptl_base_recv_frag_t* frag)
 {
     mca_ptl_self_send_request_t* sendreq = (mca_ptl_self_send_request_t*)(frag->super.frag_header.hdr_frag.hdr_src_ptr.pval);
-    mca_ptl_base_recv_request_t* recvreq = frag->frag_request;
+    mca_pml_base_recv_request_t* recvreq = frag->frag_request;
     mca_ptl_base_send_frag_t sendfrag;
 
     /* Did you have the same datatype or not ? If yes we can use an optimized version

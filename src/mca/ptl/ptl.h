@@ -138,8 +138,8 @@
 struct mca_ptl_t;
 struct mca_ptl_base_peer_t;
 struct mca_ptl_base_fragment_t;
-struct mca_ptl_base_recv_request_t;
-struct mca_ptl_base_send_request_t;
+struct mca_pml_base_recv_request_t;
+struct mca_pml_base_send_request_t;
 struct mca_ptl_base_recv_frag_t;
 struct mca_ptl_base_send_frag_t;
 struct mca_ptl_base_match_header_t;
@@ -306,14 +306,14 @@ typedef int (*mca_ptl_base_del_procs_fn_t)(
  * @return               Status indicating if allocation was successful.
  *
  * To reduce latency (number of required allocations), a derived
- * type of mca_ptl_base_send_request_t is obtained from the PTL that
+ * type of mca_pml_base_send_request_t is obtained from the PTL that
  * is selected to send the first fragment. The derived type should contain
  * space for the base request structure, the PTL first fragment,
  * and any other required buffer space.
  */
 typedef int (*mca_ptl_base_request_alloc_fn_t)(
     struct mca_ptl_t* ptl, 
-    struct mca_ptl_base_send_request_t** request
+    struct mca_pml_base_send_request_t** request
 );
 
 /**
@@ -327,7 +327,7 @@ typedef int (*mca_ptl_base_request_alloc_fn_t)(
  */
 typedef void (*mca_ptl_base_request_return_fn_t)(
     struct mca_ptl_t* ptl, 
-    struct mca_ptl_base_send_request_t* request
+    struct mca_pml_base_send_request_t* request
 );
 
 /**
@@ -354,7 +354,7 @@ typedef void (*mca_ptl_base_request_return_fn_t)(
 typedef int (*mca_ptl_base_put_fn_t)(
     struct mca_ptl_t* ptl, 
     struct mca_ptl_base_peer_t* ptl_base_peer, 
-    struct mca_ptl_base_send_request_t* request,
+    struct mca_pml_base_send_request_t* request,
     size_t offset,
     size_t size,
     int flags
@@ -380,7 +380,7 @@ typedef int (*mca_ptl_base_put_fn_t)(
 typedef int (*mca_ptl_base_get_fn_t)(
     struct mca_ptl_t* ptl, 
     struct mca_ptl_base_peer_t* ptl_base_peer, 
-    struct mca_ptl_base_recv_request_t* request,
+    struct mca_pml_base_recv_request_t* request,
     size_t offset,
     size_t size,
     int flags
@@ -435,7 +435,7 @@ typedef void (*mca_ptl_base_matched_fn_t)(
  */
 typedef void (*mca_ptl_base_recv_progress_fn_t)(
     struct mca_ptl_t* ptl,
-    struct mca_ptl_base_recv_request_t* recv_request,
+    struct mca_pml_base_recv_request_t* recv_request,
     struct mca_ptl_base_recv_frag_t* recv_frag
 );
 
@@ -449,7 +449,7 @@ typedef void (*mca_ptl_base_recv_progress_fn_t)(
  */
 typedef void (*mca_ptl_base_send_progress_fn_t)(
     struct mca_ptl_t* ptl,
-    struct mca_ptl_base_send_request_t* send_request,
+    struct mca_pml_base_send_request_t* send_request,
     struct mca_ptl_base_send_frag_t* send_frag
 );
 

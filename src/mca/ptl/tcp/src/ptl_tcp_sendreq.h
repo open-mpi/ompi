@@ -12,7 +12,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "ompi_config.h"
-#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_tcp_sendfrag.h"
 
 extern ompi_class_t mca_ptl_tcp_send_request_t_class;
@@ -24,7 +24,7 @@ extern ompi_class_t mca_ptl_tcp_send_request_t_class;
  * fragment on every send request.
  */
 struct mca_ptl_tcp_send_request_t {
-   mca_ptl_base_send_request_t super;
+   mca_pml_base_send_request_t super;
    mca_ptl_tcp_send_frag_t req_frag; /* first fragment */
 };
 typedef struct mca_ptl_tcp_send_request_t mca_ptl_tcp_send_request_t;

@@ -11,12 +11,12 @@ int mca_pml_teg_irecv_init(
     struct ompi_request_t **request)
 {
     int rc;
-    mca_ptl_base_recv_request_t *recvreq;
+    mca_pml_base_recv_request_t *recvreq;
     MCA_PML_TEG_RECV_REQUEST_ALLOC(recvreq, rc);
     if(NULL == recvreq)
         return rc;
     
-    MCA_PTL_BASE_RECV_REQUEST_INIT(
+    MCA_PML_BASE_RECV_REQUEST_INIT(
         recvreq,
         addr,
         count,
@@ -41,7 +41,7 @@ int mca_pml_teg_irecv(
 {
     int rc;
 
-    mca_ptl_base_recv_request_t *recvreq;
+    mca_pml_base_recv_request_t *recvreq;
     MCA_PML_TEG_RECV_REQUEST_ALLOC(recvreq, rc);
 #if MCA_PML_TEG_STATISTICS
     mca_pml_teg.teg_irecvs++;
@@ -49,7 +49,7 @@ int mca_pml_teg_irecv(
     if(NULL == recvreq)
         return rc;
 
-    MCA_PTL_BASE_RECV_REQUEST_INIT(
+    MCA_PML_BASE_RECV_REQUEST_INIT(
         recvreq,
         addr,
         count,
@@ -78,7 +78,7 @@ int mca_pml_teg_recv(
     ompi_status_public_t* status)
 {
     int rc;
-    mca_ptl_base_recv_request_t *recvreq;
+    mca_pml_base_recv_request_t *recvreq;
     MCA_PML_TEG_RECV_REQUEST_ALLOC(recvreq, rc);
  #if MCA_PML_TEG_STATISTICS
     mca_pml_teg.teg_recvs++;
@@ -86,7 +86,7 @@ int mca_pml_teg_recv(
     if(NULL == recvreq)
         return rc;
 
-    MCA_PTL_BASE_RECV_REQUEST_INIT(
+    MCA_PML_BASE_RECV_REQUEST_INIT(
         recvreq,
         addr,
         count,

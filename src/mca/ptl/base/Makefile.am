@@ -19,9 +19,7 @@ headers = \
 	ptl_base_header.h \
 	ptl_base_match.h \
 	ptl_base_recvfrag.h \
-	ptl_base_recvreq.h \
-	ptl_base_sendfrag.h \
-	ptl_base_sendreq.h 
+	ptl_base_sendfrag.h
 
 libmca_ptl_base_la_SOURCES = \
         $(headers) \
@@ -31,10 +29,8 @@ libmca_ptl_base_la_SOURCES = \
 	ptl_base_match.c \
         ptl_base_open.c \
         ptl_base_recvfrag.c \
-        ptl_base_recvreq.c \
         ptl_base_select.c \
-        ptl_base_sendfrag.c \
-        ptl_base_sendreq.c
+        ptl_base_sendfrag.c
 
 # Conditionally install the header files
 

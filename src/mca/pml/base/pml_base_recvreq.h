@@ -7,22 +7,20 @@
 #ifndef MCA_PML_BASE_RECV_REQUEST_H
 #define MCA_PML_BASE_RECV_REQUEST_H
 
-#include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_request.h"
 
-extern ompi_class_t mca_ptl_base_recv_request_t_class;
-struct mca_ptl_base_recv_frag_t;
+extern ompi_class_t mca_pml_base_recv_request_t_class;
 
 /**
  * Base type for receive requests.
  */
-struct mca_ptl_base_recv_request_t {
+struct mca_pml_base_recv_request_t {
    mca_pml_base_request_t super;  /**< base request */
    size_t req_bytes_packed;       /**< size of message being received */
    size_t req_bytes_received;     /**< number of bytes received from network */
    size_t req_bytes_delivered;    /**< number of bytes delivered to user */
 };
-typedef struct mca_ptl_base_recv_request_t mca_ptl_base_recv_request_t;
+typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;
 
 
 /**
@@ -37,7 +35,7 @@ typedef struct mca_ptl_base_recv_request_t mca_ptl_base_recv_request_t;
  * @param comm (IN)          Communicator.
  * @param persistent (IN)    Is this a ersistent request.
  */
-#define MCA_PTL_BASE_RECV_REQUEST_INIT( \
+#define MCA_PML_BASE_RECV_REQUEST_INIT( \
     request, \
     addr, \
     count, \
@@ -64,22 +62,6 @@ typedef struct mca_ptl_base_recv_request_t mca_ptl_base_recv_request_t;
     (request)->super.req_pml_done = false; \
     (request)->super.req_free_called = false; \
 }
-
-/**
- * Attempt to match the request against the unexpected fragment list
- * for all source ranks w/in the communicator.
- *
- * @param request (IN)   Request to match.
- */
-void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request);
-
-/**
- * Attempt to match the request against the unexpected fragment list 
- * for a specific source rank.
- *
- * @param request (IN)   Request to match.
- */
-void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* request);
 
 #endif
 

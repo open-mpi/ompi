@@ -18,7 +18,7 @@
  *
  */
 
-void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
+void mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
 {
     ompi_proc_t *proc = ompi_comm_peer_lookup(req->super.req_comm, req->super.req_peer);
     mca_pml_proc_t* proc_pml = proc->proc_pml;
@@ -81,7 +81,7 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
 
 void mca_pml_teg_send_request_progress(
     struct mca_ptl_t* ptl,
-    mca_ptl_base_send_request_t* req,
+    mca_pml_base_send_request_t* req,
     mca_ptl_base_send_frag_t* frag)
 {
     bool first_frag;

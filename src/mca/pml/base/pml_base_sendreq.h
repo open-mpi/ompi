@@ -9,19 +9,15 @@
 
 #include "ompi_config.h"
 #include "datatype/datatype.h"
-#include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_request.h"
-#include "mca/ptl/base/ptl_base_comm.h"
 
-
-extern ompi_class_t mca_ptl_base_send_request_t_class;
-struct mca_ptl_base_send_frag_t;
+extern ompi_class_t mca_pml_base_send_request_t_class;
 
 
 /**
  * Base type for send requests 
  */
-struct mca_ptl_base_send_request_t {
+struct mca_pml_base_send_request_t {
     mca_pml_base_request_t super; /** base request type - common data structure for use by wait/test */
     size_t req_offset; /**< number of bytes that have already been assigned to a fragment */
     size_t req_bytes_packed; /**< packed size of a message given the datatype and count */
@@ -34,7 +30,7 @@ struct mca_ptl_base_send_request_t {
     size_t req_peer_size;
     ompi_convertor_t req_convertor; /**< convertor that describes this datatype */
 };
-typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
+typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
 
 
 
@@ -51,7 +47,7 @@ typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
  * @param mode (IN)        Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
  * @param persistent (IN)  Is request persistent.
  */
-#define MCA_PTL_BASE_SEND_REQUEST_INIT( \
+#define MCA_PML_BASE_SEND_REQUEST_INIT( \
     request, \
     addr, \
     count, \
@@ -106,8 +102,8 @@ typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
  * @param  request (IN)  Send request.
  * return                TRUE if an ack/match has been received from peer.
  */
-static inline bool mca_ptl_base_send_request_matched(
-    mca_ptl_base_send_request_t* request)
+static inline bool mca_pml_base_send_request_matched(
+    mca_pml_base_send_request_t* request)
 {
     return (NULL != request->req_peer_match.pval);
 }
