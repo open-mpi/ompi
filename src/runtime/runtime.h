@@ -15,7 +15,7 @@
 
 /* For backwards compatibility.  If you only need MPI stuff, please include
    mpiruntime/mpiruntime.h directly */
-#include "mpiruntime/mpiruntime.h"
+#include "mpi/runtime/mpiruntime.h"
 
 #ifdef __cplusplus
 extern "C" {
