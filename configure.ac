@@ -627,8 +627,8 @@ lam_show_subtitle "Wrapper compiler flags"
 # purely aesthetic.
 #
 
-CPPFLAGS='-I$(top_srcdir)/src -I$(top_srcdir)/src/include'" $CPPFLAGS"
-CXXCPPFLAGS='-I$(top_srcdir)/src  -I$(top_srcdir)/src/include'" $CXXCPPFLAGS"
+CPPFLAGS='-I$(top_srcdir)/src -I$(top_srcdir)/src/include -I$(top_builddir)/src'" $CPPFLAGS"
+CXXCPPFLAGS='-I$(top_srcdir)/src  -I$(top_srcdir)/src/include -I$(top_builddir)/src'" $CXXCPPFLAGS"
 
 #
 # Adding WRAPPER_* flags so that extra flags needed for wrappper compilers

@@ -7,6 +7,10 @@ include $(top_srcdir)/config/Makefile.options
 SUBDIRS = base $(MCA_coll_STATIC_SUBDIRS)
 DIST_SUBDIRS = base $(MCA_coll_ALL_SUBDIRS)
 
+# For VPATH builds, have to specify where static-modules.h will be found
+
+AM_CPPFLAGS = -I$(top_builddir)/src
+
 # Source code files
 
 headers = coll.h
