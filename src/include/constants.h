@@ -30,7 +30,8 @@ enum {
     OMPI_ERR_NO_CONNECTION_ALLOWED = -20, /* indicates that the receiving process does not allow connections */
     OMPI_ERR_CONNECTION_REFUSED = -21, /* contact made with process, but it refuses any further communication */
     OMPI_ERR_CONNECTION_FAILED = -22,  /* message sent, but delivery failed */
-    OMPI_ERR_TIMEOUT = -23 
+    OMPI_ERR_TIMEOUT = -23,
+    OMPI_ERR_INIT = -24
 };
 
 #endif /* OMPI_CONSTANTS_H */
