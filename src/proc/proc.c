@@ -19,7 +19,6 @@
 
 static ompi_list_t  ompi_proc_list;
 static ompi_mutex_t ompi_proc_lock;
-static ompi_mutex_t ompi_proc_lock2;
 ompi_proc_t* ompi_proc_local_proc = NULL;
 
 static void ompi_proc_construct(ompi_proc_t* proc);
@@ -150,7 +149,7 @@ ompi_proc_t** ompi_proc_self(size_t* size)
 
 ompi_proc_t * ompi_proc_find ( const ompi_process_name_t * name )
 {
-    ompi_proc_t *proc;
+    ompi_proc_t *proc, *rproc=NULL;
     ompi_ns_cmp_bitmask_t mask;
 
     /* return the proc-struct which matches this jobid+process id */
@@ -162,13 +161,42 @@ ompi_proc_t * ompi_proc_find ( const ompi_process_name_t * name )
         proc =  (ompi_proc_t*)ompi_list_get_next(proc)) {
         if (0 == ompi_name_server.compare(mask, &proc->proc_name, name))
             { 
+		rproc = proc;
                 break;
             }
     }
     OMPI_THREAD_UNLOCK(&ompi_proc_lock);
-    return proc;
+    return rproc;
 }
 
+
+ompi_proc_t * ompi_proc_find_and_add ( const ompi_process_name_t * name )
+{
+    ompi_proc_t *proc, *rproc=NULL;
+    ompi_ns_cmp_bitmask_t mask;
+
+    /* return the proc-struct which matches this jobid+process id */
+
+    mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
+    OMPI_THREAD_LOCK(&ompi_proc_lock);
+    for(proc =  (ompi_proc_t*)ompi_list_get_first(&ompi_proc_list); 
+        proc != (ompi_proc_t*)ompi_list_get_end(&ompi_proc_list);
+        proc =  (ompi_proc_t*)ompi_list_get_next(proc)) {
+        if (0 == ompi_name_server.compare(mask, &proc->proc_name, name))
+            { 
+		rproc = proc;
+                break;
+            }
+    }
+
+    if ( NULL == rproc ) {
+	ompi_proc_t *tproc = OBJ_NEW(ompi_proc_t);
+	rproc = tproc;
+	rproc->proc_name = *name;
+    }
+    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
+    return rproc;
+}
 
 int ompi_proc_get_namebuf ( ompi_proc_t **proclist, int proclistsize,
 			    ompi_buffer_t buf)
@@ -193,27 +221,18 @@ int ompi_proc_get_proclist (ompi_buffer_t buf, int proclistsize, ompi_proc_t ***
     ompi_proc_t **plist=NULL;
     ompi_process_name_t name;
     
-    OMPI_THREAD_LOCK(&ompi_proc_lock2);
-
     /* do not free plist *ever*, since it is used in the remote group structure
        of a communicator */
     plist = (ompi_proc_t **) calloc (proclistsize, sizeof (ompi_proc_t *));
     if ( NULL == plist ) {
-	OMPI_THREAD_UNLOCK(&ompi_proc_lock2);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     for ( i=0; i<proclistsize; i++ ){
 	ompi_unpack(buf, &name, 1, OMPI_NAME);
-        plist[i] = ompi_proc_find ( &name);
-        if ( NULL == plist[i] ) {
-	    ompi_proc_t *proc = OBJ_NEW(ompi_proc_t);
-	    proc->proc_name = name;
-	    plist[i] = proc;
-	}
+        plist[i] = ompi_proc_find_and_add ( &name);
     }
     *proclist = plist;
-    OMPI_THREAD_UNLOCK(&ompi_proc_lock2);
 
     return OMPI_SUCCESS;
 }
