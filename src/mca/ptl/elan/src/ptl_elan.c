@@ -35,8 +35,6 @@ mca_ptl_elan_t  mca_ptl_elan = {
         mca_ptl_elan_add_proc,
         mca_ptl_elan_del_proc,
         mca_ptl_elan_finalize,
-        mca_ptl_elan_isend,
-        mca_ptl_elan_irecv,
         mca_ptl_elan_put,
         mca_ptl_elan_get,
         mca_ptl_elan_matched,
@@ -46,15 +44,18 @@ mca_ptl_elan_t  mca_ptl_elan = {
 };
 
 int mca_ptl_elan_add_proc (struct mca_ptl_t *ptl,
-                           struct ompi_proc_t *ompi_proc,
-                           struct mca_ptl_base_peer_t **peer_ret)
+	                   size_t nprocs,
+                           struct ompi_proc_t **ompi_proc,
+                           struct mca_ptl_base_peer_t **peer_ret,
+			   ompi_bitmap_t* reachable)
 {
     return OMPI_SUCCESS;
 }
 
-
-int mca_ptl_elan_del_proc (struct mca_ptl_t *ptl, struct ompi_proc_t *proc,
-                           struct mca_ptl_base_peer_t *ptl_peer)
+int mca_ptl_elan_del_proc (struct mca_ptl_t *ptl, 
+			   size_t nprocs,
+			   struct ompi_proc_t ** procs, 
+			   struct mca_ptl_base_peer_t **ptl_peer)
 {
     return OMPI_SUCCESS;
 }
@@ -93,16 +94,29 @@ void mca_ptl_elan_send_frag_return (struct mca_ptl_t *ptl,
 }
 
 /*
- *  Initiate a send. If this is the first fragment, use the fragment
- *  descriptor allocated with the send requests, otherwise obtain
- *  one from the free list. Initialize the fragment and foward
- *  on to the peer.
+ *  Initiate a put operation. 
  */
 
-int mca_ptl_elan_isend (struct mca_ptl_t *ptl,
-                       struct mca_ptl_base_peer_t *ptl_peer,
-                       struct mca_ptl_base_send_request_t *sendreq,
-                       size_t offset, size_t * size, int flags)
+int mca_ptl_elan_put (struct mca_ptl_t* ptl, 
+		      struct mca_ptl_base_peer_t* ptl_base_peer, 
+		      struct mca_ptl_base_send_request_t* request,
+		      size_t offset,
+		      size_t size,
+		      int flags)
+{
+    return OMPI_SUCCESS;
+}
+
+/*
+ *  Initiate a get. 
+ */
+
+int mca_ptl_elan_get (struct mca_ptl_t* ptl, 
+		      struct mca_ptl_base_peer_t* ptl_base_peer, 
+		      struct mca_ptl_base_recv_request_t* request,
+		      size_t offset,
+		      size_t size,
+		      int flags)
 {
     return OMPI_SUCCESS;
 }
