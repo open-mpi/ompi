@@ -12,7 +12,7 @@
  * Types for each function
  */
 
-typedef int (*mca_base_open_module_fn_t)(lam_cmd_line_t *cmd);
+typedef int (*mca_base_open_module_fn_t)(void);
 typedef int (*mca_base_close_module_fn_t)(void);
 
 
