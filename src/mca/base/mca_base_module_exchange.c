@@ -16,7 +16,6 @@
 
 #include "ompi_config.h"
 
-#include <string.h>
 #include "class/ompi_hash_table.h"
 #include "threads/condition.h"
 #include "util/output.h"
@@ -280,7 +279,8 @@ orte_gpr_base_dump_notify_data(data,0);
                     char *ptr;
                     void* bytes = NULL;
                     size_t cnt;
-                    size_t num_bytes;
+                    uint32_t num_bytes;
+                    size_t size_t_num_bytes;
                     if(strcmp(keyval[j]->key,"modex") != 0)
                         continue;
 
@@ -331,8 +331,9 @@ orte_gpr_base_dump_notify_data(data,0);
                             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                             continue;
                         }
-                    } 
-                    if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, bytes, &num_bytes, ORTE_BYTE))) {
+                    }
+                    size_t_num_bytes = num_bytes;
+                    if (ORTE_SUCCESS != (rc = orte_dps.unpack(&buffer, bytes, &size_t_num_bytes, ORTE_BYTE))) {
                         ORTE_ERROR_LOG(rc);
                         continue;
                     }
