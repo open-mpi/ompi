@@ -34,8 +34,7 @@ CPPFLAGS="$CPPFLAGS -DLAM_BUILDING=1"
 if test "$WANT_DEBUG" = "1"; then
     CFLAGS="$CFLAGS -g"
     LAM_UNIQ(CFLAGS)
-    AC_MSG_WARN([$add has been added to CFLAGS (--enable-debug)])
-    unset add
+    AC_MSG_WARN([-g has been added to CFLAGS (--enable-debug)])
 fi
 
 LAM_CFLAGS_BEFORE_PICKY="$CFLAGS"
