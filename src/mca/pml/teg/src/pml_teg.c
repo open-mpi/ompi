@@ -16,6 +16,7 @@
 #include "pml_teg_ptl.h"
 #include "pml_teg_recvreq.h"
 #include "pml_teg_sendreq.h"
+#include "pml_teg_recvfrag.h"
 
 
 mca_pml_teg_t mca_pml_teg = {
@@ -112,7 +113,7 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
         }
 
          /* setup ptl */
-         ptl->ptl_match = mca_ptl_base_recv_frag_match;
+         ptl->ptl_match = mca_pml_teg_recv_frag_match;
          ptl->ptl_send_progress = mca_pml_teg_send_request_progress;
          ptl->ptl_recv_progress = mca_pml_teg_recv_request_progress;
          ptl->ptl_stack = ptl;

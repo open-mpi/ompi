@@ -59,5 +59,31 @@ static inline mca_pml_proc_t* mca_pml_teg_proc_lookup_remote(ompi_communicator_t
     return proc->proc_pml;
 }
 
+/**
+ * Return the mca_ptl_peer_t instance corresponding to the process/ptl combination.
+ * 
+ * @param comm   Communicator
+ * @param rank   Peer rank
+ * @return       mca_pml_proc_t instance
+ */
+
+static inline struct mca_ptl_base_peer_t* mca_pml_teg_proc_lookup_remote_peer(
+    ompi_communicator_t* comm, 
+    int rank, 
+    struct mca_ptl_base_module_t* ptl)
+{
+    ompi_proc_t* proc = comm->c_local_group->grp_proc_pointers[rank];
+    mca_pml_proc_t* proc_pml = proc->proc_pml;
+    size_t i, size = mca_ptl_array_get_size(&proc_pml->proc_ptl_first);
+    mca_ptl_proc_t* proc_ptl = proc_pml->proc_ptl_first.ptl_procs;
+    for(i = 0; i < size; i++) {
+        if(proc_ptl->ptl == ptl) {
+            return proc_ptl->ptl_peer;
+        }
+        proc_ptl++;
+    }
+    return NULL;
+}
+
 #endif
 
