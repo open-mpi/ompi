@@ -63,9 +63,6 @@ int lam_proc_init(void)
         return LAM_ERROR;
     }
 
-    lam_proc_local_proc = OBJ_NEW(lam_proc_t);
-    lam_proc_local_proc->proc_job = strdup(local->job_handle);
-    lam_proc_local_proc->proc_vpid = local->vpid;
     if(LAM_SUCCESS != (rc = mca_pcm.pcm_proc_get_peers(&procs, &nprocs))) {
         lam_output(0, "lam_proc_init: pcm_proc_get_peers failed with errno=%d", rc);
         return rc;
@@ -73,9 +70,13 @@ int lam_proc_init(void)
     lam_output(0, "lam_proc_init: pcm_proc_get_peers returned %d peers", nprocs);
 
     for(i=0; i<nprocs; i++) {
+        lam_job_handle_t job = procs[i].job_handle;
+        uint32_t vpid = procs[i].vpid;
         lam_proc_t *proc = OBJ_NEW(lam_proc_t);
-        proc->proc_job = strdup(procs[i].job_handle);
-        proc->proc_vpid = procs[i].vpid;
+        proc->proc_job = strdup(job);
+        proc->proc_vpid = vpid;
+        if(proc->proc_vpid == vpid && strcmp(proc->proc_job, job))
+            lam_proc_local_proc = proc;
     }
     free(procs);
     return LAM_SUCCESS;
