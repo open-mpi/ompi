@@ -6,16 +6,16 @@
 
 #include <stdio.h>
 
-#include "mca/mpi/pml/pml.h"
-#include "mca/mpi/pml/base/header.h"
-#include "mca/mpi/pml/base/recvfrag.h"
-#include "mca/mpi/pml/base/recvreq.h"
-#include "lam/threads/mutex.h"
 #include "lam/constants.h"
-#include "mpi/communicator/communicator.h"
-#include "mca/mpi/ptl/base/match.h"
-#include "mca/mpi/pml/teg/comm.h"
 #include "lam/lfc/list.h"
+#include "lam/threads/mutex.h"
+#include "mpi/communicator/communicator.h"
+#include "mca/mpi/pml/pml.h"
+#include "mca/mpi/pml/base/pml_base_header.h"
+#include "mca/mpi/pml/base/pml_base_recvfrag.h"
+#include "mca/mpi/pml/base/pml_base_recvreq.h"
+#include "mca/mpi/pml/base/pml_base_comm.h"
+#include "mca/mpi/ptl/base/ptl_base_match.h"
 
 /**
  * RCS/CTS receive side matching
