@@ -26,6 +26,7 @@ int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
 {
     int ret;
     ompi_convertor_t *local_convertor;
+    unsigned int length;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -42,7 +43,8 @@ int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
     local_convertor = OBJ_NEW(ompi_convertor_t);
     ompi_convertor_init_for_send(local_convertor, 0, datatype, incount,
 				 NULL, 0, NULL /* never allocate memory */);
-    ret = ompi_convertor_get_packed_size(local_convertor, size);
+    ret = ompi_convertor_get_packed_size(local_convertor, &length);
+    *size = (int)length;
     OBJ_RELEASE(local_convertor);
 
     OMPI_ERRHANDLER_RETURN(ret, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
