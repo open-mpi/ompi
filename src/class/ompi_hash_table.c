@@ -66,7 +66,7 @@ int ompi_hash_table_init(ompi_hash_table_t* ht, size_t table_size)
     }
 
     ht->ht_mask = power2-1;
-    ht->ht_table = malloc(power2 * sizeof(ompi_list_t));
+    ht->ht_table = (ompi_list_t *)malloc(power2 * sizeof(ompi_list_t));
     if(NULL == ht->ht_table) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -348,7 +348,7 @@ static inline uint32_t ompi_hash_value(size_t mask, const void *key,
     const unsigned char *p;
     
     h = 0;
-    p = key;
+    p = (const unsigned char *)key;
     for (i = 0; i < keysize; i++, p++)
         h = HASH_MULTIPLIER*h + *p;
     return (h & mask);
@@ -516,7 +516,7 @@ ompi_hash_table_get_next_key_uint32(ompi_hash_table_t *ht, uint32_t *key,
     /* We found it.  Save the values (use "next" to avoid some
        typecasting) */
 
-    next = *out_node = (void *) item;
+    next = (ompi_uint32_hash_node_t *)*out_node = (void *) item;
     *key = next->hn_key;
     *value = next->hn_value;
 
@@ -587,7 +587,7 @@ ompi_hash_table_get_next_key_uint64(ompi_hash_table_t *ht, uint64_t *key,
     /* We found it.  Save the values (use "next" to avoid some
        typecasting) */
 
-    next = *out_node = (void *) item;
+    next = (ompi_uint64_hash_node_t *)*out_node = (void *) item;
     *key = next->hn_key;
     *value = next->hn_value;
 

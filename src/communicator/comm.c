@@ -136,7 +136,7 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
          */ 
 
         /* allocate the data for the common good */
-        newcomm->c_topo_comm = malloc(sizeof(mca_topo_base_comm_t));
+        newcomm->c_topo_comm = (mca_topo_base_comm_t *)malloc(sizeof(mca_topo_base_comm_t));
 
         if (NULL == newcomm->c_topo_comm) {
             OBJ_RELEASE(newcomm);
@@ -989,7 +989,7 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
     new_comm = OBJ_NEW (ompi_communicator_t);
 
     /* allocate the data for the common good */
-    new_comm->c_topo_comm = malloc(sizeof(mca_topo_base_comm_t));
+    new_comm->c_topo_comm = (mca_topo_base_comm_t *)malloc(sizeof(mca_topo_base_comm_t));
 
     if (NULL == new_comm->c_topo_comm) {
         OBJ_RELEASE(new_comm);
@@ -1016,7 +1016,7 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
 
     new_comm->c_topo_comm->mtc_coords = NULL;
 
-    new_comm->c_topo_comm->mtc_dims_or_index = malloc (sizeof(int) * ndims_or_nnodes);
+    new_comm->c_topo_comm->mtc_dims_or_index = (int *)malloc (sizeof(int) * ndims_or_nnodes);
     if (NULL == new_comm->c_topo_comm->mtc_dims_or_index) {
         ompi_comm_free (&new_comm);
         *comm_topo = new_comm;
@@ -1050,7 +1050,7 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
          * structure. The base component functions are free to change
          * it as they deem fit */
 
-        new_comm->c_topo_comm->mtc_periods_or_edges = 
+        new_comm->c_topo_comm->mtc_periods_or_edges = (int *)
 	    malloc (sizeof(int) * dims_or_index[ndims_or_nnodes - 1]);
         if (NULL == new_comm->c_topo_comm->mtc_periods_or_edges) {
             ompi_comm_free (&new_comm);
@@ -1061,7 +1061,7 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
                 periods_or_edges, dims_or_index[ndims_or_nnodes - 1]
 		* sizeof(int));
 
-        new_comm->c_topo_comm->mtc_coords = malloc (sizeof(int) * ndims_or_nnodes);
+        new_comm->c_topo_comm->mtc_coords = (int *)malloc (sizeof(int) * ndims_or_nnodes);
         if (NULL == new_comm->c_topo_comm->mtc_coords) {
             ompi_comm_free (&new_comm);
             *comm_topo = new_comm;
@@ -1089,7 +1089,7 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
          * structure. The base component functions are free to change
          * it as they deem fit */
 
-        new_comm->c_topo_comm->mtc_periods_or_edges = 
+        new_comm->c_topo_comm->mtc_periods_or_edges = (int *)
                 malloc (sizeof(int) * dims_or_index[ndims_or_nnodes-1]);
         if (NULL == new_comm->c_topo_comm->mtc_periods_or_edges) {
             ompi_comm_free (&new_comm);
@@ -1247,7 +1247,7 @@ static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm,
     newcomm->c_topo_comm->mtc_ndims_or_nnodes = oldcomm->c_topo_comm->mtc_ndims_or_nnodes;
     newcomm->c_topo_comm->mtc_reorder = oldcomm->c_topo_comm->mtc_reorder;
 
-    newcomm->c_topo_comm->mtc_dims_or_index = malloc(sizeof(int)*
+    newcomm->c_topo_comm->mtc_dims_or_index = (int *)malloc(sizeof(int)*
                                                      newcomm->c_topo_comm->mtc_ndims_or_nnodes);   
 
     if (NULL == newcomm->c_topo_comm->mtc_dims_or_index) {
@@ -1258,7 +1258,7 @@ static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm,
             oldcomm->c_topo_comm->mtc_dims_or_index ,
             newcomm->c_topo_comm->mtc_ndims_or_nnodes * sizeof(int));
 
-    newcomm->c_topo_comm->mtc_periods_or_edges =
+    newcomm->c_topo_comm->mtc_periods_or_edges = (int *)
                  malloc (sizeof(int)*index);
     if (NULL == newcomm->c_topo_comm->mtc_periods_or_edges) {
         return OMPI_ERROR;
@@ -1269,7 +1269,7 @@ static int ompi_comm_copy_topo (ompi_communicator_t *oldcomm,
             sizeof(int) * index );
 
     if (OMPI_COMM_IS_CART(oldcomm)) {
-        newcomm->c_topo_comm->mtc_coords = malloc(sizeof(int)*
+        newcomm->c_topo_comm->mtc_coords = (int *)malloc(sizeof(int)*
                                                   newcomm->c_topo_comm->mtc_ndims_or_nnodes);   
 
         if (NULL == newcomm->c_topo_comm->mtc_coords) {

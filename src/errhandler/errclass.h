@@ -19,7 +19,7 @@
  */
 struct ompi_errclass_t {
     ompi_object_t                      super;
-    int                                class;
+    int                                cls;
 };
 typedef struct ompi_errclass_t ompi_errclass_t;
 

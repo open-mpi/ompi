@@ -91,7 +91,7 @@ size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 	    ompi_output(0,"ompi_pointer_array_add:  INIT: table %p\n", table);
         }
 
-	p = malloc(TABLE_INIT * sizeof(void *));
+	p = (void **)malloc(TABLE_INIT * sizeof(void *));
 	if (p == NULL) {
         OMPI_THREAD_UNLOCK(&(table->lock));
         return OMPI_ERROR;
@@ -115,7 +115,7 @@ size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
                     table, table->size, table->size * TABLE_GROW);
         }
 
-	p = realloc(table->addr, TABLE_GROW * table->size * sizeof(void *));
+	p = (void **)realloc(table->addr, TABLE_GROW * table->size * sizeof(void *));
 	if (p == NULL) {
         OMPI_THREAD_UNLOCK(&(table->lock));
 	    return OMPI_ERROR;
@@ -203,7 +203,7 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, size_t index,
 	    return OMPI_ERROR;
 	}
 	table->number_free += new_size - table->size;
-	table->addr = p;
+	table->addr = (void **) p;
         for (i = table->size; i < new_size; i++) {
             table->addr[i] = NULL;
         }
@@ -323,7 +323,7 @@ int ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, size_t in
 	    return OMPI_ERROR;
 	}
 	table->number_free += new_size - table->size;
-	table->addr = p;
+	table->addr = (void **)p;
         for (i = table->size; i < new_size; i++) {
             table->addr[i] = NULL;
         }
