@@ -124,7 +124,7 @@ mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads,
     /* make it $HOME */
     tmp = getenv("HOME");
     if (tmp == NULL) {
-      printf("pcm_cofs can not find communication dir\n");
+      printf("pcm_cofs can not find communication dir (MCA_common_lam_cofs_comm_dir)\n");
       return NULL;
     }
     snprintf(mca_pcm_cofs_comm_loc, LAM_PATH_MAX, "%s/cofs", tmp);
