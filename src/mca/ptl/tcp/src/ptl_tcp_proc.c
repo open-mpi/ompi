@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "include/sys/atomic.h"
-#include "class/ompi_hash_table.h"
+#include "class/ompi_proc_table.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
@@ -17,14 +17,13 @@
 
 static void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc);
 static void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc);
-static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_ompi(ompi_proc_t* ompi_proc);
 
-ompi_class_t  mca_ptl_tcp_proc_t_class = {
-    "mca_ptl_tcp_proc_t",
-    OBJ_CLASS(ompi_list_item_t),
-    (ompi_construct_t)mca_ptl_tcp_proc_construct,
-    (ompi_destruct_t)mca_ptl_tcp_proc_destruct
-};
+OBJ_CLASS_INSTANCE(
+    mca_ptl_tcp_proc_t,
+    ompi_list_item_t,
+    mca_ptl_tcp_proc_construct,
+    mca_ptl_tcp_proc_destruct
+);
  
 
 /**
@@ -39,11 +38,6 @@ void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
     proc->proc_peers = 0;
     proc->proc_peer_count = 0;
     OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
-
-    /* add to list of all proc instance */
-    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
-    ompi_list_append(&mca_ptl_tcp_component.tcp_procs, &proc->super);
-    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 }
 
 
@@ -55,7 +49,7 @@ void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
 {
     /* remove from list of all proc instances */
     OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
-    ompi_list_remove_item(&mca_ptl_tcp_component.tcp_procs, &proc->super);
+    ompi_hash_table_remove_proc(&mca_ptl_tcp_component.tcp_procs, &proc->proc_name);
     OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 
     /* release resources */
@@ -75,15 +69,28 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
 {
     int rc;
     size_t size;
-    mca_ptl_tcp_proc_t* ptl_proc = mca_ptl_tcp_proc_lookup_ompi(ompi_proc);
-    if(ptl_proc != NULL)
+    mca_ptl_tcp_proc_t* ptl_proc;
+
+    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    ptl_proc = (mca_ptl_tcp_proc_t*)ompi_hash_table_get_proc(
+         &mca_ptl_tcp_component.tcp_procs, &ompi_proc->proc_name);
+    if(NULL != ptl_proc) {
+        OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
         return ptl_proc;
+     }
 
     ptl_proc = OBJ_NEW(mca_ptl_tcp_proc_t);
+    if(NULL == ptl_proc)
+        return NULL;
     ptl_proc->proc_ompi = ompi_proc;
+    ptl_proc->proc_name = ompi_proc->proc_name;
 
-    /* build a unique identifier (of arbitrary size) to represent the proc */
-    ptl_proc->proc_guid = ompi_proc->proc_name;
+    /* add to hash table of all proc instance */
+    ompi_hash_table_set_proc(
+        &mca_ptl_tcp_component.tcp_procs, 
+        &ptl_proc->proc_name, 
+         ptl_proc);
+    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 
     /* lookup tcp parameters exported by this proc */
     rc = mca_base_modex_recv(
@@ -114,26 +121,6 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
     return ptl_proc;
 }
 
-/*
- * Look for an existing TCP process instances based on the associated
- * ompi_proc_t instance.
- */
-static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_ompi(ompi_proc_t* ompi_proc)
-{
-    mca_ptl_tcp_proc_t* tcp_proc;
-    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
-    for(tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_first(&mca_ptl_tcp_component.tcp_procs);
-        tcp_proc != (mca_ptl_tcp_proc_t*)ompi_list_get_end(&mca_ptl_tcp_component.tcp_procs);
-        tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_next(tcp_proc)) {
-        if(tcp_proc->proc_ompi == ompi_proc) {
-            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
-            return tcp_proc;
-        }
-    }
-    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
-    return NULL;
-}
-
 
 /*
  * Look for an existing TCP process instance based on the globally unique 
@@ -141,19 +128,12 @@ static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_ompi(ompi_proc_t* ompi_proc)
  */
 mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(const ompi_process_name_t *name)
 {
-    mca_ptl_tcp_proc_t* tcp_proc;
-    ompi_process_name_t guid = *name;
+    mca_ptl_tcp_proc_t* proc;
     OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
-    for(tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_first(&mca_ptl_tcp_component.tcp_procs);
-        tcp_proc != (mca_ptl_tcp_proc_t*)ompi_list_get_end(&mca_ptl_tcp_component.tcp_procs);
-        tcp_proc  = (mca_ptl_tcp_proc_t*)ompi_list_get_next(tcp_proc)) {
-        if(memcmp(&tcp_proc->proc_guid, &guid, sizeof(guid)) == 0) {
-            OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
-            return tcp_proc;
-        }
-    }
+    proc = (mca_ptl_tcp_proc_t*)ompi_hash_table_get_proc(
+         &mca_ptl_tcp_component.tcp_procs, name);
     OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
-    return NULL;
+    return proc;
 }
 
 
@@ -169,7 +149,7 @@ int mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
     /* insert into peer array */ 
     ptl_peer->peer_proc = ptl_proc;
     ptl_proc->proc_peers[ptl_proc->proc_peer_count++] = ptl_peer;
-                                                                                                                 
+
     /*
      * Look through the proc instance for an address that is on the 
      * directly attached network. If we don't find one, pick the first
