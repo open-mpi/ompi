@@ -29,6 +29,7 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
     int send_first=0; /* we wait to be contacted */
     ompi_communicator_t *newcomp;
     char port_name[MPI_MAX_PORT_NAME];
+    char *tmp_port;
  
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -79,6 +80,8 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
 	  to the children. */
        ompi_open_port (port_name);
        ompi_comm_start_processes (command, argv, maxprocs, info, port_name);
+       tmp_port = ompi_parse_port (port_name, &tag);
+       free(tmp_port);
    }
    
    
