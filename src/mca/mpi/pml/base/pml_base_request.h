@@ -10,8 +10,6 @@
 #include "mpi/request/request.h"
 #include "mpi/datatype/datatype.h"
 #include "mpi/communicator/communicator.h"
-#include "mca/mpi/pml/pml.h"
-
 
 extern lam_class_info_t mca_pml_base_request_cls;
 
@@ -52,7 +50,7 @@ typedef struct {
   /* flag indicating if MPI is done with this request called */
   bool req_mpi_done;
   /* flag indicating if the pt-2-pt layer is done with this request */
-  bool req_p2p_layer_done;
+  bool req_pml_layer_done;
 } mca_pml_base_request_t;
 
 

@@ -20,7 +20,7 @@
  * PML module functions
  */
 
-typedef struct mca_pml_1_0_0_t * (*mca_pml_base_init_1_0_0_fn_t)(int* priority, int* min_thread, int* max_thread);
+typedef struct mca_pml_t * (*mca_pml_base_init_fn_t)(int* priority, int* min_thread, int* max_thread);
 typedef int (*mca_pml_base_fini_fn_t)(void);
 
 /*
@@ -29,9 +29,7 @@ typedef int (*mca_pml_base_fini_fn_t)(void);
 
 struct mca_ptl_t;
 
-typedef uint64_t mca_pml_base_sequence_t;
 typedef uint64_t mca_pml_base_tstamp_t;
-typedef lam_list_t mca_pml_base_queue_t;
 
 typedef enum {
     MCA_PML_BASE_SEND_STANDARD,
@@ -123,9 +121,9 @@ typedef int (*mca_pml_base_wait_fn_t)(
  */
 
 struct mca_pml_base_module_1_0_0_t {
-  mca_base_module_t pmlm_version;
-  mca_base_module_data_1_0_0_t pmlm_data;
-  mca_pml_base_init_1_0_0_fn_t pmlm_init;
+   mca_base_module_t pmlm_version;
+   mca_base_module_data_1_0_0_t pmlm_data;
+   mca_pml_base_init_fn_t pmlm_init;
 };
 typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
 
@@ -135,7 +133,7 @@ typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
  * provided by a PML.
  */
 
-struct mca_pml_1_0_0_t {
+struct mca_pml_t {
 
     mca_pml_base_add_comm_fn_t     pml_add_comm;
     mca_pml_base_del_comm_fn_t     pml_del_comm;
@@ -154,8 +152,7 @@ struct mca_pml_1_0_0_t {
     mca_pml_base_wait_fn_t         pml_wait;
 
 };
-typedef struct mca_pml_1_0_0_t mca_pml_1_0_0_t;
-typedef struct mca_pml_1_0_0_t mca_pml_t;
+typedef struct mca_pml_t mca_pml_t;
 
 /*
  * Macro for use in modules that are of type pml v1.0.0

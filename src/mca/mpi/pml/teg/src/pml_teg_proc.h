@@ -5,6 +5,7 @@
 #ifndef MCA_PML_PROC_H
 #define MCA_PML_PROC_H
 
+#include "lam/threads/mutex.h"
 #include "mpi/communicator/communicator.h"
 #include "mpi/group/group.h"
 #include "mpi/proc/proc.h"
@@ -20,6 +21,7 @@ extern lam_class_info_t mca_pml_teg_proc_cls;
 struct mca_pml_proc_t {
    lam_list_item_t super;
    lam_proc_t *proc_lam;
+   lam_mutex_t proc_lock;
    mca_ptl_array_t proc_ptl_first;
    mca_ptl_array_t proc_ptl_next;
 };

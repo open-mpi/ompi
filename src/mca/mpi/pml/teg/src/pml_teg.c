@@ -1,8 +1,8 @@
 #include "lam/util/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/pml/base/pml_base_sendreq.h"
-#include "mca/mpi/pml/base/pml_base_recvreq.h"
+#include "mca/mpi/ptl/base/ptl_base_sendreq.h"
+#include "mca/mpi/ptl/base/ptl_base_recvreq.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
 
@@ -60,6 +60,14 @@ mca_pml_teg_t mca_pml_teg = {
     }
 };
 
+/**
+ *  some comment
+ *
+ *  @param foo description
+ *  @return 
+ *
+ *  long description
+ */
 
 int mca_pml_teg_open(lam_cmd_line_t* cmd_line)
 {
@@ -67,13 +75,14 @@ int mca_pml_teg_open(lam_cmd_line_t* cmd_line)
 }
 
 
-mca_pml_1_0_0_t* mca_pml_teg_init(int* priority, int* min_thread, int* max_thread)
+mca_pml_t* mca_pml_teg_init(int* priority, int* min_thread, int* max_thread)
 {
     *priority = 0;
     *min_thread = 0;
     *max_thread = 0;
     mca_pml_teg.teg_ptls = 0;
     mca_pml_teg.teg_num_ptls = 0;
+    lam_list_init(&mca_pml_teg.teg_pending_acks);
     lam_list_init(&mca_pml_teg.teg_incomplete_sends);
     lam_mutex_init(&mca_pml_teg.teg_lock);
     return &mca_pml_teg.super;

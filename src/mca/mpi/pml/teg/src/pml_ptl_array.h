@@ -44,5 +44,14 @@ static inline mca_ptl_info_t* mca_ptl_array_get_next(mca_ptl_array_t* ptl_array)
     return ptl_info;
 }
 
+static inline mca_ptl_t* mca_ptl_array_get_next_ptl(mca_ptl_array_t* ptl_array)
+{
+    mca_ptl_info_t* ptl_info = &ptl_array->ptl_array[ptl_array->ptl_index++];
+    if(ptl_array->ptl_index == ptl_array->ptl_size)
+        ptl_array->ptl_index = 0;
+    return ptl_info->ptl;
+}
+
+
 #endif
 
