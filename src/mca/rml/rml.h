@@ -255,7 +255,7 @@ typedef int (*orte_rml_module_send_nb_fn_t)(
                                                                                                                          
 typedef int (*orte_rml_module_send_buffer_nb_fn_t)(
     orte_process_name_t* peer,
-    orte_buffer_t buffer,
+    orte_buffer_t* buffer,
     orte_rml_tag_t tag,
     int flags,
     orte_rml_buffer_callback_fn_t cbfunc,

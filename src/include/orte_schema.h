@@ -75,6 +75,7 @@ extern char *orte_error_strings[];
 #define ORTE_NODE_SLOTS_ALLOC_KEY   "orte-node-slots-alloc"
 #define ORTE_NODE_SLOTS_MAX_KEY     "orte-node-slots-max"
 #define ORTE_NODE_ALLOC_KEY         "orte-node-alloc"
+#define ORTE_NODE_BOOTPROXY_KEY     "orte-node-bootproxy"
 #define ORTE_JOB_APP_CONTEXT_KEY    "orte-job-app-context"
 #define ORTE_JOB_SLOTS_KEY          "orte-job-slots"                /**< number of procs in job */
 #define ORTE_JOB_VPID_START_KEY     "orte-job-vpid-start"

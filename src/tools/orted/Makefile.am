@@ -40,8 +40,7 @@ libs = $(top_builddir)/src/libmpi.la
 bin_PROGRAMS = orted
 orted_SOURCES = \
         orted.h \
-        orted.c \
-        orted_bootproxy.c 
+        orted.c 
 
 orted_LDADD = $(libs) $(LIBMPI_EXTRA_LIBS)
 orted_LDFLAGS = $(LIBMPI_EXTRA_LDFLAGS)

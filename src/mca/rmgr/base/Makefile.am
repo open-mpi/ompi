@@ -34,6 +34,8 @@ libmca_orte_rmgr_base_la_SOURCES = \
         rmgr_base_context.c \
         rmgr_base_close.c \
         rmgr_base_open.c \
+        rmgr_base_pack.c \
+        rmgr_base_unpack.c \
         rmgr_base_select.c \
         rmgr_base_stage_gate.c \
         rmgr_base_stubs.c

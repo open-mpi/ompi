@@ -38,9 +38,11 @@
 #include "mca/ns/ns.h"
 #include "mca/pls/pls.h"
 #include "mca/rml/rml.h"
+#include "mca/gpr/gpr.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/ras/base/ras_base_node.h"
 #include "mca/rmaps/base/rmaps_base_map.h"
+#include "mca/rmgr/base/base.h"
 #include "mca/soh/soh.h"
 #include "mca/soh/base/base.h"
 #include "pls_rsh.h"
@@ -158,6 +160,58 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
     OBJ_RELEASE(info);
 }
 
+/**
+ * Set the daemons name in the registry.
+ */
+
+static int orte_pls_rsh_set_node_name(orte_ras_base_node_t* node, orte_jobid_t jobid, orte_process_name_t* name)
+{
+    orte_gpr_value_t* values[1];
+    orte_gpr_value_t value;
+    orte_gpr_keyval_t kv_name = {{OBJ_CLASS(orte_gpr_keyval_t),0},ORTE_NODE_BOOTPROXY_KEY,ORTE_NAME};
+    orte_gpr_keyval_t* keyvals[1];
+    char* jobid_string;
+    int i, rc;
+                                                                                                                  
+    if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+                                                                                                                  
+    if(ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&value.tokens, &value.num_tokens, 
+        node->node_cellid, node->node_name))) {
+        ORTE_ERROR_LOG(rc);
+        free(jobid_string);
+        return rc;
+    }
+                                                                                                                  
+    asprintf(&kv_name.key, "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
+    kv_name.value.proc = *name;
+    keyvals[0] = &kv_name;
+    value.keyvals = keyvals;
+    value.cnt = 1;
+    value.addr_mode = ORTE_GPR_OVERWRITE;
+    value.segment = ORTE_NODE_SEGMENT;
+    values[0] = &value;
+                                                                                                                  
+    rc = orte_gpr.put(1, values);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+    }
+                                                                                                                  
+    free(kv_name.key);
+    free(jobid_string);
+    for(i=0; i<value.num_tokens; i++)
+        free(value.tokens[i]);
+    free(value.tokens);
+    return rc;
+}
+
+
+/**
+ * Launch a daemon (bootproxy) on each node. The daemon will be responsible
+ * for launching the application.
+ */
 
 int orte_pls_rsh_launch(orte_jobid_t jobid)
 {
@@ -253,11 +307,19 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         item != ompi_list_get_end(&nodes);
         item =  ompi_list_get_next(item)) {
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
+        orte_process_name_t* name;
         pid_t pid;
 
         /* setup node name */
         argv[node_name_index1] = node->node_name;
         argv[node_name_index2] = node->node_name;
+
+        /* initialize daemons process name */
+        rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
 
         /* rsh a child to exec the rsh/ssh session */
         pid = fork();
@@ -268,16 +330,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
         /* child */
         if(pid == 0) {
-
-            orte_process_name_t* name;
             char* name_string;
 
             /* setup process name */
-            rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
-            if(ORTE_SUCCESS != rc) {
-                ompi_output(0, "orte_pls_rsh: unable to create process name");
-                exit(-1);
-            }
             rc = orte_ns.get_proc_name_string(&name_string, name);
             if(ORTE_SUCCESS != rc) {
                 ompi_output(0, "orte_pls_rsh: unable to create process name");
@@ -311,19 +366,28 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                  ompi_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
             OMPI_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
 
+            /* setup callback on sigchild */
             daemon_info = OBJ_NEW(rsh_daemon_info_t);
             OBJ_RETAIN(node);
             daemon_info->node = node;
             daemon_info->jobid = jobid;
             orte_wait_cb(pid, orte_pls_rsh_wait_daemon, daemon_info);
-            vpid++;
+
+            /* save the daemons name on the node */
+            if (ORTE_SUCCESS != (rc = orte_pls_rsh_set_node_name(node,jobid,name))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
 
             /* if required - add delay to avoid problems w/ X11 authentication */
             if (mca_pls_rsh_component.debug && mca_pls_rsh_component.delay) {
                 sleep(mca_pls_rsh_component.delay);
             }
+            vpid++;
         }
+        free(name);
     }
+
 
 cleanup:
     while(NULL != (item = ompi_list_remove_first(&nodes))) {
@@ -333,9 +397,128 @@ cleanup:
     return rc;
 }
 
+
+/**
+ * Wait for a pending job to complete.
+ */
+
+static void orte_pls_rsh_terminate_job_cb(
+    int status,
+    orte_process_name_t* peer,
+    orte_buffer_t* req,
+    orte_rml_tag_t tag,
+    void* cbdata)
+{
+    /* wait for response */
+    orte_buffer_t rsp;
+    int rc;
+
+    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
+    if(0 > (rc = orte_rml.recv_buffer(peer, &rsp, ORTE_RML_TAG_RMGR_CLNT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&rsp);
+        return;
+    }
+
+    if(ORTE_SUCCESS != (rc = orte_rmgr_base_unpack_rsp(&rsp))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    OBJ_DESTRUCT(&rsp);
+    OBJ_RELEASE(req);
+}
+
+
+/**
+ * Query the registry for all nodes participating in the job
+ */
 int orte_pls_rsh_terminate_job(orte_jobid_t jobid)
 {
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    char *keys[2];
+    char *jobid_string;
+    orte_gpr_value_t** values = NULL;
+    int i, j, num_values = 0;
+    int rc;
+                                                                                                                           
+    if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    asprintf(&keys[0], "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
+    keys[1] = NULL;
+
+    rc = orte_gpr.get(
+        ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+        ORTE_NODE_SEGMENT,
+        NULL,
+        keys,
+        &num_values,
+        &values
+        );
+    if(rc != ORTE_SUCCESS) {
+        free(jobid_string);
+        return rc;
+    }
+    if(0 == num_values) {
+        rc = ORTE_ERR_NOT_FOUND;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+
+    for(i=0; i<num_values; i++) {
+        orte_gpr_value_t* value = values[i];
+        for(j=0; j<value->cnt; j++) {
+            orte_gpr_keyval_t* keyval = value->keyvals[j];
+            orte_buffer_t *cmd = OBJ_NEW(orte_buffer_t);
+            int ret;
+            if(cmd == NULL) {
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            if(strcmp(keyval->key, keys[0]) != 0) 
+                continue;
+
+            /* construct command */
+            ret = orte_rmgr_base_pack_cmd(cmd, ORTE_RMGR_CMD_TERM_JOB, jobid);
+            if(ORTE_SUCCESS != ret) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(cmd);
+                rc = ret;
+                continue;
+            }
+
+            /* send a terminate message to the bootproxy on each node */
+            if(0 > (ret = orte_rml.send_buffer_nb(
+                &keyval->value.proc, 
+                cmd, 
+                ORTE_RML_TAG_RMGR_SVC, 
+                0, 
+                orte_pls_rsh_terminate_job_cb, 
+                NULL))) {
+
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(cmd);
+                rc = ret;
+                continue;
+            }
+        }
+    }
+
+cleanup:
+
+    free(jobid_string);
+    free(keys[0]);
+                                                                                                                           
+    if(NULL != values) {
+        for(i=0; i<num_values; i++) {
+            if(NULL != values[i]) {
+                OBJ_RELEASE(values[i]);
+            }
+        }
+        free(values);
+    }
+    return rc;
 }
 
 int orte_pls_rsh_terminate_proc(const orte_process_name_t* proc)
