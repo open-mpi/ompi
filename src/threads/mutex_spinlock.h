@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_MUTEX_SPINOMPI_LOCK_
-#define OMPI_MUTEX_SPINOMPI_LOCK_
+#ifndef OMPI_MUTEX_SPINLOCK_
+#define OMPI_MUTEX_SPINLOCK_
 
 #include "class/ompi_object.h"
 #include "os/atomic.h"

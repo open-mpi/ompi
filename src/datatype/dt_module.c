@@ -181,7 +181,7 @@ static ompi_convertor_t* pDumpConv = NULL;
         strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );      \
     } while(0)
 
-#define DECLARE_MPI2_COMPOSED_BOMPI_LOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType ) \
+#define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType ) \
     do {                                                                \
         ompi_datatype_t *ptype;                                          \
         ompi_ddt_create_contiguous( 2, &(basicDatatypes[MPIType]), &ptype ); \
@@ -232,12 +232,12 @@ int ompi_ddt_init( void )
     DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_short_int, DT_SHORT_INT, "MPI_SHORT_INT", short, int, DT_SHORT, DT_INT );
     DECLARE_MPI2_COMPOSED_STRUCT_DDT( ompi_mpi_longdbl_int, DT_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT", long double, int, DT_LONG_DOUBLE, DT_INT );
 
-    DECLARE_MPI2_COMPOSED_BOMPI_LOCK_DDT( ompi_mpi_2int, DT_2INT, "MPI_2INT", DT_INT );
-    DECLARE_MPI2_COMPOSED_BOMPI_LOCK_DDT( ompi_mpi_2integer, DT_2INTEGER, "MPI_2INTEGER", DT_INT );
-    DECLARE_MPI2_COMPOSED_BOMPI_LOCK_DDT( ompi_mpi_2real, DT_2REAL, "MPI_2REAL", DT_FLOAT );
-    DECLARE_MPI2_COMPOSED_BOMPI_LOCK_DDT( ompi_mpi_2dblprec, DT_2DBLPREC, "MPI_2DOUBLE_PRECISION", DT_DOUBLE );
-    DECLARE_MPI2_COMPOSED_BOMPI_LOCK_DDT( ompi_mpi_2cplex, DT_2COMPLEX, "MPI_2COMPLEX", DT_COMPLEX_FLOAT );
-    DECLARE_MPI2_COMPOSED_BOMPI_LOCK_DDT( ompi_mpi_2dblcplex, DT_2DOUBLE_COMPLEX, "MPI_2DOUBLE_COMPLEX", DT_COMPLEX_DOUBLE );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2int, DT_2INT, "MPI_2INT", DT_INT );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2integer, DT_2INTEGER, "MPI_2INTEGER", DT_INT );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2real, DT_2REAL, "MPI_2REAL", DT_FLOAT );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2dblprec, DT_2DBLPREC, "MPI_2DOUBLE_PRECISION", DT_DOUBLE );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2cplex, DT_2COMPLEX, "MPI_2COMPLEX", DT_COMPLEX_FLOAT );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( ompi_mpi_2dblcplex, DT_2DOUBLE_COMPLEX, "MPI_2DOUBLE_COMPLEX", DT_COMPLEX_DOUBLE );
 
     for( i = 0; i < DT_MAX_PREDEFINED; i++ )
         local_sizes[i] = basicDatatypes[i].size;

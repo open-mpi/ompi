@@ -101,9 +101,9 @@ main (int argc, char **argv)
 
 	/* Linux pipes are broken, we need O_RDWR instead of O_RDONLY */
 #ifdef __linux
-	socket = open (fifo, O_RDWR | O_NONBOMPI_LOCK, 0);
+	socket = open (fifo, O_RDWR | O_NONBLOCK, 0);
 #else
-	socket = open (fifo, O_RDONLY | O_NONBOMPI_LOCK, 0);
+	socket = open (fifo, O_RDONLY | O_NONBLOCK, 0);
 #endif
 
 	if (socket == -1) {

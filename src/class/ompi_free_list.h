@@ -62,7 +62,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements);
 
 
 #define OMPI_FREE_LIST_RETURN(fl, item) \
-    OMPI_THREAD_SCOPED_LOCK(&((fl)->fl_lock), ompi_list_append(&((fl)->super), (item))); 
+    THREAD_SCOPED_LOCK(&((fl)->fl_lock), ompi_list_append(&((fl)->super), (item))); 
 
 #endif 
 

@@ -75,7 +75,7 @@ size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 
     assert(table != NULL);
 
-    OMPI_THREAD_LOCK(&(table->lock));
+    THREAD_LOCK(&(table->lock));
 
     if (table->addr == NULL) {
 
@@ -89,7 +89,7 @@ size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 
 	p = malloc(TABLE_INIT * sizeof(void *));
 	if (p == NULL) {
-        OMPI_THREAD_UNLOCK(&(table->lock));
+        THREAD_UNLOCK(&(table->lock));
         return OMPI_ERROR;
 	}
 	table->lowest_free = 0;
@@ -113,7 +113,7 @@ size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 
 	p = realloc(table->addr, TABLE_GROW * table->size * sizeof(void *));
 	if (p == NULL) {
-        OMPI_THREAD_UNLOCK(&(table->lock));
+        THREAD_UNLOCK(&(table->lock));
 	    return OMPI_ERROR;
 	}
 	table->lowest_free = table->size;
@@ -160,7 +160,7 @@ size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
                 index, ptr);
     }
 
-    OMPI_THREAD_UNLOCK(&(table->lock));
+    THREAD_UNLOCK(&(table->lock));
 
     return index;
 }
@@ -190,12 +190,12 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, size_t index,
 #endif
 
     /* expand table if required to set a specific index */
-    OMPI_THREAD_LOCK(&(table->lock));
+    THREAD_LOCK(&(table->lock));
     if(table->size <= index) {
         size_t i, new_size = (((index / TABLE_GROW) + 1) * TABLE_GROW);
 	void *p = realloc(table->addr, new_size * sizeof(void *));
 	if (p == NULL) {
-            OMPI_THREAD_UNLOCK(&(table->lock));
+            THREAD_UNLOCK(&(table->lock));
 	    return OMPI_ERROR;
 	}
 	table->number_free += new_size - table->size;
@@ -239,7 +239,7 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, size_t index,
                 index, table->addr[index]);
 #endif
 
-    OMPI_THREAD_UNLOCK(&(table->lock));
+    THREAD_UNLOCK(&(table->lock));
     return OMPI_SUCCESS;
 }
 
@@ -274,11 +274,11 @@ int ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, size_t in
 #endif
 
     /* expand table if required to set a specific index */
-    OMPI_THREAD_LOCK(&(table->lock));
+    THREAD_LOCK(&(table->lock));
     if ( index < table->size && table->addr[index] != NULL ) {
         /* This element is already in use */
         flag = false;
-        OMPI_THREAD_UNLOCK(&(table->lock));
+        THREAD_UNLOCK(&(table->lock));
         return flag;
     }
 
@@ -286,7 +286,7 @@ int ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, size_t in
         size_t i, new_size = (((index / TABLE_GROW) + 1) * TABLE_GROW);
 	void *p = realloc(table->addr, new_size * sizeof(void *));
 	if (p == NULL) {
-            OMPI_THREAD_UNLOCK(&(table->lock));
+            THREAD_UNLOCK(&(table->lock));
 	    return OMPI_ERROR;
 	}
 	table->number_free += new_size - table->size;
@@ -322,6 +322,6 @@ int ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, size_t in
                index, table->addr[index]);
 #endif
 
-    OMPI_THREAD_UNLOCK(&(table->lock));
+    THREAD_UNLOCK(&(table->lock));
     return flag;
 }

@@ -310,10 +310,10 @@ int ompi_mpi_errcode_init (void)
     ompi_pointer_array_set_item(&ompi_mpi_errcodes, MPI_ERR_KEYVAL, &ompi_err_keyval);
 
     OBJ_CONSTRUCT(&ompi_err_locktype, ompi_mpi_errcode_t);
-    ompi_err_locktype.code = MPI_ERR_OMPI_LOCKTYPE;
-    ompi_err_locktype.class = MPI_ERR_OMPI_LOCKTYPE;
-    strcpy(ompi_err_locktype.errstring, "MPI_ERR_OMPI_LOCKTYPE: invalid lock");
-    ompi_pointer_array_set_item(&ompi_mpi_errcodes, MPI_ERR_OMPI_LOCKTYPE, &ompi_err_locktype);
+    ompi_err_locktype.code = MPI_ERR_LOCKTYPE;
+    ompi_err_locktype.class = MPI_ERR_LOCKTYPE;
+    strcpy(ompi_err_locktype.errstring, "MPI_ERR_LOCKTYPE: invalid lock");
+    ompi_pointer_array_set_item(&ompi_mpi_errcodes, MPI_ERR_LOCKTYPE, &ompi_err_locktype);
 
     OBJ_CONSTRUCT(&ompi_err_name, ompi_mpi_errcode_t);
     ompi_err_name.code = MPI_ERR_NAME;

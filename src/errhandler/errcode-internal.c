@@ -152,10 +152,10 @@ int ompi_errcode_intern_init (void)
                                 &ompi_err_interupted);
 
     OBJ_CONSTRUCT(&ompi_err_would_block, ompi_errcode_intern_t);
-    ompi_err_would_block.code = OMPI_ERR_WOULD_BOMPI_LOCK;
+    ompi_err_would_block.code = OMPI_ERR_WOULD_BLOCK;
     ompi_err_would_block.mpi_code = MPI_ERR_INTERN;
     ompi_err_would_block.index = pos++;
-    strcpy(ompi_err_would_block.errstring, "OMPI_ERR_WOULD_BOMPI_LOCK");
+    strcpy(ompi_err_would_block.errstring, "OMPI_ERR_WOULD_BLOCK");
     ompi_pointer_array_set_item(&ompi_errcodes_intern, ompi_err_would_block.index, 
                                 &ompi_err_would_block);
 

@@ -151,9 +151,9 @@ struct clockinfo {
 	int	profhz;		/* profiling clock frequency */
 };
 
-#define COMPI_LOCK_REALTIME	0
-#define COMPI_LOCK_VIRTUAL	1
-#define COMPI_LOCK_PROF	2
+#define CLOCK_REALTIME	0
+#define CLOCK_VIRTUAL	1
+#define CLOCK_PROF	2
 
 #define TIMER_RELTIME	0x0	/* relative timer */
 #define TIMER_ABSTIME	0x1	/* absolute timer */

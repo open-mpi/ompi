@@ -9,7 +9,7 @@
  * Lock structure
  */
 
-enum { OMPI_LOCK_OMPI_UNLOCKED = 1 };
+enum { LOCK_UNLOCKED = 1 };
 
 typedef struct {
     union {
@@ -185,7 +185,7 @@ static inline void setBigAtomicUnsignedInt(bigAtomicUnsignedInt *addr,
                                            unsigned long long value)
 {
     addr->data = value;
-    addr->lock.data.lockData_m = OMPI_LOCK_OMPI_UNLOCKED;
+    addr->lock.data.lockData_m = LOCK_UNLOCKED;
 }
 
 #endif /* LINUX_I686_ATOMIC_H_INCLUDED */

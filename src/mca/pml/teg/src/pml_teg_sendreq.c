@@ -59,12 +59,12 @@ void mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
 
     /* unable to complete send - signal request failed */
     if(bytes_remaining > 0) {
-        OMPI_THREAD_LOCK(&mca_pml_teg.teg_request_lock);
+        THREAD_LOCK(&mca_pml_teg.teg_request_lock);
         req->super.req_mpi_done = true;
         /* FIX - set status correctly */
         if(mca_pml_teg.teg_request_waiting)
             ompi_condition_broadcast(&mca_pml_teg.teg_request_cond);
-        OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
+        THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
     }
 }
 
@@ -85,7 +85,7 @@ void mca_pml_teg_send_request_progress(
     mca_ptl_base_send_frag_t* frag)
 {
     bool first_frag;
-    OMPI_THREAD_LOCK(&mca_pml_teg.teg_request_lock);
+    THREAD_LOCK(&mca_pml_teg.teg_request_lock);
     first_frag = (req->req_bytes_sent == 0 && req->req_bytes_packed > 0);
     req->req_bytes_sent += frag->super.frag_size;
     if (req->req_bytes_sent >= req->req_bytes_packed) {
@@ -102,10 +102,10 @@ void mca_pml_teg_send_request_progress(
         } else if (req->super.req_free_called) {
             MCA_PML_TEG_FREE((ompi_request_t**)&req);
         }
-        OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
+        THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
         return;
     } 
-    OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
+    THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
 
     /* if first fragment - shedule remaining fragments */
     if(first_frag == true) {

@@ -11,10 +11,10 @@
 
 
 #ifdef HAVE_SMP
-#define SMPOMPI_LOCK "lock; "
+#define SMPLOCK "lock; "
 #define MB() __asm__ __volatile__("": : :"memory")
 #else
-#define SMPOMPI_LOCK
+#define SMPLOCK
 #define MB()
 #endif
 
@@ -44,7 +44,7 @@ static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
     uint32_t ret = oldval;
 
     __asm__ __volatile (
-SMPOMPI_LOCK "cmpxchgl %1,%2   \n\
+SMPLOCK "cmpxchgl %1,%2   \n\
       setz     %%al    \n\
       movzbl   %%al,%0 \n"
     : "+a" (ret)
@@ -85,7 +85,7 @@ static inline int ompi_atomic_cmpset_64(volatile uint64_t *addr,
     struct { uint32_t lo; uint32_t hi; } *p = (struct lwords *) &newval;
 
     __asm__ __volatile(
-SMPOMPI_LOCK "cmpxchg8b %1\n"
+SMPLOCK "cmpxchg8b %1\n"
     : "+A" (ret) 
     : "m" (*addr), "b" (p->lo), "c" (p->hi)
     : "memory");

@@ -68,9 +68,9 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *array,
 static inline void *ompi_pointer_array_get_item(ompi_pointer_array_t *table, size_t index)
 {
     void *p;
-    OMPI_THREAD_LOCK(&(table->lock));
+    THREAD_LOCK(&(table->lock));
     p = table->addr[index];
-    OMPI_THREAD_UNLOCK(&(table->lock));
+    THREAD_UNLOCK(&(table->lock));
     return p;
 }
 

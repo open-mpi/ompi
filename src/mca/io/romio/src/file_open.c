@@ -24,9 +24,9 @@ int mca_io_romio_File_open(MPI_Comm comm, char *filename, int amode,
 
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_open(comm,filename,amode,info,&romio_fh);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
 
     return ret;
 }
@@ -41,9 +41,9 @@ int mca_io_romio_File_close(MPI_File *fh) {
     mca_romio_fh = (mca_io_romio_file_t *)(*fh);
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_close(&romio_fh);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     free(*fh);
 
@@ -55,9 +55,9 @@ int mca_io_romio_File_close(MPI_File *fh) {
 int mca_io_romio_File_delete(char *filename, MPI_Info info) {
     int ret;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_delete(filename, info);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
 
     return ret;
 }
@@ -72,9 +72,9 @@ int mca_io_romio_File_set_size(MPI_File fh, MPI_Offset size){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_set_size(romio_fh, size);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 
@@ -90,9 +90,9 @@ int mca_io_romio_File_preallocate(MPI_File fh, MPI_Offset size){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_preallocate(romio_fh,size);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -107,9 +107,9 @@ int mca_io_romio_File_get_size(MPI_File fh, MPI_Offset *size){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_get_size(romio_fh,size);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -124,9 +124,9 @@ int mca_io_romio_File_get_group(MPI_File fh, MPI_Group *group){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_get_group(romio_fh,group);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -141,9 +141,9 @@ int mca_io_romio_File_get_amode(MPI_File fh, int *amode){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_get_amode(romio_fh, amode);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -158,9 +158,9 @@ int mca_io_romio_File_set_info(MPI_File fh, MPI_Info info){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_set_info(romio_fh,info);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -175,9 +175,9 @@ int mca_io_romio_File_get_info(MPI_File fh, MPI_Info *info_used){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_get_info(romio_fh,info_used);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -194,9 +194,9 @@ int mca_io_romio_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_set_view(romio_fh,disp,etype,filetype,datarep,info);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 
@@ -211,9 +211,9 @@ int mca_io_romio_File_get_view(MPI_File fh, MPI_Offset *disp, MPI_Datatype *etyp
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_get_view(romio_fh,disp,etype,filetype,datarep);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 
@@ -231,9 +231,9 @@ int mca_io_romio_File_get_type_extent(MPI_File fh, MPI_Datatype datatype, MPI_Ai
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_get_type_extent(romio_fh,datatype,extent);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -248,9 +248,9 @@ int mca_io_romio_File_set_atomicity(MPI_File fh, int flag){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_set_atomicity(romio_fh,flag);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -264,9 +264,9 @@ int mca_io_romio_File_get_atomicity(MPI_File fh, int *flag){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_get_atomicity(romio_fh,flag);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -280,9 +280,9 @@ int mca_io_romio_File_sync(MPI_File fh){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_sync(romio_fh);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -300,9 +300,9 @@ int mca_io_romio_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_seek_shared(romio_fh, offset, whence);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -315,9 +315,9 @@ int mca_io_romio_File_get_position_shared(MPI_File fh, MPI_Offset *offset){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_get_position_shared(romio_fh,offset);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -331,9 +331,9 @@ int mca_io_romio_File_seek(MPI_File fh, MPI_Offset offset, int whence){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_seek(romio_fh,offset,whence);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -346,9 +346,9 @@ int mca_io_romio_File_get_position(MPI_File fh, MPI_Offset *offset){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_get_position(romio_fh,offset);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -361,9 +361,9 @@ int mca_io_romio_File_get_byte_offset(MPI_File fh, MPI_Offset offset, MPI_Offset
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_get_byte_offset(romio_fh,offset,disp);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -378,9 +378,9 @@ int mca_io_romio_File_set_errhandler(MPI_File fh, MPI_Errhandler eh){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_set_errhandler(romio_fh,eh);
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }
@@ -393,9 +393,9 @@ int mca_io_romio_File_get_errhandler(MPI_File fh, MPI_Errhandler *eh ){
     mca_romio_fh = (mca_io_romio_file_t *) fh;
     romio_fh = mca_romio_fh->romio_fh;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    THREAD_LOCK(&mca_io_romio_mutex);
     ret=mca_io_romio_MPI_File_get_errhandler(romio_fh,eh );
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
 }

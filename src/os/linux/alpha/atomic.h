@@ -18,7 +18,7 @@ CDECL_BEGIN
 /*
  * Lock structure
  */
-    enum { OMPI_LOCK_OMPI_UNLOCKED = 0 };
+    enum { LOCK_UNLOCKED = 0 };
 
     typedef struct {
         union {

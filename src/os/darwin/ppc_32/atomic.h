@@ -19,7 +19,7 @@
  * Lock structure
  */
 
-enum { OMPI_LOCK_OMPI_UNLOCKED = 0 };
+enum { LOCK_UNLOCKED = 0 };
 
 typedef struct {
     union {
@@ -92,7 +92,7 @@ static inline int spintrylock(ompi_lock_data_t *lockData)
  */
 static inline void spinunlock(ompi_lock_data_t *lockData)
 {
-    lockData->data.lockData_m = OMPI_LOCK_OMPI_UNLOCKED;
+    lockData->data.lockData_m = LOCK_UNLOCKED;
 }
 
 
@@ -180,7 +180,7 @@ static inline void setBigAtomicUnsignedInt(bigAtomicUnsignedInt *addr,
                                            unsigned long long value)
 {
     addr->data = value;
-    addr->lock.data.lockData_m = OMPI_LOCK_OMPI_UNLOCKED;
+    addr->lock.data.lockData_m = LOCK_UNLOCKED;
 }
 
 #endif /* DARWIN_POWERPC_ATOMIC_H_INCLUDED */

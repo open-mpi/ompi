@@ -72,7 +72,7 @@ static inline bool ompi_using_threads(void)
  * If there is no possibility that multiple threads are running in the
  * process, invoke the action without acquiring the lock.
  */
-#define OMPI_THREAD_SCOPED_LOCK(mutex,action) \
+#define THREAD_SCOPED_LOCK(mutex,action) \
 	if(ompi_using_threads()) { \
             ompi_mutex_lock(mutex); \
             (action); \
@@ -121,7 +121,7 @@ static inline bool ompi_set_using_threads(bool have)
  * If there is no possibility that multiple threads are running in the
  * process, return immediately.
  */
-#define OMPI_THREAD_LOCK(a)   if (ompi_using_threads()) \
+#define THREAD_LOCK(a)   if (ompi_using_threads()) \
                               ompi_mutex_lock((a));
 
 /*
@@ -137,7 +137,7 @@ static inline bool ompi_set_using_threads(bool have)
  * If there is no possibility that multiple threads are running in the
  * process, return immediately without modifying the mutex.
  */
-#define OMPI_THREAD_UNLOCK(a) if (ompi_using_threads()) \
+#define THREAD_UNLOCK(a) if (ompi_using_threads()) \
                               ompi_mutex_unlock((a));
 
 /**
@@ -150,7 +150,7 @@ static inline bool ompi_set_using_threads(bool have)
  * multiple threads or not.  This is useful, for example, with shared
  * memory.
  */
-#define OMPI_LOCK(a)          ompi_mutex_lock((a))
+#define LOCK(a)          ompi_mutex_lock((a))
 
 /**
  * Always unlocks a mutex (never compile- or run-time removed)
@@ -162,7 +162,7 @@ static inline bool ompi_set_using_threads(bool have)
  * process has multiple threads or not.  This is useful, for example,
  * with shared memory.
  */
-#define OMPI_UNLOCK(a)        ompi_mutex_unlock((a));
+#define UNLOCK(a)        ompi_mutex_unlock((a));
 
 #endif
 
