@@ -26,6 +26,19 @@ typedef void* (*mca_allocator_realloc_fn_t)(struct mca_allocator_t*, void*, size
 typedef void(*mca_allocator_free_fn_t)(struct mca_allocator_t*, void *);
 
 
+/*
+ * compact/return memory to higher level allocator
+ */
+
+typedef int (*mca_allocator_return_fn_t)(
+    struct mca_allocator_t* allocator 
+);
+ 
+
+/*
+ * cleanup (free) any resources held by allocator
+ */
+
 typedef int (*mca_allocator_finalize_fn_t)(
     struct mca_allocator_t* allocator 
 );
@@ -35,6 +48,7 @@ struct mca_allocator_t {
     mca_allocator_alloc_fn_t alc_alloc;
     mca_allocator_realloc_fn_t alc_realloc;
     mca_allocator_free_fn_t alc_free;
+    mca_allocator_return_fn_t alc_return;
     mca_allocator_finalize_fn_t alc_finalize;
 };
 typedef struct mca_allocator_t mca_allocator_t;
