@@ -181,7 +181,6 @@ int main (int argc, char* argv[])
       test_failure("orte_dps test13 failed");
     }
 
-    test_finalize();
     fprintf(test_out, "executing test14\n");
     if (test14()) {
         test_success();
