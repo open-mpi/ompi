@@ -5,8 +5,6 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
- *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,6 +15,7 @@
 #include "ompi_config.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
@@ -37,25 +36,26 @@ static const char FUNC_NAME[] = "MPI_Alloc_mem";
 
 int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (size < 0 || NULL == baseptr) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                    FUNC_NAME);
-    } else if (NULL == info || ompi_info_is_freed(info)) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
-                                    FUNC_NAME);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (size < 0 || NULL == baseptr) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                          FUNC_NAME);
+        } else if (NULL == info || ompi_info_is_freed(info)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                          FUNC_NAME);
+        }
     }
-  }
 
-  /* Check the MPI_Info and see if we requested a specific MCA
-     type/module.  If so, invoke that module's alloc_mem function
-     (query the MCA base ?or the type base? to find the module and/or
-     invoke the alloc_mem on it).  Otherwise, call malloc().
+    /* For this release, we're just calling malloc(). */
 
-     If either fails, return an error on MPI_COMM_WORLD. */
+    *((void **) baseptr) = malloc(size);
+    if (NULL == *((void **) baseptr)) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM, 
+                                      FUNC_NAME);
+    }
 
-  /* This function is not yet implemented */
+    /* All done */
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    return MPI_SUCCESS;
 }
