@@ -377,6 +377,12 @@
 /* Do we have native Solaris threads */
 #define OMPI_HAVE_SOLARIS_THREADS 0
 
+/* Do we want to enable MPI Threads */
+#define OMPI_ENABLE_MPI_THREADS 0
+
+/* Do we want the progress thread */
+#define OMPI_ENABLE_PROGRESS_THREADS 0
+
 /* Whether we have __va_copy or not */
 #define OMPI_HAVE_UNDERSCORE_VA_COPY 0
 
