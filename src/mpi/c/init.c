@@ -30,13 +30,13 @@ int MPI_Init(int *argc, char ***argv)
   int provided;
   char *env;
   int required = MPI_THREAD_SINGLE;
-  MPI_Comm null = NULL;
 
   /* Ensure that we were not already initialized or finalized */
 
   if (ompi_mpi_finalized) {
-    /* JMS show_help */
-    return OMPI_ERRHANDLER_INVOKE(null, MPI_ERR_OTHER, FUNC_NAME);
+      /* JMS show_help */
+      return ompi_errhandler_invoke(NULL, NULL, OMPI_ERRHANDLER_TYPE_COMM, 
+                                    MPI_ERR_OTHER, FUNC_NAME);
   } else if (ompi_mpi_initialized) {
     /* JMS show_help */
     return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
@@ -62,5 +62,16 @@ int MPI_Init(int *argc, char ***argv)
   } else {
       err = ompi_mpi_init(0, NULL, required, &provided);
   }
-  OMPI_ERRHANDLER_RETURN(err, null, err, FUNC_NAME);
+
+  /* Since we don't have a communicator to invoke an errorhandler on
+     here, don't use the fancy-schmancy ERRHANDLER macros; they're
+     really designed for real communicator objects.  Just use the
+     back-end function directly. */
+
+  if (MPI_SUCCESS != err) {
+      return ompi_errhandler_invoke(NULL, NULL, OMPI_ERRHANDLER_TYPE_COMM, 
+                                    err < 0 ? ompi_errcode_get_mpi_code(err) : 
+                                    err, FUNC_NAME);
+  }
+  return MPI_SUCCESS;
 }
