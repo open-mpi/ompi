@@ -72,14 +72,10 @@ typedef struct ompi_if_t ompi_if_t;
 static ompi_list_t ompi_if_list;
 static bool already_done = false;
 
-/*
- *  Discover the list of configured interfaces. Don't care about any
- *  interfaces that are not up or are local loopbacks.
- */
+#define DEFAULT_NUMBER_INTERFACES 10
 
-static int ompi_ifinit(void) 
+static int old_ompi_ifinit(void)
 {
-#ifndef WIN32
     char buff[1024];
     char *ptr;
     struct ifconf ifconf;
@@ -152,6 +148,185 @@ static int ompi_ifinit(void)
             continue;
 #endif
                                                                                 
+        strcpy(intf.if_name, ifr->ifr_name);
+        intf.if_flags = ifr->ifr_flags;
+
+#if defined(__APPLE__)
+        intf.if_index = ompi_list_get_size(&ompi_if_list)+1;
+#else
+        if(ioctl(sd, SIOCGIFINDEX, ifr) < 0) {
+            ompi_output(0,"ompi_ifinit: ioctl(SIOCGIFINDEX) failed with errno=%d", errno);
+            continue;
+        }
+#if defined(ifr_ifindex)
+        intf.if_index = ifr->ifr_ifindex;
+#elif defined(ifr_index)
+        intf.if_index = ifr->ifr_index;
+#else
+        intf.if_index = -1;
+#endif
+#endif /* __APPLE__ */
+
+        if(ioctl(sd, SIOCGIFADDR, ifr) < 0) {
+            ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFADDR) failed with errno=%d", errno);
+            break;
+        }
+        if(ifr->ifr_addr.sa_family != AF_INET) 
+            continue;
+
+        memcpy(&intf.if_addr, &ifr->ifr_addr, sizeof(intf.if_addr));
+        if(ioctl(sd, SIOCGIFNETMASK, ifr) < 0) {
+            ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFNETMASK) failed with errno=%d", errno);
+            continue;
+        }
+        memcpy(&intf.if_mask, &ifr->ifr_addr, sizeof(intf.if_mask));
+
+        intf_ptr = (ompi_if_t*) malloc(sizeof(ompi_if_t));
+        if(intf_ptr == 0) {
+            ompi_output(0, "ompi_ifinit: unable to allocated %d bytes\n", sizeof(ompi_if_t));
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        memcpy(intf_ptr, &intf, sizeof(intf));
+        ompi_list_append(&ompi_if_list, (ompi_list_item_t*)intf_ptr);
+    }
+    close(sd);
+    return OMPI_SUCCESS;
+}
+
+
+/*
+ *  Discover the list of configured interfaces. Don't care about any
+ *  interfaces that are not up or are local loopbacks.
+ */
+
+static int ompi_ifinit(void) 
+{
+#ifndef WIN32
+    int sd;
+    int lastlen, num, rem;
+    char *ptr;
+    struct ifconf ifconf;
+    int ifc_len;
+
+    /* BWB - remove once this code is better tested */
+    if (NULL != getenv("OMPI_orig_if")) {
+        return old_ompi_ifinit();
+    }
+
+    if (already_done) {
+        return OMPI_SUCCESS;
+    }
+    already_done = true;
+
+    /* create the internet socket to test off */
+    if((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        ompi_output(0, "ompi_ifinit: socket() failed with errno=%d\n", errno);
+        return OMPI_ERROR;
+    }
+
+    /*
+     * Get Network Interface configuration 
+     *
+     * Some notes on the behavior of ioctl(..., SIOCGIFCONF,...)
+     * when not enough space is allocated for all the entries.
+     *
+     * - Solaris returns -1, errno EINVAL if there is not enough
+     *   space 
+     * - OS X returns 0, sets .ifc_len to the space used by the
+     *   by the entries that did fit.
+     * - Linux returns 0, sets .ifc_len to the space required to
+     *   hold all the entries (although it only writes what will
+     *   fit in the buffer of .ifc_len passed to the function).
+     * - FreeBSD returns 0, sets .ifc_len to 0.
+     *
+     * Everyone else seems to do one of the four.
+     */
+    lastlen = 0;
+    ifc_len = sizeof(struct ifreq) * DEFAULT_NUMBER_INTERFACES;
+    do {
+        ifconf.ifc_len = ifc_len;
+        ifconf.ifc_req = malloc(ifc_len);
+        if (NULL == ifconf.ifc_req) {
+            close(sd);
+            return OMPI_ERROR;
+        }
+
+        if(ioctl(sd, SIOCGIFCONF, &ifconf) < 0) {
+            /* if we got an einval, we probably don't have enough
+               space.  so we'll fall down and try to expand our
+               space */
+            if (errno != EINVAL && lastlen != 0) {
+                ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFCONF) failed with errno=%d", 
+                            errno);
+                close(sd);
+                return OMPI_ERROR;
+            }
+        } else {
+            /* if ifc_len is 0 or different than what we set it to at
+               call to ioctl, try again with a bigger buffer.  else stop */
+            if (ifconf.ifc_len == lastlen && ifconf.ifc_len > 0) {
+                /* we didn't expand.  we're done */
+                break;
+            }
+            lastlen = ifconf.ifc_len;
+        }
+
+        /* Yes, we overflowed (or had an EINVAL on the ioctl).  Loop
+           back around and try again with a bigger buffer */
+        free(ifconf.ifc_req);
+        ifc_len = (ifc_len == 0) ? 1 : ifc_len * 2;
+    } while (1);
+
+
+    /* 
+     * Setup indexes 
+     */
+    OBJ_CONSTRUCT(&ompi_if_list, ompi_list_t);
+    ptr = (char*) ifconf.ifc_req;
+    rem = ifconf.ifc_len;
+    num = 0;
+
+    /* loop through all interfaces */
+    while (rem > 0) {
+        struct ifreq* ifr = (struct ifreq*) ptr;
+        ompi_if_t intf;
+        ompi_if_t *intf_ptr;
+        int length;
+
+        OBJ_CONSTRUCT(&intf, ompi_list_item_t);
+
+        /* compute offset for entries */
+#if OMPI_HAVE_SA_LEN
+        length = sizeof(struct sockaddr);
+
+        if (ifr->ifr_addr.sa_len > length) {
+            length = ifr->ifr_addr.sa_len;
+        }
+
+        length += sizeof(ifr->ifr_name);
+#else
+        length = sizeof(struct ifreq);
+#endif
+
+        rem -= length;
+        ptr += length;
+
+        /* see if we like this entry */
+        if(ifr->ifr_addr.sa_family != AF_INET)
+            continue;
+
+        if(ioctl(sd, SIOCGIFFLAGS, ifr) < 0) {
+            ompi_output(0, "ompi_ifinit: ioctl(SIOCGIFFLAGS) failed with errno=%d", errno);
+            continue;
+        }
+        if ((ifr->ifr_flags & IFF_UP) == 0) 
+            continue;
+#if 0
+        if ((ifr->ifr_flags & IFF_LOOPBACK) != 0)
+            continue;
+#endif
+                                                                                
+        /* copy entry over into our data structure */
         strcpy(intf.if_name, ifr->ifr_name);
         intf.if_flags = ifr->ifr_flags;
 
