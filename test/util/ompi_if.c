@@ -96,11 +96,15 @@ main(int argc, char *argv[])
     }
 
     /* foo.example.com */
+    printf("This should generate a warning:\n");
+    fflush(stdout);
     if (test_ifaddrtoname("foo.example.com")) {
         test_failure("ifaddrtoname test failed for foo.example.com");
     } else {
         test_success();
     }
+    printf("This should generate a warning:\n");
+    fflush(stdout);
     if (ompi_ifislocal("foo.example.com")) {
         test_failure("ifislocal test failed for foo.example.com");
     } else {
