@@ -18,8 +18,7 @@
  * (a) To define a class
  *
  * In a interface (.h) file, define the class.  The first element
- * should always be the parent class,
- * for example
+ * should always be the parent class, for example
  * @code
  *   typedef struct sally_t sally_t;
  *   struct sally_t
@@ -29,13 +28,16 @@
  *     ...
  *   };
  *
- *   extern lam_class_t sally_t_class;
+ *   OBJ_CLASS_DECLARATION(sally_t_class);
  * @endcode
  * All classes must have a parent which is also class.
  * 
  * In an implementation (.c) file, instantiate a class descriptor for
- * the class, and should be the name of the struct with "_class"
- * appended:
+ * the class like this:
+ * @code
+ *   OBJ_CLASS_INSTANCE(sally_t, parent_t, sally_construct, sally_destruct);
+ * @endcode
+ * This macro actually expands to 
  * @code
  *   lam_class_t sally_t_class = {
  *     "sally_t",
@@ -45,12 +47,13 @@
  *     0, 0, NULL, NULL
  *   };
  * @endcode
- * This variable should be publically advertised using the "extern"
- * statement in the interface file as shown above.
+ * This variable should be declared in the interface (.h) file using
+ * the OBJ_CLASS_DECLARATION macro as shown above.
  *
  * sally_construct, and sally_destruct are function pointers to the
  * constructor and destructor for the class and are best defined as
- * static functions in the implementation file.
+ * static functions in the implementation file.  NULL pointers maybe
+ * supplied instead.
  *
  * Other class methods may be added to the struct.
  *
@@ -121,57 +124,16 @@
 #endif
 
 
-/* typedefs ***********************************************************/
-
-typedef struct lam_object_t lam_object_t;
-typedef struct lam_class_t lam_class_t;
-typedef void (*lam_construct_t) (lam_object_t *);
-typedef void (*lam_destruct_t) (lam_object_t *);
-
-
-/* types **************************************************************/
-
-/**
- * Class descriptor.
- *
- * There should be a single instance of this descriptor for each class
- * definition.
- */
-struct lam_class_t {
-    const char *cls_name;          /**< symbolic name for class */
-    lam_class_t *cls_parent;       /**< parent class descriptor */
-    lam_construct_t cls_construct; /**< class constructor */
-    lam_destruct_t cls_destruct;   /**< class destructor */
-    int cls_initialized;           /**< is class initialized */
-    int cls_depth;                 /**< depth of class hierarchy tree */
-    lam_construct_t *cls_construct_array;
-                                   /**< array of parent class constructors */
-    lam_destruct_t *cls_destruct_array;
-                                   /**< array of parent class destructors */
-};
-
-
-/**
- * Base object.
- *
- * This is special and does not follow the pattern for other classes.
- */
-struct lam_object_t {
-    lam_class_t *obj_class;        /**< class descriptor */
-    int obj_reference_count;       /**< reference count */
-};
-
-
 /* macros ************************************************************/
 
 /**
  * Return a pointer to the class descriptor associated with a
  * class type.
  *
- * @param type  Name of class
- * @return      Pointer to class descriptor
+ * @param NAME          Name of class
+ * @return              Pointer to class descriptor
  */
-#define OBJ_CLASS(type)     (&(type ## _class))
+#define OBJ_CLASS(NAME)     (&(NAME ## _class))
 
 
 /**
@@ -181,15 +143,28 @@ struct lam_object_t {
  * @param PARENT        Name of parent class
  * @param CONSTRUCTOR   Pointer to constructor
  * @param DESTRUCTOR    Pointer to destructor
+ *
+ * Put this in NAME.c
  */
-#define OBJ_CLASS_INSTANCE(NAME, PARENT, CONSTRUCTOR, DESTRUCTOR)   \
-    lam_class_t NAME ## _class = { \
-        # NAME, \
-        OBJ_CLASS(PARENT), \
-        (lam_construct_t)CONSTRUCTOR, \
-        (lam_destruct_t)DESTRUCTOR, \
-        0, 0, NULL, NULL \
+#define OBJ_CLASS_INSTANCE(NAME, PARENT, CONSTRUCTOR, DESTRUCTOR)       \
+    lam_class_t NAME ## _class = {                                      \
+        # NAME,                                                         \
+        OBJ_CLASS(PARENT),                                              \
+        (lam_construct_t)CONSTRUCTOR,                                   \
+        (lam_destruct_t)DESTRUCTOR,                                     \
+        0, 0, NULL, NULL                                                \
     }
+
+
+/**
+ * Declaration for class descriptor
+ *
+ * @param NAME          Name of class
+ *
+ * Put this in NAME.h
+ */
+#define OBJ_CLASS_DECLARATION(NAME) \
+    extern lam_class_t NAME ## _class
 
 
 /**
@@ -263,11 +238,52 @@ struct lam_object_t {
     } while (0)
 
 
+/* typedefs ***********************************************************/
+
+typedef struct lam_object_t lam_object_t;
+typedef struct lam_class_t lam_class_t;
+typedef void (*lam_construct_t) (lam_object_t *);
+typedef void (*lam_destruct_t) (lam_object_t *);
+
+
+/* types **************************************************************/
+
+/**
+ * Class descriptor.
+ *
+ * There should be a single instance of this descriptor for each class
+ * definition.
+ */
+struct lam_class_t {
+    const char *cls_name;          /**< symbolic name for class */
+    lam_class_t *cls_parent;       /**< parent class descriptor */
+    lam_construct_t cls_construct; /**< class constructor */
+    lam_destruct_t cls_destruct;   /**< class destructor */
+    int cls_initialized;           /**< is class initialized */
+    int cls_depth;                 /**< depth of class hierarchy tree */
+    lam_construct_t *cls_construct_array;
+                                   /**< array of parent class constructors */
+    lam_destruct_t *cls_destruct_array;
+                                   /**< array of parent class destructors */
+};
+
+
+/**
+ * Base object.
+ *
+ * This is special and does not follow the pattern for other classes.
+ */
+struct lam_object_t {
+    lam_class_t *obj_class;        /**< class descriptor */
+    int obj_reference_count;       /**< reference count */
+};
+
+OBJ_CLASS_DECLARATION(lam_object_t);
+
+
 /* declarations *******************************************************/
 
 BEGIN_C_DECLS
-
-extern lam_class_t lam_object_t_class;
 
 /**
  * Lazy initialization of class descriptor.
