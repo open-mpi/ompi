@@ -91,6 +91,8 @@ mca_ns_base_vpid_t mca_ns_replica_reserve_range(
  */
 mca_ns_base_vpid_t mca_ns_replica_get_allocated_vpids(mca_ns_base_jobid_t jobid);
 
+OMPI_COMP_EXPORT extern mca_ns_base_component_t mca_ns_replica_component;
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

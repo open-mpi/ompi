@@ -194,6 +194,8 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
    */
     int mca_allocator_bucket_finalize(mca_allocator_base_module_t * mem);
 
+OMPI_COMP_EXPORT extern mca_allocator_base_component_t mca_allocator_bucket_component;
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

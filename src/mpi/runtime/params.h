@@ -70,7 +70,7 @@ OMPI_DECLSPEC extern bool ompi_debug_no_free_handles;
      * Registers several MCA parameters and initializes corresponding
      * global variables to the values obtained from the MCA system.
      */
-    int ompi_mpi_register_params(void);
+OMPI_DECLSPEC int ompi_mpi_register_params(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

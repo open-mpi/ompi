@@ -42,6 +42,7 @@ int mca_ns_proxy_finalize(void);
  * globals used within proxy component
  */
 
+OMPI_COMP_EXPORT extern mca_ns_base_component_t mca_ns_proxy_component;
 extern ompi_process_name_t *mca_ns_my_replica;
 extern int mca_ns_proxy_debug;
 

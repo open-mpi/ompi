@@ -36,9 +36,13 @@
 #            define OMPI_DECLSPEC __declspec(dllimport)
 #        endif
 #   endif
+#   ifndef OMPI_DECLSPEC 
+    /* this is for the applications. here WIN32 is defined, but no OMPI_BUILDING */
+#       define OMPI_DECLSPEC __declspec(dllimport)
+#   endif
 #endif
 
-#ifndef OMPI_DECLSPEC
+#ifndef OMPI_DECLSPEC 
 #define OMPI_DECLSPEC
 #endif
 

@@ -225,7 +225,7 @@ struct ompi_communicator_t {
      * Initialise MPI_COMM_WORLD and MPI_COMM_SELF 
      */
     int ompi_comm_init(void);
-    int ompi_comm_link_function(void);
+    OMPI_DECLSPEC int ompi_comm_link_function(void);
     
     /** 
      * extract the local group from a communicator 

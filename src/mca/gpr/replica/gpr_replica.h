@@ -32,6 +32,9 @@
 /*
  * typedefs needed in replica component
  */
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * Define the registry "key"
@@ -259,7 +262,7 @@ extern ompi_mutex_t mca_gpr_replica_wait_for_compound_mutex;      /**< Lock to p
 extern ompi_condition_t mca_gpr_replica_compound_cmd_condition;   /**< Condition variable to control thread access to build compound cmd */
 extern int mca_gpr_replica_compound_cmd_waiting;                  /**< Count number of threads waiting to build compound cmd */
 extern bool mca_gpr_replica_silent_mode;                          /**< Indicates if local silent mode active */
-
+OMPI_COMP_EXPORT extern mca_gpr_base_component_t mca_gpr_replica_component;
 
 /*
  * Module open / close
@@ -431,4 +434,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 void mca_gpr_replica_remote_notify(ompi_process_name_t *recipient, int recipient_tag,
 			       ompi_registry_notify_message_t *message);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
