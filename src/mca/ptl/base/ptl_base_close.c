@@ -41,7 +41,12 @@ int mca_ptl_base_close(void)
                               &mca_ptl_base_components_opened, NULL);
   }
 
-  /* All done */
+  /* cleanup */
+  if(NULL != mca_ptl_base_include)
+     free(mca_ptl_base_include);
+  if(NULL != mca_ptl_base_exclude)
+     free(mca_ptl_base_exclude);
 
+  /* All done */
   return OMPI_SUCCESS;
 }

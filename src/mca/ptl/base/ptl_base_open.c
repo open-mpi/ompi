@@ -26,8 +26,8 @@
  * Global variables
  */
 int mca_ptl_base_output = -1;
-char* mca_ptl_base_include = "";
-char* mca_ptl_base_exclude = "";
+char* mca_ptl_base_include = NULL;
+char* mca_ptl_base_exclude = NULL;
 ompi_list_t mca_ptl_base_components_opened;
 ompi_list_t mca_ptl_base_modules_initialized;
 

@@ -10,9 +10,6 @@
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
 
-extern char* mca_ptl_base_include; /* list of ptls to include */
-extern char* mca_ptl_base_exclude; /* list of ptls to exclude */
-
 /**
  * Function for weeding out ptl components that don't want to run.
  *
