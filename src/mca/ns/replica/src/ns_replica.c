@@ -22,11 +22,11 @@
 
 mca_ns_base_cellid_t ns_replica_create_cellid(void)
 {
-    if ((MCA_NS_BASE_CELLID_MAX-2) >= mca_ns_replica_last_used_cellid) {
+    if ((OMPI_NAME_SERVICE_MAX-1) >= mca_ns_replica_last_used_cellid) {
 	mca_ns_replica_last_used_cellid = mca_ns_replica_last_used_cellid + 1;
 	return(mca_ns_replica_last_used_cellid);
     } else {
-	return MCA_NS_BASE_CELLID_MAX;
+	return(0);
     }
 }
 
@@ -34,7 +34,7 @@ mca_ns_base_jobid_t ns_replica_create_jobid(void)
 {
     mca_ns_replica_name_tracker_t *new;
 
-    if ((MCA_NS_BASE_JOBID_MAX-2) >= mca_ns_replica_last_used_jobid) {
+    if ((OMPI_NAME_SERVICE_MAX-1) >= mca_ns_replica_last_used_jobid) {
 	mca_ns_replica_last_used_jobid = mca_ns_replica_last_used_jobid + 1;
 	new = OBJ_NEW(mca_ns_replica_name_tracker_t);
 	new->job = mca_ns_replica_last_used_jobid;
@@ -42,7 +42,7 @@ mca_ns_base_jobid_t ns_replica_create_jobid(void)
 	ompi_list_append(&mca_ns_replica_name_tracker, &new->item);
 	return(mca_ns_replica_last_used_jobid);
     } else {
-	return MCA_NS_BASE_JOBID_MAX;
+	return(0);
     }
 }
 
@@ -56,14 +56,14 @@ mca_ns_base_vpid_t ns_replica_reserve_range(mca_ns_base_jobid_t job, mca_ns_base
 	 ptr != (mca_ns_replica_name_tracker_t*)ompi_list_get_end(&mca_ns_replica_name_tracker);
 	 ptr = (mca_ns_replica_name_tracker_t*)ompi_list_get_next(ptr)) {
 	if (job == ptr->job) { /* found the specified job */
-	    if ((MCA_NS_BASE_VPID_MAX-range-2) >= ptr->last_used_vpid) {  /* requested range available */
+	    if ((OMPI_NAME_SERVICE_MAX-range-1) >= ptr->last_used_vpid) {  /* requested range available */
 		start = ptr->last_used_vpid + 1;
 		ptr->last_used_vpid = ptr->last_used_vpid + range;
 		return(start);
 	    }
 	}
     }
-    return MCA_NS_BASE_VPID_MAX;
+    return(0);
 }
 
 
