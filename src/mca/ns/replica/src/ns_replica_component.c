@@ -152,6 +152,7 @@ orte_rml_tag_t orte_ns_replica_next_rml_tag;
 ompi_list_t orte_ns_replica_taglist;
 int orte_ns_replica_debug;
 ompi_mutex_t orte_ns_replica_mutex;
+int orte_ns_replica_isolate;
 
 /*
  * don't really need this function - could just put NULL in the above structure
@@ -161,8 +162,11 @@ int orte_ns_replica_open(void)
 {
     int id;
 
-    id = mca_base_param_register_int("ns", "replica", "debug", NULL, 0);
+    id = mca_base_param_register_int("ns", "replica", "debug", NULL, (int)false);
     mca_base_param_lookup_int(id, &orte_ns_replica_debug);
+
+    id = mca_base_param_register_int("ns", "replica", "isolate", NULL, (int)false);
+    mca_base_param_lookup_int(id, &orte_ns_replica_isolate);
 
     return ORTE_SUCCESS;
 }
@@ -228,6 +232,10 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
 
 int orte_ns_replica_module_init(void)
 {
+    if (orte_ns_replica_isolate) {
+        return ORTE_SUCCESS;
+    }
+    
     /* issue non-blocking receive for call_back function */
     return orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_NS, 0, orte_ns_replica_recv, NULL);
 }
@@ -258,6 +266,10 @@ int orte_ns_replica_finalize(void)
     }
 
     /* All done */
+    if (orte_ns_replica_isolate) {
+        return ORTE_SUCCESS;
+    }
+    
     orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_NS);
     return ORTE_SUCCESS;
 }

@@ -36,7 +36,7 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid)
 {
     OMPI_THREAD_LOCK(&orte_ns_replica_mutex);
 
-    if (ORTE_CELLID_MAX < orte_ns_replica_next_cellid) {
+    if (ORTE_CELLID_MAX > orte_ns_replica_next_cellid) {
        *cellid = orte_ns_replica_next_cellid;
 	   orte_ns_replica_next_cellid++;
 	   OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
