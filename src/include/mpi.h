@@ -165,7 +165,7 @@ enum {
  * Error classes
  */
 enum {
-  MPI_ERR_BUFFER = 1, /* invalid buffer pointer */
+  MPI_ERR_BUFFER = -10000, /* invalid buffer pointer */
   MPI_ERR_COUNT, /* invalid count argument */
   MPI_ERR_TYPE, /* invalid datatype argument */
   MPI_ERR_TAG, /* invalid tag argument */
