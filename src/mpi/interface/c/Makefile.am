@@ -27,7 +27,42 @@ libmpi_c_la_SOURCES = \
 	comm_set_name.c \
 	init.c \
 	finalize.c \
-        free_mem.c
+        free_mem.c \
+	type_commit.c \
+	type_contiguous.c \
+	type_create_darray.c \
+	type_create_f90_complex.c \
+	type_create_f90_integer.c \
+	type_create_f90_real.c \
+	type_create_hindexed.c \
+	type_create_hvector.c \
+	type_create_indexed_block.c \
+	type_create_keyval.c \
+	type_create_resized.c \
+	type_create_struct.c \
+	type_create_subarray.c \
+	type_delete_attr.c \
+	type_dup.c \
+	type_extent.c \
+	type_free.c \
+	type_free_keyval.c \
+	type_get_attr.c \
+	type_get_contents.c \
+	type_get_envelope.c \
+	type_get_extent.c \
+	type_get_name.c \
+	type_get_true_extent.c \
+	type_hindexed.c \
+	type_hvector.c \
+	type_indexed.c \
+	type_lb.c \
+	type_match_size.c \
+	type_set_attr.c \
+	type_set_name.c \
+	type_size.c \
+	type_struct.c \
+	type_ub.c \
+	type_vector.c
 
 libmpi_c_la_LIBADD	= $(profile_lib)
 
