@@ -10,6 +10,7 @@
 
 #define ARGSIZE 128
 
+/** @file **/
 
 /**
  * Append a string to an new or existing NULL-terminated argv array.
