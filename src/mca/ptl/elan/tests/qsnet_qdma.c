@@ -1,39 +1,33 @@
 #include "qsnet/fence.h"
 #include "ptl_elan.h"
 #include "ptl_elan_priv.h"
+#include "test_util.h"
 
 extern mca_ptl_elan_module_1_0_0_t mca_ptl_elan_module;
 
-int test_qdma(mca_ptl_elan_module_1_0_0_t *emp, int reps);
-
-int ptl_elan_init_event();
-int ptl_elan_free_event();
-int ptl_elan_poll_event();
-int ptl_elan_wait_event();
-
-int ptl_elan_queue_send();  /* Initialize a Tx event */
+int ptl_elan_queue_send(); /* Initialize a Tx event */
 int ptl_elan_queue_recv(); /* Wait for a recv event */
+int test_qdma(mca_ptl_elan_module_1_0_0_t *emp, int reps);
 
 int main (int argc, char ** argv)
 {
-    /* Initialization test */
-    ompi_mca_ptl_elan_init (&mca_ptl_elan_module);
+    bool  allow_threads;
+    bool  have_hidden_threads;
+    int   input;
+    int   num;
 
-    /* Please replace with a barrier at the beginning */
+    /* Get some environmental variables set for Open MPI, OOB */
+    env_init_for_elan();
 
-    sleep(5); /* Sleep 5 seconds for others to catch up */
+    /* Initialization */
+    mca_ptl_elan_module_open();
+    mca_ptl_elan_module_init(&num, &allow_threads, &have_hidden_threads);
+    mca_ptl_elan_module_control(1, &input, 4);
 
+    /* Testing QDMA */
     test_qdma(&mca_ptl_elan_module, 1);
 
-    /* Please replace with a barrier at the end */
-    sleep(5); /* Sleep 5 seconds for others to catch up */
-
-    /* Finalize the device */
-    ompi_mca_ptl_elan_finalize (&mca_ptl_elan_module);
-
-    /* Tell alive */
-    fprintf(stdout, "I am still alive\n");
-    fflush(stdout);
+    mca_ptl_elan_module_close();
     return 0;
 }
 
@@ -57,7 +51,6 @@ int test_qdma(mca_ptl_elan_module_1_0_0_t *emp, int reps)
 
     if (0 != ptl->elan_vp) {
         r--;
-        /*elan_queueRxWait(qr,rbuf,waitType);*/
         ptl_elan_queue_recv();
     }
 
@@ -89,7 +82,3 @@ int ptl_elan_queue_recv ()
     return OMPI_SUCCESS;
 }
 
-int ptl_elan_init_event() 
-{
-    return OMPI_SUCCESS;
-}

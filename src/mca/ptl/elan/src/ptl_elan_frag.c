@@ -39,7 +39,7 @@ ompi_class_t mca_ptl_elan_send_frag_t_class = {
 static void
 mca_ptl_elan_recv_frag_construct (mca_ptl_elan_recv_frag_t * frag)
 {
-    OBJ_CONSTRUCT (frag, mca_ptl_elan_recv_frag_t);
+    /*OBJ_CONSTRUCT (frag, mca_ptl_elan_recv_frag_t);*/
     frag->frag_hdr_cnt = 0;
     frag->frag_msg_cnt = 0;
     frag->frag.qdma = NULL;
@@ -63,7 +63,7 @@ mca_ptl_elan_recv_frag_destruct (mca_ptl_elan_recv_frag_t * frag)
     free (frag->alloc_buff);
     frag->alloc_buff = NULL;
     frag->unex_buff = NULL;
-    OBJ_DESTRUCT (frag);
+    /*OBJ_DESTRUCT (frag);*/
 }
 
 ompi_class_t mca_ptl_elan_recv_frag_t_class = {

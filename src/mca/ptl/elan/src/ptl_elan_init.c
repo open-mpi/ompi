@@ -176,6 +176,16 @@ ompi_elan_attach_network (mca_ptl_elan_state_t * ems)
         return OMPI_ERROR;
     }
 
+    /* Allocate more than we need to keep the heap in sync */
+    ems->elan_localvps = (int *) malloc (sizeof (int) * (ems->elan_nvp + 1));
+
+    if (NULL == ems->elan_localvps) {
+        ompi_output (0,
+                     "[%s:%d] error in malloc for elan_localvps \n", 
+		     __FILE__, __LINE__);
+        return OMPI_ERROR;
+    }
+
     /* Set all to non local initially */
     for (vp = 0; vp < ems->elan_nvp; vp++)
         ems->elan_localvps[vp] = -1;
