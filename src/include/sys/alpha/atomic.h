@@ -6,14 +6,14 @@
 #define LAM_SYS_ATOMIC_H_INCLUDED
 
 /*
- * On powerpc ...
+ * On alpha, everything is load-locked, store-conditional...
  */
 
 #ifdef HAVE_SMP
 
-#define MB()  __asm__ __volatile__ ("sync" : : : "memory")
-#define RMB() __asm__ __volatile__ ("lwsync" : : : "memory")
-#define WMB() __asm__ __volatile__ ("eieio" : : : "memory")
+#define MB()  __asm__ __volatile__ ("mb");
+#define RMB() __asm__ __volatile__ ("mb");
+#define WMB() __asm__ __volatile__ ("wmb");
 
 #else
 
@@ -48,18 +48,21 @@ static inline int lam_atomic_cmpset_32(volatile uint32_t *addr,
 {
     uint32_t ret;
 
-    __asm__ __volatile__ (
-"1: lwarx   %0, 0, %2  \n\
-    cmpw    0, %0, %3  \n\
-    bne-    2f         \n\
-    stwcx.  %4, 0, %2  \n\
-    bne-    1b         \n\
-2:"
-    : "=&r" (ret), "=m" (*addr)
-    : "r" (addr), "r" (old), "r" (new), "m" (*addr)
-    : "cc", "memory");
+    __asm __volatile__ (
+"1:  ldl_l %0, %1        // load old value            \n\
+     cmpeq %0, %2, %0    // compare                   \n\
+     beq %0, 2f          // exit if not equal         \n\
+     mov %3, %0          // value to store            \n\
+     stl_c %0, %1        // attempt to store          \n\
+     beq %0, 3f          // if failed, try again      \n\
+2:                       // done                      \n\
+3:   br 1b               // try again                 \n\
+.previous               \n"
+    : "=&r" (ret), "+m" (*addr)
+    : "r" (old), "r" (new)
+    : "memory");
 
-    return (ret == old);
+    return ret;
 }
 
 
@@ -89,20 +92,23 @@ static inline int lam_atomic_cmpset_64(volatile uint64_t *addr,
                                        uint64_t old,
                                        uint64_t new)
 {
-    uint64_t ret;
+    uint32_t ret;
 
     __asm__ __volatile__ (
-"1: ldarx   %0, 0, %2  \n\
-    cmpd    0, %0, %3  \n\
-    bne-    2f         \n\
-    stdcx.  %4, 0, %2  \n\
-    bne-    1b         \n\
-2:"
-    : "=&r" (ret), "=m" (*addr)
-    : "r" (addr), "r" (old), "r" (new), "m" (*addr)
-    : "cc", "memory");
+"1:  ldq_l %0, %1        // load old value            \n\
+     cmpeq %0, %2, %0    // compare                   \n\
+     beq %0, 2f          // exit if not equal         \n\
+     mov %3, %0          // value to store            \n\
+     stq_c %0, %1        // attempt to store          \n\
+     beq %0, 3f          // if failed, try again      \n\
+2:                       // done                      \n\
+3:   br 1b               // try again                 \n\
+.previous               \n"
+    : "=&r" (ret), "+m" (*addr)
+    : "r" (old), "r" (new)
+    : "memory");
 
-    return (ret == old);
+    return ret;
 }
 
 
