@@ -103,7 +103,7 @@ do {                                                           \
 #define  OMPI_PTL_ELAN_ZERO_FFRAG    (0)
 
 #define  OMPI_PTL_ELAN_ENABLE_GET    (0)
-#define  OMPI_PTL_ELAN_COMP_QUEUE    (1) 
+#define  OMPI_PTL_ELAN_COMP_QUEUE    (0) 
 #define  OMPI_PTL_ELAN_THREADING      \
     (OMPI_PTL_ELAN_COMP_QUEUE && OMPI_HAVE_POSIX_THREADS)
 

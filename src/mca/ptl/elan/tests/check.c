@@ -9,7 +9,7 @@
 
 #define MYBUFSIZE (4*1024*1024)
 #define CHECK 1
-#define PONG 0
+#define PONG 1
 
 char        s_buf[MYBUFSIZE];
 char        r_buf[MYBUFSIZE];
