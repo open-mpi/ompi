@@ -40,11 +40,11 @@ mca_base_msgbuf_t mca_base_msgbuf_new (size_t reqsize)
 /* make a copy of an existing buffer */
 /* this is usefull for the registry and is needed as unpack is */
 /* destructive */
-mca_base_msgbuf_t mca_base_msgbuf_copy (mca_base_msgbuf_t* copybufid, 
+int  mca_base_msgbuf_copy (mca_base_msgbuf_t* copybufid, 
                                          mca_base_msgbuf_t orgbufid)
 {
   if (!initialized) mca_base_msgbuf_init ();
-  return ((mca_base_msgbuf_t)OMPI_ERR_NOT_SUPPORTED);
+  return (OMPI_ERR_NOT_SUPPORTED);
 }
 
 /* set a buffer. As base_pack send/recv handles buffer you might not want */
@@ -57,7 +57,7 @@ mca_base_msgbuf_t mca_base_msgbuf_construct (void* ptr, size_t datasize)
 }
 
 /* explicit free of a buffer when not auto freeing them */
-int mca_base_msgbuf_free (mca_base_msgbuf_t bufid)
+int mca_base_msgbuf_free (mca_base_msgbuf_t* bufid)
 {
   if (!initialized) mca_base_msgbuf_init ();
   return OMPI_ERR_NOT_SUPPORTED;

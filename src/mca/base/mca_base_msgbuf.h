@@ -50,32 +50,109 @@ typedef enum {
 
 typedef struct mca_base_msgbuffer_s* mca_base_msgbuf_t;
 
-
-/* get/create a free buffer */
-/* if reqsize = MCA_BASE_MSGBUF_GETBUF, then the system gives an unlimited buffer. */
-/* Giving a req size just makes it more memory efficient. */
+/* 
+ * get/create a free buffer 
+ * 
+ * @param reqsize requested size for the buffer
+ *
+ * @retval mca_base_msgbuf_t handle to a message buffer
+ * 
+ * if reqsize = MCA_BASE_MSGBUF_GETBUF, then the system gives an 
+ * unlimited buffer. 
+ *
+ * Giving a req size just makes it more memory efficient. */
 mca_base_msgbuf_t mca_base_msgbuf_new (size_t reqsize);
 
-/* make a copy of an existing buffer */
-/* this is usefull for the registry and is needed as unpack is */
-/* destructive */
-mca_base_msgbuf_t mca_base_msgbuf_copy (mca_base_msgbuf_t* copybufid, mca_base_msgbuf_t orgbufid);
+/* make a copy of an existing buffer 
+ * 
+ * @param mca_base_msgbuf_t handle to an existing message buffer
+ * @param return a new buffer handle via a pointer argument
+ * 
+ * @retval sucess or failue int
+ *
+ * this is usefull for the registry and is needed as unpack is 
+ * destructive */
+int  mca_base_msgbuf_copy (mca_base_msgbuf_t* copybufid, mca_base_msgbuf_t orgbufid);
 
-/* set a buffer. As base_pack send/recv handles buffer you might not want */
-/* to pack a buffer but do a send from memory directly */
-/* a free on this special buffer just frees its structure not the memory */
+/* set a buffer to a block of memory so that you do not pack/memory copy
+ *
+ * @param ptr Pointer to users memory to be send
+ * @param datasize Length of the memory in bytes that needs to be sent
+ * 
+ * @retval mca_base_msgbuf_t message buffer that points to this userdata
+ *
+ * As base_pack send/recv handles buffer you might not want 
+ * to pack a buffer but do a send from memory directly 
+ * a free on this special buffer just frees its structure not the memory 
+ */
 mca_base_msgbuf_t mca_base_msgbuf_construct (void* ptr, size_t datasize);
 
-/* explicit free of a buffer when not auto freeing them */
-int mca_base_msgbuf_free (mca_base_msgbuf_t bufid);
+/* explicit free of a buffer when not auto freeing them 
+ * 
+ * @param mca_base_msgbuf_t buffer handle that you request to be freed
+ *
+ * @retval success or error code
+ *
+ * This routine resets the handle the user passing inso that they can only 
+ * free it once
+ */
+int mca_base_msgbuf_free (mca_base_msgbuf_t* bufid);
 
-/* pack and unpack non-string typed data */
+/* pack and non-string typed data 
+ *
+ * @param mca_base_msgbuf_t bufid buffer handle where data is packed
+ * @param void* ptr Pointer to users memory to pack from
+ * @param size_t num_items Number of items to pack into buffer bufid
+ * @param mca_base_msgbuf_data_t datatype Type of item being packed
+ * 
+ * @retval if zero or greater the items packed, if negative error code
+ *
+ * If the buffer fills up, it will automatically resize unless allocated
+ * with fixed buffer size.
+ */
 int  mca_base_msgbuf_pack (mca_base_msgbuf_t bufid, void* ptr, size_t num_items, mca_base_msgbuf_data_t datatype);
+
+
+/* unpack non-string typed data 
+ *
+ * @param mca_base_msgbuf_t bufid buffer handle where data is packed
+ * @param void* ptr Pointer to users memory to unpack into
+ * @param size_t num_items Number of items to unpack from the buffer bufid
+ * @param mca_base_msgbuf_data_t datatype Type of item being unpacked
+ * 
+ * @retval if zero or greater the items unpacked, if negative error code
+ *
+ * Once the buffer empties, the buffer is freed. 
+ * If the remain data in the buffer is not large enought for the unpack 
+ * request, the routine will unpack what it can and then return an error.
+ * The user is responsible for unpacking a message correctly.
+ */
 int  mca_base_msgbuf_unpack (mca_base_msgbuf_t bufid, void* ptr, size_t num_items, mca_base_msgbuf_data_t datatype);
 
-/* handles strings */
-/* note this takes NULL terminated strings and returns null terminated strings */
+/* pack a NULL terminated string 
+ *
+ * @param mca_base_msgbuf_t bufid buffer handle where data is packed
+ * @param strptr Pointer to NULL terminated string to pack
+ * 
+ * @retval if zero or greater the items packed, if negative error code
+ *
+ * If the buffer fills up, it will automatically resize unless allocated
+ * with a fixed buffer size.
+ */
 int  mca_base_msgbuf_pack_string (mca_base_msgbuf_t bufid, char* strptr);
+
+/* unpack a NULL terminated string 
+ *
+ * @param mca_base_msgbuf_t bufid buffer handle where data is already packed
+ * @param char* strptr Pointer to memory to unpack string into
+ * @param maxlen maximum size of the memory available to unpack into
+ * 
+ * @retval if zero or greater the items (un)packed, if negative error code
+ *
+ * If the memory given is smaller than the string (strlen(str)) + 1 
+ * then the routine truncates the string but always NULL terminates it.
+ *
+ */
 int  mca_base_msgbuf_unpack_string (mca_base_msgbuf_t bufid, char* strptr, size_t maxlen);
 
 
