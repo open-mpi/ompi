@@ -104,5 +104,6 @@ dir=$(top_srcdir)/mpi-io
 $(libmpi_io_la_SOURCES):
 	if test ! -r $@ ; then \
 		pname=`echo $@ | cut -b '19-'` ; \
+		rm -f $@; \
 		ln -s $(dir)/$$pname $@ ; \
 	fi
