@@ -189,9 +189,8 @@ int main (int argc, char* argv[])
       test_failure("orte_dps test14 failed");
     }
 
-    test_finalize();
     fclose(test_out);
-    return (0);
+    return test_finalize();
 }
 
 static bool test1(void)        /* verify different buffer inits */
