@@ -49,6 +49,9 @@ int mca_oob_tcp_close(void)
     return OMPI_ERROR;
 }
 
+ompi_list_t mca_oob_tcp_peer_list;
+ompi_rb_tree_t mca_oob_tcp_peer_tree;
+
 /*
  * this function will temporarily return NULL so we don't use it
  */
