@@ -99,11 +99,6 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         return NULL;
     }
 
-    /* debug */
-    fprintf(stderr," open %s \n",file_name);
-    fflush(stderr);
-    /* end debug */
-
     /* open the backing file - only the first process accessing this
      * file will succeed. */
     fd=mca_common_sm_mmap_open(file_name);

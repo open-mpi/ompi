@@ -169,13 +169,36 @@ int mca_ptl_sm_component_open(void)
 
 int mca_ptl_sm_component_close(void)
 {
+    int return_value=OMPI_SUCCESS;
+
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_lock);
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_send_requests);
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_first_frags);
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_second_frags);
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_pending_ack_lock);
     OBJ_DESTRUCT(&mca_ptl_sm_component.sm_pending_ack);
-    return OMPI_SUCCESS;
+
+    /* unmap the shared memory control structure */
+    return_value=munmap(mca_ptl_sm_component.mmap_file->map_addr,
+            mca_ptl_sm_component.mmap_file->map_size);
+    if(-1 == return_value) {
+        return_value=OMPI_ERROR;
+        ompi_output(0," munmap failed :: file - %s :: errno - %d \n",
+                mca_ptl_sm_component.mmap_file->map_addr,
+                errno);
+        goto CLEANUP;
+    }
+
+    /* unlink file, so that it will be deleted when all references
+     * to it are gone - no error checking, since we want all procs
+     * to call this, so that in an abnormal termination scanario,
+     * this file will still get cleaned up */
+    unlink(mca_ptl_sm_component.mmap_file->map_path);
+
+CLEANUP:
+
+    /* return */
+    return return_value;
 }
 
 
