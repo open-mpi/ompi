@@ -26,7 +26,7 @@ ompi_debug=0
 #
 ######################################################################
 ompi_hostfile=""
-ompi_jobid=""
+ompi_jobhandle=""
 ompi_app_args=""
 ompi_mydir=""
 ompi_cwd="`pwd`"
@@ -154,8 +154,8 @@ do_start_proc() {
     local cmd=""
 
     cmd="ssh ${rmt_hostname} -f -n ${rmt_boot} "
-    cmd="${cmd} -myvpid ${rmt_vpid}"
-    cmd="${cmd} -numprocs ${ompi_numprocs} -cellid 1 -jobid ${ompi_jobid}"
+    cmd="${cmd} -cellid 1 -jobid ${ompi_jobid} -procid ${rmt_vpid}"
+    cmd="${cmd} -numprocs ${ompi_numprocs}"
     cmd="${cmd} -pwd ${ompi_cwd} ${ompi_prepped}"
     if test ! -z "${MCA_common_ompi_cofs_comm_dir}" ; then
         cmd="${cmd} -commdir ${MCA_common_ompi_cofs_comm_dir}"
@@ -243,10 +243,6 @@ ompi_jobid="${$}"
 make_hosts_list
 
 launch_procs "${ompi_app_args}"
-
-echo ""
-echo "Processes should be running.  I'm going to exit now.  Need to add sleeping"
-echo ""
 
 exit 0
 

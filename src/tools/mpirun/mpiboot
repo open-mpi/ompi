@@ -17,10 +17,9 @@
 # Some basic defaults
 #
 ######################################################################
-ompi_cellid=""
-ompi_jobid=""
 ompi_procid=""
 ompi_numprocs=""
+ompi_jobid=""
 ompi_commdir=""
 
 ######################################################################
@@ -40,6 +39,11 @@ for i ; do
             ompi_cellid="${1}"
             shift
             ;;
+        -jobid)
+            shift
+            ompi_jobid="${1}"
+            shift
+            ;;
         -procid)
             shift
             ompi_procid="${1}"
@@ -48,11 +52,6 @@ for i ; do
         -numprocs)
             shift
             ompi_numprocs="${1}"
-            shift
-            ;;
-        -jobid)
-            shift
-            ompi_jobid="${1}"
             shift
             ;;
         -commdir)
@@ -85,7 +84,7 @@ if test "${args_err}" != "0" ; then
     exit 1
 fi
 if test -z "${1}" ; then
-    echo "Did not find app to execute"
+    echo "Did not find app to execute: " ${1}
     exit 2
 fi
 
@@ -99,7 +98,7 @@ export OMPI_MCA_pcm_cofs_jobid="${ompi_jobid}"
 export OMPI_MCA_pcm_cofs_procid="${ompi_procid}"
 export OMPI_MCA_pcm_cofs_num_procs="${ompi_numprocs}"
 if test ! -z "${ompi_commdir}"; then
-    export MCA_common_ompi_cofs_comm_dir="${ompi_commdir}"
+    export OMPI_MCA_oob_cofs_dir="${ompi_commdir}"
 fi
 
 ######################################################################
