@@ -35,7 +35,7 @@ mca_pcm_rms_allocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
     int total_procs;
 
     ret = OBJ_NEW(ompi_list_t);
-    if (NULL != ret) {
+    if (NULL == ret) {
         errno = ENOMEM;
         return NULL;
     }
