@@ -161,7 +161,10 @@ int
 lam_event_init(void)
 {
     static int inited = false;
-    int i, rc;
+    int i;
+#if LAM_HAVE_THREADS
+    int rc;
+#endif
 
     if(inited)
         return LAM_SUCCESS;
@@ -185,11 +188,13 @@ lam_event_init(void)
     if (lam_evbase == NULL)
         errx(1, "%s: no event mechanism available", __func__);
 
+#if LAM_HAVE_THREADS
     /* spin up a thread to dispatch events */
     OBJ_CONSTRUCT(&lam_event_thread, lam_thread_t);
     lam_event_thread.t_run = lam_event_run;
     if((rc = lam_thread_start(&lam_event_thread)) != LAM_SUCCESS)
         return rc;
+#endif
 
 #if defined(USE_LOG) && defined(USE_DEBUG)
     log_to(stderr);
@@ -302,7 +307,6 @@ lam_event_loop(int flags)
         }
     }
     lam_mutex_unlock(&lam_event_lock);
-    lam_output(0, "lam_event_loop: done");
     return (0);
 }
 

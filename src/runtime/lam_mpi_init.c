@@ -122,7 +122,8 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
         default */
 
      mca_base_param_lookup_int(param, &value);
-     lam_mpi_param_check = (bool) value;
+     /* lam_mpi_param_check = (bool) value; */
+     lam_mpi_param_check = false;
 
      /* do module exchange */
      if (LAM_SUCCESS != (ret = mca_base_modex_exchange())) {

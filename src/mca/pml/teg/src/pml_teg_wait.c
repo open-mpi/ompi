@@ -14,6 +14,7 @@ int mca_pml_teg_wait(
     int completed = -1;
     mca_pml_base_request_t* pml_request;
 
+#if LAM_HAVE_THREADS
     /* poll for completion */
     for(c=0; completed < 0 && c < mca_pml_teg.teg_poll_iterations; c++) {
         for(i=0; i<count; i++) {
@@ -26,6 +27,7 @@ int mca_pml_teg_wait(
             }
         }
     }
+#endif
 
     if(completed < 0) {
         /* give up and sleep until completion */
@@ -39,7 +41,7 @@ int mca_pml_teg_wait(
                     break;
                 }
             }
-            if(completed < 0)
+            if(completed < 0) 
                 lam_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
         } while(completed < 0);
         mca_pml_teg.teg_request_waiting--;

@@ -2,7 +2,7 @@
  * $HEADER$
  */
 #include "threads/mutex.h"
-#if defined(LAM_USE_PTHREADS)
+#if LAM_HAVE_POSIX_THREADS
 
 static void lam_mutex_construct(lam_mutex_t* m)
 {

@@ -5,7 +5,7 @@
 #define LAM_CONDITION_PTHREAD_H
 
 #include <pthread.h>
-#include "threads/mutex.h"
+#include "threads/mutex_pthread.h"
 
 
 struct lam_condition_t {

@@ -94,17 +94,14 @@ int mca_ptl_tcp_send_frag_init(
         } else {
 
             convertor = &sendfrag->frag_convertor;
-            if((rc = lam_convertor_copy(&sendreq->req_convertor, convertor)) != LAM_SUCCESS)
-                return rc;
-
-            if((rc = lam_convertor_init_for_send( 
+            lam_convertor_copy(&sendreq->req_convertor, convertor);
+            lam_convertor_init_for_send( 
                 convertor,
                 0, 
                 sendreq->super.req_datatype,
                 sendreq->super.req_count,
                 sendreq->super.req_addr,
-                sendreq->req_offset)) != LAM_SUCCESS)
-                return rc; 
+                sendreq->req_offset);
         }
 
         /* if data is contigous convertor will return an offset
@@ -113,8 +110,8 @@ int mca_ptl_tcp_send_frag_init(
          */
         sendfrag->frag_vec[1].iov_base = NULL;
         sendfrag->frag_vec[1].iov_len = size;
-        if((rc = lam_convertor_pack(convertor, &sendfrag->frag_vec[1], 1)) != LAM_SUCCESS)
-            return rc;
+        if((rc = lam_convertor_pack(convertor, &sendfrag->frag_vec[1], 1)) < 0)
+            return LAM_ERROR;
 
         /* adjust size and request offset to reflect actual number of bytes packed by convertor */
         size = sendfrag->frag_vec[1].iov_len;
@@ -133,7 +130,7 @@ int mca_ptl_tcp_send_frag_init(
     sendfrag->frag_vec_ptr = sendfrag->frag_vec;
     sendfrag->frag_vec_cnt = (size == 0) ? 1 : 2;
     sendfrag->frag_vec[0].iov_base = (lam_iov_base_ptr_t)hdr;
-    sendfrag->frag_vec[0].iov_len = hdr->hdr_common.hdr_size;
+    sendfrag->frag_vec[0].iov_len = sizeof(mca_ptl_base_header_t);
     return LAM_SUCCESS;
 }
 
