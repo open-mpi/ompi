@@ -71,6 +71,9 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
     /* Call a subroutine to do the work, because the component may
        represent different versions of the coll MCA. */
     
+    entry = OBJ_NEW(mca_base_component_priority_list_item_t);
+    entry->cpli_component = component;
+    entry->cpli_priority = 0;
     if (OMPI_SUCCESS == init_query(component, entry)) {
       
       /* Is this the basic component?  If so, save it, because it's
@@ -90,9 +93,6 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
          level for this process. */
       
       else {
-        entry = OBJ_NEW(mca_base_component_priority_list_item_t);
-        entry->cpli_component = component;
-        entry->cpli_priority = 0;
         ompi_list_append(&mca_coll_base_components_available, 
                          (ompi_list_item_t *) entry);
       }
@@ -107,6 +107,7 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
          the DSO repository (if it's there). */
       
       mca_base_module_repository_release(component);
+      OBJ_RELEASE(entry);
     }
 
     /* Free the entry from the "opened" list */
