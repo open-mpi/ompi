@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
     acted = true;
   }
   if (want_all || ompi_cmd_line_is_taken(cmd_line, "param")) {
-    do_params();
+    do_params(want_all);
     acted = true;
   }
 
