@@ -24,19 +24,19 @@
 #endif
 
 
-static inline ompi_atomic_mb(void)
+static inline void ompi_atomic_mb(void)
 {
     MB();
 }
 
 
-static inline ompi_atomic_rmb(void)
+static inline void ompi_atomic_rmb(void)
 {
     RMB();
 }
 
 
-static inline ompi_atomic_wmb(void)
+static inline void ompi_atomic_wmb(void)
 {
     WMB();
 }

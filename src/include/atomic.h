@@ -20,7 +20,7 @@
 
 #include "ompi_config.h"
 
-#if 0
+#if 1
 
 /*
  * prototypes
@@ -30,26 +30,26 @@
  * Atomic compare and set of unsigned 32-bit integer.
  *
  * @param addr          Address of integer.
- * @param cmp           Comparison value.
+ * @param old           Comparison value.
  * @param new           New value to set if comparision is true.
  *
  * Pseudo-code:
  *
  * @code
- *   int ompi_atomic_cmpset_acq_32(addr, cmp, new)
+ *   int ompi_atomic_cmpset_32(addr, old, new)
  *   {
- *       if (*addr == cmp) {
+ *       if (*addr == old) {
  *           *addr = new;
- *           return 1;
+ *           return 1;  // success, set value
  *       } else {
- *           return 0;
+ *           return 0;  // failure, do not set value
  *       }
  *   }
  * @endcode
  */
 static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
-                                       uint32_t cmp,
-                                       uint32_t new);
+                                        uint32_t old,
+                                        uint32_t new);
 
 
 /**
@@ -57,14 +57,14 @@ static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
  * semantics.
  *
  * @param addr          Address of integer.
- * @param cmp           Comparison value.
+ * @param old           Comparison value.
  * @param new           New value to set if comparision is true.
  *
  * See ompi_atomic_cmpset_32 for pseudo-code.
  */
 static inline int ompi_atomic_cmpset_acq_32(volatile uint32_t *addr,
-                                           uint32_t cmp,
-                                           uint32_t new);
+                                            uint32_t old,
+                                            uint32_t new);
 
 
 /**
@@ -72,28 +72,28 @@ static inline int ompi_atomic_cmpset_acq_32(volatile uint32_t *addr,
  * semantics.
  *
  * @param addr          Address of integer.
- * @param cmp           Comparison value.
+ * @param old           Comparison value.
  * @param new           New value to set if comparision is true.
  *
  * See ompi_atomic_cmpset_32 for pseudo-code.
  */
 static inline int ompi_atomic_cmpset_rel_32(volatile uint32_t *addr,
-                                           uint32_t cmp,
-                                           uint32_t new);
+                                            uint32_t old,
+                                            uint32_t new);
 
 
 /**
  * Atomic compare and set of unsigned 64-bit integer.
  *
  * @param addr          Address of integer.
- * @param cmp           Comparison value.
+ * @param old           Comparison value.
  * @param new           New value to set if comparision is true.
  *
  * See ompi_atomic_cmpset_32 for pseudo-code.
  */
-static inline int ompi_atomic_cmpset_acq_64(volatile uint64_t *addr,
-                                           uint64_t cmp,
-                                           uint64_t new);
+static inline int ompi_atomic_cmpset_64(volatile uint64_t *addr,
+                                        uint64_t old,
+                                        uint64_t new);
 
 
 /**
@@ -101,14 +101,14 @@ static inline int ompi_atomic_cmpset_acq_64(volatile uint64_t *addr,
  * semantics.
  *
  * @param addr          Address of integer.
- * @param cmp           Comparison value.
+ * @param old           Comparison value.
  * @param new           New value to set if comparision is true.
  *
  * See ompi_atomic_cmpset_32 for pseudo-code.
  */
 static inline int ompi_atomic_cmpset_acq_64(volatile uint64_t *addr,
-                                           uint64_t cmp,
-                                           uint64_t new);
+                                            uint64_t old,
+                                            uint64_t new);
 
 
 /**
@@ -116,98 +116,98 @@ static inline int ompi_atomic_cmpset_acq_64(volatile uint64_t *addr,
  * semantics.
  *
  * @param addr          Address of integer.
- * @param cmp           Comparison value.
+ * @param old           Comparison value.
  * @param new           New value to set if comparision is true.
  *
  * See ompi_atomic_cmpset_32 for pseudo-code.
  */
 static inline int ompi_atomic_cmpset_rel_64(volatile uint64_t *addr,
-                                           uint64_t cmp,
-                                           uint64_t new);
+                                            uint64_t old,
+                                            uint64_t new);
 
 
 /**
  * Atomic compare and set of integer.
  *
  * @param addr          Address of integer.
- * @param cmp           Comparison value.
+ * @param old           Comparison value.
  * @param new           New value to set if comparision is true.
  *
  * See ompi_atomic_cmpset_32 for pseudo-code.
  */
-static inline int ompi_atomic_cmpset_acq_int(volatile int *addr,
-                                            int cmp,
-                                            int new);
+static inline int ompi_atomic_cmpset_int(volatile int *addr,
+                                         int old,
+                                         int new);
 
 
 /**
  * Atomic compare and set of integer with acquire semantics.
  *
  * @param addr          Address of integer.
- * @param cmp           Comparison value.
+ * @param old           Comparison value.
  * @param new           New value to set if comparision is true.
  *
  * See ompi_atomic_cmpset_32 for pseudo-code.
  */
 static inline int ompi_atomic_cmpset_acq_int(volatile int *addr,
-                                            int cmp,
-                                            int new);
+                                             int old,
+                                             int new);
 
 
 /**
  * Atomic compare and set of integer with release semantics.
  *
  * @param addr          Address of integer.
- * @param cmp           Comparison value.
+ * @param old           Comparison value.
  * @param new           New value to set if comparision is true.
  *
  * See ompi_atomic_cmpset_32 for pseudo-code.
  */
 static inline int ompi_atomic_cmpset_rel_int(volatile int *addr,
-                                            int cmp,
-                                            int new);
+                                             int old,
+                                             int new);
 
 
 /**
  * Atomic compare and set of pointer.
  *
  * @param addr          Address of integer.
- * @param cmp           Comparison value.
+ * @param old           Comparison value.
  * @param new           New value to set if comparision is true.
  *
  * See ompi_atomic_cmpset_32 for pseudo-code.
  */
 static inline int ompi_atomic_cmpset_ptr(volatile void *addr,
-                                        void *cmp,
-                                        void *new);
+                                         void *old,
+                                         void *new);
 
 
 /**
  * Atomic compare and set of pointer with acquire semantics.
  *
  * @param addr          Address of integer.
- * @param cmp           Comparison value.
+ * @param old           Comparison value.
  * @param new           New value to set if comparision is true.
  *
  * See ompi_atomic_cmpset_32 for pseudo-code.
  */
 static inline int ompi_atomic_cmpset_acq_ptr(volatile void *addr,
-                                            void *cmp,
-                                            void *new);
+                                             void *old,
+                                             void *new);
 
 
 /**
  * Atomic compare and set of pointer with release semantics.
  *
  * @param addr          Address of integer.
- * @param cmp           Comparison value.
+ * @param old           Comparison value.
  * @param new           New value to set if comparision is true.
  *
  * See ompi_atomic_cmpset_32 for pseudo-code.
  */
 static inline int ompi_atomic_cmpset_rel_ptr(volatile void *addr,
-                                            void *cmp,
-                                            void *new);
+                                             void *old,
+                                             void *new);
 
 /**
  * Atomically add to a 32-bit integer.
@@ -258,7 +258,7 @@ static inline int ompi_atomic_add_int(int *addr, int delta);
 #elif defined(__ia64__)
 # include "sys/ia64/atomic.h"
 # define OMPI_ATOMIC_OPS 1
-#elif defined(__powerpc__)
+#elif defined(__POWERPC__)
 # include "sys/powerpc/atomic.h"
 # define OMPI_ATOMIC_OPS 1
 #elif defined(__sparc64__)
@@ -276,59 +276,59 @@ static inline int ompi_atomic_add_int(int *addr, int delta);
 #if SIZEOF_INT == 4
 
 static inline int ompi_atomic_cmpset_int(volatile int *addr,
-                                        int cmp,
-                                        int new)
+                                         int old,
+                                         int new)
 {
     return ompi_atomic_cmpset_32((volatile uint32_t *) addr,
-                                (uint32_t) cmp,
-                                (uint32_t) new);
+                                 (uint32_t) old,
+                                 (uint32_t) new);
 }
 
 static inline int ompi_atomic_cmpset_acq_int(volatile int *addr,
-                                            int cmp,
-                                            int new)
+                                             int old,
+                                             int new)
 {
     return ompi_atomic_cmpset_acq_32((volatile uint32_t *) addr,
-                                    (uint32_t) cmp,
-                                    (uint32_t) new);
+                                     (uint32_t) old,
+                                     (uint32_t) new);
 }
 
 static inline int ompi_atomic_cmpset_rel_int(volatile int *addr,
-                                            int cmp,
-                                            int new)
+                                             int old,
+                                             int new)
 {
     return ompi_atomic_cmpset_rel_32((volatile uint32_t *) addr,
-                                    (uint32_t) cmp,
-                                    (uint32_t) new);
+                                     (uint32_t) old,
+                                     (uint32_t) new);
 }
 
 #elif SIZEOF_INT == 8
 
 static inline int ompi_atomic_cmpset_int(volatile int *addr,
-                                        int cmp,
-                                        int new)
+                                         int old,
+                                         int new)
 {
     return ompi_atomic_cmpset_64((volatile uint64_t *) addr,
-                                (uint64_t) cmp,
-                                (uint64_t) new);
+                                 (uint64_t) old,
+                                 (uint64_t) new);
 }
 
 static inline int ompi_atomic_cmpset_acq_int(volatile int *addr,
-                                            int cmp,
-                                            int new)
+                                             int old,
+                                             int new)
 {
     return ompi_atomic_cmpset_acq_64((volatile uint64_t *) addr,
-                                    (uint64_t) cmp,
-                                    (uint64_t) new);
+                                     (uint64_t) old,
+                                     (uint64_t) new);
 }
 
 static inline int ompi_atomic_cmpset_rel_int(volatile int *addr,
-                                            int cmp,
-                                            int new)
+                                             int old,
+                                             int new)
 {
     return ompi_atomic_cmpset_rel_64((volatile uint64_t *) addr,
-                                    (uint64_t) cmp,
-                                    (uint64_t) new);
+                                     (uint64_t) old,
+                                     (uint64_t) new);
 }
 
 #else 
@@ -341,56 +341,56 @@ static inline int ompi_atomic_cmpset_rel_int(volatile int *addr,
 #if SIZEOF_VOID_P == 4
 
 static inline int ompi_atomic_cmpset_ptr(volatile void *addr,
-                                        void *cmp,
-                                        void *new)
+                                         void *old,
+                                         void *new)
 {
     return ompi_atomic_cmpset_32((volatile uint32_t *) addr,
-                                (uint32_t) cmp, (uint32_t) new);
+                                 (uint32_t) old, (uint32_t) new);
 }
 
 static inline int ompi_atomic_cmpset_acq_ptr(volatile void *addr,
-                                            void *cmp,
-                                            void *new)
+                                             void *old,
+                                             void *new)
 {
     return ompi_atomic_cmpset_acq_32((volatile uint32_t *) addr,
-                                    (uint32_t) cmp, (uint32_t) new);
+                                     (uint32_t) old, (uint32_t) new);
 }
 
 static inline int ompi_atomic_cmpset_rel_ptr(volatile void *addr,
-                                            void *cmp,
-                                            void *new)
+                                             void *old,
+                                             void *new)
 {
     return ompi_atomic_cmpset_rel_32((volatile uint32_t *) addr,
-                                    (uint32_t) cmp, (uint32_t) new);
+                                     (uint32_t) old, (uint32_t) new);
 }
 
 #elif SIZEOF_VOID_P == 8
 
 static inline int ompi_atomic_cmpset_ptr(volatile void *addr,
-                                        void *cmp,
-                                        void *new)
+                                         void *old,
+                                         void *new)
 {
     return ompi_atomic_cmpset_64((volatile uint64_t *) addr,
-                                (uint64_t) cmp,
-                                (uint64_t) new);
+                                 (uint64_t) old,
+                                 (uint64_t) new);
 }
 
 static inline int ompi_atomic_cmpset_acq_ptr(volatile void *addr,
-                                            void *cmp,
-                                            void *new)
+                                             void *old,
+                                             void *new)
 {
     return ompi_atomic_cmpset_acq_64((volatile uint64_t *) addr,
-                                    (uint64_t) cmp,
-                                    (uint64_t) new);
+                                     (uint64_t) old,
+                                     (uint64_t) new);
 }
 
 static inline int ompi_atomic_cmpset_rel_ptr(volatile void *addr,
-                                            void *cmp,
-                                            void *new)
+                                             void *old,
+                                             void *new)
 {
     return ompi_atomic_cmpset_rel_64((volatile uint64_t *) addr,
-                                    (uint64_t) cmp,
-                                    (uint64_t) new);
+                                     (uint64_t) old,
+                                     (uint64_t) new);
 }
 
 #else
