@@ -414,16 +414,7 @@ static void lam_comm_construct(lam_communicator_t* comm)
     comm->error_handler  = NULL;
     comm->c_pml_comm     = NULL;
     comm->c_coll_comm    = NULL;
-
-    comm->c_cube_dim=0; 
-    comm->c_topo_type=0; 
-    comm->c_topo_nprocs=0; 
-    comm->c_topo_ndims=0; 
-    comm->c_topo_nedges=0; 
-    comm->c_topo_dims=NULL; 
-    comm->c_topo_coords=NULL;
-    comm->c_topo_index=NULL; 
-    comm->c_topo_edges=NULL; 
+    comm->c_topo_comm    = NULL; 
 
     return;
 }
