@@ -165,7 +165,9 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
             lam_list_append(&ptl_peer->peer_frags, (lam_list_item_t*)frag);
         } else {
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd)) {
+                THREAD_UNLOCK(&ptl_peer->peer_send_lock);
                 mca_ptl_tcp_send_frag_progress(frag);
+                return rc;
             } else {
                 ptl_peer->peer_send_frag = frag;
                 lam_event_add(&ptl_peer->peer_send_event, 0);
@@ -176,7 +178,6 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
     THREAD_UNLOCK(&ptl_peer->peer_send_lock);
     return rc;
 }
-
 
 
 /*
@@ -384,28 +385,28 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 void mca_ptl_tcp_set_socket_options(int sd)
 {
     int optval;
+#if defined(TCP_NODELAY)
+    optval = 1;
+    if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval)) < 0) {
+        lam_output(0, 
+            "mca_ptl_tcp_set_socket_options: setsockopt(TCP_NODELAY) failed with errno=%d\n", 
+            errno);
+    }
+#endif
 #if defined(SO_SNDBUF)
     if(mca_ptl_tcp_module.tcp_sndbuf > 0 &&
        setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&mca_ptl_tcp_module.tcp_sndbuf, sizeof(int)) < 0) {
-        lam_output(0, "mca_ptl_tcp_set_socket_options: SO_SNDBUF option: errno %d\n", errno);
+        lam_output(0, 
+            "mca_ptl_tcp_set_socket_options: SO_SNDBUF option: errno %d\n", 
+            errno);
     }
 #endif
 #if defined(SO_RCVBUF)
     if(mca_ptl_tcp_module.tcp_rcvbuf > 0 &&
        setsockopt(sd, SOL_SOCKET, SO_RCVBUF, (char *)&mca_ptl_tcp_module.tcp_rcvbuf, sizeof(int)) < 0) {
-        lam_output(0, "mca_ptl_tcp_set_socket_options: SO_RCVBUF option: errno %d\n", errno);
-    }
-#endif
-#if defined(TCP_NODELAY)
-    optval = 1;
-    if(setsockopt(sd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval)) < 0) {
-        lam_output(0, "mca_ptl_tcp_set_socket_options: setsockopt(TCP_NODELAY) failed with errno=%d\n", errno);
-    }
-#endif
-#if defined(TCP_NODELACK)
-    optval = 1;
-    if(setsockopt(sd, IPPROTO_TCP, TCP_NODELACK, &optval, sizeof(optval)) < 0) {
-        lam_output(0, "mca_ptl_tcp_set_socket_options: setsockopt(TCP_NODELACK) failed with errno=%d\n", errno);
+        lam_output(0, 
+            "mca_ptl_tcp_set_socket_options: SO_RCVBUF option: errno %d\n", 
+            errno);
     }
 #endif
 }
@@ -532,7 +533,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
         mca_ptl_tcp_recv_frag_t* recv_frag = ptl_peer->peer_recv_frag;
         if(NULL == recv_frag) {
             int rc;
-            recv_frag = mca_ptl_tcp_recv_frag_alloc(&rc);
+            MCA_PTL_TCP_RECV_FRAG_ALLOC(recv_frag, rc);
             if(NULL == recv_frag) {
                 PROGRESS_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
                 return;
@@ -581,7 +582,9 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
             }
 
             /* if required - update request status and release fragment */
+            THREAD_UNLOCK(&ptl_peer->peer_send_lock);
             mca_ptl_tcp_send_frag_progress(frag);
+            THREAD_LOCK(&ptl_peer->peer_send_lock);
 
             /* progress any pending sends */
             ptl_peer->peer_send_frag = (mca_ptl_tcp_send_frag_t*)

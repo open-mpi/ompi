@@ -37,31 +37,31 @@ typedef struct mca_ptl_base_recv_request_t mca_ptl_base_recv_request_t;
  * @param comm (IN)          Communicator.
  * @param persistent (IN)    Is this a ersistent request.
  */
-static inline void mca_ptl_base_recv_request_init(
-    mca_ptl_base_recv_request_t *request,
-    void *addr,
-    size_t count,
-    lam_datatype_t* datatype,
-    int src,
-    int tag,
-    lam_communicator_t* comm,
-    bool persistent)
-{
-    request->req_bytes_msg = 0;
-    request->req_bytes_received = 0;
-    request->req_bytes_delivered = 0;
-    request->super.req_sequence = 0;
-    request->super.req_addr = addr;
-    request->super.req_count = count;
-    request->super.req_datatype = datatype;
-    request->super.req_peer = src;
-    request->super.req_tag = tag;
-    request->super.req_comm = comm;
-    request->super.req_proc = NULL;
-    request->super.req_persistent = persistent;
-    request->super.req_mpi_done = false;
-    request->super.req_pml_done = false;
-    request->super.req_free_called = false;
+#define MCA_PTL_BASE_RECV_REQUEST_INIT( \
+    request, \
+    addr, \
+    count, \
+    datatype, \
+    src, \
+    tag, \
+    comm, \
+    persistent) \
+{ \
+    request->req_bytes_msg = 0; \
+    request->req_bytes_received = 0; \
+    request->req_bytes_delivered = 0; \
+    request->super.req_sequence = 0; \
+    request->super.req_addr = addr; \
+    request->super.req_count = count; \
+    request->super.req_datatype = datatype; \
+    request->super.req_peer = src; \
+    request->super.req_tag = tag; \
+    request->super.req_comm = comm; \
+    request->super.req_proc = NULL; \
+    request->super.req_persistent = persistent; \
+    request->super.req_mpi_done = false; \
+    request->super.req_pml_done = false; \
+    request->super.req_free_called = false; \
 }
 
 /**

@@ -16,30 +16,26 @@
 void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req);
 
 
-static inline mca_ptl_base_send_request_t* mca_pml_teg_send_request_alloc(
-    lam_communicator_t* comm, 
-    int dst,
-    int *rc)
-{
-    mca_ptl_base_send_request_t* sendreq;
-    mca_pml_proc_t *proc = mca_pml_teg_proc_lookup_remote(comm,dst);
-    mca_ptl_proc_t* ptl_proc;
-    mca_ptl_t* ptl;
-
-    THREAD_SCOPED_LOCK(&proc->proc_lock,
-        (ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first)));
-    ptl = ptl_proc->ptl;
-    *rc = ptl->ptl_request_alloc(ptl,&sendreq);
-    if(NULL != sendreq)
-        sendreq->req_peer = ptl_proc->ptl_peer;
-    return sendreq;
+#define MCA_PML_TEG_SEND_REQUEST_ALLOC( \
+    comm, \
+    dst, \
+    sendreq, \
+    rc) \
+{ \
+    mca_pml_proc_t *proc = mca_pml_teg_proc_lookup_remote(comm,dst); \
+    mca_ptl_proc_t* ptl_proc; \
+    mca_ptl_t* ptl; \
+\
+    THREAD_SCOPED_LOCK(&proc->proc_lock, \
+        (ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first))); \
+    ptl = ptl_proc->ptl; \
+    rc = ptl->ptl_request_alloc(ptl,&sendreq); \
+    if(NULL != sendreq) \
+        sendreq->req_peer = ptl_proc->ptl_peer; \
 }
 
-static inline void mca_pml_teg_send_request_return(
-    mca_ptl_base_send_request_t* request)
-{
+#define MCA_PML_TEG_SEND_REQUEST_RETURN(request) \
     request->req_owner->ptl_request_return(request->req_owner, request);
-}
 
 static inline int mca_pml_teg_send_request_start(
     mca_ptl_base_send_request_t* req)

@@ -200,10 +200,15 @@ kq_dispatch(void *arg, struct timeval *tv)
 	TIMEVAL_TO_TIMESPEC(tv, &ts);
 
         /* release lock while waiting in kernel */
-	lam_mutex_unlock(&lam_event_lock);
-	res = kevent(kqop->kq, changes, kqop->nchanges,
-	    events, kqop->nevents, &ts);
-	lam_mutex_lock(&lam_event_lock);
+        if(lam_using_threads()) {
+	    lam_mutex_unlock(&lam_event_lock);
+	    res = kevent(kqop->kq, changes, kqop->nchanges,
+	        events, kqop->nevents, &ts);
+	    lam_mutex_lock(&lam_event_lock);
+        } else {
+	    res = kevent(kqop->kq, changes, kqop->nchanges,
+	        events, kqop->nevents, &ts);
+        }
 
 	kqop->nchanges = 0;
 	if (res == -1) {

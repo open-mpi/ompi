@@ -209,7 +209,7 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
             struct mca_ptl_t *ptl = ptl_proc->ptl;
             double weight;
             if(ptl->ptl_bandwidth)
-                weight = total_bandwidth / ptl_proc->ptl->ptl_bandwidth;
+                weight = ptl_proc->ptl->ptl_bandwidth / total_bandwidth;
             else
                 weight = 1.0 / n_size;
             ptl_proc->ptl_weight = (int)(weight * 100);

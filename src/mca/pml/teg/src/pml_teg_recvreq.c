@@ -6,7 +6,7 @@ void mca_pml_teg_recv_request_progress(
     mca_ptl_base_recv_request_t* req,
     mca_ptl_base_recv_frag_t* frag)
 {
-    lam_mutex_lock(&mca_pml_teg.teg_request_lock);
+    THREAD_LOCK(&mca_pml_teg.teg_request_lock);
     req->req_bytes_delivered += frag->super.frag_size;
     req->req_bytes_received += frag->super.frag_header.hdr_frag.hdr_frag_length;
     if (req->req_bytes_received >= req->req_bytes_msg) {
@@ -24,6 +24,6 @@ void mca_pml_teg_recv_request_progress(
             lam_condition_broadcast(&mca_pml_teg.teg_request_cond);
         }
     }
-    lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
+    THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
 }
 

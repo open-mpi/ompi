@@ -50,51 +50,51 @@ typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
  * @param mode (IN)        Send mode (STANDARD,BUFFERED,SYNCHRONOUS,READY)
  * @param persistent (IN)  Is request persistent.
  */
-static inline void mca_ptl_base_send_request_init(
-    mca_ptl_base_send_request_t *request, 
-    void *addr, 
-    size_t count, 
-    lam_datatype_t* datatype, 
-    int peer, 
-    int tag, 
-    lam_communicator_t* comm, 
-    mca_pml_base_send_mode_t mode,
-    bool persistent) 
-{ 
-    request->req_offset = 0; 
-    request->req_frags = 0; 
-    request->req_bytes_sent = 0; 
-    request->req_send_mode = mode;
-    request->req_peer_request.lval = 0; 
-    request->super.req_sequence = mca_pml_ptl_comm_send_sequence(comm->c_pml_comm, peer);
-    request->super.req_addr = addr; 
-    request->super.req_count = count; 
-    request->super.req_datatype = datatype; 
-    request->super.req_peer = peer; 
-    request->super.req_tag = tag; 
-    request->super.req_comm = comm; 
-    request->super.req_proc = lam_comm_peer_lookup(comm,peer);
-    request->super.req_persistent = persistent; 
-    request->super.req_mpi_done = false; 
-    request->super.req_pml_done = false; 
-    request->super.req_free_called = false; 
-
-    /* initialize datatype convertor for this request */
-    if(count > 0) {
-        int packed_size;
-        lam_convertor_copy(request->super.req_proc->proc_convertor, &request->req_convertor);
-        lam_convertor_init_for_send(
-            &request->req_convertor, 
-            0,
-            request->super.req_datatype,
-            request->super.req_count,
-            request->super.req_addr,
-            0);
-        lam_convertor_get_packed_size(&request->req_convertor, &packed_size);
-        request->req_bytes_msg = packed_size;
-    } else {
-        request->req_bytes_msg = 0;
-    }
+#define MCA_PTL_BASE_SEND_REQUEST_INIT( \
+    request, \
+    addr, \
+    count, \
+    datatype, \
+    peer, \
+    tag, \
+    comm, \
+    mode,\
+    persistent) \
+{ \
+    request->req_offset = 0; \
+    request->req_frags = 0; \
+    request->req_bytes_sent = 0; \
+    request->req_send_mode = mode; \
+    request->req_peer_request.lval = 0; \
+    request->super.req_sequence = mca_pml_ptl_comm_send_sequence(comm->c_pml_comm, peer); \
+    request->super.req_addr = addr; \
+    request->super.req_count = count; \
+    request->super.req_datatype = datatype; \
+    request->super.req_peer = peer; \
+    request->super.req_tag = tag; \
+    request->super.req_comm = comm; \
+    request->super.req_proc = lam_comm_peer_lookup(comm,peer); \
+    request->super.req_persistent = persistent; \
+    request->super.req_mpi_done = false; \
+    request->super.req_pml_done = false; \
+    request->super.req_free_called = false; \
+\
+    /* initialize datatype convertor for this request */ \
+    if(count > 0) { \
+        int packed_size; \
+        lam_convertor_copy(request->super.req_proc->proc_convertor, &request->req_convertor); \
+        lam_convertor_init_for_send( \
+            &request->req_convertor,  \
+            0, \
+            request->super.req_datatype, \
+            request->super.req_count, \
+            request->super.req_addr, \
+            0); \
+        lam_convertor_get_packed_size(&request->req_convertor, &packed_size); \
+        request->req_bytes_msg = packed_size; \
+    } else { \
+        request->req_bytes_msg = 0; \
+    } \
 }
 
 

@@ -57,7 +57,6 @@
 
 extern struct lam_event_list lam_eventqueue;
 extern volatile sig_atomic_t lam_evsignal_caught;
-extern lam_mutex_t lam_event_mutex;
 extern lam_mutex_t lam_event_lock;
 
 /* due to limitations in the epoll interface, we need to keep track of
@@ -175,9 +174,13 @@ epoll_dispatch(void *arg, struct timeval *tv)
 		return (-1);
 
 	timeout = tv->tv_sec * 1000 + tv->tv_usec / 1000;
-        lam_mutex_unlock(&lam_event_lock);
-	res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
-        lam_mutex_lock(&lam_event_lock);
+        if(lam_using_threads()) {
+            lam_mutex_unlock(&lam_event_lock);
+	    res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
+            lam_mutex_lock(&lam_event_lock);
+        } else {
+	    res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
+        }
 
 	if (lam_evsignal_recalc(&epollop->evsigmask) == -1)
 		return (-1);

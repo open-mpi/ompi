@@ -142,8 +142,11 @@ select_recalc(void *arg, int max)
 		sop->event_writeset = writeset;
 		sop->event_fdsz = fdsz;
 	}
-
+#if LAM_EVENT_USE_SIGNALS
 	return (lam_evsignal_recalc(&sop->evsigmask));
+#else
+	return (0);
+#endif
 }
 
 static int
@@ -163,17 +166,26 @@ select_dispatch(void *arg, struct timeval *tv)
 			FD_SET(ev->ev_fd, sop->event_readset);
 	}
 
+#if LAM_EVENT_USE_SIGNALS
 	if (lam_evsignal_deliver(&sop->evsigmask) == -1)
 		return (-1);
+#endif
 
         /* release lock while waiting in kernel */
-        lam_mutex_unlock(&lam_event_lock);
-	res = select(sop->event_fds + 1, sop->event_readset, 
-	    sop->event_writeset, NULL, tv);
-        lam_mutex_lock(&lam_event_lock);
+        if(lam_using_threads()) {
+            lam_mutex_unlock(&lam_event_lock);
+	    res = select(sop->event_fds + 1, sop->event_readset, 
+	        sop->event_writeset, NULL, tv);
+            lam_mutex_lock(&lam_event_lock);
+        } else {
+	    res = select(sop->event_fds + 1, sop->event_readset, 
+	        sop->event_writeset, NULL, tv);
+        }
 
+#if LAM_EVENT_USE_SIGNALS
 	if (lam_evsignal_recalc(&sop->evsigmask) == -1)
 		return (-1);
+#endif
 
 	if (res == -1) {
 		if (errno != EINTR) {
@@ -181,13 +193,15 @@ select_dispatch(void *arg, struct timeval *tv)
 			return (-1);
 		}
 
+#if LAM_EVENT_USE_SIGNALS
 		lam_evsignal_process();
+#endif
 		return (0);
-	} else if (lam_evsignal_caught)
+	} 
+#if LAM_EVENT_USE_SIGNALS
+	else if (lam_evsignal_caught)
 		lam_evsignal_process();
-
-	LOG_DBG((LOG_MISC, 80, "%s: select reports %d", __func__, res));
-
+#endif
 	maxfd = 0;
 	for (ev = TAILQ_FIRST(&lam_eventqueue); ev != NULL; ev = next) {
 		next = TAILQ_NEXT(ev, ev_next);
@@ -218,8 +232,10 @@ select_add(void *arg, struct lam_event *ev)
 {
 	struct selectop *sop = arg;
 
+#if LAM_EVENT_USE_SIGNALS
 	if (ev->ev_events & LAM_EV_SIGNAL)
 		return (lam_evsignal_add(&sop->evsigmask, ev));
+#endif
 
 	/* 
 	 * Keep track of the highest fd, so that we can calculate the size
@@ -243,5 +259,10 @@ select_del(void *arg, struct lam_event *ev)
 	if (!(ev->ev_events & LAM_EV_SIGNAL))
 		return (0);
 
+#if LAM_EVENT_USE_SIGNALS
 	return (lam_evsignal_del(&sop->evsigmask, ev));
+#else
+	return (0);
+#endif
 }
+

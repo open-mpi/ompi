@@ -35,7 +35,7 @@ int mca_pml_teg_wait(
 
     if(completed < 0) {
         /* give up and sleep until completion */
-        lam_mutex_lock(&mca_pml_teg.teg_request_lock);
+        THREAD_LOCK(&mca_pml_teg.teg_request_lock);
         mca_pml_teg.teg_request_waiting++;
         do {
             for(i=0; i<count; i++) {
@@ -53,12 +53,12 @@ int mca_pml_teg_wait(
             }
         } while(completed < 0);
         mca_pml_teg.teg_request_waiting--;
-        lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
+        THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
     }
 
     /* return request to pool */
     if(false == pml_request->req_persistent) {
-        mca_pml_teg_free(request);
+        MCA_PML_TEG_FREE(request);
     }
     if (NULL != status) {
        *status = pml_request->req_status;
@@ -87,7 +87,7 @@ int mca_pml_teg_wait_all(
          * acquire lock and test for completion - if all requests are not completed
          * pend on condition variable until a request completes 
          */
-        lam_mutex_lock(&mca_pml_teg.teg_request_lock);
+        THREAD_LOCK(&mca_pml_teg.teg_request_lock);
         mca_pml_teg.teg_request_waiting++;
         do {
             completed = 0;
@@ -102,7 +102,7 @@ int mca_pml_teg_wait_all(
                 lam_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
         } while (completed != count);
         mca_pml_teg.teg_request_waiting--;
-        lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
+        THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
     }
 
     if(NULL != statuses) {
@@ -114,7 +114,7 @@ int mca_pml_teg_wait_all(
             } else {
                 statuses[i] = pml_request->req_status;
                 if (false == pml_request->req_persistent) {
-                    mca_pml_teg_free(&requests[i]);
+                    MCA_PML_TEG_FREE(&requests[i]);
                 }
             }
         }
@@ -123,7 +123,7 @@ int mca_pml_teg_wait_all(
         for(i=0; i<count; i++) {
             mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)requests[i];
             if (NULL != pml_request && false == pml_request->req_persistent) {
-                    mca_pml_teg_free(&requests[i]);
+                    MCA_PML_TEG_FREE(&requests[i]);
             }
         }
     }

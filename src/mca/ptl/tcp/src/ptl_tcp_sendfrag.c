@@ -131,6 +131,7 @@ int mca_ptl_tcp_send_frag_init(
     sendfrag->frag_vec_cnt = (size == 0) ? 1 : 2;
     sendfrag->frag_vec[0].iov_base = (lam_iov_base_ptr_t)hdr;
     sendfrag->frag_vec[0].iov_len = sizeof(mca_ptl_base_header_t);
+    sendfrag->frag_progressed = 0;
     return LAM_SUCCESS;
 }
 
