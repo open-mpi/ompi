@@ -49,7 +49,7 @@ static inline int mca_pml_teg_send_request_start(
     int flags, rc;
 
     /* start the first fragment */
-    if(req->req_bytes_msg <= first_fragment_size) {
+    if(first_fragment_size <= 0 || req->req_bytes_msg <= first_fragment_size) {
         first_fragment_size = req->req_bytes_msg;
         flags = (req->req_send_mode == MCA_PML_BASE_SEND_SYNCHRONOUS) ? MCA_PTL_FLAGS_ACK_MATCHED : 0;
     } else {
