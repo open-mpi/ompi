@@ -70,6 +70,16 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
 }
 
 
+/**
+ *  Update the status of the send request to reflect the number of bytes
+ *  "actually" sent (and acknowledged). This should be called by the
+ *  lower layer PTL after the fragment is actually delivered and has been
+ *  acknowledged (if required). Note that this routine should NOT be called
+ *  directly by the PTL, a function pointer is setup on the PTL at init to 
+ *  enable upcalls into the PML w/out directly linking to a specific PML 
+ * implementation.
+ */
+
 void mca_pml_teg_send_request_progress(
     struct mca_ptl_t* ptl,
     mca_ptl_base_send_request_t* req,

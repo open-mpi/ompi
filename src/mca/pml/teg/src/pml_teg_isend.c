@@ -107,7 +107,7 @@ int mca_pml_teg_send(
         sendmode,
         false
         );
-         
+
     if((rc = mca_pml_teg_send_request_start(sendreq)) != OMPI_SUCCESS) {
         MCA_PML_TEG_FREE((ompi_request_t**)&sendreq);
         return rc;
