@@ -221,8 +221,6 @@ int mca_oob_tcp_recv_nb(
     msg->msg_hdr.msg_dst = *peer;
     msg->msg_hdr.msg_size = size;
     msg->msg_hdr.msg_tag = tag;
-    MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
-
     msg->msg_type = MCA_OOB_TCP_POSTED;
     msg->msg_rc = 0;
     msg->msg_flags = flags;
