@@ -76,8 +76,12 @@ int test_verify(char *expected_result, char *test_result){
     return return_value;
 }
 
-void test_finalize(void)
+int test_finalize(void)
 {
+
+    int return_value;
+
+    return_value=1;
 
     if( lam_n_tests == lam_n_success) {
         fprintf(stderr," SUPPORT :: LAM Test Passed :: %s \n",lam_description);
@@ -86,6 +90,9 @@ void test_finalize(void)
         fprintf(stderr," SUPPORT :: LAM Test failed :: %s :: %d of %d failed\n"
                 ,lam_description,lam_n_failures,lam_n_tests);
         fflush(stderr);
+        return_value=0;
     }
+
+    return return_value;
 }
 
