@@ -69,7 +69,8 @@
 #define  OMPI_PTL_ELAN_GET_MIN(a,b)  ((a<b)? a:b)
 #define  OMPI_PTL_ELAN_ALIGNUP(x,a)  (((unsigned int)(x) + ((a)-1)) & (-(a)))
 
-#define  OMPI_PTL_ELAN_ENABLE_GET    (0)
+#define  OMPI_PTL_ELAN_ENABLE_GET    (1)
+#define  OMPI_PTL_ELAN_QDMA_RETRY    (16)
 
 /* For now only debug send's */
 #if 1
@@ -167,7 +168,7 @@ typedef struct ompi_ptl_elan_recv_queue_t ompi_ptl_elan_recv_queue_t;
     volatile E4_uint64 main_doneWord;                     \
     /* 8 byte aligned */                                  \
     E4_Event          *elan_event;                        \
-    uint8_t           *desc_buff;                         \
+    void              *desc_buff;                         \
     /* 8 byte aligned */                                  \
     mca_pml_base_request_t *req;                          \
     mca_ptl_elan_module_t  *ptl;                          \
@@ -321,7 +322,8 @@ int         ompi_init_elan_stat (mca_ptl_elan_component_t * emp,
                                  int num_rails);
 
 /* communication prototypes */
-int         mca_ptl_elan_start_desc(mca_ptl_elan_send_frag_t *desc,
+int         mca_ptl_elan_start_desc(
+		  mca_ptl_elan_send_frag_t *desc,
 		  struct mca_ptl_elan_peer_t *ptl_peer,
                   struct mca_pml_base_send_request_t *sendreq,
                   size_t offset,
@@ -331,6 +333,9 @@ int         mca_ptl_elan_start_desc(mca_ptl_elan_send_frag_t *desc,
 int         mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl, 
 			 mca_ptl_elan_send_frag_t * desc,
 			 mca_ptl_elan_recv_frag_t * recv_frag);
+int        mca_ptl_elan_get_with_ack (mca_ptl_base_module_t * ptl, 
+			   mca_ptl_elan_send_frag_t * frag,
+			   mca_ptl_elan_recv_frag_t * recv_frag);
 
 int         mca_ptl_elan_poll_desc(mca_ptl_elan_send_frag_t *desc);
 int         mca_ptl_elan_wait_desc(mca_ptl_elan_send_frag_t *desc);
@@ -338,6 +343,15 @@ int         mca_ptl_elan_wait_desc(mca_ptl_elan_send_frag_t *desc);
 /* control, synchronization and state prototypes */
 int         mca_ptl_elan_drain_recv(mca_ptl_elan_component_t *emp);
 int         mca_ptl_elan_update_desc(mca_ptl_elan_component_t *emp);
+
+int
+mca_ptl_elan_start_get (mca_ptl_elan_send_frag_t * frag,
+			struct mca_ptl_elan_peer_t *ptl_peer,
+			struct mca_pml_base_recv_request_t *req,
+			size_t offset,
+			size_t *size,
+			int flags);
+
 /**
  * utility routines for parameter registration
  */
