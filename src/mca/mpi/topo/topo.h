@@ -10,6 +10,7 @@
 #include "mpi.h"
 #include "mca/mca.h"
 #include "mca/mpi/base/base.h"
+#include "mpi/communicator/communicator.h"
 
 /*
  * ******************************************************************
