@@ -15,7 +15,9 @@ libmca_io_romio_la_SOURCES = \
 	io_romio_module.c  \
 	io_romio.h \
 	romio_config.h  \
-	file_write.c \
+	file_status.c \
 	file_open.c \
+	file_read.c \
+	file_write.c \
 	global.c
 
