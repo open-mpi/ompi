@@ -8,6 +8,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
+#include "communicator/communicator.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "coll_basic.h"
@@ -16,12 +17,12 @@
 /*
  * Linear set of collective algorithms
  */
-static const mca_coll_1_0_0_t linear = {
+static const mca_coll_1_0_0_t intra_linear = {
 
-  /* Per-communicator initialization and finalization functions */
+  /* Initialization / finalization functions */
 
-  mca_coll_basic_init,
-  mca_coll_basic_finalize,
+  mca_coll_basic_module_init,
+  mca_coll_basic_module_finalize,
 
   /* Checkpoint / restart functions */
 
@@ -30,62 +31,26 @@ static const mca_coll_1_0_0_t linear = {
   NULL,
   NULL,
 
-  /* Memory allocation / freeing */
-
-  NULL,
-  NULL,
-
   /* Collective function pointers */
 
-  mca_coll_basic_allgather,
-  NULL,
-
-  mca_coll_basic_allgatherv,
-  NULL,
-
-  mca_coll_basic_allreduce,
-  NULL,
-  
-  mca_coll_basic_alltoall,
-  NULL,
-
-  mca_coll_basic_alltoallv,
-  NULL,
-
-  mca_coll_basic_alltoallw,
-  NULL, 
-
-  mca_coll_basic_barrier_lin,
-  NULL,
-
+  mca_coll_basic_allgather_intra,
+  mca_coll_basic_allgatherv_intra,
+  mca_coll_basic_allreduce_intra,
+  mca_coll_basic_alltoall_intra,
+  mca_coll_basic_alltoallv_intra,
+  mca_coll_basic_alltoallw_intra,
+  mca_coll_basic_barrier_intra_lin,
   true,
-  mca_coll_basic_bcast_lin,
-  NULL, 
-
-  mca_coll_basic_exscan,
-  NULL, 
-
-  mca_coll_basic_gather,
-  NULL,
-
-  mca_coll_basic_gatherv,
-  NULL,
-
+  mca_coll_basic_bcast_lin_intra,
+  mca_coll_basic_exscan_intra,
+  mca_coll_basic_gather_intra,
+  mca_coll_basic_gatherv_intra,
   true,
-  mca_coll_basic_reduce_lin,
-  NULL,
-
-  mca_coll_basic_reduce_scatter,
-  NULL,
-
-  mca_coll_basic_scan,
-  NULL,
-
-  mca_coll_basic_scatter,
-  NULL,
-
-  mca_coll_basic_scatterv,
-  NULL
+  mca_coll_basic_reduce_lin_intra,
+  mca_coll_basic_reduce_scatter_intra,
+  mca_coll_basic_scan_intra,
+  mca_coll_basic_scatter_intra,
+  mca_coll_basic_scatterv_intra
 };
 
 
@@ -94,12 +59,12 @@ static const mca_coll_1_0_0_t linear = {
  * collectives have lograthmic algorithms.  For example, scan will use
  * the same algorithm as in the linear set.
  */
-static const mca_coll_1_0_0_t log = {
+static const mca_coll_1_0_0_t intra_log = {
 
-  /* Per-communicator initialization and finalization functions */
+  /* Initialization / finalization functions */
 
-  mca_coll_basic_init,
-  mca_coll_basic_finalize,
+  mca_coll_basic_module_init,
+  mca_coll_basic_module_finalize,
 
   /* Checkpoint / restart functions */
 
@@ -108,62 +73,108 @@ static const mca_coll_1_0_0_t log = {
   NULL,
   NULL,
 
-  /* Memory allocation / freeing */
+  /* Collective function pointers */
 
+  mca_coll_basic_allgather_intra,
+  mca_coll_basic_allgatherv_intra,
+  mca_coll_basic_allreduce_intra,
+  mca_coll_basic_alltoall_intra,
+  mca_coll_basic_alltoallv_intra,
+  mca_coll_basic_alltoallw_intra,
+  mca_coll_basic_barrier_intra_log,
+  true,
+  mca_coll_basic_bcast_log_intra,
+  mca_coll_basic_exscan_intra,
+  mca_coll_basic_gather_intra,
+  mca_coll_basic_gatherv_intra,
+  true,
+  mca_coll_basic_reduce_log_intra,
+  mca_coll_basic_reduce_scatter_intra,
+  mca_coll_basic_scan_intra,
+  mca_coll_basic_scatter_intra,
+  mca_coll_basic_scatterv_intra
+};
+
+
+/*
+ * Linear set of collective algorithms for intercommunicators
+ */
+static const mca_coll_1_0_0_t inter_linear = {
+
+  /* Initialization / finalization functions */
+
+  mca_coll_basic_module_init,
+  mca_coll_basic_module_finalize,
+
+  /* Checkpoint / restart functions */
+
+  NULL,
+  NULL,
   NULL,
   NULL,
 
   /* Collective function pointers */
 
-  mca_coll_basic_allgather,
-  NULL,
-
-  mca_coll_basic_allgatherv,
-  NULL,
-
-  mca_coll_basic_allreduce,
-  NULL,
-
-  mca_coll_basic_alltoall,
-  NULL,
-
-  mca_coll_basic_alltoallv,
-  NULL,
-
-  mca_coll_basic_alltoallw,
-  NULL, 
-
-  mca_coll_basic_barrier_log,
-  NULL,
-
+  mca_coll_basic_allgather_inter,
+  mca_coll_basic_allgatherv_inter,
+  mca_coll_basic_allreduce_inter,
+  mca_coll_basic_alltoall_inter,
+  mca_coll_basic_alltoallv_inter,
+  mca_coll_basic_alltoallw_inter,
+  mca_coll_basic_barrier_inter_lin,
   true,
-  mca_coll_basic_bcast_log,
-  NULL,
-
-  mca_coll_basic_exscan,
-  NULL, 
-
-  mca_coll_basic_gather,
-  NULL,
-
-  mca_coll_basic_gatherv,
-  NULL,
-
+  mca_coll_basic_bcast_lin_inter,
+  mca_coll_basic_exscan_inter,
+  mca_coll_basic_gather_inter,
+  mca_coll_basic_gatherv_inter,
   true,
-  mca_coll_basic_reduce_log,
+  mca_coll_basic_reduce_lin_inter,
+  mca_coll_basic_reduce_scatter_inter,
+  NULL,
+  mca_coll_basic_scatter_inter,
+  mca_coll_basic_scatterv_inter
+};
+
+
+/*
+ * Lograthmic set of collective algorithms.  Note that not all
+ * collectives have lograthmic algorithms.  For example, scan will use
+ * the same algorithm as in the linear set.
+ */
+static const mca_coll_1_0_0_t inter_log = {
+
+  /* Initialization / finalization functions */
+
+  mca_coll_basic_module_init,
+  mca_coll_basic_module_finalize,
+
+  /* Checkpoint / restart functions */
+
+  NULL,
+  NULL,
+  NULL,
   NULL,
 
-  mca_coll_basic_reduce_scatter,
-  NULL,
+  /* Collective function pointers */
 
-  mca_coll_basic_scan,
+  mca_coll_basic_allgather_inter,
+  mca_coll_basic_allgatherv_inter,
+  mca_coll_basic_allreduce_inter,
+  mca_coll_basic_alltoall_inter,
+  mca_coll_basic_alltoallv_inter,
+  mca_coll_basic_alltoallw_inter,
+  mca_coll_basic_barrier_inter_log,
+  true,
+  mca_coll_basic_bcast_log_inter,
+  mca_coll_basic_exscan_inter,
+  mca_coll_basic_gather_inter,
+  mca_coll_basic_gatherv_inter,
+  true,
+  mca_coll_basic_reduce_log_inter,
+  mca_coll_basic_reduce_scatter_inter,
   NULL,
-
-  mca_coll_basic_scatter,
-  NULL,
-
-  mca_coll_basic_scatterv,
-  NULL
+  mca_coll_basic_scatter_inter,
+  mca_coll_basic_scatterv_inter
 };
 
 
@@ -171,10 +182,13 @@ static const mca_coll_1_0_0_t log = {
  * Initial query function that is invoked during MPI_INIT, allowing
  * this module to indicate what level of thread support it provides.
  */
-int mca_coll_basic_init_query(int *thread_min, int *thread_max)
+int mca_coll_basic_init_query(bool *allow_multi_user_threads,
+                              bool *have_hidden_user_threads)
 {
-  *thread_min = MPI_THREAD_SINGLE;
-  *thread_max = MPI_THREAD_MULTIPLE;
+  *allow_multi_user_threads = true;
+  *have_hidden_user_threads = false;
+
+  /* All done */
   
   return OMPI_SUCCESS;
 }
@@ -185,48 +199,107 @@ int mca_coll_basic_init_query(int *thread_min, int *thread_max)
  * Look at the communicator and decide which set of functions and
  * priority we want to return.
  */
-const mca_coll_1_0_0_t *mca_coll_basic_comm_query(MPI_Comm comm, int *priority)
+const mca_coll_1_0_0_t *
+mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
-#if 1
-  /* JMS fix me */
-  *priority = 0;
-  return &linear;
-#else
-  int size;
-
   /* This module should always have the lowest available priority */
 
   *priority = 0;
 
-  /* Choose whether to use linear or log-based algorithms. */
+  /* Choose whether to use [intra|inter], and [linear|log]-based
+     algorithms. */
 
-  MPI_Comm_size(comm, &size);
-  if (size <= mca_coll_base_crossover) {
-    return &linear;
+  if (OMPI_COMM_IS_INTER(comm)) {
+    /* Intercommunicators */
+
+    if (ompi_comm_remote_size(comm) <= mca_coll_base_crossover) {
+      return &inter_linear;
+    } else {
+      return &inter_log;
+    }
   } else {
-    return &log;
+    
+    /* Intracommunicators */
+
+    if (ompi_comm_size(comm) <= mca_coll_base_crossover) {
+      return &intra_linear;
+    } else {
+      return &intra_log;
+    }
   }
+
+  /* Never reach here */
+}
+
+
+/*
+ * Init module on the communicator
+ */
+const struct mca_coll_1_0_0_t *
+mca_coll_basic_module_init(struct ompi_communicator_t *comm)
+{
+  int size;
+  struct mca_coll_comm_t *data;
+
+  /* Allocate the data that hangs off the communicator */
+
+  comm->c_coll_basic_data = NULL;
+
+  size = ompi_comm_size(comm);
+  data = malloc(sizeof(struct mca_coll_comm_t) +
+                (sizeof(ompi_request_t) * size * 2));
+
+  if (NULL == data) {
+    return NULL;
+  }
+  data->mccb_reqs = (ompi_request_t **) (data + 1);
+  data->mccb_num_reqs = size * 2;
+
+  /* Initialize the communicator */
+
+  if (OMPI_COMM_IS_INTER(comm)) {
+    /* Intercommunicators */
+    /* JMS Continue here */
+  } else {
+    /* Intracommunicators */
+    /* JMS Continue here */
+  }
+
+  /* All done */
+
+  comm->c_coll_basic_data = data;
+  return comm->c_coll_basic_module;
+}
+
+
+/*
+ * Finalize module on the communicator
+ */
+int mca_coll_basic_module_finalize(struct ompi_communicator_t *comm)
+{
+  if (NULL == comm->c_coll_basic_module) {
+    return OMPI_SUCCESS;
+  }
+
+#if OMPI_ENABLE_DEBUG
+  /* Reset the reqs to NULL/0 -- they'll be freed as part of freeing
+     the generel c_coll_basic_data */
+
+  comm->c_coll_basic_data->mccb_reqs = NULL;
+  comm->c_coll_basic_data->mccb_num_reqs = 0;
 #endif
-}
 
+  if (OMPI_COMM_IS_INTER(comm)) {
+    /* Intercommunicators */
+    /* JMS Continue here */
+  } else {
+    /* Intracommunicators */
+    /* JMS Continue here */
+  }
 
-/*
- * Init on the communicator
- */
-int mca_coll_basic_init(MPI_Comm comm, const mca_coll_1_0_0_t **new_coll)
-{
-  /* Nothing to init on the communicator */
+  /* All done */
 
-  return OMPI_SUCCESS;
-}
-
-
-/*
- * Finalize on the communicator
- */
-int mca_coll_basic_finalize(MPI_Comm comm)
-{
-  /* Nothing to finalize on the communicator */
-
+  free(comm->c_coll_basic_data);
+  comm->c_coll_basic_data = NULL;
   return OMPI_SUCCESS;
 }

@@ -52,13 +52,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_proc_t** procs;
     size_t nprocs;
 
-
     /* Save command line parameters */
+
     if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_init(argc, argv))) {
         return ret;
     }
 
-    /* Get the local system information and populate the ompi_system_info structure */
+    /* Get the local system information and populate the
+       ompi_system_info structure */
+
     ompi_sys_info();
 
     /* Become a OMPI process */
@@ -74,7 +76,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* Join the run-time environment */
-    if (OMPI_SUCCESS != (ret = ompi_rte_init(&allow_multi_user_threads, &have_hidden_threads))) {
+    if (OMPI_SUCCESS != (ret = ompi_rte_init(&allow_multi_user_threads,
+                                             &have_hidden_threads))) {
         return ret;
     }
 
@@ -111,16 +114,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
          final thread level */
 
     if (OMPI_SUCCESS != 
-            (ret = mca_base_init_select_modules(requested, allow_multi_user_threads,
-             have_hidden_threads, provided))) {
+            (ret = mca_base_init_select_modules(requested, 
+                                                allow_multi_user_threads,
+                                                have_hidden_threads, 
+                                                provided))) {
         /* JMS show_help */
         return ret;
     }
-
-    /* Query the coll */
-
-    if (OMPI_SUCCESS != (ret = mca_coll_base_query()))
-	return ret;
 
      /* initialize error handlers */
      if (OMPI_SUCCESS != (ret = ompi_errhandler_init())) {
@@ -175,28 +175,32 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
      /* start PTL's */
      param = 1;
-     if (OMPI_SUCCESS != (ret = mca_pml.pml_control(MCA_PTL_ENABLE, &param, sizeof(param))))
+     if (OMPI_SUCCESS != 
+         (ret = mca_pml.pml_control(MCA_PTL_ENABLE, &param, sizeof(param))))
          return ret;
 
      /* save the resulting thread levels */
 
     ompi_mpi_thread_requested = requested;
     *provided = ompi_mpi_thread_provided;
-    ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == MPI_THREAD_MULTIPLE);
+    ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
+                                MPI_THREAD_MULTIPLE);
 
     /* Init coll for the comms */
 
-    if (OMPI_ERROR == mca_coll_base_init_comm(MPI_COMM_SELF))
+    if (OMPI_ERROR == mca_coll_base_comm_select(MPI_COMM_SELF, NULL))
 	return OMPI_ERROR;
 
-    if (OMPI_ERROR == mca_coll_base_init_comm(MPI_COMM_WORLD))
+    if (OMPI_ERROR == mca_coll_base_comm_select(MPI_COMM_WORLD, NULL))
 	return OMPI_ERROR;
 
     /* Wait for everyone to initialize */
     /* Change the Barrier call to the backend call */
 
-    if (MPI_SUCCESS != (ret = MPI_Barrier(MPI_COMM_WORLD)))
+    if (MPI_SUCCESS != (ret = 
+                        MPI_COMM_WORLD->c_coll.coll_barrier(MPI_COMM_WORLD))) {
 	return ret;
+    }
 
     /* All done */
 

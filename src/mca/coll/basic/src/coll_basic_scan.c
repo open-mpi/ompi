@@ -7,8 +7,8 @@
 
 #include <stdio.h>
 
-#include "constants.h"
 #include "mpi.h"
+#include "include/constants.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
@@ -21,8 +21,10 @@
  *	Accepts:	- same arguments as MPI_Scan()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_scan(void *sbuf, void *rbuf, int count,
-                        MPI_Datatype dtype, MPI_Op op, MPI_Comm comm)
+int mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
+                              struct ompi_datatype_t *dtype, 
+                              struct ompi_op_t *op, 
+                              struct ompi_communicator_t *comm)
 {
 #if 1
   return OMPI_ERR_NOT_IMPLEMENTED;
@@ -33,10 +35,10 @@ int mca_coll_basic_scan(void *sbuf, void *rbuf, int count,
   char *tmpbuf = NULL;
   char *origin;
 
-  /* Initialize. */
+  /* Initialize */
 
-  MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &size);
+  rank = ompi_comm_rank(comm);
+  size = ompi_comm_size(comm);
 
   /* If I'm rank 0, initialize the recv buffer. */
 
@@ -55,7 +57,7 @@ int mca_coll_basic_scan(void *sbuf, void *rbuf, int count,
 
   else {
 #if 0
-      /* JMS Need MPI_Op */
+      /* JMS Need struct ompi_op_t **/
     if (!op->op_commute) {
 #else
     if (1) {
@@ -107,7 +109,7 @@ int mca_coll_basic_scan(void *sbuf, void *rbuf, int count,
     }
 
 #if 0
-    /* JMS Need MPI_Op */
+    /* JMS Need struct ompi_op_t **/
     if (op->op_flags & OMPI_LANGF77) {
       (op->op_func)(origin, rbuf, &count, &dtype->dt_f77handle);
     } else {

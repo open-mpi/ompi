@@ -28,6 +28,48 @@ int ompi_mpi_finalize(void)
 
   ompi_mpi_finalized = true;
 
+  /* Shut down any bindings-specific issues: C++, F77, F90 (may or
+     may not be necessary...?) */
+
+  /* Free communication objects */
+
+  /* free communicator resources */
+  if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
+      return ret;
+  }
+
+  /* free window resources */
+
+  /* free file resources */
+
+  /* Free secondary resources */
+
+  /* free group resources */
+  if (OMPI_SUCCESS != (ret = ompi_group_finalize())) {
+      return ret;
+  }
+
+  /* free errhandler resources */
+  if (OMPI_SUCCESS != (ret = ompi_errhandler_finalize())) {
+      return ret;
+  }
+
+  /* free request resources */
+
+  /* Free all other resources */
+
+  /* free op resources */
+  if (OMPI_SUCCESS != (ret = ompi_op_finalize())) {
+      return ret;
+  }
+
+  /* free ddt resources */
+  if (OMPI_SUCCESS != (ret = ompi_ddt_finalize())) {
+      return ret;
+  }
+
+  /* free info resources */
+
   /* Close down MCA modules */
 
   if (OMPI_SUCCESS != (ret = mca_coll_base_close())) {
@@ -49,37 +91,6 @@ int ompi_mpi_finalize(void)
   /* Close down the MCA */
 
   if (OMPI_SUCCESS != (ret = mca_base_close())) {
-    return ret;
-  }
-
-  /* Leave OMPI */
-
-  /* free op resources */
-  if (OMPI_SUCCESS != (ret = ompi_op_finalize())) {
-      return ret;
-  }
-
-  /* free ddt resources */
-  if (OMPI_SUCCESS != (ret = ompi_ddt_finalize())) {
-      return ret;
-  }
-
-  /* free communicator resources */
-  if (OMPI_SUCCESS != (ret = ompi_comm_finalize())) {
-      return ret;
-  }
-
-  /* free group resources */
-  if (OMPI_SUCCESS != (ret = ompi_group_finalize())) {
-      return ret;
-  }
-
-  /* free errhandler resources */
-  if (OMPI_SUCCESS != (ret = ompi_errhandler_finalize())) {
-      return ret;
-  }
-
-  if (OMPI_SUCCESS != (ret = ompi_finalize())) {
     return ret;
   }
 

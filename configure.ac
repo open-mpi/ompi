@@ -164,6 +164,8 @@ fi
 if test $ac_cv_type_long_double = yes; then
     AC_CHECK_SIZEOF(long double)
 fi
+AC_CHECK_SIZEOF(float)
+AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(void *)
 
 #
@@ -234,20 +236,21 @@ if test "$WANT_MPI_PROFILING" = "1"; then
 else
     OMPI_PROFILING_COMPILE_SEPARATELY=0
 fi
+
 #
-# There are 2 layers to the MPI Language binidings
-# One layer generates MPI_* bindings. The other layer
-# generates PMPI_* bindings. The following conditions
-# determine whether each (or both) these layers are 
-# built.
+# There are 2 layers to the MPI Language binidings One layer generates
+# MPI_* bindings. The other layer generates PMPI_* bindings. The
+# following conditions determine whether each (or both) these layers
+# are built.
 # 1. MPI_* bindings are needed if:
 #	- Profiling is not required
 #   - Profiling is required but weak symbols are not
 #	  supported
-# 2. PMPI_* bindings are needed if profiling is required.
-# Hence we define 2 AM_CONDITIONALs which tell us whether
-# each of these layers need to be built or NOT
+# 2. PMPI_* bindings are needed if profiling is required.  Hence we
+# define 2 conditionals which tell us whether each of these layers
+# need to be built or NOT
 #
+
 AM_CONDITIONAL(WANT_MPI_BINDINGS_LAYER,
 	test "$WANT_MPI_PROFILING" = 0 -o "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1)
 
@@ -298,24 +301,33 @@ OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX=0
 OMPI_SETUP_F77
 if test "$OMPI_F77" != "none" ; then
     OMPI_F77_FIND_EXT_SYMBOL_CONVENTION($OMPI_F77)
-
-    # checking the sizeof fortran interger. This is needed to define 
-    # MPI_Fint. This is needed for C bindings and hence there is no
-    # bearing of --enable-fortran flag on this test.
-
-    OMPI_F77_GET_SIZEOF(INTEGER, OMPI_SIZEOF_FORTRAN_INT)
 fi
 
-# If we want fortran support, then get the sizes and alignments of all
-# the rest of the fortran types
+# Even if we don't want fortran support, we have to have a size for
+# INTEGER because it's needed to define MPI_Fint, which is part of
+# mpi.h.  Hence, if we don't want fortran support, we set the size of
+# Fortran INTEGER's to sizeof(int).
+#
+# Similarly, we need C types for LOGICAL, REAL, and DOUBLE PRECISION
+# for the MPI_Op reduction back-end routines.
 
-if test "$OMPI_WANT_F77_BINDINGS" = "1" ; then
-    # INTEGER is already done, per above
+if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
+    OMPI_SIZEOF_FORTRAN_LOGICAL=$ac_cv_sizeof_int
+    OMPI_SIZEOF_FORTRAN_INT=$ac_cv_sizeof_int
+    OMPI_SIZEOF_FORTRAN_REAL=$ac_cv_sizeof_float
+    OMPI_SIZEOF_FORTRAN_DBLPREC=$ac_cv_sizeof_double
+else
+    # If we want fortran support, then get the sizes and alignments of
+    # all the rest of the fortran types
+
+    OMPI_F77_GET_SIZEOF(LOGICAL, OMPI_SIZEOF_FORTRAN_LOGICAL)
+    OMPI_F77_GET_SIZEOF(INTEGER, OMPI_SIZEOF_FORTRAN_INT)
     OMPI_F77_GET_SIZEOF(REAL, OMPI_SIZEOF_FORTRAN_REAL)
     OMPI_F77_GET_SIZEOF(DOUBLE PRECISION, OMPI_SIZEOF_FORTRAN_DBLPREC)
     OMPI_F77_GET_SIZEOF(COMPLEX, OMPI_SIZEOF_FORTRAN_COMPLEX)
     OMPI_F77_GET_SIZEOF(DOUBLE COMPLEX, OMPI_SIZEOF_FORTRAN_DBLCOMPLEX)
 
+    OMPI_F77_GET_ALIGNMENT(LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL)
     OMPI_F77_GET_ALIGNMENT(INTEGER, OMPI_ALIGNMENT_FORTRAN_INT)
     OMPI_F77_GET_ALIGNMENT(REAL, OMPI_ALIGNMENT_FORTRAN_REAL)
     OMPI_F77_GET_ALIGNMENT(DOUBLE PRECISION, OMPI_ALIGNMENT_FORTRAN_DBLPREC)
@@ -323,6 +335,8 @@ if test "$OMPI_WANT_F77_BINDINGS" = "1" ; then
     OMPI_F77_GET_ALIGNMENT(DOUBLE COMPLEX, OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX)
 fi
 
+AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_LOGICAL, $OMPI_SIZEOF_FORTRAN_LOGICAL,
+    [Size of fortran logical])
 AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_INT, $OMPI_SIZEOF_FORTRAN_INT,
     [Size of fortran integer])
 AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_REAL, $OMPI_SIZEOF_FORTRAN_REAL,
@@ -335,6 +349,9 @@ AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_DBLCOMPLEX,
     $OMPI_SIZEOF_FORTRAN_DBLCOMPLEX,
     [Size of fortran double complex])
 
+AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_LOGICAL, 
+    $OMPI_ALIGNMENT_FORTRAN_LOGICAL,
+    [Alignment of fortran logical])
 AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_INT, $OMPI_ALIGNMENT_FORTRAN_INT,
     [Alignment of fortran integer])
 AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_REAL, $OMPI_ALIGNMENT_FORTRAN_REAL,
@@ -350,13 +367,13 @@ AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX,
     [Alignment of fortran double complex])
 
 #
-# There are 2 layers to the MPI f77 layer. The only extra thing
-# that determine f77 bindings is that fortran can be disabled by
-# user. In such cases, we need to not build the target at all.
-# One layer generates MPI_f77* bindings. The other layer
-# generates PMPI_f77* bindings. The following conditions
-# determine whether each (or both) these layers are
-# built.
+# There are 2 layers to the MPI f77 layer. The only extra thing that
+# determine f77 bindings is that fortran can be disabled by user. In
+# such cases, we need to not build the target at all.  One layer
+# generates MPI_f77* bindings. The other layer generates PMPI_f77*
+# bindings. The following conditions determine whether each (or both)
+# these layers are built.
+#
 # Superceeding clause:
 #   - fortran77 bindings should be enabled, else everything is
 #     disabled
@@ -364,9 +381,9 @@ AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX,
 #   - Profiling is not required
 #   - Profiling is required but weak symbols are not
 #     supported
-# 2. PMPI_* bindings are needed if profiling is required.
-# Hence we define 2 AM_CONDITIONALs which tell us whether
-# each of these layers need to be built or NOT
+# 2. PMPI_* bindings are needed if profiling is required.  Hence we
+# define 2 conditionals which tell us whether each of these layers
+# need to be built or NOT
 #
 AM_CONDITIONAL(WANT_MPI_F77_BINDINGS_LAYER,
                test "$WANT_MPI_PROFILING" = 0 -o "$OMPI_PROFILING_COMPILE_SEPARATELY" = 1  -a "$OMPI_WANT_F77_BINDINGS" = 1)
@@ -438,50 +455,46 @@ AC_DEFINE_UNQUOTED(OMPI_HAVE_UNDERSCORE_VA_COPY, $OMPI_HAVE_UNDERSCORE_VA_COPY,
 ##################################
 
 ompi_show_title "System-specific tests"
+
 #
-# Determine what MPI_Fint shout be defined as. If the size of 
-# fortran integer is 4 then it is defined to either
-# int32_t or int. Similarly if the size of fortran integer
-# is 8 bytes then it is defined to either int64_t or int.
-# ac_cv_type_int32_t=yes implies that unint_32 was present.
-# similary ac_cv_type_int64_t=yes. Similarly the values 
-# of ac_cv_sizeof_int will contain the size of int and later
-# this will be #defined to SIZEOF_INT.
-# NOTE:
-# This test should be carried out ONLY if there is a f77 compiler
-# available. Else we should default to MPI_Fint being an int.
+# Determine corresponding C types for Fortran: LOGICAL, INTEGER, REAL,
+# DOUBLE PRECISION.  If we don't have a fortran compiler, assume some
+# sensible defaults (although the values don't really matter).  We
+# need these types for the back-end MPI_Op reduction functions,
+# regardless of whether we have a fortran compiler or not.
 #
+
 if test "$OMPI_F77" != "none"; then
-	MPI_FINT_TYPE="not found"
-	AC_MSG_CHECKING([checking for type of MPI_Fint])
-	if test "$OMPI_SIZEOF_FORTRAN_INT" = 4 ; then
-            if test "$ac_cv_type_int32_t" = "yes"; then
-        	MPI_FINT_TYPE=int32_t
-            elif test "$ac_cv_sizeof_int" = 4 ; then
-        	MPI_FINT_TYPE=int
-            fi
-	elif test "$OMPI_SIZEOF_FORTRAN_INT" = 8 ; then
-            if test "$ac_cv_type_int64_t" = "yes"; then
-                MPI_FINT_TYPE=int64_t
-            elif test "$ac_cv_type_long_long" = "yes" -a "$ac_cv_sizeof_long_long" = 8; then
-        	MPI_FINT_TYPE="long long"
-            elif test "$ac_cv_sizeof_long" = 8; then
-        	MPI_FINT_TYPE="long"
-            elif test "$ac_cv_sizeof_int" = 8 ; then
-        	MPI_FINT_TYPE=int
-            fi
-	fi
-	AC_MSG_RESULT([$MPI_FINT_TYPE])
-	if test "$MPI_FINT_TYPE" = "not found"; then
-            AC_MSG_WARN([*** WARNING: Unable to find the right definition for MPI_Fint])
-            AC_MSG_ERROR([Cannot continue])
-	fi
-	AC_DEFINE_UNQUOTED(MPI_Fint, $MPI_FINT_TYPE, [Type of MPI_Fint])
+        OMPI_FIND_TYPE(Fortran LOGICAL, FORTRAN_LOGICAL,
+            char int int32_t)
+        OMPI_FIND_TYPE(Fortran INTEGER, FORTRAN_INT, 
+            int32_t int intr64_t long:long long)
+        OMPI_FIND_TYPE(Fortran REAL, FORTRAN_REAL,
+            float double long:double)
+        OMPI_FIND_TYPE(Fortran DOUBLE PRECISION, FORTRAN_DBLPREC,
+            float double long:double)
 else
-	AC_MSG_WARN([*** WARNING: Could not detect a f77 compiler. MPI_Fint will be defined as an int]) 
-	MPI_FINT_TYPE=int
-	AC_DEFINE_UNQUOTED(MPI_Fint, $MPI_FINT_TYPE, [Type of MPI_Fint])
+        MPI_FORTRAN_LOGICAL_TYPE=char
+	MPI_FORTRAN_INT_TYPE=int
+        MPI_FORTRAN_REAL_TYPE=float
+        MPI_FORTRAN_DOUBLE_TYPE=double
+	AC_MSG_WARN([*** WARNING: Did not detect a f77 compiler.  Assuming default corresponding types])
+        AC_MSG_WARN([*** Fortran LOGICAL = C $MPI_FORTRAN_LOGICAL_TYPE])
+        AC_MSG_WARN([*** Fortran INTEGER = C $MPI_FORTRAN_INTEGER_TYPE])
+        AC_MSG_WARN([*** Fortran REAL = C $MPI_FORTRAN_REAL_TYPE])
+        AC_MSG_WARN([*** Fortran DOUBLE PRECISION = C $MPI_FORTRAN_DBLPREC_TYPE])
 fi
+AC_DEFINE_UNQUOTED(MPI_Fint, $MPI_FORTRAN_INT_TYPE, 
+    [C type corresponding to Fortran INTEGER])
+
+AC_DEFINE_UNQUOTED(ompi_fortran_logical_t, $MPI_FORTRAN_LOGICAL_TYPE, 
+    [C type corresponding to Fortran LOGICAL])
+AC_DEFINE_UNQUOTED(ompi_fortran_integer_t, $MPI_FORTRAN_INTEGER_TYPE, 
+    [C type corresponding to Fortran LOGICAL])
+AC_DEFINE_UNQUOTED(ompi_fortran_real_t, $MPI_FORTRAN_REAL_TYPE, 
+    [C type corresponding to Fortran REAL])
+AC_DEFINE_UNQUOTED(ompi_fortran_dblprec_t, $MPI_FORTRAN_DBLPREC_TYPE, 
+    [C type corresponding to Fortran DOUBLE PRECISION])
 
 #
 # Test to determine type of MPI_Offset. This is searched in the following order
@@ -492,19 +505,19 @@ MPI_OFFSET_TYPE="not found"
 AC_MSG_CHECKING([checking for type of MPI_Offset])
 if test "$ac_cv_type_int64_t" == "yes"; then
 	MPI_OFFSET_TYPE=int64_t
-elif test "$ac_cv_type_long_long_t" == "yes" -a "$ac_cv_sizeof_long_long" = 8; then
+elif test "$ac_cv_type_long_long_t" == "yes" -a "$ac_cv_sizeof_long_long" == 8; then
 	MPI_OFFSET_TYPE="long long"
-elif test "$ac_cv_type_long_t" == "yes" -a "$ac_cv_sizeof_long" = 8; then
+elif test "$ac_cv_type_long_t" == "yes" -a "$ac_cv_sizeof_long" == 8; then
 	MPI_OFFSET_TYPE="long"
-elif test "ac_cv_sizeof_int" = 8; then
+elif test "ac_cv_sizeof_int" == 8; then
 	MPI_OFFSET_TYPE=int
 elif test "$ac_cv_type_int32_t" == "yes"; then
 	MPI_OFFSET_TYPE=int32_t
-elif test "$ac_cv_type_long_long_t" == "yes" -a "$ac_cv_sizeof_long_long" = 4; then
+elif test "$ac_cv_type_long_long_t" == "yes" -a "$ac_cv_sizeof_long_long" == 4; then
 	MPI_OFFSET_TYPE="long long"
-elif test "$ac_cv_type_long_t" == "yes" -a "$ac_cv_sizeof_long" = 4; then
+elif test "$ac_cv_type_long_t" == "yes" -a "$ac_cv_sizeof_long" == 4; then
 	MPI_OFFSET_TYPE="long"
-elif test "ac_cv_sizeof_int" = 4; then
+elif test "ac_cv_sizeof_int" == 4; then
 	MPI_OFFSET_TYPE=int
 fi
 AC_MSG_RESULT([$MPI_OFFSET_TYPE])

@@ -7,6 +7,8 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "mca/coll/coll.h"
+#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Alltoallv = PMPI_Alltoallv
@@ -16,9 +18,57 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Alltoallv";
+
+
 int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
-                  MPI_Datatype sendtype, void *recvbuf, int *recvcounts,
-                  int *rdispls, MPI_Datatype recvtype, MPI_Comm comm) {
-	return MPI_SUCCESS;
+                  MPI_Datatype sendtype, 
+                  void *recvbuf, int *recvcounts, int *rdispls, 
+                  MPI_Datatype recvtype, MPI_Comm comm) 
+{
+    int i, size, err;
+
+    if (MPI_PARAM_CHECK) {
+
+      /* Unrooted operation -- same checks for all ranks */
+
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      if (ompi_comm_invalid(comm)) {
+	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+                                     FUNC_NAME);
+      }
+
+      if ((NULL == sendcounts) || (NULL == sdispls) ||
+          (NULL == recvcounts) || (NULL == rdispls)) {
+        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+      }
+
+      if ((MPI_DATATYPE_NULL == sendtype) || 
+          (MPI_DATATYPE_NULL == recvtype)) {
+        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
+      }
+
+      /* Use a different size for intracommunicators and
+         intercommunicators */
+
+      if (OMPI_COMM_IS_INTRA(comm)) {
+        size = ompi_comm_size(comm);
+      } else {
+        size = ompi_comm_remote_size(comm);
+      }
+
+      for (i = 0; i < size; ++i) {
+        if ((sendcounts[i] < 0) || (recvcounts[i] < 0)) {
+          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+        }
+      }
+    }
+
+    /* Invoke the coll component to perform the back-end operation */
+
+    err = comm->c_coll.coll_alltoallv(sendbuf, sendcounts, sdispls, sendtype, 
+                                      recvbuf, recvcounts, rdispls, recvtype,
+                                      comm);
+    OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }
 

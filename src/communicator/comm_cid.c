@@ -170,8 +170,8 @@ static int ompi_comm_allreduce_intra ( int *inbuf, int *outbuf, int count,
                                       ompi_communicator_t *bridgecomm, 
                                       void* local_leader, void* remote_leader )
 {
-    return comm->c_coll.coll_allreduce_intra ( inbuf, outbuf, count, MPI_INT, op,
-                                             comm );
+    return comm->c_coll.coll_allreduce ( inbuf, outbuf, count, MPI_INT, op,
+                                         comm );
 }
 
 /* Arguments not used in this implementation:
@@ -205,8 +205,8 @@ static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, int count,
         return MPI_ERR_INTERN;
     }
 
-    rc = intercomm->c_coll.coll_allreduce_inter ( inbuf, tmpbuf, count, MPI_INT,
-                                                  op, intercomm );
+    rc = intercomm->c_coll.coll_allreduce ( inbuf, tmpbuf, count, MPI_INT,
+                                            op, intercomm );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -259,34 +259,36 @@ static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, int count,
     /* Bcast result to both groups */
     if ( lvpid->proc_vpid > rvpid->proc_vpid ) {
         if ( 0 == local_rank  ) {
-            rc = intercomm->c_coll.coll_bcast_inter ( &outbuf, count, MPI_INT, MPI_ROOT,
-                                                      intercomm );
+            rc = intercomm->c_coll.coll_bcast ( &outbuf, count, MPI_INT,
+                                                MPI_ROOT, intercomm );
             if ( OMPI_SUCCESS != rc ) {
                 goto exit;
             }
         }
         else {
-            rc = intercomm->c_coll.coll_bcast_inter ( &outbuf, count, MPI_INT, MPI_PROC_NULL,
-                                                      intercomm );
+            rc = intercomm->c_coll.coll_bcast ( &outbuf, count, MPI_INT,
+                                                MPI_PROC_NULL, intercomm );
             if ( OMPI_SUCCESS != rc ) {
                 goto exit;
             }
         }
         
-        rc = intercomm->c_coll.coll_bcast_inter ( &outbuf, count, MPI_INT, 0, intercomm );
+        rc = intercomm->c_coll.coll_bcast ( &outbuf, count, MPI_INT, 0,
+                                            intercomm );
     }
     else {
-        rc = intercomm->c_coll.coll_bcast_inter ( &outbuf, count, MPI_INT, 0, intercomm );
+        rc = intercomm->c_coll.coll_bcast ( &outbuf, count, MPI_INT, 0,
+                                            intercomm );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
         
         if ( 0 == local_rank  ) 
-            rc = intercomm->c_coll.coll_bcast_inter ( &outbuf, count, MPI_INT, MPI_ROOT,
-                                                      intercomm );
+            rc = intercomm->c_coll.coll_bcast ( &outbuf, count, MPI_INT, 
+                                                MPI_ROOT, intercomm );
         else 
-            intercomm->c_coll.coll_bcast_inter ( &outbuf, count, MPI_INT, MPI_PROC_NULL,
-                                                  intercomm );
+            intercomm->c_coll.coll_bcast ( &outbuf, count, MPI_INT,
+                                           MPI_PROC_NULL, intercomm );
     }
 
  exit:
@@ -325,8 +327,8 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf, int count,
     }
 
     /* Intercomm_create */
-    rc = comm->c_coll.coll_allreduce_intra ( inbuf, tmpbuf, count, MPI_INT,
-                                             op, comm );
+    rc = comm->c_coll.coll_allreduce ( inbuf, tmpbuf, count, MPI_INT,
+                                       op, comm );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -374,7 +376,7 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf, int count,
         
     }
     
-    rc = comm->c_coll.coll_bcast_intra ( outbuf, count, MPI_INT, local_leader, comm);
+    rc = comm->c_coll.coll_bcast ( outbuf, count, MPI_INT, local_leader, comm);
 
  exit:
     if (NULL != tmpbuf ) {

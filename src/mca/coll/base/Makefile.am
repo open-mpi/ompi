@@ -12,10 +12,10 @@ headers = \
 
 libmca_coll_base_la_SOURCES = \
         coll_base_close.c \
-	coll_base_comm_init.c \
-        coll_base_open.c \
-        coll_base_select.c \
-	coll_base_query.c
+        coll_base_comm_select.c \
+        coll_base_comm_unselect.c \
+	coll_base_find_available.c \
+        coll_base_open.c
 
 # Conditionally install the header files
 

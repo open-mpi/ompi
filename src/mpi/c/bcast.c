@@ -21,20 +21,18 @@ static const char FUNC_NAME[] = "MPI_Bcast";
 
 
 int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
-                int root, MPI_Comm comm)
+              int root, MPI_Comm comm)
 {
-    int size, err;
-    mca_coll_base_bcast_fn_t func;
+    int err;
 
     if (MPI_PARAM_CHECK) {
-      if (MPI_COMM_NULL == comm) {
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      if (ompi_comm_invalid(comm)) {
 	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                      FUNC_NAME);
       }
 
-      if (NULL == buffer) {
-	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-      }
+      /* Errors for all ranks */
 
       if (MPI_DATATYPE_NULL == datatype) {
 	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
@@ -43,38 +41,39 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
       if (count < 0) {
 	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
       }
+
+      /* Errors for intracommunicators */
+
+      if (OMPI_COMM_IS_INTRA(comm)) {
+        if ((root >= ompi_comm_size(comm)) || (root < 0)) {
+          return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+        }
+      } 
+
+      /* Errors for intercommunicators */
+
+      else {
+        if (! ((root >= 0 && root < ompi_comm_remote_size(comm)) ||
+               root == MPI_ROOT || root == MPI_PROC_NULL)) {
+	  return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+        }
+      } 
     }
 
-    if (OMPI_COMM_IS_INTRA(comm)) {
-      MPI_Comm_size(comm, &size);
-      if ((root >= size) || (root < 0)) {
-	  return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
-      }
-      if (count == 0 && comm->c_coll.coll_bcast_optimization) {
-	  return(MPI_SUCCESS);
-      }
+    /* If there's only one node, we're done */
 
-      /* If there's only one node, we're done */
-      
-      else if (size <= 1) {
-	return(MPI_SUCCESS);
-      }
-    } else {
-      MPI_Comm_remote_size(comm, &size);
-      if (!(((root < size) && (root >= 0)) 
-	|| (root == MPI_ROOT) || (root == MPI_PROC_NULL))) {
-	  return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
-      }
-    } 
+    if (OMPI_COMM_IS_INTRA(comm) && ompi_comm_size(comm) <= 1) {
+      return MPI_SUCCESS;
+    }
 
-    /* VPS: Need to change this to another pointer, because we wont have
-     two pointers - intra and inter - cached in the new design */
-    func = comm->c_coll.coll_bcast_intra;
+    /* Can we optimize? */
 
-    if (NULL == func)
-	return MPI_ERR_OTHER;
+    if (count == 0 && comm->c_coll.coll_bcast_optimization) {
+      return MPI_SUCCESS;
+    }
 
-    err = func(buffer, count, datatype, root, comm);
-    
-    OMPI_ERRHANDLER_RETURN(err, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+    /* Invoke the coll component to perform the back-end operation */
+
+    err = comm->c_coll.coll_bcast(buffer, count, datatype, root, comm);
+    OMPI_ERRHANDLER_RETURN(err, comm, err, FUNC_NAME);
 }

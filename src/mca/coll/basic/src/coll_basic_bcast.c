@@ -5,33 +5,34 @@
 #include "ompi_config.h"
 #include "coll_basic.h"
 
-#include "constants.h"
 #include "mpi.h"
+#include "include/constants.h"
 #include "datatype/datatype.h"
+#include "communicator/communicator.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
 #include "mca/pml/pml.h"
-#include "util/hibit.h"
+#include "util/bit_ops.h"
 
 
 /*
- *	bcast_lin
+ *	bcast_lin_intra
  *
  *	Function:	- broadcast using O(N) algorithm
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_bcast_lin(void *buff, int count,
-			     MPI_Datatype datatype, int root,
-			     MPI_Comm comm)
+int mca_coll_basic_bcast_lin_intra(void *buff, int count,
+                                   struct ompi_datatype_t *datatype, int root,
+                                   struct ompi_communicator_t *comm)
 {
     int i;
     int size;
     int rank;
     int err;
     ompi_request_t **preq;
-    ompi_request_t **reqs = comm->bcast_lin_reqs;
+    ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -46,50 +47,54 @@ int mca_coll_basic_bcast_lin(void *buff, int count,
 
     /* Root sends data to all others. */
 
-    /* VPS: as per Tim's suggestion there is no advantage of having
-       isend_init/start over normal isend. So just trying a normal isend  */
-
     for (i = 0, preq = reqs; i < size; ++i) {
-	if (i == rank)
-	    continue;
+      if (i == rank) {
+        continue;
+      }
 
-	err = mca_pml.pml_isend(buff, count, datatype, i, 
-				MCA_COLL_BASE_TAG_BCAST,
-				MCA_PML_BASE_SEND_STANDARD, 
-				comm, preq++);
-
-	if (MPI_SUCCESS != err) {
-	    return err;
-	}
+      err = mca_pml.pml_isend_init(buff, count, datatype, i, 
+                                   MCA_COLL_BASE_TAG_BCAST,
+                                   MCA_PML_BASE_SEND_STANDARD, 
+                                   comm, preq++);
+      if (MPI_SUCCESS != err) {
+        return err;
+      }
     }
-    
-    /* Free the requests. */
-    
-    for (i = 0, preq = reqs; i < size; ++i) {
-	if (i == rank)
-	    continue;
+    --i;
 
-	err = mca_pml.pml_free(preq);
-	++preq;
-    }
+    /* Start your engines.  This will never return an error. */
 
+    mca_pml.pml_start(i, reqs);
+
+    /* Wait for them all.  If there's an error, note that we don't
+       care what the error was -- just that there *was* an error.  The
+       PML will finish all requests, even if one or more of them fail.
+       i.e., by the end of this call, all the requests are free-able.
+       So free them anyway -- even if there was an error, and return
+       the error after we free everything. */
+
+    err = mca_pml.pml_wait_all(i, reqs, MPI_STATUSES_IGNORE);
+
+    /* Free the reqs */
+
+    mca_coll_basic_free_reqs(reqs, i);
+    
     /* All done */
 
-    return MPI_SUCCESS;
+    return err;
 }
 
 
-
 /*
- *	bcast_log
+ *	bcast_log_intra
  *
  *	Function:	- broadcast using O(log(N)) algorithm
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_bcast_log(void *buff, int count,
-			     MPI_Datatype datatype, int root,
-			     MPI_Comm comm)
+int mca_coll_basic_bcast_log_intra(void *buff, int count,
+                                   struct ompi_datatype_t *datatype, int root,
+                                   struct ompi_communicator_t *comm)
 {
     int i;
     int size;
@@ -102,7 +107,7 @@ int mca_coll_basic_bcast_log(void *buff, int count,
     int err;
     int nreqs;
     ompi_request_t **preq;
-    ompi_request_t **reqs = comm->bcast_log_reqs;
+    ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -127,6 +132,7 @@ int mca_coll_basic_bcast_log(void *buff, int count,
 
     /* Send data to the children. */
 
+    err = MPI_SUCCESS;
     preq = reqs;
     nreqs = 0;
     for (i = hibit + 1, mask = 1 << i; i <= dim; ++i, mask <<= 1) {
@@ -135,12 +141,12 @@ int mca_coll_basic_bcast_log(void *buff, int count,
 	    peer = (peer + root) % size;
 	    ++nreqs;
 
-	    err = mca_pml.pml_isend(buff, count, datatype, peer,
-				    MCA_COLL_BASE_TAG_BCAST, 
-				    MCA_PML_BASE_SEND_STANDARD, 
-				    comm, preq++);
-
+	    err = mca_pml.pml_isend_init(buff, count, datatype, peer,
+                                         MCA_COLL_BASE_TAG_BCAST, 
+                                         MCA_PML_BASE_SEND_STANDARD, 
+                                         comm, preq++);
 	    if (MPI_SUCCESS != err) {
+                mca_coll_basic_free_reqs(reqs, preq - reqs);
 		return err;
 	    }
 	}
@@ -150,17 +156,55 @@ int mca_coll_basic_bcast_log(void *buff, int count,
 
     if (nreqs > 0) {
 
-	err = mca_pml.pml_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
-	if (MPI_SUCCESS != err) {
-	    return err;
-	}
+      /* Start your engines.  This will never return an error. */
 
-	for (i = 0, preq = reqs; i < nreqs; ++i, ++preq) {
-	    mca_pml.pml_free(preq);
-	}
+      mca_pml.pml_start(nreqs, reqs);
+
+      /* Wait for them all.  If there's an error, note that we don't
+         care what the error was -- just that there *was* an error.
+         The PML will finish all requests, even if one or more of them
+         fail.  i.e., by the end of this call, all the requests are
+         free-able.  So free them anyway -- even if there was an
+         error, and return the error after we free everything. */
+      
+      err = mca_pml.pml_wait_all(nreqs, reqs, MPI_STATUSES_IGNORE);
+
+      /* Free the reqs */
+      
+      mca_coll_basic_free_reqs(reqs, nreqs);
     }
 
     /* All done */
 
-    return MPI_SUCCESS;
+    return err;
+}
+
+
+/*
+ *	bcast_lin_inter
+ *
+ *	Function:	- broadcast using O(N) algorithm
+ *	Accepts:	- same arguments as MPI_Bcast()
+ *	Returns:	- MPI_SUCCESS or error code
+ */
+int mca_coll_basic_bcast_lin_inter(void *buff, int count,
+                                   struct ompi_datatype_t *datatype, int root,
+                                   struct ompi_communicator_t *comm)
+{
+  return OMPI_ERR_NOT_IMPLEMENTED;
+}
+
+
+/*
+ *	bcast_log_inter
+ *
+ *	Function:	- broadcast using O(N) algorithm
+ *	Accepts:	- same arguments as MPI_Bcast()
+ *	Returns:	- MPI_SUCCESS or error code
+ */
+int mca_coll_basic_bcast_log_inter(void *buff, int count,
+                                   struct ompi_datatype_t *datatype, int root,
+                                   struct ompi_communicator_t *comm)
+{
+  return OMPI_ERR_NOT_IMPLEMENTED;
 }

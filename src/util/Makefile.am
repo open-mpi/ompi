@@ -11,10 +11,10 @@ noinst_LTLIBRARIES = libutil.la
 
 headers = \
     argv.h \
+    bit_ops.h \
     cmd_line.h \
     common_cmd_line.h \
     few.h \
-    hibit.h \
     if.h \
     malloc.h \
     output.h \

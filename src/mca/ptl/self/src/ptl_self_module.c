@@ -115,10 +115,13 @@ int mca_ptl_self_module_close(void)
             mca_ptl_self_module.self_send_requests.super.ompi_list_length);
     }
 
+#if 0
+    /* JMS debug */
     if (NULL != mca_ptl_self_module.self_ptls) {
         free(mca_ptl_self_module.self_ptls);
         OBJ_DESTRUCT( &(mca_ptl_self_module.self_send_requests) );
     }
+#endif
     return OMPI_SUCCESS;
 }
 

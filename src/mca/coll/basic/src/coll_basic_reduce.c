@@ -7,80 +7,198 @@
 
 #include <stdio.h>
 
-#include "constants.h"
 #include "mpi.h"
+#include "include/constants.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
-#include "coll_basic.h"
+#include "op/op.h"
 
 
 /*
- *	reduce_lin
+ *	reduce_lin_intra
  *
  *	Function:	- reduction using O(N) algorithm
  *	Accepts:	- same as MPI_Reduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_reduce_lin(void *sbuf, void *rbuf, int count,
-                              MPI_Datatype dtype, MPI_Op op,
-                              int root, MPI_Comm comm)
+int mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
+                                    struct ompi_datatype_t *dtype, 
+                                    struct ompi_op_t *op,
+                                    int root, struct ompi_communicator_t *comm)
 {
-#if 1
-  return OMPI_ERR_NOT_IMPLEMENTED;
-#else
   int i;
-  int size;
   int rank;
   int err;
-  char *buffer = NULL;
-  char *origin = NULL;
+  int size;
+  long true_lb, true_extent, lb, extent;
+  char *free_buffer = NULL;
+  char *pml_buffer = NULL;
   char *inbuf;
+  MPI_Fint fint = (MPI_Fint) dtype->id;
 
-  MPI_Comm_rank(comm, &rank);
-  MPI_Comm_size(comm, &size);
+  /* Initialize */
+
+  rank = ompi_comm_rank(comm);
+  size = ompi_comm_size(comm);
 
   /* If not root, send data to the root. */
 
   if (rank != root) {
-#if 0
-    /* JMS This needs to be replaced with negative tags and direct
-       calls into the PML */
-    err = MPI_Send(sbuf, count, dtype, root, BLKMPIREDUCE, comm);
-#endif
+    err = mca_pml.pml_send(sbuf, count, dtype, root, 
+                           MCA_COLL_BASE_TAG_REDUCE, 
+                           MCA_PML_BASE_SEND_STANDARD, comm);
     return err;
   }
 
   /* Root receives and reduces messages.  Allocate buffer to receive
-     messages. */
+     messages.  This comment applies to all collectives in this basic
+     module where we allocate a temporary buffer.  For the next few
+     lines of code, it's tremendously complicated how we decided that
+     this was the Right Thing to do.  Sit back and enjoy.  And prepare
+     to have your mind warped. :-)
+
+     Recall some definitions (I always get these backwards, so I'm
+     going to put them here):
+
+     extent: the length from the lower bound to the upper bound -- may
+     be considerably larger than the buffer required to hold the data
+     (or smaller!  But it's easiest to think about when it's larger).
+
+     true extent: the exact number of bytes required to hold the data
+     in the layout pattern in the datatype.
+
+     For example, consider the following buffer (just talking about
+     LB, extent, and true extent -- extrapolate for UB; i.e., assume
+     the UB equals exactly where the data ends):
+
+         A              B                                       C
+         --------------------------------------------------------
+         |              |                                       |
+         --------------------------------------------------------
+
+     There are multiple cases:
+
+     1. A is what we give to MPI_Send (and friends), and A is where
+        the data starts, and C is where the data ends.  In this case:
+
+        - extent: C-A
+        - true extent: C-A
+        - LB: 0
+
+         A                                                      C
+         --------------------------------------------------------
+         |                                                      |
+         --------------------------------------------------------
+         <=======================extent=========================>
+         <======================true extent=====================>
+
+     2. A is what we give to MPI_Send (and friends), B is where the
+        data starts, and C is where the data ends.  In this case:
+
+        - extent: C-A
+        - true extent: C-B
+        - LB: positive
+
+         A              B                                       C
+         --------------------------------------------------------
+         |              |           User buffer                 |
+         --------------------------------------------------------
+         <=======================extent=========================>
+                        <===============true extent=============>
+
+     3. B is what we give to MPI_Send (and friends), A is where the
+        data starts, and C is where the data ends.  In this case:
+
+        - extent: C-A
+        - true extent: C-A
+        - LB: negative
+
+         A              B                                       C
+         --------------------------------------------------------
+         |              |           User buffer                 |
+         --------------------------------------------------------
+         <=======================extent=========================>
+         <======================true extent=====================>
+
+     4. MPI_BOTTOM is what we give to MPI_Send (and friends), B is
+        where the data starts, and C is where the data ends.  In this
+        case:
+
+        - extent: C-MPI_BOTTOM
+        - true extent: C-B
+        - LB: [potentially very large] positive
+
+         MPI_BOTTOM     B                                       C
+         --------------------------------------------------------
+         |              |           User buffer                 |
+         --------------------------------------------------------
+         <=======================extent=========================>
+                        <===============true extent=============>
+
+     So in all cases, for a temporary buffer, all we need to malloc()
+     is a buffer of size true_extent.  We therefore need to know two
+     pointer values: what value to give to MPI_Send (and friends) and
+     what value to give to free(), because they might not be the same.
+
+     Clearly, what we give to free() is exactly what was returned from
+     malloc().  That part is easy.  :-)
+
+     What we give to MPI_Send (and friends) is a bit more complicated.
+     Let's take the 4 cases from above:
+
+     1. If A is what we give to MPI_Send and A is where the data
+        starts, then clearly we give to MPI_Send what we got back from
+        malloc().
+
+     2. If B is what we get back from malloc, but we give A to
+        MPI_Send, then the buffer range [A,B) represents "dead space"
+        -- no data will be put there.  So it's safe to give A-LB to
+        MPI_Send.  More specifically, the LB is positive, so B-LB is
+        actually A.
+
+     3. If A is what we get back from malloc, and B is what we give to
+        MPI_Send, then the LB is negative, so A-LB will actually equal
+        B.
+
+     4. Although this seems like the weirdest case, it's actually
+        quite similar to case #2 -- the pointer we give to MPI_Send is
+        smaller than the pointer we got back from malloc().
+
+     Hence, in all cases, we give (return_from_malloc - LB) to MPI_Send.
+
+     This works fine and dandy if we only have (count==1), which we
+     rarely do.  ;-) So we need to then allocate ((count-1)*extent) to
+     get enough space for the rest.  This may be more than is
+     necessary, but it's ok.
+
+     Simple, no?  :-)
+
+  */
 
   if (size > 1) {
-#if 0
-    /* JMS Needs to be replaced with ompi_datatype_*() functions */
-    err = ompi_dtbuffer(dtype, count, &buffer, &origin);
-    if (MPI_SUCCESS != err)
-      return err;
-#endif
+    ompi_ddt_get_extent(dtype, &lb, &extent);
+    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+
+    free_buffer = malloc(true_extent + (count - 1) * extent);
+    if (NULL == free_buffer) {
+      return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    pml_buffer = free_buffer - lb;
   }
 
   /* Initialize the receive buffer. */
 
   if (rank == (size - 1)) {
-#if 0
-    /* JMS Needs to be replaced with ompi_datatype_*() functions */
-    err = ompi_dtsndrcv(sbuf, count, dtype, rbuf, count,
-		       dtype, BLKMPIREDUCE, comm);
-#endif
+    err = ompi_ddt_sndrcv(sbuf, count, dtype, rbuf, count,
+                         dtype, MCA_COLL_BASE_TAG_REDUCE, comm);
   } else {
-#if 0
-    /* JMS This needs to be replaced with negative tags and direct
-       calls into the PML */
-    err = MPI_Recv(rbuf, count, dtype, size - 1,
-		   BLKMPIREDUCE, comm, MPI_STATUS_IGNORE);
-#endif
+    err = mca_pml.pml_recv(rbuf, count, dtype, size - 1,
+                           MCA_COLL_BASE_TAG_REDUCE, comm, MPI_STATUS_IGNORE);
   }
   if (MPI_SUCCESS != err) {
-    if (NULL != buffer)
-      free(buffer);
+    if (NULL != free_buffer) {
+      free(free_buffer);
+    }
     return err;
   }
 
@@ -90,57 +208,68 @@ int mca_coll_basic_reduce_lin(void *sbuf, void *rbuf, int count,
     if (rank == i) {
       inbuf = sbuf;
     } else {
-#if 0
-      /* JMS This needs to be replaced with negative tags and direct
-         calls into the PML */
-      err = MPI_Recv(origin, count, dtype, i, BLKMPIREDUCE, comm, 
-		     MPI_STATUS_IGNORE);
-#endif
+      err = mca_pml.pml_recv(pml_buffer, count, dtype, i, 
+                             MCA_COLL_BASE_TAG_REDUCE, comm, 
+                             MPI_STATUS_IGNORE);
       if (MPI_SUCCESS != err) {
-	if (NULL != buffer)
-	  free(buffer);
+	if (NULL != free_buffer) {
+	  free(free_buffer);
+        }
 	return err;
       }
 
-      inbuf = origin;
+      inbuf = pml_buffer;
     }
 
-    /* Call reduction function. */
+    /* Call reduction function.  Two dimensions: a) if both the op and
+       the datatype are intrinsic, we have a series of predefined
+       functions for each datatype, b) if the op has a fortran
+       callback function or not. 
 
-#if 0
-    /* JMS Need MPI_Op */
-    if (op->op_flags & OMPI_LANGF77) {
-      (op->op_func)(inbuf, rbuf, &count, &dtype->dt_f77handle);
+       NOTE: We assume here that we will get a valid result back from
+       the ompi_op_ddt_map[] (and not -1) -- if we do, then the
+       parameter check in the top-level MPI function should have
+       caught it.  If we get -1 because the top-level parameter check
+       is off, then it's an erroneous program and it's the user's
+       fault.  :-)*/
+
+    if (ompi_op_is_intrinsic(op) && dtype->id < DT_MAX_PREDEFINED) {
+      if (ompi_op_is_fortran(op)) {
+        op->o_func[ompi_op_ddt_map[dtype->id]].fort_fn(inbuf, rbuf,
+                                                       &count, &fint);
+      } else {
+        op->o_func[ompi_op_ddt_map[dtype->id]].c_fn(inbuf, rbuf, &count,
+                                                    &dtype);
+      }
+    } else if (ompi_op_is_fortran(op)) {
+      op->o_func[0].fort_fn(inbuf, rbuf, &count, &fint);
     } else {
-      (op->op_func)(inbuf, rbuf, &count, &dtype);
+      op->o_func[0].c_fn(inbuf, rbuf, &count, &dtype);
     }
-#endif
   }
 
-  if (NULL != buffer)
-    free(buffer);
+  if (NULL != free_buffer) {
+    free(free_buffer);
+  }
 
   /* All done */
 
-  return (MPI_SUCCESS);
-#endif
+  return MPI_SUCCESS;
 }
 
 
 /*
- *	reduce_log
+ *	reduce_log_intra
  *
  *	Function:	- reduction using O(log N) algorithm
  *	Accepts:	- same as MPI_Reduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
-                              MPI_Datatype dtype, MPI_Op op,
-                              int root, MPI_Comm comm)
+int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
+                                    struct ompi_datatype_t *dtype, 
+                                    struct ompi_op_t *op,
+                                    int root, struct ompi_communicator_t *comm)
 {
-#if 1
-  return OMPI_ERR_NOT_IMPLEMENTED;
-#else
   int i;
   int size;
   int rank;
@@ -150,53 +279,42 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
   int dim;
   int mask;
   int fl_recv;
-  char *buf1;
-  char *buf2;
-  char *origin1;
-  char *origin2;
+  long true_lb, true_extent, lb, extent;
+  char *free_buffer = NULL;
+  char *pml_buffer1 = NULL;
+  char *pml_buffer2 = NULL;
   void *inmsg;
   void *resmsg;
+  MPI_Fint fint = (MPI_Fint) dtype->id;
 
-  /* Allocate the incoming and resulting message buffers. */
+  /* Allocate the incoming and resulting message buffers.  See lengthy
+     rationale above. */
 
-#if 0
-    /* JMS Needs to be replaced with ompi_datatype_*() functions */
-  /* JMS: result of Feb meeting:
+  if (size > 1) {
+    ompi_ddt_get_extent(dtype, &lb, &extent);
+    ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
 
-     if (dtype != MPI_IN_PLACE) {
-       MPI_Type_get_true_extent(dtype, &true_lb, &true_extent);
-       buffer_to_free = malloc(true_extent);
-       buffer_for_mpi = buffer_to_free - true_lb;
-     }
-  */
-  err = ompi_dtbuffer(dtype, count, &buf1, &origin1);
-  if (MPI_SUCCESS != err)
-    return err;
+    free_buffer = malloc(true_extent + (count - 1) * extent);
+    if (NULL == free_buffer) {
+      return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
-  err = ompi_dtbuffer(dtype, count, &buf2, &origin2);
-  if (MPI_SUCCESS != err) {
-    if (NULL != buf1)
-      free(buf1);
-    return err;
+    pml_buffer1 = free_buffer + true_extent - lb;
+    pml_buffer2 = free_buffer - lb;
   }
-#endif
 
-  MPI_Comm_size(comm, &size);
-  MPI_Comm_rank(comm, &rank);
-#if 0
-  /* JMS Need MPI_Op */
-  vrank = (op->op_commute) ? (rank - root + size) % size : rank;
-#endif
-#if 0
-  /* JMS Need to cache this somewhere */
+  /* Some variables */
+
+  size = ompi_comm_size(comm);
+  rank = ompi_comm_rank(comm);                       
+  vrank = ompi_op_is_commute(op) ? (rank - root + size) % size : rank;
   dim = comm->c_cube_dim;
-#endif
 
   /* Loop over cube dimensions. High processes send to low ones in the
      dimension. */
 
-  inmsg = origin1;
-  resmsg = origin2;
+  inmsg = pml_buffer1;
+  resmsg = pml_buffer2;
   fl_recv = 0;
   for (i = 0, mask = 1; i < dim; ++i, mask <<= 1) {
 
@@ -204,23 +322,17 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
 
     if (vrank & mask) {
       peer = vrank & ~mask;
-#if 0
-      /* JMS Need MPI_Op */
-      if (op->op_commute)
+      if (ompi_op_is_commute(op)) {
 	peer = (peer + root) % size;
-#endif
+      }
 
-#if 0
-      /* JMS This needs to be replaced with negative tags and direct
-         calls into the PML */
-      err = MPI_Send((fl_recv) ? resmsg : sbuf, count,
-		     dtype, peer, BLKMPIREDUCE, comm);
-#endif
+      err = mca_pml.pml_send((fl_recv) ? resmsg : sbuf, count,
+                             dtype, peer, MCA_COLL_BASE_TAG_REDUCE, 
+                             MCA_PML_BASE_SEND_STANDARD, comm);
       if (MPI_SUCCESS != err) {
-	if (NULL != buf1)
-	  free(buf1);
-	if (NULL != buf2)
-	  free(buf2);
+	if (NULL != free_buffer) {
+	  free(free_buffer);
+        }
 	return err;
       }
 
@@ -232,45 +344,51 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
 
     else {
       peer = vrank | mask;
-      if (peer >= size)
+      if (peer >= size) {
 	continue;
-#if 0
-      /* JMS Need MPI_Op */
-      if (op->op_commute)
+      }
+      if (ompi_op_is_commute(op)) {
 	peer = (peer + root) % size;
-#endif
+      }
 
       fl_recv = 1;
-#if 0
-      /* JMS This needs to be replaced with negative tags and direct
-         calls into the PML */
-      err = MPI_Recv(inmsg, count, dtype, peer,
-		     BLKMPIREDUCE, comm, MPI_STATUS_IGNORE);
-#endif
+      err = mca_pml.pml_recv(inmsg, count, dtype, peer,
+                             MCA_COLL_BASE_TAG_REDUCE, comm,
+                             MPI_STATUS_IGNORE);
       if (MPI_SUCCESS != err) {
-	if (NULL != buf1)
-	  free(buf1);
-	if (NULL != buf2)
-	  free(buf2);
+	if (NULL != free_buffer) {
+	  free(free_buffer);
+        }
 	return err;
       }
 
-#if 0
-      /* JMS Need MPI_Op */
-      if (op->op_flags & OMPI_LANGF77) {
-	(*op->op_func)((i > 0) ? resmsg : sbuf,
-                       inmsg, &count, &dtype->dt_f77handle);
-      } else {
-	(*op->op_func)((i > 0) ? resmsg : sbuf, inmsg, &count, &dtype);
-      }
-#endif
+      /* Call reduction function.  Two dimensions: a) if both the op
+         and the datatype are intrinsic, we have a series of
+         predefined functions for each datatype, b) if the op has a
+         fortran callback function or not. */
 
-      if (inmsg == origin1) {
-	resmsg = origin1;
-	inmsg = origin2;
+      if (ompi_op_is_intrinsic(op) && dtype->id < DT_MAX_PREDEFINED) {
+        if (ompi_op_is_fortran(op)) {
+          op->o_func[ompi_op_ddt_map[dtype->id]].fort_fn((i > 0) ?
+                                                         resmsg : sbuf, inmsg, 
+                                                         &count, &fint);
+        } else {
+          op->o_func[ompi_op_ddt_map[dtype->id]].c_fn((i > 0) ?
+                                                      resmsg : sbuf, inmsg, 
+                                                      &count, &dtype);
+        }
+      } else if (ompi_op_is_fortran(op)) {
+        op->o_func[0].fort_fn((i > 0) ? resmsg : sbuf, inmsg, &count, &fint);
       } else {
-	resmsg = origin2;
-	inmsg = origin1;
+        op->o_func[0].c_fn((i > 0) ? resmsg : sbuf, inmsg, &count, &dtype);
+      }
+
+      if (inmsg == pml_buffer1) {
+	resmsg = pml_buffer1;
+	inmsg = pml_buffer2;
+      } else {
+	resmsg = pml_buffer2;
+	inmsg = pml_buffer1;
       }
     }
   }
@@ -280,34 +398,55 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
   err = MPI_SUCCESS;
   if (0 == vrank) {
     if (root == rank) {
-#if 0
-      /* JMS Needs to be replaced with ompi_datatype_*() functions */
-      ompi_dtcpy(rbuf, (i > 0) ? resmsg : sbuf, count, dtype);
-#endif
+      ompi_ddt_sndrcv((i > 0) ? resmsg : sbuf, count, dtype,
+                     rbuf, count, dtype, MCA_COLL_BASE_TAG_REDUCE, comm);
     } else {
-#if 0
-      /* JMS This needs to be replaced with negative tags and direct
-         calls into the PML */
-      err = MPI_Send((i > 0) ? resmsg : sbuf, count,
-		     dtype, root, BLKMPIREDUCE, comm);
-#endif
+      err = mca_pml.pml_send((i > 0) ? resmsg : sbuf, count,
+                             dtype, root, MCA_COLL_BASE_TAG_REDUCE,
+                             MCA_PML_BASE_SEND_STANDARD, comm);
     }
   } else if (rank == root) {
-#if 0
-      /* JMS This needs to be replaced with negative tags and direct
-         calls into the PML */
-    err = MPI_Recv(rbuf, count, dtype, 0, BLKMPIREDUCE, comm, 
-		   MPI_STATUS_IGNORE);
-#endif
+    err = mca_pml.pml_recv(rbuf, count, dtype, 0, MCA_COLL_BASE_TAG_REDUCE,
+                           comm, MPI_STATUS_IGNORE);
   }
 
-  if (NULL != buf1)
-    free(buf1);
-  if (NULL != buf2)
-    free(buf2);
+  if (NULL != free_buffer) {
+    free(free_buffer);
+  }
 
   /* All done */
 
   return err;
-#endif
+}
+
+
+/*
+ *	reduce_lin_inter
+ *
+ *	Function:	- reduction using O(N) algorithm
+ *	Accepts:	- same as MPI_Reduce()
+ *	Returns:	- MPI_SUCCESS or error code
+ */
+int mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
+                                    struct ompi_datatype_t *dtype, 
+                                    struct ompi_op_t *op,
+                                    int root, struct ompi_communicator_t *comm)
+{
+  return OMPI_ERR_NOT_IMPLEMENTED;
+}
+
+
+/*
+ *	reduce_log_inter
+ *
+ *	Function:	- reduction using O(N) algorithm
+ *	Accepts:	- same as MPI_Reduce()
+ *	Returns:	- MPI_SUCCESS or error code
+ */
+int mca_coll_basic_reduce_log_inter(void *sbuf, void *rbuf, int count,
+                                    struct ompi_datatype_t *dtype, 
+                                    struct ompi_op_t *op,
+                                    int root, struct ompi_communicator_t *comm)
+{
+  return OMPI_ERR_NOT_IMPLEMENTED;
 }

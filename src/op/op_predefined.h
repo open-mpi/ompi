@@ -7,73 +7,117 @@
 
 #include "op/op.h"
 
-/**
- * Handler function for MPI_MAX
+/*
+ * Since we have so many of these, and they're all identical except
+ * for the name, use macros to prototype them.
  */
-void ompi_mpi_op_max_func(void *in, void *out, int *count, MPI_Datatype *type);
+#define OMPI_OP_PROTO (void *in, void *out, int *count, MPI_Datatype *dtype)
+#define OMPI_OP_HANDLER_C_INTEGER(name) \
+  void ompi_mpi_op_##name##_int OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_long OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_short OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_unsigned_short OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_unsigned OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_unsigned_long OMPI_OP_PROTO
+
+#define OMPI_OP_HANDLER_FORTRAN_INTEGER(name) \
+  void ompi_mpi_op_##name##_fortran_integer OMPI_OP_PROTO
+
+#define OMPI_OP_HANDLER_FLOATING_POINT(name) \
+  void ompi_mpi_op_##name##_float OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_double OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_fortran_real OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_fortran_double_precision OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_long_double OMPI_OP_PROTO
+
+#define OMPI_OP_HANDLER_LOGICAL(name) \
+  void ompi_mpi_op_##name##_fortran_logical OMPI_OP_PROTO
+
+#define OMPI_OP_HANDLER_COMPLEX(name) \
+  void ompi_mpi_op_##name##_fortran_complex OMPI_OP_PROTO
+
+#define OMPI_OP_HANDLER_BYTE(name) \
+  void ompi_mpi_op_##name##_byte OMPI_OP_PROTO
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
- * Handler function for MPI_MIN
+ * Handler functions for MPI_MAX
  */
-void ompi_mpi_op_min_func(void *in, void *out, int *count, MPI_Datatype *type);
+  OMPI_OP_HANDLER_C_INTEGER(max);
+  OMPI_OP_HANDLER_FORTRAN_INTEGER(max);
+  OMPI_OP_HANDLER_FLOATING_POINT(max);
 
 /**
- * Handler function for MPI_SUM
+ * Handler functions for MPI_MIN
  */
-void ompi_mpi_op_sum_func(void *in, void *out, int *count, MPI_Datatype *type);
+  OMPI_OP_HANDLER_C_INTEGER(min);
+  OMPI_OP_HANDLER_FORTRAN_INTEGER(min);
+  OMPI_OP_HANDLER_FLOATING_POINT(min);
 
 /**
- * Handler function for MPI_PROD
+ * Handler functions for MPI_SUM
  */
-void ompi_mpi_op_prod_func(void *in, void *out, int *count, MPI_Datatype *type);
+  OMPI_OP_HANDLER_C_INTEGER(sum);
+  OMPI_OP_HANDLER_FORTRAN_INTEGER(sum);
+  OMPI_OP_HANDLER_FLOATING_POINT(sum);
+  OMPI_OP_HANDLER_COMPLEX(sum);
 
 /**
- * Handler function for MPI_LAND
+ * Handler functions for MPI_PROD
  */
-void ompi_mpi_op_land_func(void *in, void *out, int *count, MPI_Datatype *type);
+  OMPI_OP_HANDLER_C_INTEGER(prod);
+  OMPI_OP_HANDLER_FORTRAN_INTEGER(prod);
+  OMPI_OP_HANDLER_FLOATING_POINT(prod);
+  OMPI_OP_HANDLER_COMPLEX(prod);
 
 /**
- * Handler function for MPI_BAND
+ * Handler functions for MPI_LAND
  */
-void ompi_mpi_op_band_func(void *in, void *out, int *count, MPI_Datatype *type);
+  OMPI_OP_HANDLER_C_INTEGER(land);
+  OMPI_OP_HANDLER_LOGICAL(land);
 
 /**
- * Handler function for MPI_LOR
+ * Handler functions for MPI_BAND
  */
-void ompi_mpi_op_lor_func(void *in, void *out, int *count, MPI_Datatype *type);
+  OMPI_OP_HANDLER_C_INTEGER(band);
+  OMPI_OP_HANDLER_FORTRAN_INTEGER(band);
+  OMPI_OP_HANDLER_BYTE(band);
 
 /**
- * Handler function for MPI_BOR
+ * Handler functions for MPI_LOR
  */
-void ompi_mpi_op_bor_func(void *in, void *out, int *count, MPI_Datatype *type);
+  OMPI_OP_HANDLER_C_INTEGER(lor);
+  OMPI_OP_HANDLER_LOGICAL(lor);
 
 /**
- * Handler function for MPI_LXOR
+ * Handler functions for MPI_BOR
  */
-void ompi_mpi_op_lxor_func(void *in, void *out, int *count, MPI_Datatype *type);
+  OMPI_OP_HANDLER_C_INTEGER(bor);
+  OMPI_OP_HANDLER_FORTRAN_INTEGER(bor);
+  OMPI_OP_HANDLER_BYTE(bor);
 
 /**
- * Handler function for MPI_BXOR
+ * Handler functions for MPI_LXOR
  */
-void ompi_mpi_op_bxor_func(void *in, void *out, int *count, MPI_Datatype *type);
+  OMPI_OP_HANDLER_C_INTEGER(lxor);
+  OMPI_OP_HANDLER_LOGICAL(lxor);
 
 /**
- * Handler function for MPI_MAXLOC
+ * Handler functions for MPI_BXOR
  */
-void ompi_mpi_op_maxloc_func(void *in, void *out, int *count, 
-                            MPI_Datatype *type);
+  OMPI_OP_HANDLER_C_INTEGER(bxor);
+  OMPI_OP_HANDLER_FORTRAN_INTEGER(bxor);
+  OMPI_OP_HANDLER_BYTE(bxor);
 
 /**
- * Handler function for MPI_MINLOC
+ * Handler functions for MPI_MAXLOC
  */
-void ompi_mpi_op_minloc_func(void *in, void *out, int *count, 
-                            MPI_Datatype *type);
 
 /**
- * Handler function for MPI_REPLACE
+ * Handler functions for MPI_MINLOC
  */
-void ompi_mpi_op_replace_func(void *in, void *out, int *count, 
-                             MPI_Datatype *type);
-
 
 #endif /* OMPI_OP_PREDEFINED_H */

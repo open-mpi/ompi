@@ -2,14 +2,13 @@
  * $HEADER$
  */
 
-/** @file **/
-
 #include "ompi_config.h"
 
 #include "include/constants.h"
 #include "op/op.h"
 #include "op/op_predefined.h"
 #include "class/ompi_pointer_array.h"
+#include "datatype/datatype_internal.h"
 
 
 /*
@@ -34,30 +33,118 @@ static void ompi_op_destruct(ompi_op_t *eh);
 /*
  * Class instance
  */
-OBJ_CLASS_INSTANCE(ompi_op_t, ompi_object_t, ompi_op_construct, ompi_op_destruct);
+OBJ_CLASS_INSTANCE(ompi_op_t, ompi_object_t, 
+                   ompi_op_construct, ompi_op_destruct);
+
+
+/*
+ * Helpful defines, because there's soooo many names!
+ */
+#define C_INTEGER(name) \
+  { ompi_mpi_op_##name##_int }, \
+  { ompi_mpi_op_##name##_long }, \
+  { ompi_mpi_op_##name##_short }, \
+  { ompi_mpi_op_##name##_unsigned_short }, \
+  { ompi_mpi_op_##name##_unsigned }, \
+  { ompi_mpi_op_##name##_unsigned_long }
+#define C_INTEGER_NULL \
+  { NULL }, \
+  { NULL }, \
+  { NULL }, \
+  { NULL }, \
+  { NULL }, \
+  { NULL }
+
+#define FORTRAN_INTEGER(name) \
+  { ompi_mpi_op_##name##_fortran_integer }
+#define FORTRAN_INTEGER_NULL \
+  { NULL }
+
+#define FLOATING_POINT(name) \
+  { ompi_mpi_op_##name##_float }, \
+  { ompi_mpi_op_##name##_double }, \
+  { ompi_mpi_op_##name##_fortran_real }, \
+  { ompi_mpi_op_##name##_fortran_double_precision }, \
+  { ompi_mpi_op_##name##_long_double }
+#define FLOATING_POINT_NULL \
+  { NULL }, \
+  { NULL }, \
+  { NULL }, \
+  { NULL }, \
+  { NULL }
+
+#define LOGICAL(name) \
+  { ompi_mpi_op_##name##_fortran_logical }
+#define LOGICAL_NULL \
+  { NULL }
+
+#define COMPLEX(name) \
+  { ompi_mpi_op_##name##_fortran_complex }
+#define COMPLEX_NULL \
+  { NULL }
+
+#define BYTE(name) \
+  { ompi_mpi_op_##name##_byte }
+#define BYTE_NULL \
+  { NULL }
+
+#define TWOLOC(name) \
+  { ompi_mpi_op_##name##_2real }, \
+  { ompi_mpi_op_##name##_2double_precision }, \
+  { ompi_mpi_op_##name##_2integer }, \
+  { ompi_mpi_op_##name##_float_int }, \
+  { ompi_mpi_op_##name##_double_int }, \
+  { ompi_mpi_op_##name##_2int }, \
+  { ompi_mpi_op_##name##_long_int }, \
+  { ompi_mpi_op_##name##_short_int }, \
+  { ompi_mpi_op_##name##_long_double_int }
+#define TWOLOC_NULL \
+  { NULL }, \
+  { NULL }, \
+  { NULL }, \
+  { NULL }, \
+  { NULL }, \
+  { NULL }, \
+  { NULL }, \
+  { NULL }, \
+  { NULL }
 
 
 /*
  * MPI_OP_NULL
+ * All types
  */
 ompi_op_t ompi_mpi_op_null = {
     { NULL, 0 },
 
     "MPI_OP_NULL",
-    true, false, true, true,
-    { NULL }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER_NULL,
+      FORTRAN_INTEGER_NULL,
+      FLOATING_POINT_NULL,
+      LOGICAL_NULL,
+      COMPLEX_NULL,
+      BYTE_NULL,
+      TWOLOC_NULL }
 };
 
 
 /*
  * MPI_OP_MAX
+ * C integer, Fortran integer, Floating point
  */
 ompi_op_t ompi_mpi_op_max = {
     { NULL, 0 },
 
     "MPI_OP_MAX",
-    true, false, true, true,
-    { ompi_mpi_op_max_func }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER(max),
+      FORTRAN_INTEGER(max),
+      FLOATING_POINT(max),
+      LOGICAL_NULL,
+      COMPLEX_NULL,
+      BYTE_NULL,
+      TWOLOC_NULL }
 };
 
 
@@ -68,8 +155,14 @@ ompi_op_t ompi_mpi_op_min = {
     { NULL, 0 },
 
     "MPI_OP_MIN",
-    true, false, true, true,
-    { ompi_mpi_op_min_func }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER(min),
+      FORTRAN_INTEGER(min),
+      FLOATING_POINT(min),
+      LOGICAL_NULL,
+      COMPLEX_NULL,
+      BYTE_NULL,
+      TWOLOC_NULL }
 };
 
 
@@ -80,8 +173,14 @@ ompi_op_t ompi_mpi_op_sum = {
     { NULL, 0 },
 
     "MPI_OP_SUM",
-    true, false, true, true,
-    { ompi_mpi_op_sum_func }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER(sum),
+      FORTRAN_INTEGER(sum),
+      FLOATING_POINT(sum),
+      LOGICAL_NULL,
+      COMPLEX(sum),
+      BYTE_NULL,
+      TWOLOC_NULL }
 };
 
 
@@ -92,8 +191,14 @@ ompi_op_t ompi_mpi_op_prod = {
     { NULL, 0 },
 
     "MPI_OP_PROD",
-    true, false, true, true,
-    { ompi_mpi_op_prod_func }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER(prod),
+      FORTRAN_INTEGER(prod),
+      FLOATING_POINT(prod),
+      LOGICAL_NULL,
+      COMPLEX(prod),
+      BYTE_NULL,
+      TWOLOC_NULL }
 };
 
 
@@ -104,8 +209,14 @@ ompi_op_t ompi_mpi_op_land = {
     { NULL, 0 },
 
     "MPI_OP_LAND",
-    true, false, true, true,
-    { ompi_mpi_op_land_func }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER(land),
+      FORTRAN_INTEGER_NULL,
+      FLOATING_POINT_NULL,
+      LOGICAL(land),
+      COMPLEX_NULL,
+      BYTE_NULL,
+      TWOLOC_NULL }
 };
 
 
@@ -116,8 +227,14 @@ ompi_op_t ompi_mpi_op_band = {
     { NULL, 0 },
 
     "MPI_OP_BAND",
-    true, false, true, true,
-    { ompi_mpi_op_band_func }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER(band),
+      FORTRAN_INTEGER(band),
+      FLOATING_POINT_NULL,
+      LOGICAL_NULL,
+      COMPLEX_NULL,
+      BYTE(band),
+      TWOLOC_NULL }
 };
 
 
@@ -128,8 +245,14 @@ ompi_op_t ompi_mpi_op_lor = {
     { NULL, 0 },
 
     "MPI_OP_LOR",
-    true, false, true, true,
-    { ompi_mpi_op_lor_func }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER(lor),
+      FORTRAN_INTEGER_NULL,
+      FLOATING_POINT_NULL,
+      LOGICAL(lor),
+      COMPLEX_NULL,
+      BYTE_NULL,
+      TWOLOC_NULL }
 };
 
 
@@ -140,8 +263,14 @@ ompi_op_t ompi_mpi_op_bor = {
     { NULL, 0 },
 
     "MPI_OP_BOR",
-    true, false, true, true,
-    { ompi_mpi_op_bor_func }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER(bor),
+      FORTRAN_INTEGER(bor),
+      FLOATING_POINT_NULL,
+      LOGICAL_NULL,
+      COMPLEX_NULL,
+      BYTE(bor),
+      TWOLOC_NULL }
 };
 
 
@@ -152,8 +281,14 @@ ompi_op_t ompi_mpi_op_lxor = {
     { NULL, 0 },
 
     "MPI_OP_LXOR",
-    true, false, true, true,
-    { ompi_mpi_op_lxor_func }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER(lxor),
+      FORTRAN_INTEGER_NULL,
+      FLOATING_POINT_NULL,
+      LOGICAL(lxor),
+      COMPLEX_NULL,
+      BYTE_NULL,
+      TWOLOC_NULL }
 };
 
 
@@ -164,8 +299,14 @@ ompi_op_t ompi_mpi_op_bxor = {
     { NULL, 0 },
 
     "MPI_OP_BXOR",
-    true, false, true, true,
-    { ompi_mpi_op_bxor_func }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER(bxor),
+      FORTRAN_INTEGER(bxor),
+      FLOATING_POINT_NULL,
+      LOGICAL_NULL,
+      COMPLEX_NULL,
+      BYTE(bxor),
+      TWOLOC_NULL }
 };
 
 
@@ -176,8 +317,14 @@ ompi_op_t ompi_mpi_op_maxloc = {
     { NULL, 0 },
 
     "MPI_OP_MAXLOC",
-    true, false, true, true,
-    { ompi_mpi_op_maxloc_func }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER_NULL,
+      FORTRAN_INTEGER_NULL,
+      FLOATING_POINT_NULL,
+      LOGICAL_NULL,
+      COMPLEX_NULL,
+      BYTE_NULL,
+      TWOLOC_NULL }
 };
 
 
@@ -188,21 +335,20 @@ ompi_op_t ompi_mpi_op_minloc = {
     { NULL, 0 },
 
     "MPI_OP_MINLOC",
-    true, false, true, true,
-    { ompi_mpi_op_minloc_func }
+    (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
+    { C_INTEGER_NULL,
+      FORTRAN_INTEGER_NULL,
+      FLOATING_POINT_NULL,
+      LOGICAL_NULL,
+      COMPLEX_NULL,
+      BYTE_NULL,
+      TWOLOC_NULL }
 };
-
 
 /*
- * MPI_OP_REPLACE
+ * Map from ddt->id to position in op function pointer array
  */
-ompi_op_t ompi_mpi_op_replace = {
-    { NULL, 0 },
-
-    "MPI_OP_REPLACE",
-    true, false, true, true,
-    { ompi_mpi_op_replace_func }
-};
+int ompi_op_ddt_map[DT_MAX_PREDEFINED];
 
 
 /*
@@ -210,6 +356,8 @@ ompi_op_t ompi_mpi_op_replace = {
  */
 int ompi_op_init(void)
 {
+  int i;
+
   /* initialize ompi_op_f_to_c_table */
 
   ompi_op_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
@@ -217,25 +365,55 @@ int ompi_op_init(void)
     return OMPI_ERROR;
   }
 
+  /* Fill in the ddt.id->op_position map */
+
+  for (i = 0; i < DT_MAX_PREDEFINED; ++i)
+    ompi_op_ddt_map[i] = -1;
+
+  ompi_op_ddt_map[DT_BYTE] = OMPI_OP_TYPE_BYTE;
+  ompi_op_ddt_map[DT_SHORT] = OMPI_OP_TYPE_SHORT;
+  ompi_op_ddt_map[DT_UNSIGNED_SHORT] = OMPI_OP_TYPE_UNSIGNED_SHORT;
+  ompi_op_ddt_map[DT_INT] = OMPI_OP_TYPE_INT;
+  ompi_op_ddt_map[DT_LONG] = OMPI_OP_TYPE_LONG;
+  ompi_op_ddt_map[DT_UNSIGNED_LONG] = OMPI_OP_TYPE_UNSIGNED_LONG;
+  ompi_op_ddt_map[DT_FLOAT] = OMPI_OP_TYPE_FLOAT;
+  ompi_op_ddt_map[DT_DOUBLE] = OMPI_OP_TYPE_DOUBLE;
+  ompi_op_ddt_map[DT_LONG_DOUBLE] = OMPI_OP_TYPE_LONG_DOUBLE;
+  ompi_op_ddt_map[DT_COMPLEX_FLOAT] = OMPI_OP_TYPE_COMPLEX;
+  ompi_op_ddt_map[DT_LOGIC] = OMPI_OP_TYPE_LOGICAL;
+  ompi_op_ddt_map[DT_FLOAT_INT] = OMPI_OP_TYPE_FLOAT_INT;
+  ompi_op_ddt_map[DT_DOUBLE_INT] = OMPI_OP_TYPE_DOUBLE_INT;
+  ompi_op_ddt_map[DT_LONG_INT] = OMPI_OP_TYPE_LONG_INT;
+  ompi_op_ddt_map[DT_2INT] = OMPI_OP_TYPE_2INT;
+  ompi_op_ddt_map[DT_SHORT_INT] = OMPI_OP_TYPE_SHORT_INT;
+  ompi_op_ddt_map[DT_INTEGER] = OMPI_OP_TYPE_INTEGER;
+  ompi_op_ddt_map[DT_REAL] = OMPI_OP_TYPE_REAL;
+  ompi_op_ddt_map[DT_DBLPREC] = OMPI_OP_TYPE_DOUBLE_PRECISION;
+  ompi_op_ddt_map[DT_2REAL] = OMPI_OP_TYPE_2REAL;
+  ompi_op_ddt_map[DT_2DBLPREC] = OMPI_OP_TYPE_2DOUBLE_PRECISION;
+  ompi_op_ddt_map[DT_2INTEGER] = OMPI_OP_TYPE_2INTEGER;
+  ompi_op_ddt_map[DT_LONGDBL_INT] = OMPI_OP_TYPE_LONG_DOUBLE_INT;
+  ompi_op_ddt_map[DT_WCHAR] = OMPI_OP_TYPE_WCHAR;
+  /* JMS Continue here -- next step is to make the reduce functions
+     use this map */
+
   /* Create the intrinsic ops */
 
-  if (add_intrinsic(&ompi_mpi_op_null, OMPI_OP_NULL_FORTRAN) != OMPI_SUCCESS ||
-      add_intrinsic(&ompi_mpi_op_max, OMPI_OP_MAX_FORTRAN) != OMPI_SUCCESS ||
-      add_intrinsic(&ompi_mpi_op_min, OMPI_OP_MIN_FORTRAN) != OMPI_SUCCESS ||
-      add_intrinsic(&ompi_mpi_op_sum, OMPI_OP_SUM_FORTRAN) != OMPI_SUCCESS ||
-      add_intrinsic(&ompi_mpi_op_prod, OMPI_OP_PROD_FORTRAN) != OMPI_SUCCESS ||
-      add_intrinsic(&ompi_mpi_op_land, OMPI_OP_LAND_FORTRAN) != OMPI_SUCCESS ||
-      add_intrinsic(&ompi_mpi_op_band, OMPI_OP_BAND_FORTRAN) != OMPI_SUCCESS ||
-      add_intrinsic(&ompi_mpi_op_lor, OMPI_OP_LOR_FORTRAN) != OMPI_SUCCESS ||
-      add_intrinsic(&ompi_mpi_op_bor, OMPI_OP_BOR_FORTRAN) != OMPI_SUCCESS ||
-      add_intrinsic(&ompi_mpi_op_lxor, OMPI_OP_LXOR_FORTRAN) != OMPI_SUCCESS ||
-      add_intrinsic(&ompi_mpi_op_bxor, OMPI_OP_BXOR_FORTRAN) != OMPI_SUCCESS ||
+  if (add_intrinsic(&ompi_mpi_op_null, OMPI_OP_FORTRAN_NULL) != OMPI_SUCCESS ||
+      add_intrinsic(&ompi_mpi_op_max, OMPI_OP_FORTRAN_MAX) != OMPI_SUCCESS ||
+      add_intrinsic(&ompi_mpi_op_min, OMPI_OP_FORTRAN_MIN) != OMPI_SUCCESS ||
+      add_intrinsic(&ompi_mpi_op_sum, OMPI_OP_FORTRAN_SUM) != OMPI_SUCCESS ||
+      add_intrinsic(&ompi_mpi_op_prod, OMPI_OP_FORTRAN_PROD) != OMPI_SUCCESS ||
+      add_intrinsic(&ompi_mpi_op_land, OMPI_OP_FORTRAN_LAND) != OMPI_SUCCESS ||
+      add_intrinsic(&ompi_mpi_op_band, OMPI_OP_FORTRAN_BAND) != OMPI_SUCCESS ||
+      add_intrinsic(&ompi_mpi_op_lor, OMPI_OP_FORTRAN_LOR) != OMPI_SUCCESS ||
+      add_intrinsic(&ompi_mpi_op_bor, OMPI_OP_FORTRAN_BOR) != OMPI_SUCCESS ||
+      add_intrinsic(&ompi_mpi_op_lxor, OMPI_OP_FORTRAN_LXOR) != OMPI_SUCCESS ||
+      add_intrinsic(&ompi_mpi_op_bxor, OMPI_OP_FORTRAN_BXOR) != OMPI_SUCCESS ||
       add_intrinsic(&ompi_mpi_op_maxloc, 
-                    OMPI_OP_MAXLOC_FORTRAN) != OMPI_SUCCESS ||
+                    OMPI_OP_FORTRAN_MAXLOC) != OMPI_SUCCESS ||
       add_intrinsic(&ompi_mpi_op_minloc, 
-                    OMPI_OP_MINLOC_FORTRAN) != OMPI_SUCCESS ||
-      add_intrinsic(&ompi_mpi_op_replace, 
-                    OMPI_OP_REPLACE_FORTRAN) != OMPI_SUCCESS) {
+                    OMPI_OP_FORTRAN_MINLOC) != OMPI_SUCCESS) {
     return OMPI_ERROR;
   }
 
@@ -260,15 +438,19 @@ int ompi_op_finalize(void)
 }
 
 
+/*
+ * Create a new MPI_Op
+ */
 ompi_op_t *ompi_op_create(bool commute,
                         ompi_op_fortran_handler_fn_t *func)
 {
+  int i;
   ompi_op_t *new_op;
 
   /* Create a new object and ensure that it's valid */
 
   new_op = OBJ_NEW(ompi_op_t);
-  if (NULL == new_op) {
+  if (NULL != new_op) {
     if (OMPI_ERROR == new_op->o_f_to_c_index) {
       OBJ_RELEASE(new_op);
       new_op = NULL;
@@ -282,17 +464,20 @@ ompi_op_t *ompi_op_create(bool commute,
          it doesn't matter what type it is (we'll cast it to the Right
          type when we *use* it). */
 
-      new_op->o_is_intrinsic = false;
-      new_op->o_fortran_function = false;
-      new_op->o_is_assoc = true;
-      new_op->o_is_commute = commute;
-      new_op->o_func.fort_fn = func;
+      new_op->o_flags = OMPI_OP_FLAGS_ASSOC;
+      if (commute) {
+        new_op->o_flags |= OMPI_OP_FLAGS_COMMUTE;
+      }
+      new_op->o_func[0].fort_fn = func;
+      for (i = 1; i < OMPI_OP_TYPE_MAX; ++i) {
+        new_op->o_func[i].fort_fn = NULL;
+      }
     }
   }
 
   /* All done */
 
-  return OMPI_SUCCESS;
+  return new_op;
 }
 
 
@@ -335,8 +520,7 @@ static void ompi_op_construct(ompi_op_t *new_op)
 
   /* assign entry in fortran <-> c translation array */
 
-  ret_val = ompi_pointer_array_add(ompi_op_f_to_c_table, 
-                                  new_op);
+  ret_val = ompi_pointer_array_add(ompi_op_f_to_c_table, new_op);
   new_op->o_f_to_c_index = ret_val;
 }
 
@@ -350,8 +534,8 @@ static void ompi_op_destruct(ompi_op_t *op)
      entry is in the table */
 
   if (NULL!= ompi_pointer_array_get_item(ompi_op_f_to_c_table,
-                                        op->o_f_to_c_index)) {
+                                         op->o_f_to_c_index)) {
     ompi_pointer_array_set_item(ompi_op_f_to_c_table,
-                               op->o_f_to_c_index, NULL);
+                                op->o_f_to_c_index, NULL);
   }
 }

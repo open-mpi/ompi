@@ -59,11 +59,13 @@ struct ompi_communicator_t {
     ompi_group_t       *c_remote_group;
   
     /* Attributes */
+
     ompi_hash_table_t       *c_keyhash;
 
     int c_cube_dim; /**< inscribing cube dimension */
 
     /* Hooks for topo module to hang things */
+
     mca_topo_1_0_0_t c_topo; /**< structure of function pointers */
     mca_topo_comm_t *c_topo_comm; /**<structure containing information
                                     *about the topology */
@@ -79,17 +81,25 @@ struct ompi_communicator_t {
     ompi_errhandler_t *error_handler;
 
     /* Hooks for PML to hang things */
+
     struct mca_pml_comm_t* c_pml_comm;
 
-    /* Hooks for collectives to hang things */
-
     mca_coll_1_0_0_t c_coll;
-    struct mca_coll_comm_t* c_coll_comm;
+    /**< Selected collective module, saved by value for speed (instead
+         of by reference) */
 
-    /* VPS: This will be moved in the coll module later on */
-    ompi_request_t **bcast_lin_reqs;
-    ompi_request_t **bcast_log_reqs;
+    const mca_coll_1_0_0_t *c_coll_selected_module;
+    /**< The selected module, but only when the selected module is
+         *not* the basic module.  Used during comm_unselect(). */
+    struct mca_coll_comm_t* c_coll_selected_data;
+    /**< Allow the selected module to cache data on the communicator */
 
+    const mca_coll_1_0_0_t *c_coll_basic_module;
+    /**< Save the basic module; only necessary when the selected
+         module is *not* the basic module, but was supplemented with
+         methods from the basic module. */
+    struct mca_coll_comm_t* c_coll_basic_data;
+    /**< Allow the basic module to cache data on the communicator */
 };
 typedef struct ompi_communicator_t ompi_communicator_t;
 extern ompi_communicator_t *ompi_mpi_comm_parent;
@@ -160,17 +170,6 @@ static inline bool ompi_comm_peer_invalid(ompi_communicator_t* comm, int peer_id
     }
     return false;
 }
-
-static inline int ompi_cube_dim(int nprocs) {
-    int dim;
-    size_t size;
-
-    if (1 > nprocs) return OMPI_ERROR;
-    for(dim = 0, size = 1; size < (size_t)nprocs; ++dim, size <<= 1);
-
-    return dim;
-}
-
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

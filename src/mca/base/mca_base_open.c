@@ -59,7 +59,7 @@ int mca_base_open(void)
     set_defaults(&lds);
   }
   ompi_output_reopen(0, &lds);
-  ompi_output_verbose(0, 5, " Opening");
+  ompi_output_verbose(5, 0, " Opening");
 
   /* Open up the module repository */
 

@@ -163,8 +163,10 @@ void ompi_output_reopen_all(void)
   for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i) {
 
     /* scan till we find ldi_used == 0, which is the end-marker */ 
-    if (!info[i].ldi_used)
+
+    if (!info[i].ldi_used) {
       break;
+    }
 
     /* 
      * set this to zero to ensure that ompi_output_open will return this same
@@ -201,8 +203,9 @@ void ompi_output_close(int output_id)
 
   /* Setup */
 
-  if (!initialized)
+  if (!initialized) {
     ompi_output_init();
+  }
 
   /* If it's valid, used, enabled, and has an open file descriptor,
      free the resources associated with the descriptor */
@@ -216,11 +219,14 @@ void ompi_output_close(int output_id)
   /* If no one has the syslog open, we should close it */
 
   OMPI_THREAD_LOCK(&mutex);
-  for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i)
-    if (info[i].ldi_used && info[i].ldi_syslog)
+  for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i) {
+    if (info[i].ldi_used && info[i].ldi_syslog) {
       break;
-  if (i >= OMPI_OUTPUT_MAX_STREAMS)
+    }
+  }
+  if (i >= OMPI_OUTPUT_MAX_STREAMS) {
     closelog();
+  }
 
   /* Somewhat of a hack to free up the temp_str */
 
@@ -252,7 +258,7 @@ void ompi_output(int output_id, char *format, ...)
 /*
  * Send a message to a stream if the verbose level is high enough
  */
-void ompi_output_verbose(int output_id, int level, char *format, ...)
+void ompi_output_verbose(int level, int output_id, char *format, ...)
 {
   if (info[output_id].ldi_verbose_level >= level) {
     va_list arglist;
@@ -282,8 +288,9 @@ void ompi_output_set_verbosity(int output_id, int level)
 void ompi_output_finalize(void)
 {
   if (initialized) {
-    if (verbose_stream != -1)
+    if (verbose_stream != -1) {
       ompi_output_close(verbose_stream);
+    }
     verbose_stream = -1;
   }
 }
@@ -303,17 +310,20 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
 
   /* Setup */
 
-  if (!initialized)
+  if (!initialized) {
     ompi_output_init();
+  }
 
   /* If output_id == -1, find an available stream, or return
      OMPI_ERROR */
 
   if (-1 == output_id) {
     OMPI_THREAD_LOCK(&mutex);
-    for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i)
-      if (!info[i].ldi_used)
+    for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i) {
+      if (!info[i].ldi_used) {
         break;
+      }
+    }
     if (i >= OMPI_OUTPUT_MAX_STREAMS) {
       OMPI_THREAD_UNLOCK(&mutex);
       return OMPI_ERR_OUT_OF_RESOURCE;
@@ -339,7 +349,8 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
 
   info[i].ldi_used = true;
   OMPI_THREAD_UNLOCK(&mutex);
-  info[i].ldi_enabled = lds->lds_is_debugging ? (bool) OMPI_ENABLE_DEBUG : true;
+  info[i].ldi_enabled = lds->lds_is_debugging ? 
+    (bool) OMPI_ENABLE_DEBUG : true;
   info[i].ldi_verbose_level = 0;
 
   info[i].ldi_syslog = lds->lds_want_syslog;
@@ -387,8 +398,9 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
       strcat(filename, "output.txt");
     }
     flags = O_CREAT | O_RDWR;
-    if (!lds->lds_want_file_append)
+    if (!lds->lds_want_file_append) {
       flags |= O_TRUNC;
+    }
 
     /* Actually open the file */
 
@@ -419,25 +431,28 @@ static void free_descriptor(int output_id)
   if (output_id >= 0 && output_id < OMPI_OUTPUT_MAX_STREAMS &&
       info[output_id].ldi_used && 
       info[output_id].ldi_enabled) {
-
     ldi = &info[output_id];
 
-    if (-1 != ldi->ldi_fd)
+    if (-1 != ldi->ldi_fd) {
       close(ldi->ldi_fd);
+    }
     ldi->ldi_used = false;
 
     /* If we strduped a prefix, suffix, or syslog ident, free it */
 
-    if (NULL != ldi->ldi_prefix)
+    if (NULL != ldi->ldi_prefix) {
       free(ldi->ldi_prefix);
+    }
     ldi->ldi_prefix = NULL;
 
-    if (NULL != ldi->ldi_file_suffix)
+    if (NULL != ldi->ldi_file_suffix) {
       free(ldi->ldi_file_suffix);
+    }
     ldi->ldi_file_suffix = NULL;
 
-    if (NULL != ldi->ldi_syslog_ident)
+    if (NULL != ldi->ldi_syslog_ident) {
       free(ldi->ldi_syslog_ident);
+    }
     ldi->ldi_syslog_ident = NULL;
   }  
 }
@@ -457,8 +472,9 @@ static void output(int output_id, char *format, va_list arglist)
 
   /* Setup */
 
-  if (!initialized)
+  if (!initialized) {
     ompi_output_init();
+  }
 
   /* If it's valid, used, and enabled, output */
 
@@ -476,30 +492,35 @@ static void output(int output_id, char *format, va_list arglist)
       want_newline = true;
       ++total_len;
     }
-    if (NULL != ldi->ldi_prefix)
+    if (NULL != ldi->ldi_prefix) {
       total_len += strlen(ldi->ldi_prefix);
+    }
     if (temp_str_len < total_len + want_newline) {
-      if (NULL != temp_str)
+      if (NULL != temp_str) {
 	free(temp_str);
+      }
       temp_str = malloc(total_len * 2);
       temp_str_len = total_len * 2;
     }
     if (NULL != ldi->ldi_prefix) {
-      if (want_newline)
+      if (want_newline) {
 	snprintf(temp_str, temp_str_len, "%s%s\n", ldi->ldi_prefix, str);
-      else
+      } else {
 	snprintf(temp_str, temp_str_len, "%s%s", ldi->ldi_prefix, str);
+      }
     } else {
-      if (want_newline) 
+      if (want_newline) {
 	snprintf(temp_str, temp_str_len, "%s\n", str);
-      else
+      } else {
 	snprintf(temp_str, temp_str_len, "%s", str);
+      }
     }
 
     /* Syslog output */
 
-    if (ldi->ldi_syslog)
+    if (ldi->ldi_syslog) {
       syslog(ldi->ldi_syslog_priority, str);
+    }
 
     /* stdout output */
 
@@ -517,8 +538,9 @@ static void output(int output_id, char *format, va_list arglist)
 
     /* File output */
 
-    if (ldi->ldi_fd != -1)
+    if (ldi->ldi_fd != -1) {
       write(ldi->ldi_fd, temp_str, total_len);
+    }
     OMPI_THREAD_UNLOCK(&mutex);
 
     free(str);

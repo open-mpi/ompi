@@ -15,13 +15,19 @@
 
 int mca_coll_base_close(void)
 {
-  extern ompi_list_t mca_coll_base_modules_opened;
+  /* Close all components that are still open.  This may be the opened
+     list (if we're in ompi_info), or it may be the available list (if
+     we're anywhere else). */
 
-  /* Close all remaining available modules (may be one if this is a
-     OMPI RTE program, or [possibly] multiple if this is ompi_info) */
-
-  mca_base_modules_close(mca_coll_base_output, 
-                         &mca_coll_base_modules_opened, NULL);
+  if (mca_coll_base_components_opened_valid) {
+    mca_base_modules_close(mca_coll_base_output,
+                           &mca_coll_base_components_opened, NULL);
+    mca_coll_base_components_opened_valid = false;
+  } else if (mca_coll_base_components_available_valid) {
+    mca_base_modules_close(mca_coll_base_output,
+                           &mca_coll_base_components_available, NULL);
+    mca_coll_base_components_available_valid = false;
+  }
 
   /* All done */
 

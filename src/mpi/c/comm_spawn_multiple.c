@@ -104,7 +104,7 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
    }
 
    /* bcast totalnumprocs to all processes in comm and allocate the rprocs array*/
-   rc = comp->c_coll.coll_bcast_intra ( &totalnumprocs, 1, MPI_INT, root, comm);
+   rc = comp->c_coll.coll_bcast ( &totalnumprocs, 1, MPI_INT, root, comm);
    if ( OMPI_SUCCESS != rc ) {
        goto exit;
    }
@@ -131,7 +131,7 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
    }
    
    /* bcast list of remote procs to all processes in comm */
-   rc = comp->c_coll.coll_bcast_intra ( &rprocs, totalnumprocs, MPI_UNSIGNED, root, comm);
+   rc = comp->c_coll.coll_bcast ( &rprocs, totalnumprocs, MPI_UNSIGNED, root, comm);
    if ( OMPI_SUCCESS != rc ) {
        goto exit;
    }
