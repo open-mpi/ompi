@@ -8,10 +8,7 @@ SUBDIRS = lam mpi common
 
 # Source code files
 
-headers = \
-	mca.h \
-	mca_pml.h \
-	mca_ptl.h
+headers = mca.h
 
 # Conditionally install the header files
 
