@@ -1,3 +1,5 @@
-.deps
 Makefile.in
 Makefile
+.deps
+.libs
+.gdb_history
