@@ -44,6 +44,9 @@ mca_ptl_gm_module_t mca_ptl_gm_module = {
 	mca_ptl_gm_matched,
 	mca_ptl_gm_request_init, 
 	mca_ptl_gm_request_fini,
+    NULL,
+    NULL,
+    NULL
     }
 };
 
