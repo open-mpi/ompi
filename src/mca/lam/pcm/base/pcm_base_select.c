@@ -18,11 +18,9 @@
  * Function for selecting one module from all those that are
  * available.
  *
- * Call the query function on all available modules and get their
+ * Call the init function on all available modules and get their
  * priorities.  Select the module with the highest priority.  All
- * other modules will be closed and unloaded.  The selected module
- * will have its initialization function invoked, and all of its
- * function pointers saved.
+ * other modules will be closed and unloaded.
  */
 int mca_pcm_base_select(void)
 {
