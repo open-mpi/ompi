@@ -17,34 +17,19 @@
 #include "mca/lam/base/mca_base_param.h"
 
 
-typedef enum {
-  MCA_BASE_PARAM_TYPE_INT,
-  MCA_BASE_PARAM_TYPE_STRING,
-
-  MCA_BASE_PARAM_TYPE_MAX
-} mca_base_param_type_t;
-
-struct mca_base_param_t {
-  lam_array_item_t super;
-
-  mca_base_param_type_t mbp_type;
-  char *mbp_type_name;
-  char *mbp_module_name;
-  char *mbp_param_name;
-  char *mbp_full_name;
-
-  int mbp_keyval;
-  char *mbp_env_var_name;
-
-  mca_base_param_storage_t mbp_default_value;
-};
-typedef struct mca_base_param_t mca_base_param_t;
+/*
+ * Public variables
+ *
+ * This variable is public, but not advertised in mca_base_param.h.
+ * It's only public so that laminfo can see it.  The relevant module
+ * in laminfo will provide an extern to see this variable.
+ */
+lam_array_t mca_base_params;
 
 
 /*
  * local variables
  */
-static lam_array_t mca_base_params;
 static char *mca_prefix = "LAM_MPI_MCA_";
 static bool initialized = false;
 
@@ -306,7 +291,7 @@ static int param_register(const char *type_name, const char *module_name,
   if (NULL == param) {
     return LAM_ERR_OUT_OF_RESOURCE;
   }
-  lam_arr_item_init((lam_array_item_t *) param);
+  SUPER_INIT(&(param->super), &lam_object_cls);
   param->mbp_type = type;
   param->mbp_keyval = -1;
 

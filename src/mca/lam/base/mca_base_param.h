@@ -23,6 +23,34 @@ typedef union {
 
 
 /*
+ * The following types are really in this public .h file so that
+ * laminfo can see them.  No one else should use them!
+ */
+typedef enum {
+  MCA_BASE_PARAM_TYPE_INT,
+  MCA_BASE_PARAM_TYPE_STRING,
+
+  MCA_BASE_PARAM_TYPE_MAX
+} mca_base_param_type_t;
+
+struct mca_base_param_t {
+  lam_object_t super;
+
+  mca_base_param_type_t mbp_type;
+  char *mbp_type_name;
+  char *mbp_module_name;
+  char *mbp_param_name;
+  char *mbp_full_name;
+
+  int mbp_keyval;
+  char *mbp_env_var_name;
+
+  mca_base_param_storage_t mbp_default_value;
+};
+typedef struct mca_base_param_t mca_base_param_t;
+
+
+/*
  * Global functions for MCA
  */
 
