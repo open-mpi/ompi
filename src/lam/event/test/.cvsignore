@@ -1,0 +1,8 @@
+Makefile
+bench
+regress
+test-eof
+test-init
+test-time
+test-weof
+*.o
