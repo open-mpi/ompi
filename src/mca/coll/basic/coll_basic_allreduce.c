@@ -138,9 +138,9 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
     /***************************************************************************/
     if ( rank == root ) {
         /* sendrecv between the two roots */
-        err = mca_pml.pml_irecv (tmpbuf, count, dtype, 0, 
+        err = mca_pml.pml_irecv (pml_buffer, count, dtype, 0, 
                                  MCA_COLL_BASE_TAG_ALLREDUCE,
-                                 comm, &(reqs[rsize]));
+                                 comm, &(req[1]));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -148,7 +148,11 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
         err = mca_pml.pml_isend (rbuf, count, dtype, 0, 
                                 MCA_COLL_BASE_TAG_ALLREDUCE,
                                 MCA_PML_BASE_SEND_STANDARD, comm,
-                                 &(reqs[0]));
+                                 &(req[0]));
+        if ( OMPI_SUCCESS != err ) {
+            goto exit;
+        }
+        err = ompi_request_wait_all (2, req, MPI_STATUSES_IGNORE);
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -158,19 +162,21 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
            has already the correct data AND we avoid a potential 
            deadlock here. 
         */
-        for ( i=1; i<rsize; i++ ) {
-            err = mca_pml.pml_isend (tmpbuf, count, dtype,i,
-                                     MCA_COLL_BASE_TAG_ALLREDUCE,
-                                     MCA_PML_BASE_SEND_STANDARD, comm,
-                                     &reqs[i]);
+        if (rsize > 1) {
+            for ( i=1; i<rsize; i++ ) {
+                err = mca_pml.pml_isend (pml_buffer, count, dtype,i,
+                                         MCA_COLL_BASE_TAG_ALLREDUCE,
+                                         MCA_PML_BASE_SEND_STANDARD, comm,
+                                         &reqs[i - 1]);
+                if ( OMPI_SUCCESS != err ) {
+                    goto exit;
+                }
+            }
+
+            err = ompi_request_wait_all (rsize - 1, reqs, MPI_STATUSES_IGNORE);
             if ( OMPI_SUCCESS != err ) {
                 goto exit;
             }
-        }
-
-        err = ompi_request_wait_all (rsize+1, reqs, MPI_STATUSES_IGNORE);
-        if ( OMPI_SUCCESS != err ) {
-            goto exit;
         }
     }
     else {
