@@ -68,7 +68,7 @@ int mca_oob_tcp_ping(
 
     /* setup a timeout based on absolute time and wait for completion */
     gettimeofday(&tv, NULL);
-    tv.tv_sec += timeout->tv_usec;
+    tv.tv_sec += timeout->tv_sec;
     tv.tv_usec += timeout->tv_usec;
     while(tv.tv_usec > 1000000) {
         tv.tv_sec++;
