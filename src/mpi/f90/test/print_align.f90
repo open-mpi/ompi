@@ -15,7 +15,8 @@
 !   - prints out alignment of real types
 !
 
-module OMPI_TEST_ALIGN
+program main
+
   type AlignReal
     character a
     real(selected_real_kind(6)) :: w
@@ -76,11 +77,9 @@ module OMPI_TEST_ALIGN
     character c
     complex(selected_real_kind(31)) :: z
   end type
-end module
 
-program main
-  use OMPI_TEST_ALIGN
   external align_c
+
   type(AlignReal) :: ar
   type(AlignDouble) :: ad
   type(AlignQuad) :: aq
