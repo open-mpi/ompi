@@ -36,18 +36,22 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     mca_ns_base_jobid_t jobid;
     int ret;
     
+    /* XXX - Should probably publish the error code somewhere */
+
     /* Kill everyone in the job.  We may make this better someday to
        actually loop over ompi_rte_kill_proc() to only kill the procs
        in comm, and additionally to somehow use errorcode. */
 
     jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
-    ret = ompi_rte_kill_job(jobid, SIGTERM, errcode, 0);
+    ret = ompi_rte_terminate_job(jobid, 0);
 
-    if (1 /* BWB - fix me */) {
+    if (OMPI_SUCCESS == ret) {
         while (1) {
-            /* we successfully started the kill.  Just sit around and
-               wait to be slaughtered.  run the event loop if we
-               should */
+            /* We should never really get here, since
+               ompi_rte_terminate_job shouldn't return until the job
+               is actually dead.  But just in case there are some
+               race conditions, keep progressing the event loop until
+               we get killed */
             if (!OMPI_HAVE_THREADS || ompi_event_progress_thread()) {
                 ompi_event_loop(0);
             } else {
@@ -55,9 +59,9 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
             }
         }
     } else {
-        /* If we return from this, then the selected PCM was unable to
-           kill the job (and the rte printed an error message).  So
-           just die die die. */
+        /* If ret isn't OMPI_SUCCESS, then the rest of the job is
+        still running.  But we can't really do anything about that, so
+        just exit and let it become Somebody Elses Problem. */
         abort();
     }
 

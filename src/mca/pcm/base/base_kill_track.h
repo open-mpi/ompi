@@ -31,32 +31,9 @@
 extern "C" {
 #endif
 
-    /**
-     * Send kill message for an entire job
-     *
-     * Send a kill message to all processes associated with \c jobid.
-     * This may require OOB communication with one or more remote
-     * processes.  An attempt is made to deliver the signal
-     * asynchronously in a timely manner, but there may be times where
-     * a delay is required in single threaded code (particularily when
-     * portions of the job were started by MPI_COMM_SPAWN).
-     */
-    int mca_pcm_base_kill_send_job_msg(mca_ns_base_jobid_t jobid,
-                                       int sig, int errorcode, int flags);
 
-    /**
-     * Send kill message for a single process
-     *
-     * Send a kill message to process \c name.  As a side effect,
-     * other processes in the same job as \c name may be killed.  This
-     * may require OOB communication with one or more remote
-     * processes.  An attempt is made to deliver the signal
-     * asynchronously in a timely manner, but there may be times where
-     * a delay is required in single threaded code (particularily when
-     * portions of the job were started by MPI_COMM_SPAWN).
-     */
-    int mca_pcm_base_kill_send_proc_msg(ompi_process_name_t name,
-                                        int sig, int errorcode, int flags);
+    int mca_pcm_base_kill(int how, ompi_process_name_t *name,
+                          int signal, int flags);
 
 
     /**
@@ -68,9 +45,7 @@ extern "C" {
      * \note This function should only be called within a pcm module.
      */
     int mca_pcm_base_kill_register(mca_pcm_base_module_t* pcm,
-                                   mca_ns_base_jobid_t jobid,
-                                   mca_ns_base_vpid_t lower_vpid,
-                                   mca_ns_base_vpid_t upper_vpid);
+				   ompi_process_name_t *name);
 
 
     /**
@@ -81,10 +56,7 @@ extern "C" {
      *
      * \note This function should only be called within a pcm module.
      */
-    int mca_pcm_base_kill_unregister(mca_pcm_base_module_t* pcm,
-                                     mca_ns_base_jobid_t jobid,
-                                     mca_ns_base_vpid_t lower_vpid,
-                                     mca_ns_base_vpid_t upper_vpid);
+    int mca_pcm_base_kill_unregister(ompi_process_name_t *name);
 
 
     /**

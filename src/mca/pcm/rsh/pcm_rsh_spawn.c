@@ -33,7 +33,7 @@
 #include "include/constants.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
-#include "mca/pcm/base/base_job_track.h"
+#include "mca/pcm/base/base_data_store.h"
 #include "mca/pcm/base/base_kill_track.h"
 #include "runtime/runtime.h"
 #include "runtime/runtime_types.h"
@@ -460,15 +460,21 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
 proc_cleanup:
 
     if (high_qos) {
-        mca_pcm_base_job_list_add_job_info(me->jobs,
-                                           jobid, pid, my_start_vpid,
-                                           my_start_vpid + num_procs - 1);
-        ret = mca_pcm_base_kill_register((mca_pcm_base_module_t*)me,
-        								   jobid, my_start_vpid,
-                                         my_start_vpid + num_procs - 1);
-        if (ret != OMPI_SUCCESS) goto cleanup;
-        ret = ompi_rte_wait_cb(pid, internal_wait_cb, me);
-        if (ret != OMPI_SUCCESS) goto cleanup;
+      for (i = 0 ; i < num_procs ; ++i) {
+	ompi_process_name_t *name;
+
+	name = ompi_name_server.create_process_name(0, jobid, my_start_vpid + i);
+
+	/* register job info */
+	ret = mca_pcm_base_data_store_add_pid(me->data_store,
+					name, pid);
+	ret = mca_pcm_base_kill_register((mca_pcm_base_module_t*) me, name);
+
+	ompi_name_server.free_name(name);
+      }
+
+      ret = ompi_rte_wait_cb(pid, internal_wait_cb, me);
+      if (ret != OMPI_SUCCESS) goto cleanup;
     } else {
         /* Wait for the command to exit.  */
         while (1) {
@@ -500,15 +506,12 @@ proc_cleanup:
 static void
 internal_wait_cb(pid_t pid, int status, void *data)
 {
-    mca_ns_base_jobid_t jobid = 0;
-    mca_ns_base_vpid_t upper = 0;
-    mca_ns_base_vpid_t lower = 0;
-    mca_ns_base_vpid_t i = 0;
-    int ret;
-    ompi_process_name_t *proc_name;
     mca_pcm_rsh_module_t *me = (mca_pcm_rsh_module_t*) data;
+    ompi_process_name_t **procs;
+    size_t procs_len, i;
     ompi_rte_process_status_t *proc_status;
     volatile int spin = 0;
+    int ret;
 
     ompi_output_verbose(10, mca_pcm_base_output, 
                         "process %d exited with status %d", pid, status);
@@ -520,8 +523,8 @@ internal_wait_cb(pid_t pid, int status, void *data)
 	while (spin != 0) ;
     }
 
-    ret = mca_pcm_base_job_list_get_job_info(me->jobs, pid, &jobid, 
-                                             &lower, &upper, true);
+    ret = mca_pcm_base_data_store_get_procs(me->data_store, pid, &procs,
+                                            &procs_len, true);
     if (ret != OMPI_SUCCESS) {
         ompi_show_help("help-mca-pcm-rsh.txt",
                        "spawn:no-process-record", true, pid, status);
@@ -529,15 +532,13 @@ internal_wait_cb(pid_t pid, int status, void *data)
     }
 
     /* unregister all the procs */
-    for (i = lower ; i <= upper ; ++i) {
-	proc_name = mca_ns_base_create_process_name(0, jobid, i);
-        proc_status = ompi_rte_get_process_status(proc_name);
+    for (i = 0 ; i < procs_len ; ++i) {
+        proc_status = ompi_rte_get_process_status(procs[i]);
         proc_status->status_key = OMPI_PROC_KILLED;
         proc_status->exit_code = (ompi_exit_code_t)status;
-	printf("setting process status\n");
-        ompi_rte_set_process_status(proc_status, proc_name);
-        free(proc_name);
+        ompi_rte_set_process_status(proc_status, procs[i]);
+        free(procs[i]);
     }
 
-    mca_pcm_base_kill_unregister((mca_pcm_base_module_t*)me, jobid, lower, upper);
+    free(procs);
 }

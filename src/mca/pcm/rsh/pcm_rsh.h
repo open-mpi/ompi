@@ -19,7 +19,7 @@
 #include "mca/pcm/pcm.h"
 #include "include/types.h"
 #include "mca/llm/llm.h"
-#include "mca/pcm/base/base_job_track.h"
+#include "mca/pcm/base/base_data_store.h"
 
 #include <sys/types.h>
 
@@ -52,10 +52,11 @@ extern "C" {
                                                 int nodes, int procs);
     int mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me, 
                                 mca_ns_base_jobid_t jobid, ompi_list_t *schedule_list);
-    int mca_pcm_rsh_kill_proc(struct mca_pcm_base_module_1_0_0_t* me, 
-                              ompi_process_name_t *name, int flags);
-    int mca_pcm_rsh_kill_job(struct mca_pcm_base_module_1_0_0_t* me,
-                             mca_ns_base_jobid_t jobid, int flags);
+
+    int mca_pcm_rsh_kill(struct mca_pcm_base_module_1_0_0_t* me,
+			 int mode_flag, ompi_process_name_t *name, 
+			 int signal, int flags);
+
     int mca_pcm_rsh_deallocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
                                          mca_ns_base_jobid_t jobid,
                                          ompi_list_t *nodelist);
@@ -67,7 +68,7 @@ extern "C" {
         mca_pcm_base_module_t super;
 
         mca_llm_base_module_t *llm;
-        mca_pcm_base_job_list_t *jobs;
+        mca_pcm_base_data_store_t *data_store;
 
         int no_profile;
         int fast_boot;

@@ -29,6 +29,7 @@
 #include "mca/llm/llm.h"
 #include "mca/llm/base/base.h"
 #include "runtime/ompi_rte_wait.h"
+#include "mca/pcm/base/base_data_store.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -150,12 +151,11 @@ mca_pcm_rsh_init(int *priority,
      */
     me->super.pcm_allocate_resources = mca_pcm_rsh_allocate_resources;
     me->super.pcm_spawn_procs = mca_pcm_rsh_spawn_procs;
-    me->super.pcm_kill_proc = mca_pcm_rsh_kill_proc;
-    me->super.pcm_kill_job = mca_pcm_rsh_kill_job;
+    me->super.pcm_kill = mca_pcm_rsh_kill;
     me->super.pcm_deallocate_resources = mca_pcm_rsh_deallocate_resources;
     me->super.pcm_finalize = mca_pcm_rsh_finalize;
 
-    me->jobs = mca_pcm_base_job_list_init();
+    me->data_store = mca_pcm_base_data_store_init();
 
     return (mca_pcm_base_module_t*) me;
 }
@@ -177,7 +177,7 @@ mca_pcm_rsh_finalize(struct mca_pcm_base_module_1_0_0_t* me_super)
        triggered (calling back into us once we are unmapped is
        *bad*) */
     ompi_rte_wait_cb_disable();
-    mca_pcm_base_job_list_get_all_starters(me->jobs, &pids, &len, true);
+    mca_pcm_base_data_store_get_all_pids(me->data_store, &pids, &len, true);
     for (i = 0 ; i < len ; ++i) {
         ompi_rte_wait_cb_cancel(pids[i]);
     }
@@ -187,9 +187,10 @@ mca_pcm_rsh_finalize(struct mca_pcm_base_module_1_0_0_t* me_super)
         ompi_rte_waitpid(pids[i], &status, 0);
     }
 
-    mca_pcm_base_job_list_fini(me->jobs);
+    mca_pcm_base_data_store_finalize(me->data_store);
 
     if (NULL != me->rsh_agent) free(me->rsh_agent);
+    if (pids != NULL) free(pids);
     free(me);
 
     return OMPI_SUCCESS;
