@@ -51,55 +51,55 @@ int mca_ptl_base_match(mca_ptl_base_reliable_hdr_t *frag_header,
         mca_ptl_base_recv_frag_t *frag_desc, int *match_made, 
         lam_list_t *additional_matches)
 {
-	/* local variables */
-	mca_ptl_base_sequence_t frag_msg_seq_num,next_msg_seq_num_expected;
-	lam_communicator_t *comm_ptr;
-	mca_ptl_base_recv_request_t *matched_receive;
+    /* local variables */
+    mca_ptl_base_sequence_t frag_msg_seq_num,next_msg_seq_num_expected;
+    lam_communicator_t *comm_ptr;
+    mca_ptl_base_recv_request_t *matched_receive;
     mca_pml_comm_t *pml_comm;
-	int frag_src;
+    int frag_src;
 
     /* initialization */
     *match_made=0;
 
-	/* communicator pointer */
-	comm_ptr=lam_comm_lookup(frag_header->hdr_base.hdr_contextid);
+    /* communicator pointer */
+    comm_ptr=lam_comm_lookup(frag_header->hdr_base.hdr_contextid);
     pml_comm=(mca_pml_comm_t *)comm_ptr->c_pml_comm;
 
-	/* source sequence number */
-	frag_msg_seq_num = frag_header->hdr_msg_seq_num;
+    /* source sequence number */
+    frag_msg_seq_num = frag_header->hdr_msg_seq_num;
 
-	/* get fragment communicator source rank */
-	frag_src = frag_header->hdr_frag_seq_num;
+    /* get fragment communicator source rank */
+    frag_src = frag_header->hdr_frag_seq_num;
 
-	/* get next expected message sequence number - if threaded
-	 * run, lock to make sure that if another thread is processing 
-	 * a frag from the same message a match is made only once.
-	 * Also, this prevents other posted receives (for a pair of
-	 * end points) from being processed, and potentially "loosing"
-	 * the fragment.
-	 */
+    /* get next expected message sequence number - if threaded
+     * run, lock to make sure that if another thread is processing 
+     * a frag from the same message a match is made only once.
+     * Also, this prevents other posted receives (for a pair of
+     * end points) from being processed, and potentially "loosing"
+     * the fragment.
+     */
     THREAD_LOCK((pml_comm->c_matching_lock)+frag_src);
 
-	/* get sequence number of next message that can be processed */
-	next_msg_seq_num_expected = *((pml_comm->c_next_msg_seq_num)+frag_src);
+    /* get sequence number of next message that can be processed */
+    next_msg_seq_num_expected = *((pml_comm->c_next_msg_seq_num)+frag_src);
 
-	if (frag_msg_seq_num == next_msg_seq_num_expected) {
+    if (frag_msg_seq_num == next_msg_seq_num_expected) {
 
-		/*
-		 * This is the sequence number we were expecting,
-		 * so we can try matching it to already posted
-		 * receives.
-		 */
+        /*
+         * This is the sequence number we were expecting,
+         * so we can try matching it to already posted
+         * receives.
+         */
 
-		/* We're now expecting the next sequence number. */
-		(pml_comm->c_next_msg_seq_num[frag_src])++;
+        /* We're now expecting the next sequence number. */
+        (pml_comm->c_next_msg_seq_num[frag_src])++;
 
-		/* see if receive has already been posted */
-		matched_receive = mca_ptl_base_check_recieves_for_match(frag_header,
+        /* see if receive has already been posted */
+        matched_receive = mca_ptl_base_check_recieves_for_match(frag_header,
                 pml_comm);
 
-		/* if match found, process data */
-		if (matched_receive) {
+        /* if match found, process data */
+        if (matched_receive) {
 
             /* set flag indicating the input fragment was matched */
             *match_made=1;
@@ -107,13 +107,13 @@ int mca_ptl_base_match(mca_ptl_base_reliable_hdr_t *frag_header,
              * descriptor */
             frag_desc->matched_recv=matched_receive;
 
-			/*
-			 * update deliverd sequence number information,
-			 *   if need be.
-			 */
+            /*
+             * update deliverd sequence number information,
+             *   if need be.
+             */
 
-		} else {
-			/* if no match found, place on unexpected queue - need to
+        } else {
+            /* if no match found, place on unexpected queue - need to
              * lock to prevent probe from interfering with updating
              * the list */
             THREAD_LOCK((pml_comm->unexpected_frags_lock)+frag_src);
@@ -121,20 +121,20 @@ int mca_ptl_base_match(mca_ptl_base_reliable_hdr_t *frag_header,
                     (lam_list_item_t *)frag_desc);
             THREAD_UNLOCK((pml_comm->unexpected_frags_lock)+frag_src);
 
-		}
+        }
 
-		/* 
-		 * Now that new message has arrived, check to see if
-		 *   any fragments on the c_frags_cant_match list
-		 *   may now be used to form new matchs
-		 */
-		if (0 < lam_list_get_size((pml_comm->frags_cant_match)+frag_src)) {
+        /* 
+         * Now that new message has arrived, check to see if
+         *   any fragments on the c_frags_cant_match list
+         *   may now be used to form new matchs
+         */
+        if (0 < lam_list_get_size((pml_comm->frags_cant_match)+frag_src)) {
 
             lam_check_cantmatch_for_match(additional_matches,pml_comm,frag_src);
 
-		}
+        }
 
-			
+            
         /* 
          * if threaded, ok to release lock, since the posted
          * receive is not on any queue, so it won't be
@@ -484,7 +484,7 @@ mca_ptl_base_recv_request_t *check_specific_and_wild_receives_for_match(
 }
 
 #if (0)
-			/* need to handle this -- lam_check_cantmatch_for_match();
+            /* need to handle this -- lam_check_cantmatch_for_match();
              */
 /**
  * Scan the list of frags that came in ahead of time to see if any
@@ -508,7 +508,7 @@ void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
     int match_found;
     mca_pml_base_sequence_t next_msg_seq_num_expected, frag_seq_number;
     mca_pml_base_recv_frag_t *frag_desc;
-	mca_pml_base_recv_request_t *matched_receive;
+    mca_pml_base_recv_request_t *matched_receive;
 
     /*
      * Initialize list size - assume that most of the time this search
@@ -589,7 +589,7 @@ void lam_check_cantmatch_for_match(lam_list_t *additional_matches,
                             (lam_list_item_t *)frag_desc);
 
                 } else {
-	
+    
                     /* if no match found, place on unexpected queue - need to
                      * lock to prevent probe from interfering with updating
                      * the list */

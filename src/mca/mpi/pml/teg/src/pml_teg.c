@@ -32,7 +32,7 @@ int mca_pml_teg_add_comm(lam_communicator_t* comm)
 {
     /* allocate pml specific comm data */
     struct mca_pml_comm_t* pml_comm = (mca_pml_comm_t*)LAM_MALLOC(sizeof(mca_pml_comm_t));
-    mca_pml_ptl_comm_init(pml_comm);
+    mca_pml_ptl_comm_init(pml_comm, comm->c_remote_group->g_proc_count);
     comm->c_pml_comm = pml_comm;
     return LAM_SUCCESS;
 }
@@ -65,7 +65,7 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
 
             /* preallocate space in array for max number of ptls */
             mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptls);
-            mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptls);
+            mca_ptl_array_reserve(&proc_pml->proc_ptl_next, mca_pml_teg.teg_num_ptls);
             proc_pml->proc_lam = proc;
             proc->proc_pml = proc_pml;
         }
@@ -76,7 +76,31 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
         mca_ptl_t* ptl = mca_pml_teg.teg_ptls[i];
         ptl->ptl_add_procs(ptl, procs, nprocs);
     }
+
+    /* compute a weighting factor for each ptl */
+    for(i=0; i<nprocs; i++) {
+        lam_proc_t *proc = procs[i];
+        mca_pml_proc_t* proc_pml = proc->proc_pml;
+    }
     return LAM_SUCCESS;
+}
+
+int mca_pml_teg_del_procs(lam_proc_t** procs, size_t nprocs)
+{
+#if 0
+    size_t i;
+    for(i=0; i<nprocs; i++) {
+        lam_proc_t *proc = procs[i];
+        mca_pml_proc_t* proc_pml = proc->proc_pml;
+ 
+        /* notify each ptl that the proc is going away */
+        size_t p;
+        for(p=0; p<proc_pml->proc_ptl_first.ptl_size; p++) {
+            mca_ptl_info_t* ptl_info = proc_pml->proc_ptl_first.ptl_array[p];
+            ptl_info->ptl->ptl_del_proc(proc);
+        }
+    }
+#endif
 }
 
 int mca_pml_teg_module_fini(void)
