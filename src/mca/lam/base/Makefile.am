@@ -9,7 +9,7 @@ noinst_LTLIBRARIES = libmca_lam_base.la
 # Source code files
 
 headers = \
-        param.h \
+        mca_lam_param.h \
         module_exchange.h
 
 # Library
