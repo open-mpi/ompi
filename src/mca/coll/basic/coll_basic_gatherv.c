@@ -36,6 +36,13 @@ int mca_coll_basic_gatherv_intra(void *sbuf, int scount,
   size = ompi_comm_size(comm);
   rank = ompi_comm_rank(comm);
 
+  /* Need this test here because this function is invoked by
+     allgatherv in addition to the top-level MPI_Gatherv */
+
+  if (0 == scount && rank != root) {
+      return MPI_SUCCESS;
+  }
+
   /* Everyone but root sends data and returns.  Note that we will only
      get here if scount > 0 or rank == root. */
 
