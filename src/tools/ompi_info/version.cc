@@ -11,6 +11,7 @@
 
 #include "mca/base/base.h"
 #include "tools/ompi_info/ompi_info.h"
+#include "util/printf.h"
 
 using namespace std;
 using namespace ompi_info;
