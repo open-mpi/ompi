@@ -25,7 +25,7 @@ AM_CPPFLAGS = \
 
 libs = $(top_builddir)/src/libmpi.la
 
-bin_PROGRAMS = ompid
+bin_PROGRAMS =
 ompid_SOURCES = \
         ompid.h \
         ompid.c 
