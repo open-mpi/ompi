@@ -6,10 +6,11 @@
 #include "ompi_config.h"
 #include "tools/wrappers/ompi_wrap.h"
 
+#include <iostream>
+using namespace std;
 
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
   // The four wrapper compilers are extremely similar.  So similar,
   // in fact, that they can be parameterized on what is different.
@@ -21,6 +22,8 @@ main(int argc, char *argv[])
 #if 0
   show_help("hf77", "no-fortran-support", NULL);
 #endif
+  cerr << "Open MPI was not compiled with f77 support" << endl
+       << "(waiting for show_help for a proper error message)" << endl;
   return 1;
 #else
   ompi_sv_t str_vec;
