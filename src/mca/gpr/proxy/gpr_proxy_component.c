@@ -13,16 +13,8 @@
  */
 #include "ompi_config.h"
 
-#include "include/constants.h"
-
-#include "threads/mutex.h"
-
-#include "util/proc_info.h"
-#include "util/output.h"
-#include "mca/mca.h"
-#include "mca/base/mca_base_param.h"
-#include "mca/ns/base/base.h"
 #include "mca/gpr/base/base.h"
+
 #include "gpr_proxy.h"
 
 
@@ -51,18 +43,32 @@ OMPI_COMP_EXPORT mca_gpr_base_component_t mca_gpr_proxy_component = {
  * setup the function pointers for the module
  */
 static mca_gpr_base_module_t mca_gpr_proxy = {
-    gpr_proxy_get,
-    gpr_proxy_put,
-    gpr_proxy_delete_segment,
-    gpr_proxy_subscribe,
-    gpr_proxy_unsubscribe,
-    gpr_proxy_synchro,
-    gpr_proxy_cancel_synchro,
-    gpr_proxy_delete_object,
-    gpr_proxy_index,
-    gpr_proxy_test_internals,
-    gpr_proxy_rte_register,
-    gpr_proxy_rte_unregister
+    mca_gpr_proxy_get,
+    mca_gpr_proxy_put,
+    mca_gpr_proxy_delete_segment,
+    mca_gpr_proxy_subscribe,
+    mca_gpr_proxy_unsubscribe,
+    mca_gpr_proxy_synchro,
+    mca_gpr_proxy_cancel_synchro,
+    mca_gpr_proxy_delete_object,
+    mca_gpr_proxy_index,
+    mca_gpr_proxy_test_internals,
+    mca_gpr_proxy_begin_compound_cmd,
+    mca_gpr_proxy_stop_compound_cmd,
+    mca_gpr_proxy_exec_compound_cmd,
+    mca_gpr_proxy_dump,
+    mca_gpr_proxy_silent_mode_on,
+    mca_gpr_proxy_silent_mode_off,
+    mca_gpr_proxy_notify_off,
+    mca_gpr_proxy_notify_on,
+    mca_gpr_proxy_assume_ownership,
+    mca_gpr_proxy_triggers_active,
+    mca_gpr_proxy_triggers_inactive,
+    mca_gpr_proxy_get_startup_msg,
+    mca_gpr_proxy_get_shutdown_msg,
+    mca_gpr_proxy_cleanup_job,
+    mca_gpr_proxy_cleanup_proc,
+    mca_gpr_proxy_deliver_notify_msg
 };
 
 
@@ -76,15 +82,47 @@ static bool initialized = false;
  */
 ompi_process_name_t *mca_gpr_my_replica;
 ompi_list_t mca_gpr_proxy_notify_request_tracker;
-mca_gpr_notify_id_t mca_gpr_proxy_last_notify_id_tag;
+ompi_registry_notify_id_t mca_gpr_proxy_last_notify_id_tag;
 ompi_list_t mca_gpr_proxy_free_notify_id_tags;
 int mca_gpr_proxy_debug;
 ompi_mutex_t mca_gpr_proxy_mutex;
+bool mca_gpr_proxy_compound_cmd_mode;
+ompi_buffer_t mca_gpr_proxy_compound_cmd;
+ompi_mutex_t mca_gpr_proxy_wait_for_compound_mutex;
+ompi_condition_t mca_gpr_proxy_compound_cmd_condition;
+int mca_gpr_proxy_compound_cmd_waiting;
+bool mca_gpr_proxy_silent_mode;
+
+
+/* constructor - used to initialize notify message instance */
+static void mca_gpr_proxy_notify_request_tracker_construct(mca_gpr_proxy_notify_request_tracker_t* req)
+{
+    req->callback = NULL;
+    req->user_tag = NULL;
+    req->local_idtag = OMPI_REGISTRY_NOTIFY_ID_MAX;
+    req->remote_idtag = OMPI_REGISTRY_NOTIFY_ID_MAX;
+    req->segment = NULL;
+    req->action = OMPI_REGISTRY_NOTIFY_NONE;
+}
+
+/* destructor - used to free any resources held by instance */
+static void mca_gpr_proxy_notify_request_tracker_destructor(mca_gpr_proxy_notify_request_tracker_t* req)
+{
+    if (NULL != req->segment) {
+	free(req->segment);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   mca_gpr_proxy_notify_request_tracker_t,            /* type name */
+		   ompi_list_item_t,                          /* parent "class" name */
+		   mca_gpr_proxy_notify_request_tracker_construct,    /* constructor */
+		   mca_gpr_proxy_notify_request_tracker_destructor);  /* destructor */
 
 
 /*
- * don't really need this function - could just put NULL in the above structure
- * Just holding the place in case we decide there is something we need to do
+ * Open the component
  */
 int mca_gpr_proxy_open(void)
 {
@@ -97,7 +135,7 @@ int mca_gpr_proxy_open(void)
 }
 
 /*
- * ditto for this one
+ * Close the component
  */
 int mca_gpr_proxy_close(void)
 {
@@ -132,8 +170,14 @@ mca_gpr_base_module_t* mca_gpr_proxy_init(bool *allow_multi_user_threads, bool *
 	*allow_multi_user_threads = true;
 	*have_hidden_threads = false;
 
-	/* setup thread lock */
+	/* setup thread locks and condition variable */
 	OBJ_CONSTRUCT(&mca_gpr_proxy_mutex, ompi_mutex_t);
+	OBJ_CONSTRUCT(&mca_gpr_proxy_wait_for_compound_mutex, ompi_mutex_t);
+	OBJ_CONSTRUCT(&mca_gpr_proxy_compound_cmd_condition, ompi_condition_t);
+
+	/* initialize the registry compound mode */
+	mca_gpr_proxy_compound_cmd_mode = false;
+	mca_gpr_proxy_compound_cmd_waiting = 0;
 
 	/* define the replica for us to use - get it from process_info */
 	mca_gpr_my_replica = ompi_name_server.copy_process_name(ompi_process_info.gpr_replica);
@@ -141,10 +185,13 @@ mca_gpr_base_module_t* mca_gpr_proxy_init(bool *allow_multi_user_threads, bool *
 	    return NULL;
 	}
 
-	/* initialize the notify list */
+	/* initialize the notify request tracker */
 	OBJ_CONSTRUCT(&mca_gpr_proxy_notify_request_tracker, ompi_list_t);
 	mca_gpr_proxy_last_notify_id_tag = 0;
 	OBJ_CONSTRUCT(&mca_gpr_proxy_free_notify_id_tags, ompi_list_t);
+
+	/* initialize any local variables */
+	mca_gpr_proxy_silent_mode = false;
 
 	/* issue the non-blocking receive */
 	rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR_NOTIFY, 0, mca_gpr_proxy_notify_recv, NULL);
@@ -190,11 +237,12 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
 {
     char **tokptr;
     mca_gpr_cmd_flag_t command;
-    int32_t num_items, i, id_tag;
+    uint32_t num_items;
+    uint32_t i, id_tag;
     ompi_registry_value_t *regval;
     ompi_registry_notify_message_t *message;
     bool found;
-    mca_gpr_notify_request_tracker_t *trackptr;
+    mca_gpr_proxy_notify_request_tracker_t *trackptr;
 
     if (mca_gpr_proxy_debug) {
 	ompi_output(0, "gpr proxy: received trigger message");
@@ -206,6 +254,15 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
 	(MCA_GPR_NOTIFY_CMD != command)) {
 	goto RETURN_ERROR;
     }
+
+    if (0 > ompi_unpack_string(buffer, &message->segment)) {
+	goto RETURN_ERROR;
+    }
+
+    if (OMPI_SUCCESS != ompi_unpack(buffer, &i, 1, OMPI_INT32)) {
+	goto RETURN_ERROR;
+    }
+    message->owning_job = (mca_ns_base_jobid_t)i;
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &id_tag, 1, OMPI_INT32)) {
 	goto RETURN_ERROR;
@@ -259,25 +316,23 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
 
     /* find the request corresponding to this notify */
     found = false;
-    for (trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_proxy_notify_request_tracker);
-         trackptr != (mca_gpr_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_proxy_notify_request_tracker);
-         trackptr = (mca_gpr_notify_request_tracker_t*)ompi_list_get_next(trackptr)) {
-	if (trackptr->id_tag == id_tag) {
+    for (trackptr = (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_proxy_notify_request_tracker);
+         trackptr != (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_proxy_notify_request_tracker) && !found;
+         trackptr = (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_next(trackptr)) {
+	if (trackptr->local_idtag == id_tag) {
 	    found = true;
-	    break;
 	}
     }
 
+    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
+
     if (!found) {  /* didn't find request */
 	ompi_output(0, "Proxy notification error - received request not found");
-	OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
 	return;
     }
 
     /* process request */
     trackptr->callback(message, trackptr->user_tag);
-
-    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
 
     /* dismantle message and free memory */
 

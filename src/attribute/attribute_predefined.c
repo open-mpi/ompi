@@ -77,7 +77,7 @@ int ompi_attr_create_predefined(void)
        where the master is supposed to SPAWN the other processes.
        Perhaps need some integration with the LLM here...?  [shrug] */
 
-    universe = ompi_registry.get(OMPI_REGISTRY_OR, "ompi-vm", NULL);
+    universe = ompi_registry.get(OMPI_REGISTRY_OR, OMPI_RTE_VM_STATUS_SEGMENT, NULL);
     attr_universe_size = 0;
     if (0 == ompi_list_get_size(universe)) {
         attr_universe_size = ompi_comm_size(MPI_COMM_WORLD);

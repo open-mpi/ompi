@@ -211,7 +211,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name)
     /* if the peer list is over the maximum size, remove one unsed peer */
     ompi_list_prepend(&mca_oob_tcp_component.tcp_peer_list, (ompi_list_item_t *) peer);
     if(mca_oob_tcp_component.tcp_peer_limit > 0 &&
-       ompi_list_get_size(&mca_oob_tcp_component.tcp_peer_list) > mca_oob_tcp_component.tcp_peer_limit) {
+       (int)ompi_list_get_size(&mca_oob_tcp_component.tcp_peer_list) > mca_oob_tcp_component.tcp_peer_limit) {
         old = (mca_oob_tcp_peer_t *) 
               ompi_list_get_last(&mca_oob_tcp_component.tcp_peer_list);
         while(1) {
@@ -491,7 +491,7 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
     }
 
     /* if we have a wildcard name - use the name returned by the peer */
-    if(mca_oob_tcp_process_name_compare(&mca_oob_name_self, &mca_oob_name_any) == 0) {
+    if(ompi_name_server.compare(OMPI_NS_CMP_ALL, &mca_oob_name_self, &mca_oob_name_any) == 0) {
         mca_oob_name_self = guid[1];
     }
 
@@ -637,7 +637,7 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
                 msg->msg_rwiov->iov_len = 1;
                 msg->msg_rwcnt = msg->msg_rwnum = 1;
                 msg->msg_rwptr = msg->msg_rwiov;
-                msg->msg_rwiov[0].iov_base = &msg->msg_hdr;
+                msg->msg_rwiov[0].iov_base = (void*)&msg->msg_hdr;
                 msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
                 peer->peer_recv_msg = msg;
             }
@@ -777,7 +777,7 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
     if ((peer->peer_state == MCA_OOB_TCP_CLOSED) ||
         (peer->peer_state == MCA_OOB_TCP_RESOLVE) ||
         (peer->peer_state != MCA_OOB_TCP_CONNECTED &&
-         mca_oob_tcp_process_name_compare(&peer->peer_name, MCA_OOB_NAME_SELF) < 0)) {
+         ompi_name_server.compare(OMPI_NS_CMP_ALL, &peer->peer_name, MCA_OOB_NAME_SELF) < 0)) {
 
         if(peer->peer_state != MCA_OOB_TCP_CLOSED) {
             mca_oob_tcp_peer_close(peer);

@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 	    }
 	} else if (0 == strncmp(usercmd, "dumpvm", strlen("dumpvm"))) {
 	    fprintf(stderr, "getting vm list\n");
-	    list = ompi_registry.get(OMPI_REGISTRY_OR, "ompi-vm", NULL);
+	    list = ompi_registry.get(OMPI_REGISTRY_OR, OMPI_RTE_VM_STATUS_SEGMENT, NULL);
 	    fprintf(stderr, "got vm list: length %d\n", (int)ompi_list_get_size(list));
 	    for (item = ompi_list_get_first(list);
 		 item != ompi_list_get_end(list);

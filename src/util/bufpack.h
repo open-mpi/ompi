@@ -20,6 +20,7 @@
 #define _OMPI_PACK_H_
 #include "ompi_config.h"
 
+#include "mca/ns/base/base.h"
 /*
  * Other constants
  */
@@ -32,10 +33,12 @@
 
 typedef enum {
     OMPI_BYTE, /**< a byte of data */
+    OMPI_INT8,  /**< an 8-bit integer */
     OMPI_INT16, /**< a 16 bit integer */
     OMPI_INT32, /**< a 32 bit integer */
     OMPI_STRING, /**< a NULL terminated string */
     OMPI_NAME,  /**< an ompi_process_name_t */
+    OMPI_JOBID,  /**< a jobid */
     OMPI_PACKED /**< already packed data. */
 } ompi_pack_type_t;
 

@@ -142,6 +142,8 @@ int mca_svc_sched_module_init(mca_svc_base_module_t* module)
 {
     /* register */
     int rc;
+    ompi_registry_notify_id_t rc_tag;
+
     if(mca_svc_sched_component.sched_debug > 0) {
         ompi_output(0, "[%d,%d,%d] mca_svc_sched_module_init: calling ompi_registry.subscribe(\"vm\")");
     }
@@ -149,20 +151,21 @@ int mca_svc_sched_module_init(mca_svc_base_module_t* module)
     mca_svc_sched_component.sched_node_next = 
         (mca_svc_sched_node_t*)ompi_list_get_end(&mca_svc_sched_component.sched_node_list);
 
-    rc = ompi_registry.subscribe(
-        OMPI_REGISTRY_NONE,
-        OMPI_REGISTRY_NOTIFY_MODIFICATION|
-        OMPI_REGISTRY_NOTIFY_ADD_ENTRY|
-        OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
-        OMPI_REGISTRY_NOTIFY_PRE_EXISTING,
-        "ompi-vm", /* segment */
-        NULL, /* keys */
-        mca_svc_sched_registry_callback,
-        NULL);
-    if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "[%d,%d,%d] mca_svc_sched_module_init: ompi_registry.subscribe failed, error=%d\n", 
-            OMPI_NAME_ARGS(mca_oob_name_self), rc);
-        return rc;
+    rc_tag = ompi_registry.subscribe(
+             OMPI_REGISTRY_NONE,
+	     OMPI_REGISTRY_NOTIFY_MODIFICATION|
+	     OMPI_REGISTRY_NOTIFY_ADD_ENTRY|
+	     OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
+	     OMPI_REGISTRY_NOTIFY_PRE_EXISTING |
+	     OMPI_REGISTRY_NOTIFY_ON_STARTUP,
+	     OMPI_RTE_VM_STATUS_SEGMENT, /* segment */
+	     NULL, /* keys */
+	     mca_svc_sched_registry_callback,
+	     NULL);
+    if(rc_tag -= OMPI_REGISTRY_NOTIFY_ID_MAX) {
+        ompi_output(0, "[%d,%d,%d] mca_svc_sched_module_init: ompi_registry.subscribe failed", 
+		    OMPI_NAME_ARGS(mca_oob_name_self));
+        return OMPI_ERROR;
     }
 
     rc = mca_oob_recv_packed_nb(
