@@ -16,7 +16,6 @@ headers = \
     if.h \
     output.h \
     path.h \
-    reactor.h \
     strncpy.h
 
 libutil_la_SOURCES = \
@@ -27,7 +26,6 @@ libutil_la_SOURCES = \
     if.c \
     output.c \
     path.c \
-    reactor.c \
     strncpy.c
 
 # Conditionally install the header files
