@@ -265,6 +265,7 @@ int main(int argc, char **argv)
     /* try and remove a non existant element from the list -
      *   testing debug code */
     printf("This should generate a warning:\n");
+    fflush(stdout);
     ele = (test_data_t *) 
         ompi_list_remove_item(&list,(ompi_list_item_t *)(elements+indx));
     if( ((test_data_t *)NULL) == ele ) {
