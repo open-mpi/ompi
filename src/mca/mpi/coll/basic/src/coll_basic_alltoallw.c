@@ -13,6 +13,7 @@
 #include "lam/mem/malloc.h"
 #include "mpi/datatype/datatype.h"
 #include "mca/mpi/coll/coll.h"
+#include "mca/mpi/coll/base/coll_tags.h"
 #include "coll_basic.h"
 
 
@@ -28,6 +29,9 @@ int mca_coll_basic_alltoallw(void *sbuf, int *scounts, int *sdisps,
                              int *rcounts, int *rdisps,
                              MPI_Datatype *rdtypes, MPI_Comm comm)
 {
+#if 1
+  return LAM_ERR_NOT_IMPLEMENTED;
+#else
   int i;
   int size;
   int rank;
@@ -145,4 +149,5 @@ int mca_coll_basic_alltoallw(void *sbuf, int *scounts, int *sdisps,
 
   free(req);
   return MPI_SUCCESS;
+#endif
 }

@@ -11,6 +11,7 @@
 #include "lam/mem/malloc.h"
 #include "mpi.h"
 #include "mca/mpi/coll/coll.h"
+#include "mca/mpi/coll/base/coll_tags.h"
 #include "coll_basic.h"
 
 
@@ -24,7 +25,9 @@
 int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
                           MPI_Datatype dtype, MPI_Op op, MPI_Comm comm)
 {
-#if 0
+#if 1
+  return LAM_ERR_NOT_IMPLEMENTED;
+#else
   int size;
   int rank;
   int err;
@@ -162,9 +165,9 @@ int mca_coll_basic_exscan(void *sbuf, void *rbuf, int count,
     LAM_FREE(gathered_buffer);
   if (NULL != tmpbuf)
     LAM_FREE(tmpbuf);
-#endif /* 0 */
 
   /* All done */
 
   return MPI_SUCCESS;
+#endif /* 0 */
 }

@@ -8,6 +8,7 @@
 #include "lam/constants.h"
 #include "mpi.h"
 #include "mca/mpi/coll/coll.h"
+#include "mca/mpi/coll/base/coll_tags.h"
 #include "coll_basic.h"
 
 
@@ -22,6 +23,9 @@ int mca_coll_basic_bcast_lin(void *buff, int count,
 				 MPI_Datatype datatype, int root,
 				 MPI_Comm comm)
 {
+#if 1
+  return LAM_ERR_NOT_IMPLEMENTED;
+#else
   int i;
   int size;
   int rank;
@@ -90,6 +94,7 @@ int mca_coll_basic_bcast_lin(void *buff, int count,
   /* All done */
 
   return MPI_SUCCESS;
+#endif
 }
 
 
@@ -104,6 +109,9 @@ int mca_coll_basic_bcast_log(void *buff, int count,
 				 MPI_Datatype datatype, int root,
 				 MPI_Comm comm)
 {
+#if 1
+  return LAM_ERR_NOT_IMPLEMENTED;
+#else
   int i;
   int size;
   int rank;
@@ -190,4 +198,5 @@ int mca_coll_basic_bcast_log(void *buff, int count,
   /* All done */
 
   return MPI_SUCCESS;
+#endif
 }

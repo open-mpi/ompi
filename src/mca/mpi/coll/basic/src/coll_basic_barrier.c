@@ -8,6 +8,7 @@
 #include "lam/constants.h"
 #include "mpi.h"
 #include "mca/mpi/coll/coll.h"
+#include "mca/mpi/coll/base/coll_tags.h"
 #include "coll_basic.h"
 
 
@@ -20,7 +21,9 @@
  */
 int mca_coll_basic_barrier_lin(MPI_Comm comm)
 {
-#if 0
+#if 1
+  return LAM_ERR_NOT_IMPLEMENTED;
+#else
   int size;
   int rank;
   int err;
@@ -78,11 +81,11 @@ int mca_coll_basic_barrier_lin(MPI_Comm comm)
 #endif
     }
   }
-#endif /* 0 */
 
   /* All done */
 
   return MPI_SUCCESS;
+#endif
 }
 
 
@@ -96,7 +99,9 @@ int mca_coll_basic_barrier_lin(MPI_Comm comm)
 int
 mca_coll_basic_barrier_log(MPI_Comm comm)
 {
-#if 0
+#if 1
+  return LAM_ERR_NOT_IMPLEMENTED;
+#else
   int size;
   int rank;
   int peer;
@@ -174,9 +179,9 @@ mca_coll_basic_barrier_log(MPI_Comm comm)
 #endif
     }
   }
-#endif /* 0 */
 
   /* All done */
 
   return MPI_SUCCESS;
+#endif
 }

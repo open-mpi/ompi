@@ -187,6 +187,11 @@ int mca_coll_basic_init_query(int *thread_min, int *thread_max)
  */
 const mca_coll_1_0_0_t *mca_coll_basic_comm_query(MPI_Comm comm, int *priority)
 {
+#if 1
+  /* JMS fix me */
+  *priority = 0;
+  return &linear;
+#else
   int size;
 
   /* This module should always have the lowest available priority */
@@ -201,6 +206,7 @@ const mca_coll_1_0_0_t *mca_coll_basic_comm_query(MPI_Comm comm, int *priority)
   } else {
     return &log;
   }
+#endif
 }
 
 

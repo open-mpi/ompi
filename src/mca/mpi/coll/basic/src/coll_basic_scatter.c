@@ -8,6 +8,7 @@
 #include "lam/constants.h"
 #include "mpi.h"
 #include "mca/mpi/coll/coll.h"
+#include "mca/mpi/coll/base/coll_tags.h"
 #include "coll_basic.h"
 
 
@@ -22,6 +23,9 @@ int mca_coll_basic_scatter(void *sbuf, int scount, MPI_Datatype sdtype,
                            void *rbuf, int rcount, MPI_Datatype rdtype,
                            int root, MPI_Comm comm)
 {
+#if 1
+  return LAM_ERR_NOT_IMPLEMENTED;
+#else
   int i;
   int rank;
   int size;
@@ -71,4 +75,5 @@ int mca_coll_basic_scatter(void *sbuf, int scount, MPI_Datatype sdtype,
   /* All done */
 
   return MPI_SUCCESS;
+#endif
 }
