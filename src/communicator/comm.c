@@ -226,7 +226,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
                 j++;
             }
         }                                           
-        mode = OMPI_COMM_INTER_INTER;
+        mode = OMPI_COMM_CID_INTER;
 #else
         return ( MPI_ERR_COMM );
 #endif
@@ -234,7 +234,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
     else {
         rsize  = 0;
         rprocs = NULL;
-        mode = OMPI_COMM_INTRA_INTRA;
+        mode = OMPI_COMM_CID_INTRA;
     }
 
     newcomp = ompi_comm_set ( comm,                     /* old comm */
@@ -254,12 +254,12 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid ( newcomp,       /* new communicator */ 
-                             comm,          /* old comm */
-                             NULL,          /* bridge comm */
-                             MPI_UNDEFINED, /* local leader */
-                             MPI_UNDEFINED, /* remote_leader */
-                             mode );        /* mode */
+    rc = ompi_comm_nextcid ( newcomp,  /* new communicator */ 
+                             comm,     /* old comm */
+                             NULL,     /* bridge comm */
+                             NULL,     /* local leader */
+                             NULL,     /* remote_leader */
+                             mode );   /* mode */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -432,7 +432,7 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
             rprocs[i] = comm->c_remote_group->grp_proc_pointers[rsorted[i*2]];
         }  
 
-        mode = OMPI_COMM_INTER_INTER;
+        mode = OMPI_COMM_CID_INTER;
 #else
         /* creating an inter-communicator using MPI_Comm_create will
            be supported soon, but not in this version */
@@ -443,7 +443,7 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     else {
         my_rsize  = 0;
         rprocs = NULL;
-        mode   = OMPI_COMM_INTRA_INTRA;
+        mode   = OMPI_COMM_CID_INTRA;
     }
     
     
@@ -466,12 +466,12 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid ( newcomp,       /* new communicator */ 
-                             comm,          /* old comm */
-                             NULL,          /* bridge comm */
-                             MPI_UNDEFINED, /* local leader */
-                             MPI_UNDEFINED, /* remote_leader */
-                             mode );        /* mode */
+    rc = ompi_comm_nextcid ( newcomp,  /* new communicator */ 
+                             comm,     /* old comm */
+                             NULL,     /* bridge comm */
+                             NULL,     /* local leader */
+                             NULL,     /* remote_leader */
+                             mode );   /* mode */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
