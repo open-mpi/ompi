@@ -9,6 +9,7 @@
 #include "include/constants.h"
 #include "runtime/runtime.h"
 #include "util/output.h"
+#include "util/proc_info.h"
 #include "threads/mutex.h"
 #include "mca/llm/base/base.h"
 #include "mca/pcm/base/base.h"
@@ -27,6 +28,7 @@
  */
 int ompi_rte_finalize(void)
 {
+  ompi_rte_unregister();
   mca_oob_base_close();
   mca_pcm_base_close();
   mca_llm_base_close();

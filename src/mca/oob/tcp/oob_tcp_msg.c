@@ -40,11 +40,8 @@ static void mca_oob_tcp_msg_destruct(mca_oob_tcp_msg_t* msg)
 int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
 {
     /* wait for message to complete */
-    ompi_mutex_lock(&msg->msg_lock);
-    while(msg->msg_complete == false) {
-        ompi_condition_wait(&msg->msg_condition, &msg->msg_lock);
-    }
-    ompi_mutex_unlock(&msg->msg_lock);
+    while(msg->msg_complete == false)
+        ompi_event_loop(OMPI_EVLOOP_ONCE);
 
     /* return status */
     if(NULL != rc) {
@@ -128,16 +125,20 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
     int rc;
     while(1) {
         rc = readv(peer->peer_sd, msg->msg_rwptr, msg->msg_rwnum);
-        if(rc <= 0) {
+        if(rc < 0) {
             if(errno == EINTR)
                 continue;
             else if (errno == EAGAIN)
                 return false;
             else {
-                ompi_output(0, "mca_oob_tcp_msg_recv_handler: bad return from writev. errno=%d", errno);
+                ompi_output(0, "mca_oob_tcp_msg_recv_handler: readv failed with errno=%d", errno);
                 mca_oob_tcp_peer_close(peer);
                 return false;
             }
+        } else if (rc == 0)  {
+            ompi_output(0, "mca_oob_tcp_msg_recv_handler: read failedd - peer closed connection");
+            mca_oob_tcp_peer_close(peer);
+            return false;
         }
 
         do {

@@ -146,6 +146,7 @@ int ompi_event_init(void);
 int ompi_event_fini(void);
 int ompi_event_dispatch(void);
 int ompi_event_loop(int);
+bool ompi_event_progress_thread(void);
 
 #define ompi_evtimer_add(ev, tv)		ompi_event_add(ev, tv)
 #define ompi_evtimer_set(ev, cb, arg)	ompi_event_set(ev, -1, 0, cb, arg)

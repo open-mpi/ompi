@@ -32,7 +32,8 @@ typedef struct ompi_thread_t ompi_thread_t;
 OBJ_CLASS_DECLARATION(ompi_thread_t);
 
 
-int ompi_thread_start(ompi_thread_t *);
-int ompi_thread_join(ompi_thread_t *, void **thread_return);
+int  ompi_thread_start(ompi_thread_t *);
+int  ompi_thread_join(ompi_thread_t *, void **thread_return);
+bool ompi_thread_self(ompi_thread_t*);
 
 #endif /* OMPI_THREAD_H */

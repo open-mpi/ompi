@@ -71,13 +71,16 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
 {
     ompi_list_item_t *item;
     mca_base_component_list_item_t *cli;
-    mca_oob_base_info_t * first;
     mca_oob_base_component_t *component;
     mca_oob_t *module;
     extern ompi_list_t mca_oob_base_components;
     int i, id;
     char* seed;
     char** uri = NULL;
+    mca_oob_t *s_module = NULL;
+    bool s_user_threads;
+    bool s_hidden_threads;
+    int  s_priority = -1;
 
     char** include = ompi_argv_split(mca_oob_base_include, ',');
     char** exclude = ompi_argv_split(mca_oob_base_exclude, ',');
@@ -141,24 +144,33 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
         if (NULL == component->oob_init) {
             ompi_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no init function; ignoring component");
         } else {
-            module = component->oob_init(user_threads, hidden_threads);
-            if (NULL == module) {
-                ompi_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: oob_init returned failure");
-            } else {
-              inited = OBJ_NEW(mca_oob_base_info_t);
-              inited->oob_component = component;
-              inited->oob_module = module;
-              ompi_list_append(&mca_oob_base_modules, &inited->super);
+            int priority = -1;
+            bool u_threads;
+            bool h_threads;
+            module = component->oob_init(&priority, &u_threads, &h_threads);
+            if (NULL != module) {
+                inited = OBJ_NEW(mca_oob_base_info_t);
+                inited->oob_component = component;
+                inited->oob_module = module;
+                ompi_list_append(&mca_oob_base_modules, &inited->super);
 
-              /* lookup contact info for this component */
-              if(NULL != uri) {
-                  for(i=0; NULL != uri[i]; i++) {
-                     if(strncmp(uri[i], component->oob_base.mca_component_name, 
-                        strlen(component->oob_base.mca_component_name)) == 0) { 
-                        module->oob_set_seed(uri[i]);
-                     }
-                  }
-               }
+                /* lookup contact info for this component */
+                if(NULL != uri) {
+                    for(i=0; NULL != uri[i]; i++) {
+                       if(strncmp(uri[i], component->oob_base.mca_component_name, 
+                          strlen(component->oob_base.mca_component_name)) == 0) { 
+                          module->oob_set_seed(uri[i]);
+                       }
+                    }
+                }
+
+                /* setup highest priority oob channel */
+                if(priority > s_priority) {
+                    s_priority = priority;
+                    s_module = module;
+                    s_user_threads = u_threads;
+                    s_hidden_threads = h_threads;
+                }
             }
         }
     }
@@ -167,15 +179,15 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     }
 
     /* set the global variable to point to the first initialize module */
-    if (0 < ompi_list_get_size(&mca_oob_base_modules)) {
-      first = (mca_oob_base_info_t *) ompi_list_get_first(&mca_oob_base_modules);
-      mca_oob = *first->oob_module; 
-      return OMPI_SUCCESS;
-    } else {
-      printf("No OOB modules available!\n");
-      fflush(stdout);
+    if(s_module == NULL) {
+      ompi_output(0, "mca_oob_base_init: no OOB modules available\n");
       return OMPI_ERROR;
-    }
+   }
+
+   mca_oob = *s_module;
+   *user_threads &= s_user_threads;
+   *hidden_threads |= s_hidden_threads;
+   return OMPI_SUCCESS;
 }
 
 
@@ -216,6 +228,17 @@ int mca_oob_set_contact_info(const char* seed)
     return OMPI_SUCCESS;
 }
                                                                                   
+
+/**
+ * Are we or do we know how to get to the seed.
+ */
+
+bool mca_oob_has_seed(void)
+{
+    return (getenv("OMPI_MCA_oob_base_seed") != NULL || ompi_process_info.seed);
+}
+
+
 /**
 * Called to request the selected oob components to
 * register their address with the seed deamon.
@@ -226,8 +249,10 @@ int mca_oob_base_module_init(void)
   ompi_list_item_t* item;
 
   /* setup self to point to actual process name */
-  if(ompi_name_server.compare(OMPI_NS_CMP_ALL, &mca_oob_name_self, &mca_oob_name_any) == 0) {
-      mca_oob_name_self = *mca_pcmclient.pcmclient_get_self();
+  mca_oob_name_self = *mca_pcmclient.pcmclient_get_self();
+  if(ompi_process_info.seed) {
+      char* seed = mca_oob_get_contact_info();
+      mca_oob_set_contact_info(seed);
   }
 
   /* Initialize all modules after oob/gpr/ns have initialized */
@@ -240,5 +265,4 @@ int mca_oob_base_module_init(void)
   }
   return OMPI_SUCCESS;
 }
-                                                                                                                                           
 

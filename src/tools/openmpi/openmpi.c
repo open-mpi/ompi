@@ -25,6 +25,7 @@
 #include "util/session_dir.h"
 #include "util/printf.h"
 #include "util/daemon_init.h"
+#include "event/event.h"
 #include "util/universe_setup_file_io.h"
 #include "mca/base/base.h"
 #include "mca/oob/base/base.h"
@@ -51,7 +52,7 @@ int main(int argc, char **argv)
     char *tmpdir = NULL;
     char *universe = NULL;
     char *tmp, *universe_name, *remote_host, *remote_uid;
-    char *script_file, *socket_contact_info, *oob_contact_info;
+    char *script_file;
     char *contact_file;
     int ret;
     bool persistent, silent, script, webserver;
@@ -92,7 +93,7 @@ int main(int argc, char **argv)
     }
 
     /* setup the rte command line arguments */
-    cmd_line = ompi_cmd_line_create();
+    cmd_line = OBJ_NEW(ompi_cmd_line_t);
     ompi_cmd_line_make_opt(cmd_line, 's', "seed", 0, 
 			   "Set the daemon seed to true.");
 
@@ -116,7 +117,7 @@ int main(int argc, char **argv)
     /*
      * setup  mca command line arguments
      */
-    mca_cmd_line = ompi_cmd_line_create();
+    mca_cmd_line = OBJ_NEW(ompi_cmd_line_t);
     if (OMPI_SUCCESS != (ret = mca_base_cmd_line_setup(mca_cmd_line))) {
 	/* BWB show_help */
 	printf("show_help: mca_base_cmd_line_setup failed\n");
@@ -245,10 +246,12 @@ int main(int argc, char **argv)
 	    ompi_process_info.seed = true;
 	    ompi_process_info.my_universe = strdup(ompi_universe.name);
 
+#if 0
 	    if (OMPI_SUCCESS != daemon_init(ompi_process_info.universe_session_dir)) {
 		fprintf(stderr, "could not convert to daemon - please report error to bugs@open-mpi.org\n");
 		exit(1);
 	    }
+#endif
 
 	    /*
 	     * Start the Open MPI Run Time Environment
@@ -266,10 +269,10 @@ int main(int argc, char **argv)
 	    }
 
 	    /* get OOB contact info */
-	    oob_contact_info = mca_oob_get_contact_info();
+	    ompi_universe.oob_contact_info = mca_oob_get_contact_info();
 
 	    /* get Web contact info */
-	    socket_contact_info = strdup("dum.add.for.tst");
+	    ompi_universe.socket_contact_info = strdup("dum.add.for.tst");
 
 	    /* save all pertinent info in universe file */
 	    contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
@@ -282,6 +285,8 @@ int main(int argc, char **argv)
 
 	    /* put info on the registry */
 
+        /* event loop */
+        ompi_event_loop(0);
 	}
     }
     /* spawn console process */

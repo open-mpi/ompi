@@ -67,13 +67,15 @@ int mca_oob_cofs_set_seed(const char* addr)
     return OMPI_SUCCESS;
 }
 
-mca_oob_t* mca_oob_cofs_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
+mca_oob_t* mca_oob_cofs_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
   int len;
   char *tmp;
   FILE *fp;
 
-  *allow_multi_user_threads &= true;
+  *priority = 0;
+  *allow_multi_user_threads = true;
+  *have_hidden_threads = false;
 
   /*
    * See if we can write in our directory...

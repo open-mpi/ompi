@@ -11,12 +11,6 @@ noinst_PROGRAMS = \
 
 atomic_SOURCES = atomic.c 
 atomic_LDADD = \
-	$(top_builddir)/src/util/output.lo \
-        $(top_builddir)/src/class/ompi_object.lo \
-	$(top_builddir)/src/util/malloc.lo \
-	$(top_builddir)/src/threads/mutex.lo \
-        $(top_builddir)/src/threads/mutex_pthread.lo \
-        $(top_builddir)/src/threads/mutex_spinlock.lo \
-        $(top_builddir)/src/util/libutil.la \
+	$(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.la
 atomic_DEPENDENCIES = $(atomic_LDADD)

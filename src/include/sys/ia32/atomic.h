@@ -55,7 +55,7 @@ SMPLOCK "cmpxchgl %1,%2   \n\
       setz     %%al    \n\
       movzbl   %%al,%0 \n"
     : "+a" (ret)
-    : "r" (newval), "m" (*addr)
+    : "a" (oldval) "r" (newval), "m" (*addr)
     : "memory");
 
     return (ret == oldval);

@@ -233,7 +233,7 @@ static int mca_oob_tcp_create_listen(void)
 
 static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
 {
-    ompi_process_name_t name;
+    ompi_process_name_t guid[2];
     mca_oob_tcp_peer_t* peer;
     int rc;
 
@@ -246,14 +246,15 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     free(user);
 
     /* recv the process identifier */
-    rc = recv(sd, &name, sizeof(name), 0);
-    if(rc != sizeof(name)) {
+    rc = recv(sd, guid, sizeof(guid), 0);
+    if(rc != sizeof(guid)) {
         ompi_output(0, "mca_oob_tcp_recv_handler: recv() return value %d != %d, errno = %d",
-            rc, sizeof(name), errno);
+            rc, sizeof(guid), errno);
         close(sd);
         return;
     }
-    OMPI_PROCESS_NAME_NTOH(name);
+    OMPI_PROCESS_NAME_NTOH(guid[0]);
+    OMPI_PROCESS_NAME_NTOH(guid[1]);
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
@@ -268,14 +269,14 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     /* check for wildcard name - if this is true - we allocate a name from the name server 
      * and return to the peer 
      */
-    if(mca_oob_tcp_process_name_compare(&name, MCA_OOB_NAME_ANY) == 0) {
-        name.jobid = ompi_name_server.create_jobid();
-        name.vpid = ompi_name_server.reserve_range(name.jobid,1);
-        ompi_name_server.assign_cellid_to_process(&name);
+    if(mca_oob_tcp_process_name_compare(guid, MCA_OOB_NAME_ANY) == 0) {
+        guid->jobid = ompi_name_server.create_jobid();
+        guid->vpid = ompi_name_server.reserve_range(guid->jobid,1);
+        ompi_name_server.assign_cellid_to_process(guid);
     }
 
     /* lookup the corresponding process */
-    peer = mca_oob_tcp_peer_lookup(&name, true);
+    peer = mca_oob_tcp_peer_lookup(guid, true);
     if(NULL == peer) {
         ompi_output(0, "mca_oob_tcp_recv_handler: unable to locate peer");
         close(sd);
@@ -294,8 +295,16 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
  * (1) initialize static resources
  * (2) create listen socket
  */
-mca_oob_t* mca_oob_tcp_component_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
+mca_oob_t* mca_oob_tcp_component_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
+    /* dont allow tcp to be selected if we dont know the seed */
+    if(mca_oob_has_seed() == false)
+        return NULL;
+        
+    *priority = 1;
+    *allow_multi_user_threads = true;
+    *have_hidden_threads = OMPI_HAVE_THREADS;
+
     /* initialize data structures */
     ompi_rb_tree_init(&mca_oob_tcp_component.tcp_peer_tree, (ompi_rb_tree_comp_fn_t)mca_oob_tcp_process_name_compare);
 
@@ -339,11 +348,6 @@ int mca_oob_tcp_init(void)
     char *keys[3];
     char *addr;
     int rc;
-
-    /* setup self to point to actual process name */
-    if(mca_oob_tcp_process_name_compare(&mca_oob_name_self, &mca_oob_name_any) == 0) {
-        mca_oob_name_self = *mca_pcmclient.pcmclient_get_self();
-    }
 
     /* put contact info in registry */
     keys[0] = "tcp";
