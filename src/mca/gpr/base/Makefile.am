@@ -16,7 +16,10 @@ headers = \
         base.h
 
 libmca_gpr_base_la_SOURCES = \
-        $(headers)
+        $(headers) \
+        gpr_base_open.c \
+        gpr_base_close.c \
+        gpr_base_select.c
 
 # Conditionally install the header files
 

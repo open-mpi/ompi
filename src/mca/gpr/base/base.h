@@ -70,58 +70,16 @@ extern "C" {
 /*
  * globals that might be needed
  */
-
+extern int mca_gpr_base_output;
 extern mca_gpr_base_module_t ompi_registry; /* holds selected module's function pointers */
 extern ompi_list_t mca_gpr_base_modules_available;
 extern mca_gpr_base_component_t mca_gpr_base_selected_component;
 
 /*
- * structures
+ * Base functions that are common to all implementations - can be overridden
  */
 
-/** Return value structure for registry requests.
- * A request for information stored within the registry returns a linked list of values that
- * correspond to the provided tokens. The linked list is terminated by a "next" value of NULL.
- * Each link in the list contains a pointer to a copy of the registry object, and the size
- * of that object in bytes. Note that the pointer is to a \em copy of the object, and not
- * to the registry object itself. This prevents inadvertent modification of the registry, but
- * may require the recipient to release the structure's memory when done.
- */
-struct ompi_registry_value_t {
-    ompi_list_item_t item;    /**< Allows this item to be placed on a list */
-    char *segment;            /**< Name of segment this object came from */
-    ompi_key_table_t keylist;  /**< List of keys describing the object */
-    ompi_registry_object_t *object;   /**< Pointer to object being returned */
-    int object_size;   /**< Size of returned object, in bytes */
-};
-typedef struct ompi_registry_value_t ompi_registry_value_t;
-
-OBJ_CLASS_DECLARATION(ompi_registry_value_t);
+int gpr_base_send(ompi_process_name_t *target, mca_gpr_buffer_t *buf, mca_gpr_buffer_size_t size);
+mca_gpr_buffer_t gpr_base_recv(void);
 
 #endif
-
-/*
- * external functions - here for purely documentation purposes
- */
-
-/** @verbatim
- int ompi_registry.definesegment(char *segment);
- 
- Define a new registry segment.
- The ompi_registry.definesegment() function allows the caller to create a new registry
- segment with the specified name. Each segment is given its own token-key dictionary and
- object storage list. There is no limit nor restrictions on the number of segments
- that can be created and who can create them, or for what they can be used. Attempts to
- define a segment with a name that already exists will return an error.
- 
- Param  segment A pointer to a character string containing the name of the segment
- to be created.
- 
-Returns
- OMPI_SUCCESS Indicates that the operation was successfully completed.
- OMPI_ERROR Indicates that the operation failed - most likely due to the
- prior existence of a segment with an identical name.
-*/
-
-/** @endverbatim
- */
