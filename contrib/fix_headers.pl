@@ -2,7 +2,7 @@
 
 if (scalar(@ARGV) != 1) {
     print "Usage:
-           ./fix_headers.pl <header_file_list>\n";
+           fix_headers.pl <header_file_list>\n";
     exit(3);
 }
 
