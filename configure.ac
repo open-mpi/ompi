@@ -3,11 +3,11 @@
 # Copyright (c) 2003 The Trustees of Indiana University.  
 #                    All rights reserved.
 # 
-# This file is part of the CMPI software package.  For license
+# This file is part of the LAM software package.  For license
 # information, see the LICENSE file in the top level directory of the
-# CMPI source distribution.
+# LAM source distribution.
 #
-# $Id: configure.ac,v 1.3 2003/11/22 16:57:54 jsquyres Exp $
+# $Id: configure.ac,v 1.4 2003/12/22 16:29:11 twoodall Exp $
 #
 
 
@@ -21,40 +21,40 @@ AC_INIT(./src/mpi/datatype/d_get_name.c)
 AC_PREREQ(2.52)
 AC_CONFIG_AUX_DIR(./config)
 
-# Get the version of CMPI that we are installing
+# Get the version of LAM that we are installing
 
-CMPI_GET_VERSION($srcdir/config, $srcdir/VERSION, CMPI)
+LAM_GET_VERSION($srcdir/config, $srcdir/VERSION, LAM)
 
-AC_DEFINE_UNQUOTED(CMPI_MAJOR_VERSION, $CMPI_MAJOR_VERSION, 
-    [Major CMPI version])
-AC_DEFINE_UNQUOTED(CMPI_MINOR_VERSION, $CMPI_MINOR_VERSION, 
-    [Minor CMPI version])
-AC_DEFINE_UNQUOTED(CMPI_RELEASE_VERSION, $CMPI_RELEASE_VERSION, 
-    [Release CMPI version])
-AC_DEFINE_UNQUOTED(CMPI_ALPHA_VERSION, $CMPI_ALPHA_VERSION, 
-    [Alpha CMPI version])
-AC_DEFINE_UNQUOTED(CMPI_BETA_VERSION, $CMPI_BETA_VERSION, 
-    [Beta CMPI version])
-AC_DEFINE_UNQUOTED(CMPI_CVS_VERSION, $CMPI_CVS_VERSION, 
-    [CVS CMPI version])
-AC_DEFINE_UNQUOTED(CMPI_VERSION, "$CMPI_VERSION", 
-    [Overall CMPI version number])
+AC_DEFINE_UNQUOTED(LAM_MAJOR_VERSION, $LAM_MAJOR_VERSION, 
+    [Major LAM version])
+AC_DEFINE_UNQUOTED(LAM_MINOR_VERSION, $LAM_MINOR_VERSION, 
+    [Minor LAM version])
+AC_DEFINE_UNQUOTED(LAM_RELEASE_VERSION, $LAM_RELEASE_VERSION, 
+    [Release LAM version])
+AC_DEFINE_UNQUOTED(LAM_ALPHA_VERSION, $LAM_ALPHA_VERSION, 
+    [Alpha LAM version])
+AC_DEFINE_UNQUOTED(LAM_BETA_VERSION, $LAM_BETA_VERSION, 
+    [Beta LAM version])
+AC_DEFINE_UNQUOTED(LAM_CVS_VERSION, $LAM_CVS_VERSION, 
+    [CVS LAM version])
+AC_DEFINE_UNQUOTED(LAM_VERSION, "$LAM_VERSION", 
+    [Overall LAM version number])
 
-AC_SUBST(CMPI_MAJOR_VERSION)
-AC_SUBST(CMPI_MINOR_VERSION)
-AC_SUBST(CMPI_RELEASE_VERSION)
-AC_SUBST(CMPI_ALPHA_VERSION)
-AC_SUBST(CMPI_BETA_VERSION)
-AC_SUBST(CMPI_CVS_VERSION)
-AC_SUBST(CMPI_VERSION)
+AC_SUBST(LAM_MAJOR_VERSION)
+AC_SUBST(LAM_MINOR_VERSION)
+AC_SUBST(LAM_RELEASE_VERSION)
+AC_SUBST(LAM_ALPHA_VERSION)
+AC_SUBST(LAM_BETA_VERSION)
+AC_SUBST(LAM_CVS_VERSION)
+AC_SUBST(LAM_VERSION)
 
 #
 # Start it up
 #
 
-CMPI_CONFIGURE_SETUP
-cmpi_show_title "Configuring CMPI version $CMPI_VERSION"
-cmpi_show_subtitle "Initialization, setup"
+LAM_CONFIGURE_SETUP
+lam_show_title "Configuring LAM version $LAM_VERSION"
+lam_show_subtitle "Initialization, setup"
 
 #
 # Init automake
@@ -62,39 +62,41 @@ cmpi_show_subtitle "Initialization, setup"
 # VERSION macors
 #
 
-AM_INIT_AUTOMAKE(cmpi, $CMPI_VERSION, 'no')
+AM_INIT_AUTOMAKE(lam, $LAM_VERSION, 'no')
 
-CMPI_TOP_BUILDDIR="`pwd`"
-AC_SUBST(CMPI_TOP_BUILDDIR)
+LAM_TOP_BUILDDIR="`pwd`"
+AC_SUBST(LAM_TOP_BUILDDIR)
 cd "$srcdir"
-CMPI_TOP_SRCDIR="`pwd`"
-AC_SUBST(CMPI_TOP_SRCDIR)
-cd "$CMPI_TOP_BUILDDIR"
+LAM_TOP_SRCDIR="`pwd`"
+AC_SUBST(LAM_TOP_SRCDIR)
+cd "$LAM_TOP_BUILDDIR"
 
-AC_MSG_NOTICE([builddir: $CMPI_TOP_BUILDDIR])
-AC_MSG_NOTICE([srcdir: $CMPI_TOP_SRCDIR])
-if test "$CMPI_TOP_BUILDDIR" != "$CMPI_TOP_SRCDIR"; then
+AC_MSG_NOTICE([builddir: $LAM_TOP_BUILDDIR])
+AC_MSG_NOTICE([srcdir: $LAM_TOP_SRCDIR])
+if test "$LAM_TOP_BUILDDIR" != "$LAM_TOP_SRCDIR"; then
     AC_MSG_NOTICE([Detected VPATH build])
 fi
 
-# Setup the top of the src/include/cmpi_config.h file
+# Setup the top of the src/include/lam_config.h file
 
 AH_TOP([/* -*- c -*-
  *
  * Copyright (c) 2003 The Trustees of Indiana University.  
  *                    All rights reserved.
  * 
- * This file is part of the CMPI software package.  For license
+ * This file is part of the LAM software package.  For license
  * information, see the LICENSE file in the top level directory of the
- * CMPI source distribution.
+ * LAM source distribution.
  *
  * Function: - OS, CPU and compiler dependent configuration 
  */
 
-#ifndef CMPI_CONFIG_H
-#define CMPI_CONFIG_H
+#ifndef LAM_CONFIG_H
+#define LAM_CONFIG_H
 ])
-AH_BOTTOM([#endif /* CMPI_CONFIG_H */])
+AH_BOTTOM([
+#endif /* LAM_CONFIG_H */
+])
 
 # What kind of machine are we on?
 
@@ -112,7 +114,7 @@ AC_CANONICAL_HOST
 # ...?
 
 # amorphous, seem-to-be-good-idea options
-# --with-cmpi=maintainer_options
+# --with-lam=maintainer_options
 # --with-ssi-*
 # ...?
 
@@ -130,8 +132,8 @@ AC_CANONICAL_HOST
 # the user requested something or if the default was set here.
 #
 
-cmpi_enable_shared="$enable_shared"
-cmpi_enable_static="$enable_static"
+lam_enable_shared="$enable_shared"
+lam_enable_static="$enable_static"
 AM_DISABLE_SHARED
 AM_ENABLE_STATIC
 
@@ -153,7 +155,8 @@ CFLAGS="$cflags_save"
 # check for some types
 # check for type sizes
 # check for type alignments
-
+# check for c99 features
+AC_C_INLINE
 
 ##################################
 # C++ compiler characteristics
@@ -175,14 +178,14 @@ CXXFLAGS="$cxx_flags_save"
 ##################################
 
 if test "$with_f77" != "yes"; then
-    cmpi_show_subtitle "Fortran Compiler -- skipped" 
-    CMPI_WANT_FORTRAN=1
+    lam_show_subtitle "Fortran Compiler -- skipped" 
+    LAM_WANT_FORTRAN=1
 else
-    cmpi_show_subtitle "Fortran Compiler"
-    CMPI_WANT_FORTRAN=0
+    lam_show_subtitle "Fortran Compiler"
+    LAM_WANT_FORTRAN=0
 fi
 
-if test "$CMPI_WANT_FORTRAN" = "1"; then
+if test "$LAM_WANT_FORTRAN" = "1"; then
     # fortran linking style (necessary?)
     # check for types
     # check for type sizes
@@ -190,7 +193,7 @@ if test "$CMPI_WANT_FORTRAN" = "1"; then
     true
 fi
 
-AM_CONDITIONAL(WANT_FORTRAN, test "$CMPI_WANT_FORTRAN" = "1")
+AM_CONDITIONAL(WANT_FORTRAN, test "$LAM_WANT_FORTRAN" = "1")
 
 
 ##################################
@@ -251,7 +254,7 @@ AM_CONDITIONAL(WANT_FORTRAN, test "$CMPI_WANT_FORTRAN" = "1")
 # (after C compiler setup)
 ############################################################################
 
-cmpi_show_title "Libtool configuration"
+lam_show_title "Libtool configuration"
 
 AM_PROG_LIBTOOL
 
@@ -260,7 +263,7 @@ AM_PROG_LIBTOOL
 # final wrapper compiler config
 ############################################################################
 
-cmpi_show_title "Final top-level CMPI configuration"
+lam_show_title "Final top-level LAM configuration"
 
 #
 # This is needed for VPATH builds, so that it will -I the appropriate
@@ -270,8 +273,8 @@ cmpi_show_title "Final top-level CMPI configuration"
 # purely aesthetic.
 #
 
-CPPFLAGS='-I$(top_srcdir)/share/include'" $CPPFLAGS"
-CXXCPPFLAGS='-I$(top_srcdir)/share/include'" $CXXCPPFLAGS"
+CPPFLAGS='-I$(top_srcdir)/src'" $CPPFLAGS"
+CXXCPPFLAGS='-I$(top_srcdir)/src'" $CXXCPPFLAGS"
 
 #
 # Delayed the substitution of CFLAGS and CXXFLAGS until now because
@@ -289,9 +292,10 @@ AC_SUBST(FFLAGS)
 # Party on
 ############################################################################
 
-cmpi_show_subtitle "Final output" 
+lam_show_subtitle "Final output" 
 
-AM_CONFIG_HEADER([src/include/cmpi_config.h])
+AX_CREATE_STDINT_H([src/include/lam_stdint.h])
+AM_CONFIG_HEADER([src/include/lam_config.h])
 AC_CONFIG_FILES([
     Makefile
 
@@ -300,9 +304,20 @@ AC_CONFIG_FILES([
     src/Makefile
     src/include/Makefile
 
+    src/lam/Makefile
+    src/lam/base/Makefile
+    src/lam/mem/Makefile
+    src/lam/os/Makefile
+    src/lam/threads/Makefile
+    src/lam/util/Makefile
+
     src/mpi/Makefile
     src/mpi/communicator/Makefile
     src/mpi/datatype/Makefile
+    src/mpi/p2p/Makefile
+    src/mpi/p2p/base/Makefile
+    src/mpi/p2p/interface/Makefile
+    src/mpi/p2p/matching/Makefile
 
     src/tools/Makefile
     src/tools/wrappers/Makefile
