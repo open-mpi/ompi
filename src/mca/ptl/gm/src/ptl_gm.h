@@ -16,11 +16,18 @@
 #include "mca/ptl/ptl.h"
 #include "gm.h"
 
+
 #define MCA_PTL_GM_STATISTICS 0
-#define SIZE 30
+#define GM_SIZE 30
 #define THRESHOLD 16384
 #define MAX_GM_PORTS 16
 #define MAX_RECV_TOKENS 256
+#define PTL_GM_ADMIN_SEND_TOKENS 0
+#define PTL_GM_ADMIN_RECV_TOKENS 0
+#define GM_SEND_BUF_SIZE 16384
+#define GM_RECV_BUF_SIZE 16384
+#define NUM_RECV_FRAGS 100
+#define MCA_PTL_GM_FRAG_CACHED
 
 /**
  * GM PTL component
@@ -33,7 +40,7 @@ struct mca_ptl_gm_component_t {
     int         gm_free_list_num;        /**< initial size of free lists */
     int         gm_free_list_max;        /**< maximum size of free lists */
     int         gm_free_list_inc;        /**< number of elements to alloc when growing free lists */
-
+    struct mca_ptl_gm_proc_t* gm_local;
     ompi_list_t gm_procs;
     ompi_list_t gm_send_req;
 
@@ -51,16 +58,19 @@ extern mca_ptl_gm_component_t mca_ptl_gm_component;
 struct mca_ptl_gm_module_t {
     mca_ptl_base_module_t super;    /**< base PTL module interface */
     struct gm_port *my_port;
-    unsigned int my_lid;
-    unsigned int my_gid;
+    unsigned int my_local_id;
+    unsigned int my_global_id;
     unsigned int my_port_id;
     unsigned int num_send_tokens;
     unsigned int num_recv_tokens;
     unsigned int max_send_tokens;
     unsigned int max_recv_tokens;
-    struct mca_ptl_gm_addr_t *proc_id_table;
+    /*struct mca_ptl_gm_addr_t *proc_id_table;*/
 
     ompi_free_list_t gm_send_frags;
+    ompi_free_list_t gm_recv_frags;
+    ompi_free_list_t gm_recv_frags_free;
+    ompi_list_t gm_send_frags_queue;
     ompi_list_t gm_pending_acks;
 
 #if MCA_PTL_GM_STATISTICS
@@ -109,6 +119,19 @@ extern int  mca_ptl_gm_component_control (int param,
  * GM module progress.
  */
 extern int  mca_ptl_gm_component_progress (mca_ptl_tstamp_t tstamp);
+
+
+
+/**
+ *  GM send
+ */
+
+extern int  mca_ptl_gm_send (struct mca_ptl_base_module_t *ptl,
+                            struct mca_ptl_base_peer_t *ptl_peer,
+                            struct mca_pml_base_send_request_t *sendreq,
+                            size_t offset, size_t size, int flags);
+
+
 
 
 /**
@@ -173,16 +196,16 @@ extern int  mca_ptl_gm_del_procs (struct mca_ptl_base_module_t *ptl,
  * @return               Status indicating if allocation was successful.
  *
  */
-extern int  mca_ptl_gm_request_alloc (struct mca_ptl_base_module_t *ptl,
+extern int  mca_ptl_gm_request_init (struct mca_ptl_base_module_t *ptl,
                                       struct mca_pml_base_send_request_t
-                                      **);
+                                      *req);
 
 
 /**
  *
  */
 
-extern void mca_ptl_gm_request_return (struct mca_ptl_base_module_t *ptl,
+extern void mca_ptl_gm_request_fini (struct mca_ptl_base_module_t *ptl,
                                        struct mca_pml_base_send_request_t
                                        *);
 

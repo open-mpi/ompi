@@ -24,6 +24,7 @@ struct mca_ptl_gm_proc_t {
     size_t      proc_peer_count;
     size_t      proc_addr_count;
     struct mca_ptl_gm_peer_t **peer_arr;
+    ompi_process_name_t proc_guid;
 };
 typedef struct mca_ptl_gm_proc_t mca_ptl_gm_proc_t;
 

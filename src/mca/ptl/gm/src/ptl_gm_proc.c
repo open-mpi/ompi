@@ -83,10 +83,18 @@ mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
     int         i;
     mca_ptl_gm_proc_t *ptl_proc;
 
+    ptl_proc = mca_ptl_gm_proc_lookup_ompi (ompi_proc);
+    if (ptl_proc != NULL)
+    {
+       return ptl_proc;
+    }
+
+
     /* only gm ptl opened */
     ptl_proc = OBJ_NEW (mca_ptl_gm_proc_t);
     ptl_proc->proc_ompi = ompi_proc;
 
+    
     /* Extract exposed addresses from remote proc */
     rc = mca_base_modex_recv (&mca_ptl_gm_component.super.ptlm_version,
                               ompi_proc, (void **) &ptl_proc->proc_addrs,
@@ -107,18 +115,6 @@ mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
     }
     ptl_proc->proc_addr_count = size / sizeof (mca_ptl_gm_addr_t);
 
-    for (i = 0; i < ptl_proc->proc_addr_count; i++) {
-        /*convert from global id to local id */
-        if (GM_SUCCESS !=
-            gm_global_id_to_node_id (ptl->my_port,
-                                     ptl_proc->proc_addrs[i].global_id,
-                                     ptl_proc->proc_addrs[i].local_id)) {
-            ompi_output (0,
-                         "[%s:%d] error in converting global to local id \n",
-                         __FILE__, __LINE__);
-        }
-    }
-
 
     /* allocate space for peer array - one for each exported address */
     ptl_proc->peer_arr = (mca_ptl_gm_peer_t **)
@@ -130,6 +126,10 @@ mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
                      __FILE__, __LINE__);
         return NULL;
     }
+
+     if(NULL == mca_ptl_gm_component.gm_local && ompi_proc ==
+ompi_proc_local() )
+        mca_ptl_gm_component.gm_local = ptl_proc;
 
     return ptl_proc;
 }
