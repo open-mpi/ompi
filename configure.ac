@@ -553,7 +553,25 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h dlfcn.h \
 #   rpc/types.h rpc/xdr.h sched.h strings.h
 
 # SA_RESTART in signal.h
+AC_MSG_CHECKING([if SA_RESTART defined in signal.h])
+AC_EGREP_CPP(yes, [
+#include <signal.h>
+#ifdef SA_RESTART
+    yes
+#endif ], [MSG=yes VALUE=1], [MSG=no VALUE=0])
+AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_RESTART, $VALUE, 
+    [Whether we have SA_RESTART in <signal.h> or not])
+AC_MSG_RESULT([$MSG])
+
 # sa_len in struct sockaddr
+AC_MSG_CHECKING([for sa_len in struct sockaddr])
+AC_TRY_COMPILE([#include <sys/types.h>
+#include <sys/socket.h>], [struct sockaddr s; s.sa_len;],
+[MSG=yes VALUE=1], [MSG=no VALUE=0])
+AC_DEFINE_UNQUOTED(OMPI_HAVE_SA_LEN, $VALUE,
+    [Whether we have the sa_len struct in <sys/socket.h> or not])
+AC_MSG_RESULT([$MSG])
+
 # union semun in sys/sem.h
 
 # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,

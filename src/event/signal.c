@@ -169,7 +169,9 @@ ompi_evsignal_recalc(sigset_t *evsigmask)
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = ompi_evsignal_handler;
 	sa.sa_mask = *evsigmask;
+#if OMPI_HAVE_SA_RESTART
 	sa.sa_flags |= SA_RESTART;
+#endif
 	
 	TAILQ_FOREACH(ev, &ompi_signalqueue, ev_signal_next) {
 		if (sigaction(OMPI_EVENT_SIGNAL(ev), &sa, NULL) == -1)
