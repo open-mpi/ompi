@@ -14,25 +14,22 @@ int mca_allocator_bucket_module_close(void);
 
 void * mca_allocator_bucket_alloc_wrapper(struct mca_allocator_t* allocator,
                                           size_t size, size_t align);
+static int mca_allocator_num_buckets;
+
+
 
 struct mca_allocator_t* mca_allocator_bucket_module_init(
     bool *allow_multi_user_threads,
     mca_allocator_segment_alloc_fn_t segment_alloc,
     mca_allocator_segment_free_fn_t segment_free)
 {
-    int num_buckets = 30;
-    int id;
     size_t alloc_size = sizeof(mca_allocator_bucket_t);
     mca_allocator_bucket_t * retval;
     mca_allocator_bucket_t * allocator = segment_alloc(&alloc_size);
     if(NULL == allocator) {
         return(NULL);
     }
-    id = mca_base_param_register_int("allocator","bucket","num_buckets",
-                                     NULL,num_buckets);
-    mca_base_param_lookup_int(id,&num_buckets);
-
-    retval = mca_allocator_bucket_init((mca_allocator_t *) allocator, num_buckets, 
+    retval = mca_allocator_bucket_init((mca_allocator_t *) allocator, mca_allocator_num_buckets, 
                                         segment_alloc, segment_free);
     if(NULL == retval) {
         segment_free(allocator);
@@ -48,6 +45,8 @@ struct mca_allocator_t* mca_allocator_bucket_module_init(
 
 int mca_allocator_bucket_module_open(void) {
 
+    int id = mca_base_param_register_int("allocator","bucket","num_buckets", NULL,30);
+    mca_base_param_lookup_int(id,&mca_allocator_num_buckets);
     return(OMPI_SUCCESS);
 }
 
