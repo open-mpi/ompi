@@ -4,6 +4,8 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+AM_CPPFLAGS = -DLAM_PKGLIBDIR=\"$(pkglibdir)\"
+
 noinst_LTLIBRARIES = libmca_lam_base.la
 
 # Source code files
@@ -22,6 +24,8 @@ libmca_lam_base_la_SOURCES = \
         mca_base_module_compare.c \
         mca_base_module_find.c \
         mca_base_module_registry.c \
+        mca_base_modules_open.c \
+        mca_base_modules_close.c \
         mca_base_open.c \
         mca_base_param.c
 
