@@ -20,7 +20,6 @@
 
 int MPI_Group_free(MPI_Group *group)
 {
-    int proc;
     lam_group_t *l_group;
 
     /* check to make sure we don't free GROUP_EMPTY or GROUP_NULL */
@@ -34,9 +33,9 @@ int MPI_Group_free(MPI_Group *group)
 
     l_group = (lam_group_t *) *group;
 
-    /* decrement proc reference count */
-    for (proc = 0; proc < l_group->grp_proc_count; proc++) {
-        OBJ_RELEASE(l_group->grp_proc_pointers[proc]);
+    /* check to see if group may be freed */
+    if( false == l_group->grp_ok_to_free ) {
+        return MPI_ERR_GROUP;
     }
 
     OBJ_RELEASE(l_group);

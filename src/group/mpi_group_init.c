@@ -109,6 +109,7 @@ static void lam_group_construct(lam_group_t *new_group)
     /* assign entry in fortran <-> c translation array */
     ret_val = lam_pointer_array_add(lam_group_f_to_c_table, new_group);
     new_group->grp_f_to_c_index = ret_val;
+    new_group->grp_ok_to_free=true;
 
     /* return */
     return;
@@ -120,6 +121,12 @@ static void lam_group_construct(lam_group_t *new_group)
  */
 static void lam_group_destruct(lam_group_t *group)
 {
+    int proc;
+
+    /* decrement proc reference count */
+    for (proc = 0; proc < group->grp_proc_count; proc++) {
+        OBJ_RELEASE(group->grp_proc_pointers[proc]);
+    }
     /* release thegrp_proc_pointers memory */
     if (NULL != group->grp_proc_pointers)
         free(group->grp_proc_pointers);

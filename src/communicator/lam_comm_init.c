@@ -56,6 +56,7 @@ int lam_comm_init(void)
     group->grp_proc_pointers = NULL;
     group->grp_my_rank = MPI_PROC_NULL;
     group->grp_proc_count = 0;
+    group->grp_ok_to_free = false;
     OBJ_RETAIN(group); /* bump reference count for remote reference */
 
     lam_mpi_comm_null.c_contextid = MPI_UNDEFINED;
@@ -80,6 +81,7 @@ int lam_comm_init(void)
     group->grp_proc_pointers = lam_proc_world(&size);
     group->grp_my_rank = lam_proc_local()->proc_vpid ;
     group->grp_proc_count = size;
+    group->grp_ok_to_free = false;
     OBJ_RETAIN(group); /* bump reference count for remote reference */
 
     lam_mpi_comm_world.c_contextid = 0;
@@ -114,6 +116,7 @@ int lam_comm_init(void)
     group->grp_proc_pointers = lam_proc_self(&size);
     group->grp_my_rank = 0;
     group->grp_proc_count = size;
+    group->grp_ok_to_free = false;
     OBJ_RETAIN(group); /* bump reference count for remote reference */
 
     lam_mpi_comm_self.c_contextid = 1;
