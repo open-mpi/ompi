@@ -89,7 +89,7 @@ mca_mpool_sm_mmap_t* mca_mpool_sm_mmap_init(size_t size)
 
     /* map the file and initialize segment state */
     seg = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if(NULL == seg) {
+    if(seg == (void*)-1) {
         ompi_output(0, "mca_mpool_sm_mmap_init: mmap failed with errno=%d\n", errno);
         return NULL;
     }
