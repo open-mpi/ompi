@@ -56,12 +56,12 @@ extern bool ompi_mpi_param_check;
  */
 #if OMPI_ENABLE_MEM_DEBUG && defined(OMPI_BUILDING) && OMPI_BUILDING
 
-/* It is safe to include mem/malloc.h here because a) it will only
+/* It is safe to include util/malloc.h here because a) it will only
    happen when we are building OMPI and therefore have a full OMPI
    source tree [including headers] available, and b) we guaranteed to
    *not* to include anything else via mem/malloc.h, so we won't
    have Cascading Includes Of Death. */
-#include "mem/malloc.h"
+#include "util/malloc.h"
 #define malloc(size) ompi_malloc((size), __FILE__, __LINE__)
 #define realloc(ptr, size) ompi_realloc((ptr), (size), __FILE__, __LINE__)
 #define free(ptr) ompi_free((ptr), __FILE__, __LINE__)

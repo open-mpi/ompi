@@ -15,6 +15,7 @@ headers = \
     few.h \
     hibit.h \
     if.h \
+    malloc.h \
     output.h \
     path.h \
     sys_info.h \
@@ -28,6 +29,7 @@ libutil_la_SOURCES = \
     cmd_line.c \
     few.c \
     if.c \
+    malloc.c \
     output.c \
     path.c \
     sys_info.c \

@@ -165,11 +165,14 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
         if (NULL != ptl_peer->peer_send_frag) {
             ompi_list_append(&ptl_peer->peer_frags, (ompi_list_item_t*)frag);
         } else {
+#if 0
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd)) {
                 THREAD_UNLOCK(&ptl_peer->peer_send_lock);
                 mca_ptl_tcp_send_frag_progress(frag);
                 return rc;
-            } else {
+            } else 
+#endif
+{
                 ptl_peer->peer_send_frag = frag;
                 ompi_event_add(&ptl_peer->peer_send_event, 0);
             }

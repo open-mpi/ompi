@@ -11,7 +11,6 @@
 #include "util/output.h"
 #include "threads/mutex.h"
 #include "event/event.h"
-#include "mem/malloc.h"
 
 
 /**
