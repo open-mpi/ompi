@@ -18,6 +18,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_schema.h"
 #include "util/proc_info.h"
+#include "util/environ.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/ns/base/base.h"
@@ -62,7 +63,7 @@ int main(int argc, char **argv)
     orte_process_info.seed = true;
 
     /* ensure the replica is isolated */
-    setenv("OMPI_MCA_ns_replica_isolate", "1", 1);
+    ompi_setenv("OMPI_MCA_ns_replica_isolate", "1", true, &environ);
     
     /* init the proc info structure */
     orte_proc_info();

@@ -34,6 +34,7 @@
 #include "support.h"
 #include "runtime/runtime.h"
 #include "util/proc_info.h"
+#include "util/environ.h"
 #include "mca/base/base.h"
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"
@@ -66,7 +67,7 @@ int main (int argc, char* argv[])
     orte_process_info.seed = true;
 
     /* ensure the replica is isolated */
-    setenv("OMPI_MCA_ns_replica_isolate", "1", 1);
+    ompi_setenv("OMPI_MCA_ns_replica_isolate", "1", true, &environ);
     
     /* init the proc info structure */
     orte_proc_info();
@@ -173,12 +174,12 @@ static bool test2(void)
         return false;
     }
     
-    setenv("OMPI_MCA_ns_nds", "env", 1);
-    setenv("OMPI_MCA_ns_nds_cellid", "2", 1);
-    setenv("OMPI_MCA_ns_nds_jobid", "5", 1);
-    setenv("OMPI_MCA_ns_nds_vpid", "21456", 1);
-    setenv("OMPI_MCA_ns_nds_vpid_start", "0", 1);
-    setenv("OMPI_MCA_ns_nds_num_procs", "100000", 1);
+    ompi_setenv("OMPI_MCA_ns_nds", "env", true, &environ);
+    ompi_setenv("OMPI_MCA_ns_nds_cellid", "2", true, &environ);
+    ompi_setenv("OMPI_MCA_ns_nds_jobid", "5", true, &environ);
+    ompi_setenv("OMPI_MCA_ns_nds_vpid", "21456", true, &environ);
+    ompi_setenv("OMPI_MCA_ns_nds_vpid_start", "0", true, &environ);
+    ompi_setenv("OMPI_MCA_ns_nds_num_procs", "100000", true, &environ);
     
     if (ORTE_SUCCESS != (rc = orte_ns.set_my_name())) {
         test_comment("set_my_name failed for env case");
