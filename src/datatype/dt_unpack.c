@@ -274,7 +274,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
     last_count = 0;  /* complete the data */
  end_loop:
     if( last_count != 0 ) { /* save the internal state */
-        OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
+        OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_count,
                                     pConv->pBaseBuf, pData, pConv->count );
         MEMCPY( pConv->pBaseBuf + lastDisp, pSrcBuf, last_count );
         bConverted += last_count;
