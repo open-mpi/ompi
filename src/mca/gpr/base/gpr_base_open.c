@@ -132,7 +132,7 @@ static void mca_gpr_idtag_list_destructor(mca_gpr_idtag_list_t* req)
 
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
-		   mca_gpr_idtag_list_tracker_t,    /* type name */
+		   mca_gpr_idtag_list_t,    /* type name */
 		   ompi_list_item_t,                /* parent "class" name */
 		   mca_gpr_idtag_list_construct,    /* constructor */
 		   mca_gpr_idtag_list_destructor);  /* destructor */
