@@ -1,13 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2003 The Trustees of Indiana University.  
-#                    All rights reserved.
-# 
-# This file is part of the CMPI software package.  For license
-# information, see the LICENSE file in the top level directory of the
-# CMPI source distribution.
-#
-# $Id: Makefile.am,v 1.4 2004/01/07 07:51:23 jsquyres Exp $
+# $HEADER$
 #
 
 include $(top_srcdir)/config/Makefile.options
@@ -31,7 +24,7 @@ include_HEADERS	= \
 # Add a hook to run *after* the file lam_config.h has been installed
 # out to the target location.  It changes the pesky PACKAGE_* macros
 # that autoconf automatically generates (and there is no way of
-# turning off) into CMPI_PACKAGE_* in order to make <mpi.h> safe to
+# turning off) into LAM_MPI_PACKAGE_* in order to make <mpi.h> safe to
 # include with other files.
 
 install-data-hook:
