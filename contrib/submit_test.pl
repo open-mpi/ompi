@@ -122,24 +122,33 @@ sub do_menu {
     my $i;
     my $level = $options;
     my @config;
+
     for ($i = 0; $i <= $#$prompts; ++$i) {
         while (1) {
             my @keys = sort keys (%$level);
-            for (my $j = 0; $j <= $#keys; ++$j) {
-                printf("%d. %s\n", $j + 1, $keys[$j]);
-            }
-            print "\n$$prompts[$i] (1-" . ($#keys + 1) . "): ";
+
+            if ($#keys == 0) {
+                print "Assuming: $$prompts[$i] = $keys[0]\n\n";
+                push(@config, $keys[0]);
+                $level = $level->{$keys[0]};
+            } else {
+                for (my $j = 0; $j <= $#keys; ++$j) {
+                    printf("%d. %s\n", $j + 1, $keys[$j]);
+                }
+                print "\n$$prompts[$i] (1-" . ($#keys + 1) . "): ";
+                
+                my $input = <STDIN>;
+                print "\n";
+                chomp($input);
+                if ($input < 1 || $input > $#keys + 1) {
+                    print "Please enter a valid selection\n";
+                    next;
+                }
             
-            my $input = <STDIN>;
-            print "\n";
-            chomp($input);
-            if ($input < 1 || $input > $#keys + 1) {
-                print "Please enter a valid selection\n";
-                next;
+                push(@config, $keys[$input - 1]);
+                $level = $level->{$keys[$input - 1]};
             }
-            
-            push(@config, $keys[$input - 1]);
-            $level = $level->{$keys[$input - 1]};
+
             last;
         }
     }
@@ -315,7 +324,7 @@ my $url = "$base_url/$submit_uri?$result";
 my $req = HTTP::Request->new(POST => $url);
 my $res = $ua->request($req);
 if ($res->is_success()) {
-#    print "Response: " . $res->content . "\n";
+    print "Response: " . $res->content . "\n";
     print "Results submitted successfully.  Thanks!\n";
 } else {
     die $res->message;
