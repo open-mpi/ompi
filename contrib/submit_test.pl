@@ -324,12 +324,20 @@ for (my $i = 0; $i <= $#$platform_fields; ++$i) {
 
 my $url = "$base_url/$submit_uri?$result";
 my $req = HTTP::Request->new(POST => $url);
+$req->header(User_Agent => "OMPI test_submit");
+$req->header(Content_Type => "text/html");
 my $res = $ua->request($req);
 if ($res->is_success()) {
-    print "Response: " . $res->content . "\n";
-    print "Results submitted successfully.  Thanks!\n";
+    my $content = $res->content;
+    if ($content && $content =~ /SUCCESS/) {
+        print "Results submitted successfully.  Thanks!\n";
+    } else {
+        print "FAILED SUBMIT!\n\n";
+        print "Response: " . $res->content . "\n";
+    }
 } else {
-    die $res->message;
+    print "FAILED SUBMIT!\n\n";
+    print $res->message;
 }
 
 # All done
