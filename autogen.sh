@@ -1,22 +1,18 @@
 #! /bin/bash 
 #
-# @COPYRIGHT@
+# $HEADER$
 #
-# This file is part of the LAM/MPI software package.  For license
-# information, see the LICENSE file in the top level directory of the
-# LAM/MPI source distribution.
-#
-# $Id: autogen.sh,v 1.5 2004/01/04 00:14:51 brbarret Exp $
+# $Id: autogen.sh,v 1.6 2004/01/07 14:43:42 jsquyres Exp $
 #
 # This script is run on developer copies of LAM/MPI -- *not*
 # distribution tarballs.
 
 
-################################################################################
+##############################################################################
 #
 # User-definable parameters (search path and minimum supported versions)
 #
-################################################################################
+##############################################################################
 
 lam_aclocal_search="aclocal"
 lam_autoheader_search="autoheader"
@@ -29,11 +25,11 @@ lam_autoconf_version="2.57"
 lam_libtool_version="1.5"
 
 
-################################################################################
+##############################################################################
 #
 # Global variables - should not need to modify defaults
 #
-################################################################################
+##############################################################################
 
 lam_aclocal_version="$lam_automake_version"
 lam_autoheader_version="$lam_autoconf_version"
@@ -47,9 +43,10 @@ lam_libtoolize=""
 lam_automake=""
 
 
-################################################################################
+############################################################################
 #
-# Version check - does major,minor,release check (hopefully ignoring beta et al)
+# Version check - does major,minor,release check (hopefully ignoring
+# beta et al)
 #
 # INPUT:
 #    - minimum version allowable
@@ -62,7 +59,7 @@ lam_automake=""
 # SIDE EFFECTS:
 #    none
 #
-################################################################################
+##############################################################################
 check_version() {
     local min_version="$1"
     local version="$2"
@@ -101,9 +98,10 @@ check_version() {
 }
 
 
-################################################################################
+##############################################################################
 #
-# find app - find a version of the given application that is new enough for use
+# find app - find a version of the given application that is new
+# enough for use
 #
 # INPUT:
 #    - name of application (eg aclocal)
@@ -115,7 +113,7 @@ check_version() {
 #    - sets application_name variable to working executable name
 #    - aborts on error finding application
 #
-################################################################################
+##############################################################################
 find_app() {
     local app_name="$1"
 
@@ -159,7 +157,7 @@ EOF
 }
 
 
-################################################################################
+##############################################################################
 #
 # run_and_check - run the right GNU tool, printing warning on failure
 #
@@ -173,7 +171,7 @@ EOF
 # SIDE EFFECTS:
 #    - aborts on error running application
 #
-################################################################################
+##############################################################################
 run_and_check() {
     local rac_progs="$*"
     echo "$rac_progs"
@@ -197,9 +195,7 @@ EOF
     fi
 }
 
-
-
-################################################################################
+##############################################################################
 #
 # find_and_delete -  look for standard files in a number of common places
 #     (e.g., ./config.guess, config/config.guess, dist/config.guess), and
@@ -215,7 +211,7 @@ EOF
 # SIDE EFFECTS:
 #    - files may disappear
 #
-################################################################################
+##############################################################################
 find_and_delete() {
     local fad_file="$1"
 
@@ -252,11 +248,11 @@ find_and_delete() {
 }
 
 
-################################################################################
+##############################################################################
 #
 # main - do the real work...
 #
-################################################################################
+##############################################################################
 
 # sanity check to make sure user isn't being stupid
 if test ! -d CVS ; then
