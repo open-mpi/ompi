@@ -24,12 +24,13 @@ static void ompi_proc_construct(ompi_proc_t* proc);
 static void ompi_proc_destruct(ompi_proc_t* proc);
 
 
-ompi_class_t ompi_proc_t_class = {
-    "ompi_proc_t", 
-    OBJ_CLASS(ompi_list_item_t),
-    (ompi_construct_t)ompi_proc_construct, 
-    (ompi_destruct_t)ompi_proc_destruct
-};
+OBJ_CLASS_INSTANCE(
+    ompi_proc_t, 
+    ompi_list_item_t,
+    ompi_proc_construct, 
+    ompi_proc_destruct
+);
+
 
 void ompi_proc_construct(ompi_proc_t* proc)
 {
