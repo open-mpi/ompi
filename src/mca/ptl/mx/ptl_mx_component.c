@@ -79,8 +79,8 @@ static inline int mca_ptl_mx_param_register_int(
 int mca_ptl_mx_component_open(void)
 {
     /* initialize state */
-    mca_ptl_mx_component.mx_ptl_modules = NULL;
-    mca_ptl_mx_component.mx_num_ptl_modules = 0;
+    mca_ptl_mx_component.mx_ptls = NULL;
+    mca_ptl_mx_component.mx_num_ptls = 0;
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_lock, ompi_mutex_t);
@@ -88,6 +88,8 @@ int mca_ptl_mx_component_open(void)
     OBJ_CONSTRUCT(&mca_ptl_mx_component.mx_recv_frags, ompi_free_list_t);
 
     /* register MX module parameters */
+    mca_ptl_mx_module.mx_filter =
+        (uint32_t)mca_ptl_mx_param_register_int("filter", 0xdeadbeef);
     mca_ptl_mx_component.mx_free_list_num =
         mca_ptl_mx_param_register_int("free_list_num", 256);
     mca_ptl_mx_component.mx_free_list_max =
@@ -133,24 +135,15 @@ int mca_ptl_mx_component_close(void)
 
 
 /*
- * Open NIC and initialize resources.
- */
-
-static int ptl_mx_open_endpoints(void)
-{
-    return OMPI_SUCCESS;
-}
-
-
-/*
  *  MX module initialization.
  */
-mca_ptl_base_module_t** mca_ptl_mx_component_init(int *num_ptl_modules, 
-                                                bool *allow_multi_user_threads,
-                                                bool *have_hidden_threads)
+mca_ptl_base_module_t** mca_ptl_mx_component_init(
+    int *num_ptls, 
+    bool *allow_multi_user_threads,
+    bool *have_hidden_threads)
 {
     mca_ptl_base_module_t** ptls;
-    *num_ptl_modules = 0;
+    *num_ptls = 0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
 
@@ -170,18 +163,20 @@ mca_ptl_base_module_t** mca_ptl_mx_component_init(int *num_ptl_modules,
         mca_ptl_mx_component.mx_free_list_inc,
         NULL); /* use default allocator */
 
-    ptls = malloc(mca_ptl_mx_component.mx_num_ptl_modules * 
+    /* initialize mx ptls */
+    if(OMPI_SUCCESS != mca_ptl_mx_module_init())
+        return NULL;
+
+    /* allocate and return a copy of the ptl array */
+    ptls = malloc(mca_ptl_mx_component.mx_num_ptls * 
                   sizeof(mca_ptl_base_module_t*));
     if(NULL == ptls)
         return NULL;
 
-    if(OMPI_SUCCESS != ptl_mx_open_endpoints())
-        return NULL;
-
     memcpy(ptls, 
-        mca_ptl_mx_component.mx_ptl_modules, 
-        mca_ptl_mx_component.mx_num_ptl_modules*sizeof(mca_ptl_mx_module_t*));
-    *num_ptl_modules = mca_ptl_mx_component.mx_num_ptl_modules;
+        mca_ptl_mx_component.mx_ptls, 
+        mca_ptl_mx_component.mx_num_ptls*sizeof(mca_ptl_mx_module_t*));
+    *num_ptls = mca_ptl_mx_component.mx_num_ptls;
     return ptls;
 }
 

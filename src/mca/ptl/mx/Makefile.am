@@ -22,8 +22,11 @@ mx_SOURCES = \
     ptl_mx.c \
     ptl_mx.h \
     ptl_mx_component.c \
+    ptl_mx_module.c \
     ptl_mx_peer.c \
     ptl_mx_peer.h \
+    ptl_mx_proc.c \
+    ptl_mx_proc.h \
     ptl_mx_recvfrag.c \
     ptl_mx_recvfrag.h \
     ptl_mx_sendfrag.c \

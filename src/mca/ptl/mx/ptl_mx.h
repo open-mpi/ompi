@@ -8,9 +8,11 @@
 #define MCA_PTL_MX_H
 
 #include "ompi_config.h"
+#include <myriexpress.h>
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "class/ompi_free_list.h"
+#include "class/ompi_proc_table.h"
 
 #define MCA_PTL_MX_STATISTICS 0
 
@@ -19,13 +21,15 @@
  */
 struct mca_ptl_mx_component_t {
     mca_ptl_base_component_1_0_0_t super;         /**< base PTL component */
-    struct mca_ptl_mx_module_t** mx_ptl_modules;  /**< array of available PTL moduless */
-    size_t mx_num_ptl_modules;                    /**< number of ptls actually used */
     int    mx_free_list_num;                      /**< initial size of free lists */
     int    mx_free_list_max;                      /**< maximum size of free lists */
     int    mx_free_list_inc;                      /**< number of elements to growing free lists by */
+    uint32_t mx_filter;                           /**< filter assigned to application */
+    uint32_t mx_num_ptls;                         /**< number of MX NICs available to app */
+    struct mca_ptl_mx_module_t** mx_ptls;         /**< array of available PTL moduless */
     ompi_free_list_t mx_send_frags;               /**< free list of mx send fragments */
     ompi_free_list_t mx_recv_frags;               /**< free list of mx recv fragments */
+    ompi_hash_table_t mx_procs;                   /**< hash table of procs */
     ompi_mutex_t mx_lock;                         /**< lock for accessing module state */
 };
 
@@ -111,13 +115,25 @@ extern int mca_ptl_mx_component_progress(
  * Myricom MX PTL module.
  */
 struct mca_ptl_mx_module_t {
-    mca_ptl_base_module_t super;    /**< base PTL module interface */
-    ompi_list_item_t mx_peers;      /**< list of peers */
+    mca_ptl_base_module_t super;         /**< base PTL module interface */
+    ompi_list_t mx_peers;                /**< list of peers */
+    uint64_t mx_nic_addr;                /**< NIC MAC address */
+    uint32_t mx_filter;                  /**< endpoint filter */
+    uint32_t mx_endpoint_id;             /**< endpoint ID */
+    mx_endpoint_t mx_endpoint;           /**< endpoint */
+    mx_endpoint_addr_t mx_endpoint_addr; /**< endpoint address */
 };
 typedef struct mca_ptl_mx_module_t mca_ptl_mx_module_t;
 
 
 extern mca_ptl_mx_module_t mca_ptl_mx_module;
+
+/**
+ * Create/initialize the MX PTL modules.
+ * @return OMPI_SUCCESS or error status on failure.
+ */
+
+extern int mca_ptl_mx_module_init(void);
 
 
 /**
