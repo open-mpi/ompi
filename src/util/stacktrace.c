@@ -228,8 +228,13 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
     }
 #ifdef SIGPOLL
     case SIGPOLL: {
+#ifdef HAVE_SIGINFO_T_SI_FD
         ret = snprintf (tmp, size, "si_band:%ld si_fd:%d\n",
                         info->si_band, info->si_fd);
+#else
+        ret = snprintf (tmp, size, "si_band:%ld\n",
+                        info->si_band);
+#endif
         size -= ret;
         tmp += ret;
         break;

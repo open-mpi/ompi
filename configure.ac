@@ -974,6 +974,9 @@ AC_CHECK_MEMBERS([struct dirent.d_type], [], [], [
 #include <sys/types.h>
 #include <dirent.h>])
 
+AC_CHECK_MEMBERS([siginfo_t.si_fd],,,[#include <signal.h>])
+
+
 # Note that sometimes we have <stdbool.h>, but it doesn't work (e.g.,
 # have both Portland and GNU installed; using pgcc will find GNU's
 # <stdbool.h>, which all it does -- by standard -- is define "bool" to
