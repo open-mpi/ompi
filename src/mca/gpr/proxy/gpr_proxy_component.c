@@ -53,7 +53,8 @@ static mca_gpr_base_module_t mca_gpr_proxy = {
     gpr_proxy_subscribe,
     gpr_proxy_unsubscribe,
     gpr_proxy_delete,
-    gpr_proxy_index
+    gpr_proxy_index,
+    gpr_proxy_test_internals
 };
 
 /*
@@ -65,6 +66,31 @@ static bool initialized = false;
  * globals needed within proxy component
  */
 ompi_process_name_t *mca_gpr_my_replica;
+
+/* constructor - used to initialize state of test results instance */
+static void ompi_registry_internal_test_results_construct(ompi_registry_internal_test_results_t* results)
+{
+    results->test = NULL;
+    results->message = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void ompi_registry_internal_test_results_destructor(ompi_registry_internal_test_results_t* results)
+{
+    if (NULL != results->test) {
+	free(results->test);
+    }
+    if (NULL != results->message) {
+	free(results->message);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   ompi_registry_internal_test_results_t,            /* type name */
+		   ompi_list_item_t,                                 /* parent "class" name */
+		   ompi_registry_internal_test_results_construct,    /* constructor */
+		   ompi_registry_internal_test_results_destructor);  /* destructor */
 
 
 /*

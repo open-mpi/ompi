@@ -55,7 +55,8 @@ static mca_gpr_base_module_t mca_gpr_replica = {
     gpr_replica_subscribe,
     gpr_replica_unsubscribe,
     gpr_replica_delete_object,
-    gpr_replica_index
+    gpr_replica_index,
+    gpr_replica_test_internals
 };
 
 /*
@@ -91,6 +92,32 @@ OBJ_CLASS_INSTANCE(
 		   ompi_list_item_t,              /* parent "class" name */
 		   mca_gpr_keytable_construct,    /* constructor */
 		   mca_gpr_keytable_destructor);  /* destructor */
+
+
+/* constructor - used to initialize state of test results instance */
+static void ompi_registry_internal_test_results_construct(ompi_registry_internal_test_results_t* results)
+{
+    results->test = NULL;
+    results->message = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void ompi_registry_internal_test_results_destructor(ompi_registry_internal_test_results_t* results)
+{
+    if (NULL != results->test) {
+	free(results->test);
+    }
+    if (NULL != results->message) {
+	free(results->message);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   ompi_registry_internal_test_results_t,            /* type name */
+		   ompi_list_item_t,                                 /* parent "class" name */
+		   ompi_registry_internal_test_results_construct,    /* constructor */
+		   ompi_registry_internal_test_results_destructor);  /* destructor */
 
 
 /* constructor - used to initialize state of keylist instance */
