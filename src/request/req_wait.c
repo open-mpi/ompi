@@ -83,8 +83,9 @@ int ompi_request_wait_any(
     ompi_request_waiting--;
     OMPI_THREAD_UNLOCK(&ompi_request_lock);
 
+#if OMPI_HAVE_THREADS
 finished:
-
+#endif  /* OMPI_HAVE_THREADS */
     if(num_requests_null_inactive == count) {
         *index = MPI_UNDEFINED;
         if (MPI_STATUS_IGNORE != status) {
