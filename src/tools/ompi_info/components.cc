@@ -170,8 +170,12 @@ void ompi_info::close_components()
     mca_coll_base_close();
     mca_pml_base_close();
     mca_ptl_base_close();
-
+    mca_topo_base_close();
+    mca_mpool_base_close();
+    mca_llm_base_close();
+    mca_allocator_base_close();
     mca_base_close();
+
     component_map.clear();
   }
 
