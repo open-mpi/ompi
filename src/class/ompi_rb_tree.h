@@ -181,7 +181,7 @@ OMPI_DECLSPEC int ompi_rb_tree_destroy(ompi_rb_tree_t *tree);
   * @param action a pointer to the action function
   *
   * @retval OMPI_SUCCESS
-  * @retval OMPI_FAILURE if there is an error
+  * @retval OMPI_ERROR if there is an error
   */
 OMPI_DECLSPEC int ompi_rb_tree_traverse(ompi_rb_tree_t *tree,
                           ompi_rb_tree_condition_fn_t cond,
