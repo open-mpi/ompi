@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Op_create";
+
+
 int MPI_Op_create(MPI_User_function *function, int commute,
                   MPI_Op *op) 
 {
@@ -26,20 +29,22 @@ int MPI_Op_create(MPI_User_function *function, int commute,
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (NULL == function || 
         NULL == op) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_Comm_create_op");
+                                    FUNC_NAME);
     }
   }
 
   /* Create and cache the op.  Sets a refcount of 1. */
 
-  *op = ompi_op_create((bool) commute, (ompi_op_fortran_handler_fn_t*) function);
+  *op = ompi_op_create((bool) commute,
+                       (ompi_op_fortran_handler_fn_t*) function);
   if (NULL == *op) {
     err = MPI_ERR_INTERN;
   }
 
   OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN,
-                        "MPI_Comm_create_op");
+                         FUNC_NAME);
 }
