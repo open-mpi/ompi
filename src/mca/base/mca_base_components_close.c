@@ -42,9 +42,9 @@ int mca_base_components_close(int output_id,
 
       /* Unload */
 
-      mca_base_component_repository_release((mca_base_component_t *) component);
-      ompi_output_verbose(10, output_id, "close: component %s unloaded",
+      ompi_output_verbose(10, output_id, "close: unloading component %s",
                          component->mca_component_name);
+      mca_base_component_repository_release((mca_base_component_t *) component);
     }
     free(cli);
   }
