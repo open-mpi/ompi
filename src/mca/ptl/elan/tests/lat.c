@@ -1,13 +1,14 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <sys/time.h>
 #include "mpi.h"
 #include "test_util.h"
 
 #define MYBUFSIZE (4*1024*16)
 char        s_buf[MYBUFSIZE];
 char        r_buf[MYBUFSIZE];
-int         skip = 0;
+int         skip = 40;
 
 int
 main (int argc, char *argv[])
@@ -22,7 +23,7 @@ main (int argc, char *argv[])
     MPI_Status  stat;
     int         sleep = 1;
 
-    double      t_start, t_end;
+    struct timeval t_start, t_end;
 
     if (argc < 2) {
         fprintf (stderr, "Usage: %s msg_size\n", argv[0]);
@@ -43,34 +44,37 @@ main (int argc, char *argv[])
         s_buf[i] = 'a' + i;
     }
 
-    /*MPI_Barrier (MPI_COMM_WORLD);*/
-
-    loop = 1;
+    loop = 1000;
     gethostname(hostname, 32);
+
     fprintf(stdout, "[%s:%s:%d] done with init and barrier\n",
 	    hostname, __FUNCTION__, __LINE__);
     fflush(stdout);
 
+    MPI_Barrier (MPI_COMM_WORLD);
+
     for (i = 0; i < loop + skip; i++) {
 	if (i == skip)
-	    t_start = MPI_Wtime ();
+	    gettimeofday (&t_start, 0);
 	if (myid == 0) {
             MPI_Send (s_buf, size, MPI_CHAR, 1, i, MPI_COMM_WORLD);
+            MPI_Recv (r_buf, size, MPI_CHAR, 1, i, MPI_COMM_WORLD, &stat);
 	} else {
-            MPI_Recv (r_buf, size, MPI_CHAR, 0, i, MPI_COMM_WORLD,
-                      &stat);
+            MPI_Recv (r_buf, size, MPI_CHAR, 0, i, MPI_COMM_WORLD, &stat);
+            MPI_Send (s_buf, size, MPI_CHAR, 0, i, MPI_COMM_WORLD);
         }
     }
+    gettimeofday (&t_end, 0);
 
     fprintf(stdout, "[%s:%s:%d] done with pingpong\n",
 	    hostname, __FUNCTION__, __LINE__);
     fflush(stdout);
  
-    t_end = MPI_Wtime ();
 
     if (myid == 0) {
         double      latency;
-        latency = (t_end - t_start) * 1.0e6 / (2.0 * loop);
+        latency = ((1.0e6 * t_end.tv_sec + t_end.tv_usec) 
+		- (1.0e6 * t_start.tv_sec + t_start.tv_usec)) / (2.0 * loop);
 	fprintf(stdout, "length %d latency %8f\n", 
 		size, latency);
 	fflush(stdout);
