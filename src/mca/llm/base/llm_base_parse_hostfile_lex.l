@@ -24,7 +24,6 @@
 /*
  * local functions
  */
-static int mca_llm_base_yyerror(void);
 static int mca_llm_base_yywrap(void);
 
 /*
@@ -54,13 +53,6 @@ count              { mca_llm_base_string = yytext; return MCA_LLM_BASE_COUNT; }
 .	           { mca_llm_base_string = yytext; return MCA_LLM_BASE_ERROR; }
 
 %%
-
-
-static int mca_llm_base_yyerror(void)
-{
-    printf("%d: Invalid input (%s)\n", mca_llm_base_yynewlines, yytext);
-    return MCA_LLM_BASE_ERROR; 
-}
 
 
 static int mca_llm_base_yywrap(void)
