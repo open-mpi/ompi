@@ -23,6 +23,7 @@ EXTRA_DIST = VERSION
 # libompi_ssi_coll_ompi_basic.la
 
 AM_CPPFLAGS = \
+        -I$(top_ompi_builddir)/include \
         -I$(top_ompi_builddir)/src/include \
         -I$(top_ompi_builddir)/src/ompi/event \
         -I$(top_ompi_srcdir)/src \
