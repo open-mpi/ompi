@@ -317,6 +317,9 @@ enum {
 #define MPI_WIN_DUP_FN OMPI_C_MPI_WIN_DUP_FN
 #endif
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 int OMPI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype datatype, int type_keyval,
                                     void* attribute_val_out, void* flag );
 int OMPI_C_MPI_TYPE_NULL_COPY_FN( MPI_Datatype datatype, int type_keyval, 
@@ -350,6 +353,10 @@ int OMPI_C_MPI_WIN_NULL_COPY_FN( MPI_Win window, int win_keyval,
 int OMPI_C_MPI_WIN_DUP_FN( MPI_Win window, int win_keyval, void* extra_state,
                            void* attribute_val_in, void* attribute_val_out,
                            int* flag );
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 /*
  * External variables
