@@ -1,3 +1,7 @@
 Makefile.in
 Makefile
+.deps
+.libs
+*.lo
+*.la
 static-modules.h
