@@ -110,8 +110,6 @@ mca_gpr_base_component_t mca_gpr_base_selected_component;
  */
 int mca_gpr_base_open(void)
 {
-    int checksize;
-
   /* Open up all available components */
 
   if (OMPI_SUCCESS != 
@@ -126,8 +124,6 @@ int mca_gpr_base_open(void)
   }
 
   mca_gpr_base_output = ompi_output_open(NULL);
-  checksize = ompi_list_get_size(&mca_gpr_base_components_available);
-  ompi_output(mca_gpr_base_output, "number of components: %d", checksize);
 
   /* All done */
 
