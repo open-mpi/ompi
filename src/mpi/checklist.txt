@@ -33,11 +33,11 @@ MPI_Attr_get                    Vishal
 MPI_Attr_put                    Vishal
 MPI_Barrier                     DONE
 MPI_Bcast                       DONE
-MPI_Bsend
-MPI_Bsend_init 
-MPI_Buffer_attach
-MPI_Buffer_detach
-MPI_Cancel
+MPI_Bsend                       Ginger
+MPI_Bsend_init                  Ginger
+MPI_Buffer_attach               Ginger
+MPI_Buffer_detach               Ginger
+MPI_Cancel                      Ginger
 MPI_Cart_coords                 Anju
 MPI_Cart_create                 Anju
 MPI_Cart_get                    Anju
@@ -47,7 +47,7 @@ MPI_Cart_shift                  Anju
 MPI_Cart_sub                    Anju
 MPI_Cartdim_get                 Anju
 MPI_Close_port
-MPI_Comm_accept
+MPI_Comm_accept                 
 MPI_Comm_c2f
 MPI_Comm_call_errhandler        DONE
 MPI_Comm_compare                Edgar
@@ -178,7 +178,7 @@ MPI_Group_rank                  Rich
 MPI_Group_size                  Rich
 MPI_Group_translate_ranks       Rich
 MPI_Group_union                 Rich
-MPI_Ibsend
+MPI_Ibsend                      Ginger
 MPI_Info_c2f                    Anju
 MPI_Info_create                 Anju
 MPI_Info_delete                 Anju
@@ -195,12 +195,12 @@ MPI_Initialized
 MPI_Init_thread
 MPI_Intercomm_create            Edgar
 MPI_Intercomm_merge             Edgar
-MPI_Iprobe
-MPI_Irecv
-MPI_Irsend
-MPI_Isend
-MPI_Issend
-MPI_Is_thread_main
+MPI_Iprobe                      Ginger
+MPI_Irecv                       Ginger
+MPI_Irsend                      Ginger
+MPI_Isend                       Ginger
+MPI_Issend                      Ginger
+MPI_Is_thread_main              Ginger
 MPI_Keyval_create               Vishal
 MPI_Keyval_free                 Vishal
 MPI_Lookup_name
@@ -214,41 +214,41 @@ MPI_Pack_external_size          George
 MPI_Pack                        DONE
 MPI_Pack_size                   DONE
 MPI_Pcontrol
-MPI_Probe
+MPI_Probe                       Ginger
 MPI_Publish_name
 MPI_Put
-MPI_Query_thread
-MPI_Recv_init
-MPI_Recv
+MPI_Query_thread                Ginger
+MPI_Recv_init                   Ginger
+MPI_Recv                        Ginger
 MPI_Reduce                      Jeff
 MPI_Reduce_scatter              Jeff
 MPI_Register_datarep
-MPI_Request_c2f
-MPI_Request_f2c
-MPI_Request_free
-MPI_Request_get_status
-MPI_Rsend
-MPI_Rsend_init
+MPI_Request_c2f                 Ginger
+MPI_Request_f2c                 Ginger
+MPI_Request_free                Ginger
+MPI_Request_get_status          Ginger
+MPI_Rsend                       Ginger
+MPI_Rsend_init                  Ginger
 MPI_Scan                        Jeff
 MPI_Scatter                     Jeff
 MPI_Scatterv                    Jeff
-MPI_Send_init
-MPI_Send
-MPI_Sendrecv
-MPI_Sendrecv_replace
-MPI_Ssend_init
-MPI_Ssend
-MPI_Start
-MPI_Startall
-MPI_Status_c2f
-MPI_Status_f2c
-MPI_Status_set_cancelled
-MPI_Status_set_elements
-MPI_Testall
-MPI_Testany
-MPI_Test
-MPI_Test_cancelled
-MPI_Testsome
+MPI_Send_init                   Ginger
+MPI_Send                        Ginger
+MPI_Sendrecv                    Ginger
+MPI_Sendrecv_replace            Ginger
+MPI_Ssend_init                  Ginger
+MPI_Ssend                       Ginger
+MPI_Start                       Ginger
+MPI_Startall                    Ginger
+MPI_Status_c2f                  Ginger
+MPI_Status_f2c                  Ginger
+MPI_Status_set_cancelled        Ginger
+MPI_Status_set_elements         Ginger
+MPI_Testall                     Ginger
+MPI_Testany                     Ginger
+MPI_Test                        Ginger
+MPI_Test_cancelled              Ginger
+MPI_Testsome                    Ginger
 MPI_Topo_test                   Anju
 MPI_Type_c2f                    George
 MPI_Type_commit			George
@@ -290,10 +290,10 @@ MPI_Type_vector			George
 MPI_Unpack			DONE
 MPI_Unpublish_name
 MPI_Unpack_external 		George
-MPI_Waitall
-MPI_Waitany
-MPI_Wait
-MPI_Waitsome
+MPI_Waitall                     Ginger
+MPI_Waitany                     Ginger
+MPI_Wait                        Ginger
+MPI_Waitsome                    Ginger
 MPI_Win_c2f
 MPI_Win_call_errhandler         Jeff
 MPI_Win_complete
