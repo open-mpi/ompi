@@ -113,6 +113,19 @@ int mca_oob_send(
     int tag,
     int flags);
 
+/*
+*  Similiar to unix send(2) and mca_oob_send.
+*
+* @param peer (IN)   Opaque name of peer process.
+* @param buffer (IN) Prepacked OMPI_BUFFER containing data to send
+* @param flags (IN)  Currently unused.
+* @return            OMPI error code (<0) on error or number of bytes actually sent.
+*/
+
+
+int mca_oob_send_packed (const ompi_process_name_t* peer, const ompi_buffer_t buffer, int tag, int flags);
+
+
 /**
 * Convert data (if required) to network byte order prior to sending to peer.
 *
