@@ -262,6 +262,7 @@ enum {
 #define MPI_ERRHANDLER_NULL ((MPI_Errhandler) &(lam_mpi_errhandler_null))
 #define MPI_INFO_NULL ((MPI_Info) 0)
 #define MPI_WIN_NULL ((MPI_Win) 0)
+#define MPI_FILE_NULL ((MPI_File) 0)
 
 #define MPI_STATUS_IGNORE ((MPI_Status *) 0)
 #define MPI_STATUSES_IGNORE ((MPI_Status *) 0)
