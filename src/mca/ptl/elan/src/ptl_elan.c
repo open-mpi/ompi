@@ -442,8 +442,11 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
     }
 
     /* Process the fragment */
+#if 0
     set = fetchNset (&((mca_ptl_elan_recv_frag_t *)frag)->frag_progressed, 1);
-
+#else
+    set = ompi_atomic_fetch_and_set_int (&((mca_ptl_elan_recv_frag_t *)frag)->frag_progressed, 1);
+#endif
     if (!set) {
 	/* IN TCP case, IO_VEC is first allocated.
 	 * then recv the data, and copy if needed,
