@@ -2,7 +2,13 @@
  * $HEADER$
  */
 
-#include "mpi/p2p/base/cdi.h"
+/** @file */
+
+#ifdef DATATYPES_ARE_READY
+
+#include "lam_config.h"
+#include "datatype.h"
+
 
 lam_class_info_t lam_datatype_cls = {
     "lam_datatype_t",
@@ -10,6 +16,7 @@ lam_class_info_t lam_datatype_cls = {
     (class_init_t) lam_p2p_cdi_init,
     (class_destroy_t) lam_p2p_cdi_destroy
 };
+
 
 static int lam_datatype_init = 0;
 lam_dbl_list_t lam_p2p_cdis;
@@ -42,12 +49,11 @@ void lam_p2p_cdi_destroy(lam_p2p_cdi_t* cdi)
 }
 
 
-
 /*
  * This random stuff checked in while I think about things ...
  */
 
-/*!
+/**
  * type_pack -- Incrementally copy data type arrays to/from a packed buffer
  *
  * @param pack          direction of copy: PACK or UNPACK
@@ -102,7 +108,7 @@ struct lam_packer_state_t {
     lam_crc_t crc;
 };
 
-/*!
+/**
  * lam_datatype_copy - Copy (the contents of) an array of data types
  *
  * @param dest          output data type array
@@ -125,7 +131,7 @@ lam_packer_status_t lam_packer(lam_packer_direction_t direction,
 
 
 
-/*!
+/**
  * lam_datatype_copy - Copy (the contents of) an array of data types
  *
  * @param dest          output data type array
@@ -159,3 +165,5 @@ void lam_datatype_copy(void *dest,
         }
     }
 }
+
+#endif
