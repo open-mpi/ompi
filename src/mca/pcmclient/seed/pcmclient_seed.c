@@ -15,7 +15,7 @@
 
 
 static ompi_process_name_t peers[] = {
-    {0, 1, 0}
+    {0, 0, 0}
 };
 
 
