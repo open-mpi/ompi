@@ -42,6 +42,10 @@ static void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t* frag)
 {
 }
 
+void* ptl_tcp_memalloc( unsigned int* length )
+{
+  return malloc( *length );
+}
 
 /*
  *  Initialize the fragment based on the current offset into the users
@@ -59,6 +63,8 @@ int mca_ptl_tcp_send_frag_init(
     /* message header */
     size_t size_in = *size;
     size_t size_out;
+    unsigned int iov_count, max_data;
+    int freeAfter = 0;
 
     mca_ptl_base_header_t* hdr = &sendfrag->frag_header;
     if(offset == 0) {
@@ -92,25 +98,16 @@ int mca_ptl_tcp_send_frag_init(
        ompi_convertor_t *convertor;
        int rc;
 
-        /* first fragment (eager send) and first fragment of long
-         * protocol can use the convertor initialized on the request,
-         * remaining fragments must copy/reinit the convertor as the
-         * transfer could be in parallel.
-         */
-        if( offset <= mca_ptl_tcp_module.super.ptl_first_frag_size ) {
-            convertor = &sendreq->req_convertor;
-        } else {
-
-            convertor = &sendfrag->frag_convertor;
-            ompi_convertor_copy(&sendreq->req_convertor, convertor);
-            ompi_convertor_init_for_send( 
-                convertor,
-                0, 
-                sendreq->req_base.req_datatype,
-                sendreq->req_base.req_count,
-                sendreq->req_base.req_addr,
-                offset);
-        }
+       convertor = &sendfrag->frag_convertor;
+       ompi_convertor_copy(&sendreq->req_convertor, convertor);
+       ompi_convertor_init_for_send( 
+				    convertor,
+				    0, 
+				    sendreq->req_base.req_datatype,
+				    sendreq->req_base.req_count,
+				    sendreq->req_base.req_addr,
+				    offset,
+				    ptl_tcp_memalloc );
 
         /* if data is contigous convertor will return an offset
          * into users buffer - otherwise will return an allocated buffer 
@@ -118,7 +115,10 @@ int mca_ptl_tcp_send_frag_init(
          */
         sendfrag->frag_vec[1].iov_base = NULL;
         sendfrag->frag_vec[1].iov_len = size_in;
-        if((rc = ompi_convertor_pack(convertor, &sendfrag->frag_vec[1], 1)) < 0)
+        iov_count = 1;
+        max_data = size_in;
+        if((rc = ompi_convertor_pack(convertor, &sendfrag->frag_vec[1], 
+				     &iov_count, &max_data, &freeAfter)) < 0)
             return OMPI_ERROR;
 
         /* adjust size and request offset to reflect actual number of bytes packed by convertor */

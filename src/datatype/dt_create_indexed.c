@@ -4,7 +4,7 @@
 
 /* We try to merge together data that are contiguous */
 int ompi_ddt_create_indexed( int count, int* pBlockLength, int* pDisp,
-                            dt_desc_t* oldType, dt_desc_t** newType )
+			     dt_desc_t* oldType, dt_desc_t** newType )
 {
     dt_desc_t* pdt;
     int i, dLength, endat, disp;
@@ -15,16 +15,17 @@ int ompi_ddt_create_indexed( int count, int* pBlockLength, int* pDisp,
     dLength = pBlockLength[0];
     endat = disp + dLength;
     for( i = 1; i < count; i++ ) {
-        if( endat == pDisp[i] ) {
-            /* contiguous with the previsious */
-            dLength += pBlockLength[i];
-            endat += pBlockLength[i];
-        } else {
-            ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
-            disp = pDisp[i];
-            dLength = pBlockLength[i];
-            endat = disp + pBlockLength[i];
-        }
+	if( pBlockLength[i] == 0 ) continue;
+	if( endat == pDisp[i] ) {
+	    /* contiguous with the previsious */
+	    dLength += pBlockLength[i];
+	    endat += pBlockLength[i];
+	} else {
+	    ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
+	    disp = pDisp[i];
+	    dLength = pBlockLength[i];
+	    endat = disp + pBlockLength[i];
+	}
     }
     ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
 
@@ -45,6 +46,7 @@ int ompi_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
    dLength = pBlockLength[0];
    endat = disp + dLength * extent;
    for( i = 1; i < count; i++ ) {
+      if( pBlockLength[i] == 0 ) continue;
       if( endat == pDisp[i] ) {
          /* contiguous with the previsious */
          dLength += pBlockLength[i];
@@ -69,6 +71,10 @@ int ompi_ddt_create_indexed_block( int count, int bLength, int* pDisp,
    int i, dLength, endat, disp;
    long extent = oldType->ub - oldType->lb;
 
+   if( (count == 0) || (bLength == 0) ) {
+      *newType = ompi_ddt_create(0);
+      return OMPI_SUCCESS;
+   }
    pdt = ompi_ddt_create( count * (2 + oldType->desc.used) );
    disp = pDisp[0];
    dLength = bLength;

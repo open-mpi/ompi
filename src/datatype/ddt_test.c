@@ -345,7 +345,8 @@ int test_upper( unsigned int length )
    dt_desc_t *pdt, *pdt1;
    ompi_convertor_t * pConv;
    char *ptr;
-   int i, j, split_chunk, total_length, rc;
+   int i, j, split_chunk, total_length, rc, iov_count;
+   unsigned int max_data, freeAfter;
    struct iovec a;
    TIMER_DATA_TYPE start, end;
    long total_time;
@@ -370,7 +371,7 @@ int test_upper( unsigned int length )
       }
    inbuf = (double*)ptr;
    pConv = ompi_convertor_create( 0, 0 );
-   ompi_convertor_init_for_recv( pConv, 0, pdt, 1, mat2, 0 );
+   ompi_convertor_init_for_recv( pConv, 0, pdt, 1, mat2, 0, NULL );
 
 /* test the automatic destruction pf the data */
    ompi_ddt_destroy( &pdt ); assert( pdt == NULL );
@@ -383,7 +384,9 @@ int test_upper( unsigned int length )
       if( i < split_chunk ) split_chunk = i;
       a.iov_base = ptr;
       a.iov_len = split_chunk;
-      ompi_convertor_unpack( pConv, &a, 1 );
+      iov_count = 1;
+      max_data = split_chunk;
+      ompi_convertor_unpack( pConv, &a, &iov_count, &max_data, &freeAfter );
       ptr += split_chunk;
       i -= split_chunk;
       if( mat2[0] != inbuf[0] ) assert(0);
@@ -435,7 +438,6 @@ dt_desc_t* test_contiguous( void )
    ompi_ddt_create_contiguous( 2, pdt2, &pdt );
    OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
    ompi_ddt_dump( pdt );
-   ompi_ddt_dump_complete( pdt );
    return pdt;
 }
 
@@ -452,13 +454,13 @@ dt_desc_t* test_struct( void )
    pdt1 = ompi_ddt_create( -1 );
    ompi_ddt_add( pdt1, &(basicDatatypes[DT_DOUBLE]), 1, 0, -1 );
    ompi_ddt_add( pdt1, &(basicDatatypes[DT_CHAR]), 1, 8, -1 );
-   ompi_ddt_dump_complete( pdt1 );
+   ompi_ddt_dump( pdt1 );
 
    types[1] = pdt1;
 
    ompi_ddt_create_struct( 3, lengths, disp, types, &pdt );
    OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
-   ompi_ddt_dump_complete( pdt );
+   ompi_ddt_dump( pdt );
    return pdt;
 }
 
@@ -519,11 +521,7 @@ dt_desc_t* create_strange_dt( void )
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
     ompi_ddt_dump( pdt );
-    {
-        dt_type_desc_t pElemDesc = { 0, 0, NULL };
-        ompi_ddt_optimize_short( pdt, 1, &pElemDesc );
-        if( pElemDesc.desc != NULL ) free( pElemDesc.desc );
-    }
+    ompi_ddt_commit( &pdt );
     return pdt;
 }
 

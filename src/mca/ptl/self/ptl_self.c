@@ -158,7 +158,8 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
     } else {
         ompi_convertor_t *pSendConvertor, *pRecvConvertor;
         struct iovec iov[1];
-        int completed, iov_count, length;
+        int completed, freeAfter, length;
+	unsigned int max_data, iov_count;
         char* buf;
         
         /* We use a temporary buffer as it look to be faster on much architectures */
@@ -170,25 +171,29 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
             0, 
             recvreq->req_base.req_datatype, 
             recvreq->req_base.req_count, 
-            recvreq->req_base.req_addr, 0 );
+            recvreq->req_base.req_addr, 0, NULL );
         pSendConvertor = &(sendreq->req_send.req_convertor);
         pRecvConvertor = &(frag->frag_base.frag_convertor);
         completed = 0;
+	freeAfter = 0;
         while( !completed ) {
             iov[0].iov_base = buf;
             iov[0].iov_len = length;
             iov_count = 1;
-            completed |= ompi_convertor_pack( pSendConvertor, iov, iov_count );
-            /*assert( freeAfter == 0 );*/
-            completed |= ompi_convertor_unpack( pRecvConvertor, iov, iov_count );
-            /*assert( freeAfter == 0 );*/
+	    max_data = length;
+            completed |= ompi_convertor_pack( pSendConvertor, iov, &iov_count,
+					      &max_data, &freeAfter );
+            assert( freeAfter == 0 );
+            completed |= ompi_convertor_unpack( pRecvConvertor, iov, &iov_count,
+						&max_data, &freeAfter );
+            assert( freeAfter == 0 );
         }
 	free( buf );
     }
     ptl->ptl_send_progress( ptl, &sendreq->req_send, sendreq->req_send.req_bytes_packed );
     ptl->ptl_recv_progress( ptl, 
-        recvreq, 
-        frag->frag_base.frag_header.hdr_frag.hdr_frag_length,
-        frag->frag_base.frag_size );
+			    recvreq, 
+			    frag->frag_base.frag_header.hdr_frag.hdr_frag_length,
+			    frag->frag_base.frag_size );
 }
 

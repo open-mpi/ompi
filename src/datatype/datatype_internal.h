@@ -65,12 +65,11 @@
 #define DT_2REAL                   0x22
 #define DT_2DBLPREC                0x23
 #define DT_2INTEGER                0x24
-#define DT_LONGDBL_INT             0x25
-#define DT_WCHAR                   0x26
-#define DT_2COMPLEX                0x27
-#define DT_2DOUBLE_COMPLEX         0x28
-#define DT_CXX_BOOL                0x29
-#define DT_UNAVAILABLE             0x2A
+#define DT_WCHAR                   0x25
+#define DT_2COMPLEX                0x26
+#define DT_2DOUBLE_COMPLEX         0x27
+#define DT_CXX_BOOL                0x28
+#define DT_UNAVAILABLE             0x29
 /* If the number of basic datatype should change update
  * DT_MAX_PREDEFINED in datatype.h
  */
@@ -131,9 +130,9 @@ typedef struct {
     long double i;
 } ompi_complex_long_double_t;
 
-extern dt_desc_t basicDatatypes[DT_MAX_PREDEFINED];
+extern ompi_datatype_t* basicDatatypes[DT_MAX_PREDEFINED];
 
-/* mcaros to play with the flags */
+/* macros to play with the flags */
 #define REMOVE_FLAG( INT_VALUE, FLAG )  (INT_VALUE) = (INT_VALUE) ^ (FLAG)
 #define SET_FLAG( INT_VALUE, FLAG )     (INT_VALUE) = (INT_VALUE) | (FLAG)
 #define UNSET_FLAG( INT_VALUE, FLAG)    (INT_VALUE) = (INT_VALUE) & (~(FLAG))
@@ -207,5 +206,39 @@ do { \
       memcpy( (DST), (SRC), (BLENGTH) ); \
 } while(0)
 #endif  /* USELESS */
+
+static inline
+int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, int* sizes )
+{
+    ompi_datatype_t* pData = pConvertor->pDesc;
+    dt_elem_desc_t* pElems;
+
+    pConvertor->stack_pos = 2;
+    pConvertor->pStack[0].index = -1;
+    pConvertor->pStack[0].count = pConvertor->count;
+    pConvertor->pStack[0].disp  = 0;
+    /* first here we should select which data representation will be used for
+     * this operation: normal one or the optimized version ? */
+    if( pData->opt_desc.used > 0 ) {
+	pElems = pData->opt_desc.desc;
+	pConvertor->pStack[0].end_loop = pData->opt_desc.used;
+    } else {
+	pElems = pData->desc.desc;
+	pConvertor->pStack[0].end_loop = pData->desc.used;
+    }
+    pConvertor->pStack[1].index    = 0;
+    pConvertor->pStack[1].count    = pElems->count;
+    pConvertor->pStack[1].disp     = pElems->disp;
+    pConvertor->pStack[1].end_loop = pConvertor->pStack[0].end_loop;
+    /* always fill with ZEROS on the begining */
+    pConvertor->pStack[2].index    = 0;
+    pConvertor->pStack[2].count    = 0;
+    pConvertor->pStack[2].disp     = 0;
+    pConvertor->pStack[2].end_loop = 0;
+    /* And set the correct status */
+    pConvertor->converted          = 0;
+    pConvertor->bConverted         = 0;
+    return OMPI_SUCCESS;
+}
 
 #endif  /* DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED */

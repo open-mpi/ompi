@@ -400,30 +400,30 @@ extern struct ompi_op_t ompi_mpi_op_lxor, ompi_mpi_op_bxor;
 extern struct ompi_op_t ompi_mpi_op_maxloc, ompi_mpi_op_minloc;
 extern struct ompi_op_t ompi_mpi_op_replace;
 
-extern struct ompi_datatype_t *ompi_mpi_char, *ompi_mpi_byte;
-extern struct ompi_datatype_t *ompi_mpi_int, *ompi_mpi_logic;
-extern struct ompi_datatype_t *ompi_mpi_short, *ompi_mpi_long;
-extern struct ompi_datatype_t *ompi_mpi_float, *ompi_mpi_double;
-extern struct ompi_datatype_t *ompi_mpi_long_double;
-extern struct ompi_datatype_t *ompi_mpi_cplex, *ompi_mpi_packed;
-extern struct ompi_datatype_t *ompi_mpi_unsigned_char;
-extern struct ompi_datatype_t *ompi_mpi_unsigned_short;
-extern struct ompi_datatype_t *ompi_mpi_unsigned, *ompi_mpi_datatype_null;
-extern struct ompi_datatype_t *ompi_mpi_unsigned_long;
-extern struct ompi_datatype_t *ompi_mpi_ub, *ompi_mpi_lb;
-extern struct ompi_datatype_t *ompi_mpi_float_int, *ompi_mpi_double_int;
-extern struct ompi_datatype_t *ompi_mpi_long_int, *ompi_mpi_2int;
-extern struct ompi_datatype_t *ompi_mpi_short_int, *ompi_mpi_dblcplex;
-extern struct ompi_datatype_t *ompi_mpi_integer, *ompi_mpi_real;
-extern struct ompi_datatype_t *ompi_mpi_dblprec, *ompi_mpi_character;
-extern struct ompi_datatype_t *ompi_mpi_2real, *ompi_mpi_2dblprec;
-extern struct ompi_datatype_t *ompi_mpi_2integer, *ompi_mpi_longdbl_int;
-extern struct ompi_datatype_t *ompi_mpi_wchar, *ompi_mpi_long_long_int;
-extern struct ompi_datatype_t *ompi_mpi_long_long, *ompi_mpi_unsigned_long_long;
-extern struct ompi_datatype_t *ompi_mpi_cxx_cplex, *ompi_mpi_cxx_dblcplex;
-extern struct ompi_datatype_t *ompi_mpi_cxx_ldblcplex;
-extern struct ompi_datatype_t *ompi_mpi_cxx_bool;
-extern struct ompi_datatype_t *ompi_mpi_2cplex, *ompi_mpi_2dblcplex;
+extern struct ompi_datatype_t ompi_mpi_char, ompi_mpi_byte;
+extern struct ompi_datatype_t ompi_mpi_int, ompi_mpi_logic;
+extern struct ompi_datatype_t ompi_mpi_short, ompi_mpi_long;
+extern struct ompi_datatype_t ompi_mpi_float, ompi_mpi_double;
+extern struct ompi_datatype_t ompi_mpi_long_double;
+extern struct ompi_datatype_t ompi_mpi_cplex, ompi_mpi_packed;
+extern struct ompi_datatype_t ompi_mpi_unsigned_char;
+extern struct ompi_datatype_t ompi_mpi_unsigned_short;
+extern struct ompi_datatype_t ompi_mpi_unsigned, ompi_mpi_datatype_null;
+extern struct ompi_datatype_t ompi_mpi_unsigned_long;
+extern struct ompi_datatype_t ompi_mpi_ub, ompi_mpi_lb;
+extern struct ompi_datatype_t ompi_mpi_float_int, ompi_mpi_double_int;
+extern struct ompi_datatype_t ompi_mpi_long_int, ompi_mpi_2int;
+extern struct ompi_datatype_t ompi_mpi_short_int, ompi_mpi_dblcplex;
+extern struct ompi_datatype_t ompi_mpi_integer, ompi_mpi_real;
+extern struct ompi_datatype_t ompi_mpi_dblprec, ompi_mpi_character;
+extern struct ompi_datatype_t ompi_mpi_2real, ompi_mpi_2dblprec;
+extern struct ompi_datatype_t ompi_mpi_2integer, ompi_mpi_longdbl_int;
+extern struct ompi_datatype_t ompi_mpi_wchar, ompi_mpi_long_long_int;
+extern struct ompi_datatype_t ompi_mpi_long_long, ompi_mpi_unsigned_long_long;
+extern struct ompi_datatype_t ompi_mpi_cxx_cplex, ompi_mpi_cxx_dblcplex;
+extern struct ompi_datatype_t ompi_mpi_cxx_ldblcplex;
+extern struct ompi_datatype_t ompi_mpi_cxx_bool;
+extern struct ompi_datatype_t ompi_mpi_2cplex, ompi_mpi_2dblcplex;
 
 extern struct ompi_errhandler_t ompi_mpi_errhandler_null;
 extern struct ompi_errhandler_t ompi_mpi_errors_are_fatal;
@@ -458,33 +458,33 @@ extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_MINLOC (&ompi_mpi_op_minloc)
 #define MPI_REPLACE (&ompi_mpi_op_replace)
 
-#define MPI_DATATYPE_NULL (ompi_mpi_datatype_null)
-#define MPI_BYTE (ompi_mpi_byte)
-#define MPI_PACKED (ompi_mpi_packed)
-#define MPI_CHAR (ompi_mpi_char)
-#define MPI_SHORT (ompi_mpi_short)
-#define MPI_INT (ompi_mpi_int)
-#define MPI_LONG (ompi_mpi_long)
-#define MPI_FLOAT (ompi_mpi_float)
-#define MPI_DOUBLE (ompi_mpi_double)
-#define MPI_LONG_DOUBLE (ompi_mpi_long_double)
-#define MPI_UNSIGNED_CHAR (ompi_mpi_unsigned_char)
-#define MPI_UNSIGNED_SHORT (ompi_mpi_unsigned_short)
-#define MPI_UNSIGNED_LONG (ompi_mpi_unsigned_long)
-#define MPI_UNSIGNED (ompi_mpi_unsigned)
-#define MPI_FLOAT_INT (ompi_mpi_float_int)
-#define MPI_DOUBLE_INT (ompi_mpi_double_int)
-#define MPI_LONG_DOUBLE_INT (ompi_mpi_longdbl_int)
-#define MPI_LONG_INT (ompi_mpi_long_int)
-#define MPI_SHORT_INT (ompi_mpi_short_int)
-#define MPI_2INT (ompi_mpi_2int)
-#define MPI_UB (ompi_mpi_ub)
-#define MPI_LB (ompi_mpi_lb)
-#define MPI_WCHAR (ompi_mpi_wchar)
+#define MPI_DATATYPE_NULL (&ompi_mpi_datatype_null)
+#define MPI_BYTE (&ompi_mpi_byte)
+#define MPI_PACKED (&ompi_mpi_packed)
+#define MPI_CHAR (&ompi_mpi_char)
+#define MPI_SHORT (&ompi_mpi_short)
+#define MPI_INT (&ompi_mpi_int)
+#define MPI_LONG (&ompi_mpi_long)
+#define MPI_FLOAT (&ompi_mpi_float)
+#define MPI_DOUBLE (&ompi_mpi_double)
+#define MPI_LONG_DOUBLE (&ompi_mpi_long_double)
+#define MPI_UNSIGNED_CHAR (&ompi_mpi_unsigned_char)
+#define MPI_UNSIGNED_SHORT (&ompi_mpi_unsigned_short)
+#define MPI_UNSIGNED_LONG (&ompi_mpi_unsigned_long)
+#define MPI_UNSIGNED (&ompi_mpi_unsigned)
+#define MPI_FLOAT_INT (&ompi_mpi_float_int)
+#define MPI_DOUBLE_INT (&ompi_mpi_double_int)
+#define MPI_LONG_DOUBLE_INT (&ompi_mpi_longdbl_int)
+#define MPI_LONG_INT (&ompi_mpi_long_int)
+#define MPI_SHORT_INT (&ompi_mpi_short_int)
+#define MPI_2INT (&ompi_mpi_2int)
+#define MPI_UB (&ompi_mpi_ub)
+#define MPI_LB (&ompi_mpi_lb)
+#define MPI_WCHAR (&ompi_mpi_wchar)
 #if HAVE_LONG_LONG
-#define MPI_LONG_LONG_INT (ompi_mpi_long_long_int)
-#define MPI_LONG_LONG (ompi_mpi_long_long)
-#define MPI_UNSIGNED_LONG_LONG (ompi_mpi_unsigned_long_long)
+#define MPI_LONG_LONG_INT (&ompi_mpi_long_long_int)
+#define MPI_LONG_LONG (&ompi_mpi_long_long)
+#define MPI_UNSIGNED_LONG_LONG (&ompi_mpi_unsigned_long_long)
 #endif  /* HAVE_LONG_LONG */
 
 #define MPI_ERRORS_ARE_FATAL (&ompi_mpi_errors_are_fatal)
