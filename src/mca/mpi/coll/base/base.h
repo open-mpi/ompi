@@ -20,7 +20,9 @@
 extern "C" {
 #endif
   int mca_coll_base_open(void);
-  int mca_coll_base_select(lam_list_t *available);
+  int mca_coll_base_select(lam_list_t *selected, 
+                           bool *allow_multi_user_threads, 
+                           bool *have_hidden_threads);
   const mca_coll_1_0_0_t *
     mca_coll_basic_query(MPI_Comm comm, int *priority);
   int mca_coll_base_close(void);

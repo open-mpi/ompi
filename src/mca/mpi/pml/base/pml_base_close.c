@@ -19,8 +19,8 @@ int mca_pml_base_close(void)
      anyway?  This module is going away, so errors don't matter
      anymore) */
 
-  if (NULL != mca_pml.pml_finalize) {
-    mca_pml.pml_finalize();
+  if (NULL != mca_pml_base_selected_module.pmlm_finalize) {
+    mca_pml_base_selected_module.pmlm_finalize();
   }
 
   /* Close all remaining available modules (may be one if this is a

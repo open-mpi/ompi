@@ -26,9 +26,12 @@
  *
  * The contents of this function will likely be replaced 
  */
-int mca_mpi_init_select_modules(int requested, int *provided)
+int mca_mpi_init_select_modules(int requested, 
+                                bool allow_multi_user_threads,
+                                bool have_hidden_threads, int *provided)
 {
   lam_list_t colls;
+  bool user_threads, hidden_threads;
 
   /* Make final lists of available modules (i.e., call the query/init
      functions and see if they return happiness).  For pml, there will
@@ -37,18 +40,26 @@ int mca_mpi_init_select_modules(int requested, int *provided)
   /* JMS: At some point, we'll need to feed it the thread level to
      ensure to pick one high enough (e.g., if we need CR) */
 
-  if (LAM_SUCCESS != mca_pml_base_select(&mca_pml)) {
+  if (LAM_SUCCESS != mca_pml_base_select(&mca_pml, 
+                                         &user_threads, &hidden_threads)) {
     return LAM_ERROR;
   }
+  allow_multi_user_threads |= user_threads;
+  have_hidden_threads |= hidden_threads;
 
-  if (LAM_SUCCESS != mca_ptl_base_select()) {
+  if (LAM_SUCCESS != mca_ptl_base_select(&user_threads, &hidden_threads)) {
     return LAM_ERROR;
   }
+  allow_multi_user_threads |= user_threads;
+  have_hidden_threads |= hidden_threads;
 
   lam_list_init(&colls);
-  if (LAM_SUCCESS != mca_coll_base_select(&colls)) {
+  if (LAM_SUCCESS != mca_coll_base_select(&colls, &user_threads, 
+                                          &hidden_threads)) {
     return LAM_ERROR;
   }
+  allow_multi_user_threads |= user_threads;
+  have_hidden_threads |= hidden_threads;
 
   /* Now that we have a final list of all available modules, do the
      selection.  pml is already selected. */

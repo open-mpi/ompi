@@ -16,7 +16,6 @@ typedef struct opened_module_t {
   lam_list_item_t super;
 
   mca_pml_base_module_t *om_module;
-  mca_pml_t *om_actions;
 } opened_module_t;
 
 
@@ -30,10 +29,12 @@ typedef struct opened_module_t {
  * will have all of its function pointers saved and returned to the
  * caller.
  */
-int mca_pml_base_select(mca_pml_t *selected)
+int mca_pml_base_select(mca_pml_t *selected, bool *allow_multi_user_threads,
+                        bool *have_hidden_threads)
 {
   int priority, best_priority;
-  bool allow_multi_user_threads, have_hidden_threads;
+  bool user_threads, hidden_threads;
+  bool best_user_threads, best_hidden_threads;
   lam_list_item_t *item;
   mca_base_module_list_item_t *mli;
   mca_pml_base_module_t *module, *best_module;
@@ -61,8 +62,8 @@ int mca_pml_base_select(mca_pml_t *selected)
       lam_output_verbose(10, mca_pml_base_output,
                          "select: no init function; ignoring module");
     } else {
-      actions = module->pmlm_init(&priority, &allow_multi_user_threads,
-                                  &have_hidden_threads);
+      actions = module->pmlm_init(&priority, &user_threads,
+                                  &hidden_threads);
       if (NULL == actions) {
         lam_output_verbose(10, mca_pml_base_output,
                            "select: init returned failure");
@@ -71,6 +72,8 @@ int mca_pml_base_select(mca_pml_t *selected)
                            "select: init returned priority %d", priority);
         if (priority > best_priority) {
           best_priority = priority;
+          best_user_threads = user_threads;
+          best_hidden_threads = hidden_threads;
           best_module = module;
         }
 
@@ -80,7 +83,6 @@ int mca_pml_base_select(mca_pml_t *selected)
         }
         lam_list_item_init((lam_list_item_t *) om);
         om->om_module = module;
-        om->om_actions = actions;
         lam_list_append(&opened, (lam_list_item_t*) om);
       }
     }
@@ -103,13 +105,13 @@ int mca_pml_base_select(mca_pml_t *selected)
 
       /* Finalize */
 
-      if (NULL != om->om_actions->pml_finalize) {
+      if (NULL != om->om_module->pmlm_finalize) {
 
         /* Blatently ignore the return code (what would we do to
            recover, anyway?  This module is going away, so errors
            don't matter anymore) */
 
-        om->om_actions->pml_finalize();
+        om->om_module->pmlm_finalize();
         lam_output_verbose(10, mca_pml_base_output, 
                            "select: module %s not selected / finalized",
                            module->pmlm_version.mca_module_name);
@@ -129,6 +131,8 @@ int mca_pml_base_select(mca_pml_t *selected)
 
   mca_pml_base_selected_module = *best_module;
   *selected = *actions;
+  *allow_multi_user_threads = best_user_threads;
+  *have_hidden_threads = best_hidden_threads;
   lam_output_verbose(10, mca_pml_base_output, 
                      "select: module %s selected",
                      module->pmlm_version.mca_module_name);

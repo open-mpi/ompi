@@ -47,7 +47,7 @@ int mca_pml_base_open(void)
   /* Set a sentinel in case we don't select any modules (e.g.,
      laminfo) */
 
-  mca_pml.pml_finalize = NULL;
+  mca_pml_base_selected_module.pmlm_finalize = NULL;
 
   /* All done */
 

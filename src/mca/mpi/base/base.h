@@ -31,7 +31,9 @@ extern "C" {
   int mca_mpi_alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr);
   int mca_mpi_free_mem(void *baseptr);
 
-  int mca_mpi_init_select_modules(int requested, int *provided);
+  int mca_mpi_init_select_modules(int requested, 
+                                  bool allow_multi_user_threads,
+                                  bool have_hidden_threads, int *provided);
 
 #if 0
   /* JMS Not implemented yet */
