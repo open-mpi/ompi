@@ -13,13 +13,8 @@ struct mca_allocator_t;
 /**
   * allocate function typedef
   */
-typedef void* (*mca_allocator_alloc_fn_t)(size_t);
+typedef void* (*mca_allocator_alloc_fn_t)(size_t size, size_t align);
  
-/**
-  * allocate align function typedef
-  */
-typedef void* (*mca_allocator_alloc_align_fn_t)(size_t, size_t);
-
 /**
   * realloc function typedef
   */
