@@ -74,9 +74,10 @@ static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
             frag->frag_recv.frag_is_buffered = true;
 	    /* we now have correct offset into users buffer */
         } else {
-            frag->frag_recv.frag_base.frag_addr = request->req_base.req_addr;
+            frag->frag_recv.frag_base.frag_addr = ((unsigned char*)request->req_base.req_addr) + 
+                header->hdr_frag_offset;
         }
-	frag->frag_recv.frag_base.frag_size = header->hdr_frag_length;
+	    frag->frag_recv.frag_base.frag_size = header->hdr_frag_length;
 	/* TODO: check for truncation */
     }
 }
