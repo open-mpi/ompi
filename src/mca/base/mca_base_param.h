@@ -290,6 +290,9 @@ extern "C" {
      * never be NULL. It will always have a value, even if that value is
      * the empty string.
      * 
+     * Strings returns in the \em value parameter should later be
+     * free()'ed.
+     *
      * The value of a specific MCA parameter can be looked up using the
      * return value from mca_base_param_register_string().
      */
