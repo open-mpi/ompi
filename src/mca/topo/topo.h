@@ -80,7 +80,6 @@ typedef mca_topo_base_module_1_0_0_t mca_topo_base_module_t;
  * ******************************************************************
  */ 
 struct mca_topo_comm_1_0_0_t {
-        int mtc_cube_dim; /**< Inscribing cube dimension */
         int mtc_type; /**< Topology type */
         int mtc_nprocs; /**< Number of processes */
         int mtc_ndims; /**< Number of cart dimensions */
