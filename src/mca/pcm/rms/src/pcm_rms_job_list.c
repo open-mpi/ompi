@@ -6,9 +6,9 @@
 
 #include "ompi_config.h"
 
+#include "pcm_rms.h"
 #include "include/constants.h"
 #include "class/ompi_list.h"
-#include "mca/pcm/rms/pcm_rms.h"
 #include "threads/mutex.h"
 
 /*

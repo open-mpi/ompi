@@ -19,10 +19,10 @@
 #include <string.h>
 #include <errno.h>
 
+#include "pcm_rsh.h"
 #include "include/constants.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
-#include "mca/pcm/rsh/src/pcm_rsh.h"
 #include "runtime/runtime_types.h"
 #include "event/event.h"
 #include "util/output.h"

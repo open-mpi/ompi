@@ -5,5 +5,5 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=src/pcm_rsh.c
-PARAM_CONFIG_FILES="Makefile src/Makefile"
+PARAM_INIT_FILE=pcm_rsh.c
+PARAM_CONFIG_FILES="Makefile"
