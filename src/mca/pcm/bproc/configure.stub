@@ -102,6 +102,7 @@ if test "$OMPI_HAVE_BPROC" = "1"; then
     LIBS="-lbproc"
 else
     AC_MSG_RESULT([no])
+    AC_MSG_ERROR([*** Connot find working libbproc.])
     LAM_HAVE_BPROC3_API=0
 fi
 
