@@ -71,9 +71,12 @@ extern "C" {
   int mca_base_param_find(char *type, char *module, char *param);
   int mca_base_param_finalize(void);
 
+#if 0
+  /* JMS these belong in libmpi */
   int mca_base_param_kv_associate(int index, int keyval);
   int mca_base_param_kv_lookup_int(int index, MPI_Comm comm);
   char *mca_base_param_kv_lookup_string(int index, MPI_Comm comm);
+#endif
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
