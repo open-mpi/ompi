@@ -45,6 +45,54 @@ OBJ_CLASS_INSTANCE(
 		   ompi_registry_value_destructor); /* destructor */
 
 
+/* constructor - used to initialize state of index_value instance */
+static void ompi_registry_index_value_construct(ompi_registry_index_value_t* value)
+{
+    value->token = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void ompi_registry_index_value_destructor(ompi_registry_index_value_t* value)
+{
+    if (value->token) {
+	free(value->token);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   ompi_registry_index_value_t,     /* type name */
+		   ompi_list_item_t,                /* parent "class" name */
+		   ompi_registry_index_value_construct,   /* constructor */
+		   ompi_registry_index_value_destructor); /* destructor */
+
+
+/* constructor - used to initialize state of test results instance */
+static void ompi_registry_internal_test_results_construct(ompi_registry_internal_test_results_t* results)
+{
+    results->test = NULL;
+    results->message = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void ompi_registry_internal_test_results_destructor(ompi_registry_internal_test_results_t* results)
+{
+    if (NULL != results->test) {
+	free(results->test);
+    }
+    if (NULL != results->message) {
+	free(results->message);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   ompi_registry_internal_test_results_t,            /* type name */
+		   ompi_list_item_t,                                 /* parent "class" name */
+		   ompi_registry_internal_test_results_construct,    /* constructor */
+		   ompi_registry_internal_test_results_destructor);  /* destructor */
+
+
 
 /*
  * Global variables
