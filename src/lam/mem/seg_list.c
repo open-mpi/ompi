@@ -3,6 +3,7 @@
  */
 
 #include "lam/mem/seg_list.h"
+#include "lam/lfc/list.h"
 
 lam_class_info_t seg_list_cls = {"lam_seg_list_t", &lam_object_cls, 
     (class_init_t)lam_sgl_init, (class_destroy_t)lam_sgl_destroy};
@@ -21,7 +22,7 @@ void lam_sgl_init(lam_seg_list_t *slist)
 
 void lam_sgl_destroy(lam_seg_list_t *slist)
 {
-    lam_dbl_empty_list(&(slist->sgl_list));
+    lam_list_empty_list(&(slist->sgl_list));
     SUPER_DESTROY(slist, seg_list_cls.cls_parent);
 }
 
@@ -44,7 +45,7 @@ void lam_sgl_append_elt_chunk(
     slist->sgl_bytes_pushed += chunk_size;
     for ( i = 0; i < n_elts; i++ )
     {
-        lam_dbl_append(&(slist->sgl_list), (lam_list_item_t *)ptr);
+        lam_list_append(&(slist->sgl_list), (lam_list_item_t *)ptr);
         ptr += elt_size;
     }
 }

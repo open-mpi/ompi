@@ -3,6 +3,7 @@
  * $HEADER$
  *
  */
+#include "lam_config.h"
 
 #include "mca/lam/oob/oob.h"
 #include "lam/types.h"
@@ -33,3 +34,8 @@ int mca_oob_cofs_recv_nb(lam_job_handle_t job_handle, int* tag, int* vpid,
                          void** data, size_t* data_len);
 int mca_oob_cofs_recv_cb(lam_job_handle_t job_handle, int tag, 
                          mca_oob_recv_cb_t callback);
+
+
+extern char mca_oob_cofs_comm_loc[LAM_PATH_MAX]; /* location for file drop-off */
+extern int mca_oob_cofs_my_vpid;
+extern unsigned int mca_oob_cofs_serial;

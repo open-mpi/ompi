@@ -65,20 +65,20 @@ void lam_list_destroy(lam_list_t *list);
  */
 
 #define lam_list_get_type(list) \
-    ((lam_list_list_t*)list)->lam_list_type
+    ((lam_list_t*)list)->lam_list_type
 
 #define lam_list_set_type(list, type) \
-    (((lam_list_list_t*)list)->lam_list_type = type)
+    (((lam_list_t*)list)->lam_list_type = type)
 
 #define lam_list_get_size(list) \
-    ((lam_list_list_t*)list)->lam_list_length
+    ((lam_list_t*)list)->lam_list_length
 
 
 /* 
  * Returns first item on list, but does not remove it from the list. 
  */
 #define lam_list_get_first(list) \
-    ((lam_list_list_t*)list)->lam_list_head
+    ((lam_list_t*)list)->lam_list_head
 
 
 /* 

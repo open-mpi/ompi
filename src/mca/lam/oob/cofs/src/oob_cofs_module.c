@@ -11,6 +11,10 @@
 #include "mca/lam/oob/oob.h"
 #include "mca/lam/oob/cofs/src/oob_cofs.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 /*
  * Struct of function pointers and all that to let us be initialized
@@ -37,6 +41,16 @@ mca_oob_module_1_0_0_t mca_oob_cofs_module_1_0_0_0 = {
   mca_oob_cofs_finalize
 };
 
+struct mca_oob_1_0_0_t mca_oob_cofs_1_0_0 = {
+  mca_oob_cofs_send,
+  mca_oob_cofs_recv,
+  mca_oob_cofs_recv_nb,
+  mca_oob_cofs_recv_cb
+};
+
+char mca_oob_cofs_comm_loc[LAM_PATH_MAX];
+int mca_oob_cofs_my_vpid;
+unsigned int mca_oob_cofs_serial;
 
 int
 mca_oob_cofs_open(lam_cmd_line_t *cmd)
@@ -63,11 +77,55 @@ mca_oob_cofs_query(int *priority)
 struct mca_oob_1_0_0*
 mca_oob_cofs_init(void)
 {
+  char *tmp;
+  FILE *fp;
+
   /*
    * BWB - fix me, make register the "right" way...
    */
+  tmp = getenv("MCA_common_lam_cofs_comm_dir");
+  if (tmp == NULL) {
+    /* make it $HOME */
+    tmp = getenv("HOME");
+    if (tmp == NULL) {
+      printf("oob_cofs can not find communication dir\n");
+      return NULL;
+    }
+    snprintf(mca_oob_cofs_comm_loc, LAM_PATH_MAX, "%s/cofs", tmp);
+  } else {
+    snprintf(mca_oob_cofs_comm_loc, LAM_PATH_MAX, "%s", tmp);
+  }
+
+  /*
+   * See if we can write in our directory...
+   */
+  tmp = malloc(strlen(mca_oob_cofs_comm_loc) + 5);
+  if (tmp == NULL) return NULL;
+  sprintf(tmp, "%s/me", mca_oob_cofs_comm_loc);
+  fp = fopen(tmp, "w");
+  if (fp == NULL) {
+    printf("oob_cofs can not write in communication dir\n");
+    free(tmp);
+    return NULL;
+  }
+  fclose(fp);
+  unlink(tmp);
+  free(tmp);
+
+  /*
+   * BWB - fix me, make register the "right" way...
+   */
+  /* find our vpid */
+  tmp = getenv("MCA_OOB_BASE_VPID");
+  if (tmp == NULL) {
+    printf("oob_cofs can not find vpid\n");
+    return NULL;
+  }
+  mca_oob_cofs_my_vpid = atoi(tmp);
+
+  mca_oob_cofs_serial = 0;
   
-  return NULL;
+  return &mca_oob_cofs_1_0_0;
 }
 
 

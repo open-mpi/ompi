@@ -117,14 +117,16 @@ lam_cmd_line_t *lam_cmd_line_create(void)
  */
 int lam_cmd_line_free(lam_cmd_line_t *cmd)
 {
+#if 0
   /* We don't lock the mutex; there's no point.  Just free it. */
 
   lam_mtx_free(&cmd->lcl_mutex);
+#endif
 
   /* Free the lists */
 
-  lam_list_free(&cmd->lcl_options);
-  lam_list_free(&cmd->lcl_params);
+  lam_list_destroy(&cmd->lcl_options);
+  lam_list_destroy(&cmd->lcl_params);
 
   /* Free the argv's */
 

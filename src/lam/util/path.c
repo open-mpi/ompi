@@ -204,14 +204,12 @@ lam_path_env_findv(char *fname, int mode, char **envv, char *wrkdir)
 char *
 lam_path_env_find(char *fname, int mode)
 {
-    char    *cwd;
+    char    cwd[LAM_PATH_MAX];
     char    *r;
 
-    cwd = getworkdir();
+    getcwd(cwd, LAM_PATH_MAX);
     r = lam_path_env_findv(fname, mode, 0, cwd);
-    if (cwd)
-    LAM_FREE(cwd);
-
+    
     return(r);
 }
 
