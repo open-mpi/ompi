@@ -24,9 +24,8 @@ int MPI_Unpublish_name(char *service_name, MPI_Info info,
     int rc;
 
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
-                                          "MPI_Unpublish_name");
+        OMPI_ERR_INIT_FINALIZE; 
+
         if ( NULL == port_name )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
                                           "MPI_Unpublish_name");

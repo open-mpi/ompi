@@ -32,9 +32,8 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
     comp = (ompi_communicator_t *) comm;
 
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
-                                          "MPI_Comm_spawn_multiple");
+        OMPI_ERR_INIT_FINALIZE; 
+
         if ( MPI_COMM_NULL == comm || ompi_comm_invalid (comm))
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                          "MPI_Comm_spawn_multiple");

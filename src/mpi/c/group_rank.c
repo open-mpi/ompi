@@ -22,6 +22,8 @@ int MPI_Group_rank(MPI_Group group, int *rank) {
 
     /* error checking */
     if( MPI_PARAM_CHECK ) {
+        OMPI_ERR_INIT_FINALIZE; 
+
         if( (MPI_GROUP_NULL == group) || ( NULL == group) ){
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
                         "MPI_Group_rank");

@@ -28,6 +28,8 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
 
     /* check for errors */
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE; 
+
         if ((MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
                 (NULL == group1) || (NULL == group2) ) {
             return 

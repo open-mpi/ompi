@@ -20,9 +20,7 @@
 int MPI_Comm_free(MPI_Comm *comm) {
     
     if ( MPI_PARAM_CHECK ) {
-        if (ompi_mpi_finalized )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
-                                         "MPI_Comm_free");
+        OMPI_ERR_INIT_FINALIZE; 
         
         if ( NULL == *comm  || MPI_COMM_WORLD == *comm ||
              MPI_COMM_SELF == *comm  || ompi_comm_invalid (*comm))

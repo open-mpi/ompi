@@ -29,9 +29,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     int rc, rsize;
 
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized ) 
-            return OMPI_ERRHANDLER_INVOKE ( MPI_COMM_WORLD, MPI_ERR_INTERN,
-                                           "MPI_Intercomm_create");
+        OMPI_ERR_INIT_FINALIZE; 
 
         if ( MPI_COMM_NULL == local_comm || ompi_comm_invalid ( local_comm ) ||
              ( local_comm->c_flags & OMPI_COMM_INTER ) ) 
