@@ -107,6 +107,8 @@ typedef uint16_t ompi_registry_mode_t;
 #define MCA_GPR_GET_CMD                0x0100
 #define MCA_GPR_TEST_INTERNALS_CMD     0x0200
 #define MCA_GPR_NOTIFY_CMD             0x0400   /**< Indicates a notify message */
+#define MCA_GPR_RTE_REGISTER_CMD       0x0800
+#define MCA_GPR_RTE_UNREGISTER_CMD     0x1000
 #define MCA_GPR_ERROR                  0xffff
 
 typedef uint16_t mca_gpr_cmd_flag_t;
@@ -221,6 +223,10 @@ typedef int (*mca_gpr_base_module_synchro_fn_t)(ompi_registry_synchro_mode_t syn
 typedef int (*mca_gpr_base_module_cancel_synchro_fn_t)(ompi_registry_synchro_mode_t synchro_mode,
 						       ompi_registry_mode_t addr_mode,
 						       char *segment, char **tokens, int trigger);
+typedef int (*mca_gpr_base_module_register_fn_t)(char *contact_info, size_t num_procs,
+			     ompi_registry_notify_cb_fn_t start_cb_func, void *start_user_tag,
+			     ompi_registry_notify_cb_fn_t end_cb_func, void *end_user_tag);
+typedef int (*mca_gpr_base_module_unregister_fn_t)(char *proc_name_string);
 
 /*
  * test interface for internal functions - optional to provide
@@ -242,6 +248,8 @@ struct mca_gpr_base_module_1_0_0_t {
     mca_gpr_base_module_delete_fn_t delete_object;
     mca_gpr_base_module_index_fn_t index;
     mca_gpr_base_module_test_internals_fn_t test_internals;
+    mca_gpr_base_module_register_fn_t rte_register;
+    mca_gpr_base_module_unregister_fn_t rte_unregister;
 };
 typedef struct mca_gpr_base_module_1_0_0_t mca_gpr_base_module_1_0_0_t;
 typedef mca_gpr_base_module_1_0_0_t mca_gpr_base_module_t;
