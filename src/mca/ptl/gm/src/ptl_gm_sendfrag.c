@@ -194,22 +194,12 @@ mca_ptl_gm_recv_frag_destruct (mca_ptl_gm_recv_frag_t *frag)
 mca_ptl_gm_recv_frag_t *
 mca_ptl_gm_alloc_recv_frag( struct mca_ptl_base_module_t *ptl )
 {
-    ompi_free_list_t *flist;
-    ompi_list_item_t *item;
-    mca_ptl_gm_recv_frag_t *frag;
-    mca_ptl_tstamp_t tstamp = 0;
+    int rc;
+    ompi_list_item_t* item;
 
-    GM_DBG(PTL_GM_DBG_COMM,"INSIDE ALLOC RECV FRAG\n");
-    flist =&( ((mca_ptl_gm_module_t *)ptl)->gm_recv_frags_free);
-    item = ompi_list_remove_first(&((flist)->super));
+    OMPI_FREE_LIST_GET( &(((mca_ptl_gm_module_t *)ptl)->gm_recv_frags_free), item, rc );
 
-    while(NULL == item) {
-        ptl->ptl_component->ptlm_progress(tstamp);
-        item = ompi_list_remove_first (&((flist)->super));
-    }
-
-    frag = (mca_ptl_gm_recv_frag_t *)item;
-    return frag;
+    return (mca_ptl_gm_recv_frag_t *)item;
 
 }
 
