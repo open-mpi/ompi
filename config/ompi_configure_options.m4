@@ -62,12 +62,12 @@ AC_MSG_CHECKING([if want developer-level compiler pickyness])
 AC_ARG_ENABLE(picky, 
     AC_HELP_STRING([--enable-picky],
                    [enable developer-level compiler pickyness (not for general MPI users!) (default: enabled)]))
-if test "$enable_picky" != "no"; then
-    AC_MSG_RESULT([yes])
-    WANT_PICKY_COMPILER=1
-else
+if test "$enable_picky" = "yes"; then
     AC_MSG_RESULT([no])
     WANT_PICKY_COMPILER=0
+else
+    AC_MSG_RESULT([yes])
+    WANT_PICKY_COMPILER=1
 fi
 #################### Early development override ####################
 if test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a -d .svn; then
