@@ -135,7 +135,7 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority)
 {
   /* This module should always have the lowest available priority */
 
-  *priority = 0;
+  *priority = 10;
 
   /* Choose whether to use [intra|inter], and [linear|log]-based
      algorithms. */
