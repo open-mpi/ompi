@@ -152,6 +152,8 @@ GNU tools:
 
 GNU Autoconf $ompi_autoconf_version
 GNU Automake $ompi_automake_version
+    NOTE: You may need Automake 1.8.5 (or higher) in order to run
+    "make dist" successfully
 GNU Libtool  $ompi_libtool_version
 
 EOF
