@@ -1,0 +1,197 @@
+ARCH        = @ARCH@
+RANLIB      = @RANLIB@
+FILE_SYSTEM = @FILE_SYSTEM@
+MAKE        = @MAKE@
+AR          = @AR@
+LIBNAME     = @LIBNAME@
+NOF77       = @NOF77@
+NOPROFILE   = @NOPROFILE@
+MPI         = @MPI@
+PREFIX      = @prefix@
+FROM_MPICH  = @FROM_MPICH@
+FROM_MPICH2  = @FROM_MPICH2@
+BUILD_MPI_INFO = @BUILD_MPI_INFO@
+BUILD_MPI_ARRAY = @BUILD_MPI_ARRAY@
+DIRS        = mpi-io adio/common
+MPIO_DIRS   = mpi-io
+ALL_DIRS    = mpi-io mpi-io/fortran mpi2-other/info mpi2-other/info/fortran mpi2-other/array mpi2-other/array/fortran adio/common adio/ad_pfs adio/ad_piofs adio/ad_nfs adio/ad_ufs adio/ad_xfs adio/ad_hfs adio/ad_sfs adio/ad_testfs adio/ad_pvfs test
+SHELL       = /bin/sh
+
+@VPATH@
+
+all: mpio
+
+# The sleep 1 at the end of the build is used to ensure that make
+# builds the libraries for any steps that *follow* this one and
+# use the same library.  This is a work around for a bug in make that 
+# is related to the use of file time stamps in make, but is in fact
+# a bug in the logic of several make implementations, including gnumake
+mpio:
+	$(MAKE) clean
+	$(MAKE) mpiolib
+	$(MAKE) clean
+	@if test "$(NOPROFILE)" = 0 ; then\
+            $(MAKE) profile; \
+        fi;\
+	$(MAKE) clean
+	$(RANLIB) $(LIBNAME)
+	@if test "$(FROM_MPICH)" = 0 -a "$(FROM_MPICH2)" = 0 ; then \
+           echo " "; \
+           echo "Completed build of ROMIO. Check the output for errors."; \
+           echo " " ;\
+           echo "To compile the example programs, cd to the test directory"; \
+           echo "and type make."; \
+           echo "Run the examples the way you would run any MPI program."; \
+           echo "Each program takes the filename as a command-line argument"; \
+           echo "'-fname filename'." ; \
+           echo " " ;\
+        fi
+	@sleep 1
+
+clean:
+	@-rm -f work.pc work.pcl
+	@dirs=`echo "$(DIRS)"`; \
+        for x in $(FILE_SYSTEM) ;\
+         do \
+             dirs=`echo "$$dirs" adio/ad_$$x` ;\
+         done ; \
+        if test "$(BUILD_MPI_INFO)" = 1 ; then \
+            dirs=`echo "$$dirs" mpi2-other/info` ;\
+            if test "$(NOF77)" = 0 ; then\
+                dirs=`echo "$$dirs" mpi2-other/info/fortran` ;\
+            fi;\
+        fi; \
+        if test "$(BUILD_MPI_ARRAY)" = 1 ; then \
+            dirs=`echo "$$dirs" mpi2-other/array` ;\
+            if test "$(NOF77)" = 0 ; then\
+                dirs=`echo "$$dirs" mpi2-other/array/fortran` ;\
+            fi;\
+        fi; \
+        if test "$(NOF77)" = 0 ; then\
+            dirs=`echo "$$dirs" mpi-io/fortran` ;\
+        fi;\
+        for dir in $$dirs ;\
+         do \
+            echo " " ;\
+            echo cleaning directory $$dir ;\
+            (cd $$dir; rm -f *.o) ;\
+         done; \
+         echo " " ;\
+         echo cleaning directory test ;\
+         (cd test; $(MAKE) clean);\
+         echo " ";
+
+mpiolib:
+	@if test "$(FROM_MPICH)" = 0 -a "$(FROM_MPICH2)" = 0 ; then \
+            echo " " ;\
+            echo "deleting previously built library if it exists" ;\
+            rm -f $(LIBNAME) ;\
+        fi; \
+        dirs=`echo "$(DIRS)"`; \
+        for x in $(FILE_SYSTEM) ;\
+         do \
+             dirs=`echo "$$dirs" adio/ad_$$x` ;\
+         done ; \
+        if test "$(BUILD_MPI_INFO)" = 1 ; then \
+            dirs=`echo "$$dirs" mpi2-other/info` ;\
+            if test "$(NOF77)" = 0 ; then \
+                dirs=`echo "$$dirs" mpi2-other/info/fortran` ;\
+            fi; \
+        fi; \
+        if test "$(BUILD_MPI_ARRAY)" = 1 ; then \
+            dirs=`echo "$$dirs" mpi2-other/array` ;\
+            if test "$(NOF77)" = 0 ; then \
+                dirs=`echo "$$dirs" mpi2-other/array/fortran` ;\
+            fi; \
+        fi; \
+        if test "$(NOF77)" = 0 ; then \
+            dirs=`echo "$$dirs" mpi-io/fortran` ;\
+        fi; \
+        for dir in $$dirs ;\
+         do \
+            echo " " ;\
+            echo compiling ROMIO in directory $$dir ;\
+	    sleep 1;\
+            (cd $$dir && $(MAKE) ;) ;\
+            if [ $$? != 0 ] ; then \
+                echo "Make failed in directory $$dir" ; exit 1 ;\
+            fi ;\
+         done
+
+profile: 
+	@if [ "@HAVE_WEAK_SYMBOLS@" = 0 ] ; then \
+           dirs=`echo "$(MPIO_DIRS)"`; \
+           if test "$(BUILD_MPI_INFO)" = 1 ; then \
+               dirs=`echo "$$dirs" mpi2-other/info` ;\
+               if test "$(NOF77)" = 0 ; then\
+                   dirs=`echo "$$dirs" mpi2-other/info/fortran` ;\
+               fi;\
+           fi; \
+           if test "$(BUILD_MPI_ARRAY)" = 1 ; then \
+               dirs=`echo "$$dirs" mpi2-other/array` ;\
+               if test "$(NOF77)" = 0 ; then\
+                   dirs=`echo "$$dirs" mpi2-other/array/fortran` ;\
+               fi;\
+           fi; \
+           if test "$(NOF77)" = 0 ; then\
+               dirs=`echo "$$dirs" mpi-io/fortran` ;\
+           fi;\
+           for dir in $$dirs ;\
+            do \
+               echo " " ;\
+               echo building profiling interface in directory $$dir ;\
+               sleep 1;\
+               (cd $$dir; \
+                $(MAKE) profile MPIOPROFILE="-DMPIO_BUILD_PROFILING";) ;\
+                if [ $$? != 0 ] ; then \
+                    echo "Make failed in directory $$dir" ; exit 1 ;\
+                fi ;\
+            done \
+	fi
+
+cleanall:
+	@dirs=`echo "$(ALL_DIRS)"`; \
+	echo "cleaning test directory" ;\
+	(cd test ; ${MAKE} cleanall ) ;\
+        echo cleaning current directory ;\
+        (rm -f config.status Makefile *~ *.log romio.tar*) ;\
+        for dir in $$dirs ;\
+         do \
+            echo " " ;\
+	    if [ ! -d $$dir ] ; then continue ; fi ; \
+            echo cleaning directory $$dir ;\
+            (cd $$dir; rm -f *.o Makefile *~) ;\
+         done; \
+         echo " " ;\
+         echo "cleaning directory include" ;\
+         (cd include; rm -f *.h);\
+         echo " " ;\
+         echo "cleaning directory util" ;\
+         (cd util; rm -f romioinstall *~)
+	-rm -f lib
+
+install:
+	$(MAKE) clean
+	@./util/romioinstall -prefix=$(PREFIX)
+
+# LAM added uninstall target
+uninstall:
+	@./util/romioinstall -prefix=$(PREFIX) -uninstall
+
+romio_lflags:
+	@echo '@ROMIO_LFLAGS@'
+
+romio_liblist:
+	@echo '@ROMIO_LIBLIST@'
+
+romio_tcflags:
+	@echo '@ROMIO_TCFLAGS@'
+
+romio_tcppflags:
+	@echo '@ROMIO_TCPPFLAGS@'
+
+romio_tfflags:
+	@echo '@ROMIO_TFFLAGS@'
+
+# distclean the standard form for cleanall
+distclean: cleanall

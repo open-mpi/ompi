@@ -1,0 +1,11 @@
+ testing MPI_FILE_GET_AMODE
+ setting atomic mode
+ reverting back to nonatomic mode
+ testing MPI_FILE_GET_VIEW
+ testing MPI_FILE_GET_BYTE_OFFSET
+ setting file size to 1060 bytes
+ seeking to eof and testing MPI_FILE_GET_POSITION
+ testing MPI_FILE_GET_BYTE_OFFSET
+ testing MPI_FILE_SEEK with MPI_SEEK_CUR
+ preallocating disk space up to 8192 bytes
+ closing the file and deleting it

@@ -1,0 +1,26 @@
+CC          = @CC@
+AR          = @AR@
+LIBNAME     = @LIBNAME@
+MPI         = @MPI@
+srcdir      = @srcdir@
+
+INCLUDE_DIR = -I@MPI_INCLUDE_DIR@ -I${srcdir}/../include -I../include
+CFLAGS      = @CFLAGS@ $(INCLUDE_DIR)
+
+@VPATH@
+
+AD_OBJECTS = ad_close.o ad_init.o ad_end.o ad_open.o setfn.o flatten.o \
+      async_list.o req_malloc.o malloc.o ad_read_coll.o eof_offset.o \
+      ad_write_coll.o lock.o ad_read_str.o ad_write_str.o iscontig.o \
+      get_fp_posn.o ad_seek.o ad_delete.o ad_flush.o ad_hints.o error.o \
+      ad_fstype.o ad_get_sh_fp.o ad_set_sh_fp.o shfp_fname.o byte_offset.o \
+      status_setb.o ad_aggregate.o cb_config_list.o \
+      ad_read_str_naive.o gencheck.o ad_set_view.o
+
+all: $(LIBNAME)
+
+.c.o:
+	$(CC) $(CFLAGS) $(INC) -c $<
+
+$(LIBNAME): $(AD_OBJECTS)
+	$(AR) $(LIBNAME) $(AD_OBJECTS)

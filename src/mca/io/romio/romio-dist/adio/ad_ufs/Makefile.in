@@ -1,0 +1,27 @@
+CC          = @CC@
+AR          = @AR@
+LIBNAME     = @LIBNAME@
+srcdir      = @srcdir@
+
+INCLUDE_DIR = -I@MPI_INCLUDE_DIR@ -I${srcdir}/../include -I../include
+CFLAGS      = @CFLAGS@ $(INCLUDE_DIR)
+
+@VPATH@
+
+AD_UFS_OBJECTS = ad_ufs_close.o ad_ufs_read.o \
+      ad_ufs_open.o ad_ufs_write.o ad_ufs_done.o \
+      ad_ufs_fcntl.o ad_ufs_iread.o ad_ufs_iwrite.o ad_ufs_wait.o \
+      ad_ufs_resize.o \
+      ad_ufs.o
+
+
+default: $(LIBNAME)
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+$(LIBNAME): $(AD_UFS_OBJECTS)
+	$(AR) $(LIBNAME) $(AD_UFS_OBJECTS)
+
+clean:
+	@rm -f *.o
