@@ -15,6 +15,7 @@
 #include "mca/topo/topo.h"
 #include "lfc/lam_hash_table.h"
 #include "attribute/attribute.h"
+#include "request/request.h"
 
 extern lam_class_t lam_communicator_t_class;
 
@@ -74,6 +75,11 @@ struct lam_communicator_t {
 
     mca_coll_1_0_0_t c_coll;
     struct mca_coll_comm_t* c_coll_comm;
+
+    /* VPS: This will be moved in the coll module later on */
+    lam_request_t **bcast_lin_reqs;
+    lam_request_t **bcast_log_reqs;
+
 };
 typedef struct lam_communicator_t lam_communicator_t;
 
