@@ -5,13 +5,13 @@
 
 set srcdir="`pwd`"
 set distdir="$srcdir/$1"
-set verfile="$srcdir/VERSION"
-set verscript="config/ompi_get_version.sh"
+set OMPI_VERSION="$2"
 
-set OMPI_VERSION="`sh $verscript $verfile --full`"
-
-if ("$distdir" == "") then
+if (-z "$distdir") then
     echo "Must supply relative distdir as argv[1] -- aborting"
+    exit 1
+elif (-z "$OMPI_VERSION") then
+    echo "Must supply version as argv[2] -- aborting"
     exit 1
 endif
 
@@ -30,7 +30,13 @@ umask 022
 # VERY IMPORTANT: Now go into the new distribution tree #
 #########################################################
 
-cd $distdir
+if (! -d "$distdir") then
+    echo "*** ERROR: dist dir does not exist"
+    echo "*** ERROR:   $distdir"
+    exit 1
+endif
+cd "$distdir"
+echo "*** Now in distdir: $distdir"
 
 #
 # Get the latest config.guess and config.sub from ftp.gnu.org
@@ -65,6 +71,7 @@ else
 endif
 cd ..
 rm -rf tmp.$$
+cd ..
 
 
 #
@@ -72,6 +79,7 @@ rm -rf tmp.$$
 # the ones that we've downloaded
 #
 
+echo "*** Now in: `pwd`"
 echo "*** Replacing config.sub/config.guess with latest from ftp.gnu.org..."
 foreach file (config.guess config.sub)
     find src -name $file \
