@@ -108,15 +108,17 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
 
 static int ompi_socket_send (int fd, char *buf, int len )
 {
+    int num;
     size_t s_num;
     ssize_t a;
     char *c_ptr;
     int ret = OMPI_SUCCESS;
     
-    s_num      = (size_t) len;
+    num      = (size_t) len;
     c_ptr      = buf;
 
     do {
+	s_num = (size_t) num;
         a = write ( fd, c_ptr, s_num ); 
         if ( a == -1 ) {
             if ( errno == EINTR ) {
@@ -140,12 +142,12 @@ static int ompi_socket_send (int fd, char *buf, int len )
                 return ( OMPI_ERROR);
 	    }
 	}
-        s_num      -= (size_t) a;
-        c_ptr      += a;
-    }   while ( s_num > 0 );
+        num      -= a;
+        c_ptr    += a;
+    }   while ( num > 0 );
     
 
-  if ( s_num < 0 )  {
+  if ( num < 0 )  {
       fprintf (stderr, "read_socket: more data read then available");
       ret = OMPI_ERROR;
   }
@@ -155,15 +157,17 @@ static int ompi_socket_send (int fd, char *buf, int len )
 
 static int ompi_socket_recv (int fd, char *buf, int len )
 {
+    int num;
     size_t s_num;
     ssize_t a;
     char *c_ptr;
     int ret = OMPI_SUCCESS;
     
-    s_num      = (size_t) len;
+    num      = len;
     c_ptr      = buf;
 
     do {
+	s_num = (size_t ) num;
         a = read ( fd, c_ptr, s_num ); 
         if ( a == -1 ) {
             if ( errno == EINTR ) {
@@ -187,12 +191,12 @@ static int ompi_socket_recv (int fd, char *buf, int len )
                 return ( OMPI_ERROR);
 	    }
 	}
-        s_num      -= (size_t) a;
+        num      -= (size_t) a;
         c_ptr      += a;
-    }   while ( s_num > 0 );
+    }   while ( num > 0 );
     
 
-  if ( s_num < 0 )  {
+  if ( num < 0 )  {
       fprintf (stderr, "read_socket: more data read then available");
       ret = OMPI_ERROR;
   }
