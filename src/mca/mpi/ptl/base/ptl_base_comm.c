@@ -1,6 +1,10 @@
 #include "ptl_base_comm.h"
 
                                                                                                          
+static void mca_pml_ptl_comm_init(mca_pml_comm_t* comm);
+static void mca_pml_ptl_comm_destroy(mca_pml_comm_t* comm);
+
+
 lam_class_info_t mca_pml_ptl_comm_cls = {
     "mca_pml_comm_t",
     &lam_object_cls,
@@ -8,14 +12,14 @@ lam_class_info_t mca_pml_ptl_comm_cls = {
     (class_destroy_t)mca_pml_ptl_comm_destroy
 };
                                                                                                                        
-void mca_pml_ptl_comm_init(mca_pml_comm_t* comm)
+static void mca_pml_ptl_comm_init(mca_pml_comm_t* comm)
 {
     SUPER_INIT(comm, &lam_object_cls);
     STATIC_INIT(comm->c_wild_receives, &lam_list_cls);
     lam_mutex_init(&comm->c_wild_lock);
 }
 
-void mca_pml_ptl_comm_destroy(mca_pml_comm_t* comm)
+static void mca_pml_ptl_comm_destroy(mca_pml_comm_t* comm)
 {
     LAM_FREE(comm->c_msg_seq);
     LAM_FREE(comm->c_next_msg_seq);

@@ -47,9 +47,7 @@ struct mca_pml_comm_t {
 typedef struct mca_pml_comm_t mca_pml_comm_t;
 
 
-extern void mca_pml_ptl_comm_init(struct mca_pml_comm_t*);
 extern int  mca_pml_ptl_comm_init_size(struct mca_pml_comm_t*, size_t);
-extern void mca_pml_ptl_comm_destroy(struct mca_pml_comm_t*);
 
 #endif
 

@@ -45,10 +45,6 @@ struct mca_ptl_base_send_request_t {
 typedef struct mca_ptl_base_send_request_t mca_ptl_base_send_request_t;
 
 
-void mca_ptl_base_send_request_init(mca_ptl_base_send_request_t*);
-void mca_ptl_base_send_request_destroy(mca_ptl_base_send_request_t*);
-
-
 static inline void mca_ptl_base_send_request_reinit(
     mca_ptl_base_send_request_t *request, 
     void *addr, 

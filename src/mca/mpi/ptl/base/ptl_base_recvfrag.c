@@ -7,6 +7,9 @@
 #include "mca/mpi/ptl/base/ptl_base_recvfrag.h"
 #include "mca/mpi/ptl/base/ptl_base_match.h"
 
+static void mca_ptl_base_recv_frag_init(mca_ptl_base_recv_frag_t* frag);
+static void mca_ptl_base_recv_frag_destroy(mca_ptl_base_recv_frag_t* frag);
+
 
 lam_class_info_t mca_ptl_base_recv_frag_cls = { 
     "mca_ptl_base_recv_frag_t", 
