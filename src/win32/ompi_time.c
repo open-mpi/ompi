@@ -1,0 +1,39 @@
+/*
+ $HEADER$
+ */
+
+#include "ompi_config.h"
+#include "win32/ompi_time.h"
+
+#ifdef WIN32
+#   include<time.h>
+#endif
+
+int gettimeofday(struct timeval *tv, struct timezone *tz) {
+    
+    FILETIME file_time;
+    ULARGE_INTEGER place_holder;
+    __int64 time;
+    
+
+    /* returns 64 bit value which is the number of 100 nanosecond
+       intervals since 1601(UTC) */
+    GetSystemTimeAsFileTime (&file_time);
+
+    /* Windows recommends that we should copy the FILETIME returned 
+       into a ULARGE_INTEGER and then perform the arithmetic on that */
+    place_holder.LowPart = file_time.dwLowDateTime;
+    place_holder.HighPart = file_time.dwHighDateTime;
+    time = place_holder.QuadPart;
+    
+    /* Now we can use arithmetic operations on time which is nothing but
+       a 64 bit integer holding time in 100 nanosec intervals */
+
+    /* convert 100 nanoseconds intervals into microseconds .. divide by 10 */
+    time /= 10;
+    
+    tv->tv_sec = (long)(time / 1000000);
+    tv->tv_usec = (long)(time % 1000000);
+
+    return 0;
+}
