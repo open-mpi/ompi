@@ -796,7 +796,7 @@ ompi_convertor_t* ompi_convertor_create( int remote_arch, int mode )
    return pConv;
 }
 
-static int ompi_convertor_construct( ompi_convertor_t* pConv )
+static void ompi_convertor_construct( ompi_convertor_t* pConv )
 {
     pConv->pDesc = NULL;
     pConv->pStack = NULL;
@@ -806,12 +806,10 @@ static int ompi_convertor_construct( ompi_convertor_t* pConv )
 
 static void ompi_convertor_destruct( ompi_convertor_t* pConv )
 {
-   if( pConv == NULL ) return OMPI_SUCCESS;
    if( pConv->pStack != NULL ) free( pConv->pStack );
    pConv->pStack = NULL;
    if( pConv->pDesc != NULL ) OBJ_RELEASE( pConv->pDesc );
    pConv->pDesc = NULL;
-   return OMPI_SUCCESS;
 }
 
 OBJ_CLASS_INSTANCE(ompi_convertor_t, ompi_object_t, ompi_convertor_construct, ompi_convertor_destruct );
