@@ -486,13 +486,10 @@ internal_wait_cb(pid_t pid, int status, void *data)
     }
 
     /* unregister all the procs */
-#if 0
-    /* BWB - fix me when deadlock in gpr is fixed */
     for (i = lower ; i <= upper ; ++i) {
         test = ns_base_get_proc_name_string(ns_base_create_process_name(0, jobid, i));
         ompi_registry.rte_unregister(test);
     }
-#endif
 
     /* bwb - fix me - should only remove this range */
     mca_pcm_base_remove_job(jobid);
