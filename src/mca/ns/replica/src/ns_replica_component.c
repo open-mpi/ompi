@@ -147,7 +147,7 @@ mca_ns_base_module_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *
 
       /* set my_replica to point to myself */
 
-      mca_ns_my_replica = mca_ns_replica.copy_process_name(ompi_process_info.name);
+      /* mca_ns_my_replica = mca_ns_replica.copy_process_name(ompi_process_info.name); */
 
       /* Return the module */
 
