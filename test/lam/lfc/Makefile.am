@@ -36,6 +36,7 @@ lam_hash_table_LDADD = \
 lam_pointer_array_SOURCES = lam_pointer_array.c
 lam_pointer_array_LDADD = \
         $(top_builddir)/src/lam/lfc/lam_pointer_array.lo \
+        $(top_builddir)/src/lam/lfc/lam_object.lo \
         $(top_builddir)/src/lam/mem/malloc.lo \
         $(top_builddir)/src/lam/util/output.lo \
         $(top_builddir)/src/lam/threads/mutex.lo \
