@@ -1,6 +1,4 @@
-#include "oob_tcp.h"
-#include "oob_tcp_msg.h"
-#include "oob_tcp_peer.h"
+#include "mca/oob/tcp/oob_tcp.h"
 
 /*
  * Similiar to unix writev(2).
@@ -14,7 +12,7 @@
 
 int mca_oob_tcp_send(const ompi_process_name_t* name, const struct iovec *iov, int count, int flags)
 {
-    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name);
+    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name, true);
     mca_oob_tcp_msg_t* msg;
     int rc, sent;
     if(NULL == peer)
@@ -42,7 +40,7 @@ int mca_oob_tcp_send(const ompi_process_name_t* name, const struct iovec *iov, i
     msg->msg_cbfunc = NULL;
     msg->msg_cbdata = NULL;
     msg->msg_complete = false;
-    msg->msg_peer = peer;
+    msg->msg_peer = &peer->peer_name;
     msg->msg_state = 0;
     
     rc = mca_oob_tcp_peer_send(peer, msg);
@@ -78,7 +76,7 @@ int mca_oob_tcp_send_nb(
     mca_oob_callback_fn_t cbfunc, 
     void* cbdata)
 {
-    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name);
+    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name, true);
     mca_oob_tcp_msg_t* msg;
     int rc;
     if(NULL == peer)
@@ -107,7 +105,7 @@ int mca_oob_tcp_send_nb(
     msg->msg_cbfunc = cbfunc;
     msg->msg_cbdata = cbdata;
     msg->msg_complete = false;
-    msg->msg_peer = peer;
+    msg->msg_peer = &peer->peer_name;
     msg->msg_state = 0;
     
     rc = mca_oob_tcp_peer_send(peer, msg);

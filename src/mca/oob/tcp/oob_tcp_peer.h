@@ -15,9 +15,8 @@
 #include <netinet/in.h>
 #include "threads/mutex.h"
 #include <string.h>
-#include "oob_tcp.h"
-#include "oob_tcp_msg.h"
-
+#include "mca/oob/tcp/oob_tcp.h"
+#include "mca/oob/tcp/oob_tcp_msg.h"
 /**
  * the state of the connection
  */
@@ -76,11 +75,12 @@ extern "C" {
  * create one and cache it.
  *
  * @param peer_name the name of the peer
- * 
+ * @param get_lock get the lock on the tcp struct. This should always be true
+ *                 unless the caller already owns the lock.
  * @retval pointer to the peer's (possibly newly created) struture
  * @retval NULL if there was a problem
  */
-mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(const ompi_process_name_t* peer_name);
+mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(const ompi_process_name_t* peer_name, bool get_lock);
 
 /**
  * Start sending a message to the specified peer. The routine
