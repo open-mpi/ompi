@@ -12,7 +12,7 @@ int mca_oob_barrier(void)
     ompi_process_name_t* self;
     size_t i, npeers;
     struct iovec iov;
-    int foo;
+    int foo = 0;
 
     int rc = mca_pcmclient.pcmclient_get_peers(&peers,&npeers);
     if(rc != OMPI_SUCCESS)
