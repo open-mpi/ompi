@@ -87,8 +87,8 @@ typedef ompi_registry_buf_t (*mca_gpr_base_module_recv_fn_t)(void);
 /*
  * public functions that MUST be provided
  */
-typedef int (*mca_gpr_base_module_definesegment_fn_t)(char *segment);
-typedef int (*mca_gpr_base_module_deletesegment_fn_t)(char *segment);
+typedef int (*mca_gpr_base_module_define_segment_fn_t)(char *segment);
+typedef int (*mca_gpr_base_module_delete_segment_fn_t)(char *segment);
 typedef int (*mca_gpr_base_module_put_fn_t)(ompi_registry_mode_t mode, char *segment,
 				     char **tokens, ompi_registry_object_t *object,
 				     int size);
@@ -136,8 +136,8 @@ struct mca_gpr_base_module_1_0_0_t {
     /* public functions - must be provided */
     mca_gpr_base_module_get_fn_t get;
     mca_gpr_base_module_put_fn_t put;
-    mca_gpr_base_module_definesegment_fn_t definesegment;
-    mca_gpr_base_module_deletesegment_fn_t deletesegment;
+    mca_gpr_base_module_define_segment_fn_t define_segment;
+    mca_gpr_base_module_delete_segment_fn_t delete_segment;
     mca_gpr_base_module_subscribe_fn_t subscribe;
     mca_gpr_base_module_unsubscribe_fn_t unsubscribe;
     mca_gpr_base_module_delete_fn_t delete;
