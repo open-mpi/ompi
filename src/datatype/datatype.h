@@ -22,7 +22,6 @@
 
 #include "lam_config.h"
 #include "constants.h"
-#include "stdint.h"
 #include "lfc/lam_object.h"
 #include "lfc/lam_hash_table.h"
 #include "types.h"

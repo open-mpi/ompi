@@ -9,7 +9,6 @@
 #include <sys/socket.h>
 
 #include "lam_config.h"
-#include "stdint.h"
 
 /*
  *  Increase FD_SETSIZE
