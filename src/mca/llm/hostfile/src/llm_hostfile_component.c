@@ -74,7 +74,7 @@ mca_llm_hostfile_component_open(void)
     param_filename = mca_base_param_register_string("llm",
                                                     "hostfile",
                                                     "hostfile",
-                                                    "hostfile",
+                                                    NULL,
                                                     default_path);
     if (NULL != default_path) free(default_path);
 
