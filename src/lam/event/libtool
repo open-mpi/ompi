@@ -44,7 +44,7 @@ available_tags=" CXX F77"
 
 # ### BEGIN LIBTOOL CONFIG
 
-# Libtool was configured on host thor.cs.indiana.edu:
+# Libtool was configured on host roadkill:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
@@ -313,7 +313,7 @@ variables_saved_for_relink="PATH  LD_RUN_PATH GCC_EXEC_PREFIX COMPILER_PATH LIBR
 link_all_deplibs=unknown
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=" /usr/lib/gcc-lib/i386-redhat-linux/3.2/ /usr/lib/gcc/i386-redhat-linux/3.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../../i386-redhat-linux/lib/i386-redhat-linux/3.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../../i386-redhat-linux/lib/ /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../i386-redhat-linux/3.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../ /lib/i386-redhat-linux/3.2/ /lib/ /usr/lib/i386-redhat-linux/3.2/ /usr/lib/"
+sys_lib_search_path_spec=" /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ /usr/lib/gcc/i386-redhat-linux/3.2.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../../i386-redhat-linux/lib/i386-redhat-linux/3.2.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../../i386-redhat-linux/lib/ /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../i386-redhat-linux/3.2.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../ /lib/i386-redhat-linux/3.2.2/ /lib/ /usr/lib/i386-redhat-linux/3.2.2/ /usr/lib/"
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec="/lib /usr/lib"
@@ -6630,7 +6630,7 @@ build_old_libs=`case $build_libtool_libs in yes) $echo no;; *) $echo yes;; esac`
 # End:
 # ### BEGIN LIBTOOL TAG CONFIG: CXX
 
-# Libtool was configured on host thor.cs.indiana.edu:
+# Libtool was configured on host roadkill:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
@@ -6803,11 +6803,11 @@ striplib="strip --strip-unneeded"
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
-predep_objects="/usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../crti.o /usr/lib/gcc-lib/i386-redhat-linux/3.2/crtbeginS.o"
+predep_objects="/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../crti.o /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/crtbeginS.o"
 
 # Dependencies to place after the objects being linked to create a
 # shared library.
-postdep_objects="/usr/lib/gcc-lib/i386-redhat-linux/3.2/crtendS.o /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../crtn.o"
+postdep_objects="/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/crtendS.o /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../crtn.o"
 
 # Dependencies to place before the objects being linked to create a
 # shared library.
@@ -6819,7 +6819,7 @@ postdeps="-lstdc++ -lm -lgcc_s -lc -lgcc_s"
 
 # The library search path used internally by the compiler when linking
 # a shared library.
-compiler_lib_search_path="-L/usr/lib/gcc-lib/i386-redhat-linux/3.2 -L/usr/lib/gcc-lib/i386-redhat-linux/3.2/../../.."
+compiler_lib_search_path="-L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2 -L/usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../.."
 
 # Method to check whether dependent libraries are shared objects.
 deplibs_check_method="pass_all"
@@ -6899,7 +6899,7 @@ variables_saved_for_relink="PATH LD_LIBRARY_PATH LD_RUN_PATH GCC_EXEC_PREFIX COM
 link_all_deplibs=unknown
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=" /usr/lib/gcc-lib/i386-redhat-linux/3.2/ /usr/lib/gcc/i386-redhat-linux/3.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../../i386-redhat-linux/lib/i386-redhat-linux/3.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../../i386-redhat-linux/lib/ /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../i386-redhat-linux/3.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../ /lib/i386-redhat-linux/3.2/ /lib/ /usr/lib/i386-redhat-linux/3.2/ /usr/lib/"
+sys_lib_search_path_spec=" /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ /usr/lib/gcc/i386-redhat-linux/3.2.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../../i386-redhat-linux/lib/i386-redhat-linux/3.2.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../../i386-redhat-linux/lib/ /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../i386-redhat-linux/3.2.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../ /lib/i386-redhat-linux/3.2.2/ /lib/ /usr/lib/i386-redhat-linux/3.2.2/ /usr/lib/"
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec="/lib /usr/lib"
@@ -6926,7 +6926,7 @@ include_expsyms=""
 
 # ### BEGIN LIBTOOL TAG CONFIG: F77
 
-# Libtool was configured on host thor.cs.indiana.edu:
+# Libtool was configured on host roadkill:
 
 # Shell to use when invoking shell scripts.
 SHELL="/bin/sh"
@@ -7195,7 +7195,7 @@ variables_saved_for_relink="PATH LD_LIBRARY_PATH LD_RUN_PATH GCC_EXEC_PREFIX COM
 link_all_deplibs=unknown
 
 # Compile-time system search path for libraries
-sys_lib_search_path_spec=" /usr/lib/gcc-lib/i386-redhat-linux/3.2/ /usr/lib/gcc/i386-redhat-linux/3.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../../i386-redhat-linux/lib/i386-redhat-linux/3.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../../i386-redhat-linux/lib/ /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../i386-redhat-linux/3.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2/../../../ /lib/i386-redhat-linux/3.2/ /lib/ /usr/lib/i386-redhat-linux/3.2/ /usr/lib/"
+sys_lib_search_path_spec=" /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/ /usr/lib/gcc/i386-redhat-linux/3.2.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../../i386-redhat-linux/lib/i386-redhat-linux/3.2.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../../i386-redhat-linux/lib/ /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../i386-redhat-linux/3.2.2/ /usr/lib/gcc-lib/i386-redhat-linux/3.2.2/../../../ /lib/i386-redhat-linux/3.2.2/ /lib/ /usr/lib/i386-redhat-linux/3.2.2/ /usr/lib/"
 
 # Run-time system search path for libraries
 sys_lib_dlsearch_path_spec="/lib /usr/lib"

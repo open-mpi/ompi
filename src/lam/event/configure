@@ -1499,7 +1499,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 am__api_version="1.8"
-ac_aux_dir=
+ac_aux_dir=config
 for ac_dir in $srcdir $srcdir/.. $srcdir/../..; do
   if test -f $ac_dir/install-sh; then
     ac_aux_dir=$ac_dir
