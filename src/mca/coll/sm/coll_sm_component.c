@@ -19,18 +19,26 @@
  */
 
 #include "ompi_config.h"
+
+#include "include/constants.h"
+#include "mca/coll/coll.h"
 #include "coll_sm.h"
 #include "mca/coll/sm/coll-sm-version.h"
 
-#include "mpi.h"
-#include "mca/coll/coll.h"
-#include "coll_sm.h"
 
 /*
  * Public string showing the coll ompi_sm component version number
  */
 const char *mca_coll_sm_component_version_string =
-  "Open MPI sm collective MCA component version " MCA_coll_sm_FULL_VERSION;
+    "Open MPI sm collective MCA component version " MCA_coll_sm_VERSION;
+
+
+/*
+ * Local functions
+ */
+
+static int sm_open(void);
+
 
 /*
  * Instantiate the public struct with all of our public information
@@ -39,39 +47,54 @@ const char *mca_coll_sm_component_version_string =
 
 const mca_coll_base_component_1_0_0_t mca_coll_sm_component = {
 
-  /* First, the mca_component_t struct containing meta information
-     about the component itself */
+    /* First, the mca_component_t struct containing meta information
+       about the component itself */
 
-  {
-    /* Indicate that we are a coll v1.0.0 component (which also implies a
-       specific MCA version) */
+    {
+        /* Indicate that we are a coll v1.0.0 component (which also
+           implies a specific MCA version) */
 
-    MCA_COLL_BASE_VERSION_1_0_0,
+        MCA_COLL_BASE_VERSION_1_0_0,
 
-    /* Component name and version */
+        /* Component name and version */
 
-    "sm",
-    MCA_coll_sm_MAJOR_VERSION,
-    MCA_coll_sm_MINOR_VERSION,
-    MCA_coll_sm_RELEASE_VERSION,
+        "sm",
+        MCA_coll_sm_MAJOR_VERSION,
+        MCA_coll_sm_MINOR_VERSION,
+        MCA_coll_sm_RELEASE_VERSION,
 
-    /* Component open and close functions */
+        /* Component open and close functions */
 
-    mca_coll_sm_open,
-    mca_coll_sm_close
-  },
+        sm_open,
+        NULL
+    },
 
-  /* Next the MCA v1.0.0 component meta data */
+    /* Next the MCA v1.0.0 component meta data */
 
-  {
-   /* Whether the component is checkpointable or not */
+    {
+        /* Whether the component is checkpointable or not */
 
-   true
-  },
+        true
+    },
 
-  /* Initialization / querying functions */
+    /* Initialization / querying functions */
 
-  mca_coll_sm_init_query,
-  mca_coll_sm_comm_query,
-  mca_coll_sm_comm_unquery,
+    mca_coll_sm_init_query,
+    mca_coll_sm_comm_query,
+    mca_coll_sm_comm_unquery,
 };
+
+
+/*
+ * Open the component
+ */
+static int sm_open(void)
+{
+    /* If we want to be selected (i.e., all procs on one node), then
+       we should have a high priority */
+    
+    mca_coll_sm_param_priority = 
+        mca_base_param_register_int("coll", "sm", "priority", NULL, 75);
+
+    return OMPI_SUCCESS;
+}

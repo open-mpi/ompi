@@ -14,28 +14,21 @@
 
 #include "ompi_config.h"
 
-#include <stdio.h>
-
-#include "mpi.h"
-#include "communicator/communicator.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
+#include "include/constants.h"
 #include "coll_sm.h"
 
 
 /*
  *	allgather
  *
- *	Function:	- allgather using other MPI collections
+ *	Function:	- allgather
  *	Accepts:	- same as MPI_Allgather()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int
-mca_coll_sm_allgather(void *sbuf, int scount,
-		      struct ompi_datatype_t *sdtype, void *rbuf,
-		      int rcount, struct ompi_datatype_t *rdtype,
-		      struct ompi_communicator_t *comm) 
+int mca_coll_sm_allgather_intra(void *sbuf, int scount,
+                                struct ompi_datatype_t *sdtype, void *rbuf,
+                                int rcount, struct ompi_datatype_t *rdtype,
+                                struct ompi_communicator_t *comm) 
 {
-
-    return MPI_SUCCESS;
+    return OMPI_ERR_NOT_IMPLEMENTED;
 }

@@ -19,13 +19,16 @@
 
 
 /*
- *	barrier
+ *	reduce_scatter
  *
- *	Function:	- barrier 
- *	Accepts:	- same as MPI_Barrier()
+ *	Function:	- reduce then scatter
+ *	Accepts:	- same as MPI_Reduce_scatter()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm)
+int mca_coll_sm_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
+                                     struct ompi_datatype_t *dtype,
+                                     struct ompi_op_t *op,
+                                     struct ompi_communicator_t *comm)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

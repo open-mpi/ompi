@@ -19,13 +19,17 @@
 
 
 /*
- *	barrier
+ *	scatterv_intra
  *
- *	Function:	- barrier 
- *	Accepts:	- same as MPI_Barrier()
+ *	Function:	- scatterv operation
+ *	Accepts:	- same arguments as MPI_Scatterv()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm)
+int mca_coll_sm_scatterv_intra(void *sbuf, int *scounts,
+                               int *disps, struct ompi_datatype_t *sdtype,
+                               void *rbuf, int rcount,
+                               struct ompi_datatype_t *rdtype, int root,
+                               struct ompi_communicator_t *comm)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

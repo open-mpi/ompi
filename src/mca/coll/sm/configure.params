@@ -13,7 +13,5 @@
 # $HEADER$
 #
 
-# Specific to this module
-
 PARAM_INIT_FILE=coll_sm.c
 PARAM_CONFIG_FILES=Makefile

@@ -19,13 +19,16 @@
 
 
 /*
- *	barrier
+ *	allreduce_intra
  *
- *	Function:	- barrier 
- *	Accepts:	- same as MPI_Barrier()
+ *	Function:	- allreduce using other MPI collectives
+ *	Accepts:	- same as MPI_Allreduce()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_sm_barrier_intra(struct ompi_communicator_t *comm)
+int mca_coll_sm_allreduce_intra(void *sbuf, void *rbuf, int count,
+                                struct ompi_datatype_t *dtype, 
+                                struct ompi_op_t *op,
+                                struct ompi_communicator_t *comm)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
