@@ -50,7 +50,6 @@ unset dir
 #
 ######################################################################
 args_err=0
-args_fork=0
 for i ; do
     case "${i}" in
         -np)
@@ -71,10 +70,6 @@ for i ; do
         -h)
             shift
             args_err=1
-            ;;
-        -f)
-            shift
-            args_fork=1
             ;;
         --)
             shift
@@ -158,10 +153,7 @@ do_start_proc() {
     local rmt_boot="${ompi_mydir}/mpiboot"
     local cmd=""
 
-    if test "$args_fork" = "0"; then
-        cmd="ssh ${rmt_hostname} -f -n ${rmt_boot} "
-    fi
-    cmd="${cmd} ${rmt_boot} "
+    cmd="ssh ${rmt_hostname} -f -n ${rmt_boot} "
     cmd="${cmd} -cellid 1 -jobid ${ompi_jobid} -procid ${rmt_vpid}"
     cmd="${cmd} -numprocs ${ompi_numprocs}"
     cmd="${cmd} -pwd ${ompi_cwd} ${ompi_prepped}"
@@ -180,11 +172,7 @@ do_start_proc() {
         cmd="${cmd} -commdir ${OMPI_MCA_oob_cofs_dir}"
     fi
     cmd="${cmd} -- ${argv}"
-    if test "$args_fork" = "0"; then
-        ${cmd}
-    else
-        ${cmd} &
-    fi
+    ${cmd}
 }
 
 ######################################################################
