@@ -21,20 +21,26 @@
 
 #include "tools/ompid/ompid.h"
 
-static void ompi_console_recv(int status, ompi_process_name_t* sender,
-			      ompi_buffer_t buffer, int tag,
-			      void* cbdata);
+#define OMPI_CONSOLE_MAX_LINE_LENGTH 1024
+
+static void ompi_console_recv(void);
+
+static char *ompi_getinputline(void);
+
+static void ompi_console_sendcmd(ompi_daemon_cmd_flag_t usercmd);
 
 
 int main(int argc, char *argv[])
 {
-    int ret, recv_tag;
+    int ret;
     ompi_cmd_line_t *cmd_line;
     bool allow_multi_user_threads   = false;
     bool have_hidden_threads  = false;
-    ompi_buffer_t cmd;
-    ompi_daemon_cmd_flag_t command;
+    bool exit_cmd;
+    char *usercmd, *str_response;
+    ompi_buffer_t buffer;
     ompi_process_name_t seed={0,0,0};
+    int recv_tag;
 
     /*
      * Intialize the Open MPI environment
@@ -163,19 +169,37 @@ int main(int argc, char *argv[])
 	return ret;
     }
  
-    /* register the console callback function */
-    ret = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_DAEMON, 0, ompi_console_recv, NULL);
-    if(ret != OMPI_SUCCESS && ret != OMPI_ERR_NOT_IMPLEMENTED) {
-	printf("daemon callback not registered: error code %d", ret);
-	return ret;
-    }
+/*     /\* register the console callback function *\/ */
+/*     ret = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_DAEMON, 0, ompi_console_recv, NULL); */
+/*     if(ret != OMPI_SUCCESS && ret != OMPI_ERR_NOT_IMPLEMENTED) { */
+/* 	printf("daemon callback not registered: error code %d", ret); */
+/* 	return ret; */
+/*     } */
 
-    fprintf (stderr, "issuing exit cmd\n");
-    ompi_buffer_init(&cmd, 0);
-    command = OMPI_DAEMON_EXIT_CMD;
-    recv_tag = MCA_OOB_TAG_DAEMON;
-    ompi_pack(cmd, &command, 1, OMPI_DAEMON_OOB_PACK_CMD);
-    mca_oob_send_packed(&seed, cmd, MCA_OOB_TAG_DAEMON, 0);
+    exit_cmd = false;
+    while (!exit_cmd) {
+	printf("ompiconsole> ");
+	usercmd = ompi_getinputline();
+	if (0 == strncmp(usercmd, "exit", strlen("exit"))) {
+	    exit_cmd = true;
+	    ompi_console_sendcmd(OMPI_DAEMON_EXIT_CMD);
+	} else if (0 == strncmp(usercmd, "contactinfo", strlen("contactinfo"))) {
+	    ompi_console_sendcmd(OMPI_DAEMON_CONTACT_QUERY_CMD);
+	    if (0 > mca_oob_recv_packed(&seed, &buffer, &recv_tag)) {
+		printf("****got a bad response\n");
+	    } else {
+
+		if (0 > ompi_unpack_string(buffer, &str_response)) {
+		    printf("****couldn't decode answer\n");
+		} else {
+		    printf(str_response);
+		    printf("\n");
+		}
+	    }
+	} else {
+	    printf("huh???\n");
+	}
+    }
 
     ompi_rte_finalize();
     mca_base_close();
@@ -183,34 +207,71 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-static void ompi_console_recv(int status, ompi_process_name_t* sender,
-			      ompi_buffer_t buffer, int tag,
-			      void* cbdata)
+
+static void ompi_console_sendcmd(ompi_daemon_cmd_flag_t usercmd)
 {
+    ompi_buffer_t cmd;
     ompi_daemon_cmd_flag_t command;
+    int recv_tag;
+    ompi_process_name_t seed={0,0,0};
+
+    ompi_buffer_init(&cmd, 0);
+    command = usercmd;
+    recv_tag = MCA_OOB_TAG_DAEMON;
+    ompi_pack(cmd, &command, 1, OMPI_DAEMON_OOB_PACK_CMD);
+    mca_oob_send_packed(&seed, cmd, MCA_OOB_TAG_DAEMON, 0);
+    ompi_buffer_free(cmd);
+}
+
+
+static void ompi_console_recv(void)
+{
     int32_t num_bytes, i;
     uint8_t *outbytes;
+    ompi_buffer_t buffer;
+    ompi_process_name_t seed={0,0,0};
+    int recv_tag;
 
-    printf("console - message received from [%d,%d,%d]\n", sender->cellid,
-	   sender->jobid, sender->vpid);
 
     if (OMPI_SUCCESS != ompi_unpack(buffer, &num_bytes, 1, OMPI_INT32)) {
 	printf("\terror unpacking number of bytes\n");
 	return;
     }
 
-    outbytes = (uint8_t*)malloc(num_bytes);
+    if (0 < num_bytes) {
+	outbytes = (uint8_t*)malloc(num_bytes);
 
-    if (OMPI_SUCCESS != ompi_unpack(buffer, &outbytes, num_bytes, OMPI_BYTE)) {
-	printf("\terror unpacking number of bytes\n");
-	return;
+	if (OMPI_SUCCESS != ompi_unpack(buffer, &outbytes, num_bytes, OMPI_BYTE)) {
+	    printf("\terror unpacking number of bytes\n");
+	    return;
+	}
+
+	fprintf(stderr, "unpacked the bytes\n");
+
+	for (i=0; i<num_bytes; i++) {
+	    printf("%c", outbytes[i]);
+	}
+
+	free(outbytes);
+    } else {
+	printf("got zero bytes back\n");
     }
 
-    for (i=0; i<num_bytes; i++) {
-	printf("%c", outbytes[i]);
-    }
-
-    free(outbytes);
     ompi_buffer_free(buffer);
     return;
 }
+
+char *ompi_getinputline()
+{
+    char *ret, *buff;
+    char input[OMPI_CONSOLE_MAX_LINE_LENGTH];
+
+    ret = fgets(input, OMPI_CONSOLE_MAX_LINE_LENGTH, stdin);
+    if (NULL != ret) {
+	input[strlen(input)-1] = '\0';  /* remove newline */
+	buff = strdup(input);
+	return buff;
+    }
+    return NULL;
+}
+

@@ -312,6 +312,9 @@ static void ompi_daemon_recv(int status, ompi_process_name_t* sender,
 {
     ompi_buffer_t answer;
     ompi_daemon_cmd_flag_t command;
+    int ret;
+    int32_t str_len;
+    char *contact_info;
 
     OMPI_THREAD_LOCK(&ompi_daemon_mutex);
 
@@ -328,13 +331,29 @@ static void ompi_daemon_recv(int status, ompi_process_name_t* sender,
 	goto RETURN_ERROR;
     }
 
-    /****    EXIT COMMAND    ****/
+        /****    EXIT COMMAND    ****/
     if (OMPI_DAEMON_EXIT_CMD == command) {
 	ompi_daemon_exit_condition = true;
 	ompi_condition_signal(&ompi_daemon_condition);
 
-    } else if (OMPI_DAEMON_HEARTBEAT_CMD == command) {
-	/* send back an "i'm alive" message */
+	/****     CONTACT QUERY COMMAND    ****/
+    } else if (OMPI_DAEMON_CONTACT_QUERY_CMD == command) {
+	/* send back contact info */
+
+	contact_info = mca_oob_get_contact_info();
+
+	if (NULL != contact_info) {
+	    if (OMPI_SUCCESS != ompi_pack_string(answer, contact_info)) {
+		/* RHC -- not sure what to do if this fails */
+	    }
+
+	    if (0 > (ret = mca_oob_send_packed(sender, answer, tag, 0))) {
+		if (ompi_daemon_debug) {
+		    ompi_output(0, "ompid_recv: send failed with return %d", ret);
+		}
+	    }
+	}
+
     }
 
  RETURN_ERROR:

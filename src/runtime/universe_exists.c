@@ -156,6 +156,7 @@ int ompi_rte_universe_exists()
 	/* ...and ping to verify it's alive */
 	ping_success = false;
 	for (i=0; i<5 && !ping_success; i++) {
+	    ompi_output(0, "univ_exists: attempting ping number %d", i);
 	    if (OMPI_SUCCESS == mca_oob_ping(&proc, &ompi_rte_ping_wait)) {
 		ping_success = true;
 	    }
