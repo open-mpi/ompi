@@ -61,9 +61,10 @@ main(int argc, char* argv[])
 
   printf("#\n# Receiving Messages\n#\n");
   for (msg_count = 0 ; msg_count < 20 ; ++msg_count) {
-    ret = mca_oob_cofs_recv("foobar", &source_vpid, &source_tag, (void**) &source_data, &source_len);
+    source_tag = 1;
+    ret = mca_oob_cofs_recv("foobar", &source_tag, &source_vpid, (void**) &source_data, &source_len);
     if (ret != LAM_SUCCESS) {
-      printf("mca_oob_cofs_recv failed on msg_count %d\n", msg_count);
+      printf("mca_oob_cofs_recv failed on msg_count %d, %d\n", msg_count, ret);
       exit(1);
     }
     printf("%d %d: %s\n", source_vpid, source_tag, source_data);
