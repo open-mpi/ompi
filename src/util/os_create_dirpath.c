@@ -80,6 +80,8 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
 	if(0 != count) {
 		strcat(pth, ompi_system_info.path_sep);
 	}
+#else
+        strcat(pth, ompi_system_info.path_sep);
 #endif
 	strcat(pth, basename(bottom_up));
 	/* try to make the next layer - return error if can't & directory doesn't exist */
