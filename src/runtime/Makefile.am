@@ -15,7 +15,6 @@ headers = \
 	runtime.h \
 	runtime_types.h \
         universe_connect.h \
-        universe_init.h \
 	ompi_progress.h
 
 libruntime_la_SOURCES = \
@@ -23,8 +22,7 @@ libruntime_la_SOURCES = \
         ompi_abort.c \
         ompi_finalize.c \
         ompi_init.c \
-        universe_connect.c \
-        universe_init.c \
+        ompi_universe.c \
 	ompi_progress.c \
         ompi_rte_finalize.c \
         ompi_rte_init.c \
