@@ -14,6 +14,8 @@
 
 #include "ompi_config.h"
 
+#include <stdlib.h>
+
 #include "mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
@@ -79,9 +81,9 @@ void mpi_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
     OMPI_ARRAY_FINT_2_INT(rdispls, size);
 
     while (size > 0) {
-	c_sendtypes[size - 1] = MPI_Type_f2c(sendtypes[size - 1]);
-	c_recvtypes[size - 1] = MPI_Type_f2c(recvtypes[size - 1]);
-	--size;
+        c_sendtypes[size - 1] = MPI_Type_f2c(sendtypes[size - 1]);
+        c_recvtypes[size - 1] = MPI_Type_f2c(recvtypes[size - 1]);
+        --size;
     }
 
     *ierr = OMPI_INT_2_FINT(MPI_Alltoallw(sendbuf, 
