@@ -405,10 +405,6 @@ extern "C" {
    * MPI API
    */
   /* JMS: Look for missing functions (e.g., MPI_File_*) */
-  int MPI_DUP_FN(MPI_Comm, int, void *, void *, void *, int *);
-  int MPI_COMM_DUP_FN(MPI_Comm, int, void *, void *, void *, int *);
-  int MPI_TYPE_DUP_FN(MPI_Datatype, int, void *, void *, void *, int *);
-  int MPI_WIN_DUP_FN(MPI_Win, int, void *, void *, void *, int *);
 
   int MPI_Abort(MPI_Comm comm, int errorcode);
   int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
