@@ -81,6 +81,15 @@ typedef mca_llm_base_component_1_0_0_t mca_llm_base_component_t;
 /*
  * LLM interface types
  */
+
+/**
+ * Container for key = value pairs from the node container.
+ *
+ * Container used for the \code info member of the \code
+ * mca_llm_base_node_t structure.  Ownership of char* strings must be
+ * give to the container, who will \code free() them when the
+ * container is destroyed.
+ */
 struct mca_llm_base_valuepair_t {
     ompi_list_item_t super;
     char *key;
@@ -89,6 +98,12 @@ struct mca_llm_base_valuepair_t {
 typedef struct mca_llm_base_valuepair_t mca_llm_base_valuepair_t;
 OBJ_CLASS_DECLARATION(mca_llm_base_valuepair_t);
 
+/**
+ * Container for node allocation information.
+ *
+ * Container used for the allocate and deallocate functions of the
+ * LLM.
+ */
 struct mca_llm_base_node_t {
     ompi_list_item_t super;
     char hostname[MAXHOSTNAMELEN];
@@ -148,6 +163,12 @@ typedef int (*mca_llm_base_deallocate_resources_fn_t)(int jobid,
                                                       ompi_list_t *nodelist);
 
 
+/**
+ * Base module structure for the LLM
+ *
+ * Base module structure for the LLM - presents the required function
+ * pointers to the calling interface. 
+ */
 struct mca_llm_base_module_1_0_0_t {
   mca_llm_base_allocate_resources_fn_t llm_allocate_resources;
   mca_llm_base_deallocate_resources_fn_t llm_deallocate_resources;
@@ -156,7 +177,7 @@ typedef struct mca_llm_base_module_1_0_0_t mca_llm_base_module_1_0_0_t;
 typedef struct mca_llm_base_module_1_0_0_t mca_llm_base_module_t;
 
 
-/*
+/**
  * Macro for use in modules that are of type pml v1.0.0
  */
 #define MCA_LLM_BASE_VERSION_1_0_0 \
