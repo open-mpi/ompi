@@ -22,6 +22,7 @@ int mca_coll_basic_gather(void *sbuf, int scount, MPI_Datatype sdtype,
                           void *rbuf, int rcount, MPI_Datatype rdtype, 
                           int root, MPI_Comm comm)
 {
+#if 0
   int i;
   int err;
   int rank;
@@ -30,7 +31,6 @@ int mca_coll_basic_gather(void *sbuf, int scount, MPI_Datatype sdtype,
   MPI_Aint incr;
   MPI_Aint extent;
 
-#if 0
   /* JMS: Need to replace lots things in this file: lam_dt* stuff with
      lam_datatype_*() functions.  Also need to replace lots of
      MPI_Send/MPI_Recv with negative tags and PML entry points. */
@@ -64,7 +64,7 @@ int mca_coll_basic_gather(void *sbuf, int scount, MPI_Datatype sdtype,
       return err;
     }
   }
-#endif
+#endif /* 0 */
 
   /* All done */
   
