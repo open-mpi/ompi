@@ -16,6 +16,7 @@
 #include "class/ompi_hash_table.h"
 #include "attribute/attribute.h"
 #include "request/request.h"
+#include "threads/mutex.h"
 
 extern ompi_class_t ompi_communicator_t_class;
 
@@ -48,7 +49,8 @@ extern ompi_class_t ompi_communicator_t_class;
 extern ompi_pointer_array_t ompi_mpi_communicators; 
 
 struct ompi_communicator_t {
-    ompi_object_t               c_base; 
+    ompi_object_t              c_base; 
+    ompi_mutex_t               c_lock; /* mutex for name and attributes */
     char  c_name[MPI_MAX_OBJECT_NAME];
     uint32_t              c_contextid;
     int                     c_my_rank;
@@ -321,6 +323,9 @@ extern "C" {
     char* ompi_comm_namelookup ( char *service_name );
     int ompi_comm_nameunpublish ( char *service_name ); 
 
+
+    /* setting name */
+    int ompi_comm_set_name (ompi_communicator_t *comm, char *name );
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

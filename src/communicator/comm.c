@@ -10,6 +10,7 @@
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"
 #include "proc/proc.h"
+#include "threads/mutex.h"
 #include "util/bit_ops.h"
 #include "include/constants.h"
 #include "mca/pcm/pcm.h"
@@ -507,6 +508,21 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
 
     *newcomm = newcomp;
     return ( rc );
+}
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
+int ompi_comm_set_name (ompi_communicator_t *comm, char *name )
+{
+
+    OMPI_THREAD_LOCK(&(comm->c_lock));
+    memset(comm->c_name, 0, MPI_MAX_OBJECT_NAME);
+    strncpy(comm->c_name, name, MPI_MAX_OBJECT_NAME);
+    comm->c_name[MPI_MAX_OBJECT_NAME - 1] = 0;
+    comm->c_flags |= OMPI_COMM_NAMEISSET;
+    OMPI_THREAD_UNLOCK(&(comm->c_lock));
+
+    return OMPI_SUCCESS;
 }
 /**********************************************************************/
 /**********************************************************************/
