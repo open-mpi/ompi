@@ -173,6 +173,10 @@ void lam_cmd_line_free(lam_cmd_line_t *cmd)
   /* Free any parsed results */
 
   free_parse_results(cmd);
+
+  /* Now free the cmd itself */
+
+  LAM_FREE(cmd);
 }
 
 
@@ -793,8 +797,9 @@ static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
   argc = 0;
   argv = NULL;
   changed = false;
-  if (cmd->lcl_argv > 0)
+  if (cmd->lcl_argv > 0) {
     lam_argv_append(&argc, &argv, cmd->lcl_argv[0]);
+  }
   for (i = 1; i < cmd->lcl_argc; ) {
     token = cmd->lcl_argv[i];
     len = strlen(token);
@@ -907,8 +912,9 @@ static int split_shorts(lam_cmd_line_t *cmd, bool ignore_unknown)
     cmd->lcl_argc = argc;
     cmd->lcl_argv = argv;
   } else {
-    if (NULL != argv)
+    if (NULL != argv) {
       lam_argv_free(argv);
+    }
   }
 
   /* All done */
