@@ -28,10 +28,10 @@ headers = \
 # Library
 
 libmca_soh_base_la_SOURCES = \
-        $(headers)
+        $(headers) \
+        soh_base_close.c
 
 for_ralph_to_fix = \
-        soh_base_close.c \
         soh_base_select.c \
         soh_base_open.c
 
