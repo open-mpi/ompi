@@ -55,16 +55,6 @@ void mpi_win_create_keyval_f(MPI_Fint *win_copy_attr_fn, MPI_Fint *win_delete_at
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
-    if (MPI_PARAM_CHECK) {
-        if ((NULL == win_copy_attr_fn)   || 
-            (NULL == win_delete_attr_fn) ||
-            (NULL == win_keyval)            ) {
-            c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
-                                           MPI_ERR_ARG, 
-                                           FUNC_NAME);
-	    *ierr = OMPI_INT_2_FINT(c_err);
-        }
-    }
     copy_fn.attr_F_copy_fn = (MPI_F_copy_function *)win_copy_attr_fn;
     del_fn.attr_F_delete_fn = (MPI_F_delete_function *)win_delete_attr_fn;
 
