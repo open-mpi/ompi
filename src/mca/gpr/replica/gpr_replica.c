@@ -441,7 +441,7 @@ int gpr_replica_subscribe_nl(ompi_registry_mode_t addr_mode,
     if (mca_gpr_replica_debug) {
 	ompi_output(0, "[%d,%d,%d] gpr replica: subscribe entered: segment %s 1st token %s",
 		    ompi_process_info.name->cellid, ompi_process_info.name->jobid,
-		    ompi_process_info.name->vpid, segment, *tokens);
+		    ompi_process_info.name->vpid, segment, tokens ? *tokens : "");
     }
 
     /* protect against errors */

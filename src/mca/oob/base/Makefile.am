@@ -19,6 +19,7 @@ headers = \
 
 libmca_oob_base_la_SOURCES = \
         $(headers) \
+        oob_base_barrier.c \
         oob_base_close.c \
         oob_base_init.c \
         oob_base_open.c \
