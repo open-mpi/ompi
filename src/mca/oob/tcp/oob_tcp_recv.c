@@ -97,7 +97,7 @@ int mca_oob_tcp_recv(
     /* fill in the struct */
     msg->msg_hdr.msg_size = size;
     msg->msg_hdr.msg_tag = tag;
-    msg->msg_hdr.msg_type = MCA_OOB_TCP_MSG;
+    msg->msg_hdr.msg_type = MCA_OOB_TCP_DATA;
     msg->msg_hdr.msg_src = *peer;
     msg->msg_hdr.msg_dst = mca_oob_name_self;
     msg->msg_type = MCA_OOB_TCP_POSTED;

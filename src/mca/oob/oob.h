@@ -52,6 +52,17 @@ typedef char* (*mca_oob_base_module_get_addr_fn_t)(void);
 
 typedef int (*mca_oob_base_module_set_addr_fn_t)(const ompi_process_name_t*, const char* addr);
 
+
+/**
+*  Implementation of mca_oob_ping().
+*   
+*  @param peer (IN)   Opaque name of peer process.
+*  @param tv (IN)     Timeout to wait in connection response.
+*  @return            OMPI error code (<0) or OMPI_SUCCESS
+*/
+
+typedef int (*mca_oob_base_module_ping_fn_t)(const ompi_process_name_t*, const struct timeval* tv);
+
 /**
 *  Implementation of mca_oob_send().
 *   
@@ -152,6 +163,7 @@ typedef int (*mca_oob_base_module_fini_fn_t)(void);
 struct mca_oob_1_0_0_t {
     mca_oob_base_module_get_addr_fn_t  oob_get_addr;
     mca_oob_base_module_set_addr_fn_t  oob_set_addr;
+    mca_oob_base_module_ping_fn_t      oob_ping;
     mca_oob_base_module_send_fn_t      oob_send;
     mca_oob_base_module_recv_fn_t      oob_recv;
     mca_oob_base_module_send_nb_fn_t   oob_send_nb;

@@ -28,6 +28,7 @@ int mca_oob_cofs_module_fini(void);
 /* stubs */
 char* mca_oob_cofs_get_addr(void);
 int   mca_oob_cofs_set_addr(const ompi_process_name_t*, const char*);
+int   mca_oob_cofs_ping(const ompi_process_name_t*, const struct timeval* tv); 
 
                                                                                                           
 /**

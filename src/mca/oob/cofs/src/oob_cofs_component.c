@@ -43,6 +43,7 @@ mca_oob_base_component_1_0_0_t mca_oob_cofs_component = {
 mca_oob_t mca_oob_cofs = {
   mca_oob_cofs_get_addr,
   mca_oob_cofs_set_addr,
+  mca_oob_cofs_ping,
   mca_oob_cofs_send,
   mca_oob_cofs_recv,
   mca_oob_cofs_send_nb,
@@ -66,6 +67,12 @@ int mca_oob_cofs_set_addr(const ompi_process_name_t* name, const char* addr)
 {
     return OMPI_SUCCESS;
 }
+
+int mca_oob_cofs_ping(const ompi_process_name_t* name, const struct timeval* ts)
+{
+    return OMPI_SUCCESS;
+}
+
 
 mca_oob_t* mca_oob_cofs_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads)
 {

@@ -95,6 +95,19 @@ char* mca_oob_tcp_get_addr(void);
 int mca_oob_tcp_set_addr(const ompi_process_name_t*, const char*);
 
 /**
+ *  A routine to ping a given process name to determine if it is reachable.
+ *
+ *  @param  name  The peer name.
+ *  @param  tv    The length of time to wait on a connection/response.
+ *
+ *  Note that this routine blocks up to the specified timeout waiting for a
+ *  connection / response from the specified peer. If the peer is unavailable
+ *  an error status is returned.
+ */
+                                                                                                       
+int mca_oob_tcp_ping(const ompi_process_name_t* name, const struct timeval* tv);
+
+/**
  *  Similiar to unix writev(2).
  *
  * @param peer (IN)   Opaque name of peer process.

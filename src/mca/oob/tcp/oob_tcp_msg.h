@@ -87,6 +87,14 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
 int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* size);
 
 /**
+ *  Wait - up to a timeout - for a msg to complete.
+ *  @param  msg (IN)     Message to wait on.
+ *  @param  size (OUT)   Number of bytes delivered.
+ *  @retval OMPI_SUCCESS or error code on failure.
+ */
+int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* size, struct timespec* ts);
+
+/**
  *  Signal that a message has completed. Wakes up any pending threads (for blocking send)
  *  or invokes callbacks for non-blocking case.
  *  @param  msg (IN)   Message send/recv that has completed.
