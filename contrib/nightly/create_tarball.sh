@@ -30,7 +30,14 @@ fi
 
 # send a mail
 send_mail() {
-    print "sending mail to $email"
+    outfile="$scratch_root/output.txt"
+    rm -f "$outfile"
+    touch "$outfile"
+    for file in `/bin/ls $scratch_root/logs/* | sort`; do
+	cat "$file" >> "$outfile"
+    done
+    Mail -s "=== CREATE ERROR ===" "$email" < "$outfile"
+    rm -f "$outfile"
 }
 
 # do the work
@@ -134,6 +141,9 @@ for file in `/bin/ls *gz *bz2 | grep -v latest`; do
     md5sum $file >> md5sums.txt
     sha1sum $file >> sha1sums.txt
 done
+
+# remove temp dirs
+rm -rf "$scratch_root/logs" "$scratch_root/ompi"
 
 # send success mail
 Mail -s "Success" "$email" <<EOF
