@@ -2,8 +2,6 @@
 #
 # $HEADER$
 #
-# $Id: configure.ac,v 1.6 2004/01/07 07:49:23 jsquyres Exp $
-#
 
 
 ############################################################################
@@ -76,12 +74,7 @@ fi
 
 AH_TOP([/* -*- c -*-
  *
- * Copyright (c) 2003 The Trustees of Indiana University.  
- *                    All rights reserved.
- * 
- * This file is part of the LAM software package.  For license
- * information, see the LICENSE file in the top level directory of the
- * LAM source distribution.
+ * $HEADER$
  *
  * Function: - OS, CPU and compiler dependent configuration 
  */
@@ -293,7 +286,21 @@ AC_CONFIG_FILES([
     src/lam/Makefile
     src/lam/lfc/Makefile
     src/lam/mem/Makefile
+
     src/lam/os/Makefile
+    src/lam/os/cygwin/Makefile
+    src/lam/os/darwin/Makefile
+    src/lam/os/darwin/powerpc/Makefile
+    src/lam/os/darwin/ppc_64/Makefile
+    src/lam/os/irix/Makefile
+    src/lam/os/irix/sn0/Makefile
+    src/lam/os/linux/Makefile
+    src/lam/os/linux/alpha/Makefile
+    src/lam/os/linux/i686/Makefile
+    src/lam/os/linux/ia64/Makefile
+    src/lam/os/linux/x86_64/Makefile
+    src/lam/os/tru64/Makefile
+
     src/lam/threads/Makefile
     src/lam/util/Makefile
 
@@ -304,6 +311,9 @@ AC_CONFIG_FILES([
     src/mpi/p2p/base/Makefile
     src/mpi/p2p/interface/Makefile
     src/mpi/p2p/matching/Makefile
+
+    src/runtime/Makefile
+    src/runtime/ctnetwork/Makefile
 
     src/tools/Makefile
     src/tools/wrappers/Makefile
