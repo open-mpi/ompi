@@ -120,8 +120,8 @@ size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
         OMPI_THREAD_UNLOCK(&(table->lock));
 	    return OMPI_ERROR;
 	}
-	table->lowest_free = table->size;
-	table->number_free = (TABLE_GROW - 1) * table->size;
+	table->lowest_free  = table->size;
+	table->number_free += (TABLE_GROW - 1) * table->size;
 	table->size *= TABLE_GROW;
 	table->addr = p;
         for (i = table->lowest_free; i < table->size; i++) {
@@ -213,27 +213,56 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, size_t index,
     /* 
      * allow a specific index to be changed.
      */
-    table->addr[index] = value;
-    /* mark element as free, if NULL element */
-    if( NULL == value ) {
-        if (index < table->lowest_free) {
-            table->lowest_free = index;
-        }
-        table->number_free++;
+    
+    if ( NULL == table->addr[index] ) {
+        table->addr[index] = value;
+	/* mark element as free, if NULL element */
+	if( NULL == value ) {
+	    if (index < table->lowest_free) {
+		table->lowest_free = index;
+	    }
+	}
+	else {
+	    table->number_free--;
+	    /* Reset lowest_free if required */
+	    if ( index == table->lowest_free ) {
+		size_t i;
+            
+		table->lowest_free=table->size;
+		for ( i=index; i<table->size; i++) {
+		    if ( NULL == table->addr[i] ){
+			table->lowest_free = i;
+			break;
+		    }                    
+		}
+	    }
+	}
     }
     else {
-        /* Reset lowest_free if required */
-        if ( index == table->lowest_free ) {
-            size_t i;
+        table->addr[index] = value;
+	/* mark element as free, if NULL element */
+	if( NULL == value ) {
+	    if (index < table->lowest_free) {
+		table->lowest_free = index;
+	    }
+	    table->number_free++;
+	}
+	else {
+	    /* Reset lowest_free if required */
+	    if ( index == table->lowest_free ) {
+		size_t i;
             
-            for ( i=table->lowest_free; i<table->size; i++) {
-                if ( NULL == table->addr[i] ){
-                    table->lowest_free = i;
-                    break;
-                }                    
-            }
-        }
+		table->lowest_free=table->size;
+		for ( i=index; i<table->size; i++) {
+		    if ( NULL == table->addr[i] ){
+			table->lowest_free = i;
+			break;
+		    }                    
+		}
+	    }
+	}
     }
+	
 
 #if 0
     ompi_output(0,"ompi_pointer_array_set_item: OUT: "
@@ -305,12 +334,13 @@ int ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, size_t in
      * allow a specific index to be changed.
      */
     table->addr[index] = value;
-
+    table->number_free--;
     /* Reset lowest_free if required */
     if ( index == table->lowest_free ) {
         size_t i;
 
-        for ( i=table->lowest_free; i<table->size; i++) {
+	table->lowest_free = table->size;
+        for ( i=index; i<table->size; i++) {
             if ( NULL == table->addr[i] ){
                 table->lowest_free = i;
                 break;
