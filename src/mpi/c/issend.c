@@ -6,7 +6,6 @@
 
 #include "mpi.h"
 #include "errhandler/errhandler.h"
-#include "runtime/runtime.h"
 #include "mpi/c/bindings.h"
 #include "mca/pml/pml.h"
 

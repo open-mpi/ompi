@@ -5,7 +5,6 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "runtime/runtime.h"
 #include "mpi/c/bindings.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/pml_base_bsend.h"

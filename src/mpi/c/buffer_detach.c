@@ -6,7 +6,6 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "runtime/runtime.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/pml_base_bsend.h"
 

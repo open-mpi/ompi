@@ -6,7 +6,6 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "runtime/runtime.h"
 #include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES

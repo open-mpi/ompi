@@ -7,7 +7,6 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "mca/pml/pml.h"
-#include "runtime/runtime.h"
 #include "communicator/communicator.h"
 
 

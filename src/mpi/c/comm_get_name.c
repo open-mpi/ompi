@@ -10,7 +10,6 @@
 #include "include/totalview.h"
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "runtime/runtime.h"
 #include "communicator/communicator.h"
 #include "threads/mutex.h"
 

@@ -6,7 +6,6 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "runtime/runtime.h"
 #include "info/info.h"
 #include "communicator/communicator.h"
 #include "mca/ns/base/base.h"
