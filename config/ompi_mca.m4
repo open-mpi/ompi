@@ -108,7 +108,8 @@ for type in $found_types; do
 
     # Remove any previous generated #include files.
 
-    outfile=$outdir/static-components.h
+    outfile_real=$outdir/static-components.h
+    outfile=$outfile_real.new
     rm -f $outfile $outfile.struct $outfile.extern \
        $outfile.all $outfile.static $outfile.dyanmic
     touch $outfile.struct $outfile.extern \
@@ -226,6 +227,18 @@ const mca_base_component_t *mca_${type}_base_static_components[[]] = {
   NULL
 };
 EOF
+        # Only replace the header file if a) it doesn't previously
+        # exist, or b) the contents are different.  Do this to not
+        # trigger recompilation of certain .c files just because the
+        # timestamp changed on $outfile_real (similar to the way AC
+        # handles AC_CONFIG_HEADER files).
+
+        diff $outfile $outfile_real 2>&1 > /dev/null
+        if test "$?" != "0"; then
+            mv $outfile $outfile_real
+        else
+            rm -f $outfile
+        fi
     fi
     rm -f $outfile.struct $outfile.extern 
 
