@@ -27,7 +27,7 @@ void lam_mp_init(lam_mem_pool_t *pool)
 {
     SUPER_INIT(pool, mem_pool_cls.cls_parent);
     
-    pool->mp_private_alloc = NEW(lam_allocator_t, &allocator_cls);
+    pool->mp_private_alloc = OBJ_CREATE(lam_allocator_t, &allocator_cls);
     lam_mutex_init(&(pool->mp_lock));
     pool->mp_dev_alloc = NULL;
 }
@@ -36,7 +36,7 @@ void lam_mp_shared_init(lam_mem_pool_t *pool)
 {
     SUPER_INIT(pool, shmem_pool_cls.cls_parent);
     
-    pool->mp_private_alloc = NEW(lam_allocator_t, &allocator_cls);
+    pool->mp_private_alloc = OBJ_CREATE(lam_allocator_t, &allocator_cls);
     lam_mutex_init(&(pool->mp_lock));
     lam_alc_set_is_shared(pool->mp_private_alloc, 1);
     lam_alc_set_mem_prot(pool->mp_private_alloc, MMAP_SHARED_PROT);
@@ -276,7 +276,7 @@ void lam_fmp_init(lam_fixed_mpool_t *pool)
 {
     SUPER_INIT(pool, &lam_object_cls);
     
-    pool->fmp_private_alloc = NEW(lam_allocator_t, &allocator_cls);
+    pool->fmp_private_alloc = OBJ_CREATE(lam_allocator_t, &allocator_cls);
     lam_alc_set_is_shared(pool->fmp_private_alloc, 1);
     lam_alc_set_mem_prot(pool->fmp_private_alloc, MMAP_SHARED_PROT);
     

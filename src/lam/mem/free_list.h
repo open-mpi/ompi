@@ -36,7 +36,7 @@ int lam_free_list_init_with(
     int num_elements_to_alloc,
     int max_elements_to_alloc,
     int num_elements_per_alloc,
-    lam_allocator_t);
+    lam_allocator_t*);
 
 static inline lam_list_item_t *lam_free_list_get(lam_free_list_t * list, int *rc)
 {
