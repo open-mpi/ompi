@@ -57,9 +57,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
         return ret;
     }
-    if (OMPI_SUCCESS != (ret = mca_base_open())) {
-        return ret;
-    }
 
     /* Join the run-time environment */
     if (OMPI_SUCCESS != (ret = ompi_rte_init(&allow_multi_user_threads, &have_hidden_threads))) {
