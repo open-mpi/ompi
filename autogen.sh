@@ -1,4 +1,4 @@
-#! /bin/sh 
+#! /bin/bash 
 #
 # Copyright (c) 2003 The Trustees of Indiana University.  
 #                    All rights reserved.
@@ -7,7 +7,7 @@
 # information, see the LICENSE file in the top level directory of the
 # LAM/MPI source distribution.
 #
-# $Id: autogen.sh,v 1.2 2003/11/22 16:40:48 jsquyres Exp $
+# $Id: autogen.sh,v 1.3 2003/12/24 01:49:07 brbarret Exp $
 #
 # This script is run on developer copies of LAM/MPI -- *not*
 # distribution tarballs.
@@ -18,10 +18,30 @@
 #
 # Subroutine to check for the existence of various standard GNU tools
 #
+# First argument: variable name to set
+# Other arguments: list of programs to look for
+#
 test_for_existence() {
-    tfe_prog="$1"
-    tfe_foo="`$tfe_prog --version`"
-    if test "$?" != 0; then
+    local tfe_foo_set=0
+    local tfe_found=0
+    local tfe_output=0
+    tfe_name="$1"
+
+    for i in $* ; do
+        if [ $tfe_foo_set = 0 ]; then
+            tfe_foo_set=1
+            continue
+        fi
+
+        tfe_output="`$i --version 2>&1`"
+        if [ $? == 0 ]; then
+            tfe_found=1
+            eval "$tfe_name=$i"
+            break
+        fi
+    done
+
+    if test $tfe_found = 0; then
 	cat <<EOF
 
 You must have GNU autoconf, automake, and libtool installed to build
@@ -32,7 +52,7 @@ EOF
 	# Stupid emacs: '
 	exit 1
     fi
-    unset tfe_prog tfe_foo
+    unset tfe_name
 }
 
 
@@ -47,7 +67,7 @@ run_and_check() {
     if test "$?" != 0; then
 	cat <<EOF
 
-It seems that the execution of "$progs" has failed.
+It seems that the execution of "$rac_progs" has failed.
 I am gonna abort.  :-(
 
 This may be caused by an older version of one of the required
@@ -120,9 +140,9 @@ EOF
     exit 1
 fi
 
-test_for_existence autoconf
-test_for_existence automake
-test_for_existence libtool
+test_for_existence autoconf autoconf autoconf-2.57
+test_for_existence automake automake automake-1.5
+test_for_existence libtoolize libtoolize glibtoolize
 
 # See if the package doesn't want us to set it up
 
@@ -153,7 +173,7 @@ if test "`grep AC_CONFIG_HEADER configure.ac`" != "" -o \
     run_and_check autoheader
 fi
 run_and_check autoconf
-run_and_check libtoolize --automake --copy
+run_and_check $libtoolize --automake --copy
 run_and_check automake --foreign -a --copy --include-deps
 	
 # All done
