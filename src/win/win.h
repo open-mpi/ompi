@@ -12,7 +12,6 @@
 #include "class/ompi_hash_table.h"
 
 
-extern ompi_class_t ompi_win_t_class;
 struct ompi_win_t {
   char w_name[MPI_MAX_OBJECT_NAME];
 
@@ -32,7 +31,8 @@ struct ompi_win_t {
     ompi_errhandler_t                    *error_handler;
     ompi_errhandler_type_t               errhandler_type;
 };
-
 typedef struct ompi_win_t ompi_win_t;
+
+OBJ_CLASS_DECLARATION(ompi_win_t);
 
 #endif
