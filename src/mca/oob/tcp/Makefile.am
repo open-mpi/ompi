@@ -7,17 +7,15 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 sources = \
-	oob_tcp.c \
+    oob_tcp.c \
     oob_tcp.h \
-    oob_tcp_addr.c \
-    oob_tcp_addr.h \
     oob_tcp_hdr.h \
-	oob_tcp_msg.c \
+    oob_tcp_msg.c \
     oob_tcp_msg.h \
-	oob_tcp_peer.c \
+    oob_tcp_peer.c \
     oob_tcp_peer.h \
-	oob_tcp_recv.c \
-	oob_tcp_send.c
+    oob_tcp_recv.c \
+    oob_tcp_send.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
