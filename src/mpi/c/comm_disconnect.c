@@ -34,9 +34,19 @@ int MPI_Comm_disconnect(MPI_Comm *comm)
 	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
     }
 
-    (*comm)->c_coll.coll_barrier(*comm);
-    OBJ_RETAIN(*comm);
 
+    if ( OMPI_COMM_IS_DYNAMIC(*comm)) {
+	ompi_comm_disconnect_obj *dobj;
+	
+	dobj = ompi_comm_disconnect_init (*comm);
+	ompi_comm_disconnect_waitall(1, &dobj);
+    }
+    else {
+	(*comm)->c_coll.coll_barrier(*comm);
+    }
+
+    OBJ_RETAIN(*comm);
+    
     *comm = MPI_COMM_NULL;
     return MPI_SUCCESS;
 }
