@@ -48,7 +48,7 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
        *outcount = 1;
        indices[0] = index;
        if( MPI_STATUSES_IGNORE != statuses ) {
-          statuses[index] = status;
+          statuses[0] = status;
        }
     }
     return MPI_SUCCESS;
