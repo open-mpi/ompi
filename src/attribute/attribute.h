@@ -171,7 +171,8 @@ int ompi_attr_create_keyval(ompi_attribute_type_t type,
  * @return OMPI error code
  */
 
-int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, int predefined);
+int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, 
+                          bool predefined);
 
 /**
  * Set an attribute on the comm/win/datatype
@@ -181,16 +182,22 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, int predefined);
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
+ * @param need_lock      Whether we need to need to lock the keyval_lock or not
  * @return OMPI error code
  *
  * If (*keyhash) == NULL, a new keyhash will be created and
  * initialized.
  *
+ * Note that need_lock should *always* be true when this function is
+ * invoked from an top-level MPI function.  It is only false when this
+ * function is invoked internally (i.e., when we already hold the
+ * relevant locks, and we don't want to try to lock them again,
+ * recursively).
  */
 
 int ompi_attr_set(ompi_attribute_type_t type, void *object, 
                   ompi_hash_table_t **keyhash,
-                  int key, void *attribute, int predefined);
+                  int key, void *attribute, bool predefined, bool need_lock);
 
 /**
  * Get an attribute on the comm/win/datatype
@@ -214,13 +221,19 @@ int ompi_attr_get(ompi_hash_table_t *keyhash, int key,
  * @param keyhash        The attribute hash table hanging on the object(IN)
  * @param key            Key val for the attribute (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
+ * @param need_lock      Whether we need to need to lock the keyval_lock or not
  * @return OMPI error code
  *
+ * Note that need_lock should *always* be true when this function is
+ * invoked from an top-level MPI function.  It is only false when this
+ * function is invoked internally (i.e., when we already hold the
+ * relevant locks, and we don't want to try to lock them again,
+ * recursively).
  */
 
 int ompi_attr_delete(ompi_attribute_type_t type, void *object, 
-		    ompi_hash_table_t *keyhash , int key,
-		    int predefined);
+                     ompi_hash_table_t *keyhash , int key,
+                     bool predefined, bool need_lock);
 
 
 /** 

@@ -34,6 +34,6 @@ int MPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val)
     }
 
     ret = ompi_attr_set(WIN_ATTR, win, &win->w_keyhash, 
-                        win_keyval, attribute_val, 0);
+                        win_keyval, attribute_val, false, true);
     OMPI_ERRHANDLER_RETURN(ret, win, MPI_ERR_OTHER, FUNC_NAME);  
 }

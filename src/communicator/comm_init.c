@@ -276,6 +276,13 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
 
 static void ompi_comm_destruct(ompi_communicator_t* comm)
 {
+    /* Release attributes */
+
+    if (NULL != comm->c_keyhash) {
+        ompi_attr_delete_all(COMM_ATTR, comm, comm->c_keyhash);
+        OBJ_RELEASE(comm->c_keyhash);
+    }
+
     /* Release the collective module */
 
     mca_coll_base_comm_unselect(comm);
