@@ -1,3 +1,4 @@
+START_FILE
 	TEXT
 
 	ALIGN(4)
@@ -20,13 +21,13 @@ END_FUNC(ompi_atomic_wmb)
 
 
 START_FUNC(ompi_atomic_cmpset_32)
-	1: lwarx   r0, 0, r3  
+	LSYM(1) lwarx   r0, 0, r3  
 	   cmpw    0, r0, r4  
-	   bne-    2f         
+	   bne-    REFLSYM(2)
 	   stwcx.  r5, 0, r3  
-	   bne-    1b         
+	   bne-    REFLSYM(1)
 	sync 
-	2:
+	LSYM(2)
 	xor r3,r0,r4
 	subfic r2,r3,0
 	adde r3,r2,r3
@@ -35,13 +36,13 @@ END_FUNC(ompi_atomic_cmpset_32)
 
 
 START_FUNC(ompi_atomic_cmpset_acq_32)
-	1: lwarx   r0, 0, r3  
+	LSYM(3) lwarx   r0, 0, r3  
 	   cmpw    0, r0, r4  
-	   bne-    2f         
+	   bne-    REFLSYM(4)         
 	   stwcx.  r5, 0, r3  
-	   bne-    1b         
+	   bne-    REFLSYM(3)
 	sync 
-	2:
+	LSYM(4)
 	xor r3,r0,r4
 	subfic r2,r3,0
 	adde r3,r2,r3
@@ -52,13 +53,13 @@ END_FUNC(ompi_atomic_cmpset_acq_32)
 
 START_FUNC(ompi_atomic_cmpset_rel_32)
 	eieio
-	1: lwarx   r0, 0, r3  
+	LSYM(5) lwarx   r0, 0, r3  
 	   cmpw    0, r0, r4  
-	   bne-    2f         
+	   bne-    REFLSYM(6)
 	   stwcx.  r5, 0, r3  
-	   bne-    1b         
+	   bne-    REFLSYM(5)
 	sync 
-	2:
+	LSYM(6)
 	xor r3,r0,r4
 	subfic r2,r3,0
 	adde r3,r2,r3
@@ -73,12 +74,12 @@ START_FUNC(ompi_atomic_cmpset_64)
 	stw r7,-20(r1)
 	ld r5,-32(r1)
 	ld r7,-24(r1)
-	1: ldarx   r9, 0, r3  
+	LSYM(7) ldarx   r9, 0, r3  
 	   cmpd    0, r9, r5  
-	   bne-    2f         
+	   bne-    REFLSYM(8)         
 	   stdcx.  r7, 0, r3
-	   bne-    1b
-	2:
+	   bne-    REFLSYM(7)
+	LSYM(8)
 	xor r3,r5,r9
 	subfic r2,r3,0
 	adde r3,r2,r3
@@ -94,12 +95,12 @@ START_FUNC(ompi_atomic_cmpset_acq_64)
         ld r5,-32(r1)
         ld r7,-24(r1)
 
-        1: ldarx   r9, 0, r3  
+        LSYM(9) ldarx   r9, 0, r3  
            cmpd    0, r9, r5
-           bne-    2f         
+           bne-    REFLSYM(10)         
            stdcx.  r7, 0, r3  
-           bne-    1b         
-        2:
+           bne-    REFLSYM(9)
+        LSYM(10)
         xor r3,r5,r9
         subfic r2,r3,0
         adde r3,r2,r3
@@ -118,12 +119,12 @@ START_FUNC(ompi_atomic_cmpset_rel_64)
         ld r7,-24(r1)
 
         eieio
-        1: ldarx   r9, 0, r3  
+        LSYM(11) ldarx   r9, 0, r3  
            cmpd    0, r9, r5  
-           bne-    2f         
+           bne-    REFLSYM(12)         
            stdcx.  r7, 0, r3  
-           bne-    1b         
-        2:
+           bne-    REFLSYM(11)
+        LSYM(12)
         xor r3,r5,r9
         subfic r2,r3,0
         adde r3,r2,r3
@@ -135,10 +136,10 @@ END_FUNC(ompi_atomic_cmpset_rel_64)
 
 
 START_FUNC(ompi_atomic_add_32)
-	1:   lwarx r0, 0, r3 
+	LSYM(13)   lwarx r0, 0, r3 
 	     add  r0, r4, r0                
 	     stwcx.   r0, 0, r3              
-	     bne-  1b                      
+	     bne-  REFLSYM(13)
 	
 	lwz r3,0(r3)
 	blr
@@ -146,10 +147,10 @@ END_FUNC(ompi_atomic_add_32)
 
 
 START_FUNC(ompi_atomic_sub_32)
-	1:   lwarx r0,0,r3
+	LSYM(14)   lwarx r0,0,r3
 	     subf  r0,r4,r0                
 	     stwcx.   r0,0,r3              
-	     bne-  1b                      
+	     bne-  REFLSYM(14)             
 	
 	lwz r3,0(r3)
 	blr

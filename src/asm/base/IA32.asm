@@ -1,3 +1,4 @@
+START_FILE
 	TEXT
 
 START_FUNC(ompi_atomic_mb)

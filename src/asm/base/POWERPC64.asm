@@ -1,5 +1,4 @@
 START_FILE
-
 	TEXT
 
 	ALIGN(4)
