@@ -9,7 +9,7 @@
 #include "class/ompi_list.h"
 
 
-extern ompi_class_t ompi_request_t_class;
+OBJ_CLASS_DECLARATION(ompi_request_t);
 
 typedef enum {
     OMPI_REQUEST_PML,
@@ -32,8 +32,15 @@ struct ompi_request_t {
 };
 typedef struct ompi_request_t ompi_request_t;
 
-void ompi_request_construct(ompi_request_t*);
-void ompi_request_destruct(ompi_request_t*);
+
+#define OMPI_REQUEST_INIT(request) \
+    do { \
+    while(0); 
+
+#define OMPI_REQUEST_FINI(request) \
+    do { \
+    while(0); 
+
 
 #endif
 
