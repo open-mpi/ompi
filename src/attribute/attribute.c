@@ -1,12 +1,15 @@
-/**
+/*
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "attribute/attribute.h"
 #include "communicator/communicator.h"
+#include "threads/mutex.h"
 #include "include/constants.h"
 
-/**
+/*
  * Macros
  */
 
@@ -61,7 +64,7 @@
 
 
 /* 
- * Static 
+ * Static
  */
 static void ompi_attrkey_item_construct(ompi_attrkey_item_t *item);
 static void ompi_attrkey_item_destruct(ompi_attrkey_item_t *item);
@@ -84,6 +87,16 @@ OBJ_CLASS_INSTANCE(ompi_attrkey_item_t,
 static ompi_hash_table_t *keyval_hash;
 static ompi_bitmap_t *key_bitmap;
 
+/*
+ * Have one lock protect all access to any attribute stuff (keyval
+ * hash, key bitmap, attribute hashes on MPI objects, etc.).
+ * Arguably, we would have a finer-grained scheme (e.g., 2 locks) that
+ * would allow at least *some* concurrency, but these are attributes
+ * -- they're not in the performance-critical portions of the code.
+ * So why bother?
+ */
+static ompi_mutex_t alock;
+
 
 /*
  * ompi_attrkey_item_t interface functions
@@ -102,8 +115,10 @@ ompi_attrkey_item_destruct(ompi_attrkey_item_t *item)
 {
     /* Remove the key entry from the hash and free the key */
 
+    OMPI_THREAD_LOCK(&alock);
     ompi_hash_table_remove_value_uint32(keyval_hash, item->key);
     FREE_KEY(item->key);
+    OMPI_THREAD_UNLOCK(&alock);
 }
 
 
@@ -176,8 +191,10 @@ ompi_attr_create_keyval(ompi_attribute_type_t type,
 
     /* Create a new unique key and fill the hash */
   
+    OMPI_THREAD_LOCK(&alock);
     *key = CREATE_KEY();
     ret = ompi_hash_table_set_value_uint32(keyval_hash, *key, attr);
+    OMPI_THREAD_UNLOCK(&alock);
     if (OMPI_SUCCESS != ret) {
 	return ret;
     }
@@ -204,7 +221,7 @@ ompi_attr_create_keyval(ompi_attribute_type_t type,
 
 
 int 
-ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, int predefined)
+ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, bool predefined)
 {
     ompi_attrkey_item_t *key_item;
 
@@ -216,15 +233,17 @@ ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, int predefined)
 
     /* Find the key-value pair */
 
+    OMPI_THREAD_LOCK(&alock);
     key_item = (ompi_attrkey_item_t*) 
 	ompi_hash_table_get_value_uint32(keyval_hash, *key);
+    OMPI_THREAD_UNLOCK(&alock);
   
     if ((NULL == key_item) || (key_item->attr_type != type) ||
 	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
 	return OMPI_ERR_BAD_PARAM;
     }
 
-    /* Not releasing the object here, it will be done in MPI_*_attr_delete */
+    /* MPI says to set the returned value to MPI_KEYVAL_INVALID */
 
     *key = MPI_KEYVAL_INVALID;
 
@@ -241,7 +260,7 @@ ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, int predefined)
 int 
 ompi_attr_delete(ompi_attribute_type_t type, void *object, 
                  ompi_hash_table_t *keyhash, int key,
-                 int predefined) 
+                 bool predefined, bool need_lock) 
 {
     ompi_attrkey_item_t *key_item;
     int ret, err;
@@ -253,19 +272,35 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
 	return MPI_ERR_INTERN;
     }
 
+    /* Note that this function can be invoked by
+       ompi_attr_delete_all() to set attributes on the new object (in
+       addition to the top-level MPI_* functions that set attributes).
+       In these cases, ompi_attr_delete_all() has already locked the
+       keyval_lock, so we should not try to lock it again. */
+
+    if (need_lock) {
+        OMPI_THREAD_LOCK(&alock);
+    }
+
     /* Check if the key is valid in the key-attribute hash */
 
     key_item = (ompi_attrkey_item_t*) 
 	ompi_hash_table_get_value_uint32(keyval_hash, key);
-  
+
     if ((NULL == key_item) || (key_item->attr_type!= type) ||
 	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
+        if (need_lock) {
+            OMPI_THREAD_UNLOCK(&alock);
+        }
 	return OMPI_ERR_BAD_PARAM;
     }
 
     /* Ensure that we don't have an empty keyhash */
 
     if (NULL == keyhash) {
+        if (need_lock) {
+            OMPI_THREAD_UNLOCK(&alock);
+        }
         return OMPI_ERR_BAD_PARAM;
     }
 
@@ -273,7 +308,6 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
        yes, then delete the attribute and key entry from the CWD hash */
 
     attr = ompi_hash_table_get_value_uint32(keyhash, key);
-
     switch(type) {
     case COMM_ATTR:
 	DELETE_ATTR_OBJECT(communicator, attr);
@@ -293,6 +327,9 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
     }
 
     ret = ompi_hash_table_remove_value_uint32(keyhash, key);
+    if (need_lock) {
+        OMPI_THREAD_UNLOCK(&alock);
+    }
     if (OMPI_SUCCESS != ret) {
         return ret; 
     }
@@ -309,7 +346,7 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
 int
 ompi_attr_set(ompi_attribute_type_t type, void *object, 
               ompi_hash_table_t **keyhash, int key, void *attribute,
-              int predefined)
+              bool predefined, bool need_lock)
 {
     ompi_attrkey_item_t *key_item;
     int ret, err;
@@ -325,6 +362,15 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
         return MPI_ERR_INTERN;
     }
 
+    /* Note that this function can be invoked by ompi_attr_copy_all()
+       to set attributes on the new object (in addition to the
+       top-level MPI_* functions that set attributes).  In these
+       cases, ompi_attr_copy_all() has already locked the keyval_lock,
+       so we should not try to lock it again. */
+
+    if (need_lock) {
+        OMPI_THREAD_LOCK(&alock);
+    }
     key_item = (ompi_attrkey_item_t *) 
 	ompi_hash_table_get_value_uint32(keyval_hash, key);
 
@@ -332,6 +378,9 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
 
     if ((NULL == key_item) || (key_item->attr_type != type) ||
 	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
+        if (need_lock) {
+            OMPI_THREAD_UNLOCK(&alock);
+        }
 	return OMPI_ERR_BAD_PARAM;
     }
 
@@ -343,8 +392,8 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
 
     /* Now see if the key is present in the CWD object. If so, delete
        the old attribute in the key */
-    oldattr = ompi_hash_table_get_value_uint32(*keyhash, key);
 
+    oldattr = ompi_hash_table_get_value_uint32(*keyhash, key);
     if (oldattr != NULL) {
 	switch(type) {
 	case COMM_ATTR:
@@ -367,6 +416,9 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
     }
 
     ret = ompi_hash_table_set_value_uint32(*keyhash, key, attribute); 
+    if (need_lock) {
+        OMPI_THREAD_UNLOCK(&alock);
+    }
     if (OMPI_SUCCESS != ret) {
 	return ret; 
     }
@@ -394,10 +446,12 @@ ompi_attr_get(ompi_hash_table_t *keyhash, int key, void *attribute,
        flag argument */
 
     *flag = 0;
+    OMPI_THREAD_LOCK(&alock);
     key_item = (ompi_attrkey_item_t *) 
 	ompi_hash_table_get_value_uint32(keyval_hash, key);
 
     if (NULL == key_item) {
+        OMPI_THREAD_UNLOCK(&alock);
 	return MPI_KEYVAL_INVALID;
     }
 
@@ -405,10 +459,12 @@ ompi_attr_get(ompi_hash_table_t *keyhash, int key, void *attribute,
        been cached on this object yet.  So just return *flag = 0. */
 
     if (NULL == keyhash) {
+        OMPI_THREAD_UNLOCK(&alock);
         return MPI_SUCCESS;
     }
 
     attr = ompi_hash_table_get_value_uint32(keyhash, key);
+    OMPI_THREAD_UNLOCK(&alock);
     if (NULL != attr) {
 	*((void **) attribute) = attr;
 	*flag = 1;
@@ -442,6 +498,12 @@ ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
     if (NULL == oldkeyhash) {
         return MPI_SUCCESS;
     }
+
+    /* Lock this whole sequence of events -- don't let any other
+       thread modify the structure of the keyval hash or bitmap while
+       we're traversing it */
+
+    OMPI_THREAD_LOCK(&alock);
 
     /* Get the first key-attr in the CWD hash */
     ret = ompi_hash_table_get_first_key_uint32(oldkeyhash, &key, &old_attr,
@@ -478,23 +540,27 @@ ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
 
         /* Hang this off the new CWD object */
 	    
-        /* VPS: predefined is set to 1, so that no comparison is done
-           for prdefined at all and it just falls off the error
-           checking loop in attr_set  */
+        /* The "predefined" parameter to ompi_attr_set() is set to 1,
+           so that no comparison is done for prdefined at all and it
+           just falls off the error checking loop in attr_set  */
 
         /* VPS: we pass the address of new_attr in here, I am assuming
            that new_attr should have actually been a double pointer in
            the copy fn, but since its a pointer in that MPI specs, we
            need to pass *new_attr here  */
-        if (flag == 1) {
+        if (1 == flag) {
             ompi_attr_set(type, new_object, &newkeyhash, key, 
-                          new_attr, 1);
+                          new_attr, true, false);
         }
 
         ret = ompi_hash_table_get_next_key_uint32(oldkeyhash, &key, 
                                                   &old_attr, in_node, 
                                                   &node);
     }
+
+    /* All done */
+
+    OMPI_THREAD_UNLOCK(&alock);
     return MPI_SUCCESS;
 }
 
@@ -515,10 +581,16 @@ ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
 
     /* Ensure that the table is not empty */
 
-    if (NULL != keyhash) {
+    if (NULL == keyhash) {
         return MPI_SUCCESS;
     }
 	
+    /* Lock this whole sequence of events -- don't let any other
+       thread modify the structure of the keyval hash or bitmap while
+       we're traversing it */
+
+    OMPI_THREAD_LOCK(&alock);
+
     /* Get the first key in local CWD hash  */
     ret = ompi_hash_table_get_first_key_uint32(keyhash,
                                                &key, &old_attr,
@@ -538,8 +610,11 @@ ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
                                                   in_node, &node);
 	/* Now delete this attribute */
 
-	ompi_attr_delete(type, object, keyhash, oldkey, 1);
+	ompi_attr_delete(type, object, keyhash, oldkey, true, false);
     }
-	
+
+    /* All done */
+
+    OMPI_THREAD_UNLOCK(&alock);
     return MPI_SUCCESS;
 }

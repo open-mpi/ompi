@@ -32,7 +32,8 @@ int MPI_Type_delete_attr (MPI_Datatype type, int type_keyval)
       }
    }
   
-   ret = ompi_attr_delete(TYPE_ATTR, type, type->d_keyhash, type_keyval, 0);
+   ret = ompi_attr_delete(TYPE_ATTR, type, type->d_keyhash, type_keyval, 
+                          false, true);
    OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
 			  MPI_ERR_OTHER, FUNC_NAME);  
 }

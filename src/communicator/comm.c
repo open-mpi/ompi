@@ -678,13 +678,6 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
 */
 int ompi_comm_free ( ompi_communicator_t **comm )
 {
-
-    /* Release attributes */
-    if (NULL != (*comm)->c_keyhash) {
-        ompi_attr_delete_all ( COMM_ATTR, (*comm), (*comm)->c_keyhash );
-        OBJ_RELEASE((*comm)->c_keyhash);
-    }
-
     /* Release the communicator */
     OBJ_RELEASE ( (*comm) );
 

@@ -32,7 +32,8 @@ int MPI_Attr_delete(MPI_Comm comm, int keyval)
 	}
     }
   
-    ret = ompi_attr_delete(COMM_ATTR, comm, comm->c_keyhash, keyval, 0);
+    ret = ompi_attr_delete(COMM_ATTR, comm, comm->c_keyhash, keyval, 
+                           false, true);
 
     OMPI_ERRHANDLER_RETURN(ret, comm, MPI_ERR_OTHER, FUNC_NAME);  
 }

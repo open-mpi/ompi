@@ -46,27 +46,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_DELETE_ATTR,
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/f77/profile/defines.h"
 #endif
-static const char FUNC_NAME[] = "MPI_Win_delete_attr_f";
+
 
 void mpi_win_delete_attr_f(MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr)
 {
-    MPI_Win c_win = MPI_Win_f2c( *win );
-    int ret, c_err; 
+    MPI_Win c_win = MPI_Win_f2c(*win);
 
-    if (MPI_PARAM_CHECK) {
-        if (MPI_WIN_NULL == c_win) {
-            c_err = OMPI_ERRHANDLER_INVOKE(c_win, MPI_ERR_WIN, 
-					   FUNC_NAME);
-	    *ierr = OMPI_INT_2_FINT(c_err);
-        }
-    }
-  
-    ret = ompi_attr_delete(WIN_ATTR, c_win, c_win->w_keyhash, *win_keyval, 
-                           OMPI_KEYVAL_F77);
-
-    if (MPI_SUCCESS != ret) {
-        OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);  
-    } else {
-        *ierr = MPI_SUCCESS;
-    }
+    *ierr = OMPI_INT_2_FINT(MPI_Win_delete_attr(c_win, 
+                                                OMPI_FINT_2_INT(*win_keyval)
+                                                )); 
 }

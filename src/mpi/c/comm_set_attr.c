@@ -32,6 +32,6 @@ int MPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val)
     }
     
     ret = ompi_attr_set(COMM_ATTR, comm, &comm->c_keyhash, 
-                        comm_keyval, attribute_val, 0);
+                        comm_keyval, attribute_val, false, true);
     OMPI_ERRHANDLER_RETURN(ret, comm, MPI_ERR_OTHER, FUNC_NAME);  
 }
