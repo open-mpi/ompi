@@ -136,6 +136,14 @@ int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer);
  */
 int orte_gpr_replica_release_segment(orte_gpr_replica_segment_t **seg);
 
+/**
+ * Typedef of the orte_gpr_replica_release_segment() function
+ * signature so that it can be invoked via a function pointer for a
+ * unit test.
+ */
+typedef int (*orte_gpr_replica_release_segment_fn_t)
+    (orte_gpr_replica_segment_t **seg);
+
 int orte_gpr_replica_find_containers(int *num_found, orte_gpr_replica_segment_t *seg,
                                      orte_gpr_replica_addr_mode_t addr_mode,
                                      orte_gpr_replica_itag_t *taglist, int num_tags);
@@ -144,6 +152,16 @@ int orte_gpr_replica_create_container(orte_gpr_replica_container_t **cptr,
                                       orte_gpr_replica_segment_t *seg,
                                       int num_itags,
                                       orte_gpr_replica_itag_t *itags);
+/**
+ * Typedef of the orte_gpr_replica_create_container() function
+ * signature so that it can be invoked via a function pointer for a
+ * unit test.
+ */
+typedef int (*orte_gpr_replica_create_container_fn_t)
+    (orte_gpr_replica_container_t **cptr,
+     orte_gpr_replica_segment_t *seg,
+     int num_itags,
+     orte_gpr_replica_itag_t *itags);
 
 int orte_gpr_replica_release_container(orte_gpr_replica_segment_t *seg,
                                        orte_gpr_replica_container_t *cptr);
@@ -153,9 +171,30 @@ int orte_gpr_replica_add_keyval(orte_gpr_replica_itagval_t **ivalptr,
                                 orte_gpr_replica_container_t *cptr,
                                 orte_gpr_keyval_t *kptr);
 
+/**
+ * Typedef of the orte_gpr_replica_add_keyval() function
+ * signature so that it can be invoked via a function pointer for a
+ * unit test.
+ */
+typedef int (*orte_gpr_replica_add_keyval_fn_t)
+    (orte_gpr_replica_itagval_t **ivalptr,
+     orte_gpr_replica_segment_t *seg,
+     orte_gpr_replica_container_t *cptr,
+     orte_gpr_keyval_t *kptr);
+
 int orte_gpr_replica_update_keyval(orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_container_t *cptr,
                                    orte_gpr_keyval_t *kptr);
+
+/**
+ * Typedef of the orte_gpr_replica_update_keyval() function
+ * signature so that it can be invoked via a function pointer for a
+ * unit test.
+ */
+typedef int (*orte_gpr_replica_update_keyval_fn_t)
+    (orte_gpr_replica_segment_t *seg,
+     orte_gpr_replica_container_t *cptr,
+     orte_gpr_keyval_t *kptr);
 
 int orte_gpr_replica_xfer_payload(orte_gpr_value_union_t *dest,
                                   orte_gpr_value_union_t *src,
@@ -167,6 +206,16 @@ int orte_gpr_replica_purge_itag(orte_gpr_replica_segment_t *seg,
 int orte_gpr_replica_search_container(int *cnt, orte_gpr_replica_addr_mode_t addr_mode,
                                       orte_gpr_replica_itag_t *itags, int num_itags,
                                       orte_gpr_replica_container_t *cptr);
+
+/**
+ * Typedef of the orte_gpr_replica_search_container() function
+ * signature so that it can be invoked via a function pointer for a
+ * unit test.
+ */
+typedef int (*orte_gpr_replica_search_container_fn_t)
+    (int *cnt, orte_gpr_replica_addr_mode_t addr_mode,
+     orte_gpr_replica_itag_t *itags, int num_itags,
+     orte_gpr_replica_container_t *cptr);
 
 int orte_gpr_replica_get_value(void *value, orte_gpr_replica_itagval_t *ival);
 
@@ -183,6 +232,18 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t mode,
 				    orte_gpr_replica_itag_t *itags,
 				    int num_itags_entry,
 				    orte_gpr_replica_itag_t *entry_itags);
+
+/**
+ * Typedef of the orte_gpr_replica_check_itag_list() function
+ * signature so that it can be invoked via a function pointer for a
+ * unit test.
+ */
+typedef bool (*orte_gpr_replica_check_itag_list_fn_t)
+    (orte_gpr_replica_addr_mode_t mode,
+     int num_itags_search,
+     orte_gpr_replica_itag_t *itags,
+     int num_itags_entry,
+     orte_gpr_replica_itag_t *entry_itags);
 
 int orte_gpr_replica_copy_itag_list(orte_gpr_replica_itag_t **dest,
                                     orte_gpr_replica_itag_t *src, int num_itags);
