@@ -52,31 +52,42 @@ CONFIG_HEADER = $(top_builddir)/adio/include/romioconf.h
 CONFIG_CLEAN_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 libadio_hfs_la_LIBADD =
-am_libadio_hfs_la_OBJECTS = ad_hfs.lo ad_hfs_close.lo ad_hfs_done.lo \
-	ad_hfs_fcntl.lo ad_hfs_flush.lo ad_hfs_hints.lo \
-	ad_hfs_iread.lo ad_hfs_iwrite.lo ad_hfs_open.lo \
-	ad_hfs_rdcoll.lo ad_hfs_read.lo ad_hfs_resize.lo \
-	ad_hfs_seek.lo ad_hfs_wait.lo ad_hfs_wrcoll.lo ad_hfs_write.lo
+am_libadio_hfs_la_OBJECTS = mca_io_romio_dist_ad_hfs.lo \
+	mca_io_romio_dist_ad_hfs_close.lo \
+	mca_io_romio_dist_ad_hfs_done.lo \
+	mca_io_romio_dist_ad_hfs_fcntl.lo \
+	mca_io_romio_dist_ad_hfs_flush.lo \
+	mca_io_romio_dist_ad_hfs_hints.lo \
+	mca_io_romio_dist_ad_hfs_iread.lo \
+	mca_io_romio_dist_ad_hfs_iwrite.lo \
+	mca_io_romio_dist_ad_hfs_open.lo \
+	mca_io_romio_dist_ad_hfs_rdcoll.lo \
+	mca_io_romio_dist_ad_hfs_read.lo \
+	mca_io_romio_dist_ad_hfs_resize.lo \
+	mca_io_romio_dist_ad_hfs_seek.lo \
+	mca_io_romio_dist_ad_hfs_wait.lo \
+	mca_io_romio_dist_ad_hfs_wrcoll.lo \
+	mca_io_romio_dist_ad_hfs_write.lo
 libadio_hfs_la_OBJECTS = $(am_libadio_hfs_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/adio/include
 depcomp = $(SHELL) $(top_srcdir)/../depcomp
 am__depfiles_maybe = depfiles
-@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/ad_hfs.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_close.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_done.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_fcntl.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_flush.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_hints.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_iread.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_iwrite.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_open.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_rdcoll.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_read.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_resize.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_seek.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_wait.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_wrcoll.Plo \
-@AMDEP_TRUE@	./$(DEPDIR)/ad_hfs_write.Plo
+@AMDEP_TRUE@DEP_FILES = ./$(DEPDIR)/mca_io_romio_dist_ad_hfs.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_close.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_done.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_fcntl.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_flush.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_hints.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_iread.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_iwrite.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_open.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_rdcoll.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_read.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_resize.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_seek.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_wait.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_wrcoll.Plo \
+@AMDEP_TRUE@	./$(DEPDIR)/mca_io_romio_dist_ad_hfs_write.Plo
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) \
@@ -264,26 +275,40 @@ AM_CPPFLAGS = \
         -I$(top_ompi_srcdir)/src \
         -I$(top_ompi_srcdir)/src/include
 
+
+# It is unfortunately necessary to make all the filenames in the ROMIO
+# distribtion confrom to the MCA prefix name rule -- there is at least
+# one or two filename conflicts that potentially create problems when
+# merging everything into onelibmpi.
+
+# In developer's copies, we have the real ROMIO files, and sym links
+# are made.  In distribution tarballs, the sym-linked files turn into
+# real files and the original filenames do not appear.
 noinst_LTLIBRARIES = libadio_hfs.la
 libadio_hfs_la_SOURCES = \
-        ad_hfs.c \
         ad_hfs.h \
-        ad_hfs_close.c \
-        ad_hfs_done.c \
-        ad_hfs_fcntl.c \
-        ad_hfs_flush.c \
-        ad_hfs_hints.c \
-        ad_hfs_iread.c \
-        ad_hfs_iwrite.c \
-        ad_hfs_open.c \
-        ad_hfs_rdcoll.c \
-        ad_hfs_read.c \
-        ad_hfs_resize.c \
-        ad_hfs_seek.c \
-        ad_hfs_wait.c \
-        ad_hfs_wrcoll.c \
-        ad_hfs_write.c
+        mca_io_romio_dist_ad_hfs.c \
+        mca_io_romio_dist_ad_hfs_close.c \
+        mca_io_romio_dist_ad_hfs_done.c \
+        mca_io_romio_dist_ad_hfs_fcntl.c \
+        mca_io_romio_dist_ad_hfs_flush.c \
+        mca_io_romio_dist_ad_hfs_hints.c \
+        mca_io_romio_dist_ad_hfs_iread.c \
+        mca_io_romio_dist_ad_hfs_iwrite.c \
+        mca_io_romio_dist_ad_hfs_open.c \
+        mca_io_romio_dist_ad_hfs_rdcoll.c \
+        mca_io_romio_dist_ad_hfs_read.c \
+        mca_io_romio_dist_ad_hfs_resize.c \
+        mca_io_romio_dist_ad_hfs_seek.c \
+        mca_io_romio_dist_ad_hfs_wait.c \
+        mca_io_romio_dist_ad_hfs_wrcoll.c \
+        mca_io_romio_dist_ad_hfs_write.c
 
+
+#
+# Sym link the sources to conform to the MCA prefix name rule
+#
+dir = $(top_srcdir)/adio/ad_hfs
 all: all-am
 
 .SUFFIXES:
@@ -335,22 +360,22 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_close.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_done.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_fcntl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_flush.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_hints.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_iread.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_iwrite.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_open.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_rdcoll.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_read.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_resize.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_seek.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_wait.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_wrcoll.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ad_hfs_write.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_close.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_done.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_fcntl.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_flush.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_hints.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_iread.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_iwrite.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_open.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_rdcoll.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_read.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_resize.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_seek.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_wait.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_wrcoll.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mca_io_romio_dist_ad_hfs_write.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	if $(COMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -554,6 +579,11 @@ uninstall-am: uninstall-info-am
 
 
 include $(top_ompi_srcdir)/config/Makefile.options
+$(libadio_hfs_la_SOURCES):
+	if test ! -r $@ ; then \
+		pname=`echo $@ | cut -b '19-'` ; \
+		ln -s $(dir)/$$pname $@ ; \
+	fi
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

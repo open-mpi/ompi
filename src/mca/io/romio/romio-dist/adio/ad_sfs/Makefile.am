@@ -10,22 +10,41 @@ AM_CPPFLAGS = \
         -I$(top_ompi_srcdir)/src \
         -I$(top_ompi_srcdir)/src/include
 
+# It is unfortunately necessary to make all the filenames in the ROMIO
+# distribtion confrom to the MCA prefix name rule -- there is at least
+# one or two filename conflicts that potentially create problems when
+# merging everything into onelibmpi.
+
+# In developer's copies, we have the real ROMIO files, and sym links
+# are made.  In distribution tarballs, the sym-linked files turn into
+# real files and the original filenames do not appear.
+
 noinst_LTLIBRARIES = libadio_sfs.la
 libadio_sfs_la_SOURCES = \
-        ad_sfs.c \
+        mca_io_romio_dist_ad_sfs.c \
         ad_sfs.h \
-        ad_sfs_close.c \
-        ad_sfs_done.c \
-        ad_sfs_fcntl.c \
-        ad_sfs_flush.c \
-        ad_sfs_hints.c \
-        ad_sfs_iread.c \
-        ad_sfs_iwrite.c \
-        ad_sfs_open.c \
-        ad_sfs_rdcoll.c \
-        ad_sfs_read.c \
-        ad_sfs_resize.c \
-        ad_sfs_seek.c \
-        ad_sfs_wait.c \
-        ad_sfs_wrcoll.c \
-        ad_sfs_write.c
+        mca_io_romio_dist_ad_sfs_close.c \
+        mca_io_romio_dist_ad_sfs_done.c \
+        mca_io_romio_dist_ad_sfs_fcntl.c \
+        mca_io_romio_dist_ad_sfs_flush.c \
+        mca_io_romio_dist_ad_sfs_hints.c \
+        mca_io_romio_dist_ad_sfs_iread.c \
+        mca_io_romio_dist_ad_sfs_iwrite.c \
+        mca_io_romio_dist_ad_sfs_open.c \
+        mca_io_romio_dist_ad_sfs_rdcoll.c \
+        mca_io_romio_dist_ad_sfs_read.c \
+        mca_io_romio_dist_ad_sfs_resize.c \
+        mca_io_romio_dist_ad_sfs_seek.c \
+        mca_io_romio_dist_ad_sfs_wait.c \
+        mca_io_romio_dist_ad_sfs_wrcoll.c \
+        mca_io_romio_dist_ad_sfs_write.c
+
+#
+# Sym link the sources to conform to the MCA prefix name rule
+#
+dir=$(top_srcdir)/adio/ad_sfs
+$(libadio_sfs_la_SOURCES):
+	if test ! -r $@ ; then \
+		pname=`echo $@ | cut -b '19-'` ; \
+		ln -s $(dir)/$$pname $@ ; \
+	fi
