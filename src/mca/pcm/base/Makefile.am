@@ -24,7 +24,7 @@ AM_CPPFLAGS = -I$(top_builddir)/src
 
 headers = \
         base.h \
-	base_job_track.h \
+	base_data_store.h \
 	base_kill_track.h
 
 # Library
@@ -33,11 +33,11 @@ libmca_pcm_base_la_SOURCES = \
         $(headers) \
         pcm_base_close.c \
 	pcm_base_comm.c \
-	pcm_base_job_track.c \
-	pcm_base_kill_track.c \
         pcm_base_open.c \
         pcm_base_select.c \
-	pcm_base_util.c
+	pcm_base_util.c \
+	pcm_base_data_store.c \
+	pcm_base_kill_track.c
 
 # Conditionally install the header files
 

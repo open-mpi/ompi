@@ -129,6 +129,7 @@ main(int argc, char *argv[])
     int status;
     fd_set read_fds, ex_fds;
     int num_running_procs = 0;
+    bool continue_running = true;
 
     /* make ourselves an OMPI process */
     ret = ompi_init(argc, argv);
@@ -290,7 +291,7 @@ main(int argc, char *argv[])
     /* if we want qos, hang around until the first process exits.  We
        can clean the rest up later if we want */
     if (opts.high_qos) {
-        while (num_running_procs > 0) {
+        while (continue_running && num_running_procs > 0) {
             int max_fd = 0;
             FD_ZERO(&read_fds);
             FD_ZERO(&ex_fds);
@@ -342,7 +343,7 @@ main(int argc, char *argv[])
                         num_running_procs--;
                         if (! (WIFEXITED(status) && 
                                WEXITSTATUS(status) == 0)) {
-                            break;
+                            continue_running = false;
                         }
                     }
                 }

@@ -76,6 +76,11 @@
 #include "mca/ns/ns.h"
 #include "include/types.h"
 
+#define MCA_PCM_BASE_KILL_PROC 0x01
+#define MCA_PCM_BASE_KILL_JOB  0x02
+#define MCA_PCM_BASE_TERM_PROC 0x04
+#define MCA_PCM_BASE_TERM_JOB  0x08
+
 /*
  * MCA component management functions
  */
@@ -231,27 +236,9 @@ typedef int
  * processes (0 will be same as a "kill <pid>"
  */
 typedef int
-(*mca_pcm_base_kill_proc_fn_t)(struct mca_pcm_base_module_1_0_0_t* me,
-                               ompi_process_name_t *name, int flags);
-
-
-/**
- * Kill all the processes in a job. This will probably find out all
- * the processes in the job by contacting the registry and then call
- * mca_pcm_kill_process for each process in the job (for a cell)
- *
- * @param me (IN)    Pointer to the module struct
- * @param jobid (IN) Job id 
- *
- * @return Error code
- *
- * @warning flags is currently ignored, but should be set to 0 for
- * future compatibility.  Will be used to specify how to kill
- * processes (0 will be same as a "kill <pid>"
- */
-typedef int
-(*mca_pcm_base_kill_job_fn_t)(struct mca_pcm_base_module_1_0_0_t* me,
-                              mca_ns_base_jobid_t jobid, int flags);
+(*mca_pcm_base_kill_fn_t)(struct mca_pcm_base_module_1_0_0_t* me,
+			  int mode_flag, ompi_process_name_t *name, 
+			  int signal, int flags);
 
 
 /**
@@ -282,8 +269,7 @@ typedef int
 struct mca_pcm_base_module_1_0_0_t {
     mca_pcm_base_allocate_resources_fn_t pcm_allocate_resources;
     mca_pcm_base_spawn_procs_fn_t pcm_spawn_procs;
-    mca_pcm_base_kill_proc_fn_t pcm_kill_proc;
-    mca_pcm_base_kill_job_fn_t pcm_kill_job;
+    mca_pcm_base_kill_fn_t pcm_kill;
     mca_pcm_base_deallocate_resources_fn_t pcm_deallocate_resources;
     mca_pcm_base_component_finalize_fn_t pcm_finalize;
 };

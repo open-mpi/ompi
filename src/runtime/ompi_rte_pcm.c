@@ -151,22 +151,64 @@ ompi_rte_spawn_procs(ompi_rte_spawn_handle_t *handle,
 
 
 int
-ompi_rte_kill_proc(ompi_process_name_t *name, int signal, 
-                   int errorcode, int flags)
+ompi_rte_kill_proc(ompi_process_name_t *name, int signal, int flags)
 {
-    return mca_pcm_base_kill_send_proc_msg(*name, signal, errorcode, flags);
+    if (NULL == name) return OMPI_ERR_BAD_PARAM;
+
+    return mca_pcm_base_kill(MCA_PCM_BASE_KILL_PROC, name, signal, flags);
 }
 
 
 int
-ompi_rte_kill_job(mca_ns_base_jobid_t jobid, int signal, 
-                  int errorcode, int flags)
+ompi_rte_kill_job(mca_ns_base_jobid_t jobid, int signal, int flags)
 {
+    int ret;
+    ompi_process_name_t *job_name;
+
     if (jobid < 0 || jobid == MCA_NS_BASE_JOBID_MAX) {
         return OMPI_ERR_BAD_PARAM;
     }
 
-    return mca_pcm_base_kill_send_job_msg(jobid, signal, errorcode, flags);
+    job_name = ompi_name_server.create_process_name(MCA_NS_BASE_CELLID_MAX,
+                                                    jobid,
+                                                    MCA_NS_BASE_VPID_MAX);
+    
+    ret = mca_pcm_base_kill(MCA_PCM_BASE_KILL_JOB, job_name, signal, flags);
+
+    ompi_name_server.free_name(job_name);
+
+    return ret;
+}
+
+
+int
+ompi_rte_terminate_proc(ompi_process_name_t *name, int flags)
+{
+    if (NULL == name) return OMPI_ERR_BAD_PARAM;
+
+    return mca_pcm_base_kill(MCA_PCM_BASE_TERM_PROC, name, 0, flags);
+}
+
+
+int
+ompi_rte_terminate_job(mca_ns_base_jobid_t jobid, int flags)
+{
+    int ret;
+    ompi_process_name_t *job_name;
+
+    if (jobid < 0 || jobid == MCA_NS_BASE_JOBID_MAX) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    job_name = ompi_name_server.create_process_name(MCA_NS_BASE_CELLID_MAX,
+                                                    jobid,
+                                                    MCA_NS_BASE_VPID_MAX);
+    
+    ret = mca_pcm_base_kill(MCA_PCM_BASE_TERM_JOB, job_name, 0, flags);
+
+    ompi_name_server.free_name(job_name);
+
+    return ret;
 }
 
 

@@ -366,37 +366,65 @@ OMPI_DECLSPEC	 int ompi_rte_monitor_procs_registered(void);
 OMPI_DECLSPEC    int ompi_rte_monitor_procs_unregistered(void);
 
     /**
-     * Kill a specific process in this cell
+     * Send an asynchronous message (signal in unix land) to a given process
      *
      * @param process_name Which process needs to be killed.
+     * @param signal Integer value to send to process
      * @return Error code
      *
      * @warning flags is currently ignored, but should be set to 0 for
-     * future compatibility.  Will be used to specify how to kill
-     * processes (0 will be same as a "kill <pid>"
+     * future compatibility.
      */
     OMPI_DECLSPEC int ompi_rte_kill_proc(ompi_process_name_t *name, 
                                          int signal, 
-                                         int errorcode, 
                                          int flags);
 
 
     /**
-     * Kill all the processes in a job. This will probably find out all
-     * the processes in the job by contacting the registry and then call
-     * mca_pcm_kill_process for each process in the job (for a cell)
+     * Send an asynchronous message (signal in unix land) to a given
+     * jobid
      *
-     * @param jobid Job id 
+     * @param jobid Jobid to be signaled
+     * @param signal Integer value to send to process
      * @return Error code
      *
      * @warning flags is currently ignored, but should be set to 0 for
-     * future compatibility.  Will be used to specify how to kill
-     * processes (0 will be same as a "kill <pid>"
+     * future compatibility.
      */
     OMPI_DECLSPEC int ompi_rte_kill_job(mca_ns_base_jobid_t jobid, 
                                         int signal,
-                                        int errorcode,
                                         int flags);
+
+    /**
+     * Terminate a process
+     *
+     * Terminate a process in a nice fashion (In UNIX-land, send a
+     * SIGTERM, if that doesn't work, send SIGKILL).
+     *
+     * @param process_name Process to terminate
+     * @return Error code
+     *
+     * @warning flags is currently ignored, but should be set to 0 for
+     * future compatibility.
+     */
+    OMPI_DECLSPEC int ompi_rte_terminate_proc(ompi_process_name_t *name, 
+                                         int flags);
+
+
+    /**
+     * Terminate a job
+     *
+     * Terminate a job in a nice fashion (In UNIX-land, send a
+     * SIGTERM, if that doesn't work, send SIGKILL).
+     *
+     * @param jobid Job id to terminate
+     * @return Error code
+     *
+     * @warning flags is currently ignored, but should be set to 0 for
+     * future compatibility.
+     */
+    OMPI_DECLSPEC int ompi_rte_terminate_job(mca_ns_base_jobid_t jobid, 
+                                             int flags);
 
 
     /**
