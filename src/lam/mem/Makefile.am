@@ -1,4 +1,6 @@
 #
+# $HEADER$
+#
 # Copyright 2002-2003. The Regents of the University of California. This material
 # was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
 # National Laboratory, which is operated by the University of California for
@@ -26,13 +28,21 @@
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Lesser General Public License for more details.
 #
-                                                                                                     
+
 include $(top_srcdir)/config/Makefile.options
 
 lib_LTLIBRARIES	= libmem.la
 
 libmem_la_SOURCES = \
 	allocator.c \
+	allocator.h \
+	free_list.c \
+	free_list.h \
+	mem_globals.c \
+	mem_globals.h \
 	mem_pool.c \
+	mem_pool.h \
 	seg_list.c \
-	sharedmem_util.c
+	seg_list.h \
+	sharedmem_util.c \
+	sharedmem_util.h
