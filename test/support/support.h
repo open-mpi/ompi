@@ -18,6 +18,8 @@ void test_failure(char *a);
 int test_verify_str(const char *expected_result, const char *test_result);
 int test_verify_int(int expected_result, int test_result);
 int test_finalize(void);
+void test_comment (char* userstr);
+
 
 
 /*

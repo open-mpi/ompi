@@ -120,3 +120,10 @@ int test_finalize(void)
 
     return return_value;
 }
+
+
+/* note this is for additional output that does NOT go to STDERR but STDOUT */
+void test_comment (char* userstr)
+{
+	fprintf(stdout, "%s:%s\n", ompi_description, userstr);
+}
