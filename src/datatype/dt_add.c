@@ -79,8 +79,8 @@ int lam_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, long
       pLast->extent = extent;
       pdtBase->desc.used++;
       pdtBase->btypes[pdtAdd->id] += count;
-      pLast->flags  = pdtAdd->flags & ~(DT_FLAG_FOREVER | DT_FLAG_COMMITED | DT_FLAG_CONTIGUOUS);
-      if( extent == pdtAdd->size )
+      pLast->flags  = pdtAdd->flags ^ (DT_FLAG_FOREVER | DT_FLAG_COMMITED);
+      if( extent != pdtAdd->size )
          pLast->flags |= DT_FLAG_CONTIGUOUS;
    } else {
       /* now we add a complex datatype */
@@ -130,6 +130,13 @@ int lam_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, long
       }
       /* should I add some space until the extent of this datatype ? */
    }
+
+   /* let's add a fake element at the end just to avoid useless comparaisons
+    * in pack/unpack functions.
+    */
+   pLast++;
+   pLast->type = 0;
+   pLast->flags = 0;
 
    pdtBase->size += count * pdtAdd->size;
    pdtBase->true_lb = LMIN( pdtBase->true_lb, pdtAdd->true_lb + disp );

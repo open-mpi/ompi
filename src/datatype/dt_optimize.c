@@ -12,7 +12,7 @@
 /*   printf( "save in %s:%d at %p DT_BYTE disp %ld count %d\n", __FILE__, __LINE__, (PELEM), (DISP), (COUNT) ); \ */
 #define SAVE_DESC( PELEM, DISP, COUNT ) \
 do { \
-  (PELEM)->flags  = DT_FLAG_BASIC; \
+  (PELEM)->flags  = DT_FLAG_BASIC | DT_FLAG_DATA; \
   (PELEM)->type   = DT_BYTE; \
   (PELEM)->count  = (COUNT); \
   (PELEM)->disp   = (DISP); \
@@ -154,4 +154,137 @@ int lam_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDe
    /* cleanup the stack */
    pTypeDesc->used = nbElems;
    return 0;
+}
+
+#define PRINT_MEMCPY( DST, SRC, LENGTH ) \
+{ \
+  printf( "%5d: memcpy dst = %p src %p length %ld bytes (so far %d)[%d]\n", \
+          __index++, (DST), (SRC), (long)(LENGTH), __sofar, __LINE__ ); \
+  __sofar += (LENGTH); \
+}
+
+static int lam_ddt_unroll( dt_desc_t* pData, int count )
+{
+   dt_stack_t* pStack;   /* pointer to the position on the stack */
+   int pos_desc;         /* actual position in the description of the derived datatype */
+   int type;             /* type at current position */
+   int i;                /* index for basic elements with extent */
+   int stack_pos = 0;    /* position on the stack */
+   long lastDisp = 0, lastLength = 0;
+   char* pDestBuf;
+   int bConverted = 0, __index = 0, __sofar = 0;
+   dt_elem_desc_t* pElems;
+
+   pDestBuf = NULL;
+
+   if( pData->flags & DT_FLAG_CONTIGUOUS ) {
+      long extent = pData->ub - pData->lb;
+      char* pSrc = (char*)pData->true_lb;
+
+      type = count * pData->size;
+      if( pData->size == extent /* true extent at this point */ ) {
+         /* we can do it with just one memcpy */
+         PRINT_MEMCPY( pDestBuf, pSrc, pData->size * count );
+         bConverted += (pData->size * count);
+      } else {
+         char* pSrcBuf = (char*)pData->true_lb;
+         long extent = pData->ub - pData->lb;
+         for( pos_desc = 0; pos_desc < count; pos_desc++ ) {
+            PRINT_MEMCPY( pDestBuf, pSrcBuf, pData->size );
+            pSrcBuf += extent;
+            pDestBuf += pData->size;
+         }
+         bConverted += type;
+      }
+      return (bConverted == (pData->size * count));
+   }
+   pStack = alloca( sizeof(dt_stack_t) * pData->btypes[DT_LOOP] );
+   pStack->count = count;
+   pStack->index = -1;
+   pStack->disp = 0;
+   pos_desc  = 0;
+
+   if( pData->opt_desc.desc != NULL ) {
+      pElems = pData->opt_desc.desc;
+      pStack->end_loop = pData->opt_desc.used;
+   } else {
+      pElems = pData->desc.desc;
+      pStack->end_loop = pData->desc.used;
+   }
+
+   DUMP_STACK( pStack, stack_pos, pElems, "starting" );
+   DUMP( "remember position on stack %d last_elem at %d\n", stack_pos, pos_desc );
+   DUMP( "top stack info {index = %d, count = %d}\n", 
+         pStack->index, pStack->count );
+  next_loop:
+   while( pos_desc <= pStack->end_loop ) {
+      if( pos_desc == pStack->end_loop ) { /* end of the current loop */
+         if( --(pStack->count) == 0 ) { /* end of loop */
+            pStack--;
+            if( --stack_pos == -1 ) break;
+         } else {
+            pos_desc = pStack->index;
+            if( pos_desc == -1 )
+               pStack->disp += (pData->ub - pData->lb);
+            else
+               pStack->disp += pElems[pos_desc].extent;
+         }
+         pos_desc++;
+         goto next_loop;
+      }
+      if( pElems[pos_desc].type == DT_LOOP ) {
+         if( pElems[pos_desc].flags & DT_FLAG_CONTIGUOUS ) {
+            dt_elem_desc_t* pLast = &( pElems[pos_desc + pElems[pos_desc].disp]);
+            if( (lastDisp + lastLength) == (pStack->disp + pElems[pos_desc+1].disp) ) {
+               PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength + pLast->extent );
+               lastDisp = pStack->disp + pElems[pos_desc+1].disp + pLast->extent;
+               i = 1;
+            } else {
+               PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength );
+               lastDisp = pStack->disp + pElems[pos_desc + 1].disp;
+               i = 0;
+            }
+            lastLength = pLast->extent;
+            for( ; i < (pElems[pos_desc].count - 1); i++ ) {
+               PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength );
+               pDestBuf += pLast->extent;
+               lastDisp += pElems[pos_desc].extent;
+            }
+            pos_desc += pElems[pos_desc].disp + 1;
+            goto next_loop;
+         } else {
+            do {
+               PUSH_STACK( pStack, stack_pos, pos_desc, pElems[pos_desc].count,
+                           pStack->disp, pos_desc + pElems[pos_desc].disp );
+               pos_desc++;
+            } while( pElems[pos_desc].type == DT_LOOP ); /* let's start another loop */
+         }
+      }
+      /* now here we have a basic datatype */
+      type = pElems[pos_desc].type;
+      if( (lastDisp + lastLength) == (pStack->disp + pElems[pos_desc].disp) ) {
+         lastLength += pElems[pos_desc].count * basicDatatypes[type].size;
+      } else {
+         PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength );
+         pDestBuf += lastLength;
+         bConverted += lastLength;
+         lastDisp = pStack->disp + pElems[pos_desc].disp;
+         lastLength = pElems[pos_desc].count * basicDatatypes[type].size;
+      }
+      pos_desc++;  /* advance to the next data */
+   }
+   PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength );
+   return 0;
+}
+
+int lam_ddt_commit( dt_desc_t** data )
+{
+    dt_desc_t* pData = (dt_desc_t*)*data;
+
+    if( pData->flags & DT_FLAG_COMMITED ) return -1;
+    pData->flags |= DT_FLAG_COMMITED;
+    /* If the data is contiguous is useless to generate an optimized version. */
+    if( pData->size != (pData->true_ub - pData->true_lb) )
+        (void)lam_ddt_optimize_short( pData, 1, &(pData->opt_desc) );
+    return 0;
 }

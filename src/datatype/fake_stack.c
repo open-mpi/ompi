@@ -31,6 +31,33 @@ int lam_create_stack_with_pos( lam_convertor_t* pConvertor,
     int* remoteLength;
     int loop_length;
 
+    if( starting_point == 0 ) {
+        dt_elem_desc_t* pElems;
+        
+        pConvertor->stack_pos = 1;
+        pConvertor->pStack[0].index = 0;
+        pConvertor->pStack[0].count = pConvertor->count;
+        pConvertor->pStack[0].disp  = 0;
+        /* first here we should select which data representation will be used for
+         * this operation: normal one or the optimized version ? */
+        if( pData->opt_desc.used > 0 ) {
+            pElems = pData->opt_desc.desc;
+            pConvertor->pStack[0].end_loop = pData->opt_desc.used;
+        } else {
+            pElems = pData->desc.desc;
+            pConvertor->pStack[0].end_loop = pData->desc.used;
+        }
+        pConvertor->pStack[1].index = 0;
+        pConvertor->pStack[1].count = pElems->count;
+        pConvertor->pStack[1].disp = pElems->disp;
+        pConvertor->pStack[1].end_loop = pConvertor->pStack[0].end_loop;
+        return 0;
+    }
+    /* if the convertor continue from the last position
+     * there is nothing to do.
+     */
+    if( pConvertor->bConverted != starting_point ) return 0;
+
     remoteLength = (int*)alloca( sizeof(int) * pConvertor->pDesc->btypes[DT_LOOP] );
     pStack = pConvertor->pStack;
     pStack->count = pConvertor->count;
