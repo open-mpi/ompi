@@ -207,7 +207,7 @@ typedef struct ompi_ptl_elan_comp_queue_t ompi_ptl_elan_comp_queue_t;
     /* 8 byte aligned */                                     \
     volatile E4_uint64 comp_doneWord;                        \
     /* 8 byte aligned */                                     \
-    E4_Event32        *comp_event; /* E4_Event plus pad */   \
+    E4_Event          *comp_event; /* E4_Event plus pad */   \
     /* 8 byte aligned */                                     \
     E4_Addr           *comp_buff;                            \
     E4_Addr           *comp_pad;                             \
