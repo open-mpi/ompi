@@ -44,6 +44,18 @@ if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     unset add
 fi
 
+# See if this version of gcc allows -finline-functions
+if test "$GCC" = "yes"; then
+    CXXFLAGS_orig="$CXXFLAGS"
+    CXXFLAGS="$CXXFLAGS -finline-functions"
+    add=
+    AC_TRY_COMPILE([], [], add=" -finline-functions")
+    CXXFLAGS="$CXXFLAGS_orig$add"
+    LAM_UNIQ(CXXFLAGS)
+    AC_MSG_WARN([$add has been added to CXXFLAGS])
+    unset add
+fi
+
 # Check for special things due to C++ exceptions
 
 WRAPPER_EXTRA_CFLAGS=
