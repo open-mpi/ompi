@@ -13,7 +13,6 @@
 #include "ompi_config.h"
 
 #include "include/constants.h"
-#include "runtime/runtime.h"
 #include "mpi.h"
 #include "event/event.h"
 #include "group/group.h"

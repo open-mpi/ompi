@@ -66,7 +66,9 @@ main(int argc, char *argv[])
     char *contact_file, *filenm, *segment;
     ompi_rte_spawn_handle_t *spawn_handle;
     ompi_registry_notify_id_t rc_tag;
-
+    ompi_rte_process_status_t *proc_status;
+    ompi_list_t *status_list;
+    ompi_registry_value_t *value;
     /*
      * Intialize our Open MPI environment
      */
@@ -323,6 +325,7 @@ main(int argc, char *argv[])
         ompi_show_help("help-mpirun.txt", "mpirun:proc-reg-failed", 
                        true, argv[0], ret);
 	ompi_rte_job_shutdown(new_jobid);
+	return -1;
     } else {
 	ompi_rte_job_startup(new_jobid);
 	ompi_rte_monitor_procs_unregistered();
@@ -331,6 +334,21 @@ main(int argc, char *argv[])
     /*
      *   - ompi_rte_kill_job()
      */
+
+    /*
+     * Determine if the processes all exited normally - if not, flag the output of mpirun
+     */
+    ret = 0;
+    status_list = ompi_registry.get(OMPI_REGISTRY_OR, segment, NULL);
+    while (NULL != (value = (ompi_registry_value_t*)ompi_list_remove_first(status_list))) {
+	proc_status = ompi_rte_unpack_process_status(value);
+	if (OMPI_PROC_TERMINATING != proc_status->status_key) {
+	    ret = -1;
+	}
+	if (0 != proc_status->exit_code) {
+	    ret = proc_status->exit_code;
+	}
+    }
 
     /*
      * Clean up
@@ -353,6 +371,6 @@ main(int argc, char *argv[])
     ompi_finalize();
 
     OBJ_DESTRUCT(&schedlist);
-    return 0;
+    return ret;
 }
 
