@@ -14,7 +14,7 @@
 #include "mca/ns/base/base.h"
 #include "mca/gpr/gpr.h"
 #include "mca/gpr/base/base.h"
-
+#include "runtime/runtime.h"
 
 /*
  * Private functions
@@ -63,7 +63,7 @@ int ompi_attr_create_predefined(void)
 
     /* Set some default values */
 
-    attr_appnum = (int) ompi_name_server.get_jobid(ompi_process_info.name);
+    attr_appnum = (int) ompi_name_server.get_jobid(ompi_rte_get_self());
 
     /* Query the registry to find out how many CPUs there will be.
        This will only return a non-empty list in a persistent

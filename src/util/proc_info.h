@@ -35,7 +35,6 @@ struct ompi_proc_info_t {
 			    * called at least once so fields have valid values
 			    */
     pid_t pid;             /**< Local process ID for this process */
-    ompi_process_name_t *name;  /**< Process name structure */
     bool seed;             /**< Indicate whether or not this is seed daemon */
     ompi_process_name_t *ns_replica;       /**< Name of my name server replica (NULL=>me) */
     ompi_process_name_t *gpr_replica;      /**< Name of my registry replica (NULL=>me) */

@@ -42,7 +42,7 @@ int MPI_Abort(MPI_Comm comm, int errorcode)
        actually loop over ompi_rte_kill_proc() to only kill the procs
        in comm, and additionally to somehow use errorcode. */
 
-    jobid = ompi_name_server.get_jobid(ompi_process_info.name);
+    jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
     ompi_rte_kill_job(jobid, 0);
 
     /* If we return from this, then the selected PCM was unable to

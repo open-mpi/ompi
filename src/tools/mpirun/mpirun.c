@@ -166,8 +166,8 @@ main(int argc, char *argv[])
 
 	if (OMPI_SUCCESS != (ret = ompi_write_universe_setup_file(contact_file))) {
 	    if (ompi_rte_debug_flag) {
-		ompi_output(0, "[%d,%d,%d] ompid: couldn't write setup file", ompi_process_info.name->cellid,
-			    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+		ompi_output(0, "[%d,%d,%d] ompid: couldn't write setup file", ompi_rte_get_self()->cellid,
+			    ompi_rte_get_self()->jobid, ompi_rte_get_self()->vpid);
 	    }
 	}
     }

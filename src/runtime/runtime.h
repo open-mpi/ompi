@@ -36,22 +36,19 @@
 /** Spawn constraint - require ability to launch daemons.  The
     selected spawn system must be capable of starting daemon process.
     Setting this flag will result in a spawn service that does not
-    provide process monitoring or standard I/O forwarding.  The caller
-    may exit before all children are cleaned up, but
-    OMPI_RTE_SPAWN_EARLY_EXIT is not implied because there is no
-    expectation of process monitoring. */
+    neccessarily provide process monitoring or standard I/O
+    forwarding.  The calling process may exit before all children have
+    exited. */
 #define OMPI_RTE_SPAWN_DAEMON     0x0002
 /** Spawn constraint - require quality of service support.  The
     selected spawn system must provide I/O forwarding, quick process
     shutdown, and process status monitoring. */
 #define OMPI_RTE_SPAWN_HIGH_QOS   0x0004
 /** Spawn constraint - caller is an MPI process.  The caller is an MPI
-    application (has called MPI_Init).  Implies
-    OMPI_RTE_SPAWN_EARLY_EXIT */
-#define OMPI_RTE_SPAWN_FROM_MPI   0x0018
-/** Spawn constraint - caller may exit before child.  The caller may
-    exit before children have exited.  */
-#define OMPI_RTE_SPAWN_EARLY_EXIT 0x0010
+    application (has called MPI_Init).  This should be used only for
+    MPI_COMM_SPAWN and MPI_COMM_SPAWN_MULTIPLE.  The calling process
+    will follow the semantics of the MPI_COMM_SPAWN_* functions. */
+#define OMPI_RTE_SPAWN_FROM_MPI   0x0008
 
 #ifdef __cplusplus
 extern "C" {
