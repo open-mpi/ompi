@@ -301,7 +301,7 @@ static int lam_free_lists_mem_pool_init(lam_free_lists_t *flist,
             STATIC_INIT(flist->fl_pool, &shmem_pool_cls);
     } else {
         /* process private memory allocation */
-        flist->fl_pool = NEW(lam_mem_pool_t, &mem_pool_cls);
+        flist->fl_pool = OBJ_CREATE(lam_mem_pool_t, &mem_pool_cls);
     }
 
     err = lam_mp_init_with(
