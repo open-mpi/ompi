@@ -31,22 +31,28 @@ int orte_pls_base_close(void)
 
     /* Finalize all available modules */
 
-    while (NULL != 
-           (item = ompi_list_remove_first(&orte_pls_base.pls_available))) {
-        orte_pls_base_cmp_t* cmp = (orte_pls_base_cmp_t*) item;
-        ompi_output(orte_pls_base.pls_output,
-                    "orte:base:close: finalizing module %s",
-                    cmp->component->pls_version.mca_component_name);
-        if (NULL != cmp->module->finalize) {
-            cmp->module->finalize();
+    if (orte_pls_base.pls_available_valid) {
+        while (NULL != 
+               (item = ompi_list_remove_first(&orte_pls_base.pls_available))) {
+            orte_pls_base_cmp_t* cmp = (orte_pls_base_cmp_t*) item;
+            ompi_output(orte_pls_base.pls_output,
+                        "orte:base:close: finalizing module %s",
+                        cmp->component->pls_version.mca_component_name);
+            if (NULL != cmp->module->finalize) {
+                cmp->module->finalize();
+            }
+            OBJ_RELEASE(cmp);
         }
-        OBJ_RELEASE(cmp);
     }
+    orte_pls_base.pls_available_valid = false;
 
     /* Close all remaining open components */
 
-    mca_base_components_close(orte_pls_base.pls_output, 
-                              &orte_pls_base.pls_opened, NULL);
+    if (orte_pls_base.pls_opened_valid) {
+        mca_base_components_close(orte_pls_base.pls_output, 
+                                  &orte_pls_base.pls_opened, NULL);
+    }
+    orte_pls_base.pls_opened_valid = false;
 
     return ORTE_SUCCESS;
 }
