@@ -47,23 +47,22 @@ WRAPPER_EXTRA_FFLAGS=
 WRAPPER_EXTRA_CXXFLAGS=
 WRAPPER_EXTRA_LDFLAGS=
 WRAPPER_EXTRA_LIBS=
-WANT_CXXEXCEPTIONS=no
-HAVE_CXXEXCEPTIONS=0
+ENABLE_CXX_EXCEPTIONS=no
+HAVE_CXX_EXCEPTIONS=0
 AC_ARG_ENABLE(cxx-exceptions, 
   AC_HELP_STRING([--enable-cxx-exceptions],
 		 [enable support for C++ exceptions]),
-  [WANT_CXXEXCEPTIONS="$withval"])
+  [ENABLE_CXX_EXCEPTIONS="$enableval"])
 
 AC_MSG_CHECKING([if want C++ exception handling])
-AC_MSG_RESULT([$enable_cxx_exceptions])
-if test "$enable_cxx_exceptions" = "yes"; then
+AC_MSG_RESULT([$ENABLE_CXX_EXCEPTIONS])
+if test "$ENABLE_CXX_EXCEPTIONS" = "yes"; then
     # config/cxx_have_exceptions.m4
-    AC_MSG_ERROR([Yell at Jeff to finish this section])
     LAM_CXX_HAVE_EXCEPTIONS
     # config/cxx_find_exception_flags.m4
     LAM_CXX_FIND_EXCEPTION_FLAGS
     if test "$LAM_CXX_EXCEPTIONS" = "1"; then
-	HAVE_CXXEXCEPTIONS=1
+	HAVE_CXX_EXCEPTIONS=1
 	CFLAGS="$CFLAGS $LAM_CXX_EXCEPTIONS_CXXFLAGS"
 	FFLAGS="$FFLAGS $LAM_CXX_EXCEPTIONS_CXXFLAGS"
 	CXXFLAGS="$CXXFLAGS $LAM_CXX_EXCEPTIONS_CXXFLAGS"
@@ -74,7 +73,7 @@ if test "$enable_cxx_exceptions" = "yes"; then
 	WRAPPER_EXTRA_CXXFLAGS="$LAM_CXX_EXCEPTIONS_CXXFLAGS"
     fi
 fi
-AC_DEFINE_UNQUOTED(LAM_HAVE_CXX_EXCEPTION_SUPPORT, $HAVE_CXXEXCEPTIONS,
+AC_DEFINE_UNQUOTED(LAM_HAVE_CXX_EXCEPTION_SUPPORT, $HAVE_CXX_EXCEPTIONS,
     [Whether or not we have compiled with C++ exceptions support])
 
 # Find some more characteristics of the C++ compiler
@@ -91,12 +90,13 @@ case "$host" in
 	AC_MSG_WARN([*** You will probably have problems compiling the MPI 2])
 	AC_MSG_WARN([*** C++ bindings with the HP-UX CC compiler.  You should])
 	AC_MSG_WARN([*** probably be using the aCC compiler.  Re-run configure])
-	AC_MSG_WARN([*** with "--with-cxx=aCC".])
+	AC_MSG_WARN([*** with the environment variable "CXX=aCC".])
     fi
     ;;
 esac
 
-# Same rationale for g++ as with gcc, above.
+# Same rationale for g++ as with gcc in LAM_SETUP_CC.
+
 if test "$GXX" = yes; then
     OPTFLAGS="-O3"
 else
