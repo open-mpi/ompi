@@ -255,7 +255,7 @@ int main(int argc, char **argv)
 	    ompi_process_info.my_universe = strdup(ompi_universe.name);
 
 #if 0
-	    if (OMPI_SUCCESS != daemon_init(ompi_process_info.universe_session_dir)) {
+	    if (OMPI_SUCCESS != ompi_daemon_init(ompi_process_info.universe_session_dir)) {
 		fprintf(stderr, "could not convert to daemon - please report error to bugs@open-mpi.org\n");
 		exit(1);
 	    }
