@@ -92,7 +92,7 @@ int ompi_thread_start(ompi_thread_t *t)
         }
     }
 
-    rc = pthread_create(&t->t_handle, NULL, t->t_run, t);
+    rc = pthread_create(&t->t_handle, NULL, (void*(*)(void*)) t->t_run, t);
 
     return (rc == 0) ? OMPI_SUCCESS : OMPI_ERROR;
 }
