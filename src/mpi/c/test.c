@@ -34,18 +34,11 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
-    if(*request == NULL) {
-        *completed = 1;
-        status->MPI_SOURCE = MPI_PROC_NULL;
-        status->MPI_TAG = MPI_ANY_TAG;
-        status->MPI_ERROR = MPI_SUCCESS;
-        status->_count = 0;
-        return MPI_SUCCESS;
-    }
-    rc = ompi_request_test(1, request, &index, completed, status);
+    rc = ompi_request_test(request, completed, status);
     if(*completed < 0) {
         *completed = 0;
     }
+
     /* JMS: Tim will fix to invoke on the communicator/window/file on
        the request (i.e., not COMM_WORLD) */
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
