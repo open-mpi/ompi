@@ -43,6 +43,7 @@ int lam_comm_init(void)
     /* Setup communicator array */
     OBJ_CONSTRUCT(&lam_mpi_communicators, lam_pointer_array_t); 
 
+    OBJ_RETAIN(group); /* 2 times as the grous is referenced 2 times */
 
     /* Setup MPI_COMM_WORLD */
     OBJ_CONSTRUCT(&lam_mpi_comm_world, lam_communicator_t);
@@ -52,6 +53,7 @@ int lam_comm_init(void)
     group->grp_proc_count    = size;
     group->grp_ok_to_free    = false;
     OBJ_RETAIN(group); /* bump reference count for remote reference */
+    OBJ_RETAIN(group); /* 2 times as the grous is referenced 2 times */
 
     lam_mpi_comm_world.c_contextid    = 0;
     lam_mpi_comm_world.c_f_to_c_index = 0;
@@ -90,6 +92,7 @@ int lam_comm_init(void)
     group->grp_proc_count    = size;
     group->grp_ok_to_free    = false;
     OBJ_RETAIN(group); /* bump reference count for remote reference */
+    OBJ_RETAIN(group); /* 2 times as the grous is referenced 2 times */
 
     lam_mpi_comm_self.c_contextid    = 1;
     lam_mpi_comm_self.c_f_to_c_index = 1;
@@ -179,6 +182,18 @@ lam_communicator_t *lam_comm_allocate ( int local_size, int remote_size )
 
 int lam_comm_finalize(void) 
 {
+    /* Destroy all predefined communicators */
+    OBJ_RELEASE( lam_mpi_comm_null.c_local_group );
+    OBJ_RELEASE( lam_mpi_comm_null.c_remote_group );
+    OBJ_DESTRUCT( &lam_mpi_comm_null );
+    
+    OBJ_RELEASE( lam_mpi_comm_world.c_local_group );
+    OBJ_RELEASE( lam_mpi_comm_world.c_remote_group );
+    OBJ_DESTRUCT( &lam_mpi_comm_world );
+
+    OBJ_RELEASE( lam_mpi_comm_self.c_local_group );
+    OBJ_RELEASE( lam_mpi_comm_self.c_remote_group );
+    OBJ_DESTRUCT( &lam_mpi_comm_self );
     return LAM_SUCCESS;
 }
 
