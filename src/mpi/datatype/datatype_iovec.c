@@ -76,7 +76,8 @@ int lam_datatype_gather_iovec(lam_pack_state_t *state,
                               const void *typebuf,
                               size_t ntype,
                               lam_datatype_t *datatype,
-                              lam_checksum_t *checksum);
+                              lam_memcpy_fn_t *memcpy_fn,
+                              lam_memcpy_state_t *memcpy_state);
 
 /**
  * Incrementally generate an iovec for scattering from a packed array
@@ -115,6 +116,6 @@ int lam_datatype_scatter_iovec(lam_pack_state_t *state,
                                size_t bufsize,
                                lam_datatype_t *datatype,
                                lam_memcpy_fn_t *memcpy_fn,
-                               lam_memcpy_state_t *check);
+                               lam_memcpy_state_t *memcpy_state);
 
 

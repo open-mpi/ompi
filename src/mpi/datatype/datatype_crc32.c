@@ -4,7 +4,7 @@
 
 /** @file
  *
- * 32-bit cyclic redundancy check support
+ * 32-bit cyclic redundancy check implementation
  */
 
 #include <stdlib.h>
@@ -53,8 +53,7 @@ static void initialize_crc_table(void)
 /*
  * Generate a 32-bit CRC for a buffer
  */
-uint32_t lam_crc32(const void *restrict buffer, size_t size,
-                   uint32_t initial_crc)
+uint32_t lam_crc32(const void *buffer, size_t size, uint32_t initial_crc)
 {
     register int i, j;
     register unsigned char *t;
@@ -65,7 +64,7 @@ uint32_t lam_crc32(const void *restrict buffer, size_t size,
         initialize_crc_table();
     }
 
-    if (LAM_IS_32BIT_ALIGNED(buffer)) {
+    if (lam_aligned32((void *) buffer)) {
         register uint32_t *restrict src = (uint32_t *) buffer;
         while (size >= sizeof(uint32_t)) {
             tmp = *src++;
@@ -96,8 +95,8 @@ uint32_t lam_crc32(const void *restrict buffer, size_t size,
 /*
  * Copy data from one buffer to another and calculate a 32-bit CRC
  */
-void *lam_memcpy_crc32(void *restrict dst,
-                       const void *restrict src,
+void *lam_memcpy_crc32(void *dst,
+                       const void *src,
                        size_t size,
                        lam_memcpy_state_t *state)
 {
@@ -116,7 +115,7 @@ void *lam_memcpy_crc32(void *restrict dst,
         state->sum = CRC_INITIAL_REGISTER;
     }
 
-    if (LAM_IS_32BIT_ALIGNED(src) && LAM_IS_32BIT_ALIGNED(dst)) {
+    if (lam_aligned32((void *) src) && lam_aligned32(dst)) {
         register uint32_t *restrict p = (uint32_t *) dst;
         register uint32_t *restrict q = (uint32_t *) src;
         register unsigned char *ts, *td;
