@@ -1,0 +1,77 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+
+#
+# Main function.  This will be invoked in the middle of the templated
+# configure script.
+#
+AC_DEFUN([MCA_CONFIGURE_STUB],[
+
+    # Additional --with flags that can be specified
+
+    AC_ARG_WITH(ptl-mx, 
+        AC_HELP_STRING([--with-ptl-mx=DIR],
+                       [Specify the installation directory of MX]))
+    AC_ARG_WITH(ptl-mx-libdir,
+        AC_HELP_STRING([--with-ptl-mx-libdir=DIR],
+                       [directory where the MX library can be found, if it is not in \$MXDIR/lib or \$MXDIR/binary/lib]))
+
+    # Add to CPPFLAGS if necessary
+
+    EXTRA_CPPFLAGS=
+    if test -n "$with_ptl_mx"; then
+        if test -d "$with_ptl_mx/include"; then
+            EXTRA_CPPFLAGS="-I$with_ptl_mx/include"
+        else
+            AC_MSG_WARN([*** Warning: cannot find $with_ptl_mx/include])
+            AC_MSG_WARN([*** Will still try to configure mx ptl anyway...])
+        fi
+    fi
+
+    # See if we can find mx.h
+
+    CPPFLAGS="$CPPFLAGS $EXTRA_CPPFLAGS"
+    AC_CHECK_HEADERS(myriexpress.h,,
+        AC_MSG_ERROR([*** Cannot find working myriexpress.h.]))
+
+    # Add to LDFLAGS if necessary
+
+    EXTRA_LDFLAGS=
+    if test -n "$with_ptl_mx_libdir"; then
+        if test -d "$with_ptl_mx_libdir/lib"; then
+            EXTRA_LDFLAGS="-L$with_ptl_mx_libdir/lib"
+        elif test -d "$with_ptl_mx_libdir/binary/lib"; then
+            EXTRA_LDFLAGS="-L$with_ptl_mx_libdir/binary/lib"
+        else
+            AC_MSG_WARN([*** Warning: cannot find $with_ptl_mx_libdir/lib])
+            AC_MSG_WARN([*** or $with_ptl_mx_libdir/binary/lib])
+            AC_MSG_WARN([*** Will still try to configure mx ptl anyway...])
+        fi
+    elif test -n "$with_ptl_mx"; then
+        if test -d "$with_ptl_mx/lib"; then
+            EXTRA_LDFLAGS="-L$with_ptl_mx/lib"
+        elif test -d "$with_ptl_mx/binary/lib"; then
+            EXTRA_LDFLAGS="-L$with_ptl_mx/binary/lib"
+        else
+            AC_MSG_WARN([*** Warning: cannot find $with_ptl_mx/lib])
+            AC_MSG_WARN([*** or $with_ptl_mx/binary/lib])
+            AC_MSG_WARN([*** Will still try to configure mx ptl anyway...])
+        fi
+    fi
+
+    # Try to find libmyriexpress
+
+    LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
+    AC_CHECK_LIB([myriexpress], [main], [],
+        AC_MSG_ERROR([*** Cannot find libmyriexpress]))
+
+    #
+    # Save extra compiler/linker flags so that they can be added in
+    # the wrapper compilers, if necessary
+    #
+
+    WRAPPER_EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
+    WRAPPER_EXTRA_LIBS="-lmx"
+])dnl
