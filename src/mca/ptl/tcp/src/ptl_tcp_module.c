@@ -140,19 +140,19 @@ int mca_ptl_tcp_module_close(void)
     if (mca_ptl_tcp_module.tcp_send_requests.fl_num_allocated != 
         mca_ptl_tcp_module.tcp_send_requests.super.lam_list_length) {
         lam_output(0, "tcp send requests: %d allocated %d returned\n",
-            mca_ptl_tcp_module.tcp_send_requests.fl_num_allocated != 
+            mca_ptl_tcp_module.tcp_send_requests.fl_num_allocated, 
             mca_ptl_tcp_module.tcp_send_requests.super.lam_list_length);
     }
     if (mca_ptl_tcp_module.tcp_send_frags.fl_num_allocated != 
         mca_ptl_tcp_module.tcp_send_frags.super.lam_list_length) {
         lam_output(0, "tcp send frags: %d allocated %d returned\n",
-            mca_ptl_tcp_module.tcp_send_frags.fl_num_allocated != 
+            mca_ptl_tcp_module.tcp_send_frags.fl_num_allocated, 
             mca_ptl_tcp_module.tcp_send_frags.super.lam_list_length);
     }
     if (mca_ptl_tcp_module.tcp_recv_frags.fl_num_allocated != 
         mca_ptl_tcp_module.tcp_recv_frags.super.lam_list_length) {
         lam_output(0, "tcp recv frags: %d allocated %d returned\n",
-            mca_ptl_tcp_module.tcp_recv_frags.fl_num_allocated != 
+            mca_ptl_tcp_module.tcp_recv_frags.fl_num_allocated, 
             mca_ptl_tcp_module.tcp_recv_frags.super.lam_list_length);
     }
 
@@ -216,7 +216,7 @@ static int mca_ptl_tcp_module_create_instances(void)
         return LAM_ERR_OUT_OF_RESOURCE;
 
     /* if the user specified an interface list - use these exclusively */
-    argv = include = lam_argv_split(mca_ptl_tcp_module.tcp_if_include,'\'');
+    argv = include = lam_argv_split(mca_ptl_tcp_module.tcp_if_include,',');
     while(argv && *argv) {
         char* if_name = *argv;
         int if_index = lam_ifnametoindex(if_name);
@@ -235,7 +235,7 @@ static int mca_ptl_tcp_module_create_instances(void)
     /* if the interface list was not specified by the user, create 
      * a PTL for each interface that was not excluded.
     */
-    exclude = lam_argv_split(mca_ptl_tcp_module.tcp_if_exclude,'\'');
+    exclude = lam_argv_split(mca_ptl_tcp_module.tcp_if_exclude,',');
     for(if_index = lam_ifbegin(); if_index >= 0; if_index = lam_ifnext(if_index)) {
         char if_name[32];
         lam_ifindextoname(if_index, if_name, sizeof(if_name));
@@ -394,8 +394,6 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
     /* create a PTL TCP module for selected interfaces */
     if(mca_ptl_tcp_module_create_instances() != LAM_SUCCESS)
         return 0;
-    if(mca_ptl_tcp_module.tcp_num_ptls == 1)
-        mca_ptl_tcp_module.tcp_ptls[0]->super.ptl_max_frag_size = 1024 * 1024;
 
     /* create a TCP listen socket for incoming connection attempts */
     if(mca_ptl_tcp_module_create_listen() != LAM_SUCCESS)
