@@ -84,7 +84,7 @@ finished:
     
         /* return request to pool */ 
         rc = request->req_free(request);
-        *rptr = NULL;
+        *rptr = MPI_REQUEST_NULL;
         *index = completed;
     }
     return rc;
