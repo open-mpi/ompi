@@ -26,7 +26,9 @@
 #include "include/constants.h"
 
 static int ompi_progress_event_flag = OMPI_EVLOOP_ONCE;
+#if OMPI_HAVE_THREAD_SUPPORT
 static ompi_lock_t progress_lock;
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 static ompi_progress_callback_t *callbacks = NULL;
 static size_t callbacks_len = 0;
 static size_t callbacks_size = 0;
@@ -34,7 +36,9 @@ static size_t callbacks_size = 0;
 int
 ompi_progress_init(void)
 {
+#if OMPI_HAVE_THREAD_SUPPORT
     ompi_atomic_init(&progress_lock, OMPI_ATOMIC_UNLOCKED);
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
     return OMPI_SUCCESS;
 }
 
@@ -114,7 +118,7 @@ void ompi_progress(void)
     if(events == 0) {
 #ifndef WIN32
         /* TODO: Find the windows equivalent for this */
-        sched_yield();
+        /*sched_yield();*/
 #endif
     }
 #endif
