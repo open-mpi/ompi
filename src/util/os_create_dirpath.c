@@ -2,7 +2,6 @@
  * $HEADER$
  */
 
-/** @file **/
 
 #include "lam_config.h"
 
@@ -27,7 +26,7 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
 	if (mode == (mode & buf.st_mode)) { /* has correct mode */
 	    return(LAM_SUCCESS);
 	}
-	if (0 == chmod(path, mode)) { /* successfully change mode */
+	if (0 == chmod(path, (buf.st_mode | mode))) { /* successfully change mode */
 	    return(LAM_SUCCESS);
 	}
 	return(LAM_ERROR); /* can't set correct mode */

@@ -2,8 +2,6 @@
  * $HEADER$
  */
 
-/** @file **/
-
 #include "lam_config.h"
 
 #include <string.h>
