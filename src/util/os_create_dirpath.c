@@ -17,14 +17,14 @@
 #include "include/constants.h"
 #include "util/os_create_dirpath.h"
 #include "util/sys_info.h"
+#include "util/argv.h"
 
 int ompi_os_create_dirpath(const char *path, const mode_t mode)
 {
-    char *pth, *bottom_up, *tmp;
     struct stat buf;
-#ifdef WIN32
-	int count = 0;
-#endif
+    char **parts, *tmp;
+    int i, len;
+
     if (NULL == path) { /* protect ourselves from errors */
 	return(OMPI_ERROR);
     }
@@ -48,58 +48,93 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
     /* ensure system info is valid */
     ompi_sys_info();
 
-    pth = strdup(path); /* make working copy of path */
-    if(NULL == pth) {
-	return(OMPI_ERROR);
-    }
+    /* Split the requested path up into its individual parts */
 
-    bottom_up = (char *)malloc(strlen(path)+1); /* create space for bottom_up */
-    if (NULL == bottom_up) { /* can't get the space */
-	free(pth);
-	return(OMPI_ERROR);
-    }
+    parts = ompi_argv_split(path, ompi_system_info.path_sep[0]);
 
-    /* start by building bottoms-up tree of directories */
-    strcpy(bottom_up, ompi_system_info.path_sep);
-    while (strcmp(pth, ".") != 0 && stat(pth, &buf) != 0) { /* see if directory exists, or if we've reached the top */
-	strcat(bottom_up, basename(pth));  /* doesn't exist yet, so save this name */
-	strcat(bottom_up, ompi_system_info.path_sep);
-	tmp = strdup(pth);
-	strcpy(pth, dirname(tmp)); /* "pop" the directory tree */
-	free(tmp);
-    }
-#ifdef WIN32
-	if (bottom_up[strlen(bottom_up)-1] == '\\') {
-		bottom_up[strlen(bottom_up)-1] = '\0';
-	}
-#endif
+    /* Ensure to allocate enough space for tmp: the strlen of the
+       incoming path + 1 (for \0) */
 
-    /* okay, ready to build from the top down */
-    while (strlen(bottom_up) > 1) {
-#ifdef WIN32
-	if(0 != count) {
-		strcat(pth, ompi_system_info.path_sep);
-	}
+    tmp = malloc(strlen(path) + 1);
+    tmp[0] = '\0';
+
+    /* Iterate through all the subdirectory names in the path,
+       building up a directory name.  Check to see if that dirname
+       exists.  If it doesn't, create it. */
+
+    /* Notes about stat(): Windows has funny definitions of what will
+       return 0 from stat().  "C:" will return failure, while "C:\"
+       will return success.  Similarly, "C:\foo" will return success,
+       while "C:\foo\" will return failure (assuming that a folder
+       named "foo" exists under C:\).
+
+       POSIX implementations of stat() are generally a bit more
+       forgiving; most will return true for "/foo" and "/foo/"
+       (assuming /foo exists).  But we might as well abide by the same
+       rules as Windows and generally disallow checking for names
+       ending with path_sep (the only possible allowable one is
+       checking for "/", which is the root directory, and is
+       guaranteed to exist on valid POSIX filesystems, and is
+       therefore not worth checking for). */
+
+    len = ompi_argv_count(parts);
+    for (i = 0; i < len; ++i) {
+        if (i == 0) {
+
+#ifdef WIN32         
+            /* In the Windows case, check for "<drive>:" case (i.e.,
+               an absolute pathname).  If this is the case, ensure
+               that it ends in a path_sep. */
+
+            if (2 == strlen(parts[0]) && isalpha(parts[0][0]) &&
+                ':' == parts[0][1]) {
+                strcat(tmp, parts[i]);
+                strcat(tmp, ompi_system_info.path_sep);
+            }
+            
+            /* Otherwise, it's a relative path.  Per the comment
+               above, we don't want a '\' at the end, so just append
+               this part. */
+
+            else {
+                strcat(tmp, parts[i]);
+            }
 #else
-        strcat(pth, ompi_system_info.path_sep);
-#endif
-	strcat(pth, basename(bottom_up));
-	/* try to make the next layer - return error if can't & directory doesn't exist */
-	/* if directory already exists, then that means somebody beat us to it - not an error */
-	if ((0 != mkdir(pth, mode)) && (stat(pth, &buf) != 0)) { 
-	    free(pth);
-	    free(bottom_up);
-	    return(OMPI_ERROR);
-	}
-	tmp = strdup(bottom_up);
-	strcpy(bottom_up, dirname(tmp)); /* "pop" the directory tree */
-	free(tmp);
-#ifdef WIN32
-	count++;
-#endif
-   }
+            /* If in POSIX-land, ensure that we never end a directory
+               name with path_sep */
 
-    free(pth);
-    free(bottom_up);
-    return(OMPI_SUCCESS);
+            if ('/' == path[0]) {
+                strcat(tmp, ompi_system_info.path_sep);
+            }
+            strcat(tmp, parts[i]);
+#endif
+        }
+
+        /* If it's not the first part, ensure that there's a
+           preceeding path_sep and then append this part */
+
+        else {
+            if (ompi_system_info.path_sep[0] != tmp[strlen(tmp) - 1]) {
+                strcat(tmp, ompi_system_info.path_sep);
+            }
+            strcat(tmp, parts[i]);
+        }
+
+        /* Now that we finally have the name to check, check it.
+           Create it if it doesn't exist. */
+
+        if (0 != stat(tmp, &buf)) {
+            if (0 != mkdir(tmp, mode) || 0 != stat(tmp, &buf)) { 
+                ompi_argv_free(parts);
+                free(tmp);
+                return OMPI_ERROR;
+            }
+        }
+    }
+
+    /* All done */
+
+    ompi_argv_free(parts);
+    free(tmp);
+    return OMPI_SUCCESS;
 }
