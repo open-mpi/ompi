@@ -12,32 +12,55 @@
 #define DATATYPE_H_HAS_BEEN_INCLUDED
 
 #include "lam_config.h"
+#include <sys/uio.h>
+#include <string.h>
 #include "include/constants.h"
-#include "include/types.h"
 #include "lfc/lam_object.h"
 #include "lfc/lam_hash_table.h"
 #include "mpi.h"
 
-#define DT_LOOP            0x00
-#define DT_LB              0x01
-#define DT_UB              0x02
-#define DT_SPACE           0x03
-#define DT_CHAR            0x04
-#define DT_BYTE            0x05
-#define DT_SHORT           0x06
-#define DT_INT             0x07
-#define DT_FLOAT           0x08
-#define DT_LONG            0x09
-#define DT_DOUBLE          0x0A
-#define DT_LONG_LONG       0x0B
-#define DT_LONG_DOUBLE     0x0C
-#define DT_COMPLEX_FLOAT   0x0D
-#define DT_COMPLEX_DOUBLE  0x0E
-#define DT_END_LOOP        0x0F
+#define DT_LOOP                    0x00
+#define DT_END_LOOP                0x01
+#define DT_LB                      0x02
+#define DT_UB                      0x03
+#define DT_CHAR                    0x04
+#define DT_CHARACTER               0x05
+#define DT_UNSIGNED_CHAR           0x06
+#define DT_BYTE                    0x07
+#define DT_SHORT                   0x08
+#define DT_UNSIGNED_SHORT          0x09
+#define DT_INT                     0x0A
+#define DT_UNSIGNED_INT            0x0B
+#define DT_LONG                    0x0C
+#define DT_UNSIGNED_LONG           0x0D
+#define DT_LONG_LONG               0x0E
+#define DT_LONG_LONG_INT           0x0F
+#define DT_UNSIGNED_LONG_LONG      0x10
+#define DT_FLOAT                   0x11
+#define DT_DOUBLE                  0x12
+#define DT_LONG_DOUBLE             0x13
+#define DT_COMPLEX_FLOAT           0x14
+#define DT_COMPLEX_DOUBLE          0x15
+#define DT_PACKED                  0x16
+#define DT_LOGIC                   0x17
+#define DT_FLOAT_INT               0x18
+#define DT_DOUBLE_INT              0x19
+#define DT_LONG_INT                0x1A
+#define DT_2INT                    0x1B
+#define DT_SHORT_INT               0x1C
+#define DT_INTEGER                 0x1D
+#define DT_REAL                    0x1E
+#define DT_DBLPREC                 0x1F
+#define DT_2REAL                   0x20
+#define DT_2DBLPREC                0x21
+#define DT_2INTEGER                0x22
+#define DT_LONGDBL_INT             0x23
+#define DT_WCHAR                   0x24
+
 /* if there are more basic datatypes than the number of bytes in the int type
  * the bdt_used field of the data description struct should be changed to long.
  */
-#define DT_MAX_PREDEFINED  0x10
+#define DT_MAX_PREDEFINED  0x25
 
 /* flags for the datatypes. */
 #define DT_FLAG_DESTROYED  0x0001  /**< user destroyed but some other layers still have a reference */
@@ -65,24 +88,6 @@ typedef struct __dt_elem_desc {
       unsigned int   extent; /**< extent of each element */
 } dt_elem_desc_t;
 
-typedef struct {
-      float r;
-      float i;
-} complex_float_t;
-
-typedef struct {
-      double r;
-      double i;
-} complex_double_t;
-
-/* The basic memory zone description. The idea is to be able to represent the
- * data as a array of zones, thus allowing us to simply find when concatenating
- * several data leads to merging contiguous zones of memory.
- */
-typedef struct __dt_zone_desc {
-  int useless;
-} dt_zone_desc_t;
-
 typedef struct __dt_struct_desc {
    int length;  /* the maximum number of elements in the description array */
    int used;    /* the number of used elements in the description array */
@@ -103,7 +108,7 @@ typedef struct lam_datatype_t {
    unsigned short flags;  /**< the flags */
    unsigned short id;     /**< data id, normally the index in the data array. */
    unsigned int nbElems;  /**< total number of elements inside the datatype */
-   unsigned int bdt_used; /**< which basic datatypes are used in the data description */
+   unsigned long long bdt_used; /**< which basic datatypes are used in the data description */
 
    /* Attribute fields */
    lam_hash_table_t *d_keyhash;
@@ -121,32 +126,18 @@ typedef struct lam_datatype_t {
 
 OBJ_CLASS_DECLARATION( lam_datatype_t );
 
-extern dt_desc_t basicDatatypes[];
-
-#if defined(__GNUC__)
-#define LMAX(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _b : _a); })
-#define LMIN(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _a : _b); })
-#define IMAX(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _b : _a); })
-#define IMIN(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _a : _b); })
-#else
-static inline long LMAX( long a, long b ) { return ( a < b ? b : a ); }
-static inline long LMIN( long a, long b ) { return ( a < b ? a : b ); }
-static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
-static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
-#endif  /* __GNU__ */
-
 typedef struct __dt_stack {
-      int index;
-      int count;
-      int end_loop;
-      long disp;
+        int index;
+        int count;
+        int end_loop;
+        long disp;
 } dt_stack_t;
 
 typedef struct __dt_convert {
-  char* buf;
-  unsigned int length;
-  dt_stack_t* pStack;
-  dt_desc_t* pDesc;
+        char* buf;
+        unsigned int length;
+        dt_stack_t* pStack;
+        dt_desc_t* pDesc;
 } dt_convert_t;
 
 int lam_ddt_init( void );
@@ -158,18 +149,18 @@ void lam_ddt_dump( dt_desc_t* pData );
 void lam_ddt_dump_complete( dt_desc_t* pData );
 /* data creation functions */
 int lam_ddt_duplicate( dt_desc_t* oldType, dt_desc_t** newType );
-int lam_ddt_create_contiguous( size_t count, dt_desc_t* oldType, dt_desc_t** newType );
-int lam_ddt_create_vector( size_t count, int bLength, long stride,
+int lam_ddt_create_contiguous( int count, dt_desc_t* oldType, dt_desc_t** newType );
+int lam_ddt_create_vector( int count, int bLength, long stride,
                            dt_desc_t* oldType, dt_desc_t** newType );
-int lam_ddt_create_hvector( size_t count, int bLength, long stride,
+int lam_ddt_create_hvector( int count, int bLength, long stride,
                             dt_desc_t* oldType, dt_desc_t** newType );
-int lam_ddt_create_indexed( size_t count, int* pBlockLength, int* pDisp,
+int lam_ddt_create_indexed( int count, int* pBlockLength, int* pDisp,
                             dt_desc_t* oldType, dt_desc_t** newType );
-int lam_ddt_create_hindexed( size_t count, int* pBlockLength, long* pDisp,
+int lam_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
                              dt_desc_t* oldType, dt_desc_t** newType );
-int lam_ddt_create_indexed_block( size_t count, int bLength, int* pDisp,
+int lam_ddt_create_indexed_block( int count, int bLength, int* pDisp,
                                   dt_desc_t* oldType, dt_desc_t** newType );
-int lam_ddt_create_struct( size_t count, size_t* pBlockLength, long* pDisp,
+int lam_ddt_create_struct( int count, int* pBlockLength, long* pDisp,
                            dt_desc_t** pTypes, dt_desc_t** newType );
 int lam_ddt_create_resized( dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType );
 int lam_ddt_create_subarray( int ndims, int* pSizes, int* pSubSizes, int* pStarts,
@@ -196,21 +187,10 @@ static inline int lam_ddt_get_extent( dt_desc_t* pData, long* lb, long* extent)
 static inline int lam_ddt_get_true_extent( dt_desc_t* pData, long* true_lb, long* true_extent)
 { *true_lb = pData->true_lb; *true_extent = (pData->true_ub - pData->true_lb); return 0; };
 
-int lam_ddt_get_element_count( dt_desc_t* pData, size_t iSize );
+int lam_ddt_get_element_count( dt_desc_t* pData, int iSize );
 int lam_ddt_copy_content_same_ddt( dt_desc_t* pData, int count, char* pDestBuf, char* pSrcBuf );
 
-#define lam_ddt_increase_ref(PDT) OBJ_RETAIN( PDT )
-#define lam_ddt_decrease_ref(PDT) OBJ_RELEASE( PDT )
-
 int lam_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDesc );
-
-#define REMOVE_FLAG( INT_VALUE, FLAG )  (INT_VALUE) = (INT_VALUE) ^ (FLAG)
-#define SET_FLAG( INT_VALUE, FLAG )     (INT_VALUE) = (INT_VALUE) | (FLAG)
-#define UNSET_FLAG( INT_VALUE, FLAG)    (INT_VALUE) = (INT_VALUE) & (~(FLAG))
-
-#define REMOVE_CONTIGUOUS_FLAG( INT_VALUE )  REMOVE_FLAG(INT_VALUE, DT_FLAG_CONTIGUOUS)
-#define SET_CONTIGUOUS_FLAG( INT_VALUE )     SET_FLAG(INT_VALUE, DT_FLAG_CONTIGUOUS)
-#define UNSET_CONTIGUOUS_FLAG( INT_VALUE )   UNSET_FLAG(INT_VALUE, DT_FLAG_CONTIGUOUS)
 
 /* flags for the datatypes */
 
@@ -229,13 +209,14 @@ typedef int (*conversion_fct_t)( unsigned int count,
 #define CONVEROTR_STATE_COMPLETE   0x02000000
 #define CONVERTOR_STATE_ALLOC      0x04000000
 
-typedef struct __struct_convertor convertor_t;
-typedef int (*convertor_advance_fct_t)( convertor_t* pConvertor,
+typedef struct lam_convertor_t lam_convertor_t;
+typedef int (*convertor_advance_fct_t)( lam_convertor_t* pConvertor,
                                         struct iovec* pInputv,
                                         unsigned int inputCount );
 
 /* and now the convertor stuff */
-struct __struct_convertor {
+struct lam_convertor_t {
+   lam_object_t super;    /**< basic superclass */
    dt_desc_t* pDesc;
    long remoteArch;
    dt_stack_t* pStack;
@@ -252,28 +233,29 @@ struct __struct_convertor {
    convertor_advance_fct_t fAdvance;
    conversion_fct_t* pFunctions;
 };
-
-extern conversion_fct_t copy_functions[DT_MAX_PREDEFINED];
+OBJ_CLASS_DECLARATION( lam_convertor_t );
 
 /* some convertor flags */
 #define lam_convertor_progress( PCONV, IOVEC, COUNT ) \
   (PCONV)->fAdvance( (PCONV), (IOVEC), (COUNT) );
 
 /* and finally the convertor functions */
-convertor_t* lam_convertor_create( int remote_arch, int mode );
-int lam_convertor_init_for_send( convertor_t* pConv, unsigned int flags,
+lam_convertor_t* lam_convertor_create( int remote_arch, int mode );
+lam_convertor_t* lam_convertor_get_copy( lam_convertor_t* pConvertor );
+int lam_convertor_copy( lam_convertor_t* pSrcConv, lam_convertor_t* pDestConv );
+int lam_convertor_init_for_send( lam_convertor_t* pConv, unsigned int flags,
                                  dt_desc_t* pData, int count,
-                                 void* pUserBuf, int starting_point );
-int lam_convertor_init_for_recv( convertor_t* pConv, unsigned int flags,
+                                 void* pUserBuf, int local_starting_point );
+int lam_convertor_init_for_recv( lam_convertor_t* pConv, unsigned int flags,
                                  dt_desc_t* pData, int count,
-                                 void* pUserBuf, int starting_point );
-convertor_t* lam_convertor_get_copy( convertor_t* pConvertor );
-int lam_convertor_need_buffers( convertor_t* pConvertor );
-int lam_convertor_pack( convertor_t* pConv, struct iovec* in, unsigned int in_size );
-int lam_convertor_unpack( convertor_t* pConv, struct iovec* out, unsigned int out_size );
-int lam_convertor_destroy( convertor_t** ppConv );
-int lam_convertor_get_packed_size( convertor_t* pConv, unsigned int* pSize );
-int lam_convertor_get_unpacked_size( convertor_t* pConv, unsigned int* pSize );
-
+                                 void* pUserBuf, int remote_starting_point );
+int lam_convertor_need_buffers( lam_convertor_t* pConvertor );
+int lam_convertor_pack( lam_convertor_t* pConv, struct iovec* in, unsigned int in_size );
+int lam_convertor_unpack( lam_convertor_t* pConv, struct iovec* out, unsigned int out_size );
+int lam_convertor_get_packed_size( lam_convertor_t* pConv, unsigned int* pSize );
+int lam_convertor_get_unpacked_size( lam_convertor_t* pConv, unsigned int* pSize );
+int lam_create_stack_with_pos( lam_convertor_t* pConv,
+                               int local_starting_point,
+                               int* local_sizes );
 #endif  /* DATATYPE_H_HAS_BEEN_INCLUDED */
 

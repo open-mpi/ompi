@@ -1,6 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
-#include <string.h>
 #include "datatype.h"
 
 int lam_ddt_duplicate( dt_desc_t* oldType, dt_desc_t** newType )
@@ -17,7 +16,7 @@ int lam_ddt_duplicate( dt_desc_t* oldType, dt_desc_t** newType )
    return 0;
 }
 
-int lam_ddt_create_contiguous( size_t count, dt_desc_t* oldType, dt_desc_t** newType )
+int lam_ddt_create_contiguous( int count, dt_desc_t* oldType, dt_desc_t** newType )
 {
    dt_desc_t* pdt = lam_ddt_create( oldType->desc.used + 2 );
    lam_ddt_add( pdt, oldType, count, 0, (oldType->ub - oldType->lb) );

@@ -4,11 +4,9 @@
 #include "datatype_internal.h"
 
 
-static int convertor_unpack_homogeneous( convertor_t* pConv, struct iovec* iov, unsigned int out_size );
-static int convertor_unpack_general( convertor_t* pConvertor,
-                                     struct iovec* pInputv,
-                                     unsigned int inputCount );
-
+static int convertor_unpack_homogeneous( lam_convertor_t* pConv, struct iovec* iov, unsigned int out_size );
+static int convertor_unpack_general( lam_convertor_t* pConvertor,
+                                     struct iovec* pInputv, unsigned int inputCount );
 
 void dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char* name )
 {
@@ -39,7 +37,7 @@ void dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char*
  *        1 if everything went fine and the data was completly converted
  *       -1 something wrong occurs.
  */
-static int convertor_unpack_general( convertor_t* pConvertor,
+static int convertor_unpack_general( lam_convertor_t* pConvertor,
                                      struct iovec* pInputv,
                                      unsigned int inputCount )
 {
@@ -161,7 +159,7 @@ static int convertor_unpack_general( convertor_t* pConvertor,
    return 0;
 }
 
-static int convertor_unpack_homogeneous( convertor_t* pConv, struct iovec* iov, unsigned int out_size )
+static int convertor_unpack_homogeneous( lam_convertor_t* pConv, struct iovec* iov, unsigned int out_size )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */
@@ -180,9 +178,13 @@ static int convertor_unpack_homogeneous( convertor_t* pConv, struct iovec* iov, 
       char* pDstBuf = pConv->pBaseBuf + pData->true_lb + pConv->bConverted;
 
       if( pData->size == extent ) {
+         long length = pConv->count * pData->size;
+
+	 if( length > iov[0].iov_len )
+             length = iov[0].iov_len;
          /* contiguous data or basic datatype with count */
-         MEMCPY( pDstBuf, pSrcBuf, iov[0].iov_len );
-         pConv->bConverted += iov[0].iov_len;
+         MEMCPY( pDstBuf, pSrcBuf, length );
+         pConv->bConverted += length;
       } else {
          type = iov[0].iov_len;
          for( pos_desc = 0; pos_desc < pConv->count; pos_desc++ ) {
@@ -274,7 +276,7 @@ static int convertor_unpack_homogeneous( convertor_t* pConv, struct iovec* iov, 
    return 0;
 }
 
-int lam_convertor_unpack( convertor_t* pConvertor,
+int lam_convertor_unpack( lam_convertor_t* pConvertor,
                           struct iovec* pInputv,
                           unsigned int inputCount )
 {
@@ -416,13 +418,14 @@ conversion_fct_t copy_functions[DT_MAX_PREDEFINED] = {
 /* Should we supply buffers to the convertor or can we use directly
  * the user buffer ?
  */
-int lam_convertor_need_buffers( convertor_t* pConvertor )
+int lam_convertor_need_buffers( lam_convertor_t* pConvertor )
 {
    if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) return 0;
    return 1;
 }
 
-int lam_convertor_init_for_recv( convertor_t* pConv, unsigned int flags,
+extern int local_sizes[DT_MAX_PREDEFINED];
+int lam_convertor_init_for_recv( lam_convertor_t* pConv, unsigned int flags,
                                  dt_desc_t* pData, int count,
                                  void* pUserBuf, int starting_point )
 {
@@ -431,12 +434,15 @@ int lam_convertor_init_for_recv( convertor_t* pConv, unsigned int flags,
    pConv->flags = CONVERTOR_RECV;
    if( pConv->pStack != NULL ) free( pConv->pStack );
    pConv->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * (pData->btypes[DT_LOOP] + 2) );
-   pConv->stack_pos = 0;
-   pConv->pStack[0].index = -1;         /* fake entry for the first step */
-   pConv->pStack[0].count = count;      /* fake entry for the first step */
-   pConv->pStack[0].disp  = 0;
-   /* first we should decide which data representation will be used TODO */
-   pConv->pStack[0].end_loop = pData->desc.used;
+   if( starting_point == 0 ) {
+      pConv->stack_pos = 0;
+      pConv->pStack[0].index = -1;         /* fake entry for the first step */
+      pConv->pStack[0].count = count;      /* fake entry for the first step */
+      pConv->pStack[0].disp  = 0;
+      /* first we should decide which data representation will be used TODO */
+      pConv->pStack[0].end_loop = pData->desc.used;
+   } else {
+   }
    pConv->pBaseBuf = pUserBuf;
    pConv->available_space = count * (pData->ub - pData->lb);
    pConv->count = count;
@@ -449,30 +455,6 @@ int lam_convertor_init_for_recv( convertor_t* pConv, unsigned int flags,
    return 0;
 }
 
-convertor_t* lam_convertor_get_copy( convertor_t* pConvertor )
-{
-   convertor_t* pConv = (convertor_t*)calloc( 1, sizeof(convertor_t) );
-   MEMCPY( pConv, pConvertor, sizeof(convertor_t) );
-   pConv->pStack     = NULL;
-   pConv->pDesc      = NULL;
-   pConv->count      = 0;
-   pConv->converted  = 0;
-   pConv->bConverted = 0;
-   pConv->freebuf    = NULL;
-   return pConv;
-}
-
-int lam_convertor_destroy( convertor_t** ppConv )
-{
-   if( (*ppConv) == NULL ) return 0;
-   if( (*ppConv)->pStack != NULL ) free( (*ppConv)->pStack );
-   if( (*ppConv)->pDesc != NULL ) OBJ_RELEASE( (*ppConv)->pDesc );
-   if( (*ppConv)->freebuf != NULL ) free( (*ppConv)->freebuf );
-   free( (*ppConv) );
-   *ppConv = NULL;
-   return 0;
-}
-
 /* Get the number of elements from the data associated with this convertor that can be
  * retrieved from a recevied buffer with the size iSize.
  * To spped-up this function you should use it with a iSize == to the modulo
@@ -482,7 +464,7 @@ int lam_convertor_destroy( convertor_t** ppConv )
  *   positive = number of basic elements inside
  *   negative = some error occurs
  */
-int lam_ddt_get_element_count( dt_desc_t* pData, size_t iSize )
+int lam_ddt_get_element_count( dt_desc_t* pData, int iSize )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */
