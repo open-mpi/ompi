@@ -107,22 +107,28 @@ OBJ_CLASS_INSTANCE(
  */
 int orte_ns_base_open(void)
 {
-  /* Open up all available components */
+    int param, value;
 
-  if (ORTE_SUCCESS != 
-      mca_base_components_open("ns", 0, mca_ns_base_static_components, 
-                               &mca_ns_base_components_available)) {
-    return ORTE_ERROR;
-  }
+    /* Debugging / verbose output */
+    
+    param = mca_base_param_register_int("ns", "base", "verbose",
+                                        NULL, 0);
+    mca_base_param_lookup_int(param, &value);
+    if (value != 0) {
+        mca_ns_base_output = ompi_output_open(NULL);
+    } else {
+        mca_ns_base_output = -1;
+    }
 
-  /* setup output for debug messages */
-  if (!ompi_output_init) {  /* can't open output */
-      return ORTE_ERROR;
-  }
+    /* Open up all available components */
+    
+    if (ORTE_SUCCESS != 
+        mca_base_components_open("ns", 0, mca_ns_base_static_components, 
+                                 &mca_ns_base_components_available)) {
+        return ORTE_ERROR;
+    }
 
-  mca_ns_base_output = ompi_output_open(NULL);
+    /* All done */
 
-  /* All done */
-
-  return ORTE_SUCCESS;
+    return ORTE_SUCCESS;
 }

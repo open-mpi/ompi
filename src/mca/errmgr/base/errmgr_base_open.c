@@ -61,18 +61,26 @@ bool orte_errmgr_initialized = false;
  */
 int orte_errmgr_base_open(void)
 {
+    int param, value;
+
     if (!orte_errmgr_initialized) { /* ensure we only do this once */
       
+        /* Debugging / verbose output */
+        
+        param = mca_base_param_register_int("errmgr", "base", "verbose",
+                                            NULL, 0);
+        mca_base_param_lookup_int(param, &value);
+        if (value != 0) {
+            orte_errmgr_base_output = ompi_output_open(NULL);
+        } else {
+            orte_errmgr_base_output = -1;
+        }
+
         /* Open up all available components */
     
         if (ORTE_SUCCESS != 
             mca_base_components_open("errmgr", 0, mca_errmgr_base_static_components, 
                                    &orte_errmgr_base_components_available)) {
-            return ORTE_ERROR;
-        }
-    
-        /* setup output for debug messages */
-        if (!ompi_output_init) {  /* can't open output */
             return ORTE_ERROR;
         }
     
