@@ -133,6 +133,9 @@ bool mca_ptl_base_match(
              * descriptor */
             frag_desc->frag_request=matched_receive;
 
+            /* set lenght of incoming message */
+            matched_receive->req_bytes_packed=frag_header->hdr_msg_length;
+
             /*
              * update deliverd sequence number information,
              *   if need be.
@@ -673,6 +676,10 @@ bool mca_ptl_base_match_in_order_network_delivery(
 
         /* associate the receive descriptor with the fragment descriptor */
         frag_desc->frag_request=matched_receive;
+
+        /* set lenght of incoming message */
+        matched_receive->req_bytes_packed=frag_header->hdr_msg_length;
+
     } else {
         /* if no match found, place on unexpected queue */
         ompi_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
