@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN(LAM_CONFIG_SUBDIR,[
+AC_DEFUN([LAM_CONFIG_SUBDIR],[
 #
 # Invoke configure in a specific subdirectory.
 #

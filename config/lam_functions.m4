@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN(LAM_CONFIGURE_SETUP,[
+AC_DEFUN([LAM_CONFIGURE_SETUP],[
 
 # Some helper script functions.  Unfortunately, we cannot use $1 kinds
 # of arugments here because of the m4 substitution.  So we have to set
@@ -45,7 +45,7 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN(LAM_BASIC_SETUP,[
+AC_DEFUN([LAM_BASIC_SETUP],[
 #
 # Save some stats about this build
 #
@@ -118,7 +118,7 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN(LAM_LOG_MSG,[
+AC_DEFUN([LAM_LOG_MSG],[
 # 1 is the message
 # 2 is whether to put a prefix or not
 if test -n "$2"; then
@@ -131,7 +131,7 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN(LAM_LOG_FILE,[
+AC_DEFUN([LAM_LOG_FILE],[
 # 1 is the filename
 if test -n "$1" -a -f "$1"; then
     cat $1 >&5
@@ -141,7 +141,7 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN(LAM_LOG_COMMAND,[
+AC_DEFUN([LAM_LOG_COMMAND],[
 # 1 is the command
 # 2 is actions to do if success
 # 3 is actions to do if fail
@@ -161,7 +161,7 @@ dnl #######################################################################
 dnl #######################################################################
 dnl #######################################################################
 
-AC_DEFUN(LAM_UNIQ,[
+AC_DEFUN([LAM_UNIQ],[
 # 1 is the variable name to be uniq-ized
 lam_name=$1
 

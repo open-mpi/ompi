@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN(LAM_GET_VERSION,[
+AC_DEFUN([LAM_GET_VERSION],[
 gv_glv_dir="$1"
 gv_ver_file="$2"
 gv_prefix="$3"

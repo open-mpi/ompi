@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN(LAM_SETUP_CC,[
+AC_DEFUN([LAM_SETUP_CC],[
 
 # Modularize this setup so that sub-configure.in scripts can use this
 # same setup code.
