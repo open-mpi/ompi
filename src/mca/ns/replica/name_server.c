@@ -29,7 +29,7 @@
  * globals
  */
 ompi_process_id_t ompi_name_service = 0;
-ompi_process_id_t OMPI_NAME_SERVICE_MAX = 0xffffffffffffffff;
+ompi_process_id_t OMPI_NAME_SERVICE_MAX = 0xffff;
 
 ompi_process_id_t ompi_process_name_new(void)
 {

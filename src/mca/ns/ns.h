@@ -97,9 +97,8 @@ typedef ompi_process_id_t (*mca_ns_create_jobid_t)(void);
 
 /**
  * Obtain a single new process name.
- * The create_process_name() function obtains a single new process name. The
- * function checks to find the next available process id, allocates memory
- * for the name, and then fills in the fields.
+ * The create_process_name() function creates a single process name structure and fills the
+ * fields with the provided values.
  *
  * @param cell The cell for which the process name is intended. Usually, this is
  * the id of the cell where the process is initially planning to be spawned.
@@ -108,17 +107,43 @@ typedef ompi_process_id_t (*mca_ns_create_jobid_t)(void);
  * can have the same process id if and only if they have different jobid's. However,
  * two processes in the same jobid cannot have the same process id, regardless
  * of whether or not they are in the same cell.
+ * @param procid The process id for the name. Note that no check is made for uniqueness - 
+ * the caller is responsible for ensuring that the requested name is, in fact, unique
+ * by first requesting reservation of an appropriate range of process id's.
  *
  * @retval *name Pointer to an ompi_process_name_t structure containing the name.
- * @retval NULL Indicates that the name server is out of names for that jobid. This is
- * an unlikely event given the extremely large number of available process id's. Thus,
- * it probably indicates an error in the calling program.
+ * @retval NULL Indicates an error, probably due to inability to allocate memory for
+ * the name structure.
  *
  * @code
  * new_name = ompi_name_server.create_process_name(cell, job);
  * @endcode
  */
-typedef ompi_process_name_t* (*mca_ns_create_proc_name_t)(ompi_process_id_t cell, ompi_process_id_t job);
+typedef ompi_process_name_t* (*mca_ns_create_proc_name_t)(ompi_process_id_t cell, ompi_process_id_t job, ompi_process_id_t procid);
+
+
+/**
+ * Reserve a range of process id's.
+ * The reserve_range() function reserves a range of process id's for the given jobid.
+ * Note that the cellid does not factor into this request - jobid's span the entire universe,
+ * hence the cell where the process is currently executing is irrelevant to this request.
+ *
+ * @param jobid The id of the job for which the process id's are to be reserved.
+ * @param range The number of process id's to be reserved. The function will find the
+ * next available process id and assign range-number of sequential id's to the caller.
+ * These id's will be reserved - i.e., they cannot be assigned to any subsequent caller.
+ *
+ * @retval startid The starting value of the reserved range of process id's. At this time,
+ * no means for returning an error condition is available. This will be rectified in the
+ * near future.
+ *
+ * @code
+ * starting_procid = ompi_name_server.reserve_range(jobid, range)
+ * @endcode
+ */
+typedef ompi_process_id_t (*mca_ns_reserve_range_t)(ompi_process_id_t job, ompi_process_id_t range);
+
+
 /**
  * Free (release) a process name.
  * The free_name() function releases the process name from the "used" list
@@ -335,6 +360,7 @@ struct mca_ns_1_0_0_t {
     mca_ns_create_cellid_t create_cellid;
     mca_ns_create_jobid_t create_jobid;
     mca_ns_create_proc_name_t create_process_name;
+    mca_ns_reserve_range_t reserve_range;
     mca_ns_free_name_t free_name;
     mca_ns_get_proc_name_string_t get_proc_name_string;
     mca_ns_get_procid_string_t get_procid_string;
