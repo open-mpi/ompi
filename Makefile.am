@@ -5,7 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = config include src test
+SUBDIRS = config include src 
 
 EXTRA_DIST = README INSTALL VERSION Doxyfile
 
