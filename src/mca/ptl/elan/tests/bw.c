@@ -4,13 +4,14 @@
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
+#include <sys/time.h>
 #include "test_util.h"
 
-#define MYBUFSIZE (4*1024*1024)
+#define MYBUFSIZE (1<<22)
 #define MAX_REQ_NUM 1024
 
 MPI_Request request[MAX_REQ_NUM];
-MPI_Status  stat[MAX_REQ_NUM];
+MPI_Status  tmp_stat[MAX_REQ_NUM];
 
 int         skip = 0;
 
@@ -18,11 +19,13 @@ int
 main (int argc,
       char *argv[])
 {
-    int         myid, numprocs, i;
+    int         myid, numprocs, i, j;
     int         size, loop, win, page_size;
     struct timeval t_start, t_end;
-    char        s_buf[MYBUFSIZE];
-    char        r_buf[MYBUFSIZE];
+    char        *s_buf, *r_buf;
+
+    s_buf = (char *) malloc (sizeof(char)*MYBUFSIZE);
+    r_buf = (char *) malloc (sizeof(char)*MYBUFSIZE);
 
     /* Get some environmental variables set for Open MPI, OOB */
     env_init_for_elan();
@@ -54,18 +57,18 @@ main (int argc,
 	    if ( i == skip )
 		gettimeofday (&t_start, 0);
 
-	    for (i = 0; i < win; i++) {
+	    for (j = 0; j < win; j++) {
 		MPI_Isend (s_buf, size, MPI_CHAR, 1, 100, MPI_COMM_WORLD,
-			   request + i);
+			   request + j);
 	    }
-	    MPI_Waitall (win, request, stat);
-	    MPI_Recv (r_buf, 4, MPI_CHAR, 1, 101, MPI_COMM_WORLD, &stat[0]);
+	    MPI_Waitall (win, request, tmp_stat);
+	    MPI_Recv (r_buf, 4, MPI_CHAR, 1, 101, MPI_COMM_WORLD, &tmp_stat[0]);
 	} else {
-	    for (i = 0; i < win; i++) {
+	    for (j = 0; j < win; j++) {
 		MPI_Irecv (r_buf, size, MPI_CHAR, 0, 100, MPI_COMM_WORLD,
-			   request + i);
+			   request + j);
 	    }
-	    MPI_Waitall (win, request, stat);
+	    MPI_Waitall (win, request, tmp_stat);
 	    MPI_Send (s_buf, 4, MPI_CHAR, 0, 101, MPI_COMM_WORLD);
 	}
 	MPI_Barrier (MPI_COMM_WORLD);
