@@ -171,34 +171,6 @@ static inline int fetchNadd(volatile int *addr, int inc);
 
 
 /**
- * Test if object inherits from class.
- *
- * Do not use this function directly: use OBJ_IS_KIND_OF instead.
- *
- * @param obj           Pointer to the object
- * @param class         Class to query
- * @return              1 if the object is of, or derived from, this class
- */
-static inline int lam_obj_is_kind_of(lam_object_t *obj,
-				     lam_class_info_t *class_info)
-{
-    return 0;
-}
-
-
-/**
- * Return the reference count of this object.
- *
- * @param obj           Pointer to the object
- * @return              The reference count value
- */
-static inline int lam_obj_get_ref_count(lam_object_t *obj)
-{
-    return obj->obj_reference_count;
-}
-
-
-/**
  * Retain an object (by incrementing its reference count)
  *
  * Do not use this function directly: use OBJ_RETAIN instead.
