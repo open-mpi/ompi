@@ -85,8 +85,7 @@ int main(int argc, char** argv)
     test_verify_int(OMPI_SUCCESS, rc);
     test_verify_int(TEST_COUNT, thr2_count);
 
-    test_finalize();
-    return 0;
+    return test_finalize();
 }
 
 
