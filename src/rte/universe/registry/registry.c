@@ -41,6 +41,42 @@ ompi_registry_t ompi_registry;
  * local type definitions
  */
 
+/** Dictionary of token-key pairs.
+ * This structure is used to create a linked list of token-key pairs. All calls to
+ * registry functions pass character string tokens for programming clarity - the ompi_keytable
+ * structure is used to translate those strings into an integer key value, thus allowing
+ * for faster searches of the registry. This structure is also used to return token-key pairs
+ * from the dictionary in response to an ompi_registry_index() call.
+ */
+struct ompi_keytable_t {
+    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
+    char *token;  /**< Char string that defines the key */
+    unsigned long int key;      /**< Numerical value assigned by registry to represent token string */
+};
+typedef struct ompi_keytable_t ompi_keytable_t;
+
+/* constructor - used to initialize state of keytable instance */
+static void ompi_keytable_construct(ompi_keytable_t* keytable)
+{
+    keytable->token = NULL;
+    keytable->key = 0;
+}
+
+/* destructor - used to free any resources held by instance */
+static void ompi_keytable_destructor(ompi_keytable_t* keytable)
+{
+    if (NULL != keytable->token) {
+	free(keytable->token);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   ompi_keytable_t,  /* type name */
+		   ompi_list_item_t, /* parent "class" name */
+		   ompi_keytable_construct, /* constructor */
+		   ompi_keytable_destructor); /* destructor */
+
 /** List of keys that describe a stored object.
  * Each object stored in the registry may have as many keys describing it as the
  * creator desires. This structure is used to create a linked list of keys
@@ -103,6 +139,54 @@ OBJ_CLASS_INSTANCE(
 		   ompi_subscribe_list_destructor); /* destructor */
 
 
+/** List of replicas that hold a stored object.
+ * Each object can have an arbitrary number of replicas that hold a copy
+ * of the object. The GPR requires that each object be replicated in at least
+ * two locations. This structure is used to create a linked list of
+ * replicas for the object.
+ */
+struct ompi_replica_list_t {
+    ompi_list_item_t item;    /**< Allows this item to be placed on a list */
+    char *name;               /**< Name of the replica */
+};
+typedef struct ompi_subscribe_list_t ompi_subscribe_list_t;
+
+/* constructor - used to initialize state of keytable instance */
+static void ompi_replica_list_construct(ompi_replica_list_t* replica)
+{
+    replica->name = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void ompi_replica_list_destructor(ompi_replica_list_t* replica)
+{
+    if (NULL != replica->name) {
+	free(replica->name);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   ompi_replica_list_t,  /* type name */
+		   ompi_list_item_t, /* parent "class" name */
+		   ompi_replica_list_construct, /* constructor */
+		   ompi_replica_list_destructor); /* destructor */
+
+/** Write invalidate structure.
+ * The structure used to indicate that an object has been updated somewhere else in the GPR.
+ * The structure contains a flag indicating that the locally stored copy of the object
+ * is no longer valid, a time tag indicating the time of the last known modification
+ * of the object within the global registry, and the replica holding the last known
+ * up-to-date version of the object.
+ */
+struct ompi_write_invalidate_t {
+    bool invalidate;
+    time_t last_mod;
+    char *replica;
+};
+typedef struct ompi_write_invalidate_t ompi_write_invalidate_t;
+
+
 /** The core registry structure.
  * Each segment of the registry contains a linked list of registry entries. This structure
  * represents a link in that list. The structure contains a linked list of the keys that
@@ -121,6 +205,8 @@ struct ompi_registry_core_t {
     int object_size;      /**< Size of stored object, in bytes */
     uint8_t *object;      /**< Pointer to stored object */
     ompi_list_t subscriber;  /**< Linked list of subscribers to this object */
+    ompi_list_t replicas;   /**< Linked list of replicas that also contain this object */
+    ompi_write_invalidate_t write_invalidate;  /**< Structure containing write invalidate info */
 };
 typedef struct ompi_registry_core_t ompi_registry_core_t;
 
