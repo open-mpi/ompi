@@ -105,8 +105,8 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd,
             if( disp < pdtBase->true_ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
         }
         /* keep trace of the total number of basic datatypes in the datatype definition */
-        pdtBase->btypes[DT_LOOP]     |= pdtAdd->btypes[DT_LOOP];
-        pdtBase->btypes[DT_END_LOOP] |= pdtAdd->btypes[DT_END_LOOP];
+        pdtBase->btypes[DT_LOOP]     += pdtAdd->btypes[DT_LOOP];
+        pdtBase->btypes[DT_END_LOOP] += pdtAdd->btypes[DT_END_LOOP];
         pdtBase->btypes[DT_LB]       |= pdtAdd->btypes[DT_LB];
         pdtBase->btypes[DT_UB]       |= pdtAdd->btypes[DT_UB];
         for( i = 4; i < DT_MAX_PREDEFINED; i++ )
