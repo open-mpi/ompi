@@ -13,7 +13,6 @@
  */
 
 #include "ompi_config.h"
-#include "coll_demo.h"
 
 #include "mpi.h"
 #include "include/constants.h"
@@ -26,7 +25,7 @@
 /*
  *	allgatherv_intra
  *
- *	Function:	- allgather using other MPI collectives
+ *	Function:	- allgather
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
@@ -36,17 +35,17 @@ int mca_coll_demo_allgatherv_intra(void *sbuf, int scount,
                                    struct ompi_datatype_t *rdtype, 
                                    struct ompi_communicator_t *comm)
 {
-  ompi_output_verbose(10, mca_coll_base_output, "In demo allgatherv_intra");
-  return comm->c_coll_basic_module->coll_allgatherv(sbuf, scount, sdtype,
-                                                    rbuf, rcounts, disps,
-                                                    rdtype, comm);
+    ompi_output_verbose(10, mca_coll_base_output, "In demo allgatherv_intra");
+    return comm->c_coll_basic_module->coll_allgatherv(sbuf, scount, sdtype,
+                                                      rbuf, rcounts, disps,
+                                                      rdtype, comm);
 }
 
 
 /*
  *	allgatherv_inter
  *
- *	Function:	- allgather using other MPI collectives
+ *	Function:	- allgather
  *	Accepts:	- same as MPI_Allgatherv()
  *	Returns:	- MPI_SUCCESS or error code
  */
@@ -56,8 +55,8 @@ int mca_coll_demo_allgatherv_inter(void *sbuf, int scount,
                                     struct ompi_datatype_t *rdtype, 
                                     struct ompi_communicator_t *comm)
 {
-  ompi_output_verbose(10, mca_coll_base_output, "In demo allgatherv_inter");
-  return comm->c_coll_basic_module->coll_allgatherv(sbuf, scount, sdtype,
-                                                    rbuf, rcounts, disps,
-                                                    rdtype, comm);
+    ompi_output_verbose(10, mca_coll_base_output, "In demo allgatherv_inter");
+    return comm->c_coll_basic_module->coll_allgatherv(sbuf, scount, sdtype,
+                                                      rbuf, rcounts, disps,
+                                                      rdtype, comm);
 }

@@ -29,29 +29,29 @@
  */
 static const mca_coll_base_module_1_0_0_t intra = {
 
-  /* Initialization / finalization functions */
+    /* Initialization / finalization functions */
 
-  mca_coll_demo_module_init,
-  mca_coll_demo_module_finalize,
+    mca_coll_demo_module_init,
+    mca_coll_demo_module_finalize,
 
-  /* Collective function pointers */
+    /* Collective function pointers */
 
-  mca_coll_demo_allgather_intra,
-  mca_coll_demo_allgatherv_intra,
-  mca_coll_demo_allreduce_intra,
-  mca_coll_demo_alltoall_intra,
-  mca_coll_demo_alltoallv_intra,
-  mca_coll_demo_alltoallw_intra,
-  mca_coll_demo_barrier_intra,
-  mca_coll_demo_bcast_intra,
-  NULL, /* Leave exscan blank just to force  basic to be loaded used */
-  mca_coll_demo_gather_intra,
-  mca_coll_demo_gatherv_intra,
-  mca_coll_demo_reduce_intra,
-  mca_coll_demo_reduce_scatter_intra,
-  mca_coll_demo_scan_intra,
-  mca_coll_demo_scatter_intra,
-  mca_coll_demo_scatterv_intra
+    mca_coll_demo_allgather_intra,
+    mca_coll_demo_allgatherv_intra,
+    mca_coll_demo_allreduce_intra,
+    mca_coll_demo_alltoall_intra,
+    mca_coll_demo_alltoallv_intra,
+    mca_coll_demo_alltoallw_intra,
+    mca_coll_demo_barrier_intra,
+    mca_coll_demo_bcast_intra,
+    NULL, /* Leave exscan blank just to force basic to be used */
+    mca_coll_demo_gather_intra,
+    mca_coll_demo_gatherv_intra,
+    mca_coll_demo_reduce_intra,
+    mca_coll_demo_reduce_scatter_intra,
+    mca_coll_demo_scan_intra,
+    mca_coll_demo_scatter_intra,
+    mca_coll_demo_scatterv_intra
 };
 
 
@@ -60,29 +60,29 @@ static const mca_coll_base_module_1_0_0_t intra = {
  */
 static const mca_coll_base_module_1_0_0_t inter = {
 
-  /* Initialization / finalization functions */
+    /* Initialization / finalization functions */
 
-  mca_coll_demo_module_init,
-  mca_coll_demo_module_finalize,
+    mca_coll_demo_module_init,
+    mca_coll_demo_module_finalize,
 
-  /* Collective function pointers */
+    /* Collective function pointers */
 
-  mca_coll_demo_allgather_inter,
-  mca_coll_demo_allgatherv_inter,
-  mca_coll_demo_allreduce_inter,
-  mca_coll_demo_alltoall_inter,
-  mca_coll_demo_alltoallv_inter,
-  mca_coll_demo_alltoallw_inter,
-  mca_coll_demo_barrier_inter,
-  mca_coll_demo_bcast_inter,
-  mca_coll_demo_exscan_inter,
-  mca_coll_demo_gather_inter,
-  mca_coll_demo_gatherv_inter,
-  mca_coll_demo_reduce_inter,
-  mca_coll_demo_reduce_scatter_inter,
-  NULL,
-  mca_coll_demo_scatter_inter,
-  mca_coll_demo_scatterv_inter
+    mca_coll_demo_allgather_inter,
+    mca_coll_demo_allgatherv_inter,
+    mca_coll_demo_allreduce_inter,
+    mca_coll_demo_alltoall_inter,
+    mca_coll_demo_alltoallv_inter,
+    mca_coll_demo_alltoallw_inter,
+    mca_coll_demo_barrier_inter,
+    mca_coll_demo_bcast_inter,
+    mca_coll_demo_exscan_inter,
+    mca_coll_demo_gather_inter,
+    mca_coll_demo_gatherv_inter,
+    mca_coll_demo_reduce_inter,
+    mca_coll_demo_reduce_scatter_inter,
+    NULL,
+    mca_coll_demo_scatter_inter,
+    mca_coll_demo_scatterv_inter
 };
 
 
@@ -93,12 +93,12 @@ static const mca_coll_base_module_1_0_0_t inter = {
 int mca_coll_demo_init_query(bool *allow_demo_user_threads,
                              bool *have_hidden_user_threads)
 {
-  *allow_demo_user_threads = true;
-  *have_hidden_user_threads = false;
+    *allow_demo_user_threads = true;
+    *have_hidden_user_threads = false;
 
-  /* All done */
+    /* All done */
   
-  return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -108,14 +108,15 @@ int mca_coll_demo_init_query(bool *allow_demo_user_threads,
  * priority we want to return.
  */
 const mca_coll_base_module_1_0_0_t *
-mca_coll_demo_comm_query(struct ompi_communicator_t *comm, int *priority)
+mca_coll_demo_comm_query(struct ompi_communicator_t *comm, int *priority,
+                         struct mca_coll_base_comm_t **data)
 {
-  if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_demo_priority_param, 
-                                                priority)) {
-    return NULL;
-  }
+    if (OMPI_SUCCESS != 
+        mca_base_param_lookup_int(mca_coll_demo_priority_param, priority)) {
+        return NULL;
+    }
 
-  return OMPI_COMM_IS_INTER(comm) ? &inter : &intra;
+    return OMPI_COMM_IS_INTER(comm) ? &inter : &intra;
 }
 
 
@@ -140,5 +141,5 @@ mca_coll_demo_module_init(struct ompi_communicator_t *comm)
  */
 int mca_coll_demo_module_finalize(struct ompi_communicator_t *comm)
 {
-  return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }

@@ -13,7 +13,6 @@
  */
 
 #include "ompi_config.h"
-#include "coll_demo.h"
 
 #include "mpi.h"
 #include "include/constants.h"
@@ -37,10 +36,10 @@ mca_coll_demo_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
                               struct ompi_datatype_t *rdtype, 
                               struct ompi_communicator_t *comm)
 {
-  ompi_output_verbose(10, mca_coll_base_output, "In demo alltoallv_intra");
-  return comm->c_coll_basic_module->coll_alltoallv(sbuf, scounts, sdisps,
-                                                   sdtype, rbuf, rcounts,
-                                                   rdisps, rdtype, comm);
+    ompi_output_verbose(10, mca_coll_base_output, "In demo alltoallv_intra");
+    return comm->c_coll_basic_module->coll_alltoallv(sbuf, scounts, sdisps,
+                                                     sdtype, rbuf, rcounts,
+                                                     rdisps, rdtype, comm);
 }
 
 
@@ -58,8 +57,8 @@ mca_coll_demo_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
                               struct ompi_datatype_t *rdtype, 
                               struct ompi_communicator_t *comm)
 {
-  ompi_output_verbose(10, mca_coll_base_output, "In demo alltoallv_inter");
-  return comm->c_coll_basic_module->coll_alltoallv(sbuf, scounts, sdisps,
-                                                   sdtype, rbuf, rcounts,
-                                                   rdisps, rdtype, comm);
+    ompi_output_verbose(10, mca_coll_base_output, "In demo alltoallv_inter");
+    return comm->c_coll_basic_module->coll_alltoallv(sbuf, scounts, sdisps,
+                                                     sdtype, rbuf, rcounts,
+                                                     rdisps, rdtype, comm);
 }
