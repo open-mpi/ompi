@@ -22,23 +22,6 @@
 #endif
 	
 /**
- * This function is being called as a signal-handler in response
- * to a user-specified signal (e.g. SIGFPE or SIGSEGV).
- * For Linux/Glibc, it then uses backtrace and backtrace_symbols
- * to figure the current stack and then prints that out to stdout.
- * Yes, printf and malloc are not signal-safe per se, but should be 
- * on Linux?
- *
- *  @param signo with the signal number raised
- *  @param act with information regarding the reason/send of the signal
- *  @param oldact
- *
- */
-#ifndef WIN32
-static void ompi_show_stackframe (int signo, siginfo_t * info, void * p);
-#endif
-
-/**
  * Here we register the ompi_show_stackframe function for signals
  * passed to OpenMPI by the mpi_signal-parameter passed to mpirun
  * by the user.
