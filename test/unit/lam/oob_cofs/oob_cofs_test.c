@@ -11,7 +11,7 @@ main(int argc, char* argv[])
   int ret;
   char *tmp;
   int priority = 0;
-  struct mca_oob_1_0_0 *init_ret;
+  struct mca_oob_1_0_0_t *init_ret;
   int target_vpid, source_vpid, source_tag;
   size_t source_len;
   char *source_data;
