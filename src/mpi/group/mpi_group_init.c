@@ -58,37 +58,58 @@ lam_group_t *group_allocate(int group_size)
 
     /* create new group group element */
     new_group=OBJ_NEW(lam_group_t);
+    if( -1 == new_group->grp_f_to_c_index){
+        OBJ_RELEASE(new_group);
+        new_group=NULL;
+    }
 
     if( new_group ) {
         /* allocate array of (lam_proc_t *)'s, one for each
          *   process in the group */
         new_group->grp_proc_pointers=
             malloc(sizeof(lam_proc_t *)*group_size);
-        if( new_group->grp_proc_pointers ) {
-            /* grp_proc_pointers allocated */
-            new_group->grp_proc_count=group_size;
-            /* assign entry in fortran <-> c translation array */
-            ret_val=lam_pointer_array_add(lam_group_f_to_c_table,new_group);
-            if( -1 == ret_val ){
-                OBJ_RELEASE(new_group);
+        if( 0 < group_size ) {
+            /* non-empty group */
+            if( !new_group->grp_proc_pointers ) {
+                /* grp_proc_pointers allocation failed */
+                free(new_group);
                 new_group=NULL;
             }
-            new_group->grp_f_to_c_index=ret_val;
-        } else {
-            /* grp_proc_pointers allocation failed */
-            free(new_group);
-            new_group=NULL;
         }
+
+        /* set the group size */
+        new_group->grp_proc_count=group_size;
     }
 
     /* return */
     return new_group;
 }
 
+/*
+ * increment the reference count of the proc structures
+ */
+void lam_group_increment_proc_count(lam_group_t *group) {
+    /* local variable */
+    int proc;
+
+    for(proc=0 ; proc < group->grp_proc_count ; proc++ ) {
+        OBJ_RETAIN(group->grp_proc_pointers[proc]);
+    }
+
+    /* return */
+    return;
+}
+
 /**
  * group constructor
  */
-void lam_group_construct(lam_group_t *new_group){
+void lam_group_construct(lam_group_t *new_group)
+{
+    int ret_val;
+
+    /* assign entry in fortran <-> c translation array */
+    ret_val=lam_pointer_array_add(lam_group_f_to_c_table,new_group);
+    new_group->grp_f_to_c_index=ret_val;
 
     /* return */
     return;
@@ -97,8 +118,8 @@ void lam_group_construct(lam_group_t *new_group){
 /**
  * group destructor
  */
-void lam_group_destruct(lam_group_t *group){
-
+void lam_group_destruct(lam_group_t *group)
+{
     /* release thegrp_proc_pointers memory */
     if( NULL != group->grp_proc_pointers )
         free(group->grp_proc_pointers);
@@ -123,6 +144,7 @@ int lam_group_init(void)
 {
     /* local variables */
     int return_value,ret_val;
+    lam_group_t *new_group_pointer;
 
     return_value=LAM_SUCCESS;
 
@@ -153,8 +175,6 @@ int lam_group_init(void)
         return LAM_ERROR;
     };
     lam_mpi_group_empty.grp_f_to_c_index=ret_val;
-
-    /* contruct group for MPI_COMM_WORLD */
 
     /* return */
     return return_value;

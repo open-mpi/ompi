@@ -20,28 +20,17 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
     lam_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
     lam_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer;
 
+    /* check for errors */
+    if( MPI_PARAM_CHECK ) {
+        if( ( MPI_GROUP_NULL == group1 ) || ( MPI_GROUP_NULL == group2 ) ){
+            return MPI_ERR_GROUP;
+        }
+    }
+
     return_value=MPI_SUCCESS;
     group1_pointer= (lam_group_t *) group1;
     group2_pointer= (lam_group_t *) group2;
 
-    /* check to see if one of the groups is the empty group */
-    if ((MPI_GROUP_EMPTY == group1) && (MPI_GROUP_EMPTY == group2)) {
-        /* both group1 and group2 are MPI_GROUP_EMPTY */
-        *new_group = MPI_GROUP_EMPTY;
-        return return_value;
-    } else if ( MPI_GROUP_EMPTY == group1 ) {
-        /* group1 is MPI_GROUP_EMPTY */
-        *new_group = group2;
-        /* increment group count */
-        OBJ_RETAIN(group2_pointer);
-        return return_value;
-    } else if ( MPI_GROUP_EMPTY == group2 ) {
-        /* group2 is MPI_GROUP_EMPTY */
-        *new_group = group1;
-        /* increment group count */
-        OBJ_RETAIN(group1_pointer);
-        return return_value;
-    }
     /*
      * form union
      */
@@ -107,6 +96,9 @@ int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group)
             group2_pointer->grp_proc_pointers[proc2];
         cnt++;
     }                           /* end proc loop */
+
+    /* increment proc reference counters */
+    lam_group_increment_proc_count(new_group_pointer);
 
     /* find my rank */
     my_group_rank=group1_pointer->grp_my_rank;

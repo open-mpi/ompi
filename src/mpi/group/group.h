@@ -50,6 +50,11 @@ extern lam_pointer_array_t *lam_group_f_to_c_table;
  */
 lam_group_t *group_allocate(int group_size);
 
+/*
+ * increment the reference count of the proc structures
+ */
+void lam_group_increment_proc_count(lam_group_t *group);
+
 /**
  * Initialize LAM group infrastructure
  *

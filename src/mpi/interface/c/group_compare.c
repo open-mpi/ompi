@@ -19,8 +19,16 @@ int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
     lam_group_t *group1_pointer, *group2_pointer;
     lam_proc_t *proc1_pointer, *proc2_pointer;
 
+
     /* initialization */
     return_value=MPI_SUCCESS;
+
+    /* check for errors */
+    if( MPI_PARAM_CHECK ) {
+        if( ( MPI_GROUP_NULL == group1 ) || ( MPI_GROUP_NULL == group2 ) ){
+            return MPI_ERR_GROUP;
+        }
+    }
 
     /* check for same groups */
     if( group1 == group2 ) {
@@ -29,8 +37,7 @@ int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
     }
 
     /* check to see if either is MPI_GROUP_NULL or MPI_GROUP_EMPTY */
-    if( ( MPI_GROUP_NULL == group1 ) || ( MPI_GROUP_EMPTY == group1 ) ||
-        ( MPI_GROUP_NULL == group2 ) || ( MPI_GROUP_EMPTY == group2 ) ) {
+    if( ( MPI_GROUP_EMPTY == group1 ) || ( MPI_GROUP_EMPTY == group2 ) ) {
         *result=MPI_UNEQUAL;
         return return_value;
     }
