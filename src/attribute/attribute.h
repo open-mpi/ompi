@@ -66,9 +66,6 @@ struct lam_attrkey_item_t {
     void *copy_attr_fn; /**< Copy function for the attribute */
     void *delete_attr_fn; /**< Delete function for the attribute */
     void *extra_state; /**< Extra state of the attribute */
-    int delete_ok; /**< Denotes if its ok to delete this key when
-		      reference count is 0 -- the key can only be
-		      deleted with MPI_*_free_keyval */
     int key; /**< Keep a track of which key this item belongs to, so that
 		the key can be deleted when this object is destroyed */
 };

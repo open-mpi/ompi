@@ -28,7 +28,7 @@ struct lam_communicator_t {
     lam_group_t *c_remote_group;
   
     /* Attributes */
-    lam_hash_table_t *keyhash;
+    lam_hash_table_t *c_keyhash;
 
     /* Topology information */
     int c_cube_dim; /**< Inscribing cube dimension */

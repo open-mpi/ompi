@@ -106,7 +106,7 @@ typedef struct lam_datatype_t {
    unsigned int bdt_used; /**< which basic datatypes are used in the data description */
 
    /* Attribute fields */
-   lam_hash_table_t *keyhash;
+   lam_hash_table_t *d_keyhash;
    char name[MPI_MAX_OBJECT_NAME];
 
    dt_type_desc_t desc;   /**< the data description */

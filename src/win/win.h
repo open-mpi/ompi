@@ -18,7 +18,7 @@ struct lam_win_t {
 
   /* Attributes */
 
-  lam_hash_table_t *keyhash;
+  lam_hash_table_t *w_keyhash;
 
   /* index in Fortran <-> C translation array */
 
