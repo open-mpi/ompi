@@ -49,12 +49,17 @@
  * *********** These functions go in the module struct **********
  * **************** module struct *******************************
  */ 
-typedef struct mca_topo_1_0_0_t * 
-  (*mca_topo_base_comm_query_1_0_0_fn_t)(int *priority,
-                                         bool *allow_multi_user_threads,
+typedef int (*mca_topo_base_init_query_1_0_0_fn_t)
+                                        (bool *allow_multi_user_threads,
                                          bool *have_hidden_threads);
 
-typedef int (*mca_topo_base_comm_finalize_1_0_0_fn_t) (void);
+typedef struct mca_topo_1_0_0_t*
+    (*mca_topo_base_comm_query_1_0_0_fn_t) (int *priority);
+                                            
+                            
+typedef int (*mca_topo_base_comm_unquery_1_0_0_fn_t) 
+                                    (struct ompi_communicator_t *comm);
+
 /*
  * ****************** module struct ******************************
  * Structure for topo v1.0.0 modules.This is chained to MCA v1.0.0
@@ -63,8 +68,9 @@ typedef int (*mca_topo_base_comm_finalize_1_0_0_fn_t) (void);
 struct mca_topo_base_module_1_0_0_t {
     mca_base_module_t topom_version;
     mca_base_module_data_1_0_0_t topom_data;
-    mca_topo_base_comm_query_1_0_0_fn_t topom_query;
-    mca_topo_base_comm_finalize_1_0_0_fn_t topom_finalize;
+    mca_topo_base_init_query_1_0_0_fn_t topom_init_query;
+    mca_topo_base_comm_query_1_0_0_fn_t topom_comm_query;
+    mca_topo_base_comm_unquery_1_0_0_fn_t topom_comm_unquery;
 };
 typedef struct mca_topo_base_module_1_0_0_t mca_topo_base_module_1_0_0_t;       
 typedef mca_topo_base_module_1_0_0_t mca_topo_base_module_t;
@@ -77,17 +83,34 @@ typedef mca_topo_base_module_1_0_0_t mca_topo_base_module_t;
 /*
  * ******************************************************************
  * *********************** information structure  ******************
+ * Note for module authors:
+ * If you find that this is not the most convinient form of representing
+ * your topology, then please feel free to define your own structure in 
+ * which this structure is the first element. That way, type casting can 
+ * used to communicate between 2 different topo modules. Note that this 
+ * representation must be filled up no matter what the actual topo
+ * structure might be
  * ******************************************************************
  */ 
+
 struct mca_topo_comm_1_0_0_t {
-        int mtc_type; /**< Topology type */
-        int mtc_nprocs; /**< Number of processes */
-        int mtc_ndims; /**< Number of cart dimensions */
-        int mtc_nedges; /**< Graph edges */
-        int *mtc_dims; /**< Cart dimensions */
-        int *mtc_coords; /**< Cart coordinates */
-        int *mtc_index; /**< Graph indices */
-        int *mtc_edges; /**< Graph edges */
+
+    /* The first section represents data which is passed on to the 
+     * structure by the user when creating the topology. This info
+     * is cached on so that if required another module can create the
+     * topology again when comm_dup fails to pick the same module */
+
+     int mtc_ndims_or_nnodes; /**< Number of cart dimensions */
+     int *mtc_dims_or_index; /**< Cart dimensions */
+     int *mtc_periods_or_edges; /**< whether this was a periodic cart */
+     bool mtc_reorder; /**< Whether the re-ordering is allowed */
+
+    /* The second section is used by the unity module since it does not 
+     * hang its own structure off the communicator. Any module which wishes
+     * to use the base/topo_base* functions to fill in their unimplemented
+     * functions should and must fill this portion up */
+
+     int *mtc_coords; /**< Cart coordinates */
 };
 typedef struct mca_topo_comm_1_0_0_t mca_topo_comm_1_0_0_t;
 typedef mca_topo_comm_1_0_0_t mca_topo_comm_t;
@@ -105,10 +128,11 @@ typedef mca_topo_comm_1_0_0_t mca_topo_comm_t;
  * backend functions which will be used by the various topology modules
  * ***********************************************************************
  */
-
-typedef int (*mca_topo_base_init_1_0_0_fn_t) 
-                    (MPI_Comm comm,
-                     const struct mca_topo_1_0_0_t **new_topo); 
+typedef int
+    (*mca_topo_base_module_init_1_0_0_fn_t)(struct ompi_communicator_t *comm);
+            
+typedef int 
+    (*mca_topo_base_module_finalize_1_0_0_fn_t)(struct ompi_communicator_t *comm);
 
 typedef int (*mca_topo_base_cart_coords_fn_t) 
                     (MPI_Comm comm, 
@@ -117,12 +141,14 @@ typedef int (*mca_topo_base_cart_coords_fn_t)
                      int *coords);
 
 typedef int (*mca_topo_base_cart_create_fn_t)
-                    (MPI_Comm old_comm, 
+                    (mca_topo_comm_t *topo_data,
+                     int *proc_count, 
+                     ompi_proc_t **proc_pointers,
+                     int *new_rank,
                      int ndims, 
                      int *dims, 
                      int *periods, 
-                     int redorder, 
-                     MPI_Comm* comm_cart);
+                     bool redorder);
 
 typedef int (*mca_topo_base_cart_get_fn_t)
                     (MPI_Comm comm, 
@@ -160,12 +186,14 @@ typedef int (*mca_topo_base_cart_sub_fn_t)
                      MPI_Comm* new_comm);
 
 typedef int (*mca_topo_base_graph_create_fn_t)
-                    (MPI_Comm comm_old, 
+                    (mca_topo_comm_t *topo_data, 
+                     int *proc_count,
+                     ompi_proc_t **proc_pointers,
+                     int *new_rank,
                      int nnodes, 
                      int *index, 
                      int *edges, 
-                     int reorder, 
-                     MPI_Comm* comm_graph);
+                     bool reorder);
 
 typedef int (*mca_topo_base_graph_get_fn_t)
                     (MPI_Comm comm, 
@@ -214,7 +242,8 @@ struct mca_topo_1_0_0_t {
      * on the module which is selected. The finalize corresponding to
      * this function is present on the module struct above 
      */
-    mca_topo_base_init_1_0_0_fn_t topo_init;
+    mca_topo_base_module_init_1_0_0_fn_t topo_module_init;
+    mca_topo_base_module_finalize_1_0_0_fn_t topo_module_finalize;
 
     /* Graph related functions */
     mca_topo_base_cart_coords_fn_t topo_cart_coords;
@@ -240,22 +269,5 @@ typedef mca_topo_1_0_0_t mca_topo_t;
  * ***********************************************************************
  */ 
 
-    
-/*
- * This function is technically part of the unity module, but since it
- * ships with OMPI, and other modules may use the unity module for
- * query/init functionality, prototype this function here.
- */
-
-#if defined(c_plusplus) || defined(__cplusplus)
-  extern "C" {
-#endif
-   const mca_topo_1_0_0_t *
-         mca_topo_unity_comm_query(int *priority,
-                                   bool *allow_multi_user_threads,
-                                   bool *have_hidden_threads);
-#if defined(c_plusplus) || defined(__cplusplus)
-  }
-#endif
     
 #endif /* MCA_TOPO_H */
