@@ -86,12 +86,11 @@ int mca_ptl_gm_send_next_long_segment( mca_ptl_gm_send_frag_t* frag,
 				       int flags )
 {
     struct mca_ptl_gm_peer_t* ptl_peer;
-    ompi_ptr_t* local_address;
     gm_status_t status;
     char* pointer;
     uint64_t length;
     int32_t hdr_flags = 0;
-    mca_ptl_base_header_t* hdr;
+    mca_ptl_gm_frag_header_t* hdr;
 
     ptl_peer = (struct mca_ptl_gm_peer_t*)frag->send_frag.frag_base.frag_peer;
 
@@ -108,22 +107,20 @@ int mca_ptl_gm_send_next_long_segment( mca_ptl_gm_send_frag_t* frag,
 	int32_t rc;
 	
 	OMPI_FREE_LIST_GET( &(ptl_peer->peer_ptl->gm_send_dma_frags), item, rc );
-	hdr = (mca_ptl_base_header_t*)item;
+	hdr = (mca_ptl_gm_frag_header_t*)item;
 
-	hdr->hdr_frag.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+	hdr->hdr_frag.hdr_common.hdr_type  = MCA_PTL_HDR_TYPE_FRAG;
 	hdr->hdr_frag.hdr_common.hdr_flags = frag->send_frag.frag_base.frag_header.hdr_common.hdr_flags | hdr_flags;
-	hdr->hdr_frag.hdr_src_ptr.lval = 0L;  /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
-	hdr->hdr_frag.hdr_src_ptr.pval = frag;
-	hdr->hdr_frag.hdr_dst_ptr = frag->send_frag.frag_base.frag_header.hdr_ack.hdr_dst_match;
-	hdr->hdr_frag.hdr_frag_offset = frag->frag_bytes_processed;
-	hdr->hdr_frag.hdr_frag_length = length;
-	
-	local_address = (ompi_ptr_t*)((char*)hdr + sizeof(mca_ptl_base_frag_header_t));
-	local_address->lval = 0;
-	local_address->pval = pointer;
+	hdr->hdr_frag.hdr_src_ptr.lval     = 0L;  /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+	hdr->hdr_frag.hdr_src_ptr.pval     = frag;
+	hdr->hdr_frag.hdr_dst_ptr          = frag->send_frag.frag_base.frag_header.hdr_ack.hdr_dst_match;
+	hdr->hdr_frag.hdr_frag_offset      = frag->frag_bytes_processed;
+	hdr->hdr_frag.hdr_frag_length      = length;
+	hdr->registered_memory.lval        = 0L;
+	hdr->registered_memory.pval        = pointer;
 
 	gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, hdr,
-				       GM_SIZE, sizeof(mca_ptl_base_frag_header_t) + sizeof(ompi_ptr_t),
+				       GM_SIZE, sizeof(mca_ptl_gm_frag_header_t),
 				       GM_LOW_PRIORITY, ptl_peer->local_id,
 				       send_continue_callback, (void*)hdr );
 	frag->frag_bytes_processed += length;
@@ -152,10 +149,9 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
 				   size_t *size, 
 				   int flags )
 {
-    mca_ptl_base_header_t* hdr;
+    mca_ptl_gm_frag_header_t* hdr;
     uint64_t remaining_bytes;
     ompi_list_item_t *item;
-    ompi_ptr_t* local_address;
     int rc = 0;
 
     fragment->frag_offset = offset;
@@ -168,7 +164,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
 
     /* The first DMA memory buffer has been alocated in same time as the fragment */
     item = (ompi_list_item_t*)fragment->send_buf;
-    hdr = (mca_ptl_base_header_t*)item;
+    hdr = (mca_ptl_gm_frag_header_t*)item;
     remaining_bytes = fragment->send_frag.frag_base.frag_size - fragment->frag_bytes_processed;
 
     if( remaining_bytes <= mca_ptl_gm_component.gm_eager_limit ) {  /* small protocol */
@@ -182,7 +178,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
 	    if( NULL == item ) {
 		OMPI_FREE_LIST_WAIT( &(ptl_peer->peer_ptl->gm_send_dma_frags), item, rc );
 		ompi_atomic_sub( &(ptl_peer->peer_ptl->num_send_tokens), 1 );
-		hdr = (mca_ptl_base_header_t*)item;
+		hdr = (mca_ptl_gm_frag_header_t*)item;
 	    }
             iov.iov_base = (char*)item + sizeof(mca_ptl_base_frag_header_t);
             iov.iov_len = mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_frag_header_t);
@@ -205,7 +201,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
 	    fragment->frag_bytes_processed += iov.iov_len;
 	    remaining_bytes -= iov.iov_len;
 	    if( remaining_bytes == 0 )
-		hdr->hdr_common.hdr_flags |= PTL_FLAG_GM_LAST_FRAGMENT;
+		hdr->hdr_frag.hdr_common.hdr_flags |= PTL_FLAG_GM_LAST_FRAGMENT;
 
 	    /* for the last piece set the header type to FIN */
             gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, hdr,
@@ -234,10 +230,8 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     hdr->hdr_frag.hdr_dst_ptr          = sendreq->req_peer_match;
     hdr->hdr_frag.hdr_frag_offset      = fragment->frag_offset;
     hdr->hdr_frag.hdr_frag_length      = *size;
-
-    local_address = (ompi_ptr_t*)((char*)hdr + sizeof(mca_ptl_base_frag_header_t));
-    local_address->lval = 0;
-    local_address->pval = NULL;
+    hdr->registered_memory.lval        = 0L;
+    hdr->registered_memory.pval        = NULL; 
     
     gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, hdr,
 				   GM_SIZE, sizeof(mca_ptl_base_frag_header_t) + sizeof(ompi_ptr_t),
@@ -648,8 +642,8 @@ static void mca_ptl_gm_get_callback( struct gm_port *port, void * context, gm_st
 }
 
 static mca_ptl_gm_recv_frag_t*
-mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t *ptl,
-			   mca_ptl_base_header_t *hdr )
+mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
+			   mca_ptl_gm_frag_header_t* hdr )
 {
     mca_pml_base_recv_request_t *request;
     ompi_convertor_t local_convertor, *convertor;
@@ -658,7 +652,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t *ptl,
     int32_t freeAfter, rc;
     mca_ptl_gm_recv_frag_t* recv_frag;
 
-    if( hdr->hdr_common.hdr_flags & PTL_FLAG_GM_HAS_FRAGMENT ) {
+    if( hdr->hdr_frag.hdr_common.hdr_flags & PTL_FLAG_GM_HAS_FRAGMENT ) {
 	recv_frag = (mca_ptl_gm_recv_frag_t*)hdr->hdr_frag.hdr_dst_ptr.pval;
 	request = (mca_pml_base_recv_request_t*)recv_frag->frag_recv.frag_request;
 	/* here we can have a synchronisation problem if several threads work in same time
@@ -705,13 +699,12 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t *ptl,
 	ptl->super.ptl_recv_progress( (mca_ptl_base_module_t*)ptl, request, max_data, max_data );
     } else {
 	gm_status_t status;
-	ompi_ptr_t* remote_memory = (ompi_ptr_t*)((char*)hdr + sizeof(mca_ptl_base_frag_header_t));
 	mca_ptl_gm_peer_t* peer = (mca_ptl_gm_peer_t*)recv_frag->frag_recv.frag_base.frag_peer;
 	char* pointer = (char*)request->req_base.req_addr + recv_frag->frag_offset;
 	uint64_t length = mca_ptl_gm_component.gm_rdma_frag_size;
 
 	recv_frag->frag_recv.frag_base.frag_header.hdr_frag = hdr->hdr_frag;
-	if( NULL == remote_memory->pval ) {  /* first round of the local rendez-vous protocol */
+	if( NULL == hdr->registered_memory.pval ) {  /* first round of the local rendez-vous protocol */
 	    /* send an ack message to the sender ... quick hack (TODO) */
 	    recv_frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length = 0;
 	    mca_ptl_gm_send_quick_fin_message( (mca_ptl_gm_peer_t*)recv_frag->frag_recv.frag_base.frag_peer,
@@ -727,7 +720,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t *ptl,
 	     * get a fragment with the remote_memory field not NULL it can start getting the data.
 	     */
 	    pointer += hdr->hdr_frag.hdr_frag_offset;
-	    gm_get( ptl->gm_port, remote_memory->lval, pointer, hdr->hdr_frag.hdr_frag_length,
+	    gm_get( ptl->gm_port, hdr->registered_memory.lval, pointer, hdr->hdr_frag.hdr_frag_length,
 		    GM_LOW_PRIORITY, peer->local_id, peer->port_number, mca_ptl_gm_get_callback, recv_frag );
 	    pointer += hdr->hdr_frag.hdr_frag_length;
 	    length = recv_frag->frag_recv.frag_base.frag_size - recv_frag->frag_bytes_processed;
@@ -832,7 +825,7 @@ frag_management_fct_t* frag_management_fct[MCA_PTL_HDR_TYPE_MAX] = {
     NULL,
     mca_ptl_gm_recv_frag_match,
     mca_ptl_gm_recv_frag_match,
-    mca_ptl_gm_recv_frag_frag,
+    (frag_management_fct_t*)mca_ptl_gm_recv_frag_frag,  /* force the conversion to remove a warning */
     mca_ptl_gm_ctrl_frag,
     mca_ptl_gm_ctrl_frag,
     NULL,
