@@ -934,6 +934,7 @@ AC_CONFIG_FILES([
     src/mpi/f90/Makefile
 
     src/tools/Makefile
+    src/tools/ompid/Makefile
     src/tools/ompi_info/Makefile
     src/tools/mpirun/Makefile
     src/tools/wrappers/Makefile
