@@ -197,7 +197,7 @@ int ompi_comm_finalize(void)
     if( ompi_mpi_comm_parent != &ompi_mpi_comm_null ) {
        ompi_mpi_comm_parent->c_local_group->grp_flags = 0;
        ompi_mpi_comm_parent->c_flags = 0;
-       OBJ_RETAIN (&ompi_mpi_comm_parent);
+       OBJ_DESTRUCT (&ompi_mpi_comm_parent);
     }
 
     ompi_mpi_comm_null.c_local_group->grp_flags = 0;

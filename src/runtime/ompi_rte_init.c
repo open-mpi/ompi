@@ -427,6 +427,11 @@ void
 ompi_rte_int_node_schedule_construct(ompi_object_t *obj)
 {
     ompi_rte_node_schedule_t *sched = (ompi_rte_node_schedule_t*) obj;
+    sched->argv = NULL;
+    sched->argc = 0;
+    sched->env = NULL;
+    sched->envc = 0;
+    sched->cwd = NULL;
     sched->nodelist = OBJ_NEW(ompi_list_t);
 }
 

@@ -13,8 +13,10 @@
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"
 #include "errhandler/errhandler.h"
+#include "group/group.h"
 #include "proc/proc.h"
 #include "threads/mutex.h"
+#include "util/proc_info.h"
 #include "util/bit_ops.h"
 #include "util/bufpack.h"
 #include "util/argv.h"
@@ -324,7 +326,11 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
     mca_pcm_base_build_base_env(environ, &(sched->envc), &(sched->env));
 
     /* set initial contact info */
-    my_contact_info = strdup(ompi_universe_info.ns_replica);
+    if (ompi_process_info.seed) {
+        my_contact_info = mca_oob_get_contact_info();
+    } else {
+        my_contact_info = strdup(ompi_universe_info.ns_replica);
+    }
 
     asprintf(&tmp, "OMPI_MCA_ns_base_replica=%s", my_contact_info);
     ompi_argv_append(&(sched->envc), &(sched->env), tmp);
@@ -412,6 +418,8 @@ int ompi_comm_dyn_init (void)
     int tag, root=0, send_first=1;
     ompi_communicator_t *newcomm=NULL;
     ompi_process_name_t *port_proc_name=NULL;
+    ompi_group_t *group = NULL;
+    ompi_errhandler_t *errhandler = NULL;
 
     /* get jobid */
     myproc = ompi_proc_self(&size);
@@ -438,12 +446,15 @@ int ompi_comm_dyn_init (void)
 	 * now we have to decrease the reference counters to the according
 	 * objects 
 	 */
-	
+
 	oldcomm = &ompi_mpi_comm_null;
 	OBJ_RELEASE(oldcomm);
-	OBJ_RELEASE(oldcomm);
-	OBJ_RELEASE(oldcomm);
-	OBJ_RELEASE(oldcomm);
+        group = &ompi_mpi_group_null;
+	OBJ_RELEASE(group);
+        group = &ompi_mpi_group_null;
+	OBJ_RELEASE(group);
+	errhandler = &ompi_mpi_errors_are_fatal;
+	OBJ_RELEASE(errhandler);
 
 	/* Set name for debugging purposes */
 	snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI_COMM_PARENT");
