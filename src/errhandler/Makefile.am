@@ -10,6 +10,9 @@ noinst_LTLIBRARIES = liberrhandler.la
 # Source code files
 
 headers = \
+        errclass.h \
+        errcode.h \
+        errcode-internal.h \
         errhandler.h \
         errhandler_predefined.h
 
