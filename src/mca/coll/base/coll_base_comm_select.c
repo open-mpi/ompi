@@ -349,13 +349,13 @@ static ompi_list_t *check_components(ompi_list_t *components,
         item2 = ompi_list_get_first(selectable); 
         avail2 = (avail_coll_t *) item2;
         if (avail->ac_priority > avail2->ac_priority) {
-          ompi_list_prepend(selectable, avail);
+          ompi_list_prepend(selectable, (ompi_list_item_t *) avail);
         } else {
           for (i = 1; item2 != ompi_list_get_end(selectable); 
                item2 = ompi_list_get_next(selectable), ++i) {
             avail2 = (avail_coll_t *) item2;
             if (avail->ac_priority > avail2->ac_priority) {
-              ompi_list_insert(selectable, avail, i);
+              ompi_list_insert(selectable, (ompi_list_item_t *) avail, i);
               break;
             }
           }
@@ -364,7 +364,7 @@ static ompi_list_t *check_components(ompi_list_t *components,
              append it (because it has the lowest priority found so
              far) */
           if (ompi_list_get_end(selectable) == item2) {
-            ompi_list_append(selectable, avail);
+            ompi_list_append(selectable, (ompi_list_item_t *) avail);
           }
         }
       }
