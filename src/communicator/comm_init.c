@@ -85,6 +85,7 @@ int ompi_comm_init(void)
     ompi_mpi_comm_world.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
     mca_pml.pml_add_comm(&ompi_mpi_comm_world);
+    OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world);
     ompi_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
 
     strncpy (ompi_mpi_comm_world.c_name, "MPI_COMM_WORLD", 
@@ -114,6 +115,7 @@ int ompi_comm_init(void)
     ompi_mpi_comm_self.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
     mca_pml.pml_add_comm(&ompi_mpi_comm_self);
+    OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self);
     ompi_pointer_array_set_item (&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
 
     strncpy(ompi_mpi_comm_self.c_name,"MPI_COMM_SELF",strlen("MPI_COMM_SELF")+1);
@@ -331,9 +333,18 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
        mca_pml.pml_add_comm() was called explicitly in
        ompi_comm_init() when setting up COMM_WORLD and COMM_SELF; it's
        called in ompi_comm_set() for all others.  This means that all
-       communicators must be destroyed before the PML shuts down. */
+       communicators must be destroyed before the PML shuts down.
 
-    if ( MPI_COMM_NULL != comm ) {
+       Also -- do not invoke the pml_del_comm if the corresponding
+       pml_add_comm was never invoked.  This can happen in an error
+       situation where, for example, attributes do not copy properly
+       from one communicator to another and we end up destroying the
+       new communication while propagating the error up the stack.  We
+       want to make it all the way up the stack to invoke the MPI
+       exception, not cause a seg fault in pml_del_comm because it was
+       never pml_add_com'ed. */
+
+    if ( MPI_COMM_NULL != comm && OMPI_COMM_IS_PML_ADDED(comm) ) {
 	mca_pml.pml_del_comm (comm);
     }
     

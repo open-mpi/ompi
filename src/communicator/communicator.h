@@ -45,6 +45,7 @@ OMPI_DECLSPEC extern ompi_class_t ompi_communicator_t_class;
 #define OMPI_COMM_HIDDEN     0x00000040
 #define OMPI_COMM_DYNAMIC    0x00000080
 #define OMPI_COMM_INVALID    0x00000100
+#define OMPI_COMM_PML_ADDED  0x00000200
 
 /* some utility #defines */
 #define OMPI_COMM_IS_INTER(comm) ((comm)->c_flags & OMPI_COMM_INTER)
@@ -56,10 +57,13 @@ OMPI_DECLSPEC extern ompi_class_t ompi_communicator_t_class;
 #define OMPI_COMM_IS_FREED(comm) ((comm)->c_flags & OMPI_COMM_ISFREED)
 #define OMPI_COMM_IS_DYNAMIC(comm) ((comm)->c_flags &OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_IS_INVALID(comm) ((comm)->c_flags &OMPI_COMM_INVALID)
+#define OMPI_COMM_IS_PML_ADDED(comm) ((comm)->c_flags &OMPI_COMM_PML_ADDED)
 
 #define OMPI_COMM_SET_HIDDEN(comm) ((comm)->c_flags |= OMPI_COMM_HIDDEN)
 #define OMPI_COMM_SET_DYNAMIC(comm) ((comm)->c_flags |= OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_SET_INVALID(comm) ((comm)->c_flags |= OMPI_COMM_INVALID)
+
+#define OMPI_COMM_SET_PML_ADDED(comm) ((comm)->c_flags |= OMPI_COMM_PML_ADDED)
 
 /* a set of special tags: */
 

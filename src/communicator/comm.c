@@ -189,6 +189,7 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
         OBJ_RELEASE(newcomm);
         return OMPI_ERROR;
     }
+    OMPI_COMM_SET_PML_ADDED(newcomm);
     return (OMPI_SUCCESS);
 }
 
@@ -1329,6 +1330,7 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
         /* some error has happened */
         return ret;
     }
+    OMPI_COMM_SET_PML_ADDED(comm);
 
     return OMPI_SUCCESS;
 }
