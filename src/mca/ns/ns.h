@@ -5,10 +5,10 @@
  *
  * The Open MPI Name Server
  *
- * The Open MPI Name Server provides unique name ranges for processes within the
- * universe. Each universe will have one name server running within the seed daemon.
- * This is done to prevent the inadvertent duplication of names.
- *
+ * The Open MPI Name Server provides unique name ranges for processes
+ * within the universe. Each universe will have one name server
+ * running within the seed daemon.  This is done to prevent the
+ * inadvertent duplication of names.
  */
 
 #ifndef MCA_NS_H
@@ -372,27 +372,28 @@ typedef mca_ns_1_0_0_t mca_ns_t;
 
 typedef mca_ns_t* (*mca_ns_base_init_fn_t)(
     bool *allow_multi_user_threads,
-    bool *have_hidden_threads);
-                                                                                                         
+    bool *have_hidden_threads,
+    int *priority);
+
 typedef int (*mca_ns_base_finalize_fn_t)(void);
  
 /*
  * the standard component data structure
  */
 
-struct mca_ns_base_module_1_0_0_t {
+struct mca_ns_base_component_1_0_0_t {
     mca_base_module_t ns_version;
     mca_base_module_data_1_0_0_t ns_data;
     mca_ns_base_init_fn_t ns_init;
     mca_ns_base_finalize_fn_t ns_finalize;
 };
-typedef struct mca_ns_base_module_1_0_0_t mca_ns_base_module_1_0_0_t;
-typedef mca_ns_base_module_1_0_0_t mca_ns_base_module_t;
+typedef struct mca_ns_base_component_1_0_0_t mca_ns_base_component_1_0_0_t;
+typedef mca_ns_base_component_1_0_0_t mca_ns_base_component_t;
 
 
 
 /*
- * Macro for use in modules that are of type ns v1.0.0
+ * Macro for use in components that are of type ns v1.0.0
  */
 #define MCA_NS_BASE_VERSION_1_0_0 \
   /* ns v1.0 is chained to MCA v1.0 */ \

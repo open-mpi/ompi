@@ -12,6 +12,7 @@
 #include "threads/mutex.h"
 #include "mca/pcm/base/base.h"
 #include "mca/oob/base/base.h"
+#include "mca/ns/base/base.h"
 
 
 /**
@@ -30,6 +31,21 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
   *allow_multi_user_threads = true;
   *have_hidden_threads = false;
 
+  /* Added by JMS: I *think* ns has to come first; feel free to move
+     around */
+  
+  if (OMPI_SUCCESS != (ret = mca_ns_base_open())) {
+    /* JMS show_help */
+    return ret;
+  }
+  if (OMPI_SUCCESS != (ret = mca_ns_base_select(&user_threads,
+                                                &hidden_threads))) {
+    /* JMS show_help */
+    return ret;
+  }
+  *allow_multi_user_threads &= user_threads;
+  *have_hidden_threads |= hidden_threads;
+
   /* Added by JMS -- feel free to move around */
 
   if (OMPI_SUCCESS != (ret = mca_pcm_base_open())) {
@@ -37,7 +53,7 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
     return ret;
   }
   if (OMPI_SUCCESS != (ret = mca_pcm_base_select(&user_threads, 
-                                                &hidden_threads))) {
+                                                 &hidden_threads))) {
     /* JMS show_help */
     return ret;
   }
@@ -48,7 +64,8 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
     /* JMS show_help */
     return ret;
   }
-  if (OMPI_SUCCESS != (ret = mca_oob_base_init(&user_threads, &hidden_threads))) {
+  if (OMPI_SUCCESS != (ret = mca_oob_base_init(&user_threads, 
+                                               &hidden_threads))) {
     /* JMS show_help */
     return ret;
   }
