@@ -69,8 +69,10 @@
 #define  OMPI_PTL_ELAN_GET_MIN(a,b)  ((a<b)? a:b)
 #define  OMPI_PTL_ELAN_ALIGNUP(x,a)  (((unsigned int)(x) + ((a)-1)) & (-(a)))
 
+#define  OMPI_PTL_ELAN_ENABLE_GET  (0)
+
 /* For now only debug send's */
-#if 0
+#if 1
 #define  PTL_ELAN_DEBUG_FLAG  PTL_ELAN_DEBUG_NONE
 #else
 #define  PTL_ELAN_DEBUG_FLAG (PTL_ELAN_DEBUG_MAC|PTL_ELAN_DEBUG_ACK|PTL_ELAN_DEBUG_SEND|PTL_ELAN_DEBUG_PUT)
@@ -90,7 +92,7 @@ do {                                                           \
 do {                                                           \
     if (value == unexp) {                                      \
 	ompi_output(output,                                    \
-		"[%s:%d] received unexpect allocated value \n",\
+		"[%s:%d] allocate received unexpect value \n", \
 		__FILE__, __LINE__);                           \
 	return errno;                                          \
     }                                                          \
@@ -167,8 +169,8 @@ typedef struct ompi_ptl_elan_recv_queue_t ompi_ptl_elan_recv_queue_t;
     E4_Event          *elan_event;                        \
     uint8_t           *desc_buff;                         \
     /* 8 byte aligned */                                  \
-    mca_pml_base_send_request_t *req;                     \
-    mca_ptl_elan_module_t       *ptl;                     \
+    mca_pml_base_request_t *req;                          \
+    mca_ptl_elan_module_t  *ptl;                          \
     /* 8 byte aligned */                                  \
     int    desc_type;                                     \
     int    desc_status;                                   \
