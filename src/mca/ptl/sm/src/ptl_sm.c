@@ -53,7 +53,7 @@ mca_ptl_sm_t mca_ptl_sm = {
     mca_ptl_sm_send_continue,  /* second and subsequent send function */
     NULL,  /* get function */
     mca_ptl_sm_matched, /* function called after match is made */
-    mca_ptl_sm_send_request_init, /* initialization routine */
+    mca_ptl_sm_request_alloc, /* initialization routine */
     mca_ptl_sm_request_return
     }
 };
@@ -74,7 +74,7 @@ int mca_ptl_sm_add_procs(
     mca_ptl_sm_exchange_t **sm_proc_info;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_ptl_sm_t *ptl_sm;
-    ompi_fifo_t *fifo_addr;
+    ompi_fifo_t *fifo_addr, **fifo_tmp;
 
     /* initializion */
     for(i=0 ; i < nprocs ; i++ ) {
@@ -89,6 +89,10 @@ int mca_ptl_sm_add_procs(
     if( NULL == sm_proc_info ){
         return_code=OMPI_ERR_OUT_OF_RESOURCE;
         goto CLEANUP;
+    }
+    /* initialize sm_proc_info */
+    for(proc=0 ; proc < nprocs ; proc++ ) {
+        sm_proc_info[proc]=0;
     }
 
     /* get pointer to my proc structure */
@@ -240,10 +244,12 @@ int mca_ptl_sm_add_procs(
                 return_code=OMPI_ERR_OUT_OF_RESOURCE;
                 goto CLEANUP;
             }
+
             /* allocate vectors of ompi_fifo_t - one per
              * process - offsets will be stored */
             size=n_to_allocate*sizeof(ompi_fifo_t);
             for( i=0 ; i < n_to_allocate ; i++ ) {
+
                 mca_ptl_sm_component.sm_ctl_header->fifo[i]=
                     mca_ptl_sm_component.sm_mpool->mpool_alloc
                     (size, CACHE_LINE_SIZE);
@@ -251,20 +257,24 @@ int mca_ptl_sm_add_procs(
                     return_code=OMPI_ERR_OUT_OF_RESOURCE;
                     goto CLEANUP;
                 }
-                mca_ptl_sm_component.sm_ctl_header->fifo[i]=
-                    (volatile ompi_fifo_t *)
-                    ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo[i]) -
-                    (char *)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
+
                 /* initialize the ompi_fifo_t structures */
-                fifo_addr=(ompi_fifo_t *) (
-                        ((char *)(mca_ptl_sm_component.sm_ctl_header->fifo[i])) 
-                        + mca_ptl_sm_component.sm_offset);
+                fifo_addr=(ompi_fifo_t *) ( ((char *)
+                            (mca_ptl_sm_component.sm_ctl_header->fifo[i]))
+                        );
                 for( j=0 ; j < n_to_allocate ; j++ ) {
                     fifo_addr[j].head=OMPI_CB_FREE;
                     fifo_addr[j].tail=OMPI_CB_FREE;
                     ompi_atomic_unlock(&(fifo_addr[j].head_lock));
                     ompi_atomic_unlock(&(fifo_addr[j].tail_lock));
                 }
+                
+                /* set the fifo address to be relative to offset from
+                 * the shared memory segment */
+                mca_ptl_sm_component.sm_ctl_header->fifo[i]=
+                    (volatile ompi_fifo_t *)
+                    ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo[i]) -
+                    (char *)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
             }
 
             /* set the fifo address to be a relative address, so that
@@ -278,6 +288,10 @@ int mca_ptl_sm_add_procs(
             /* allow other procs to use this shared memory map */
             mca_ptl_sm_component.mmap_file->map_seg->seg_inited=true;
         }
+        /* debug */
+        fprintf(stderr," yeah !!! \n");
+        fflush(stderr);
+        /* end debug */
    
         /* Note:  Need to make sure that proc 0 initializes control
          * structures before any of the other procs can progress */
@@ -287,14 +301,32 @@ int mca_ptl_sm_add_procs(
             while(!mca_ptl_sm_component.mmap_file->map_seg->seg_inited)
             { ; }
         }
+        /* debug */
+        fprintf(stderr," yeah !!! II %d \n",n_to_allocate);
+        fflush(stderr);
+        /* end debug */
 
         /* cache the pointer to the 2d fifo array.  This is a virtual
          * address, whereas the address in the virtual memory segment
          * is a relative address */
         mca_ptl_sm_component.fifo=(ompi_fifo_t **)
-            ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo) +
-              (size_t)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
-
+            malloc(sizeof(ompi_fifo_t *)*n_to_allocate);
+        if( NULL == mca_ptl_sm_component.fifo ) {
+            return_code=OMPI_ERROR;
+            goto CLEANUP;
+        }
+        /* debug */
+        fprintf(stderr," yeah !!! IV \n");
+        fflush(stderr);
+        /* end debug */
+        fifo_tmp=(ompi_fifo_t **)
+                ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo) +
+                  (size_t)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
+        for( i=0 ; i < n_to_allocate ; i++ ) {
+            mca_ptl_sm_component.fifo[i]= (ompi_fifo_t *)
+                ( (char *)fifo_tmp[i] +
+                  (size_t)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
+        }
     }
 
     /* free local memory */
@@ -303,10 +335,13 @@ int mca_ptl_sm_add_procs(
         for( proc=0 ; proc < nprocs; proc++ ) {
             if(sm_proc_info[proc]){
                 free(sm_proc_info[proc]);
+                sm_proc_info[proc]=NULL;
             }
         }
         free(sm_proc_info);
+        sm_proc_info=NULL;
     }
+
 
     /* initialize some of the free-lists */
     if( !mca_ptl_sm.ptl_inited ) {
@@ -446,6 +481,11 @@ int mca_ptl_sm_send(
     mca_ptl_base_header_t* hdr;
     void *sm_data_ptr, *user_data_ptr;
 
+    /* debug */
+    fprintf(stderr," ZZZZ send called %d \n",
+            ptl_peer->my_smp_rank);
+    fflush(stderr);
+    /* end debug */
     /* cast to shared memory send descriptor */
     sm_request=(mca_ptl_sm_send_request_t *)sendreq;
 
@@ -455,6 +495,10 @@ int mca_ptl_sm_send(
         /* in this ptl, we will only use the cache, or fail */
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+    /* debug */
+    fprintf(stderr," ZZZZ II send called %d size %d\n",
+            ptl_peer->my_smp_rank,size);
+    fflush(stderr);
 
     /* if needed, pack data in payload buffer */
     if( 0 <= size ) {
@@ -487,6 +531,10 @@ int mca_ptl_sm_send(
             return OMPI_ERROR;
         }
     }
+    /* debug */
+    fprintf(stderr," after pack \n");
+    fflush(stderr);
+    /* end debug */
 
     /* fill in the fragment descriptor */
     /* get pointer to the fragment header */
@@ -526,12 +574,22 @@ int mca_ptl_sm_send(
     send_fifo=&(mca_ptl_sm_component.fifo
             [my_local_smp_rank][peer_local_smp_rank]);
 
+    /* debug */
+    fprintf(stderr," send_fifo %d %d %u \n",
+            my_local_smp_rank,peer_local_smp_rank,getpid());
+    fflush(stderr);
+    /* end debug */
     /* lock for thread safety - using atomic lock, not mutex, since
      * we need shared memory access to these lock, and in some pthread
      * implementation, such mutex's don't work correctly */
     if( ompi_using_threads() ) {
         ompi_atomic_lock(&(send_fifo->head_lock));
     }
+    /* debug */
+    fprintf(stderr," send_fifo after %d %d %u \n",
+            my_local_smp_rank,peer_local_smp_rank,getpid());
+    fflush(stderr);
+    /* end debug */
 
     if(OMPI_CB_FREE == send_fifo->head){
         /* no queues have been allocated - allocate now */
@@ -542,9 +600,15 @@ int mca_ptl_sm_send(
                 0,0,0,
                 send_fifo, mca_ptl_sm_component.sm_mpool);
         if( return_status != OMPI_SUCCESS ) {
+            ompi_atomic_unlock(&(send_fifo->head_lock));
             return return_status;
         }
     }
+    /* debug */
+    fprintf(stderr," sending me %d it %d \n",my_local_smp_rank,
+            peer_local_smp_rank);
+    fflush(stderr);
+    /* end if */
 
     /* post descriptor */
     return_status=ompi_fifo_write_to_head(sm_request->req_frag_offset_from_base,
@@ -555,6 +619,10 @@ int mca_ptl_sm_send(
     if( ompi_using_threads() ) {
         ompi_atomic_unlock(&(send_fifo->head_lock));
     }
+    /* debug */
+    fprintf(stderr," done sending \n");
+    fflush(stderr);
+    /* end debug */
     /* return */
     return return_status;
 }
