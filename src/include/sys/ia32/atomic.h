@@ -148,7 +148,7 @@ static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
  *
  * Atomically adds @i to @v.
  */
-static inline int ompi_atomic_add_32(volatile int32_t* v, int i)
+static inline int32_t ompi_atomic_add_32(volatile int32_t* v, int i)
 {
    __asm__ __volatile__(
                         SMPLOCK "addl %1,%0"
@@ -165,7 +165,7 @@ static inline int ompi_atomic_add_32(volatile int32_t* v, int i)
  *
  * Atomically subtracts @i from @v.
  */
-static inline int ompi_atomic_sub_32(volatile int32_t* v, int i)
+static inline int32_t ompi_atomic_sub_32(volatile int32_t* v, int i)
 {
    __asm__ __volatile__(
                         SMPLOCK "subl %1,%0"
