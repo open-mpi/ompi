@@ -23,9 +23,16 @@ EXTRA_DIST = acconfig.h err.c event.h evsignal.h event.3 kqueue.c \
 # LAM: Changed to libevent.la
 lib_LTLIBRARIES = libevent.la
 
+# LAM: Get LIBOBJS and convert them to .lo (vs. .o)
+libobj = @LIBOBJS@
+lt_libobj = $(libobj:.o=.lo)
+
 # LAM: Changed to libevent_la_*
 libevent_la_SOURCES = event.c
-libevent_la_LIBADD = @LIBOBJS@
+libevent_la_LIBADD = $(lt_libobj)
+# LAM: Had to add the .lo's as dependencies to force them to be
+# compiled as .lo
+libevent_la_DEPENDENCIES = $(lt_libobj)
 
 include_HEADERS = event.h
 
