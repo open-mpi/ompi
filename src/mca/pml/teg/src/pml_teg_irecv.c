@@ -116,7 +116,13 @@ int mca_pml_teg_recv(
                 ompi_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
             mca_pml_teg.teg_request_waiting--;
         }
+    } 
+
+    /* return status */
+    if (NULL != status) {
+       *status = recvreq->req_base.req_status;
     }
+
     MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq);
     return OMPI_SUCCESS;
 }
