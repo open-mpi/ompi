@@ -120,10 +120,10 @@ poll_dispatch(void *arg, struct timeval *tv)
 	nfds = 0;
 	TAILQ_FOREACH(ev, &lam_eventqueue, ev_next) {
 		if (nfds + 1 >= count) {
-			if (count < 32)
-				count = 32;
+			if (count < 256)
+				count = 256;
 			else
-				count *= 2;
+				count <<= 1;
 
 			/* We need more file descriptors */
 			pop->event_set = realloc(pop->event_set,

@@ -221,15 +221,15 @@ epoll_dispatch(void *arg, struct timeval *tv)
 			continue;
 
 		if (evread != NULL && !(evread->ev_events & LAM_EV_PERSIST))
-			lam_event_del(evread);
+			lam_event_del_i(evread);
 		if (evwrite != NULL && evwrite != evread &&
 		    !(evwrite->ev_events & LAM_EV_PERSIST))
-			lam_event_del(evwrite);
+			lam_event_del_i(evwrite);
 
 		if (evread != NULL)
-			lam_event_active(evread, LAM_EV_READ, 1);
+			lam_event_active_i(evread, LAM_EV_READ, 1);
 		if (evwrite != NULL)
-			lam_event_active(evwrite, LAM_EV_WRITE, 1);
+			lam_event_active_i(evwrite, LAM_EV_WRITE, 1);
 	}
 
 	return (0);
