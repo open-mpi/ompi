@@ -260,17 +260,17 @@
        parameter( MPI_ERR_WIN                  = 53)
        
        parameter( MPI_ERR_SYSRESOURCE          = -2)
-       parameter( MPI_ERR_LASTCODE             = -1)
+       parameter( MPI_ERR_LASTCODE             = 54)
 
 !
 ! comparison results
 !
        integer MPI_IDENT, MPI_CONGRUENT, MPI_SIMILAR, MPI_UNEQUAL
 
-       parameter (MPI_IDENT=1)
-       parameter (MPI_CONGRUENT=2)
-       parameter (MPI_SIMILAR=3)
-       parameter (MPI_UNEQUAL=4)
+       parameter (MPI_IDENT=0)
+       parameter (MPI_CONGRUENT=1)
+       parameter (MPI_SIMILAR=2)
+       parameter (MPI_UNEQUAL=3)
 !
 ! lookup table indices
 !
