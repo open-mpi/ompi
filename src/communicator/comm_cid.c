@@ -129,15 +129,14 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         else {
             ompi_pointer_array_set_item(&ompi_mpi_communicators, 
                                         nextlocal_cid, NULL);
-	    nextlocal_cid = nextcid;
+
             flag = ompi_pointer_array_test_and_set_item(&ompi_mpi_communicators, 
-                                                         nextlocal_cid, comm );
+                                                         nextcid, comm );
             if (true == flag) {
                 response = 1; /* works as well */
             }
             else {
                 response = 0; /* nope, not acceptable */
-                start  = nextcid+1; /* that's where we can start the next round */
             }
         }
         
@@ -148,10 +147,12 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
             break;
         }
 	else if ( 0 == glresponse ) {
-	    /* we could use that, but other don't agree */
-            ompi_pointer_array_set_item(&ompi_mpi_communicators, 
-                                        nextlocal_cid, NULL);
-	    start = nextcid+1;
+	    if ( 1 == response ) {
+		/* we could use that, but other don't agree */
+		ompi_pointer_array_set_item(&ompi_mpi_communicators, 
+					    nextcid, NULL);
+	    }
+	    start = nextcid+1; /* that's where we can start the next round */
 	}
     }
     
