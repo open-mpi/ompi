@@ -2,6 +2,11 @@
 #include "pml_teg_recvreq.h"
 
                                                                                                                
+/*
+ * Update the recv request status to reflect the number of bytes
+ * received and actually delivered to the application. 
+ */
+
 void mca_pml_teg_recv_request_progress(
     struct mca_ptl_t* ptl,
     mca_ptl_base_recv_request_t* req,
