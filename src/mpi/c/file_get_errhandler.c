@@ -37,9 +37,10 @@ int MPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler)
     }
   }
 
-  /* Return the errhandler.  Do not increase the refcount here; we
-     only refcount on communicators */
+  /* Return the errhandler.  See lengthy comment in
+     comm_get_errhandler.c about why we increment the refcount. */
 
+  OBJ_RETAIN(file->error_handler);
   *errhandler = file->error_handler;
 
   /* All done */
