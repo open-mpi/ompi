@@ -65,3 +65,9 @@ uint32_t ompi_ddt_external32_arch_id = OMPI_ARCH_LDEXPSIZEIS15 | OMPI_ARCH_LDMAN
                                        OMPI_ARCH_LONGDOUBLEIS128 | OMPI_ARCH_ISBIGENDIAN |
                                        OMPI_ARCH_HEADERMASK | OMPI_ARCH_HEADERMASK2;
 
+ompi_convertor_t* ompi_mpi_external32_convertor = NULL;
+
+int32_t ompi_ddt_external32_init( void )
+{
+    return OMPI_SUCCESS;
+}
