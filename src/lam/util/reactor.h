@@ -25,16 +25,21 @@ extern lam_class_info_t lam_reactor_cls;
  * implement the lam_reactor_listener_t interface.
  */
 
+struct lam_reactor_listener_t;
+typedef void (*rl_recv_handler_fn_t)(struct lam_reactor_listener_t *r, int sd);
+typedef void (*rl_send_handler_fn_t)(struct lam_reactor_listener_t *r, int sd);
+typedef void (*rl_except_handler_fn_t)(struct lam_reactor_listener_t *r, int sd);
+
 struct lam_reactor_listener_t {
+    rl_recv_handler_fn_t rl_recv_handler;
+    rl_send_handler_fn_t rl_send_handler;
+    rl_except_handler_fn_t rl_except_handler;
     void *rl_user_data;
-    void (*rl_recv_handler)(struct _lam_reactor_listener*, int sd);
-    void (*rl_send_handler)(struct _lam_reactor_listener*, int sd);
-    void (*rl_except_handler)(struct _lam_reactor_listener*, int sd);
 };
 typedef struct lam_reactor_listener_t lam_reactor_listener_t;
 
 
-typedef struct lam_reactor_descriptor_t {
+struct lam_reactor_descriptor_t {
     lam_list_item_t         rd_base;
     int                     rd;
     volatile int            rd_flags;
@@ -49,7 +54,7 @@ void lam_reactor_descriptor_init(lam_reactor_descriptor_t*);
 void lam_reactor_descriptor_destroy(lam_reactor_descriptor_t*);
 
 
-typedef struct lam_reactor_t {
+struct lam_reactor_t {
     lam_object_t       r_base;
     lam_mutex_t        r_mutex;
     lam_list_t         r_active;
