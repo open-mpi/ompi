@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -25,28 +25,28 @@
  * from waitpid(2).  The WIF* macros can be used to examine the value
  * (see waitpid(2)).
  *
- * @retval LAM_SUCCESS If the child launched and exited.
- * @retval LAM_ERR_IN_ERRNO If a failure occurred, errno should be
+ * @retval OMPI_SUCCESS If the child launched and exited.
+ * @retval OMPI_ERR_IN_ERRNO If a failure occurred, errno should be
  * examined for the specific error.
  *
  * This function forks, execs, and waits for an executable to
  * complete.  The input argv must be a NULL-terminated array (perhaps
- * built with the lam_arr_*() interface).  Upon success, LAM_SUCCESS
+ * built with the ompi_arr_*() interface).  Upon success, OMPI_SUCCESS
  * is returned.  This function will wait either until the child
  * process has exited or waitpid() returns an error other than EINTR.
  *
- * Note that a return of LAM_SUCCESS does \em not imply that the child
+ * Note that a return of OMPI_SUCCESS does \em not imply that the child
  * process exited successfully -- it simply indicates that the child
  * process exited.  The WIF* macros (see waitpid(2)) should be used to
  * examine the status to see hold the child exited.
  */
 int
-lam_few(char *argv[], int *status)
+ompi_few(char *argv[], int *status)
 {
     pid_t pid, ret;
 
     if ((pid = fork()) < 0) {
-      return LAM_ERR_IN_ERRNO;
+      return OMPI_ERR_IN_ERRNO;
     }
 
     /* Child execs.  If it fails to exec, exit. */
@@ -75,12 +75,12 @@ lam_few(char *argv[], int *status)
 
           /* Otherwise, some bad juju happened -- need to quit */
 
-          return LAM_ERR_IN_ERRNO;
+          return OMPI_ERR_IN_ERRNO;
         }
       } while (true);
     }
 
     /* Return the status to the caller */
 
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }

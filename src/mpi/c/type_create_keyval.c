@@ -2,17 +2,17 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "attribute/attribute.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_create_keyval = PMPI_Type_create_keyval
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -25,13 +25,13 @@ MPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
                        void *extra_state)
 {
     int ret;
-    lam_attribute_fn_ptr_union_t copy_fn;
-    lam_attribute_fn_ptr_union_t del_fn;
+    ompi_attribute_fn_ptr_union_t copy_fn;
+    ompi_attribute_fn_ptr_union_t del_fn;
 
     if (MPI_PARAM_CHECK) {
 	if ((NULL == type_copy_attr_fn) || (NULL == type_delete_attr_fn) ||
 	    (NULL == type_keyval)) {
-	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
 					 MPI_ERR_ARG, 
 					 FUNC_NAME);
 	}
@@ -40,10 +40,10 @@ MPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
     copy_fn.attr_datatype_copy_fn = type_copy_attr_fn;
     del_fn.attr_datatype_delete_fn = type_delete_attr_fn;
 
-    ret = lam_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,
+    ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,
 				 type_keyval, extra_state, 0);
 
-    LAM_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
+    OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
 			  MPI_ERR_OTHER, FUNC_NAME);
 }
 

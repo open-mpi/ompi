@@ -1,17 +1,17 @@
 dnl
 dnl $HEADER$
 dnl
-dnl LAM_CONFIG_SOLARIS_THREADS()
+dnl OMPI_CONFIG_SOLARIS_THREADS()
 dnl
 
 # ********************************************************************
 #
-# Internal macros - do not call from outside LAM_CONFIG_SOLARIS_THREADS
+# Internal macros - do not call from outside OMPI_CONFIG_SOLARIS_THREADS
 #
 # ********************************************************************
 
-AC_DEFUN([LAM_INTL_SOLARIS_TRY_LINK], [
-# BEGIN: LAM_INTL_SOLARIS_TRY_LINK
+AC_DEFUN([OMPI_INTL_SOLARIS_TRY_LINK], [
+# BEGIN: OMPI_INTL_SOLARIS_TRY_LINK
 #
 # Make sure that we can run a small application in C or C++, which
 # ever is the current language.  Do make sure that C or C++ is the
@@ -20,12 +20,12 @@ AC_DEFUN([LAM_INTL_SOLARIS_TRY_LINK], [
                  [thread_t th; thr_join(th, 0, 0);
                  thr_create(0,0,0,0,0,0); ],
                  [$1], [$2])
-# END: LAM_INTL_SOLARIS_TRY_LINK
+# END: OMPI_INTL_SOLARIS_TRY_LINK
 ])dnl
 
 
-AC_DEFUN([LAM_INTL_SOLARIS_TRY_LINK_F77], [
-# BEGIN: LAM_INTL_SOLARIS_TRY_LINK_F77
+AC_DEFUN([OMPI_INTL_SOLARIS_TRY_LINK_F77], [
+# BEGIN: OMPI_INTL_SOLARIS_TRY_LINK_F77
 #
 # Make sure that we can run a small application in Fortran, with
 # pthreads living in a C object file
@@ -40,20 +40,20 @@ EOF
 
 # C module
 if test -f conftest.h; then
-    lam_conftest_h="#include \"conftest.h\""
+    ompi_conftest_h="#include \"conftest.h\""
 else
-    lam_conftest_h=""
+    ompi_conftest_h=""
 fi
 cat > conftest.c <<EOF
 #include <stdio.h>
 #include <stdlib.h>
 #include <thread.h>
-$lam_conftest_h
+$ompi_conftest_h
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void lam_pthread()
+void ompi_pthread()
 {
   thread_t th;
   thr_join(th, 0, 0);
@@ -65,9 +65,9 @@ void lam_pthread()
 EOF
 
 # Try the compile
-LAM_LOG_COMMAND(
+OMPI_LOG_COMMAND(
     [$CC $CFLAGS -I. -c conftest.c],
-    LAM_LOG_COMMAND(
+    OMPI_LOG_COMMAND(
         [$F77 $FFLAGS conftestf.f conftest.o -o conftest $LIBS],
         [HAPPY=1],
 	[HAPPY=0]),
@@ -76,24 +76,24 @@ LAM_LOG_COMMAND(
 if test "$HAPPY" = "1"; then
    $1
 else
-    LAM_LOG_MSG([here is the C program:], 1)
-    LAM_LOG_FILE([conftest.c])
+    OMPI_LOG_MSG([here is the C program:], 1)
+    OMPI_LOG_FILE([conftest.c])
     if test -f conftest.h; then
-	LAM_LOG_MSG([here is contest.h:], 1)
-	LAM_LOG_FILE([conftest.h])
+	OMPI_LOG_MSG([here is contest.h:], 1)
+	OMPI_LOG_FILE([conftest.h])
     fi
-    LAM_LOG_MSG([here is the fortran program:], 1)
-    LAM_LOG_FILE([conftestf.f])
+    OMPI_LOG_MSG([here is the fortran program:], 1)
+    OMPI_LOG_FILE([conftestf.f])
     $2
 fi
 
-unset HAPPY lam_conftest_h
+unset HAPPY ompi_conftest_h
 /bin/rm -f conftest*
-# END: LAM_INTL_SOLARIS_TRY_LINK_F77
+# END: OMPI_INTL_SOLARIS_TRY_LINK_F77
 ])dnl
 
 
-AC_DEFUN([LAM_CONFIG_SOLARIS_THREADS_C], [
+AC_DEFUN([OMPI_CONFIG_SOLARIS_THREADS_C], [
 if test "$BASECC" = "cc"; then
     STHREAD_CFLAGS="-mt"
     style="Workshop/Forte"
@@ -108,10 +108,10 @@ CPPFLAGS="$STHREAD_CPPFLAGS $CPPFLAGS_orig"
 LDFLAGS="$STHREAD_LDFLAGS $LDFLAGS_orig"
 LIBS="$STHREAD_LIBS $LIBS_orig"
 AC_LANG_PUSH(C)
-LAM_INTL_SOLARIS_TRY_LINK(lam_sthread_c_success=1,
-                          lam_sthread_c_success=0)
+OMPI_INTL_SOLARIS_TRY_LINK(ompi_sthread_c_success=1,
+                          ompi_sthread_c_success=0)
 AC_LANG_POP(C)
-if test "$lam_sthread_c_success" = "1"; then
+if test "$ompi_sthread_c_success" = "1"; then
     AC_MSG_RESULT([yes - $style])
 else
     AC_MSG_RESULT([no])
@@ -119,7 +119,7 @@ fi
 ])dnl
 
 
-AC_DEFUN([LAM_CONFIG_SOLARIS_THREADS_CXX], [
+AC_DEFUN([OMPI_CONFIG_SOLARIS_THREADS_CXX], [
 if test "$BASECXX" = "CC"; then
     STHREAD_CXXFLAGS="-mt"
     style="Workshop/Forte"
@@ -137,10 +137,10 @@ LDFLAGS="$STHREAD_LDFLAGS $LDFLAGS_orig"
 LIBS="$STHREAD_LIBS $LIBS_orig"
 AC_MSG_CHECKING([if C++ compiler and Solaris threads work])
 AC_LANG_PUSH(C++)
-LAM_INTL_SOLARIS_TRY_LINK(lam_sthread_cxx_success=1, 
-                          lam_sthread_cxx_success=0)
+OMPI_INTL_SOLARIS_TRY_LINK(ompi_sthread_cxx_success=1, 
+                          ompi_sthread_cxx_success=0)
 AC_LANG_POP(C++)
-if test "$lam_sthread_cxx_success" = "1"; then
+if test "$ompi_sthread_cxx_success" = "1"; then
     AC_MSG_RESULT([yes - $style])
 else
     AC_MSG_RESULT([no])
@@ -148,8 +148,8 @@ fi
 ])dnl
 
 
-AC_DEFUN([LAM_CONFIG_SOLARIS_THREADS_FC], [
-if test "$LAM_WANT_F77_BINDINGS" = "1"; then
+AC_DEFUN([OMPI_CONFIG_SOLARIS_THREADS_FC], [
+if test "$OMPI_WANT_F77_BINDINGS" = "1"; then
     if test "$BASEFC" = "f77"; then
         STHREAD_FFLAGS="-mt"
         style="Workshop/Forte"
@@ -164,24 +164,24 @@ if test "$LAM_WANT_F77_BINDINGS" = "1"; then
     LIBS="$STHREAD_LIBS $LIBS_orig"
     AC_MSG_CHECKING([if F77 compiler and Solaris threads work])
     AC_LANG_PUSH(C)
-    LAM_INTL_SOLARIS_TRY_LINK_F77(lam_sthread_f77_success=1, 
-                                  lam_sthread_f77_success=0)
+    OMPI_INTL_SOLARIS_TRY_LINK_F77(ompi_sthread_f77_success=1, 
+                                  ompi_sthread_f77_success=0)
     AC_LANG_POP(C)
-    if test "$lam_sthread_f77_success" = "1"; then
+    if test "$ompi_sthread_f77_success" = "1"; then
         AC_MSG_RESULT([yes - $style])
      else
         AC_MSG_RESULT([no])
      fi
 else
-  lam_sthread_f77_success=1
+  ompi_sthread_f77_success=1
 fi
 ])dnl
 
 
-AC_DEFUN([LAM_CONFIG_SOLARIS_THREADS],[
-lam_sthread_c_success=0
-lam_sthread_f77_success=0
-lam_sthread_cxx_success=0
+AC_DEFUN([OMPI_CONFIG_SOLARIS_THREADS],[
+ompi_sthread_c_success=0
+ompi_sthread_f77_success=0
+ompi_sthread_cxx_success=0
 
 orig_CFLAGS="$CFLAGS"
 orig_FFLAGS="$FFLAGS"
@@ -201,16 +201,16 @@ STHREAD_LIBS=
 
 # Only run C++ and Fortran if those compilers already configured
 AC_PROVIDE_IFELSE([AC_PROG_CC], 
-                  [LAM_CONFIG_SOLARIS_THREADS_C],
-                  [lam_sthread_c_success=1])
+                  [OMPI_CONFIG_SOLARIS_THREADS_C],
+                  [ompi_sthread_c_success=1])
 
 AC_PROVIDE_IFELSE([AC_PROG_CXX], 
-                  [LAM_CONFIG_SOLARIS_THREADS_CXX],
-                  [lam_sthread_cxx_success=1])
+                  [OMPI_CONFIG_SOLARIS_THREADS_CXX],
+                  [ompi_sthread_cxx_success=1])
 
 AC_PROVIDE_IFELSE([AC_PROG_F77], 
-                  [LAM_CONFIG_SOLARIS_THREADS_FC],
-                  [lam_sthread_f77_success=1])
+                  [OMPI_CONFIG_SOLARIS_THREADS_FC],
+                  [ompi_sthread_f77_success=1])
 
 CFLAGS="$orig_CFLAGS"
 FFLAGS="$orig_FFLAGS"
@@ -220,9 +220,9 @@ CXXCPPFLAGS="$orig_CXXCPPFLAGS"
 LDFLAGS="$orig_LDFLAGS"
 LIBS="$orig_LIBS"
 
-if test "$lam_sthread_c_success" = "1" -a \
-        "$lam_sthread_cxx_success" = "1" -a \
-       "$lam_sthread_f77_success" = "1"; then
+if test "$ompi_sthread_c_success" = "1" -a \
+        "$ompi_sthread_cxx_success" = "1" -a \
+       "$ompi_sthread_f77_success" = "1"; then
   internal_useless=1
   $1
 else
@@ -230,7 +230,7 @@ else
   $2
 fi
 
-unset lam_sthread_c_success lam_sthread_f77_success lam_sthread_cxx_success
+unset ompi_sthread_c_success ompi_sthread_f77_success ompi_sthread_cxx_success
 unset internal_useless
 ])dnl
 

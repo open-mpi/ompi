@@ -131,17 +131,17 @@ typedef struct __dt_endloop_desc {
 typedef struct {
     float r;
     float i;
-} lam_complex_float_t;
+} ompi_complex_float_t;
 
 typedef struct {
     double r;
     double i;
-} lam_complex_double_t;
+} ompi_complex_double_t;
 
 typedef struct {
     long double r;
     long double i;
-} lam_complex_long_double_t;
+} ompi_complex_long_double_t;
 
 extern dt_desc_t basicDatatypes[DT_MAX_PREDEFINED];
 

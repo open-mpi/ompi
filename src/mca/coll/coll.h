@@ -5,7 +5,7 @@
 #ifndef MCA_COLL_H
 #define MCA_COLL_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
 #include "mca/mca.h"
@@ -210,7 +210,7 @@ typedef mca_coll_1_0_0_t mca_coll_t;
 
 /*
  * This function is technically part of the basic module, but since it
- * ships with LAM, and other modules may use the basic module for
+ * ships with OMPI, and other modules may use the basic module for
  * query/init functionality, prototype this function here.
  */
 

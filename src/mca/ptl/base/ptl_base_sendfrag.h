@@ -10,7 +10,7 @@
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_fragment.h"
 
-extern lam_class_t mca_ptl_base_send_frag_t_class;
+extern ompi_class_t mca_ptl_base_send_frag_t_class;
 
 /**
  * Base type for send fragment descriptors 

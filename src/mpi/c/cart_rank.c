@@ -1,7 +1,7 @@
 /*
  * $HEADERS$
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "mpi.h"
@@ -10,11 +10,11 @@
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Cart_rank = PMPI_Cart_rank
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -26,19 +26,19 @@ int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) {
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
         if (MPI_COMM_NULL == comm) {
-            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
                                           "MPI_Cart_rank");
         }
-        if (LAM_COMM_IS_INTER(comm)) { 
-            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+        if (OMPI_COMM_IS_INTER(comm)) { 
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
                                           "MPI_Cart_rank");
         }
-        if (!LAM_COMM_IS_CART(comm)) {
-            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
+        if (!OMPI_COMM_IS_CART(comm)) {
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
                                           "MPI_Cart_rank");
         }
         if ((NULL == coords) || (NULL == rank)){
-            return LAM_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
                                           "MPI_Cart_rank");
         }
     }
@@ -46,13 +46,13 @@ int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) {
     /* get the function pointer on this communicator */
     func = comm->c_topo.topo_cart_rank;
     if (NULL == func) {
-        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
                                      "MPI_Cart_rank");
     }
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, coords, rank))) {
-        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Cart_rank");
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Cart_rank");
     }
 
     return MPI_SUCCESS;

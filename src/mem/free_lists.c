@@ -2,12 +2,12 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "mem/free_lists.h"
 #include "runtime/runtime.h"
 #include "util/output.h"
 #include "os/numa.h"
-#include "os/lam_system.h"
+#include "os/ompi_system.h"
 #include "mem/mem_globals.h"
 
 #ifndef ROB_HASNT_FINISHED_THIS_YET
@@ -17,32 +17,32 @@
 /* private list functions */
 
 #if ROB_HASNT_FINISHED_THIS_YET
-static lam_list_item_t *lam_free_lists_request_elt(lam_free_lists_t *flist, 
+static ompi_list_item_t *ompi_free_lists_request_elt(ompi_free_lists_t *flist, 
                                             int pool_idx);
 #endif
 
-static void lam_free_lists_append(lam_free_lists_t *flist, void *chunk, int pool_idx);
+static void ompi_free_lists_append(ompi_free_lists_t *flist, void *chunk, int pool_idx);
 
-static int lam_free_lists_create_more_elts(lam_free_lists_t *flist, int pool_idx);
+static int ompi_free_lists_create_more_elts(ompi_free_lists_t *flist, int pool_idx);
 
-static void *lam_free_lists_get_mem_chunk(lam_free_lists_t *flist, int index, size_t *len, int *err);
+static void *ompi_free_lists_get_mem_chunk(ompi_free_lists_t *flist, int index, size_t *len, int *err);
 
-static int lam_free_lists_mem_pool_construct(lam_free_lists_t *flist, int nlists, long pages_per_list, ssize_t chunk_size,
+static int ompi_free_lists_mem_pool_construct(ompi_free_lists_t *flist, int nlists, long pages_per_list, ssize_t chunk_size,
                       size_t page_size, long min_pages_per_list,
                       long default_min_pages_per_list, long default_pages_per_list,
                       long max_pages_per_list, ssize_t max_mem_in_pool);
 
-lam_class_t lam_free_lists_t_class = {
-    "lam_free_lists_t",
-    OBJ_CLASS(lam_object_t), 
-    (lam_construct_t) lam_free_lists_construct,
-    (lam_destruct_t) lam_free_lists_destruct
+ompi_class_t ompi_free_lists_t_class = {
+    "ompi_free_lists_t",
+    OBJ_CLASS(ompi_object_t), 
+    (ompi_construct_t) ompi_free_lists_construct,
+    (ompi_destruct_t) ompi_free_lists_destruct
 };
 
 
-void lam_free_lists_construct(lam_free_lists_t *flist)
+void ompi_free_lists_construct(ompi_free_lists_t *flist)
 {
-    OBJ_CONSTRUCT(&flist->fl_lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&flist->fl_lock, ompi_mutex_t);
     flist->fl_pool = NULL;
     flist->fl_elt_cls = NULL;
     flist->fl_description = NULL;
@@ -56,18 +56,18 @@ void lam_free_lists_construct(lam_free_lists_t *flist)
     flist->fl_affinity = NULL;
     flist->fl_threshold_grow = 0;
 
-#if LAM_ENABLE_MEM_PROFILE
+#if OMPI_ENABLE_MEM_PROFILE
     flist->fl_elt_out = NULL;
     flist->fl_elt_max = NULL;
     flist->fl_elt_sum = NULL;
     flist->fl_nevents = NULL;
     flist->fl_chunks_req = NULL;
     flist->fl_chunks_returned = NULL;
-#endif  /* LAM_ENABLE_MEM_PROFILE */
+#endif  /* OMPI_ENABLE_MEM_PROFILE */
 }
 
 
-void lam_free_lists_destruct(lam_free_lists_t *flist)
+void ompi_free_lists_destruct(ompi_free_lists_t *flist)
 {
     int         i;
     
@@ -78,7 +78,7 @@ void lam_free_lists_destruct(lam_free_lists_t *flist)
     if ( flist->fl_affinity )
         free(flist->fl_affinity);
 
-#if LAM_ENABLE_MEM_PROFILE    
+#if OMPI_ENABLE_MEM_PROFILE    
     if ( flist->fl_elt_out )
         free(flist->fl_elt_out);
     
@@ -96,12 +96,12 @@ void lam_free_lists_destruct(lam_free_lists_t *flist)
     
     if ( flist->fl_chunks_returned )
         free(flist->fl_chunks_returned);
-#endif  /* LAM_ENABLE_MEM_PROFILE */
+#endif  /* OMPI_ENABLE_MEM_PROFILE */
 }
 
 
-int lam_free_lists_construct_with(
-        lam_free_lists_t *flist, 
+int ompi_free_lists_construct_with(
+        ompi_free_lists_t *flist, 
         int nlists,
         int pages_per_list,
         size_t chunk_size, 
@@ -112,16 +112,16 @@ int lam_free_lists_construct_with(
         int max_consec_req_fail,
         const char *description,
         bool retry_for_more_resources,
-        lam_affinity_t *affinity,
+        ompi_affinity_t *affinity,
         bool enforce_affinity,
-        lam_mem_pool_t *mem_pool)
+        ompi_mem_pool_t *mem_pool)
 {
-    /* lam_free_lists_construct must have been called prior to calling this function */
+    /* ompi_free_lists_construct must have been called prior to calling this function */
     size_t  max_mem_in_pool;
     size_t  initial_mem_per_list;
     long    max_mem_per_list;
     int     list, pool;
-    int     err = LAM_SUCCESS;
+    int     err = OMPI_SUCCESS;
 
     flist->fl_description = description;
     flist->fl_nlists = nlists;
@@ -136,7 +136,7 @@ int lam_free_lists_construct_with(
     {
         /* instantiate memory pool */
         max_mem_in_pool = max_pages_per_list * page_size;
-        err = lam_free_lists_mem_pool_construct(
+        err = ompi_free_lists_mem_pool_construct(
             flist,
             nlists, 
             pages_per_list, 
@@ -147,14 +147,14 @@ int lam_free_lists_construct_with(
             pages_per_list,
             max_pages_per_list, 
             max_mem_in_pool);
-        if (err != LAM_SUCCESS)
+        if (err != OMPI_SUCCESS)
         {
             return err;
         }
     }
     
     /* reset pool chunk size */
-    chunk_size = lam_mp_get_chunk_size(flist->fl_pool);
+    chunk_size = ompi_mp_get_chunk_size(flist->fl_pool);
     
     /* Number of elements per chunk */
     flist->fl_elt_per_chunk = chunk_size / elt_size;
@@ -178,12 +178,12 @@ int lam_free_lists_construct_with(
         max_mem_per_list = max_pages_per_list * page_size;
     
     /* initialize empty lists of available descriptors */
-    flist->fl_free_lists = (lam_seg_list_t **)
-                    malloc(sizeof(lam_seg_list_t *) *
+    flist->fl_free_lists = (ompi_seg_list_t **)
+                    malloc(sizeof(ompi_seg_list_t *) *
                    flist->fl_nlists);
     if ( !flist->fl_free_lists )
     {
-      lam_abort(1, "Error: Out of memory");
+      ompi_abort(1, "Error: Out of memory");
     }
  
     /* run constructors */
@@ -193,28 +193,28 @@ int lam_free_lists_construct_with(
         {
             /* process shared memory allocation */
             flist->fl_free_lists[list] =
-            (lam_seg_list_t *)
-            lam_fmp_get_mem_segment(&lam_per_proc_shmem_pools,
-                sizeof(lam_seg_list_t), CACHE_ALIGNMENT, list);
+            (ompi_seg_list_t *)
+            ompi_fmp_get_mem_segment(&ompi_per_proc_shmem_pools,
+                sizeof(ompi_seg_list_t), CACHE_ALIGNMENT, list);
         } 
         else
         {
             /* process private memory allocation */
             flist->fl_free_lists[list] =
-                (lam_seg_list_t *)malloc(sizeof(lam_seg_list_t));
+                (ompi_seg_list_t *)malloc(sizeof(ompi_seg_list_t));
         }
         
         if (!flist->fl_free_lists[list]) {
-          lam_abort(1, "Error: Out of memory");
+          ompi_abort(1, "Error: Out of memory");
         }
 
-        OBJ_CONSTRUCT(&flist->fl_free_lists[list], lam_seg_list_t);
+        OBJ_CONSTRUCT(&flist->fl_free_lists[list], ompi_seg_list_t);
         
-        lam_sgl_set_min_bytes_pushed(flist->fl_free_lists[list],
+        ompi_sgl_set_min_bytes_pushed(flist->fl_free_lists[list],
                                      initial_mem_per_list);
-        lam_sgl_set_max_bytes_pushed(flist->fl_free_lists[list],
+        ompi_sgl_set_max_bytes_pushed(flist->fl_free_lists[list],
                                      max_mem_per_list);
-        lam_sgl_set_max_consec_fail(flist->fl_free_lists[list],
+        ompi_sgl_set_max_consec_fail(flist->fl_free_lists[list],
                                     max_consec_req_fail);
     } /* end list loop */
     
@@ -225,7 +225,7 @@ int lam_free_lists_construct_with(
         flist->fl_affinity = (affinity_t *)malloc(sizeof(affinity_t) *
                                     flist->fl_nlists);
         if ( !flist->fl_affinity ) {
-          lam_abort(1, "Error: Out of memory");
+          ompi_abort(1, "Error: Out of memory");
         }
 
         /* copy policies in */
@@ -240,24 +240,24 @@ int lam_free_lists_construct_with(
     for ( pool = 0; pool < flist->fl_nlists; pool++ ) {
         
         /* gain exclusive use of list */
-        if ( 1 == lam_sgl_lock_list(flist->fl_free_lists[pool]) ) {
+        if ( 1 == ompi_sgl_lock_list(flist->fl_free_lists[pool]) ) {
             
-            while ( lam_sgl_get_bytes_pushed(flist->fl_free_lists[pool])
-                   < lam_sgl_get_min_bytes_pushed(flist->fl_free_lists[pool]) )
+            while ( ompi_sgl_get_bytes_pushed(flist->fl_free_lists[pool])
+                   < ompi_sgl_get_min_bytes_pushed(flist->fl_free_lists[pool]) )
             {
-                if (lam_free_lists_create_more_elts(flist, pool) != LAM_SUCCESS)
+                if (ompi_free_lists_create_more_elts(flist, pool) != OMPI_SUCCESS)
                 {
-                  lam_abort(1, "Error: Setting up initial private "
+                  ompi_abort(1, "Error: Setting up initial private "
                             "free list for %s.\n", flist->fl_description);
                 }
             }
             
-            lam_sgl_unlock_list(flist->fl_free_lists[pool]);
+            ompi_sgl_unlock_list(flist->fl_free_lists[pool]);
         }
         else
         {
             /* only 1 process should be initializing the list */
-            lam_abort(1, "Error: Setting up initial private free "
+            ompi_abort(1, "Error: Setting up initial private free "
                       "list %d for %s.\n", pool, flist->fl_description);
         }
     }   
@@ -267,13 +267,13 @@ int lam_free_lists_construct_with(
 }
 
 
-static int lam_free_lists_mem_pool_construct(lam_free_lists_t *flist,
+static int ompi_free_lists_mem_pool_construct(ompi_free_lists_t *flist,
                       int nlists, long pages_per_list, ssize_t chunk_size,
                       size_t page_size, long min_pages_per_list,
                       long default_min_pages_per_list, long default_pages_per_list,
                       long max_pages_per_list, ssize_t max_mem_in_pool)
 {
-    int         err = LAM_SUCCESS;
+    int         err = OMPI_SUCCESS;
     long        total_pgs_to_alloc;
     ssize_t     mem_in_pool;
     size_t      to_alloc;
@@ -295,9 +295,9 @@ static int lam_free_lists_mem_pool_construct(lam_free_lists_t *flist,
     /* Initialize memory pool */
     if ( flist->fl_is_shared ) {
         /* shared memory allocation */
-        to_alloc = sizeof(lam_mem_pool_t);
+        to_alloc = sizeof(ompi_mem_pool_t);
         flist->fl_pool =
-            (lam_mem_pool_t *)lam_fmp_get_mem_segment(&lam_shmem_pools,
+            (ompi_mem_pool_t *)ompi_fmp_get_mem_segment(&ompi_shmem_pools,
                                                       to_alloc, 
                                                       CACHE_ALIGNMENT, 0);
         if ( flist->fl_pool ) {
@@ -305,10 +305,10 @@ static int lam_free_lists_mem_pool_construct(lam_free_lists_t *flist,
         }
     } else {
         /* process private memory allocation */
-        flist->fl_pool = OBJ_NEW(lam_mem_pool_t);
+        flist->fl_pool = OBJ_NEW(ompi_mem_pool_t);
     }
 
-    err = lam_mp_construct_with(
+    err = ompi_mp_construct_with(
         flist->fl_pool, 
         mem_in_pool, 
         max_mem_in_pool,
@@ -318,41 +318,41 @@ static int lam_free_lists_mem_pool_construct(lam_free_lists_t *flist,
 }
 
 
-static void *lam_free_lists_get_mem_chunk(lam_free_lists_t *flist, int index, size_t *len, int *err)
+static void *ompi_free_lists_get_mem_chunk(ompi_free_lists_t *flist, int index, size_t *len, int *err)
 {
     void        *chunk = 0;
     uint64_t    sz_to_add;
     
     /* check to make sure that the amount to add to the list does not 
        exceed the amount allowed */
-    sz_to_add = lam_mp_get_chunk_size(flist->fl_pool);
+    sz_to_add = ompi_mp_get_chunk_size(flist->fl_pool);
 
-#if LAM_ENABLE_MEM_PROFILE
+#if OMPI_ENABLE_MEM_PROFILE
     flist->fl_chunks_req[index]++;
 #endif
     
     if (index >= flist->fl_nlists)
     {
-      lam_output(0, "Error: Array out of bounds");
+      ompi_output(0, "Error: Array out of bounds");
       return chunk;
     }
         
-    if ( lam_sgl_get_max_bytes_pushed(flist->fl_free_lists[index]) != -1 ) 
+    if ( ompi_sgl_get_max_bytes_pushed(flist->fl_free_lists[index]) != -1 ) 
     {
         if (sz_to_add +
-            lam_sgl_get_bytes_pushed(flist->fl_free_lists[index]) >
-            lam_sgl_get_max_bytes_pushed(flist->fl_free_lists[index]) )
+            ompi_sgl_get_bytes_pushed(flist->fl_free_lists[index]) >
+            ompi_sgl_get_max_bytes_pushed(flist->fl_free_lists[index]) )
         {
-            lam_sgl_inc_consec_fail(flist->fl_free_lists[index]); 
-            if ( lam_sgl_get_consec_fail(flist->fl_free_lists[index]) >=
-                lam_sgl_get_max_consec_fail(flist->fl_free_lists[index]) )
+            ompi_sgl_inc_consec_fail(flist->fl_free_lists[index]); 
+            if ( ompi_sgl_get_consec_fail(flist->fl_free_lists[index]) >=
+                ompi_sgl_get_max_consec_fail(flist->fl_free_lists[index]) )
             {
-                *err = LAM_ERR_OUT_OF_RESOURCE;
-                lam_output(0, "Error: List out of memory in pool for %s",
+                *err = OMPI_ERR_OUT_OF_RESOURCE;
+                ompi_output(0, "Error: List out of memory in pool for %s",
                            flist->fl_description);
                 return chunk;
             } else
-                *err = LAM_ERR_TEMP_OUT_OF_RESOURCE;
+                *err = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
             
             return chunk;
         }
@@ -362,29 +362,29 @@ static void *lam_free_lists_get_mem_chunk(lam_free_lists_t *flist, int index, si
     
     
     /* get chunk of memory */
-    chunk = lam_mp_request_chunk(flist->fl_pool, index);
+    chunk = ompi_mp_request_chunk(flist->fl_pool, index);
     if ( 0 == chunk )
     {
         /* increment failure count */
-        lam_sgl_inc_consec_fail(flist->fl_free_lists[index]); 
-        if ( lam_sgl_get_consec_fail(flist->fl_free_lists[index]) >=
-             lam_sgl_get_max_consec_fail(flist->fl_free_lists[index]) )
+        ompi_sgl_inc_consec_fail(flist->fl_free_lists[index]); 
+        if ( ompi_sgl_get_consec_fail(flist->fl_free_lists[index]) >=
+             ompi_sgl_get_max_consec_fail(flist->fl_free_lists[index]) )
         {
-            *err = LAM_ERR_OUT_OF_RESOURCE;
-            lam_output(0, "Error: List out of memory in pool for %s\n",
+            *err = OMPI_ERR_OUT_OF_RESOURCE;
+            ompi_output(0, "Error: List out of memory in pool for %s\n",
                        flist->fl_description);
             return chunk;
         } else
-            *err = LAM_ERR_TEMP_OUT_OF_RESOURCE;
+            *err = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
         
         return chunk;
     }
     
     /* set consecutive failure count to 0 - if we fail, we don't get 
        this far in the code. */
-    lam_sgl_set_consec_fail(flist->fl_free_lists[index], 0);
+    ompi_sgl_set_consec_fail(flist->fl_free_lists[index], 0);
     
-#if LAM_ENABLE_MEM_PROFILE
+#if OMPI_ENABLE_MEM_PROFILE
     flist->fl_chunks_returned[index]++;
 #endif
 
@@ -394,40 +394,40 @@ static void *lam_free_lists_get_mem_chunk(lam_free_lists_t *flist, int index, si
 
 
 #if ROB_HASNT_FINISHED_THIS_YET
-static lam_list_item_t *lam_free_lists_request_elt(lam_free_lists_t *flist, int pool_idx)
+static ompi_list_item_t *ompi_free_lists_request_elt(ompi_free_lists_t *flist, int pool_idx)
 {
-    lam_dbl_list_t      *seg_list = &(flist->fl_free_lists[pool_idx]->sgl_list);
-    volatile lam_list_item_t *elt = lam_dbl_get_last(seg_list);
+    ompi_dbl_list_t      *seg_list = &(flist->fl_free_lists[pool_idx]->sgl_list);
+    volatile ompi_list_item_t *elt = ompi_dbl_get_last(seg_list);
     
     if ( elt )
-        lam_sgl_set_consec_fail(seg_list, 0);
+        ompi_sgl_set_consec_fail(seg_list, 0);
     return elt;
 }
 #endif
 
 
-static void lam_free_lists_append(lam_free_lists_t *flist, void *chunk, int pool_idx)
+static void ompi_free_lists_append(ompi_free_lists_t *flist, void *chunk, int pool_idx)
 {
     /* ASSERT: mp_chunk_sz >= fl_elt_per_chunk * fl_elt_size */
     /* push items onto list  */
-    lam_sgl_append_elt_chunk(flist->fl_free_lists[pool_idx],
-        chunk, lam_mp_get_chunk_size(flist->fl_pool),
+    ompi_sgl_append_elt_chunk(flist->fl_free_lists[pool_idx],
+        chunk, ompi_mp_get_chunk_size(flist->fl_pool),
         flist->fl_elt_per_chunk, flist->fl_elt_size);
 }
 
 
 
 
-static int lam_free_lists_create_more_elts(lam_free_lists_t *flist, int pool_idx)
+static int ompi_free_lists_create_more_elts(ompi_free_lists_t *flist, int pool_idx)
 {
-    int         err = LAM_SUCCESS, desc;
+    int         err = OMPI_SUCCESS, desc;
     size_t      len_added;
     char        *current_loc;
     
-    void *ptr = lam_free_lists_get_mem_chunk(flist, pool_idx, &len_added, &err);
+    void *ptr = ompi_free_lists_get_mem_chunk(flist, pool_idx, &len_added, &err);
     
     if (0 == ptr ) {
-      lam_output(0, "Error: Can't get new elements for %s\n", 
+      ompi_output(0, "Error: Can't get new elements for %s\n", 
                  flist->fl_description);
         return err;
     }
@@ -435,12 +435,12 @@ static int lam_free_lists_create_more_elts(lam_free_lists_t *flist, int pool_idx
     /* attach memory affinity */
     if ( flist->fl_enforce_affinity )
     {
-        if (!lam_set_affinity(ptr, len_added,
+        if (!ompi_set_affinity(ptr, len_added,
                          flist->fl_affinity[pool_idx]))
         {
-            err = LAM_ERROR;
+            err = OMPI_ERROR;
 #ifdef _DEBUGQUEUES
-            lam_err(("Error: Can't set memory policy (pool_idx=%d)\n",
+            ompi_err(("Error: Can't set memory policy (pool_idx=%d)\n",
                      pool_idx));
             return err;
 #endif                          /* _DEBUGQUEUES */
@@ -456,7 +456,7 @@ static int lam_free_lists_create_more_elts(lam_free_lists_t *flist, int pool_idx
     }
     
     /* push chunk of memory onto the list */
-    lam_free_lists_append(flist, ptr, pool_idx);
+    ompi_free_lists_append(flist, ptr, pool_idx);
     
     return err;
 }
@@ -464,44 +464,44 @@ static int lam_free_lists_create_more_elts(lam_free_lists_t *flist, int pool_idx
 
 
 
-lam_list_item_t *lam_free_lists_get_elt(lam_free_lists_t *flist, int index, int *error)
+ompi_list_item_t *ompi_free_lists_get_elt(ompi_free_lists_t *flist, int index, int *error)
 {
 #if ROB_HASNT_FINISHED_THIS_YET
     int         error;
-    volatile    lam_list_item_t *elem = NULL;
+    volatile    ompi_list_item_t *elem = NULL;
     
-    elem = lam_free_lists_request_elt(flist, index);
+    elem = ompi_free_lists_request_elt(flist, index);
     
     if ( elem ) 
     {
-        error = LAM_SUCCESS;
+        error = OMPI_SUCCESS;
     } 
-    else if ( lam_sgl_get_consec_fail(&(flist->fl_free_lists[index]->sgl_list))
+    else if ( ompi_sgl_get_consec_fail(&(flist->fl_free_lists[index]->sgl_list))
                < flist->fl_threshold_grow ) 
     {
-        error = LAM_ERR_TEMP_OUT_OF_RESOURCE;
+        error = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     } 
     else 
     {
-        error = LAM_SUCCESS;
-        while ( (LAM_SUCCESS) && (0 == elem) &&
+        error = OMPI_SUCCESS;
+        while ( (OMPI_SUCCESS) && (0 == elem) &&
                 (flist->fl_retry_more_resources) )
         {
-            error = lam_free_lists_create_more_elts(flist, index);
+            error = ompi_free_lists_create_more_elts(flist, index);
             /* get element if managed to add resources to the list */
-            if ( LAM_SUCCESS == error )
+            if ( OMPI_SUCCESS == error )
             {
-                elem = lam_free_lists_request_elt(flist, index);
+                elem = ompi_free_lists_request_elt(flist, index);
             }            
         }
 
-        if ( (LAM_ERR_OUT_OF_RESOURCE == error)
-             || (LAM_ERR_FATAL == error) )
+        if ( (OMPI_ERR_OUT_OF_RESOURCE == error)
+             || (OMPI_ERR_FATAL == error) )
         {
             return 0;
         }
     }
-#if LAM_ENABLE_MEM_PROFILE
+#if OMPI_ENABLE_MEM_PROFILE
     flist->fl_elt_out[index]++;
     flist->fl_elt_sum[index] += flist->fl_elt_out[index];
     flist->fl_nevents[index]++;
@@ -517,20 +517,20 @@ lam_list_item_t *lam_free_lists_get_elt(lam_free_lists_t *flist, int index, int 
 #endif
 }
 
-int lam_free_lists_return_elt(lam_free_lists_t *flist, int index, lam_list_item_t *item)
+int ompi_free_lists_return_elt(ompi_free_lists_t *flist, int index, ompi_list_item_t *item)
 {
 #if ROB_HASNT_FINISHED_THIS_YET
     mb();
-    lam_dbl_append(&(flist->fl_free_lists[index]->sgl_list), item);
+    ompi_dbl_append(&(flist->fl_free_lists[index]->sgl_list), item);
     mb();
     
-#if LAM_ENABLE_MEM_PROFILE
+#if OMPI_ENABLE_MEM_PROFILE
     flist->fl_elt_out[index]--;
 #endif
     
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 #else
-    return LAM_ERROR;
+    return OMPI_ERROR;
 #endif
 }
 

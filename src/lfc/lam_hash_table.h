@@ -11,28 +11,28 @@
  *  concurrently.
  */
 
-#ifndef LAM_HASH_TABLE_H
-#define LAM_HASH_TABLE_H
+#ifndef OMPI_HASH_TABLE_H
+#define OMPI_HASH_TABLE_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "include/types.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 
 
-extern lam_class_t lam_hash_table_t_class;
+extern ompi_class_t ompi_hash_table_t_class;
                            
 
-struct lam_hash_table_t
+struct ompi_hash_table_t
 {
-    lam_object_t        super;          /**< subclass of lam_object_t */
-    lam_list_t          ht_nodes;       /**< free list of hash nodes */
-    lam_list_t         *ht_table;       /**< each item is an array of 
-					   lam_fhnode_t nodes */
+    ompi_object_t        super;          /**< subclass of ompi_object_t */
+    ompi_list_t          ht_nodes;       /**< free list of hash nodes */
+    ompi_list_t         *ht_table;       /**< each item is an array of 
+					   ompi_fhnode_t nodes */
     size_t              ht_table_size;  /**< size of table */
     size_t              ht_size;        /**< number of values on table */
     size_t              ht_mask;
 };
-typedef struct lam_hash_table_t lam_hash_table_t;
+typedef struct ompi_hash_table_t ompi_hash_table_t;
 
                            
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -46,11 +46,11 @@ extern "C" {
  *  @param   table   The input hash table (IN).
  *  @param   size    The size of the table, which will be rounded up 
  *                   (if required) to the next highest power of two (IN).
- *  @return  LAM error code.
+ *  @return  OMPI error code.
  *
  */
 
-int lam_hash_table_init(lam_hash_table_t* ht, size_t table_size);
+int ompi_hash_table_init(ompi_hash_table_t* ht, size_t table_size);
 
 
 /**
@@ -61,7 +61,7 @@ int lam_hash_table_init(lam_hash_table_t* ht, size_t table_size);
  *
  */
 
-static inline size_t lam_hash_table_get_size(lam_hash_table_t *ht)
+static inline size_t ompi_hash_table_get_size(ompi_hash_table_t *ht)
 {
     return ht->ht_size;
 }
@@ -70,11 +70,11 @@ static inline size_t lam_hash_table_get_size(lam_hash_table_t *ht)
  *  Remove all elements from the table.
  *
  *  @param   table   The input hash table (IN).
- *  @return  LAM return code.
+ *  @return  OMPI return code.
  *
  */
 
-int lam_hash_table_remove_all(lam_hash_table_t *ht);
+int ompi_hash_table_remove_all(ompi_hash_table_t *ht);
 
 /**
  *  Retrieve value via uint32_t key.
@@ -85,7 +85,7 @@ int lam_hash_table_remove_all(lam_hash_table_t *ht);
  *
  */
 
-void *lam_hash_table_get_value_uint32(lam_hash_table_t* table, uint32_t key);
+void *ompi_hash_table_get_value_uint32(ompi_hash_table_t* table, uint32_t key);
 
 /**
  *  Set value based on uint32_t key.
@@ -93,22 +93,22 @@ void *lam_hash_table_get_value_uint32(lam_hash_table_t* table, uint32_t key);
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
  *  @param   value   The value to be associated with the key (IN).
- *  @return  LAM return code.
+ *  @return  OMPI return code.
  *
  */
 
-int lam_hash_table_set_value_uint32(lam_hash_table_t* table, uint32_t key, void* value);
+int ompi_hash_table_set_value_uint32(ompi_hash_table_t* table, uint32_t key, void* value);
 
 /**
  *  Remove value based on uint32_t key.
  *
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
- *  @return  LAM return code.
+ *  @return  OMPI return code.
  *
  */
 
-int lam_hash_table_remove_value_uint32(lam_hash_table_t* table, uint32_t key);
+int ompi_hash_table_remove_value_uint32(ompi_hash_table_t* table, uint32_t key);
 
 /**
  *  Retrieve value via uint64_t key.
@@ -119,7 +119,7 @@ int lam_hash_table_remove_value_uint32(lam_hash_table_t* table, uint32_t key);
  *
  */
 
-void *lam_hash_table_get_value_uint64(lam_hash_table_t *table, uint64_t key);
+void *ompi_hash_table_get_value_uint64(ompi_hash_table_t *table, uint64_t key);
 
 /**
  *  Set value based on uint64_t key.
@@ -127,22 +127,22 @@ void *lam_hash_table_get_value_uint64(lam_hash_table_t *table, uint64_t key);
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
  *  @param   value   The value to be associated with the key (IN).
- *  @return  LAM return code.
+ *  @return  OMPI return code.
  *
  */
 
-int lam_hash_table_set_value_uint64(lam_hash_table_t *table, uint64_t key, void* value);
+int ompi_hash_table_set_value_uint64(ompi_hash_table_t *table, uint64_t key, void* value);
 
 /**
  *  Remove value based on uint64_t key.
  *
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
- *  @return  LAM return code.
+ *  @return  OMPI return code.
  *
  */
 
-int lam_hash_table_remove_value_uint64(lam_hash_table_t *table, uint64_t key);
+int ompi_hash_table_remove_value_uint64(ompi_hash_table_t *table, uint64_t key);
 
 /**
  *  Retrieve value via arbitrary length binary key.
@@ -153,7 +153,7 @@ int lam_hash_table_remove_value_uint64(lam_hash_table_t *table, uint64_t key);
  *
  */
 
-void *lam_hash_table_get_value_ptr(lam_hash_table_t *table, const void* key, size_t keylen);
+void *ompi_hash_table_get_value_ptr(ompi_hash_table_t *table, const void* key, size_t keylen);
 
 /**
  *  Set value based on arbitrary length binary key.
@@ -161,22 +161,22 @@ void *lam_hash_table_get_value_ptr(lam_hash_table_t *table, const void* key, siz
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
  *  @param   value   The value to be associated with the key (IN).
- *  @return  LAM return code.
+ *  @return  OMPI return code.
  *
  */
 
-int lam_hash_table_set_value_ptr(lam_hash_table_t *table, const void* key, size_t keylen, void* value);
+int ompi_hash_table_set_value_ptr(ompi_hash_table_t *table, const void* key, size_t keylen, void* value);
 
 /**
  *  Remove value based on arbitrary length binary key.
  *
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
- *  @return  LAM return code.
+ *  @return  OMPI return code.
  *
  */
 
-int lam_hash_table_remove_value_ptr(lam_hash_table_t *table, const void* key, size_t keylen);
+int ompi_hash_table_remove_value_ptr(ompi_hash_table_t *table, const void* key, size_t keylen);
 
 
 /** The following functions are only for allowing iterating through
@@ -197,11 +197,11 @@ int lam_hash_table_remove_value_ptr(lam_hash_table_t *table, const void* key, si
  *  @param  node    The pointer to the hash table internal node which stores
  *                  the key-value pair (this is required for subsequent calls
  *                  to get_next_key) (OUT)
- *  @return LAM error code
+ *  @return OMPI error code
  *
  */
 
-int lam_hash_table_get_first_key_uint32(lam_hash_table_t *table, uint32_t *key,
+int ompi_hash_table_get_first_key_uint32(ompi_hash_table_t *table, uint32_t *key,
 					void **value, void **node);
 
 
@@ -215,11 +215,11 @@ int lam_hash_table_get_first_key_uint32(lam_hash_table_t *table, uint32_t *key,
  *  @param  out_node The pointer to the hash table internal node which stores
  *                   the key-value pair (this is required for subsequent calls
  *                   to get_next_key) (OUT)
- *  @return LAM error code
+ *  @return OMPI error code
  *
  */
 
-int lam_hash_table_get_next_key_uint32(lam_hash_table_t *table, uint32_t *key,
+int ompi_hash_table_get_next_key_uint32(ompi_hash_table_t *table, uint32_t *key,
 				       void **value, void *in_node,
 				       void **out_node);
 
@@ -233,11 +233,11 @@ int lam_hash_table_get_next_key_uint32(lam_hash_table_t *table, uint32_t *key,
  *  @param  node    The pointer to the hash table internal node which stores
  *                  the key-value pair (this is required for subsequent calls
  *                  to get_next_key) (OUT)
- *  @return LAM error code
+ *  @return OMPI error code
  *
  */
 
-int lam_hash_table_get_first_key_uint64(lam_hash_table_t *table, uint64_t *key,
+int ompi_hash_table_get_first_key_uint64(ompi_hash_table_t *table, uint64_t *key,
 				       void **value, void **node);
 
 
@@ -251,11 +251,11 @@ int lam_hash_table_get_first_key_uint64(lam_hash_table_t *table, uint64_t *key,
  *  @param  out_node The pointer to the hash table internal node which stores
  *                   the key-value pair (this is required for subsequent calls
  *                   to get_next_key) (OUT)
- *  @return LAM error code
+ *  @return OMPI error code
  *
  */
     
-int lam_hash_table_get_next_key_uint64(lam_hash_table_t *table, uint64_t *key,
+int ompi_hash_table_get_next_key_uint64(ompi_hash_table_t *table, uint64_t *key,
 				       void **value, void *in_node,
 				       void **out_node);
 
@@ -265,4 +265,4 @@ int lam_hash_table_get_next_key_uint64(lam_hash_table_t *table, uint64_t *key,
 #endif
 
 
-#endif  /* LAM_HASH_TABLE_H */
+#endif  /* OMPI_HASH_TABLE_H */

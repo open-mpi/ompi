@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_UNPACK = mpi_unpack_f
 #pragma weak pmpi_unpack = mpi_unpack_f
 #pragma weak pmpi_unpack_ = mpi_unpack_f
 #pragma weak pmpi_unpack__ = mpi_unpack_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_UNPACK,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_UNPACK,
                            pmpi_unpack,
                            pmpi_unpack_,
                            pmpi_unpack__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_UNPACK,
                            (inbuf, insize, position, outbuf, outcount, datatype, comm, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_UNPACK = mpi_unpack_f
 #pragma weak mpi_unpack = mpi_unpack_f
 #pragma weak mpi_unpack_ = mpi_unpack_f
 #pragma weak mpi_unpack__ = mpi_unpack_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_UNPACK,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_UNPACK,
                            mpi_unpack,
                            mpi_unpack_,
                            mpi_unpack__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_UNPACK,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

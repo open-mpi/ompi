@@ -2,9 +2,9 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "runtime/runtime.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -13,7 +13,7 @@
 
 
 typedef struct opened_module_t {
-  lam_list_item_t super;
+  ompi_list_item_t super;
 
   mca_pml_base_module_t *om_module;
 } opened_module_t;
@@ -35,11 +35,11 @@ int mca_pml_base_select(mca_pml_t *selected, bool *allow_multi_user_threads,
   int priority, best_priority;
   bool user_threads, hidden_threads;
   bool best_user_threads, best_hidden_threads;
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
   mca_base_module_list_item_t *mli;
   mca_pml_base_module_t *module, *best_module;
   mca_pml_t *actions;
-  lam_list_t opened;
+  ompi_list_t opened;
   opened_module_t *om;  
 
   /* Traverse the list of available modules; call their init
@@ -47,28 +47,28 @@ int mca_pml_base_select(mca_pml_t *selected, bool *allow_multi_user_threads,
 
   best_priority = -1;
   best_module = NULL;
-  OBJ_CONSTRUCT(&opened, lam_list_t);
-  for (item = lam_list_get_first(&mca_pml_base_modules_available);
-       lam_list_get_end(&mca_pml_base_modules_available) != item;
-       item = lam_list_get_next(item)) {
+  OBJ_CONSTRUCT(&opened, ompi_list_t);
+  for (item = ompi_list_get_first(&mca_pml_base_modules_available);
+       ompi_list_get_end(&mca_pml_base_modules_available) != item;
+       item = ompi_list_get_next(item)) {
     mli = (mca_base_module_list_item_t *) item;
     module = (mca_pml_base_module_t *) mli->mli_module;
 
-    lam_output_verbose(10, mca_pml_base_output, 
+    ompi_output_verbose(10, mca_pml_base_output, 
                        "select: initializing %s module %s",
                        module->pmlm_version.mca_type_name,
                        module->pmlm_version.mca_module_name);
     if (NULL == module->pmlm_init) {
-      lam_output_verbose(10, mca_pml_base_output,
+      ompi_output_verbose(10, mca_pml_base_output,
                          "select: no init function; ignoring module");
     } else {
       actions = module->pmlm_init(&priority, &user_threads,
                                   &hidden_threads);
       if (NULL == actions) {
-        lam_output_verbose(10, mca_pml_base_output,
+        ompi_output_verbose(10, mca_pml_base_output,
                            "select: init returned failure");
       } else {
-        lam_output_verbose(10, mca_pml_base_output,
+        ompi_output_verbose(10, mca_pml_base_output,
                            "select: init returned priority %d", priority);
         if (priority > best_priority) {
           best_priority = priority;
@@ -79,11 +79,11 @@ int mca_pml_base_select(mca_pml_t *selected, bool *allow_multi_user_threads,
 
         om = malloc(sizeof(opened_module_t));
         if (NULL == om) {
-          return LAM_ERR_OUT_OF_RESOURCE;
+          return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        OBJ_CONSTRUCT(om, lam_list_item_t);
+        OBJ_CONSTRUCT(om, ompi_list_item_t);
         om->om_module = module;
-        lam_list_append(&opened, (lam_list_item_t*) om);
+        ompi_list_append(&opened, (ompi_list_item_t*) om);
       }
     }
   }
@@ -92,14 +92,14 @@ int mca_pml_base_select(mca_pml_t *selected, bool *allow_multi_user_threads,
 
   if (NULL == best_module) {
     /* JMS Replace with show_help */
-    lam_abort(1, "No pml module available.  This shouldn't happen.");
+    ompi_abort(1, "No pml module available.  This shouldn't happen.");
   } 
 
   /* Finalize all non-selected modules */
 
-  for (item = lam_list_remove_first(&opened);
+  for (item = ompi_list_remove_first(&opened);
        NULL != item;
-       item = lam_list_remove_first(&opened)) {
+       item = ompi_list_remove_first(&opened)) {
     om = (opened_module_t *) item;
     if (om->om_module != best_module) {
 
@@ -112,7 +112,7 @@ int mca_pml_base_select(mca_pml_t *selected, bool *allow_multi_user_threads,
            don't matter anymore) */
 
         om->om_module->pmlm_finalize();
-        lam_output_verbose(10, mca_pml_base_output, 
+        ompi_output_verbose(10, mca_pml_base_output, 
                            "select: module %s not selected / finalized",
                            module->pmlm_version.mca_module_name);
       }
@@ -134,11 +134,11 @@ int mca_pml_base_select(mca_pml_t *selected, bool *allow_multi_user_threads,
   *selected = *actions;
   *allow_multi_user_threads = best_user_threads;
   *have_hidden_threads = best_hidden_threads;
-  lam_output_verbose(10, mca_pml_base_output, 
+  ompi_output_verbose(10, mca_pml_base_output, 
                      "select: module %s selected",
                      module->pmlm_version.mca_module_name);
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_CART_SHIFT = mpi_cart_shift_f
 #pragma weak pmpi_cart_shift = mpi_cart_shift_f
 #pragma weak pmpi_cart_shift_ = mpi_cart_shift_f
 #pragma weak pmpi_cart_shift__ = mpi_cart_shift_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_CART_SHIFT,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_CART_SHIFT,
                            pmpi_cart_shift,
                            pmpi_cart_shift_,
                            pmpi_cart_shift__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_CART_SHIFT,
                            (comm, direction, disp, rank_source, rank_dest, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_CART_SHIFT = mpi_cart_shift_f
 #pragma weak mpi_cart_shift = mpi_cart_shift_f
 #pragma weak mpi_cart_shift_ = mpi_cart_shift_f
 #pragma weak mpi_cart_shift__ = mpi_cart_shift_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_CART_SHIFT,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_CART_SHIFT,
                            mpi_cart_shift,
                            mpi_cart_shift_,
                            mpi_cart_shift__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_CART_SHIFT,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

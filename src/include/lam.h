@@ -2,14 +2,14 @@
  * $HEADER$
  */
 
-#ifndef LAM_H
-#define LAM_H
+#ifndef OMPI_H
+#define OMPI_H
 
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "types.h"
 #include "constants.h"
 
-#endif /* LAM_H */
+#endif /* OMPI_H */

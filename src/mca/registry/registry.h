@@ -7,8 +7,8 @@
 /**
  *  \brief Publish/Subscribe-style global registry database infrastructure
  *
- * LAM/MPI provides a global publish/subscribe-style registry database
- * for use in both LAM and MPI layers.  Data is stored in a flat
+ * OMPI/MPI provides a global publish/subscribe-style registry database
+ * for use in both OMPI and MPI layers.  Data is stored in a flat
  * key=value style database; keys are of type char* and value of type
  * void*.  No endian correction is performed on the data.
  *
@@ -28,7 +28,7 @@
 #ifndef MCA_REGISTRY_H_
 #define MCA_REGISTRY_H_
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mca/mca.h"
 
@@ -77,8 +77,8 @@ typedef int (*mca_registry_base_publish_fn_t)(char* key, void* data, size_t data
    * the value could be obtained.  On error, *data will be NULL and
    * data_len will be 0.
    *
-   * \warning Returned buffer was allocated via lam_malloc and must be
-   * freed by the caller using lam_free.
+   * \warning Returned buffer was allocated via ompi_malloc and must be
+   * freed by the caller using ompi_free.
    *
    * \warning May block if the registry entry for key is currently
    * locked by another process.

@@ -10,11 +10,11 @@
 /* shared memory pool for use before fork.
     should be initialized during prefork init.
 */
-extern lam_fixed_mpool_t    lam_shmem_pools;
+extern ompi_fixed_mpool_t    ompi_shmem_pools;
 
-extern lam_fixed_mpool_t    lam_per_proc_shmem_pools;
+extern ompi_fixed_mpool_t    ompi_per_proc_shmem_pools;
 
-int lam_setup_per_proc_shmem_pools(int npools);
+int ompi_setup_per_proc_shmem_pools(int npools);
 
 #endif
 

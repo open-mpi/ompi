@@ -10,7 +10,7 @@
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_request.h"
 
-extern lam_class_t mca_ptl_base_recv_request_t_class;
+extern ompi_class_t mca_ptl_base_recv_request_t_class;
 struct mca_ptl_base_recv_frag_t;
 
 /**

@@ -9,7 +9,7 @@
 #define MCA_PTL_SM_SEND_REQUEST_H
 
 #include <sys/types.h>
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_sm_sendfrag.h"
 

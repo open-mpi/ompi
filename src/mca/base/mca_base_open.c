@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -22,8 +22,8 @@ bool mca_base_opened = false;
 /*
  * Private functions
  */
-static void set_defaults(lam_output_stream_t *lds);
-static void parse_verbose(char *e, lam_output_stream_t *lds);
+static void set_defaults(ompi_output_stream_t *lds);
+static void parse_verbose(char *e, ompi_output_stream_t *lds);
 
 
 /*
@@ -33,19 +33,19 @@ int mca_base_open(void)
 {
   int param_index;
   char *value;
-  lam_output_stream_t lds;
+  ompi_output_stream_t lds;
 
   if (!mca_base_opened) {
     mca_base_opened = true;
   } else {
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
   }
 
   /* Register some params */
 
   mca_base_param_module_path = 
     mca_base_param_register_string("base", NULL, "module_path",
-                                   "module_path", LAM_PKGLIBDIR);
+                                   "module_path", OMPI_PKGLIBDIR);
   param_index = mca_base_param_register_string("base", NULL, "verbose",
                                                "verbose", NULL);
 
@@ -58,8 +58,8 @@ int mca_base_open(void)
   } else {
     set_defaults(&lds);
   }
-  lam_output_reopen(0, &lds);
-  lam_output_verbose(0, 5, " Opening");
+  ompi_output_reopen(0, &lds);
+  ompi_output_verbose(0, 5, " Opening");
 
   /* Open up the module repository */
 
@@ -70,7 +70,7 @@ int mca_base_open(void)
 /*
  * Set sane default values for the lds
  */
-static void set_defaults(lam_output_stream_t *lds)
+static void set_defaults(ompi_output_stream_t *lds)
 {
   /* Load up defaults */
 
@@ -78,7 +78,7 @@ static void set_defaults(lam_output_stream_t *lds)
   lds->lds_verbose_level = 0;
   lds->lds_want_syslog = false;
   lds->lds_syslog_priority = LOG_INFO;
-  lds->lds_syslog_ident = "lam";
+  lds->lds_syslog_ident = "ompi";
   lds->lds_want_stdout = false;
   lds->lds_want_stderr = true;
   lds->lds_want_file = false;
@@ -91,7 +91,7 @@ static void set_defaults(lam_output_stream_t *lds)
 /*
  * Parse the value of an environment variable describing verbosity
  */
-static void parse_verbose(char *e, lam_output_stream_t *lds)
+static void parse_verbose(char *e, ompi_output_stream_t *lds)
 {
   char *edup;
   char *ptr, *next;

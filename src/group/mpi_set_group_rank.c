@@ -8,7 +8,7 @@
 /*
  * Set group rank in a group structure.
  */
-void lam_set_group_rank(lam_group_t *group, lam_proc_t *proc_pointer)
+void ompi_set_group_rank(ompi_group_t *group, ompi_proc_t *proc_pointer)
 {
     /* local variables */
     int proc;

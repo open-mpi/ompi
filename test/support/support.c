@@ -13,10 +13,10 @@
  * A testing support library to provide uniform reporting output
  */
 
-static int lam_n_tests;
-static int lam_n_success;
-static int lam_n_failures;
-static char *lam_description;
+static int ompi_n_tests;
+static int ompi_n_success;
+static int ompi_n_failures;
+static char *ompi_description;
 
 void test_init(char *a)
 {
@@ -25,15 +25,15 @@ void test_init(char *a)
 
     /* save the descriptive string */
     len=strlen(a);
-    lam_description=(char *)malloc(len+1);
-    assert(lam_description);
+    ompi_description=(char *)malloc(len+1);
+    assert(ompi_description);
 
-    strcpy(lam_description,a);
+    strcpy(ompi_description,a);
 
     /* initialize counters */
-    lam_n_tests=0;
-    lam_n_success=0;
-    lam_n_failures=0;
+    ompi_n_tests=0;
+    ompi_n_success=0;
+    ompi_n_failures=0;
 
     return;
 
@@ -41,15 +41,15 @@ void test_init(char *a)
 
 void test_success(void){
 
-    lam_n_tests++;
-    lam_n_success++;
+    ompi_n_tests++;
+    ompi_n_success++;
 
     return;
 }
 
 void test_failure(char *a){
-    lam_n_tests++;
-    lam_n_failures++;
+    ompi_n_tests++;
+    ompi_n_failures++;
 
     fprintf(stderr," Failure : %s \n",a);
     fflush(stderr);
@@ -110,13 +110,13 @@ int test_finalize(void)
 
     return_value=1;
 
-    if( lam_n_tests == lam_n_success) {
-        fprintf(stderr," SUPPORT :: LAM Test Passed :: %s %d tests \n",
-                lam_description,lam_n_tests);
+    if( ompi_n_tests == ompi_n_success) {
+        fprintf(stderr," SUPPORT :: OMPI Test Passed :: %s %d tests \n",
+                ompi_description,ompi_n_tests);
         fflush(stderr);
     } else {
-        fprintf(stderr," SUPPORT :: LAM Test failed :: %s :: %d of %d failed\n"
-                ,lam_description,lam_n_failures,lam_n_tests);
+        fprintf(stderr," SUPPORT :: OMPI Test failed :: %s :: %d of %d failed\n"
+                ,ompi_description,ompi_n_failures,ompi_n_tests);
         fflush(stderr);
         return_value=0;
     }

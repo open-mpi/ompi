@@ -12,26 +12,26 @@
 #include <assert.h>
 
 #include "include/constants.h"
-#include "lfc/lam_pointer_array.h"
+#include "class/ompi_pointer_array.h"
 #include "util/output.h"
 
-static void lam_pointer_array_construct(lam_pointer_array_t *);
-static void lam_pointer_array_destruct(lam_pointer_array_t *);
+static void ompi_pointer_array_construct(ompi_pointer_array_t *);
+static void ompi_pointer_array_destruct(ompi_pointer_array_t *);
 enum { TABLE_INIT = 1, TABLE_GROW = 2 };
 
-lam_class_t lam_pointer_array_t_class = {
-    "lam_pointer_array_t",
-    OBJ_CLASS(lam_object_t),
-    (lam_construct_t) lam_pointer_array_construct,
-    (lam_destruct_t) lam_pointer_array_destruct
+ompi_class_t ompi_pointer_array_t_class = {
+    "ompi_pointer_array_t",
+    OBJ_CLASS(ompi_object_t),
+    (ompi_construct_t) ompi_pointer_array_construct,
+    (ompi_destruct_t) ompi_pointer_array_destruct
 };
 
 /**
- * lam_pointer_array constructor
+ * ompi_pointer_array constructor
  */
-void lam_pointer_array_construct(lam_pointer_array_t *array)
+void ompi_pointer_array_construct(ompi_pointer_array_t *array)
 {
-    OBJ_CONSTRUCT(&array->lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&array->lock, ompi_mutex_t);
     array->lowest_free = 0;
     array->number_free = 0;
     array->size = 0;
@@ -39,9 +39,9 @@ void lam_pointer_array_construct(lam_pointer_array_t *array)
 }
 
 /**
- * lam_pointer_array destructor
+ * ompi_pointer_array destructor
  */
-void lam_pointer_array_destruct(lam_pointer_array_t *array){
+void ompi_pointer_array_destruct(ompi_pointer_array_t *array){
 
     /* free table */
     if( NULL != array->addr)
@@ -54,19 +54,19 @@ void lam_pointer_array_destruct(lam_pointer_array_t *array){
 /**
  * add a pointer to dynamic pointer table
  *
- * @param table Pointer to lam_pointer_array_t object (IN)
+ * @param table Pointer to ompi_pointer_array_t object (IN)
  * @param ptr Pointer to be added to table    (IN)
  *
- * @return Array index where ptr is inserted or LAM_ERROR if it fails
+ * @return Array index where ptr is inserted or OMPI_ERROR if it fails
  */
-size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
+size_t ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 {
     void **p;
     int	i;
     size_t index;
 
     if (0) {
-        lam_output(0,"lam_pointer_array_add:  IN:  "
+        ompi_output(0,"ompi_pointer_array_add:  IN:  "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " ptr = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -84,13 +84,13 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
 	 */
 
         if (0) {
-	    lam_output(0,"lam_pointer_array_add:  INIT: table %p\n", table);
+	    ompi_output(0,"ompi_pointer_array_add:  INIT: table %p\n", table);
         }
 
 	p = malloc(TABLE_INIT * sizeof(void *));
 	if (p == NULL) {
         THREAD_UNLOCK(&(table->lock));
-        return LAM_ERROR;
+        return OMPI_ERROR;
 	}
 	table->lowest_free = 0;
 	table->number_free = TABLE_INIT;
@@ -107,14 +107,14 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
          */
 
         if (0) {
-            lam_output(0,"lam_pointer_array_add:  GROW: table %p growing %d -> %d\n",
+            ompi_output(0,"ompi_pointer_array_add:  GROW: table %p growing %d -> %d\n",
                     table, table->size, table->size * TABLE_GROW);
         }
 
 	p = realloc(table->addr, TABLE_GROW * table->size * sizeof(void *));
 	if (p == NULL) {
         THREAD_UNLOCK(&(table->lock));
-	    return LAM_ERROR;
+	    return OMPI_ERROR;
 	}
 	table->lowest_free = table->size;
 	table->number_free = (TABLE_GROW - 1) * table->size;
@@ -153,7 +153,7 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
     }
 
     if (0) {
-        lam_output(0,"lam_pointer_array_add:  OUT: "
+        ompi_output(0,"ompi_pointer_array_add:  OUT: "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -169,20 +169,20 @@ size_t lam_pointer_array_add(lam_pointer_array_t *table, void *ptr)
  * free a slot in dynamic pointer table for reuse
  *
  *
- * @param table Pointer to lam_pointer_array_t object (IN)
+ * @param table Pointer to ompi_pointer_array_t object (IN)
  * @param ptr Pointer to be added to table    (IN)
  *
  * @return Error code
  *
  * Assumption: NULL element is free element.
  */
-int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
+int ompi_pointer_array_set_item(ompi_pointer_array_t *table, size_t index,
         void * value)
 {
     assert(table != NULL);
 
 #if 0
-    lam_output(0,"lam_pointer_array_set_item: IN:  "
+    ompi_output(0,"ompi_pointer_array_set_item: IN:  "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -196,7 +196,7 @@ int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
 	void *p = realloc(table->addr, new_size * sizeof(void *));
 	if (p == NULL) {
             THREAD_UNLOCK(&(table->lock));
-	    return LAM_ERROR;
+	    return OMPI_ERROR;
 	}
 	table->number_free += new_size - table->size;
 	table->addr = p;
@@ -219,7 +219,7 @@ int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
     }
 
 #if 0
-    lam_output(0,"lam_pointer_array_set_item: OUT: "
+    ompi_output(0,"ompi_pointer_array_set_item: OUT: "
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
@@ -227,7 +227,7 @@ int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
 #endif
 
     THREAD_UNLOCK(&(table->lock));
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 /**
@@ -244,7 +244,7 @@ int lam_pointer_array_set_item(lam_pointer_array_t *table, size_t index,
  * In contrary to array_set, this function does not allow to overwrite 
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
-int lam_pointer_array_test_and_set_item (lam_pointer_array_t *table, size_t index,
+int ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, size_t index,
                                          void *value)
 {
     int flag=true;
@@ -253,7 +253,7 @@ int lam_pointer_array_test_and_set_item (lam_pointer_array_t *table, size_t inde
     assert(index >= 0);
 
 #if 0
-    lam_output(0,"lam_pointer_array_test_and_set_item: IN:  "
+    ompi_output(0,"ompi_pointer_array_test_and_set_item: IN:  "
                " table %p (size %ld, lowest free %ld, number free %ld)"
                " addr[%d] = %p\n",
                table, table->size, table->lowest_free, table->number_free,
@@ -274,7 +274,7 @@ int lam_pointer_array_test_and_set_item (lam_pointer_array_t *table, size_t inde
 	void *p = realloc(table->addr, new_size * sizeof(void *));
 	if (p == NULL) {
             THREAD_UNLOCK(&(table->lock));
-	    return LAM_ERROR;
+	    return OMPI_ERROR;
 	}
 	table->number_free += new_size - table->size;
 	table->addr = p;
@@ -290,7 +290,7 @@ int lam_pointer_array_test_and_set_item (lam_pointer_array_t *table, size_t inde
     table->addr[index] = value;
 
 #if 0
-    lam_output(0,"lam_pointer_array_test_and_set_item: OUT: "
+    ompi_output(0,"ompi_pointer_array_test_and_set_item: OUT: "
                " table %p (size %ld, lowest free %ld, number free %ld)"
                " addr[%d] = %p\n",
                table, table->size, table->lowest_free, table->number_free,

@@ -45,14 +45,14 @@ mca_io_base_module_1_0_0_t mca_io_romio_module = {
 
 int mca_io_romio_module_open(void)
 {
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
     /* register all mca parameters */
 }
 
 
 int mca_io_romio_module_close(void)
 {
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 

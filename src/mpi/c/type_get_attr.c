@@ -2,17 +2,17 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "attribute/attribute.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_get_attr = PMPI_Type_get_attr
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -28,15 +28,15 @@ MPI_Type_get_attr (MPI_Datatype type,
 
     if (MPI_PARAM_CHECK) {
 	if ((NULL == attribute_val) || (NULL == flag)) {
-	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
+	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
 					 MPI_ERR_ARG, 
 					 FUNC_NAME);
 	}
     }
 
-    ret = lam_attr_get(type->d_keyhash, type_keyval, 
+    ret = ompi_attr_get(type->d_keyhash, type_keyval, 
 		       attribute_val, flag);
 
-    LAM_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
+    OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
 			  MPI_ERR_OTHER, FUNC_NAME);  
 }

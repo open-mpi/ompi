@@ -3,14 +3,14 @@
  */
 
 /** @file
- * LAM output stream facility.
+ * OMPI output stream facility.
  *
- * The LAM output stream facility is used to send output from the LAM
+ * The OMPI output stream facility is used to send output from the OMPI
  * libraries to output devices.  It is meant to fully replace all
  * forms of printf() (and friends).  Output streams are opened via the
- * lam_output_open() function call, and then sent output via
- * lam_output_verbose(), LAM_OUTPUT(), and lam_output().  Streams are
- * closed with lam_output_close().
+ * ompi_output_open() function call, and then sent output via
+ * ompi_output_verbose(), OMPI_OUTPUT(), and ompi_output().  Streams are
+ * closed with ompi_output_close().
  *
  * Streams can multiplex output to several kinds of outputs (one of
  * each):
@@ -20,15 +20,15 @@
  * - standard error
  * - file
  *
- * Which outputs to use are specified during lam_output_open().
+ * Which outputs to use are specified during ompi_output_open().
  *
- * lam_output_open() returns an integer handle that is used in
- * successive calls to LAM_OUTPUT() and lam_output() to send output to
+ * ompi_output_open() returns an integer handle that is used in
+ * successive calls to OMPI_OUTPUT() and ompi_output() to send output to
  * the stream.
  *
  * The default "verbose" stream is opened after invoking
- * lam_output_init() (and closed after invoking
- * lam_output_finalize()).  This stream outputs to stderr only, and
+ * ompi_output_init() (and closed after invoking
+ * ompi_output_finalize()).  This stream outputs to stderr only, and
  * has a stream handle ID of 0.
  *
  * It is erroneous to have one thread close a stream and have another
@@ -36,10 +36,10 @@
  * will be serialized in an unspecified order.
  */
 
-#ifndef LAM_OUTPUT_H_
-#define LAM_OUTPUT_H_
+#ifndef OMPI_OUTPUT_H_
+#define OMPI_OUTPUT_H_
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #if __STDC__
 #include <stdarg.h>
@@ -53,29 +53,29 @@
 
 
 /**
- * \class lam_output_stream_t 
+ * \class ompi_output_stream_t 
  *
- * Structure used to request the opening of a LAM output stream.  A
- * pointer to this structure is passed to lam_output_open() to tell
- * the lam_output subsystem where to send output for a given stream.
+ * Structure used to request the opening of a OMPI output stream.  A
+ * pointer to this structure is passed to ompi_output_open() to tell
+ * the ompi_output subsystem where to send output for a given stream.
  * It is valid to specify multiple destinations of output for a stream
  * -- output streams can be multiplexed to multiple different
- * destinations through the lam_output facility.
+ * destinations through the ompi_output facility.
  *
  * Note that all strings in this struct are cached on the stream by
  * value; there is no need to keep them allocated after the return
- * from lam_output_open().
+ * from ompi_output_open().
  *
  * @see output.h
  */
-struct lam_output_stream_t {
+struct ompi_output_stream_t {
   /**
    * Indicates whether the output of the stream is
    * debugging/developer-only output or not.
    *
    * This field should be "true" if the output is for debugging
    * purposes only.  In that case, the output will never be sent to
-   * the stream unless LAM was configured with --enable-debug.
+   * the stream unless OMPI was configured with --enable-debug.
    */
   bool lds_is_debugging;
 
@@ -84,8 +84,8 @@ struct lam_output_stream_t {
    *
    * Verbose levels are a convenience mechanisms, and are only
    * consulted when output is sent to a stream through the
-   * lam_output_verbose() function.  Verbose levels are ignored in
-   * LAM_OUTPUT() and lam_output().
+   * ompi_output_verbose() function.  Verbose levels are ignored in
+   * OMPI_OUTPUT() and ompi_output().
    *
    * Valid verbose levels typically start at 0 (meaning "minimal
    * information").  Higher verbosity levels generally indicate that
@@ -108,7 +108,7 @@ struct lam_output_stream_t {
    */
   bool lds_want_syslog;
   /**
-   * When lam_output_stream_t::lds_want_syslog is true, this field is
+   * When ompi_output_stream_t::lds_want_syslog is true, this field is
    * examined to see what priority output from the stream should be
    * sent to the syslog.
    *
@@ -118,10 +118,10 @@ struct lam_output_stream_t {
    */
   int lds_syslog_priority;
   /**
-   * When lam_output_stream_t::lds_want_syslog is true, this field is
+   * When ompi_output_stream_t::lds_want_syslog is true, this field is
    * examined to see what ident value should be passed to openlog(3).
    * 
-   * If a NULL value is given, the string "lam" is used.
+   * If a NULL value is given, the string "ompi" is used.
    */
   char *lds_syslog_ident;
 
@@ -158,7 +158,7 @@ struct lam_output_stream_t {
    */
   bool lds_want_file;
   /**
-   * When lam_output_stream_t::lds_want_file is true, this field
+   * When ompi_output_stream_t::lds_want_file is true, this field
    * indicates whether to append the file (if it exists) or overwrite
    * it.
    *
@@ -166,11 +166,11 @@ struct lam_output_stream_t {
    */
   bool lds_want_file_append;
   /**
-   * When lam_output_stream_t::lds_want_file is true, this field
+   * When ompi_output_stream_t::lds_want_file is true, this field
    * indicates the string suffix to add to the filename.
    *
-   * The output file will be in the LAM session directory and have a
-   * LAM-generated prefix (generally "$sessiondir/lam-").  The suffix
+   * The output file will be in the OMPI session directory and have a
+   * OMPI-generated prefix (generally "$sessiondir/ompi-").  The suffix
    * is intended to give stream users a chance to write their output
    * into unique files.  If this field is NULL, the suffix
    * "output.txt" is used.
@@ -178,7 +178,7 @@ struct lam_output_stream_t {
   char *lds_file_suffix;
 };
 
-typedef struct lam_output_stream_t lam_output_stream_t;
+typedef struct ompi_output_stream_t ompi_output_stream_t;
 
 
 #ifdef __cplusplus
@@ -193,13 +193,13 @@ extern "C" {
    *
    * This should be the first function invoked in the output
    * subsystem.  After this call, the default "verbose" stream is open
-   * and can be written to via calls to lam_output_verbose() and
-   * lam_output_error().
+   * and can be written to via calls to ompi_output_verbose() and
+   * ompi_output_error().
    *
    * By definition, the default verbose stream has a handle ID of 0,
    * and has a verbose level of 0.
    */
-  bool lam_output_init(void);
+  bool ompi_output_init(void);
 
   /**
    * Shut down the output stream system.
@@ -207,18 +207,18 @@ extern "C" {
    * Shut down the output stream system, including the default verbose
    * stream.
    */
-  void lam_output_finalize(void);
+  void ompi_output_finalize(void);
 
   /**
    * Opens an output stream.
    *
-   * @param lds A pointer to lam_output_stream_t describing what the
+   * @param lds A pointer to ompi_output_stream_t describing what the
    * characteristics of the output stream should be.
    *
    * This function opens an output stream and returns an integer
    * handle.  The caller is responsible for maintaining the handle and
-   * using it in successive calls to LAM_OUTPUT(), lam_output(),
-   * lam_output_switch(), and lam_output_close().
+   * using it in successive calls to OMPI_OUTPUT(), ompi_output(),
+   * ompi_output_switch(), and ompi_output_close().
    *
    * If lds is NULL, the default descriptions will be used, meaning
    * that output will only be sent to stderr.
@@ -227,13 +227,13 @@ extern "C" {
    * simultaneously; their execution will be serialized in an
    * unspecified manner.
    */
-  int lam_output_open(lam_output_stream_t *lds);
+  int ompi_output_open(ompi_output_stream_t *lds);
 
   /**
    * Re-opens / redirects an output stream.
    *
    * @param output_id Stream handle to reopen
-   * @param lds A pointer to lam_output_stream_t describing what the
+   * @param lds A pointer to ompi_output_stream_t describing what the
    * characteristics of the reopened output stream should be.
    *
    * This function redirects an existing stream into a new [set of]
@@ -241,7 +241,7 @@ extern "C" {
    * passed is invalid, this call is effectively the same as opening a
    * new stream with a specific stream handle.
    */
-  int lam_output_reopen(int output_id, lam_output_stream_t *lds);
+  int ompi_output_reopen(int output_id, ompi_output_stream_t *lds);
 
   /**
    * Enables and disables output streams.
@@ -256,11 +256,11 @@ extern "C" {
    * The output of a stream can be temporarily disabled by passing an
    * enable value to false, and later resumed by passing an enable
    * value of true.  This does not close the stream -- it simply tells
-   * the lam_output subsystem to intercept and discard any output sent
-   * to the stream via LAM_OUTPUT() or lam_output() until the output
+   * the ompi_output subsystem to intercept and discard any output sent
+   * to the stream via OMPI_OUTPUT() or ompi_output() until the output
    * is re-enabled.
    */
-  bool lam_output_switch(int output_id, bool enable);
+  bool ompi_output_switch(int output_id, bool enable);
 
   /**
    * \internal
@@ -271,7 +271,7 @@ extern "C" {
    * typically only invoked after a restart (i.e., in a new process)
    * where output streams need to be re-initialized.
    */
-  void lam_output_reopen_all(void);
+  void ompi_output_reopen_all(void);
 
   /**
    * Close an output stream.
@@ -283,19 +283,19 @@ extern "C" {
    * re-used; it is possible that after a stream is closed, if another
    * stream is opened, it will get the same handle value.
    */
-  void lam_output_close(int output_id);
+  void ompi_output_close(int output_id);
 
   /**
    * Main function to send output to a stream.
    *
-   * @param output_id Stream id returned from lam_output_open().
+   * @param output_id Stream id returned from ompi_output_open().
    * @param format printf-style format string.
    * @param varargs printf-style varargs list to fill the string
    * specified by the format parameter.
    *
    * This is the main function to send output to custom streams (note
    * that output to the default "verbose" stream is handled through
-   * lam_output_verbose() and lam_output_error()).
+   * ompi_output_verbose() and ompi_output_error()).
    *
    * It is never necessary to send a trailing "\n" in the strings to
    * this function; some streams requires newlines, others do not --
@@ -303,13 +303,13 @@ extern "C" {
    *
    * Verbosity levels are ignored in this function.
    */
-  void lam_output(int output_id, char *format, ...);
+  void ompi_output(int output_id, char *format, ...);
 
   /**
    * Send output to a stream only if the passed verbosity level is
    * high enough.
    *
-   * @param output_id Stream id returned from lam_output_open().
+   * @param output_id Stream id returned from ompi_output_open().
    * @param level Target verbosity level.
    * @param format printf-style format string.
    * @param varargs printf-style varargs list to fill the string
@@ -328,46 +328,46 @@ extern "C" {
    * This function is really a convenience wrapper around checking the
    * current verbosity level set on the stream, and if the passed
    * level is less than or equal to the stream's verbosity level, this
-   * function will effectively invoke lam_output to send the output to
+   * function will effectively invoke ompi_output to send the output to
    * the stream.
    *
-   * @see lam_output_set_verbosity()
+   * @see ompi_output_set_verbosity()
    */
-  void lam_output_verbose(int output_id, int verbose_level, char *format, ...);
+  void ompi_output_verbose(int output_id, int verbose_level, char *format, ...);
 
   /**
    * Set the verbosity level for a stream.
    *
-   * @param output_id Stream id returned from lam_output_open().
+   * @param output_id Stream id returned from ompi_output_open().
    * @param level New verbosity level
    *
    * This function sets the verbosity level on a given stream.  It
-   * will be used for all future invocations of lam_output_verbose().
+   * will be used for all future invocations of ompi_output_verbose().
    */
-  void lam_output_set_verbosity(int output_id, int level);
+  void ompi_output_set_verbosity(int output_id, int level);
 
-#if LAM_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
   /**
    * Main macro for use in sending debugging output to output streams;
-   * will be "compiled out" when LAM is configured without
+   * will be "compiled out" when OMPI is configured without
    * --enable-debug.
    *
-   * @see lam_output()
+   * @see ompi_output()
    */
-#define LAM_OUTPUT(a) lam_output a
+#define OMPI_OUTPUT(a) ompi_output a
 #else
   /**
    * Main macro for use in sending debugging output to output streams;
-   * will be "compiled out" when LAM is configured without
+   * will be "compiled out" when OMPI is configured without
    * --enable-debug.
    *
-   * @see lam_output()
+   * @see ompi_output()
    */
-#define LAM_OUTPUT(a)
+#define OMPI_OUTPUT(a)
 #endif
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LAM_OUTPUT_H_ */
+#endif /* OMPI_OUTPUT_H_ */
 

@@ -4,8 +4,8 @@
 
 /** @file **/
 
-#ifndef LAM_MCA_BASE_PARAM_H
-#define LAM_MCA_BASE_PARAM_H
+#ifndef OMPI_MCA_BASE_PARAM_H
+#define OMPI_MCA_BASE_PARAM_H
 
 #include "mpi.h"
 
@@ -23,7 +23,7 @@ typedef union {
 
 /*
  * The following types are really in this public .h file so that
- * laminfo can see them.  No one else should use them!
+ * ompi_info can see them.  No one else should use them!
  */
 typedef enum {
   MCA_BASE_PARAM_TYPE_INT,
@@ -66,7 +66,7 @@ extern "C" {
    * @param default_value The value that is used for this parameter if
    * the user does not supply one.
    *
-   * @retval LAM_ERROR Upon failure to register the parameter.
+   * @retval OMPI_ERROR Upon failure to register the parameter.
    * @retval index Index value that can be used with
    * mca_base_param_lookup_int() to retrieve the value of the parameter.
    *
@@ -93,7 +93,7 @@ extern "C" {
    * @param default_value The value that is used for this parameter if
    * the user does not supply one.
    *
-   * @retval LAM_ERROR Upon failure to register the parameter.
+   * @retval OMPI_ERROR Upon failure to register the parameter.
    * @retval index Index value that can be used with
    * mca_base_param_lookup_string() to retrieve the value of the
    * parameter.
@@ -117,9 +117,9 @@ extern "C" {
    * @param value Pointer to int where the parameter value will be
    * stored.
    *
-   * @retvalue LAM_ERROR Upon failure.  The contents of value are
+   * @retvalue OMPI_ERROR Upon failure.  The contents of value are
    * undefined.
-   * @retvalue LAM_SUCCESS Upon success.  value will be filled with the
+   * @retvalue OMPI_SUCCESS Upon success.  value will be filled with the
    * parameter's current value.
    *
    * The value of a specific MCA parameter can be looked up using the
@@ -134,9 +134,9 @@ extern "C" {
    * @param value Pointer to (char *) where the parameter value will be
    * stored.
    *
-   * @retvalue LAM_ERROR Upon failure.  The contents of value are
+   * @retvalue OMPI_ERROR Upon failure.  The contents of value are
    * undefined.
-   * @retvalue LAM_SUCCESS Upon success.  value will be filled with the
+   * @retvalue OMPI_SUCCESS Upon success.  value will be filled with the
    * parameter's current value.
    *
    * The value of a specific MCA parameter can be looked up using the
@@ -150,7 +150,7 @@ extern "C" {
    * @param module_name Name of the module containing the parameter.
    * @param param_name Name of the parameter.
    *
-   * @retval LAM_ERROR If the parameter was not found.
+   * @retval OMPI_ERROR If the parameter was not found.
    * @retval index If the parameter was found.
    *
    * It is not always convenient to widely propagate a parameter's index
@@ -168,7 +168,7 @@ extern "C" {
    * Shut down the MCA parameter system (normally only invoked by the
    * MCA framework itself).
    *
-   * @returns LAM_SUCCESS This function never fails.
+   * @returns OMPI_SUCCESS This function never fails.
    *
    * This function shuts down the MCA parameter repository and frees all
    * associated memory.  No other mca_base_param*() functions can be
@@ -190,4 +190,4 @@ extern "C" {
 }
 #endif
 
-#endif /* LAM_MCA_BASE_PARAM_H */
+#endif /* OMPI_MCA_BASE_PARAM_H */

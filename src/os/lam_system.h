@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef LAM_SYSTEM_H
-#define LAM_SYSTEM_H
+#ifndef OMPI_SYSTEM_H
+#define OMPI_SYSTEM_H
 
 /* conditionally include system dependent stuff here */
 
@@ -32,4 +32,4 @@
 #endif
 
 
-#endif  /* LAM_SYSTEM_H */
+#endif  /* OMPI_SYSTEM_H */

@@ -9,8 +9,8 @@
  * arrays of strings, especially when creating command lines.
  */
 
-#ifndef LAM_ARGV_H
-#define LAM_ARGV_H
+#ifndef OMPI_ARGV_H
+#define OMPI_ARGV_H
 
 #include "include/types.h"
 
@@ -26,8 +26,8 @@ extern "C" {
    * @param argv Pointer to an argv array.
    * @param str Pointer to the string to append.
    *
-   * @retval LAM_SUCCESS On success
-   * @retval LAM_ERROR On failure
+   * @retval OMPI_SUCCESS On success
+   * @retval OMPI_ERROR On failure
    *
    * This function adds a string to an argv array of strings by value;
    * it is permissable to pass a string on the stack as the str
@@ -46,7 +46,7 @@ extern "C" {
    * value into the argv array; there is no need to keep the original
    * string (i.e., the arg parameter) after invoking this function.
    */
-  int lam_argv_append(int *argc, char ***argv, const char *arg);
+  int ompi_argv_append(int *argc, char ***argv, const char *arg);
 
   /**
    * Free a NULL-terminated argv array.
@@ -61,7 +61,7 @@ extern "C" {
    * not safe to invoke this function with a non-NULL-terminated argv
    * array.
    */
-  void lam_argv_free(char **argv);
+  void ompi_argv_free(char **argv);
   
   /**
    * Split a string into a NULL-terminated argv array.
@@ -77,7 +77,7 @@ extern "C" {
    * argument (i.e., it can be freed after calling this function
    * without invalidating the output argv).
    */
-  char **lam_argv_split(const char *src_string, int delimiter);
+  char **ompi_argv_split(const char *src_string, int delimiter);
 
   /**
    * Return the length of a NULL-terminated argv array.
@@ -89,7 +89,7 @@ extern "C" {
    *
    * The argv array must be NULL-terminated.
    */
-  int lam_argv_count(char **argv);
+  int ompi_argv_count(char **argv);
 
   /**
    * Join all the elements of an argv array into a single
@@ -107,7 +107,7 @@ extern "C" {
    *
    * It is the callers responsibility to free the returned string.
    */
-  char *lam_argv_join(char **argv, int delimiter);
+  char *ompi_argv_join(char **argv, int delimiter);
 
   /**
    * Return the number of bytes consumed by an argv array.
@@ -118,7 +118,7 @@ extern "C" {
    * array.  This includes the number of bytes used by each of the
    * strings as well as the pointers used in the argv array.
    */
-  size_t lam_argv_len(char **argv);
+  size_t ompi_argv_len(char **argv);
 
   /**
    * Copy a NULL-terminated argv array.
@@ -132,9 +132,9 @@ extern "C" {
    * Specifically, the output argv will be an array of the same length
    * as the input argv, and strcmp(argv_in[i], argv_out[i]) will be 0.
    */
-  char **lam_argv_copy(char **argv);
+  char **ompi_argv_copy(char **argv);
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LAM_ARGV_H */
+#endif /* OMPI_ARGV_H */

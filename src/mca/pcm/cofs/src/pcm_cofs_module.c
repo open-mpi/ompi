@@ -4,7 +4,7 @@
  *
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "constants.h"
 #include "types.h"
@@ -61,7 +61,7 @@ struct mca_pcm_1_0_0_t mca_pcm_cofs_1_0_0 = {
 };
 
 
-char mca_pcm_cofs_comm_loc[LAM_PATH_MAX];
+char mca_pcm_cofs_comm_loc[OMPI_PATH_MAX];
 int mca_pcm_cofs_my_vpid = -1;
 char *mca_pcm_cofs_my_handle = NULL;
 mca_pcm_proc_t *mca_pcm_cofs_procs = NULL;
@@ -72,14 +72,14 @@ mca_pcm_cofs_open(void)
 {
   /* JMS/BWB: Register MCA params in here -- see
      src/mca/base/mca_base_param.h */
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
 int
 mca_pcm_cofs_close(void)
 {
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
@@ -98,45 +98,45 @@ mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads,
 
   /* BWB - remove printfs once things settle down some... */
   /* JMS: Look in src/mca/base/mca_base_param.h */
-  test_ret = getenv("MCA_common_lam_cofs_my_vpid");
+  test_ret = getenv("MCA_common_ompi_cofs_my_vpid");
   if (test_ret == NULL) {
-    printf("COFS PCM will not be running because MCA_common_lam_cofs_my_vpid not set\n");
+    printf("COFS PCM will not be running because MCA_common_ompi_cofs_my_vpid not set\n");
     return NULL;
   }
 
-  test_ret = getenv("MCA_common_lam_cofs_job_handle");
+  test_ret = getenv("MCA_common_ompi_cofs_job_handle");
   if (test_ret == NULL) {
-    printf("COFS PCM will not be running because MCA_common_lam_cofs_job_handle not set\n");
+    printf("COFS PCM will not be running because MCA_common_ompi_cofs_job_handle not set\n");
     return NULL;
   }
 
-  test_ret = getenv("MCA_common_lam_cofs_num_procs");
+  test_ret = getenv("MCA_common_ompi_cofs_num_procs");
   if (test_ret == NULL) {
-    printf("COFS PCM will not be running because MCA_common_lam_cofs_num_procs not set\n");
+    printf("COFS PCM will not be running because MCA_common_ompi_cofs_num_procs not set\n");
     return NULL;
   }
 
   /*
    * BWB - fix me, make register the "right" way...
    */
-  tmp = getenv("MCA_common_lam_cofs_comm_dir");
+  tmp = getenv("MCA_common_ompi_cofs_comm_dir");
   if (tmp == NULL) {
     /* make it $HOME */
     tmp = getenv("HOME");
     if (tmp == NULL) {
-      printf("pcm_cofs can not find communication dir (MCA_common_lam_cofs_comm_dir)\n");
+      printf("pcm_cofs can not find communication dir (MCA_common_ompi_cofs_comm_dir)\n");
       return NULL;
     }
-    snprintf(mca_pcm_cofs_comm_loc, LAM_PATH_MAX, "%s/cofs", tmp);
+    snprintf(mca_pcm_cofs_comm_loc, OMPI_PATH_MAX, "%s/cofs", tmp);
   } else {
-    snprintf(mca_pcm_cofs_comm_loc, LAM_PATH_MAX, "%s", tmp);
+    snprintf(mca_pcm_cofs_comm_loc, OMPI_PATH_MAX, "%s", tmp);
   }
 
   /*
    * BWB - fix me, make register the "right" way...
    */
   /* find our vpid */
-  tmp = getenv("MCA_common_lam_cofs_my_vpid");
+  tmp = getenv("MCA_common_ompi_cofs_my_vpid");
   if (tmp == NULL) {
     printf("pcm_cofs can not find vpid\n");
     return NULL;
@@ -159,11 +159,11 @@ mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads,
   unlink(tmp);
   free(tmp);
 
-  mca_pcm_cofs_my_handle = getenv("MCA_common_lam_cofs_job_handle");
+  mca_pcm_cofs_my_handle = getenv("MCA_common_ompi_cofs_job_handle");
 
   mca_pcm_cofs_procs = NULL;
 
-  tmp = getenv("MCA_common_lam_cofs_num_procs");
+  tmp = getenv("MCA_common_ompi_cofs_num_procs");
   if (tmp == NULL) {
     printf("pcm_cofs can not find nprocs\n");
     return NULL;
@@ -183,6 +183,6 @@ mca_pcm_cofs_finalize(void)
     mca_pcm_cofs_nprocs = 0;
   }
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 

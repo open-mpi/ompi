@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
@@ -30,7 +30,7 @@ int mca_coll_base_associative = 1;
 int mca_coll_base_reduce_crossover = 4;
 int mca_coll_base_bcast_collmaxlin = 4;
 int mca_coll_base_bcast_collmaxdim = 64;
-lam_list_t mca_coll_base_modules_opened;
+ompi_list_t mca_coll_base_modules_opened;
 
 
 /**
@@ -41,13 +41,13 @@ int mca_coll_base_open(void)
 {
   /* Open up all available modules */
 
-  if (LAM_SUCCESS != 
+  if (OMPI_SUCCESS != 
       mca_base_modules_open("coll", 0, mca_coll_base_static_modules, 
                             &mca_coll_base_modules_opened)) {
-    return LAM_ERROR;
+    return OMPI_ERROR;
   }
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

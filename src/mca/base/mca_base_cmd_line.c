@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -25,9 +25,9 @@ static char **mca_value_argv = NULL;
 /*
  * Add -mca to the possible command line options list
  */
-int mca_base_cmd_line_setup(lam_cmd_line_t *cmd)
+int mca_base_cmd_line_setup(ompi_cmd_line_t *cmd)
 {
-  return lam_cmd_line_make_opt(cmd, 'm', "mca", 2,
+  return ompi_cmd_line_make_opt(cmd, 'm', "mca", 2,
                                "General mechanism to pass MCA parameters");
 }
 
@@ -35,7 +35,7 @@ int mca_base_cmd_line_setup(lam_cmd_line_t *cmd)
 /*
  * Look for and handle any -mca options on the command line
  */
-int mca_base_cmd_line_process_args(lam_cmd_line_t *cmd)
+int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd)
 {
   int i, num_insts;
   char *buf = 0;
@@ -43,37 +43,37 @@ int mca_base_cmd_line_process_args(lam_cmd_line_t *cmd)
 
   /* If no "-mca" parameters were given, just return */
 
-  if (!lam_cmd_line_is_taken(cmd, "mca"))
-    return LAM_SUCCESS;
+  if (!ompi_cmd_line_is_taken(cmd, "mca"))
+    return OMPI_SUCCESS;
 
   /* Otherwise, assemble them into an argc/argv */
 
-  num_insts = lam_cmd_line_get_ninsts(cmd, "mca");
+  num_insts = ompi_cmd_line_get_ninsts(cmd, "mca");
   for (i = 0; i < num_insts; ++i)
-    mca_base_cmd_line_process_arg(lam_cmd_line_get_param(cmd, "mca", i, 0), 
-                                  lam_cmd_line_get_param(cmd, "mca", i, 1));
+    mca_base_cmd_line_process_arg(ompi_cmd_line_get_param(cmd, "mca", i, 0), 
+                                  ompi_cmd_line_get_param(cmd, "mca", i, 1));
 
   /* Now put that argc/argv in the environment */
 
   if (NULL == mca_param_argv)
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 
   /* Loop through all the -mca args that we've gotten and make env
-     vars of the form LAM_MPI_MCA_*=value.  This is a memory leak, but
+     vars of the form OMPI_MPI_MCA_*=value.  This is a memory leak, but
      that's how putenv works.  :-( */
 
   for (i = 0; NULL != mca_param_argv[i]; ++i) {
     buflen = strlen(mca_param_argv[i]) + strlen(mca_value_argv[i]) + 32;
     buf = malloc(buflen);
     if (NULL == buf)
-      return LAM_ERR_OUT_OF_RESOURCE;
+      return OMPI_ERR_OUT_OF_RESOURCE;
 
-    snprintf(buf, buflen, "LAM_MPI_MCA_%s=%s", mca_param_argv[i], 
+    snprintf(buf, buflen, "OMPI_MPI_MCA_%s=%s", mca_param_argv[i], 
 	     mca_value_argv[i]);
     putenv(buf);
   }
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
@@ -99,15 +99,15 @@ int mca_base_cmd_line_process_arg(const char *param, const char *value)
       free(mca_value_argv[i]);
       mca_value_argv[i] = new_str;
 
-      return LAM_SUCCESS;
+      return OMPI_SUCCESS;
     }
   }
 
   /* If we didn't already have an value for the same param, save this
      one away */
   
-  lam_argv_append(&mca_param_argc, &mca_param_argv, param);
-  lam_argv_append(&mca_value_argc, &mca_value_argv, value);
+  ompi_argv_append(&mca_param_argc, &mca_param_argv, param);
+  ompi_argv_append(&mca_value_argc, &mca_value_argv, value);
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

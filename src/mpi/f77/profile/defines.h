@@ -2,8 +2,8 @@
 /*
  * $HEADER$
  */
-#ifndef LAM_F77_PROFILE_DEFINES_H
-#define LAM_F77_PROFILE_DEFINES_H
+#ifndef OMPI_F77_PROFILE_DEFINES_H
+#define OMPI_F77_PROFILE_DEFINES_H
 
 #define mpi_abort_f pmpi_abort_f
 #define mpi_accumulate_f pmpi_accumulate_f

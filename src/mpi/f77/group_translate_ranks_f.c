@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
@@ -10,13 +10,13 @@
 #include "mpi/f77/bindings.h"
 #include "group/group.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_GROUP_TRANSLATE_RANKS = mpi_group_translate_ranks_f
 #pragma weak pmpi_group_translate_ranks = mpi_group_translate_ranks_f
 #pragma weak pmpi_group_translate_ranks_ = mpi_group_translate_ranks_f
 #pragma weak pmpi_group_translate_ranks__ = mpi_group_translate_ranks_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_GROUP_TRANSLATE_RANKS,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_TRANSLATE_RANKS,
                            pmpi_group_translate_ranks,
                            pmpi_group_translate_ranks_,
                            pmpi_group_translate_ranks__,
@@ -25,15 +25,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_GROUP_TRANSLATE_RANKS,
                            (group1, n, ranks1, group2, ranks2, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_GROUP_TRANSLATE_RANKS = mpi_group_translate_ranks_f
 #pragma weak mpi_group_translate_ranks = mpi_group_translate_ranks_f
 #pragma weak mpi_group_translate_ranks_ = mpi_group_translate_ranks_f
 #pragma weak mpi_group_translate_ranks__ = mpi_group_translate_ranks_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_GROUP_TRANSLATE_RANKS,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_TRANSLATE_RANKS,
                            mpi_group_translate_ranks,
                            mpi_group_translate_ranks_,
                            mpi_group_translate_ranks__,
@@ -43,13 +43,13 @@ LAM_GENERATE_F77_BINDINGS (MPI_GROUP_TRANSLATE_RANKS,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 
 void mpi_group_translate_ranks_f(MPI_Fint *group1, MPI_Fint *n, MPI_Fint *ranks1, MPI_Fint *group2, MPI_Fint *ranks2, MPI_Fint *ierr)
 {
-  lam_group_t *c_group1, *c_group2;
+  ompi_group_t *c_group1, *c_group2;
 
   /* Make the fortran to c representation conversion */
   c_group1 = MPI_Group_f2c(*group1);

@@ -30,9 +30,9 @@ libmca_topo_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mca/topo/base
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/mca/topo/base
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif
 

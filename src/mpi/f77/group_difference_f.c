@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
@@ -10,13 +10,13 @@
 #include "mpi/f77/bindings.h"
 #include "group/group.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_GROUP_DIFFERENCE = mpi_group_difference_f
 #pragma weak pmpi_group_difference = mpi_group_difference_f
 #pragma weak pmpi_group_difference_ = mpi_group_difference_f
 #pragma weak pmpi_group_difference__ = mpi_group_difference_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_GROUP_DIFFERENCE,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_GROUP_DIFFERENCE,
                            pmpi_group_difference,
                            pmpi_group_difference_,
                            pmpi_group_difference__,
@@ -25,15 +25,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_GROUP_DIFFERENCE,
                            (group1, group2, newgroup, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_GROUP_DIFFERENCE = mpi_group_difference_f
 #pragma weak mpi_group_difference = mpi_group_difference_f
 #pragma weak mpi_group_difference_ = mpi_group_difference_f
 #pragma weak mpi_group_difference__ = mpi_group_difference_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_GROUP_DIFFERENCE,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_DIFFERENCE,
                            mpi_group_difference,
                            mpi_group_difference_,
                            mpi_group_difference__,
@@ -43,13 +43,13 @@ LAM_GENERATE_F77_BINDINGS (MPI_GROUP_DIFFERENCE,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 
 void mpi_group_difference_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr)
 {
-  lam_group_t *c_group1, *c_group2, *c_newgroup;
+  ompi_group_t *c_group1, *c_group2, *c_newgroup;
 
   /* Make the fortran to c representation conversion */
   c_group1 = MPI_Group_f2c(*group1);
@@ -59,6 +59,6 @@ void mpi_group_difference_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgro
   *ierr = MPI_Group_difference(c_group1, c_group2, &c_newgroup);
 
   /* translate the results from c to fortran */
-  if (*ierr == LAM_SUCCESS)
+  if (*ierr == OMPI_SUCCESS)
     *newgroup = c_newgroup->grp_f_to_c_index; 
 }

@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "info/info.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Info_c2f = PMPI_Info_c2f
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -33,7 +33,7 @@ MPI_Fint MPI_Info_c2f(MPI_Info info) {
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
         if (NULL == info) {
-            return (MPI_Fint) LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+            return (MPI_Fint) OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
                     "MPI_Info_c2f");
         }
     }

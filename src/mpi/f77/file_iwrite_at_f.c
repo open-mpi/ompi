@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_FILE_IWRITE_AT = mpi_file_iwrite_at_f
 #pragma weak pmpi_file_iwrite_at = mpi_file_iwrite_at_f
 #pragma weak pmpi_file_iwrite_at_ = mpi_file_iwrite_at_f
 #pragma weak pmpi_file_iwrite_at__ = mpi_file_iwrite_at_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_FILE_IWRITE_AT,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_IWRITE_AT,
                            pmpi_file_iwrite_at,
                            pmpi_file_iwrite_at_,
                            pmpi_file_iwrite_at__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_FILE_IWRITE_AT,
                            (fh, offset, buf, count, datatype, request, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_FILE_IWRITE_AT = mpi_file_iwrite_at_f
 #pragma weak mpi_file_iwrite_at = mpi_file_iwrite_at_f
 #pragma weak mpi_file_iwrite_at_ = mpi_file_iwrite_at_f
 #pragma weak mpi_file_iwrite_at__ = mpi_file_iwrite_at_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_FILE_IWRITE_AT,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_FILE_IWRITE_AT,
                            mpi_file_iwrite_at,
                            mpi_file_iwrite_at_,
                            mpi_file_iwrite_at__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_FILE_IWRITE_AT,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

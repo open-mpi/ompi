@@ -25,13 +25,13 @@ fifo_read(int fd, short event, void *arg)
 {
 	char buf[255];
 	int len;
-	struct lam_event *ev = arg;
+	struct ompi_event *ev = arg;
 #ifdef WIN32
 	DWORD dwBytesRead;
 #endif
 
 	/* Reschedule this event */
-	lam_event_add(ev, NULL);
+	ompi_event_add(ev, NULL);
 
 	fprintf(stderr, "fifo_read called with fd: %d, event: %d, arg: %p\n",
 		fd, event, arg);
@@ -41,7 +41,7 @@ fifo_read(int fd, short event, void *arg)
 	// Check for end of file. 
 	if(len && dwBytesRead == 0) {
 		fprintf(stderr, "End Of File");
-		lam_event_del(ev);
+		ompi_event_del(ev);
 		return;
 	}
 
@@ -65,7 +65,7 @@ fifo_read(int fd, short event, void *arg)
 int
 main (int argc, char **argv)
 {
-	struct lam_event evfifo;
+	struct ompi_event evfifo;
 #ifdef WIN32
 	HANDLE socket;
 	// Open a file. 
@@ -114,19 +114,19 @@ main (int argc, char **argv)
 	fprintf(stderr, "Write data to %s\n", fifo);
 #endif
 	/* Initalize the event library */
-	lam_event_init();
+	ompi_event_init();
 
 	/* Initalize one event */
 #ifdef WIN32
-	lam_event_set(&evfifo, (int)socket, LAM_EV_READ, fifo_read, &evfifo);
+	ompi_event_set(&evfifo, (int)socket, OMPI_EV_READ, fifo_read, &evfifo);
 #else
-	lam_event_set(&evfifo, socket, LAM_EV_READ, fifo_read, &evfifo);
+	ompi_event_set(&evfifo, socket, OMPI_EV_READ, fifo_read, &evfifo);
 #endif
 
 	/* Add it to the active events, without a timeout */
-	lam_event_add(&evfifo, NULL);
+	ompi_event_add(&evfifo, NULL);
 	
-	lam_event_dispatch();
+	ompi_event_dispatch();
 #ifdef WIN32
 	CloseHandle(socket);
 #endif

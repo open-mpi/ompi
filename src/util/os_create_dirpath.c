@@ -3,7 +3,7 @@
  */
 
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -19,22 +19,22 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
     struct stat buf;
 
     if (NULL == path) { /* protect ourselves from fools */
-	return(LAM_ERROR);
+	return(OMPI_ERROR);
     }
 
     if (0 == stat(path, &buf)) { /* already exists */
 	if (mode == (mode & buf.st_mode)) { /* has correct mode */
-	    return(LAM_SUCCESS);
+	    return(OMPI_SUCCESS);
 	}
 	if (0 == chmod(path, (buf.st_mode | mode))) { /* successfully change mode */
-	    return(LAM_SUCCESS);
+	    return(OMPI_SUCCESS);
 	}
-	return(LAM_ERROR); /* can't set correct mode */
+	return(OMPI_ERROR); /* can't set correct mode */
     }
 
     /* quick -- try to make directory */
     if (0 == mkdir(path, mode)) {
-	return(LAM_SUCCESS);
+	return(OMPI_SUCCESS);
     }
 
     /* didnt work, so now have to build our way down the tree */
@@ -43,13 +43,13 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
 
     pth = strdup(path); /* make working copy of path */
     if(NULL == pth) {
-	return(LAM_ERROR);
+	return(OMPI_ERROR);
     }
 
     bottom_up = (char *)malloc(strlen(path)+1); /* create space for bottom_up */
     if (NULL == bottom_up) { /* can't get the space */
 	free(pth);
-	return(LAM_ERROR);
+	return(OMPI_ERROR);
     }
 
     /* start by building bottoms-up tree of directories */
@@ -67,12 +67,12 @@ int ompi_os_create_dirpath(const char *path, const mode_t mode)
 	if (0 != mkdir(pth, mode)) { /* try to make the next layer - return error if can't */
 	    free(pth);
 	    free(bottom_up);
-	    return(LAM_ERROR);
+	    return(OMPI_ERROR);
 	}
 	strcpy(bottom_up, dirname(bottom_up)); /* "pop" the directory tree */
    }
 
     free(pth);
     free(bottom_up);
-    return(LAM_SUCCESS);
+    return(OMPI_SUCCESS);
 }

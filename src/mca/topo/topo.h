@@ -5,7 +5,7 @@
 #ifndef MCA_TOPO_H
 #define MCA_TOPO_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mpi.h"
 #include "mca/mca.h"
@@ -243,7 +243,7 @@ typedef mca_topo_1_0_0_t mca_topo_t;
     
 /*
  * This function is technically part of the unity module, but since it
- * ships with LAM, and other modules may use the unity module for
+ * ships with OMPI, and other modules may use the unity module for
  * query/init functionality, prototype this function here.
  */
 

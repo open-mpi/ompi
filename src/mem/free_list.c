@@ -1,25 +1,25 @@
 /*
  * $HEADER$
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "mem/free_list.h"
 
 
-static void lam_free_list_construct(lam_free_list_t* fl);
-static void lam_free_list_destruct(lam_free_list_t* fl);
+static void ompi_free_list_construct(ompi_free_list_t* fl);
+static void ompi_free_list_destruct(ompi_free_list_t* fl);
 
 
-lam_class_t lam_free_list_t_class = {
-    "lam_free_list_t", 
-    OBJ_CLASS(lam_list_t),
-    (lam_construct_t)lam_free_list_construct, 
-    (lam_destruct_t)lam_free_list_destruct
+ompi_class_t ompi_free_list_t_class = {
+    "ompi_free_list_t", 
+    OBJ_CLASS(ompi_list_t),
+    (ompi_construct_t)ompi_free_list_construct, 
+    (ompi_destruct_t)ompi_free_list_destruct
 };
 
 
-static void lam_free_list_construct(lam_free_list_t* fl)
+static void ompi_free_list_construct(ompi_free_list_t* fl)
 {
-    OBJ_CONSTRUCT(&fl->fl_lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&fl->fl_lock, ompi_mutex_t);
     fl->fl_max_to_alloc = 0;
     fl->fl_num_allocated = 0;
     fl->fl_num_per_alloc = 0;
@@ -28,19 +28,19 @@ static void lam_free_list_construct(lam_free_list_t* fl)
     fl->fl_allocator = 0;
 }
 
-static void lam_free_list_destruct(lam_free_list_t* fl)
+static void ompi_free_list_destruct(ompi_free_list_t* fl)
 {
     OBJ_DESTRUCT(&fl->fl_lock);
 }
 
-int lam_free_list_init(
-    lam_free_list_t *flist,
+int ompi_free_list_init(
+    ompi_free_list_t *flist,
     size_t elem_size,
-    lam_class_t* elem_class,
+    ompi_class_t* elem_class,
     int num_elements_to_alloc,
     int max_elements_to_alloc,
     int num_elements_per_alloc,
-    lam_allocator_t* allocator)
+    ompi_allocator_t* allocator)
 {
     flist->fl_elem_size = elem_size;
     flist->fl_elem_class = elem_class;
@@ -48,34 +48,34 @@ int lam_free_list_init(
     flist->fl_num_allocated = 0;
     flist->fl_num_per_alloc = num_elements_per_alloc;
     flist->fl_allocator = allocator;
-    return lam_free_list_grow(flist, num_elements_to_alloc);
+    return ompi_free_list_grow(flist, num_elements_to_alloc);
 }
 
 
-int lam_free_list_grow(lam_free_list_t* flist, size_t num_elements)
+int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
 {
     unsigned char* ptr;
     size_t i;
     if (flist->fl_max_to_alloc > 0 && flist->fl_num_allocated + num_elements > flist->fl_max_to_alloc)
-        return LAM_ERR_TEMP_OUT_OF_RESOURCE;
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     if (NULL != flist->fl_allocator)
-        ptr = (unsigned char*)lam_allocator_alloc(flist->fl_allocator, num_elements * flist->fl_elem_size);
+        ptr = (unsigned char*)ompi_allocator_alloc(flist->fl_allocator, num_elements * flist->fl_elem_size);
     else
         ptr = malloc(num_elements * flist->fl_elem_size);
     if(NULL == ptr)
-        return LAM_ERR_TEMP_OUT_OF_RESOURCE;
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     for(i=0; i<num_elements; i++) {
-        lam_list_item_t* item = (lam_list_item_t*)ptr;
+        ompi_list_item_t* item = (ompi_list_item_t*)ptr;
         if (NULL != flist->fl_elem_class) {
             OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
         }
-        lam_list_append(&flist->super, item);
+        ompi_list_append(&flist->super, item);
         ptr += flist->fl_elem_size;
     }
     flist->fl_num_allocated += num_elements;
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 

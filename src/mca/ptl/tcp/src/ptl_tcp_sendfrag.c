@@ -22,11 +22,11 @@ static void mca_ptl_tcp_send_frag_construct(mca_ptl_tcp_send_frag_t* frag);
 static void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t* frag);
 
 
-lam_class_t  mca_ptl_tcp_send_frag_t_class = {
+ompi_class_t  mca_ptl_tcp_send_frag_t_class = {
     "mca_ptl_tcp_send_frag_t",
     OBJ_CLASS(mca_ptl_base_send_frag_t),
-    (lam_construct_t)mca_ptl_tcp_send_frag_construct,
-    (lam_destruct_t)mca_ptl_tcp_send_frag_destruct
+    (ompi_construct_t)mca_ptl_tcp_send_frag_construct,
+    (ompi_destruct_t)mca_ptl_tcp_send_frag_destruct
 };
                                                                                                            
 /*
@@ -89,7 +89,7 @@ int mca_ptl_tcp_send_frag_init(
 
     /* initialize convertor */
     if(size_in > 0) {
-       lam_convertor_t *convertor;
+       ompi_convertor_t *convertor;
        int rc;
 
         /* first fragment (eager send) and first fragment of long protocol
@@ -101,8 +101,8 @@ int mca_ptl_tcp_send_frag_init(
         } else {
 
             convertor = &sendfrag->frag_convertor;
-            lam_convertor_copy(&sendreq->req_convertor, convertor);
-            lam_convertor_init_for_send( 
+            ompi_convertor_copy(&sendreq->req_convertor, convertor);
+            ompi_convertor_init_for_send( 
                 convertor,
                 0, 
                 sendreq->super.req_datatype,
@@ -117,8 +117,8 @@ int mca_ptl_tcp_send_frag_init(
          */
         sendfrag->frag_vec[1].iov_base = NULL;
         sendfrag->frag_vec[1].iov_len = size_in;
-        if((rc = lam_convertor_pack(convertor, &sendfrag->frag_vec[1], 1)) < 0)
-            return LAM_ERROR;
+        if((rc = ompi_convertor_pack(convertor, &sendfrag->frag_vec[1], 1)) < 0)
+            return OMPI_ERROR;
 
         /* adjust size and request offset to reflect actual number of bytes packed by convertor */
         size_out = sendfrag->frag_vec[1].iov_len;
@@ -136,11 +136,11 @@ int mca_ptl_tcp_send_frag_init(
     sendfrag->frag_peer = ptl_peer;
     sendfrag->frag_vec_ptr = sendfrag->frag_vec;
     sendfrag->frag_vec_cnt = (size_out == 0) ? 1 : 2;
-    sendfrag->frag_vec[0].iov_base = (lam_iov_base_ptr_t)hdr;
+    sendfrag->frag_vec[0].iov_base = (ompi_iov_base_ptr_t)hdr;
     sendfrag->frag_vec[0].iov_len = sizeof(mca_ptl_base_header_t);
     sendfrag->frag_progressed = 0;
     *size = size_out;
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -162,11 +162,11 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t* frag, int sd)
             case EINTR:
                 continue;
             case EWOULDBLOCK:
-                /* lam_output(0, "mca_ptl_tcp_send_frag_handler: EWOULDBLOCK\n"); */
+                /* ompi_output(0, "mca_ptl_tcp_send_frag_handler: EWOULDBLOCK\n"); */
                 return false;
             default:
                 {
-                lam_output(0, "mca_ptl_tcp_send_frag_handler: writev failed with errno=%d", errno);
+                ompi_output(0, "mca_ptl_tcp_send_frag_handler: writev failed with errno=%d", errno);
                 mca_ptl_tcp_peer_close(frag->frag_peer);
                 return false;
                 }
@@ -187,7 +187,7 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t* frag, int sd)
             frag->frag_vec_ptr++;
             frag->frag_vec_cnt--;
         } else {
-            frag->frag_vec_ptr->iov_base = (lam_iov_base_ptr_t)
+            frag->frag_vec_ptr->iov_base = (ompi_iov_base_ptr_t)
                 (((unsigned char*)frag->frag_vec_ptr->iov_base) + cnt);
             frag->frag_vec_ptr->iov_len -= cnt;
             break;

@@ -3,7 +3,7 @@
  * $HEADER$
  *
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mca/registry/registry.h"
 #include "types.h"
@@ -31,5 +31,5 @@ int mca_registry_cofs_publish(char* key, void* data, size_t data_len);
 int mca_registry_cofs_lookup(char* key, void** data, size_t* data_len);
 int mca_registry_cofs_unpublish(char* key);
 
-extern char mca_registry_cofs_comm_loc[LAM_PATH_MAX]; /* location for file drop-off */
+extern char mca_registry_cofs_comm_loc[OMPI_PATH_MAX]; /* location for file drop-off */
 extern int mca_registry_cofs_my_vpid;

@@ -11,27 +11,27 @@
 #include "romio-1.2.5.1/include/mpio.h" 
 
 /* global variables, instantiated in global.c  */
-extern lam_mutex_t mca_io_romio_mutex;
+extern ompi_mutex_t mca_io_romio_mutex;
 extern mca_io_1_0_0_t romio_actions;
 
 
 /* 
-MPI_Request:  "inherit" the lam_request, and add more stuff:
+MPI_Request:  "inherit" the ompi_request, and add more stuff:
 (romio module will instantiate)
 */
 struct mca_io_romio_request_t {
-    lam_request_t  super;
+    ompi_request_t  super;
     mca_io_romio_MPIO_Request  romio_rq; 
 };
 typedef struct mca_io_romio_request_t  mca_io_romio_request_t;
 
 
 /* 
-MPI_File:  "inherit" the lam_file_t, and add more stuff
+MPI_File:  "inherit" the ompi_file_t, and add more stuff
 (romio module will instantiate)
 */
 struct mca_io_romio_file_t {
-    lam_file_t super;
+    ompi_file_t super;
     mca_io_romio_MPI_File romio_fh;
 };
 typedef struct mca_io_romio_file_t mca_io_romio_file_t;
@@ -99,7 +99,7 @@ int mca_io_romio_File_write_all(MPI_File fh, void *buf, int count, MPI_Datatype
 int mca_io_romio_File_iread(MPI_File fh, void *buf, int count, MPI_Datatype
 	     datatype, MPI_Request *request); 
 int mca_io_romio_File_iwrite(MPI_File fh, void *buf, int count, 
-                             MPI_Datatype datatype, lam_request_t **request);
+                             MPI_Datatype datatype, ompi_request_t **request);
 
 
 int mca_io_romio_File_seek(MPI_File fh, MPI_Offset offset, int whence);
@@ -159,7 +159,7 @@ int mca_io_romio_File_get_errhandler( MPI_File, MPI_Errhandler * );
 
 
 
-/* The funtions will not be called by users, but by LAM's MPI_Test/Wait
+/* The funtions will not be called by users, but by OMPI's MPI_Test/Wait
  *   functions when they are called with an I/O request. */
 int mca_io_romio_Test(MPI_Request *request, int *flag, MPI_Status *status);
 int mca_io_romio_Wait(MPI_Request *request, MPI_Status *status);

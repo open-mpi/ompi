@@ -5,13 +5,13 @@
 
 include $(top_srcdir)/config/Makefile.options
 #
-# LAM_PRPOFILING_DEFINES flag s enabled when we want our MPI_* symbols
+# OMPI_PRPOFILING_DEFINES flag s enabled when we want our MPI_* symbols
 # to be replaced by PMPI_*. In other words, this flag decides 
 # whether "profile/defines.h" is included or not. "profile/defines.h"
 # replaces all MPI_* symbols with PMPI_* symbols. In this directory,
 # we need it to be 0
 #
-AM_CPPFLAGS     = -DLAM_PROFILING_DEFINES=0
+AM_CPPFLAGS     = -DOMPI_PROFILING_DEFINES=0
 
 #
 # The top directory always builds MPI_* bindings. The bottom directory
@@ -366,8 +366,8 @@ EXTRA_DIST = $(libmpi_c_mpi_la_SOURCES)
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mpi/c
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/mpi/c
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif

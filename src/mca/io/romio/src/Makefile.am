@@ -3,14 +3,14 @@
 # $HEADER$
 #
 
-include $(top_lam_srcdir)/config/Makefile.options
+include $(top_ompi_srcdir)/config/Makefile.options
 
 SUBDIRS = romio-1.2.5.1
 
 AM_CPPFLAGS = \
-        -I$(top_lam_builddir)/src/include \
-        -I$(top_lam_srcdir)/src \
-        -I$(top_lam_srcdir)/src/include
+        -I$(top_ompi_builddir)/src/include \
+        -I$(top_ompi_srcdir)/src \
+        -I$(top_ompi_srcdir)/src/include
 
 noinst_LTLIBRARIES = libmca_io_romio.la
 libmca_io_romio_la_SOURCES = \

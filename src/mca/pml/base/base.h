@@ -5,7 +5,7 @@
 #ifndef MCA_PML_BASE_H
 #define MCA_PML_BASE_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mca/mca.h"
 #include "mca/pml/pml.h"
@@ -32,7 +32,7 @@ extern "C" {
  * Globals
  */
 extern int mca_pml_base_output;
-extern lam_list_t mca_pml_base_modules_available;
+extern ompi_list_t mca_pml_base_modules_available;
 extern mca_pml_base_module_t mca_pml_base_selected_module;
 extern mca_pml_t mca_pml;
 

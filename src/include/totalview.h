@@ -2,10 +2,10 @@
  * $HEADER$
  */
 
-#ifndef LAM_TOTALVIEW_H
-#define LAM_TOTALVIEW_H
+#ifndef OMPI_TOTALVIEW_H
+#define OMPI_TOTALVIEW_H
 
-extern int lam_tv_comm_sequence_number;
+extern int ompi_tv_comm_sequence_number;
 
-#endif /* LAM_TOTALVIEW_H */
+#endif /* OMPI_TOTALVIEW_H */
 

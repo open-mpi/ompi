@@ -42,11 +42,11 @@ static void __destroy_ddt_struct( dt_desc_t* pData )
     pData->args = NULL;
 }
 
-OBJ_CLASS_INSTANCE(lam_datatype_t, lam_object_t, __get_free_dt_struct, __destroy_ddt_struct );
+OBJ_CLASS_INSTANCE(ompi_datatype_t, ompi_object_t, __get_free_dt_struct, __destroy_ddt_struct );
 
-dt_desc_t* lam_ddt_create( int expectedSize )
+dt_desc_t* ompi_ddt_create( int expectedSize )
 {
-    dt_desc_t* pdt = (dt_desc_t*)OBJ_NEW(lam_datatype_t);
+    dt_desc_t* pdt = (dt_desc_t*)OBJ_NEW(ompi_datatype_t);
 
     if( expectedSize == -1 ) expectedSize = DT_INCREASE_STACK;
     pdt->desc.length = expectedSize + 1;  /* one for the fake elem at the end */
@@ -56,9 +56,9 @@ dt_desc_t* lam_ddt_create( int expectedSize )
     return pdt;
 }
 
-int lam_ddt_create_resized( dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType )
+int ompi_ddt_create_resized( dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType )
 {
-    lam_ddt_duplicate( oldType, newType );
+    ompi_ddt_duplicate( oldType, newType );
     (*newType)->lb = lb;
     (*newType)->ub = lb + extent;
     return 0;

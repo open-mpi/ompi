@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdlib.h>
 
@@ -10,11 +10,11 @@
 #include "mpi/c/bindings.h"
 #include "runtime/runtime.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Init = PMPI_Init
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -29,7 +29,7 @@ int MPI_Init(int *argc, char ***argv)
      there is, check to see that it is a valid/supported thread level.
      If not, default to MPI_THREAD_SINGLE. */
 
-  if (NULL != (env = getenv("LAM_MPI_THREAD_LEVEL"))) {
+  if (NULL != (env = getenv("OMPI_MPI_THREAD_LEVEL"))) {
     requested = atoi(env);
     if (requested < MPI_THREAD_SINGLE || requested > MPI_THREAD_MULTIPLE) {
       /* JMS call the show_help() interface */
@@ -41,5 +41,5 @@ int MPI_Init(int *argc, char ***argv)
      little in this function as possible so that if it's profiled, we
      don't lose anything) */
 
-  return lam_mpi_init(*argc, *argv, requested, &provided);
+  return ompi_mpi_init(*argc, *argv, requested, &provided);
 }

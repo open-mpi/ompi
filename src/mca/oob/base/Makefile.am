@@ -26,8 +26,8 @@ libmca_oob_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mca/oob/base
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/mca/oob/base
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif

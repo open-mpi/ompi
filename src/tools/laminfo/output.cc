@@ -3,17 +3,17 @@
 //
 /** @file **/
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <iostream>
 #include <string>
 
-#include "tools/laminfo/laminfo.h"
+#include "tools/ompi_info/ompi_info.h"
 
 using namespace std;
-using namespace laminfo;
+using namespace ompi_info;
 
-#define LAM_max(a,b) (((a) > (b)) ? (a) : (b)) 
+#define OMPI_max(a,b) (((a) > (b)) ? (a) : (b)) 
 
 
 //
@@ -27,12 +27,12 @@ static int screen_width = 78;
 // 
 // Prints the passed strings in a pretty or parsable format.
 //
-void laminfo::out(const string& pretty_message, const string &plain_message,
+void ompi_info::out(const string& pretty_message, const string &plain_message,
                   const string& value)
 {
   if (pretty) {
     string::size_type pos, max_value_width;
-    string spaces(LAM_max(centerpoint - pretty_message.length(), 0), ' ');
+    string spaces(OMPI_max(centerpoint - pretty_message.length(), 0), ' ');
     string v = value;
     string filler;
 
@@ -87,11 +87,11 @@ void laminfo::out(const string& pretty_message, const string &plain_message,
 // 
 // Prints the passed integer in a pretty or parsable format.
 //
-void laminfo::out(const string& pretty_message, const string &plain_message, 
+void ompi_info::out(const string& pretty_message, const string &plain_message, 
                   int value)
 {
-  if (laminfo::pretty) {
-    string spaces(LAM_max(centerpoint - pretty_message.length(), 0), ' ');
+  if (ompi_info::pretty) {
+    string spaces(OMPI_max(centerpoint - pretty_message.length(), 0), ' ');
     cout << spaces << pretty_message << ": " << value << endl;
   } else {
     cout << plain_message << ":" << value << endl;

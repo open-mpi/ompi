@@ -33,8 +33,8 @@ struct mca_pml_teg_t {
     mca_ptl_t** teg_ptls;
     size_t teg_num_ptls;
 
-    lam_list_t  teg_procs;
-    lam_mutex_t teg_lock;
+    ompi_list_t  teg_procs;
+    ompi_mutex_t teg_lock;
 
     int teg_free_list_num;   /* initial size of free list */
     int teg_free_list_max;   /* maximum size of free list */
@@ -42,7 +42,7 @@ struct mca_pml_teg_t {
     int teg_poll_iterations; /* number of iterations to poll for completion */
 
     /* free list of recv requests */
-    lam_free_list_t teg_recv_requests;
+    ompi_free_list_t teg_recv_requests;
 
 #if MCA_PML_TEG_STATISTICS
     long teg_isends;
@@ -55,8 +55,8 @@ struct mca_pml_teg_t {
 #endif
 
     /* request completion */
-    lam_mutex_t teg_request_lock;
-    lam_condition_t teg_request_cond;
+    ompi_mutex_t teg_request_lock;
+    ompi_condition_t teg_request_cond;
     volatile int teg_request_waiting;
     mca_pml_base_request_t teg_request_null;
 };
@@ -90,25 +90,25 @@ extern int mca_pml_teg_module_fini(void);
  */
 
 extern int mca_pml_teg_add_comm(
-    struct lam_communicator_t* comm
+    struct ompi_communicator_t* comm
 );
 
 extern int mca_pml_teg_del_comm(
-    struct lam_communicator_t* comm
+    struct ompi_communicator_t* comm
 );
 
 extern int mca_pml_teg_add_procs(
-    struct lam_proc_t **procs,
+    struct ompi_proc_t **procs,
     size_t nprocs
 );
 
 extern int mca_pml_teg_del_procs(
-    struct lam_proc_t **procs,
+    struct ompi_proc_t **procs,
     size_t nprocs
 );
 
 extern int mca_pml_teg_add_ptls(
-    lam_list_t *ptls
+    ompi_list_t *ptls
 );
 
 extern int mca_pml_teg_control(
@@ -122,106 +122,106 @@ extern int mca_pml_teg_progress(void);
 extern int mca_pml_teg_isend_init(
     void *buf,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
-    struct lam_communicator_t* comm,
-    struct lam_request_t **request
+    struct ompi_communicator_t* comm,
+    struct ompi_request_t **request
 );
 
 extern int mca_pml_teg_isend(
     void *buf,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
-    struct lam_communicator_t* comm,
-    struct lam_request_t **request
+    struct ompi_communicator_t* comm,
+    struct ompi_request_t **request
 );
 
 extern int mca_pml_teg_send(
     void *buf,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
-    struct lam_communicator_t* comm
+    struct ompi_communicator_t* comm
 );
 
 extern int mca_pml_teg_irecv_init(
     void *buf,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int src,
     int tag,
-    struct lam_communicator_t* comm,
-    struct lam_request_t **request
+    struct ompi_communicator_t* comm,
+    struct ompi_request_t **request
 );
 
 extern int mca_pml_teg_irecv(
     void *buf,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int src,
     int tag,
-    struct lam_communicator_t* comm,
-    struct lam_request_t **request
+    struct ompi_communicator_t* comm,
+    struct ompi_request_t **request
 );
 
 extern int mca_pml_teg_recv(
     void *buf,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int src,
     int tag,
-    struct lam_communicator_t* comm,
-    lam_status_public_t* status
+    struct ompi_communicator_t* comm,
+    ompi_status_public_t* status
 );
 
 extern int mca_pml_teg_progress(void);
 
 extern int mca_pml_teg_start(
     size_t count,
-    lam_request_t** requests
+    ompi_request_t** requests
 );
 
 extern int mca_pml_teg_test(
     size_t count,
-    lam_request_t** request,
+    ompi_request_t** request,
     int *index,
     int *completed,
-    lam_status_public_t* status
+    ompi_status_public_t* status
 );
 
 extern int mca_pml_teg_test_all(
     size_t count,
-    lam_request_t** request,
+    ompi_request_t** request,
     int *completed,
-    lam_status_public_t* status
+    ompi_status_public_t* status
 );
 
 extern int mca_pml_teg_wait(
     size_t count,
-    lam_request_t** request,
+    ompi_request_t** request,
     int *index,
-    lam_status_public_t* status
+    ompi_status_public_t* status
 );
 
 extern int mca_pml_teg_wait_all(
     size_t count,
-    lam_request_t** request,
-    lam_status_public_t* status
+    ompi_request_t** request,
+    ompi_status_public_t* status
 );
 
 extern int mca_pml_teg_null(
-    lam_request_t** request
+    ompi_request_t** request
 );
 
 extern int mca_pml_teg_free(
-    lam_request_t** request
+    ompi_request_t** request
 );
 
 #define MCA_PML_TEG_FREE(request) \
@@ -240,7 +240,7 @@ extern int mca_pml_teg_free(
             } \
         case MCA_PML_REQUEST_RECV: \
             { \
-            LAM_FREE_LIST_RETURN(&mca_pml_teg.teg_recv_requests, (lam_list_item_t*)pml_request); \
+            OMPI_FREE_LIST_RETURN(&mca_pml_teg.teg_recv_requests, (ompi_list_item_t*)pml_request); \
             break; \
             } \
         default: \

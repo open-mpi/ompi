@@ -12,8 +12,8 @@ headers = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/os/linux/x86_64
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/os/linux/x86_64
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif

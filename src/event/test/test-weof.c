@@ -34,7 +34,7 @@ write_cb(int fd, short event, void *arg)
 
 	if (len > 0) {
 		if (!called)
-			lam_event_add(arg, NULL);
+			ompi_event_add(arg, NULL);
 		close(pair[0]);
 	} else if (called == 1)
 		test_okay = 0;
@@ -45,7 +45,7 @@ write_cb(int fd, short event, void *arg)
 int
 main (int argc, char **argv)
 {
-	struct lam_event ev;
+	struct ompi_event ev;
 
 	if (signal(SIGPIPE, SIG_IGN) == SIG_IGN)
 		return (1);
@@ -54,12 +54,12 @@ main (int argc, char **argv)
 		return (1);
 
 	/* Initalize the event library */
-	lam_event_init();
+	ompi_event_init();
 
 	/* Initalize one event */
-	lam_event_set(&ev, pair[1], LAM_EV_WRITE, write_cb, &ev);
-	lam_event_add(&ev, NULL);
-	lam_event_dispatch();
+	ompi_event_set(&ev, pair[1], OMPI_EV_WRITE, write_cb, &ev);
+	ompi_event_add(&ev, NULL);
+	ompi_event_dispatch();
 
 	return (test_okay);
 }

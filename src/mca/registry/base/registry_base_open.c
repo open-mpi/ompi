@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -24,7 +24,7 @@
  */
 int mca_registry_base_output = -1;
 mca_registry_t mca_registry;
-lam_list_t mca_registry_base_modules_available;
+ompi_list_t mca_registry_base_modules_available;
 mca_registry_base_module_t mca_registry_base_selected_module;
 
 
@@ -36,13 +36,13 @@ int mca_registry_base_open(void)
 {
   /* Open up all available modules */
 
-  if (LAM_SUCCESS != 
+  if (OMPI_SUCCESS != 
       mca_base_modules_open("registry", 0, mca_registry_base_static_modules, 
                             &mca_registry_base_modules_available)) {
-    return LAM_ERROR;
+    return OMPI_ERROR;
   }
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

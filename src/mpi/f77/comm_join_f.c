@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_JOIN = mpi_comm_join_f
 #pragma weak pmpi_comm_join = mpi_comm_join_f
 #pragma weak pmpi_comm_join_ = mpi_comm_join_f
 #pragma weak pmpi_comm_join__ = mpi_comm_join_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_COMM_JOIN,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_JOIN,
                            pmpi_comm_join,
                            pmpi_comm_join_,
                            pmpi_comm_join__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_COMM_JOIN,
                            (fd, intercomm, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_COMM_JOIN = mpi_comm_join_f
 #pragma weak mpi_comm_join = mpi_comm_join_f
 #pragma weak mpi_comm_join_ = mpi_comm_join_f
 #pragma weak mpi_comm_join__ = mpi_comm_join_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_COMM_JOIN,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_COMM_JOIN,
                            mpi_comm_join,
                            mpi_comm_join_,
                            mpi_comm_join__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_COMM_JOIN,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

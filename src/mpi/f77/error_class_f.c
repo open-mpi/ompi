@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ERROR_CLASS = mpi_error_class_f
 #pragma weak pmpi_error_class = mpi_error_class_f
 #pragma weak pmpi_error_class_ = mpi_error_class_f
 #pragma weak pmpi_error_class__ = mpi_error_class_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_ERROR_CLASS,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_ERROR_CLASS,
                            pmpi_error_class,
                            pmpi_error_class_,
                            pmpi_error_class__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_ERROR_CLASS,
                            (errorcode, errorclass, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_ERROR_CLASS = mpi_error_class_f
 #pragma weak mpi_error_class = mpi_error_class_f
 #pragma weak mpi_error_class_ = mpi_error_class_f
 #pragma weak mpi_error_class__ = mpi_error_class_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_ERROR_CLASS,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_ERROR_CLASS,
                            mpi_error_class,
                            mpi_error_class_,
                            mpi_error_class__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_ERROR_CLASS,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

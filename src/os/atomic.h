@@ -2,10 +2,10 @@
  * $HEADER$
  */
 
-#ifndef LAM_ATOMIC_H_INCLUDED
-#define LAM_ATOMIC_H_INCLUDED
+#ifndef OMPI_ATOMIC_H_INCLUDED
+#define OMPI_ATOMIC_H_INCLUDED
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 /*
  * Atomic functions
@@ -70,4 +70,4 @@
 #define ATOMIC_UNLOCK(LOCKPTR)     spinunlock(LOCKPTR)
 #define ATOMIC_TRYLOCK(LOCKPTR)    spintrylock(LOCKPTR)
 
-#endif /* LAM_ATOMIC_H_INCLUDED */
+#endif /* OMPI_ATOMIC_H_INCLUDED */

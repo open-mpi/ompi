@@ -3,7 +3,7 @@ dnl
 dnl $HEADER
 denl
 
-AC_DEFUN([LAM_CHECK_LINKER_FLAGS],[
+AC_DEFUN([OMPI_CHECK_LINKER_FLAGS],[
 #
 # libtool has been created by this point
 # Try to see if it will add any additional flags for dependant libraries
@@ -32,14 +32,14 @@ cat > foo.c <<EOF
 int foo(void) { return 0; }
 EOF
 
-lam_check_linker_flags_work() {
-    LAM_LOG_MSG([$cmd], [yes])
+ompi_check_linker_flags_work() {
+    OMPI_LOG_MSG([$cmd], [yes])
     eval $cmd >&5 2>&5
     if test -n "[$]1"; then
 	output="`eval $cmd 2>/dev/null`"
     fi
     status="$?"
-    LAM_LOG_MSG([\$? = $status], [yes])
+    OMPI_LOG_MSG([\$? = $status], [yes])
     if test "$status" != "0"; then
 	AC_MSG_RESULT([libtool error!])
 	AC_MSG_ERROR([Cannot continue])
@@ -51,16 +51,16 @@ lam_check_linker_flags_work() {
 #
 
 cmd="$libtool --mode=compile $CC $CFLAGS foo.c -c -o foo.o"
-lam_check_linker_flags_work
+ompi_check_linker_flags_work
 cmd="$libtool --mode=link $CC $CFLAGS foo.lo $LDFLAGS $LIBS -o libfoo.la"
-lam_check_linker_flags_work
+ompi_check_linker_flags_work
 
 #
 # Now fake linking to it and capture the output from libtool
 #
 
 cmd="$libtool --dry-run --mode=link $CC bar.lo libfoo.la -o bar $extra_flags"
-lam_check_linker_flags_work yes
+ompi_check_linker_flags_work yes
 
 eval "set $output"
 extra_ldflags=

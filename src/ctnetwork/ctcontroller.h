@@ -2,42 +2,42 @@
  * $HEADER$
  */
 
-#ifndef LAM_CT_CONTROLLER_H
-#define LAM_CT_CONTROLLER_H
+#ifndef OMPI_CT_CONTROLLER_H
+#define OMPI_CT_CONTROLLER_H
 
-#include "lfc/lam_object.h"
+#include "class/ompi_object.h"
 #include "ctnetwork/ctnode.h"
 
-typedef void    (*lam_ctmsg_recvd_fn)(struct lam_ctcontroller *,
-                                            lam_ctmsg_t *,
+typedef void    (*ompi_ctmsg_recvd_fn)(struct ompi_ctcontroller *,
+                                            ompi_ctmsg_t *,
                                             void *);
 
-typedef void    (*lam_ctnode_failed_fn)(struct lam_ctcontroller *,
-                                            lam_ctnode_t *,
+typedef void    (*ompi_ctnode_failed_fn)(struct ompi_ctcontroller *,
+                                            ompi_ctnode_t *,
                                             void *);
 
-typedef struct lam_ctcontroller
+typedef struct ompi_ctcontroller
 {
-    lam_object_t    super;
-    lam_ctnode_t    ctl_node;
+    ompi_object_t    super;
+    ompi_ctnode_t    ctl_node;
     void            *ctl_user_info;
-    lam_ctmsg_recvd_fn      ctl_msg_recvd_callback;
-    lam_ctnode_failed_fn    ctl_node_failed_callback;
-} lam_ctctrl_t;
+    ompi_ctmsg_recvd_fn      ctl_msg_recvd_callback;
+    ompi_ctnode_failed_fn    ctl_node_failed_callback;
+} ompi_ctctrl_t;
 
-void lam_ctl_construct(lam_ctctrl_t *ctrl);
-void lam_ctl_destruct(lam_ctctrl_t *ctrl);
+void ompi_ctl_construct(ompi_ctctrl_t *ctrl);
+void ompi_ctl_destruct(ompi_ctctrl_t *ctrl);
 
-inline void lam_ctl_set_recvd_callback(lam_ctctrl_t *ctrl, lam_ctmsg_recvd_fn callback)
+inline void ompi_ctl_set_recvd_callback(ompi_ctctrl_t *ctrl, ompi_ctmsg_recvd_fn callback)
 {
     ctrl->ctl_msg_recvd_callback = callback;
 }
 
 
-inline void lam_ctl_set_failed_callback(lam_ctctrl_t *ctrl, lam_ctnode_failed_fn callback)
+inline void ompi_ctl_set_failed_callback(ompi_ctctrl_t *ctrl, ompi_ctnode_failed_fn callback)
 {
     ctrl->ctl_node_failed_callback = callback;
 }
 
 
-#endif  /* LAM_CT_CONTROLLER_H */
+#endif  /* OMPI_CT_CONTROLLER_H */

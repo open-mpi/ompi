@@ -11,11 +11,11 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_tcp_sendfrag.h"
 
-extern lam_class_t mca_ptl_tcp_send_request_t_class;
+extern ompi_class_t mca_ptl_tcp_send_request_t_class;
 
 /**
  * TCP send request derived type. The send request contains both the

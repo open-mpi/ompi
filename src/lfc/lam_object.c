@@ -5,21 +5,21 @@
 /**
  * @file
  * 
- * Implementation of lam_object_t, the base lam foundation class
+ * Implementation of ompi_object_t, the base ompi foundation class
  */
 
 #include <stdio.h>
 
 #include "include/constants.h"
-#include "lfc/lam_object.h"
+#include "class/ompi_object.h"
 
 /*
  * Instantiation of class descriptor for the base class.  This is
  * special, since be mark it as already initialized, with no parent
  * and no constructor or desctructor
  */
-lam_class_t lam_object_t_class = {
-    "lam_object_t", /* name */
+ompi_class_t ompi_object_t_class = {
+    "ompi_object_t", /* name */
     NULL,           /* parent class */
     NULL,           /* constructor */
     NULL,           /* destructor */
@@ -33,9 +33,9 @@ lam_class_t lam_object_t_class = {
 /*
  * Lazy initialization of class descriptor.
  */
-void lam_class_initialize(lam_class_t *class)
+void ompi_class_initialize(ompi_class_t *class)
 {
-    lam_class_t *c;
+    ompi_class_t *c;
     int i;
 
     assert(class);
@@ -55,13 +55,13 @@ void lam_class_initialize(lam_class_t *class)
      */
 
     class->cls_construct_array = malloc(class->cls_depth *
-                                        sizeof(lam_construct_t));
+                                        sizeof(ompi_construct_t));
     if (NULL == class->cls_construct_array) {
         perror("Out of memory");
     }
 
     class->cls_destruct_array = malloc(class->cls_depth *
-                                       sizeof(lam_destruct_t));
+                                       sizeof(ompi_destruct_t));
     if (NULL == class->cls_destruct_array) {
         perror("Out of memory");
     }

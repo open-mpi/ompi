@@ -126,8 +126,8 @@
 #define MCA_PTL_H
 
 #include "mca/mca.h"
-#include "include/lam.h"
-#include "lfc/lam_list.h"
+#include "include/ompi.h"
+#include "class/ompi_list.h"
 #include "proc/proc.h"
 #include "mca/pml/pml.h"
 
@@ -146,7 +146,7 @@ struct mca_ptl_base_match_header_t;
 
 typedef uint64_t mca_ptl_sequence_t;
 typedef uint64_t mca_ptl_tstamp_t;
-typedef lam_list_t mca_ptl_queue_t;
+typedef ompi_list_t mca_ptl_queue_t;
 
 typedef enum { 
     MCA_PTL_ENABLE 
@@ -196,7 +196,7 @@ typedef struct mca_ptl_t** (*mca_ptl_base_module_init_fn_t)(
  * @param flag (IN)   Parameter to change.
  * @param value (IN)  Optional parameter value.
  *
- * @return           LAM_SUCCESS or error code on failure.
+ * @return           OMPI_SUCCESS or error code on failure.
  */
 typedef int (*mca_ptl_base_module_control_fn_t)(
     int param,
@@ -210,7 +210,7 @@ typedef int (*mca_ptl_base_module_control_fn_t)(
  * non-threaded polling environments.
  *
  * @param tstamp     Current time.
- * @return           LAM_SUCCESS or error code on failure.
+ * @return           OMPI_SUCCESS or error code on failure.
  */
 typedef int (*mca_ptl_base_module_progress_fn_t)(
     mca_ptl_tstamp_t tstamp
@@ -260,11 +260,11 @@ typedef int (*mca_ptl_base_finalize_fn_t)(
  * @param procs (IN)          Set of processes
  * @param peer (OUT)          Set of (optional) mca_ptl_base_peer_t instances returned by PTL.
  * @param reachable (IN/OUT)  Bitmask indicating set of peer processes that are reachable by this PTL.
- * @return                    LAM_SUCCESS or error status on failure.
+ * @return                    OMPI_SUCCESS or error status on failure.
  *
  * The mca_ptl_base_add_procs_fn_t() is called by the PML to determine
  * the set of PTLs that should be used to reach the specified process.
- * A return value of LAM_SUCCESS indicates the PTL should be added to the
+ * A return value of OMPI_SUCCESS indicates the PTL should be added to the
  * set used to reach the proc. The peers addressing information may be 
  * obtained by the PTL via the mca_base_modex_recv() function if required. 
  * The PTL may optionally return a pointer to a mca_ptl_base_peer_t data 
@@ -273,9 +273,9 @@ typedef int (*mca_ptl_base_finalize_fn_t)(
 typedef int (*mca_ptl_base_add_procs_fn_t)(
     struct mca_ptl_t* ptl, 
     size_t nprocs,
-    struct lam_proc_t** procs, 
+    struct ompi_proc_t** procs, 
     struct mca_ptl_base_peer_t** peer,
-    lam_bitmap_t* reachable
+    ompi_bitmap_t* reachable
 );
 
 /**
@@ -294,7 +294,7 @@ typedef int (*mca_ptl_base_add_procs_fn_t)(
 typedef int (*mca_ptl_base_del_procs_fn_t)(
     struct mca_ptl_t* ptl, 
     size_t nprocs,
-    struct lam_proc_t** procs, 
+    struct ompi_proc_t** procs, 
     struct mca_ptl_base_peer_t**
 );
 
@@ -340,7 +340,7 @@ typedef void (*mca_ptl_base_request_return_fn_t)(
  * @param size (IN/OUT)          Number of bytes PML is requesting PTL to deliver, 
  *                               PTL returns number of bytes sucessfully fragmented
  * @param flags (IN)             Flags that should be passed to the peer via the message header.
- * @param request (OUT)          LAM_SUCCESS if the PTL was able to queue one or more fragments
+ * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
  *
  * The PML implements a rendevouz protocol, with up to the PTL defined threshold
  * bytes of the message sent in eager send mode. On receipt of an acknowledgment
@@ -370,7 +370,7 @@ typedef int (*mca_ptl_base_put_fn_t)(
  * @param size (IN/OUT)          Number of bytes PML is requesting PTL to pull from peer, 
  *                               PTL returns number of bytes sucessfully fragmented.
  * @param flags (IN)             
- * @param request (OUT)          LAM_SUCCESS if the PTL was able to queue one or more fragments
+ * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
  *
  * Initiate an RDMA get request to pull data from the peer. This is initiated
  * at the receiver side when a request is matched if the PTL indicates that it
@@ -489,4 +489,4 @@ typedef struct mca_ptl_t mca_ptl_t;
   /* ptl v1.0 */ \
   "ptl", 1, 0, 0
 
-#endif /* LAM_MCA_PTL_H */
+#endif /* OMPI_MCA_PTL_H */

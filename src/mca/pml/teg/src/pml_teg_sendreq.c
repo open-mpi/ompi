@@ -21,7 +21,7 @@
 
 void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
 {
-    lam_proc_t *proc = lam_comm_peer_lookup(req->super.req_comm, req->super.req_peer);
+    ompi_proc_t *proc = ompi_comm_peer_lookup(req->super.req_comm, req->super.req_peer);
     mca_pml_proc_t* proc_pml = proc->proc_pml;
 
     /* allocate remaining bytes to PTLs */
@@ -51,7 +51,7 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
         }
 
         rc = ptl->ptl_put(ptl, ptl_proc->ptl_peer, req, req->req_offset, &bytes_to_frag, 0);
-        if(rc == LAM_SUCCESS) {
+        if(rc == OMPI_SUCCESS) {
             req->req_offset += bytes_to_frag;
             bytes_remaining = req->req_bytes_packed - req->req_offset;
         }
@@ -63,7 +63,7 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
         req->super.req_mpi_done = true;
         /* FIX - set status correctly */
         if(mca_pml_teg.teg_request_waiting)
-            lam_condition_broadcast(&mca_pml_teg.teg_request_cond);
+            ompi_condition_broadcast(&mca_pml_teg.teg_request_cond);
         THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
     }
 }
@@ -82,14 +82,14 @@ void mca_pml_teg_send_request_progress(
         if (req->super.req_mpi_done == false) {
             req->super.req_status.MPI_SOURCE = req->super.req_comm->c_my_rank;
             req->super.req_status.MPI_TAG = req->super.req_tag;
-            req->super.req_status.MPI_ERROR = LAM_SUCCESS;
+            req->super.req_status.MPI_ERROR = OMPI_SUCCESS;
             req->super.req_status._count = req->req_bytes_sent;
             req->super.req_mpi_done = true;
             if(mca_pml_teg.teg_request_waiting) {
-                lam_condition_broadcast(&mca_pml_teg.teg_request_cond);
+                ompi_condition_broadcast(&mca_pml_teg.teg_request_cond);
             }
         } else if (req->super.req_free_called)
-            MCA_PML_TEG_FREE((lam_request_t**)&req);
+            MCA_PML_TEG_FREE((ompi_request_t**)&req);
         THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
         return;
     } 

@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_FILE_GET_BYTE_OFFSET = mpi_file_get_byte_offset_f
 #pragma weak pmpi_file_get_byte_offset = mpi_file_get_byte_offset_f
 #pragma weak pmpi_file_get_byte_offset_ = mpi_file_get_byte_offset_f
 #pragma weak pmpi_file_get_byte_offset__ = mpi_file_get_byte_offset_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_FILE_GET_BYTE_OFFSET,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_BYTE_OFFSET,
                            pmpi_file_get_byte_offset,
                            pmpi_file_get_byte_offset_,
                            pmpi_file_get_byte_offset__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_FILE_GET_BYTE_OFFSET,
                            (fh, offset, disp, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_FILE_GET_BYTE_OFFSET = mpi_file_get_byte_offset_f
 #pragma weak mpi_file_get_byte_offset = mpi_file_get_byte_offset_f
 #pragma weak mpi_file_get_byte_offset_ = mpi_file_get_byte_offset_f
 #pragma weak mpi_file_get_byte_offset__ = mpi_file_get_byte_offset_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_FILE_GET_BYTE_OFFSET,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_BYTE_OFFSET,
                            mpi_file_get_byte_offset,
                            mpi_file_get_byte_offset_,
                            mpi_file_get_byte_offset__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_FILE_GET_BYTE_OFFSET,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

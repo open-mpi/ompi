@@ -2,14 +2,14 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mca/mca.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 
 
-int mca_coll_base_select(lam_list_t *selected, bool *allow_multi_user_threads, 
+int mca_coll_base_select(ompi_list_t *selected, bool *allow_multi_user_threads, 
                          bool *have_hidden_threads)
 {
   /* JMS Need to implement */
@@ -19,5 +19,5 @@ int mca_coll_base_select(lam_list_t *selected, bool *allow_multi_user_threads,
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

@@ -3,22 +3,22 @@
  */
 
 #include "mem/seg_list.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 
 /*
  * Public variable
  */
-lam_class_t lam_seg_list_t_class = {
-    "lam_seg_list_t",
-    OBJ_CLASS(lam_object_t), 
-    (lam_construct_t) lam_sgl_construct,
-    (lam_destruct_t) lam_sgl_destruct
+ompi_class_t ompi_seg_list_t_class = {
+    "ompi_seg_list_t",
+    OBJ_CLASS(ompi_object_t), 
+    (ompi_construct_t) ompi_sgl_construct,
+    (ompi_destruct_t) ompi_sgl_destruct
 };
 
-void lam_sgl_construct(lam_seg_list_t *slist)
+void ompi_sgl_construct(ompi_seg_list_t *slist)
 {
-    OBJ_CONSTRUCT(&slist->sgl_list, lam_list_t);
-    OBJ_CONSTRUCT(&slist->sgl_lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&slist->sgl_list, ompi_list_t);
+    OBJ_CONSTRUCT(&slist->sgl_lock, ompi_mutex_t);
     slist->sgl_min_bytes_pushed = 0;
     slist->sgl_max_bytes_pushed = 0;
     slist->sgl_bytes_pushed = 0;
@@ -26,15 +26,15 @@ void lam_sgl_construct(lam_seg_list_t *slist)
     slist->sgl_consec_fail = 0;
 }
 
-void lam_sgl_destruct(lam_seg_list_t *slist)
+void ompi_sgl_destruct(ompi_seg_list_t *slist)
 {
     OBJ_DESTRUCT(&slist->sgl_list);
     OBJ_DESTRUCT(&slist->sgl_lock);
 }
 
 
-void lam_sgl_append_elt_chunk(
-    lam_seg_list_t *slist, 
+void ompi_sgl_append_elt_chunk(
+    ompi_seg_list_t *slist, 
     void *chunk, 
     size_t chunk_size,
     int n_elts, 
@@ -51,7 +51,7 @@ void lam_sgl_append_elt_chunk(
     slist->sgl_bytes_pushed += chunk_size;
     for ( i = 0; i < n_elts; i++ )
     {
-        lam_list_append(&(slist->sgl_list), (lam_list_item_t *)ptr);
+        ompi_list_append(&(slist->sgl_list), (ompi_list_item_t *)ptr);
         ptr += elt_size;
     }
 }

@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -55,16 +55,16 @@
 #include "evsignal.h"
 #include "threads/mutex.h"
 
-extern struct lam_event_list lam_eventqueue;
-extern volatile sig_atomic_t lam_evsignal_caught;
-extern lam_mutex_t lam_event_lock;
+extern struct ompi_event_list ompi_eventqueue;
+extern volatile sig_atomic_t ompi_evsignal_caught;
+extern ompi_mutex_t ompi_event_lock;
 
 /* due to limitations in the epoll interface, we need to keep track of
  * all file descriptors outself.
  */
 struct evepoll {
-	struct lam_event *evread;
-	struct lam_event *evwrite;
+	struct ompi_event *evread;
+	struct ompi_event *evwrite;
 };
 
 struct epollop {
@@ -77,12 +77,12 @@ struct epollop {
 } epollop;
 
 static void *epoll_init	(void);
-static int epoll_add	(void *, struct lam_event *);
-static int epoll_del	(void *, struct lam_event *);
+static int epoll_add	(void *, struct ompi_event *);
+static int epoll_del	(void *, struct ompi_event *);
 static int epoll_recalc	(void *, int);
 static int epoll_dispatch	(void *, struct timeval *);
 
-struct lam_eventop lam_epollops = {
+struct ompi_eventop ompi_epollops = {
 	"epoll",
 	epoll_init,
 	epoll_add,
@@ -131,7 +131,7 @@ epoll_init(void)
 	}
 	epollop.nfds = nfiles;
 
-	lam_evsignal_init(&epollop.evsigmask);
+	ompi_evsignal_init(&epollop.evsigmask);
 
 	return (&epollop);
 }
@@ -159,7 +159,7 @@ epoll_recalc(void *arg, int max)
 		epollop->nfds = nfds;
 	}
 
-	return (lam_evsignal_recalc(&epollop->evsigmask));
+	return (ompi_evsignal_recalc(&epollop->evsigmask));
 }
 
 int
@@ -170,19 +170,19 @@ epoll_dispatch(void *arg, struct timeval *tv)
 	struct evepoll *evep;
 	int i, res, timeout;
 
-	if (lam_evsignal_deliver(&epollop->evsigmask) == -1)
+	if (ompi_evsignal_deliver(&epollop->evsigmask) == -1)
 		return (-1);
 
 	timeout = tv->tv_sec * 1000 + tv->tv_usec / 1000;
-        if(lam_using_threads()) {
-            lam_mutex_unlock(&lam_event_lock);
+        if(ompi_using_threads()) {
+            ompi_mutex_unlock(&ompi_event_lock);
 	    res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
-            lam_mutex_lock(&lam_event_lock);
+            ompi_mutex_lock(&ompi_event_lock);
         } else {
 	    res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
         }
 
-	if (lam_evsignal_recalc(&epollop->evsigmask) == -1)
+	if (ompi_evsignal_recalc(&epollop->evsigmask) == -1)
 		return (-1);
 
 	if (res == -1) {
@@ -191,17 +191,17 @@ epoll_dispatch(void *arg, struct timeval *tv)
 			return (-1);
 		}
 
-		lam_evsignal_process();
+		ompi_evsignal_process();
 		return (0);
-	} else if (lam_evsignal_caught)
-		lam_evsignal_process();
+	} else if (ompi_evsignal_caught)
+		ompi_evsignal_process();
 
 	LOG_DBG((LOG_MISC, 80, "%s: epoll_wait reports %d", __func__, res));
 
 	for (i = 0; i < res; i++) {
 		int which = 0;
 		int what = events[i].events;
-		struct lam_event *evread = NULL, *evwrite = NULL;
+		struct ompi_event *evread = NULL, *evwrite = NULL;
 
 		evep = (struct evepoll *)events[i].data.ptr;
    
@@ -212,27 +212,27 @@ epoll_dispatch(void *arg, struct timeval *tv)
 
 		if (what & EPOLLIN) {
 			evread = evep->evread;
-			which |= LAM_EV_READ;
+			which |= OMPI_EV_READ;
 		}
 
 		if (what & EPOLLOUT) {
 			evwrite = evep->evwrite;
-			which |= LAM_EV_WRITE;
+			which |= OMPI_EV_WRITE;
 		}
 
 		if (!which)
 			continue;
 
-		if (evread != NULL && !(evread->ev_events & LAM_EV_PERSIST))
-			lam_event_del_i(evread);
+		if (evread != NULL && !(evread->ev_events & OMPI_EV_PERSIST))
+			ompi_event_del_i(evread);
 		if (evwrite != NULL && evwrite != evread &&
-		    !(evwrite->ev_events & LAM_EV_PERSIST))
-			lam_event_del_i(evwrite);
+		    !(evwrite->ev_events & OMPI_EV_PERSIST))
+			ompi_event_del_i(evwrite);
 
 		if (evread != NULL)
-			lam_event_active_i(evread, LAM_EV_READ, 1);
+			ompi_event_active_i(evread, OMPI_EV_READ, 1);
 		if (evwrite != NULL)
-			lam_event_active_i(evwrite, LAM_EV_WRITE, 1);
+			ompi_event_active_i(evwrite, OMPI_EV_WRITE, 1);
 	}
 
 	return (0);
@@ -240,15 +240,15 @@ epoll_dispatch(void *arg, struct timeval *tv)
 
 
 static int
-epoll_add(void *arg, struct lam_event *ev)
+epoll_add(void *arg, struct ompi_event *ev)
 {
 	struct epollop *epollop = arg;
 	struct epoll_event epev;
 	struct evepoll *evep;
 	int fd, op, events;
 
-	if (ev->ev_events & LAM_EV_SIGNAL)
-		return (lam_evsignal_add(&epollop->evsigmask, ev));
+	if (ev->ev_events & OMPI_EV_SIGNAL)
+		return (ompi_evsignal_add(&epollop->evsigmask, ev));
 
 	fd = ev->ev_fd;
 	if (fd >= epollop->nfds) {
@@ -268,9 +268,9 @@ epoll_add(void *arg, struct lam_event *ev)
 		op = EPOLL_CTL_MOD;
 	}
 
-	if (ev->ev_events & LAM_EV_READ)
+	if (ev->ev_events & OMPI_EV_READ)
 		events |= EPOLLIN;
-	if (ev->ev_events & LAM_EV_WRITE)
+	if (ev->ev_events & OMPI_EV_WRITE)
 		events |= EPOLLOUT;
 
 	epev.data.ptr = evep;
@@ -279,16 +279,16 @@ epoll_add(void *arg, struct lam_event *ev)
 			return (-1);
 
 	/* Update events responsible */
-	if (ev->ev_events & LAM_EV_READ)
+	if (ev->ev_events & OMPI_EV_READ)
 		evep->evread = ev;
-	if (ev->ev_events & LAM_EV_WRITE)
+	if (ev->ev_events & OMPI_EV_WRITE)
 		evep->evwrite = ev;
 
 	return (0);
 }
 
 static int
-epoll_del(void *arg, struct lam_event *ev)
+epoll_del(void *arg, struct ompi_event *ev)
 {
 	struct epollop *epollop = arg;
 	struct epoll_event epev;
@@ -296,8 +296,8 @@ epoll_del(void *arg, struct lam_event *ev)
 	int fd, events, op;
 	int needwritedelete = 1, needreaddelete = 1;
 
-	if (ev->ev_events & LAM_EV_SIGNAL)
-		return (lam_evsignal_del(&epollop->evsigmask, ev));
+	if (ev->ev_events & OMPI_EV_SIGNAL)
+		return (ompi_evsignal_del(&epollop->evsigmask, ev));
 
 	fd = ev->ev_fd;
 	if (fd >= epollop->nfds)
@@ -307,9 +307,9 @@ epoll_del(void *arg, struct lam_event *ev)
 	op = EPOLL_CTL_DEL;
 	events = 0;
 
-	if (ev->ev_events & LAM_EV_READ)
+	if (ev->ev_events & OMPI_EV_READ)
 		events |= EPOLLIN;
-	if (ev->ev_events & LAM_EV_WRITE)
+	if (ev->ev_events & OMPI_EV_WRITE)
 		events |= EPOLLOUT;
 
 	if ((events & (EPOLLIN|EPOLLOUT)) != (EPOLLIN|EPOLLOUT)) {

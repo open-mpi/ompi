@@ -2,11 +2,11 @@
  * $HEADER$
  */
 
-#ifndef LAM_CT_NODE_H
-#define LAM_CT_NODE_H
+#ifndef OMPI_CT_NODE_H
+#define OMPI_CT_NODE_H
 
-#include "lfc/lam_object.h"
-#include "lfc/hash_table.h"
+#include "class/ompi_object.h"
+#include "class/hash_table.h"
 
 
 /*
@@ -15,19 +15,19 @@
  *
  */
 
-#define CTNODE(obj)     (lam_ctnode_t *)(obj)
+#define CTNODE(obj)     (ompi_ctnode_t *)(obj)
 
-struct lam_ctnode;
+struct ompi_ctnode;
 
-typedef uint32_t (*lam_ctl_label_for_link_fn_t)(struct lam_ctnode *, uint32_t);
-typedef char *(*lam_ctl_isa_neighbor_fn_t)(struct lam_ctnode *, uint32_t);
+typedef uint32_t (*ompi_ctl_label_for_link_fn_t)(struct ompi_ctnode *, uint32_t);
+typedef char *(*ompi_ctl_isa_neighbor_fn_t)(struct ompi_ctnode *, uint32_t);
 
-typedef struct lam_ctnode_class
+typedef struct ompi_ctnode_class
 {
-    lam_class_t    super;
-    lam_ctl_label_for_link_fn_t *ctl_label_for_link;
-    lam_ctl_isa_neighbor_fn_t *ctl_isa_neighbor;
-} lam_ctnode_class_t;
+    ompi_class_t    super;
+    ompi_ctl_label_for_link_fn_t *ctl_label_for_link;
+    ompi_ctl_isa_neighbor_fn_t *ctl_isa_neighbor;
+} ompi_ctnode_class_t;
 
 
 
@@ -39,7 +39,7 @@ typedef struct lam_ctnode_class
  */
 
 
-extern lam_ctnode_class_t     hypercube_t_class;
+extern ompi_ctnode_class_t     hypercube_t_class;
 
 
 
@@ -51,20 +51,20 @@ extern lam_ctnode_class_t     hypercube_t_class;
  *
  */
 
-typedef struct lam_ctnode
+typedef struct ompi_ctnode
 {
-    lam_object_t    super;
+    ompi_object_t    super;
     uint32_t        ctn_label;
     uint32_t        ctn_num_nodes;  /* total # of nodes in network */
     void            *ctn_user_info;
-    lam_fast_hash_t ctn_neighbors;
-    lam_fast_hash_t ctn_scatter_cache;
-    lam_fast_hash_t ctn_bcast_cache;    
-} lam_ctnode_t;
+    ompi_fast_hash_t ctn_neighbors;
+    ompi_fast_hash_t ctn_scatter_cache;
+    ompi_fast_hash_t ctn_bcast_cache;    
+} ompi_ctnode_t;
 
 
-void lam_ctn_construct(lam_ctnode_t *node);
-void lam_ctn_destruct(lam_ctnode_t *node);
+void ompi_ctn_construct(ompi_ctnode_t *node);
+void ompi_ctn_destruct(ompi_ctnode_t *node);
 
 /*
  *
@@ -72,13 +72,13 @@ void lam_ctn_destruct(lam_ctnode_t *node);
  *
  */
 
-void *lam_ctn_get_neighbor(lam_ctnode_t *node, uint32_t neighbor_label);
+void *ompi_ctn_get_neighbor(ompi_ctnode_t *node, uint32_t neighbor_label);
 /*
  PRE:   neighbor_label is the label of the node's neighbor
  POST:  returns a pointer to the node's neighbor
  */
 
-void lam_ctn_set_neighbor(lam_ctnode_t *node, uint32_t label, void *neighbor);
+void ompi_ctn_set_neighbor(ompi_ctnode_t *node, uint32_t label, void *neighbor);
 /*
  PRE:    label represents the label for a valid neighbor.
  POST:   Adds a link to a neighbor with specified label.
@@ -91,11 +91,11 @@ void lam_ctn_set_neighbor(lam_ctnode_t *node, uint32_t label, void *neighbor);
  *
  */
 
-inline uint32_t lam_ctn_get_label(lam_ctnode_t *node) {return node->ctn_label;}
-inline void lam_ctn_set_label(lam_ctnode_t *node, uint32_t label)
+inline uint32_t ompi_ctn_get_label(ompi_ctnode_t *node) {return node->ctn_label;}
+inline void ompi_ctn_set_label(ompi_ctnode_t *node, uint32_t label)
     {node->ctn_label = label;}
 
-inline uint32_t lam_ctn_get_num_nodes(lam_ctnode_t *node) {return node->ctn_num_nodes;}
+inline uint32_t ompi_ctn_get_num_nodes(ompi_ctnode_t *node) {return node->ctn_num_nodes;}
 
 
 /*
@@ -105,7 +105,7 @@ inline uint32_t lam_ctn_get_num_nodes(lam_ctnode_t *node) {return node->ctn_num_
  *
  */
 
-int lam_ctn_isa_neighbor(lam_ctnode_t *node, uint32_t label);
+int ompi_ctn_isa_neighbor(ompi_ctnode_t *node, uint32_t label);
 /*
  POST:   returns 1 if a node with specified label is a label for
  a neighbor node.  This does not imply that the get_neighbor() function
@@ -114,7 +114,7 @@ int lam_ctn_isa_neighbor(lam_ctnode_t *node, uint32_t label);
  */
 
 
-uint32_t lam_ctn_label_for_link(lam_ctnode_t *node, uint32_t link);
+uint32_t ompi_ctn_label_for_link(ompi_ctnode_t *node, uint32_t link);
 /*
  PRE: The graph edges connecting node to its neighbors are oriented
         so that the links (edges) are numbered starting from 1.
@@ -131,7 +131,7 @@ uint32_t lam_ctn_label_for_link(lam_ctnode_t *node, uint32_t link);
  */
 
 
-char *lam_ctn_initial_control_data(lam_ctnode_t *node, uint32_t *ctrl_size);
+char *ompi_ctn_initial_control_data(ompi_ctnode_t *node, uint32_t *ctrl_size);
 /*
  POST: Returns pointer to byte array for control data for routing
         messages.  The length of the control array is stored in
@@ -146,12 +146,12 @@ char *lam_ctn_initial_control_data(lam_ctnode_t *node, uint32_t *ctrl_size);
  *
  */
 
-typedef struct lam_hcube
+typedef struct ompi_hcube
 {
-    lam_ctnode_t    super;
+    ompi_ctnode_t    super;
     unsigned int    hc_hsize;           /* hc_hsize = log2(# nodes in network) */
-} lam_hcube_t;
+} ompi_hcube_t;
 
-extern lam_class_t     hcube_t_class;
+extern ompi_class_t     hcube_t_class;
 
-#endif  /* LAM_CT_NODE_H */
+#endif  /* OMPI_CT_NODE_H */

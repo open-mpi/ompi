@@ -3,14 +3,14 @@
 #include "datatype.h"
 
 /* We try to merge together data that are contiguous */
-int lam_ddt_create_indexed( int count, int* pBlockLength, int* pDisp,
+int ompi_ddt_create_indexed( int count, int* pBlockLength, int* pDisp,
                             dt_desc_t* oldType, dt_desc_t** newType )
 {
     dt_desc_t* pdt;
     int i, dLength, endat, disp;
     long extent = oldType->ub - oldType->lb;
 
-    pdt = lam_ddt_create( count * (2 + oldType->desc.used) );
+    pdt = ompi_ddt_create( count * (2 + oldType->desc.used) );
     disp = pDisp[0];
     dLength = pBlockLength[0];
     endat = disp + dLength;
@@ -20,19 +20,19 @@ int lam_ddt_create_indexed( int count, int* pBlockLength, int* pDisp,
             dLength += pBlockLength[i];
             endat += pBlockLength[i];
         } else {
-            lam_ddt_add( pdt, oldType, dLength, disp * extent, extent );
+            ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
             disp = pDisp[i];
             dLength = pBlockLength[i];
             endat = disp + pBlockLength[i];
         }
     }
-    lam_ddt_add( pdt, oldType, dLength, disp * extent, extent );
+    ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
 
     *newType = pdt;
     return 0;
 }
 
-int lam_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
+int ompi_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
                              dt_desc_t* oldType, dt_desc_t** newType )
 {
    dt_desc_t* pdt;
@@ -40,7 +40,7 @@ int lam_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
    long extent = oldType->ub - oldType->lb;
    long disp, endat;
 
-   pdt = lam_ddt_create( count * (2 + oldType->desc.used) );
+   pdt = ompi_ddt_create( count * (2 + oldType->desc.used) );
    disp = pDisp[0];
    dLength = pBlockLength[0];
    endat = disp + dLength * extent;
@@ -50,26 +50,26 @@ int lam_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
          dLength += pBlockLength[i];
          endat += pBlockLength[i] * extent;
       } else {
-         lam_ddt_add( pdt, oldType, dLength, disp, extent );
+         ompi_ddt_add( pdt, oldType, dLength, disp, extent );
          disp = pDisp[i];
          dLength = pBlockLength[i];
          endat = disp + pBlockLength[i] * extent;
       }
    }
-   lam_ddt_add( pdt, oldType, dLength, disp, extent );
+   ompi_ddt_add( pdt, oldType, dLength, disp, extent );
 
    *newType = pdt;
    return 0;
 }
 
-int lam_ddt_create_indexed_block( int count, int bLength, int* pDisp,
+int ompi_ddt_create_indexed_block( int count, int bLength, int* pDisp,
                                   dt_desc_t* oldType, dt_desc_t** newType )
 {
    dt_desc_t* pdt;
    int i, dLength, endat, disp;
    long extent = oldType->ub - oldType->lb;
 
-   pdt = lam_ddt_create( count * (2 + oldType->desc.used) );
+   pdt = ompi_ddt_create( count * (2 + oldType->desc.used) );
    disp = pDisp[0];
    dLength = bLength;
    endat = disp + dLength;
@@ -79,13 +79,13 @@ int lam_ddt_create_indexed_block( int count, int bLength, int* pDisp,
          dLength += bLength;
          endat += bLength;
       } else {
-         lam_ddt_add( pdt, oldType, dLength, disp * extent, extent );
+         ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
          disp = pDisp[i];
          dLength = bLength;
          endat = disp + bLength;
       }
    }
-   lam_ddt_add( pdt, oldType, dLength, disp * extent, extent );
+   ompi_ddt_add( pdt, oldType, dLength, disp * extent, extent );
 
    *newType = pdt;
    return 0;

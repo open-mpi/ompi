@@ -6,11 +6,11 @@
 
 int mca_pml_teg_wait(
     size_t count,
-    lam_request_t** request,
+    ompi_request_t** request,
     int *index,
-    lam_status_public_t* status)
+    ompi_status_public_t* status)
 {
-#if LAM_HAVE_THREADS
+#if OMPI_HAVE_THREADS
     int c;
 #endif
     int i;
@@ -21,7 +21,7 @@ int mca_pml_teg_wait(
     mca_pml_teg.teg_waits++;
 #endif
 
-#if LAM_HAVE_THREADS
+#if OMPI_HAVE_THREADS
     /* poll for completion */
     for(c=0; completed < 0 && c < mca_pml_teg.teg_poll_iterations; c++) {
         for(i=0; i<count; i++) {
@@ -52,7 +52,7 @@ int mca_pml_teg_wait(
 #if MCA_PML_TEG_STATISTICS
                 mca_pml_teg.teg_condition_waits++;
 #endif
-                lam_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
+                ompi_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
             }
         } while(completed < 0);
         mca_pml_teg.teg_request_waiting--;
@@ -67,14 +67,14 @@ int mca_pml_teg_wait(
        *status = pml_request->req_status;
     }
     *index = completed;
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
 int mca_pml_teg_wait_all(
     size_t count,
-    lam_request_t** requests,
-    lam_status_public_t* statuses)
+    ompi_request_t** requests,
+    ompi_status_public_t* statuses)
 {
     int completed = 0, i;
     for(i=0; i<count; i++) {
@@ -102,7 +102,7 @@ int mca_pml_teg_wait_all(
                 }
             } 
             if(completed != count)
-                lam_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
+                ompi_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
         } while (completed != count);
         mca_pml_teg.teg_request_waiting--;
         THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
@@ -130,6 +130,6 @@ int mca_pml_teg_wait_all(
             }
         }
     }
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 

@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-define(LAM_CXX_FIND_TEMPLATE_PARAMETERS,[
+define(OMPI_CXX_FIND_TEMPLATE_PARAMETERS,[
 #
 # Arguments: none
 #

@@ -16,13 +16,13 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO LAM_EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * IN NO OMPI_EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWLAM_EVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, LAM_EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE, OMPI_EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
  * Mon 03/10/2003 - Modified by Davide Libenzi <davidel@xmailserver.org>
@@ -56,7 +56,7 @@
 static int count, writes, fired;
 static int *pipes;
 static int num_pipes, num_active, num_writes;
-static struct lam_event *events;
+static struct ompi_event *events;
 
 
 
@@ -83,12 +83,12 @@ run_once(void)
 	static struct timeval ts, te;
 
 	for (cp = pipes, i = 0; i < num_pipes; i++, cp += 2) {
-		lam_event_del(&events[i]);
-		lam_event_set(&events[i], cp[0], LAM_EV_READ | LAM_EV_PERSIST, read_cb, (void *) i);
-		lam_event_add(&events[i], NULL);
+		ompi_event_del(&events[i]);
+		ompi_event_set(&events[i], cp[0], OMPI_EV_READ | OMPI_EV_PERSIST, read_cb, (void *) i);
+		ompi_event_add(&events[i], NULL);
 	}
 
-	lam_event_loop(LAM_EVLOOP_ONCE | LAM_EVLOOP_NONBLOCK);
+	ompi_event_loop(OMPI_EVLOOP_ONCE | OMPI_EVLOOP_NONBLOCK);
 
 	fired = 0;
 	space = num_pipes / num_active;
@@ -101,7 +101,7 @@ run_once(void)
 	{ int xcount = 0;
 	gettimeofday(&ts, NULL);
 	do {
-		lam_event_loop(LAM_EVLOOP_ONCE | LAM_EVLOOP_NONBLOCK);
+		ompi_event_loop(OMPI_EVLOOP_ONCE | OMPI_EVLOOP_NONBLOCK);
 		xcount++;
 	} while (count != fired);
 	gettimeofday(&te, NULL);
@@ -149,14 +149,14 @@ main (int argc, char **argv)
 		exit(1);
 	}
 
-	events = calloc(num_pipes, sizeof(struct lam_event));
+	events = calloc(num_pipes, sizeof(struct ompi_event));
 	pipes = calloc(num_pipes * 2, sizeof(int));
 	if (events == NULL || pipes == NULL) {
 		perror("malloc");
 		exit(1);
 	}
 
-	lam_event_init();
+	ompi_event_init();
 
 	for (cp = pipes, i = 0; i < num_pipes; i++, cp += 2) {
 #ifdef USE_PIPES

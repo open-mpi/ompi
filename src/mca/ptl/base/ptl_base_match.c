@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "threads/mutex.h"
 #include "include/constants.h"
 #include "communicator/communicator.h"
@@ -39,7 +39,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
     mca_pml_ptl_comm_t *ptl_comm);
                                                                                                                             
 static void mca_ptl_base_check_cantmatch_for_match(
-    lam_list_t *additional_matches,
+    ompi_list_t *additional_matches,
     mca_pml_ptl_comm_t *pml_comm, int frag_src);
 
 
@@ -61,7 +61,7 @@ static void mca_ptl_base_check_cantmatch_for_match(
  *                    case, the associated fragment descriptors are
  *                    put on this list for further processing. (OUT)
  *
- * @return LAM error code
+ * @return OMPI error code
  *
  * This routine is used to try and match a newly arrived message fragment
  *   to pre-posted receives.  The following assumptions are made
@@ -76,18 +76,18 @@ static void mca_ptl_base_check_cantmatch_for_match(
 bool mca_ptl_base_match(
     mca_ptl_base_match_header_t *frag_header,
     mca_ptl_base_recv_frag_t *frag_desc, 
-    lam_list_t *additional_matches)
+    ompi_list_t *additional_matches)
 {
     /* local variables */
     mca_ptl_sequence_t frag_msg_seq,next_msg_seq_expected;
-    lam_communicator_t *comm_ptr;
+    ompi_communicator_t *comm_ptr;
     mca_ptl_base_recv_request_t *matched_receive;
     mca_pml_ptl_comm_t *pml_comm;
     int frag_src;
     bool match_made=false;
 
     /* communicator pointer */
-    comm_ptr=lam_comm_lookup(frag_header->hdr_contextid);
+    comm_ptr=ompi_comm_lookup(frag_header->hdr_contextid);
     pml_comm=(mca_pml_ptl_comm_t *)comm_ptr->c_pml_comm;
 
     /* source sequence number */
@@ -139,8 +139,8 @@ bool mca_ptl_base_match(
 
         } else {
             /* if no match found, place on unexpected queue */
-            lam_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
-                    (lam_list_item_t *)frag_desc);
+            ompi_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
+                    (ompi_list_item_t *)frag_desc);
 
         }
 
@@ -149,7 +149,7 @@ bool mca_ptl_base_match(
          *   any fragments on the c_c_frags_cant_match list
          *   may now be used to form new matchs
          */
-        if (0 < lam_list_get_size((pml_comm->c_frags_cant_match)+frag_src)) {
+        if (0 < ompi_list_get_size((pml_comm->c_frags_cant_match)+frag_src)) {
 
             mca_ptl_base_check_cantmatch_for_match(additional_matches,pml_comm,frag_src);
 
@@ -160,8 +160,8 @@ bool mca_ptl_base_match(
          * This message comes after the next expected, so it
          * is ahead of sequence.  Save it for later.
          */
-        lam_list_append( ((pml_comm->c_frags_cant_match)+frag_src),
-                    (lam_list_item_t *)frag_desc);
+        ompi_list_append( ((pml_comm->c_frags_cant_match)+frag_src),
+                    (ompi_list_item_t *)frag_desc);
     }
 
     THREAD_UNLOCK(&pml_comm->c_matching_lock);
@@ -202,13 +202,13 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match
      */
     frag_src = frag_header->hdr_src;
 
-    if (lam_list_get_size((pml_comm->c_specific_receives)+frag_src) == 0 ){
+    if (ompi_list_get_size((pml_comm->c_specific_receives)+frag_src) == 0 ){
         /*
          * There are only wild irecvs, so specialize the algorithm.
          */
         return_match = mca_ptl_base_check_wild_receives_for_match(frag_header, pml_comm);
 
-    } else if (lam_list_get_size(&(pml_comm->c_wild_receives)) == 0 ) {
+    } else if (ompi_list_get_size(&(pml_comm->c_wild_receives)) == 0 ) {
         /*
          * There are only specific irecvs, so specialize the algorithm.
          */
@@ -258,20 +258,20 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
      * change this list.
      */
     for(wild_recv = (mca_ptl_base_recv_request_t *) 
-            lam_list_get_first(&(pml_comm->c_wild_receives));
+            ompi_list_get_first(&(pml_comm->c_wild_receives));
             wild_recv != (mca_ptl_base_recv_request_t *)
-            lam_list_get_end(&(pml_comm->c_wild_receives));
+            ompi_list_get_end(&(pml_comm->c_wild_receives));
             wild_recv = (mca_ptl_base_recv_request_t *) 
-            ((lam_list_item_t *)wild_recv)->lam_list_next) {
+            ((ompi_list_item_t *)wild_recv)->ompi_list_next) {
 
         recv_tag = wild_recv->super.req_tag;
         if ( 
                 /* exact tag match */
                 (frag_tag == recv_tag) ||
                 /* wild tag match - negative tags (except for
-                 * LAM_ANY_TAG) are reserved for internal use, and will
-                 * not be matched with LAM_ANY_TAG */
-                ( (recv_tag == LAM_ANY_TAG) && (0 <= frag_tag) )  )
+                 * OMPI_ANY_TAG) are reserved for internal use, and will
+                 * not be matched with OMPI_ANY_TAG */
+                ( (recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) )  )
 
         {
             /*
@@ -280,8 +280,8 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
             return_match = wild_recv;
 
             /* remove this irecv from the postd wild ireceive list */
-            lam_list_remove_item(&(pml_comm->c_wild_receives),
-                    (lam_list_item_t *)wild_recv);
+            ompi_list_remove_item(&(pml_comm->c_wild_receives),
+                    (ompi_list_item_t *)wild_recv);
 
             /* found match - no need to continue */
             break;
@@ -324,17 +324,17 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_mat
      * Loop over the specific irecvs.
      */
     for(specific_recv = (mca_ptl_base_recv_request_t *) 
-            lam_list_get_first((pml_comm->c_specific_receives)+frag_src);
+            ompi_list_get_first((pml_comm->c_specific_receives)+frag_src);
             specific_recv != (mca_ptl_base_recv_request_t *)
-            lam_list_get_end((pml_comm->c_specific_receives)+frag_src);
+            ompi_list_get_end((pml_comm->c_specific_receives)+frag_src);
             specific_recv = (mca_ptl_base_recv_request_t *) 
-            ((lam_list_item_t *)specific_recv)->lam_list_next) {
+            ((ompi_list_item_t *)specific_recv)->ompi_list_next) {
         /*
          * Check for a match
          */
         recv_tag = specific_recv->super.req_tag;
         if ( (frag_tag == recv_tag) ||
-             ( (recv_tag == LAM_ANY_TAG) && (0 <= frag_tag) ) ) {
+             ( (recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) {
 
             /*
              * Match made
@@ -342,8 +342,8 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_mat
             return_match = specific_recv;
 
             /* remove descriptor from posted specific ireceive list */
-            lam_list_remove_item((pml_comm->c_specific_receives)+frag_src,
-                    (lam_list_item_t *)specific_recv);
+            ompi_list_remove_item((pml_comm->c_specific_receives)+frag_src,
+                    (ompi_list_item_t *)specific_recv);
 
             break;
         }
@@ -387,9 +387,9 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
      *  have been posted.
      */
     specific_recv = (mca_ptl_base_recv_request_t *) 
-            lam_list_get_first((pml_comm->c_specific_receives)+frag_src);
+            ompi_list_get_first((pml_comm->c_specific_receives)+frag_src);
     wild_recv = (mca_ptl_base_recv_request_t *) 
-            lam_list_get_first(&(pml_comm->c_wild_receives));
+            ompi_list_get_first(&(pml_comm->c_wild_receives));
 
     specific_recv_seq = specific_recv->super.req_sequence;
     wild_recv_seq = wild_recv->super.req_sequence;
@@ -404,7 +404,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
              */
             wild_recv_tag = wild_recv->super.req_tag;
             if ( (frag_tag == wild_recv_tag) ||
-                 ( (wild_recv_tag == LAM_ANY_TAG) && (0 <= frag_tag) ) ) {
+                 ( (wild_recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) {
                     
                 /*
                  * Match made
@@ -412,8 +412,8 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
                 return_match=wild_recv;
 
                 /* remove this recv from the wild receive queue */
-                lam_list_remove_item(&(pml_comm->c_wild_receives),
-                        (lam_list_item_t *)wild_recv);
+                ompi_list_remove_item(&(pml_comm->c_wild_receives),
+                        (ompi_list_item_t *)wild_recv);
 
                 return return_match;
             }
@@ -422,14 +422,14 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
              * No match, go to the next.
              */
             wild_recv=(mca_ptl_base_recv_request_t *)
-                ((lam_list_item_t *)wild_recv)->lam_list_next;
+                ((ompi_list_item_t *)wild_recv)->ompi_list_next;
 
             /*
              * If that was the last wild one, just look at the
              * rest of the specific ones.
              */
             if (wild_recv == (mca_ptl_base_recv_request_t *)
-                    lam_list_get_end(&(pml_comm->c_wild_receives)) ) 
+                    ompi_list_get_end(&(pml_comm->c_wild_receives)) ) 
             { 
                 return_match = mca_ptl_base_check_specific_receives_for_match(frag_header,
                         pml_comm);
@@ -449,7 +449,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
              */
             specific_recv_tag=specific_recv->super.req_tag;
             if ( (frag_tag == specific_recv_tag) ||
-                 ( (specific_recv_tag == LAM_ANY_TAG) && (0<=frag_tag)) ) 
+                 ( (specific_recv_tag == OMPI_ANY_TAG) && (0<=frag_tag)) ) 
             {
 
                 /*
@@ -458,8 +458,8 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
                 return_match = specific_recv;
 
                 /* remove descriptor from specific receive list */
-                lam_list_remove_item((pml_comm->c_specific_receives)+frag_src,
-                    (lam_list_item_t *)specific_recv);
+                ompi_list_remove_item((pml_comm->c_specific_receives)+frag_src,
+                    (ompi_list_item_t *)specific_recv);
 
                 return return_match;
             }
@@ -468,14 +468,14 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
              * No match, go on to the next specific irecv.
              */
             specific_recv = (mca_ptl_base_recv_request_t *)
-                ((lam_list_item_t *)specific_recv)->lam_list_next;
+                ((ompi_list_item_t *)specific_recv)->ompi_list_next;
 
             /*
              * If that was the last specific irecv, process the
              * rest of the wild ones.
              */
             if (specific_recv == (mca_ptl_base_recv_request_t *)
-                    lam_list_get_end((pml_comm->c_specific_receives)+frag_src) )
+                    ompi_list_get_end((pml_comm->c_specific_receives)+frag_src) )
             {
                 return_match = mca_ptl_base_check_wild_receives_for_match(frag_header,
                         pml_comm);
@@ -508,7 +508,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
  * set by the upper level routine.
  */
 
-static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matches,
+static void mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_matches,
     mca_pml_ptl_comm_t *pml_comm, int frag_src)
 {
     /* local parameters */
@@ -523,7 +523,7 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
      */
 
     match_found = 1;
-    while ((0 < lam_list_get_size((pml_comm->c_frags_cant_match)+frag_src)) &&
+    while ((0 < ompi_list_get_size((pml_comm->c_frags_cant_match)+frag_src)) &&
             match_found) {
 
         /* initialize match flag for this search */
@@ -536,11 +536,11 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
          * number next_msg_seq_expected
          */
         for(frag_desc = (mca_ptl_base_recv_frag_t *) 
-            lam_list_get_first((pml_comm->c_frags_cant_match)+frag_src);
+            ompi_list_get_first((pml_comm->c_frags_cant_match)+frag_src);
             frag_desc != (mca_ptl_base_recv_frag_t *)
-            lam_list_get_end((pml_comm->c_frags_cant_match)+frag_src);
+            ompi_list_get_end((pml_comm->c_frags_cant_match)+frag_src);
             frag_desc = (mca_ptl_base_recv_frag_t *) 
-            lam_list_get_next(frag_desc))
+            ompi_list_get_next(frag_desc))
         {
             /*
              * If the message has the next expected seq from that proc...
@@ -557,8 +557,8 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
                 /*
                  * remove frag_desc from list
                  */
-                lam_list_remove_item((pml_comm->c_frags_cant_match)+frag_src,
-                        (lam_list_item_t *)frag_desc);
+                ompi_list_remove_item((pml_comm->c_frags_cant_match)+frag_src,
+                        (ompi_list_item_t *)frag_desc);
 
                 /*
                  * check to see if this frag matches a posted message
@@ -576,14 +576,14 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
                     /* add this fragment descriptor to the list of
                      * descriptors to be processed later
                      */
-                    lam_list_append(additional_matches,
-                            (lam_list_item_t *)frag_desc);
+                    ompi_list_append(additional_matches,
+                            (ompi_list_item_t *)frag_desc);
 
                 } else {
     
                     /* if no match found, place on unexpected queue */
-                    lam_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
-                            (lam_list_item_t *)frag_desc);
+                    ompi_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
+                            (ompi_list_item_t *)frag_desc);
 
                 }
 

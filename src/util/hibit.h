@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef LAM_HIBIT_H
-#define LAM_HIBIT_H
+#ifndef OMPI_HIBIT_H
+#define OMPI_HIBIT_H
 
 /**
  * Calculates the highest bit in an integer
@@ -20,7 +20,7 @@
  * WARNING: *NO* error checking is performed.  This is meant to be a
  * fast inline function.
  */
-static inline int lam_hibit(int value, int start)
+static inline int ompi_hibit(int value, int start)
 {
   unsigned int mask;
 
@@ -35,4 +35,4 @@ static inline int lam_hibit(int value, int start)
   return start;
 }
 
-#endif /* LAM_HIBIT_H */
+#endif /* OMPI_HIBIT_H */

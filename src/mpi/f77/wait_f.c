@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WAIT = mpi_wait_f
 #pragma weak pmpi_wait = mpi_wait_f
 #pragma weak pmpi_wait_ = mpi_wait_f
 #pragma weak pmpi_wait__ = mpi_wait_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_WAIT,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_WAIT,
                            pmpi_wait,
                            pmpi_wait_,
                            pmpi_wait__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_WAIT,
                            (request, status, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_WAIT = mpi_wait_f
 #pragma weak mpi_wait = mpi_wait_f
 #pragma weak mpi_wait_ = mpi_wait_f
 #pragma weak mpi_wait__ = mpi_wait_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_WAIT,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_WAIT,
                            mpi_wait,
                            mpi_wait_,
                            mpi_wait__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_WAIT,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

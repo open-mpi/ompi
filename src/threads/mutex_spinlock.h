@@ -2,35 +2,35 @@
  * $HEADER$
  */
 
-#ifndef LAM_MUTEX_SPINLOCK_
-#define LAM_MUTEX_SPINLOCK_
+#ifndef OMPI_MUTEX_SPINLOCK_
+#define OMPI_MUTEX_SPINLOCK_
 
-#include "lfc/lam_object.h"
+#include "class/ompi_object.h"
 #include "os/atomic.h"
 
 
-struct lam_mutex_t {
-    lam_object_t super;
-    lam_lock_data_t m_lock;
+struct ompi_mutex_t {
+    ompi_object_t super;
+    ompi_lock_data_t m_lock;
 
 };
-typedef struct lam_mutex_t lam_mutex_t;
+typedef struct ompi_mutex_t ompi_mutex_t;
 
 
-OBJ_CLASS_DECLARATION(lam_mutex_t);
+OBJ_CLASS_DECLARATION(ompi_mutex_t);
 
 
-static inline void lam_mutex_lock(lam_mutex_t* m)
+static inline void ompi_mutex_lock(ompi_mutex_t* m)
 {
     spinlock(&m->m_lock);
 }
 
-static inline int lam_mutex_trylock(lam_mutex_t* m)
+static inline int ompi_mutex_trylock(ompi_mutex_t* m)
 {
     return spintrylock(&m->m_lock);
 }
 
-static inline void lam_mutex_unlock(lam_mutex_t* m)
+static inline void ompi_mutex_unlock(ompi_mutex_t* m)
 {
     spinunlock(&m->m_lock);
 }

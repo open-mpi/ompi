@@ -3,10 +3,10 @@
                                                                                                                               
 int mca_pml_teg_test(
     size_t count,
-    lam_request_t** requests,
+    ompi_request_t** requests,
     int *index,
     int *completed,
-    lam_status_public_t* status)
+    ompi_status_public_t* status)
 {
     size_t i;
     for(i=0; i<count; i++) {
@@ -27,15 +27,15 @@ int mca_pml_teg_test(
     *completed = false;
     if(NULL != status) 
         *status = mca_pml_teg.teg_request_null.req_status;
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
 int mca_pml_teg_test_all(
     size_t count,
-    lam_request_t** requests,
+    ompi_request_t** requests,
     int *completed,
-    lam_status_public_t* statuses)
+    ompi_status_public_t* statuses)
 {
     size_t i;
     size_t num_completed;
@@ -47,7 +47,7 @@ int mca_pml_teg_test_all(
 
     if(num_completed != count) {
         *completed = false;
-        return LAM_SUCCESS;
+        return OMPI_SUCCESS;
     }
 
     *completed = true;
@@ -71,6 +71,6 @@ int mca_pml_teg_test_all(
                 MCA_PML_TEG_FREE(requests+i);
         }
     }
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 

@@ -3,14 +3,14 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([LAM_GET_VERSION],[
+AC_DEFUN([OMPI_GET_VERSION],[
 gv_glv_dir="$1"
 gv_ver_file="$2"
 gv_prefix="$3"
 
-# Find the get_lam_version program
+# Find the get_ompi_version program
 
-gv_prog="sh $gv_glv_dir/lam_get_version.sh $gv_ver_file"
+gv_prog="sh $gv_glv_dir/ompi_get_version.sh $gv_ver_file"
 
 dnl quote eval to suppress macro expansion with non-GNU m4
 

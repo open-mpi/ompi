@@ -3,7 +3,7 @@
  */
 
 /*
- * This test is intended to test the lam_pointer_array
+ * This test is intended to test the ompi_pointer_array
  *   class
  */
 
@@ -13,12 +13,12 @@
 #include <string.h>
 
 #include "support.h"
-#include "lfc/lam_pointer_array.h"
+#include "class/ompi_pointer_array.h"
 
 static void test(bool thread_usage){
 
     /* local variables */
-    lam_pointer_array_t *array;
+    ompi_pointer_array_t *array;
     char *test_value;
     char **test_data;
     size_t len_test_data,i,test_len_in_array,error_cnt;
@@ -26,9 +26,9 @@ static void test(bool thread_usage){
     int use_threads,error_code;
 
     /* initialize thread levels */
-    use_threads=(int)lam_set_using_threads(thread_usage);
+    use_threads=(int)ompi_set_using_threads(thread_usage);
     
-    array=OBJ_NEW(lam_pointer_array_t);
+    array=OBJ_NEW(ompi_pointer_array_t);
     assert(array);
 
     len_test_data=5;
@@ -44,7 +44,7 @@ static void test(bool thread_usage){
     test_len_in_array=3;
     assert(len_test_data>=test_len_in_array);
     for(i=0 ; i < test_len_in_array ; i++ ) {
-        lam_pointer_array_add(array,test_data[i]);
+        ompi_pointer_array_add(array,test_data[i]);
     }
     /* check to see that test_len_in_array are in array */
     if( (array->size - array->number_free) == 
@@ -69,11 +69,11 @@ static void test(bool thread_usage){
     /* free 2nd element and make sure that value is reset correctly,
      *   and that the lowest_index is also reset correctly */
     ele_index=1;
-    error_code=lam_pointer_array_set_item(array,ele_index,NULL);
+    error_code=ompi_pointer_array_set_item(array,ele_index,NULL);
     if( 0 == error_code ) {
         test_success();
     } else {
-        test_failure(" lam_pointer_array_set_item ");
+        test_failure(" ompi_pointer_array_set_item ");
     }
     if( NULL == array->addr[ele_index]){
         test_success();
@@ -86,7 +86,7 @@ static void test(bool thread_usage){
         test_failure(" lowest free ");
     }
 
-    /* test lam_pointer_array_get_item */
+    /* test ompi_pointer_array_get_item */
     array->number_free=array->size;
     array->lowest_free=0;
     for(i=0 ; i < array->size ; i++ ) {
@@ -94,7 +94,7 @@ static void test(bool thread_usage){
     }
     error_cnt=0;
     for(i=0 ; i < array->size ; i++ ) {
-        ele_index=lam_pointer_array_add(array,((char *)(i+2)) );
+        ele_index=ompi_pointer_array_add(array,((char *)(i+2)) );
         if( i != ele_index ) {
             error_cnt++;
         }
@@ -102,12 +102,12 @@ static void test(bool thread_usage){
     if( 0 == error_cnt ) {
         test_success();
     } else {
-        test_failure(" lam_pointer_array_add 2nd ");
+        test_failure(" ompi_pointer_array_add 2nd ");
     }
 
     error_cnt=0;
     for(i=0 ; i < array->size ; i++ ) {
-        test_value=lam_pointer_array_get_item(array,i);
+        test_value=ompi_pointer_array_get_item(array,i);
         if( ((char *)(i+2)) != test_value ) {
             error_cnt++;
         }
@@ -126,7 +126,7 @@ static void test(bool thread_usage){
 
 int main(int argc, char **argv)
 {
-    test_init("lam_pointer_array");
+    test_init("ompi_pointer_array");
 
     /* run through tests with thread usage set to false */
     test(false);

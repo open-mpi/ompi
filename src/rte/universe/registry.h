@@ -177,8 +177,8 @@ int ompi_registry_definekey(char *segment, char *token);
  * @param segment Pointer to a character string defining the segment of the registry.
  * @param token Pointer to a character string containing the token to be deleted.
  *
- * @retval LAM_SUCCESS Indicating that the operation was successful.
- * @retval LAM_ERROR Indicates that the operation failed - most likely caused by specifying
+ * @retval OMPI_SUCCESS Indicating that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the operation failed - most likely caused by specifying
  * a token that did not exist within the specified segment, or a non-existent segment.
  */
 int ompi_registry_deletekey(char *segment, char *token);
@@ -193,8 +193,8 @@ int ompi_registry_deletekey(char *segment, char *token);
  * @param segment A pointer to a character string containing the name of the segment
  * to be created.
  *
- * @retval LAM_SUCCESS Indicates that the operation was successfully completed.
- * @retval LAM_ERROR Indicates that the operation failed - most likely due to the
+ * @retval OMPI_SUCCESS Indicates that the operation was successfully completed.
+ * @retval OMPI_ERROR Indicates that the operation failed - most likely due to the
  * prior existence of a segment with an identical name.
  */
 int ompi_registry_definesegment(char *segment);
@@ -227,8 +227,8 @@ int ompi_registry_definesegment(char *segment);
  * @param NULL The last parameter in the function call MUST be a NULL to terminate the
  * variable list of arguments.
  *
- * @retval LAM_SUCCESS Indicates that the operation was successful.
- * @retval LAM_ERROR Indicates that the registry was unable to store the object - most
+ * @retval OMPI_SUCCESS Indicates that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the registry was unable to store the object - most
  * likely due to specifying a non-existent segment or lack of available memory.
  */
 int ompi_registry_put(uint8_t *object, int size, char *segment, char *token, ...);
@@ -279,8 +279,8 @@ ompi_registry_value_t *ompi_registry_get(char *segment, char *token, ...);
  * provided to further identify the object being deleted.
  * @param NULL The last parameter in the function call MUST be a NULL to terminate the
  * variable list of arguments.
- * @retval LAM_SUCCESS Indicates that the operation was successful.
- * @retval LAM_ERROR Indicates that the registry was unable to delete the object - most
+ * @retval OMPI_SUCCESS Indicates that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the registry was unable to delete the object - most
  * likely due to specifying a non-existent segment or object.
  */
 int ompi_registry_del(char *segment, char *token, ...);
@@ -332,8 +332,8 @@ ompi_keytable_t *ompi_registry_index(char *segment, ...);
  * @param NULL The last parameter in the function call MUST be a NULL to terminate the
  * variable list of arguments.
  *
- * @retval LAM_SUCCESS Indicating that the operation was successful.
- * @retval LAM_ERROR Indicates that the operation failed - most likely caused by specifying
+ * @retval OMPI_SUCCESS Indicating that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the operation failed - most likely caused by specifying
  * an object that did not exist within the specified segment, or a non-existent segment.
  */
 int ompi_registry_subscribe(int caller, uint8_t action, char *segment, char *token, ...);
@@ -354,10 +354,10 @@ int ompi_registry_subscribe(int caller, uint8_t action, char *segment, char *tok
  * @param NULL The last parameter in the function call MUST be a NULL to terminate the
  * variable list of arguments.
  *
- * @retval LAM_SUCCESS Indicating that the operation was successful. Note that this value will
+ * @retval OMPI_SUCCESS Indicating that the operation was successful. Note that this value will
  * also be returned if the caller was not previously subscribed to the specified object since an
  * unsubscribe request would have resulted in the same end condition.
- * @retval LAM_ERROR Indicates that the operation failed - most likely caused by specifying
+ * @retval OMPI_ERROR Indicates that the operation failed - most likely caused by specifying
  * an object that did not exist within the specified segment, or a non-existent segment.
  */
 int ompi_registry_unsubscribe(int caller, uint8_t action, char *segment, char *token, ...);

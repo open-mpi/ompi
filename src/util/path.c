@@ -8,7 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "util/path.h"
 #include "util/argv.h"
 
@@ -43,7 +43,7 @@ static char     *list_env_get(char *var, char **list);
  *  path delimiter or end-of-string
  */
 char *
-lam_path_findv(char *fname, char **pathv, int mode, char **envv)
+ompi_path_findv(char *fname, char **pathv, int mode, char **envv)
 {
     char    *fullpath;  
     char    *delimit;  
@@ -103,7 +103,7 @@ lam_path_findv(char *fname, char **pathv, int mode, char **envv)
 
 /**
  *  
- *  Same as lam_path_findv
+ *  Same as ompi_path_findv
  *
  *  @param fname File name
  *  @param pathv Array of search directories
@@ -119,9 +119,9 @@ lam_path_findv(char *fname, char **pathv, int mode, char **envv)
  *  path delimiter or end-of-string
  */
 char *
-lam_path_find(char *fname, char **pathv, int mode)
+ompi_path_find(char *fname, char **pathv, int mode)
 {
-    return(lam_path_findv(fname, pathv, mode, 0));
+    return(ompi_path_findv(fname, pathv, mode, 0));
 }
 
 /**
@@ -140,7 +140,7 @@ lam_path_find(char *fname, char **pathv, int mode)
  *  of found path with working dir
  */
 char *
-lam_path_env_findv(char *fname, int mode, char **envv, char *wrkdir)
+ompi_path_env_findv(char *fname, int mode, char **envv, char *wrkdir)
 {
     char    **dirv;     
     char    *fullpath; 
@@ -175,11 +175,11 @@ lam_path_env_findv(char *fname, int mode, char **envv, char *wrkdir)
      * the wrkdir to the end of the path
      */
     if (!found_dot && wrkdir) {
-        lam_argv_append(&dirc, &dirv, wrkdir);
+        ompi_argv_append(&dirc, &dirv, wrkdir);
     }
 
-    fullpath = lam_path_findv(fname, dirv, mode, envv);
-    lam_argv_free(dirv);
+    fullpath = ompi_path_findv(fname, dirv, mode, envv);
+    ompi_argv_free(dirv);
     return(fullpath);
 }
 
@@ -194,13 +194,13 @@ lam_path_env_findv(char *fname, int mode, char **envv, char *wrkdir)
  *  @retval NULL Failure
  */
 char *
-lam_path_env_find(char *fname, int mode)
+ompi_path_env_find(char *fname, int mode)
 {
-    char    cwd[LAM_PATH_MAX];
+    char    cwd[OMPI_PATH_MAX];
     char    *r;
 
-    getcwd(cwd, LAM_PATH_MAX);
-    r = lam_path_env_findv(fname, mode, 0, cwd);
+    getcwd(cwd, OMPI_PATH_MAX);
+    r = ompi_path_env_findv(fname, mode, 0, cwd);
     
     return(r);
 }
@@ -282,7 +282,7 @@ path_env_load(char *path, int *pargc, char ***pargv)
         if (p != path) {
             saved = *p;
             *p = '\0';
-            lam_argv_append(pargc, pargv, path);
+            ompi_argv_append(pargc, pargv, path);
             *p = saved;
             path = p;
         }

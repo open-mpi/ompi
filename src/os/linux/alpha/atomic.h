@@ -25,7 +25,7 @@ CDECL_BEGIN
             volatile int lockData_m;
             char padding[4];
         } data;
-    } lam_lock_data_t;
+    } ompi_lock_data_t;
 
 #define mb() \
 __asm__ __volatile__("mb": : :"memory")
@@ -42,7 +42,7 @@ __asm__ __volatile__("wmb": : :"memory")
  *    A value of 0 indicates that the lock is available
  *               1 or more the lock is held by someone
  */
-    inline void spinlock(lam_lock_data_t *lock)
+    inline void spinlock(ompi_lock_data_t *lock)
     {
         /*** sungeun *** ref: alpha-linux spinlock sources ***/
         int tmp = 0;
@@ -72,7 +72,7 @@ __asm__ __volatile__("wmb": : :"memory")
 /*
  * This routine tries once to obtain the lock
  */
-    inline int spintrylock(lam_lock_data_t *lock)
+    inline int spintrylock(ompi_lock_data_t *lock)
     {
         int got_lock = 0;
         int tmp = 0;
@@ -97,7 +97,7 @@ __asm__ __volatile__("wmb": : :"memory")
 /*
  * Clear the lock - alpha specific - need memory barrier
  */
-    inline void spinunlock(lam_lock_data_t *lock)
+    inline void spinunlock(ompi_lock_data_t *lock)
     {
         mb();
         lock->data.lockData_m = 0;

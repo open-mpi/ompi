@@ -14,8 +14,8 @@ headers = io.h
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mca/io
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/mca/io
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif

@@ -11,7 +11,7 @@ SUBDIRS = c cxx f77 f90
 
 # See if configure found a valid f77 compiler
 
-if LAM_WANT_F77_BINDINGS
+if OMPI_WANT_F77_BINDINGS
 f77_lib = f77/libmpi_f77.la
 else
 f77_lib =
@@ -19,7 +19,7 @@ endif
 
 # See if configure found a valid f90/f95 compiler
 
-if LAM_WANT_F90_BINDINGS
+if OMPI_WANT_F90_BINDINGS
 f90_lib =
 else
 f90_lib =

@@ -41,33 +41,33 @@ mca_ptl_sm_t mca_ptl_sm = {
 int mca_ptl_sm_add_procs(
     struct mca_ptl_t* ptl, 
     size_t nprocs, 
-    struct lam_proc_t **procs, 
+    struct ompi_proc_t **procs, 
     struct mca_ptl_base_peer_t **peers,
-    lam_bitmap_t* reachability)
+    ompi_bitmap_t* reachability)
 {
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
 int mca_ptl_sm_del_procs(
     struct mca_ptl_t* ptl, 
     size_t nprocs,
-    struct lam_proc_t **procs, 
+    struct ompi_proc_t **procs, 
     struct mca_ptl_base_peer_t **peers)
 {
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
 int mca_ptl_sm_finalize(struct mca_ptl_t* ptl)
 {
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
 int mca_ptl_sm_request_alloc(struct mca_ptl_t* ptl, struct mca_ptl_base_send_request_t** request)
 {
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -91,7 +91,7 @@ int mca_ptl_sm_send(
     size_t *size,
     int flags)
 {
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 

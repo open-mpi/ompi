@@ -24,8 +24,8 @@ libmca_registry_la_DEPENDENCIES = $(libmca_registry_la_LIBADD)
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mca/registry
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/mca/registry
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif

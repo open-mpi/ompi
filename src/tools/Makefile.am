@@ -5,4 +5,4 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= laminfo mpirun wrappers
+SUBDIRS		= ompi_info mpirun wrappers

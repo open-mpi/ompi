@@ -14,11 +14,11 @@ static void mca_ptl_tcp_send_request_construct(mca_ptl_tcp_send_request_t*);
 static void mca_ptl_tcp_send_request_destruct(mca_ptl_tcp_send_request_t*);
                                                                                                                 
 
-lam_class_t  mca_ptl_tcp_send_request_t_class = {
+ompi_class_t  mca_ptl_tcp_send_request_t_class = {
     "mca_ptl_tcp_send_request_t",
     OBJ_CLASS(mca_ptl_base_send_request_t),
-    (lam_construct_t)mca_ptl_tcp_send_request_construct,
-    (lam_destruct_t)mca_ptl_tcp_send_request_destruct
+    (ompi_construct_t)mca_ptl_tcp_send_request_construct,
+    (ompi_destruct_t)mca_ptl_tcp_send_request_destruct
 };
 
 

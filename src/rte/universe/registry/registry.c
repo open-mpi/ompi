@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <libgen.h>
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "include/constants.h"
 #include "rte/universe/registry/registry.h"
 
@@ -27,10 +27,10 @@
  */
 
 struct ompi_registry_t {
-    lam_list_t registry;
-    lam_list_t segment_dict;
+    ompi_list_t registry;
+    ompi_list_t segment_dict;
     unsigned long int lastkey;
-    lam_list_t freekeys;
+    ompi_list_t freekeys;
 };
 typedef struct ompi_registry_t ompi_registry_t;
 
@@ -47,7 +47,7 @@ ompi_registry_t ompi_registry;
  * associated with each object.
  */
 struct ompi_keylist_t {
-    lam_list_item_t item;   /**< Allows this item to be placed on a list */
+    ompi_list_item_t item;   /**< Allows this item to be placed on a list */
     unsigned long int key;     /**< Numerical key that defines stored object */
 };
 typedef struct ompi_keylist_t ompi_keylist_t;
@@ -63,10 +63,10 @@ static void ompi_keylist_destructor(ompi_keylist_t* keylist)
 {
 }
 
-/* define instance of lam_class_t */
+/* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
 		   ompi_keylist_t,  /* type name */
-		   lam_list_item_t, /* parent "class" name */
+		   ompi_list_item_t, /* parent "class" name */
 		   ompi_keylist_construct, /* constructor */
 		   ompi_keylist_destructor); /* destructor */
 
@@ -77,7 +77,7 @@ OBJ_CLASS_INSTANCE(
  * used to create a linked list of subscribers for objects.
  */
 struct ompi_subscribe_list_t {
-    lam_list_item_t item;    /**< Allows this item to be placed on a list */
+    ompi_list_item_t item;    /**< Allows this item to be placed on a list */
     unsigned long int id;   /**< ID of the subscriber */
     uint8_t action;  /**< Bit-mask of actions that trigger notification */
 };
@@ -95,10 +95,10 @@ static void ompi_subscribe_list_destructor(ompi_subscribe_list_t* subscriber)
 {
 }
 
-/* define instance of lam_class_t */
+/* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
 		   ompi_subscribe_list_t,  /* type name */
-		   lam_list_item_t, /* parent "class" name */
+		   ompi_list_item_t, /* parent "class" name */
 		   ompi_subscribe_list_construct, /* constructor */
 		   ompi_subscribe_list_destructor); /* destructor */
 
@@ -116,11 +116,11 @@ OBJ_CLASS_INSTANCE(
  * "authorization" linked list of ID's and their access rights to this structure.
  */
 struct ompi_registry_core_t {
-    lam_list_item_t item;   /**< Allows this item to be placed on a list */
-    lam_list_t keys;   /**< Linked list of keys that define stored object */
+    ompi_list_item_t item;   /**< Allows this item to be placed on a list */
+    ompi_list_t keys;   /**< Linked list of keys that define stored object */
     int object_size;      /**< Size of stored object, in bytes */
     uint8_t *object;      /**< Pointer to stored object */
-    lam_list_t subscriber;  /**< Linked list of subscribers to this object */
+    ompi_list_t subscriber;  /**< Linked list of subscribers to this object */
 };
 typedef struct ompi_registry_core_t ompi_registry_core_t;
 
@@ -129,8 +129,8 @@ static void ompi_registry_core_construct(ompi_registry_core_t* reg)
 {
     reg->object = NULL;
     reg->object_size = 0;
-    OBJ_CONSTRUCT(&reg->subscriber, lam_list_t);
-    OBJ_CONSTRUCT(&reg->keys, lam_list_t);
+    OBJ_CONSTRUCT(&reg->subscriber, ompi_list_t);
+    OBJ_CONSTRUCT(&reg->keys, ompi_list_t);
 }
 
 /* destructor - used to free any resources held by instance */
@@ -143,10 +143,10 @@ static void ompi_registry_core_destructor(ompi_registry_core_t* reg)
     OBJ_DESTRUCT(&reg->keys);
 }
 
-/* define instance of lam_class_t */
+/* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
 		   ompi_registry_core_t,  /* type name */
-		   lam_list_item_t, /* parent "class" name */
+		   ompi_list_item_t, /* parent "class" name */
 		   ompi_registry_core_construct, /* constructor */
 		   ompi_registry_core_destructor); /* destructor */
 
@@ -161,12 +161,12 @@ OBJ_CLASS_INSTANCE(
  * to avoid naming conflicts between tokens from CommWorlds sharing a given universe.
  */
 struct ompi_registry_segment_t {
-    lam_list_item_t item;   /**< Allows this item to be placed on a list */
+    ompi_list_item_t item;   /**< Allows this item to be placed on a list */
     unsigned long int segment;    /**< ID of registry segment */
     unsigned long int lastkey;    /**< Highest key value used */
-    lam_list_t reg_list;   /**< Linked list of stored objects within this segment */
-    lam_list_t keytable;   /**< Token-key dictionary for this segment */
-    lam_list_t freekeys;  /**< List of keys that have been made available */
+    ompi_list_t reg_list;   /**< Linked list of stored objects within this segment */
+    ompi_list_t keytable;   /**< Token-key dictionary for this segment */
+    ompi_list_t freekeys;  /**< List of keys that have been made available */
 };
 typedef struct ompi_registry_segment_t ompi_registry_segment_t;
 
@@ -175,9 +175,9 @@ static void ompi_registry_segment_construct(ompi_registry_segment_t* seg)
 {
     seg->segment = 0;
     seg->lastkey = 0;
-    OBJ_CONSTRUCT(&seg->reg_list, lam_list_t);
-    OBJ_CONSTRUCT(&seg->keytable, lam_list_t);
-    OBJ_CONSTRUCT(&seg->freekeys, lam_list_t);
+    OBJ_CONSTRUCT(&seg->reg_list, ompi_list_t);
+    OBJ_CONSTRUCT(&seg->keytable, ompi_list_t);
+    OBJ_CONSTRUCT(&seg->freekeys, ompi_list_t);
 }
 
 /* destructor - used to free any resources held by instance */
@@ -188,10 +188,10 @@ static void ompi_registry_segment_destructor(ompi_registry_segment_t* seg)
     OBJ_DESTRUCT(&seg->freekeys);
 }
 
-/* define instance of lam_class_t */
+/* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
 		   ompi_registry_segment_t,  /* type name */
-		   lam_list_item_t, /* parent "class" name */
+		   ompi_list_item_t, /* parent "class" name */
 		   ompi_registry_segment_construct, /* constructor */
 		   ompi_registry_segment_destructor); /* destructor */
 
@@ -240,8 +240,8 @@ unsigned long int ompi_registry_definekey(char *segment, char *token);
  * @param token Pointer to a character string containing the token to be deleted. If token=NULL,
  * the function deletes the specified segment name from the segment dictionary.
  *
- * @retval LAM_SUCCESS Indicating that the operation was successful.
- * @retval LAM_ERROR Indicates that the operation failed - most likely caused by specifying
+ * @retval OMPI_SUCCESS Indicating that the operation was successful.
+ * @retval OMPI_ERROR Indicates that the operation failed - most likely caused by specifying
  * a token that did not exist within the specified segment, or a non-existent segment.
  */
 int ompi_registry_deletekey(char *segment, char *token);
@@ -260,36 +260,36 @@ int main(int argc, char **argv)
     uint8_t *object;
 
     /* initialize the global registry list */
-    OBJ_CONSTRUCT(&ompi_registry.registry, lam_list_t);
+    OBJ_CONSTRUCT(&ompi_registry.registry, ompi_list_t);
 
     /* initialize the global dictionary for segment id's */
-    OBJ_CONSTRUCT(&ompi_registry.segment_dict, lam_list_t);
-    OBJ_CONSTRUCT(&ompi_registry.freekeys, lam_list_t);
+    OBJ_CONSTRUCT(&ompi_registry.segment_dict, ompi_list_t);
+    OBJ_CONSTRUCT(&ompi_registry.freekeys, ompi_list_t);
     ompi_registry.lastkey = 0;
 
     /* define the "universe" segment key */
     if (0 == ompi_registry_definekey("universe", NULL)) {
 	fprintf(stderr, "registry_init(error): could not create universe dictionary entry\n");
-	exit(LAM_ERROR);
+	exit(OMPI_ERROR);
     }
 
     /* initialize the "universe" segment */
     seg = OBJ_NEW(ompi_registry_segment_t);  /* allocate a new segment */
     seg->segment = ompi_registry_getkey("universe", NULL);
-    lam_list_append(&ompi_registry.registry, &seg->item);  /* add to the global registry */
+    ompi_list_append(&ompi_registry.registry, &seg->item);  /* add to the global registry */
 
     printf("initialized universe seg %ld\n", seg->segment);
 
     if (0 == ompi_registry_definekey("universe", "ipsy-doodles")) {
 	fprintf(stderr, "well, ipsy-doodles define didn't work\n");
-	exit(LAM_ERROR);
+	exit(OMPI_ERROR);
     }
 
     printf("ipsy-doodles ok: %ld\n", ompi_registry_getkey("universe", "ipsy-doodles"));
 
     if (0 == ompi_registry_definekey("commworld-1", NULL)) {
 	fprintf(stderr, "commworld 1 failed\n");
-	exit(LAM_ERROR);
+	exit(OMPI_ERROR);
     }
 
     printf("commworld ok: %ld\n", ompi_registry_getkey("commworld-1", NULL));
@@ -330,15 +330,15 @@ ompi_registry_segment_t *ompi_registry_findseg(char *segment)
     ompi_registry_segment_t *seg;
 
     /* search the registry segments to find which one is being referenced */
-    for (ptr_seg = (ompi_keytable_t*)lam_list_get_first(&ompi_registry.segment_dict);
-	 ptr_seg != (ompi_keytable_t*)lam_list_get_end(&ompi_registry.segment_dict);
-	 ptr_seg = (ompi_keytable_t*)lam_list_get_next(ptr_seg)) {
+    for (ptr_seg = (ompi_keytable_t*)ompi_list_get_first(&ompi_registry.segment_dict);
+	 ptr_seg != (ompi_keytable_t*)ompi_list_get_end(&ompi_registry.segment_dict);
+	 ptr_seg = (ompi_keytable_t*)ompi_list_get_next(ptr_seg)) {
 	if (0 == strcmp(segment, ptr_seg->token)) {
 	    fprintf(stderr, "findseg: found segment token %s key %ld\n", ptr_seg->token, ptr_seg->key);
 	    /* search ompi_registry to find segment */
-	    for (seg=(ompi_registry_segment_t*)lam_list_get_first(&ompi_registry.registry);
-		 seg != (ompi_registry_segment_t*)lam_list_get_end(&ompi_registry.registry);
-		 seg = (ompi_registry_segment_t*)lam_list_get_next(seg)) {
+	    for (seg=(ompi_registry_segment_t*)ompi_list_get_first(&ompi_registry.registry);
+		 seg != (ompi_registry_segment_t*)ompi_list_get_end(&ompi_registry.registry);
+		 seg = (ompi_registry_segment_t*)ompi_list_get_next(seg)) {
 		fprintf(stderr, "findseg: checking seg\n");
 		if(seg->segment == ptr_seg->key) {
 		    fprintf(stderr, "findseg: found segment key %ld\n", seg->segment);
@@ -357,22 +357,22 @@ ompi_keytable_t *ompi_registry_finddictentry(char *segment, char *token)
     ompi_registry_segment_t *seg;
 
     /* search the registry segments to find which one is being referenced */
-    for (ptr_seg = (ompi_keytable_t*)lam_list_get_first(&ompi_registry.segment_dict);
-	 ptr_seg != (ompi_keytable_t*)lam_list_get_end(&ompi_registry.segment_dict);
-	 ptr_seg = (ompi_keytable_t*)lam_list_get_next(ptr_seg)) {
+    for (ptr_seg = (ompi_keytable_t*)ompi_list_get_first(&ompi_registry.segment_dict);
+	 ptr_seg != (ompi_keytable_t*)ompi_list_get_end(&ompi_registry.segment_dict);
+	 ptr_seg = (ompi_keytable_t*)ompi_list_get_next(ptr_seg)) {
 	if (0 == strcmp(segment, ptr_seg->token)) {
 	    if (NULL == token) { /* just want segment token-key pair */
 		return(ptr_seg);
 	    }
 	    /* search ompi_registry to find segment */
-	    for (seg=(ompi_registry_segment_t*)lam_list_get_first(&ompi_registry.registry);
-		 seg != (ompi_registry_segment_t*)lam_list_get_end(&ompi_registry.registry);
-		 seg = (ompi_registry_segment_t*)lam_list_get_next(seg)) {
+	    for (seg=(ompi_registry_segment_t*)ompi_list_get_first(&ompi_registry.registry);
+		 seg != (ompi_registry_segment_t*)ompi_list_get_end(&ompi_registry.registry);
+		 seg = (ompi_registry_segment_t*)ompi_list_get_next(seg)) {
 		if(seg->segment == ptr_seg->key) {
 		    /* got segment - now find specified token-key pair in that dictionary */
-		    for (ptr_key = (ompi_keytable_t*)lam_list_get_first(&seg->keytable);
-			 ptr_key != (ompi_keytable_t*)lam_list_get_end(&seg->keytable);
-			 ptr_key = (ompi_keytable_t*)lam_list_get_next(ptr_key)) {
+		    for (ptr_key = (ompi_keytable_t*)ompi_list_get_first(&seg->keytable);
+			 ptr_key != (ompi_keytable_t*)ompi_list_get_end(&seg->keytable);
+			 ptr_key = (ompi_keytable_t*)ompi_list_get_next(ptr_key)) {
 			if (0 == strcmp(token, ptr_key->token)) {
 			    return(ptr_key);
 			}
@@ -420,9 +420,9 @@ unsigned long int ompi_registry_definekey(char *segment, char *token)
 
     /* if token is NULL, then this is defining a segment name. Check dictionary to ensure uniqueness */
     if (NULL == token) {
-	for (ptr_seg = (ompi_keytable_t*)lam_list_get_first(&ompi_registry.segment_dict);
-	     ptr_seg != (ompi_keytable_t*)lam_list_get_end(&ompi_registry.segment_dict);
-	     ptr_seg = (ompi_keytable_t*)lam_list_get_next(ptr_seg)) {
+	for (ptr_seg = (ompi_keytable_t*)ompi_list_get_first(&ompi_registry.segment_dict);
+	     ptr_seg != (ompi_keytable_t*)ompi_list_get_end(&ompi_registry.segment_dict);
+	     ptr_seg = (ompi_keytable_t*)ompi_list_get_next(ptr_seg)) {
 	    if (0 == strcmp(segment, ptr_seg->token)) {
 		return(0);
 	    }
@@ -431,14 +431,14 @@ unsigned long int ompi_registry_definekey(char *segment, char *token)
 	/* okay, name is not previously taken. Define a key value for it and return */
 	new = OBJ_NEW(ompi_keytable_t);
 	new->token = strdup(segment);
-	if (0 == lam_list_get_size(&ompi_registry.freekeys)) { /* no keys waiting for reuse */
+	if (0 == ompi_list_get_size(&ompi_registry.freekeys)) { /* no keys waiting for reuse */
 	    ompi_registry.lastkey++;
 	    new->key = ompi_registry.lastkey;
 	} else {
-	    ptr_key = (ompi_keytable_t*)lam_list_remove_first(&ompi_registry.freekeys);
+	    ptr_key = (ompi_keytable_t*)ompi_list_remove_first(&ompi_registry.freekeys);
 	    new->key = ptr_key->key;
 	}
-	lam_list_append(&ompi_registry.segment_dict, &new->item);
+	ompi_list_append(&ompi_registry.segment_dict, &new->item);
 	return(new->key);
     }
 
@@ -447,9 +447,9 @@ unsigned long int ompi_registry_definekey(char *segment, char *token)
     seg = ompi_registry_findseg(segment);
     if (NULL != seg) {
 	/* using that segment, check dictionary to ensure uniqueness */
-	for (ptr_key = (ompi_keytable_t*)lam_list_get_first(&seg->keytable);
-	     ptr_key != (ompi_keytable_t*)lam_list_get_end(&seg->keytable);
-	     ptr_key = (ompi_keytable_t*)lam_list_get_next(ptr_key)) {
+	for (ptr_key = (ompi_keytable_t*)ompi_list_get_first(&seg->keytable);
+	     ptr_key != (ompi_keytable_t*)ompi_list_get_end(&seg->keytable);
+	     ptr_key = (ompi_keytable_t*)ompi_list_get_next(ptr_key)) {
 	    if (0 == strcmp(token, ptr_key->token)) {
 		return(0); /* already taken, report error */
 	    }
@@ -457,14 +457,14 @@ unsigned long int ompi_registry_definekey(char *segment, char *token)
 	/* okay, token is unique - create dictionary entry */
 	new = OBJ_NEW(ompi_keytable_t);
 	new->token = strdup(token);
-	if (0 == lam_list_get_size(&seg->freekeys)) { /* no keys waiting for reuse */
+	if (0 == ompi_list_get_size(&seg->freekeys)) { /* no keys waiting for reuse */
 	    seg->lastkey++;
 	    new->key = seg->lastkey;
 	} else {
-	    ptr_key = (ompi_keytable_t*)lam_list_remove_first(&seg->freekeys);
+	    ptr_key = (ompi_keytable_t*)ompi_list_remove_first(&seg->freekeys);
 	    new->key = ptr_key->key;
 	}
-	lam_list_append(&seg->keytable, &new->item);
+	ompi_list_append(&seg->keytable, &new->item);
 	return(new->key);
     }
     /* couldn't find segment */
@@ -480,7 +480,7 @@ int ompi_registry_deletekey(char *segment, char *token)
 
     /* protect ourselves against errors */
     if (NULL == segment) {
-	return(LAM_ERROR);
+	return(OMPI_ERROR);
     }
 
     /* find the segment */
@@ -489,59 +489,59 @@ int ompi_registry_deletekey(char *segment, char *token)
 	/* if specified token is NULL, then this is deleting a segment name.*/
 	if (NULL == token) {
 	    /* empty the segment's registry */
-	    while (0 < lam_list_get_size(&seg->reg_list)) {
-		lam_list_remove_last(&seg->reg_list);
+	    while (0 < ompi_list_get_size(&seg->reg_list)) {
+		ompi_list_remove_last(&seg->reg_list);
 	    }
 	    /* empty the segment's dictionary */
-	    while (0 < lam_list_get_size(&seg->keytable)) {
-		lam_list_remove_last(&seg->keytable);
+	    while (0 < ompi_list_get_size(&seg->keytable)) {
+		ompi_list_remove_last(&seg->keytable);
 	    }
 	    /* empty the list of free keys */
-	    while (0 < lam_list_get_size(&seg->freekeys)) {
-		lam_list_remove_last(&seg->freekeys);
+	    while (0 < ompi_list_get_size(&seg->freekeys)) {
+		ompi_list_remove_last(&seg->freekeys);
 	    }
 	    /* now remove segment from global registry */
-	    lam_list_remove_item(&ompi_registry.registry, &seg->item);
+	    ompi_list_remove_item(&ompi_registry.registry, &seg->item);
 	    /* add key to global registry's freekey list */
 	    new = OBJ_NEW(ompi_keytable_t);
 	    new->token = NULL;
 	    new->key = ptr_seg->key;
-	    lam_list_append(&ompi_registry.freekeys, &new->item);
+	    ompi_list_append(&ompi_registry.freekeys, &new->item);
 	    /* NEED TO RE-FIND PTR_SEG */
 	    /* now remove the dictionary entry from the global registry dictionary*/
-	    lam_list_remove_item(&ompi_registry.segment_dict, &ptr_seg->item);
-	    return(LAM_SUCCESS);
+	    ompi_list_remove_item(&ompi_registry.segment_dict, &ptr_seg->item);
+	    return(OMPI_SUCCESS);
 	} else {  /* token not null, so need to find dictionary element to delete */
 	    ptr_key = ompi_registry_finddictentry(segment, token);
 	    if (NULL != ptr_key) {
 		/* found key in dictionary */
 		/* need to search this segment's registry to find all instances of key - then delete them */
-		for (reg = (ompi_registry_core_t*)lam_list_get_first(&seg->reg_list);
-		     reg != (ompi_registry_core_t*)lam_list_get_end(&seg->reg_list);
-		     reg = (ompi_registry_core_t*)lam_list_get_next(reg)) {
+		for (reg = (ompi_registry_core_t*)ompi_list_get_first(&seg->reg_list);
+		     reg != (ompi_registry_core_t*)ompi_list_get_end(&seg->reg_list);
+		     reg = (ompi_registry_core_t*)ompi_list_get_next(reg)) {
 		    /* check the subscriber list */
-		    for (subscriber = (ompi_subscribe_list_t*)lam_list_get_first(&reg->subscriber);
-			 (subscriber != (ompi_subscribe_list_t*)lam_list_get_end(&reg->subscriber)
+		    for (subscriber = (ompi_subscribe_list_t*)ompi_list_get_first(&reg->subscriber);
+			 (subscriber != (ompi_subscribe_list_t*)ompi_list_get_end(&reg->subscriber)
 			  && (subscriber->id != ptr_key->key));
-			 subscriber = (ompi_subscribe_list_t*)lam_list_get_next(subscriber));
-		    if (subscriber != (ompi_subscribe_list_t*)lam_list_get_end(&reg->subscriber)) {
-			lam_list_remove_item(&reg->subscriber, &subscriber->item);
+			 subscriber = (ompi_subscribe_list_t*)ompi_list_get_next(subscriber));
+		    if (subscriber != (ompi_subscribe_list_t*)ompi_list_get_end(&reg->subscriber)) {
+			ompi_list_remove_item(&reg->subscriber, &subscriber->item);
 		    }
 		    /* check the key list */
-		    for (regkey = (ompi_keytable_t*)lam_list_get_first(&reg->keys);
-			 (regkey != (ompi_keytable_t*)lam_list_get_end(&reg->keys))
+		    for (regkey = (ompi_keytable_t*)ompi_list_get_first(&reg->keys);
+			 (regkey != (ompi_keytable_t*)ompi_list_get_end(&reg->keys))
 			     && (regkey->key != ptr_key->key);
-			 regkey = (ompi_keytable_t*)lam_list_get_next(regkey));
-		    if (regkey != (ompi_keytable_t*)lam_list_get_end(&reg->keys)) {
-			lam_list_remove_item(&reg->keys, &regkey->item);
+			 regkey = (ompi_keytable_t*)ompi_list_get_next(regkey));
+		    if (regkey != (ompi_keytable_t*)ompi_list_get_end(&reg->keys)) {
+			ompi_list_remove_item(&reg->keys, &regkey->item);
 		    }
 		    /* if this was the last key, then remove the registry entry itself */
-		    if (0 == lam_list_get_size(&reg->keys)) {
-			while (0 < lam_list_get_size(&reg->subscriber)) {
-			    lam_list_remove_last(&reg->subscriber);
+		    if (0 == ompi_list_get_size(&reg->keys)) {
+			while (0 < ompi_list_get_size(&reg->subscriber)) {
+			    ompi_list_remove_last(&reg->subscriber);
 			}
-			prev = (ompi_registry_core_t*)lam_list_get_prev(reg);
-			lam_list_remove_item(&seg->reg_list, &reg->item);
+			prev = (ompi_registry_core_t*)ompi_list_get_prev(reg);
+			ompi_list_remove_item(&seg->reg_list, &reg->item);
 			reg = prev;
 		    }
 		}
@@ -549,24 +549,24 @@ int ompi_registry_deletekey(char *segment, char *token)
 		new = OBJ_NEW(ompi_keytable_t);
 		new->token = NULL;
 		new->key = ptr_key->key;
-		lam_list_append(&seg->freekeys, &new->item);
+		ompi_list_append(&seg->freekeys, &new->item);
 		/* now remove the dictionary entry from the segment's dictionary */
-		lam_list_remove_item(&seg->keytable, &ptr_key->item);
-		return(LAM_SUCCESS);
+		ompi_list_remove_item(&seg->keytable, &ptr_key->item);
+		return(OMPI_SUCCESS);
 	    }
-	    return(LAM_ERROR); /* if we get here, then we couldn't find token in dictionary */
+	    return(OMPI_ERROR); /* if we get here, then we couldn't find token in dictionary */
 	}
     }
-    return(LAM_ERROR); /* if we get here, then we couldn't find segment */
+    return(OMPI_ERROR); /* if we get here, then we couldn't find segment */
 }
 
 
 int ompi_registry_definesegment(char *segment)
 {
      if (0 == ompi_registry_definekey(segment, NULL)) {
- 	return(LAM_ERROR);
+ 	return(OMPI_ERROR);
      }
-     return(LAM_SUCCESS);
+     return(OMPI_SUCCESS);
 }
 
 
@@ -588,7 +588,7 @@ int ompi_registry_put(bool overwrite, uint8_t *object, int size, char *segment, 
 
     /* protect ourselves against errors */
     if (NULL == segment || NULL == object || 0 == size || NULL == token) {
-	return(LAM_ERROR);
+	return(OMPI_ERROR);
     }
 
     /* get list of tokens */
@@ -617,7 +617,7 @@ int ompi_registry_put(bool overwrite, uint8_t *object, int size, char *segment, 
     seg = ompi_registry_findseg(segment);
     if (NULL != seg) {
     }
-    return(LAM_SUCCESS);
+    return(OMPI_SUCCESS);
 }
 
 

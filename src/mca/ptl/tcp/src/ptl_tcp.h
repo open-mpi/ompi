@@ -34,15 +34,15 @@ struct mca_ptl_tcp_module_1_0_0_t {
     int   tcp_free_list_inc;              /**< number of elements to alloc when growing free lists */
     int   tcp_sndbuf;                     /**< socket sndbuf size */
     int   tcp_rcvbuf;                     /**< socket rcvbuf size */
-    lam_free_list_t tcp_send_requests;    /**< free list of tcp send requests -- sendreq + sendfrag */
-    lam_free_list_t tcp_send_frags;       /**< free list of tcp send fragments */
-    lam_free_list_t tcp_recv_frags;       /**< free list of tcp recv fragments */
-    lam_list_t tcp_procs;                 /**< list of tcp proc structures */
-    lam_list_t tcp_pending_acks;          /**< list of pending acks - retry as sends complete */
+    ompi_free_list_t tcp_send_requests;    /**< free list of tcp send requests -- sendreq + sendfrag */
+    ompi_free_list_t tcp_send_frags;       /**< free list of tcp send fragments */
+    ompi_free_list_t tcp_recv_frags;       /**< free list of tcp recv fragments */
+    ompi_list_t tcp_procs;                 /**< list of tcp proc structures */
+    ompi_list_t tcp_pending_acks;          /**< list of pending acks - retry as sends complete */
     struct mca_ptl_tcp_proc_t* tcp_local; /**< the tcp proc instance corresponding to the local process */
-    lam_event_t tcp_send_event;           /**< event structure for sends */
-    lam_event_t tcp_recv_event;           /**< event structure for recvs */
-    lam_mutex_t tcp_lock;                 /**< lock for accessing module state */
+    ompi_event_t tcp_send_event;           /**< event structure for sends */
+    ompi_event_t tcp_recv_event;           /**< event structure for recvs */
+    ompi_mutex_t tcp_lock;                 /**< lock for accessing module state */
 };
 typedef struct mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module_1_0_0_t;
 typedef struct mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module_t;
@@ -119,7 +119,7 @@ extern mca_ptl_tcp_t mca_ptl_tcp;
  * Cleanup any resources held by the PTL.
  * 
  * @param ptl  PTL instance.
- * @return     LAM_SUCCESS or error status on failure.
+ * @return     OMPI_SUCCESS or error status on failure.
  */
 
 extern int mca_ptl_tcp_finalize(
@@ -135,16 +135,16 @@ extern int mca_ptl_tcp_finalize(
  * @param procs (IN)      Set of processes
  * @param peers (OUT)     Set of (optional) peer addressing info.
  * @param peers (IN/OUT)  Set of processes that are reachable via this PTL.
- * @return     LAM_SUCCESS or error status on failure.
+ * @return     OMPI_SUCCESS or error status on failure.
  * 
  */
 
 extern int mca_ptl_tcp_add_procs(
     struct mca_ptl_t* ptl,
     size_t nprocs,
-    struct lam_proc_t **procs,
+    struct ompi_proc_t **procs,
     struct mca_ptl_base_peer_t** peers,
-    lam_bitmap_t* reachable
+    ompi_bitmap_t* reachable
 );
 
                                                                                                                
@@ -161,7 +161,7 @@ extern int mca_ptl_tcp_add_procs(
 extern int mca_ptl_tcp_del_procs(
     struct mca_ptl_t* ptl,
     size_t nprocs,
-    struct lam_proc_t **procs,
+    struct ompi_proc_t **procs,
     struct mca_ptl_base_peer_t** peers
 );
 
@@ -210,7 +210,7 @@ extern void mca_ptl_tcp_matched(
  * @param send_request (IN/OUT)  Send request (allocated by PML via mca_ptl_base_request_alloc_fn_t)
  * @param size (IN)              Number of bytes PML is requesting PTL to deliver
  * @param flags (IN)             Flags that should be passed to the peer via the message header.
- * @param request (OUT)          LAM_SUCCESS if the PTL was able to queue one or more fragments
+ * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
  */
 extern int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,

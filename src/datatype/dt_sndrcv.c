@@ -9,7 +9,7 @@
 #include "datatype/datatype.h"
 
 /*
- *	lam_dtsndrcv
+ *	ompi_dtsndrcv
  *
  *	Function:	- copy MPI message from buffer into another
  *			- send/recv done if cannot optimize
@@ -24,7 +24,7 @@
  *	Returns:	- MPI_SUCCESS or error code
  */
 int
-lam_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
+ompi_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
 	     int rcount, MPI_Datatype rdtype, int tag, MPI_Comm comm)
 {
     int		err;			/* error code */
@@ -38,7 +38,7 @@ lam_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
      */
     if (sdtype == rdtype) {
 	if (scount <= rcount) {
-	    lam_ddt_copy_content_same_ddt(rdtype, scount, (char *) rbuf,
+	    ompi_ddt_copy_content_same_ddt(rdtype, scount, (char *) rbuf,
 					  (char *) sbuf);
 	    err = MPI_SUCCESS;
 	}

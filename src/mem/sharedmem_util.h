@@ -18,7 +18,7 @@
 # define MMAP_SHARED_FLAGS MAP_SHARED|MAP_ANONYMOUS
 #endif
 
-void *lam_zero_alloc(size_t len, int mem_prot, int mem_flags);
+void *ompi_zero_alloc(size_t len, int mem_prot, int mem_flags);
 
 #endif  /* SHAREDMEM_UTIL_H */
 

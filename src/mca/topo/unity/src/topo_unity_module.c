@@ -4,7 +4,7 @@
  * These symbols are in a file by themselves to provide nice linker
  * semantics. Since linkers generally pull in symbols by object fules,
  * keeping these symbols as the only symbols in this file prevents
- * utility programs such as "laminfo" from having to import entire
+ * utility programs such as "ompi_info" from having to import entire
  * modules just to query their version and parameters
  */
 
@@ -15,7 +15,7 @@
  */
 
 const char *mca_topo_unity_module_version_string = 
-    "LAM/MPI unity topology MCA module version" MCA_topo_unity_FULL_VERSION;
+    "OMPI/MPI unity topology MCA module version" MCA_topo_unity_FULL_VERSION;
 
 /*
  * *******************************************************************
@@ -82,14 +82,14 @@ int mca_topo_unity_module_open (void) {
     /*
      * As of now do nothing
      */
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 } 
     
 int mca_topo_unity_module_close (void) {
     /*
      * As of now do nothing
      */
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 mca_topo_t* mca_topo_unity_module_query(int* priority,
@@ -109,5 +109,5 @@ int mca_topo_unity_module_finalize (void) {
     /*
      * do nothing as of now
      */
-     return LAM_SUCCESS;
+     return OMPI_SUCCESS;
 } 

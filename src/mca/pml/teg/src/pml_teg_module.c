@@ -60,15 +60,15 @@ static inline int mca_pml_teg_param_register_int(
 int mca_pml_teg_module_open(void)
 {
     mca_pml_base_request_t* teg_null = &mca_pml_teg.teg_request_null;
-    OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, lam_mutex_t);
-    OBJ_CONSTRUCT(&mca_pml_teg.teg_recv_requests, lam_free_list_t);
-    OBJ_CONSTRUCT(&mca_pml_teg.teg_procs, lam_list_t);
+    OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_pml_teg.teg_recv_requests, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_teg.teg_procs, ompi_list_t);
 
     OBJ_CONSTRUCT(teg_null, mca_pml_base_request_t);
     teg_null->req_type = MCA_PML_REQUEST_NULL;
-    teg_null->req_status.MPI_SOURCE = LAM_PROC_NULL;
-    teg_null->req_status.MPI_TAG = LAM_ANY_TAG;
-    teg_null->req_status.MPI_ERROR = LAM_SUCCESS;
+    teg_null->req_status.MPI_SOURCE = OMPI_PROC_NULL;
+    teg_null->req_status.MPI_TAG = OMPI_ANY_TAG;
+    teg_null->req_status.MPI_ERROR = OMPI_SUCCESS;
     teg_null->req_status._count = 0;
 
 #if MCA_PML_TEG_STATISTICS
@@ -89,34 +89,34 @@ int mca_pml_teg_module_open(void)
         mca_pml_teg_param_register_int("free_list_inc", 256);
     mca_pml_teg.teg_poll_iterations =
         mca_pml_teg_param_register_int("poll_iterations", 100000);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
 int mca_pml_teg_module_close(void)
 {
-#if MCA_PML_TEG_STATISTICS && LAM_ENABLE_DEBUG
-    lam_output(0, "mca_pml_teg.teg_waits = %d\n", 
+#if MCA_PML_TEG_STATISTICS && OMPI_ENABLE_DEBUG
+    ompi_output(0, "mca_pml_teg.teg_waits = %d\n", 
         mca_pml_teg.teg_waits);
-    lam_output(0, "mca_pml_teg.teg_sends = %d\n", 
+    ompi_output(0, "mca_pml_teg.teg_sends = %d\n", 
         mca_pml_teg.teg_sends);
-    lam_output(0, "mca_pml_teg.teg_recvs = %d\n", 
+    ompi_output(0, "mca_pml_teg.teg_recvs = %d\n", 
         mca_pml_teg.teg_recvs);
-    lam_output(0, "mca_pml_teg.teg_isends = %d\n", 
+    ompi_output(0, "mca_pml_teg.teg_isends = %d\n", 
         mca_pml_teg.teg_isends);
-    lam_output(0, "mca_pml_teg.teg_irecvs = %d\n", 
+    ompi_output(0, "mca_pml_teg.teg_irecvs = %d\n", 
         mca_pml_teg.teg_irecvs);
-    lam_output(0, "mca_pml_teg.teg_condition_waits = %d\n", 
+    ompi_output(0, "mca_pml_teg.teg_condition_waits = %d\n", 
         mca_pml_teg.teg_condition_waits);
-    lam_output(0, "mca_pml_teg.teg_condition_broadcast = %d\n", 
+    ompi_output(0, "mca_pml_teg.teg_condition_broadcast = %d\n", 
         mca_pml_teg.teg_condition_broadcasts);
 #endif
 
     if (mca_pml_teg.teg_recv_requests.fl_num_allocated !=
-        mca_pml_teg.teg_recv_requests.super.lam_list_length) {
-        lam_output(0, "teg recv requests: %d allocated %d returned\n",
+        mca_pml_teg.teg_recv_requests.super.ompi_list_length) {
+        ompi_output(0, "teg recv requests: %d allocated %d returned\n",
             mca_pml_teg.teg_recv_requests.fl_num_allocated,
-            mca_pml_teg.teg_recv_requests.super.lam_list_length);
+            mca_pml_teg.teg_recv_requests.super.ompi_list_length);
     }
 
     if(NULL != mca_pml_teg.teg_ptl_modules)
@@ -126,7 +126,7 @@ int mca_pml_teg_module_close(void)
     OBJ_DESTRUCT(&mca_pml_teg.teg_recv_requests);
     OBJ_DESTRUCT(&mca_pml_teg.teg_procs);
     OBJ_DESTRUCT(&mca_pml_teg.teg_lock);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -138,14 +138,14 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
-    OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, ompi_mutex_t);
     mca_pml_teg.teg_ptl_modules = NULL;
     mca_pml_teg.teg_num_ptl_modules = 0;
     mca_pml_teg.teg_ptls = NULL;
     mca_pml_teg.teg_num_ptls = 0;
 
     /* recv requests */
-    lam_free_list_init(
+    ompi_free_list_init(
         &mca_pml_teg.teg_recv_requests,
         sizeof(mca_ptl_base_recv_request_t),
         OBJ_CLASS(mca_ptl_base_recv_request_t), 
@@ -155,8 +155,8 @@ mca_pml_t* mca_pml_teg_module_init(int* priority,
         NULL);
         
     /* request completion */
-    OBJ_CONSTRUCT(&mca_pml_teg.teg_request_lock, lam_mutex_t);
-    OBJ_CONSTRUCT(&mca_pml_teg.teg_request_cond, lam_condition_t);
+    OBJ_CONSTRUCT(&mca_pml_teg.teg_request_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_pml_teg.teg_request_cond, ompi_condition_t);
     mca_pml_teg.teg_request_waiting = 0;
     return &mca_pml_teg.super;
 }

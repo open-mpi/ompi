@@ -3,8 +3,8 @@
 //	Function:	- wrapper for C++ program compilation
 //
 
-#include "lam_config.h"
-#include "tools/wrappers/lamwrap.h"
+#include "ompi_config.h"
+#include "tools/wrappers/ompi_wrap.h"
 
 
 int
@@ -16,13 +16,13 @@ main(int argc, char *argv[])
   // and pass in just a few arguments to customize for the language of
   // this wrapper compiler.
 
-  lam_sv_t str_vec;
+  ompi_sv_t str_vec;
 
   str_vec.clear();
-  str_vec.push_back("LAMMPICXX");
-  str_vec.push_back("LAMCXX");
+  str_vec.push_back("OMPI_MPICXX");
+  str_vec.push_back("OMPI_CXX");
 
-  return lam_wrap_engine(argc, argv,
-			 str_vec, LAM_CXX,true, false, 
+  return ompi_wrap_engine(argc, argv,
+			 str_vec, OMPI_CXX,true, false, 
 			 WRAPPER_EXTRA_CXXFLAGS);
 }

@@ -71,7 +71,7 @@ int topo_base_cart_sub (MPI_Comm comm,
      */
      if (ndim == 0) {
 #if 0
-        lam_comm_rank (comm, &colour);
+        ompi_comm_rank (comm, &colour);
 #endif
         ndim = 1;
         allfalse = 1;
@@ -80,7 +80,7 @@ int topo_base_cart_sub (MPI_Comm comm,
      * Split the communicator.
      */
 #if 0
-     errcode = lam_comm_split (comm, colour, key, new_comm);
+     errcode = ompi_comm_split (comm, colour, key, new_comm);
 #endif
      if (errcode != MPI_SUCCESS) {
         return errcode;
@@ -115,7 +115,7 @@ int topo_base_cart_sub (MPI_Comm comm,
            * Compute the caller's coordinates.
            */
 #if 0
-          errcode = lam_comm_rank (newcomm, &rank);
+          errcode = ompi_comm_rank (newcomm, &rank);
 #endif
           if (errcode != MPI_SUCCESS) {
              return errcode;

@@ -4,11 +4,11 @@
 int mca_pml_teg_irecv_init(
     void *addr,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int src,
     int tag,
-    struct lam_communicator_t* comm,
-    struct lam_request_t **request)
+    struct ompi_communicator_t* comm,
+    struct ompi_request_t **request)
 {
     int rc;
     mca_ptl_base_recv_request_t *recvreq;
@@ -26,18 +26,18 @@ int mca_pml_teg_irecv_init(
         comm,
         true);
 
-    *request = (lam_request_t*)recvreq;
-    return LAM_SUCCESS;
+    *request = (ompi_request_t*)recvreq;
+    return OMPI_SUCCESS;
 }
                                                                                                                               
 int mca_pml_teg_irecv(
     void *addr,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int src,
     int tag,
-    struct lam_communicator_t* comm,
-    struct lam_request_t **request)
+    struct ompi_communicator_t* comm,
+    struct ompi_request_t **request)
 {
     int rc;
 
@@ -59,23 +59,23 @@ int mca_pml_teg_irecv(
         comm,
         false);
 
-    if((rc = mca_pml_teg_recv_request_start(recvreq)) != LAM_SUCCESS) {
+    if((rc = mca_pml_teg_recv_request_start(recvreq)) != OMPI_SUCCESS) {
         MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq);
         return rc;
     }
-    *request = (lam_request_t*)recvreq;
-    return LAM_SUCCESS;
+    *request = (ompi_request_t*)recvreq;
+    return OMPI_SUCCESS;
 }
 
 
 int mca_pml_teg_recv(
     void *addr,
     size_t count,
-    lam_datatype_t *datatype,
+    ompi_datatype_t *datatype,
     int src,
     int tag,
-    struct lam_communicator_t* comm,
-    lam_status_public_t* status)
+    struct ompi_communicator_t* comm,
+    ompi_status_public_t* status)
 {
     int rc;
     mca_ptl_base_recv_request_t *recvreq;
@@ -96,28 +96,28 @@ int mca_pml_teg_recv(
         comm,
         false);
 
-    if((rc = mca_pml_teg_recv_request_start(recvreq)) != LAM_SUCCESS) {
+    if((rc = mca_pml_teg_recv_request_start(recvreq)) != OMPI_SUCCESS) {
         MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq);
         return rc;
     }
 
     if(recvreq->super.req_mpi_done == false) {
         /* give up and sleep until completion */
-        if(lam_using_threads()) {
-            lam_mutex_lock(&mca_pml_teg.teg_request_lock);
+        if(ompi_using_threads()) {
+            ompi_mutex_lock(&mca_pml_teg.teg_request_lock);
             mca_pml_teg.teg_request_waiting++;
             while(recvreq->super.req_mpi_done == false)
-                lam_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
+                ompi_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
             mca_pml_teg.teg_request_waiting--;
-            lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
+            ompi_mutex_unlock(&mca_pml_teg.teg_request_lock);
         } else {
             mca_pml_teg.teg_request_waiting++;
             while(recvreq->super.req_mpi_done == false)
-                lam_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
+                ompi_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
             mca_pml_teg.teg_request_waiting--;
         }
     }
     MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 

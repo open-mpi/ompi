@@ -10,24 +10,24 @@
 #include "threads/mutex.h"
 #include "threads/condition.h"
 #include "mca/ptl/ptl.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 
-extern lam_class_t mca_pml_ptl_comm_t_class;
+extern ompi_class_t mca_pml_ptl_comm_t_class;
 
 /**
- *  Cached on lam_communicator_t to hold queues/state
+ *  Cached on ompi_communicator_t to hold queues/state
  *  used by the PML<->PTL interface for matching logic. 
  */
 struct mca_pml_comm_t {
-    lam_object_t super;
+    ompi_object_t super;
     mca_ptl_sequence_t *c_msg_seq;      /**< send message sequence number - sender side */
     mca_ptl_sequence_t *c_next_msg_seq; /**< send message sequence number - receiver side */
     mca_ptl_sequence_t c_recv_seq;      /**< recv request sequence number - receiver side */
-    lam_mutex_t c_matching_lock;             /**< matching lock */
-    lam_list_t *c_unexpected_frags;          /**< unexpected fragment queues */
-    lam_list_t *c_frags_cant_match;          /**< out-of-order fragment queues */
-    lam_list_t *c_specific_receives;         /**< queues of unmatched specific (source process specified) receives */
-    lam_list_t c_wild_receives;              /**< queue of unmatched wild (source process not specified) receives */
+    ompi_mutex_t c_matching_lock;             /**< matching lock */
+    ompi_list_t *c_unexpected_frags;          /**< unexpected fragment queues */
+    ompi_list_t *c_frags_cant_match;          /**< out-of-order fragment queues */
+    ompi_list_t *c_specific_receives;         /**< queues of unmatched specific (source process specified) receives */
+    ompi_list_t c_wild_receives;              /**< queue of unmatched wild (source process not specified) receives */
 };
 typedef struct mca_pml_comm_t mca_pml_ptl_comm_t;
 
@@ -37,7 +37,7 @@ typedef struct mca_pml_comm_t mca_pml_ptl_comm_t;
  *
  * @param  comm   Instance of mca_pml_ptl_comm_t
  * @param  size   Size of communicator 
- * @return        LAM_SUCCESS or error status on failure.
+ * @return        OMPI_SUCCESS or error status on failure.
  */
 
 extern int mca_pml_ptl_comm_init_size(mca_pml_ptl_comm_t* comm, size_t size);

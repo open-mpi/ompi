@@ -6,10 +6,10 @@
  * gathered by configure.
  */
 
-#ifndef LAM_STDINT_H
-#define LAM_STDINT_H 1
+#ifndef OMPI_STDINT_H
+#define OMPI_STDINT_H 1
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #ifdef HAVE_STDINT_H
 
@@ -170,5 +170,5 @@ typedef unsigned long long uintptr_t;
 
 #endif /* HAVE_STDINT_H */
 
-#endif /* LAM_STDINT_H */
+#endif /* OMPI_STDINT_H */
 

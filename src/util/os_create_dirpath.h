@@ -19,7 +19,7 @@
  * will consider the directory acceptable. If the minimal permissions are
  * not currently provided, the function will attempt to change the
  * access permissions of the directory to add the specified
- * permissions. The function will return LAM_ERROR if this cannot
+ * permissions. The function will return OMPI_ERROR if this cannot
  * be done.
  **/
 
@@ -30,9 +30,9 @@
  * @param path A pointer to a string that contains the path name to be built.
  * @param mode A mode_t bit mask that specifies the access permissions for the
  * directories being constructed. 
- * @retval LAM_SUCCESS If the directory tree has been successfully created with
+ * @retval OMPI_SUCCESS If the directory tree has been successfully created with
  * the specified access permissions.
- * @retval LAM_ERROR If the directory tree could not be created with the
+ * @retval OMPI_ERROR If the directory tree could not be created with the
  * specified access permissions.
  */
 

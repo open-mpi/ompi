@@ -2,15 +2,15 @@
  * $HEADER$
  */
 
-#ifndef LAM_VALUE_ARRAY_H
-#define LAM_VALUE_ARRAY_H
+#ifndef OMPI_VALUE_ARRAY_H
+#define OMPI_VALUE_ARRAY_H
 
 #include <string.h>
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "include/constants.h"
 #include "include/types.h"
-#include "lfc/lam_object.h"
-#if LAM_ENABLE_DEBUG
+#include "class/ompi_object.h"
+#if OMPI_ENABLE_DEBUG
 #include "util/output.h"
 #endif
 
@@ -18,18 +18,18 @@
  *  @file  Array of elements maintained by value.
  */
 
-extern lam_class_t lam_value_array_t_class;
+extern ompi_class_t ompi_value_array_t_class;
 
 
-struct lam_value_array_t
+struct ompi_value_array_t
 {
-    lam_object_t    super;
+    ompi_object_t    super;
     unsigned char*  array_items;
     size_t          array_item_sizeof;
     size_t          array_size;
     size_t          array_alloc_size;
 };
-typedef struct lam_value_array_t lam_value_array_t;
+typedef struct ompi_value_array_t ompi_value_array_t;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -42,20 +42,20 @@ extern "C" {
  *
  *  @param   array       The array to initialize (IN).
  *  @param   item_size   The sizeof each array element (IN).
- *  @return  LAM error code
+ *  @return  OMPI error code
  *
  * Note that there is no corresponding "finalize" function -- use
  * OBJ_DESTRUCT (for stack arrays) or OBJ_RELEASE (for heap arrays) to
  * delete it.
  */
 
-static inline int lam_value_array_init(lam_value_array_t *array, size_t item_sizeof)
+static inline int ompi_value_array_init(ompi_value_array_t *array, size_t item_sizeof)
 {
     array->array_item_sizeof = item_sizeof;
     array->array_alloc_size = 1; 
     array->array_size = 0;
     array->array_items = (unsigned char*)realloc(array->array_items, item_sizeof * array->array_alloc_size);
-    return (NULL != array->array_items) ? LAM_SUCCESS : LAM_ERR_OUT_OF_RESOURCE;
+    return (NULL != array->array_items) ? OMPI_SUCCESS : OMPI_ERR_OUT_OF_RESOURCE;
 }
 
 
@@ -64,21 +64,21 @@ static inline int lam_value_array_init(lam_value_array_t *array, size_t item_siz
  *
  *  @param   array   The input array (IN).
  *  @param   size    The anticipated size of the array (IN).
- *  @return  LAM error code.
+ *  @return  OMPI error code.
  */
 
-static inline int lam_value_array_reserve(lam_value_array_t* array, size_t size)
+static inline int ompi_value_array_reserve(ompi_value_array_t* array, size_t size)
 {
      if(size > array->array_alloc_size) {
          array->array_items = (unsigned char*)realloc(array->array_items, array->array_item_sizeof * size);
          if(NULL == array->array_items) {
              array->array_size = 0;
              array->array_alloc_size = 0;
-             return LAM_ERR_OUT_OF_RESOURCE;
+             return OMPI_ERR_OUT_OF_RESOURCE;
          }
          array->array_alloc_size = 1;
      }
-     return LAM_SUCCESS;
+     return OMPI_SUCCESS;
 }
 
 
@@ -90,7 +90,7 @@ static inline int lam_value_array_reserve(lam_value_array_t* array, size_t size)
  *  @return  The number of elements currently in use.
  */
 
-static inline size_t lam_value_array_get_size(lam_value_array_t* array)
+static inline size_t ompi_value_array_get_size(ompi_value_array_t* array)
 {
     return array->array_size;
 }
@@ -102,16 +102,16 @@ static inline size_t lam_value_array_get_size(lam_value_array_t* array)
  *  @param  array   The input array (IN).
  *  @param  size    The new array size.
  *
- *  @return  LAM error code.
+ *  @return  OMPI error code.
  *
  *  Note that resizing the array to a smaller size may not change
  *  the underlying memory allocated by the array. However, setting
  *  the size larger than the current allocation will grow it. In either
- *  case, if the routine is successful, lam_value_array_get_size() will 
+ *  case, if the routine is successful, ompi_value_array_get_size() will 
  *  return the new size.
  */
 
-int lam_value_array_set_size(lam_value_array_t* array, size_t size);
+int ompi_value_array_set_size(ompi_value_array_t* array, size_t size);
 
 
 /** 
@@ -128,7 +128,7 @@ int lam_value_array_set_size(lam_value_array_t* array, size_t size);
  *  ensuring the array index is valid (0 <= item index < array size).
  */
 
-#define LAM_VALUE_ARRAY_GET_ITEM(array, item_type, item_index) \
+#define OMPI_VALUE_ARRAY_GET_ITEM(array, item_type, item_index) \
     ((item_type*)((array)->array_items))[item_index]
 
 /**
@@ -143,9 +143,9 @@ int lam_value_array_set_size(lam_value_array_t* array, size_t size);
  *  array size, the array is grown to satisfy the request.
  */
 
-static inline void* lam_value_array_get_item(lam_value_array_t *array, size_t index)
+static inline void* ompi_value_array_get_item(ompi_value_array_t *array, size_t index)
 {
-    if(index >= array->array_size && lam_value_array_set_size(array, index+1) != LAM_SUCCESS)
+    if(index >= array->array_size && ompi_value_array_set_size(array, index+1) != OMPI_SUCCESS)
         return NULL;
     return array->array_items + (index * array->array_item_sizeof);
 }
@@ -166,7 +166,7 @@ static inline void* lam_value_array_get_item(lam_value_array_t *array, size_t in
  * copied into the array by value.
  */
 
-#define LAM_VALUE_ARRAY_SET_ITEM(array, item_type, item_index, item_value) \
+#define OMPI_VALUE_ARRAY_SET_ITEM(array, item_type, item_index, item_value) \
     (((item_type*)((array)->array_items))[item_index] = item_value)
 
 /** 
@@ -177,20 +177,20 @@ static inline void* lam_value_array_get_item(lam_value_array_t *array, size_t in
  *  @param   item_value  A pointer to the item, which is copied into 
  *                       the array.
  *
- *  @return  LAM error code.
+ *  @return  OMPI error code.
  *
  * It is safe to free the item after returning from this call; it is
  * copied into the array by value.
  */
 
-static inline int lam_value_array_set_item(lam_value_array_t *array, size_t index, const void* item)
+static inline int ompi_value_array_set_item(ompi_value_array_t *array, size_t index, const void* item)
 {
     int rc;
     if(index >= array->array_size && 
-       (rc = lam_value_array_set_size(array, index+1)) != LAM_SUCCESS)
+       (rc = ompi_value_array_set_size(array, index+1)) != OMPI_SUCCESS)
         return rc;
     memcpy(array->array_items + (index * array->array_item_sizeof), item, array->array_item_sizeof);
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -201,16 +201,16 @@ static inline int lam_value_array_set_item(lam_value_array_t *array, size_t inde
  *  @param   item     A pointer to the item to append, which is copied 
  *                    into the array.
  *
- *  @return  LAM error code 
+ *  @return  OMPI error code 
  *
  * This will grow the array if it is not large enough to contain the
  * item.  It is safe to free the item after returning from this call;
  * it is copied by value into the array.
  */
 
-static inline int lam_value_array_append_item(lam_value_array_t *array, const void *item)
+static inline int ompi_value_array_append_item(ompi_value_array_t *array, const void *item)
 {
-    return lam_value_array_set_item(array, array->array_size, item);
+    return ompi_value_array_set_item(array, array->array_size, item);
 }
 
 
@@ -221,24 +221,24 @@ static inline int lam_value_array_append_item(lam_value_array_t *array, const vo
  *  @param   index  The index to remove, which must be less than
  *                  the current array size (IN).
  *
- *  @return  LAM error code.
+ *  @return  OMPI error code.
  *
  * All elements following this index are shifted down.
  */
 
-static inline int lam_value_array_remove_item(lam_value_array_t *array, size_t index)
+static inline int ompi_value_array_remove_item(ompi_value_array_t *array, size_t index)
 {
-#if LAM_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
     if (index >= array->array_size) {
-        lam_output(0, "lam_value_array_remove_item: invalid index %d\n", index);
-        return LAM_ERR_BAD_PARAM;
+        ompi_output(0, "ompi_value_array_remove_item: invalid index %d\n", index);
+        return OMPI_ERR_BAD_PARAM;
     }
 #endif   
     memmove(array->array_items+(array->array_item_sizeof * index), 
             array->array_items+(array->array_item_sizeof * (index+1)),
             array->array_item_sizeof * (array->array_size - index - 1));
     array->array_size--;
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 /**
@@ -252,12 +252,12 @@ static inline int lam_value_array_remove_item(lam_value_array_t *array, size_t i
  * This function is helpful when you need to iterate through an
  * entire array; simply get the base value of the array and use native
  * C to iterate through it manually.  This can have better performance
- * than looping over LAM_VALUE_ARRAY_GET_ITEM() and
- * LAM_VALUE_ARRAY_SET_ITEM() because it will [potentially] reduce the
+ * than looping over OMPI_VALUE_ARRAY_GET_ITEM() and
+ * OMPI_VALUE_ARRAY_SET_ITEM() because it will [potentially] reduce the
  * number of pointer dereferences.
  */
 
-#define LAM_VALUE_ARRAY_GET_BASE(array, item_type) \
+#define OMPI_VALUE_ARRAY_GET_BASE(array, item_type) \
   ((item_type*) ((array)->array_items))
 
 #if defined(c_plusplus) || defined(__cplusplus)

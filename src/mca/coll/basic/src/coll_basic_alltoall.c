@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include <stdio.h>
@@ -40,24 +40,24 @@ int mca_coll_basic_alltoall(void *sbuf, int scount,
     MPI_Aint sndinc;
     MPI_Aint rcvinc;
 
-    lam_request_t **req;
-    lam_request_t **sreq;
-    lam_request_t **rreq;
+    ompi_request_t **req;
+    ompi_request_t **sreq;
+    ompi_request_t **rreq;
 
     /* Initialize. */
 
-    size = lam_comm_size(comm);
-    rank = lam_comm_rank(comm);
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
 
 
-    err = lam_ddt_get_extent(sdtype, &lb, &sndinc);
+    err = ompi_ddt_get_extent(sdtype, &lb, &sndinc);
     if (0 != err) {
-	return LAM_ERROR;
+	return OMPI_ERROR;
     }
 
-    err = lam_ddt_get_extent(rdtype, &lb, &rcvinc);
+    err = ompi_ddt_get_extent(rdtype, &lb, &rcvinc);
     if (0 != err) {
-	return LAM_ERROR;
+	return OMPI_ERROR;
     }
 
     sndinc *= scount;
@@ -67,7 +67,7 @@ int mca_coll_basic_alltoall(void *sbuf, int scount,
 
     nreqs = 2 * (size - 1);
     if (nreqs > 0) {
-	req = malloc(nreqs * sizeof(lam_request_t *));
+	req = malloc(nreqs * sizeof(ompi_request_t *));
 	if (NULL == req) {
 	    return ENOMEM;
 	}
@@ -80,7 +80,7 @@ int mca_coll_basic_alltoall(void *sbuf, int scount,
     psnd = ((char *) sbuf) + (rank * sndinc);
     prcv = ((char *) rbuf) + (rank * rcvinc);
 
-    err = lam_ddt_sndrcv(psnd, scount, sdtype,
+    err = ompi_ddt_sndrcv(psnd, scount, sdtype,
 			 prcv, rcount, rdtype, 
 			 MCA_COLL_BASE_TAG_ALLTOALL, comm);
 

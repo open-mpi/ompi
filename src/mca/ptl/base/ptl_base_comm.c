@@ -9,18 +9,18 @@ static void mca_pml_ptl_comm_construct(mca_pml_ptl_comm_t* comm);
 static void mca_pml_ptl_comm_destruct(mca_pml_ptl_comm_t* comm);
 
 
-lam_class_t mca_pml_ptl_comm_t_class = {
+ompi_class_t mca_pml_ptl_comm_t_class = {
     "mca_pml_ptl_comm_t",
-    OBJ_CLASS(lam_object_t),
-    (lam_construct_t)mca_pml_ptl_comm_construct,
-    (lam_destruct_t)mca_pml_ptl_comm_destruct
+    OBJ_CLASS(ompi_object_t),
+    (ompi_construct_t)mca_pml_ptl_comm_construct,
+    (ompi_destruct_t)mca_pml_ptl_comm_destruct
 };
 
 
 static void mca_pml_ptl_comm_construct(mca_pml_ptl_comm_t* comm)
 {
-    OBJ_CONSTRUCT(&comm->c_wild_receives, lam_list_t);
-    OBJ_CONSTRUCT(&comm->c_matching_lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&comm->c_wild_receives, ompi_list_t);
+    OBJ_CONSTRUCT(&comm->c_matching_lock, ompi_mutex_t);
     comm->c_recv_seq = 0;
 }
 
@@ -44,42 +44,42 @@ int mca_pml_ptl_comm_init_size(mca_pml_ptl_comm_t* comm, size_t size)
     /* send message sequence-number support - sender side */
     comm->c_msg_seq = malloc(sizeof(mca_ptl_sequence_t) * size);
     if(NULL == comm->c_msg_seq)
-        return LAM_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     memset(comm->c_msg_seq, 0, sizeof(mca_ptl_sequence_t) * size);
 
     /* send message sequence-number support - receiver side */
     comm->c_next_msg_seq = malloc(sizeof(mca_ptl_sequence_t) * size);
     if(NULL == comm->c_next_msg_seq)
-        return LAM_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     memset(comm->c_next_msg_seq, 0, sizeof(mca_ptl_sequence_t) * size);
 
     /* unexpected fragments queues */
-    comm->c_unexpected_frags = malloc(sizeof(lam_list_t) * size);
+    comm->c_unexpected_frags = malloc(sizeof(ompi_list_t) * size);
     if(NULL == comm->c_unexpected_frags)
-        return LAM_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     for(i=0; i<size; i++) {
-        lam_list_t* object = comm->c_unexpected_frags+i;
-        OBJ_CONSTRUCT(object, lam_list_t);
+        ompi_list_t* object = comm->c_unexpected_frags+i;
+        OBJ_CONSTRUCT(object, ompi_list_t);
     }
 
      /* out-of-order fragments queues */
-    comm->c_frags_cant_match = malloc(sizeof(lam_list_t) * size);
+    comm->c_frags_cant_match = malloc(sizeof(ompi_list_t) * size);
     if(NULL == comm->c_frags_cant_match)
-        return LAM_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     for(i=0; i<size; i++) {
-        lam_list_t* object = comm->c_frags_cant_match+i;
-        OBJ_CONSTRUCT(object, lam_list_t);
+        ompi_list_t* object = comm->c_frags_cant_match+i;
+        OBJ_CONSTRUCT(object, ompi_list_t);
     }
 
     /* queues of unmatched specific (source process specified) receives */
-    comm->c_specific_receives = malloc(sizeof(lam_list_t) * size);
+    comm->c_specific_receives = malloc(sizeof(ompi_list_t) * size);
     if(NULL == comm->c_specific_receives)
-        return LAM_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     for(i=0; i<size; i++) {
-        lam_list_t *object = comm->c_specific_receives+i;
-        OBJ_CONSTRUCT(object, lam_list_t);
+        ompi_list_t *object = comm->c_specific_receives+i;
+        OBJ_CONSTRUCT(object, ompi_list_t);
     }
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 

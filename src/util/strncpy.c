@@ -5,7 +5,7 @@
  * (e.g., Itanium with RedHat Advanced Server glibc).
  */
 
-#include <lam_config.h>
+#include <ompi_config.h>
 
 #include <string.h>
 
@@ -29,7 +29,7 @@
  * Hat Advanced Server glibc cough cough).
  */
 char *
-lam_strncpy(char *dest, const char *src, size_t len)
+ompi_strncpy(char *dest, const char *src, size_t len)
 {
   int i;
   int pad = 0;

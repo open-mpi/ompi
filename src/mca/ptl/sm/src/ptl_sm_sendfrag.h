@@ -8,7 +8,7 @@
 #define MCA_PTL_SM_SEND_FRAG_H
 
 #include <sys/types.h>
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_sm.h"
@@ -27,7 +27,7 @@ typedef struct mca_ptl_sm_send_frag_t mca_ptl_sm_send_frag_t;
 
 
 #define MCA_PTL_SM_SEND_FRAG_ALLOC(item, rc)  \
-    LAM_FREE_LIST_GET(&mca_ptl_sm_module.sm_send_frags, item, rc);
+    OMPI_FREE_LIST_GET(&mca_ptl_sm_module.sm_send_frags, item, rc);
 
 
 /**

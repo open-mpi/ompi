@@ -4,8 +4,8 @@
 /**
  * @file
  */
-#ifndef LAM_PML_TEG_SEND_REQUEST_H
-#define LAM_PML_TEG_SEND_REQUEST_H
+#ifndef OMPI_PML_TEG_SEND_REQUEST_H
+#define OMPI_PML_TEG_SEND_REQUEST_H
 
 #include "pml_teg_proc.h"
 #include "mca/ptl/ptl.h"
@@ -56,9 +56,9 @@ static inline int mca_pml_teg_send_request_start(
     }
 
     rc = ptl->ptl_put(ptl, req->req_peer, req, offset, first_fragment_size, flags);
-    if(rc != LAM_SUCCESS)
+    if(rc != OMPI_SUCCESS)
         return rc;
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 void mca_pml_teg_send_request_progress(

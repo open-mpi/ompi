@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_INTERCOMM_MERGE = mpi_intercomm_merge_f
 #pragma weak pmpi_intercomm_merge = mpi_intercomm_merge_f
 #pragma weak pmpi_intercomm_merge_ = mpi_intercomm_merge_f
 #pragma weak pmpi_intercomm_merge__ = mpi_intercomm_merge_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_INTERCOMM_MERGE,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_INTERCOMM_MERGE,
                            pmpi_intercomm_merge,
                            pmpi_intercomm_merge_,
                            pmpi_intercomm_merge__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_INTERCOMM_MERGE,
                            (intercomm, high, newintercomm, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_INTERCOMM_MERGE = mpi_intercomm_merge_f
 #pragma weak mpi_intercomm_merge = mpi_intercomm_merge_f
 #pragma weak mpi_intercomm_merge_ = mpi_intercomm_merge_f
 #pragma weak mpi_intercomm_merge__ = mpi_intercomm_merge_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_INTERCOMM_MERGE,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_MERGE,
                            mpi_intercomm_merge,
                            mpi_intercomm_merge_,
                            mpi_intercomm_merge__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_INTERCOMM_MERGE,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

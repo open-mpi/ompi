@@ -1,6 +1,6 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "datatype.h"
 #include "datatype_internal.h"
@@ -40,7 +40,7 @@ static inline long GET_LOOP_DISP( dt_elem_desc_t* _pElem )
    return _pElem->disp;
 }
 
-int lam_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDesc )
+int ompi_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDesc )
 {
    dt_elem_desc_t* pElemDesc;
    long lastDisp = 0;
@@ -163,7 +163,7 @@ int lam_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDe
   __sofar += (LENGTH); \
 }
 
-static int lam_ddt_unroll( dt_desc_t* pData, int count )
+static int ompi_ddt_unroll( dt_desc_t* pData, int count )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */
@@ -277,7 +277,7 @@ static int lam_ddt_unroll( dt_desc_t* pData, int count )
    return 0;
 }
 
-int lam_ddt_commit( dt_desc_t** data )
+int ompi_ddt_commit( dt_desc_t** data )
 {
     dt_desc_t* pData = (dt_desc_t*)*data;
     dt_elem_desc_t* pLast = &(pData->desc.desc[pData->desc.used]);
@@ -296,7 +296,7 @@ int lam_ddt_commit( dt_desc_t** data )
 
     /* If the data is contiguous is useless to generate an optimized version. */
     if( pData->size != (pData->true_ub - pData->true_lb) ) {
-        (void)lam_ddt_optimize_short( pData, 1, &(pData->opt_desc) );
+        (void)ompi_ddt_optimize_short( pData, 1, &(pData->opt_desc) );
         /* let's add a fake element at the end just to avoid useless comparaisons
          * in pack/unpack functions.
          */

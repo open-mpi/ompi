@@ -17,10 +17,10 @@
 # Some basic defaults
 #
 ######################################################################
-lam_myvpid=""
-lam_numprocs=""
-lam_jobhandle=""
-lam_commdir=""
+ompi_myvpid=""
+ompi_numprocs=""
+ompi_jobhandle=""
+ompi_commdir=""
 
 ######################################################################
 #
@@ -36,22 +36,22 @@ for i ; do
             ;;
         -myvpid)
             shift
-            lam_myvpid="${1}"
+            ompi_myvpid="${1}"
             shift
             ;;
         -numprocs)
             shift
-            lam_numprocs="${1}"
+            ompi_numprocs="${1}"
             shift
             ;;
         -jobhandle)
             shift
-            lam_jobhandle="${1}"
+            ompi_jobhandle="${1}"
             shift
             ;;
         -commdir)
             shift
-            lam_commdir="${1}"
+            ompi_commdir="${1}"
             shift
             ;;
         -x)
@@ -88,11 +88,11 @@ fi
 # Set the environment
 #
 ######################################################################
-export MCA_common_lam_cofs_my_vpid="${lam_myvpid}"
-export MCA_common_lam_cofs_num_procs="${lam_numprocs}"
-export MCA_common_lam_cofs_job_handle="${lam_jobhandle}"
-if test ! -z "${lam_commdir}"; then
-    export MCA_common_lam_cofs_comm_dir="${lam_commdir}"
+export MCA_common_ompi_cofs_my_vpid="${ompi_myvpid}"
+export MCA_common_ompi_cofs_num_procs="${ompi_numprocs}"
+export MCA_common_ompi_cofs_job_handle="${ompi_jobhandle}"
+if test ! -z "${ompi_commdir}"; then
+    export MCA_common_ompi_cofs_comm_dir="${ompi_commdir}"
 fi
 
 ######################################################################

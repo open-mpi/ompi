@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include <stdio.h>
@@ -26,7 +26,7 @@ int mca_coll_basic_reduce_lin(void *sbuf, void *rbuf, int count,
                               int root, MPI_Comm comm)
 {
 #if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
+  return OMPI_ERR_NOT_IMPLEMENTED;
 #else
   int i;
   int size;
@@ -55,8 +55,8 @@ int mca_coll_basic_reduce_lin(void *sbuf, void *rbuf, int count,
 
   if (size > 1) {
 #if 0
-    /* JMS Needs to be replaced with lam_datatype_*() functions */
-    err = lam_dtbuffer(dtype, count, &buffer, &origin);
+    /* JMS Needs to be replaced with ompi_datatype_*() functions */
+    err = ompi_dtbuffer(dtype, count, &buffer, &origin);
     if (MPI_SUCCESS != err)
       return err;
 #endif
@@ -66,8 +66,8 @@ int mca_coll_basic_reduce_lin(void *sbuf, void *rbuf, int count,
 
   if (rank == (size - 1)) {
 #if 0
-    /* JMS Needs to be replaced with lam_datatype_*() functions */
-    err = lam_dtsndrcv(sbuf, count, dtype, rbuf, count,
+    /* JMS Needs to be replaced with ompi_datatype_*() functions */
+    err = ompi_dtsndrcv(sbuf, count, dtype, rbuf, count,
 		       dtype, BLKMPIREDUCE, comm);
 #endif
   } else {
@@ -109,7 +109,7 @@ int mca_coll_basic_reduce_lin(void *sbuf, void *rbuf, int count,
 
 #if 0
     /* JMS Need MPI_Op */
-    if (op->op_flags & LAM_LANGF77) {
+    if (op->op_flags & OMPI_LANGF77) {
       (op->op_func)(inbuf, rbuf, &count, &dtype->dt_f77handle);
     } else {
       (op->op_func)(inbuf, rbuf, &count, &dtype);
@@ -139,7 +139,7 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
                               int root, MPI_Comm comm)
 {
 #if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
+  return OMPI_ERR_NOT_IMPLEMENTED;
 #else
   int i;
   int size;
@@ -160,7 +160,7 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
   /* Allocate the incoming and resulting message buffers. */
 
 #if 0
-    /* JMS Needs to be replaced with lam_datatype_*() functions */
+    /* JMS Needs to be replaced with ompi_datatype_*() functions */
   /* JMS: result of Feb meeting:
 
      if (dtype != MPI_IN_PLACE) {
@@ -169,11 +169,11 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
        buffer_for_mpi = buffer_to_free - true_lb;
      }
   */
-  err = lam_dtbuffer(dtype, count, &buf1, &origin1);
+  err = ompi_dtbuffer(dtype, count, &buf1, &origin1);
   if (MPI_SUCCESS != err)
     return err;
 
-  err = lam_dtbuffer(dtype, count, &buf2, &origin2);
+  err = ompi_dtbuffer(dtype, count, &buf2, &origin2);
   if (MPI_SUCCESS != err) {
     if (NULL != buf1)
       free(buf1);
@@ -257,7 +257,7 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
 
 #if 0
       /* JMS Need MPI_Op */
-      if (op->op_flags & LAM_LANGF77) {
+      if (op->op_flags & OMPI_LANGF77) {
 	(*op->op_func)((i > 0) ? resmsg : sbuf,
                        inmsg, &count, &dtype->dt_f77handle);
       } else {
@@ -281,8 +281,8 @@ int mca_coll_basic_reduce_log(void *sbuf, void *rbuf, int count,
   if (0 == vrank) {
     if (root == rank) {
 #if 0
-      /* JMS Needs to be replaced with lam_datatype_*() functions */
-      lam_dtcpy(rbuf, (i > 0) ? resmsg : sbuf, count, dtype);
+      /* JMS Needs to be replaced with ompi_datatype_*() functions */
+      ompi_dtcpy(rbuf, (i > 0) ? resmsg : sbuf, count, dtype);
 #endif
     } else {
 #if 0

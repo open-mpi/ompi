@@ -1,7 +1,7 @@
 /*
  * $HEADERS$
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "mpi.h"
@@ -9,19 +9,19 @@
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_compare = PMPI_Comm_compare
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
 int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
 
     /* local variables */
-    lam_communicator_t *comp1, *comp2;
-    lam_group_t *grp1, *grp2;
+    ompi_communicator_t *comp1, *comp2;
+    ompi_group_t *grp1, *grp2;
     int size1, size2, rsize1, rsize2;
     int lresult, rresult;
     int sameranks = 1;
@@ -30,28 +30,28 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     int found = 0;
     
     if ( MPI_PARAM_CHECK ) {
-        if ( lam_mpi_finalized )
-            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
+        if ( ompi_mpi_finalized )
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
                                          "MPI_Comm_compare");
 
         if ( MPI_COMM_NULL == comm1 || MPI_COMM_NULL == comm2 || 
-             lam_comm_invalid ( comm1 ) || lam_comm_invalid (comm2) )
-            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+             ompi_comm_invalid ( comm1 ) || ompi_comm_invalid (comm2) )
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                          "MPI_Comm_compare");  
 
         if ( NULL == result )
-            return LAM_ERRHANDLER_INVOKE(comm1, MPI_ERR_ARG, 
+            return OMPI_ERRHANDLER_INVOKE(comm1, MPI_ERR_ARG, 
                                          "MPI_Comm_compare");
     }
     
-    comp1 = (lam_communicator_t *) comm1;
-    comp2 = (lam_communicator_t *) comm2;
+    comp1 = (ompi_communicator_t *) comm1;
+    comp2 = (ompi_communicator_t *) comm2;
 
     /* compare sizes of local and remote groups */
-    size1 = lam_comm_size (comp1);
-    size2 = lam_comm_size (comp1);
-    rsize1 = lam_comm_remote_size (comp1);
-    rsize2 = lam_comm_remote_size (comp1);
+    size1 = ompi_comm_size (comp1);
+    size2 = ompi_comm_size (comp1);
+    rsize1 = ompi_comm_remote_size (comp1);
+    rsize2 = ompi_comm_remote_size (comp1);
 
     if ( size1 != size2 || rsize1 != rsize2 ) {
         *result = MPI_UNEQUAL;
@@ -61,8 +61,8 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     /* Compare local groups */
     /* we need to check whether the communicators contain
        the same processes and in the same order */
-    grp1 = (lam_group_t *)comp1->c_local_group;
-    grp2 = (lam_group_t *)comp2->c_local_group;
+    grp1 = (ompi_group_t *)comp1->c_local_group;
+    grp2 = (ompi_group_t *)comp2->c_local_group;
     for ( i = 0; i < size1; i++ ) {
         if ( grp1->grp_proc_pointers[i] != grp2->grp_proc_pointers[i]) {
             sameorder = 0;
@@ -99,8 +99,8 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
         sameranks = sameorder = 1;
         rresult = MPI_SIMILAR;
 
-        grp1 = (lam_group_t *)comp1->c_remote_group;
-        grp2 = (lam_group_t *)comp2->c_remote_group;
+        grp1 = (ompi_group_t *)comp1->c_remote_group;
+        grp2 = (ompi_group_t *)comp2->c_remote_group;
         for ( i = 0; i < rsize1; i++ ) {
             if ( grp1->grp_proc_pointers[i] != grp2->grp_proc_pointers[i]) {
                 sameorder = 0;

@@ -13,7 +13,7 @@ openmpi.c - main program for spawning persistent universe.
 #include <string.h>
 #include <pwd.h>
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "util/sys_info.h"
 #include "util/cmd_line.h"
@@ -48,7 +48,7 @@ ompi_universe_t universe = {
 
 int main(int argc, char *argv[])
 {
-    lam_cmd_line_t *cmd_line = NULL;
+    ompi_cmd_line_t *cmd_line = NULL;
     char *tmpdir_option = NULL;
     char *universe_option = NULL;
     char *tmp, *universe_name, *remote_host, *remote_uid;
@@ -56,40 +56,40 @@ int main(int argc, char *argv[])
 
     tmp = universe_name = remote_host = remote_uid = NULL;
 
-    cmd_line = lam_cmd_line_create();
+    cmd_line = ompi_cmd_line_create();
     if (NULL == cmd_line) {
         fprintf(stderr,"openmpi: Command line handle could not be created - please report error to bugs@open-mpi.org"); 
         exit(errno);
     }
 
-    lam_cmd_line_make_opt(cmd_line, 'v', "version", 0,
+    ompi_cmd_line_make_opt(cmd_line, 'v', "version", 0,
                         "Show version of Open MPI and this program");
-    lam_cmd_line_make_opt(cmd_line, 'u', "universe", 1,
+    ompi_cmd_line_make_opt(cmd_line, 'u', "universe", 1,
                         "User specified name for universe");
-    lam_cmd_line_make_opt(cmd_line, 't', "tmpdir", 1,
+    ompi_cmd_line_make_opt(cmd_line, 't', "tmpdir", 1,
 			  "Temp directory to be used by universe");
-    lam_cmd_line_make_opt(cmd_line, 'w', "webserver", 1,
+    ompi_cmd_line_make_opt(cmd_line, 'w', "webserver", 1,
                           "Web server available");
-    lam_cmd_line_make_opt(cmd_line, 's', "silent", 1,
+    ompi_cmd_line_make_opt(cmd_line, 's', "silent", 1,
                           "No console prompt - operate silently");
-    lam_cmd_line_make_opt(cmd_line, 'f', "script", 1,
+    ompi_cmd_line_make_opt(cmd_line, 'f', "script", 1,
                           "Read commands from script file");
 
-    if ((LAM_SUCCESS != lam_cmd_line_parse(cmd_line, false, argc, argv)) ||
-        lam_cmd_line_is_taken(cmd_line, "help") || 
-	lam_cmd_line_is_taken(cmd_line, "h")) {
+    if ((OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, false, argc, argv)) ||
+        ompi_cmd_line_is_taken(cmd_line, "help") || 
+	ompi_cmd_line_is_taken(cmd_line, "h")) {
         fprintf(stderr, "...showing openmpi help message...\n");
         exit(1);
     }
 
     /* get universe name and store it, if user specified it */
     /* otherwise, stick with default name */
-    if (lam_cmd_line_is_taken(cmd_line, "universe")) {
-	if (NULL == lam_cmd_line_get_param(cmd_line, "universe", 0, 0)) {
+    if (ompi_cmd_line_is_taken(cmd_line, "universe")) {
+	if (NULL == ompi_cmd_line_get_param(cmd_line, "universe", 0, 0)) {
 	    fprintf(stderr, "error retrieving universe name - please report error to bugs@open-mpi.org\n");
 		exit(1);
         }
-        universe_option = strdup(lam_cmd_line_get_param(cmd_line, "universe", 0, 0));
+        universe_option = strdup(ompi_cmd_line_get_param(cmd_line, "universe", 0, 0));
 
 	if (NULL != (tmp = strchr(universe_option, ':'))) { /* name contains remote host */
 	    /* get the host name, and the universe name separated */
@@ -112,12 +112,12 @@ int main(int argc, char *argv[])
     universe.pid = getpid();
 
     /* get the temporary directory name for the session directory, if provided on command line */
-    if (lam_cmd_line_is_taken(cmd_line, "tmpdir")) {
-	if (NULL == lam_cmd_line_get_param(cmd_line, "tmpdir", 0, 0)) {
+    if (ompi_cmd_line_is_taken(cmd_line, "tmpdir")) {
+	if (NULL == ompi_cmd_line_get_param(cmd_line, "tmpdir", 0, 0)) {
 	    fprintf(stderr, "error retrieving tmpdir name - please report error to bugs@open-mpi.org\n");
 	    exit(1);
 	}
-	tmpdir_option = strdup(lam_cmd_line_get_param(cmd_line, "tmpdir", 0, 0));
+	tmpdir_option = strdup(ompi_cmd_line_get_param(cmd_line, "tmpdir", 0, 0));
     } else {
 	tmpdir_option = NULL;
     }
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 
 
     /* initialize the Open MPI system */
-    if (LAM_ERROR == ompi_init(universe_name, tmpdir_option)) {
+    if (OMPI_ERROR == ompi_init(universe_name, tmpdir_option)) {
 	fprintf(stderr, "Unable to initialize system - please report error to bugs@open-mpi.org\n");
 	exit(1);
     }

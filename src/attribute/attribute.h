@@ -8,16 +8,16 @@
  * win or datatype.
  */
 
-#ifndef LAM_ATTRIBUTE_H
-#define LAM_ATTRIBUTE_H
+#ifndef OMPI_ATTRIBUTE_H
+#define OMPI_ATTRIBUTE_H
 
 #include <string.h>
 #include "mpi.h"
 
-#include "lam_config.h"
-#include "lfc/lam_object.h"
-#include "lfc/lam_bitmap.h"
-#include "lfc/lam_hash_table.h"
+#include "ompi_config.h"
+#include "class/ompi_object.h"
+#include "class/ompi_bitmap.h"
+#include "class/ompi_hash_table.h"
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"
 #include "win/win.h"
@@ -29,15 +29,15 @@
    just to make things compile now, should take other value in a
    different enum later */
 
-enum lam_consts{
-    LAM_PREDEFINED = 1,
+enum ompi_consts{
+    OMPI_PREDEFINED = 1,
     MPI_ERROR, 
     MPI_INVALID_ATTR_KEYVAL
 };
 
 /* *******************************************************************  */
 
-enum lam_attribute_type_t{
+enum ompi_attribute_type_t{
     COMM_ATTR = 1, /**< The attribute belongs to a comm object. Starts
 		      with 1 so that we can have it initialized to 0
 		      using memset in the constructor */
@@ -45,13 +45,13 @@ enum lam_attribute_type_t{
     TYPE_ATTR /**< The attribute belongs to datatype object */
 };
 
-typedef enum lam_attribute_type_t lam_attribute_type_t;
+typedef enum ompi_attribute_type_t ompi_attribute_type_t;
 
 /* Union to take care of proper casting of the function pointers
    passed from the front end functions depending on the type. This
    will avoid casting function pointers to void*  */
 
-union lam_attribute_fn_ptr_union_t {
+union ompi_attribute_fn_ptr_union_t {
     MPI_Comm_delete_attr_function *attr_communicator_delete_fn;
     MPI_Type_delete_attr_function *attr_datatype_delete_fn;
     MPI_Win_delete_attr_function *attr_win_delete_fn;
@@ -61,35 +61,35 @@ union lam_attribute_fn_ptr_union_t {
     MPI_Win_copy_attr_function *attr_win_copy_fn;
 };
 
-typedef union lam_attribute_fn_ptr_union_t lam_attribute_fn_ptr_union_t;
+typedef union ompi_attribute_fn_ptr_union_t ompi_attribute_fn_ptr_union_t;
 
 
-struct lam_attrkey_t {
-    lam_hash_table_t super; /**< hash table pointer which will contain
+struct ompi_attrkey_t {
+    ompi_hash_table_t super; /**< hash table pointer which will contain
 			       <key,attr_meta_data> pair */
     int a_fhandle; /**<Fortran handle for language interoperability */
 };
 
-typedef struct lam_attrkey_t lam_attrkey_t;
+typedef struct ompi_attrkey_t ompi_attrkey_t;
 
 
-struct lam_attrkey_item_t {
-    lam_object_t super;
-    lam_attribute_type_t attr_type; /**< One of COMM/WIN/DTYPE. This
+struct ompi_attrkey_item_t {
+    ompi_object_t super;
+    ompi_attribute_type_t attr_type; /**< One of COMM/WIN/DTYPE. This
 				       will be used to cast the
 				       copy/delete attribute functions
 				       properly and error checking */
     int attr_flag; /**< flag field to denote if its predefined  */
-    lam_attribute_fn_ptr_union_t copy_attr_fn; /**< Copy function for the 
+    ompi_attribute_fn_ptr_union_t copy_attr_fn; /**< Copy function for the 
 					     attribute */
-    lam_attribute_fn_ptr_union_t delete_attr_fn; /**< Delete function for the
+    ompi_attribute_fn_ptr_union_t delete_attr_fn; /**< Delete function for the
 					       attribute */
     void *extra_state; /**< Extra state of the attribute */
     int key; /**< Keep a track of which key this item belongs to, so that
 		the key can be deleted when this object is destroyed */
 };
 
-typedef struct lam_attrkey_item_t lam_attrkey_item_t;
+typedef struct ompi_attrkey_item_t ompi_attrkey_item_t;
   
 
 /* Functions */
@@ -104,14 +104,14 @@ extern "C" {
  */
 
 static inline
-int lam_attr_hash_init(lam_hash_table_t **keyhash)
+int ompi_attr_hash_init(ompi_hash_table_t **keyhash)
 {
-   *keyhash = OBJ_NEW(lam_hash_table_t);
+   *keyhash = OBJ_NEW(ompi_hash_table_t);
     if (NULL == keyhash) {
 	fprintf(stderr, "Error while creating the local attribute list\n");
 	return MPI_ERR_SYSRESOURCE;
     }
-    if (lam_hash_table_init(*keyhash, ATTR_HASH_SIZE) != LAM_SUCCESS)
+    if (ompi_hash_table_init(*keyhash, ATTR_HASH_SIZE) != OMPI_SUCCESS)
 	return MPI_ERR_SYSRESOURCE;
   
     return MPI_SUCCESS;
@@ -120,16 +120,16 @@ int lam_attr_hash_init(lam_hash_table_t **keyhash)
 /**
  * Initialize the main attribute hash that stores the key and meta data
  *
- * @return LAM return code
+ * @return OMPI return code
  */
 
-int lam_attr_init(void);
+int ompi_attr_init(void);
 
 /**
  * Destroy the main attribute hash that stores the key and meta data
  */
 
-void lam_attr_destroy(void);
+void ompi_attr_destroy(void);
 
 
 /**
@@ -149,33 +149,33 @@ void lam_attr_destroy(void);
  * any predefined keys or the attributes attached. To accomplish this,
  * all MPI* calls will have predefined argument set as 0. MPI
  * implementors who will need to play with the predefined keys and
- * attributes would call the lam* functions here and not the MPI*
+ * attributes would call the ompi* functions here and not the MPI*
  * functions, with predefined argument set to 1. 
  * END OF NOTE
  *
  * NOTE: For the function pointers, you need to create a variable of the 
- * union type "lam_attribute_fn_ptr_union_t" and assign the proper field.
+ * union type "ompi_attribute_fn_ptr_union_t" and assign the proper field.
  * to be passed into this function
  * END OF NOTE
  *
- * @return LAM return code
+ * @return OMPI return code
 
  *
  */
 
-int lam_attr_create_keyval(lam_attribute_type_t type, 
-			   lam_attribute_fn_ptr_union_t copy_attr_fn, 
-			   lam_attribute_fn_ptr_union_t delete_attr_fn,
+int ompi_attr_create_keyval(ompi_attribute_type_t type, 
+			   ompi_attribute_fn_ptr_union_t copy_attr_fn, 
+			   ompi_attribute_fn_ptr_union_t delete_attr_fn,
 			   int *key, void *extra_state, int predefined);
 
 /**
  * Free an attribute keyval
  * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param key            key, which is set to MPI_KEY_INVALID (IN/OUT)
- * @return LAM error code
+ * @return OMPI error code
  */
 
-int lam_attr_free_keyval(lam_attribute_type_t type, int *key, int predefined);
+int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, int predefined);
 
 /**
  * Set an attribute on the comm/win/datatype
@@ -185,12 +185,12 @@ int lam_attr_free_keyval(lam_attribute_type_t type, int *key, int predefined);
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
- * @return LAM error code
+ * @return OMPI error code
  *
  */
 
-int lam_attr_set(lam_attribute_type_t type, void *object, 
-		 lam_hash_table_t *keyhash,
+int ompi_attr_set(ompi_attribute_type_t type, void *object, 
+		 ompi_hash_table_t *keyhash,
 		 int key, void *attribute, int predefined);
 
 /**
@@ -200,11 +200,11 @@ int lam_attr_set(lam_attribute_type_t type, void *object,
  * @param attribute      The actual attribute pointer (OUT)
  * @param flag           Flag whether an attribute is associated 
  *                       with the key (OUT)
- * @return LAM error code
+ * @return OMPI error code
  *
  */
 
-int lam_attr_get(lam_hash_table_t *keyhash, int key, 
+int ompi_attr_get(ompi_hash_table_t *keyhash, int key, 
 		 void *attribute, int *flag);
 
 
@@ -215,12 +215,12 @@ int lam_attr_get(lam_hash_table_t *keyhash, int key,
  * @param keyhash        The attribute hash table hanging on the object(IN)
  * @param key            Key val for the attribute (IN)
  * @param predefined     Whether the key is predefined or not 0/1 (IN)
- * @return LAM error code
+ * @return OMPI error code
  *
  */
 
-int lam_attr_delete(lam_attribute_type_t type, void *object, 
-		    lam_hash_table_t *keyhash , int key,
+int ompi_attr_delete(ompi_attribute_type_t type, void *object, 
+		    ompi_hash_table_t *keyhash , int key,
 		    int predefined);
 
 
@@ -233,13 +233,13 @@ int lam_attr_delete(lam_attribute_type_t type, void *object,
  * @param new_object   The new COMM/WIN/DTYPE object (IN)
  * @param keyhash      The attribute hash table hanging on old object(IN)
  * @param newkeyhash   The attribute hash table hanging on new object(IN)
- * @return LAM error code
+ * @return OMPI error code
  *
  */
 
-int lam_attr_copy_all(lam_attribute_type_t type, void *old_object, 
-		      void *new_object, lam_hash_table_t *oldkeyhash,
-		      lam_hash_table_t *newkeyhash);
+int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object, 
+		      void *new_object, ompi_hash_table_t *oldkeyhash,
+		      ompi_hash_table_t *newkeyhash);
 
 
 /** 
@@ -248,12 +248,12 @@ int lam_attr_copy_all(lam_attribute_type_t type, void *old_object,
  * @param type         Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param object       The COMM/WIN/DTYPE object (IN)
  * @param keyhash        The attribute hash table hanging on the object(IN)
- * @return LAM error code
+ * @return OMPI error code
  *
  */
 
-int lam_attr_delete_all(lam_attribute_type_t type, void *object, 
-			lam_hash_table_t *keyhash);
+int ompi_attr_delete_all(ompi_attribute_type_t type, void *object, 
+			ompi_hash_table_t *keyhash);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -261,4 +261,4 @@ int lam_attr_delete_all(lam_attribute_type_t type, void *object,
 #endif
 
 
-#endif /* LAM_ATTRIBUTE_H */
+#endif /* OMPI_ATTRIBUTE_H */

@@ -4,10 +4,10 @@
 
 /** @file **/
 
-#ifndef MCA_LAM_MODULE_EXCHANGE_H
-#define MCA_LAM_MODULE_EXCHANGE_H
+#ifndef MCA_OMPI_MODULE_EXCHANGE_H
+#define MCA_OMPI_MODULE_EXCHANGE_H
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <sys/types.h>
 
@@ -28,8 +28,8 @@ extern "C" {
    * @param size Number of bytes of each instance in the buffer.
    * @param count Number of instances in the buffer.
    *
-   * @retval LAM_SUCCESS On success
-   * @retval LAM_ERROR On failure
+   * @retval OMPI_SUCCESS On success
+   * @retval OMPI_ERROR On failure
    * 
    * This function takes a contiguous buffer of network-ordered data
    * and makes it available to all other MCA processes during the
@@ -88,9 +88,9 @@ extern "C" {
    * @param count Pointer to an int that will be filled with the
    * number of instances in the buffer.
    *
-   * @retval LAM_SUCCESS If a corresponding module buffer is found and
+   * @retval OMPI_SUCCESS If a corresponding module buffer is found and
    * is successfully returned to the caller.
-   * @retval LAM_FAILURE If no corresponding module buffer is found,
+   * @retval OMPI_FAILURE If no corresponding module buffer is found,
    * or if an error occurs wil returning the buffer to the caller.
    *
    * This is the corresponding "get" call to mca_base_modex_send().
@@ -108,7 +108,7 @@ extern "C" {
    * number of bytes is split into two parts.
    */
   int mca_base_modex_recv(mca_base_module_t *dest_module,
-                          lam_proc_t *source_proc,
+                          ompi_proc_t *source_proc,
                           void **buffer, size_t *size);
 
   /*
@@ -120,4 +120,4 @@ extern "C" {
 }
 #endif
 
-#endif /* MCA_LAM_MODULE_EXCHANGE_H */
+#endif /* MCA_OMPI_MODULE_EXCHANGE_H */

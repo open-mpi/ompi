@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_ACCEPT = mpi_comm_accept_f
 #pragma weak pmpi_comm_accept = mpi_comm_accept_f
 #pragma weak pmpi_comm_accept_ = mpi_comm_accept_f
 #pragma weak pmpi_comm_accept__ = mpi_comm_accept_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_COMM_ACCEPT,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_ACCEPT,
                            pmpi_comm_accept,
                            pmpi_comm_accept_,
                            pmpi_comm_accept__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_COMM_ACCEPT,
                            (port_name, info, root, comm, newcomm, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_COMM_ACCEPT = mpi_comm_accept_f
 #pragma weak mpi_comm_accept = mpi_comm_accept_f
 #pragma weak mpi_comm_accept_ = mpi_comm_accept_f
 #pragma weak mpi_comm_accept__ = mpi_comm_accept_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_COMM_ACCEPT,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_COMM_ACCEPT,
                            mpi_comm_accept,
                            mpi_comm_accept_,
                            mpi_comm_accept__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_COMM_ACCEPT,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

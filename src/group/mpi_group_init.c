@@ -7,64 +7,64 @@
 #include "mpi.h"
 
 /* define class information */
-static void lam_group_construct(lam_group_t *);
-static void lam_group_destruct(lam_group_t *);
+static void ompi_group_construct(ompi_group_t *);
+static void ompi_group_destruct(ompi_group_t *);
 
-OBJ_CLASS_INSTANCE(lam_group_t,
-                   lam_object_t,
-                   lam_group_construct,
-                   lam_group_destruct);
+OBJ_CLASS_INSTANCE(ompi_group_t,
+                   ompi_object_t,
+                   ompi_group_construct,
+                   ompi_group_destruct);
 
 /*
  * Table for Fortran <-> C group handle conversion
  */
-lam_pointer_array_t *lam_group_f_to_c_table;
+ompi_pointer_array_t *ompi_group_f_to_c_table;
 
 /*
  * MPI_GROUP_EMPTY
  */
-lam_group_t lam_mpi_group_empty = {
+ompi_group_t ompi_mpi_group_empty = {
     { NULL, 0 },              /* base class */
     0,                        /* number of processes in group */
     MPI_PROC_NULL,            /* rank in group */
-    LAM_ERROR,                /* index in Fortran <-> C translation array */
+    OMPI_ERROR,                /* index in Fortran <-> C translation array */
     false,                    /* can't free group */
-    (lam_proc_t **)NULL       /* pointers to lam_proc_t structures */
+    (ompi_proc_t **)NULL       /* pointers to ompi_proc_t structures */
 };
 
 /*
  * MPI_GROUP_NULL - defining this group makes it much easier to handle
  * this group with out special case code
  */
-lam_group_t lam_mpi_group_null = {
+ompi_group_t ompi_mpi_group_null = {
     { NULL, 0 },              /* base class */
     0,                        /* number of processes in group */
     MPI_PROC_NULL,            /* rank in group */
-    LAM_ERROR,                /* index in Fortran <-> C translation array */
+    OMPI_ERROR,                /* index in Fortran <-> C translation array */
     false,                    /* can't free group */
-    (lam_proc_t **)NULL       /* pointers to lam_proc_t structures */
+    (ompi_proc_t **)NULL       /* pointers to ompi_proc_t structures */
 };
 
 
 /*
  * Allocate a new group structure
  */
-lam_group_t *lam_group_allocate(int group_size)
+ompi_group_t *ompi_group_allocate(int group_size)
 {
     /* local variables */
-    lam_group_t *new_group;
+    ompi_group_t *new_group;
 
     /* create new group group element */
-    new_group = OBJ_NEW(lam_group_t);
+    new_group = OBJ_NEW(ompi_group_t);
     if (new_group) {
-        if (LAM_ERROR == new_group->grp_f_to_c_index) {
+        if (OMPI_ERROR == new_group->grp_f_to_c_index) {
             OBJ_RELEASE(new_group);
             new_group = NULL;
         } else {
-            /* allocate array of (lam_proc_t *)'s, one for each
+            /* allocate array of (ompi_proc_t *)'s, one for each
              *   process in the group */
             new_group->grp_proc_pointers =
-                malloc(sizeof(lam_proc_t *) * group_size);
+                malloc(sizeof(ompi_proc_t *) * group_size);
             if (0 < group_size) {
                 /* non-empty group */
                 if (!new_group->grp_proc_pointers) {
@@ -87,7 +87,7 @@ lam_group_t *lam_group_allocate(int group_size)
 /*
  * increment the reference count of the proc structures
  */
-void lam_group_increment_proc_count(lam_group_t *group)
+void ompi_group_increment_proc_count(ompi_group_t *group)
 {
     /* local variable */
     int proc;
@@ -104,12 +104,12 @@ void lam_group_increment_proc_count(lam_group_t *group)
 /*
  * group constructor
  */
-static void lam_group_construct(lam_group_t *new_group)
+static void ompi_group_construct(ompi_group_t *new_group)
 {
     int ret_val;
 
     /* assign entry in fortran <-> c translation array */
-    ret_val = lam_pointer_array_add(lam_group_f_to_c_table, new_group);
+    ret_val = ompi_pointer_array_add(ompi_group_f_to_c_table, new_group);
     new_group->grp_f_to_c_index = ret_val;
     new_group->grp_ok_to_free=true;
 
@@ -121,7 +121,7 @@ static void lam_group_construct(lam_group_t *new_group)
 /*
  * group destructor
  */
-static void lam_group_destruct(lam_group_t *group)
+static void ompi_group_destruct(ompi_group_t *group)
 {
     int proc;
 
@@ -133,11 +133,11 @@ static void lam_group_destruct(lam_group_t *group)
     if (NULL != group->grp_proc_pointers)
         free(group->grp_proc_pointers);
 
-    /* reset the lam_group_f_to_c_table entry - make sure that the
+    /* reset the ompi_group_f_to_c_table entry - make sure that the
      * entry is in the table */
-    if (NULL != lam_pointer_array_get_item(lam_group_f_to_c_table,
+    if (NULL != ompi_pointer_array_get_item(ompi_group_f_to_c_table,
                                            group->grp_f_to_c_index)) {
-        lam_pointer_array_set_item(lam_group_f_to_c_table,
+        ompi_pointer_array_set_item(ompi_group_f_to_c_table,
                                    group->grp_f_to_c_index, NULL);
     }
 
@@ -147,45 +147,45 @@ static void lam_group_destruct(lam_group_t *group)
 
 
 /*
- * Initialize LAM group infrastructure
+ * Initialize OMPI group infrastructure
  */
-int lam_group_init(void)
+int ompi_group_init(void)
 {
     /* local variables */
     int return_value, ret_val;
 
-    return_value = LAM_SUCCESS;
+    return_value = OMPI_SUCCESS;
 
-    /* initialize lam_group_f_to_c_table */
-    lam_group_f_to_c_table = OBJ_NEW(lam_pointer_array_t);
-    if (NULL == lam_group_f_to_c_table) {
-        return LAM_ERROR;
+    /* initialize ompi_group_f_to_c_table */
+    ompi_group_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
+    if (NULL == ompi_group_f_to_c_table) {
+        return OMPI_ERROR;
     }
 
     /* add MPI_GROUP_NULL to table */
     ret_val =
-        lam_pointer_array_add(lam_group_f_to_c_table, &lam_mpi_group_null);
-    if (LAM_ERROR == ret_val) {
-        return LAM_ERROR;
+        ompi_pointer_array_add(ompi_group_f_to_c_table, &ompi_mpi_group_null);
+    if (OMPI_ERROR == ret_val) {
+        return OMPI_ERROR;
     };
     /* make sure that MPI_GROUP_NULL is in location in the table */
-    if (LAM_GROUP_NULL_FORTRAN != ret_val) {
-        return LAM_ERROR;
+    if (OMPI_GROUP_NULL_FORTRAN != ret_val) {
+        return OMPI_ERROR;
     };
-    lam_mpi_group_null.grp_f_to_c_index = ret_val;
+    ompi_mpi_group_null.grp_f_to_c_index = ret_val;
 
     /* add MPI_GROUP_EMPTY to table */
     ret_val =
-        lam_pointer_array_add(lam_group_f_to_c_table,
-                              &lam_mpi_group_empty);
-    if (LAM_ERROR == ret_val) {
-        return LAM_ERROR;
+        ompi_pointer_array_add(ompi_group_f_to_c_table,
+                              &ompi_mpi_group_empty);
+    if (OMPI_ERROR == ret_val) {
+        return OMPI_ERROR;
     };
     /* make sure that MPI_GROUP_NULL is in location in the table */
-    if (LAM_GROUP_EMPTY_FORTRAN != ret_val) {
-        return LAM_ERROR;
+    if (OMPI_GROUP_EMPTY_FORTRAN != ret_val) {
+        return OMPI_ERROR;
     };
-    lam_mpi_group_empty.grp_f_to_c_index = ret_val;
+    ompi_mpi_group_empty.grp_f_to_c_index = ret_val;
 
     /* return */
     return return_value;
@@ -195,14 +195,14 @@ int lam_group_init(void)
 /*
  * Clean up group infrastructure
  */
-int lam_group_finalize(void)
+int ompi_group_finalize(void)
 {
     /* local variables */
-    int return_value = LAM_SUCCESS;
+    int return_value = OMPI_SUCCESS;
 
     /* remove group for MPI_COMM_WORLD */
 
-    OBJ_RELEASE(lam_group_f_to_c_table);
+    OBJ_RELEASE(ompi_group_f_to_c_table);
 
     /* return */
     return return_value;

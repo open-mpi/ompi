@@ -24,7 +24,7 @@ typedef struct {
         volatile int lockData_m;
         char padding[4];
     } data;
-} lam_lock_data_t;
+} ompi_lock_data_t;
 
 /*
  * 64 bit integer
@@ -32,7 +32,7 @@ typedef struct {
 typedef volatile unsigned long long bigAtomicUnsignedInt;
 
 
-static inline void spinlock(lam_lock_data_t *lock)
+static inline void spinlock(ompi_lock_data_t *lock)
 {
     asm("loop:\n"
 	"    ldl %t1, (%a0)\n"
@@ -58,7 +58,7 @@ static inline void spinlock(lam_lock_data_t *lock)
  * obtain the lock...
  */
 
-static inline int spintrylock(lam_lock_data_t *lock)
+static inline int spintrylock(ompi_lock_data_t *lock)
 {
     int result = asm("mov %zero, %t3\n"
            "loop:\n"
@@ -85,7 +85,7 @@ static inline int spintrylock(lam_lock_data_t *lock)
 }
 
 /* alpha specific unlock function - need the memory barrier */
-static inline void spinunlock(lam_lock_data_t *lock)
+static inline void spinunlock(ompi_lock_data_t *lock)
 {
     asm("mb");
     lock->data.lockData_m = LOCK_UNLOCKED;

@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include "constants.h"
@@ -30,7 +30,7 @@ int mca_coll_basic_allgather(void *sbuf, int scount,
   
   /* Gather and broadcast. */
 
-  size = lam_comm_size(comm);
+  size = ompi_comm_size(comm);
 
   err = comm->c_coll.coll_gather_intra(sbuf, scount, sdtype, rbuf, rcount, 
                                        rdtype, 0, comm);

@@ -3,7 +3,7 @@
  * $HEADER$
  *
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include "mca/pcm/pcm.h"
 #include "types.h"
@@ -31,24 +31,24 @@ int mca_pcm_rsh_finalize(void);
 int mca_pcm_rsh_query_get_nodes(mca_pcm_rte_node_t **nodes, size_t *nodes_len, 
                                             int *available_procs);
 
-lam_job_handle_t mca_pcm_rsh_handle_new(lam_job_handle_t parent);
-lam_job_handle_t mca_pcm_rsh_handle_get(void);
-void mca_pcm_rsh_handle_free(lam_job_handle_t *job_handle);
+ompi_job_handle_t mca_pcm_rsh_handle_new(ompi_job_handle_t parent);
+ompi_job_handle_t mca_pcm_rsh_handle_get(void);
+void mca_pcm_rsh_handle_free(ompi_job_handle_t *job_handle);
 
-int mca_pcm_rsh_job_can_spawn(lam_job_handle_t job_handle);
-int mca_pcm_rsh_job_set_arguments(lam_job_handle_t job_handle, 
+int mca_pcm_rsh_job_can_spawn(ompi_job_handle_t job_handle);
+int mca_pcm_rsh_job_set_arguments(ompi_job_handle_t job_handle, 
                                               mca_pcm_control_args_t* opts, 
                                               size_t opts_len);
-int mca_pcm_rsh_job_launch_procs(lam_job_handle_t job_handle, 
+int mca_pcm_rsh_job_launch_procs(ompi_job_handle_t job_handle, 
                                              mca_pcm_rte_node_t *nodes, 
                                              size_t nodes_len, const char* file, 
                                              int argc, const char* argv[], 
                                              const char *env[]);
-int mca_pcm_rsh_job_rendezvous(lam_job_handle_t job_handle);
-int mca_pcm_rsh_job_wait(lam_job_handle_t job_handle);
-int mca_pcm_rsh_job_running(lam_job_handle_t job_handle, 
+int mca_pcm_rsh_job_rendezvous(ompi_job_handle_t job_handle);
+int mca_pcm_rsh_job_wait(ompi_job_handle_t job_handle);
+int mca_pcm_rsh_job_running(ompi_job_handle_t job_handle, 
                                         int* running);
-int mca_pcm_rsh_job_list_running(lam_job_handle_t **handles, 
+int mca_pcm_rsh_job_list_running(ompi_job_handle_t **handles, 
                                              size_t handles_len);
 
 int mca_pcm_rsh_proc_startup(void);
@@ -61,7 +61,7 @@ int mca_pcm_rsh_proc_get_parent(void);
  */
 
 struct mca_pcm_rsh_connection_item_t {
-  lam_list_item_t super;
+  ompi_list_item_t super;
 
   pid_t rshpid;
   int vpid;
@@ -69,9 +69,9 @@ struct mca_pcm_rsh_connection_item_t {
 };
 typedef struct mca_pcm_rsh_connection_t mca_pcm_rsh_connection_t;
 
-extern lam_list_t mca_pcm_rsh_connections;
+extern ompi_list_t mca_pcm_rsh_connections;
 
-extern lam_job_handle_t mca_pcm_rsh_my_job_handle;
+extern ompi_job_handle_t mca_pcm_rsh_my_job_handle;
 extern int mca_pcm_rsh_my_vpid;
 
 extern char *mca_pcm_rsh_rsh;

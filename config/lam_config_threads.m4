@@ -2,7 +2,7 @@ dnl
 dnl $HEADER$
 dnl
 
-AC_DEFUN([LAM_CONFIG_THREADS],[
+AC_DEFUN([OMPI_CONFIG_THREADS],[
 #
 # Arguments: none
 #
@@ -15,15 +15,15 @@ AC_DEFUN([LAM_CONFIG_THREADS],[
 #
 
 # create templates
-AH_TEMPLATE([LAM_HAVE_SOLARIS_THREADS], 
+AH_TEMPLATE([OMPI_HAVE_SOLARIS_THREADS], 
     [Do we have native Solaris threads])
-AH_TEMPLATE([LAM_HAVE_POSIX_THREADS], 
+AH_TEMPLATE([OMPI_HAVE_POSIX_THREADS], 
     [Do we have POSIX threads])
 
 #
 # Check for thread types - add your type here...
 #
-LAM_CONFIG_POSIX_THREADS(HAVE_POSIX_THREADS=1, HAVE_POSIX_THREADS=0)
+OMPI_CONFIG_POSIX_THREADS(HAVE_POSIX_THREADS=1, HAVE_POSIX_THREADS=0)
 AC_MSG_CHECKING([for working POSIX threads package])
 if test "$HAVE_POSIX_THREADS" = "1" ; then
   AC_MSG_RESULT([yes])
@@ -32,7 +32,7 @@ else
 fi
 export HAVE_POSIX_THREADS
 
-LAM_CONFIG_SOLARIS_THREADS(HAVE_SOLARIS_THREADS=1, HAVE_SOLARIS_THREADS=0)
+OMPI_CONFIG_SOLARIS_THREADS(HAVE_SOLARIS_THREADS=1, HAVE_SOLARIS_THREADS=0)
 AC_MSG_CHECKING([for working Solaris threads package])
 if test "$HAVE_SOLARIS_THREADS" = "1" ; then
   AC_MSG_RESULT([yes])
@@ -103,9 +103,9 @@ AC_MSG_RESULT($THREAD_TYPE)
 # Blah - this should be made better, but I don't know how...
 #
 if test "$THREAD_TYPE" = "solaris"; then
-    AC_DEFINE(LAM_HAVE_SOLARIS_THREADS, 1)
-    AC_DEFINE(LAM_HAVE_POSIX_THREADS, 0)
-    AC_DEFINE(LAM_THREADS_HAVE_DIFFERENT_PIDS, 0)
+    AC_DEFINE(OMPI_HAVE_SOLARIS_THREADS, 1)
+    AC_DEFINE(OMPI_HAVE_POSIX_THREADS, 0)
+    AC_DEFINE(OMPI_THREADS_HAVE_DIFFERENT_PIDS, 0)
 
     THREAD_CFLAGS="$STHREAD_CFLAGS"
     THREAD_FFLAGS="$STHREAD_FFLAGS"
@@ -115,8 +115,8 @@ if test "$THREAD_TYPE" = "solaris"; then
     THREAD_LDFLAGS="$STHREAD_LDFLAGS"
     THREAD_LIBS="$STHREAD_LIBS"
 elif test "$THREAD_TYPE" = "posix"; then
-    AC_DEFINE(LAM_HAVE_SOLARIS_THREADS, 0)
-    AC_DEFINE(LAM_HAVE_POSIX_THREADS, 1)
+    AC_DEFINE(OMPI_HAVE_SOLARIS_THREADS, 0)
+    AC_DEFINE(OMPI_HAVE_POSIX_THREADS, 1)
 
     THREAD_CFLAGS="$PTHREAD_CFLAGS"
     THREAD_FFLAGS="$PTHREAD_FFLAGS"
@@ -126,10 +126,10 @@ elif test "$THREAD_TYPE" = "posix"; then
     THREAD_LDFLAGS="$PTHREAD_LDFLAGS"
     THREAD_LIBS="$PTHREAD_LIBS"
 
-    LAM_CHECK_PTHREAD_PIDS
+    OMPI_CHECK_PTHREAD_PIDS
 elif test "$THREAD_TYPE" = "none"; then
-    AC_DEFINE(LAM_HAVE_SOLARIS_THREADS, 0)
-    AC_DEFINE(LAM_HAVE_POSIX_THREADS, 0)
+    AC_DEFINE(OMPI_HAVE_SOLARIS_THREADS, 0)
+    AC_DEFINE(OMPI_HAVE_POSIX_THREADS, 0)
 
     TRHEAD_CFLAGS=
     THREAD_FFLAGS=
@@ -143,14 +143,14 @@ else
 
 ************************************************************************
 
-LAM/MPI was unable to find threading support on your system.  In the
-near future, the LAM development team is considering requiring
-threading support for proper LAM execution.  This is in part because
+OMPI/MPI was unable to find threading support on your system.  In the
+near future, the OMPI development team is considering requiring
+threading support for proper OMPI execution.  This is in part because
 we are not aware of any users that do not have thread support - so we
-need you to e-mail us at lam@lam-mpi.org and let us know about this
+need you to e-mail us at ompi@ompi-mpi.org and let us know about this
 problem.
 
-To build this version of LAM/MPI without thread support, re-run
+To build this version of OMPI/MPI without thread support, re-run
 configure with the '--without-threads' option.
 
 ************************************************************************

@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef LAM_C_PROFILE_DEFINES_H
-#define LAM_C_PROFILE_DEFINES_H
+#ifndef OMPI_C_PROFILE_DEFINES_H
+#define OMPI_C_PROFILE_DEFINES_H
 /*
  * This file is included in the top directory only if 
  * profiling is required. Once profiling is required,
@@ -316,4 +316,4 @@
 #define MPI_Win_wait PMPI_Win_wait
 #define MPI_Wtick PMPI_Wtick 
 #define MPI_Wtime PMPI_Wtime
-#endif /* LAM_C_PROFILE_DEFINES_H */
+#endif /* OMPI_C_PROFILE_DEFINES_H */

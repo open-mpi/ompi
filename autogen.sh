@@ -2,7 +2,7 @@
 #
 # $HEADER$
 #
-# This script is run on developer copies of LAM/MPI -- *not*
+# This script is run on developer copies of OMPI/MPI -- *not*
 # distribution tarballs.
 
 
@@ -12,15 +12,15 @@
 #
 ##############################################################################
 
-lam_aclocal_search="aclocal"
-lam_autoheader_search="autoheader"
-lam_autoconf_search="autoconf"
-lam_libtoolize_search="libtoolize glibtoolize"
-lam_automake_search="automake"
+ompi_aclocal_search="aclocal"
+ompi_autoheader_search="autoheader"
+ompi_autoconf_search="autoconf"
+ompi_libtoolize_search="libtoolize glibtoolize"
+ompi_automake_search="automake"
 
-lam_automake_version="1.7"
-lam_autoconf_version="2.58"
-lam_libtool_version="1.5"
+ompi_automake_version="1.7"
+ompi_autoconf_version="2.58"
+ompi_libtool_version="1.5"
 
 
 ##############################################################################
@@ -29,16 +29,16 @@ lam_libtool_version="1.5"
 #
 ##############################################################################
 
-lam_aclocal_version="$lam_automake_version"
-lam_autoheader_version="$lam_autoconf_version"
-lam_libtoolize_version="$lam_libtool_version"
+ompi_aclocal_version="$ompi_automake_version"
+ompi_autoheader_version="$ompi_autoconf_version"
+ompi_libtoolize_version="$ompi_libtool_version"
 
 # program names to execute
-lam_aclocal=""
-lam_autoheader=""
-lam_autoconf=""
-lam_libtoolize=""
-lam_automake=""
+ompi_aclocal=""
+ompi_autoheader=""
+ompi_autoconf=""
+ompi_libtoolize=""
+ompi_automake=""
 
 mca_no_configure_modules_file="config/mca_no_configure_modules.m4"
 mca_no_config_list_file="mca_no_config_list"
@@ -123,9 +123,9 @@ find_app() {
     local min_version="99.99.99"
     local found=0
 
-    eval "min_version=\"\$lam_${app_name}_version\""
+    eval "min_version=\"\$ompi_${app_name}_version\""
 
-    eval "search_path=\"\$lam_${app_name}_search\""
+    eval "search_path=\"\$ompi_${app_name}_search\""
     for i in $search_path ; do
         version="`${i} --version 2>&1`"
         if test "$?" != 0 ; then
@@ -136,7 +136,7 @@ find_app() {
         version="`echo $version | cut -f1 -d' '`"
 
         if check_version $min_version $version ; then
-            eval "lam_${app_name}=\"${i}\""
+            eval "ompi_${app_name}=\"${i}\""
             found=1
             break
         fi
@@ -150,9 +150,9 @@ I am gonna abort.  :-(
 Please make sure you are using at least the following versions of the
 GNU tools:
 
-GNU Autoconf $lam_autoconf_version
-GNU Automake $lam_automake_version
-GNU Libtool  $lam_libtool_version
+GNU Autoconf $ompi_autoconf_version
+GNU Automake $ompi_automake_version
+GNU Libtool  $ompi_libtool_version
 
 EOF
         exit 1
@@ -190,9 +190,9 @@ This *MAY* be caused by an older version of one of the required
 packages.  Please make sure you are using at least the following
 versions:
 
-GNU Autoconf $lam_autoconf_version
-GNU Automake $lam_automake_version
-GNU Libtool  $lam_libtool_version
+GNU Autoconf $ompi_autoconf_version
+GNU Automake $ompi_automake_version
+GNU Libtool  $ompi_libtool_version
 -------------------------------------------------------------------------
 
 EOF
@@ -259,7 +259,7 @@ find_and_delete() {
 #
 # INPUT:
 #    - directory to run in
-#    - LAM top directory
+#    - OMPI top directory
 #
 # OUTPUT:
 #    none
@@ -273,20 +273,20 @@ find_and_delete() {
 ##############################################################################
 run_gnu_tools() {
     rgt_dir="$1"
-    rgt_lam_topdir="$2"
+    rgt_ompi_topdir="$2"
 
     # Sanity check to ensure that there's a configure.in or
     # configure.ac file here, or if there's a configure.params
     # file and we need to run make_configure.pl.
 
     if test -f configure.params -a -f configure.stub -a \
-	-x "$rgt_lam_topdir/config/mca_make_configure.pl"; then
+	-x "$rgt_ompi_topdir/config/mca_make_configure.pl"; then
         cat <<EOF
 *** Found configure.stub
 *** Running mca_make_configure.pl
 EOF
-	"$rgt_lam_topdir/config/mca_make_configure.pl" \
-	    --lamdir "$rgt_lam_topdir" \
+	"$rgt_ompi_topdir/config/mca_make_configure.pl" \
+	    --ompidir "$rgt_ompi_topdir" \
 	    --moduledir "`pwd`"
         if test "$?" != "0"; then
            echo "*** autogen.sh failed to complete!"
@@ -325,22 +325,22 @@ EOF
 
     echo "*** Running GNU tools"
 
-    run_and_check $lam_aclocal
+    run_and_check $ompi_aclocal
     if test "`grep AC_CONFIG_HEADER $file`" != "" -o \
 	"`grep AM_CONFIG_HEADER $file`" != ""; then
-	run_and_check $lam_autoheader
+	run_and_check $ompi_autoheader
     fi
-    run_and_check $lam_autoconf
+    run_and_check $ompi_autoconf
 
     # We only need the libltdl stuff for the top-level
     # configure, not any of the MCA modules.
 
     if test -f include/mpi.h; then
 	rm -rf libltdl src/libltdl src/ltdl.h
-	run_and_check $lam_libtoolize --automake --copy --ltdl
+	run_and_check $ompi_libtoolize --automake --copy --ltdl
 	mv libltdl src
 
-	echo "Adjusting libltdl for LAM :-("
+	echo "Adjusting libltdl for OMPI :-("
 
 	echo "  -- patching for argz bugfix in libtool 1.5"
 	cd src/libltdl
@@ -363,14 +363,14 @@ EOF
         fi
 	cd ../..
 	echo "  -- patching configure for broken -c/-o compiler test"
-	sed -e 's/chmod -w \./#LAM\/MPI FIX: chmod -w ./' \
+	sed -e 's/chmod -w \./#OMPI\/MPI FIX: chmod -w ./' \
 	    configure > configure.new
 	mv configure.new configure
 	chmod a+x configure
     else
-	run_and_check $lam_libtoolize --automake --copy
+	run_and_check $ompi_libtoolize --automake --copy
     fi
-    run_and_check $lam_automake --foreign -a --copy --include-deps
+    run_and_check $ompi_automake --foreign -a --copy --include-deps
 }
 
 
@@ -385,19 +385,19 @@ EOF
 #
 # INPUT:
 #    - directory to run in
-#    - LAM top directory
+#    - OMPI top directory
 #
 # OUTPUT:
 #    none
 #
 # SIDE EFFECTS:
-#    - skips directories with .lam_no_gnu .lam_ignore
+#    - skips directories with .ompi_no_gnu .ompi_ignore
 #    - uses provided autogen.sh if available
 #
 ##############################################################################
 process_dir() {
     pd_dir="$1"
-    pd_lam_topdir="$2"
+    pd_ompi_topdir="$2"
     pd_cur_dir="`pwd`"
 
     if test -d "$pd_dir"; then
@@ -405,17 +405,17 @@ process_dir() {
 
 	# See if the package doesn't want us to set it up
 
-	if test -f .lam_no_gnu; then
+	if test -f .ompi_no_gnu; then
 	    cat <<EOF
 
-*** Found .lam_no_gnu file -- skipping GNU setup in:
+*** Found .ompi_no_gnu file -- skipping GNU setup in:
 ***   `pwd`
 
 EOF
-	elif test -f .lam_ignore; then
+	elif test -f .ompi_ignore; then
 	    cat <<EOF
 
-*** Found .lam_ignore file -- skipping entire tree:
+*** Found .ompi_ignore file -- skipping entire tree:
 ***   `pwd`
 
 EOF
@@ -437,7 +437,7 @@ EOF
 ***   `pwd`
 
 EOF
-            run_gnu_tools "$pd_dir" "$pd_lam_topdir"
+            run_gnu_tools "$pd_dir" "$pd_ompi_topdir"
 
         elif test -f configure.params -a -f configure.stub; then
 	    cat <<EOF
@@ -446,7 +446,7 @@ EOF
 ***   `pwd`
 
 EOF
-            run_gnu_tools "$pd_dir" "$pd_lam_topdir"
+            run_gnu_tools "$pd_dir" "$pd_ompi_topdir"
 
         elif test -f configure.params; then
 	    cat <<EOF
@@ -465,7 +465,7 @@ EOF
                 pd_module_name="`basename $pd_dir`"
                 pd_module_type="`dirname $pd_dir`"
                 pd_module_type="`basename $pd_module_type`"
-                pd_get_ver="../../../../config/lam_get_version.sh"
+                pd_get_ver="../../../../config/ompi_get_version.sh"
                 pd_ver_file="`grep PARAM_VERSION_FILE configure.params`"
                 if test -z "$pd_ver_file"; then
                     pd_ver_file="VERSION"
@@ -475,8 +475,8 @@ EOF
 
                 # Write out to two files (they're merged at the end)
 
-                pd_list_file="$pd_lam_topdir/$mca_no_config_list_file"
-                pd_amc_file="$pd_lam_topdir/$mca_no_config_amc_file"
+                pd_list_file="$pd_ompi_topdir/$mca_no_config_list_file"
+                pd_amc_file="$pd_ompi_topdir/$mca_no_config_amc_file"
 
                 cat >> $pd_list_file <<EOF
 dnl ----------------------------------------------------------------
@@ -519,29 +519,29 @@ dnl argument.  So we have to figure it out here.
 
 AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_MAJOR_VERSION, 
     $pd_ver_major,
-    [Major LAM MCA $pd_module_type $pd_module_name version])
+    [Major OMPI MCA $pd_module_type $pd_module_name version])
 AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_MINOR_VERSION, 
     $pd_ver_minor,
-    [Minor LAM MCA $pd_module_type $pd_module_name version])
+    [Minor OMPI MCA $pd_module_type $pd_module_name version])
 AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_RELEASE_VERSION, 
     $pd_ver_release,
-    [Release LAM MCA $pd_module_type $pd_module_name version])
+    [Release OMPI MCA $pd_module_type $pd_module_name version])
 AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_ALPHA_VERSION, 
     $pd_ver_alpha,
-    [Alpha LAM MCA $pd_module_type $pd_module_name version])
+    [Alpha OMPI MCA $pd_module_type $pd_module_name version])
 AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_BETA_VERSION, 
     $pd_ver_beta,
-    [Beta LAM MCA $pd_module_type $pd_module_name version])
+    [Beta OMPI MCA $pd_module_type $pd_module_name version])
 AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_SVN_VERSION, 
     $pd_ver_svn,
-    [SVN LAM MCA $pd_module_type $pd_module_name version])
+    [SVN OMPI MCA $pd_module_type $pd_module_name version])
 AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_FULL_VERSION, 
     "$pd_ver_full",
-    [Full LAM MCA $pd_module_type $pd_module_name version])
+    [Full OMPI MCA $pd_module_type $pd_module_name version])
 
 EOF
                 cat >> $pd_amc_file <<EOF
-AM_CONDITIONAL(LAM_BUILD_${pd_module_type}_${pd_module_name}_LOADABLE_MODULE,
+AM_CONDITIONAL(OMPI_BUILD_${pd_module_type}_${pd_module_name}_LOADABLE_MODULE,
     test "\$BUILD_${pd_module_type}_${pd_module_name}_LOADABLE_MODULE" = "1")
 
 EOF
@@ -566,13 +566,13 @@ EOF
 
         cd "$pd_cur_dir"
     fi
-    unset pd_dir pd_lam_topdir pd_cur_dir pd_module_type
+    unset pd_dir pd_ompi_topdir pd_cur_dir pd_module_type
 }
 
 
 ##############################################################################
 #
-# run_global - run the config in the top LAM dir and all MCA modules
+# run_global - run the config in the top OMPI dir and all MCA modules
 #
 # INPUT:
 #    none
@@ -673,11 +673,11 @@ echo "[Checking] command line parameters"
 # just in this current directory.
 
 want_local=no
-lamdir=
+ompidir=
 for arg in $*; do
     case $arg in
     -l) want_local=yes ;;
-    -lamdir|--lamdir|-lam|--lam) lamdir="$1" ;;
+    -ompidir|--ompidir|-ompi|--ompi) ompidir="$1" ;;
     *) ;;
     esac
 done
@@ -689,7 +689,7 @@ echo "[Checking] prerequisites"
 if test ! -d .svn ; then
     cat <<EOF
 
-This doesn't look like a developer copy of LAM/MPI.  You probably do not
+This doesn't look like a developer copy of OMPI/MPI.  You probably do not
 want to run autogen.sh - it is normally not needed for a release source
 tree.  Giving you 5 seconds to reconsider and kill me.
 
@@ -697,21 +697,21 @@ EOF
     sleep 5
 fi
 
-# figure out if we're at the top level of the LAM tree, a module's
+# figure out if we're at the top level of the OMPI tree, a module's
 # top-level directory, or somewhere else.
 if test -f VERSION -a -f configure.ac -a -f include/mpi.h ; then
-    # Top level of LAM tree
-    lamdir="`pwd`"
+    # Top level of OMPI tree
+    ompidir="`pwd`"
 elif test -f configure.in -o -f configure.ac -o -f configure.params ; then
     # Top level of a module directory
     want_local=yes
-    if test -z "$lamdir"; then
-        lamdir="../../../.."
+    if test -z "$ompidir"; then
+        ompidir="../../../.."
     fi
 else
     cat <<EOF
 
-You must run this script from either the top level of the LAM
+You must run this script from either the top level of the OMPI
 directory tree or the top-level of an MCA module directory tree.
 
 EOF
@@ -727,7 +727,7 @@ find_app "automake"
 
 # do the work
 if test "$want_local" = "yes"; then
-    process_dir . $lamdir
+    process_dir . $ompidir
 else
     run_global
 fi

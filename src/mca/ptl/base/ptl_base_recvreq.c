@@ -14,11 +14,11 @@ static void mca_ptl_base_recv_request_destruct(mca_ptl_base_recv_request_t*);
 static mca_ptl_base_recv_frag_t* mca_ptl_base_recv_request_match_specific_proc(mca_ptl_base_recv_request_t*, int);
 
 
-lam_class_t mca_ptl_base_recv_request_t_class = { 
+ompi_class_t mca_ptl_base_recv_request_t_class = { 
     "mca_ptl_base_recv_request_t", 
     OBJ_CLASS(mca_pml_base_request_t),
-    (lam_construct_t) mca_ptl_base_recv_request_construct, 
-    (lam_destruct_t) mca_ptl_base_recv_request_destruct 
+    (ompi_construct_t) mca_ptl_base_recv_request_construct, 
+    (ompi_destruct_t) mca_ptl_base_recv_request_destruct 
 };
                                                                                                  
 
@@ -41,7 +41,7 @@ static void mca_ptl_base_recv_request_destruct(mca_ptl_base_recv_request_t* requ
 
 void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* request)
 {
-    lam_communicator_t *comm = request->super.req_comm;
+    ompi_communicator_t *comm = request->super.req_comm;
     mca_pml_ptl_comm_t* pml_comm = comm->c_pml_comm;
     int req_peer = request->super.req_peer;
     mca_ptl_base_recv_frag_t* frag;
@@ -52,7 +52,7 @@ void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* reque
     /* assign sequence number */
     request->super.req_sequence = pml_comm->c_recv_seq++;
 
-    if (lam_list_get_size(&pml_comm->c_unexpected_frags[req_peer]) > 0 &&
+    if (ompi_list_get_size(&pml_comm->c_unexpected_frags[req_peer]) > 0 &&
         (frag = mca_ptl_base_recv_request_match_specific_proc(request, req_peer)) != NULL) {
         mca_ptl_t* ptl = frag->super.frag_owner;
         THREAD_UNLOCK(&pml_comm->c_matching_lock);
@@ -63,7 +63,7 @@ void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* reque
     /* We didn't find any matches.  Record this irecv so we can match 
      * it when the message comes in.
     */
-    lam_list_append(pml_comm->c_specific_receives+req_peer, (lam_list_item_t*)request);
+    ompi_list_append(pml_comm->c_specific_receives+req_peer, (ompi_list_item_t*)request);
     THREAD_UNLOCK(&pml_comm->c_matching_lock);
 }
 
@@ -75,7 +75,7 @@ void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* reque
 
 void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
 {
-    lam_communicator_t *comm = request->super.req_comm;
+    ompi_communicator_t *comm = request->super.req_comm;
     mca_pml_ptl_comm_t* pml_comm = comm->c_pml_comm;
     int proc_count = comm->c_remote_group->grp_proc_count;
     int proc;
@@ -95,7 +95,7 @@ void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
         mca_ptl_base_recv_frag_t* frag;
 
         /* continue if no frags to match */
-        if (lam_list_get_size(&pml_comm->c_unexpected_frags[proc]) == 0)
+        if (ompi_list_get_size(&pml_comm->c_unexpected_frags[proc]) == 0)
             continue;
 
         /* loop over messages from the current proc */
@@ -111,7 +111,7 @@ void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
      * it when the message comes in.
     */
  
-    lam_list_append(&pml_comm->c_wild_receives, (lam_list_item_t*)request);
+    ompi_list_append(&pml_comm->c_wild_receives, (ompi_list_item_t*)request);
     THREAD_UNLOCK(&pml_comm->c_matching_lock);
 }
 
@@ -125,22 +125,22 @@ static mca_ptl_base_recv_frag_t* mca_ptl_base_recv_request_match_specific_proc(
     mca_ptl_base_recv_request_t* request, int proc)
 {
     mca_pml_ptl_comm_t *pml_comm = request->super.req_comm->c_pml_comm;
-    lam_list_t* unexpected_frags = pml_comm->c_unexpected_frags+proc;
+    ompi_list_t* unexpected_frags = pml_comm->c_unexpected_frags+proc;
     mca_ptl_base_recv_frag_t* frag;
     int tag = request->super.req_tag;
 
-    for (frag =  (mca_ptl_base_recv_frag_t*)lam_list_get_first(unexpected_frags);
-         frag != (mca_ptl_base_recv_frag_t*)lam_list_get_end(unexpected_frags);
-         frag =  (mca_ptl_base_recv_frag_t*)lam_list_get_next(frag)) {
+    for (frag =  (mca_ptl_base_recv_frag_t*)ompi_list_get_first(unexpected_frags);
+         frag != (mca_ptl_base_recv_frag_t*)ompi_list_get_end(unexpected_frags);
+         frag =  (mca_ptl_base_recv_frag_t*)ompi_list_get_next(frag)) {
         mca_ptl_base_match_header_t* header = &frag->super.frag_header.hdr_match;
 
         /* check first frag - we assume that process matching has been done already */
-        if (((tag == LAM_ANY_TAG) || (tag == header->hdr_tag))) {
+        if (((tag == OMPI_ANY_TAG) || (tag == header->hdr_tag))) {
 
-            if (tag == LAM_ANY_TAG && header->hdr_tag < 0) {
+            if (tag == OMPI_ANY_TAG && header->hdr_tag < 0) {
                 continue;
             }
-            lam_list_remove_item(unexpected_frags, (lam_list_item_t*)frag);
+            ompi_list_remove_item(unexpected_frags, (ompi_list_item_t*)frag);
             request->req_bytes_packed = header->hdr_msg_length;
             request->super.req_tag = header->hdr_tag;
             request->super.req_peer = header->hdr_src;

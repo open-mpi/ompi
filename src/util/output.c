@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 #if __STDC__
@@ -25,7 +25,7 @@
  * Private data
  */
 static int verbose_stream = -1;
-static lam_output_stream_t verbose = {
+static ompi_output_stream_t verbose = {
   /* debugging */
   false,
   /* verbose level */
@@ -44,10 +44,10 @@ static lam_output_stream_t verbose = {
 /*
  * Private functions
  */
-static int do_open(int output_id, lam_output_stream_t *lds);
+static int do_open(int output_id, ompi_output_stream_t *lds);
 static void free_descriptor(int output_id);
 static void output(int output_id, char *format, va_list arglist);
-static char *lam_vsnprintf(char *format, va_list arglist);
+static char *ompi_vsnprintf(char *format, va_list arglist);
 
 
 /*
@@ -74,26 +74,26 @@ struct output_desc_t {
 };
 typedef struct output_desc_t output_desc_t;
 
-#define LAM_OUTPUT_MAX_STREAMS 32
+#define OMPI_OUTPUT_MAX_STREAMS 32
 
 
 /*
  * Local state
  */
 static bool initialized = false;
-static output_desc_t info[LAM_OUTPUT_MAX_STREAMS];
+static output_desc_t info[OMPI_OUTPUT_MAX_STREAMS];
 static char *temp_str = 0;
 static int temp_str_len = 0;
-static lam_mutex_t mutex;
+static ompi_mutex_t mutex;
 
 
 /*
  * Setup the output stream infrastructure
  */
-bool lam_output_init(void)
+bool ompi_output_init(void)
 {
   int i;
-  for (i = 0; i < LAM_OUTPUT_MAX_STREAMS; ++i) {
+  for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i) {
     info[i].ldi_used = false;
     info[i].ldi_enabled = false;
 
@@ -103,12 +103,12 @@ bool lam_output_init(void)
 
   /* Initialize the mutex that protects the output */
 
-  OBJ_CONSTRUCT(&mutex, lam_mutex_t);
+  OBJ_CONSTRUCT(&mutex, ompi_mutex_t);
   initialized = true;
 
   /* Open the default verbose stream */
 
-  verbose_stream = lam_output_open(&verbose);
+  verbose_stream = ompi_output_open(&verbose);
   return true;
 }
 
@@ -116,7 +116,7 @@ bool lam_output_init(void)
 /*
  * Open a stream
  */
-int lam_output_open(lam_output_stream_t *lds)
+int ompi_output_open(ompi_output_stream_t *lds)
 {
   return do_open(-1, lds);
 }
@@ -125,7 +125,7 @@ int lam_output_open(lam_output_stream_t *lds)
 /*
  * Reset the parameters on a stream
  */
-int lam_output_reopen(int output_id, lam_output_stream_t *lds)
+int ompi_output_reopen(int output_id, ompi_output_stream_t *lds)
 {
   return do_open(output_id, lds);
 }
@@ -134,16 +134,16 @@ int lam_output_reopen(int output_id, lam_output_stream_t *lds)
 /*
  * Enable and disable outptu streams
  */
-bool lam_output_switch(int output_id, bool enable)
+bool ompi_output_switch(int output_id, bool enable)
 {
   bool ret = false;
 
   /* Setup */
 
   if (!initialized)
-    lam_output_init();
+    ompi_output_init();
 
-  if (output_id >= 0 && output_id < LAM_OUTPUT_MAX_STREAMS) {
+  if (output_id >= 0 && output_id < OMPI_OUTPUT_MAX_STREAMS) {
     ret = info[output_id].ldi_enabled;
     info[output_id].ldi_enabled = enable;
   }
@@ -155,19 +155,19 @@ bool lam_output_switch(int output_id, bool enable)
 /*
  * Reopen all the streams; used during checkpoint/restart.
  */
-void lam_output_reopen_all(void)
+void ompi_output_reopen_all(void)
 {
   int i;
-  lam_output_stream_t lds;
+  ompi_output_stream_t lds;
 
-  for (i = 0; i < LAM_OUTPUT_MAX_STREAMS; ++i) {
+  for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i) {
 
     /* scan till we find ldi_used == 0, which is the end-marker */ 
     if (!info[i].ldi_used)
       break;
 
     /* 
-     * set this to zero to ensure that lam_output_open will return this same
+     * set this to zero to ensure that ompi_output_open will return this same
      * index as the output stream id 
      */
     info[i].ldi_used = false;
@@ -184,10 +184,10 @@ void lam_output_reopen_all(void)
     lds.lds_file_suffix = info[i].ldi_file_suffix;
 
     /* 
-     * call lam_output_open to open the stream. The return value is
+     * call ompi_output_open to open the stream. The return value is
      * guaranteed to be i.  So we can ignore it. 
      */
-    lam_output_open(&lds);
+    ompi_output_open(&lds);
   }
 }
 
@@ -195,19 +195,19 @@ void lam_output_reopen_all(void)
 /*
  * Close a stream
  */
-void lam_output_close(int output_id)
+void ompi_output_close(int output_id)
 {
   int i;
 
   /* Setup */
 
   if (!initialized)
-    lam_output_init();
+    ompi_output_init();
 
   /* If it's valid, used, enabled, and has an open file descriptor,
      free the resources associated with the descriptor */
 
-   if (output_id >= 0 && output_id < LAM_OUTPUT_MAX_STREAMS &&
+   if (output_id >= 0 && output_id < OMPI_OUTPUT_MAX_STREAMS &&
       info[output_id].ldi_used && 
       info[output_id].ldi_enabled) {
      free_descriptor(output_id);
@@ -216,10 +216,10 @@ void lam_output_close(int output_id)
   /* If no one has the syslog open, we should close it */
 
   THREAD_LOCK(&mutex);
-  for (i = 0; i < LAM_OUTPUT_MAX_STREAMS; ++i)
+  for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i)
     if (info[i].ldi_used && info[i].ldi_syslog)
       break;
-  if (i >= LAM_OUTPUT_MAX_STREAMS)
+  if (i >= OMPI_OUTPUT_MAX_STREAMS)
     closelog();
 
   /* Somewhat of a hack to free up the temp_str */
@@ -236,7 +236,7 @@ void lam_output_close(int output_id)
 /*
  * Main function to send output to a stream
  */
-void lam_output(int output_id, char *format, ...)
+void ompi_output(int output_id, char *format, ...)
 {
   va_list arglist;
 #if __STDC__
@@ -252,7 +252,7 @@ void lam_output(int output_id, char *format, ...)
 /*
  * Send a message to a stream if the verbose level is high enough
  */
-void lam_output_verbose(int output_id, int level, char *format, ...)
+void ompi_output_verbose(int output_id, int level, char *format, ...)
 {
   if (info[output_id].ldi_verbose_level >= level) {
     va_list arglist;
@@ -270,7 +270,7 @@ void lam_output_verbose(int output_id, int level, char *format, ...)
 /*
  * Set the verbosity level of a stream
  */
-void lam_output_set_verbosity(int output_id, int level)
+void ompi_output_set_verbosity(int output_id, int level)
 {
   info[output_id].ldi_verbose_level = level;
 }
@@ -279,11 +279,11 @@ void lam_output_set_verbosity(int output_id, int level)
 /*
  * Shut down the output stream system
  */
-void lam_output_finalize(void)
+void ompi_output_finalize(void)
 {
   if (initialized) {
     if (verbose_stream != -1)
-      lam_output_close(verbose_stream);
+      ompi_output_close(verbose_stream);
     verbose_stream = -1;
   }
 }
@@ -295,7 +295,7 @@ void lam_output_finalize(void)
  * back-end function so that we can do the thread locking properly
  * (especially upon reopen).
  */
-static int do_open(int output_id, lam_output_stream_t *lds)
+static int do_open(int output_id, ompi_output_stream_t *lds)
   {
   int i;
   int flags;
@@ -304,19 +304,19 @@ static int do_open(int output_id, lam_output_stream_t *lds)
   /* Setup */
 
   if (!initialized)
-    lam_output_init();
+    ompi_output_init();
 
   /* If output_id == -1, find an available stream, or return
-     LAM_ERROR */
+     OMPI_ERROR */
 
   if (-1 == output_id) {
     THREAD_LOCK(&mutex);
-    for (i = 0; i < LAM_OUTPUT_MAX_STREAMS; ++i)
+    for (i = 0; i < OMPI_OUTPUT_MAX_STREAMS; ++i)
       if (!info[i].ldi_used)
         break;
-    if (i >= LAM_OUTPUT_MAX_STREAMS) {
+    if (i >= OMPI_OUTPUT_MAX_STREAMS) {
       THREAD_UNLOCK(&mutex);
-      return LAM_ERR_OUT_OF_RESOURCE;
+      return OMPI_ERR_OUT_OF_RESOURCE;
     }
   } 
 
@@ -339,7 +339,7 @@ static int do_open(int output_id, lam_output_stream_t *lds)
 
   info[i].ldi_used = true;
   THREAD_UNLOCK(&mutex);
-  info[i].ldi_enabled = lds->lds_is_debugging ? (bool) LAM_ENABLE_DEBUG : true;
+  info[i].ldi_enabled = lds->lds_is_debugging ? (bool) OMPI_ENABLE_DEBUG : true;
   info[i].ldi_verbose_level = 0;
 
   info[i].ldi_syslog = lds->lds_want_syslog;
@@ -349,7 +349,7 @@ static int do_open(int output_id, lam_output_stream_t *lds)
       openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
     } else {
       info[i].ldi_syslog_ident = NULL;
-      openlog("lam", LOG_PID, LOG_USER);
+      openlog("ompi", LOG_PID, LOG_USER);
     }
     info[i].ldi_syslog_priority = lds->lds_syslog_priority;
   }
@@ -371,14 +371,14 @@ static int do_open(int output_id, lam_output_stream_t *lds)
     /* Setup the filename and open flags */
 
 #if 0
-    filename = lam_get_tmpdir();
+    filename = ompi_get_tmpdir();
 #else
-    lam_output(0, "WARNING: need to implement session dir (%s, %d)\n",
+    ompi_output(0, "WARNING: need to implement session dir (%s, %d)\n",
                __FILE__, __LINE__);
     filename = malloc(256);
     strcpy(filename, "/tmp");
 #endif
-    strcat(filename, "/lam-");
+    strcat(filename, "/ompi-");
     if (lds->lds_file_suffix != NULL) {
       info[i].ldi_file_suffix = strdup(lds->lds_file_suffix);
       strcat(filename, lds->lds_file_suffix);
@@ -395,7 +395,7 @@ static int do_open(int output_id, lam_output_stream_t *lds)
     info[i].ldi_fd = open(filename, flags, 0644);
     if (-1 == info[i].ldi_fd) {
       info[i].ldi_used = false;
-      return LAM_ERR_IN_ERRNO;
+      return OMPI_ERR_IN_ERRNO;
     }
 
     /* Make the file be close-on-exec to prevent child inheritance
@@ -416,7 +416,7 @@ static void free_descriptor(int output_id)
 {
   output_desc_t *ldi;
 
-  if (output_id >= 0 && output_id < LAM_OUTPUT_MAX_STREAMS &&
+  if (output_id >= 0 && output_id < OMPI_OUTPUT_MAX_STREAMS &&
       info[output_id].ldi_used && 
       info[output_id].ldi_enabled) {
 
@@ -458,11 +458,11 @@ static void output(int output_id, char *format, va_list arglist)
   /* Setup */
 
   if (!initialized)
-    lam_output_init();
+    ompi_output_init();
 
   /* If it's valid, used, and enabled, output */
 
-  if (output_id >= 0 && output_id < LAM_OUTPUT_MAX_STREAMS &&
+  if (output_id >= 0 && output_id < OMPI_OUTPUT_MAX_STREAMS &&
       info[output_id].ldi_used && 
       info[output_id].ldi_enabled) {
     ldi = &info[output_id];
@@ -470,7 +470,7 @@ static void output(int output_id, char *format, va_list arglist)
     /* Make the formatted string */
 
     THREAD_LOCK(&mutex);
-    str = lam_vsnprintf(format, arglist);
+    str = ompi_vsnprintf(format, arglist);
     total_len = len = strlen(str);
     if ('\n' != str[len - 1]) {
       want_newline = true;
@@ -527,7 +527,7 @@ static void output(int output_id, char *format, va_list arglist)
 
 
 /* 
- * lam_vsnprintf
+ * ompi_vsnprintf
  *
  * Make a good guess about how long a printf-style varags formatted
  * string will be once all the % escapes are filled in.  We don't
@@ -538,7 +538,7 @@ static void output(int output_id, char *format, va_list arglist)
  * not exactly the same as vsnprintf, but it's in the same spirit, so
  * it's ok to use a derrivative of the name...  
  */
-static char *lam_vsnprintf(char *format, va_list arglist)
+static char *ompi_vsnprintf(char *format, va_list arglist)
 {
   int i, len;
   char *sarg;
@@ -556,9 +556,9 @@ static char *lam_vsnprintf(char *format, va_list arglist)
      Copy order taken from Autoconf docs
   */
   va_list arglist2;
-#if LAM_HAVE_VA_COPY
+#if OMPI_HAVE_VA_COPY
   va_copy(arglist2, arglist);
-#elif LAM_HAVE_UNDERSCORE_VA_COPY
+#elif OMPI_HAVE_UNDERSCORE_VA_COPY
   __va_copy(arglist2, arglist);
 #else
   memcpy (&arglist2, &arglist, sizeof(va_list));

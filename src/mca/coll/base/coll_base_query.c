@@ -3,7 +3,7 @@
  *
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -15,14 +15,14 @@
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "communicator/communicator.h"
-#include "lfc/lam_list.h"
+#include "class/ompi_list.h"
 #include "include/constants.h"
 
 
 /*
  * Global variables
  */
-lam_list_t mca_coll_base_available;
+ompi_list_t mca_coll_base_available;
 
 
 /*
@@ -47,30 +47,30 @@ mca_coll_base_query()
 {
     int found, count = 0;
     mca_base_module_priority_list_item_t *entry;
-    lam_list_item_t *p;
+    ompi_list_item_t *p;
 
     /* Initialize the list */
 
     /* VPS: This is not thread safe, this needs to be a local thingy  */
-    OBJ_CONSTRUCT(&mca_coll_base_available, lam_list_t);
+    OBJ_CONSTRUCT(&mca_coll_base_available, ompi_list_t);
 
     /* In 64 bit mode, this struct can have empty padding */
 #if 0
-    LAM_ZERO_ME(entry);
+    OMPI_ZERO_ME(entry);
 #endif
 
     /* The list of modules that we should check has already been
        established in mca_coll_base_opened. */
 
-    for (found = 0, p = lam_list_get_first(&mca_coll_base_modules_opened);
-	 p != lam_list_get_end(&mca_coll_base_modules_opened);
-	 p = lam_list_get_next(p)) {
+    for (found = 0, p = ompi_list_get_first(&mca_coll_base_modules_opened);
+	 p != ompi_list_get_end(&mca_coll_base_modules_opened);
+	 p = ompi_list_get_next(p)) {
 
 	entry = malloc (sizeof(mca_base_module_priority_list_item_t));
 	if (NULL == entry)
-	    return LAM_ERROR;
+	    return OMPI_ERROR;
 
-	OBJ_CONSTRUCT(&entry->super, lam_list_item_t);
+	OBJ_CONSTRUCT(&entry->super, ompi_list_item_t);
 	
 	entry->mpli_module = ((mca_base_module_list_item_t *) p)->mli_module;
 
@@ -90,8 +90,8 @@ mca_coll_base_query()
 	    ++count;
 
 	    entry->mpli_priority = 0;
-	    lam_list_append(&mca_coll_base_available, 
-			    (lam_list_item_t *) entry);
+	    ompi_list_append(&mca_coll_base_available, 
+			    (ompi_list_item_t *) entry);
 	    found = 1;
 	} else {
 
@@ -122,16 +122,16 @@ mca_coll_base_query()
 
 #if 0
 	if (mca_coll_verbose >= 10)
-	    lam_debug(mca_coll_did, "query: no collectives available!");
+	    ompi_debug(mca_coll_did, "query: no collectives available!");
 	show_help("ssi-coll", "none-available", NULL);
 #endif
 
-	return LAM_ERROR;
+	return OMPI_ERROR;
     }
 
     /* All done */
 
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 
@@ -142,8 +142,8 @@ thread_query(mca_base_module_t *ls,
     int ret;
 
 #if 0
-    if (lam_ssi_coll_verbose > 10)
-	lam_debug(lam_ssi_coll_did, "query: querying coll module %s", 
+    if (ompi_ssi_coll_verbose > 10)
+	ompi_debug(ompi_ssi_coll_did, "query: querying coll module %s", 
 		  ls->ssi_module_name);
     fprintf(stderr, "query: querying coll module %s\n", 
 	    ls->mca_module_name);
@@ -162,8 +162,8 @@ thread_query(mca_base_module_t *ls,
     if (ret != 0) {
 
 #if 0
-	if (lam_mca_coll_verbose > 10)
-	    lam_debug(lam_mca_coll_did, 
+	if (ompi_mca_coll_verbose > 10)
+	    ompi_debug(ompi_mca_coll_did, 
 		      "query: coll module %s is not available", 
 		      ls->mca_module_name);
 	fprintf(stderr, "query: coll module %s is not available\n", 
@@ -176,8 +176,8 @@ thread_query(mca_base_module_t *ls,
     } else {
     
 #if 0
-	if (lam_mca_coll_verbose >= 10)
-	    lam_debug(lam_mca_coll_did, "query: coll module %s available", 
+	if (ompi_mca_coll_verbose >= 10)
+	    ompi_debug(ompi_mca_coll_did, "query: coll module %s available", 
 		      ls->mca_module_name);
 	fprintf(stderr, "query: coll module %s available\n", 
 		ls->mca_module_name);

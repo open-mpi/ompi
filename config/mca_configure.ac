@@ -14,41 +14,41 @@ AC_INIT(@PARAM_INIT_FILE@)
 AC_PREREQ(2.57)
 AC_CONFIG_AUX_DIR(@PARAM_CONFIG_AUX_DIR@)
 
-# Establish the top-level LAM directory
+# Establish the top-level OMPI directory
 
-top_lam_srcdir='$(top_srcdir)/../../../../..'
-top_lam_builddir='$(top_builddir)/../../../../..'
+top_ompi_srcdir='$(top_srcdir)/../../../../..'
+top_ompi_builddir='$(top_builddir)/../../../../..'
 
-AC_SUBST(top_lam_srcdir)
-AC_SUBST(top_lam_builddir)
+AC_SUBST(top_ompi_srcdir)
+AC_SUBST(top_ompi_builddir)
 
 # Get the version of @MCA_TYPE@ @MCA_MODULE_NAME@ that we are installing.
 
 if test -n "@PARAM_VERSION_FILE@" -a -f "@PARAM_VERSION_FILE@"; then
-    LAM_GET_VERSION($srcdir/../../../../../config, @PARAM_VERSION_FILE@,
+    OMPI_GET_VERSION($srcdir/../../../../../config, @PARAM_VERSION_FILE@,
         @PARAM_VAR_PREFIX@)
 
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_MAJOR_VERSION, 
         $@PARAM_VAR_PREFIX@_MAJOR_VERSION, 
-        [Major LAM MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
+        [Major OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_MINOR_VERSION, 
         $@PARAM_VAR_PREFIX@_MINOR_VERSION, 
-        [Minor LAM MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
+        [Minor OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_RELEASE_VERSION, 
         $@PARAM_VAR_PREFIX@_RELEASE_VERSION, 
-        [Release LAM MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
+        [Release OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_ALPHA_VERSION, 
         $@PARAM_VAR_PREFIX@_ALPHA_VERSION, 
-        [Alpha LAM MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
+        [Alpha OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_BETA_VERSION, 
         $@PARAM_VAR_PREFIX@_BETA_VERSION, 
-        [Beta LAM MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
+        [Beta OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_CVS_VERSION, 
         $@PARAM_VAR_PREFIX@_CVS_VERSION, 
-        [CVS LAM MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
+        [CVS OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version])
     AC_DEFINE_UNQUOTED(@PARAM_VAR_PREFIX@_VERSION, 
         "$@PARAM_VAR_PREFIX@_VERSION", 
-        [Overall LAM MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version number])
+        [Overall OMPI MCA @MCA_TYPE@ @MCA_MODULE_NAME@ version number])
     version_string="version $@PARAM_VAR_PREFIX@_VERSION"
 else
     version_string=""
@@ -58,9 +58,9 @@ fi
 # Start it up
 #
 
-LAM_CONFIGURE_SETUP
-lam_show_title "Configuring MCA @MCA_TYPE@ @MCA_MODULE_NAME@ module $version_string"
-lam_show_subtitle "Initialization, setup" 
+OMPI_CONFIGURE_SETUP
+ompi_show_title "Configuring MCA @MCA_TYPE@ @MCA_MODULE_NAME@ module $version_string"
+ompi_show_subtitle "Initialization, setup" 
 
 #
 # Init automake
@@ -76,7 +76,7 @@ AH_TOP([/* -*- c -*-
  *
  * $HEADER$
  *
- * LAM/MPI configuation header file.
+ * OMPI/MPI configuation header file.
  * MCA @MCA_TYPE@: @MCA_MODULE_NAME@ module
  */
 
@@ -92,7 +92,7 @@ AH_BOTTOM([#endif /* _@PARAM_VAR_PREFIX@_CONFIG_H */])
 # - figure out the host type
 # - set the default prefix
 #
-LAM_BASIC_SETUP
+OMPI_BASIC_SETUP
 
 
 #
@@ -129,13 +129,13 @@ AC_ARG_WITH(modules,
 		   [if name is "@MCA_TYPE@-@MCA_MODULE_NAME@", then @MCA_MODULE_NAME@ will be compiled as a loadable module (if supported on this platform).  This directly implies "--enable-shared=@MCA_TYPE@-@MCA_MODULE_NAME@ --disable-static=@MCA_TYPE@-@MCA_MODULE_NAME@"]))
 
 # Manual conversion of $kind to its generic name (e.g., crmpi->cr,
-# crlam->cr).
+# crompi->cr).
 
 case "@MCA_TYPE@" in
 crmpi)
     generic_type="cr"
     ;;
-crlam)
+crompi)
     generic_type="cr"
     ;;
 *)
@@ -198,7 +198,7 @@ fi
 # @MCA_TYPE@ @MCA_MODULE_NAME@ module specific setup
 ##################################
 
-if test "$LAM_WANT_DIST" = "no"; then
+if test "$OMPI_WANT_DIST" = "no"; then
     @CONFIGURE_STUB_MACRO@
 else
     @CONFIGURE_DIST_STUB_MACRO@
@@ -212,7 +212,7 @@ fi
 # purely aesthetic.
 #
 
-CPPFLAGS='-I$(top_lam_srcdir)/src/include'" $CPPFLAGS"
+CPPFLAGS='-I$(top_ompi_srcdir)/src/include'" $CPPFLAGS"
 
 #
 # Delayed the substitution of these until now because they may have
@@ -226,10 +226,10 @@ AC_SUBST(CPPFLAGS)
 # libtool magic
 ############################################################################
 
-lam_show_subtitle "GNU libtool setup" 
+ompi_show_subtitle "GNU libtool setup" 
 
 AM_PROG_LIBTOOL
-AM_CONDITIONAL(LAM_BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_LOADABLE_MODULE, 
+AM_CONDITIONAL(OMPI_BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_LOADABLE_MODULE, 
     test "$BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_LOADABLE_MODULE" = "1")
 
 
@@ -237,7 +237,7 @@ AM_CONDITIONAL(LAM_BUILD_@MCA_TYPE@_@MCA_MODULE_NAME@_LOADABLE_MODULE,
 # Party on
 ############################################################################
 
-lam_show_subtitle "Final output" 
+ompi_show_subtitle "Final output" 
 
 AM_CONFIG_HEADER([@PARAM_CONFIG_HEADER_FILE@])
 AC_CONFIG_FILES([@PARAM_CONFIG_FILES@])

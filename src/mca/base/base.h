@@ -20,7 +20,7 @@
  * Structure for making plain lists of modules
  */
 struct mca_base_module_list_item_t {
-  lam_list_item_t super;
+  ompi_list_item_t super;
   const mca_base_module_t *mli_module;
 };
 typedef struct mca_base_module_list_item_t mca_base_module_list_item_t;
@@ -30,7 +30,7 @@ typedef struct mca_base_module_list_item_t mca_base_module_list_item_t;
  * Structure for making priority lists of modules
  */
 struct mca_base_module_priority_list_item_t {
-  lam_list_item_t super;
+  ompi_list_item_t super;
 
   int mpli_priority;
   int mpli_thread_min, mpli_thread_max;
@@ -70,8 +70,8 @@ extern "C" {
 
     /* mca_base_cmd_line.c */
 
-    int mca_base_cmd_line_setup(lam_cmd_line_t *cmd);
-    int mca_base_cmd_line_process_args(lam_cmd_line_t *cmd);
+    int mca_base_cmd_line_setup(ompi_cmd_line_t *cmd);
+    int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd);
     int mca_base_cmd_line_process_arg(const char *param, const char *value);
 
     /* mca_base_module_compare.c */
@@ -85,7 +85,7 @@ extern "C" {
 
     int mca_base_module_find(const char *directory, const char *type,
                              const mca_base_module_t *static_modules[],
-                             lam_list_t *found_modules);
+                             ompi_list_t *found_modules);
 
     /* mca_base_module_register.c */
 
@@ -104,11 +104,11 @@ extern "C" {
 
     int mca_base_modules_open(const char *type_name, int output_id,
                               const mca_base_module_t **static_modules,
-                              lam_list_t *modules_available);
+                              ompi_list_t *modules_available);
 
     /* mca_base_modules_close.c */
 
-    int mca_base_modules_close(int output_id, lam_list_t *modules_available, 
+    int mca_base_modules_close(int output_id, ompi_list_t *modules_available, 
                                const mca_base_module_t *skip);
 
 

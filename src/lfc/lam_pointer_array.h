@@ -2,26 +2,26 @@
  * $HEADER$
  */
 
-#ifndef LAM_POINTER_ARRAY_H
-#define LAM_POINTER_ARRAY_H
+#ifndef OMPI_POINTER_ARRAY_H
+#define OMPI_POINTER_ARRAY_H
 
 #include "threads/mutex.h"
-#include "lfc/lam_object.h"
+#include "class/ompi_object.h"
 
 /*
  * typedefs
  */
-typedef struct lam_pointer_array_t lam_pointer_array_t;
-extern lam_class_t lam_pointer_array_t_class;
+typedef struct ompi_pointer_array_t ompi_pointer_array_t;
+extern ompi_class_t ompi_pointer_array_t_class;
 
 /*
  * dynamic pointer array
  */
-struct lam_pointer_array_t {
+struct ompi_pointer_array_t {
     /* base class */
-    lam_object_t super;
+    ompi_object_t super;
     /* synchronization object */
-    lam_mutex_t lock;
+    ompi_mutex_t lock;
     /* index of lowest free element */
     size_t lowest_free;
     /* number of fee elements in the list */
@@ -42,7 +42,7 @@ struct lam_pointer_array_t {
  * @return Index of inserted array element.  Return value of
  *  (size_t)(-1) indicates an error.
  */
-size_t lam_pointer_array_add(lam_pointer_array_t *array, void *ptr);
+size_t ompi_pointer_array_add(ompi_pointer_array_t *array, void *ptr);
 
 /**
  * Set the value of an element in array
@@ -53,7 +53,7 @@ size_t lam_pointer_array_add(lam_pointer_array_t *array, void *ptr);
  *
  * @return Error code.  (-1) indicates an error.
  */
-int lam_pointer_array_set_item(lam_pointer_array_t *array, 
+int ompi_pointer_array_set_item(ompi_pointer_array_t *array, 
         size_t index, void *value);
 
 /**
@@ -65,7 +65,7 @@ int lam_pointer_array_set_item(lam_pointer_array_t *array,
  * @return Error code.  NULL indicates an error.
  */
 
-static inline void *lam_pointer_array_get_item(lam_pointer_array_t *table, size_t index)
+static inline void *ompi_pointer_array_get_item(ompi_pointer_array_t *table, size_t index)
 {
     void *p;
     THREAD_LOCK(&(table->lock));
@@ -85,7 +85,7 @@ static inline void *lam_pointer_array_get_item(lam_pointer_array_t *table, size_
  * Simple inline function to return the size of the array in order to
  * hide the member field from external users.
  */
-static inline size_t lam_pointer_array_get_size(lam_pointer_array_t *array)
+static inline size_t ompi_pointer_array_get_size(ompi_pointer_array_t *array)
 {
   return array->size;
 }
@@ -104,7 +104,7 @@ static inline size_t lam_pointer_array_get_size(lam_pointer_array_t *array)
  * In contrary to array_set, this function does not allow to overwrite 
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
-int lam_pointer_array_test_and_set_item (lam_pointer_array_t *table, size_t index,
+int ompi_pointer_array_test_and_set_item (ompi_pointer_array_t *table, size_t index,
                                          void *value);
 
-#endif /* LAM_POINTER_ARRAY_H */
+#endif /* OMPI_POINTER_ARRAY_H */

@@ -16,7 +16,7 @@
 #include "util/output.h"
 
 
-void *lam_zero_alloc(size_t len, int mem_prot, int mem_flags)
+void *ompi_zero_alloc(size_t len, int mem_prot, int mem_flags)
 {
     void *ptr;
     int fd, flags = mem_flags;
@@ -38,7 +38,7 @@ void *lam_zero_alloc(size_t len, int mem_prot, int mem_flags)
     ptr = mmap(NULL, len, mem_prot, flags, fd, 0);
     if ( ptr == MAP_FAILED )
     {
-        lam_output(0, "Error: mmap failed (%s)", strerror(errno));
+        ompi_output(0, "Error: mmap failed (%s)", strerror(errno));
         close(fd);
         return (void *)0;
     }

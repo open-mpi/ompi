@@ -1,7 +1,7 @@
 /*
  * $HEADERS$
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "mpi.h"
@@ -9,49 +9,49 @@
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_dup = PMPI_Comm_dup
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
 int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
     
     /* local variables */
-    lam_communicator_t *comp, *newcomp;
+    ompi_communicator_t *comp, *newcomp;
     int rsize, mode;
-    lam_proc_t **rprocs;
+    ompi_proc_t **rprocs;
     
     /* argument checking */
     if ( MPI_PARAM_CHECK ) {
-        if (lam_mpi_finalized)  
-            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
+        if (ompi_mpi_finalized)  
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
                                          "MPI_Comm_dup");
         
-        if (MPI_COMM_NULL == comm || lam_comm_invalid (comm))
-            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+        if (MPI_COMM_NULL == comm || ompi_comm_invalid (comm))
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                          "MPI_Comm_dup");
         
         if ( NULL == newcomm )
-            return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
                                          "MPI_Comm_dup");
     }
 
-    comp = (lam_communicator_t *) comm;
-    if ( LAM_COMM_IS_INTER ( comp ) ){
+    comp = (ompi_communicator_t *) comm;
+    if ( OMPI_COMM_IS_INTER ( comp ) ){
         rsize  = comp->c_remote_group->grp_proc_count;
         rprocs = comp->c_remote_group->grp_proc_pointers;
-        mode   = LAM_COMM_INTER_INTER;
+        mode   = OMPI_COMM_INTER_INTER;
     }
     else {
         rsize  = 0;
         rprocs = NULL;
-        mode   = LAM_COMM_INTRA_INTRA;
+        mode   = OMPI_COMM_INTRA_INTRA;
     }
 
-    newcomp = lam_comm_set ( mode,                                   /* mode */
+    newcomp = ompi_comm_set ( mode,                                   /* mode */
                              comp,                                   /* old comm */
                              NULL,                                   /* bridge comm */
                              comp->c_local_group->grp_proc_count,    /* local_size */
@@ -67,7 +67,7 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
                              );
 
     if ( newcomp == MPI_COMM_NULL ) 
-        LAM_ERRHANDLER_INVOKE (comm, MPI_ERR_INTERN, "MPI_Comm_dup");
+        OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_INTERN, "MPI_Comm_dup");
 
     *newcomm = newcomp;
     return ( MPI_SUCCESS );

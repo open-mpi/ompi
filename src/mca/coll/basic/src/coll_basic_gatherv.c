@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include "constants.h"
@@ -25,7 +25,7 @@ int mca_coll_basic_gatherv(void *sbuf, int scount, MPI_Datatype sdtype,
                            MPI_Comm comm)
 {
 #if 1
-  return LAM_ERR_NOT_IMPLEMENTED;
+  return OMPI_ERR_NOT_IMPLEMENTED;
 #else
   int i;
   int rank;
@@ -34,8 +34,8 @@ int mca_coll_basic_gatherv(void *sbuf, int scount, MPI_Datatype sdtype,
   char *ptmp;
   MPI_Aint extent;
 
-  /* JMS: Need to replace lots things in this file: lam_dt* stuff with
-     lam_datatype_*() functions.  Also need to replace lots of
+  /* JMS: Need to replace lots things in this file: ompi_dt* stuff with
+     ompi_datatype_*() functions.  Also need to replace lots of
      MPI_Send/MPI_Recv with negative tags and PML entry points. */
 
   MPI_Comm_size(comm, &size);
@@ -57,7 +57,7 @@ int mca_coll_basic_gatherv(void *sbuf, int scount, MPI_Datatype sdtype,
     /* simple optimization */
 
     if (i == rank) {
-      err = lam_dtsndrcv(sbuf, scount, sdtype,
+      err = ompi_dtsndrcv(sbuf, scount, sdtype,
 			 ptmp, rcounts[i], rdtype, BLKMPIGATHERV, comm);
     } else {
       err = MPI_Recv(ptmp, rcounts[i], rdtype, i,

@@ -12,22 +12,22 @@
 ! tells the compiler where to find .h files (specifically, this one).  For
 ! example:
 !
-!      shell$ mpif77 foo.f -o foo -I$LAMHOME/include
+!      shell$ mpif77 foo.f -o foo -I$OMPI_HOME/include
 !
-! will probably do the trick (assuming that you have set LAMHOME 
+! will probably do the trick (assuming that you have set OMPI_HOME 
 ! properly).
 !
-! That being said, LAM's "mpif77" wrapper compiler should
+! That being said, OMPI's "mpif77" wrapper compiler should
 ! automatically include the -I option for you.  The following command
 ! should be equivalent to the command listed above:
 !
 !      shell$ mpif77 foo.f -o foo
 !
 ! You should not copy this file to your local directory because it is
-! possible that this file will be changed between versions of LAM/MPI.
+! possible that this file will be changed between versions of OMPI/MPI.
 ! Indeed, this mpif.h is incompatible with the mpif.f of other 
 ! implementations of MPI.  Using this mpif.h with other implementations 
-! of MPI, or with other versions of LAM/MPI will result in undefined
+! of MPI, or with other versions of OMPI/MPI will result in undefined
 ! behavior (to include incorrect results, segmentation faults, 
 ! unexplainable "hanging" in your application, etc.).  Always use the
 ! -I command line option instead (or let mpif77 do it for you).
@@ -37,19 +37,19 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !
-! LAM version
+! OMPI version
 ! This file is generated from configure; do not edit it manually.
 !
-       integer LAM_MAJOR_VERSION, LAM_MINOR_VERSION
-       integer LAM_RELEASE_VERSION
-       integer LAM_ALPHA_VERSION, LAM_BETA_VERSION
-       integer LAM_SVN_VERSION
-       parameter (LAM_MAJOR_VERSION=@LAM_MAJOR_VERSION@)
-       parameter (LAM_MINOR_VERSION=@LAM_MINOR_VERSION@)
-       parameter (LAM_RELEASE_VERSION=@LAM_RELEASE_VERSION@)
-       parameter (LAM_ALPHA_VERSION=@LAM_ALPHA_VERSION@)
-       parameter (LAM_BETA_VERSION=@LAM_BETA_VERSION@)
-       parameter (LAM_SVN_VERSION=@LAM_SVN_VERSION@)
+       integer OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION
+       integer OMPI_RELEASE_VERSION
+       integer OMPI_ALPHA_VERSION, OMPI_BETA_VERSION
+       integer OMPI_SVN_VERSION
+       parameter (OMPI_MAJOR_VERSION=@OMPI_MAJOR_VERSION@)
+       parameter (OMPI_MINOR_VERSION=@OMPI_MINOR_VERSION@)
+       parameter (OMPI_RELEASE_VERSION=@OMPI_RELEASE_VERSION@)
+       parameter (OMPI_ALPHA_VERSION=@OMPI_ALPHA_VERSION@)
+       parameter (OMPI_BETA_VERSION=@OMPI_BETA_VERSION@)
+       parameter (OMPI_SVN_VERSION=@OMPI_SVN_VERSION@)
 !
 ! MPI version
 !
@@ -240,12 +240,12 @@
        parameter (MPI_INTEGER1=12) 
        parameter (MPI_INTEGER2=13)
        parameter (MPI_INTEGER4=14) 
-       parameter (MPI_INTEGER8=@LAM_INDEXOF_FORTRAN_INTEGER8@)  
+       parameter (MPI_INTEGER8=@OMPI_INDEXOF_FORTRAN_INTEGER8@)  
        parameter (MPI_REAL=16)
        parameter (MPI_REAL2=17)
        parameter (MPI_REAL4=18)
        parameter (MPI_REAL8=19)
-       parameter (MPI_REAL16=@LAM_INDEXOF_FORTRAN_REAL16@)
+       parameter (MPI_REAL16=@OMPI_INDEXOF_FORTRAN_REAL16@)
        parameter (MPI_DOUBLE_PRECISION=21)
        parameter (MPI_COMPLEX=22)
        parameter (MPI_DOUBLE_COMPLEX=23)

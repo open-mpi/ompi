@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WIN_CREATE = mpi_win_create_f
 #pragma weak pmpi_win_create = mpi_win_create_f
 #pragma weak pmpi_win_create_ = mpi_win_create_f
 #pragma weak pmpi_win_create__ = mpi_win_create_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE,
                            pmpi_win_create,
                            pmpi_win_create_,
                            pmpi_win_create__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE,
                            (base, size, disp_unit, info, comm, win, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_WIN_CREATE = mpi_win_create_f
 #pragma weak mpi_win_create = mpi_win_create_f
 #pragma weak mpi_win_create_ = mpi_win_create_f
 #pragma weak mpi_win_create__ = mpi_win_create_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_WIN_CREATE,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE,
                            mpi_win_create,
                            mpi_win_create_,
                            mpi_win_create__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_WIN_CREATE,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

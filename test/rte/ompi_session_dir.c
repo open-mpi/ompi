@@ -10,14 +10,14 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "include/constants.h"
 #include "util/sys_info.h"
 #include "util/os_path.h"
 #include "rte/universe/os_session_dir.h"
 
 static bool test1(void);   /* given prefix, both one that works and one that fails */
-static bool test2(void);   /* no prefix given, LAM_PREFIX_ENV set, one good and one bad */
+static bool test2(void);   /* no prefix given, OMPI_PREFIX_ENV set, one good and one bad */
 static bool test3(void);   /* no prefix given, TMPDIR set, one good and one bad */
 static bool test4(void);   /* no prefix given, TMP set, one good and one bad */
 static bool test5(void);   /* no prefix given, HOME set, one good and one bad */
@@ -82,13 +82,13 @@ static bool test1(void)
     /* see if we can create a specified path */
 
     prefix = ompi_os_path(false, "tmp", NULL);
-    if (LAM_ERROR == ompi_session_dir_init(prefix, "test-universe")) {
+    if (OMPI_ERROR == ompi_session_dir_init(prefix, "test-universe")) {
         free(prefix);
         return(false);
     }
     /* see if it can access an existing path */
 
-    if (LAM_ERROR == ompi_session_dir_init(prefix, "test-universe")) {
+    if (OMPI_ERROR == ompi_session_dir_init(prefix, "test-universe")) {
         free(prefix);
         return(false);
     }
@@ -102,7 +102,7 @@ static bool test1(void)
 
     /* check what happens when given prefix that won't allow access */
     tmp2 = ompi_os_path(false, "test", NULL); /* assume we don't have root privileges */
-    if (LAM_SUCCESS == ompi_session_dir_init(tmp2, "test-universe")) {
+    if (OMPI_SUCCESS == ompi_session_dir_init(tmp2, "test-universe")) {
         printf("created temp directory in %s - shouldn't have been able to do so\n", tmp2);
 	rmdir(ompi_system_info.session_dir);
 	tmp = strdup(dirname(ompi_system_info.session_dir));
@@ -120,12 +120,12 @@ static bool test2(void)
 {
     char *tmp;
 
-    /* use the LAM_PREFIX_ENV variable */
+    /* use the OMPI_PREFIX_ENV variable */
 
-    setenv("LAM_PREFIX_ENV", "/tmp/trythis", 1);
+    setenv("OMPI_PREFIX_ENV", "/tmp/trythis", 1);
 
-    if (LAM_ERROR == ompi_session_dir_init(NULL, "test-universe")) {
-	unsetenv("LAM_PREFIX_ENV");
+    if (OMPI_ERROR == ompi_session_dir_init(NULL, "test-universe")) {
+	unsetenv("OMPI_PREFIX_ENV");
         return(false);
     }
 
@@ -134,7 +134,7 @@ static bool test2(void)
     rmdir(tmp);
     free(tmp);
 
-    unsetenv("LAM_PREFIX_ENV");
+    unsetenv("OMPI_PREFIX_ENV");
 
     return(true);
 
@@ -148,7 +148,7 @@ static bool test3(void)
 
     setenv("TMPDIR", "/tmp/trythis", 1);
 
-    if (LAM_ERROR == ompi_session_dir_init(NULL, "test-universe")) {
+    if (OMPI_ERROR == ompi_session_dir_init(NULL, "test-universe")) {
 	unsetenv("TMPDIR");
         return(false);
     }
@@ -171,7 +171,7 @@ static bool test4(void)
 
     setenv("TMP", "/tmp/trythis", 1);
 
-    if (LAM_ERROR == ompi_session_dir_init(NULL, "test-universe")) {
+    if (OMPI_ERROR == ompi_session_dir_init(NULL, "test-universe")) {
 	unsetenv("TMP");
         return(false);
     }
@@ -194,7 +194,7 @@ static bool test5(void)
 
     setenv("HOME", "/tmp/trythis", 1);
 
-    if (LAM_ERROR == ompi_session_dir_init(NULL, "test-universe")) {
+    if (OMPI_ERROR == ompi_session_dir_init(NULL, "test-universe")) {
 	unsetenv("HOME");
         return(false);
     }
@@ -218,7 +218,7 @@ static bool test6(void)
     * Program should turn to default of /tmp (where "/" is whatever
     * top-level directory is appropriate for given system)
     */
-    if (LAM_ERROR == ompi_session_dir_init(NULL, "test-universe")) {
+    if (OMPI_ERROR == ompi_session_dir_init(NULL, "test-universe")) {
         return(false);
     }
 

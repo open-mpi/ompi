@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "coll_basic.h"
 
 #include <stdio.h>
@@ -176,7 +176,7 @@ int mca_coll_basic_init_query(int *thread_min, int *thread_max)
   *thread_min = MPI_THREAD_SINGLE;
   *thread_max = MPI_THREAD_MULTIPLE;
   
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
@@ -217,7 +217,7 @@ int mca_coll_basic_init(MPI_Comm comm, const mca_coll_1_0_0_t **new_coll)
 {
   /* Nothing to init on the communicator */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }
 
 
@@ -228,5 +228,5 @@ int mca_coll_basic_finalize(MPI_Comm comm)
 {
   /* Nothing to finalize on the communicator */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

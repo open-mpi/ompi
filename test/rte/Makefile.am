@@ -4,14 +4,14 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
-AM_CPPFLAGS = -I$(top_srcdir)/test/support -DLAM_ENABLE_DEBUG_OVERRIDE=1
+AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
 
 noinst_PROGRAMS = \
 	ompi_session_dir
 
 ompi_session_dir_SOURCES = ompi_session_dir.c
 ompi_session_dir_LDADD = \
-        $(top_builddir)/src/lfc/lam_object.lo \
+        $(top_builddir)/src/class/ompi_object.lo \
         $(top_builddir)/src/mem/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/util/argv.lo \

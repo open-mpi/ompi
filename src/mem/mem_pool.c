@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <string.h>
 #include <sys/errno.h>
@@ -15,38 +15,38 @@
 #include "util/output.h"
 #include "os/numa.h"
 
-lam_class_t lam_mem_pool_t_class = {
-    "lam_mem_pool_t",
-    OBJ_CLASS(lam_object_t), 
-    (lam_construct_t) lam_mp_construct,
-    (lam_destruct_t) lam_mp_destruct
+ompi_class_t ompi_mem_pool_t_class = {
+    "ompi_mem_pool_t",
+    OBJ_CLASS(ompi_object_t), 
+    (ompi_construct_t) ompi_mp_construct,
+    (ompi_destruct_t) ompi_mp_destruct
 };
 
 /* process-shared mem pool class */
-lam_class_t shmem_pool_t_class = {
+ompi_class_t shmem_pool_t_class = {
     "shmem_pool_t",
-    OBJ_CLASS(lam_object_t), 
-    (lam_construct_t) lam_mp_shared_construct,
-    (lam_destruct_t) lam_mp_destruct
+    OBJ_CLASS(ompi_object_t), 
+    (ompi_construct_t) ompi_mp_shared_construct,
+    (ompi_destruct_t) ompi_mp_destruct
 };
 
-void lam_mp_construct(lam_mem_pool_t *pool)
+void ompi_mp_construct(ompi_mem_pool_t *pool)
 {
-    pool->mp_private_alloc = OBJ_NEW(lam_allocator_t);
-    OBJ_CONSTRUCT(&pool->mp_lock, lam_mutex_t);
+    pool->mp_private_alloc = OBJ_NEW(ompi_allocator_t);
+    OBJ_CONSTRUCT(&pool->mp_lock, ompi_mutex_t);
     pool->mp_dev_alloc = NULL;
 }
 
-void lam_mp_shared_construct(lam_mem_pool_t *pool)
+void ompi_mp_shared_construct(ompi_mem_pool_t *pool)
 {
-    pool->mp_private_alloc = OBJ_NEW(lam_allocator_t);
-    OBJ_CONSTRUCT(&pool->mp_lock, lam_mutex_t);
-    lam_allocator_set_is_shared(pool->mp_private_alloc, 1);
-    lam_allocator_set_mem_prot(pool->mp_private_alloc, MMAP_SHARED_PROT);
+    pool->mp_private_alloc = OBJ_NEW(ompi_allocator_t);
+    OBJ_CONSTRUCT(&pool->mp_lock, ompi_mutex_t);
+    ompi_allocator_set_is_shared(pool->mp_private_alloc, 1);
+    ompi_allocator_set_mem_prot(pool->mp_private_alloc, MMAP_SHARED_PROT);
     pool->mp_dev_alloc = NULL;    
 }
 
-void lam_mp_destruct(lam_mem_pool_t *pool)
+void ompi_mp_destruct(ompi_mem_pool_t *pool)
 {
     if ( pool->mp_dev_alloc )
         OBJ_RELEASE(pool->mp_dev_alloc);
@@ -54,7 +54,7 @@ void lam_mp_destruct(lam_mem_pool_t *pool)
     OBJ_DESTRUCT(&pool->mp_lock);
 }
 
-int lam_mp_construct_with(lam_mem_pool_t *pool, uint64_t pool_size,
+int ompi_mp_construct_with(ompi_mem_pool_t *pool, uint64_t pool_size,
                   uint64_t max_len,
                   uint64_t chunk_size, size_t page_size)
 {
@@ -67,13 +67,13 @@ int lam_mp_construct_with(lam_mem_pool_t *pool, uint64_t pool_size,
     pool->mp_page_sz = page_size;
     if (((pool->mp_page_sz / getpagesize()) * getpagesize()) != pool->mp_page_sz)
     {
-        return LAM_ERR_BAD_PARAM;
+        return OMPI_ERR_BAD_PARAM;
     }
     
     pool->mp_chunk_sz = chunk_size;
     if ( !chunk_size )
     {
-        return LAM_ERR_BAD_PARAM;
+        return OMPI_ERR_BAD_PARAM;
     }
     
     /* set upper limit on pool */
@@ -87,34 +87,34 @@ int lam_mp_construct_with(lam_mem_pool_t *pool, uint64_t pool_size,
         pool->mp_max_chunks = ((max_len - 1) / page_size) + 1;
         if (pool->mp_max_chunks == 0)
         {
-            return LAM_ERR_BAD_PARAM;
+            return OMPI_ERR_BAD_PARAM;
         }
     }
     
     /* round up pool size to multiple of page size */
     pool_size = ((((pool_size - 1) / chunk_size) + 1) * chunk_size);
     if (0 == pool_size) {
-      lam_output(0, "Error: pool_size == 0");
-      return LAM_ERR_BAD_PARAM;
+      ompi_output(0, "Error: pool_size == 0");
+      return OMPI_ERR_BAD_PARAM;
     }
     
     if (pool_size < chunk_size) {
-      lam_output(0, "Error: pool_size < chunk_size");
-      return LAM_ERR_BAD_PARAM;
+      ompi_output(0, "Error: pool_size < chunk_size");
+      return OMPI_ERR_BAD_PARAM;
     }
     
     /* add red-zone pages */
     
     /* set up dev allocator to use pinned memory */
-    lam_allocator_set_should_pin(pool->mp_dev_alloc, 1);
-    lam_allocator_set_pin_offset(pool->mp_dev_alloc, page_size);
+    ompi_allocator_set_should_pin(pool->mp_dev_alloc, 1);
+    ompi_allocator_set_pin_offset(pool->mp_dev_alloc, page_size);
     
     while (!ptr && wrk_size) {
         to_alloc = wrk_size + 2 * page_size;
         
         /* allocate memory.  Reset pinned memory size. */
-        lam_allocator_set_pin_size(pool->mp_dev_alloc, wrk_size);
-        ptr = lam_allocator_alloc(pool->mp_dev_alloc, to_alloc);
+        ompi_allocator_set_pin_size(pool->mp_dev_alloc, wrk_size);
+        ptr = ompi_allocator_alloc(pool->mp_dev_alloc, to_alloc);
         if (ptr == 0)
             wrk_size /= 2;
         else
@@ -129,31 +129,31 @@ int lam_mp_construct_with(lam_mem_pool_t *pool, uint64_t pool_size,
     pool->mp_num_chunks = ((pool_size - 1) / chunk_size) + 1;
     if ((pool->mp_num_chunks > pool->mp_max_chunks) && (pool->mp_max_chunks > 0))
     {
-      lam_output(0, "Error: NPoolChunks (%ld) > maxNPoolChunks (%ld)",
+      ompi_output(0, "Error: NPoolChunks (%ld) > maxNPoolChunks (%ld)",
                  pool->mp_num_chunks, pool->mp_max_chunks);
-      return LAM_ERR_BAD_PARAM;
+      return OMPI_ERR_BAD_PARAM;
     }
     /* change memory protection for red zones */
     retval = mprotect(ptr, page_size, PROT_NONE);
     if (retval != 0)
     {
-      lam_abort(1, "Error in red zone 1 mprotect");
+      ompi_abort(1, "Error in red zone 1 mprotect");
     }
     /* end red zone */
     retval =
         mprotect(ptr + page_size + wrk_size, page_size, PROT_NONE);
     if (retval != 0)
     {
-      lam_abort(1, "Error in red zone 2 mprotect");
+      ompi_abort(1, "Error in red zone 2 mprotect");
     }
     
     /* initialize chunk descriptors */
-    to_alloc = sizeof(lam_chunk_desc_t) * pool->mp_num_chunks;
-    pool->mp_chunks = lam_allocator_alloc(pool->mp_private_alloc, to_alloc);
+    to_alloc = sizeof(ompi_chunk_desc_t) * pool->mp_num_chunks;
+    pool->mp_chunks = ompi_allocator_alloc(pool->mp_private_alloc, to_alloc);
     if ( !pool->mp_chunks )
     {
-      lam_output(0, "Error: Out of memory");
-      return LAM_ERROR;
+      ompi_output(0, "Error: Out of memory");
+      return OMPI_ERROR;
     }
     
     ptr = (char *) base;
@@ -171,17 +171,17 @@ int lam_mp_construct_with(lam_mem_pool_t *pool, uint64_t pool_size,
 }
 
 
-void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
+void *ompi_mp_request_chunk(ompi_mem_pool_t *pool, int pool_index)
 {
     void        *chunk = 0;
     int         chunk_found;
     int         next_chunk_to_use;
-    lam_chunk_desc_t    *chunk_desc;
+    ompi_chunk_desc_t    *chunk_desc;
     size_t      to_alloc;
     int         desc;
     
     /* grab lock on pool */
-    lam_mutex_lock(&(pool->mp_lock));
+    ompi_mutex_lock(&(pool->mp_lock));
     
     /* Have we used all the allocated memory? */
     if ( pool->mp_next_avail_chunk == pool->mp_num_chunks )
@@ -189,21 +189,21 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
         
         /* can we increase the pool size ?  We currently won't grow a shared
           memory region. */
-        if ( lam_mp_uses_shared_mem(pool)  ||
+        if ( ompi_mp_uses_shared_mem(pool)  ||
             ((pool->mp_max_chunks > 0) && (pool->mp_num_chunks == pool->mp_max_chunks)) ) 
         {
-            lam_mutex_unlock(&(pool->mp_lock));
+            ompi_mutex_unlock(&(pool->mp_lock));
             return chunk;
         }
         
         /* allocate larger array of chunk descriptors and
             copy old array into new array */
-        to_alloc = sizeof(lam_chunk_desc_t) * (pool->mp_num_chunks + 1);
-        chunk_desc = lam_allocator_alloc(pool->mp_private_alloc, to_alloc);
+        to_alloc = sizeof(ompi_chunk_desc_t) * (pool->mp_num_chunks + 1);
+        chunk_desc = ompi_allocator_alloc(pool->mp_private_alloc, to_alloc);
         if ( !chunk_desc )
         {
-            lam_output(0, "Error! Out of memory!");
-            lam_mutex_unlock(&(pool->mp_lock));
+            ompi_output(0, "Error! Out of memory!");
+            ompi_mutex_unlock(&(pool->mp_lock));
             return 0;
         }
         
@@ -212,20 +212,20 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
         }
         
         /* free old array and set old array pointer to point to new array */
-        lam_allocator_free(pool->mp_private_alloc, pool->mp_chunks);
+        ompi_allocator_free(pool->mp_private_alloc, pool->mp_chunks);
         pool->mp_chunks = chunk_desc;
         
         /* allocate new memory chunk using device allocator. */
-        lam_allocator_set_should_pin(pool->mp_dev_alloc, 1);
-        lam_allocator_set_pin_offset(pool->mp_dev_alloc, 0);
-        lam_allocator_set_pin_size(pool->mp_dev_alloc, 0);
+        ompi_allocator_set_should_pin(pool->mp_dev_alloc, 1);
+        ompi_allocator_set_pin_offset(pool->mp_dev_alloc, 0);
+        ompi_allocator_set_pin_size(pool->mp_dev_alloc, 0);
         
         pool->mp_chunks[pool->mp_num_chunks].chd_base_ptr =
-            lam_allocator_alloc(pool->mp_dev_alloc, pool->mp_chunk_sz);
+            ompi_allocator_alloc(pool->mp_dev_alloc, pool->mp_chunk_sz);
         if ( !pool->mp_chunks[pool->mp_num_chunks].chd_base_ptr )
         {
-          lam_output(0, "Error: Out of memory");
-          lam_mutex_unlock(&(pool->mp_lock));
+          ompi_output(0, "Error: Out of memory");
+          ompi_mutex_unlock(&(pool->mp_lock));
           return chunk;
         }
         
@@ -259,7 +259,7 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
     if ( !chunk_found ) {
         pool->mp_next_avail_chunk = pool->mp_num_chunks;
     }
-    lam_mutex_unlock(&(pool->mp_lock));
+    ompi_mutex_unlock(&(pool->mp_lock));
     return chunk;
 }
 
@@ -271,18 +271,18 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
  */
 
 
-lam_class_t lam_fixed_mpool_t_class = {
-    "lam_fixed_mpool_t",
-    OBJ_CLASS(lam_object_t), 
-    (lam_construct_t) lam_fmp_construct,
-    (lam_destruct_t) lam_fmp_destruct
+ompi_class_t ompi_fixed_mpool_t_class = {
+    "ompi_fixed_mpool_t",
+    OBJ_CLASS(ompi_object_t), 
+    (ompi_construct_t) ompi_fmp_construct,
+    (ompi_destruct_t) ompi_fmp_destruct
 };
 
-void lam_fmp_construct(lam_fixed_mpool_t *pool)
+void ompi_fmp_construct(ompi_fixed_mpool_t *pool)
 {
-    pool->fmp_private_alloc = OBJ_NEW(lam_allocator_t);
-    lam_allocator_set_is_shared(pool->fmp_private_alloc, 1);
-    lam_allocator_set_mem_prot(pool->fmp_private_alloc, MMAP_SHARED_PROT);
+    pool->fmp_private_alloc = OBJ_NEW(ompi_allocator_t);
+    ompi_allocator_set_is_shared(pool->fmp_private_alloc, 1);
+    ompi_allocator_set_mem_prot(pool->fmp_private_alloc, MMAP_SHARED_PROT);
     
     pool->fmp_segments = NULL;
     pool->fmp_n_segments = NULL;
@@ -294,7 +294,7 @@ void lam_fmp_construct(lam_fixed_mpool_t *pool)
     pool->fmp_apply_affinity = 0;
 }
 
-void lam_fmp_destruct(lam_fixed_mpool_t *pool)
+void ompi_fmp_destruct(ompi_fixed_mpool_t *pool)
 {
     int         i;
     
@@ -315,7 +315,7 @@ void lam_fmp_destruct(lam_fixed_mpool_t *pool)
 
 
 
-int lam_fmp_construct_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation, 
+int ompi_fmp_construct_with(ompi_fixed_mpool_t *pool, ssize_t initial_allocation, 
                        ssize_t min_allocation_size,
                    int n_pools, int n_array_elements_to_add, int apply_mem_affinity)
 {
@@ -329,19 +329,19 @@ int lam_fmp_construct_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation,
         pool->fmp_min_alloc_size = getpagesize();
     pool->fmp_n_elts_to_add = n_array_elements_to_add;
     pool->fmp_n_pools = n_pools;
-    pool->fmp_segments = (lam_memseg_t **) 
-      malloc(sizeof(lam_memseg_t *)*n_pools);
+    pool->fmp_segments = (ompi_memseg_t **) 
+      malloc(sizeof(ompi_memseg_t *)*n_pools);
     if ( !pool->fmp_segments )
     {
-      lam_abort(1, "Unable to allocate memory for "
+      ompi_abort(1, "Unable to allocate memory for "
                 "pool->fmp_segments, requested %ld bytes, errno %d",
                 sizeof(int) * n_pools, errno);
     }
-    memset(pool->fmp_segments, 0, sizeof(lam_memseg_t *)*n_pools);
+    memset(pool->fmp_segments, 0, sizeof(ompi_memseg_t *)*n_pools);
 
     pool->fmp_n_segs_in_array = malloc(sizeof(int) * n_pools);
     if ( !pool->fmp_n_segs_in_array ) {
-      lam_abort(1, "Unable to allocate memory for "
+      ompi_abort(1, "Unable to allocate memory for "
                 "pool->fmp_n_segs_in_array, requested %ld bytes, errno %d",
                 sizeof(int) * n_pools, errno);
     }
@@ -350,23 +350,23 @@ int lam_fmp_construct_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation,
     for ( pool_idx = 0; pool_idx < n_pools; pool_idx++ )
     {
         
-        ptr = lam_zero_alloc(initial_allocation, MMAP_SHARED_PROT,
+        ptr = ompi_zero_alloc(initial_allocation, MMAP_SHARED_PROT,
                                  MMAP_SHARED_FLAGS);
         if ( !ptr ) {
-          lam_abort(1, "Unable to allocate "
+          ompi_abort(1, "Unable to allocate "
                     "memory pool , requested %ld, errno %d",
                     initial_allocation, errno);
         }
 
         if ( apply_mem_affinity ) 
         {
-            if (!lam_set_affinity(ptr, initial_allocation, pool_idx))
+            if (!ompi_set_affinity(ptr, initial_allocation, pool_idx))
             {
-              lam_abort(1, "Error: setting memory affinity");
+              ompi_abort(1, "Error: setting memory affinity");
             }
         }
         
-        /* set lam_memseg_t data */
+        /* set ompi_memseg_t data */
         pool->fmp_segments[pool_idx][0].ms_base_ptr = ptr;
         pool->fmp_segments[pool_idx][0].ms_current_ptr = ptr;
         pool->fmp_segments[pool_idx][0].ms_length = initial_allocation;
@@ -377,10 +377,10 @@ int lam_fmp_construct_with(lam_fixed_mpool_t *pool, ssize_t initial_allocation,
         
     }                       /* end pool loop */
  
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
-void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
+void *ompi_fmp_get_mem_segment(ompi_fixed_mpool_t *pool,
                               size_t length, size_t alignment, int which_pool)
 {
     void    *segment = NULL;
@@ -388,7 +388,7 @@ void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
     int     idx, seg_idx;
     ssize_t len_to_alloc;
     char    *ptr;
-    lam_memseg_t *tmp_seg;
+    ompi_memseg_t *tmp_seg;
     void *tmp_ptr;
     
     /* return if pool can't be used */
@@ -448,11 +448,11 @@ void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
             pool->fmp_n_segs_in_array[which_pool])
         {
             /* create a temp version of pool->fmp_segments[] */
-            tmp_seg = malloc(sizeof(lam_memseg_t) *
+            tmp_seg = malloc(sizeof(ompi_memseg_t) *
                              (pool->fmp_n_segments[which_pool] +
                               pool->fmp_n_elts_to_add));
             if ( !tmp_seg ) {
-              lam_abort(1, "Unable to allocate memory for tmp_seg, errno %d",
+              ompi_abort(1, "Unable to allocate memory for tmp_seg, errno %d",
                         errno);
             }
             /* copy old version of pool->fmp_segments to tmp copy */
@@ -483,16 +483,16 @@ void *lam_fmp_get_mem_segment(lam_fixed_mpool_t *pool,
         if (len_to_alloc < pool->fmp_min_alloc_size)
             len_to_alloc = 2 * pool->fmp_min_alloc_size;
         tmp_ptr =
-            lam_zero_alloc(len_to_alloc, MMAP_SHARED_PROT, MMAP_SHARED_FLAGS);
+            ompi_zero_alloc(len_to_alloc, MMAP_SHARED_PROT, MMAP_SHARED_FLAGS);
         if ( !tmp_ptr )
         {
-          lam_abort(1, "Unable to allocate memory pool");
+          ompi_abort(1, "Unable to allocate memory pool");
         }
         
         if ( pool->fmp_apply_affinity )
         {
-          if ( !lam_set_affinity(tmp_ptr, len_to_alloc, which_pool) ) {
-            lam_abort(1, "Error: setting memory affinity");
+          if ( !ompi_set_affinity(tmp_ptr, len_to_alloc, which_pool) ) {
+            ompi_abort(1, "Error: setting memory affinity");
           }
         }
         

@@ -1,18 +1,18 @@
 /*
  * $HEADERS$
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "attribute/attribute.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Create_keyval = PMPI_Create_keyval
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -23,13 +23,13 @@ int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn,
 			   int *comm_keyval, void *extra_state)
 {
     int ret;
-    lam_attribute_fn_ptr_union_t copy_fn;
-    lam_attribute_fn_ptr_union_t del_fn;
+    ompi_attribute_fn_ptr_union_t copy_fn;
+    ompi_attribute_fn_ptr_union_t del_fn;
 
     if (MPI_PARAM_CHECK) {
 	if ((NULL == comm_copy_attr_fn) || (NULL == comm_delete_attr_fn) ||
 	    (NULL == comm_keyval)) {
-	    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
 					 FUNC_NAME);
 	}
     }
@@ -37,8 +37,8 @@ int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn,
     copy_fn.attr_communicator_copy_fn = comm_copy_attr_fn;
     del_fn.attr_communicator_delete_fn = comm_delete_attr_fn;
 
-    ret = lam_attr_create_keyval(COMM_ATTR, copy_fn, 
+    ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, 
 				 del_fn, comm_keyval, extra_state, 0);
 
-    LAM_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
 }

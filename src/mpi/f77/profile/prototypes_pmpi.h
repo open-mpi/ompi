@@ -1,15 +1,15 @@
-#ifndef LAM_F77_PROTOTYPES_PMPI_H
-#define LAM_F77_PROTOTYPES_PMPI_H
+#ifndef OMPI_F77_PROTOTYPES_PMPI_H
+#define OMPI_F77_PROTOTYPES_PMPI_H
 /*
  * $HEADER$
  * This file prototypes all MPI fortran functions in all four fortran
- * symbol conventions as well as all the internal real LAM wrapper
+ * symbol conventions as well as all the internal real OMPI wrapper
  * functions (different from any of the four fortran symbol
  * conventions for clarity, at the cost of more typing for me...).
  * This file is included in the top-level build ONLY. The prototyping
  * is done ONLY for MPI_* bindings
  *
- * Zeroth, the LAM wrapper functions, with a _f suffix.
+ * Zeroth, the OMPI wrapper functions, with a _f suffix.
  *
  * This is needed ONLY if the lower-level prototypes_pmpi.h has not
  * already been included

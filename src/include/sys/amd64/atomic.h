@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#ifndef LAM_SYS_ATOMIC_H_INCLUDED
-#define LAM_SYS_ATOMIC_H_INCLUDED
+#ifndef OMPI_SYS_ATOMIC_H_INCLUDED
+#define OMPI_SYS_ATOMIC_H_INCLUDED
 
 /*
  * On amd64, we use cmpxchg.
@@ -19,25 +19,25 @@
 #endif
 
 
-static inline lam_atomic_mb(void)
+static inline ompi_atomic_mb(void)
 {
     MB();
 }
 
 
-static inline lam_atomic_rmb(void)
+static inline ompi_atomic_rmb(void)
 {
     MB();
 }
 
 
-static inline lam_atomic_wmb(void)
+static inline ompi_atomic_wmb(void)
 {
     MB();
 }
 
 
-static inline int lam_atomic_cmpset_32(volatile uint32_t *addr,
+static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
                                        uint32_t old,
                                        uint32_t new)
 {
@@ -55,23 +55,23 @@ LOCK "cmpxchgl %1,%2   \n\
 }
 
 
-static inline int lam_atomic_cmpset_acq_32(volatile uint32_t *addr,
+static inline int ompi_atomic_cmpset_acq_32(volatile uint32_t *addr,
                                             uint32_t old,
                                             uint32_t new)
 {
-    return lam_atomic_cmpset_32(addr, old, new);
+    return ompi_atomic_cmpset_32(addr, old, new);
 }
 
 
-static inline int lam_atomic_cmpset_rel_32(volatile uint32_t *addr,
+static inline int ompi_atomic_cmpset_rel_32(volatile uint32_t *addr,
                                             uint32_t old,
                                             uint32_t new)
 {
-    return lam_atomic_cmpset_32(addr, old, new);
+    return ompi_atomic_cmpset_32(addr, old, new);
 }
 
 
-static inline int lam_atomic_cmpset_64(volatile uint64_t *addr,
+static inline int ompi_atomic_cmpset_64(volatile uint64_t *addr,
                                        uint64_t old,
                                        uint64_t new)
 {
@@ -89,19 +89,19 @@ LOCK "cmpxchgq %1,%2   \n\
 }
 
 
-static inline int lam_atomic_cmpset_acq_64(volatile uint64_t *addr,
+static inline int ompi_atomic_cmpset_acq_64(volatile uint64_t *addr,
                                            uint64_t old,
                                            uint64_t new)
 {
-    return lam_atomic_cpmset_64(addr, old, new);
+    return ompi_atomic_cpmset_64(addr, old, new);
 }
 
 
-static inline int lam_atomic_cmpset_rel_64(volatile uint64_t *addr,
+static inline int ompi_atomic_cmpset_rel_64(volatile uint64_t *addr,
                                            uint64_t old,
                                            uint64_t new)
 {
-    return lam_atomic_cpmset_64(addr, old, new);
+    return ompi_atomic_cpmset_64(addr, old, new);
 }
 
-#endif /* ! LAM_SYS_ATOMIC_H_INCLUDED */
+#endif /* ! OMPI_SYS_ATOMIC_H_INCLUDED */

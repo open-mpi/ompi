@@ -1,7 +1,7 @@
 /*
  * $HEADERS$
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "mpi.h"
@@ -9,11 +9,11 @@
 #include "mca/coll/coll.h"
 #include "communicator/communicator.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Bcast = PMPI_Bcast
 #endif
 
-#if LAM_PROFILING_DEFINES
+#if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
 
@@ -28,27 +28,27 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
 
     if (MPI_PARAM_CHECK) {
       if (MPI_COMM_NULL == comm) {
-	return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
+	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
                                      FUNC_NAME);
       }
 
       if (NULL == buffer) {
-	return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
       }
 
       if (MPI_DATATYPE_NULL == datatype) {
-	return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
+	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
       }
     
       if (count < 0) {
-	return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
+	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
       }
     }
 
-    if (LAM_COMM_IS_INTRA(comm)) {
+    if (OMPI_COMM_IS_INTRA(comm)) {
       MPI_Comm_size(comm, &size);
       if ((root >= size) || (root < 0)) {
-	  return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+	  return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
       }
       if (count == 0 && comm->c_coll.coll_bcast_optimization) {
 	  return(MPI_SUCCESS);
@@ -63,7 +63,7 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
       MPI_Comm_remote_size(comm, &size);
       if (!(((root < size) && (root >= 0)) 
 	|| (root == MPI_ROOT) || (root == MPI_PROC_NULL))) {
-	  return LAM_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
+	  return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ROOT, FUNC_NAME);
       }
     } 
 
@@ -76,5 +76,5 @@ int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype,
 
     err = func(buffer, count, datatype, root, comm);
     
-    LAM_ERRHANDLER_RETURN(err, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(err, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }

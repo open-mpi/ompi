@@ -1,7 +1,7 @@
 /*
  * $HEADER$
  */
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
@@ -20,7 +20,7 @@
  * Global variables
  */
 int mca_topo_base_output = -1;
-lam_list_t mca_topo_base_modules_available;
+ompi_list_t mca_topo_base_modules_available;
 mca_topo_base_module_t mca_topo_base_selected_module;
 mca_topo_t mca_topo;
 
@@ -32,14 +32,14 @@ int mca_topo_base_open(void) {
     /*
      * Open up all available modules 
      */
-    if (LAM_SUCCESS !=
+    if (OMPI_SUCCESS !=
            mca_base_modules_open("topo", 0, mca_topo_base_static_modules,
                                  &mca_topo_base_modules_available)) {
-        return LAM_ERROR;
+        return OMPI_ERROR;
     }
     /*
      * All done
      */ 
 
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }

@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_CREATE_RESIZED = mpi_type_create_resized_f
 #pragma weak pmpi_type_create_resized = mpi_type_create_resized_f
 #pragma weak pmpi_type_create_resized_ = mpi_type_create_resized_f
 #pragma weak pmpi_type_create_resized__ = mpi_type_create_resized_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_RESIZED,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_RESIZED,
                            pmpi_type_create_resized,
                            pmpi_type_create_resized_,
                            pmpi_type_create_resized__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_TYPE_CREATE_RESIZED,
                            (oldtype, lb, extent, newtype, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_TYPE_CREATE_RESIZED = mpi_type_create_resized_f
 #pragma weak mpi_type_create_resized = mpi_type_create_resized_f
 #pragma weak mpi_type_create_resized_ = mpi_type_create_resized_f
 #pragma weak mpi_type_create_resized__ = mpi_type_create_resized_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_RESIZED,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_RESIZED,
                            mpi_type_create_resized,
                            mpi_type_create_resized_,
                            mpi_type_create_resized__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_RESIZED,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

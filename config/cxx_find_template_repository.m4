@@ -3,7 +3,7 @@ dnl
 dnl $HEADER$
 dnl
 
-define([LAM_CXX_FIND_TEMPLATE_REPOSITORY],[
+define([OMPI_CXX_FIND_TEMPLATE_REPOSITORY],[
 #
 # Arguments: None
 #
@@ -12,7 +12,7 @@ define([LAM_CXX_FIND_TEMPLATE_REPOSITORY],[
 # See if the compiler makes template repository directories
 # Warning: this is a really screwy example! -JMS
 #
-# Sets LAM_CXX_TEMPLATE_REPOSITORY to the template repository, or blank.
+# Sets OMPI_CXX_TEMPLATE_REPOSITORY to the template repository, or blank.
 # Must call AC_SUBST manually
 #
 
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 }
 EOF
 
-lam_template_failed=
+ompi_template_failed=
 echo configure:__oline__: $CXX $CXXFLAGS -c conftest1.C >&5
 $CXX $CXXFLAGS -c conftest1.C >&5 2>&5
 if test ! -f conftest1.o ; then
@@ -83,7 +83,7 @@ if test ! -f conftest1.o ; then
     cat conftest1.C >&5
     echo configure:__oline__: here is conftest.h: >&5
     cat conftest.h >&5
-    lam_template_failed=1
+    ompi_template_failed=1
 else
     echo configure:__oline__: $CXX $CXXFLAGS -c conftest2.C >&5
     $CXX $CXXFLAGS -c conftest2.C >&5 2>&5
@@ -96,43 +96,43 @@ else
     else
 	rm -rf conftest*
 
-	for lam_file in `ls`
+	for ompi_file in `ls`
 	do
-	    if test "$lam_file" != "." -a "$lam_file" != ".."; then
+	    if test "$ompi_file" != "." -a "$ompi_file" != ".."; then
 		# Is it a directory?
-		if test -d "$lam_file"; then
-		    lam_template_dir="$lam_file $lam_template_dir"
+		if test -d "$ompi_file"; then
+		    ompi_template_dir="$ompi_file $ompi_template_dir"
 		    
 		# Or is it a file?
 		else
-		    name="`echo $lam_file | cut -d. -f1`"
+		    name="`echo $ompi_file | cut -d. -f1`"
 		    
 		    temp_mask=
 		    if test "$name" = "main" -o "$name" = "other"; then
-			temp_mask="`echo $lam_file | cut -d. -f2`"
-			if test "$lam_template_filemask" = ""; then
-			lam_template_filemask="$temp_mask";
-			elif test "`echo $lam_template_filemask | grep $temp_mask`" = ""; then
-			lam_template_filemask="$lam_template_filemask $temp_mask"
+			temp_mask="`echo $ompi_file | cut -d. -f2`"
+			if test "$ompi_template_filemask" = ""; then
+			ompi_template_filemask="$temp_mask";
+			elif test "`echo $ompi_template_filemask | grep $temp_mask`" = ""; then
+			ompi_template_filemask="$ompi_template_filemask $temp_mask"
 			fi
 		    fi
 		fi
 	    fi
 	done
-	if test "$lam_template_filemask" != ""; then
+	if test "$ompi_template_filemask" != ""; then
 	    temp_mask=
-	    for mask in $lam_template_filemask
+	    for mask in $ompi_template_filemask
 	    do
 		temp_mask="*.$mask $temp_mask"
 	    done
-	    lam_template_filemask=$temp_mask
+	    ompi_template_filemask=$temp_mask
 	fi
     fi
 fi
-LAM_CXX_TEMPLATE_REPOSITORY="$lam_template_dir $lam_template_filemask"
+OMPI_CXX_TEMPLATE_REPOSITORY="$ompi_template_dir $ompi_template_filemask"
 
-if test "`echo $LAM_CXX_TEMPLATE_REPOSITORY`" != ""; then
-    AC_MSG_RESULT([$LAM_CXX_TEMPLATE_REPOSITORY])
+if test "`echo $OMPI_CXX_TEMPLATE_REPOSITORY`" != ""; then
+    AC_MSG_RESULT([$OMPI_CXX_TEMPLATE_REPOSITORY])
 else
     AC_MSG_RESULT([not used])
 fi
@@ -140,4 +140,4 @@ cd ..
 rm -rf conf_tmp_$$
 
 # Clean up
-unset lam_file lam_template_failed lam_template_dir])dnl
+unset ompi_file ompi_template_failed ompi_template_dir])dnl

@@ -2,20 +2,20 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
 
-#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
+#if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_FILE_READ_ORDERED_END = mpi_file_read_ordered_end_f
 #pragma weak pmpi_file_read_ordered_end = mpi_file_read_ordered_end_f
 #pragma weak pmpi_file_read_ordered_end_ = mpi_file_read_ordered_end_f
 #pragma weak pmpi_file_read_ordered_end__ = mpi_file_read_ordered_end_f
-#elif LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (PMPI_FILE_READ_ORDERED_END,
+#elif OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_READ_ORDERED_END,
                            pmpi_file_read_ordered_end,
                            pmpi_file_read_ordered_end_,
                            pmpi_file_read_ordered_end__,
@@ -24,15 +24,15 @@ LAM_GENERATE_F77_BINDINGS (PMPI_FILE_READ_ORDERED_END,
                            (fh, buf, status, ierr) )
 #endif
 
-#if LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_FILE_READ_ORDERED_END = mpi_file_read_ordered_end_f
 #pragma weak mpi_file_read_ordered_end = mpi_file_read_ordered_end_f
 #pragma weak mpi_file_read_ordered_end_ = mpi_file_read_ordered_end_f
 #pragma weak mpi_file_read_ordered_end__ = mpi_file_read_ordered_end_f
 #endif
 
-#if ! LAM_HAVE_WEAK_SYMBOLS && ! LAM_PROFILE_LAYER
-LAM_GENERATE_F77_BINDINGS (MPI_FILE_READ_ORDERED_END,
+#if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
+OMPI_GENERATE_F77_BINDINGS (MPI_FILE_READ_ORDERED_END,
                            mpi_file_read_ordered_end,
                            mpi_file_read_ordered_end_,
                            mpi_file_read_ordered_end__,
@@ -42,7 +42,7 @@ LAM_GENERATE_F77_BINDINGS (MPI_FILE_READ_ORDERED_END,
 #endif
 
 
-#if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
+#if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 

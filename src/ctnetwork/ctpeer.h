@@ -2,9 +2,9 @@
  * $HEADER$
  */
 
-#ifndef LAM_CT_PEER_H
-#define LAM_CT_PEER_H
+#ifndef OMPI_CT_PEER_H
+#define OMPI_CT_PEER_H
 
-#include "lfc/lam_object.h"
+#include "class/ompi_object.h"
 
-#endif  /* LAM_CT_PEER_H */
+#endif  /* OMPI_CT_PEER_H */

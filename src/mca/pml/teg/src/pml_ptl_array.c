@@ -23,7 +23,7 @@ static void mca_ptl_array_destruct(mca_ptl_array_t* array)
 
 OBJ_CLASS_INSTANCE(
     mca_pml_teg_ptl_array_t,
-    lam_object_t,
+    ompi_object_t,
     mca_ptl_array_construct,
     mca_ptl_array_destruct
 );
@@ -32,14 +32,14 @@ int mca_ptl_array_reserve(mca_ptl_array_t* array, size_t size)
 {
     mca_ptl_proc_t *procs;
     if(array->ptl_reserve >= size)
-        return LAM_SUCCESS;
+        return OMPI_SUCCESS;
     
     procs = realloc(array->ptl_procs, sizeof(mca_ptl_proc_t)*size);
     if(NULL == procs)
-        return LAM_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     array->ptl_procs = procs;
     array->ptl_reserve = size;
     memset(array->ptl_procs+array->ptl_size, 0, (size-array->ptl_size)*sizeof(mca_ptl_proc_t));
-    return LAM_SUCCESS;
+    return OMPI_SUCCESS;
 }
 

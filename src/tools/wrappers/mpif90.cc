@@ -3,8 +3,8 @@
 //	Function:	- wrapper for fortran program compilation
 //
 
-#include "lam_config.h"
-#include "tools/wrappers/lamwrap.h"
+#include "ompi_config.h"
+#include "tools/wrappers/ompi_wrap.h"
 
 
 
@@ -17,20 +17,20 @@ main(int argc, char *argv[])
   // and pass in just a few arguments to customize for the language of
   // this wrapper compiler.
 
-#if !LAM_WANT_F90_BINDINGS
+#if !OMPI_WANT_F90_BINDINGS
 #if 0
   show_help("hf90", "no-fortran-support", NULL);
 #endif
   return 1;
 #else
-  lam_sv_t str_vec;
+  ompi_sv_t str_vec;
 
   str_vec.clear();
-  str_vec.push_back("LAMMPIF90");
-  str_vec.push_back("LAMF90");
+  str_vec.push_back("OMPI_MPIF90");
+  str_vec.push_back("OMPI_F90");
 
-  return lam_wrap_engine(argc, argv,
-			 str_vec, LAM_F90, false, false,
+  return ompi_wrap_engine(argc, argv,
+			 str_vec, OMPI_F90, false, false,
 			 WRAPPER_EXTRA_FCFLAGS);
 #endif
 }

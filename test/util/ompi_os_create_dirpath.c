@@ -9,7 +9,7 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#include "lam_config.h"
+#include "ompi_config.h"
 #include "include/constants.h"
 #include "util/sys_info.h"
 #include "util/os_path.h"
@@ -58,9 +58,9 @@ int main(int argc, char* argv[])
 static bool test1(void)
 {
 
-    /* Test trivial functionality. Program should return LAM_ERROR when called with NULL path. */
+    /* Test trivial functionality. Program should return OMPI_ERROR when called with NULL path. */
 
-    if (LAM_ERROR != ompi_os_create_dirpath(NULL, S_IRWXU))
+    if (OMPI_ERROR != ompi_os_create_dirpath(NULL, S_IRWXU))
             return(false);
 
     return true;
@@ -82,14 +82,14 @@ static bool test2(void)
         return(false);
     }
 
-    if (LAM_ERROR == ompi_os_create_dirpath(tmp, S_IRWXU)) {
+    if (OMPI_ERROR == ompi_os_create_dirpath(tmp, S_IRWXU)) {
         rmdir(tmp);
         return(false);
     }
 
     chmod(tmp, S_IRUSR);
 
-    if (LAM_ERROR == ompi_os_create_dirpath(tmp, S_IRWXU)) {
+    if (OMPI_ERROR == ompi_os_create_dirpath(tmp, S_IRWXU)) {
         rmdir(tmp);
         return(false);
     }
@@ -117,7 +117,7 @@ static bool test3(void)
     }
 
     out = ompi_os_path(true, a[0], a[1], a[2], NULL);
-    if (LAM_ERROR == ompi_os_create_dirpath(out, S_IRWXU)) {
+    if (OMPI_ERROR == ompi_os_create_dirpath(out, S_IRWXU)) {
         out = ompi_os_path(true, a[0], a[1], a[2], NULL);
         if (0 == stat(out, &buf))
             rmdir(out);

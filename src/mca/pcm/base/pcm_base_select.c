@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_config.h"
+#include "ompi_config.h"
 
 #include <stdio.h>
 
@@ -27,37 +27,37 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
   int priority, best_priority;
   bool user_threads, hidden_threads;
   bool best_user_threads, best_hidden_threads;
-  lam_list_item_t *item;
+  ompi_list_item_t *item;
   mca_base_module_list_item_t *mli;
   mca_pcm_base_module_t *module, *best_module;
   mca_pcm_t *actions, *best_actions;
-  extern lam_list_t mca_pcm_base_modules_available;
+  extern ompi_list_t mca_pcm_base_modules_available;
 
   /* Traverse the list of available modules; call their init
      functions. */
 
   best_priority = -1;
   best_module = NULL;
-  for (item = lam_list_get_first(&mca_pcm_base_modules_available);
-       lam_list_get_end(&mca_pcm_base_modules_available) != item;
-       item = lam_list_get_next(item)) {
+  for (item = ompi_list_get_first(&mca_pcm_base_modules_available);
+       ompi_list_get_end(&mca_pcm_base_modules_available) != item;
+       item = ompi_list_get_next(item)) {
     mli = (mca_base_module_list_item_t *) item;
     module = (mca_pcm_base_module_t *) mli->mli_module;
 
-    lam_output_verbose(10, mca_pcm_base_output, 
+    ompi_output_verbose(10, mca_pcm_base_output, 
                        "select: initializing %s module %s",
                        module->pcmm_version.mca_type_name,
                        module->pcmm_version.mca_module_name);
     if (NULL == module->pcmm_init) {
-      lam_output_verbose(10, mca_pcm_base_output,
+      ompi_output_verbose(10, mca_pcm_base_output,
                          "select: no init function; ignoring module");
     } else {
       actions = module->pcmm_init(&priority, &user_threads, &hidden_threads);
       if (NULL == actions) {
-        lam_output_verbose(10, mca_pcm_base_output,
+        ompi_output_verbose(10, mca_pcm_base_output,
                            "select: init returned failure");
       } else {
-        lam_output_verbose(10, mca_pcm_base_output,
+        ompi_output_verbose(10, mca_pcm_base_output,
                            "select: init returned priority %d", priority);
         if (priority > best_priority) {
           best_priority = priority;
@@ -74,14 +74,14 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
 
   if (NULL == best_module) {
     /* JMS Replace with show_help */
-    lam_abort(1, "No PCM module available.  This shouldn't happen.");
+    ompi_abort(1, "No PCM module available.  This shouldn't happen.");
   } 
 
   /* Finalize all non-selected modules */
 
-  for (item = lam_list_get_first(&mca_pcm_base_modules_available);
-       lam_list_get_end(&mca_pcm_base_modules_available) != item;
-       item = lam_list_get_next(item)) {
+  for (item = ompi_list_get_first(&mca_pcm_base_modules_available);
+       ompi_list_get_end(&mca_pcm_base_modules_available) != item;
+       item = ompi_list_get_next(item)) {
     mli = (mca_base_module_list_item_t *) item;
     module = (mca_pcm_base_module_t *) mli->mli_module;
 
@@ -96,7 +96,7 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
            don't matter anymore) */
 
         module->pcmm_finalize();
-        lam_output_verbose(10, mca_pcm_base_output, 
+        ompi_output_verbose(10, mca_pcm_base_output, 
                            "select: module %s finalized",
                            module->pcmm_version.mca_module_name);
       }
@@ -116,11 +116,11 @@ int mca_pcm_base_select(bool *allow_multi_user_threads,
   mca_pcm = *best_actions;
   *allow_multi_user_threads = best_user_threads;
   *have_hidden_threads = best_hidden_threads;
-  lam_output_verbose(10, mca_pcm_base_output, 
+  ompi_output_verbose(10, mca_pcm_base_output, 
                      "select: module %s initialized",
                      module->pcmm_version.mca_module_name);
 
   /* All done */
 
-  return LAM_SUCCESS;
+  return OMPI_SUCCESS;
 }

@@ -9,14 +9,14 @@ SUBDIRS = cygwin darwin irix linux tru64
 
 headers = \
 	atomic.h \
-	lam_system.h \
+	ompi_system.h \
 	numa.h
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/os
-lam_HEADERS = $(headers)
+ompidir = $(includedir)/ompi/os
+ompi_HEADERS = $(headers)
 else
-lamdir = $(includedir)
+ompidir = $(includedir)
 endif
