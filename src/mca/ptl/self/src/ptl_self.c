@@ -76,9 +76,10 @@ int mca_ptl_self_finalize(struct mca_ptl_t* ptl)
     return OMPI_SUCCESS;
 }
 
-void mca_ptl_self_request_init(struct mca_ptl_t* ptl, mca_pml_base_send_request_t* request)
+int mca_ptl_self_request_init(struct mca_ptl_t* ptl, mca_pml_base_send_request_t* request)
 {
     OBJ_CONSTRUCT(request+1, mca_ptl_base_recv_frag_t);
+    return OMPI_SUCCESS;
 }
 
 void mca_ptl_self_request_fini(struct mca_ptl_t* ptl, mca_pml_base_send_request_t* request)

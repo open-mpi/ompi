@@ -313,7 +313,7 @@ typedef int (*mca_ptl_base_del_procs_fn_t)(
  * same PTL. When the request is re-used from the cache, the init function is NOT
  * called for subsequent sends.
  */
-typedef void (*mca_ptl_base_request_init_fn_t)(
+typedef int (*mca_ptl_base_request_init_fn_t)(
     struct mca_ptl_t* ptl, 
     struct mca_pml_base_send_request_t* request
 );
