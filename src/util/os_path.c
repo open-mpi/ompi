@@ -11,8 +11,7 @@
 #include <libgen.h>
 #include <sys/param.h>
 
-#include "constants.h"
-
+#include "include/constants.h"
 #include "util/os_path.h"
 #include "util/sys_info.h"
 
