@@ -38,8 +38,8 @@ libmca_gpr_base_la_SOURCES = \
         gpr_base_unpack_mode_ops.c \
         gpr_base_pack_put_get.c \
         gpr_base_unpack_put_get.c \
-        gpr_base_pack_startup_shutdown_msg.c \
-        gpr_base_unpack_startup_shutdown_msg.c \
+        gpr_base_pack_startup_msg.c \
+        gpr_base_unpack_startup_msg.c \
         gpr_base_pack_subscribe.c \
         gpr_base_unpack_subscribe.c \
         gpr_base_pack_synchro.c \

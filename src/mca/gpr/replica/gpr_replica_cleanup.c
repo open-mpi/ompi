@@ -97,7 +97,7 @@ void mca_gpr_replica_cleanup_proc_nl(bool purge, ompi_process_name_t *proc)
 	 seg = (mca_gpr_replica_segment_t*)ompi_list_get_next(seg)) {
 
 	if (jobid == seg->owning_job) {
-	    /* adjust any startup synchro and/or shutdown synchros owned
+	    /* adjust any startup synchro synchros owned
 	     * by the associated jobid by one.
 	     */
 		if (mca_gpr_replica_debug) {
@@ -108,14 +108,9 @@ void mca_gpr_replica_cleanup_proc_nl(bool purge, ompi_process_name_t *proc)
 	    for (trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_first(&seg->triggers);
 		 	trig != (mca_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers);
 		 	trig = (mca_gpr_replica_trigger_list_t*)ompi_list_get_next(trig)) {
-			if ((OMPI_REGISTRY_SYNCHRO_MODE_STARTUP & trig->synch_mode) ||
-		    		(OMPI_REGISTRY_SYNCHRO_MODE_SHUTDOWN & trig->synch_mode)) {
+			if (OMPI_REGISTRY_SYNCHRO_MODE_STARTUP & trig->synch_mode) {
 				if (mca_gpr_replica_debug) {
-					if (OMPI_REGISTRY_SYNCHRO_MODE_STARTUP & trig->synch_mode) {
-						ompi_output(0, "\tadjusting startup synchro");
-					} else {
-						ompi_output(0, "\tadjusting shutdown synchro");
-					}
+					ompi_output(0, "\tadjusting startup synchro");
 				}
 		    		trig->count--;
 			}

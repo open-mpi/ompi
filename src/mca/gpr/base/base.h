@@ -171,9 +171,6 @@ extern "C" {
     OMPI_DECLSPEC int mca_gpr_base_pack_get_startup_msg(ompi_buffer_t cmd, mca_ns_base_jobid_t jobid);
     OMPI_DECLSPEC ompi_buffer_t mca_gpr_base_unpack_get_startup_msg(ompi_buffer_t buffer, ompi_list_t *recipients);
 
-    OMPI_DECLSPEC int mca_gpr_base_pack_get_shutdown_msg(ompi_buffer_t cmd, mca_ns_base_jobid_t jobid);
-    ompi_buffer_t mca_gpr_base_unpack_get_shutdown_msg(ompi_buffer_t buffer, ompi_list_t *recipients);
-
     OMPI_DECLSPEC int mca_gpr_base_pack_triggers_active_cmd(ompi_buffer_t cmd, mca_ns_base_jobid_t jobid);
     OMPI_DECLSPEC int mca_gpr_base_unpack_triggers_active_cmd(ompi_buffer_t cmd);
 

@@ -49,6 +49,11 @@ mca_gpr_proxy_enter_notify_request(char *segment,
     }
     ompi_list_append(&mca_gpr_proxy_notify_request_tracker, &trackptr->item);
 
+    if (mca_gpr_proxy_debug) {
+        ompi_output(0, "[%d,%d,%d] enter_notify_request: tracker created for segment %s action %X idtag %d",
+                    OMPI_NAME_ARGS(*ompi_rte_get_self()), segment, action, trackptr->local_idtag);
+    }
+    
     return trackptr->local_idtag;
 }
 
@@ -77,6 +82,11 @@ mca_gpr_proxy_remove_notify_request(ompi_registry_notify_id_t local_idtag)
     ptr_free_id = OBJ_NEW(mca_gpr_idtag_list_t);
     ptr_free_id->id_tag = trackptr->local_idtag;
     ompi_list_append(&mca_gpr_proxy_free_notify_id_tags, &ptr_free_id->item);
+
+    if (mca_gpr_proxy_debug) {
+        ompi_output(0, "[%d,%d,%d] remove_notify_request: tracker removed for segment %s action %X idtag %d",
+                OMPI_NAME_ARGS(*ompi_rte_get_self()), trackptr->segment, trackptr->action, local_idtag);
+    }
 
     /* release tracker item */
     OBJ_RELEASE(trackptr);

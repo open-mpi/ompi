@@ -40,7 +40,6 @@ static ompi_registry_notify_id_t mca_gpr_replica_recv_synchro_cmd(ompi_process_n
 static int32_t mca_gpr_replica_recv_cancel_synchro_cmd(ompi_buffer_t buffer);
 static void mca_gpr_replica_recv_dump_cmd(ompi_buffer_t answer);
 static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_buffer_t answer);
-static void mca_gpr_replica_recv_get_shutdown_msg_cmd(ompi_buffer_t buffer, ompi_buffer_t answer);
 static void mca_gpr_replica_recv_triggers_active_cmd(ompi_buffer_t buffer);
 static void mca_gpr_replica_recv_triggers_inactive_cmd(ompi_buffer_t buffer);
 static void mca_gpr_replica_recv_cleanup_job_cmd(ompi_buffer_t buffer);
@@ -416,17 +415,6 @@ ompi_buffer_t mca_gpr_replica_process_command_buffer(ompi_buffer_t buffer,
 	    }
 
 	    mca_gpr_replica_recv_notify_off_cmd(buffer);
-	    break;
-
-
-	    
-	case MCA_GPR_GET_SHUTDOWN_MSG_CMD:  /*****     GET SHUTDOWN MSG     *****/
-
-	    if (mca_gpr_replica_debug) {
-		ompi_output(0, "\tget shutdown msg cmd");
-	    }
-
-	    mca_gpr_replica_recv_get_shutdown_msg_cmd(buffer, answer);
 	    break;
 
 
@@ -1163,7 +1151,7 @@ static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_
 
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
-    msg = mca_gpr_replica_construct_startup_shutdown_msg_nl(OMPI_STARTUP_DETECTED, jobid, recipients);
+    msg = mca_gpr_replica_construct_startup_msg_nl(jobid, recipients);
 
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 
@@ -1185,46 +1173,6 @@ static void mca_gpr_replica_recv_get_startup_msg_cmd(ompi_buffer_t buffer, ompi_
 
 }
 
-
-static void mca_gpr_replica_recv_get_shutdown_msg_cmd(ompi_buffer_t buffer, ompi_buffer_t answer)
-{
-    mca_ns_base_jobid_t jobid=0;
-    ompi_list_t *recipients=NULL;
-    ompi_buffer_t msg;
-    ompi_name_server_namelist_t *recip=NULL;
-    void *addr=NULL;
-    int32_t size=0, num_recipients=0, i=0;
-
-    if (OMPI_SUCCESS != ompi_unpack(buffer, &jobid, 1, OMPI_JOBID)) {
-    		ompi_output(0, "[%d,%d,%d] recv_get_shutdown_msg: failed to unpack jobidstring",
-    					OMPI_NAME_ARGS(*ompi_rte_get_self()));
-		return;
-    }
-
-    recipients = OBJ_NEW(ompi_list_t);
-
-    OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
-
-    msg = mca_gpr_replica_construct_startup_shutdown_msg_nl(OMPI_SHUTDOWN_DETECTED, jobid, recipients);
-
-    OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
-
-    num_recipients = (int32_t)ompi_list_get_size(recipients);
-    if (OMPI_SUCCESS != ompi_pack(answer, &num_recipients, 1, OMPI_INT32)) {
-	return;
-    }
-
-    for (i=0; i<num_recipients; i++) {
-	recip = (ompi_name_server_namelist_t*)ompi_list_remove_first(recipients);
-	ompi_pack(answer, recip->name, 1, OMPI_NAME);
-	OBJ_RELEASE(recip);
-    }
-
-    ompi_buffer_get(msg, &addr, &size);
-
-    ompi_pack(answer, &size, 1, OMPI_INT32);
-    ompi_pack(answer, &addr, size, OMPI_BYTE);
-}
 
 static void mca_gpr_replica_recv_triggers_active_cmd(ompi_buffer_t cmd)
 {

@@ -206,10 +206,10 @@ bool mca_gpr_replica_process_triggers(mca_gpr_replica_segment_t *seg,
     for (trackptr = (mca_gpr_replica_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_replica_notify_request_tracker);
 	 trackptr != (mca_gpr_replica_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_replica_notify_request_tracker);
 	 trackptr = (mca_gpr_replica_notify_request_tracker_t*)ompi_list_get_next(trackptr)) {
-	if (trackptr->local_idtag == trig->local_idtag) {
-	    found = true;
-	    break;
-	}
+        	if (trackptr->local_idtag == trig->local_idtag) {
+        	    found = true;
+        	    break;
+        	}
     }
 
     if (!found) {  /* didn't find request */

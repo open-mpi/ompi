@@ -174,13 +174,10 @@ ompi_list_t* mca_gpr_proxy_test_internals(int level);
 
 
 /*
- * Startup/shutdown functions
+ * Startup functions
  */
 ompi_buffer_t mca_gpr_proxy_get_startup_msg(mca_ns_base_jobid_t jobid,
 					    ompi_list_t *recipients);
-
-ompi_buffer_t mca_gpr_proxy_get_shutdown_msg(mca_ns_base_jobid_t jobid,
-					     ompi_list_t *recipients);
 
 
 /*

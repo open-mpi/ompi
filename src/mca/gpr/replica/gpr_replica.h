@@ -410,18 +410,14 @@ void mca_gpr_replica_deliver_notify_msg(ompi_registry_notify_action_t state,
 ompi_list_t* mca_gpr_replica_test_internals(int level);
 
 /*
- * Startup/shutdown functions
+ * Startup functions
  */
 ompi_buffer_t mca_gpr_replica_get_startup_msg(mca_ns_base_jobid_t jobid,
 					      ompi_list_t *recipients);
 
-ompi_buffer_t mca_gpr_replica_get_shutdown_msg(mca_ns_base_jobid_t jobid,
-					       ompi_list_t *recipients);
-
 ompi_buffer_t
-mca_gpr_replica_construct_startup_shutdown_msg_nl(int mode,
-						  mca_ns_base_jobid_t jobid,
-						  ompi_list_t *recipients);
+mca_gpr_replica_construct_startup_msg_nl(mca_ns_base_jobid_t jobid,
+						               ompi_list_t *recipients);
 
 /*
  * Functions that interface to the proxy, but aren't available outside the gpr subsystem

@@ -75,7 +75,6 @@ static mca_gpr_base_module_t mca_gpr_proxy = {
     mca_gpr_proxy_triggers_active,
     mca_gpr_proxy_triggers_inactive,
     mca_gpr_proxy_get_startup_msg,
-    mca_gpr_proxy_get_shutdown_msg,
     mca_gpr_proxy_cleanup_job,
     mca_gpr_proxy_cleanup_proc,
     mca_gpr_proxy_deliver_notify_msg
@@ -336,22 +335,23 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
     /* find the request corresponding to this notify */
     found = false;
     for (trackptr = (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_proxy_notify_request_tracker);
-         trackptr != (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_proxy_notify_request_tracker) && !found;
+         trackptr != (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_proxy_notify_request_tracker);
          trackptr = (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_next(trackptr)) {
      	if (mca_gpr_proxy_debug) {
      		ompi_output(0, "\tchecking idtag %d for segment %s\n", trackptr->local_idtag, trackptr->segment);
      	}
 		if (trackptr->local_idtag == id_tag) {
-		    found = true;
-		}
+            found = true;
+            break;
+        }
     }
 
     OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
 
     if (!found) {  /* didn't find request */
-	ompi_output(0, "[%d,%d,%d] Proxy notification error - received request not found",
-                OMPI_NAME_ARGS(*ompi_rte_get_self()));
-	return;
+        	ompi_output(0, "[%d,%d,%d] Proxy notification error - received request not found",
+                        OMPI_NAME_ARGS(*ompi_rte_get_self()));
+        	return;
     }
 
     /* process request */

@@ -27,14 +27,6 @@ void
 ompi_rte_decode_startup_msg(int status, ompi_process_name_t *peer,
 			    ompi_buffer_t msg, int tag, void *cbdata);
 
-void
-ompi_rte_decode_shutdown_msg(int status, ompi_process_name_t *peer,
-			    ompi_buffer_t msg, int tag, void *cbdata);
-
-static void
-ompi_rte_decode_startup_shutdown_msg(ompi_registry_notify_action_t state,
-				     int status, ompi_process_name_t *peer,
-				     ompi_buffer_t msg, int tag, void *cbdata);
 
 /*
  * Main functions
@@ -46,33 +38,9 @@ int ompi_rte_wait_startup_msg(void)
 }
 
 
-void
-ompi_rte_decode_startup_msg(int status, ompi_process_name_t *peer,
-			    ompi_buffer_t msg, int tag, void *cbdata)
-{
-    ompi_rte_decode_startup_shutdown_msg(OMPI_REGISTRY_NOTIFY_ON_STARTUP,
-					 status, peer, msg, tag, cbdata);
-}
-
-
-int ompi_rte_wait_shutdown_msg(void)
-{
-    return mca_oob_xcast(NULL, NULL, NULL, ompi_rte_decode_shutdown_msg);
-}
-
-
-void
-ompi_rte_decode_shutdown_msg(int status, ompi_process_name_t *peer,
-			    ompi_buffer_t msg, int tag, void *cbdata)
-{
-    ompi_rte_decode_startup_shutdown_msg(OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN,
-					 status, peer, msg, tag, cbdata);
-}
-
-
 /*
- * Unpack the startup/shutdown message.
- * When a startup/shutdown message is received, it contains data objects from
+ * Unpack the startup message.
+ * When a startup message is received, it contains data objects from
  * several pre-defined registry segments. This includes OOB contact info,
  * PTL contact info, and other things. Each of these subsystems has a
  * callback function that is used to receive updates from the registry
@@ -81,10 +49,9 @@ ompi_rte_decode_shutdown_msg(int status, ompi_process_name_t *peer,
  * callback function as if it came directly from the registry.
  */
 
-static void
-ompi_rte_decode_startup_shutdown_msg(ompi_registry_notify_action_t state,
-				     int status, ompi_process_name_t *peer,
-				     ompi_buffer_t msg, int tag, void *cbdata)
+void
+ompi_rte_decode_startup_msg(int status, ompi_process_name_t *peer,
+			    ompi_buffer_t msg, int tag, void *cbdata)
 {
     char *segment;
     ompi_registry_notify_message_t *notify_msg;
@@ -94,13 +61,8 @@ ompi_rte_decode_startup_shutdown_msg(ompi_registry_notify_action_t state,
     int32_t num_objects, i;
 
     if (ompi_rte_debug_flag) {
-	if (OMPI_REGISTRY_NOTIFY_ON_STARTUP == state) {
-	ompi_output(0, "[%d,%d,%d] decoding startup msg",
+		ompi_output(0, "[%d,%d,%d] decoding startup msg",
 		    OMPI_NAME_ARGS(*ompi_rte_get_self()));
-	} else {
-	ompi_output(0, "[%d,%d,%d] decoding shutdown msg",
-		    OMPI_NAME_ARGS(*ompi_rte_get_self()));
-	}
     }
 
     while (0 < ompi_unpack_string(msg, &segment)) {
@@ -136,7 +98,7 @@ ompi_rte_decode_startup_shutdown_msg(ompi_registry_notify_action_t state,
 			    OMPI_NAME_ARGS(*ompi_rte_get_self()), segment, (int)num_objects);
 	    }
 
-	    ompi_registry.deliver_notify_msg(state, notify_msg);
+	    ompi_registry.deliver_notify_msg(OMPI_REGISTRY_NOTIFY_ON_STARTUP, notify_msg);
 	}
 
 	free(segment);

@@ -203,9 +203,6 @@ void mca_gpr_replica_dump_nl(ompi_buffer_t buffer)
 		if (OMPI_REGISTRY_SYNCHRO_MODE_STARTUP & trig->synch_mode) {
 		    ompi_pack_string(buffer, "\t\tOMPI_REGISTRY_SYNCHRO_MODE_STARTUP");
 		}
-		if (OMPI_REGISTRY_SYNCHRO_MODE_SHUTDOWN & trig->synch_mode) {
-		    ompi_pack_string(buffer, "\t\tOMPI_REGISTRY_SYNCHRO_MODE_SHUTDOWN");
-		}
 		asprintf(&tmp_out, "\tTrigger level: %d\tCurrent count: %d", trig->trigger, trig->count);
 		mca_gpr_replica_dump_load_string(buffer, tmp_out);
 		asprintf(&tmp_out, "\tTransition status: %d", trig->above_below);
