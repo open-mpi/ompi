@@ -12,42 +12,51 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/param.h>
+#include <errno.h>
 
+#include "event/event.h"
+#include "include/constants.h"
+
+#include "util/argv.h"
 #include "util/output.h"
 #include "util/os_path.h"
+#include "util/pack.h"
 #include "util/sys_info.h"
 #include "util/cmd_line.h"
 #include "util/common_cmd_line.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"
-#include "event/event.h"
+#include "util/universe_setup_file_io.h"
+
 #include "mca/base/base.h"
 #include "mca/oob/base/base.h"
+#include "mca/ns/base/base.h"
+#include "mca/pcm/base/base.h"
 
-#include "util/universe_setup_file_io.h"
-#include "runtime/universe_connect.h"
+#include "tools/ompid/ompid.h"
+
 #include "runtime/runtime.h"
+
+extern char** environ;
 
 
 int main(int argc, char **argv)
 {
-    ompi_cmd_line_t *cmd_line = NULL, *mca_cmd_line=NULL;
-    char *tmpdir = NULL;
-    char *universe = NULL;
-    char *tmp, *universe_name, *remote_host, *remote_uid;
-    char *script_file;
-    char *contact_file;
-    int ret;
+    ompi_cmd_line_t *cmd_line = NULL;
+    char *universe = NULL, *tmp=NULL, **tmp2=NULL;
+    char *contact_info=NULL;
+    char **seed_argv;
     pid_t pid;
-    bool persistent, silent, script, webserver;
     bool multi_thread = false;
     bool hidden_thread = false;
-
-    tmp = universe_name = remote_host = remote_uid = script_file = NULL;
-    persistent = silent = script = webserver = false;
+    int ret, i, seed_argc;
+    ompi_rte_node_schedule_t *sched;
+    char cwd[MAXPATHLEN];
+    ompi_list_t *nodelist = NULL;
+    ompi_list_t schedlist;
 
     /* require tcp oob */
     setenv("OMPI_MCA_oob_base_include", "tcp", 1);
@@ -66,6 +75,10 @@ int main(int argc, char **argv)
     ompi_universe_info.host = strdup(ompi_system_info.nodename);
     ompi_universe_info.uid = strdup(ompi_system_info.user);
 
+    /* give myself default bootstrap name */
+    ompi_process_info.name = ns_base_create_process_name(MCA_NS_BASE_CELLID_MAX,
+							 MCA_NS_BASE_JOBID_MAX,
+							 MCA_NS_BASE_VPID_MAX);
 
     /* setup to read common command line options that span all Open MPI programs */
     if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_init(argc, argv))) {
@@ -91,14 +104,13 @@ int main(int argc, char **argv)
     /*
      * setup  mca command line arguments
      */
-    mca_cmd_line = OBJ_NEW(ompi_cmd_line_t);
-    if (OMPI_SUCCESS != (ret = mca_base_cmd_line_setup(mca_cmd_line))) {
+    if (OMPI_SUCCESS != (ret = mca_base_cmd_line_setup(cmd_line))) {
 	/* BWB show_help */
 	printf("show_help: mca_base_cmd_line_setup failed\n");
 	return ret;
     }
 
-    if (OMPI_SUCCESS != mca_base_cmd_line_process_args(mca_cmd_line)) {
+    if (OMPI_SUCCESS != mca_base_cmd_line_process_args(cmd_line)) {
 	/* BWB show_help */
 	printf("show_help: mca_base_cmd_line_process_args\n");
 	return ret;
@@ -110,87 +122,160 @@ int main(int argc, char **argv)
     }
 
 
-/*     /\* parse the cmd_line for seed daemon options *\/ */
-/*     ompi_rte_parse_seed_cmd_line(cmd_line); */
+    /* parse the cmd_line for rte options */
+    ompi_rte_parse_cmd_line(cmd_line);
 
-/*     /\* check for universe existence *\/ */
-/*     if (OMPI_SUCCESS != ompi_rte_universe_exists()) { */
-/* 	/\* check exit codes */
-/* 	 * exists, but connect not allowed or refused *\/ */
-/* 	    /\*define unique name based on current one and start new universe *\/ */
-/* 	    pid = getpid(); */
-/* 	    if (0 < asprintf(&ompi_universe.name, "%s-%d", universe, pid)) { */
-/* 		fprintf(stderr, "error creating unique universe name - please report error to bugs@open-mpi.org\n"); */
-/* 		exit(1); */
+
+    /**  RHC - THIS NEEDS TO BE FIXED **/
+    ompi_process_info.seed = true;
+    setenv("OMPI_MCA_oob_base_include", "tcp", 1);
+
+
+    /* start the initial barebones RTE (just OOB) so we can check universe existence */
+    if (OMPI_SUCCESS != (ret = mca_base_open())) {
+        /* JMS show_help */
+        printf("show_help: mca_base_open failed\n");
+        exit(ret);
+    }
+    ompi_rte_init_stage1(&multi_thread, &hidden_thread);
+
+    /* check for local universe existence */
+    if ((0 == strncmp(ompi_universe_info.host, ompi_system_info.nodename, strlen(ompi_system_info.nodename))) &&
+	(OMPI_SUCCESS != (ret = ompi_rte_local_universe_exists())) &&
+	(OMPI_ERR_NOT_IMPLEMENTED != ret)) {
+
+	if (OMPI_ERR_NOT_FOUND != ret) {
+	    /* if not found, then keep current name. otherwise,
+	     * define unique name based on current one.
+	     * either way, start new universe
+	     */
+	    universe = strdup(ompi_universe_info.name);
+	    free(ompi_universe_info.name);
+	    pid = getpid();
+	    if (0 < asprintf(&ompi_universe_info.name, "%s-%d", universe, pid)) {
+		fprintf(stderr, "error creating unique universe name - please report error to bugs@open-mpi.org\n");
+		exit(1);
+	    }
+	}
+
+	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
+
+	/* parse command line for rest of seed options */
+	ompi_rte_parse_daemon_cmd_line(cmd_line);
+
+	/* does not exist - need to start it locally
+	 * using fork/exec process
+	 */
+	if ((pid = fork()) < 0) {
+	    fprintf(stderr, "unable to start universe - please report error to bugs@open-mpi.org\n");
+	    exit(-1);
+	} else if (pid == 0) { /* child process does the exec */
+
+	    /* build the command line options for the seed
+	     * including universe name and tmpdir_base
+	     */
+	    seed_argv = NULL;
+	    ompi_argv_append(&seed_argc, &seed_argv, "ompid");
+	    ompi_argv_append(&seed_argc, &seed_argv, "-seed");
+	    ompi_argv_append(&seed_argc, &seed_argv, "-nameserver");
+	    ompi_argv_append(&seed_argc, &seed_argv, "-registry");
+	    asprintf(&tmp, "-scope %s", ompi_universe_info.scope);
+	    ompi_argv_append(&seed_argc, &seed_argv, tmp);
+	    free(tmp);
+	    if (ompi_universe_info.persistence) {
+		ompi_argv_append(&seed_argc, &seed_argv, "-persistent");
+	    }
+	    if (ompi_universe_info.web_server) {
+		ompi_argv_append(&seed_argc, &seed_argv, "-webserver");
+	    }
+	    if (NULL != ompi_universe_info.scriptfile) {
+		asprintf(&tmp, "-script %s", ompi_universe_info.scriptfile);
+		ompi_argv_append(&seed_argc, &seed_argv, tmp);
+		free(tmp);
+	    }
+	    if (NULL != ompi_universe_info.hostfile) {
+		asprintf(&tmp, "-hostfile %s", ompi_universe_info.hostfile);
+		ompi_argv_append(&seed_argc, &seed_argv, tmp);
+		free(tmp);
+	    }
+	    /* provide my contact info */
+	    contact_info = mca_oob_get_contact_info();
+	    asprintf(&tmp, "-initcontact %s", contact_info);
+	    ompi_argv_append(&seed_argc, &seed_argv, tmp);
+	    free(contact_info);
+	    free(tmp);
+	    /* add options for universe name and tmpdir_base, if provided */
+	    asprintf(&tmp, "-universe %s", ompi_universe_info.name);
+	    ompi_argv_append(&seed_argc, &seed_argv, tmp);
+	    free(tmp);
+	    if (NULL != ompi_process_info.tmpdir_base) {
+		asprintf(&tmp, "-tmpdir %s", ompi_process_info.tmpdir_base);
+		ompi_argv_append(&seed_argc, &seed_argv, tmp);
+		free(tmp);
+	    }
+	    /* 	mca_pcm_base_build_base_env(environ, &(sched->env)); */
+
+/* 	    fprintf(stderr, "getting ready to disgorge\n"); */
+
+/* 	    tmp2 = seed_argv; */
+/* 	    for (i=0; i<seed_argc; i++) { */
+/* 		fprintf(stderr, "i %d %s\n", i, *tmp2); */
+/* 		tmp2++; */
 /* 	    } */
 
-/* 	/\* does not exist - need to start *\/ */
-/* 	    if (OMPI_SUCCESS != ompi_rte_universe_initiate()) { */
-/* 		fprintf(stderr, "unable to start universe services - please report error to bugs@open-mpi.org\n"); */
-/* 		exit(1); */
-/* 	    } */
-/*     } */
+	    /*
+	     * spawn the seed
+	     */
+	    	if (0 > execv("../ompid/.libs/ompid", seed_argv)) {
+	    	    fprintf(stderr, "unable to exec daemon - please report error to bugs@open-mpi.org\n");
+		    fprintf(stderr, "errno: %s\n", strerror(errno));
+	    	    exit(1);
+	    	}
+	}
+    } else {  /* check for remote universe existence */
+	/* future implementation: launch probe daemon, providing my contact info, probe
+	 * checks for session directory on remote machine and transmits back results
+	 * then probe dies
+	 */
+    }
 
-/* 	/\* universe already exists and we can connect - see what else needs doing *\/ */
-/* 	goto OPERATE; */
+    /* if console, kickoff console - point comm at universe */
 
-/*     } */
-
-/*     /\* universe must not already exist, so create it from scratch *\/ */
-/*  STARTUP: */
-
-/*     /\* spinoff ompid with "seed" flag set - it will become the seed daemon for this universe *\/ */
-
-/*    /\* */
-/*      * Start the Open MPI Run Time Environment */
-/*      *\/ */
-/*     if (OMPI_SUCCESS != (ret = mca_base_open())) { */
-/* 	/\* JMS show_help *\/ */
-/* 	printf("show_help: mca_base_open failed\n"); */
-/* 	return ret; */
-/*     } */
-
-/*     if (OMPI_SUCCESS != ompi_rte_init(&multi_thread, &hidden_thread)) { */
-/* 	/\* BWB show_help *\/ */
-/* 	printf("show_help: ompi_rte_init failed\n"); */
-/* 	return ret; */
-/*     } */
-
-/*     /\* get OOB contact info *\/ */
-/*     ompi_universe.oob_contact_info = mca_oob_get_contact_info(); */
-
-/*     /\* get Web contact info *\/ */
-/*     ompi_universe.socket_contact_info = strdup("dum.add.for.tst"); */
-
-/*     /\* save all pertinent info in universe file *\/ */
-/*     contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir, */
-/* 				"universe-setup.txt", NULL); */
-
-/*     if (OMPI_SUCCESS != ompi_write_universe_setup_file(contact_file, &ompi_universe)) { */
-/* 	fprintf(stderr, "couldn't write universe setup file: %s\n", contact_file); */
-/* 	exit(1); */
-/*     } */
-
-/*     /\* put info on the registry *\/ */
-
-/*     fprintf(stderr, "openmpi: entering event loop\n"); */
-/*     /\* event loop *\/ */
-/*     ompi_event_loop(0); */
-/*     /\* spawn console process *\/ */
-/*     if (!silent) { */
-/* 	fprintf(stderr, "SUCCESS - spawned console process!\n"); */
-/*     } */
-
-/*  OPERATE: */
-/* 	/\* if hostfile, startup virtual machine *\/ */
-/* 	/\* check registry for nodes in hostfile - if not found, add them *\/ */
-/* 	/\* send command - ompi_vm_startup to seed that causes it to read registry segment, check if ompid already */
-/* 	 * on each node, spin one up if not *\/ */
-
-/* 	/\* if console, kickoff console - point comm at universe *\/ */
-
-/* 	/\* all done, so exit! *\/ */
-/* 	exit(0); */
-
+    /* all done, so exit! */
     exit(0);
+
 }
+
+/* 	/\* start the rest of the RTE *\/ */
+/* 	ompi_rte_init_stage2(&multi_thread, &hidden_thread); */
+
+/* 	fprintf(stderr, "allocating procesors\n"); */
+
+/* 	/\* allocate a processor to the job *\/ */
+/* 	nodelist = ompi_rte_allocate_resources(0, 0, 1); */
+/* 	if (NULL == nodelist) { */
+/* 	    /\* BWB show_help *\/ */
+/* 	    printf("show_help: ompi_rte_allocate_resources failed\n"); */
+/* 	    exit(-1); */
+/* 	} */
+
+/* 	fprintf(stderr, "scheduling\n"); */
+
+/* 	/\* */
+/* 	 * "schedule" seed process */
+/* 	 *\/ */
+/* 	OBJ_CONSTRUCT(&schedlist,  ompi_list_t); */
+/* 	sched = OBJ_NEW(ompi_rte_node_schedule_t); */
+/* 	ompi_list_append(&schedlist, (ompi_list_item_t*) sched); */
+/* 	ompi_argv_append(&(sched->argc), &(sched->argv), */
+/* 			 "/Users/rcastain/Documents/OpenMPI/src/tools/ompid/ompid"); */
+/* /\* 	ompi_cmd_line_get_tail(cmd_line, &(sched->argc), &(sched->argv)); *\/ */
+
+/* 	if (OMPI_SUCCESS != mca_pcm.pcm_spawn_procs(0, &schedlist)) { */
+/* 	    printf("show_help: woops!  the seed didn't spawn :( \n"); */
+/* 	    exit(-1); */
+/* 	} */
+/* 	    getcwd(cwd, MAXPATHLEN); */
+/* 	    sched->cwd = strdup(cwd); */
+/* 	    sched->nodelist = nodelist; */
+

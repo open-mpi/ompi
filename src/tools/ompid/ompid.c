@@ -14,6 +14,7 @@
 
 #include "runtime/runtime.h"
 #include "runtime/universe_connect.h"
+#include "util/output.h"
 #include "util/sys_info.h"
 #include "util/cmd_line.h"
 #include "util/common_cmd_line.h"
@@ -38,92 +39,86 @@ const char *type_base = "base";
 int main(int argc, char *argv[])
 {
     int ret = 0;
+    int i;
+    char **tmp;
 
     bool multi_thread   = false;
     bool hidden_thread  = false;
 
     ompi_cmd_line_t *mca_cmd_line=NULL;
 
-/*     /\* */
-/*      * Intialize the Open MPI environment */
-/*      *\/ */
-/*     if (OMPI_SUCCESS != ompi_init(argc, argv)) { */
-/*         /\* BWB show_help *\/ */
-/*         printf("show_help: ompi_init failed\n"); */
-/*         return ret; */
-/*     } */
+    /* require tcp oob */
+    setenv("OMPI_MCA_oob_base_include", "tcp", 1);
 
-/*     /\* get the system info *\/ */
-/*     ompi_sys_info(); */
+    /*
+     * Intialize the Open MPI environment
+     */
+    if (OMPI_SUCCESS != ompi_init(argc, argv)) {
+        /* BWB show_help */
+        printf("show_help: ompi_init failed\n");
+        return ret;
+    }
 
-/*     /\* setup to read common command line options that span all Open MPI programs *\/ */
-/*     if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_init(argc, argv))) { */
-/* 	exit(ret); */
-/*     } */
+    /* get the system info */
+    ompi_sys_info();
 
-/*     if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "help") ||  */
-/*         ompi_cmd_line_is_taken(ompi_common_cmd_line, "h")) { */
-/*         printf("...showing ompi_info help message...\n"); */
-/*         exit(1); */
-/*     } */
+    ompi_output(0, "HEY - YOU CALLED ME");
+    tmp = argv;
+    for (i=0; i<argc; i++) {
+	ompi_output(0, "\tompid args: %d %s", i,*tmp);
+	tmp++;
+    }
 
-/*     /\* setup the rte command line arguments *\/ */
-/*     cmd_line = OBJ_NEW(ompi_cmd_line_t); */
-/*     ompi_cmd_line_make_opt(cmd_line, 's', "seed", 0,  */
-/* 			   "Set the daemon seed to true."); */
+    /* setup to read common command line options that span all Open MPI programs */
+    if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_init(argc, argv))) {
+	exit(ret);
+    }
 
-/*     ompi_cmd_line_make_opt(cmd_line,  */
-/* 			   'u', "universe", 1, */
-/* 			   "Specify the Open MPI universe"); */
+    if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "help") ||
+        ompi_cmd_line_is_taken(ompi_common_cmd_line, "h")) {
+        printf("...showing ompi_info help message...\n");
+        exit(1);
+    }
 
-/*     ompi_cmd_line_make_opt(cmd_line,  */
-/* 			   't', "tmpdir", 1, */
-/* 			   "Specify the Open MPI prefix for the session directory"); */
+    if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "version") ||
+	ompi_cmd_line_is_taken(ompi_common_cmd_line, "v")) {
+	printf("...showing off my version!\n");
+	exit(1);
+    }
 
-/*     ompi_cmd_line_make_opt(cmd_line, 'w', "webserver", 0, */
-/* 			   "Web server available"); */
+    /* setup rte command line arguments */
+    cmd_line = OBJ_NEW(ompi_cmd_line_t);
+    ompi_rte_cmd_line_setup(cmd_line);
 
-/*     ompi_cmd_line_make_opt(cmd_line, 's', "silent", 0, */
-/* 			   "No console prompt - operate silently"); */
+    /*
+     * setup  mca command line arguments
+     */
+    if (OMPI_SUCCESS != (ret = mca_base_cmd_line_setup(cmd_line))) {
+	/* BWB show_help */
+	printf("show_help: mca_base_cmd_line_setup failed\n");
+	return ret;
+    }
 
-/*     ompi_cmd_line_make_opt(cmd_line, 'f', "script", 1, */
-/* 			   "Read commands from script file"); */
+    if (OMPI_SUCCESS != mca_base_cmd_line_process_args(cmd_line)) {
+	/* BWB show_help */
+	printf("show_help: mca_base_cmd_line_process_args\n");
+	return ret;
+    }
 
-/*     /\* */
-/*      * setup  mca command line arguments */
-/*      *\/ */
-/*     mca_cmd_line = OBJ_NEW(ompi_cmd_line_t); */
-/*     if (OMPI_SUCCESS != (ret = mca_base_cmd_line_setup(mca_cmd_line))) { */
-/* 	/\* BWB show_help *\/ */
-/* 	printf("show_help: mca_base_cmd_line_setup failed\n"); */
-/* 	return ret; */
-/*     } */
+    /* parse the local commands */
+    if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv)) {
+	exit(ret);
+    }
 
-/*     if (OMPI_SUCCESS != mca_base_cmd_line_process_args(mca_cmd_line)) { */
-/* 	/\* BWB show_help *\/ */
-/* 	printf("show_help: mca_base_cmd_line_process_args\n"); */
-/* 	return ret; */
-/*     } */
 
-/*     if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv)) { */
-/* 	exit(ret); */
-/*     } */
+    /* parse the cmd_line for rte options - provides the universe name
+    * and temp directory base, if provided by user. Both loaded into
+    * ompi_universe_info and ompi_process_info structures as specified
+    */
+    ompi_rte_parse_cmd_line(cmd_line);
 
-/*     /\* Do the parsing *\/ */
 
-/*     if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "help")) { */
-/* #if 1 */
-/* 	printf("...showing ompid help message...\n"); */
-/* 	printf("\nThe following optional arguments are available: --v --h --seeded\n"); */
-/* 	printf("\t ompid -h      is used to display this information\n"); */
-/* 	printf("\t ompid -v      is used to display the version of this application\n"); */
-/* 	printf("\t ompid -seed is used to start the universe (seed) daemon.\n"); */
-/* 	printf("\n"); */
-/* #else */
-/* 	show_help("ompid", "usage", NULL); */
-/* #endif */
-/* 	exit(1); */
-/*     } */
+
 
 
 /*     if (OMPI_SUCCESS != (ret = mca_base_open())) { */
@@ -181,6 +176,35 @@ int main(int argc, char *argv[])
 /*     /\* */
 /*      * if seed, call open functions of comm frameworks (oob, socket, etc.) to */
 /*      * get contact info. write contact info into universe session directory */
+
+    /*     /\* get OOB contact info *\/ */
+    /*     ompi_universe.oob_contact_info = mca_oob_get_contact_info(); */
+
+    /*     /\* get Web contact info *\/ */
+    /*     ompi_universe.socket_contact_info = strdup("dum.add.for.tst"); */
+
+    /*     /\* save all pertinent info in universe file *\/ */
+    /*     contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir, */
+    /* 				"universe-setup.txt", NULL); */
+
+    /*     if (OMPI_SUCCESS != ompi_write_universe_setup_file(contact_file, &ompi_universe)) { */
+    /* 	fprintf(stderr, "couldn't write universe setup file: %s\n", contact_file); */
+    /* 	exit(1); */
+    /*     } */
+
+    /*     /\* put info on the registry *\/ */
+
+    /*     fprintf(stderr, "openmpi: entering event loop\n"); */
+    /*     /\* event loop *\/ */
+ 
+
+    /* 	/\* if hostfile, startup virtual machine *\/ */
+    /* 	/\* check registry for nodes in hostfile - if not found, add them *\/ */
+    /* 	/\* send command - ompi_vm_startup to seed that causes it to read registry segment, check if ompid already */
+    /* 	 * on each node, spin one up if not *\/ */
+
+
+
 /*      * as file "contact-info" so others can find us. */
 /*      *\/ */
 
@@ -194,6 +218,6 @@ int main(int argc, char *argv[])
 
 /*     OBJ_RELEASE(cmd_line); */
 /*     mca_base_close(); */
-/*     ompi_finalize(); */
-/*     return 0; */
+    ompi_finalize();
+    return 0;
 }

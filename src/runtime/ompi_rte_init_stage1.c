@@ -98,7 +98,10 @@ ompi_universe_t ompi_universe_info = {
     /* .pid =                 */    0,
     /* .persistence =         */    false,
     /* .scope =               */    "local",
+    /* .probe =               */    false,
     /* .silent_mode =         */    true,
+    /* .ns_replica =          */    false,
+    /* .gpr_replica =         */    false,
     /* .web_server =          */    false,
     /* .socket_contact_info = */    NULL,
     /* .oob_contact_info =    */    NULL,
@@ -137,6 +140,8 @@ int ompi_rte_init_stage1(bool *allow_multi_user_threads, bool *have_hidden_threa
     }
     user_threads = true;
     hidden_threads = false;
+
+
     if (OMPI_SUCCESS != (ret = mca_oob_base_init(&user_threads, 
 						 &hidden_threads))) {
 	/* JMS show_help */

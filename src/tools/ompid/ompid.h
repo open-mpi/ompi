@@ -16,51 +16,53 @@
  */
 #define OMPI_DAEMON_OOB_PACK_CMD        OMPI_INT16
 
-#define OMPI_DAEMON_INITIAL_CONTACT_CMD 0x01
-#define OMPI_DAEMON_CONTACT_ACK_CMD     0x02
+#define OMPI_DAEMON_HOSTFILE_CMD        0x01
+#define OMPI_DAEMON_SCRIPTFILE_CMD      0x02
 
 
-  /*
-   * Globals
-   */
+/*
+ * Globals
+ */
 
-  typedef char *type_vector_t;
+typedef uint16_t ompi_daemon_cmd_flag_t;
 
-  extern bool pretty;
-  extern ompi_cmd_line_t *cmd_line;
+typedef char *type_vector_t;
 
-  extern const char *type_all;
-  extern const char *type_ompi;
-  extern const char *type_base;
-  extern type_vector_t mca_types;
+extern bool pretty;
+extern ompi_cmd_line_t *cmd_line;
 
-  /*
-   * Version-related strings and functions
-   */
+extern const char *type_all;
+extern const char *type_ompi;
+extern const char *type_base;
+extern type_vector_t mca_types;
 
-  extern const char *ver_full;
-  extern const char *ver_major;
-  extern const char *ver_minor;
-  extern const char *ver_release;
-  extern const char *ver_alpha;
-  extern const char *ver_beta;
-  extern const char *ver_svn;
+/*
+ * Version-related strings and functions
+ */
 
-  void do_version(bool want_all, ompi_cmd_line_t *cmd_line);
-  void show_ompi_version(const char *scope);
+extern const char *ver_full;
+extern const char *ver_major;
+extern const char *ver_minor;
+extern const char *ver_release;
+extern const char *ver_alpha;
+extern const char *ver_beta;
+extern const char *ver_svn;
 
-  /*
-   * Parameter/configuration-related functions
-   */
+void do_version(bool want_all, ompi_cmd_line_t *cmd_line);
+void show_ompi_version(const char *scope);
 
-  extern char *param_all;
+/*
+ * Parameter/configuration-related functions
+ */
 
-  extern char *path_prefix;
-  extern char *path_bindir;
-  extern char *path_libdir;
-  extern char *path_incdir;
-  extern char *path_pkglibdir;
-  extern char *path_sysconfdir;
+extern char *param_all;
+
+extern char *path_prefix;
+extern char *path_bindir;
+extern char *path_libdir;
+extern char *path_incdir;
+extern char *path_pkglibdir;
+extern char *path_sysconfdir;
 
 
 #endif /* OMPID_H */
