@@ -28,12 +28,12 @@ MPI_Fint MPI_Comm_c2f(MPI_Comm comm)
     if ( MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         
-        if ( ompi_comm_invalid (cptr))
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                        FUNC_NAME);
+    /* mapping an invalid handle to a null handle */
+	/* not invoking an error handler */
+        if ( ompi_comm_invalid (cptr)) {
+			cptr = (ompi_communicator_t *) MPI_COMM_NULL;
+		}
     }
 
-    /* Since MPI_COMM_NULL is an object itself, we do not have to check
-       for that */
     return ((MPI_Fint) comm->c_f_to_c_index);
 }

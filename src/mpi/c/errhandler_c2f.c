@@ -26,15 +26,16 @@ MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler)
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+
+	/* mapping an invalid handle to a null handle */
+	/* also checks errhandler type matches */
+	/* not invoking an error handler */
     if (NULL == errhandler ||
-        MPI_ERRHANDLER_NULL == errhandler ||
         OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_Errhandler_c2f");
+		errhandler = MPI_ERRHANDLER_NULL;
     }
   }
 
-  /* All done */
 
   return (MPI_Fint) errhandler->eh_f_to_c_index;
 }

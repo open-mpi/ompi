@@ -25,9 +25,11 @@ MPI_Fint MPI_Type_c2f(MPI_Datatype datatype)
 {
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == datatype || MPI_DATATYPE_NULL == datatype) {
-      return (MPI_Fint)
-        OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
+
+	/* mapping an invalid handle to a null handle */
+	/* not invoking an error handler */
+    if (NULL == datatype) {
+		datatype = MPI_DATATYPE_NULL;
     }
   }
 

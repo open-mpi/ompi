@@ -36,11 +36,11 @@ MPI_Fint MPI_Info_c2f(MPI_Info info)
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info || MPI_INFO_NULL == info ||
-            ompi_info_is_freed(info)) {
-            return (MPI_Fint) OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, 
-                                                     MPI_ERR_INFO,
-                                                     FUNC_NAME);
+
+	    /* mapping an invalid handle to a null handle */
+	    /* not invoking an error handler */
+        if (NULL == info || ompi_info_is_freed(info)) {
+			info = MPI_INFO_NULL;
         }
     }
 

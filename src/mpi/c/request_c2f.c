@@ -29,10 +29,11 @@ MPI_Fint MPI_Request_c2f(MPI_Request request)
     /* error checking */
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+
+ 	    /* mapping an invalid handle to a null handle */
+	    /* not invoking an error handler */
         if( (NULL == request) ) {
-            return (MPI_Fint) 
-                OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST,
-                                       FUNC_NAME);
+			request = MPI_REQUEST_NULL;
         }
     }
 
