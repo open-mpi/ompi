@@ -3,3 +3,4 @@ Makefile.in
 lam_config.h
 lam_config.h.in
 stamp-h1
+lam_stdint.h
