@@ -75,13 +75,32 @@ ompi_output_stream_t mca_pcm_bproc_output_stream = {
 /*
  * Module variables handles
  */
-static int mca_pcm_bproc_param_priority;
+static int param_priority;
+
+/* disable stdio */
+static int param_stdin_dev_null;
+static int param_no_io_forwarding;
+
+/* use forwarding */
+static int param_line_buffer;
+static int param_prefix_io;
+static int param_line_buffer_size;
+static int param_stdin_rank;
+
+/* use files */
+static int param_stdin_file;
+static int param_stdout_file;
+static int param_stderr_file;
+
 
 int
 mca_pcm_bproc_component_open(void)
 {
-  mca_pcm_bproc_param_priority =
+  param_priority =
     mca_base_param_register_int("pcm", "bproc", "priority", NULL, 5);
+  param_stdin_dev_null =
+     mca_base_param_register_int("pcm", "bproc", "priority", NULL, 5);
+
 
   return OMPI_SUCCESS;
 }
@@ -103,7 +122,7 @@ mca_pcm_bproc_init(int *priority,
     mca_pcm_bproc_module_t *me;
     struct bproc_version_t vers;
 
-    mca_base_param_lookup_int(mca_pcm_bproc_param_priority, priority);
+    mca_base_param_lookup_int(param_priority, priority);
 
     /* we can start daemons, we can do qos, and it looks like we can spawn,
        so no constrains searching */
