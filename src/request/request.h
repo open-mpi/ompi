@@ -295,7 +295,7 @@ static inline int ompi_request_wait(
 
     /* return request to pool */
     rc = req->req_free(req);
-    *req_ptr = NULL;
+    *req_ptr = MPI_REQUEST_NULL;
     return rc;
 }
 
