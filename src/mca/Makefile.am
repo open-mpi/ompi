@@ -16,8 +16,7 @@ SUBDIRS = \
         pcm \
         pml \
         ptl \
-        topo \
-        registry
+        topo
 # JMS Temporary hack to make "make dist" function properly; directories 
 # mentioned here will eventually be moved into SUBDIRS
 DIST_SUBDIRS = $(SUBDIRS) gpr
@@ -39,8 +38,7 @@ libmca_la_LIBADD = \
         oob/libmca_oob.la \
         pcm/libmca_pcm.la \
         pml/libmca_pml.la \
-        ptl/libmca_ptl.la \
-        registry/libmca_registry.la
+        ptl/libmca_ptl.la
 libmca_la_DEPENDENCIES = $(libmca_la_LIBADD)
 
 not_implemented_yet = \

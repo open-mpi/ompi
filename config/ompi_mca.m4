@@ -43,7 +43,7 @@ unset msg
 # The list of MCA types (it's fixed)
 
 AC_MSG_CHECKING([for MCA types])
-found_types="allocator coll common io gpr mpool oob one pcm pml ptl registry topo"
+found_types="allocator coll common io gpr mpool oob one pcm pml ptl topo"
 AC_MSG_RESULT([$found_types])
 
 # Get the list of all the non-configure MCA modules that were found by
@@ -251,11 +251,6 @@ AC_SUBST(MCA_gpr_ALL_SUBDIRS)
 AC_SUBST(MCA_gpr_STATIC_SUBDIRS)
 AC_SUBST(MCA_gpr_DYNAMIC_SUBDIRS)
 AC_SUBST(MCA_gpr_STATIC_LTLIBS)
-
-AC_SUBST(MCA_registry_ALL_SUBDIRS)
-AC_SUBST(MCA_registry_STATIC_SUBDIRS)
-AC_SUBST(MCA_registry_DYNAMIC_SUBDIRS)
-AC_SUBST(MCA_registry_STATIC_LTLIBS)
 
 # MPI types
 

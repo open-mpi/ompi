@@ -12,7 +12,6 @@
 #include "threads/mutex.h"
 #include "mca/pcm/base/base.h"
 #include "mca/oob/base/base.h"
-#include "mca/registry/base/base.h"
 
 
 /**
@@ -51,18 +50,6 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
   }
   if (OMPI_SUCCESS != (ret = mca_oob_base_select(&user_threads, 
                                                 &hidden_threads))) {
-    /* JMS show_help */
-    return ret;
-  }
-  *allow_multi_user_threads |= user_threads;
-  *have_hidden_threads |= hidden_threads;
-
-  if (OMPI_SUCCESS != (ret = mca_registry_base_open())) {
-    /* JMS show_help */
-    return ret;
-  }
-  if (OMPI_SUCCESS != (ret = mca_registry_base_select(&user_threads, 
-                                                     &hidden_threads))) {
     /* JMS show_help */
     return ret;
   }

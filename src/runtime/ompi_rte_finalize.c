@@ -12,7 +12,6 @@
 #include "threads/mutex.h"
 #include "mca/pcm/base/base.h"
 #include "mca/oob/base/base.h"
-#include "mca/registry/base/base.h"
 
 
 /**
@@ -25,7 +24,6 @@
  */
 int ompi_rte_finalize(void)
 {
-  mca_registry_base_close();
   mca_oob_base_close();
   mca_pcm_base_close();
 

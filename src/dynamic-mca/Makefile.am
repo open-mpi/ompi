@@ -15,8 +15,7 @@ SUBDIRS = \
         pcm \
         pml \
         ptl \
-        topo \
-        registry
+        topo
 # JMS Temporary hack to make "make dist" function properly; directories 
 # mentioned here will eventually be moved into SUBDIRS
 DIST_SUBDIRS = $(SUBDIRS) gpr
