@@ -101,8 +101,7 @@ mca_ptl_elan_component_open (void)
     mca_ptl_elan_module.super.ptl_exclusivity =
         mca_ptl_elan_param_register_int ("exclusivity", 0);
 
-    /*length = OMPI_PTL_ELAN_MAX_QSIZE - sizeof(mca_ptl_base_header_t);*/
-    length = 128 - sizeof(mca_ptl_base_header_t);
+    length = OMPI_PTL_ELAN_MAX_QSIZE - sizeof(mca_ptl_base_header_t);
     param1 = mca_ptl_elan_param_register_int ("first_frag_size", length);
     param2 = mca_ptl_elan_param_register_int ("min_frag_size", length);
     param3 = mca_ptl_elan_param_register_int ("max_frag_size", (1<<31));
