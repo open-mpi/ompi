@@ -15,7 +15,7 @@ use Getopt::Long;
 
 # Set this to true for additional output; typically only when
 # debugging
-our $debug = 0;
+my $debug = 0;
 
 # download "latest" filename
 my $latest_name = "latest_snapshot.txt";
@@ -38,6 +38,24 @@ my $max_snapshots = 3;
 # Shouldn't need to change below this line
 ############################################################################
 
+# Need to define some globals here -- can't use "our" because we have
+# to run on machines with older versions of perl.  #$%#@$%#...
+
+my $version;
+my $mail;
+my @email_output;
+my $tarball_name;
+my $ret;
+
+my $scratch_root_arg;
+my $email_arg;
+my $url_arg;
+my $config_arg;
+my $debug_arg;
+my $file_arg;
+my $leave_install_arg;
+my $help_arg;
+
 #--------------------------------------------------------------------------
 
 # send a mail
@@ -46,9 +64,6 @@ sub send_mail {
     shift;
     shift;
     my $msg = \@_;
-
-    our $mail;
-    our $version;
 
     $subject =~ s/\@version\@/$version/;
 
@@ -67,9 +82,6 @@ sub send_mail {
 # abort the script, and send an error e-mail as a result
 sub test_abort {
     my $msg = \@_;
-
-    our @email_output;
-    our $email_arg;
 
     push(@email_output, "Building the nightly tarball ended in error:\n\n");
     push(@email_output, @$msg);
@@ -261,9 +273,6 @@ sub try_build {
         $vpath_mode, $confargs) = @_;
     my $ret;
     my $startdir = `pwd`;
-    our $version;
-    our $scratch_root_arg;
-    our $leave_install_arg;
 
     chomp($startdir);
 
@@ -414,15 +423,6 @@ int main(int argc, char* argv[]) {
 #
 
 # parse the command line
-our $scratch_root_arg;
-our $email_arg;
-our $url_arg;
-our $config_arg;
-our $debug_arg;
-our $file_arg;
-our $leave_install_arg;
-my $help_arg;
-
 &Getopt::Long::Configure("bundling", "require_order");
 my $ok = Getopt::Long::GetOptions("url|u=s" => \$url_arg,
                                   "scratch|s=s" => \$scratch_root_arg,
@@ -484,23 +484,23 @@ if ($config_arg) {
 $debug = 1
     if ($debug_arg);
 
-# global vars
-our @email_output;
-my $ret;
-
 # prefix the e-mail
-my $unamen = `uname -n 2>/dev/null`;
-my $unameo = `uname -o 2>/dev/null`;
-my $unamer = `uname -r 2>/dev/null`;
-my $unamem = `uname -m 2>/dev/null`;
-chomp($unamen);
-chomp($unameo);
-chomp($unamer);
-chomp($unamem);
-push(@email_output, "Host: $unamen / $unameo / $unamer / $unamem\n");
+my $str = "Host: ";
+my $first = 1;
+foreach my $option (qw/n o r m/) {
+    my $out = `uname -$option 2>/dev/null`;
+    chomp($out);
+    if ($out) {
+        $str .= " / "
+            if (! $first);
+        $str .= $out;
+        $first = 0;
+    }
+}
+push(@email_output, $str . "\n");
 
 # Find a mail program
-our $mail = find_program(qw(Mail mailx mail));
+$mail = find_program(qw(Mail mailx mail));
 die "Could not find mail program; aborting in despair\n"
     if (!defined($mail));
 
@@ -528,8 +528,6 @@ foreach my $dir (qw(downloads)) {
 }
 
 # if we were given a URL base, get the latest snapshot version number
-our $tarball_name;
-our $version;
 if ($url_arg) {
     chdir("downloads");
     unlink($latest_name);
