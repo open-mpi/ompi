@@ -380,7 +380,61 @@
 								RelativePath="..\..\src\mca\gpr\base\gpr_base_open.c">
 							</File>
 							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_pack_cleanup.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_pack_del_index.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_pack_dump.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_pack_mode_ops.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_pack_put_get.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_pack_startup_msg.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_pack_subscribe.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_pack_synchro.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_pack_test_internals.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_print_dump.c">
+							</File>
+							<File
 								RelativePath="..\..\src\mca\gpr\base\gpr_base_select.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_unpack_del_index.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_unpack_mode_ops.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_unpack_put_get.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_unpack_startup_msg.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_unpack_subscribe.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_unpack_synchro.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\gpr_base_unpack_test_internals.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\gpr\base\static-components.h">
 							</File>
 						</Filter>
 					</Filter>
@@ -530,6 +584,12 @@
 							<File
 								RelativePath="..\..\src\mca\oob\base\oob_base_send_nb.c">
 							</File>
+							<File
+								RelativePath="..\..\src\mca\oob\base\oob_base_xcast.c">
+							</File>
+							<File
+								RelativePath="..\..\src\mca\oob\base\static-components.h">
+							</File>
 						</Filter>
 					</Filter>
 					<Filter
@@ -556,6 +616,9 @@
 								RelativePath="..\..\src\mca\pcm\base\base.h">
 							</File>
 							<File
+								RelativePath="..\..\src\mca\pcm\base\base_data_store.h">
+							</File>
+							<File
 								RelativePath="..\..\src\mca\pcm\base\base_job_track.h">
 							</File>
 							<File
@@ -568,7 +631,7 @@
 								RelativePath="..\..\src\mca\pcm\base\pcm_base_comm.c">
 							</File>
 							<File
-								RelativePath="..\..\src\mca\pcm\base\pcm_base_job_track.c">
+								RelativePath="..\..\src\mca\pcm\base\pcm_base_data_store.c">
 							</File>
 							<File
 								RelativePath="..\..\src\mca\pcm\base\pcm_base_kill_track.c">
@@ -774,40 +837,43 @@
 								RelativePath="..\..\src\mca\topo\base\topo_base_open.c">
 							</File>
 						</Filter>
-					</Filter>
-					<Filter
-						Name="io"
-						Filter="">
-						<File
-							RelativePath="..\..\src\mca\io\io.h">
-						</File>
 						<Filter
-							Name="base"
+							Name="io"
 							Filter="">
 							<File
-								RelativePath="..\..\src\mca\io\base\base.h">
+								RelativePath="..\..\src\mca\io\io.h">
 							</File>
-							<File
-								RelativePath="..\..\src\mca\io\base\io_base_close.c">
-							</File>
-							<File
-								RelativePath="..\..\src\mca\io\base\io_base_delete.c">
-							</File>
-							<File
-								RelativePath="..\..\src\mca\io\base\io_base_file_select.c">
-							</File>
-							<File
-								RelativePath="..\..\src\mca\io\base\io_base_find_available.c">
-							</File>
-							<File
-								RelativePath="..\..\src\mca\io\base\io_base_open.c">
-							</File>
-							<File
-								RelativePath="..\..\src\mca\io\base\io_base_request.c">
-							</File>
-							<File
-								RelativePath="..\..\src\mca\io\base\io_base_request.h">
-							</File>
+							<Filter
+								Name="base"
+								Filter="">
+								<File
+									RelativePath="..\..\src\mca\io\base\base.h">
+								</File>
+								<File
+									RelativePath="..\..\src\mca\io\base\io_base_close.c">
+								</File>
+								<File
+									RelativePath="..\..\src\mca\io\base\io_base_component_list.c">
+								</File>
+								<File
+									RelativePath="..\..\src\mca\io\base\io_base_delete.c">
+								</File>
+								<File
+									RelativePath="..\..\src\mca\io\base\io_base_file_select.c">
+								</File>
+								<File
+									RelativePath="..\..\src\mca\io\base\io_base_find_available.c">
+								</File>
+								<File
+									RelativePath="..\..\src\mca\io\base\io_base_open.c">
+								</File>
+								<File
+									RelativePath="..\..\src\mca\io\base\io_base_request.c">
+								</File>
+								<File
+									RelativePath="..\..\src\mca\io\base\io_base_request.h">
+								</File>
+							</Filter>
 						</Filter>
 					</Filter>
 				</Filter>
@@ -917,6 +983,9 @@
 					</File>
 					<File
 						RelativePath="..\..\src\event\event.h">
+					</File>
+					<File
+						RelativePath="..\..\src\event\evsignal.h">
 					</File>
 					<Filter
 						Name="Win32-Code"
@@ -2175,6 +2244,15 @@
 						RelativePath="..\..\src\runtime\ompi_rte_init.c">
 					</File>
 					<File
+						RelativePath="..\..\src\runtime\ompi_rte_init_cleanup.c">
+					</File>
+					<File
+						RelativePath="..\..\src\runtime\ompi_rte_job_shutdown.c">
+					</File>
+					<File
+						RelativePath="..\..\src\runtime\ompi_rte_job_startup.c">
+					</File>
+					<File
 						RelativePath="..\..\src\runtime\ompi_rte_llm.c">
 					</File>
 					<File
@@ -2193,13 +2271,19 @@
 						RelativePath="..\..\src\runtime\ompi_rte_pcm.c">
 					</File>
 					<File
+						RelativePath="..\..\src\runtime\ompi_rte_process_status.c">
+					</File>
+					<File
+						RelativePath="..\..\src\runtime\ompi_rte_vm_status.c">
+					</File>
+					<File
 						RelativePath="..\..\src\runtime\ompi_rte_wait.c">
 					</File>
 					<File
 						RelativePath="..\..\src\runtime\ompi_rte_wait.h">
 					</File>
 					<File
-						RelativePath="..\..\src\runtime\ompi_vm_register.c">
+						RelativePath="..\..\src\runtime\ompi_rte_wait_startup_shutdown_msg.c">
 					</File>
 					<File
 						RelativePath="..\..\src\runtime\runtime.h">
@@ -2528,28 +2612,97 @@
 					RelativePath="..\..\src\mca\coll\basic\coll_basic_scatterv.c">
 				</File>
 				<File
-					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy.c">
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy.h">
 				</File>
 				<File
-					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy.h">
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_cleanup.c">
 				</File>
 				<File
 					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_component.c">
 				</File>
 				<File
-					RelativePath="..\..\src\mca\gpr\replica\gpr_replica.c">
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_compound_cmd.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_del_index.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_dump.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_internals.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_messaging.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_mode_ops.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_put_get.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_subscribe.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_synchro.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\proxy\gpr_proxy_xmit_alerts.c">
 				</File>
 				<File
 					RelativePath="..\..\src\mca\gpr\replica\gpr_replica.h">
 				</File>
 				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_cleanup.c">
+				</File>
+				<File
 					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_component.c">
 				</File>
 				<File
-					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_internals.c">
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_compound_cmd.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_del_index.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_dump.c">
 				</File>
 				<File
 					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_internals.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_internals_dict_ops.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_internals_segment_ops.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_internals_trigger_ops.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_messaging.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_mode_ops.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_put_get.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_recv_proxy_msgs.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_subscribe.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_synchro.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_test_internals.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\gpr\replica\gpr_replica_xmit_alerts.c">
 				</File>
 				<File
 					RelativePath="..\..\src\mca\llm\hostfile\src\llm_hostfile.h">
