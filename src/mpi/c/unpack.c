@@ -50,14 +50,15 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
       }
     }
 
-    local_convertor = ompi_convertor_get_copy(local_convertor);
+    local_convertor = OBJ_NEW(ompi_convertor_t);
     ompi_convertor_init_for_recv(local_convertor, 0, datatype, outcount, 
 				inbuf, 0);
     
     /* how long is the data ? Can we put it in the user buffer */
     ompi_convertor_get_packed_size(local_convertor, &size);
     if ((outcount - (*position)) < size) {
-      return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        OBJ_RELEASE(local_convertor);
+        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
     }
 
     /* Prepare the iovec withh all informations */
@@ -72,10 +73,8 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
     rc = ompi_convertor_unpack(local_convertor, &outvec, 1);
     *position += local_convertor->bConverted;
 
-    /* Release the convertor. For Open MPI you should simply use
-     * OBJ_RELEASE.
-     */
-    OBJ_RELEASE(local_convertor);
+    /* All done */
 
+    OBJ_RELEASE(local_convertor);
     OMPI_ERRHANDLER_RETURN(rc, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }

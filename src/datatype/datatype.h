@@ -219,7 +219,6 @@ int ompi_ddt_set_args( dt_desc_t* pData,
                       int ci, int ** i, 
                       int ca, MPI_Aint* a,
                       int cd, MPI_Datatype* d,int type);
-/* VPS: Added  */
 int ompi_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
 		 int rcount, MPI_Datatype rdtype, int tag, MPI_Comm comm);
 

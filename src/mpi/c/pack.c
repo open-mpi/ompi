@@ -19,9 +19,6 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-/* VPS: Just for now, to be removed later */
-extern ompi_convertor_t *ompi_convertor;
-
 static const char FUNC_NAME[] = "MPI_Pack";
 
 
@@ -47,14 +44,15 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
       }
     }
 
-    local_convertor = ompi_convertor_get_copy(ompi_convertor);
+    local_convertor = OBJ_NEW(ompi_convertor_t);
     ompi_convertor_init_for_send(local_convertor, 0, datatype, incount, 
 				inbuf, 0);
     
     /* how long is the data ? Can we put it in the user buffer */
     ompi_convertor_get_packed_size(local_convertor, &size);
     if( (outsize - (*position)) < size) {
-      return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        OBJ_RELEASE(local_convertor);
+        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
     }
 
     /* Prepare the iovec withh all informations */
@@ -68,10 +66,9 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
     /* Do the actual packing */
     rc = ompi_convertor_pack(local_convertor, &invec, 1);
     *position += local_convertor->bConverted;
+
+    /* All done */
     
-    /* Release the convertor. For Open MPI you should simply use
-     * OBJ_RELEASE.
-     */
     OBJ_RELEASE(local_convertor);
     OMPI_ERRHANDLER_RETURN(rc, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }
