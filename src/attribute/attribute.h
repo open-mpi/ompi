@@ -231,7 +231,8 @@ int lam_attr_delete(lam_attribute_type_t type, void *object,
  * @param type         Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param old_object   The old COMM/WIN/DTYPE object (IN)
  * @param new_object   The new COMM/WIN/DTYPE object (IN)
- * @param keyhash        The attribute hash table hanging on the object(IN)
+ * @param keyhash      The attribute hash table hanging on old object(IN)
+ * @param newkeyhash   The attribute hash table hanging on new object(IN)
  * @return LAM error code
  *
  */
