@@ -30,8 +30,9 @@ typedef struct mca_allocator_base_selected_module_t mca_allocator_base_selected_
 extern "C" {
 #endif
   int mca_allocator_base_open(void);
-  int mca_allocator_base_select(bool *allow_multi_user_threads);
+  int mca_allocator_base_init(bool *allow_multi_user_threads);
   int mca_allocator_base_close(void);
+  mca_allocator_t* mca_allocator_lookup(const char* name);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

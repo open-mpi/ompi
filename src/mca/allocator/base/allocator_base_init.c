@@ -17,7 +17,7 @@
  * will be closed and unloaded.  The selected modules will be returned
  * to the caller in a ompi_list_t.
  */
-int mca_allocator_base_select(bool *allow_multi_user_threads)
+int mca_allocator_base_init(bool *allow_multi_user_threads)
 {
 #if 0
   int i, num_allocators;

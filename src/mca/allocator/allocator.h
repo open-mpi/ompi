@@ -69,5 +69,14 @@ struct mca_allocator_base_module_1_0_0_t {
 };
 typedef struct mca_allocator_base_module_1_0_0_t mca_allocator_base_module_t;
 
+/*
+ * Macro for use in modules that are of type ptl v1.0.0
+ */
+#define MCA_ALLOCATOR_BASE_VERSION_1_0_0 \
+  /* mpool v1.0 is chained to MCA v1.0 */ \
+  MCA_BASE_VERSION_1_0_0, \
+  /* ptl v1.0 */ \
+  "allocator", 1, 0, 0
+
 #endif /* MCA_ALLOCATOR_H */
 
