@@ -107,27 +107,29 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 
 static void
 mca_ptl_elan_putget_desc_contruct (
-	ELAN4_CTX *ctx, 
+	mca_ptl_elan_module_t * ptl,
        	ompi_ptl_elan_putget_desc_t *desc, 
 	EVENT *elan_event,
 	E4_Addr src_elan4_addr,
 	E4_Addr dst_elan4_addr, 
 	int local /* dma_src is local */ )
 {
-    /* Zero this descriptor */
-    memset(desc, 0, sizeof(desc));
+    ELAN4_CTX *ctx, 
 
+    ctx = ptl->ptl_elan_ctx;
+    memset(desc, 0, sizeof(desc));
+    desc->ptl = ptl;
+    desc->req = NULL;
     desc->main_dma.dma_typeSize = 0;
     desc->main_dma.dma_cookie   = 0;
     desc->main_dma.dma_vproc    = 0;
-
     desc->elan_event = elan_event; 
     desc->chain_event= (E4_Event32 *) 
 	((char *)elan_event + sizeof (E4_Event32));
     desc->chain_buff = (E4_Addr *) 
 	((char *)elan_event + 2*sizeof (E4_Event32));
 
-    /* Remember all the address needs to be converted 
+    /* XXX: Remember all the address needs to be converted 
      * before assigning to DMA descritpor */
     desc->main_dma.dma_srcAddr = src_elan4_addr;
     desc->main_dma.dma_dstAddr = dst_elan4_addr;
@@ -138,6 +140,7 @@ mca_ptl_elan_putget_desc_contruct (
 	desc->main_dma.dma_dstEvent = elan4_main2elan(ctx, elan_event);
     }
 
+    /* XXX: Remember to reset all event and doneWord */
     INITEVENT_WORD (ctx, elan_event, &desc->main_doneWord);
     RESETEVENT_WORD (&desc->main_doneWord);
     PRIMEEVENT_WORD (ctx, elan_event, 1);
