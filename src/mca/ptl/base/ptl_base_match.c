@@ -490,7 +490,6 @@ static bool mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_match
              */
             frag_seq=frag_desc->frag_base.frag_header.hdr_match.hdr_msg_seq;
             if (frag_seq == next_msg_seq_expected) {
-                int frag_src;
                 mca_ptl_base_match_header_t* frag_header = 
                     &frag_desc->frag_base.frag_header.hdr_match;
 
