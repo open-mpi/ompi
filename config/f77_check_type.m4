@@ -21,8 +21,6 @@ AC_COMPILE_IFELSE(AC_LANG_SOURCE([[C
 AC_LANG_POP
 
 str="$2=$HAPPY"
-echo happy is: $HAPPY
-echo str is: $str
 eval $str
 
 unset HAPPY])dnl
