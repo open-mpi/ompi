@@ -56,7 +56,7 @@ extern "C" {
 #endif
         
 /**
-*  Similiar to unix send(2).
+*  Similiar to unix writev(2).
 *
 * @param peer (IN)   Opaque name of peer process.
 * @param msg (IN)    Array of iovecs describing user buffers and lengths.
@@ -91,7 +91,7 @@ int mca_oob_send_hton(
 
 
 /**
-* Similiar to unix recv(2)
+* Similiar to unix readv(2)
 *
 * @param peer (IN)    Opaque name of peer process or OOB_NAME_ANY for wildcard receive.
 * @param msg (IN)     Array of iovecs describing user buffers and lengths.
