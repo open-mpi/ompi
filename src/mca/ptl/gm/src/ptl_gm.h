@@ -70,6 +70,7 @@ struct mca_ptl_gm_module_t {
     struct mca_ptl_gm_recv_frag_t* gm_recv_fragments;
 
     ompi_free_list_t gm_send_frags;
+    ompi_free_list_t gm_send_dma_frags;
     ompi_free_list_t gm_recv_frags_free;
     ompi_list_t gm_send_frags_queue;
     ompi_list_t gm_pending_acks;

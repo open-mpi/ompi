@@ -281,16 +281,28 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     /****************SEND****************************/
     /* construct a list of send fragments */
     OBJ_CONSTRUCT (&(ptl->gm_send_frags), ompi_free_list_t);
+    OBJ_CONSTRUCT (&(ptl->gm_send_dma_frags), ompi_free_list_t);
     OBJ_CONSTRUCT (&(ptl->gm_send_frags_queue), ompi_list_t);
 
     /* We need a free list just to handle the send fragment that we provide.
-     * This free list does not have the right to allocate any new item
-     * as they should have a DMA buffer attach to them.
+     * Just to make sure that we dont waste memory, we dont allow this list to
+     * grow anymore.
      */
     ompi_free_list_init( &(ptl->gm_send_frags),
-			 sizeof (mca_ptl_gm_send_frag_t),
-			 OBJ_CLASS (mca_ptl_gm_send_frag_t),
-			 0,  /* do not allocate any items I'll provide them */
+                         sizeof (mca_ptl_gm_send_frag_t),
+                         OBJ_CLASS (mca_ptl_gm_send_frag_t),
+                         0,  /* do not allocate any items I'll provide them */
+                         0,  /* maximum number of list allocated elements will be zero */
+                         0,
+                         NULL ); /* not using mpool */
+    /* A free list containing all DMA allocate memory.
+     * This free list does not have the right to allocate any new item
+     * as they should be allocated with a special GM function.
+     */
+    ompi_free_list_init( &(ptl->gm_send_dma_frags),
+                         GM_BUF_SIZE,
+                         OBJ_CLASS (ompi_list_item_t),
+                         0,  /* do not allocate any items I'll provide them */
                          0,  /* maximum number of list allocated elements will be zero */
                          0,
                          NULL ); /* not using mpool */
@@ -306,10 +318,10 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
     for (i = 0; i < ptl->num_send_tokens; i++) {
+	sfragment->send_buf = NULL;
 	OMPI_FREE_LIST_RETURN( &(ptl->gm_send_frags), (ompi_list_item_t *)sfragment );
-	sfragment->send_buf = (char*)ptl->gm_send_dma_memory + i * GM_BUF_SIZE;
-	DO_DEBUG( printf( "%3d : gm register sendreq %p with GM buffer %p\n", i,
-                          (void*)sfragment, (void*)sfragment->send_buf ) );
+	OMPI_FREE_LIST_RETURN( &(ptl->gm_send_dma_frags),
+                               (ompi_list_item_t *)((char*)ptl->gm_send_dma_memory + i * GM_BUF_SIZE) );
 	sfragment++;
     }
     A_PRINT( ("recv_tokens = %d send_tokens = %d, allocted free lis = %d\n",
@@ -317,7 +329,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 
 
     /*****************RECEIVE*****************************/
-    /*allow remote memory access */
+    /* allow remote memory access */
     if( GM_SUCCESS != gm_allow_remote_memory_access (ptl->gm_port) ) {
 	ompi_output (0, "unable to allow remote memory access\n");
     }
@@ -438,7 +450,7 @@ mca_ptl_gm_component_init (int *num_ptl_modules,
 #else
     *have_hidden_threads = false;
 #endif  /* OMPI_HAVE_POSIX_THREADS */
-
+    sleep(20);
     if (OMPI_SUCCESS != mca_ptl_gm_init (&mca_ptl_gm_component)) {
         ompi_output( 0, "[%s:%d] error in initializing gm state and PTL's.\n",
                      __FILE__, __LINE__ );

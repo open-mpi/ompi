@@ -24,6 +24,13 @@ extern "C" {
     OBJ_CLASS_DECLARATION (mca_ptl_gm_send_frag_t);
     OBJ_CLASS_DECLARATION (mca_ptl_gm_recv_frag_t);
 
+    /* header definition for intermediary fragments on eager p2p communications */
+    struct mca_ptl_gm_eager_header_t {
+        mca_ptl_base_common_header_t hdr_common; /**< common attributes */
+        ompi_ptr_t hdr_src_ptr;                  /**< pointer to source fragment */
+    };
+    typedef struct mca_ptl_gm_eager_header_t mca_ptl_gm_eager_header_t;
+
     /*struct mca_ptl_base_peer_t;*/
 
     /**
@@ -37,11 +44,12 @@ extern "C" {
         struct mca_ptl_gm_module_t *ptl;
         struct mca_ptl_gm_peer_t *peer;
     
-        int status;
-        int type;
-        int wait_for_ack; 
-        int put_sent;
-        int send_complete;
+        uint32_t already_send;  /**< data sended so far */
+        int      status;
+        int      type;
+        int      wait_for_ack; 
+        int      put_sent;
+        int      send_complete;
     };
     typedef struct mca_ptl_gm_send_frag_t mca_ptl_gm_send_frag_t;
 

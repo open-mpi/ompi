@@ -44,10 +44,13 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
 			  size_t *size, 
 			  int flags ) 
 {
-    struct iovec outvec;
+    struct iovec iov;
     size_t size_in,size_out;
     int header_length;
     mca_ptl_base_header_t* header;
+    ompi_convertor_t *convertor = NULL;
+    int rc, freeAfter;
+    unsigned int in_size, max_data;
 
     header = (mca_ptl_base_header_t*)fragment->send_buf;
     header_length = sizeof(mca_ptl_base_match_header_t);
@@ -55,15 +58,11 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
     size_in = *size;
   
     if( (size_in + header_length) <= GM_BUF_SIZE ) 
-	outvec.iov_len = size_in;
+	iov.iov_len = size_in;
     else
-	outvec.iov_len = GM_BUF_SIZE - header_length;
+	iov.iov_len = GM_BUF_SIZE - header_length;
 
-    if(size_in > 0) {
-        ompi_convertor_t *convertor;
-        int rc, freeAfter;
-	unsigned int in_size, max_data;
-
+    if( size_in > 0 ) {
         /* first fragment (eager send) and first fragment of long protocol
          * can use the convertor initialized on the request. The remaining
          * fragments must copy/reinit the convertor.
@@ -87,21 +86,21 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
          */
 
         /* copy the data to the registered buffer */
-        outvec.iov_base = ((char*)fragment->send_buf) + header_length;
-	max_data = outvec.iov_len;
+        iov.iov_base = ((char*)fragment->send_buf) + header_length;
+	max_data = iov.iov_len;
 	in_size = 1;
-        if((rc = ompi_convertor_pack(convertor, &(outvec), &in_size, &max_data, &freeAfter)) < 0)
+        if((rc = ompi_convertor_pack(convertor, &(iov), &in_size, &max_data, &freeAfter)) < 0)
             return OMPI_ERROR;
     }
 
     if( (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FRAG) ||
 	(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_MATCH) )
-	header->hdr_match.hdr_msg_length = outvec.iov_len;
+	header->hdr_match.hdr_msg_length = iov.iov_len;
 
     /* adjust size and request offset to reflect actual number of bytes
      * packed by convertor
      */
-    size_out = outvec.iov_len + header_length;
+    size_out = iov.iov_len + header_length;
   
     A_PRINT( "peer_send request is %p\t, frag->req = %p, fragment is %p,size is %d, send_frag is %p\n",
 	     sendreq, fragment->req, fragment, size_out,
@@ -116,20 +115,51 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
     fragment->send_frag.frag_base.frag_size = size_out - header_length;
     fragment->send_frag.frag_request = sendreq;
 
-    ompi_atomic_sub( &(ptl_peer->peer_ptl->num_send_tokens), 1 );
-    assert( ptl_peer->peer_ptl->num_send_tokens >= 0 );
+    fragment->already_send = 0;
     /* initiate the gm send */
     gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
                                    GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
                                    send_callback, (void *)fragment );
-    ptl_peer->peer_ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl_peer->peer_ptl,
-                                                 fragment->send_frag.frag_request,
-                                                 outvec.iov_len );
-    /*gm_send_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
-      GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
-      ptl_peer->port_number, send_callback, (void *)fragment );*/
+    if( size_out <= GM_BUF_SIZE ) {
+        /* small message. All data went out */
+        ptl_peer->peer_ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl_peer->peer_ptl,
+                                                     fragment->send_frag.frag_request,
+                                                     iov.iov_len );
+        /*gm_send_with_callback( ptl_peer->peer_ptl->gm_port, fragment->send_buf, 
+          GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
+          ptl_peer->port_number, send_callback, (void *)fragment );*/
+        *size = iov.iov_len;
+    } else if( size_in <= (5 * GM_BUF_SIZE) ) {  /* eager message */
+        while( size_out < size_in ) {
+            ompi_list_item_t* item;
+            mca_ptl_gm_eager_header_t* header;
+            
+            OMPI_FREE_LIST_WAIT( &(ptl_peer->peer_ptl->gm_send_dma_frags), item, rc );
+            iov.iov_base = (char*)header + sizeof(mca_ptl_gm_eager_header_t);
+            iov.iov_len = GM_BUF_SIZE - sizeof(mca_ptl_gm_eager_header_t);
+            max_data = iov.iov_len;
+            in_size = 1;
 
-    *size = (size_out - header_length);
+            if((rc = ompi_convertor_pack(convertor, &(iov), &in_size, &max_data, &freeAfter)) < 0)
+                return OMPI_ERROR;
+
+            size_out += iov.iov_len;
+            header = (mca_ptl_gm_eager_header_t*)item;
+            header->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+            header->hdr_common.hdr_flags = 0;
+            header->hdr_src_ptr.pval = fragment;
+
+            gm_send_to_peer_with_callback( ptl_peer->peer_ptl->gm_port, header,
+                                           GM_SIZE, size_out, GM_LOW_PRIORITY, ptl_peer->local_id,
+                                           send_callback, (void *)header );
+        }
+        ptl_peer->peer_ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl_peer->peer_ptl,
+                                                     fragment->send_frag.frag_request, size_out );
+        *size = size_out;
+    } else {  /* large message */
+        
+    }
+
     A_PRINT("inside peer send : bytes sent is %d\n",*size);
     return OMPI_SUCCESS;
 }
@@ -192,7 +222,7 @@ void put_callback(struct gm_port *port,void * context, gm_status_t status)
     }
 }
 
-void send_callback(struct gm_port *port,void * context, gm_status_t status)
+void send_callback( struct gm_port *port, void * context, gm_status_t status )
 {
     mca_ptl_gm_module_t *ptl;
     mca_ptl_gm_send_frag_t *frag;
@@ -210,32 +240,66 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
     case GM_SUCCESS:
         DO_DEBUG( printf( "send_callback for data ptr %p\n", (void*)frag->send_buf ) );
 	ompi_atomic_add( &(ptl->num_send_tokens), 1 );
-    
-	if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_ACK) {
-	    A_PRINT("send callback: Completion of send_ack, sent frag is %p\n", frag);
+
+        switch( header->hdr_common.hdr_type ) {
+        case MCA_PTL_HDR_TYPE_MATCH:
+	    /*ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl, frag->send_frag.frag_request,
+              header->hdr_match.hdr_msg_length);*/
+	    
+            /* return the DMA memory */
+	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_dma_frags), ((ompi_list_item_t *)frag->send_buf));
+            frag->send_buf = NULL;
+	    /* Return sendfrag to free list */
 	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), ((ompi_list_item_t *) frag));
-	} else if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FIN) {
+            break;
+        case MCA_PTL_HDR_TYPE_RNDV:
+        case MCA_PTL_HDR_TYPE_FRAG:
+            {
+                /* Use by eager messages. It contains just enough informations to be able
+                 * to retrieve the fragment to whom it belong. I use the mca_ptl_gm_eager_header_t
+                 * and I store in hdr_src_ptr the pointer to the fragment that have been
+                 * generated the send operation.
+                 */
+                mca_ptl_gm_eager_header_t* header = (mca_ptl_gm_eager_header_t*)context;
+                frag = (mca_ptl_gm_send_frag_t*)(header->hdr_src_ptr.pval);
+                ptl = (mca_ptl_gm_module_t *)frag->send_frag.frag_base.frag_owner;
+                frag->already_send += (GM_BUF_SIZE - sizeof(mca_ptl_gm_eager_header_t));
+                if( frag->already_send > frag->send_frag.frag_base.frag_size ) {
+                    frag->send_buf = NULL;
+                    /* I will update the status of the request just once when everything is
+                     * already done. Dont waste the time :)
+                     */
+                    ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl, frag->send_frag.frag_request, 
+                                                  frag->send_frag.frag_base.frag_size );
+                    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), ((ompi_list_item_t*)frag));
+                }
+                OMPI_FREE_LIST_RETURN(&(ptl->gm_send_dma_frags), ((ompi_list_item_t *)header));
+            }
+            break;
+        case MCA_PTL_HDR_TYPE_ACK:
+	    A_PRINT("send callback: Completion of send_ack, sent frag is %p\n", frag);
+            /* return the DMA memory */
+	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_dma_frags), ((ompi_list_item_t *)frag->send_buf));
+            frag->send_buf = NULL;
+	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), ((ompi_list_item_t *) frag));
+            break;
+        case MCA_PTL_HDR_TYPE_FIN:
 	    A_PRINT("send callback : Completion of fin, bytes complete = %d\n",
                     header->hdr_ack.hdr_dst_size);
 	    ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl, frag->send_frag.frag_request, 
 					  header->hdr_ack.hdr_dst_size);
 	    
+            /* return the DMA memory */
+	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_dma_frags), ((ompi_list_item_t *)frag->send_buf));
+            frag->send_buf = NULL;
 	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), ((ompi_list_item_t *) frag));
-	} else if (0 == (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK)
-		   || mca_pml_base_send_request_matched(gm_send_req)) {
-	    A_PRINT(" send callback : match not required\n");
-	    /*ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl, frag->send_frag.frag_request,
-              header->hdr_match.hdr_msg_length);*/
-	    
-	    /* Return sendfrag to free list */
-	    A_PRINT("Return frag : %p", frag);
-	    OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), ((ompi_list_item_t *) frag));
-	} else {
+            break;
+        default:
 	    /* Not going to call progress on this send,
 	     * and not free-ing descriptor */
 	    frag->send_complete = 1;
 	    A_PRINT("send callback : match required but not yet recv ack sendfrag is %p\n",frag);
-	}
+        }
 	break;
 	
     case GM_SEND_TIMED_OUT:
