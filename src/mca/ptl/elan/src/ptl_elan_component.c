@@ -188,10 +188,13 @@ mca_ptl_elan_component_init (int *num_ptls,
  
     START_FUNC(PTL_ELAN_DEBUG_INIT);
 
-    /* TODO: support multiple threads */
     *num_ptls = 0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
+
+    /* XXX: Set the global variable to be true for threading */
+    if(OMPI_HAVE_THREADS)
+        ompi_set_using_threads(true);
 
     ompi_free_list_init (&(elan_mp->elan_recv_frags_free),
                          sizeof (mca_ptl_elan_recv_frag_t),
@@ -229,6 +232,26 @@ mca_ptl_elan_component_init (int *num_ptls,
             elan_mp->num_modules * sizeof (mca_ptl_elan_module_t *));
     *num_ptls = elan_mp->num_modules;
     mca_ptl_elan_component_initialized = true;
+
+    /* XXX + TODO: 
+     * have threads listening on send/recv completion from this point on.
+     * Points to be aware of.
+     * a) Main thread trigger the send 
+     * b) Asynchronous thread detects the completion of send/recv, put/get
+     *    then update fragment descriptors and requests if needed.
+     * c) Main thread progresses with the status of requests being detected.
+     * d) Asynchronous thread handles the retransmission and recv side
+     *    data copying; Main thread does nothing more than initiating
+     *    the messaging.
+     * e) Asynchronous thread should also detect the completion of the
+     *    program and exit accordingly, via a signal/interrupt.
+     */
+
+    if ((ompi_ptl_elan_thread_init(elan_mp)) != OMPI_SUCCESS) {
+        ompi_output(0, 
+		"unable to initialize %d asynchronous threads\n",
+		elan_mp->num_modules);
+    }
 
     END_FUNC(PTL_ELAN_DEBUG_INIT);
     return ptls;

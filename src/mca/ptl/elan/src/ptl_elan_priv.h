@@ -38,75 +38,20 @@
 #include "init_sys.h"
 #include "elan4/events.h"
 
-#define  PTL_ELAN_DEBUG_NONE  (0x000)
-#define  PTL_ELAN_DEBUG_INIT  (0x001)
-#define  PTL_ELAN_DEBUG_FIN   (0x002)
-#define  PTL_ELAN_DEBUG_QDESC (0x004)
-#define  PTL_ELAN_DEBUG_RDESC (0x008)
-#define  PTL_ELAN_DEBUG_SEND  (0x010)
-#define  PTL_ELAN_DEBUG_RECV  (0x020)
-#define  PTL_ELAN_DEBUG_ACK   (0x040)
-#define  PTL_ELAN_DEBUG_MAC   (0x080)
-#define  PTL_ELAN_DEBUG_QDMA  (0x100)
-#define  PTL_ELAN_DEBUG_PUT   (0x200)
-#define  PTL_ELAN_DEBUG_GET   (0x400)
-#define  PTL_ELAN_DEBUG_CHAIN (0x800)
-
-#define  OMPI_PTL_ELAN_ENABLE_GET    (1)
-#define  OMPI_PTL_ELAN_COMP_QUEUE    (0) 
-
-#define  OMPI_PTL_ELAN_MAX_QSIZE     (2048)
-#define  OMPI_PTL_ELAN_MAX_QSLOTS    (128)
-#define  OMPI_PTL_ELAN_LOST_QSLOTS   (1)
-
-#define  OMPI_PTL_ELAN_MAX_QDESCS    (128)
-#define  OMPI_PTL_ELAN_NUM_QDESCS    (4)
-#define  OMPI_PTL_ELAN_QDMA_RETRY    (16)
-
-#define  OMPI_PTL_ELAN_MAX_PUTGET    (32)
-#define  OMPI_PTL_ELAN_NUM_PUTGET    (8)
-#define  OMPI_PTL_ELAN_MAX_PGDESC    (8)
-
-#define  OMPI_PTL_ELAN_FASTPATH      (0x1)
-#define  OMPI_PTL_ELAN_SLOT_ALIGN    (128)
-#define  OMPI_PTL_ELAN_GET_MAX(a,b)  ((a>b)? a:b)
-#define  OMPI_PTL_ELAN_GET_MIN(a,b)  ((a<b)? a:b)
-#define  OMPI_PTL_ELAN_ALIGNUP(x,a)  (((unsigned int)(x) + ((a)-1)) & (-(a)))
-
-/* For now only debug send's */
-#if 1
-#define  PTL_ELAN_DEBUG_FLAG  PTL_ELAN_DEBUG_NONE
-#else
-#define  PTL_ELAN_DEBUG_FLAG (PTL_ELAN_DEBUG_MAC|PTL_ELAN_DEBUG_ACK|PTL_ELAN_DEBUG_SEND|PTL_ELAN_DEBUG_PUT)
-#endif
-
-#if 1 || (QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4))
-#define OMPI_PTL_ELAN_ALLOC_CMDQ(ctx, alloc, size, bits, params) \
-	elan4_alloc_cmdq (ctx, alloc, size, bits, params)
-#else
-#define OMPI_PTL_ELAN_ALLOC_CMDQ(ctx, alloc, size, bits, params) \
-	elan4_alloc_cmdq (ctx, size, bits, params)
-#endif
-
-#define  LOG_PRINT(flag, args...)                              \
-do {                                                           \
-    if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
-	char hostname[32]; gethostname(hostname, 32);          \
-	fprintf(stdout, "[%s:%s:%d] ",                         \
-		hostname, __FUNCTION__, __LINE__);             \
-	fprintf(stdout, args);                                 \
-    }                                                          \
-} while (0)
-
-#define OMPI_PTL_ELAN_CHECK_UNEX(value, unexp, errno, output)  \
-do {                                                           \
-    if (value == unexp) {                                      \
-	ompi_output(output,                                    \
-		"[%s:%d] allocate received unexpect value \n", \
-		__FILE__, __LINE__);                           \
-	return errno;                                          \
-    }                                                          \
-} while (0)
+#define  PTL_ELAN_DEBUG_NONE    (0x000)
+#define  PTL_ELAN_DEBUG_INIT    (0x001)
+#define  PTL_ELAN_DEBUG_FIN     (0x002)
+#define  PTL_ELAN_DEBUG_QDESC   (0x004)
+#define  PTL_ELAN_DEBUG_RDESC   (0x008)
+#define  PTL_ELAN_DEBUG_SEND    (0x010)
+#define  PTL_ELAN_DEBUG_RECV    (0x020)
+#define  PTL_ELAN_DEBUG_ACK     (0x040)
+#define  PTL_ELAN_DEBUG_MAC     (0x080)
+#define  PTL_ELAN_DEBUG_QDMA    (0x100)
+#define  PTL_ELAN_DEBUG_PUT     (0x200)
+#define  PTL_ELAN_DEBUG_GET     (0x400)
+#define  PTL_ELAN_DEBUG_CHAIN   (0x800)
+#define  PTL_ELAN_DEBUG_FLAG    PTL_ELAN_DEBUG_NONE
 
 #define START_FUNC(flag)                                       \
 do {                                                           \
@@ -126,6 +71,56 @@ do {                                                           \
     }                                                          \
 } while (0)
 
+#define  LOG_PRINT(flag, args...)                              \
+do {                                                           \
+    if (PTL_ELAN_DEBUG_FLAG & flag) {                          \
+	char hostname[32]; gethostname(hostname, 32);          \
+	fprintf(stdout, "[%s:%s:%d] ",                         \
+		hostname, __FUNCTION__, __LINE__);             \
+	fprintf(stdout, args);                                 \
+    }                                                          \
+} while (0)
+
+/* PTL_ELAN related MACROS, expose some as configurable options if needed */
+#define  OMPI_PTL_ELAN_ENABLE_GET    (1)
+#define  OMPI_PTL_ELAN_COMP_QUEUE    (0) 
+#define  OMPI_PTL_ELAN_THREADING     (1) 
+
+#define  OMPI_PTL_ELAN_MAX_QSIZE     (2048)
+#define  OMPI_PTL_ELAN_MAX_QSLOTS    (128)
+#define  OMPI_PTL_ELAN_LOST_QSLOTS   (1)
+
+#define  OMPI_PTL_ELAN_MAX_QDESCS    (128)
+#define  OMPI_PTL_ELAN_NUM_QDESCS    (4)
+#define  OMPI_PTL_ELAN_QDMA_RETRY    (16)
+
+#define  OMPI_PTL_ELAN_MAX_PUTGET    (32)
+#define  OMPI_PTL_ELAN_NUM_PUTGET    (8)
+#define  OMPI_PTL_ELAN_MAX_PGDESC    (8)
+
+#define  OMPI_PTL_ELAN_FASTPATH      (0x1)
+#define  OMPI_PTL_ELAN_SLOT_ALIGN    (128)
+#define  OMPI_PTL_ELAN_GET_MAX(a,b)  ((a>b)? a:b)
+#define  OMPI_PTL_ELAN_GET_MIN(a,b)  ((a<b)? a:b)
+#define  OMPI_PTL_ELAN_ALIGNUP(x,a)  (((unsigned int)(x) + ((a)-1)) & (-(a)))
+
+#if 1 || (QSNETLIBS_VERSION_CODE <= QSNETLIBS_VERSION(1,6,4))
+#define OMPI_PTL_ELAN_ALLOC_CMDQ(ctx, alloc, size, bits, params) \
+	elan4_alloc_cmdq (ctx, alloc, size, bits, params)
+#else
+#define OMPI_PTL_ELAN_ALLOC_CMDQ(ctx, alloc, size, bits, params) \
+	elan4_alloc_cmdq (ctx, size, bits, params)
+#endif
+
+#define OMPI_PTL_ELAN_CHECK_UNEX(value, unexp, errno, output)  \
+do {                                                           \
+    if (value == unexp) {                                      \
+	ompi_output(output,                                    \
+		"[%s:%d] allocate received unexpect value \n", \
+		__FILE__, __LINE__);                           \
+	return errno;                                          \
+    }                                                          \
+} while (0)
 
 enum {
     /* the first four bits for type */
@@ -342,8 +337,10 @@ ELAN_SLEEP *ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
                                       RAIL * rail);
 
 /* Initialization and finalization routines */
-int         ompi_mca_ptl_elan_init (mca_ptl_elan_component_t * emp);
-int         ompi_mca_ptl_elan_finalize (mca_ptl_elan_component_t * emp);
+int         mca_ptl_elan_init (mca_ptl_elan_component_t * emp);
+int         mca_ptl_elan_finalize (mca_ptl_elan_component_t * emp);
+int         mca_ptl_elan_thread_init(mca_ptl_elan_component_t * emp);
+int         mca_ptl_elan_thread_close(mca_ptl_elan_component_t * emp);
 
 /* communication initialization prototypes */
 int         ompi_init_elan_qdma (mca_ptl_elan_component_t * emp,
@@ -365,7 +362,7 @@ int         mca_ptl_elan_start_desc(
 int         mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl, 
 			 mca_ptl_elan_send_frag_t * desc,
 			 mca_ptl_elan_recv_frag_t * recv_frag);
-int        mca_ptl_elan_get_with_ack (mca_ptl_base_module_t * ptl, 
+int         mca_ptl_elan_get_with_ack (mca_ptl_base_module_t * ptl, 
 			   mca_ptl_elan_send_frag_t * frag,
 			   mca_ptl_elan_recv_frag_t * recv_frag);
 

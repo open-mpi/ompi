@@ -308,7 +308,7 @@ ompi_init_elan_sleepdesc (mca_ptl_elan_state_t * ems,
 }
 
 int
-ompi_mca_ptl_elan_init (mca_ptl_elan_component_t * emp)
+mca_ptl_elan_init (mca_ptl_elan_component_t * emp)
 {
     int         i;
     int        *rails;
@@ -543,7 +543,7 @@ ompi_mca_ptl_elan_init (mca_ptl_elan_component_t * emp)
 }
 
 int
-ompi_mca_ptl_elan_finalize (mca_ptl_elan_component_t * emp)
+mca_ptl_elan_finalize (mca_ptl_elan_component_t * emp)
 {
     int     i;
     int     num_rails;
@@ -590,3 +590,42 @@ ompi_mca_ptl_elan_finalize (mca_ptl_elan_component_t * emp)
     END_FUNC(PTL_ELAN_DEBUG_FIN);
     return (OMPI_SUCCESS);
 }
+
+#if OMPI_PTL_ELAN_THREADING
+/* XXX: 
+ * Create threads per PTL and have them up running, 
+ * Blocking on the completion queues */
+int
+mca_ptl_elan_thread_init (mca_ptl_elan_component_t * emp)
+{
+    int     num_rails;
+    mca_ptl_elan_state_t *ems;
+
+    START_FUNC(PTL_ELAN_DEBUG_INIT);
+
+    ems = &mca_ptl_elan_global_state;
+    num_rails = ems->elan_nrails;
+
+    END_FUNC(PTL_ELAN_DEBUG_INIT);
+    return (OMPI_SUCCESS);
+}
+
+
+/* XXX: 
+ * Send signal/interrupt(s) to threads and wait for them to join */
+int
+mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
+{
+    int     num_rails;
+    mca_ptl_elan_state_t *ems;
+
+    START_FUNC(PTL_ELAN_DEBUG_FIN);
+
+    ems = &mca_ptl_elan_global_state;
+    num_rails = ems->elan_nrails;
+
+    END_FUNC(PTL_ELAN_DEBUG_FIN);
+    return (OMPI_SUCCESS);
+}
+#endif /* End of OMPI_PTL_ELAN_THREADING */
+
