@@ -119,7 +119,6 @@ int main(int argc, char **argv)
 {
     ompi_list_t nodes;
     test_node_t *node;
-    orte_process_name_t seed={0,0,0};
     int i, rc;
 
    /*  test_out = fopen( "test_gpr_replica_out", "w+" ); */
@@ -158,7 +157,10 @@ int main(int argc, char **argv)
     
 
     orte_process_info.seed = true;
-    orte_process_info.my_name = &seed;
+    orte_process_info.my_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    orte_process_info.my_name->cellid = 0;
+    orte_process_info.my_name->jobid = 0;
+    orte_process_info.my_name->vpid = 0;
 
     /* startup the MCA */
     if (OMPI_SUCCESS == mca_base_open()) {
@@ -237,6 +239,19 @@ int main(int argc, char **argv)
     }
     
     orte_gpr.dump_all(0);
+    
+    fprintf(stderr, "now finalize and see if all memory cleared\n");
+    while (NULL != (node = (test_node_t*)ompi_list_remove_first(&nodes))) {
+        OBJ_RELEASE(node);
+    }
+    OBJ_DESTRUCT(&nodes);
+    orte_dps_close();
+    orte_gpr_base_close();
+    orte_sys_info_finalize();
+    orte_proc_info_finalize();
+    mca_base_close();
+    ompi_malloc_finalize();
+    ompi_output_finalize();
     
     fclose( test_out );
 
