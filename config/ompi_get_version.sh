@@ -2,10 +2,13 @@
 #
 # $HEADER$
 #
-# Since we do this in multiple places, it's worth putting in a
-# separate shell script.  Very primitive script to get the version
-# number of OMPI into a coherent variable.  Can query for any of the
-# individual parts of the version number, too.
+
+#
+# This file is almost identical in functionality to
+# ompi_get_version.sh.  It is unfortunate that we have to duplicate code,
+# but it is really the only what that I can think to do it.  :-( Hence,
+# if you change the logic here for determining version numbers, YOU MUST
+# ALSO CHANGE IT IN ompi_get_version.sh!!
 #
 
 srcfile="$1"
@@ -32,12 +35,9 @@ else
 	OMPI_VERSION="${OMPI_VERSION}b$OMPI_BETA_VERSION"
     fi
 
-    if test "$OMPI_SVN_VERSION" = "1"; then
-        OMPI_VERSION="${OMPI_VERSION}svn"
-    elif test "`expr $OMPI_SVN_VERSION \> 0`" = "1"; then
+    if test "$OMPI_SVN_VERSION" != "0"; then
         if test -d .svn; then
-   #         ver="r`svn info . | grep Revision | cut -d\  -f 2`"
-            ver="r`svnversion .`"
+            ver=`svnversion .`
         else
             ver="svn`date '+%m%d%Y'`"
         fi
@@ -47,7 +47,7 @@ else
 
     if test "$option" = ""; then
 	option="--full"
-	fi
+    fi
 fi
 
 case "$option" in
