@@ -161,7 +161,6 @@ mca_ptl_elan_putget_desc_contruct (
     desc->req = NULL;
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
-
     /* Allocate elan memory for chained event and buff */
     desc->chain_buff = (E4_Addr *) ((char *)elan_event);
     desc->comp_buff  = (E4_Addr *) ((char *)elan_event + ELAN_BLOCK_SIZE );
@@ -170,23 +169,39 @@ mca_ptl_elan_putget_desc_contruct (
 	    + 2 * ELAN_BLOCK_SIZE + sizeof (E4_Event32));
     desc->comp_event= (E4_Event *) ((char *)elan_event 
 	    + 2 * ELAN_BLOCK_SIZE + 2 * sizeof (E4_Event32));
+
+    /* XXX: provide a DMA structure for each chained event */
+    desc->comp_dma.dma_typeSize = E4_DMA_TYPE_SIZE (
+	    sizeof(mca_ptl_base_frag_header_t), 
+	    DMA_DataTypeByte, DMA_QueueWrite, 8);
+    desc->comp_dma.dma_vproc    = ptl->elan_vp;
+    desc->comp_dma.dma_srcAddr  = 0x0ULL; /* To be filled in */
+    desc->comp_dma.dma_dstAddr  = 0x0ULL; /* To be filled in */
+
+    /* XXX: If completion is to be detected from the Queue
+     *      there is no need to trigger a local event */
+    desc->comp_dma.dma_dstEvent = elan4_main2elan (ctx, 
+	    (void *) ptl->comp->input);
+    desc->comp_dma.dma_srcEvent = 0x0ULL;
+    desc->comp_dma.dma_typeSize |= RUN_DMA_CMD;
+    desc->comp_dma.dma_pad       = NOP_CMD;
+
+    desc->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
+	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
+    desc->comp_event->ev_Params[0]    = elan4_main2elan (ctx, 
+	    (void *)desc->comp_buff);
+    desc->comp_event->ev_Params[1] = 0x0ULL; 
+
+    /* Initialize some of the dma structures */
+    desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, 
+	    (E4_Event *)desc->chain_event);
+    desc->main_dma.dma_dstEvent= 0x0ULL;
 #else
     desc->elan_event = elan_event; 
     desc->chain_event= (E4_Event32 *) 
 	((char *)elan_event + sizeof (E4_Event32));
     desc->chain_buff = (E4_Addr *) 
 	((char *)elan_event + 2*sizeof (E4_Event32));
-
-#if 0
-    desc->main_dma.dma_typeSize = 0;
-    desc->main_dma.dma_cookie   = 0;
-    desc->main_dma.dma_vproc    = 0;
-    /* XXX + TODO: To remove this block after verification
-     * Remember all the address needs to be converted 
-     * before assigning to DMA descritpor */
-    desc->main_dma.dma_srcAddr = src_elan4_addr;
-    desc->main_dma.dma_dstAddr = dst_elan4_addr;
-#endif
 
     if (local) {
 	desc->main_dma.dma_srcEvent = elan4_main2elan(ctx, elan_event);

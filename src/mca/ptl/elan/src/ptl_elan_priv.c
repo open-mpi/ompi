@@ -352,8 +352,7 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
     desc->main_dma.dma_vproc = destvp;
     desc->main_dma.dma_cookie= elan4_local_cookie (ptl->queue->tx_cpool, 
 	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
-    desc->main_dma.dma_srcEvent= elan4_main2elan(
-	    ctx, (E4_Event *)desc->comp_event);
+    desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, desc->comp_event);
     desc->main_dma.dma_srcAddr = MAIN2ELAN (ctx, &desc->buff[0]);
 #else
     desc->main_dma.dma_srcAddr = MAIN2ELAN (ctx, &desc->buff[0]);
@@ -373,7 +372,7 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 }
 
 static void
-mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
+mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
                                mca_ptl_elan_module_t * ptl,
 			       struct mca_ptl_elan_peer_t *ptl_peer,
                                mca_pml_base_send_request_t *pml_req,
@@ -474,8 +473,17 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
     /* XXX: Chain a QDMA to each queue and 
-     * Have all the srcEvent fired to the Queue */
-
+     * Have all the srcEvent fired to the Queue 
+     *
+     * XXX: The chain dma will go directly into a command stream
+     * so we need addend the command queue control bits.
+     * Allocate space from command queues hanged off the CTX.
+     */
+    desc->comp_event->ev_Params[0]    = elan4_main2elan (ctx, 
+	    (void *)desc->comp_buff);
+    desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+    desc->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
+	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
     desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,
 	    E4_COOKIE_TYPE_LOCAL_DMA, ptl->elan_vp);
     desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, 
@@ -483,19 +491,12 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
     memcpy ((void *)desc->comp_buff, (void *)&desc->comp_dma, 
 	    sizeof (E4_DMA64));
 
-    /* XXX: The chain dma will go directly into a command stream
-     * so we need addend the command queue control bits.
-     * Allocate space from command queues hanged off the CTX.
-     */
-    desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
-    desc->chain_dma.dma_srcEvent= elan4_main2elan(
-	    ctx, (E4_Event *)desc->comp_event);
+    /* XXX: chain the comp event to the put_dma */
+    desc->chain_dma.dma_srcEvent= elan4_main2elan(ctx, desc->comp_event);
 #else
     desc->chain_dma.dma_srcEvent = elan4_main2elan (ctx, desc->elan_event);
     INITEVENT_WORD (ctx, (E4_Event *) desc->elan_event, &desc->main_doneWord);
     RESETEVENT_WORD (&desc->main_doneWord);
-
-    /* Be sure that padding E4_Event is not causing problems */
     PRIMEEVENT_WORD (ctx, (E4_Event *)desc->elan_event, 1);
 #endif
 
@@ -615,8 +616,18 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
 		*size);
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
+
     /* XXX: Chain a QDMA to each queue and 
-     * Have all the srcEvent fired to the Queue */
+     * Have all the srcEvent fired to the Queue 
+     *
+     * XXX: The chain dma will go directly into a command stream
+     * so we need addend the command queue control bits.
+     * Allocate space from command queues hanged off the CTX.
+     */
+
+    desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+    desc->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
+	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
     desc->comp_dma.dma_cookie   = elan4_local_cookie(ptl->queue->tx_cpool,
 	    E4_COOKIE_TYPE_LOCAL_DMA, ptl->elan_vp);
     desc->comp_dma.dma_srcAddr  = elan4_main2elan (ctx, 
@@ -624,13 +635,8 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     memcpy ((void *)desc->comp_buff, (void *)&desc->comp_dma, 
 	    sizeof (E4_DMA64));
 
-    /* XXX: The chained COMP/DMA will go directly into a command stream
-     * so we need addend the command queue control bits.
-     * Allocate space from command queues hanged off the CTX.
-     */
-    desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
-    desc->chain_dma.dma_srcEvent= elan4_main2elan(ctx, 
-	    (E4_Event *)desc->comp_event);
+    /* XXX: chain the comp event to the put_dma */
+    desc->chain_dma.dma_srcEvent= elan4_main2elan(ctx, desc->comp_event);
 #else
     desc->chain_dma.dma_srcEvent = elan4_main2elan (ctx, desc->elan_event);
     INITEVENT_WORD (ctx, (E4_Event *) desc->elan_event, &desc->main_doneWord);
@@ -760,7 +766,7 @@ mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * frag,
         struct ompi_ptl_elan_putget_desc_t *pdesc;
 
         pdesc = (ompi_ptl_elan_putget_desc_t *)frag->desc;
-        mca_ptl_elan_init_putget_desc (frag, ptl, ptl_peer, sendreq, 
+        mca_ptl_elan_init_put_desc (frag, ptl, ptl_peer, sendreq, 
 		offset, size, flags);
         elan4_run_dma_cmd (ptl->putget->put_cmdq, (E4_DMA *) &pdesc->main_dma);
 	elan4_flush_cmdq_reorder (ptl->putget->put_cmdq);
@@ -1068,9 +1074,6 @@ mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
 	/* XXX: please reset additional chained event for put/get desc */
 	mca_ptl_elan_send_desc_done (frag, 
 		(mca_pml_base_send_request_t *) basic->req);
-
-	/* XXX: Reset the comp event, buggy */
-	/*PRIMEEVENT_WORD (ctx, basic->comp_event, 1);*/
 
 	/* Work out the new front pointer */
 	if (rxq->qr_fptr == rxq->qr_top) {
