@@ -6,13 +6,13 @@
 # Arguements
 # ==========
 # 
-# test_list  =  no args runs all tests
+# test_list  =  no args or all runs all tests
 #              or
-#               bitmap runs ompi_bitmap tests
-#               hash_list runs ompi_hash_list tests
-#               pointer_array runs ompi_pointer_array tests, 
-#               rb_tree runs ompi_rb_tree tests
-#               value_array runs ompi_value_array tests
+#               ompi_bitmap runs ompi_bitmap tests
+#               ompi_hash_list runs ompi_hash_list tests
+#               ompi_pointer_array runs ompi_pointer_array tests, 
+#               ompi_rb_tree runs ompi_rb_tree tests
+#               ompi_value_array runs ompi_value_array tests
 
 # Usage
 #
@@ -24,30 +24,44 @@
 
 umask 007
 
-if ("x$1" == "x") then
+if  ("x$1" == "x") then
+  echo "do all - no args"
   ./ompi_bitmap
   ./ompi_hash_table
   ./ompi_list
   ./ompi_pointer_array
   ./ompi_rb_tree
   ./ompi_value_array
-else if ("$1" == "bitmap") then
-  ./ompi_bitmap
-else if ("$1" == "hash_table") then
-  ./ompi_hash_table
-else if ("$1" == "list") then
-  ./ompi_list
-else if ("$1" == "pointer_array") then
-  ./ompi_pointer_array
-else if ("$1" == "rb_tree") then
-  ./ompi_rb_tree
-else if ("$1" == "value_array") then
-  ./ompi_value_array
-else
-  echo "correct use: "
-  echo "    run_tests    (to run all class tests)"
-  echo "or  run_tests <bimmap | hash_table | list | pointer_array | rb_tree | value_array>"
-  exit -1
+else 
+  foreach target ($argv)
+    switch ($target)
+    case "all":
+      ./ompi_bitmap
+      ./ompi_hash_table
+      ./ompi_list
+      ./ompi_pointer_array
+      ./ompi_rb_tree
+      ./ompi_value_array
+      breaksw
+    case "ompi_bitmap":
+    case "ompi_hash_table":
+    case "ompi_pointer_array":
+    case "ompi_rb_tree":
+    case "ompi_value_array":
+    case "ompi_list":
+      ./$target
+      breaksw
+    case "help"    
+    default     
+      echo "correct use: "
+      echo "    run_tests    (to run all class tests)"
+      echo "or  run_tests with any combination of the following: "
+      echo  "       <ompi_bimmap | ompi_hash_table | onpi_list | "
+      echo "         ompi_pointer_array | ompi_rb_tree | ompi_value_array>"
+      break
+    endsw
+  end
+
 endif
 
 
