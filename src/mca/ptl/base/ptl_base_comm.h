@@ -53,7 +53,8 @@ extern int mca_pml_ptl_comm_init_size(mca_pml_ptl_comm_t* comm, size_t size);
 static inline mca_ptl_sequence_t mca_pml_ptl_comm_send_sequence(mca_pml_ptl_comm_t* comm, int dst)
 {
    mca_ptl_sequence_t sequence;
-   THREAD_SCOPED_LOCK(&comm->c_matching_lock, sequence = comm->c_msg_seq[dst]++);
+   OMPI_THREAD_SCOPED_LOCK(&comm->c_matching_lock,
+                           sequence = comm->c_msg_seq[dst]++);
    return sequence;
 }
 

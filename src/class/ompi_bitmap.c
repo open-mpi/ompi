@@ -2,6 +2,10 @@
  * $HEADER$
  */
 
+#ifdef HAVE_CONFIG_H
+#include "ompi_config.h"
+#endif
+
 #include "class/ompi_bitmap.h"
 
 #define SIZE_OF_CHAR (sizeof(char) * 8)

@@ -1,9 +1,13 @@
 /*
- *
+ * $HEADER$
  */
+
 /**
  * @file
  */
+
+#include "ompi_config.h"
+
 #include "pml_teg_recvfrag.h"
 #include "pml_teg_proc.h"
 

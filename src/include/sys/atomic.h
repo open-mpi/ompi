@@ -26,9 +26,36 @@
 #define STATIC_INLINE
 #endif
 
-/*
- * prototypes
+/**
+ * Volatile lock object (with optional padding).
  */
+struct ompi_lock_t {
+    union {
+        volatile int lock;         /**< The lock address (an integer) */
+        char padding[sizeof(int)]; /**< Array for optional padding */
+    } u;
+};
+
+typedef struct ompi_lock_t ompi_lock_t;
+
+
+/**
+ * Memory barrier
+ */
+STATIC_INLINE void ompi_atomic_mb(void);
+
+
+/**
+ * Read memory barrier
+ */
+STATIC_INLINE void ompi_atomic_rmb(void);
+
+
+/**
+ * Write memory barrier.
+ */
+STATIC_INLINE void ompi_atomic_wmb(void);
+
 
 /**
  * Atomic compare and set of unsigned 32-bit integer.
@@ -220,7 +247,7 @@ STATIC_INLINE int ompi_atomic_cmpset_rel_ptr(volatile void *addr,
  * @param delta         Value to add.
  * @return              New value of integer.
  */
-STATIC_INLINE uint32_t ompi_atomic_add_32(uint32_t *addr, int delta);
+static inline uint32_t ompi_atomic_add_32(volatile uint32_t *addr, int delta);
 
 
 /**
@@ -230,7 +257,7 @@ STATIC_INLINE uint32_t ompi_atomic_add_32(uint32_t *addr, int delta);
  * @param delta         Value to add.
  * @return              New value of integer.
  */
-STATIC_INLINE uint64_t ompi_atomic_add_64(uint64_t *addr, int delta);
+static inline uint64_t ompi_atomic_add_64(volatile uint64_t *addr, int delta);
 
 
 /**
@@ -240,8 +267,43 @@ STATIC_INLINE uint64_t ompi_atomic_add_64(uint64_t *addr, int delta);
  * @param delta         Value to add.
  * @return              New value of integer.
  */
-STATIC_INLINE int ompi_atomic_add_int(int *addr, int delta);
+static inline int ompi_atomic_add_int(volatile int *addr, int delta);
  
+
+/**
+ * Atomically add to an integer.
+ *
+ * @param addr          Address of integer.
+ * @param newval        Value to set.
+ * @return              Old value of integer.
+ */
+static inline int ompi_atomic_fetch_and_set_int(volatile int *addr, int newval);
+ 
+
+/**
+ * Try to acquire a lock.
+ *
+ * @param lock          Address of the lock.
+ * @return              0 if the lock was acquired, 1 otherwise.
+ */
+static inline int ompi_atomic_trylock(ompi_lock_t *lock);
+
+
+/**
+ * Acquire a lock by spinning.
+ *
+ * @param lock          Address of the lock.
+ */
+static inline void ompi_atomic_lock(ompi_lock_t *lock);
+
+
+/**
+ * Release a lock.
+ *
+ * @param lock          Address of the lock.
+ */
+static inline void ompi_atomic_unlock(ompi_lock_t *lock);
+
 
 #ifdef __GNUC__
 
@@ -398,7 +460,7 @@ static inline int ompi_atomic_cmpset_rel_ptr(volatile void *addr,
 #endif
 
 
-static inline uint32_t ompi_atomic_add_32(uint32_t *addr, int delta)
+static inline uint32_t ompi_atomic_add_32(volatile uint32_t *addr, int delta)
 {
     uint32_t oldval;
 
@@ -409,7 +471,7 @@ static inline uint32_t ompi_atomic_add_32(uint32_t *addr, int delta)
 }
 
 
-static inline uint64_t ompi_atomic_add_64(uint64_t *addr, int delta)
+static inline uint64_t ompi_atomic_add_64(volatile uint64_t *addr, int delta)
 {
     uint64_t oldval;
 
@@ -420,7 +482,7 @@ static inline uint64_t ompi_atomic_add_64(uint64_t *addr, int delta)
 }
 
 
-static inline int ompi_atomic_add_int(int *addr, int delta)
+static inline int ompi_atomic_add_int(volatile int *addr, int delta)
 {
     int oldval;
 
@@ -428,6 +490,61 @@ static inline int ompi_atomic_add_int(int *addr, int delta)
         oldval = *addr;
     } while (0 == ompi_atomic_cmpset_int(addr, oldval, oldval + delta));
     return (oldval + delta);
+}
+
+
+static inline int ompi_atomic_fetch_and_set_int(volatile int *addr, int newval)
+{
+    int oldval;
+
+    do {
+        oldval = *addr;
+    } while (0 == ompi_atomic_cmpset_int(addr, oldval, newval));
+    return (oldval);
+}
+
+
+/*
+ * Atomic locks
+ */
+
+/**
+ * Enumeration of lock states
+ */
+enum {
+    OMPI_ATOMIC_UNLOCKED = 0,
+    OMPI_ATOMIC_LOCKED = 1
+};
+
+
+static inline int ompi_atomic_trylock(ompi_lock_t *lock)
+{
+    return ompi_atomic_cmpset_acq_int((volatile int *) lock,
+                                      OMPI_ATOMIC_UNLOCKED,
+                                      OMPI_ATOMIC_LOCKED);
+}
+
+static inline void ompi_atomic_lock(ompi_lock_t *lock)
+{
+    while (!ompi_atomic_cmpset_acq_int((volatile int *) lock,
+                                       OMPI_ATOMIC_UNLOCKED,
+                                       OMPI_ATOMIC_LOCKED)) {
+        while (lock->u.lock == OMPI_ATOMIC_LOCKED) {
+            /* spin */ ;
+        }
+    }
+}
+
+static inline void ompi_atomic_unlock(ompi_lock_t *lock)
+{
+    if (0) {
+        ompi_atomic_cmpset_rel_int((volatile int *) lock,
+                                   OMPI_ATOMIC_LOCKED,
+                                   OMPI_ATOMIC_UNLOCKED);
+    } else {
+        ompi_atomic_wmb();
+        lock->u.lock = OMPI_ATOMIC_UNLOCKED;
+    }
 }
 
 #endif /* OMPI_SYS_ATOMIC_H */

@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "os/atomic.h"
+#include "include/sys/atomic.h"
 #include "ompi_config.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
@@ -84,7 +84,7 @@ static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag)
           mca_pml_base_send_request_matched(request))) { 
 
         /* make sure this only happens once in threaded case */ 
-        if(fetchNset(&frag->frag_progressed,1) == 0) {
+        if(ompi_atomic_fetch_and_set_int(&frag->frag_progressed,1) == 0) {
 
             /* update request status */ 
             frag->frag_send.frag_base.frag_owner->ptl_send_progress(

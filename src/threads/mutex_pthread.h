@@ -7,7 +7,7 @@
 
 #include <pthread.h>
 #include "class/ompi_object.h"
-#include "os/atomic.h"
+#include "include/sys/atomic.h"
 
 
 struct ompi_mutex_t {

@@ -1,7 +1,7 @@
 #ifndef MCA_PTL_IB_RECV_FRAG_H
 #define MCA_PTL_IB_RECV_FRAG_H
 
-#include "os/atomic.h"
+#include "include/sys/atomic.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 

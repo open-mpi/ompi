@@ -23,11 +23,11 @@ static inline int ompi_condition_wait(ompi_condition_t* c, ompi_mutex_t* m)
     int rc;
     pthread_mutex_lock(&m->m_lock);
     /* release the spinlock */
-    fetchNset(&m->m_spinlock, 0);
+    ompi_atomic_fetch_and_set_int(&m->m_spinlock, 0);
     if(m->m_waiting)
         pthread_cond_signal(&m->m_cond);
     rc = pthread_cond_wait(&c->c_cond, &m->m_lock);
-    fetchNset(&m->m_spinlock, 1);
+    ompi_atomic_fetch_and_set_int(&m->m_spinlock, 1);
     return rc;
 }
 
@@ -36,11 +36,11 @@ static inline int ompi_condition_timedwait(ompi_condition_t* c, ompi_mutex_t* m,
     int rc;
     pthread_mutex_lock(&m->m_lock);
     /* release the spinlock */
-    fetchNset(&m->m_spinlock, 0);
+    ompi_atomic_fetch_and_set_int(&m->m_spinlock, 0);
     if(m->m_waiting)
         pthread_cond_signal(&m->m_cond);
     rc = pthread_cond_timedwait(&c->c_cond, &m->m_lock, abstime);
-    fetchNset(&m->m_spinlock, 1);
+    ompi_atomic_fetch_and_set_int(&m->m_spinlock, 1);
     return rc;
 }
 

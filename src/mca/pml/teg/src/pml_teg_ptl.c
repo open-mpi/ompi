@@ -1,3 +1,9 @@
+/*
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+
 #include "pml_teg_ptl.h"
 
 

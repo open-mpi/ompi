@@ -10,7 +10,7 @@
 
 #include <string.h>
 #include <sys/types.h>
-#include "os/atomic.h"
+#include "include/sys/atomic.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "ptl_sm.h"

@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "os/atomic.h"
+#include "include/sys/atomic.h"
 #include "ompi_config.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/pml/base/pml_base_recvreq.h"
