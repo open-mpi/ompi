@@ -40,11 +40,15 @@ mca_pcm_base_send_schedule(FILE *fp,
     }
 
     /* ENV - since we don't have a envc, must create ourselves...*/
-    for (envc = 0 ; (sched->env)[envc] != NULL ; ++envc) ;
-    fprintf(fp, "%d\n", envc);
-    for (i = 0 ; i < envc ; ++i) {
-        fprintf(fp, "%d %s\n", (int) strlen((sched->env)[i]), 
-                (sched->env)[i]);
+    if (sched->env == NULL) {
+        fprintf(fp, "%d\n", 0);
+    } else {
+        for (envc = 0 ; (sched->env)[envc] != NULL ; ++envc) ;
+        fprintf(fp, "%d\n", envc);
+        for (i = 0 ; i < envc ; ++i) {
+            fprintf(fp, "%d %s\n", (int) strlen((sched->env)[i]), 
+                    (sched->env)[i]);
+        }
     }
     
     /* CWD */

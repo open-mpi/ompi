@@ -70,7 +70,7 @@ mca_pcmclient_env_open(void)
     param_procid = mca_base_param_register_int("pcmclient", "env", "procid",
                                                NULL, -1);
     param_vpid_start = mca_base_param_register_int("pcmclient", "env", 
-                                                   "vpid_start", NULL, -1);
+                                                   "vpid_start", NULL, 0);
     param_num_procs = mca_base_param_register_int("pcmclient", "env", 
                                                   "num_procs", NULL, -1);
 
