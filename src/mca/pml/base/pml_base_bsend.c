@@ -63,7 +63,6 @@ static void* mca_pml_bsend_alloc_segment(size_t* size_inout)
 int mca_pml_base_bsend_init(bool thread_safe)
 {
     int id = mca_base_param_register_string("pml", "base", "bsend_allocator", NULL, "basic");
-    mca_allocator_base_module_t *allocator;
     char *name;
     size_t tmp;
 
@@ -78,15 +77,6 @@ int mca_pml_base_bsend_init(bool thread_safe)
         return OMPI_ERR_BUFFER;
     }
     free(name);
-
-    /* try to create an instance of the allocator - to determine
-       thread safety level */
-
-    allocator = mca_pml_bsend_allocator_component->allocator_init(thread_safe, mca_pml_bsend_alloc_segment, NULL);
-    if (NULL == allocator) {
-        return OMPI_ERR_BUFFER;
-    }
-    allocator->alc_finalize(allocator);
 
     /* determine page size */
     tmp = mca_pml_bsend_pagesz = sysconf(_SC_PAGESIZE);
@@ -119,7 +109,7 @@ int mca_pml_base_bsend_fini()
  */
 int mca_pml_base_bsend_attach(void* addr, int size)
 {
-    bool thread_safe;
+    bool thread_safe = (ompi_mpi_thread_multiple == MPI_THREAD_MULTIPLE ? true : false);
     if(NULL == addr || size <= 0) {
         return OMPI_ERR_BUFFER;
     }
@@ -132,7 +122,7 @@ int mca_pml_base_bsend_attach(void* addr, int size)
     }
 
     /* try to create an instance of the allocator - to determine thread safety level */
-    mca_pml_bsend_allocator = mca_pml_bsend_allocator_component->allocator_init(&thread_safe, mca_pml_bsend_alloc_segment, NULL);
+    mca_pml_bsend_allocator = mca_pml_bsend_allocator_component->allocator_init(thread_safe, mca_pml_bsend_alloc_segment, NULL);
     if(NULL == mca_pml_bsend_allocator) {
         OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERR_BUFFER;
