@@ -282,6 +282,12 @@ extern "C" {
     int ompi_comm_determine_first ( ompi_communicator_t *intercomm,
                                    int high );
 
+
+    /**
+     * a simple function to dump the structure
+     */
+    int ompi_comm_dump ( ompi_communicator_t *comm );
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

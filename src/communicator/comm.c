@@ -27,6 +27,22 @@
 */
 static int rankkeycompare(const void *, const void *);
 
+/*
+** typedef for the allgather_intra required in comm_split.
+** the reason for introducing this abstraction is, that
+** for Comm_split for inter-coms, we do not have this
+** functions, so we need to emulate it.
+*/
+typedef int ompi_comm_allgatherfct (void* inbuf, int incount, MPI_Datatype intype,
+                                    void* outbuf, int outcount, MPI_Datatype outtype,
+                                    ompi_communicator_t *comm);
+
+static int ompi_comm_allgather_emulate_intra (void* inbuf, int incount, MPI_Datatype intype,
+                                              void* outbuf, int outcount, 
+                                              MPI_Datatype outtype, 
+                                              ompi_communicator_t *comm);
+
+
 
 /**********************************************************************/
 /**********************************************************************/
@@ -301,11 +317,13 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     int rsize;
 #endif
     int i, loc;
+    int inter;
     int *results=NULL, *sorted=NULL; 
     int *rresults=NULL, *rsorted=NULL; 
     int rc=OMPI_SUCCESS;
     ompi_proc_t **procs=NULL, **rprocs=NULL;
     ompi_communicator_t *newcomp;
+    ompi_comm_allgatherfct *allgatherfnct;
     
     /* Step 1: determine all the information for the local group */
     /* --------------------------------------------------------- */
@@ -314,14 +332,26 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     myinfo[0] = color;
     myinfo[1] = key;
 
-    size      = ompi_comm_size ( comm );
-    results   = (int*) malloc ( 2 * size * sizeof(int));
+    size     = ompi_comm_size ( comm );
+    inter    = OMPI_COMM_IS_INTER(comm);
+    results  = (int*) malloc ( 2 * size * sizeof(int));
     if ( NULL == results ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    rc = comm->c_coll.coll_allgather_intra ( myinfo, 2, MPI_INT,
-                                             results, 2, MPI_INT, comm );
+#ifdef HAVE_COMM_SPLIT_FOR_INTERCOMMS
+    if (inter) {
+        allgatherfnct = (ompi_comm_allgatherfct*)ompi_comm_allgather_emulate_intra;
+    }
+    else {
+#endif
+        allgatherfnct = (ompi_comm_allgatherfct*)comm->c_coll.coll_allgather_intra;
+
+#ifdef HAVE_COMM_SPLIT_FOR_INTERCOMMS    
+    }
+#endif
+
+    rc = allgatherfnct ( myinfo, 2, MPI_INT, results, 2, MPI_INT, comm );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -364,7 +394,7 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
             
     /* Step 2: determine all the information for the remote group */
     /* --------------------------------------------------------- */
-    if ( OMPI_COMM_IS_INTER(comm) ) {
+    if ( inter ) {
 #ifdef HAVE_COMM_SPLIT_FOR_INTERCOMMS
         rsize    = comm->c_remote_group->grp_proc_count;
         rresults = (int *) malloc ( rsize * 2 * sizeof(int));
@@ -479,8 +509,99 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
     *newcomm = newcomp;
     return ( rc );
 }
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
+/* 
+ * Implementation of MPI_Allgather for the local_group in an inter-comm.
+ * The algorithm consists of two steps: 
+ * 1. an inter-gather to rank 0 in remote group
+ * 2. an inter-bcast from rank 0 in remote_group.
+ */
 
+#define OMPI_COMM_ALLGATHER_TAG 31078
 
+static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount, 
+                                              MPI_Datatype intype, void* outbuf,
+                                              int outcount, MPI_Datatype outtype,
+                                              ompi_communicator_t *comm)
+{
+    int rank, rsize, i, rc;
+    int *tmpbuf=NULL;
+    MPI_Request *req=NULL, sendreq;
+    MPI_Status *stats=NULL, status;
+
+    rsize = ompi_comm_remote_size(comm);
+    rank  = ompi_comm_rank(comm);
+
+    /* Step 1: the gather-step */
+    if ( 0 == rank ) {
+        tmpbuf = (int *) malloc (rsize*outcount*sizeof(int));
+        req = (MPI_Request *)malloc (rsize*outcount*sizeof(MPI_Request));
+        stats = (MPI_Status *)malloc (rsize*outcount*sizeof(MPI_Status));
+        if ( NULL == tmpbuf || NULL == req || NULL == stats) {
+            return (OMPI_ERR_OUT_OF_RESOURCE);
+        }
+
+        for ( i=0; i<rsize; i++) {
+            rc = mca_pml.pml_irecv ( &tmpbuf[outcount*i], outcount, outtype, i,
+                                     OMPI_COMM_ALLGATHER_TAG, comm, &req[i] );
+            if ( OMPI_SUCCESS != rc ) {
+                goto exit;       
+            }
+        }
+    }        
+    rc = mca_pml.pml_isend ( inbuf, incount, intype, 0, OMPI_COMM_ALLGATHER_TAG,
+                             MCA_PML_BASE_SEND_STANDARD, comm, &sendreq );
+    if ( OMPI_SUCCESS != rc ) {
+        goto exit;       
+    }
+        
+    if ( 0 == rank ) {
+        rc = mca_pml.pml_wait (rsize, req, NULL, stats);
+        if ( OMPI_SUCCESS != rc ) {
+            goto exit;       
+        }
+    }
+
+    rc = mca_pml.pml_wait (1, &sendreq, NULL, &status );
+    if ( OMPI_SUCCESS != rc ) {
+        goto exit;       
+    }
+
+    /* Step 2: the inter-bcast step */
+    rc = mca_pml.pml_irecv (outbuf, rsize*outcount, outtype, 0, 
+                            OMPI_COMM_ALLGATHER_TAG, comm, &sendreq);
+    if ( OMPI_SUCCESS != rc ) {
+        goto exit;
+    }
+
+    if ( 0 == rank ) {
+        for ( i=0; i < rsize; i++ ){
+            rc = mca_pml.pml_send (tmpbuf, rsize*outcount, outtype, i, 
+                                   OMPI_COMM_ALLGATHER_TAG, 
+                                   MCA_PML_BASE_SEND_STANDARD, comm );
+            if ( OMPI_SUCCESS != rc ) {
+                goto exit;       
+            }
+        }
+    }
+
+    rc = mca_pml.pml_wait (1, &sendreq, NULL, &status );
+
+ exit:
+    if ( NULL != req ) {
+        free ( req );
+    }
+    if ( NULL != stats ) {
+        free ( stats );
+    }
+    if ( NULL != tmpbuf ) {
+        free ( tmpbuf );
+    }
+
+    return (rc);
+}
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
