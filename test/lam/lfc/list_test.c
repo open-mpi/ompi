@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 
     /* initialize list */
     lam_list_set_size(&list,0Xdeadbeaf);
-    lam_list_construct(&list);
+    OBJ_CONSTRUCT(&list, lam_list_t);
 
     /* check length of list */
     list_size=lam_list_get_size(&list);
