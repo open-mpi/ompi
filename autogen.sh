@@ -311,6 +311,10 @@ EOF
 		"$rgt_lam_topdir/config/mca_make_configure.pl" \
 		    --lamdir "$rgt_lam_topdir" \
 		    --moduledir "`pwd`"
+                if test "$?" != "0"; then
+                    echo "*** autogen.sh failed to complete!"
+                    exit 1
+                fi
 		happy=1
 		file=configure.ac
 	    elif test -f configure.in; then
