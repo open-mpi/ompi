@@ -16,7 +16,6 @@ libmca_ptl_elan_la_SOURCES = \
 	ptl_elan_frag.h \
 	ptl_elan_req.h \
 	ptl_elan_proc.h \
-	ptl_elan_addr.h \
 	ptl_elan_peer.h \
 	ptl_elan_frag.c \
 	ptl_elan_req.c \
