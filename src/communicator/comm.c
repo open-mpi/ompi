@@ -97,10 +97,6 @@ ompi_communicator_t * ompi_comm_set ( ompi_communicator_t* oldcomm,
     snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d", 
              newcomm->c_contextid);
 
-    /* Determine cube_dim */
-    newcomm->c_cube_dim = 
-      ompi_cube_dim(newcomm->c_local_group->grp_proc_count);
-
     /* Set Topology, if required */
     
     if ( NULL != topomodule ) {
@@ -115,7 +111,7 @@ ompi_communicator_t * ompi_comm_set ( ompi_communicator_t* oldcomm,
     /* Copy attributes and call according copy functions, 
        if required */
     ompi_attr_hash_init(&newcomm->c_keyhash);
-    if ( attr != NULL ) {
+    if ( NULL != attr ) {
         ompi_attr_copy_all (COMM_ATTR, oldcomm, newcomm, attr, newcomm->c_keyhash);
     }
 
@@ -260,7 +256,7 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
        all processes of the original comm have to participate in
        that function call. Additionally, all errhandler stuff etc.
        has to be set to make ompi_comm_free happy */
-    if ( MPI_PROC_NULL == newcomp->c_local_group->grp_my_rank ) {
+    if ( MPI_UNDEFINED == newcomp->c_local_group->grp_my_rank ) {
         ompi_comm_free ( &newcomp );
     }
 

@@ -21,23 +21,6 @@
 #define OMPI_COMM_CID_TAG 1011
 #define OMPI_MAX_COMM 32768
 
-#ifndef HAVE_COLLECTIVES
-int ompi_comm_nextcid ( ompi_communicator_t* newcomm, 
-                        ompi_communicator_t* comm, 
-                        ompi_communicator_t* bridgecomm, 
-                        void* local_leader,
-                        void* remote_leader,
-                        int mode )
-{
-    /* set the according values to the newcomm */
-    newcomm->c_contextid = comm->c_contextid + 10;
-    ompi_pointer_array_set_item (&ompi_mpi_communicators, 
-                                 newcomm->c_contextid, 
-                                 newcomm);
-
-    return ( MPI_SUCCESS );
-}
-#else
 /**
  * These functions make sure, that we determine the global result over 
  * an intra communicators (simple), an inter-communicator and a
@@ -60,15 +43,15 @@ static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, int count,
                                      ompi_communicator_t *bridgecomm, 
                                      void* local_leader, void* remote_leader );
 
-static int ompi_comm_allreduce_intra_bridge ( int *inbuf, int* outbuf, int count,
-                                              ompi_op_t *op, ompi_communicator_t *intercomm,
-                                              ompi_communicator_t *bridgecomm, 
-                                              void* local_leader, void* remote_leader );
+static int ompi_comm_allreduce_intra_bridge(int *inbuf, int* outbuf, int count,
+                                            ompi_op_t *op, ompi_communicator_t *intercomm,
+                                            ompi_communicator_t *bridgecomm, 
+                                            void* local_leader, void* remote_leader );
 
-static int ompi_comm_allreduce_intra_oob ( int *inbuf, int* outbuf, int count,
-                                              ompi_op_t *op, ompi_communicator_t *intercomm,
-                                              ompi_communicator_t *bridgecomm, 
-                                              void* local_leader, void* remote_leader );
+static int ompi_comm_allreduce_intra_oob (int *inbuf, int* outbuf, int count,
+                                          ompi_op_t *op, ompi_communicator_t *intercomm,
+                                          ompi_communicator_t *bridgecomm, 
+                                          void* local_leader, void* remote_leader );
 
 
 int ompi_comm_nextcid ( ompi_communicator_t* newcomm, 
@@ -98,15 +81,19 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         case OMPI_COMM_CID_INTRA: 
             allredfnct = (ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra;
             break;
+#if 0
         case OMPI_COMM_CID_INTER:
             allredfnct = (ompi_comm_cid_allredfct*)ompi_comm_allreduce_inter;
             break;
+#endif
         case OMPI_COMM_CID_INTRA_BRIDGE: 
             allredfnct = (ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_bridge;
             break;
+#if 0 
         case OMPI_COMM_CID_INTRA_OOB: 
             allredfnct = (ompi_comm_cid_allredfct*)ompi_comm_allreduce_intra_oob;
             break;
+#endif
         default: 
             return MPI_UNDEFINED;
             break;
@@ -125,7 +112,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         }
 
         (allredfnct)(&nextlocal_cid, &nextcid, 1, MPI_MAX, comm, bridgecomm,
-                         local_leader, remote_leader );
+                     local_leader, remote_leader );
         if (nextcid == nextlocal_cid) {
             response = 1; /* fine with me */
         }
@@ -152,6 +139,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
     
     /* set the according values to the newcomm */
     newcomm->c_contextid = nextcid;
+    newcomm->c_f_to_c_index = newcomm->c_contextid;
     ompi_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
     
     return (MPI_SUCCESS);
@@ -174,6 +162,7 @@ static int ompi_comm_allreduce_intra ( int *inbuf, int *outbuf, int count,
                                          comm );
 }
 
+#if 0
 /* Arguments not used in this implementation:
  *  - bridgecomm
  *  - local_leader
@@ -297,6 +286,7 @@ static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, int count,
     }
     return (rc);
 }
+#endif
 
 /* Arguments not used in this implementation:
    all arguments are in use.
@@ -386,6 +376,7 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf, int count,
     return (rc);
 }
 
+#ifdef HAVE_OOB
 /* Arguments not used in this implementation:
  *    - bridgecomm
  *
@@ -467,5 +458,6 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf, int count,
 
     return (rc);
 }
+
 
 #endif
