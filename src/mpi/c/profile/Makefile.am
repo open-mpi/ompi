@@ -331,9 +331,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pwin_start.c \
         pwin_test.c \
         pwin_unlock.c \
-        pwin_wait.c \
-        pwtick.c \
-        pwtime.c 
+        pwin_wait.c
 
 #
 # Sym link in the sources from the real MPI directory

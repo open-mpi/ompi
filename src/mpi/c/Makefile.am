@@ -41,7 +41,9 @@ headers = bindings.h
 #
 
 libmpi_c_la_SOURCES = \
-        attr_fn.c
+        attr_fn.c \
+        wtick.c \
+        wtime.c 
 
 #
 # libmpi_c_mpi.la is only built in some cases (see above)
@@ -350,9 +352,7 @@ libmpi_c_mpi_la_SOURCES = \
         win_start.c \
         win_test.c \
         win_unlock.c \
-        win_wait.c \
-        wtick.c \
-        wtime.c 
+        win_wait.c
 
 EXTRA_DIST = $(libmpi_c_mpi_la_SOURCES) 
 # Conditionally install the header files

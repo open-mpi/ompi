@@ -48,7 +48,9 @@ headers = \
 #
 
 libmpi_f77_la_SOURCES   = \
-		attr_fn_f.c
+        attr_fn_f.c \
+        wtick_f.c \
+        wtime_f.c
 
 #
 # libmpi_c_mpi.la is only built in some cases (see above)
@@ -337,9 +339,7 @@ libmpi_f77_mpi_la_SOURCES = \
         win_start_f.c \
         win_test_f.c \
         win_unlock_f.c \
-        win_wait_f.c \
-        wtick_f.c \
-        wtime_f.c
+        win_wait_f.c
 
 EXTRA_DIST = $(libmpi_f77_mpi_la_SOURCES)
 
