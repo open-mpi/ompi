@@ -41,13 +41,13 @@ int mca_topo_base_find_available(bool *allow_multi_user_threads,
           NULL != p;
           p = ompi_list_remove_first (&mca_topo_base_components_opened)) {
          entry = OBJ_NEW(mca_base_component_priority_list_item_t);
-         entry->cpli_component =
+         entry->super.cli_component =
            ((mca_base_component_list_item_t *)p)->cli_component;
 
          /* Now for this entry, we have to determine the thread level. Call 
             a subroutine to do the job for us */
 
-         if (OMPI_SUCCESS == init_query(entry->cpli_component, entry)) {
+         if (OMPI_SUCCESS == init_query(entry->super.cli_component, entry)) {
              /* Save the results in the list. The priority is not relvant at 
                 this point in time. But we save the thread arguments so that
                 the initial selection algorithm can negotiate overall thread
@@ -60,7 +60,7 @@ int mca_topo_base_find_available(bool *allow_multi_user_threads,
              /* The component does not want to run, so close it. Its close()
                 has already been invoked. Close it out of the DSO repository
                 (if it is there in the repository) */
-             mca_base_component_repository_release (entry->cpli_component);
+             mca_base_component_repository_release(entry->super.cli_component);
              OBJ_RELEASE(entry);
          }
          /* Free entry from the "opened" list */

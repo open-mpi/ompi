@@ -26,7 +26,7 @@ OBJ_CLASS_INSTANCE(mca_base_component_list_item_t,
  * Class instance of the mca_base_component_priority_list_item_t class
  */
 OBJ_CLASS_INSTANCE(mca_base_component_priority_list_item_t, 
-                   ompi_list_item_t, cpl_constructor, NULL);
+                   mca_base_component_list_item_t, cpl_constructor, NULL);
 
 
 /*
@@ -49,5 +49,4 @@ static void cpl_constructor(ompi_object_t *obj)
   cpli->cpli_priority = -1;
   cpli->cpli_allow_multi_user_threads = false;
   cpli->cpli_have_hidden_threads = false;
-  cpli->cpli_component = NULL;
 }

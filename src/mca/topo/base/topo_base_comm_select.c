@@ -171,7 +171,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
             item = ompi_list_get_next(item)) {
             /* convert the ompi_list_item_t returned into the proper type */
             cpli = (mca_base_component_priority_list_item_t *) item;
-            component = (mca_topo_base_component_t *) cpli->cpli_component;
+            component = (mca_topo_base_component_t *) cpli->super.cli_component;
             ompi_output_verbose(10, mca_topo_base_output,
                                 "select: initialising %s component %s",
                                 component->topom_version.mca_type_name,
@@ -219,7 +219,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
         * convert the ompi_list_item_t returned into the proper type
         */
        cpli = (mca_base_component_priority_list_item_t *) item;
-       component = (mca_topo_base_component_t *) cpli->cpli_component;
+       component = (mca_topo_base_component_t *) cpli->super.cli_component;
        ompi_output_verbose(10, mca_topo_base_output,
                            "select: initialising %s component %s",
                            component->topom_version.mca_type_name,

@@ -36,12 +36,11 @@ OBJ_CLASS_DECLARATION(mca_base_component_list_item_t);
  * Structure for making priority lists of components
  */
 struct mca_base_component_priority_list_item_t {
-  ompi_list_item_t super;
+  mca_base_component_list_item_t super;
 
   int cpli_priority;
   bool cpli_allow_multi_user_threads;
   bool cpli_have_hidden_threads;
-  const mca_base_component_t *cpli_component;
 };
 typedef struct mca_base_component_priority_list_item_t 
   mca_base_component_priority_list_item_t;
