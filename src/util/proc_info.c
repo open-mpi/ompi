@@ -46,41 +46,17 @@ int ompi_proc_info(void)
 
     /* create the proc session directory */
     /* RLG - need to change universe name */
-    jobid_str=malloc(sizeof(mca_ns_base_jobid_t)*8+1);
-    if( NULL == jobid_str) {
-        return_code=OMPI_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
-    memset(jobid_str,0,sizeof(mca_ns_base_jobid_t)*8+1);
-    sprintf(jobid_str,"%-d",ompi_process_info.name->jobid);
-
-    procid_str=malloc(sizeof(mca_ns_base_vpid_t)*8+1);
-    if( NULL == procid_str) {
-        return_code=OMPI_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
-    memset(procid_str,0,sizeof(mca_ns_base_vpid_t)*8+1);
-    sprintf(procid_str,"%-d",ompi_process_info.name->vpid);
-
-    ompi_process_info.proc_session_dir=ompi_session_dir
-        (true, NULL, ompi_system_info.user, "bOb",jobid_str,procid_str);
-    if( NULL == ompi_process_info.proc_session_dir ) {
+    if(0 > asprintf(&jobid_str, "%-d", ompi_process_info.name->jobid)) {
         return_code=OMPI_ERROR;
         goto CLEANUP;
     }
 
-    /* set the job session directory */
-    ompi_process_info.job_session_dir=ompi_session_dir
-        (false, NULL, ompi_system_info.user, "bOb",jobid_str,NULL);
-    if( NULL == ompi_process_info.proc_session_dir ) {
+    if(0 > asprintf(&procid_str, "%-d", ompi_process_info.name->vpid)) {
         return_code=OMPI_ERROR;
         goto CLEANUP;
     }
 
-    /* set the Universe session directory */
-    ompi_process_info.universe_session_dir=ompi_session_dir
-        (false, NULL, ompi_system_info.user, "bOb",NULL,NULL);
-    if( NULL == ompi_process_info.proc_session_dir ) {
+    if (OMPI_ERROR == ompi_session_dir(true, NULL, ompi_system_info.user, ompi_system_info.nodename, NULL, "bOb", jobid_str, procid_str)) {
         return_code=OMPI_ERROR;
         goto CLEANUP;
     }

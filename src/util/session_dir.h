@@ -31,16 +31,17 @@
  * local system. If none of these options are successful, the function returns an
  * error code.
  *
- * \par \em [openmpi-sessions]-[user-id]
+ * \par \em [openmpi-sessions]-[user-id]@[host]:[batchid]
  * This serves as a concentrator for all Open MPI session
  * directories for this user on the local system. If it doesn't already exist, this directory is
  * created with read-write-execute permissions exclusively restricted to the user. If it does exist, the access
  * permissions are checked to ensure they are correct - if not, the program attempts to correct
  * them. If they can't' be changed to the correct values,
- * an error condition is returned.
+ * an error condition is returned. The [host] and [batchid] fields are included to provide
+ * uniqueness on shared file systems and batch schedulers, respectively.
  *
  * \par
- * Note: The [prefix]/openmpi-sessions-[user-id] directory is left on the system
+ * Note: The [prefix]/openmpi-sessions-[user-id]@[host]:[batchid] directory is left on the system
  * upon termination of an application and/or an Open MPI universe for future use
  * by the user. Thus, when checking a potential location for the directory, the
  * ompi_session_tree_init() function first checks to see if an appropriate directory
@@ -70,19 +71,24 @@
  * should be found or placed. A value of "NULL" indicates that the user specified no location - hence, the
  * function explores a range of "standard" locations.
  * @param user Name of the user to whom the universe belongs. This will be used to build the name of the
- * "openmpi-sessions-<user>" branch of the directory tree.
+ * "openmpi-sessions-[user]@[host]:[batch]" branch of the directory tree.
+ * @param hostid Name of the host on which the session directory is being built. Used to build the name
+ * of the "openmpi-sessions-[user]@[host]:[batch]" branch of the directory tree. NULL indicates that the
+ * nodename found in ompi_system_info is to be used.
+ * @param batchid Batch job name, used in batch scheduling systems. NULL indicates that the default of "0"
+ * is to be used.
  * @param universe name of the universe being setup.
  * @param job String version of the jobid for which a session directory is to be created/found. NULL indicates
  * that only the universe directory is to be created/found.
  * @param vpid String version of the vpid for which a session directory is to be created/found. NULL indicates
  * that only the job directory is to be created/found.
  *
- * @retval *path A pointer to a string containing the pathname of the directory.
- * A "NULL" value is returned if the directory cannot be found (if create is "false") or created (if
+ * @retval OMPI_SUCCESS The directory was found and/or created with the proper permissions.
+ * @retval OMPI_ERROR The directory cannot be found (if create is "false") or created (if
  * create is "true").
  */
 
-char *ompi_session_dir(bool create, char *prefix, char *user, char *universe, char *job, char *vpid);
+int ompi_session_dir(bool create, char *prefix, char *user, char *hostid, char *batchid, char *universe, char *job, char *vpid);
 
 /** The ompi_session_dir_finalize() function performs a cleanup of the session directory tree. It first
  * removes the session directory for the calling process. It then checks to see if the job-level session
