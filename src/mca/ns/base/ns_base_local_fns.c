@@ -92,6 +92,12 @@ ompi_process_name_t* mca_ns_base_create_process_name(mca_ns_base_cellid_t cell,
     return(newname);
 }
 
+mca_ns_base_vpid_t mca_ns_base_derive_vpid(mca_ns_base_vpid_t base_vpid, int offset)
+{
+    return (base_vpid + (mca_ns_base_vpid_t)offset);
+}
+
+
 ompi_process_name_t* mca_ns_base_copy_process_name(ompi_process_name_t* name)
 {
     mca_ns_base_cellid_t cell;

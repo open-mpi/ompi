@@ -31,6 +31,7 @@ libmca_soh_base_la_SOURCES = \
         $(headers) \
         soh_base_close.c \
         soh_base_select.c \
+        soh_base_local_functions.c \
         soh_base_open.c
 
 
