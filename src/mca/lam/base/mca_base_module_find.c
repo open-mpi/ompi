@@ -138,7 +138,7 @@ static void find_dyn_modules(const char *path, const char *type_name,
   ltfn_data_holder_t params;
   char *path_to_use, *dir, *end, *param;
   module_file_item_t *file;
-  volatile lam_list_item_t *cur;
+  lam_list_item_t *cur;
 
   strcpy(params.type, type_name);
 
@@ -295,7 +295,7 @@ static int open_module(module_file_item_t *target_file,
   mca_base_module_t *module_struct;
   char *struct_name;
   lam_list_t dependencies;
-  volatile lam_list_item_t *cur;
+  lam_list_item_t *cur;
   mca_base_module_list_item_t *mitem;
   dependency_item_t *ditem;
 
