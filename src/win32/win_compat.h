@@ -49,7 +49,6 @@ typedef DWORD in_port_t;
 /* Anju: some random #defines which I know offhand, but need to configure it */
 #define OMPI_ALIGNMENT_CXX_BOOL OMPI_ALIGNMENT_INT
 #define SIZEOF_BOOL SIZEOF_INT
-#define __func__ __FUNCTION__
 #define getpid _getpid
 #define getcwd _getcwd
 #define mkdir _mkdir
