@@ -40,6 +40,10 @@ lam_autoconf=""
 lam_libtoolize=""
 lam_automake=""
 
+mca_no_configure_modules_file="config/mca_no_configure_modules.m4"
+mca_no_config_list_file="mca_no_config_list"
+mca_no_config_amc_file="mca_no_config_amc"
+
 
 ############################################################################
 #
@@ -249,7 +253,134 @@ find_and_delete() {
 
 ##############################################################################
 #
-# run_gnu_tools - run the GNU tools on a given directory
+# run_gnu_tools - run the GNU tools in a given directory
+#
+# INPUT:
+#    - directory to run in
+#    - LAM top directory
+#
+# OUTPUT:
+#    none
+#
+# SIDE EFFECTS:
+#    - assumes that the directory is ready to have the GNU tools run
+#      in it (i.e., there's some form of configure.*)
+#    - may preprocess the directory before running the GNU tools
+#      (e.g., generale Makefile.am's from configure.params, etc.)
+#
+##############################################################################
+run_gnu_tools() {
+    rgt_dir="$1"
+    rgt_lam_topdir="$2"
+
+    # Sanity check to ensure that there's a configure.in or
+    # configure.ac file here, or if there's a configure.params
+    # file and we need to run make_configure.pl.
+
+    if test -f configure.params -a -f configure.stub -a \
+	-x "$rgt_lam_topdir/config/mca_make_configure.pl"; then
+        cat <<EOF
+*** Found configure.stub
+*** Running mca_make_configure.pl
+EOF
+	"$rgt_lam_topdir/config/mca_make_configure.pl" \
+	    --lamdir "$rgt_lam_topdir" \
+	    --moduledir "`pwd`"
+        if test "$?" != "0"; then
+           echo "*** autogen.sh failed to complete!"
+           exit 1
+        fi
+	happy=1
+	file=configure.ac
+    elif test -f configure.in; then
+	happy=1
+	file=configure.in
+    elif test -f configure.ac; then
+	happy=1
+	file=configure.ac
+    else
+        cat <<EOF
+--> Err... there's no configure.in or configure.ac file in this directory"
+--> Confused; aborting in despair
+EOF
+	exit 1
+    fi
+    unset happy
+
+    # Find and delete the GNU helper script files
+
+    find_and_delete config.guess
+    find_and_delete config.sub
+    find_and_delete depcomp
+    find_and_delete install-sh
+    find_and_delete ltconfig
+    find_and_delete ltmain.sh
+    find_and_delete missing
+    find_and_delete mkinstalldirs
+    find_and_delete libtool
+
+    # Run the GNU tools
+
+    echo "*** Running GNU tools"
+
+    run_and_check $lam_aclocal
+    if test "`grep AC_CONFIG_HEADER $file`" != "" -o \
+	"`grep AM_CONFIG_HEADER $file`" != ""; then
+	run_and_check $lam_autoheader
+    fi
+    run_and_check $lam_autoconf
+
+    # We only need the libltdl stuff for the top-level
+    # configure, not any of the MCA modules.
+
+    if test -f src/include/mpi.h; then
+	rm -rf libltdl src/mca/libltdl src/mca/ltdl.h
+	run_and_check $lam_libtoolize --automake --copy --ltdl
+	mv libltdl src/mca
+
+	echo "Adjusting libltdl for LAM :-("
+
+	echo "  -- adding sym link for src/mca/ltdl.h"
+        cd src/mca
+	ln -s libltdl/ltdl.h ltdl.h
+        cd ../..
+
+	echo "  -- patching for argz bugfix in libtool 1.5"
+	cd src/mca/libltdl
+	patch -N -p0 <<EOF
+--- ltdl.c.old  2003-11-26 16:42:17.000000000 -0500
++++ ltdl.c      2003-12-03 17:06:27.000000000 -0500
+@@ -682,7 +682,7 @@
+   /* This probably indicates a programmer error, but to preserve
+      semantics, scan back to the start of an entry if BEFORE points
+      into the middle of it.  */
+-  while ((before >= *pargz) && (before[-1] != LT_EOS_CHAR))
++  while ((before > *pargz) && (before[-1] != LT_EOS_CHAR))
+     --before;
+
+   {
+EOF
+	cd ../../..
+	echo "  -- patching configure for broken -c/-o compiler test"
+	sed -e 's/chmod -w \./#LAM\/MPI FIX: chmod -w ./' \
+	    configure > configure.new
+	mv configure.new configure
+	chmod a+x configure
+    else
+	run_and_check $lam_libtoolize --automake --copy
+    fi
+    run_and_check $lam_automake --foreign -a --copy --include-deps
+}
+
+
+##############################################################################
+#
+# process_dir - look at the files present in a given directory, and do
+# one of the following:
+#    - skip/ignore it
+#    - run custom autogen.sh in it
+#    - run the GNU tools in it
+#    - get a list of Makefile.am's to add to the top-level configure
 #
 # INPUT:
 #    - directory to run in
@@ -263,12 +394,13 @@ find_and_delete() {
 #    - uses provided autogen.sh if available
 #
 ##############################################################################
-run_gnu_tools() {
-    rgt_dir="$1"
-    rgt_lam_topdir="$2"
-    rgt_cur_dir="`pwd`"
-    if test -d "$rgt_dir"; then
-	cd "$rgt_dir"
+process_dir() {
+    pd_dir="$1"
+    pd_lam_topdir="$2"
+    pd_cur_dir="`pwd`"
+
+    if test -d "$pd_dir"; then
+	cd "$pd_dir"
 
 	# See if the package doesn't want us to set it up
 
@@ -286,7 +418,7 @@ EOF
 ***   `pwd`
 
 EOF
-	elif test "$rgt_dir" != "." -a -x autogen.sh; then
+	elif test "$pd_dir" != "." -a -x autogen.sh; then
 	    cat <<EOF
 
 *** Found custom autogen.sh file in:
@@ -294,110 +426,146 @@ EOF
 
 EOF
 	    ./autogen.sh
-        else
+        elif test -f configure.ac -o -f configure.in; then
+            # If we have configure.ac or configure.in, run the GNU
+            # tools here
+
 	    cat <<EOF
 
-*** Running GNU tools in directory: 
+*** Found configure.(in|ac)
 ***   `pwd`
 
 EOF
-	    # Sanity check to ensure that there's a configure.in or
-	    # configure.ac file here, or if there's a configure.params
-	    # file and we need to run make_configure.pl.
+            run_gnu_tools "$pd_dir" "$pd_lam_topdir"
 
-	    if test -f configure.params -a \
-		-x "$rgt_lam_topdir/config/mca_make_configure.pl"; then
-		echo "--> Found configure.params.  Running mca_make_configure.pl"
-		"$rgt_lam_topdir/config/mca_make_configure.pl" \
-		    --lamdir "$rgt_lam_topdir" \
-		    --moduledir "`pwd`"
-                if test "$?" != "0"; then
-                    echo "*** autogen.sh failed to complete!"
-                    exit 1
-                fi
-		happy=1
-		file=configure.ac
-	    elif test -f configure.in; then
-		happy=1
-		file=configure.in
-	    elif test -f configure.ac; then
-		happy=1
-		file=configure.ac
-	    else
-		echo "---> Err... there's no configure.in or configure.ac file in this directory"
-		echo "---> I'm confused, so I'm going to abort"
-		exit 1
-	    fi
-	    unset happy
+        elif test -f configure.params -a -f configure.stub; then
+	    cat <<EOF
 
-	    # Find and delete the GNU helper script files
+*** Found configure.params and configure.stub
+***   `pwd`
 
-	    find_and_delete config.guess
-	    find_and_delete config.sub
-	    find_and_delete depcomp
-	    find_and_delete install-sh
-	    find_and_delete ltconfig
-	    find_and_delete ltmain.sh
-	    find_and_delete missing
-	    find_and_delete mkinstalldirs
-	    find_and_delete libtool
-
-            # Run the GNU tools
-
-	    run_and_check $lam_aclocal
-	    if test "`grep AC_CONFIG_HEADER $file`" != "" -o \
-		"`grep AM_CONFIG_HEADER $file`" != ""; then
-		run_and_check $lam_autoheader
-	    fi
-	    run_and_check $lam_autoconf
-
-	    # We only need the libltdl stuff for the top-level
-	    # configure, not any of the MCA modules.
-
-	    if test -f src/include/mpi.h; then
-		rm -rf libltdl src/mca/libltdl src/mca/ltdl.h
-		run_and_check $lam_libtoolize --automake --copy --ltdl
-		mv libltdl src/mca
-
-		echo "Adjusting libltdl for LAM :-("
-
-		echo "  -- adding sym link for src/mca/ltdl.h"
-                cd src/mca
-		ln -s libltdl/ltdl.h ltdl.h
-                cd ../..
-
-		echo "  -- patching for argz bugfix in libtool 1.5"
-		cd src/mca/libltdl
-		patch -N -p0 <<EOF
---- ltdl.c.old  2003-11-26 16:42:17.000000000 -0500
-+++ ltdl.c      2003-12-03 17:06:27.000000000 -0500
-@@ -682,7 +682,7 @@
-   /* This probably indicates a programmer error, but to preserve
-      semantics, scan back to the start of an entry if BEFORE points
-      into the middle of it.  */
--  while ((before >= *pargz) && (before[-1] != LT_EOS_CHAR))
-+  while ((before > *pargz) && (before[-1] != LT_EOS_CHAR))
-     --before;
-
-   {
 EOF
-		cd ../../..
-		echo "  -- patching configure for broken -c/-o compiler test"
-		sed -e 's/chmod -w \./#LAM\/MPI FIX: chmod -w ./' \
-		    configure > configure.new
-		mv configure.new configure
-		chmod a+x configure
-	    else
-		run_and_check $lam_libtoolize --automake --copy
-	    fi
-	    run_and_check $lam_automake --foreign -a --copy --include-deps
-	fi
-	
-	# Go back to the original directory
+            run_gnu_tools "$pd_dir" "$pd_lam_topdir"
 
-	cd "$rgt_cur_dir"
+        elif test -f configure.params; then
+	    cat <<EOF
+
+*** Found configure.params
+***   `pwd`
+
+EOF
+            . ./configure.params
+            if test -z "$PARAM_CONFIG_FILES"; then
+                cat <<EOF
+*** No PARAM_CONFIG_FILES!
+*** Nothing to do -- skipping this directory
+EOF
+            else
+                pd_module_name="`basename $pd_dir`"
+                pd_module_type="`dirname $pd_dir`"
+                pd_module_type="`basename $pd_module_type`"
+                pd_get_ver="../../../../../config/lam_get_version.sh"
+                pd_ver_file="`grep PARAM_VERSION_FILE configure.params`"
+                if test -z "$pd_ver_file"; then
+                    pd_ver_file="VERSION"
+                else
+                    pd_ver_file="`echo $pd_ver_file | cut -d= -f1`"
+                fi
+
+                # Write out to two files (they're merged at the end)
+
+                pd_list_file="$pd_lam_topdir/$mca_no_config_list_file"
+                pd_amc_file="$pd_lam_topdir/$mca_no_config_amc_file"
+
+                cat >> $pd_list_file <<EOF
+dnl ----------------------------------------------------------------
+
+dnl No-configure module: 
+dnl    $pd_dir
+
+EOF
+                cat >> $pd_amc_file <<EOF
+dnl ----------------------------------------------------------------
+
+dnl No-configure module: 
+dnl    $pd_dir
+
+EOF
+                for file in $PARAM_CONFIG_FILES; do
+                    echo "AC_CONFIG_FILES([$pd_dir/$file])" >> $pd_list_file
+                done
+
+                # Get all the version numbers
+
+                pd_ver="`sh $pd_get_ver $pd_ver_file --all`"
+                pd_ver_full="`echo $pd_ver | cut -d: -f1`"
+                pd_ver_major="`echo $pd_ver | cut -d: -f2`"
+                pd_ver_minor="`echo $pd_ver | cut -d: -f3`"
+                pd_ver_release="`echo $pd_ver | cut -d: -f4`"
+                pd_ver_alpha="`echo $pd_ver | cut -d: -f5`"
+                pd_ver_beta="`echo $pd_ver | cut -d: -f6`"
+                pd_ver_cvs="`echo $pd_ver | cut -d: -f7`"
+                cat >> $pd_list_file <<EOF
+
+MCA_${pd_module_type}_NO_CONFIGURE_SUBDIRS="$pd_dir \$MCA_${pd_module_type}_NO_CONFIGURE_SUBDIRS"
+
+dnl Since AM_CONDITIONAL does not accept a variable name as its first
+dnl argument, we generate it here, and the variable used in the test
+dnl will be filled in later.
+
+dnl Similarly, AC_DEFINE_UNQUOTED doesn't take a variable first
+dnl argument.  So we have to figure it out here.
+
+AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_MAJOR_VERSION, 
+    $pd_ver_major,
+    [Major LAM MCA $pd_module_type $pd_module_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_MINOR_VERSION, 
+    $pd_ver_minor,
+    [Minor LAM MCA $pd_module_type $pd_module_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_RELEASE_VERSION, 
+    $pd_ver_release,
+    [Release LAM MCA $pd_module_type $pd_module_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_ALPHA_VERSION, 
+    $pd_ver_alpha,
+    [Alpha LAM MCA $pd_module_type $pd_module_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_BETA_VERSION, 
+    $pd_ver_beta,
+    [Beta LAM MCA $pd_module_type $pd_module_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_CVS_VERSION, 
+    $pd_ver_cvs,
+    [CVS LAM MCA $pd_module_type $pd_module_name version])
+AC_DEFINE_UNQUOTED(MCA_${pd_module_type}_${pd_module_name}_FULL_VERSION, 
+    "$pd_ver_full",
+    [Full LAM MCA $pd_module_type $pd_module_name version])
+
+EOF
+                cat >> $pd_amc_file <<EOF
+AM_CONDITIONAL(LAM_BUILD_${pd_module_type}_${pd_module_name}_LOADABLE_MODULE,
+    test "\$BUILD_${pd_module_type}_${pd_module_name}_LOADABLE_MODULE" = "1")
+
+EOF
+
+                cat <<EOF
+--> Adding to top-level configure no-configure subdirs:
+-->   $pd_dir
+--> Adding to top-level configure AC_CONFIG_FILES list:
+-->   $PARAM_CONFIG_FILES
+EOF
+            fi
+        else
+	    cat <<EOF
+
+*** Nothing found; directory skipped
+***   `pwd`
+
+EOF
+        fi
+
+        # Go back to the topdir
+
+        cd "$pd_cur_dir"
     fi
-    unset rgt_dir rgt_cur_dir
+    unset pd_dir pd_lam_topdir pd_cur_dir pd_module_type
 }
 
 
@@ -415,9 +583,12 @@ EOF
 #
 ##############################################################################
 run_global() {
-    # Run the config in the top-level directory
+    # [Re-]Create the mca_module_list file
 
-    run_gnu_tools . .
+    rm -f "$mca_no_configure_modules_file" "$mca_no_config_list_file" \
+        "$mca_no_config_amc_file"
+    touch "$mca_no_configure_modules_file" "$mca_no_config_list_file" \
+        "$mca_no_config_amc_file"
 
     # Now run the config in every directory in src/mca/[lam|mpi]/*/*
     # that has a configure.in or configure.ac script
@@ -431,12 +602,59 @@ run_global() {
 		    if test -f "$module/configure.in" -o \
 			-f "$module/configure.params" -o \
 			-f "$module/configure.ac"; then
-			run_gnu_tools "$module" "$rg_cwd"
+			process_dir "$module" "$rg_cwd"
 		    fi
 		fi
 	    done
 	fi
     done
+
+    # Fill in the final m4 file
+
+    cat > "$mca_no_configure_modules_file" <<EOF
+dnl
+dnl \$HEADER
+dnl
+
+dnl This file is automatically created by autogen.sh; it should not
+dnl be edited by hand!!
+
+dnl List all the no-configure modules that we found, and AC_DEFINE
+dnl their versions
+
+AC_DEFUN([MCA_FIND_NO_CONFIGURE_MODULES],[
+MCA_cofs_NO_CONFIGURE_SUBDIRS=""
+MCA_pcm_NO_CONFIGURE_SUBDIRS=""
+MCA_registry_NO_CONFIGURE_SUBDIRS=""
+
+MCA_coll_NO_CONFIGURE_SUBDIRS=""
+MCA_io_NO_CONFIGURE_SUBDIRS=""
+MCA_one_NO_CONFIGURE_SUBDIRS=""
+MCA_pml_NO_CONFIGURE_SUBDIRS=""
+MCA_ptl_NO_CONFIGURE_SUBDIRS=""
+MCA_topo_NO_CONFIGURE_SUBDIRS=""
+
+`cat $mca_no_config_list_file`
+])dnl
+
+dnl Separately have the AM_CONDITIONALS as to whether we build the
+dnl modules static or shared.  This must be done separately from the
+dnl list because we have to do it late in the configure script, after
+dnl all the test variable values have been set.
+
+AC_DEFUN([MCA_AMC_NO_CONFIGURE_MODULES],[
+`cat $mca_no_config_amc_file`
+])dnl
+EOF
+    # Remove temp files
+
+    rm -f $mca_no_config_list_file $mca_no_config_amc_file
+
+    # Finally, after we found all the no-configure MCA modules, run
+    # the config in the top-level directory
+
+    process_dir . .
+
     unset type module
 }
 
@@ -508,7 +726,7 @@ find_app "automake"
 
 # do the work
 if test "$want_local" = "yes"; then
-    run_gnu_tools . $lamdir
+    process_dir . $lamdir
 else
     run_global
 fi

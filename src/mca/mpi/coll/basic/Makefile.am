@@ -16,7 +16,7 @@ EXTRA_DIST = VERSION
 # in the top-level directory, and it has to be named
 # liblam_ssi_coll_lam_basic.la
 
-if LAM_BUILD_LOADABLE_MODULE
+if LAM_BUILD_coll_basic_LOADABLE_MODULE
 module_noinst =
 module_install = mca_coll_basic.la
 else

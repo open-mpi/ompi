@@ -6,4 +6,4 @@
 # Specific to this module
 
 PARAM_INIT_FILE=src/oob_cofs.c
-PARAM_CONFIG_FILES="Makefile config/Makefile src/Makefile"
+PARAM_CONFIG_FILES="Makefile src/Makefile"

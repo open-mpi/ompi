@@ -8,7 +8,6 @@
 include $(top_lam_srcdir)/config/Makefile.options
 
 SUBDIRS = src
-DIST_SUBDIRS = config $(SUBDIRS)
 
 EXTRA_DIST = VERSION
 
@@ -16,8 +15,8 @@ EXTRA_DIST = VERSION
 # in the top-level directory, and it has to be named
 # liblam_ssi_coll_lam_basic.la
 
-if LAM_BUILD_LOADABLE_MODULE
-module_noinst =
+if LAM_BUILD_oob_cofs_LOADABLE_MODULE
+module_noinst = 
 module_install = mca_oob_cofs.la
 else
 module_noinst = libmca_lam_oob_cofs.la
