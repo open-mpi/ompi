@@ -17,7 +17,6 @@
 #include "mca/pml/base/pml_base_request.h"
 #include "mca/pml/base/pml_base_bsend.h"
 #include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/pml/base/pml_base_recvreq.h"
 #include "mca/ptl/ptl.h"
 
 #define MCA_PML_TEG_STATISTICS 0
@@ -287,7 +286,8 @@ extern int mca_pml_teg_free(
             } \
         case MCA_PML_REQUEST_RECV: \
             { \
-            MCA_PML_TEG_RECV_REQUEST_RETURN(sendreq); \
+            mca_pml_base_recv_request_t* recvreq = (mca_pml_base_recv_request_t*)pml_request; \
+            MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq); \
             break; \
             } \
         default: \
