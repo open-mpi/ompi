@@ -19,31 +19,13 @@ OBJ_CLASS_INSTANCE(ompi_group_t,
  * Table for Fortran <-> C group handle conversion
  */
 ompi_pointer_array_t *ompi_group_f_to_c_table;
+ompi_pointer_array_t ompi_group_table;
 
 /*
- * MPI_GROUP_EMPTY
+ * Predefined group objects
  */
-ompi_group_t ompi_mpi_group_empty = {
-    { NULL, 0 },              /* base class */
-    0,                        /* number of processes in group */
-    MPI_PROC_NULL,            /* rank in group */
-    OMPI_ERROR,                /* index in Fortran <-> C translation array */
-    false,                    /* can't free group */
-    (ompi_proc_t **)NULL       /* pointers to ompi_proc_t structures */
-};
-
-/*
- * MPI_GROUP_NULL - defining this group makes it much easier to handle
- * this group with out special case code
- */
-ompi_group_t ompi_mpi_group_null = {
-    { NULL, 0 },              /* base class */
-    0,                        /* number of processes in group */
-    MPI_PROC_NULL,            /* rank in group */
-    OMPI_ERROR,                /* index in Fortran <-> C translation array */
-    false,                    /* can't free group */
-    (ompi_proc_t **)NULL       /* pointers to ompi_proc_t structures */
-};
+ompi_group_t ompi_mpi_group_empty;
+ompi_group_t ompi_mpi_group_null;
 
 
 /*
@@ -111,7 +93,7 @@ static void ompi_group_construct(ompi_group_t *new_group)
     /* assign entry in fortran <-> c translation array */
     ret_val = ompi_pointer_array_add(ompi_group_f_to_c_table, new_group);
     new_group->grp_f_to_c_index = ret_val;
-    new_group->grp_ok_to_free=true;
+    new_group->grp_flags = 0;
 
     /* return */
     return;
@@ -124,7 +106,7 @@ static void ompi_group_construct(ompi_group_t *new_group)
 static void ompi_group_destruct(ompi_group_t *group)
 {
     int proc;
-
+    
     /* decrement proc reference count */
     for (proc = 0; proc < group->grp_proc_count; proc++) {
         OBJ_RELEASE(group->grp_proc_pointers[proc]);
@@ -151,44 +133,25 @@ static void ompi_group_destruct(ompi_group_t *group)
  */
 int ompi_group_init(void)
 {
-    /* local variables */
-    int return_value, ret_val;
-
-    return_value = OMPI_SUCCESS;
-
     /* initialize ompi_group_f_to_c_table */
-    ompi_group_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
-    if (NULL == ompi_group_f_to_c_table) {
-        return OMPI_ERROR;
-    }
-
+    OBJ_CONSTRUCT(&ompi_group_table, ompi_pointer_array_t);
+    ompi_group_f_to_c_table = &ompi_group_table;
+    
     /* add MPI_GROUP_NULL to table */
-    ret_val =
-        ompi_pointer_array_add(ompi_group_f_to_c_table, &ompi_mpi_group_null);
-    if (OMPI_ERROR == ret_val) {
-        return OMPI_ERROR;
-    };
-    /* make sure that MPI_GROUP_NULL is in location in the table */
-    if (OMPI_GROUP_NULL_FORTRAN != ret_val) {
-        return OMPI_ERROR;
-    };
-    ompi_mpi_group_null.grp_f_to_c_index = ret_val;
+    OBJ_CONSTRUCT(&ompi_mpi_group_null, ompi_group_t);
+    ompi_mpi_group_null.grp_proc_count    = 0;
+    ompi_mpi_group_null.grp_my_rank       = MPI_PROC_NULL;
+    ompi_mpi_group_null.grp_proc_pointers = NULL;
+    ompi_mpi_group_null.grp_flags        |= OMPI_GROUP_INTRINSIC;
 
-    /* add MPI_GROUP_EMPTY to table */
-    ret_val =
-        ompi_pointer_array_add(ompi_group_f_to_c_table,
-                              &ompi_mpi_group_empty);
-    if (OMPI_ERROR == ret_val) {
-        return OMPI_ERROR;
-    };
-    /* make sure that MPI_GROUP_NULL is in location in the table */
-    if (OMPI_GROUP_EMPTY_FORTRAN != ret_val) {
-        return OMPI_ERROR;
-    };
-    ompi_mpi_group_empty.grp_f_to_c_index = ret_val;
+    /* add MPI_GROUP_EMPTRY to table */
+    OBJ_CONSTRUCT(&ompi_mpi_group_empty, ompi_group_t);
+    ompi_mpi_group_empty.grp_proc_count    = 0;
+    ompi_mpi_group_empty.grp_my_rank       = MPI_PROC_NULL;
+    ompi_mpi_group_empty.grp_proc_pointers = NULL;
+    ompi_mpi_group_empty.grp_flags        |= OMPI_GROUP_INTRINSIC;
 
-    /* return */
-    return return_value;
+    return OMPI_SUCCESS;
 }
 
 
@@ -197,13 +160,13 @@ int ompi_group_init(void)
  */
 int ompi_group_finalize(void)
 {
-    /* local variables */
-    int return_value = OMPI_SUCCESS;
+    ompi_mpi_group_null.grp_flags = 0;
+    OBJ_DESTRUCT(&ompi_mpi_group_null);
 
-    /* remove group for MPI_COMM_WORLD */
+    ompi_mpi_group_null.grp_flags = 0;
+    OBJ_DESTRUCT(&ompi_mpi_group_empty);
 
-    OBJ_RELEASE(ompi_group_f_to_c_table);
-
-    /* return */
-    return return_value;
+    OBJ_DESTRUCT(ompi_group_f_to_c_table);
+    
+    return OMPI_SUCCESS;
 }

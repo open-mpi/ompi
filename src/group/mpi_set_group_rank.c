@@ -13,10 +13,10 @@ void ompi_set_group_rank(ompi_group_t *group, ompi_proc_t *proc_pointer)
     /* local variables */
     int proc;
 
-    /* set the rank to proc_null, just in case this process is not
+    /* set the rank to MPI_UNDEFINED, just in case this process is not
      *   in this group
      */
-    group->grp_my_rank = MPI_PROC_NULL;
+    group->grp_my_rank = MPI_UNDEFINED;
     if (NULL != proc_pointer) {
         /* loop over all procs in the group */
         for (proc = 0; proc < group->grp_proc_count; proc++) {
