@@ -332,8 +332,8 @@ int main(int argc, char *argv[])
     laminfo::show_path(path_prefix, LAM_PREFIX);
     laminfo::do_arch(cmd_line);
     laminfo::do_config(false);
-#if 0
     laminfo::open_modules();
+#if 0
     laminfo::show_boot_version(mca_boot_modules, type_all, ver_full, 
                                ver_module);
     laminfo::show_coll_version(mca_coll_modules, type_all, ver_full, 
@@ -349,5 +349,7 @@ int main(int argc, char *argv[])
 
   laminfo::close_modules();
   lam_cmd_line_free(cmd_line);
+  mca_base_close();
+  lam_finalize();
   return 0;
 }
