@@ -23,7 +23,6 @@ bin_PROGRAMS = \
 
 openmpi_SOURCES = \
         openmpi.h \
-        os_session_dir.c \
         openmpi.c 
 
 old_sources = ompi_init.h ompi_init.c
