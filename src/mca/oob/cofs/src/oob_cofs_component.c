@@ -37,15 +37,15 @@ mca_oob_base_component_1_0_0_t mca_oob_cofs_component = {
   {
     false /* checkpoint / restart */
   },
-  mca_oob_cofs_init,    /* module init */
-  mca_oob_cofs_finalize
+  mca_oob_cofs_init    /* module init */
 };
 
 mca_oob_t mca_oob_cofs = {
   mca_oob_cofs_send,
   mca_oob_cofs_recv,
   mca_oob_cofs_send_nb,
-  mca_oob_cofs_recv_nb
+  mca_oob_cofs_recv_nb,
+  mca_oob_cofs_finalize
 };
 
 char mca_oob_cofs_comm_loc[OMPI_PATH_MAX];
@@ -90,7 +90,7 @@ mca_oob_t* mca_oob_cofs_init(bool *allow_multi_user_threads, bool *have_hidden_t
 }
 
 
-int mca_oob_cofs_finalize(void)
+int mca_oob_cofs_finalize(mca_oob_t* oob)
 {
   return OMPI_SUCCESS;
 }

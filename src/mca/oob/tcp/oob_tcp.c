@@ -33,8 +33,7 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
     {
         false /* checkpoint / restart */
     },
-    mca_oob_tcp_init,    /* module init */
-    mca_oob_tcp_finalize
+    mca_oob_tcp_init    /* module init */
   }
 };
 
@@ -42,7 +41,8 @@ static mca_oob_t mca_oob_tcp = {
     mca_oob_tcp_send,
     mca_oob_tcp_recv,
     mca_oob_tcp_send_nb,
-    mca_oob_tcp_recv_nb
+    mca_oob_tcp_recv_nb,
+    mca_oob_tcp_finalize
 };
 
 
@@ -279,7 +279,7 @@ mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_th
         8,  /* increment to grow by */
         NULL); /* use default allocator */
 
-#if 0
+#if 1
     /* intialize event library */
     memset(&mca_oob_tcp_component.tcp_recv_event, 0, sizeof(ompi_event_t));
     memset(&mca_oob_tcp_component.tcp_send_event, 0, sizeof(ompi_event_t));
@@ -303,7 +303,7 @@ mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_th
 /*
  * Module cleanup.
  */
-int mca_oob_tcp_finalize(void)
+int mca_oob_tcp_finalize(mca_oob_t* oob)
 {
     int optval;
     mca_oob_tcp_peer_t * peer;
