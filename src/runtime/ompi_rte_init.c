@@ -10,6 +10,7 @@
 
 #include "include/constants.h"
 #include "runtime/runtime.h"
+#include "event/event.h"
 #include "util/output.h"
 #include "threads/mutex.h"
 #include "mca/mca.h"
@@ -102,6 +103,14 @@ int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads)
 
     ret =  mca_base_param_register_int("ompi", "rte", "debug", NULL, 0);
     mca_base_param_lookup_int(ret, &ompi_rte_debug_flag);
+
+    /*
+     * Initialize the event library 
+    */
+    if (OMPI_SUCCESS != (ret = ompi_event_init())) {
+	    ompi_output(0, "ompi_rte_init: ompi_event_init failed with error status: %d\n", ret);
+	    return ret;
+    }
 
     /*
      * Out of Band Messaging
