@@ -2,8 +2,6 @@
 #
 # $HEADER$
 #
-# $Id: autogen.sh,v 1.6 2004/01/07 14:43:42 jsquyres Exp $
-#
 # This script is run on developer copies of LAM/MPI -- *not*
 # distribution tarballs.
 
