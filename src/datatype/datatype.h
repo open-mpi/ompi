@@ -65,7 +65,6 @@ typedef struct lam_datatype_t {
    /* Attribute fields */
    lam_hash_table_t *d_keyhash;
    char name[MPI_MAX_OBJECT_NAME];
-    lam_errhandler_t *error_handler; /**< error handler */
    dt_type_desc_t desc;     /**< the data description */
    dt_type_desc_t opt_desc; /**< short description of the data used when conversion is useless
                              * or in the send case (without conversion) */
