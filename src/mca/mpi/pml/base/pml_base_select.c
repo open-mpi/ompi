@@ -13,6 +13,8 @@
 
 
 typedef struct opened_module_t {
+  lam_list_item_t super;
+
   mca_pml_base_module_t *om_module;
   mca_pml_t *om_actions;
 } opened_module_t;
@@ -93,9 +95,9 @@ int mca_pml_base_select(mca_pml_t *selected)
 
   /* Finalize all non-selected modules */
 
-  for (item = lam_list_get_first(&opened);
-       lam_list_get_end(&opened) != item;
-       item = lam_list_get_next(item)) {
+  for (item = lam_list_remove_first(&opened);
+       NULL != item;
+       item = lam_list_remove_first(&opened)) {
     om = (opened_module_t *) item;
     if (om->om_module != best_module) {
 
@@ -113,6 +115,7 @@ int mca_pml_base_select(mca_pml_t *selected)
                            module->pmlm_version.mca_module_name);
       }
     }
+    LAM_FREE(om);
   }
 
   /* This base function closes, unloads, and removes from the
