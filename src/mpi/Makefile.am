@@ -10,6 +10,7 @@ SUBDIRS = communicator datatype interface proc request runtime
 noinst_LTLIBRARIES = libmpi_convenience.la
 
 sources = \
+        communicator/libmpi_communicator.la \
         datatype/libmpi_datatype.la \
         interface/libmpi_interface.la \
         proc/libmpi_proc.la \
