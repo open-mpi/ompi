@@ -5,7 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 #
-# LAM_IS_PMPI_BINDING flag s enabled when we want our MPI_* symbols
+# LAM_PRPOFILING_DEFINES flag s enabled when we want our MPI_* symbols
 # to be replaced by PMPI_*. In other words, this flag decides 
 # whether "profile/defines.h" is included or not. "profile/defines.h"
 # replaces all MPI_* symbols with PMPI_* symbols. In this directory,
