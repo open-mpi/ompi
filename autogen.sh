@@ -755,6 +755,7 @@ make_version_header_template() {
 
     # See if we have a VERSION file
 
+    PARAM_CONFIG_FILES_save="$PARAM_CONFIG_FILES"
     . ./configure.params
     if test -z "$PARAM_VERSION_FILE"; then
         if test -f "VERSION"; then
@@ -791,7 +792,8 @@ make_version_header_template() {
 #endif /* MCA_${mvht_component_type}_${mvht_component_name}_VERSION_H */
 EOF
     fi
-    unset PARAM_VERSION_FILE PARAM_CONFIG_FILES
+    PARAM_CONFIG_FILES="$PARAM_CONFIG_FILES_save"
+    unset PARAM_VERSION_FILE PARAM_CONFIG_FILES_save
 }
 
 
