@@ -79,26 +79,42 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
         switch (info->si_code)
           {
             case ILL_ILLOPC: str = "ILL_ILLOPC"; break;
+#ifdef ILL_ILLOPN
             case ILL_ILLOPN: str = "ILL_ILLOPN"; break;
+#endif
+#ifdef ILL_ILLADR
             case ILL_ILLADR: str = "ILL_ILLADR"; break;
+#endif
             case ILL_ILLTRP: str = "ILL_ILLTRP"; break;
             case ILL_PRVOPC: str = "ILL_PRVOPC"; break;
+#ifdef ILL_PRVREG
             case ILL_PRVREG: str = "ILL_PRVREG"; break;
+#endif
+#ifdef ILL_COPROC
             case ILL_COPROC: str = "ILL_COPROC"; break;
+#endif
+#ifdef ILL_BADSTK
             case ILL_BADSTK: str = "ILL_BADSTK"; break;
+#endif
           }
         break;
       case SIGFPE:
         switch (info->si_code)
           {
+#ifdef FPE_INTDIV
             case FPE_INTDIV: str = "FPE_INTDIV"; break;
+#endif
+#ifdef FPE_INTOVF
             case FPE_INTOVF: str = "FPE_INTOVF"; break;
+#endif
             case FPE_FLTDIV: str = "FPE_FLTDIV"; break;
             case FPE_FLTOVF: str = "FPE_FLTOVF"; break;
             case FPE_FLTUND: str = "FPE_FLTUND"; break;
             case FPE_FLTRES: str = "FPE_FLTRES"; break;
             case FPE_FLTINV: str = "FPE_FLTINV"; break;
+#ifdef FPE_FLTSUB
             case FPE_FLTSUB: str = "FPE_FLTSUB"; break;
+#endif
           }
         break;
       case SIGSEGV:
@@ -112,15 +128,23 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
         switch (info->si_code)
           {
             case BUS_ADRALN: str = "BUS_ADRALN"; break;
+#ifdef BUSADRERR
             case BUS_ADRERR: str = "BUS_ADRERR"; break;
+#endif
+#ifdef BUS_OBJERR
             case BUS_OBJERR: str = "BUS_OBJERR"; break;
+#endif
           }
         break;
       case SIGTRAP:
         switch (info->si_code)
           {
+#ifdef TRAP_BRKPT
             case TRAP_BRKPT: str = "TRAP_BRKPT"; break;
+#endif
+#ifdef TRAP_TRACE
             case TRAP_TRACE: str = "TRAP_TRACE"; break;
+#endif
           }
         break;
       case SIGCHLD:
@@ -134,6 +158,7 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
             case CLD_CONTINUED: str = "CLD_CONTINUED"; break;
           }
         break;
+#ifdef SIGPOLL
       case SIGPOLL:
         switch (info->si_code)
           {
@@ -145,17 +170,24 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
              case POLL_HUP: str = "POLL_HUP"; break;
           }
         break;
+#endif /* SIGPOLL */
       default:
         switch (info->si_code)
          {
+#ifdef SI_ASYNCNL
             case SI_ASYNCNL: str = "SI_ASYNCNL"; break;
+#endif
+#ifdef SI_SIGIO
             case SI_SIGIO: str = "SI_SIGIO"; break;
+#endif
             case SI_ASYNCIO: str = "SI_ASYNCIO"; break;
             case SI_MESGQ: str = "SI_MESGQ"; break;
             case SI_TIMER: str = "SI_TIMER"; break;
             case SI_QUEUE: str = "SI_QUEUE"; break;
             case SI_USER: str = "SI_USER"; break;
+#ifdef SI_KERNEL
             case SI_KERNEL: str = "SI_KERNEL"; break;
+#endif
           }
     }
 
@@ -179,13 +211,13 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
       break;
     }
     case SIGCHLD: {
-      ret = snprintf (tmp, size, "si_pid:%d si_uid:%d si_status:%d si_utime:%d, si_stime:%d\n",
-                      info->si_pid, info->si_uid, info->si_status,
-                      info->si_utime, info->si_stime);
+      ret = snprintf (tmp, size, "si_pid:%d si_uid:%d si_status:%d\n",
+                      info->si_pid, info->si_uid, info->si_status);
       size -= ret;
       tmp += ret;
       break;
     }
+#ifdef SIGPOLL
     case SIGPOLL: {
       ret = snprintf (tmp, size, "si_band:%ld si_fd:%d\n",
                       info->si_band, info->si_fd);
@@ -193,9 +225,11 @@ static void ompi_show_stackframe (int signo, siginfo_t * info, void * p)
       tmp += ret;
       break;
     }
+#endif
     }
    
     printf ("%s", print_buffer);
+    fflush(stdout);
 
 #ifdef __GLIBC__
     trace_size = backtrace (trace, 32);
@@ -233,7 +267,12 @@ int ompi_util_register_stackhandlers (void)
 
     memset(&act, 0, sizeof(act));
     act.sa_sigaction = ompi_show_stackframe;
-    act.sa_flags = SA_SIGINFO | SA_ONESHOT;
+    act.sa_flags = SA_SIGINFO;
+#ifdef SA_ONESHOT
+    act.sa_flags |= SA_ONESHOT;
+#else
+    act.sa_flags |= SA_RESETHAND;
+#endif
 
     for (tmp = next = string_value ; 
 	 next != NULL && *next != '\0'; 
