@@ -33,10 +33,11 @@
 
 
 ompi_universe_t ompi_universe = {
-    /* .name =                */    NULL,
+    /* .name =                */    "default-universe",
     /* .host =                */    NULL,
     /* .uid =                 */    NULL,
     /* .persistence =         */    false,
+    /* .scope =               */    "local",
     /* .silent_mode =         */    false,
     /* .script_mode =         */    false,
     /* .web_server =          */    false,
@@ -114,6 +115,9 @@ int main(int argc, char **argv)
     ompi_cmd_line_make_opt(cmd_line, 'f', "script", 1,
 			   "Read commands from script file");
 
+    ompi_cmd_line_make_opt(cmd_line, 'c', "scope", 1,
+			   "Scope of this universe");
+
     /*
      * setup  mca command line arguments
      */
@@ -130,6 +134,7 @@ int main(int argc, char **argv)
 	return ret;
     }
 
+    /* parse the local commands */
     if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv)) {
 	exit(ret);
     }
@@ -162,6 +167,9 @@ int main(int argc, char **argv)
 	}
     }
 
+    /* get desired universe scope, if specified */
+    if (ompi_cmd_line_is_taken(cmd_line, "scope")) {
+    }
     /* get the temporary directory name for the session directory, if provided on command line */
     if (ompi_cmd_line_is_taken(cmd_line, "tmpdir")) {
 	if (NULL == ompi_cmd_line_get_param(cmd_line, "tmpdir", 0, 0)) {
@@ -285,8 +293,8 @@ int main(int argc, char **argv)
 
 	    /* put info on the registry */
 
-        /* event loop */
-        ompi_event_loop(0);
+	    /* event loop */
+	    ompi_event_loop(0);
 	}
     }
     /* spawn console process */
