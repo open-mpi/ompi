@@ -58,6 +58,15 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
     OBJ_CONSTRUCT(&ptl_peer->peer_recv_lock, ompi_mutex_t);
 }
 
+/*
+ * Cleanup any resources held by the peer.
+ */
+
+static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
+{
+    mca_ptl_tcp_proc_remove(ptl_peer->peer_proc, ptl_peer);
+    mca_ptl_tcp_peer_close(ptl_peer);
+}
 
 /*
  * diagnostics
@@ -130,16 +139,6 @@ static inline void mca_ptl_tcp_peer_event_init(mca_ptl_base_peer_t* ptl_peer, in
         OMPI_EV_WRITE|OMPI_EV_PERSIST, 
         mca_ptl_tcp_peer_send_handler,
         ptl_peer);
-}
-
-/*
- * Cleanup any resources held by the peer.
- */
-
-static void mca_ptl_tcp_peer_destruct(mca_ptl_base_peer_t* ptl_peer)
-{
-    mca_ptl_tcp_proc_remove(ptl_peer->peer_proc, ptl_peer);
-    mca_ptl_tcp_peer_close(ptl_peer);
 }
 
 
