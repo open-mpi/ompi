@@ -29,7 +29,7 @@ libmca_mpi_pml_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/mca/mpi/pml/base
+lamdir = $(includedir)/lam/mca/mpi/pml/base
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)
