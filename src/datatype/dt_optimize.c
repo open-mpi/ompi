@@ -46,7 +46,6 @@ int lam_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDe
    long lastDisp = 0;
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */
-   int end_loop;         /* last element in the actual loop */
    int stack_pos = 0;
    int type, lastLength = 0, nbElems = 0, changes = 0;
    long totalDisp;
@@ -57,14 +56,13 @@ int lam_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDe
    pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+1) );
    pStack->count = count;
    pStack->index = -1;
-   pStack->end_loop = pData->desc.used - 1;
+   pStack->end_loop = pData->desc.used;
    pStack->disp = 0;
    pos_desc  = 0;
    
   next_loop:
-   end_loop = pStack->end_loop;
    totalDisp = pStack->disp;
-   while( pos_desc <= end_loop ) {
+   while( pos_desc < pStack->end_loop ) {
       if( pData->desc.desc[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
          dt_elem_desc_t* pStartLoop;
          if( lastLength != 0 ) {
@@ -151,6 +149,8 @@ int lam_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_desc_t* pTypeDe
 
    if( lastLength != 0 )
       SAVE_DESC( pElemDesc, lastDisp, lastLength );
+   pElemDesc->flags = 0;
+   pElemDesc->type = DT_UNAVAILABLE;
    /* cleanup the stack */
    pTypeDesc->used = nbElems;
    return 0;
@@ -217,8 +217,8 @@ static int lam_ddt_unroll( dt_desc_t* pData, int count )
    DUMP( "top stack info {index = %d, count = %d}\n", 
          pStack->index, pStack->count );
   next_loop:
-   while( pos_desc <= pStack->end_loop ) {
-      if( pos_desc == pStack->end_loop ) { /* end of the current loop */
+   while( pos_desc < pStack->end_loop ) {
+      if( pElems[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
          if( --(pStack->count) == 0 ) { /* end of loop */
             pStack--;
             if( --stack_pos == -1 ) break;
@@ -280,11 +280,32 @@ static int lam_ddt_unroll( dt_desc_t* pData, int count )
 int lam_ddt_commit( dt_desc_t** data )
 {
     dt_desc_t* pData = (dt_desc_t*)*data;
+    dt_elem_desc_t* pLast = &(pData->desc.desc[pData->desc.used]);
 
     if( pData->flags & DT_FLAG_COMMITED ) return -1;
     pData->flags |= DT_FLAG_COMMITED;
+
+    /* let's add a fake element at the end just to avoid useless comparaisons
+     * in pack/unpack functions.
+     */
+    pLast->type   = DT_END_LOOP;
+    pLast->flags  = 0;
+    pLast->count  = pData->desc.used;
+    pLast->disp   = pData->ub - pData->lb;
+    pLast->extent = pData->size;
+
     /* If the data is contiguous is useless to generate an optimized version. */
-    if( pData->size != (pData->true_ub - pData->true_lb) )
+    if( pData->size != (pData->true_ub - pData->true_lb) ) {
         (void)lam_ddt_optimize_short( pData, 1, &(pData->opt_desc) );
+        /* let's add a fake element at the end just to avoid useless comparaisons
+         * in pack/unpack functions.
+         */
+        pLast = &(pData->opt_desc.desc[pData->opt_desc.used]);
+        pLast->type   = DT_END_LOOP;
+        pLast->flags  = 0;
+        pLast->count  = pData->opt_desc.used;
+        pLast->disp   = pData->ub - pData->lb;
+        pLast->extent = pData->size;
+    }
     return 0;
 }
