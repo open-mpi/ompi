@@ -223,10 +223,12 @@ ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_fi
     int rc;
     ompi_process_name_t *rport, tbuf;
     ompi_proc_t *rproc=NULL;
+    bool isnew = false;
 
     if ( send_first ) {
         ompi_buffer_t sbuf;
 
+        rproc = ompi_proc_find_and_add(port, &isnew);
         ompi_buffer_init(&sbuf, sizeof(ompi_process_name_t));
         ompi_pack(sbuf, &(proc->proc_name), 1, OMPI_NAME);
         rc = mca_oob_send_packed(port, sbuf, tag, 0);
@@ -240,11 +242,12 @@ ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_fi
         rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, &tag);
         ompi_unpack(rbuf, &tbuf, 1, OMPI_NAME);
         ompi_buffer_free(rbuf);
-
-	rproc = ompi_proc_find_and_add(&tbuf);
+        rproc = ompi_proc_find_and_add(&tbuf, &isnew);
         rport = &(rproc->proc_name);
+
     }
-    
+    if(isnew)
+        mca_pml.pml_add_procs(&rproc, 1);
     return rport;
 }
 
