@@ -39,6 +39,32 @@ AC_DEFINE_UNQUOTED(OMPI_CC, "$CC", [OMPI underlying C compiler])
 
 CPPFLAGS="$CPPFLAGS -DOMPI_BUILDING=1"
 
+# Check for compilers that impersonate gcc
+
+AC_MSG_CHECKING([for compilers that impersonate gcc])
+msg=
+TRULY_GCC=$GCC
+if test "$GCC" = "yes"; then
+    AC_TRY_COMPILE([], [
+int i = 3;
+#if __INTEL_COMPILER
+#error Yes, I am lying about being gcc.
+#endif
+], [], [msg=intel])
+
+    # If we made it through unscathed, then it really is gcc
+    if test -z "$msg"; then
+        TRULY_GCC=yes
+    else
+        TRULY_GCC=no
+    fi
+else
+    # We never thought that this was gcc to begin with
+    msg=not applicable
+    TRULY_GCC=no
+fi
+AC_MSG_RESULT([$msg])
+
 # Do we want debugging?
 
 if test "$WANT_DEBUG" = "1"; then
@@ -47,8 +73,11 @@ if test "$WANT_DEBUG" = "1"; then
     AC_MSG_WARN([-g has been added to CFLAGS (--enable-debug)])
 fi
 
+# These flags are generally gcc-specific; even the gcc-impersonating
+# compilers won't accept them.
+
 OMPI_CFLAGS_BEFORE_PICKY="$CFLAGS"
-if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
+if test "$TRULY_GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     add="-Wall -Wundef -Wno-long-long -Wsign-compare"
     add="$add -Wmissing-prototypes -Wstrict-prototypes"
     add="$add -Wcomment -pedantic"
@@ -68,7 +97,7 @@ if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
 fi
 
 # See if this version of gcc allows -finline-functions and/or
-# -fno-strict-aliasing
+# -fno-strict-aliasing.  Even check the gcc-impersonating compilers.
 if test "$GCC" = "yes"; then
     CFLAGS_orig="$CFLAGS"
 
@@ -123,6 +152,9 @@ fi
 # optimization -- selecting a high level of optimization is not
 # prohibitive).  If we're using anything else, be conservative and
 # just use -O.  
+
+# Note: gcc-imperonating compilers accept -O3, so there's no need for
+# $TRULY_GCC here.
 
 if test "$GCC" = yes; then
     OPTFLAGS="-O3"
