@@ -24,8 +24,8 @@ module_noinst = libmca_lam_registry_cofs.la
 module_install =
 endif
 
-lamssiexecdir = $(libdir)/lam
-lamssiexec_LTLIBRARIES = $(module_install)
+mcamoduledir = $(libdir)/lam
+mcamodule_LTLIBRARIES = $(module_install)
 mca_registry_cofs_la_SOURCES =
 mca_registry_cofs_la_LIBADD = \
         src/libmca_registry_cofs.la \

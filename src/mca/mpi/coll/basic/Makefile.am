@@ -24,8 +24,8 @@ module_noinst = libmca_mpi_coll_basic.la
 module_install =
 endif
 
-lamssiexecdir = $(libdir)/lam
-lamssiexec_LTLIBRARIES = $(module_install)
+mcamoduledir = $(libdir)/lam
+mcamodule_LTLIBRARIES = $(module_install)
 mca_coll_basic_la_SOURCES =
 mca_coll_basic_la_LIBADD = \
         src/libmca_coll_basic.la \
