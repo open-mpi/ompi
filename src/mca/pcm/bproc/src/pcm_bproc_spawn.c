@@ -34,9 +34,30 @@
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"
 #include "runtime/runtime.h"
+#include "threads/condition.h"
+#include "threads/mutex.h"
+#include "event/event.h"
+
 
 extern char **environ;
 
+
+struct spawn_procs_data_t {
+    struct mca_pcm_base_module_1_0_0_t* me;
+    mca_ns_base_jobid_t jobid;
+    ompi_list_t *schedlist;
+    int ret;
+    ompi_mutex_t mutex;
+    ompi_condition_t cond;
+    volatile bool done;
+};
+typedef struct spawn_procs_data_t spawn_procs_data_t;
+                                                                                                                
+                                                                                                                
+
+static int 
+internal_start_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
+                           mca_ns_base_jobid_t jobid, ompi_list_t *schedlist);
 static int
 internal_spawn_procs(mca_pcm_bproc_module_t *me,
                      mca_ns_base_jobid_t jobid, 
@@ -46,7 +67,6 @@ internal_spawn_procs(mca_pcm_bproc_module_t *me,
                      ompi_list_t *node_alloc,
                      struct bproc_io_t *io, int iolen, int *offset);
 
-
 static int
 internal_bproc_vexecmove_io(int nnodes, int *nodes, int *pids,
                             struct bproc_io_t *io, int iolen,
@@ -54,8 +74,74 @@ internal_bproc_vexecmove_io(int nnodes, int *nodes, int *pids,
                             char ***env, int *envc, int offset);
 
 
+#if OMPI_HAVE_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+static void spawn_procs_callback(int fd, short flags, void *data);
+#endif
+                                                                                                                
+
 int
 mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
+                          mca_ns_base_jobid_t jobid, 
+                          ompi_list_t *schedlist)
+{
+#if OMPI_HAVE_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+    spawn_procs_data_t data;
+    struct timeval tv;
+    struct ompi_event ev;
+                                                                                                                
+    if (ompi_event_progress_thread()) {
+        return internal_start_spawn_procs(me_super, jobid, schedlist);
+    }
+                                                                                                                
+    data.me = me_super;
+    data.jobid = jobid;
+    data.schedlist = schedlist;
+    data.ret = 0;
+    data.done = false;
+    OBJ_CONSTRUCT(&(data.mutex), ompi_mutex_t);
+    OBJ_CONSTRUCT(&(data.cond), ompi_condition_t);
+                                                                                                                
+    OMPI_THREAD_LOCK(&(data.mutex));
+                                                                                                                
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+                                                                                                                
+    ompi_evtimer_set(&ev, spawn_procs_callback, &data);
+    ompi_evtimer_add(&ev, &tv);
+                                                                                                                
+    while (data.done == false) {
+        ompi_condition_wait(&(data.cond), &(data.mutex));
+    }
+    OMPI_THREAD_UNLOCK(&(data.mutex));
+                                                                                                                
+    OBJ_DESTRUCT(&(data.mutex));
+    OBJ_DESTRUCT(&(data.cond));
+                                                                                                                
+    return data.ret;
+#else
+    return internal_start_spawn_procs(me_super, jobid, schedlist);
+#endif
+
+}
+
+
+#if OMPI_HAVE_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
+static void
+spawn_procs_callback(int fd, short flags, void *data)
+{
+    spawn_procs_data_t *procs_data = (spawn_procs_data_t*) data;
+                                                                                                                
+    procs_data->ret = internal_start_spawn_procs(procs_data->me,
+                                                 procs_data->jobid,
+                                                 procs_data->schedlist);
+    procs_data->done = true;
+    ompi_condition_signal(&(procs_data->cond));
+}
+#endif
+                                                                                                                
+
+int
+internal_start_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
                           mca_ns_base_jobid_t jobid, 
                           ompi_list_t *schedlist)
 {
