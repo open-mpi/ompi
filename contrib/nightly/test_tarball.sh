@@ -19,7 +19,7 @@ vpath_arg="$5"
 
 # Set this to any value for additional output; typically only when
 # debugging
-debug=0
+debug=
 
 # do you want a success mail?
 want_success_mail=1
