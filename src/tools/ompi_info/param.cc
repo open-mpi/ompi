@@ -26,6 +26,7 @@
 #if HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
+#include <netdb.h>
 
 #include "class/ompi_value_array.h"
 #include "util/printf.h"
