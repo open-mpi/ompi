@@ -28,7 +28,7 @@ int mca_pml_teg_progress(void)
              continue;
         }
         if(complete) {
-            req = (mca_ptl_base_send_request_t*)lam_list_remove(
+            req = (mca_ptl_base_send_request_t*)lam_list_remove_item(
                 &mca_pml_teg.teg_incomplete_sends, (lam_list_item_t*)req);
         }
     }
