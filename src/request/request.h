@@ -129,7 +129,7 @@ OMPI_DECLSPEC extern ompi_mutex_t          ompi_request_lock;
 OMPI_DECLSPEC extern ompi_condition_t      ompi_request_cond;
 OMPI_DECLSPEC extern int                   ompi_request_poll_iterations;
 OMPI_DECLSPEC extern ompi_request_t        ompi_request_null;
-
+OMPI_DECLSPEC extern ompi_status_public_t  ompi_status_empty;
 
 
 /**
@@ -198,7 +198,7 @@ static inline int ompi_request_test(
     if (request == MPI_REQUEST_NULL) {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
-            *status = ompi_request_null.req_status;
+            *status = ompi_status_empty;
         }
         return OMPI_SUCCESS;
     }
