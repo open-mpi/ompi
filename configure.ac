@@ -219,7 +219,7 @@ LAM_SETUP_CXX
 ##################################
 
 LAM_SETUP_F77
-if test -n "$F77"; then
+if test "$F77" != "none" ; then
     LAM_F77_FIND_EXT_SYMBOL_CONVENTION($F77)
 
     # checking the sizeof fortran interger. This is needed to define 
@@ -298,7 +298,7 @@ lam_show_title "System-specific tests"
 # This test should be carried out ONLY if there is a f77 compiler
 # available. Else we should default to MPI_Fint being an int.
 #
-if test -n "$F77"; then
+if test "$F77" != "none"; then
 	MPI_FINT_TYPE="not found"
 	AC_MSG_CHECKING([checking for type of MPI_Fint])
 	if test "$LAM_SIZEOF_FORTRAN_INT" = 4 ; then
