@@ -5,7 +5,6 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "runtime/runtime.h"
 #include "mpi/c/bindings.h"
 #include "datatype/datatype.h"
 #include "errhandler/errhandler.h"
