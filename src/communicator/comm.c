@@ -165,13 +165,18 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
     if (NULL != oldcomm->c_keyhash) {
         if (NULL != attr) {
             ompi_attr_hash_init(&newcomm->c_keyhash);
-            ompi_attr_copy_all (COMM_ATTR, oldcomm, newcomm, attr, 
-                                newcomm->c_keyhash);
+            if (OMPI_SUCCESS != (ret = ompi_attr_copy_all (COMM_ATTR, oldcomm,
+                                                           newcomm, attr, 
+                                                           newcomm->c_keyhash))) {
+                OBJ_RELEASE(newcomm);
+                return ret;
+            }                                    
         }
     }
 
     /* Initialize the PML stuff in the newcomm  */
     if ( OMPI_ERROR == mca_pml.pml_add_comm(newcomm) ) {
+        OBJ_RELEASE(newcomm);
         return OMPI_ERROR;
     }
     return (OMPI_SUCCESS);
