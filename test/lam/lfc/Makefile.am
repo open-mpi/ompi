@@ -19,6 +19,7 @@ lam_list_LDADD = \
         $(top_builddir)/src/lam/mem/malloc.lo \
         $(top_builddir)/src/lam/util/output.lo \
         $(top_builddir)/src/lam/threads/mutex.lo \
+        $(top_builddir)/src/lam/threads/mutex_pthread.lo \
         $(top_builddir)/test/support/libsupport.la
 lam_list_DEPENDENCIES = $(lam_list_LDADD)
 
@@ -30,6 +31,7 @@ lam_hash_table_LDADD = \
         $(top_builddir)/src/lam/mem/malloc.lo \
         $(top_builddir)/src/lam/util/output.lo \
         $(top_builddir)/src/lam/threads/mutex.lo \
+        $(top_builddir)/src/lam/threads/mutex_pthread.lo \
         $(top_builddir)/src/lam/util/libutil.la \
         $(top_builddir)/test/support/libsupport.la
 
@@ -40,6 +42,7 @@ lam_pointer_array_LDADD = \
         $(top_builddir)/src/lam/mem/malloc.lo \
         $(top_builddir)/src/lam/util/output.lo \
         $(top_builddir)/src/lam/threads/mutex.lo \
+        $(top_builddir)/src/lam/threads/mutex_pthread.lo \
         $(top_builddir)/src/lam/util/libutil.la \
         $(top_builddir)/test/support/libsupport.la
 lam_pointer_array_DEPENDENCIES = $(lam_pointer_array_LDADD)
@@ -51,6 +54,7 @@ lam_value_array_LDADD = \
         $(top_builddir)/src/lam/mem/malloc.lo \
         $(top_builddir)/src/lam/util/output.lo \
         $(top_builddir)/src/lam/threads/mutex.lo \
+        $(top_builddir)/src/lam/threads/mutex_pthread.lo \
         $(top_builddir)/src/lam/util/libutil.la \
         $(top_builddir)/test/support/libsupport.la
 lam_value_array_DEPENDENCIES = $(lam_value_array_LDADD)

@@ -28,11 +28,8 @@ static void test(bool thread_usage){
     /* initialize thread levels */
     use_threads=(int)lam_set_using_threads(thread_usage);
     
-    array=malloc(sizeof(lam_pointer_array_t));
+    array=OBJ_NEW(lam_pointer_array_t);
     assert(array);
-    bzero(array,sizeof(lam_pointer_array_t));
-    /* init the mutex */
-    lam_mutex_init(&(array->lock));
 
     len_test_data=5;
     test_data=malloc(sizeof(char *)*len_test_data);
