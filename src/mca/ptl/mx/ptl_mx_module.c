@@ -177,7 +177,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
         frag->frag_size = size;
         frag->frag_recv.frag_base.frag_size = size - sizeof(mca_ptl_base_header_t);
         frag->frag_recv.frag_base.frag_header.hdr_common.hdr_type =
-            MCA_PTL_HDR_TYPE_MATCH;
+            MCA_PTL_HDR_TYPE_FRAG;
 
         /* initialize convertor */
         ompi_convertor_copy(proc->proc_convertor, convertor);
