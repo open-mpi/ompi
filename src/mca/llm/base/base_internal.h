@@ -43,6 +43,9 @@ extern "C" {
      */
     int mca_llm_base_collapse_resources(ompi_list_t *hostlist);
 
+    /**
+     * Deallocate resources allocated by parse hostfile
+     */
     int mca_llm_base_deallocate(ompi_list_t *nodelist);
 
 #if defined(c_plusplus) || defined(__cplusplus)

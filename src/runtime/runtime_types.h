@@ -26,11 +26,16 @@
  * container is destroyed.
  */
 struct ompi_rte_valuepair_t {
+    /** make us an instance of a list item */
     ompi_list_item_t super;
+    /** key string for the info pair */
     char *key;
+    /** value string for the info pair */
     char *value;
 };
+/** shorten ompi_rte_valuepair_t declarations */
 typedef struct ompi_rte_valuepair_t ompi_rte_valuepair_t;
+/** create the required instance information */
 OBJ_CLASS_DECLARATION(ompi_rte_valuepair_t);
 
 
@@ -42,28 +47,53 @@ OBJ_CLASS_DECLARATION(ompi_rte_valuepair_t);
  * 
  */
 struct ompi_rte_node_allocation_t {
+    /** make us an instance of list item */
     ompi_list_item_t super;
+    /** hostname for this node.  Can be used as generic description
+        field if hostnames aren't used on this platform */
     char hostname[MAXHOSTNAMELEN];
+    /** number of MPI processes Open MPI can start on this host */
     int count;
+    /** generic key=value storage mechanism */
     ompi_list_t *info;    
 };
+/** shorten ompi_rte_allocation_t declarations */
 typedef struct ompi_rte_node_allocation_t ompi_rte_node_allocation_t;
+/** create the required instance information */
 OBJ_CLASS_DECLARATION(ompi_rte_node_allocation_t);
 
 
 /**
  * Container use for process startup information
  *
+ * Container describing a job to be launched.  A job consists of a
+ * number of processes started on a number of nodes.  Each process
+ * type (a unique argv/envp/cwd) is given its own instance of \c
+ * ompi_rte_node_schedule_t and its own unique list of hosts to start
+ * on.
+ *
+ * All memory associated with \c argv, \c env, \c cwd, and \c nodelist
+ * is given to the instance of \c ompi_rte_node_schedule_t and will be
+ * freed when the instance of \c ompi_rte_node_schedule_t is
+ * destructed.
  */
 struct ompi_rte_node_schedule_t {
+    /** make us an instance of list item */
     ompi_list_item_t super;
+    /** argv array for process to start (NULL terminated array) */
     char **argv;
+    /** length of argv */
     int argc;
+    /** environ array for process to start (NULL terminated array) */
     char **env;
+    /** working directory in which to start the application */
     char *cwd;
+    /** list of nodes to start the process on */
     ompi_list_t *nodelist;
 };
+/** shorten ompi_rte_node_schedule_t declarations */
 typedef struct ompi_rte_node_schedule_t ompi_rte_node_schedule_t;
+/** create the required instance information */
 OBJ_CLASS_DECLARATION(ompi_rte_node_schedule_t);
 
 
