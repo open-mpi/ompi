@@ -22,7 +22,7 @@ int mca_pml_teg_progress(void)
 {
     mca_ptl_tstamp_t tstamp = 0;
     size_t i;
-    int count;
+    int count = 0;
 
     /*
      * Progress each of the PTL modules
@@ -36,6 +36,6 @@ int mca_pml_teg_progress(void)
             count += rc;
         }
     }
-    return OMPI_SUCCESS;
+    return count;
 }
 
