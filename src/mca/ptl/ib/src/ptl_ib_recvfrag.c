@@ -133,8 +133,17 @@ static void mca_ptl_ib_ctrl_frag(mca_ptl_base_module_t *module,
 }
 
 static void mca_ptl_ib_last_frag(mca_ptl_base_module_t *module,
-        mca_ptl_base_header_t *header)
+        mca_ptl_base_header_t *hdr)
 {
+    mca_pml_base_recv_request_t *request;
+    request = (mca_pml_base_recv_request_t*) hdr->hdr_frag.hdr_dst_ptr.pval;
+
+    module->ptl_recv_progress (
+            module,
+            request,
+            hdr->hdr_frag.hdr_frag_length,
+            hdr->hdr_frag.hdr_frag_length);
+
 }
 
 /*

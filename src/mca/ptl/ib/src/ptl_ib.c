@@ -97,7 +97,9 @@ int mca_ptl_ib_put( struct mca_ptl_base_module_t* ptl,
     /* Update offset */
     req->req_offset += size;
 
-    return OMPI_SUCCESS;
+    rc = mca_ptl_ib_peer_send(ptl_peer, send_frag_fin);
+
+    return rc;
 }
 
 int mca_ptl_ib_add_procs(struct mca_ptl_base_module_t* base_module, 
