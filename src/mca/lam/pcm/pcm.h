@@ -2,6 +2,7 @@
  *
  * $HEADER$
  */
+/** @file **/
 
 /** 
  *  \brief LAM/MPI Interface for Parallel Job & Process Control (pcm)

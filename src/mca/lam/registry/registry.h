@@ -2,6 +2,7 @@
  *
  * $HEADER$
  */
+/** @file **/
 
 /**
  *  \brief Publish/Subscribe-style global registry database infrastructure
