@@ -46,9 +46,10 @@ lam_group_t *group_allocate(int group_size)
             /* assign entry in fortran <-> c translation array */
             ret_val=lam_pointer_array_add(lam_group_f_to_c_table,new_group);
             if( -1 == ret_val ){
-                free(new_group);
+                OBJ_RELEASE(new_group);
                 new_group=NULL;
             }
+            new_group->grp_f_to_c_index=ret_val;
         } else {
             /* grp_proc_pointers allocation failed */
             free(new_group);
@@ -74,6 +75,20 @@ void lam_group_construct(lam_group_t *new_group){
  */
 void lam_group_destruct(lam_group_t *group){
 
+    int return_value;
+
+    /* release thegrp_proc_pointers memory */
+    if( NULL != group->grp_proc_pointers )
+        free(group->grp_proc_pointers);
+
+    /* reset the lam_group_f_to_c_table entry - make sure that the
+     * entry is in the table */
+    if( NULL!= lam_pointer_array_get_item(lam_group_f_to_c_table,
+                group->grp_f_to_c_index) ) {
+        lam_pointer_array_set_item(lam_group_f_to_c_table,
+                group->grp_f_to_c_index, NULL);
+    }
+
     /* return */
     return;
 }
@@ -82,14 +97,14 @@ void lam_group_destruct(lam_group_t *group){
  * Initialize LAM group infrastructure
  */
 
-int lam_group_init()
+int lam_group_init(void)
 {
     /* local variables */
     int return_value=LAM_SUCCESS;
 
     /* initialize lam_group_f_to_c_table */
     lam_group_f_to_c_table=OBJ_NEW(lam_pointer_array_t);
-    if( (-1) == lam_group_f_to_c_table )
+    if( NULL == lam_group_f_to_c_table )
         return_value=LAM_ERROR;
 
     /* return */
@@ -99,7 +114,7 @@ int lam_group_init()
 /**
  * Clean up group infrastructure
  */
-int lam_group_finalize(){
+int lam_group_finalize(void){
     /* local variables */
     int return_value=LAM_SUCCESS;
 

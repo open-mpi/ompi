@@ -15,7 +15,7 @@
 int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group) 
 {
     /* local variables */
-    int return_value,proc,cnt;
+    int return_value,proc;
     lam_group_t *group_pointer, *new_group_pointer;
 
     return_value = MPI_SUCCESS;
@@ -23,18 +23,18 @@ int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group)
 
     if( MPI_PARAM_CHECK ) {
         /* including anything of the empty group is still the empty group */
-        if ((group == MPI_GROUP_EMPTY) || (ranks == 0)) {
+        if ((group == MPI_GROUP_EMPTY) || (n == 0)) {
             *new_group = MPI_GROUP_EMPTY;
             return return_value;
         }
 
         /* verify that group is valid group */
-        if ( NULL == group ) {
+        if ( NULL == group || NULL == ranks ) {
             return MPI_ERR_GROUP;
         }
 
         /* check that new group is no larger than old group */
-        if (ranks > group_pointer->grp_proc_count) {
+        if ( n > group_pointer->grp_proc_count) {
             return MPI_ERR_RANK;
         }
 
@@ -70,6 +70,8 @@ int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group)
             }
         }
     }
+
+    *new_group = (MPI_Group)new_group_pointer;
 
     return MPI_SUCCESS;
 }
