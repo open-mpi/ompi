@@ -575,7 +575,7 @@ ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_regist
     /* compute number of tokens */
     tokptr = tokens;
     num_tokens = 0;
-    while (NULL != *tokptr) {
+    while (tokptr && NULL != *tokptr) {
 	num_tokens++;
 	tokptr++;
     }
