@@ -9,6 +9,7 @@
 # test_list  =  no args runs all tests
 #              or
 #               sched_comm runs ompi pcm base sched_comm tests
+#               build_env runs ompi pcm base build_env tests
 
 # Usage
 #
@@ -22,12 +23,15 @@ umask 007
 
 if ("x$1" == "x") then
   ./sched_comm;
+  ./build_env
 else if ("$1" == "sched_comm") then
   ./sched_comm;
+else if ("$1" == "build_env") then
+  ./build_env
 else
   echo "correct use: "
   echo "    run    (to run all mca pcm base tests)"
-  echo "or  run < sched_comm >"
+  echo "or  run < sched_comm | build_env >"
   exit -1
 endif
 
