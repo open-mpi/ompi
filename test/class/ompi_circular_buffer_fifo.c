@@ -33,6 +33,7 @@ int main(int argc, char **argv) {
     ompi_cb_fifo_t fifo;
     int i,size_of_fifo,lazy_free,return_status,error_cnt,loop_cnt;
 	void *ptr;
+    bool queue_empty;
 
     /* get queue size */
     size_of_fifo=atoi(argv[1]);
@@ -81,7 +82,7 @@ int main(int argc, char **argv) {
 	/* pop items off the queue */
     error_cnt=0;
 	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		ptr=ompi_cb_fifo_read_from_tail(&fifo,0);
+		ptr=ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty);
 		if( (void *)(i+5) != ptr ) {
 	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
             error_cnt++;
@@ -165,7 +166,7 @@ int main(int argc, char **argv) {
 	/* pop items off the queue */
     error_cnt=0;
 	for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-		ptr=ompi_cb_fifo_read_from_tail(&fifo,0);
+		ptr=ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty);
 		if( (void *)(i+5) != ptr ) {
 	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
             error_cnt++;
@@ -217,9 +218,9 @@ int main(int argc, char **argv) {
         if( (i % ompi_cb_fifo_size(&fifo) ) ==
                 ompi_cb_fifo_size(&fifo)/2  ) {
             /* force a flush */
-            ptr=ompi_cb_fifo_read_from_tail(&fifo,1);
+            ptr=ompi_cb_fifo_read_from_tail(&fifo,1,&queue_empty);
         } else {
-            ptr=ompi_cb_fifo_read_from_tail(&fifo,0);
+            ptr=ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty);
         }
 		if( (void *)(i+5) != ptr ) {
 	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
