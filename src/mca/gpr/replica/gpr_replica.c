@@ -215,7 +215,7 @@ ompi_list_t* gpr_replica_index(char *segment)
 	if (NULL == seg) {  /* segment not found */
 	    return answer;
 	}
-	/* got segment - now find specified token-key pair in that dictionary */
+	/* got segment - now index that dictionary */
 	for (ptr = (mca_gpr_keytable_t*)ompi_list_get_first(&seg->keytable);
 	     ptr != (mca_gpr_keytable_t*)ompi_list_get_end(&seg->keytable);
 	     ptr = (mca_gpr_keytable_t*)ompi_list_get_next(ptr)) {
@@ -233,13 +233,13 @@ int gpr_replica_subscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode
 			  ompi_registry_notify_action_t action,
 			  char *segment, char **tokens)
 {
-    return 0;
+    return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
 int gpr_replica_unsubscribe(ompi_process_name_t *caller, ompi_registry_mode_t mode,
 			    char *segment, char **tokens)
 {
-    return 0;
+    return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
 ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
