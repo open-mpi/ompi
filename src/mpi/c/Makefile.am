@@ -49,7 +49,9 @@ headers = bindings.h
 # by default
 #
 
-libmpi_c_la_SOURCES = 
+libmpi_c_la_SOURCES = \
+        attr_fn.c
+
 
 libmpi_c_la_LIBADD  = \
                     $(mpi_lib) \
