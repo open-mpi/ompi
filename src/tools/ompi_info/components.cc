@@ -38,6 +38,8 @@
 #include "mca/pml/base/base.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
+#include "mca/soh/soh.h"
+#include "mca/soh/base/base.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "mca/ns/ns.h"
@@ -161,6 +163,12 @@ void ompi_info::open_components()
   mca_ptl_base_open();
   component_map["ptl"] = &mca_ptl_base_components_opened;
 
+#if 0
+  // JMS waiting for ralph to finish
+  mca_soh_base_open();
+  component_map["soh"] = &mca_soh_base_components_available;
+#endif
+
   mca_topo_base_open();
   component_map["topo"] = &mca_topo_base_components_opened;
 
@@ -177,6 +185,10 @@ void ompi_info::close_components()
     mca_oob_base_close();
     mca_ns_base_close();
     mca_gpr_base_close();
+#if 0
+    // JMS waiting for ralph to finish
+    mca_soh_base_close();
+#endif
     mca_coll_base_close();
     mca_pml_base_close();
     mca_ptl_base_close();

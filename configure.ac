@@ -1123,6 +1123,7 @@ AC_CONFIG_FILES([
     src/dynamic-mca/pcm/Makefile
     src/dynamic-mca/pcmclient/Makefile
     src/dynamic-mca/llm/Makefile
+    src/dynamic-mca/soh/Makefile
     src/dynamic-mca/svc/Makefile
 
     src/dynamic-mca/Makefile

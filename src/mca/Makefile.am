@@ -30,6 +30,7 @@ SUBDIRS = \
 	pcmclient \
         pml \
         ptl \
+        soh \
         svc \
         topo
 
