@@ -76,7 +76,7 @@ typedef mca_module_1_0_0_t mca_module_t;
 struct mca_module_priority_t {
   int lsm_priority;
   int lsm_thread_min, lsm_thread_max;
-  mca_t *lsm_module;
+  mca_module_t *lsm_module;
 };
 typedef struct mca_module_priority_t mca_module_priority_t;
 
@@ -138,8 +138,8 @@ extern "C" {
   int mca_base_module_check(char *name, char *module, int is_default);
   int mca_base_module_compare(mca_module_t *a, mca_module_t *b);
   int mca_base_module_find(char *directory, char *type, 
-                           mca_t *static_modules[], 
-                           mca_t ***modules_out);
+                           mca_module_t *static_modules[], 
+                           mca_module_t ***modules_out);
 #if 0
   /* JMS add after the lbltdl stuff is done */
   int mca_base_module_register(char *type, lt_dlhandle module_handle, 
@@ -151,7 +151,7 @@ extern "C" {
                                     const char *src_name,
                                     const char *depend_type,
                                     const char *depend_name);
-  void mca_base_module_registry_unuse(mca_t *module);
+  void mca_base_module_registry_unuse(mca_module_t *module);
   int mca_base_module_registry_use(const char *type, const char *name);
 
   int mca_base_mpi_init_callback(mca_mpi_init_callback_fn_t func);
