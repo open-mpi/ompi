@@ -532,11 +532,9 @@ int mca_ptl_tcp_component_control(int param, void* value, size_t size)
         case MCA_PTL_ENABLE:
             if(*(int*)value) {
                 ompi_event_add(&mca_ptl_tcp_component.tcp_recv_event, 0);
-#if OMPI_HAVE_THREADS == 0
-                if(mca_ptl_tcp_component.tcp_num_ptl_modules) {
+                if(ompi_hash_table_get_size(&mca_ptl_tcp_component.tcp_procs) > 0) {
                     ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
                 }
-#endif
             } else {
                 ompi_event_del(&mca_ptl_tcp_component.tcp_recv_event);
             }

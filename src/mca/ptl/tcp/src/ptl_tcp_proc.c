@@ -194,7 +194,9 @@ int mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
         if(ptl_proc->proc_peers[i] == ptl_peer) {
             memmove(ptl_proc->proc_peers+i, ptl_proc->proc_peers+i+1,
                 (ptl_proc->proc_peer_count-i-1)*sizeof(mca_ptl_base_peer_t*));
-            ptl_proc->proc_peer_count--;
+            if(--ptl_proc->proc_peer_count == 0) {
+                OBJ_RELEASE(ptl_proc);
+            }
             ptl_peer->peer_addr->addr_inuse--;
             break;
         }
