@@ -26,6 +26,9 @@
 #include "orte_config.h"
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "include/orte_constants.h"
 
@@ -362,6 +365,7 @@ int main(int argc, char **argv)
     }
 */
     test_finalize();
+    unlink("test_gpr_replica_out");
 
     return(0);
 }
