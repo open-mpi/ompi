@@ -17,10 +17,10 @@
 
 #
 # This file is almost identical in functionality to
-# ompi_get_version.sh.  It is unfortunate that we have to duplicate code,
-# but it is really the only what that I can think to do it.  :-( Hence,
-# if you change the logic here for determining version numbers, YOU MUST
-# ALSO CHANGE IT IN ompi_get_version.sh!!
+# ompi_get_version.m4.  It is unfortunate that we have to duplicate
+# code, but it is really the only what that I can think to do it.  :-(
+# Hence, if you change the logic here for determining version numbers,
+# YOU MUST ALSO CHANGE IT IN ompi_get_version.m4!!
 #
 
 srcfile="$1"
