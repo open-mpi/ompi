@@ -1,0 +1,7 @@
+.deps
+.libs
+libcofs.la
+Makefile
+Makefile.in
+oob_cofs.lo
+oob_cofs_module.lo

@@ -1,0 +1,4 @@
+.libs
+libmca_lam_oob_cofs.la
+Makefile
+Makefile.in

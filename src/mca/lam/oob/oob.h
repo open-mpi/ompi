@@ -72,22 +72,22 @@ typedef int (*mca_oob_finalize_fn_t)(void);
 /*
  * Ver 1.0.0
  */
-typedef struct mca_oob_module_1_0_0 {
+struct mca_oob_module_1_0_0_t {
   mca_module_1_0_0_t super;
 
   mca_oob_query_fn_t oobm_query;
   mca_oob_init_fn_t oobm_init;
   mca_oob_finalize_fn_t oob_finalize;
-} mca_oob_module_1_0_0_t;
+};
+typedef struct mca_oob_module_1_0_0_t mca_oob_module_1_0_0_t;
 
-typedef struct mca_oob_1_0_0 {
-  mca_1_0_0_t super;
-
+struct mca_oob_1_0_0_t {
   mca_oob_send_fn_t oob_send;
   mca_oob_recv_fn_t oob_recv;
   mca_oob_recv_nb_fn_t oob_recv_nb;
   mca_oob_recv_cb_fn_t oob_recv_cb;
-} mca_oob_1_0_0_t;
+};
+typedef struct mca_oob_1_0_0_t mca_oob_1_0_0_t;
 
 typedef mca_oob_module_1_0_0_t mca_oob_module_t;
 typedef mca_oob_1_0_0_t mca_oob_t;
@@ -102,7 +102,7 @@ extern "C" {
   int mca_oob_base_open(lam_cmd_line_t *cmd);
   int mca_oob_base_close(void);
 
-  bool mca_oob_base_is_checkpointable(void)
+  bool mca_oob_base_is_checkpointable(void);
 
   int mca_oob_base_checkpoint(void);
   int mca_oob_base_continue(void);
@@ -111,10 +111,11 @@ extern "C" {
 }
 #endif
 
-
 /*
  * Global struct holding the selected module's function pointers
  */
+#if 0
 extern mca_oob_t mca_oob;
+#endif /* #if 0 */
 
 #endif
