@@ -30,9 +30,9 @@ typedef void (lam_errhandler_fortran_handler_fn_t)(int *, int *, ...);
  * Enum used to describe what kind MPI object an error handler is used for
  */
 enum lam_errhandler_type_t {
-    LAM_ERRHANDLER_COMM,
-    LAM_ERRHANDLER_WIN,
-    LAM_ERRHANDLER_FILE
+    LAM_ERRHANDLER_TYPE_COMM,
+    LAM_ERRHANDLER_TYPE_WIN,
+    LAM_ERRHANDLER_TYPE_FILE
 };
 typedef enum lam_errhandler_type_t lam_errhandler_type_t;
 
@@ -71,6 +71,23 @@ typedef struct lam_errhandler_t lam_errhandler_t;
 
 
 /**
+ * Global variable for MPI_ERRHANDLER_NULL
+ */
+extern lam_errhandler_t lam_mpi_errhandler_null;
+
+/**
+ * Global variable for MPI_ERRORS_ARE_FATAL
+ */
+extern lam_errhandler_t lam_mpi_errors_are_fatal;
+
+/**
+ * Global variable for MPI_ERRORS_RETURN
+ */
+extern lam_errhandler_t lam_mpi_errors_return;
+
+
+
+/**
  * This is the macro to invoke to directly invoke an MPI error
  * handler.
  *
@@ -83,9 +100,9 @@ typedef struct lam_errhandler_t lam_errhandler_t;
  * This macro is used when you want to directly invoke the error
  * handler.  It is exactly equivalent to calling
  * lam_errhandler_invoke() directly, but is provided to have a
- * parallel invocation to LAM_ERRHDL_CHECK() and LAM_ERRHDL_RETURN().
+ * parallel invocation to LAM_ERRHANDLER_CHECK() and LAM_ERRHANDLER_RETURN().
  */
-#define LAM_ERRHDL_INVOKE(mpi_object, err_code, message) \
+#define LAM_ERRHANDLER_INVOKE(mpi_object, err_code, message) \
   lam_errhandler_invoke((mpi_object)->error_handler, (mpi_object), \
                         (err_code), (message));
 
@@ -103,10 +120,11 @@ typedef struct lam_errhandler_t lam_errhandler_t;
  * This macro will invoke the error handler if the return code is not
  * LAM_SUCCESS.
  */
-#define LAM_ERRHDL_CHECK(rc, mpi_object, err_code, message) \
+#define LAM_ERRHANDLER_CHECK(rc, mpi_object, err_code, message) \
   if (rc != LAM_SUCCESS) { \
-    lam_errhandler_invoke((errhandler), (mpi_object)->error_handler, \
-                          (mpi_object), (err_code), (message)); \
+    lam_errhandler_invoke((mpi_object)->error_handler, (mpi_object), \
+                          (err_code), (message)); \
+    return (err_code); \
   }
 
 /**
@@ -125,10 +143,11 @@ typedef struct lam_errhandler_t lam_errhandler_t;
  * LAM_SUCCESS.  If the return code is LAM_SUCCESS, then return
  * MPI_SUCCESS.
  */
-#define LAM_ERRHDL_RETURN(rc, mpi_object, err_code, message) \
+#define LAM_ERRHANDLER_RETURN(rc, mpi_object, err_code, message) \
   if (rc != LAM_SUCCESS) { \
-    lam_errhandler_invoke((errhandler), (mpi_object)->error_handler, \
-                          (mpi_object), (err_code), (message)); \
+    lam_errhandler_invoke((mpi_object)->error_handler, (mpi_object), \
+                          (err_code), (message)); \
+    return (err_code); \
   } else { \
     return MPI_SUCCESS; \
   }
@@ -159,8 +178,8 @@ extern "C" {
    * \internal
    *
    * This function should not be invoked directly; it should only be
-   * invoked by LAM_ERRHDL_INVOKE(), LAM_ERRHDL_CHECK(), or
-   * LAM_ERRHDL_RETURN().
+   * invoked by LAM_ERRHANDLER_INVOKE(), LAM_ERRHANDLER_CHECK(), or
+   * LAM_ERRHANDLER_RETURN().
    *
    * @param errhandler The MPI_Errhandler to invoke
    * @param mpi_object The MPI object to invoke the errhandler on (a
@@ -179,11 +198,18 @@ extern "C" {
 
 
   /**
+   * Create a lam_errhandler_t
+   *
+   * @param mpi_object The object that the errhandler should be cached on
+   * @param object_type Enum of the type of MPI object
+   * @param func Function pointer of the error handler
+   * @param errhandler Pointer to the lam_errorhandler_t that will be
+   *   created and returned
+   *
+   * This function will.... JMS continue here
    */
-  int lam_errhandler_create(void *mpi_object, 
-                            lam_errhandler_type_t object_type,
-                            lam_errhandler_fortran_handler_fn_t *func,
-                            lam_errhandler_t **errhandler);
+  lam_errhandler_t *lam_errhandler_create(lam_errhandler_type_t object_type,
+                                          lam_errhandler_fortran_handler_fn_t *func);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

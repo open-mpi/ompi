@@ -6,11 +6,34 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Comm_get_errhandler = PMPI_Comm_get_errhandler
 #endif
 
-int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *erhandler) {
-    return MPI_SUCCESS;
+
+int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
+{
+  /* Error checking */
+
+  if (MPI_PARAM_CHECK) {
+    if (NULL == comm || 
+        MPI_COMM_NULL == comm) {
+      return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                   "MPI_Comm_set_errhandler");
+    } else if (NULL == errhandler) {
+      return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                   "MPI_Comm_create_errhandler");
+    }
+  }
+
+  /* Return the errhandler */
+
+  *errhandler = comm->error_handler;
+
+  /* All done */
+
+  return MPI_SUCCESS;
 }

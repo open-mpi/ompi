@@ -1,4 +1,5 @@
-/*
+/* -*- Mode: C; c-basic-offset:4 ;
+ *
  * $HEADER$
  */
 
@@ -39,7 +40,7 @@ lam_errhandler_t lam_mpi_errhandler_null = {
 
     "MPI_ERRHANDLER_NULL",
     false,
-    LAM_ERRHANDLER_COMM,
+    LAM_ERRHANDLER_TYPE_COMM,
     { NULL }
 };
 
@@ -52,7 +53,7 @@ lam_errhandler_t lam_mpi_errors_are_fatal = {
 
     "MPI_ERRORS_ARE_FATAL",
     false,
-    LAM_ERRHANDLER_COMM,
+    LAM_ERRHANDLER_TYPE_COMM,
     { lam_mpi_errors_are_fatal_handler },
     -1
 };
@@ -66,41 +67,10 @@ lam_errhandler_t lam_mpi_errors_return = {
 
     "MPI_ERRORS_ARE_RETURN",
     false,
-    LAM_ERRHANDLER_COMM,
+    LAM_ERRHANDLER_TYPE_COMM,
     { lam_mpi_errors_return_handler },
     -1
 };
-
-
-/**
- * Errhandler constructor
- */
-static void lam_errhandler_construct(lam_errhandler_t *new_errhandler)
-{
-  int ret_val;
-
-  /* assign entry in fortran <-> c translation array */
-
-  ret_val = lam_pointer_array_add(lam_errhandler_f_to_c_table, 
-                                  new_errhandler);
-  new_errhandler->eh_f_to_c_index = ret_val;
-}
-
-
-/**
- * Errhandler destructor
- */
-static void lam_errhandler_destruct(lam_errhandler_t *errhandler)
-{
-  /* reset the lam_errhandler_f_to_c_table entry - make sure that the
-     entry is in the table */
-
-  if (NULL!= lam_pointer_array_get_item(lam_errhandler_f_to_c_table,
-                                        errhandler->eh_f_to_c_index)) {
-    lam_pointer_array_set_item(lam_errhandler_f_to_c_table,
-                               errhandler->eh_f_to_c_index, NULL);
-  }
-}
 
 
 /*
@@ -182,3 +152,76 @@ int lam_errhandler_finalize(void)
 
   return LAM_SUCCESS;
 };
+
+
+lam_errhandler_t *lam_errhandler_create(lam_errhandler_type_t object_type,
+                                        lam_errhandler_fortran_handler_fn_t *func)
+{
+  lam_errhandler_t *new_errhandler;
+
+  /* Create a new object and ensure that it's valid */
+
+  new_errhandler = OBJ_NEW(lam_errhandler_t);
+  if (NULL == new_errhandler) {
+    if (LAM_ERROR == new_errhandler->eh_f_to_c_index) {
+      OBJ_RELEASE(new_errhandler);
+      new_errhandler = NULL;
+    } else {
+
+      /* The new object is valid -- initialize it.  If this is being
+         created from fortran, the fortran MPI API wrapper function
+         will override the eh_fortran_field directly.  We cast the
+         function pointer type to the fortran type arbitrarily -- it
+         only has to be a function pointer in order to store properly,
+         it doesn't matter what type it is (we'll cast it to the Right
+         type when we *use* it). */
+
+      new_errhandler->eh_mpi_object_type = object_type;
+      new_errhandler->eh_fortran_function = false;
+      new_errhandler->eh_func.fort_fn = func;
+    }
+  }
+
+
+  /* All done */
+  return LAM_SUCCESS;
+}
+
+
+/**************************************************************************
+ *
+ * Static functions
+ *
+ **************************************************************************/
+
+/**
+ * Errhandler constructor
+ */
+static void lam_errhandler_construct(lam_errhandler_t *new_errhandler)
+{
+  int ret_val;
+
+  /* assign entry in fortran <-> c translation array */
+
+  ret_val = lam_pointer_array_add(lam_errhandler_f_to_c_table, 
+                                  new_errhandler);
+  new_errhandler->eh_f_to_c_index = ret_val;
+}
+
+
+/**
+ * Errhandler destructor
+ */
+static void lam_errhandler_destruct(lam_errhandler_t *errhandler)
+{
+  /* reset the lam_errhandler_f_to_c_table entry - make sure that the
+     entry is in the table */
+
+  if (NULL!= lam_pointer_array_get_item(lam_errhandler_f_to_c_table,
+                                        errhandler->eh_f_to_c_index)) {
+    lam_pointer_array_set_item(lam_errhandler_f_to_c_table,
+                               errhandler->eh_f_to_c_index, NULL);
+  }
+}
+
+

@@ -11,6 +11,8 @@
 #pragma weak MPI_Errhandler_free = PMPI_Errhandler_free
 #endif
 
-int MPI_Errhandler_free(MPI_Errhandler *errhandler) {
-    return MPI_SUCCESS;
+
+int MPI_Errhandler_free(MPI_Errhandler *errhandler)
+{
+  return MPI_SUCCESS;
 }
