@@ -15,6 +15,7 @@
 
 ranks="1 2 3 4 5 6 7"
 
+lkinds="@OMPI_FORTRAN_LKINDS@"
 ikinds="@OMPI_FORTRAN_IKINDS@"
 rkinds="@OMPI_FORTRAN_RKINDS@"
 ckinds="@OMPI_FORTRAN_CKINDS@"
