@@ -60,21 +60,27 @@ mca_ptl_gm_alloc_send_frag(struct mca_ptl_base_module_t *ptl,
     mca_ptl_tstamp_t tstamp = 0;
 
     GM_DBG(PTL_GM_DBG_COMM,"INSIDE ALLOC SEND FRAG\n");
-
     flist =&( ((mca_ptl_gm_module_t *)ptl)->gm_send_frags );
+    A_PRINT("num_list_allocated: %d\n",flist->fl_num_allocated);
+
     item = ompi_list_remove_first(&((flist)->super));
+ 
+    GM_DBG(PTL_GM_DBG_COMM,"AFTER ALLOC SEND FRAG\n");
+    A_PRINT("send_frag: %p\n", item);
+    A_PRINT("after removing a sendfrag num_list_allocated: %d\n",flist->fl_num_allocated);
 
     while(NULL == item)
     {
+         A_PRINT("888888888888888888888888 calling progress to allocate send frag\n");
          ptl->ptl_component->ptlm_progress(tstamp);
          item = ompi_list_remove_first (&((flist)->super));
     }
 
     frag = (mca_ptl_gm_send_frag_t *)item;
     frag->req = (struct mca_pml_base_send_request_t *)sendreq;
-    GM_DBG(PTL_GM_DBG_COMM,"  request is %p\t, frag->req = %p\n",sendreq, frag->req);
-
+    GM_DBG(PTL_GM_DBG_COMM, "request is %p\t, frag->req = %p\n",sendreq, frag->req);
     frag->type =  0 ;
+    
     return frag;
   
 }
@@ -102,12 +108,12 @@ int mca_ptl_gm_send_ack_init(
    mca_ptl_base_header_t * hdr;
    mca_pml_base_recv_request_t *request;
    hdr = (mca_ptl_base_header_t *)ack->send_buf;
-   memset(hdr, 0, sizeof(mca_ptl_base_header_t));
-  ack->status = -1;
-  ack->type = -1;
-  ack->wait_for_ack = 0;
-  ack->put_sent = -1;
-  ack->send_complete = -1;
+   memset(hdr, 0, sizeof(mca_ptl_base_ack_header_t));
+   ack->status = -1;
+   ack->type = -1;
+   ack->wait_for_ack = 0;
+   ack->put_sent = -1;
+   ack->send_complete = -1;
 
 
    GM_DBG(PTL_GM_DBG_COMM,"ack buf is %p\n",ack->send_buf);
@@ -119,12 +125,15 @@ int mca_ptl_gm_send_ack_init(
    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
 
    hdr->hdr_ack.hdr_src_ptr.pval =
-frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr.pval;
-   /*assert(hdr->hdr_ack.hdr_src_ptr->req != NULL);*/
+                frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr.pval;
+
+   A_PRINT("inside ack init: the src frag ptr is %p,hdr_len is %u
+            \n",hdr->hdr_ack.hdr_src_ptr,hdr->hdr_common.hdr_size);
+   /*assert(((mca_ptl_gm_send_frag_t *)(hdr->hdr_ack.hdr_src_ptr.pval))->req
+                 * != NULL);*/
    hdr->hdr_ack.hdr_dst_match.lval = 0;
    hdr->hdr_ack.hdr_dst_match.pval = request; /*should this be dst_match */
-   hdr->hdr_ack.hdr_dst_addr.lval = 0; /*we are filling both p and val of
-dest address */
+   hdr->hdr_ack.hdr_dst_addr.lval = 0; /*we are filling both p and val of dest address */
    hdr->hdr_ack.hdr_dst_addr.pval = (void *)buffer;
    hdr->hdr_ack.hdr_dst_size = size;
 
@@ -139,7 +148,7 @@ dest address */
    ack->wait_for_ack = 0;
    ack->type = ACK;
 
- return OMPI_SUCCESS;
+   return OMPI_SUCCESS;
 
 }
 
@@ -154,14 +163,14 @@ int mca_ptl_gm_put_frag_init(
     int flags)
 {
   
-  mca_ptl_base_header_t *hdr;
-  hdr = (mca_ptl_base_header_t *)putfrag->send_buf;
-  memset(hdr, 0, sizeof(mca_ptl_base_header_t));
-  putfrag->status = -1;
-  putfrag->type = -1;
-  putfrag->wait_for_ack = 0;
-  putfrag->put_sent = -1;
-  putfrag->send_complete = -1;
+   mca_ptl_base_header_t *hdr;
+   hdr = (mca_ptl_base_header_t *)putfrag->send_buf;
+   memset(hdr, 0, sizeof(mca_ptl_base_header_t));
+   putfrag->status = -1;
+   putfrag->type = -1;
+   putfrag->wait_for_ack = 0;
+   putfrag->put_sent = -1;
+   putfrag->send_complete = -1;
 
    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FIN;
    hdr->hdr_common.hdr_flags = 0;
@@ -183,7 +192,7 @@ int mca_ptl_gm_put_frag_init(
    putfrag->wait_for_ack = 0;
    putfrag->put_sent = 0;
    putfrag->type = PUT;
-   putfrag->req = request; /* gm_send_request */
+   putfrag->req = request; 
    assert(putfrag->req != NULL);  
    return OMPI_SUCCESS; 
 }
@@ -207,13 +216,13 @@ int mca_ptl_gm_send_frag_init(
    hdr = (mca_ptl_base_header_t *)sendfrag->send_buf; 
    memset(hdr, 0, sizeof(mca_ptl_base_header_t));
   
-  sendfrag->status = -1;
-  sendfrag->type = -1;
-  sendfrag->wait_for_ack = 0;
-  sendfrag->put_sent = -1;
-  sendfrag->send_complete = -1;
-
+   sendfrag->status = -1;
+   sendfrag->type = -1;
+   sendfrag->wait_for_ack = 0;
+   sendfrag->put_sent = -1;
+   sendfrag->send_complete = -1;
    assert(sendfrag->req != NULL);
+  
    if (offset == 0) 
    {
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
@@ -234,6 +243,11 @@ int mca_ptl_gm_send_frag_init(
         hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
         hdr->hdr_match.hdr_msg_length= sendreq->req_bytes_packed;
         hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
+ 
+       #if 1
+        hdr->hdr_frag.hdr_dst_ptr.lval = 0;
+       #endif 
+
    } 
    else
    {
@@ -255,6 +269,8 @@ int mca_ptl_gm_send_frag_init(
 
    return OMPI_SUCCESS;
 }
+
+
 
 ompi_class_t mca_ptl_gm_recv_frag_t_class = {
     "mca_ptl_gm_recv_frag_t",

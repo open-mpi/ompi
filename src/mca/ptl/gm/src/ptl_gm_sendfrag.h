@@ -51,8 +51,6 @@ struct mca_ptl_gm_send_frag_t {
 typedef struct mca_ptl_gm_send_frag_t mca_ptl_gm_send_frag_t;
 
 
-/*#define MCA_PTL_GM_SEND_FRAG_ALLOC(item, rc)  \*/
-    /*OMPI_FREE_LIST_GET(&mca_ptl_gm_module.gm_send_frags, item, rc);*/
 
 
 struct mca_ptl_gm_recv_frag_t {

@@ -21,12 +21,21 @@
 #define  GM_DBG(flag, args...)                                 \
 do {                                                           \
     if (PTL_GM_DBG_FLAG & flag) {                              \
-	char hostname[32]; gethostname(hostname, 32);          \
-	fprintf(stderr, "[%s:%s:%d] ",                         \
-		hostname, __FUNCTION__, __LINE__);             \
-	fprintf(stderr, args);                                 \
+	char hostname[32]; gethostname(hostname, 32);              \
+	fprintf(stderr, "[%s:%s:%d] ",                             \
+		hostname, __FUNCTION__, __LINE__);                     \
+	fprintf(stderr, args);                                     \
     }                                                          \
 } while (0)
+
+#if 0
+#define A_PRINT(fmt, args...) {                                     \
+    ompi_output(0, "[%s:%d:%s] " fmt, __FILE__, __LINE__, __func__, \
+        ##args);                                                    \
+}
+#else
+#define A_PRINT(fmt, args...)
+#endif
 
 
 void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl,
