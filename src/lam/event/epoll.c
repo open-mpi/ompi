@@ -55,9 +55,11 @@
 
 #include "event.h"
 #include "evsignal.h"
+#include "lam/threads/mutex.h"
 
 extern struct lam_event_list lam_eventqueue;
 extern volatile sig_atomic_t lam_evsignal_caught;
+extern lam_mutex_t lam_event_mutex;
 
 /* due to limitations in the epoll interface, we need to keep track of
  * all file descriptors outself.
@@ -174,7 +176,9 @@ epoll_dispatch(void *arg, struct timeval *tv)
 		return (-1);
 
 	timeout = tv->tv_sec * 1000 + tv->tv_usec / 1000;
+        lam_mutex_unlock(&lam_event_lock);
 	res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
+        lam_mutex_lock(&lam_event_lock);
 
 	if (lam_evsignal_recalc(&epollop->evsigmask) == -1)
 		return (-1);
@@ -218,15 +222,15 @@ epoll_dispatch(void *arg, struct timeval *tv)
 			continue;
 
 		if (evread != NULL && !(evread->ev_events & EV_PERSIST))
-			event_del(evread);
+			lam_event_del(evread);
 		if (evwrite != NULL && evwrite != evread &&
 		    !(evwrite->ev_events & EV_PERSIST))
-			event_del(evwrite);
+			lam_event_del(evwrite);
 
 		if (evread != NULL)
-			event_active(evread, EV_READ, 1);
+			lam_event_active(evread, EV_READ, 1);
 		if (evwrite != NULL)
-			event_active(evwrite, EV_WRITE, 1);
+			lam_event_active(evwrite, EV_WRITE, 1);
 	}
 
 	return (0);

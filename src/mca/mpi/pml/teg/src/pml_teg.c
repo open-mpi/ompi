@@ -276,8 +276,25 @@ int mca_pml_teg_module_fini(void)
 
 int mca_pml_teg_null(lam_request_t** request)
 {
-    *request = &mca_pml_teg.teg_null;
+    *request = (lam_request_t*)&mca_pml_teg.teg_null;
     return LAM_SUCCESS;
 }
 
+void mca_pml_teg_request_return(mca_pml_base_request_t* request)
+{
+    switch(request->req_type) {
+        case MCA_PML_REQUEST_SEND:
+            {
+            mca_ptl_base_send_request_t* sendreq = (mca_ptl_base_send_request_t*)request;
+            sendreq->req_owner->ptl_request_return(sendreq->req_owner, sendreq);
+            break;
+            }
+        case MCA_PML_REQUEST_RECV:
+            {
+            mca_ptl_base_recv_request_t* recvreq = (mca_ptl_base_recv_request_t*)request;
+            lam_free_list_return(&mca_pml_teg.teg_recv_requests,(lam_list_item_t*)recvreq);
+            break;
+            }
+    }
+}
 

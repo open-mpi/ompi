@@ -85,7 +85,6 @@ typedef int (*mca_pml_base_irecv_init_fn_t)(
     struct lam_datatype_t *datatype,
     int src,
     int tag,
-    bool persistent,
     struct lam_communicator_t* comm,
     struct lam_request_t **request
 );
@@ -117,7 +116,6 @@ typedef int (*mca_pml_base_isend_init_fn_t)(
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
-    bool persistent,
     struct lam_communicator_t* comm,
     struct lam_request_t **request
 );
@@ -148,8 +146,8 @@ typedef int (*mca_pml_base_start_fn_t)(
 );
 
 typedef int (*mca_pml_base_test_fn_t)(
-    lam_request_t* request,
-    bool *completed,
+    lam_request_t** request,
+    int *completed,
     lam_status_public_t* status
 );
 
