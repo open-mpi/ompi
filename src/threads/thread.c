@@ -33,7 +33,7 @@ int ompi_thread_start(ompi_thread_t* t)
 #if OMPI_HAVE_POSIX_THREADS
     int rc;
 #if OMPI_ENABLE_DEBUG
-    if(NULL == t->t_run || t->t_handle != -1)
+    if(NULL == t->t_run || t->t_handle != (pthread_t) -1)
         return OMPI_ERR_BAD_PARAM;
 #endif
     rc = pthread_create(&t->t_handle, NULL, (pthread_start_fn_t)t->t_run, t);
