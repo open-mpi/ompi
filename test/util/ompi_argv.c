@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "support.h"
 #include "ompi_config.h"
 #include "include/constants.h"
 #include "util/argv.h"
@@ -22,15 +23,37 @@ static bool test8(void);
 
 int main(int argc, char* argv[])
 {
+
+  test_init("ompi_argv_t");
+
+  if( test1() ) test_success();
+  else test_failure("test1 argv test failed");
+
+  if( test2() ) test_success();
+  else test_failure("test2 argv test failed");
+
+  if( test3() ) test_success();
+  else test_failure("test3 argv test failed");
+
+  if( test4() ) test_success();
+  else test_failure("test4 argv test failed");
+
+  if( test5() ) test_success();
+  else test_failure("test5 argv test failed");
+
+  if( test6() ) test_success();
+  else test_failure("test6 argv test failed");
+
+  if( test7() ) test_success();
+  else test_failure("test7 argv test failed");
+
+  if( test8() ) test_success();
+  else test_failure("test8 argv test failed");
+
+  
   /* All done */
+  test_finalize();
 
-  if (!test1() || !test2() || !test3() || !test4() || !test5() || !test6() ||
-      !test7() || !test8()) {
-    printf("test failed\n");
-    return -1;
-  }
-
-  printf("test succeeded\n");
   return 0;
 }
 
