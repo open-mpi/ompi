@@ -5,11 +5,13 @@
 /** @file alternative memcpy function */
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "lam_config.h"
 #include "lam/stdint.h"
 
-#define ALIGNED32(X) ((uint32_t)(X) & (uint32_t) 3 == (uint32_t) 0 ? 1 : 0)
+
+#define ALIGNED32(X) (((uint32_t)(X) & (uint32_t) 3) == (uint32_t) 0 ? 1 : 0)
 
 /**
  * Alternative memcpy function
