@@ -383,21 +383,6 @@ static int mca_ptl_ib_rc_qp_init(VAPI_hca_hndl_t nic,
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_ib_get_num_hcas(uint32_t* num_hcas)
-{
-    VAPI_ret_t ret;
-
-    /* List all HCAs */
-    ret = EVAPI_list_hcas(0, num_hcas, NULL);
-
-    if( (VAPI_OK != ret) && (VAPI_EAGAIN != ret)) {
-        MCA_PTL_IB_VAPI_RET(ret, "EVAPI_list_hcas");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
 int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
         void* buf, int len, vapi_memhandle_t* memhandle)
 {
