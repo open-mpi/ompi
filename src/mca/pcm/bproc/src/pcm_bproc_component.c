@@ -22,10 +22,12 @@
 #include "class/ompi_list.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"
+#include "mca/pcm/base/base_data_store.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
 #include "mca/llm/base/base.h"
 #include "runtime/runtime.h"
+#include "runtime/ompi_rte_wait.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -77,31 +79,12 @@ ompi_output_stream_t mca_pcm_bproc_output_stream = {
  */
 static int param_priority;
 
-/* disable stdio */
-static int param_stdin_dev_null;
-static int param_no_io_forwarding;
-
-/* use forwarding */
-static int param_line_buffer;
-static int param_prefix_io;
-static int param_line_buffer_size;
-static int param_stdin_rank;
-
-/* use files */
-static int param_stdin_file;
-static int param_stdout_file;
-static int param_stderr_file;
-
 
 int
 mca_pcm_bproc_component_open(void)
 {
   param_priority =
     mca_base_param_register_int("pcm", "bproc", "priority", NULL, 5);
-  param_stdin_dev_null =
-     mca_base_param_register_int("pcm", "bproc", "priority", NULL, 5);
-
-
   return OMPI_SUCCESS;
 }
 
@@ -159,16 +142,15 @@ mca_pcm_bproc_init(int *priority,
       return NULL;
     }
 
+    me->data_store = mca_pcm_base_data_store_init();
     me->constraints = constraints;
-    me->jobs = mca_pcm_base_job_list_init();
 
     /*
      * fill in the function pointers
      */
     me->super.pcm_allocate_resources = mca_pcm_bproc_allocate_resources;
     me->super.pcm_spawn_procs = mca_pcm_bproc_spawn_procs;
-    me->super.pcm_kill_proc = mca_pcm_bproc_kill_proc;
-    me->super.pcm_kill_job = mca_pcm_bproc_kill_job;
+    me->super.pcm_kill = mca_pcm_bproc_kill;
     me->super.pcm_deallocate_resources = mca_pcm_bproc_deallocate_resources;
     me->super.pcm_finalize = mca_pcm_bproc_finalize;
 
@@ -180,13 +162,31 @@ int
 mca_pcm_bproc_finalize(struct mca_pcm_base_module_1_0_0_t* me_super)
 {
     mca_pcm_bproc_module_t *me = (mca_pcm_bproc_module_t*) me_super;
+    pid_t *pids;
+    size_t i, len;
+    int status;
 
     if (NULL == me) return OMPI_ERR_BAD_PARAM;
 
     me->llm->llm_finalize(me->llm);
+    
+    /* remove all the job entries and keep them from having callbacks
+       triggered (calling back into us once we are unmapped is
+       *bad*) */
+    ompi_rte_wait_cb_disable();
+    mca_pcm_base_data_store_get_all_pids(me->data_store, &pids, &len, true);
+    for (i = 0 ; i < len ; ++i) {
+        ompi_rte_wait_cb_cancel(pids[i]);
+    }
+    ompi_rte_wait_cb_enable();
+
+    for (i = 0 ; i < len ; ++i) {
+        ompi_rte_waitpid(pids[i], &status, 0);
+    }
+
+    mca_pcm_base_data_store_finalize(me->data_store);
 
     free(me);
-
     return OMPI_SUCCESS;
 }
 

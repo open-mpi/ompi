@@ -25,7 +25,6 @@
 #include "mca/llm/llm.h"
 #include "include/types.h"
 #include "class/ompi_list.h"
-#include "mca/pcm/base/base_job_track.h"
 
 #include <sys/types.h>
 
@@ -58,10 +57,8 @@ extern "C" {
                                                   int nodes, int procs);
     int mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
                                   mca_ns_base_jobid_t jobid, ompi_list_t *schedule_list);
-    int mca_pcm_bproc_kill_proc(struct mca_pcm_base_module_1_0_0_t* me,
-                                ompi_process_name_t *name, int flags);
-    int mca_pcm_bproc_kill_job(struct mca_pcm_base_module_1_0_0_t* me,
-                               mca_ns_base_jobid_t jobid, int flags);
+    int mca_pcm_bproc_kill(struct mca_pcm_base_module_1_0_0_t* me, int mode_flag,
+                           ompi_process_name_t *name, int signal, int flags);
     int mca_pcm_bproc_deallocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
                                            mca_ns_base_jobid_t jobid,
                                            ompi_list_t *nodelist);
@@ -70,17 +67,12 @@ extern "C" {
      * Internal monitor functions
      */
     void mca_pcm_bproc_monitor_cb(pid_t pid, int status, void *data);
-    void mca_pcm_bproc_stdin_handler(int sd, short flags, void *user);
-    void mca_pcm_bproc_stdout_handler(int sd, short flags, void *user);
-    void mca_pcm_bproc_stderr_handler(int sd, short flags, void *user);
 
 
     struct mca_pcm_bproc_module_t {
         mca_pcm_base_module_t super;
-
         mca_llm_base_module_t *llm;
-        mca_pcm_base_job_list_t *jobs;
-
+        struct mca_pcm_base_data_store_t *data_store;
         int constraints;
     };
     typedef struct mca_pcm_bproc_module_t mca_pcm_bproc_module_t;
