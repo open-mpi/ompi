@@ -236,7 +236,7 @@ extern "C" {
    *
    * NOTE: It *always* sets the "fortran" flag to false.  Fortran
    * wrappers for MPI_*_CREATE_ERRHANDLER are expected to reset this
-   * flag to false manually.
+   * flag to true manually.
    */
   lam_errhandler_t *lam_errhandler_create(lam_errhandler_type_t object_type,
                                           lam_errhandler_fortran_handler_fn_t *func);
