@@ -61,7 +61,7 @@ typedef struct mca_ptl_base_peer_t mca_ptl_tcp_peer_t;
 
 void mca_ptl_tcp_set_socket_options(int sd);
 void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t*);
-int  mca_ptl_tcp_peer_send(mca_ptl_base_peer_t*, mca_ptl_tcp_send_frag_t*);
+int  mca_ptl_tcp_peer_send(mca_ptl_base_peer_t*, mca_ptl_tcp_send_frag_t*, int);
 bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t*, struct sockaddr_in*, int);
 void mca_ptl_tcp_peer_shutdown(mca_ptl_base_peer_t*);
 

@@ -151,7 +151,7 @@ static inline void mca_ptl_tcp_peer_event_init(mca_ptl_base_peer_t* ptl_peer, in
  * queue the fragment and start the connection as required.
  */
 
-int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t* frag)
+int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t* frag, int offset)
 {
     int rc = OMPI_SUCCESS;
     OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
@@ -169,7 +169,7 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
     case MCA_PTL_TCP_CONNECTED:
         if (NULL != ptl_peer->peer_send_frag) {
             ompi_list_append(&ptl_peer->peer_frags, (ompi_list_item_t*)frag);
-        } else {
+        } else if (offset == 0) {
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd)) {
                 OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
                 mca_ptl_tcp_send_frag_progress(frag);
@@ -178,6 +178,9 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
                 ptl_peer->peer_send_frag = frag;
                 ompi_event_add(&ptl_peer->peer_send_event, 0);
             }
+        } else {
+            ptl_peer->peer_send_frag = frag;
+            ompi_event_add(&ptl_peer->peer_send_event, 0);
         }
         break;
     case MCA_PTL_TCP_SHUTDOWN:
