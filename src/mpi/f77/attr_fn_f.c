@@ -80,7 +80,7 @@ OMPI_GENERATE_F77_BINDINGS( MPI_TYPE_NULL_DELETE_FN,
                             mpi_type_null_delete_fn_,
                             mpi_type_null_delete_fn__,
                             mpi_type_null_delete_fn_f,
-                            (MPI_Fint* type, MPI_Fnt* type_keyval, MPI_Fint* attribute_val_out, MPI_Fint* extra_state, MPI_Fint* ierr),
+                            (MPI_Fint* type, MPI_Fint* type_keyval, MPI_Fint* attribute_val_out, MPI_Fint* extra_state, MPI_Fint* ierr),
                             (type, type_keyval, attribute_val_out, extra_state, ierr) )
 OMPI_GENERATE_F77_BINDINGS( MPI_TYPE_NULL_COPY_FN,
                             mpi_type_null_copy_fn,
