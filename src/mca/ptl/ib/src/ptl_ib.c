@@ -74,6 +74,7 @@ int mca_ptl_ib_add_procs(
 
     D_PRINT("Adding %d procs\n", nprocs);
 
+
     for(i = 0; i < nprocs; i++) {
 
         ompi_proc = ompi_procs[i];
