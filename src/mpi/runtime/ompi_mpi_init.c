@@ -351,7 +351,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
 #if OMPI_HAVE_THREADS == 0
-    ompi_progress_events(0);
+    ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
 #endif
 
     /* Wait for everyone to initialize */
