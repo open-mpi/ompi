@@ -474,6 +474,7 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
         goto cleanup;
     } else if (pid == 0) {
         /* child */
+        setpgid(0, 0);
 
         if ((dup2(kidstdin[0], 0) < 0)) {
             /* BWB - XXX - FIX ME to use show help */
@@ -498,6 +499,7 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
     } else {
         int comm_fd;
 
+        setpgid(pid, 0);
         /* parent */
         close(kidstdin[0]);
 

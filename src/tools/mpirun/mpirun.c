@@ -50,6 +50,38 @@
 
 extern char** environ;
 
+struct ompi_event term_handler;
+struct ompi_event int_handler;
+struct ompi_event exit_handler;
+mca_ns_base_jobid_t new_jobid = MCA_NS_BASE_JOBID_MAX;
+
+static void
+exit_callback(int fd, short event, void *arg)
+{
+    printf("we failed to exit cleanly :(\n");
+    exit(1);
+}
+
+static void
+signal_callback(int fd, short event, void *arg)
+{
+    int ret;
+    struct timeval tv;
+
+    if (new_jobid != MCA_NS_BASE_JOBID_MAX) {
+        ret = ompi_rte_terminate_job(new_jobid, 0);
+        if (OMPI_SUCCESS != ret) {
+            new_jobid = MCA_NS_BASE_JOBID_MAX;
+        }
+    }
+
+    tv.tv_sec = 3;
+    tv.tv_usec = 0;
+    ompi_evtimer_set(&exit_handler, exit_callback, NULL);
+    ompi_evtimer_add(&exit_handler, &tv);
+}
+
+
 
 int
 main(int argc, char *argv[])
@@ -60,7 +92,6 @@ main(int argc, char *argv[])
     ompi_cmd_line_t *cmd_line = NULL;
     ompi_list_t *nodelist = NULL;
     ompi_list_t schedlist;
-    mca_ns_base_jobid_t new_jobid;
     int num_procs = 1;
     ompi_rte_node_schedule_t *sched;
     char cwd[MAXPATHLEN];
@@ -71,6 +102,8 @@ main(int argc, char *argv[])
     ompi_rte_process_status_t *proc_status;
     ompi_list_t *status_list;
     ompi_registry_value_t *value;
+        
+
     /*
      * Intialize our Open MPI environment
      */
@@ -225,6 +258,12 @@ main(int argc, char *argv[])
     }
 
     /*****    PREP TO START THE APPLICATION    *****/
+    ompi_event_set(&term_handler, SIGTERM, OMPI_EV_SIGNAL,
+                   signal_callback, NULL);
+    ompi_event_add(&term_handler, NULL);
+    ompi_event_set(&int_handler, SIGINT, OMPI_EV_SIGNAL,
+                   signal_callback, NULL);
+    ompi_event_add(&int_handler, NULL);
 
     /* get the jobid for the application */
     new_jobid = ompi_name_server.create_jobid();
@@ -332,9 +371,10 @@ main(int argc, char *argv[])
 	ompi_rte_job_startup(new_jobid);
 	ompi_rte_monitor_procs_unregistered();
     }
-    /*
-     *   - ompi_rte_kill_job()
-     */
+
+    /* remove signal handler */
+    ompi_event_del(&term_handler);
+    ompi_event_del(&int_handler);
 
     /*
      * Determine if the processes all exited normally - if not, flag the output of mpirun
@@ -367,11 +407,12 @@ main(int argc, char *argv[])
 	unlink(filenm);
     }
 
+    OBJ_DESTRUCT(&schedlist);
+
     ompi_rte_finalize();
     mca_base_close();
     ompi_finalize();
 
-    OBJ_DESTRUCT(&schedlist);
     return ret;
 }
 
