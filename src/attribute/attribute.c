@@ -13,13 +13,15 @@
 #define ATTR_TABLE_SIZE 10
 
 /* This is done so that I can have a conssitent interface to my macros
-   here, because Datatype and Type - both are used for Datatype
-   related stuff */
+   here */
 
 #define MPI_DATATYPE_NULL_COPY_FN MPI_TYPE_NULL_COPY_FN
-#define lam_Comm_t lam_communicator_t *
-#define lam_Type_t lam_datatype_t *
-#define lam_Win_t lam_win_t *
+#define lam_c_t lam_communicator_t *
+#define lam_d_t lam_datatype_t *
+#define lam_w_t lam_win_t *
+#define MPI_c_delete_attr_function MPI_Comm_delete_attr_function
+#define MPI_d_delete_attr_function MPI_Type_delete_attr_function
+#define MPI_w_delete_attr_function MPI_Win_delete_attr_function
 
 #define CREATE_KEY() lam_bitmap_find_and_set_first_unset_bit(key_bitmap)
 
@@ -39,11 +41,11 @@
 
 
 #define GET_ATTR(type) \
-    lam_hash_table_get_value_uint32(((lam_##type##_t)object)->keyhash, key);
+    lam_hash_table_get_value_uint32(((lam_##type##_t)object)->type##_keyhash, key);
 
 
 #define SET_ATTR(type, attribute) \
-    ret = lam_hash_table_set_value_uint32(((lam_##type##_t)object)->keyhash,\
+    ret = lam_hash_table_set_value_uint32(((lam_##type##_t)object)->type##_keyhash,\
                                             key, \
                                             attribute); \
     if (ret != LAM_SUCCESS) \
@@ -51,7 +53,7 @@
 
 
 #define REMOVE_ATTR_ENTRY(type) \
-    ret = lam_hash_table_remove_value_uint32(((lam_##type##_t)object)->keyhash,\
+    ret = lam_hash_table_remove_value_uint32(((lam_##type##_t)object)->type##_keyhash,\
                                                key);\
     if (ret != LAM_SUCCESS) \
         return ret;
@@ -261,21 +263,21 @@ lam_attr_delete(lam_attribute_type_t type, void *object, int key,
     switch(type) {
   
     case COMM_ATTR:
-	attr = GET_ATTR(Comm);
-	DELETE_ATTR_OBJECT(Comm, COMM, attr);
-	REMOVE_ATTR_ENTRY(Comm);
+	attr = GET_ATTR(c);
+	DELETE_ATTR_OBJECT(c, COMM, attr);
+	REMOVE_ATTR_ENTRY(c);
 	break;
 
     case WIN_ATTR:
-	attr = GET_ATTR(Win);
-	DELETE_ATTR_OBJECT(Win, WIN, attr);
-	REMOVE_ATTR_ENTRY(Win);
+	attr = GET_ATTR(w);
+	DELETE_ATTR_OBJECT(w, WIN, attr);
+	REMOVE_ATTR_ENTRY(w);
 	break;
 
     case TYPE_ATTR:
-	attr = GET_ATTR(Type);
-	DELETE_ATTR_OBJECT(Type, TYPE, attr);
-	REMOVE_ATTR_ENTRY(Type);
+	attr = GET_ATTR(d);
+	DELETE_ATTR_OBJECT(d, TYPE, attr);
+	REMOVE_ATTR_ENTRY(d);
 	break;
 
     default:
@@ -320,30 +322,30 @@ lam_attr_set(lam_attribute_type_t type, void *object, int key, void *attribute,
     switch(type) {
     
     case COMM_ATTR:
-	oldattr = GET_ATTR(Comm);
+	oldattr = GET_ATTR(c);
 	if (oldattr != NULL) {
-	    DELETE_ATTR_OBJECT(Comm, COMM, oldattr);
+	    DELETE_ATTR_OBJECT(c, COMM, oldattr);
 	    had_old = 1;
 	}
-	SET_ATTR(Comm, attribute);
+	SET_ATTR(c, attribute);
 	break;
       
     case WIN_ATTR:
-	oldattr = GET_ATTR(Win);
+	oldattr = GET_ATTR(w);
 	if (oldattr != NULL) {
-	    DELETE_ATTR_OBJECT(Win, WIN, oldattr);
+	    DELETE_ATTR_OBJECT(w, WIN, oldattr);
 	    had_old = 1;
 	}
-	SET_ATTR(Win, attribute);
+	SET_ATTR(w, attribute);
 	break;
     
     case TYPE_ATTR:
-	oldattr = GET_ATTR(Type);
+	oldattr = GET_ATTR(d);
 	if (oldattr != NULL) {
-	    DELETE_ATTR_OBJECT(Type, TYPE, oldattr);
+	    DELETE_ATTR_OBJECT(d, TYPE, oldattr);
 	    had_old = 1;
 	}
-	SET_ATTR(Type, attribute);
+	SET_ATTR(d, attribute);
 	break;
       
     default:
@@ -376,15 +378,15 @@ lam_attr_get(lam_attribute_type_t type, void *object, int key, void *attribute,
     switch (type) {
 
     case COMM_ATTR:
-	attr = GET_ATTR(Comm);
+	attr = GET_ATTR(c);
 	break;
     
     case WIN_ATTR:
-	attr = GET_ATTR(Win);
+	attr = GET_ATTR(w);
 	break;
 
     case TYPE_ATTR:
-	attr = GET_ATTR(Type);
+	attr = GET_ATTR(d);
 	break;
 
     default:
