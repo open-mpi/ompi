@@ -600,7 +600,8 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
  */
 int32_t ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
 {
-    if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) return 0;
+    ompi_datatype_t* pData = pConvertor->pDesc;
+    if( (long)pData->size == (pData->ub - pData->lb) ) return 0;
     return 1;
 }
 
