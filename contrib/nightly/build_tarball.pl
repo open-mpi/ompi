@@ -278,7 +278,7 @@ sub try_build {
 
     # make the source root
     if (! -d $srcroot) {
-        mkdir($srcroot);
+        mkdir($srcroot, 0777);
     }
     chdir($srcroot);
 
@@ -300,7 +300,7 @@ sub try_build {
     # configure it
     my $config_command = "./configure";
     if ($vpath_mode) {
-        mkdir("vpath_build");
+        mkdir("vpath_build", 0777);
         chdir("vpath_build");
         if ($vpath_mode eq "relative") {
             $config_command = "../configure";
@@ -335,7 +335,7 @@ sub try_build {
     # try compiling and linking a simple C application
     chdir("..");
     if (! -d test) {
-        mkdir("test");
+        mkdir("test", 0777);
     }
     chdir("test");
     open C, ">hello.c";
@@ -512,7 +512,7 @@ test_abort("Cannot find downloading program -- aborting in despair\n")
 # move into the scratch directory, and ensure we have an absolute path
 # for it
 if (! -d $scratch_root_arg) {
-    mkdir($scratch_root_arg);
+    mkdir($scratch_root_arg, 0777);
 }
 test_abort("Could not cd to scratch root: $scratch_root_arg\n")
     if (! -d $scratch_root_arg);
@@ -523,7 +523,7 @@ chomp($scratch_root_arg);
 # ensure some subdirs exist
 foreach my $dir (qw(downloads)) {
     if (! -d $dir) {
-        mkdir($dir);
+        mkdir($dir, 0777);
     } 
 }
 
@@ -611,7 +611,7 @@ WARNING: checksums.  Proceeding anyway...\n\n");
 # root will be absolute)
 my $root= "$scratch_root_arg/build-$version";
 system("rm -rf $root");
-mkdir($root);
+mkdir($root, 0777);
 chdir($root);
 
 # loop over all configurations
