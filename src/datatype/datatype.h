@@ -24,7 +24,7 @@
 /* if there are more basic datatypes than the number of bytes in the int type
  * the bdt_used field of the data description struct should be changed to long.
  */
-#define DT_MAX_PREDEFINED  0x25
+#define DT_MAX_PREDEFINED  0x2A
 
 #define DT_INCREASE_STACK  32
 
@@ -32,16 +32,16 @@
  * by a set of basic elements.
  */
 typedef struct __dt_elem_desc {
-      unsigned short flags;  /**< flags for the record */
-      unsigned short type;   /**< the basic data type id */
-      unsigned int   count;  /**< number of elements */
-      long           disp;   /**< displacement of the first element */
-      unsigned int   extent; /**< extent of each element */
+      u_int16_t flags;  /**< flags for the record */
+      u_int16_t type;   /**< the basic data type id */
+      u_int32_t count;  /**< number of elements */
+      long      disp;   /**< displacement of the first element */
+      u_int32_t extent; /**< extent of each element */
 } dt_elem_desc_t;
 
 typedef struct __dt_struct_desc {
-   int length;  /* the maximum number of elements in the description array */
-   int used;    /* the number of used elements in the description array */
+   int32_t length;  /* the maximum number of elements in the description array */
+   int32_t used;    /* the number of used elements in the description array */
    dt_elem_desc_t* desc;
 } dt_type_desc_t;
 
@@ -49,30 +49,30 @@ typedef struct __dt_struct_desc {
  */
 typedef struct lam_datatype_t {
    lam_object_t super;    /**< basic superclass */
-   unsigned int size;     /**< total size in bytes of the memory used by the data if
+   u_int32_t    size;     /**< total size in bytes of the memory used by the data if
                            * the data is put on a contiguous buffer */
-   long true_lb;
-   long true_ub;          /**< the true ub of the data without user defined lb and ub */
-   unsigned int align;    /**< data should be aligned to */
-   long lb;               /**< lower bound in memory */
-   long ub;               /**< upper bound in memory */
-   unsigned short flags;  /**< the flags */
-   unsigned short id;     /**< data id, normally the index in the data array. */
-   unsigned int nbElems;  /**< total number of elements inside the datatype */
-   unsigned long long bdt_used; /**< which basic datatypes are used in the data description */
+   long         true_lb;
+   long         true_ub;  /**< the true ub of the data without user defined lb and ub */
+   u_int32_t    align;    /**< data should be aligned to */
+   long         lb;       /**< lower bound in memory */
+   long         ub;       /**< upper bound in memory */
+   u_int16_t    flags;    /**< the flags */
+   u_int16_t    id;       /**< data id, normally the index in the data array. */
+   u_int32_t    nbElems;  /**< total number of elements inside the datatype */
+   u_int64_t    bdt_used; /**< which basic datatypes are used in the data description */
 
    /* Attribute fields */
    lam_hash_table_t *d_keyhash;
    char name[MPI_MAX_OBJECT_NAME];
 
-   dt_type_desc_t desc;   /**< the data description */
+   dt_type_desc_t desc;     /**< the data description */
    dt_type_desc_t opt_desc; /**< short description of the data used when conversion is useless
                              * or in the send case (without conversion) */
-   void*        args;     /**< data description for the user */
+   void*          args;     /**< data description for the user */
 
    /* basic elements count used to compute the size of the datatype for
     * remote nodes */
-   unsigned int btypes[DT_MAX_PREDEFINED];
+   u_int32_t      btypes[DT_MAX_PREDEFINED];
 } dt_desc_t, lam_datatype_t;
 
 OBJ_CLASS_DECLARATION( lam_datatype_t );
@@ -144,22 +144,22 @@ typedef int (*convertor_advance_fct_t)( lam_convertor_t* pConvertor,
 
 /* and now the convertor stuff */
 struct lam_convertor_t {
-   lam_object_t super;    /**< basic superclass */
-   dt_desc_t* pDesc;
-   long remoteArch;
-   dt_stack_t* pStack;
-   /* the convertor functions pointer */
-   /* the local stack for the actual conversion */
-   int converted;   /* the number of already converted elements */
-   int bConverted;  /* the size of already converted elements in bytes */
-   unsigned int flags;
-   unsigned int count;
-   unsigned int stack_pos;
-   char* pBaseBuf;
-   unsigned int available_space;
-   void* freebuf;
-   convertor_advance_fct_t fAdvance;
-   conversion_fct_t* pFunctions;
+    lam_object_t super;    /**< basic superclass */
+    dt_desc_t* pDesc;
+    long remoteArch;
+    dt_stack_t* pStack;
+    /* the convertor functions pointer */
+    /* the local stack for the actual conversion */
+    int32_t   converted;   /* the number of already converted elements */
+    int32_t   bConverted;  /* the size of already converted elements in bytes */
+    u_int32_t flags;
+    u_int32_t count;
+    u_int32_t stack_pos;
+    char*     pBaseBuf;
+    u_int32_t available_space;
+    void*     freebuf;
+    convertor_advance_fct_t fAdvance;
+    conversion_fct_t* pFunctions;
 };
 OBJ_CLASS_DECLARATION( lam_convertor_t );
 
