@@ -33,7 +33,7 @@
  */
 #define MCA_PML_TEG_RECV_REQUEST_RETURN(request)                                        \
     {                                                                                   \
-    OBJ_RELEASE(request->req_base.req_comm);                                            \
+    OBJ_RELEASE((request)->req_base.req_comm);                                            \
     OMPI_FREE_LIST_RETURN(&mca_pml_teg.teg_recv_requests, (ompi_list_item_t*)request);  \
     }
 

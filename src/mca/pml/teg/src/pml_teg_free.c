@@ -6,6 +6,7 @@
 
 #include "pml_teg.h"
 #include "pml_teg_sendreq.h"
+#include "pml_teg_recvreq.h"
 #include "mca/pml/base/pml_base_request.h"
 
 
