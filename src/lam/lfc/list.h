@@ -64,31 +64,45 @@ void lam_list_destroy(lam_list_t *list);
  * Inlined accessor functions
  */
 
-#define lam_list_get_type(list) \
-    ((lam_list_t*)list)->lam_list_type
+static inline lam_list_type_t lam_list_get_type(lam_list_t* list)
+{
+    return list->lam_list_type;
+}
 
-#define lam_list_set_type(list, type) \
-    (((lam_list_t*)list)->lam_list_type = type)
+static inline void lam_list_set_type(lam_list_t* list, lam_list_type_t type)
+{
+    list->lam_list_type = type;
+}
 
-#define lam_list_get_size(list) \
-    ((lam_list_t*)list)->lam_list_length
+static inline size_t lam_list_get_size(lam_list_t* list)
+{
+    return list->lam_list_length;
+}
 
-    /* set list size */
-#define lam_list_set_size(list,size) \
-    ((lam_list_t*)list)->lam_list_length=(int)size;
 
 /* 
  * Returns first item on list, but does not remove it from the list. 
  */
-#define lam_list_get_first(list) \
-    ((lam_list_t*)list)->lam_list_head
-
+static inline lam_list_item_t* lam_list_get_first(lam_list_t* list)
+{
+    return 0;
+}
 
 /* 
  * Returns last item on list, but does not remove it from the list. 
  */
-#define lam_list_get_last(list) \
-    ((lam_list_list_t*)list)->lam_list_tail
+static inline lam_list_item_t* lam_list_get_last(lam_list_t* list)
+{
+    return 0;
+}
+
+/* 
+ * Returns end of list, an invalid list entry.
+ */
+static inline lam_list_item_t* lam_list_get_end(lam_list_t* list)
+{
+    return 0;
+}
 
 
 /* 

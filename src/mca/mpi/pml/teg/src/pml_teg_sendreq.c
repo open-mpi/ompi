@@ -5,9 +5,15 @@
 
 #include "lam/constants.h"
 #include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/pml/base/pml_base_sendreq.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
+#include "pml_teg_sendreq.h"
+
+
+int mca_pml_teg_send_request_alloc(mca_pml_proc_t* proc, mca_pml_base_send_request_t** sendreq)
+{
+    return LAM_SUCCESS;
+}
 
 
 /*
@@ -51,28 +57,6 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req, bool* co
     lam_proc_t *proc = lam_comm_lookup_peer(req->super.req_communicator, req->super.req_peer);
     mca_pml_proc_t* proc_pml = proc->proc_pml;
 
-    /* allocate first fragment, if the first PTL in the list 
-     * cannot allocate resources for the fragment, try the next 
-     * available.
-    */
-    if(req->req_frags_allocated == 0) {
-        size_t num_ptl_avail = proc_pml->proc_ptl_first.ptl_size;
-        size_t i;
-        for(i = 0; i < num_ptl_avail; i++) {
-            mca_ptl_info_t* ptl_info = mca_ptl_array_get_next(&proc_pml->proc_ptl_first);
-            mca_ptl_t* ptl = ptl_info->ptl;
-            int rc = ptl->ptl_fragment(ptl, req, ptl->ptl_frag_first_size);
-            if (rc == LAM_SUCCESS)
-                break;
-            else if (rc != LAM_ERR_TEMP_OUT_OF_RESOURCE)
-                return rc;
-        }
-        /* has first fragment been allocated? */
-        if(req->req_frags_allocated == 0) {
-            *complete = false;
-            return LAM_SUCCESS;
-        }
-    }
 
     /* allocate remaining bytes to PTLs */
     size_t bytes_remaining = req->req_length - req->req_bytes_fragmented;
@@ -116,7 +100,7 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req, bool* co
  *
  */
 
-void mca_pml_teg_send_request_push()
+int mca_pml_teg_send_request_progress(void)
 {
     THREAD_LOCK(&mca_pml_teg.teg_lock);
     mca_pml_base_send_request_t* req;
@@ -127,15 +111,16 @@ void mca_pml_teg_send_request_push()
         bool complete;
         int rc = mca_pml_teg_send_request_schedule(req, &complete);
         if(rc != LAM_SUCCESS) {
-             // FIX 
-             exit(-1);
+             THREAD_UNLOCK(&mca_pml_teg.teg_lock);
+             return rc;
         }
         if(complete) {
-            req = (mca_pml_base_send_request_t*)lam_dbl_remove(
+            req = (mca_pml_base_send_request_t*)lam_list_remove(
                 &mca_pml_teg.teg_incomplete_sends, (lam_list_item_t*)req);
         }
     }
     THREAD_UNLOCK(&mca_pml_teg.teg_lock);
+    return LAM_SUCCESS;
 }
 
 
