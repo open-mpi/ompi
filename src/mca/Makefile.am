@@ -14,6 +14,7 @@ SUBDIRS = \
         pcm \
         pml \
         ptl \
+        topo \
         registry
 
 # Source code files

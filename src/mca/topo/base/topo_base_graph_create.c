@@ -3,6 +3,8 @@
  */
 
 #include "mca/topo/base/base.h"
+#include "communicator/communicator.h"
+#include "mca/topo/topo.h"
 
 /*
  *
@@ -20,14 +22,15 @@
  * @retval MPI_ERR_OUT_OF_RESOURCE
  */
 
-int topo_base_graph_create (lam_communicator_t *comm_old,
+int topo_base_graph_create (MPI_Comm comm_old,
                             int nnodes,
                             int *index,
                             int *edges,
                             int reorder,
-                            lam_communicator_t **comm_graph) {
-
-    lam_group_t *newgroup;
+                            MPI_Comm *comm_graph) {
+#if 0
+    MPI_Group newgroup;
+#endif
     int  nedges;
     int  size;
     int  err;
@@ -43,7 +46,7 @@ int topo_base_graph_create (lam_communicator_t *comm_old,
     topo = (int *) malloc((unsigned) (nnodes + nedges) * sizeof(int));
     if (topo == 0) {
         printf ("Out of resources\n");
-        return MPI_ERR_OUT_OF_RESOURCE;
+        return MPI_ERR_SYSRESOURCE;
     }
 
     for (i = 0, p = topo; i < nnodes; ++i, ++p) {
@@ -60,7 +63,9 @@ int topo_base_graph_create (lam_communicator_t *comm_old,
     /*
      * Create the group for the new communicator.
      */
+#if 0
     err = lam_comm_size (comm_old, &size);
+#endif
     if (err != MPI_SUCCESS) {
         free((char *) topo);
         return err;
@@ -72,12 +77,16 @@ int topo_base_graph_create (lam_communicator_t *comm_old,
     }
 
     if (nnodes == size) {
+#if 0
         err = lam_comm_group (comm_old, &newgroup);
+#endif
     } else {
         range[0][0] = 0;
         range[0][1] = nnodes - 1;
         range[0][2] = 1;
+#if 0
         err = lam_group_range_incl(comm_old->c_group, 1, range, &newgroup);
+#endif
     }
     if (err != MPI_SUCCESS) {
         free((char *) topo);
@@ -86,24 +95,30 @@ int topo_base_graph_create (lam_communicator_t *comm_old,
     /*
      * Create the new communicator.
      */
+#if 0
     err = lam_comm_create (comm_old, newgroup, comm_graph);
+#endif
     if (err != MPI_SUCCESS) {
          free((char *) topo);
+#if 0
          lam_group_free (&newgroup);
+#endif
          return err;
     }
     /*
      * Set the communicator topology information.
      */
     if (*comm_graph != MPI_COMM_NULL) {
-        (*comm_graph)->c_topo_type = MPI_GRAPH;
-        (*comm_graph)->c_topo_nprocs = nnodes;
-        (*comm_graph)->c_topo_nedges = nedges;
-        (*comm_graph)->c_topo_index = topo;
-        (*comm_graph)->c_topo_edges = topo + nnodes;
+        (*comm_graph)->c_topo_comm->mtc_type = MPI_GRAPH;
+        (*comm_graph)->c_topo_comm->mtc_nprocs = nnodes;
+        (*comm_graph)->c_topo_comm->mtc_nedges = nedges;
+        (*comm_graph)->c_topo_comm->mtc_index = topo;
+        (*comm_graph)->c_topo_comm->mtc_edges = topo + nnodes;
      }
 
+#if 0
     err = lam_group_free (&newgroup);
+#endif
     if (err != MPI_SUCCESS) {
         return err;
     }

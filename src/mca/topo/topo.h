@@ -10,7 +10,6 @@
 #include "mpi.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
-#include "communicator/communicator.h"
 
 /*
  * ******************************************************************
@@ -50,7 +49,7 @@
  * *********** These functions go in the module struct **********
  * **************** module struct *******************************
  */ 
-typedef const struct mca_topo_1_0_0_t * 
+typedef struct mca_topo_1_0_0_t * 
   (*mca_topo_base_comm_query_1_0_0_fn_t)(int *priority,
                                          bool *allow_multi_user_threads,
                                          bool *have_hidden_threads);
@@ -75,6 +74,30 @@ typedef mca_topo_base_module_1_0_0_t mca_topo_base_module_t;
  * *********************** module struct ends here ******************
  * ******************************************************************
  */ 
+/*
+ * ******************************************************************
+ * *********************** information structure  ******************
+ * ******************************************************************
+ */ 
+struct mca_topo_comm_1_0_0_t {
+        int mtc_cube_dim; /**< Inscribing cube dimension */
+        int mtc_type; /**< Topology type */
+        int mtc_nprocs; /**< Number of processes */
+        int mtc_ndims; /**< Number of cart dimensions */
+        int mtc_nedges; /**< Graph edges */
+        int *mtc_dims; /**< Cart dimensions */
+        int *mtc_coords; /**< Cart coordinates */
+        int *mtc_index; /**< Graph indices */
+        int *mtc_edges; /**< Graph edges */
+};
+typedef struct mca_topo_comm_1_0_0_t mca_topo_comm_1_0_0_t;
+typedef mca_topo_comm_1_0_0_t mca_topo_comm_t;
+
+/*
+ * ******************************************************************
+ * *********************** information structure   ******************
+ * ******************************************************************
+ */ 
 
 /*
  * ***********************************************************************
@@ -84,89 +107,89 @@ typedef mca_topo_base_module_1_0_0_t mca_topo_base_module_t;
  * ***********************************************************************
  */
 
-typedef int (*mca_topo_base_init_1_0_0_fn_t)
-                    (lam_commmunicator_t *comm,
-                     mca_topo_1_0_0_t **new_topo);
+typedef int (*mca_topo_base_init_1_0_0_fn_t) (void);
+/*                    (MPI_Comm comm,
+                     mca_topo_1_0_0_t **new_topo); */
 
 typedef int (*mca_topo_base_cart_coords_fn_t) 
-                    (lam_communicator_t* comm, 
+                    (MPI_Comm comm, 
                      int rank, 
                      int maxdims, 
                      int *coords);
 
 typedef int (*mca_topo_base_cart_create_fn_t)
-                    (lam_communicator_t* old_comm, 
+                    (MPI_Comm old_comm, 
                      int ndims, 
                      int *dims, 
                      int *periods, 
                      int redorder, 
-                     lam_communicator_t** comm_cart);
+                     MPI_Comm* comm_cart);
 
 typedef int (*mca_topo_base_cart_get_fn_t)
-                    (lam_communicator_t* comm, 
+                    (MPI_Comm comm, 
                      int maxdims, 
                      int *dims,
                      int *periods, 
                      int *coords);
 
 typedef int (*mca_topo_base_cartdim_get_fn_t)
-                    (lam_communicator_t *comm,
+                    (MPI_Comm comm,
                      int *ndims);
 
 typedef int (*mca_topo_base_cart_map_fn_t)
-                    (lam_communicator_t* comm, 
+                    (MPI_Comm comm, 
                      int ndims, 
                      int *dims,
                      int *periods, 
                      int *newrank);
 
 typedef int (*mca_topo_base_cart_rank_fn_t)
-                    (lam_communicator_t* comm, 
+                    (MPI_Comm comm, 
                      int *coords, 
                      int *rank);
 
 typedef int (*mca_topo_base_cart_shift_fn_t)
-                    (lam_communicator_t* comm, 
+                    (MPI_Comm comm, 
                      int direction, 
                      int disp,
                      int *rank_source, 
                      int *rank_dest);
 
 typedef int (*mca_topo_base_cart_sub_fn_t)
-                    (lam_communicator_t* comm, 
+                    (MPI_Comm comm, 
                      int *remain_dims, 
-                     lam_communicator_t** new_comm);
+                     MPI_Comm* new_comm);
 
 typedef int (*mca_topo_base_graph_create_fn_t)
-                    (lam_communicator_t* comm_old, 
+                    (MPI_Comm comm_old, 
                      int nnodes, 
                      int *index, 
                      int *edges, 
                      int reorder, 
-                     lam_communicator_t** comm_graph);
+                     MPI_Comm* comm_graph);
 
 typedef int (*mca_topo_base_graph_get_fn_t)
-                    (lam_communicator_t* comm, 
+                    (MPI_Comm comm, 
                      int maxindex, 
                      int maxedges, 
                      int *index, 
                      int *edges);
 
 typedef int (*mca_topo_base_graph_map_fn_t)
-                    (lam_communicator_t* comm, 
+                    (MPI_Comm comm, 
                      int nnodes, 
                      int *index, 
                      int *edges, 
                      int *newrank);
 
 typedef int (*mca_topo_base_graph_neighbors_fn_t)
-                    (lam_communicator_t* comm, 
+                    (MPI_Comm comm, 
                      int rank, 
                      int maxneighbors, 
                      int *neighbors);
 
 typedef int (*mca_topo_base_graph_neighbors_count_fn_t)
-                    (lam_communicator_t* comm, 
+                    (MPI_Comm comm, 
                      int rank, 
                      int *nneighbors);
 
@@ -223,7 +246,7 @@ typedef mca_topo_1_0_0_t mca_topo_t;
   extern "C" {
 #endif
    const mca_topo_1_0_0_t *
-         mca_topo_unity_comm_query(int *priority
+         mca_topo_unity_comm_query(int *priority,
                                    bool *allow_multi_user_threads,
                                    bool *have_hidden_threads);
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -3,6 +3,8 @@
  */
 
 #include "mca/topo/base/base.h"
+#include "communicator/communicator.h"
+#include "mca/topo/topo.h"
 
 /*
  * function - determines process coords in cartesian topology given
@@ -22,7 +24,7 @@
  * @retval MPI_ERR_ARG
  */                   
 
-int topo_base_cart_coords (lam_communicator_t *comm,
+int topo_base_cart_coords (MPI_Comm comm,
                            int rank,
                            int maxdims,
                            int *coords){
@@ -34,9 +36,9 @@ int topo_base_cart_coords (lam_communicator_t *comm,
     /*
      * loop computing the co-ordinates
      */ 
-    d = comm->c_topo_dims;
-    remprocs = comm->c_topo_nprocs;
-    for (i = 0; (i < comm->c_topo_ndims) && (i < maxdims); ++i, ++d) {
+    d = comm->c_topo_comm->mtc_dims;
+    remprocs = comm->c_topo_comm->mtc_nprocs;
+    for (i = 0; (i < comm->c_topo_comm->mtc_ndims) && (i < maxdims); ++i, ++d) {
         dim = (*d > 0) ? *d : -(*d);
         remprocs /= dim;
         *coords++ = rank / remprocs;

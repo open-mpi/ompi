@@ -3,6 +3,8 @@
  */
 
 #include "mca/topo/base/base.h"
+#include "communicator/communicator.h"
+#include "mca/topo/topo.h"
 
 /*
  * function - retrieves Cartesian topology information associated with a
@@ -14,10 +16,10 @@
  * @retval MPI_SUCCESS
  * @retval MPI_ERR_COMM
  */
-int topo_base_cartdim_get (lam_communicator_t *comm,
+int topo_base_cartdim_get (MPI_Comm comm,
                            int *ndims){
  
-    *ndims = comm->c_topo_ndims;
+    *ndims = comm->c_topo_comm->mtc_ndims;
     return MPI_SUCCESS;
 }
 

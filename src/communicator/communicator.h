@@ -12,6 +12,7 @@
 #include "mpi.h"
 #include "group/group.h"
 #include "mca/coll/coll.h"
+#include "mca/topo/topo.h"
 #include "lfc/lam_hash_table.h"
 #include "attribute/attribute.h"
 
@@ -43,16 +44,10 @@ struct lam_communicator_t {
     /* Attributes */
     lam_hash_table_t       *c_keyhash;
 
-    /* Topology information */
-    int c_cube_dim; /**< Inscribing cube dimension */
-    int c_topo_type; /**< Topology type */
-    int c_topo_nprocs; /**< Number of processes */
-    int c_topo_ndims; /**< Number of cart dimensions */
-    int c_topo_nedges; /**< Graph edges */
-    int *c_topo_dims; /**< Cart dimensions */
-    int *c_topo_coords; /**< Cart coordinates */
-    int *c_topo_index; /**< Graph indices */
-    int *c_topo_edges; /**< Graph edges */
+    /* Hooks for topo module to hang things */
+    mca_topo_1_0_0_t c_topo; /**< structure of function pointers */
+    mca_topo_comm_t *c_topo_comm; /**<structure containing information
+                                    *about the topology */
 
     /* index in Fortran <-> C translation array */
 

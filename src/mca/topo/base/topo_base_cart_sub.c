@@ -3,6 +3,8 @@
  */
 
 #include "mca/topo/base/base.h"
+#include "communicator/communicator.h"
+#include "mca/topo/topo.h"
 
 /*
  * function - partitions a communicator into subgroups which
@@ -19,16 +21,18 @@
  * @retval MPI_ERR_TOPOLOGY
  * @retval MPI_ERR_COMM
  */                
-int topo_base_cart_sub (lam_communicator_t *comm,
+int topo_base_cart_sub (MPI_Comm comm,
                         int *remain_dims,
-                        lam_communicator_t **new_comm){
-     lam_communicator_t *newcomm;
+                        MPI_Comm *new_comm){
+     MPI_Comm newcomm;
      int errcode;
      int colour;
      int key;
      int colfactor;
      int keyfactor;
+#if 0
      int rank;
+#endif
      int ndim;
      int dim;
      int allfalse;
@@ -46,9 +50,9 @@ int topo_base_cart_sub (lam_communicator_t *comm,
      ndim = 0;
      allfalse = 0;
 
-     i = comm->c_topo_ndims - 1;
-     d = comm->c_topo_dims + i;
-     c = comm->c_topo_coords + i;
+     i = comm->c_topo_comm->mtc_ndims - 1;
+     d = comm->c_topo_comm->mtc_dims + i;
+     c = comm->c_topo_comm->mtc_coords + i;
      r = remain_dims + i;
 
      for (; i >= 0; --i, --d, --c, --r) {
@@ -68,14 +72,18 @@ int topo_base_cart_sub (lam_communicator_t *comm,
      * have a communicator unless you're in it).
      */
      if (ndim == 0) {
+#if 0
         lam_comm_rank (comm, &colour);
+#endif
         ndim = 1;
         allfalse = 1;
      }
     /*
      * Split the communicator.
      */
+#if 0
      errcode = lam_comm_split (comm, colour, key, new_comm);
+#endif
      if (errcode != MPI_SUCCESS) {
         return errcode;
      }
@@ -84,36 +92,40 @@ int topo_base_cart_sub (lam_communicator_t *comm,
      */
      newcomm = *new_comm;
      if (newcomm != MPI_COMM_NULL) {
-        newcomm->c_topo_type = MPI_CART;
-        newcomm->c_topo_nprocs = keyfactor;
-        newcomm->c_topo_ndims = ndim;
-        newcomm->c_topo_dims = (int *)
+        newcomm->c_topo_comm->mtc_type = MPI_CART;
+        newcomm->c_topo_comm->mtc_nprocs = keyfactor;
+        newcomm->c_topo_comm->mtc_ndims = ndim;
+        newcomm->c_topo_comm->mtc_dims = (int *)
         malloc((unsigned) 2 * ndim * sizeof(int));
-        if (newcomm->c_topo_dims == 0) {
+        if (newcomm->c_topo_comm->mtc_dims == 0) {
             return MPI_ERR_OTHER;
         }
-        newcomm->c_topo_coords = newcomm->c_topo_dims + ndim;
+        newcomm->c_topo_comm->mtc_coords = newcomm->c_topo_comm->mtc_dims + ndim;
         if (!allfalse) {
-           p = newcomm->c_topo_dims;
-           d = comm->c_topo_dims;
+           p = newcomm->c_topo_comm->mtc_dims;
+           d = comm->c_topo_comm->mtc_dims;
            r = remain_dims;
-           for (i = 0; i < comm->c_topo_ndims; ++i, ++d, ++r) {
+           for (i = 0; i < comm->c_topo_comm->mtc_ndims; ++i, ++d, ++r) {
              if (*r) {
                  *p++ = *d;
               }
            }
            } else {
-             newcomm->c_topo_dims[0] = 1;
+             newcomm->c_topo_comm->mtc_dims[0] = 1;
            }
           /*
            * Compute the caller's coordinates.
            */
+#if 0
           errcode = lam_comm_rank (newcomm, &rank);
+#endif
           if (errcode != MPI_SUCCESS) {
              return errcode;
           }
+#if 0
           errcode = lam_cart_coords (newcomm, rank,
-                                     ndim, newcomm->c_topo_coords);
+                                     ndim, newcomm->c_topo_comm->mtc_coords);
+#endif
           if (errcode != MPI_SUCCESS) {
              return errcode;
           }
