@@ -41,7 +41,6 @@ extern "C" {
 	bool persistence;
 	char *scope;
 	bool silent_mode;
-	bool script_mode;
 	bool web_server;
 	char *socket_contact_info;
 	char *oob_contact_info;
@@ -95,7 +94,8 @@ extern "C" {
      * be called by every application using the RTE interface, including
      * MPI applications and mpirun.
      */
-    int ompi_rte_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
+    int ompi_rte_init_stage1(bool *allow_multi_user_threads, bool *have_hidden_threads);
+    int ompi_rte_init_stage2(bool *allow_multi_user_threads, bool *have_hidden_threads);
 
     /**
      * Finalize the Open MPI run time environment

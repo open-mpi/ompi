@@ -25,7 +25,8 @@ libruntime_la_SOURCES = \
     ompi_universe.c \
     ompi_progress.c \
     ompi_rte_finalize.c \
-    ompi_rte_init.c \
+    ompi_rte_init_stage1.c \
+    ompi_rte_init_stage2.c \
     ompi_rte_llm.c \
     ompi_rte_monitor.c \
     ompi_rte_cmd_line_setup.c \
