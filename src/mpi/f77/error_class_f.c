@@ -46,7 +46,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERROR_CLASS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_error_class_f(MPI_Fint *errorcode, MPI_Fint *errorclass, MPI_Fint *ierr)
+void mpi_error_class_f(MPI_Fint *errorcode, MPI_Fint *errorclass, 
+		       MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    OMPI_SINGLE_NAME_DECL(errorclass);
+
+    *ierr = 
+	OMPI_INT_2_FINT(MPI_Error_class(OMPI_FINT_2_INT(*errorcode),
+					OMPI_SINGLE_NAME_CONVERT(errorclass)));
+    
+    OMPI_SINGLE_INT_2_FINT(errorclass);
 }

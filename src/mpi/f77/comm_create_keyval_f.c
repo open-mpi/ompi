@@ -8,6 +8,7 @@
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "attribute/attribute.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_CREATE_KEYVAL = mpi_comm_create_keyval_f
@@ -46,7 +47,38 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_KEYVAL,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_comm_create_keyval_f(MPI_Fint *comm_copy_attr_fn, MPI_Fint *comm_delete_attr_fn, MPI_Fint *comm_keyval, char *extra_state, MPI_Fint *ierr)
+static const char FUNC_NAME[] = "MPI_Comm_create_keyval_f";
+
+void mpi_comm_create_keyval_f(MPI_Fint *comm_copy_attr_fn,
+			      MPI_Fint *comm_delete_attr_fn,
+			      MPI_Fint *comm_keyval,
+			      char *extra_state, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    int ret;
+    ompi_attribute_fn_ptr_union_t copy_fn;
+    ompi_attribute_fn_ptr_union_t del_fn;
+
+    if (MPI_PARAM_CHECK) {
+        if ((NULL == comm_copy_attr_fn)   || 
+            (NULL == comm_delete_attr_fn) ||
+            (NULL == comm_keyval)              ) {
+            *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+                                           MPI_ERR_ARG,
+                                           FUNC_NAME);
+        }
+    }
+
+    copy_fn.attr_F_copy_fn = (MPI_F_copy_function *)comm_copy_attr_fn;
+    del_fn.attr_F_delete_fn = (MPI_F_delete_function *)comm_delete_attr_fn;
+
+    ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
+                                  comm_keyval, extra_state, OMPI_KEYVAL_F77);
+
+    if (MPI_SUCCESS != ret) {
+        *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+						       MPI_ERR_OTHER,
+						       FUNC_NAME))
+    } else {
+        *ierr = MPI_SUCCESS;
+    }
 }

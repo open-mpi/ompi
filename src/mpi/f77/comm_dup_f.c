@@ -52,5 +52,6 @@ void mpi_comm_dup_f(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr)
     MPI_Comm c_comm = MPI_Comm_f2c( *comm );
     
     *ierr = MPI_Comm_dup ( c_comm, &c_newcomm );
+
     *newcomm = MPI_Comm_c2f (c_newcomm);
 }

@@ -50,6 +50,7 @@
   #define OMPI_ARRAY_FINT_2_INT_ALLOC(in, n) 
   #define OMPI_ARRAY_FINT_2_INT(in, n)
   #define OMPI_ARRAY_FINT_2_INT_CLEANUP(in)
+  #define OMPI_SINGLE_FINT_2_INT(in)
   #define OMPI_SINGLE_INT_2_FINT(in)
   #define OMPI_ARRAY_INT_2_FINT(in, n)
 
@@ -58,7 +59,7 @@
   #define OMPI_SINGLE_NAME_DECL(a) int c_##a
   #define OMPI_ARRAY_NAME_CONVERT(a) c_##a
   #define OMPI_SINGLE_NAME_CONVERT(a) &c_##a
-  #define OMPI_INT_2_FINT(a) (a)
+  #define OMPI_INT_2_FINT(a) a
   #define OMPI_FINT_2_INT(a) (int) (a)
 
   /* This is for OUT parameters. Does only alloc */
@@ -76,6 +77,10 @@
   /* This is for IN parameters. Does only free */
   #define OMPI_ARRAY_FINT_2_INT_CLEANUP(in) \
     free(OMPI_ARRAY_NAME_CONVERT(in))
+
+  /* This is for single IN parameter */
+  #define OMPI_SINGLE_FINT_2_INT(in) \
+    OMPI_ARRAY_NAME_CONVERT(in) = (int) *(in)
 
   /* This is for single OUT parameter */
   #define OMPI_SINGLE_INT_2_FINT(in) \
@@ -110,6 +115,9 @@
 
   #define OMPI_ARRAY_FINT_2_INT_CLEANUP(in) \
     free(OMPI_ARRAY_NAME_CONVERT(in))
+
+  #define OMPI_SINGLE_FINT_2_INT(in)
+    OMPI_ARRAY_NAME_CONVERT(in) = *(in)
 
   #define OMPI_SINGLE_INT_2_FINT(n) \
     in = (MPI_Fint) OMPI_ARRAY_NAME_CONVERT(in)

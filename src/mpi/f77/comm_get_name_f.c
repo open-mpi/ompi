@@ -46,7 +46,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GET_NAME,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_comm_get_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *resultlen, MPI_Fint *ierr)
+void mpi_comm_get_name_f(MPI_Fint *comm, char *comm_name,
+			 MPI_Fint *resultlen, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    OMPI_SINGLE_NAME_DECL(resultlen);
+
+    c_comm = MPI_Comm_f2c(*comm);
+
+    *ierr =
+	OMPI_INT_2_FINT(MPI_Comm_get_name(c_comm, comm_name, 
+					  OMPI_SINGLE_NAME_CONVERT(resultlen)));
+    OMPI_SINGLE_INT_2_FINT(resultlen);
 }

@@ -72,8 +72,9 @@ void mpi_type_create_keyval_f(MPI_Fint *type_copy_attr_fn, MPI_Fint *type_delete
                                   type_keyval, extra_state, OMPI_KEYVAL_F77);
 
     if (MPI_SUCCESS != ret) {
-        *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER,
-                                       FUNC_NAME);
+        *ierr = OMPI_INT_2_FINT(OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
+						       MPI_ERR_OTHER,
+						       FUNC_NAME))
     } else {
         *ierr = MPI_SUCCESS;
     }

@@ -46,7 +46,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIMS_CREATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_dims_create_f(MPI_Fint *nnodes, MPI_Fint *ndims, MPI_Fint *dims, MPI_Fint *ierr)
+void mpi_dims_create_f(MPI_Fint *nnodes, MPI_Fint *ndims, 
+		       MPI_Fint *dims, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    OMPI_ARRAY_NAME_DECL(dims);
+
+    OMPI_ARRAY_FINT_2_INT(dims, *ndims);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Dims_create(OMPI_FINT_2_INT(*nnodes),
+					    OMPI_FINT_2_INT(*ndims),
+					    OMPI_ARRAY_NAME_CONVERT(dims)));
+
+    OMPI_ARRAY_INT_2_FINT(dims, *ndims);
 }

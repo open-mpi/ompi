@@ -46,7 +46,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_DELETE_ATTR,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_comm_delete_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval, MPI_Fint *ierr)
+void mpi_comm_delete_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval,
+			    MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    
+    c_comm = MPI_Comm_f2c(*comm);
+
+    *ierr = 
+	OMPI_INT_2_FINT(MPI_Comm_delete_attr(c_comm,
+					     OMPI_FINT_2_INT(*comm_keyval)));
 }

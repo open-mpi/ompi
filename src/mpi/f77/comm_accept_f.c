@@ -53,8 +53,11 @@ void mpi_comm_accept_f(char *port_name, MPI_Fint *info, MPI_Fint *root,
     MPI_Info c_info;
 
     c_comm = MPI_Comm_f2c(*comm);
-    c_new_comm = MPI_Comm_f2c(*newcomm);
     c_info = MPI_Info_f2c(*info);
 
-    *ierr = MPI_Comm_accept(port_name, c_info, *root, c_comm, &c_new_comm);
+    *ierr = OMPI_INT_2_FINT(MPI_Comm_accept(port_name, c_info, 
+					    OMPI_FINT_2_INT(*root), 
+					    c_comm, &c_new_comm));
+    
+    *newcomm = MPI_Comm_c2f(c_new_comm);
 }
