@@ -6,7 +6,6 @@
 #include "ompi_config.h"
 #include "include/types.h"
 #include "datatype/datatype.h"
-#include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_gm.h"
 #include "ptl_gm_sendfrag.h"
 #include "ptl_gm_priv.h"
@@ -41,7 +40,7 @@ mca_ptl_gm_send_frag_destruct (mca_ptl_gm_send_frag_t * frag)
 /*XXX : take care of multi threading*/
 
 mca_ptl_gm_send_frag_t *
-mca_ptl_gm_alloc_send_frag( struct mca_ptl_base_module_t *ptl,
+mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t *ptl,
 			    struct mca_pml_base_send_request_t * sendreq )
 {
 
@@ -50,26 +49,20 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_base_module_t *ptl,
     mca_ptl_gm_send_frag_t *frag;
     mca_ptl_tstamp_t tstamp = 0;
 
-    GM_DBG(PTL_GM_DBG_COMM,"INSIDE ALLOC SEND FRAG\n");
-    flist =&( ((mca_ptl_gm_module_t *)ptl)->gm_send_frags );
-    A_PRINT("num_list_allocated: %d\n",flist->fl_num_allocated);
+    flist = &(ptl->gm_send_frags);
 
-    item = ompi_list_remove_first(&((flist)->super));
+    item = ompi_list_remove_first( &(flist->super) );
  
-    GM_DBG(PTL_GM_DBG_COMM,"AFTER ALLOC SEND FRAG\n");
-    A_PRINT("send_frag: %p\n", item);
-    A_PRINT("after removing a sendfrag num_list_allocated: %d\n",flist->fl_num_allocated);
-
     while(NULL == item) {
 	A_PRINT("888888888888888888888888 calling progress to allocate send frag\n");
-	ptl->ptl_component->ptlm_progress(tstamp);
-	item = ompi_list_remove_first (&((flist)->super));
+	((mca_ptl_base_module_t*)ptl)->ptl_component->ptlm_progress(tstamp);
+	item = ompi_list_remove_first( &(flist->super) );
     }
 
     frag = (mca_ptl_gm_send_frag_t *)item;
     frag->req = (struct mca_pml_base_send_request_t *)sendreq;
     GM_DBG( PTL_GM_DBG_COMM, "request is %p\t, frag->req = %p\n", (void*)sendreq, (void*)frag->req );
-    frag->type =  0 ;
+    frag->type =  0;
     
     return frag;
 }
@@ -176,57 +169,6 @@ int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t* putfrag,
     assert(putfrag->req != NULL);  
     return OMPI_SUCCESS; 
 }
-
-int mca_ptl_gm_send_frag_init( struct mca_ptl_gm_send_frag_t* sendfrag,
-			       struct mca_ptl_gm_peer_t * ptl_peer,
-			       struct mca_pml_base_send_request_t * sendreq,
-			       size_t offset,
-			       size_t* size,
-			       int flags )
-
-{
-    mca_ptl_base_header_t *hdr;
-    void *buffer;
- 
-    buffer = sendfrag->send_buf; 
-    hdr = (mca_ptl_base_header_t *)sendfrag->send_buf; 
-  
-    sendfrag->status        = -1;
-    sendfrag->type          = -1;
-    sendfrag->wait_for_ack  = 0;
-    sendfrag->put_sent      = -1;
-    sendfrag->send_complete = -1;
-  
-    hdr->hdr_common.hdr_flags = flags;
-    if (offset == 0) {
-	/* When the offset is ZERO we send the match header. */
-	hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
-	hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
-	
-	hdr->hdr_match.hdr_contextid  = sendreq->req_base.req_comm->c_contextid;
-	hdr->hdr_match.hdr_src        = sendreq->req_base.req_comm->c_my_rank;
-	hdr->hdr_match.hdr_dst        = sendreq->req_base.req_peer;
-	hdr->hdr_match.hdr_tag        = sendreq->req_base.req_tag;
-	hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-	hdr->hdr_match.hdr_msg_seq    = sendreq->req_base.req_sequence;
-	sendfrag->type = MATCH;
-    } else {
-	hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
-	hdr->hdr_common.hdr_size = sizeof (mca_ptl_base_frag_header_t);
-
-	sendfrag->type = FRAG;
-    }
-    hdr->hdr_frag.hdr_frag_offset  = offset;
-    hdr->hdr_frag.hdr_frag_length  = *size;
-    hdr->hdr_frag.hdr_frag_seq     = 0;
-    hdr->hdr_frag.hdr_src_ptr.lval = 0;
-    hdr->hdr_frag.hdr_src_ptr.pval = sendfrag; /* pointer to the frag */
-    hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
-
-    return OMPI_SUCCESS;
-}
-
-
 
 ompi_class_t mca_ptl_gm_recv_frag_t_class = {
     "mca_ptl_gm_recv_frag_t",

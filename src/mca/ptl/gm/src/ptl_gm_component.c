@@ -284,17 +284,16 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 
     /* allocate the registered memory */
     gm_send_reg_memory = gm_dma_malloc( ptl->gm_port,
-					(GM_SEND_BUF_SIZE * ptl->num_send_tokens) );
+					(GM_BUF_SIZE * ptl->num_send_tokens) + GM_PAGE_LEN );
     if( NULL == gm_send_reg_memory ) {
 	ompi_output( 0, "unable to allocate registered memory\n" );
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
     for (i = 0; i < ptl->num_send_tokens; i++) {
-	ompi_list_item_t *item;
+	OMPI_FREE_LIST_RETURN( &(ptl->gm_send_frags), (ompi_list_item_t *)sfragment );
 	sfragment->send_buf = gm_send_reg_memory;
-	item = (ompi_list_item_t *) sfragment;
-	OMPI_FREE_LIST_RETURN( &(ptl->gm_send_frags), item );
-	gm_send_reg_memory = ((char *)gm_send_reg_memory) + GM_SEND_BUF_SIZE;
+	printf( "%3d : gm register sendreq %p with GM buffer %p\n", i, (void*)sfragment, (void*)sfragment->send_buf );
+	gm_send_reg_memory = ((char *)gm_send_reg_memory) + GM_BUF_SIZE;
 	sfragment++;
     }
     A_PRINT( ("recv_tokens = %d send_tokens = %d, allocted free lis = %d\n",
@@ -323,20 +322,20 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 
     /*allocate the registered memory */
     gm_recv_reg_memory =
-	gm_dma_malloc (ptl->gm_port, (GM_RECV_BUF_SIZE * ptl->num_recv_tokens ) );
+	gm_dma_malloc (ptl->gm_port, (GM_BUF_SIZE * ptl->num_recv_tokens) + GM_PAGE_LEN );
     if( NULL == gm_recv_reg_memory ) {
 	ompi_output( 0, "unable to allocate registered memory for receive\n" );
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     for( i = 0; i < ptl->num_recv_tokens; i++ ) {
-	ompi_list_item_t *item = (ompi_list_item_t *) free_rfragment;
-	OMPI_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), item );
+	OMPI_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
 	free_rfragment++;
 
 	gm_provide_receive_buffer( ptl->gm_port, gm_recv_reg_memory,
 				   GM_SIZE, GM_LOW_PRIORITY );
-	gm_recv_reg_memory = ((char *)gm_recv_reg_memory) + GM_RECV_BUF_SIZE;
+	printf( "%3d : gm register GM receive buffer %p\n", i, (void*)gm_recv_reg_memory );
+	gm_recv_reg_memory = ((char *)gm_recv_reg_memory) + GM_BUF_SIZE;
     }
 
     return OMPI_SUCCESS;

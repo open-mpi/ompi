@@ -13,13 +13,12 @@
 #include "mca/ptl/ptl.h"
 
 #define MCA_PTL_GM_STATISTICS 0
-#define GM_SIZE 30
 #define THRESHOLD 16384 
 #define MAX_RECV_TOKENS 256
 #define PTL_GM_ADMIN_SEND_TOKENS 0
 #define PTL_GM_ADMIN_RECV_TOKENS 0
-#define GM_SEND_BUF_SIZE 16384
-#define GM_RECV_BUF_SIZE 16384 
+#define GM_BUF_SIZE 16384
+#define GM_SIZE  30
 #define NUM_RECV_FRAGS 256 
 #define MCA_PTL_GM_FRAG_CACHED
 #if defined(c_plusplus) || defined(__cplusplus)
