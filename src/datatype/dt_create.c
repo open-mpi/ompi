@@ -48,18 +48,6 @@ int lam_ddt_create_resized( dt_desc_t* oldType, long lb, long extent, dt_desc_t*
     return 0;
 }
 
-int lam_ddt_commit( dt_desc_t** data )
-{
-    dt_desc_t* pData = (dt_desc_t*)*data;
-
-    if( pData->flags & DT_FLAG_COMMITED ) return -1;
-    pData->flags |= DT_FLAG_COMMITED;
-    /* If the data is contiguous is useless to generate an optimized version. */
-    if( pData->size != (pData->true_ub - pData->true_lb) )
-        (void)lam_ddt_optimize_short( pData, 1, &(pData->opt_desc) );
-    return 0;
-}
-
 static void _dump_data_flags( unsigned short usflags )
 {
     char flags[12] = "-----------";

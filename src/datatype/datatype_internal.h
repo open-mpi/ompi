@@ -6,26 +6,26 @@
 #if defined(VERBOSE)
 #  define DUMP_STACK( PSTACK, STACK_POS, PDESC, NAME ) \
      dump_stack( (PSTACK), (STACK_POS), (PDESC), (NAME) )
-#  if defined(__GNUC__)
-#    define DUMP(ARGS...)            printf(ARGS)
+#  if defined(ACCEPT_C99)
+#    define DUMP( ARGS... )          printf(__VA_ARGS__)
 #  else
-#    if defined(ACCEPT_C99)
-#      define DUMP( ARGS... )        printf(__VA_ARGS__)
-#    else
+#    if defined(__GNUC__) && !defined(__STDC__)
+#      define DUMP(ARGS...)          printf(ARGS)
+#  else
 #      define DUMP                   printf
-#    endif  /* ACCEPT_C99 */
-#  endif  /* __GNUC__ */
+#    endif  /* __GNUC__ && !__STDC__ */
+#  endif  /* ACCEPT_C99 */
 #else
 #  define DUMP_STACK( PSTACK, STACK_POS, PDESC, NAME )
-#  if defined(__GNUC__)
+#  if defined(ACCEPT_C99)
 #    define DUMP(ARGS...)
 #  else
-#    if defined(ACCEPT_C99)
+#    if defined(__GNUC__) && !defined(__STDC__)
 #      define DUMP(ARGS...)
 #    else
-       static void DUMP() { /* empty hopefully removed by the compiler */ }
-#    endif  /* ACCEPT_C99 */
-#  endif  /* __GNUC__ */
+       static inline void DUMP() { /* empty hopefully removed by the compiler */ }
+#    endif  /* __GNUC__ && !__STDC__ */
+#  endif  /* ACCEPT_C99 */
 #endif  /* VERBOSE */
 
 #define DT_LOOP                    0x00
@@ -65,7 +65,9 @@
 #define DT_2INTEGER                0x22
 #define DT_LONGDBL_INT             0x23
 #define DT_WCHAR                   0x24
-/* If the number of basic datatype should change update DT_MAX_PREDEFINED in datatype.h */
+/* If the number of basic datatype should change update
+ * DT_MAX_PREDEFINED in datatype.h
+ */
 
 /* flags for the datatypes. */
 #define DT_FLAG_DESTROYED  0x0001  /**< user destroyed but some other layers still have a reference */
@@ -120,8 +122,8 @@ extern dt_desc_t basicDatatypes[DT_MAX_PREDEFINED];
 #define SET_CONTIGUOUS_FLAG( INT_VALUE )     SET_FLAG(INT_VALUE, DT_FLAG_CONTIGUOUS)
 #define UNSET_CONTIGUOUS_FLAG( INT_VALUE )   UNSET_FLAG(INT_VALUE, DT_FLAG_CONTIGUOUS)
 
-#if defined(__GNUC__)
-#define LMAX(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _b : _a); })
+#if defined(__GNUC__) && !defined(__STDC__)
+#define LMAX(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _b : _a) })
 #define LMIN(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _a : _b); })
 #define IMAX(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _b : _a); })
 #define IMIN(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _a : _b); })
@@ -151,7 +153,9 @@ do { \
    (PSTACK) = pTempStack; \
 } while(0)
 
-#define MEMCPY( DST, SRC, BLENGTH ) memcpy( (DST), (SRC), (BLENGTH) )
+#define MEMCPY( DST, SRC, BLENGTH ) { \
+    /*printf( "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) );*/ \
+    memcpy( (DST), (SRC), (BLENGTH) ); }
 
 #ifdef USELESS
 #define MEMCPY_LIMIT 1
