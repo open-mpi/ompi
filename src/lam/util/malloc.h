@@ -22,8 +22,9 @@
 #define LAM_MALLOC_DEBUG_LEVEL 2
 #endif
 
-void *lam_malloc(size_t size, int debug_level, char *file, int line);
-void lam_free(void *addr, int debug_level, char *file, int line);
+static inline void *lam_malloc(size_t size, int debug_level, char *file, 
+                               int line);
+static inline void lam_free(void *addr, int debug_level, char *file, int line);
 
 /**
  * Back-end error-checking malloc function for LAM (you should use the
@@ -34,7 +35,8 @@ void lam_free(void *addr, int debug_level, char *file, int line);
  * @param file Typically the __FILE__ macro
  * @param line Typically the __LINE__ macro
  */
-inline void *lam_malloc(size_t size, int debug_level, char *file, int line)
+static inline void *lam_malloc(size_t size, int debug_level, char *file, 
+                               int line)
 {
     void *addr = NULL;
     if (debug_level > 1) {
@@ -72,7 +74,7 @@ inline void *lam_malloc(size_t size, int debug_level, char *file, int line)
  * @param file Typically the __FILE__ macro
  * @param line Typically the __LINE__ macro
  */
-inline void lam_free(void *addr, int debug_level, char *file, int line)
+static inline void lam_free(void *addr, int debug_level, char *file, int line)
 {
     if (debug_level > 1 && NULL == addr) {
 #if 0
