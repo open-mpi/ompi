@@ -467,7 +467,7 @@ int mca_ptl_sm_send(
     int return_status=OMPI_SUCCESS;
     ompi_fifo_t *send_fifo;
     mca_ptl_base_header_t* hdr;
-    void *sm_data_ptr, *user_data_ptr;
+    void *sm_data_ptr ;
 
     /* cast to shared memory send descriptor */
     sm_request=(mca_ptl_sm_send_request_t *)sendreq;
@@ -489,13 +489,12 @@ int mca_ptl_sm_send(
         convertor = &sendreq->req_convertor;
         ompi_convertor_copy(&sendreq->req_convertor, convertor);
         ompi_convertor_init_for_send( convertor, 0, 
-                sendreq->req_base.req_datatype,
-                sendreq->req_base.req_count, 
-                sendreq->req_base.req_addr,
+                sendreq->req_datatype,
+                sendreq->req_count, 
+                sendreq->req_addr,
                 offset, NULL);
 
         sm_data_ptr=sm_request->req_frag->buff;
-        user_data_ptr=sendreq->req_base.req_addr;
 
         /* set up the shared memory iovec */
         address.iov_base=sm_data_ptr;
@@ -604,7 +603,7 @@ int mca_ptl_sm_send_continue(
     int return_status=OMPI_SUCCESS, free_after=0;
     ompi_fifo_t *send_fifo;
     mca_ptl_base_header_t* hdr;
-    void *sm_data_ptr, *user_data_ptr;
+    void *sm_data_ptr ;
     ompi_list_item_t* item;
     mca_ptl_sm_second_frag_t *send_frag, *write_send_frag;
     ompi_convertor_t *convertor;
@@ -628,13 +627,12 @@ int mca_ptl_sm_send_continue(
     convertor = &sendreq->req_convertor;
     ompi_convertor_copy(&sendreq->req_convertor, convertor);
     ompi_convertor_init_for_send( convertor, 0, 
-            sendreq->req_base.req_datatype,
-            sendreq->req_base.req_count, 
-            sendreq->req_base.req_addr,
+            sendreq->req_datatype,
+            sendreq->req_count, 
+            sendreq->req_addr,
             offset, NULL);
 
     sm_data_ptr=send_frag->buff;
-    user_data_ptr=sendreq->req_base.req_addr;
 
     /* set up the shared memory iovec */
     address.iov_base=sm_data_ptr;
