@@ -10,10 +10,11 @@
  *  specific to the PML. 
  */
 
-extern lam_class_info_t mca_ptl_comm_cls;
+extern lam_class_info_t mca_pml_ptl_comm_cls;
 
 struct mca_pml_comm_t {
-    
+    lam_object_t super;
+
     /* send message sequence-number support - sender side */
     mca_ptl_base_sequence_t *c_msg_seq;
 
@@ -43,7 +44,8 @@ struct mca_pml_comm_t {
 typedef struct mca_pml_comm_t mca_pml_comm_t;
 
 
-extern void mca_pml_ptl_comm_init(struct mca_pml_comm_t*, size_t);
+extern void mca_pml_ptl_comm_init(struct mca_pml_comm_t*);
+extern int  mca_pml_ptl_comm_init_size(struct mca_pml_comm_t*, size_t);
 extern void mca_pml_ptl_comm_destroy(struct mca_pml_comm_t*);
 
 #endif

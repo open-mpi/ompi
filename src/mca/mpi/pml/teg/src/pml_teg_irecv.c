@@ -9,8 +9,7 @@ int mca_pml_teg_irecv_init(
     int tag,
     bool persistent,
     struct lam_communicator_t* comm,
-    struct lam_request_t **request
-)
+    struct lam_request_t **request)
 {
     return LAM_ERROR;
 }
@@ -22,8 +21,7 @@ int mca_pml_teg_irecv(
     int src,
     int tag,
     struct lam_communicator_t* comm,
-    struct lam_request_t **request
-)
+    struct lam_request_t **request)
 {
     return LAM_ERROR;
 }

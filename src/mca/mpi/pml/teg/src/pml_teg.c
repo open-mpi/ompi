@@ -35,20 +35,18 @@ mca_pml_teg_t mca_pml_teg = {
 int mca_pml_teg_add_comm(lam_communicator_t* comm)
 {
     /* allocate pml specific comm data */
-    struct mca_pml_comm_t* pml_comm = (mca_pml_comm_t*)LAM_MALLOC(sizeof(mca_pml_comm_t));
-    if (0 == pml_comm) {
+    mca_pml_comm_t* pml_comm = OBJ_CREATE(mca_pml_comm_t, &mca_pml_ptl_comm_cls);
+    if (NULL == pml_comm) {
         return LAM_ERR_OUT_OF_RESOURCE;
     }
-#if TIM_HASNT_IMPLEMENTED_THIS_YET
-    mca_pml_ptl_comm_init(pml_comm, comm->c_remote_group->g_proc_count);
-#endif
+    mca_pml_ptl_comm_init_size(pml_comm, comm->c_remote_group->g_proc_count);
     comm->c_pml_comm = pml_comm;
     return LAM_SUCCESS;
 }
 
 int mca_pml_teg_del_comm(lam_communicator_t* comm)
 {
-    LAM_FREE(comm->c_pml_comm);
+    OBJ_RELEASE(comm->c_pml_comm);
     comm->c_pml_comm = 0;
     return LAM_SUCCESS;
 }
