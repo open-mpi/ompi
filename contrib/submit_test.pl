@@ -60,7 +60,7 @@ sub download {
             @prompts = split(/:/, substr($line, 9));
             ++$i;
         } elsif ($line =~ /^#FIELDS/) {
-            @fields = split(/:/, substr($line, 9));
+            @fields = split(/:/, substr($line, 8));
             ++$i;
         }
 
@@ -254,7 +254,7 @@ sub do_rte {
 
     # Submit the results
 
-    "type=rte&pcm=$$pcm[0]&hello=$hello&$abort=$abort&$spawn=$spawn";
+    "type=rte&pcm=$$pcm[0]&hello=$hello&abort=$abort&spawn=$spawn";
 }
 
 #----------------------------------------------------------------------------
