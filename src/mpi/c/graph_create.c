@@ -49,7 +49,7 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
                                            FUNC_NAME);
         }
-        if (1 > nnodes || NULL == index || NULL == edges) {
+        if ( (1 > nnodes) || (NULL == index) || (NULL == edges) ) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
                                            FUNC_NAME);
         }
@@ -59,7 +59,7 @@ int MPI_Graph_create(MPI_Comm old_comm, int nnodes, int *index,
                                            FUNC_NAME);
         }
 
-        if (0 > reorder || 1 < reorder) {
+        if ((0 > reorder) || (1 < reorder)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
                                            FUNC_NAME);
         }
