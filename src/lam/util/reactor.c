@@ -80,7 +80,7 @@ static inline lam_reactor_descriptor_t* lam_reactor_get_descriptor(lam_reactor_t
     if(lam_dbl_get_size(&r->r_free))
         descriptor = (lam_reactor_descriptor_t*)lam_dbl_remove_first_item(&r->r_free);
     else {
-        descriptor = (lam_reactor_descriptor_t*)lam_malloc(sizeof(lam_reactor_descriptor_t));
+        descriptor = (lam_reactor_descriptor_t*)LAM_MALLOC(sizeof(lam_reactor_descriptor_t));
         lam_reactor_descriptor_init(descriptor);
     }
     if(descriptor == 0) {
@@ -248,7 +248,7 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
                 lam_dbl_append(&r->r_free, &descriptor->rd_base);
             } else {
                 lam_reactor_descriptor_destroy(descriptor);
-                lam_free(descriptor);
+                LAM_FREE(descriptor);
             }
         } 
         descriptor = next;
