@@ -154,20 +154,15 @@ mca_pcm_bproc_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super,
         asprintf(&tmp, "OMPI_MCA_pcmclient_bproc_num_procs=%d", num_procs);
         ompi_argv_append(&envc, &env, tmp);
         free(tmp);
-        asprintf(&tmp, "BPROC_RANK=XXXXXXX");
-        ompi_argv_append(&envc, &env, tmp);
-        free(tmp);
 
         printf("pcm: bproc: spawning procs: %s %s\n", sched->argv[0], base_proc_name_string);
         ret = internal_spawn_procs(me, jobid, base_vpid,
                                    sched->argv[0], sched->argv,
                                    &env, &envc,
                                    sched->nodelist, io, iolen, &offset);
-        /* remove the base process name */
-#if 0
-        ompi_argv_shrink(&envc, &env, sched->envc - 3, 3);
-#endif
         printf("pcm: bproc: internal_spawn_procs returned %d\n", ret);
+
+        ompi_argv_free(env);
 
         if (ret != OMPI_SUCCESS) {
             mca_pcm_bproc_kill_job(me_super, jobid, 0);
@@ -334,10 +329,13 @@ internal_bproc_vexecmove_io(int nnodes, int *nodes, int *pids,
     asprintf(&tmp, "OMPI_MCA_pcmclient_bproc_rank_offset=%d", offset);
     ompi_argv_append(envc, env, tmp);
     free(tmp);
+    asprintf(&tmp, "BPROC_RANK=XXXXXXX");
+    ompi_argv_append(envc, env, tmp);
+    free(tmp);
     ret = bproc_vexecmove_io(nnodes, nodes, pids, io, iolen,
                              cmd, argv, *env);
     loc = ompi_argv_count(*env);
-    ompi_argv_delete(envc, env, loc - 1, 1);
+    ompi_argv_delete(envc, env, loc - 2, 2);
 
     return ret;
 }
