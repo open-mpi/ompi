@@ -1,7 +1,7 @@
 #include "pml_teg.h"
 
                                                                                                              
-extern int mca_pml_teg_irecv_init(
+int mca_pml_teg_irecv_init(
     void *buf,
     size_t size,
     struct lam_datatype_t *datatype,
