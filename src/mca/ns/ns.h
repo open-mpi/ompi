@@ -51,6 +51,7 @@
 #define MCA_NS_CREATE_JOBID_CMD    0x02
 #define MCA_NS_RESERVE_RANGE_CMD   0x04
 #define MCA_NS_FREE_NAME_CMD       0x08
+#define MCA_NS_ERROR               0xff
 
 
 /*
