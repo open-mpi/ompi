@@ -10,7 +10,7 @@
 
 #include "mca/mca.h"
 #include "mca/llm/llm.h"
-
+#include "mca/ns/ns.h"
 
 /*
  * Globally exported variable
@@ -38,11 +38,11 @@ extern "C" {
 
     int mca_llm_hostfile_component_finalize(void);
 
-    ompi_list_t* mca_llm_hostfile_allocate_resources(int jobid,
+    ompi_list_t* mca_llm_hostfile_allocate_resources(mca_ns_base_jobid_t jobid,
                                                      int nodes,
                                                      int procs);
 
-    int mca_llm_hostfile_deallocate_resources(int jobid,
+    int mca_llm_hostfile_deallocate_resources(mca_ns_base_jobid_t jobid,
                                               ompi_list_t *nodelist);
 
 #ifdef __cplusplus
