@@ -35,8 +35,7 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
                         "MPI_Group_translate_ranks");
         }
-        if( (n_ranks > group1_pointer->grp_proc_count) ||
-                ( 0 >= n_ranks ) ){
+        if( 0 >= n_ranks ){
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
                         "MPI_Group_translate_ranks - II ");
         }
