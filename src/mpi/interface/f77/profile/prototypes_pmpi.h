@@ -20,15 +20,13 @@
 /* This needs to be included ONLY if the top level "prototypes_mpi.h"
  * has not yet been included
  */
-#ifndef LAM_F77_PROTOTYPES_MPI_H
-void mpi_alloc_mem_f(MPI_Fint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr);
-void mpi_comm_get_name_f(MPI_Fint *comm, char *name, MPI_Fint *l, MPI_Fint *ierror, 
+void pmpi_alloc_mem_f(MPI_Fint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr);
+void pmpi_comm_get_name_f(MPI_Fint *comm, char *name, MPI_Fint *l, MPI_Fint *ierror, 
                          MPI_Fint charlen);
-void mpi_comm_set_name_f(MPI_Fint *comm, char *name, MPI_Fint *ierror, MPI_Fint charlen);
-void mpi_init_f(MPI_Fint *ierror);
-void mpi_finalize_f(MPI_Fint *ierror);
-void mpi_free_mem_f(char *baseptr, MPI_Fint *ierr);
-#endif
+void pmpi_comm_set_name_f(MPI_Fint *comm, char *name, MPI_Fint *ierror, MPI_Fint charlen);
+void pmpi_init_f(MPI_Fint *ierror);
+void pmpi_finalize_f(MPI_Fint *ierror);
+void pmpi_free_mem_f(char *baseptr, MPI_Fint *ierr);
 
 /*
  * First, all caps.
