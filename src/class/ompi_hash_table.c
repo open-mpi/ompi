@@ -115,7 +115,8 @@ static OBJ_CLASS_INSTANCE(ompi_uint32_hash_node_t,
                           NULL);
 
 
-void* ompi_hash_table_get_value_uint32(ompi_hash_table_t* ht, uint32_t key)
+int ompi_hash_table_get_value_uint32(ompi_hash_table_t* ht, uint32_t key,
+				     void **ptr)
 {
     ompi_list_t* list = ht->ht_table + (key & ht->ht_mask);
     ompi_uint32_hash_node_t *node;
@@ -124,17 +125,18 @@ void* ompi_hash_table_get_value_uint32(ompi_hash_table_t* ht, uint32_t key)
     if(ht->ht_table_size == 0) {
         ompi_output(0, "ompi_hash_table_get_value_uint32:"
 		   "ompi_hash_table_init() has not been called");
-        return NULL;
+        return OMPI_ERROR;
     }
 #endif
     for(node =  (ompi_uint32_hash_node_t*)ompi_list_get_first(list);
         node != (ompi_uint32_hash_node_t*)ompi_list_get_end(list);
         node =  (ompi_uint32_hash_node_t*)ompi_list_get_next(node)) {
         if (node->hn_key == key) {
-            return node->hn_value;
+	    *ptr = node->hn_value;
+            return OMPI_SUCCESS;
         }
     } 
-    return NULL;
+    return OMPI_ERR_NOT_FOUND;
 }
 
 
@@ -219,7 +221,8 @@ static OBJ_CLASS_INSTANCE(ompi_uint64_hash_node_t,
                           NULL);
 
 
-void* ompi_hash_table_get_value_uint64(ompi_hash_table_t* ht, uint64_t key)
+int ompi_hash_table_get_value_uint64(ompi_hash_table_t* ht, uint64_t key,
+				     void **ptr)
 {
     ompi_list_t* list = ht->ht_table + (key & ht->ht_mask);
     ompi_uint64_hash_node_t *node;
@@ -228,17 +231,18 @@ void* ompi_hash_table_get_value_uint64(ompi_hash_table_t* ht, uint64_t key)
     if(ht->ht_table_size == 0) {
         ompi_output(0, "ompi_hash_table_get_value_uint64:"
 		   "ompi_hash_table_init() has not been called");
-        return NULL;
+        return OMPI_ERROR;
     }
 #endif
     for(node =  (ompi_uint64_hash_node_t*)ompi_list_get_first(list);
         node != (ompi_uint64_hash_node_t*)ompi_list_get_end(list);
         node =  (ompi_uint64_hash_node_t*)ompi_list_get_next(node)) {
         if (node->hn_key == key) {
-            return node->hn_value;
+            *ptr = node->hn_value;
+	    return OMPI_SUCCESS;
         }
     } 
-    return NULL;
+    return OMPI_ERR_NOT_FOUND;
 }
 
 
@@ -352,8 +356,8 @@ static inline uint32_t ompi_hash_value(size_t mask, const void *key,
     return (h & mask);
 }
 
-void* ompi_hash_table_get_value_ptr(ompi_hash_table_t* ht, const void* key,
-                                    size_t key_size)
+int ompi_hash_table_get_value_ptr(ompi_hash_table_t* ht, const void* key,
+				  size_t key_size, void **ptr)
 {
     ompi_list_t* list = ht->ht_table + ompi_hash_value(ht->ht_mask, key, 
                                                        key_size);
@@ -363,7 +367,7 @@ void* ompi_hash_table_get_value_ptr(ompi_hash_table_t* ht, const void* key,
     if(ht->ht_table_size == 0) {
         ompi_output(0, "ompi_hash_table_get_value_ptr:"
 		   "ompi_hash_table_init() has not been called");
-        return NULL;
+        return OMPI_ERROR;
     }
 #endif
     for(node =  (ompi_ptr_hash_node_t*)ompi_list_get_first(list);
@@ -371,10 +375,11 @@ void* ompi_hash_table_get_value_ptr(ompi_hash_table_t* ht, const void* key,
         node =  (ompi_ptr_hash_node_t*)ompi_list_get_next(node)) {
         if (node->hn_key_size == key_size &&
             memcmp(node->hn_key, key, key_size) == 0) {
-            return node->hn_value;
+            *ptr = node->hn_value;
+	    return OMPI_SUCCESS;
         }
     } 
-    return NULL;
+    return OMPI_ERR_NOT_FOUND;
 }
 
 
