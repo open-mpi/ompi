@@ -16,6 +16,12 @@
  * Global variables
  */
 
+/*
+** Table for Fortran <-> C communicator handle conversion
+** Also used by P2P code to lookup communicator based
+** on cid.
+** 
+*/
 lam_pointer_array_t lam_mpi_communicators; 
 lam_communicator_t  lam_mpi_comm_world;
 lam_communicator_t  lam_mpi_comm_self;
@@ -25,14 +31,6 @@ static void lam_comm_construct(lam_communicator_t* comm);
 static void lam_comm_destruct(lam_communicator_t* comm);
 
 OBJ_CLASS_INSTANCE(lam_communicator_t, lam_object_t,lam_comm_construct, lam_comm_destruct );
-
-/*
-** Table for Fortran <-> C communicator handle conversion
-** 
-** probably removed soon,since we'll have just a single look-up table 
-** for all objects
-*/
-lam_pointer_array_t *lam_comm_f_to_c_table;
 
 /*
 ** sort-function for MPI_Comm_split 
@@ -360,7 +358,6 @@ int lam_comm_free ( lam_communicator_t **comm )
 
 int lam_comm_finalize(void) 
 {
-    OBJ_RELEASE(lam_comm_f_to_c_table);
     return LAM_SUCCESS;
 }
 
@@ -406,7 +403,7 @@ static int rankkeycompare (const void *p, const void *q)
 static void lam_comm_construct(lam_communicator_t* comm)
 {
     /* assign entry in fortran <-> c translation array */
-    comm->c_f_to_c_index = lam_pointer_array_add (lam_comm_f_to_c_table,
+    comm->c_f_to_c_index = lam_pointer_array_add (&lam_mpi_communicators,
                                                   comm);
     comm->c_name[0]   = '\0';
     comm->c_contextid = 0;
@@ -439,11 +436,11 @@ static void lam_comm_destruct(lam_communicator_t* dead_comm)
         OBJ_RELEASE ( dead_comm->c_remote_group );
 
     /* reset the lam_comm_f_to_c_table entry */
-    if ( NULL != lam_pointer_array_get_item (lam_comm_f_to_c_table,
-                                             dead_comm->c_f_to_c_index )) {
-        lam_pointer_array_set_item ( lam_comm_f_to_c_table,
+    if ( NULL != lam_pointer_array_get_item ( &lam_mpi_communicators,
+                                              dead_comm->c_f_to_c_index )) {
+        lam_pointer_array_set_item ( &lam_mpi_communicators,
                                      dead_comm->c_f_to_c_index, NULL);
-                                             }
+    }
     return;
 
 }
