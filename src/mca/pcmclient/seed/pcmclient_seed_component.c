@@ -71,7 +71,7 @@ mca_pcmclient_seed_init(int *priority,
         return NULL;
     }
 
-    *priority = 0;
+    *priority = 10;
     *allow_multiple_user_threads = true;
     *have_hidden_threads = false;
     
