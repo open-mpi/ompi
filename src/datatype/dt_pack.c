@@ -294,19 +294,24 @@ int lam_convertor_pack( lam_convertor_t* pConv, struct iovec* out, unsigned int 
     if( pData->flags & DT_FLAG_CONTIGUOUS ) {
         if( pData->size == (extent = (pData->ub - pData->lb)) ) {
             size_t length = pData->size * pConv->count;
+            char* pSrc = pConv->pBaseBuf + pData->true_lb + pConv->bConverted;
+
             if( out[0].iov_base == NULL ) {
-                out[0].iov_base = pConv->pBaseBuf + pData->true_lb;
-                if( (out[0].iov_base == 0) ||
-                    ((pConv->bConverted + out[0].iov_len) > length) )
+                out[0].iov_base = pSrc;
+                if( (pConv->bConverted + out[0].iov_len) > length )
                     out[0].iov_len = length - pConv->bConverted;
             } else {
                 /* contiguous data just memcpy the smallest data in the user buffer */
                 out[0].iov_len = IMIN( out[0].iov_len, pData->size * pConv->count );
-                MEMCPY( out[0].iov_base, pConv->pBaseBuf + pData->true_lb, out[0].iov_len);
+                MEMCPY( out[0].iov_base, pSrc, out[0].iov_len);
             }
             pConv->bConverted += out[0].iov_len;
-            return 0;
-        }         
+            return (pConv->bConverted == length);
+        } else {  /* datatype is contiguous but there are gap inbetween elements */
+            if( out[0].iov_base != NULL ) {
+                return -1;
+            }
+        }        
     }
     if( out[0].iov_base == NULL ) {
         out[0].iov_len = pConv->count * pData->size;
