@@ -237,7 +237,7 @@ int ompi_ddt_init( void )
    /* VPS: Create a fake convertor. No error checking here now, since
       this will be removed sometime */
    ompi_convertor = ompi_convertor_create(0,0);
-   return 0;
+   return OMPI_SUCCESS;
 }
 
 int ompi_ddt_finalize( void )
@@ -254,7 +254,7 @@ int ompi_ddt_finalize( void )
    if( pDumpConv != NULL ) {
        OBJ_RELEASE( pDumpConv );
    }
-   return 0;
+   return OMPI_SUCCESS;
 }
 
 /********************************************************
@@ -296,7 +296,7 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems )
                     pDesc->count, pDesc->disp, pDesc->disp, pDesc->extent );
         pDesc++;
     }
-    return 0;
+    return OMPI_SUCCESS;
 }
 
 static void __dt_contain_basic_datatypes( dt_desc_t* pData )

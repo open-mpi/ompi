@@ -98,7 +98,7 @@ static int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
                                                &advance );
             if( rc <= 0 ) {
                 printf( "trash in the input buffer\n" );
-                return -1;
+                return OMPI_ERROR;
             }
             iCount -= advance;      /* decrease the available space in the buffer */
             pInput += advance;      /* increase the pointer to the buffer */
@@ -292,7 +292,7 @@ static int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
         pConv->bConverted += out[0].iov_len;
         return (pConv->bConverted == length);
     }
-    return -1;  /* not yet implemented */
+    return OMPI_ERR_NOT_IMPLEMENTED;  /* not yet implemented */
 }
 
 /* The pack routines should do 2 things:
@@ -303,7 +303,7 @@ static int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
  *   provide the correct pointer every time. But if the user provide a buffer, then
  *   some parts of the data should be packed inside this buffer, but we still should
  *   able to have pointers to the user buf on the subsequents calls.
- * Return 0 if everything went OK and if there is still room before the complete
+ * return 0 if everything went OK and if there is still room before the complete
  *          conversion of the data (need additional call with others input buffers )
  *        1 if everything went fine and the data was completly converted
  *       -1 something wrong occurs.
@@ -363,7 +363,7 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv, unsigned int flags,
         pConv->freebuf = NULL;
     }
     ompi_create_stack_with_pos( pConv, local_starting_point, local_sizes );
-    return 0;
+    return OMPI_SUCCESS;
 }
 
 ompi_convertor_t* ompi_convertor_create( int remote_arch, int mode )
@@ -380,11 +380,11 @@ ompi_convertor_t* ompi_convertor_create( int remote_arch, int mode )
 
 static int ompi_convertor_destroy( ompi_convertor_t* pConv )
 {
-   if( pConv == NULL ) return 0;
+   if( pConv == NULL ) return OMPI_SUCCESS;
    if( pConv->pStack != NULL ) free( pConv->pStack );
    if( pConv->pDesc != NULL ) OBJ_RELEASE( pConv->pDesc );
    if( pConv->freebuf != NULL ) free( pConv->freebuf );
-   return 0;
+   return OMPI_SUCCESS;
 }
 
 OBJ_CLASS_INSTANCE(ompi_convertor_t, ompi_object_t, NULL, ompi_convertor_destroy );
@@ -413,10 +413,10 @@ ompi_convertor_t* ompi_convertor_get_copy( ompi_convertor_t* pConvertor )
 int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, int* pSize )
 {
    if( ompi_ddt_type_size( pConv->pDesc, pSize ) != 0 )
-      return -1;
+      return OMPI_ERROR;
    /* actually *pSize contain the size of one instance of the data */
    *pSize = (*pSize) * pConv->count;
-   return 0;
+   return OMPI_SUCCESS;
 }
 
 int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, int* pSize )
@@ -426,11 +426,11 @@ int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, int* pSize )
 
    if( pConv->count == 0 ) {
       *pSize = 0;
-      return 0;
+      return OMPI_SUCCESS;
    }
    if( pConv->remoteArch == 0 ) {  /* same architecture */
       *pSize = pData->size * pConv->count;
-      return 0;
+      return OMPI_SUCCESS;
    }
    *pSize = 0;
    for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
@@ -440,5 +440,5 @@ int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, int* pSize )
       }
    }
    *pSize *= pConv->count;
-   return 0;
+   return OMPI_SUCCESS;
 }

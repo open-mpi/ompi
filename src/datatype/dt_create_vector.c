@@ -36,7 +36,7 @@ int ompi_ddt_create_vector( int count, int bLength, long stride,
       ompi_ddt_add( pData, oldType, bLength, (count - 1) * extent * stride, extent );
    }
    *newType = pData;
-   return 0;
+   return OMPI_SUCCESS;
 }
 
 int ompi_ddt_create_hvector( int count, int bLength, long stride,
@@ -62,5 +62,5 @@ int ompi_ddt_create_hvector( int count, int bLength, long stride,
       ompi_ddt_add( pData, oldType, bLength, (count - 1) * stride, extent );
    }
    *newType = pData;
-   return 0;
+   return OMPI_SUCCESS;
 }

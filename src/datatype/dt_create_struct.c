@@ -61,5 +61,5 @@ int ompi_ddt_create_struct( int count, int* pBlockLength, long* pDisp,
     ompi_ddt_add( pdt, lastType, lastBlock, lastDisp, lastExtent );
 
     *newType = pdt;
-    return 0;
+    return OMPI_SUCCESS;
 }

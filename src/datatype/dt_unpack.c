@@ -34,7 +34,7 @@ void dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDesc, char*
  */
 /* Convert data from multiple input buffers (as received from the network layer)
  * to a contiguous output buffer with a predefined size.
- * Return 0 if everything went OK and if there is still room before the complete
+ * return OMPI_SUCCESS if everything went OK and if there is still room before the complete
  *          conversion of the data (need additional call with others input buffers )
  *        1 if everything went fine and the data was completly converted
  *       -1 something wrong occurs.
@@ -126,7 +126,7 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
                                                &advance );
             if( rc <= 0 ) {
                 printf( "trash in the input buffer\n" );
-                return -1;
+                return OMPI_ERROR;
             }
             iCount -= advance;      /* decrease the available space in the buffer */
             pInput += advance;      /* increase the pointer to the buffer */
@@ -481,7 +481,7 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
         pConv->fAdvance = ompi_convertor_unpack_homogeneous;
     }
     ompi_create_stack_with_pos( pConv, starting_point, local_sizes );
-    return 0;
+    return OMPI_SUCCESS;
 }
 
 /* Get the number of elements from the data associated with this convertor that can be
@@ -594,7 +594,7 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
                pSrcBuf += (pData->ub - pData->lb);
            }
        }
-       return 0;
+       return OMPI_SUCCESS;
    }
 
    pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+1) );
@@ -656,5 +656,5 @@ int ompi_ddt_copy_content_same_ddt( dt_desc_t* pData, int count,
    if( lastLength != 0 )
        MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
    /* cleanup the stack */
-   return 0;
+   return OMPI_SUCCESS;
 }

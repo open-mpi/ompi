@@ -40,7 +40,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, lon
             pdtBase->lb = disp;
             pdtBase->flags |= DT_FLAG_USER_LB;
          }
-         return 0;
+         return OMPI_SUCCESS;
       } else if( pdtAdd == &(basicDatatypes[DT_UB]) ) {
          pdtBase->bdt_used |= (1<< DT_UB);
          if( pdtBase->flags & DT_FLAG_USER_UB ) {
@@ -49,7 +49,7 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, lon
             pdtBase->ub = disp;
             pdtBase->flags |= DT_FLAG_USER_UB;
          }
-         return 0;
+         return OMPI_SUCCESS;
       }
    } else {
       place_needed = pdtAdd->desc.used;
@@ -187,5 +187,5 @@ int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtAdd, unsigned int count, lon
 
    OBJ_RELEASE( pdtAdd );
 
-   return 0;
+   return OMPI_SUCCESS;
 }
