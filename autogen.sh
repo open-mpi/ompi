@@ -172,7 +172,7 @@ EOF
 ##############################################################################
 run_and_check() {
     local rac_progs="$*"
-    echo "$rac_progs"
+    echo "[Running] $rac_progs"
     eval $rac_progs
     if test "$?" != 0; then
 	cat <<EOF
@@ -252,6 +252,9 @@ find_and_delete() {
 #
 ##############################################################################
 
+# announce
+echo "[Checking] prerequisites"
+
 # sanity check to make sure user isn't being stupid
 if test ! -d CVS ; then
     cat <<EOF
@@ -276,7 +279,6 @@ You must run this script from the top-level LAM directory.
 EOF
     exit 1
 fi
-
 
 # find all the apps we are going to run
 find_app "aclocal"
@@ -303,7 +305,7 @@ if test "`grep AC_CONFIG_HEADER configure.ac`" != "" -o \
     run_and_check $lam_autoheader
 fi
 run_and_check $lam_autoconf
-echo "  -- patching configure for broken -c/-o compiler test"
+echo "[Patching] configure for broken libtool -c/-o compiler test"
 sed -e 's/chmod -w \./#LAM\/MPI FIX: chmod -w ./' \
     configure > configure.new
 mv configure.new configure
