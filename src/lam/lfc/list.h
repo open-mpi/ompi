@@ -111,12 +111,20 @@ static inline lam_list_item_t* lam_list_get_end(lam_list_t* list)
 }
 
 /*
- * Removes the specified item from the list
+ * Removes the specified item from the list.  It retuns the element
+ * pointing to item, so that a loop traversing the list from the
+ * top of the list down can proceed.
  */
-static inline void lam_list_remove_item(lam_list_t *list, lam_list_item_t *item){
+static inline lam_list_item_t *lam_list_remove_item
+  (lam_list_t *list, lam_list_item_t *item)
+{
 #ifdef LAM_ENABLE_DEBUG
     lam_list_item_t *item_ptr;
-    int found=0;
+    int found;
+#endif
+
+#ifdef LAM_ENABLE_DEBUG
+    found=0;
 #endif
 
 #ifdef LAM_ENABLE_DEBUG
@@ -142,7 +150,7 @@ static inline void lam_list_remove_item(lam_list_t *list, lam_list_item_t *item)
     /* reset previous pointer of next element */
     item->lam_list_next->lam_list_prev=item->lam_list_prev;
 
-    return;
+    return item->lam_list_prev;
 }
 
 /* 

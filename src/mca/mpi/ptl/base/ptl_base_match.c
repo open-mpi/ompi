@@ -227,7 +227,7 @@ mca_pml_base_recv_request_t *mca_ptl_base_check_recieves_for_match
 
 /**
  * Try and match the incoming message fragment to the list of
- * "wild" receies
+ * "wild" receives
  *
  * @param frag_header Matching data from recived fragment (IN)
  *
@@ -288,6 +288,68 @@ mca_pml_base_recv_request_t *check_wild_receives_for_match(
         }
     }
     //
+
+    return return_match;
+}
+
+
+/**
+ * Try and match the incoming message fragment to the list of
+ * "specific" receives
+ *
+ * @param frag_header Matching data from recived fragment (IN)
+ *
+ * @param pml_comm Pointer to the communicator structure used for
+ * matching purposes. (IN)
+ *
+ * @return Matched receive
+ *
+ * This routine assumes that the appropriate matching locks are
+ * set by the upper level routine.
+ */
+mca_pml_base_recv_request_t *check_specific_receives_for_match(
+        mca_pml_base_reliable_hdr_t *frag_header,
+        mca_pml_comm_t *pml_comm)
+{
+    /* local variables */
+    mca_pml_base_recv_request_t *specific_recv;
+    mca_pml_base_recv_request_t *return_match;
+    int frag_src,recv_user_tag,frag_user_tag;
+
+    frag_user_tag=frag_header->hdr_base.hdr_user_tag;
+
+    /* initialization */
+    return_match=(mca_pml_base_recv_request_t *)NULL;
+    frag_src = frag_header->hdr_frag_seq_num;
+
+    /*
+     * Loop over the specific irecvs.
+     */
+    for(specific_recv = (mca_pml_base_recv_request_t *) 
+            lam_list_get_first((pml_comm->specific_receives)+frag_src);
+            specific_recv != (mca_pml_base_recv_request_t *)
+            lam_list_get_end((pml_comm->specific_receives)+frag_src);
+            specific_recv = (mca_pml_base_recv_request_t *) 
+            ((lam_list_item_t *)specific_recv)->lam_list_next) {
+        /*
+         * Check for a match
+         */
+        recv_user_tag = specific_recv->super.req_tag;
+        if ( (frag_user_tag == recv_user_tag) ||
+             ( (recv_user_tag == LAM_ANY_TAG) && (0 <= frag_user_tag) ) ) {
+
+            /*
+             * Match made
+             */
+            return_match = specific_recv;
+
+            /* remove descriptor from posted specific ireceive list */
+            lam_list_remove_item((pml_comm->specific_receives)+frag_src,
+                    (lam_list_item_t *)specific_recv);
+
+            break;
+        }
+    }
 
     return return_match;
 }
