@@ -105,9 +105,9 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     item = (ompi_list_item_t*)fragment->send_buf;
 
     if( (*size) <= mca_ptl_gm_component.gm_max_eager_size ) {  /* small protocol */
-	size_t max_data, remaining_bytes = fragment->send_frag.frag_base.frag_size;
-	int freeAfter;
-	unsigned int in_size;
+	size_t remaining_bytes = fragment->send_frag.frag_base.frag_size;
+	int32_t freeAfter;
+	uint32_t max_data, in_size;
 	struct iovec iov;
 	ompi_convertor_t *convertor = &(fragment->send_frag.frag_base.frag_convertor);
 	
@@ -298,7 +298,6 @@ int mca_ptl_gm_peer_send( mca_ptl_gm_peer_t *ptl_peer,
     return OMPI_SUCCESS;
 }
 
-
 void put_callback(struct gm_port *port,void * context, gm_status_t status)
 {
     mca_ptl_gm_module_t *ptl;
@@ -454,13 +453,9 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
     
     /* allocate a receive fragment */
     recv_frag = mca_ptl_gm_alloc_recv_frag( (struct mca_ptl_base_module_t*)ptl );
-    
-    recv_frag->frag_recv.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
-    recv_frag->frag_recv.frag_base.frag_peer = NULL;
+    /*recv_frag->frag_recv.frag_base.frag_peer = NULL;
     recv_frag->frag_recv.frag_request = NULL;
-    recv_frag->frag_recv.frag_is_buffered = false;
-    
-    recv_frag->frag_recv.frag_base.frag_header.hdr_rndv = hdr->hdr_rndv;
+    */
     if( MCA_PTL_HDR_TYPE_MATCH == hdr->hdr_rndv.hdr_match.hdr_common.hdr_type ) {
         recv_frag->frag_recv.frag_base.frag_addr =
             (char *) hdr + sizeof(mca_ptl_base_match_header_t);
@@ -472,27 +467,34 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
 	recv_frag->frag_recv.frag_base.frag_size = hdr->hdr_rndv.hdr_frag_length;
     }
     
-    recv_frag->matched = false;
+    recv_frag->frag_recv.frag_is_buffered = false;
     recv_frag->have_allocated_buffer = false;
-    recv_frag->frag_ack_pending = false;
-    recv_frag->frag_progressed = 0;
-    recv_frag->frag_offset = 0;  /* initial frgment */
-    recv_frag->frag_bytes_processed = 0;
+    recv_frag->frag_offset = 0;  /* initial fragment */
 
+    recv_frag->frag_recv.frag_base.frag_header.hdr_rndv = hdr->hdr_rndv;
     matched = ptl->super.ptl_match( &(ptl->super),
                                     &(recv_frag->frag_recv),
                                     &(recv_frag->frag_recv.frag_base.frag_header.hdr_match) );
     if( !matched ) {
         size_t length = recv_frag->frag_recv.frag_base.frag_size;
+        
 	/* get some memory and copy the data inside. We can then release the receive buffer */
         if( 0 != length ) {
-            char* ptr = (char*)malloc( sizeof(char) * length );
+            char* ptr = (char*)gm_get_local_buffer();
+	    if (NULL == ptr) {
+		ompi_output(0, "[%s:%d] error in allocating memory \n", __FILE__, __LINE__);
+	    }
             recv_frag->have_allocated_buffer = true;
             memcpy( ptr, recv_frag->frag_recv.frag_base.frag_addr, length );
             recv_frag->frag_recv.frag_base.frag_addr = ptr;
         } else {
             recv_frag->frag_recv.frag_base.frag_addr = NULL;
         }
+        recv_frag->matched = false;
+        recv_frag->frag_ack_pending = false;
+        recv_frag->frag_progressed = 0;
+        recv_frag->frag_bytes_processed = 0;
+
         return recv_frag;
     }
     return NULL;
@@ -592,7 +594,6 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t *ptl,
 	    recv_frag = NULL;
 	} else {  /* large message => we have to create a receive fragment */
 	    recv_frag = mca_ptl_gm_alloc_recv_frag( (struct mca_ptl_base_module_t*)ptl );
-	    recv_frag->frag_recv.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
 	    recv_frag->frag_recv.frag_request = request;
 	    recv_frag->frag_recv.frag_base.frag_header.hdr_frag = hdr->hdr_frag;
 	    recv_frag->frag_recv.frag_base.frag_peer =
@@ -745,19 +746,6 @@ int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_even
     case GM_HIGH_PEER_RECV_EVENT:
 	mesg = gm_ntohp(event->recv.buffer);
 	frag = ptl_gm_handle_recv( ptl, event );
-	if( (frag != NULL) && !(frag->matched) ) {
-	    /* allocate temporary buffer: temporary until the fragment will be finally matched */
-	    char* buffer = malloc( GM_BUF_SIZE );
-	    if (NULL == buffer) {
-		ompi_output(0, "[%s:%d] error in allocating memory \n", __FILE__, __LINE__);
-	    }
-	    /* copy the data from the registered buffer to the newly allocated one */
-	    memcpy( buffer, mesg, gm_ntohl(event->recv.length) );
-	    /* associate the buffer with the unexpected fragment */
-	    frag->frag_recv.frag_base.frag_addr = (void *)buffer;
-	    /* mark the fragment as having pending buffers */
-	    frag->have_allocated_buffer = true;
-	}
 	gm_provide_receive_buffer( ptl->gm_port, mesg, GM_SIZE, GM_LOW_PRIORITY );
 	break;
     case GM_NO_RECV_EVENT:

@@ -411,7 +411,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     
     /* Now update the status of the fragment */
     if( ((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer == true ) {
-        free( ((mca_ptl_gm_recv_frag_t*)frag)->frag_recv.frag_base.frag_addr);
+        gm_release_local_buffer( ((mca_ptl_gm_recv_frag_t*)frag)->frag_recv.frag_base.frag_addr );
         ((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer = false;
     }
     
