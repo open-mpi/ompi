@@ -14,6 +14,9 @@
 #include "group/group.h"
 #include "util/common_cmd_line.h"
 #include "errhandler/errhandler.h"
+#include "errhandler/errcode.h"
+#include "errhandler/errclass.h"
+#include "errhandler/errcode-internal.h"
 #include "op/op.h"
 #include "mca/base/base.h"
 #include "mca/base/base.h"
@@ -153,6 +156,27 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
      if (OMPI_SUCCESS != (ret = ompi_errhandler_init())) {
          /* JMS show_help */
          printf("show_help: ompi_mpi_init failed in ompi_errhandler_init\n");
+         return ret;
+     }
+
+     /* initialize error codes */
+     if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_init())) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in ompi_errcode_init\n");
+         return ret;
+     }
+
+     /* initialize error classes */
+     if (OMPI_SUCCESS != (ret = ompi_errclass_init())) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in ompi_errclass_init\n");
+         return ret;
+     }
+
+     /* initialize internal error codes */
+     if (OMPI_SUCCESS != (ret = ompi_errcode_intern_init())) {
+         /* JMS show_help */
+         printf("show_help: ompi_mpi_init failed in ompi_errcode_internal_init\n");
          return ret;
      }
      
