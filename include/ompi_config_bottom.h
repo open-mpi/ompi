@@ -13,7 +13,7 @@
 #ifndef OMPI_CONFIG_BOTTOM_H 
 #define OMPI_CONFIG_BOTTOM_H
  
-#ifdef WIN32
+#if defined(WIN32) && defined(OMPI_BUILDING)
 #include "win32/win_compat.h"
 #define OMPI_COMP_EXPORT __declspec(dllexport)
 #endif
