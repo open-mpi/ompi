@@ -111,6 +111,7 @@ ompi_universe_t ompi_universe_info = {
     /* .hostfile =            */    NULL
 };
 
+static void printname(char *location);
 
 int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
@@ -120,6 +121,7 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
     pid_t pid;
     mca_ns_base_jobid_t jobid;
     mca_ns_base_vpid_t vpid;
+    ompi_process_name_t illegal_name={MCA_NS_BASE_CELLID_MAX, MCA_NS_BASE_JOBID_MAX, MCA_NS_BASE_VPID_MAX};
 
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
@@ -181,6 +183,37 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 	return ret;
     }
 
+    printname("pcmclient");
+
+    /*
+     * Process Control and Monitoring Client -
+     * just complete selection of proper module
+     */
+    user_threads = true;
+    hidden_threads = false;
+    if (OMPI_SUCCESS != (ret = mca_pcmclient_base_select(&user_threads, 
+							 &hidden_threads))) {
+	printf("show_help: ompi_rte_init failed in pcmclient_base_select\n");
+	/* JMS show_help */
+	return ret;
+    }
+    *allow_multi_user_threads &= user_threads;
+    *have_hidden_threads |= hidden_threads;
+
+    printname("pcm_select");
+
+    /* Initialize the name - set to value provided by enviro, if available */
+    if (NULL != ompi_process_info.name) {  /* should NOT have been previously set */
+	free(ompi_process_info.name);
+	ompi_process_info.name = NULL;
+    }
+
+    if (NULL != ompi_rte_get_self()) {  /* name set in environment - nonsingleton - record name */
+	ompi_process_info.name = ompi_rte_get_self();
+    }
+
+    printname("get_self");
+
     /* complete setup of OOB */
     if (OMPI_SUCCESS != (ret = mca_oob_base_init(&user_threads, 
 						 &hidden_threads))) {
@@ -191,8 +224,12 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
     *allow_multi_user_threads &= user_threads;
     *have_hidden_threads |= hidden_threads;
 
+    printname("oob_init");
+
     /* parse non-PCM environmental variables and fill corresponding info structures */
     ompi_rte_parse_environ();
+
+    printname("parse_environ");
 
     if (NULL != cmd_line) {
 	/* parse the cmd_line for rte options - override settings from enviro, where necessary
@@ -207,6 +244,9 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 	 */
 	ompi_rte_parse_daemon_cmd_line(cmd_line);
     }
+
+    printname("cmd_line");
+
     /* check for existing universe to join */
     if (OMPI_SUCCESS != (ret = ompi_rte_universe_exists())) {
 	if (ompi_rte_debug_flag) {
@@ -246,6 +286,8 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 	}
     }
 
+    printname("univ_exists");
+
     /*
      * Name Server - base already opened in stage1, so just complete the selection
      * of the proper module
@@ -262,21 +304,6 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
     *have_hidden_threads |= hidden_threads;
 
     /*
-     * Process Control and Monitoring Client -
-     * just complete selection of proper module
-     */
-    user_threads = true;
-    hidden_threads = false;
-    if (OMPI_SUCCESS != (ret = mca_pcmclient_base_select(&user_threads, 
-							 &hidden_threads))) {
-	printf("show_help: ompi_rte_init failed in pcmclient_base_select\n");
-	/* JMS show_help */
-	return ret;
-    }
-    *allow_multi_user_threads &= user_threads;
-    *have_hidden_threads |= hidden_threads;
-
-    /*
      * Allocation code - open only.  pcm will init if needed
      */
     if (OMPI_SUCCESS != (ret = mca_llm_base_open())) {
@@ -284,6 +311,8 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 	printf("show_help: ompi_rte_init failed in llm_base_open\n");
 	return ret;
     }
+
+    printname("llm_open");
 
     /*
      * Process Control and Monitoring - lazy load
@@ -293,6 +322,8 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
 	printf("show_help: ompi_rte_init failed in pcm_base_open\n");
 	return ret;
     }
+
+    printname("pcm_open");
 
     /*
      * Registry 
@@ -312,25 +343,23 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
     }
     *allow_multi_user_threads &= user_threads;
     *have_hidden_threads |= hidden_threads;
-
-    /* Initialize the name - set to value provided by enviro, if available */
-    if (NULL != ompi_process_info.name) {  /* should NOT have been previously set */
-	free(ompi_process_info.name);
-	ompi_process_info.name = NULL;
-    }
-
-    if (NULL != ompi_rte_get_self()) {  /* name set in environment - nonsingleton - record name */
-	ompi_process_info.name = ompi_rte_get_self();
-    }
+ 
+    printname("gpr_select");
 
     /*****    SET MY NAME IF NOT ALREADY PROVIDED IN ENVIRONMENT   *****/
-    if (NULL == ompi_process_info.name) {  /* name not previously set */
-	if (NULL == ompi_process_info.ns_replica) { /* singleton - couldn't join existing univ */
+    if (NULL == ompi_process_info.name ||
+	(0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, ompi_process_info.name, &illegal_name))) {  /* name not previously set */
+	if (ompi_process_info.seed || NULL == ompi_process_info.ns_replica) { /* seed or singleton - couldn't join existing univ */
+	    if (NULL != ompi_process_info.name) {
+		free(ompi_process_info.name);
+	    }
 	    ompi_process_info.name = ompi_name_server.create_process_name(0,0,0);
-	} else {  /* singleton - name server exists elsewhere - get a name for me */
+	    printname("singleton/seed");
+	} else {  /* not seed or singleton - name server exists elsewhere - get a name for me */
 	    jobid = ompi_name_server.create_jobid();
 	    vpid = ompi_name_server.reserve_range(jobid, 1);
 	    ompi_process_info.name = ompi_name_server.create_process_name(0, jobid, vpid);
+	    printname("name_server_provided");
 	}
     }
 
@@ -376,7 +405,16 @@ int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, boo
     return OMPI_SUCCESS;
 }
 
-
+static void printname(char *loc)
+{
+    if (ompi_rte_debug_flag) {
+	if (NULL == ompi_process_info.name) {
+	    ompi_output(0, "My name after %s has NOT been set", loc);
+	} else {
+	    ompi_output(0, "My name after %s is [%d,%d,%d]", loc, OMPI_NAME_ARGS(*ompi_process_info.name));
+	}
+    }
+}
 
 
 /*
