@@ -194,23 +194,6 @@ fi
 AM_CONDITIONAL(WANT_INSTALL_HEADERS, test "$WANT_INSTALL_HEADERS" = 1)
 
 #
-# Do we want profiling?
-#
-
-AC_MSG_CHECKING([if want MPI profiling layers])
-AC_ARG_ENABLE(profiling,
-    AC_HELP_STRING([--enable-profiling],
-                   [build the MPI profiling layers for all available languages (default: enabled)]))
-if test "$enable_profiling" != "no"; then
-    AC_MSG_RESULT([yes])
-    WANT_MPI_PROFILING=1
-else
-    AC_MSG_RESULT([no])
-    WANT_MPI_PROFILING=0
-fi
-AM_CONDITIONAL(WANT_MPI_PROFILING, test "$WANT_MPI_PROFILING" = 1)
-
-#
 # Do we want to disable weak symbols for some reason?
 #
 
