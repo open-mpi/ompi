@@ -37,10 +37,13 @@ extern mca_ptl_sm_module_resource_t mca_ptl_sm_module_resource;
  */
 struct mca_ptl_sm_component_t {
     mca_ptl_base_component_1_0_0_t super;  /**< base PTL component */
-    int sm_free_list_num;                 /**< initial size of free lists */
-    int sm_free_list_max;                 /**< maximum size of free lists */
-    int sm_free_list_inc;                 /**< number of elements to alloc when growing free lists */
-    int sm_max_procs;                     /**< upper limit on the number of processes using the shared memory pool */
+    int sm_first_frag_free_list_num;       /**< initial size of free lists */
+    int sm_first_frag_free_list_max;       /**< maximum size of free lists */
+    int sm_first_frag_free_list_inc;       /**< number of elements to alloc when growing free lists */
+    int sm_second_frag_free_list_num;       /**< initial size of free lists */
+    int sm_second_frag_free_list_max;       /**< maximum size of free lists */
+    int sm_second_frag_free_list_inc;       /**< number of elements to alloc when growing free lists */
+    int sm_max_procs;                      /**< upper limit on the number of processes using the shared memory pool */
     int sm_extra_procs;                  /**< number of extra procs to allow */
     char* sm_mpool_name;                  /**< name of shared memory pool module */
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */

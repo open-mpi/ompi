@@ -103,12 +103,18 @@ static inline int mca_ptl_sm_param_register_int(
 int mca_ptl_sm_component_open(void)
 {
     /* register SM component parameters */
-    mca_ptl_sm_component.sm_free_list_num =
-        mca_ptl_sm_param_register_int("free_list_num", 256);
-    mca_ptl_sm_component.sm_free_list_max =
-        mca_ptl_sm_param_register_int("free_list_max", -1);
-    mca_ptl_sm_component.sm_free_list_inc =
-        mca_ptl_sm_param_register_int("free_list_inc", 256);
+    mca_ptl_sm_component.sm_first_frag_free_list_num =
+        mca_ptl_sm_param_register_int("first_frag_free_list_num", 256);
+    mca_ptl_sm_component.sm_first_frag_free_list_max =
+        mca_ptl_sm_param_register_int("first_frag_free_list_max", -1);
+    mca_ptl_sm_component.sm_first_frag_free_list_inc =
+        mca_ptl_sm_param_register_int("first_frag_free_list_inc", 256);
+    mca_ptl_sm_component.sm_second_frag_free_list_num =
+        mca_ptl_sm_param_register_int("second_frag_free_list_num", 256);
+    mca_ptl_sm_component.sm_second_frag_free_list_max =
+        mca_ptl_sm_param_register_int("second_frag_free_list_max", -1);
+    mca_ptl_sm_component.sm_second_frag_free_list_inc =
+        mca_ptl_sm_param_register_int("second_frag_free_list_inc", 256);
     mca_ptl_sm_component.sm_max_procs =
         mca_ptl_sm_param_register_int("max_procs", -1);
     mca_ptl_sm_component.sm_mpool_name =
@@ -170,6 +176,10 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 
     /* initialize fragment descriptor free list */
 
+    /* 
+     * first fragment 
+     */
+
     /* allocation will be for the fragment descriptor, payload buffer,
      * and padding to ensure proper alignment can be acheived */
     length=sizeof(mca_ptl_sm_frag_t)+mca_ptl_sm_component.fragment_alignment+
@@ -177,9 +187,25 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 
     ompi_free_list_init(&mca_ptl_sm_component.sm_first_frags, length,
         OBJ_CLASS(mca_ptl_sm_frag_t),
-        mca_ptl_sm_component.sm_free_list_num,
-        mca_ptl_sm_component.sm_free_list_max,
-        mca_ptl_sm_component.sm_free_list_inc,
+        mca_ptl_sm_component.sm_first_frag_free_list_num,
+        mca_ptl_sm_component.sm_first_frag_free_list_max,
+        mca_ptl_sm_component.sm_first_frag_free_list_inc,
+        mca_ptl_sm_component.sm_mpool); /* use shared-memory pool */
+
+    /* 
+     * second and beyond fragments 
+     */
+
+    /* allocation will be for the fragment descriptor, payload buffer,
+     * and padding to ensure proper alignment can be acheived */
+    length=sizeof(mca_ptl_sm_frag_t)+mca_ptl_sm_component.fragment_alignment+
+        mca_ptl_sm_component.max_fragment_size;
+
+    ompi_free_list_init(&mca_ptl_sm_component.sm_second_frags, length,
+        OBJ_CLASS(mca_ptl_sm_frag_t),
+        mca_ptl_sm_component.sm_second_frag_free_list_num,
+        mca_ptl_sm_component.sm_second_frag_free_list_max,
+        mca_ptl_sm_component.sm_second_frag_free_list_inc,
         mca_ptl_sm_component.sm_mpool); /* use shared-memory pool */
 
     /* publish shared memory parameters with the MCA framework */
@@ -191,8 +217,22 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     if(NULL == ptls)
         return NULL;
 
+    /* only one copy of this ptl is created */
     *ptls = &mca_ptl_sm.super;
     *num_ptls = 1;
+
+    /* set scheduling parameters */
+    mca_ptl_sm.super.ptl_cache_size=mca_ptl_sm_component.sm_first_frag_free_list_max;
+    mca_ptl_sm.super.ptl_cache_bytes=sizeof(mca_ptl_sm_send_request_t) -
+                sizeof(mca_pml_base_send_request_t);
+    mca_ptl_sm.super.ptl_first_frag_size=mca_ptl_sm_component.first_fragment_size;
+
+    mca_ptl_sm.super.ptl_min_frag_size=mca_ptl_sm_component.max_fragment_size;
+    mca_ptl_sm.super.ptl_max_frag_size=mca_ptl_sm_component.max_fragment_size;
+    mca_ptl_sm.super.ptl_exclusivity=100;  /* always use this ptl */
+    mca_ptl_sm.super.ptl_latency=100;      /* lowest latency */
+    mca_ptl_sm.super.ptl_bandwidth=900; /* not really used now since
+                                     exclusivity is set to 100 */
 
     /* initialize some PTL data */
     /* start with no SM procs */
