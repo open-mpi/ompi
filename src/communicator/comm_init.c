@@ -277,17 +277,14 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
 
 static void ompi_comm_destruct(ompi_communicator_t* comm)
 {
-    /* Release attributes */
-
-    if (NULL != comm->c_keyhash) {
-        ompi_attr_delete_all(COMM_ATTR, comm, comm->c_keyhash);
-        OBJ_RELEASE(comm->c_keyhash);
-    }
+    /* Note that the attributes were already released on this
+       communicator in ompi_comm_free() (i.e., from MPI_COMM_FREE /
+       MPI_COMM_DISCONNECT).  See the lengthy comment in
+       communicator/comm.c in ompi_comm_free() for the reasons why. */
 
     /* Release the collective module */
 
     mca_coll_base_comm_unselect(comm);
-
 
     /*  Check if the communicator is a topology */
     if (OMPI_COMM_IS_CART(comm) || OMPI_COMM_IS_GRAPH(comm)) {
