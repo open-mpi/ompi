@@ -31,6 +31,8 @@ void ompi_mpi_errors_are_fatal_comm_handler(struct ompi_communicator_t **comm,
   va_start(arglist);
 #endif
 
+  fflush(stdout);
+  fflush(stderr);
   arg = va_arg(arglist, char*);
   if (NULL != arg) {
     ompi_output(0, "*** An error occurred in %s", arg);
@@ -78,6 +80,8 @@ void ompi_mpi_errors_are_fatal_file_handler(struct ompi_file_t **file,
   va_start(arglist);
 #endif
 
+  fflush(stdout);
+  fflush(stderr);
   arg = va_arg(arglist, char*);
   if (NULL != arg) {
     ompi_output(0, "*** An error occurred in %s", arg);
@@ -124,6 +128,8 @@ void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
   va_start(arglist);
 #endif
 
+  fflush(stdout);
+  fflush(stderr);
   arg = va_arg(arglist, char*);
   if (NULL != arg) {
     ompi_output(0, "*** An error occurred in %s", arg);
