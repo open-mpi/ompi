@@ -125,6 +125,7 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
                           va_list arglist)
 {
     char *arg;
+    char str[MPI_MAX_PROCESSOR_NAME * 2];
 
     fflush(stdout);
     fflush(stderr);
@@ -136,8 +137,14 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
     }
 
     if (NULL != name && ompi_mpi_initialized && !ompi_mpi_finalized) {
-        out("*** on %s ", type);
-        out("%s\n", name);
+        /* Don't use asprintf() here because there may be stack / heap
+           corruption by the time we're invoked, so just do it on the
+           stack */
+        str[0] = '\0';
+        strcat(str, type);
+        strcat(str, " ");
+        strcat(str, name);
+        out("*** on %s", str);
     } else if (!ompi_mpi_initialized) {
         out("*** before MPI was initialized\n", NULL);
     } else if (ompi_mpi_finalized) {
