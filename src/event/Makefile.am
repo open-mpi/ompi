@@ -5,8 +5,8 @@ AUTOMAKE_OPTIONS = foreign no-dependencies
 # of the header files in this directory get included elsewhere in LAM.
 # #@%@#$...
 AM_CPPFLAGS = \
-        -I$(top_builddir)/../../include -I$(top_srcdir)/../../include \
-        -I$(top_builddir)/../..
+        -I$(top_builddir)/../include -I$(top_srcdir)/../include \
+        -I$(top_builddir)/..
 
 CFLAGS = -Wall @CFLAGS@
 # LAM: No need to build the sample or test
@@ -43,9 +43,6 @@ libevent_la_LIBADD = $(lt_libobj)
 libevent_la_DEPENDENCIES = $(lt_libobj)
 
 include_HEADERS = event.h
-
-# LAM: Make it work in a VPATH environment
-INCLUDES = -I$(top_srcdir)/compat -I$(top_srcdir)/../.. -I$(top_srcdir)/../../include
 
 man_MANS = event.3
 

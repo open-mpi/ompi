@@ -34,7 +34,7 @@ libthreads_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/lam/threads
+lamdir = $(includedir)/lam/threads
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)

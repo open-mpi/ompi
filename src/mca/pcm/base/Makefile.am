@@ -26,7 +26,7 @@ libmca_pcm_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mca/lam/pcm/base
+lamdir = $(includedir)/lam/mca/pcm/base
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)

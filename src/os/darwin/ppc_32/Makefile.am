@@ -11,7 +11,7 @@ headers = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/lam/os/darwin/ppc_32
+lamdir = $(includedir)/lam/os/darwin/ppc_32
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)

@@ -13,7 +13,7 @@ headers = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mpi/communicator
+lamdir = $(includedir)/lam/communicator
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)

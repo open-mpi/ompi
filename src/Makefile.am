@@ -5,39 +5,54 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = include lam mpi mca . tools
+SUBDIRS = \
+        include \
+        $(LIBLTDL_SUBDIR) \
+        attribute \
+        communicator \
+        ctnetwork \
+        datatype \
+        errhandler \
+        event \
+        file \
+        group \
+        info \
+        lfc \
+        mca \
+        mem \
+        mpi \
+        op \
+        os \
+        proc \
+        request \
+        runtime \
+        threads \
+        util \
+        win \
+        tools
 
-# If the --enable-single-library flag was given to configure, then the
-# user wants to merge liblam and libmpi into a single big, honkin'
-# libmpi.  So the libmpi in this directory should be a convenience
-# (noinst) library.  Otherwise, it should be installed into lib.
-
-lam_sources = lam/liblam_convenience.la mca/libmca_lam.la
-mpi_sources = mpi/libmpi_convenience.la mca/libmca_mpi.la
-
-if WANT_SINGLE_MPI_LIBRARY
-install_libs = libmpi.la
-libmpi_sources = $(mpi_sources) $(lam_sources)
-liblam_sources =
-else
-install_libs = libmpi.la liblam.la
-libmpi_sources = $(mpi_sources)
-liblam_sources = $(lam_sources)
-endif
-
-lib_LTLIBRARIES = $(install_libs)
-
+lib_LTLIBRARIES = libmpi.la
 libmpi_la_SOURCES =
-libmpi_la_LIBADD = $(libmpi_sources)
-
-liblam_la_SOURCES =
-liblam_la_LIBADD = $(liblam_sources)
-
-# Shortcut frequently used by developers -- NOT to be used by
-# end-users!!
-
-libs:
-	cd lam && $(MAKE) all && cd ../mpi && $(MAKE) all && cd .. && $(MAKE) $(install_libs)
-
-libs-install: libs
-	$(MAKE) install-exec-am
+libmpi_la_LIBADD = \
+        $(LIBLTDL_LTLIB) \
+        attribute/libattribute.la \
+        communicator/libcommunicator.la \
+        ctnetwork/libctnetwork.la \
+        datatype/libdatatype.la \
+        errhandler/liberrhandler.la \
+        event/libevent.la \
+        file/libfile.la \
+        group/libgroup.la \
+        info/libinfo.la \
+        lfc/liblfc.la \
+        mca/libmca.la \
+        mem/libmem.la \
+        mpi/libmpi_bindings.la \
+        op/libop.la \
+        os/libos.la \
+        proc/libproc.la \
+        request/librequest.la \
+        runtime/libruntime.la \
+        threads/libthreads.la \
+        util/libutil.la \
+        win/libwin.la

@@ -6,7 +6,7 @@ include $(top_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = -DLAM_PKGLIBDIR=\"$(pkglibdir)\"
 
-noinst_LTLIBRARIES = libmca_lam_base.la
+noinst_LTLIBRARIES = libmca_base.la
 
 # Source code files
 
@@ -17,7 +17,7 @@ headers = \
 
 # Library
 
-libmca_lam_base_la_SOURCES = \
+libmca_base_la_SOURCES = \
         $(headers) \
         mca_base_close.c \
         mca_base_cmd_line.c \
@@ -34,7 +34,7 @@ libmca_lam_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mca/lam/base
+lamdir = $(includedir)/lam/mca/base
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)

@@ -5,21 +5,21 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = libmpi_communicator.la
+noinst_LTLIBRARIES = libcommunicator.la
 
 # Source code files
 
 headers = \
         communicator.h
 
-libmpi_communicator_la_SOURCES = \
+libcommunicator_la_SOURCES = \
         $(headers) \
         lam_comm_init.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/mpi/communicator
+lamdir = $(includedir)/lam/communicator
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)

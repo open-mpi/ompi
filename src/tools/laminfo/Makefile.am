@@ -27,7 +27,7 @@ laminfo_SOURCES = \
         param.cc \
         version.cc 
 laminfo_LDADD = $(libs) $(LIBMPI_EXTRA_LIBS) $(LIBLAM_EXTRA_LIBS)
-laminfo_LDFLAGS = $(LIBMPI_EXTRA_LDFLAGS) $(LIBLAM_EXTRA_LDFLAGS) -lpthread
+laminfo_LDFLAGS = $(LIBMPI_EXTRA_LDFLAGS) $(LIBLAM_EXTRA_LDFLAGS)
 laminfo_DEPENDENCIES = $(libs)
 
 clean-local:

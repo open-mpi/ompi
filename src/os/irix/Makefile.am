@@ -5,7 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= sn0
+SUBDIRS = sn0
 
 headers = \
 	atomic.h \
@@ -15,7 +15,7 @@ headers = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-lamdir = $(includedir)/lam/lam/os/irix
+lamdir = $(includedir)/lam/os/irix
 lam_HEADERS = $(headers)
 else
 lamdir = $(includedir)
