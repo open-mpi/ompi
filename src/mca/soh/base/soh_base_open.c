@@ -43,7 +43,11 @@
  */
 int mca_soh_base_output = -1;
 mca_soh_base_module_t ompi_soh_monitor = {
+#if RALPH_NEEDS_TO_FIX
     mca_soh_base_update_cell_soh_not_available;
+#else
+    NULL
+#endif
 };
 bool mca_soh_base_selected = false;
 ompi_list_t mca_soh_base_components_available;
