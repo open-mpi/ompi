@@ -16,8 +16,10 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "communicator/communicator.h"
+#include "datatype/datatype.h"
 #include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
+#include "class/ompi_object.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Unpack_external = PMPI_Unpack_external
@@ -34,11 +36,46 @@ int MPI_Unpack_external (char *datarep, void *inbuf, MPI_Aint insize,
                          MPI_Aint *position, void *outbuf, int outcount,
                          MPI_Datatype datatype) 
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-  }
+    int rc, freeAfter;
+    ompi_convertor_t *local_convertor;
+    struct iovec outvec;
+    unsigned int size, iov_count;
 
-  /* This function is not yet implemented */
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if ((NULL == inbuf) || (NULL == outbuf) || (NULL == position)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+        } else if (outcount < 0) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT, FUNC_NAME);
+        } else if (MPI_DATATYPE_NULL == datatype) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
+        }
+    }
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    local_convertor = ompi_convertor_get_copy( ompi_mpi_external32_convertor );
+    ompi_convertor_init_for_recv( local_convertor, 0, datatype, outcount,
+                                  outbuf, 0, NULL /* never allocate memory */ );
+
+    /* Check for truncation */
+    ompi_convertor_get_packed_size(local_convertor, &size);
+    if( (*position + size) > (unsigned int)insize ) {
+        OBJ_RELEASE(local_convertor);
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TRUNCATE, FUNC_NAME);
+    }
+
+    /* Prepare the iovec with all informations */
+    outvec.iov_base = (char*) inbuf + (*position);
+    outvec.iov_len = insize - (*position);
+
+    /* Do the actual unpacking */
+    iov_count = 1;
+    rc = ompi_convertor_unpack( local_convertor, &outvec, &iov_count,
+                                &size, &freeAfter );
+    *position += local_convertor->bConverted;
+    OBJ_RELEASE(local_convertor);
+
+    /* All done.  Note that the convertor returns 1 upon success, not
+       OMPI_SUCCESS. */
+    OMPI_ERRHANDLER_RETURN((rc == 1) ? OMPI_SUCCESS : OMPI_ERROR,
+                           MPI_COMM_WORLD, MPI_ERR_UNKNOWN, FUNC_NAME);
 }
