@@ -263,6 +263,13 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
   void *inmsg;
   void *resmsg;
 
+  /* Some variables */
+
+  size = ompi_comm_size(comm);
+  rank = ompi_comm_rank(comm);                       
+  vrank = ompi_op_is_commute(op) ? (rank - root + size) % size : rank;
+  dim = comm->c_cube_dim;
+
   /* Allocate the incoming and resulting message buffers.  See lengthy
      rationale above. */
 
@@ -279,13 +286,6 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     pml_buffer2 = free_buffer - lb;
   }
 
-  /* Some variables */
-
-  size = ompi_comm_size(comm);
-  rank = ompi_comm_rank(comm);                       
-  vrank = ompi_op_is_commute(op) ? (rank - root + size) % size : rank;
-  dim = comm->c_cube_dim;
-
   /* Loop over cube dimensions. High processes send to low ones in the
      dimension. */
 
@@ -299,17 +299,17 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     if (vrank & mask) {
       peer = vrank & ~mask;
       if (ompi_op_is_commute(op)) {
-	peer = (peer + root) % size;
+         peer = (peer + root) % size;
       }
 
       err = mca_pml.pml_send((fl_recv) ? resmsg : sbuf, count,
                              dtype, peer, MCA_COLL_BASE_TAG_REDUCE, 
                              MCA_PML_BASE_SEND_STANDARD, comm);
       if (MPI_SUCCESS != err) {
-	if (NULL != free_buffer) {
-	  free(free_buffer);
-        }
-	return err;
+         if (NULL != free_buffer) {
+           free(free_buffer);
+         }
+         return err;
       }
 
       break;
@@ -321,10 +321,10 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
     else {
       peer = vrank | mask;
       if (peer >= size) {
-	continue;
+         continue;
       }
       if (ompi_op_is_commute(op)) {
-	peer = (peer + root) % size;
+         peer = (peer + root) % size;
       }
 
       fl_recv = 1;
@@ -332,10 +332,10 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
                              MCA_COLL_BASE_TAG_REDUCE, comm,
                              MPI_STATUS_IGNORE);
       if (MPI_SUCCESS != err) {
-	if (NULL != free_buffer) {
-	  free(free_buffer);
-        }
-	return err;
+         if (NULL != free_buffer) {
+            free(free_buffer);
+         }
+         return err;
       }
 
       /* Perform the operation */
@@ -343,11 +343,11 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
       ompi_op_reduce(op, (i > 0) ? resmsg : sbuf, inmsg, count, dtype);
 
       if (inmsg == pml_buffer1) {
-	resmsg = pml_buffer1;
-	inmsg = pml_buffer2;
+         resmsg = pml_buffer1;
+         inmsg = pml_buffer2;
       } else {
-	resmsg = pml_buffer2;
-	inmsg = pml_buffer1;
+         resmsg = pml_buffer2;
+         inmsg = pml_buffer1;
       }
     }
   }
