@@ -61,10 +61,6 @@
  * \par \em <process>
  * A directory for the specific process, will house all information for that process.
  *
- * The ompi_session_dir() function searches either a user-specified location, or a
- * set of standard locations that might contain the specified directory. Once
- * found, the function returns the pathname of that directory. The function calls the
- * ompi_check_dir() function.
  */
 
 /** @param create A boolean variable that indicates whether or not to create the specified

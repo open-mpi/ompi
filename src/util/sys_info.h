@@ -19,9 +19,7 @@
  * System information structure
  *
  * The ompi_sys_info() function fills the sysname, nodename, release, version, machine,
- * path_sep, and user fields, but does not populate
- * the session_dir, enviro, suffix, or sock_* fields. These latter fields are populated by other
- * functions as required.
+ * path_sep, and user fields
  *
  */
 struct ompi_sys_info_t {
@@ -60,7 +58,8 @@ extern ompi_sys_info_t ompi_system_info;
  * this code is executing. ompi_sys_info populates a global variable with information about the system
  * upon which the process is executing.
  *
- * @retval None
+ * @retval OMPI_SUCCESS If values are successfully determined.
+ * @retval OMPI_ERROR If the system does not provide the requested information.
  */
 
 int ompi_sys_info(void);

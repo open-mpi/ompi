@@ -17,10 +17,11 @@
 /**
  * Process information structure
  *
- * The ompi_proc_info() function fills the pid field, obtains the process name, and
- * creates the process session directory, storing that information in the global
- * structure. The structure also holds path names to the stdin, stdout, and
- * stderr temp files - however, these are initialized elsewhere.
+ * The ompi_proc_info() function fills the pid field and obtains the process name,
+ * storing that information in the global
+ * structure. The structure also holds path names to the universe, job, and process
+ * session directories, and to the stdin, stdout, and
+ * stderr temp files - however, these are all initialized elsewhere.
  *
  */
 struct ompi_proc_info_t {
@@ -30,15 +31,12 @@ struct ompi_proc_info_t {
 			    */
     pid_t pid;             /**< Local process ID for this process */
     ompi_process_name_t *name;  /**< Process name structure */
-    char *universe_session_dir;  /**< Location of user writable temp dir.
+    char *universe_session_dir;  /**< Location of universe  temp dir.
 			    * The session directory has the form
-			    * <prefix><openmpi-sessions-user><universe><job><process>, where the prefix
+			    * <prefix><openmpi-sessions-user><universe>, where the prefix
 			    * can either be provided by the user via the
 			    * --tmpdir command-line flag, the use of one of several
-			    * environmental variables, or else a default location. The
-			    * function ompi_session_dir_init() develops
-			    * the name of this directory, creates it, and stores the name
-			    * in this location.
+			    * environmental variables, or else a default location.
 			    */
 
     char *job_session_dir;  /**< Session directory for job */
