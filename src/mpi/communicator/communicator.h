@@ -11,14 +11,14 @@
 #include "lam/threads/mutex.h"
 #include "mca/mpi/coll/coll.h"
 
-typedef struct lam_communicator {
+struct lam_communicator_t {
     char c_name[MPI_MAX_OBJECT_NAME];
     uint32_t c_contextid;
     int c_refcount;
     int c_flags;
 
-    lam_group_t c_local_group;
-    lam_group_t c_remote_group;
+    lam_group_t *c_local_group;
+    lam_group_t *c_remote_group;
   
     /* Queues */
 
@@ -38,6 +38,7 @@ typedef struct lam_communicator {
 
     mca_coll_1_0_0_t c_coll;
     struct mca_coll_comm_t* c_coll_comm;
-} lam_communicator_t;
+};
+typedef struct lam_communicator_t lam_communicator_t;
 
 #endif /* LAM_COMMUNICATOR_H */
