@@ -194,7 +194,8 @@ mca_ptl_gm_recv_frag_t* ptl_gm_data_frag( struct mca_ptl_gm_module_t *ptl,
     if( matched ) {
         return NULL;
     }
-    ompi_output(0,"matching receive not yet posted\n");
+    ompi_output( 0,"matching receive not yet posted get tag %d comm %d source %d\n",
+                 header->hdr_match.hdr_tag, header->hdr_match.hdr_contextid, header->hdr_match.hdr_src );
     return recv_frag;
 }
 
