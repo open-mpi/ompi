@@ -184,8 +184,10 @@ int ompi_comm_finalize(void)
     int max, i;
     ompi_communicator_t *comm;
 
+    /* disconnect all dynamic communicators */
+    ompi_comm_dyn_finalize();
+
     /* Destroy all predefined communicators */    
-    
     ompi_mpi_comm_world.c_local_group->grp_flags = 0;
     ompi_mpi_comm_world.c_flags = 0;
     OBJ_DESTRUCT( &ompi_mpi_comm_world );
@@ -203,7 +205,7 @@ int ompi_comm_finalize(void)
     ompi_mpi_comm_null.c_local_group->grp_flags = 0;
     ompi_mpi_comm_null.c_flags = 0;
     OBJ_DESTRUCT( &ompi_mpi_comm_null );
-    
+
     /* Check whether we have some communicators left */
     max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
     for ( i=3; i<max; i++ ) {

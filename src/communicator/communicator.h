@@ -406,7 +406,20 @@ struct ompi_communicator_t {
     int ompi_comm_start_processes (char *command, char **argv, int maxprocs, 
 				   MPI_Info info,  char *port_name);
 
+    /*
+     * This routine checks, whether an application has been spawned
+     * by another MPI application, or has been independently started.
+     * If it has been spawned, it establishes the parent communicator.
+     * Since the routine has to communicate, it should be among the last
+     * steps in MPI_Init, to be sure that everything is already set up.
+     */
     int ompi_comm_dyn_init(void);
+
+    /** 
+     * Executes internally a disconnect on all dynamic communicators
+     * in case the user did not disconnect them.
+     */
+    int ompi_comm_dyn_finalize(void);
 
     /* this routine counts the number of different jobids of the processes
        given in a certain communicator. If there is more than one jobid,

@@ -436,7 +436,8 @@ int ompi_comm_dyn_init (void)
 	 * now we have to decrease the reference counters to the according
 	 * objects 
 	 */
-/*	OBJ_RELEASE(&ompi_mpi_comm_null);
+/*
+	OBJ_RELEASE(&ompi_mpi_comm_null);
 	OBJ_RELEASE(&ompi_mpi_group_null);
 	OBJ_RELEASE(&ompi_mpi_group_null);
 	OBJ_RELEASE(&ompi_mpi_errors_are_fatal);
@@ -451,12 +452,40 @@ int ompi_comm_dyn_init (void)
 /**********************************************************************/
 /* this routine runs through the list of communicators and
    and does the disconnect for all dynamic communicators */
-/*int ompi_comm_dyn_finalize (void)
+int ompi_comm_dyn_finalize (void)
 {
-    
+    int i,j=0, max=0;
+    ompi_comm_disconnect_obj **objs=NULL;
+    ompi_communicator_t *comm=NULL;
 
+    if ( 1 <ompi_comm_num_dyncomm ) {
+	objs = (ompi_comm_disconnect_obj **)malloc (ompi_comm_num_dyncomm*
+						   sizeof(ompi_comm_disconnect_obj*));
+	if ( NULL == objs ) {
+	    return OMPI_ERR_OUT_OF_RESOURCE;
+	}
+
+	max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
+	for ( i=3; i<max; i++ ) {
+	    comm = (ompi_communicator_t*)ompi_pointer_array_get_item(&ompi_mpi_communicators,i);
+	    if ( OMPI_COMM_IS_DYNAMIC(comm)) {
+		objs[j++]=ompi_comm_disconnect_init(comm);
+	    }
+	}
+    
+	if ( j != ompi_comm_num_dyncomm+1 ) {
+	    free (objs);
+	    return OMPI_ERROR;
+	}
+
+	ompi_comm_disconnect_waitall (ompi_comm_num_dyncomm, objs);
+	free (objs);
+    }
+    
+    
+    return OMPI_SUCCESS;
 }
-*/
+
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
