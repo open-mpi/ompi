@@ -354,7 +354,7 @@ static ompi_list_t *check_components(ompi_list_t *components,
 
     if (want_to_check) {
       priority = check_one_component(comm, component, &module, &data);
-      if (priority > 0) {
+      if (priority >= 0) {
 
         /* We have a component that indicated that it wants to run by
            giving us a module */
@@ -368,26 +368,32 @@ static ompi_list_t *check_components(ompi_list_t *components,
         /* Put this item on the list in priority order (highest
            priority first).  Should it go first? */
 
-        item2 = ompi_list_get_first(selectable); 
-        avail2 = (avail_coll_t *) item2;
-        if (avail->ac_priority > avail2->ac_priority) {
-          ompi_list_prepend(selectable, (ompi_list_item_t *) avail);
+        if (ompi_list_is_empty(selectable)) {
+            ompi_list_prepend(selectable, (ompi_list_item_t *) avail);
         } else {
-          for (i = 1; item2 != ompi_list_get_end(selectable); 
-               item2 = ompi_list_get_next(selectable), ++i) {
+            item2 = ompi_list_get_first(selectable); 
             avail2 = (avail_coll_t *) item2;
             if (avail->ac_priority > avail2->ac_priority) {
-              ompi_list_insert(selectable, (ompi_list_item_t *) avail, i);
-              break;
-            }
-          }
+                ompi_list_prepend(selectable, (ompi_list_item_t *) avail);
+            } else {
+                for (i = 1; item2 != ompi_list_get_end(selectable); 
+                     item2 = ompi_list_get_next(item2), ++i) {
+                    avail2 = (avail_coll_t *) item2;
+                    if (avail->ac_priority > avail2->ac_priority) {
+                        ompi_list_insert(selectable, 
+                                         (ompi_list_item_t *) avail, i);
+                        break;
+                    }
+                }
+                
+                /* If we didn't find a place to put it in the list, then
+                   append it (because it has the lowest priority found so
+                   far) */
 
-          /* If we didn't find a place to put it in the list, then
-             append it (because it has the lowest priority found so
-             far) */
-          if (ompi_list_get_end(selectable) == item2) {
-            ompi_list_append(selectable, (ompi_list_item_t *) avail);
-          }
+                if (ompi_list_get_end(selectable) == item2) {
+                    ompi_list_append(selectable, (ompi_list_item_t *) avail);
+                }
+            }
         }
       }
     }
