@@ -162,7 +162,6 @@ mca_pcm_rsh_init(int *priority,
      * fill in the function pointers
      */
     me->super.pcm_allocate_resources = mca_pcm_rsh_allocate_resources;
-    me->super.pcm_can_spawn = mca_pcm_rsh_can_spawn;
     me->super.pcm_spawn_procs = mca_pcm_rsh_spawn_procs;
     me->super.pcm_kill_proc = mca_pcm_rsh_kill_proc;
     me->super.pcm_kill_job = mca_pcm_rsh_kill_job;

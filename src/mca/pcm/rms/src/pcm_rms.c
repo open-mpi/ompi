@@ -60,15 +60,6 @@ mca_pcm_rms_allocate_resources(struct mca_pcm_base_module_1_0_0_t* me,
 }
 
 
-bool
-mca_pcm_rms_can_spawn(struct mca_pcm_base_module_1_0_0_t* me)
-{
-    /* it looks like a prun'd job can call prun again...  let's see
-       what happens for now.. */
-    return true;
-}
-
-
 int
 mca_pcm_rms_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me,
                         mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)

@@ -45,7 +45,6 @@ mca_pcm_base_component_1_0_0_t mca_pcm_bproc_component = {
 
 struct mca_pcm_base_module_1_0_0_t mca_pcm_bproc_1_0_0 = {
     mca_pcm_bproc_allocate_resources,
-    mca_pcm_bproc_can_spawn,
     mca_pcm_bproc_spawn_procs,
     mca_pcm_bproc_kill_proc,
     mca_pcm_bproc_kill_job,

@@ -40,16 +40,6 @@ static int internal_spawn_proc(mca_pcm_rsh_module_t *me,
                                int num_procs);
 
 
-bool
-mca_pcm_rsh_can_spawn(struct mca_pcm_base_module_1_0_0_t* me_super)
-{
-    /* we can always try to rsh some more...  Might not always work as
-     * the caller hopes
-     */
-    return true;
-}
-
-
 int
 mca_pcm_rsh_spawn_procs(struct mca_pcm_base_module_1_0_0_t* me_super, 
                         mca_ns_base_jobid_t jobid, ompi_list_t *schedlist)

@@ -67,15 +67,6 @@ ompi_list_t* mca_pcm_ompid_allocate_resources(
                                                                                                          
 
 /**
- * This tells you whether the pcm module is capable of spawning new
- * processes or not during a run
- *
- * @return True/False
- */
-                                                                                                         
-bool mca_pcm_ompid_can_spawn(struct mca_pcm_base_module_1_0_0_t* me);
-
-/**
  * Spawn a job
  *
  * Start a job with given jobid and starting vpid (should probably be

@@ -44,7 +44,6 @@ mca_pcm_base_component_1_0_0_t mca_pcm_ompid_component = {
 
 struct mca_pcm_base_module_1_0_0_t mca_pcm_ompid_1_0_0 = {
     mca_pcm_ompid_allocate_resources, /* allocate_resources */
-    mca_pcm_ompid_can_spawn, /* can_spawn */
     mca_pcm_ompid_spawn_procs, /* spawn_procs */
     NULL, /* kill_proc */
     NULL, /* kill_job */
