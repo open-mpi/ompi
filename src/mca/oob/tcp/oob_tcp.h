@@ -11,19 +11,13 @@
 
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
+#include "class/ompi_free_list.h"
 #include "class/ompi_rb_tree.h"
+#include "event/event.h"
+#include "threads/mutex.h"
+#include "threads/condition.h"
 #include "mca/oob/tcp/oob_tcp_peer.h"
-#include "mca/oob/tcp/oob_tcp_message.h"
-
-/*
- * the list of peers
- */
-extern ompi_list_t mca_oob_tcp_peer_list;
-
-/*
- * the tree of peers
- */
-extern ompi_rb_tree_t mca_oob_tcp_peer_tree;
+#include "mca/oob/tcp/oob_tcp_msg.h"
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -100,6 +94,28 @@ int mca_oob_tcp_send_nb(const ompi_process_name_t* peer, const struct iovec* msg
 
 int mca_oob_tcp_recv_nb(ompi_process_name_t* peer, const struct iovec* msg, int count, int flags,
                     mca_oob_callback_fn_t cbfunc, void* cbdata);
+
+
+/**
+ *  OOB TCP Component
+*/
+struct mca_oob_tcp_component_t {
+    mca_oob_base_component_1_0_0_t super;  /**< base PTL component */
+    int tcp_listen_sd;                     /**< listen socket for incoming connection requests */
+    unsigned short   tcp_listen_port;      /**< listen port */
+    ompi_list_t      tcp_peer_list;        /**< list of peers sorted in mru order */
+    ompi_rb_tree_t   tcp_peer_tree;        /**< tree of peers sorted by name */
+    ompi_free_list_t tcp_peer_free;        /**< free list of peers */
+    ompi_free_list_t tcp_msgs;             /**< free list of messages */
+    ompi_event_t     tcp_send_event;       /**< event structure for sends */
+    ompi_event_t     tcp_recv_event;       /**< event structure for recvs */
+    ompi_mutex_t     tcp_lock;             /**< lock for accessing module state */
+    ompi_condition_t tcp_condition;        /**< condition variable for blocking sends */
+    size_t           tcp_cache_size;       /**< max size of tcp peer cache */
+};
+typedef struct mca_oob_tcp_component_t mca_oob_tcp_component_t;
+
+extern mca_oob_tcp_component_t mca_oob_tcp_module;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

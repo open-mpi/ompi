@@ -9,10 +9,10 @@
 /*
  * Struct of function pointers and all that to let us be initialized
  */
-mca_oob_base_component_1_0_0_t mca_oob_tcp_module = {
+mca_oob_tcp_component_t mca_oob_tcp_module = {
+    {
     {
         MCA_OOB_BASE_VERSION_1_0_0,
-
         "tcp", /* MCA module name */
         1,  /* MCA module major version */
         0,  /* MCA module minor version */
@@ -25,9 +25,10 @@ mca_oob_base_component_1_0_0_t mca_oob_tcp_module = {
     },
     mca_oob_tcp_init,    /* module init */
     mca_oob_tcp_finalize
+    }
 };
 
-struct mca_oob_1_0_0_t mca_oob_tcp_1_0_0 = {
+static struct mca_oob_1_0_0_t mca_oob_tcp = {
     mca_oob_tcp_send,
     mca_oob_tcp_recv,
     mca_oob_tcp_send_nb,
@@ -35,22 +36,64 @@ struct mca_oob_1_0_0_t mca_oob_tcp_1_0_0 = {
 };
 
 /*
- * for now these 2 functions simply return an error so we won't
- * use this module
+ * Initialize global variables used w/in this module.
  */
 int mca_oob_tcp_open(void)
 {
-    return OMPI_ERROR;
+    mca_oob_tcp_module.tcp_listen_port = 1;
+    OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_peer_list, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_peer_tree, ompi_rb_tree_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_peer_free, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_lock,      ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_module.tcp_condition, ompi_condition_t);
+    return OMPI_SUCCESS;
 }
 
+
+/*
+ * Cleanup of global variables used by this module.
+ */
 
 int mca_oob_tcp_close(void)
 {
-    return OMPI_ERROR;
+    OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_peer_list);
+    OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_peer_tree);
+    OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_peer_free);
+    OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_condition);
+    OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_lock);
+    return OMPI_SUCCESS;
 }
 
-ompi_list_t mca_oob_tcp_peer_list;
-ompi_rb_tree_t mca_oob_tcp_peer_tree;
+
+/**
+* Compare two process names for equality.
+*
+* @param  n1  Process name 1.
+* @param  n2  Process name 2.
+* @return     (-1 for n1<n2 0 for equality, 1 for n1>n2)
+*
+* Note that the definition of < or > is somewhat arbitrary -
+* just needs to be consistently applied to maintain an ordering
+* when process names are used as indices.
+*/
+
+static int ompi_process_name_compare(ompi_process_name_t* n1, ompi_process_name_t* n2)
+{
+   if(n1->cellid < n2->cellid)
+       return -1;
+   else if(n1->cellid > n2->cellid)
+       return 1;
+   else if(n1->jobid < n2->jobid)
+       return -1;
+   else if(n1->jobid > n2->jobid)
+       return 1;
+   else if(n1->procid < n2->procid)
+       return -1;
+   else if(n1->procid > n2->procid)
+       return 1;
+   return(0);
+} 
+
 
 /*
  * this function will temporarily return NULL so we don't use it
@@ -58,19 +101,17 @@ ompi_rb_tree_t mca_oob_tcp_peer_tree;
 struct mca_oob_1_0_0_t* mca_oob_tcp_init(bool *allow_multi_user_threads,
                                          bool *have_hidden_threads)
 {
-    /* set up the list for the cache of peer processes */
-    OBJ_CONSTRUCT(&mca_oob_tcp_peer_list, ompi_list_t);
-    /* set up the rb tree for the cache of peer processes */
-    OBJ_CONSTRUCT(&mca_oob_tcp_peer_tree, ompi_rb_tree_t);
-    ompi_rb_tree_init(&mca_oob_tcp_peer_tree, &mca_oob_tcp_peer_comp);
-    /* return &mca_oob_tcp_1_0_0; */
+    /* initialize data structures */
+    ompi_rb_tree_init(&mca_oob_tcp_module.tcp_peer_tree, (ompi_rb_tree_comp_fn_t)ompi_process_name_compare);
+    /* return &mca_oob_tcp; */
     return NULL;
 }
 
 
 int mca_oob_tcp_finalize(void)
 {
-    OBJ_DESTRUCT(&mca_oob_tcp_peer_list);
-    OBJ_DESTRUCT(&mca_oob_tcp_peer_tree);
+    OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_peer_list);
+    OBJ_DESTRUCT(&mca_oob_tcp_module.tcp_peer_tree);
     return OMPI_SUCCESS;
 }
+
