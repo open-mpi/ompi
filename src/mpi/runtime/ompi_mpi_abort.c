@@ -90,6 +90,8 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
 #if 0
     ret = ompi_rte_terminate_job(my_jobid, 0);
+#else
+    ret = OMPI_ERROR;
 #endif
 
     if (OMPI_SUCCESS == ret) {
