@@ -38,6 +38,7 @@ if test "$WANT_DEBUG" = "1"; then
     unset add
 fi
 
+LAM_CFLAGS_BEFORE_PICKY="$CFLAGS"
 if test -d CVS -a "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     add="-Wall -Wundef -Wno-long-long"
     add="$add -Wmissing-prototypes -Wstrict-prototypes"
@@ -68,8 +69,11 @@ if test "$GCC" = yes; then
 else
     OPTFLAGS="-O"
 fi
-LAM_CHECK_OPTFLAGS("$CFLAGS")
+
+LAM_CHECK_OPTFLAGS("$LAM_CFLAGS_BEFORE_PICKY")
+LAM_CFLAGS_BEFORE_PICKY="$co_result"
+
 AC_MSG_CHECKING([for C optimization flags])
+LAM_CHECK_OPTFLAGS("$CFLAGS")
 AC_MSG_RESULT([$co_result])
-CFLAGS="$co_result"
-])
+CFLAGS="$co_result"])
