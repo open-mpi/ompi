@@ -18,13 +18,13 @@
  */
 typedef uint32_t mca_gpr_replica_key_t;
 
-struct ompi_registry_t {
+struct mca_gpr_registry_t {
     ompi_list_t registry;
     ompi_list_t segment_dict;
     mca_gpr_replica_key_t lastkey;
     ompi_list_t freekeys;
 };
-typedef struct ompi_registry_t ompi_registry_t;
+typedef struct mca_gpr_registry_t mca_gpr_registry_t;
 
 /** Dictionary of token-key pairs.
  * This structure is used to create a linked list of token-key pairs. All calls to
@@ -33,41 +33,41 @@ typedef struct ompi_registry_t ompi_registry_t;
  * for faster searches of the registry. This structure is also used to return token-key pairs
  * from the dictionary in response to an ompi_registry_index() call.
  */
-struct ompi_keytable_t {
-    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
-    char *token;  /**< Char string that defines the key */
-    unsigned long int key;      /**< Numerical value assigned by registry to represent token string */
+struct mca_gpr_keytable_t {
+    ompi_list_item_t item;         /**< Allows this item to be placed on a list */
+    char *token;                   /**< Char string that defines the key */
+    mca_gpr_replica_key_t key;     /**< Numerical value assigned by registry to represent token string */
 };
-typedef struct ompi_keytable_t ompi_keytable_t;
+typedef struct mca_gpr_keytable_t mca_gpr_keytable_t;
 
-OBJ_CLASS_DECLARATION(ompi_keytable_t);
+OBJ_CLASS_DECLARATION(mca_gpr_keytable_t);
 
 /** List of keys that describe a stored object.
  * Each object stored in the registry may have as many keys describing it as the
  * creator desires. This structure is used to create a linked list of keys
  * associated with each object.
  */
-struct ompi_keylist_t {
-    ompi_list_item_t item;   /**< Allows this item to be placed on a list */
-    unsigned long int key;     /**< Numerical key that defines stored object */
+struct mca_gpr_keylist_t {
+    ompi_list_item_t item;      /**< Allows this item to be placed on a list */
+    mca_gpr_replica_key_t key;  /**< Numerical key that defines stored object */
 };
-typedef struct ompi_keylist_t ompi_keylist_t;
+typedef struct mca_gpr_keylist_t mca_gpr_keylist_t;
 
-OBJ_CLASS_DECLARATION(ompi_keylist_t);
+OBJ_CLASS_DECLARATION(mca_gpr_keylist_t);
 
 /** List of subscribers to a stored object.
  * Each object can have an arbitrary number of subscribers desiring notification
  * upon specified actions being performed against the object. This structure is
  * used to create a linked list of subscribers for objects.
  */
-struct ompi_subscribe_list_t {
-    ompi_list_item_t item;    /**< Allows this item to be placed on a list */
-    unsigned long int id;   /**< ID of the subscriber */
-    uint8_t action;  /**< Bit-mask of actions that trigger notification */
+struct mca_gpr_subscriber_list_t {
+    ompi_list_item_t item;                 /**< Allows this item to be placed on a list */
+    ompi_process_name_t *subscriber;       /**< ID of the subscriber */
+    ompi_registry_notify_action_t action;  /**< Bit-mask of actions that trigger notification */
 };
-typedef struct ompi_subscribe_list_t ompi_subscribe_list_t;
+typedef struct mca_gpr_subscriber_list_t mca_gpr_subscriber_list_t;
 
-OBJ_CLASS_DECLARATION(ompi_subscribe_list_t);
+OBJ_CLASS_DECLARATION(mca_gpr_subscribe_list_t);
 
 /** List of replicas that hold a stored object.
  * Each object can have an arbitrary number of replicas that hold a copy
@@ -75,13 +75,13 @@ OBJ_CLASS_DECLARATION(ompi_subscribe_list_t);
  * two locations. This structure is used to create a linked list of
  * replicas for the object.
  */
-struct ompi_replica_list_t {
-    ompi_list_item_t item;    /**< Allows this item to be placed on a list */
-    char *name;               /**< Name of the replica */
+struct mca_gpr_replica_list_t {
+    ompi_list_item_t item;         /**< Allows this item to be placed on a list */
+    ompi_process_name_t *replica;  /**< Name of the replica */
 };
-typedef struct ompi_replica_list_t ompi_replica_list_t;
+typedef struct mca_gpr_replica_list_t mca_gpr_replica_list_t;
 
-OBJ_CLASS_DECLARATION(ompi_replica_list_t);
+OBJ_CLASS_DECLARATION(mca_gpr_replica_list_t);
 
 /** Write invalidate structure.
  * The structure used to indicate that an object has been updated somewhere else in the GPR.
@@ -90,12 +90,12 @@ OBJ_CLASS_DECLARATION(ompi_replica_list_t);
  * of the object within the global registry, and the replica holding the last known
  * up-to-date version of the object.
  */
-struct ompi_write_invalidate_t {
+struct mca_gpr_write_invalidate_t {
     bool invalidate;
     time_t last_mod;
-    char *replica;
+    ompi_process_name_t *valid_replica;
 };
-typedef struct ompi_write_invalidate_t ompi_write_invalidate_t;
+typedef struct mca_gpr_write_invalidate_t mca_gpr_write_invalidate_t;
 
 
 /** The core registry structure.
@@ -110,18 +110,18 @@ typedef struct ompi_write_invalidate_t ompi_write_invalidate_t;
  * object are automatically granted. This may be changed at some future time by adding an
  * "authorization" linked list of ID's and their access rights to this structure.
  */
-struct ompi_registry_core_t {
-    ompi_list_item_t item;   /**< Allows this item to be placed on a list */
-    ompi_list_t keys;   /**< Linked list of keys that define stored object */
-    int object_size;      /**< Size of stored object, in bytes */
-    uint8_t *object;      /**< Pointer to stored object */
-    ompi_list_t subscriber;  /**< Linked list of subscribers to this object */
-    ompi_list_t replicas;   /**< Linked list of replicas that also contain this object */
-    ompi_write_invalidate_t write_invalidate;  /**< Structure containing write invalidate info */
+struct mca_gpr_registry_core_t {
+    ompi_list_item_t item;                         /**< Allows this item to be placed on a list */
+    ompi_list_t keys;                              /**< Linked list of keys that define stored object */
+    ompi_registry_object_size_t object_size;       /**< Size of stored object, in bytes */
+    ompi_registry_object_t *object;                /**< Pointer to stored object */
+    ompi_list_t subscriber;                        /**< Linked list of subscribers to this object */
+    ompi_list_t replicas;                          /**< Linked list of replicas that also contain this object */
+    mca_gpr_write_invalidate_t write_invalidate;   /**< Structure containing write invalidate info */
 };
-typedef struct ompi_registry_core_t ompi_registry_core_t;
+typedef struct mca_gpr_registry_core_t mca_gpr_registry_core_t;
 
-OBJ_CLASS_DECLARATION(ompi_registry_core_t);
+OBJ_CLASS_DECLARATION(mca_gpr_registry_core_t);
 
 /** Registry segment definition.
  * The registry is subdivided into segments, each defining a unique domain. The "universe" segment
@@ -132,23 +132,23 @@ OBJ_CLASS_DECLARATION(ompi_registry_core_t);
  * list of registry elements for that segment. Each segment also holds its own token-key dictionary
  * to avoid naming conflicts between tokens from CommWorlds sharing a given universe.
  */
-struct ompi_registry_segment_t {
-    ompi_list_item_t item;   /**< Allows this item to be placed on a list */
-    unsigned long int segment;    /**< ID of registry segment */
-    unsigned long int lastkey;    /**< Highest key value used */
-    ompi_list_t reg_list;   /**< Linked list of stored objects within this segment */
-    ompi_list_t keytable;   /**< Token-key dictionary for this segment */
-    ompi_list_t freekeys;  /**< List of keys that have been made available */
+struct mca_gpr_registry_segment_t {
+    ompi_list_item_t item;             /**< Allows this item to be placed on a list */
+    mca_gpr_replica_key_t segment;     /**< Key corresponding to name of registry segment */
+    mca_gpr_replica_key_t lastkey;     /**< Highest key value used */
+    ompi_list_t registry_entries;      /**< Linked list of stored objects within this segment */
+    ompi_list_t keytable;              /**< Token-key dictionary for this segment */
+    ompi_list_t freekeys;              /**< List of keys that have been made available */
 };
-typedef struct ompi_registry_segment_t ompi_registry_segment_t;
+typedef struct mca_gpr_registry_segment_t mca_gpr_registry_segment_t;
 
-OBJ_CLASS_DECLARATION(ompi_registry_segment_t);
+OBJ_CLASS_DECLARATION(mca_gpr_registry_segment_t);
 
 
 /*
  * globals needed within component
  */
-extern ompi_registry_t mca_gpr_head;
+extern mca_gpr_registry_t mca_gpr_replica_head;
 
 /*
  * Module open / close
