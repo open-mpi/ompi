@@ -177,9 +177,14 @@ int ompi_comm_finalize(void)
     ompi_mpi_comm_self.c_flags = 0;
     OBJ_DESTRUCT( &ompi_mpi_comm_self );
 
+    ompi_mpi_comm_parent->c_local_group->grp_flags = 0;
+    ompi_mpi_comm_parent->c_flags = 0;
+    OBJ_RETAIN (&ompi_mpi_comm_parent);
+
     ompi_mpi_comm_null.c_local_group->grp_flags = 0;
     ompi_mpi_comm_null.c_flags = 0;
     OBJ_DESTRUCT( &ompi_mpi_comm_null );
+
     
     /* Check whether we have some communicators left */
     max = ompi_pointer_array_get_size(&ompi_mpi_communicators);
@@ -285,11 +290,11 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
 
     }
 
-    if (NULL != comm->c_local_group) {
-        OBJ_RELEASE ( comm->c_local_group );
-    }
     if (NULL != comm->c_remote_group) {
         OBJ_RELEASE ( comm->c_remote_group );
+    }
+    if (NULL != comm->c_local_group) {
+        OBJ_RELEASE ( comm->c_local_group );
     }
     if (NULL != comm->error_handler) {
         OBJ_RELEASE ( comm->error_handler );
