@@ -96,6 +96,22 @@ void ompi_group_increment_proc_count(ompi_group_t *group)
     return;
 }
 
+/*
+ * decrement the reference count of the proc structures
+ */
+void ompi_group_decrement_proc_count(ompi_group_t *group)
+{
+    /* local variable */
+    int proc;
+
+    for (proc = 0; proc < group->grp_proc_count; proc++) {
+        OBJ_RELEASE(group->grp_proc_pointers[proc]);
+    }
+
+    /* return */
+    return;
+}
+
 
 /*
  * group constructor

@@ -57,8 +57,6 @@ int MPI_Comm_disconnect(MPI_Comm *comm)
 	(*comm)->c_coll.coll_barrier(*comm);
     }
 
-    OBJ_RETAIN(*comm);
-    
-    *comm = MPI_COMM_NULL;
+    ompi_comm_free(comm);
     return MPI_SUCCESS;
 }

@@ -83,14 +83,7 @@ int ompi_mpi_finalize(void)
 	}
     }
 
-    /* shutdown communications */
-    if (OMPI_SUCCESS != (ret = mca_ptl_base_close())) {
-	return ret;
-    }
-    if (OMPI_SUCCESS != (ret = mca_pml_base_close())) {
-	return ret;
-    }
-
+ 
     /* Shut down any bindings-specific issues: C++, F77, F90 (may or
        may not be necessary...?) */
 
@@ -113,6 +106,16 @@ int ompi_mpi_finalize(void)
 	return ret;
     }
 
+    /* Now that all MPI objects dealing with communications are gone,
+       shut down MCA types having to do with communications */
+    if (OMPI_SUCCESS != (ret = mca_ptl_base_close())) {
+	return ret;
+    }
+    if (OMPI_SUCCESS != (ret = mca_pml_base_close())) {
+	return ret;
+    }
+
+
     /* Free secondary resources */
 
     /* free attr resources */
@@ -123,6 +126,11 @@ int ompi_mpi_finalize(void)
     /* free group resources */
     if (OMPI_SUCCESS != (ret = ompi_group_finalize())) {
 	return ret;
+    }
+
+    /* free proc resources */
+    if ( OMPI_SUCCESS != (ret = ompi_proc_finalize())) {
+    	return ret;
     }
 
     /* free internal error resources */

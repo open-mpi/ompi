@@ -79,6 +79,14 @@ ompi_group_t *ompi_group_allocate(int group_size);
  */
 void ompi_group_increment_proc_count(ompi_group_t *group);
 
+/**
+ * Decrement the reference count of the proc structures.
+ *
+ * @param group Pointer to ompi_group_t structute (IN)
+ *
+ */
+void ompi_group_decrement_proc_count(ompi_group_t *group);
+
 
 /**
  * Initialize OMPI group infrastructure.

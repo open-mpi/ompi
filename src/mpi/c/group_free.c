@@ -49,6 +49,7 @@ int MPI_Group_free(MPI_Group *group)
     }
 
     l_group = (ompi_group_t *) *group;
+    ompi_group_decrement_proc_count (l_group);
     OBJ_RELEASE(l_group);
 
     *group = MPI_GROUP_NULL;
