@@ -109,9 +109,9 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
                 elements_int_list[index] = new_group_size;
                 index += stride;
                 new_group_size++;
-            }                   // end while loop
+            }                   /* end while loop */
 
-        } else {                // first_rank == last_rank
+        } else {                /* first_rank == last_rank */
 
             index = first_rank;
             if (elements_int_list[index] != -1) {

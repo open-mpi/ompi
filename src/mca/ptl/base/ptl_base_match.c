@@ -309,7 +309,6 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
             break;
         }
     }
-    //
 
     return return_match;
 }

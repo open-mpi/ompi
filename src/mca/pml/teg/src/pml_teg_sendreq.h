@@ -46,12 +46,12 @@ static inline int mca_pml_teg_send_request_start(
     size_t first_fragment_size = ptl->ptl_first_frag_size;
     int flags, rc;
 
-    // start the first fragment
+    /* start the first fragment */
     if(req->super.req_length <= first_fragment_size) {
         first_fragment_size = req->super.req_length;
         flags = (req->req_send_mode == MCA_PML_BASE_SEND_SYNCHRONOUS) ? MCA_PTL_FLAGS_ACK_MATCHED : 0;
     } else {
-        // require match for first fragment of a multi-fragment message or if synchronous send
+        /* require match for first fragment of a multi-fragment message or if synchronous send */
         flags = MCA_PTL_FLAGS_ACK_MATCHED;
     }
 
