@@ -13,7 +13,11 @@
 #include "mca/lam/base/base.h"
 #include "mca/lam/pcm/pcm.h"
 #include "mca/mpi/pml/pml.h"
+#include "mca/mpi/pml/base/base.h"
 #include "mca/mpi/ptl/ptl.h"
+#include "mca/mpi/ptl/base/base.h"
+#include "mca/mpi/coll/coll.h"
+#include "mca/mpi/coll/base/base.h"
 #include "tools/laminfo/laminfo.h"
 
 using namespace std;
@@ -82,11 +86,9 @@ void laminfo::open_modules()
   module_map["registry"] = &mca_registry_base_modules_available;
 #endif
 
-#if 0
   // coll module opening not implemented yet
   mca_coll_base_open();
   module_map["coll"] = &mca_coll_base_modules_available;
-#endif
 
 #if 0
   // io module opening not implemented yet
@@ -126,13 +128,13 @@ void laminfo::close_modules()
     mca_pcm_base_close();
 #if 0
     mca_crmpi_base_close();
-    mca_coll_base_close();
 #endif
+    mca_coll_base_close();
     mca_pml_base_close();
 #if 0
     mca_boot_close();
-    mca_base_close();
 #endif
+    mca_base_close();
 
     module_map.clear();
   }

@@ -337,6 +337,7 @@ int main(int argc, char *argv[])
     laminfo::do_config(false);
     laminfo::open_modules();
     laminfo::show_module_version("pcm", module_all, ver_full, type_all);
+    laminfo::show_module_version("coll", module_all, ver_full, type_all);
     laminfo::show_module_version("pml", module_all, ver_full, type_all);
     laminfo::show_module_version("ptl", module_all, ver_full, type_all);
 #if 0
