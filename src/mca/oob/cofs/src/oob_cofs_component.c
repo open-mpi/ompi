@@ -65,11 +65,18 @@ mca_oob_t* mca_oob_cofs_init(bool *allow_multi_user_threads, bool *have_hidden_t
   /*
    * See if we can write in our directory...
    */
-  if((tmp = getenv("OMPI_MCA_oob_cofs_dir")) == NULL) {
-      ompi_output(0, "mca_oob_cofs_init: invalid/missing OMPI_MCA_oob_cofs_dir\n");
+  if((tmp = getenv("OMPI_MCA_oob_cofs_dir")) != NULL) {
+      /* user specified in env variable */
+      strncpy(mca_oob_cofs_comm_loc, tmp, sizeof(mca_oob_cofs_comm_loc));
+  } else if ((tmp = getenv("HOME")) != NULL) {
+      /* just default to $HOME/cofs */
+      snprintf(mca_oob_cofs_comm_loc, sizeof(mca_oob_cofs_comm_loc),
+               "%s/cofs", tmp);
+  } else {
+      ompi_output(0, "mca_oob_cofs_init: invalid/missing "
+                  "OMPI_MCA_oob_cofs_dir\n");
       return NULL;
   }
-  strncpy(mca_oob_cofs_comm_loc, tmp, sizeof(mca_oob_cofs_comm_loc));
 
   len = strlen(tmp) + 32;
   tmp = malloc(len);
