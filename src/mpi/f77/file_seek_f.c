@@ -30,7 +30,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_SEEK,
                            pmpi_file_seek_,
                            pmpi_file_seek__,
                            pmpi_file_seek_f,
-                           (MPI_Fint *fh, MPI_Fint *offset, MPI_Fint *whence, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *whence, MPI_Fint *ierr),
                            (fh, offset, whence, ierr) )
 #endif
 
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SEEK,
                            mpi_file_seek_,
                            mpi_file_seek__,
                            mpi_file_seek_f,
-                           (MPI_Fint *fh, MPI_Fint *offset, MPI_Fint *whence, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *whence, MPI_Fint *ierr),
                            (fh, offset, whence, ierr) )
 #endif
 
@@ -56,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SEEK,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_seek_f(MPI_Fint *fh, MPI_Fint *offset, 
+void mpi_file_seek_f(MPI_Fint *fh, MPI_Offset *offset, 
 		     MPI_Fint *whence, MPI_Fint *ierr)
 {
     MPI_File c_fh = MPI_File_f2c(*fh);

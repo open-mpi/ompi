@@ -30,7 +30,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_WRITE_AT_ALL_BEGIN,
                            pmpi_file_write_at_all_begin_,
                            pmpi_file_write_at_all_begin__,
                            pmpi_file_write_at_all_begin_f,
-                           (MPI_Fint *fh, MPI_Fint *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *ierr),
                            (fh, offset, buf, count, datatype, ierr) )
 #endif
 
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_AT_ALL_BEGIN,
                            mpi_file_write_at_all_begin_,
                            mpi_file_write_at_all_begin__,
                            mpi_file_write_at_all_begin_f,
-                           (MPI_Fint *fh, MPI_Fint *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *ierr),
                            (fh, offset, buf, count, datatype, ierr) )
 #endif
 
@@ -56,7 +56,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_AT_ALL_BEGIN,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_write_at_all_begin_f(MPI_Fint *fh, MPI_Fint *offset, 
+void mpi_file_write_at_all_begin_f(MPI_Fint *fh, MPI_Offset *offset, 
 				   char *buf, MPI_Fint *count,
 				   MPI_Fint *datatype, MPI_Fint *ierr)
 {

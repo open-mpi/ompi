@@ -33,7 +33,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_READ_AT_ALL,
                            pmpi_file_read_at_all_,
                            pmpi_file_read_at_all__,
                            pmpi_file_read_at_all_f,
-                           (MPI_Fint *fh, MPI_Fint *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, offset, buf, count, datatype, status, ierr) )
 #endif
 
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_READ_AT_ALL,
                            mpi_file_read_at_all_,
                            mpi_file_read_at_all__,
                            mpi_file_read_at_all_f,
-                           (MPI_Fint *fh, MPI_Fint *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr),
                            (fh, offset, buf, count, datatype, status, ierr) )
 #endif
 
@@ -59,7 +59,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_READ_AT_ALL,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_read_at_all_f(MPI_Fint *fh, MPI_Fint *offset,
+void mpi_file_read_at_all_f(MPI_Fint *fh, MPI_Offset *offset,
 			    char *buf, MPI_Fint *count, 
 			    MPI_Fint *datatype, MPI_Fint *status,
 			    MPI_Fint *ierr)
