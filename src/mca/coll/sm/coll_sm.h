@@ -47,8 +47,8 @@ extern "C" {
      * Globally exported variables
      */
 
-    OMPI_DECLSPEC extern const mca_coll_base_component_1_0_0_t mca_coll_sm_component;
-    OMPI_DECLSPEC extern int mca_coll_sm_param_priority;
+    extern const mca_coll_base_component_1_0_0_t mca_coll_sm_component;
+    extern int mca_coll_sm_param_priority;
 
 
     /*
