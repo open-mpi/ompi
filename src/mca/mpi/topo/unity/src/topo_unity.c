@@ -1,10 +1,7 @@
 /*
  * $HEADER$
  */
-#include "lam_config.h"
-#include "mca/mpi/topo/topo.h"
-#include "mca/mpi/topo/base/base.h"
-
+#include "mca/mpi/topo/unity/topo_unity.h"
 
 /*
  * Init on the communicator. This function is called once the

@@ -8,10 +8,7 @@
  * modules just to query their version and parameters
  */
 
-#include "lam_config.h"
-#include "mpi.h"
-#include "mca/mpi/topo/topo.h"
-#include "topo_unity,h"
+#include "mca/mpi/topo/unity/topo_unity,h"
 
 /*
  * Public string showing the topo unity module version number
