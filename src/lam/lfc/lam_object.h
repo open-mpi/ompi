@@ -5,42 +5,44 @@
 /**
  * @file:
  *
- * Simple C-language object-oriented system with single inheritance
+ * A simple C-language object-oriented system with single inheritance
  * and ownership-based memory management using a retain/release model.
  *
  * A class consists of a struct and singly-instantiated class
  * descriptor.  The first element of the struct must be the parent
  * class's struct.  The class descriptor must be given a well-known
- * name based upon the class struct name: If the struct is sally_t,
- * the class descriptor should be sally_t_class.
+ * name based upon the class struct name (if the struct is sally_t,
+ * the class descriptor should be sally_t_class) and must be
+ * statically initialized as discussed below.
  *
  * (a) To define a class
  *
  * In a interface (.h) file, define the class.  The first element
- * should always be the parent class, and be called "super",
+ * should always be the parent class,
  * for example
  * @code
  *   typedef struct sally_t sally_t;
  *   struct sally_t
  *   {
- *     parent_t super;
+ *     parent_t parent;
  *     void *first_member;
  *     ...
  *   };
  *
  *   extern lam_class_t sally_t_class;
  * @endcode
- * All classes must have a parent.
+ * All classes must have a parent which is also class.
  * 
  * In an implementation (.c) file, instantiate a class descriptor for
- * this class, and should be the name of the class with "_class"
+ * the class, and should be the name of the struct with "_class"
  * appended:
  * @code
  *   lam_class_t sally_t_class = {
  *     "sally_t",
  *     OBJ_CLASS(parent_t),  // pointer to parent_t_class
  *     sally_construct,
- *     sally_destruct
+ *     sally_destruct,
+ *     0, 0, NULL, NULL
  *   };
  * @endcode
  * This variable should be publically advertised using the "extern"
@@ -59,7 +61,7 @@
  *   sally_t *sally = OBJ_NEW(sally_t);
  * @endcode
  * which allocates memory of sizeof(sally_t) and runs the class's
- * "init" method.
+ * constructors.
  *
  * Use OBJ_RETAIN, OBJ_RELEASE to do reference-count-based
  * memory management:
@@ -143,9 +145,9 @@ struct lam_class_t {
     int cls_initialized;           /**< is class initialized */
     int cls_depth;                 /**< depth of class hierarchy tree */
     lam_construct_t *cls_construct_array;
-                                   /**< array of parent class descriptors */
+                                   /**< array of parent class constructors */
     lam_destruct_t *cls_destruct_array;
-                                   /**< array of parent class descriptors */
+                                   /**< array of parent class destructors */
 };
 
 
