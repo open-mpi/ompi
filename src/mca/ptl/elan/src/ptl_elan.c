@@ -24,7 +24,7 @@ mca_ptl_elan_t mca_ptl_elan = {
     {
         &mca_ptl_elan_module.super,
 	4,
-	sizeof(mca_ptl_elan_desc_item_t),
+	sizeof(mca_ptl_elan_send_frag_t),
         0,                         /* ptl_exclusivity */
         0,                         /* ptl_latency */
         0,                         /* ptl_bandwidth */
@@ -165,7 +165,7 @@ mca_ptl_elan_req_init (struct mca_ptl_t *ptl,
                        struct mca_pml_base_send_request_t *request)
 {
     int         rc = OMPI_SUCCESS;
-    mca_ptl_elan_desc_item_t *sd;
+    mca_ptl_elan_send_frag_t *sd;
     mca_ptl_elan_send_request_t * elan_req;
 
     START_FUNC();
@@ -233,7 +233,7 @@ mca_ptl_elan_isend (struct mca_ptl_t *ptl,
                     int flags)
 {
     int rc = OMPI_SUCCESS;
-    mca_ptl_elan_desc_item_t *sd;
+    mca_ptl_elan_send_frag_t *sd;
 
     /* XXX: 
      *   PML extract an request from PTL module and then use this
@@ -246,6 +246,18 @@ mca_ptl_elan_isend (struct mca_ptl_t *ptl,
     if (offset == 0) /* The first fragment uses a cached desc */
         sd = ((mca_ptl_elan_send_request_t*)sendreq)->req_frag;
     } else {
+
+	/* Get a frag desc and allocate a send desc */
+	ompi_free_list_t * frag_list;
+
+	frag_list = &mca_ptl_elan_module.elan_send_frags_free;
+
+	/* More sendfrag then descritpors, no need to block */
+	ompi_mutex_lock(&frag_list->fl_lock);
+	item = ompi_list_remove_first (&((flist)->super));
+	ompi_mutex_unlock(&flist->fl_lock);
+        OMPI_PTL_ELAN_CHECK_UNEX (item, NULL, OMPI_ERROR, 0);
+
 	sd = mca_ptl_elan_alloc_send_desc(ptl, sendreq);
 	if (NULL == sd) {
 	    ompi_output(0,

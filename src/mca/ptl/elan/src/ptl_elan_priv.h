@@ -125,7 +125,7 @@ typedef struct {
  */
 struct mca_ptl_elan_send_request_t {
     mca_pml_base_send_request_t super;
-    mca_ptl_elan_desc_item_t *req_frag; 
+    mca_ptl_elan_send_frag_t *req_frag; 
 };
 typedef struct mca_ptl_elan_send_request_t mca_ptl_elan_send_request_t;
 
@@ -262,15 +262,15 @@ int         ompi_init_elan_stat (mca_ptl_elan_module_1_0_0_t * emp,
                                  int num_rails);
 
 /* communication prototypes */
-int         mca_ptl_elan_start_desc(mca_ptl_elan_desc_item_t *desc,
+int         mca_ptl_elan_start_desc(mca_ptl_elan_send_frag_t *desc,
 		  struct mca_ptl_elan_peer_t *ptl_peer,
                   struct mca_pml_base_send_request_t *sendreq,
                   size_t offset,
                   size_t *size,
                   int flags);
 
-int         mca_ptl_elan_poll_desc(mca_ptl_elan_desc_item_t *desc);
-int         mca_ptl_elan_wait_desc(mca_ptl_elan_desc_item_t *desc);
+int         mca_ptl_elan_poll_desc(mca_ptl_elan_send_frag_t *desc);
+int         mca_ptl_elan_wait_desc(mca_ptl_elan_send_frag_t *desc);
 
 /* control, synchronization and state prototypes */
 int         mca_ptl_elan_drain_recv(mca_ptl_elan_module_1_0_0_t *emp);

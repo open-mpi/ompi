@@ -102,18 +102,6 @@ mca_ptl_elan_init_qdma_desc (struct ompi_ptl_elan_qdma_desc_t *desc,
     *size = size_out;
     hdr->hdr_frag.hdr_frag_length = size_out;
 
-    /* fragment state */
-#if 0
-    sendfrag->frag_owner = &ptl_peer->peer_ptl->super;
-    sendfrag->frag_send.frag_request = sendreq;
-    sendfrag->frag_send.frag_base.frag_addr = sendfrag->frag_vec[1].iov_base;
-    sendfrag->frag_send.frag_base.frag_size = size_out;
-    sendfrag->frag_peer = ptl_peer;
-
-    /* XXX: Fragment state, is this going to be set anywhere in PML */
-    sendfrag->frag_progressed = 0;
-#endif
-
     desc->main_dma.dma_srcAddr = MAIN2ELAN (desc->rail->r_ctx,
                                             &desc->buff[0]);
 
@@ -146,7 +134,7 @@ mca_ptl_elan_init_qdma_desc (struct ompi_ptl_elan_qdma_desc_t *desc,
 
 
 int
-mca_ptl_elan_start_desc (mca_ptl_elan_desc_item_t * desc,
+mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
 			 struct mca_ptl_elan_peer_t *ptl_peer,
 			 struct mca_pml_base_send_request_t *sendreq,
 			 size_t offset,
@@ -156,6 +144,19 @@ mca_ptl_elan_start_desc (mca_ptl_elan_desc_item_t * desc,
     mca_ptl_elan_t *ptl;
 
     START_FUNC();
+
+    /* fragment state */
+#if 0
+    sendfrag->frag_owner = &ptl_peer->peer_ptl->super;
+    sendfrag->frag_send.frag_request = sendreq;
+    sendfrag->frag_send.frag_base.frag_addr = sendfrag->frag_vec[1].iov_base;
+    sendfrag->frag_send.frag_base.frag_size = size_out;
+    sendfrag->frag_peer = ptl_peer;
+
+    /* XXX: Fragment state, is this going to be set anywhere in PML */
+    sendfrag->frag_progressed = 0;
+#endif
+
 
     if (desc->desc->desc_type == MCA_PTL_ELAN_QDMA_DESC) {
         struct ompi_ptl_elan_qdma_desc_t *qdma;
@@ -379,7 +380,7 @@ mca_ptl_elan_update_send (mca_ptl_elan_module_1_0_0_t * emp)
 {
     struct mca_ptl_elan_t *ptl;
     ompi_ptl_elan_queue_ctrl_t *queue;
-    mca_ptl_elan_desc_item_t *desc;
+    mca_ptl_elan_send_frag_t *desc;
     ELAN4_CTX  *ctx;
 
     int         num_ptls;
@@ -398,7 +399,7 @@ mca_ptl_elan_update_send (mca_ptl_elan_module_1_0_0_t * emp)
         ctx = ptl->ptl_elan_ctx;
 
 	while (ompi_list_get_size (&queue->tx_desc) > 0) {
-            desc = (mca_ptl_elan_desc_item_t *)
+            desc = (mca_ptl_elan_send_frag_t *)
                 ompi_list_get_first (&queue->tx_desc);
 #if 1
             rc = (int *) (&desc->desc->main_doneWord);
@@ -410,7 +411,7 @@ mca_ptl_elan_update_send (mca_ptl_elan_module_1_0_0_t * emp)
 		mca_ptl_base_header_t *header;
                 mca_ptl_elan_send_request_t *req;
                 /* Remove the desc, update the request, put back to free list */
-                desc = (mca_ptl_elan_desc_item_t *)
+                desc = (mca_ptl_elan_send_frag_t *)
                     ompi_list_remove_first (&queue->tx_desc);
                 req = desc->desc->req;
 		header = (mca_ptl_base_header_t *)&desc->desc->buff[0];

@@ -152,6 +152,14 @@ mca_ptl_elan_module_close (void)
 	}
     }
 
+    if (elan_mp->elan_send_frags_free.fl_num_allocated !=
+        elan_mp->elan_send_frags_free.super.ompi_list_length) {
+        ompi_output (0, "[%s:%d] send_frags : %d allocated %d returned\n",
+		     __FILE__, __LINE__,
+                     elan_mp->elan_send_frags_free.fl_num_allocated,
+                     elan_mp->elan_send_frags_free.super.ompi_list_length);
+    }
+
     if (elan_mp->elan_recv_frags_free.fl_num_allocated !=
         elan_mp->elan_recv_frags_free.super.ompi_list_length) {
         ompi_output (0, "[%s:%d] recv_frags : %d allocated %d returned\n",
@@ -165,11 +173,13 @@ mca_ptl_elan_module_close (void)
     /* Free the empty list holders */
     OBJ_DESTRUCT (&(elan_mp->elan_procs));
     OBJ_DESTRUCT (&(elan_mp->elan_pending_acks));
+    OBJ_DESTRUCT (&(elan_mp->elan_send_frags));
     OBJ_DESTRUCT (&(elan_mp->elan_recv_frags));
 
     /* TODO:
      * We need free all the memory allocated for this list
      * before desctructing this free_list */
+    OBJ_DESTRUCT (&(elan_mp->elan_send_frags_free));
     OBJ_DESTRUCT (&(elan_mp->elan_recv_frags_free));
 
     /* Destruct other structures */
@@ -205,6 +215,13 @@ mca_ptl_elan_module_init (int *num_ptls,
 
     *allow_multi_user_threads = true;
     *have_hidden_threads = OMPI_HAVE_THREADS;
+
+    ompi_free_list_init (&(elan_mp->elan_send_frags_free),
+                         sizeof (mca_ptl_elan_send_frag_t),
+                         OBJ_CLASS (mca_ptl_elan_recv_frag_t),
+                         elan_mp->elan_free_list_num,
+                         elan_mp->elan_free_list_max,
+                         elan_mp->elan_free_list_inc, NULL);
 
     ompi_free_list_init (&(elan_mp->elan_recv_frags_free),
                          sizeof (mca_ptl_elan_recv_frag_t),
