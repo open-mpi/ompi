@@ -632,15 +632,12 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
 		*size);
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
-
-    /* XXX: Chain a QDMA to each queue and 
-     * Have all the srcEvent fired to the Queue 
-     *
-     * XXX: The chain dma will go directly into a command stream
+    /* XXX: The chain dma will go directly into a command stream
      * so we need addend the command queue control bits.
      * Allocate space from command queues hanged off the CTX.
      */
-
+    frag->frag_base.frag_header = *hdr; 
+    ((mca_ptl_elan_ack_header_t *) &frag->frag_base.frag_header)->frag = frag; 
     desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
     desc->comp_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
 	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
@@ -1194,7 +1191,9 @@ ptl_elan_send_comp:
 	    return OMPI_SUCCESS;
 	}
 #endif
-	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_ACK) {
+	/* FIXME: Support Completion Queue with Get */
+	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_ACK 
+		|| header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FIN_ACK) {
 	    frag = ((mca_ptl_elan_ack_header_t*)header)->frag;
 	} else {
 	    frag = (mca_ptl_elan_send_frag_t *)
