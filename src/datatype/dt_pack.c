@@ -574,11 +574,9 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
     dt_desc_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
     char *pSrc;
-    size_t length = pData->size * pConv->count;
+    size_t length = pData->size * pConv->count - pConv->bConverted;
     uint32_t iov_count, initial_amount = pConv->bConverted;
 
-    pSrc = pConv->pBaseBuf + pStack->disp;  /* actual starting point for the conversion */
-    
     *freeAfter = 0;
     /* There are some optimizations that can be done if the upper level
      * does not provide a buffer.
@@ -596,20 +594,22 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
                                         pConv->pBaseBuf, pData, pConv->count );
             MEMCPY( iov[iov_count].iov_base, pSrc, iov[iov_count].iov_len);
         }
+	length -= iov[iov_count].iov_len;
         pConv->bConverted += iov[iov_count].iov_len;
         pStack[0].disp += iov[iov_count].iov_len;
         pSrc = pConv->pBaseBuf + pStack[0].disp;
-        if( pConv->bConverted == length ) break;
+        if( 0 == length ) break;
     }
     /* the number of complete datatypes still to be copied */
     pStack[0].count = pConv->count - (pConv->bConverted / pData->size);
     /* the amount of data (in bytes) that still have to be done on the last data */
     pStack[1].count = pConv->bConverted - pData->size * pStack[0].count;
     pStack[1].disp  = pData->size - pStack[1].count;
+    pStack[0].disp -= (pData->size - pStack[1].count);
     /* update the return value */
     *max_data = pConv->bConverted - initial_amount;
     *out_size = iov_count;
-    return (pConv->bConverted == length);
+    return (pConv->bConverted == (pData->size * pConv->count));
 }
 
 static int
