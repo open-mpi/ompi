@@ -41,7 +41,19 @@ module mpi_kinds
   parameter(MPI_INTEGER8_KIND  = selected_int_kind(18))
   parameter(MPI_INTEGER16_KIND = selected_int_kind(19))
 
+!
+! real kinds
+!
+
+  integer :: MPI_REAL4_KIND, MPI_REAL8_KIND
+  integer :: MPI_REAL16_KIND, MPI_REAL32_KIND
+  parameter(MPI_REAL4_KIND  = selected_real_kind(6))
+  parameter(MPI_REAL8_KIND  = selected_real_kind(15))
+  parameter(MPI_REAL16_KIND = selected_real_kind(31))
+  parameter(MPI_REAL32_KIND = selected_real_kind(32))
+
 end module mpi_kinds
+
 
 module mpi
 
