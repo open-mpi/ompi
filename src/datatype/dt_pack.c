@@ -12,15 +12,15 @@
 
 static
 int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
-				 struct iovec* iov, unsigned int* out_size,
-				 unsigned int* max_data,
-				 int* freeAfter )
+				 struct iovec* iov, uint32_t* out_size,
+				 uint32_t* max_data,
+				 int32_t* freeAfter )
 {
     dt_stack_t* pStack;    /* pointer to the position on the stack */
-    unsigned int pos_desc; /* actual position in the description of the derived datatype */
+    uint32_t pos_desc;     /* actual position in the description of the derived datatype */
     int count_desc;        /* the number of items already done in the actual pos_desc */
     int type;              /* type at current position */
-    unsigned int advance;  /* number of bytes that we should advance the buffer */
+    uint32_t advance;      /* number of bytes that we should advance the buffer */
     long disp_desc = 0;    /* compute displacement for truncated data */
     int bConverted = 0;    /* number of bytes converted this time */
     dt_desc_t *pData = pConvertor->pDesc;
@@ -29,7 +29,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
     int oCount = (pData->ub - pData->lb) * pConvertor->count;
     char* pInput;
     int iCount, rc;
-    unsigned int iov_count, total_bytes_converted = 0;
+    uint32_t iov_count, total_bytes_converted = 0;
 
     DUMP( "convertor_decode( %p, {%p, %d}, %d )\n", (void*)pConvertor,
           iov[0].iov_base, iov[0].iov_len, *out_size );
@@ -51,7 +51,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         bConverted = 0;
         if( iov[iov_count].iov_base == NULL ) {
-            unsigned int length = iov[iov_count].iov_len;
+            uint32_t length = iov[iov_count].iov_len;
             if( length <= 0 )
                 length = pConvertor->count * pData->size - pConvertor->bConverted - bConverted;
             if( (*max_data) < length )
@@ -140,17 +140,17 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
 static
 int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
 						 struct iovec* iov,
-						 unsigned int* out_size,
-						 unsigned int* max_data,
+						 uint32_t* out_size,
+						 uint32_t* max_data,
 						 int* freeAfter )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
-    u_int32_t pos_desc;   /* actual position in the description of the derived datatype */
+    uint32_t pos_desc;    /* actual position in the description of the derived datatype */
     int type;             /* type at current position */
     int i;                /* index for basic elements with extent */
     int bConverted = 0;   /* number of bytes converted/moved this time */
     long lastDisp = 0, last_count = 0;
-    u_int32_t space = iov[0].iov_len, last_blength = 0;
+    uint32_t space = iov[0].iov_len, last_blength = 0;
     char* pDestBuf;
     dt_desc_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
@@ -306,20 +306,20 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
  * return the pointer to the contiguous piece of memory to the upper level.
  */
 static
-int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
-				     struct iovec* iov,
-				     unsigned int *out_size,
-				     unsigned int* max_data,
-				     int* freeAfter )
+int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
+                                       struct iovec* iov,
+                                       uint32_t *out_size,
+                                       uint32_t* max_data,
+                                       int* freeAfter )
 {
     dt_stack_t* pStack;       /* pointer to the position on the stack */
     int pos_desc;             /* actual position in the description of the derived datatype */
     int i;                    /* index for basic elements with extent */
-    u_int32_t iov_pos = 0;    /* index in the iovec that we put data inside */
+    uint32_t iov_pos = 0;     /* index in the iovec that we put data inside */
     int bConverted = 0;       /* number of bytes converted/moved this time */
-    u_int32_t space_on_iovec; /* amount of free space on the current iovec */
+    uint32_t space_on_iovec;  /* amount of free space on the current iovec */
     long lastDisp = 0, last_count = 0;
-    u_int32_t space = *max_data, last_blength = 0, saveLength;
+    uint32_t space = *max_data, last_blength = 0, saveLength;
     char *pDestBuf, *savePos;
     dt_desc_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
@@ -571,12 +571,15 @@ int ompi_convertor_pack_homogeneous( ompi_convertor_t* pConv,
     return (pConv->bConverted == (pData->size * pConv->count));
 }
 
+/* the Contig versions does not use the stack. They can easily retrieve
+ * the status with just the informations from pConvertor->bConverted.
+ */
 static
-int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
-					    struct iovec* iov,
-					    unsigned int* out_size,
-					    unsigned int* max_data,
-					    int* freeAfter )
+int ompi_convertor_pack_no_conversion_contig( ompi_convertor_t* pConv,
+                                              struct iovec* iov,
+                                              uint32_t* out_size,
+                                              uint32_t* max_data,
+                                              int* freeAfter )
 {
     dt_desc_t* pData = pConv->pDesc;
     char* pSrc = pConv->pBaseBuf + pData->true_lb;
@@ -584,8 +587,9 @@ int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
     char* pDest;
     size_t length = pData->size * pConv->count;
     long extent;
-    u_int32_t max_allowed = *max_data;
-    u_int32_t i, index;
+    uint32_t max_allowed = *max_data;
+    uint32_t i, index;
+    uint32_t iov_count, total_bytes_converted = 0;
 
     i = pConv->bConverted / pData->size;  /* how many we already pack */
     extent = pData->ub - pData->lb;
@@ -595,99 +599,102 @@ int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
     /* There are some optimizations that can be done if the upper level
      * does not provide a buffer.
      */
-    if( iov[0].iov_base == NULL ) {
-	/* special case for small data. We avoid allocating memory if we
-	 * can fill the iovec directly with the address of the remaining
-	 * data.
-	 */
-	if( (pConv->count - i) < (*out_size) ) {
-	    for( index = 0; i < pConv->count; i++, index++ ) {
-		iov[index].iov_base = pSrc;
-		iov[index].iov_len = pData->size;
-		pSrc += extent;
-                pConv->bConverted += pData->size;
-	    }
-	    *out_size = index;
-	    *max_data = index * pData->size;
-	    return 1;  /* we're done */
-	}
-	/* now special case for big contiguous data with gaps around */
-	if( pData->size >= IOVEC_MEM_LIMIT ) {
-	    /* as we dont have to copy any data, we can simply fill the iovecs 
-	     * with data from the user data description.
-	     */
-	    for( index = 0; (i < pConv->count) && (index < (*out_size));
-		 i++, index++ ) {
-		if( max_allowed < pData->size ) {
-		    iov[index].iov_base = pSrc;
-		    iov[index].iov_len = max_allowed;
-		    max_allowed = 0;
-		    printf( "%s:%d Possible problem here\n", __FILE__, __LINE__ );
-		    break;
-		} else {
-		    iov[index].iov_base = pSrc;
-		    iov[index].iov_len = pData->size;
-		    pSrc += extent;
-		}
-		max_allowed -= iov[index].iov_len;
-	    }
-	    *out_size = index;
-	    *max_data = (*max_data) - max_allowed;
-	    pConv->bConverted += (*max_data);
-	    return (pConv->bConverted == length );
-	}
+    for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
+        if( iov[iov_count].iov_base == NULL ) {
+            /* special case for small data. We avoid allocating memory if we
+             * can fill the iovec directly with the address of the remaining
+             * data.
+             */
+            if( (pConv->count - i) < ((*out_size) - iov_count) ) {
+                for( index = iov_count; i < pConv->count; i++, index++ ) {
+                    iov[index].iov_base = pSrc;
+                    iov[index].iov_len = pData->size;
+                    pSrc += extent;
+                    pConv->bConverted += pData->size;
+                }
+                *out_size = iov_count + index;
+                *max_data = total_bytes_converted + index * pData->size;
+                return 1;  /* we're done */
+            }
+            /* now special case for big contiguous data with gaps around */
+            if( pData->size >= IOVEC_MEM_LIMIT ) {
+                /* as we dont have to copy any data, we can simply fill the iovecs 
+                 * with data from the user data description.
+                 */
+                for( index = iov_count; (i < pConv->count) && (index < (*out_size));
+                     i++, index++ ) {
+                    if( max_allowed < pData->size ) {
+                        iov[index].iov_base = pSrc;
+                        iov[index].iov_len = max_allowed;
+                        max_allowed = 0;
+                        printf( "%s:%d Possible problem here\n", __FILE__, __LINE__ );
+                        break;
+                    } else {
+                        iov[index].iov_base = pSrc;
+                        iov[index].iov_len = pData->size;
+                        pSrc += extent;
+                    }
+                    max_allowed -= iov[index].iov_len;
+                }
+                *out_size = index;
+                *max_data = total_bytes_converted + - max_allowed;
+                pConv->bConverted += total_bytes_converted;
+                return (pConv->bConverted == length );
+            }
+        }
+        
+        if( (long)pData->size == extent ) {  /* that really contiguous */
+            if( iov[iov_count].iov_base == NULL ) {
+                iov[iov_count].iov_base = pSrc; /* + pConv->bConverted; */
+                if( (pConv->bConverted + iov[iov_count].iov_len) > length )
+                    iov[iov_count].iov_len = length - pConv->bConverted;
+            } else {
+                /* contiguous data just memcpy the smallest data in the user buffer */
+                iov[iov_count].iov_len = IMIN( iov[iov_count].iov_len, length );
+                OMPI_DDT_SAFEGUARD_POINTER( pSrc, iov[iov_count].iov_len,
+                                            pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY( iov[iov_count].iov_base, pSrc, iov[iov_count].iov_len);
+            }
+            *max_data = iov[iov_count].iov_len;
+        } else {
+            uint32_t done, counter;
+            
+            if( iov[iov_count].iov_base == NULL ) {
+                iov[iov_count].iov_base = pConv->memAlloc_fn( &(iov[iov_count].iov_len) );
+                (*freeAfter) |= (1 << 0);
+                if( max_allowed < iov[iov_count].iov_len )
+                    iov[iov_count].iov_len = max_allowed;
+                else
+                    max_allowed = iov[iov_count].iov_len;
+            }
+            pDest = iov[iov_count].iov_base;
+            done = pConv->bConverted - i * pData->size;  /* how much data left last time */
+            pSrc += done;
+            if( done != 0 ) {  /* still some data to copy from the last time */
+                done = pData->size - done;
+                OMPI_DDT_SAFEGUARD_POINTER( pSrc, done, pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY( pDest, pSrc, done );
+                pDest += done;
+                max_allowed -= done;
+                i++;  /* just to compute the correct source pointer */
+            }
+            pSrc = pConv->pBaseBuf + pData->true_lb + i * extent;
+            counter = max_allowed / pData->size;
+            if( counter > pConv->count ) counter = pConv->count;
+            for( i = 0; i < counter; i++ ) {
+                OMPI_DDT_SAFEGUARD_POINTER( pSrc, pData->size, pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY( pDest, pSrc, pData->size );
+                pDest += pData->size;
+                pSrc += extent;
+            }
+            max_allowed -= (counter * pData->size);
+            total_bytes_converted += iov[iov_count].iov_len - max_allowed;
+            iov[iov_count].iov_len = *max_data;
+        }
     }
-
-    if( (long)pData->size == extent ) {  /* that really contiguous */
-	if( iov[0].iov_base == NULL ) {
-	    iov[0].iov_base = pSrc; /* + pConv->bConverted; */
-	    if( (pConv->bConverted + iov[0].iov_len) > length )
-		iov[0].iov_len = length - pConv->bConverted;
-	} else {
-	    /* contiguous data just memcpy the smallest data in the user buffer */
-	    iov[0].iov_len = IMIN( iov[0].iov_len, length );
-            OMPI_DDT_SAFEGUARD_POINTER( pSrc, iov[0].iov_len,
-                                        pConv->pBaseBuf, pData, pConv->count );
-	    MEMCPY( iov[0].iov_base, pSrc, iov[0].iov_len);
-	}
-	*max_data = iov[0].iov_len;
-    } else {
-	u_int32_t done, counter;
-
-	if( iov[0].iov_base == NULL ) {
-	    iov[0].iov_base = pConv->memAlloc_fn( &(iov[0].iov_len) );
-	    (*freeAfter) |= (1 << 0);
-	    if( max_allowed < iov[0].iov_len )
-		iov[0].iov_len = max_allowed;
-	    else
-		max_allowed = iov[0].iov_len;
-	}
-	pDest = iov[0].iov_base;
-	done = pConv->bConverted - i * pData->size;  /* how much data left last time */
-	pSrc += done;
-	if( done != 0 ) {  /* still some data to copy from the last time */
-	    done = pData->size - done;
-            OMPI_DDT_SAFEGUARD_POINTER( pSrc, done, pConv->pBaseBuf, pData, pConv->count );
-	    MEMCPY( pDest, pSrc, done );
-	    pDest += done;
-	    max_allowed -= done;
-	    i++;  /* just to compute the correct source pointer */
-	}
-	pSrc = pConv->pBaseBuf + pData->true_lb + i * extent;
-	counter = max_allowed / pData->size;
-	if( counter > pConv->count ) counter = pConv->count;
-	for( i = 0; i < counter; i++ ) {
-            OMPI_DDT_SAFEGUARD_POINTER( pSrc, pData->size, pConv->pBaseBuf, pData, pConv->count );
-	    MEMCPY( pDest, pSrc, pData->size );
-	    pDest += pData->size;
-	    pSrc += extent;
-	}
-	max_allowed -= (counter * pData->size);
-	*max_data = iov[0].iov_len - max_allowed;
-	iov[0].iov_len = *max_data;
-    }
-    pConv->bConverted += iov[0].iov_len;
-    *out_size = 1;
+    *max_data = total_bytes_converted;
+    pConv->bConverted += iov[iov_count].iov_len;
+    *out_size = iov_count;
     return (pConv->bConverted == length);
 }
 
@@ -716,12 +723,12 @@ int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
  */
 int ompi_convertor_pack( ompi_convertor_t* pConv,
 			 struct iovec* iov, 
-			 unsigned int* out_size,
-			 unsigned int* max_data,
+			 uint32_t* out_size,
+			 uint32_t* max_data,
 			 int* freeAfter )
 {
     dt_desc_t* pData = pConv->pDesc;
-    u_int32_t done = 0, index = 0;
+    uint32_t done = 0, index = 0;
 
     *freeAfter = 0;  /* nothing to free yet */
     /* TODO should use the remote size */
@@ -762,7 +769,7 @@ int ompi_convertor_pack( ompi_convertor_t* pConv,
 
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
-				  unsigned int flags,
+				  uint32_t flags,
 				  dt_desc_t* dt,
 				  int count,
 				  void* pUserBuf,
@@ -792,14 +799,11 @@ int ompi_convertor_init_for_send( ompi_convertor_t* pConv,
     pConv->memAlloc_fn = allocfn;
     if( dt->flags & DT_FLAG_CONTIGUOUS ) {
 	pConv->flags |= DT_FLAG_CONTIGUOUS | CONVERTOR_HOMOGENEOUS;
-	pConv->fAdvance = ompi_convertor_pack_homogeneous_contig;
+	pConv->fAdvance = ompi_convertor_pack_no_conversion_contig;
     } else {
 	/* TODO handle the sender convert case */
-	pConv->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
-	pConv->fAdvance = ompi_convertor_pack_homogeneous;
-#if defined(ONE_STEP)
-	pConv->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
-#endif  /* ONE_STEP */
+	pConv->fAdvance = ompi_convertor_pack_no_conversion_contig;
+	pConv->fAdvance = ompi_convertor_pack_no_conversion;
     }
     pConv->fAdvance = ompi_convertor_pack_general;
     if( starting_pos != 0 ) {
@@ -863,7 +867,7 @@ ompi_convertor_t* ompi_convertor_get_copy( ompi_convertor_t* pConvertor )
 }
 
 /* Actually we suppose that we can only do receiver side conversion */
-int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, unsigned int* pSize )
+int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, uint32_t* pSize )
 {
    int ddt_size = 0;
 
@@ -874,7 +878,7 @@ int ompi_convertor_get_packed_size( ompi_convertor_t* pConv, unsigned int* pSize
    return OMPI_SUCCESS;
 }
 
-int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, unsigned int* pSize )
+int ompi_convertor_get_unpacked_size( ompi_convertor_t* pConv, uint32_t* pSize )
 {
    int i;
    dt_desc_t* pData = pConv->pDesc;

@@ -55,16 +55,16 @@ OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
  * by a set of basic elements.
  */
 typedef struct __dt_elem_desc {
-      u_int16_t flags;  /**< flags for the record */
-      u_int16_t type;   /**< the basic data type id */
-      u_int32_t count;  /**< number of elements */
-      long      disp;   /**< displacement of the first element */
-      u_int32_t extent; /**< extent of each element */
+      uint16_t flags;  /**< flags for the record */
+      uint16_t type;   /**< the basic data type id */
+      uint32_t count;  /**< number of elements */
+      long     disp;   /**< displacement of the first element */
+      uint32_t extent; /**< extent of each element */
 } dt_elem_desc_t;
 
 typedef struct __dt_struct_desc {
-   u_int32_t length;  /* the maximum number of elements in the description array */
-   u_int32_t used;    /* the number of used elements in the description array */
+   uint32_t length;  /* the maximum number of elements in the description array */
+   uint32_t used;    /* the number of used elements in the description array */
    dt_elem_desc_t* desc;
 } dt_type_desc_t;
 
@@ -74,15 +74,15 @@ typedef struct ompi_datatype_t {
    ompi_object_t super;    /**< basic superclass */
    unsigned long size;     /**< total size in bytes of the memory used by the data if
                             * the data is put on a contiguous buffer */
-   u_int32_t     align;    /**< data should be aligned to */
+   uint32_t      align;    /**< data should be aligned to */
    long          true_lb;
    long          true_ub;  /**< the true ub of the data without user defined lb and ub */
    long          lb;       /**< lower bound in memory */
    long          ub;       /**< upper bound in memory */
-   u_int16_t     flags;    /**< the flags */
-   u_int16_t     id;       /**< data id, normally the index in the data array. */
-   u_int32_t     nbElems;  /**< total number of elements inside the datatype */
-   u_int64_t     bdt_used; /**< which basic datatypes are used in the data description */
+   uint16_t      flags;    /**< the flags */
+   uint16_t      id;       /**< data id, normally the index in the data array. */
+   uint32_t      nbElems;  /**< total number of elements inside the datatype */
+   uint64_t      bdt_used; /**< which basic datatypes are used in the data description */
 
    /* Attribute fields */
    ompi_hash_table_t *d_keyhash;
@@ -95,7 +95,7 @@ typedef struct ompi_datatype_t {
 
    /* basic elements count used to compute the size of the datatype for
     * remote nodes */
-   u_int32_t          btypes[DT_MAX_PREDEFINED];
+   uint32_t           btypes[DT_MAX_PREDEFINED];
 } dt_desc_t, ompi_datatype_t;
 
 OBJ_CLASS_DECLARATION( ompi_datatype_t );
@@ -116,23 +116,23 @@ void ompi_ddt_dump( dt_desc_t* pData );
 OMPI_DECLSPEC int ompi_ddt_duplicate( dt_desc_t* oldType, dt_desc_t** newType );
 OMPI_DECLSPEC int ompi_ddt_create_contiguous( int count, dt_desc_t* oldType, dt_desc_t** newType );
 OMPI_DECLSPEC int ompi_ddt_create_vector( int count, int bLength, long stride,
-                           dt_desc_t* oldType, dt_desc_t** newType );
+                                          dt_desc_t* oldType, dt_desc_t** newType );
 OMPI_DECLSPEC int ompi_ddt_create_hvector( int count, int bLength, long stride,
-                            dt_desc_t* oldType, dt_desc_t** newType );
+                                           dt_desc_t* oldType, dt_desc_t** newType );
 OMPI_DECLSPEC int ompi_ddt_create_indexed( int count, int* pBlockLength, int* pDisp,
-                            dt_desc_t* oldType, dt_desc_t** newType );
+                                           dt_desc_t* oldType, dt_desc_t** newType );
 OMPI_DECLSPEC int ompi_ddt_create_hindexed( int count, int* pBlockLength, long* pDisp,
-                             dt_desc_t* oldType, dt_desc_t** newType );
+                                            dt_desc_t* oldType, dt_desc_t** newType );
 OMPI_DECLSPEC int ompi_ddt_create_indexed_block( int count, int bLength, int* pDisp,
-                                  dt_desc_t* oldType, dt_desc_t** newType );
+                                                 dt_desc_t* oldType, dt_desc_t** newType );
 OMPI_DECLSPEC int ompi_ddt_create_struct( int count, int* pBlockLength, long* pDisp,
-                           dt_desc_t** pTypes, dt_desc_t** newType );
+                                          dt_desc_t** pTypes, dt_desc_t** newType );
 OMPI_DECLSPEC int ompi_ddt_create_resized( dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType );
 OMPI_DECLSPEC int ompi_ddt_create_subarray( int ndims, int* pSizes, int* pSubSizes, int* pStarts,
-                             int order, dt_desc_t* oldType, dt_desc_t** newType );
+                                            int order, dt_desc_t* oldType, dt_desc_t** newType );
 OMPI_DECLSPEC int ompi_ddt_create_darray( int size, int rank, int ndims, int* pGSizes, int *pDistrib,
-                           int* pDArgs, int* pPSizes, int order, dt_desc_t* oldType,
-                           dt_desc_t** newType );
+                                          int* pDArgs, int* pPSizes, int order, dt_desc_t* oldType,
+                                          dt_desc_t** newType );
 
 OMPI_DECLSPEC int ompi_ddt_add( dt_desc_t* pdtBase, dt_desc_t* pdtNew, unsigned int count, long disp, long extent );
 
@@ -158,30 +158,30 @@ OMPI_DECLSPEC int ompi_ddt_optimize_short( dt_desc_t* pData, int count, dt_type_
 /* flags for the datatypes */
 
 typedef int (*conversion_fct_t)( unsigned int count,
-                                 void* from, unsigned int from_len, long from_extent,
-                                 void* to, unsigned int in_length, long to_extent );
+                                 void* from, uint32_t from_len, long from_extent,
+                                 void* to, uint32_t in_length, long to_extent );
 
 typedef struct __dt_stack dt_stack_t;
 typedef struct ompi_convertor_t ompi_convertor_t;
 typedef int (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
                                         struct iovec* pInputv,
-                                        unsigned int* inputCount,
-                                        unsigned int* max_data,
-                                        int* freeAfter );
+                                        uint32_t* inputCount,
+                                        uint32_t* max_data,
+                                        int32_t* freeAfter );
 typedef void*(*memalloc_fct_t)( size_t* pLength );
 
 struct ompi_convertor_t {
     ompi_object_t           super;    /**< basic superclass */
     dt_desc_t*              pDesc;    /**< the datatype description associated with the convertor */
-    u_int32_t               remoteArch;  /**< the remote architecture */
+    uint32_t                remoteArch;  /**< the remote architecture */
     dt_stack_t*             pStack;  /**< the local stack for the actual conversion */
-    u_int32_t               converted;   /**< the number of already converted elements */
-    u_int32_t               bConverted;  /**< the size of already converted elements in bytes */
-    u_int32_t               flags;  /**< the properties of this convertor */
-    u_int32_t               count;  /**< the total number of full datatype elements */
-    u_int32_t               stack_pos;  /**< the actual position on the stack */
+    uint32_t                converted;   /**< the number of already converted elements */
+    uint32_t                bConverted;  /**< the size of already converted elements in bytes */
+    uint32_t                flags;  /**< the properties of this convertor */
+    uint32_t                count;  /**< the total number of full datatype elements */
+    uint32_t                stack_pos;  /**< the actual position on the stack */
     char*                   pBaseBuf;  /**< initial buffer as supplied by the user */
-    u_int32_t               available_space;  /**< total available space */
+    uint32_t                available_space;  /**< total available space */
     convertor_advance_fct_t fAdvance;  /**< pointer to the pack/unpack functions */
     memalloc_fct_t          memAlloc_fn;  /**< pointer to the memory allocation function */
     conversion_fct_t*       pFunctions;  /**< the convertor functions pointer */

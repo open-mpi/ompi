@@ -208,7 +208,7 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
             free( (PDST)->opt_desc.desc );                              \
         (PDST)->opt_desc = (PSRC)->opt_desc;                            \
         memcpy( (PDST)->btypes, (PSRC)->btypes,                         \
-                DT_MAX_PREDEFINED * sizeof(u_int32_t) );                \
+                DT_MAX_PREDEFINED * sizeof(uint32_t) );                 \
     } while(0)
 
 #define DECLARE_MPI2_COMPOSED_STRUCT_DDT( PDATA, MPIDDT, MPIDDTNAME, type1, type2, MPIType1, MPIType2 ) \
