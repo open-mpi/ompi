@@ -55,19 +55,11 @@ mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module = {
 
 
 /*
- * data structure for receiving reactor callbacks
+ * functions for receiving event callbacks
  */
 
-static void mca_ptl_tcp_module_recv_handler(void*, int sd);
-static void mca_ptl_tcp_module_send_handler(void*, int sd);
-static void mca_ptl_tcp_module_except_handler(void*, int sd);
-
-
-static lam_reactor_listener_t mca_ptl_tcp_module_listener = {
-    mca_ptl_tcp_module_recv_handler,
-    mca_ptl_tcp_module_send_handler,
-    mca_ptl_tcp_module_except_handler,
-};
+static void mca_ptl_tcp_module_recv_handler(int, short, void*);
+static void mca_ptl_tcp_module_send_handler(int, short, void*);
 
 
 /*
@@ -102,7 +94,6 @@ static inline int mca_ptl_tcp_param_register_int(
 int mca_ptl_tcp_module_open(void)
 {
     lam_mutex_init(&mca_ptl_tcp_module.tcp_lock);
-    OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_reactor, lam_reactor_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_procs, lam_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_acks, lam_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_send_requests, lam_free_list_t);
@@ -138,7 +129,6 @@ int mca_ptl_tcp_module_close(void)
     if (NULL != mca_ptl_tcp_module.tcp_ptls)
         free(mca_ptl_tcp_module.tcp_ptls);
  
-    OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_reactor);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_procs);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_acks);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_send_requests);
@@ -243,13 +233,7 @@ static int mca_ptl_tcp_module_create_listen(void)
     mca_ptl_tcp_module.tcp_port = inaddr.sin_port;
 
     /* register listen port */
-    lam_reactor_insert(
-        &mca_ptl_tcp_module.tcp_reactor, 
-        mca_ptl_tcp_module.tcp_listen,
-        &mca_ptl_tcp_module_listener,
-        0,
-        LAM_REACTOR_NOTIFY_RECV|LAM_REACTOR_NOTIFY_EXCEPT);
-
+    lam_event_add(&mca_ptl_tcp_module.tcp_recv_event, 0);
     return LAM_SUCCESS;
 }
 
@@ -341,7 +325,7 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
 
 void mca_ptl_tcp_module_progress(mca_ptl_base_tstamp_t tstamp)
 {
-    lam_reactor_poll(&mca_ptl_tcp_module.tcp_reactor);
+    lam_event_loop(LAM_EVLOOP_NONBLOCK);
 }
 
                                                                                                                 
@@ -366,21 +350,18 @@ static void mca_ptl_tcp_module_accept(void)
         }
 
         /* wait for receipt of peers process identifier to complete this connection */
-        lam_reactor_insert(
-            &mca_ptl_tcp_module.tcp_reactor, 
-            sd,
-            &mca_ptl_tcp_module_listener,
-            0,
-            LAM_REACTOR_NOTIFY_RECV|LAM_REACTOR_NOTIFY_EXCEPT);
+        lam_event_t* event = malloc(sizeof(lam_event_t));
+        lam_event_set(event, sd, LAM_EV_READ|LAM_EV_PERSIST, mca_ptl_tcp_module_recv_handler, event);
+        lam_event_add(event, 0);
     }
 }
 
 
 /*
- * Called by reactor when there is data available on the registered 
+ * Event callback when there is data available on the registered 
  * socket to recv.
  */
-static void mca_ptl_tcp_module_recv_handler(void* user, int sd)
+static void mca_ptl_tcp_module_recv_handler(int sd, short flags, void* user)
 {
     void* guid; 
     uint32_t size;
@@ -392,7 +373,8 @@ static void mca_ptl_tcp_module_recv_handler(void* user, int sd)
         mca_ptl_tcp_module_accept();
         return;
     }
-    lam_reactor_remove(&mca_ptl_tcp_module.tcp_reactor, sd, LAM_REACTOR_NOTIFY_ALL);
+    lam_event_del((lam_event_t*)user);
+    free(user);
 
     /* recv the size of the process identifier */
     int retval = recv(sd, &size, sizeof(size), 0);
@@ -442,18 +424,5 @@ static void mca_ptl_tcp_module_recv_handler(void* user, int sd)
         close(sd);
         return;
     }
-}
-
-
-static void mca_ptl_tcp_module_send_handler(void* user, int sd)
-{
-    lam_output(0, "mca_ptl_tcp_module_send: received invalid event for descriptor(%d)", sd);
-    lam_reactor_remove(&mca_ptl_tcp_module.tcp_reactor, sd, LAM_REACTOR_NOTIFY_ALL);
-}
-
-static void mca_ptl_tcp_module_except_handler(void* user, int sd)
-{
-    lam_output(0, "mca_ptl_tcp_module_except: received invalid event for descriptor(%d)", sd);
-    lam_reactor_remove(&mca_ptl_tcp_module.tcp_reactor, sd, LAM_REACTOR_NOTIFY_ALL);
 }
 

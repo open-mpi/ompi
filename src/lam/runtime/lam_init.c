@@ -11,6 +11,7 @@
 #include "lam/mem/malloc.h"
 #include "lam/util/output.h"
 #include "lam/threads/mutex.h"
+#include "lam/event/event.h"
 
 /**
  * First function that must be called in a LAM process.
@@ -50,6 +51,10 @@ int lam_init(int argc, char *argv[])
   /* For malloc debugging */
 
   lam_malloc_init();
+
+  /* Initialize event handling */
+
+  lam_event_init();
 
   /* Other things that we'll probably need:
 

@@ -9,8 +9,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "lam/util/reactor.h"
 #include "lam/mem/free_list.h"
+#include "lam/event/event.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
 
@@ -31,13 +31,14 @@ struct mca_ptl_tcp_module_1_0_0_t {
     int   tcp_free_list_num;     /**< initial size of free lists */
     int   tcp_free_list_max;     /**< maximum size of free lists */
     int   tcp_free_list_inc;     /**< number of elements to alloc when growing free lists */
-    lam_reactor_t tcp_reactor;
     lam_free_list_t tcp_send_requests;
     lam_free_list_t tcp_send_frags;
     lam_free_list_t tcp_recv_frags;
     lam_list_t tcp_procs;
     lam_list_t tcp_acks;
     struct mca_ptl_tcp_proc_t* tcp_local;
+    lam_event_t tcp_send_event;
+    lam_event_t tcp_recv_event;
     lam_mutex_t tcp_lock;
 };
 typedef struct mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module_1_0_0_t;

@@ -14,9 +14,8 @@
 #include "lam/util/output.h"
 #endif
 
-
 /*
- *  Array of elements maintained by value.
+ *  @file  Array of elements maintained by value.
  */
 
 extern lam_class_info_t lam_value_array_t_class_info;
@@ -53,10 +52,36 @@ extern "C" {
 static inline int lam_value_array_init(lam_value_array_t *array, size_t item_sizeof)
 {
     array->array_item_sizeof = item_sizeof;
-    array->array_alloc_size = 1;
-    array->array_items = (unsigned char*) malloc(item_sizeof * array->array_alloc_size);
+    array->array_alloc_size = 1; 
+    array->array_size = 0;
+    array->array_items = (unsigned char*)realloc(array->array_items, item_sizeof * array->array_alloc_size);
     return (NULL != array->array_items) ? LAM_SUCCESS : LAM_ERR_OUT_OF_RESOURCE;
 }
+
+
+/**
+ *  Reserve space in the array for new elements, but do not change the size.
+ *
+ *  @param   array   The input array (IN).
+ *  @param   size    The anticipated size of the array (IN).
+ *  @return  LAM error code.
+ */
+
+static inline int lam_value_array_reserve(lam_value_array_t* array, size_t size)
+{
+     if(size > array->array_alloc_size) {
+         array->array_items = (unsigned char*)realloc(array->array_items, array->array_item_sizeof * size);
+         if(NULL == array->array_items) {
+             array->array_size = 0;
+             array->array_alloc_size = 0;
+             return LAM_ERR_OUT_OF_RESOURCE;
+         }
+         array->array_alloc_size = 1;
+     }
+     return LAM_SUCCESS;
+}
+
+
 
 /**
  *  Retreives the number of elements in the array.

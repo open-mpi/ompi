@@ -25,6 +25,7 @@ struct mca_ptl_base_recv_request_t;
 struct mca_ptl_base_send_request_t;
 struct mca_ptl_base_recv_frag_t;
 struct mca_ptl_base_send_frag_t;
+struct mca_ptl_base_match_header_t;
 
 typedef uint64_t mca_ptl_base_sequence_t;
 typedef uint64_t mca_ptl_base_tstamp_t;
@@ -145,6 +146,11 @@ typedef void (*mca_ptl_base_recv_fn_t)(
     struct mca_ptl_base_recv_frag_t* recv_frag
 );
 
+typedef int (*mca_ptl_base_match_fn_t)(
+    struct mca_ptl_base_recv_frag_t* frag,
+    struct mca_ptl_base_match_header_t* header
+);
+
 typedef void (*mca_ptl_base_recv_progress_fn_t)(
     struct mca_ptl_base_recv_request_t* recv_request,
     struct mca_ptl_base_recv_frag_t* recv_frag
@@ -181,6 +187,7 @@ struct mca_ptl_t {
     mca_ptl_base_frag_return_fn_t      ptl_frag_return;
 
     /* PTL->PML function table - filled in by PML at init */
+    mca_ptl_base_match_fn_t            ptl_match;
     mca_ptl_base_send_progress_fn_t    ptl_send_progress;
     mca_ptl_base_recv_progress_fn_t    ptl_recv_progress;
 };

@@ -7,10 +7,13 @@
 #include "mca/mpi/ptl/ptl.h"
 #include "mca/mpi/ptl/base/base.h"
 #include "mca/mpi/ptl/base/ptl_base_comm.h"
-#include "mca/mpi/ptl/base/ptl_base_sendreq.h"
-#include "mca/mpi/ptl/base/ptl_base_recvreq.h"
+#include "mca/mpi/ptl/base/ptl_base_header.h"
+#include "mca/mpi/ptl/base/ptl_base_recvfrag.h"
+#include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
+#include "pml_teg_recvreq.h"
+#include "pml_teg_sendreq.h"
 
 
 mca_pml_teg_t mca_pml_teg = {
@@ -88,6 +91,11 @@ int mca_pml_teg_add_ptls(lam_list_t *ptls)
                 break;
         if(i == mca_pml_teg.teg_num_ptl_modules)
             mca_pml_teg.teg_ptl_modules[mca_pml_teg.teg_num_ptl_modules++] = ptl->ptl_module;
+
+         /* setup ptl */
+         ptl->ptl_match = mca_ptl_base_recv_frag_match;
+         ptl->ptl_send_progress = mca_pml_teg_send_request_progress;
+         ptl->ptl_recv_progress = mca_pml_teg_recv_request_progress;
     }
 
     /* sort ptl list by exclusivity */

@@ -72,7 +72,7 @@ static int poll_del		(void *, struct lam_event *);
 static int poll_recalc	(void *, int);
 static int poll_dispatch	(void *, struct timeval *);
 
-struct lam_eventop lam_pollops = {
+const struct lam_eventop lam_pollops = {
 	"poll",
 	poll_init,
 	poll_add,
