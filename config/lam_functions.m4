@@ -33,6 +33,15 @@ EOF
 LAM_CONFIGURE_USER="`whoami`"
 LAM_CONFIGURE_HOST="`hostname | head -n 1`"
 LAM_CONFIGURE_DATE="`date`"
+#
+# Save these details so that they can be used in laminfo later
+#
+AC_SUBST(LAM_CONFIGURE_USER)
+AC_SUBST(LAM_CONFIGURE_HOST)
+AC_SUBST(LAM_CONFIGURE_DATE)
+
+AC_DEFINE_UNQUOTED(LAM_ARCH, "$host", [LAM architecture string])
+    
 
 #
 # Make automake clean emacs ~ files for "make clean"
