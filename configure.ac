@@ -1096,21 +1096,5 @@ AC_CONFIG_FILES([
     src/tools/ompid/Makefile
     src/tools/openmpi/Makefile
     src/tools/wrappers/Makefile
-
-    test/Makefile
-    test/include/Makefile
-    test/support/Makefile
-    test/class/Makefile
-    test/mca/Makefile
-    test/mca/oob/Makefile
-    test/mca/ns/Makefile
-    test/mca/gpr/Makefile
-    test/mca/llm/Makefile
-    test/mca/llm/base/Makefile
-    test/mca/pcm/Makefile
-    test/mca/pcm/base/Makefile
-    test/rte/Makefile
-    test/threads/Makefile
-    test/util/Makefile
 ])
 AC_OUTPUT

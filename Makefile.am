@@ -5,8 +5,6 @@
 include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = config include etc src 
-DIST_SUBDIRS = $(SUBDIRS) test
-
 EXTRA_DIST = README INSTALL VERSION Doxyfile
 
 dist-hook:
