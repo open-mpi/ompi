@@ -308,6 +308,47 @@ CPPFLAGS='-I$(top_srcdir)/src'" $CPPFLAGS"
 CXXCPPFLAGS='-I$(top_srcdir)/src'" $CXXCPPFLAGS"
 
 #
+# Adding WRAPPER_* flags so that extra flags needed for wrappper compilers
+#
+# WRAPPER_EXTRA_CFLAGS
+#
+LAM_UNIQ(WRAPPER_EXTRA_CFLAGS)
+AC_SUBST(WRAPPER_EXTRA_CFLAGS)
+AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CFLAGS, "$WRAPPER_EXTRA_CFLAGS",
+    [Additional CFLAGS to pass through the wrapper compilers])
+
+#
+# WRAPPER_EXTRA_CXXFLAGS
+#
+LAM_UNIQ(WRAPPER_EXTRA_CXXFLAGS)
+AC_SUBST(WRAPPER_EXTRA_CXXFLAGS)
+AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_CXXFLAGS, "$WRAPPER_EXTRA_CXXFLAGS",
+    [Additional CXXFLAGS to pass through the wrapper compilers])
+
+#
+# WRAPPER_EXTRA_FFLAGS
+#
+LAM_UNIQ(WRAPPER_EXTRA_FFLAGS)
+AC_SUBST(WRAPPER_EXTRA_FFLAGS)
+AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_FFLAGS, "$WRAPPER_EXTRA_FFLAGS",
+    [Additional FFLAGS to pass through the wrapper compilers])
+
+#
+# WRAPPER_EXTRA_LDFLAGS
+#
+LAM_UNIQ(WRAPPER_EXTRA_LDFLAGS)
+AC_SUBST(WRAPPER_EXTRA_LDFLAGS)
+AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LDFLAGS, "$WRAPPER_EXTRA_LDFLAGS",
+    [Additional LDFLAGS to pass through the wrapper compilers])
+
+#
+# WRAPPER_EXTRA_LIBS
+#
+AC_SUBST(WRAPPER_EXTRA_LIBS)
+AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LIBS, "$WRAPPER_EXTRA_LIBS",
+    [Additional LIBS to pass through the wrapper compilers])
+
+#
 # Delayed the substitution of CFLAGS and CXXFLAGS until now because
 # they may have been modified throughout the course of this script.
 #
