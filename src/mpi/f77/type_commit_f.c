@@ -50,7 +50,7 @@ void mpi_type_commit_f(MPI_Fint *type, MPI_Fint *ierr)
 {
     MPI_Datatype c_type = MPI_Type_f2c(*type);
 
-    *ierr = MPI_Type_commit(&c_type); 
+    *ierr = OMPI_INT_2_FINT(MPI_Type_commit(&c_type)); 
 
     if (MPI_SUCCESS == *ierr) {
       *type = MPI_Type_c2f(c_type);
