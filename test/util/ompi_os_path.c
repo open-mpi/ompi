@@ -10,6 +10,7 @@
 #include "ompi_config.h"
 #include "util/sys_info.h"
 #include "util/os_path.h"
+#include "support.h"
 
 static bool test1(void);   /* trivial answer test */
 static bool test2(void);   /* relative path test */
@@ -20,44 +21,46 @@ static bool test5(void);   /* very long path name test */
 
 int main(int argc, char* argv[])
 {
-    bool test1f, test2f, test3f, test4f, test5f;
 
-    test1f = test2f = test3f = test4f = test5f = false;
-
-    /* All done */
+    test_init("ompi_os_path_t");
 
     if (test1()) {
-        printf("test1 passed\n");
-        test1f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_os_path_t test1 failed");
     }
 
     if (test2()) {
-        printf("test2 passed\n");
-        test2f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_os_path_t test2 failed");
     }
 
     if (test3()) {
-        printf("test3 passed\n");
-        test3f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_os_path_t test3 failed");
     }
 
     if (test4()) {
-        printf("test4 passed\n");
-        test4f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_os_path_t test4 failed");
     }
 
     if (test5()) {
-        printf("test5 passed\n");
-        test5f = true;
+        test_success();
     }
- 
-    if (test1f && test2f && test3f && test4f && test5f) {
-        printf("test succeeded\n");
-        return 0;
+    else {
+      test_failure("ompi_os_path_t test5 failed");
     }
 
-    printf("test failed\n");
-    return -1;
+    test_finalize();
+    return 0;
 }
 
 
