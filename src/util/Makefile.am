@@ -21,6 +21,7 @@ headers = \
     output.h \
     path.h \
     sys_info.h \
+    printf.h \
     proc_info.h \
     os_path.h \
     os_create_dirpath.h \
@@ -38,6 +39,7 @@ libutil_la_SOURCES = \
     numtostr.c \
     output.c \
     path.c \
+    printf.c \
     proc_info.c \
     sys_info.c \
     os_path.c \

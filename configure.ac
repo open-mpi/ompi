@@ -457,6 +457,8 @@ ompi_show_title "Library and Function tests"
 # sched_yield
 # vscanf
 
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf])
+
 #
 # Make sure we can copy va_lists (need check declared, not linkable)
 #
@@ -548,7 +550,6 @@ if test "$MPI_FINT_TYPE" = "not found"; then
 	AC_MSG_ERROR([Cannot continue])
 fi
 AC_DEFINE_UNQUOTED(MPI_Offset, $MPI_OFFSET_TYPE, [Type of MPI_Offset])
-
 
 
 # all: endian

@@ -21,7 +21,6 @@ typedef enum { false, true } bool;
 #endif
 #endif
 
-
 /*
  * Maximum size of a filename path.
  */
@@ -105,3 +104,23 @@ typedef struct {
   ompi_fortran_dblprec_t real;
   ompi_fortran_dblprec_t imag;
 } ompi_fortran_dblcomplex_t;
+
+/*
+ * printf functions for portability
+ */
+#ifndef HAVE_ASPRINTF
+# include "util/printf.h"
+# define asprintf ompi_asprintf
+#endif
+#ifndef HAVE_SNPRINTF
+# include "util/printf.h"
+# define snprintf ompi_snprintf
+#endif
+#ifndef HAVE_VASPRINTF
+# include "util/printf.h"
+# define vasprintf ompi_vasprintf
+#endif
+#ifndef HAVE_VSNPRINTF
+# include "util/printf.h"
+# define vsnprintf ompi_vsnprintf
+#endif
