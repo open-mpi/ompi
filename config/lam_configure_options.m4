@@ -200,31 +200,6 @@ AC_DEFINE_UNQUOTED(MPI_PARAM_CHECK, $mpi_param_check,
 
 
 #
-# Do we want -llam/-lmpi, or just -lmpi?
-#
-
-AC_MSG_CHECKING([if want consolidated MPI library (not recommended)])
-AC_ARG_ENABLE(single-lib,
-    AC_HELP_STRING([--enable-single-lib],
-                   [those who use the MPI wrapper compilers (mpicc, mpif77, etc.) do not care about this option.  This option is *only* if you insist on using underlying compilers to compile MPI applications and only want to have -lmpi as your $LIBS) (default: disabled)]))
-if test "$enable_single_lib" != "yes"; then
-    AC_MSG_RESULT([no])
-    WANT_SINGLE_MPI_LIBRARY=0
-    LIBLAM_LA='$(top_builddir)/src/liblam.la'
-    LIBMPI_LA='$(top_builddir)/src/libmpi.la'" $LIBLAM_LA"
-else
-    AC_MSG_RESULT([yes])
-    WANT_SINGLE_MPI_LIBRARY=1
-    LIBLAM_LA='$(top_builddir)/src/libmpi.la'
-    LIBMPI_LA="$LIBLAM_LA"
-fi
-AC_SUBST(LIBLAM_LA)
-AC_SUBST(LIBMPI_LA)
-AC_DEFINE_UNQUOTED(WANT_SINGLE_MPI_LIBRARY, $WANT_SINGLE_MPI_LIBRARY,
-    [Do we want libmpi or libmpi and liblam?])
-AM_CONDITIONAL(WANT_SINGLE_MPI_LIBRARY, test "$WANT_SINGLE_MPI_LIBRARY" = 1)
-
-#
 # Do we want to install all of LAM's header files?
 #
 
