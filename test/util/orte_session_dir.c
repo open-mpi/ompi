@@ -35,7 +35,6 @@
 #include "util/os_create_dirpath.h"
 #include "util/session_dir.h"
 #include "util/proc_info.h"
-#include "util/environ.h"
 #include "support.h"
 
 
@@ -180,10 +179,10 @@ static bool test2(void)
 
     /* use the OMPI_PREFIX_ENV variable */
 
-    ompi_setenv("OMPI_PREFIX_ENV", "/tmp/trythis", true, &environ);
+    setenv("OMPI_PREFIX_ENV", "/tmp/trythis", 1);
 
     if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
-	ompi_unsetenv("OMPI_PREFIX_ENV", &environ);
+	unsetenv("OMPI_PREFIX_ENV");
         return(false);
     }
 
@@ -192,7 +191,7 @@ static bool test2(void)
     rmdir(tmp);
     free(tmp);
 
-    ompi_unsetenv("OMPI_PREFIX_ENV", &environ);
+    unsetenv("OMPI_PREFIX_ENV");
 
     return(true);
 
@@ -206,10 +205,10 @@ static bool test3(void)
 
     clear_proc_info();
 
-    ompi_setenv("TMPDIR", "/tmp/trythis", true, &environ);
+    setenv("TMPDIR", "/tmp/trythis", 1);
 
     if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
-	ompi_unsetenv("TMPDIR", &environ);
+	unsetenv("TMPDIR");
         return(false);
     }
 
@@ -218,7 +217,7 @@ static bool test3(void)
     rmdir(tmp);
     free(tmp);
 
-    ompi_unsetenv("TMPDIR", &environ);
+    unsetenv("TMPDIR");
 
     return(true);
 }
@@ -231,10 +230,10 @@ static bool test4(void)
 
     clear_proc_info();
 
-    ompi_setenv("TMP", "/tmp/trythis", true, &environ);
+    setenv("TMP", "/tmp/trythis", 1);
 
     if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
-	ompi_unsetenv("TMP", &environ);
+	unsetenv("TMP");
         return(false);
     }
 
@@ -243,7 +242,7 @@ static bool test4(void)
     rmdir(tmp);
     free(tmp);
 
-    ompi_unsetenv("TMP", &environ);
+    unsetenv("TMP");
 
     return(true);
 }
@@ -256,10 +255,10 @@ static bool test5(void)
 
     clear_proc_info();
 
-    ompi_setenv("HOME", "/tmp/trythis", true, &environ);
+    setenv("HOME", "/tmp/trythis", 1);
 
     if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, NULL, NULL, "test-universe", NULL, NULL)) {
-	ompi_unsetenv("HOME", &environ);
+	unsetenv("HOME");
         return(false);
     }
 
@@ -268,7 +267,7 @@ static bool test5(void)
     rmdir(tmp);
     free(tmp);
 
-    ompi_unsetenv("HOME", &environ);
+    unsetenv("HOME");
 
     return(true);
 }
