@@ -10,6 +10,17 @@
 #include "mca/pcm/rsh/src/pcm_rsh.h"
 #include "runtime/runtime_types.h"
 
+
+bool
+mca_pcm_rsh_can_spawn(void)
+{
+    /* we can always try to rsh some more...  Might not always work as
+     * the caller hopes
+     */
+    return true;
+}
+
+
 int
 mca_pcm_rsh_spawn_procs(int jobid, ompi_list_t *schedlist)
 {
