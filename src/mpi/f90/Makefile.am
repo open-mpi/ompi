@@ -136,7 +136,7 @@ BUILT_SOURCES = \
 #
 $(nodist_libmpi_f90_la_SOURCES):
 	if test ! -r $@ ; then \
-	    scripts/$@.sh > $@ ; \
+	    $(srcdir)/scripts/$@.sh > $@ ; \
 	fi
 
 MOSTLYCLEANFILES = *.mod
