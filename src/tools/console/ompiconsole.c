@@ -18,12 +18,11 @@
 #include "mca/base/base.h"
 #include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"
+#include "mca/gpr/base/base.h"
 
 #include "tools/ompid/ompid.h"
 
 #define OMPI_CONSOLE_MAX_LINE_LENGTH 1024
-
-static void ompi_console_recv(void);
 
 static char *ompi_getinputline(void);
 
@@ -32,6 +31,14 @@ static void ompi_console_sendcmd(ompi_daemon_cmd_flag_t usercmd);
 
 int main(int argc, char *argv[])
 {
+    ompi_list_t *list;
+    ompi_list_item_t *item;
+    ompi_registry_value_t *value;
+    char *hostname, *contact_info;
+    ompi_process_name_t proc_name;
+    int32_t proc_slots;
+    mca_ns_base_jobid_t jobid;
+    mca_ns_base_vpid_t vpid;
     int ret;
     ompi_cmd_line_t *cmd_line;
     bool allow_multi_user_threads   = false;
@@ -50,11 +57,6 @@ int main(int argc, char *argv[])
         printf("show_help: ompi_init failed\n");
         return ret;
     }
-
-    /* get the system info and setup defaults */
-    ompi_sys_info();
-    ompi_universe_info.host = strdup(ompi_system_info.nodename);
-    ompi_universe_info.uid = strdup(ompi_system_info.user);
 
     /* setup to read common command line options that span all Open MPI programs */
     cmd_line = OBJ_NEW(ompi_cmd_line_t);
@@ -153,23 +155,23 @@ int main(int argc, char *argv[])
         return ret;
     }
 
-    /*****    SET MY NAME   *****/
-    if (NULL == ompi_process_info.name) { /* don't overwrite an existing name */
-	if (ompi_process_info.seed) {
-	    ompi_process_info.name = ompi_name_server.create_process_name(0, 0, 0);
-	} else {
-	    ompi_process_info.name = ompi_rte_get_self();
-	}
-    }
-
-    /* finalize the rte startup */
+   /* finalize the rte startup */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&allow_multi_user_threads,
 							&have_hidden_threads))) {
 	printf("failed to finalize the rte startup\n");
 	return ret;
     }
  
-/*     /\* register the console callback function *\/ */
+    /*****    SET MY NAME   *****/
+ /*    jobid = ompi_name_server.create_jobid(); */
+/*     vpid = ompi_name_server.reserve_range(jobid, 1); */
+/*     ompi_process_info.name = ompi_name_server.create_process_name(0, jobid, vpid); */
+
+/*     fprintf(stderr, "my name: [%d,%d,%d]\n", ompi_process_info.name->cellid, */
+/* 	    ompi_process_info.name->jobid, ompi_process_info.name->vpid); */
+
+
+ /*     /\* register the console callback function *\/ */
 /*     ret = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_DAEMON, 0, ompi_console_recv, NULL); */
 /*     if(ret != OMPI_SUCCESS && ret != OMPI_ERR_NOT_IMPLEMENTED) { */
 /* 	printf("daemon callback not registered: error code %d", ret); */
@@ -196,6 +198,24 @@ int main(int argc, char *argv[])
 		    printf("\n");
 		}
 	    }
+	} else if (0 == strncmp(usercmd, "dumpvm", strlen("dumpvm"))) {
+	    fprintf(stderr, "getting vm list\n");
+	    list = ompi_registry.get(OMPI_REGISTRY_OR, "ompi-vm", NULL);
+	    fprintf(stderr, "got vm list: length %d\n", (int)ompi_list_get_size(list));
+	    for (item = ompi_list_get_first(list);
+		 item != ompi_list_get_end(list);
+		 item = ompi_list_get_next(item)) {
+		value = (ompi_registry_value_t*)item;
+		buffer = (ompi_buffer_t)value->object;
+		ompi_unpack_string(buffer, &hostname);
+		ompi_unpack(buffer, &proc_name, 1, OMPI_NAME);
+		ompi_unpack_string(buffer, &contact_info);
+		ompi_unpack(buffer, &proc_slots, 1, OMPI_INT32);
+		printf("host: %s\n", hostname);
+		printf("proc: [%d,%d,%d]\n", proc_name.cellid, proc_name.jobid, proc_name.vpid);
+		printf("cont: %s\n", contact_info);
+		printf("slot: %d\n\n", proc_slots); 
+	    }
 	} else {
 	    printf("huh???\n");
 	}
@@ -221,44 +241,6 @@ static void ompi_console_sendcmd(ompi_daemon_cmd_flag_t usercmd)
     ompi_pack(cmd, &command, 1, OMPI_DAEMON_OOB_PACK_CMD);
     mca_oob_send_packed(&seed, cmd, MCA_OOB_TAG_DAEMON, 0);
     ompi_buffer_free(cmd);
-}
-
-
-static void ompi_console_recv(void)
-{
-    int32_t num_bytes, i;
-    uint8_t *outbytes;
-    ompi_buffer_t buffer;
-    ompi_process_name_t seed={0,0,0};
-    int recv_tag;
-
-
-    if (OMPI_SUCCESS != ompi_unpack(buffer, &num_bytes, 1, OMPI_INT32)) {
-	printf("\terror unpacking number of bytes\n");
-	return;
-    }
-
-    if (0 < num_bytes) {
-	outbytes = (uint8_t*)malloc(num_bytes);
-
-	if (OMPI_SUCCESS != ompi_unpack(buffer, &outbytes, num_bytes, OMPI_BYTE)) {
-	    printf("\terror unpacking number of bytes\n");
-	    return;
-	}
-
-	fprintf(stderr, "unpacked the bytes\n");
-
-	for (i=0; i<num_bytes; i++) {
-	    printf("%c", outbytes[i]);
-	}
-
-	free(outbytes);
-    } else {
-	printf("got zero bytes back\n");
-    }
-
-    ompi_buffer_free(buffer);
-    return;
 }
 
 char *ompi_getinputline()

@@ -101,9 +101,9 @@ static void mca_svc_sched_registry_callback(
             &proc_name);
 
         /* do the right thing based on the trigger type */
-        switch(msg->trig_action) {
-            case OMPI_REGISTRY_NOTIFY_MODIFICATION:
-            case OMPI_REGISTRY_NOTIFY_ADD_ENTRY:
+        if ((OMPI_REGISTRY_NOTIFY_MODIFICATION & msg->trig_action) ||
+	    (OMPI_REGISTRY_NOTIFY_ADD_ENTRY & msg->trig_action) ||
+	    (OMPI_REGISTRY_NOTIFY_PRE_EXISTING & msg->trig_action)) {
                 /* create or modify the corresponding daemon entry */
                 if(node == NULL) {
                     node = OBJ_NEW(mca_svc_sched_node_t);
@@ -112,8 +112,7 @@ static void mca_svc_sched_registry_callback(
                     ompi_list_append(&mca_svc_sched_component.sched_node_list, &node->node_item);
                 } 
                 mca_svc_sched_node_set(node,hostname,contact_info,proc_slots);
-                break;
-            case OMPI_REGISTRY_NOTIFY_DELETE_ENTRY:
+	} else if (OMPI_REGISTRY_NOTIFY_DELETE_ENTRY & msg->trig_action) {
                 /* delete the corresponding deamon entry */
                 if(node != NULL) {
                     ompi_list_item_t* next;
@@ -123,8 +122,7 @@ static void mca_svc_sched_registry_callback(
                     if(mca_svc_sched_component.sched_node_next == node)
                         mca_svc_sched_component.sched_node_next = (mca_svc_sched_node_t*)next;
                 }
-                break;
-        }
+	}
 
         /* cleanup */
         if(hostname != NULL)
@@ -157,7 +155,7 @@ int mca_svc_sched_module_init(mca_svc_base_module_t* module)
         OMPI_REGISTRY_NOTIFY_ADD_ENTRY|
         OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
         OMPI_REGISTRY_NOTIFY_PRE_EXISTING,
-        "vm", /* segment */
+        "ompi-vm", /* segment */
         NULL, /* keys */
         mca_svc_sched_registry_callback,
         NULL);
