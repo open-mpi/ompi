@@ -29,7 +29,10 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include "lam/mem/free_list.h"
+#include "lam/util/lam_log.h"
 #include "lam/os/numa.h"
+#include "lam/os/lam_system.h"
+#include "lam/mem/mem_globals.h"
 
 /* private list functions */
 void lam_frl_append_nl(lam_free_list_t *flist, void *chunk, int pool_idx);
@@ -38,7 +41,7 @@ int lam_frl_create_more_elts(lam_free_list_t *flist, int pool_idx);
 
 void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int *err);
 
-int lam_frl_mem_pool_init(int nlists, long pages_per_list, ssize_t chunk_size,
+int lam_frl_mem_pool_init(lam_free_list_t *flist, int nlists, long pages_per_list, ssize_t chunk_size,
                       size_t page_size, long min_pages_per_list,
                       long default_min_pages_per_list, long default_pages_per_list,
                       long max_pages_per_list, ssize_t max_mem_in_pool);
@@ -125,8 +128,8 @@ int lam_frl_init_with(
     size_t  max_mem_in_pool;
     size_t  initial_mem_per_list;
     long    max_mem_per_list;
-    int     list,pool;
-    int     err;
+    int     list, pool;
+    int     err = LAM_SUCCESS;
 
     flist->fl_description = description;
     flist->fl_nlists = nlists;
@@ -141,8 +144,8 @@ int lam_frl_init_with(
     {
         /* instantiate memory pool */
         max_mem_in_pool = max_pages_per_list * page_size;
-        err = lam_mp_init_with(
-            flist->fl_pool,
+        err = lam_frl_mem_pool_init(
+            flist,
             nlists, 
             pages_per_list, 
             chunk_size,
@@ -188,7 +191,7 @@ int lam_frl_init_with(
                    flist->fl_nlists);
     if ( !flist->fl_free_lists )
     {
-        ulm_exit((-1, "Error: Out of memory\n"));
+        lam_exit((-1, "Error: Out of memory\n"));
     }
  
     /* run constructors */
@@ -199,7 +202,7 @@ int lam_frl_init_with(
             /* process shared memory allocation */
             flist->fl_free_lists[list] =
             (lam_seg_list_t *)
-            PerProcSharedMemoryPools.getMemorySegment(
+            lam_fmp_get_mem_segment(&lam_per_proc_shmem_pools,
                 sizeof(lam_seg_list_t), CACHE_ALIGNMENT, list);
         } 
         else
@@ -210,7 +213,7 @@ int lam_frl_init_with(
         }
         
         if (!flist->fl_free_lists[list])
-            ulm_exit((-1, "Error: Out of memory\n"));
+            lam_exit((-1, "Error: Out of memory\n"));
 
         STATIC_INIT(flist->fl_free_lists[list], &seg_list_cls);
         
@@ -229,7 +232,7 @@ int lam_frl_init_with(
         flist->fl_affinity = (affinity_t *)malloc(sizeof(affinity_t) *
                                     flist->fl_nlists);
         if ( !flist->fl_affinity )
-            ulm_exit((-1, "Error: Out of memory\n"));
+            lam_exit((-1, "Error: Out of memory\n"));
 
         /* copy policies in */
         for ( pool = 0; pool < flist->fl_nlists; pool++ )
@@ -248,10 +251,10 @@ int lam_frl_init_with(
             while ( lam_sgl_get_bytes_pushed(flist->fl_free_lists[pool])
                    < lam_sgl_get_min_bytes_pushed(flist->fl_free_lists[pool]) )
             {
-                if (lam_frl_create_more_elts(pool) != LAM_SUCCESS)
+                if (lam_frl_create_more_elts(flist, pool) != LAM_SUCCESS)
                 {
-                    ulm_exit((-1, "Error: Setting up initial private "
-                              "free list for %s.\n", fl_description));
+                    lam_exit((-1, "Error: Setting up initial private "
+                              "free list for %s.\n", flist->fl_description));
                 }
             }
             
@@ -260,7 +263,7 @@ int lam_frl_init_with(
         else
         {
             /* only 1 process should be initializing the list */
-            ulm_exit((-1, "Error: Setting up initial private free "
+            lam_exit((-1, "Error: Setting up initial private free "
                       "list %d for %s.\n", pool, flist->fl_description));
         }
     }   
@@ -300,7 +303,9 @@ int lam_frl_mem_pool_init(lam_free_list_t *flist,
         /* shared memory allocation */
         to_alloc = sizeof(lam_mem_pool_t);
         flist->fl_pool =
-            (lam_mem_pool_t *)SharedMemoryPools.getMemorySegment(to_alloc, CACHE_ALIGNMENT);
+            (lam_mem_pool_t *)lam_fmp_get_mem_segment(&lam_shmem_pools,
+                                                      to_alloc, 
+                                                      CACHE_ALIGNMENT, 0);
         if ( flist->fl_pool )
             STATIC_INIT(flist->fl_pool, &shmem_pool_cls);
     } else {
@@ -327,13 +332,15 @@ void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int 
        exceed the amount allowed */
     sz_to_add = lam_mp_get_chunk_size(flist->fl_pool);
     
-    if (OPT_MEMPROFILE) {
+    /* need to add option to configure */
+    /* if (OPT_MEMPROFILE) { */
+    if ( 0 ) {
         flist->fl_chunks_req[index]++;
     }
     
     if (index >= flist->fl_nlists)
     {
-        ulm_err(("Error: Array out of bounds\n"));
+        lam_err(("Error: Array out of bounds\n"));
         return chunk;
     }
         
@@ -348,7 +355,7 @@ void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int 
                 lam_sgl_get_max_consec_fail(flist->fl_free_lists[index]) )
             {
                 *err = LAM_ERR_OUT_OF_RESOURCE;
-                ulm_err(("Error: List out of memory in pool for %s\n",
+                lam_err(("Error: List out of memory in pool for %s\n",
                          flist->fl_description));
                 return chunk;
             } else
@@ -371,7 +378,7 @@ void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int 
              lam_sgl_get_max_consec_fail(flist->fl_free_lists[index]) )
         {
             *err = LAM_ERR_OUT_OF_RESOURCE;
-            ulm_err(("Error: List out of memory in pool for %s\n",
+            lam_err(("Error: List out of memory in pool for %s\n",
                      flist->fl_description));
             return chunk;
         } else
@@ -384,7 +391,8 @@ void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int 
        this far in the code. */
     lam_sgl_set_consec_fail(flist->fl_free_lists[index], 0);
     
-    if (OPT_MEMPROFILE) {
+    /* if (OPT_MEMPROFILE) { */
+    if ( 0 ) {
         flist->fl_chunks_returned[index]++;
     }
 
@@ -395,11 +403,11 @@ void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int 
 
 void lam_frl_append_nl(lam_free_list_t *flist, void *chunk, int pool_idx)
 {
-    /* ASSERT: mp_chunk_sz >= fl_n_elt_per_chunk * fl_elt_size */
+    /* ASSERT: mp_chunk_sz >= fl_elt_per_chunk * fl_elt_size */
     // push items onto list 
     lam_sgl_append_elt_chunk(flist->fl_free_lists[pool_idx],
         chunk, lam_mp_get_chunk_size(flist->fl_pool),
-        flist->fl_n_elt_per_chunk, flist->fl_elt_size);
+        flist->fl_elt_per_chunk, flist->fl_elt_size);
 }
 
 
@@ -407,14 +415,14 @@ void lam_frl_append_nl(lam_free_list_t *flist, void *chunk, int pool_idx)
 
 int lam_frl_create_more_elts(lam_free_list_t *flist, int pool_idx)
 {
-    int         err = LAM_SUCCESS;
+    int         err = LAM_SUCCESS, desc;
     size_t      len_added;
     char        *current_loc;
     
     void *ptr = lam_frl_get_mem_chunk(flist, pool_idx, &len_added, &err);
     
     if (0 == ptr ) {
-        ulm_err(("Error: Can't get new elements for %s\n", 
+        lam_err(("Error: Can't get new elements for %s\n", 
                  flist->fl_description));
         return err;
     }
@@ -425,9 +433,9 @@ int lam_frl_create_more_elts(lam_free_list_t *flist, int pool_idx)
         if (!lam_set_affinity(ptr, len_added,
                          flist->fl_affinity[pool_idx]))
         {
-            err = ULM_ERROR;
+            err = LAM_ERROR;
 #ifdef _DEBUGQUEUES
-            ulm_err(("Error: Can't set memory policy (pool_idx=%d)\n",
+            lam_err(("Error: Can't set memory policy (pool_idx=%d)\n",
                      pool_idx));
             return err;
 #endif                          /* _DEBUGQUEUES */
@@ -436,11 +444,11 @@ int lam_frl_create_more_elts(lam_free_list_t *flist, int pool_idx)
     
     /* Construct new descriptors using placement new */
     current_loc = (char *) ptr;
-    for (int desc = 0; desc < flist->fl_n_elt_per_chunk; desc++)
+    for (desc = 0; desc < flist->fl_elt_per_chunk; desc++)
     {
-        STATIC_INIT((lam_flist_elt_t *)current_loc, flist->fl_elt_cls);
-        lam_fle_set_idx(current_loc, pool_idx);
-        current_loc += eleSize_m;
+        STATIC_INIT(*(lam_flist_elt_t *)current_loc, flist->fl_elt_cls);
+        lam_fle_set_idx((lam_flist_elt_t *)current_loc, pool_idx);
+        current_loc += flist->fl_elt_size;
     }
     
     /* push chunk of memory onto the list */
