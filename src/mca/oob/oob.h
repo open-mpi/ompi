@@ -67,12 +67,21 @@ extern "C" {
 /**
 *  Similiar to unix writev(2).
 *
-* @param peer (IN)    Opaque name of peer process.
-* @param msg (IN)     Array of iovecs describing user buffers and lengths.
-* @param count (IN)   Number of elements in iovec array.
-* @param tag (IN)     User defined tag for matching send/recv.
-* @param flags (IN)   Currently unused.
-* @return             OMPI error code (<0) on error number of bytes actually sent.
+*  @param peer (IN)    Opaque name of peer process.
+*  @param msg (IN)     Array of iovecs describing user buffers and lengths.
+*  @param count (IN)   Number of elements in iovec array.
+*  @param tag (IN)     User defined tag for matching send/recv.
+*  @param flags (IN)   Currently unused.
+*  @return             OMPI error code (<0) on error number of bytes actually sent.
+*
+*  This routine provides semantics similar to unix send/writev with the addition of
+*  a tag parameter that can be used by the application to match the send w/ a specific
+*  receive. In other words - a recv call by the specified peer will only succeed when
+*  the corresponding (or wildcard) tag is used.
+*
+*  The <i>peer</i> parameter represents an opaque handle to the peer process that
+*  is resolved by the oob layer (using the registry) to an actual physical network
+*  address.
 */
 
 int mca_oob_send(
@@ -92,6 +101,11 @@ int mca_oob_send(
 * @param tag (IN)     User defined tag for matching send/recv.
 * @param flags (IN)   Currently unused.
 * @return             OMPI error code (<0) on error number of bytes actually sent.
+*
+* This routine is equivalent to mca_oob_send, with the exception that it excepts
+* an additional array of type codes describing the data types contained within the
+* iovec array. This information is used to convert the data to network byte order
+* (if required) prior to transmission over the underlying network transport.
 */
 
 int mca_oob_send_hton(
@@ -113,6 +127,20 @@ int mca_oob_send_hton(
 * @param flags (IN)   May be MCA_OOB_PEEK to return up to the number of bytes provided in the
 *                     iovec array without removing the message from the queue.
 * @return             OMPI error code (<0) on error or number of bytes actually received.
+*
+* The OOB recv call is similar to unix recv/readv in that it requires the caller to manage
+* memory associated w/ the message. The routine accepts an array of iovecs (<i>msg</i>); however,
+* the caller must determine the appropriate number of elements (<i>count</i>) and allocate the
+* buffer space for each entry. 
+*
+* The <i>tag</i> parameter is provided to facilitate this. The user may define tags based on message 
+* type to determine the message layout and size, as the mca_oob_recv call will block until a message
+* with the matching tag is received.
+*
+* Alternately, the <i>flags</i> parameter may be used to peek (MCA_OOB_PEEK) a portion of the message 
+* (e.g. a standard message header) or determine the overall message size (MCA_OOB_TRUNC|MCA_OOB_PEEK)
+* without removing the message from the queue. 
+*
 */
 
 int mca_oob_recv(
@@ -133,6 +161,12 @@ int mca_oob_recv(
 * @param flags (IN)   May be MCA_OOB_PEEK to return up to the number of bytes provided in the
 *                     iovec array without removing the message from the queue.
 * @return             OMPI error code (<0) on error or number of bytes actually received.
+*
+* This routine is equivalent to mca_oob_recv, with the exception that it accepts
+* an additional array of type codes describing the data types contained within the
+* iovec array. This information is used to convert the data from network byte order
+* (if required) to host byte order prior to receiving into the users buffer.
+* 
 */
 
 int mca_oob_recv_ntoh(
@@ -179,6 +213,10 @@ typedef void (*mca_oob_callback_fn_t)(
 *  @param cbdata (IN)  User data that is passed to callback function.
 *  @return             OMPI error code (<0) on error number of bytes actually sent.
 *
+*  The user supplied callback function is called when the send completes. Note that
+*  the callback may occur before the call to mca_oob_send returns to the caller, 
+*  if the send completes during the call.
+*
 */
 
 int mca_oob_send_nb(
@@ -203,6 +241,10 @@ int mca_oob_send_nb(
 *  @param cbdata (IN)  User data that is passed to callback function.
 *  @return             OMPI error code (<0) on error number of bytes actually sent.
 *
+*  The user supplied callback function is called when the send completes. Note that
+*  the callback may occur before the call to mca_oob_send returns to the caller, 
+*  if the send completes during the call.
+*
 */
 
 int mca_oob_send_hton_nb(
@@ -226,6 +268,9 @@ int mca_oob_send_hton_nb(
 * @param cbfunc (IN)  Callback function on recv completion.
 * @param cbdata (IN)  User data that is passed to callback function.
 * @return             OMPI error code (<0) on error or number of bytes actually received.
+*
+* The user supplied callback function is called asynchronously when a message is received 
+* that matches the call parameters.
 */
 
 int mca_oob_recv_nb(
@@ -249,6 +294,9 @@ int mca_oob_recv_nb(
 * @param cbfunc (IN)   Callback function on recv completion.
 * @param cbdata (IN)   User data that is passed to callback function.
 * @return              OMPI error code (<0) on error or number of bytes actually received.
+* 
+* The user supplied callback function is called asynchronously when a message is received 
+* that matches the call parameters.
 */
 
 int mca_oob_recv_ntoh_nb(
