@@ -11,7 +11,7 @@
 #include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
 
 
-int mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req, bool* complete);
+void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req);
 
 
 static inline mca_ptl_base_send_request_t* mca_pml_teg_send_request_alloc(

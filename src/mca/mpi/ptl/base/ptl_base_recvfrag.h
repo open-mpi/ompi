@@ -22,11 +22,10 @@ typedef struct mca_ptl_base_recv_frag_t mca_ptl_base_recv_frag_t;
 
 
 
-static inline void mca_ptl_base_recv_frag_process(mca_ptl_base_recv_frag_t* frag)
+static inline void mca_ptl_base_recv_frag_init(mca_ptl_base_recv_frag_t* frag)
 {
     mca_ptl_base_recv_request_t* request = frag->frag_request;
     mca_ptl_base_frag_header_t* header = &frag->super.frag_header.hdr_frag;
-    mca_ptl_t* ptl = frag->super.frag_owner;
 
     /* determine the offset and size of posted buffer */
     if (request->super.req_length < header->hdr_frag_offset) {
@@ -48,9 +47,6 @@ static inline void mca_ptl_base_recv_frag_process(mca_ptl_base_recv_frag_t* frag
         frag->super.frag_size = header->hdr_frag_length;
 
     }
-
-    /* indicate to the ptl that the fragment can be delivered */
-    ptl->ptl_recv(ptl, frag);
 }
                                                                                                                    
 
@@ -68,8 +64,13 @@ static inline int mca_ptl_base_recv_frag_match(
 
     if(matched) {
         do {
-            /* process current fragment */
-            mca_ptl_base_recv_frag_process(frag);
+            mca_ptl_t* ptl = frag->super.frag_owner;
+
+            /* initialize current fragment */
+            mca_ptl_base_recv_frag_init(frag);
+            
+            /* notify ptl of match */
+            ptl->ptl_recv(ptl, frag);
 
             /* process any additional fragments that arrived out of order */
             frag = (mca_ptl_base_recv_frag_t*)lam_list_remove_first(&matched_frags);

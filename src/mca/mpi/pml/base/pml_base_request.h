@@ -43,9 +43,9 @@ struct mca_pml_base_request_t {
     /* flag indicating if the this is a persistent request */
     bool req_persistent;
     /* flag indicating if MPI is done with this request */
-    bool req_mpi_done;
+    volatile bool req_mpi_done;
     /* flag indicating if the pt-2-pt layer is done with this request */
-    bool req_pml_done;
+    volatile bool req_pml_done;
 };
 typedef struct mca_pml_base_request_t mca_pml_base_request_t;
 

@@ -8,6 +8,7 @@
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
 #include "ptl_tcp_recvfrag.h"
+#include "ptl_tcp_sendfrag.h"
 
 
 #define frag_header super.super.frag_header
@@ -100,10 +101,10 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
                 return false;
             }
         }
+    frag->frag_hdr_cnt += cnt;
     }
 
     /* is the entire common header available? */
-    frag->frag_hdr_cnt += cnt;
     return (frag->frag_hdr_cnt == size);
 }
 
@@ -114,7 +115,9 @@ static bool mca_ptl_tcp_recv_frag_ack(mca_ptl_tcp_recv_frag_t* frag, int sd)
     if (frag->frag_hdr_cnt < sizeof(mca_ptl_base_ack_header_t))
         if (mca_ptl_tcp_recv_frag_header(frag, sd, sizeof(mca_ptl_base_ack_header_t)) == false)
             return false;
+
     sendfrag = (mca_ptl_tcp_send_frag_t*)frag->frag_header.hdr_ack.hdr_src_ptr.pval;
+    sendfrag->super.frag_request->req_peer_request = frag->frag_header.hdr_ack.hdr_dst_ptr;
     sendfrag->frag_owner->ptl_send_progress(sendfrag->super.frag_request, &sendfrag->super);
     /* don't return first fragment - it is returned along with the request */
     return true;
@@ -135,14 +138,6 @@ static bool mca_ptl_tcp_recv_frag_match(mca_ptl_tcp_recv_frag_t* frag, int sd)
         /* match was not made - so allocate buffer for eager send */
         if (NULL == frag->super.frag_request) {
 
-#if 0
-            lam_output(0, "mca_ptl_tcp_recv_frag_match: src=%d tag=%d comm=%d seq=%ld",
-                 frag->frag_header.hdr_match.hdr_src, 
-                 frag->frag_header.hdr_match.hdr_tag, 
-                 frag->frag_header.hdr_match.hdr_contextid, 
-                 frag->frag_header.hdr_match.hdr_msg_seq);
-#endif
- 
             if(frag->frag_header.hdr_frag.hdr_frag_length > 0) {
                 frag->frag_buff = malloc(frag->frag_header.hdr_frag.hdr_frag_length);
                 frag->super.super.frag_size = frag->frag_header.hdr_frag.hdr_frag_length;
@@ -176,9 +171,14 @@ static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
        if(mca_ptl_tcp_recv_frag_header(frag, sd, sizeof(mca_ptl_base_match_header_t)) == false)
             return false;
 
+    /* get request from header */
     if(frag->frag_msg_cnt == 0) {
-        /* determine offset into user buffer or allocate buffer for non-contig data */
-    } else if(frag->frag_msg_cnt < frag->super.super.frag_size) {
+        frag->super.frag_request = frag->frag_header.hdr_frag.hdr_dst_ptr.pval;
+        mca_ptl_base_recv_frag_init(&frag->super);
+    }
+
+    /* continue to receive user data */
+    if(frag->frag_msg_cnt < frag->super.super.frag_size) {
         if(mca_ptl_tcp_recv_frag_data(frag, sd) == false)
             return false;
     }
@@ -188,7 +188,7 @@ static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
             return false;
 
     /* indicate completion status */
-    frag->frag_owner->ptl_recv_progress(frag->super.frag_request, &frag->super);
+    mca_ptl_tcp_recv_frag_process(frag);
     return true;
 }
 

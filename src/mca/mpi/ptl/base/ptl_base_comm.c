@@ -95,7 +95,6 @@ int mca_pml_ptl_comm_init_size(mca_pml_comm_t* comm, size_t size)
         lam_list_t *object = comm->c_specific_receives+i;
         OBJ_CONSTRUCT(object, lam_list_t);
     }
-
     return LAM_SUCCESS;
 }
 

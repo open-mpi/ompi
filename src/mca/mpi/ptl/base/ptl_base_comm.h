@@ -2,6 +2,7 @@
 #define MCA_PML_COMM_H
 
 #include "lam/threads/mutex.h"
+#include "lam/threads/condition.h"
 #include "mca/mpi/ptl/ptl.h"
 #include "lam/lfc/lam_list.h"
 

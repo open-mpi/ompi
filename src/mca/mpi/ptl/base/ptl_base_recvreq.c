@@ -48,8 +48,10 @@ void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* reque
     THREAD_LOCK(pml_comm->c_matching_lock+req_peer);
     if (lam_list_get_size(&pml_comm->c_unexpected_frags[req_peer]) > 0 &&
         (frag = mca_ptl_base_recv_request_match_specific_proc(request, req_peer)) != NULL) {
+        mca_ptl_t* ptl = frag->super.frag_owner;
         THREAD_UNLOCK(pml_comm->c_matching_lock+req_peer);
-        mca_ptl_base_recv_frag_process(frag);
+        mca_ptl_base_recv_frag_init(frag);
+        ptl->ptl_recv(ptl, frag);
         return; /* match found */
     }
 
@@ -91,8 +93,10 @@ void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
 
         /* loop over messages from the current proc */
         if ((frag = mca_ptl_base_recv_request_match_specific_proc(request, proc)) != NULL) {
+            mca_ptl_t* ptl = frag->super.frag_owner;
             THREAD_UNLOCK(pml_comm->c_matching_lock+proc);
-            mca_ptl_base_recv_frag_process(frag);
+            mca_ptl_base_recv_frag_init(frag); 
+            ptl->ptl_recv(ptl, frag);
             return; /* match found */
         }
         THREAD_UNLOCK(pml_comm->c_matching_lock+proc);
@@ -132,7 +136,7 @@ static mca_ptl_base_recv_frag_t* mca_ptl_base_recv_request_match_specific_proc(
             if (tag == LAM_ANY_TAG && header->hdr_tag < 0) {
                 continue;
             }
-            lam_list_remove_item(unexpected_frags, frag);
+            lam_list_remove_item(unexpected_frags, (lam_list_item_t*)frag);
             request->req_sequence = header->hdr_msg_seq;
             request->super.req_tag = tag = header->hdr_tag;
             request->super.req_peer = header->hdr_src;
