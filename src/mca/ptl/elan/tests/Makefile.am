@@ -35,7 +35,7 @@ lat: % : %.c
 	${HOME}/installs/openmpi/bin/mpicc -g -o lat lat.c
 
 init_elan: % : %.c
-	gcc $< -o $@ -lelan4 -lelan -lrmscall -lelan3
+	gcc -g $< -o $@ -lelan4 -lelan -lrmscall -lelan3
 
 clean:
 	-rm -rf $(EXECS) 
