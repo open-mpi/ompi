@@ -60,7 +60,7 @@
 !
 ! misc. constants
 !
-       integer MPI_SUCCESS, MPI_ANY_SOURCE, MPI_ANY_TAG
+       integer MPI_ANY_SOURCE, MPI_ANY_TAG
        integer MPI_PROC_NULL, MPI_MAX_PROCESSOR_NAME
        integer MPI_MAX_ERROR_STRING, MPI_UNDEFINED
        integer MPI_CART, MPI_GRAPH, MPI_KEYVAL_INVALID
@@ -74,7 +74,6 @@
        integer MPI_DISTRIBUTE_BLOCK, MPI_DISTRIBUTE_CYCLIC
        integer MPI_DISTRIBUTE_NONE, MPI_DISTRIBUTE_DFLT_DARG
 
-       parameter (MPI_SUCCESS=0)
        parameter (MPI_ANY_SOURCE=-1)
        parameter (MPI_ANY_TAG=-1)
        parameter (MPI_PROC_NULL=-2)
@@ -127,7 +126,7 @@
        integer MPI_REQUEST_NULL, MPI_OP_NULL, MPI_ERRHANDLER_NULL
        integer MPI_INFO_NULL
 
-       parameter (MPI_GROUP_NULL=-1)
+       parameter (MPI_GROUP_NULL=0)
        parameter (MPI_COMM_NULL=2)
        parameter (MPI_DATATYPE_NULL=-1)
        parameter (MPI_REQUEST_NULL=-1)
@@ -147,59 +146,122 @@
 !
 ! error classes
 !
-       integer MPI_ERR_BUFFER, MPI_ERR_COUNT, MPI_ERR_TYPE
-       integer MPI_ERR_TAG, MPI_ERR_COMM, MPI_ERR_RANK
-       integer MPI_ERR_REQUEST, MPI_ERR_ROOT, MPI_ERR_GROUP
-       integer MPI_ERR_OP, MPI_ERR_TOPOLOGY, MPI_ERR_DIMS
-       integer MPI_ERR_ARG, MPI_ERR_UNKNOWN, MPI_ERR_TRUNCATE
-       integer MPI_ERR_OTHER, MPI_ERR_INTERN, MPI_ERR_IN_STATUS
-       integer MPI_ERR_PENDING, MPI_ERR_SYSRESOURCE
-       integer MPI_ERR_LOCALDEAD, MPI_ERR_REMOTEDEAD
-       integer MPI_ERR_VALUE, MPI_ERR_FLAGS, MPI_ERR_SERVICE
-       integer MPI_ERR_NAME, MPI_ERR_SPAWN, MPI_ERR_KEYVAL
-       integer MPI_ERR_INFO_NOKEY, MPI_ERR_WIN
-       integer MPI_ERR_EPOCH, MPI_ERR_TYPENOTSUP
-       integer MPI_ERR_INFO_KEY, MPI_ERR_INFO_VALUE
-       integer MPI_ERR_NO_MEM, MPI_ERR_BASE
-       integer MPI_ERR_LASTCODE
+       integer MPI_SUCCESS                    
+       integer MPI_ERR_BUFFER                
+       integer MPI_ERR_COUNT                 
+       integer MPI_ERR_TYPE                  
+       integer MPI_ERR_TAG                   
+       integer MPI_ERR_COMM                  
+       integer MPI_ERR_RANK                  
+       integer MPI_ERR_REQUEST               
+       integer MPI_ERR_ROOT                  
+       integer MPI_ERR_GROUP                 
+       integer MPI_ERR_OP                    
+       integer MPI_ERR_TOPOLOGY              
+       integer MPI_ERR_DIMS                  
+       integer MPI_ERR_ARG                   
+       integer MPI_ERR_UNKNOWN               
+       integer MPI_ERR_TRUNCATE              
+       integer MPI_ERR_OTHER                 
+       integer MPI_ERR_INTERN                
+       integer MPI_ERR_IN_STATUS             
+       integer MPI_ERR_PENDING               
+       integer MPI_ERR_ACCESS                
+       integer MPI_ERR_AMODE                 
+       integer MPI_ERR_ASSERT                
+       integer MPI_ERR_BAD_FILE              
+       integer MPI_ERR_BASE                  
+       integer MPI_ERR_CONVERSION            
+       integer MPI_ERR_DISP                  
+       integer MPI_ERR_DUP_DATAREP           
+       integer MPI_ERR_FILE_EXISTS           
+       integer MPI_ERR_FILE_IN_USE           
+       integer MPI_ERR_FILE                  
+       integer MPI_ERR_INFO_KEY              
+       integer MPI_ERR_INFO_NOKEY            
+       integer MPI_ERR_INFO_VALUE            
+       integer MPI_ERR_INFO                  
+       integer MPI_ERR_IO                    
+       integer MPI_ERR_KEYVAL                
+       integer MPI_ERR_LOCKTYPE              
+       integer MPI_ERR_NAME                  
+       integer MPI_ERR_NO_MEM                
+       integer MPI_ERR_NOT_SAME              
+       integer MPI_ERR_NO_SPACE              
+       integer MPI_ERR_NO_SUCH_FILE          
+       integer MPI_ERR_PORT                  
+       integer MPI_ERR_QUOTA                 
+       integer MPI_ERR_READ_ONLY             
+       integer MPI_ERR_RMA_CONFLICT          
+       integer MPI_ERR_RMA_SYNC              
+       integer MPI_ERR_SERVICE               
+       integer MPI_ERR_SIZE                  
+       integer MPI_ERR_SPAWN                 
+       integer MPI_ERR_UNSUPPORTED_DATAREP   
+       integer MPI_ERR_UNSUPPORTED_OPERATION 
+       integer MPI_ERR_WIN                   
+       
+       integer MPI_ERR_SYSRESOURCE          
+       integer MPI_ERR_LASTCODE              
+       
+       parameter( MPI_SUCCESS                  = 0)
+       parameter( MPI_ERR_BUFFER               = 1)
+       parameter( MPI_ERR_COUNT                = 2)
+       parameter( MPI_ERR_TYPE                 = 3)
+       parameter( MPI_ERR_TAG                  = 4)
+       parameter( MPI_ERR_COMM                 = 5)
+       parameter( MPI_ERR_RANK                 = 6)
+       parameter( MPI_ERR_REQUEST              = 7)
+       parameter( MPI_ERR_ROOT                 = 8)
+       parameter( MPI_ERR_GROUP                = 9)
+       parameter( MPI_ERR_OP                   = 10)
+       parameter( MPI_ERR_TOPOLOGY             = 11)
+       parameter( MPI_ERR_DIMS                 = 12)
+       parameter( MPI_ERR_ARG                  = 13)
+       parameter( MPI_ERR_UNKNOWN              = 14)
+       parameter( MPI_ERR_TRUNCATE             = 15)
+       parameter( MPI_ERR_OTHER                = 16)
+       parameter( MPI_ERR_INTERN               = 17)
+       parameter( MPI_ERR_IN_STATUS            = 18)
+       parameter( MPI_ERR_PENDING              = 19)
+       parameter( MPI_ERR_ACCESS               = 20)
+       parameter( MPI_ERR_AMODE                = 21)
+       parameter( MPI_ERR_ASSERT               = 22)
+       parameter( MPI_ERR_BAD_FILE             = 23)
+       parameter( MPI_ERR_BASE                 = 24)
+       parameter( MPI_ERR_CONVERSION           = 25)
+       parameter( MPI_ERR_DISP                 = 26)
+       parameter( MPI_ERR_DUP_DATAREP          = 27)
+       parameter( MPI_ERR_FILE_EXISTS          = 28)
+       parameter( MPI_ERR_FILE_IN_USE          = 29)
+       parameter( MPI_ERR_FILE                 = 30)
+       parameter( MPI_ERR_INFO_KEY             = 31)
+       parameter( MPI_ERR_INFO_NOKEY           = 32)
+       parameter( MPI_ERR_INFO_VALUE           = 33)
+       parameter( MPI_ERR_INFO                 = 34)
+       parameter( MPI_ERR_IO                   = 35)
+       parameter( MPI_ERR_KEYVAL               = 36)
+       parameter( MPI_ERR_LOCKTYPE             = 37)
+       parameter( MPI_ERR_NAME                 = 38)
+       parameter( MPI_ERR_NO_MEM               = 39)
+       parameter( MPI_ERR_NOT_SAME             = 40)
+       parameter( MPI_ERR_NO_SPACE             = 41)
+       parameter( MPI_ERR_NO_SUCH_FILE         = 42)
+       parameter( MPI_ERR_PORT                 = 43)
+       parameter( MPI_ERR_QUOTA                = 44)
+       parameter( MPI_ERR_READ_ONLY            = 45)
+       parameter( MPI_ERR_RMA_CONFLICT         = 46)
+       parameter( MPI_ERR_RMA_SYNC             = 47)
+       parameter( MPI_ERR_SERVICE              = 48)
+       parameter( MPI_ERR_SIZE                 = 49)
+       parameter( MPI_ERR_SPAWN                = 50)
+       parameter( MPI_ERR_UNSUPPORTED_DATAREP  = 51)
+       parameter( MPI_ERR_UNSUPPORTED_OPERATION= 52)
+       parameter( MPI_ERR_WIN                  = 53)
+       
+       parameter( MPI_ERR_SYSRESOURCE          = -2)
+       parameter( MPI_ERR_LASTCODE             = -1)
 
-       parameter (MPI_ERR_BUFFER=1)
-       parameter (MPI_ERR_COUNT=2)
-       parameter (MPI_ERR_TYPE=3)
-       parameter (MPI_ERR_TAG=4)
-       parameter (MPI_ERR_COMM=5)
-       parameter (MPI_ERR_RANK=6)
-       parameter (MPI_ERR_REQUEST=7)
-       parameter (MPI_ERR_ROOT=8)
-       parameter (MPI_ERR_GROUP=9)
-       parameter (MPI_ERR_OP=10)
-       parameter (MPI_ERR_TOPOLOGY=11)
-       parameter (MPI_ERR_DIMS=12)
-       parameter (MPI_ERR_ARG=13)
-       parameter (MPI_ERR_UNKNOWN=14)
-       parameter (MPI_ERR_TRUNCATE=15)
-       parameter (MPI_ERR_OTHER=16)
-       parameter (MPI_ERR_INTERN=17)
-       parameter (MPI_ERR_IN_STATUS=18)
-       parameter (MPI_ERR_PENDING=19)
-       parameter (MPI_ERR_SYSRESOURCE=20)
-       parameter (MPI_ERR_LOCALDEAD=21)
-       parameter (MPI_ERR_REMOTEDEAD=22)
-       parameter (MPI_ERR_VALUE=23)
-       parameter (MPI_ERR_FLAGS=24)
-       parameter (MPI_ERR_SERVICE=25)
-       parameter (MPI_ERR_NAME=26)
-       parameter (MPI_ERR_SPAWN=27)
-       parameter (MPI_ERR_KEYVAL=28)
-       parameter (MPI_ERR_INFO_NOKEY=29)
-       parameter (MPI_ERR_WIN=30)
-       parameter (MPI_ERR_EPOCH=31)
-       parameter (MPI_ERR_TYPENOTSUP=32)
-       parameter (MPI_ERR_INFO_KEY=33)
-       parameter (MPI_ERR_INFO_VALUE=34)
-       parameter (MPI_ERR_NO_MEM=35)
-       parameter (MPI_ERR_BASE=36)
-       parameter (MPI_ERR_LASTCODE=37)
 !
 ! comparison results
 !
@@ -218,7 +280,7 @@
 
        parameter (MPI_COMM_WORLD=0)
        parameter (MPI_COMM_SELF=1)
-       parameter (MPI_GROUP_EMPTY=0)
+       parameter (MPI_GROUP_EMPTY=1)
        parameter (MPI_ERRORS_ARE_FATAL=0)
        parameter (MPI_ERRORS_RETURN=1)
 
