@@ -145,7 +145,7 @@ void laminfo::show_mca_params(const string& type, const string& module,
               "parameter \"" : "information \"";
             content += item->mbp_full_name;
             content += (item->mbp_env_var_name != NULL) ?
-              "\" (default value: " : "\" (value: ";
+              "\" (default: " : "\" (value: ";
 
             if (strlen(default_value_string) == 0)
               content += "<none>)";
@@ -265,6 +265,8 @@ void laminfo::do_config(bool want_all)
   const string f90(LAM_ENABLE_MPI_F90 ? "yes" : "no");
   const string sthreads(LAM_HAVE_SOLARIS_THREADS ? "yes" : "no");
   const string pthreads(LAM_HAVE_POSIX_THREADS ? "yes" : "no");
+  const string memprofile(LAM_ENABLE_MEM_PROFILE ? "yes" : "no");
+  const string memdebug(LAM_ENABLE_MEM_DEBUG ? "yes" : "no");
 #if 0
   // Anju: 
   // These are the options that will definately be added along the
@@ -272,7 +274,6 @@ void laminfo::do_config(bool want_all)
   const string romio(LAM_WANT_ROMIO ? "yes" : "no");
   const string impi(LAM_WANT_IMPI ? "yes" : "no");
 #endif
-  const string memzero(LAM_ENABLE_MEM_ZERO ? "yes" : "no");
   const string debug(LAM_ENABLE_DEBUG ? "yes" : "no");
   const string cprofiling(LAM_WANT_MPI_PROFILING ? "yes" : "no");
   const string cxxprofiling(LAM_WANT_MPI_PROFILING ? "yes" : "no");
@@ -358,12 +359,8 @@ void laminfo::do_config(bool want_all)
   out("C++ exceptions", "option:cxx_exceptions", cxxexceptions);
   out("POSIX thread support", "option:threads", pthreads);
   out("Solaris thread support", "option:threads", sthreads);
-#if 0
-  // Anju:
-  // Someday even this should be presented as information
-  out("ROMIO support", "option:romio", romio);
-  out("IMPI support", "option:impi", impi);
-#endif
-  out("Memory zeroing clean", "option:memzero", memzero);
+
   out("Debug support", "option:debug", debug);
+  out("Memory profiling support", "option:mem-profile", memprofile);
+  out("Memory debugging support", "option:mem-debug", memdebug);
 }
