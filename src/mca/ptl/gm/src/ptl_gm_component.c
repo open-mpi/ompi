@@ -271,7 +271,6 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     mca_ptl_gm_send_frag_t *sfragment;
     mca_ptl_gm_recv_frag_t *free_rfragment;
 
-    sleep(20);
     ptl->num_send_tokens = gm_num_send_tokens (ptl->gm_port);
     ptl->max_send_tokens = ptl->num_send_tokens;
     ptl->num_send_tokens -= PTL_GM_ADMIN_SEND_TOKENS;
@@ -325,9 +324,6 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
                                (ompi_list_item_t *)((char*)ptl->gm_send_dma_memory + i * GM_BUF_SIZE) );
 	sfragment++;
     }
-    A_PRINT( ("recv_tokens = %d send_tokens = %d, allocted free lis = %d\n",
-	      ptl->num_recv_tokens,ptl->num_send_tokens,ptl->gm_send_frags->fl_num_allocated) );
-
 
     /*****************RECEIVE*****************************/
     /* allow remote memory access */

@@ -69,7 +69,6 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t *ptl,
     sendfrag->send_buf = (void*)item;
 
     sendfrag->req = (struct mca_pml_base_send_request_t *)sendreq;
-    GM_DBG( PTL_GM_DBG_COMM, "request is %p\t, frag->req = %p\n", (void*)sendreq, (void*)sendfrag->req );
     sendfrag->status        = -1;
     sendfrag->type          = -1;
     sendfrag->wait_for_ack  =  0;
@@ -111,9 +110,6 @@ int mca_ptl_gm_send_ack_init( struct mca_ptl_gm_send_frag_t* ack,
 
     hdr->hdr_src_ptr.pval =
 	frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr.pval;
-
-    A_PRINT( "inside ack init: the src frag ptr is %p,hdr_len is %u\n",
-             hdr->hdr_src_ptr, hdr->hdr_common.hdr_size );
 
     hdr->hdr_dst_match.lval = 0;
     hdr->hdr_dst_match.pval = request; /*should this be dst_match */
