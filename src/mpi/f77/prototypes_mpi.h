@@ -301,8 +301,8 @@ void mpi_win_start_f(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint 
 void mpi_win_test_f(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_win_unlock_f(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_wait_f(MPI_Fint *win, MPI_Fint *ierr);
-double *mpi_wtick_f(void);
-double *mpi_wtime_f(void);
+double mpi_wtick_f(void);
+double mpi_wtime_f(void);
 #endif
 
 /*These are the all lower case prototypes*/
@@ -590,8 +590,8 @@ void mpi_win_start(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *i
 void mpi_win_test(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_win_unlock(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_wait(MPI_Fint *win, MPI_Fint *ierr);
-double *mpi_wtick(void);
-double *mpi_wtime(void);
+double mpi_wtick(void);
+double mpi_wtime(void);
 /*This is the single underscore prototypes*/
 
 void mpi_abort_(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
@@ -877,8 +877,8 @@ void mpi_win_start_(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *
 void mpi_win_test_(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_win_unlock_(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_wait_(MPI_Fint *win, MPI_Fint *ierr);
-double *mpi_wtick_(void);
-double *mpi_wtime_(void);
+double mpi_wtick_(void);
+double mpi_wtime_(void);
 /*This is the double underscore prototypes*/
 
 void mpi_abort__(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
@@ -1164,8 +1164,8 @@ void mpi_win_start__(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint 
 void mpi_win_test__(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_win_unlock__(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void mpi_win_wait__(MPI_Fint *win, MPI_Fint *ierr);
-double *mpi_wtick__(void);
-double *mpi_wtime__(void);
+double mpi_wtick__(void);
+double mpi_wtime__(void);
 /*This is the all upper case prototypes*/
 
 void MPI_ABORT(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr);
@@ -1451,7 +1451,7 @@ void MPI_WIN_START(MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *i
 void MPI_WIN_TEST(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr);
 void MPI_WIN_UNLOCK(MPI_Fint *rank, MPI_Fint *win, MPI_Fint *ierr);
 void MPI_WIN_WAIT(MPI_Fint *win, MPI_Fint *ierr);
-double *MPI_WTICK(void);
-double *MPI_WTIME(void);
+double MPI_WTICK(void);
+double MPI_WTIME(void);
 #endif
 
