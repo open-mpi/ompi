@@ -52,7 +52,8 @@ static bool initialized = false;
 /*
  * local functions
  */
-static int param_register(const char *type_name, const char *module_name, const char *param_name,
+static int param_register(const char *type_name, const char *module_name, 
+                          const char *param_name,
                           const char *mca_param_name,
                           mca_base_param_type_t type,
                           mca_base_param_storage_t *default_value);
@@ -126,7 +127,10 @@ int mca_base_param_register_string(const char *type_name,
                                    const char *default_value)
 {
   mca_base_param_storage_t storage;
-  storage.stringval = strdup(default_value);
+  if (NULL != default_value)
+    storage.stringval = strdup(default_value);
+  else
+    storage.stringval = NULL;
   return param_register(type_name, module_name, param_name, mca_param_name,
                         MCA_BASE_PARAM_TYPE_STRING, &storage);
 }
