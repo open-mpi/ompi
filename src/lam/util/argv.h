@@ -5,6 +5,8 @@
 #ifndef LAM_ARGV_H
 #define LAM_ARGV_H
 
+#include "lam/types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
