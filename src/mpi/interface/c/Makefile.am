@@ -121,9 +121,13 @@ libmpi_c_mpi_la_SOURCES = \
 				comm_test_inter.c \
                 finalize.c \
                 free_mem.c \
-                init.c
-
-bogus_stuff = \
+                init.c \
+			    test_cancelled.c \
+				test.c \
+				testall.c \
+				testany.c \
+				testsome.c \
+				topo_test.c \ 
                 type_commit.c \
                 type_contiguous.c \
                 type_create_darray.c \

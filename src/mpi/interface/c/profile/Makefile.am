@@ -94,9 +94,13 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 				pcomm_test_inter.c \
                 pfinalize.c \
                 pfree_mem.c \
-                pinit.c
-
-bogus_stuff = \
+                pinit.c \
+			    ptest_cancelled.c \
+				ptest.c \
+				ptestall.c \
+				ptestany.c \
+				ptestsome.c \
+				ptopo_test.c \ 
                 ptype_commit.c \
                 ptype_contiguous.c \
                 ptype_create_darray.c \
