@@ -46,7 +46,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_READ_ALL_BEGIN,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_read_all_begin_f(MPI_Fint *fh, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *ierr)
+void mpi_file_read_all_begin_f(MPI_Fint *fh, char *buf,
+			       MPI_Fint *count, MPI_Fint *datatype,
+			       MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_File c_fh = MPI_File_f2c(*fh);
+    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+
+    *ierr = OMPI_INT_2_FINT(MPI_File_read_all_begin(c_fh, buf, 
+						    OMPI_FINT_2_INT(*count),
+						    c_type));
+    
 }
