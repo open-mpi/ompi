@@ -304,7 +304,7 @@ internal_spawn_procs(mca_pcm_bproc_module_t *me,
             return ret;
         }
 
-        ret = ompi_rte_wait_cb(pids[i], mca_pcm_bproc_monitor_cb, NULL);
+        ret = ompi_rte_wait_cb(pids[i], mca_pcm_bproc_monitor_cb, me);
         if (OMPI_SUCCESS != ret) {
             mca_pcm_bproc_kill_job((mca_pcm_base_module_t*) me, jobid, 0);
             return ret;
