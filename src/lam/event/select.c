@@ -54,8 +54,10 @@
 
 #include "event.h"
 #include "evsignal.h"
+#include "lam/threads/mutex.h"
 
 extern struct lam_event_list lam_eventqueue;
+extern lam_mutex_t lam_event_lock;
 
 #ifndef howmany
 #define        howmany(x, y)   (((x)+((y)-1))/(y))
@@ -165,8 +167,11 @@ select_dispatch(void *arg, struct timeval *tv)
 	if (lam_evsignal_deliver(&sop->evsigmask) == -1)
 		return (-1);
 
+        /* release lock while waiting in kernel */
+        lam_mutex_unlock(&lam_event_lock);
 	res = select(sop->event_fds + 1, sop->event_readset, 
 	    sop->event_writeset, NULL, tv);
+        lam_mutex_lock(&lam_event_lock);
 
 	if (lam_evsignal_recalc(&sop->evsigmask) == -1)
 		return (-1);
