@@ -281,6 +281,9 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
       }
 
       pml_buffer = free_buffer - lb;
+      /* read the comment about commutative operations (few lines down the page) */
+      if( ompi_op_is_commute(op) ) rcv_buffer = pml_buffer;
+      else rcv_buffer = rbuf;
    }
 
    /* Loop over cube dimensions. High processes send to low ones in the
@@ -322,6 +325,13 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
          }
 
          fl_recv = 1;
+         /* Most of the time (all except the first one for commutative operations) we
+          * receive in the user provided buffer (rbuf). But the exception is here to allow
+          * us to dont have to copy from the sbuf to a temporary location. If the operation
+          * is commutative we dont care in which order we apply the operation, so for the
+          * first time we can receive the data in the pml_buffer and then apply to
+          * operation between this buffer and the user provided data.
+          */
          err = mca_pml.pml_recv( rcv_buffer, count, dtype, peer,
                                  MCA_COLL_BASE_TAG_REDUCE, comm,
                                  MPI_STATUS_IGNORE );
@@ -331,13 +341,28 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
             }
             return err;
          }
-
-         /* Perform the operation. The target is always the user provided buffer 
-          * We do the operation only if we receive it not in the user buffer */
-         if( rcv_buffer != rbuf )
-            ompi_op_reduce(op, rcv_buffer, rbuf, count, dtype);
-         rcv_buffer = pml_buffer;
-         snd_buffer = rbuf;  /* now we have to send the buffer containing the computed data */
+         /* Perform the operation. The target is always the user
+            provided buffer We do the operation only if we receive it
+            not in the user buffer */
+         if( snd_buffer != sbuf ) {
+            /* the target buffer is the locally allocated one */
+            ompi_op_reduce(op, rcv_buffer, pml_buffer, count, dtype);
+         } else {
+            /* If we're commutative, we don't care about the order of
+             * operations and we can just reduce the operations now.
+             * If we are not commutative, we have to copy the send
+             * buffer into a temp buffer (pml_buffer) and then reduce
+             * what we just received against it.
+             */
+            if( !ompi_op_is_commute(op) ) {
+               ompi_ddt_sndrcv( sbuf, count, dtype, pml_buffer, count, dtype,
+                                MCA_COLL_BASE_TAG_REDUCE, comm);
+               ompi_op_reduce( op, rbuf, pml_buffer, count, dtype );
+            } else
+               ompi_op_reduce(op, sbuf, pml_buffer, count, dtype);
+            snd_buffer = pml_buffer;  /* now we have to send the buffer containing the computed data */
+            rcv_buffer = rbuf;  /* starting from now we always receive in the user provided buffer */
+         }
       }
    }
 
