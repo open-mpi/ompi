@@ -54,6 +54,7 @@ struct mca_ptl_gm_peer_t {
     int                         max_credits;
     int                         resending;
     int                         num_resend;
+    bool                        get_started;
 };
 typedef struct mca_ptl_gm_peer_t mca_ptl_gm_peer_t;
 

@@ -30,23 +30,20 @@
 #define ACK 2
 #define PUT 3 
 
-#define PTL_GM_PIPELINE_EMPTY       0x01
+/* depth of the GM internal pipeline */
+#define GM_PIPELINE_DEPTH           3
+
+#define PTL_GM_PIPELINE_EMPTY       0x00
+#define PTL_GM_PIPELINE_DEREGISTER  0x01
 #define PTL_GM_PIPELINE_REGISTER    0x02
-#define PTL_GM_PIPELINE_SEND        0x04
-#define PTL_GM_PIPELINE_DEREGISTER  0x08
+#define PTL_GM_PIPELINE_REMOTE      0x04
+#define PTL_GM_PIPELINE_TRANSFERT   (PTL_GM_PIPELINE_REGISTER | PTL_GM_PIPELINE_REMOTE)
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
     OBJ_CLASS_DECLARATION (mca_ptl_gm_send_frag_t);
     OBJ_CLASS_DECLARATION (mca_ptl_gm_recv_frag_t);
-
-    /* header definition for intermediary fragments on eager p2p communications */
-    struct mca_ptl_gm_eager_header_t {
-        mca_ptl_base_common_header_t hdr_common; /**< common attributes */
-        ompi_ptr_t hdr_src_ptr;                  /**< pointer to source fragment */
-    };
-    typedef struct mca_ptl_gm_eager_header_t mca_ptl_gm_eager_header_t;
 
     /* specific header for GM rendezvous protocol. It will be filled up by the sender
      * and should be ab;e to hold a pointer to the last registered memory location.
@@ -57,13 +54,22 @@ extern "C" {
     };
     typedef struct mca_ptl_gm_frag_header_t mca_ptl_gm_frag_header_t;
 
-    struct mca_ptl_gm_pipeline_info_t {
-	uint32_t flags;
-	uint32_t hdr_flags;
+    struct mca_ptl_gm_pipeline_line_t {
+	uint16_t flags;
+	uint16_t hdr_flags;
+	uint32_t length;
 	uint64_t offset;
-	uint64_t length;
 	ompi_ptr_t local_memory;
 	ompi_ptr_t remote_memory;
+    };
+    typedef struct mca_ptl_gm_pipeline_line_t mca_ptl_gm_pipeline_line_t;
+
+    struct mca_ptl_gm_pipeline_info_t {
+	mca_ptl_gm_pipeline_line_t lines[GM_PIPELINE_DEPTH];
+	uint32_t pos_register;
+	uint32_t pos_remote;
+	uint32_t pos_deregister;
+	uint32_t pos_transfert;
     };
     typedef struct mca_ptl_gm_pipeline_info_t mca_ptl_gm_pipeline_info_t;
 
@@ -80,8 +86,8 @@ extern "C" {
         uint64_t frag_bytes_processed;  /**< data sended so far */
 	uint64_t frag_bytes_validated;  /**< amount of data for which we receive an ack */
 	uint64_t frag_offset;           /**< initial offset of the fragment as specified by the upper level */
-	mca_ptl_gm_pipeline_info_t pipeline[3];  /**< storing the information about the status of the pipeline
-						  *   for long messages. */
+	mca_ptl_gm_pipeline_info_t pipeline;  /**< storing the information about the status 
+					       *   of the pipeline for long messages. */
         int      status;
         uint32_t type;
     };
@@ -92,8 +98,8 @@ extern "C" {
         uint64_t     frag_bytes_processed;
 	uint64_t     frag_bytes_validated;  /**< amount of data for which we receive an ack */
 	uint64_t     frag_offset;
-	mca_ptl_gm_pipeline_info_t pipeline[3];  /**< storing the information about the status of the pipeline
-						  *   for long messages. */
+	mca_ptl_gm_pipeline_info_t pipeline;  /**< storing the information about the status of
+					       *   the pipeline for long messages. */
 	uint32_t     type;
         bool         matched;
         bool         have_allocated_buffer;
@@ -169,8 +175,17 @@ extern "C" {
         return OMPI_SUCCESS;
     }
 
-    int mca_ptl_gm_send_frag_done( struct mca_ptl_gm_send_frag_t* frag,
-                                   struct mca_pml_base_send_request_t* req);
+    static inline void ompi_ptl_gm_init_pipeline( mca_ptl_gm_pipeline_info_t* pipeline )
+    {
+	int i;
+
+	pipeline->pos_register = 0;
+	pipeline->pos_remote = 0;
+	pipeline->pos_deregister = 0;
+	pipeline->pos_transfert = 0;
+	for( i = 0; i < GM_PIPELINE_DEPTH; i++ )
+	    pipeline->lines[i].flags = 0;
+    }
 
     static inline mca_ptl_gm_recv_frag_t*
     mca_ptl_gm_alloc_recv_frag( struct mca_ptl_base_module_t *ptl )
@@ -183,9 +198,10 @@ extern "C" {
         
         frag = (mca_ptl_gm_recv_frag_t*)item;
         frag->frag_recv.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
-        frag->frag_bytes_processed = 0;
-        frag->frag_bytes_validated = 0;
-	frag->frag_offset          = 0;
+        frag->frag_bytes_processed   = 0;
+        frag->frag_bytes_validated   = 0;
+	frag->frag_offset            = 0;
+	ompi_ptl_gm_init_pipeline( &(frag->pipeline) );
         return frag;
     }
 

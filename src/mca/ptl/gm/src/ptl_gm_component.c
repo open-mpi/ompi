@@ -374,7 +374,14 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    for( i = 0; i < ptl->num_recv_tokens; i++ ) {
+    for( i = 0; i < 2; i++ ) {
+	OMPI_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
+	free_rfragment++;
+
+	gm_provide_receive_buffer( ptl->gm_port, (char*)ptl->gm_recv_dma_memory + i * mca_ptl_gm_component.gm_segment_size,
+				   GM_SIZE, GM_HIGH_PRIORITY );
+    }
+    for( i = 2; i < ptl->num_recv_tokens; i++ ) {
 	OMPI_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
 	free_rfragment++;
 
