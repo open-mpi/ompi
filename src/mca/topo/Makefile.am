@@ -14,7 +14,7 @@ headers = topo.h
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/ompi/mca/topo
+ompidir = $(includedir)/openmpi/mca/topo
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

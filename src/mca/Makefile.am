@@ -49,7 +49,7 @@ not_implemented_yet = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/ompi/mca
+ompidir = $(includedir)/openmpi/mca
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

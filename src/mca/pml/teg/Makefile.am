@@ -22,7 +22,7 @@ module_noinst = libmca_pml_teg.la
 module_install =
 endif
 
-mcamoduledir = $(libdir)/ompi
+mcamoduledir = $(libdir)/openmpi
 mcamodule_LTLIBRARIES = $(module_install)
 mca_pml_teg_la_SOURCES = 
 mca_pml_teg_la_LIBADD = \

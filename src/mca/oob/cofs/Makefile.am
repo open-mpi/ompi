@@ -23,7 +23,7 @@ module_noinst = libmca_oob_cofs.la
 module_install =
 endif
 
-mcamoduledir = $(libdir)/ompi
+mcamoduledir = $(libdir)/openmpi
 mcamodule_LTLIBRARIES = $(module_install)
 mca_oob_cofs_la_SOURCES =
 mca_oob_cofs_la_LIBADD = \

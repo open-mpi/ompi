@@ -366,7 +366,7 @@ EXTRA_DIST = $(libmpi_c_mpi_la_SOURCES)
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/ompi/mpi/c
+ompidir = $(includedir)/openmpi/mpi/c
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

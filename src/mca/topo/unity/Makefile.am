@@ -23,7 +23,7 @@ module_noinst = libmca_topo_unity.la
 module_install =
 endif
 
-mcamoduledir = $(libdir)/ompi
+mcamoduledir = $(libdir)/openmpi
 mcamodule_LTLIBRARIES = $(module_install)
 mca_topo_unity_la_SOURCES =
 mca_topo_unity_la_LIBADD = \

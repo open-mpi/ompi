@@ -20,7 +20,7 @@ libmca_coll_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/ompi/mca/coll/base
+ompidir = $(includedir)/openmpi/mca/coll/base
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

@@ -333,7 +333,7 @@ MAINTAINERCLEANFILES = $(nodist_libmpi_f77_profile_la_SOURCES)
 EXTRA_DIST = $(nodist_libmpi_f77_pmpi_la_SOURCES)
 #
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/ompi/mpi/f77/profile
+ompidir = $(includedir)/openmpi/mpi/f77/profile
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

@@ -33,7 +33,7 @@ bogus = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/ompi/ctnetwork
+ompidir = $(includedir)/openmpi/ctnetwork
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

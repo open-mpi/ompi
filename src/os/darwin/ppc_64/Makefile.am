@@ -12,7 +12,7 @@ headers = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/ompi/os/darwin/ppc_64
+ompidir = $(includedir)/openmpi/os/darwin/ppc_64
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
