@@ -13,7 +13,7 @@
 #define CRC_POLYNOMIAL       ((uint32_t) 0x04c11db7)
 #define CRC_INITIAL_REGISTER ((uint32_t) 0xffffffff)
 #define IS_32BIT_ALIGNED(X) \
-    ((uint32_t)(X) & (uint32_t) 3 == (uint32_t) 0 ? 1 : 0)
+    (((uint32_t)(X) & (uint32_t) 3) == (uint32_t) 0 ? 1 : 0)
 
 /*
  * Look-up table for CRC32 generation
