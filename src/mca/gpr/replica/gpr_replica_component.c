@@ -21,7 +21,7 @@
 
 #include "util/proc_info.h"
 #include "util/output.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"

@@ -10,7 +10,7 @@
 #include "datatype/datatype.h"
 #include "threads/mutex.h"
 #include "mca/ns/ns.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 
 extern ompi_class_t ompi_proc_t_class;
 

@@ -7,7 +7,7 @@
 #include "mpi.h"
 #include "attribute/attribute.h"
 #include "util/proc_info.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 #include "errhandler/errclass.h"
 #include "communicator/communicator.h"
 #include "mca/ns/ns.h"

@@ -13,7 +13,7 @@
 #include "mca/pcm/pcm.h"
 #include "include/types.h"
 #include "include/constants.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 #include "util/output.h"
 #include "mca/oob/base/base.h"
 #include "mca/oob/oob.h"

@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include "class/ompi_object.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 #include "mca/ns/ns.h"
 
 /**

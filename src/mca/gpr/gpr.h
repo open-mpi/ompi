@@ -27,7 +27,7 @@
 #include "include/types.h"
 #include "include/constants.h"
 #include "class/ompi_list.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 
 #include "mca/mca.h"
 #include "mca/oob/base/base.h"

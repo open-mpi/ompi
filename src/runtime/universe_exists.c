@@ -19,7 +19,7 @@
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 #include "util/os_path.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 #include "util/session_dir.h"
 #include "util/universe_setup_file_io.h"
 

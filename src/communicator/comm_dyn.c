@@ -13,7 +13,7 @@
 #include "proc/proc.h"
 #include "threads/mutex.h"
 #include "util/bit_ops.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 #include "include/constants.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pml/pml.h"

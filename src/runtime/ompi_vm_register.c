@@ -13,7 +13,7 @@
 #include "util/output.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 
 #include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"

@@ -27,7 +27,7 @@
 #include "class/ompi_list.h"
 
 #include "mca/mca.h"
-#include "util/pack.h"
+#include "util/bufpack.h"
 
 
 /*
