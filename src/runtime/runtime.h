@@ -13,6 +13,8 @@
 
 #include "ompi_config.h"
 
+#include <sys/types.h>
+
 #include "runtime/runtime_types.h"
 #include "mca/ns/ns.h"
 
@@ -35,6 +37,7 @@ extern "C" {
 	char *name;
 	char *host;
 	char *uid;
+	pid_t pid;
 	bool persistence;
 	char *scope;
 	bool silent_mode;

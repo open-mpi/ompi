@@ -11,6 +11,14 @@
 #include "util/cmd_line.h"
 #include "mca/mca.h"
 
+/*
+ * Definitions needed for communication
+ */
+#define OMPI_DAEMON_OOB_PACK_CMD        OMPI_INT16
+
+#define OMPI_DAEMON_INITIAL_CONTACT_CMD 0x01
+#define OMPI_DAEMON_CONTACT_ACK_CMD     0x02
+
 
   /*
    * Globals

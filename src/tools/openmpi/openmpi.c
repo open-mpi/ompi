@@ -16,8 +16,6 @@
 #include <unistd.h>
 #include <sys/types.h>
 
-#include "runtime/runtime.h"
-#include "runtime/universe_connect.h"
 #include "util/output.h"
 #include "util/os_path.h"
 #include "util/sys_info.h"
@@ -25,15 +23,13 @@
 #include "util/common_cmd_line.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"
-#include "util/printf.h"
-#include "util/daemon_init.h"
 #include "event/event.h"
-#include "util/universe_setup_file_io.h"
 #include "mca/base/base.h"
 #include "mca/oob/base/base.h"
 
-
-extern ompi_universe_t ompi_universe_info;
+#include "util/universe_setup_file_io.h"
+#include "runtime/universe_connect.h"
+#include "runtime/runtime.h"
 
 
 int main(int argc, char **argv)
@@ -88,30 +84,30 @@ int main(int argc, char **argv)
 	exit(1);
     }
 
-/*     /\* setup rte command line arguments *\/ */
-/*     cmd_line = OBJ_NEW(ompi_cmd_line_t); */
-/*     ompi_rte_cmd_line_setup(cmd_line); */
+    /* setup rte command line arguments */
+    cmd_line = OBJ_NEW(ompi_cmd_line_t);
+    ompi_rte_cmd_line_setup(cmd_line);
 
-/*     /\* */
-/*      * setup  mca command line arguments */
-/*      *\/ */
-/*     mca_cmd_line = OBJ_NEW(ompi_cmd_line_t); */
-/*     if (OMPI_SUCCESS != (ret = mca_base_cmd_line_setup(mca_cmd_line))) { */
-/* 	/\* BWB show_help *\/ */
-/* 	printf("show_help: mca_base_cmd_line_setup failed\n"); */
-/* 	return ret; */
-/*     } */
+    /*
+     * setup  mca command line arguments
+     */
+    mca_cmd_line = OBJ_NEW(ompi_cmd_line_t);
+    if (OMPI_SUCCESS != (ret = mca_base_cmd_line_setup(mca_cmd_line))) {
+	/* BWB show_help */
+	printf("show_help: mca_base_cmd_line_setup failed\n");
+	return ret;
+    }
 
-/*     if (OMPI_SUCCESS != mca_base_cmd_line_process_args(mca_cmd_line)) { */
-/* 	/\* BWB show_help *\/ */
-/* 	printf("show_help: mca_base_cmd_line_process_args\n"); */
-/* 	return ret; */
-/*     } */
+    if (OMPI_SUCCESS != mca_base_cmd_line_process_args(mca_cmd_line)) {
+	/* BWB show_help */
+	printf("show_help: mca_base_cmd_line_process_args\n");
+	return ret;
+    }
 
-/*     /\* parse the local commands *\/ */
-/*     if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv)) { */
-/* 	exit(ret); */
-/*     } */
+    /* parse the local commands */
+    if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv)) {
+	exit(ret);
+    }
 
 
 /*     /\* parse the cmd_line for seed daemon options *\/ */

@@ -94,6 +94,7 @@ ompi_universe_t ompi_universe_info = {
     /* .name =                */    "default-universe",
     /* .host =                */    "localhost",
     /* .uid =                 */    NULL,
+    /* .pid =                 */    0,
     /* .persistence =         */    false,
     /* .scope =               */    "local",
     /* .silent_mode =         */    true,
