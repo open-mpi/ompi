@@ -5,7 +5,7 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 SUBDIRS = include adio mpi-io 
-DIST_SUBDIRS = $(SUBDIRS) doc
+DIST_SUBDIRS = $(SUBDIRS) doc util
 
 EXTRA_DIST = README COPYRIGHT README_OMPI
 
