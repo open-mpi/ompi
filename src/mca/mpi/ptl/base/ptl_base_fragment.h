@@ -24,8 +24,5 @@ struct mca_ptl_base_frag_t {
 typedef struct mca_ptl_base_frag_t mca_ptl_base_frag_t;
 
 
-void mca_ptl_base_frag_init(mca_ptl_base_frag_t*);
-void mca_ptl_base_frag_destroy(mca_ptl_base_frag_t*);
-
 #endif
 

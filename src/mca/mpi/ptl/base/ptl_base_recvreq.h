@@ -18,10 +18,8 @@ typedef struct {
 } mca_ptl_base_recv_request_t;
 
 
-void mca_ptl_base_recv_request_init(mca_ptl_base_recv_request_t*);
-void mca_ptl_base_recv_request_destroy(mca_ptl_base_recv_request_t*);
-int  mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t*);
-int  mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t*);
+void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t*);
+void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t*);
 void mca_ptl_base_recv_request_progress(mca_ptl_base_recv_request_t*, struct mca_ptl_base_recv_frag_t*);
 
 
