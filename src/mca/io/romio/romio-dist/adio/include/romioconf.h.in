@@ -1,84 +1,222 @@
-/* adio/include/romioconf.h.in.  Generated automatically from .tmp by autoheader.  */
+/* adio/include/romioconf.h.in.  Generated from configure.in by autoheader.  */
 
-/* Define if on AIX 3.
-   System headers sometimes define this.
-   We just want to avoid a redefinition error message.  */
-#ifndef _ALL_SOURCE
-#undef _ALL_SOURCE
-#endif
+/*
+ *  $HEADER$
+ *
+ *  (C) 2001 by Argonne National Laboratory.
+ *      See COPYRIGHT in top-level directory.
+ */
 
-/* Define to one of _getb67, GETB67, getb67 for Cray-2 and Cray-YMP systems.
-   This function is required for alloca.c support on those systems.  */
-#undef CRAY_STACKSEG_END
 
-/* Define as the proper declaration for yytext.  */
-#undef DECLARE_YYTEXT
-
-/* Define as __inline if that's what the C compiler calls it.  */
-#undef inline
-
-/* Define if `sys_siglist' is declared by <signal.h>.  */
-#undef SYS_SIGLIST_DECLARED
-
+/* On RS600, set this if we have aio (?) */
 #undef AIO_HANDLE_IN_AIOCB
-#undef AIO_PRIORITY_DEFAULT
-#undef AIO_SIGNOTIFY_NONE
-#undef AIO_SUN
-#undef FREEBSD
-#undef HAVE_LONG_LONG_64
-#undef HAVE_MOUNT_NFS
-#undef HAVE_MPI_COMBINERS
-#undef HAVE_MPI_DARRAY_SUBARRAY
-#undef HAVE_MPI_INFO
-#undef HAVE_MPI_LONG_LONG_INT
-#undef HAVE_PRAGMA_CRI_DUP
-#undef HAVE_PRAGMA_HP_SEC_DEF
-#undef HAVE_PRAGMA_WEAK
-#undef HAVE_PREAD64
-#undef HAVE_STATUS_SET_BYTES
-#undef HAVE_STRERROR
-#undef HAVE_SYSERRLIST
-#undef HAVE_WEAK_SYMBOLS
-#undef HFS
-#undef HPUX
-#undef INT_LT_POINTER
-#undef IRIX
-#undef LINUX
-#undef MPICH
-#undef MPIHP
-#undef MPILAM
-#undef MPISGI
-#undef MPI_OFFSET_IS_INT
-#undef NEEDS_MPI_TEST
-#undef NFS
-#undef NO_AIO
-#undef NO_FD_IN_AIOCB
-#undef NO_MPI_SGI_type_is_contig
-#undef PARAGON
-#undef PFS
-#undef PIOFS
-#undef PRINT_ERR_MSG
-#undef ROMIO_PVFS
-#undef ROMIO_TESTFS
-#undef SFS
-#undef SOLARIS
-#undef SPPUX
-#undef SX4
-#undef UFS
-#undef XFS
-#undef NEEDS_AIOCB_T
 
-/* Define if you have memalign.  */
+/* Whether we have AIO priority default or not */
+#undef AIO_PRIORITY_DEFAULT
+
+/* Whether AIO has SIGNOTIFY or not */
+#undef AIO_SIGNOTIFY_NONE
+
+/* Whether we have Sun's libaio or not */
+#undef AIO_SUN
+
+/* Whether we're on AIX or not */
+#undef AIX
+
+/* Whether we are on Cray or not */
+#undef CRAY
+
+/* Whether we are on DEC or not */
+#undef DEC
+
+/* Whether we're on FreeBSD or not */
+#undef FREEBSD
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define if long long is 64 bits */
+#undef HAVE_LONG_LONG_64
+
+/* Define to 1 if you have the `memalign' function. */
 #undef HAVE_MEMALIGN
 
-/* Define if you have the <unistd.h> header file.  */
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define if MOUNT_NFS defined */
+#undef HAVE_MOUNT_NFS
+
+/* Define if MPI combiners available */
+#undef HAVE_MPI_COMBINERS
+
+/* Define if MPI Darray available */
+#undef HAVE_MPI_DARRAY_SUBARRAY
+
+/* Define if MPI_Info available */
+#undef HAVE_MPI_INFO
+
+/* Define if mpi has long long it */
+#undef HAVE_MPI_LONG_LONG_INT
+
+/* Will always be defined / 1 */
+#undef HAVE_MPI_OFFSET
+
+/* Whether we have #pragma cri_dup or not */
+#undef HAVE_PRAGMA_CRI_DUP
+
+/* Whether we have #pragma sec_def or not */
+#undef HAVE_PRAGMA_HP_SEC_DEF
+
+/* Whether we have #pragma weak or not */
+#undef HAVE_PRAGMA_WEAK
+
+/* Define if pread64 available */
+#undef HAVE_PREAD64
+
+/* Define if status set bytes available */
+#undef HAVE_STATUS_SET_BYTES
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define if strerror available */
+#undef HAVE_STRERROR
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define if syserrlist available */
+#undef HAVE_SYSERRLIST
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define if you have the aio library (-laio).  */
-#undef HAVE_LIBAIO
+/* Whether we have weak symbols or not */
+#undef HAVE_WEAK_SYMBOLS
 
-/* Define if you have the pthread library (-lpthread).  */
-#undef HAVE_LIBPTHREAD
+/* Building HFS support or not */
+#undef HFS
 
-/* Define if you have the rt library (-lrt).  */
-#undef HAVE_LIBRT
+/* Whether we are on HPUX or not */
+#undef HPUX
+
+/* Define if int smaller than pointer */
+#undef INT_LT_POINTER
+
+/* Whether we are on IRIX or not */
+#undef IRIX
+
+/* Whether we're on Linux or not */
+#undef LINUX
+
+/* Will always be undefined / 0 */
+#undef MPICH
+
+/* Will always be undefined / 0 */
+#undef MPIHP
+
+/* Will always be undefined / 0 */
+#undef MPILAM
+
+/* Will always be undefined / 0 */
+#undef MPISGI
+
+/* Will always be undefined / 0 */
+#undef MPI_FILE_DEFINED
+
+/* Define if MPI_Offset is int */
+#undef MPI_OFFSET_IS_INT
+
+/* Whether we need to define aiocb_t type or not */
+#undef NEEDS_AIOCB_T
+
+/* Will always be undefined / 0 */
+#undef NEEDS_MPI_TEST
+
+/* Building NFS support or not */
+#undef NFS
+
+/* Whether we have/want to use libaio or not */
+#undef NO_AIO
+
+/* On RS600, set this if we have aio (?) */
+#undef NO_FD_IN_AIOCB
+
+/* Define if no MPI type is contig */
+#undef NO_MPI_SGI_type_is_contig
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Whether we're on Paragon or not */
+#undef PARAGON
+
+/* Building PFS support or not */
+#undef PFS
+
+/* Building PIOFS support or not */
+#undef PIOFS
+
+/* Will always be undefined */
+#undef PRINT_ERROR_MSG
+
+/* Will always be undefined / 0 */
+#undef PRINT_ERR_MSG
+
+/* Building PVFS support or not */
+#undef ROMIO_PVFS
+
+/* Building ROMIO testfs support or not */
+#undef ROMIO_TESTFS
+
+/* Building SFS support or not */
+#undef SFS
+
+/* Whether we're on Solaris or not */
+#undef SOLARIS
+
+/* Whether we are on SPPUX or not */
+#undef SPPUX
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Whether we are on SX4 or not */
+#undef SX4
+
+/* Building UFS support or not */
+#undef UFS
+
+/* Building XFS support or not */
+#undef XFS
+
+/* Define if inline is not supported */
+#undef inline

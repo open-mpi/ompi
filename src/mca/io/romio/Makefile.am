@@ -20,13 +20,15 @@ component_noinst = libmca_mpi_io_romio.la
 component_install =
 endif
 
+libs = src/libmca_io_romio.la romio-dist/libromio_dist.la
+
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_io_romio_la_SOURCES = 
-mca_io_romio_la_LIBADD = src/libmca_io_romio.la
+mca_io_romio_la_LIBADD = $(libs)
 mca_io_romio_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mpi_io_romio_la_SOURCES =
-libmca_mpi_io_romio_la_LIBADD = src/libmca_io_romio.la
+libmca_mpi_io_romio_la_LIBADD = $(libs)
 libmca_mpi_io_romio_la_LDFLAGS = -module -avoid-version

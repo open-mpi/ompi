@@ -5,6 +5,7 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=src/io_romio_module.c
+PARAM_INIT_FILE=src/io_romio_component.c
 PARAM_CONFIG_HEADER_FILE="src/romio_config.h"
-PARAM_CONFIG_FILES="Makefile src/Makefile romio-dist/Makefile romio-dist/include/Makefile romio-dist/adio/Makefile romio-dist/adio/common/Makefile romio-dist/adio/ad_ufs/Makefile romio-dist/adio/ad_nfs/Makefile romio-dist/mpi-io/Makefile"
+PARAM_CONFIG_FILES="Makefile src/Makefile"
+

@@ -1,0 +1,73 @@
+# -*- shell-script -*-
+#
+# $HEADER$
+#
+
+# Because of the following statements, this component is essentially
+# "core" and cannot be configured / compiled outside of the Open MPI
+# tree.
+
+sinclude(../../../../config/ompi_config_subdir.m4)
+
+
+#
+# Main function.  This will be invoked in the middle of the templated
+# configure script.
+#
+AC_DEFUN([MCA_CONFIGURE_STUB],[
+    AC_ARG_WITH([io-romio-flags], 
+        AC_HELP_STRING([--with-io-romio-flags=FLAGS],
+                [Pass FLAGS to the ROMIO distribution configuration script]))
+
+    AC_MSG_CHECKING([for ROMIO distribution configure flags])
+    io_romio_flags=
+    if test -n "$with_io_romio_flags" -a "$with_io_romio_flags" != "no"; then
+        io_romio_flags="$with_io_romio_flags $io_romio_flags"
+    fi
+
+    shared=enable
+    if test -n "$enable_shared"; then
+        if test "$enable_shared" != "no"; then
+            shared=enable
+        else
+            shared=disable
+        fi
+    fi
+
+    static=enable
+    if test -n "$enable_static"; then
+        if test "$enable_static" != "no"; then
+            static=enable
+        else
+            static=disable
+        fi
+    fi
+    io_romio_flags="CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LSFLAGS"'"'" --$shared-shared --$static-static $io_romio_flags"
+    AC_MSG_RESULT([$io_romio_flags])
+
+    ompi_show_subtitle "Configuring ROMIO distribution"
+    OMPI_CONFIG_SUBDIR([romio-dist], [$io_romio_flags],
+                        [HAPPY=1], [HAPPY=0])
+    if test "$HAPPY" = "1"; then
+        echo "ROMIO distribution configured successfully"
+    else
+        AC_MSG_WARN([ROMIO distribution did not configure successfully])
+        AC_MSG_ERROR([Cannot continue])
+    fi
+])
+
+#
+# For dist
+#
+AC_DEFUN([MCA_CONFIGURE_DIST_STUB],[
+    ompi_show_subtitle "Configuring ROMIO distribution"
+    OMPI_CONFIG_SUBDIR([romio-dist], [],
+                        [HAPPY=1], [HAPPY=0])
+    if test "$HAPPY" = "1"; then
+        echo "ROMIO distribution configured successfully"
+    else
+        AC_MSG_WARN([ROMIO distribution did not configure successfully])
+        AC_MSG_WARN([Nothing I can do about that -- sorry!])
+        AC_MSG_ERROR([Cannot continue])
+    fi
+])

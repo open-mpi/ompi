@@ -9,6 +9,7 @@
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
 #include "file/file.h"
+#include "datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_read = PMPI_File_read
@@ -21,18 +22,39 @@
 static const char FUNC_NAME[] = "MPI_File_read";
 
 
-int MPI_File_read(MPI_File fh, void *buf, int count, MPI_Datatype
-                  datatype, MPI_Status *status)
+int MPI_File_read(MPI_File fh, void *buf, int count, 
+                  MPI_Datatype datatype, MPI_Status *status)
 {
+    int rc;
+
     if (MPI_PARAM_CHECK) {
+        rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_file_invalid(fh)) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, MPI_ERR_FILE,
-                                          FUNC_NAME);
+            fh = MPI_FILE_NULL;
+            rc = MPI_ERR_FILE;
+        } else if (count < 0) {
+            rc = MPI_ERR_COUNT;
+        } else {
+           OMPI_CHECK_DATATYPE_FOR_RECV(rc, datatype, count);
         }
+        OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
 
-    /* This function is not yet implemented */
+    /* Call the back-end io component function */
+
+    switch (fh->f_io_version) {
+    case MCA_IO_BASE_V_1_0_0:
+        rc = fh->f_io_selected_module.v1_0_0.
+            io_module_file_read(fh, buf, count, datatype, status);
+        break;
+
+    default:
+        rc = MPI_ERR_INTERN;
+        break;
+    }
+
+    /* All done */
     
-    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(rc, fh, rc, FUNC_NAME);
 }

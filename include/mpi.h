@@ -19,6 +19,16 @@
 #define MPI_SUBVERSION 0
 
 /*
+ * To accomodate programs written for MPI implementations that use a
+ * straight ROMIO import
+ */
+#if !defined(OMPI_BUILDING) || !OMPI_BUILDING
+#define MPIO_Request MPI_Request
+#define MPIO_Test MPI_Test
+#define MPIO_Wait MPI_Wait
+#endif
+
+/*
  * Typedefs
  */
 typedef long MPI_Aint;
@@ -82,44 +92,68 @@ extern "C" {
 
 /*
  * Miscellaneous constants
- * JMS: Some of these may be L7-specific and should be removed...
+ * JMS: Some of these may be LAM-specific and should be removed...
  */
-#define MPI_ANY_SOURCE      -1      /* match any source rank */
-#define MPI_PROC_NULL       -2      /* rank of null process */
-#define MPI_ROOT -4
-#define MPI_CANCEL_SOURCE   -3      /* successful cancel */
-#define MPI_ANY_TAG     -1      /* match any message tag */
-#define MPI_GER_TAG     -2      /* used for GER protocol */
-#define MPI_MERGE_TAG       -3      /* used to merge inter-comm */
-#define MPI_MAX_PROCESSOR_NAME  256     /* max proc. name length */
-#define MPI_MAX_ERROR_STRING    256     /* max error message length */
-#define MPI_MAX_OBJECT_NAME 64      /* max object name length */
-#define MPI_UNDEFINED       -32766      /* undefined stuff */
-#define MPI_CART        1       /* cartesian topology */
-#define MPI_GRAPH       2       /* graph topology */
-#define MPI_KEYVAL_INVALID  -1      /* invalid key value */
+#define MPI_ANY_SOURCE         -1      /* match any source rank */
+#define MPI_PROC_NULL          -2      /* rank of null process */
+#define MPI_ROOT               -4
+#define MPI_CANCEL_SOURCE      -3      /* successful cancel */
+#define MPI_ANY_TAG            -1      /* match any message tag */
+#define MPI_GER_TAG            -2      /* used for GER protocol */
+#define MPI_MERGE_TAG          -3      /* used to merge inter-comm */
+#define MPI_MAX_PROCESSOR_NAME 256     /* max proc. name length */
+#define MPI_MAX_ERROR_STRING   256     /* max error message length */
+#define MPI_MAX_OBJECT_NAME    64      /* max object name length */
+#define MPI_UNDEFINED          -32766  /* undefined stuff */
+#define MPI_CART               1       /* cartesian topology */
+#define MPI_GRAPH              2       /* graph topology */
+#define MPI_KEYVAL_INVALID     -1      /* invalid key value */
 
 /*
  * More constants
- * JMS: Copied straight from L7 -- feel free to change
- * JMS: Some of these are probably L7-specific and should be deleted
+ * JMS: Copied straight from LAM -- feel free to change
+ * JMS: Some of these are probably LAM-specific and should be deleted
  */
-#define MPI_BOTTOM      ((void *) 0)    /* base reference address */
-#define MPI_BSEND_OVERHEAD  40      /* size of bsend header + ptr */
-#define MPI_MAX_INFO_KEY    36      /* max info key length */
-#define MPI_MAX_INFO_VAL    256     /* max info value length */
-#define MPI_ARGV_NULL       ((char **) 0)   /* NULL argument vector */
-#define MPI_ARGVS_NULL      ((char ***) 0)  /* NULL argument vectors */
-#define MPI_ERRCODES_IGNORE ((void *) 0)    /* don't return error codes */
-#define MPI_MAX_PORT_NAME       36              /* max port name length */
-#define MPI_MAX_NAME_LEN    MPI_MAX_PORT_NAME /* max port name length */
-#define MPI_ORDER_C     0       /* C row major order */
-#define MPI_ORDER_FORTRAN   1       /* Fortran column major order */
-#define MPI_DISTRIBUTE_BLOCK    0       /* block distribution */
-#define MPI_DISTRIBUTE_CYCLIC   1       /* cyclic distribution */
-#define MPI_DISTRIBUTE_NONE     2       /* not distributed */
-#define MPI_DISTRIBUTE_DFLT_DARG (-1)       /* default distribution arg */
+#define MPI_BOTTOM               ((void *) 0)    /* base reference address */
+#define MPI_BSEND_OVERHEAD       40      /* size of bsend header + ptr */
+#define MPI_MAX_INFO_KEY         36      /* max info key length */
+#define MPI_MAX_INFO_VAL         256     /* max info value length */
+#define MPI_ARGV_NULL            ((char **) 0)   /* NULL argument vector */
+#define MPI_ARGVS_NULL           ((char ***) 0)  /* NULL argument vectors */
+#define MPI_ERRCODES_IGNORE      ((void *) 0)    /* don't return error codes */
+#define MPI_MAX_PORT_NAME        36      /* max port name length */
+#define MPI_MAX_NAME_LEN         MPI_MAX_PORT_NAME /* max port name length */
+#define MPI_ORDER_C              0       /* C row major order */
+#define MPI_ORDER_FORTRAN        1       /* Fortran column major order */
+#define MPI_DISTRIBUTE_BLOCK     0       /* block distribution */
+#define MPI_DISTRIBUTE_CYCLIC    1       /* cyclic distribution */
+#define MPI_DISTRIBUTE_NONE      2       /* not distributed */
+#define MPI_DISTRIBUTE_DFLT_DARG (-1)    /* default distribution arg */
 #define MPI_TAG_UB_VALUE (0x7fffffff)
+
+/*
+ * Since these values are arbitrary to Open MPI, we might as well make
+ * them the same as ROMIO for ease of mapping.  These values taken
+ * from ROMIO's mpio.h file.
+ */
+#define MPI_MODE_CREATE              1  /* ADIO_CREATE */ 
+#define MPI_MODE_RDONLY              2  /* ADIO_RDONLY */
+#define MPI_MODE_WRONLY              4  /* ADIO_WRONLY  */
+#define MPI_MODE_RDWR                8  /* ADIO_RDWR  */
+#define MPI_MODE_DELETE_ON_CLOSE    16  /* ADIO_DELETE_ON_CLOSE */
+#define MPI_MODE_UNIQUE_OPEN        32  /* ADIO_UNIQUE_OPEN */
+#define MPI_MODE_EXCL               64  /* ADIO_EXCL */
+#define MPI_MODE_APPEND            128  /* ADIO_APPEND */
+#define MPI_MODE_SEQUENTIAL        256  /* ADIO_SEQUENTIAL */
+
+#define MPI_DISPLACEMENT_CURRENT   -54278278
+
+#define MPI_SEEK_SET            600
+#define MPI_SEEK_CUR            602
+#define MPI_SEEK_END            604
+
+#define MPI_MAX_DATAREP_STRING  128
+
 
 /*
  * Predefined attribute keyvals
@@ -406,7 +440,7 @@ extern struct ompi_errhandler_t ompi_mpi_errhandler_null;
 extern struct ompi_errhandler_t ompi_mpi_errors_are_fatal;
 extern struct ompi_errhandler_t ompi_mpi_errors_return;
 
-extern struct ompi_file_t ompi_file_null;
+extern struct ompi_file_t ompi_mpi_file_null;
 
 extern struct ompi_info_t ompi_mpi_info_null;
 

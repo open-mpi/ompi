@@ -9,6 +9,7 @@
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
 #include "info/info.h"
+#include "file/file.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_File_set_info = PMPI_File_set_info
@@ -23,15 +24,32 @@ static const char FUNC_NAME[] = "MPI_File_set_info";
 
 int MPI_File_set_info(MPI_File fh, MPI_Info info)
 {
-  if (MPI_PARAM_CHECK) {
-    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == info || ompi_info_is_freed(info)) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
-                                    FUNC_NAME);
+    int rc;
+
+    if (MPI_PARAM_CHECK) {
+        rc = MPI_SUCCESS;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (ompi_file_invalid(fh)) {
+            fh = MPI_FILE_NULL;
+            rc = MPI_ERR_FILE;
+        }
+        OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
-  }
 
-  /* This function is not yet implemented */
+    /* Call the back-end io component function */
 
-  return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    switch (fh->f_io_version) {
+    case MCA_IO_BASE_V_1_0_0:
+        rc = fh->f_io_selected_module.v1_0_0.
+            io_module_file_set_info(fh, info);
+        break;
+
+    default:
+        rc = MPI_ERR_INTERN;
+        break;
+    }
+
+    /* All done */
+    
+    OMPI_ERRHANDLER_RETURN(rc, fh, rc, FUNC_NAME);
 }

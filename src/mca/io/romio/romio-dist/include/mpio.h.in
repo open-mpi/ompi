@@ -13,6 +13,10 @@
 
 #include "mpi.h"
 
+/* Open MPI: We need to rename almost all of these functions, as well
+   a the types to be names that conform to the prefix rule */
+#include "io_romio_conv.h"
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
@@ -231,8 +235,12 @@ int MPI_Type_create_darray(int size, int rank, int ndims,
 #endif
 #endif
 /* above needed for some versions of mpi.h in MPICH!! */
+/* Open MPI: I can't seem to make these #define properly.  Oh well --
+   we don't need them anyway :-( */
+#if 0
 MPI_File MPI_File_f2c(MPI_Fint fh);
 MPI_Fint MPI_File_c2f(MPI_File fh);
+#endif
 
 
 /* The foll. functions are required, because an MPIO_Request object
@@ -271,8 +279,11 @@ int MPI_Info_free(MPI_Info *info);
 #endif
 #endif
 /* above needed for some versions of mpi.h in MPICH!! */
+/* Open MPI: we don't need these in ROMIO */
+#if 0
 MPI_Fint MPI_Info_c2f(MPI_Info info);
 MPI_Info MPI_Info_f2c(MPI_Fint info);
+#endif
 #endif
 
 #endif   /* HAVE_PRAGMA_HP_SEC_DEF */
@@ -280,6 +291,8 @@ MPI_Info MPI_Info_f2c(MPI_Fint info);
 
 /**************** BINDINGS FOR THE PROFILING INTERFACE ***************/
 
+/* Open MPI: We don't want any of the profiling layer */
+#if 0
 
 /* Section 9.2 */
 int PMPI_File_open(MPI_Comm comm, char *filename, int amode, 
@@ -440,5 +453,7 @@ MPI_Info PMPI_Info_f2c(MPI_Fint info);
 #if defined(__cplusplus)
 }
 #endif
+
+#endif /* Open MPI: We don't want any of the profiling layer */
 
 #endif

@@ -18,6 +18,7 @@
 #include "mca/pml/pml.h"
 #include "mca/pml/base/base.h"
 #include "mca/mpool/base/base.h"
+#include "mca/io/base/base.h"
 
 
 /*
@@ -69,9 +70,15 @@ int mca_base_init_select_components(int requested,
   allow_multi_user_threads &= user_threads;
   have_hidden_threads |= hidden_threads;
 
-
   if (OMPI_SUCCESS != mca_topo_base_find_available(&user_threads, 
                                                    &hidden_threads)) {
+    return OMPI_ERROR;
+  }
+  allow_multi_user_threads &= user_threads;
+  have_hidden_threads |= hidden_threads;
+
+  if (OMPI_SUCCESS != mca_io_base_find_available(&user_threads, 
+                                                 &hidden_threads)) {
     return OMPI_ERROR;
   }
   allow_multi_user_threads &= user_threads;

@@ -2,23 +2,109 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+include $(top_ompi_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = -DHAVE_MPI_INFO \
         -I$(top_ompi_builddir)/src/include \
         -I$(top_ompi_srcdir)/src \
         -I$(top_ompi_srcdir)/src/include
 
-SUBDIRS = common ad_ufs ad_nfs #ad_pvfs ad_xfs
+# Conditionals whether to build each subdir or not
+
+if BUILD_HFS
+HFS_DIR = ad_hfs
+HFS_LIB = ad_hfs/libadio_hfs.la
+else
+HFS_DIR =
+HFS_LIB =
+endif
+
+if BUILD_NFS
+NFS_DIR = ad_nfs
+NFS_LIB = ad_nfs/libadio_nfs.la
+else
+NFS_DIR =
+NFS_LIB =
+endif
+
+# Currently disabled
+#if BUILD_NTFS
+#NTFS_DIR = ad_ntfs
+#NTFS_LIB = ad_ntfs/libadio_ntfs.la
+#else
+#NTFS_DIR =
+#NTFS_LIB =
+#endif
+
+if BUILD_PFS
+PFS_DIR = ad_pfs
+PFS_LIB = ad_pfs/libadio_pfs.la
+else
+PFS_DIR =
+PFS_LIB =
+endif
+
+if BUILD_PIOFS
+PIOFS_DIR = ad_piofs
+PIOFS_LIB = ad_piofs/libadio_piofs.la
+else
+PIOFS_DIR =
+PIOFS_LIB =
+endif
+
+if BUILD_PVFS
+PVFS_DIR = ad_pvfs
+PVFS_LIB = ad_pvfs/libadio_pvfs.la
+else
+PVFS_DIR =
+PVFS_LIB =
+endif
+
+if BUILD_SFS
+SFS_DIR = ad_sfs
+SFS_LIB = ad_sfs/libadio_sfs.la
+else
+SFS_DIR =
+SFS_LIB =
+endif
+
+if BUILD_TESTFS
+TESTFS_DIR = ad_testfs
+TESTFS_LIB = ad_testfs/libadio_testfs.la
+else
+TESTFS_DIR =
+TESTFS_LIB =
+endif
+
+if BUILD_UFS
+UFS_DIR = ad_ufs
+UFS_LIB = ad_ufs/libadio_ufs.la
+else
+UFS_DIR =
+UFS_LIB =
+endif
+
+if BUILD_XFS
+XFS_DIR = ad_xfs
+XFS_LIB = ad_xfs/libadio_xfs.la
+else
+XFS_DIR =
+XFS_LIB =
+endif
+
+SUBDIRS = common include \
+        $(HFS_DIR) $(NFS_DIR) $(NTFS_DIR) $(PFS_DIR) $(PIOFS_DIR) \
+        $(PVFS_DIR) $(SFS_DIR) $(TESTFS_DIR) $(UFS_DIR) $(XFS_DIR)
+DIST_SUBDIRS = common include \
+        ad_hfs ad_nfs ad_ntfs ad_pfs ad_piofs ad_pvfs \
+        ad_sfs ad_testfs ad_ufs ad_xfs include
 
 # Library
-noinst_LTLIBRARIES = libmca_io_romio_romio_dist_adio.la
-libmca_io_romio_romio_dist_adio_la_SOURCES =
-libmca_io_romio_romio_dist_adio_la_LIBADD = \
-        common/libmca_io_romio_romio_dist_adio_common.la \
-        ad_ufs/libmca_io_romio_romio_dist_adio_ad_ufs.la \
-        ad_nfs/libmca_io_romio_romio_dist_adio_ad_nfs.la 
-	
-libmca_io_romio_romio_dist_adio_la_DEPENDENCIES = \
-        $(libmca_io_romio_romio_dist_adio_la_LIBADD)
-
+noinst_LTLIBRARIES = libadio.la
+libadio_la_SOURCES =
+libadio_la_LIBADD = \
+        common/libadio_common.la \
+        $(HFS_LIB) $(NFS_LIB) $(NTFS_LIB) $(PFS_LIB) $(PIOFS_LIB) \
+        $(PVFS_LIB) $(SFS_LIB) $(TESTFS_LIB) $(UFS_LIB) $(XFS_LIB)
+libadio_la_DEPENDENCIES = \
+        $(adio_la_LIBADD)

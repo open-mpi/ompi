@@ -44,7 +44,14 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
        out of ompi_file_open(), invoke the error handler on that.  If
        not, invoke the error handler on MPI_FILE_NULL. */
 
+    /* Create an empty MPI_File handle */
+
     *fh = MPI_FILE_NULL;
     rc = ompi_file_open(comm, filename, amode, info, fh);
+
+    /* Creating the file handle also selects a component to use,
+       creates a module, and calls file_open() on the module.  So
+       we're good to go. */
+
     OMPI_ERRHANDLER_RETURN(rc, *fh, rc, FUNC_NAME);
 }

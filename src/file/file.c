@@ -7,6 +7,7 @@
 #include "file/file.h"
 #include "class/ompi_list.h"
 #include "mpi/runtime/params.h"
+#include "mca/io/base/base.h"
 
 
 /*
@@ -62,13 +63,17 @@ int ompi_file_init(void)
 
 
 /*
- * Create a file handle
+ * Back end to MPI_FILE_OPEN
  */
 int ompi_file_open(ompi_communicator_t *comm, char *filename, 
                    int amode, ompi_info_t *info, ompi_file_t **fh)
 {
+    int ret;
     ompi_file_t *file;
 
+    /* JMS: This is problematic -- need this to be as large as ROMIO
+       needs to to be, or we need an additional pointer to hang stuff
+       off :-( */
     file = OBJ_NEW(ompi_file_t);
     if (NULL == file) {
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -78,12 +83,30 @@ int ompi_file_open(ompi_communicator_t *comm, char *filename,
 
     file->f_comm = comm;
     OBJ_RETAIN(comm);
-    file->f_filename = strdup(filename);
+
+    if (MPI_INFO_NULL != info) {
+        if (OMPI_SUCCESS != (ret = ompi_info_dup(info, &file->f_info))) {
+            OBJ_RELEASE(file);
+            return ret;
+        }
+    } else {
+        file->f_info = MPI_INFO_NULL;
+        OBJ_RETAIN(MPI_INFO_NULL);
+    }
+
     file->f_amode = amode;
+    file->f_filename = strdup(filename);
+    if (NULL == file->f_filename) {
+        OBJ_RELEASE(file);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     /* Select a module and actually open the file */
 
-    /* JMS fill in here */
+    if (OMPI_SUCCESS != (ret = mca_io_base_file_select(file, NULL))) {
+        OBJ_RELEASE(file);
+        return ret;
+    }
 
     /* All done */
 
@@ -93,13 +116,14 @@ int ompi_file_open(ompi_communicator_t *comm, char *filename,
 
 
 /*
- * Close a file handle
+ * Back end to MPI_FILE_CLOSE.
  */
 int ompi_file_close(ompi_file_t **file) 
 {
     (*file)->f_flags |= OMPI_FILE_ISCLOSED;
     OBJ_RELEASE(*file);
     *file = MPI_FILE_NULL;
+
     return OMPI_SUCCESS;
 }
 
@@ -174,7 +198,7 @@ static void file_constructor(ompi_file_t *file)
     file->f_comm = NULL;
     file->f_filename = NULL;
     file->f_amode = 0;
-    file->errhandler_type = OMPI_ERRHANDLER_TYPE_FILE;
+    file->f_info = NULL;
 
     /* Initialize flags */
 
@@ -191,6 +215,7 @@ static void file_constructor(ompi_file_t *file)
        be changed by invoking MPI_FILE_SET_ERRHANDLER on
        MPI_FILE_NULL). */
 
+    file->errhandler_type = OMPI_ERRHANDLER_TYPE_FILE;
     if (file != &ompi_mpi_file_null) {
         file->error_handler = ompi_mpi_file_null.error_handler;
     } else {
@@ -200,10 +225,10 @@ static void file_constructor(ompi_file_t *file)
 
     /* Initialize the module */
 
-    file->f_io_version = OMPI_IO_VERSION_NONE;
+    file->f_io_version = MCA_IO_BASE_V_NONE;
     memset(&(file->f_io_selected_module), 0, 
            sizeof(file->f_io_selected_module));
-    file->f_selected_data = NULL;
+    file->f_io_selected_data = NULL;
 
     /* If the user doesn't want us to ever free it, then add an extra
        RETAIN here */
@@ -222,19 +247,12 @@ static void file_destructor(ompi_file_t *file)
     /* Finalize the module */
 
     switch (file->f_io_version) {
-    case OMPI_IO_VERSION_1_0_0:
-#if 0
-        /* JMS need to implement */
-        file->f_io_selected_module.v1_0_0.iom_finalize(file);
-#endif
+    case MCA_IO_BASE_V_1_0_0:
+        file->f_io_selected_module.v1_0_0.io_module_file_close(file);
         break;
-        
-    case OMPI_IO_VERSION_2_0_0:
-        /* JMS fill in here */
-        break;
-        
+
     default:
-        /* All other cases are uninitialized or MPI_FILE_NULL */
+        /* Should never get here */
         break;
     }
     
@@ -258,6 +276,13 @@ static void file_destructor(ompi_file_t *file)
         OBJ_RELEASE(file->error_handler);
 #if OMPI_ENABLE_DEBUG
         file->error_handler = NULL;
+#endif
+    }
+
+    if (NULL != file->f_info) {
+        OBJ_RELEASE(file->f_info);
+#if OMPI_ENABLE_DEBUG
+        file->f_info = NULL;
 #endif
     }
 

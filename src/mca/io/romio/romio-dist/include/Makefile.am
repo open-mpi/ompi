@@ -2,8 +2,7 @@
 # $HEADER$
 #
 
-include $(top_srcdir)/config/Makefile.options
+include $(top_ompi_srcdir)/config/Makefile.options
 
-include_HEADERS = \
-          mpio_def.h mpio.h
+noinst_HEADERS = mpio.h mpio.h
 

@@ -1,3 +1,105 @@
+# Open MPI: Modifications to this file were done on an "let's do the
+# minimum possible" basis, not so that we can skip on the work or
+# provide any less functionality, but more from a perspective that we
+# want to be able to import new versions of ROMIO in as easy a fashion
+# as possible.  Hence, there are some things in this file that are
+# irrelevant / unnecessary in an Open MPI environment, but are
+# harmless and are left here solely for the sake of ease of future
+# patching/importing.
+
+# Open MPI: added AC#INIT, AC#PREREQ, and AM#INIT_AUTOMAKE
+AC_INIT
+AC_PREREQ(2.58)
+AM_INIT_AUTOMAKE(io-romio, 1.0.0, 'no')
+
+# Open MPI: added AH_TOP
+AH_TOP([/*
+ *  $HEADER$
+ *
+ *  (C) 2001 by Argonne National Laboratory.
+ *      See COPYRIGHT in top-level directory.
+ */
+])
+
+# Open MPI: added a bunch of AH templates.  Could go manually edit all
+# AC_DEFINE's down below, but this approach will be significantly
+# easier to port forward to future versions of ROMIO.
+
+AH_TEMPLATE([NO_AIO], [Whether we have/want to use libaio or not])
+AH_TEMPLATE([AIO_SUN], [Whether we have Sun's libaio or not])
+AH_TEMPLATE([SOLARIS], [Whether we're on Solaris or not])
+AH_TEMPLATE([NO_FD_IN_AIOCB], [On RS600, set this if we have aio (?)])
+AH_TEMPLATE([AIO_HANDLE_IN_AIOCB], [On RS600, set this if we have aio (?)])
+AH_TEMPLATE([AIX], [Whether we're on AIX or not])
+AH_TEMPLATE([PARAGON], [Whether we're on Paragon or not])
+AH_TEMPLATE([FREEBSD], [Whether we're on FreeBSD or not])
+AH_TEMPLATE([LINUX], [Whether we're on Linux or not])
+AH_TEMPLATE([NEEDS_AIOCB_T], [Whether we need to define aiocb_t type or not])
+AH_TEMPLATE([SX4], [Whether we are on SX4 or not])
+AH_TEMPLATE([HPUX], [Whether we are on HPUX or not])
+AH_TEMPLATE([SPPUX], [Whether we are on SPPUX or not])
+AH_TEMPLATE([AIO_PRIORITY_DEFAULT], [Whether we have AIO priority default or not])
+AH_TEMPLATE([DEC], [Whether we are on DEC or not])
+AH_TEMPLATE([CRAY], [Whether we are on Cray or not])
+AH_TEMPLATE([MPISGI], [Will always be undefined / 0])
+AH_TEMPLATE([HAVE_MPI_COMBINERS], [Whether we have SGI MPI or not])
+AH_TEMPLATE([NO_MPI_SGI_type_is_contig], [Whether we have SGI MPI or not])
+AH_TEMPLATE([IRIX], [Whether we are on IRIX or not])
+AH_TEMPLATE([AIO_SIGNOTIFY_NONE], [Whether AIO has SIGNOTIFY or not])
+AH_TEMPLATE([HAVE_MPI_LONG_LONG_INT], [Whether Open MPI has MPI_LONG_LONG_INT or not])
+AH_TEMPLATE([HAVE_MPI_INFO], [Whether Open MPI has MPI_INFO or not])
+AH_TEMPLATE([HAVE_MPI_DARRAY_SUBARRAY], [Whether Open MPI has MPI_DARRAY_SUBARRAY or not])
+AH_TEMPLATE([HAVE_WEAK_SYMBOLS], [Whether we have weak symbols or not])
+AH_TEMPLATE([HAVE_PRAGMA_WEAK], [Whether we have #pragma weak or not])
+AH_TEMPLATE([HAVE_PRAGMA_HP_SEC_DEF], [Whether we have #pragma sec_def or not])
+AH_TEMPLATE([HAVE_PRAGMA_CRI_DUP], [Whether we have #pragma cri_dup or not])
+AH_TEMPLATE([NFS], [Building NFS support or not])
+AH_TEMPLATE([UFS], [Building UFS support or not])
+AH_TEMPLATE([HFS], [Building HFS support or not])
+AH_TEMPLATE([SFS], [Building SFS support or not])
+AH_TEMPLATE([XFS], [Building XFS support or not])
+AH_TEMPLATE([ROMIO_PVFS], [Building PVFS support or not])
+AH_TEMPLATE([PFS], [Building PFS support or not])
+AH_TEMPLATE([ROMIO_TESTFS], [Building ROMIO testfs support or not])
+AH_TEMPLATE([PIOFS], [Building PIOFS support or not])
+AH_TEMPLATE([NEEDS_MPI_TEST], [Will always be undefined / 0])
+AH_TEMPLATE([MPICH], [Will always be undefined / 0])
+AH_TEMPLATE([MPILAM], [Will always be undefined / 0])
+AH_TEMPLATE([MPIHP], [Will always be undefined / 0])
+AH_TEMPLATE([HAVE_STATUS_SET_BYTES], [Will always be defined / 1])
+AH_TEMPLATE([PRINT_ERR_MSG], [Will always be undefined / 0])
+
+AH_TEMPLATE([HAVE_MPI_OFFSET], [Will always be defined / 1])
+AH_TEMPLATE([MPI_FILE_DEFINED], [Will always be undefined / 0])
+AH_TEMPLATE([PRINT_ERROR_MSG], [Will always be undefined])
+
+# Open MPI: this configure script doesn't seem to define these
+# anywhere, so just do them manually here because "we know better"
+# (i.e., Open MPI can be hard-wired to these values).
+AC_DEFINE(HAVE_MPI_OFFSET, 1)
+
+# Open MPI: look for top Open MPI directory
+AC_MSG_CHECKING([for Open MPI support files])
+if test -f "$srcdir/../../../../../config/mca_configure.ac"; then
+
+    # This is needed for VPATH builds, so that it will -I the
+    # appropriate include directory (don't know why automake
+    # doesn't do this # automatically).
+
+    top_ompi_srcdir='$(top_srcdir)/../../../../..'
+    top_ompi_builddir='$(top_builddir)/../../../../..'
+    OMPI_CFLAGS='-I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/include -I$(top_ompi_builddir)/src'
+    found_ompi_headers=1
+    AC_MSG_RESULT([in Open MPI source tree -- good])
+    AC_SUBST(top_ompi_srcdir)
+    AC_SUBST(top_ompi_builddir)
+else
+    AC_MSG_RESULT([not found])
+    AC_MSG_WARN([*** Could not find Open MPI support files])
+    AC_MSG_WARN([*** Can only build this version of ROMIO in an Open MPI source tree])
+    AC_MSG_ERROR([*** Cannot continue])
+fi
+
 dnl This is an autoconf script. To rebuild the "configure" script 
 dnl from this, execute the command "autoconf" in the directory containing 
 dnl this script.  You must have autoconf version 1.4 or later, 
@@ -120,12 +222,15 @@ available, for building the profiling interface.
 "
 #
 echo " "
-echo "Configuring ROMIO Version 1.2.3"
+# Open MPI: fix version number and append "(Open MPI)"
+echo "Configuring ROMIO Version 1.2.5.1 (Open MPI)"
 echo " "
-CONFIGURE_ARGS="$*"
-if test -n "$CONFIGURE_ARGS" ; then
-    echo "Configuring with args $CONFIGURE_ARGS"
-fi
+# Open MPI: modern versions of GNU auto tools pass in some parameters
+# that we don't want to see, so don't look at them at all.
+#CONFIGURE_ARGS="$*"
+#if test -n "$CONFIGURE_ARGS" ; then
+#    echo "Configuring with args $CONFIGURE_ARGS"
+#fi
 #
 # rm -f include/*.h
 #
@@ -184,12 +289,25 @@ TEST_F77=""
 TRY_WEAK_SYMBOLS=1
 #
 known_filesystems="nfs ufs pfs piofs pvfs testfs xfs hfs sfs"
-known_mpi_impls="mpich_mpi sgi_mpi hp_mpi cray_mpi lam_mpi"
+# Open MPI: added "open_mpi"
+known_mpi_impls="mpich_mpi sgi_mpi hp_mpi cray_mpi lam_mpi open_mpi"
 #
 # Defaults
 enable_aio=notgiven
-#
-for arg
+# Open MPI: rather than update the below to use modern GNU auto tools
+# options for getting command line params, just set the defaults that
+# we want here
+FROM_MPICH=1
+MPI="open_mpi"
+NOF77=1
+NOPROFILE=1
+TRY_WEAK_SYMBOLS=0
+# Open MPI: Original form would traverse through $*.  But since modern
+# GNU auto tools pass in opaque command line params that we should not
+# see, add "in $bogus" so that this big statement traverses through
+# nothing (and is effectively ignored).
+#for arg
+for arg in $bogus
 do
 case $arg in
   -arch=* | --arch=*)
@@ -353,7 +471,8 @@ done
 ]
 #
 rm -f config.log
-AC_PREPARE()
+# Open MPI: removed AC#PREPARE
+#AC#_PREPARE()
 #
 dnl
 dnl Place the definitions into a configuration file, rather than sedding
@@ -364,13 +483,17 @@ dnl comment out the line that follows it (CFLAGS="$CFLAGS -DHAVE_ROMIOCONF_H").
 dnl
 AC_CONFIG_HEADER(adio/include/romioconf.h)
 #
-PAC_FIXUP_SRCDIR
+# Open MPI: machinations with the srcdir are no longer necessary in
+# modern versions of the GNU auto tools
+dnl PAC_FIXUP_SRCDIR
 # Get top_srcdir
-if test -z "$top_srcdir" ; then
-    top_srcdir=$srcdir
-fi
+#if test -z "$top_srcdir" ; then
+#    top_srcdir=$srcdir
+#fi
 #
-PAC_MAKE_VPATH
+# Open MPI: machinations with VPATH are no longer necessary in modern
+# versions of the GNU auto tools.
+dnl PAC_MAKE_VPATH
 #
 # Check that an arch was set
 # If it wasn't set, try to guess using "util/tarch"
@@ -407,35 +530,37 @@ fi
 echo "ROMIO home directory is $ROMIO_HOME_TRIAL"
 ROMIO_HOME=$ROMIO_HOME_TRIAL
 #
+# Open MPI: These are no longer necessary with modern versions of the
+# GNU auto tools.
 # Create the "autoconf" style directory names...
 #
-if test -z "$prefix" ; then prefix=$PREFIX ; fi
-if test -z "$prefix" ; then
-    prefix=$ROMIO_HOME
-fi
-AC_SUBST(prefix)
-if test -z "$exec_prefix" ; then exec_prefix='${prefix}' ; fi
+# if test -z "$prefix" ; then prefix=$PREFIX ; fi
+# if test -z "$prefix" ; then
+#     prefix=$ROMIO_HOME
+# fi
+dnl AC_SUBST(prefix)
+# if test -z "$exec_prefix" ; then exec_prefix='${prefix}' ; fi
 # exec_prefix is the prefix for directories containing machine-specific
 # files such as libraries and executables.  For the USER
-AC_SUBST(exec_prefix)
-includedir="${prefix}/include"
-AC_SUBST(includedir)
+dnl AC_SUBST(exec_prefix)
+#includedir="${prefix}/include"
+dnl AC_SUBST(includedir)
 # bindir is for executable programs for the USER
-if test -z "$bindir" ; then bindir='${exec_prefix}/bin' ; fi
-AC_SUBST(bindir)
+#if test -z "$bindir" ; then bindir='${exec_prefix}/bin' ; fi
+dnl AC_SUBST(bindir)
 # sbindir is for executable programs for the ADMINISTRATOR
-if test -z "$sbindir" ; then sbindir='${exec_prefix}/sbin' ; fi
-AC_SUBST(sbindir)
+#if test -z "$sbindir" ; then sbindir='${exec_prefix}/sbin' ; fi
+dnl AC_SUBST(sbindir)
 # libdir is for libraries for the USER
-if test -z "$libdir" ; then libdir='${exec_prefix}/lib' ; fi
-AC_SUBST(libdir)
+#if test -z "$libdir" ; then libdir='${exec_prefix}/lib' ; fi
+dnl AC_SUBST(libdir)
 # mandir is the root for the man pages
-if test -z "$mandir" ; then mandir='${prefix}/man' ; fi
-AC_SUBST(mandir)
-if test -z "$docdir" ; then docdir='${prefix}/doc' ; fi
-AC_SUBST(docdir)
-if test -z "$htmldir" ; then htmldir='${prefix}/www' ; fi
-AC_SUBST(htmldir) 
+#if test -z "$mandir" ; then mandir='${prefix}/man' ; fi
+dnl AC_SUBST(mandir)
+# if test -z "$docdir" ; then docdir='${prefix}/doc' ; fi
+dnl AC_SUBST(docdir)
+#if test -z "$htmldir" ; then htmldir='${prefix}/www' ; fi
+dnl AC_SUBST(htmldir) 
 #
 # check for valid file system
 if test -n "$FILE_SYSTEM" ; then
@@ -493,20 +618,28 @@ if test $FROM_MPICH = 0 ; then
    fi
 fi
 #
-#
-AR="${AR:-ar} cr$AR_LOCAL"
-if test -z "$RANLIB" ; then
+# Open MPI: need to actually get the C compiler
+CFLAGS_save="$CFLAGS"
+AC_PROG_CC
+CFLAGS="$CFLAGS_save"
+
+# Open MPI: this stuff is not necessary with modern versions of the
+# GNU auto tools.
+#AR="${AR:-ar} cr$AR_LOCAL"
+#if test -z "$RANLIB" ; then
     AC_PROG_RANLIB
-fi
-MAKE=${MAKE:-make}
+#fi
+# Open MPI: We should not be using this.
+#MAKE=${MAKE:-make}
 #
 # USER_CFLAGS and USER_FFLAGS are used only in test/Makefile.in
 if test $DEBUG = "yes"; then
     USER_CFLAGS="$CFLAGS -g"
     USER_FFLAGS="$FFLAGS -g"
-else
-    USER_CFLAGS="$CFLAGS -O"
-    USER_FFLAGS="$FFLAGS -O"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#else
+#    USER_CFLAGS="$CFLAGS -O"
+#    USER_FFLAGS="$FFLAGS -O"
 fi
 #
 if test -n "$arch_sun4" ; then 
@@ -515,10 +648,13 @@ if test -n "$arch_sun4" ; then
     if test $DEBUG = "yes"; then
 	if test "$CC" = "gcc"; then
            dnl CFLAGS="$CFLAGS -g -O -Wall -Wstrict-prototypes -Wmissing-prototypes -DAIO_SUN"
-           CFLAGS="$CFLAGS -g -O -Wall -Wstrict-prototypes -Wmissing-prototypes"
-	else
-           dnl CFLAGS="$CFLAGS -g -DAIO_SUN"
-           CFLAGS="$CFLAGS -g"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#           CFLAGS="$CFLAGS -g -O -Wall -Wstrict-prototypes -Wmissing-prototypes"
+           CFLAGS="$CFLAGS -g -Wall -Wstrict-prototypes -Wmissing-prototypes"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#    else 
+#        dnl CFLAGS="$CFLAGS -O -DAIO_SUN"
+#        CFLAGS="$CFLAGS -O"
         fi
     else 
         dnl CFLAGS="$CFLAGS -O -DAIO_SUN"
@@ -547,10 +683,13 @@ if test -n "$arch_solaris" || test -n "$arch_solaris86" ; then
     if test $DEBUG = "yes"; then
         if test "$CC" = "gcc" ; then
             dnl CFLAGS="$CFLAGS -g -O -Wall -Wstrict-prototypes -Wmissing-prototypes -DAIO_SUN"
-            CFLAGS="$CFLAGS -g -O -Wall -Wstrict-prototypes -Wmissing-prototypes"
-        else 
-            dnl CFLAGS="$CFLAGS -g -v -DAIO_SUN"
-            CFLAGS="$CFLAGS -g -v"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#            CFLAGS="$CFLAGS -g -O -Wall -Wstrict-prototypes -Wmissing-prototypes"
+            CFLAGS="$CFLAGS -g -Wall -Wstrict-prototypes -Wmissing-prototypes"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#    else 
+#        dnl CFLAGS="$CFLAGS -O -DAIO_SUN"
+#        CFLAGS="$CFLAGS -O"
         fi
     else 
         dnl CFLAGS="$CFLAGS -O -DAIO_SUN"
@@ -603,9 +742,10 @@ if test -n "$arch_rs6000"; then
     if test $DEBUG = "yes"; then
         dnl CFLAGS="$CFLAGS -g -DNO_FD_IN_AIOCB -DAIO_HANDLE_IN_AIOCB"
         CFLAGS="$CFLAGS -g"
-    else 
-        dnl CFLAGS="$CFLAGS -O -DNO_FD_IN_AIOCB -DAIO_HANDLE_IN_AIOCB"
-        CFLAGS="$CFLAGS -O"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#    else 
+#        dnl CFLAGS="$CFLAGS -O -DNO_FD_IN_AIOCB -DAIO_HANDLE_IN_AIOCB"
+#        CFLAGS="$CFLAGS -O"
     fi
     # Check that aio is available (many systems appear to have aio
     # either installed improperly or turned off).
@@ -661,9 +801,12 @@ if test -n "$arch_paragon"; then
         CFLAGS="$CFLAGS -g"
     else 
 	if test "$CC" = "icc"; then
-           CFLAGS="$CFLAGS -Knoieee -Mvect -O3"
-	else
-           CFLAGS="$CFLAGS -O"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#           CFLAGS="$CFLAGS -Knoieee -Mvect -O3"
+           CFLAGS="$CFLAGS -Knoieee -Mvect"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#	else
+#           CFLAGS="$CFLAGS -O"
         fi
     fi
     AR="ar860 cr$AR_LOCAL"
@@ -697,9 +840,12 @@ if test -n "$arch_tflop" || test -n "$arch_tflops"; then
         CFLAGS="$CFLAGS -g $TFLOP_FLAGS"
     else
        if test "$CC" = "pgcc"; then
-           CFLAGS="$CFLAGS -Knoieee -Mvect -O3 $TFLOP_FLAGS"
-       else
-           CFLAGS="$CFLAGS -O $TFLOP_FLAGS"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#           CFLAGS="$CFLAGS -Knoieee -Mvect -O3 $TFLOP_FLAGS"
+           CFLAGS="$CFLAGS -Knoieee -Mvect $TFLOP_FLAGS"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#       else
+#           CFLAGS="$CFLAGS -O $TFLOP_FLAGS"
        fi
     fi
     AR="xar cr$AR_LOCAL"
@@ -723,6 +869,26 @@ if test -n "$arch_freebsd" || test -n "$arch_LINUX" || test -n "$arch_LINUX_ALPH
        dnl CFLAGS="$CFLAGS -DFREEBSD"
        AC_DEFINE(FREEBSD)
        PAC_HAVE_MOUNT_NFS
+       # Open MPI: Added the following to check for struct
+       # fsbuf.f_fstypename.  The previous approach did not work on
+       # OpenBSD 2.8.
+       if test "$ROMIO_HAVE_MOUNT_NFS" = "1"; then
+            AC_MSG_CHECKING(struct statfs.f_fstypename)
+            AC_COMPILE_CHECK([for language syntax],[#include <sys/param.h>
+#include <sys/mount.h>
+#include <string.h>],[
+  struct statfs f;
+  memset(&f, 0, sizeof(f));
+  strncmp("nfs", f.f_fstypename, 3);],
+  HAVE_STATFS_F_FSTYPENAME=1)
+            if test "$HAVE_STATFS_F_FSTYPENAME" = "1"; then
+                AC_MSG_RESULT([yes])
+            else
+                AC_MSG_RESULT([no])
+            fi
+        fi
+# Open MPI: section end
+
        longlongsize=${longlongsize:-0}
 # printf doesn't work properly and no integer*8 as far as I can tell
     else 
@@ -733,14 +899,17 @@ if test -n "$arch_freebsd" || test -n "$arch_LINUX" || test -n "$arch_LINUX_ALPH
     if test $DEBUG = "yes" ; then
 	if test "$CC" = "gcc" ; then
             dnl CFLAGS="$CFLAGS -g -O -Wall -Wstrict-prototypes -Wmissing-prototypes -DNO_AIO"
-            CFLAGS="$CFLAGS -g -O -Wall -Wstrict-prototypes -Wmissing-prototypes"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#            CFLAGS="$CFLAGS -g -O -Wall -Wstrict-prototypes -Wmissing-prototypes"
+            CFLAGS="$CFLAGS -g -Wall -Wstrict-prototypes -Wmissing-prototypes"
         else
 	    dnl CFLAGS="$CFLAGS -g -DNO_AIO"
 	    CFLAGS="$CFLAGS -g"
         fi
-    else 
-        dnl CFLAGS="$CFLAGS -O -DNO_AIO"
-        CFLAGS="$CFLAGS -O"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#    else 
+#        dnl CFLAGS="$CFLAGS -O -DNO_AIO"
+#        CFLAGS="$CFLAGS -O"
     fi
     if test "$enable_aio" != "yes" ; then
         AC_DEFINE(NO_AIO)
@@ -795,7 +964,8 @@ if test -n "$arch_SX4" ; then
     else
         USER_FFLAGS="$FFLAGS -Chopt"
         dnl CFLAGS="$CFLAGS -O -DNO_AIO -DSX4"
-        CFLAGS="$CFLAGS -O"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#        CFLAGS="$CFLAGS -O"
         FFLAGS="$FFLAGS -Chopt"
     fi
     AC_DEFINE(NO_AIO)
@@ -818,9 +988,11 @@ if test -n "$arch_hpux" || test -n "$arch_sppux" ; then
     if test $DEBUG = "yes"; then
         dnl CFLAGS="$CFLAGS -g +w1 -DNO_AIO"
         CFLAGS="$CFLAGS -g +w1"
-    else 
         dnl CFLAGS="$CFLAGS -O -DNO_AIO"
-        CFLAGS="$CFLAGS -O"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#    else 
+#        dnl CFLAGS="$CFLAGS -O -DNO_AIO"
+#        CFLAGS="$CFLAGS -O"
     fi
     AC_DEFINE(NO_AIO)
     RANLIB=":"
@@ -895,10 +1067,14 @@ if test -n "$arch_alpha" || test -n "$arch_ALPHA" ; then
     F77=${FC:-f77}
     if test $DEBUG = "yes"; then
         dnl CFLAGS="$CFLAGS -g -std1 -warnprotos -verbose -DAIO_PRIORITY_DEFAULT"
-        CFLAGS="$CFLAGS -g -std1 -warnprotos -verbose"
-    else 
-        dnl CFLAGS="$CFLAGS -O -DAIO_PRIORITY_DEFAULT"
-        CFLAGS="$CFLAGS -O"
+# Open MPI: it is not a valid assumption that on Alpha architectures
+# you are always using the alpha compilers
+#        CFLAGS="$CFLAGS -g -std1 -warnprotos -verbose"
+        CFLAGS="$CFLAGS -g -verbose"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#    else 
+#        dnl CFLAGS="$CFLAGS -O -DAIO_PRIORITY_DEFAULT"
+#        CFLAGS="$CFLAGS -O"
     fi
     AC_DEFINE(AIO_PRIORITY_DEFAULT)
     MPI_LIB="$MPI_LIB -laio"
@@ -928,9 +1104,10 @@ if test -n "$arch_CRAY" ; then
     if test $DEBUG = "yes"; then
         dnl CFLAGS="$CFLAGS -g -DNO_AIO"
         CFLAGS="$CFLAGS -g"
-    else 
-        dnl CFLAGS="$CFLAGS -O -DNO_AIO"
-        CFLAGS="$CFLAGS -O"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#    else 
+#        dnl CFLAGS="$CFLAGS -O -DNO_AIO"
+#        CFLAGS="$CFLAGS -O"
     fi
     AC_DEFINE(NO_AIO)
     RANLIB=":"
@@ -1000,8 +1177,9 @@ if test -n "$arch_IRIX"; then
     F77=${FC:-f77}
     if test $DEBUG = "yes"; then
         CFLAGS="$CFLAGS -g -fullwarn"
-    else 
-        CFLAGS="$CFLAGS -O"
+# Open MPI: Don't add any optflags; they come in from the top-level configure
+#    else 
+#        CFLAGS="$CFLAGS -O"
     fi
    if test $osversion = 4 ; then
 	RANLIB="ar ts"
@@ -1380,8 +1558,29 @@ TEST_LIBNAME=$LIBNAME
 MPIRUN=mpirun
 #
 # if MPICH, use mpicc in test programs
+# Open MPI: Force extra if clause for simiplified stuff in Open MPI
 #
-if test $FROM_MPICH = 1 ; then
+if test "$MPI" = "open_mpi"; then
+
+   # Open MPI does have the status set bytes functionality
+
+   AC_DEFINE(HAVE_STATUS_SET_BYTES)
+
+   # Used in the tests/ subdirectory for after ROMIO is built
+
+   TEST_CC=mpicc
+   TEST_F77=mpif77
+   MPIRUN=mpirun
+   MPI_LIB=
+   ROMIO_INCLUDE=
+   USER_CFLAGS=
+   USER_FFLAGS=
+   TEST_LIBNAME=
+
+#
+# if MPICH, use mpicc in test programs
+#
+elif test $FROM_MPICH = 1 ; then
    MPICH_HOME=`dirname $ROMIO_HOME`
    if test -z "$MPI_BIN_DIR" ; then MPI_BIN_DIR=$MPICH_HOME/bin ; fi
    TEST_CC=$MPI_BIN_DIR/mpicc
@@ -1416,6 +1615,20 @@ fi
 dnl CFLAGS="$CFLAGS $DEFS"
 CFLAGS="$CFLAGS -DHAVE_ROMIOCONF_H"
 #
+# Open MPI: we need libtool
+AM_PROG_LIBTOOL
+
+# Open MPI: setup the AM_CONDITIONALs to build the different adio devices
+AM_CONDITIONAL(BUILD_HFS, [test -n "`echo $FILE_SYSTEM | grep hfs`"])
+AM_CONDITIONAL(BUILD_NFS, test -n "`echo $FILE_SYSTEM | grep nfs`")
+AM_CONDITIONAL(BUILD_PFS, test -n "`echo $FILE_SYSTEM | grep pfs`")
+AM_CONDITIONAL(BUILD_PIOFS, test -n "`echo $FILE_SYSTEM | grep piofs`")
+AM_CONDITIONAL(BUILD_PVFS, test -n "`echo $FILE_SYSTEM | grep pvfs`")
+AM_CONDITIONAL(BUILD_SFS, test -n "`echo $FILE_SYSTEM | grep sfs`")
+AM_CONDITIONAL(BUILD_TESTFS, test -n "`echo $FILE_SYSTEM | grep testfs`")
+AM_CONDITIONAL(BUILD_UFS, test -n "`echo $FILE_SYSTEM | grep ufs`")
+AM_CONDITIONAL(BUILD_XFS, test -n "`echo $FILE_SYSTEM | grep xfs`")
+
 echo "setting CC to $CC"
 echo "setting F77 to $F77"
 echo "setting TEST_CC to $TEST_CC"
@@ -1423,7 +1636,11 @@ echo "setting TEST_F77 to $TEST_F77"
 echo "setting CFLAGS to $CFLAGS"
 echo "setting USER_CFLAGS to $USER_CFLAGS"
 echo "setting USER_FFLAGS to $USER_FFLAGS"
-#
+
+# Open MPI: Add on CFLAGS that we figured out up top.  They have
+# makefile macros in them, so we couldn't substitute them until now.
+CFLAGS="$CFLAGS $OMPI_CFLAGS "'-I$(top_builddir)/include'
+
 AC_SUBST(ARCH)
 AC_SUBST(FILE_SYSTEM)
 AC_SUBST(CC)
@@ -1481,36 +1698,66 @@ AC_SUBST(ROMIO_TCPPFLAGS)
 AC_SUBST(ROMIO_TFFLAGS)
 AC_SUBST(MPIRUN)
 AC_SUBST(FORTRAN_TEST)
-if test ! -d adio ; then mkdir adio ; fi
-if test ! -d adio/include ; then mkdir adio/include ; fi
-if test ! -d mpi2-other ; then mkdir mpi2-other ; fi
+# Open MPI: This is no longer necessary with modern versions of the
+# GNU auto tools.
+#if test ! -d adio ; then mkdir adio ; fi
+#if test ! -d adio/include ; then mkdir adio/include ; fi
+#if test ! -d mpi2-other ; then mkdir mpi2-other ; fi
 # 
+
 # Make sure we remove any configuration file incase there is out-of-date data.
 # We remove the version in include in case this is a vpath build
-rm -f adio/include/romioconf.h ${top_srcdir}/adio/include/romioconf.h 
+# Open MPI: This is no longer necessary with modern versions of the
+# GNU auto tools.
+#rm -f adio/include/romioconf.h ${top_srcdir}/adio/include/romioconf.h 
 #
 # Create makefiles for all of the adio devices.  Only the ones that 
 # are active will be called by the top level ROMIO make
-AC_OUTPUT(Makefile mpi-io/Makefile mpi2-other/info/Makefile \
-		   mpi2-other/array/Makefile adio/common/Makefile \
-		   test/Makefile test/misc.c test/large_file.c \
-		   test/runtests util/romioinstall include/mpio.h \
-		   include/mpiof.h \
-		   adio/ad_nfs/Makefile adio/ad_ufs/Makefile \
-		   adio/ad_xfs/Makefile adio/ad_hfs/Makefile \
-		   adio/ad_sfs/Makefile adio/ad_pfs/Makefile \
-		   adio/ad_testfs/Makefile adio/ad_pvfs/Makefile \
-		   adio/ad_piofs/Makefile )
-if test "$NOF77" = 0; then
-    CONFIG_FILES="$CONFIG_FILES mpi-io/fortran/Makefile mpi2-other/info/fortran/Makefile mpi2-other/array/fortran/Makefile test/fmisc.f test/fcoll_test.f test/pfcoll_test.f test/fperf.f"
-fi
-export CONFIG_FILES
-./config.status
-CONFIG_FILES=""
+# Open MPI: revamped the AC_OUTPUT lines to fit our Makefile.am's
+AC_CONFIG_FILES([
+	Makefile 
+	adio/Makefile
+	adio/ad_nfs/Makefile
+	adio/ad_ufs/Makefile
+	adio/ad_xfs/Makefile
+	adio/ad_hfs/Makefile
+	adio/ad_sfs/Makefile
+	adio/ad_pfs/Makefile
+	adio/ad_testfs/Makefile
+	adio/ad_pvfs/Makefile
+	adio/ad_piofs/Makefile
+	adio/common/Makefile
+	adio/include/Makefile
+
+	doc/Makefile
+
+	include/Makefile
+	include/mpio.h
+	include/mpiof.h
+
+	mpi-io/Makefile 
+
+	test/Makefile 
+	test/misc.c 
+	test/large_file.c
+	test/runtests 
+
+	util/Makefile
+])
+AC_OUTPUT
+# Open MPI: This is no longer necessary with modern versions of the
+# GNU auto tools.
+#if test "$NOF77" = 0; then
+#    CONFIG_FILES="$CONFIG_FILES mpi-io/fortran/Makefile mpi2-other/info/fortran/Makefile mpi2-other/array/fortran/Makefile test/fmisc.f test/fcoll_test.f test/pfcoll_test.f test/fperf.f"
+#fi
+#export CONFIG_FILES
+#./config.status
+#CONFIG_FILES=""
 # delete the first line created by configure in some files
-sed 1d util/romioinstall > util/tmp
-mv util/tmp util/romioinstall
-chmod 755 util/romioinstall
+# Open MPI: we're not using romioinstall
+#sed 1d util/romioinstall > util/tmp
+#mv util/tmp util/romioinstall
+#chmod 755 util/romioinstall
 if test "$NOF77" = 0; then
    sed 1d test/fcoll_test.f > test/tmp
    mv test/tmp test/fcoll_test.f

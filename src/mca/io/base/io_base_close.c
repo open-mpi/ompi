@@ -4,12 +4,34 @@
 
 #include "ompi_config.h"
 
+#include <stdio.h>
+
 #include "include/constants.h"
+#include "mca/mca.h"
+#include "mca/base/base.h"
+#include "mca/io/io.h"
 #include "mca/io/base/base.h"
 
 
 int mca_io_base_close(void)
 {
-    /* JMS More coming here soon */
+    /* Close all components that are still open.  This may be the opened
+     list (if we're in ompi_info), or it may be the available list (if
+     we're anywhere else). */
+
+    if (mca_io_base_components_opened_valid) {
+        mca_base_components_close(mca_io_base_output,
+                                  &mca_io_base_components_opened, NULL);
+        OBJ_DESTRUCT(&mca_io_base_components_opened);
+        mca_io_base_components_opened_valid = false;
+    } else if (mca_io_base_components_available_valid) {
+        mca_base_components_close(mca_io_base_output,
+                                  &mca_io_base_components_available, NULL);
+        OBJ_DESTRUCT(&mca_io_base_components_available);
+        mca_io_base_components_available_valid = false;
+    }
+
+    /* All done */
+
     return OMPI_SUCCESS;
 }
