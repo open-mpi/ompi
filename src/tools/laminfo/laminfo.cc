@@ -218,22 +218,22 @@ using namespace std;
 static void do_version(bool want_all, lam_cmd_line_t *cmd_line);
 static void show_lam_version(const string& scope);
 static void show_boot_version(const mca_base_module_t **boot_modules, 
-			      const string& which, const string& scope,
-			      const string& ver_type);
+				  const string& which, const string& scope,
+				  const string& ver_type);
 static void show_coll_version(const mca_base_module_t **coll_modules, 
-			      const string& which, const string& scope,
-			      const string& ver_type);
+				  const string& which, const string& scope,
+				  const string& ver_type);
 static void show_pml_version(const mca_base_module_t **pml_modules, 
-			     const string& which, const string& scope,
-			     const string& ver_type);
+				 const string& which, const string& scope,
+				 const string& ver_type);
 static void show_cr_version(const mca_base_module_t **cr_modules, 
                              const string& which, const string& scope,
                              const string& ver_type);
 static void show_mca_version(const mca_base_module_t *ls, const string& type,
-			     const string& scope, const string& ver_type);
+				 const string& scope, const string& ver_type);
 static string make_version_str(const string& scope,
-			       int major, int minor, int release, 
-			       int alpha, int beta, int cvs);
+				   int major, int minor, int release, 
+				   int alpha, int beta, int cvs);
 
 static void do_params(bool want_all);
 static void show_mca_params(const string& type, const string& module, 
@@ -430,8 +430,8 @@ main(int argc, char *argv[])
 // Determines the version information related to the lam modules
 // being used.
 // Accepts: 
-// 	- want_all: True if all modules' info is required.
-// 	- cmd_line: The constructed command line argument
+//	- want_all: True if all modules' info is required.
+//	- cmd_line: The constructed command line argument
 //
 
 static void
@@ -933,8 +933,8 @@ do_arch(lam_cmd_line_t *cmd_line)
 //
 // do_config
 // Accepts:
-// 	- want_all: boolean flag; TRUE -> display all options
-// 				  FALSE -> display selected options
+//	- want_all: boolean flag; TRUE -> display all options
+//				  FALSE -> display selected options
 //
 // This function displays all the options with which the current
 // installation of lam was configured. There are many options here 
