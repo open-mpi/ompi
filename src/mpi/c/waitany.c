@@ -1,7 +1,7 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
 
 /*
- * $HEADERS$
+ * $HEADER$
  */
 #include "ompi_config.h"
 #include <stdio.h>

@@ -1,5 +1,5 @@
 /*
- * $HEADERS$
+ * $HEADER$
  */
 
 #include "ompi_config.h"
