@@ -9,7 +9,7 @@
  */
 
 #include "lam_config.h"
-#include "coll_basic_config.h"
+#include "coll_basic.h"
 
 #include "mpi.h"
 #include "mca/mpi/coll/coll.h"
@@ -19,7 +19,7 @@
  * Public string showing the coll lam_basic module version number
  */
 const char *mca_coll_basic_module_version_string =
-  "LAM/MPI basic collective MCA module version " MCA_COLL_BASIC_VERSION;
+  "LAM/MPI basic collective MCA module version " MCA_coll_basic_FULL_VERSION;
 
 /*
  * Instantiate the public struct with all of our public information
@@ -40,9 +40,9 @@ const mca_coll_base_module_1_0_0_t mca_coll_basic_module = {
     /* Module name and version */
 
     "basic",
-    MCA_COLL_BASIC_MAJOR_VERSION,
-    MCA_COLL_BASIC_MINOR_VERSION,
-    MCA_COLL_BASIC_RELEASE_VERSION,
+    MCA_coll_basic_MAJOR_VERSION,
+    MCA_coll_basic_MINOR_VERSION,
+    MCA_coll_basic_RELEASE_VERSION,
 
     /* Module open and close functions */
 

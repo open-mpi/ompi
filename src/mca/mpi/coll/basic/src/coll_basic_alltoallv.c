@@ -3,7 +3,7 @@
  */
 
 #include "lam_config.h"
-#include "coll_basic_config.h"
+#include "coll_basic.h"
 
 #include <stdio.h>
 #include <errno.h>
