@@ -10,6 +10,7 @@
 #include "runtime/runtime.h"
 #include "util/output.h"
 #include "util/malloc.h"
+#include "util/sys_info.h"
 #include "threads/mutex.h"
 #include "event/event.h"
 
@@ -106,11 +107,10 @@ int ompi_init(int argc, char *argv[])
 
   ompi_malloc_init();
 
-  /* Other things that we'll probably need:
+  /* Get the local system information and populate the
+     ompi_system_info structure */
 
-     - session directory setup
-     - ...?
-  */
+  ompi_sys_info();
 
   /* All done */
 

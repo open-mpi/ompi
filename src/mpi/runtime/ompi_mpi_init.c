@@ -66,11 +66,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         return ret;
     }
 
-    /* Get the local system information and populate the
-       ompi_system_info structure */
-
-    ompi_sys_info();
-
     /* Become a OMPI process */
 
     if (OMPI_SUCCESS != (ret = ompi_init(argc, argv))) {
