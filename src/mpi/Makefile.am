@@ -5,7 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = communicator datatype interface
+SUBDIRS = communicator datatype interface runtime
 
 # If the --enable-single-library flag was given to configure, then the
 # user wants to merge liblam and libmpi into a single big, honkin'
@@ -23,11 +23,10 @@ endif
 lib_LTLIBRARIES = $(install_lib)
 noinst_LTLIBRARIES = $(convenience_lib)
 
-# To be added shortly
-#        communicator/libmpi_communicator.la 
 sources = \
         datatype/libmpi_datatype.la \
-        interface/libmpi_interface.la
+        interface/libmpi_interface.la \
+        runtime/libmpi_runtime.la
 
 libmpi_la_SOURCES =
 libmpi_la_LIBADD = $(sources)

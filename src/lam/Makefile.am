@@ -5,7 +5,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS	= ctnetwork lfc mem os threads util
+SUBDIRS	= ctnetwork lfc mem os runtime threads util
 
 headers = \
         atomic.h \
