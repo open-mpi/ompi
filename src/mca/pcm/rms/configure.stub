@@ -46,7 +46,7 @@ elif test "$with_rms" = "yes"; then
 else
     RMS_DIR=$with_rms
 
-    if test -n "$RMSDIR"; then
+    if test -n "$RMS_DIR"; then
 	# Make the tests work...
 	OLDLDFLAGS="$LDFLAGS"
 	OLDCPPFLAGS="$CPPFLAGS"
@@ -81,8 +81,11 @@ if test "$OMPI_HAVE_RMS" = "1"; then
 #
     LIBMPI_EXTRA_LDFLAGS="$RMS_LDFLAGS"
     LIBMPI_EXTRA_LIBS="-lrms -lrmsapi"
+
     WRAPPER_EXTRA_LDFLAGS="$RMS_LDFLAGS"
     WRAPPER_EXTRA_LIBS="-lrms -lrmsapi"
+
+    LDFLAGS="$LDFLAGS $RMS_LDFLAGS"
     LIBS="$LIBS -lrms -lrmsapi"
 
 else
