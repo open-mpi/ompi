@@ -168,9 +168,11 @@ mca_pcm_rsh_init(int *priority,
 
     /* copy over the function pointers */
     mca_pcm_rsh_1_0_0.pcm_allocate_resources = 
-        mca_pcm_rsh_llm.llm_allocate_resources;
+        (mca_pcm_base_allocate_resources_fn_t) 
+          mca_pcm_rsh_llm.llm_allocate_resources;
     mca_pcm_rsh_1_0_0.pcm_deallocate_resources = 
-        mca_pcm_rsh_llm.llm_deallocate_resources;
+        (mca_pcm_base_deallocate_resources_fn_t)
+          mca_pcm_rsh_llm.llm_deallocate_resources;
 
     /* DO SOME PARAM "FIXING" */
     /* BWB - remove param fixing before 1.0 */
