@@ -405,23 +405,7 @@ static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t * cls)
  */
 static inline int ompi_obj_update(ompi_object_t *object, int inc)
 {
-#ifdef WIN32
-
-    LONG volatile *addr;
-
-    addr = (LONG volatile *) &(object->obj_reference_count);
-    InterlockedExchangeAdd(addr, (LONG) inc);
-
-#elif OMPI_HAVE_ATOMIC
-
-    ompi_atomic_add(&(object->obj_reference_count), 1 );
-
-#else
-
-    object->obj_reference_count += inc;
-
-#endif
-
+    ompi_atomic_add(&(object->obj_reference_count), inc );
     return object->obj_reference_count;
 }
 
