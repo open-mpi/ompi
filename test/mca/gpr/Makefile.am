@@ -31,12 +31,6 @@ check_PROGRAMS = \
 TESTS = \
 	$(check_PROGRAMS)
 
-if OMPI_BUILD_gpr_replica_DSO
-replica = $(top_builddir)/src/mca/gpr/replica/mca_gpr_replica.la
-else
-replica = $(top_builddir)/src/mca/gpr/replica/libmca_gpr_replica.la
-endif
-
 gpr_internal_fns_SOURCES = gpr_internal_fns.c
 gpr_internal_fns_LDADD = \
         $(top_builddir)/src/libmpi.la \
@@ -58,20 +52,17 @@ gpr_overwrite_DEPENDENCIES = $(gpr_overwrite_LDADD)
 gpr_put_get_SOURCES = gpr_put_get.c
 gpr_put_get_LDADD = \
         $(top_builddir)/src/libmpi.la \
-        $(replica) \
         $(top_builddir)/test/support/libsupport.a 
 gpr_put_get_DEPENDENCIES = $(gpr_put_get_LDADD)
 
 gpr_threads_SOURCES = gpr_threads.c
 gpr_threads_LDADD = \
         $(top_builddir)/src/libmpi.la \
-        $(replica) \
         $(top_builddir)/test/support/libsupport.a 
 gpr_threads_DEPENDENCIES = $(gpr_threads_LDADD)
 
 gpr_triggers_SOURCES = gpr_triggers.c
 gpr_triggers_LDADD = \
         $(top_builddir)/src/libmpi.la \
-        $(replica) \
         $(top_builddir)/test/support/libsupport.a 
 gpr_triggers_DEPENDENCIES = $(gpr_triggers_LDADD)

@@ -33,6 +33,7 @@
 #include "include/orte_constants.h"
 
 #include "support.h"
+#include "components.h"
 
 #include "class/orte_pointer_array.h"
 #include "dps/dps.h"
@@ -53,6 +54,9 @@
 /* output files needed by the test */
 static FILE *test_out=NULL;
 
+/* GPR module under test */
+static orte_gpr_base_module_t *gpr_module = NULL;
+
 static char *cmd_str="diff ./test_gpr_replica_out ./test_gpr_replica_out_std";
 
 static void test_cbfunc1(orte_gpr_notify_data_t *data, void *user_tag);
@@ -69,6 +73,10 @@ static int test2(void);
 int main(int argc, char **argv)
 {
     int rc=0;
+    test_component_handle_t handle;
+    mca_gpr_base_component_t *gpr_component = NULL;
+    bool allow, have;
+    int priority;
     
     test_init("test_gpr_replica_trigs");
 
@@ -90,12 +98,13 @@ int main(int argc, char **argv)
     if (!ompi_output_init()) {
         exit(1);
     }
-                                                                                                                   
+
     /* 
-     * If threads are supported - assume that we are using threads - and reset otherwise. 
+     * If threads are supported - assume that we are using threads -
+     * and reset otherwise.
      */
     ompi_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
-                                                                                                                   
+
     /* For malloc debugging */
     ompi_malloc_init();
 
@@ -119,18 +128,18 @@ int main(int argc, char **argv)
         exit (1);
     }
 
-    if (ORTE_SUCCESS == orte_gpr_base_open()) {
-        fprintf(test_out, "GPR started\n");
-    } else {
-        fprintf(test_out, "GPR could not start\n");
-        exit (1);
+    /* Open the gpr replica component and initialize a module */
+    if (OMPI_SUCCESS != 
+        test_component_open("gpr", "replica", &handle, 
+                            (mca_base_component_t**) &gpr_component) ||
+        NULL == gpr_component) {
+        fprintf(test_out, "Could not open replica\n");
+        exit(1);
     }
-    
-    if (ORTE_SUCCESS == orte_gpr_base_select()) {
-        fprintf(test_out, "GPR replica selected\n");
-    } else {
-        fprintf(test_out, "GPR replica could not be selected\n");
-        exit (1);
+    gpr_module = gpr_component->gpr_init(&allow, &have, &priority);
+    if (NULL == gpr_module) {
+        fprintf(test_out, "replica component did not return a module\n");
+        exit(1);
     }
                   
     if (ORTE_SUCCESS == orte_dps_open()) {
@@ -241,7 +250,7 @@ static int test1(void)
     fprintf(test_out, "putting counters on registry\n");
     
     /* put the counters on the registry */
-    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
+    if (ORTE_SUCCESS != (rc = gpr_module->put(1, &values))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&value);
         return rc;
@@ -278,7 +287,7 @@ static int test1(void)
     }
     values = &value;
     
-    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
+    if (ORTE_SUCCESS != (rc = gpr_module->put(1, &values))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&value);
         return rc;
@@ -312,7 +321,7 @@ static int test1(void)
     (value.keyvals[2])->value.i32 = 2348;
     values = &value;
     
-    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
+    if (ORTE_SUCCESS != (rc = gpr_module->put(1, &values))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&value);
         return rc;
@@ -407,20 +416,20 @@ static int test1(void)
        trigs = &trig;
        
        /* enter things as three different subscriptions */
-       rc = orte_gpr.subscribe(
+       rc = gpr_module->subscribe(
              ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY,
              2, subscriptions,
              1, &trigs,
              sub);
     
     
-       rc = orte_gpr.subscribe(
+       rc = gpr_module->subscribe(
              ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY,
              2, &(subscriptions[2]),
              1, &trigs,
              sub);
     
-       rc = orte_gpr.subscribe(
+       rc = gpr_module->subscribe(
              ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_MONITOR_ONLY,
              1, &(subscriptions[4]),
              1, &trigs,
@@ -435,7 +444,7 @@ static int test1(void)
         }
     }
 
-    orte_gpr.dump_triggers(0);
+    gpr_module->dump_triggers(0);
     return ORTE_SUCCESS;
     
     fprintf(test_out, "incrementing until trigger\n");
@@ -469,14 +478,14 @@ static int test1(void)
     
     for (i=0; i < 10; i++) {
         fprintf(test_out, "\tincrement %s\n", keys[1]);
-        if (ORTE_SUCCESS != (rc = orte_gpr.increment_value(&value))) {
+        if (ORTE_SUCCESS != (rc = gpr_module->increment_value(&value))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&value);
             return rc;
         }
     }
 
-    orte_gpr.dump_all(0);
+    gpr_module->dump_all(0);
     OBJ_DESTRUCT(&value);
     
     return ORTE_SUCCESS;
@@ -525,7 +534,7 @@ int test2(void)
     fprintf(test_out, "putting level test counter on registry\n");
     
     /* put the counters on the registry */
-    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
+    if (ORTE_SUCCESS != (rc = gpr_module->put(1, &values))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&value);
         return rc;
@@ -579,13 +588,13 @@ int test2(void)
    trigs = &trig;
    
    /* enter subscription */
-   rc = orte_gpr.subscribe(
+   rc = gpr_module->subscribe(
          ORTE_GPR_TRIG_AT_LEVEL | ORTE_GPR_TRIG_MONITOR_ONLY,
          1, &subscription,
          1, &trigs,
          &sub);
 
-    orte_gpr.dump_triggers(0);
+    gpr_module->dump_triggers(0);
     
     /* cleanup */
     OBJ_RELEASE(subscription);
@@ -622,14 +631,14 @@ int test2(void)
     
     for (i=0; i < 10; i++) {
         fprintf(test_out, "\tincrement level-counter\n");
-        if (ORTE_SUCCESS != (rc = orte_gpr.increment_value(&value))) {
+        if (ORTE_SUCCESS != (rc = gpr_module->increment_value(&value))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&value);
             return rc;
         }
     }
 
-    orte_gpr.dump_all(0);
+    gpr_module->dump_all(0);
     OBJ_DESTRUCT(&value);
     
     return ORTE_SUCCESS;
@@ -640,40 +649,40 @@ void test_cbfunc1(orte_gpr_notify_data_t *data, void *tag)
 {
     fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 1\n");
     
-    orte_gpr.dump_notify_data(data, 0);
+    gpr_module->dump_notify_data(data, 0);
 }
 
 void test_cbfunc2(orte_gpr_notify_data_t *data, void *tag)
 {
     fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 2\n");
     
-    orte_gpr.dump_notify_data(data, 0);
+    gpr_module->dump_notify_data(data, 0);
 }
 
 void test_cbfunc3(orte_gpr_notify_data_t *data, void *tag)
 {
     fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 3\n");
     
-    orte_gpr.dump_notify_data(data, 0);
+    gpr_module->dump_notify_data(data, 0);
 }
 
 void test_cbfunc4(orte_gpr_notify_data_t *data, void *tag)
 {
     fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 4\n");
     
-    orte_gpr.dump_notify_data(data, 0);
+    gpr_module->dump_notify_data(data, 0);
 }
 
 void test_cbfunc5(orte_gpr_notify_data_t *data, void *tag)
 {
     fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 5\n");
     
-    orte_gpr.dump_notify_data(data, 0);
+    gpr_module->dump_notify_data(data, 0);
 }
 
 void test_cbfunc6(orte_gpr_notify_data_t *data, void *tag)
 {
     fprintf(test_out, "\n\n\nTRIGGER FIRED AND RECEIVED AT CALLBACK 6\n");
     
-    orte_gpr.dump_notify_data(data, 0);
+    gpr_module->dump_notify_data(data, 0);
 }
