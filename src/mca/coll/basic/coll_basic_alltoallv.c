@@ -52,11 +52,13 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
   psnd = ((char *) sbuf) + (sdisps[rank] * sndextent);
   prcv = ((char *) rbuf) + (rdisps[rank] * rcvextent);
 
-  err = ompi_ddt_sndrcv(psnd, scounts[rank], sdtype,
-                       prcv, rcounts[rank], rdtype, 
-                       MCA_COLL_BASE_TAG_ALLTOALLV, comm);
-  if (MPI_SUCCESS != err) {
-    return err;
+  if (0 != scounts[rank]) {
+      err = ompi_ddt_sndrcv(psnd, scounts[rank], sdtype,
+                            prcv, rcounts[rank], rdtype, 
+                            MCA_COLL_BASE_TAG_ALLTOALLV, comm);
+      if (MPI_SUCCESS != err) {
+          return err;
+      }
   }
 
   /* If only one process, we're done. */
@@ -67,18 +69,20 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
 
   /* Initiate all send/recv to/from others. */
 
-  nreqs = (size - 1) * 2;
+  nreqs = 0;
   preq = comm->c_coll_basic_data->mccb_reqs;
 
   /* Post all receives first -- a simple optimization */
 
   for (i = 0; i < size; ++i) {
-    if (i == rank)
+    if (i == rank || 0 == rcounts[i]) {
       continue;
+    }
 
     prcv = ((char *) rbuf) + (rdisps[i] * rcvextent);
     err = mca_pml.pml_irecv_init(prcv, rcounts[i], rdtype,
                                  i, MCA_COLL_BASE_TAG_ALLTOALLV, comm, preq++);
+    ++nreqs;
     if (MPI_SUCCESS != err) {
       mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs, nreqs);
       return err;
@@ -88,13 +92,15 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
   /* Now post all sends */
 
   for (i = 0; i < size; ++i) {
-    if (i == rank)
+    if (i == rank || 0 == scounts[i]) {
       continue;
+    }
 
     psnd = ((char *) sbuf) + (sdisps[i] * sndextent);
     err = mca_pml.pml_isend_init(psnd, scounts[i], sdtype,
                                  i, MCA_COLL_BASE_TAG_ALLTOALLV, 
                                  MCA_PML_BASE_SEND_STANDARD, comm, preq++);
+    ++nreqs;
     if (MPI_SUCCESS != err) {
       mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs, nreqs);
       return err;
