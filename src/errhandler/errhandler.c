@@ -155,7 +155,7 @@ int lam_errhandler_finalize(void)
   /* All done */
 
   return LAM_SUCCESS;
-};
+}
 
 
 lam_errhandler_t *lam_errhandler_create(lam_errhandler_type_t object_type,

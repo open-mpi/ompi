@@ -124,6 +124,7 @@ static int  lam_timeout_next(struct timeval *tv);
 static void lam_timeout_correct(struct timeval *off);
 static void lam_timeout_process(void);
 static void lam_timeout_insert(struct lam_event *);
+int lam_event_haveevents(void);
 
 static RB_HEAD(lam_event_tree, lam_event) lam_timetree;
 static struct lam_event_list lam_activequeue;
@@ -143,9 +144,9 @@ compare(struct lam_event *a, struct lam_event *b)
     return (0);
 }
 
-static RB_PROTOTYPE(lam_event_tree, lam_event, ev_timeout_node, compare);
+static RB_PROTOTYPE(lam_event_tree, lam_event, ev_timeout_node, compare)
 
-static RB_GENERATE(lam_event_tree, lam_event, ev_timeout_node, compare);
+static RB_GENERATE(lam_event_tree, lam_event, ev_timeout_node, compare)
 
 /* run loop for dispatch thread */
 static void* lam_event_run(lam_object_t* arg)
