@@ -273,7 +273,12 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
     new_jobid = ompi_name_server.create_jobid();
 
     /* get the spawn handle to start spawning stuff */
-    spawn_handle = ompi_rte_get_spawn_handle(OMPI_RTE_SPAWN_FROM_MPI, true);
+    spawn_handle =
+        ompi_rte_get_spawn_handle(OMPI_RTE_SPAWN_FROM_MPI|OMPI_RTE_SPAWN_HIGH_QOS, true);
+    if (NULL == spawn_handle) {
+        printf("show_help: get_spawn_handle failed\n");
+        return -1;
+    }
 
     /* BWB - fix jobid, procs, and nodes */
     nodelist = ompi_rte_allocate_resources(spawn_handle, new_jobid, 0, maxprocs);

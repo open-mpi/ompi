@@ -1,0 +1,53 @@
+# -*- text -*-
+#
+# $HEADER$
+#
+# This is the US/English bootproxy help file for Open MPI.
+#
+[usage]
+Usage: %s --local-offset <vpid> --global_start_vpid <vpid> 
+          --num_procs <num> [--high-qos]
+
+  --local_offset <vpid>	      Starting vpid from which to assign for all
+                              processes started by this bootproxy
+  --global_start_vpid <vpid>  Starting vpid for the call to
+                              spawn_procs that resulted in this
+                              bootproxy being launched.
+  --num_procs <num>           Total number of processes started in the
+                              call to spawn_procs that resulted in
+                              this bootproxy being launched
+  --high-qos                  Do not exit until all processes started
+                              have exited.  Do not close
+                              std{in,out,err}.  If one process exits
+                              with non-zero status, kill the remaining
+                              started processes.
+[could-not-receive-schedule]
+Open MPI was unable to start a process on one or more nodes using the
+bootproxy strartup mechanism.  The bootproxy client was able to
+start but was not able to receive the scheduling information from the
+starting process.  The error returned was %d.
+[could-not-chdir]
+Open MPI was unable to start a process on one or more nodes using the
+bootproxy strartup mechanism.  The bootproxy client was able to
+start and receive startup information, but was unable to set the
+current working directory of the new process.
+
+  Current working directory was: %s
+  The error from chdir was:      %s
+[could-not-fork]
+Open MPI was unable to start a process on one or more nodes using the
+bootproxy strartup mechanism.  The bootproxy client was able to
+start and receive startup information, but was unable to fork the new
+process.
+
+  I was trying to start:         %s
+  The error from fork was:       %s
+[could-not-exec]
+Open MPI was unable to start a process on one or more nodes using the
+bootproxy strartup mechanism.  The bootproxy client was able to
+start and receive startup information, but was unable to exec the new
+process.
+
+  I was trying to start:         %s
+  Current working directory was: %s
+  The error from exec was:       %s

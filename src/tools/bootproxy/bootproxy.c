@@ -16,6 +16,7 @@
 #include "runtime/runtime.h"
 #include "mca/pcm/base/base.h"
 #include "class/ompi_list.h"
+#include "util/show_help.h"
 
 
 struct pid_item_t {
@@ -107,7 +108,8 @@ main(int argc, char *argv[])
     ret = mca_pcm_base_recv_schedule(stdin, &jobid, sched,
                                      &fork_num_procs);
     if (ret != OMPI_SUCCESS) {
-        fprintf(stderr, "Failure in receiving schedule information\n");
+        ompi_show_help("help-bootproxy.txt", "could-not-receive-schedule",
+                       true, ret);
         exit(1);
     }
 
@@ -130,7 +132,8 @@ main(int argc, char *argv[])
     if (sched->cwd != NULL) {
         ret = chdir(sched->cwd);
         if (ret != 0) {
-            perror("chdir");
+            ompi_show_help("help-bootproxy.txt", "could-not-chdir",
+                           true, sched->cwd, strerror(errno));
             exit(1);
         }
     }
@@ -142,7 +145,9 @@ main(int argc, char *argv[])
         pid = fork();
         if (pid < 0) {
             /* error :( */
-            perror("fork");
+            ompi_show_help("help-bootproxy.txt", "could-not-fork",
+                           true, sched->argv[0], strerror(errno));
+            exit(errno);
         } else if (pid == 0) {
             /* child */
 
@@ -158,7 +163,10 @@ main(int argc, char *argv[])
             }
 
             execvp(sched->argv[0], sched->argv);
-            perror("exec");
+            ompi_show_help("help-bootproxy.txt", "could-not-exec",
+                           true, sched->argv[0], sched->cwd, 
+                           strerror(errno));
+            exit(errno);
         } else {
             /* parent */
 
