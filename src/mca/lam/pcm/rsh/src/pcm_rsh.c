@@ -19,6 +19,8 @@
 
 static const char *handle_base = "pcm_rsh_job";
 static unsigned long handle_count = 0;
+static int have_connected = 0;
+static int have_launched = 0;
 
 int 
 mca_pcm_rsh_query_get_nodes(mca_pcm_rte_node_t **nodes, size_t * nodes_len,
@@ -61,7 +63,10 @@ mca_pcm_rsh_handle_get(void)
 void 
 mca_pcm_rsh_handle_free(lam_job_handle_t * job_handle)
 {
-  if (job_handle != NULL) free(job_handle);
+  if (*job_handle != NULL) {
+    free(*job_handle);
+    *job_handle = NULL;
+  }
 }
 
 
@@ -82,6 +87,9 @@ mca_pcm_rsh_job_set_arguments(lam_job_handle_t job_handle,
 			       mca_pcm_control_args_t * opts,
 			       size_t opts_len)
 {
+  if (have_launched != 0) return LAM_ERROR;
+
+
   return LAM_ERR_NOT_IMPLEMENTED;
 }
 
@@ -93,6 +101,9 @@ mca_pcm_rsh_job_launch_procs(lam_job_handle_t job_handle,
 			      int argc, const char *argv[],
 			      const char *env[])
 {
+  if (have_connected != 0) return LAM_ERROR;
+
+  have_launched = 1;
   return LAM_ERR_NOT_IMPLEMENTED;
 }
 
@@ -100,6 +111,8 @@ mca_pcm_rsh_job_launch_procs(lam_job_handle_t job_handle,
 int 
 mca_pcm_rsh_job_rendezvous(lam_job_handle_t job_handle)
 {
+  if (have_connected != 0 || have_launched == 0) return LAM_ERROR;
+
   return LAM_ERR_NOT_IMPLEMENTED;
 }
 
@@ -107,6 +120,8 @@ mca_pcm_rsh_job_rendezvous(lam_job_handle_t job_handle)
 int 
 mca_pcm_rsh_job_wait(lam_job_handle_t job_handle)
 {
+  if (have_connected == 0 || have_launched == 0) return LAM_ERROR;
+
   return LAM_ERR_NOT_IMPLEMENTED;
 }
 
@@ -130,6 +145,9 @@ mca_pcm_rsh_job_list_running(lam_job_handle_t ** handles,
 int 
 mca_pcm_rsh_proc_startup(void)
 {
+  if (have_connected != 0) return LAM_ERROR;
+  have_connected = 1;
+
   return LAM_SUCCESS;
 }
 
@@ -137,6 +155,8 @@ mca_pcm_rsh_proc_startup(void)
 int 
 mca_pcm_rsh_proc_get_peers(mca_pcm_proc_t **procs, size_t *nprocs)
 {
+  if (have_connected == 0) return LAM_ERROR;
+
   return LAM_SUCCESS;
 }
 
