@@ -126,7 +126,7 @@ static inline int mca_ptl_mx_post(mca_ptl_mx_module_t* ptl)
  *  Routine to process complete request(s).
  */
 
-static void mca_ptl_mx_progress(mca_ptl_mx_module_t* ptl, mx_request_t mx_request)
+static inline void mca_ptl_mx_progress(mca_ptl_mx_module_t* ptl, mx_request_t mx_request)
 {
     mx_return_t mx_return;
     mx_status_t mx_status;

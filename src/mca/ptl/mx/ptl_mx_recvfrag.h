@@ -80,11 +80,6 @@ static inline void mca_ptl_mx_recv_frag_handler(
     }
 }
 
-
-/**
- *
- */
-
 /**
  *
  */
