@@ -57,6 +57,31 @@ static inline bool lam_using_threads(void)
     return lam_uses_threads; 
 }
 
+
+/**
+ * Lock a mutex if lam_using_threads() says that multiple threads may
+ * be active in the process for the duration of the specified action.
+ *
+ * @param mutex    Pointer to a lam_mutex_t to lock.
+ * @param action   A scope over which the lock is held.
+ *
+ * If there is a possibility that multiple threads are running in the
+ * process (as determined by lam_using_threads()), this function will
+ * acquire the lock before invoking the specified action and release
+ * it on return.
+ *
+ * If there is no possibility that multiple threads are running in the
+ * process, invoke the action without acquiring the lock.
+ */
+#define THREAD_SCOPED_LOCK(mutex,action) \
+	if(lam_use_threads()) { \
+            lam_mutex_lock(mutex); \
+            (action); \
+            lam_mutex_unlock(mutex); \
+        } else { \
+            (action); \
+        }
+
 /**
  * Set whether the process is using multiple threads or not.
  *
