@@ -300,14 +300,6 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
 
     START_FUNC(PTL_ELAN_DEBUG_PUT);
 
-    if (PTL_ELAN_DEBUG_FLAG & PTL_ELAN_DEBUG_PUT) {
-	char hostname[32]; gethostname(hostname, 32);    
-	fprintf(stderr, "[%s:%s:%d] ptl %p ptl_peer %p req %p offset %d"
-		" size %d flags %d \n",     
-	    hostname, __FUNCTION__, __LINE__,
-	    ptl, ptl_peer, sendreq, offset, size, flags);           
-    }
-
     desc = mca_ptl_elan_alloc_send_desc(ptl, sendreq, MCA_PTL_ELAN_DESC_PUT);
     if (NULL == desc) {
 	ompi_output(0,

@@ -55,8 +55,8 @@
 #define  PTL_ELAN_DEBUG_CHAIN (0x800)
 
 /* For now only debug send's */
-#define  PTL_ELAN_DEBUG_FLAG  (PTL_ELAN_DEBUG_NONE \
-    | PTL_ELAN_DEBUG_SEND | PTL_ELAN_DEBUG_PUT)
+#define  PTL_ELAN_DEBUG_FLAG  (PTL_ELAN_DEBUG_ACK \
+    | PTL_ELAN_DEBUG_SEND | PTL_ELAN_DEBUG_PUT | PTL_ELAN_DEBUG_RECV)
 
 #define OMPI_PTL_ELAN_CHECK_UNEX(value, unexp, errno, output)          \
         do {                                                           \
@@ -312,7 +312,7 @@ int         mca_ptl_elan_wait_desc(mca_ptl_elan_send_frag_t *desc);
 /* control, synchronization and state prototypes */
 int         mca_ptl_elan_drain_recv(mca_ptl_elan_component_t *emp);
 int         mca_ptl_elan_update_desc(mca_ptl_elan_component_t *emp);
-
+int         mca_ptl_elan_update_putget(mca_ptl_elan_component_t * emp);
 /**
  * utility routines for parameter registration
  */
