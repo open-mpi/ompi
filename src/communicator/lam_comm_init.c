@@ -67,6 +67,7 @@ int lam_comm_init(void)
     strncpy (lam_mpi_comm_world.c_name, "MPI_COMM_WORLD", 
              strlen("MPI_COMM_WORLD")+1 );
     lam_mpi_comm_world.c_flags |= LAM_COMM_NAMEISSET;
+    lam_attr_hash_init(&lam_mpi_comm_world.c_keyhash);
 
     /* VPS: Remove this later */
     lam_mpi_comm_world.bcast_lin_reqs =
@@ -103,7 +104,8 @@ int lam_comm_init(void)
     strncpy (lam_mpi_comm_self.c_name, "MPI_COMM_SELF", 
              strlen("MPI_COMM_SELF")+1 );
     lam_mpi_comm_self.c_flags |= LAM_COMM_NAMEISSET;
-
+    lam_attr_hash_init(&lam_mpi_comm_self.c_keyhash);
+    
     /* VPS: Remove this later */
     lam_mpi_comm_self.bcast_lin_reqs =
 	malloc (mca_coll_base_bcast_collmaxlin * sizeof(lam_request_t*));
