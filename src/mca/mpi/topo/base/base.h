@@ -74,5 +74,7 @@ extern "C" {
  */
 extern int mca_topo_base_output;
 extern lam_list_t mca_topo_base_modules_available;
+extern mca_topo_base_module_t mca_topo_base_selected_module;
+extern mca_topo_t mca_topo;
 
 #endif /* MCA_BASE_TOPO_H */
