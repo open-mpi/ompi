@@ -5,7 +5,7 @@
 #include <assert.h>
 
 #include "support.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 
 /*
  * Data type used for testing

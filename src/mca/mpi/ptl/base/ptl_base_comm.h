@@ -3,7 +3,7 @@
 
 #include "lam/threads/mutex.h"
 #include "mca/mpi/ptl/ptl.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 
 /*
  *  Structure associated w/ lam_communicator_t that contains data 

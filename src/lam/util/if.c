@@ -14,7 +14,7 @@
 #include <netdb.h>
 
 #include "lam/constants.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "lam/mem/malloc.h"
 #include "lam/util/if.h"
 #include "lam/util/output.h"

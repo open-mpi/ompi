@@ -3,7 +3,7 @@
  */
 
 #include "lam/mem/seg_list.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 
 /*
  * Public variable
@@ -19,7 +19,7 @@ void lam_sgl_construct(lam_seg_list_t *slist)
 {
     OBJ_CONSTRUCT_SUPER(slist, lam_object_t);
     OBJ_CONSTRUCT(&slist->sgl_list, lam_list_t);
-    lam_mutex_construct(&slist->sgl_lock);
+    lam_mutex_init(&slist->sgl_lock);
     slist->sgl_min_bytes_pushed = 0;
     slist->sgl_max_bytes_pushed = 0;
     slist->sgl_bytes_pushed = 0;

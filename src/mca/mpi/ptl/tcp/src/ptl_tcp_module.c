@@ -101,7 +101,7 @@ static inline int mca_ptl_tcp_param_register_int(
 
 int mca_ptl_tcp_module_open(void)
 {
-    lam_mutex_construct(&mca_ptl_tcp_module.tcp_lock);
+    lam_mutex_init(&mca_ptl_tcp_module.tcp_lock);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_reactor, lam_reactor_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_procs, lam_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_acks, lam_list_t);
@@ -144,7 +144,7 @@ int mca_ptl_tcp_module_close(void)
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_send_requests);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_send_frags);
     OBJ_DESTRUCT(&mca_ptl_tcp_module.tcp_recv_frags);
-    lam_mutex_destruct(&mca_ptl_tcp_module.tcp_lock);
+    lam_mutex_destroy(&mca_ptl_tcp_module.tcp_lock);
     return LAM_SUCCESS;
 }
 
@@ -292,7 +292,7 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
 
 
     /* initialize free lists */
-    lam_free_list_construct_with(&mca_ptl_tcp_module.tcp_send_requests, 
+    lam_free_list_init(&mca_ptl_tcp_module.tcp_send_requests, 
         sizeof(mca_ptl_tcp_send_request_t),
         CLASS_INFO(mca_ptl_tcp_send_request_t),
         mca_ptl_tcp_module.tcp_free_list_num,
@@ -300,7 +300,7 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
         mca_ptl_tcp_module.tcp_free_list_inc,
         NULL); /* use default allocator */
 
-    lam_free_list_construct_with(&mca_ptl_tcp_module.tcp_send_frags, 
+    lam_free_list_init(&mca_ptl_tcp_module.tcp_send_frags, 
         sizeof(mca_ptl_tcp_send_frag_t),
         CLASS_INFO(mca_ptl_tcp_send_frag_t),
         mca_ptl_tcp_module.tcp_free_list_num,
@@ -308,7 +308,7 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
         mca_ptl_tcp_module.tcp_free_list_inc,
         NULL); /* use default allocator */
 
-    lam_free_list_construct_with(&mca_ptl_tcp_module.tcp_recv_frags, 
+    lam_free_list_init(&mca_ptl_tcp_module.tcp_recv_frags, 
         sizeof(mca_ptl_tcp_recv_frag_t),
         CLASS_INFO(mca_ptl_tcp_recv_frag_t),
         mca_ptl_tcp_module.tcp_free_list_num,

@@ -9,7 +9,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "lam/lfc/object.h"
+#include "lam/lfc/lam_object.h"
 #include "mpi/proc/proc.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"

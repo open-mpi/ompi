@@ -6,7 +6,7 @@
 #define LAM_REACTOR_H
 
 #include "lam/types.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "lam/lfc/hash_table.h"
 #include "lam/threads/mutex.h"
 

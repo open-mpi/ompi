@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "lam/threads/mutex.h"
 #include "lam/constants.h"
 #include "mpi/communicator/communicator.h"

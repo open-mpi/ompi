@@ -54,7 +54,7 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
     ptl_peer->peer_state = MCA_PTL_TCP_CLOSED;
     ptl_peer->peer_retries = 0;
     OBJ_CONSTRUCT(&ptl_peer->peer_frags, lam_list_t);
-    lam_mutex_construct(&ptl_peer->peer_lock);
+    lam_mutex_init(&ptl_peer->peer_lock);
 }
 
 

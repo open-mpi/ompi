@@ -7,7 +7,7 @@
 
 #include "lam_config.h"
 #include "lam/types.h"
-#include "lam/lfc/object.h"
+#include "lam/lfc/lam_object.h"
 
 /*
  *

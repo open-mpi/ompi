@@ -5,7 +5,7 @@
 #ifndef LAM_ALLOCATOR_H
 #define LAM_ALLOCATOR_H
 
-#include "lam/lfc/object.h"
+#include "lam/lfc/lam_object.h"
 
 /* This class is used to provide a generic and flexible
     way for the mem pool to allocate memory.  It's meant

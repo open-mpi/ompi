@@ -4,7 +4,7 @@
 
 #include "lam_config.h"
 
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "lam/runtime/runtime.h"
 #include "mca/mca.h"
 #include "mca/lam/base/base.h"

@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "lam/util/strncpy.h"
 #include "lam/util/argv.h"
 #include "lam/util/output.h"

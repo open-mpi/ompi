@@ -16,8 +16,10 @@
 
 /* private list functions */
 
+#if RB_HASNT_FINISHED_THIS_YET
 static lam_list_item_t *lam_free_lists_request_elt(lam_free_lists_t *flist, 
                                             int pool_idx);
+#endif
 
 static void lam_free_lists_append(lam_free_lists_t *flist, void *chunk, int pool_idx);
 
@@ -41,7 +43,7 @@ lam_class_info_t lam_free_lists_t_class_info = {
 void lam_free_lists_construct(lam_free_lists_t *flist)
 {
     OBJ_CONSTRUCT_SUPER(flist, lam_object_t);
-    lam_mutex_construct(&flist->fl_lock);
+    lam_mutex_init(&flist->fl_lock);
     flist->fl_pool = NULL;
     flist->fl_elt_cls = NULL;
     flist->fl_description = NULL;
@@ -394,19 +396,17 @@ static void *lam_free_lists_get_mem_chunk(lam_free_lists_t *flist, int index, si
 
 
 
+#if ROB_HASNT_FINISHED_THIS_YET
 static lam_list_item_t *lam_free_lists_request_elt(lam_free_lists_t *flist, int pool_idx)
 {
-#if ROB_HASNT_FINISHED_THIS_YET
     lam_dbl_list_t      *seg_list = &(flist->fl_free_lists[pool_idx]->sgl_list);
     volatile lam_list_item_t *elt = lam_dbl_get_last(seg_list);
     
     if ( elt )
         lam_sgl_set_consec_fail(seg_list, 0);
     return elt;
-#else
-    return NULL;
-#endif
 }
+#endif
 
 
 static void lam_free_lists_append(lam_free_lists_t *flist, void *chunk, int pool_idx)

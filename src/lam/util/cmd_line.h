@@ -9,7 +9,7 @@
 
 #include "lam_config.h"
 #include "lam/constants.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "lam/threads/mutex.h"
 #include "lam/util/argv.h"
 

@@ -6,7 +6,7 @@
 #define LAM_FREE_LIST_H
 
 #include "lam_config.h"
-#include "lam/lfc/list.h"
+#include "lam/lfc/lam_list.h"
 #include "lam/constants.h"
 #include "lam/mem/seg_list.h"
 #include "lam/mem/mem_pool.h"
@@ -28,12 +28,7 @@ struct lam_free_list_t
 typedef struct lam_free_list_t lam_free_list_t;
 
 
-void lam_free_list_construct(lam_free_list_t *flist);
-void lam_free_list_destruct(lam_free_list_t *flist);
-int  lam_free_list_grow(lam_free_list_t* flist, size_t num_elements);
-
-
-int lam_free_list_construct_with(
+int lam_free_list_init(
     lam_free_list_t *flist, 
     size_t element_size,
     lam_class_info_t* element_class,
@@ -41,6 +36,8 @@ int lam_free_list_construct_with(
     int max_elements_to_alloc,
     int num_elements_per_alloc,
     lam_allocator_t*);
+
+int lam_free_list_grow(lam_free_list_t* flist, size_t num_elements);
     
 
 static inline lam_list_item_t *lam_free_list_get(lam_free_list_t * fl, int *rc)
