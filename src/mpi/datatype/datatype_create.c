@@ -60,7 +60,7 @@ int lam_datatype_create(int combiner,
     }
 
     if (count == 0) {
-        newtype = (lam_datatype_t *) LAM_MALLOC(sizeof(lam_datatype_t));
+        newtype = (lam_datatype_t *) malloc(sizeof(lam_datatype_t));
         if (newtype == NULL) {
             ulm_err(("Error: MPI_Type_struct: Out of memory\n"));
             rc = MPI_ERR_TYPE;
@@ -84,7 +84,7 @@ int lam_datatype_create(int combiner,
         newtype->envelope.nints = 1;
         newtype->envelope.naddrs = 0;
         newtype->envelope.ndatatypes = 0;
-        newtype->envelope.iarray = (int *) LAM_MALLOC(sizeof(int));
+        newtype->envelope.iarray = (int *) malloc(sizeof(int));
         newtype->envelope.aarray = NULL;
         newtype->envelope.darray = NULL;
         newtype->envelope.iarray[0] = count;
@@ -97,7 +97,7 @@ int lam_datatype_create(int combiner,
     }
 
     /* Allocate new type */
-    newtype = LAM_MALLOC(sizeof(lam_datatype_t));
+    newtype = malloc(sizeof(lam_datatype_t));
     if (newtype == NULL) {
         ulm_err(("Error: MPI_Type_struct: Out of memory\n"));
         rc = MPI_ERR_TYPE;
@@ -118,12 +118,12 @@ int lam_datatype_create(int combiner,
     newtype->envelope.naddrs = count;
     newtype->envelope.ndatatypes = count;
     newtype->envelope.iarray =
-        (int *) LAM_MALLOC(newtype->envelope.nints * sizeof(int));
+        (int *) malloc(newtype->envelope.nints * sizeof(int));
     newtype->envelope.aarray =
-        (MPI_Aint *) LAM_MALLOC(newtype->envelope.naddrs *
+        (MPI_Aint *) malloc(newtype->envelope.naddrs *
                                 sizeof(MPI_Aint));
     newtype->envelope.darray =
-        (MPI_Datatype *) LAM_MALLOC(newtype->envelope.ndatatypes *
+        (MPI_Datatype *) malloc(newtype->envelope.ndatatypes *
                                     sizeof(MPI_Datatype));
     newtype->envelope.iarray[0] = count;
     for (i = 0; i < count; i++) {
@@ -253,7 +253,7 @@ int lam_datatype_create(int combiner,
     if (newtype->num_pairs > 0) {
         /* allocate the type_map */
         newtype->type_map = (ULMTypeMapElt_t *)
-            LAM_MALLOC(newtype->num_pairs * sizeof(ULMTypeMapElt_t));
+            malloc(newtype->num_pairs * sizeof(ULMTypeMapElt_t));
         if (newtype->type_map == NULL) {
             ulm_err(("Error: MPI_Type_struct: Out of memory\n"));
             rc = MPI_ERR_TYPE;

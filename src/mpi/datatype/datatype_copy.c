@@ -2,12 +2,15 @@
  * $HEADER$
  */
 
-/** @file dataype copy function */
+/* lam_dataype_t copy function */
 
 #include <stdlib.h>
 
 #include "datatype.h"
 
+/*
+ * Copy (the contents of) an array of data types
+ */
 int lam_datatype_copy(void *dst,
                       const void *src,
                       size_t count,
