@@ -39,7 +39,7 @@
 #else
 /* Otherwise, we're compiling in the main directory, so get the
    defines mapping from mpi_foo_f to the proper symbol convention. */
-#include "mpi/f77/defines.h"
+#include "mpi/interface/f77/defines.h"
 #endif
 #endif
 
