@@ -38,6 +38,26 @@
 #include "init_sys.h"
 #include "elan4/events.h"
 
+#define  PTL_ELAN_DEBUG_NONE  (0x000)
+#define  PTL_ELAN_DEBUG_INIT  (0x001)
+#define  PTL_ELAN_DEBUG_FIN   (0x002)
+#define  PTL_ELAN_DEBUG_QDESC (0x004)
+#define  PTL_ELAN_DEBUG_RDESC (0x008)
+
+#define  PTL_ELAN_DEBUG_SEND  (0x010)
+#define  PTL_ELAN_DEBUG_RECV  (0x020)
+#define  PTL_ELAN_DEBUG_ACK   (0x040)
+#define  PTL_ELAN_DEBUG_PROG  (0x080)
+
+#define  PTL_ELAN_DEBUG_QDMA  (0x100)
+#define  PTL_ELAN_DEBUG_PUT   (0x200)
+#define  PTL_ELAN_DEBUG_GET   (0x400)
+#define  PTL_ELAN_DEBUG_CHAIN (0x800)
+
+/* For now only debug send's */
+#define  PTL_ELAN_DEBUG_FLAG  (PTL_ELAN_DEBUG_NONE \
+    | PTL_ELAN_DEBUG_SEND | PTL_ELAN_DEBUG_PUT)
+
 #define OMPI_PTL_ELAN_CHECK_UNEX(value, unexp, errno, output)          \
         do {                                                           \
             if (value == unexp) {                                      \
@@ -48,29 +68,25 @@
             }                                                          \
 	} while (0)
 
-#define CHECK_ELAN 1
-
-#if CHECK_ELAN && 0
-#define START_FUNC()                                         \
+#define START_FUNC(flag)                                     \
     do {                                                     \
-	char hostname[32]; gethostname(hostname, 32);        \
-	fprintf(stderr, "[%s:%s:%d] Entering ...\n",         \
-	    hostname, __FUNCTION__, __LINE__);               \
-    } while (0);
+	if (PTL_ELAN_DEBUG_FLAG & flag) {                    \
+	    char hostname[32]; gethostname(hostname, 32);    \
+	    fprintf(stderr, "[%s:%s:%d] Entering ...\n",     \
+		hostname, __FUNCTION__, __LINE__);           \
+	}                                                    \
+    } while (0) 
 
-#define END_FUNC()                                           \
+#define END_FUNC(flag)                                       \
     do {                                                     \
-	char hostname[32]; gethostname(hostname, 32);        \
-	fprintf(stderr, "[%s:%s:%d] Completes ...\n",        \
-	    hostname, __FUNCTION__, __LINE__);               \
-    } while (0);
+	if (PTL_ELAN_DEBUG_FLAG & flag) {                    \
+	    char hostname[32]; gethostname(hostname, 32);    \
+	    fprintf(stderr, "[%s:%s:%d] Completes ...\n",    \
+		hostname, __FUNCTION__, __LINE__);           \
+	}                                                    \
+    } while (0)
 
-#else
-
-#define START_FUNC()
-#define END_FUNC()
-
-#endif
+#define  PTL_ELAN_INPUT_QUEUE_MAX  (2048)
 
 enum {
     /* the first four bits for type */
