@@ -338,19 +338,19 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
     ompi_argv_append(&cmdc, &cmdv, BOOTAGENT);
 
     /* starting vpid for launchee's procs */
-    tmp = ltostr(my_start_vpid);
+    tmp = ompi_ltostr(my_start_vpid);
     ompi_argv_append(&cmdc, &cmdv, "--local_offset");
     ompi_argv_append(&cmdc, &cmdv, tmp);
     free(tmp);
 
     /* global starting vpid for this pcm spawn */
-    tmp = ltostr(global_start_vpid);
+    tmp = ompi_ltostr(global_start_vpid);
     ompi_argv_append(&cmdc, &cmdv, "--global_start_vpid");
     ompi_argv_append(&cmdc, &cmdv, tmp);
     free(tmp);
 
     /* number of procs in this pcm spawn */
-    tmp = ltostr(num_procs);
+    tmp = ompi_ltostr(num_procs);
     ompi_argv_append(&cmdc, &cmdv, "--num_procs");
     ompi_argv_append(&cmdc, &cmdv, tmp);
     free(tmp);
