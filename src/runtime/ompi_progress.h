@@ -20,17 +20,64 @@
 extern "C" {
 #endif
 
+/**
+ * Initialize the progress engine
+ *
+ * Initialize the progress engine, including constructing the 
+ * proper locks and allocating space for the progress registration
+ * functions.  At this point, any function in the progress engine
+ * interface may be called.
+ */
 OMPI_DECLSPEC extern int ompi_progress_init(void);
 
+/**
+ * Configure the progress engine for executing MPI applications
+ *
+ * Initialize and configrue the progress engine to optimize for MPI
+ * applications, or any application where low latency is critical.
+ * Will configure itself for lowest latency (look at the yield MCA
+ * parameter, adjust calling frequency into the event library, etc.)
+ */
+OMPI_DECLSPEC extern int ompi_progress_mpi_init(void);
+
+/**
+ * Turn off all optimizations enabled by ompi_progress_mpi_init().
+ */
+OMPI_DECLSPEC extern int ompi_progress_mpi_finalize(void);
+
+/** 
+ * Shut down the progress engine
+ *
+ * Shut down the progress engine.  This includes deregistering all
+ * registered callbacks and freeing all resources.  After finalize
+ * returns, no calls into the progress interface are allowed.
+ */
+OMPI_DECLSPEC extern int ompi_progress_finalize(void);
+
+/**
+ * Control how the event library is called
+ */
 OMPI_DECLSPEC extern void ompi_progress_events(int);
 
+/**
+ * Progress all pending events
+ */
 OMPI_DECLSPEC extern void ompi_progress(void);
 
 typedef int (*ompi_progress_callback_t)(void);
 
+
+/**
+ * Register an event to be progressed
+ */
 OMPI_DECLSPEC int ompi_progress_register(ompi_progress_callback_t cb);
 
+
+/**
+ * Unregister previously registered event
+ */
 OMPI_DECLSPEC int ompi_progress_unregister(ompi_progress_callback_t cb);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

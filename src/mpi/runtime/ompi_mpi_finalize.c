@@ -67,6 +67,9 @@ int ompi_mpi_finalize(void)
     ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
 #endif
 
+    /* Change progress function priority back to RTE level stuff */
+    ompi_progress_mpi_finalize();
+
     /* begin recording compound command */
 /*    if (OMPI_SUCCESS != (ret = orte_gpr.begin_compound_cmd())) {
         return ret;

@@ -425,6 +425,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         return ret;
     }
 
+    /* put the event library in "high performance MPI mode" */
+    if (OMPI_SUCCESS != ompi_progress_mpi_init()) {
+        error = "ompi_progress_mpi_init() failed";
+        goto error;
+    }
+
     /* All done.  Wasn't that simple? */
 
     ompi_mpi_initialized = true;

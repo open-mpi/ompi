@@ -124,6 +124,14 @@ int orte_init_stage1(void)
     }
 
     /*
+     * Intialize the general progress engine
+     */
+    if (OMPI_SUCCESS != (ret = ompi_progress_init())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+
+    /*
      * Internal startup
      */
     if (OMPI_SUCCESS != (ret = orte_wait_init())) {
