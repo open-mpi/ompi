@@ -12,6 +12,10 @@
 #endif
 
 int MPI_Errhandler_create(MPI_Handler_function *function,
-		                   MPI_Errhandler *errhandler) {
-    return MPI_SUCCESS;
+                          MPI_Errhandler *errhandler)
+{
+  /* This is a deprecated -- just turn around and call the real
+     function */
+
+  return MPI_Comm_create_errhandler(function, errhandler);
 }
