@@ -15,10 +15,10 @@ mca_pml_module_1_0_0_t mca_pml_teg_module_1_0_0_0 = {
     0,  /* MCA module minor version */
     0,  /* MCA module release version */
     mca_pml_teg_open,  /* module open */
-    mca_pml_teg_close  /* module close */
+    mca_pml_teg_close, /* module close */
+    true               /* checkpoint/restart */
     },
     mca_pml_teg_query,  /* module query */
-    mca_pml_teg_init    /* module init */
-    true,               /* checkpoint/restart */
+    mca_pml_teg_init   /* module init */
 };
 
