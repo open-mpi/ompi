@@ -391,8 +391,12 @@ OBJ_CLASS_INSTANCE(ompi_convertor_t, ompi_object_t, NULL, ompi_convertor_destroy
 
 inline int ompi_convertor_copy( ompi_convertor_t* pSrcConv, ompi_convertor_t* pDestConv )
 {
-   MEMCPY( pDestConv, pSrcConv, sizeof(ompi_convertor_t) );
+   pDestConv->remoteArch = pSrcConv->remoteArch;
+   pDestConv->flags = pSrcConv->flags;
+   pDestConv->pFunctions = pSrcConv->pFunctions;
+
    pDestConv->pStack     = NULL;
+   pDestConv->stack_pos  = 0;
    pDestConv->pDesc      = NULL;
    pDestConv->count      = 0;
    pDestConv->converted  = 0;
