@@ -48,5 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE,
 
 void mpi_comm_create_f(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_newcomm;
+    MPI_Comm c_comm = MPI_Comm_f2c (*comm);
+    MPI_Group c_group = MPI_Group_f2c(*group);
+
+    *ierr = MPI_Comm_create (c_comm, c_group, &c_newcomm);
+    *newcomm = MPI_Comm_c2f (c_newcomm);
 }
