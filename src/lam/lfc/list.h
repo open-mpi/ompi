@@ -160,6 +160,7 @@ static inline lam_list_item_t *lam_list_remove_item
     if (!found) {
         fprintf(stderr," Warning :: lam_list_remove_item - the item %p is not on the list %p \n",item,list);
         fflush(stderr);
+        return (lam_list_item_t *)NULL;
     }
 #endif
 
@@ -179,12 +180,6 @@ extern "C" {
    * Adds item to the end of the list but does not retain item. 
    */
   void lam_list_append(lam_list_t *list, lam_list_item_t *item);
-
-
-  /*
-   * Remove item from the list.
-   */
-  lam_list_item_t* lam_list_remove(lam_list_t *list, lam_list_item_t *item);
 
   /* Adds item to list at index and retains item. 
      Returns 1 if successful, 0 otherwise.

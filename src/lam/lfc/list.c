@@ -96,8 +96,9 @@ int lam_list_insert(lam_list_t *list, lam_list_item_t *item, long long idx)
     }
     else
     {
+        /* pointer to element 0 */
         ptr = list->lam_list_head.lam_list_next;
-        for ( i = 0; i < idx; i++ )
+        for ( i = 0; i < idx-1; i++ )
             ptr = ptr->lam_list_next;
 
         next = ptr->lam_list_next;
