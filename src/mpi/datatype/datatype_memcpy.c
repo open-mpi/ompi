@@ -4,13 +4,12 @@
 
 /* alternative memcpy function */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "lam_config.h"
 #include "datatype.h"
-
-#define ALIGNED32(X) (((uint32_t)(X) & (uint32_t) 3) == (uint32_t) 0 ? 1 : 0)
 
 /*
  * Alternative memcpy function: On some systems, this performs better
@@ -19,7 +18,10 @@
 void *lam_memcpy_alt(void *dst, const void *src, size_t size,
                      lam_memcpy_state_t *dummy)
 {
-    if (ALIGNED32(src) && ALIGNED32(dst)) {
+    assert(dst);
+    assert(src);
+
+    if (LAM_IS_32BIT_ALIGNED(src) && LAM_IS_32BIT_ALIGNED(dst)) {
         uint32_t *restrict p = (uint32_t *) dst;
         uint32_t *restrict q = (uint32_t *) src;
         uint32_t i;
