@@ -106,6 +106,9 @@ extern "C" {
                                          int rank,
                                          int *nneighbors);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 /*
  * Globals
