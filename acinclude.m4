@@ -36,6 +36,9 @@ sinclude(config/f90_check_type.m4)
 sinclude(config/f90_get_alignment.m4)
 sinclude(config/f90_get_sizeof.m4)
 
+sinclude(config/ompi_try_assemble.m4)
+sinclude(config/ompi_config_asm.m4)
+
 sinclude(config/ompi_case_sensitive_fs_setup.m4)
 sinclude(config/ompi_check_optflags.m4)
 sinclude(config/ompi_config_subdir.m4)

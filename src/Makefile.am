@@ -66,6 +66,7 @@ endif
 SUBDIRS = \
         include \
         $(LIBLTDL_SUBDIR) \
+	asm \
         attribute \
         communicator \
         datatype \
@@ -94,6 +95,7 @@ lib_LTLIBRARIES = libmpi.la
 libmpi_la_SOURCES =
 libmpi_la_LIBADD = \
         $(LIBLTDL_LTLIB) \
+	asm/libasm.la \
         attribute/libattribute.la \
         class/liblfc.la \
         communicator/libcommunicator.la \
