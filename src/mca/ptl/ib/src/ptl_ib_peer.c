@@ -107,6 +107,7 @@ static int mca_ptl_ib_alloc_peer_conn(mca_ptl_base_peer_t* peer)
     if(NULL == peer->peer_conn) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
     return OMPI_SUCCESS;
 }
 
@@ -248,10 +249,6 @@ static int mca_ptl_ib_peer_reply_start_connect(mca_ptl_ib_peer_t *peer,
     if(rc != OMPI_SUCCESS) {
         return rc;
     }
-
-    /* Register Buffers */
-
-    /* Post receives */
 
     /* Send connection info over to remote peer */
     rc = mca_ptl_ib_peer_send_conn_info(peer);

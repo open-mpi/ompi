@@ -110,8 +110,6 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
      * size) to represent the proc */
     module_proc->proc_guid = ompi_proc->proc_name;
 
-    D_PRINT("Creating proc for %d\n", ompi_proc->proc_name.vpid);
-
     /* IB module doesn't have addresses exported at
      * initialization, so the addr_count is set to one. */
     module_proc->proc_addr_count = 1;

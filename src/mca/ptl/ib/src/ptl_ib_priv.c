@@ -403,7 +403,7 @@ static int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
     memhandle->lkey = mem_handle.lkey;
     memhandle->rkey = mem_handle.rkey;
 
-    D_PRINT("addr = %p, lkey = %d\n", buf, memhandle->lkey);
+    /* D_PRINT("addr = %p, lkey = %d\n", buf, memhandle->lkey); */
 
     memhandle->hndl = mem_handle.hndl;
 
@@ -413,20 +413,19 @@ static int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
 int mca_ptl_ib_init_peer(mca_ptl_ib_state_t *ib_state,
         mca_ptl_ib_peer_conn_t *peer_conn)
 {
-    /* Allocate resources for the peer connection */
-
+    /* Local resources */
     peer_conn->lres = (mca_ptl_ib_peer_local_res_t *)
         malloc(sizeof(mca_ptl_ib_peer_local_res_t));
     if(NULL == peer_conn->lres) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    /* Remote resources */
     peer_conn->rres = (mca_ptl_ib_peer_remote_res_t *)
         malloc(sizeof(mca_ptl_ib_peer_remote_res_t));
     if(NULL == peer_conn->rres) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-
     /* Create the Queue Pair */
     if(mca_ptl_ib_create_qp(ib_state->nic,
                     ib_state->ptag,
@@ -443,15 +442,81 @@ int mca_ptl_ib_init_peer(mca_ptl_ib_state_t *ib_state,
 }
 
 /*
- * Establish Reliable Connection with peer
+ * 1. Establish Reliable Connection with peer
+ * 2. Allocate resources to this connection
+ * 3. Post receives for this connection
  *
  */
 
 int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t *ib_state,
         mca_ptl_ib_peer_conn_t *peer_conn)
 {
-    return(mca_ptl_ib_rc_qp_init(ib_state->nic,
+    int rc, i;
+    VAPI_ret_t ret;
+
+    /* Establish Reliable Connection */
+    rc = mca_ptl_ib_rc_qp_init(ib_state->nic,
                 peer_conn->lres->qp_hndl,
                 peer_conn->rres->qp_num,
-                peer_conn->rres->lid));
+                peer_conn->rres->lid);
+
+    if(rc != OMPI_SUCCESS) {
+        return rc;
+    }
+
+    /* Allocate resources to this connection */
+    peer_conn->lres->send = (ib_buffer_t*)
+        malloc(sizeof(ib_buffer_t) * NUM_IB_SEND_BUF);
+
+    if(NULL == peer_conn->lres->send) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    peer_conn->lres->recv = (ib_buffer_t*)
+        malloc(sizeof(ib_buffer_t) * NUM_IB_RECV_BUF);
+
+    if(NULL == peer_conn->lres->recv) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Register the buffers */
+    for(i = 0; i < NUM_IB_SEND_BUF; i++) {
+
+        rc = mca_ptl_ib_register_mem(ib_state->nic, ib_state->ptag,
+                (void*) peer_conn->lres->send[i].buf, 
+                4096, &peer_conn->lres->send[i].hndl);
+        if(rc != OMPI_SUCCESS) {
+            return OMPI_ERROR;
+        }
+    }
+
+    for(i = 0; i < NUM_IB_RECV_BUF; i++) {
+
+        ib_buffer_t *ib_buf_ptr;
+
+        rc = mca_ptl_ib_register_mem(ib_state->nic, ib_state->ptag,
+                (void*) peer_conn->lres->recv[i].buf, 
+                4096, &peer_conn->lres->recv[i].hndl);
+        if(rc != OMPI_SUCCESS) {
+            return OMPI_ERROR;
+        }
+
+        IB_PREPARE_RECV_DESC((&peer_conn->lres->recv[i]));
+    }
+
+    /* Post receives */
+    for(i = 0; i < NUM_IB_RECV_BUF; i++) {
+
+        ret = VAPI_post_rr(ib_state->nic,
+                peer_conn->lres->qp_hndl,
+                &peer_conn->lres->recv[i].desc.rr);
+
+        if(VAPI_OK != ret) {
+            MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_rr");
+        }
+    }
+
+    D_PRINT("Done posting recvs");
+
+    return OMPI_SUCCESS;
 }

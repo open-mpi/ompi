@@ -50,8 +50,6 @@ int mca_ptl_ib_add_procs(struct mca_ptl_base_module_t* base_module,
     mca_ptl_ib_proc_t* module_proc;
     mca_ptl_base_peer_t* module_peer;
 
-    D_PRINT("Adding %d procs\n", nprocs);
-
     for(i = 0; i < nprocs; i++) {
 
         ompi_proc = ompi_procs[i];
@@ -97,8 +95,6 @@ int mca_ptl_ib_add_procs(struct mca_ptl_base_module_t* base_module,
         OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
         peers[i] = module_peer;
     }
-
-    D_PRINT("Added %d procs\n", nprocs);
 
     return OMPI_SUCCESS;
 }

@@ -4,21 +4,28 @@
 #include <stdint.h>
 #include "ptl_ib_vapi.h"
 
-struct mca_ptl_ib_state_t {
-    VAPI_hca_id_t                   hca_id;     /* ID of HCA */
-    VAPI_hca_port_t                 port;       /* IB port of this PTL */
-    VAPI_hca_hndl_t                 nic;        /* NIC handle */  
-    VAPI_pd_hndl_t                  ptag;       /* Protection Domain tag */
+#define NUM_IB_SEND_BUF             (10)
+#define NUM_IB_RECV_BUF             (10)
 
-    VAPI_cq_hndl_t                  cq_hndl;    /* Completion Queue handle */
-                                                /* At present Send & Recv
-                                                 * are tied to the same
-                                                 * completion queue */
+struct mca_ptl_ib_state_t {
+    VAPI_hca_id_t                   hca_id;     
+    /* ID of HCA */
+
+    VAPI_hca_port_t                 port;       
+    /* IB port of this PTL */
+
+    VAPI_hca_hndl_t                 nic;        
+    /* NIC handle */  
+
+    VAPI_pd_hndl_t                  ptag;       
+    /* Protection Domain tag */
+
+    VAPI_cq_hndl_t                  cq_hndl;    
+    /* Completion Queue handle */
+    /* At present Send & Recv are tied to the same completion queue */
 
     EVAPI_async_handler_hndl_t      async_handler; 
-                                                /* Async event handler used
-                                                 * to detect weird/unknown
-                                                 * events */
+    /* Async event handler used to detect weird/unknown events */
 };
 
 typedef struct mca_ptl_ib_state_t mca_ptl_ib_state_t;
@@ -58,6 +65,19 @@ struct vapi_descriptor_t {
 
 typedef struct vapi_descriptor_t vapi_descriptor_t;
 
+struct ib_buffer_t {
+    vapi_descriptor_t               desc;
+    /* Descriptor of the buffer */
+
+    vapi_memhandle_t                hndl;
+    /* Buffer handle */
+
+    char                            buf[4096];
+    /* Buffer space */
+};
+
+typedef struct ib_buffer_t ib_buffer_t;
+
 /* mca_ptl_ib_peer_local_res_t contains information
  * regarding local resources dedicated to this
  * connection */
@@ -68,6 +88,12 @@ struct mca_ptl_ib_peer_local_res_t {
 
     VAPI_qp_prop_t                  qp_prop;
     /* Local QP properties */
+
+    ib_buffer_t                     *send;
+    /* Pointer to send buffers */
+
+    ib_buffer_t                     *recv;
+    /* Pointer to recv buffers */
 };
 
 typedef struct mca_ptl_ib_peer_local_res_t mca_ptl_ib_peer_local_res_t;
@@ -112,6 +138,18 @@ typedef struct mca_ptl_ib_peer_conn_t mca_ptl_ib_peer_conn_t;
     ompi_output(0, "Async hndl : %d", ib_state_ptr->async_handler); \
 }
 
+#define IB_PREPARE_RECV_DESC(ib_buf_ptr) {                          \
+    ib_buf_ptr->desc.rr.comp_type = VAPI_SIGNALED;                  \
+    ib_buf_ptr->desc.rr.opcode = VAPI_RECEIVE;                      \
+    ib_buf_ptr->desc.rr.id = (VAPI_virt_addr_t)                     \
+        (MT_virt_addr_t) ib_buf_ptr;                                \
+    ib_buf_ptr->desc.rr.sg_lst_len = 1;                             \
+    ib_buf_ptr->desc.rr.sg_lst_p = &ib_buf_ptr->desc.sg_entry;      \
+    ib_buf_ptr->desc.sg_entry.len = 4096;                           \
+    ib_buf_ptr->desc.sg_entry.lkey = ib_buf_ptr->hndl.lkey;         \
+    ib_buf_ptr->desc.sg_entry.addr = (VAPI_virt_addr_t)             \
+        (MT_virt_addr_t) ib_buf_ptr->buf;                           \
+}
 
 int mca_ptl_ib_init_module(mca_ptl_ib_state_t*, int);
 int mca_ptl_ib_get_num_hcas(uint32_t*);
