@@ -70,6 +70,7 @@ while test -n "[$]1"; do
     bar*) ;;
     -I*) ;;
     -L*) ;;
+    -R*) ;;
     -lfoo) ;;
     -o) ;;
     *.so) ;;
