@@ -15,9 +15,11 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/param.h>
 
 #include "include/constants.h"
 #include "util/output.h"
+#include "util/proc_info.h"
 #include "threads/mutex.h"
 
 
@@ -45,6 +47,7 @@ static ompi_output_stream_t verbose = {
  * Private functions
  */
 static int do_open(int output_id, ompi_output_stream_t *lds);
+static int open_file(int i);
 static void free_descriptor(int output_id);
 static void output(int output_id, char *format, va_list arglist);
 
@@ -68,8 +71,11 @@ struct output_desc_t {
   bool ldi_stdout;
   bool ldi_stderr;
 
-  int ldi_fd;
+  bool ldi_file;
+  bool ldi_file_want_append;
   char *ldi_file_suffix;
+  int ldi_fd;
+  int ldi_file_num_lines_lost;
 };
 typedef struct output_desc_t output_desc_t;
 
@@ -97,7 +103,11 @@ bool ompi_output_init(void)
     info[i].ldi_enabled = false;
 
     info[i].ldi_syslog = false;
+    info[i].ldi_file = false;
+    info[i].ldi_file_suffix = NULL;
+    info[i].ldi_file_want_append = false;
     info[i].ldi_fd = -1;
+    info[i].ldi_file_num_lines_lost = 0;
   }
 
   /* Initialize the mutex that protects the output */
@@ -179,7 +189,7 @@ void ompi_output_reopen_all(void)
     lds.lds_prefix = info[i].ldi_prefix;
     lds.lds_want_stdout = info[i].ldi_stdout;
     lds.lds_want_stderr = info[i].ldi_stderr;
-    lds.lds_want_file = (-1 == info[i].ldi_fd) ? false: true;
+    lds.lds_want_file = (-1 == info[i].ldi_fd) ? false : true;
     /* open all streams in append mode */
     lds.lds_want_file_append = true;
     lds.lds_file_suffix = info[i].ldi_file_suffix;
@@ -303,10 +313,8 @@ void ompi_output_finalize(void)
  * (especially upon reopen).
  */
 static int do_open(int output_id, ompi_output_stream_t *lds)
-  {
-  int i;
-  int flags;
-  char *filename;
+{
+  int i, ret;
 
   /* Setup */
 
@@ -379,47 +387,67 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
   info[i].ldi_stderr = lds->lds_want_stderr;
 
   info[i].ldi_fd = -1;
+  info[i].ldi_file = lds->lds_want_file;
+  info[i].ldi_file_suffix = (NULL == lds->lds_file_suffix) ? NULL :
+      strdup(lds->lds_file_suffix);
+  info[i].ldi_file_want_append = lds->lds_want_file_append;
+  info[i].ldi_file_num_lines_lost = 0;
   if (lds->lds_want_file) {
-
-    /* Setup the filename and open flags */
-
-#if 0
-    filename = ompi_get_tmpdir();
-#else
-    ompi_output(0, "WARNING: need to implement session dir (%s, %d)\n",
-               __FILE__, __LINE__);
-    filename = malloc(256);
-    strcpy(filename, "/tmp");
-#endif
-    strcat(filename, "/ompi-");
-    if (lds->lds_file_suffix != NULL) {
-      info[i].ldi_file_suffix = strdup(lds->lds_file_suffix);
-      strcat(filename, lds->lds_file_suffix);
-    } else {
-      info[i].ldi_file_suffix = NULL;
-      strcat(filename, "output.txt");
+    if (OMPI_SUCCESS != (ret = open_file(i))) {
+      return ret;
     }
-    flags = O_CREAT | O_RDWR;
-    if (!lds->lds_want_file_append) {
-      flags |= O_TRUNC;
-    }
-
-    /* Actually open the file */
-
-    info[i].ldi_fd = open(filename, flags, 0644);
-    if (-1 == info[i].ldi_fd) {
-      info[i].ldi_used = false;
-      return OMPI_ERR_IN_ERRNO;
-    }
-
-    /* Make the file be close-on-exec to prevent child inheritance
-       problems */
-
-    fcntl(info[i].ldi_fd, F_SETFD, 1);
-    free(filename);
   }
 
   return i;
+}
+
+
+static int open_file(int i)
+{
+    int flags;
+    char *dir, *filename;
+
+    /* Setup the filename and open flags */
+
+    dir = ompi_process_info.proc_session_dir;
+    if (NULL != dir) {
+        filename = malloc(MAXPATHLEN);
+        if (NULL == filename) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        strcpy(filename, dir);
+        strcat(filename, "/output-");
+        if (info[i].ldi_file_suffix != NULL) {
+            strcat(filename, info[i].ldi_file_suffix);
+        } else {
+            info[i].ldi_file_suffix = NULL;
+            strcat(filename, "output.txt");
+        }
+        flags = O_CREAT | O_RDWR;
+        if (!info[i].ldi_file_want_append) {
+            flags |= O_TRUNC;
+        }
+
+        /* Actually open the file */
+
+        info[i].ldi_fd = open(filename, flags, 0644);
+        printf("output: opening file: %s\n", filename);
+        if (-1 == info[i].ldi_fd) {
+            info[i].ldi_used = false;
+            return OMPI_ERR_IN_ERRNO;
+        }
+
+        /* Make the file be close-on-exec to prevent child inheritance
+           problems */
+
+        fcntl(info[i].ldi_fd, F_SETFD, 1);
+        free(filename);
+    }
+
+    /* Return successfully even if the session dir did not exist yet;
+       we'll try opening it later */
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -538,10 +566,27 @@ static void output(int output_id, char *format, va_list arglist)
       fflush(stderr);
     }
 
-    /* File output */
+    /* File output -- first check to see if the file opening was
+       delayed.  If so, try to open it.  If we failed to open it, then
+       just discard (there are big warnings in the ompi_output.h docs
+       about this!). */
 
-    if (ldi->ldi_fd != -1) {
-      write(ldi->ldi_fd, temp_str, total_len);
+    if (ldi->ldi_file) {
+      if (ldi->ldi_fd == -1) {
+          if (OMPI_SUCCESS != open_file(output_id)) {
+              ++ldi->ldi_file_num_lines_lost;
+          } else if (ldi->ldi_file_num_lines_lost > 0) {
+              char buffer[BUFSIZ];
+              memset(buffer, 0, BUFSIZ);
+              snprintf(buffer, BUFSIZ - 1, "[WARNING: %d lines lost because the Open MPI process session directory did\n not exist when ompi_output() was invoked]\n", ldi->ldi_file_num_lines_lost);
+              write(ldi->ldi_fd, buffer, strlen(buffer));
+              ldi->ldi_file_num_lines_lost = 0;
+          }
+      }
+      if (ldi->ldi_fd != -1) {
+          printf("proc session dir: %s\n", ompi_process_info.proc_session_dir);
+        write(ldi->ldi_fd, temp_str, total_len);
+      }
     }
     OMPI_THREAD_UNLOCK(&mutex);
 

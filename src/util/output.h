@@ -22,6 +22,14 @@
  *
  * Which outputs to use are specified during ompi_output_open().
  *
+ * WARNING: When using "file" as an output destination, be aware that
+ * the file may not exist until the session directory for the process
+ * exists.  This is at least part of the way through MPI_INIT (for
+ * example).  Most MCA components and internals of Open MPI won't be
+ * affected by this, but some RTE / startup aspects of Open MPI will
+ * not be able to write to a file for output.  See ompi_output() for
+ * details on what happens in these cases.
+ *
  * ompi_output_open() returns an integer handle that is used in
  * successive calls to OMPI_OUTPUT() and ompi_output() to send output to
  * the stream.
@@ -170,10 +178,14 @@ struct ompi_output_stream_t {
    * indicates the string suffix to add to the filename.
    *
    * The output file will be in the OMPI session directory and have a
-   * OMPI-generated prefix (generally "$sessiondir/ompi-").  The suffix
-   * is intended to give stream users a chance to write their output
-   * into unique files.  If this field is NULL, the suffix
-   * "output.txt" is used.
+   * OMPI-generated prefix (generally "$proc_sessiondir/output-").
+   * The suffix is intended to give stream users a chance to write
+   * their output into unique files.  If this field is NULL, the
+   * suffix "output.txt" is used.
+   *
+   * Note that it is possible that the process session directory does
+   * not exist when ompi_output_open() is invoked.  See ompi_output()
+   * for details on what happens in this situation.
    */
   char *lds_file_suffix;
 };
@@ -226,6 +238,10 @@ extern "C" {
    * It is safe to have multiple threads invoke this function
    * simultaneously; their execution will be serialized in an
    * unspecified manner.
+   *
+   * Be sure to see ompi_output() for a description of what happens
+   * when open_open() / ompi_output() is directed to send output to a
+   * file but the process session directory does not yet exist.
    */
   int ompi_output_open(ompi_output_stream_t *lds);
 
@@ -302,6 +318,13 @@ extern "C" {
    * this function will append newlines as necessary.
    *
    * Verbosity levels are ignored in this function.
+   *
+   * Note that for output streams that are directed to files, the
+   * files are stored under the process' session directory.  If the
+   * session directory does not exist when ompi_output() is invoked,
+   * the output will be discarded!  Once the session directory is
+   * created, ompi_output() will automatically create the file and
+   * writing to it.
    */
   void ompi_output(int output_id, char *format, ...);
 
