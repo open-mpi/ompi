@@ -192,7 +192,7 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize state of segment instance */
 static void mca_gpr_registry_segment_construct(mca_gpr_registry_segment_t* seg)
 {
-    seg->segment = NULL;
+    seg->segment = 0;
     seg->lastkey = 0;
     OBJ_CONSTRUCT(&seg->registry_entries, ompi_list_t);
     OBJ_CONSTRUCT(&seg->keytable, ompi_list_t);
