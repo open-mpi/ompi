@@ -20,7 +20,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_SET_ATTR,
                            pmpi_type_set_attr_,
                            pmpi_type_set_attr__,
                            pmpi_type_set_attr_f,
-                           (MPI_Fint *type, MPI_Fint *type_keyval, char *attr_val, MPI_Fint *ierr),
+                           (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attr_val, MPI_Fint *ierr),
                            (type, type_keyval, attr_val, ierr) )
 #endif
 
@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SET_ATTR,
                            mpi_type_set_attr_,
                            mpi_type_set_attr__,
                            mpi_type_set_attr_f,
-                           (MPI_Fint *type, MPI_Fint *type_keyval, char *attr_val, MPI_Fint *ierr),
+                           (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attr_val, MPI_Fint *ierr),
                            (type, type_keyval, attr_val, ierr) )
 #endif
 
@@ -46,15 +46,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SET_ATTR,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_type_set_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, char *attr_val, MPI_Fint *ierr)
+void mpi_type_set_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attr_val, MPI_Fint *ierr)
 {
     MPI_Datatype c_type = MPI_Type_f2c( *type );
 
     *ierr = OMPI_INT_2_FINT(MPI_Type_set_attr( c_type, 
 					       OMPI_FINT_2_INT(*type_keyval),
 					       attr_val ));
-
-    if (MPI_SUCCESS == *ierr) {
-        *type = MPI_Type_c2f( c_type );
-    }
 }

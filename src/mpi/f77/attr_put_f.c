@@ -20,7 +20,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ATTR_PUT,
                            pmpi_attr_put_,
                            pmpi_attr_put__,
                            pmpi_attr_put_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, char *attribute_val, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, MPI_Fint *ierr),
                            (comm, keyval, attribute_val, ierr) )
 #endif
 
@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_PUT,
                            mpi_attr_put_,
                            mpi_attr_put__,
                            mpi_attr_put_f,
-                           (MPI_Fint *comm, MPI_Fint *keyval, char *attribute_val, MPI_Fint *ierr),
+                           (MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, MPI_Fint *ierr),
                            (comm, keyval, attribute_val, ierr) )
 #endif
 
@@ -46,14 +46,27 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_PUT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_attr_put_f(MPI_Fint *comm, MPI_Fint *keyval, char *attribute_val, 
+void mpi_attr_put_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, 
 		    MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
+    int *c_value;
 
     c_comm = MPI_Comm_f2c(*comm);
 
+    /* This stuff is very confusing.  Be sure to see MPI-2 4.12.7. */
+
+    /* Note that this function deals with attribute values that are
+       the size of Fortran INTEGERS; MPI_ATTR_PUT deals with attribute
+       values that are the size of address integers.  Hence, it is
+       possible that the C value is larger than the Fortran value.
+       MPI says that we sign-extend in this case. */
+
+    c_value = (int *) *attribute_val;
     *ierr = OMPI_INT_2_FINT(MPI_Attr_put(c_comm, 
 					 OMPI_FINT_2_INT(*keyval), 
 					 attribute_val));
+    if (MPI_SUCCESS == *ierr) {
+        
+    }
 }
