@@ -13,6 +13,7 @@
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/pcm/pcm.h"
+#include "mca/pcm/base/base.h"
 #include "mca/pcm/rsh/src/pcm_rsh.h"
 
 #include <stdio.h>
@@ -43,7 +44,7 @@ mca_pcm_base_component_1_0_0_t mca_pcm_rsh_component = {
 
 
 struct mca_pcm_base_module_1_0_0_t mca_pcm_rsh_1_0_0 = {
-    mca_pcm_rsh_get_unique_name,
+    mca_pcm_base_no_unique_name,
     mca_pcm_rsh_allocate_resources,
     mca_pcm_rsh_register_monitor,
     mca_pcm_rsh_can_spawn,
