@@ -32,6 +32,7 @@ else
 f77_pmpi_lib = 
 endif
 else
+f77_base_lib =
 f77_mpi_lib =
 f77_pmpi_lib =
 endif
@@ -103,7 +104,7 @@ libmpi_la_LIBADD = \
         mca/ptl/base/libmca_ptl_base.la $(MCA_ptl_STATIC_LTLIBS) \
         mca/topo/base/libmca_topo_base.la $(MCA_topo_STATIC_LTLIBS) \
         mpi/c/libmpi_c.la $(c_mpi_lib) $(c_pmpi_lib) \
-        mpi/f77/libmpi_f77.la $(f77_mpi_lib) $(f77_pmpi_lib) \
+        $(f77_base_lib) $(f77_mpi_lib) $(f77_pmpi_lib) \
         $(f90_lib) $(cxx_lib) \
 	mpi/runtime/libmpiruntime.la \
         op/libop.la \
