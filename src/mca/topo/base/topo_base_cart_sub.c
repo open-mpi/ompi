@@ -80,7 +80,7 @@ int mca_topo_base_cart_sub (MPI_Comm comm,
     /*
      * Split the communicator.
      */
-     errcode = ompi_comm_split (comm, colour, key, &temp_comm);
+     errcode = ompi_comm_split (comm, colour, key, &temp_comm, true);
      if (errcode != MPI_SUCCESS) {
         return errcode;
      }

@@ -237,7 +237,7 @@ extern "C" {
      * @
      */
     int ompi_comm_split ( ompi_communicator_t *comm, int color, int key, 
-                         ompi_communicator_t** newcomm );
+                         ompi_communicator_t** newcomm, bool pass_on_topo);
     
     /**
      * free a communicator 
