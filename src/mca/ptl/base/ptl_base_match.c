@@ -622,6 +622,12 @@ static void mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_match
  *       is used.
  *   - 2nd and greater fragments include a receive descriptor pointer
  *   - this routine may be called simoultaneously by more than one thread
+ *
+ *  On return, if match is made:
+ *       neither the fragment, nor the matched receive descriptor
+ *       are on any list
+ *  if match is not made:
+ *       The fragment is placed on the unexpected fragment list
  */
 bool mca_ptl_base_match_in_order_network_delivery(
     mca_ptl_base_match_header_t *frag_header,
