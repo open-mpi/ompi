@@ -105,6 +105,8 @@ ompi_rte_get_spawn_handle(int criteria, bool have_threads)
     }
 
     ompi_pointer_array_add(&avail_handles, ptr);
+    /* retain for the array */
+    OBJ_RETAIN(ptr);
 
  cleanup:
     OMPI_THREAD_UNLOCK(&avail_handles_mutex);
