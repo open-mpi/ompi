@@ -85,7 +85,7 @@ int lam_list_insert(lam_list_t *list, lam_list_item_t *item, long long idx)
 {
     /* Adds item to list at index and retains item. */
     int     i;
-    lam_list_item_t     *ptr, *next;
+    volatile lam_list_item_t     *ptr, *next;
     
     if ( idx >= list->lam_list_length )
         return 0;
@@ -143,7 +143,7 @@ lam_list_item_t *lam_list_remove_first(lam_list_t *list)
         Caller now owns the item and should release the item
         when caller is done with it.
     */
-    lam_list_item_t *item;
+    volatile lam_list_item_t *item;
     if ( 0 == list->lam_list_length )
         return (lam_list_item_t *)NULL;
     
@@ -165,7 +165,7 @@ lam_list_item_t *lam_list_remove_first(lam_list_t *list)
     item->lam_list_next=(lam_list_item_t *)NULL;
 #endif
 
-    return item;
+    return (lam_list_item_t *) item;
 }
 
 lam_list_item_t *lam_list_remove_last(lam_list_t *list)
@@ -174,7 +174,7 @@ lam_list_item_t *lam_list_remove_last(lam_list_t *list)
     Caller now owns the item and should release the item
     when caller is done with it.
     */
-    lam_list_item_t  *item;
+    volatile lam_list_item_t  *item;
     
     if ( 0 == list->lam_list_length )
         return (lam_list_item_t *)NULL;
@@ -196,6 +196,6 @@ lam_list_item_t *lam_list_remove_last(lam_list_t *list)
     item->lam_list_next = item->lam_list_prev = (lam_list_item_t *)NULL;
 #endif
 
-    return item;
+    return (lam_list_item_t *) item;
 }
 

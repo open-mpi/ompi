@@ -513,7 +513,7 @@ char *lam_cmd_line_get_usage_msg(lam_cmd_line_t *cmd)
   line = NULL;
   for (item = lam_list_get_first(&cmd->lcl_options); 
        lam_list_get_end(&cmd->lcl_options) != item;
-       item = lam_list_get_next(item)) {
+       item = (lam_list_item_t *) lam_list_get_next(item)) {
     option = (cmd_line_option_t *) item;
     if (NULL != option->clo_description) {
 
@@ -652,7 +652,7 @@ int lam_cmd_line_get_ninsts(lam_cmd_line_t *cmd, const char *opt)
   if (NULL != option) {
     for (item = lam_list_get_first(&cmd->lcl_params); 
          lam_list_get_end(&cmd->lcl_params) != item;
-         item = lam_list_get_next(item)) {
+         item = (lam_list_item_t *) lam_list_get_next(item)) {
       param = (cmd_line_param_t *) item;
       if (param->clp_option == option) {
         ++ret;
@@ -722,7 +722,7 @@ char *lam_cmd_line_get_param(lam_cmd_line_t *cmd, const char *opt, int inst,
     if (idx < option->clo_num_params) {
       for (item = lam_list_get_first(&cmd->lcl_params); 
            lam_list_get_end(&cmd->lcl_params) != item;
-           item = lam_list_get_next(item)) {
+           item = (lam_list_item_t *) lam_list_get_next(item)) {
         param = (cmd_line_param_t *) item;
         if (param->clp_option == option) {
           if (num_found == inst) {
@@ -935,7 +935,7 @@ static cmd_line_option_t *find_option(lam_cmd_line_t *cmd,
 
   for (item = lam_list_get_first(&cmd->lcl_options);
        lam_list_get_end(&cmd->lcl_options) != item;
-       item = lam_list_get_next(item)) {
+       item = (lam_list_item_t *) lam_list_get_next(item)) {
     option = (cmd_line_option_t *) item;
     if (0 == strcmp(option_name, option->clo_long_name) ||
         (strlen(option_name) == 1 &&
