@@ -827,14 +827,11 @@ int mca_ptl_sm_send_continue(
 
     /* pack data in payload buffer */
     convertor = &sendreq->req_convertor;
-#if 0
-    ompi_convertor_copy(&sendreq->req_convertor, convertor);
     ompi_convertor_init_for_send( convertor, 0, 
             sendreq->req_datatype,
             sendreq->req_count, 
             sendreq->req_addr,
             offset, NULL);
-#endif
     sm_data_ptr=send_frag->buff;
 
     /* set up the shared memory iovec */
