@@ -353,7 +353,7 @@ extern int mca_ptl_mx_send_continue(
 );
 
 
-#define HAVE_MX_ICOMPLETED 1
+#define HAVE_MX_ICOMPLETED 0
 #if HAVE_MX_ICOMPLETED
 extern mx_return_t mx_icompleted(mx_endpoint_t endpoint, mx_status_t *status, uint32_t *result);
 #endif
