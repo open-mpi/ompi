@@ -175,11 +175,6 @@ int ompi_atomic_cmpset_rel_32(volatile int32_t *addr,
 #if OMPI_POWERPC_SUPPORT_64BIT
 
 #if  OMPI_GCC_INLINE_ASSEMBLY
-/* these two functions aren't inlined in the non-gcc case because then
-   there would be two function calls (since neither cmpset_64 nor
-   atomic_?mb can be inlined).  Instead, we "inline" them by hand in
-   the assembly, meaning there is one function call overhead instead
-   of two */
 static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
                                         int64_t oldval, int64_t newval)
 {
@@ -199,6 +194,12 @@ static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
    return (ret == oldval);
 }
 
+
+/* these two functions aren't inlined in the non-gcc case because then
+   there would be two function calls (since neither cmpset_64 nor
+   atomic_?mb can be inlined).  Instead, we "inline" them by hand in
+   the assembly, meaning there is one function call overhead instead
+   of two */
 static inline int ompi_atomic_cmpset_acq_64(volatile int64_t *addr,
                                             int64_t oldval, int64_t newval)
 {
