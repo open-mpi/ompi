@@ -13,7 +13,11 @@ OBJ_CLASS_DECLARATION(mca_ptl_ib_send_frag_t);
  * IB send fragment derived type.
  */
 struct mca_ptl_ib_send_frag_t {
-   mca_ptl_base_send_frag_t super;  /**< base send fragment descriptor */
+   mca_ptl_base_send_frag_t frag_send;  /**< base send fragment descriptor */
+   struct iovec *frag_vec_ptr;
+   size_t frag_vec_cnt;
+   struct iovec frag_vec[2];
+   volatile int frag_progressed;
 };
 typedef struct mca_ptl_ib_send_frag_t mca_ptl_ib_send_frag_t;
 

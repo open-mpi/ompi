@@ -135,6 +135,7 @@ int mca_ptl_ib_component_close(void)
 
 static int mca_ptl_ib_component_send(void)
 {
+#if 0
     int i, rc, size;
     mca_ptl_ib_ud_addr_t* ud_qp_addr = NULL;
 
@@ -171,6 +172,8 @@ static int mca_ptl_ib_component_send(void)
     free(ud_qp_addr);
 
     return rc;
+#endif
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -238,6 +241,8 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
     mca_ptl_ib_component.ib_max_ptl_modules = 
         mca_ptl_ib_component.ib_num_hcas;
 
+    /* Allocate space for number of modules available
+     * to this component */
     ib_modules = (mca_ptl_ib_module_t*) malloc(sizeof(mca_ptl_ib_module_t) * 
             mca_ptl_ib_component.ib_num_ptl_modules);
     if(NULL == ib_modules) {
@@ -255,131 +260,26 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
                 sizeof(mca_ptl_ib_module));
     }
 
-    /* For each module, do this */
+    /* For each module, Initialize! */
     for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
 
-        if(mca_ptl_ib_get_hca_id(i, &ib_modules[i].hca_id) 
+        /* Allocate space for the state of the IB module */
+        ib_modules[i].ib_state = malloc(sizeof(mca_ptl_ib_state_t));
+
+        if(NULL == ib_modules[i].ib_state) {
+            return NULL;
+        }
+        
+        if(mca_ptl_ib_init_module(ib_modules[i].ib_state, i)
                 != OMPI_SUCCESS) {
             return NULL;
         }
-
-        D_PRINT("hca_id: %s\n", ib_modules[i].hca_id);
-
-        if(mca_ptl_ib_get_hca_hndl(ib_modules[i].hca_id, &ib_modules[i].nic)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        D_PRINT("hca_hndl: %d\n", ib_modules[i].nic);
-
-        if(mca_ptl_ib_alloc_pd(ib_modules[i].nic, &ib_modules[i].ptag)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        D_PRINT("Protection Domain: %d\n", ib_modules[i].ptag);
-
-        /* Each HCA uses only port 1. Need to change
-         * this so that each ptl can choose different
-         * ports */
-
-        if(mca_ptl_ib_query_hca_prop(ib_modules[i].nic, &ib_modules[i].port)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        D_PRINT("LID: %d\n", ib_modules[i].port.lid);
-
-
-        if(mca_ptl_ib_create_cq(ib_modules[i].nic, &ib_modules[i].cq_hndl)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        D_PRINT("CQ handle: %d\n", ib_modules[i].cq_hndl);
-
-        if(mca_ptl_ib_create_cq(ib_modules[i].nic, &ib_modules[i].ud_scq_hndl)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        if(mca_ptl_ib_create_cq(ib_modules[i].nic, &ib_modules[i].ud_rcq_hndl)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        D_PRINT("UD_SCQ handle: %d, UD_RCQ handle: %d\n", 
-                ib_modules[i].ud_scq_hndl, ib_modules[i].ud_rcq_hndl);
-
-        if(mca_ptl_ib_create_qp(ib_modules[i].nic, ib_modules[i].ptag,
-                    ib_modules[i].ud_rcq_hndl, ib_modules[i].ud_scq_hndl,
-                    &ib_modules[i].ud_qp_hndl, &ib_modules[i].ud_qp_prop,
-                    VAPI_TS_UD)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        D_PRINT("UD Qp handle: %d, Qp num: %d\n",
-                ib_modules[i].ud_qp_hndl, ib_modules[i].ud_qp_prop.qp_num);
-
-        if(mca_ptl_ib_ud_qp_init(ib_modules[i].nic, ib_modules[i].ud_qp_hndl)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        /* Attach asynchronous handler */
-        if(mca_ptl_ib_set_async_handler(ib_modules[i].nic, 
-                    &ib_modules[i].async_handler) 
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-#if 0
-        if(mca_ptl_ib_get_comp_ev_hndl(&ib_modules[i].ud_comp_ev_handler)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        /* Set the completion event handler for the UD recv queue */
-        if(mca_ptl_ib_set_comp_ev_hndl(ib_modules[i].nic, 
-                    ib_modules[i].cq_hndl,
-                    ib_modules[i].ud_comp_ev_handler, 
-                    (void*)NULL, &ib_modules[i].ud_comp_ev_hndl) 
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        /* Request for interrupts on the UD recv queue */
-        if(mca_ptl_ib_req_comp_notif(ib_modules[i].nic, 
-                    ib_modules[i].cq_hndl)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-#endif
-
-        /* Just for point-to-point communication */
-        /* Till dynamic connection management comes */
-
-        /* Create the QP I am going to use to communicate
-         * with this peer */
-        if(mca_ptl_ib_create_qp(ib_modules[i].nic,
-                    ib_modules[i].ptag,
-                    ib_modules[i].cq_hndl,
-                    ib_modules[i].cq_hndl,
-                    &ib_modules[i].my_qp_hndl,
-                    &ib_modules[i].my_qp_prop,
-                    VAPI_TS_RC)
-                != OMPI_SUCCESS) {
-        }
-
-        D_PRINT("QP hndl:%d, num: %d for 1-to-1 communication\n", 
-                ib_modules[i].my_qp_hndl,
-                ib_modules[i].my_qp_prop.qp_num);
-
-        ib_modules[i].send_index = 0;
-        ib_modules[i].recv_index = 0;
+        DUMP_IB_STATE(ib_modules[i].ib_state);
 
     }
+
+    /* Post OOB receives */
+    mca_ptl_ib_post_oob_recv_nb();
 
     /* Allocate list of IB ptl pointers */
     mca_ptl_ib_component.ib_ptl_modules = (struct mca_ptl_ib_module_t**) 
@@ -399,7 +299,8 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
     }
 
     /* Allocate list of MCA ptl pointers */
-    modules = (mca_ptl_base_module_t**) malloc(mca_ptl_ib_component.ib_num_ptl_modules * 
+    modules = (mca_ptl_base_module_t**) 
+        malloc(mca_ptl_ib_component.ib_num_ptl_modules * 
             sizeof(mca_ptl_base_module_t*));
     if(NULL == modules) {
         return NULL;
@@ -446,6 +347,7 @@ int mca_ptl_ib_component_control(int param, void* value, size_t size)
 
 int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
 {
+#if 0
     VAPI_ret_t ret;
     VAPI_wc_desc_t comp;
 
@@ -506,6 +408,7 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
                     comp.opcode);
         }
     }
+#endif
 
     return OMPI_SUCCESS;
 }

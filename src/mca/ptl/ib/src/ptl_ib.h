@@ -35,21 +35,50 @@
  */
 
 struct mca_ptl_ib_component_t {
-    mca_ptl_base_component_1_0_0_t super; /**< base PTL component */
-    struct mca_ptl_ib_module_t** ib_ptl_modules; /**< array of available PTLs */
-    uint32_t ib_num_ptl_modules;        /**< number of ptl modules actually used */
-    uint32_t ib_max_ptl_modules;         /**< maximum number of ptls */
-    int   ib_free_list_num;              /**< initial size of free lists */
-    int   ib_free_list_max;              /**< maximum size of free lists */
-    int   ib_free_list_inc;              /**< number of elements to alloc when growing free lists */
-    ompi_free_list_t ib_send_requests;    /**< free list of ib send requests -- sendreq + IB */
-    ompi_free_list_t ib_send_frags;       /**< free list of ib send fragments */
-    ompi_free_list_t ib_recv_frags;       /**< free list of ib recv fragments */
-    ompi_list_t ib_procs;                 /**< list of ib proc structures */
-    ompi_event_t ib_send_event;           /**< event structure for sends */
-    ompi_event_t ib_recv_event;           /**< event structure for recvs */
-    ompi_mutex_t ib_lock;                 /**< lock for accessing module state */
-    uint32_t ib_num_hcas;                   /* number of hcas available to the IB component */
+    mca_ptl_base_component_1_0_0_t          super; 
+    /**< base PTL component */
+
+    struct mca_ptl_ib_module_t              **ib_ptl_modules;
+    /**< array of available PTLs */
+
+    uint32_t                                ib_num_ptl_modules;
+    /**< number of ptl modules actually used */
+
+    uint32_t                                ib_max_ptl_modules;         
+    /**< maximum number of ptls */
+
+    int                                     ib_free_list_num;
+    /**< initial size of free lists */
+
+    int                                     ib_free_list_max;
+    /**< maximum size of free lists */
+
+    int                                     ib_free_list_inc;
+    /**< number of elements to alloc when growing free lists */
+
+    ompi_free_list_t                        ib_send_requests;
+    /**< free list of ib send requests -- sendreq + IB */
+
+    ompi_free_list_t                        ib_send_frags;
+    /**< free list of ib send fragments */
+
+    ompi_free_list_t                        ib_recv_frags;
+    /**< free list of ib recv fragments */
+
+    ompi_list_t                             ib_procs;
+    /**< list of ib proc structures */
+
+    ompi_event_t                            ib_send_event;
+    /**< event structure for sends */
+
+    ompi_event_t                            ib_recv_event;
+    /**< event structure for recvs */
+
+    ompi_mutex_t                            ib_lock;
+    /**< lock for accessing module state */
+
+    uint32_t                                ib_num_hcas;
+    /* number of hcas available to the IB component */
 };
 typedef struct mca_ptl_ib_component_t mca_ptl_ib_component_t;
 struct mca_ptl_ib_recv_frag_t;
@@ -61,38 +90,10 @@ extern mca_ptl_ib_component_t mca_ptl_ib_component;
  */
 struct mca_ptl_ib_module_t {
     mca_ptl_base_module_t           super;      /**< base PTL interface */
-    VAPI_hca_id_t                   hca_id;     /* ID of HCA this PTL is tied to */
-    VAPI_hca_port_t                 port;       /* InfiniBand port of this PTL */
-    VAPI_hca_hndl_t                 nic;        /* NIC handle */  
-    VAPI_pd_hndl_t                  ptag;       /* Protection Domain tag */
 
-    VAPI_cq_hndl_t                  cq_hndl;    /* Completion Queue handle */
-
-    EVAPI_async_handler_hndl_t      async_handler; /* Async event handler used to detect
-                                                      weird events */
-
-    VAPI_cq_hndl_t                  ud_scq_hndl;/* UD send completion queue handle */
-    VAPI_cq_hndl_t                  ud_rcq_hndl;/* UD recv completion queue handle */
-    mca_ptl_ib_ud_buf_ctrl_t*       ud_recv;    /* Link to UD recv buffer structures */
-    mca_ptl_ib_ud_buf_ctrl_t*       ud_send;    /* Link to UD bufs which are used for sending */
-
-    VAPI_qp_hndl_t                  ud_qp_hndl; /* UD queue pair handle */
-    VAPI_qp_prop_t                  ud_qp_prop; /* UD queue pair properties */
-    VAPI_rr_desc_t*                 ud_rr_hndl; /* UD receive descriptor pool */
-    VAPI_completion_event_handler_t ud_comp_ev_handler; /* UD completion handler */
-    EVAPI_compl_handler_hndl_t      ud_comp_ev_hndl; /* UD completion handler handle */
-
-    /* Temporary fields remove after dynamic connection
-     * management is in place */
-    VAPI_qp_hndl_t                  my_qp_hndl;
-    VAPI_qp_prop_t                  my_qp_prop;
-    /* Circular buffers */
-    mca_ptl_ib_send_buf_t*          send_buf;
-    int                             send_index;
-    mca_ptl_ib_recv_buf_t*          recv_buf;
-    int                             recv_index;
-    vapi_memhandle_t                send_buf_hndl;
-    vapi_memhandle_t                recv_buf_hndl;
+    /* IB state holds info about queue handles, HCA handles,
+     * protection domain etc. which are private to this module */
+    mca_ptl_ib_state_t              *ib_state;
 };
 
 typedef struct mca_ptl_ib_module_t mca_ptl_ib_module_t;
