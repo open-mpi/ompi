@@ -7,22 +7,23 @@ include $(top_srcdir)/config/Makefile.options
 AM_CPPFLAGS = -I$(top_srcdir)/test/support -DLAM_ENABLE_DEBUG=1
 
 noinst_PROGRAMS = \
-	hash_table \
-	list_test \
-	test_lam_pointer_array
+	lam_hash_table \
+	lam_list \
+	lam_value_array \
+	lam_pointer_array
 
-list_test_SOURCES = list_test.c 
-list_test_LDADD = \
+lam_list_SOURCES = lam_list.c 
+lam_list_LDADD = \
         $(top_builddir)/src/lam/lfc/lam_list.lo \
         $(top_builddir)/src/lam/lfc/lam_object.lo \
         $(top_builddir)/src/lam/mem/malloc.lo \
         $(top_builddir)/src/lam/util/output.lo \
         $(top_builddir)/src/lam/threads/mutex.lo \
         $(top_builddir)/test/support/libsupport.la
-list_test_DEPENDENCIES = $(list_test_LDADD)
+lam_list_DEPENDENCIES = $(lam_list_LDADD)
 
-hash_table_SOURCES = hash_table.c
-hash_table_LDADD = \
+lam_hash_table_SOURCES = lam_hash_table.c
+lam_hash_table_LDADD = \
         $(top_builddir)/src/lam/lfc/lam_hash_table.lo \
         $(top_builddir)/src/lam/lfc/lam_list.lo \
         $(top_builddir)/src/lam/lfc/lam_object.lo \
@@ -32,13 +33,25 @@ hash_table_LDADD = \
         $(top_builddir)/src/lam/util/libutil.la \
         $(top_builddir)/test/support/libsupport.la
 
-test_lam_pointer_array_SOURCES = test_lam_pointer_array.c
-test_lam_pointer_array_LDADD = \
+lam_pointer_array_SOURCES = lam_pointer_array.c
+lam_pointer_array_LDADD = \
         $(top_builddir)/src/lam/lfc/lam_pointer_array.lo \
         $(top_builddir)/src/lam/mem/malloc.lo \
         $(top_builddir)/src/lam/util/output.lo \
         $(top_builddir)/src/lam/threads/mutex.lo \
         $(top_builddir)/src/lam/util/libutil.la \
         $(top_builddir)/test/support/libsupport.la
-test_lam_pointer_array_DEPENDENCIES = $(test_lam_pointer_array_LDADD)
+lam_pointer_array_DEPENDENCIES = $(lam_pointer_array_LDADD)
+
+lam_value_array_SOURCES = lam_value_array.c
+lam_value_array_LDADD = \
+        $(top_builddir)/src/lam/lfc/lam_value_array.lo \
+        $(top_builddir)/src/lam/lfc/lam_object.lo \
+        $(top_builddir)/src/lam/mem/malloc.lo \
+        $(top_builddir)/src/lam/util/output.lo \
+        $(top_builddir)/src/lam/threads/mutex.lo \
+        $(top_builddir)/src/lam/util/libutil.la \
+        $(top_builddir)/test/support/libsupport.la
+lam_value_array_DEPENDENCIES = $(lam_value_array_LDADD)
+
 
