@@ -44,9 +44,9 @@ int mca_oob_cofs_send(
   char msg_file_tmp[OMPI_PATH_MAX];
 
   /* create the file and open it... */
-  snprintf(msg_file, OMPI_PATH_MAX, "%s/%d_%d_%d_%lld.msg", mca_oob_cofs_comm_loc,
+  snprintf(msg_file, OMPI_PATH_MAX, "%s/%d_%d_%d_%ld.msg", mca_oob_cofs_comm_loc,
            mca_oob_base_self.jobid, mca_oob_base_self.procid, peer->procid, mca_oob_cofs_serial);
-  snprintf(msg_file_tmp, OMPI_PATH_MAX, "%s/.%d_%d_%d_%lld.msg", mca_oob_cofs_comm_loc,
+  snprintf(msg_file_tmp, OMPI_PATH_MAX, "%s/.%d_%d_%d_%ld.msg", mca_oob_cofs_comm_loc,
            mca_oob_base_self.jobid, mca_oob_base_self.procid, peer->procid, mca_oob_cofs_serial);
 
   fp = fopen(msg_file_tmp, "w");
@@ -144,7 +144,7 @@ find_match(ompi_process_id_t jobid, ompi_process_id_t procid)
   while ((ent = readdir(dir)) != NULL) {
     if (ent->d_name[0] == '.') continue;
 
-    ret = sscanf(ent->d_name, "%d_%d_%d_%llu.msg", &tmp_jobid, &tmp_procid, 
+    ret = sscanf(ent->d_name, "%d_%d_%d_%lu.msg", &tmp_jobid, &tmp_procid, 
                  &tmp_myprocid, &tmp_serial);
     if (ret != 4) {
       continue;
