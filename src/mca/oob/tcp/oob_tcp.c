@@ -520,7 +520,8 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
      sprintf(segment, "oob-tcp-%u", peer->peer_name.jobid);
      rc = ompi_registry.subscribe(
          OMPI_REGISTRY_OR,
-         OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|OMPI_REGISTRY_NOTIFY_MODIFICATION,
+         OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
+         OMPI_REGISTRY_NOTIFY_MODIFICATION|OMPI_REGISTRY_NOTIFY_PRE_EXISTING,
          segment,
          NULL,
          mca_oob_tcp_registry_callback,
