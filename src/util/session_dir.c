@@ -425,29 +425,36 @@ ompi_dir_empty(char *pathname)
     }
 #else
     bool empty = false;
+    char search_path[MAX_PATH];
     HANDLE file;
     WIN32_FIND_DATA file_data;
     TCHAR *file_name;
                         
     if (NULL != pathname) {
-        if (INVALID_HANDLE_VALUE == (file = FindFirstFile(pathname, &file_data))) {
+        strncpy(search_path, pathname, strlen(pathname)+1);
+        strncat (search_path, "\\*", 3);
+        file = FindFirstFile(search_path, &file_data);
+
+        if (INVALID_HANDLE_VALUE == file) {
+            FindClose(&file_data);
             return;
-        } else while (!empty) {
+        } 
+        
+        do {
             if ((0 != strcmp(file_data.cFileName, ".")) &&
-               (0 != strcmp(file_data.cFileName, "..")) &&
-               (!(file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) &&
-               (0 != strncmp(file_data.cFileName,"output-", strlen("output-"))) &&
-               (0 != strcmp(file_data.cFileName,"universe-setup.txt-"))) {
-                /*remove the file */
-		        file_name = ompi_os_path(false, pathname, file_data.cFileName, NULL);
-                DeleteFile(file_name);
+                (0 != strcmp(file_data.cFileName, "..")) &&
+                (!(file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) &&
+                (0 != strncmp(file_data.cFileName,"output-", strlen("output-"))) &&
+                (0 != strcmp(file_data.cFileName,"universe-setup.txt-"))) {
+                
+		            file_name = ompi_os_path(false, pathname, file_data.cFileName, NULL);
+                    DeleteFile(file_name);
+
             }
-            if (!FindNextFile(pathname, &file_data)) {
-                if (ERROR_NO_MORE_FILES == GetLastError()) {
+            if (!FindNextFile(search_path, &file_data)) {
                     empty = true;
-                }
             }
-        }
+        } while(!empty);
         FindClose(&file_data);
     }
 #endif
@@ -476,30 +483,34 @@ static bool ompi_is_empty(char *pathname)
     }
     return false;
 #else 
-    /* ANJU: check this logic again PLEASE */
-    bool empty = true;
+    char search_path[MAX_PATH];
     HANDLE file;
     WIN32_FIND_DATA file_data;
 
     if (NULL != pathname) {
-        if (!(INVALID_HANDLE_VALUE == (file = FindFirstFile(pathname, &file_data)))) {
-            while(empty) {
-                if ((0 != strcmp(file_data.cFileName, ".")) &&
-                    (0 != strcmp(file_data.cFileName, ".."))) {
-                    if (!FindNextFile(pathname, &file_data)) {
-                        if (ERROR_NO_MORE_FILES == GetLastError()) {
-                            empty = true;
-                        } else {
-                            empty = false;
-                        }
-                    } else {
-                        empty = false;
-                    }
-                }
-            } /* end while */
-        } /* endif */
-    } /* end outer if */
-    return empty;
+        strncpy(search_path, pathname, strlen(pathname)+1);
+        strncat (search_path, "\\*", 3);
+
+        file = FindFirstFile(search_path, &file_data);
+        if (INVALID_HANDLE_VALUE == file) {
+            FindClose(&file_data);
+            return true;
+        }
+
+        if (0 != strcmp(file_data.cFileName, ".") || 0 != strcmp(file_data.cFileName, "..")) {
+            FindClose(&file_data);
+            return false;
+        }
+
+        while (0 != FindNextFile(search_path, &file_data)) {
+            if (0 != strcmp(file_data.cFileName, ".") || 0 != strcmp(file_data.cFileName, "..")) {
+                FindClose(&file_data);
+                return false;
+            }
+        }
+    }
+
+    FindClose(&file_data);
+    return true;
 #endif /* ifndef WIN32 */
 }
-
