@@ -174,26 +174,25 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
     int rc = OMPI_SUCCESS;
     
     if ( OMPI_COMM_IS_INTER(comm) ) {
-#ifdef HAVE_COMM_CREATE_FOR_INTERCOMMS
         int tsize, i, j;
 
-        tsize = comm->c_remote_group->grp_proc_count;
+        tsize = ompi_comm_remote_size(comm);
         allranks = (int *) malloc ( tsize * sizeof(int));
         if ( NULL == allranks ) {
             rc = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
         }
         
-        rc = comm->c_coll.coll_allgather_inter ( &group->grp_my_rank, 
-                                                 1, MPI_INT, allranks, 
-                                                 1, MPI_INT, comm );
+        rc = comm->c_coll.coll_allgather ( &(group->grp_my_rank), 
+                                           1, MPI_INT, allranks, 
+                                           1, MPI_INT, comm );
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
 
         /* Count number of procs in future remote group */
         for (rsize=0, i = 0; i < tsize; i++) {
-            if ( MPI_PROC_NULL != allranks[i] ) {
+            if ( MPI_UNDEFINED != allranks[i] ) {
                 rsize++;
             }
         }
@@ -201,34 +200,33 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
         /* If any of those groups is empty, we have to return
            MPI_COMM_NULL */
         if ( 0 == rsize || 0 == group->grp_proc_count ) {
-            *newcomm = MPI_COMM_NULL;
+            newcomp = MPI_COMM_NULL;
             rc = OMPI_SUCCESS;
             goto exit;
         }
 
         /* Set proc-pointers for remote group */
-        rprocs = (ompi_proc_t **) malloc ( sizeof(ompi_proc_t *) * rsize);
+        rprocs = (ompi_proc_t **) calloc ( rsize, sizeof(ompi_proc_t *));
         if ( NULL == rprocs ) {
             rc = OMPI_ERR_OUT_OF_RESOURCE;
             goto exit;
         }
-        for ( j = 0, i = 0; i < rsize; i++ ) {
-            if ( MPI_PROC_NULL != allranks[i] ) {
+
+        for ( j = 0, i = 0; i < tsize; i++ ) {
+            if ( MPI_UNDEFINED != allranks[i] ) {
                 rprocs[j] = comm->c_remote_group->grp_proc_pointers[i];
                 j++;
             }
         }                                           
         mode = OMPI_COMM_CID_INTER;
-#else
-        return ( MPI_ERR_COMM );
-#endif
+
     }
     else {
         rsize  = 0;
         rprocs = NULL;
         mode   = OMPI_COMM_CID_INTRA;
     }
-
+    
     newcomp = ompi_comm_allocate (group->grp_proc_count, rsize );
     if ( NULL == newcomp ) {
         rc = MPI_ERR_INTERN;
@@ -263,13 +261,13 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
 
     /* Activate the communicator and init coll-component */
     rc = ompi_comm_activate ( newcomp,  /* new communicator */ 
-                             comm,     /* old comm */
-                             NULL,     /* bridge comm */
-                             NULL,     /* local leader */
-                             NULL,     /* remote_leader */
-                             mode,     /* mode */
-                             -1,       /* send first */
-                             NULL );   /* coll component */
+                              comm,     /* old comm */
+                              NULL,     /* bridge comm */
+                              NULL,     /* local leader */
+                              NULL,     /* remote_leader */
+                              mode,     /* mode */
+                              -1,       /* send first */
+                              NULL );   /* coll component */
                              
     if ( OMPI_SUCCESS != rc ) {
         goto exit;

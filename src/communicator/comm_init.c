@@ -203,8 +203,13 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_remote_group = NULL;
     comm->error_handler  = NULL;
     comm->c_pml_comm     = NULL;
+    comm->c_topo         = NULL;
     comm->c_topo_comm    = NULL; 
-    comm->c_topo_module = NULL;
+    comm->c_topo_module  = NULL;
+
+#if OMPI_ENABLE_DEBUG
+    memset (&(comm->c_coll), 0, sizeof(mca_coll_base_module_1_0_0_t));
+#endif
 
     comm->c_coll_selected_module    = NULL;
     comm->c_coll_selected_data      = NULL;
