@@ -95,3 +95,11 @@ mca_gpr_notify_id_t gpr_replica_remove_trigger(ompi_registry_synchro_mode_t sync
 					       char *segment, char **tokens, int trigger);
 
 char *gpr_replica_get_token(char *segment, mca_gpr_replica_key_t key);
+
+mca_gpr_notify_id_t gpr_replica_enter_notify_request(ompi_process_name_t *requestor,
+						     mca_gpr_notify_id_t idtag,
+						     ompi_registry_notify_cb_fn_t cb_func,
+						     void *user_tag);
+
+mca_gpr_notify_id_t gpr_replica_remove_notify_request(mca_gpr_notify_id_t idtag);
+
