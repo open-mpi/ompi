@@ -130,7 +130,7 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
   /* Create a new object and ensure that it's valid */
 
   new_errhandler = OBJ_NEW(ompi_errhandler_t);
-  if (NULL == new_errhandler) {
+  if (NULL != new_errhandler) {
     if (OMPI_ERROR == new_errhandler->eh_f_to_c_index) {
       OBJ_RELEASE(new_errhandler);
       new_errhandler = NULL;
@@ -151,9 +151,9 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
     }
   }
 
-
   /* All done */
-  return OMPI_SUCCESS;
+
+  return new_errhandler;
 }
 
 
