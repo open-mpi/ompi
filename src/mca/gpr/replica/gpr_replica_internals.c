@@ -315,34 +315,65 @@ ompi_list_t *gpr_replica_test_internals(int level)
 {
     ompi_list_t *test_results;
     ompi_registry_internal_test_results_t *result;
-    char name[30];
-    int i;
-    mca_gpr_replica_key_t segkey;
+    char name[30], name2[30];
+    int i, j;
+    mca_gpr_replica_key_t segkey, key;
     mca_gpr_registry_segment_t *seg;
+    mca_gpr_keytable_t *dict_entry;
+    bool success;
 
     test_results = OBJ_NEW(ompi_list_t);
 
     /* create several test segments */
+    success = true;
+    result = OBJ_NEW(ompi_registry_internal_test_results_t);
+    result->test = strdup("test-create-segment");
     for (i=0; i<5; i++) {
 	sprintf(name, "test-def-seg%d", i);
-	result = OBJ_NEW(ompi_registry_internal_test_results_t);
-	result->test = strdup(name);
 	if (OMPI_SUCCESS != gpr_replica_define_segment(name)) {
-	    result->message = strdup("failed");
-	} else {
-	    result->message = strdup("success");
+	    success = false;
 	}
-	ompi_list_append(test_results, &result->item);
     }
+    if (success) {
+	result->message = strdup("success");
+    } else {
+	result->message = strdup("failed");
+    }
+    ompi_list_append(test_results, &result->item);
+
+    /* check that define key protects uniqueness */
+    success = true;
+    result = OBJ_NEW(ompi_registry_internal_test_results_t);
+    result->test = strdup("test-define-key-uniqueness");
+    for (i=0; i<5; i++) {
+	sprintf(name, "test-def-seg%d", i);
+	key = gpr_replica_define_key(name, NULL);
+	if (MCA_GPR_REPLICA_KEY_MAX != key) { /* got an error */
+	    success = false;
+	}
+    }
+    if (success) {
+	result->message = strdup("success");
+    } else {
+	result->message = strdup("failed");
+    }
+    ompi_list_append(test_results, &result->item);
 
     /* check ability to get key for a segment */
+    success = true;
     result = OBJ_NEW(ompi_registry_internal_test_results_t);
     result->test = strdup("test-get-seg-key");
-    segkey = gpr_replica_get_key(name, NULL);
-    if (MCA_GPR_REPLICA_KEY_MAX == segkey) { /* couldn't find it */
-	asprintf(&result->message, "failed to find segment %s", name);
+    for (i=0; i<5; i++) {
+	sprintf(name, "test-def-seg%d", i);
+	key = gpr_replica_get_key(name, NULL);
+	if (MCA_GPR_REPLICA_KEY_MAX == key) { /* got an error */
+	    success = false;
+	}
+    }
+    if (success) {
+	result->message = strdup("success");
     } else {
-	asprintf(&result->message, "success: %d", segkey);
+	result->message = strdup("failed");
     }
     ompi_list_append(test_results, &result->item);
 
@@ -364,5 +395,65 @@ ompi_list_t *gpr_replica_test_internals(int level)
     }
     ompi_list_append(test_results, &result->item);
 
+    /* check ability to define key within a segment */
+    success = true;
+    result = OBJ_NEW(ompi_registry_internal_test_results_t);
+    result->test = strdup("test-define-key");
+    for (i=0; i<5 && success; i++) {
+	sprintf(name, "test-def-seg%d", i);
+	for (j=0; j<10 && success; j++) {
+ 	    sprintf(name2, "test-key%d", j);
+	    key = gpr_replica_define_key(name, name2);
+	    if (MCA_GPR_REPLICA_KEY_MAX == key) { /* got an error */
+		success = false;
+	    }
+	}
+    }
+    if (success) {
+	result->message = strdup("success");
+    } else {
+	result->message = strdup("failed");
+    }
+    ompi_list_append(test_results, &result->item);
+
+    /* check ability to get dictionary entries */
+    success = true;
+    result = OBJ_NEW(ompi_registry_internal_test_results_t);
+    result->test = strdup("test-get-dict-entry");
+    /* first check ability to get segment values */
+    for (i=0; i<5 && success; i++) {
+	sprintf(name, "test-def-seg%d", i);
+	dict_entry = gpr_replica_find_dict_entry(name, NULL);
+	if (NULL == dict_entry) { /* got an error */
+	    success = false;
+	}
+    }
+    if (success) {
+	result->message = strdup("success");
+    } else {
+	result->message = strdup("failed");
+    }
+    ompi_list_append(test_results, &result->item);
+
+    if (success) { /* segment values checked out - move on to within a segment */
+	result = OBJ_NEW(ompi_registry_internal_test_results_t);
+	result->test = strdup("test-get-dict-entry-segment");
+	for (i=0; i<5; i++) {
+	    sprintf(name, "test-def-seg%d", i);
+	    for (j=0; j<10; j++) {
+		sprintf(name2, "test-key%d", j);
+		dict_entry = gpr_replica_find_dict_entry(name, NULL);
+		if (NULL == dict_entry) { /* got an error */
+		    success = false;
+		}
+	    }
+	}
+	if (success) {
+	    result->message = strdup("success");
+	} else {
+	    result->message = strdup("failed");
+	}
+	ompi_list_append(test_results, &result->item);
+    }
     return test_results;
 }
