@@ -67,8 +67,6 @@ void laminfo::do_params()
   // Show the params
 
   if (want_all) {
-    show_mca_params("lam", module_all, param_all);
-    show_mca_params("mpi", module_all, param_all);
     for (i = 0; i < mca_types.size(); ++i) {
       show_mca_params(mca_types[i], module_all, param_all);
     }
