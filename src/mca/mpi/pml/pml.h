@@ -6,8 +6,8 @@
 #define LAM_MCA_PML_H
 
 #include "lam/lam.h"
-#include "lam/proc.h"
 #include "lam/lfc/list.h"
+#include "mpi/proc/proc.h"
 #include "mca/mca.h"
 
 /*

@@ -6,10 +6,10 @@
 #ifndef MCA_PML_BASE_REQUEST_H
 #define MCA_PML_BASE_REQUEST_H
 
-#include "lam/communicator.h"
-#include "lam/datatype.h"
-#include "lam/request.h"
 #include "lam/mem/free_list.h"
+#include "mpi/request/request.h"
+#include "mpi/datatype/datatype.h"
+#include "mpi/communicator/communicator.h"
 #include "mca/mpi/pml/pml.h"
 
 
