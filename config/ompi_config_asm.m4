@@ -611,7 +611,7 @@ if test "$enable_smp_locks" != "no"; then
     want_smp_locks=1
 else
     AC_MSG_RESULT([no])
-    want_smp_locks=1
+    want_smp_locks=0
 fi
 AC_DEFINE_UNQUOTED([OMPI_WANT_SMP_LOCKS], [$want_smp_locks],
                    [whether we want to have smp locks in atomic ops or not])
