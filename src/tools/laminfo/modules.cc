@@ -43,7 +43,7 @@ static bool opened_modules = false;
 //
 void laminfo::open_modules()
 {
-  laminfo::type_list_t::size_type i;
+  laminfo::type_vector_t::size_type i;
   string env;
   char *target;
 

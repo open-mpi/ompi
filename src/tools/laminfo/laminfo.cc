@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <list>
 
 #include <stdio.h>
 #include <ctype.h>
@@ -218,7 +219,7 @@ lam_cmd_line_t *laminfo::cmd_line = NULL;
 const string laminfo::type_all = "all";
 const string laminfo::type_lam = "lam";
 const string laminfo::type_base = "base";
-laminfo::type_list_t laminfo::mca_types;
+laminfo::type_vector_t laminfo::mca_types;
 
 
 int main(int argc, char *argv[])
@@ -321,7 +322,7 @@ int main(int argc, char *argv[])
     acted = true;
   }
   if (want_all || lam_cmd_line_is_taken(cmd_line, "param")) {
-    do_params(want_all);
+    do_params();
     acted = true;
   }
 

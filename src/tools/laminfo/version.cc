@@ -60,7 +60,7 @@ static string make_version_str(const string& scope,
 void laminfo::do_version(bool want_all, lam_cmd_line_t *cmd_line)
 {
   unsigned int count;
-  laminfo::type_list_t::size_type i;
+  laminfo::type_vector_t::size_type i;
   string arg1, scope, type, module;
   string::size_type pos;
 
@@ -122,7 +122,7 @@ void laminfo::show_module_version(const string& type_name,
                                   const string& module_name,
                                   const string& scope, const string& ver_type)
 {
-  laminfo::type_list_t::size_type i;
+  laminfo::type_vector_t::size_type i;
   bool want_all_modules = (type_all == module_name);
   bool found;
   lam_list_item *item;

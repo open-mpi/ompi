@@ -20,7 +20,7 @@ namespace laminfo {
   // Globals
   //
 
-  typedef std::vector<std::string> type_list_t;
+  typedef std::vector<std::string> type_vector_t;
 
   extern bool pretty;
   extern lam_cmd_line_t *cmd_line;
@@ -28,7 +28,7 @@ namespace laminfo {
   extern const std::string type_all;
   extern const std::string type_lam;
   extern const std::string type_base;
-  extern type_list_t mca_types;
+  extern type_vector_t mca_types;
 
   //
   // Version-related strings and functions
@@ -63,7 +63,7 @@ namespace laminfo {
   extern std::string path_pkglibdir;
   extern std::string path_sysconfdir;
 
-  void do_params(bool want_all);
+  void do_params();
   void show_mca_params(const std::string& type, const std::string& module, 
                        const std::string& param);
 

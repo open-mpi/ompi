@@ -6,10 +6,12 @@
 
 #include <iostream>
 #include <string>
+#include <map>
 
 #include <unistd.h>
 #include <sys/param.h>
 
+#include "mca/lam/base/mca_base_param.h"
 #include "tools/laminfo/laminfo.h"
 
 using namespace std;
@@ -30,18 +32,47 @@ string laminfo::path_incdir = "incdir";
 string laminfo::path_pkglibdir = "pkglibdir";
 string laminfo::path_sysconfdir = "sysconfdir";
 
+//
+// External variables
+//
+// This exists in mca/lam/base/mca_base_param.c.  It's not extern'ed
+// in mca_base_param.h so that no one else will use it.
+//
 
-void laminfo::do_params(bool want_all)
+extern lam_array_t mca_base_params;
+
+
+void laminfo::do_params()
 {
   unsigned int count;
   string type, module;
-  bool found;
-  laminfo::type_list_t::size_type i;
+  bool found, want_all;
+  laminfo::type_vector_t::size_type i;
+
+  laminfo::open_modules();
+
+  // See if the special param "all" was givin to --param; that
+  // superceeds any individual type
+
+  want_all = false;
+  count = lam_cmd_line_get_ninsts(cmd_line, "param");
+  for (i = 0; i < count; ++i) {
+    type = lam_cmd_line_get_param(cmd_line, "param", i, 0);
+    if (type_all == type) {
+      want_all = true;
+      break;
+    }
+  }
+
+  // Show the params
 
   if (want_all) {
-    show_mca_params(type_all, module_all, param_all);
+    show_mca_params("lam", module_all, param_all);
+    show_mca_params("mpi", module_all, param_all);
+    for (i = 0; i < mca_types.size(); ++i) {
+      show_mca_params(mca_types[i], module_all, param_all);
+    }
   } else {
-    count = lam_cmd_line_get_ninsts(cmd_line, "param");
     for (i = 0; i < count; ++i) {
       type = lam_cmd_line_get_param(cmd_line, "param", i, 0);
       module = lam_cmd_line_get_param(cmd_line, "param", i, 1);
@@ -69,49 +100,37 @@ void laminfo::do_params(bool want_all)
 void laminfo::show_mca_params(const string& type, const string& module, 
                               const string& param)
 {
-#if 0
-  // Anju:
-  // This datatype has not been incorporated as yet. Yet to 
-  // decide how this will come into picture.
-  lam_mca_base_param_t *array;
-  int i, size;
+  size_t i, size;
   char *default_value_string, temp[BUFSIZ];
   string message, content;
+  mca_base_param_t *item;
 
-  // Ensure that we've opened the modules (so that they can register
-  // their parameters).
-
-  open_modules();
-  // Anju:
-  // Since this whole function is built on the premise of 
-  // "lam_mca_base_param_t" and this enum (see lam_mca.h) 
-  // is not supported, it is best to not do anything right 
-  // now about this function
-  if (mca_base_params == NULL)
+  size = lam_arr_get_size(&mca_base_params);
+  if (0 == size) {
     return;
-
-  size = lam_arr_size(mca_base_params);
-  array = (lam_mca_base_param_t*) lam_arr_get(mca_base_params);
+  }
 
   for (i = 0; i < size; ++i) {
-    if (type == type_all || type == array[i].lsbp_type_name) {
+    item = (mca_base_param_t *) lam_arr_get_item(&mca_base_params, i);
+    if (type == item->mbp_type_name) {
       if (module == module_all || 
-          (array[i].lsbp_module_name != NULL &&
-           module == array[i].lsbp_module_name)) {
-        if (param == param_all || param == array[i].lsbp_param_name) {
+          NULL == item->mbp_module_name ||
+          (NULL != item->mbp_module_name &&
+           module == item->mbp_module_name)) {
+        if (param == param_all || param == item->mbp_param_name) {
 
           // Make a string for the default value
 
           temp[0] = '\0';
-          if (array[i].lsbp_type == LAM_MCA_BASE_PARAM_TYPE_STRING) {
-            if (array[i].lsbp_default_value.stringval != NULL)
-              default_value_string = array[i].lsbp_default_value.stringval;
+          if (item->mbp_type == MCA_BASE_PARAM_TYPE_STRING) {
+            if (item->mbp_default_value.stringval != NULL)
+              default_value_string = item->mbp_default_value.stringval;
             else
               default_value_string = temp;
           } else {
             default_value_string = temp;
             snprintf(default_value_string, BUFSIZ, "%d", 
-                     array[i].lsbp_default_value.intval);
+                     item->mbp_default_value.intval);
           }
           content = default_value_string;
 
@@ -119,15 +138,15 @@ void laminfo::show_mca_params(const string& type, const string& module,
 
           if (pretty) {
             message = "MCA ";
-            message += array[i].lsbp_type_name;
+            message += item->mbp_type_name;
 
             // Put in the real, full name (which may be different than
             // the categorization).
 
-            content = (array[i].lsbp_env_var_name != NULL) ?
+            content = (item->mbp_env_var_name != NULL) ?
               "parameter \"" : "information \"";
-            content += array[i].lsbp_full_name;
-            content += (array[i].lsbp_env_var_name != NULL) ?
+            content += item->mbp_full_name;
+            content += (item->mbp_env_var_name != NULL) ?
               "\" (default value: " : "\" (value: ";
 
             if (strlen(default_value_string) == 0)
@@ -141,21 +160,21 @@ void laminfo::show_mca_params(const string& type, const string& module,
             out(message, message, content);
           } else {
             message = "mca:";
-            message += array[i].lsbp_type_name;
+            message += item->mbp_type_name;
             message += ":";
 
-            if (array[i].lsbp_module_name != NULL) {
-              message += array[i].lsbp_module_name;
+            if (item->mbp_module_name != NULL) {
+              message += item->mbp_module_name;
             } else {
               message += "base";
             }
-            message += (array[i].lsbp_env_var_name != NULL) ?
+            message += (item->mbp_env_var_name != NULL) ?
               ":param:" : ":info:";
 
             // Put in the real, full name (which may be different than
             // the categorization).
 
-            message += array[i].lsbp_full_name;
+            message += item->mbp_full_name;
 
             content = default_value_string;
 
@@ -165,7 +184,6 @@ void laminfo::show_mca_params(const string& type, const string& module,
       }
     }
   }
-#endif // Nullifying the function
 }
 
 
