@@ -24,10 +24,31 @@
 #include "mpi/runtime/mpiruntime.h"
 
 /* constants for spawn constraints */
+
+/** Spawn constraint - require multi-cell support.  The selected spawn
+    system must be capable of starting across multiple cells.  This
+    allows multiple pcms to be used to satisfy a single resource
+    allocation request */
 #define OMPI_RTE_SPAWN_MULTI_CELL 0x0001
+/** Spawn constraint - require ability to launch daemons.  The
+    selected spawn system must be capable of starting daemon process.
+    Setting this flag will result in a spawn service that does not
+    provide process monitoring or standard I/O forwarding.  The caller
+    may exit before all children are cleaned up, but
+    OMPI_RTE_SPAWN_EARLY_EXIT is not implied because there is no
+    expectation of process monitoring. */
 #define OMPI_RTE_SPAWN_DAEMON     0x0002
+/** Spawn constraint - require quality of service support.  The
+    selected spawn system must provide I/O forwarding, quick process
+    shutdown, and process status monitoring. */
 #define OMPI_RTE_SPAWN_HIGH_QOS   0x0004
-#define OMPI_RTE_SPAWN_FROM_MPI   0x0008
+/** Spawn constraint - caller is an MPI process.  The caller is an MPI
+    application (has called MPI_Init).  Implies
+    OMPI_RTE_SPAWN_EARLY_EXIT */
+#define OMPI_RTE_SPAWN_FROM_MPI   0x0018
+/** Spawn constraint - caller may exit before child.  The caller may
+    exit before children have exited.  */
+#define OMPI_RTE_SPAWN_EARLY_EXIT 0x0010
 
 #ifdef __cplusplus
 extern "C" {
