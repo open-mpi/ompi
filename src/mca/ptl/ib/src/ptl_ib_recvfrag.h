@@ -10,8 +10,10 @@ OBJ_CLASS_DECLARATION(mca_ptl_ib_recv_frag_t);
  *  IB received fragment derived type.
  */
 struct mca_ptl_ib_recv_frag_t {
-    mca_ptl_base_recv_frag_t super; /**< base receive fragment descriptor */
-    char                     unex_buf[4096]; /* Unexpected buffer */
+    mca_ptl_base_recv_frag_t        super; 
+    /**< base receive fragment descriptor */
+    char                            unex_buf[4096];
+    /**< Unexpected buffer */
 };
 typedef struct mca_ptl_ib_recv_frag_t mca_ptl_ib_recv_frag_t;
 

@@ -445,7 +445,6 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
 
 void mca_ptl_ib_progress_send_frags(mca_ptl_ib_peer_t* peer)
 {
-    int num_frags, i;
     ompi_list_item_t *frag_item;
     mca_ptl_ib_send_frag_t *sendfrag;
 
@@ -455,28 +454,21 @@ void mca_ptl_ib_progress_send_frags(mca_ptl_ib_peer_t* peer)
         return;
     }
 
-    /* Go over all the frags */
-    num_frags = 
-        ompi_list_get_size(&(peer->pending_send_frags));
+    /* While there are frags in the list,
+     * process them */
 
-    frag_item = 
-        ompi_list_get_first(&(peer->pending_send_frags));
+    while(!ompi_list_is_empty(&(peer->pending_send_frags))) {
 
-    for(i = 0; i < num_frags; 
-            frag_item = ompi_list_get_next(frag_item), i++) {
+        frag_item = ompi_list_remove_first(&(peer->pending_send_frags));
 
         sendfrag = (mca_ptl_ib_send_frag_t *) frag_item;
 
-        if(!sendfrag->frag_progressed) {
-            /* We need to post this one */
-            if(mca_ptl_ib_post_send(peer->peer_module->ib_state,
-                        peer->peer_conn, &sendfrag->ib_buf,
-                        (void*) sendfrag)
-                    != OMPI_SUCCESS) {
-                ompi_output(0, "Error in posting send");
-            }
-
-            sendfrag->frag_progressed = 1;
+        /* We need to post this one */
+        if(mca_ptl_ib_post_send(peer->peer_module->ib_state,
+                    peer->peer_conn, &sendfrag->ib_buf,
+                    (void*) sendfrag)
+                != OMPI_SUCCESS) {
+            ompi_output(0, "Error in posting send");
         }
     }
 }
