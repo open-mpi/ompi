@@ -86,6 +86,11 @@ mca_ns_base_vpid_t mca_ns_replica_reserve_range(
                                        mca_ns_base_jobid_t job,
                                        mca_ns_base_vpid_t range);
 
+/*
+ * Implementation of get_allocated_vpids()
+ */
+mca_ns_base_vpid_t mca_ns_replica_get_allocated_vpids(mca_ns_base_jobid_t jobid);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

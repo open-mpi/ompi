@@ -54,6 +54,7 @@ mca_ns_base_jobid_t mca_ns_proxy_create_jobid(void);
 
 mca_ns_base_vpid_t mca_ns_proxy_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range);
 
+mca_ns_base_vpid_t mca_ns_proxy_get_allocated_vpids(mca_ns_base_jobid_t jobid);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

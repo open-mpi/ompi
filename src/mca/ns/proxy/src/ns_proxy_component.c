@@ -89,7 +89,8 @@ static mca_ns_base_module_t mca_ns_proxy = {
     mca_ns_base_unpack_cellid,
     mca_ns_base_pack_jobid,
     mca_ns_base_unpack_jobid,
-    mca_ns_base_derive_vpid
+    mca_ns_base_derive_vpid,
+    mca_ns_proxy_get_allocated_vpids
 };
 
 /*

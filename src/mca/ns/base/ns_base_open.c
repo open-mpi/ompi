@@ -68,7 +68,9 @@ mca_ns_base_module_t ompi_name_server = {
     mca_ns_base_pack_cellid,
     mca_ns_base_unpack_cellid,
     mca_ns_base_pack_jobid,
-    mca_ns_base_unpack_jobid
+    mca_ns_base_unpack_jobid,
+    mca_ns_base_derive_vpid,
+    mca_ns_base_get_allocated_vpids_not_available
 };
 bool mca_ns_base_selected = false;
 ompi_list_t mca_ns_base_components_available;
