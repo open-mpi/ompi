@@ -943,7 +943,6 @@ AC_CONFIG_FILES([
     test/support/Makefile
     test/class/Makefile
     test/mca/Makefile
-    test/mca/gpr/Makefile
     test/mca/oob/Makefile
     test/mca/ns/Makefile
     test/mca/gpr/Makefile
