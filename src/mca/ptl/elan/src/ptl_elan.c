@@ -213,12 +213,6 @@ mca_ptl_elan_put (struct mca_ptl_t *ptl,
 {
     mca_ptl_elan_desc_item_t *sd;
 
-    if (size <= 0) {
-        sendreq->super.req_mpi_done = true;
-        sendreq->super.req_pml_done = true;
-        return OMPI_SUCCESS;
-    }
-
     /* XXX: fix pml_send?
      *   Why presenting so many arguments while each of them is already
      *   contained in the request descriptors,
