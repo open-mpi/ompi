@@ -17,12 +17,11 @@
 /**
  * Process information structure
  *
- * The ompi_proc_info() function fills the pid field and obtains the process name,
- * storing that information in the global
- * structure. The structure also holds path names to the universe, job, and process
- * session directories, and to the stdin, stdout, and
- * stderr temp files - however, these are all initialized elsewhere.
- *
+ * The ompi_proc_info() function fills the pid field and obtains the
+ * process name, storing that information in the global structure. The
+ * structure also holds path names to the universe, job, and process
+ * session directories, and to the stdin, stdout, and stderr temp
+ * files - however, these are all initialized elsewhere.
  */
 struct ompi_proc_info_t {
     bool init;             /**< Certifies that values have been filled.
@@ -50,13 +49,28 @@ struct ompi_proc_info_t {
 };
 typedef struct ompi_proc_info_t ompi_proc_info_t;
 
-extern ompi_proc_info_t ompi_process_info;
 
 /**
- * Global structure to store a wide range of information about the process.
- * ompi_proc_info populates a global variable with information about the process
- * being executing. This function should be
- * called only once to setup the information.
+ *
+ * Global process info descriptor.  Initialized to almost no
+ * meaningful information - data is provided by calling \c
+ * ompi_rte_init() (which calls \c ompi_proc_info() to fill in the
+ * structure).
+ *
+ * The exception to this rule is the \c ompi_process_info.seed field,
+ * which will be initialized to \c false, but should be set to \c true
+ * before calling \c ompi_rte_info() if the caller is a seed daemon.
+ */
+extern ompi_proc_info_t ompi_process_info;
+
+
+/**
+ * \internal
+ *
+ * Global structure to store a wide range of information about the
+ * process.  ompi_proc_info populates a global variable with
+ * information about the process being executing. This function should
+ * be called only once, from ompi_rte_init().
  *
  * @param None.
  *

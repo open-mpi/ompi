@@ -90,10 +90,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         return ret;
     }
 
-    /* Initialize the ompi_process_info structe.  This must be called 
-     * after the rte is inited */
-    ompi_proc_info();
-
     /* initialize ompi procs */
     if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
         /* JMS show_help */
