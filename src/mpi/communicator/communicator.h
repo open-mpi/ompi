@@ -63,12 +63,12 @@ static inline lam_communicator_t *lam_comm_lookup(uint32_t cid)
 static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, size_t peer_id)
 {
 #ifdef LAM_ENABLE_DEBUG
-    if(peer_id >= comm->c_remote_group->g_proc_count) {
+    if(peer_id >= comm->c_remote_group->grp_proc_count) {
         lam_output(0, "lam_comm_lookup_peer: invalid peer index (%d)", peer_id);
         return (lam_proc_t *) NULL;
     }
 #endif
-    return comm->c_remote_group->g_procs[peer_id];
+    return comm->c_remote_group->grp_proc_pointers[peer_id];
 }
 
 

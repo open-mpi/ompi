@@ -70,7 +70,7 @@ void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
 {
     lam_communicator_t *comm = request->super.req_communicator;
     mca_pml_comm_t* pml_comm = comm->c_pml_comm;
-    int proc_count = comm->c_remote_group->g_proc_count;
+    int proc_count = comm->c_remote_group->grp_proc_count;
     int proc;
 
     /*
