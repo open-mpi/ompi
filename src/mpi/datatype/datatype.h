@@ -28,10 +28,6 @@
 
 /* typedefs ***********************************************************/
 
-typedef enum lam_checksum_kind_t lam_checksum_kind_t;
-typedef enum lam_datatype_kind_t lam_datatype_kind_t;
-typedef enum lam_datatype_creator_t lam_dtype_creator_t;
-typedef enum lam_datatype_state_t lam_datatype_state_t;
 typedef struct lam_checksum_t lam_checksum_t;
 typedef struct lam_datatype_t lam_datatype_t;
 typedef struct lam_datavec_element_t lam_datavec_element_t;
@@ -54,6 +50,7 @@ enum lam_datatype_state_t {
     LAM_DATATYPE_STATE_XDR            = 1 << 5,
     /* etc. */
 };
+typedef enum lam_datatype_state_t lam_datatype_state_t;
 
 
 /**
@@ -81,6 +78,7 @@ enum lam_datatype_kind_t {
     LAM_DATATYPE_KIND_STRUCT_FORTRAN,
     LAM_DATATYPE_KIND_VECTOR_FORTRAN
 };
+typedef enum lam_datatype_kind_t lam_datatype_kind_t;
 
 
 /**
@@ -92,6 +90,7 @@ enum lam_checksum_kind_t {
     LAM_CHECKSUM_KIND_SUM32,
     LAM_CHECKSUM_KIND_SUM64
 };
+typedef enum lam_checksum_kind_t lam_checksum_kind_t;
 
 
 /* structs ************************************************************/
