@@ -137,6 +137,10 @@ static int open_file(const char *base, const char *topic)
         return OMPI_ERR_NOT_FOUND;
     }
 
+    /* Set the buffer */
+
+    ompi_show_help_init_buffer(ompi_show_help_yyin);
+
     /* Happiness */
 
     return OMPI_SUCCESS;
