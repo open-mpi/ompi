@@ -109,8 +109,6 @@ typedef struct lam_ctchannel
 } lam_ctchannel_t;
 
 
-void lam_cth_construct(lam_ctchannel_t *channel);
-
 /*
  *
  *  Accessor functions
@@ -190,10 +188,6 @@ typedef struct lam_tcp_channel
 } lam_tcp_chnl_t;
 
 extern lam_ctchannel_class_t   lam_tcp_chnl_t_class_info;
-
-void lam_tcpch_construct(lam_tcp_chnl_t *channel);
-void lam_tcpch_destruct(lam_tcp_chnl_t *channel);
-
 
 uint32_t lam_tcpch_send(lam_tcp_chnl_t *channel, const uint8_t *data, 
                       uint32_t data_len, uint32_t *bytes_sent);
