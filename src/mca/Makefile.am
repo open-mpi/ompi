@@ -15,21 +15,21 @@
 include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = \
-	allocator \
+        common \
+        allocator \
         base \
         coll \
-        common \
-	errmgr \
+        errmgr \
         gpr \
         io \
         iof \
-	llm \
+        llm \
         mpool \
         ns \
         one \
         oob \
         pcm \
-	pcmclient \
+        pcmclient \
         pml \
         ptl \
         soh \
