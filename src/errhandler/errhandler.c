@@ -145,6 +145,13 @@ int ompi_errhandler_finalize(void)
        similar to communicators, info handles, etc. */
 
     /* Remove errhandler F2C table */
+
+  /* Forcibly release the intrinsic error handlers because in order to
+     be safe, we increase the refcount on error handlers in
+     MPI_*_GET_ERRHANDLER and MPI_ERRHANDLER_GET.  If these handles
+     are never ERRHANDLER_FREEd, then the refcount will not be
+     decremented and they will not naturally get to 0 during FINALIZE.
+     Hence, we RELEASE on the intrinsics until they are freed. */
   
     OBJ_RELEASE(ompi_errhandler_f_to_c_table);
 
