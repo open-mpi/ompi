@@ -92,26 +92,19 @@ typedef struct mca_base_module_data_1_0_0_t mca_base_module_data_1_0_0_t;
 
 
 /*
- * Lists of modules
+ * Return codes
  */
-struct mca_base_module_list_item_t {
-  lam_list_item_t super;
-  mca_base_module_t *mli_module;
+enum {
+  MCA_SUCCESS = 0,
+  MCA_ERROR = -1,
+  MCA_ERR_OUT_OF_RESOURCE = -2, /* fatal error */
+  MCA_ERR_TEMP_OUT_OF_RESOURCE = -3, /* try again later */
+  MCA_ERR_BAD_PARAM = -5,     /* equivalent to MPI_ERR_ARG error code */
+  MCA_ERR_NOT_IMPLEMENTED = -10,
+  MCA_ERR_NOT_SUPPORTED = -11,
+
+  MCA_MAX_ERROR = -20
 };
-typedef struct mca_base_module_list_item_t mca_base_module_list_item_t;
-
-
-/*
- * Structure for making priority lists of modules
- */
-struct mca_base_module_priority_t {
-  lam_list_item_t super;
-
-  int lsm_priority;
-  int lsm_thread_min, lsm_thread_max;
-  mca_base_module_t *lsm_module;
-};
-typedef struct mca_base_module_priority_t mca_base_module_priority_t;
 
 
 /*

@@ -18,7 +18,7 @@
  * Public variables
  */
 int mca_base_param_module_path = -1;
-
+bool mca_base_opened = false;
 
 /*
  * Private functions
@@ -36,10 +36,17 @@ int mca_base_open(void)
   char *value;
   lam_output_stream_t lds;
 
+  if (!mca_base_opened) {
+    mca_base_opened = true;
+  } else {
+    return LAM_SUCCESS;
+  }
+
   /* Register some params */
 
-  mca_base_param_register_string("base", NULL, "module_path",
-                                 "module_path", NULL);
+  mca_base_param_module_path = 
+    mca_base_param_register_string("base", NULL, "module_path",
+                                   "module_path", LAM_PKGLIBDIR);
   param_index = mca_base_param_register_string("base", NULL, "verbose",
                                                "verbose", NULL);
 

@@ -128,7 +128,7 @@ int mca_base_param_register_string(const char *type_name,
 {
   mca_base_param_storage_t storage;
   if (NULL != default_value)
-    storage.stringval = strdup(default_value);
+    storage.stringval = (char *) default_value;
   else
     storage.stringval = NULL;
   return param_register(type_name, module_name, param_name, mca_param_name,
@@ -262,13 +262,19 @@ int mca_base_param_finalize(void)
   size_t i, size;
   mca_base_param_t **array;
 
+  lam_malloc_debug(2);
   if (initialized) {
     array = (mca_base_param_t**) lam_arr_get_c_array(&mca_base_params, &size);
     for (i = 0; i < size; ++i) {
       param_free(array[i]);
+      /* JMS Memory management of the array may change when array.[ch]
+         changes */
+      LAM_FREE(array[i]);
+      lam_arr_remove_item(&mca_base_params, i);
     }
-
-    lam_arr_destroy(&mca_base_params);
+    /* JMS Memory management of the array may change when array.[ch]
+       changes */
+    LAM_FREE(array);
     initialized = false;
   }
 
@@ -347,10 +353,16 @@ static int param_register(const char *type_name, const char *module_name,
     }
 
     param->mbp_full_name = LAM_MALLOC(len);
-    if (NULL != param->mbp_full_name) {
-      LAM_FREE(param->mbp_type_name);
-      LAM_FREE(param->mbp_module_name);
-      LAM_FREE(param->mbp_param_name);
+    if (NULL == param->mbp_full_name) {
+      if (NULL != param->mbp_type_name) {
+        LAM_FREE(param->mbp_type_name);
+      }
+      if (NULL != param->mbp_module_name) {
+        LAM_FREE(param->mbp_module_name);
+      }
+      if (NULL != param->mbp_param_name) {
+        LAM_FREE(param->mbp_param_name);
+      }
       return LAM_ERROR;
     }
     strncpy(param->mbp_full_name, type_name, len);
@@ -415,6 +427,7 @@ static int param_register(const char *type_name, const char *module_name,
       }
 
       param_free(param);
+      LAM_FREE(param);
       return i;
     }
   }
@@ -456,10 +469,6 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage)
   array = (mca_base_param_t **) lam_arr_get_c_array(&mca_base_params, 
                                                     &size);
   p = array[index];
-#if 0
-  p = ((mca_base_param_t*) lam_arr_get_c_array(&mca_base_params, 
-                                               &size)) + index;
-#endif
 
   /* We either don't have a keyval or didn't find it.  So look in the
      environment. */
@@ -485,7 +494,11 @@ static bool param_lookup(int index, mca_base_param_storage_t *storage)
     break;
 
   case MCA_BASE_PARAM_TYPE_STRING:
-    storage->stringval = p->mbp_default_value.stringval;
+    if (NULL != p->mbp_default_value.stringval) {
+      storage->stringval = strdup(p->mbp_default_value.stringval);
+    } else {
+      storage->stringval = NULL;
+    }
     break;
 
   default:
@@ -528,5 +541,4 @@ static void param_free(mca_base_param_t *p)
       NULL != p->mbp_default_value.stringval) {
     LAM_FREE(p->mbp_default_value.stringval);
   }
-  LAM_FREE(p);
 }

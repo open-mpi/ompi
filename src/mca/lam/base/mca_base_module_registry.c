@@ -26,7 +26,7 @@ struct registry_item_t {
 
   char ri_type[MCA_BASE_MAX_TYPE_NAME_LEN];
   lt_dlhandle ri_dlhandle;
-  mca_base_module_t *ri_module_struct;
+  const mca_base_module_t *ri_module_struct;
   int ri_refcount;
   lam_list_t ri_dependencies;
 };
@@ -60,14 +60,15 @@ static void release_registry_item(registry_item_t *ri);
  */
 int mca_base_module_registry_init(void)
 {
-  /* Initialized libltdl */
-
-  if (lt_dlinit() != 0)
-    return LAM_ERR_OUT_OF_RESOURCE;
-
   /* Setup internal structures */
 
   if (!initialized) {
+
+    /* Initialize libltdl */
+
+    if (lt_dlinit() != 0)
+      return LAM_ERR_OUT_OF_RESOURCE;
+
     lam_list_init(&registry);
     initialized = true;
   }
@@ -83,7 +84,7 @@ int mca_base_module_registry_init(void)
  * The module's type, handle, and public struct are saved.
  */
 int mca_base_module_registry_retain(char *type, lt_dlhandle module_handle, 
-                                    mca_base_module_t *module_struct)
+                                    const mca_base_module_t *module_struct)
 {
   registry_item_t *ri;
 
@@ -141,7 +142,7 @@ int mca_base_module_registry_link(const char *src_type,
  * If it's in the registr, close a specified module and remove it from
  * the registry.
  */
-void mca_base_module_registry_release(mca_base_module_t *module)
+void mca_base_module_registry_release(const mca_base_module_t *module)
 {
   registry_item_t *ri = find_module(module->mca_type_name, 
                                     module->mca_module_name);
@@ -177,7 +178,7 @@ void mca_base_module_registry_finalize(void)
     do {
       changed = false;
       for (item = lam_list_get_first(&registry);
-           lam_list_get_last(&registry) != item && changed;
+           lam_list_get_end(&registry) != item && changed;
            item = lam_list_get_next(item)) {
         ri = (registry_item_t *) ri;
 
@@ -187,13 +188,12 @@ void mca_base_module_registry_finalize(void)
         }
       }
     } while (lam_list_get_size(&registry) > 0 && changed);
-    lam_list_destroy(&registry);
+
+    /* Close down libltdl */
+
+    lt_dlexit();
     initialized = false;
   }
-
-  /* Close down libltdl */
-
-  lt_dlexit();
 }
 
 
@@ -203,7 +203,7 @@ static registry_item_t *find_module(const char *type, const char *name)
   registry_item_t *ri;
 
   for (item = lam_list_get_first(&registry);
-       lam_list_get_last(&registry) != item;
+       lam_list_get_end(&registry) != item;
        item = lam_list_get_next(item)) {
     ri = (registry_item_t *) ri;
     if (0 == strcmp(ri->ri_type, type) && 

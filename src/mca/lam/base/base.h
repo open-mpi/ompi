@@ -15,10 +15,33 @@
 
 
 /*
+ * Structure for making plain lists of modules
+ */
+struct mca_base_module_list_item_t {
+  lam_list_item_t super;
+  const mca_base_module_t *mli_module;
+};
+typedef struct mca_base_module_list_item_t mca_base_module_list_item_t;
+
+
+/*
+ * Structure for making priority lists of modules
+ */
+struct mca_base_module_priority_list_item_t {
+  lam_list_item_t super;
+
+  int mpli_priority;
+  int mpli_thread_min, mpli_thread_max;
+  mca_base_module_t *mpli_module;
+};
+typedef struct mca_base_module_priority_list_item_t 
+  mca_base_module_priority_list_item_t;
+
+
+/*
  * Public variables
  */
 extern int mca_base_param_module_path;
-
 
 
 /*
@@ -44,26 +67,37 @@ extern "C" {
 
   /* mca_base_module_compare.c */
 
-  int mca_base_module_compare(mca_base_module_priority_t *a,
-                              mca_base_module_priority_t *b);
+  int mca_base_module_compare(mca_base_module_priority_list_item_t *a,
+                              mca_base_module_priority_list_item_t *b);
 
   /* mca_base_module_find.c */
 
   int mca_base_module_find(const char *directory, const char *type,
-                           mca_base_module_t *static_modules[],
+                           const mca_base_module_t *static_modules[],
                            lam_list_t *found_modules);
 
   /* mca_base_module_register.c */
 
   int mca_base_module_registry_init(void);
   int mca_base_module_registry_retain(char *type, lt_dlhandle module_handle, 
-                                      mca_base_module_t *module_struct);
+                                      const mca_base_module_t *module_struct);
   int mca_base_module_registry_link(const char *src_type, 
                                     const char *src_name,
                                     const char *depend_type,
                                     const char *depend_name);
-  void mca_base_module_registry_release(mca_base_module_t *module);
+  void mca_base_module_registry_release(const mca_base_module_t *module);
   void mca_base_module_registry_finalize(void);
+
+  /* mca_base_modules_open.c */
+
+  int mca_base_modules_open(const char *type_name, int output_id,
+                            const mca_base_module_t **static_modules,
+                            lam_list_t *modules_available);
+
+  /* mca_base_modules_close.c */
+
+  int mca_base_modules_close(int output_id, lam_list_t *modules_available, 
+                             const mca_base_module_t *skip);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
