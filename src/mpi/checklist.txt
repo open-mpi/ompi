@@ -49,34 +49,34 @@ MPI_Close_port
 MPI_Comm_accept
 MPI_Comm_c2f
 MPI_Comm_call_errhandler    Jeff
-MPI_Comm_compare
+MPI_Comm_compare            Edgar
 MPI_Comm_connect
 MPI_Comm_create_errhandler  DONE
 MPI_Comm_create_keyval
-MPI_Comm_create
+MPI_Comm_create             Edgar
 MPI_Comm_delete_attr
 MPI_Comm_disconnect
-MPI_Comm_dup
+MPI_Comm_dup                Edgar
 MPI_Comm_f2c
 MPI_Comm_free_keyval
-MPI_Comm_free
+MPI_Comm_free               Edgar
 MPI_Comm_get_attr
 MPI_Comm_get_errhandler     Jeff
-MPI_Comm_get_name
+MPI_Comm_get_name           Edgar
 MPI_Comm_get_parent
-MPI_Comm_group
+MPI_Comm_group              Edgar
 MPI_Comm_join
-MPI_Comm_rank
-MPI_Comm_remote_group
-MPI_Comm_remote_size
+MPI_Comm_rank               Edgar
+MPI_Comm_remote_group       Edgar
+MPI_Comm_remote_size        Edgar
 MPI_Comm_set_attr
 MPI_Comm_set_errhandler     Jeff
-MPI_Comm_set_name
-MPI_Comm_size
+MPI_Comm_set_name           Edgar
+MPI_Comm_size               Edgar
 MPI_Comm_spawn
 MPI_Comm_spawn_multiple
-MPI_Comm_split
-MPI_Comm_test_inter
+MPI_Comm_split              Edgar
+MPI_Comm_test_inter         Edgar
 MPI_Dims_create
 MPI_Errhandler_c2f
 MPI_Errhandler_create       DONE
@@ -192,8 +192,8 @@ MPI_Info_set
 MPI_Init
 MPI_Initialized
 MPI_Init_thread
-MPI_Intercomm_create
-MPI_Intercomm_merge
+MPI_Intercomm_create        Edgar
+MPI_Intercomm_merge         Edgar
 MPI_Iprobe
 MPI_Irecv
 MPI_Irsend
