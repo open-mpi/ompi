@@ -65,7 +65,6 @@ typedef int (*mca_pml_base_add_comm_fn_t)(struct lam_communicator_t*);
 typedef int (*mca_pml_base_del_comm_fn_t)(struct lam_communicator_t*);
 typedef int (*mca_pml_base_add_procs_fn_t)(struct lam_proc_t **procs, size_t nprocs);
 typedef int (*mca_pml_base_del_procs_fn_t)(struct lam_proc_t **procs, size_t nprocs);
-typedef int (*mca_pml_base_add_ptls_fn_t)(struct mca_ptl_t **ptls, size_t nptls);
 typedef int (*mca_pml_base_fini_fn_t)(void);
 typedef int (*mca_pml_base_progress_fn_t)(void);
 

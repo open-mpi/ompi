@@ -74,13 +74,13 @@ extern int mca_ptl_tcp_fini(
 extern int mca_ptl_tcp_add_proc(
     struct mca_ptl_t* ptl,
     struct lam_proc_t *procs,
-    struct mca_ptl_addr_t** addr
+    struct mca_ptl_peer_t** addr
 );
 
 extern int mca_ptl_tcp_del_proc(
     struct mca_ptl_t* ptl,
     struct lam_proc_t *procs,
-    struct mca_ptl_addr_t* addr
+    struct mca_ptl_peer_t* addr
 );
 
 extern int mca_ptl_tcp_request_alloc(
@@ -90,7 +90,7 @@ extern int mca_ptl_tcp_request_alloc(
                                                                                                  
 extern int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,
-    struct mca_ptl_addr_t* ptl_addr,
+    struct mca_ptl_peer_t* ptl_peer,
     struct mca_ptl_base_send_request_t*,
     size_t size,
     bool* complete

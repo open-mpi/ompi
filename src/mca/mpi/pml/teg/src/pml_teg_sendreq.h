@@ -46,7 +46,7 @@ static inline int mca_pml_teg_send_request_start(
     // start the first fragment
     if(req->req_length < first_fragment_size)
         first_fragment_size = req->req_length;
-    rc = ptl->ptl_send(ptl, ptl_proc->ptl_addr, req, first_fragment_size, &complete);
+    rc = ptl->ptl_send(ptl, ptl_proc->ptl_peer, req, first_fragment_size, &complete);
     if(rc != LAM_SUCCESS)
         return rc;
 

@@ -13,12 +13,12 @@
 mca_ptl_tcp_t mca_ptl_tcp = {
     {
     &mca_ptl_tcp_module.super,
-    0, /* ptl_exclusive */
+    0, /* ptl_exclusivity */
+    0, /* ptl_latency */
+    0, /* ptl_andwidth */
     0, /* ptl_frag_first_size */
     0, /* ptl_frag_min_size */
     0, /* ptl_frag_max_size */
-    0, /* ptl_latency */
-    0, /* ptl_andwidth */
     mca_ptl_tcp_add_proc,
     mca_ptl_tcp_del_proc,
     mca_ptl_tcp_fini,
@@ -31,10 +31,8 @@ mca_ptl_tcp_t mca_ptl_tcp = {
 int mca_ptl_tcp_create(int if_index)
 {
     mca_ptl_tcp_t* ptl = (mca_ptl_tcp_t*)LAM_MALLOC(sizeof(mca_ptl_tcp_t));
-    if(NULL == ptl) {
-        lam_output(0,"mca_ptl_tcp: unable to allocate ptl");
+    if(NULL == ptl)
         return LAM_ERR_OUT_OF_RESOURCE;
-    }
     memcpy(ptl, &mca_ptl_tcp, sizeof(mca_ptl_tcp));
     mca_ptl_tcp_module.tcp_ptls[mca_ptl_tcp_module.tcp_num_ptls++] = ptl;
 
@@ -45,7 +43,12 @@ int mca_ptl_tcp_create(int if_index)
 }
 
 
-int mca_ptl_tcp_add_proc(struct mca_ptl_t* ptl, struct lam_proc_t *procs, struct mca_ptl_addr_t** ptl_addr)
+int mca_ptl_tcp_add_proc(struct mca_ptl_t* ptl, struct lam_proc_t *proc, struct mca_ptl_peer_t** ptl_peer)
+{
+    return LAM_SUCCESS;
+}
+
+int mca_ptl_tcp_del_proc(struct mca_ptl_t* ptl, struct lam_proc_t *proc, struct mca_ptl_peer_t* ptl_peer)
 {
     return LAM_SUCCESS;
 }
