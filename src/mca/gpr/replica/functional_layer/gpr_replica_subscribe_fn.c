@@ -51,6 +51,18 @@ int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, int num_subs,
     if (orte_gpr_replica_globals.debug) {
 	   ompi_output(0, "[%d,%d,%d] gpr replica: subscribe entered",
 		    ORTE_NAME_ARGS(orte_process_info.my_name));
+        ompi_output(0, "Received %d subscriptions", num_subs);
+        for (i=0; i < num_subs; i++) {
+            ompi_output(0, "Subscription %d on segment %s with %d tokens, %d keys",
+                    i, subscriptions[i]->segment, subscriptions[i]->num_tokens,
+                    subscriptions[i]->num_keys);
+            for (j=0; j < subscriptions[i]->num_tokens; j++) {
+                ompi_output(0, "\tToken num: %d\tToken: %s", j, subscriptions[i]->tokens[j]);
+            }
+            for (j=0; j < subscriptions[i]->num_keys; j++) {
+                ompi_output(0, "\tKey num: %d\tKey: %s", j, subscriptions[i]->keys[j]);
+            }
+        }
     }
 
     trig = (orte_gpr_replica_triggers_t*)((orte_gpr_replica.triggers)->addr[idtag]);
@@ -59,7 +71,6 @@ int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, int num_subs,
         return ORTE_ERR_BAD_PARAM;
     }
     trig->action = action;
-    trig->num_subscribed_data = num_subs;
 
     for (i=0; i < num_subs; i++) {
         /* find the subscribed_data entry in the trigger pointer array - placed

@@ -26,14 +26,16 @@
 extern "C" {
 #endif
 
-    /*
-     * Globally exported variables
-     */
+    /* Globally exported variables */
     
     OMPI_COMP_EXPORT extern orte_pls_base_component_1_0_0_t 
         orte_pls_tm_component;
     OMPI_COMP_EXPORT extern orte_pls_base_module_1_0_0_t
         orte_pls_tm_module;
+
+    /* Global, but not exported variables */
+
+    extern bool orte_pls_tm_connected;
 
     /* Internal struct */
 
@@ -47,7 +49,14 @@ extern "C" {
     int orte_pls_tm_put_tid(const orte_process_name_t* name, 
                             tm_task_id tid, int state);
     int orte_pls_tm_get_tids(orte_jobid_t jobid, tm_task_id **tids, 
-                             size_t *num_tids);
+                             orte_process_name_t **names, size_t *size);
+
+    /* Child process functions */
+
+    int orte_pls_tm_child_init(void);
+    int orte_pls_tm_child_launch(orte_jobid_t jobid);
+    int orte_pls_tm_child_wait(orte_jobid_t jobid);
+    int orte_pls_tm_child_finalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

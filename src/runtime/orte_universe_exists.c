@@ -58,15 +58,23 @@ int orte_universe_exists()
     /* if both ns_replica and gpr_replica were provided, check for contact with them */
     if (NULL != orte_process_info.ns_replica_uri && NULL != orte_process_info.gpr_replica_uri) {
        orte_process_name_t name;
-       if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(orte_process_info.ns_replica_uri, &name, NULL)))
+       if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(orte_process_info.ns_replica_uri, &name, NULL))) {
+           ORTE_ERROR_LOG(ret);
            return ret;
-       if(ORTE_SUCCESS != (ret = orte_ns.copy_process_name(&orte_process_info.ns_replica, &name)))
+       }
+       if(ORTE_SUCCESS != (ret = orte_ns.copy_process_name(&orte_process_info.ns_replica, &name))) {
+           ORTE_ERROR_LOG(ret);
            return ret;
-       if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(orte_process_info.gpr_replica_uri, &name, NULL)))
+       }
+       if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(orte_process_info.gpr_replica_uri, &name, NULL))) {
+           ORTE_ERROR_LOG(ret);
            return ret;
-       if(ORTE_SUCCESS != (ret = orte_ns.copy_process_name(&orte_process_info.gpr_replica, &name)))
+       }
+       if(ORTE_SUCCESS != (ret = orte_ns.copy_process_name(&orte_process_info.gpr_replica, &name))) {
+           ORTE_ERROR_LOG(ret);
            return ret;
-	   return ORTE_SUCCESS;
+        }
+        return ORTE_SUCCESS;
     }
 
 /* 	/\* ping to verify ns_replica alive *\/ */

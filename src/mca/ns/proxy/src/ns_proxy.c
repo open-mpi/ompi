@@ -20,6 +20,7 @@
 #include "include/orte_types.h"
 #include "mca/mca.h"
 #include "dps/dps.h"
+#include "mca/errmgr/errmgr.h"
 #include "mca/rml/rml.h"
 
 #include "ns_proxy.h"
@@ -46,44 +47,44 @@ int orte_ns_proxy_create_cellid(orte_cellid_t *cellid)
 
     cmd = OBJ_NEW(orte_buffer_t);
     if(cmd == NULL) {
-	   return ORTE_ERR_OUT_OF_RESOURCE;
+       return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (OMPI_SUCCESS != orte_dps.pack(cmd, (void*)&command, 1, ORTE_NS_OOB_PACK_CMD)) {
+    if (ORTE_SUCCESS != orte_dps.pack(cmd, (void*)&command, 1, ORTE_NS_CMD)) {
        OBJ_RELEASE(cmd);
-	   return ORTE_ERR_PACK_FAILURE;
+       return ORTE_ERR_PACK_FAILURE;
     }
 
     if (0 > orte_rml.send_buffer(orte_ns_my_replica, cmd, MCA_OOB_TAG_NS, 0)) {
        OBJ_RELEASE(cmd);
-	   return ORTE_ERR_COMM_FAILURE;
+       return ORTE_ERR_COMM_FAILURE;
     }
     OBJ_RELEASE(cmd);
 
     answer = OBJ_NEW(orte_buffer_t);
     if(answer == NULL) {
-	   return ORTE_ERR_OUT_OF_RESOURCE;
+       return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     if (0 > orte_rml.recv_buffer(orte_ns_my_replica, answer, ORTE_RML_TAG_NS)) {
        OBJ_RELEASE(answer);
-	   return ORTE_ERR_COMM_FAILURE;
+       return ORTE_ERR_COMM_FAILURE;
     }
 
     count = 1;
-    if ((OMPI_SUCCESS != orte_dps.unpack(answer, &command, &count, ORTE_NS_OOB_PACK_CMD))
-	|| (ORTE_NS_CREATE_CELLID_CMD != command)) {
+    if ((ORTE_SUCCESS != orte_dps.unpack(answer, &command, &count, ORTE_NS_CMD))
+    || (ORTE_NS_CREATE_CELLID_CMD != command)) {
        OBJ_RELEASE(answer);
-	   return ORTE_ERR_UNPACK_FAILURE;
+       return ORTE_ERR_UNPACK_FAILURE;
     }
 
     count = 1;
-    if (OMPI_SUCCESS != orte_dps.unpack(answer, cellid, &count, ORTE_NS_OOB_PACK_CELLID)) {
+    if (ORTE_SUCCESS != orte_dps.unpack(answer, cellid, &count, ORTE_CELLID)) {
        OBJ_RELEASE(answer);
-	   return ORTE_ERR_UNPACK_FAILURE;
+       return ORTE_ERR_UNPACK_FAILURE;
     }
     OBJ_RELEASE(answer);
-	return ORTE_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -98,44 +99,44 @@ int orte_ns_proxy_create_jobid(orte_jobid_t *job)
     *job = ORTE_JOBID_MAX;
     
     if ((cmd = OBJ_NEW(orte_buffer_t)) == NULL) {
-	   return ORTE_ERR_OUT_OF_RESOURCE;
+       return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     command = ORTE_NS_CREATE_JOBID_CMD;
-    if (OMPI_SUCCESS != orte_dps.pack(cmd, (void*)&command, 1, ORTE_NS_OOB_PACK_CMD)) { /* got a problem */
+    if (ORTE_SUCCESS != orte_dps.pack(cmd, (void*)&command, 1, ORTE_NS_CMD)) { /* got a problem */
        OBJ_RELEASE(cmd);
-	   return OMPI_ERR_PACK_FAILURE;
+       return ORTE_ERR_PACK_FAILURE;
     }
 
     if (0 > orte_rml.send_buffer(orte_ns_my_replica, cmd, ORTE_RML_TAG_NS, 0)) {
        OBJ_RELEASE(cmd);
-	   return ORTE_ERR_COMM_FAILURE;
+       return ORTE_ERR_COMM_FAILURE;
     }
     OBJ_RELEASE(cmd);
 
     if ((answer = OBJ_NEW(orte_buffer_t)) == NULL) {
        OBJ_RELEASE(answer);
-	   return ORTE_ERR_OUT_OF_RESOURCE;
+       return ORTE_ERR_OUT_OF_RESOURCE;
     }
     if (0 > orte_rml.recv_buffer(orte_ns_my_replica, answer, ORTE_RML_TAG_NS)) {
        OBJ_RELEASE(answer);
-	   return ORTE_ERR_COMM_FAILURE;
+       return ORTE_ERR_COMM_FAILURE;
     }
 
     count = 1;
-    if ((OMPI_SUCCESS != orte_dps.unpack(answer, &command, &count, ORTE_NS_OOB_PACK_CMD))
-	|| (ORTE_NS_CREATE_JOBID_CMD != command)) {
+    if ((ORTE_SUCCESS != orte_dps.unpack(answer, &command, &count, ORTE_NS_CMD))
+    || (ORTE_NS_CREATE_JOBID_CMD != command)) {
        OBJ_RELEASE(answer);
-	   return ORTE_ERR_UNPACK_FAILURE;
+       return ORTE_ERR_UNPACK_FAILURE;
     }
 
     count = 1;
-    if (OMPI_SUCCESS != orte_dps.unpack(answer, job, &count, ORTE_NS_OOB_PACK_JOBID)) {
+    if (ORTE_SUCCESS != orte_dps.unpack(answer, job, &count, ORTE_JOBID)) {
        OBJ_RELEASE(answer);
-	   return ORTE_ERR_UNPACK_FAILURE;
+       return ORTE_ERR_UNPACK_FAILURE;
     }
     OBJ_RELEASE(answer);
-	return ORTE_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -145,60 +146,69 @@ int orte_ns_proxy_reserve_range(orte_jobid_t job, orte_vpid_t range, orte_vpid_t
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
     size_t count;
+    int rc;
 
     /* set default return value */
     *starting_vpid = ORTE_VPID_MAX;
     
     if ((cmd = OBJ_NEW(orte_buffer_t)) == NULL) {
-	   return ORTE_ERR_OUT_OF_RESOURCE;
+           ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+       return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     command = ORTE_NS_RESERVE_RANGE_CMD;
-    if (OMPI_SUCCESS != orte_dps.pack(cmd, (void*)&command, 1, ORTE_NS_OOB_PACK_CMD)) { /* got a problem */
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, (void*)&command, 1, ORTE_NS_CMD))) { /* got a problem */
+       ORTE_ERROR_LOG(rc);
        OBJ_RELEASE(cmd);
-	   return ORTE_ERR_PACK_FAILURE;
+       return rc;
     }
 
-    if (OMPI_SUCCESS != orte_dps.pack(cmd, (void*)&job, 1, ORTE_NS_OOB_PACK_JOBID)) { /* got a problem */
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, (void*)&job, 1, ORTE_JOBID))) { /* got a problem */
+       ORTE_ERROR_LOG(rc);
        OBJ_RELEASE(cmd);
-	   return ORTE_ERR_PACK_FAILURE;
+       return rc;
     }
 
-    if (OMPI_SUCCESS != orte_dps.pack(cmd, (void*)&range, 1, ORTE_NS_OOB_PACK_VPID)) { /* got a problem */
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, (void*)&range, 1, ORTE_VPID))) { /* got a problem */
+       ORTE_ERROR_LOG(rc);
        OBJ_RELEASE(cmd);
-	   return ORTE_ERR_PACK_FAILURE;
+       return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_ns_my_replica, cmd, ORTE_RML_TAG_NS, 0)) {
+    if (0 > (rc = orte_rml.send_buffer(orte_ns_my_replica, cmd, ORTE_RML_TAG_NS, 0))) {
+       ORTE_ERROR_LOG(rc);
        OBJ_RELEASE(cmd);
-	   return ORTE_ERR_COMM_FAILURE;
+       return rc;
     }
     OBJ_RELEASE(cmd);
 
 
     if ((answer = OBJ_NEW(orte_buffer_t)) == NULL) {
-	   return ORTE_ERR_OUT_OF_RESOURCE;
+       return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > orte_rml.recv_buffer(orte_ns_my_replica, answer, ORTE_RML_TAG_NS)) {
+    if (0 > (rc = orte_rml.recv_buffer(orte_ns_my_replica, answer, ORTE_RML_TAG_NS))) {
+       ORTE_ERROR_LOG(rc);
        OBJ_RELEASE(answer);
-	   return ORTE_ERR_COMM_FAILURE;
-    }
-
-    count = 1;
-    if ((OMPI_SUCCESS != orte_dps.unpack(answer, &command, &count, ORTE_NS_OOB_PACK_CMD))
-	|| (ORTE_NS_RESERVE_RANGE_CMD != command)) {
-       OBJ_RELEASE(answer);
-	   return ORTE_ERR_UNPACK_FAILURE;
+       return rc;
     }
 
     count = 1;
-    if (OMPI_SUCCESS != orte_dps.unpack(answer, starting_vpid, &count, ORTE_NS_OOB_PACK_VPID)) {
+    if ((ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &command, &count, ORTE_NS_CMD)))
+    || (ORTE_NS_RESERVE_RANGE_CMD != command)) {
+       ORTE_ERROR_LOG(rc);
        OBJ_RELEASE(answer);
-	   return ORTE_ERR_UNPACK_FAILURE;
+       return rc;
+    }
+
+    count = 1;
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, starting_vpid, &count, ORTE_VPID))) {
+       ORTE_ERROR_LOG(rc);
+       OBJ_RELEASE(answer);
+       return ORTE_ERR_UNPACK_FAILURE;
     }
     OBJ_RELEASE(answer);
-	return ORTE_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -235,7 +245,7 @@ int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (OMPI_SUCCESS != orte_dps.pack(cmd, (void*)&command, 1, ORTE_NS_OOB_PACK_CMD)) {
+    if (ORTE_SUCCESS != orte_dps.pack(cmd, (void*)&command, 1, ORTE_NS_CMD)) {
         OBJ_RELEASE(cmd);
         return ORTE_ERR_PACK_FAILURE;
     }
@@ -265,14 +275,14 @@ int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag,
     }
 
     count = 1;
-    if ((OMPI_SUCCESS != orte_dps.unpack(answer, &command, &count, ORTE_NS_OOB_PACK_CMD))
+    if ((ORTE_SUCCESS != orte_dps.unpack(answer, &command, &count, ORTE_NS_CMD))
         || (ORTE_NS_CREATE_CELLID_CMD != command)) {
             OBJ_RELEASE(answer);
             return ORTE_ERR_UNPACK_FAILURE;
     }
 
     count = 1;
-    if (OMPI_SUCCESS != orte_dps.unpack(answer, tag, &count, ORTE_NS_OOB_PACK_OOB_TAG)) {
+    if (ORTE_SUCCESS != orte_dps.unpack(answer, tag, &count, ORTE_UINT32)) {
         OBJ_RELEASE(answer);
         return ORTE_ERR_UNPACK_FAILURE;
     }

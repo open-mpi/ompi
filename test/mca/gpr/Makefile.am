@@ -19,7 +19,8 @@ AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1 -g
 noinst_PROGRAMS = \
     gpr_test \
     gpr_test_trigs \
-    gpr_test_proxy
+    gpr_test_proxy \
+    gpr_test_overwrite
 
 gpr_test_SOURCES = gpr_test.c
 gpr_test_LDADD = \
@@ -38,3 +39,9 @@ gpr_test_proxy_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.la 
 gpr_test_proxy_DEPENDENCIES = $(gpr_test_proxy_LDADD)
+
+gpr_test_overwrite_SOURCES = gpr_test_overwrite.c
+gpr_test_overwrite_LDADD = \
+        $(top_builddir)/src/libmpi.la \
+        $(top_builddir)/test/support/libsupport.la 
+gpr_test_overwrite_DEPENDENCIES = $(gpr_test_overwrite_LDADD)

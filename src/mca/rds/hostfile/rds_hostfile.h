@@ -34,6 +34,7 @@ struct orte_rds_hostfile_component_t {
     orte_rds_base_component_t super;
     int debug;
     char* path;
+    bool default_hostfile;
     ompi_mutex_t lock;
 };
 typedef struct orte_rds_hostfile_component_t orte_rds_hostfile_component_t;

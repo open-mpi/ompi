@@ -114,7 +114,6 @@ static char* orte_pls_rsh_param_register_string(
 int orte_pls_rsh_component_open(void)
 {
     char* param;
-
     /* initialize globals */
     OBJ_CONSTRUCT(&mca_pls_rsh_component.lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_pls_rsh_component.cond, ompi_condition_t);
@@ -123,8 +122,16 @@ int orte_pls_rsh_component_open(void)
     /* lookup parameters */
     mca_pls_rsh_component.debug = orte_pls_rsh_param_register_int("debug",0);
     mca_pls_rsh_component.num_concurrent = orte_pls_rsh_param_register_int("num_concurrent",128);
+    if(mca_pls_rsh_component.debug == 0) {
+        int id = mca_base_param_register_int("debug",NULL,NULL,NULL,0);
+        int value;
+        mca_base_param_lookup_int(id,&value);
+        mca_pls_rsh_component.debug = (value > 0) ? 1 : 0;
+    }
+
     mca_pls_rsh_component.orted = orte_pls_rsh_param_register_string("orted","orted");
     mca_pls_rsh_component.priority = orte_pls_rsh_param_register_int("priority",10);
+    mca_pls_rsh_component.delay = orte_pls_rsh_param_register_int("delay",1);
     mca_pls_rsh_component.reap = orte_pls_rsh_param_register_int("reap",1);
 
     param = orte_pls_rsh_param_register_string("agent","ssh");
@@ -139,6 +146,9 @@ orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
     extern char **environ;
 
     /* If we didn't find the agent in the path, then don't use this component */
+    if (NULL == mca_pls_rsh_component.argv || NULL == mca_pls_rsh_component.argv[0]) {
+        return NULL;
+    }
     mca_pls_rsh_component.path = ompi_path_findv(mca_pls_rsh_component.argv[0], 0, environ, NULL);
     if (NULL == mca_pls_rsh_component.path) {
         return NULL;

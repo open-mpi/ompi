@@ -76,7 +76,8 @@ orte_gpr_replica_enter_notify_request(orte_gpr_notify_id_t *local_idtag,
         }
         data->index = i;
     }
-        
+    trig->num_subscribed_data = cnt;
+    
     if (0 > (rc = orte_pointer_array_add(orte_gpr_replica.triggers, trig))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -153,34 +154,13 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg,
     trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
     for (i=0; i < (orte_gpr_replica.triggers)->size; i++) {
         if (NULL != trig[i]) {
-            sptr = (orte_gpr_replica_subscribed_data_t**)((trig[i]->subscribed_data)->addr);
-            n = (trig[i]->subscribed_data)->size;
-            for (j=0; j < n; j++) {
-                if (NULL != sptr[j] && seg == sptr[j]->seg) {
-#if 0
-                    if (ORTE_GPR_NOTIFY_ANY & trig[i]->action &&
-                        !(ORTE_GPR_TRIG_NOTIFY_START & trig[i]->action)) { /* notify exists and is active */
-                        if (((ORTE_GPR_NOTIFY_ADD_ENTRY & trig[i]->action) && (ORTE_GPR_REPLICA_ENTRY_ADDED == action_taken)) ||
-                            ((ORTE_GPR_NOTIFY_DEL_ENTRY & trig[i]->action) && (ORTE_GPR_REPLICA_ENTRY_DELETED == action_taken)) ||
-                            ((ORTE_GPR_NOTIFY_VALUE_CHG & trig[i]->action) && (ORTE_GPR_REPLICA_ENTRY_CHANGED == action_taken)) ||
-                            ((ORTE_GPR_NOTIFY_VALUE_CHG_TO & trig[i]->action) && (ORTE_GPR_REPLICA_ENTRY_CHG_TO == action_taken)) ||
-                            ((ORTE_GPR_NOTIFY_VALUE_CHG_FRM & trig[i]->action) && (ORTE_GPR_REPLICA_ENTRY_CHG_FRM == action_taken))) {
-                            if (ORTE_SUCCESS != (rc = orte_gpr_replica_register_callback(trig[i]))) {
-                                ORTE_ERROR_LOG(rc);
-                                return rc;
-                            }
-                        }
-                    }
-#endif                
-                    /* check if trigger is on this subscription - if so, check it */
-                    if (ORTE_GPR_TRIG_ANY & trig[i]->action) {
-                        if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_trig(trig[i]))) {
-                            ORTE_ERROR_LOG(rc);
-                            return rc;
-                        }
-                    }
-                } /* if sptr not NULL */
-            }  /* for j */
+            /* check if trigger is on this subscription - if so, check it */
+            if (ORTE_GPR_TRIG_ANY & trig[i]->action) {
+                if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_trig(trig[i]))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
         }  /* if trig not NULL */
     }
     return ORTE_SUCCESS;
@@ -217,6 +197,9 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
             }
         }
         if (fire) { /* all levels were equal */
+            if (orte_gpr_replica_globals.debug) {
+                ompi_output(0, "REGISTERING CALLBACK FOR TRIG %d", trig->index);
+            }
             if (ORTE_SUCCESS != (rc = orte_gpr_replica_register_callback(trig))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;

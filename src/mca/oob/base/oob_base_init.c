@@ -12,7 +12,8 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
+#include "include/orte_constants.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -56,19 +57,22 @@ int mca_oob_parse_contact_info(
     char*** uri)
 {
     orte_process_name_t* proc_name;
+    int rc;
 
     /* parse the process name */
     char* cinfo = strdup(contact_info);
     char* ptr = strchr(cinfo, ';');
     if(NULL == ptr) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         free(cinfo);
-        return OMPI_ERR_BAD_PARAM;
+        return ORTE_ERR_BAD_PARAM;
     }
     *ptr = '\0';
     ptr++;
-    if (ORTE_SUCCESS != orte_ns.convert_string_to_process_name(&proc_name, cinfo)) {
-        name = NULL;
-        return OMPI_ERROR;
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&proc_name, cinfo))) {
+        ORTE_ERROR_LOG(rc);
+        free(cinfo);
+        return rc;
     }
     *name = *proc_name;
     free(proc_name);
@@ -78,7 +82,7 @@ int mca_oob_parse_contact_info(
 	*uri = ompi_argv_split(ptr, ';');
     }
     free(cinfo);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
@@ -164,11 +168,11 @@ int mca_oob_base_init(void)
     /* set the global variable to point to the first initialize module */
     if(s_module == NULL) {
       ompi_output(0, "mca_oob_base_init: no OOB modules available\n");
-      return OMPI_ERROR;
+      return ORTE_ERROR;
    }
 
    mca_oob = *s_module;
-   return OMPI_SUCCESS;
+   return ORTE_SUCCESS;
 }
 
 
@@ -216,7 +220,7 @@ int mca_oob_set_contact_info(const char* contact_info)
     char** uri;
     char** ptr;
     int rc = mca_oob_parse_contact_info(contact_info, &name, &uri);
-    if(rc != OMPI_SUCCESS)
+    if(rc != ORTE_SUCCESS)
         return rc;
 
     for(ptr = uri; ptr != NULL && *ptr != NULL; ptr++) {
@@ -234,7 +238,7 @@ int mca_oob_set_contact_info(const char* contact_info)
     if(uri != NULL) {
         ompi_argv_free(uri);
     }
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 /**
@@ -254,6 +258,6 @@ int mca_oob_base_module_init(void)
     if (NULL != base->oob_module->oob_init)
         base->oob_module->oob_init();
   }
-  return OMPI_SUCCESS;
+  return ORTE_SUCCESS;
 }
 

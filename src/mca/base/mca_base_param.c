@@ -547,11 +547,9 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
                         asprintf(&str, "%s=%s", array[i].mbp_env_var_name, 
                                  storage.stringval);
                         free(storage.stringval);
-                    } else {
-                        asprintf(&str, "%s=", array[i].mbp_env_var_name);
-                    }
-                    ompi_argv_append(num_env, env, str);
-                    free(str);
+                        ompi_argv_append(num_env, env, str);
+                        free(str);
+                    } 
                 } else {
                     goto cleanup;
                 }

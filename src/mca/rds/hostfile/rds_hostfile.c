@@ -154,7 +154,6 @@ static int orte_rds_hostfile_parse(const char *hostfile, ompi_list_t* existing, 
     orte_rds_hostfile_done = false;
     orte_rds_hostfile_in = fopen(hostfile, "r");
     if (NULL == orte_rds_hostfile_in) {
-        ompi_output(0, "orte_rds_hostfile: could not open %s (%s)\n", hostfile, strerror(errno));
         rc = ORTE_ERR_NOT_FOUND;
         goto unlock;
     }
@@ -211,7 +210,11 @@ static int orte_rds_hostfile_query(void)
 
     rc = orte_rds_hostfile_parse(mca_rds_hostfile_component.path, &existing, &updates);
     if (ORTE_ERR_NOT_FOUND == rc) {
-        rc = ORTE_SUCCESS;
+        if(mca_rds_hostfile_component.default_hostfile) {
+            rc = ORTE_SUCCESS;
+        } else {
+            ompi_output(0, "orte_rds_hostfile: could not open %s\n", mca_rds_hostfile_component.path);
+        }
         goto cleanup;
     }
     rc = orte_ras_base_node_insert(&updates);

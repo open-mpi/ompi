@@ -57,6 +57,7 @@ int orte_iof_base_open(void)
     OBJ_CONSTRUCT(&orte_iof_base.iof_condition, ompi_condition_t);
     OBJ_CONSTRUCT(&orte_iof_base.iof_fragments, ompi_free_list_t);
     orte_iof_base.iof_waiting = 0;
+    orte_iof_base.iof_component_selected = false;
 
     /* lookup common parameters */
     id = mca_base_param_register_int("iof","base","window_size",NULL,ORTE_IOF_BASE_MSG_MAX << 1);

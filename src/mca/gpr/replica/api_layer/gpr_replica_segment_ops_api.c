@@ -49,5 +49,7 @@ int orte_gpr_replica_preallocate_segment(char *name, int num_slots)
                                             orte_gpr_replica_globals.max_size,
                                             orte_gpr_replica_globals.block_size);
                                             
-    return rc;
+     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+     
+     return rc;
 }

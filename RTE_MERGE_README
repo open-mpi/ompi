@@ -1,6 +1,112 @@
 This file contains information on merging the branches/tim tree into the
 trunk.
 
+UPDATE MERGE:
+
+  svn merge -r4821:4892 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim .
+
+RESULTS:
+
+ M     test/mca/gpr
+ M      test/mca/gpr/gpr_test.c
+ M      test/mca/gpr/gpr_test_proxy.c
+ M      test/mca/gpr/Makefile.am
+ A  +   test/mca/gpr/gpr_test_overwrite.c
+ M      RTE_MERGE_README
+ ?      src/event/event.c.working
+ ?      src/event/event.c.merge-right.r4892
+ ?      src/event/event.c.merge-left.r4821
+ M      src/event/signal.c
+ C      src/event/event.c
+ M      src/event/event.h
+ M      src/runtime/orte_wait.h
+ M      src/runtime/orte_restart.c
+ M      src/runtime/ompi_progress.c
+ M      src/runtime/orte_universe_exists.c
+ M      src/runtime/orte_init.c
+ M      src/runtime/ompi_progress.h
+ M      src/tools/ompi_info/components.cc
+ M      src/tools/orted/orted.c
+ M      src/tools/orterun/orterun.c
+ M      src/tools/orterun/help-orterun.txt
+ M      src/tools/orterun/Makefile.am
+ M      src/mca/oob/base/oob_base_init.c
+ M      src/mca/ns/replica/src/ns_replica_component.c
+ M      src/mca/ns/proxy/src/ns_proxy.c
+ M      src/mca/ns/base/base.h
+ M      src/mca/ns/base/ns_base_nds.h
+ M      src/mca/ns/base/ns_base_nds_env.c
+ M      src/mca/ns/base/ns_base_nds_pipe.c
+ M      src/mca/ras/lsf_bproc/ras_lsf_bproc_component.c
+ M      src/mca/ras/bjs/ras_bjs_component.c
+ M      src/mca/pml/base/pml_base_close.c
+ M      src/mca/gpr/replica/api_layer/gpr_replica_segment_ops_api.c
+ M      src/mca/gpr/replica/api_layer/gpr_replica_dump_api.c
+ M      src/mca/gpr/replica/api_layer/gpr_replica_put_get_api.c
+ M      src/mca/gpr/replica/api_layer/gpr_replica_arithmetic_ops_api.c
+ M      src/mca/gpr/replica/communications/gpr_replica_arithmetic_ops_cm.c
+ M      src/mca/gpr/replica/communications/gpr_replica_del_index_cm.c
+ M      src/mca/gpr/replica/communications/gpr_replica_subscribe_cm.c
+ M      src/mca/gpr/replica/communications/gpr_replica_cleanup_cm.c
+ M      src/mca/gpr/replica/communications/gpr_replica_put_get_cm.c
+ M      src/mca/gpr/replica/functional_layer/gpr_replica_dump_fn.c
+ M      src/mca/gpr/replica/functional_layer/gpr_replica_trig_ops_fn.c
+ M      src/mca/gpr/replica/functional_layer/gpr_replica_put_get_fn.c
+ M      src/mca/gpr/replica/functional_layer/gpr_replica_messaging_fn.c
+ M      src/mca/gpr/replica/functional_layer/gpr_replica_subscribe_fn.c
+ M      src/mca/gpr/replica/functional_layer/gpr_replica_segment_fn.c
+ M      src/mca/gpr/proxy/gpr_proxy_dump.c
+ M      src/mca/gpr/proxy/gpr_proxy_compound_cmd.c
+ M      src/mca/gpr/proxy/gpr_proxy_put_get.c
+ M      src/mca/gpr/proxy/gpr_proxy_cleanup.c
+ M      src/mca/gpr/proxy/gpr_proxy_arithmetic_ops.c
+ M      src/mca/gpr/proxy/gpr_proxy_del_index.c
+ M      src/mca/gpr/proxy/gpr_proxy_subscribe.c
+ M      src/mca/gpr/proxy/gpr_proxy_component.c
+ M      src/mca/gpr/base/base.h
+ M      src/mca/gpr/base/unpack_api_response/gpr_base_dump_notify.c
+ M      src/mca/rds/hostfile/rds_hostfile.c
+ M      src/mca/rds/hostfile/rds_hostfile_component.c
+ M      src/mca/rds/hostfile/rds_hostfile.h
+ M      src/mca/rml/rml_types.h
+ M      src/mca/errmgr/base/errmgr_base_fns.c
+ A  +   src/mca/pls/tm/src/pls_tm_child.c
+ M      src/mca/pls/tm/src/pls_tm_module.c
+ M      src/mca/pls/tm/src/pls_tm.h
+ M      src/mca/pls/tm/src/pls_tm_registry.c
+ M      src/mca/pls/tm/src/Makefile.am
+ M      src/mca/pls/fork/pls_fork_module.c
+ M      src/mca/pls/bproc_seed/pls_bproc_seed.c
+ M      src/mca/pls/bproc_seed/pls_bproc_seed_component.c
+ M      src/mca/pls/base/pls_base_open.c
+ M      src/mca/pls/rsh/pls_rsh_module.c
+ M      src/mca/pls/rsh/pls_rsh.h
+ M      src/mca/pls/rsh/pls_rsh_component.c
+ ?      src/mca/io/base/io_base_component_list.c.merge-right.r4892
+ ?      src/mca/io/base/io_base_component_list.c.merge-left.r4821
+ ?      src/mca/io/base/io_base_component_list.c.working
+ C      src/mca/io/base/io_base_component_list.c
+ M      src/mca/base/mca_base_module_exchange.c
+ M      src/mca/base/mca_base_param.c
+ M      src/mca/base/mca_base_cmd_line.c
+ M      src/mca/iof/proxy/iof_proxy_component.c
+ M      src/mca/iof/base/base.h
+ M      src/mca/iof/base/iof_base_select.c
+ M      src/mca/iof/base/iof_base_open.c
+ M      src/mca/iof/base/iof_base_close.c
+ A  +   src/mca/iof/null
+ A  +   src/mca/iof/null/configure.params
+ A  +   src/mca/iof/null/Makefile.am
+ A  +   src/mca/iof/null/iof_null_component.c
+ A  +   src/mca/iof/null/iof_null_module.c
+ A  +   src/mca/iof/null/iof_null.h
+ A  +   src/mca/iof/null/configure.stub
+ M      src/mca/iof/svc/iof_svc_component.c
+ M      src/attribute/attribute_predefined.c
+ M      src/util/sys_info.c
+ M      src/util/path.c
+
+
 INITIAL MERGE:
 
   svn merge -r3853:4821 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim . 

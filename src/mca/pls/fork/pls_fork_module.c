@@ -73,7 +73,11 @@ static void orte_pls_fork_wait_proc(pid_t pid, int status, void* cbdata)
     int rc;
 
     /* set the state of this process */
-    rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_TERMINATED, status);
+    if(WIFEXITED(status)) {
+        rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_TERMINATED, status);
+    } else {
+        rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_ABORTED, status);
+    }
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }
@@ -97,10 +101,6 @@ static int orte_pls_fork_proc(
     int p_stdout[2];
     int p_stderr[2];
     int rc;
-
-    if(mca_pls_fork_component.debug) {
-        ompi_output(0, "orte_pls_fork: starting %d.%d.%d\n", ORTE_NAME_ARGS(&proc->proc_name));
-    }
 
     if(pipe(p_stdout) < 0 ||
        pipe(p_stderr) < 0) {
@@ -167,6 +167,8 @@ static int orte_pls_fork_proc(
         new_env = ompi_environ_merge(context->env, environ_copy);
         ompi_argv_free(environ_copy);
         execve(context->app, context->argv, new_env);
+        ompi_output(0, "orte_pls_fork: %s - %s\n", context->app, 
+            ompi_argv_join(context->argv, ' '));
         ompi_output(0, "orte_pls_fork: execv failed with errno=%d\n", errno);
         exit(-1);
 

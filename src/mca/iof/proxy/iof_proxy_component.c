@@ -35,6 +35,12 @@ static orte_iof_base_module_t* orte_iof_proxy_init(
     bool *have_hidden_threads);
 
 
+/*
+ * Local variables
+ */
+static bool initialized = false;
+
+
 orte_iof_proxy_component_t mca_iof_proxy_component = {
     {
       /* First, the mca_base_component_t struct containing meta
@@ -127,6 +133,7 @@ orte_iof_proxy_init(int* priority, bool *allow_multi_user_threads, bool *have_hi
         ompi_output(0, "orte_iof_proxy_init: unable to post non-blocking recv");
         return NULL;
     }
+    initialized = true;
     return &orte_iof_proxy_module;
 }
 
@@ -136,7 +143,12 @@ orte_iof_proxy_init(int* priority, bool *allow_multi_user_threads, bool *have_hi
 
 static int orte_iof_proxy_close(void)
 {
-    return orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_IOF_SVC);
+    int rc = ORTE_SUCCESS;
+
+    if (initialized) {
+        rc = orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_IOF_SVC);
+    }
+    return rc;
 }
 
 

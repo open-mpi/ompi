@@ -65,7 +65,7 @@ int orte_pls_tm_put_tid(const orte_process_name_t* name,
     
     rc = orte_gpr.put(1, values);
     free(value.segment);
-    for(i=0; i<value.num_tokens; i++) {
+    for (i = 0; i < value.num_tokens; ++i) {
         free(value.tokens[i]);
     }
     free(value.tokens);
@@ -76,27 +76,36 @@ int orte_pls_tm_put_tid(const orte_process_name_t* name,
 /**
  * Retreive all process tids for the specified job.
  */
+#include <unistd.h>
 int orte_pls_tm_get_tids(orte_jobid_t jobid, tm_task_id **tids, 
-                         size_t* num_tids)
+                         orte_process_name_t **names, size_t* size)
 {
-    char *segment;
-    char *keys[2];
+    char *segment = NULL;
+    char *keys[3];
     orte_gpr_value_t** values = NULL;
-    int i, num_values = 0;
+    int i, j, num_values = 0;
     int rc;
 
-    /* query the job segment on the registry */
+    /* Zero out in case of error */
+
+    *tids = NULL;
+    *names = NULL;
+    *size = 0;
+
+    /* Query the job segment on the registry */
+
     if (ORTE_SUCCESS != 
         (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        goto cleanup;
     }
 
     keys[0] = TID_KEY;
-    keys[1] = NULL;
+    keys[1] = ORTE_PROC_NAME_KEY;
+    keys[2] = NULL;
 
     rc = orte_gpr.get(
-        ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+        ORTE_GPR_KEYS_AND,
         segment,
         NULL,
         keys,
@@ -108,17 +117,29 @@ int orte_pls_tm_get_tids(orte_jobid_t jobid, tm_task_id **tids,
         return rc;
     }
 
-    if (0 == num_values) {
-        rc = ORTE_ERR_NOT_FOUND;
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
+    /* If we got values back (both TID and the process names have to
+       exist), then process them */
 
-    *tids = (tm_task_id*) malloc(sizeof(tm_task_id) * num_values);
-    for (i = 0; i < num_values; ++i) {
-        (*tids)[i] = values[i]->keyvals[0]->value.ui32;
+    if (num_values > 0) {
+        *tids = malloc(sizeof(tm_task_id) * num_values);
+        *names = malloc(sizeof(orte_process_name_t) * num_values);
+        if (NULL == *tids || NULL == *names) {
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        for (i = 0; i < num_values; ++i) {
+            for (j = 0; j < values[i]->cnt; ++j) {
+                if (0 == strcmp(values[i]->keyvals[j]->key, TID_KEY)) {
+                    (*tids)[i] = values[i]->keyvals[j]->value.ui32;
+                } else if (0 == strcmp(values[i]->keyvals[j]->key, 
+                                       ORTE_PROC_NAME_KEY)) {
+                    (*names)[i] = values[i]->keyvals[j]->value.proc;
+                }
+            }
+        }
+        *size = num_values;
     }
-    *num_tids = num_values;
 
 cleanup:
     if (NULL != values) {
@@ -127,6 +148,8 @@ cleanup:
         }
         free(values);
     }
-    free(segment);
+    if (NULL != segment) {
+        free(segment);
+    }
     return rc;
 }

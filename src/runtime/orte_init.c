@@ -286,7 +286,7 @@ int orte_init(void)
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-    
+
     /* setup my session directory */
     if (ORTE_SUCCESS != (ret = orte_ns.get_jobid_string(&jobid_str, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(ret);
@@ -341,6 +341,7 @@ int orte_init(void)
         ORTE_ERROR_LOG(ret);
         return ret;
     }
+
     if (ORTE_SUCCESS != (ret = orte_soh_base_open())) {
         ORTE_ERROR_LOG(ret);
         return ret;

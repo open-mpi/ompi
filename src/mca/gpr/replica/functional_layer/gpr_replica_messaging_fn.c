@@ -32,6 +32,7 @@
 #include "mca/ns/ns.h"
 #include "mca/errmgr/errmgr.h"
 
+#include "mca/gpr/base/base.h"
 #include "mca/gpr/replica/communications/gpr_replica_comm.h"
 #include "gpr_replica_fn.h"
 
@@ -112,8 +113,8 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_triggers_t *trig)
          if (trig->requestor == cb->requestor) { /* same destination - add to existing callback */
              if (ORTE_SUCCESS != (rc = orte_gpr_replica_construct_notify_message(&(cb->message), trig))) {
                 ORTE_ERROR_LOG(rc);
-                return rc;
              }
+             return rc;
          }
     }
     /* got a new callback, generate the request */
@@ -256,6 +257,10 @@ int orte_gpr_replica_add_values(orte_gpr_notify_data_t **data,
     num_tokens = (int)orte_value_array_get_size(&(sptr->tokentags));
     num_keys = (int) orte_value_array_get_size(&(sptr->keytags));
 
+    if (orte_gpr_replica_globals.debug) {
+        ompi_output(0, "add_values: performing a get");
+    }
+    
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_fn(sptr->addr_mode, sptr->seg,
             ORTE_VALUE_ARRAY_GET_BASE(&(sptr->tokentags), orte_gpr_replica_itag_t),
             num_tokens,
@@ -264,6 +269,21 @@ int orte_gpr_replica_add_values(orte_gpr_notify_data_t **data,
             &cnt, &values))) {
         ORTE_ERROR_LOG(rc);
         return rc;
+    }
+
+     if (orte_gpr_replica_globals.debug) {
+        ompi_output(0, "add_values: get returned %d values", cnt);
+        for (i=0; i < cnt; i++) {
+            ompi_output(0, "Data for value %d from segment %s\nTokens:", i, values[i]->segment);
+            for (j=0; j < values[i]->num_tokens; j++) {
+                ompi_output(0, "\ttoken num: %d\tToken: %s", j, values[i]->tokens[j]);
+            }
+            ompi_output(0, "\tGot %d keyals:", values[i]->cnt);
+            for (j=0; j < values[i]->cnt; j++) {
+                ompi_output(0, "\tValue num: %d\tKey: %s", j, (values[i]->keyvals[j])->key);
+                orte_gpr_base_dump_keyval_value(values[i]->keyvals[j], 0);
+            }
+        }
     }
     
     /* store these values in the notify_data structure, combining data

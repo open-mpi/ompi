@@ -31,7 +31,6 @@
 #include "mca/gpr/base/base.h"
 
 static void orte_gpr_base_dump_data(orte_gpr_notify_data_t *data, int output_id);
-static void orte_gpr_base_dump_keyval_value(orte_gpr_keyval_t *iptr, int output_id);
 
 int orte_gpr_base_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_id)
 {
@@ -145,7 +144,7 @@ static void orte_gpr_base_dump_data(orte_gpr_notify_data_t *data, int output_id)
 }
 
 
-static void orte_gpr_base_dump_keyval_value(orte_gpr_keyval_t *iptr, int output_id)
+void orte_gpr_base_dump_keyval_value(orte_gpr_keyval_t *iptr, int output_id)
 {
     switch(iptr->type) {
 

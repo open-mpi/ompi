@@ -28,3 +28,11 @@ orterun_SOURCES = \
 
 orterun_LDADD = $(libs) 
 orterun_DEPENDENCIES = $(libs)
+
+install-exec-hook:
+	(cd $(DESTDIR)$(bindir); rm -f mpirun; ln -s orterun mpirun)
+	(cd $(DESTDIR)$(bindir); rm -f mpiexec; ln -s orterun mpiexec)
+
+uninstall-local:
+	rm -f $(DESTDIR)$(bindir)/mpirun \
+		$(DESTDIR)$(bindir)/mpiexec

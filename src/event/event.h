@@ -189,6 +189,7 @@ OMPI_DECLSPEC int   ompi_event_add_i(struct ompi_event *, struct timeval *);
 OMPI_DECLSPEC int   ompi_event_del_i(struct ompi_event *);
 OMPI_DECLSPEC void  ompi_event_active_i(struct ompi_event*, int, short);
 OMPI_DECLSPEC extern ompi_mutex_t ompi_event_lock;
+OMPI_DECLSPEC extern int ompi_evsignal_restart(void);
 
 /* public functions */
 static inline void

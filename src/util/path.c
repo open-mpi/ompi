@@ -97,7 +97,6 @@ char *ompi_path_find(char *fname, char **pathv, int mode, char **envv)
     return fullpath;
 }
 
-
 /*
  * Locates a file with certain permissions from a list of search paths
  */
@@ -141,6 +140,8 @@ char *ompi_path_findv(char *fname, int mode, char **envv, char *wrkdir)
         ompi_argv_append(&dirc, &dirv, wrkdir);
     }
 
+    if(NULL == dirv)
+        return NULL;
     fullpath = ompi_path_find(fname, dirv, mode, envv);
     ompi_argv_free(dirv);
     return fullpath;

@@ -485,7 +485,12 @@ void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
             break;
     }
     
-    orte_gpr_replica_dump_load_string(buffer, &tmp);
+    if (NULL == buffer) {
+        ompi_output(0, "%s", tmp);
+        free(tmp);
+    } else {
+        orte_gpr_replica_dump_load_string(buffer, &tmp);
+    }
 }
 
 

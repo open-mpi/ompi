@@ -30,18 +30,22 @@ requsted more nodes than exist in your cluster).
 
 While probably only useful to Open RTE developers, the error returned
 was %d.
-[orterun:no-application]
+[orterun:executable-not-found]
 %s could not find the executable "%s".
 
-This may mean you forgot to specify the application to start on the
-command line.  Or it could mean that you have an error with another
-option on the command line and confused the command line parser.  "%s
---help" will provide a detailed usage guide.
+Please check your PATH and ensure that the executable is able to be
+found and executed.
 [orterun:error-spawning]
 %s was unable to start the specified application.  An attempt has been
 made to clean up all processes that did start.  The error returned was
 %d.
 [orterun:appfile-not-found]
-orterun was unable to open the appfile "%s".
+Unable to open the appfile:
+
+    %s
 
 Double check that this file exists and is readable.
+[orterun:executable-not-specified]
+No executable was specified on the %s command line.
+
+Aborting.

@@ -108,7 +108,7 @@ int orte_gpr_proxy_exec_compound_cmd(void)
     OMPI_THREAD_LOCK(&orte_gpr_proxy_globals.wait_for_compound_mutex);
     rc = ORTE_SUCCESS;
     
-    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, orte_gpr_proxy_globals.compound_cmd, MCA_OOB_TAG_GPR, 0)) {
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, orte_gpr_proxy_globals.compound_cmd, ORTE_RML_TAG_GPR, 0)) {
         rc = ORTE_ERR_COMM_FAILURE;
 	    goto CLEANUP;
     }
@@ -119,7 +119,7 @@ int orte_gpr_proxy_exec_compound_cmd(void)
         goto CLEANUP;
     }
     
-	if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, MCA_OOB_TAG_GPR)) {
+	if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         OBJ_RELEASE(answer);
         rc = ORTE_ERR_COMM_FAILURE;
 	    goto CLEANUP;

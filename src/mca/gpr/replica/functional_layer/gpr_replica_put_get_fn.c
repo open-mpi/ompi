@@ -199,7 +199,6 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
                                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_keyval(seg, cptr[j], keyvals[i]))) {
                                     return rc;
                                 }
-                                overwrite = false;  /* only do it for the first one - rest get added */
                                 *action_taken = *action_taken | ORTE_GPR_REPLICA_ENTRY_CHANGED;
                              } else {
                                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_keyval(&iptr, seg, cptr[j], keyvals[i]))) {
@@ -251,9 +250,35 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_keyval_t **kptr;
     orte_gpr_replica_addr_mode_t tokmode, keymode;
     int rc, i, j, num_found;
+    char *token;
     
     if (orte_gpr_replica_globals.debug) {
         	ompi_output(0, "[%d,%d,%d] gpr replica: get entered", ORTE_NAME_ARGS(orte_process_info.my_name));
+            ompi_output(0, "\tGetting data from segment %s wiht %d tokens and %d keys",
+                    seg->name, num_tokens, num_keys);
+            for (i=0; i < num_tokens; i++) {
+                 if (ORTE_SUCCESS != orte_gpr_replica_dict_reverse_lookup(
+                                                    &token, seg, tokentags[i])) {
+                          ompi_output(0, "\t\ttoken num %d: No entry found for itag %X",
+                                 i, tokentags[i]);
+                 } else {
+                          ompi_output(0, "\t\ttoken num %d: itag %d\tToken: %s",
+                                 i, tokentags[i], token);
+                          free(token);
+                 }
+            }
+            for (i=0; i < num_keys; i++) {
+                 if (ORTE_SUCCESS != orte_gpr_replica_dict_reverse_lookup(
+                                                    &token, seg, keytags[i])) {
+                          ompi_output(0, "\t\tkey num %d: No entry found for itag %X",
+                                 i, keytags[i]);
+                 } else {
+                          ompi_output(0, "\t\tkey num %d: itag %d\tKey: %s",
+                                 i, keytags[i], token);
+                          free(token);
+                 }
+            }
+
     }
 
     /* initialize the list of findings */

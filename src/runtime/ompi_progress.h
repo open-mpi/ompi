@@ -28,6 +28,8 @@ typedef int (*ompi_progress_callback_t)(void);
 
 OMPI_DECLSPEC int ompi_progress_register(ompi_progress_callback_t cb);
 
+OMPI_DECLSPEC int ompi_progress_unregister(ompi_progress_callback_t cb);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

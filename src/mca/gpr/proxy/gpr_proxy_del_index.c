@@ -60,7 +60,7 @@ int orte_gpr_proxy_delete_segment(char *segment)
 	    return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
         return ORTE_ERR_COMM_FAILURE;
@@ -73,7 +73,7 @@ int orte_gpr_proxy_delete_segment(char *segment)
        return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, MCA_OOB_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
        OBJ_RELEASE(answer);
 	   return ORTE_ERR_COMM_FAILURE;
@@ -136,7 +136,7 @@ int orte_gpr_proxy_delete_entries(orte_gpr_addr_mode_t mode,
 	   return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
 	   return ORTE_ERR_COMM_FAILURE;
@@ -149,7 +149,7 @@ int orte_gpr_proxy_delete_entries(orte_gpr_addr_mode_t mode,
        return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, MCA_OOB_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
 	   return ORTE_ERR_COMM_FAILURE;
@@ -203,7 +203,7 @@ int orte_gpr_proxy_index(char *segment, size_t *cnt, char **index)
         return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
 	    return ORTE_ERR_COMM_FAILURE;
@@ -216,7 +216,7 @@ int orte_gpr_proxy_index(char *segment, size_t *cnt, char **index)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, MCA_OOB_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
 	    OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;

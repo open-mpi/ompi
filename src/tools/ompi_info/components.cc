@@ -124,6 +124,44 @@ void ompi_info::open_components()
 
   component_map["base"] = NULL;
 
+  // ORTE frameworks
+
+  mca_oob_base_open();
+  component_map["oob"] = &mca_oob_base_components;
+
+  orte_errmgr_base_open();
+  component_map["errmgr"] = &orte_errmgr_base_components_available;
+
+  orte_gpr_base_open();
+  component_map["gpr"] = &orte_gpr_base_components_available;
+
+  orte_iof_base_open();
+  component_map["iof"] = &orte_iof_base.iof_components_opened;
+
+  orte_ns_base_open();
+  component_map["ns"] = &mca_ns_base_components_available;
+
+  orte_ras_base_open();
+  component_map["ras"] = &orte_ras_base.ras_opened;
+
+  orte_rds_base_open();
+  component_map["rds"] = &orte_rds_base.rds_components;
+
+  orte_rmaps_base_open();
+  component_map["rmaps"] = &orte_rmaps_base.rmaps_opened;
+
+  orte_rmgr_base_open();
+  component_map["rmgr"] = &orte_rmgr_base.rmgr_components;
+
+  orte_rml_base_open();
+  component_map["rml"] = &orte_rml_base.rml_components;
+
+  orte_pls_base_open();
+  component_map["pls"] = &orte_pls_base.pls_opened;
+
+  orte_soh_base_open();
+  component_map["soh"] = &orte_soh_base.soh_components;
+
   // MPI frameworks
 
   mca_allocator_base_open();
@@ -147,44 +185,6 @@ void ompi_info::open_components()
   mca_topo_base_open();
   component_map["topo"] = &mca_topo_base_components_opened;
 
-  // ORTE frameworks
-
-  orte_errmgr_base_open();
-  component_map["errmgr"] = &orte_errmgr_base_components_available;
-
-  orte_gpr_base_open();
-  component_map["gpr"] = &orte_gpr_base_components_available;
-
-  orte_iof_base_open();
-  component_map["iof"] = &orte_iof_base.iof_components_opened;
-
-  orte_ns_base_open();
-  component_map["ns"] = &mca_ns_base_components_available;
-
-  mca_oob_base_open();
-  component_map["oob"] = &mca_oob_base_components;
-
-  orte_ras_base_open();
-  component_map["ras"] = &orte_ras_base.ras_opened;
-
-  orte_rds_base_open();
-  component_map["rds"] = &orte_rds_base.rds_components;
-
-  orte_rmaps_base_open();
-  component_map["rmaps"] = &orte_rmaps_base.rmaps_opened;
-
-  orte_rmgr_base_open();
-  component_map["rmgr"] = &orte_rmgr_base.rmgr_components;
-
-  orte_rml_base_open();
-  component_map["rml"] = &orte_rml_base.rml_components;
-
-  orte_pls_base_open();
-  component_map["pls"] = &orte_pls_base.pls_opened;
-
-  orte_soh_base_open();
-  component_map["soh"] = &orte_soh_base.soh_components;
-
   // All done
 
   opened_components = true;
@@ -193,24 +193,36 @@ void ompi_info::open_components()
 
 void ompi_info::close_components()
 {
-  if (opened_components) {
-    mca_oob_base_close();
-    orte_ns_base_close();
-    orte_gpr_base_close();
-#if 0
-    // JMS waiting for ralph to finish
-    mca_soh_base_close();
-#endif
-    mca_coll_base_close();
-    mca_pml_base_close();
-    mca_ptl_base_close();
-    mca_topo_base_close();
-    mca_mpool_base_close();
-    mca_allocator_base_close();
-    mca_base_close();
+    if (opened_components) {
 
-    component_map.clear();
-  }
+        // Note that the order of shutdown here doesn't matter because
+        // we aren't *using* any components -- none were selected, so
+        // there are no dependencies between the frameworks.  We list
+        // them generally "in order", but it doesn't really matter.
 
-  opened_components = false;
+        mca_topo_base_close();
+        mca_ptl_base_close();
+        mca_pml_base_close();
+        mca_mpool_base_close();
+        mca_io_base_close();
+        mca_coll_base_close();
+        mca_allocator_base_close();
+
+        orte_iof_base_close();
+        orte_soh_base_close();
+        orte_pls_base_close();
+        orte_rml_base_close();
+        orte_rmgr_base_close();
+        orte_rmaps_base_close();
+        orte_rds_base_close();
+        orte_ras_base_close();
+        orte_ns_base_close();
+        orte_gpr_base_close();
+        orte_errmgr_base_close();
+        mca_oob_base_close();
+    
+        component_map.clear();
+    }
+
+    opened_components = false;
 }

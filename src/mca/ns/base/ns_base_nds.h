@@ -73,7 +73,7 @@ int orte_ns_nds_env_put(const orte_process_name_t* proc,
                         char ***environ);
 
 int orte_ns_nds_pipe_get(void);
-int orte_ns_nds_pipe_put(const orte_process_name_t* proc, orte_vpid_t vpid_start, size_t num_procs);
+int orte_ns_nds_pipe_put(const orte_process_name_t* proc, orte_vpid_t vpid_start, size_t num_procs, int fd);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

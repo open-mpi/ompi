@@ -37,8 +37,8 @@ static char **mca_value_argv = NULL;
  */
 int mca_base_cmd_line_setup(ompi_cmd_line_t *cmd)
 {
-  return ompi_cmd_line_make_opt(cmd, 'm', "mca", 2,
-                               "General mechanism to pass MCA parameters");
+  return ompi_cmd_line_make_opt3(cmd, '\0', "mca", "mca", 2,
+                                 "General mechanism to pass MCA parameters");
 }
 
 
@@ -48,39 +48,37 @@ int mca_base_cmd_line_setup(ompi_cmd_line_t *cmd)
 int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd)
 {
   int i, num_insts;
-  char *buf = 0;
-  int buflen = 0;
+  char *buf, *name;
 
   /* If no "-mca" parameters were given, just return */
 
-  if (!ompi_cmd_line_is_taken(cmd, "mca"))
-    return OMPI_SUCCESS;
+  if (!ompi_cmd_line_is_taken(cmd, "mca")) {
+      return OMPI_SUCCESS;
+  }
 
   /* Otherwise, assemble them into an argc/argv */
 
   num_insts = ompi_cmd_line_get_ninsts(cmd, "mca");
-  for (i = 0; i < num_insts; ++i)
-    mca_base_cmd_line_process_arg(ompi_cmd_line_get_param(cmd, "mca", i, 0), 
-                                  ompi_cmd_line_get_param(cmd, "mca", i, 1));
+  for (i = 0; i < num_insts; ++i) {
+      mca_base_cmd_line_process_arg(ompi_cmd_line_get_param(cmd, "mca", i, 0), 
+                                    ompi_cmd_line_get_param(cmd, "mca", i, 1));
+  }
 
   /* Now put that argc/argv in the environment */
 
-  if (NULL == mca_param_argv)
-    return OMPI_SUCCESS;
+  if (NULL == mca_param_argv) {
+      return OMPI_SUCCESS;
+  }
 
   /* Loop through all the -mca args that we've gotten and make env
      vars of the form OMPI_MCA_*=value.  This is a memory leak, but
      that's how putenv works.  :-( */
 
   for (i = 0; NULL != mca_param_argv[i]; ++i) {
-    buflen = strlen(mca_param_argv[i]) + strlen(mca_value_argv[i]) + 32;
-    buf = malloc(buflen);
-    if (NULL == buf)
-      return OMPI_ERR_OUT_OF_RESOURCE;
-
-    snprintf(buf, buflen, "OMPI_MCA_%s=%s", mca_param_argv[i], 
-	     mca_value_argv[i]);
-    putenv(buf);
+      name = mca_base_param_environ_variable(mca_param_argv[i], NULL, NULL);
+      asprintf(&buf, "%s=%s", name, mca_value_argv[i]);
+      putenv(buf);
+      free(name);
   }
 
   return OMPI_SUCCESS;

@@ -131,7 +131,7 @@ orte_gpr_proxy_subscribe(orte_gpr_notify_action_t action,
     }
 
 
-    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
          ORTE_ERROR_LOG(rc);
          OMPI_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
          orte_gpr_proxy_remove_notify_request(idtag, &remote_idtag);
@@ -148,7 +148,7 @@ orte_gpr_proxy_subscribe(orte_gpr_notify_action_t action,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, MCA_OOB_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(rc);
         OMPI_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
         orte_gpr_proxy_remove_notify_request(idtag, &remote_idtag);
@@ -232,7 +232,7 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_notify_id_t sub_number)
         return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
 	    return ORTE_ERR_COMM_FAILURE;
@@ -245,7 +245,7 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_notify_id_t sub_number)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, MCA_OOB_TAG_GPR)) {
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
 	    OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;

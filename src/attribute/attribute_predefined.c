@@ -227,7 +227,6 @@ void ompi_attr_create_predefined_callback(
             }
         }
     }
-    OBJ_RELEASE(data);
 
     /* DO NOT CHANGE THE ORDER OF CREATING THESE KEYVALS!  This order
        strictly adheres to the order in mpi.h.  If you change the

@@ -118,7 +118,6 @@ int orte_pls_base_open(void)
     /* Sort the resulting available list in priority order */
 
     ompi_list_sort(&orte_pls_base.pls_available, compare);
-
     /* All done */
 
     return ORTE_SUCCESS;

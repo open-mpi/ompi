@@ -33,6 +33,11 @@ static orte_iof_base_module_t* orte_iof_svc_init(
     bool *allow_multi_user_threads,
     bool *have_hidden_threads);
 
+/*
+ * Local variables
+ */
+static bool initialized = false;
+
 
 orte_iof_svc_component_t mca_iof_svc_component = {
     {
@@ -92,26 +97,27 @@ static  int orte_iof_svc_param_register_int(
 static int orte_iof_svc_open(void)
 {
     mca_iof_svc_component.svc_debug = orte_iof_svc_param_register_int("debug", 1);
-    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_subscribed, ompi_list_t);
-    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_published, ompi_list_t);
-    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_lock, ompi_mutex_t);
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
 
 static int orte_iof_svc_close(void)
 {
     ompi_list_item_t* item;
-    OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
-    while((item = ompi_list_remove_first(&mca_iof_svc_component.svc_subscribed)) != NULL) {
-        OBJ_RELEASE(item);
+
+    if (initialized) {
+        OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+        while((item = ompi_list_remove_first(&mca_iof_svc_component.svc_subscribed)) != NULL) {
+            OBJ_RELEASE(item);
+        }
+        while((item = ompi_list_remove_first(&mca_iof_svc_component.svc_published)) != NULL) {
+            OBJ_RELEASE(item);
+        }
+        OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+        orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_IOF_SVC);
     }
-    while((item = ompi_list_remove_first(&mca_iof_svc_component.svc_published)) != NULL) {
-        OBJ_RELEASE(item);
-    }
-    OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
-    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_IOF_SVC);
-    return OMPI_SUCCESS;
+
+    return ORTE_SUCCESS;
 }
 
 
@@ -121,12 +127,17 @@ static orte_iof_base_module_t*
 orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
     int rc;
-    if(orte_process_info.seed == false)
+    if (false == orte_process_info.seed) {
         return NULL;
+    }
 
     *priority = 1;
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
+
+    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_subscribed, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_published, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_iof_svc_component.svc_lock, ompi_mutex_t);
 
     /* post non-blocking recv */
     mca_iof_svc_component.svc_iov[0].iov_base = NULL;
@@ -145,6 +156,7 @@ orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidd
         ompi_output(0, "orte_iof_svc_init: unable to post non-blocking recv");
         return NULL;
     }
+    initialized = true;
     return &orte_iof_svc_module;
 }
 
