@@ -46,7 +46,7 @@ libasm_la_SOURCES =
 endif
 
 libasm_la_DEPENDENCIES = generated/@OMPI_ASM_FILE@
-lib_LTLIBRARIES = libasm.la
+noinst_LTLIBRARIES = libasm.la
 
 EXTRA_DIST	= \
 	asm-data.txt \
