@@ -38,8 +38,6 @@ if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
     CXXFLAGS="$CXXFLAGS_orig"
     AC_LANG_POP(C++)
 
-    add="$add -Werror-implicit-function-declaration "
-
     CXXFLAGS="$CXXFLAGS $add"
     LAM_UNIQ(CXXFLAGS)
     AC_MSG_WARN([$add has been added to CXXFLAGS (developer copy)])
