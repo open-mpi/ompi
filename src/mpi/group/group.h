@@ -8,8 +8,7 @@
 #include "mpi.h"
 #include "lam/proc.h"
 
-
-typedef struct lam_group {
+struct lam_group_t {
    char g_name[MPI_MAX_OBJECT_NAME];
 
    /* Processes */
@@ -17,7 +16,7 @@ typedef struct lam_group {
    lam_proc_t  **g_procs;
    size_t        g_proc_count;
 
-} lam_group_t;
-
+};
+typedef struct lam_group_t lam_group_t;
 
 #endif /* LAM_GROUP_H */

@@ -19,9 +19,10 @@
 #define LAM_FD_SETSIZE          4096
 #endif
 
-typedef struct _lam_fd_set {
+struct lam_fd_set_t {
     uint32_t fds_bits[LAM_FD_SETSIZE / NFDBITS];
-} lam_fd_set_t;
+};
+typedef struct lam_fd_set_t lam_fd_set_t;
 
 #define LAM_FD_ZERO(fds)     FD_ZERO((fd_set*)(fds))
 #define LAM_FD_SET(fd,fds)   FD_SET((fd),(fd_set*)(fds))
