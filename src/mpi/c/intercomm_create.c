@@ -77,12 +77,11 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                 return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_COMM, 
                                                 FUNC_NAME);
             }            
+            if ( (remote_leader < 0) || (remote_leader >= ompi_comm_size(bridge_comm))) {
+                return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG,
+                                                FUNC_NAME);
+            }
         } /* if ( local_rank == local_leader ) */
-
-        if ( (remote_leader < 0) || (remote_leader >= ompi_comm_size(bridge_comm))) {
-            return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG,
-                                            FUNC_NAME);
-        }
     }
 
     if ( local_rank == local_leader ) {
