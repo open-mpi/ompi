@@ -69,7 +69,7 @@
      */                                                                    \
     if(NULL != ptl->ptl_base) {                                            \
         OMPI_THREAD_LOCK(&ptl_base->ptl_cache_lock);                       \
-        if(ompi_list_get_size(&ptl_base->ptl_cache) >= ptl_base->ptl_cache_) {\
+        if(ompi_list_get_size(&ptl_base->ptl_cache) >= ptl_base->ptl_cache_size) {\
             /* if cache limit is exceeded - return to global pool */       \
             ptl->ptl_request_fini(ptl, sendreq);                           \
             OMPI_FREE_LIST_RETURN(&mca_pml_teg.teg_send_requests,          \
