@@ -81,7 +81,7 @@ OBJ_CLASS_INSTANCE(ompi_attrkey_item_t,
  * Static variables 
  */
 
-static ompi_hash_table_t *attr_hash;
+static ompi_hash_table_t *keyval_hash;
 static ompi_bitmap_t *key_bitmap;
 
 
@@ -102,7 +102,7 @@ ompi_attrkey_item_destruct(ompi_attrkey_item_t *item)
 {
     /* Remove the key entry from the hash and free the key */
 
-    ompi_hash_table_remove_value_uint32(attr_hash, item->key);
+    ompi_hash_table_remove_value_uint32(keyval_hash, item->key);
     FREE_KEY(item->key);
 }
 
@@ -117,8 +117,8 @@ ompi_attr_init(void)
 {
     int ret;
 
-    attr_hash = OBJ_NEW(ompi_hash_table_t);
-    if (NULL == attr_hash) {
+    keyval_hash = OBJ_NEW(ompi_hash_table_t);
+    if (NULL == keyval_hash) {
         /* show_help */
 	return MPI_ERR_SYSRESOURCE;
     }
@@ -126,14 +126,13 @@ ompi_attr_init(void)
     if (0 != ompi_bitmap_init(key_bitmap, 10)) {
 	return MPI_ERR_SYSRESOURCE;
     }
-    if (OMPI_SUCCESS != (ret = ompi_hash_table_init(attr_hash,
+    if (OMPI_SUCCESS != (ret = ompi_hash_table_init(keyval_hash,
                                                     ATTR_TABLE_SIZE))) {
 	return ret;
     }
     if (OMPI_SUCCESS != (ret = ompi_attr_create_predefined())) {
         return ret;
     }
-    
   
     return OMPI_SUCCESS;
 }
@@ -146,7 +145,7 @@ ompi_attr_init(void)
 int
 ompi_attr_finalize(void)
 {
-    OBJ_RELEASE(attr_hash);
+    OBJ_RELEASE(keyval_hash);
     OBJ_RELEASE(key_bitmap);
 
     return OMPI_SUCCESS;
@@ -164,7 +163,7 @@ ompi_attr_create_keyval(ompi_attribute_type_t type,
 
     /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
-    if (NULL == attr_hash) {
+    if (NULL == keyval_hash) {
 	return MPI_ERR_INTERN;
     }
 
@@ -172,14 +171,13 @@ ompi_attr_create_keyval(ompi_attribute_type_t type,
 
     attr = OBJ_NEW(ompi_attrkey_item_t);
     if (NULL == attr) {
-	fprintf(stderr, "Error during new object creation for attribute \n");
 	return MPI_ERR_SYSRESOURCE;
     }
 
     /* Create a new unique key and fill the hash */
   
     *key = CREATE_KEY();
-    ret = ompi_hash_table_set_value_uint32(attr_hash, *key, attr);
+    ret = ompi_hash_table_set_value_uint32(keyval_hash, *key, attr);
     if (OMPI_SUCCESS != ret) {
 	return ret;
     }
@@ -212,14 +210,14 @@ ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, int predefined)
 
     /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
-    if (NULL == attr_hash) {
+    if (NULL == keyval_hash) {
 	return MPI_ERR_INTERN;
     }
 
     /* Find the key-value pair */
 
     key_item = (ompi_attrkey_item_t*) 
-	ompi_hash_table_get_value_uint32(attr_hash, *key);
+	ompi_hash_table_get_value_uint32(keyval_hash, *key);
   
     if ((NULL == key_item) || (key_item->attr_type != type) ||
 	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
@@ -242,8 +240,8 @@ ompi_attr_free_keyval(ompi_attribute_type_t type, int *key, int predefined)
 
 int 
 ompi_attr_delete(ompi_attribute_type_t type, void *object, 
-		ompi_hash_table_t *keyhash, int key,
-		int predefined) 
+                 ompi_hash_table_t *keyhash, int key,
+                 int predefined) 
 {
     ompi_attrkey_item_t *key_item;
     int ret, err;
@@ -251,14 +249,14 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
 
     /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
-    if (NULL == attr_hash) {
+    if (NULL == keyval_hash) {
 	return MPI_ERR_INTERN;
     }
 
     /* Check if the key is valid in the key-attribute hash */
 
     key_item = (ompi_attrkey_item_t*) 
-	ompi_hash_table_get_value_uint32(attr_hash, key);
+	ompi_hash_table_get_value_uint32(keyval_hash, key);
   
     if ((NULL == key_item) || (key_item->attr_type!= type) ||
 	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
@@ -304,8 +302,8 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
 
 int
 ompi_attr_set(ompi_attribute_type_t type, void *object, 
-	     ompi_hash_table_t *keyhash, int key, void *attribute,
-	     int predefined)
+              ompi_hash_table_t *keyhash, int key, void *attribute,
+              int predefined)
 {
     ompi_attrkey_item_t *key_item;
     int ret, err;
@@ -314,18 +312,17 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
 
     /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
-    if (NULL == attr_hash) {
+    if (NULL == keyval_hash) {
 	return MPI_ERR_INTERN;
     }
 
     key_item = (ompi_attrkey_item_t *) 
-	ompi_hash_table_get_value_uint32(attr_hash, key);
+	ompi_hash_table_get_value_uint32(keyval_hash, key);
 
     /* If key not found */
 
     if ((NULL == key_item) || (key_item->attr_type != type) ||
 	((!predefined) && (key_item->attr_flag & OMPI_KEYVAL_PREDEFINED))) {
-	fprintf(stderr, "ompi_attribute: ompi_attr_set: key not found \n");
 	return OMPI_ERR_BAD_PARAM;
     }
 
@@ -371,7 +368,7 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
 
 int
 ompi_attr_get(ompi_hash_table_t *keyhash, int key, void *attribute,
-	     int *flag)
+              int *flag)
 {
     void *attr;
     ompi_attrkey_item_t *key_item;
@@ -382,7 +379,7 @@ ompi_attr_get(ompi_hash_table_t *keyhash, int key, void *attribute,
        flag argument */
 
     key_item = (ompi_attrkey_item_t *) 
-	ompi_hash_table_get_value_uint32(attr_hash, key);
+	ompi_hash_table_get_value_uint32(keyval_hash, key);
 
     if (NULL == key_item) {
 	return MPI_KEYVAL_INVALID;
@@ -407,8 +404,8 @@ ompi_attr_get(ompi_hash_table_t *keyhash, int key, void *attribute,
    logic could work here  */
 int
 ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object, 
-		  void *new_object, ompi_hash_table_t *oldkeyhash,
-		  ompi_hash_table_t *newkeyhash)
+                   void *new_object, ompi_hash_table_t *oldkeyhash,
+                   ompi_hash_table_t *newkeyhash)
 {
     int ret;
     int err;
@@ -419,7 +416,7 @@ ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
 
     /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
-    if (NULL == attr_hash) {
+    if (NULL == keyval_hash) {
 	return MPI_ERR_INTERN;
     }
 
@@ -435,7 +432,7 @@ ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
            the copy_attr_fn is */
 
         hash_value = (ompi_attrkey_item_t *)
-            ompi_hash_table_get_value_uint32(attr_hash, key);
+            ompi_hash_table_get_value_uint32(keyval_hash, key);
 
         assert (hash_value != NULL);
 
@@ -466,8 +463,10 @@ ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
            that new_attr should have actually been a double pointer in
            the copy fn, but since its a pointer in that MPI specs, we
            need to pass *new_attr here  */
-        ompi_attr_set(type, new_object, newkeyhash, key, 
-                      new_attr, 1);
+        if (flag == 1) {
+            ompi_attr_set(type, new_object, newkeyhash, key, 
+                          new_attr, 1);
+        }
 
         ret = ompi_hash_table_get_next_key_uint32(oldkeyhash, &key, 
                                                   &old_attr, in_node, 
@@ -479,7 +478,7 @@ ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
 
 int
 ompi_attr_delete_all(ompi_attribute_type_t type, void *object, 
-		    ompi_hash_table_t *keyhash)
+                     ompi_hash_table_t *keyhash)
 {
     int ret;
     uint32_t key, oldkey;
@@ -487,14 +486,14 @@ ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
 
     /* Protect against the user calling ompi_attr_destroy and then
        calling any of the functions which use it  */
-    if (NULL == attr_hash) {
+    if (NULL == keyval_hash) {
 	return MPI_ERR_INTERN;
     }
 	
     /* Get the first key in local CWD hash  */
     ret = ompi_hash_table_get_first_key_uint32(keyhash,
-					      &key, &old_attr,
-					      &node);
+                                               &key, &old_attr,
+                                               &node);
     while (OMPI_SUCCESS == ret) {
 
 	/* Save this node info for deletion, before we move onto the
@@ -506,8 +505,8 @@ ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
 	/* Move to the next node */
 
 	ret = ompi_hash_table_get_next_key_uint32(keyhash,
-						 &key, &old_attr, 
-						 in_node, &node);
+                                                  &key, &old_attr, 
+                                                  in_node, &node);
 	/* Now delete this attribute */
 
 	ompi_attr_delete(type, object, keyhash, oldkey, 1);
