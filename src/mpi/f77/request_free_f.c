@@ -52,5 +52,5 @@ void mpi_request_free_f(MPI_Fint *request, MPI_Fint *ierr)
 
     *ierr = MPI_Request_free( &c_req );
 
-    *request = MPI_Request_c2f( c_req );
+    *request = (MPI_Fint)MPI_REQUEST_NULL;
 }
