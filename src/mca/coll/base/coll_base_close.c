@@ -22,10 +22,12 @@ int mca_coll_base_close(void)
   if (mca_coll_base_components_opened_valid) {
     mca_base_components_close(mca_coll_base_output,
                               &mca_coll_base_components_opened, NULL);
+    OBJ_DESTRUCT(&mca_coll_base_components_opened);
     mca_coll_base_components_opened_valid = false;
   } else if (mca_coll_base_components_available_valid) {
     mca_base_components_close(mca_coll_base_output,
                               &mca_coll_base_components_available, NULL);
+    OBJ_DESTRUCT(&mca_coll_base_components_available);
     mca_coll_base_components_available_valid = false;
   }
 
