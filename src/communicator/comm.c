@@ -1005,19 +1005,6 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
 
     /* since the topo component has initialised, let us now initialise
      * the topo comm structure */
-#define FREE_COMMUNICATOR(new_comm) \
-    if (NULL != new_comm->c_topo_comm->mtc_dims_or_index) { \
-        free(new_comm->c_topo_comm->mtc_dims_or_index); \
-    } \
-    if (NULL != new_comm->c_topo_comm->mtc_periods_or_edges) { \
-        free(new_comm->c_topo_comm->mtc_periods_or_edges); \
-    } \
-    if (NULL != new_comm->c_topo_comm->mtc_coords) { \
-        free(new_comm->c_topo_comm->mtc_coords); \
-    } \
-    free(new_comm->c_topo_comm);  \
-    OBJ_RELEASE (new_comm); 
-
     new_comm->c_flags |= cart_or_graph;
 
     new_comm->c_topo_comm->mtc_ndims_or_nnodes = ndims_or_nnodes;
@@ -1030,7 +1017,8 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
 
     new_comm->c_topo_comm->mtc_dims_or_index = malloc (sizeof(int) * ndims_or_nnodes);
     if (NULL == new_comm->c_topo_comm->mtc_dims_or_index) {
-        FREE_COMMUNICATOR(new_comm);
+        ompi_comm_free (&new_comm);
+        *comm_topo = new_comm;
         return OMPI_ERROR;
     }
     memcpy (new_comm->c_topo_comm->mtc_dims_or_index,
@@ -1064,7 +1052,8 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
         new_comm->c_topo_comm->mtc_periods_or_edges = 
 	    malloc (sizeof(int) * dims_or_index[ndims_or_nnodes - 1]);
         if (NULL == new_comm->c_topo_comm->mtc_periods_or_edges) {
-            FREE_COMMUNICATOR(new_comm);
+            ompi_comm_free (&new_comm);
+            *comm_topo = new_comm;
             return OMPI_ERROR;
         }
         memcpy (new_comm->c_topo_comm->mtc_periods_or_edges,
@@ -1073,7 +1062,8 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
 
         new_comm->c_topo_comm->mtc_coords = malloc (sizeof(int) * ndims_or_nnodes);
         if (NULL == new_comm->c_topo_comm->mtc_coords) {
-            FREE_COMMUNICATOR(new_comm);
+            ompi_comm_free (&new_comm);
+            *comm_topo = new_comm;
             return OMPI_ERROR;
         }
 
@@ -1101,7 +1091,8 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
         new_comm->c_topo_comm->mtc_periods_or_edges = 
                 malloc (sizeof(int) * dims_or_index[ndims_or_nnodes-1]);
         if (NULL == new_comm->c_topo_comm->mtc_periods_or_edges) {
-            FREE_COMMUNICATOR(new_comm);
+            ompi_comm_free (&new_comm);
+            *comm_topo = new_comm;
             return OMPI_ERROR;
         }
         memcpy (new_comm->c_topo_comm->mtc_periods_or_edges,
@@ -1121,15 +1112,6 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
 
     }
 
-    /* if the returned rank is -1, then this process is not in the 
-     * new topology, so free everything we have allocated and return */
-
-    if (MPI_UNDEFINED == new_rank) {
-        FREE_COMMUNICATOR(new_comm);
-        return OMPI_SUCCESS; 
-    }
-
-
     /* Determine context id. It is identical to f_2_c_handle */
 
     ret = ompi_comm_nextcid ( new_comm,  /* new communicator */
@@ -1141,9 +1123,11 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
                              -1 );     /* send first, doesn't matter */
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened during setting the communicator */
-        FREE_COMMUNICATOR(new_comm);
+        ompi_comm_free (&new_comm);
+        *comm_topo = new_comm;
         return ret;
     }
+
 
     /* Now, the topology component has been selected and the group
      * which has the topology information has been created. All we
@@ -1159,7 +1143,8 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
 
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened during setting the communicator */
-        FREE_COMMUNICATOR(new_comm);
+        ompi_comm_free (&new_comm);
+        *comm_topo = new_comm;
         return ret;
     }
 
@@ -1171,17 +1156,25 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
                                OMPI_COMM_CID_INTRA,   /* mode */
                                -1,       /* send first, doesn't matter */
                                NULL );   /* coll component */
+
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened during setting the communicator */
-        FREE_COMMUNICATOR(new_comm);
+        ompi_comm_free (&new_comm);
+        *comm_topo = new_comm;
         return ret;
     }
 
     
-#undef FREE_COMMUNICATOR
     /* finally, set the communicator to comm_cart */
 
-    *comm_topo = new_comm;
+    /* if the returned rank is -1, then this process is not in the 
+     * new topology, so free everything we have allocated and return */
+    if (MPI_UNDEFINED == new_rank) {
+        ompi_comm_free (&new_comm);
+        *comm_topo = new_comm;
+    } else {
+        *comm_topo = new_comm;
+    }
 
     return OMPI_SUCCESS;
 }
