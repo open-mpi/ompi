@@ -217,6 +217,7 @@ using namespace std;
  */
 static void do_version(bool want_all, lam_cmd_line_t *cmd_line);
 static void show_lam_version(const string& scope);
+#if 0
 static void show_boot_version(const mca_base_module_t **boot_modules, 
 				  const string& which, const string& scope,
 				  const string& ver_type);
@@ -231,6 +232,7 @@ static void show_cr_version(const mca_base_module_t **cr_modules,
                              const string& ver_type);
 static void show_mca_version(const mca_base_module_t *ls, const string& type,
 				 const string& scope, const string& ver_type);
+#endif
 static string make_version_str(const string& scope,
 				   int major, int minor, int release, 
 				   int alpha, int beta, int cvs);
@@ -417,9 +419,7 @@ main(int argc, char *argv[])
   }
 
   // All done
-#if 0
   close_modules();
-#endif
   lam_cmd_line_free(cmd_line);
   return 0;
 }
@@ -539,7 +539,7 @@ show_lam_version(const string& scope)
                        LAM_ALPHA_VERSION, LAM_BETA_VERSION, LAM_CVS_VERSION));
 }
 
-
+#if 0
 static void 
 show_boot_version(const mca_base_module_t **boot_modules, 
 		  const string& which, const string& scope, 
@@ -615,7 +615,6 @@ show_cr_version(const mca_base_module_t **cr_modules,
   }
 }
 
-
 static void 
 show_mca_version(const mca_base_module_t *ls, const string &type,
 		  const string& scope, 
@@ -674,6 +673,7 @@ show_mca_version(const mca_base_module_t *ls, const string &type,
   }
 }
 
+#endif
 
 static string 
 make_version_str(const string& scope,
