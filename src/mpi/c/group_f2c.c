@@ -11,6 +11,7 @@
 #pragma weak MPI_Group_f2c = PMPI_Group_f2c
 #endif
 
+
 MPI_Group MPI_Group_f2c(MPI_Fint group_f)
 {
     /* local variables */
@@ -22,10 +23,10 @@ MPI_Group MPI_Group_f2c(MPI_Fint group_f)
     /* error checks */
     if (MPI_PARAM_CHECK) {
         if (0 > group_index) {
-            return NULL;
+            return MPI_GROUP_NULL;
         }
         if (group_index >= lam_group_f_to_c_table->size) {
-            return NULL;
+            return MPI_GROUP_NULL;
         }
     }
 
