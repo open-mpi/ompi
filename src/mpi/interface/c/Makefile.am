@@ -242,6 +242,9 @@ libmpi_c_mpi_la_SOURCES = \
 		is_thread_main.c \
 		isend.c \
 		issend.c \
+		keyval_create.c \
+		keyval_free.c \
+		lookup_name.c \
         testall.c \
         testany.c \
         test.c \

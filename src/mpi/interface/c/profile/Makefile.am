@@ -215,6 +215,9 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 		pis_thread_main.c \
 		pisend.c \
 		pissend.c \
+		pkeyval_create.c \
+		pkeyval_free.c \
+		plookup_name.c \
         ptestall.c \
         ptestany.c \
         ptest.c \
