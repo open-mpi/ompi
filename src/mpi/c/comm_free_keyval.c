@@ -6,11 +6,22 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "attribute/attribute.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Comm_free_keyval = PMPI_Comm_free_keyval
 #endif
 
-int MPI_Comm_free_keyval(int *comm_keyval) {
-    return MPI_SUCCESS;
+int MPI_Comm_free_keyval(int *comm_keyval) 
+{
+    int ret;
+
+    /* Check for valid key pointer */
+
+    if (NULL == comm_keyval)
+	return MPI_ERR_ARG;
+      
+    ret = lam_attr_free_keyval(COMM_ATTR, comm_keyval, 0);
+
+    return ret;
 }
