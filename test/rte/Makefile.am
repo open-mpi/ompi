@@ -4,26 +4,41 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
-AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
 
-noinst_PROGRAMS = \
-	ompi_session_dir
+AM_CPPFLAGS = \
+            -DLAM_PREFIX="\"$(prefix)\"" \
+            -DLAM_BINDIR="\"$(bindir)\"" \
+            -DLAM_LIBDIR="\"$(libdir)\"" \
+            -DLAM_INCDIR="\"$(includedir)\"" \
+            -DLAM_PKGLIBDIR="\"$(pkglibdir)\"" \
+            -DLAM_SYSCONFDIR="\"$(sysconfdir)\"" \
+            -DLAM_CONFIGURE_USER="\"@LAM_CONFIGURE_USER@\"" \
+            -DLAM_CONFIGURE_HOST="\"@LAM_CONFIGURE_HOST@\"" \
+            -DLAM_CONFIGURE_DATE="\"@LAM_CONFIGURE_DATE@\""
 
-ompi_session_dir_SOURCES = ompi_session_dir.c
-ompi_session_dir_LDADD = \
-        $(top_builddir)/src/class/ompi_object.lo \
-        $(top_builddir)/src/mem/malloc.lo \
-        $(top_builddir)/src/util/output.lo \
-        $(top_builddir)/src/util/argv.lo \
-        $(top_builddir)/src/util/strncpy.lo \
-        $(top_builddir)/src/threads/mutex.lo \
-        $(top_builddir)/src/threads/mutex_pthread.lo \
-        $(top_builddir)/src/threads/mutex_spinlock.lo \
-        $(top_builddir)/src/threads/mutex_spinwait.lo \
+libs = $(top_builddir)/src/libmpi.la
+
+bin_PROGRAMS = \
+        openmpi
+
+openmpi_SOURCES = \
+        openmpi.h \
+        ompi_init.h \
+        os_session_dir.c \
+        ompi_init.c \
+        openmpi.c 
+
+openmpi_LDADD = \
+        $(libs) \
+        $(LIBMPI_EXTRA_LIBS) \
+        $(LIBLAM_EXTRA_LIBS) \
         $(top_builddir)/src/util/os_path.lo \
         $(top_builddir)/src/util/os_create_dirpath.lo \
-        $(top_builddir)/src/util/sys_info.lo \
-        $(top_builddir)/src/rte/universe/os_session_dir.o \
-        $(top_builddir)/test/support/libsupport.la 
-ompi_session_dir_DEPENDENCIES = $(ompi_session_dir_LDADD)
+        $(top_builddir)/src/util/sys_info.lo
 
+openmpi_DFLAGS = $(LIBMPI_EXTRA_LDFLAGS) $(LIBLAM_EXTRA_LDFLAGS)
+openmpi_DEPENDENCIES = $(libs) \
+                       $(openmpi_LDADD)
+
+clean-local:
+	test -z "$(LAM_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(LAM_CXX_TEMPLATE_REPOSITORY)
