@@ -84,7 +84,7 @@ int mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
   /* Now post all sends */
 
   for (i = 0; i < size; ++i) {
-    if (i == rank || 0 = scounts[i])
+    if (i == rank || 0 == scounts[i])
       continue;
 
     psnd = ((char *) sbuf) + sdisps[i];
