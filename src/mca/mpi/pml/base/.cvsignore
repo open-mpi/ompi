@@ -4,3 +4,4 @@ Makefile.in
 .libs
 *.lo
 *.la
+static-modules.h

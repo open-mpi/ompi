@@ -4,4 +4,33 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = coll io one pml ptl topo
+# base should be listed first because it should be built first
+# (probably not for any technical rason, but it makes sense to build
+# the base first).  common_mpi must be second, however, because
+# modules under there may be statically linked to other modules.
+
+SUBDIRS = base common_mpi coll io one pml ptl topo
+
+# Source code files
+
+headers = mpi.h
+
+# Library
+
+noinst_LTLIBRARIES = libmca_mpi_convenience.la
+libmca_mpi_convenience_la_SOURCES =
+libmca_mpi_convenience_la_LIBADD = \
+        base/libmca_mpi_base.la \
+        coll/libmca_mpi_coll.la \
+        pml/libmca_mpi_pml.la
+# Add in common_mpi, io, one, pml, ptl, topo as necessary
+libmca_mpi_convenience_la_DEPENDENCIES = $(libmca_mpi_convenience_la_LIBADD)
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+lamdir = $(includedir)/lam/mca/mpi
+lam_HEADERS = $(headers)
+else
+lamdir = $(includedir)
+endif

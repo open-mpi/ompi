@@ -12,38 +12,54 @@
  * Types for each function
  */
 
-typedef int (*mca_open_module_fn_t)(lam_cmd_line_t *cmd);
-typedef int (*mca_close_module_fn_t)(void);
-typedef int (*mca_mpi_init_callback_fn_t)(void);
-typedef int (*mca_alloc_mem_fn_t)(MPI_Aint size, MPI_Info info, void **base);
-typedef int (*mca_free_mem_fn_t)(void *base);
+typedef int (*mca_base_open_module_fn_t)(lam_cmd_line_t *cmd);
+typedef int (*mca_base_close_module_fn_t)(void);
 
 
 /*
- * Struct of meta data necessary in every MCA module, regardless of
- * its type.
+ * Max length of some strings used later
  */
 
 #define MCA_BASE_MAX_TYPE_NAME_LEN 32
 #define MCA_BASE_MAX_MODULE_NAME_LEN 64
 
-struct mca_module_1_0_0_t {
+/*
+ * The MCA guarantees that every module has three known pieces of
+ * information: the MCA version that it conforms to, the type name and
+ * version that it conforms to, and its own name and version.  This
+ * triple will be present in *all* modules (regardless of MCA, type,
+ * and module version), and identifies the module as well as how it
+ * can be used.
+ *
+ * This information directly implies the data layout and content of
+ * the rest module structure.  For example, MCA v1.0.0 specifies that
+ * after this triple will be an instance of
+ * mca_base_module_data_1_0_0_t, specifying module open and close
+ * functions and a flag indicating whether the module is
+ * checkpointable or not.
+ *
+ */
 
-  /* Integer version numbers indicating which MCA API version this
-     module conforms to. */
+/*
+ * Base/super for all modules, regardless of MCA version, type
+ * version, or module version.
+ */
+struct mca_base_module_t {
+
+  /* Version of the MCA */
 
   int mca_major_version;
   int mca_minor_version;
   int mca_release_version;
 
-  /* Information about the type */
+  /* The type's name and API version */
 
   char mca_type_name[MCA_BASE_MAX_TYPE_NAME_LEN];
   int mca_type_major_version;
   int mca_type_minor_version;
   int mca_type_release_version;
 
-  /* Information about the module itself */
+  /* The module's name and version */
 
   char mca_module_name[MCA_BASE_MAX_MODULE_NAME_LEN];
   int mca_module_major_version;
@@ -52,33 +68,37 @@ struct mca_module_1_0_0_t {
 
   /* Functions for opening and closing the module */
 
-  mca_open_module_fn_t mca_open_module;
-  mca_close_module_fn_t mca_close_module;
+  mca_base_open_module_fn_t mca_open_module;
+  mca_base_close_module_fn_t mca_close_module;
+};
+typedef struct mca_base_module_t mca_base_module_t;
+
+/*
+ * Meta data for MCA v1.0.0 modules
+ */
+struct mca_base_module_data_1_0_0_t {
 
   /* Does this module support checkpoint or not? */
 
   bool mca_is_checkpointable;
 };
-typedef struct mca_module_1_0_0_t mca_module_1_0_0_t;
+typedef struct mca_base_module_data_1_0_0_t mca_base_module_data_1_0_0_t;
 
 /*
- * Set the default type to use version 1.0.0 of the MCA struct 
+ * Macro for module author convenience
  */
-
-typedef mca_module_1_0_0_t mca_module_t;
-
+#define MCA_BASE_VERSION_1_0_0 1, 0, 0
 
 
 /*
  * Structure for making priority lists of modules
  */
-
-struct mca_module_priority_t {
+struct mca_base_module_priority_t {
   int lsm_priority;
   int lsm_thread_min, lsm_thread_max;
-  mca_module_t *lsm_module;
+  mca_base_module_t *lsm_module;
 };
-typedef struct mca_module_priority_t mca_module_priority_t;
+typedef struct mca_base_module_priority_t mca_base_module_priority_t;
 
 
 /*
@@ -96,10 +116,10 @@ extern "C" {
   int mca_base_arg_process_one(char *type, char *arg);
 
   int mca_base_module_check(char *name, char *module, int is_default);
-  int mca_base_module_compare(mca_module_t *a, mca_module_t *b);
+  int mca_base_module_compare(mca_base_module_t *a, mca_base_module_t *b);
   int mca_base_module_find(char *directory, char *type, 
-                           mca_module_t *static_modules[], 
-                           mca_module_t ***modules_out);
+                           mca_base_module_t *static_modules[], 
+                           mca_base_module_t ***modules_out);
 #if 0
   /* JMS add after the lbltdl stuff is done */
   int mca_base_module_register(char *type, lt_dlhandle module_handle, 
@@ -111,12 +131,8 @@ extern "C" {
                                     const char *src_name,
                                     const char *depend_type,
                                     const char *depend_name);
-  void mca_base_module_registry_unuse(mca_module_t *module);
+  void mca_base_module_registry_unuse(mca_base_module_t *module);
   int mca_base_module_registry_use(const char *type, const char *name);
-
-  int mca_base_mpi_init_callback(mca_mpi_init_callback_fn_t func);
-  int mca_base_mpi_init_callbacks_invoke(void);
-  int mca_base_mpi_module_select(int requested);
 
 #if 0
   /* JMS Are these necessary in L8? */
