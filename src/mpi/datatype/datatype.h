@@ -24,6 +24,7 @@
 #include "lam/constants.h"
 #include "lam/stdint.h"
 #include "lam/lfc/lam_object.h"
+#include "lam/lfc/lam_hash_table.h"
 #include "lam/types.h"
 
 #include "mpi.h"
@@ -113,6 +114,10 @@ struct lam_datatype_t {
     lam_object_t super;             /**< object super class */
     char name[MPI_MAX_OBJECT_NAME]; /**< object name */
     int flags;                      /**< bit flags */
+
+    /* Attributes */
+  
+    lam_hash_table_t *keyhash;
 
     /* cached information */
 

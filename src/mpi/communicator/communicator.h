@@ -12,6 +12,7 @@
 #include "mpi.h"
 #include "mpi/group/group.h"
 #include "mca/mpi/coll/coll.h"
+#include "lam/lfc/lam_hash_table.h"
 
 
 extern lam_class_t lam_communicator_t_class;
@@ -27,6 +28,7 @@ struct lam_communicator_t {
     lam_group_t *c_remote_group;
   
     /* Attributes */
+    lam_hash_table_t *keyhash;
 
     /* Topology information */
     int c_cube_dim; /**< Inscribing cube dimension */
