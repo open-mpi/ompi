@@ -70,18 +70,18 @@ void mpi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
     /* It's allowed to ignore the errcodes */
 
     if (OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_of_errcodes)) {
+        c_errs = MPI_ERRCODES_IGNORE;
+    } else {
         OMPI_ARRAY_FINT_2_INT_ALLOC(array_of_errcodes, size);
         c_errs = OMPI_ARRAY_NAME_CONVERT(array_of_errcodes);
-    } else {
-        c_errs = MPI_ERRCODES_IGNORE;
     }
 
     /* It's allowed to have no argv */
 
     if (OMPI_IS_FORTRAN_ARGV_NULL(argv)) {
-        ompi_fortran_argv_f2c(argv, argv_len, &c_argv);
-    } else {
         c_argv = MPI_ARGV_NULL;
+    } else {
+        ompi_fortran_argv_f2c(argv, argv_len, &c_argv);
     }
 
     *ierr = OMPI_INT_2_FINT(MPI_Comm_spawn(command, c_argv, 

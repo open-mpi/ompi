@@ -55,7 +55,7 @@ void mpi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 {
     MPI_Status *c_status;
 #if OMPI_SIZEOF_FORTRAN_INT != SIZEOF_INT
-    MPI_Stauts c_status2;
+    MPI_Status c_status2;
 #endif
     MPI_Comm c_comm = MPI_Comm_f2c(*comm);
     MPI_Datatype c_type = MPI_Type_f2c(*datatype);

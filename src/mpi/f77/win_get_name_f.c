@@ -7,7 +7,11 @@
 #include <stdio.h>
 
 #include "mpi.h"
+#include "include/constants.h"
+#include "errhandler/errhandler.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/strings.h"
+
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WIN_GET_NAME = mpi_win_get_name_f
@@ -46,7 +50,21 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_GET_NAME,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_win_get_name_f(MPI_Fint *win, char *win_name, MPI_Fint *resultlen, MPI_Fint *ierr)
+void mpi_win_get_name_f(MPI_Fint *win, char *win_name,
+			MPI_Fint *resultlen, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    int err, c_len;
+    MPI_Win c_win = MPI_Win_f2c(*win);
+    char c_name[MPI_MAX_OBJECT_NAME];
+
+    err = MPI_Win_get_name(c_win, c_name, &c_len);
+    if (MPI_SUCCESS == err) {
+        ompi_fortran_string_c2f(c_name, win_name, 
+                                OMPI_FINT_2_INT(*resultlen));
+        *resultlen = OMPI_INT_2_FINT(c_len);
+        *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
+    } else {
+        *ierr = OMPI_INT_2_FINT(err);
+    }
+
 }

@@ -106,3 +106,29 @@ int ompi_fortran_argv_f2c(char *array, int len, char ***argv)
 
     return OMPI_SUCCESS;
 }
+
+
+/*
+ * creates a C argument vector from an F77 array of argvs. The
+ * returned array needs to be freed by the caller
+ */
+int ompi_fortran_multiple_argvs_f2c(int count, char *array, int len,
+				    char ****argv)
+{
+    char ***argv_array;
+    int i;
+    char *current_array;
+    int ret;
+
+    argv_array = (char ***) malloc (count * sizeof(char **));
+
+    for (i = 0; i < count; ++i) {
+	ret = ompi_fortran_argv_f2c(current_array, len, &argv_array[i]);
+	if (OMPI_SUCCESS != ret) {
+	    return ret;
+	}
+	current_array += len * i;
+    }
+    *argv = argv_array;
+    return OMPI_SUCCESS;
+}

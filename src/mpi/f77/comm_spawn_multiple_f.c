@@ -7,7 +7,11 @@
 #include <stdio.h>
 
 #include "mpi.h"
+#include "util/argv.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
+#include "mpi/f77/strings.h"
+
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_SPAWN_MULTIPLE = mpi_comm_spawn_multiple_f
@@ -51,12 +55,15 @@ void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 			       MPI_Fint *array_maxprocs,
 			       MPI_Fint *array_info, MPI_Fint *root,
 			       MPI_Fint *comm, MPI_Fint *intercomm,
-			       MPI_Fint *array_errcds, MPI_Fint *ierr)
+			       MPI_Fint *array_errcds, MPI_Fint *ierr,
+			       int cmd_len, int argv_len)
 {
-#if 0
     MPI_Comm c_comm, c_new_comm;
     MPI_Info *c_info;
     int size, array_size, i;
+    int *c_errs;
+    char **c_array_commands;
+    char ***c_array_argv;
     OMPI_ARRAY_NAME_DECL(array_maxprocs);
     OMPI_ARRAY_NAME_DECL(array_errcds);
     
@@ -65,9 +72,29 @@ void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
     MPI_Comm_size(c_comm, &size);
 
     array_size = OMPI_FINT_2_INT(*count);
-    OMPI_ARRAY_FINT_2_INT(array_maxprocs, array_size);
-    OMPI_ARRAY_FINT_2_INT_ALLOC(array_errcds, size);
 
+    /* It's allowed to ignore the errcodes */
+
+    if (OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_errcds)) {
+        c_errs = MPI_ERRCODES_IGNORE;
+    } else {
+        OMPI_ARRAY_FINT_2_INT_ALLOC(array_errcds, size);
+        c_errs = OMPI_ARRAY_NAME_CONVERT(array_errcds);
+    }
+
+    /* It's allowed to have no argv */
+
+    if (OMPI_IS_FORTRAN_ARGV_NULL(array_argv)) {
+        c_array_argv = MPI_ARGVS_NULL;
+    } else {
+	ompi_fortran_multiple_argvs_f2c(OMPI_FINT_2_INT(*count), array_argv, 
+					argv_len, &c_array_argv);
+    }
+
+    OMPI_ARRAY_FINT_2_INT(array_maxprocs, array_size);
+    
+    ompi_fortran_argv_f2c(array_commands, cmd_len, &c_array_commands);
+	
     c_info = malloc (array_size * sizeof(MPI_Info));
     for (i = 0; i < array_size; ++i) {
 	c_info[i] = MPI_Info_f2c(array_info[i]);
@@ -75,17 +102,24 @@ void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 
     *ierr = 
 	OMPI_INT_2_FINT(MPI_Comm_spawn_multiple(OMPI_FINT_2_INT(*count),
-				       array_commands,
-				       array_argv, 
+				       c_array_commands,
+				       c_array_argv, 
 				       OMPI_ARRAY_NAME_CONVERT(array_maxprocs),
 				       c_info,
 				       OMPI_FINT_2_INT(*root),
 				       c_comm, &c_new_comm,
-				       OMPI_ARRAY_NAME_CONVERT(array_errcds)));
+				       c_errs));
     
     *intercomm = MPI_Comm_c2f(c_new_comm);
     OMPI_ARRAY_INT_2_FINT(array_errcds, size);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_maxprocs);
 
-#endif
+    ompi_argv_free(c_array_commands);
+
+    if (MPI_ARGVS_NULL != c_array_argv && NULL != c_array_argv) {
+	for (i = 0; i < OMPI_FINT_2_INT(*count); ++i) { 
+	    ompi_argv_free(c_array_argv[i]);
+	}
+    }
+    free(c_array_argv);
 }

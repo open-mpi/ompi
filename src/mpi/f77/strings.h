@@ -60,6 +60,24 @@ extern "C" {
      * it later (or equivalent).
      */
     int ompi_fortran_argv_f2c(char *farray, int len, char ***cargv);
+
+    /**
+     * Convert an array of argvs to a C style array of argvs
+     * @param count Dimension of the array of argvs
+     * @param array Array of fortran argv
+     * @param len Length of Fortran array
+     * @param argv Returned C arrray of argvs
+     *
+     * This function is intented to be used in the MPI F77 bindings to
+     * convert arrays of fortran strings to argv-style arrays of C
+     * strings.  The argv array will be allocated and returned; it is
+     * the caller's responsibility to invoke ompi_argv_free() to free
+     * each content of argv array and call free to deallocate the argv
+     * array itself
+     */
+    int ompi_fortran_multiple_argvs_f2c(int count, char *array, int len,
+					char ****argv);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
