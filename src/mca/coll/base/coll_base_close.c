@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 
+#include "util/output.h"
 #include "include/constants.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -28,6 +29,9 @@ int mca_coll_base_close(void)
                            &mca_coll_base_components_available, NULL);
     mca_coll_base_components_available_valid = false;
   }
+
+  /* Close the output stream for this framework */
+  ompi_output_close(mca_coll_base_output);
 
   /* All done */
 
