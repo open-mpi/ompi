@@ -158,7 +158,7 @@ enum {
 
 /* XXX: Temporarily a type of header to stop threads */
 enum {
-    MCA_PTL_HDR_TYPE_STOP    = 0xFF /* Only a character */
+    MCA_PTL_HDR_TYPE_STOP    = 0x3F /* Only a character */
 };
 
 /* To set up a component-wise list of free cmdq space */

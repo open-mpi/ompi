@@ -442,12 +442,13 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	    memcpy(request->req_base.req_addr,
 		    frag->frag_base.frag_addr, frag->frag_base.frag_size);
 #else
+	    int iov_count = 1, max_data, freeAfter;
 	    struct iovec iov; 
 	    ompi_proc_t *proc;
 
-	    /* XXX: if (frag->frag_is_buffered) */
 	    iov.iov_base = frag->frag_base.frag_addr;
 	    iov.iov_len  = frag->frag_base.frag_size;
+	    max_data = iov.iov_len;
 
 	    proc = ompi_comm_peer_lookup(request->req_base.req_comm,
 		    request->req_base.req_peer);
@@ -460,8 +461,10 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 		    request->req_base.req_datatype,  
 		    request->req_base.req_count,      
 		    request->req_base.req_addr,        
-		    header->hdr_frag.hdr_frag_offset);  
-	    ompi_convertor_unpack(&frag->frag_base.frag_convertor, &iov, 1); 
+		    header->hdr_frag.hdr_frag_offset,
+		    NULL);
+	    ompi_convertor_unpack(&frag->frag_base.frag_convertor, 
+		    &iov, &iov_count, &max_data, &freeAfter); 
 #endif
 	}
 
