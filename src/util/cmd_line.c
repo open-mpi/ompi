@@ -32,9 +32,9 @@ struct cmd_line_option_t {
 typedef struct cmd_line_option_t cmd_line_option_t;
 static void option_constructor(cmd_line_option_t *cmd);
 static void option_destructor(cmd_line_option_t *cmd);
-OBJ_CLASS_INSTANCE(cmd_line_option_t,
-                   ompi_list_item_t,
-                   option_constructor, option_destructor);
+static OBJ_CLASS_INSTANCE(cmd_line_option_t,
+                          ompi_list_item_t,
+                          option_constructor, option_destructor);
 
 /*
  * An option that was used in the argv that was parsed
@@ -63,9 +63,9 @@ struct cmd_line_param_t {
 typedef struct cmd_line_param_t cmd_line_param_t;
 static void param_constructor(cmd_line_param_t *cmd);
 static void param_destructor(cmd_line_param_t *cmd);
-OBJ_CLASS_INSTANCE(cmd_line_param_t,
-                   ompi_list_item_t,
-                   param_constructor, param_destructor);
+static OBJ_CLASS_INSTANCE(cmd_line_param_t,
+                          ompi_list_item_t,
+                          param_constructor, param_destructor);
 
 /*
  * Instantiate the ompi_cmd_line_t class

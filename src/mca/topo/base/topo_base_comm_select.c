@@ -33,7 +33,7 @@ struct queried_module_t {
     mca_topo_base_module_t *om_module;
 };
 typedef struct queried_module_t queried_module_t;
-OBJ_CLASS_INSTANCE(queried_module_t, ompi_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(queried_module_t, ompi_list_item_t, NULL, NULL);
 
 
 /*

@@ -81,7 +81,7 @@ static int replace_null_with_basic(ompi_communicator_t *comm);
 /*
  * Stuff for the OBJ interface
  */
-OBJ_CLASS_INSTANCE(avail_coll_t, ompi_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(avail_coll_t, ompi_list_item_t, NULL, NULL);
 
 
 /*
