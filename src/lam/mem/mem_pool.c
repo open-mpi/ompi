@@ -24,7 +24,7 @@ void lam_mp_init(lam_mem_pool_t *pool)
     SUPER_INIT(pool, mem_pool_cls.cls_parent);
     
     CREATE_OBJECT(pool->mp_private_alloc, lam_allocator_t, &allocator_cls);
-    lam_mtx_init(&(pool->mp_lock));
+    lam_mutex_init(&(pool->mp_lock));
     pool->mp_dev_alloc = NULL;
 }
 
@@ -33,7 +33,7 @@ void lam_mp_shared_init(lam_mem_pool_t *pool)
     SUPER_INIT(pool, shmem_pool_cls.cls_parent);
     
     CREATE_OBJECT(pool->mp_private_alloc, lam_allocator_t, &allocator_cls);
-    lam_mtx_init(&(pool->mp_lock));
+    lam_mutex_init(&(pool->mp_lock));
     lam_alc_set_is_shared(pool->mp_private_alloc, 1);
     lam_alc_set_mem_prot(pool->mp_private_alloc, MMAP_SHARED_PROT);
     pool->mp_dev_alloc = NULL;    
@@ -175,7 +175,7 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
     int         desc;
     
     /* grab lock on pool */
-    lam_mtx_lock(&(pool->mp_lock));
+    lam_mutex_lock(&(pool->mp_lock));
     
     /* Have we used all the allocated memory? */
     if ( pool->mp_next_avail_chunk == pool->mp_num_chunks )
@@ -186,7 +186,7 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
         if ( lam_mp_uses_shared_mem(pool)  ||
             ((pool->mp_max_chunks > 0) && (pool->mp_num_chunks == pool->mp_max_chunks)) ) 
         {
-            lam_mtx_unlock(&(pool->mp_lock));
+            lam_mutex_unlock(&(pool->mp_lock));
             return chunk;
         }
         
@@ -197,7 +197,7 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
         if ( !chunk_desc )
         {
             lam_err(("Error! Out of memory!\n"));
-            lam_mtx_unlock(&(pool->mp_lock));
+            lam_mutex_unlock(&(pool->mp_lock));
             return 0;
         }
         
@@ -219,7 +219,7 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
         if ( !pool->mp_chunks[pool->mp_num_chunks].chd_base_ptr )
         {
             lam_err(("Error: Out of memory\n"));
-            lam_mtx_unlock(&(pool->mp_lock));
+            lam_mutex_unlock(&(pool->mp_lock));
             return chunk;
         }
         
@@ -253,9 +253,7 @@ void *lam_mp_request_chunk(lam_mem_pool_t *pool, int pool_index)
     if ( !chunk_found ) {
         pool->mp_next_avail_chunk = pool->mp_num_chunks;
     }
-    
-    lam_mtx_unlock(&(pool->mp_lock));
-    
+    lam_mutex_unlock(&(pool->mp_lock));
     return chunk;
 }
 

@@ -72,7 +72,7 @@ void lam_reactor_init(lam_reactor_t* r)
     lam_obj_init(&r->r_base);
     r->r_base.obj_class = &lam_reactor_cls;
 
-    lam_mtx_init(&r->r_mutex);
+    lam_mutex_init(&r->r_mutex);
     lam_list_init(&r->r_active);
     lam_list_init(&r->r_free);
     lam_list_init(&r->r_pending);
@@ -108,12 +108,12 @@ bool lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* listen
     }
 #endif
 
-    lam_mtx_lock(&r->r_mutex);
+    lam_mutex_lock(&r->r_mutex);
     lam_reactor_descriptor_t *descriptor = (lam_reactor_descriptor_t*)lam_list_remove_first(&r->r_free);
     if(descriptor == 0) {
         descriptor = lam_reactor_get_descriptor(r, sd);
         if(descriptor == 0) {
-            lam_mtx_unlock(&r->r_mutex);
+            lam_mutex_unlock(&r->r_mutex);
             return false;
         }
         lam_list_append(&r->r_pending, &descriptor->rd_base);
@@ -134,7 +134,7 @@ bool lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* listen
         LAM_FD_SET(sd, &r->r_except_set);
     }
     r->r_changes++;
-    lam_mtx_unlock(&r->r_mutex);
+    lam_mutex_unlock(&r->r_mutex);
     return true;
 }
 
@@ -148,11 +148,11 @@ bool lam_reactor_remove(lam_reactor_t* r, int sd, lam_reactor_listener_t* rl, in
     }
 #endif
 
-    lam_mtx_lock(&r->r_mutex);
+    lam_mutex_lock(&r->r_mutex);
     lam_reactor_descriptor_t* descriptor = (lam_reactor_descriptor_t*)lam_fh_get_value_for_ikey(&r->r_hash, sd);
     if(descriptor == 0) {
         lam_err(("lam_reactor_remove(%d): descriptor not registered.\n", sd));
-        lam_mtx_unlock(&r->r_mutex);
+        lam_mutex_unlock(&r->r_mutex);
         return false;
     }
     descriptor->rd_flags &= ~flags;
@@ -169,7 +169,7 @@ bool lam_reactor_remove(lam_reactor_t* r, int sd, lam_reactor_listener_t* rl, in
         LAM_FD_CLR(sd, &r->r_except_set);
     }
     r->r_changes++;
-    lam_mtx_unlock(&r->r_mutex);
+    lam_mutex_unlock(&r->r_mutex);
     return true;
 }
 
@@ -204,9 +204,9 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
         if(flags) cnt--;
     }
 
-    lam_mtx_lock(&r->r_mutex);
+    lam_mutex_lock(&r->r_mutex);
     if(r->r_changes == 0) {
-        lam_mtx_unlock(&r->r_mutex);
+        lam_mutex_unlock(&r->r_mutex);
         return;
     }
 
@@ -246,7 +246,7 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
     }
 
     r->r_changes = 0;
-    lam_mtx_unlock(&r->r_mutex);
+    lam_mutex_unlock(&r->r_mutex);
 }
 
 
