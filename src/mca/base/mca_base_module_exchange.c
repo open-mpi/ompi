@@ -16,6 +16,7 @@
 #include "mca/gpr/base/base.h"
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"
+#include "mca/pml/pml.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "runtime/runtime.h"
 
@@ -187,6 +188,12 @@ static void mca_base_modex_registry_callback(
     void* cbdata)
 {
     ompi_list_item_t* item;
+    ompi_proc_t** new_procs = NULL;
+    size_t new_proc_count = 0;
+
+    if(ompi_list_get_size(&msg->data)) {
+        new_procs = malloc(sizeof(ompi_proc_t*) * ompi_list_get_size(&msg->data));
+    }
 
     /* process the callback */
     while((item = ompi_list_remove_first(&msg->data)) != NULL) {
@@ -201,6 +208,7 @@ static void mca_base_modex_registry_callback(
         mca_base_component_t component;
         void* bptr;
         int32_t bsize;
+        bool isnew = false;
                                                                                                        
         /* transfer ownership of registry object to buffer and unpack */
         ompi_buffer_init_preallocated(&buffer, value->object, value->object_size);
@@ -212,9 +220,13 @@ static void mca_base_modex_registry_callback(
          * Lookup the process.
          */
         ompi_unpack(buffer, &proc_name, 1, OMPI_NAME);
-        proc = ompi_proc_find_and_add(&proc_name);
+        proc = ompi_proc_find_and_add(&proc_name, &isnew);
         if(NULL == proc)
             continue;
+        if(isnew) {
+            new_procs[new_proc_count] = proc;
+            new_proc_count++;
+        }
 
         /*
          * Lookup the modex data structure.
@@ -277,6 +289,13 @@ static void mca_base_modex_registry_callback(
         /* release buffer */
         ompi_buffer_free(buffer);
         OMPI_THREAD_UNLOCK(&proc->proc_lock);
+
+        /* update the pml/ptls with new proc */
+    }
+
+    if(NULL != new_procs) {
+        mca_pml.pml_add_procs(new_procs, new_proc_count);
+        free(new_procs);
     }
 }
 

@@ -170,11 +170,12 @@ ompi_proc_t * ompi_proc_find ( const ompi_process_name_t * name )
 }
 
 
-ompi_proc_t * ompi_proc_find_and_add ( const ompi_process_name_t * name )
+ompi_proc_t * ompi_proc_find_and_add ( const ompi_process_name_t * name, bool* isnew )
 {
     ompi_proc_t *proc, *rproc=NULL;
     ompi_ns_cmp_bitmask_t mask;
 
+    fprintf(stderr, "ompi_proc_find_and_add\n");
     /* return the proc-struct which matches this jobid+process id */
     mask = OMPI_NS_CMP_CELLID | OMPI_NS_CMP_JOBID | OMPI_NS_CMP_VPID;
     OMPI_THREAD_LOCK(&ompi_proc_lock);
@@ -183,6 +184,7 @@ ompi_proc_t * ompi_proc_find_and_add ( const ompi_process_name_t * name )
         proc =  (ompi_proc_t*)ompi_list_get_next(proc)) {
         if (0 == ompi_name_server.compare(mask, &proc->proc_name, name))
             { 
+                *isnew = false;
                 rproc = proc;
                 break;
             }
@@ -193,9 +195,7 @@ ompi_proc_t * ompi_proc_find_and_add ( const ompi_process_name_t * name )
 	    ompi_proc_t *tproc = OBJ_NEW(ompi_proc_t);
 	    rproc = tproc;
 	    rproc->proc_name = *name;
-
-        /* downcall into pml to notify ptls of new proc */
-        mca_pml.pml_add_procs(&rproc,1);
+        *isnew = true;
     }
     return rproc;
 }
@@ -222,7 +222,8 @@ int ompi_proc_get_proclist (ompi_buffer_t buf, int proclistsize, ompi_proc_t ***
     int i;
     ompi_proc_t **plist=NULL;
     ompi_process_name_t name;
-    
+    bool isnew = false;
+
     /* do not free plist *ever*, since it is used in the remote group structure
        of a communicator */
     plist = (ompi_proc_t **) calloc (proclistsize, sizeof (ompi_proc_t *));
@@ -232,7 +233,10 @@ int ompi_proc_get_proclist (ompi_buffer_t buf, int proclistsize, ompi_proc_t ***
 
     for ( i=0; i<proclistsize; i++ ){
 	ompi_unpack(buf, &name, 1, OMPI_NAME);
-        plist[i] = ompi_proc_find_and_add ( &name);
+        plist[i] = ompi_proc_find_and_add ( &name, &isnew );
+        if(isnew) {
+            mca_pml.pml_add_procs(&plist[i], 1);
+        }
     }
     *proclist = plist;
 
