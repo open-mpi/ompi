@@ -85,8 +85,10 @@ mca_ptl_elan_proc_create (ompi_proc_t * ompi_proc)
     mca_ptl_elan_proc_t *ptl_proc;
 
     ptl_proc = mca_ptl_elan_proc_lookup_ompi (ompi_proc);
-    if (ptl_proc != NULL)
+
+    if (ptl_proc != NULL) {
         return ptl_proc;
+    }
 
     ptl_proc = OBJ_NEW (mca_ptl_elan_proc_t);
     ptl_proc->proc_ompi = ompi_proc;
@@ -185,7 +187,9 @@ mca_ptl_elan_proc_insert (mca_ptl_elan_proc_t * ptl_proc,
 
     ptl_elan = ptl_peer->peer_ptl;
     ptl_peer->peer_proc = ptl_proc;
-    ptl_proc->proc_peers[ptl_proc->proc_peer_count++] = ptl_peer;
+
+    ptl_proc->proc_peers[ptl_proc->proc_peer_count] = ptl_peer;
+    ptl_proc->proc_peer_count++;
 
     /* Look through the proc instance for an address that is on the 
      * directly attached network. If we don't find one, pick the first
@@ -198,6 +202,7 @@ mca_ptl_elan_proc_insert (mca_ptl_elan_proc_t * ptl_proc,
         mca_ptl_elan_addr_t *peer_addr;
 
         peer_addr = ptl_proc->proc_addrs + i;
+
         if (peer_addr->addr_inuse != 0) {
             continue;
         }
@@ -205,12 +210,8 @@ mca_ptl_elan_proc_insert (mca_ptl_elan_proc_t * ptl_proc,
         vp_local = ptl_elan->elan_vp;
         vp_remote = peer_addr->elan_vp;
 
-        if (vp_local = vp_remote) {
-            ptl_peer->peer_addr = peer_addr;
-            break;
-        } else if (ptl_peer->peer_addr != 0) {
-            ptl_peer->peer_addr = peer_addr;
-        }
+	assert (vp_local != vp_remote);
+	ptl_peer->peer_addr = peer_addr;
     }
 
     ptl_peer->peer_addr->addr_inuse++;

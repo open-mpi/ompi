@@ -26,7 +26,7 @@ qsnet_rdma: qsnet_rdma.c
 	$(CC) -g $(AM_CPPFLAGS) $(CFLAGS) $(CPPFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) -lmpi -pthread -lm -lmca_ptl_elan
 
 mpitest: mpi_test.c
-	$(CC) -I${HOME}/installs/openmpi/include -L${HOME}/installs/openmpi/lib -o mpitest mpi_test.c -lmpi
+	${HOME}/installs/openmpi/bin/mpicc -g -o mpitest mpi_test.c 
 
 clean:
 	-rm -rf $(EXECS) 

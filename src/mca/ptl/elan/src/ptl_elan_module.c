@@ -26,7 +26,7 @@
 #include "ptl_elan_req.h"
 #include "ptl_elan_priv.h"
 
-#define UNIT_TESTING 1
+/*#define UNIT_TESTING 1*/
 
 mca_ptl_elan_module_1_0_0_t mca_ptl_elan_module = {
     {

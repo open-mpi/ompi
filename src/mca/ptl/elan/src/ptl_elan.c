@@ -58,6 +58,7 @@ mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
     int         rc;
     int         i;
 
+    /* Here nprocs is the number of peer processes */
     for (i = 0; i < nprocs; i++) {
 
         ompi_proc = procs[i];
@@ -82,6 +83,11 @@ mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
             return OMPI_ERR_UNREACH;
         }
 
+	if (ptl_proc == mca_ptl_elan_module.elan_local) {
+            OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+	    continue;
+	}
+
         /* The ptl_proc datastructure is shared by all PTL 
          * instances that are trying to reach this destination. 
          * Cache the peer instance on the ptl_proc.
@@ -94,16 +100,16 @@ mca_ptl_elan_add_procs (struct mca_ptl_t *ptl,
                     __FILE__, __LINE__);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        ptl_peer->peer_ptl = (mca_ptl_elan_t *) ptl;
 
-        rc = mca_ptl_elan_proc_insert (ptl_proc, ptl_peer);
-        if (rc != OMPI_SUCCESS) {
-            OBJ_RELEASE (ptl_peer);
-            OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
-            ompi_output (0, "[%s:%d] unabled to insert ptl_peer \n",
-                    __FILE__, __LINE__);
-            return rc;
-        }
+        ptl_peer->peer_ptl = (mca_ptl_elan_t *) ptl;
+	ptl_peer->peer_proc = ptl_proc;
+	ptl_proc->proc_peers[ptl_proc->proc_peer_count] = ptl_peer;
+	ptl_proc->proc_peer_count++;
+
+	/* XXX XXX: There might be no order on this ptl_proc's,
+         * But one-to-one corresponding is still there */
+	ptl_peer->peer_addr = ptl_proc->proc_addrs + i;
+	ptl_peer->peer_addr->addr_inuse++;
         ompi_bitmap_set_bit (reachable, i);
 
         OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);

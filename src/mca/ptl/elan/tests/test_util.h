@@ -15,9 +15,10 @@ static void env_init_for_elan()
     if ( strcmp("quad0", hostname) == 0) {
 	fprintf(stdout, "I am %s rank %d\n", hostname, 0);
 	fflush(stdout);
-	setenv("OMPI_MCA_pcm_cofs_procid", "1", 0);
+	setenv("OMPI_MCA_pcm_cofs_procid", "0", 1);
     } else {
 	fprintf(stdout, "I am %s rank %d\n", hostname, 1);
+	fflush(stdout);
 	setenv("OMPI_MCA_pcm_cofs_procid", "1", 1);
     }
 }
