@@ -10,7 +10,6 @@
 
 
 extern lam_class_info_t lam_proc_cls;
-extern lam_list_t lam_procs;
 
 
 struct lam_proc_t {
@@ -33,7 +32,12 @@ typedef struct lam_proc_t lam_proc_t;
 
 void  lam_proc_init(lam_proc_t*);
 void  lam_proc_destroy(lam_proc_t*);
-lam_proc_t* lam_proc_local(void);
+
+static inline lam_proc_t* lam_proc_local(void) 
+{
+    extern lam_proc_t* lam_proc_self;
+    return lam_proc_self;
+}
 
 #endif /* LAM_PROC */
 

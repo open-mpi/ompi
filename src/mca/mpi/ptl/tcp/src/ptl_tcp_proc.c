@@ -18,8 +18,8 @@ lam_class_info_t  mca_ptl_tcp_proc_cls = {
  
 static lam_list_t mca_ptl_tcp_procs;
 static lam_mutex_t mca_ptl_tcp_proc_mutex;
-static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc;
 static mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup_lam(lam_proc_t* lam_proc);
+mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_self = 0;
 
 
 
@@ -115,10 +115,8 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(lam_proc_t* lam_proc)
         OBJ_RELEASE(ptl_proc);
         return NULL;
     }
-#if TIM_HASNT_IMPLEMENTED_THIS_YET
-    if(lam_proc == lam_proc_local())
-        mca_ptl_tcp_proc = ptl_proc;
-#endif
+    if(NULL == mca_ptl_tcp_proc_self && lam_proc == lam_proc_local())
+        mca_ptl_tcp_proc_self = ptl_proc;
     return ptl_proc;
 }
 

@@ -25,17 +25,9 @@ mca_ptl_tcp_t mca_ptl_tcp = {
     0, /* ptl_frag_max_size */
     mca_ptl_tcp_add_proc,
     mca_ptl_tcp_del_proc,
-#if TIM_HASNT_IMPLEMENTED_THIS_YET
     mca_ptl_tcp_fini,
-#else
-    NULL,
-#endif
     mca_ptl_tcp_send,
-#if TIM_HASNT_IMPLEMENTED_THIS_YET
     mca_ptl_tcp_request_alloc
-#else
-    NULL
-#endif
     }
 };
 
@@ -101,5 +93,18 @@ int mca_ptl_tcp_del_proc(struct mca_ptl_t* ptl, struct lam_proc_t *proc, struct 
 {
     OBJ_RELEASE(ptl_peer);
     return LAM_SUCCESS;
+}
+
+int mca_ptl_tcp_fini(struct mca_ptl_t* ptl)
+{
+    
+    return LAM_SUCCESS;
+}
+
+int mca_ptl_tcp_request_alloc(struct mca_ptl_t* ptl, struct mca_ptl_base_send_request_t** request)
+{
+    int rc;
+    *request = (struct mca_ptl_base_send_request_t*)lam_free_list_get(&mca_ptl_tcp_module.tcp_send_requests, &rc);
+    return rc;
 }
 

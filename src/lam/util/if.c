@@ -165,6 +165,30 @@ int lam_ifnametoaddr(const char* if_name, struct sockaddr* addr, int length)
     return LAM_ERROR;
 }
 
+
+/*
+ *  Look for interface by name and returns its 
+ *  corresponding kernel index.
+ */
+
+int lam_ifnametoindex(const char* if_name)
+{
+    lam_if_t* intf;
+    int rc = lam_ifinit();
+    if(rc != LAM_SUCCESS)
+        return rc;
+
+    for(intf =  (lam_if_t*)lam_list_get_first(&lam_if_list);
+        intf != (lam_if_t*)lam_list_get_end(&lam_if_list);
+        intf =  (lam_if_t*)lam_list_get_next(intf)) {
+        if(strcmp(intf->if_name, if_name) == 0) {
+            return intf->if_index;
+        }
+    }
+    return -1;
+}
+
+
 /*
  *  Attempt to resolve the adddress as either a dotted decimal formated
  *  string or a hostname and lookup corresponding interface.
