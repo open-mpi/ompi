@@ -68,7 +68,7 @@ parse_keyval(int first, ompi_rte_node_allocation_t *node)
     keyval->key = key;
     keyval->value = value;
 
-    ompi_list_append(&(node->info), (ompi_list_item_t *) keyval); 
+    ompi_list_append(node->info, (ompi_list_item_t *) keyval); 
 
     return OMPI_SUCCESS;
 }

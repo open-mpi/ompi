@@ -43,6 +43,8 @@ extern "C" {
      */
     int mca_llm_base_collapse_resources(ompi_list_t *hostlist);
 
+    int mca_llm_base_deallocate(ompi_list_t *nodelist);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

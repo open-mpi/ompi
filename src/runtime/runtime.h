@@ -93,13 +93,12 @@ extern "C" {
      *                   allocate all cpus on <code>nodes</code> nodes
      * @param procs (IN) Number of processors to try to allocate.  See the note
      *                   for <code>nodes</code> for usage.
-     * @param nodelist (OUT) List of <code>ompi_rte_node_allocation_t</code>s
+     * @return List of <code>ompi_rte_node_allocation_t</code>s
      *                   describing the allocated resources.
      *
      * @warning The type for jobid will change in the near future
      */
-    int ompi_rte_allocate_resources(int jobid, int nodes, int procs,
-                                    ompi_list_t **nodelist);
+    ompi_list_t* ompi_rte_allocate_resources(int jobid, int nodes, int procs);
 
 
     /** 
@@ -121,8 +120,7 @@ extern "C" {
      *
      * @warning Parameter list will probably change in the near future.
      */
-    int ompi_rte_spawn_procs(int jobid, ompi_list_t schedule_list,
-                             ompi_vpid_t start_vpid);
+    int ompi_rte_spawn_procs(int jobid, ompi_list_t *schedule_list);
 
 
     /**

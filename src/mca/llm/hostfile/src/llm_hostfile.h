@@ -38,10 +38,9 @@ extern "C" {
 
     int mca_llm_hostfile_component_finalize(void);
 
-    int mca_llm_hostfile_allocate_resources(int jobid,
-                                            int nodes,
-                                            int procs,
-                                            ompi_list_t **nodelist);
+    ompi_list_t* mca_llm_hostfile_allocate_resources(int jobid,
+                                                     int nodes,
+                                                     int procs);
 
     int mca_llm_hostfile_deallocate_resources(int jobid,
                                               ompi_list_t *nodelist);

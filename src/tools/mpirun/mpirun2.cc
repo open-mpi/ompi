@@ -99,7 +99,8 @@ main(int argc, char *argv[])
      */
 
     /* BWB - fix jobid, procs, and nodes */
-    if (OMPI_SUCCESS != ompi_rte_allocate_resources(0, 0, 2, &nodelist)) {
+    nodelist = ompi_rte_allocate_resources(0, 0, 2);
+    if (NULL != nodelist) {
         /* BWB show_help */
         printf("show_help: ompi_rte_allocate_resources failed\n");
         return -1;

@@ -61,9 +61,9 @@ mca_pcm_base_send_schedule(FILE *fp,
         fprintf(fp, "%d\n", node->count);
 
         /* INFO */
-        fprintf(fp, "%d\n", (int) ompi_list_get_size(&(node->info)));
-        for (info_item = ompi_list_get_first(&(node->info)) ;
-             info_item != ompi_list_get_end(&(node->info)) ;
+        fprintf(fp, "%d\n", (int) ompi_list_get_size(node->info));
+        for (info_item = ompi_list_get_first(node->info) ;
+             info_item != ompi_list_get_end(node->info) ;
              info_item = ompi_list_get_next(info_item)) {
             valpair = (ompi_rte_valuepair_t*) info_item;
 
@@ -79,7 +79,7 @@ mca_pcm_base_send_schedule(FILE *fp,
      * check that the other side hasn't dropped our connection yet.
      *
      * Do this before the last print so we don't get swapped out and
-     * accidently catch an eof or something
+     * accidently catch the expected eof or something
      */
     if (feof(fp) || ferror(fp)) return OMPI_ERROR;
 
@@ -101,6 +101,7 @@ get_key(FILE *fp, const char *key)
     size_t pos = 0;
     size_t len;
     int val;
+    int countdown = 50;
 
     len = strlen(key);
 
@@ -108,6 +109,8 @@ get_key(FILE *fp, const char *key)
         val = fgetc(fp);
         if (val == EOF) {
             if (feof(fp)) {
+                countdown--;
+                if (0 == countdown) return OMPI_ERROR; 
                 /* BWB: probably want to back off at some point */
                 clearerr(fp);
             } else {
@@ -268,7 +271,7 @@ get_keyval(FILE *fp, char **keyp, char **valp)
 
 
 static int
-get_nodeinfo(FILE *fp, ompi_list_t info)
+get_nodeinfo(FILE *fp, ompi_list_t *info)
 {
     ompi_rte_valuepair_t *newinfo;
     int ret;
@@ -285,7 +288,7 @@ get_nodeinfo(FILE *fp, ompi_list_t info)
             return ret;
         }
 
-        ompi_list_append(&info, (ompi_list_item_t*) newinfo);
+        ompi_list_append(info, (ompi_list_item_t*) newinfo);
     }
 
     return OMPI_SUCCESS;

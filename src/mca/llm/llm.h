@@ -105,10 +105,8 @@ typedef mca_llm_base_component_1_0_0_t mca_llm_base_component_t;
  *
  * @warning The type for jobid will change in the near future
  */
-typedef int (*mca_llm_base_allocate_resources_fn_t)(int jobid,
-                                                    int nodes,
-                                                    int procs,
-                                                    ompi_list_t **nodelist);
+typedef ompi_list_t*
+(*mca_llm_base_allocate_resources_fn_t)(int jobid, int nodes,int procs);
 
 
 /**

@@ -11,10 +11,15 @@
 #include "runtime/runtime_types.h"
 #include "mca/pcm/base/base.h"
 
-extern char **environ;
-
 static char *cmd1_str="diff ./test1_out ./test1_out_std";
 static char *cmd2_str="diff ./test2_out ./test2_out_std";
+
+char *env[] = {
+    "ENV1=blah blah blah",
+    "ENV2=foo bar is fun",
+    "ENV3=123",
+    NULL
+};
 
 int
 main(int argc, char *argv[])
@@ -39,15 +44,14 @@ main(int argc, char *argv[])
       exit(-1);
     }
 
-    schedout = malloc(sizeof(ompi_rte_node_schedule_t));
-    OBJ_CONSTRUCT(&(schedout->nodelist), ompi_list_t);
+    schedout = OBJ_NEW(ompi_rte_node_schedule_t);
     schedout->argv = argv;
     schedout->argc = argc;
-    schedout->env = environ;
+    schedout->env = env;
     schedout->cwd = "/foo/bar/baz";
 
     result = mca_pcm_base_send_schedule(test1_out, schedout, 
-                                        &(schedout->nodelist));
+                                        schedout->nodelist);
     if (result != OMPI_SUCCESS) {
         test_failure("send_schedule failed");
         exit(1);
@@ -65,18 +69,17 @@ main(int argc, char *argv[])
     }
 
     /* test 2 */
-    schedin = malloc(sizeof(ompi_rte_node_schedule_t));
-    OBJ_CONSTRUCT(&(schedin->nodelist), ompi_list_t);
+    schedin = OBJ_NEW(ompi_rte_node_schedule_t);
 
     test2_in = fopen("./test1_out", "r");
 
     result = mca_pcm_base_recv_schedule(test2_in, schedin,
-                                        &(schedin->nodelist));
+                                        schedin->nodelist);
     if (result != OMPI_SUCCESS) {
         test_failure("recv_schedule failed");
         exit(1);
     }
-    mca_pcm_base_send_schedule(test2_out, schedin, &(schedin->nodelist));
+    mca_pcm_base_send_schedule(test2_out, schedin, schedin->nodelist);
     if (result != OMPI_SUCCESS) {
         test_failure("send_schedule (2) failed");
         exit(1);
@@ -92,6 +95,9 @@ main(int argc, char *argv[])
     else {
       test_failure( "sched_comm test2 failed" );
     }
+
+    OBJ_RELEASE(schedin);
+    OBJ_RELEASE(schedout);
     
     test_finalize();
     return 0;
