@@ -8,8 +8,8 @@
 
 #include "mpi/c/bindings.h"
 #include "lam/util/strncpy.h"
-#include "communicator.h"
-#include "totalview.h"
+#include "lam/communicator.h"
+#include "lam/totalview.h"
 
 #if LAM_WANT_MPI_PROFILING && LAM_HAVE_WEAK_SYMBOLS
 #pragma weak PMPI_Comm_set_name = MPI_Comm_set_name

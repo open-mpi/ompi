@@ -2,5 +2,5 @@
  * $HEADER$
  */
 
-#include "ctnode.h"
+#include "lam/ctnetwork/ctnode.h"
 

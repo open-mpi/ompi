@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_constants.h"
+#include "lam/constants.h"
 #include "lam/lfc/object.h"
 
 typedef int     affinity_t;

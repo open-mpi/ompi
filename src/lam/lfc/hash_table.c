@@ -6,7 +6,7 @@
 #include <stdlib.h>
 
 #include "lam_config.h"
-#include "include/lam_constants.h"
+#include "lam/constants.h"
 #include "lam/lfc/hash_table.h"
 
 #define     BUCKET_ALLOC_SZ         5

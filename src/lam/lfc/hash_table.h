@@ -6,7 +6,7 @@
 #define LAM_HASH_TABLE_H
 
 #include "lam_config.h"
-#include "include/lam_stdint.h"
+#include "lam/stdint.h"
 #include "lam/lfc/object.h"
 
 typedef struct lam_fhnode

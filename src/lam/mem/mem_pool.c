@@ -5,7 +5,7 @@
 #include <string.h>
 #include <sys/errno.h>
 #include <unistd.h>
-#include "lam_constants.h"
+#include "lam/constants.h"
 #include "lam/mem/mem_pool.h"
 #include "lam/mem/sharedmem_util.h"
 #include "lam/util/lam_log.h"

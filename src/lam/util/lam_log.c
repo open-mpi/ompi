@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam_log.h"
+#include "lam/util/lam_log.h"
 #include <stdlib.h>
 #include <stdarg.h>
 

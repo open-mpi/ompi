@@ -370,6 +370,7 @@ AC_CONFIG_FILES([
 
     src/Makefile
     src/include/Makefile
+    src/include/lam/Makefile
 
     src/lam/Makefile
     src/lam/ctnetwork/Makefile
