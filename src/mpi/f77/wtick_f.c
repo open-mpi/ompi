@@ -16,19 +16,19 @@
 #pragma weak pmpi_wtick__ = mpi_wtick_f
 #elif OMPI_PROFILE_LAYER
 
-    double *pmpi_wtick(void) {
+    double pmpi_wtick(void) {
         return pmpi_wtick_f();
     }
 
-    double *pmpi_wtick_(void) {
+    double pmpi_wtick_(void) {
         return pmpi_wtick_f();
     }
 
-    double *pmpi_wtick__(void) {
+    double pmpi_wtick__(void) {
         return pmpi_wtick_f();
     }
 
-    double *PMPI_WTICK(void) {
+    double PMPI_WTICK(void) {
         return pmpi_wtick_f();
     }
 
@@ -43,25 +43,25 @@
 
 #if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 
-    double *mpi_wtick(void) {
+    double mpi_wtick(void) {
         return mpi_wtick_f();
     }
 
-    double *mpi_wtick_(void) {
+    double mpi_wtick_(void) {
         return mpi_wtick_f();
     }
 
-    double *mpi_wtick__(void) {
+    double mpi_wtick__(void) {
         return mpi_wtick_f();
     }
 
-    double *MPI_WTICK(void) {
+    double MPI_WTICK(void) {
         return mpi_wtick_f();
     }
 
 #endif
 
-double *mpi_wtick_f(void)
+double mpi_wtick_f(void)
 {
-    return (double *)0;
+    return MPI_Wtick();
 }
