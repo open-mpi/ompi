@@ -11,7 +11,7 @@
 #include "datatype.h"
 
 #define IS_32BIT_ALIGNED(X) \
-    ((uint32_t)(X) & (uint32_t) 3 == (uint32_t) 0 ? 1 : 0)
+    (((uint32_t)(X) & (uint32_t) 3) == ((uint32_t) 0 ? 1 : 0))
 
 
 /**
