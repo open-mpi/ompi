@@ -26,7 +26,7 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     ompi_communicator_t *comp1, *comp2;
     ompi_group_t *grp1, *grp2;
     int size1, size2, rsize1, rsize2;
-    int lresult, rresult;
+    int lresult, rresult=MPI_SIMILAR;
     int sameranks = 1;
     int sameorder = 1;
     int i, j;
@@ -47,6 +47,11 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     
     comp1 = (ompi_communicator_t *) comm1;
     comp2 = (ompi_communicator_t *) comm2;
+
+    if ( comp1->c_contextid == comp2->c_contextid ) {
+        *result = MPI_IDENT;
+        return MPI_SUCCESS;
+    }
 
     /* compare sizes of local and remote groups */
     size1 = ompi_comm_size (comp1);
@@ -86,9 +91,9 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     }
     
     if ( sameranks && sameorder )
-        lresult = MPI_SIMILAR;
-    else if ( sameranks && !sameorder )
         lresult = MPI_CONGRUENT;
+    else if ( sameranks && !sameorder )
+        lresult = MPI_SIMILAR;
     else
         lresult = MPI_UNEQUAL;
 
