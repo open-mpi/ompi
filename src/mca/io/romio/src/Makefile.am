@@ -5,10 +5,13 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = \
+        -I$(top_ompi_builddir)/src \
         -I$(top_ompi_builddir)/src/include \
         -I$(top_ompi_srcdir)/src \
         -I$(top_ompi_srcdir)/src/include \
-        -I$(top_srcdir)
+        -I$(top_srcdir) \
+        -I$(top_srcdir)/romio-dist/include \
+        -I$(top_builddir)
 
 noinst_LTLIBRARIES = libmca_io_romio.la
 libmca_io_romio_la_SOURCES = \
