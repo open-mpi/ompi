@@ -83,5 +83,6 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
         return LAM_ERRHANDLER_INVOKE ( comm, rc, "MPI_Comm_dup");
     }
 
+    *newcomm = (MPI_Comm) newcomp;
     return MPI_SUCCESS;
 }

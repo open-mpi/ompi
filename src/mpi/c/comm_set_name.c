@@ -19,6 +19,7 @@
 
 int MPI_Comm_set_name(MPI_Comm comm, char *name) {
 
+    lam_communicator_t* comp;
 
     if ( MPI_PARAM_CHECK ) {
         if ( lam_mpi_finalized ) 
@@ -37,9 +38,11 @@ int MPI_Comm_set_name(MPI_Comm comm, char *name) {
     /* -- Thread safety entrance -- */
 
     /* Copy in the name */
-    strncpy(comm->c_name, name, MPI_MAX_OBJECT_NAME);
-    comm->c_name[MPI_MAX_OBJECT_NAME - 1] = 0;
-    comm->c_flags |= LAM_COMM_NAMEISSET;
+    comp = (lam_communicator_t*) comm;
+    
+    strncpy(comp->c_name, name, MPI_MAX_OBJECT_NAME);
+    comp->c_name[MPI_MAX_OBJECT_NAME - 1] = 0;
+    comp->c_flags |= LAM_COMM_NAMEISSET;
 
     /* -- Tracing information for new communicator name -- */
 #if 0  

@@ -30,7 +30,7 @@ int MPI_Comm_rank(MPI_Comm comm, int *rank) {
                                          "MPI_Comm_rank");
     }
 
-    *rank = lam_comm_rank(comm);
+    *rank = lam_comm_rank((lam_communicator_t*)comm);
     return MPI_SUCCESS;
 }
 
