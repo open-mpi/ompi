@@ -3,6 +3,9 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
+
+SUBDIRS = profile
+
 #
 # OMPI_PRPOFILING_DEFINES flag is enabled when we want our MPI_* symbols
 # to be replaced by PMPI_*. In other words, this flag decides 
@@ -10,7 +13,9 @@ include $(top_srcdir)/config/Makefile.options
 # replaces all MPI_* symbols with PMPI_* symbols. In this directory,
 # we need it to be 0
 #
+
 AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_F77_WRAPPERS=1
+
 #
 # The top directory always builds MPI_* bindings. The bottom directory
 # always builds PMPI_* bindings. The cases where the top directory
@@ -18,6 +23,7 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_F77_WRAPPERS=1
 # 1. When profiling is disabled.
 # 2. When profiling is enabled but weak symbol support is absent.
 #
+
 if WANT_MPI_F77_BINDINGS_LAYER
 mpi_lib = libmpi_f77_mpi.la
 else
@@ -25,38 +31,28 @@ mpi_lib =
 endif
 
 if OMPI_WANT_F77_BINDINGS
-    install_libs = libmpi_f77.la $(mpi_lib)
+f77_libs = libmpi_f77.la $(mpi_lib)
 else
-    install_libs = 
+f77_libs = 
 endif
 
-noinst_LTLIBRARIES = $(install_libs)
+noinst_LTLIBRARIES = $(f77_libs)
 
-#
-# The profile subdirectory always builds PMPI_* bindings. Hence, this
-# directory needs to be built whenever profiling is enabled
-#
-if WANT_PMPI_F77_BINDINGS_LAYER
-    pmpi_lib = profile/libmpi_f77_pmpi.la
-else
-    pmpi_lib = 
-endif
-#
-# 
-SUBDIRS = profile
-#
-# 
 headers = \
     bindings.h \
     prototypes_mpi.h
+
 #
-# libmpi_f77.la is the final library that will be built. This will try
-# to snarf in mpi_lib and pmpi_lib. So, the right things will be done
-# by default
+# libmpi_f77.la is always build because it contains some non-profilied
+# functions.
 #
 
 libmpi_f77_la_SOURCES   = \
 		attr_fn_f.c
+
+#
+# libmpi_c_mpi.la is only built in some cases (see above)
+#
 
 libmpi_f77_mpi_la_SOURCES = \
         abort_f.c \
@@ -344,11 +340,13 @@ libmpi_f77_mpi_la_SOURCES = \
         win_wait_f.c \
         wtick_f.c \
         wtime_f.c
-#
+
 EXTRA_DIST = $(libmpi_f77_mpi_la_SOURCES)
+
 #
 # Conditionally install the header files
 #
+
 if WANT_INSTALL_HEADERS
 ompidir = $(includedir)/openmpi/mpi/f77
 ompi_HEADERS = $(headers)

@@ -3,6 +3,9 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
+
+SUBDIRS = profile
+
 #
 # OMPI_PRPOFILING_DEFINES flag s enabled when we want our MPI_* symbols
 # to be replaced by PMPI_*. In other words, this flag decides 
@@ -10,15 +13,18 @@ include $(top_srcdir)/config/Makefile.options
 # replaces all MPI_* symbols with PMPI_* symbols. In this directory,
 # we need it to be 0
 #
+
 AM_CPPFLAGS     = -DOMPI_PROFILING_DEFINES=0
 
 #
 # The top directory always builds MPI_* bindings. The bottom directory
 # always builds PMPI_* bindings. The cases where the top directory
-# needs to be built are
+# needs to be built are:
+#
 # 1. When profiling is disabled.
 # 2. When profiling is enabled but weak symbol support is absent.
 #
+
 if WANT_MPI_BINDINGS_LAYER
 mpi_lib = libmpi_c_mpi.la
 else
@@ -27,29 +33,19 @@ endif
 
 noinst_LTLIBRARIES = libmpi_c.la $(mpi_lib)
 
-#
-# The profile subdirectory always builds PMPI_* bindings. Hence, this
-# directory needs to be built whenever profiling is enabled
-#
-if WANT_PMPI_BINDINGS_LAYER
-    pmpi_lib = profile/libmpi_c_pmpi.la
-else
-    pmpi_lib = 
-endif
-#
-# 
-SUBDIRS = profile
-#
-# 
 headers = bindings.h
+
 #
-# libmpi_c.la is the final library that will be built. This will try
-# to snarf in mpi_lib and pmpi_lib. So, the right things will be done
-# by default
+# libmpi_c.la is always build because it contains some non-profilied
+# functions.
 #
 
 libmpi_c_la_SOURCES = \
         attr_fn.c
+
+#
+# libmpi_c_mpi.la is only built in some cases (see above)
+#
 
 libmpi_c_mpi_la_SOURCES = \
         abort.c \
