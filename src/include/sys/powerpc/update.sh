@@ -26,6 +26,7 @@ cat > $CFILE<<EOF
 #define inline
 #define OMPI_GCC_INLINE_ASSEMBLY 1
 #define OMPI_ASSEMBLY_ARCH OMPI_POWERPC32
+#define OMPI_WANT_SMP_LOCKS 1
 #include "../architecture.h"
 #include "atomic.h"
 EOF
