@@ -77,7 +77,7 @@ int mca_pml_teg_recv(
     struct lam_communicator_t* comm,
     lam_status_public_t* status)
 {
-    int rc, index;
+    int rc;
     mca_ptl_base_recv_request_t *recvreq;
     MCA_PML_TEG_RECV_REQUEST_ALLOC(recvreq, rc);
  #if MCA_PML_TEG_STATISTICS

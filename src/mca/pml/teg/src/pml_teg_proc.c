@@ -11,6 +11,7 @@
 static void mca_pml_teg_proc_construct(mca_pml_proc_t* proc)
 {
     proc->proc_lam = NULL;
+    proc->proc_ptl_flags = 0;
     OBJ_CONSTRUCT(&proc->proc_lock, lam_mutex_t);
     OBJ_CONSTRUCT(&proc->proc_ptl_first, mca_pml_teg_ptl_array_t);
     OBJ_CONSTRUCT(&proc->proc_ptl_next,  mca_pml_teg_ptl_array_t);

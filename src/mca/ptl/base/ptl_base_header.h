@@ -14,6 +14,7 @@
 #define MCA_PTL_HDR_TYPE_FRAG   1
 #define MCA_PTL_HDR_TYPE_ACK    2
 #define MCA_PTL_HDR_TYPE_NACK   3
+#define MCA_PTL_HDR_TYPE_GET    4
 
 #define MCA_PTL_FLAGS_ACK_MATCHED     1
 #define MCA_PTL_FLAGS_ACK_AGGREGATE   2
@@ -37,7 +38,7 @@ struct mca_ptl_base_frag_header_t {
     mca_ptl_base_common_header_t hdr_common; /**< common attributes */
     uint32_t hdr_frag_length;                /**< fragment length */
     uint32_t hdr_frag_offset;                /**< offset into message */
-    mca_ptl_sequence_t hdr_frag_seq;    /**< fragment sequence number */
+    mca_ptl_sequence_t hdr_frag_seq;         /**< fragment sequence number */
     lam_ptr_t hdr_src_ptr;                   /**< pointer to source fragment */
     lam_ptr_t hdr_dst_ptr;                   /**< pointer to matched receive */
 };
@@ -55,7 +56,8 @@ struct mca_ptl_base_match_header_t {
     int32_t hdr_dst;                     /**< destination rank */
     int32_t hdr_tag;                     /**< user tag */
     uint32_t hdr_msg_length;             /**< message length */
-    mca_ptl_sequence_t hdr_msg_seq; /**< message sequence number */
+    mca_ptl_sequence_t hdr_msg_seq;      /**< message sequence number */
+    lam_ptr_t hdr_src_ptr;
 };
 typedef struct mca_ptl_base_match_header_t mca_ptl_base_match_header_t;
 
@@ -66,7 +68,9 @@ typedef struct mca_ptl_base_match_header_t mca_ptl_base_match_header_t;
 struct mca_ptl_base_ack_header_t {
     mca_ptl_base_common_header_t hdr_common; /**< common attributes */
     lam_ptr_t hdr_src_ptr;                   /**< source fragment */
-    lam_ptr_t hdr_dst_ptr;                   /**< matched receive request */
+    lam_ptr_t hdr_dst_match;                 /**< matched receive request */
+    lam_ptr_t hdr_dst_addr;                  /**< posted receive buffer */
+    uint32_t  hdr_dst_size;                  /**< size of posted buffer */
     /* sequence range? */
 };
 typedef struct mca_ptl_base_ack_header_t mca_ptl_base_ack_header_t;

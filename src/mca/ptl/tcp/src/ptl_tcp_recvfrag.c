@@ -118,7 +118,7 @@ static bool mca_ptl_tcp_recv_frag_ack(mca_ptl_tcp_recv_frag_t* frag, int sd)
     mca_ptl_base_send_request_t* sendreq;
     sendfrag = (mca_ptl_tcp_send_frag_t*)frag->super.super.frag_header.hdr_ack.hdr_src_ptr.pval;
     sendreq = sendfrag->super.frag_request;
-    sendreq->req_peer_request = frag->super.super.frag_header.hdr_ack.hdr_dst_ptr;
+    sendreq->req_peer_match = frag->super.super.frag_header.hdr_ack.hdr_dst_match;
     mca_ptl_tcp_send_frag_progress(sendfrag);
     mca_ptl_tcp_recv_frag_return(frag->super.super.frag_owner, frag);
     return true;

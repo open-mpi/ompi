@@ -30,11 +30,13 @@ mca_ptl_tcp_t mca_ptl_tcp = {
     0, /* ptl_frag_first_size */
     0, /* ptl_frag_min_size */
     0, /* ptl_frag_max_size */
+    MCA_PTL_PUT,  /* ptl flags */
     mca_ptl_tcp_add_proc,
     mca_ptl_tcp_del_proc,
     mca_ptl_tcp_finalize,
     mca_ptl_tcp_send,
-    mca_ptl_tcp_recv,
+    NULL,
+    mca_ptl_tcp_matched,
     mca_ptl_tcp_request_alloc,
     mca_ptl_tcp_request_return
     }
@@ -154,20 +156,23 @@ int mca_ptl_tcp_send(
     struct mca_ptl_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
     struct mca_ptl_base_send_request_t* sendreq,
-    size_t size,
+    size_t offset,
+    size_t *size,
     int flags)
 {
     mca_ptl_tcp_send_frag_t* sendfrag;
-    if (sendreq->req_frags == 0) {
+    int rc;
+    if (offset == 0) {
         sendfrag = &((mca_ptl_tcp_send_request_t*)sendreq)->req_frag;
     } else {
-        int rc;
         lam_list_item_t* item;
         LAM_FREE_LIST_GET(&mca_ptl_tcp_module.tcp_send_frags, item, rc);
         if(NULL == (sendfrag = (mca_ptl_tcp_send_frag_t*)item))
             return rc;
     }
-    mca_ptl_tcp_send_frag_init(sendfrag, ptl_peer, sendreq, size, flags);
+    rc = mca_ptl_tcp_send_frag_init(sendfrag, ptl_peer, sendreq, offset, size, flags);
+    if(rc != LAM_SUCCESS)
+        return rc;
     return mca_ptl_tcp_peer_send(ptl_peer, sendfrag);
 }
 
@@ -177,7 +182,7 @@ int mca_ptl_tcp_send(
  *  ack back to the peer and process the fragment.
  */
 
-void mca_ptl_tcp_recv(
+void mca_ptl_tcp_matched(
     mca_ptl_t* ptl,
     mca_ptl_base_recv_frag_t* frag)
 {
@@ -205,4 +210,5 @@ void mca_ptl_tcp_recv(
     /* process fragment if complete */
     mca_ptl_tcp_recv_frag_progress((mca_ptl_tcp_recv_frag_t*)frag);
 }
+
 

@@ -10,7 +10,10 @@ int mca_pml_teg_wait(
     int *index,
     lam_status_public_t* status)
 {
-    int c, i;
+#if LAM_HAVE_THREADS
+    int c;
+#endif
+    int i;
     int completed = -1;
     mca_pml_base_request_t* pml_request;
 

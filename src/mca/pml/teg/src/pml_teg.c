@@ -160,7 +160,7 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
             proc->proc_pml = proc_pml;
         }
 
-        /* allow each ptl to register with the proc */
+        /* attempt to add the proc to each ptl */
         for(p_index = 0; p_index < mca_pml_teg.teg_num_ptls; p_index++) {
             mca_ptl_t* ptl = mca_pml_teg.teg_ptls[p_index];
  
@@ -181,6 +181,8 @@ int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
                 /* if this ptl supports exclusive access then don't allow 
                  * subsequent ptls to register
                  */
+ 
+                proc_pml->proc_ptl_flags |= ptl->ptl_flags;
                 if(ptl->ptl_exclusivity)
                     break;
             }

@@ -44,7 +44,8 @@ int mca_ptl_tcp_send_frag_init(
     mca_ptl_tcp_send_frag_t*, 
     struct mca_ptl_base_peer_t*, 
     struct mca_ptl_base_send_request_t*, 
-    size_t size,
+    size_t offset,
+    size_t* size,
     int flags);
 
 
@@ -96,12 +97,16 @@ static inline void mca_ptl_tcp_send_frag_init_ack(
     mca_ptl_tcp_recv_frag_t* frag)
 {
     mca_ptl_base_header_t* hdr = &ack->super.super.frag_header;
+    mca_ptl_base_recv_request_t* request = frag->super.frag_request;
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
     hdr->hdr_ack.hdr_src_ptr = frag->super.super.frag_header.hdr_frag.hdr_src_ptr;
-    hdr->hdr_ack.hdr_dst_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
-    hdr->hdr_ack.hdr_dst_ptr.pval = frag->super.frag_request;
+    hdr->hdr_ack.hdr_dst_match.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+    hdr->hdr_ack.hdr_dst_match.pval = request;
+    hdr->hdr_ack.hdr_dst_addr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+    hdr->hdr_ack.hdr_dst_addr.pval = request->super.req_addr;
+    hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed;
     ack->super.frag_request = 0;
     ack->super.super.frag_peer = ptl_peer;
     ack->super.super.frag_owner = ptl;

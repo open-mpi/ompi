@@ -25,7 +25,7 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
     mca_pml_proc_t* proc_pml = proc->proc_pml;
 
     /* allocate remaining bytes to PTLs */
-    size_t bytes_remaining = req->req_bytes_msg - req->req_offset;
+    size_t bytes_remaining = req->req_bytes_packed - req->req_offset;
     size_t num_ptl_avail = proc_pml->proc_ptl_next.ptl_size;
     size_t num_ptl = 0;
     while(bytes_remaining > 0 && num_ptl++ < num_ptl_avail) {
@@ -50,9 +50,11 @@ void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req)
             bytes_to_frag = (ptl_proc->ptl_weight * bytes_remaining) / 100;
         }
 
-        rc = ptl->ptl_send(ptl, ptl_proc->ptl_peer, req, bytes_to_frag, 0);
-        if(rc == LAM_SUCCESS)
-            bytes_remaining = req->req_bytes_msg - req->req_offset;
+        rc = ptl->ptl_put(ptl, ptl_proc->ptl_peer, req, req->req_offset, &bytes_to_frag, 0);
+        if(rc == LAM_SUCCESS) {
+            req->req_offset += bytes_to_frag;
+            bytes_remaining = req->req_bytes_packed - req->req_offset;
+        }
     }
 
     /* unable to complete send - signal request failed */
@@ -71,9 +73,11 @@ void mca_pml_teg_send_request_progress(
     mca_ptl_base_send_request_t* req,
     mca_ptl_base_send_frag_t* frag)
 {
+    bool first_frag;
     THREAD_LOCK(&mca_pml_teg.teg_request_lock);
+    first_frag = (req->req_bytes_sent == 0);
     req->req_bytes_sent += frag->super.frag_size;
-    if (req->req_bytes_sent >= req->req_bytes_msg) {
+    if (req->req_bytes_sent >= req->req_bytes_packed) {
         req->super.req_pml_done = true;
         if (req->super.req_mpi_done == false) {
             req->super.req_status.MPI_SOURCE = req->super.req_comm->c_my_rank;
@@ -91,8 +95,8 @@ void mca_pml_teg_send_request_progress(
     } 
     THREAD_UNLOCK(&mca_pml_teg.teg_request_lock);
 
-    /* if first fragment - schedule remaining fragments */
-    if(req->req_frags == 1) {
+    /* if first fragment - shedule remaining fragments */
+    if(first_frag == 1) {
         mca_pml_teg_send_request_schedule(req);
     }
 }
