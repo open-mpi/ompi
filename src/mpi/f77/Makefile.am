@@ -1,4 +1,3 @@
-# -*- makefile -*-
 #
 # $HEADER$
 #
@@ -58,10 +57,6 @@ headers = \
 
 libmpi_f77_la_SOURCES   = \
 		attr_fn_f.c
-
-libmpi_f77_la_LIBADD    = \
-                    $(mpi_lib) \
-                    $(pmpi_lib)
 
 libmpi_f77_mpi_la_SOURCES = \
         abort_f.c \

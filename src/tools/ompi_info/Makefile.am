@@ -21,7 +21,14 @@ AM_CPPFLAGS = \
             -DOMPI_BUILD_FFLAGS="\"@FFLAGS@\"" \
             -DOMPI_BUILD_FCFLAGS="\"@FCFLAGS@\"" \
             -DOMPI_BUILD_LDFLAGS="\"@LDFLAGS@\"" \
-            -DOMPI_BUILD_LIBS="\"@LIBS@\""
+            -DOMPI_BUILD_LIBS="\"@LIBS@\"" \
+            -DOMPI_MAJOR_VERSION=@OMPI_MAJOR_VERSION@ \
+            -DOMPI_MINOR_VERSION=@OMPI_MINOR_VERSION@ \
+            -DOMPI_RELEASE_VERSION=@OMPI_RELEASE_VERSION@ \
+            -DOMPI_ALPHA_VERSION=@OMPI_ALPHA_VERSION@ \
+            -DOMPI_BETA_VERSION=@OMPI_BETA_VERSION@ \
+            -DOMPI_SVN_VERSION=\"@OMPI_SVN_VERSION@\" \
+            -DOMPI_VERSION=\"@OMPI_VERSION\"
 
 libs = $(top_builddir)/src/libmpi.la
 

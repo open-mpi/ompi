@@ -380,7 +380,7 @@ if test "$HAPPY" = "1"; then
 	$LN_S "$OMPI_TOP_BUILDDIR/src/mca/$type/$m" \
 	    "src/dynamic-mca/$type/$m"
     else
-	static_ltlibs="$m/libmca_${type}_${m}.la $static_ltlibs"
+	static_ltlibs="mca/$type/$m/libmca_${type}_${m}.la $static_ltlibs"
 	echo "extern const mca_base_component_t mca_${type}_${m}_component;" >> $outfile.extern
 	echo "  &mca_${type}_${m}_component, " >> $outfile.struct
 	compile_mode="static"

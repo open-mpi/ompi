@@ -11,13 +11,6 @@ DIST_SUBDIRS = base $(MCA_pml_ALL_SUBDIRS)
 
 headers = pml.h
 
-noinst_LTLIBRARIES = libmca_pml.la
-libmca_pml_la_SOURCES =
-libmca_pml_la_LIBADD = \
-        base/libmca_pml_base.la \
-        $(MCA_pml_STATIC_LTLIBS)
-libmca_pml_la_DEPENDENCIES = $(libmca_pml_la_LIBADD)
-
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
