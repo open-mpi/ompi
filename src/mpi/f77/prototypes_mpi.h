@@ -67,7 +67,8 @@ void mpi_comm_free_keyval_f(MPI_Fint *comm_keyval, MPI_Fint *ierr);
 void mpi_comm_free_f(MPI_Fint *comm, MPI_Fint *ierr);
 void mpi_comm_get_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval, char *attribute_val, MPI_Fint *flag, MPI_Fint *ierr);
 void mpi_comm_get_errhandler_f(MPI_Fint *comm, MPI_Fint *erhandler, MPI_Fint *ierr);
-void mpi_comm_get_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *resultlen, MPI_Fint *ierr);
+void mpi_comm_get_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *resultlen,
+                         MPI_Fint *ierr, int name_len);
 void mpi_comm_get_parent_f(MPI_Fint *parent, MPI_Fint *ierr);
 void mpi_comm_group_f(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *ierr);
 void mpi_comm_join_f(MPI_Fint *fd, MPI_Fint *intercomm, MPI_Fint *ierr);
@@ -76,9 +77,13 @@ void mpi_comm_remote_group_f(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *ierr);
 void mpi_comm_remote_size_f(MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr);
 void mpi_comm_set_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval, char *attribute_val, MPI_Fint *ierr);
 void mpi_comm_set_errhandler_f(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr);
-void mpi_comm_set_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr);
+void mpi_comm_set_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr,
+                         int name_len);
 void mpi_comm_size_f(MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr);
-void mpi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr);
+void mpi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs, 
+                      MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm,
+                      MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, 
+                      MPI_Fint *ierr, int command_len, int argv_len);
 void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_of_commands, char *array_of_argv, MPI_Fint *array_of_maxprocs, MPI_Fint *array_of_info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *intercomm, MPI_Fint *array_of_errcodes, MPI_Fint *ierr);
 void mpi_comm_split_f(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr);
 void mpi_comm_test_inter_f(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr);
