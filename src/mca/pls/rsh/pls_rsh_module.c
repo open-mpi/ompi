@@ -538,7 +538,9 @@ int orte_pls_rsh_terminate_proc(const orte_process_name_t* proc)
 
 int orte_pls_rsh_finalize(void)
 {
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    /* cleanup any pending recvs */
+    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RMGR_CLNT);
+    return ORTE_SUCCESS;
 }
 
 
