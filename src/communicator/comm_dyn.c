@@ -424,6 +424,8 @@ int ompi_comm_dyn_init (void)
     
     /* if env-variable is set, parse port and call comm_connect_accept */
     if (NULL != port_name ) {
+	ompi_communicator_t *oldcomm;
+
 	/* we have been spawned */
 	oob_port = ompi_parse_port (port_name, &tag);
 	port_proc_name = ompi_name_server.convert_string_to_process_name(oob_port);
@@ -436,11 +438,12 @@ int ompi_comm_dyn_init (void)
 	 * now we have to decrease the reference counters to the according
 	 * objects 
 	 */
-
-	OBJ_RETAIN(&ompi_mpi_comm_null);
-	OBJ_RETAIN(&ompi_mpi_group_null);
-	OBJ_RETAIN(&ompi_mpi_group_null);
-	OBJ_RETAIN(&ompi_mpi_errors_are_fatal);
+	
+	oldcomm = &ompi_mpi_comm_null;
+	OBJ_RELEASE(oldcomm);
+	OBJ_RELEASE(oldcomm);
+	OBJ_RELEASE(oldcomm);
+	OBJ_RELEASE(oldcomm);
 
 	/* Set name for debugging purposes */
 	snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI_COMM_PARENT");
