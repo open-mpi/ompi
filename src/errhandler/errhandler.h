@@ -11,6 +11,8 @@
 #include "mpi.h"
 #include "class/ompi_object.h"
 #include "class/ompi_pointer_array.h"
+#include "runtime/runtime.h"
+#include "errhandler/errhandler_predefined.h"
 
 /*
  * These must correspond to the fortran handle indices
@@ -91,6 +93,19 @@ extern ompi_errhandler_t ompi_mpi_errors_return;
  */
 extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
 
+
+/**
+ * This is the macro to check the state of MPI and determine whether
+ * it was properly initialized and not yet finalized.
+ *
+ * This macro directly invokes the ompi_mpi_errors_are_fatal_handler()
+ * when an error occurs because MPI_COMM_WORLD does not exist (because
+ * we're before MPI_Init() or after MPI_Finalize()).
+ */
+#define OMPI_ERR_INIT_FINALIZE \
+  if (!ompi_mpi_initialized || ompi_mpi_finalized) { \
+    ompi_mpi_errors_are_fatal_handler(NULL, NULL); \
+  }
 
 /**
  * This is the macro to invoke to directly invoke an MPI error
