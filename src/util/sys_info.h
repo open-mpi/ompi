@@ -5,6 +5,9 @@
 /** @file:
  *
  * Populates global structure with system-specific information.
+ *
+ * Notes: add limits.h, compute size of integer and other types via sizeof(type)*CHAR_BIT
+ *
  */
 
 

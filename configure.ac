@@ -814,6 +814,7 @@ AC_CONFIG_FILES([
     src/mca/pml/base/Makefile
     src/mca/ptl/Makefile
     src/mca/ptl/base/Makefile
+    src/mca/gpr/Makefile
 
     src/mpi/Makefile
     src/mpi/c/Makefile
@@ -829,7 +830,6 @@ AC_CONFIG_FILES([
     src/tools/wrappers/Makefile
 
     src/rte/universe/Makefile
-    src/rte/universe/registry/Makefile
 
     test/Makefile
     test/support/Makefile
