@@ -447,6 +447,26 @@ extern "C" {
     OMPI_DECLSPEC int mca_base_param_dump(ompi_list_t **info, bool internal);
 
     /**
+     * Obtain a list of all the MCA parameters currently defined as
+     * well as their types.  
+     *
+     * @param env[out] A pointer to an argv-style array of key=value
+     * strings, suitable for use in an environment
+     * @param num_env[out] A pointer to an int, containing the length
+     * of the env array (not including the final NULL entry).
+     * @param internal[in] Whether to include the internal parameters
+     * or not.
+     *
+     * @retval OMPI_SUCCESS Upon success.
+     * @retval OMPI_ERROR Upon failure.
+     *
+     * This function is similar to mca_base_param_dump() except that
+     * its output is in terms of an argv-style array of key=value
+     * strings, suitable for using in an environment.
+     */
+    OMPI_DECLSPEC int mca_base_param_build_env(char ***env, int *num_env, bool internal);
+
+    /**
      * Release the memory associated with the info list returned from
      * mca_base_param_dump().
      *
