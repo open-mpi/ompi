@@ -26,7 +26,7 @@
 static void ompi_registry_value_construct(ompi_registry_value_t* reg_val)
 {
     reg_val->object = NULL;
-    reg_val->object_size = -1;
+    reg_val->object_size = 0;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -100,7 +100,7 @@ static void mca_gpr_notify_request_tracker_construct(mca_gpr_notify_request_trac
     req->req_tag = 0;
     req->callback = NULL;
     req->user_tag = NULL;
-    req->id_tag = 0;
+    req->id_tag = MCA_GPR_NOTIFY_ID_MAX;
     req->synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
 }
 
@@ -123,7 +123,7 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize notify idtag list instance */
 static void mca_gpr_idtag_list_construct(mca_gpr_idtag_list_t* req)
 {
-    req->id_tag = 0;
+    req->id_tag = MCA_GPR_NOTIFY_ID_MAX;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -152,11 +152,17 @@ static void ompi_registry_notify_message_destructor(ompi_registry_notify_message
 {
     uint32_t i;
     char **tokptr;
+    ompi_registry_value_t *ptr;
 
+    while (NULL != (ptr = (ompi_registry_value_t*)ompi_list_remove_first(&msg->data))) {
+	OBJ_RELEASE(ptr);
+    }
     OBJ_DESTRUCT(&msg->data);
+
     for (i=0, tokptr=msg->tokens; i < msg->num_tokens; i++, tokptr++) {
 	free(*tokptr);
     }
+
     if (NULL != msg->tokens) {
 	free(msg->tokens);
     }
