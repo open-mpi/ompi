@@ -62,8 +62,6 @@ int ompi_mpi_finalize(void)
 {
     int ret;
 
-    ompi_progress_events(OMPI_EVLOOP_ONCE);
-
     ompi_mpi_finalized = true;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
