@@ -30,7 +30,6 @@ using namespace std;
 //
 
 extern "C" {
-	extern int lam_few(char *argv[], int *status);
 	extern char   *lam_path_find (char *fname, char **pathv, int mode);
 	extern char   *lam_path_env_find (char *fname, int mode);
 	extern char   *lam_path_findv (char *fname, char **pathv, int mode, char **envv);
@@ -116,7 +115,7 @@ lam_wrap_parse_args(int argc, char* argv[], bool& want_flags)
       fl_want_show_error = true;
     }
   }
-#if !WANT_MPI_PROFILING
+#if !LAM_ENABLE_MPI_PROFILING
   // Sanity check
   if (fl_profile) {
 #if 0
