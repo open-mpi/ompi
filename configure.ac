@@ -87,9 +87,9 @@ AH_BOTTOM([
 #endif /* LAM_CONFIG_H */
 ])
 
-# What kind of machine are we on?
+# Other basic setup stuff (shared with modules)
 
-AC_CANONICAL_HOST
+LAM_BASIC_SETUP
 
 
 ############################################################################
@@ -221,12 +221,13 @@ LAM_SETUP_CXX
 LAM_SETUP_F77
 if test -n "$F77"; then
     LAM_F77_FIND_EXT_SYMBOL_CONVENTION($F77)
-	# checking the sizeof fortran interger. This is needed to define 
-	# MPI_Fint. This is needed for C bindings and hence there is no
-	# bearing of --enable-fortran flag on this test.
-	# 
-	LAM_SIZEOF_FORTRAN_INT=0
-	LAM_GET_SIZEOF_FORTRAN_TYPE(INTEGER, LAM_SIZEOF_FORTRAN_INT)
+
+    # checking the sizeof fortran interger. This is needed to define 
+    # MPI_Fint. This is needed for C bindings and hence there is no
+    # bearing of --enable-fortran flag on this test.
+
+    LAM_SIZEOF_FORTRAN_INT=0
+    LAM_GET_SIZEOF_FORTRAN_TYPE(INTEGER, LAM_SIZEOF_FORTRAN_INT)
 fi
 
 LAM_SETUP_F90
@@ -301,30 +302,30 @@ if test -n "$F77"; then
 	MPI_FINT_TYPE="not found"
 	AC_MSG_CHECKING([checking for type of MPI_Fint])
 	if test "$LAM_SIZEOF_FORTRAN_INT" = 4 ; then
-    	if test "$ac_cv_type_int32_t" = "yes"; then
+            if test "$ac_cv_type_int32_t" = "yes"; then
         	MPI_FINT_TYPE=int32_t
-    	elif test "$ac_cv_sizeof_int" = 4 ; then
+            elif test "$ac_cv_sizeof_int" = 4 ; then
         	MPI_FINT_TYPE=int
-    	fi
+            fi
 	elif test "$LAM_SIZEOF_FORTRAN_INT" = 8 ; then
-    	if test "$ac_cv_type_int64_t" = "yes"; then
-        MPI_FINT_TYPE=int64_t
-    	elif test "$ac_cv_type_long_long" = "yes" -a "$ac_cv_sizeof_long_long" = 8; then
+            if test "$ac_cv_type_int64_t" = "yes"; then
+                MPI_FINT_TYPE=int64_t
+            elif test "$ac_cv_type_long_long" = "yes" -a "$ac_cv_sizeof_long_long" = 8; then
         	MPI_FINT_TYPE="long long"
-    	elif test "$ac_cv_sizeof_long" = 8; then
+            elif test "$ac_cv_sizeof_long" = 8; then
         	MPI_FINT_TYPE="long"
-    	elif test "$ac_cv_sizeof_int" = 8 ; then
+            elif test "$ac_cv_sizeof_int" = 8 ; then
         	MPI_FINT_TYPE=int
-    	fi
+            fi
 	fi
 	AC_MSG_RESULT([$MPI_FINT_TYPE])
 	if test "$MPI_FINT_TYPE" = "not found"; then
-    	AC_MSG_WARN([*** WARNING: Unable to find the right definition for MPI_Fint])
-    	AC_MSG_ERROR([Cannot continue])
+            AC_MSG_WARN([*** WARNING: Unable to find the right definition for MPI_Fint])
+            AC_MSG_ERROR([Cannot continue])
 	fi
 	AC_DEFINE_UNQUOTED(MPI_Fint, $MPI_FINT_TYPE, [Type of MPI_Fint])
 else
-	AC_MSG_WARN([*** WARNING: Could not detect a f77 compiler. MPI_fint will be defined as an int]) 
+	AC_MSG_WARN([*** WARNING: Could not detect a f77 compiler. MPI_Fint will be defined as an int]) 
 	MPI_FINT_TYPE=int
 	AC_DEFINE_UNQUOTED(MPI_Fint, $MPI_FINT_TYPE, [Type of MPI_Fint])
 fi
