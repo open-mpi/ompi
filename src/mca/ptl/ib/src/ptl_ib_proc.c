@@ -88,13 +88,11 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
 
     mca_ptl_ib_proc_t* module_proc = NULL;
 
-    /*
     module_proc = mca_ptl_ib_proc_lookup_ompi(ompi_proc);
 
     if(module_proc != NULL) {
         return module_proc;
     }
-    */
 
     module_proc = OBJ_NEW(mca_ptl_ib_proc_t);
 
@@ -160,12 +158,12 @@ mca_ptl_ib_proc_t* mca_ptl_ib_proc_create(ompi_proc_t* ompi_proc)
 int mca_ptl_ib_proc_insert(mca_ptl_ib_proc_t* module_proc, 
         mca_ptl_base_peer_t* module_peer)
 {
-    int i;
-
     /* insert into peer array */
     module_peer->peer_proc = module_proc;
     module_proc->proc_peers[module_proc->proc_peer_count++] = module_peer;
 
+#if 0 /* TODO: don't quite understand what this means for IB ptl.
+         will come back to it later */
     /*
      * Look through the proc instance for an address that is on the
      * directly attached network. If we don't find one, pick the first
@@ -178,6 +176,7 @@ int mca_ptl_ib_proc_insert(mca_ptl_ib_proc_t* module_proc,
 
         module_peer->peer_addr = peer_addr;
     }
+#endif
 
     return OMPI_SUCCESS;
 }

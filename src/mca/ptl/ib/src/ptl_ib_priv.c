@@ -14,10 +14,8 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
         case VAPI_SEND_QUEUE_DRAINED:
         case VAPI_PORT_ACTIVE:
             {
-                /*
                 D_PRINT("Got an asynchronous event: %s\n",
                         VAPI_event_record_sym(event_p->type));
-                */
                 break;
             }
         case VAPI_CQ_ERROR:
@@ -47,7 +45,8 @@ static void ud_completion_handler(VAPI_hca_hndl_t nic,
 {
     VAPI_ret_t ret;
 
-    D_PRINT("Got interrupt!!\n");
+    fprintf(stderr,"Got interrupt!!\n");
+    fflush(stderr);
 
     ret = VAPI_req_comp_notif(nic, cq_hndl, VAPI_NEXT_COMP);
 
@@ -120,8 +119,8 @@ int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
     qp_init_attr.sq_cq_hndl         = ud_scq_hndl;
     
     /* Signal all work requests on this queue pair */
-    qp_init_attr.rq_sig_type        = VAPI_SIGNAL_ALL_WR;
-    qp_init_attr.sq_sig_type        = VAPI_SIGNAL_ALL_WR;
+    qp_init_attr.rq_sig_type        = VAPI_SIGNAL_REQ_WR;
+    qp_init_attr.sq_sig_type        = VAPI_SIGNAL_REQ_WR;
 
     /* Use Unreliable Datagram transport service */
     qp_init_attr.ts_type            = VAPI_TS_UD;
@@ -342,59 +341,62 @@ int mca_ptl_ib_set_async_handler(VAPI_hca_hndl_t nic,
 }
 
 int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t nic,
-        mca_ptl_ib_ud_buf_t** ud_buf_ptr)
+        mca_ptl_ib_ud_buf_t* ud_buf, IB_wr_t wr_type, 
+        int num_bufs)
 {
-    int size, len;
-    int i, num_ud_bufs;
+    int i;
     vapi_descriptor_t* desc;
-    mca_ptl_ib_ud_buf_data_t* buf_data;
-    vapi_memhandle_t* memhandle;
-    mca_ptl_ib_ud_buf_t* ud_buf;
 
-    num_ud_bufs = MAX_UD_PREPOST_DEPTH;
+    for(i = 0; i < num_bufs; i++) {
 
-    size = num_ud_bufs * sizeof(mca_ptl_ib_ud_buf_t);
-
-    len = sizeof(mca_ptl_ib_ud_buf_data_t);
-
-    (mca_ptl_ib_ud_buf_t*)*ud_buf_ptr = (mca_ptl_ib_ud_buf_t*) malloc(size);
-
-    if(NULL == *ud_buf_ptr) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    ud_buf = (mca_ptl_ib_ud_buf_t*)*ud_buf_ptr;
-
-    /* Walk through the list of UD bufs */
-    for(i = 0; i < num_ud_bufs; i++) {
         desc = &ud_buf[i].desc;
-        buf_data = ud_buf[i].buf_data;
-        memhandle = &ud_buf[i].memhandle;
+        ud_buf[i].buf_data = 
+            malloc(sizeof(mca_ptl_ib_ud_buf_data_t));
 
-        buf_data = (mca_ptl_ib_ud_buf_data_t*) malloc(len);
-        if(NULL == buf_data) {
+        if(NULL == ud_buf[i].buf_data) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        if(mca_ptl_ib_register_mem(nic, buf_data, len, memhandle) 
+        if(mca_ptl_ib_register_mem(nic, 
+                    (void*) ud_buf[i].buf_data, 
+                    sizeof(mca_ptl_ib_ud_buf_data_t), 
+                    &ud_buf[i].memhandle)
                 != OMPI_SUCCESS) {
             return OMPI_ERROR;
         }
 
-        desc->rr.comp_type = VAPI_SIGNALED;
-        desc->rr.opcode = VAPI_RECEIVE;
-        desc->rr.id = (VAPI_virt_addr_t) (unsigned int) &ud_buf[i];
-        desc->rr.sg_lst_len = 1;
-        desc->rr.sg_lst_p = &(desc->sg_entry);
-        desc->sg_entry.len = len;
+        D_PRINT("databuf = %p, len = %d, lkey = %d\n",
+                (void*) ud_buf[i].buf_data,
+                sizeof(mca_ptl_ib_ud_buf_data_t),
+                ud_buf[i].memhandle.lkey);
 
-        D_PRINT("length = %d\n", len);
-        desc->sg_entry.lkey = memhandle->lkey;
+        if(IB_RECV == wr_type) {
+            desc->rr.comp_type = VAPI_SIGNALED;
+            desc->rr.opcode = VAPI_RECEIVE;
+            desc->rr.id = (VAPI_virt_addr_t)(MT_virt_addr_t) &(ud_buf[i]);
+            desc->rr.sg_lst_len = 1;
+            desc->rr.sg_lst_p = &(desc->sg_entry);
+            desc->sg_entry.len = sizeof(mca_ptl_ib_ud_buf_data_t);
+            desc->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) ud_buf[i].buf_data;
+            desc->sg_entry.lkey = ud_buf[i].memhandle.lkey; 
+        } else if (IB_SEND == wr_type) {
+            desc->sr.comp_type = VAPI_SIGNALED;
+            desc->sr.opcode = VAPI_SEND;
+            desc->sr.id = (VAPI_virt_addr_t)(MT_virt_addr_t) &(ud_buf[i]);
+            desc->sr.sg_lst_len = 1;
+            desc->sr.sg_lst_p = &(desc->sg_entry);
+            desc->sg_entry.len = sizeof(mca_ptl_ib_ud_buf_data_t);
+            desc->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) ud_buf[i].buf_data;
+            desc->sg_entry.lkey = ud_buf[i].memhandle.lkey; 
+        } else {
+            return OMPI_ERROR;
+        }
 
-        D_PRINT("local key = %d\n", (int) memhandle->lkey);
 
-        desc->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) (buf_data);
-        D_PRINT("sg_entry.addr = %d\n", (int)desc->sg_entry.addr);
+        D_PRINT("databuf = %p, len = %d, lkey = %d\n",
+                (void*) ud_buf[i].buf_data,
+                sizeof(mca_ptl_ib_ud_buf_data_t),
+                ud_buf[i].memhandle.lkey);
     }
 
     return OMPI_SUCCESS;
@@ -427,8 +429,7 @@ int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic,
     memhandle->lkey = mem_handle.lkey;
     memhandle->rkey = mem_handle.rkey;
 
-    D_PRINT("local key = %d, remote key = %d\n",
-            mem_handle.lkey, mem_handle.rkey);
+    D_PRINT("addr = %p, lkey = %d\n", buf, memhandle->lkey);
 
     memhandle->hndl = mem_handle.hndl;
 
@@ -437,18 +438,14 @@ int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic,
 
 int mca_ptl_ib_post_ud_recv(VAPI_hca_hndl_t nic,
         VAPI_qp_hndl_t ud_qp_hndl, 
-        mca_ptl_ib_ud_buf_t* ud_buf)
+        mca_ptl_ib_ud_buf_t* ud_buf, int num_bufs)
 {
-    int num_ud_bufs, i;
+    int i;
     VAPI_ret_t ret;
-    vapi_descriptor_t* desc;
 
-    num_ud_bufs = MAX_UD_PREPOST_DEPTH;
+    for(i = 0; i < num_bufs; i++) {
 
-    for(i = 0; i< num_ud_bufs; i++) {
-        desc = &ud_buf[i].desc;
-
-        ret = VAPI_post_rr(nic, ud_qp_hndl, &desc->rr);
+        ret = VAPI_post_rr(nic, ud_qp_hndl, &ud_buf[i].desc.rr);
 
         if(VAPI_OK != ret) {
             MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_rr");

@@ -16,7 +16,10 @@ libmca_ptl_ib_la_SOURCES = \
 	ptl_ib_proc.h \
 	ptl_ib_peer.c \
 	ptl_ib_peer.h \
+	ptl_ib_recvfrag.c \
 	ptl_ib_recvfrag.h \
+	ptl_ib_sendfrag.c \
 	ptl_ib_sendfrag.h \
+	ptl_ib_sendreq.c \
 	ptl_ib_sendreq.h \
 	ptl_ib_vapi.h

@@ -10,6 +10,11 @@
  */
 #define MAX_UD_PREPOST_DEPTH    (1)
 
+typedef enum {
+    IB_RECV,
+    IB_SEND
+} IB_wr_t;
+
 struct vapi_memhandle_t {
     VAPI_mr_hndl_t hndl;
     VAPI_lkey_t lkey;
@@ -42,6 +47,31 @@ struct mca_ptl_ib_ud_buf_t {
 
 typedef struct mca_ptl_ib_ud_buf_t mca_ptl_ib_ud_buf_t;
 
+
+#define MCA_PTL_IB_UD_RECV_DESC(ud_buf, len) {                      \
+        desc->rr.comp_type = VAPI_SIGNALED;                         \
+        desc->rr.opcode = VAPI_RECEIVE;                             \
+        desc->rr.id = (VAPI_virt_addr_t)(MT_virt_addr_t) &(ud_buf); \
+        desc->rr.sg_lst_len = 1;                                    \
+        desc->rr.sg_lst_p = &(desc->sg_entry);                      \
+        desc->sg_entry.len = len;                                   \
+        desc->sg_entry.addr =                                       \
+        (VAPI_virt_addr_t) (MT_virt_addr_t) ud_buf.buf_data;        \
+        desc->sg_entry.lkey = ud_buf.memhandle.lkey;                \
+}
+
+#define MCA_PTL_IB_UD_SEND_DESC(ud_buf, len) {                      \
+        desc->sr.comp_type = VAPI_SIGNALED;                         \
+        desc->sr.opcode = VAPI_SEND;                                \
+        desc->sr.id = (VAPI_virt_addr_t)(MT_virt_addr_t) ud_buf;    \
+        desc->sr.sg_lst_len = 1;                                    \
+        desc->sr.sg_lst_p = &(desc->sg_entry);                      \
+        desc->sg_entry.len = len;                                   \
+        desc->sg_entry.addr =                                       \
+        (VAPI_virt_addr_t) (MT_virt_addr_t) ud_buf->buf_data;       \
+        desc->sg_entry.lkey = ud_buf->memhandle.lkey;               \
+}
+
 int mca_ptl_ib_ud_cq_init(VAPI_hca_hndl_t, VAPI_cq_hndl_t*,
         VAPI_cq_hndl_t*);
 int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t, VAPI_cq_hndl_t,
@@ -56,8 +86,8 @@ int mca_ptl_ib_create_cq(VAPI_hca_hndl_t, VAPI_cq_hndl_t*);
 int mca_ptl_ib_set_async_handler(VAPI_hca_hndl_t, 
         EVAPI_async_handler_hndl_t*);
 int mca_ptl_ib_post_ud_recv(VAPI_hca_hndl_t, VAPI_qp_hndl_t, 
-        mca_ptl_ib_ud_buf_t*);
-int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t, mca_ptl_ib_ud_buf_t**);
+        mca_ptl_ib_ud_buf_t*, int);
+int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t, mca_ptl_ib_ud_buf_t*, IB_wr_t, int);
 int mca_ptl_ib_register_mem(VAPI_hca_hndl_t, void*, int, 
         vapi_memhandle_t*);
 int mca_ptl_ib_set_comp_ev_hndl(VAPI_hca_hndl_t, VAPI_cq_hndl_t,
@@ -65,7 +95,7 @@ int mca_ptl_ib_set_comp_ev_hndl(VAPI_hca_hndl_t, VAPI_cq_hndl_t,
         EVAPI_compl_handler_hndl_t*);
 int mca_ptl_ib_req_comp_notif(VAPI_hca_hndl_t,VAPI_cq_hndl_t);
 int mca_ptl_ib_get_comp_ev_hndl(VAPI_completion_event_handler_t*);
-
+int mca_ptl_ib_init_send(void*, VAPI_qp_hndl_t, int);
 
 
 #endif  /* MCA_PTL_IB_PRIV_H */
