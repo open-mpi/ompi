@@ -45,8 +45,9 @@ extern ompi_process_name_t mca_oob_name_self;
 /**
  * Service tags
  */
-#define MCA_OOB_TAG_NS  1
-#define MCA_OOB_TAG_GPR 2
+#define MCA_OOB_TAG_NS          1
+#define MCA_OOB_TAG_GPR         2
+#define MCA_OOB_TAG_GPR_NOTIFY  3
 
 
 /*
