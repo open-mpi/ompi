@@ -29,7 +29,34 @@
  * Portals PTL component.
  */
 struct mca_ptl_portals_component_t {
-    mca_ptl_base_component_1_0_0_t super;  /**< base PTL component */
+    /** base PTL component */
+    mca_ptl_base_component_1_0_0_t super;
+
+    /** output channel for debugging.  Value settings when using
+     * output_verbose:
+     *
+     *  - 0 : critical user information
+     *  - 10: initialization / shutdown diagnostic information
+     *  - 20: general execution diagnostic information
+     *  - 99: useful only to developers
+     */
+    int portals_output;
+
+    /** ethernet interface to use - only has meaning with utcp
+        reference */
+    char *portals_ifname;
+
+    /** Number of currently active portals modules */
+    uint32_t portals_num_modules;
+    /** List of currently running modules */
+    struct mca_ptl_base_module_t **portals_modules;
+
+    /** Initial size of the free lists */
+    int32_t portals_free_list_num;
+    /** maximum size of the free lists */
+    int32_t portals_free_list_max;
+    /** number of elements to alloc when group free lists */
+    int32_t portals_free_list_inc;
 };
 
 typedef struct mca_ptl_portals_component_t mca_ptl_portals_component_t;
@@ -325,3 +352,4 @@ extern int mca_ptl_portals_send_continue(
     int flags
 );
 
+#endif
