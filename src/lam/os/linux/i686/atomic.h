@@ -27,6 +27,7 @@ typedef struct {
     volatile unsigned long long data;
 } bigAtomicUnsignedInt;
 
+/* JMS This section is commented out */
 /*
 #ifdef __INTEL_COMPILER
 
@@ -43,7 +44,6 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
-
 
 #else
 */

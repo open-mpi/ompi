@@ -6,7 +6,7 @@
 #define LAM_ARRAY_H
 
 #include "lam_config.h"
-#include "include/lam_types.h"
+#include "lam/types.h"
 #include "lam/lfc/object.h"
 
 /*

@@ -6,8 +6,8 @@
 #define LAM_OBJECT_H
 
 #include <stdlib.h>
-#include "include/lam_types.h"
-#include "lam/os/atomic.h"
+#include "lam/types.h"
+#include "lam/atomic.h"
 
 /*
  *
@@ -82,6 +82,13 @@ typedef struct lam_object
 
 void lam_obj_init(lam_object_t *obj);
 void lam_obj_destroy(lam_object_t *obj);
+
+/*
+ * This function is used by inline functions later in this file, and
+ * it must be defined by other header files later (eg., one of the
+ * atomic.h's).
+ */
+static inline int fetchNadd(volatile int *addr, int inc);
 
 /*
  returns 1 if object's class is derived from cls, otherwise 0.

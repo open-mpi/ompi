@@ -2,5 +2,5 @@
  * $HEADER$
  */
 
-#include "ctpeer.h"
+#include "lam/ctnetwork/ctpeer.h"
 

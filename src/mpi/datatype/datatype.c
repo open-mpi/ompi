@@ -7,7 +7,7 @@
 #ifdef DATATYPES_ARE_READY
 
 #include "lam_config.h"
-#include "datatype.h"
+#include "lam/datatype.h"
 
 
 lam_class_info_t lam_datatype_cls = {
