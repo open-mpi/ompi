@@ -41,7 +41,7 @@ mca_pml_teg_t mca_pml_teg = {
 int mca_pml_teg_add_comm(lam_communicator_t* comm)
 {
     /* allocate pml specific comm data */
-    mca_pml_comm_t* pml_comm = OBJ_NEW(mca_pml_comm_t);
+    mca_pml_ptl_comm_t* pml_comm = OBJ_NEW(mca_pml_ptl_comm_t);
     if (NULL == pml_comm) {
         return LAM_ERR_OUT_OF_RESOURCE;
     }

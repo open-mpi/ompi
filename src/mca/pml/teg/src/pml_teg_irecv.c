@@ -77,6 +77,7 @@ int mca_pml_teg_recv(
     lam_status_public_t* status)
 {
     int rc;
+    int index;
 
     mca_ptl_base_recv_request_t *recvreq = mca_pml_teg_recv_request_alloc(&rc);
     if(NULL == recvreq)
@@ -96,6 +97,6 @@ int mca_pml_teg_recv(
         mca_pml_teg_recv_request_return(recvreq);
         return rc;
     }
-    return mca_pml_teg_wait((lam_request_t**)&recvreq, status);
+    return mca_pml_teg_wait(1, (lam_request_t**)&recvreq, &index, status);
 }
 

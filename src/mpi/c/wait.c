@@ -15,6 +15,7 @@
 
 int MPI_Wait(MPI_Request *request, MPI_Status *status) 
 {
+    int index;
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
         if (lam_mpi_finalized) {
@@ -34,6 +35,6 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
         status->_count = 0;
         return MPI_SUCCESS;
     }
-    return mca_pml.pml_wait(request,status);
+    return mca_pml.pml_wait(1, request, &index, status);
 }
 

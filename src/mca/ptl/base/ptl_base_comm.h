@@ -11,7 +11,7 @@
  *  specific to the PML. 
  */
 
-extern lam_class_t mca_pml_comm_t_class;
+extern lam_class_t mca_pml_ptl_comm_t_class;
 
 struct mca_pml_comm_t {
     lam_object_t super;
@@ -45,12 +45,12 @@ struct mca_pml_comm_t {
     /* protect access to wild receives */
     lam_mutex_t c_wild_lock;
 };
-typedef struct mca_pml_comm_t mca_pml_comm_t;
+typedef struct mca_pml_comm_t mca_pml_ptl_comm_t;
 
 
-extern int mca_pml_ptl_comm_init_size(struct mca_pml_comm_t*, size_t);
+extern int mca_pml_ptl_comm_init_size(mca_pml_ptl_comm_t*, size_t);
 
-static inline mca_ptl_base_sequence_t mca_pml_ptl_comm_send_sequence(struct mca_pml_comm_t* comm, int dst)
+static inline mca_ptl_base_sequence_t mca_pml_ptl_comm_send_sequence(mca_pml_ptl_comm_t* comm, int dst)
 {
    mca_ptl_base_sequence_t sequence;
    lam_mutex_lock(comm->c_matching_lock+dst);

@@ -4,25 +4,25 @@
 
 #include "ptl_base_comm.h"
 
-static void mca_pml_ptl_comm_construct(mca_pml_comm_t* comm);
-static void mca_pml_ptl_comm_destruct(mca_pml_comm_t* comm);
+static void mca_pml_ptl_comm_construct(mca_pml_ptl_comm_t* comm);
+static void mca_pml_ptl_comm_destruct(mca_pml_ptl_comm_t* comm);
 
 
-lam_class_t mca_pml_comm_t_class = {
-    "mca_pml_comm_t",
+lam_class_t mca_pml_ptl_comm_t_class = {
+    "mca_pml_ptl_comm_t",
     OBJ_CLASS(lam_object_t),
     (lam_construct_t)mca_pml_ptl_comm_construct,
     (lam_destruct_t)mca_pml_ptl_comm_destruct
 };
 
 
-static void mca_pml_ptl_comm_construct(mca_pml_comm_t* comm)
+static void mca_pml_ptl_comm_construct(mca_pml_ptl_comm_t* comm)
 {
     OBJ_CONSTRUCT(&comm->c_wild_receives, lam_list_t);
     OBJ_CONSTRUCT(&comm->c_wild_lock, lam_mutex_t);
 }
 
-static void mca_pml_ptl_comm_destruct(mca_pml_comm_t* comm)
+static void mca_pml_ptl_comm_destruct(mca_pml_ptl_comm_t* comm)
 {
     free(comm->c_msg_seq);
     free(comm->c_next_msg_seq);
@@ -35,7 +35,7 @@ static void mca_pml_ptl_comm_destruct(mca_pml_comm_t* comm)
 }
 
 
-int mca_pml_ptl_comm_init_size(mca_pml_comm_t* comm, size_t size)
+int mca_pml_ptl_comm_init_size(mca_pml_ptl_comm_t* comm, size_t size)
 {
     size_t i;
 

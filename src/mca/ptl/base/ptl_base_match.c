@@ -24,23 +24,23 @@
 
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match(
     mca_ptl_base_match_header_t *frag_header,
-    mca_pml_comm_t *ptl_comm);
+    mca_pml_ptl_comm_t *ptl_comm);
                                                                                                                             
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
     mca_ptl_base_match_header_t *frag_header,
-    mca_pml_comm_t *ptl_comm);
+    mca_pml_ptl_comm_t *ptl_comm);
                                                                                                                             
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_match(
     mca_ptl_base_match_header_t *frag_header,
-    mca_pml_comm_t *ptl_comm);
+    mca_pml_ptl_comm_t *ptl_comm);
                                                                                                                             
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receives_for_match(
     mca_ptl_base_match_header_t *frag_header,
-    mca_pml_comm_t *ptl_comm);
+    mca_pml_ptl_comm_t *ptl_comm);
                                                                                                                             
 static void mca_ptl_base_check_cantmatch_for_match(
     lam_list_t *additional_matches,
-    mca_pml_comm_t *pml_comm, int frag_src);
+    mca_pml_ptl_comm_t *pml_comm, int frag_src);
 
 
 /**
@@ -81,7 +81,7 @@ int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
     mca_ptl_base_sequence_t frag_msg_seq,next_msg_seq_expected;
     lam_communicator_t *comm_ptr;
     mca_ptl_base_recv_request_t *matched_receive;
-    mca_pml_comm_t *pml_comm;
+    mca_pml_ptl_comm_t *pml_comm;
     int frag_src;
 
     /* initialization */
@@ -89,7 +89,7 @@ int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
 
     /* communicator pointer */
     comm_ptr=lam_comm_lookup(frag_header->hdr_contextid);
-    pml_comm=(mca_pml_comm_t *)comm_ptr->c_pml_comm;
+    pml_comm=(mca_pml_ptl_comm_t *)comm_ptr->c_pml_comm;
 
     /* source sequence number */
     frag_msg_seq = frag_header->hdr_msg_seq;
@@ -204,7 +204,7 @@ int mca_ptl_base_match(mca_ptl_base_match_header_t *frag_header,
  * set by the upper level routine.
  */
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match
-  (mca_ptl_base_match_header_t *frag_header, mca_pml_comm_t *pml_comm)
+  (mca_ptl_base_match_header_t *frag_header, mca_pml_ptl_comm_t *pml_comm)
 {
     /* local parameters */
     mca_ptl_base_recv_request_t *return_match;
@@ -264,7 +264,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_receives_for_match
  */
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
         mca_ptl_base_match_header_t *frag_header,
-        mca_pml_comm_t *pml_comm)
+        mca_pml_ptl_comm_t *pml_comm)
 {
     /* local parameters */
     mca_ptl_base_recv_request_t *return_match, *wild_recv;
@@ -331,7 +331,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_wild_receives_for_match(
  */
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_match(
         mca_ptl_base_match_header_t *frag_header,
-        mca_pml_comm_t *pml_comm)
+        mca_pml_ptl_comm_t *pml_comm)
 {
     /* local variables */
     mca_ptl_base_recv_request_t *specific_recv, *return_match;
@@ -393,7 +393,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_receives_for_mat
  */
 static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receives_for_match(
         mca_ptl_base_match_header_t *frag_header,
-        mca_pml_comm_t *pml_comm)
+        mca_pml_ptl_comm_t *pml_comm)
 {
     /* local variables */
     mca_ptl_base_recv_request_t *specific_recv, *wild_recv, *return_match;
@@ -532,7 +532,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
  */
 
 static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matches,
-        mca_pml_comm_t *pml_comm, int frag_src)
+    mca_pml_ptl_comm_t *pml_comm, int frag_src)
 {
     /* local parameters */
     int match_found;

@@ -40,7 +40,7 @@ static void mca_ptl_base_recv_request_destruct(mca_ptl_base_recv_request_t* requ
 void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* request)
 {
     lam_communicator_t *comm = request->super.req_comm;
-    mca_pml_comm_t* pml_comm = comm->c_pml_comm;
+    mca_pml_ptl_comm_t* pml_comm = comm->c_pml_comm;
     int req_peer = request->super.req_peer;
     mca_ptl_base_recv_frag_t* frag;
    
@@ -71,7 +71,7 @@ void mca_ptl_base_recv_request_match_specific(mca_ptl_base_recv_request_t* reque
 void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
 {
     lam_communicator_t *comm = request->super.req_comm;
-    mca_pml_comm_t* pml_comm = comm->c_pml_comm;
+    mca_pml_ptl_comm_t* pml_comm = comm->c_pml_comm;
     int proc_count = comm->c_remote_group->grp_proc_count;
     int proc;
 
@@ -120,7 +120,7 @@ void mca_ptl_base_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
 static mca_ptl_base_recv_frag_t* mca_ptl_base_recv_request_match_specific_proc(
     mca_ptl_base_recv_request_t* request, int proc)
 {
-    mca_pml_comm_t *pml_comm = request->super.req_comm->c_pml_comm;
+    mca_pml_ptl_comm_t *pml_comm = request->super.req_comm->c_pml_comm;
     lam_list_t* unexpected_frags = pml_comm->c_unexpected_frags+proc;
     mca_ptl_base_recv_frag_t* frag;
     int tag = request->super.req_tag;

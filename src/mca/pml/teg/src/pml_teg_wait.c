@@ -5,9 +5,12 @@
 
 
 int mca_pml_teg_wait(
+    int count,
     lam_request_t** request,
+    int *index,
     lam_status_public_t* status)
 {
+#if 0
     mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)request;
     if(pml_request->req_mpi_done == false) {
 
@@ -29,13 +32,22 @@ int mca_pml_teg_wait(
 
     /* return request to pool */
     if(pml_request->req_persistent == false) {
-        if(pml_request->req_pml_done == true)
-            mca_pml_teg_free(request);
-        *request = NULL;
+        mca_pml_teg_free(request);
     }
 
-    if (status != NULL)
+    if (status != NULL) {
        *status = pml_request->req_status;
+    }
+#endif
+    return LAM_SUCCESS;
+}
+
+
+int mca_pml_teg_waitall(
+    int count,
+    lam_request_t** request,
+    lam_status_public_t* status)
+{
     return LAM_SUCCESS;
 }
 
