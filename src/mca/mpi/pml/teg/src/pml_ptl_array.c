@@ -7,7 +7,7 @@
 #include "pml_ptl_array.h"
 
 
-lam_class_info_t mca_pml_teg_proc_cls = {
+lam_class_info_t mca_pml_teg_array_cls = {
     "mca_ptl_array_t",
     &lam_object_cls,
     (class_init_t) mca_ptl_array_init,
