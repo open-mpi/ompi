@@ -48,5 +48,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_JOIN,
 
 void mpi_comm_join_f(MPI_Fint *fd, MPI_Fint *intercomm, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_intercomm;
+
+    *ierr = OMPI_INT_2_FINT(MPI_Comm_join(OMPI_FINT_2_INT(*fd),
+					  &c_intercomm));
+    *intercomm = MPI_Comm_c2f(c_intercomm);
 }

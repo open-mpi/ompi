@@ -48,5 +48,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_FREE_KEYVAL,
 
 void mpi_comm_free_keyval_f(MPI_Fint *comm_keyval, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    OMPI_SINGLE_NAME_DECL(comm_keyval);
+
+    OMPI_SINGLE_FINT_2_INT(comm_keyval);
+
+    *ierr = 
+	OMPI_INT_2_FINT(MPI_Comm_free_keyval(OMPI_SINGLE_NAME_CONVERT(comm_keyval)));
+
+    OMPI_SINGLE_INT_2_FINT(comm_keyval);
 }

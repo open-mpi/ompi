@@ -46,7 +46,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_CREATE_ERRHANDLER,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_create_errhandler_f(MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr)
+void mpi_file_create_errhandler_f(MPI_Fint *function, 
+				  MPI_Fint *errhandler, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Errhandler c_errhandler;
+    
+    *ierr = 
+	OMPI_INT_2_FINT(MPI_File_create_errhandler((MPI_File_errhandler_fn *)
+						   function,
+						   &c_errhandler));
+
+    *errhandler = MPI_Errhandler_c2f(c_errhandler);
 }

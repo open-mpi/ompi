@@ -53,5 +53,7 @@ void mpi_comm_call_errhandler_f(MPI_Fint *comm, MPI_Fint *errorcode,
 
     c_comm = MPI_Comm_f2c(*comm);
 
-    *ierr = MPI_Comm_call_errhandler(c_comm, *errorcode);
+    *ierr = 
+	OMPI_INT_2_FINT(MPI_Comm_call_errhandler(c_comm, 
+						 OMPI_FINT_2_INT(*errorcode)));
 }

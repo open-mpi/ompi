@@ -48,5 +48,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERRHANDLER_SET,
 
 void mpi_errhandler_set_f(MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    MPI_Errhandler c_errhandler;
+
+    c_comm = MPI_Comm_f2c(*comm);
+    c_errhandler = MPI_Errhandler_f2c(*errhandler);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Errhandler_set(c_comm, c_errhandler));
 }
