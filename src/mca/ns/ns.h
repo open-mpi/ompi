@@ -22,22 +22,78 @@
 
 
 #include "ompi_config.h"
+#include "include/types.h"
+#include "class/ompi_list.h"
+
+#include "mca/mca.h"
+#include "mca/ns/base/base.h"
 
 /*
  * typedefs
  */
 typedef uint32_t ompi_process_id_t;  /**< Set the allowed range for id's in each space */
 
-struct ompi_process_name_t {
-    ompi_process_id_t cellid;  /**< Cell number */
-    ompi_process_id_t jobid; /**< Job number */
-    ompi_process_id_t procid;  /**< Process number */
+
+/*
+ * Component functions - all MUST be provided!
+ */
+
+typedef ompi_process_id_t (*mca_ns_create_cellid_t)(void);
+typedef ompi_process_id_t (*mca_ns_create_jobid_t)(void);
+typedef ompi_process_name_t (*mca_ns_create_proc_name_t)(ompi_process_id_t cell, ompi_process_id_t job);
+
+typedef char* (*mca_ns_get_proc_name_string)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_procid_string)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_jobid_string)(ompi_process_name_t *name);
+typedef char* (*mca_ns_get_cellid_string)(ompi_process_name_t *name);
+
+typedef ompi_process_id_t (*mca_ns_get_procid_t)(ompi_process_name_t *name);
+typedef ompi_process_id_t (*mca_ns_get_jobid_t)(ompi_process_name_t *name);
+typedef ompi_process_id_t (*mca_ns_get_cellid_t)(ompi_process_name_t *name);
+
+typedef int (*mca_ns_compare_t)(ompi_process_name_t *name1, ompi_process_name_t *name2);
+
+/*
+ * Ver 1.0.0
+ */
+struct mca_ns_base_module_1_0_0_t {
+    mca_base_module_t nsc_version;
+    mca_base_module_data_1_0_0_t nsc_data;
+
+    mca_ns_base_init_fn_t nsc_init;
+    mca_ns_base_finalize_fn_t nsc_finalize;
 };
-typedef struct ompi_process_name_t ompi_process_name_t;
+typedef struct mca_ns_base_module_1_0_0_t mca_ns_base_module_1_0_0_t;
 
-ompi_process_id_t ompi_ns_create_cellid(void);
+struct mca_ns_1_0_0_t {
+    mca_ns_create_cellid_t create_cellid;
+    mca_ns_create_jobid_t create_jobid;
+    mca_ns_create_proc_name_t create_process_name;
+    mca_ns_get_proc_name_string_t get_proc_name_string;
+    mca_ns_get_procid_string_t get_procid_string;
+    mca_ns_get_jobid_string_t get_jobid_string;
+    mca_ns_get_cellid_string_t get_cellid_string;
+    mca_ns_get_procid_t get_procid;
+    mca_ns_get_jobid_t get_jobid;
+    mca_ns_get_cellid_t get_cellid;
+    mca_ns_compare_t compare;
+};
+typedef struct mca_ns_1_0_0_t mca_ns_1_0_0_t;
 
-ompi_process_id_t ompi_ns_create_jobid(void);
+typedef mca_ns_base_module_1_0_0_t mca_ns_base_module_t;
+typedef mca_ns_1_0_0_t mca_ns_t;
+
+
+/*
+ * Macro for use in modules that are of type ns v1.0.0
+ */
+#define MCA_NS_BASE_VERSION_1_0_0 \
+  /* ns v1.0 is chained to MCA v1.0 */ \
+  MCA_BASE_VERSION_1_0_0, \
+  /* ns v1.0 */ \
+  "ns", 1, 0, 0
+
+#endif
 
 /**
  * Obtain a single new process name.
