@@ -48,7 +48,7 @@
 
 int OMPI_C_MPI_TYPE_NULL_DELETE_FN( MPI_Datatype datatype, int type_keyval,
                                     void* attribute_val_out,
-                                    void* flag )
+                                    void* extra_state )
 {
    /* Why not all MPI functions are like this ?? */
    return MPI_SUCCESS;
@@ -77,7 +77,7 @@ int OMPI_C_MPI_TYPE_DUP_FN( MPI_Datatype datatype, int type_keyval,
 #if OMPI_WANT_MPI2_ONE_SIDED
 int OMPI_C_MPI_WIN_NULL_DELETE_FN( MPI_Win window, int win_keyval,
                                    void* attribute_val_out,
-                                   void* flag )
+                                   void* extra_state )
 {
    return MPI_SUCCESS;
 }
@@ -103,7 +103,7 @@ int OMPI_C_MPI_WIN_DUP_FN( MPI_Win window, int win_keyval, void* extra_state,
 
 int OMPI_C_MPI_COMM_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
                                     void* attribute_val_out,
-                                    void* flag )
+                                    void* extra_state )
 {
    return MPI_SUCCESS;
 }
@@ -128,7 +128,7 @@ int OMPI_C_MPI_COMM_DUP_FN( MPI_Comm comm, int comm_keyval, void* extra_state,
 
 int OMPI_C_MPI_NULL_DELETE_FN( MPI_Comm comm, int comm_keyval,
                                void* attribute_val_out,
-                               void* flag )
+                               void* extra_state )
 {
    return MPI_SUCCESS;
 }
