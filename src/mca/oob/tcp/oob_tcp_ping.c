@@ -60,7 +60,7 @@ int mca_oob_tcp_ping(
     msg->msg_uiov = NULL;
     msg->msg_ucnt = 0;
     msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg, 1);
-    msg->msg_rwiov[0].iov_base = (void*)&msg->msg_hdr;
+    msg->msg_rwiov[0].iov_base = (ompi_iov_base_ptr_t)&msg->msg_hdr;
     msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
     msg->msg_rwptr = msg->msg_rwiov;
     msg->msg_rwcnt = msg->msg_rwnum = 1;

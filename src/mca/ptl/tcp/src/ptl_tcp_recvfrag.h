@@ -169,7 +169,7 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
 		    offset,                            /* offset in bytes into packed buffer */ 
 		NULL );                            /* dont allocate memory */
 	
-	    iov.iov_base = frag->frag_recv.frag_base.frag_addr; 
+	    iov.iov_base = (ompi_iov_base_ptr_t)frag->frag_recv.frag_base.frag_addr; 
 	    iov.iov_len = frag->frag_recv.frag_base.frag_size;
 	    iov_count = 1;
 	    max_data = iov.iov_len;

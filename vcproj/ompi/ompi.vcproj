@@ -18,7 +18,7 @@
 			CharacterSet="2">
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/I&quot;../generated_include&quot; /I&quot;../../src/win32/generated_include&quot; /I&quot;../../include&quot; /I&quot;../../src&quot; /I&quot;../../src/event/compat/&quot; /I&quot;../../src/event/WIN32-Code&quot; /D&quot;__i386__&quot;  /D&quot;HAVE_CONFIG_H&quot; /DOMPI_PKGDATADIR=&quot;\&quot;C:/cygwin/ompi-new/vcproj/ompi/Debug\&quot;&quot; /DOMPI_PKGLIBDIR=&quot;\&quot;C:/cygwin/ompi-new/vcpro/ompi/Debug\&quot;&quot; /DOMPI_SYSCONFDIR=&quot;\&quot;C:/cygwin/ompi-new/vcproj/ompi/Debug\&quot;&quot; /DOMPI_BUILDING=1"
+				AdditionalOptions="/I&quot;../generated_include&quot; /I&quot;../../src/win32/generated_include&quot; /I&quot;../../include&quot; /I&quot;../../src&quot; /I&quot;../../src/event/compat/&quot; /I&quot;../../src/event/WIN32-Code&quot; /D&quot;__i386__&quot;  /D&quot;HAVE_CONFIG_H&quot; /DOMPI_PKGDATADIR=&quot;\&quot;E:/cygwin/home/pkambadu/ompi-pristine/vcproj/ompi/Debug\&quot;&quot; /DOMPI_PKGLIBDIR=&quot;\&quot;E:/cygwin/home/pkambadu/ompi-pristine/vcproj/ompi/Debug\&quot;&quot; /DOMPI_SYSCONFDIR=&quot;\&quot;E:/cygwin/home/pkambadu/ompi-pristine/vcproj/ompi/Debug\&quot;&quot; /DOMPI_BUILDING=1"
 				Optimization="0"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				GeneratePreprocessedFile="0"
@@ -986,6 +986,9 @@
 					</File>
 					<File
 						RelativePath="..\..\src\event\evsignal.h">
+					</File>
+					<File
+						RelativePath="..\..\src\event\select.c">
 					</File>
 					<Filter
 						Name="Win32-Code"
@@ -2919,21 +2922,6 @@
 				</File>
 				<File
 					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp_sendreq.h">
-				</File>
-				<File
-					RelativePath="..\..\src\mca\topo\unity\src\topo_unity.c">
-				</File>
-				<File
-					RelativePath="..\..\src\mca\topo\unity\src\topo_unity.h">
-				</File>
-				<File
-					RelativePath="..\..\src\mca\topo\unity\src\topo_unity_cart_map.c">
-				</File>
-				<File
-					RelativePath="..\..\src\mca\topo\unity\src\topo_unity_component.c">
-				</File>
-				<File
-					RelativePath="..\..\src\mca\topo\unity\src\topo_unity_graph_map.c">
 				</File>
 			</Filter>
 		</Filter>

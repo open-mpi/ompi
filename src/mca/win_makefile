@@ -30,7 +30,6 @@ C_SUBDIRS = \
         coll/basic \
         llm/hostfile/src \
         ns/proxy/src \
-        gpr/proxy/ \
         pcmclient/env \
         pcmclient/seed \
         pcmclient/singleton \
@@ -43,6 +42,7 @@ CPP_SUBDIRS = \
         oob/tcp/ \
         pml/teg/src \
         ns/replica/src \
+        gpr/proxy/ \
         gpr/replica/
 
 #list of components that are not working as yet
@@ -64,7 +64,6 @@ CFLAGS = \
         /DOMPI_BUILDING=0 \
         /DHAVE_CONFIG_H \
         /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
-        /D_WINDLL \
         /EHsc \
         /MLd \
         /W0 \
@@ -85,7 +84,6 @@ CPPFLAGS = \
         /DOMPI_BUILDING=0 \
         /DHAVE_CONFIG_H \
         /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
-        /D_WINDLL \
         /EHsc \
         /MLd \
         /W0 \

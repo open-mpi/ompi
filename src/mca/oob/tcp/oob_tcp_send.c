@@ -32,7 +32,7 @@ static int mca_oob_tcp_send_self(
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    ptr = msg->msg_rwbuf;
+    ptr = (unsigned char *)msg->msg_rwbuf;
     for(rc = 0; rc < count; rc++) {
         memcpy(ptr, iov[rc].iov_base, iov[rc].iov_len);
         ptr += iov[rc].iov_len;
@@ -98,7 +98,7 @@ int mca_oob_tcp_send(
     msg->msg_uiov = iov;
     msg->msg_ucnt = count;
     msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg, count+1);
-    msg->msg_rwiov[0].iov_base = (void*)&msg->msg_hdr;
+    msg->msg_rwiov[0].iov_base = (ompi_iov_base_ptr_t)(&msg->msg_hdr);
     msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
     msg->msg_rwptr = msg->msg_rwiov;
     msg->msg_rwcnt = msg->msg_rwnum = count + 1;
@@ -181,7 +181,7 @@ int mca_oob_tcp_send_nb(
     msg->msg_uiov = iov;
     msg->msg_ucnt = count;
     msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,count+1);
-    msg->msg_rwiov[0].iov_base = (void*)&msg->msg_hdr;
+    msg->msg_rwiov[0].iov_base = (ompi_iov_base_ptr_t)(&msg->msg_hdr);
     msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
     msg->msg_rwptr = msg->msg_rwiov;
     msg->msg_rwcnt = msg->msg_rwnum = count + 1;

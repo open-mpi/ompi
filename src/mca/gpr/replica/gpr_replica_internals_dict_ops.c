@@ -140,14 +140,14 @@ mca_gpr_replica_key_t
 mca_gpr_replica_key_t
 mca_gpr_replica_define_key(mca_gpr_replica_segment_t *seg, char *token)
 {
-    mca_gpr_replica_keytable_t *ptr_key, *new;
+    mca_gpr_replica_keytable_t *ptr_key, *latest;
 
     /* if token is NULL, error */
     if (NULL == token) {
 	return MCA_GPR_REPLICA_KEY_MAX;
     }
 
-    /* if seg is NULL, use token to define new segment name in global dictionary */
+    /* if seg is NULL, use token to define latest segment name in global dictionary */
     if (NULL == seg) {
 	for (ptr_key = (mca_gpr_replica_keytable_t*)ompi_list_get_first(&mca_gpr_replica_head.segment_dict);
 	     ptr_key != (mca_gpr_replica_keytable_t*)ompi_list_get_end(&mca_gpr_replica_head.segment_dict);
@@ -157,17 +157,17 @@ mca_gpr_replica_define_key(mca_gpr_replica_segment_t *seg, char *token)
 	    }
 	}
 	/* okay, token is unique - create dictionary entry */
-	new = OBJ_NEW(mca_gpr_replica_keytable_t);
-	new->token = strdup(token);
+	latest = OBJ_NEW(mca_gpr_replica_keytable_t);
+	latest->token = strdup(token);
 	if (0 == ompi_list_get_size(&mca_gpr_replica_head.freekeys)) { /* no keys waiting for reuse */
 	    mca_gpr_replica_head.lastkey++;
-	    new->key = mca_gpr_replica_head.lastkey;
+	    latest->key = mca_gpr_replica_head.lastkey;
 	} else {
 	    ptr_key = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&mca_gpr_replica_head.freekeys);
-	    new->key = ptr_key->key;
+	    latest->key = ptr_key->key;
 	}
-	ompi_list_append(&mca_gpr_replica_head.segment_dict, &new->item);
-	return new->key;
+	ompi_list_append(&mca_gpr_replica_head.segment_dict, &latest->item);
+	return latest->key;
     }
 
     /* check seg's dictionary to ensure uniqueness */
@@ -180,24 +180,24 @@ mca_gpr_replica_define_key(mca_gpr_replica_segment_t *seg, char *token)
     }
 
     /* okay, token is unique - create dictionary entry */
-    new = OBJ_NEW(mca_gpr_replica_keytable_t);
-    new->token = strdup(token);
+    latest = OBJ_NEW(mca_gpr_replica_keytable_t);
+    latest->token = strdup(token);
     if (0 == ompi_list_get_size(&seg->freekeys)) { /* no keys waiting for reuse */
 	seg->lastkey++;
-	new->key = seg->lastkey;
+	latest->key = seg->lastkey;
     } else {
 	ptr_key = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&seg->freekeys);
-	new->key = ptr_key->key;
+	latest->key = ptr_key->key;
     }
-    ompi_list_append(&seg->keytable, &new->item);
-    return new->key;
+    ompi_list_append(&seg->keytable, &latest->item);
+    return latest->key;
 }
 
 
 int mca_gpr_replica_delete_key(mca_gpr_replica_segment_t *seg, char *token)
 {
     mca_gpr_replica_core_t *reg;
-    mca_gpr_replica_keytable_t *ptr_seg, *ptr_key, *new;
+    mca_gpr_replica_keytable_t *ptr_seg, *ptr_key, *latest;
     mca_gpr_replica_key_t *key;
     uint i;
 
@@ -209,10 +209,10 @@ int mca_gpr_replica_delete_key(mca_gpr_replica_segment_t *seg, char *token)
 	}
 
 	/* add key to global registry's freekey list */
-	new = OBJ_NEW(mca_gpr_replica_keytable_t);
-	new->token = NULL;
-	new->key = ptr_seg->key;
-	ompi_list_append(&mca_gpr_replica_head.freekeys, &new->item);
+	latest = OBJ_NEW(mca_gpr_replica_keytable_t);
+	latest->token = NULL;
+	latest->key = ptr_seg->key;
+	ompi_list_append(&mca_gpr_replica_head.freekeys, &latest->item);
 
 	/* remove the dictionary entry */
 	ompi_list_remove_item(&mca_gpr_replica_head.segment_dict, &ptr_seg->item);
@@ -239,10 +239,10 @@ int mca_gpr_replica_delete_key(mca_gpr_replica_segment_t *seg, char *token)
 	    }
 
 	    /* add key to this segment's freekey list */
-	    new = OBJ_NEW(mca_gpr_replica_keytable_t);
-	    new->token = NULL;
-	    new->key = ptr_key->key;
-	    ompi_list_append(&seg->freekeys, &new->item);
+	    latest = OBJ_NEW(mca_gpr_replica_keytable_t);
+	    latest->token = NULL;
+	    latest->key = ptr_key->key;
+	    ompi_list_append(&seg->freekeys, &latest->item);
 
 	    /* now remove the dictionary entry from the segment's dictionary */
 	    ompi_list_remove_item(&seg->keytable, &ptr_key->item);

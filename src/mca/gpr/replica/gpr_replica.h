@@ -238,7 +238,7 @@ struct mca_gpr_replica_notify_request_tracker_t {
 };
 typedef struct mca_gpr_replica_notify_request_tracker_t mca_gpr_replica_notify_request_tracker_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_gpr_replica_notify_request_tracker_t);
+OMPI_COMP_EXPORT OBJ_CLASS_DECLARATION(mca_gpr_replica_notify_request_tracker_t);
 
 
 /*
