@@ -1433,6 +1433,28 @@ AC_DEFINE_UNQUOTED(WRAPPER_EXTRA_LIBS, "$WRAPPER_EXTRA_LIBS",
 AC_MSG_RESULT([$WRAPPER_EXTRA_LIBS])
 
 #
+# Adding LIBMPI_* flags from the components that are necessary to
+# compile with libmpi
+#
+# LIBMPI_EXTRA_LDFLAGS
+#
+AC_MSG_CHECKING([for libmpi additional LDFLAGS])
+OMPI_UNIQ(LIBMPI_EXTRA_LDFLAGS)
+AC_SUBST(LIBMPI_EXTRA_LDFLAGS)
+AC_DEFINE_UNQUOTED(LIBMPI_EXTRA_LDFLAGS, "$LIBMPI_EXTRA_LDFLAGS",
+    [Additional LDFLAGS to compile against libmpi])
+AC_MSG_RESULT([$LIBMPI_EXTRA_LDFLAGS])
+
+#
+# LIBMPI_EXTRA_LIBS
+#
+AC_MSG_CHECKING([for libmpi additional LIBS])
+AC_SUBST(LIBMPI_EXTRA_LIBS)
+AC_DEFINE_UNQUOTED(LIBMPI_EXTRA_LIBS, "$LIBMPI_EXTRA_LIBS",
+    [Additional LIBS to compile against libmpi])
+AC_MSG_RESULT([$LIBMPI_EXTRA_LIBS])
+
+#
 # Delayed the substitution of CFLAGS and CXXFLAGS until now because
 # they may have been modified throughout the course of this script.
 #

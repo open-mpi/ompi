@@ -498,23 +498,48 @@ if test "$HAPPY" = "1"; then
 	    AC_MSG_ERROR([cannot continue])
 	fi
 
-	# Now check for LIBMPI tags
+        # If we're not compiling statically, then only take the
+        # "ALWAYS" tags (a uniq will be performed at the end -- no
+        # need to worry about duplicate flags here)
 
-        for flags in CFLAGS CXXFLAGS FFLAGS LDFLAGS LIBS; do
-            var="LIBMPI_EXTRA_${flags}"
-            line="`grep $var= $infile | cut -d= -f2-`"
-	    eval "line=$line"
+        for flags in LDFLAGS LIBS; do
+            var_in="LIBMPI_ALWAYS_EXTRA_${flags}"
+            var_out="LIBMPI_EXTRA_${flags}"
+            line="`grep $var_in= $infile | cut -d= -f2-`"
+            eval "line=$line"
             if test -n "$line"; then
-                str="$var="'"$'"$var $line"'"'
+                str="$var_out="'"$'"$var_out $var_in $line"'"'
                 eval $str
             fi
         done
 
-        # Finally check for WRAPPER flags, but only if this component
-        # is compiling statically
+        for flags in CFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS LIBS; do
+            var_in="WRAPPER_ALWAYS_EXTRA_${flags}"
+            var_out="WRAPPER_EXTRA_${flags}"
+            line="`grep $var_in= $infile | cut -d= -f2-`"
+            eval "line=$line"
+            if test -n "$line"; then
+                str="$var_out="'"$'"$var_out $var_in $line"'"'
+                eval $str
+            fi
+        done
+
+        # Check for flags passed up from the component.  If we're
+        # compiling statically, then take all flags passed up from the
+        # component.
 
         if test "$compile_mode" = "static"; then
             for flags in LDFLAGS LIBS; do
+                var="LIBMPI_EXTRA_${flags}"
+                line="`grep $var= $infile | cut -d= -f2-`"
+                eval "line=$line"
+                if test -n "$line"; then
+                    str="$var="'"$'"$var $line"'"'
+                    eval $str
+                fi
+            done
+
+            for flags in CFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS LIBS; do
                 var="WRAPPER_EXTRA_${flags}"
                 line="`grep $var= $infile | cut -d= -f2-`"
 		eval "line=$line"
