@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <sys/bproc.h>
 #include <sys/wait.h>
+#include <string.h>
 
 #include "pcm_bproc.h"
 #include "mca/pcm/pcm.h"
@@ -287,6 +288,12 @@ internal_set_nodelist(ompi_list_t *host_list,
             }
         }
 have_node_list_entry:
+
+        /* last ditch, see if we have a localhost entry */
+        if (strncmp("localhost", host->hostname, strlen("localhost")) == 0 ||
+            strcmp("127.0.0.1", host->hostname) == 0) {
+            resolved_node = bproc_currnode();
+        }
 
         if (BPROC_NODE_NONE == resolved_node) {
             printf("Unable to resolve node %s\n", host->hostname);
