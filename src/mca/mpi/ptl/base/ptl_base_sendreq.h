@@ -49,7 +49,7 @@ void mca_ptl_base_send_request_destroy(mca_ptl_base_send_request_t*);
 
 static inline void mca_ptl_base_send_request_reinit(
     mca_ptl_base_send_request_t *request, 
-    void *data, 
+    void *addr, 
     size_t length, 
     lam_datatype_t* datatype, 
     int peer, 
@@ -58,14 +58,14 @@ static inline void mca_ptl_base_send_request_reinit(
     mca_pml_base_send_mode_t sendmode,
     bool persistent) 
 { 
-    request->req_data = data; 
-    request->req_length = length; 
     request->req_clear_to_send = false; 
     request->req_offset = 0; 
     request->req_frags = 0; 
     request->req_bytes_sent = 0; 
     request->req_bytes_acked = 0; 
     request->req_send_mode = sendmode;
+    request->super.req_addr = addr; 
+    request->super.req_length = length; 
     request->super.req_datatype = datatype; 
     request->super.req_peer = peer; 
     request->super.req_tag = tag; 

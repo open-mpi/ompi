@@ -111,17 +111,14 @@ typedef int (*mca_ptl_base_fini_fn_t)(
     struct mca_ptl_t* ptl
 );
                                                                                                          
-/**
- *  PML->PTL notification of change in the process list.
- *
- *  @param ptl (IN)     
- *  @param procs (IN)   
- *  @param nprocs (IN)  
- *  @return            
- */
 typedef int (*mca_ptl_base_request_alloc_fn_t)(
     struct mca_ptl_t* ptl, 
-    struct mca_ptl_base_send_request_t** send_request
+    struct mca_ptl_base_send_request_t** request
+);
+
+typedef int (*mca_ptl_base_request_return_fn_t)(
+    struct mca_ptl_t* ptl, 
+    struct mca_ptl_base_send_request_t* request
 );
 
 typedef int (*mca_ptl_base_send_fn_t)(
@@ -148,12 +145,12 @@ struct mca_ptl_t {
     uint32_t    ptl_bandwidth;         /**< bandwidth (Mbytes/sec) supported by each endpoint */
 
     /* PTL function table */
-    mca_ptl_base_add_proc_fn_t       ptl_add_proc;
-    mca_ptl_base_del_proc_fn_t       ptl_del_proc;
-    mca_ptl_base_fini_fn_t           ptl_fini;
-    mca_ptl_base_send_fn_t           ptl_send;
-    mca_ptl_base_request_alloc_fn_t  ptl_request_alloc;
-
+    mca_ptl_base_add_proc_fn_t         ptl_add_proc;
+    mca_ptl_base_del_proc_fn_t         ptl_del_proc;
+    mca_ptl_base_fini_fn_t             ptl_fini;
+    mca_ptl_base_send_fn_t             ptl_send;
+    mca_ptl_base_request_alloc_fn_t    ptl_request_alloc;
+    mca_ptl_base_request_return_fn_t   ptl_request_return;
 };
 typedef struct mca_ptl_t mca_ptl_t;
 

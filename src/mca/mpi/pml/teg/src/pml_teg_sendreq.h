@@ -13,11 +13,12 @@
 int mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req, bool* complete);
 
 
-static inline int mca_pml_teg_send_request_alloc(
+static inline mca_ptl_base_send_request_t* mca_pml_teg_send_request_alloc(
     lam_communicator_t* comm, 
     int dst,
-    mca_ptl_base_send_request_t** sendreq)
+    int *rc)
 {
+    mca_ptl_base_send_request_t* sendreq;
     mca_pml_proc_t *proc = mca_pml_teg_proc_lookup_remote(comm,dst);
     mca_ptl_proc_t* ptl_proc;
     mca_ptl_t* ptl;
@@ -26,13 +27,17 @@ static inline int mca_pml_teg_send_request_alloc(
         (ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first)));
     ptl = ptl_proc->ptl;
 
-    int rc = ptl->ptl_request_alloc(ptl,sendreq);
-    if(rc != LAM_SUCCESS)
-        return rc;
-    (*sendreq)->req_owner = ptl_proc;
+    *rc = ptl->ptl_request_alloc(ptl,&sendreq);
+    if(NULL != sendreq)
+        sendreq->req_owner = ptl_proc;
     return LAM_SUCCESS;
 }
 
+static inline void mca_ptl_base_send_request_return(
+    mca_ptl_base_send_request_t* request)
+{
+
+}
 
 static inline int mca_pml_teg_send_request_start(
     mca_ptl_base_send_request_t* req)

@@ -149,6 +149,7 @@ static bool mca_ptl_tcp_recv_frag_discard(mca_ptl_tcp_recv_frag_t* frag, int sd)
     while(cnt < 0) {
         void *rbuf = LAM_MALLOC(frag->frag_header.hdr_frag_length - frag->frag_msg_cnt);
         cnt = recv(sd, rbuf, frag->frag_header.hdr_frag_length - frag->frag_msg_cnt, 0);
+        LAM_FREE(rbuf);
         if(cnt == 0) {
             mca_ptl_tcp_peer_close(frag->frag_peer);
             lam_free_list_return(&mca_ptl_tcp_module.tcp_recv_frags, (lam_list_item_t*)frag);

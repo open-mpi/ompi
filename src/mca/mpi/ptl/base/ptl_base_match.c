@@ -32,7 +32,7 @@
  * @param additional_matches  if a match is made with frag_desc, we
  *                    may be able to match fragments that previously
  *                    have arrived out-of-order.  If this is the
- *                    case, the associted fratment descriptors are
+ *                    case, the associated fragment descriptors are
  *                    put on this list for further processing. (OUT)
  *
  * @return LAM error code
