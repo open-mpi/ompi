@@ -63,7 +63,7 @@ static inline void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag, str
                                                                                                                 
 bool mca_ptl_tcp_recv_frag_send_ack(mca_ptl_tcp_recv_frag_t* frag);
 
-extern void* ptl_tcp_memalloc( unsigned int* length );
+extern void* mca_ptl_tcp_memalloc( unsigned int* length );
 
 static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
 {
@@ -84,7 +84,7 @@ static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
             request->req_base.req_count,    /* count elements */
             request->req_base.req_addr,     /* users buffer */
             header->hdr_frag_offset,        /* offset in bytes into packed buffer */
-            ptl_tcp_memalloc );             /* not allocating memory */
+            mca_ptl_tcp_memalloc );         /* not allocating memory */
 
         /* non-contiguous - allocate buffer for receive */
         if( 1 == ompi_convertor_need_buffers( &frag->frag_recv.frag_base.frag_convertor ) ) {
