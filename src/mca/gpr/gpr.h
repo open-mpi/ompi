@@ -35,40 +35,29 @@
 
 /** Define the notification actions for the subscription system
  */
-/** Notifies subscriber when object is modified */
-#define OMPI_REGISTRY_NOTIFY_MODIFICATION     0x0001
-/** Notifies subscriber when another subscriber is added */
-#define OMPI_REGISTRY_NOTIFY_ADD_SUBSCRIBER   0x0002
-/** Notifies subscriber when object is removed from registry */
-#define OMPI_REGISTRY_NOTIFY_DELETE           0x0004
-/** Notifies subscriber upon any action - effectively an OR of all other flags */
-#define OMPI_REGISTRY_NOTIFY_ALL              0xffff
+typedef enum {OMPI_REGISTRY_NOTIFY_MODIFICATION=0x0001,     /**< Notifies subscriber when object modified */
+	      OMPI_REGISTRY_NOTIFY_ADD_SUBSCRIBER=0x0002,   /**< Notifies subscriber when another subscriber added */
+	      OMPI_REGISTRY_NOTIFY_DELETE=0x0004,           /**< Notifies subscriber when object deleted */
+	      OMPI_REGISTRY_NOTIFY_ALL=0xffff               /**< Notifies subscriber upon any action */
+} ompi_registry_notify_action_t;
 
 
 /** Define the mode bit-masks for registry operations.
  */
-/** None
- */
-#define OMPI_REGISTRY_NONE            0x0000
-/** Overwrite permission */
-#define OMPI_REGISTRY_OVERWRITE       0x0001
-/** AND tokens together for search results */
-#define OMPI_REGISTRY_AND             0x0002
-/** OR tokens for search results */
-#define OMPI_REGISTRY_OR              0x0004
-/** XAND - all tokens required, nothing else allowed - must be exact match */
-#define OMPI_REGISTRY_XAND            0x0008
-/** XOR - any one of the tokens required, nothing else allowed */
-#define OMPI_REGISTRY_XOR             0x0010
+typedef enum {OMPI_REGISTRY_NONE=0x0000,        /**< None */
+	      OMPI_REGISTRY_OVERWRITE=0x0001,   /**< Overwrite Permission */
+	      OMPI_REGISTRY_AND=0x0002,         /**< AND tokens together for search results */
+	      OMPI_REGISTRY_OR=0x0004,          /**< OR tokens for search results */
+	      OMPI_REGISTRY_XAND=0x0008,        /**< All tokens required, nothing else allowed */
+	      OMPI_REGISTRY_XOR=0x0010          /**< Any one of the tokens required, nothing else allowed */
+} ompi_registry_mode_t;
 
 /*
  * typedefs
  */
 
-typedef uint16_t ompi_registry_notify_action_t;
-typedef uint16_t ompi_registry_mode_t;
 typedef ompi_buffer_t ompi_registry_object_t;
-typedef uint32_t ompi_registry_object_size_t;
+typedef size_t ompi_registry_object_size_t;
 
 
 /*

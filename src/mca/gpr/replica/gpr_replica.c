@@ -75,17 +75,14 @@ int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
     mca_gpr_registry_core_t *entry_ptr;
     ompi_registry_mode_t put_mode;
     int return_code;
-    char **token;
 
 
     /* protect ourselves against errors */
-    if (NULL == segment || NULL == object || 0 == size || NULL == tokens) {
+    if (NULL == segment || NULL == object || 0 == size || NULL == tokens || NULL == *tokens) {
 	return OMPI_ERROR;
     }
     put_mode = mode & OMPI_REGISTRY_OVERWRITE;  /* only overwrite permission mode flag allowed */
 
-
-    token = tokens;
 
     /* convert tokens to list of keys */
     keys = gpr_replica_get_key_list(segment, tokens);
@@ -142,12 +139,15 @@ int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
     memcpy(entry_ptr->object, object, size);
     ompi_list_append(&seg->registry_entries, &entry_ptr->item);
 
+    return_code = OMPI_SUCCESS;
+
 
  CLEANUP:
     /* release list of keys */
     while (NULL != (keyptr = (mca_gpr_keytable_t*)ompi_list_remove_last(keys))) {
 	OBJ_DESTRUCT(keyptr);
     }
+    OBJ_DESTRUCT(keys);
 
     return return_code;
 }
@@ -195,7 +195,7 @@ int gpr_replica_unsubscribe(ompi_process_name_t *caller, ompi_registry_mode_t mo
 }
 
 ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
-				       char *segment, char **tokens)
+			     char *segment, char **tokens)
 {
     mca_gpr_registry_segment_t *seg;
     ompi_list_t *answer;
@@ -207,7 +207,7 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
     answer = OBJ_NEW(ompi_list_t);
 
     /* protect against errors */
-    if (NULL == segment || NULL == tokens) {
+    if (NULL == segment || NULL == tokens || NULL == *tokens) {
 	return answer;
     }
 
@@ -232,7 +232,6 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
 	}
     }
 
-    OBJ_CONSTRUCT(&answer, ompi_list_t);
     /* traverse the segment's registry, looking for matching tokens per the specified mode */
     for (reg = (mca_gpr_registry_core_t*)ompi_list_get_first(&seg->registry_entries);
 	 reg != (mca_gpr_registry_core_t*)ompi_list_get_end(&seg->registry_entries);
@@ -249,9 +248,9 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
     }
 
  CLEANUP:
-    /* empty the list of keys and release it */
-    while (0 < ompi_list_get_size(keys)) {
-	ompi_list_remove_last(keys);
+    /* release list of keys */
+    while (NULL != (keyptr = (mca_gpr_keytable_t*)ompi_list_remove_last(keys))) {
+	OBJ_DESTRUCT(keyptr);
     }
     OBJ_DESTRUCT(keys);
 

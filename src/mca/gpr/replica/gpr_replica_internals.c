@@ -304,16 +304,86 @@ int gpr_replica_empty_segment(mca_gpr_registry_segment_t *seg)
     return OMPI_SUCCESS;
 }
 
+/*
+ * A mode of "NONE" or "OVERWRITE" defaults to "XAND" behavior
+ */
 bool gpr_replica_check_key_list(ompi_registry_mode_t mode, ompi_list_t *key_list, mca_gpr_registry_core_t *entry)
 {
-    mca_gpr_keytable_t *keyptr;
+    mca_gpr_keylist_t *keyptr;
+    mca_gpr_keytable_t *key;
+    size_t num_keys_search, num_keys_entry, num_found;
+    bool exclusive, no_match;
 
-    for (keyptr = (mca_gpr_keytable_t*)ompi_list_get_first(&entry->keys);
-	 keyptr != (mca_gpr_keytable_t*)ompi_list_get_end(&entry->keys);
-	 keyptr = (mca_gpr_keytable_t*)ompi_list_get_next(keyptr)) {
+    if (OMPI_REGISTRY_NONE == mode ||
+	OMPI_REGISTRY_OVERWRITE == mode) { /* set default behavior for search */
+	mode = OMPI_REGISTRY_XAND;
     }
 
-    return true;
+    num_keys_search = ompi_list_get_size(key_list);
+    num_keys_entry = ompi_list_get_size(&entry->keys);
+
+    /* take care of trivial cases that don't require search */
+    if ((OMPI_REGISTRY_XAND & mode) &&
+	(num_keys_search != num_keys_entry)) { /* can't possibly turn out "true" */
+	ompi_output(mca_gpr_base_output, "xand violation");
+	return false;
+    }
+
+    if ((OMPI_REGISTRY_AND & mode) &&
+	(num_keys_search > num_keys_entry)) {  /* can't find enough matches */
+	ompi_output(mca_gpr_base_output, "and violation");
+	return false;
+    }
+
+    /* okay, have to search for remaining possibilities */
+    num_found = 0;
+    exclusive = true;
+    for (keyptr = (mca_gpr_keylist_t*)ompi_list_get_first(&entry->keys);
+	 keyptr != (mca_gpr_keylist_t*)ompi_list_get_end(&entry->keys);
+	 keyptr = (mca_gpr_keylist_t*)ompi_list_get_next(keyptr)) {
+	no_match = true;
+	for (key = (mca_gpr_keytable_t*)ompi_list_get_first(key_list);
+	     (key != (mca_gpr_keytable_t*)ompi_list_get_end(key_list)) && no_match;
+	     key = (mca_gpr_keytable_t*)ompi_list_get_next(key)) {
+	    if (key->key == keyptr->key) { /* found a match */
+		num_found++;
+		no_match = false;
+		if (OMPI_REGISTRY_OR & mode) { /* only need one match */
+		    return true;
+		}
+	    }
+	}
+	if (no_match) {
+	    exclusive = false;
+	}
+    }
+
+    if (OMPI_REGISTRY_XAND & mode) {  /* deal with XAND case */
+	if (num_found == num_keys_entry) { /* found all, and nothing more */
+	    return true;
+	} else {  /* found either too many or not enough */
+	    return false;
+	}
+    }
+
+    if (OMPI_REGISTRY_XOR & mode) {  /* deal with XOR case */
+	if (num_found > 0 && exclusive) {  /* found at least one and nothing not on list */
+	    return true;
+	} else {
+	    return false;
+	}
+    }
+
+    if (OMPI_REGISTRY_AND & mode) {  /* deal with AND case */
+	if (num_found == num_keys_search) {  /* found all the required keys */
+	    return true;
+	} else {
+	    return false;
+	}
+    }
+
+    /* should be impossible situation, but just to be safe... */
+    return false;
 }
 
 ompi_list_t *gpr_replica_test_internals(int level)
