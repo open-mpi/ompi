@@ -20,7 +20,7 @@
 
 #if   defined(__alpha__)
 # include "include/sys/alpha/atomic.s"
-#elif defined(__amd64__)
+#elif defined(__amd64__) || defined(__x86_64__)
 # include "include/sys/amd64/atomic.s"
 #elif defined(__i386__)
 # include "include/sys/ia32/atomic.s"

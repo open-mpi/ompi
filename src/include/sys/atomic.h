@@ -118,7 +118,7 @@ static inline void ompi_atomic_unlock(ompi_lock_t *lock);
 # ifdef __GNUC__
 #  include "alpha/atomic.h"
 # endif
-#elif defined(__amd64__)
+#elif defined(__amd64__) || defined(__x86_64__)
 # define OMPI_HAVE_ATOMIC 1
 # ifdef __GNUC__
 #  include "amd64/atomic.h"
