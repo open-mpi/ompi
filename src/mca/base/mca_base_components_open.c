@@ -25,6 +25,12 @@ typedef struct component_name_t component_name_t;
 
 
 /*
+ * Local variables
+ */
+static bool show_errors = false;
+
+
+/*
  * Local functions
  */
 static int open_components(const char *type_name, int output_id, 
@@ -42,7 +48,7 @@ int mca_base_components_open(const char *type_name, int output_id,
                              const mca_base_component_t **static_components,
                              ompi_list_t *components_available)
 {
-  int ret;
+  int ret, param;
   ompi_list_item_t *item;
   ompi_list_t components_found;
   char **requested_component_names;
@@ -57,13 +63,18 @@ int mca_base_components_open(const char *type_name, int output_id,
   param_type = mca_base_param_register_string(type_name, "base", NULL, 
                                               type_name, NULL);
 
+  param = mca_base_param_find("base", NULL, "component_show_load_errors");
+  mca_base_param_lookup_int(param, &ret);
+  show_errors = (0 != ret) ? true : false;
+
   /* Setup verbosity for this MCA type */
 
   mca_base_param_lookup_int(param_verbose, &verbose_level);
   if (output_id != 0) {
     ompi_output_set_verbosity(output_id, verbose_level);
   }
-  ompi_output_verbose(10, output_id, "mca: base: open: Looking for components");
+  ompi_output_verbose(10, output_id, 
+                      "mca: base: components_open: Looking for components");
 
   /* Find and load all available components */
 
@@ -144,14 +155,14 @@ static int open_components(const char *type_name, int output_id,
 
   if (NULL == requested_component_names) {
     ompi_output_verbose(10, output_id,
-                        "mca: base: open: "
+                        "mca: base: components_open: "
                         "looking for any %s components", type_name);
   } else {
     ompi_output_verbose(10, output_id,
-                        "mca: base: open: looking for specific %s components:", 
+                        "mca: base: components_open: looking for specific %s components:", 
                         type_name);
     for (i = 0; NULL != requested_component_names[i]; ++i) {
-      ompi_output_verbose(10, output_id, "mca: base: open:   %s", 
+      ompi_output_verbose(10, output_id, "mca: base: components_open:   %s", 
                           requested_component_names[i]);
     }
   }
@@ -185,13 +196,13 @@ static int open_components(const char *type_name, int output_id,
     if (acceptable) {
       opened = called_open = false;
       ompi_output_verbose(10, output_id, 
-                          "mca: base: open: found loaded component %s",
+                          "mca: base: components_open: found loaded component %s",
                           component->mca_component_name);
       
       if (NULL == component->mca_open_component) {
         opened = true; 
         ompi_output_verbose(10, output_id, 
-                            "mca: base: open: "
+                            "mca: base: components_open: "
                             "component %s has no open function",
                             component->mca_component_name);
       } else {
@@ -199,14 +210,24 @@ static int open_components(const char *type_name, int output_id,
         if (MCA_SUCCESS == component->mca_open_component()) {
           opened = true;
           ompi_output_verbose(10, output_id, 
-                              "mca: base: open: "
+                              "mca: base: components_open: "
                               "component %s open function successful",
                               component->mca_component_name);
         } else {
-          ompi_output_verbose(10, output_id, 
-                              "mca: base: open: "
-                              "component %s open function failed",
-                              component->mca_component_name);
+            /* We may end up displaying this twice, but it may go to
+               separate streams.  So better to be redundant than to
+               not display the error in the stream where it was
+               expected. */
+
+            if (show_errors) {
+                ompi_output(0, "mca: base: components_open: "
+                            "component %s open function failed",
+                            component->mca_component_name);
+            }
+            ompi_output_verbose(10, output_id, 
+                                "mca: base: components_open: "
+                                "component %s open function failed",
+                                component->mca_component_name);
         }
       }
 
@@ -218,13 +239,13 @@ static int open_components(const char *type_name, int output_id,
             component->mca_close_component();
           }
           ompi_output_verbose(10, output_id, 
-                              "mca: base: open: component %s closed",
+                              "mca: base: components_open: component %s closed",
                               component->mca_component_name);
           called_open = false;
         }
         mca_base_component_repository_release(component);
         ompi_output_verbose(10, output_id, 
-                            "mca: base: open: component %s unloaded", 
+                            "mca: base: components_open: component %s unloaded", 
                             component->mca_component_name);
       }
 
