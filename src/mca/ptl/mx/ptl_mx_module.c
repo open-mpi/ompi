@@ -44,7 +44,7 @@ int mca_ptl_mx_module_init(void)
     /* intialize MX library */
     if(MX_SUCCESS != (status = mx_init())) {
         ompi_output(0, "mca_ptl_mx_init: mx_init() failed with status=%d\n", status);
-        return OMPI_ERR_INIT;
+        return OMPI_ERROR;
     }
 
     /* determine the number of NICs */
@@ -54,7 +54,7 @@ int mca_ptl_mx_module_init(void)
         &mca_ptl_mx_component.mx_num_ptls,
         sizeof(uint32_t))) != MX_SUCCESS) {
         ompi_output(0, "mca_ptl_mx_init: mx_get_info(MX_NIC_COUNT) failed with status=%d\n", status);
-        return OMPI_ERR_INIT;
+        return OMPI_ERROR;
     }
 
     /* determine the NIC ids */
@@ -67,7 +67,7 @@ int mca_ptl_mx_module_init(void)
         nic_addrs,
         size)) != MX_SUCCESS) {
         free(nic_addrs);
-        return OMPI_ERR_INIT;
+        return OMPI_ERROR;
     }
 
     /* check for limit on number of ptls */
@@ -86,7 +86,7 @@ int mca_ptl_mx_module_init(void)
     for(i=0; i<mca_ptl_mx_component.mx_num_ptls; i++) {
         mca_ptl_mx_module_t* ptl = mca_ptl_mx_create(nic_addrs[i]);
         if(NULL == ptl) {
-            return OMPI_ERR_INIT;
+            return OMPI_ERROR;
         }
         mca_ptl_mx_component.mx_ptls[i] = ptl;
     }
@@ -178,7 +178,7 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     ompi_convertor_t* convertor;
     int rc;
 
-    /* use of the sizeof of the header as the match value */
+    /* use of the header type as the match value */
     if(match_value <= MCA_PTL_HDR_TYPE_MAX)
         return;
 
