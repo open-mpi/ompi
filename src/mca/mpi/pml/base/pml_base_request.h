@@ -15,6 +15,7 @@ extern lam_class_t mca_pml_base_request_t_class;
 
 /* request type */
 typedef enum {
+    MCA_PML_REQUEST_NULL,
     MCA_PML_REQUEST_SEND,
     MCA_PML_REQUEST_RECV
 } mca_pml_base_request_type_t;

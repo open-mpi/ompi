@@ -63,8 +63,10 @@
 
 #include "event.h"
 #include "lam/types.h"
+#include "lam/constants.h"
 #include "lam/lfc/lam_object.h"
 #include "lam/threads/mutex.h"
+#include "lam/threads/thread.h"
 #include "lam/util/output.h"
 
 #ifdef HAVE_SELECT
@@ -119,7 +121,6 @@ int lam_event_gotsig;        /* Set in signal handler */
 /* Prototypes */
 static void lam_event_queue_insert(struct lam_event *, int);
 static void lam_event_queue_remove(struct lam_event *, int);
-static int  lam_event_haveevents(void);
 static void lam_event_process_active(void);
 static int  lam_timeout_next(struct timeval *tv);
 static void lam_timeout_correct(struct timeval *off);
@@ -132,6 +133,7 @@ struct lam_event_list lam_signalqueue;
 struct lam_event_list lam_eventqueue;
 static struct timeval lam_event_tv;
 lam_mutex_t lam_event_lock;
+lam_thread_t lam_event_thread;
 
 static int
 compare(struct lam_event *a, struct lam_event *b)
@@ -147,18 +149,29 @@ static RB_PROTOTYPE(lam_event_tree, lam_event, ev_timeout_node, compare);
 
 static RB_GENERATE(lam_event_tree, lam_event, ev_timeout_node, compare);
 
+/* run loop for dispatch thread */
+static void* lam_event_run(lam_object_t* arg)
+{
+    lam_event_loop(0);
+    return NULL;
+}
 
 
-void
+
+int
 lam_event_init(void)
 {
-    int i;
+    static int inited = false;
+    int i, rc;
+
+    if(inited)
+        return LAM_SUCCESS;
 
     lam_event_sigcb = NULL;
     lam_event_gotsig = 0;
     gettimeofday(&lam_event_tv, NULL);
     
-        OBJ_CONSTRUCT(&lam_event_lock, lam_mutex_t);
+    OBJ_CONSTRUCT(&lam_event_lock, lam_mutex_t);
     RB_INIT(&lam_timetree);
     TAILQ_INIT(&lam_eventqueue);
     TAILQ_INIT(&lam_activequeue);
@@ -173,16 +186,21 @@ lam_event_init(void)
     if (lam_evbase == NULL)
         errx(1, "%s: no event mechanism available", __func__);
 
-    if (getenv("EVENT_SHOW_METHOD")) 
-        fprintf(stderr, "libevent using: %s\n", lam_evsel->name); 
+    /* spin up a thread to dispatch events */
+    OBJ_CONSTRUCT(&lam_event_thread, lam_thread_t);
+    lam_event_thread.t_run = lam_event_run;
+    if((rc = lam_thread_start(&lam_event_thread)) != LAM_SUCCESS)
+        return rc;
 
 #if defined(USE_LOG) && defined(USE_DEBUG)
     log_to(stderr);
     log_debug_cmd(LOG_MISC, 80);
 #endif
+    inited = true;
+    return LAM_SUCCESS;
 }
 
-static int
+int
 lam_event_haveevents(void)
 {
     return (RB_ROOT(&lam_timetree) || TAILQ_FIRST(&lam_eventqueue) ||

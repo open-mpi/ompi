@@ -5,10 +5,10 @@
 
 
 int mca_pml_teg_wait(
-    lam_request_t* request,
+    lam_request_t** request,
     lam_status_public_t* status)
 {
-    mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)request;
+    mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)request;
     if(pml_request->req_mpi_done == false) {
 
         /* poll status - primarily for benchmarks */

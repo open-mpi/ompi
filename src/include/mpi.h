@@ -120,6 +120,7 @@ extern "C" {
 #define MPI_DISTRIBUTE_CYCLIC   1       /* cyclic distribution */
 #define MPI_DISTRIBUTE_NONE     2       /* not distributed */
 #define MPI_DISTRIBUTE_DFLT_DARG (-1)       /* default distribution arg */
+#define MPI_TAG_UB_VALUE (0x7fffffff)
 
 /*
  * Predefined attribute keyvals

@@ -33,6 +33,7 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_start,
     mca_pml_teg_test,
     mca_pml_teg_wait,
+    mca_pml_teg_null
     }
 };
 
@@ -271,4 +272,12 @@ int mca_pml_teg_module_fini(void)
     /* FIX */
     return LAM_SUCCESS;
 }
+
+
+int mca_pml_teg_null(lam_request_t** request)
+{
+    *request = &mca_pml_teg.teg_null;
+    return LAM_SUCCESS;
+}
+
 

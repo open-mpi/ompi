@@ -30,7 +30,10 @@ typedef enum {
     MCA_PML_BASE_SEND_READY
 } mca_pml_base_send_mode_t;
 
-#define LAM_ANY_TAG MPI_ANY_TAG
+/* renamed MPI constants */
+#define LAM_ANY_TAG    MPI_ANY_TAG
+#define LAM_ANY_SOURCE MPI_ANY_SOURCE
+#define LAM_PROC_NULL  MPI_PROC_NULL
 
 /**
  * MCA->PML Called by MCA framework to initialize the module.
@@ -151,9 +154,14 @@ typedef int (*mca_pml_base_test_fn_t)(
 );
 
 typedef int (*mca_pml_base_wait_fn_t)(
-    lam_request_t* request,
+    lam_request_t** request,
     lam_status_public_t* status
 );
+
+typedef int (*mca_pml_base_null_fn_t)(
+    lam_request_t** request
+);
+
 
 
 /**
@@ -180,6 +188,7 @@ struct mca_pml_1_0_0_t {
     mca_pml_base_start_fn_t        pml_start;
     mca_pml_base_test_fn_t         pml_test;
     mca_pml_base_wait_fn_t         pml_wait;
+    mca_pml_base_null_fn_t         pml_null;
 };
 typedef struct mca_pml_1_0_0_t mca_pml_1_0_0_t;
 typedef mca_pml_1_0_0_t mca_pml_t;

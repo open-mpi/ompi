@@ -20,10 +20,6 @@ int mca_pml_teg_isend_init(
 {
     int rc;
 
-#if 0
-    lam_output(0, "mca_pml_teg_isend_init: dst=%d tag=%d comm=%d\n", dst, tag, comm->c_contextid);
-#endif
-
     mca_ptl_base_send_request_t* sendreq = mca_pml_teg_send_request_alloc(comm,dst,&rc);
     if(rc != LAM_SUCCESS)
         return rc;
@@ -56,10 +52,6 @@ int mca_pml_teg_isend(
     lam_request_t **request)
 {
     int rc;
-
-#if 0
-    lam_output(0, "mca_pml_teg_isend: dst=%d tag=%d comm=%d\n", dst, tag, comm->c_contextid);
-#endif
 
     mca_ptl_base_send_request_t* sendreq = mca_pml_teg_send_request_alloc(comm,dst,&rc);
     if(rc != LAM_SUCCESS)
@@ -94,10 +86,6 @@ int mca_pml_teg_send(
 {
     int rc;
 
-#if 0
-    lam_output(0, "mca_pml_teg_send: dst=%d tag=%d comm=%d\n", dst, tag, comm->c_contextid);
-#endif
-
     mca_ptl_base_send_request_t* sendreq = mca_pml_teg_send_request_alloc(comm,dst,&rc);
     if(rc != LAM_SUCCESS)
         return rc;
@@ -116,6 +104,6 @@ int mca_pml_teg_send(
          
     if((rc = mca_pml_teg_send_request_start(sendreq)) != LAM_SUCCESS)
         return rc;
-    return mca_pml_teg_wait((lam_request_t*)sendreq, NULL);
+    return mca_pml_teg_wait((lam_request_t**)&sendreq, NULL);
 }
 

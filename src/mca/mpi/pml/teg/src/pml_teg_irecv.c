@@ -84,10 +84,6 @@ int mca_pml_teg_recv(
 {
     int rc;
 
-#if 0
-    lam_output(0, "mca_pml_teg_recv: src=%d tag=%d comm=%d\n", src, tag, comm->c_contextid);
-#endif
-    
     mca_ptl_base_recv_request_t *recvreq = mca_pml_teg_recv_request_alloc(&rc);
     if(NULL == recvreq)
         return rc;
@@ -106,6 +102,6 @@ int mca_pml_teg_recv(
         mca_pml_teg_recv_request_return(recvreq);
         return rc;
     }
-    return mca_pml_teg_wait((lam_request_t*)recvreq, status);
+    return mca_pml_teg_wait((lam_request_t**)&recvreq, status);
 }
 
