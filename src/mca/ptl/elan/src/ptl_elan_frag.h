@@ -52,9 +52,9 @@ extern ompi_class_t mca_ptl_elan_send_frag_t_class;
 extern ompi_class_t mca_ptl_elan_recv_frag_t_class;
 
 mca_ptl_elan_send_frag_t *
-mca_ptl_elan_alloc_send_desc( struct mca_ptl_base_module_t *ptl,
-                  struct mca_pml_base_send_request_t *sendreq,
-		  int oneside);
+mca_ptl_elan_alloc_desc(struct mca_ptl_base_module_t *ptl,
+			struct mca_pml_base_request_t *req,
+		       	int desc_type);
 
 mca_ptl_elan_recv_frag_t *
 mca_ptl_elan_alloc_recv_desc(struct mca_pml_base_recv_request_t *req);

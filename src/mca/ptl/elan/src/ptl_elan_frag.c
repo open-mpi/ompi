@@ -80,25 +80,25 @@ ompi_class_t mca_ptl_elan_recv_frag_t_class = {
 
 extern mca_ptl_elan_state_t mca_ptl_elan_global_state;
 
+/* FIXME: Even though we have also get implemened here, temporarily 
+ * mca_ptl_elan_send_frag_t is still used as the return type */
 mca_ptl_elan_send_frag_t *
-mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
-                  struct mca_pml_base_send_request_t *sendreq, 
-		  int desc_type)
+mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
+       	struct mca_pml_base_request_t *req, int desc_type)
 {
 
     ompi_free_list_t *flist;
     ompi_list_item_t *item;
     mca_ptl_elan_send_frag_t *desc;
 
-    START_FUNC(PTL_ELAN_DEBUG_NONE);
+    START_FUNC(PTL_ELAN_DEBUG_SEND);
 
-    /* For now, bind to queue DMA directly */
+    /* TODO: Dynamically bind a base request to PUT/GET/QDMA/STEN */
     if (MCA_PTL_ELAN_DESC_QDMA == desc_type) {
         flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->queue)->tx_desc_free;
     } else if (MCA_PTL_ELAN_DESC_PUT == desc_type) {
         flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->putget)->put_desc_free;
     } else if (MCA_PTL_ELAN_DESC_GET == desc_type) {
-	/*struct mca_ptl_elan_peer_t *peer;*/
         flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->putget)->get_desc_free;
     } else {
         ompi_output (0,
@@ -110,52 +110,30 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
     if (ompi_using_threads ()) {
 	ompi_mutex_lock(&flist->fl_lock);
 	item = ompi_list_remove_first (&((flist)->super));
-
-	/* Progress this PTL module to get back a descriptor,
-	 * Is it OK to progress with ptl->ptl_send_progress? */
 	while (NULL == item) {
 	    mca_ptl_tstamp_t tstamp = 0;
-
 	    ptl_ptr->ptl_component->ptlm_progress (tstamp);
 	    item = ompi_list_remove_first (&((flist)->super));
 	}
 	ompi_mutex_unlock(&flist->fl_lock);
     } else {
-	if (MCA_PTL_ELAN_DESC_QDMA == desc_type )
-	    LOG_PRINT(PTL_ELAN_DEBUG_ACK, 
-		    "before list %p length %d item %p\n", 
-		    flist, flist->super.ompi_list_length,
-		    item);
 
 	item = ompi_list_remove_first (&((flist)->super));
 
-	if (MCA_PTL_ELAN_DESC_QDMA == desc_type )
-	    LOG_PRINT(PTL_ELAN_DEBUG_ACK, 
-		    "after list %p length %d item %p\n", 
-		    flist, flist->super.ompi_list_length,
-		    item);
-
-	/* Progress this PTL module to get back a descriptor,
-	 * Is it OK to progress with ptl->ptl_send_progress()? */
+	/* XXX: 
+	 * Ouch..., this still does not trigger the progress on 
+	 * PTL's from other modules.  Wait for PML to change.
+	 * Otherwise have to trigger PML progress from PTL.  */
 	while (NULL == item) {
 	    mca_ptl_tstamp_t tstamp = 0;
-
-	    /*LOG_PRINT(PTL_ELAN_DEBUG_ACK, "Warning: no more
-	     * descriptors\n");*/
-	    /* XXX: 
-	     * Well, this still does not trigger the progress on 
-	     * PTL's from other modules.  Wait for PML to change.
-	     * Otherwise have to trigger PML progress from PTL.  Ouch..
-	     */
 	    ptl_ptr->ptl_component->ptlm_progress (tstamp);
 	    item = ompi_list_remove_first (&((flist)->super));
 	}
     }
     desc = (mca_ptl_elan_send_frag_t *) item; 
-    desc->desc->req = sendreq;
+    desc->desc->req = req;
     desc->desc->desc_type = desc_type;
-
-    END_FUNC(PTL_ELAN_DEBUG_NONE);
+    END_FUNC(PTL_ELAN_DEBUG_SEND);
     return desc;
 }
 
@@ -194,27 +172,18 @@ mca_ptl_elan_send_desc_done (
 	}
 
 	/* Return a frag or if not cached, or it is a follow up */ 
-	if (
-		/*(header->hdr_frag.hdr_frag_offset != 0) || */
+	if ( /*(header->hdr_frag.hdr_frag_offset != 0) || */
 		(desc->desc->desc_status != MCA_PTL_ELAN_DESC_CACHED)){
 	    if (desc->desc->desc_type == MCA_PTL_ELAN_DESC_PUT) {
 		OMPI_FREE_LIST_RETURN (&ptl->putget->put_desc_free,
 			(ompi_list_item_t *) desc);
-		LOG_PRINT(PTL_ELAN_DEBUG_ACK,
-		    "list %p length %d\n",
-		    &ptl->putget->put_desc_free,
-		    ptl->putget->put_desc_free.super.ompi_list_length);
 	    } else {
 		OMPI_FREE_LIST_RETURN (&ptl->queue->tx_desc_free,
 			(ompi_list_item_t *) desc);
-		LOG_PRINT(PTL_ELAN_DEBUG_ACK,
-		    "list %p length %d\n",
-		    &ptl->queue->tx_desc_free,
-		    ptl->queue->tx_desc_free.super.ompi_list_length);
 	    }
 	} else {
 	    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
-		    "PML return frag to list %p, length %d\n", 
+		    "PML will return frag to list %p, length %d\n", 
 		    &ptl->queue->tx_desc_free,
 		    ptl->queue->tx_desc_free.super.ompi_list_length);
 	}
@@ -227,7 +196,7 @@ mca_ptl_elan_send_desc_done (
 	 * Why the release of this send fragment is dependent 
 	 * on the receiving of an acknowledgement 
 	 * There are two drawbacks,
-	 * a) Send fragment is not immediately return the free pool
+	 * a) Send fragment is not immediately returned to the free pool
 	 * b) Some list is needed to hold on this fragment and
 	 *    later on find an time slot to process it.
 	 * c) If ever local completion happens later then the receive
@@ -252,11 +221,6 @@ mca_ptl_elan_send_desc_done (
     } 
 #endif
 
-    LOG_PRINT(PTL_ELAN_DEBUG_ACK,
-	"list %p length %d\n",
-	&ptl->queue->tx_desc_free,
-	ptl->queue->tx_desc_free.super.ompi_list_length);
-
     END_FUNC(PTL_ELAN_DEBUG_SEND);
 }
  
@@ -279,7 +243,7 @@ mca_ptl_elan_recv_frag_done (
 	mca_ptl_elan_recv_frag_return (
 		frag->frag_recv.frag_base.frag_owner, frag);
     } else {
-	/* Chaining it into the list of completion pending recv_frag,
+	/* XXX: Chaining it into the list of completion pending recv_frag,
 	 * Until the ack frag is sent out, they will stay in the list */
     }
 }

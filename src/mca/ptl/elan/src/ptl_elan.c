@@ -169,7 +169,9 @@ mca_ptl_elan_req_init (struct mca_ptl_base_module_t *ptl,
 
     START_FUNC(PTL_ELAN_DEBUG_SEND);
 
-    desc = mca_ptl_elan_alloc_send_desc(ptl, request, MCA_PTL_ELAN_DESC_QDMA);
+    desc = mca_ptl_elan_alloc_desc(ptl, 
+	    (struct mca_pml_base_request_t *) request, 
+	    MCA_PTL_ELAN_DESC_QDMA);
     if (NULL == desc) {
         ompi_output(0,
                 "[%s:%d] Unable to allocate an elan send descriptors \n", 
@@ -248,8 +250,9 @@ mca_ptl_elan_isend (struct mca_ptl_base_module_t *ptl,
     if (offset == 0) { /* The first fragment uses a cached desc */
         desc = ((mca_ptl_elan_send_request_t*)sendreq)->req_frag;
     } else {
-       	desc = mca_ptl_elan_alloc_send_desc(ptl, 
-		sendreq, MCA_PTL_ELAN_DESC_QDMA);
+       	desc = mca_ptl_elan_alloc_desc(ptl, 
+		(struct mca_pml_base_request_t *) sendreq, 
+		MCA_PTL_ELAN_DESC_QDMA);
 	if (NULL == desc) {
 	    ompi_output(0,
 		    "[%s:%d] Unable to allocate an elan send descriptors \n", 
@@ -294,7 +297,9 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
 
     START_FUNC(PTL_ELAN_DEBUG_PUT);
 
-    desc = mca_ptl_elan_alloc_send_desc(ptl, sendreq, MCA_PTL_ELAN_DESC_PUT);
+    desc = mca_ptl_elan_alloc_desc(ptl, 
+	    (struct mca_pml_base_request_t *) sendreq, 
+	    MCA_PTL_ELAN_DESC_PUT);
     if (NULL == desc) {
 	ompi_output(0,
 		"[%s:%d] Unable to allocate an elan send descriptors \n", 
@@ -322,12 +327,51 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
 int
 mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
                   struct mca_ptl_base_peer_t *ptl_peer,
-                  struct mca_pml_base_recv_request_t *sendreq,
+                  struct mca_pml_base_recv_request_t *req,
                   size_t offset,
                   size_t size,
                   int flags)
 {
     int rc = OMPI_SUCCESS;
+
+#if OMPI_PTL_ELAN_ENABLE_GET
+    mca_ptl_elan_send_frag_t *desc;
+
+    /* TODO: 
+     *   There is no interface support in PML.
+     *   So a walkround is to twist the way ack works.
+     *   Step 1: Have elan_isend send E4_addr over
+     *   Step 2: Have elan_matched trigger elan_get, 
+     *           with an ack chained, which generate events to both sides.
+     *   Step 3: Done at both the send side and the recv side.
+     */
+
+    /* XXX: 
+     *    Since the address passed down from PML does not provide 
+     *    elan information, so there needs to be a change 
+     */
+
+    START_FUNC(PTL_ELAN_DEBUG_GET);
+    desc = mca_ptl_elan_alloc_desc(ptl, 
+	    (struct mca_pml_base_request_t *) req, 
+	    MCA_PTL_ELAN_DESC_GET);
+    if (NULL == desc) {
+	ompi_output(0,
+		"[%s:%d] Unable to allocate an elan send descriptors \n", 
+		__FILE__, __LINE__);
+    }
+
+    /*rc = mca_ptl_elan_start_desc(desc, */
+    rc = mca_ptl_elan_start_get(desc, (struct mca_ptl_elan_peer_t *)ptl_peer,
+	    req, offset, &size, flags);
+
+    /* XXX: It is very important to update offset,
+     *      otherwise, you stuck */
+    /*req->req_offset += size;*/
+
+    /* Update all the sends until the put is done */
+    END_FUNC(PTL_ELAN_DEBUG_GET);
+#endif
     return rc;
 }
 
@@ -351,27 +395,6 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
     request = frag->frag_request;
     recv_frag = (mca_ptl_elan_recv_frag_t * ) frag;
 
-#if 0 
-    /* XXX: If to change in PML and PTL/base
-     * Two places to setting the frag_peer after match
-     * teg_recvreq.c:157 or ptl_base_match.c:131 
-     */
-
-    /* Makeup for setting up peer information 
-       for elan's connectionless nature */
-    {
-	mca_pml_proc_t* proc;
-	mca_ptl_proc_t* ptl_proc;
-
-	proc = mca_pml_teg_proc_lookup_remote(request->req_base.req_comm, 
-		header->hdr_match.hdr_src);
-
-	THREAD_SCOPED_LOCK(&proc->proc_lock, 
-		(ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first))); 
-	frag->frag_base.frag_peer = ptl_proc->ptl_peer;
-    }
-#endif
-
     if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) 
 #if 1 
     {
@@ -379,7 +402,7 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	mca_ptl_elan_send_frag_t *desc;
 
 	/* Get a frag desc and allocate a send desc */
-	desc = mca_ptl_elan_alloc_send_desc(ptl, NULL, MCA_PTL_ELAN_DESC_QDMA);
+	desc = mca_ptl_elan_alloc_desc(ptl, NULL, MCA_PTL_ELAN_DESC_QDMA);
 
 	if (NULL == desc) {
 	    ompi_output(0,
@@ -391,6 +414,8 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 		    (ompi_list_item_t*)frag);
             OMPI_THREAD_UNLOCK(&mca_ptl_elan_component.elan_lock);
 	} else {
+	    /* XXX: recv_frag is released a few lines below,
+	     *      pay more attention to timing of the release */ 
 	    mca_ptl_elan_start_ack (ptl, desc, recv_frag);
         }
     }
