@@ -46,7 +46,6 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
 
     ompi_proc_t **myproc=NULL;
     ompi_communicator_t *newcomp;
-    ompi_ns_cmp_bitmask_t mask;
     ompi_process_name_t *port_proc_name=NULL;
 
     if ( MPI_PARAM_CHECK ) {
