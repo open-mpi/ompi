@@ -34,7 +34,7 @@ typedef struct _lam_reactor_listener {
 
 
 typedef struct _lam_reactor_descriptor {
-    lam_dbl_item_t          rd_base;
+    lam_list_item_t         rd_base;
     int                     rd;
     volatile int            rd_flags;
     lam_reactor_listener_t *rd_recv;
@@ -50,9 +50,9 @@ void lam_reactor_descriptor_destroy(lam_reactor_descriptor_t*);
 typedef struct _lam_reactor {
     lam_object_t       r_base;
     lam_mutex_t        r_mutex;
-    lam_dbl_list_t     r_active;
-    lam_dbl_list_t     r_free;
-    lam_dbl_list_t     r_pending;
+    lam_list_t         r_active;
+    lam_list_t         r_free;
+    lam_list_t         r_pending;
     lam_fast_hash_t    r_hash;
     int                r_max;
     bool               r_run;

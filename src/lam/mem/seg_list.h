@@ -18,7 +18,7 @@ typedef struct lam_seg_list
     int             sgl_max_consec_fail;
     int             sgl_consec_fail;
     lam_mutex_t     sgl_lock;
-    lam_dbl_list_t  sgl_list;
+    lam_list_t      sgl_list;
 } lam_seg_list_t;
 
 extern lam_class_info_t     seg_list_cls;
