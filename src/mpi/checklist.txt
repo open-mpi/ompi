@@ -213,7 +213,7 @@ MPI_Irecv                       DONE    DONE
 MPI_Irsend                      DONE    DONE
 MPI_Isend                       DONE    DONE
 MPI_Issend                      DONE    DONE
-MPI_Is_thread_main              Ginger
+MPI_Is_thread_main                      DONE
 MPI_Keyval_create               Vishal
 MPI_Keyval_free                 Vishal
 MPI_Lookup_name                 Edgar
@@ -226,7 +226,7 @@ MPI_Pack_external               DONE
 MPI_Pack_external_size          DONE
 MPI_Pack                        DONE
 MPI_Pack_size                   DONE
-MPI_Pcontrol                    Ginger
+MPI_Pcontrol                            DONE
 MPI_Probe                       DONE    DONE
 MPI_Publish_name                Edgar
 MPI_Put
