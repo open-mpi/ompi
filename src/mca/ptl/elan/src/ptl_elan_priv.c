@@ -105,7 +105,7 @@ mca_ptl_elan_last_frag (struct mca_ptl_elan_module_t *ptl,
 
     LOG_PRINT(PTL_ELAN_DEBUG_ACK,
 	    " local req %p addr %p, length %d\n", 
-	    request, request->req_base.req_addr,
+	    (void *)request, request->req_base.req_addr,
 	    hdr->hdr_frag.hdr_frag_length);
 
     ptl->super.ptl_recv_progress ( 
@@ -347,9 +347,9 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
     desc->src_elan_addr = elan4_main2elan (ctx, pml_req->req_base.req_addr);
     desc->dst_elan_addr = (E4_Addr)pml_req->req_peer_addr.lval;
     desc->desc_buff = hdr;
-    LOG_PRINT(PTL_ELAN_DEBUG_PUT, " remote req %p addr %x, length %d\n", 
+    LOG_PRINT(PTL_ELAN_DEBUG_PUT, " remote req %p addr %lx, length %d\n", 
 		pml_req->req_peer_match.pval, 
-		pml_req->req_peer_addr.lval, 
+		(long)pml_req->req_peer_addr.lval, 
 		pml_req->req_peer_size);
 
     /* FIXME: initialize convertor and get the fragment copied out */
@@ -409,7 +409,7 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
     desc->chain_dma.dma_dstEvent = elan4_main2elan (ctx, 
 	    (void *) ptl->queue->input);
 
-#if OMPI_PTL_ELAN_COMP_QUEUE
+#if OMPI_PTL_ELAN_COMP_QUEUE || 1
     /* XXX: Chain a QDMA to each queue and 
      * Have all the srcEvent fired to the Queue */
 
@@ -425,17 +425,8 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
      * Allocate space from command queues hanged off the CTX.
      */
     desc->comp_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
-    desc->main_dma.dma_srcEvent= elan4_main2elan(
+    desc->chain_dma.dma_srcEvent= elan4_main2elan(
 	    ctx, (E4_Event *)desc->comp_event);
-    desc->main_dma.dma_srcAddr = MAIN2ELAN (ctx, &desc->buff[0]);
-    /* XXX: Hardcoded DMA retry count */
-    desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE ((header_length +
-                                                     size_out),
-                                                    DMA_DataTypeByte,
-                                                    DMA_QueueWrite, 16);
-    desc->main_dma.dma_cookie= elan4_local_cookie (ptl->queue->tx_cpool, 
-	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
-    desc->main_dma.dma_vproc = destvp;
 #else
     desc->chain_dma.dma_srcEvent = elan4_main2elan (ctx, desc->elan_event);
     INITEVENT_WORD (ctx, (E4_Event *) desc->elan_event, &desc->main_doneWord);
@@ -451,7 +442,7 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
     LOG_PRINT (PTL_ELAN_DEBUG_FLAG,
 	    " desc %p chain_buff %p chain_event %p "
 	    "src_addr %x dst_addr %x size %d\n",
-	    desc, desc->chain_buff, desc->chain_event,
+	    desc, (void *)desc->chain_buff, (void *)desc->chain_event,
 	    (int)desc->src_elan_addr, 
 	    (int)desc->dst_elan_addr, size_out);           
 
@@ -523,7 +514,8 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     ctx  =  ptl->ptl_elan_ctx;
     hdr  = &frag->frag_base.frag_header;
     recv_header= &recv_frag->frag_recv.frag_base.frag_header;
-    ptl_peer = recv_frag->frag_recv.frag_base.frag_peer,
+    ptl_peer = (struct mca_ptl_elan_peer_t *)
+	recv_frag->frag_recv.frag_base.frag_peer,
     offset = pml_req->req_bytes_received, 
     desc = (ompi_ptl_elan_putget_desc_t *)frag->desc;
     destvp  = ptl_peer->peer_vp;
@@ -580,8 +572,8 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
     LOG_PRINT (PTL_ELAN_DEBUG_FLAG,
 	    " desc %p chain_buff %p chain_event %p "
 	    "src_addr %x dst_addr %x size %d\n",
-	    desc, desc->chain_buff, desc->chain_event,
-	    (int)desc->src_elan_addr, 
+	    (void*)desc, (void*)desc->chain_buff, 
+	    (void*)desc->chain_event, (int)desc->src_elan_addr, 
 	    (int)desc->dst_elan_addr, size_out);           
 
     /* Copy down the chain dma to the chain buffer in elan sdram  */
@@ -622,6 +614,7 @@ mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl,
 	    hdr->hdr_common.hdr_size);
     END_FUNC(PTL_ELAN_DEBUG_SEND);
 }
+#endif /* End of OMPI_PTL_ELAN_ENABLE_GET */
 
 #if OMPI_PTL_ELAN_ENABLE_GET && defined (HAVE_GET_INTERFACE)
 int
@@ -665,8 +658,7 @@ mca_ptl_elan_start_get (mca_ptl_elan_send_frag_t * frag,
     END_FUNC(PTL_ELAN_DEBUG_GET);
     return OMPI_SUCCESS;
 }
-#endif
-#endif /* End of OMPI_PTL_ELAN_ENABLE_GET */
+#endif /* End of OMPI_PTL_ELAN_ENABLE_GET && HAVE_GET_INTERFACE */
 
 int
 mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * frag,
@@ -734,8 +726,9 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     mca_ptl_base_header_t *hdr;
     mca_pml_base_recv_request_t* request;
     mca_ptl_elan_module_t *elan_ptl;
-    int destvp;
-    int remain_len, flags;
+    int    destvp;
+    int    flags;
+    size_t remain_len;
 
     START_FUNC(PTL_ELAN_DEBUG_ACK);
 
@@ -764,15 +757,15 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     hdr->hdr_ack.hdr_dst_size = remain_len;
 
     LOG_PRINT(PTL_ELAN_DEBUG_ACK,
-		"remote buff %x frag %p local req %p buffer %p size %d \n",
+		"remote buff %lx frag %p local req %p buffer %p size %d \n",
 		hdr->hdr_frag.hdr_dst_ptr.lval,
 	       	hdr->hdr_ack.hdr_src_ptr.pval,
 	       	hdr->hdr_ack.hdr_dst_match.pval,
 	       	hdr->hdr_ack.hdr_dst_addr.pval,
 	       	hdr->hdr_ack.hdr_dst_size);           
 
-    mca_ptl_elan_init_get_desc (frag, ptl, 
-	    recv_frag, request, remain_len, flags);
+    mca_ptl_elan_init_get_desc (elan_ptl, frag, recv_frag, 
+	    request, &remain_len, flags);
 
     /* Trigger a STEN packet to the remote side and then from there
      * a elan_get is triggered */
@@ -985,6 +978,7 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
 {
     struct mca_ptl_elan_module_t *ptl;
     mca_ptl_elan_send_frag_t   *frag;
+    struct ompi_ptl_elan_comp_queue_t  *comp;
     ELAN4_CTX  *ctx;
 
     int         i, no_ptls, rc = 0;
@@ -997,15 +991,61 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
         ptl = emp->modules[i];
         ctx = ptl->ptl_elan_ctx;
 
+#if OMPI_PTL_ELAN_COMP_QUEUE 
+        comp = emp->modules[i]->comp;
+        rxq = comp->rxq;
+
+#if 1
+	/* XXX: Just test and go */
+        rc = (*(int *) (&rxq->qr_doneWord));
+
+#else
+	/* XXX: block on the event without holding a lock */
+        rc = elan4_pollevent_word (ctx, &rxq->qr_doneWord, 1);
+#endif
+        if (rc) {
+
+            mca_ptl_base_header_t *header;
+ 
+	    OMPI_LOCK (&comp->rx_lock);
+            header = (mca_ptl_base_header_t *) rxq->qr_fptr;
+
+	    /* FIXME: please fix this completion queue processing */
+
+	    /* FIXME: please reorganize this into a common routine */
+
+            /* Work out the new front pointer */
+            if (rxq->qr_fptr == rxq->qr_top) {
+                rxq->qr_fptr = rxq->qr_base;
+                rxq->qr_efptr = rxq->qr_efitem;
+            } else {
+                rxq->qr_fptr = (void *) ((uintptr_t) rxq->qr_fptr
+                                         + comp->rx_slotsize);
+                rxq->qr_efptr += comp->rx_slotsize;
+            }
+
+            /* PCI Write, Reset the event 
+	     * Order RESETEVENT wrt to wait_event_cmd */
+            comp->input->q_fptr = rxq->qr_efptr;
+            RESETEVENT_WORD (&rxq->qr_doneWord);
+            MEMBAR_STORESTORE ();
+
+            /* Re-prime comp event by issuing a waitevent(1) on it */
+            elan4_wait_event_cmd (rxq->qr_cmdq,
+                    /* Is qr_elanDone really a main memory address? */
+                    MAIN2ELAN (ctx, rxq->qr_elanDone),
+                    E4_EVENT_INIT_VALUE (-32, E4_EVENT_WRITE,
+                        E4_EVENT_DTYPE_LONG, 0), 
+                    MAIN2ELAN (ctx, (void *) &rxq->qr_doneWord),
+                    0xfeedfacedeadbeef);
+	    elan4_flush_cmdq_reorder (rxq->qr_cmdq);
+	    OMPI_UNLOCK (&comp->rx_lock);
+        }
+#else
 	while (ompi_list_get_size (&ptl->send_frags) > 0) {
             frag = (mca_ptl_elan_send_frag_t *)
                 ompi_list_get_first (&ptl->send_frags);
-#if 1
             rc = * ((int *) (&frag->desc->main_doneWord));
-#else
-            /* Poll the completion event for 1usec */
-            rc = elan4_pollevent_word(ctx, &frag->desc->main_doneWord, 1);
-#endif
 	    if (rc) {
 		ompi_ptl_elan_base_desc_t *basic;
 
@@ -1013,7 +1053,9 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
                 frag = (mca_ptl_elan_send_frag_t *)
                     ompi_list_remove_first (&ptl->send_frags);
 		basic = (ompi_ptl_elan_base_desc_t*)frag->desc;
- 		mca_ptl_elan_send_desc_done (frag, basic->req);
+
+ 		mca_ptl_elan_send_desc_done (
+			frag, (mca_pml_base_send_request_t *) basic->req);
 		INITEVENT_WORD (ctx, basic->elan_event, &basic->main_doneWord);
 		RESETEVENT_WORD (&basic->main_doneWord);
 		PRIMEEVENT_WORD (ctx, basic->elan_event, 1);
@@ -1021,10 +1063,10 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
  		/* XXX: Stop at any incomplete send desc */
 		break;
 	    }
+#endif 
 	} /* end of the while loop */
     } /* end of the for loop */
 
     return OMPI_SUCCESS;
 }
-
 
