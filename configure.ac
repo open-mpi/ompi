@@ -477,10 +477,10 @@ else
         MPI_FORTRAN_LOGICAL_TYPE=char
 	MPI_FORTRAN_INT_TYPE=int
         MPI_FORTRAN_REAL_TYPE=float
-        MPI_FORTRAN_DOUBLE_TYPE=double
+        MPI_FORTRAN_DBLPREC_TYPE=double
 	AC_MSG_WARN([*** WARNING: Did not detect a f77 compiler.  Assuming default corresponding types])
         AC_MSG_WARN([*** Fortran LOGICAL = C $MPI_FORTRAN_LOGICAL_TYPE])
-        AC_MSG_WARN([*** Fortran INTEGER = C $MPI_FORTRAN_INTEGER_TYPE])
+        AC_MSG_WARN([*** Fortran INTEGER = C $MPI_FORTRAN_INT_TYPE])
         AC_MSG_WARN([*** Fortran REAL = C $MPI_FORTRAN_REAL_TYPE])
         AC_MSG_WARN([*** Fortran DOUBLE PRECISION = C $MPI_FORTRAN_DBLPREC_TYPE])
 fi
@@ -489,7 +489,7 @@ AC_DEFINE_UNQUOTED(MPI_Fint, $MPI_FORTRAN_INT_TYPE,
 
 AC_DEFINE_UNQUOTED(ompi_fortran_logical_t, $MPI_FORTRAN_LOGICAL_TYPE, 
     [C type corresponding to Fortran LOGICAL])
-AC_DEFINE_UNQUOTED(ompi_fortran_integer_t, $MPI_FORTRAN_INTEGER_TYPE, 
+AC_DEFINE_UNQUOTED(ompi_fortran_integer_t, $MPI_FORTRAN_INT_TYPE, 
     [C type corresponding to Fortran LOGICAL])
 AC_DEFINE_UNQUOTED(ompi_fortran_real_t, $MPI_FORTRAN_REAL_TYPE, 
     [C type corresponding to Fortran REAL])
