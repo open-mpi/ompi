@@ -6,7 +6,6 @@
 #include "mpi/file/file.h"
 #include "io_romio.h"
 #include "mpi/request/request.h"
-#include "lam/mem/malloc.h"
 #include <string.h>
 
 int mca_io_romio_File_open(MPI_Comm comm, char *filename, int amode,
@@ -17,7 +16,7 @@ int mca_io_romio_File_open(MPI_Comm comm, char *filename, int amode,
     mca_io_romio_file_t *mca_romio_fh;  
 
     /* create a new lam_file_t */
-    mca_romio_fh = LAM_MALLOC(sizeof(mca_io_romio_file_t));
+    mca_romio_fh = malloc(sizeof(mca_io_romio_file_t));
     (*fh) = (lam_file_t *) mca_romio_fh;
     strncpy((*fh)->f_name,filename,MPI_MAX_OBJECT_NAME);
     (*fh)->lam_io_version=LAM_IO_1_0_0;
@@ -46,7 +45,7 @@ int mca_io_romio_File_close(MPI_File *fh) {
     ret=mca_io_romio_MPI_File_close(&romio_fh);
     THREAD_UNLOCK(&mca_io_romio_mutex);
   
-    LAM_FREE(*fh);
+    free(*fh);
 
     return ret;
 }
@@ -395,7 +394,7 @@ int mca_io_romio_File_get_errhandler(MPI_File fh, MPI_Errhandler *eh ){
     romio_fh = mca_romio_fh->romio_fh;
 
     THREAD_LOCK(&mca_io_romio_mutex);
-    ret=mca_io_romio_File_get_errhandler(romio_fh,eh );
+    ret=mca_io_romio_MPI_File_get_errhandler(romio_fh,eh );
     THREAD_UNLOCK(&mca_io_romio_mutex);
   
     return ret;
