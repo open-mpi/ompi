@@ -20,12 +20,13 @@
 #include "win/win.h"
 #include "file/file.h"
 #include "errhandler/errhandler.h"
+#include "mpi/f77/fint_2_int.h"
 
 
 int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object, 
 			   int object_type, int err_code, const char *message)
 {
-    int fortran_handle;
+    MPI_Fint fortran_handle, fortran_err_code = OMPI_INT_2_FINT(err_code);
     ompi_communicator_t *comm;
 #if OMPI_WANT_MPI2_ONE_SIDED
     ompi_win_t *win;
@@ -44,8 +45,8 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
 	case OMPI_ERRHANDLER_TYPE_COMM:
 	    comm = (ompi_communicator_t *) mpi_object;
 	    if (errhandler->eh_fortran_function) {
-		fortran_handle = comm->c_f_to_c_index;
-		errhandler->eh_fort_fn(&fortran_handle, &err_code);
+		fortran_handle = OMPI_INT_2_FINT(comm->c_f_to_c_index);
+		errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
 	    } else {
 		errhandler->eh_comm_fn(&comm, &err_code, message, NULL);
 	  }
@@ -55,8 +56,8 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
 	case OMPI_ERRHANDLER_TYPE_WIN:
 	    win = (ompi_win_t *) mpi_object;
 	    if (errhandler->eh_fortran_function) {
-		fortran_handle = win->w_f_to_c_index;
-		errhandler->eh_fort_fn(&fortran_handle, &err_code);
+		fortran_handle = OMPI_INT_2_FINT(win->w_f_to_c_index);
+		errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
 	    } else {
 		errhandler->eh_win_fn(&win, &err_code, message, NULL);
 	    }
@@ -66,8 +67,8 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
 	case OMPI_ERRHANDLER_TYPE_FILE:
 	    file = (ompi_file_t *) mpi_object;
 	    if (errhandler->eh_fortran_function) {
-		fortran_handle = file->f_f_to_c_index;
-		errhandler->eh_fort_fn(&fortran_handle, &err_code);
+		fortran_handle = OMPI_INT_2_FINT(file->f_f_to_c_index);
+		errhandler->eh_fort_fn(&fortran_handle, &fortran_err_code);
 	    } else {
 		errhandler->eh_file_fn(&file, &err_code, message, NULL);
 	    }

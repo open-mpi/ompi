@@ -43,7 +43,8 @@ enum {
 /**
  * Typedef for all fortran errhandler functions
  */
-typedef void (ompi_errhandler_fortran_handler_fn_t)(int *, int *, ...);
+typedef void (ompi_errhandler_fortran_handler_fn_t)(MPI_Fint *, 
+                                                    MPI_Fint *, ...);
 
 /**
  * Typedef for generic errhandler function
