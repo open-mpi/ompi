@@ -1,5 +1,4 @@
 #include <unistd.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -137,10 +136,11 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
 mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name)
 {
     int rc;
-    mca_oob_tcp_peer_t * peer;
+    mca_oob_tcp_peer_t * peer, * old;
 
     OMPI_THREAD_LOCK(&mca_oob_tcp_module.tcp_lock);
-    peer = (mca_oob_tcp_peer_t*)ompi_rb_tree_find(&mca_oob_tcp_module.tcp_peer_tree, name);
+    peer = (mca_oob_tcp_peer_t*)ompi_rb_tree_find(&mca_oob_tcp_module.tcp_peer_tree,
+           (ompi_process_name_t *)  name);
     if(NULL != peer) {
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
         return peer;
@@ -153,15 +153,32 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name)
     }
 
     peer->peer_name = *name;
-    if(OMPI_SUCCESS != ompi_rb_tree_insert(&mca_oob_tcp_module.tcp_peer_tree, name, peer)) {
+    if(OMPI_SUCCESS != ompi_rb_tree_insert(&mca_oob_tcp_module.tcp_peer_tree, 
+                       (ompi_process_name_t *) name, peer)) {
         MCA_OOB_TCP_PEER_RETURN(peer);
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
         return NULL;
     }
     ompi_list_prepend(&mca_oob_tcp_module.tcp_peer_list, (ompi_list_item_t *) peer);
+    /* if the peer list is over the maximum size, remove one unsed peer */
     if(ompi_list_get_size(&mca_oob_tcp_module.tcp_peer_list) > 
        mca_oob_tcp_module.tcp_cache_size) {
-       /* do something - remove LRU items from peer list (that aren't in use) */
+       old = (mca_oob_tcp_peer_t *) 
+              ompi_list_get_last(&mca_oob_tcp_module.tcp_peer_list);
+       while(1) {
+           if(0 == ompi_list_get_size(&(old->peer_send_queue)) &&
+              0 == ompi_list_get_size(&(old->peer_recv_queue))) {
+               ompi_list_remove_item(&mca_oob_tcp_module.tcp_peer_list, 
+                                     (ompi_list_item_t *) old);
+               MCA_OOB_TCP_PEER_RETURN(old);
+               break;
+           } else {
+               old = (mca_oob_tcp_peer_t *) ompi_list_get_prev(old);
+               if(NULL == old) {
+                   break;
+               }
+           }
+       }
     }
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
     return peer;
@@ -251,7 +268,7 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         mca_oob_tcp_peer_close(peer);
         return;
     }
-                                                                                                                       
+
     if(mca_oob_tcp_peer_send_connect_ack(peer) == OMPI_SUCCESS) {
         peer->peer_state = MCA_OOB_TCP_CONNECT_ACK;
         ompi_event_add(&peer->peer_recv_event, 0);
@@ -300,7 +317,6 @@ static void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
  * Send the globally unique identifier for this process to a peer on
  * a newly connected socket.
  */
-                                                                                                                                 
 static int mca_oob_tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
 {
     /* send process identifier to remote peer */
@@ -316,7 +332,6 @@ static int mca_oob_tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
  *  connected socket and verify the expected response. If so, move the
  *  socket to a connected state.
  */
-                                                                                                            
 static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
 {
     ompi_process_name_t guid;

@@ -50,14 +50,19 @@ struct mca_oob_tcp_peer_t {
 };
 typedef struct mca_oob_tcp_peer_t mca_oob_tcp_peer_t;
 
-                                                                                                                 
+/**
+ * Get a new peer data structure
+ */                                                                                                                 
 #define MCA_OOB_TCP_PEER_ALLOC(peer, rc) \
     { \
     ompi_list_item_t* item; \
     OMPI_FREE_LIST_GET(&mca_oob_tcp_module.tcp_peer_free, item, rc); \
     peer = (mca_oob_tcp_peer_t*)item; \
     }
-                                                                                                                 
+
+/**
+ * Return a peer data structure
+ */
 #define MCA_OOB_TCP_PEER_RETURN(peer) \
     { \
     OMPI_FREE_LIST_RETURN(&mca_oob_tcp_module.tcp_peer_free, (ompi_list_item_t*)peer); \
@@ -74,7 +79,7 @@ extern "C" {
  *
  * @param peer_name the name of the peer
  * 
- * @retval pointer to the newly created struture
+ * @retval pointer to the peer's (possibly newly created) struture
  * @retval NULL if there was a problem
  */
 mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(const ompi_process_name_t* peer_name);

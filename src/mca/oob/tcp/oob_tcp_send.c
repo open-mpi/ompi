@@ -35,7 +35,7 @@ int mca_oob_tcp_send(const ompi_process_name_t* name, const struct iovec *iov, i
 
     rc = mca_oob_tcp_peer_send(peer, msg);
     if(rc != OMPI_SUCCESS) {
-        OBJ_RELEASE(msg);
+        MCA_OOB_TCP_MSG_RETURN(msg);
         return rc;
     }
 
@@ -87,7 +87,7 @@ int mca_oob_tcp_send_nb(
 
     rc = mca_oob_tcp_peer_send(peer, msg);
     if(rc != OMPI_SUCCESS) {
-        OBJ_RELEASE(msg);
+        MCA_OOB_TCP_MSG_RETURN(msg);
         return rc;
     }
     return OMPI_SUCCESS;

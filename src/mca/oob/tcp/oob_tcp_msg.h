@@ -36,7 +36,9 @@ typedef struct mca_oob_tcp_msg_t mca_oob_tcp_msg_t;
 
 OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
 
-
+/**
+ * Get a new structure for use with a message
+ */
 #define MCA_OOB_TCP_MSG_ALLOC(msg, rc) \
     { \
     ompi_list_item_t* item; \
@@ -44,6 +46,9 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
     msg = (mca_oob_tcp_msg_t*)item; \
     }
 
+/**
+ * return a message structure that is no longer needed
+ */
 #define MCA_OOB_TCP_MSG_RETURN(msg) \
     { \
     OMPI_FREE_LIST_RETURN(&mca_oob_tcp_module.tcp_msgs, (ompi_list_item_t*)msg); \
@@ -55,7 +60,6 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
  *  @param  size (OUT) Number of bytes delivered.
  *  @retval OMPI_SUCCESS or error code on failure.
  */
-
 int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* size);
 
 /**
@@ -64,7 +68,6 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* size);
  *  @param  msg (IN)   Message send/recv that has completed.
  *  @retval OMPI_SUCCESS or error code on failure.
  */
-
 int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg);
 
 /**
@@ -73,9 +76,7 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg);
  *  @param  sd (IN)    Socket descriptor to use for send.
  *  @retval bool       Bool flag indicating wether operation has completed.
  */
-
 bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, int sd);
-
 
 /**
  *  Called asynchronously to progress sending a message from the event library thread.
