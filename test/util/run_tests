@@ -6,15 +6,15 @@
 # Arguements
 # ==========
 # 
-# test_list  =  no args runs all tests
+# test_list  =  no args or all runs all tests
 #              or
-#               argv runs ompi_argv tests
-#               numtostr runs ompi_numtostr tests
-#               os_create_dirpath runs ompi_os_create_dirpath tests, 
-#               os_path runs ompi_os_path tests, 
-#               session_dir runs ompi_session_dir tests
-#               sys_info runs ompi_sys_info tests
-#               pack runs ompi_pack tests
+#               ompi_argv runs ompi_argv tests
+#               ompi_numtostr runs ompi_numtostr tests
+#               ompi_os_create_dirpath runs ompi_os_create_dirpath tests, 
+#               ompi_os_path runs ompi_os_path tests, 
+#               ompi_session_dir runs ompi_session_dir tests
+#               ompi_sys_info runs ompi_sys_info tests
+#               ompi_pack runs ompi_pack tests
 
 # Usage
 #
@@ -34,25 +34,46 @@ if ("x$1" == "x") then
   ./ompi_os_path
 #  ./ompi_session_dir
   ./ompi_sys_info
-else if ("$1" == "argv") then
-  ./ompi_argv
-else if ("$1" == "numtostr") then
-  ./ompi_numtostr
-else if ("$1" == "os_create_dir_path") then
-  ./ompi_os_create_dir_path
-else if ("$1" == "os_path") then
-  ./ompi_os_path
-else if ("$1" == "pack") then
-  ./ompi_pack
-else if ("$1" == "session_dir") then
-  ./ompi_session_dir
-else if ("$1" == "sys_info") then
-  ./ompi_sys_info
 else
-  echo "correct use: "
-  echo "    run    (to run all class tests)"
-  echo "or  run <argv | numtostr | os_create_dir_path | os_path | session_dir | sys_info>"
-  exit -1
+  foreach target ($argv)
+    switch ($target)
+    case "all":
+#      ./ompi_argv
+      ./ompi_numtostr
+      ./ompi_os_create_dirpath
+      ./ompi_pack
+      ./ompi_os_path
+#      ./ompi_session_dir
+      ./ompi_sys_info
+      breaksw
+    case "ompi_argv":
+    case "ompi_numtostr":
+    case "ompi_os_create_dirpath":
+    case "ompi_pack":
+    case "ompi_os_path":
+    case "ompi_session_dir":
+    case "ompi_sys_info":
+      ./$target
+      breaksw
+    case "help":
+      echo "correct use: "
+      echo "    run_tests help (this message)"
+      echo "    run_tests all (to run all class tests)"
+      echo "or  run_tests with any of the following: "
+      echo "     <ompi_argv | ompi_numtostr | ompi_os_create_dirpath | "
+      echo "      ompi_os_path | ompi_session_dir | ompi_sys_info>"
+      break
+      breaksw
+    default
+      echo "There is no test program <$target> to run"
+      echo "correct use: "
+      echo "    run_tests    (to run all class tests)"
+      echo "or  run_tests with any of the following: "
+      echo "     <ompi_argv | ompi_numtostr | ompi_os_create_dirpath | "
+      echo "      ompi_os_path | ompi_session_dir | ompi_sys_info>"
+      break
+    endsw
+  end
 endif
 
 
