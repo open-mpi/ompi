@@ -391,6 +391,14 @@ extern "C" {
     void ompi_comm_reg_finalize(void);
 
 
+    /* start the new processes from MPI_Comm_spawn. Initial version,
+     * a version for Comm_spawn_multiple still missing.
+     */
+    int ompi_comm_start_processes (char *command, char **argv, int maxprocs, 
+				   MPI_Info info,  char *port_name);
+
+    int ompi_comm_dyn_init(void);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
