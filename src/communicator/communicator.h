@@ -18,6 +18,9 @@
 #include "request/request.h"
 #include "threads/mutex.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_class_t ompi_communicator_t_class;
 
 #define OMPI_COMM_INTER     0x00000001
@@ -55,9 +58,6 @@ extern ompi_class_t ompi_communicator_t_class;
 #define OMPI_COMM_CID_INTRA_BRIDGE 0x00000080
 #define OMPI_COMM_CID_INTRA_OOB    0x00000100
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 extern ompi_pointer_array_t ompi_mpi_communicators; 
 
 struct ompi_communicator_t {
