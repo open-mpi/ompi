@@ -21,7 +21,6 @@ int main(int argc, char **argv)
 {
     /* local variables */
     ompi_list_t list;
-    ompi_list_type_t list_type,list_type_out;
     size_t list_size,tmp_list_size;
     int size_elements,i,indx,error_cnt;
     test_data_t *elements, *ele;
@@ -38,17 +37,6 @@ int main(int argc, char **argv)
         test_success();
     } else {
         test_failure(" ompi_list_get_size");
-    }
-
-    /* check list type */
-    list_type=2;
-    ompi_list_set_type(&list,list_type);
-    list_type_out=0;
-    list_type_out=ompi_list_get_type(&list);
-    if( list_type_out == list_type ) {
-        test_success();
-    } else {
-        test_failure(" ompi_list_set/get_type");
     }
 
     /* check set_size/get_size */
