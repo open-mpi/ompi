@@ -621,7 +621,7 @@ int ompi_convertor_pack_homogeneous_contig( ompi_convertor_t* pConv,
 
     if( pData->size == extent ) {  /* that really contiguous */
 	if( iov[0].iov_base == NULL ) {
-	    iov[0].iov_base = pSrc + pConv->bConverted;
+	    iov[0].iov_base = pSrc; /* + pConv->bConverted; */
 	    if( (pConv->bConverted + iov[0].iov_len) > length )
 		iov[0].iov_len = length - pConv->bConverted;
 	} else {
