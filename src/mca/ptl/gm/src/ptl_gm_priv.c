@@ -353,8 +353,7 @@ void put_callback(struct gm_port *port,void * context, gm_status_t status)
 
         /* deregister the user memory */
        status = gm_deregister_memory(ptl->gm_port, (char *)(putfrag->registered_buf), bytes2);
-
-       if(GM_SUCCESS != status) {
+       if( GM_SUCCESS != status ) {
     	   ompi_output(0," unpinning memory failed\n");
        }
        break;
@@ -481,7 +480,8 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
     mca_ptl_gm_recv_frag_t* recv_frag;
     bool matched;
     mca_ptl_base_header_t* hdr;
-    
+    size_t length;
+
     hdr = (mca_ptl_base_header_t*)gm_ntohp(event->recv.buffer);
     
     /* allocate a receive fragment */
@@ -506,29 +506,28 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
     matched = ptl->super.ptl_match( &(ptl->super),
                                     &(recv_frag->frag_recv),
                                     &(recv_frag->frag_recv.frag_base.frag_header.hdr_match) );
-    if( !matched ) {
-        size_t length = recv_frag->frag_recv.frag_base.frag_size;
-        
-	/* get some memory and copy the data inside. We can then release the receive buffer */
-        if( 0 != length ) {
-            char* ptr = (char*)gm_get_local_buffer();
-	    if (NULL == ptr) {
-		ompi_output(0, "[%s:%d] error in allocating memory \n", __FILE__, __LINE__);
-	    }
-            recv_frag->have_allocated_buffer = true;
-            memcpy( ptr, recv_frag->frag_recv.frag_base.frag_addr, length );
-            recv_frag->frag_recv.frag_base.frag_addr = ptr;
-        } else {
-            recv_frag->frag_recv.frag_base.frag_addr = NULL;
-        }
-        recv_frag->matched = false;
-        recv_frag->frag_ack_pending = false;
-        recv_frag->frag_progressed = 0;
-        recv_frag->frag_bytes_processed = 0;
+    if( true == matched ) return NULL;  /* done and fragment already removed */
 
-        return recv_frag;
+    length = recv_frag->frag_recv.frag_base.frag_size;
+        
+    /* get some memory and copy the data inside. We can then release the receive buffer */
+    if( 0 != length ) {
+        char* ptr = (char*)gm_get_local_buffer();
+        if (NULL == ptr) {
+            ompi_output(0, "[%s:%d] error in allocating memory \n", __FILE__, __LINE__);
+        }
+        recv_frag->have_allocated_buffer = true;
+        memcpy( ptr, recv_frag->frag_recv.frag_base.frag_addr, length );
+        recv_frag->frag_recv.frag_base.frag_addr = ptr;
+    } else {
+        recv_frag->frag_recv.frag_base.frag_addr = NULL;
     }
-    return NULL;
+    recv_frag->matched = false;
+    recv_frag->frag_ack_pending = false;
+    recv_frag->frag_progressed = 0;
+    recv_frag->frag_bytes_processed = 0;
+    
+    return recv_frag;
 }
 
 /* This function get called when the gm_get is finish (i.e. when the read from remote memory
@@ -699,6 +698,7 @@ mca_ptl_gm_recv_frag_fin( struct mca_ptl_gm_module_t *ptl,
 {
     mca_ptl_gm_send_frag_t* frag;
     mca_ptl_base_header_t *hdr;
+    gm_status_t status;
 
     hdr = (mca_ptl_base_header_t *)gm_ntohp(event->recv.buffer);
     frag = (mca_ptl_gm_send_frag_t*)hdr->hdr_ack.hdr_src_ptr.pval;
@@ -707,6 +707,12 @@ mca_ptl_gm_recv_frag_fin( struct mca_ptl_gm_module_t *ptl,
 				  frag->send_frag.frag_request,
 				  hdr->hdr_ack.hdr_dst_size );
 
+    status = gm_deregister_memory( ptl->gm_port, frag->send_frag.frag_base.frag_addr,
+                                   frag->send_frag.frag_base.frag_size );
+    if( GM_SUCCESS != status ) {
+        ompi_output( 0, "Unable to deregister GM memory at %p length %d bytes\n",
+                     frag->send_frag.frag_base.frag_addr, frag->send_frag.frag_base.frag_size );
+    }
     OMPI_FREE_LIST_RETURN( &(ptl->gm_send_frags), (ompi_list_item_t*)frag );
     return NULL;
 }
