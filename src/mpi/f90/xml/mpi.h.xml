@@ -374,7 +374,7 @@
       -     there is no way to alloc memory in C for Fortran arrays
       -     see MPI_Free_mem
       -->
-    <method name="MPI_Alloc_mem" kind="final">
+    <method name="MPI_Alloc_mem" kind="No_F90">
 
       <!-- ARGUMENT : size -->
       <arg name="size" intent="in">
@@ -407,8 +407,9 @@
     
     <!-- 
       -  METHOD: int MPI_Allreduce(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Allreduce" kind="final" template="yes">
+    <method name="MPI_Allreduce" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -465,7 +466,7 @@
       -  METHOD: int MPI_Alltoall(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Alltoall" kind="final" template="yes">
+    <method name="MPI_Alltoall" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -528,7 +529,7 @@
       -  METHOD: int MPI_Alltoallv(void *, int *, int *, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Alltoallv" kind="final" template="yes">
+    <method name="MPI_Alltoallv" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -619,7 +620,7 @@
       -  METHOD: int MPI_Alltoallw(void *, int *, int *, MPI_Datatype *, void *, int *, int *, MPI_Datatype *, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Alltoallw" kind="final" template="yes">
+    <method name="MPI_Alltoallw" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -1949,7 +1950,7 @@
     <method name="MPI_Comm_set_attr" kind="final">
 
       <!-- ARGUMENT : comm -->
-      <arg name="comm" intent="inout">
+      <arg name="comm" intent="in">
         <type kind="usertype" usertype="MPI_Comm" >
         </type>
       </arg>
@@ -2345,12 +2346,13 @@
     
     <!-- 
       -  METHOD: int MPI_Exscan(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Exscan" kind="final" template="yes">
+    <method name="MPI_Exscan" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -2360,7 +2362,7 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -3367,7 +3369,7 @@
       <arg name="buf" intent="out">
         <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -3405,9 +3407,9 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr">
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -3415,7 +3417,7 @@
 
       <!-- ARGUMENT : status -->
       <arg name="status" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr">
           <indirect depth="1" kind="pointer">
             <type kind="usertype" usertype="MPI_Status" >
             </type>
@@ -3601,9 +3603,9 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -3729,7 +3731,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4183,7 +4185,7 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4379,9 +4381,9 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -4507,9 +4509,9 @@
 
       <!-- ARGUMENT : buf -->
       <arg name="buf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -4619,7 +4621,7 @@
     <!-- 
       -  METHOD: int MPI_Free_mem(void *) C
       -->
-    <method name="MPI_Free_mem" kind="final" template="yes">
+    <method name="MPI_Free_mem" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : base -->
       <arg name="base" intent="in">
@@ -4640,12 +4642,13 @@
     
     <!-- 
       -  METHOD: int MPI_Gather(void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Gather" kind="final" template="yes">
+    <method name="MPI_Gather" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4667,7 +4670,7 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4708,12 +4711,13 @@
     
     <!-- 
       -  METHOD: int MPI_Gatherv(void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, int, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Gatherv" kind="final" template="yes">
+    <method name="MPI_Gatherv" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4735,7 +4739,7 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4795,9 +4799,9 @@
 
       <!-- ARGUMENT : origin_addr -->
       <arg name="origin_addr" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -4855,7 +4859,7 @@
     <!-- 
       -  METHOD: int MPI_Get_address(void *, MPI_Aint *) C
       -->
-    <method name="MPI_Get_address" kind="final" template="yes">
+    <method name="MPI_Get_address" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : location -->
       <arg name="location" intent="in">
@@ -6824,8 +6828,9 @@
     
     <!-- 
       -  METHOD: int MPI_Pack(void *, int, MPI_Datatype, void *, int, int *, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Pack" kind="final" template="yes">
+    <method name="MPI_Pack" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : inbuf -->
       <arg name="inbuf" intent="in">
@@ -6890,12 +6895,13 @@
     
     <!-- 
       -  METHOD: int MPI_Pack_external(char *, void *, int, MPI_Datatype, void *, MPI_Aint, MPI_Aint *) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Pack_external" kind="final" template="yes">
+    <method name="MPI_Pack_external" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : datarep -->
       <arg name="datarep" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr">
           <indirect depth="1" kind="pointer">
             <type kind="int" ikind="char" >
             </type>
@@ -6905,7 +6911,7 @@
 
       <!-- ARGUMENT : inbuf -->
       <arg name="inbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -6927,7 +6933,7 @@
 
       <!-- ARGUMENT : outbuf -->
       <arg name="outbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7108,9 +7114,9 @@
 
       <!-- ARGUMENT : origin_addr -->
       <arg name="origin_addr" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
@@ -7313,12 +7319,13 @@
     
     <!-- 
       -  METHOD: int MPI_Reduce(void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Reduce" kind="final" template="yes">
+    <method name="MPI_Reduce" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7328,7 +7335,7 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7375,12 +7382,13 @@
     
     <!-- 
       -  METHOD: int MPI_Reduce_scatter(void *, void *, int *, MPI_Datatype, MPI_Op, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Reduce_scatter" kind="final" template="yes">
+    <method name="MPI_Reduce_scatter" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7390,7 +7398,7 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7682,12 +7690,13 @@
     
     <!-- 
       -  METHOD: int MPI_Scan(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Scan" kind="final" template="yes">
+    <method name="MPI_Scan" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7697,7 +7706,7 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7738,12 +7747,13 @@
     
     <!-- 
       -  METHOD: int MPI_Scatter(void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Scatter" kind="final" template="yes">
+    <method name="MPI_Scatter" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7765,7 +7775,7 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7806,12 +7816,13 @@
     
     <!-- 
       -  METHOD: int MPI_Scatterv(void *, int *, int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Scatterv" kind="final" template="yes">
+    <method name="MPI_Scatterv" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -7821,7 +7832,7 @@
 
       <!-- ARGUMENT : sendcounts -->
       <arg name="sendcounts" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="int" ikind="int" >
             </type>
@@ -8002,14 +8013,13 @@
     
     <!-- 
       -  METHOD: int MPI_Sendrecv(void *, int, MPI_Datatype, int, int, void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Status *) C
-      - NOTE: send/recv buffers can have different datatypes,
-      -       don't believe we should have interface defined
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Sendrecv" kind="final" template="yes">
+    <method name="MPI_Sendrecv" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -8043,7 +8053,7 @@
 
       <!-- ARGUMENT : recvbuf -->
       <arg name="recvbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -10175,12 +10185,13 @@
     
     <!-- 
       -  METHOD: int MPI_Unpack(void *, int, int *, void *, int, MPI_Datatype, MPI_Comm) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Unpack" kind="final" template="yes">
+    <method name="MPI_Unpack" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : inbuf -->
       <arg name="inbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -10206,7 +10217,7 @@
 
       <!-- ARGUMENT : outbuf -->
       <arg name="outbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -10241,12 +10252,13 @@
     
     <!-- 
       -  METHOD: int MPI_Unpack_external(char *, void *, MPI_Aint, MPI_Aint *, void *, int, MPI_Datatype) C
+      -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Unpack_external" kind="final" template="yes">
+    <method name="MPI_Unpack_external" kind="No_F90" template="yes">
 
       <!-- ARGUMENT : datarep -->
       <arg name="datarep" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr">
           <indirect depth="1" kind="pointer">
             <type kind="int" ikind="char" >
             </type>
@@ -10256,7 +10268,7 @@
 
       <!-- ARGUMENT : inbuf -->
       <arg name="inbuf" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -10282,7 +10294,7 @@
 
       <!-- ARGUMENT : outbuf -->
       <arg name="outbuf" intent="out">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -10539,9 +10551,9 @@
 
       <!-- ARGUMENT : base -->
       <arg name="base" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
-            <type kind="void" >
+            <type kind="void">
             </type>
           </indirect>
         </type>
