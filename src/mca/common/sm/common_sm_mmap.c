@@ -160,7 +160,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         return NULL;
     }
     mem_offset=addr-(unsigned char *)seg;
-    map->map_addr = seg;
+    map->map_addr = (unsigned char *)seg;
     map->data_addr = addr;
     map->map_size = size;
 
