@@ -52,6 +52,7 @@ void *lam_memcpy_sum32(void *restrict dst,
     csumlenresidue = (csumlen > size) ? (csumlen - size) : 0;
     temp = state->partial_int;
 
+#if 0
     if (intaligned(p) && intaligned(q)) {
         if (state->partial_size) {
             // do we have enough data to fill out the partial word?
@@ -258,6 +259,7 @@ void *lam_memcpy_sum32(void *restrict dst,
             state->partial_int = 0;
         }
     }
+#endif
 
     /* if size is non-zero there was a bit left, less than an uint32_t's worth */
 
