@@ -303,7 +303,7 @@ int ompi_ddt_init( void )
     MOOG(complex32);
     MOOG(dblcplex);
     MOOG(2real);
-    MOOG(2dblcplex);
+    MOOG(2dblprec);
     MOOG(2integer);
 
     /* Now the C types */
