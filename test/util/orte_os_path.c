@@ -14,22 +14,13 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
-
-
-int main(int argc, char **argv)
-{
-    printf("Test disabled - Does not compile.\n");
-    return 77;
-}
-
-#if 0
 
 #include "util/sys_info.h"
 #include "util/os_path.h"
@@ -45,41 +36,43 @@ static bool test5(void);   /* very long path name test */
 int main(int argc, char* argv[])
 {
 
-    test_init("ompi_os_path_t");
-
+    test_init("orte_os_path_t");
+    /* setup the system info structure */
+    orte_sys_info();
+    
     if (test1()) {
         test_success();
     }
     else {
-      test_failure("ompi_os_path_t test1 failed");
+      test_failure("orte_os_path_t test1 failed");
     }
 
     if (test2()) {
         test_success();
     }
     else {
-      test_failure("ompi_os_path_t test2 failed");
+      test_failure("orte_os_path_t test2 failed");
     }
 
     if (test3()) {
         test_success();
     }
     else {
-      test_failure("ompi_os_path_t test3 failed");
+      test_failure("orte_os_path_t test3 failed");
     }
 
     if (test4()) {
         test_success();
     }
     else {
-      test_failure("ompi_os_path_t test4 failed");
+      test_failure("orte_os_path_t test4 failed");
     }
 
     if (test5()) {
         test_success();
     }
     else {
-      test_failure("ompi_os_path_t test5 failed");
+      test_failure("orte_os_path_t test5 failed");
     }
 
     test_finalize();
@@ -89,17 +82,18 @@ int main(int argc, char* argv[])
 
 static bool test1(void)
 {
-    char *out;
+    char *out, *answer;
 
-    /* Test trivial functionality. Program should return "." when called in relative
+    /* Test trivial functionality. Program should return ".[separator]" when called in relative
      * mode, and the separator character when called in absolute mode. */
-
-    if (NULL != (out = ompi_os_path(true,NULL))) {
-        if (0 != strcmp(".", out))
+    if (NULL != (out = orte_os_path(true,NULL))) {
+        answer = strdup(".");
+        strcat(answer, orte_system_info.path_sep);
+        if (0 != strcmp(answer, out))
             return(false);
     }
-    if (NULL != (out = ompi_os_path(false,NULL))) {
-        if (0 != strcmp(ompi_system_info.path_sep, out))
+    if (NULL != (out = orte_os_path(false,NULL))) {
+        if (0 != strcmp(orte_system_info.path_sep, out))
             return(false);
     }
 
@@ -112,26 +106,26 @@ static bool test2(void)
     char *out;
     char *a[] = { "aaa", "bbb", "ccc", NULL };
  
-    if (NULL == ompi_system_info.path_sep) {
+    if (NULL == orte_system_info.path_sep) {
         printf("test2 cannot be run\n");
         return(false);
     }
 
     /* Construct a relative path name and see if it comes back correctly. Check multiple depths. */
     out = strdup(".");
-    out = strcat(out, ompi_system_info.path_sep);
+    out = strcat(out, orte_system_info.path_sep);
     out = strcat(out, a[0]);
-    if (0 != strcmp(out, ompi_os_path(true, a[0], NULL)))
+    if (0 != strcmp(out, orte_os_path(true, a[0], NULL)))
         return(false);
 
-    out = strcat(out, ompi_system_info.path_sep);
+    out = strcat(out, orte_system_info.path_sep);
     out = strcat(out, a[1]);
-    if (0 != strcmp(out, ompi_os_path(true, a[0], a[1], NULL)))
+    if (0 != strcmp(out, orte_os_path(true, a[0], a[1], NULL)))
         return(false);
 
-    out = strcat(out, ompi_system_info.path_sep);
+    out = strcat(out, orte_system_info.path_sep);
     out = strcat(out, a[2]);
-    if (0 != strcmp(out, ompi_os_path(true, a[0], a[1], a[2], NULL)))
+    if (0 != strcmp(out, orte_os_path(true, a[0], a[1], a[2], NULL)))
         return(false);
 
     return true;
@@ -143,25 +137,25 @@ static bool test3(void)
     char *out;
     char *a[] = { "aaa", "bbb", "ccc", NULL };
 
-    if (NULL == ompi_system_info.path_sep) {
+    if (NULL == orte_system_info.path_sep) {
         printf("test3 cannot be run\n");
         return(false);
     }
 
     /* Same as prior test, only with absolute path name */
-    out = strdup(ompi_system_info.path_sep);
+    out = strdup(orte_system_info.path_sep);
     out = strcat(out, a[0]);
-    if (0 != strcmp(out, ompi_os_path(false, a[0], NULL)))
+    if (0 != strcmp(out, orte_os_path(false, a[0], NULL)))
         return(false);
 
-    out = strcat(out, ompi_system_info.path_sep);
+    out = strcat(out, orte_system_info.path_sep);
     out = strcat(out, a[1]);
-    if (0 != strcmp(out, ompi_os_path(false, a[0], a[1], NULL)))
+    if (0 != strcmp(out, orte_os_path(false, a[0], a[1], NULL)))
         return(false);
 
-    out = strcat(out, ompi_system_info.path_sep);
+    out = strcat(out, orte_system_info.path_sep);
     out = strcat(out, a[2]);
-    if (0 != strcmp(out, ompi_os_path(false, a[0], a[1], a[2], NULL)))
+    if (0 != strcmp(out, orte_os_path(false, a[0], a[1], a[2], NULL)))
         return(false);
 
     return true;
@@ -172,7 +166,7 @@ static bool test4(void)
     char a[MAXPATHLEN + 10];
     int i;
 
-    if (NULL == ompi_system_info.path_sep) {
+    if (NULL == orte_system_info.path_sep) {
         printf("test4 cannot be run\n");
         return(false);
     }
@@ -180,7 +174,7 @@ static bool test4(void)
     for (i=0; i< MAXPATHLEN+5; i++) {
         a[i] = 'a';
     }
-    if (NULL != ompi_os_path(false, a, NULL)) {
+    if (NULL != orte_os_path(false, a, NULL)) {
         return(false);
     }
     return (true);
@@ -191,12 +185,9 @@ static bool test5(void)
     /* test to ensure the program doesn't bomb when no separator is found.
      * Program should try to find one, then return NULL if it can't */
 
-    if (NULL != ompi_system_info.path_sep) {
-        free(ompi_system_info.path_sep);
-        ompi_system_info.path_sep = NULL;
+    if (NULL != orte_system_info.path_sep) {
+        free(orte_system_info.path_sep);
+        orte_system_info.path_sep = NULL;
     }
     return(test1());
 }
-
-
-#endif
