@@ -56,7 +56,10 @@ void mpi_type_hvector_f(MPI_Fint *count, MPI_Fint *blocklength,
 
     *ierr = OMPI_INT_2_FINT(MPI_Type_hvector(OMPI_FINT_2_INT(*count),
 					     OMPI_FINT_2_INT(*blocklength),
-					     (MPI_Aint) stride,
+					     (MPI_Aint)*stride,
 					     c_oldtype, &c_newtype));
+    if( MPI_SUCCESS != (*ierr) ) {
+       c_newtype = MPI_DATATYPE_NULL;
+    }
     *newtype = MPI_Type_c2f(c_newtype);
 }
