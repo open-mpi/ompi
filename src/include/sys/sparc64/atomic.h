@@ -9,6 +9,8 @@
  * On sparc64, use casa and casxa (compare and swap) instructions.
  */
 
+#define ASI_P "0x80"
+
 #ifdef HAVE_SMP
 #define MEMBAR(type) __asm__  __volatile__ ("membar" type : : : "memory")
 #else
@@ -40,7 +42,7 @@ static inline int ompi_atomic_cmpset_32(volatile uint32_t *addr,
 {
     uint32_t ret = oldval;
 
-    __asm__ __volatile("casa [%1] ASI_P, %2, %0"
+    __asm__ __volatile("casa [%1] " ASI_P ", %2, %0"
                        : "+r" (ret)
                        : "r" (addr), "r" (newval));
     return (ret == oldval);
@@ -75,7 +77,7 @@ static inline int ompi_atomic_cmpset_64(volatile uint64_t *addr,
 {
     uint64_t ret = oldval;
 
-    __asm__ __volatile("casxa [%1] ASI_P, %2, %0"
+    __asm__ __volatile("casxa [%1] " ASI_P ", %2, %0"
                        : "+r" (ret)
                        : "r" (addr), "r" (newval));
     return (ret == oldval);
