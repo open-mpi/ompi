@@ -203,6 +203,8 @@ libmpi_c_mpi_la_SOURCES = \
 		graph_neighbors_count.c \
 		graph_neighbors.c \
 		graphdims_get.c \
+		grequest_complete.c \
+		grequest_start.c \
 		group_c2f.c \
 		group_compare.c \
 		group_difference.c \
@@ -261,10 +263,6 @@ libmpi_c_mpi_la_SOURCES = \
         type_struct.c \
         type_ub.c \
         type_vector.c  
-
-bogus_stuff= \
-		grequest_complete.c \
-		grequest_start.c
 
 EXTRA_DIST = $(libmpi_c_mpi_la_SOURCES) 
 # Conditionally install the header files
