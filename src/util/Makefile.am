@@ -23,7 +23,7 @@ headers = \
     proc_info.h \
     os_path.h \
     os_create_dirpath.h \
-    os_session_dir.h \
+    session_dir.h \
     strncpy.h
 
 libutil_la_SOURCES = \
@@ -40,7 +40,7 @@ libutil_la_SOURCES = \
     sys_info.c \
     os_path.c \
     os_create_dirpath.c \
-    os_session_dir.c \
+    session_dir.c \
     strncpy.c
 
 # Conditionally install the header files
