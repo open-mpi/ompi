@@ -40,7 +40,7 @@ void ompi_ddt_dump_stack( dt_stack_t* pStack, int stack_pos, dt_elem_desc_t* pDe
  */
 static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
 					  struct iovec* iov,
-					  unsigned int out_size,
+					  unsigned int* out_size,
 					  unsigned int* max_data,
 					  int* freeAfter )
 {
@@ -499,7 +499,8 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
     pConv->pFunctions = ompi_ddt_copy_functions;
     pConv->converted = 0;
     pConv->bConverted = 0;
-    pConv->fAdvance = ompi_convertor_unpack_homogeneous; /*default behaviour */
+    pConv->fAdvance = ompi_convertor_unpack_general;     /* TODO: just stop complaining */
+    pConv->fAdvance = ompi_convertor_unpack_homogeneous; /* default behaviour */
     pConv->memAlloc_fn = allocfn;
 
     /* TODO: work only on homogeneous architectures */
@@ -508,7 +509,7 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, unsigned int flags,
         pConv->fAdvance = ompi_convertor_unpack_homogeneous_contig;
     }
     if( starting_point != 0 )
-	return ompi_convertor_create_stack_with_pos( pConv, starting_point, ompi_ddt_local_sizes );
+        return ompi_convertor_create_stack_with_pos( pConv, starting_point, ompi_ddt_local_sizes );
     return ompi_convertor_create_stack_at_begining( pConv, ompi_ddt_local_sizes );
 }
 
