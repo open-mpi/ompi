@@ -1065,7 +1065,6 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
     }
 
     ompi_buffer_free(answer);
-    ompi_buffer_free(buffer);
 
     /* reissue the non-blocking receive */
     mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL);
