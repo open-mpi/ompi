@@ -142,6 +142,7 @@ mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_mem_registry_register(
         /* create new entry and register memory region */
         item = (ompi_list_item_t *)info;
         OMPI_FREE_LIST_GET(&(registry->info_free_list), item, rc);
+        info = (mca_ptl_ib_mem_registry_info_t *)item;
         if (OMPI_SUCCESS != rc) {
             /* error - return null pointer */
             return info;
