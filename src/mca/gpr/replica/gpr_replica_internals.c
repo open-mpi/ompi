@@ -38,7 +38,7 @@ int gpr_replica_define_segment(char *segment)
     int response;
 
      response = gpr_replica_define_key(segment, NULL);
-     if (0 > response) {  /* got some kind of error code */
+     if (0 > response && OMPI_EXISTS != response) {  /* got some kind of error code */
  	return response;
      }
 
@@ -74,7 +74,6 @@ mca_gpr_registry_segment_t *gpr_replica_find_seg(char *segment)
 		}
 	    }
 	}
-	return NULL;  /* segment in dictionary, but can't locate it */
     }
     /* didn't find the dictionary entry */
     return NULL;
@@ -352,13 +351,11 @@ bool gpr_replica_check_key_list(ompi_registry_mode_t mode, ompi_list_t *key_list
     /* take care of trivial cases that don't require search */
     if ((OMPI_REGISTRY_XAND & mode) &&
 	(num_keys_search != num_keys_entry)) { /* can't possibly turn out "true" */
-	ompi_output(mca_gpr_base_output, "xand violation");
 	return false;
     }
 
     if ((OMPI_REGISTRY_AND & mode) &&
 	(num_keys_search > num_keys_entry)) {  /* can't find enough matches */
-	ompi_output(mca_gpr_base_output, "and violation");
 	return false;
     }
 
@@ -419,7 +416,7 @@ ompi_list_t *gpr_replica_test_internals(int level)
     ompi_registry_internal_test_results_t *result;
     char name[30], name2[30];
     char *name3[30];
-    int i, j;
+    int i, j, k;
     mca_gpr_replica_key_t segkey, key;
     mca_gpr_registry_segment_t *seg;
     mca_gpr_keytable_t *dict_entry;
@@ -431,7 +428,7 @@ ompi_list_t *gpr_replica_test_internals(int level)
     success = true;
     result = OBJ_NEW(ompi_registry_internal_test_results_t);
     result->test = strdup("test-create-segment");
-    for (i=0; i<5; i++) {
+    for (i=0; i<5 && success; i++) {
 	sprintf(name, "test-def-seg%d", i);
 	if (OMPI_SUCCESS != gpr_replica_define_segment(name)) {
 	    success = false;
@@ -448,10 +445,10 @@ ompi_list_t *gpr_replica_test_internals(int level)
     success = true;
     result = OBJ_NEW(ompi_registry_internal_test_results_t);
     result->test = strdup("test-define-key-uniqueness");
-    for (i=0; i<5; i++) {
+    for (i=0; i<5 && success; i++) {
 	sprintf(name, "test-def-seg%d", i);
 	key = gpr_replica_define_key(name, NULL);
-	if (MCA_GPR_REPLICA_KEY_MAX != key) { /* got an error */
+	if (OMPI_EXISTS != key) { /* got an error */
 	    success = false;
 	}
     }
@@ -466,7 +463,7 @@ ompi_list_t *gpr_replica_test_internals(int level)
     success = true;
     result = OBJ_NEW(ompi_registry_internal_test_results_t);
     result->test = strdup("test-get-seg-key");
-    for (i=0; i<5; i++) {
+    for (i=0; i<5 && success; i++) {
 	sprintf(name, "test-def-seg%d", i);
 	key = gpr_replica_get_key(name, NULL);
 	if (MCA_GPR_REPLICA_KEY_MAX == key) { /* got an error */
@@ -506,8 +503,8 @@ ompi_list_t *gpr_replica_test_internals(int level)
 	sprintf(name, "test-def-seg%d", i);
 	for (j=0; j<10 && success; j++) {
  	    sprintf(name2, "test-key%d", j);
-	    key = gpr_replica_define_key(name, name2);
-	    if (MCA_GPR_REPLICA_KEY_MAX == key) { /* got an error */
+	    k = gpr_replica_define_key(name, name2);
+	    if (0 > k) { /* got an error */
 		success = false;
 	    }
 	}

@@ -91,19 +91,7 @@ int main(int argc, char **argv)
 	test_success();
     }
 
-    fprintf(stderr, "testing define segment\n");
-    /* try to define a segment */
-    if (OMPI_SUCCESS != (response = ompi_registry.define_segment("test-segment"))) {
-	fprintf(test_out, "GPR replica: could not define segment - error code %d\n", response);
-	test_failure("test_gpr_replica define_segment failed");
-	test_finalize();
-	exit(1);
-    } else {
-	fprintf(test_out, "GPR test segment defined\n");
-	test_success();
-    }
-
-    fprintf(stderr, "testing get index\n");
+   fprintf(stderr, "testing get index\n");
     /* check index */
     test_list = ompi_registry.index(NULL);
     if (0 == ompi_list_get_size(test_list)) { /* should have been something in dictionary */
@@ -184,6 +172,7 @@ int main(int argc, char **argv)
     }
 
     /* test the put overwrite function */
+    success = true;
     for (i=0; i<5 && success; i++) {
 	sprintf(name, "test-def-seg%d", i);
 	if (10 %  i) {
@@ -213,6 +202,7 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "testing get\n");
     /* test the get function */
+    success = true;
     for (i=0; i<5 && success; i++) {
 	sprintf(name, "test-def-seg%d", i);
 	if (10 %  i) {

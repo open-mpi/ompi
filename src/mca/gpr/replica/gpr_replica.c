@@ -86,8 +86,8 @@ int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
     seg = gpr_replica_find_seg(segment);
     if (NULL == seg) { /* couldn't find segment - try to create it */
 	if (0 > gpr_replica_define_segment(segment)) {  /* couldn't create it */
-	return_code = OMPI_ERROR;
-	goto CLEANUP;
+	    return_code = OMPI_ERROR;
+	    goto CLEANUP;
 	}
 	seg = gpr_replica_find_seg(segment);
 	if (NULL == seg) { /* ok, we tried - time to give up */
