@@ -244,6 +244,42 @@ foreach my $key (sort keys(%config_param_names)) {
 
 }
 
+# Do some error checking on the values that we've determined
+
+if (! -f $config_params{PARAM_INIT_FILE}) {
+    print "*** WARNING: PARAM_INIT_FILE does not exist:\n";
+    print "*** WARNING:    $config_params{PARAM_INIT_FILE}\n";
+    print "*** WARNING: resulting configure script will not run properly!\n";
+    exit(1);
+}
+
+if ($config_params{PARAM_INIT_FILE} eq "" || 
+    ! -f $config_params{PARAM_INIT_FILE}) {
+    print "*** WARNING: PARAM_VERSION_FILE does not exit:\n";
+    print "*** WARNING:    $config_params{PARAM_VERSION_FILE} does not exist!\n";
+    print "*** WARNING: resulting configure script will not check for the version!!\n";
+}
+
+my @files = split(/ /, $config_params{PARAM_CONFIG_FILES});
+foreach my $file (@files) {
+    if (! -f "$file.in" && ! -f "$file.am") {
+        print "*** WARNING: PARAM_CONFIG_FILES file does not exist:\n";
+        print "*** WARNING:    $file.[in|am]\n";
+        print "*** WARNING: resulting configure script may not run correctly!!\n";
+        exit(1);
+    }
+}
+
+if (! -d $config_params{PARAM_CONFIG_AUX_DIR}) {
+    print "*** WARNING: PARAM_CONFIG_AUX_DIR does not exit:\n";
+    print "*** WARNING:    $config_params{PARAM_CONFIG_AUX_DIR}\n";
+    print "*** WARNING: Taking the liberty of trying to make it...\n";
+    if (mkdir($config_params{PARAM_CONFIG_AUX_DIR})) {
+        printf("BARF\n");
+        exit(1);
+    }
+}
+
 ############################################################################
 # Read in the configure.ac template
 ############################################################################
@@ -312,3 +348,5 @@ make_template("$lam_topdir/config/mca_acinclude.m4",
 ############################################################################
 
 print "\n$announce_str finished\n";
+
+exit(0);
