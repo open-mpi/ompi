@@ -142,70 +142,82 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     size_t p;
     ompi_bitmap_t reachable;
+    struct mca_ptl_base_peer_t** ptl_peers = NULL;
     int rc;
+    int p_index;
 
     OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
-    rc = ompi_bitmap_init(&reachable, 1);
+    rc = ompi_bitmap_init(&reachable, nprocs);
     if(OMPI_SUCCESS != rc)
         return rc;
 
-    for(p=0; p<nprocs; p++) {
-        ompi_proc_t *proc = procs[p];
-        double total_bandwidth = 0;
-        uint32_t latency = 0;
-        size_t n_index, p_index; 
-        size_t n_size;
+    /* attempt to add all procs to each ptl */
+    ptl_peers = malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
+    for(p_index = 0; p_index < mca_pml_teg.teg_num_ptls; p_index++) {
+        mca_ptl_t* ptl = mca_pml_teg.teg_ptls[p_index];
 
-        /* initialize each proc */
-        mca_pml_proc_t* proc_pml = proc->proc_pml;
-        if(NULL == proc_pml) {
-
-            /* allocate pml specific proc data */
-            proc_pml = OBJ_NEW(mca_pml_teg_proc_t);
-            if (NULL == proc_pml) {
-                ompi_output(0, "mca_pml_teg_add_procs: unable to allocate resources");
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-
-            /* preallocate space in array for max number of ptls */
-            mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptls);
-            mca_ptl_array_reserve(&proc_pml->proc_ptl_next, mca_pml_teg.teg_num_ptls);
-            proc_pml->proc_ompi = proc;
-            proc->proc_pml = proc_pml;
+        /* if the ptl can reach the destination proc it sets the
+         * corresponding bit (proc index) in the reachable bitmap
+         * and can return addressing information for each proc
+         * that is passed back to the ptl on data transfer calls
+         */
+        ompi_bitmap_clear_all_bits(&reachable);
+        memset(ptl_peers, 0, nprocs * sizeof(struct mca_ptl_base_peer_t*));
+        rc = ptl->ptl_add_procs(ptl, nprocs, procs, ptl_peers, &reachable);
+        if(OMPI_SUCCESS != rc) {
+            free(ptl_peers);
+            return rc;
         }
 
-        /* attempt to add the proc to each ptl */
-        for(p_index = 0; p_index < mca_pml_teg.teg_num_ptls; p_index++) {
-            mca_ptl_t* ptl = mca_pml_teg.teg_ptls[p_index];
-            struct mca_ptl_base_peer_t* ptl_peer;
+        /* for each proc that is reachable - add the ptl to the procs array(s) */
+        for(p=0; p<nprocs; p++) {
+            if(ompi_bitmap_is_set_bit(&reachable, p)) {
+                ompi_proc_t *proc = procs[p];
+                mca_pml_proc_t* proc_pml = proc->proc_pml;
+                mca_ptl_proc_t* proc_ptl;
 
-            ompi_bitmap_clear_all_bits(&reachable);
- 
-            /* if the ptl can reach the destination proc it will return 
-             * addressing information that will be cached on the proc, if it
-             * cannot reach the proc - but another peer
-             */
-            rc = ptl->ptl_add_procs(ptl, 1, &proc, &ptl_peer, &reachable);
-            if(OMPI_SUCCESS != rc)
-                return rc;
+                /* initialize each proc */
+                if(NULL == proc_pml) {
 
-            if(ompi_bitmap_is_set_bit(&reachable, 0)) {
+                    /* allocate pml specific proc data */
+                    proc_pml = OBJ_NEW(mca_pml_teg_proc_t);
+                    if (NULL == proc_pml) {
+                        ompi_output(0, "mca_pml_teg_add_procs: unable to allocate resources");
+                        free(ptl_peers);
+                        return OMPI_ERR_OUT_OF_RESOURCE;
+                    }
+
+                    /* preallocate space in array for max number of ptls */
+                    mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptls);
+                    mca_ptl_array_reserve(&proc_pml->proc_ptl_next, mca_pml_teg.teg_num_ptls);
+                    proc_pml->proc_ompi = proc;
+                    proc->proc_pml = proc_pml;
+                }
 
                 /* cache the ptl on the proc */
-                mca_ptl_proc_t* ptl_proc  = mca_ptl_array_insert(&proc_pml->proc_ptl_next);
-                ptl_proc->ptl = ptl;
-                ptl_proc->ptl_peer = ptl_peer;
-                ptl_proc->ptl_weight = 0;
+                proc_ptl = mca_ptl_array_insert(&proc_pml->proc_ptl_next);
+                proc_ptl->ptl = ptl;
+                proc_ptl->ptl_peer = ptl_peers[p];
+                proc_ptl->ptl_weight = 0;
 
                 /* if this ptl supports exclusive access then don't allow 
                  * subsequent ptls to register
                  */
- 
+
                 proc_pml->proc_ptl_flags |= ptl->ptl_flags;
-                if(ptl->ptl_exclusivity)
-                    break;
             }
         }
+    }
+    free(ptl_peers);
+
+    /* iterate back through procs and compute metrics for registered ptls */
+    for(p=0; p<nprocs; p++) {
+        ompi_proc_t *proc = procs[p];
+        mca_pml_proc_t* proc_pml = proc->proc_pml;
+        double total_bandwidth = 0;
+        uint32_t latency = 0;
+        size_t n_index;
+        size_t n_size;
 
         /* (1) determine the total bandwidth available across all ptls
          *     note that we need to do this here, as we may already have ptls configured
@@ -213,9 +225,9 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
          */
         n_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_next); 
         for(n_index = 0; n_index < n_size; n_index++) {
-            struct mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
-            struct mca_ptl_t* ptl = ptl_proc->ptl;
-            total_bandwidth += ptl_proc->ptl->ptl_bandwidth; 
+            struct mca_ptl_proc_t* proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
+            struct mca_ptl_t* ptl = proc_ptl->ptl;
+            total_bandwidth += proc_ptl->ptl->ptl_bandwidth; 
             if(ptl->ptl_latency > latency)
                 latency = ptl->ptl_latency;
         }
@@ -226,14 +238,14 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
          */
 
         for(n_index = 0; n_index < n_size; n_index++) {
-            struct mca_ptl_proc_t* ptl_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
-            struct mca_ptl_t *ptl = ptl_proc->ptl;
+            struct mca_ptl_proc_t* proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
+            struct mca_ptl_t *ptl = proc_ptl->ptl;
             double weight;
             if(ptl->ptl_bandwidth)
-                weight = ptl_proc->ptl->ptl_bandwidth / total_bandwidth;
+                weight = proc_ptl->ptl->ptl_bandwidth / total_bandwidth;
             else
                 weight = 1.0 / n_size;
-            ptl_proc->ptl_weight = (int)(weight * 100);
+            proc_ptl->ptl_weight = (int)(weight * 100);
 
             /* check to see if this ptl is already in the array of ptls used for first
              * fragments - if not add it.
@@ -244,14 +256,14 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
                 for(f_index=0; f_index < f_size; f_index++) {
                     struct mca_ptl_proc_t* existing_proc = mca_ptl_array_get_index(&proc_pml->proc_ptl_first, f_index);
                     if(existing_proc->ptl == ptl) {
-                        *existing_proc = *ptl_proc; /* update existing definition */
+                        *existing_proc = *proc_ptl; /* update existing definition */
                         break;
                     }
                 }
                 /* not found add a new entry */
                 if(f_index == f_size) {
-                    struct mca_ptl_proc_t* new_proc = mca_ptl_array_insert(&proc_pml->proc_ptl_first);
-                    *new_proc = *ptl_proc;
+                    struct mca_ptl_proc_t* proc_new = mca_ptl_array_insert(&proc_pml->proc_ptl_first);
+                    *proc_new = *proc_ptl;
                 }
             }
         }
