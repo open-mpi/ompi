@@ -46,7 +46,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_LOOKUP_NAME,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_lookup_name_f(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr)
+void mpi_lookup_name_f(char *service_name, MPI_Fint *info,
+		       char *port_name, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Info c_info;
+
+    c_info = MPI_Info_f2c(*info);
+    
+    *ierr = OMPI_INT_2_FINT(MPI_Lookup_name(service_name, c_info,
+					    port_name));
 }

@@ -46,7 +46,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NTHKEY,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_info_get_nthkey_f(MPI_Fint *info, MPI_Fint *n, char *key, MPI_Fint *ierr)
+void mpi_info_get_nthkey_f(MPI_Fint *info, MPI_Fint *n, char *key,
+			   MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Info c_info;
+
+    c_info = MPI_Info_f2c(*info);
+    
+    *ierr = OMPI_INT_2_FINT(MPI_Info_get_nthkey(c_info, 
+						OMPI_FINT_2_INT(*n),
+						key));
 }

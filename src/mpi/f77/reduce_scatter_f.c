@@ -46,7 +46,24 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REDUCE_SCATTER,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_reduce_scatter_f(char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr)
+void mpi_reduce_scatter_f(char *sendbuf, char *recvbuf, 
+			  MPI_Fint *recvcounts, MPI_Fint *datatype,
+			  MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    MPI_Datatype c_type;
+    MPI_Op c_op;
+    int size;
+    OMPI_ARRAY_NAME_DECL(recvcounts);
+
+    c_comm = MPI_Comm_f2c(*comm);
+    c_type = MPI_Type_f2c(*datatype);
+    c_op = MPI_Op_f2c(*op);
+
+    MPI_Comm_size(c_comm, &size);
+    OMPI_ARRAY_FINT_2_INT(recvcounts, size);
+    
+    *ierr = OMPI_INT_2_FINT(MPI_Reduce_scatter(sendbuf, recvbuf,
+				       OMPI_ARRAY_NAME_CONVERT(recvcounts),
+				       c_type, c_op, c_comm));
 }

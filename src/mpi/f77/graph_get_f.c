@@ -46,7 +46,24 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_GET,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_graph_get_f(MPI_Fint *comm, MPI_Fint *maxindex, MPI_Fint *maxedges, MPI_Fint *index, MPI_Fint *edges, MPI_Fint *ierr)
+void mpi_graph_get_f(MPI_Fint *comm, MPI_Fint *maxindex, 
+		     MPI_Fint *maxedges, MPI_Fint *index, 
+		     MPI_Fint *edges, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    OMPI_ARRAY_NAME_DECL(index);
+    OMPI_ARRAY_NAME_DECL(edges);
+
+    c_comm = MPI_Comm_f2c(*comm);
+    OMPI_ARRAY_FINT_2_INT_ALLOC(index, *maxindex);
+    OMPI_ARRAY_FINT_2_INT_ALLOC(edges, *maxedges);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Graph_get(c_comm, 
+					  OMPI_FINT_2_INT(*maxindex),
+					  OMPI_FINT_2_INT(*maxedges),
+					  OMPI_ARRAY_NAME_CONVERT(index),
+					  OMPI_ARRAY_NAME_CONVERT(edges)));
+
+    OMPI_ARRAY_INT_2_FINT(index, *maxindex);
+    OMPI_ARRAY_INT_2_FINT(edges, *maxedges);
 }

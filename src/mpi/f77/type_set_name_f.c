@@ -48,5 +48,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SET_NAME,
 
 void mpi_type_set_name_f(MPI_Fint *type, char *type_name, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Datatype c_type;
+    
+    c_type = MPI_Type_f2c(*type);
+    
+    *ierr = OMPI_INT_2_FINT(MPI_Type_set_name(c_type, type_name));
 }

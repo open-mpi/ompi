@@ -48,5 +48,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_ADDRESS,
 
 void mpi_get_address_f(char *location, MPI_Fint *address, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Aint c_address;
+
+    *ierr = OMPI_INT_2_FINT(MPI_Get_address(location, &c_address));
+    *address = (MPI_Fint) c_address;
 }

@@ -46,7 +46,26 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_MAP,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_graph_map_f(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *index, MPI_Fint *edges, MPI_Fint *newrank, MPI_Fint *ierr)
+void mpi_graph_map_f(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *index,
+		     MPI_Fint *edges, MPI_Fint *nrank, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    OMPI_ARRAY_NAME_DECL(index);
+    OMPI_ARRAY_NAME_DECL(edges);
+    OMPI_SINGLE_NAME_DECL(nrank);
+
+    c_comm = MPI_Comm_f2c(*comm);
+
+    /* Number of edges is equal to the last entry in the index array */
+    OMPI_ARRAY_FINT_2_INT(edges, index[*nnodes - 1]);
+    OMPI_ARRAY_FINT_2_INT(index, *nnodes);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Graph_map(c_comm, OMPI_FINT_2_INT(*nnodes),
+					  OMPI_ARRAY_NAME_CONVERT(index),
+					  OMPI_ARRAY_NAME_CONVERT(edges),
+					  OMPI_SINGLE_NAME_CONVERT(nrank)));
+
+    OMPI_SINGLE_INT_2_FINT(nrank);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(edges);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(index);
 }

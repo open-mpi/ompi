@@ -48,5 +48,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OPEN_PORT,
 
 void mpi_open_port_f(MPI_Fint *info, char *port_name, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Info c_info;
+
+    c_info = MPI_Info_f2c(*info);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Open_port(c_info, port_name));
 }

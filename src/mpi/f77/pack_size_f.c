@@ -46,7 +46,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK_SIZE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_pack_size_f(MPI_Fint *incount, MPI_Fint *datatype, MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr)
+void mpi_pack_size_f(MPI_Fint *incount, MPI_Fint *datatype, 
+		     MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    MPI_Datatype c_type;
+    OMPI_SINGLE_NAME_DECL(size);
+    
+    c_comm = MPI_Comm_f2c(*comm);
+    c_type = MPI_Type_f2c(*datatype);
+
+    *ierr = OMPI_FINT_2_INT(MPI_Pack_size(OMPI_FINT_2_INT(*incount),
+					  c_type, c_comm, 
+					  OMPI_SINGLE_NAME_CONVERT(size)));
+
+    OMPI_SINGLE_INT_2_FINT(size);
 }

@@ -46,7 +46,20 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SCATTER,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_scatter_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr)
+void mpi_scatter_f(char *sendbuf, MPI_Fint *sendcount, 
+		   MPI_Fint *sendtype, char *recvbuf,
+		   MPI_Fint *recvcount, MPI_Fint *recvtype,
+		   MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Datatype c_sendtype, c_recvtype;
+    MPI_Comm c_comm;
+    
+    c_sendtype = MPI_Type_f2c(*sendtype);
+    c_recvtype = MPI_Type_f2c(*recvtype);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Scatter(sendbuf,OMPI_FINT_2_INT(*sendcount),
+					c_sendtype, recvbuf, 
+					OMPI_FINT_2_INT(*recvcount),
+					c_recvtype, 
+					OMPI_FINT_2_INT(*root), c_comm));
 }

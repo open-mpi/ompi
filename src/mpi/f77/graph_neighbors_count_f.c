@@ -46,7 +46,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_NEIGHBORS_COUNT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_graph_neighbors_count_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *nneighbors, MPI_Fint *ierr)
+void mpi_graph_neighbors_count_f(MPI_Fint *comm, MPI_Fint *rank,
+				 MPI_Fint *nneighbors, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    OMPI_SINGLE_NAME_DECL(nneighbors);
+
+    c_comm = MPI_Comm_f2c(*comm);
+    
+    *ierr = OMPI_INT_2_FINT(MPI_Graph_neighbors_count(c_comm,
+				      OMPI_FINT_2_INT(*rank),
+				      OMPI_SINGLE_NAME_CONVERT(nneighbors)));
+
+    OMPI_SINGLE_INT_2_FINT(nneighbors);
 }

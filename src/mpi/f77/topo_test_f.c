@@ -48,5 +48,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TOPO_TEST,
 
 void mpi_topo_test_f(MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    OMPI_SINGLE_NAME_DECL(status);
+
+    c_comm = MPI_Comm_f2c(*comm);
+    
+    *ierr = OMPI_INT_2_FINT(MPI_Topo_test(c_comm, 
+					  OMPI_SINGLE_NAME_CONVERT(status)));
+    
+    OMPI_SINGLE_INT_2_FINT(status);
+
 }

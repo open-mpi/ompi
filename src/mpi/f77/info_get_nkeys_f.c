@@ -48,5 +48,14 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NKEYS,
 
 void mpi_info_get_nkeys_f(MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Info c_info;
+    OMPI_SINGLE_NAME_DECL(nkeys);
+
+    c_info = MPI_Info_f2c(*info);
+    
+    *ierr = OMPI_INT_2_FINT(MPI_Info_get_nkeys(c_info, 
+					       OMPI_SINGLE_NAME_CONVERT(nkeys)
+					       ));
+    
+    OMPI_SINGLE_INT_2_FINT(nkeys);
 }
