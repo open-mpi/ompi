@@ -28,7 +28,8 @@ my %config_param_names = (PIFILE => "PARAM_INIT_FILE",
                           PVARPREFIX => "PARAM_VAR_PREFIX",
                           PAMNAME => "PARAM_AM_NAME",
                           PCFGHDRFILE => "PARAM_CONFIG_HEADER_FILE",
-                          PCFGFILES => "PARAM_CONFIG_FILES"
+                          PCFGFILES => "PARAM_CONFIG_FILES",
+                          PCOMPILEEXT => "PARAM_WANT_COMPILE_EXTERNAL",
                           );
 
 ############################################################################
@@ -121,6 +122,10 @@ if ($config_values{"PROCESSED_MCA_TYPE"} eq "crompi" ||
 $config_values{"MCA_COMPONENT_NAME"} = basename($component_topdir);
 
 # Parameter (changeable) values
+# PARAM_COMPILE_EXTERNAL: set
+
+$config_params{$config_param_names{PCOMPILEEXT}} = 0;
+
 # PARAM_CONFIG_AUX_DIR: set
 
 if (-d "$component_topdir/config") {
@@ -196,7 +201,7 @@ MCA_CONFIGURE_DIST_STUB";
 }
 
 ############################################################################
-# Read in the configure.params file (pomcably overriding the defaults
+# Read in the configure.params file (possibly overriding the defaults
 # set above)
 ############################################################################
 
@@ -275,9 +280,32 @@ if (! -d $config_params{PARAM_CONFIG_AUX_DIR}) {
     print "*** WARNING: PARAM_CONFIG_AUX_DIR does not exit:\n";
     print "*** WARNING:    $config_params{PARAM_CONFIG_AUX_DIR}\n";
     print "*** WARNING: Taking the liberty of trying to make it...\n";
-    if (mkdir($config_params{PARAM_CONFIG_AUX_DIR})) {
-        printf("BARF\n");
+    if (!mkdir($config_params{PARAM_CONFIG_AUX_DIR})) {
+        print "*** ERROR: Failed to make AUX_DIR: $config_params{PARAM_CONFIG_AUX_DIR}\n";
+        print "*** ERROR: Cannot continue\n";
         exit(1);
+    }
+}
+
+# If we want to be able to compile outside the Open MPI tree, we need
+# to copy some files to the auxdir
+
+if ($config_params{PARAM_WANT_COMPILE_EXTERNAL} != 0) {
+    my $auxdir = $config_params{PARAM_CONFIG_AUX_DIR};
+    open (ACINCLUDE, "$ompi_topdir/config/mca_acinclude.m4");
+{
+        while (<ACINCLUDE>) {
+            chomp;
+            my $filename = $_;
+            if ($filename =~ /^.*sinclude\(\@M4DIR\@\/(.+)\).*$/) {
+                $filename =~ s/^.*sinclude\(\@M4DIR\@\/(.+)\).*$/\1/;
+                unlink("$auxdir/$filename")
+                    if (-f "$auxdir/$filename");
+                print "--> Copying m4 file: $filename ==> $auxdir\n";
+                system("cp -f $ompi_topdir/config/$filename $config_params{PARAM_CONFIG_AUX_DIR}");
+            }
+        }
+        close(ACINCLUDE);
     }
 }
 
@@ -327,6 +355,16 @@ sub make_template {
     $replace = $config_params{$config_param_names{"PCXX"}} ?
         "OMPI_SETUP_CXX" : "";
     $template =~ s/$search/$replace/;
+
+    # If we want to be able to compile outside the Open MPI tree, set
+    # the right include path for the M4 files
+
+    $search = "\@M4DIR\@";
+    $replace = ($config_params{PARAM_WANT_COMPLE_EXTERNAL} == 0) ?
+        $config_params{PARAM_CONFIG_AUX_DIR} : "../../../../config";
+    $template =~ s/$search/$replace/g;
+
+    # Write it out
 
     print "--> Writing output file: $dest\n";
     open(OUTPUT, ">$dest") ||
