@@ -1,4 +1,12 @@
-/* -*- Mode: C; c-basic-offset:3 ; -*- */
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
+/**
+ * lam_datatype_t interface for LAM internal data type representation
+ *
+ * lam_datatype_t is a class which represents contiguous or
+ * non-contiguous data together with constituent type-related
+ * information.
+ */
 
 #ifndef DATATYPE_H_HAS_BEEN_INCLUDED
 #define DATATYPE_H_HAS_BEEN_INCLUDED
@@ -32,16 +40,16 @@
 #define DT_MAX_PREDEFINED  0x10
 
 /* flags for the datatypes. */
-#define DT_FLAG_DESTROYED  0x0001  /* user destroyed but some other layers still have a reference */
-#define DT_FLAG_COMMITED   0x0002  /* ready to be used for a send/recv operation */
-#define DT_FLAG_CONTIGUOUS 0x0004  /* contiguous datatype */
-#define DT_FLAG_OVERLAP    0x0008  /* datatype is unpropper for a recv operation */
-#define DT_FLAG_USER_LB    0x0010  /* has a user defined LB */
-#define DT_FLAG_USER_UB    0x0020  /* has a user defined UB */
-#define DT_FLAG_FOREVER    0x0040  /* cannot be removed: initial and predefined datatypes */
-#define DT_FLAG_IN_LOOP    0x0080  /* we are inside a loop */
-#define DT_FLAG_INITIAL    0x0100  /* one of the initial datatype */
-#define DT_FLAG_DATA       0x0200  /* data or control structure */
+#define DT_FLAG_DESTROYED  0x0001  /**< user destroyed but some other layers still have a reference */
+#define DT_FLAG_COMMITED   0x0002  /**< ready to be used for a send/recv operation */
+#define DT_FLAG_CONTIGUOUS 0x0004  /**< contiguous datatype */
+#define DT_FLAG_OVERLAP    0x0008  /**< datatype is unpropper for a recv operation */
+#define DT_FLAG_USER_LB    0x0010  /**< has a user defined LB */
+#define DT_FLAG_USER_UB    0x0020  /**< has a user defined UB */
+#define DT_FLAG_FOREVER    0x0040  /**< cannot be removed: initial and predefined datatypes */
+#define DT_FLAG_IN_LOOP    0x0080  /**< we are inside a loop */
+#define DT_FLAG_INITIAL    0x0100  /**< one of the initial datatype */
+#define DT_FLAG_DATA       0x0200  /**< data or control structure */
 #define DT_FLAG_BASIC      (DT_FLAG_INITIAL | DT_FLAG_COMMITED | DT_FLAG_FOREVER | DT_FLAG_CONTIGUOUS)
 
 #define DT_INCREASE_STACK  32
@@ -50,11 +58,11 @@
  * by a set of basic elements.
  */
 typedef struct __dt_elem_desc {
-      unsigned short flags;  /* flags for the record */
-      unsigned short type;   /* the basic data type id */
-      unsigned int   count;  /* number of elements */
-      long           disp;   /* displacement of the first element */
-      unsigned int   extent; /* extent of each element */
+      unsigned short flags;  /**< flags for the record */
+      unsigned short type;   /**< the basic data type id */
+      unsigned int   count;  /**< number of elements */
+      long           disp;   /**< displacement of the first element */
+      unsigned int   extent; /**< extent of each element */
 } dt_elem_desc_t;
 
 typedef struct {
@@ -83,28 +91,28 @@ typedef struct __dt_struct_desc {
 
 /* the data description.
  */
-typedef struct __dt_desc {
-   lam_object_t super;
-   unsigned int size;     /* total size in bytes of the memory used by the data if
+typedef struct lam_datatype_t {
+   lam_object_t super;    /**< basic superclass */
+   unsigned int size;     /**< total size in bytes of the memory used by the data if
                            * the data is put on a contiguous buffer */
    long true_lb;
-   long true_ub;          /* the true ub of the data without user defined lb and ub */
-   unsigned int align;    /* data should be aligned to */
-   long lb;               /* lower bound in memory */
-   long ub;               /* upper bound in memory */
-   unsigned short flags;  /* the flags */
-   unsigned short id;     /* data id, normally the index in the data array. */
-   unsigned int nbElems;  /* total number of elements inside the datatype */
-   unsigned int bdt_used; /* which basic datatypes are used in the data description */
+   long true_ub;          /**< the true ub of the data without user defined lb and ub */
+   unsigned int align;    /**< data should be aligned to */
+   long lb;               /**< lower bound in memory */
+   long ub;               /**< upper bound in memory */
+   unsigned short flags;  /**< the flags */
+   unsigned short id;     /**< data id, normally the index in the data array. */
+   unsigned int nbElems;  /**< total number of elements inside the datatype */
+   unsigned int bdt_used; /**< which basic datatypes are used in the data description */
 
    /* Attribute fields */
    lam_hash_table_t *keyhash;
    char name[MPI_MAX_OBJECT_NAME];
 
-   dt_type_desc_t desc;   /* the data description */
-   dt_type_desc_t opt_desc; /* short description of the data used when conversion is useless
+   dt_type_desc_t desc;   /**< the data description */
+   dt_type_desc_t opt_desc; /**< short description of the data used when conversion is useless
                              * or in the send case (without conversion) */
-   void*        args;     /* data description for the user */
+   void*        args;     /**< data description for the user */
 
    /* basic elements count used to compute the size of the datatype for
     * remote nodes */
@@ -174,15 +182,23 @@ int dt_create_darray( int size, int rank, int ndims, int* pGSizes, int *pDistrib
 
 int dt_add( dt_desc_t* pdtBase, dt_desc_t* pdtNew, unsigned int count, long disp, long extent );
 
-int dt_type_lb( dt_desc_t* pData, long* disp );
-int dt_type_ub( dt_desc_t* pData, long* disp );
-int dt_type_size ( dt_desc_t* pData, int *size );
-int dt_type_extent( dt_desc_t* pData, long* extent );
+static inline int dt_type_lb( dt_desc_t* pData, long* disp )
+{ *disp = pData->lb; return 0; };
+static inline int dt_type_ub( dt_desc_t* pData, long* disp )
+{ *disp = pData->ub; return 0; };
+static inline int dt_type_size ( dt_desc_t* pData, int *size )
+{ *size = pData->size; return 0; };
+static inline int dt_type_extent( dt_desc_t* pData, long* extent )
+{ *extent = (pData->ub - pData->lb); return 0; };
 
-int dt_type_resize( dt_desc_t* pOld, long lb, long extent, dt_desc_t** pNew );
-int dt_get_extent( dt_desc_t* datatype, long* lb, long* extent);
-int dt_get_true_extent( dt_desc_t* datatype, long* true_lb, long* true_extent);
-int dt_get_element_count( dt_desc_t* datatype, size_t iSize );
+static inline int dt_type_resize( dt_desc_t* pOld, long lb, long extent, dt_desc_t** pNew )
+{ /* empty function */ return -1; };
+static inline int dt_get_extent( dt_desc_t* pData, long* lb, long* extent)
+{ *lb = pData->lb; *extent = pData->ub - pData->lb; return 0; };
+static inline int dt_get_true_extent( dt_desc_t* pData, long* true_lb, long* true_extent)
+{ *true_lb = pData->true_lb; *true_extent = (pData->true_ub - pData->true_lb); return 0; };
+
+int dt_get_element_count( dt_desc_t* pData, size_t iSize );
 int dt_copy_content_same_dt( dt_desc_t* pData, int count, char* pDestBuf, char* pSrcBuf );
 
 #define dt_increase_ref(PDT) OBJ_RETAIN( PDT )

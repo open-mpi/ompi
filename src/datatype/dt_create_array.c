@@ -1,3 +1,5 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
 #include "datatype.h"
 
 int dt_create_subarray( int ndims, int* pSizes, int* pSubSizes, int* pStarts,

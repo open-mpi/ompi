@@ -1,3 +1,5 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
 #include "datatype.h"
 
 int dt_create_struct( size_t count, size_t* pBlockLength, long* pDisp,
