@@ -53,5 +53,7 @@ void mpi_attr_put_f(MPI_Fint *comm, MPI_Fint *keyval, char *attribute_val,
 
     c_comm = MPI_Comm_f2c(*comm);
 
-    *ierr = MPI_Attr_put(c_comm, *keyval, attribute_val);
+    *ierr = OMPI_INT_2_FINT(MPI_Attr_put(c_comm, 
+					 OMPI_FINT_2_INT(*keyval), 
+					 attribute_val));
 }

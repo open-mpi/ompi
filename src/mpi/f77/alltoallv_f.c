@@ -53,12 +53,35 @@ void mpi_alltoallv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *sdispls,
 {
     MPI_Comm c_comm;
     MPI_Datatype c_sendtype, c_recvtype;
+    int size;
+    OMPI_ARRAY_NAME_DECL(sendcounts);
+    OMPI_ARRAY_NAME_DECL(sdispls);
+    OMPI_ARRAY_NAME_DECL(recvcounts);
+    OMPI_ARRAY_NAME_DECL(rdispls);
 
     c_comm = MPI_Comm_f2c(*comm);
     c_sendtype = MPI_Type_f2c(*sendtype);
     c_recvtype = MPI_Type_f2c(*recvtype);
 
-    *ierr = MPI_Alltoallv(sendbuf, sendcounts, sdispls, c_sendtype, 
-			  recvbuf, recvcounts, rdispls, c_recvtype, c_comm);
+    MPI_Comm_size(c_comm, &size);
+    OMPI_ARRAY_FINT_2_INT(sendcounts, size);
+    OMPI_ARRAY_FINT_2_INT(sdispls, size);
+    OMPI_ARRAY_FINT_2_INT(recvcounts, size);
+    OMPI_ARRAY_FINT_2_INT(rdispls, size);
+
+
+    *ierr = OMPI_INT_2_FINT(MPI_Alltoallv(sendbuf, 
+					  OMPI_ARRAY_NAME_CONVERT(sendcounts),
+					  OMPI_ARRAY_NAME_CONVERT(sdispls), 
+					  c_sendtype, 
+					  recvbuf, 
+					  OMPI_ARRAY_NAME_CONVERT(recvcounts),
+					  OMPI_ARRAY_NAME_CONVERT(rdispls),
+					  c_recvtype, c_comm));
+
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(sdispls);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(recvcounts);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(rdispls);
 
 }
