@@ -225,10 +225,14 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
         mca_ptl_mx_module_t* ptl = mca_ptl_mx_component.mx_ptls[i];
         mx_status_t mx_status;
         mx_return_t mx_return;
-        uint32_t mx_result;
+        uint32_t mx_result = 0;
 
 #if HAVE_MX_ICOMPLETED == 0
         mx_request_t mx_request;
+        if(ptl->mx_recvs_posted == 0) {
+            MCA_PTL_MX_POST(ptl);
+        }
+
         mx_return = mx_ipeek(
             ptl->mx_endpoint,
             &mx_request,
@@ -238,8 +242,9 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
                 mx_return);
             return OMPI_ERROR;
         }
-        if(mx_result < 0)
+        if(mx_result == 0) {
             continue;
+        }
 
         mx_return = mx_test(
             ptl->mx_endpoint,
@@ -253,6 +258,11 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
                 mx_return);
         }
 #else
+        /* pre-post receive */
+        if(ptl->mx_recvs_posted == 0) {
+            MCA_PTL_MX_POST(ptl);
+        }
+
         /* poll for completion */
         mx_return = mx_icompleted(
             ptl->mx_endpoint,
@@ -265,7 +275,7 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
         }
         if(mx_result > 0) {
             MCA_PTL_MX_PROGRESS(ptl, mx_status);
-        }
+        } 
 #endif
     }
     return OMPI_SUCCESS;
