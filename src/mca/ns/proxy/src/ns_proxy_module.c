@@ -70,32 +70,6 @@ static mca_ns_t mca_ns_proxy = {
 static bool initialized = false;
 
 
-/* constructor - used to initialize state of name_tracker instance */
-static void ompi_name_tracker_construct(ompi_name_tracker_t* name_tracker)
-{
-    name_tracker->job = 0;
-    name_tracker->last_used_vpid = 0;
-}
-
-/* destructor - used to free any resources held by instance */
-static void ompi_name_tracker_destructor(ompi_name_tracker_t* name_tracker)
-{
-}
-
-/* define instance of ompi_class_t */
-OBJ_CLASS_INSTANCE(
-		   ompi_name_tracker_t,  /* type name */
-		   ompi_list_item_t, /* parent "class" name */
-		   ompi_name_tracker_construct, /* constructor */
-		   ompi_name_tracker_destructor); /* destructor */
-
-/*
- * globals needed within proxy component
- */
-ompi_process_id_t last_used_cellid;
-ompi_process_id_t last_used_jobid;
-ompi_list_t ompi_name_tracker;
-
 /*
  * don't really need this function - could just put NULL in the above structure
  * Just holding the place in case we decide there is something we need to do
@@ -120,9 +94,6 @@ mca_ns_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_th
 
     if (!ompi_process_info.seed) {
 
-      last_used_cellid = 0;
-      last_used_jobid = 0;
-
       /* Return a module (choose an arbitrary, positive priority --
          it's only relevant compared to other ns components).  If
          we're not the seed, then we don't want to be selected, so
@@ -134,10 +105,6 @@ mca_ns_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_th
 
       *allow_multi_user_threads = true;
       *have_hidden_threads = false;
-
-      /* initialize the name tracker */
-
-      OBJ_CONSTRUCT(&ompi_name_tracker, ompi_list_t);
 
       /* Return the module */
 
@@ -156,8 +123,6 @@ int mca_ns_proxy_finalize(void)
   /* free all tracking storage, but only if this component was initialized */
 
   if (initialized) {
-    OBJ_DESTRUCT(&ompi_name_tracker);
-
     initialized = false;
   }
 
