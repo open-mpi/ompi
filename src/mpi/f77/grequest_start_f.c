@@ -46,7 +46,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_START,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_grequest_start_f(MPI_Fint *query_fn, MPI_Fint *free_fn, MPI_Fint *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr)
+void mpi_grequest_start_f(MPI_Fint *query_fn, MPI_Fint *free_fn,
+			  MPI_Fint *cancel_fn, char *extra_state,
+			  MPI_Fint *request, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Request c_req;
+    *ierr = OMPI_INT_2_FINT(MPI_Grequest_start(
+			       (MPI_Grequest_query_function *)query_fn,
+			       (MPI_Grequest_free_function *)free_fn,
+			       (MPI_Grequest_cancel_function *)cancel_fn, 
+			       extra_state, &c_req));
+
+    if (MPI_SUCCESS == *ierr) {
+        *request = MPI_Request_c2f(c_req);
+    }
+
 }
