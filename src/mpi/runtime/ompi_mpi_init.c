@@ -65,7 +65,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     bool have_hidden_threads;
     ompi_proc_t** procs;
     size_t nprocs;
-    char *error;
+    char *error = NULL;
     char *contact_info;
 
     /* Become an OMPI process */
