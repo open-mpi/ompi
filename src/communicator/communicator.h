@@ -23,13 +23,14 @@ extern "C" {
 #endif
 OMPI_DECLSPEC extern ompi_class_t ompi_communicator_t_class;
 
-#define OMPI_COMM_INTER     0x00000001
-#define OMPI_COMM_CART      0x00000002
-#define OMPI_COMM_GRAPH     0x00000004
-#define OMPI_COMM_NAMEISSET 0x00000008
-#define OMPI_COMM_ISFREED   0x00000010
-#define OMPI_COMM_INTRINSIC 0x00000020
-#define OMPI_COMM_HIDDEN    0x00000040
+#define OMPI_COMM_INTER      0x00000001
+#define OMPI_COMM_CART       0x00000002
+#define OMPI_COMM_GRAPH      0x00000004
+#define OMPI_COMM_NAMEISSET  0x00000008
+#define OMPI_COMM_ISFREED    0x00000010
+#define OMPI_COMM_INTRINSIC  0x00000020
+#define OMPI_COMM_HIDDEN     0x00000040
+#define OMPI_COMM_DYNAMIC    0x00000080
 
 /* some utility #defines */
 #define OMPI_COMM_IS_INTER(comm) ((comm)->c_flags & OMPI_COMM_INTER)
@@ -39,9 +40,13 @@ OMPI_DECLSPEC extern ompi_class_t ompi_communicator_t_class;
 #define OMPI_COMM_IS_INTRINSIC(comm) ((comm)->c_flags & OMPI_COMM_INTRINSIC)
 #define OMPI_COMM_IS_HIDDEN(comm) ((comm)->c_flags & OMPI_COMM_HIDDEN)
 #define OMPI_COMM_IS_FREED(comm) ((comm)->c_flags & OMPI_COMM_ISFREED)
+#define OMPI_COMM_IS_DYNAMIC(comm) ((comm)->c_flags &OMPI_COMM_DYNAMIC)
 
 #define OMPI_COMM_SET_HIDDEN(comm) ((comm)->c_flags |= OMPI_COMM_HIDDEN)
+#define OMPI_COMM_SET_DYNAMIC(comm) ((comm)->c_flags |= OMPI_COMM_DYNAMIC)
 
+
+#define OMPI_COMM_HAVETO_DISCONNECT ((comm)->c_flags & OMPI_COMM_DISCONNECT)
 /* a special tag to recognize an MPI_Comm_join in the comm_connect_accept
    routine. */
 #define OMPI_COMM_JOIN_TAG  32000
@@ -75,14 +80,12 @@ struct ompi_communicator_t {
     ompi_group_t       *c_remote_group;
   
     /* Attributes */
-
     ompi_hash_table_t       *c_keyhash;
 
-    int c_cube_dim; 
     /**< inscribing cube dimension */
+    int c_cube_dim; 
 
     /* Hooks for topo module to hang things */
-
     mca_base_component_t *c_topo_component;
 
     const mca_topo_base_module_1_0_0_t *c_topo; 
@@ -128,95 +131,97 @@ struct ompi_communicator_t {
     struct mca_coll_base_comm_t *c_coll_basic_data;
     /**< Allow the basic module to cache data on the communicator */
 };
-typedef struct ompi_communicator_t ompi_communicator_t;
-OMPI_DECLSPEC extern ompi_communicator_t *ompi_mpi_comm_parent;
+    typedef struct ompi_communicator_t ompi_communicator_t;
+    OMPI_DECLSPEC extern ompi_communicator_t *ompi_mpi_comm_parent;
 
 
-/**
- * is this a valid communicator
- */
-static inline int ompi_comm_invalid(ompi_communicator_t* comm)
-{
-    if ((NULL == comm) || (MPI_COMM_NULL == comm) || (comm->c_flags & OMPI_COMM_ISFREED ))
-        return true;
-    else
-        return false;
-}
+    /**
+     * is this a valid communicator
+     */
+    static inline int ompi_comm_invalid(ompi_communicator_t* comm)
+    {
+	if ((NULL == comm) || (MPI_COMM_NULL == comm) || 
+	    (comm->c_flags & OMPI_COMM_ISFREED ))
+	    return true;
+	else
+	    return false;
+    }
 
-/**
- * rank w/in the communicator
- */
-static inline int ompi_comm_rank(ompi_communicator_t* comm)
-{
-    return comm->c_my_rank;
-}
-/**
- * size of the communicator
- */
-static inline int ompi_comm_size(ompi_communicator_t* comm)
-{
-    return comm->c_local_group->grp_proc_count;
-}
+    /**
+     * rank w/in the communicator
+     */
+    static inline int ompi_comm_rank(ompi_communicator_t* comm)
+    {
+	return comm->c_my_rank;
+    }
 
-/**
- * size of the remote group for inter-communicators.
- * returns zero for an intra-communicator
- */
-static inline int ompi_comm_remote_size(ompi_communicator_t* comm)
-{
-    if ( comm->c_flags & OMPI_COMM_INTER ) 
-        return comm->c_remote_group->grp_proc_count;
-    else 
-        return 0;
-}
-
-/* return pointer to communicator associated with context id cid,
- * No error checking is done*/
-static inline ompi_communicator_t *ompi_comm_lookup(uint32_t cid) 
-{ 
-    /* array of pointers to communicators, indexed by context ID */
-    OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_communicators;
-    return (ompi_communicator_t*)ompi_pointer_array_get_item(&ompi_mpi_communicators, cid);
-}
-
-static inline ompi_proc_t* ompi_comm_peer_lookup(ompi_communicator_t* comm, int peer_id)
-{
+    /**
+     * size of the communicator
+     */
+    static inline int ompi_comm_size(ompi_communicator_t* comm)
+    {
+	return comm->c_local_group->grp_proc_count;
+    }
+    
+    /**
+     * size of the remote group for inter-communicators.
+     * returns zero for an intra-communicator
+     */
+    static inline int ompi_comm_remote_size(ompi_communicator_t* comm)
+    {
+	if ( comm->c_flags & OMPI_COMM_INTER ) 
+	    return comm->c_remote_group->grp_proc_count;
+	else 
+	    return 0;
+    }
+    
+    /* return pointer to communicator associated with context id cid,
+     * No error checking is done*/
+    static inline ompi_communicator_t *ompi_comm_lookup(uint32_t cid) 
+    { 
+	/* array of pointers to communicators, indexed by context ID */
+	OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_communicators;
+	return (ompi_communicator_t*)ompi_pointer_array_get_item(&ompi_mpi_communicators, cid);
+    }
+    
+    static inline ompi_proc_t* ompi_comm_peer_lookup(ompi_communicator_t* comm, int peer_id)
+    {
 #if OMPI_ENABLE_DEBUG
-    if(peer_id >= comm->c_remote_group->grp_proc_count) {
-        ompi_output(0, "ompi_comm_lookup_peer: invalid peer index (%d)", peer_id);
-        return (ompi_proc_t *) NULL;
-    }
+	if(peer_id >= comm->c_remote_group->grp_proc_count) {
+	    ompi_output(0, "ompi_comm_lookup_peer: invalid peer index (%d)", peer_id);
+	    return (ompi_proc_t *) NULL;
+	}
 #endif
-    return comm->c_remote_group->grp_proc_pointers[peer_id];
-}
-
-static inline bool ompi_comm_peer_invalid(ompi_communicator_t* comm, int peer_id)
-{
-    if(peer_id < 0 || peer_id >= comm->c_remote_group->grp_proc_count) {
-        return true;
+	return comm->c_remote_group->grp_proc_pointers[peer_id];
     }
-    return false;
-}
-
-
+    
+    static inline bool ompi_comm_peer_invalid(ompi_communicator_t* comm, int peer_id)
+    {
+	if(peer_id < 0 || peer_id >= comm->c_remote_group->grp_proc_count) {
+	    return true;
+	}
+	return false;
+    }
+    
+    
     /** 
      * Initialise MPI_COMM_WORLD and MPI_COMM_SELF 
      */
     int ompi_comm_init(void);
     int ompi_comm_link_function(void);
-
+    
     /** 
      * extract the local group from a communicator 
      */
     int ompi_comm_group ( ompi_communicator_t *comm, ompi_group_t **group );
-
+    
     /**
      * create a communicator based on a group 
      */
     int ompi_comm_create ( ompi_communicator_t* comm, ompi_group_t *group, 
-                          ompi_communicator_t** newcomm );
-
-
+			   ompi_communicator_t** newcomm );
+    
+    
     /**
      * create a cartesian communicator
      */
@@ -402,6 +407,36 @@ static inline bool ompi_comm_peer_invalid(ompi_communicator_t* comm, int peer_id
 				   MPI_Info info,  char *port_name);
 
     int ompi_comm_dyn_init(void);
+
+    /* this routine counts the number of different jobids of the processes
+       given in a certain communicator. If there is more than one jobid,
+       we mark the communicator as 'dynamic'. This is especially relevant
+       for the MPI_Comm_disconnect *and* for MPI_Finalize, where we have
+       to wait for all still connected processes. */
+    extern int ompi_comm_num_dyncomm;
+    void ompi_comm_mark_dyncomm (ompi_communicator_t *comm);
+
+    /* the next two routines implement a kind of non-blocking barrier.
+       the only difference is, that you can wait for the completion
+       of more than one initiated ibarrier. This is required for waiting
+       for all still connected processes in MPI_Finalize.
+
+       ompi_comm_disconnect_init returns a handle, which has to be passed in 
+       to ompi_comm_disconnect_waitall. The second routine blocks, until
+       all non-blocking barriers described by the handles are finished.
+       The communicators can than be released.
+    */
+
+    struct ompi_comm_disconnect_obj {
+	ompi_communicator_t *comm;
+	int                  size;
+	ompi_request_t     **reqs;
+	int                   buf;
+    };
+    typedef struct ompi_comm_disconnect_obj ompi_comm_disconnect_obj;
+
+    ompi_comm_disconnect_obj *ompi_comm_disconnect_init (ompi_communicator_t *comm);
+    void ompi_comm_disconnect_waitall (int count, ompi_comm_disconnect_obj **objs );
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -38,6 +38,11 @@ static void ompi_comm_destruct(ompi_communicator_t* comm);
 
 OBJ_CLASS_INSTANCE(ompi_communicator_t,ompi_object_t,ompi_comm_construct,ompi_comm_destruct);
 
+/* This is the counter for the number of communicators, which contain
+   process with more than one jobid. This counter is a usefull 
+   shortcut for finalize and abort. */
+int ompi_comm_num_dyncomm=0;
+
 
 /*
  * Initialize comm world/self/null/parent.

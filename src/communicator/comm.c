@@ -102,6 +102,10 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
         newcomm->c_flags |= OMPI_COMM_INTER;
     }
 
+    /* Check how many different jobids are represented in this communicator.
+       Necessary for the disconnect of dynamic communicators. */
+    ompi_comm_mark_dyncomm (newcomm);
+
     /* Set error handler */
     newcomm->error_handler = errh;
     OBJ_RETAIN ( newcomm->error_handler );
@@ -1242,6 +1246,10 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
     ompi_set_group_rank(comm->c_local_group, 
             comm->c_local_group->grp_proc_pointers[my_rank]);
     comm->c_my_rank = comm->c_local_group->grp_my_rank;
+
+    /* verify whether to set the flag, that this comm
+       contains process from more than one jobid. */
+    ompi_comm_mark_dyncomm (comm);
 
     /* set the error handler */
     comm->error_handler = errh;

@@ -206,7 +206,9 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     return rc;
 }
 
-
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
 /*
  * This routine is necessary, since in the connect/accept case, the processes
  * executing the connect operation have the OOB contact information of the
@@ -252,6 +254,9 @@ ompi_process_name_t *ompi_comm_get_rport (ompi_process_name_t *port, int send_fi
 }
 
 
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
 int ompi_comm_start_processes (char *command, char **argv, int maxprocs, 
 			       MPI_Info info,  char *port_name )
 {
@@ -279,7 +284,8 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
 
     /* get the spawn handle to start spawning stuff */
     spawn_handle =
-        ompi_rte_get_spawn_handle(OMPI_RTE_SPAWN_FROM_MPI|OMPI_RTE_SPAWN_HIGH_QOS, true);
+        ompi_rte_get_spawn_handle(OMPI_RTE_SPAWN_FROM_MPI|OMPI_RTE_SPAWN_HIGH_QOS, 
+				  true);
     if (NULL == spawn_handle) {
         printf("show_help: get_spawn_handle failed\n");
         return -1;
@@ -393,7 +399,9 @@ int ompi_comm_start_processes (char *command, char **argv, int maxprocs,
     return OMPI_SUCCESS;
 }
 			       
-
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
 int ompi_comm_dyn_init (void)
 {
     uint32_t jobid;
@@ -436,4 +444,198 @@ int ompi_comm_dyn_init (void)
     }
     
     return OMPI_SUCCESS;
+}
+
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
+/* this routine runs through the list of communicators and
+   and does the disconnect for all dynamic communicators */
+/*int ompi_comm_dyn_finalize (void)
+{
+    
+
+}
+*/
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
+#define COMM_COLL_BASE_TAG_BARRIER 30303
+
+ompi_comm_disconnect_obj *ompi_comm_disconnect_init ( ompi_communicator_t *comm)
+{
+    ompi_comm_disconnect_obj *obj=NULL;
+    int ret;
+    int i;
+
+    obj = (ompi_comm_disconnect_obj *) calloc(1,sizeof(ompi_comm_disconnect_obj));
+    if ( NULL == obj ) {
+	return NULL;
+    }
+
+    if ( OMPI_COMM_IS_INTER(comm) ) {
+	obj->size = ompi_comm_remote_size (comm);
+    }
+    else {
+	obj->size = ompi_comm_size (comm);
+    }
+    
+    obj->comm = comm;
+    obj->reqs = (ompi_request_t **) malloc(2*obj->size*sizeof(ompi_request_t *));
+    if ( NULL == obj->reqs ) {
+	free (obj);
+	return NULL;
+    }
+
+    /* initiate all isend_irecvs. We use a dummy buffer stored on
+       the object, since we are sending zero size messages anyway. */
+    for ( i=0; i < obj->size; i++ ) {
+	ret = mca_pml.pml_irecv (&(obj->buf), 0, MPI_INT, i,
+				 COMM_COLL_BASE_TAG_BARRIER, comm, 
+				 &(obj->reqs[2*i]));
+				 
+	if ( OMPI_SUCCESS != ret ) {
+	    free (obj->reqs);
+	    free (obj);
+	    return NULL;
+	}
+
+	ret = mca_pml.pml_isend (&(obj->buf), 0, MPI_INT, i,
+				 COMM_COLL_BASE_TAG_BARRIER, 
+				 MCA_PML_BASE_SEND_STANDARD,
+				 comm, &(obj->reqs[2*i+1]));
+				 
+	if ( OMPI_SUCCESS != ret ) {
+	    free (obj->reqs);
+	    free (obj);
+	    return NULL;
+	}
+	
+    }
+	
+    /* return handle */
+    return obj;
+}
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
+/* - count how many requests are active
+ * - generate a request array large enough to hold
+     all active requests
+ * - call waitall on the overall request array
+ * - free the objects
+ */
+void ompi_comm_disconnect_waitall (int count, ompi_comm_disconnect_obj **objs)
+{
+    
+    ompi_request_t **reqs=NULL;
+    char *treq=NULL;
+    int totalcount = 0;
+    int i;
+    int ret;
+
+    for (i=0; i<count; i++) {
+	if (NULL == objs[i]) {
+	    printf("Error in comm_disconnect_waitall\n");
+	    return;
+	}
+	
+	totalcount += objs[i]->size;
+    }
+    
+    reqs = (ompi_request_t **) malloc (2*totalcount*sizeof(ompi_request_t *));
+    if ( NULL == reqs ) {
+	printf("ompi_comm_disconnect_waitall: error allocating memory\n");
+	return;
+    }
+
+    /* generate a single, large array of pending requests */
+    treq = (char *)reqs;
+    for (i=0; i<count; i++) {
+	memcpy (treq, objs[i]->reqs, 2*objs[i]->size * sizeof(ompi_request_t *));
+	treq += 2*objs[i]->size * sizeof(ompi_request_t *);
+    }
+
+    /* force all non-blocking all-to-alls to finish */
+    ret = ompi_request_wait_all (2*totalcount, reqs, MPI_STATUSES_IGNORE);
+
+    /* Finally, free everything */
+    for (i=0; i< count; i++ ) {
+	if (NULL != objs[i]->reqs ) {
+	    free (objs[i]->reqs );
+	    free (objs[i]);
+	}
+    }
+    
+    free (reqs);
+
+    /* decrease the counter for dynamic communicators by 'count'.
+       Attention, this approach now requires, that we are just using
+       these routines for communicators which have been flagged dynamic */
+    ompi_comm_num_dyncomm -=count;
+
+    return;
+}
+
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
+#define OMPI_COMM_MAXJOBIDS 64
+void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
+{
+    int i, j, numjobids=0;
+    int size, rsize;
+    int found;
+    uint32_t jobids[OMPI_COMM_MAXJOBIDS], thisjobid;
+    ompi_group_t *grp=NULL;
+
+    /* special case for MPI_COMM_NULL */
+    if ( comm == MPI_COMM_NULL ) {
+	return;
+    }
+
+    size  = ompi_comm_size (comm);
+    rsize = ompi_comm_remote_size(comm);
+
+    /* loop over all processes in local group and count number
+       of different jobids.  */
+    grp = comm->c_local_group;
+    for (i=0; i< size; i++) {
+	thisjobid = ompi_name_server.get_jobid(&(grp->grp_proc_pointers[i]->proc_name));
+	found = 0;
+	for ( j=0; j<numjobids; j++) {
+	    if ( thisjobid == jobids[j]) {
+		found = 1;
+		break;
+	    }
+	}
+	if (!found ) {
+	    jobids[numjobids++] = thisjobid;
+	}
+    }
+
+    /* if inter-comm, loop over all processes in remote_group
+       and count number of different jobids */
+    grp = comm->c_remote_group;
+    for (i=0; i< rsize; i++) {
+	thisjobid = ompi_name_server.get_jobid(&(grp->grp_proc_pointers[i]->proc_name));
+	found = 0;
+	for ( j=0; j<numjobids; j++) {
+	    if ( thisjobid == jobids[j]) {
+		found = 1;
+		break;
+	    }
+	}
+	if (!found ) {
+	    jobids[numjobids++] = thisjobid;
+	}
+    }
+    
+    /* if number of joibds larger than one, set the disconnect flag*/
+    if ( numjobids > 1 ) {
+	ompi_comm_num_dyncomm++;
+	OMPI_COMM_SET_DYNAMIC(comm);
+    }
+
+    return;
 }
