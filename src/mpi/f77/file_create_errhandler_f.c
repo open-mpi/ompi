@@ -20,7 +20,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_CREATE_ERRHANDLER,
                            pmpi_file_create_errhandler_,
                            pmpi_file_create_errhandler__,
                            pmpi_file_create_errhandler_f,
-                           (MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr),
+                           (void *function, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (function, errhandler, ierr) )
 #endif
 
@@ -37,7 +37,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_CREATE_ERRHANDLER,
                            mpi_file_create_errhandler_,
                            mpi_file_create_errhandler__,
                            mpi_file_create_errhandler_f,
-                           (MPI_Fint *function, MPI_Fint *errhandler, MPI_Fint *ierr),
+                           (void *function, MPI_Fint *errhandler, MPI_Fint *ierr),
                            (function, errhandler, ierr) )
 #endif
 
@@ -46,14 +46,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_CREATE_ERRHANDLER,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_create_errhandler_f(MPI_Fint *function, 
+void mpi_file_create_errhandler_f(void *function, 
 				  MPI_Fint *errhandler, MPI_Fint *ierr)
 {
     MPI_Errhandler c_errhandler;
     
+    /* See the note in src/mpi/f77/prototypes_mpi.h about the use of
+       (void*) for function pointers in this function */
+
     *ierr = OMPI_INT_2_FINT(MPI_File_create_errhandler(
-                     (MPI_File_errhandler_fn *)*function,
-						   &c_errhandler));
+                     (MPI_File_errhandler_fn *) function,
+                     &c_errhandler));
 
     *errhandler = MPI_Errhandler_c2f(c_errhandler);
 }
