@@ -5,17 +5,10 @@
 # This is the US/English bootproxy help file for Open MPI.
 #
 [usage]
-Usage: %s --local-offset <vpid> --global_start_vpid <vpid> 
-          --num_procs <num> [--high-qos]
+Usage: %s --local-offset <vpid> [--high-qos]
 
   --local_offset <vpid>	      Starting vpid from which to assign for all
                               processes started by this bootproxy
-  --global_start_vpid <vpid>  Starting vpid for the call to
-                              spawn_procs that resulted in this
-                              bootproxy being launched.
-  --num_procs <num>           Total number of processes started in the
-                              call to spawn_procs that resulted in
-                              this bootproxy being launched
   --high-qos                  Do not exit until all processes started
                               have exited.  Do not close
                               std{in,out,err}.  If one process exits
@@ -51,3 +44,23 @@ process.
   I was trying to start:         %s
   Current working directory was: %s
   The error from exec was:       %s
+[system-failure]
+Open MPI encountered a failure with a system-level call and does not
+know how to continue.  The call was %s and the error message was:
+
+  %s
+[ompi-init]
+Open MPI encountered a failure while attempting to initialize the Open
+MPI environment.  This really shouldn't happen.  The best I can say is
+that the error was %d.
+[signal-exception]
+Open MPI encountered a failure while monitoring MPI processes.  The
+error was an exception on the internal signal pipes.  No more
+information is available at this time.  This error should be reported
+to the Open MPI developers as this should not happen.
+[internal-accounting-error]
+Open MPI encountered a failure while monitoring MPI processes.  This
+error can best be described as an internal accounting error, as it was
+completely unexpected and no information is available on the error.
+This error should be reported to the Open MPI developers as this
+should not happen.

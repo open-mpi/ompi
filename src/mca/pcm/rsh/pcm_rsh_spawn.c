@@ -364,18 +364,6 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
     ompi_argv_append(&cmdc, &cmdv, tmp);
     free(tmp);
 
-    /* global starting vpid for this pcm spawn */
-    tmp = ompi_ltostr(global_start_vpid);
-    ompi_argv_append(&cmdc, &cmdv, "--global_start_vpid");
-    ompi_argv_append(&cmdc, &cmdv, tmp);
-    free(tmp);
-
-    /* number of procs in this pcm spawn */
-    tmp = ompi_ltostr(num_procs);
-    ompi_argv_append(&cmdc, &cmdv, "--num_procs");
-    ompi_argv_append(&cmdc, &cmdv, tmp);
-    free(tmp);
-
     /* keep stdio open? */
     if (high_qos) {
         ompi_argv_append(&cmdc, &cmdv, "--high_qos");
@@ -402,11 +390,13 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
         /* child */
 
         if ((dup2(kidstdin[0], 0) < 0)) {
+            /* BWB - XXX - FIX ME to use show help */
             perror(cmdv[0]);
             exit(errno);
         }
 
         if (close(kidstdin[0]) || close(kidstdin[1])) {
+            /* BWB - XXX - FIX ME to use show help */
             perror(cmdv[0]);
             exit(errno);
         }
@@ -420,11 +410,17 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
         exit(errno);
 
     } else {
+        int comm_fd;
+
         /* parent */
         close(kidstdin[0]);
 
-        /* send our stuff down the wire */
-        fp = fdopen(kidstdin[1], "a");
+        /* send our stuff down the wire - dup so that we can close the
+           fp without killing the other side's stdin, since stdin
+           going away is how the remote side knows that it's time to
+           kill everyone. */
+        comm_fd = dup(kidstdin[1]);
+        fp = fdopen(comm_fd, "a");
         if (fp == NULL) { 
             ompi_show_help("help-mca-pcm-rsh.txt",
                            "spawn:application-send", true,
@@ -433,7 +429,12 @@ internal_spawn_proc(mca_pcm_rsh_module_t *me,
             kill(pid, SIGTERM);
             goto proc_cleanup;
         }
-        ret = mca_pcm_base_send_schedule(fp, jobid, sched, start_node->count);
+        /* BWB - XXX - FIX ME - CELLID */
+        ret = mca_pcm_base_send_schedule(fp, 0, jobid, 
+                                         global_start_vpid,
+                                         num_procs,          
+                                         sched, 
+                                         start_node->count);
         fclose(fp);
         if (OMPI_SUCCESS != ret) {
             ompi_show_help("help-mca-pcm-rsh.txt",

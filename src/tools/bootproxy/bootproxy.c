@@ -23,98 +23,132 @@
 #include "mca/pcm/base/base.h"
 #include "class/ompi_list.h"
 #include "util/show_help.h"
+#include "mca/ns/ns.h"
 
-
-struct pid_item_t {
-    ompi_list_item_t super;
-    pid_t pid;
+/*
+ * Local data structure
+ */
+struct app_opts {
+    bool high_qos;
+    bool debug;
+    mca_ns_base_cellid_t cellid;
+    mca_ns_base_jobid_t jobid;
+    mca_ns_base_vpid_t local_vpid_start;
+    mca_ns_base_vpid_t global_vpid_start;
+    int num_job_procs;
+    int num_fork_procs;
 };
-typedef struct pid_item_t pid_item_t;
-OBJ_CLASS_INSTANCE(pid_item_t, ompi_list_item_t, NULL, NULL);
 
+/*
+ * Local Data
+ */
+static pid_t *started_pids;
+int sigchld_msg[2];
+int sigdie_msg[2];
+int sigcount = 0;
 
+/*
+ * Local functions
+ */
 static void
-show_usage(char *myname)
+sighandler(int sig)
 {
-    printf("usage: %s --local_offset [vpid] --global_start_vpid [vpid]\n"
-           "         --num_procs [num] [--high-qos]\n\n", myname);
+    int i = 1;
+
+    if (SIGCHLD == sig) {
+        write(sigchld_msg[1], &i, sizeof(int));
+    } else {
+        write(sigdie_msg[1], &i, sizeof(int));
+    }
 }
+
+
+
+
+static int
+do_args(int argc, char *argv[], struct app_opts *opts)
+{
+    ompi_cmd_line_t *cmd_line = NULL;
+
+    cmd_line = OBJ_NEW(ompi_cmd_line_t);
+    ompi_cmd_line_make_opt(cmd_line, '\0', "local_offset", 1, 
+                           "starting vpid to use when launching");
+    ompi_cmd_line_make_opt(cmd_line, '\0', "high_qos", 0, 
+                           "Do we want High QOS system (keepalive, etc)");
+    ompi_cmd_line_make_opt(cmd_line, '\0', "debug", 0, 
+                           "Enable debugging support?");
+
+    if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, false, argc, argv)) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    if (!ompi_cmd_line_is_taken(cmd_line, "local_offset")) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+    opts->local_vpid_start = 
+        atoi(ompi_cmd_line_get_param(cmd_line, "local_offset", 0, 0));
+
+    if (ompi_cmd_line_is_taken(cmd_line, "high_qos"))  {
+        opts->high_qos = true;
+    } else {
+        opts->high_qos = false;
+    }
+
+    if (ompi_cmd_line_is_taken(cmd_line, "debug")) {
+        opts->debug = true;
+    } else {
+        opts->debug = false;
+    }
+
+    OBJ_RELEASE(cmd_line);
+
+    return OMPI_SUCCESS;
+}
+
 
 
 int
 main(int argc, char *argv[])
 {
-    ompi_rte_node_schedule_t *sched;
-    pid_t pid;
-    int i;
     int ret;
-    mca_ns_base_jobid_t jobid;
-    ompi_cmd_line_t *cmd_line = NULL;
-    int local_vpid_start, global_vpid_start;
-    int cellid = 0;
-    int total_num_procs;
-    int fork_num_procs;
-    char *env_buf;
-    bool high_qos = false;
+    struct app_opts opts;
+    ompi_rte_node_schedule_t *sched;
+    char *tmp_buf;
+    int i, orig_errno;
+    pid_t pid;
     int status;
-    ompi_list_t pid_list;
-    pid_item_t *pid_list_item;
-    ompi_list_item_t *list_item;
-    int orig_errno;
-    char *dotted_command;
+    fd_set read_fds, ex_fds;
+    int num_running_procs = 0;
 
-    ompi_init(argc, argv);
-
-    /* 
-     * command line parsing
-     */
-    cmd_line = OBJ_NEW(ompi_cmd_line_t);
-    ompi_cmd_line_make_opt(cmd_line, '\0', "local_offset", 1, 
-                           "starting vpid to use when launching");
-    ompi_cmd_line_make_opt(cmd_line, '\0', "global_start_vpid", 1, 
-                           "starting vpid to use when launching");
-    ompi_cmd_line_make_opt(cmd_line, '\0', "num_procs", 1, 
-                           "number of procs in job");
-    ompi_cmd_line_make_opt(cmd_line, '\0', "high_qos", 0, 
-                           "Do we want High QOS system (keepalive, etc)");
-
-    if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, false, argc, argv)) {
-        show_usage(argv[0]);
+    /* make ourselves an OMPI process */
+    ret = ompi_init(argc, argv);
+    if (OMPI_SUCCESS != ret) {
+        ompi_show_help("help-bootproxy.txt", "ompi_init", true, ret);
         exit(1);
     }
 
-    if (!ompi_cmd_line_is_taken(cmd_line, "local_offset")) {
-        show_usage(argv[0]);
+    /* get all the arguments and all that */
+    ret = do_args(argc, argv, &opts);
+    if (OMPI_SUCCESS != ret) {
+        ompi_show_help("help-bootproxy.txt", "usage", true);
         exit(1);
     }
-    local_vpid_start =
-        atoi(ompi_cmd_line_get_param(cmd_line, "local_offset", 0, 0));
 
-    if (!ompi_cmd_line_is_taken(cmd_line, "global_start_vpid")) {
-        show_usage(argv[0]);
-        exit(1);
-    }
-    global_vpid_start =
-        atoi(ompi_cmd_line_get_param(cmd_line, "global_start_vpid", 0, 0));
-
-    if (!ompi_cmd_line_is_taken(cmd_line, "num_procs")) {
-        show_usage(argv[0]);
-        exit(1);
-    }
-    total_num_procs = atoi(ompi_cmd_line_get_param(cmd_line, "num_procs", 0, 0));
-    if (ompi_cmd_line_is_taken(cmd_line, "high_qos"))  high_qos = true;
-
-    /*
-     * Receive the startup schedule for here
-     */
+    /* receive schedule */
     sched = OBJ_NEW(ompi_rte_node_schedule_t);
     if (NULL == sched) {
-        printf("Error in OBJ_NEW.  aborting\n");
+        ompi_show_help("help-bootproxy.txt", "system-failure", true,
+                       "OBJ_NEW", strerror(errno));
         exit(1);
     }
 
-    ret = mca_pcm_base_recv_schedule(stdin, &jobid, sched,
-                                     &fork_num_procs);
+    ret = mca_pcm_base_recv_schedule(stdin, 
+                                     &(opts.cellid), 
+                                     &(opts.jobid),
+                                     &(opts.global_vpid_start),
+                                     &(opts.num_job_procs),
+                                     sched,
+                                     &(opts.num_fork_procs));
     if (ret != OMPI_SUCCESS) {
         ompi_show_help("help-bootproxy.txt", "could-not-receive-schedule",
                        true, ret);
@@ -123,18 +157,19 @@ main(int argc, char *argv[])
 
     /* fill our environment */
     for (i = 0 ; sched->env[i] != NULL ; ++i) {
-        putenv(sched->env[i]);
+        putenv(strdup(sched->env[i]));
     }
     /* constant pcmclient info */
-    asprintf(&env_buf, "OMPI_MCA_pcmclient_env_cellid=%d", cellid);
-    putenv(env_buf);
-    asprintf(&env_buf, "OMPI_MCA_pcmclient_env_jobid=%d", jobid);
-    putenv(env_buf);
-    asprintf(&env_buf, "OMPI_MCA_pcmclient_env_num_procs=%d", total_num_procs);
-    putenv(env_buf);
-    asprintf(&env_buf, "OMPI_MCA_pcmclient_env_vpid_start=%d", 
-             global_vpid_start);
-    putenv(env_buf);
+    asprintf(&tmp_buf, "OMPI_MCA_pcmclient_env_cellid=%d", opts.cellid);
+    putenv(tmp_buf);
+    asprintf(&tmp_buf, "OMPI_MCA_pcmclient_env_jobid=%d", opts.jobid);
+    putenv(tmp_buf);
+    asprintf(&tmp_buf, "OMPI_MCA_pcmclient_env_num_procs=%d",
+             opts.num_job_procs);
+    putenv(tmp_buf);
+    asprintf(&tmp_buf, "OMPI_MCA_pcmclient_env_vpid_start=%d", 
+             opts.global_vpid_start);
+    putenv(tmp_buf);
 
     /* get in the right place */
     if (sched->cwd != NULL) {
@@ -146,10 +181,47 @@ main(int argc, char *argv[])
         }
     }
 
-    OBJ_CONSTRUCT(&pid_list, ompi_list_t);
+    /* do the pre-fork setup */
+    started_pids = malloc(sizeof(pid_t) * opts.num_fork_procs);
+    if (NULL == started_pids) {
+        ompi_show_help("help-bootproxy.txt", "system-failure", true,
+                       "malloc", strerror(errno));
+        exit(1);
+    }
+
+    ret = pipe(sigchld_msg);
+    if (ret < 0) {
+        ompi_show_help("help-bootproxy.txt", "system-failure", true,
+                       "pipe", strerror(errno));
+        exit(1);
+    }
+    ret = pipe(sigdie_msg);
+    if (ret < 0) {
+        ompi_show_help("help-bootproxy.txt", "system-failure", true,
+                       "pipe", strerror(errno));
+        exit(1);
+    }
+
+    if (SIG_ERR == signal(SIGCHLD, sighandler)) {
+        ompi_show_help("help-bootproxy.txt", "system-failure", true,
+                       "signal", strerror(errno));
+    }
+    if (SIG_ERR == signal(SIGINT, sighandler)) {
+        ompi_show_help("help-bootproxy.txt", "system-failure", true,
+                       "signal", strerror(errno));
+    }
+    if (SIG_ERR == signal(SIGQUIT, sighandler)) {
+        ompi_show_help("help-bootproxy.txt", "system-failure", true,
+                       "signal", strerror(errno));
+    }
+    if (SIG_ERR == signal(SIGTERM, sighandler)) {
+        ompi_show_help("help-bootproxy.txt", "system-failure", true,
+                       "signal", strerror(errno));
+    }
 
     /* launch processes, and do the right cleanup things */
-    for (i = 0 ; i < fork_num_procs ; ++i) {
+    num_running_procs = 0;
+    for (i = 0 ; i < opts.num_fork_procs ; ++i) {
         /* BWB - XXX - fix me.  This sleep is here because the
            registry in mpirun can't keep up if you launch a large number
            of processes all at once.  And with this loop, it really is
@@ -168,11 +240,11 @@ main(int argc, char *argv[])
 
             /* do the putenv here so that we don't look like we have a
                giant memory leak */
-            asprintf(&env_buf, "OMPI_MCA_pcmclient_env_procid=%d", 
-                     local_vpid_start + i);
-            putenv(env_buf);
+            asprintf(&tmp_buf, "OMPI_MCA_pcmclient_env_procid=%d", 
+                     opts.local_vpid_start + i);
+            putenv(tmp_buf);
 
-            if (!high_qos) {
+            if (!opts.high_qos) {
                 for (i = 0; i < FD_SETSIZE; i++)
                     close(i);
             }
@@ -180,8 +252,8 @@ main(int argc, char *argv[])
             execvp(sched->argv[0], sched->argv);
             /* BWB - fix me - do real path search stuff */
             orig_errno = errno;
-            asprintf(&dotted_command, "./%s", sched->argv[0]);
-            execvp(dotted_command, sched->argv);
+            asprintf(&tmp_buf, "./%s", sched->argv[0]);
+            execvp(tmp_buf, sched->argv);
             if (ENOENT == errno || ELOOP == errno) {
                 /* if we could have found something, use our errno.
                    otherwisse, use the non-hack errno */
@@ -194,43 +266,98 @@ main(int argc, char *argv[])
         } else {
             /* parent */
 
-            if (high_qos) {
-                pid_list_item = OBJ_NEW(pid_item_t);
-                pid_list_item->pid = pid;
-                ompi_list_append(&pid_list, 
-                                 (ompi_list_item_t*) pid_list_item);
+            if (opts.high_qos) {
+                started_pids[i] = pid;
+                num_running_procs++;
             }
         }
     }
 
     OBJ_RELEASE(sched);
 
-    status = 1;
+    status = 0;
 
     /* if we want qos, hang around until the first process exits.  We
        can clean the rest up later if we want */
-    if (high_qos) {
-        for (i = 0 ; i < fork_num_procs ; ++i) {
-            while (1) {
-                pid = waitpid(-1, &status, 0);
-                if (! (pid == -1 && errno == EINTR)) break;
+    if (opts.high_qos) {
+        while (num_running_procs > 0) {
+            int max_fd = 0;
+            FD_ZERO(&read_fds);
+            FD_ZERO(&ex_fds);
+            FD_SET(0, &read_fds);
+            FD_SET(0, &ex_fds);
+            FD_SET(sigchld_msg[0], &read_fds);
+            FD_SET(sigchld_msg[0], &ex_fds);
+            FD_SET(sigdie_msg[0], &read_fds);
+            FD_SET(sigdie_msg[0], &ex_fds);
+
+            max_fd = sigchld_msg[0] > sigdie_msg[0] ?
+                sigchld_msg[0] : sigdie_msg[0];
+
+            ret = select(max_fd + 1, &read_fds, NULL, &ex_fds, NULL);
+            if (ret < 0) {
+                if (EINTR == errno) {
+                    continue; 
+                } else {
+                    ompi_show_help("help-bootproxy.txt",
+                                   "system-failure", true,
+                                   "select", strerror(errno));
+                    exit(1);
+                }
             }
-            if (! (WIFEXITED(status) && WEXITSTATUS(status) == 0)) break;
+
+            if (FD_ISSET(0, &read_fds) || FD_ISSET(0, &ex_fds)) {
+                /* ssh closed - get us out of here */
+                break;
+
+            } else if (FD_ISSET(sigdie_msg[0], &read_fds)) {
+                /* we got a death signal - get us out of here */
+                break;
+
+            } else if (FD_ISSET(sigchld_msg[0], &read_fds)) {
+                int buf;
+                /* we got a sigchld.  reap the pid.  If abnormal exit,
+                   kill and run */
+                ret = read(sigchld_msg[0], &buf, sizeof(int));
+                pid = 0;
+                while (pid >= 0) {
+                    pid = waitpid(-1, &status, WNOHANG);
+                    if (pid == -1 && errno == EINTR) { 
+                        pid = 0;
+                        continue; 
+                    }
+                    if (pid == -1) break;
+
+                    if (pid > 0) {
+                        num_running_procs--;
+                        if (! (WIFEXITED(status) && 
+                               WEXITSTATUS(status) == 0)) {
+                            break;
+                        }
+                    }
+                }
+            } else if (FD_ISSET(sigchld_msg[0], &ex_fds) ||
+                       FD_ISSET(sigdie_msg[0], &ex_fds)) {
+                ompi_show_help("help-bootproxy.txt",
+                               "signal-exception", true);
+                exit(1);
+            } else {
+                ompi_show_help("help-bootproxy.txt",
+                               "internal-accounting-error", true);
+                exit(1);
+            }
         }
 
-        while (NULL != (list_item = ompi_list_remove_first(&pid_list))) {
-            pid_list_item = (pid_item_t*) list_item;
-            if (pid_list_item->pid != pid) {
-                kill(pid_list_item->pid, SIGTERM);
+        /* ok, at this point, we shouldn't have any processes running
+           if all went well.  Otherwise, clean everyone up */
+        if (num_running_procs > 0) {
+            for (i = 0 ; i < opts.num_fork_procs ; ++i) {
+                kill(started_pids[i], SIGTERM);
             }
-            OBJ_RELEASE(list_item);
         }
-
     } else {
         status = 0;
     }
-
-    OBJ_DESTRUCT(&pid_list);
 
     ompi_finalize();
 
