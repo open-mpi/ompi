@@ -83,7 +83,7 @@ AH_TOP([/* -*- c -*-
 #define LAM_CONFIG_H
 ])
 AH_BOTTOM([
-#include <lam_config_bottom.h>
+#include "lam_config_bottom.h"
 #endif /* LAM_CONFIG_H */
 ])
 
@@ -325,8 +325,8 @@ lam_show_title "Final top-level LAM configuration"
 # purely aesthetic.
 #
 
-CPPFLAGS='-I$(top_srcdir)/src'" $CPPFLAGS"
-CXXCPPFLAGS='-I$(top_srcdir)/src'" $CXXCPPFLAGS"
+CPPFLAGS='-I$(top_srcdir)/src -I$(top_srcdir)/src/include'" $CPPFLAGS"
+CXXCPPFLAGS='-I$(top_srcdir)/src  -I$(top_srcdir)/src/include'" $CXXCPPFLAGS"
 
 #
 # Adding WRAPPER_* flags so that extra flags needed for wrappper compilers
