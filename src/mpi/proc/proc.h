@@ -9,11 +9,11 @@
 
 
 extern lam_class_info_t lam_proc_cls;
-extern lam_dbl_list_t lam_procs;
+extern lam_list_t lam_procs;
 
 
 struct lam_proc_t {
-    lam_dbl_item_t         super;       /* allow proc to be placed on a list */
+    lam_list_item_t        super;       /* allow proc to be placed on a list */
     pid_t                  proc_id; 
     int                    proc_gid;    /* globally unique identifier? */
     struct mca_pml_proc_t* proc_pml;    /* PML specific proc data */

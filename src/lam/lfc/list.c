@@ -9,175 +9,175 @@
  */
 
 
-lam_class_info_t  lam_dbl_item_cls = {"lam_dbl_link_item_t", &lam_object_cls, 
-    (class_init_t) lam_dbl_item_init, (class_destroy_t)lam_obj_destroy};
-lam_class_info_t  lam_dbl_list_cls = {"lam_dbl_list_t", &lam_object_cls,
-    (class_init_t)lam_dbl_init, (class_destroy_t)lam_dbl_destroy};
+lam_class_info_t  lam_list_item_cls = {"lam_list_link_item_t", &lam_object_cls, 
+    (class_init_t) lam_list_item_init, (class_destroy_t)lam_obj_destroy};
+lam_class_info_t  lam_list_cls = {"lam_list_t", &lam_object_cls,
+    (class_init_t)lam_list_init, (class_destroy_t)lam_list_destroy};
 
 
 /*
  *
- *      lam_dbl_link_item_t interface
+ *      lam_list_link_item_t interface
  *
  */
 
-void lam_dbl_item_init(lam_dbl_item_t *item)
+void lam_list_item_init(lam_list_item_t *item)
 {
-    SUPER_INIT(item, lam_dbl_item_cls.cls_parent);
-    item->lam_dbl_next = item->lam_dbl_prev = 0;
-    item->lam_dbl_type = 0;
+    SUPER_INIT(item, lam_list_item_cls.cls_parent);
+    item->lam_list_next = item->lam_list_prev = 0;
+    item->lam_list_type = 0;
 }
 
 
 /*
  *
- *      lam_dbl_list_t interface
+ *      lam_list_list_t interface
  *
  */
 
-void lam_dbl_init(lam_dbl_list_t *list)
+void lam_list_init(lam_list_t *list)
 {
-    SUPER_INIT(list, lam_dbl_list_cls.cls_parent);
-    list->lam_dbl_head = list->lam_dbl_tail = 0;
-    list->lam_dbl_type = 0;
-    list->lam_dbl_length = 0;
+    SUPER_INIT(list, lam_list_cls.cls_parent);
+    list->lam_list_head = list->lam_list_tail = 0;
+    list->lam_list_type = 0;
+    list->lam_list_length = 0;
 }
 
-void lam_dbl_destroy(lam_dbl_list_t *list)
+void lam_list_destroy(lam_list_t *list)
 {
     /* release all items in list */
-    lam_dbl_empty_list(list);
-    SUPER_DESTROY(list, lam_dbl_list_cls.cls_parent);
+    lam_list_empty_list(list);
+    SUPER_DESTROY(list, lam_list_cls.cls_parent);
 }
 
 
-void lam_dbl_append(lam_dbl_list_t *list, lam_dbl_item_t *item)
+void lam_list_append(lam_list_t *list, lam_list_item_t *item)
 {
     /* Adds item to the end of the list. */
-    item->lam_dbl_next = 0;
-    item->lam_dbl_prev = list->lam_dbl_tail;
-    if ( !(list->lam_dbl_head) )
-        list->lam_dbl_head = item;
-    if ( list->lam_dbl_tail )
-        list->lam_dbl_tail->lam_dbl_next = item;
+    item->lam_list_next = 0;
+    item->lam_list_prev = list->lam_list_tail;
+    if ( !(list->lam_list_head) )
+        list->lam_list_head = item;
+    if ( list->lam_list_tail )
+        list->lam_list_tail->lam_list_next = item;
     
-    list->lam_dbl_tail = item;
-    list->lam_dbl_length++;
+    list->lam_list_tail = item;
+    list->lam_list_length++;
 }
 
-void lam_dbl_empty_list(lam_dbl_list_t *list)
+void lam_list_empty_list(lam_list_t *list)
 {
     /* Since we don't retain the items, simply set
         each item's next and prev pointers to 0. */
-    lam_dbl_item_t     *ptr, *next;
+    lam_list_item_t     *ptr, *next;
 
-    ptr = list->lam_dbl_head;
+    ptr = list->lam_list_head;
     while ( ptr )
     {
-        next = ptr->lam_dbl_next;
-        ptr->lam_dbl_next = ptr->lam_dbl_prev = 0;
+        next = ptr->lam_list_next;
+        ptr->lam_list_next = ptr->lam_list_prev = 0;
         ptr = next;
     }
-    list->lam_dbl_head = list->lam_dbl_tail = 0;
-    list->lam_dbl_length = 0;
+    list->lam_list_head = list->lam_list_tail = 0;
+    list->lam_list_length = 0;
 }
 
 
-int lam_dbl_insert(lam_dbl_list_t *list, lam_dbl_item_t *item, long long idx)
+int lam_list_insert(lam_list_t *list, lam_list_item_t *item, long long idx)
 {
     /* Adds item to list at index and retains item. */
     int     i;
-    lam_dbl_item_t     *ptr, *next;
+    lam_list_item_t     *ptr, *next;
     
-    if ( idx >= list->lam_dbl_length )
+    if ( idx >= list->lam_list_length )
         return 0;
     
     if ( 0 == idx )
     {
-        lam_dbl_prepend(list, item);
+        lam_list_prepend(list, item);
     }
     else
     {
-        ptr = list->lam_dbl_head;
+        ptr = list->lam_list_head;
         for ( i = 0; i < idx; i++ )
-            ptr = ptr->lam_dbl_next;
+            ptr = ptr->lam_list_next;
 
-        next = ptr->lam_dbl_next;
-        item->lam_dbl_next = next;
-        item->lam_dbl_prev = ptr;
-        next->lam_dbl_prev = item;
-        ptr->lam_dbl_next = item;
+        next = ptr->lam_list_next;
+        item->lam_list_next = next;
+        item->lam_list_prev = ptr;
+        next->lam_list_prev = item;
+        ptr->lam_list_next = item;
     }
     
-    list->lam_dbl_length++;    
+    list->lam_list_length++;    
     return 1;
 }
 
-lam_dbl_item_t *lam_dbl_get_first_item(lam_dbl_list_t *list)
+lam_list_item_t *lam_list_get_first_item(lam_list_t *list)
 {
     /* Returns first item on list, but does not remove it from the list. */
-    return list->lam_dbl_head;
+    return list->lam_list_head;
 }
 
-lam_dbl_item_t *lam_dbl_get_last_item(lam_dbl_list_t *list)
+lam_list_item_t *lam_list_get_last_item(lam_list_t *list)
 {
     /* Returns last item on list, but does not remove it from the list. */
-    return list->lam_dbl_tail;
+    return list->lam_list_tail;
 }
 
-void lam_dbl_prepend(lam_dbl_list_t *list, lam_dbl_item_t *item)
+void lam_list_prepend(lam_list_t *list, lam_list_item_t *item)
 {
     /* Adds item to the front of the list and retains item. */
-    item->lam_dbl_next = list->lam_dbl_head;
-    item->lam_dbl_prev = 0;
-    if ( list->lam_dbl_head )
-        list->lam_dbl_head->lam_dbl_prev = item;
-    list->lam_dbl_head = item;    
+    item->lam_list_next = list->lam_list_head;
+    item->lam_list_prev = 0;
+    if ( list->lam_list_head )
+        list->lam_list_head->lam_list_prev = item;
+    list->lam_list_head = item;    
 }
 
-lam_dbl_item_t *lam_dbl_remove_first(lam_dbl_list_t *list)
+lam_list_item_t *lam_list_remove_first(lam_list_t *list)
 {
     /*  Removes and returns first item on list.
         Caller now owns the item and should release the item
         when caller is done with it.
     */
-    lam_dbl_item_t *item;
-    if ( 0 == list->lam_dbl_length )
+    lam_list_item_t *item;
+    if ( 0 == list->lam_list_length )
         return 0;
     
-    list->lam_dbl_length--;
-    item = list->lam_dbl_head;
-    list->lam_dbl_head = item->lam_dbl_next;
-    if ( list->lam_dbl_length )
+    list->lam_list_length--;
+    item = list->lam_list_head;
+    list->lam_list_head = item->lam_list_next;
+    if ( list->lam_list_length )
     {
-        item->lam_dbl_next->lam_dbl_prev = 0;
+        item->lam_list_next->lam_list_prev = 0;
     }
     else
-        list->lam_dbl_tail = 0;
+        list->lam_list_tail = 0;
     
-    item->lam_dbl_next = item->lam_dbl_prev = 0;
+    item->lam_list_next = item->lam_list_prev = 0;
     return item;
 }
 
-lam_dbl_item_t *lam_dbl_remove_last(lam_dbl_list_t *list)
+lam_list_item_t *lam_list_remove_last(lam_list_t *list)
 {
     /*  Removes, releases and returns last item on list.
     Caller now owns the item and should release the item
     when caller is done with it.
     */
-    lam_dbl_item_t  *item;
+    lam_list_item_t  *item;
     
-    if ( 0 == list->lam_dbl_length )
+    if ( 0 == list->lam_list_length )
         return 0;
     
-    list->lam_dbl_length--;
-    item = list->lam_dbl_head;
-    list->lam_dbl_tail = item->lam_dbl_prev;
-    if ( list->lam_dbl_length )
-        item->lam_dbl_prev->lam_dbl_next = 0;
+    list->lam_list_length--;
+    item = list->lam_list_head;
+    list->lam_list_tail = item->lam_list_prev;
+    if ( list->lam_list_length )
+        item->lam_list_prev->lam_list_next = 0;
     else
-        list->lam_dbl_head = 0;
-    item->lam_dbl_next = item->lam_dbl_prev = 0;
+        list->lam_list_head = 0;
+    item->lam_list_next = item->lam_list_prev = 0;
     return item;
 }
 

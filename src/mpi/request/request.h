@@ -19,7 +19,7 @@ typedef enum {
 } lam_request_type_t;
 
 struct lam_request_t {
-    lam_dbl_item_t super;
+    lam_list_item_t super;
     lam_request_type_t req_type;
 };
 typedef struct lam_request_t lam_request_t;

@@ -13,9 +13,9 @@
  *
  */
 
-extern lam_class_info_t   lam_dbl_item_cls;
-extern lam_class_info_t   lam_dbl_list_cls;
-typedef int               lam_dbl_type_t;
+extern lam_class_info_t   lam_list_item_cls;
+extern lam_class_info_t   lam_list_cls;
+typedef int               lam_list_type_t;
 
 
 /*
@@ -24,87 +24,87 @@ typedef int               lam_dbl_type_t;
  *
  */
  
-typedef struct _lam_dbl_item
+typedef struct lam_list_item
 {
     lam_object_t            super;
-    lam_dbl_type_t          lam_dbl_type;
-    struct _lam_dbl_item   *lam_dbl_next;
-    struct _lam_dbl_item   *lam_dbl_prev;
-} lam_dbl_item_t;
+    lam_list_type_t         lam_list_type;
+    struct lam_list_item   *lam_list_next;
+    struct lam_list_item   *lam_list_prev;
+} lam_list_item_t;
 
-void lam_dbl_item_init(lam_dbl_item_t *item);
-void lam_dbl_item_destroy(lam_dbl_item_t *item);
+void lam_list_item_init(lam_list_item_t *item);
+void lam_list_item_destroy(lam_list_item_t *item);
 
-#define lam_dbl_get_next(item) \
-    ((item) ? (((lam_dbl_item_t*)(item))->lam_dbl_next) : 0)
+#define lam_list_get_next(item) \
+    ((item) ? (((lam_list_item_t*)(item))->lam_list_next) : 0)
 
-#define lam_dbl_get_prev(item) \
-    ((item) ? (((lam_dbl_item_t*)(item))->lam_dbl_prev) : 0)
+#define lam_list_get_prev(item) \
+    ((item) ? (((lam_list_item_t*)(item))->lam_list_prev) : 0)
 
 /*
  *
- *      lam_dbl_list_t interface
+ *      lam_list_list_t interface
  *
  */
  
-typedef struct _lam_dbl_list
+typedef struct lam_list
 {
     lam_object_t        super;
-    lam_dbl_item_t     *lam_dbl_head;
-    lam_dbl_item_t     *lam_dbl_tail;
-    lam_dbl_type_t      lam_dbl_type;
-    volatile size_t     lam_dbl_length;
-} lam_dbl_list_t;
+    lam_list_item_t     *lam_list_head;
+    lam_list_item_t     *lam_list_tail;
+    lam_list_type_t      lam_list_type;
+    volatile size_t     lam_list_length;
+} lam_list_t;
 
 
-void lam_dbl_init(lam_dbl_list_t *list);
-void lam_dbl_destroy(lam_dbl_list_t *list);
+void lam_list_init(lam_list_t *list);
+void lam_list_destroy(lam_list_t *list);
 
 /*
  * Inlined accessor functions
  */
 
-#define lam_dbl_get_type(list) \
-    ((lam_dbl_list_t*)list)->lam_dbl_type
+#define lam_list_get_type(list) \
+    ((lam_list_list_t*)list)->lam_list_type
 
-#define lam_dbl_set_type(list, type) \
-    (((lam_dbl_list_t*)list)->lam_dbl_type = type)
+#define lam_list_set_type(list, type) \
+    (((lam_list_list_t*)list)->lam_list_type = type)
 
-#define lam_dbl_get_size(list) \
-    ((lam_dbl_list_t*)list)->lam_dbl_length
+#define lam_list_get_size(list) \
+    ((lam_list_list_t*)list)->lam_list_length
 
 
 /* 
  * Returns first item on list, but does not remove it from the list. 
  */
-#define lam_dbl_get_first(list) \
-    ((lam_dbl_list_t*)list)->lam_dbl_head
+#define lam_list_get_first(list) \
+    ((lam_list_list_t*)list)->lam_list_head
 
 
 /* 
  * Returns last item on list, but does not remove it from the list. 
  */
-#define lam_dbl_get_last(list) \
-    ((lam_dbl_list_t*)list)->lam_dbl_tail
+#define lam_list_get_last(list) \
+    ((lam_list_list_t*)list)->lam_list_tail
 
 
 /* 
  * Adds item to the end of the list but does not retain item. 
  */
-void lam_dbl_append(lam_dbl_list_t *list, lam_dbl_item_t *item);
+void lam_list_append(lam_list_t *list, lam_list_item_t *item);
 
 
 /*
  * Remove item from the list.
  */
-lam_dbl_item_t* lam_dbl_remove(lam_dbl_list_t *list, lam_dbl_item_t *item);
+lam_list_item_t* lam_list_remove(lam_list_t *list, lam_list_item_t *item);
 
 
 /* 
  * Removes all items in list and sets each
  * item's next and prev pointer to 0. 
  */
-void lam_dbl_empty_list(lam_dbl_list_t *list);
+void lam_list_empty_list(lam_list_t *list);
 
 
 /* Adds item to list at index and retains item. 
@@ -113,25 +113,25 @@ void lam_dbl_empty_list(lam_dbl_list_t *list);
     Example: if idx = 2 and list = item1->item2->item3->item4, then
     after insert, list = item1->item2->item->item3->item4
 */
-int lam_dbl_insert(lam_dbl_list_t *list, lam_dbl_item_t *item, long long idx);
+int lam_list_insert(lam_list_t *list, lam_list_item_t *item, long long idx);
 
 
 /* 
  * Adds item to the front of the list and retains item. 
  */
 
-void lam_dbl_prepend(lam_dbl_list_t *list, lam_dbl_item_t *item);
+void lam_list_prepend(lam_list_t *list, lam_list_item_t *item);
 
 
 /*   
  *  Removes and returns first item on list.
  */
-lam_dbl_item_t *lam_dbl_remove_first(lam_dbl_list_t *list);
+lam_list_item_t *lam_list_remove_first(lam_list_t *list);
 
 
 /*   
  *  Removes and returns last item on list.
  */
-lam_dbl_item_t *lam_dbl_remove_last(lam_dbl_list_t *list);
+lam_list_item_t *lam_list_remove_last(lam_list_t *list);
 
 #endif /* LAM_LIST_H */

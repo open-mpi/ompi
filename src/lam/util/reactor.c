@@ -27,7 +27,7 @@ lam_class_info_t lam_reactor_cls = {
 };
                                                                                                                 
 lam_class_info_t lam_reactor_descriptor_cls = {
-    "lam_reactor_t", &lam_dbl_item_cls, (class_init_t)lam_reactor_descriptor_init,
+    "lam_reactor_t", &lam_list_item_cls, (class_init_t)lam_reactor_descriptor_init,
     (class_destroy_t)lam_reactor_descriptor_destroy
 };
 

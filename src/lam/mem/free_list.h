@@ -19,7 +19,7 @@
 
 typedef struct lam_flist_elt
 {
-    lam_dbl_item_t      super;
+    lam_list_item_t     super;
     int                 fle_pool_idx;
 } lam_flist_elt_t;
 

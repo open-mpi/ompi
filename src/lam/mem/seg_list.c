@@ -10,7 +10,7 @@ lam_class_info_t seg_list_cls = {"lam_seg_list_t", &lam_object_cls,
 void lam_sgl_init(lam_seg_list_t *slist)
 {
     SUPER_INIT(slist, seg_list_cls.cls_parent);
-    STATIC_INIT(slist->sgl_list, &lam_dbl_list_cls);
+    STATIC_INIT(slist->sgl_list, &lam_list_cls);
     lam_mtx_init(&slist->sgl_lock);
     slist->sgl_min_bytes_pushed = 0;
     slist->sgl_max_bytes_pushed = 0;
@@ -44,7 +44,7 @@ void lam_sgl_append_elt_chunk(
     slist->sgl_bytes_pushed += chunk_size;
     for ( i = 0; i < n_elts; i++ )
     {
-        lam_dbl_append(&(slist->sgl_list), (lam_dbl_item_t *)ptr);
+        lam_dbl_append(&(slist->sgl_list), (lam_list_item_t *)ptr);
         ptr += elt_size;
     }
 }

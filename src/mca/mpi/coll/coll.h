@@ -227,8 +227,8 @@ extern int mca_coll_did;
 extern int mca_coll_base_crossover;
 extern int mca_coll_base_associative;
 extern int mca_coll_base_reduce_crossover;
-extern lam_dbl_list_t *mca_coll_base_opened;
-extern lam_dbl_list_t *mca_coll_base_available;
+extern lam_list_t *mca_coll_base_opened;
+extern lam_list_t *mca_coll_base_available;
 
 
 /*

@@ -28,7 +28,7 @@ typedef struct mca_pml_1_0_0 * (*mca_pml_init_1_0_0_fn_t)(
 
 typedef uint64_t mca_pml_sequence_t;
 typedef uint64_t mca_pml_tstamp_t;
-typedef lam_dbl_list_t mca_pml_queue_t;
+typedef lam_list_t mca_pml_queue_t;
 
 typedef enum {
     MCA_PML_REQUEST_TYPE_RECV,
@@ -120,8 +120,8 @@ extern "C" {
  * Public variables
  */
 
-extern lam_dbl_list_t *mca_pml_base_opened;
-extern lam_dbl_list_t *mca_pml_base_available;
+extern lam_list_t *mca_pml_base_opened;
+extern lam_list_t *mca_pml_base_available;
 
 /*
  * Global instance of array of pointers to lam_ssi_rpi_t.  Will
