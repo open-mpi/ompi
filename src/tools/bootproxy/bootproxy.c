@@ -150,6 +150,13 @@ main(int argc, char *argv[])
 
     /* launch processes, and do the right cleanup things */
     for (i = 0 ; i < fork_num_procs ; ++i) {
+        /* BWB - XXX - fix me.  This sleep is here because the
+           registry in mpirun can't keep up if you launch a large number
+           of processes all at once.  And with this loop, it really is
+           basically all at once.  15 seems to be a good balance for a
+           hack.  I was able to launch 30 procs on a 2.0Ghz G5 this way,
+           so that should cover us for now */
+        if (i % 15 == 0) sleep(1);
         pid = fork();
         if (pid < 0) {
             /* error :( */
