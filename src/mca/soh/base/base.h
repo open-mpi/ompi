@@ -22,6 +22,7 @@
  */
 #include "ompi_config.h"
 
+#include "include/constants.h"
 #include "class/ompi_list.h"
 #include "mca/mca.h"
 
@@ -39,7 +40,7 @@ OMPI_DECLSPEC    int mca_soh_base_open(void);
 OMPI_DECLSPEC    int mca_soh_base_select(bool *allow_multi_user_threads,
 			                            bool *have_hidden_threads);
 OMPI_DECLSPEC    int mca_soh_base_close(void);
-
+OMPI_DECLSPEC    int mca_soh_base_update_cell_soh_not_available(mca_ns_base_cellid_t cellid);
 
 /*
  * globals that might be needed

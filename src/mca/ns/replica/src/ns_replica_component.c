@@ -88,7 +88,8 @@ static mca_ns_base_module_t mca_ns_replica = {
     mca_ns_base_pack_name,
     mca_ns_base_unpack_name,
     mca_ns_base_pack_jobid,
-    mca_ns_base_unpack_jobid
+    mca_ns_base_unpack_jobid,
+    mca_ns_base_derive_vpid
 };
 
 /*

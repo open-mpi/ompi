@@ -220,6 +220,14 @@ typedef mca_ns_base_jobid_t (*mca_ns_base_module_create_jobid_fn_t)(void);
 typedef ompi_process_name_t* (*mca_ns_base_module_create_proc_name_fn_t)(mca_ns_base_cellid_t cell, mca_ns_base_jobid_t job, mca_ns_base_vpid_t vpid);
 
 /**
+ * Derive a process vpid.
+ * Given a base vpid and an offset, return the computed equivalent vpid. This function
+ * is required because the vpid may not be an integer - need to provide a means for
+ * computing the resulting vpid in case it isn't.
+ */
+typedef mca_ns_base_vpid_t (*mca_ns_base_module_derive_vpid_fn_t)(mca_ns_base_vpid_t base_vpid, int offset);
+
+/**
  * Make a copy of a process name.
  * Given a process name, this function creates a copy of it and returns a pointer
  * to the duplicate structure.
@@ -726,6 +734,7 @@ struct mca_ns_base_module_1_0_0_t {
     mca_ns_base_module_unpack_cellid_fn_t unpack_cellid;
     mca_ns_base_module_pack_jobid_fn_t pack_jobid;
     mca_ns_base_module_unpack_jobid_fn_t unpack_jobid;
+    mca_ns_base_module_derive_vpid_fn_t derive_vpid;
 };
 
 typedef struct mca_ns_base_module_1_0_0_t mca_ns_base_module_1_0_0_t;
