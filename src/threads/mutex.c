@@ -4,7 +4,7 @@
 
 #include "lam_config.h"
 
-#include "lam/threads/mutex.h"
+#include "threads/mutex.h"
 
 /*
  * Default to a safe value

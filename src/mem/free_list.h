@@ -6,10 +6,10 @@
 #define LAM_FREE_LIST_H
 
 #include "lam_config.h"
-#include "lam/lfc/lam_list.h"
-#include "lam/constants.h"
-#include "lam/mem/seg_list.h"
-#include "lam/mem/mem_pool.h"
+#include "lfc/lam_list.h"
+#include "constants.h"
+#include "mem/seg_list.h"
+#include "mem/mem_pool.h"
 
 extern lam_class_t lam_free_list_t_class;
 

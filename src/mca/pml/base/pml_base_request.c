@@ -3,7 +3,7 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#include "mca/mpi/pml/base/pml_base_request.h"
+#include "mca/pml/base/pml_base_request.h"
 
 lam_class_t mca_pml_base_request_t_class = { 
     "mca_pml_base_request_t", 

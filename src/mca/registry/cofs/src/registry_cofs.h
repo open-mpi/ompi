@@ -5,8 +5,8 @@
  */
 #include "lam_config.h"
 
-#include "mca/lam/registry/registry.h"
-#include "lam/types.h"
+#include "mca/registry/registry.h"
+#include "types.h"
 
 /*
  * Module open / close

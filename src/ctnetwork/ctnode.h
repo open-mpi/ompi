@@ -5,9 +5,9 @@
 #ifndef LAM_CT_NODE_H
 #define LAM_CT_NODE_H
 
-#include "lam/stdint.h"
-#include "lam/lfc/lam_object.h"
-#include "lam/lfc/hash_table.h"
+#include "stdint.h"
+#include "lfc/lam_object.h"
+#include "lfc/hash_table.h"
 
 
 /*

@@ -10,8 +10,8 @@
 /*
  * These units are large enough to warrant their own .h files
  */
-#include "mca/lam/base/mca_base_param.h"
-#include "mca/lam/base/mca_base_module_exchange.h"
+#include "mca/base/mca_base_param.h"
+#include "mca/base/mca_base_module_exchange.h"
 
 
 /*

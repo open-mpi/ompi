@@ -5,10 +5,10 @@
 #ifndef LAM_REACTOR_H
 #define LAM_REACTOR_H
 
-#include "lam/types.h"
-#include "lam/lfc/lam_list.h"
-#include "lam/lfc/lam_hash_table.h"
-#include "lam/threads/mutex.h"
+#include "types.h"
+#include "lfc/lam_list.h"
+#include "lfc/lam_hash_table.h"
+#include "threads/mutex.h"
 
 extern const int LAM_REACTOR_NOTIFY_ALL;
 extern const int LAM_REACTOR_NOTIFY_RECV;

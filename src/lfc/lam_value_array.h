@@ -7,11 +7,11 @@
 
 #include <string.h>
 #include "lam_config.h"
-#include "lam/constants.h"
-#include "lam/types.h"
-#include "lam/lfc/lam_object.h"
+#include "constants.h"
+#include "types.h"
+#include "lfc/lam_object.h"
 #if LAM_ENABLE_DEBUG
-#include "lam/util/output.h"
+#include "util/output.h"
 #endif
 
 /*

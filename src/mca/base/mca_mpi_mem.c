@@ -9,10 +9,10 @@
 
 #include "mpi.h"
 #include "mca/mca.h"
-#include "mca/mpi/base/base.h"
+#include "mca/base/base.h"
 
 
-int mca_mpi_alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
+int mca_base_alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 {
   void *temp;
 
@@ -36,7 +36,7 @@ int mca_mpi_alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 }
 
 
-int mca_mpi_free_mem(void *baseptr)
+int mca_base_free_mem(void *baseptr)
 {
   if (NULL != baseptr)
     free(baseptr);

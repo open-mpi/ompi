@@ -8,9 +8,9 @@
 #include <string.h>
 #include <syslog.h>
 
-#include "lam/util/output.h"
+#include "util/output.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
+#include "mca/base/base.h"
 
 
 /*

@@ -3,13 +3,13 @@
  */
 
 #include <stdlib.h>
-#include "mca/mpi/pml/pml.h"
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/ptl/base/base.h"
-#include "mca/mpi/ptl/base/ptl_base_comm.h"
-#include "mca/mpi/ptl/base/ptl_base_header.h"
-#include "mca/mpi/ptl/base/ptl_base_recvfrag.h"
-#include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
+#include "mca/pml/pml.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/base.h"
+#include "mca/ptl/base/ptl_base_comm.h"
+#include "mca/ptl/base/ptl_base_header.h"
+#include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
 #include "pml_teg_recvreq.h"

@@ -9,10 +9,10 @@
 #include <errno.h>
 
 #include "lam_config.h"
-#include "lam/constants.h"
-#include "lam/util/reactor.h"
-#include "lam/util/output.h"
-#include "lam/runtime/runtime.h"
+#include "constants.h"
+#include "util/reactor.h"
+#include "util/output.h"
+#include "runtime/runtime.h"
 
 
 const int LAM_REACTOR_NOTIFY_RECV = 1;

@@ -8,8 +8,8 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "mca/mpi/coll/coll.h"
-#include "mca/mpi/coll/base/base.h"
+#include "mca/coll/coll.h"
+#include "mca/coll/base/base.h"
 #include "coll_basic.h"
 
 

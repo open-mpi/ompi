@@ -1,9 +1,9 @@
 /*
  * $HEADER$
  */
-#include "lam/atomic.h"
-#include "lam/lfc/lam_hash_table.h"
-#include "mca/lam/base/mca_base_module_exchange.h"
+#include "atomic.h"
+#include "lfc/lam_hash_table.h"
+#include "mca/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
 #include "ptl_tcp_peer.h"

@@ -6,14 +6,14 @@
 
 #include "lam_config.h"
 
-#include "lam/constants.h"
-#include "lam/types.h"
-#include "lam/mem/malloc.h"
-#include "lam/lfc/lam_list.h"
+#include "constants.h"
+#include "types.h"
+#include "mem/malloc.h"
+#include "lfc/lam_list.h"
 #include "mca/mca.h"
-#include "mca/lam/base/mca_base_param.h"
-#include "mca/lam/pcm/pcm.h"
-#include "mca/lam/pcm/rsh/src/pcm_rsh.h"
+#include "mca/base/mca_base_param.h"
+#include "mca/pcm/pcm.h"
+#include "mca/pcm/rsh/src/pcm_rsh.h"
 
 #include <stdio.h>
 #include <stdlib.h>

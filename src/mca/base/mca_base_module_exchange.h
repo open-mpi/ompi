@@ -11,7 +11,7 @@
 
 #include <sys/types.h>
 
-#include "mpi/proc/proc.h"
+#include "proc/proc.h"
 #include "mca/mca.h"
 
 

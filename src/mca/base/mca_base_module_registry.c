@@ -12,10 +12,10 @@
 /* Ensure to get the right <ltdl.h> */ 
 #include "mca/ltdl.h"
 
-#include "lam/constants.h"
-#include "lam/lfc/lam_list.h"
+#include "constants.h"
+#include "lfc/lam_list.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
+#include "mca/base/base.h"
 
 
 /*

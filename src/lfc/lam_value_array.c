@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam/lfc/lam_value_array.h"
+#include "lfc/lam_value_array.h"
 
 
 static void lam_value_array_construct(lam_value_array_t* array)

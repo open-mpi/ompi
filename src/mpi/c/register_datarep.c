@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "mpi/interface/c/bindings.h"
+#include "mpi/c/bindings.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Register_datarep = PMPI_Register_datarep

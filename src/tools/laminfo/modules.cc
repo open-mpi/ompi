@@ -10,19 +10,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "mca/lam/base/base.h"
-#include "mca/lam/pcm/pcm.h"
-#include "mca/lam/pcm/base/base.h"
-#include "mca/lam/oob/oob.h"
-#include "mca/lam/oob/base/base.h"
-#include "mca/lam/registry/registry.h"
-#include "mca/lam/registry/base/base.h"
-#include "mca/mpi/pml/pml.h"
-#include "mca/mpi/pml/base/base.h"
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/ptl/base/base.h"
-#include "mca/mpi/coll/coll.h"
-#include "mca/mpi/coll/base/base.h"
+#include "mca/base/base.h"
+#include "mca/pcm/pcm.h"
+#include "mca/pcm/base/base.h"
+#include "mca/oob/oob.h"
+#include "mca/oob/base/base.h"
+#include "mca/registry/registry.h"
+#include "mca/registry/base/base.h"
+#include "mca/pml/pml.h"
+#include "mca/pml/base/base.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/base.h"
+#include "mca/coll/coll.h"
+#include "mca/coll/base/base.h"
 #include "tools/laminfo/laminfo.h"
 
 using namespace std;
@@ -75,7 +75,6 @@ void laminfo::open_modules()
   // Open all modules
 
   mca_base_open();
-  mca_mpi_open();
   module_map["base"] = NULL;
 
   mca_pcm_base_open();

@@ -9,8 +9,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/ptl/base/ptl_base_recvfrag.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "ptl_tcp.h"
 
 

@@ -9,7 +9,7 @@
 #include "lam_config.h"
 
 #include "mca/mca.h"
-#include "mca/lam/registry/registry.h"
+#include "mca/registry/registry.h"
 
 /*
  * Global functions for MCA overall collective open and close

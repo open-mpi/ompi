@@ -1,7 +1,7 @@
 /*
  * $HEADER$
  */
-#include "mca/mpi/topo/unity/topo_unity.h"
+#include "mca/topo/unity/topo_unity.h"
 
 /*
  * Init on the communicator. This function is called once the

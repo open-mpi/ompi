@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#include "mpi/group/group.h"
-#include "lam/constants.h"
+#include "group/group.h"
+#include "constants.h"
 #include "mpi.h"
 
 /* define class information */

@@ -13,34 +13,34 @@
 
 #ifdef __alpha
 #  ifdef __GNUC__
-#    include "lam/os/linux/alpha/atomic.h"
+#    include "os/linux/alpha/atomic.h"
 #  else
-#    include "lam/os/tru64/atomic.h"
+#    include "os/tru64/atomic.h"
 #  endif
 #endif
 
 #if defined (__linux__) && defined (__i386)
-#include "lam/os/linux/i686/atomic.h"
+#include "os/linux/i686/atomic.h"
 #endif
 
 #ifdef __CYGWIN__
-#include "lam/os/cygwin/atomic.h"
+#include "os/cygwin/atomic.h"
 #endif
 
 #ifdef __ia64
-#include "lam/os/linux/ia64/atomic.h"
+#include "os/linux/ia64/atomic.h"
 #endif
 
 #ifdef __mips
-#include "lam/os/irix/atomic.h"
+#include "os/irix/atomic.h"
 #endif
 
 #ifdef __APPLE__
 /* check if PowerPC 970 (G5) */
 #ifdef __ppc_64__
-#include "lam/os/darwin/ppc_64/atomic.h"
+#include "os/darwin/ppc_64/atomic.h"
 #else
-#include "lam/os/darwin/ppc_32/atomic.h"
+#include "os/darwin/ppc_32/atomic.h"
 #endif
 
 #endif      /* __APPLE__ */

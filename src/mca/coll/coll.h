@@ -9,7 +9,7 @@
 
 #include "mpi.h"
 #include "mca/mca.h"
-#include "mca/mpi/base/base.h"
+#include "mca/base/base.h"
 
 
 /*
@@ -140,8 +140,8 @@ struct mca_coll_1_0_0_t {
 
   /* Memory allocation / freeing */
 
-  mca_mpi_alloc_mem_fn_t coll_alloc_mem;
-  mca_mpi_free_mem_fn_t coll_free_mem;
+  mca_base_alloc_mem_fn_t coll_alloc_mem;
+  mca_base_free_mem_fn_t coll_free_mem;
 
   /* Collective function pointers */
 

@@ -15,12 +15,12 @@
 #include "mpi.h"
 
 #include "lam_config.h"
-#include "lam/lfc/lam_object.h"
-#include "lam/lfc/lam_bitmap.h"
-#include "lam/lfc/lam_hash_table.h"
-#include "mpi/communicator/communicator.h"
-#include "mpi/datatype/datatype.h"
-#include "mpi/win/win.h"
+#include "lfc/lam_object.h"
+#include "lfc/lam_bitmap.h"
+#include "lfc/lam_hash_table.h"
+#include "communicator/communicator.h"
+#include "datatype/datatype.h"
+#include "win/win.h"
 
 
 /* *******************************************************************  */

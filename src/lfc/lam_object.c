@@ -10,8 +10,8 @@
 
 #include <stdio.h>
 
-#include "lam/constants.h"
-#include "lam/lfc/lam_object.h"
+#include "constants.h"
+#include "lfc/lam_object.h"
 
 /*
  * Instantiation of class descriptor for the base class.  This is

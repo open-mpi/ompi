@@ -5,8 +5,8 @@
 #ifndef MCA_PML_BASE_RECV_REQUEST_H
 #define MCA_PML_BASE_RECV_REQUEST_H
 
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/pml/base/pml_base_request.h"
+#include "mca/ptl/ptl.h"
+#include "mca/pml/base/pml_base_request.h"
 
 extern lam_class_t mca_ptl_base_recv_request_t_class;;
 struct mca_ptl_base_recv_frag_t;

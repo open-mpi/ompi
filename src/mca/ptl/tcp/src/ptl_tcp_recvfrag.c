@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/errno.h>
-#include "mca/mpi/ptl/base/ptl_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
 #include "ptl_tcp_recvfrag.h"

@@ -21,11 +21,11 @@
 #include <stdlib.h>
 
 #include "lam_config.h"
-#include "lam/constants.h"
-#include "lam/stdint.h"
-#include "lam/lfc/lam_object.h"
-#include "lam/lfc/lam_hash_table.h"
-#include "lam/types.h"
+#include "constants.h"
+#include "stdint.h"
+#include "lfc/lam_object.h"
+#include "lfc/lam_hash_table.h"
+#include "types.h"
 
 #include "mpi.h"
 

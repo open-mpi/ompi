@@ -1,4 +1,4 @@
-#include "lam/threads/mutex.h"
+#include "threads/mutex.h"
 #if defined(LAM_USE_SPINWAIT)
 
 

@@ -4,7 +4,7 @@
 #ifndef LAM_CONDITION_SPINLOCK_H
 #define LAM_CONDITION_SPINLOCK_H
 
-#include "lam/threads/condition.h"
+#include "threads/condition.h"
 
 
 struct lam_condition_t {

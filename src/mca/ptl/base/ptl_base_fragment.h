@@ -6,9 +6,9 @@
 #ifndef MCA_PML_BASE_FRAGMENT_H
 #define MCA_PML_BASE_FRAGMENT_H
 
-#include "lam/lfc/lam_list.h"
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/ptl/base/ptl_base_header.h"
+#include "lfc/lam_list.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/ptl_base_header.h"
 
 
 extern lam_class_t mca_ptl_base_frag_t_class;

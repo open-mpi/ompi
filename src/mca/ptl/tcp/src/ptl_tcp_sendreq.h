@@ -10,7 +10,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "lam_config.h"
-#include "mca/mpi/ptl/base/ptl_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_tcp_sendfrag.h"
 
 

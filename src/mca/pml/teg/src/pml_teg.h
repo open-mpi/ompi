@@ -10,14 +10,14 @@
 #ifndef MCA_PML_TEG_H
 #define MCA_PML_TEG_H
 
-#include "lam/threads/thread.h"
-#include "lam/threads/condition.h"
-#include "lam/mem/free_list.h"
-#include "lam/util/cmd_line.h"
-#include "mpi/request/request.h"
-#include "mca/mpi/pml/pml.h"
-#include "mca/mpi/pml/base/pml_base_request.h"
-#include "mca/mpi/ptl/ptl.h"
+#include "threads/thread.h"
+#include "threads/condition.h"
+#include "mem/free_list.h"
+#include "util/cmd_line.h"
+#include "request/request.h"
+#include "mca/pml/pml.h"
+#include "mca/pml/base/pml_base_request.h"
+#include "mca/ptl/ptl.h"
 
 
 /**

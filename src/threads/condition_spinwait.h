@@ -5,7 +5,7 @@
 #define LAM_CONDITION_SPINWAIT_H
 
 #include <pthread.h>
-#include "lam/threads/mutex.h"
+#include "threads/mutex.h"
 
 
 struct lam_condition_t {

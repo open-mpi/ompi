@@ -4,10 +4,10 @@
 
 #include "lam_config.h"
 
-#include "lam/lfc/lam_list.h"
-#include "lam/util/output.h"
+#include "lfc/lam_list.h"
+#include "util/output.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
+#include "mca/base/base.h"
 
 
 int mca_base_modules_close(int output_id, lam_list_t *modules_available, 

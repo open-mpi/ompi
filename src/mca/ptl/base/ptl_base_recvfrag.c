@@ -3,9 +3,9 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/ptl/base/ptl_base_recvfrag.h"
-#include "mca/mpi/ptl/base/ptl_base_match.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "mca/ptl/base/ptl_base_match.h"
 
 static void mca_ptl_base_recv_frag_construct(mca_ptl_base_recv_frag_t* frag);
 static void mca_ptl_base_recv_frag_destruct(mca_ptl_base_recv_frag_t* frag);

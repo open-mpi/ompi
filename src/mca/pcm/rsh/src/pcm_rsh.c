@@ -6,10 +6,10 @@
 
 #include "lam_config.h"
 
-#include "mca/lam/pcm/pcm.h"
-#include "mca/lam/pcm/rsh/src/pcm_rsh.h"
-#include "lam/mem/malloc.h"
-#include "lam/types.h"
+#include "mca/pcm/pcm.h"
+#include "mca/pcm/rsh/src/pcm_rsh.h"
+#include "mem/malloc.h"
+#include "types.h"
 
 #include <stdio.h>
 #include <sys/types.h>

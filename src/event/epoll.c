@@ -55,7 +55,7 @@
 
 #include "event.h"
 #include "evsignal.h"
-#include "lam/threads/mutex.h"
+#include "threads/mutex.h"
 
 extern struct lam_event_list lam_eventqueue;
 extern volatile sig_atomic_t lam_evsignal_caught;

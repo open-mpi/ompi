@@ -9,8 +9,8 @@
 #include <unistd.h>
 
 #include "lam_config.h"
-#include "lam/util/path.h"
-#include "lam/util/argv.h"
+#include "util/path.h"
+#include "util/argv.h"
 
 /**
  * PATH environment variable separator

@@ -63,7 +63,7 @@
 #endif
 
 #include "event.h"
-#include "lam/threads/mutex.h"
+#include "threads/mutex.h"
 
 extern struct event_list timequeue;
 extern struct event_list eventqueue;

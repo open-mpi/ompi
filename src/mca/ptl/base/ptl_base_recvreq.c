@@ -3,10 +3,10 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#include "lam/types.h"
-#include "mca/mpi/ptl/base/ptl_base_comm.h"
-#include "mca/mpi/ptl/base/ptl_base_recvreq.h"
-#include "mca/mpi/ptl/base/ptl_base_recvfrag.h"
+#include "types.h"
+#include "mca/ptl/base/ptl_base_comm.h"
+#include "mca/ptl/base/ptl_base_recvreq.h"
+#include "mca/ptl/base/ptl_base_recvfrag.h"
 
 
 static void mca_ptl_base_recv_request_construct(mca_ptl_base_recv_request_t*);

@@ -7,7 +7,7 @@
  */
 
 #include "lam_config.h"
-#include "mpi/datatype/datatype.h"
+#include "datatype/datatype.h"
 
 /*
  * Global variables

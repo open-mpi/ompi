@@ -6,11 +6,11 @@
 
 #include "lam_config.h"
 
-#include "lam/constants.h"
-#include "lam/types.h"
+#include "constants.h"
+#include "types.h"
 #include "mca/mca.h"
-#include "mca/lam/pcm/pcm.h"
-#include "mca/lam/pcm/cofs/src/pcm_cofs.h"
+#include "mca/pcm/pcm.h"
+#include "mca/pcm/cofs/src/pcm_cofs.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,7 +71,7 @@ int
 mca_pcm_cofs_open(void)
 {
   /* JMS/BWB: Register MCA params in here -- see
-     src/mca/lam/base/mca_base_param.h */
+     src/mca/base/mca_base_param.h */
   return LAM_SUCCESS;
 }
 
@@ -97,7 +97,7 @@ mca_pcm_cofs_init(int *priority, bool *allow_multi_user_threads,
   *have_hidden_threads = false;
 
   /* BWB - remove printfs once things settle down some... */
-  /* JMS: Look in src/mca/lam/base/mca_base_param.h */
+  /* JMS: Look in src/mca/base/mca_base_param.h */
   test_ret = getenv("MCA_common_lam_cofs_my_vpid");
   if (test_ret == NULL) {
     printf("COFS PCM will not be running because MCA_common_lam_cofs_my_vpid not set\n");

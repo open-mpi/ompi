@@ -8,7 +8,7 @@
 #include "lam_config.h"
 #include "mpi.h"
 
-#include "mca/mpi/topo/topo.h"
+#include "mca/topo/topo.h"
 
 /*
  * All stuff goes in here

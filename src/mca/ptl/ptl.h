@@ -8,10 +8,10 @@
 #define MCA_PTL_H
 
 #include "mca/mca.h"
-#include "lam/lam.h"
-#include "lam/lfc/lam_list.h"
-#include "mpi/proc/proc.h"
-#include "mca/mpi/pml/pml.h"
+#include "lam.h"
+#include "lfc/lam_list.h"
+#include "proc/proc.h"
+#include "mca/pml/pml.h"
 
 
 /*

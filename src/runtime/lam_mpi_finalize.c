@@ -4,18 +4,18 @@
 
 #include "lam_config.h"
 
-#include "lam/constants.h"
-#include "lam/runtime/runtime.h"
+#include "constants.h"
+#include "runtime/runtime.h"
 #include "mpi.h"
-#include "mpi/group/group.h"
-#include "mpi/runtime/runtime.h"
-#include "mca/lam/base/base.h"
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/ptl/base/base.h"
-#include "mca/mpi/pml/pml.h"
-#include "mca/mpi/pml/base/base.h"
-#include "mca/mpi/coll/coll.h"
-#include "mca/mpi/coll/base/base.h"
+#include "group/group.h"
+#include "runtime/runtime.h"
+#include "mca/base/base.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/base.h"
+#include "mca/pml/pml.h"
+#include "mca/pml/base/base.h"
+#include "mca/coll/coll.h"
+#include "mca/coll/base/base.h"
 
 
 int lam_mpi_finalize(void)

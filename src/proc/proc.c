@@ -1,8 +1,8 @@
 #include <string.h>
-#include "lam/threads/mutex.h"
-#include "lam/util/output.h"
-#include "mpi/proc/proc.h"
-#include "mca/lam/pcm/pcm.h"
+#include "threads/mutex.h"
+#include "util/output.h"
+#include "proc/proc.h"
+#include "mca/pcm/pcm.h"
 
 
 static lam_list_t  lam_proc_list;

@@ -6,8 +6,8 @@
 #define LAM_WIN_H
 
 
-#include "lam/lfc/lam_object.h"
-#include "lam/lfc/lam_hash_table.h"
+#include "lfc/lam_object.h"
+#include "lfc/lam_hash_table.h"
 
 
 extern lam_class_t lam_win_t_class;

@@ -5,8 +5,8 @@
 #include "lam_config.h"
 
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
-#include "mca/lam/pcm/pcm.h"
+#include "mca/base/base.h"
+#include "mca/pcm/pcm.h"
 
 
 /*
@@ -15,7 +15,7 @@
  * module's public mca_base_module_t struct.
  */
 
-#include "mca/lam/pcm/base/static-modules.h"
+#include "mca/pcm/base/static-modules.h"
 
 
 /*

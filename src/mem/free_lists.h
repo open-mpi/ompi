@@ -6,10 +6,10 @@
 #define LAM_FREE_LISTS_H
 
 #include "lam_config.h"
-#include "lam/lfc/lam_list.h"
-#include "lam/threads/mutex.h"
-#include "lam/mem/seg_list.h"
-#include "lam/mem/mem_pool.h"
+#include "lfc/lam_list.h"
+#include "threads/mutex.h"
+#include "mem/seg_list.h"
+#include "mem/mem_pool.h"
 
 /*
  * Memory affinity is almost certainly an int everywhere, but let's

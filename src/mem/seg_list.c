@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#include "lam/mem/seg_list.h"
-#include "lam/lfc/lam_list.h"
+#include "mem/seg_list.h"
+#include "lfc/lam_list.h"
 
 /*
  * Public variable

@@ -6,16 +6,16 @@
 
 #include <stdio.h>
 
-#include "lam/lfc/lam_list.h"
-#include "lam/threads/mutex.h"
-#include "lam/constants.h"
-#include "mpi/communicator/communicator.h"
-#include "mca/mpi/pml/pml.h"
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/ptl/base/ptl_base_comm.h"
-#include "mca/mpi/ptl/base/ptl_base_recvfrag.h"
-#include "mca/mpi/ptl/base/ptl_base_header.h"
-#include "mca/mpi/ptl/base/ptl_base_match.h"
+#include "lfc/lam_list.h"
+#include "threads/mutex.h"
+#include "constants.h"
+#include "communicator/communicator.h"
+#include "mca/pml/pml.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/ptl_base_comm.h"
+#include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "mca/ptl/base/ptl_base_header.h"
+#include "mca/ptl/base/ptl_base_match.h"
 
 
 /*

@@ -10,8 +10,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "lam/constants.h"
-#include "lam/util/few.h"
+#include "constants.h"
+#include "util/few.h"
 
 /** @file **/
 

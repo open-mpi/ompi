@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam/lfc/lam_list.h"
+#include "lfc/lam_list.h"
 
 /*
  *  List classes

@@ -6,8 +6,8 @@
 #define LAM_MUTEX_SPINWAIT_
 
 #include <pthread.h>
-#include "lam/lfc/lam_object.h"
-#include "lam/os/atomic.h"
+#include "lfc/lam_object.h"
+#include "os/atomic.h"
 
 #ifndef MUTEX_SPINWAIT
 #define MUTEX_SPINWAIT 10000

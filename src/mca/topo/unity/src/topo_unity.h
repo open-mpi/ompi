@@ -9,11 +9,11 @@
 #ifndef MCA_TOPO_UNTIY_H
 #define MCA_TOPO_UNTIY_H
 
-#include "lam/threads/condition.h"
-#include "lam/mem/free_list.h"
-#include "lam/util/cmd_line.h"
-#include "mpi/request/request.h"
-#include "mca/mpi/topo/topo.h"
+#include "threads/condition.h"
+#include "mem/free_list.h"
+#include "util/cmd_line.h"
+#include "request/request.h"
+#include "mca/topo/topo.h"
 
 /*
  * This structure is the interface to the MCA world. It contains the

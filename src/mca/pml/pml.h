@@ -6,11 +6,11 @@
 #define MCA_PML_H
 
 #include "lam_config.h"
-#include "lam/lam.h"
-#include "lam/lfc/lam_list.h"
-#include "mpi/communicator/communicator.h"
-#include "mpi/datatype/datatype.h"
-#include "mpi/request/request.h"
+#include "lam.h"
+#include "lfc/lam_list.h"
+#include "communicator/communicator.h"
+#include "datatype/datatype.h"
+#include "request/request.h"
 #include "mca/mca.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 

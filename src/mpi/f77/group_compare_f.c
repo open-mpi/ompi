@@ -7,8 +7,8 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "mpi/interface/f77/bindings.h"
-#include "mpi/group/group.h"
+#include "mpi/f77/bindings.h"
+#include "group/group.h"
 
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER

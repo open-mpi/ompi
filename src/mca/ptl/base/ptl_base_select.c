@@ -4,11 +4,11 @@
 
 #include "lam_config.h"
 
-#include "lam/runtime/runtime.h"
+#include "runtime/runtime.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/ptl/base/base.h"
+#include "mca/base/base.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/base.h"
 
 
 /**

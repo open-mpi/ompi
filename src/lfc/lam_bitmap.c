@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam/lfc/lam_bitmap.h"
+#include "lfc/lam_bitmap.h"
 
 #define SIZE_OF_CHAR (sizeof(char) * 8)
 #define LAM_INVALID_BIT -1

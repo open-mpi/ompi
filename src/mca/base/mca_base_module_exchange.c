@@ -4,13 +4,13 @@
 
 #include <string.h>
 #include "lam_config.h"
-#include "lam/lfc/lam_hash_table.h"
-#include "lam/util/output.h"
-#include "mpi/proc/proc.h"
+#include "lfc/lam_hash_table.h"
+#include "util/output.h"
+#include "proc/proc.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
-#include "mca/lam/oob/oob.h"
-#include "mca/lam/base/mca_base_module_exchange.h"
+#include "mca/base/base.h"
+#include "mca/oob/oob.h"
+#include "mca/base/mca_base_module_exchange.h"
 
 
 

@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
+#include "mca/base/base.h"
 
 
 /*

@@ -1,4 +1,4 @@
-#include "mca/mpi/ptl/base/ptl_base_comm.h"
+#include "mca/ptl/base/ptl_base_comm.h"
 #include "pml_teg_recvreq.h"
 
                                                                                                                

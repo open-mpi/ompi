@@ -8,7 +8,7 @@
 #include "lam_config.h"
 
 #include "mca/mca.h"
-#include "mca/mpi/coll/coll.h"
+#include "mca/coll/coll.h"
 
 
 /*

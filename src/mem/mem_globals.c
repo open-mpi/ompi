@@ -4,9 +4,9 @@
 
 #include <unistd.h>
 
-#include "lam/constants.h"
-#include "lam/lfc/lam_object.h"
-#include "lam/mem/mem_globals.h"
+#include "constants.h"
+#include "lfc/lam_object.h"
+#include "mem/mem_globals.h"
 
 lam_fixed_mpool_t    lam_shmem_pools;
 lam_fixed_mpool_t    lam_per_proc_shmem_pools;

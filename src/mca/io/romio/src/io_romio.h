@@ -5,9 +5,9 @@
 #ifndef MCA_IO_ROMIO_H
 #define MCA_IO_ROMIO_H
 
-#include "mpi/request/request.h"
-#include "mpi/file/file.h"
-#include "lam/threads/mutex.h"
+#include "request/request.h"
+#include "file/file.h"
+#include "threads/mutex.h"
 #include "romio-1.2.5.1/include/mpio.h" 
 
 /* global variables, instantiated in global.c  */

@@ -5,10 +5,10 @@
 #include "lam_config.h"
 
 #include "mpi.h"
-#include "mpi/interface/c/bindings.h"
-#include "lam/lfc/lam_list.h"
-#include "mpi/info/info.h"
-#include "lam/util/strncpy.h"
+#include "mpi/c/bindings.h"
+#include "lfc/lam_list.h"
+#include "info/info.h"
+#include "util/strncpy.h"
 #include <stdlib.h>
 #include <string.h>
 

@@ -1,7 +1,7 @@
 /*
  * $HEADER$
  */ 
-#include "mca/mpi/topo/unity/topo_unity.h"
+#include "mca/topo/unity/topo_unity.h"
 
 /*
  * function - mca_topo_unity_cart_map

@@ -9,8 +9,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#include "lam/lfc/lam_object.h"
-#include "lam/ctnetwork/ctmessage.h"
+#include "lfc/lam_object.h"
+#include "ctnetwork/ctmessage.h"
 
 
 /*

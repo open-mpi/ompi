@@ -6,9 +6,9 @@
 
 #include <stdio.h>
 #include "mpi.h"
-#include "mpi/communicator/communicator.h"
-#include "mpi/group/group.h"
-#include "mca/mpi/pml/pml.h"
+#include "communicator/communicator.h"
+#include "group/group.h"
+#include "mca/pml/pml.h"
 
 
 /*

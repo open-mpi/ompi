@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#include "mpi/group/group.h"
-#include "lam/constants.h"
+#include "group/group.h"
+#include "constants.h"
 
 void lam_set_group_rank(lam_group_t *group, lam_proc_t *proc_pointer)
 {

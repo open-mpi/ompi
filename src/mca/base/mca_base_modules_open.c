@@ -8,12 +8,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "lam/lfc/lam_list.h"
-#include "lam/util/strncpy.h"
-#include "lam/util/argv.h"
-#include "lam/util/output.h"
+#include "lfc/lam_list.h"
+#include "util/strncpy.h"
+#include "util/argv.h"
+#include "util/output.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
+#include "mca/base/base.h"
 
 
 struct module_name_t {

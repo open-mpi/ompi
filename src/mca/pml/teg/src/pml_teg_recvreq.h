@@ -7,8 +7,8 @@
 
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
-#include "mca/mpi/ptl/base/ptl_base_recvreq.h"
-#include "mca/mpi/ptl/base/ptl_base_recvfrag.h"
+#include "mca/ptl/base/ptl_base_recvreq.h"
+#include "mca/ptl/base/ptl_base_recvfrag.h"
 
 
 /*

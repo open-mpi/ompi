@@ -12,8 +12,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "lam/mem/sharedmem_util.h"
-#include "lam/util/output.h"
+#include "mem/sharedmem_util.h"
+#include "util/output.h"
 
 
 void *lam_zero_alloc(size_t len, int mem_prot, int mem_flags)

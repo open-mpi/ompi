@@ -9,8 +9,8 @@
 #include <vector>
 #include <map>
 
-#include "lam/lfc/lam_list.h"
-#include "lam/util/cmd_line.h"
+#include "lfc/lam_list.h"
+#include "util/cmd_line.h"
 #include "mca/mca.h"
 
 

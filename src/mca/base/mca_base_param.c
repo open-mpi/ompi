@@ -10,10 +10,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "lam/constants.h"
-#include "lam/lfc/lam_value_array.h"
+#include "constants.h"
+#include "lfc/lam_value_array.h"
 #include "mca/mca.h"
-#include "mca/lam/base/mca_base_param.h"
+#include "mca/base/mca_base_param.h"
 
 
 /*
@@ -415,13 +415,13 @@ static int param_register(const char *type_name, const char *module_name,
 
 
 /*
- * DO NOT MODIFY THIS FUNCTION WITHOUT ALSO MODIFYING mca_mpi_param.c!
+ * DO NOT MODIFY THIS FUNCTION WITHOUT ALSO MODIFYING mca_base_param.c!
  *
  * This function appears in liblam.  Because of unix linker semantics,
  * it's simply easier to essentially duplicate this function in libmpi
  * because in libmpi, we need to lookup on a keyval before looking in
  * the environment.  The logic is simpler if we just duplicate/alter
- * the code in mca_mpi_param.c rather than try to make this a) public,
+ * the code in mca_base_param.c rather than try to make this a) public,
  * and b) more general (to accomodate looking up keyvals while not
  * linking to MPI_Comm_get_attr() in libmpi).
  */

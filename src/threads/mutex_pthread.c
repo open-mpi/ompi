@@ -1,7 +1,7 @@
 /*
  * $HEADER$
  */
-#include "lam/threads/mutex.h"
+#include "threads/mutex.h"
 #if defined(LAM_USE_PTHREADS)
 
 static void lam_mutex_construct(lam_mutex_t* m)

@@ -5,9 +5,9 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "mpi/runtime/runtime.h"
-#include "mpi/interface/c/bindings.h"
-#include "mca/mpi/pml/pml.h"
+#include "runtime/runtime.h"
+#include "mpi/c/bindings.h"
+#include "mca/pml/pml.h"
 
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES

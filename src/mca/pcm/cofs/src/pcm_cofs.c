@@ -6,9 +6,9 @@
 
 #include "lam_config.h"
 
-#include "mca/lam/pcm/pcm.h"
-#include "mca/lam/pcm/cofs/src/pcm_cofs.h"
-#include "lam/types.h"
+#include "mca/pcm/pcm.h"
+#include "mca/pcm/cofs/src/pcm_cofs.h"
+#include "types.h"
 
 #include <stdio.h>
 #include <sys/types.h>

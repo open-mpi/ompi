@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "mpi/request/request.h"
+#include "request/request.h"
 
 lam_class_t lam_request_t_class = { 
     "lam_request_t", 

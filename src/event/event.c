@@ -62,12 +62,12 @@
 #endif
 
 #include "event.h"
-#include "lam/types.h"
-#include "lam/constants.h"
-#include "lam/lfc/lam_object.h"
-#include "lam/threads/mutex.h"
-#include "lam/threads/thread.h"
-#include "lam/util/output.h"
+#include "types.h"
+#include "constants.h"
+#include "lfc/lam_object.h"
+#include "threads/mutex.h"
+#include "threads/thread.h"
+#include "util/output.h"
 
 #ifdef HAVE_SELECT
 extern const struct lam_eventop lam_selectops;
