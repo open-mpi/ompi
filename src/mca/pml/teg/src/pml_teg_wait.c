@@ -31,16 +31,17 @@ int mca_pml_teg_wait(
         /* give up and sleep until completion */
         lam_mutex_lock(&mca_pml_teg.teg_request_lock);
         mca_pml_teg.teg_request_waiting++;
-        while(completed < 0) {
+        do {
             for(i=0; i<count; i++) {
                 pml_request = (mca_pml_base_request_t*)request[i];
                 if(pml_request->req_mpi_done == true) {
                     completed = i;
                     break;
                 }
-                lam_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
             }
-        }
+            if(completed < 0)
+                lam_condition_wait(&mca_pml_teg.teg_request_cond, &mca_pml_teg.teg_request_lock);
+        } while(completed < 0);
         mca_pml_teg.teg_request_waiting--;
         lam_mutex_unlock(&mca_pml_teg.teg_request_lock);
     }
