@@ -65,6 +65,27 @@ struct mca_ptl_ib_mem_registry_t {
 
 OBJ_CLASS_DECLARATION(mca_ptl_ib_mem_registry_t);
 
+static inline void mca_ptl_ib_mem_registry_insert_hint(
+    mca_ptl_ib_mem_registry_t *registry, VAPI_mr_t *key, 
+    mca_ptl_ib_mem_registry_info_t *info)
+{
+    uint64_t hints_hash = 0, addrll;
+
+    if (registry->hints_size) {
+        addrll = (uint64_t)(key->start);
+    
+        /* calculate hash index for hints array - hash is (hints_log_size - 1) bits of key 
+         * from first non-zero least significant bit
+         */
+        hints_hash = addrll & (-addrll);
+        hints_hash = (((hints_hash << registry->hints_log_size) - hints_hash) & addrll) / 
+            hints_hash;
+
+        registry->hints[hints_hash].pval = info;
+    }
+    return;
+}
+
 /* find information on a registered memory region for a given address,
  * region size, and access permissions
  *
@@ -105,9 +126,19 @@ static inline mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_mem_registry_find(
     return info;
 }
 
+/* prototypes */
+
 mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_mem_registry_register(
     mca_ptl_ib_mem_registry_t *registry,
     VAPI_mr_t *mr);
+
+mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_register_mem_with_registry(
+    struct mca_ptl_ib_state_t *ib_state,
+    void *addr, size_t len);
+
+int mca_ptl_ib_deregister_mem_with_registry(
+    struct mca_ptl_ib_state_t *ib_state,
+    void *addr, size_t len);
 
 int mca_ptl_ib_mem_registry_deregister(
     mca_ptl_ib_mem_registry_t *registry,
