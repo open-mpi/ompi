@@ -37,9 +37,30 @@ int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
     }
   }
 
-  /* Return the errhandler.  Do not increase the refcount here; we
-     only refcount on communicators */
+  /* Return the errhandler.  A quandry.  Should we increase the
+     refcount here?
 
+     - Consider that if we *get* an errhandler, we don't have to free
+       it.  It's just a handle that was returned to the user.  If they
+       never free it (and we increased the refcount), then it'll never
+       be freed.
+
+     - However, if we *don't* increase it and the user *does* free it,
+       then this could cause the refcount to go to 0 prematurely, and
+       a communicator could be left with a stale error handler.
+
+     Add to the mix that MPI-1:196:8-11 says that MPI_ERRHANDLER_FREE
+     will only free the error handler when all the communicators using
+     it have been freed.
+
+     All in all, it seems like we should increase the refcount to be
+     safe here.  We're still conformant -- error handlers won't be
+     freed until all the communicators (or other objects using them)
+     are freed *and* any outstanding handles returned by this function
+     (or its peers) are also freed.
+  */
+
+  OBJ_RETAIN(comm->error_handler);
   *errhandler = comm->error_handler;
 
   /* All done */
