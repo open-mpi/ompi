@@ -88,13 +88,13 @@ all: \
     cpplibs
 
 prebuild:
-	@cp ${gen_base}/coll-basic-version.h ${copy_base}/coll/basic/
-	@cp ${gen_base}/io-romio-version.h ${copy_base}/io/romio/
-	@cp ${gen_base}/pcmclient-env-version.h ${copy_base}/pcmclient/env/
-	@cp ${gen_base}/pcmclient-seed-version.h ${copy_base}/pcmclient/seed/
-	@cp ${gen_base}/pcmclient-singleton-version.h ${copy_base}/pcmclient/singleton/
-	@cp ${gen_base}/llm-hostfile-version.h ${copy_base}/llm/hostfile/
-	@cp ${gen_base}/topo-unity-version.h ${copy_base}/topo/unity/
+	@cp '${gen_base}/coll-basic-version.h' '${copy_base}/coll/basic/'
+	@cp '${gen_base}/io-romio-version.h' '${copy_base}/io/romio/'
+	@cp '${gen_base}/pcmclient-env-version.h' '${copy_base}/pcmclient/env/'
+	@cp '${gen_base}/pcmclient-seed-version.h' '${copy_base}/pcmclient/seed/'
+	@cp '${gen_base}/pcmclient-singleton-version.h' '${copy_base}/pcmclient/singleton/'
+	@cp '${gen_base}/llm-hostfile-version.h' '${copy_base}/llm/hostfile/'
+	@cp '${gen_base}/topo-unity-version.h' '${copy_base}/topo/unity/'
             
 
 clibs: ${C_SUBDIRS} prebuild
