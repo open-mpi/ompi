@@ -35,7 +35,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t **rprocs=NULL;
     ompi_group_t *group=comm->c_local_group;
-    ompi_process_name_t *rport;
+    ompi_process_name_t *rport=NULL;
 
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
