@@ -1,7 +1,7 @@
 /* -*- C -*-
  *
  * $HEADER$
- *
+ * 
  */
 
 #include "lam_config.h"
