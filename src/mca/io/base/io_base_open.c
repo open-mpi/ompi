@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include <stdio.h>
 
 #include "util/output.h"
@@ -19,9 +19,11 @@
  * statements and the definition of an array of pointers to each
  * component's public mca_base_component_t struct.
  */
-
+#ifdef WIN32
+    const mca_base_component_t *mca_io_base_static_components[] = {NULL};
+#else 
 #include "mca/io/base/static-components.h"
-
+#endif
 
 /*
  * Global variables; most of which are loaded by back-ends of MCA

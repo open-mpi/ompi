@@ -64,7 +64,7 @@ extern "C" {
      * invoked internally (by mca_base_open()) and is only documented
      * here for completeness.
      */
-    int mca_base_param_init(void);
+OMPI_DECLSPEC int mca_base_param_init(void);
 
     /**
      * Register an integer MCA parameter.
@@ -108,7 +108,7 @@ extern "C" {
      * returned, but the default value will be changed to reflect the
      * last registration.
      */
-    int mca_base_param_register_int(const char *type_name, 
+OMPI_DECLSPEC int mca_base_param_register_int(const char *type_name, 
                                     const char *component_name,
                                     const char *param_name, 
                                     const char *mca_param_name,
@@ -136,7 +136,7 @@ extern "C" {
      * associated string default value (which is allowed to be NULL).
      * See mca_base_param_register_int() for all other details.
      */
-    int mca_base_param_register_string(const char *type_name, 
+OMPI_DECLSPEC int mca_base_param_register_string(const char *type_name, 
                                        const char *component_name,
                                        const char *param_name, 
                                        const char *mca_param_name,
@@ -165,7 +165,7 @@ extern "C" {
      * versions will cross reference and attempt to find parameter
      * values on attributes.
      */
-    int mca_base_param_kv_associate(size_t index, int keyval);
+OMPI_DECLSPEC int mca_base_param_kv_associate(size_t index, int keyval);
 
     /**
      * Look up an integer MCA parameter.
@@ -183,7 +183,7 @@ extern "C" {
      * The value of a specific MCA parameter can be looked up using the
      * return value from mca_base_param_register_int().
      */
-    int mca_base_param_lookup_int(int index, int *value);
+OMPI_DECLSPEC int mca_base_param_lookup_int(int index, int *value);
     
     /**
      * Look up an integer MCA parameter, to include looking in
@@ -205,7 +205,7 @@ extern "C" {
      * value.  The function mca_base_param_kv_associate() must have been
      * called first to associate a keyval with the index.
      */
-    int mca_base_param_kv_lookup_int(int index,
+OMPI_DECLSPEC int mca_base_param_kv_lookup_int(int index,
                                      struct ompi_hash_table_t *attrs, 
                                      int *value);
     
@@ -225,7 +225,7 @@ extern "C" {
      * The value of a specific MCA parameter can be looked up using the
      * return value from mca_base_param_register_string().
      */
-    int mca_base_param_lookup_string(int index, char **value);
+OMPI_DECLSPEC int mca_base_param_lookup_string(int index, char **value);
 
     /**
      * Look up a string MCA parameter, to include looking in attributes.
@@ -246,7 +246,7 @@ extern "C" {
      * parameter value.  The function mca_base_param_kv_associate() must
      * have been called first to associate a keyval with the index.
      */
-    int mca_base_param_kv_lookup_string(int index, 
+OMPI_DECLSPEC int mca_base_param_kv_lookup_string(int index, 
                                         struct ompi_hash_table_t *attrs, 
                                         char **value);
 
@@ -269,7 +269,7 @@ extern "C" {
      * can be used with mca_base_param_lookup_int() and
      * mca_base_param_lookup_string().
      */
-    int mca_base_param_find(const char *type, const char *component, 
+OMPI_DECLSPEC int mca_base_param_find(const char *type, const char *component, 
                             const char *param);
 
     /**
@@ -286,7 +286,7 @@ extern "C" {
      * when the process is shutting down (e.g., during MPI_FINALIZE).  It
      * is only documented here for completeness.
      */
-    int mca_base_param_finalize(void);
+OMPI_DECLSPEC int mca_base_param_finalize(void);
     
 #if defined(c_plusplus) || defined(__cplusplus)
 }

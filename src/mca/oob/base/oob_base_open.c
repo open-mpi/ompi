@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
@@ -16,7 +16,11 @@
  * component's public mca_base_component_t struct.
  */
 
+#ifdef WIN32
+    const mca_base_component_t *mca_oob_base_static_components[] = {NULL};
+#else 
 #include "mca/oob/base/static-components.h"
+#endif
 
 
 /*

@@ -65,9 +65,9 @@ struct ompi_rb_tree_t {
 typedef struct ompi_rb_tree_t ompi_rb_tree_t;
 
 /** declare the tree node as a class */
-OBJ_CLASS_DECLARATION(ompi_rb_tree_node_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_rb_tree_node_t);
 /** declare the tree as a class */
-OBJ_CLASS_DECLARATION(ompi_rb_tree_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_rb_tree_t);
 
 /* Function pointers for map traversal function */
 /**

@@ -2,8 +2,12 @@
  * $HEADER$
  */
 #include "ompi_config.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #include <sys/errno.h>
 #include "include/types.h"
 #include "mca/pml/base/pml_base_sendreq.h"

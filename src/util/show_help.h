@@ -99,7 +99,7 @@ extern "C" {
      * based on the topic, and displays it.  If want_error_header is
      * true, a header and footer of asterisks are also displayed.
      */
-    int ompi_show_help(const char *filename, const char *topic, 
+OMPI_DECLSPEC int ompi_show_help(const char *filename, const char *topic, 
                        bool want_error_header, ...);
 
     /**
@@ -111,7 +111,7 @@ extern "C" {
      * flex parser since we may not hit the <<EOF>> rule and call this
      * function automatically.
      */
-    int ompi_show_help_finish_parsing(void);
+OMPI_DECLSPEC int ompi_show_help_finish_parsing(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_LIBGEN_H
+#ifdef HAVE_LIBGEN_H 
 #include <libgen.h>
 #endif
 #ifdef HAVE_SYS_PARAM_H
@@ -33,7 +33,7 @@
 #include <dirent.h>
 #endif
 
-/*
+/*  
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -44,7 +44,7 @@
 #include <unistd.h>
 #endif
 #include <errno.h>
-#ifdef HAVE_DIRENT_H
+#ifdef HAVE_DIRENT_H 
 #include <dirent.h>
 #endif
    
@@ -74,14 +74,24 @@ static void ompi_dir_empty(char *pathname);
 static bool ompi_is_empty(char *pathname);
 
 
+
 #define OMPI_DEFAULT_TMPDIR "tmp"
 
 static int ompi_check_dir(bool create, char *directory)
 {
+#ifndef WIN32
     struct stat buf;
     mode_t my_mode = S_IRWXU;  /* at the least, I need to be able to do anything */
+#else
+    struct __stat64 buf;
+    mode_t my_mode = _S_IREAD | _S_IWRITE | _S_IEXEC;
+#endif
 
+#ifndef WIN32
     if (0 == stat(directory, &buf)) { /* exists - check access */
+#else
+    if (0 == _stat64(directory, &buf)) { /* exist -- check */
+#endif
         if ((buf.st_mode & my_mode) == my_mode) { /* okay, I can work here */
             return(OMPI_SUCCESS);
         }
@@ -389,6 +399,7 @@ ompi_session_dir_finalize()
 static void
 ompi_dir_empty(char *pathname)
 {
+#ifndef WIN32
     DIR *dp;
     struct dirent *ep;
     char *filenm;
@@ -412,10 +423,40 @@ ompi_dir_empty(char *pathname)
 	    closedir(dp);
 	}
     }
+#else
+    bool empty = false;
+    HANDLE file;
+    WIN32_FIND_DATA file_data;
+    TCHAR *file_name;
+                        
+    if (NULL != pathname) {
+        if (INVALID_HANDLE_VALUE == (file = FindFirstFile(pathname, &file_data))) {
+            return;
+        } else while (!empty) {
+            if ((0 != strcmp(file_data.cFileName, ".")) &&
+               (0 != strcmp(file_data.cFileName, "..")) &&
+               (!(file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) &&
+               (0 != strncmp(file_data.cFileName,"output-", strlen("output-"))) &&
+               (0 != strcmp(file_data.cFileName,"universe-setup.txt-"))) {
+                /*remove the file */
+		        file_name = ompi_os_path(false, pathname, file_data.cFileName, NULL);
+                DeleteFile(file_name);
+            }
+            if (!FindNextFile(pathname, &file_data)) {
+                if (ERROR_NO_MORE_FILES == GetLastError()) {
+                    empty = true;
+                }
+            }
+        }
+        FindClose(&file_data);
+    }
+#endif
 }
 
+/* tests if the directory is empty */
 static bool ompi_is_empty(char *pathname)
 {
+#ifndef WIN32
     DIR *dp;
     struct dirent *ep;
 
@@ -434,5 +475,31 @@ static bool ompi_is_empty(char *pathname)
 	return false;
     }
     return false;
+#else 
+    /* ANJU: check this logic again PLEASE */
+    bool empty = true;
+    HANDLE file;
+    WIN32_FIND_DATA file_data;
+
+    if (NULL != pathname) {
+        if (!(INVALID_HANDLE_VALUE == (file = FindFirstFile(pathname, &file_data)))) {
+            while(empty) {
+                if ((0 != strcmp(file_data.cFileName, ".")) &&
+                    (0 != strcmp(file_data.cFileName, ".."))) {
+                    if (!FindNextFile(pathname, &file_data)) {
+                        if (ERROR_NO_MORE_FILES == GetLastError()) {
+                            empty = true;
+                        } else {
+                            empty = false;
+                        }
+                    } else {
+                        empty = false;
+                    }
+                }
+            } /* end while */
+        } /* endif */
+    } /* end outer if */
+    return empty;
+#endif /* ifndef WIN32 */
 }
 

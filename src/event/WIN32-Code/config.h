@@ -86,7 +86,6 @@
 #define HAVE_SYS_EVENT_H 1
 
 /* Define to 1 if you have the <sys/queue.h> header file. */
-#define HAVE_SYS_QUEUE_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1

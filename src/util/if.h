@@ -6,6 +6,7 @@
 #ifndef _OMPI_IF_UTIL_
 #define _OMPI_IF_UTIL_
 
+#include "ompi_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -20,7 +21,7 @@
  *  @param if_addr (OUT)  Interface address buffer
  *  @param size    (IN)   Interface address buffer size
  */
-int ompi_ifnametoaddr(const char* if_name, struct sockaddr*, int);
+OMPI_DECLSPEC int ompi_ifnametoaddr(const char* if_name, struct sockaddr*, int);
 
 /**
  *  Lookup an interface by address and return its name.
@@ -29,7 +30,7 @@ int ompi_ifnametoaddr(const char* if_name, struct sockaddr*, int);
  *  @param if_addr (OUT)  Interface name buffer
  *  @param size    (IN)   Interface name buffer size
  */
-int ompi_ifaddrtoname(const char* if_addr, char* if_name, int);
+OMPI_DECLSPEC int ompi_ifaddrtoname(const char* if_addr, char* if_name, int);
 
 /**
  *  Lookup an interface by name and return its kernel index.
@@ -37,17 +38,17 @@ int ompi_ifaddrtoname(const char* if_addr, char* if_name, int);
  *  @param if_name (IN)  Interface name
  *  @return              Interface index
  */
-int ompi_ifnametoindex(const char* if_name);
+OMPI_DECLSPEC int ompi_ifnametoindex(const char* if_name);
 
 /**
  *  Returns the number of available interfaces.
  */
-int ompi_ifcount(void);
+OMPI_DECLSPEC int ompi_ifcount(void);
 
 /**
  *  Returns the index of the first available interface.
  */
-int ompi_ifbegin(void); 
+OMPI_DECLSPEC int ompi_ifbegin(void); 
 
 /**
  *  Lookup the current position in the interface list by
@@ -56,7 +57,7 @@ int ompi_ifbegin(void);
  *  @param if_index   Returns the next available index from the 
  *                    current position.
  */
-int ompi_ifnext(int if_index);
+OMPI_DECLSPEC int ompi_ifnext(int if_index);
 
 /**
  *  Lookup an interface by index and return its name.
@@ -65,7 +66,7 @@ int ompi_ifnext(int if_index);
  *  @param if_name (OUT)  Interface name buffer
  *  @param size (IN)      Interface name buffer size
  */
-int ompi_ifindextoname(int if_index, char* if_name, int);
+OMPI_DECLSPEC int ompi_ifindextoname(int if_index, char* if_name, int);
 
 /**
  *  Lookup an interface by index and return its primary address .
@@ -74,7 +75,7 @@ int ompi_ifindextoname(int if_index, char* if_name, int);
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-int ompi_ifindextoaddr(int if_index, struct sockaddr*, int);
+OMPI_DECLSPEC int ompi_ifindextoaddr(int if_index, struct sockaddr*, int);
 
 /**
  *  Lookup an interface by index and return its network mask.
@@ -83,7 +84,7 @@ int ompi_ifindextoaddr(int if_index, struct sockaddr*, int);
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-int ompi_ifindextomask(int if_index, struct sockaddr*, int);
+OMPI_DECLSPEC int ompi_ifindextomask(int if_index, struct sockaddr*, int);
 
 #endif
 

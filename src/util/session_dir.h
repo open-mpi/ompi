@@ -70,6 +70,7 @@
  * proc_info structure will be updated.  If proc_info is false,
  *
  */
+#include "ompi_config.h"
 
 /** @param create A boolean variable that indicates whether or not to
  *                create the specified directory. If set to "false",
@@ -109,7 +110,7 @@
  * @retval OMPI_ERROR The directory cannot be found (if create is
  *                "false") or created (if create is "true").
  */
-int ompi_session_dir(bool create, char *prefix, char *user, char *hostid, 
+OMPI_DECLSPEC int ompi_session_dir(bool create, char *prefix, char *user, char *hostid, 
                      char *batchid, char *universe, char *job, char *vpid);
 
 
@@ -128,4 +129,4 @@ int ompi_session_dir(bool create, char *prefix, char *user, char *hostid,
  * @retval OMPI_ERROR If something prevents the tree from being
  *                properly cleaned up.
  */
-int ompi_session_dir_finalize(void);
+OMPI_DECLSPEC int ompi_session_dir_finalize(void);

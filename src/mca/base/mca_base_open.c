@@ -2,12 +2,14 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include <stdio.h>
 #include <string.h>
-#include <syslog.h>
 
+#if HAVE_SYSLOG_H
+#include <syslog.h>
+#endif
 #include "util/output.h"
 #include "util/printf.h"
 #include "mca/mca.h"
@@ -88,7 +90,9 @@ static void set_defaults(ompi_output_stream_t *lds)
   lds->lds_is_debugging = false;
   lds->lds_verbose_level = 0;
   lds->lds_want_syslog = false;
+#ifndef WIN32
   lds->lds_syslog_priority = LOG_INFO;
+#endif
   lds->lds_syslog_ident = "ompi";
   lds->lds_want_stdout = false;
   lds->lds_want_stderr = true;
@@ -121,8 +125,10 @@ static void parse_verbose(char *e, ompi_output_stream_t *lds)
     if (NULL != next)
       *next = '\0';
 
+
     if (0 == strcasecmp(ptr, "syslog")) {
-      lds->lds_want_syslog = true;
+#ifndef WIN32 /* there is no syslog */
+		lds->lds_want_syslog = true;
       have_output = true;
     }
     else if (strncasecmp(ptr, "syslogpri:", 10) == 0) {
@@ -137,7 +143,8 @@ static void parse_verbose(char *e, ompi_output_stream_t *lds)
     } else if (strncasecmp(ptr, "syslogid:", 9) == 0) {
       lds->lds_want_syslog = true;
       lds->lds_syslog_ident = ptr + 9;
-    }
+#endif
+	}
 
     else if (strcasecmp(ptr, "stdout") == 0) {
       lds->lds_want_stdout = true;

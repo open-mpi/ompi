@@ -56,7 +56,7 @@ extern "C" {
 
     /* globals used by RTE - instanced in ompi_rte_init.c */
 
-    extern int ompi_rte_debug_flag;
+    OMPI_DECLSPEC extern int ompi_rte_debug_flag;
 
     /* Define the info structure underlying the Open MPI universe system
     * instanced in ompi_rte_init.c */
@@ -79,7 +79,7 @@ extern "C" {
     };
     typedef struct ompi_universe_t ompi_universe_t;
 
-    extern ompi_universe_t ompi_universe_info;
+OMPI_DECLSPEC extern ompi_universe_t ompi_universe_info;
 
     /**
      * Initialize the Open MPI support code
@@ -92,7 +92,7 @@ extern "C" {
      * This function should be called before \code ompi_rte_init, if
      * \code ompi_rte_init is to be called.
      */
-    int ompi_init(int argc, char* argv[]);
+OMPI_DECLSPEC    int ompi_init(int argc, char* argv[]);
 
     /**
      * Finalize the Open MPI support code
@@ -102,7 +102,7 @@ extern "C" {
      * be called after \code ompi_rte_finalize, if \code
      * ompi_rte_finalize is called.
      */
-    int ompi_finalize(void);
+OMPI_DECLSPEC    int ompi_finalize(void);
 
     /**
      * Abort the current application with a pretty-print error message
@@ -111,7 +111,7 @@ extern "C" {
      * printing an error message if possible.  Error message should be
      * specified using the standard \code printf() format.
      */
-    int ompi_abort(int status, char *fmt, ...);
+OMPI_DECLSPEC    int ompi_abort(int status, char *fmt, ...);
 
 
     /**
@@ -123,13 +123,13 @@ extern "C" {
      * be called by every application using the RTE interface, including
      * MPI applications and mpirun.
      */
-    int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, bool *have_hidden_threads);
+OMPI_DECLSPEC    int ompi_rte_init(ompi_cmd_line_t *cmd_line, bool *allow_multi_user_threads, bool *have_hidden_threads);
 
     /**
      * Finalize the Open MPI run time environment
      *
      */
-    int ompi_rte_finalize(void);
+OMPI_DECLSPEC    int ompi_rte_finalize(void);
 
 
     /**
@@ -163,7 +163,7 @@ extern "C" {
      *                      If no available pcm components are capable
      *                      of meeting criteria, \c NULL is returned.
      */
-    ompi_rte_spawn_handle_t* ompi_rte_get_spawn_handle(int criteria,
+OMPI_DECLSPEC    ompi_rte_spawn_handle_t* ompi_rte_get_spawn_handle(int criteria,
                                                        bool have_threads);
 
 
@@ -208,7 +208,7 @@ extern "C" {
      *       ompi_rte_allocate_resources can be called again, but
      *       without nodes = 0, procs = 0.
      */
-    ompi_list_t* ompi_rte_allocate_resources(ompi_rte_spawn_handle_t* handle,
+OMPI_DECLSPEC    ompi_list_t* ompi_rte_allocate_resources(ompi_rte_spawn_handle_t* handle,
                                              mca_ns_base_jobid_t jobid, 
                                              int nodes, int procs);
 
@@ -223,7 +223,7 @@ extern "C" {
      *
      * @param handle (IN) Handle from \c ompi_rte_get_spawn_handle
      */
-    int ompi_rte_spawn_procs(ompi_rte_spawn_handle_t* handle,
+OMPI_DECLSPEC    int ompi_rte_spawn_procs(ompi_rte_spawn_handle_t* handle,
                              mca_ns_base_jobid_t jobid, 
                              ompi_list_t *schedule_list);
 
@@ -233,7 +233,7 @@ extern "C" {
      *
      * @return my name
      */
-    ompi_process_name_t* ompi_rte_get_self(void);
+OMPI_DECLSPEC    ompi_process_name_t* ompi_rte_get_self(void);
 
 
     /**
@@ -256,35 +256,35 @@ extern "C" {
      *                     not properly loaded.
      *
      */
-    int ompi_rte_get_peers(ompi_process_name_t **peers, size_t *npeers);
+OMPI_DECLSPEC    int ompi_rte_get_peers(ompi_process_name_t **peers, size_t *npeers);
 
     /**
      * "Hold" until all procs registered, or timeout occurs
      */
 
-    int ompi_rte_monitor_procs_registered(void);
+OMPI_DECLSPEC    int ompi_rte_monitor_procs_registered(void);
 
     /**
      * "Hold" until all procs unregistered - no timeout.
      */
     
-    int ompi_rte_monitor_procs_unregistered(void);
+OMPI_DECLSPEC    int ompi_rte_monitor_procs_unregistered(void);
 
     /**
      * Callback function for all procs registered
      */
-    void ompi_rte_all_procs_registered(ompi_registry_notify_message_t* match, void* cbdata);
+OMPI_DECLSPEC    void ompi_rte_all_procs_registered(ompi_registry_notify_message_t* match, void* cbdata);
 
     /**
      * Callback function for all procs unregistered
      */
-    void ompi_rte_all_procs_unregistered(ompi_registry_notify_message_t* match, void* cbdata);
+OMPI_DECLSPEC    void ompi_rte_all_procs_unregistered(ompi_registry_notify_message_t* match, void* cbdata);
 
     /**
      * Remove process registration.
      */
 
-    int ompi_rte_unregister(void);
+OMPI_DECLSPEC    int ompi_rte_unregister(void);
 
     /**
      * Kill a specific process in this cell
@@ -296,7 +296,7 @@ extern "C" {
      * future compatibility.  Will be used to specify how to kill
      * processes (0 will be same as a "kill <pid>"
      */
-    int ompi_rte_kill_proc(ompi_process_name_t *name, int flags);
+OMPI_DECLSPEC    int ompi_rte_kill_proc(ompi_process_name_t *name, int flags);
 
 
     /**
@@ -311,7 +311,7 @@ extern "C" {
      * future compatibility.  Will be used to specify how to kill
      * processes (0 will be same as a "kill <pid>"
      */
-    int ompi_rte_kill_job(mca_ns_base_jobid_t jobid, int flags);
+OMPI_DECLSPEC    int ompi_rte_kill_job(mca_ns_base_jobid_t jobid, int flags);
 
 
     /**
@@ -324,7 +324,7 @@ extern "C" {
      * @param nodes (IN) Nodelist from associated allocate_resource call.
      *                   All associated memory will be freed as appropriate.
      */
-    int ompi_rte_deallocate_resources(ompi_rte_spawn_handle_t *handle,
+OMPI_DECLSPEC    int ompi_rte_deallocate_resources(ompi_rte_spawn_handle_t *handle,
                                       mca_ns_base_jobid_t jobid, 
                                       ompi_list_t *nodelist);
 
@@ -337,7 +337,7 @@ extern "C" {
      * @param cmd_line Pointer to an ompi_cmd_line_t object
      * @retval None
      */
-    void ompi_rte_cmd_line_setup(ompi_cmd_line_t *cmd_line);
+OMPI_DECLSPEC    void ompi_rte_cmd_line_setup(ompi_cmd_line_t *cmd_line);
 
 
     /**
@@ -349,7 +349,7 @@ extern "C" {
      * @param cmd_line Command line to be parsed.
      * @retval None
      */
-    void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line);
+OMPI_DECLSPEC    void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line);
 
     /**
      * Parse the rte command line for daemon-specific options
@@ -360,7 +360,7 @@ extern "C" {
      * @param cmd_line Command line to be parsed.
      * @retval None
      */
-    void ompi_rte_parse_daemon_cmd_line(ompi_cmd_line_t *cmd_line);
+OMPI_DECLSPEC    void ompi_rte_parse_daemon_cmd_line(ompi_cmd_line_t *cmd_line);
 
     /**
      * Check for universe existence
@@ -382,7 +382,7 @@ extern "C" {
      * @retval OMPI_CONNECTION_REFUSED Universe found and contact made, but
      * universe refused to allow connection.
      */
-    int ompi_rte_universe_exists(void);
+OMPI_DECLSPEC    int ompi_rte_universe_exists(void);
 
     /**
      * Parse the RTE environmental variables
@@ -395,13 +395,13 @@ extern "C" {
      *
      * @retval None
      */
-    void ompi_rte_parse_environ(void);
+OMPI_DECLSPEC    void ompi_rte_parse_environ(void);
 
 
     /**
      * Register a daemon on the virtual machine segment.
      */
-    int ompi_vm_register(void);
+OMPI_DECLSPEC    int ompi_vm_register(void);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

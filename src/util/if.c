@@ -44,10 +44,17 @@ struct ompi_if_t {
     ompi_list_item_t     super;
     char                if_name[IF_NAMESIZE];
     int                 if_index;
+#ifndef WIN32
     int                 if_flags;
+#else
+    u_long              if_flags;
+#endif
     int                 if_speed;
     struct sockaddr_in  if_addr;
     struct sockaddr_in  if_mask;
+#ifdef WIN32
+    struct sockaddr_in  if_bcast;
+#endif
     uint32_t            if_bandwidth;
 };
 typedef struct ompi_if_t ompi_if_t;
@@ -62,6 +69,7 @@ static ompi_list_t ompi_if_list;
 
 static int ompi_ifinit(void) 
 {
+#ifndef WIN32
     char buff[1024];
     char *ptr;
     struct ifconf ifconf;
@@ -161,6 +169,116 @@ static int ompi_ifinit(void)
         ompi_list_append(&ompi_if_list, (ompi_list_item_t*)intf_ptr);
     }
     close(sd);
+    
+#else /* WIN32 implementation begins */
+
+    /* 
+       1. check if the interface info list is already populated. If so, return
+       2. get the interface information which is required using WSAIoctl
+       3. construct ompi_if_list and populate it with the list of interfaces we have
+       CAVEAT: Does not support the following options which are supported in SIOCGIFCONF
+            - kernel table index
+            - interface name
+     */
+
+    #define MAX_INTERFACES 10 /* Anju: for now assume there are no more than this */
+    int ret;
+    WSADATA win_sock_data;
+    SOCKET sd; 
+    INTERFACE_INFO if_list[MAX_INTERFACES];
+    int num_interfaces;
+    unsigned long num_bytes_returned;
+    int i;
+    SOCKADDR_IN *sock_address;
+    unsigned int interface_counter = 0;
+    ompi_if_t intf;
+    ompi_if_t *intf_ptr;
+
+    /* return if this has been done before */
+    if (0 > ompi_list_get_size(&ompi_if_list)) {
+        return OMPI_SUCCESS;
+    }
+  
+    /* else initialise the use of Winsock2.DLL */
+    if (WSAStartup (MAKEWORD (2, 2), &win_sock_data) != 0) {
+        ompi_output(0, "ompi_ifinit: WSAStartup failed with errno=%d\n",WSAGetLastError());
+        return OMPI_ERROR;
+    }
+
+    /* create a socket */
+    sd = WSASocket (AF_INET, SOCK_DGRAM, IPPROTO_UDP, NULL, 0, 0);
+    if (sd == SOCKET_ERROR) {
+        ompi_output(0, "ompi_ifinit: WSASocket failed with errno=%d\n",WSAGetLastError());
+        return OMPI_ERROR;
+    }
+
+    /* get the information about the interfaces */
+    if (SOCKET_ERROR == WSAIoctl (sd, 
+                                  SIO_GET_INTERFACE_LIST, 
+                                  NULL, 
+                                  0, 
+                                  &if_list,
+		                          sizeof (if_list), 
+                                  &num_bytes_returned, 
+                                  0,
+		                          0)) {
+        ompi_output(0, "ompi_ifinit: WSAIoctl failed with errno=%d\n",WSAGetLastError());
+        return OMPI_ERROR;
+    }
+
+    /* create and populate ompi_if_list */
+    OBJ_CONSTRUCT (&ompi_if_list, ompi_list_t);
+
+
+    /* loop through all the interfaces and create the list */
+    num_interfaces = num_bytes_returned / sizeof (INTERFACE_INFO);
+    for (i = 0; i < num_interfaces; ++i) {
+        /* do all this only if the interface is up */
+        if (if_list[i].iiFlags & IFF_UP) {
+
+            OBJ_CONSTRUCT (&intf, ompi_list_item_t);
+        
+            /* fill in the interface address */ 
+            memcpy (&intf.if_addr, &(if_list[i].iiAddress), sizeof(intf.if_addr));
+
+            /* fill in the netmask information */
+            memcpy (&intf.if_mask, &(if_list[i].iiNetmask), sizeof(intf.if_mask));
+
+            /* fill in the bcast address */
+            memcpy (&intf.if_bcast, &(if_list[i].iiBroadcastAddress), sizeof(intf.if_bcast));
+
+            /* fill in the flags */
+            intf.if_flags = if_list[i].iiFlags;
+
+            /* fill in the index in the table */
+            intf.if_index = ompi_list_get_size(&ompi_if_list)+1;
+
+            /* generate the interface name on your own ....
+               loopback: lo
+               Rest:    eth0, eth1, ..... */
+
+            if (if_list[i].iiFlags & IFF_LOOPBACK) {
+                sprintf (intf.if_name, "lo");
+            } else {
+                sprintf (intf.if_name, "eth%u", interface_counter++);
+            }
+
+            /* copy all this into a persistent form and store it in the list */
+            intf_ptr = malloc(sizeof(ompi_if_t));
+            if (NULL == intf_ptr) {
+                ompi_output (0,"ompi_ifinit: Unable to malloc %d bytes",sizeof(ompi_list_t));
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+
+            memcpy (intf_ptr, &intf, sizeof(intf));
+            ompi_list_append(&ompi_if_list, (ompi_list_item_t *)intf_ptr);
+        }
+    }
+    
+    /* this takes care of the cleanup for us :-D */
+    WSACleanup ();
+
+#endif
     return OMPI_SUCCESS;
 }
 
@@ -220,13 +338,22 @@ int ompi_ifnametoindex(const char* if_name)
 int ompi_ifaddrtoname(const char* if_addr, char* if_name, int length)
 {
     ompi_if_t* intf;
-    in_addr_t inaddr = inet_addr(if_addr);
-    int rc = ompi_ifinit();
+#ifndef WIN32
+    in_addr_t inaddr;
+#else 
+    unsigned long inaddr;
+#endif
+    int rc;
+    struct hostent *h;
+    
+    inaddr = inet_addr(if_addr);
+
+    rc = ompi_ifinit();
     if(rc != OMPI_SUCCESS)
         return rc;
 
     if(inaddr == INADDR_ANY) {
-        struct hostent *h = gethostbyname(if_addr);
+        h = gethostbyname(if_addr);
         if(h == 0) {
             ompi_output(0,"ompi_ifaddrtoname: unable to resolve %s\n", if_addr);
             return OMPI_ERROR;
@@ -376,4 +503,3 @@ int ompi_ifindextoname(int if_index, char* if_name, int length)
     }
     return OMPI_ERROR;
 }
-

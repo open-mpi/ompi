@@ -10,8 +10,12 @@
 #define _MCA_OOB_TCP_ADDR_H_
 
 #include "ompi_config.h"
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #include "class/ompi_object.h"
 #include "util/bufpack.h"
 #include "mca/ns/ns.h"

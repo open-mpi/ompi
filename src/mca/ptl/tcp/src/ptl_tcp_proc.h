@@ -7,9 +7,15 @@
 #ifndef MCA_PTL_TCP_PROC_H
 #define MCA_PTL_TCP_PROC_H
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #include "mca/ns/ns.h"
 #include "class/ompi_object.h"
 #include "proc/proc.h"

@@ -27,8 +27,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-extern ompi_class_t ompi_bitmap_t_class;
-
 struct ompi_bitmap_t {
     ompi_object_t super; /**< Subclass of ompi_object_t */
     unsigned char *bitmap; /**< The actual bitmap array of characters */
@@ -41,8 +39,7 @@ struct ompi_bitmap_t {
 
 typedef struct ompi_bitmap_t ompi_bitmap_t;
 
-OBJ_CLASS_DECLARATION(ompi_bitmap_t);
-
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_bitmap_t);
 
 /**
  * Initializes the bitmap and sets its size. This must be called
@@ -53,7 +50,7 @@ OBJ_CLASS_DECLARATION(ompi_bitmap_t);
  * @return OMPI error code or success
  *
  */
-int ompi_bitmap_init (ompi_bitmap_t *bm, size_t size);
+OMPI_DECLSPEC int ompi_bitmap_init (ompi_bitmap_t *bm, size_t size);
 
 
 /**
@@ -66,7 +63,7 @@ int ompi_bitmap_init (ompi_bitmap_t *bm, size_t size);
  * @return OMPI error code or success
  *
  */
-int ompi_bitmap_set_bit(ompi_bitmap_t *bm, size_t bit); 
+OMPI_DECLSPEC int ompi_bitmap_set_bit(ompi_bitmap_t *bm, size_t bit); 
 
 
 /**
@@ -78,7 +75,7 @@ int ompi_bitmap_set_bit(ompi_bitmap_t *bm, size_t bit);
  * @return OMPI error code if the bit is out of range, else success
  *
  */
-int ompi_bitmap_clear_bit(ompi_bitmap_t *bm, size_t bit);
+OMPI_DECLSPEC int ompi_bitmap_clear_bit(ompi_bitmap_t *bm, size_t bit);
 
 
 /**
@@ -91,7 +88,7 @@ int ompi_bitmap_clear_bit(ompi_bitmap_t *bm, size_t bit);
   *         0 if the bit is not set
   *
   */
-int ompi_bitmap_is_set_bit(ompi_bitmap_t *bm, size_t bit);
+OMPI_DECLSPEC int ompi_bitmap_is_set_bit(ompi_bitmap_t *bm, size_t bit);
 
 
 /**
@@ -102,7 +99,7 @@ int ompi_bitmap_is_set_bit(ompi_bitmap_t *bm, size_t bit);
 
  * @return err        OMPI_SUCCESS on success
  */
-int ompi_bitmap_find_and_set_first_unset_bit(ompi_bitmap_t *bm, 
+OMPI_DECLSPEC int ompi_bitmap_find_and_set_first_unset_bit(ompi_bitmap_t *bm, 
                                              size_t *position); 
 
 
@@ -113,7 +110,7 @@ int ompi_bitmap_find_and_set_first_unset_bit(ompi_bitmap_t *bm,
  * @return OMPI error code if bm is NULL
  * 
  */
-int ompi_bitmap_clear_all_bits(ompi_bitmap_t *bm);
+OMPI_DECLSPEC int ompi_bitmap_clear_all_bits(ompi_bitmap_t *bm);
 
 
 /**
@@ -122,7 +119,7 @@ int ompi_bitmap_clear_all_bits(ompi_bitmap_t *bm);
  * @return OMPI error code if bm is NULL
  *
  */
-int ompi_bitmap_set_all_bits(ompi_bitmap_t *bm);
+OMPI_DECLSPEC int ompi_bitmap_set_all_bits(ompi_bitmap_t *bm);
 
 
 /**

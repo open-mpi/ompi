@@ -8,9 +8,15 @@
 #ifndef MCA_PTL_TCP_SEND_REQUEST_H
 #define MCA_PTL_TCP_SEND_REQUEST_H
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #include "ompi_config.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_tcp_sendfrag.h"
@@ -18,7 +24,6 @@
 extern "C" {
 #endif
 extern ompi_class_t mca_ptl_tcp_send_request_t_class;
-
 /**
  * TCP send request derived type. The send request contains both the
  * base send request, and space for the first TCP send fragment descriptor.

@@ -28,7 +28,7 @@ extern "C" {
  * Hence, the MPI_PARAM_CHECK macro will either be "0", "1", or
  * "ompi_mpi_param_check".
  */
-extern bool ompi_mpi_param_check;
+OMPI_DECLSPEC extern bool ompi_mpi_param_check;
 
 /**
  * Whether or not to check for MPI handle leaks during MPI_FINALIZE.
@@ -38,7 +38,7 @@ extern bool ompi_mpi_param_check;
  * This is good debugging for user applications to find out if they
  * are inadvertantly orphaning MPI handles.
  */
-extern bool ompi_debug_show_handle_leaks;
+OMPI_DECLSPEC extern bool ompi_debug_show_handle_leaks;
 
 /**
  * Whether or not to actually free MPI handles when their
@@ -49,7 +49,7 @@ extern bool ompi_debug_show_handle_leaks;
  * This is good debugging for user applications to find out if they
  * are inadvertantly using MPI handles after they have been freed.
  */
-extern bool ompi_debug_no_free_handles;
+OMPI_DECLSPEC extern bool ompi_debug_no_free_handles;
 
 
     /**

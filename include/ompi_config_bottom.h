@@ -10,11 +10,30 @@
  * need to #ifndef/#endif protection here.
  */
 
-/* 
+#ifndef OMPI_CONFIG_BOTTOM_H 
+#define OMPI_CONFIG_BOTTOM_H
+ 
+#if defined(WIN32)
+#include "win32/win_compat.h"
+#endif
+
+#ifndef OMPI_DECLSPEC
+#define OMPI_DECLSPEC
+#endif
+
+#ifndef OMPI_COMP_EXPORT
+#define OMPI_COMP_EXPORT
+#endif
+
+/*
  * If we're in C, bring in the bool type and true/false constants.
  */
-#ifndef __cplusplus
-#if OMPI_USE_STDBOOL_H
+#if !defined(__cplusplus) 
+#ifdef WIN32
+#define bool BOOL
+#define false FALSE
+#define true TRUE
+#elif OMPI_USE_STDBOOL_H
 /* If we're using <stdbool.h>, there is an implicit assumption that
    the C++ bool is the same size and has the same alignment. */
 #include <stdbool.h>
@@ -166,25 +185,9 @@ extern "C" {
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
-        
 #endif
 
-/* For windoze weirdness.  A symbol is not considered part of a DLL
-   interface unless it is exported.  Hence these macros.  It needs to
-   be prepended to the declaration of every symbol which needs to be
-   exported from a DLL.  For us, this would be all MPI_ functions and
-   also all function from within Open MPI which are used by other
-   execuatables such as ompi_info, mpicc, etc.  Visual studio defines
-   WIN32 and is the standard way of knowing whether we are compiling
-   using its native compiler (random note: the compiler itself does
-   not define this macro -- it's passed as -DWIN32 automatically).
-   Also, they simply define the macro as opposed to defining it to
-   something. I guess they dont program defensively :-) */
+/* this is needed for windows ONLY. It is defined in src/win32/win_compat.h
+   if we are running on windwos, else it is defined to nothing here */
 
-#if defined (WIN32) 
-    #define OMPI_EXPORT __declspec(dllexport)
-    #define OMPI_IMPORT __declspec(dllimport)
-#else
-    #define OMPI_EXPORT 
-    #define OMPI_IMPORT 
-#endif
+#endif /* OMPI_CONFIG_BOTTOM_H */

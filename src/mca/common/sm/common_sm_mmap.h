@@ -67,7 +67,7 @@ void  mca_common_sm_mmap_free(void* addr);
  * Instance that is shared between components that use shared memory
  */
 
-extern mca_common_sm_mmap_t *mca_common_sm_mmap;
+OMPI_DECLSPEC extern mca_common_sm_mmap_t *mca_common_sm_mmap;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -58,7 +58,7 @@ typedef struct ompi_buffer_internal_t {
 } ompi_buffer_internal_t;
 
 /* formalise the declaration */
-OBJ_CLASS_DECLARATION (ompi_buffer_internal_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION (ompi_buffer_internal_t);
 
 
 /* some internal functions */

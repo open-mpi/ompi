@@ -20,7 +20,7 @@
 
 #include "ompi_config.h"
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined (WIN32)
 #define STATIC_INLINE static inline
 #else
 #define STATIC_INLINE
@@ -310,6 +310,13 @@ static inline void ompi_atomic_unlock(ompi_lock_t *lock);
  * the definitions are in system specific .s files in src/util.
  */
 
+/* Include win32/atomic.h if we are in windows platform. Else, we 
+   can go through other compilers and options. */
+#ifdef WIN32
+#define OMPI_HAVE_ATOMIC_WIN32 1
+#include "include/sys/win32/atomic.h"
+#else /* only now go through this stuff */
+
 #if   defined(__alpha__)
 # define OMPI_HAVE_ATOMIC 1
 # ifdef __GNUC__
@@ -410,7 +417,7 @@ static inline int ompi_atomic_cmpset_rel_int(volatile int *addr,
                                      (uint64_t) newval);
 }
 
-#else 
+#else
 
 #error
 
@@ -522,6 +529,11 @@ static inline int ompi_atomic_fetch_and_set_int(volatile int *addr, int newval)
     return (oldval);
 }
 
+#endif /* OMPI_HAVE_ATOMIC */
+
+#endif /* ifdef WIN32 */
+
+#if OMPI_HAVE_ATOMIC || OMPI_HAVE_ATOMIC_WIN32
 
 /*
  * Atomic locks
@@ -565,7 +577,6 @@ static inline void ompi_atomic_unlock(ompi_lock_t *lock)
         lock->u.lock = OMPI_ATOMIC_UNLOCKED;
     }
 }
-
-#endif /* OMPI_HAVE_ATOMIC */
+#endif /* OMPI_HAVE_ATOMIC || OMPI_HAVE_ATOMIC_WIN32 */
 
 #endif /* OMPI_SYS_ATOMIC_H */

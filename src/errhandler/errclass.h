@@ -26,8 +26,8 @@ struct ompi_errclass_t {
 };
 typedef struct ompi_errclass_t ompi_errclass_t;
 
-extern ompi_pointer_array_t ompi_errclasses;
-extern int ompi_errclass_lastused;
+OMPI_DECLSPEC extern ompi_pointer_array_t ompi_errclasses;
+OMPI_DECLSPEC extern int ompi_errclass_lastused;
 /** 
  * Check for a valid error class
  */

@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include <stdio.h>
 #include <errno.h>
 #ifdef HAVE_SYS_WAIT_H
@@ -19,6 +19,7 @@
 
 int ompi_few(char *argv[], int *status)
 {
+#ifndef WIN32
     pid_t pid, ret;
 
     if ((pid = fork()) < 0) {
@@ -59,4 +60,43 @@ int ompi_few(char *argv[], int *status)
     /* Return the status to the caller */
 
     return OMPI_SUCCESS;
+#else
+
+    /* Welcome to windows land. This is apparently a simple fork() exec() 
+       procedure and hence should not be too difficult to implement */
+       HANDLE new_process;
+       STARTUPINFO si;
+       PROCESS_INFORMATION pi;
+       DWORD process_stat;
+
+       /* it does seem as if the environment is getting propogated, so I 
+          will follow the same procedure in my code */
+
+          /* ANJU: Have to implement signal handling */
+
+       ZeroMemory (&si, sizeof(si));
+       ZeroMemory (&pi, sizeof(pi));
+       
+       GetStartupInfo (&si);
+       if (!CreateProcess (argv[0], 
+                           argv, 
+                           NULL,
+                           NULL,
+                           TRUE,
+                           0,  
+                           NULL,
+                           NULL,
+                           &si,
+                           &pi)){
+         /* actual error can be got by simply calling GetLastError() */
+         return OMPI_ERROR; 
+       }
+
+       /* wait for child to die */
+       WaitForSingleObject(pi.hProcess, INFINITE);
+       GetExitCodeProcess(pi.hProcess, &process_stat);
+
+       SetLastError(process_stat);
+       return OMPI_SUCCESS;
+#endif
 }

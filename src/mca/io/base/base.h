@@ -45,7 +45,7 @@ extern "C" {
      * public interface member -- and is only mentioned here for
      * completeness.
      */
-    int mca_io_base_open(void);
+OMPI_DECLSPEC int mca_io_base_open(void);
 
     /**
      * Create list of available io components.
@@ -72,7 +72,7 @@ extern "C" {
      * functions -- it is not considered a public interface member --
      * and is only mentioned here for completeness.
      */
-    int mca_io_base_find_available(bool *allow_multi_user_threads, 
+OMPI_DECLSPEC int mca_io_base_find_available(bool *allow_multi_user_threads, 
                                    bool *have_hidden_threads);
     
     /**
@@ -125,7 +125,7 @@ extern "C" {
      * file handle, or no component was selected and an error is
      * returned up the stack.
      */
-    int mca_io_base_file_select(struct ompi_file_t *file,
+OMPI_DECLSPEC int mca_io_base_file_select(struct ompi_file_t *file,
                                 struct mca_base_component_t *preferred);
 
     /**
@@ -148,7 +148,7 @@ extern "C" {
      * mca_io_base_select(), as result of this function, other
      * file handles may also be destroyed.
      */
-    int mca_io_base_file_unselect(struct ompi_file_t *file);
+OMPI_DECLSPEC int mca_io_base_file_unselect(struct ompi_file_t *file);
 
     /**
      * Invoke a back-end component to delete a file.
@@ -162,7 +162,7 @@ extern "C" {
      * the available components (rather than some pre-selected
      * module).  See io.h for details.
      */
-    int mca_io_base_delete(char *filename, struct ompi_info_t *info);
+OMPI_DECLSPEC int mca_io_base_delete(char *filename, struct ompi_info_t *info);
 
     /**
      * Shut down the io MCA framework.
@@ -175,7 +175,7 @@ extern "C" {
      *
      * It must be the last function invoked on the io MCA framework.
      */
-    int mca_io_base_close(void);
+OMPI_DECLSPEC int mca_io_base_close(void);
 
 
 /*
@@ -186,35 +186,35 @@ extern "C" {
  * Index number from the "io" MCA parameter, created when the io
  * framework is initialized and used during scope selection.
  */
-extern int mca_io_base_param;
+OMPI_DECLSPEC extern int mca_io_base_param;
 /**
  * io framework debugging stream ID used with ompi_output() and
  * ompi_output_verbose().
  */
-extern int mca_io_base_output;
+OMPI_DECLSPEC extern int mca_io_base_output;
 
 /**
  * Indicator as to whether the list of opened io components is valid or
  * not.
  */
-extern bool mca_io_base_components_opened_valid;
+OMPI_DECLSPEC extern bool mca_io_base_components_opened_valid;
 /**
  * List of all opened components; created when the io framework is
  * initialized and destroyed when we reduce the list to all available
  * io components.
  */
-extern ompi_list_t mca_io_base_components_opened;
+OMPI_DECLSPEC extern ompi_list_t mca_io_base_components_opened;
 /**
  * Indicator as to whether the list of available io components is valid
  * or not.
  */
-extern bool mca_io_base_components_available_valid;
+OMPI_DECLSPEC extern bool mca_io_base_components_available_valid;
 /**
  * List of all available components; created by reducing the list of open
  * components to all those who indicate that they may run during this
  * process.
  */
-extern ompi_list_t mca_io_base_components_available;
+OMPI_DECLSPEC extern ompi_list_t mca_io_base_components_available;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -203,7 +203,7 @@ typedef struct ompi_output_stream_t ompi_output_stream_t;
    * By definition, the default verbose stream has a handle ID of 0,
    * and has a verbose level of 0.
    */
-  bool ompi_output_init(void);
+OMPI_DECLSPEC   bool ompi_output_init(void);
 
   /**
    * Shut down the output stream system.
@@ -211,7 +211,7 @@ typedef struct ompi_output_stream_t ompi_output_stream_t;
    * Shut down the output stream system, including the default verbose
    * stream.
    */
-  void ompi_output_finalize(void);
+OMPI_DECLSPEC   void ompi_output_finalize(void);
 
   /**
    * Opens an output stream.
@@ -235,7 +235,7 @@ typedef struct ompi_output_stream_t ompi_output_stream_t;
    * when open_open() / ompi_output() is directed to send output to a
    * file but the process session directory does not yet exist.
    */
-  int ompi_output_open(ompi_output_stream_t *lds);
+OMPI_DECLSPEC   int ompi_output_open(ompi_output_stream_t *lds);
 
   /**
    * Re-opens / redirects an output stream.
@@ -249,7 +249,7 @@ typedef struct ompi_output_stream_t ompi_output_stream_t;
    * passed is invalid, this call is effectively the same as opening a
    * new stream with a specific stream handle.
    */
-  int ompi_output_reopen(int output_id, ompi_output_stream_t *lds);
+OMPI_DECLSPEC   int ompi_output_reopen(int output_id, ompi_output_stream_t *lds);
 
   /**
    * Enables and disables output streams.
@@ -268,7 +268,7 @@ typedef struct ompi_output_stream_t ompi_output_stream_t;
    * to the stream via OMPI_OUTPUT() or ompi_output() until the output
    * is re-enabled.
    */
-  bool ompi_output_switch(int output_id, bool enable);
+OMPI_DECLSPEC   bool ompi_output_switch(int output_id, bool enable);
 
   /**
    * \internal
@@ -279,7 +279,7 @@ typedef struct ompi_output_stream_t ompi_output_stream_t;
    * typically only invoked after a restart (i.e., in a new process)
    * where output streams need to be re-initialized.
    */
-  void ompi_output_reopen_all(void);
+OMPI_DECLSPEC   void ompi_output_reopen_all(void);
 
   /**
    * Close an output stream.
@@ -291,7 +291,7 @@ typedef struct ompi_output_stream_t ompi_output_stream_t;
    * re-used; it is possible that after a stream is closed, if another
    * stream is opened, it will get the same handle value.
    */
-  void ompi_output_close(int output_id);
+OMPI_DECLSPEC   void ompi_output_close(int output_id);
 
   /**
    * Main function to send output to a stream.
@@ -318,7 +318,7 @@ typedef struct ompi_output_stream_t ompi_output_stream_t;
    * created, ompi_output() will automatically create the file and
    * writing to it.
    */
-  void ompi_output(int output_id, char *format, ...);
+OMPI_DECLSPEC   void ompi_output(int output_id, char *format, ...);
 
   /**
    * Send output to a stream only if the passed verbosity level is
@@ -348,7 +348,7 @@ typedef struct ompi_output_stream_t ompi_output_stream_t;
    *
    * @see ompi_output_set_verbosity()
    */
-  void ompi_output_verbose(int verbose_level, int output_id, 
+OMPI_DECLSPEC   void ompi_output_verbose(int verbose_level, int output_id, 
                            char *format, ...);
 
   /**
@@ -360,7 +360,7 @@ typedef struct ompi_output_stream_t ompi_output_stream_t;
    * This function sets the verbosity level on a given stream.  It
    * will be used for all future invocations of ompi_output_verbose().
    */
-  void ompi_output_set_verbosity(int output_id, int level);
+OMPI_DECLSPEC   void ompi_output_set_verbosity(int output_id, int level);
 
 #if OMPI_ENABLE_DEBUG
   /**

@@ -15,7 +15,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-extern ompi_class_t ompi_free_list_t_class;
+OMPI_DECLSPEC extern ompi_class_t ompi_free_list_t_class;
 struct mca_mem_pool_t;
 
 

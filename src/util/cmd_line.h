@@ -149,7 +149,7 @@ typedef struct ompi_cmd_line_t ompi_cmd_line_t;
  * destructor for ompi_cmd_line_t handles will free all memory
  * associated with the handle.
  */
-OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
 
 
 
@@ -161,7 +161,7 @@ OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
    * ompi_cmd_line_make_opt3(cmd, short_name, NULL, long_name,
    * num_params, desc).
    */
-  int ompi_cmd_line_make_opt(ompi_cmd_line_t *cmd, char short_name, 
+OMPI_DECLSPEC  int ompi_cmd_line_make_opt(ompi_cmd_line_t *cmd, char short_name, 
                             const char *long_name, int num_params, 
                             const char *desc);
 
@@ -193,7 +193,7 @@ OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
    * used to generate the output from ompi_cmd_line_get_usage_msg().
    *
    */
-  int ompi_cmd_line_make_opt3(ompi_cmd_line_t *cmd, char short_name, 
+OMPI_DECLSPEC  int ompi_cmd_line_make_opt3(ompi_cmd_line_t *cmd, char short_name, 
                               const char *sd_name, const char *long_name, 
                               int num_params, const char *desc);
   /**
@@ -247,7 +247,7 @@ OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
    * Invoking this function multiple times on different sets of argv
    * tokens is safe, but will erase any previous parsing results.
    */
-  int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
+OMPI_DECLSPEC  int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                          int argc, char **argv);
 
   /**
@@ -271,7 +271,7 @@ OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
    *
    * The returned string must be freed by the caller.
    */
-  char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd);
+OMPI_DECLSPEC  char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd);
   /**
    * Test if a given option was taken on the parsed command line.
    *
@@ -291,7 +291,7 @@ OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
    * (either by its short or long name) during token parsing.
    * Otherwise, it will return false.
    */
-  bool ompi_cmd_line_is_taken(ompi_cmd_line_t *cmd, const char *opt);
+OMPI_DECLSPEC  bool ompi_cmd_line_is_taken(ompi_cmd_line_t *cmd, const char *opt);
 
   /**
    * Return the number of arguments parsed on a OMPI command line handle.
@@ -304,7 +304,7 @@ OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
    * Arguments are added to the handle via the ompi_cmd_line_parse()
    * function.
    */
-  int ompi_cmd_line_get_argc(ompi_cmd_line_t *cmd);
+OMPI_DECLSPEC  int ompi_cmd_line_get_argc(ompi_cmd_line_t *cmd);
 
   /**
    * Return a string argument parsed on a OMPI command line handle.
@@ -323,7 +323,7 @@ OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
    * What is returned is a pointer to the actual string that is on
    * the handle; it should not be modified or freed.
    */
-  char *ompi_cmd_line_get_argv(ompi_cmd_line_t *cmd, int index);
+OMPI_DECLSPEC  char *ompi_cmd_line_get_argv(ompi_cmd_line_t *cmd, int index);
 
   /**
    * Return the number of instances of an option found during parsing.
@@ -345,7 +345,7 @@ OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
    * either the option was not specified as part of the OMPI command line
    * handle, or ompi_cmd_line_parse() was not invoked on this handle.
    */
-  int ompi_cmd_line_get_ninsts(ompi_cmd_line_t *cmd, const char *opt);
+OMPI_DECLSPEC  int ompi_cmd_line_get_ninsts(ompi_cmd_line_t *cmd, const char *opt);
 
   /**
    * Return a specific parameter for a specific instance of a option
@@ -374,7 +374,7 @@ OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
    * The returned string should \em not be modified or freed by the
    * caller.
    */
-  char *ompi_cmd_line_get_param(ompi_cmd_line_t *cmd, const char *opt, 
+OMPI_DECLSPEC  char *ompi_cmd_line_get_param(ompi_cmd_line_t *cmd, const char *opt, 
                                int instance_num, int param_num);
 
   /**
@@ -404,7 +404,7 @@ OBJ_CLASS_DECLARATION(ompi_cmd_line_t);
    * of the tail parameters, and must be freed (likely with a call
    * to ompi_argv_free()) by the caller.
    */
-  int ompi_cmd_line_get_tail(ompi_cmd_line_t *cmd, int *tailc, 
+OMPI_DECLSPEC  int ompi_cmd_line_get_tail(ompi_cmd_line_t *cmd, int *tailc, 
                              char ***tailv);
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -118,8 +118,8 @@ extern "C" {
    */
   void ompi_free(void *addr, char *file, int line);
 
-extern int ompi_malloc_debug_level;
-extern int ompi_malloc_output;
+OMPI_DECLSPEC extern int ompi_malloc_debug_level;
+OMPI_DECLSPEC extern int ompi_malloc_output;
 
 static inline void ompi_malloc_debug(int level);
 

@@ -32,7 +32,7 @@ struct ompi_group_t {
                                  for each process in the group */
 };
 typedef struct ompi_group_t ompi_group_t;
-OBJ_CLASS_DECLARATION(ompi_group_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_group_t);
 
 
 /* Some definitions for the flags */
@@ -44,7 +44,7 @@ OBJ_CLASS_DECLARATION(ompi_group_t);
 /**
  * Table for Fortran <-> C group handle conversion
  */
-extern ompi_pointer_array_t *ompi_group_f_to_c_table;
+OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_group_f_to_c_table;
 
 
 /*

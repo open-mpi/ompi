@@ -51,7 +51,7 @@ OBJ_CLASS_DECLARATION(mca_base_component_priority_list_item_t);
 /*
  * Public variables
  */
-extern int mca_base_param_component_path;
+OMPI_DECLSPEC extern int mca_base_param_component_path;
 
 
 /*
@@ -72,7 +72,7 @@ extern int mca_base_param_component_path;
    * invoked during ompi_mpi_init() and specifically invoked in the
    * special case of the laminfo command.
    */
-   int mca_base_open(void);
+OMPI_DECLSPEC   int mca_base_open(void);
 
   /**
    * Last function called in the MCA
@@ -87,56 +87,56 @@ extern int mca_base_param_component_path;
    * during ompi_mpi_finalize() and specifically invoked during the
    * special case of the laminfo command.
    */
-  int mca_base_close(void);
+OMPI_DECLSPEC  int mca_base_close(void);
 
   /* mca_base_cmd_line.c */
 
-  int mca_base_cmd_line_setup(ompi_cmd_line_t *cmd);
-  int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd);
-  int mca_base_cmd_line_process_arg(const char *param, const char *value);
+OMPI_DECLSPEC  int mca_base_cmd_line_setup(ompi_cmd_line_t *cmd);
+OMPI_DECLSPEC  int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd);
+OMPI_DECLSPEC  int mca_base_cmd_line_process_arg(const char *param, const char *value);
 
   /* mca_base_component_compare.c */
   
-  int mca_base_component_compare_priority(mca_base_component_priority_list_item_t *a,
+OMPI_DECLSPEC  int mca_base_component_compare_priority(mca_base_component_priority_list_item_t *a,
                                        mca_base_component_priority_list_item_t *b);
-  int mca_base_component_compare(const mca_base_component_t *a,
+OMPI_DECLSPEC  int mca_base_component_compare(const mca_base_component_t *a,
                               const mca_base_component_t *b);
   int mca_base_component_compatible(const mca_base_component_t *a,
                               const mca_base_component_t *b);
 
   /* mca_base_component_find.c */
 
-  int mca_base_component_find(const char *directory, const char *type,
+OMPI_DECLSPEC  int mca_base_component_find(const char *directory, const char *type,
                            const mca_base_component_t *static_components[],
                            ompi_list_t *found_components);
 
   /* mca_base_component_register.c */
 
-  int mca_base_component_repository_initialize(void);
-  int mca_base_component_repository_retain(char *type, 
+OMPI_DECLSPEC  int mca_base_component_repository_initialize(void);
+OMPI_DECLSPEC  int mca_base_component_repository_retain(char *type, 
                                         lt_dlhandle component_handle, 
                                         const mca_base_component_t *component_struct);
-  int mca_base_component_repository_link(const char *src_type, 
+OMPI_DECLSPEC  int mca_base_component_repository_link(const char *src_type, 
                                       const char *src_name,
                                       const char *depend_type,
                                       const char *depend_name);
-  void mca_base_component_repository_release(const mca_base_component_t *component);
-  void mca_base_component_repository_finalize(void);
+OMPI_DECLSPEC  void mca_base_component_repository_release(const mca_base_component_t *component);
+OMPI_DECLSPEC  void mca_base_component_repository_finalize(void);
 
   /* mca_base_components_open.c */
 
-  int mca_base_components_open(const char *type_name, int output_id,
+OMPI_DECLSPEC  int mca_base_components_open(const char *type_name, int output_id,
                             const mca_base_component_t **static_components,
                             ompi_list_t *components_available);
 
   /* mca_base_components_close.c */
   
-  int mca_base_components_close(int output_id, ompi_list_t *components_available, 
+OMPI_DECLSPEC  int mca_base_components_close(int output_id, ompi_list_t *components_available, 
                              const mca_base_component_t *skip);
 
   /* mca_base_init_select_components.c */
   
-  int mca_base_init_select_components(int requested, 
+OMPI_DECLSPEC  int mca_base_init_select_components(int requested, 
                                    bool allow_multi_user_threads,
                                    bool have_hidden_threads, int *provided);
   

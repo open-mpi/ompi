@@ -59,7 +59,7 @@ ompi_mpi_cxx_delete_attr_intercept(MPI_Comm comm, int keyval,
 namespace MPI {
 
 #if ! OMPI_HAVE_CXX_EXCEPTION_SUPPORT
-	extern int mpi_errno;
+	OMPI_DECLSPEC extern int mpi_errno;
 #endif
 
   class Comm_Null;

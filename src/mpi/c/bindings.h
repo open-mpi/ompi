@@ -19,7 +19,7 @@ extern "C" {
 /* This variable is actually in src/mpi/runtime/ompi_mpi_init.c, but it
    is used by every MPI function. */
 
-extern bool ompi_mpi_param_check;
+OMPI_DECLSPEC extern bool ompi_mpi_param_check;
 
 /* These macros have to be used to check the corectness of the datatype depending on the
  * operations that we have to do with them. They can be used on all functions, not only

@@ -24,7 +24,6 @@
 #include "util/proc_info.h"
 #include "threads/mutex.h"
 
-
 /*
  * Private data
  */
@@ -65,8 +64,11 @@ struct output_desc_t {
 
   bool ldi_syslog;
   int ldi_syslog_priority;
+#ifndef WIN32
   char *ldi_syslog_ident;
-
+#else 
+  HANDLE ldi_syslog_ident;
+#endif
   char *ldi_prefix;
   int ldi_prefix_len;
 
@@ -236,9 +238,13 @@ void ompi_output_close(int output_id)
       break;
     }
   }
+#ifndef WIN32
   if (i >= OMPI_OUTPUT_MAX_STREAMS && syslog_opened) {
     closelog();
   }
+#else 
+    DeregisterEventSource(info[output_id].ldi_syslog_ident);
+#endif
 
   /* Somewhat of a hack to free up the temp_str */
 
@@ -359,14 +365,21 @@ static int do_open(int output_id, ompi_output_stream_t *lds)
   info[i].ldi_verbose_level = lds->lds_verbose_level;
 
   info[i].ldi_syslog = lds->lds_want_syslog;
+#ifndef WIN32
   if (lds->lds_want_syslog) {
     if (NULL != lds->lds_syslog_ident) {
       info[i].ldi_syslog_ident = strdup(lds->lds_syslog_ident);
-      openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
+	  openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
     } else {
       info[i].ldi_syslog_ident = NULL;
       openlog("ompi", LOG_PID, LOG_USER);
     }
+#else
+  if (NULL == (info[i].ldi_syslog_ident = RegisterEventSource(NULL, TEXT("To be determined: OMPI")))) {
+        /* handle the error */
+        return OMPI_ERROR;
+    }
+#endif
     syslog_opened = true;
     info[i].ldi_syslog_priority = lds->lds_syslog_priority;
   }
@@ -435,8 +448,10 @@ static int open_file(int i)
 
         /* Make the file be close-on-exec to prevent child inheritance
            problems */
-
+#ifndef WIN32
+		/* ANJU: Need to find out the equivalent in windows */
         fcntl(info[i].ldi_fd, F_SETFD, 1);
+#endif
         free(filename);
     }
 
@@ -476,10 +491,12 @@ static void free_descriptor(int output_id)
     }
     ldi->ldi_file_suffix = NULL;
 
+#ifndef WIN32
     if (NULL != ldi->ldi_syslog_ident) {
       free(ldi->ldi_syslog_ident);
     }
     ldi->ldi_syslog_ident = NULL;
+#endif
   }  
 }
 
@@ -545,7 +562,9 @@ static void output(int output_id, char *format, va_list arglist)
     /* Syslog output */
 
     if (ldi->ldi_syslog) {
+#ifndef WIN32
       syslog(ldi->ldi_syslog_priority, str);
+#endif
     }
 
     /* stdout output */

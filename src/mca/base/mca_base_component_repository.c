@@ -2,9 +2,11 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>

@@ -42,9 +42,9 @@ OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
  * Global functions for MCA: overall allocator open and close
  */
 
-  int mca_allocator_base_open(void);
-  int mca_allocator_base_close(void);
-  mca_allocator_base_component_t* mca_allocator_component_lookup(const char* name);
+OMPI_DECLSPEC int mca_allocator_base_open(void);
+OMPI_DECLSPEC int mca_allocator_base_close(void);
+OMPI_DECLSPEC mca_allocator_base_component_t* mca_allocator_component_lookup(const char* name);
 
 
 /*
@@ -53,7 +53,7 @@ OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
 /**
  * The list of all the selected components.
  */
-extern ompi_list_t mca_allocator_base_components;
+OMPI_DECLSPEC extern ompi_list_t mca_allocator_base_components;
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

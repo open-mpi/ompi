@@ -29,8 +29,8 @@ struct ompi_errcode_intern_t {
 };
 typedef struct ompi_errcode_intern_t ompi_errcode_intern_t;
 
-extern ompi_pointer_array_t ompi_errcodes_intern;
-extern int ompi_errcode_intern_lastused;
+OMPI_DECLSPEC extern ompi_pointer_array_t ompi_errcodes_intern;
+OMPI_DECLSPEC extern int ompi_errcode_intern_lastused;
 
 /** 
  * Return the MPI errcode for a given internal error code

@@ -14,8 +14,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-extern ompi_class_t ompi_proc_t_class;
-
+OMPI_DECLSPEC extern ompi_class_t ompi_proc_t_class;
 
 struct ompi_proc_t {
     ompi_list_item_t          super;       /* allow proc to be placed on a list */
@@ -59,7 +58,7 @@ ompi_proc_t** ompi_proc_self(size_t* size);
  */
 static inline ompi_proc_t* ompi_proc_local(void) 
 {
-    extern ompi_proc_t* ompi_proc_local_proc;
+    OMPI_DECLSPEC extern ompi_proc_t* ompi_proc_local_proc;
     return ompi_proc_local_proc;
 }
 

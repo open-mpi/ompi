@@ -2,21 +2,25 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/env/pcmclient_env.h"
 #include "include/types.h"
 #include "include/constants.h"
 
 #include <stdio.h>
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
-extern int mca_pcmclient_env_num_procs;
-extern int mca_pcmclient_env_procid;
-extern ompi_process_name_t *mca_pcmclient_env_procs;
+OMPI_COMP_EXPORT extern int mca_pcmclient_env_num_procs;
+OMPI_COMP_EXPORT extern int mca_pcmclient_env_procid;
+OMPI_COMP_EXPORT extern ompi_process_name_t *mca_pcmclient_env_procs;
 
 
 int 

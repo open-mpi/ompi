@@ -5,7 +5,7 @@
 #ifndef OMPI_THREAD_H
 #define OMPI_THREAD_H 1
 
-#ifdef __WINDOWS__
+#ifdef WIN32
 #include <windows.h>
 #elif OMPI_HAVE_POSIX_THREADS
 #ifdef HAVE_PTHREAD_H
@@ -24,7 +24,7 @@ typedef void *(*ompi_thread_fn_t) (ompi_object_t *);
 struct ompi_thread_t {
     ompi_object_t super;
     ompi_thread_fn_t t_run;
-#ifdef __WINDOWS__
+#ifdef WIN32
     HANDLE t_handle;
 #elif OMPI_HAVE_POSIX_THREADS
     pthread_t t_handle;
@@ -34,7 +34,7 @@ struct ompi_thread_t {
 typedef struct ompi_thread_t ompi_thread_t;
 
 
-OBJ_CLASS_DECLARATION(ompi_thread_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_thread_t);
 
 
 int  ompi_thread_start(ompi_thread_t *);

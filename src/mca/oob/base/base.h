@@ -10,7 +10,9 @@
 #define _MCA_OOB_BASE_H_
 #include "mca/mca.h"
 #include "mca/ns/ns.h"
-#include <sys/uio.h>
+#ifdef HAVE_SYS_UIO_H
+	#include <sys/uio.h>
+#endif
 #include "util/bufpack.h"
 
 
@@ -18,9 +20,9 @@
  * Well known address
  */
 
-extern ompi_process_name_t mca_oob_name_any;
-extern ompi_process_name_t mca_oob_name_seed;
-extern ompi_process_name_t mca_oob_name_self;
+OMPI_DECLSPEC extern ompi_process_name_t mca_oob_name_any;
+OMPI_DECLSPEC extern ompi_process_name_t mca_oob_name_seed;
+OMPI_DECLSPEC extern ompi_process_name_t mca_oob_name_self;
 
 /**
  * The wildcard for recieves from any peer.
@@ -92,7 +94,7 @@ extern "C" {
 *  an OOB module prior to calling this routine.
 */
 
-char* mca_oob_get_contact_info(void);
+OMPI_DECLSPEC char* mca_oob_get_contact_info(void);
 
 /**
 *  Pre-populate the cache of contact information required by the OOB 
@@ -104,7 +106,7 @@ char* mca_oob_get_contact_info(void);
 *
 */
 
-int mca_oob_set_contact_info(const char*);
+OMPI_DECLSPEC int mca_oob_set_contact_info(const char*);
 
 /**
  *  A routine to ping a given process name to determine if it is reachable. 
@@ -117,13 +119,13 @@ int mca_oob_set_contact_info(const char*);
  *  an error status is returned.
  */
 
-int mca_oob_ping(ompi_process_name_t* name, struct timeval* tv);
+OMPI_DECLSPEC int mca_oob_ping(ompi_process_name_t* name, struct timeval* tv);
 
 /**
  *  A barrier across all processes w/in the same job.
  */
 
-int mca_oob_barrier(void);
+OMPI_DECLSPEC int mca_oob_barrier(void);
 
 /**
 *  Extract from the contact info the peer process identifier.
@@ -137,7 +139,7 @@ int mca_oob_barrier(void);
 *  the process name.
 */
 
-int mca_oob_parse_contact_info(const char* uri, ompi_process_name_t* peer, char*** uris);
+OMPI_DECLSPEC int mca_oob_parse_contact_info(const char* uri, ompi_process_name_t* peer, char*** uris);
 
 
 /**
@@ -148,7 +150,7 @@ int mca_oob_parse_contact_info(const char* uri, ompi_process_name_t* peer, char*
  *  must currently be set before calling mca_oob_base_init().
  */
 
-int mca_oob_set_contact_info(const char*);
+OMPI_DECLSPEC int mca_oob_set_contact_info(const char*);
 
 /**
 *  Similiar to unix writev(2).
@@ -170,7 +172,7 @@ int mca_oob_set_contact_info(const char*);
 *  address.
 */
 
-int mca_oob_send(
+OMPI_DECLSPEC int mca_oob_send(
     ompi_process_name_t* peer, 
     struct iovec *msg, 
     int count, 
@@ -186,7 +188,7 @@ int mca_oob_send(
 * @return            OMPI error code (<0) on error or number of bytes actually sent.
 */
 
-int mca_oob_send_packed(
+OMPI_DECLSPEC int mca_oob_send_packed(
     ompi_process_name_t* peer, 
     ompi_buffer_t buffer, 
     int tag, 
@@ -222,7 +224,7 @@ int mca_oob_send_packed(
 *
 */
 
-int mca_oob_recv(
+OMPI_DECLSPEC int mca_oob_recv(
     ompi_process_name_t* peer, 
     struct iovec *msg, 
     int count, 
@@ -246,7 +248,7 @@ int mca_oob_recv(
 *
 */
 
-int mca_oob_recv_packed (
+OMPI_DECLSPEC int mca_oob_recv_packed (
 	ompi_process_name_t* peer, 
 	ompi_buffer_t *buf, 
 	int* tag);
@@ -312,7 +314,7 @@ typedef void (*mca_oob_callback_packed_fn_t)(
 *
 */
 
-int mca_oob_send_nb(
+OMPI_DECLSPEC int mca_oob_send_nb(
     ompi_process_name_t* peer, 
     struct iovec* msg, 
     int count, 
@@ -338,7 +340,7 @@ int mca_oob_send_nb(
 *
 */
 
-int mca_oob_send_packed_nb(
+OMPI_DECLSPEC int mca_oob_send_packed_nb(
     ompi_process_name_t* peer, 
     ompi_buffer_t buffer,
     int tag,
@@ -362,7 +364,7 @@ int mca_oob_send_packed_nb(
 * that matches the call parameters.
 */
 
-int mca_oob_recv_nb(
+OMPI_DECLSPEC int mca_oob_recv_nb(
     ompi_process_name_t* peer, 
     struct iovec* msg,  
     int count, 
@@ -379,7 +381,7 @@ int mca_oob_recv_nb(
 * @return             OMPI error code (<0) on error or number of bytes actually received.
 */
 
-int mca_oob_recv_cancel(
+OMPI_DECLSPEC int mca_oob_recv_cancel(
     ompi_process_name_t* peer, 
     int tag);
 
@@ -399,7 +401,7 @@ int mca_oob_recv_cancel(
 * that matches the call parameters.
 */
 
-int mca_oob_recv_packed_nb(
+OMPI_DECLSPEC int mca_oob_recv_packed_nb(
     ompi_process_name_t* peer, 
     int tag,
     int flags, 

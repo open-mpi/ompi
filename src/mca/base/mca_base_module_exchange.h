@@ -9,7 +9,9 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 
 #include "proc/proc.h"
 #include "mca/mca.h"
@@ -72,7 +74,7 @@ extern "C" {
    * in some format that peer processes will be able to read it,
    * regardless of pointer sizes or endian bias.
    */
-  int mca_base_modex_send(mca_base_component_t *source_component, 
+OMPI_DECLSPEC int mca_base_modex_send(mca_base_component_t *source_component, 
                           const void *buffer, size_t size);
 
   /**
@@ -108,24 +110,24 @@ extern "C" {
    * count).  See the explanation in mca_base_modex_send() for why the
    * number of bytes is split into two parts.
    */
-  int mca_base_modex_recv(mca_base_component_t *dest_component,
+OMPI_DECLSPEC int mca_base_modex_recv(mca_base_component_t *dest_component,
                           ompi_proc_t *source_proc,
                           void **buffer, size_t *size);
 
   /*
    * Called to subscribe to registry.
    */
-  int mca_base_modex_exchange(void);
+OMPI_DECLSPEC int mca_base_modex_exchange(void);
 
   /**
    *
    */
-  int mca_base_modex_init(void);
+OMPI_DECLSPEC int mca_base_modex_init(void);
 
   /**
    *
    */
-  int mca_base_modex_finalize(void);
+OMPI_DECLSPEC int mca_base_modex_finalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -22,7 +22,7 @@ struct ompi_condition_t {
 };
 typedef struct ompi_condition_t ompi_condition_t;
 
-OBJ_CLASS_DECLARATION(ompi_condition_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_condition_t);
 
 
 static inline int ompi_condition_wait(ompi_condition_t *c, ompi_mutex_t *m)

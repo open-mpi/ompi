@@ -8,7 +8,9 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 
 #include "mca/ns/ns.h"
 #include "runtime/runtime_types.h"

@@ -27,8 +27,8 @@ struct ompi_mpi_errcode_t {
 };
 typedef struct ompi_mpi_errcode_t ompi_mpi_errcode_t;
 
-extern ompi_pointer_array_t ompi_mpi_errcodes;
-extern int ompi_mpi_errcode_lastused;
+OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_errcodes;
+OMPI_DECLSPEC extern int ompi_mpi_errcode_lastused;
 
 /** 
  * Check for a valid error code

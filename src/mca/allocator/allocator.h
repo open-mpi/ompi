@@ -123,7 +123,7 @@ typedef struct mca_allocator_base_component_1_0_0_t mca_allocator_base_component
 /**
  * The output integer used for the mca base
  */
-extern int mca_allocator_base_output;
+OMPI_DECLSPEC extern int mca_allocator_base_output;
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

@@ -9,9 +9,12 @@
 
 #include "ompi_config.h"
 #include "mca/ptl/ptl.h"
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
-
+#endif
 
 #define MCA_PTL_HDR_TYPE_MATCH  0
 #define MCA_PTL_HDR_TYPE_FRAG   1

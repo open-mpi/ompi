@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-extern ompi_class_t mca_pml_teg_ptl_array_t_class;
+OMPI_DECLSPEC extern ompi_class_t mca_pml_teg_ptl_array_t_class;
 
 /**
  * A data structure associated with a ompi_proc_t that caches

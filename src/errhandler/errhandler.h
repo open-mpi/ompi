@@ -80,22 +80,22 @@ typedef struct ompi_errhandler_t ompi_errhandler_t;
 /**
  * Global variable for MPI_ERRHANDLER_NULL
  */
-extern ompi_errhandler_t ompi_mpi_errhandler_null;
+OMPI_DECLSPEC extern ompi_errhandler_t ompi_mpi_errhandler_null;
 
 /**
  * Global variable for MPI_ERRORS_ARE_FATAL
  */
-extern ompi_errhandler_t ompi_mpi_errors_are_fatal;
+OMPI_DECLSPEC extern ompi_errhandler_t ompi_mpi_errors_are_fatal;
 
 /**
  * Global variable for MPI_ERRORS_RETURN
  */
-extern ompi_errhandler_t ompi_mpi_errors_return;
+OMPI_DECLSPEC extern ompi_errhandler_t ompi_mpi_errors_return;
 
 /**
  * Table for Fortran <-> C errhandler handle conversion
  */
-extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
+OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
 
 
 /**

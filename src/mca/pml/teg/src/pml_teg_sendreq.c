@@ -2,10 +2,10 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
+#include "ompi_config.h"
 #include "include/constants.h"
 #include "mca/ptl/ptl.h"
 #include "pml_teg.h"

@@ -18,7 +18,7 @@ extern "C" {
 /*
  * Globally exported variable
  */
-extern const mca_llm_base_component_1_0_0_t mca_llm_hostfile_component;
+OMPI_COMP_EXPORT extern const mca_llm_base_component_1_0_0_t mca_llm_hostfile_component;
 
 /*
  * llm API functions

@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-extern ompi_class_t ompi_hash_table_t_class;
+OMPI_DECLSPEC extern ompi_class_t ompi_hash_table_t_class;
                            
 
 struct ompi_hash_table_t
@@ -50,7 +50,7 @@ typedef struct ompi_hash_table_t ompi_hash_table_t;
  *
  */
 
-int ompi_hash_table_init(ompi_hash_table_t* ht, size_t table_size);
+OMPI_DECLSPEC int ompi_hash_table_init(ompi_hash_table_t* ht, size_t table_size);
 
 
 /**
@@ -74,7 +74,7 @@ static inline size_t ompi_hash_table_get_size(ompi_hash_table_t *ht)
  *
  */
 
-int ompi_hash_table_remove_all(ompi_hash_table_t *ht);
+OMPI_DECLSPEC int ompi_hash_table_remove_all(ompi_hash_table_t *ht);
 
 /**
  *  Retrieve value via uint32_t key.
@@ -85,7 +85,7 @@ int ompi_hash_table_remove_all(ompi_hash_table_t *ht);
  *
  */
 
-void *ompi_hash_table_get_value_uint32(ompi_hash_table_t* table, uint32_t key);
+OMPI_DECLSPEC void *ompi_hash_table_get_value_uint32(ompi_hash_table_t* table, uint32_t key);
 
 /**
  *  Set value based on uint32_t key.
@@ -97,7 +97,7 @@ void *ompi_hash_table_get_value_uint32(ompi_hash_table_t* table, uint32_t key);
  *
  */
 
-int ompi_hash_table_set_value_uint32(ompi_hash_table_t* table, uint32_t key, void* value);
+OMPI_DECLSPEC int ompi_hash_table_set_value_uint32(ompi_hash_table_t* table, uint32_t key, void* value);
 
 /**
  *  Remove value based on uint32_t key.
@@ -108,7 +108,7 @@ int ompi_hash_table_set_value_uint32(ompi_hash_table_t* table, uint32_t key, voi
  *
  */
 
-int ompi_hash_table_remove_value_uint32(ompi_hash_table_t* table, uint32_t key);
+OMPI_DECLSPEC int ompi_hash_table_remove_value_uint32(ompi_hash_table_t* table, uint32_t key);
 
 /**
  *  Retrieve value via uint64_t key.
@@ -119,7 +119,7 @@ int ompi_hash_table_remove_value_uint32(ompi_hash_table_t* table, uint32_t key);
  *
  */
 
-void *ompi_hash_table_get_value_uint64(ompi_hash_table_t *table, uint64_t key);
+OMPI_DECLSPEC void *ompi_hash_table_get_value_uint64(ompi_hash_table_t *table, uint64_t key);
 
 /**
  *  Set value based on uint64_t key.
@@ -131,7 +131,7 @@ void *ompi_hash_table_get_value_uint64(ompi_hash_table_t *table, uint64_t key);
  *
  */
 
-int ompi_hash_table_set_value_uint64(ompi_hash_table_t *table, uint64_t key, void* value);
+OMPI_DECLSPEC int ompi_hash_table_set_value_uint64(ompi_hash_table_t *table, uint64_t key, void* value);
 
 /**
  *  Remove value based on uint64_t key.
@@ -142,7 +142,7 @@ int ompi_hash_table_set_value_uint64(ompi_hash_table_t *table, uint64_t key, voi
  *
  */
 
-int ompi_hash_table_remove_value_uint64(ompi_hash_table_t *table, uint64_t key);
+OMPI_DECLSPEC int ompi_hash_table_remove_value_uint64(ompi_hash_table_t *table, uint64_t key);
 
 /**
  *  Retrieve value via arbitrary length binary key.
@@ -153,7 +153,7 @@ int ompi_hash_table_remove_value_uint64(ompi_hash_table_t *table, uint64_t key);
  *
  */
 
-void *ompi_hash_table_get_value_ptr(ompi_hash_table_t *table, const void* key, size_t keylen);
+OMPI_DECLSPEC void *ompi_hash_table_get_value_ptr(ompi_hash_table_t *table, const void* key, size_t keylen);
 
 /**
  *  Set value based on arbitrary length binary key.
@@ -165,7 +165,7 @@ void *ompi_hash_table_get_value_ptr(ompi_hash_table_t *table, const void* key, s
  *
  */
 
-int ompi_hash_table_set_value_ptr(ompi_hash_table_t *table, const void* key, size_t keylen, void* value);
+OMPI_DECLSPEC int ompi_hash_table_set_value_ptr(ompi_hash_table_t *table, const void* key, size_t keylen, void* value);
 
 /**
  *  Remove value based on arbitrary length binary key.
@@ -176,7 +176,7 @@ int ompi_hash_table_set_value_ptr(ompi_hash_table_t *table, const void* key, siz
  *
  */
 
-int ompi_hash_table_remove_value_ptr(ompi_hash_table_t *table, const void* key, size_t keylen);
+OMPI_DECLSPEC int ompi_hash_table_remove_value_ptr(ompi_hash_table_t *table, const void* key, size_t keylen);
 
 
 /** The following functions are only for allowing iterating through
@@ -201,7 +201,7 @@ int ompi_hash_table_remove_value_ptr(ompi_hash_table_t *table, const void* key, 
  *
  */
 
-int ompi_hash_table_get_first_key_uint32(ompi_hash_table_t *table, uint32_t *key,
+OMPI_DECLSPEC int ompi_hash_table_get_first_key_uint32(ompi_hash_table_t *table, uint32_t *key,
 					void **value, void **node);
 
 
@@ -219,7 +219,7 @@ int ompi_hash_table_get_first_key_uint32(ompi_hash_table_t *table, uint32_t *key
  *
  */
 
-int ompi_hash_table_get_next_key_uint32(ompi_hash_table_t *table, uint32_t *key,
+OMPI_DECLSPEC int ompi_hash_table_get_next_key_uint32(ompi_hash_table_t *table, uint32_t *key,
 				       void **value, void *in_node,
 				       void **out_node);
 
@@ -237,7 +237,7 @@ int ompi_hash_table_get_next_key_uint32(ompi_hash_table_t *table, uint32_t *key,
  *
  */
 
-int ompi_hash_table_get_first_key_uint64(ompi_hash_table_t *table, uint64_t *key,
+OMPI_DECLSPEC int ompi_hash_table_get_first_key_uint64(ompi_hash_table_t *table, uint64_t *key,
 				       void **value, void **node);
 
 
@@ -255,7 +255,7 @@ int ompi_hash_table_get_first_key_uint64(ompi_hash_table_t *table, uint64_t *key
  *
  */
     
-int ompi_hash_table_get_next_key_uint64(ompi_hash_table_t *table, uint64_t *key,
+OMPI_DECLSPEC int ompi_hash_table_get_next_key_uint64(ompi_hash_table_t *table, uint64_t *key,
 				       void **value, void *in_node,
 				       void **out_node);
 

@@ -4,6 +4,7 @@
 
 #ifndef OMPI_FEW_H
 #define OMPI_FEW_H
+#include "ompi_config.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -38,7 +39,7 @@ extern "C" {
  *          safe in a multi-threaded environment in which a handler
  *          for \c SIGCHLD has been registered.
  */
-int ompi_few(char *argv[], int *status);
+OMPI_DECLSPEC int ompi_few(char *argv[], int *status);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

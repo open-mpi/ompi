@@ -3,8 +3,8 @@
  */
 /** @file **/
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -35,17 +35,17 @@ int ompi_vm_register(void)
 
     if (OMPI_SUCCESS != ompi_pack_string(buffer, ompi_system_info.nodename)) {
 	ret_code = OMPI_ERROR;
-	goto ERROR;
+	goto error;
     }
 
     if (OMPI_SUCCESS != ompi_pack(buffer, ompi_rte_get_self(), 1, OMPI_NAME)) {
 	ret_code = OMPI_ERROR;
-	goto ERROR;
+	goto error;
     }
 
     if (OMPI_SUCCESS != ompi_pack_string(buffer, mca_oob_get_contact_info())) {
 	ret_code = OMPI_ERROR;
-	goto ERROR;
+	goto error;
     }
 
     if (0 == strncmp(ompi_system_info.sysname, "Darwin", strlen("Darwin"))) {
@@ -59,7 +59,7 @@ int ompi_vm_register(void)
 
     if (OMPI_SUCCESS != ompi_pack(buffer, &num, 1, OMPI_INT32)) {
 	ret_code = OMPI_ERROR;
-	goto ERROR;
+	goto error;
     }
 
     keys[0] = ompi_name_server.get_proc_name_string(ompi_rte_get_self());
@@ -67,7 +67,7 @@ int ompi_vm_register(void)
 
     ret_code = ompi_registry.put(OMPI_REGISTRY_XAND, "ompi-vm", keys, buffer, sizeof(buffer));
 
- ERROR:
+ error:
     ompi_buffer_free(buffer);
     return ret_code;
 }

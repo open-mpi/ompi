@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/llm/llm.h"
@@ -18,7 +18,11 @@
  * module's public mca_base_module_t struct.
  */
 
+#ifdef WIN32
+    const mca_base_component_t *mca_llm_base_static_components[] = {NULL};
+#else 
 #include "mca/llm/base/static-components.h"
+#endif
 
 /*
  * Global variables

@@ -30,19 +30,19 @@ OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
  * Global functions for MCA: overall mpool open and close
  */
 
-  int mca_mpool_base_open(void);
-  int mca_mpool_base_init(bool *allow_multi_user_threads);
-  int mca_mpool_base_close(void);
-  mca_mpool_base_component_t* mca_mpool_component_lookup(const char* name);
-  mca_mpool_base_module_t* mca_mpool_module_lookup(const char* name);
+OMPI_DECLSPEC int mca_mpool_base_open(void);
+OMPI_DECLSPEC int mca_mpool_base_init(bool *allow_multi_user_threads);
+OMPI_DECLSPEC int mca_mpool_base_close(void);
+OMPI_DECLSPEC mca_mpool_base_component_t* mca_mpool_component_lookup(const char* name);
+OMPI_DECLSPEC mca_mpool_base_module_t* mca_mpool_module_lookup(const char* name);
 
 
 /*
  * Globals
  */
-extern int mca_mpool_base_output;
-extern ompi_list_t mca_mpool_base_components;
-extern ompi_list_t mca_mpool_base_modules;
+OMPI_DECLSPEC extern int mca_mpool_base_output;
+OMPI_DECLSPEC extern ompi_list_t mca_mpool_base_components;
+OMPI_DECLSPEC extern ompi_list_t mca_mpool_base_modules;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

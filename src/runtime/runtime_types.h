@@ -44,7 +44,7 @@ struct ompi_rte_spawn_handle_t {
 /** shorten ompi_rte_spawn_handle_t declarations */
 typedef struct ompi_rte_spawn_handle_t ompi_rte_spawn_handle_t;
 /** create the required instance information */
-OBJ_CLASS_DECLARATION(ompi_rte_spawn_handle_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_rte_spawn_handle_t);
 
 
 /**
@@ -86,7 +86,7 @@ struct ompi_rte_node_schedule_t {
 /** shorten ompi_rte_node_schedule_t declarations */
 typedef struct ompi_rte_node_schedule_t ompi_rte_node_schedule_t;
 /** create the required instance information */
-OBJ_CLASS_DECLARATION(ompi_rte_node_schedule_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_rte_node_schedule_t);
 
 
 /**
@@ -102,7 +102,7 @@ struct ompi_rte_node_allocation_data_t {
 /** shorten ompi_rte_node_allocation_data_t declarations */
 typedef struct ompi_rte_node_allocation_data_t ompi_rte_node_allocation_data_t;
 /** create the required instance information */
-OBJ_CLASS_DECLARATION(ompi_rte_node_allocation_data_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_rte_node_allocation_data_t);
 
 
 /**
@@ -146,7 +146,7 @@ struct ompi_rte_node_allocation_t {
 /** shorten ompi_rte_allocation_t declarations */
 typedef struct ompi_rte_node_allocation_t ompi_rte_node_allocation_t;
 /** create the required instance information */
-OBJ_CLASS_DECLARATION(ompi_rte_node_allocation_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_rte_node_allocation_t);
 
 
 /**
@@ -168,7 +168,7 @@ struct ompi_rte_valuepair_t {
 /** shorten ompi_rte_valuepair_t declarations */
 typedef struct ompi_rte_valuepair_t ompi_rte_valuepair_t;
 /** create the required instance information */
-OBJ_CLASS_DECLARATION(ompi_rte_valuepair_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_rte_valuepair_t);
 
 
 /**

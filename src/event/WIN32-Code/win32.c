@@ -25,6 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "ompi_config.h"
 #include "config.h"
 
 #include <windows.h>
@@ -50,12 +51,14 @@
 #define log_error(x)	perror(x)
 #endif
 
-#include "event.h"
+#include "event/event.h"
+#include "event/compat/sys/queue.h"
+#include "event/compat/err.h"
 
-extern struct event_list timequeue;
-extern struct event_list eventqueue;
-extern struct event_list addqueue;
-extern struct event_list signalqueue;
+extern struct ompi_event_list ompi_timequeue;
+extern struct ompi_event_list ompi_eventqueue;
+extern struct ompi_event_list ompi_addqueue;
+extern struct ompi_event_list ompi_signalqueue;
 
 #define NEVENT		64
 
@@ -69,12 +72,12 @@ void signal_process(void);
 int signal_recalc(void);
 
 void *win32_init	(void);
-int win32_insert	(void *, struct event *);
-int win32_del	(void *, struct event *);
+int win32_insert	(void *, struct ompi_event *);
+int win32_del	(void *, struct ompi_event *);
 int win32_recalc	(void *, int);
 int win32_dispatch	(void *, struct timeval *);
 
-struct eventop win32ops = {
+struct ompi_eventop ompi_win32ops = {
 	"win32",
 	win32_init,
 	win32_insert,
@@ -91,7 +94,7 @@ static int timeval_to_ms(struct timeval *tv)
 void *
 win32_init(void)
 {
-	return (&win32ops);
+	return (&ompi_win32ops);
 }
 
 int
@@ -101,13 +104,13 @@ win32_recalc(void *arg, int max)
 }
 
 int
-win32_insert(struct win32op *wop, struct event *ev)
+win32_insert(struct win32op *wop, struct ompi_event *ev)
 {
-	if (ev->ev_events & EV_SIGNAL) {
-		if (ev->ev_events & (EV_READ|EV_WRITE))
-			errx(1, "%s: EV_SIGNAL incompatible use",
-			    __func__);
-		if((int)signal(EVENT_SIGNAL(ev), signal_handler) == -1)
+	if (ev->ev_events & OMPI_EV_SIGNAL) {
+		if (ev->ev_events & (OMPI_EV_READ|OMPI_EV_WRITE))
+			errx(1, "%s: OMPI_EV_SIGNAL incompatible use",
+			    __FUNCTION__);
+		if((int)signal(OMPI_EVENT_SIGNAL(ev), signal_handler) == -1)
 			return (-1);
 
 		return (0);
@@ -121,10 +124,10 @@ win32_dispatch(void *arg, struct timeval *tv)
 {
 	int res = 0;
 	struct win32op *wop = arg;
-	struct event *ev;
+	struct ompi_event *ev;
 	int evres;
 
-	TAILQ_FOREACH(ev, &eventqueue, ev_next) {
+	TAILQ_FOREACH(ev, &ompi_eventqueue, ev_next) {
 		res = WaitForSingleObject(ev->ev_fd, timeval_to_ms(tv));
 
 		if(res == WAIT_TIMEOUT || res == WAIT_FAILED) {
@@ -134,15 +137,15 @@ win32_dispatch(void *arg, struct timeval *tv)
 			signal_process();
 
 		evres = 0;
-		if(ev->ev_events & EV_READ)
-			evres |= EV_READ;
+		if(ev->ev_events & OMPI_EV_READ)
+			evres |= OMPI_EV_READ;
 
-		if(ev->ev_events & EV_WRITE)
-			evres |= EV_WRITE;
+		if(ev->ev_events & OMPI_EV_WRITE)
+			evres |= OMPI_EV_WRITE;
 		if(evres) {
-			if(!(ev->ev_events & EV_PERSIST))
-				event_del(ev);
-			event_active(ev, evres, 1);
+			if(!(ev->ev_events & OMPI_EV_PERSIST))
+				ompi_event_del(ev);
+			ompi_event_active(ev, evres, 1);
 		}
 	}
 
@@ -153,9 +156,9 @@ win32_dispatch(void *arg, struct timeval *tv)
 }
 
 int
-win32_del(struct win32op *arg, struct event *ev)
+win32_del(struct win32op *arg, struct ompi_event *ev)
 {
-	return ((int)signal(EVENT_SIGNAL(ev), SIG_IGN));
+	return ((int)signal(OMPI_EVENT_SIGNAL(ev), SIG_IGN));
 }
 
 static int signal_handler(int sig)
@@ -169,11 +172,11 @@ static int signal_handler(int sig)
 int
 signal_recalc(void)
 {
-	struct event *ev;
+	struct ompi_event *ev;
 
 	/* Reinstall our signal handler. */
-	TAILQ_FOREACH(ev, &signalqueue, ev_signal_next) {
-		if((int)signal(EVENT_SIGNAL(ev), signal_handler) == -1)
+	TAILQ_FOREACH(ev, &ompi_signalqueue, ev_signal_next) {
+		if((int)signal(OMPI_EVENT_SIGNAL(ev), signal_handler) == -1)
 			return (-1);
 	}
 	return (0);
@@ -182,15 +185,15 @@ signal_recalc(void)
 void
 signal_process(void)
 {
-	struct event *ev;
+	struct ompi_event *ev;
 	short ncalls;
 
-	TAILQ_FOREACH(ev, &signalqueue, ev_signal_next) {
-		ncalls = evsigcaught[EVENT_SIGNAL(ev)];
+	TAILQ_FOREACH(ev, &ompi_signalqueue, ev_signal_next) {
+		ncalls = evsigcaught[OMPI_EVENT_SIGNAL(ev)];
 		if (ncalls) {
-			if (!(ev->ev_events & EV_PERSIST))
-				event_del(ev);
-			event_active(ev, EV_SIGNAL, ncalls);
+			if (!(ev->ev_events & OMPI_EV_PERSIST))
+				ompi_event_del(ev);
+			ompi_event_active(ev, OMPI_EV_SIGNAL, ncalls);
 		}
 	}
 

@@ -2,9 +2,11 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
 
+#include "ompi_config.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "class/ompi_list.h"
 #include "runtime/runtime.h"

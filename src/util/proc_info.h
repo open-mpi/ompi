@@ -9,7 +9,10 @@
  *
  */
 
+#ifndef OMPI_PROC_INFO_H
+#define OMPI_PROC_INFO_H
 
+#include "ompi_config.h"
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -71,7 +74,7 @@ typedef struct ompi_proc_info_t ompi_proc_info_t;
  * which will be initialized to \c false, but should be set to \c true
  * before calling \c ompi_rte_info() if the caller is a seed daemon.
  */
-extern ompi_proc_info_t ompi_process_info;
+OMPI_DECLSPEC extern ompi_proc_info_t ompi_process_info;
 
 
 /**
@@ -88,8 +91,10 @@ extern ompi_proc_info_t ompi_process_info;
  * @retval OMPI_ERROR Failed to initialize one or more fields.
  */
 
-int ompi_proc_info(void);
+OMPI_DECLSPEC int ompi_proc_info(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
+#endif
+
 #endif

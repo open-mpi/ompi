@@ -31,7 +31,7 @@ struct mca_pml_proc_t {
 typedef struct mca_pml_proc_t mca_pml_proc_t;
 
 
-extern ompi_class_t mca_pml_teg_proc_t_class;
+OMPI_COMP_EXPORT extern ompi_class_t mca_pml_teg_proc_t_class;
 typedef struct mca_pml_proc_t mca_pml_teg_proc_t;
 
 /**

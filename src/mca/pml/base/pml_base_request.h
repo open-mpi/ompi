@@ -16,7 +16,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-extern ompi_class_t mca_pml_base_request_t_class;
+OMPI_DECLSPEC extern ompi_class_t mca_pml_base_request_t_class;
 
 /**
  * Type of request.

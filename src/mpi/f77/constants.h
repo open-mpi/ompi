@@ -68,10 +68,10 @@ typedef struct { double bogus[2]; } ompi_fortran_common_t;
  */
 
 #define DECL(upper_case, lower_case, single_u, double_u) \
-extern ompi_fortran_common_t upper_case; \
-extern ompi_fortran_common_t lower_case; \
-extern ompi_fortran_common_t single_u; \
-extern ompi_fortran_common_t double_u
+OMPI_DECLSPEC extern ompi_fortran_common_t upper_case; \
+OMPI_DECLSPEC extern ompi_fortran_common_t lower_case; \
+OMPI_DECLSPEC extern ompi_fortran_common_t single_u; \
+OMPI_DECLSPEC extern ompi_fortran_common_t double_u
 
 DECL(MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
      mpi_fortran_bottom_, mpi_fortran_bottom__);
