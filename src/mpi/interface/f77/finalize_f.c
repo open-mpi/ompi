@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "mpi/f77/bindings.h"
+#include "mpi/interface/f77/bindings.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS
 #pragma weak MPI_FINALIZE = mpi_finalize_f
