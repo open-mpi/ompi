@@ -1,7 +1,7 @@
 Overview
 ========
 
-This file is here for those who are building/exploring OMPI/MPI in its
+This file is here for those who are building/exploring OMPI in its
 source code form, most likely through a developer's tree (i.e., a SVN
 checkout).
 
@@ -12,8 +12,8 @@ Use of GNU Autoconf, Automake, and Libtool
 If you are building OMPI/MPI from a developer's tree, you must first
 use fairly recent versions of the GNU tools Autoconf, Automake, and
 Libtool.  As of this writing, you need at least Autoconf v2.58,
-Automake v1.7(or better), and Libtool 1.5.  You can check what versions you have
-installed with the following:
+Automake v1.7 (or better), and Libtool v1.5.  You can check what
+versions you have installed with the following:
 
 shell$ autoconf --version
 shell$ automake --version
@@ -22,8 +22,8 @@ shell$ libtool --version
 If you need newer versions, you are *strongly* encouraged to heed the
 following advice:
 
-*NOTE: MacOS/X libtool is broken.  
-*Download and install the GNU Version. 
+NOTE: On MacOS/X, the default "libtool" program is different than the
+      GNU libtool.  You must download and install the GNU version.
 
 1. Unless your OS distribution has easy-to-use binary installations,
    the sources can be can be downloaded from:
@@ -86,7 +86,7 @@ following advice:
    will invoke the GNU Autoconf, Automake, and Libtool commands in the
    proper order and setup to run OMPI's top-level "configure" script.
 
-   Running autogen.sh typically takes several minutes.  It's not very
+   Running autogen.sh may take several minutes.  It's not very
    exciting to watch.  :-)
 
    5a. You generally need to run autogen.sh whenever the file
@@ -117,5 +117,5 @@ following advice:
        in a since MCA module directory, cd into that module's
        directory and run autogen.sh in there directly.
 
-          shell$ cd src/mca/mpi/pml/teg
-          shell$ ../../../../../autogen.sh
+          shell$ cd src/mca/pml/teg
+          shell$ ../../../../autogen.sh
