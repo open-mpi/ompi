@@ -97,9 +97,6 @@ int mca_ns_proxy_close(void)
 
 mca_ns_base_module_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
-    int index, error_code;
-    char *my_replica_string;
-
     /* If we're NOT the seed, then we want to be selected, so do all
        the setup and return the module */
     /*    ompi_output(mca_ns_base_output, "ns_proxy: entered init\n"); */
@@ -118,21 +115,10 @@ mca_ns_base_module_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *ha
 	*have_hidden_threads = false;
 
 	/* define the replica for us to use */
-	/* register the mca parameter containing my replica's contact info */
-	index = mca_base_param_register_string("NS", "PROXY", "REPLICA", NULL, NULL);
-
-	error_code = mca_base_param_lookup_string(index, &my_replica_string);
-	if (OMPI_ERROR == error_code) {  /* can't lookup mca parameter for some reason - can't operate */
+	/* default to seed for now */
+	mca_ns_my_replica = mca_ns_proxy.create_process_name(0,0,0);
+	if (NULL == mca_ns_my_replica) {  /* couldn't create process name - can't operate */
 	    return NULL;
-	}
-
-	mca_ns_my_replica = mca_ns_proxy.convert_string_to_process_name(my_replica_string);
-	if(NULL == mca_ns_my_replica) {
-	    /* couldn't convert string to name - probably parameter not set - use seed as default */
-	    mca_ns_my_replica = mca_ns_proxy.create_process_name(0,0,0);
-	    if (NULL == mca_ns_my_replica) {  /* couldn't create process name - can't operate */
-		return NULL;
-	    }
 	}
 
 	/* Return the module */
