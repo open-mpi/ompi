@@ -185,4 +185,8 @@ ompi_list_t* gpr_replica_get(ompi_registry_mode_t mode,
 			     char *segment, char **tokens);
 ompi_list_t* gpr_replica_test_internals(int level);
 
+void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
+			  ompi_buffer_t buffer, int tag,
+			  void* cbdata);
+
 #endif

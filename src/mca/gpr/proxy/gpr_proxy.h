@@ -53,8 +53,8 @@ int gpr_proxy_put(ompi_registry_mode_t mode, char *segment,
 /*
  * Implementation of delete()
  */
-int gpr_proxy_delete(ompi_registry_mode_t mode,
-		     char *segment, char **tokens);
+int gpr_proxy_delete_object(ompi_registry_mode_t mode,
+			    char *segment, char **tokens);
 
 /*
  * Implementation of index()

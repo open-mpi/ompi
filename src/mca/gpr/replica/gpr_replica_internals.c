@@ -135,14 +135,14 @@ ompi_list_t *gpr_replica_get_key_list(char *segment, char **tokens)
     return keys;
 }
 
-mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
+int gpr_replica_define_key(char *segment, char *token)
 {
     mca_gpr_registry_segment_t *seg;
     mca_gpr_keytable_t *ptr_seg, *ptr_key, *new;
 
     /* protect against errors */
     if (NULL == segment) {
-	return MCA_GPR_REPLICA_KEY_MAX;
+	return OMPI_ERROR;
     }
 
     /* if token is NULL, then this is defining a segment name. Check dictionary to ensure uniqueness */
@@ -151,7 +151,7 @@ mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 	     ptr_seg != (mca_gpr_keytable_t*)ompi_list_get_end(&mca_gpr_replica_head.segment_dict);
 	     ptr_seg = (mca_gpr_keytable_t*)ompi_list_get_next(ptr_seg)) {
 	    if (0 == strcmp(segment, ptr_seg->token)) {
-		return MCA_GPR_REPLICA_KEY_MAX;
+		return OMPI_EXISTS;
 	    }
 	}
 
@@ -163,14 +163,14 @@ mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 	    mca_gpr_replica_head.lastkey++;
 	    new->key = mca_gpr_replica_head.lastkey;
 	    } else {  /* out of keys */
-		return MCA_GPR_REPLICA_KEY_MAX;
+		return OMPI_ERR_OUT_OF_RESOURCE;
 	    }
 	} else {
 	    ptr_key = (mca_gpr_keytable_t*)ompi_list_remove_first(&mca_gpr_replica_head.freekeys);
 	    new->key = ptr_key->key;
 	}
 	ompi_list_append(&mca_gpr_replica_head.segment_dict, &new->item);
-	return(new->key);
+	return OMPI_SUCCESS;
     }
 
     /* okay, token is specified */
@@ -182,7 +182,7 @@ mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 	     ptr_key != (mca_gpr_keytable_t*)ompi_list_get_end(&seg->keytable);
 	     ptr_key = (mca_gpr_keytable_t*)ompi_list_get_next(ptr_key)) {
 	    if (0 == strcmp(token, ptr_key->token)) {
-		return MCA_GPR_REPLICA_KEY_MAX; /* already taken, report error */
+		return OMPI_EXISTS; /* already taken, report error */
 	    }
 	}
 	/* okay, token is unique - create dictionary entry */
@@ -196,10 +196,10 @@ mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token)
 	    new->key = ptr_key->key;
 	}
 	ompi_list_append(&seg->keytable, &new->item);
-	return(new->key);
+	return OMPI_SUCCESS;
     }
     /* couldn't find segment */
-    return MCA_GPR_REPLICA_KEY_MAX;
+    return OMPI_ERROR;
 }
 
 int gpr_replica_delete_key(char *segment, char *token)
