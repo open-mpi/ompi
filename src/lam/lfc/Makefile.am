@@ -10,6 +10,7 @@ noinst_LTLIBRARIES = liblfc.la
 # Source code files
 
 headers = \
+	lam_bitmap.h \
 	lam_hash_table.h \
 	lam_list.h \
 	lam_object.h \
@@ -22,6 +23,7 @@ liblfc_la_SOURCES = \
 	lam_list.c \
 	lam_object.c \
 	lam_pointer_array.c \
+	lam_bitmap.c \
 	lam_value_array.c 
 
 # Conditionally install the header files
