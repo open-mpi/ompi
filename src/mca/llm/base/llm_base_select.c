@@ -13,6 +13,11 @@
 #include "mca/llm/base/base.h"
 
 
+/**
+ * Container for list of components opened
+ *
+ * \internal
+ */
 typedef struct opened_component_t {
   ompi_list_item_t super;
   mca_llm_base_component_t *oc_component;

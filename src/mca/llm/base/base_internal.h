@@ -47,6 +47,8 @@ extern "C" {
 }
 #endif
 
+/**
+ * Mutex wrapping the \code mca_llm_base_parse_hostfile function.
 extern ompi_mutex_t mca_llm_base_parse_mutex;
 
 #endif
