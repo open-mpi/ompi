@@ -110,46 +110,44 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
 /**
  * Start a send request. 
  */
-static inline int mca_pml_teg_send_request_start(
-    mca_pml_base_send_request_t* req)
-{
-    mca_ptl_base_module_t* ptl = req->req_ptl;
-    size_t first_fragment_size = ptl->ptl_first_frag_size;
-    int flags, rc;
-
-    /* init/reinit request - do this here instead of init 
-     * as a persistent request may be reused, and there is
-     * no additional cost
-    */
-    req->req_offset = 0;
-    req->req_bytes_sent = 0;
-    req->req_peer_match.lval = 0;
-    req->req_peer_addr.lval = 0;
-    req->req_peer_size = 0;
-    req->req_base.req_pml_complete = false;
-    req->req_base.req_ompi.req_complete = false;
-    req->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;
-    req->req_base.req_sequence = mca_pml_ptl_comm_send_sequence(
-        req->req_base.req_comm->c_pml_comm, req->req_base.req_peer);
- 
-    /* handle buffered send */
-    if(req->req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
-        mca_pml_base_bsend_request_start(&req->req_base.req_ompi);
-    }
-
-    /* start the first fragment */
-    if(first_fragment_size == 0 || req->req_bytes_packed <= first_fragment_size) {
-        first_fragment_size = req->req_bytes_packed;
-        flags = (req->req_send_mode == MCA_PML_BASE_SEND_SYNCHRONOUS) ?
-        MCA_PTL_FLAGS_ACK : 0;
-    } else {
-        /* require match for first fragment of a multi-fragment */
-        flags = MCA_PTL_FLAGS_ACK;
-    }
-    rc = ptl->ptl_send(ptl, req->req_peer, req, 0, first_fragment_size, flags);
-    if(rc != OMPI_SUCCESS)
-        return rc;
-    return OMPI_SUCCESS;
+#define MCA_PML_TEG_SEND_REQUEST_START(req, rc)                            \
+{                                                                          \
+    mca_ptl_base_module_t* ptl = req->req_ptl;                             \
+    size_t first_fragment_size = ptl->ptl_first_frag_size;                 \
+    int flags;                                                             \
+                                                                           \
+    /* init/reinit request - do this here instead of init                  \
+     * as a persistent request may be reused, and there is                 \
+     * no additional cost                                                  \
+    */                                                                     \
+    req->req_offset = 0;                                                   \
+    req->req_bytes_sent = 0;                                               \
+    req->req_peer_match.lval = 0;                                          \
+    req->req_peer_addr.lval = 0;                                           \
+    req->req_peer_size = 0;                                                \
+    req->req_base.req_pml_complete = false;                                \
+    req->req_base.req_ompi.req_complete = false;                           \
+    req->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                \
+    req->req_base.req_sequence = mca_pml_ptl_comm_send_sequence(           \
+        req->req_base.req_comm->c_pml_comm, req->req_base.req_peer);       \
+                                                                           \
+    /* handle buffered send */                                             \
+    if(req->req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {                 \
+        mca_pml_base_bsend_request_start(&req->req_base.req_ompi);         \
+    }                                                                      \
+                                                                           \
+    /* start the first fragment */                                         \
+    if (first_fragment_size == 0 ||                                        \
+        req->req_bytes_packed <= first_fragment_size) {                    \
+        first_fragment_size = req->req_bytes_packed;                       \
+        flags = (req->req_send_mode == MCA_PML_BASE_SEND_SYNCHRONOUS) ?    \
+        MCA_PTL_FLAGS_ACK : 0;                                             \
+    } else {                                                               \
+        /* require match for first fragment of a multi-fragment */         \
+        flags = MCA_PTL_FLAGS_ACK;                                         \
+    }                                                                      \
+    rc = ptl->ptl_send(ptl, req->req_peer, req, 0, first_fragment_size,    \
+        flags);                                                            \
 }
 
 

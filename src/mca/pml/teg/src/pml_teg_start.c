@@ -90,7 +90,8 @@ int mca_pml_teg_start(size_t count, ompi_request_t** requests)
             case MCA_PML_REQUEST_SEND: 
             {
                 mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)pml_request;
-                if((rc = mca_pml_teg_send_request_start(sendreq)) != OMPI_SUCCESS)
+                MCA_PML_TEG_SEND_REQUEST_START(sendreq, rc);
+                if(rc != OMPI_SUCCESS)
                     return rc;
                 break;
             }
