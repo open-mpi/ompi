@@ -1,13 +1,8 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2003 The Trustees of Indiana University.  
-#                    All rights reserved.
-# 
-# This file is part of the LAM software package.  For license
-# information, see the LICENSE file in the top level directory of the
-# LAM source distribution.
+# $HEADER$
 #
-# $Id: configure.ac,v 1.5 2003/12/28 15:12:06 jsquyres Exp $
+# $Id: configure.ac,v 1.6 2004/01/07 07:49:23 jsquyres Exp $
 #
 
 
@@ -107,16 +102,8 @@ AC_CANONICAL_HOST
 # Configuration options
 ############################################################################
 
-# --enable-purify
-# --enable-dist
-# --disable-profile
-# --disable-f77
-# ...?
+LAM_CONFIGURE_OPTIONS
 
-# amorphous, seem-to-be-good-idea options
-# --with-lam=maintainer_options
-# --with-ssi-*
-# ...?
 
 ############################################################################
 # Libtool: part one
@@ -146,9 +133,7 @@ AM_ENABLE_STATIC
 # C compiler characteristics
 ##################################
 
-cflags_save="$CFLAGS"
-AC_PROG_CC
-CFLAGS="$cflags_save"
+LAM_SETUP_CC
 
 # force ANSI prototypes
 # check for STDC
@@ -156,16 +141,16 @@ CFLAGS="$cflags_save"
 # check for type sizes
 # check for type alignments
 # check for c99 features
+
 AC_C_INLINE
 AX_CREATE_STDINT_H([src/include/lam_stdint.h])
+
 
 ##################################
 # C++ compiler characteristics
 ##################################
 
-cxx_flags_save="$CXXFLAGS"
-AC_PROG_CXX
-CXXFLAGS="$cxx_flags_save"
+LAM_SETUP_CXX
 
 # check for STL
 # check for bool (and corresponding C type)
@@ -174,11 +159,12 @@ CXXFLAGS="$cxx_flags_save"
 # check for type alignments
 # check for template repository
 
+
 ##################################
 # Fortran
 ##################################
 
-if test "$with_f77" != "yes"; then
+if test "$with_fortran" != "yes"; then
     lam_show_subtitle "Fortran Compiler -- skipped" 
     LAM_WANT_FORTRAN=1
 else
@@ -305,7 +291,7 @@ AC_CONFIG_FILES([
     src/include/Makefile
 
     src/lam/Makefile
-    src/lam/base/Makefile
+    src/lam/lfc/Makefile
     src/lam/mem/Makefile
     src/lam/os/Makefile
     src/lam/threads/Makefile
@@ -321,8 +307,6 @@ AC_CONFIG_FILES([
 
     src/tools/Makefile
     src/tools/wrappers/Makefile
-
-    doc/Makefile
 
     test/Makefile
     test/unit/Makefile
