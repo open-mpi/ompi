@@ -26,7 +26,7 @@
 #include "orte_config.h"
 
 #include "include/orte_types.h"
-
+#include "util/output.h"
 #include "dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/rml/rml.h"

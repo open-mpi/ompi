@@ -20,7 +20,7 @@
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
-
+#include "util/output.h"
 #include "mca/ras/base/base.h"
 
 

@@ -18,7 +18,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-
+#include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/rmgr/base/base.h"
