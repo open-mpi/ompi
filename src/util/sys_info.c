@@ -13,34 +13,23 @@
 
 #include "include/constants.h"
 #include "util/sys_info.h"
-#include "util/os_session_dir.h"
-#include "util/cmd_line.h"
-#include "util/common_cmd_line.h"
 
 ompi_sys_info_t ompi_system_info = {
-                 /* .init =        */     false,
-		 /* .pid =         */     0,
-                 /* .sysname =     */     NULL,
-	         /* .nodename =    */     NULL,
-                 /* .release =     */     NULL,
-                 /* .version =     */     NULL,
-                 /* .machine =     */     NULL,
-                 /* .path_sep =    */     NULL,
-                 /* .user =        */     NULL,
-                 /* .session_dir = */     NULL,
-                 /* .enviro =      */     NULL,
-                 /* .suffix =      */     NULL,
-                 /* .sock_stdin =  */     NULL,
-                 /* .sock_stdout = */     NULL,
-                 /* .sock_stderr = */     NULL};
-
+                 /* .init =        */            false,
+                 /* .sysname =     */            NULL,
+	         /* .nodename =    */            NULL,
+                 /* .release =     */            NULL,
+                 /* .version =     */            NULL,
+                 /* .machine =     */            NULL,
+                 /* .path_sep =    */            NULL,
+                 /* .user =        */            NULL,
+                 /* .enviro =      */            NULL,
+                 /* .suffix =      */            NULL};
 
 int ompi_sys_info(void)
 {
     struct utsname sys_info;
     char *path_name, sep[2];
-    char *universe = NULL;
-    char *tmpdir = NULL;
     struct passwd *pwdent;
 
     if (ompi_system_info.init) {
@@ -95,33 +84,8 @@ int ompi_sys_info(void)
 	ompi_system_info.user = strdup("unknown");
     }
 
-    /* get the process id */
-    ompi_system_info.pid = getpid();
-
-    /* set the init flag so that session_dir_init knows not to come back here */
+    /* set the init flag */
     ompi_system_info.init = true;  /* only indicates that we have been through here once - still have to test for NULL values */
-
-    /* see if user specified universe name */
-    if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "universe")) {
-	if (NULL == ompi_cmd_line_get_param(ompi_common_cmd_line, "universe", 0, 0)) {
-	    return(OMPI_ERROR);
-	}
-	universe = strdup(ompi_cmd_line_get_param(ompi_common_cmd_line, "universe", 0, 0));
-    }
-
-    /* see if user specified session directory prefix */
-    if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "tmpdir")) {
-	if (NULL == ompi_cmd_line_get_param(ompi_common_cmd_line, "tmpdir", 0, 0)) {
-	    return(OMPI_ERROR);
-	}
-	tmpdir = strdup(ompi_cmd_line_get_param(ompi_common_cmd_line, "tmpdir", 0, 0));
-    }
-
-    /* get the session directory setup */
-    if (OMPI_ERROR == ompi_session_dir_init(tmpdir, universe)) {
-    /* this is a serious error, so return the error condition */
-        return(OMPI_ERROR);
-    }
 
     return(OMPI_SUCCESS);
 }

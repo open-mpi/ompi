@@ -20,6 +20,7 @@ headers = \
     output.h \
     path.h \
     sys_info.h \
+    proc_info.h \
     os_path.h \
     os_create_dirpath.h \
     os_session_dir.h \
@@ -35,6 +36,7 @@ libutil_la_SOURCES = \
     malloc.c \
     output.c \
     path.c \
+    proc_info.c \
     sys_info.c \
     os_path.c \
     os_create_dirpath.c \
