@@ -26,6 +26,7 @@ static ompi_mutex_t ompi_rte_mutex;
 static ompi_condition_t ompi_rte_condition;
 static bool ompi_rte_job_started = false;
 static bool ompi_rte_job_finished = false;
+static bool ompi_rte_waiting = false;
 
 
 /*
@@ -47,7 +48,9 @@ void ompi_rte_all_procs_unregistered(ompi_registry_notify_message_t* match, void
 {
     OMPI_THREAD_LOCK(&ompi_rte_mutex);
     ompi_rte_job_finished = true;
-    ompi_condition_signal(&ompi_rte_condition);
+    if (ompi_rte_waiting) {
+	ompi_condition_signal(&ompi_rte_condition);
+    }
     OMPI_THREAD_UNLOCK(&ompi_rte_mutex);
 }
 
@@ -88,8 +91,10 @@ int ompi_rte_monitor_procs_unregistered(void)
     OMPI_THREAD_LOCK(&ompi_rte_mutex);
     /* wait for all processes to complete */
     while(ompi_rte_job_finished == false) {
-        ompi_condition_wait(&ompi_rte_condition, &ompi_rte_mutex);
+	ompi_rte_waiting = true;
+	ompi_condition_wait(&ompi_rte_condition, &ompi_rte_mutex);
     }
+
     OMPI_THREAD_UNLOCK(&ompi_rte_mutex);
     return OMPI_SUCCESS;
 }
