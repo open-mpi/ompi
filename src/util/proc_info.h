@@ -9,15 +9,15 @@
  *
  */
 
-#ifndef OMPI_PROC_INFO_H
-#define OMPI_PROC_INFO_H
-
 #include "ompi_config.h"
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #include "mca/ns/ns.h"
 
+#ifndef _OMPI_PROC_INFO_H_
+#define _OMPI_PROC_INFO_H_
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
