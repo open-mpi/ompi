@@ -719,7 +719,9 @@ if (! $config_arg || ! -f $config_arg) {
 
             # try to actually build it
 
-            my $dir = "$root/config-$i";
+            my $dir = "$root/$name";
+            $dir =~ s/[\[\] \t"']/_/g;
+            # stupid emacs: '"
             my $merge_output = $want_stderr ? 0 : 1;
             $ret = try_build($name, $merge_output, $tarball_name,
                              $dir, "$dir/install",
