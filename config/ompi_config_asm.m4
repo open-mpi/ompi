@@ -687,8 +687,8 @@ case "${host}" in
                 ompi_cv_asm_arch="SPARC"
 AC_MSG_WARN([Using SPARC V8 assembly for atomic operations.  This])
 AC_MSG_WARN([may result in reduced performance on UltraSparc platforms.])
-AC_MSG_WARN([If you are compiling for the UltraSparc, consider 
-AC_MSG_WARN([specifying the architecture v8plus (cc: -xarch=v8plus, 
+AC_MSG_WARN([If you are compiling for the UltraSparc, consider ])
+AC_MSG_WARN([specifying the architecture v8plus (cc: -xarch=v8plus, ])
 AC_MSG_WARN([gcc: -mv8plus) when compiling Open MPI, as you may see a])
 AC_MSG_WARN([significant performance increase.])
 
