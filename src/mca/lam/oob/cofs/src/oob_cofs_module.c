@@ -10,6 +10,7 @@
 #include "mca/mca.h"
 #include "mca/lam/oob/oob.h"
 #include "mca/lam/oob/cofs/src/oob_cofs.h"
+#include "lam/types.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +48,7 @@ struct mca_oob_1_0_0_t mca_oob_cofs_1_0_0 = {
 
 char mca_oob_cofs_comm_loc[LAM_PATH_MAX];
 int mca_oob_cofs_my_vpid;
-unsigned int mca_oob_cofs_serial;
+uint64_t mca_oob_cofs_serial;
 
 int
 mca_oob_cofs_open(lam_cmd_line_t *cmd)

@@ -38,4 +38,4 @@ int mca_oob_cofs_recv_cb(lam_job_handle_t job_handle, int tag,
 
 extern char mca_oob_cofs_comm_loc[LAM_PATH_MAX]; /* location for file drop-off */
 extern int mca_oob_cofs_my_vpid;
-extern unsigned int mca_oob_cofs_serial;
+extern uint64_t mca_oob_cofs_serial;
