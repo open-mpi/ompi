@@ -170,6 +170,10 @@ static void orte_iof_svc_proxy_ack(
 {
     ompi_list_item_t *s_item;
     uint32_t seq_min = hdr->msg_seq + hdr->msg_len;
+    union {
+        uint32_t uval;
+        void *vval;
+    } value;
 
     if(mca_iof_svc_component.svc_debug > 1) {
         ompi_output(0, "orte_iof_svc_proxy_ack");
@@ -201,13 +205,14 @@ static void orte_iof_svc_proxy_ack(
             orte_iof_svc_fwd_t* fwd = (orte_iof_svc_fwd_t*)f_item;
             orte_iof_svc_pub_t* pub = fwd->fwd_pub;
             if (orte_ns.compare(pub->pub_mask,&pub->pub_name,src) == 0) {
+                value.uval = hdr->msg_seq + hdr->msg_len;
                 ompi_hash_table_set_proc(&fwd->fwd_seq,
-                    &hdr->msg_src,(void*)(hdr->msg_seq+hdr->msg_len));
+                                         &hdr->msg_src, &value.vval);
             } else {
-                uint32_t seq = (uint32_t)ompi_hash_table_get_proc(
-                    &fwd->fwd_seq,&hdr->msg_src);
-                if(seq < seq_min) {
-                    seq_min = seq;
+                value.vval = ompi_hash_table_get_proc(&fwd->fwd_seq,
+                                                      &hdr->msg_src);
+                if(value.uval < seq_min) {
+                    seq_min = value.uval;
                 }
             }
         }
