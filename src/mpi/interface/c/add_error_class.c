@@ -8,7 +8,7 @@
 #include "mpi/interface/c/bindings.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
-#pragma weak MPI_Add_error_class PMPI_Add_error_class
+#pragma weak MPI_Add_error_class = PMPI_Add_error_class
 #endif
 
 int MPI_Add_error_class(int *errorclass) {
