@@ -1,6 +1,10 @@
+#include "lam/util/malloc.h"
+#include "mca/mpi/pml/pml.h"
+#include "mca/mpi/ptl/ptl.h"
 #include "mca/mpi/pml/base/pml_base_sendreq.h"
 #include "mca/mpi/pml/base/pml_base_recvreq.h"
 #include "pml_teg.h"
+#include "pml_teg_proc.h"
 
 #define mca_pml_teg_param_register_int(n,v) \
     mca_base_param_lookup_int( \
@@ -39,7 +43,10 @@ mca_pml_base_module_1_0_0_t mca_pml_teg_module = {
 
 mca_pml_teg_t mca_pml_teg = {
     {
+    mca_pml_teg_add_comm,
+    mca_pml_teg_del_comm,
     mca_pml_teg_add_procs,
+    mca_pml_teg_del_procs,
     mca_pml_teg_add_ptls,
     mca_pml_teg_fini,
     mca_pml_teg_irecv_init,
@@ -65,6 +72,53 @@ mca_pml_1_0_0_t* mca_pml_teg_init(int* priority, int* min_thread, int* max_threa
     *priority = 0;
     *min_thread = 0;
     *max_thread = 0;
+    mca_pml_teg.teg_ptls = 0;
+    mca_pml_teg.teg_num_ptls = 0;
+    lam_list_init(&mca_pml_teg.teg_incomplete_sends);
+    lam_mutex_init(&mca_pml_teg.teg_lock);
     return &mca_pml_teg.super;
+}
+
+int mca_pml_teg_add_ptls(struct mca_ptl_t** ptls, size_t nptls)
+{
+    mca_pml_teg.teg_ptls = ptls;
+    mca_pml_teg.teg_num_ptls = nptls;
+    return LAM_SUCCESS;
+}
+
+int mca_pml_teg_add_comm(lam_communicator_t* comm)
+{
+    return LAM_SUCCESS;
+}
+
+int mca_pml_teg_del_comm(lam_communicator_t* comm)
+{
+    return LAM_SUCCESS;
+}
+
+int mca_pml_teg_add_procs(lam_proc_t** procs, size_t nprocs)
+{
+    size_t i;
+    /* initialize each proc */
+    for(i=0; i<nprocs; i++) {
+        lam_proc_t *proc = procs[i];
+        if(proc->proc_pml == 0) {
+            /* allocate pml specific proc data */
+            mca_pml_proc_t* proc_pml = (mca_pml_proc_t*)LAM_MALLOC(sizeof(mca_pml_proc_t));
+            mca_pml_teg_proc_init(proc_pml);
+            /* preallocate space in array for max number of ptls */
+            mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptls);
+            mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_teg.teg_num_ptls);
+            proc_pml->proc_lam = proc;
+            proc->proc_pml = proc_pml;
+        }
+    }
+
+    /* allow each ptl to add itself to proc array */
+    for(i=0; i<mca_pml_teg.teg_num_ptls; i++) {
+        mca_ptl_t* ptl = mca_pml_teg.teg_ptls[i];
+        ptl->ptl_add_procs(ptl, procs, nprocs);
+    }
+    return LAM_SUCCESS;
 }
 

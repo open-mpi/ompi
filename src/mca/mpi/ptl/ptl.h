@@ -14,10 +14,10 @@
 
 
 /*
- * Set the default type to use version 1.0.0 of the PTL 
+ * PTL type 
  */
 
-typedef struct mca_ptl_module_1_0_0_t mca_ptl_module_t;
+struct mca_ptl_1_0_0_t;
 typedef struct mca_ptl_1_0_0_t mca_ptl_t;
 
 
@@ -26,15 +26,16 @@ typedef struct mca_ptl_1_0_0_t mca_ptl_t;
  */
 
 typedef struct mca_ptl_1_0_0_t** (*mca_ptl_init_1_0_0_fn_t)(int* num_ptls, int *thread_min, int *thread_max);
-typedef int (*mca_ptl_fini_1_0_0_fn_t)(struct mca_ptl_1_0_0_t*);
+typedef int (*mca_ptl_add_procs_fn_t)(mca_ptl_t*, struct lam_proc_t**, size_t nprocs);
+typedef int (*mca_ptl_fini_fn_t)(mca_ptl_t*);
                                                                                                          
 /*
  * PTL action functions.
  */
 
 typedef mca_pml_base_send_request_t* (*mca_ptl_request_alloc_fn_t)(mca_ptl_t*);
-typedef int (*mca_ptl_fragment_fn_t)(mca_ptl_t*, mca_pml_base_send_request_t*, size_t);
-typedef int (*mca_ptl_progress_fn_t)(mca_ptl_t*, mca_pml_base_tstamp_t);
+typedef int (*mca_ptl_fragment_fn_t)(struct mca_ptl_t*, mca_pml_base_send_request_t*, size_t);
+typedef int (*mca_ptl_progress_fn_t)(struct mca_ptl_t*, mca_pml_base_tstamp_t);
 
 /*
  * Struct used to pass PTL module information from the each PTL 
@@ -47,6 +48,7 @@ struct mca_ptl_module_1_0_0_t {
   mca_ptl_init_1_0_0_fn_t ptlm_init;
 };
 typedef struct mca_ptl_module_1_0_0_t mca_ptl_module_1_0_0_t;
+typedef struct mca_ptl_module_1_0_0_t mca_ptl_module_t;
 
 /*
  * Struct that represents the common state and interface functions
@@ -64,9 +66,11 @@ struct mca_ptl_1_0_0_t {
     size_t       ptl_endpoint_count;      /* number endpoints supported by this CDI */
 
     /* PTL function table */
-    mca_ptl_request_alloc_fn_t ptl_request_alloc;
-    mca_ptl_fragment_fn_t ptl_fragment;
-    mca_ptl_progress_fn_t ptl_progress;
+    mca_ptl_add_procs_fn_t      ptl_add_procs;
+    mca_ptl_fini_fn_t           ptl_fini;
+    mca_ptl_fragment_fn_t       ptl_fragment;
+    mca_ptl_progress_fn_t       ptl_progress;
+    mca_ptl_request_alloc_fn_t  ptl_request_alloc;
 
 };
 typedef struct mca_ptl_1_0_0_t mca_ptl_1_0_0_t;

@@ -8,7 +8,7 @@
 #include "mpi/communicator/communicator.h"
 #include "mpi/group/group.h"
 #include "mpi/proc/proc.h"
-#include "pml_teg_ptl_array.h"
+#include "pml_ptl_array.h"
 
 extern lam_class_info_t mca_pml_teg_proc_cls;
 

@@ -9,6 +9,27 @@
 #include "lam/util/cmd_line.h"
 #include "mpi/request/request.h"
 #include "mca/mpi/pml/pml.h"
+#include "mca/mpi/ptl/ptl.h"
+
+
+/*
+ * TEG PML Interface
+ */
+
+struct mca_pml_teg_t {
+    mca_pml_t super;
+
+    /* available ptls */
+    mca_ptl_t** teg_ptls;
+    size_t teg_num_ptls;
+
+    /* incomplete posted sends */
+    lam_list_t  teg_incomplete_sends;
+    lam_mutex_t teg_lock;
+};
+typedef struct mca_pml_teg_t mca_pml_teg_t;
+
+extern mca_pml_teg_t mca_pml_teg;
 
 
 /*
@@ -31,34 +52,31 @@ extern mca_pml_1_0_0_t* mca_pml_teg_init(
 );
 
 
-
-/*
- * TEG PML Interface
- */
-
-struct mca_pml_teg_t {
-    mca_pml_t super;
-
-    /* incomplete posted sends */
-    lam_list_t  teg_incomplete_sends;
-    lam_mutex_t teg_lock;
-};
-typedef struct mca_pml_teg_t mca_pml_teg_t;
-
-extern mca_pml_teg_t mca_pml_teg;
-
 /*
  * PML interface functions.
  */
 
+extern int mca_pml_teg_add_comm(
+    struct lam_communicator_t* comm
+);
+
+extern int mca_pml_teg_del_comm(
+    struct lam_communicator_t* comm
+);
+
 extern int mca_pml_teg_add_procs(
     struct lam_proc_t **procs,
-    int nprocs
+    size_t nprocs
+);
+
+extern int mca_pml_teg_del_procs(
+    struct lam_proc_t **procs,
+    size_t nprocs
 );
 
 extern int mca_pml_teg_add_ptls(
     struct mca_ptl_t **ptls,
-    int nptls
+    size_t nptls
 );
 
 extern int mca_pml_teg_fini(void);
