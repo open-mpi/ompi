@@ -2,10 +2,10 @@
  * $HEADER$
  */
 
+/** @file **/
+
 #ifndef LAM_CMD_LINE_H
 #define LAM_CMD_LINE_H
-
-/** @file **/
 
 #include "lam_config.h"
 #include "lam/constants.h"
@@ -13,31 +13,32 @@
 #include "lam/threads/mutex.h"
 #include "lam/util/argv.h"
 
-
+/*
+ * Top-level descriptor
+ */
 struct lam_cmd_line_t {
-  /* Keep this instance safe from other threads */
-
   lam_mutex_t lcl_mutex;
 
-  /* The list of possible options */
+  /* List of cmd_line_option_t's, below */
 
   lam_list_t lcl_options;
 
-  /* The original argv and argc that were passed */
+  /* Duplicate of the argc / argv passed in to lam_cmd_line_parse() */
 
   int lcl_argc;
   char **lcl_argv;
 
-  /* The resulting list of paramters after parsing the argv */
+  /* Parsed output; list of cmd_line_param_t's, below */
 
   lam_list_t lcl_params;
 
-  /* Left over ("tail") argv */
+  /* List of tail (unprocessed) arguments */
 
   int lcl_tail_argc;
   char **lcl_tail_argv;
 };
 typedef struct lam_cmd_line_t lam_cmd_line_t;
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,28 +46,27 @@ extern "C" {
   /* Create / destroy */
 
   lam_cmd_line_t *lam_cmd_line_create(void);
-  int lam_cmd_line_free(lam_cmd_line_t *cmd);
+  void lam_cmd_line_free(lam_cmd_line_t *cmd);
 
   /* Writes */
 
-  int lam_cmd_line_set_opt(lam_cmd_line_t *cmd, const char *short_name, 
-                           const char *long_name, int num_params, 
-                           const char *desc);
-  int lam_cmd_line_set_opt1(lam_cmd_line_t *cmd, const char *short_names,
-                            int num_params, const char *desc);
+  int lam_cmd_line_make_opt(lam_cmd_line_t *cmd, char short_name, 
+                            const char *long_name, int num_params, 
+                            const char *desc);
 
-  int lam_cmd_line_parse(lam_cmd_line_t *cmd, int *argc, char **argv);
+  int lam_cmd_line_parse(lam_cmd_line_t *cmd, bool ignore_unknown,
+                         int argc, char **argv);
 
   /* Reads */
 
   static inline int lam_cmd_line_get_argc(lam_cmd_line_t *cmd);
   static inline char *lam_cmd_line_get_argv(lam_cmd_line_t *cmd, int index);
-  char *lam_gm_line_get_usage_msg(lam_cmd_line_t *cmd);
 
+  char *lam_cmd_line_get_usage_msg(lam_cmd_line_t *cmd);
   bool lam_cmd_line_is_taken(lam_cmd_line_t *cmd, const char *opt);
   int lam_cmd_line_get_ninsts(lam_cmd_line_t *cmd, const char *opt);
-  char *lam_cmd_line_get_param(lam_cmd_line_t *cmd, const char *opt, int inst, 
-                               int idx);
+  char *lam_cmd_line_get_param(lam_cmd_line_t *cmd, const char *opt, 
+                               int instance_num, int param_num);
 
   static inline int lam_cmd_line_get_tail(lam_cmd_line_t *cmd, int *tailc, 
                                           char ***tailv);
@@ -80,8 +80,8 @@ extern "C" {
  *
  * @param cmd A pointer to the LAM command line handle.
  *
- * @return LAM_ERROR If cmd is NULL.
- * @return argc Number of arguments previously added to the handle.
+ * @retval LAM_ERROR If cmd is NULL.
+ * @retval argc Number of arguments previously added to the handle.
  *
  * Arguments are added to the handle via the lam_cmd_line_parse()
  * function.
@@ -98,8 +98,8 @@ static inline int lam_cmd_line_get_argc(lam_cmd_line_t *cmd)
  * @param cmd A pointer to the LAM command line handle.
  * @param index The nth argument from the command line (0 is argv[0], etc.).
  *
- * @returns NULL If cmd is NULL or index is invalid
- * @returns argument String of original argv[index]
+ * @retval NULL If cmd is NULL or index is invalid
+ * @retval argument String of original argv[index]
  *
  * This function returns a single token from the arguments parsed on
  * this handle.  Arguments are added bia the lam_cmd_line_parse()
@@ -125,8 +125,8 @@ static inline char *lam_cmd_line_get_argv(lam_cmd_line_t *cmd, int index)
  * @param tailv Pointer to the output null-terminated argv of all
  * unprocessed arguments from the command line.
  *
- * @return LAM_ERROR If cmd is NULL or otherwise invalid.
- * @return LAM_SUCCESS Upon success.
+ * @retval LAM_ERROR If cmd is NULL or otherwise invalid.
+ * @retval LAM_SUCCESS Upon success.
  *
  * The "tail" is all the arguments on the command line that were not
  * processed for some reason.  Reasons for not processing arguments
