@@ -416,6 +416,14 @@ static inline void ompi_atomic_unlock(ompi_lock_t *lock)
    ompi_atomic_cmpset_rel( &(lock->u.lock),
                            OMPI_ATOMIC_LOCKED, OMPI_ATOMIC_UNLOCKED);
 }
+
+/* Lock initialization function. It set the lock to UNLOCKED.
+ */
+static inline void ompi_atomic_init( ompi_lock_t* lock )
+{
+   lock->u.lock = OMPI_ATOMIC_UNLOCKED;
+}
+
 #endif /* OMPI_HAVE_ATOMIC || OMPI_HAVE_ATOMIC_WIN32 */
 
 #endif /* OMPI_SYS_ATOMIC_H */
