@@ -241,6 +241,10 @@ static int orte_rds_hostfile_query(void)
     }
    
 cleanup:
+    if (NULL != mca_rds_hostfile_component.path) {
+        free(mca_rds_hostfile_component.path);
+    }
+    
     while(NULL != (item = ompi_list_remove_first(&existing))) {
         OBJ_RELEASE(item);
     }
