@@ -20,7 +20,6 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_add_procs,
     mca_pml_teg_del_procs,
     mca_pml_teg_add_ptls,
-    mca_pml_teg_fini,
     mca_pml_teg_progress,
     mca_pml_teg_irecv_init,
     mca_pml_teg_irecv,
@@ -245,7 +244,7 @@ int mca_pml_teg_del_procs(lam_proc_t** procs, size_t nprocs)
     return LAM_SUCCESS;
 }
 
-int mca_pml_teg_fini(void)
+int mca_pml_teg_module_fini(void)
 {
     /* FIX */
     return LAM_SUCCESS;

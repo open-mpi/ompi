@@ -40,7 +40,8 @@ mca_pml_base_module_1_0_0_t mca_pml_teg_module = {
     false
     },
 
-    mca_pml_teg_module_init  /* module init */
+    mca_pml_teg_module_init,  /* module init */
+    mca_pml_teg_module_fini   /* module finalize */
 };
 
 

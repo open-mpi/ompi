@@ -60,6 +60,8 @@ extern mca_pml_t* mca_pml_teg_module_init(
     bool *have_hidden_threads
 );
 
+extern int mca_pml_teg_module_fini(void);
+
 
 
 /*
@@ -87,8 +89,6 @@ extern int mca_pml_teg_del_procs(
 extern int mca_pml_teg_add_ptls(
     lam_list_t *ptls
 );
-
-extern int mca_pml_teg_fini(void);
 
 extern int mca_pml_teg_isend_init(
     void *buf,
