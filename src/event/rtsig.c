@@ -1,6 +1,4 @@
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "lam_config.h"
 
 /* Enable F_SETSIG and F_SETOWN */
 #define _GNU_SOURCE
