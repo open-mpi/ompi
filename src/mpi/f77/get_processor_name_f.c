@@ -48,5 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_PROCESSOR_NAME,
 
 void mpi_get_processor_name_f(char *name, MPI_Fint *resultlen, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    OMPI_SINGLE_NAME_DECL(resultlen);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Get_processor_name(name, 
+				   OMPI_SINGLE_NAME_CONVERT(resultlen)));
+    
+    OMPI_SINGLE_INT_2_FINT(resultlen);
 }

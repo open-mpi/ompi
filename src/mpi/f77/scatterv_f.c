@@ -46,7 +46,34 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SCATTERV,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_scatterv_f(char *sendbuf, MPI_Fint *sendcounts, MPI_Fint *displs, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr)
+void mpi_scatterv_f(char *sendbuf, MPI_Fint *sendcounts,
+		    MPI_Fint *displs, MPI_Fint *sendtype,
+		    char *recvbuf, MPI_Fint *recvcount, 
+		    MPI_Fint *recvtype, MPI_Fint *root,
+		    MPI_Fint *comm, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    MPI_Datatype c_sendtype, c_recvtype;
+    int size;
+    OMPI_ARRAY_NAME_DECL(sendcounts);
+    OMPI_ARRAY_NAME_DECL(displs);
+
+    c_comm = MPI_Comm_f2c(*comm);
+    c_sendtype = MPI_Type_f2c(*sendtype);
+    c_recvtype = MPI_Type_f2c(*recvtype);
+
+    MPI_Comm_size(c_comm, &size);
+    OMPI_ARRAY_FINT_2_INT(sendcounts, size);
+    OMPI_ARRAY_FINT_2_INT(displs, size);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Scatterv(sendbuf, 
+					 OMPI_ARRAY_NAME_CONVERT(sendcounts),
+					 OMPI_ARRAY_NAME_CONVERT(displs),
+					 c_sendtype, recvbuf,
+					 OMPI_FINT_2_INT(*recvcount),
+					 c_recvtype, 
+					 OMPI_FINT_2_INT(*root), c_comm));
+
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(sendcounts);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(displs);
 }

@@ -48,5 +48,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_FREE,
 
 void mpi_info_free_f(MPI_Fint *info, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Info c_info;
+
+    c_info = MPI_Info_f2c(*info);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Info_free(&c_info));
+
+    *info = MPI_Info_c2f(c_info);
 }

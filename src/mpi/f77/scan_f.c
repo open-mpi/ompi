@@ -46,7 +46,20 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SCAN,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_scan_f(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr)
+void mpi_scan_f(char *sendbuf, char *recvbuf, MPI_Fint *count,
+		MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm,
+		MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    MPI_Datatype c_type;
+    MPI_Op c_op;
+
+    c_type = MPI_Type_f2c(*datatype);
+    c_op = MPI_Op_f2c(*op);
+    c_comm = MPI_Comm_f2c(*comm);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Scan(sendbuf, recvbuf,
+				     OMPI_FINT_2_INT(*count),
+				     c_type, c_op, 
+				     c_comm));
 }

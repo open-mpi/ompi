@@ -46,7 +46,20 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPHDIMS_GET,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_graphdims_get_f(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *nedges, MPI_Fint *ierr)
+void mpi_graphdims_get_f(MPI_Fint *comm, MPI_Fint *nnodes,
+			 MPI_Fint *nedges, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    OMPI_SINGLE_NAME_DECL(nnodes);
+    OMPI_SINGLE_NAME_DECL(nedges);
+
+    c_comm = MPI_Comm_f2c(*comm);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Graphdims_get(c_comm, 
+					      OMPI_SINGLE_NAME_CONVERT(nnodes),
+					      OMPI_SINGLE_NAME_CONVERT(nedges)
+					      ));
+
+    OMPI_SINGLE_INT_2_FINT(nnodes);
+    OMPI_SINGLE_INT_2_FINT(nedges);
 }
