@@ -196,6 +196,7 @@
     <!-- C++ types -->
 
     <xsl:when test="@kind = 'void'">
+      <xsl:text> != VOID_VAL)</xsl:text>
     </xsl:when>
     <xsl:when test="@kind = 'bool'">
       <xsl:text> != INT_VAL)</xsl:text>
