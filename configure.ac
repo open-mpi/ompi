@@ -42,6 +42,12 @@ ompi_show_subtitle "Initialization, setup"
 
 AM_INIT_AUTOMAKE(openmpi, $OMPI_VERSION, 'no')
 
+#
+# GNU C and autotools are inconsistent about whether this is defined
+# so let's make it true everywhere for now...
+#
+AC_GNU_SOURCE
+
 OMPI_TOP_BUILDDIR="`pwd`"
 AC_SUBST(OMPI_TOP_BUILDDIR)
 cd "$srcdir"
