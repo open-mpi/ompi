@@ -810,39 +810,51 @@ extern "C" {
   int MPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub);
   int MPI_Type_vector(int count, int blocklength, int stride, 
                       MPI_Datatype oldtype, MPI_Datatype *newtype);
-  int MPI_Unpack(void *, int, int *, void *, int, MPI_Datatype, MPI_Comm);
-  int MPI_Unpublish_name(char *, MPI_Info, char *);
-  int MPI_Waitall(int, MPI_Request *, MPI_Status *);
-  int MPI_Waitany(int, MPI_Request *, int *, MPI_Status *);
-  int MPI_Wait(MPI_Request *, MPI_Status *);
-  int MPI_Waitsome(int, MPI_Request *, int *, int *, MPI_Status *);
-  MPI_Fint MPI_Win_c2f(MPI_Win);
-  int MPI_Win_call_errhandler(MPI_Win, int);
-  int MPI_Win_complete(MPI_Win);
-  int MPI_Win_create(void *, MPI_Aint, int, MPI_Info, MPI_Comm, MPI_Win *);
-  int MPI_Win_create_errhandler(MPI_Win_errhandler_fn *, 
-                                MPI_Errhandler *);
-  int MPI_Win_create_keyval(MPI_Win_copy_attr_function *, 
-                            MPI_Win_delete_attr_function *, 
-                            int *, void *);
-  int MPI_Win_delete_attr(MPI_Win, int);
-  MPI_Win MPI_Win_f2c(MPI_Fint);
-  int MPI_Win_fence(int, MPI_Win);
-  int MPI_Win_free(MPI_Win *);
-  int MPI_Win_free_keyval(int *);
-  int MPI_Win_get_attr(MPI_Win, int, void *, int *);
-  int MPI_Win_get_errhandler(MPI_Win, MPI_Errhandler *);
-  int MPI_Win_get_group(MPI_Win, MPI_Group *);
-  int MPI_Win_get_name(MPI_Win, char *, int *);
-  int MPI_Win_lock(int, int, int, MPI_Win);
-  int MPI_Win_post(MPI_Group, int, MPI_Win);
-  int MPI_Win_set_attr(MPI_Win, int, void *);
-  int MPI_Win_set_errhandler(MPI_Win, MPI_Errhandler);
-  int MPI_Win_set_name(MPI_Win, char *);
-  int MPI_Win_start(MPI_Group, int, MPI_Win);
-  int MPI_Win_test(MPI_Win, int *);
-  int MPI_Win_unlock(int, MPI_Win);
-  int MPI_Win_wait(MPI_Win);
+  int MPI_Unpack(void *inbuf, int insize, int *position, 
+                 void *outbuf, int outcount, MPI_Datatype datatype, 
+                 MPI_Comm comm);
+  int MPI_Unpublish_name(char *service_name, MPI_Info info, 
+                         char *port_name);
+  int MPI_Unpack_external (char *datarep, void *inbuf, MPI_Aint insize,
+                           MPI_Aint *position, void *outbuf, int outcount,
+                           MPI_Datatype datatype);
+  int MPI_Waitall(int count, MPI_Request *array_of_requests, 
+                  MPI_Status *array_of_statuses);
+  int MPI_Waitany(int count, MPI_Request *array_of_requests, 
+                  int *index, MPI_Status *status);
+  int MPI_Wait(MPI_Request *request, MPI_Status *status);
+  int MPI_Waitsome(int incount, MPI_Request *array_of_requests, 
+                   int *outcount, int *array_of_indices, 
+                   MPI_Status *array_of_statuses);
+  MPI_Fint MPI_Win_c2f(MPI_Win win);
+  int MPI_Win_call_errhandler(MPI_Win win, int errorcode);
+  int MPI_Win_complete(MPI_Win win);
+  int MPI_Win_create(void *base, MPI_Aint size, int disp_unit, 
+                     MPI_Info info, MPI_Comm comm, MPI_Win *win);
+  int MPI_Win_create_errhandler(MPI_Win_errhandler_fn *function, 
+                                MPI_Errhandler *errhandler);
+  int MPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn, 
+                          MPI_Win_delete_attr_function *win_delete_attr_fn, 
+                          int *win_keyval, void *extra_state);
+  int MPI_Win_delete_attr(MPI_Win win, int win_keyval);
+  MPI_Win MPI_Win_f2c(MPI_Fint win);
+  int MPI_Win_fence(int assert, MPI_Win win);
+  int MPI_Win_free(MPI_Win *win);
+  int MPI_Win_free_keyval(int *win_keyval);
+  int MPI_Win_get_attr(MPI_Win win, int win_keyval, 
+                       void *attribute_val, int *flag);
+  int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler);
+  int MPI_Win_get_group(MPI_Win win, MPI_Group *group);
+  int MPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen);
+  int MPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win);
+  int MPI_Win_post(MPI_Group group, int assert, MPI_Win win);
+  int MPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val);
+  int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler);
+  int MPI_Win_set_name(MPI_Win win, char *win_name);
+  int MPI_Win_start(MPI_Group group, int assert, MPI_Win win);
+  int MPI_Win_test(MPI_Win win, int *flag);
+  int MPI_Win_unlock(int rank, MPI_Win win);
+  int MPI_Win_wait(MPI_Win win);
   double MPI_Wtick(void);
   double MPI_Wtime(void);
 
@@ -1273,39 +1285,51 @@ extern "C" {
   int PMPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub);
   int PMPI_Type_vector(int count, int blocklength, int stride, 
                       MPI_Datatype oldtype, MPI_Datatype *newtype);
-  int PMPI_Unpack(void *, int, int *, void *, int, MPI_Datatype, MPI_Comm);
-  int PMPI_Unpublish_name(char *, MPI_Info, char *);
-  int PMPI_Waitall(int, MPI_Request *, MPI_Status *);
-  int PMPI_Waitany(int, MPI_Request *, int *, MPI_Status *);
-  int PMPI_Wait(MPI_Request *, MPI_Status *);
-  int PMPI_Waitsome(int, MPI_Request *, int *, int *, MPI_Status *);
-  MPI_Fint PMPI_Win_c2f(MPI_Win);
-  int PMPI_Win_call_errhandler(MPI_Win, int);
-  int PMPI_Win_complete(MPI_Win);
-  int PMPI_Win_create(void *, MPI_Aint, int, MPI_Info, MPI_Comm, MPI_Win *);
-  int PMPI_Win_create_errhandler(MPI_Win_errhandler_fn *, 
-                                 MPI_Errhandler *);
-  int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *, 
-                             MPI_Win_delete_attr_function *, 
-                             int *, void *);
-  int PMPI_Win_delete_attr(MPI_Win, int);
-  MPI_Win PMPI_Win_f2c(MPI_Fint);
-  int PMPI_Win_fence(int, MPI_Win);
-  int PMPI_Win_free(MPI_Win *);
-  int PMPI_Win_free_keyval(int *);
-  int PMPI_Win_get_attr(MPI_Win, int, void *, int *);
-  int PMPI_Win_get_errhandler(MPI_Win, MPI_Errhandler *);
-  int PMPI_Win_get_group(MPI_Win, MPI_Group *);
-  int PMPI_Win_get_name(MPI_Win, char *, int *);
-  int PMPI_Win_lock(int, int, int, MPI_Win);
-  int PMPI_Win_post(MPI_Group, int, MPI_Win);
-  int PMPI_Win_set_attr(MPI_Win, int, void *);
-  int PMPI_Win_set_errhandler(MPI_Win, MPI_Errhandler);
-  int PMPI_Win_set_name(MPI_Win, char *);
-  int PMPI_Win_start(MPI_Group, int, MPI_Win);
-  int PMPI_Win_test(MPI_Win, int *);
-  int PMPI_Win_unlock(int, MPI_Win);
-  int PMPI_Win_wait(MPI_Win);
+  int PMPI_Unpack(void *inbuf, int insize, int *position, 
+                 void *outbuf, int outcount, MPI_Datatype datatype, 
+                 MPI_Comm comm);
+  int PMPI_Unpublish_name(char *service_name, MPI_Info info, 
+                         char *port_name);
+  int PMPI_Unpack_external (char *datarep, void *inbuf, MPI_Aint insize,
+                           MPI_Aint *position, void *outbuf, int outcount,
+                           MPI_Datatype datatype);
+  int PMPI_Waitall(int count, MPI_Request *array_of_requests, 
+                  MPI_Status *array_of_statuses);
+  int PMPI_Waitany(int count, MPI_Request *array_of_requests, 
+                  int *index, MPI_Status *status);
+  int PMPI_Wait(MPI_Request *request, MPI_Status *status);
+  int PMPI_Waitsome(int incount, MPI_Request *array_of_requests, 
+                   int *outcount, int *array_of_indices, 
+                   MPI_Status *array_of_statuses);
+  MPI_Fint PMPI_Win_c2f(MPI_Win win);
+  int PMPI_Win_call_errhandler(MPI_Win win, int errorcode);
+  int PMPI_Win_complete(MPI_Win win);
+  int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, 
+                     MPI_Info info, MPI_Comm comm, MPI_Win *win);
+  int PMPI_Win_create_errhandler(MPI_Win_errhandler_fn *function, 
+                                MPI_Errhandler *errhandler);
+  int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn, 
+                          MPI_Win_delete_attr_function *win_delete_attr_fn, 
+                          int *win_keyval, void *extra_state);
+  int PMPI_Win_delete_attr(MPI_Win win, int win_keyval);
+  MPI_Win PMPI_Win_f2c(MPI_Fint win);
+  int PMPI_Win_fence(int assert, MPI_Win win);
+  int PMPI_Win_free(MPI_Win *win);
+  int PMPI_Win_free_keyval(int *win_keyval);
+  int PMPI_Win_get_attr(MPI_Win win, int win_keyval, 
+                       void *attribute_val, int *flag);
+  int PMPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler);
+  int PMPI_Win_get_group(MPI_Win win, MPI_Group *group);
+  int PMPI_Win_get_name(MPI_Win win, char *win_name, int *resultlen);
+  int PMPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win);
+  int PMPI_Win_post(MPI_Group group, int assert, MPI_Win win);
+  int PMPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val);
+  int PMPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler);
+  int PMPI_Win_set_name(MPI_Win win, char *win_name);
+  int PMPI_Win_start(MPI_Group group, int assert, MPI_Win win);
+  int PMPI_Win_test(MPI_Win win, int *flag);
+  int PMPI_Win_unlock(int rank, MPI_Win win);
+  int PMPI_Win_wait(MPI_Win win);
   double PMPI_Wtick(void);
   double PMPI_Wtime(void);
 
