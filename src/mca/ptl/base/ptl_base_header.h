@@ -100,7 +100,7 @@ typedef struct mca_ptl_base_match_header_t mca_ptl_base_match_header_t;
 
 #define MCA_PTL_BASE_MATCH_HDR_NTOH(h) \
     do { \
-    MCA_PTL_BASE_COMMON_HDR_NTOH((h).hdr_frag); \
+    MCA_PTL_BASE_COMMON_HDR_NTOH((h).hdr_common); \
     (h).hdr_contextid = ntohs((h).hdr_contextid); \
     (h).hdr_src = ntohl((h).hdr_src); \
     (h).hdr_dst = ntohl((h).hdr_dst); \
@@ -111,7 +111,7 @@ typedef struct mca_ptl_base_match_header_t mca_ptl_base_match_header_t;
 
 #define MCA_PTL_BASE_MATCH_HDR_HTON(h) \
     do { \
-    MCA_PTL_BASE_COMMON_HDR_HTON((h).hdr_frag); \
+    MCA_PTL_BASE_COMMON_HDR_HTON((h).hdr_common); \
     (h).hdr_contextid = htons((h).hdr_contextid); \
     (h).hdr_src = htonl((h).hdr_src); \
     (h).hdr_dst = htonl((h).hdr_dst); \
