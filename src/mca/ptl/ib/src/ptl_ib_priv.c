@@ -478,7 +478,8 @@ int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t *ib_state,
 
         rc = mca_ptl_ib_register_mem(ib_state->nic, ib_state->ptag,
                 (void*) peer_conn->lres->recv[i].buf, 
-                4096, &peer_conn->lres->recv[i].hndl);
+                MCA_PTL_IB_FIRST_FRAG_SIZE, 
+                &peer_conn->lres->recv[i].hndl);
         if(rc != OMPI_SUCCESS) {
             return OMPI_ERROR;
         }
@@ -517,7 +518,9 @@ int mca_ptl_ib_post_send(mca_ptl_ib_state_t *ib_state,
 
     IB_SET_SEND_DESC_ID(ib_buf, addr);
 
-    D_PRINT("length : %d", ib_buf->desc.sg_entry.len);
+    D_PRINT("length : %d, qp_num = %d", 
+            ib_buf->desc.sg_entry.len,
+            (peer_conn->rres->qp_num));
 
     ret = VAPI_post_sr(ib_state->nic,
             peer_conn->lres->qp_hndl,
@@ -555,16 +558,21 @@ void mca_ptl_ib_drain_network(VAPI_hca_hndl_t nic,
                 *comp_type = IB_COMP_SEND;
                 *comp_addr = (void*) (unsigned int) comp.id;
 
-            }
-            else if(VAPI_CQE_RQ_SEND_DATA == comp.opcode) {
-                D_PRINT("Received message completion len = %d, id : %d\n",
+            } else if(VAPI_CQE_RQ_SEND_DATA == comp.opcode) {
+                A_PRINT("Received message completion len = %d, id : %d\n",
                         comp.byte_len, comp.id);
 
                 *comp_type = IB_COMP_RECV;
                 *comp_addr = (void*) (unsigned int) comp.id;
-            }
-            else {
-                D_PRINT("Got Unknown completion! Opcode : %d\n", 
+
+            } else if(VAPI_CQE_SQ_RDMA_WRITE == comp.opcode) {
+
+                A_PRINT("RDMA Write completion");
+                *comp_type = IB_COMP_RDMA_W;
+                *comp_addr = (void*) (unsigned int) comp.id;
+
+            } else {
+                ompi_output(0, "Got Unknown completion! Opcode : %d\n", 
                         comp.opcode);
 
                 *comp_type = IB_COMP_ERROR;
@@ -596,4 +604,65 @@ void mca_ptl_ib_buffer_repost(VAPI_hca_hndl_t nic,
         MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_rr");
         ompi_output(0, "Error in buffer reposting");
     }
+}
+
+void mca_ptl_ib_prepare_ack(mca_ptl_ib_state_t *ib_state,
+        void* addr_to_reg, int len_to_reg,
+        void* ack_buf, int* len_added)
+{
+    int rc;
+    vapi_memhandle_t memhandle;
+
+    rc =  mca_ptl_ib_register_mem(ib_state->nic, ib_state->ptag,
+            addr_to_reg, len_to_reg, &memhandle);
+
+    if(rc != OMPI_SUCCESS) {
+        ompi_output(0, "Error in registering");
+    }
+
+    A_PRINT("Sending Remote key : %d", memhandle.rkey);
+
+    memcpy(ack_buf,(void*) &memhandle.rkey, sizeof(VAPI_rkey_t));
+
+    *len_added = sizeof(VAPI_lkey_t);
+}
+
+int mca_ptl_ib_rdma_write(mca_ptl_ib_state_t *ib_state,
+        mca_ptl_ib_peer_conn_t *peer_conn, ib_buffer_t *ib_buf,
+        void* send_buf, size_t send_len, void* remote_buf,
+        VAPI_rkey_t remote_key)
+{
+    VAPI_ret_t ret;
+    VAPI_mrw_t mr_in, mr_out;
+    vapi_memhandle_t mem_handle;
+
+    /* Register local application buffer */
+    mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
+    mr_in.l_key = 0;
+    mr_in.r_key = 0;
+    mr_in.pd_hndl = ib_state->ptag;
+    mr_in.size = send_len;
+    mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) send_buf;
+    mr_in.type = VAPI_MR;
+
+    ret = VAPI_register_mr(ib_state->nic, &mr_in, 
+            &mem_handle.hndl, &mr_out);
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_register_mr");
+        return OMPI_ERROR;
+    }
+
+    /* Prepare descriptor */
+    IB_PREPARE_RDMA_W_DESC(ib_buf, (peer_conn->rres->qp_num),
+            send_len, send_buf, (mr_out.l_key), remote_key, remote_buf);
+
+    ret = VAPI_post_sr(ib_state->nic,
+            peer_conn->lres->qp_hndl,
+            &ib_buf->desc.sr);
+    if(ret != VAPI_OK) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_sr");
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
 }

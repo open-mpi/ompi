@@ -46,25 +46,14 @@ mca_ptl_ib_recv_frag_done (mca_ptl_base_header_t *header,
             (ompi_list_item_t*)frag);
 }
 
-/*
- * Process incoming receive fragments
- *
- */
-
-void mca_ptl_ib_process_recv(mca_ptl_base_module_t *module, void* addr)
+static void mca_ptl_ib_data_frag(mca_ptl_base_module_t *module,
+        mca_ptl_base_header_t *header)
 {
     bool matched;
     int rc;
     ib_buffer_t *ib_buf;
-    mca_ptl_base_header_t *header;
     ompi_list_item_t *item;
     mca_ptl_ib_recv_frag_t *recv_frag;
-
-    D_PRINT("");
-
-    ib_buf = (ib_buffer_t *) (unsigned int) addr;
-
-    header = (mca_ptl_base_header_t *) &ib_buf->buf[0];
 
     OMPI_FREE_LIST_GET(&mca_ptl_ib_component.ib_recv_frags,
             item, rc);
@@ -77,8 +66,7 @@ void mca_ptl_ib_process_recv(mca_ptl_base_module_t *module, void* addr)
     }
 
     recv_frag = (mca_ptl_ib_recv_frag_t *) item;
-    recv_frag->super.frag_base.frag_owner = 
-        (mca_ptl_base_module_t *) module; 
+    recv_frag->super.frag_base.frag_owner = module; 
 
     recv_frag->super.frag_base.frag_peer = NULL; 
     recv_frag->super.frag_request = NULL; 
@@ -113,5 +101,71 @@ void mca_ptl_ib_process_recv(mca_ptl_base_module_t *module, void* addr)
 
     } else {
         D_PRINT("Message matched!");
+    }
+}
+
+static void mca_ptl_ib_ctrl_frag(mca_ptl_base_module_t *module,
+        mca_ptl_base_header_t *header)
+{
+    mca_ptl_ib_send_frag_t *send_frag;
+    mca_pml_base_send_request_t *req;
+    void *data_ptr;
+
+    send_frag = (mca_ptl_ib_send_frag_t *)
+        header->hdr_ack.hdr_src_ptr.pval;
+    req = (mca_pml_base_send_request_t *) 
+        send_frag->frag_send.frag_request;
+
+    req->req_peer_match = header->hdr_ack.hdr_dst_match;
+    req->req_peer_addr = header->hdr_ack.hdr_dst_addr;
+    req->req_peer_size = header->hdr_ack.hdr_dst_size;
+
+    /* Locate data in the ACK buffer */
+    data_ptr = (void*)
+        ((char*) header + sizeof(mca_ptl_base_ack_header_t));
+
+    /* Copy over data to request buffer */
+    memcpy(((mca_ptl_ib_send_request_t *) req)->req_buf,
+            data_ptr, sizeof(VAPI_rkey_t));
+
+    /* Progress & release fragments */
+    mca_ptl_ib_process_send_comp(module, (void*) send_frag);
+}
+
+static void mca_ptl_ib_last_frag(mca_ptl_base_module_t *module,
+        mca_ptl_base_header_t *header)
+{
+}
+
+/*
+ * Process incoming receive fragments
+ *
+ */
+
+void mca_ptl_ib_process_recv(mca_ptl_base_module_t *module, void* addr)
+{
+    ib_buffer_t *ib_buf;
+    mca_ptl_base_header_t *header;
+
+    D_PRINT("");
+
+    ib_buf = (ib_buffer_t *) addr;
+
+    header = (mca_ptl_base_header_t *) &ib_buf->buf[0];
+
+    switch(header->hdr_common.hdr_type) {
+        case MCA_PTL_HDR_TYPE_MATCH :
+        case MCA_PTL_HDR_TYPE_FRAG :
+            mca_ptl_ib_data_frag(module, header);
+            break;
+        case MCA_PTL_HDR_TYPE_ACK :
+            mca_ptl_ib_ctrl_frag(module, header);
+            break;
+        case MCA_PTL_HDR_TYPE_FIN :
+            mca_ptl_ib_last_frag(module, header);
+            break;
+        default :
+            ompi_output(0, "Unknown fragment type");
+            break;
     }
 }

@@ -87,12 +87,16 @@ int mca_ptl_ib_component_open(void)
     /* register super component parameters */
     mca_ptl_ib_module.super.ptl_exclusivity =
         mca_ptl_ib_param_register_int ("exclusivity", 0);
+
     mca_ptl_ib_module.super.ptl_first_frag_size =
         mca_ptl_ib_param_register_int ("first_frag_size",
-                (16384 - sizeof(mca_ptl_base_header_t))/*magic*/);
+                (MCA_PTL_IB_FIRST_FRAG_SIZE
+                 - sizeof(mca_ptl_base_header_t)));
+
     mca_ptl_ib_module.super.ptl_min_frag_size =
         mca_ptl_ib_param_register_int ("min_frag_size",
-                (4096 - sizeof(mca_ptl_base_header_t))/*magic*/);
+                (4096 - sizeof(mca_ptl_base_header_t)));
+
     mca_ptl_ib_module.super.ptl_max_frag_size =
         mca_ptl_ib_param_register_int ("max_frag_size", 2<<30);
 
@@ -357,7 +361,7 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
                 /* Process a completed send */
                 mca_ptl_ib_process_send_comp(
                         (mca_ptl_base_module_t *) module,
-                        comp_addr, &(module->send_free));
+                        comp_addr);
 
                 break;
             case IB_COMP_RECV :
@@ -370,6 +374,13 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
                 mca_ptl_ib_buffer_repost(module->ib_state->nic,
                         comp_addr);
                 
+                break;
+            case IB_COMP_RDMA_W :
+
+                mca_ptl_ib_process_rdma_w_comp(
+                        (mca_ptl_base_module_t *) module,
+                        comp_addr);
+
                 break;
             case IB_COMP_NOTHING:
                 break;

@@ -84,7 +84,8 @@ void mca_ptl_ib_progress_send_frags(mca_ptl_ib_peer_t*);
 
 #define DUMP_PEER(peer_ptr) {                                       \
     ompi_output(0, "[%s:%d] ", __FILE__, __LINE__);                 \
-    ompi_output(0, "Dumping peer state");                           \
+    ompi_output(0, "Dumping peer %d state",                         \
+            peer->peer_proc->proc_guid.vpid);                       \
     ompi_output(0, "Local QP hndl : %d",                            \
             peer_ptr->peer_conn->lres->qp_hndl);                    \
     ompi_output(0, "Local QP num : %d",                             \

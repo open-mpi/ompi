@@ -461,7 +461,6 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
 {
     int rc;
 
-    D_PRINT("");
 
     OMPI_THREAD_LOCK(&peer->peer_send_lock);
 
@@ -509,6 +508,10 @@ int mca_ptl_ib_peer_send(mca_ptl_base_peer_t* peer,
             rc = mca_ptl_ib_post_send(peer->peer_module->ib_state,
                     peer->peer_conn, 
                     &frag->ib_buf, (void*) frag);
+
+            A_PRINT("Send to : %d, len : %d", 
+                    peer->peer_proc->proc_guid.vpid,
+                    frag->ib_buf.desc.sg_entry.len);
 
             break;
         default:

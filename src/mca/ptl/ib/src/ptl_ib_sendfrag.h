@@ -59,6 +59,13 @@ mca_ptl_ib_send_frag_t* mca_ptl_ib_alloc_send_frag(
 int mca_ptl_ib_register_send_frags(mca_ptl_base_module_t *ptl);
 
 void mca_ptl_ib_process_send_comp(mca_ptl_base_module_t *, 
-        void*, ompi_free_list_t*);
+        void*);
+void mca_ptl_ib_process_rdma_w_comp(mca_ptl_base_module_t *module,
+        void* comp_addr);
+
+int mca_ptl_ib_put_frag_init(mca_ptl_ib_send_frag_t *sendfrag, 
+        struct mca_ptl_base_peer_t *ptl_peer,
+        struct mca_pml_base_send_request_t *req, 
+        size_t offset, size_t *size, int flags);
 
 #endif
