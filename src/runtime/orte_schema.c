@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "include/orte_constants.h"
-
+#include "util/output.h"
 #include "mca/ns/ns.h"
 #include "mca/errmgr/errmgr.h"
 
@@ -159,22 +159,19 @@ int orte_schema_get_job_segment_name(char **name, orte_jobid_t jobid)
 
 int orte_schema_extract_jobid_from_segment_name(orte_jobid_t *jobid, char *name)
 {
-    char *jobstring, *tmp;
+    char *jobstring;
     orte_jobid_t job;
     int rc;
     
-    tmp = strrchr(name, '-');
-    if (NULL == tmp) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
-    }
-    jobstring = strpbrk(tmp, "0123456789");
+    jobstring = strrchr(name, '-');
     if (NULL == jobstring) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
+    jobstring++;
     if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_jobid(&job, jobstring))) {
         ORTE_ERROR_LOG(rc);
+        ompi_output(0, "[%d,%d,%d] %s\n", ORTE_NAME_ARGS(orte_process_info.my_name), jobstring);
         return rc;
     }
     *jobid = job;

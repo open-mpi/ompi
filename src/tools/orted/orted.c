@@ -55,6 +55,7 @@
 #include "mca/gpr/gpr.h"
 #include "mca/rml/rml.h"
 #include "mca/soh/soh.h"
+#include "mca/rmgr/rmgr.h"
 #include "mca/soh/base/base.h"
 
 #include "runtime/runtime.h"
@@ -82,7 +83,7 @@ ompi_cmd_line_init_t orte_cmd_line_opts[] = {
     { NULL, NULL, NULL, 'd', NULL, "debug", 0,
       &orted_globals.debug, OMPI_CMD_LINE_TYPE_BOOL,
       "Run in debug mode (not generally intended for users)" },
-    { NULL, NULL, NULL, '\0', NULL, "bootproxy", 1,
+    { "rmgr", "bootproxy", "jobid", '\0', NULL, "bootproxy", 1,
       &orted_globals.bootproxy, OMPI_CMD_LINE_TYPE_INT,
       "Run as boot proxy for <job-id>" },
     { NULL, NULL, NULL, '\0', NULL, "name", 1,
@@ -197,7 +198,7 @@ int main(int argc, char *argv[])
 
         fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0666);
         if(fd < 0) {
-             fd = open("/tmp/orted.log", O_RDWR|O_CREAT|O_TRUNC, 0666);
+             fd = open("/dev/null", O_RDWR|O_CREAT|O_TRUNC, 0666);
         }
         if(fd >= 0) {
             dup2(fd, STDOUT_FILENO);
@@ -210,7 +211,7 @@ int main(int argc, char *argv[])
 
     /* check to see if I'm a bootproxy */
     if (orted_globals.bootproxy) { /* perform bootproxy-specific things */
-        if (ORTE_SUCCESS != (ret = orte_daemon_bootproxy())) {
+        if (ORTE_SUCCESS != (ret = orte_rmgr.launch(orted_globals.bootproxy))) {
             ORTE_ERROR_LOG(ret);
         }
         if (ORTE_SUCCESS != (ret = orte_finalize())) {

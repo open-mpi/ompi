@@ -51,7 +51,6 @@ struct orte_proc_info_t {
     pid_t pid;                      /**< Local process ID for this process */
     bool seed;                      /**< Indicate whether or not this is seed daemon */
     bool daemon;                    /**< Indicate whether or not I am a daemon */
-    bool singleton;                 /**< Indicate whether or not I am a singleton */
     char *ns_replica_uri;           /**< contact info for name services replica */
     char *gpr_replica_uri;          /**< contact info for registry replica */
     orte_process_name_t *ns_replica; /**< Name of my name server replica (NULL=>me) */

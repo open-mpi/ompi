@@ -38,7 +38,6 @@ orte_proc_info_t orte_process_info = {
     /*  .pid =                  */   0,
     /*  .seed =                 */   false,
     /*  .daemon =               */   false,
-    /*  .singleton =            */   false,
     /*  .ns_replica_uri =       */   NULL,
     /*  .gpr_replica_uri =      */   NULL,
     /*  .ns_replica =           */   NULL,

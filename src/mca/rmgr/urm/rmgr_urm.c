@@ -31,6 +31,8 @@
 #include "rmgr_urm.h"
 
 
+static int orte_rmgr_urm_query(void);
+
 static int orte_rmgr_urm_create(
     orte_app_context_t** app_context,
     size_t num_context,
@@ -61,7 +63,7 @@ static int orte_rmgr_urm_spawn(
     orte_rmgr_cb_fn_t cbfn);
 
 orte_rmgr_base_module_t orte_rmgr_urm_module = {
-    orte_rds_base_query,
+    orte_rmgr_urm_query,
     orte_rmgr_urm_create,
     orte_rmgr_urm_allocate,
     orte_rmgr_urm_deallocate,
@@ -77,6 +79,21 @@ orte_rmgr_base_module_t orte_rmgr_urm_module = {
 
 
 /*
+ * Resource discovery
+ */
+
+static int orte_rmgr_urm_query(void)
+{
+    int rc;
+    if(ORTE_SUCCESS != (rc = orte_rds_base_query())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    return ORTE_SUCCESS;
+}
+
+
+/*
  *  Create the job segment and initialize the application context.
  */
 
@@ -89,6 +106,7 @@ static int orte_rmgr_urm_create(
 
     /* allocate a jobid  */
     if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(jobid))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
 
@@ -96,12 +114,14 @@ static int orte_rmgr_urm_create(
     if (ORTE_SUCCESS != 
         (rc = orte_rmgr_base_put_app_context(*jobid, app_context, 
                                              num_context))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     /* setup the launch stage gate counters and subscriptions */
     if (ORTE_SUCCESS !=
         (rc = orte_rmgr_base_proc_stage_gate_init(*jobid))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
    

@@ -42,6 +42,7 @@
 #include "mca/pls/pls.h"
 #include "mca/pls/base/base.h"
 #include "mca/rml/rml.h"
+#include "mca/gpr/gpr.h"
 #include "mca/rmaps/base/base.h"
 #include "mca/rmaps/base/rmaps_base_map.h"
 #include "mca/soh/soh.h"
@@ -95,6 +96,9 @@ static void orte_pls_fork_wait_proc(pid_t pid, int status, void* cbdata)
     OMPI_THREAD_UNLOCK(&mca_pls_fork_component.lock);
 }
 
+/**
+ *  Fork/exec the specified processes
+ */
 
 static int orte_pls_fork_proc(
     orte_app_context_t* context, 
@@ -213,6 +217,10 @@ static int orte_pls_fork_proc(
 }
 
 
+/**
+ * Launch all processes allocated to the current node.
+ */
+
 int orte_pls_fork_launch(orte_jobid_t jobid)
 {
     ompi_list_t map;
@@ -259,10 +267,67 @@ cleanup:
     return rc;
 }
 
+/**
+ *  Query for all processes allocated to the job and terminate
+ *  those on the current node.
+ */
+
 int orte_pls_fork_terminate_job(orte_jobid_t jobid)
 {
+    /* query for the pids allocated on this node */
+    char *segment;
+    char *keys[2];
+    orte_gpr_value_t** values = NULL;
+    int i, k, num_values = 0;
+    int rc;
+
+    /* query the job segment on the registry */
+    if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+                                                                                                    
+    keys[0] = ORTE_NODE_NAME_KEY;
+    keys[1] = ORTE_PROC_PID_KEY;
+    keys[2] = NULL;
+                                                                                                    
+    rc = orte_gpr.get(
+        ORTE_GPR_KEYS_AND|ORTE_GPR_TOKENS_OR,
+        segment,
+        NULL,
+        keys,
+        &num_values,
+        &values
+        );
+    if(rc != ORTE_SUCCESS) {
+        free(segment);
+        return rc;
+    }
+                                                                                                    
+    for(i=0; i<num_values; i++) {
+        orte_gpr_value_t* value = values[i];
+        pid_t pid = 0;
+        for(k=0; k<value->cnt; k++) {
+            orte_gpr_keyval_t* keyval = value->keyvals[k];
+            if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
+                if(strcmp(keyval->value.strptr, orte_system_info.nodename) != 0) {
+                    break;
+                }
+            } else if (strcmp(keyval->key, ORTE_PROC_PID_KEY) == 0) {
+                pid = keyval->value.ui32;
+            } 
+        }
+        if(pid != 0) {
+            kill(pid, SIGKILL);
+        }
+        OBJ_RELEASE(value);
+    }
+    if(NULL != values)
+        free(values);
+    free(segment);
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
+
 
 int orte_pls_fork_terminate_proc(const orte_process_name_t* proc)
 {

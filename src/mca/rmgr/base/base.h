@@ -27,6 +27,7 @@
 #include "include/orte_types.h"
 
 #include "class/ompi_list.h"
+#include "dps/dps.h"
 #include "mca/mca.h"
 #include "mca/gpr/gpr_types.h"
 #include "mca/rmgr/rmgr.h"
@@ -67,6 +68,36 @@ OMPI_DECLSPEC int orte_rmgr_base_get_job_slots(
 OMPI_DECLSPEC int orte_rmgr_base_set_job_slots(
     orte_jobid_t jobid, 
     size_t num_slots);
+
+
+/*
+ *  Pack/unpack
+ */
+
+OMPI_DECLSPEC int orte_rmgr_base_pack_cmd(
+    orte_buffer_t* buffer,
+    orte_rmgr_cmd_t cmd,
+    orte_jobid_t jobid);
+
+OMPI_DECLSPEC int orte_rmgr_base_pack_create_cmd(
+    orte_buffer_t* buffer,
+    orte_app_context_t** context,
+    size_t num_context);
+
+OMPI_DECLSPEC int orte_rmgr_base_pack_terminate_proc_cmd(
+    orte_buffer_t* buffer,
+    const orte_process_name_t* name);
+
+OMPI_DECLSPEC int orte_rmgr_base_unpack_rsp(
+    orte_buffer_t* buffer);
+
+OMPI_DECLSPEC int orte_rmgr_base_unpack_create_rsp(
+    orte_buffer_t* buffer,
+    orte_jobid_t*);
+
+OMPI_DECLSPEC int orte_rmgr_base_cmd_dispatch(
+    orte_buffer_t* req,
+    orte_buffer_t* rsp);
 
 /*
  * Base functions that are common to all implementations - can be overridden
