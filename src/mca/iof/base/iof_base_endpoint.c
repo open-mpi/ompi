@@ -135,9 +135,6 @@ static void mca_iof_base_endpoint_read_handler(int fd, short flags, void *cbdata
 static void mca_iof_base_endpoint_write_handler(int sd, short flags, void *user)
 {
     mca_iof_base_endpoint_t* endpoint = (mca_iof_base_endpoint_t*)user; 
-    ompi_list_t completed;
-    ompi_process_name_t last = mca_oob_name_any;
-    OBJ_CONSTRUCT(&completed, ompi_list_t);
 
     /*
      * step through the list of queued fragments and attempt to write
@@ -167,6 +164,9 @@ static void mca_iof_base_endpoint_write_handler(int sd, short flags, void *user)
     /* is there anything left to write? */
     if(ompi_list_get_size(&endpoint->ep_frags) == 0) {
         ompi_event_del(&endpoint->ep_event);
+        if(mca_iof_base.iof_waiting) {
+            ompi_condition_signal(&mca_iof_base.iof_condition);
+        }
     }
     OMPI_THREAD_UNLOCK(&mca_iof_base.iof_lock);
 }
@@ -401,15 +401,13 @@ int mca_iof_base_endpoint_ack(
     window_open =
             MCA_IOF_BASE_SEQDIFF(endpoint->ep_seq,endpoint->ep_ack) < mca_iof_base.iof_window_size;
                                                                                                               
-    /* if we are shutting down - cleanup endpoint */
-    if(endpoint->ep_state == MCA_IOF_EP_CLOSING) {
-        if(endpoint->ep_seq == endpoint->ep_ack) {
-            endpoint->ep_state = MCA_IOF_EP_CLOSED;
-            ompi_condition_signal(&mca_iof_base.iof_condition);
-        }
+    /* someone is waiting on all output to be flushed */
+    if(mca_iof_base.iof_waiting && endpoint->ep_seq == endpoint->ep_ack) {
+        ompi_condition_signal(&mca_iof_base.iof_condition);
+    }
 
-    /* otherwise check to see if we need to reenable forwarding */
-    } else if(window_closed && window_open) {
+    /* check to see if we need to reenable forwarding */
+    if(window_closed && window_open) {
         ompi_event_add(&endpoint->ep_event, 0);
     }
     OMPI_THREAD_UNLOCK(&mca_iof_base.iof_lock);

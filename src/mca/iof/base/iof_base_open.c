@@ -56,6 +56,7 @@ int mca_iof_base_open(void)
     OBJ_CONSTRUCT(&mca_iof_base.iof_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_iof_base.iof_condition, ompi_condition_t);
     OBJ_CONSTRUCT(&mca_iof_base.iof_fragments, ompi_free_list_t);
+    mca_iof_base.iof_waiting = 0;
 
     /* lookup common parameters */
     id = mca_base_param_register_int("iof","base","window_size",NULL,MCA_IOF_BASE_MSG_MAX << 1);
