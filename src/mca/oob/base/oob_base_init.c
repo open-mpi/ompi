@@ -23,10 +23,8 @@
 #include "util/argv.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
-#include "mca/pcmclient/pcmclient.h"
-#include "mca/pcmclient/base/base.h"
-#include "mca/ns/base/base.h"
-#include "mca/pcm/pcm.h"
+#include "mca/errmgr/errmgr.h"
+#include "mca/ns/ns.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
 
@@ -45,9 +43,8 @@ OBJ_CLASS_INSTANCE(
     NULL
 );
 
-ompi_process_name_t mca_oob_name_self  = { MCA_NS_BASE_CELLID_MAX, MCA_NS_BASE_JOBID_MAX, MCA_NS_BASE_VPID_MAX };
-ompi_process_name_t mca_oob_name_seed  = { 0, 0, 0 };
-ompi_process_name_t mca_oob_name_any  = { MCA_NS_BASE_CELLID_MAX, MCA_NS_BASE_JOBID_MAX, MCA_NS_BASE_VPID_MAX };
+orte_process_name_t mca_oob_name_seed  = { 0, 0, 0 };
+orte_process_name_t mca_oob_name_any  = { ORTE_CELLID_MAX, ORTE_JOBID_MAX, ORTE_VPID_MAX };
 
 /**
  * Parse contact info string into process name and list of uri strings.
@@ -55,10 +52,10 @@ ompi_process_name_t mca_oob_name_any  = { MCA_NS_BASE_CELLID_MAX, MCA_NS_BASE_JO
 
 int mca_oob_parse_contact_info(
     const char* contact_info,
-    ompi_process_name_t* name,
+    orte_process_name_t* name,
     char*** uri)
 {
-    ompi_process_name_t* proc_name;
+    orte_process_name_t* proc_name;
 
     /* parse the process name */
     char* cinfo = strdup(contact_info);
@@ -69,7 +66,10 @@ int mca_oob_parse_contact_info(
     }
     *ptr = '\0';
     ptr++;
-    proc_name = mca_ns_base_convert_string_to_process_name(cinfo);
+    if (ORTE_SUCCESS != orte_ns.convert_string_to_process_name(&proc_name, cinfo)) {
+        name = NULL;
+        return OMPI_ERROR;
+    }
     *name = *proc_name;
     free(proc_name);
 
@@ -88,7 +88,7 @@ int mca_oob_parse_contact_info(
  *
  * Call the init function on all available modules.
  */
-int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
+int mca_oob_base_init(void)
 {
     ompi_list_item_t *item;
     mca_base_component_list_item_t *cli;
@@ -96,8 +96,6 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     mca_oob_t *module;
     extern ompi_list_t mca_oob_base_components;
     mca_oob_t *s_module = NULL;
-    bool s_user_threads = true;
-    bool s_hidden_threads = false;
     int  s_priority = -1;
 
     char** include = ompi_argv_split(mca_oob_base_include, ',');
@@ -148,9 +146,7 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
             ompi_output_verbose(10, mca_oob_base_output, "mca_oob_base_init: no init function; ignoring component");
         } else {
             int priority = -1;
-            bool u_threads;
-            bool h_threads;
-            module = component->oob_init(&priority, &u_threads, &h_threads);
+            module = component->oob_init(&priority);
             if (NULL != module) {
                 inited = OBJ_NEW(mca_oob_base_info_t);
                 inited->oob_component = component;
@@ -161,8 +157,6 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
                 if(priority > s_priority) {
                     s_priority = priority;
                     s_module = module;
-                    s_user_threads = u_threads;
-                    s_hidden_threads = h_threads;
                 }
             }
         }
@@ -174,8 +168,6 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
    }
 
    mca_oob = *s_module;
-   *user_threads &= s_user_threads;
-   *hidden_threads |= s_hidden_threads;
    return OMPI_SUCCESS;
 }
 
@@ -192,11 +184,19 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
                                                                                                              
 char* mca_oob_get_contact_info()
 {
-    char *proc_name = mca_ns_base_get_proc_name_string(MCA_OOB_NAME_SELF);
+    char *proc_name=NULL;
     char *proc_addr = mca_oob.oob_get_addr();
-    size_t size = strlen(proc_name) + 1 + strlen(proc_addr) + 1;
-    char *contact_info = malloc(size);
-    sprintf(contact_info, "%s;%s", proc_name, proc_addr);
+    char *contact_info=NULL;
+    int rc;
+    
+    if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string(&proc_name,
+                                            orte_process_info.my_name))) {
+        ORTE_ERROR_LOG(rc);
+        return NULL;
+    }
+    if (0 > asprintf(&contact_info, "%s;%s", proc_name, proc_addr)) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+    }
     free(proc_name);
     free(proc_addr);
     return contact_info;
@@ -212,7 +212,7 @@ char* mca_oob_get_contact_info()
                                                                                                              
 int mca_oob_set_contact_info(const char* contact_info)
 {
-    ompi_process_name_t name;
+    orte_process_name_t name;
     char** uri;
     char** ptr;
     int rc = mca_oob_parse_contact_info(contact_info, &name, &uri);
@@ -245,9 +245,6 @@ int mca_oob_set_contact_info(const char* contact_info)
 int mca_oob_base_module_init(void)
 {
   ompi_list_item_t* item;
-
-  /* setup self to point to actual process name */
-  mca_oob_name_self = *ompi_rte_get_self();
 
   /* Initialize all modules after oob/gpr/ns have initialized */
   for (item =  ompi_list_get_first(&mca_oob_base_modules);

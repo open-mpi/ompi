@@ -12,6 +12,9 @@
  * $HEADER$
  */
 #include "ompi_config.h"
+
+#include "mca/ns/ns.h"
+
 #include "mca/oob/tcp/oob_tcp.h"
 
 /*
@@ -27,20 +30,19 @@
  * @return             OMPI error code (<0) on error or number of bytes actually received.
  */
 int mca_oob_tcp_recv(
-    ompi_process_name_t* peer, 
+    orte_process_name_t* peer, 
     struct iovec *iov, 
     int count, 
-    int* tagp,
+    int tag,
     int flags)
 {
     mca_oob_tcp_msg_t *msg;
     int i, rc = 0, size = 0;
-    int tag = (tagp != NULL) ? *tagp : MCA_OOB_TAG_ANY;
 
     if(mca_oob_tcp_component.tcp_debug > 1) {
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_recv: tag %d\n",
-            OMPI_NAME_ARGS(mca_oob_name_self),
-            OMPI_NAME_ARGS(*peer),
+            ORTE_NAME_ARGS(orte_process_info.my_name),
+            ORTE_NAME_ARGS(peer),
             tag);
     }
 
@@ -83,10 +85,6 @@ int mca_oob_tcp_recv(
             }
         }
 
-        if(NULL != tagp) {
-            *tagp = msg->msg_hdr.msg_tag;
-        }
-
         /* otherwise dequeue the message and return to free list */
         ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t *) msg);
         MCA_OOB_TCP_MSG_RETURN(msg);
@@ -111,7 +109,11 @@ int mca_oob_tcp_recv(
     msg->msg_hdr.msg_tag = tag;
     msg->msg_hdr.msg_type = MCA_OOB_TCP_DATA;
     msg->msg_hdr.msg_src = *peer;
-    msg->msg_hdr.msg_dst = mca_oob_name_self;
+    if (NULL == orte_process_info.my_name) {
+        msg->msg_hdr.msg_dst = *MCA_OOB_NAME_ANY;
+    } else {
+        msg->msg_hdr.msg_dst = *orte_process_info.my_name;
+    }
     msg->msg_type = MCA_OOB_TCP_POSTED;
     msg->msg_rc = 0;
     msg->msg_flags = flags;
@@ -145,7 +147,7 @@ int mca_oob_tcp_recv(
  * @return             OMPI error code (<0) on error.
  */
 int mca_oob_tcp_recv_nb(
-    ompi_process_name_t* peer, 
+    orte_process_name_t* peer, 
     struct iovec* iov, 
     int count,
     int tag,
@@ -217,7 +219,7 @@ int mca_oob_tcp_recv_nb(
     }
 
     /* fill in the header */
-    msg->msg_hdr.msg_src = mca_oob_name_self;
+    msg->msg_hdr.msg_src = *orte_process_info.my_name;
     msg->msg_hdr.msg_dst = *peer;
     msg->msg_hdr.msg_size = size;
     msg->msg_hdr.msg_tag = tag;
@@ -247,10 +249,10 @@ int mca_oob_tcp_recv_nb(
  */
 
 int mca_oob_tcp_recv_cancel(
-    ompi_process_name_t* name, 
+    orte_process_name_t* name, 
     int tag)
 {
-    int matched = 0;
+    int matched = 0, cmpval1, cmpval2;
     ompi_list_item_t *item, *next;
 
     /* wait for any previously matched messages to be processed */
@@ -268,9 +270,10 @@ int mca_oob_tcp_recv_cancel(
         mca_oob_tcp_msg_t* msg = (mca_oob_tcp_msg_t*)item;
         next = ompi_list_get_next(item);
 
-        if((0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, name,MCA_OOB_NAME_ANY) ||
-	    (0 == ompi_name_server.compare(OMPI_NS_CMP_ALL, &msg->msg_peer,name)))) {
-            if (tag == MCA_OOB_TAG_ANY || msg->msg_hdr.msg_tag == tag) {
+        cmpval1 = orte_ns.compare(ORTE_NS_CMP_ALL, name, MCA_OOB_NAME_ANY);
+        cmpval2 = orte_ns.compare(ORTE_NS_CMP_ALL, &msg->msg_peer, name);
+        if ((0 == cmpval1) || (0 == cmpval2)) {
+            if (msg->msg_hdr.msg_tag == tag) {
                 ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);
                 MCA_OOB_TCP_MSG_RETURN(msg);
                 matched++;

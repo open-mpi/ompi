@@ -32,7 +32,6 @@ libmpiruntime_la_SOURCES = \
 	$(headers) \
 	ompi_mpi_abort.c \
     ompi_mpi_init.c \
-    ompi_mpi_io.c \
     ompi_mpi_finalize.c \
     ompi_mpi_params.c
 

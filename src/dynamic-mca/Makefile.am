@@ -19,18 +19,20 @@ SUBDIRS = \
         allocator \
         coll \
         errmgr \
+        errmgr \
         gpr \
         io \
         iof \
         mpool \
-	llm \
         ns \
-        one \
         oob \
-        pcm \
-        pcmclient \
+	pls \
         pml \
         ptl \
+        rml \
+	ras \
+	rds \
+	rmaps \
+	rmgr \
         soh \
-        svc \
         topo

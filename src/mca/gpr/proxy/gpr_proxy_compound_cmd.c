@@ -21,121 +21,140 @@
  * includes
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
+
+#include "include/orte_constants.h"
+#include "include/orte_types.h"
+#include "dps/dps.h"
+#include "util/output.h"
+#include "util/proc_info.h"
+
+#include "mca/ns/ns_types.h"
+#include "mca/oob/oob_types.h"
+#include "mca/rml/rml.h"
 
 #include "gpr_proxy.h"
 
 
-int mca_gpr_proxy_begin_compound_cmd(void)
+int orte_gpr_proxy_begin_compound_cmd(void)
 {
-    size_t size;
+    orte_gpr_cmd_flag_t command;
+    int rc;
+    
+    command = ORTE_GPR_COMPOUND_CMD;
+    
+    OMPI_THREAD_LOCK(&orte_gpr_proxy_globals.wait_for_compound_mutex);
 
-    OMPI_THREAD_LOCK(&mca_gpr_proxy_wait_for_compound_mutex);
-
-    if (mca_gpr_proxy_compound_cmd_mode) {
-	mca_gpr_proxy_compound_cmd_waiting++;
-	ompi_condition_wait(&mca_gpr_proxy_compound_cmd_condition, &mca_gpr_proxy_wait_for_compound_mutex);
-	mca_gpr_proxy_compound_cmd_waiting--;
+    if (orte_gpr_proxy_globals.compound_cmd_mode) {
+	   orte_gpr_proxy_globals.compound_cmd_waiting++;
+	   ompi_condition_wait(&orte_gpr_proxy_globals.compound_cmd_condition, &orte_gpr_proxy_globals.wait_for_compound_mutex);
+	   orte_gpr_proxy_globals.compound_cmd_waiting--;
     }
 
-    mca_gpr_proxy_compound_cmd_mode = true;
-    if (NULL != mca_gpr_proxy_compound_cmd) {  /* first time through, pointer is NULL, so just perform init */
-        ompi_buffer_size(mca_gpr_proxy_compound_cmd, &size);
-        if (0 < size) {
-	    ompi_buffer_free(mca_gpr_proxy_compound_cmd);
-	    mca_gpr_proxy_compound_cmd = NULL;
-        }
+    orte_gpr_proxy_globals.compound_cmd_mode = true;
+    if (NULL != orte_gpr_proxy_globals.compound_cmd) {
+        OBJ_RELEASE(orte_gpr_proxy_globals.compound_cmd);
     }
 
-    ompi_buffer_init(&mca_gpr_proxy_compound_cmd, 0);
-
-    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_wait_for_compound_mutex);
-    return OMPI_SUCCESS;
+    orte_gpr_proxy_globals.compound_cmd = OBJ_NEW(orte_buffer_t);
+    if (NULL == orte_gpr_proxy_globals.compound_cmd) {
+        orte_gpr_proxy_globals.compound_cmd_mode = false;
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(orte_gpr_proxy_globals.compound_cmd, &command,
+                                            1, ORTE_GPR_CMD))) {
+        orte_gpr_proxy_globals.compound_cmd_mode = false;
+        OBJ_RELEASE(orte_gpr_proxy_globals.compound_cmd);
+        return rc;
+    }
+    
+    OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.wait_for_compound_mutex);
+    return ORTE_SUCCESS;
 }
 
 
-int mca_gpr_proxy_stop_compound_cmd(void)
+int orte_gpr_proxy_stop_compound_cmd(void)
 {
-    size_t size;
+    OMPI_THREAD_LOCK(&orte_gpr_proxy_globals.wait_for_compound_mutex);
 
-    OMPI_THREAD_LOCK(&mca_gpr_proxy_wait_for_compound_mutex);
-
-    mca_gpr_proxy_compound_cmd_mode = false;
-    if (NULL != mca_gpr_proxy_compound_cmd) {
-	ompi_buffer_size(mca_gpr_proxy_compound_cmd, &size);
-	if (0 < size) {
-	    ompi_buffer_free(mca_gpr_proxy_compound_cmd);
-	    mca_gpr_proxy_compound_cmd = NULL;
-	}
+    orte_gpr_proxy_globals.compound_cmd_mode = false;
+    if (NULL != orte_gpr_proxy_globals.compound_cmd) {
+	   OBJ_RELEASE(orte_gpr_proxy_globals.compound_cmd);
     }
 
-    if (mca_gpr_proxy_compound_cmd_waiting) {
-	ompi_condition_signal(&mca_gpr_proxy_compound_cmd_condition);
+    if (orte_gpr_proxy_globals.compound_cmd_waiting) {
+	   ompi_condition_signal(&orte_gpr_proxy_globals.compound_cmd_condition);
     }
 
-    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_wait_for_compound_mutex);
-    return OMPI_SUCCESS;
+    OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.wait_for_compound_mutex);
+    return ORTE_SUCCESS;
 }
 
 
-ompi_list_t* mca_gpr_proxy_exec_compound_cmd(bool return_requested)
+int orte_gpr_proxy_exec_compound_cmd(void)
 {
-    uint8_t tmp;
-    mca_gpr_cmd_flag_t command;
-    ompi_buffer_t answer;
-    int recv_tag=MCA_OOB_TAG_GPR;
-    size_t size;
-
-    if (mca_gpr_proxy_debug) {
-	ompi_output(0, "[%d,%d,%d] transmitting compound command",
-		    OMPI_NAME_ARGS(*ompi_rte_get_self()));
+    orte_buffer_t *answer;
+    orte_gpr_cmd_flag_t command;
+    size_t n;
+    int rc;
+    int32_t response;
+    
+    if (orte_gpr_proxy_globals.debug) {
+	   ompi_output(0, "[%d,%d,%d] transmitting compound command",
+		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
-    OMPI_THREAD_LOCK(&mca_gpr_proxy_wait_for_compound_mutex);
-
-    /**
-     * pack the exec_compound_cmd command and return_requested flag at the end of the buffer
-     * then send command off to be processed
-     */
-
-    command = MCA_GPR_COMPOUND_CMD;
-    ompi_pack(mca_gpr_proxy_compound_cmd, &command, 1, MCA_GPR_OOB_PACK_CMD);
-
-    tmp = (uint8_t)return_requested;
-    ompi_pack(mca_gpr_proxy_compound_cmd, &tmp, 1, MCA_GPR_OOB_PACK_BOOL);
-
-    if (0 > mca_oob_send_packed(mca_gpr_my_replica, mca_gpr_proxy_compound_cmd, MCA_OOB_TAG_GPR, 0)) {
-	goto CLEANUP;
+    OMPI_THREAD_LOCK(&orte_gpr_proxy_globals.wait_for_compound_mutex);
+    rc = ORTE_SUCCESS;
+    
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, orte_gpr_proxy_globals.compound_cmd, MCA_OOB_TAG_GPR, 0)) {
+        rc = ORTE_ERR_COMM_FAILURE;
+	    goto CLEANUP;
     }
 
-    if (return_requested) {
-	if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {
+    answer = OBJ_NEW(orte_buffer_t);
+    if (NULL == answer) {
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        goto CLEANUP;
+    }
+    
+	if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, MCA_OOB_TAG_GPR)) {
+        OBJ_RELEASE(answer);
+        rc = ORTE_ERR_COMM_FAILURE;
 	    goto CLEANUP;
 	}
 
-	/* RHC = need to figure out how to unpack the return message */
+    n = 1;
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(answer, &command, &n, ORTE_GPR_CMD))) {
+        OBJ_RELEASE(answer);
+        goto CLEANUP;
     }
-
+    
+    if (ORTE_GPR_COMPOUND_CMD != command) {
+        OBJ_RELEASE(answer);
+        rc = ORTE_ERR_COMM_FAILURE;
+        goto CLEANUP;
+    }
+    
+    n = 1;
+    rc = orte_dps.unpack(answer, &response, &n, ORTE_INT32);
+    
+    if (ORTE_SUCCESS == rc) {
+        rc = (int)response;
+    }
+    
  CLEANUP:
-    mca_gpr_proxy_compound_cmd_mode = false;
-    if (NULL != mca_gpr_proxy_compound_cmd) {  /* shouldn't be any way this could be true, but just to be safe... */
-	ompi_buffer_size(mca_gpr_proxy_compound_cmd, &size);
-	if (0 < size) {
-	    ompi_buffer_free(mca_gpr_proxy_compound_cmd);
-	    mca_gpr_proxy_compound_cmd = NULL;
-	}
+    orte_gpr_proxy_globals.compound_cmd_mode = false;
+    OBJ_RELEASE(orte_gpr_proxy_globals.compound_cmd);
+
+    if (orte_gpr_proxy_globals.compound_cmd_waiting) {
+	   ompi_condition_signal(&orte_gpr_proxy_globals.compound_cmd_condition);
     }
 
-    if (mca_gpr_proxy_compound_cmd_waiting) {
-	ompi_condition_signal(&mca_gpr_proxy_compound_cmd_condition);
-    }
+    OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.wait_for_compound_mutex);
 
-    OMPI_THREAD_UNLOCK(&mca_gpr_proxy_wait_for_compound_mutex);
-
-    /* TODO: Fix this. The function returns an ompi_list_t * according to definition, 
-       but actually is returning an int. Temporarily casted it to (ompi_list_t *), but 
-       should be fixed in the long run */
-    return (ompi_list_t *)OMPI_SUCCESS;
+    return rc;
 }
 
 

@@ -24,7 +24,4 @@
 
 #include "class/ompi_object.h"
 
-int ompi_rte_internal_init_spawn(void);
-int ompi_rte_internal_fini_spawn(void);
-
 #endif

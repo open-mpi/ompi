@@ -140,6 +140,7 @@ static void ompi_event_queue_remove(struct ompi_event *, int);
 static void ompi_timeout_process(void);
 int ompi_event_haveevents(void);
 bool ompi_event_progress_thread(void);
+extern int ompi_evsignal_restart(void);
 
 static RB_HEAD(ompi_event_tree, ompi_event) ompi_timetree;
 static struct ompi_event_list ompi_activequeue;
@@ -159,9 +160,9 @@ static int ompi_event_pipe_signalled;
 bool ompi_event_progress_thread(void)
 {
 #if OMPI_ENABLE_PROGRESS_THREADS
-    return ompi_thread_self_compare(&ompi_event_thread);
+    return ompi_using_threads() ? ompi_thread_self_compare(&ompi_event_thread) : true;
 #else
-    return false;
+    return true;
 #endif
 }
 
@@ -206,6 +207,7 @@ static int ompi_timeout_next(struct timeval *tv)
 } 
 #endif
 
+
 /* run loop for dispatch thread */
 static void* ompi_event_run(ompi_object_t* arg)
 {
@@ -224,13 +226,12 @@ static void* ompi_event_run(ompi_object_t* arg)
 static void ompi_event_pipe_handler(int sd, short flags, void* user)
 {
     unsigned char byte;
-    if(read(sd, &byte, 1) != 1) {
+    if(read(sd, &byte, 1) < 0) {
         ompi_output(0, "ompi_event_pipe: read failed with: errno=%d\n", errno);
         ompi_event_del(&ompi_event_pipe_event);
     }
 }
 #endif
-
 
 int
 ompi_event_init(void)
@@ -259,20 +260,22 @@ ompi_event_init(void)
         errx(1, "%s: no event mechanism available", __func__);
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-    if(pipe(ompi_event_pipe) != 0) {
-        ompi_output(0, "ompi_event_init: pipe() failed with errno=%d\n", errno);
-        return OMPI_ERROR;
-    }
+    if(ompi_using_threads()) {
+        if(pipe(ompi_event_pipe) != 0) {
+            ompi_output(0, "ompi_event_init: pipe() failed with errno=%d\n", errno);
+            return OMPI_ERROR;
+        }
 
-    ompi_event_pipe_signalled = 1;
-    ompi_event_set(
-        &ompi_event_pipe_event,
-         ompi_event_pipe[0],
-         OMPI_EV_READ|OMPI_EV_PERSIST,
-         ompi_event_pipe_handler,
-         0);
-    ompi_event_add_i(&ompi_event_pipe_event, 0);
-    ompi_event_pipe_signalled = 0;
+        ompi_event_pipe_signalled = 1;
+        ompi_event_set(
+            &ompi_event_pipe_event,
+             ompi_event_pipe[0],
+             OMPI_EV_READ|OMPI_EV_PERSIST,
+             ompi_event_pipe_handler,
+             0);
+        ompi_event_add_i(&ompi_event_pipe_event, 0);
+        ompi_event_pipe_signalled = 0;
+    }
 #endif
     ompi_event_enable();
 
@@ -286,28 +289,44 @@ ompi_event_init(void)
 int ompi_event_fini(void)
 {
 #if OMPI_ENABLE_PROGRESS_THREADS
-    if(--ompi_event_inited == 0)
-        ompi_event_disable();
+    if(ompi_using_threads()) {
+        OMPI_THREAD_LOCK(&ompi_event_lock);
+        if(ompi_event_inited > 0 && ompi_event_enabled) {
+            unsigned char byte = 0;
+            ompi_event_enabled = false;
+            write(ompi_event_pipe[1], &byte, 1);
+            OMPI_THREAD_UNLOCK(&ompi_event_lock);
+            ompi_thread_join(&ompi_event_thread, NULL);
+            ompi_event_pipe_signalled = 1;
+        } else {
+            OMPI_THREAD_UNLOCK(&ompi_event_lock);
+        }
+    }
 #endif
+    ompi_event_inited--;
     return OMPI_SUCCESS;
 }
 
 int ompi_event_disable(void)
 {
 #if OMPI_ENABLE_PROGRESS_THREADS
-    OMPI_THREAD_LOCK(&ompi_event_lock);
-    if(ompi_event_inited > 0 && ompi_event_enabled) {
-        ompi_event_enabled = false;
-        if(ompi_event_pipe_signalled == 0) {
-            unsigned char byte = 0;
-            if(write(ompi_event_pipe[1], &byte, 1) != 1)
-                ompi_output(0, "ompi_event_add: write() to ompi_event_pipe[1] failed with errno=%d\n", errno);
-            ompi_event_pipe_signalled++;
+    if(ompi_using_threads()) {
+        OMPI_THREAD_LOCK(&ompi_event_lock);
+        if(ompi_event_inited > 0 && ompi_event_enabled) {
+            ompi_event_enabled = false;
+            if(ompi_event_pipe_signalled == 0) {
+                unsigned char byte = 0;
+                if(write(ompi_event_pipe[1], &byte, 1) != 1)
+                    ompi_output(0, "ompi_event_add: write() to ompi_event_pipe[1] failed with errno=%d\n", errno);
+                ompi_event_pipe_signalled++;
+            }
+            OMPI_THREAD_UNLOCK(&ompi_event_lock);
+            ompi_thread_join(&ompi_event_thread, NULL);
+        } else {
+            OMPI_THREAD_UNLOCK(&ompi_event_lock);
         }
-        OMPI_THREAD_UNLOCK(&ompi_event_lock);
-        ompi_thread_join(&ompi_event_thread, NULL);
     } else {
-        OMPI_THREAD_UNLOCK(&ompi_event_lock);
+        ompi_event_enabled = false;
     }
 #else
     ompi_event_enabled = false;
@@ -318,22 +337,39 @@ int ompi_event_disable(void)
 int ompi_event_enable(void)
 {
 #if OMPI_ENABLE_PROGRESS_THREADS
-    int rc;
-    /* spin up a thread to dispatch events */
-    OMPI_THREAD_LOCK(&ompi_event_lock);
-    if(ompi_event_inited > 0 && ompi_event_enabled == false) {
-        OBJ_CONSTRUCT(&ompi_event_thread, ompi_thread_t);
+    if(ompi_using_threads()) {
+        int rc;
+        /* spin up a thread to dispatch events */
+        OMPI_THREAD_LOCK(&ompi_event_lock);
+        if(ompi_event_inited > 0 && ompi_event_enabled == false) {
+            OBJ_CONSTRUCT(&ompi_event_thread, ompi_thread_t);
+            ompi_event_enabled = true;
+            ompi_event_thread.t_run = ompi_event_run;
+            if((rc = ompi_thread_start(&ompi_event_thread)) != OMPI_SUCCESS) {
+                OMPI_THREAD_UNLOCK(&ompi_event_lock);
+                return rc;
+            }
+        }
+        OMPI_THREAD_UNLOCK(&ompi_event_lock);
+    } else {
         ompi_event_enabled = true;
-        ompi_event_thread.t_run = ompi_event_run;
-        if((rc = ompi_thread_start(&ompi_event_thread)) != OMPI_SUCCESS)
-            return rc;
     }
-    OMPI_THREAD_UNLOCK(&ompi_event_lock);
 #else
     ompi_event_enabled = true;
 #endif
     return OMPI_SUCCESS;
 }
+
+int ompi_event_restart(void)
+{
+    int rc;
+    if((rc = ompi_event_enable()) != OMPI_SUCCESS)
+        return rc;
+    if((rc = ompi_evsignal_restart()) != 0)
+        return OMPI_ERROR;
+    return (OMPI_SUCCESS);
+}
+
 
 int ompi_event_haveevents(void)
 {
@@ -521,7 +557,7 @@ ompi_event_add_i(struct ompi_event *ev, struct timeval *tv)
     }
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-    if(ompi_event_pipe_signalled == 0) {
+    if(ompi_using_threads() && ompi_event_pipe_signalled == 0) {
         unsigned char byte = 0;
         if(write(ompi_event_pipe[1], &byte, 1) != 1)
             ompi_output(0, "ompi_event_add: write() to ompi_event_pipe[1] failed with errno=%d\n", errno);
@@ -558,7 +594,7 @@ int ompi_event_del_i(struct ompi_event *ev)
     }
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-    if(ompi_event_pipe_signalled == 0) {
+    if(ompi_using_threads() && ompi_event_pipe_signalled == 0) {
         unsigned char byte = 0;
         if(write(ompi_event_pipe[1], &byte, 1) != 1)
             ompi_output(0, "ompi_event_add: write() to ompi_event_pipe[1] failed with errno=%d\n", errno);

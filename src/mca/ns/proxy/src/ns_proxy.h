@@ -17,45 +17,61 @@
 #define NS_PROXY_H
 
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include "include/types.h"
-#include "include/constants.h"
+#include "include/orte_constants.h"
 #include "class/ompi_list.h"
-#include "mca/ns/ns.h"
+
+#include "mca/ns/base/base.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+struct orte_ns_proxy_tagitem_t {
+    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
+    orte_rml_tag_t tag;  /**< OOB tag */
+    char *name;      /**< Name associated with tag */
+};
+typedef struct orte_ns_proxy_tagitem_t orte_ns_proxy_tagitem_t;
+
+OBJ_CLASS_DECLARATION(orte_ns_proxy_tagitem_t);
+
+
 /*
  * Module open / close
  */
-int mca_ns_proxy_open(void);
-int mca_ns_proxy_close(void);
+int orte_ns_proxy_open(void);
+int orte_ns_proxy_close(void);
 
 
 /*
  * Startup / Shutdown
  */
-mca_ns_base_module_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority);
-int mca_ns_proxy_finalize(void);
+mca_ns_base_module_t* orte_ns_proxy_init(int *priority);
+int orte_ns_proxy_module_init(void);
+int orte_ns_proxy_finalize(void);
 
 /*
  * globals used within proxy component
  */
 
-OMPI_COMP_EXPORT extern mca_ns_base_component_t mca_ns_proxy_component;
-extern ompi_process_name_t *mca_ns_my_replica;
-extern int mca_ns_proxy_debug;
+extern orte_process_name_t *orte_ns_my_replica;
+extern int orte_ns_proxy_debug;
+extern ompi_list_t orte_ns_proxy_taglist;
+extern ompi_mutex_t orte_ns_proxy_mutex;
 
 /*
  * proxy function prototypes
  */
-mca_ns_base_cellid_t mca_ns_proxy_create_cellid(void);
+int orte_ns_proxy_create_cellid(orte_cellid_t *cellid);
 
-mca_ns_base_jobid_t mca_ns_proxy_create_jobid(void);
+int orte_ns_proxy_create_jobid(orte_jobid_t *jobid);
 
-mca_ns_base_vpid_t mca_ns_proxy_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range);
+int orte_ns_proxy_reserve_range(orte_jobid_t job, orte_vpid_t range,
+                                orte_vpid_t *startvpid);
 
-mca_ns_base_vpid_t mca_ns_proxy_get_allocated_vpids(mca_ns_base_jobid_t jobid);
+int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag, char *name);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -31,7 +31,7 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
-#include "mca/ns/base/base.h"
+#include "mca/ns/ns.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_join = PMPI_Comm_join
@@ -56,7 +56,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
 
     ompi_proc_t **myproc=NULL;
     ompi_communicator_t *newcomp;
-    ompi_process_name_t *port_proc_name=NULL;
+    orte_process_name_t *port_proc_name=NULL;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -71,7 +71,9 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
        Need to determine somehow how to avoid a potential deadlock
        here. */
     myproc = ompi_proc_self (&size);
-    name   = ompi_name_server.get_proc_name_string (&(myproc[0]->proc_name));
+    if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string (&name, &(myproc[0]->proc_name)))) {
+        return rc;
+    }
     llen   = strlen(name)+1;
     len    = htonl(llen);
     
@@ -91,7 +93,9 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     ompi_socket_send (fd, name, llen);
     ompi_socket_recv (fd, rname, lrlen);
     
-    port_proc_name = ompi_name_server.convert_string_to_process_name(rname);
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&port_proc_name, rname))) {
+        return rc;
+    }
     rc = ompi_comm_connect_accept (MPI_COMM_SELF, 0, port_proc_name,
                                    send_first, &newcomp, tag);
     

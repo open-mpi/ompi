@@ -28,16 +28,17 @@ headers = \
     argv.h \
     bit_ops.h \
     cmd_line.h \
+    environ.h \
     few.h \
     if.h \
     malloc.h \
     numtostr.h \
     output.h \
     path.h \
-    bufpack.h \
     sys_info.h \
     printf.h \
     proc_info.h \
+    univ_info.h \
     os_path.h \
     os_create_dirpath.h \
     pow2.h \
@@ -53,16 +54,17 @@ libutil_la_SOURCES = \
     $(headers) \
     argv.c \
     cmd_line.c \
+    environ.c \
     few.c \
     if.c \
     malloc.c \
     numtostr.c \
     output.c \
     path.c \
-    bufpack.c \
     printf.c \
     proc_info.c \
     sys_info.c \
+    univ_info.c \
     os_path.c \
     os_create_dirpath.c \
     pow2.c \

@@ -15,7 +15,7 @@
 /** @file:
  * Creates an operating system-acceptable path name.
  *
- * The ompi_os_path() function takes a variable number of string arguments and
+ * The orte_os_path() function takes a variable number of string arguments and
  * concatenates them into a path name using the path separator character appropriate
  * to the local operating system. NOTE: the string returned by this function has been
  * malloc'd - thus, the user is responsible for free'ing the memory used by
@@ -25,7 +25,7 @@
  * to do this will cause the program to suffer a catastrophic failure - usually a
  * segmentation violation or bus error.
  *
- * The function calls ompi_sys_info() to ensure that the path separator character
+ * The function calls orte_sys_info() to ensure that the path separator character
  * has been identified. If that value cannot be identified for some reason,
  * the function will return a NULL value. Likewise, specifying a path name that
  * exceeds the maximum allowable path name length on the local system will result
@@ -34,7 +34,7 @@
  *
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -53,4 +53,4 @@
  * appropriate to the local operating system. The path_name string has been malloc'd
  * and therefore the user is responsible for free'ing the field.
 */
-OMPI_DECLSPEC char *ompi_os_path(bool relative, ...);
+ORTE_DECLSPEC char *orte_os_path(bool relative, ...);

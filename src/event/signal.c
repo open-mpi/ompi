@@ -46,6 +46,7 @@
 #endif
 #include <errno.h>
 #include <err.h>
+#include <fcntl.h>
 
 #ifdef USE_LOG
 #include "log.h"
@@ -64,18 +65,17 @@ static short ompi_evsigcaught[NSIG];
 static int ompi_needrecalc;
 static int ompi_event_signal_pipe[2];
 static ompi_event_t ompi_event_signal_pipe_event;
-static int ompi_event_signal_count = 0;
+volatile sig_atomic_t ompi_event_signal_count = 0;
 static bool initialized = false;
 volatile sig_atomic_t ompi_evsignal_caught = 0;
 
 static void ompi_event_signal_pipe_handler(int sd, short flags, void* user)
 {
-    unsigned char byte;
-    if(read(sd, &byte, 1) != 1) {
-        ompi_output(0, "ompi_event_signal_pipe: read failed with: errno=%d\n", errno);
-        ompi_event_del(&ompi_event_signal_pipe_event);
+    ompi_output(0, "ompi_event_signal_pipe_handler: %d\n", ompi_event_signal_count);
+    while(ompi_event_signal_count-- > 0) {
+        char byte;
+        read(ompi_event_signal_pipe[0], &byte, 1);
     }
-    ompi_event_signal_count = 0;
 }
 
 void ompi_evsignal_handler(int sig);
@@ -83,13 +83,6 @@ void ompi_evsignal_handler(int sig);
 void
 ompi_evsignal_init(sigset_t *evsigmask)
 {
-    if (pipe(ompi_event_signal_pipe) != 0) {
-        ompi_output(0, "ompi_evsignal_init: pipe() failed with errno=%d\n", 
-                    errno);
-        return;
-    }
-    ompi_event_signal_count = 0;
-
     sigemptyset(evsigmask);
 }
 
@@ -100,15 +93,18 @@ ompi_evsignal_add(sigset_t *evsigmask, struct ompi_event *ev)
 	int evsignal;
 
 	if (!initialized) {
+            int i;
 	    /* Must delay the event add until after init() because
 	       it may trigger poll events that are not yet setup
 	       to be triggered. */
+            pipe(ompi_event_signal_pipe);
     	    ompi_event_set(&ompi_event_signal_pipe_event,
                            ompi_event_signal_pipe[0],
 	                   OMPI_EV_READ|OMPI_EV_PERSIST,
 	                   ompi_event_signal_pipe_handler,
 	                   0);
 	    ompi_event_add_i(&ompi_event_signal_pipe_event, 0);
+            ompi_event_signal_count = 0;
 	    initialized = true;
 	}
 	
@@ -116,8 +112,27 @@ ompi_evsignal_add(sigset_t *evsigmask, struct ompi_event *ev)
 		errx(1, "%s: OMPI_EV_SIGNAL incompatible use", __func__);
 	evsignal = OMPI_EVENT_SIGNAL(ev);
 	sigaddset(evsigmask, evsignal);
-	
 	return (0);
+}
+
+int 
+ompi_evsignal_restart(void)
+{
+    if(initialized) {
+        int rc;
+        ompi_event_del_i(&ompi_event_signal_pipe_event);
+        if ((rc = pipe(ompi_event_signal_pipe)) != 0) {
+            return rc;
+        }
+    	ompi_event_set(&ompi_event_signal_pipe_event,
+                        ompi_event_signal_pipe[0],
+	                OMPI_EV_READ|OMPI_EV_PERSIST,
+	                ompi_event_signal_pipe_handler,
+	                0);
+        ompi_event_signal_count = 0;
+	ompi_event_add_i(&ompi_event_signal_pipe_event, 0);
+    }
+    return (0);
 }
 
 /*
@@ -140,16 +155,17 @@ void
 ompi_evsignal_handler(int sig)
 {
 	const char errmsg[] = "ompi_evsignal_handler: error in write\n";
+        unsigned char byte = 0;
 
 	ompi_evsigcaught[sig]++;
 	ompi_evsignal_caught = 1;
-	if (ompi_event_signal_count == 0) {
-            unsigned char byte = 0;
-            if (write(ompi_event_signal_pipe[1], &byte, 1) != 1) {
-                write(2, errmsg, sizeof(errmsg));
-            }
-	    ompi_event_signal_count++;
-	}
+ 
+#if 0
+        if(ompi_event_signal_count == 0) {
+            ompi_event_signal_count++;
+            write(ompi_event_signal_pipe[1], &byte, 1);
+        }
+#endif
 }
 
 int

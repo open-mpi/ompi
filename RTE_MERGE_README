@@ -1,0 +1,864 @@
+This file contains information on merging the branches/tim tree into the
+trunk.
+
+INITIAL MERGE:
+
+  svn merge -r3853:4821 svn+ssh://svn.open-mpi.org/l/svn/ompi/branches/tim . 
+
+CONFLICTS FROM INITIAL MERGE:
+
+C  src/event/event.c                                    RESOLVED, BWB
+C  src/dynamic-mca/Makefile.am                          RESOLVED, BWB
+C  src/include/Makefile.am                              RESOLVED, BWB
+C  src/runtime/ompi_progress.c                          RESOLVED, BWB
+C  src/mpi/runtime/ompi_mpi_init.c			RESOLVED, BWB
+C  src/threads/condition.h                              RESOLVED, BWB
+C  src/tools/console/Makefile.am                        RESOLVED, BWB
+C  src/tools/wrappers/Makefile.am                       RESOLVED, BWB
+C  src/tools/Makefile.am                                RESOLVED, BWB
+C  src/mca/oob/oob.h                                    RESOLVED, BWB
+C  src/mca/oob/tcp/oob_tcp.c                            RESOLVED, BWB
+C  src/mca/oob/tcp/oob_tcp_msg.c			RESOLVED, BWB
+C  src/mca/oob/base/base.h				RESOLVED, BWB
+C  src/mca/ns/replica/src/ns_replica.c                  RESOLVED, BWB
+C  src/mca/ns/replica/src/ns_replica_component.c        RESOLVED, BWB
+C  src/mca/ns/replica/src/ns_replica.h                  RESOLVED, BWB
+C  src/mca/ns/proxy/src/ns_proxy.c                      RESOLVED, BWB
+C  src/mca/ns/proxy/src/ns_proxy_component.c            RESOLVED, BWB
+C  src/mca/ns/proxy/src/ns_proxy.h                      RESOLVED, BWB
+C  src/mca/ns/ns.h                                      RESOLVED, BWB
+C  src/mca/ns/base/base.h                               RESOLVED, BWB
+C  src/mca/ns/base/ns_base_local_fns.c                  RESOLVED, BWB
+C  src/mca/ns/base/ns_base_open.c                       RESOLVED, BWB
+C  src/mca/gpr/replica/gpr_replica.h			RESOLVED, BWB
+C  src/mca/gpr/proxy/gpr_proxy.h			RESOLVED, BWB
+C  src/mca/gpr/proxy/gpr_proxy_compound_cmd.c		RESOLVED, BWB
+C  src/mca/gpr/base/base.h				RESOLVED, BWB
+C  src/mca/ptl/gm/src/ptl_gm.h				RESOLVED, BWB
+C  src/mca/io/base/io_base_component_list.c		RESOLVED, BWB
+C  src/mca/Makefile.am                                  RESOLVED, BWB
+C  src/mca/base/mca_base_param.c                        RESOLVED, BWB
+C  src/mca/base/mca_base_param.h                        RESOLVED, BWB
+C  src/communicator/comm_publish.c                      RESOLVED, BWB
+C  src/communicator/comm_dyn.c                          RESOLVED, BWB
+C  src/communicator/communicator.h                      RESOLVED, BWB
+C  src/Makefile.am                                      RESOLVED, BWB
+C  configure.ac                                         RESOLVED, BWB
+C  config/ompi_mca.m4                                   RESOLVED, BWB
+
+CHANGES AFTER RESOLUTION FROM INITIAL MERGE:
+
+ M     .
+M      test/mca/ns/test_ns_replica.c
+ M     test/mca/gpr
+A  +   test/mca/gpr/gpr_test_trigs.c
+A  +   test/mca/gpr/gpr_test.c
+M      test/mca/gpr/Makefile.am
+A  +   test/mca/gpr/gpr_test_proxy.c
+A  +   test/mca/rds
+A  +   test/mca/rds/test_rds_resfile.c
+A  +   test/mca/rds/Makefile.am
+A  +   test/runtime
+A  +   test/runtime/parse_context.c
+A  +   test/runtime/Makefile.am
+A  +   test/plsnds
+A  +   test/plsnds/plsnds_test.c
+A  +   test/plsnds/Makefile.am
+A  +   test/dps
+A  +   test/dps/dps_test.c
+A  +   test/dps/Makefile.am
+A  +   include/orte_config.h
+A      RTE_MERGE_README
+M      src/event/signal.c
+M      src/event/event.c
+M      src/event/event.h
+D      src/dynamic-mca/pcm
+D      src/dynamic-mca/pcm/Makefile.am
+D      src/dynamic-mca/one
+D      src/dynamic-mca/one/Makefile.am
+A  +   src/dynamic-mca/rmaps
+A  +   src/dynamic-mca/rmaps/Makefile.am
+D      src/dynamic-mca/llm
+D      src/dynamic-mca/llm/Makefile.am
+A  +   src/dynamic-mca/ras
+A  +   src/dynamic-mca/ras/Makefile.am
+A  +   src/dynamic-mca/rds
+A  +   src/dynamic-mca/rds/Makefile.am
+A  +   src/dynamic-mca/rml
+A  +   src/dynamic-mca/rml/Makefile.am
+D      src/dynamic-mca/svc
+D      src/dynamic-mca/svc/Makefile.am
+A  +   src/dynamic-mca/pls
+A  +   src/dynamic-mca/pls/Makefile.am
+A  +   src/dynamic-mca/rmgr
+A  +   src/dynamic-mca/rmgr/Makefile.am
+M      src/dynamic-mca/Makefile.am
+D      src/dynamic-mca/pcmclient
+D      src/dynamic-mca/pcmclient/Makefile.am
+D      src/runtime/ompi_rte_finalize.c
+A  +   src/runtime/orte_abort.c
+A  +   src/runtime/orte_wait.h
+D      src/runtime/ompi_rte_parse_environ.c
+D      src/runtime/ompi_rte_init_cleanup.c
+M      src/runtime/runtime_types.h
+D      src/runtime/ompi_rte_pcm.c
+A  +   src/runtime/orte_restart.c
+A  +   src/runtime/orte_monitor.c
+D      src/runtime/ompi_rte_vm_status.c
+M      src/runtime/runtime_internal.h
+D      src/runtime/ompi_rte_wait_startup_shutdown_msg.c
+D      src/runtime/ompi_rte_monitor.c
+D      src/runtime/ompi_init.c
+M      src/runtime/runtime.h
+M      src/runtime/ompi_progress.c
+A  +   src/runtime/orte_finalize.c
+M      src/runtime/ompi_progress.h
+D      src/runtime/universe_exists.c
+D      src/runtime/ompi_rte_init.c
+D      src/runtime/ompi_rte_wait.c
+D      src/runtime/ompi_rte_parse_cmd_line.c
+D      src/runtime/ompi_rte_job_shutdown.c
+D      src/runtime/ompi_rte_wait.h
+D      src/runtime/ompi_rte_process_status.c
+D      src/runtime/ompi_rte_llm.c
+D      src/runtime/ompi_rte_parse_daemon_cmd_line.c
+D      src/runtime/ompi_finalize.c
+A  +   src/runtime/orte_universe_exists.c
+M      src/runtime/Makefile.am
+D      src/runtime/ompi_rte_cmd_line_setup.c
+A  +   src/runtime/orte_schema.c
+D      src/runtime/ompi_rte_job_startup.c
+D      src/runtime/ompi_abort.c
+A  +   src/runtime/orte_init.c
+A  +   src/runtime/orte_wait.c
+A  +   src/include/orte_schema.h
+M      src/include/constants.h
+A  +   src/include/orte_types.h
+M      src/include/Makefile.am
+A  +   src/include/orte_constants.h
+M      src/mpi/c/comm_accept.c
+M      src/mpi/c/comm_spawn_multiple.c
+M      src/mpi/c/comm_join.c
+M      src/mpi/c/comm_spawn.c
+M      src/mpi/c/comm_connect.c
+M      src/mpi/runtime/ompi_mpi_abort.c
+M      src/mpi/runtime/Makefile.am
+M      src/mpi/runtime/ompi_mpi_finalize.c
+M      src/mpi/runtime/ompi_mpi_init.c
+M      src/mpi/runtime/ompi_mpi_params.c
+A  +   src/dps
+A  +   src/dps/dps_types.h
+A  +   src/dps/dps_pack.c
+A  +   src/dps/orte_dps_open_close.c
+A  +   src/dps/dps_load_unload.c
+A  +   src/dps/dps_internal.h
+A  +   src/dps/dps_unpack.c
+A  +   src/dps/Makefile.am
+A  +   src/dps/dps_internal_functions.c
+A  +   src/dps/dps_peek.c
+A  +   src/dps/dps.h
+A  +   src/threads/condition.c
+M      src/threads/Makefile.am
+M      src/threads/condition.h
+M      src/threads/condition_spinlock.h
+D      src/mca/pcm
+D      src/mca/pcm/rms
+D      src/mca/pcm/rms/configure.params
+D      src/mca/pcm/rms/.ompi_ignore
+D      src/mca/pcm/rms/src
+D      src/mca/pcm/rms/src/help-mca-pcm-rms.txt
+D      src/mca/pcm/rms/src/pcm_rms.c
+D      src/mca/pcm/rms/src/pcm_rms_component.c
+D      src/mca/pcm/rms/src/pcm_rms.h
+D      src/mca/pcm/rms/src/Makefile.am
+D      src/mca/pcm/rms/Makefile.am
+D      src/mca/pcm/rms/configure.stub
+D      src/mca/pcm/slurm
+D      src/mca/pcm/slurm/configure.params
+D      src/mca/pcm/slurm/.ompi_ignore
+D      src/mca/pcm/slurm/src
+D      src/mca/pcm/slurm/src/pcm_slurm.c
+D      src/mca/pcm/slurm/src/pcm_slurm_component.c
+D      src/mca/pcm/slurm/src/pcm_slurm.h
+D      src/mca/pcm/slurm/src/Makefile.am
+D      src/mca/pcm/slurm/Makefile.am
+D      src/mca/pcm/slurm/configure.stub
+D      src/mca/pcm/bproc
+D      src/mca/pcm/bproc/configure.params
+D      src/mca/pcm/bproc/.ompi_ignore
+D      src/mca/pcm/bproc/src
+D      src/mca/pcm/bproc/src/pcm_bproc_control.c
+D      src/mca/pcm/bproc/src/pcm_bproc_component.c
+D      src/mca/pcm/bproc/src/pcm_bproc_allocate.c
+D      src/mca/pcm/bproc/src/Makefile.am
+D      src/mca/pcm/bproc/src/pcm_bproc.h
+D      src/mca/pcm/bproc/src/pcm_bproc_monitor.c
+D      src/mca/pcm/bproc/src/pcm_bproc_spawn.c
+D      src/mca/pcm/bproc/Makefile.am
+D      src/mca/pcm/bproc/configure.stub
+D      src/mca/pcm/pcm.h
+D      src/mca/pcm/ompid
+D      src/mca/pcm/ompid/configure.params
+D      src/mca/pcm/ompid/pcm_ompid.c
+D      src/mca/pcm/ompid/Makefile.am
+D      src/mca/pcm/ompid/pcm_ompid_component.c
+D      src/mca/pcm/ompid/pcm_ompid.h
+D      src/mca/pcm/Makefile.am
+D      src/mca/pcm/base
+D      src/mca/pcm/base/pcm_base_close.c
+D      src/mca/pcm/base/base_kill_track.h
+D      src/mca/pcm/base/pcm_base_data_store.c
+D      src/mca/pcm/base/base.h
+D      src/mca/pcm/base/pcm_base_comm.c
+D      src/mca/pcm/base/base_data_store.h
+D      src/mca/pcm/base/pcm_base_util.c
+D      src/mca/pcm/base/pcm_base_kill_track.c
+D      src/mca/pcm/base/pcm_base_select.c
+D      src/mca/pcm/base/Makefile.am
+D      src/mca/pcm/base/pcm_base_open.c
+D      src/mca/pcm/rsh
+D      src/mca/pcm/rsh/pcm_rsh_allocate.c
+D      src/mca/pcm/rsh/pcm_rsh.h
+D      src/mca/pcm/rsh/configure.params
+D      src/mca/pcm/rsh/pcm_rsh_spawn.c
+D      src/mca/pcm/rsh/pcm_rsh_kill.c
+D      src/mca/pcm/rsh/Makefile.am
+D      src/mca/pcm/rsh/help-mca-pcm-rsh.txt
+D      src/mca/pcm/rsh/pcm_rsh_component.c
+D      src/mca/pcm/rsh/pcm_rsh_ioexecvp.c
+D      src/mca/pcm/wmi
+D      src/mca/pcm/wmi/configure.params
+D      src/mca/pcm/wmi/.ompi_ignore
+D      src/mca/pcm/wmi/src
+D      src/mca/pcm/wmi/src/pcm_wmi.h
+D      src/mca/pcm/wmi/src/Makefile.am
+D      src/mca/pcm/wmi/src/pcm_wmi.c
+D      src/mca/pcm/wmi/src/pcm_wmi_component.c
+D      src/mca/pcm/wmi/Makefile.am
+D      src/mca/pcm/wmi/configure.stub
+M      src/mca/oob/oob.h
+M      src/mca/oob/tcp/oob_tcp_send.c
+M      src/mca/oob/tcp/oob_tcp_addr.c
+M      src/mca/oob/tcp/oob_tcp_peer.c
+M      src/mca/oob/tcp/oob_tcp_msg.h
+M      src/mca/oob/tcp/oob_tcp_ping.c
+M      src/mca/oob/tcp/oob_tcp_addr.h
+M      src/mca/oob/tcp/oob_tcp_recv.c
+M      src/mca/oob/tcp/oob_tcp.c
+M      src/mca/oob/tcp/oob_tcp_peer.h
+M      src/mca/oob/tcp/oob_tcp_hdr.h
+M      src/mca/oob/tcp/oob_tcp.h
+M      src/mca/oob/tcp/oob_tcp_msg.c
+A  +   src/mca/oob/oob_types.h
+M      src/mca/oob/base/base.h
+M      src/mca/oob/base/oob_base_barrier.c
+M      src/mca/oob/base/oob_base_send_nb.c
+M      src/mca/oob/base/oob_base_send.c
+M      src/mca/oob/base/oob_base_ping.c
+M      src/mca/oob/base/oob_base_recv_nb.c
+M      src/mca/oob/base/oob_base_recv.c
+M      src/mca/oob/base/oob_base_xcast.c
+M      src/mca/oob/base/oob_base_init.c
+M      src/mca/ns/replica/src/ns_replica.c
+M      src/mca/ns/replica/src/ns_replica_component.c
+M      src/mca/ns/replica/src/ns_replica.h
+M      src/mca/ns/proxy/src/ns_proxy.c
+M      src/mca/ns/proxy/src/ns_proxy_component.c
+M      src/mca/ns/proxy/src/ns_proxy.h
+M      src/mca/ns/ns.h
+M      src/mca/ns/Makefile.am
+A  +   src/mca/ns/base/ns_base_nds.c
+M      src/mca/ns/base/base.h
+M      src/mca/ns/base/ns_base_close.c
+A  +   src/mca/ns/base/ns_base_nds.h
+A  +   src/mca/ns/base/ns_base_nds_env.c
+M      src/mca/ns/base/Makefile.am
+M      src/mca/ns/base/ns_base_select.c
+M      src/mca/ns/base/ns_base_local_fns.c
+M      src/mca/ns/base/ns_base_open.c
+A  +   src/mca/ns/base/ns_base_nds_pipe.c
+A  +   src/mca/ns/ns_types.h
+D      src/mca/one
+D      src/mca/one/one.h
+D      src/mca/one/Makefile.am
+D      src/mca/one/base
+D      src/mca/one/base/Makefile.am
+A  +   src/mca/rmaps
+A  +   src/mca/rmaps/round_robin
+A  +   src/mca/rmaps/round_robin/configure.params
+A  +   src/mca/rmaps/round_robin/rmaps_rr.c
+A  +   src/mca/rmaps/round_robin/rmaps_rr_component.c
+A  +   src/mca/rmaps/round_robin/Makefile.am
+A  +   src/mca/rmaps/round_robin/rmaps_rr.h
+A  +   src/mca/rmaps/rmaps.h
+A  +   src/mca/rmaps/Makefile.am
+A  +   src/mca/rmaps/base
+A  +   src/mca/rmaps/base/rmaps_base_map.h
+A  +   src/mca/rmaps/base/base.h
+A  +   src/mca/rmaps/base/rmaps_base_close.c
+A  +   src/mca/rmaps/base/Makefile.am
+A  +   src/mca/rmaps/base/rmaps_base_map.c
+A  +   src/mca/rmaps/base/rmaps_base_select.c
+A  +   src/mca/rmaps/base/rmaps_base_open.c
+A  +   src/mca/rmaps/rmaps_types.h
+D      src/mca/llm
+D      src/mca/llm/Makefile.am
+D      src/mca/llm/base
+D      src/mca/llm/base/base.h
+D      src/mca/llm/base/llm_base_open.c
+D      src/mca/llm/base/help-llm-base.txt
+D      src/mca/llm/base/llm_base_collapse.c
+D      src/mca/llm/base/llm_base_parse_hostfile_lex.h
+D      src/mca/llm/base/llm_base_close.c
+D      src/mca/llm/base/llm_base_parse_hostfile.c
+D      src/mca/llm/base/llm_base_parse_hostfile_lex.l
+D      src/mca/llm/base/Makefile.am
+D      src/mca/llm/base/llm_base_util.c
+D      src/mca/llm/base/base_internal.h
+D      src/mca/llm/base/llm_base_map.c
+D      src/mca/llm/base/llm_base_select.c
+D      src/mca/llm/llm.h
+D      src/mca/llm/hostfile
+D      src/mca/llm/hostfile/configure.params
+D      src/mca/llm/hostfile/VERSION
+D      src/mca/llm/hostfile/src
+D      src/mca/llm/hostfile/src/llm_hostfile_deallocate.c
+D      src/mca/llm/hostfile/src/llm_hostfile_component.c
+D      src/mca/llm/hostfile/src/llm_hostfile_allocate.c
+D      src/mca/llm/hostfile/src/llm_hostfile.h
+D      src/mca/llm/hostfile/src/Makefile.am
+D      src/mca/llm/hostfile/Makefile.am
+D      src/mca/llm/bjs
+D      src/mca/llm/bjs/configure.params
+D      src/mca/llm/bjs/llm_bjs.c
+D      src/mca/llm/bjs/VERSION
+D      src/mca/llm/bjs/llm_bjs_component.c
+D      src/mca/llm/bjs/llm_bjs.h
+D      src/mca/llm/bjs/Makefile.am
+A  +   src/mca/ras
+A  +   src/mca/ras/ras_types.h
+A  +   src/mca/ras/tm
+A  +   src/mca/ras/tm/configure.params
+A  +   src/mca/ras/tm/VERSION
+A  +   src/mca/ras/tm/src
+A  +   src/mca/ras/tm/src/ras_tm_component.c
+A  +   src/mca/ras/tm/src/Makefile.am
+A  +   src/mca/ras/tm/src/ras_tm_module.c
+A  +   src/mca/ras/tm/src/ras_tm.h
+A  +   src/mca/ras/tm/Makefile.am
+A  +   src/mca/ras/tm/configure.stub
+A  +   src/mca/ras/Makefile.am
+A  +   src/mca/ras/lsf_bproc
+A  +   src/mca/ras/lsf_bproc/ras_lsf_bproc.c
+A  +   src/mca/ras/lsf_bproc/ras_lsf_bproc_component.c
+A  +   src/mca/ras/lsf_bproc/configure.params
+A  +   src/mca/ras/lsf_bproc/ras_lsf_bproc.h
+A  +   src/mca/ras/lsf_bproc/Makefile.am
+A  +   src/mca/ras/lsf_bproc/configure.stub
+A  +   src/mca/ras/base
+A  +   src/mca/ras/base/ras_base_select.c
+A  +   src/mca/ras/base/base.h
+A  +   src/mca/ras/base/ras_base_open.c
+A  +   src/mca/ras/base/ras_base_close.c
+A  +   src/mca/ras/base/ras_base_node.c
+A  +   src/mca/ras/base/Makefile.am
+A  +   src/mca/ras/base/ras_base_node.h
+A  +   src/mca/ras/base/ras_base_alloc.c
+A  +   src/mca/ras/ras.h
+A  +   src/mca/ras/host
+A  +   src/mca/ras/host/ras_host.c
+A  +   src/mca/ras/host/configure.params
+A  +   src/mca/ras/host/ras_host_component.c
+A  +   src/mca/ras/host/ras_host.h
+A  +   src/mca/ras/host/Makefile.am
+A  +   src/mca/ras/bjs
+A  +   src/mca/ras/bjs/configure.params
+A  +   src/mca/ras/bjs/ras_bjs.c
+A  +   src/mca/ras/bjs/ras_bjs_component.c
+A  +   src/mca/ras/bjs/ras_bjs.h
+A  +   src/mca/ras/bjs/Makefile.am
+A  +   src/mca/ras/bjs/configure.stub
+M      src/mca/mca.h
+M      src/mca/mpool/sm/mpool_sm_component.c
+M      src/mca/common/sm/common_sm_mmap.c
+M      src/mca/pml/base/pml_base_select.c
+D      src/mca/gpr/replica/gpr_replica_cleanup.c
+D      src/mca/gpr/replica/gpr_replica_recv_proxy_msgs.c
+D      src/mca/gpr/replica/gpr_replica_del_index.c
+D      src/mca/gpr/replica/gpr_replica_xmit_alerts.c
+D      src/mca/gpr/replica/gpr_replica_test_internals.c
+A  +   src/mca/gpr/replica/transition_layer
+A  +   src/mca/gpr/replica/transition_layer/gpr_replica_segment_tl.c
+A  +   src/mca/gpr/replica/transition_layer/Makefile.am
+A  +   src/mca/gpr/replica/transition_layer/gpr_replica_dict_tl.c
+A  +   src/mca/gpr/replica/transition_layer/gpr_replica_tl.h
+A  +   src/mca/gpr/replica/communications
+A  +   src/mca/gpr/replica/communications/gpr_replica_recv_proxy_msgs.c
+A  +   src/mca/gpr/replica/communications/gpr_replica_arithmetic_ops_cm.c
+A  +   src/mca/gpr/replica/communications/gpr_replica_del_index_cm.c
+A  +   src/mca/gpr/replica/communications/gpr_replica_subscribe_cm.c
+A  +   src/mca/gpr/replica/communications/gpr_replica_comm.h
+A  +   src/mca/gpr/replica/communications/Makefile.am
+A  +   src/mca/gpr/replica/communications/gpr_replica_remote_msg.c
+A  +   src/mca/gpr/replica/communications/gpr_replica_cmd_processor.c
+A  +   src/mca/gpr/replica/communications/gpr_replica_dump_cm.c
+A  +   src/mca/gpr/replica/communications/gpr_replica_cleanup_cm.c
+A  +   src/mca/gpr/replica/communications/gpr_replica_put_get_cm.c
+D      src/mca/gpr/replica/gpr_replica_internals_segment_ops.c
+R  +   src/mca/gpr/replica/gpr_replica_component.c
+D      src/mca/gpr/replica/gpr_replica_internals_trigger_ops.c
+D      src/mca/gpr/replica/gpr_replica_internals.h
+D      src/mca/gpr/replica/gpr_replica_dump.c
+D      src/mca/gpr/replica/gpr_replica_mode_ops.c
+A  +   src/mca/gpr/replica/functional_layer
+A  +   src/mca/gpr/replica/functional_layer/gpr_replica_dump_fn.c
+A  +   src/mca/gpr/replica/functional_layer/gpr_replica_fn.h
+A  +   src/mca/gpr/replica/functional_layer/gpr_replica_trig_ops_fn.c
+A  +   src/mca/gpr/replica/functional_layer/gpr_replica_put_get_fn.c
+A  +   src/mca/gpr/replica/functional_layer/gpr_replica_cleanup_fn.c
+A  +   src/mca/gpr/replica/functional_layer/gpr_replica_arithmetic_ops_fn.c
+A  +   src/mca/gpr/replica/functional_layer/gpr_replica_del_index_fn.c
+A  +   src/mca/gpr/replica/functional_layer/gpr_replica_messaging_fn.c
+A  +   src/mca/gpr/replica/functional_layer/Makefile.am
+A  +   src/mca/gpr/replica/functional_layer/gpr_replica_subscribe_fn.c
+A  +   src/mca/gpr/replica/functional_layer/gpr_replica_segment_fn.c
+A  +   src/mca/gpr/replica/functional_layer/gpr_replica_dict_fn.c
+D      src/mca/gpr/replica/gpr_replica_put_get.c
+D      src/mca/gpr/replica/gpr_replica_compound_cmd.c
+M      src/mca/gpr/replica/configure.params
+D      src/mca/gpr/replica/gpr_replica_messaging.c
+A  +   src/mca/gpr/replica/api_layer
+A  +   src/mca/gpr/replica/api_layer/gpr_replica_subscribe_api.c
+A  +   src/mca/gpr/replica/api_layer/gpr_replica_segment_ops_api.c
+A  +   src/mca/gpr/replica/api_layer/gpr_replica_dump_api.c
+A  +   src/mca/gpr/replica/api_layer/gpr_replica_api.h
+A  +   src/mca/gpr/replica/api_layer/gpr_replica_compound_cmd_api.c
+A  +   src/mca/gpr/replica/api_layer/gpr_replica_cleanup_api.c
+A  +   src/mca/gpr/replica/api_layer/gpr_replica_put_get_api.c
+A  +   src/mca/gpr/replica/api_layer/Makefile.am
+A  +   src/mca/gpr/replica/api_layer/gpr_replica_arithmetic_ops_api.c
+A  +   src/mca/gpr/replica/api_layer/gpr_replica_del_index_api.c
+A  +   src/mca/gpr/replica/api_layer/gpr_replica_messaging_api.c
+M      src/mca/gpr/replica/Makefile.am
+D      src/mca/gpr/replica/gpr_replica_subscribe.c
+D      src/mca/gpr/replica/gpr_replica_internals_dict_ops.c
+M      src/mca/gpr/replica/gpr_replica.h
+D      src/mca/gpr/replica/gpr_replica_synchro.c
+D      src/mca/gpr/proxy/gpr_proxy_synchro.c
+M      src/mca/gpr/proxy/gpr_proxy.h
+M      src/mca/gpr/proxy/gpr_proxy_cleanup.c
+M      src/mca/gpr/proxy/gpr_proxy_del_index.c
+D      src/mca/gpr/proxy/gpr_proxy_xmit_alerts.c
+M      src/mca/gpr/proxy/gpr_proxy_internals.c
+M      src/mca/gpr/proxy/gpr_proxy_component.c
+M      src/mca/gpr/proxy/gpr_proxy_dump.c
+D      src/mca/gpr/proxy/gpr_proxy_mode_ops.c
+M      src/mca/gpr/proxy/gpr_proxy_put_get.c
+M      src/mca/gpr/proxy/gpr_proxy_compound_cmd.c
+A  +   src/mca/gpr/proxy/gpr_proxy_arithmetic_ops.c
+M      src/mca/gpr/proxy/gpr_proxy_messaging.c
+M      src/mca/gpr/proxy/Makefile.am
+A  +   src/mca/gpr/proxy/gpr_proxy_general_operations.c
+M      src/mca/gpr/proxy/gpr_proxy_subscribe.c
+A  +   src/mca/gpr/gpr_types.h
+D      src/mca/gpr/base/gpr_base_pack_test_internals.c
+D      src/mca/gpr/base/gpr_base_unpack_del_index.c
+D      src/mca/gpr/base/gpr_base_unpack_test_internals.c
+M      src/mca/gpr/base/gpr_base_open.c
+D      src/mca/gpr/base/gpr_base_pack_mode_ops.c
+D      src/mca/gpr/base/gpr_base_pack_dump.c
+D      src/mca/gpr/base/gpr_base_pack_put_get.c
+M      src/mca/gpr/base/gpr_base_close.c
+A  +   src/mca/gpr/base/unpack_api_response
+A  +   src/mca/gpr/base/unpack_api_response/gpr_base_unpack_del_index.c
+A  +   src/mca/gpr/base/unpack_api_response/gpr_base_dump_notify.c
+A  +   src/mca/gpr/base/unpack_api_response/gpr_base_print_dump.c
+A  +   src/mca/gpr/base/unpack_api_response/gpr_base_unpack_subscribe.c
+A  +   src/mca/gpr/base/unpack_api_response/Makefile.am
+A  +   src/mca/gpr/base/unpack_api_response/gpr_base_unpack_cleanup.c
+A  +   src/mca/gpr/base/unpack_api_response/gpr_base_unpack_put_get.c
+A  +   src/mca/gpr/base/unpack_api_response/gpr_base_unpack_arithmetic_ops.c
+A  +   src/mca/gpr/base/unpack_api_response/gpr_base_decode_startup_msg.c
+D      src/mca/gpr/base/gpr_base_pack_startup_msg.c
+D      src/mca/gpr/base/gpr_base_unpack_mode_ops.c
+A  +   src/mca/gpr/base/pack_api_cmd
+A  +   src/mca/gpr/base/pack_api_cmd/gpr_base_pack_subscribe.c
+A  +   src/mca/gpr/base/pack_api_cmd/gpr_base_pack_dump.c
+A  +   src/mca/gpr/base/pack_api_cmd/gpr_base_pack_cleanup.c
+A  +   src/mca/gpr/base/pack_api_cmd/gpr_base_pack_put_get.c
+A  +   src/mca/gpr/base/pack_api_cmd/Makefile.am
+A  +   src/mca/gpr/base/pack_api_cmd/gpr_base_pack_arithmetic_ops.c
+A  +   src/mca/gpr/base/pack_api_cmd/gpr_base_pack_del_index.c
+D      src/mca/gpr/base/gpr_base_unpack_put_get.c
+D      src/mca/gpr/base/gpr_base_unpack_startup_msg.c
+M      src/mca/gpr/base/base.h
+M      src/mca/gpr/base/gpr_base_select.c
+D      src/mca/gpr/base/gpr_base_pack_subscribe.c
+D      src/mca/gpr/base/gpr_base_print_dump.c
+D      src/mca/gpr/base/gpr_base_unpack_subscribe.c
+D      src/mca/gpr/base/gpr_base_pack_synchro.c
+D      src/mca/gpr/base/gpr_base_pack_cleanup.c
+M      src/mca/gpr/base/Makefile.am
+D      src/mca/gpr/base/gpr_base_unpack_synchro.c
+D      src/mca/gpr/base/gpr_base_pack_del_index.c
+M      src/mca/gpr/gpr.h
+A  +   src/mca/rds
+A  +   src/mca/rds/rds_types.h
+A  +   src/mca/rds/resfile
+A  +   src/mca/rds/resfile/rds_resfile.c
+A  +   src/mca/rds/resfile/configure.params
+A  +   src/mca/rds/resfile/rds_resfile_component.c
+A  +   src/mca/rds/resfile/rds_resfile.h
+A  +   src/mca/rds/resfile/Makefile.am
+A  +   src/mca/rds/resfile/configure.stub
+A  +   src/mca/rds/Makefile.am
+A  +   src/mca/rds/base
+A  +   src/mca/rds/base/base.h
+A  +   src/mca/rds/base/rds_base_select.c
+A  +   src/mca/rds/base/rds_base_open.c
+A  +   src/mca/rds/base/rds_base_close.c
+A  +   src/mca/rds/base/rds_base_query.c
+A  +   src/mca/rds/base/Makefile.am
+A  +   src/mca/rds/hostfile
+A  +   src/mca/rds/hostfile/rds_hostfile_lex.h
+A  +   src/mca/rds/hostfile/configure.params
+A  +   src/mca/rds/hostfile/rds_hostfile.c
+A  +   src/mca/rds/hostfile/rds_hostfile_lex.l
+A  +   src/mca/rds/hostfile/rds_hostfile_component.c
+A  +   src/mca/rds/hostfile/Makefile.am
+A  +   src/mca/rds/hostfile/rds_hostfile.h
+A  +   src/mca/rds/rds.h
+M      src/mca/soh/soh.h
+A  +   src/mca/soh/soh_types.h
+ M     src/mca/soh/bproc
+A  +   src/mca/soh/bproc/soh_bproc_control.c
+A  +   src/mca/soh/bproc/soh_bproc_monitor.c
+A  +   src/mca/soh/base/soh_base_get_proc_soh.c
+M      src/mca/soh/base/base.h
+M      src/mca/soh/base/soh_base_select.c
+M      src/mca/soh/base/soh_base_open.c
+M      src/mca/soh/base/soh_base_local_functions.c
+M      src/mca/soh/base/Makefile.am
+M      src/mca/soh/base/soh_base_close.c
+A  +   src/mca/soh/base/soh_base_set_proc_soh.c
+A  +   src/mca/rml
+A  +   src/mca/rml/oob
+A  +   src/mca/rml/oob/rml_oob.h
+A  +   src/mca/rml/oob/configure.params
+A  +   src/mca/rml/oob/Makefile.am
+A  +   src/mca/rml/oob/rml_oob.c
+A  +   src/mca/rml/oob/rml_oob_component.c
+A  +   src/mca/rml/rml.h
+A  +   src/mca/rml/rml_types.h
+A  +   src/mca/rml/Makefile.am
+A  +   src/mca/rml/base
+A  +   src/mca/rml/base/base.h
+A  +   src/mca/rml/base/rml_base_select.c
+A  +   src/mca/rml/base/rml_base_open.c
+A  +   src/mca/rml/base/Makefile.am
+A  +   src/mca/rml/base/rml_base_close.c
+D      src/mca/svc
+D      src/mca/svc/svc.h
+D      src/mca/svc/Makefile.am
+D      src/mca/svc/base
+D      src/mca/svc/base/base.h
+D      src/mca/svc/base/svc_base_open.c
+D      src/mca/svc/base/svc_base_init.c
+D      src/mca/svc/base/Makefile.am
+D      src/mca/svc/base/svc_base_close.c
+M      src/mca/errmgr/errmgr.h
+A  +   src/mca/errmgr/base/errmgr_base_fns.c
+M      src/mca/errmgr/base/base.h
+M      src/mca/errmgr/base/errmgr_base_select.c
+M      src/mca/errmgr/base/Makefile.am
+M      src/mca/errmgr/base/errmgr_base_open.c
+M      src/mca/errmgr/base/errmgr_base_close.c
+A  +   src/mca/pls
+A  +   src/mca/pls/tm
+A  +   src/mca/pls/tm/configure.params
+A  +   src/mca/pls/tm/VERSION
+A  +   src/mca/pls/tm/src
+A  +   src/mca/pls/tm/src/pls_tm_component.c
+A  +   src/mca/pls/tm/src/pls_tm_module.c
+A  +   src/mca/pls/tm/src/pls_tm.h
+A  +   src/mca/pls/tm/src/pls_tm_registry.c
+A  +   src/mca/pls/tm/src/Makefile.am
+A  +   src/mca/pls/tm/Makefile.am
+A  +   src/mca/pls/tm/configure.stub
+A  +   src/mca/pls/fork
+A  +   src/mca/pls/fork/pls_fork_component.c
+A  +   src/mca/pls/fork/configure.params
+A  +   src/mca/pls/fork/VERSION
+A  +   src/mca/pls/fork/pls_fork.h
+A  +   src/mca/pls/fork/pls_fork_module.c
+A  +   src/mca/pls/fork/Makefile.am
+A  +   src/mca/pls/proxy
+A  +   src/mca/pls/proxy/pls_proxy.c
+A  +   src/mca/pls/proxy/pls_proxy_component.c
+A  +   src/mca/pls/proxy/configure.params
+A  +   src/mca/pls/proxy/pls_proxy.h
+A  +   src/mca/pls/proxy/VERSION
+A  +   src/mca/pls/proxy/Makefile.am
+A  +   src/mca/pls/slurm
+A  +   src/mca/pls/slurm/pls_slurm_component.c
+A  +   src/mca/pls/slurm/configure.params
+A  +   src/mca/pls/slurm/.ompi_ignore
+A  +   src/mca/pls/slurm/VERSION
+A  +   src/mca/pls/slurm/pls_slurm.h
+A  +   src/mca/pls/slurm/pls_slurm_module.c
+A  +   src/mca/pls/slurm/.ompi_unignore
+A  +   src/mca/pls/slurm/Makefile.am
+A  +   src/mca/pls/poe
+A  +   src/mca/pls/poe/configure.params
+A  +   src/mca/pls/poe/pls_poe_component.c
+A  +   src/mca/pls/poe/VERSION
+A  +   src/mca/pls/poe/.ompi_ignore
+A  +   src/mca/pls/poe/pls_poe_module.c
+A  +   src/mca/pls/poe/pls_poe.h
+A  +   src/mca/pls/poe/.ompi_unignore
+A  +   src/mca/pls/poe/Makefile.am
+A  +   src/mca/pls/daemon
+A  +   src/mca/pls/daemon/configure.params
+A  +   src/mca/pls/daemon/pls_daemon_component.c
+A  +   src/mca/pls/daemon/.ompi_ignore
+A  +   src/mca/pls/daemon/VERSION
+A  +   src/mca/pls/daemon/pls_daemon.h
+A  +   src/mca/pls/daemon/pls_daemon_module.c
+A  +   src/mca/pls/daemon/.ompi_unignore
+A  +   src/mca/pls/daemon/Makefile.am
+A  +   src/mca/pls/pls.h
+A  +   src/mca/pls/bproc_seed
+A  +   src/mca/pls/bproc_seed/configure.params
+A  +   src/mca/pls/bproc_seed/pls_bproc_seed.c
+A  +   src/mca/pls/bproc_seed/pls_bproc_seed_component.c
+A  +   src/mca/pls/bproc_seed/pls_bproc_seed.h
+A  +   src/mca/pls/bproc_seed/Makefile.am
+A  +   src/mca/pls/bproc_seed/configure.stub
+A  +   src/mca/pls/bproc_seed/pls_bproc_seed_config.h
+A  +   src/mca/pls/bproc_proxy
+A  +   src/mca/pls/bproc_proxy/pls_bproc_proxy_config.h
+A  +   src/mca/pls/bproc_proxy/configure.params
+A  +   src/mca/pls/bproc_proxy/pls_bproc_proxy.c
+A  +   src/mca/pls/bproc_proxy/pls_bproc_proxy_component.c
+A  +   src/mca/pls/bproc_proxy/Makefile.am
+A  +   src/mca/pls/bproc_proxy/pls_bproc_proxy.h
+A  +   src/mca/pls/bproc_proxy/configure.stub
+A  +   src/mca/pls/Makefile.am
+A  +   src/mca/pls/base
+A  +   src/mca/pls/base/base.h
+A  +   src/mca/pls/base/pls_base_select.c
+A  +   src/mca/pls/base/Makefile.am
+A  +   src/mca/pls/base/pls_base_state.c
+A  +   src/mca/pls/base/pls_base_open.c
+A  +   src/mca/pls/base/pls_base_close.c
+A  +   src/mca/pls/rsh
+A  +   src/mca/pls/rsh/pls_rsh_module.c
+A  +   src/mca/pls/rsh/pls_rsh.h
+A  +   src/mca/pls/rsh/configure.params
+A  +   src/mca/pls/rsh/VERSION
+A  +   src/mca/pls/rsh/Makefile.am
+A  +   src/mca/pls/rsh/pls_rsh_component.c
+M      src/mca/ptl/sm/src/ptl_sm.c
+M      src/mca/ptl/sm/src/ptl_sm_component.c
+M      src/mca/ptl/gm/src/ptl_gm.c
+M      src/mca/ptl/gm/src/ptl_gm_proc.h
+M      src/mca/ptl/tcp/src/ptl_tcp_peer.c
+M      src/mca/ptl/tcp/src/ptl_tcp_component.c
+M      src/mca/ptl/tcp/src/ptl_tcp_proc.c
+M      src/mca/ptl/tcp/src/ptl_tcp_proc.h
+M      src/mca/ptl/base/ptl_base_select.c
+M      src/mca/io/base/io_base_component_list.c
+A  +   src/mca/rmgr
+A  +   src/mca/rmgr/rmgr_types.h
+A  +   src/mca/rmgr/urm
+A  +   src/mca/rmgr/urm/rmgr_urm.h
+A  +   src/mca/rmgr/urm/configure.params
+A  +   src/mca/rmgr/urm/Makefile.am
+A  +   src/mca/rmgr/urm/rmgr_urm.c
+A  +   src/mca/rmgr/urm/rmgr_urm_component.c
+A  +   src/mca/rmgr/Makefile.am
+A  +   src/mca/rmgr/base
+A  +   src/mca/rmgr/base/base.h
+A  +   src/mca/rmgr/base/rmgr_base_select.c
+A  +   src/mca/rmgr/base/rmgr_base_stubs.c
+A  +   src/mca/rmgr/base/rmgr_base_open.c
+A  +   src/mca/rmgr/base/rmgr_base_stage_gate.c
+A  +   src/mca/rmgr/base/rmgr_base_context.c
+A  +   src/mca/rmgr/base/rmgr_base_close.c
+A  +   src/mca/rmgr/base/Makefile.am
+A  +   src/mca/rmgr/rmgr.h
+M      src/mca/Makefile.am
+M      src/mca/base/mca_base_module_exchange.c
+M      src/mca/base/mca_base_param.c
+M      src/mca/base/mca_base_param_internal.h
+M      src/mca/base/base.h
+M      src/mca/base/mca_base_param.h
+ M     src/mca/iof
+ M     src/mca/iof/proxy
+M      src/mca/iof/proxy/iof_proxy.c
+M      src/mca/iof/proxy/iof_proxy_svc.h
+M      src/mca/iof/proxy/iof_proxy_component.c
+M      src/mca/iof/proxy/iof_proxy.h
+M      src/mca/iof/proxy/iof_proxy_svc.c
+M      src/mca/iof/iof.h
+ M     src/mca/iof/base
+M      src/mca/iof/base/base.h
+M      src/mca/iof/base/iof_base_fragment.h
+M      src/mca/iof/base/iof_base_header.h
+M      src/mca/iof/base/iof_base_select.c
+M      src/mca/iof/base/iof_base_endpoint.c
+M      src/mca/iof/base/iof_base_open.c
+M      src/mca/iof/base/iof_base_flush.c
+M      src/mca/iof/base/iof_base_fragment.c
+M      src/mca/iof/base/iof_base_close.c
+M      src/mca/iof/base/iof_base_endpoint.h
+ M     src/mca/iof/svc
+M      src/mca/iof/svc/iof_svc_proxy.h
+M      src/mca/iof/svc/iof_svc_publish.c
+M      src/mca/iof/svc/iof_svc_publish.h
+M      src/mca/iof/svc/iof_svc_subscript.c
+M      src/mca/iof/svc/iof_svc.c
+M      src/mca/iof/svc/iof_svc_proxy.c
+M      src/mca/iof/svc/iof_svc_component.c
+M      src/mca/iof/svc/iof_svc_subscript.h
+M      src/mca/iof/svc/iof_svc.h
+D      src/mca/op
+D      src/mca/op/op.h
+D      src/mca/op/base
+D      src/mca/pcmclient
+D      src/mca/pcmclient/seed
+D      src/mca/pcmclient/seed/pcmclient_seed.c
+D      src/mca/pcmclient/seed/pcmclient_seed_component.c
+D      src/mca/pcmclient/seed/configure.params
+D      src/mca/pcmclient/seed/pcmclient_seed.h
+D      src/mca/pcmclient/seed/VERSION
+D      src/mca/pcmclient/seed/Makefile.am
+D      src/mca/pcmclient/rms
+D      src/mca/pcmclient/rms/pcmclient_rms.c
+D      src/mca/pcmclient/rms/pcmclient_rms_component.c
+D      src/mca/pcmclient/rms/configure.params
+D      src/mca/pcmclient/rms/pcmclient_rms.h
+D      src/mca/pcmclient/rms/VERSION
+D      src/mca/pcmclient/rms/Makefile.am
+D      src/mca/pcmclient/singleton
+D      src/mca/pcmclient/singleton/pcmclient_singleton.c
+D      src/mca/pcmclient/singleton/configure.params
+D      src/mca/pcmclient/singleton/pcmclient_singleton_component.c
+D      src/mca/pcmclient/singleton/VERSION
+D      src/mca/pcmclient/singleton/pcmclient_singleton.h
+D      src/mca/pcmclient/singleton/Makefile.am
+D      src/mca/pcmclient/slurm
+D      src/mca/pcmclient/slurm/pcmclient_slurm.c
+D      src/mca/pcmclient/slurm/configure.params
+D      src/mca/pcmclient/slurm/pcmclient_slurm_component.c
+D      src/mca/pcmclient/slurm/VERSION
+D      src/mca/pcmclient/slurm/pcmclient_slurm.h
+D      src/mca/pcmclient/slurm/Makefile.am
+D      src/mca/pcmclient/pcmclient.h
+D      src/mca/pcmclient/bproc
+D      src/mca/pcmclient/bproc/configure.params
+D      src/mca/pcmclient/bproc/pcmclient_bproc.c
+D      src/mca/pcmclient/bproc/VERSION
+D      src/mca/pcmclient/bproc/pcmclient_bproc_component.c
+D      src/mca/pcmclient/bproc/Makefile.am
+D      src/mca/pcmclient/bproc/pcmclient_bproc.h
+D      src/mca/pcmclient/env
+D      src/mca/pcmclient/env/configure.params
+D      src/mca/pcmclient/env/VERSION
+D      src/mca/pcmclient/env/pcmclient_env.c
+D      src/mca/pcmclient/env/pcmclient_env_component.c
+D      src/mca/pcmclient/env/Makefile.am
+D      src/mca/pcmclient/env/pcmclient_env.h
+D      src/mca/pcmclient/Makefile.am
+D      src/mca/pcmclient/base
+D      src/mca/pcmclient/base/base.h
+D      src/mca/pcmclient/base/pcmclient_base_select.c
+D      src/mca/pcmclient/base/Makefile.am
+D      src/mca/pcmclient/base/pcmclient_base_open.c
+D      src/mca/pcmclient/base/pcmclient_base_close.c
+M      src/tools/ompi_info/ompi_info.cc
+M      src/tools/ompi_info/components.cc
+?      src/tools/console/ompiconsole
+ M     src/tools/console
+D      src/tools/console/ompiconsole.c
+M      src/tools/console/Makefile.am
+A  +   src/tools/console/orteconsole.c
+D      src/tools/bootproxy
+D      src/tools/bootproxy/bootproxy.c
+D      src/tools/bootproxy/help-bootproxy.txt
+D      src/tools/bootproxy/Makefile.am
+M      src/tools/openmpi/openmpi.c
+D      src/tools/ompid
+D      src/tools/ompid/ompid.c
+D      src/tools/ompid/Makefile.am
+D      src/tools/ompid/base
+D      src/tools/ompid/base/base.h
+D      src/tools/ompid/ompid.cc
+D      src/tools/ompid/ompid.h
+M      src/tools/Makefile.am
+D      src/tools/mpirun
+D      src/tools/mpirun/Makefile.am
+D      src/tools/mpirun/mpiboot
+D      src/tools/mpirun/mpirun.c
+D      src/tools/mpirun/help-mpirun.txt
+A  +   src/tools/orted
+A  +   src/tools/orted/orted.h
+A  +   src/tools/orted/orted_bootproxy.c
+A  +   src/tools/orted/Makefile.am
+A  +   src/tools/orted/orted.c
+A  +   src/tools/orterun
+A  +   src/tools/orterun/orterun.c
+A  +   src/tools/orterun/help-orterun.txt
+A  +   src/tools/orterun/Makefile.am
+M      src/communicator/comm_publish.c
+M      src/communicator/comm_dyn.c
+M      src/communicator/communicator.h
+M      src/communicator/comm_cid.c
+M      src/communicator/comm.c
+M      src/attribute/attribute.h
+M      src/attribute/attribute_predefined.c
+M      src/proc/proc.c
+M      src/proc/proc.h
+M      src/class/ompi_proc_table.c
+M      src/class/ompi_list.c
+A  +   src/class/orte_value_array.c
+M      src/class/ompi_proc_table.h
+M      src/class/ompi_list.h
+A  +   src/class/orte_pointer_array.c
+A  +   src/class/orte_value_array.h
+A  +   src/class/orte_pointer_array.h
+M      src/class/Makefile.am
+M      src/Makefile.am
+M      src/util/argv.c
+M      src/util/output.c
+A  +   src/util/univ_info.h
+M      src/util/proc_info.c
+A  +   src/util/environ.c
+M      src/util/session_dir.c
+M      src/util/proc_info.h
+A  +   src/util/environ.h
+M      src/util/session_dir.h
+M      src/util/daemon_init.c
+M      src/util/sys_info.c
+M      src/util/daemon_init.h
+M      src/util/os_path.c
+M      src/util/sys_info.h
+M      src/util/os_path.h
+M      src/util/universe_setup_file_io.c
+M      src/util/cmd_line.c
+D      src/util/bufpack.c
+M      src/util/universe_setup_file_io.h
+M      src/util/os_create_dirpath.c
+M      src/util/cmd_line.h
+D      src/util/bufpack.h
+M      src/util/os_create_dirpath.h
+M      src/util/stacktrace.c
+M      src/util/Makefile.am
+M      src/util/stacktrace.h
+A  +   src/util/univ_info.c
+M      configure.ac
+?      config/compile
+ M     config
+M      config/ompi_mca.m4
+A  +   etc/lanl_resources.xml
+M      autogen.sh

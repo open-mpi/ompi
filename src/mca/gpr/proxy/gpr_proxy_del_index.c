@@ -15,7 +15,17 @@
  *
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
+
+#include "include/orte_constants.h"
+#include "include/orte_types.h"
+#include "dps/dps.h"
+#include "util/output.h"
+#include "util/proc_info.h"
+
+#include "mca/errmgr/errmgr.h"
+#include "mca/oob/oob_types.h"
+#include "mca/rml/rml.h"
 
 #include "gpr_proxy.h"
 
@@ -28,144 +38,203 @@
  */
 
 
-int mca_gpr_proxy_delete_segment(char *segment)
+int orte_gpr_proxy_delete_segment(char *segment)
 {
-    ompi_buffer_t cmd;
-    ompi_buffer_t answer;
-    int recv_tag=MCA_OOB_TAG_GPR, response;
+    orte_buffer_t *cmd;
+    orte_buffer_t *answer;
+    int rc, ret;
 
-    if (mca_gpr_proxy_compound_cmd_mode) {
-	return mca_gpr_base_pack_delete_segment(mca_gpr_proxy_compound_cmd,
-						mca_gpr_proxy_silent_mode, segment);
+    if (orte_gpr_proxy_globals.compound_cmd_mode) {
+	   return orte_gpr_base_pack_delete_segment(orte_gpr_proxy_globals.compound_cmd, segment);
     }
 
-    if (OMPI_SUCCESS != ompi_buffer_init(&cmd, 0)) { /* got a problem */
-	return OMPI_ERROR;
+    cmd = OBJ_NEW(orte_buffer_t);
+    if (NULL == cmd) { /* got a problem */
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+	   return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    response = OMPI_ERROR;
-
-    if (OMPI_SUCCESS != mca_gpr_base_pack_delete_segment(cmd, mca_gpr_proxy_silent_mode,
-							 segment)) {
-	goto CLEANUP;
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_delete_segment(cmd, segment))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+	    return rc;
     }
 
-    if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
-	goto CLEANUP;
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(cmd);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    OBJ_RELEASE(cmd);
+    
+    answer = OBJ_NEW(orte_buffer_t);
+    if (NULL == answer) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+       return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, MCA_OOB_TAG_GPR)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+       OBJ_RELEASE(answer);
+	   return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (mca_gpr_proxy_silent_mode) {
-	ompi_buffer_free(cmd);
-	return OMPI_SUCCESS;
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_unpack_delete_segment(answer, &ret))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(answer);
+        return rc;
     }
-
-    if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {
-	goto CLEANUP;
-    }
-
-    response = mca_gpr_base_unpack_delete_segment(answer);
-    ompi_buffer_free(answer);
-
- CLEANUP:
-    ompi_buffer_free(cmd);
-    return response;
+    
+    OBJ_RELEASE(answer);
+    
+    return ret;
 }
 
 
-int mca_gpr_proxy_delete_object(ompi_registry_mode_t mode,
-			    char *segment, char **tokens)
+int orte_gpr_proxy_delete_segment_nb(char *segment,
+                                orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
-    ompi_buffer_t cmd;
-    ompi_buffer_t answer;
-    int recv_tag=MCA_OOB_TAG_GPR;
-    int response;
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
 
-    if (mca_gpr_proxy_debug) {
-	    ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object", OMPI_NAME_ARGS(*ompi_rte_get_self()));
+
+int orte_gpr_proxy_delete_entries(orte_gpr_addr_mode_t mode,
+			    char *segment, char **tokens, char **keys)
+{
+    orte_buffer_t *cmd;
+    orte_buffer_t *answer;
+    int rc, ret;
+
+    if (orte_gpr_proxy_globals.debug) {
+	    ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     /* need to protect against errors */
-    if (NULL == segment || NULL == tokens || NULL == *tokens) {
-	return OMPI_ERROR;
+    if (NULL == segment) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+	    return ORTE_ERR_BAD_PARAM;
     }
 
-    if (mca_gpr_proxy_compound_cmd_mode) {
-	return mca_gpr_base_pack_delete_object(mca_gpr_proxy_compound_cmd,
-					       mca_gpr_proxy_silent_mode,
-					       mode, segment, tokens);
+    if (orte_gpr_proxy_globals.compound_cmd_mode) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_delete_entries(orte_gpr_proxy_globals.compound_cmd,
+					       mode, segment, tokens, keys))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        return rc;
     }
 
-    if (OMPI_SUCCESS != ompi_buffer_init(&cmd, 0)) { /* got a problem */
-	return OMPI_ERROR;
+    cmd = OBJ_NEW(orte_buffer_t);
+    if (NULL == cmd) { /* got a problem */
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+	   return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    response = OMPI_ERROR;
-
-    if (OMPI_SUCCESS != mca_gpr_base_pack_delete_object(cmd, mca_gpr_proxy_silent_mode,
-							mode, segment, tokens)) {
-	goto CLEANUP;
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_delete_entries(cmd,
+							mode, segment, tokens, keys))) {
+        ORTE_ERROR_LOG(rc);
+       OBJ_RELEASE(cmd);
+	   return rc;
     }
 
-    if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
-	goto CLEANUP;
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(cmd);
+	   return ORTE_ERR_COMM_FAILURE;
+    }
+    OBJ_RELEASE(cmd);
+    
+    answer = OBJ_NEW(orte_buffer_t);
+    if (NULL == answer) { /* got a problem */
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+       return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (mca_gpr_proxy_silent_mode) {
-	ompi_buffer_free(cmd);
-	return OMPI_SUCCESS;
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, MCA_OOB_TAG_GPR)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(answer);
+	   return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {
-	goto CLEANUP;
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_unpack_delete_entries(answer, &ret))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(answer);
+        return rc;
     }
+    
+    OBJ_RELEASE(answer);
 
-    response = mca_gpr_base_unpack_delete_object(answer);
-    ompi_buffer_free(answer);
-
-
- CLEANUP:
-    if (mca_gpr_proxy_debug) {
-	   ompi_output(0, "[%d,%d,%d] gpr_proxy_delete_object: cleanup\n", OMPI_NAME_ARGS(*ompi_rte_get_self()));
-    }
-    ompi_buffer_free(cmd);
-    return response;
+    return ret;
 }
 
 
-ompi_list_t* mca_gpr_proxy_index(char *segment)
+int orte_gpr_proxy_delete_entries_nb(
+                            orte_gpr_addr_mode_t addr_mode,
+                            char *segment, char **tokens, char **keys,
+                            orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
-    ompi_list_t *return_list;
-    ompi_buffer_t cmd;
-    ompi_buffer_t answer;
-    int recv_tag=MCA_OOB_TAG_GPR;
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
 
-    return_list = OBJ_NEW(ompi_list_t);
 
-    if (mca_gpr_proxy_compound_cmd_mode) {
-	mca_gpr_base_pack_index(mca_gpr_proxy_compound_cmd, segment);
-	return return_list;
+int orte_gpr_proxy_index(char *segment, size_t *cnt, char **index)
+{
+    orte_buffer_t *cmd;
+    orte_buffer_t *answer;
+    int rc, ret;
+
+    index = NULL;
+
+    if (orte_gpr_proxy_globals.compound_cmd_mode) {
+	    if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_index(orte_gpr_proxy_globals.compound_cmd, segment))) {
+            ORTE_ERROR_LOG(rc);
+        }
+	    return rc;
     }
 
-    if (OMPI_SUCCESS != ompi_buffer_init(&cmd, 0)) { /* got a problem */
-	return return_list;
+    cmd = OBJ_NEW(orte_buffer_t);
+    if (NULL == cmd) { /* got a problem */
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+	    return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (OMPI_SUCCESS != mca_gpr_base_pack_index(cmd, segment)) {
-	goto CLEANUP;
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_index(cmd, segment))) {
+        ORTE_ERROR_LOG(rc);
+	    OBJ_RELEASE(cmd);
+        return rc;
     }
 
-    if (0 > mca_oob_send_packed(mca_gpr_my_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
-	goto CLEANUP;
+    if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, MCA_OOB_TAG_GPR, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(cmd);
+	    return ORTE_ERR_COMM_FAILURE;
+    }
+    OBJ_RELEASE(cmd);
+    
+    answer = OBJ_NEW(orte_buffer_t);
+    if (NULL == answer) { /* got a problem */
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (0 > mca_oob_recv_packed(mca_gpr_my_replica, &answer, &recv_tag)) {
-	goto CLEANUP;
+    if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, MCA_OOB_TAG_GPR)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+	    OBJ_RELEASE(answer);
+        return ORTE_ERR_COMM_FAILURE;
     }
 
-    mca_gpr_base_unpack_index(answer, return_list);
-    ompi_buffer_free(answer);
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_unpack_index(answer, &ret, cnt, index))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(answer);
+        return rc;
+    }
+    
+    OBJ_RELEASE(answer);
 
- CLEANUP:
-    ompi_buffer_free(cmd);
-    return return_list;
+    return ret;
+}
+
+int orte_gpr_proxy_index_nb(char *segment,
+                        orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
 }

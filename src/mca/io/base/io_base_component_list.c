@@ -19,6 +19,7 @@
 #include "mca/base/base.h"
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
+#include "runtime/ompi_progress.h"
 
 /*
  * Private variables
@@ -45,6 +46,8 @@ int mca_io_base_component_init(void)
     OBJ_CONSTRUCT(&components_in_use, ompi_list_t);
 
     initialized = true;
+
+    ompi_progress_register(mca_io_base_component_run_progress);
 
     return OMPI_SUCCESS;
 }

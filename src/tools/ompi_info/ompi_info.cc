@@ -11,7 +11,6 @@
 // 
 // $HEADER$
 //
-/** @file **/
 
 #include "ompi_config.h"
 
@@ -63,12 +62,6 @@ int main(int argc, char *argv[])
   bool acted = false;
   bool want_all = false;
 
-  // Start OMPI process
-
-  if (OMPI_SUCCESS != ompi_init(argc, argv)) {
-    return -1;
-  }
-
   // Initialize the argv parsing handle
 
   cmd_line = OBJ_NEW(ompi_cmd_line_t);
@@ -79,6 +72,7 @@ int main(int argc, char *argv[])
 #endif
     exit(ret);
   }
+
   ompi_cmd_line_make_opt(cmd_line, 'v', "version", 2, 
                          "Show version of Open MPI or a component");
   ompi_cmd_line_make_opt(cmd_line, '\0', "param", 2, 
@@ -139,19 +133,24 @@ int main(int argc, char *argv[])
 
   ompi_info::mca_types.push_back("allocator");
   ompi_info::mca_types.push_back("coll");
-  ompi_info::mca_types.push_back("gpr");
   ompi_info::mca_types.push_back("io");
-  ompi_info::mca_types.push_back("llm");
   ompi_info::mca_types.push_back("mpool");
-  ompi_info::mca_types.push_back("ns");
-  ompi_info::mca_types.push_back("one");
-  ompi_info::mca_types.push_back("oob");
-  ompi_info::mca_types.push_back("op");
-  ompi_info::mca_types.push_back("pcm");
-  ompi_info::mca_types.push_back("pcmclient");
   ompi_info::mca_types.push_back("pml");
   ompi_info::mca_types.push_back("ptl");
   ompi_info::mca_types.push_back("topo");
+
+  ompi_info::mca_types.push_back("errmgr");
+  ompi_info::mca_types.push_back("gpr");
+  ompi_info::mca_types.push_back("iof");
+  ompi_info::mca_types.push_back("ns");
+  ompi_info::mca_types.push_back("oob");
+  ompi_info::mca_types.push_back("ras");
+  ompi_info::mca_types.push_back("rds");
+  ompi_info::mca_types.push_back("rmaps");
+  ompi_info::mca_types.push_back("rmgr");
+  ompi_info::mca_types.push_back("rml");
+  ompi_info::mca_types.push_back("pls");
+  ompi_info::mca_types.push_back("soh");
 
   // Execute the desired action(s)
 
@@ -204,7 +203,5 @@ int main(int argc, char *argv[])
 
   ompi_info::close_components();
   OBJ_RELEASE(cmd_line);
-  mca_base_close();
-  ompi_finalize();
   return 0;
 }

@@ -18,24 +18,27 @@
 #include "mpi.h"
 
 #include "communicator/communicator.h"
-#include "proc/proc.h"
 #include "include/constants.h"
-#include "mca/pcm/pcm.h"
+
+#include "mca/errmgr/errmgr.h"
 #include "mca/pml/pml.h"
 #include "mca/ns/ns.h"
-#include "mca/gpr/base/base.h"
 #include "mca/gpr/gpr.h"
+#include "mca/rml/rml_types.h"
 
 static ompi_mutex_t ompi_port_lock;
-static int port_id=MCA_OOB_TAG_USER;
+
+#define OMPI_COMM_PORT_KEY  "ompi-port-name"
+
 
 int ompi_open_port(char *port_name)
 {
     ompi_proc_t **myproc=NULL;
     char *name=NULL;
     size_t size=0;
-    int lport_id=-1;
-
+    orte_rml_tag_t lport_id=0;
+    int rc;
+    
     /*
      * The port_name is equal to the OOB-contact information
      * and an integer. The reason for adding the integer is
@@ -43,10 +46,14 @@ int ompi_open_port(char *port_name)
      */
   
     myproc = ompi_proc_self (&size);
-    name = ompi_name_server.get_proc_name_string (&(myproc[0]->proc_name));
+    if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string (&name, &(myproc[0]->proc_name)))) {
+        return rc;
+    }
 
     OMPI_THREAD_LOCK(&ompi_port_lock);
-    lport_id = port_id++;
+    if (ORTE_SUCCESS != (rc = orte_ns.assign_rml_tag(&lport_id, NULL))) {
+        return rc;
+    }
     OMPI_THREAD_UNLOCK(&ompi_port_lock);
 
     sprintf (port_name, "%s:%d", name, lport_id);
@@ -59,7 +66,7 @@ int ompi_open_port(char *port_name)
 /* takes a port_name and separates it into the process_name 
    and the tag
 */
-char *ompi_parse_port (char *port_name, int *tag ) 
+char *ompi_parse_port (char *port_name, orte_rml_tag_t *tag) 
 {
     char tmp_port[MPI_MAX_PORT_NAME], *tmp_string;
 
@@ -70,7 +77,7 @@ char *ompi_parse_port (char *port_name, int *tag )
 
     strncpy (tmp_port, port_name, MPI_MAX_PORT_NAME);
     strncpy (tmp_string, strtok(tmp_port, ":"), MPI_MAX_PORT_NAME);
-    sscanf( strtok(NULL, ":"),"%d", tag);
+    sscanf( strtok(NULL, ":"),"%d", (int*)tag);
 
     return tmp_string;
 }
@@ -82,38 +89,67 @@ char *ompi_parse_port (char *port_name, int *tag )
  */
 int ompi_comm_namepublish ( char *service_name, char *port_name ) 
 {
+    orte_gpr_value_t *value;
+    int rc;
 
-    char *key[2];
+    value = OBJ_NEW(orte_gpr_value_t);
+    if (NULL == value) {
+       ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+       return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value->addr_mode = ORTE_GPR_TOKENS_AND | ORTE_GPR_OVERWRITE;
+    value->segment = strdup(OMPI_NAMESPACE_SEGMENT);
     
-    key[0] = service_name;
-    key[1] = NULL;
-    return ompi_registry.put(OMPI_REGISTRY_OVERWRITE, "ompi_name_publish", 
-			     key, port_name, (strlen(port_name)+1));
+    value->tokens = (char**)malloc(2*sizeof(char*));
+    if (NULL == value->tokens) {
+       ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+       return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    value->tokens[0] = strdup(service_name);
+    value->tokens[1] = NULL;
+    
+    value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == value->keyvals[0]) {
+       ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+       OBJ_RELEASE(value);
+       return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    (value->keyvals[0])->key = strdup(OMPI_COMM_PORT_KEY);
+    (value->keyvals[0])->type = ORTE_STRING;
+    ((value->keyvals[0])->value).strptr = strdup(port_name);
+    rc = orte_gpr.put(1, &value);
+    OBJ_RELEASE(value);
+    return rc;
 }
 
 char* ompi_comm_namelookup ( char *service_name )
 {
-    char *key[2];
-    ompi_list_t *tmp=NULL;
-    ompi_registry_value_t *vtmp=NULL;
-    char *stmp=NULL, *stmp2=NULL;
-
-    key[0] = service_name;
+    char *token[2], *key[2];
+    orte_gpr_keyval_t **keyvals=NULL;
+    orte_gpr_value_t **values;
+    int cnt=0;
+    char *stmp=NULL;
+    int ret;
+    
+    token[0] = service_name;
+    token[1] = NULL;
+    
+    key[0] = strdup(OMPI_COMM_PORT_KEY);
     key[1] = NULL;
-    tmp = ompi_registry.get(OMPI_REGISTRY_NONE, "ompi_name_publish", key);
-    if ( NULL != tmp ) {
-        vtmp = (ompi_registry_value_t *) ompi_list_get_first(tmp);
-	if (NULL != vtmp) {
-	    stmp  = (char *)vtmp->object;
-	    if ( NULL != stmp) {
-		stmp2 = strdup(stmp);
-		OBJ_RELEASE(vtmp);
-	    }
-}
-	OBJ_RELEASE(tmp);
+    
+    ret = orte_gpr.get(ORTE_GPR_TOKENS_AND, OMPI_NAMESPACE_SEGMENT,
+                            token, key, &cnt, &values);
+    if (ORTE_SUCCESS != ret) {
+        return NULL;
+    }
+    if ( 0 < cnt && NULL != values[0] ) {  /* should be only one, if any */
+        keyvals = values[0]->keyvals;
+        stmp = strdup(keyvals[0]->value.strptr);
+        OBJ_RELEASE(values[0]);
     }
 
-    return (stmp2);
+    return (stmp);
 }
 
 /* 
@@ -124,8 +160,12 @@ char* ompi_comm_namelookup ( char *service_name )
  */
 int ompi_comm_nameunpublish ( char *service_name )
 {
-    char *key[2];
-    key[0] = service_name;
-    key[1] = NULL;
-    return ompi_registry.delete_object(OMPI_REGISTRY_NONE, "ompi_name_publish", key); 
+    char *token[2];
+    
+    token[0] = service_name;
+    token[1] = NULL;
+    
+    return orte_gpr.delete_entries(ORTE_GPR_TOKENS_AND,
+                                        OMPI_NAMESPACE_SEGMENT,
+                                        token, NULL); 
 }

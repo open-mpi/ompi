@@ -17,26 +17,28 @@ include $(top_srcdir)/config/Makefile.options
 EXTRA_DIST = win_makefile op/base/static-components.h op/op.h
 
 SUBDIRS = \
-        common \
         allocator \
-        base \
-        coll \
-        errmgr \
-        gpr \
-        io \
-        iof \
-        llm \
-        mpool \
-        ns \
-        one \
-        oob \
-        pcm \
-        pcmclient \
-        pml \
-        ptl \
-        soh \
-        svc \
-        topo
+	base \
+	coll \
+	common \
+	errmgr \
+	gpr \
+	io \
+	iof \
+	gpr \
+	mpool \
+	ns \
+	oob \
+	pls \
+	pml \
+	ptl \
+	rml \
+	ras \
+	rds \
+	rmaps \
+	rmgr \
+	soh \
+	topo
 
 # Source code files
 

@@ -141,7 +141,7 @@ int mca_ptl_base_select(bool *allow_multi_user_threads,
 
   if (0 == ompi_list_get_size(&mca_ptl_base_modules_initialized)) {
     /* JMS Replace with show_help */
-    ompi_abort(1, "No ptl components available.  This shouldn't happen.");
+    orte_abort(1, "No ptl components available.  This shouldn't happen.");
   }
 
   /* All done */

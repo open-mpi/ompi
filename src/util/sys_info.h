@@ -20,7 +20,7 @@
  *
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #ifdef HAVE_SYS_UTSNAME_H
 #include <sys/utsname.h>
@@ -29,8 +29,8 @@
 #include <sys/types.h>
 #endif
 
-#ifndef _OMPI_SYS_INFO_H_
-#define _OMPI_SYS_INFO_H_
+#ifndef _ORTE_SYS_INFO_H_
+#define _ORTE_SYS_INFO_H_
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -39,13 +39,13 @@ extern "C" {
 /**
  * System information structure
  *
- * The ompi_sys_info() function fills the sysname, nodename, release, version, machine,
+ * The orte_sys_info() function fills the sysname, nodename, release, version, machine,
  * path_sep, and user fields
  *
  */
-struct ompi_sys_info_t {
+struct orte_sys_info_t {
     bool init;             /**< Certifies that values have been filled.
-			    * Certifies that the ompi_sys_info() function has been
+			    * Certifies that the orte_sys_info() function has been
 			    * called at least once so fields have valid values
 			    */
     char *sysname;         /**< Name of OS in use on this node. */
@@ -70,25 +70,25 @@ struct ompi_sys_info_t {
 			    * that value for future use.
 			    */
 };
-typedef struct ompi_sys_info_t ompi_sys_info_t;
+typedef struct orte_sys_info_t orte_sys_info_t;
 
-OMPI_DECLSPEC extern ompi_sys_info_t ompi_system_info;
+OMPI_DECLSPEC extern orte_sys_info_t orte_system_info;
 
 
 /**
  * \internal
  *
  * Discover and record a wide range of information about the system
- * upon which this code is executing. ompi_sys_info populates a global
+ * upon which this code is executing. orte_sys_info populates a global
  * variable with information about the system upon which the process
  * is executing.
  *
- * Called from \c ompi_init.
+ * Called from \c orte_init.
  *
- * @retval OMPI_SUCCESS If values are successfully determined.
- * @retval OMPI_ERROR If the system does not provide the requested information.
+ * @retval ORTE_SUCCESS If values are successfully determined.
+ * @retval ORTE_ERROR If the system does not provide the requested information.
  */
-OMPI_DECLSPEC int ompi_sys_info(void);
+OMPI_DECLSPEC int orte_sys_info(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

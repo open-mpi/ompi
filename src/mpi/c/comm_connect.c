@@ -18,7 +18,7 @@
 #include "mpi/c/bindings.h"
 #include "info/info.h"
 #include "communicator/communicator.h"
-#include "mca/ns/base/base.h"
+#include "mca/ns/ns.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_connect = PMPI_Comm_connect
@@ -34,11 +34,12 @@ static const char FUNC_NAME[] = "MPI_Comm_connect";
 int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
                      MPI_Comm comm, MPI_Comm *newcomm) 
 {
-    int rank, tag, rc;
+    int rank, rc;
     int send_first=1;   /* yes, we are the active part in this game */
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
-    ompi_process_name_t *port_proc_name=NULL;
+    orte_process_name_t *port_proc_name=NULL;
     char *tmp_port=NULL;
+    orte_rml_tag_t tag;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -87,7 +88,9 @@ int MPI_Comm_connect(char *port_name, MPI_Info info, int root,
      */ 
     if ( rank == root ) { 
 	tmp_port = ompi_parse_port (port_name, &tag);
-	port_proc_name = ompi_name_server.convert_string_to_process_name(tmp_port);
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&port_proc_name, tmp_port))) {
+        return rc;
+    }
 	if ( NULL == port_proc_name ) {
 	    *newcomm = MPI_COMM_NULL;
 	    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_PORT, FUNC_NAME);

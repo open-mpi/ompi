@@ -13,8 +13,8 @@
  */
 
 
-#include "ompi_config.h"
-#include "include/constants.h"
+#include "orte_config.h"
+#include "include/orte_constants.h"
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -39,37 +39,48 @@
 /*
  * Global variables
  */
-int mca_errmgr_base_output = -1;
-mca_errmgr_base_module_t orte_errmgr = {
-    mca_errmgr_base_log
+int orte_errmgr_base_output = -1;
+orte_errmgr_base_module_t orte_errmgr = {
+    orte_errmgr_base_log,
+    orte_errmgr_base_proc_aborted,
+    orte_errmgr_base_incomplete_start,
+    orte_errmgr_base_error_detected,
+    orte_errmgr_base_register_job,
+    orte_errmgr_base_abort
 };
-bool mca_errmgr_base_selected = false;
-ompi_list_t mca_errmgr_base_components_available;
-mca_errmgr_base_component_t mca_errmgr_base_selected_component;
-
+bool orte_errmgr_base_selected = false;
+ompi_list_t orte_errmgr_base_components_available;
+mca_errmgr_base_component_t orte_errmgr_base_selected_component;
+bool orte_errmgr_initialized = false;
 
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int mca_errmgr_base_open(void)
+int orte_errmgr_base_open(void)
 {
-  /* Open up all available components */
-
-  if (OMPI_SUCCESS != 
-      mca_base_components_open("mca_errmgr", 0, mca_errmgr_base_static_components, 
-                               &mca_errmgr_base_components_available)) {
-    return OMPI_ERROR;
-  }
-
-  /* setup output for debug messages */
-  if (!ompi_output_init) {  /* can't open output */
-      return OMPI_ERROR;
-  }
-
-  mca_errmgr_base_output = ompi_output_open(NULL);
-
+    if (!orte_errmgr_initialized) { /* ensure we only do this once */
+      
+        /* Open up all available components */
+    
+        if (ORTE_SUCCESS != 
+            mca_base_components_open("errmgr", 0, mca_errmgr_base_static_components, 
+                                   &orte_errmgr_base_components_available)) {
+            return ORTE_ERROR;
+        }
+    
+        /* setup output for debug messages */
+        if (!ompi_output_init) {  /* can't open output */
+            return ORTE_ERROR;
+        }
+    
+        if (0 > orte_errmgr_base_output)
+            orte_errmgr_base_output = ompi_output_open(NULL);
+      
+        orte_errmgr_initialized = true;
+    }
+    
   /* All done */
 
-  return OMPI_SUCCESS;
+  return ORTE_SUCCESS;
 }

@@ -14,8 +14,8 @@
 /**
  * @file
  */
-#ifndef MCA_IOF_SVC_PROXY_H
-#define MCA_IOF_SVC_PROXY_H
+#ifndef ORTE_IOF_SVC_PROXY_H
+#define ORTE_IOF_SVC_PROXY_H
 
 #include "mca/iof/iof.h"
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -38,12 +38,12 @@ extern "C" {
  *  @param cbdata (IN)  User data.
 */
                                                                                                                
-void mca_iof_svc_proxy_recv(
+void orte_iof_svc_proxy_recv(
     int status,
-    ompi_process_name_t* peer,
+    orte_process_name_t* peer,
     struct iovec* msg,
     int count,
-    int tag,
+    orte_rml_tag_t tag,
     void* cbdata);
 
 #if defined(c_plusplus) || defined(__cplusplus)

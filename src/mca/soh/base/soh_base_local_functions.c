@@ -17,14 +17,31 @@
 /*
  * includes
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include "class/ompi_list.h"
 #include "mca/mca.h"
 
 #include "mca/soh/base/base.h"
 
-int mca_soh_base_update_cell_soh_not_available(mca_ns_base_cellid_t cellid)
+#include "include/orte_constants.h"
+
+
+int orte_soh_base_get_node_soh_not_available(orte_node_state_t *state,
+                                                      orte_cellid_t cell,
+                                                      char *nodename)
 {
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+int orte_soh_base_set_node_soh_not_available(orte_cellid_t cell,
+                                             char *nodename,
+                                             orte_node_state_t state)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+int orte_soh_base_module_finalize_not_available (void)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
 }

@@ -153,7 +153,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
         return_code=OMPI_ERR_OUT_OF_RESOURCE;
         goto CLEANUP;
     }
-    my_len=strlen(ompi_system_info.nodename);
+    my_len=strlen(orte_system_info.nodename);
 
     /* Get unique host identifier for each process in the list,
      * and idetify procs that are on this host.  Add procs on this
@@ -181,7 +181,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
        /* check to see if this proc is on my host */
        len=strlen((char *)(sm_proc_info[proc]));
        if( len == my_len ) {
-           if( 0 == strncmp(ompi_system_info.nodename,
+           if( 0 == strncmp(orte_system_info.nodename,
                        (char *)(sm_proc_info[proc]),len) ) {
                struct mca_ptl_base_peer_t *peer = peers[proc];
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
@@ -273,8 +273,8 @@ int mca_ptl_sm_add_procs_same_base_addr(
     if ( !mca_ptl_sm[0].ptl_inited ) {
         /* set file name */
         len=asprintf(&(mca_ptl_sm_component.sm_resouce_ctl_file),
-                "%s/shared_mem_ptl_module.%s",ompi_process_info.job_session_dir,
-                ompi_system_info.nodename);
+                "%s/shared_mem_ptl_module.%s",orte_process_info.job_session_dir,
+                orte_system_info.nodename);
         if( 0 > len ) {
             goto CLEANUP;
         }

@@ -427,7 +427,7 @@ static int open_file(int i)
 
     /* Setup the filename and open flags */
 
-    dir = ompi_process_info.proc_session_dir;
+    dir = orte_process_info.proc_session_dir;
     if (NULL != dir) {
         filename = (char*) malloc(MAXPATHLEN);
         if (NULL == filename) {

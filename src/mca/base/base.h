@@ -15,9 +15,10 @@
 #ifndef MCA_BASE_H
 #define MCA_BASE_H
 
+#include "ompi_config.h"
+
 #include "libltdl/ltdl.h"
 
-#include "mpi.h"
 #include "class/ompi_object.h"
 
 /*

@@ -20,21 +20,25 @@
 #include "mca/soh/base/base.h"
 
 
-int mca_soh_base_close(void)
+int orte_soh_base_close(void)
 {
   /* If we have a selected component and module, then finalize it */
 
-  if (mca_soh_base_selected) {
-    mca_soh_base_selected_component.soh_finalize();
+  if (NULL != orte_soh.finalize) {
+    orte_soh.finalize();
   }
+
+  /* after the module, close the component?? */
+  /* orte_soh_base_component_finalize (); */
 
   /* Close all remaining available components (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
-  mca_base_components_close(mca_soh_base_output, 
-                            &mca_soh_base_components_available, NULL);
+  mca_base_components_close(orte_soh_base.soh_output, 
+                            &orte_soh_base.soh_components, NULL);
 
   /* All done */
 
   return OMPI_SUCCESS;
 }
+

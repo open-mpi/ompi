@@ -13,18 +13,21 @@
  */
 
 #include "ompi_config.h"
+
 #ifdef HAVE_SCHED_H
 #include <sched.h>
 #endif
+
 #include "event/event.h"
 #include "mca/pml/pml.h"
-#include "mca/io/base/io_base_request.h"
 #include "runtime/ompi_progress.h"
-
+#include "include/constants.h"
 
 static int ompi_progress_event_flag = OMPI_EVLOOP_ONCE;
 static ompi_lock_t progress_lock;
-
+static ompi_progress_callback_t *callbacks = NULL;
+static size_t callbacks_len = 0;
+static size_t callbacks_size = 0;
 
 int
 ompi_progress_init(void)
@@ -41,6 +44,8 @@ void ompi_progress_events(int flag)
 
 void ompi_progress(void)
 {
+    size_t i;
+
     /* progress any outstanding communications */
     int ret, events = 0;
 #if OMPI_HAVE_THREAD_SUPPORT
@@ -66,6 +71,15 @@ void ompi_progress(void)
         }
     }
 #endif
+
+    for (i = 0 ; i < callbacks_len ; ++i) {
+        ret = (callbacks[i])();
+        if (ret > 0) {
+            events += ret;
+        }
+    }
+
+#if 0 /* replaced by callback code */
     ret = mca_pml.pml_progress();
     if (ret > 0) {
         events += ret;
@@ -76,6 +90,7 @@ void ompi_progress(void)
     if (ret > 0) {
         events += ret;
     }
+#endif
 
 #if OMPI_HAVE_THREAD_SUPPORT
     /* release the lock before yielding, for obvious reasons */
@@ -101,3 +116,26 @@ void ompi_progress(void)
 #endif
 }
 
+
+/*
+ * NOTE: This function is not in any way thread-safe.  Do not allow
+ * multiple calls to ompi_progress_register and/or ompi_progress
+ * concurrently.  This will be fixed in the near future.
+ */
+int
+ompi_progress_register(ompi_progress_callback_t cb)
+{
+    /* see if we need to allocate more space */
+    if (callbacks_len + 1 > callbacks_size) {
+        ompi_progress_callback_t *tmp;
+        tmp = realloc(callbacks, callbacks_size + 4);
+        if (tmp == NULL) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+
+        callbacks = tmp;
+        callbacks_size += 4;
+    }
+
+    callbacks[callbacks_len++] = cb;
+
+    return OMPI_SUCCESS;
+}

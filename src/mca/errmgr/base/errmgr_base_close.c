@@ -12,31 +12,32 @@
  * $HEADER$
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdio.h>
 
-#include "include/constants.h"
+#include "include/orte_constants.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/errmgr/base/base.h"
 
 
-int mca_errmgr_base_close(void)
+int orte_errmgr_base_close(void)
 {
   /* If we have a selected component and module, then finalize it */
 
-  if (mca_errmgr_base_selected) {
-      mca_errmgr_base_selected_component.errmgr_finalize();
+  if (orte_errmgr_base_selected) {
+      orte_errmgr_base_selected_component.errmgr_finalize();
   }
 
   /* Close all remaining available components (may be one if this is a
-     OMPI RTE program, or [possibly] multiple if this is mca_info) */
+     OMPI RTE program, or [possibly] multiple if this is ompi_info) */
 
-  mca_base_components_close(mca_errmgr_base_output, 
-                            &mca_errmgr_base_components_available, NULL);
+  mca_base_components_close(orte_errmgr_base_output, 
+                            &orte_errmgr_base_components_available, NULL);
 
+    orte_errmgr_initialized = false;
   /* All done */
 
-  return OMPI_SUCCESS;
+  return ORTE_SUCCESS;
 }

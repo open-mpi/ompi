@@ -14,21 +14,27 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
-AM_CPPFLAGS = -D__USE_GNU -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
+AM_CPPFLAGS = -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1 -g
 
 noinst_PROGRAMS = \
-    test_gpr_proxy \
-	test_gpr_replica 
+    gpr_test \
+    gpr_test_trigs \
+    gpr_test_proxy
 
-test_gpr_replica_SOURCES = test_gpr_replica.c
-test_gpr_replica_LDADD = \
+gpr_test_SOURCES = gpr_test.c
+gpr_test_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.la 
-test_gpr_replica_DEPENDENCIES = $(test_gpr_replica_LDADD)
+gpr_test_DEPENDENCIES = $(gpr_test_LDADD)
 
-test_gpr_proxy_SOURCES = test_gpr_proxy.c
-test_gpr_proxy_LDADD = \
+gpr_test_trigs_SOURCES = gpr_test_trigs.c
+gpr_test_trigs_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.la 
-test_gpr_proxy_DEPENDENCIES = $(test_gpr_proxy_LDADD)
+gpr_test_trigs_DEPENDENCIES = $(gpr_test_trigs_LDADD)
 
+gpr_test_proxy_SOURCES = gpr_test_proxy.c
+gpr_test_proxy_LDADD = \
+        $(top_builddir)/src/libmpi.la \
+        $(top_builddir)/test/support/libsupport.la 
+gpr_test_proxy_DEPENDENCIES = $(gpr_test_proxy_LDADD)

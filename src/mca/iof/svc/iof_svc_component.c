@@ -17,23 +17,24 @@
 #include "util/output.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
-#include "mca/oob/oob.h"
+#include "mca/rml/rml.h"
+#include "mca/rml/rml_types.h"
 #include "iof_svc.h"
 #include "iof_svc_proxy.h"
 
 /*
  * Local functions
  */
-static int mca_iof_svc_open(void);
-static int mca_iof_svc_close(void);
+static int orte_iof_svc_open(void);
+static int orte_iof_svc_close(void);
 
-static mca_iof_base_module_t* mca_iof_svc_init(
+static orte_iof_base_module_t* orte_iof_svc_init(
     int* priority, 
     bool *allow_multi_user_threads,
     bool *have_hidden_threads);
 
 
-mca_iof_svc_component_t mca_iof_svc_component = {
+orte_iof_svc_component_t mca_iof_svc_component = {
     {
       /* First, the mca_base_component_t struct containing meta
          information about the component itself */
@@ -42,14 +43,14 @@ mca_iof_svc_component_t mca_iof_svc_component = {
         /* Indicate that we are a iof v1.0.0 component (which also
            implies a specific MCA version) */
 
-        MCA_IOF_BASE_VERSION_1_0_0,
+        ORTE_IOF_BASE_VERSION_1_0_0,
 
         "svc", /* MCA component name */
         1,  /* MCA component major version */
         0,  /* MCA component minor version */
         0,  /* MCA component release version */
-        mca_iof_svc_open,  /* component open  */
-        mca_iof_svc_close  /* component close */
+        orte_iof_svc_open,  /* component open  */
+        orte_iof_svc_close  /* component close */
       },
 
       /* Next the MCA v1.0.0 component meta data */
@@ -58,12 +59,12 @@ mca_iof_svc_component_t mca_iof_svc_component = {
         false
       },
 
-      mca_iof_svc_init
+      orte_iof_svc_init
     }
 };
 
 #if 0
-static char* mca_iof_svc_param_register_string(
+static char* orte_iof_svc_param_register_string(
     const char* param_name,
     const char* default_value)
 {
@@ -74,7 +75,7 @@ static char* mca_iof_svc_param_register_string(
 }
 #endif
 
-static  int mca_iof_svc_param_register_int(
+static  int orte_iof_svc_param_register_int(
     const char* param_name,
     int default_value)
 {
@@ -88,9 +89,9 @@ static  int mca_iof_svc_param_register_int(
 /**
   * component open/close/init function
   */
-static int mca_iof_svc_open(void)
+static int orte_iof_svc_open(void)
 {
-    mca_iof_svc_component.svc_debug = mca_iof_svc_param_register_int("debug", 1);
+    mca_iof_svc_component.svc_debug = orte_iof_svc_param_register_int("debug", 1);
     OBJ_CONSTRUCT(&mca_iof_svc_component.svc_subscribed, ompi_list_t);
     OBJ_CONSTRUCT(&mca_iof_svc_component.svc_published, ompi_list_t);
     OBJ_CONSTRUCT(&mca_iof_svc_component.svc_lock, ompi_mutex_t);
@@ -98,7 +99,7 @@ static int mca_iof_svc_open(void)
 }
 
 
-static int mca_iof_svc_close(void)
+static int orte_iof_svc_close(void)
 {
     ompi_list_item_t* item;
     OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
@@ -109,18 +110,18 @@ static int mca_iof_svc_close(void)
         OBJ_RELEASE(item);
     }
     OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
-    mca_oob_recv_cancel(MCA_OOB_NAME_ANY, MCA_OOB_TAG_IOF_SVC);
+    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_IOF_SVC);
     return OMPI_SUCCESS;
 }
 
 
 
 
-static mca_iof_base_module_t* 
-mca_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads)
+static orte_iof_base_module_t* 
+orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidden_threads)
 {
     int rc;
-    if(ompi_process_info.seed == false)
+    if(orte_process_info.seed == false)
         return NULL;
 
     *priority = 1;
@@ -131,19 +132,19 @@ mca_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidde
     mca_iof_svc_component.svc_iov[0].iov_base = NULL;
     mca_iof_svc_component.svc_iov[0].iov_len = 0;
 
-    rc = mca_oob_recv_nb(
-        MCA_OOB_NAME_ANY,
+    rc = orte_rml.recv_nb(
+        ORTE_RML_NAME_ANY,
         mca_iof_svc_component.svc_iov,
         1,
-        MCA_OOB_TAG_IOF_SVC,
-        MCA_OOB_ALLOC,
-        mca_iof_svc_proxy_recv,
+        ORTE_RML_TAG_IOF_SVC,
+        ORTE_RML_ALLOC,
+        orte_iof_svc_proxy_recv,
         NULL
     );
     if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "mca_iof_svc_init: unable to post non-blocking recv");
+        ompi_output(0, "orte_iof_svc_init: unable to post non-blocking recv");
         return NULL;
     }
-    return &mca_iof_svc_module;
+    return &orte_iof_svc_module;
 }
 

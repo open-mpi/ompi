@@ -21,16 +21,23 @@
 /*
  * includes
  */
-#include "ompi_config.h"
+#include "orte_config.h"
+
+#include "class/ompi_object.h"
+#include "util/output.h"
+#include "util/proc_info.h"
+
+#include "mca/rml/rml.h"
 
 #include "gpr_replica.h"
-#include "gpr_replica_internals.h"
+#include "mca/gpr/replica/api_layer/gpr_replica_api.h"
+#include "mca/gpr/replica/communications/gpr_replica_comm.h"
 
 
 /*
  * Struct of function pointers that need to be initialized
  */
-mca_gpr_base_component_t mca_gpr_replica_component = {
+OMPI_COMP_EXPORT mca_gpr_base_component_t mca_gpr_replica_component = {
     {
 	MCA_GPR_BASE_VERSION_1_0_0,
 
@@ -38,45 +45,56 @@ mca_gpr_base_component_t mca_gpr_replica_component = {
 	1,  /* MCA module major version */
 	0,  /* MCA module minor version */
 	0,  /* MCA module release version */
-	mca_gpr_replica_open,  /* module open */
-	mca_gpr_replica_close /* module close */
+	orte_gpr_replica_open,  /* module open */
+	orte_gpr_replica_close /* module close */
     },
     {
 	false /* checkpoint / restart */
     },
-    mca_gpr_replica_init,    /* module init */
-    mca_gpr_replica_finalize /* module shutdown */
+    orte_gpr_replica_init,    /* module init */
+    orte_gpr_replica_finalize /* module shutdown */
 };
 
 /*
  * setup the function pointers for the module
  */
-static mca_gpr_base_module_t mca_gpr_replica = {
-    mca_gpr_replica_get,
-    mca_gpr_replica_put,
-    mca_gpr_replica_delete_segment,
-    mca_gpr_replica_subscribe,
-    mca_gpr_replica_unsubscribe,
-    mca_gpr_replica_synchro,
-    mca_gpr_replica_cancel_synchro,
-    mca_gpr_replica_delete_object,
-    mca_gpr_replica_index,
-    mca_gpr_replica_test_internals,
-    mca_gpr_replica_begin_compound_cmd,
-    mca_gpr_replica_stop_compound_cmd,
-    mca_gpr_replica_exec_compound_cmd,
-    mca_gpr_replica_dump,
-    mca_gpr_replica_silent_mode_on,
-    mca_gpr_replica_silent_mode_off,
-    mca_gpr_replica_notify_off,
-    mca_gpr_replica_notify_on,
-    mca_gpr_replica_assign_ownership,
-    mca_gpr_replica_triggers_active,
-    mca_gpr_replica_triggers_inactive,
-    mca_gpr_replica_get_startup_msg,
-    mca_gpr_replica_cleanup_job,
-    mca_gpr_replica_cleanup_proc,
-    mca_gpr_replica_deliver_notify_msg
+static orte_gpr_base_module_t orte_gpr_replica_module = {
+    /* INIT */
+    orte_gpr_replica_module_init,
+    /* BLOCKING OPERATIONS */
+    orte_gpr_replica_get,
+    orte_gpr_replica_put,
+    orte_gpr_replica_delete_entries,
+    orte_gpr_replica_delete_segment,
+    orte_gpr_replica_index,
+    /* NON-BLOCKING OPERATIONS */
+    orte_gpr_replica_get_nb,
+    orte_gpr_replica_put_nb,
+    orte_gpr_replica_delete_entries_nb,
+    orte_gpr_replica_delete_segment_nb,
+    orte_gpr_replica_index_nb,
+    /* GENERAL OPERATIONS */
+    orte_gpr_replica_preallocate_segment,
+    orte_gpr_replica_deliver_notify_msg,
+    /* ARITHMETIC OPERATIONS */
+    orte_gpr_replica_increment_value,
+    orte_gpr_replica_decrement_value,
+    /* SUBSCRIBE OPERATIONS */
+    orte_gpr_replica_subscribe,
+    orte_gpr_replica_unsubscribe,
+    /* COMPOUND COMMANDS */
+    orte_gpr_replica_begin_compound_cmd,
+    orte_gpr_replica_stop_compound_cmd,
+    orte_gpr_replica_exec_compound_cmd,
+    /* DIAGNOSTIC OPERATIONS */
+    orte_gpr_replica_dump_all,
+    orte_gpr_replica_dump_segments,
+    orte_gpr_replica_dump_triggers,
+    orte_gpr_base_dump_notify_msg,
+    orte_gpr_base_dump_notify_data,
+    /* CLEANUP OPERATIONS */
+    orte_gpr_replica_cleanup_job,
+    orte_gpr_replica_cleanup_proc
 };
 
 /*
@@ -88,463 +106,462 @@ static bool initialized = false;
 /*
  * globals needed within replica component
  */
-mca_gpr_replica_t mca_gpr_replica_head;
-ompi_list_t mca_gpr_replica_notify_request_tracker;
-ompi_list_t mca_gpr_replica_callbacks;
-ompi_list_t mca_gpr_replica_notify_off_list;
-ompi_registry_notify_id_t mca_gpr_replica_last_notify_id_tag;
-ompi_list_t mca_gpr_replica_free_notify_id_tags;
-int mca_gpr_replica_debug;
-ompi_mutex_t mca_gpr_replica_mutex;
-bool mca_gpr_replica_compound_cmd_mode;
-bool mca_gpr_replica_exec_compound_cmd_mode;
-ompi_buffer_t mca_gpr_replica_compound_cmd;
-ompi_mutex_t mca_gpr_replica_wait_for_compound_mutex;
-ompi_condition_t mca_gpr_replica_compound_cmd_condition;
-int mca_gpr_replica_compound_cmd_waiting;
-bool mca_gpr_replica_silent_mode;
+orte_gpr_replica_t orte_gpr_replica;
 
+orte_gpr_replica_globals_t orte_gpr_replica_globals;
 
-/* constructor - used to initialize state of notify_off instance */
-static void mca_gpr_replica_notify_off_construct(mca_gpr_replica_notify_off_t* off)
+/*
+ * CONSTRUCTORS AND DESTRUCTORS
+ */
+
+/*  SEGMENT */
+/* constructor - used to initialize state of segment instance */
+static void orte_gpr_replica_segment_construct(orte_gpr_replica_segment_t* seg)
 {
-    off->sub_number = OMPI_REGISTRY_NOTIFY_ID_MAX;
-    off->proc = NULL;
+    seg->name = NULL;
+    seg->itag = ORTE_GPR_REPLICA_ITAG_MAX;
+    
+    orte_pointer_array_init(&(seg->dict), orte_gpr_replica_globals.block_size,
+                            orte_gpr_replica_globals.max_size,
+                            orte_gpr_replica_globals.block_size);
+
+    orte_pointer_array_init(&(seg->containers), orte_gpr_replica_globals.block_size,
+                            orte_gpr_replica_globals.max_size,
+                            orte_gpr_replica_globals.block_size);
+
 }
 
-/* destructor - used to free any resources held by notify_off instance */
-static void mca_gpr_replica_notify_off_destructor(mca_gpr_replica_notify_off_t* off)
+/* destructor - used to free any resources held by instance */
+static void orte_gpr_replica_segment_destructor(orte_gpr_replica_segment_t* seg)
 {
-    if (NULL != off->proc) {
-	free(off->proc);
+    if (NULL != seg->name) {
+        free(seg->name);
+    }
+
+    if (NULL != seg->dict) {
+       OBJ_RELEASE(seg->dict);
+    }
+    
+    if (NULL != seg->containers) {
+        OBJ_RELEASE(seg->containers);
     }
 }
 
-/* define instance of notify_off class */
+/* define instance of orte_gpr_replica_segment_t */
 OBJ_CLASS_INSTANCE(
-		   mca_gpr_replica_notify_off_t,
-		   ompi_list_item_t,
-		   mca_gpr_replica_notify_off_construct,
-		   mca_gpr_replica_notify_off_destructor);
+          orte_gpr_replica_segment_t,  /* type name */
+          ompi_object_t, /* parent "class" name */
+          orte_gpr_replica_segment_construct, /* constructor */
+          orte_gpr_replica_segment_destructor); /* destructor */
 
 
-/* constructor - used to initialize state of keytable instance */
-static void mca_gpr_replica_keytable_construct(mca_gpr_replica_keytable_t* keytable)
+/* CONTAINER */
+/* constructor - used to initialize state of registry container instance */
+static void orte_gpr_replica_container_construct(orte_gpr_replica_container_t* reg)
 {
-    keytable->token = NULL;
-    keytable->key = MCA_GPR_REPLICA_KEY_MAX;
+    orte_pointer_array_init(&(reg->itagvals), orte_gpr_replica_globals.block_size,
+                            orte_gpr_replica_globals.max_size,
+                            orte_gpr_replica_globals.block_size);
+
+    OBJ_CONSTRUCT(&(reg->itaglist), orte_value_array_t);
+    orte_value_array_init(&(reg->itaglist), sizeof(orte_gpr_replica_itag_t));
+
+    reg->itags = NULL;
+    reg->num_itags = 0;
+    
 }
 
 /* destructor - used to free any resources held by instance */
-static void mca_gpr_replica_keytable_destructor(mca_gpr_replica_keytable_t* keytable)
+static void orte_gpr_replica_container_destructor(orte_gpr_replica_container_t* reg)
+{
+    orte_gpr_replica_itagval_t *ptr;
+    int i;
+
+    if (NULL != reg->itags) {
+         free(reg->itags);
+    }
+
+    if (NULL != reg->itagvals) {
+        ptr = (orte_gpr_replica_itagval_t*)((reg->itagvals)->addr);
+        for (i=0; i < (reg->itagvals)->size; i++) {
+            if (NULL != ptr) {
+                OBJ_RELEASE(ptr);
+            }
+            ptr++;
+        }
+        OBJ_RELEASE(reg->itagvals);
+    }
+
+    OBJ_DESTRUCT(&(reg->itaglist));
+
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+         orte_gpr_replica_container_t,  /* type name */
+         ompi_object_t, /* parent "class" name */
+         orte_gpr_replica_container_construct, /* constructor */
+         orte_gpr_replica_container_destructor); /* destructor */
+
+
+/* ITAG-VALUE PAIR */
+/* constructor - used to initialize state of itagval instance */
+static void orte_gpr_replica_itagval_construct(orte_gpr_replica_itagval_t* ptr)
+{
+    ptr->index = 0;
+    ptr->itag = ORTE_GPR_REPLICA_ITAG_MAX;
+    ptr->type = ORTE_NULL;
+    (ptr->value).strptr = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void orte_gpr_replica_itagval_destructor(orte_gpr_replica_itagval_t* ptr)
+{
+    if (ORTE_BYTE_OBJECT == ptr->type) {
+        free(((ptr->value).byteobject).bytes);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+         orte_gpr_replica_itagval_t,  /* type name */
+         ompi_object_t, /* parent "class" name */
+         orte_gpr_replica_itagval_construct, /* constructor */
+         orte_gpr_replica_itagval_destructor); /* destructor */
+
+
+/* COUNTERS */
+/* constructor - used to initialize state of counter instance */
+static void orte_gpr_replica_counter_construct(orte_gpr_replica_counter_t* cntr)
+{
+    cntr->seg = NULL;
+    cntr->cptr = NULL;
+    cntr->iptr = NULL;
+    cntr->trigger_level = 0;
+}
+
+/* destructor - used to free any resources held by instance */
+static void orte_gpr_replica_counter_destructor(orte_gpr_replica_counter_t* targ)
 {
 }
 
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
-		   mca_gpr_replica_keytable_t,            /* type name */
-		   ompi_list_item_t,              /* parent "class" name */
-		   mca_gpr_replica_keytable_construct,    /* constructor */
-		   mca_gpr_replica_keytable_destructor);  /* destructor */
+         orte_gpr_replica_counter_t,           /* type name */
+         ompi_object_t,                 /* parent "class" name */
+         orte_gpr_replica_counter_construct,   /* constructor */
+         orte_gpr_replica_counter_destructor); /* destructor */
 
 
-/* constructor - used to initialize state of keylist instance */
-static void mca_gpr_replica_keylist_construct(mca_gpr_replica_keylist_t* keylist)
+/* SUBSCRIBED DATA */
+/* constructor - used to initialize state of subscribed data instance */
+static void orte_gpr_replica_subscribed_data_construct(orte_gpr_replica_subscribed_data_t* data)
 {
-    keylist->key = MCA_GPR_REPLICA_KEY_MAX;
+    data->seg = NULL;
+    data->addr_mode = 0;
+    
+    OBJ_CONSTRUCT(&(data->tokentags), orte_value_array_t);
+    orte_value_array_init(&(data->tokentags), sizeof(orte_gpr_replica_itag_t));
+
+    OBJ_CONSTRUCT(&(data->keytags), orte_value_array_t);
+    orte_value_array_init(&(data->keytags), sizeof(orte_gpr_replica_itag_t));
+
+    data->callback = NULL;
+    data->user_tag = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
-static void mca_gpr_replica_keylist_destructor(mca_gpr_replica_keylist_t* keylist)
+static void orte_gpr_replica_subscribed_data_destructor(orte_gpr_replica_subscribed_data_t* data)
 {
+
+    OBJ_DESTRUCT(&(data->tokentags));
+    
+    OBJ_DESTRUCT(&(data->keytags));
+
 }
 
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
-		   mca_gpr_replica_keylist_t,           /* type name */
-		   ompi_list_item_t,            /* parent "class" name */
-		   mca_gpr_replica_keylist_construct,   /* constructor */
-		   mca_gpr_replica_keylist_destructor); /* destructor */
+         orte_gpr_replica_subscribed_data_t,           /* type name */
+         ompi_object_t,                 /* parent "class" name */
+         orte_gpr_replica_subscribed_data_construct,   /* constructor */
+         orte_gpr_replica_subscribed_data_destructor); /* destructor */
 
 
+/* TRIGGERS */
+/* constructor - used to initialize state of trigger instance */
+static void orte_gpr_replica_trigger_construct(orte_gpr_replica_triggers_t* trig)
+{
+    trig->index = 0;
+    trig->action = 0;
+    
+    trig->requestor = NULL;
+    trig->remote_idtag = ORTE_GPR_NOTIFY_ID_MAX;
+    
+    trig->num_subscribed_data = 0;
+    orte_pointer_array_init(&(trig->subscribed_data), 10,
+                            orte_gpr_replica_globals.max_size, 10);
+
+    trig->num_counters = 0;
+    orte_pointer_array_init(&(trig->counters), 1, orte_gpr_replica_globals.max_size, 1);
+}
+
+/* destructor - used to free any resources held by instance */
+static void orte_gpr_replica_trigger_destructor(orte_gpr_replica_triggers_t* trig)
+{
+    int i;
+    orte_gpr_replica_subscribed_data_t **data;
+    
+    if (NULL != trig->requestor) {
+        free(trig->requestor);
+    }
+
+    if (NULL != trig->subscribed_data) {
+       data = (orte_gpr_replica_subscribed_data_t**)((trig->subscribed_data)->addr);
+       for (i=0; i < (trig->subscribed_data)->size; i++) {
+            if (NULL != data[i]) free(data[i]);
+       }
+       OBJ_RELEASE(trig->subscribed_data);
+    }
+    
+    if (NULL != trig->counters) {
+       OBJ_RELEASE(trig->counters);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+         orte_gpr_replica_triggers_t,           /* type name */
+         ompi_object_t,                 /* parent "class" name */
+         orte_gpr_replica_trigger_construct,   /* constructor */
+         orte_gpr_replica_trigger_destructor); /* destructor */
+
+
+/* CALLBACKS */
 /* constructor - used to initialize state of callback list instance */
-static void mca_gpr_replica_callbacks_construct(mca_gpr_replica_callbacks_t* cb)
+static void orte_gpr_replica_callbacks_construct(orte_gpr_replica_callbacks_t* cb)
 {
-    cb->cb_func = NULL;
     cb->message = NULL;
     cb->requestor = NULL;
     cb->remote_idtag = 0;
-    cb->user_tag = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
-static void mca_gpr_replica_callbacks_destructor(mca_gpr_replica_callbacks_t* cb)
+static void orte_gpr_replica_callbacks_destructor(orte_gpr_replica_callbacks_t* cb)
 {
     if (NULL != cb->requestor) {
-	free(cb->requestor);
+      free(cb->requestor);
+        cb->requestor = NULL;
     }
 }
 
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
-		   mca_gpr_replica_callbacks_t,           /* type name */
-		   ompi_list_item_t,            /* parent "class" name */
-		   mca_gpr_replica_callbacks_construct,   /* constructor */
-		   mca_gpr_replica_callbacks_destructor); /* destructor */
+         orte_gpr_replica_callbacks_t,           /* type name */
+         ompi_list_item_t,            /* parent "class" name */
+         orte_gpr_replica_callbacks_construct,   /* constructor */
+         orte_gpr_replica_callbacks_destructor); /* destructor */
 
 
-
-
-/* constructor - used to initialize state of trigger list instance */
-static void mca_gpr_replica_trigger_list_construct(mca_gpr_replica_trigger_list_t* trig)
-{
-    trig->synch_mode = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
-    trig->action = OMPI_REGISTRY_NOTIFY_NONE;
-    trig->addr_mode = OMPI_REGISTRY_NONE;
-    trig->num_keys = 0;
-    trig->keys = NULL;
-    trig->tokens = NULL;
-    trig->trigger = 0;
-    trig->count = 0;
-    trig->local_idtag = OMPI_REGISTRY_NOTIFY_ID_MAX;
-}
-
-/* destructor - used to free any resources held by instance */
-static void mca_gpr_replica_trigger_list_destructor(mca_gpr_replica_trigger_list_t* trig)
-{
-    char **tok;
-    uint i;
-
-    if (NULL != trig->keys) {
-	free(trig->keys);
-	trig->keys = NULL;
-    }
-    if (NULL != trig->tokens) {
-	for (i=0, tok=trig->tokens; i< (uint)trig->num_keys; i++) {
-	    free(*tok);
-	    *tok = NULL;
-	    tok++;
-	}
-	free(trig->tokens);
-	trig->tokens = NULL;
-    }
-}
-
-/* define instance of ompi_class_t */
-OBJ_CLASS_INSTANCE(
-		   mca_gpr_replica_trigger_list_t,           /* type name */
-		   ompi_list_item_t,                 /* parent "class" name */
-		   mca_gpr_replica_trigger_list_construct,   /* constructor */
-		   mca_gpr_replica_trigger_list_destructor); /* destructor */
-
-
+/* REPLICA LIST - NOT IMPLEMENTED YET! */
 /* constructor - used to initialize state of replica list instance */
-static void mca_gpr_replica_list_construct(mca_gpr_replica_list_t* replica)
+static void orte_gpr_replica_list_construct(orte_gpr_replica_list_t* replica)
 {
     replica->replica = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
-static void mca_gpr_replica_list_destructor(mca_gpr_replica_list_t* replica)
+static void orte_gpr_replica_list_destructor(orte_gpr_replica_list_t* replica)
 {
     if (NULL != replica->replica) {
-	free(replica->replica);
-	replica->replica = NULL;
+	   free(replica->replica);
+	   replica->replica = NULL;
     }
 }
 
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
-		   mca_gpr_replica_list_t,           /* type name */
+		   orte_gpr_replica_list_t,           /* type name */
 		   ompi_list_item_t,                 /* parent "class" name */
-		   mca_gpr_replica_list_construct,   /* constructor */
-		   mca_gpr_replica_list_destructor); /* destructor */
+		   orte_gpr_replica_list_construct,   /* constructor */
+		   orte_gpr_replica_list_destructor); /* destructor */
 
 
-
-/* constructor - used to initialize state of registry core instance */
-static void mca_gpr_replica_core_construct(mca_gpr_replica_core_t* reg)
-{
-    reg->num_keys = 0;
-    reg->keys = NULL;
-    reg->object_size = 0;
-    reg->object = NULL;
-    OBJ_CONSTRUCT(&reg->replicas, ompi_list_t);
-    reg->write_invalidate.invalidate = false;
-    reg->write_invalidate.last_mod = 0;
-    reg->write_invalidate.valid_replica = NULL;
-}
-
-/* destructor - used to free any resources held by instance */
-static void mca_gpr_replica_core_destructor(mca_gpr_replica_core_t* reg)
-{
-    mca_gpr_replica_list_t *ptr;
-
-    if (NULL != reg->keys) {
-	free(reg->keys);
-	reg->keys = NULL;
-    }
-
-    if (NULL != reg->object) {
-	free(reg->object);
-	reg->object = NULL;
-    }
-
-    while (NULL != (ptr = (mca_gpr_replica_list_t*)ompi_list_remove_first(&reg->replicas))) {
-	OBJ_RELEASE(ptr);
-    }
-    OBJ_DESTRUCT(&reg->replicas);
-
-    if (NULL != reg->write_invalidate.valid_replica) {
-	free(reg->write_invalidate.valid_replica);
-	reg->write_invalidate.valid_replica = NULL;
-    }
-}
-
+/* WRITE INVALIDATE - NOT IMPLEMENTED YET! */
 /* define instance of ompi_class_t */
 OBJ_CLASS_INSTANCE(
-		   mca_gpr_replica_core_t,  /* type name */
-		   ompi_list_item_t, /* parent "class" name */
-		   mca_gpr_replica_core_construct, /* constructor */
-		   mca_gpr_replica_core_destructor); /* destructor */
-
-
-
-/* constructor - used to initialize state of segment instance */
-static void mca_gpr_replica_segment_construct(mca_gpr_replica_segment_t* seg)
-{
-    seg->name = NULL;
-    seg->owning_job = MCA_NS_BASE_JOBID_MAX;
-    seg->key = MCA_GPR_REPLICA_KEY_MAX;
-    seg->lastkey = 0;
-    seg->triggers_active = false;
-    OBJ_CONSTRUCT(&seg->registry_entries, ompi_list_t);
-    OBJ_CONSTRUCT(&seg->triggers, ompi_list_t);
-    OBJ_CONSTRUCT(&seg->keytable, ompi_list_t);
-    OBJ_CONSTRUCT(&seg->freekeys, ompi_list_t);
-}
-
-/* destructor - used to free any resources held by instance */
-static void mca_gpr_replica_segment_destructor(mca_gpr_replica_segment_t* seg)
-{
-    mca_gpr_replica_core_t *reg;
-    mca_gpr_replica_trigger_list_t *tr;
-    mca_gpr_replica_keytable_t *kt;
-    mca_gpr_replica_keylist_t *kl;
-
-    if (mca_gpr_replica_debug) {
-	ompi_output(0, "entered segment destructor");
-    }
-
-    if (NULL != seg->name) {
-	free(seg->name);
-    }
-
-    while (NULL != (reg = (mca_gpr_replica_core_t*)ompi_list_remove_first(&seg->registry_entries))) {
-	OBJ_RELEASE(reg);
-    }
-    OBJ_DESTRUCT(&seg->registry_entries);
-
-    while (NULL != (tr = (mca_gpr_replica_trigger_list_t*)ompi_list_remove_first(&seg->triggers))) {
-	OBJ_RELEASE(tr);
-    }
-    OBJ_DESTRUCT(&seg->triggers);
-
-    while (NULL != (kt = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&seg->keytable))) {
-	OBJ_RELEASE(kt);
-    }
-    OBJ_DESTRUCT(&seg->keytable);
-
-    while (NULL != (kl = (mca_gpr_replica_keylist_t*)ompi_list_remove_first(&seg->freekeys))) {
-	OBJ_RELEASE(kl);
-    }
-    OBJ_DESTRUCT(&seg->freekeys);
-}
-
-/* define instance of mca_gpr_replica_segment_t */
-OBJ_CLASS_INSTANCE(
-		   mca_gpr_replica_segment_t,  /* type name */
-		   ompi_list_item_t, /* parent "class" name */
-		   mca_gpr_replica_segment_construct, /* constructor */
-		   mca_gpr_replica_segment_destructor); /* destructor */
-
-
-/* constructor - used to initialize notify message instance */
-static void mca_gpr_replica_notify_request_tracker_construct(mca_gpr_replica_notify_request_tracker_t* req)
-{
-    req->requestor = NULL;
-    req->callback = NULL;
-    req->user_tag = NULL;
-    req->local_idtag = OMPI_REGISTRY_NOTIFY_ID_MAX;
-    req->remote_idtag = OMPI_REGISTRY_NOTIFY_ID_MAX;
-    req->segptr = NULL;
-    req->action = OMPI_REGISTRY_NOTIFY_NONE;
-}
-
-/* destructor - used to free any resources held by instance */
-static void mca_gpr_replica_notify_request_tracker_destructor(mca_gpr_replica_notify_request_tracker_t* req)
-{
-    if (NULL != req->requestor) {
-	free(req->requestor);
-    }
-}
-
-/* define instance of ompi_class_t */
-OBJ_CLASS_INSTANCE(
-		   mca_gpr_replica_notify_request_tracker_t,            /* type name */
+		   orte_gpr_replica_write_invalidate_t,            /* type name */
 		   ompi_list_item_t,                          /* parent "class" name */
-		   mca_gpr_replica_notify_request_tracker_construct,    /* constructor */
-		   mca_gpr_replica_notify_request_tracker_destructor);  /* destructor */
+		   NULL,    /* constructor */
+		   NULL);  /* destructor */
 
 
 
-int mca_gpr_replica_open(void)
+int orte_gpr_replica_open(void)
 {
-    int id;
+    int id, tmp;
 
     id = mca_base_param_register_int("gpr", "replica", "debug", NULL, 0);
-    mca_base_param_lookup_int(id, &mca_gpr_replica_debug);
+    mca_base_param_lookup_int(id, &tmp);
+    if (tmp) {
+        orte_gpr_replica_globals.debug = true;
+    } else {
+        orte_gpr_replica_globals.debug = false;
+    }
+    
+    id = mca_base_param_register_int("gpr", "replica", "maxsize", NULL,
+                                     ORTE_GPR_REPLICA_MAX_SIZE);
+    mca_base_param_lookup_int(id, &orte_gpr_replica_globals.max_size);
 
-    return OMPI_SUCCESS;
+    id = mca_base_param_register_int("gpr", "replica", "blocksize", NULL,
+                                     ORTE_GPR_REPLICA_BLOCK_SIZE);
+    mca_base_param_lookup_int(id, &orte_gpr_replica_globals.block_size);
+
+    id = mca_base_param_register_int("gpr", "replica", "isolate", NULL, 0);
+    mca_base_param_lookup_int(id, &tmp);
+    if (tmp) {
+        orte_gpr_replica_globals.isolate = true;
+    } else {
+        orte_gpr_replica_globals.isolate = false;
+    }
+
+    return ORTE_SUCCESS;
 }
 
 /*
- * ditto for this one
+ * close function
  */
-int mca_gpr_replica_close(void)
+int orte_gpr_replica_close(void)
 {
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
 }
 
-mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
+orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
-
     /* If we are to host a replica, then we want to be selected, so do all the
        setup and return the module */
 
-    if (NULL == ompi_process_info.gpr_replica) {
-        int rc;
+    if (NULL == orte_process_info.gpr_replica) {
 
-	/* Return a module (choose an arbitrary, positive priority --
-	   it's only relevant compared to other ns components).  If
-	   we're not the seed, then we don't want to be selected, so
-	   return NULL. */
-
-	*priority = 50;
-
-	/* We allow multi user threads but don't have any hidden threads */
-
-	*allow_multi_user_threads = true;
-	*have_hidden_threads = false;
-
-	/* setup the thread locks and condition variables */
-	OBJ_CONSTRUCT(&mca_gpr_replica_mutex, ompi_mutex_t);
-	OBJ_CONSTRUCT(&mca_gpr_replica_wait_for_compound_mutex, ompi_mutex_t);
-	OBJ_CONSTRUCT(&mca_gpr_replica_compound_cmd_condition, ompi_condition_t);
-
-	/* initialize the registry compound mode */
-	mca_gpr_replica_compound_cmd_mode = false;
-	mca_gpr_replica_exec_compound_cmd_mode = false;
-	mca_gpr_replica_compound_cmd_waiting = 0;
-	mca_gpr_replica_compound_cmd = NULL;
-
-	/* initialize the registry head */
-/* 	OBJ_CONSTRUCT(&mca_gpr_replica_head.registry, ompi_object_t); */
-	OBJ_CONSTRUCT(&mca_gpr_replica_head.registry, ompi_list_t);
-	OBJ_CONSTRUCT(&mca_gpr_replica_head.triggers, ompi_list_t);
-
-	/* initialize the global dictionary for segment id's */
-	OBJ_CONSTRUCT(&mca_gpr_replica_head.segment_dict, ompi_list_t);
-	OBJ_CONSTRUCT(&mca_gpr_replica_head.freekeys, ompi_list_t);
-	mca_gpr_replica_head.lastkey = 0;
-
-	/* initialize the notify request tracker */
-	OBJ_CONSTRUCT(&mca_gpr_replica_notify_request_tracker, ompi_list_t);
-	mca_gpr_replica_last_notify_id_tag = 0;
-	OBJ_CONSTRUCT(&mca_gpr_replica_free_notify_id_tags, ompi_list_t);
-
-	if (mca_gpr_replica_debug) {
-	    ompi_output(0, "req tracker setup");
-	}
-
-	/* initialize the callback list head */
-	OBJ_CONSTRUCT(&mca_gpr_replica_callbacks, ompi_list_t);
-
-	/* initialize the mode trackers */
-	OBJ_CONSTRUCT(&mca_gpr_replica_notify_off_list, ompi_list_t);
-
-	/* initialize any local variables */
-	mca_gpr_replica_silent_mode = false;
-
- 	/* issue the non-blocking receive */ 
-	rc = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR, 0, mca_gpr_replica_recv, NULL);
-	if(rc != OMPI_SUCCESS && rc != OMPI_ERR_NOT_IMPLEMENTED) { 
-	    return NULL;
-	}
-
-	if (mca_gpr_replica_debug) {
-	    ompi_output(0, "nb receive setup");
-	}
-
-	/* Return the module */
-
-	initialized = true;
-	return &mca_gpr_replica;
+        	/* Return a module (choose an arbitrary, positive priority --
+        	   it's only relevant compared to other ns components).  If
+        	   we're not the seed, then we don't want to be selected, so
+        	   return NULL. */
+        
+        	*priority = 50;
+        
+        	/* We allow multi user threads but don't have any hidden threads */
+        
+        	*allow_multi_user_threads = true;
+        	*have_hidden_threads = false;
+        
+        	/* setup the thread locks and condition variables */
+        	OBJ_CONSTRUCT(&orte_gpr_replica_globals.mutex, ompi_mutex_t);
+        	OBJ_CONSTRUCT(&orte_gpr_replica_globals.wait_for_compound_mutex, ompi_mutex_t);
+        	OBJ_CONSTRUCT(&orte_gpr_replica_globals.compound_cmd_condition, ompi_condition_t);
+        
+        	/* initialize the registry compound mode */
+        	orte_gpr_replica_globals.compound_cmd_mode = false;
+        	orte_gpr_replica_globals.exec_compound_cmd_mode = false;
+        	orte_gpr_replica_globals.compound_cmd_waiting = 0;
+        	orte_gpr_replica_globals.compound_cmd = NULL;
+        
+        	/* initialize the registry head */
+            if (ORTE_SUCCESS != orte_pointer_array_init(&(orte_gpr_replica.segments),
+                                    orte_gpr_replica_globals.block_size,
+                                    orte_gpr_replica_globals.max_size,
+                                    orte_gpr_replica_globals.block_size)) {
+                return NULL;
+            }
+        
+            if (ORTE_SUCCESS != orte_pointer_array_init(&(orte_gpr_replica.triggers),
+                                    orte_gpr_replica_globals.block_size,
+                                    orte_gpr_replica_globals.max_size,
+                                    orte_gpr_replica_globals.block_size)) {
+                return NULL;
+            }
+            
+        	/* initialize the callback list head */
+        	OBJ_CONSTRUCT(&orte_gpr_replica.callbacks, ompi_list_t);
+        
+        /* initialize the search arrays for temporarily storing search results */
+        if (ORTE_SUCCESS != orte_pointer_array_init(&(orte_gpr_replica_globals.srch_cptr),
+                                100, orte_gpr_replica_globals.max_size, 100)) {
+            return NULL;
+        }
+        if (ORTE_SUCCESS != orte_pointer_array_init(&(orte_gpr_replica_globals.srch_ival),
+                                100, orte_gpr_replica_globals.max_size, 100)) {
+            return NULL;
+        }
+        
+        if (orte_gpr_replica_globals.debug) {
+            ompi_output(0, "nb receive setup");
+        }
+       
+       	/* Return the module */
+       
+        initialized = true;
+        return &orte_gpr_replica_module;
     } else {
-	return NULL;
+    	return NULL;
     }
 }
+
+
+int orte_gpr_replica_module_init(void)
+{
+    /* issue the non-blocking receive */ 
+    if (!orte_gpr_replica_globals.isolate) {
+        return orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR, 0, orte_gpr_replica_recv, NULL);
+    }
+    return ORTE_SUCCESS;
+}
+        
 
 /*
  * finalize routine
  */
-int mca_gpr_replica_finalize(void)
+int orte_gpr_replica_finalize(void)
 {
-    if (mca_gpr_replica_debug) {
-	ompi_output(0, "finalizing gpr replica");
+    int i;
+    orte_gpr_replica_segment_t** seg;
+    orte_gpr_replica_triggers_t** trig;
+    orte_gpr_replica_callbacks_t* cb;
+    
+    if (orte_gpr_replica_globals.debug) {
+	    ompi_output(0, "finalizing gpr replica");
     }
 
-    /*     mca_gpr_replica_segment_t *seg; */
-    /*     mca_gpr_replica_keytable_t *kt; */
-    /*     mca_gpr_replica_keylist_t *kl; */
-    /*     mca_gpr_notify_request_tracker_t *tk; */
-    /*     mca_gpr_idtag_list_t *id; */
-
-    /*     /\* free all storage, but only if this component was initialized *\/ */
-
-    /*     if (initialized) { */
-
-    /* 	while (NULL != (seg = (mca_gpr_replica_segment_t*)ompi_list_remove_first(&mca_gpr_replica_head.registry))) { */
-    /* 	    OBJ_RELEASE(seg); */
-    /* 	} */
-    /* 	OBJ_DESTRUCT(&mca_gpr_replica_head.registry); */
-
-    /* 	while (NULL != (kt = (mca_gpr_replica_keytable_t*)ompi_list_remove_first(&mca_gpr_replica_head.segment_dict))) { */
-    /* 	    OBJ_RELEASE(kt); */
-    /* 	} */
-    /* 	OBJ_DESTRUCT(&mca_gpr_replica_head.segment_dict); */
-
-    /* 	while (NULL != (kl = (mca_gpr_replica_keylist_t*)ompi_list_remove_first(&mca_gpr_replica_head.freekeys))) { */
-    /* 	    OBJ_RELEASE(kl); */
-    /* 	} */
-    /* 	OBJ_DESTRUCT(&mca_gpr_replica_head.freekeys); */
+    seg = (orte_gpr_replica_segment_t**)(orte_gpr_replica.segments)->addr;
+    for (i=0; i < (orte_gpr_replica.segments)->size; i++) {
+         if (NULL != seg[i]) {
+             OBJ_RELEASE(seg[i]);
+         }
+    }
+    
+    trig = (orte_gpr_replica_triggers_t**)(orte_gpr_replica.triggers)->addr;
+    for (i=0; i < (orte_gpr_replica.triggers)->size; i++) {
+         if (NULL != trig[i]) {
+             OBJ_RELEASE(trig[i]);
+         }
+    }
+    
+    while (NULL != (cb = (orte_gpr_replica_callbacks_t*)ompi_list_remove_first(&orte_gpr_replica.callbacks))) {
+        OBJ_RELEASE(cb);
+    }
+    OBJ_DESTRUCT(&orte_gpr_replica.callbacks);
 
 
-    /* 	while (NULL != (tk = (mca_gpr_notify_request_tracker_t*)ompi_list_remove_first(&mca_gpr_replica_notify_request_tracker))) { */
-    /* 	    OBJ_RELEASE(tk); */
-    /* 	} */
-    /* 	OBJ_DESTRUCT(&mca_gpr_replica_notify_request_tracker); */
-
-
-    /* 	while (NULL != (id = (mca_gpr_idtag_list_t*)ompi_list_remove_first(&mca_gpr_replica_free_notify_id_tags))) { */
-    /* 	    OBJ_RELEASE(id); */
-    /* 	} */
-    /* 	OBJ_DESTRUCT(&mca_gpr_replica_free_notify_id_tags); */
-    /* 	initialized = false; */
-    /*     } */
-
+    /* clean up the globals */
+    if (NULL != orte_gpr_replica_globals.compound_cmd) {
+        OBJ_RELEASE(orte_gpr_replica_globals.compound_cmd);
+    }
+    
     /* All done */
-
-	mca_oob_recv_cancel(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR);
-    return OMPI_SUCCESS;
+    if (orte_gpr_replica_globals.isolate) {
+        return ORTE_SUCCESS;
+    }
+    
+	orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR);
+    return ORTE_SUCCESS;
 }

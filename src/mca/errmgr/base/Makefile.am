@@ -32,7 +32,7 @@ libmca_errmgr_base_la_SOURCES = \
         errmgr_base_close.c \
         errmgr_base_select.c \
         errmgr_base_open.c \
-        errmgr_base_log.c
+        errmgr_base_fns.c
 
 
 # Conditionally install the header files

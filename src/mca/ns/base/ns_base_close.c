@@ -22,7 +22,7 @@
 #include "mca/ns/base/base.h"
 
 
-int mca_ns_base_close(void)
+int orte_ns_base_close(void)
 {
   /* If we have a selected component and module, then finalize it */
 

@@ -17,10 +17,10 @@
  * I/O Forwarding Service
  */
                                                                                          
-#ifndef MCA_IOF_H
-#define MCA_IOF_H
+#ifndef ORTE_IOF_H
+#define ORTE_IOF_H
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include "class/ompi_list.h"
 #include "mca/mca.h"
 #include "mca/ns/ns.h"
@@ -31,18 +31,18 @@ extern "C" {
 
 /* suggested tag values */
 enum {
-    MCA_IOF_ANY = -1,
-    MCA_IOF_STDIN = 0,
-    MCA_IOF_STDOUT = 1,
-    MCA_IOF_STDERR = 2
+    ORTE_IOF_ANY = -1,
+    ORTE_IOF_STDIN = 0,
+    ORTE_IOF_STDOUT = 1,
+    ORTE_IOF_STDERR = 2
 };
-typedef int mca_iof_base_tag_t;
+typedef int orte_iof_base_tag_t;
 
 /* endpoint mode */
 typedef enum {
-    MCA_IOF_SOURCE,
-    MCA_IOF_SINK
-} mca_iof_base_mode_t;
+    ORTE_IOF_SOURCE,
+    ORTE_IOF_SINK
+} orte_iof_base_mode_t;
 
 
 /**
@@ -58,10 +58,10 @@ typedef enum {
  *
  */
 
-typedef int (*mca_iof_base_publish_fn_t)(
-    const ompi_process_name_t* name,
-    mca_iof_base_mode_t mode,
-    mca_iof_base_tag_t tag,
+typedef int (*orte_iof_base_publish_fn_t)(
+    const orte_process_name_t* name,
+    orte_iof_base_mode_t mode,
+    orte_iof_base_tag_t tag,
     int fd
 );
 
@@ -75,10 +75,10 @@ typedef int (*mca_iof_base_publish_fn_t)(
  *
  */
 
-typedef int (*mca_iof_base_unpublish_fn_t)(
-    const ompi_process_name_t* name,
-    ompi_ns_cmp_bitmask_t mask,
-    mca_iof_base_tag_t tag
+typedef int (*orte_iof_base_unpublish_fn_t)(
+    const orte_process_name_t* name,
+    orte_ns_cmp_bitmask_t mask,
+    orte_iof_base_tag_t tag
 );
 
 /**
@@ -91,10 +91,10 @@ typedef int (*mca_iof_base_unpublish_fn_t)(
  * @param fd        Local file descriptor for input.
  */
 
-typedef int (*mca_iof_base_push_fn_t)(
-    const ompi_process_name_t* dst_name,
-    ompi_ns_cmp_bitmask_t dst_mask,
-    mca_iof_base_tag_t dst_tag,
+typedef int (*orte_iof_base_push_fn_t)(
+    const orte_process_name_t* dst_name,
+    orte_ns_cmp_bitmask_t dst_mask,
+    orte_iof_base_tag_t dst_tag,
     int fd
 );
 
@@ -108,10 +108,10 @@ typedef int (*mca_iof_base_push_fn_t)(
  * @param fd        Local file descriptor for output.
  */
 
-typedef int (*mca_iof_base_pull_fn_t)(
-    const ompi_process_name_t* src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag,
+typedef int (*orte_iof_base_pull_fn_t)(
+    const orte_process_name_t* src_name,
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag,
     int fd
 );
 
@@ -119,10 +119,10 @@ typedef int (*mca_iof_base_pull_fn_t)(
  * Setup buffering for a specified set of endpoints.
  */
 
-typedef int (*mca_iof_base_buffer_fn_t)(
-    const ompi_process_name_t* src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag,
+typedef int (*orte_iof_base_buffer_fn_t)(
+    const orte_process_name_t* src_name,
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag,
     size_t buffer_size
 );
 
@@ -131,26 +131,26 @@ typedef int (*mca_iof_base_buffer_fn_t)(
  * from a specified set of peers.
  */
 
-typedef int (*mca_iof_base_callback_fn_t)(
-    ompi_process_name_t* src_name, 
-    mca_iof_base_tag_t src_tag,
+typedef int (*orte_iof_base_callback_fn_t)(
+    orte_process_name_t* src_name, 
+    orte_iof_base_tag_t src_tag,
     void *cbdata,
     const unsigned char* data,
     size_t count
 );
 
-typedef int (*mca_iof_base_subscribe_fn_t)(
-    const ompi_process_name_t* src_name,  
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag,
-    mca_iof_base_callback_fn_t cb,
+typedef int (*orte_iof_base_subscribe_fn_t)(
+    const orte_process_name_t* src_name,  
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag,
+    orte_iof_base_callback_fn_t cb,
     void* cbdata
 );
 
-typedef int (*mca_iof_base_unsubscribe_fn_t)(
-    const ompi_process_name_t* src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag
+typedef int (*orte_iof_base_unsubscribe_fn_t)(
+    const orte_process_name_t* src_name,
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag
 );
 
 
@@ -158,49 +158,49 @@ typedef int (*mca_iof_base_unsubscribe_fn_t)(
  * Flush all output and block until output is delivered.
  */
 
-typedef int (*mca_iof_base_flush_fn_t)(void);
+typedef int (*orte_iof_base_flush_fn_t)(void);
 
 /**
  *  IOF module.
  */
 
-struct mca_iof_base_module_1_0_0_t {
-    mca_iof_base_publish_fn_t iof_publish;
-    mca_iof_base_unpublish_fn_t iof_unpublish;
-    mca_iof_base_push_fn_t iof_push;
-    mca_iof_base_pull_fn_t iof_pull;
-    mca_iof_base_subscribe_fn_t iof_subscribe;
-    mca_iof_base_unsubscribe_fn_t iof_unsubscribe;
-    mca_iof_base_flush_fn_t iof_flush;
+struct orte_iof_base_module_1_0_0_t {
+    orte_iof_base_publish_fn_t iof_publish;
+    orte_iof_base_unpublish_fn_t iof_unpublish;
+    orte_iof_base_push_fn_t iof_push;
+    orte_iof_base_pull_fn_t iof_pull;
+    orte_iof_base_subscribe_fn_t iof_subscribe;
+    orte_iof_base_unsubscribe_fn_t iof_unsubscribe;
+    orte_iof_base_flush_fn_t iof_flush;
 };
 
-typedef struct mca_iof_base_module_1_0_0_t mca_iof_base_module_1_0_0_t;
-typedef mca_iof_base_module_1_0_0_t mca_iof_base_module_t;
-OMPI_DECLSPEC extern mca_iof_base_module_t mca_iof;
+typedef struct orte_iof_base_module_1_0_0_t orte_iof_base_module_1_0_0_t;
+typedef orte_iof_base_module_1_0_0_t orte_iof_base_module_t;
+OMPI_DECLSPEC extern orte_iof_base_module_t orte_iof;
 
 /**
  *  IOF component descriptor. Contains component version information
  *  and component open/close/init functions.
  */
                                                                                                                  
-typedef mca_iof_base_module_t* (*mca_iof_base_component_init_fn_t)(
+typedef orte_iof_base_module_t* (*orte_iof_base_component_init_fn_t)(
     int *priority,
     bool *allow_user_threads,
     bool *have_hidden_threads
 );
 
-struct mca_iof_base_component_1_0_0_t {
+struct orte_iof_base_component_1_0_0_t {
   mca_base_component_t iof_version;
   mca_base_component_data_1_0_0_t iof_data;
-  mca_iof_base_component_init_fn_t iof_init;
+  orte_iof_base_component_init_fn_t iof_init;
 };
-typedef struct mca_iof_base_component_1_0_0_t mca_iof_base_component_1_0_0_t;
-typedef struct mca_iof_base_component_1_0_0_t mca_iof_base_component_t;
+typedef struct orte_iof_base_component_1_0_0_t orte_iof_base_component_1_0_0_t;
+typedef struct orte_iof_base_component_1_0_0_t orte_iof_base_component_t;
                                                                                                                  
 /*
  * Macro for use in components that are of type iof v1.0.0
  */
-#define MCA_IOF_BASE_VERSION_1_0_0 \
+#define ORTE_IOF_BASE_VERSION_1_0_0 \
   /* iof v1.0 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
   /* iof v1.0 */ \
@@ -209,4 +209,4 @@ typedef struct mca_iof_base_component_1_0_0_t mca_iof_base_component_t;
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-#endif /* MCA_PML_H */
+#endif /* ORTE_IOF_H */

@@ -16,41 +16,45 @@
 /** @file 
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
+
+#include "util/proc_info.h"
+#include "mca/errmgr/errmgr.h"
 
 #include "gpr_proxy.h"
 
 
-void mca_gpr_proxy_deliver_notify_msg(ompi_registry_notify_action_t state,
-				      ompi_registry_notify_message_t *message)
+int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *message)
 {
-    int namelen;
-    mca_gpr_proxy_notify_request_tracker_t *trackptr;
+    orte_gpr_proxy_notify_tracker_t *trackptr;
+    orte_gpr_proxy_subscriber_t **subs;
+    int32_t i, j;
 
-	/* don't deliver messages with zero data in them */
-	if (0 < ompi_list_get_size(&message->data)) {
-		
-	    /* protect system from threadlock */
-	    if (OMPI_REGISTRY_NOTIFY_ON_STARTUP & state) {
-	
-			OMPI_THREAD_LOCK(&mca_gpr_proxy_mutex);
-		
-			namelen = strlen(message->segment);
-		
-			/* find the request corresponding to this notify */
-			for (trackptr = (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_first(&mca_gpr_proxy_notify_request_tracker);
-			     trackptr != (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_end(&mca_gpr_proxy_notify_request_tracker);
-			     trackptr = (mca_gpr_proxy_notify_request_tracker_t*)ompi_list_get_next(trackptr)) {
-			    if ((trackptr->action & state) &&
-					(0 == strcmp(message->segment, trackptr->segment))) {
-					OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
-					/* process request - callback function responsible for releasing memory */
-					trackptr->callback(message, trackptr->user_tag);
-					return;
-			    }
-			}
-             OMPI_THREAD_UNLOCK(&mca_gpr_proxy_mutex);
-    		}
-	}
+    /* protect system from threadlock */
+/*    OMPI_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
+ */
+
+	/* locate the request corresponding to this notify */
+    trackptr = (orte_gpr_proxy_notify_tracker_t*)
+                ((orte_gpr_proxy_globals.notify_tracker)->addr[message->idtag]);
+    if (NULL == trackptr) {
+/*        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex); */
+        OBJ_RELEASE(message);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
+    for (i=0; i < message->cnt; i++) {  /* unpack each notify_data object */
+        /* locate the data callback */
+        subs = (orte_gpr_proxy_subscriber_t**)((trackptr->callbacks)->addr);
+        for (j=0; j < (trackptr->callbacks)->size; j++) {
+            if (NULL != subs[j] && subs[j]->index == (message->data[i])->cb_num) {
+                /* process request */
+                subs[j]->callback(message->data[i], subs[j]->user_tag);
+                break;
+            }
+        }
+    }
+
     OBJ_RELEASE(message);
+    return ORTE_SUCCESS;
 }

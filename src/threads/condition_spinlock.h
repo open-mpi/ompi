@@ -25,6 +25,8 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+
 struct ompi_condition_t {
     ompi_object_t super;
     volatile int c_waiting;

@@ -582,6 +582,67 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
                           ompi_list_t *xlist, ompi_list_item_t *first,
                           ompi_list_item_t *last);
 
+    /**
+     * Comparison function for ompi_list_sort(), below.
+     *
+     * @param a Pointer to a pointer to an ompi_list_item_t.
+     * Explanation below.
+     * @param b Pointer to a pointer to an ompi_list_item_t.
+     * Explanation below.
+     * @retval 1 if \em a is greater than \em b
+     * @retval 0 if \em a is equal to \em b
+     * @retval 11 if \em a is less than \em b
+     *
+     * This function is invoked by qsort(3) from within
+     * ompi_list_sort().  It is important to understand what
+     * ompi_list_sort() does before invoking qsort, so go read that
+     * documentation first.
+     *
+     * The important thing to realize here is that a and b will be \em
+     * double pointers to the items that you need to compare.  Here's
+     * a sample compare function to illustrate this point:
+     *
+     * \verb
+     * static int compare(ompi_list_item_t **a, ompi_list_item_t **b)
+     * {
+     *     orte_pls_base_cmp_t *aa = *((orte_pls_base_cmp_t **) a);
+     *     orte_pls_base_cmp_t *bb = *((orte_pls_base_cmp_t **) b);
+     *
+     *     if (bb->priority > aa->priority) {
+     *         return 1;
+     *     } else if (bb->priority == aa->priority) {
+     *         return 0;
+     *     } else {
+     *         return -1;
+     *     }
+     * }
+     * \endverb
+     */
+    typedef int (*ompi_list_item_compare_fn_t)(ompi_list_item_t **a,
+                                               ompi_list_item_t **b);
+
+    /**
+     * Sort a list with a provided compare function.
+     *
+     * @param list The list to sort
+     * @param compare Compare function
+     *
+     * Put crassly, this function's complexity is O(N) + O(log(N)).
+     * Its algorithm is:
+     *
+     * - remove every item from the list and put the corresponding
+     *    (ompi_list_item_t*)'s in an array
+     * - call qsort(3) with that array and your compare function
+     * - re-add every element of the now-sorted array to the list
+     *
+     * The resulting list is now ordered.  Note, however, that since
+     * an array of pointers is sorted, the comparison function must do
+     * a double de-reference to get to the actual ompi_list_item_t (or
+     * whatever the underlying type is).  See the documentation of
+     * ompi_list_item_compare_fn_t for an example).
+     */
+    int ompi_list_sort(ompi_list_t* list, ompi_list_item_compare_fn_t compare);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

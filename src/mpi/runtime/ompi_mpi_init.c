@@ -51,8 +51,11 @@
 #include "mca/io/base/base.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
-#include "mca/ns/base/base.h"
-#include "mca/gpr/base/base.h"
+#include "mca/ns/ns.h"
+#include "mca/gpr/gpr.h"
+#include "mca/rml/rml.h"
+#include "mca/soh/soh.h"
+#include "mca/errmgr/errmgr.h"
 
 #include "runtime/runtime.h"
 #include "event/event.h"
@@ -70,51 +73,23 @@ int ompi_mpi_thread_provided = MPI_THREAD_SINGLE;
 
 ompi_thread_t *ompi_mpi_main_thread = NULL;
 
-
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
     int ret, param;
     bool allow_multi_user_threads;
     bool have_hidden_threads;
     ompi_proc_t** procs;
-    ompi_rte_process_status_t my_status;
     size_t nprocs;
     char *error = NULL;
-    char *segment, *jobid_string;
-    mca_ns_base_jobid_t jobid;
-
-    /* Become an OMPI process */
-
-    if (OMPI_SUCCESS != (ret = ompi_init(argc, argv))) {
-        error = "ompi_init() failed";
-        goto error;
-    }
-
-    /* Open up the MCA */
-
-    if (OMPI_SUCCESS != (ret = mca_base_open())) {
-        error = "mca_base_open() failed";
-        goto error;
-    }
-
+    
     /* Join the run-time environment */
-    allow_multi_user_threads = true;
-    have_hidden_threads = false;
-    if (OMPI_SUCCESS != (ret = ompi_rte_init(NULL, &allow_multi_user_threads,
-					     &have_hidden_threads))) {
-	goto error;
+    if (ORTE_SUCCESS != (ret = orte_init())) {
+	   goto error;
     }
 
     /* start recording the compound command that starts us up */
-    ompi_registry.begin_compound_cmd();
-
-    /* Finish setting up the RTE - contains commands
-     * that need to be inside the compound command
+    /* orte_gpr.begin_compound_cmd();
      */
-    if (OMPI_SUCCESS != (ret = ompi_rte_init_cleanup())) {
-	error = "ompi_rte_init_cleanup failed";
-	goto error;
-    }
 
     /* Once we've joined the RTE, see if any MCA parameters were
        passed to the MPI level */
@@ -137,7 +112,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* Open up relevant MCA modules. */
+    /* Open up MPI-related MCA modules. */
 
     if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
         error = "mca_allocator_base_open() failed";
@@ -258,50 +233,33 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /*
-     *  Set my process status to "starting". Note that this must be done
-     *  after the rte init is completed.
-     *
-     *  Ensure we own the job status and the oob segments first
+     *  Let system know we are at STG1 Barrier
      */
-    jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
-    jobid_string = ompi_name_server.get_jobid_string(ompi_rte_get_self());
-    asprintf(&segment, "%s-%s", OMPI_RTE_JOB_STATUS_SEGMENT, jobid_string);
-    ompi_registry.assign_ownership(segment, jobid);
-    free(segment);
-
-    asprintf(&segment, "%s-%s", OMPI_RTE_OOB_SEGMENT, jobid_string);
-    ompi_registry.assign_ownership(segment, jobid);
-    free(segment);
-
-    my_status.rank = mca_ns_base_get_vpid(ompi_rte_get_self());
-    my_status.local_pid = (int32_t)ompi_process_info.pid;
-    my_status.nodename = strdup(ompi_system_info.nodename);
-    my_status.status_key = OMPI_PROC_STARTING;
-    my_status.exit_code = 0;
-    if (OMPI_SUCCESS != (ret = ompi_rte_set_process_status(&my_status, ompi_rte_get_self()))) {
-        error = "ompi_mpi_init: failed in ompi_rte_set_process_status()\n";
+    if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
+                                ORTE_PROC_STATE_AT_STG1, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "set process state failed";
         goto error;
-    } 
-
-    /*
-     * Set the virtual machine status for this node
-     */
-    ompi_rte_vm_register();
-    
-    /* execute the compound command - no return data requested
-    *  we'll get it all from the startup message
-    */
-    ompi_registry.exec_compound_cmd(OMPI_REGISTRY_NO_RETURN_REQUESTED);
-
-    /* wait to receive startup message and info distributed */
-    if (OMPI_SUCCESS != (ret = ompi_rte_wait_startup_msg())) {
-	error = "ompi_rte_init: failed to see all procs register\n";
-	goto error;
     }
 
-    if (ompi_rte_debug_flag) {
-	ompi_output(0, "[%d,%d,%d] process startup message received",
-		    OMPI_NAME_ARGS(*ompi_rte_get_self()));
+    /* execute the compound command 
+    */
+/*    if (OMPI_SUCCESS != (ret = orte_gpr.exec_compound_cmd())) {
+	    error = "ompi_rte_init: orte_gpr.exec_compound_cmd failed";
+	    goto error;
+    }
+*/
+
+    /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {
+        ORTE_ERROR_LOG(ret);
+	    error = "ompi_mpi_init: failed to see all procs register\n";
+	    goto error;
+    }
+
+    if (orte_debug_flag) {
+	ompi_output(0, "[%d,%d,%d] process startup completed",
+		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     /* add all ompi_proc_t's to PML */
@@ -361,18 +319,26 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 #endif
 
     /*
-     * Dump all MCA parameters if requested
+     *  Let system know we are at STG2 Barrier
      */
-    if (ompi_mpi_show_mca_params) {
-        ompi_show_all_mca_params(my_status.rank, nprocs, my_status.nodename);
+    if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
+                                ORTE_PROC_STATE_AT_STG2, 0))) {
+        ORTE_ERROR_LOG(ret);
+        error = "set process state failed";
+        goto error;
     }
 
-    /* Wait for everyone to initialize */
-    mca_oob_barrier();
-
+     /* BWB - is this still needed? */
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
 #endif
+
+    /* SECOND BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {
+        ORTE_ERROR_LOG(ret);
+        error = "ompi_mpi_init: failed to see all procs register\n";
+        goto error;
+    }
 
     /* new very last step: check whether we have been spawned or not.
        We introduce that at the very end, since we need collectives,
@@ -396,9 +362,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_mpi_initialized = true;
     ompi_mpi_finalized = false;
 
-    if (ompi_rte_debug_flag) {
+    if (orte_debug_flag) {
 	ompi_output(0, "[%d,%d,%d] ompi_mpi_init completed",
-		    OMPI_NAME_ARGS(*ompi_rte_get_self()));
+		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     return MPI_SUCCESS;

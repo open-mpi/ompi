@@ -13,7 +13,7 @@
  */
 /** @file **/
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 /*
  * Turn a process into a daemon.
@@ -28,4 +28,4 @@
  * @retval OMPI_SUCCESS Indicates that the conversion was successful
  * @retval OMPI_ERROR Indicates that the conversion was not successful - a fork could not be completed.
  */
-OMPI_DECLSPEC int ompi_daemon_init(char *working_dir);
+OMPI_DECLSPEC int orte_daemon_init(char *working_dir);

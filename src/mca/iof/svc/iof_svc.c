@@ -26,14 +26,14 @@
 #include "iof_svc_subscript.h"
 
 
-mca_iof_base_module_t mca_iof_svc_module = {
-    mca_iof_svc_publish,
-    mca_iof_svc_unpublish,
-    mca_iof_svc_push,
-    mca_iof_svc_pull,
-    mca_iof_svc_subscribe,
-    mca_iof_svc_unsubscribe,
-    mca_iof_base_flush
+orte_iof_base_module_t orte_iof_svc_module = {
+    orte_iof_svc_publish,
+    orte_iof_svc_unpublish,
+    orte_iof_svc_push,
+    orte_iof_svc_pull,
+    orte_iof_svc_subscribe,
+    orte_iof_svc_unsubscribe,
+    orte_iof_base_flush
 };
 
 
@@ -49,16 +49,16 @@ mca_iof_base_module_t mca_iof_svc_module = {
  *
  */
 
-int mca_iof_svc_publish(
-    const ompi_process_name_t* name,
-    mca_iof_base_mode_t mode,
-    mca_iof_base_tag_t tag,
+int orte_iof_svc_publish(
+    const orte_process_name_t* name,
+    orte_iof_base_mode_t mode,
+    orte_iof_base_tag_t tag,
     int fd)
 {
     int rc;
 
     /* setup a local endpoint to reflect registration */
-    rc = mca_iof_base_endpoint_create(
+    rc = orte_iof_base_endpoint_create(
         name,
         mode,
         tag,
@@ -68,11 +68,11 @@ int mca_iof_svc_publish(
     }
 
     /* publish endpoint */
-    if(mode == MCA_IOF_SINK) {
-        rc = mca_iof_svc_publish_create(
+    if(mode == ORTE_IOF_SINK) {
+        rc = orte_iof_svc_publish_create(
             name,
-            &mca_oob_name_self,
-            OMPI_NS_CMP_ALL,
+            ORTE_RML_NAME_SELF,
+            ORTE_NS_CMP_ALL,
             tag);
     }
     return rc;
@@ -89,22 +89,22 @@ int mca_iof_svc_publish(
  *
  */
 
-int mca_iof_svc_unpublish(
-    const ompi_process_name_t* name,
-    ompi_ns_cmp_bitmask_t mask,
-    mca_iof_base_tag_t tag)
+int orte_iof_svc_unpublish(
+    const orte_process_name_t* name,
+    orte_ns_cmp_bitmask_t mask,
+    orte_iof_base_tag_t tag)
 {
     int rc;
-    rc = mca_iof_svc_publish_delete(
+    rc = orte_iof_svc_publish_delete(
         name,
-        MCA_OOB_NAME_SELF,
+        ORTE_RML_NAME_SELF,
         mask,
         tag);
     if(rc != OMPI_SUCCESS)
         return rc;
 
     /* setup a local endpoint to reflect registration */
-    rc = mca_iof_base_endpoint_delete(
+    rc = orte_iof_base_endpoint_delete(
         name,
         mask,
         tag);
@@ -123,18 +123,18 @@ int mca_iof_svc_unpublish(
  * @param fd        Local file descriptor.
  */
 
-int mca_iof_svc_push(
-    const ompi_process_name_t* dst_name,
-    ompi_ns_cmp_bitmask_t dst_mask,
-    mca_iof_base_tag_t dst_tag,
+int orte_iof_svc_push(
+    const orte_process_name_t* dst_name,
+    orte_ns_cmp_bitmask_t dst_mask,
+    orte_iof_base_tag_t dst_tag,
     int fd)
 {
     int rc;
 
     /* setup a subscription */
-    rc = mca_iof_svc_subscript_create(
-        MCA_OOB_NAME_SELF,
-        OMPI_NS_CMP_ALL,
+    rc = orte_iof_svc_subscript_create(
+        ORTE_RML_NAME_SELF,
+        ORTE_NS_CMP_ALL,
         dst_tag,
         dst_name,
         dst_mask,
@@ -143,9 +143,9 @@ int mca_iof_svc_push(
         return rc;
 
     /* setup a local endpoint to reflect registration */
-    rc = mca_iof_base_endpoint_create(
-        MCA_OOB_NAME_SELF, 
-        MCA_IOF_SOURCE, 
+    rc = orte_iof_base_endpoint_create(
+        ORTE_RML_NAME_SELF, 
+        ORTE_IOF_SOURCE, 
         dst_tag,
         fd);
     return rc;
@@ -162,30 +162,30 @@ int mca_iof_svc_push(
  * @param fd        Local file descriptor.
  */
 
-int mca_iof_svc_pull(
-    const ompi_process_name_t* src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag,
+int orte_iof_svc_pull(
+    const orte_process_name_t* src_name,
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag,
     int fd)
 {
     int rc;
 
     /* setup a local endpoint */
-    rc = mca_iof_base_endpoint_create(
-        MCA_OOB_NAME_SELF, 
-        MCA_IOF_SINK, 
+    rc = orte_iof_base_endpoint_create(
+        ORTE_RML_NAME_SELF, 
+        ORTE_IOF_SINK, 
         src_tag,
         fd);
     if(rc != OMPI_SUCCESS)
         return rc;
 
     /* create a subscription */
-    rc = mca_iof_svc_subscript_create(
+    rc = orte_iof_svc_subscript_create(
         src_name,
         src_mask,
         src_tag,
-        MCA_OOB_NAME_SELF,
-        OMPI_NS_CMP_ALL,
+        ORTE_RML_NAME_SELF,
+        ORTE_NS_CMP_ALL,
         src_tag);
     return rc;
 }
@@ -195,10 +195,10 @@ int mca_iof_svc_pull(
  * Setup buffering for a specified set of endpoints.
  */
 
-int mca_iof_svc_buffer(
-    const ompi_process_name_t* src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag,
+int orte_iof_svc_buffer(
+    const orte_process_name_t* src_name,
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag,
     size_t buffer_size)
 {
     /* send a message to the server indicating this set of connections should be buffered */
@@ -211,11 +211,11 @@ int mca_iof_svc_buffer(
  * from a specified set of peers.
  */
 
-int mca_iof_svc_subscribe(
-    const ompi_process_name_t* src_name,  
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag,
-    mca_iof_base_callback_fn_t cb,
+int orte_iof_svc_subscribe(
+    const orte_process_name_t* src_name,  
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag,
+    orte_iof_base_callback_fn_t cb,
     void* cbdata)
 {
     /* setup local callback on receipt of data */
@@ -223,10 +223,10 @@ int mca_iof_svc_subscribe(
     return OMPI_ERROR;
 }
 
-int mca_iof_svc_unsubscribe(
-    const ompi_process_name_t* src_name,
-    ompi_ns_cmp_bitmask_t src_mask,
-    mca_iof_base_tag_t src_tag)
+int orte_iof_svc_unsubscribe(
+    const orte_process_name_t* src_name,
+    orte_ns_cmp_bitmask_t src_mask,
+    orte_iof_base_tag_t src_tag)
 {
     /* cleanup any local resouces associated with this subscription */
     return OMPI_ERROR;

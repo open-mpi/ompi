@@ -15,6 +15,9 @@
 
 #include "ompi_config.h"
 #include "include/constants.h"
+
+#include "dps/dps.h"
+#include "mca/ns/ns_types.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
 #include <string.h>
@@ -36,7 +39,7 @@ typedef struct mca_oob_recv_cbdata mca_oob_recv_cbdata_t;
 
 static void mca_oob_recv_callback(
     int status,
-    ompi_process_name_t* peer,
+    orte_process_name_t* peer,
     struct iovec* msg,
     int count,
     int tag,
@@ -53,7 +56,7 @@ static void mca_oob_recv_callback(
  * @param cbdata (IN)  User data that is passed to callback function.
  * @return             OMPI error code (<0) on error or number of bytes actually received.
  */
-int mca_oob_recv_nb(ompi_process_name_t* peer, struct iovec* msg, int count, int tag, int flags,
+int mca_oob_recv_nb(orte_process_name_t* peer, struct iovec* msg, int count, int tag, int flags,
                     mca_oob_callback_fn_t cbfunc, void* cbdata)
 {
     return(mca_oob.oob_recv_nb(peer, msg, count, tag, flags, cbfunc, cbdata));
@@ -67,7 +70,7 @@ int mca_oob_recv_nb(ompi_process_name_t* peer, struct iovec* msg, int count, int
  * @param tag (IN)     User defined tag for message matching.
  * @return             OMPI success or error code (<0) on error.
  */
-int mca_oob_recv_cancel(ompi_process_name_t* peer, int tag)
+int mca_oob_recv_cancel(orte_process_name_t* peer, int tag)
 {
     return(mca_oob.oob_recv_cancel(peer, tag));
 }
@@ -90,7 +93,7 @@ int mca_oob_recv_cancel(ompi_process_name_t* peer, int tag)
 */
 
 int mca_oob_recv_packed_nb(
-    ompi_process_name_t* peer,
+    orte_process_name_t* peer,
     int tag,
     int flags,
     mca_oob_callback_packed_fn_t cbfunc,
@@ -126,14 +129,14 @@ int mca_oob_recv_packed_nb(
 
 static void mca_oob_recv_callback(
     int status,
-    ompi_process_name_t* peer,
+    orte_process_name_t* peer,
     struct iovec* msg,
     int count,
     int tag,
     void* cbdata)
 {
     mca_oob_recv_cbdata_t *oob_cbdata = cbdata;
-    ompi_buffer_t buffer;
+    orte_buffer_t buffer;
 
     /* validate status */
     if(status < 0) {
@@ -143,13 +146,14 @@ static void mca_oob_recv_callback(
     }
 
     /* init a buffer with the received message */
-    ompi_buffer_init_preallocated(&buffer, oob_cbdata->cbiov.iov_base, oob_cbdata->cbiov.iov_len);
+    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
+    orte_dps.load(&buffer,msg[0].iov_base,msg[0].iov_len);
 
     /* call users callback function */
-    oob_cbdata->cbfunc(status, peer, buffer, tag, oob_cbdata->cbdata);
+    oob_cbdata->cbfunc(status, peer, &buffer, tag, oob_cbdata->cbdata);
 
     /* cleanup */
-    ompi_buffer_free(buffer);
+    OBJ_DESTRUCT(&buffer);
     free(oob_cbdata);
 }
 

@@ -180,6 +180,12 @@ char *ompi_argv_join(char **argv, int delimiter)
   size_t str_len = 0;
   size_t i;
 
+  /* Bozo case */
+
+  if (NULL == argv || NULL == argv[0]) {
+      return strdup("");
+  }
+
   /* Find the total string length in argv including delimiters.  The
      last delimiter is replaced by the NULL character. */
 

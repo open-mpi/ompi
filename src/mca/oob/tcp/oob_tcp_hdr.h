@@ -19,6 +19,8 @@
 #ifndef _MCA_OOB_TCP_HDR_H_
 #define _MCA_OOB_TCP_HDR_H_
 
+#include "mca/ns/ns_types.h"
+
 #define MCA_OOB_TCP_IDENT    1
 #define MCA_OOB_TCP_DATA     2
 #define MCA_OOB_TCP_PING     3
@@ -27,8 +29,8 @@
  * Header used by tcp oob protocol.
  */
 struct mca_oob_tcp_hdr_t {
-    ompi_process_name_t msg_src;
-    ompi_process_name_t msg_dst;
+    orte_process_name_t msg_src;
+    orte_process_name_t msg_dst;
     uint32_t msg_type;                /**< type of message */
     uint32_t msg_size;                /**< the total size of the message body - excluding header */ 
     int32_t  msg_tag;                 /**< user provided tag */

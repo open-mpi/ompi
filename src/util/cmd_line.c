@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "include/constants.h"
 #include "class/ompi_object.h"
@@ -25,7 +26,20 @@
 #include "util/cmd_line.h"
 #include "util/strncpy.h"
 #include "util/output.h"
+#include "mca/base/mca_base_param.h"
 
+
+/*
+ * Some usage message constants
+ *
+ * Max width for param listings before the description will be listed
+ * on the next line
+ */
+#define PARAM_WIDTH 25
+/*
+ * Max length of any line in the usage message
+ */
+#define MAX_WIDTH 76
 
 /*
  * Description of a command line option
@@ -36,8 +50,14 @@ struct cmd_line_option_t {
     char clo_short_name;
     char *clo_single_dash_name;
     char *clo_long_name;
+
     int clo_num_params;
     char *clo_description;
+
+    ompi_cmd_line_type_t clo_type;
+    int clo_mca_param_id;
+    void *clo_variable_dest;
+    bool clo_variable_set;
 };
 typedef struct cmd_line_option_t cmd_line_option_t;
 static void option_constructor(cmd_line_option_t *cmd);
@@ -97,6 +117,7 @@ static char special_empty_token[] = {
 /*
  * Private functions
  */
+static int make_opt(ompi_cmd_line_t *cmd, ompi_cmd_line_init_t *e);
 static void free_parse_results(ompi_cmd_line_t *cmd);
 static int split_shorts(ompi_cmd_line_t *cmd,
                         char *token, char **args, 
@@ -104,6 +125,49 @@ static int split_shorts(ompi_cmd_line_t *cmd,
                         int *num_args_used, bool ignore_unknown);
 static cmd_line_option_t *find_option(ompi_cmd_line_t *cmd, 
                                       const char *option_name);
+static void set_dest(cmd_line_option_t *option, char *sval);
+
+
+/*
+ * Create an entire command line handle from a table
+ */
+int ompi_cmd_line_create(ompi_cmd_line_t *cmd,
+                         ompi_cmd_line_init_t *table)
+{
+    int i, ret;
+
+    /* Check bozo case */
+
+    if (NULL == cmd) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+    OBJ_CONSTRUCT(cmd, ompi_cmd_line_t);
+
+    /* Ensure we got a table */
+
+    if (NULL == table) {
+        return OMPI_SUCCESS;
+    }
+
+    /* Loop through the table */
+
+    for (i = 0; ; ++i) {
+
+        /* Is this the end? */
+
+        if ('\0' == table[i].ocl_cmd_short_name &&
+            NULL == table[i].ocl_cmd_single_dash_name &&
+            NULL == table[i].ocl_cmd_long_name) {
+            break;
+        }
+
+        /* Nope -- it's an entry.  Process it. */
+
+        ret = make_opt(cmd, &table[i]);
+    }
+
+    return OMPI_SUCCESS;
+}
 
 
 /*
@@ -113,8 +177,24 @@ int ompi_cmd_line_make_opt(ompi_cmd_line_t *cmd, char short_name,
                           const char *long_name, int num_params, 
                           const char *desc)
 {
-    return ompi_cmd_line_make_opt3(cmd, short_name, NULL, long_name, 
-                                   num_params, desc);
+    ompi_cmd_line_init_t e;
+
+    e.ocl_mca_type_name = NULL;
+    e.ocl_mca_component_name = NULL;
+    e.ocl_mca_param_name = NULL;
+
+    e.ocl_cmd_short_name = short_name;
+    e.ocl_cmd_single_dash_name = NULL;
+    e.ocl_cmd_long_name = long_name;
+
+    e.ocl_num_params = num_params;
+
+    e.ocl_variable_dest = NULL;
+    e.ocl_variable_type = OMPI_CMD_LINE_TYPE_NULL;
+
+    e.ocl_description = desc;
+
+    return make_opt(cmd, &e);
 }
 
 
@@ -125,46 +205,24 @@ int ompi_cmd_line_make_opt3(ompi_cmd_line_t *cmd, char short_name,
                             const char *sd_name, const char *long_name, 
                             int num_params, const char *desc)
 {
-    cmd_line_option_t *option;
+    ompi_cmd_line_init_t e;
 
-    /* Bozo check */
+    e.ocl_mca_type_name = NULL;
+    e.ocl_mca_component_name = NULL;
+    e.ocl_mca_param_name = NULL;
 
-    if ('\0' == short_name && NULL == sd_name && NULL == long_name) {
-        return OMPI_ERR_BAD_PARAM;
-    } else if (NULL == cmd) {
-        return OMPI_ERR_BAD_PARAM;
-    } else if (num_params < 0) {
-        return OMPI_ERR_BAD_PARAM;
-    }
+    e.ocl_cmd_short_name = short_name;
+    e.ocl_cmd_single_dash_name = sd_name;
+    e.ocl_cmd_long_name = long_name;
 
-    /* Allocate and fill an option item */
+    e.ocl_num_params = num_params;
 
-    option = OBJ_NEW(cmd_line_option_t);
-    if (NULL == option) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
+    e.ocl_variable_dest = NULL;
+    e.ocl_variable_type = OMPI_CMD_LINE_TYPE_NULL;
 
-    option->clo_short_name = short_name;
-    if (NULL != sd_name) {
-        option->clo_single_dash_name = strdup(sd_name);
-    }
-    if (NULL != long_name) {
-        option->clo_long_name = strdup(long_name);
-    }
-    option->clo_num_params = num_params;
-    if (NULL != desc) {
-        option->clo_description = strdup(desc);
-    }
+    e.ocl_description = desc;
 
-    /* Append the item, serializing thread access */
-
-    ompi_mutex_lock(&cmd->lcl_mutex);
-    ompi_list_append(&cmd->lcl_options, (ompi_list_item_t*) option);
-    ompi_mutex_unlock(&cmd->lcl_mutex);
-
-    /* All done */
-
-    return OMPI_SUCCESS;
+    return make_opt(cmd, &e);
 }
 
 
@@ -338,23 +396,39 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
                             break;
                         } 
 
-                        /* Otherwise, save this parameter in the argv
-                           on the param entry */
+                        /* Otherwise, save this parameter */
 
                         else {
+                            /* Save in the argv on the param entry */
+
                             ompi_argv_append(&param->clp_argc,
                                              &param->clp_argv, 
                                              cmd->lcl_argv[i]);
+
+                            /* If it's the first, save it in the
+                               variable dest and/or MCA parameter */
+
+                            if (0 == j &&
+                                (option->clo_mca_param_id >= 0 ||
+                                 NULL != option->clo_variable_dest)) {
+                                set_dest(option, cmd->lcl_argv[i]);
+                            }
                         }
                     }
+                }
+
+                /* If there are no options to this command, see if we
+                   need to set a boolean value to "true". */
+
+                if (0 == option->clo_num_params) {
+                    set_dest(option, "1");
                 }
 
                 /* If we succeeded in all that, save the param to the
                    list on the ompi_cmd_line_t handle */
 
                 if (NULL != param) {
-                    ompi_list_append(&cmd->lcl_params,
-                                     (ompi_list_item_t *) param);
+                    ompi_list_append(&cmd->lcl_params, &param->super);
                 }
             }
         }
@@ -395,9 +469,11 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
     int i, len, prev_len;
     int argc;
     char **argv;
-    char *ret, *line, *temp;
+    char *ret, temp[MAX_WIDTH * 2], line[MAX_WIDTH * 2];
+    char *start, *desc, *ptr;
     ompi_list_item_t *item;
     cmd_line_option_t *option;
+    bool filled;
 
     /* Thread serialization */
 
@@ -409,53 +485,41 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
     argc = 0;
     argv = NULL;
     ret = NULL;
-    line = NULL;
-    temp = NULL;
     for (item = ompi_list_get_first(&cmd->lcl_options); 
          ompi_list_get_end(&cmd->lcl_options) != item;
          item = ompi_list_get_next(item)) {
         option = (cmd_line_option_t *) item;
         if (NULL != option->clo_description) {
             
-            /* See how much space we need */
-
-            len = 5 + strlen(option->clo_description);
-            if ('\0' != option->clo_short_name) {
-                len += 5;
-            }
-            if (NULL != option->clo_long_name) {
-                len += strlen(option->clo_long_name);
-            }
-            len += option->clo_num_params * 10;
-
-            /* Do we have enough already? */
-
-            if (len > prev_len) {
-                if (NULL != line) {
-                    free(line);
-                }
-                line = (char*) malloc(len * 2);
-                if (NULL == line) {
-                    ompi_mutex_unlock(&cmd->lcl_mutex);
-                    return NULL;
-                }
-                temp = line + len;
-                prev_len = len;
-            }
-
             /* Build up the output line */
 
+            filled = false;
             line[0] = '\0';
             if ('\0' != option->clo_short_name) {
-                snprintf(temp, len, "-%c", option->clo_short_name);
-                strcat(line, temp);
+                line[0] = '-';
+                line[1] = option->clo_short_name;
+                filled = true;
+            } else {
+                line[0] = ' ';
+                line[1] = ' ';
+            }
+            line[2] = '\0';
+            line[3] = '\0';
+            if (NULL != option->clo_single_dash_name) {
+                line[2] = (filled) ? '|' : ' ';
+                strcat(line, "-");
+                strcat(line, option->clo_single_dash_name);
+                filled = true;
             }
             if (NULL != option->clo_long_name) {
-                if ('\0' != option->clo_short_name) {
+                if (filled) {
                     strcat(line, "|");
+                } else {
+                    strcat(line, " ");
                 }
-                snprintf(temp, len, "--%s", option->clo_long_name);
-                strcat(line, temp);
+                strcat(line, "--");
+                strcat(line, option->clo_long_name);
+                filled = true;
             }
             strcat(line, " ");
             for (i = 0; i < option->clo_num_params; ++i) {
@@ -465,19 +529,119 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
             if (option->clo_num_params > 0) {
                 strcat(line, " ");
             }
-            strcat(line, option->clo_description);
 
-            /* Save the line */
+            /* If we're less than param width, then start adding the
+               description to this line.  Otherwise, finish this line
+               and start adding the description on the next line. */
 
-            ompi_argv_append(&argc, &argv, line);
+            if (strlen(line) > PARAM_WIDTH) {
+                ompi_argv_append(&argc, &argv, line);
+
+                /* Now reset the line to be all blanks up to
+                   PARAM_WIDTH so that we can start adding the
+                   description */
+
+                memset(line, ' ', PARAM_WIDTH);
+                line[PARAM_WIDTH] = '\0';
+            } else {
+
+                /* Add enough blanks to the end of the line so that we
+                   can start adding the description */
+
+                for (i = strlen(line); i < PARAM_WIDTH; ++i) {
+                    line[i] = ' ';
+                }
+                line[i] = '\0';
+            }
+
+            /* Loop over adding the description to the array, breaking
+               the string at most at MAX_WIDTH characters.  We need a
+               modifyable description (for simplicity), so strdup the
+               clo_description (because it's likely a compiler
+               constant, and may barf if we write temporary \0's in
+               the middle). */
+
+            desc = strdup(option->clo_description);
+            if (NULL == desc) {
+                return strdup("");
+            }
+            start = desc;
+            len = strlen(desc);
+            do {
+
+                /* Trim off leading whitespace */
+
+                while (isspace(*start) && start < desc + len) {
+                    ++start;
+                }
+                if (start >= desc + len) {
+                    break;
+                }
+
+                /* Last line */
+
+                if (strlen(start) < (MAX_WIDTH - PARAM_WIDTH)) {
+                    strcat(line, start);
+                    ompi_argv_append(&argc, &argv, line);
+                    break;
+                }
+
+                /* We have more than 1 line's worth left -- find this
+                   line's worth and add it to the array.  Then reset
+                   and loop around to get the next line's worth. */
+
+                for (ptr = start + (MAX_WIDTH - PARAM_WIDTH); 
+                     ptr > start; --ptr) {
+                    if (isspace(*ptr)) {
+                        *ptr = '\0';
+                        strcat(line, start);
+                        ompi_argv_append(&argc, &argv, line);
+
+                        start = ptr + 1;
+                        memset(line, ' ', PARAM_WIDTH);
+                        line[PARAM_WIDTH] = '\0';
+                        break;
+                    }
+                }
+
+                /* If we got all the way back to the beginning of the
+                   string, then go forward looking for a whitespace
+                   and break there. */
+
+                if (ptr == start) {
+                    for (ptr = start + (MAX_WIDTH - PARAM_WIDTH); 
+                         ptr < start + len; ++ptr) {
+                        if (isspace(*ptr)) {
+                            *ptr = '\0';
+
+                            strcat(line, start);
+                            ompi_argv_append(&argc, &argv, line);
+                            
+                            start = ptr + 1;
+                            memset(line, ' ', PARAM_WIDTH);
+                            line[PARAM_WIDTH] = '\0';
+                            break;
+                        }
+                    }
+
+                    /* If we reached the end of the string with no
+                       whitespace, then just add it on and be done */
+
+                    if (ptr >= start + len) {
+                        strcat(line, start);
+                        ompi_argv_append(&argc, &argv, line);
+                        start = desc + len + 1;
+                    }
+                }
+            } while (start < desc + len);
+            free(desc);
         }
-    }
-    if (NULL != line) {
-        free(line);
     }
     if (NULL != argv) {
         ret = ompi_argv_join(argv, '\n');
         ompi_argv_free(argv);
+    } else {
+        ret = strdup("");
     }
 
     /* Thread serialization */
@@ -639,6 +803,11 @@ static void option_constructor(cmd_line_option_t *o)
     o->clo_long_name = NULL;
     o->clo_num_params = 0;
     o->clo_description = NULL;
+
+    o->clo_type = OMPI_CMD_LINE_TYPE_NULL;
+    o->clo_mca_param_id = -1;
+    o->clo_variable_dest = NULL;
+    o->clo_variable_set = false;
 }
 
 
@@ -720,6 +889,62 @@ static void cmd_line_destructor(ompi_cmd_line_t *cmd)
     /* Destroy the mutex */
 
     OBJ_DESTRUCT(&cmd->lcl_mutex);
+}
+
+
+static int make_opt(ompi_cmd_line_t *cmd, ompi_cmd_line_init_t *e)
+{
+    cmd_line_option_t *option;
+
+    /* Bozo checks */
+
+    if (NULL == cmd) {
+        return OMPI_ERR_BAD_PARAM;
+    } else if ('\0' == e->ocl_cmd_short_name && 
+               NULL == e->ocl_cmd_single_dash_name && 
+               NULL == e->ocl_cmd_long_name) {
+        return OMPI_ERR_BAD_PARAM;
+    } else if (e->ocl_num_params < 0) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    /* Allocate and fill an option item */
+
+    option = OBJ_NEW(cmd_line_option_t);
+    if (NULL == option) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    option->clo_short_name = e->ocl_cmd_short_name;
+    if (NULL != e->ocl_cmd_single_dash_name) {
+        option->clo_single_dash_name = strdup(e->ocl_cmd_single_dash_name);
+    }
+    if (NULL != e->ocl_cmd_long_name) {
+        option->clo_long_name = strdup(e->ocl_cmd_long_name);
+    }
+    option->clo_num_params = e->ocl_num_params;
+    if (NULL != e->ocl_description) {
+        option->clo_description = strdup(e->ocl_description);
+    }
+
+    option->clo_type = e->ocl_variable_type;
+    option->clo_variable_dest = e->ocl_variable_dest;
+    if (NULL != e->ocl_mca_type_name) {
+        option->clo_mca_param_id = 
+            mca_base_param_find(e->ocl_mca_type_name,
+                                e->ocl_mca_component_name,
+                                e->ocl_mca_param_name);
+    }
+
+    /* Append the item, serializing thread access */
+
+    ompi_mutex_lock(&cmd->lcl_mutex);
+    ompi_list_append(&cmd->lcl_options, &option->super);
+    ompi_mutex_unlock(&cmd->lcl_mutex);
+
+    /* All done */
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -845,4 +1070,46 @@ static cmd_line_option_t *find_option(ompi_cmd_line_t *cmd,
     /* Not found */
     
     return NULL;
+}
+
+
+static void set_dest(cmd_line_option_t *option, char *sval)
+{
+    int ival = atoi(sval);
+
+    /* Set MCA param */
+    
+    if (option->clo_mca_param_id >= 0) {
+        switch(option->clo_type) {
+        case OMPI_CMD_LINE_TYPE_STRING:
+            mca_base_param_set_string(option->clo_mca_param_id, sval);
+            break;
+        case OMPI_CMD_LINE_TYPE_INT:
+            mca_base_param_set_int(option->clo_mca_param_id, ival);
+            break;
+        case OMPI_CMD_LINE_TYPE_BOOL:
+            mca_base_param_set_int(option->clo_mca_param_id, 1);
+            break;
+        default:
+            break;
+        }
+    }
+
+    /* Set variable */
+
+    if (NULL != option->clo_variable_dest) {
+        switch(option->clo_type) {
+        case OMPI_CMD_LINE_TYPE_STRING:
+            *((char**) option->clo_variable_dest) = strdup(sval);
+            break;
+        case OMPI_CMD_LINE_TYPE_INT:
+            *((int*) option->clo_variable_dest) = ival;
+            break;
+        case OMPI_CMD_LINE_TYPE_BOOL:
+            *((int*) option->clo_variable_dest) = 1;
+            break;
+        default:
+            break;
+        }
+    }
 }

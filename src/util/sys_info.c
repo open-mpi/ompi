@@ -11,7 +11,7 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -32,10 +32,10 @@
 
 #include "util/sys_info.h"
 
-ompi_sys_info_t ompi_system_info = {
+orte_sys_info_t orte_system_info = {
                  /* .init =        */            false,
                  /* .sysname =     */            NULL,
-	         /* .nodename =    */            NULL,
+	             /* .nodename =    */            NULL,
                  /* .release =     */            NULL,
                  /* .version =     */            NULL,
                  /* .machine =     */            NULL,
@@ -44,7 +44,7 @@ ompi_sys_info_t ompi_system_info = {
                  /* .enviro =      */            NULL,
                  /* .suffix =      */            NULL};
 
-int ompi_sys_info(void)
+int orte_sys_info(void)
 {
     struct utsname sys_info;
     char *path_name;
@@ -59,38 +59,38 @@ int ompi_sys_info(void)
 	char *sep = "\\";
 #endif
 
-	if (ompi_system_info.init) {
+	if (orte_system_info.init) {
 	return OMPI_SUCCESS;
     }
 
     if (0 > uname(&sys_info)) {  /* have an error - set utsname values to indicate */
-        if (NULL != ompi_system_info.sysname) {
-            free(ompi_system_info.sysname);
-            ompi_system_info.sysname = NULL;
+        if (NULL != orte_system_info.sysname) {
+            free(orte_system_info.sysname);
+            orte_system_info.sysname = NULL;
         }
-        if (NULL != ompi_system_info.nodename) {
-            free(ompi_system_info.nodename);
-            ompi_system_info.nodename = NULL;
+        if (NULL != orte_system_info.nodename) {
+            free(orte_system_info.nodename);
+            orte_system_info.nodename = NULL;
         }
-        if (NULL != ompi_system_info.release) {
-            free(ompi_system_info.release);
-            ompi_system_info.release = NULL;
+        if (NULL != orte_system_info.release) {
+            free(orte_system_info.release);
+            orte_system_info.release = NULL;
         }
-        if (NULL != ompi_system_info.version) {
-            free(ompi_system_info.version);
-            ompi_system_info.version = NULL;
+        if (NULL != orte_system_info.version) {
+            free(orte_system_info.version);
+            orte_system_info.version = NULL;
         }
-        if (NULL != ompi_system_info.machine) {
-            free(ompi_system_info.machine);
-            ompi_system_info.machine = NULL;
+        if (NULL != orte_system_info.machine) {
+            free(orte_system_info.machine);
+            orte_system_info.machine = NULL;
         }
         return OMPI_ERROR;
     } else {
-        ompi_system_info.sysname = strdup(sys_info.sysname);
-        ompi_system_info.nodename = strdup(sys_info.nodename);
-        ompi_system_info.release = strdup(sys_info.release);
-        ompi_system_info.version = strdup(sys_info.version);
-        ompi_system_info.machine = strdup(sys_info.machine);
+        orte_system_info.sysname = strdup(sys_info.sysname);
+        orte_system_info.nodename = strdup(sys_info.nodename);
+        orte_system_info.release = strdup(sys_info.release);
+        orte_system_info.version = strdup(sys_info.version);
+        orte_system_info.machine = strdup(sys_info.machine);
     }
 
 #ifndef WIN32
@@ -102,11 +102,11 @@ int ompi_sys_info(void)
             sep[0] = path_name[0];
         }
         sep[1] = '\0';
-        ompi_system_info.path_sep = strdup(sep);
+        orte_system_info.path_sep = strdup(sep);
     }
 #else
     /* we can hardcode windows path seperator to be "\" */
-    ompi_system_info.path_sep = strdup(sep);
+    orte_system_info.path_sep = strdup(sep);
 #endif
 
 
@@ -115,20 +115,20 @@ int ompi_sys_info(void)
 	/* get the name of the user */
 #ifndef WIN32
 	if ((pwdent = getpwuid(getuid())) != 0) {
-	    ompi_system_info.user = strdup(pwdent->pw_name);
+	    orte_system_info.user = strdup(pwdent->pw_name);
     } else {
-	    ompi_system_info.user = strdup("unknown");
+	    orte_system_info.user = strdup("unknown");
     }
 #else 
     if (!GetUserName(info_buf, &info_buf_length)) {
-	    ompi_system_info.user = strdup("unknown");
+	    orte_system_info.user = strdup("unknown");
     } else {
-	    ompi_system_info.user = strdup(info_buf);
+	    orte_system_info.user = strdup(info_buf);
     }
 #endif
 
     /* set the init flag */
-    ompi_system_info.init = true;  /* only indicates that we have been through here once - still have to test for NULL values */
+    orte_system_info.init = true;  /* only indicates that we have been through here once - still have to test for NULL values */
 
     return(OMPI_SUCCESS);
 }

@@ -26,9 +26,8 @@
 #include <string.h>
 
 #include "class/ompi_list.h"
-#include "class/ompi_rb_tree.h"
 #include "threads/mutex.h"
-#include "mca/ns/ns.h"
+#include "mca/ns/ns_types.h"
 #include "oob_tcp_msg.h"
 #include "oob_tcp_addr.h"
 
@@ -50,7 +49,7 @@ typedef enum {
  */
 struct mca_oob_tcp_peer_t {
     ompi_list_item_t super;           /**< allow this to be on a list */
-    ompi_process_name_t peer_name;    /**< the name of the peer */
+    orte_process_name_t peer_name;    /**< the name of the peer */
     mca_oob_tcp_state_t peer_state;   /**< the state of the connection */
     int peer_retries;                 /**< number of times connection attempt has failed */
     mca_oob_tcp_addr_t* peer_addr;    /**< the addresses of the peer process */
@@ -89,8 +88,8 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
  */
 #define MCA_OOB_TCP_PEER_RETURN(peer) \
     { \
-    mca_oob_tcp_peer_close(peer); \
-    ompi_rb_tree_delete(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name); \
+    mca_oob_tcp_peer_shutdown(peer); \
+    ompi_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name); \
     OMPI_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_peer_free, (ompi_list_item_t*)peer); \
     }
 
@@ -106,7 +105,7 @@ extern "C" {
  * @retval pointer to the peer's (possibly newly created) struture
  * @retval NULL if there was a problem
  */
-mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(const ompi_process_name_t* peer_name);
+mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(const orte_process_name_t* peer_name);
 
 /**
  * Start sending a message to the specified peer. The routine
@@ -133,6 +132,7 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd);
  * @param peer  The peer process.
  */
 void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer);
+void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer);
 
 /**
  * The peers address has been resolved.

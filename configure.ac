@@ -937,8 +937,8 @@ AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_COMPLEX32, $OMPI_RANGE_F90_COMPLEX32,
 ompi_show_title "Header file tests"
 
 AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h dlfcn.h execinfo.h \
-    fcntl.h inttypes.h libgen.h net/if.h netdb.h netinet/in.h netinet/tcp.h \
-    sys/stat.h poll.h pthread.h pwd.h sched.h stdint.h string.h strings.h stropts.h \
+    fcntl.h sys/fcntl.h inttypes.h libgen.h net/if.h netdb.h netinet/in.h netinet/tcp.h \
+    sys/stat.h poll.h pthread.h pwd.h sched.h stdint.h string.hstrings.h stropts.h \
     sys/types.h sys/ipc.h sys/mman.h sys/resource.h sys/select.h sys/socket.h \
     sys/ioctl.h err.h sys/statvfs.h sys/time.h sys/uio.h sys/utsname.h sys/wait.h \
     syslog.h termios.h ulimit.h unistd.h sys/param.h sys/tree.h sys/queue.h])
@@ -1037,6 +1037,8 @@ AC_DEFINE_UNQUOTED(OMPI_HAVE_UNDERSCORE_VA_COPY, $OMPI_HAVE_UNDERSCORE_VA_COPY,
     [Whether we have __va_copy or not])
 
 AC_CHECK_DECLS(__func__)
+
+AC_CHECK_LIB([m], [ceil])
 
 
 ##################################
@@ -1498,6 +1500,7 @@ AC_CONFIG_FILES([
     src/include/sys/win32/Makefile
 
     src/class/Makefile
+    src/dps/Makefile
     src/runtime/Makefile
     src/threads/Makefile
     src/util/Makefile
@@ -1523,65 +1526,70 @@ AC_CONFIG_FILES([
     src/mca/base/Makefile
     src/mca/common/Makefile
 
+    src/mca/errmgr/Makefile
+    src/mca/errmgr/base/Makefile
+    src/mca/iof/Makefile
+    src/mca/iof/base/Makefile
+    src/mca/gpr/Makefile
+    src/mca/gpr/base/Makefile
+    src/mca/gpr/base/pack_api_cmd/Makefile
+    src/mca/gpr/base/unpack_api_response/Makefile
+    src/mca/ns/Makefile
+    src/mca/ns/base/Makefile
     src/mca/oob/Makefile
     src/mca/oob/base/Makefile
-    src/mca/pcm/Makefile
-    src/mca/pcm/base/Makefile
-    src/mca/pcmclient/Makefile
-    src/mca/pcmclient/base/Makefile
-    src/mca/llm/Makefile
-    src/mca/llm/base/Makefile
+    src/mca/pls/Makefile
+    src/mca/pls/base/Makefile
+    src/mca/ras/Makefile
+    src/mca/ras/base/Makefile
+    src/mca/rds/Makefile
+    src/mca/rds/base/Makefile
+    src/mca/rmaps/Makefile
+    src/mca/rmaps/base/Makefile
+    src/mca/rmgr/Makefile
+    src/mca/rmgr/base/Makefile
     src/mca/soh/Makefile
     src/mca/soh/base/Makefile
-    src/mca/svc/Makefile
-    src/mca/svc/base/Makefile
 
     src/mca/allocator/Makefile
     src/mca/allocator/base/Makefile
     src/mca/coll/Makefile
     src/mca/coll/base/Makefile
-    src/mca/errmgr/Makefile
-    src/mca/errmgr/base/Makefile
-    src/mca/gpr/Makefile
-    src/mca/gpr/base/Makefile
     src/mca/io/Makefile
     src/mca/io/base/Makefile
-    src/mca/iof/Makefile
-    src/mca/iof/base/Makefile
     src/mca/mpool/Makefile
     src/mca/mpool/base/Makefile
-    src/mca/one/Makefile
-    src/mca/one/base/Makefile
     src/mca/pml/Makefile
     src/mca/pml/base/Makefile
     src/mca/ptl/Makefile
     src/mca/ptl/base/Makefile
+    src/mca/rml/Makefile
+    src/mca/rml/base/Makefile
     src/mca/topo/Makefile
     src/mca/topo/base/Makefile
-    src/mca/ns/Makefile
-    src/mca/ns/base/Makefile
 
     src/dynamic-mca/common/Makefile
 
+    src/dynamic-mca/errmgr/Makefile
+    src/dynamic-mca/iof/Makefile
+    src/dynamic-mca/gpr/Makefile
+    src/dynamic-mca/ns/Makefile
     src/dynamic-mca/oob/Makefile
-    src/dynamic-mca/pcm/Makefile
-    src/dynamic-mca/pcmclient/Makefile
-    src/dynamic-mca/llm/Makefile
+    src/dynamic-mca/pls/Makefile
+    src/dynamic-mca/ras/Makefile
+    src/dynamic-mca/rds/Makefile
+    src/dynamic-mca/rmaps/Makefile
+    src/dynamic-mca/rmgr/Makefile
     src/dynamic-mca/soh/Makefile
-    src/dynamic-mca/svc/Makefile
 
     src/dynamic-mca/Makefile
     src/dynamic-mca/allocator/Makefile
     src/dynamic-mca/coll/Makefile
-    src/dynamic-mca/errmgr/Makefile
-    src/dynamic-mca/gpr/Makefile
     src/dynamic-mca/io/Makefile
-    src/dynamic-mca/iof/Makefile
     src/dynamic-mca/mpool/Makefile
-    src/dynamic-mca/one/Makefile
-    src/dynamic-mca/ns/Makefile
     src/dynamic-mca/pml/Makefile
     src/dynamic-mca/ptl/Makefile
+    src/dynamic-mca/rml/Makefile
     src/dynamic-mca/topo/Makefile
 
     src/mpi/Makefile
@@ -1597,14 +1605,24 @@ AC_CONFIG_FILES([
     src/mpi/runtime/Makefile
 
     src/tools/Makefile
-    src/tools/bootproxy/Makefile
     src/tools/console/Makefile
-    src/tools/mpirun/Makefile
     src/tools/ompi_info/Makefile
-    src/tools/ompid/Makefile
+    src/tools/orted/Makefile
+    src/tools/orterun/Makefile
     src/tools/openmpi/Makefile
     src/tools/wrappers/Makefile
 
     src/asm/test/Makefile
+    
+    test/support/Makefile
+    test/util/Makefile
+    test/class/Makefile
+    test/include/Makefile
+    test/rte/Makefile
+    test/dps/Makefile
+    test/mca/gpr/Makefile
+    test/mca/ns/Makefile
+    test/mca/rds/Makefile
+    test/runtime/Makefile
 ])
 AC_OUTPUT

@@ -13,7 +13,7 @@
  */
 
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -25,20 +25,20 @@
  * Function for selecting one component from all those that are
  * available.
  */
-int mca_errmgr_base_select(bool *allow_multi_user_threads, 
+int orte_errmgr_base_select(bool *allow_multi_user_threads, 
                             bool *have_hidden_threads)
 {
   ompi_list_item_t *item;
   mca_base_component_list_item_t *cli;
   mca_errmgr_base_component_t *component, *best_component = NULL;
-  mca_errmgr_base_module_t *module, *best_module = NULL;
+  orte_errmgr_base_module_t *module, *best_module = NULL;
   bool multi, hidden;
   int priority, best_priority = -1;
 
   /* Iterate through all the available components */
 
-  for (item = ompi_list_get_first(&mca_errmgr_base_components_available);
-       item != ompi_list_get_end(&mca_errmgr_base_components_available);
+  for (item = ompi_list_get_first(&orte_errmgr_base_components_available);
+       item != ompi_list_get_end(&orte_errmgr_base_components_available);
        item = ompi_list_get_next(item)) {
     cli = (mca_base_component_list_item_t *) item;
     component = (mca_errmgr_base_component_t *) cli->cli_component;
@@ -85,17 +85,17 @@ int mca_errmgr_base_select(bool *allow_multi_user_threads,
   /* If we didn't find one to select, that's okay - stick with default */
 
   if (NULL == best_component) {
-    return OMPI_SUCCESS;
+    return ORTE_SUCCESS;
   }
 
   /* We have happiness -- save the component and module for later
      usage */
 
   orte_errmgr = *best_module;
-  mca_errmgr_base_selected_component = *best_component;
-  mca_errmgr_base_selected = true;
+  orte_errmgr_base_selected_component = *best_component;
+  orte_errmgr_base_selected = true;
 
   /* all done */
 
-  return OMPI_SUCCESS;
+  return ORTE_SUCCESS;
 }

@@ -25,10 +25,9 @@ sources = \
         gpr_proxy_messaging.c \
         gpr_proxy_internals.c \
         gpr_proxy_put_get.c \
-        gpr_proxy_xmit_alerts.c \
-        gpr_proxy_mode_ops.c \
+        gpr_proxy_general_operations.c \
+        gpr_proxy_arithmetic_ops.c \
         gpr_proxy_subscribe.c \
-        gpr_proxy_synchro.c \
         gpr_proxy.h
 
 # Make the output library in this directory, and name it either

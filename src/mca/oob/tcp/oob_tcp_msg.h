@@ -25,6 +25,7 @@
 #include "oob_tcp_hdr.h"
 #include <errno.h>
 #include "util/output.h"
+#include "mca/ns/ns_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -55,7 +56,7 @@ struct mca_oob_tcp_msg_t {
     mca_oob_callback_fn_t msg_cbfunc;    /**< the callback function for the send/receive */    
     void *                msg_cbdata;    /**< the data for the callback fnuction */
     bool                  msg_complete;  /**< whether the message is done sending or not */
-    ompi_process_name_t   msg_peer;      /**< the name of the peer */
+    orte_process_name_t   msg_peer;      /**< the name of the peer */
     ompi_mutex_t          msg_lock;      /**< lock for the condition variable */
     ompi_condition_t      msg_condition; /**< condition variable for completion */
     struct iovec          msg_iov[MCA_OOB_TCP_IOV_MAX];  /** preallocate space for iovec array */
@@ -114,7 +115,7 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* size, struct timespec
  *  @param  peer (IN)  The peer the send/receive was from
  *  @retval OMPI_SUCCESS or error code on failure.
  */
-int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, ompi_process_name_t * peer);
+int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer);
 
 /**
  *  Called to copy the results of a message into user supplied iovec array.
@@ -159,7 +160,7 @@ void mca_oob_tcp_msg_recv_complete(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pe
  *  Note - this routine requires the caller to be holding the module lock.
  */
 
-mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(ompi_process_name_t* name, int tag);
+mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(orte_process_name_t* name, int tag);
 
 /**
  *  Match name to a posted recv request.
@@ -172,7 +173,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(ompi_process_name_t* name, int tag
  *  Note - this routine requires the caller to be holding the module lock.
  */
 
-mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(ompi_process_name_t* name, int tag, bool peek);
+mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag, bool peek);
 
 /**
  *  Allocate space for iovec array - if the request number of elements is less than

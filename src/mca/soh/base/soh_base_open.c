@@ -25,6 +25,8 @@
 
 #include "mca/soh/base/base.h"
 
+#include "stdio.h" /* just for gef debug */
+
 
 /*
  * The following file was created by configure.  It contains extern
@@ -41,38 +43,52 @@
 /*
  * Global variables
  */
-int mca_soh_base_output = -1;
-mca_soh_base_module_t ompi_soh_monitor = {
-    mca_soh_base_update_cell_soh_not_available
+orte_soh_base_t orte_soh_base;
+
+orte_soh_base_module_t orte_soh = {
+
+	orte_soh_base_get_proc_soh,
+    orte_soh_base_set_proc_soh,
+	orte_soh_base_get_node_soh_not_available,
+    orte_soh_base_set_node_soh_not_available,
+    orte_soh_base_module_finalize_not_available
 };
-bool mca_soh_base_selected = false;
-ompi_list_t mca_soh_base_components_available;
-mca_soh_base_component_t mca_soh_base_selected_component;
-
-
 
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int mca_soh_base_open(void)
+int orte_soh_base_open(void)
 {
+
+    int param, value;
+
+/* fprintf(stderr,"orte_soh_base_open:enter\n"); */
+
+  /* setup output for debug messages */
+
+    orte_soh_base.soh_output = ompi_output_open(NULL);
+    param = mca_base_param_register_int("soh", "base", "verbose", NULL, 0);
+    mca_base_param_lookup_int(param, &value);
+    if (value != 0) {
+        orte_soh_base.soh_output = ompi_output_open(NULL);
+    } else {
+        orte_soh_base.soh_output = -1;
+    }
+
+
   /* Open up all available components */
 
   if (OMPI_SUCCESS != 
-      mca_base_components_open("soh", 0, mca_soh_base_static_components, 
-                               &mca_soh_base_components_available)) {
+		mca_base_components_open("soh", 0, mca_soh_base_static_components,
+                                 &orte_soh_base.soh_components)) {
+
+/* fprintf(stderr,"orte_soh_base_open:failed\n"); */
     return OMPI_ERROR;
   }
 
-  /* setup output for debug messages */
-  if (!ompi_output_init) {  /* can't open output */
-      return OMPI_ERROR;
-  }
-
-  mca_soh_base_output = ompi_output_open(NULL);
-
   /* All done */
+/* fprintf(stderr,"orte_soh_base_open:success\n"); */
 
   return OMPI_SUCCESS;
 }

@@ -15,14 +15,14 @@
 
 /** @file 
  *
- *  A hash table indexed by ompi_process_name_t.
+ *  A hash table indexed by orte_process_name_t.
  */
 
 #ifndef OMPI_PROC_TABLE_H
 #define OMPI_PROC_TABLE_H
 
 #include "class/ompi_hash_table.h"
-#include "mca/ns/ns.h"
+#include "mca/ns/ns_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -30,7 +30,7 @@ extern "C" {
 
 
 /**
- *  Retrieve value via ompi_process_name_t key.
+ *  Retrieve value via orte_process_name_t key.
  *
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
@@ -40,7 +40,7 @@ extern "C" {
 
 OMPI_DECLSPEC void *ompi_hash_table_get_proc(
     ompi_hash_table_t* table, 
-    const ompi_process_name_t* key);
+    const orte_process_name_t* key);
 
 /**
  *  Set value based on uint32_t key.
@@ -54,7 +54,7 @@ OMPI_DECLSPEC void *ompi_hash_table_get_proc(
 
 OMPI_DECLSPEC int ompi_hash_table_set_proc(
     ompi_hash_table_t* table, 
-    const ompi_process_name_t*, 
+    const orte_process_name_t*, 
     void* value);
 
 /**
@@ -68,7 +68,7 @@ OMPI_DECLSPEC int ompi_hash_table_set_proc(
 
 OMPI_DECLSPEC int ompi_hash_table_remove_proc(
     ompi_hash_table_t* table, 
-    const ompi_process_name_t* key);
+    const orte_process_name_t* key);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
