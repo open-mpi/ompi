@@ -176,7 +176,6 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 
     struct ompi_communicator_t *llcomm=NULL;
     struct mca_coll_base_comm_t *data=NULL;
-    struct mca_coll_base_module_1_0_0_t *hier_mod=NULL;
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
@@ -241,7 +240,6 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 
     memcpy ( data->hier_lleaders, llr, data->hier_num_lleaders * sizeof(int));
     comm->c_coll_selected_data = (struct mca_coll_base_comm_t *)data;
-    hier_mod = &intra;
 
  exit:
     if ( NULL != llr ) {
@@ -261,9 +259,10 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 	    }
 	    free ( data );
 	}
+	return NULL;
     }
 
-    return hier_mod;
+    return &intra;
 }
 
 
@@ -279,6 +278,8 @@ int mca_coll_hierarch_module_finalize(struct ompi_communicator_t *comm)
     llcomm = data->hier_llcomm;
 
     ompi_comm_free (&llcomm);
+    free ( data->hier_reqs);
+    free ( data->hier_lleaders);
     free ( data );
     
     comm->c_coll_selected_data = NULL;
