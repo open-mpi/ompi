@@ -59,7 +59,7 @@ struct mca_ptl_base_peer_t {
     ompi_mutex_t                    peer_recv_lock;   /**< lock for concurrent access to peer state */
     ompi_event_t                    peer_send_event;  /**< event for async processing of send frags */
     ompi_event_t                    peer_recv_event;  /**< event for async processing of recv frags */
-    bool                            peer_byte_swap;   /**< is peer a different byte ordering? */
+    bool                            peer_nbo;         /**< convert headers to network byte order? */
 };
 typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;
 

@@ -19,7 +19,6 @@
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/ptl/ptl.h"
 
-#define MCA_PML_TEG_STATISTICS 0
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -51,13 +50,6 @@ struct mca_pml_teg_t {
 
     /* list of pending send requests */
     ompi_list_t teg_send_pending;
-
-#if MCA_PML_TEG_STATISTICS
-    long teg_isends;
-    long teg_irecvs;
-    long teg_sends;
-    long teg_recvs;
-#endif
 };
 typedef struct mca_pml_teg_t mca_pml_teg_t; 
 

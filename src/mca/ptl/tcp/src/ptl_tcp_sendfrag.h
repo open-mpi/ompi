@@ -107,7 +107,7 @@ static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag)
          * all others need to be returned to free list  
          */ 
         if (request->req_cached == false || 
-            frag->frag_send.frag_base.frag_header.hdr_frag.hdr_frag_offset != 0) {
+            frag->frag_send.frag_base.frag_header.hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FRAG) {
             mca_ptl_tcp_send_frag_return(frag->frag_send.frag_base.frag_owner, frag); 
         } 
     }
@@ -124,8 +124,7 @@ static inline void mca_ptl_tcp_send_frag_init_ack(
     mca_pml_base_recv_request_t* request = frag->frag_recv.frag_request;
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
     hdr->hdr_common.hdr_flags = 0;
-    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
-    hdr->hdr_ack.hdr_src_ptr = frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr;
+    hdr->hdr_ack.hdr_src_ptr = frag->frag_recv.frag_base.frag_header.hdr_rndv.hdr_src_ptr;
     hdr->hdr_ack.hdr_dst_match.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
     hdr->hdr_ack.hdr_dst_match.pval = request;
     hdr->hdr_ack.hdr_dst_addr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */

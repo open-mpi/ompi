@@ -35,6 +35,8 @@ struct mca_ptl_sm_frag_t {
     int queue_index;      /**< local process index, cached for fast
                             acking */
     struct mca_ptl_base_module_t* send_ptl;   /**< PTL that is selected for first fragment */
+    struct mca_pml_base_send_request_t* send_req;
+    size_t send_offset;
     void *buff;           /**< pointer to buffer */
 };
 typedef struct mca_ptl_sm_frag_t mca_ptl_sm_frag_t;

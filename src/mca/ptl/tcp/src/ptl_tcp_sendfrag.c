@@ -76,32 +76,6 @@ int mca_ptl_tcp_send_frag_init(
     unsigned int iov_count, max_data;
 
     mca_ptl_base_header_t* hdr = &sendfrag->frag_header;
-    if(offset == 0) {
-        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
-        hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
-        hdr->hdr_frag.hdr_frag_offset = offset;
-        hdr->hdr_frag.hdr_frag_seq = 0;
-        hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
-        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
-        hdr->hdr_frag.hdr_dst_ptr.lval = 0;
-        hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
-        hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
-        hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
-        hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
-        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-        hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
-    } else {
-        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
-        hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_frag_header_t);
-        hdr->hdr_frag.hdr_frag_offset = offset;
-        hdr->hdr_frag.hdr_frag_seq = 0;
-        hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
-        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
-        hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
-    }
-
     sendfrag->free_after = 0;
     /* initialize convertor */
     if(size_in > 0) {
@@ -139,13 +113,31 @@ int mca_ptl_tcp_send_frag_init(
     } else {
         size_out = size_in;
     }
-    hdr->hdr_frag.hdr_frag_length = size_out;
 
-    /* convert to network byte order if required */
-    if(ptl_peer->peer_byte_swap) {
-        if(offset == 0) {
-            MCA_PTL_BASE_MATCH_HDR_HTON(hdr->hdr_match);
-        } else {
+    if(offset == 0) {
+        hdr->hdr_common.hdr_type = (flags & MCA_PTL_FLAGS_ACK) ? MCA_PTL_HDR_TYPE_MATCH : MCA_PTL_HDR_TYPE_RNDV;
+        hdr->hdr_common.hdr_flags = flags;
+        hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
+        hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
+        hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
+        hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
+        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
+        hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
+        hdr->hdr_rndv.hdr_frag_length = size_out;
+        hdr->hdr_rndv.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+        hdr->hdr_rndv.hdr_src_ptr.pval = sendfrag;
+        if(ptl_peer->peer_nbo) {
+            MCA_PTL_BASE_RNDV_HDR_HTON(hdr->hdr_rndv);
+        }
+    } else {
+        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+        hdr->hdr_common.hdr_flags = flags;
+        hdr->hdr_frag.hdr_frag_offset = offset;
+        hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
+        hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
+        hdr->hdr_frag.hdr_frag_length = size_out;
+        if(ptl_peer->peer_nbo) {
             MCA_PTL_BASE_FRAG_HDR_HTON(hdr->hdr_frag);
         }
     }

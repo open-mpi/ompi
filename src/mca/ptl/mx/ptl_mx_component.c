@@ -123,18 +123,23 @@ int mca_ptl_mx_component_open(void)
 int mca_ptl_mx_component_close(void)
 {
     mx_finalize();
-    if (mca_ptl_mx_component.mx_send_frags.fl_num_allocated != 
+#if OMPI_ENABLE_DEBUG
+    if (mca_ptl_mx_component.mx_send_frags.fl_num_allocated &&
+        mca_ptl_mx_component.mx_send_frags.fl_num_allocated != 
         mca_ptl_mx_component.mx_send_frags.super.ompi_list_length) {
         ompi_output(0, "mx send frags: %d allocated %d returned\n",
             mca_ptl_mx_component.mx_send_frags.fl_num_allocated, 
             mca_ptl_mx_component.mx_send_frags.super.ompi_list_length);
     }
-    if (mca_ptl_mx_component.mx_recv_frags.fl_num_allocated != 
+    /* allow for pre-posted receives */
+    if (mca_ptl_mx_component.mx_recv_frags.fl_num_allocated &&
+        mca_ptl_mx_component.mx_recv_frags.fl_num_allocated - 3 > 
         mca_ptl_mx_component.mx_recv_frags.super.ompi_list_length) {
         ompi_output(0, "mx recv frags: %d allocated %d returned\n",
             mca_ptl_mx_component.mx_recv_frags.fl_num_allocated, 
             mca_ptl_mx_component.mx_recv_frags.super.ompi_list_length);
     }
+#endif
 
     /* release resources */
     OBJ_DESTRUCT(&mca_ptl_mx_component.mx_send_frags);
@@ -230,7 +235,8 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
 #if HAVE_MX_ICOMPLETED == 0
         mx_request_t mx_request;
         if(ptl->mx_recvs_posted == 0) {
-            MCA_PTL_MX_POST(ptl);
+            OMPI_THREAD_ADD32(&ptl->mx_recvs_posted,1);
+            MCA_PTL_MX_POST(ptl,MCA_PTL_HDR_TYPE_MATCH,sizeof(mca_ptl_base_match_header_t));
         }
 
         mx_return = mx_ipeek(
@@ -260,7 +266,8 @@ int mca_ptl_mx_component_progress(mca_ptl_tstamp_t tstamp)
 #else
         /* pre-post receive */
         if(ptl->mx_recvs_posted == 0) {
-            MCA_PTL_MX_POST(ptl);
+            OMPI_THREAD_ADD32(&ptl->mx_recvs_posted,1);
+            MCA_PTL_MX_POST(ptl,MCA_PTL_HDR_TYPE_MATCH,sizeof(mca_ptl_base_match_header_t));
         }
 
         /* poll for completion */

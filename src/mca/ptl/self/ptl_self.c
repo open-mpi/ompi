@@ -120,18 +120,14 @@ int mca_ptl_self_send(
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
     hdr->hdr_common.hdr_flags = flags;
-    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_match_header_t);
-    hdr->hdr_frag.hdr_frag_offset = offset;
-    hdr->hdr_frag.hdr_frag_seq = 0;
     hdr->hdr_match.hdr_contextid = request->req_base.req_comm->c_contextid;
     hdr->hdr_match.hdr_src = request->req_base.req_comm->c_my_rank;
     hdr->hdr_match.hdr_dst = request->req_base.req_peer;
     hdr->hdr_match.hdr_tag = request->req_base.req_tag;
     hdr->hdr_match.hdr_msg_length = request->req_bytes_packed;
     hdr->hdr_match.hdr_msg_seq = request->req_base.req_sequence;
-    hdr->hdr_frag.hdr_frag_length = request->req_bytes_packed;
-    hdr->hdr_frag.hdr_frag_offset = 0 ;
-    hdr->hdr_frag.hdr_src_ptr.pval = (void*)req;
+    hdr->hdr_rndv.hdr_src_ptr.lval = 0;
+    hdr->hdr_rndv.hdr_src_ptr.pval = request;
     req->req_frag.frag_base.frag_peer = ptl_base_peer;
     req->req_frag.frag_base.frag_size = request->req_bytes_packed;
     req->req_frag.frag_base.frag_owner = &mca_ptl_self_module;
@@ -150,7 +146,7 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
                            mca_ptl_base_recv_frag_t* frag)
 {
     mca_ptl_self_send_request_t* sendreq = (mca_ptl_self_send_request_t*)
-        frag->frag_base.frag_header.hdr_frag.hdr_src_ptr.pval;
+        frag->frag_base.frag_header.hdr_rndv.hdr_src_ptr.pval;
     mca_pml_base_recv_request_t* recvreq = frag->frag_request;
 
     if( (recvreq->req_base.req_count != 0) &&
@@ -207,7 +203,7 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
                             sendreq->req_send.req_bytes_packed );
     ptl->ptl_recv_progress( ptl, 
 			    recvreq, 
-			    frag->frag_base.frag_header.hdr_frag.hdr_frag_length,
+			    frag->frag_base.frag_header.hdr_match.hdr_msg_length,
 			    frag->frag_base.frag_size );
 }
 

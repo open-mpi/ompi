@@ -74,13 +74,6 @@ int mca_pml_teg_component_open(void)
     OBJ_CONSTRUCT(&mca_pml_teg.teg_procs, ompi_list_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_send_pending, ompi_list_t);
 
-#if MCA_PML_TEG_STATISTICS
-    mca_pml_teg.teg_sends = 0;
-    mca_pml_teg.teg_recvs = 0;
-    mca_pml_teg.teg_isends = 0;
-    mca_pml_teg.teg_irecvs = 0;
-#endif
-
     mca_pml_teg.teg_free_list_num =
         mca_pml_teg_param_register_int("free_list_num", 256);
     mca_pml_teg.teg_free_list_max =
@@ -98,23 +91,15 @@ int mca_pml_teg_component_close(void)
 #ifdef WIN32
     WSACleanup();
 #endif
-#if MCA_PML_TEG_STATISTICS && OMPI_ENABLE_DEBUG
-    ompi_output(0, "mca_pml_teg.teg_sends = %d\n", 
-        mca_pml_teg.teg_sends);
-    ompi_output(0, "mca_pml_teg.teg_recvs = %d\n", 
-        mca_pml_teg.teg_recvs);
-    ompi_output(0, "mca_pml_teg.teg_isends = %d\n", 
-        mca_pml_teg.teg_isends);
-    ompi_output(0, "mca_pml_teg.teg_irecvs = %d\n", 
-        mca_pml_teg.teg_irecvs);
-#endif
 
+#if OMPI_ENABLE_DEBUG
     if (mca_pml_teg.teg_recv_requests.fl_num_allocated !=
         mca_pml_teg.teg_recv_requests.super.ompi_list_length) {
         ompi_output(0, "teg recv requests: %d allocated %d returned\n",
             mca_pml_teg.teg_recv_requests.fl_num_allocated,
             mca_pml_teg.teg_recv_requests.super.ompi_list_length);
     }
+#endif
 
     if(NULL != mca_pml_teg.teg_ptl_components) {
         free(mca_pml_teg.teg_ptl_components);

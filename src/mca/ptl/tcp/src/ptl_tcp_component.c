@@ -211,6 +211,7 @@ int mca_ptl_tcp_component_close(void)
 #ifdef WIN32
     WSACleanup();
 #endif
+#if OMPI_ENABLE_DEBUG
     if (mca_ptl_tcp_component.tcp_send_frags.fl_num_allocated != 
         mca_ptl_tcp_component.tcp_send_frags.super.ompi_list_length) {
         ompi_output(0, "tcp send frags: %d allocated %d returned\n",
@@ -223,6 +224,7 @@ int mca_ptl_tcp_component_close(void)
             mca_ptl_tcp_component.tcp_recv_frags.fl_num_allocated, 
             mca_ptl_tcp_component.tcp_recv_frags.super.ompi_list_length);
     }
+#endif
 
     if(NULL != mca_ptl_tcp_component.tcp_if_include)
         free(mca_ptl_tcp_component.tcp_if_include);
@@ -506,6 +508,7 @@ mca_ptl_base_module_t** mca_ptl_tcp_component_init(int *num_ptl_modules,
 
     memcpy(ptls, mca_ptl_tcp_component.tcp_ptl_modules, mca_ptl_tcp_component.tcp_num_ptl_modules*sizeof(mca_ptl_tcp_module_t*));
     *num_ptl_modules = mca_ptl_tcp_component.tcp_num_ptl_modules;
+
     return ptls;
 }
 
@@ -517,10 +520,16 @@ int mca_ptl_tcp_component_control(int param, void* value, size_t size)
 {
     switch(param) {
         case MCA_PTL_ENABLE:
-            if(*(int*)value)
+            if(*(int*)value) {
                 ompi_event_add(&mca_ptl_tcp_component.tcp_recv_event, 0);
-            else
+#if OMPI_HAVE_THREADS == 0
+                if(mca_ptl_tcp_component.tcp_num_ptl_modules) {
+                    ompi_progress_events(OMPI_EVLOOP_NONBLOCK);
+                }
+#endif
+            } else {
                 ompi_event_del(&mca_ptl_tcp_component.tcp_recv_event);
+            }
             break;
         default:
             break;
