@@ -144,6 +144,7 @@ static void* mca_ptl_mx_thread(ompi_object_t *arg)
             break;
         }
         
+        /* dispatch completed requests */
         mx_return = mx_test(
             ptl->mx_endpoint,
             &mx_request,
@@ -154,6 +155,12 @@ static void* mca_ptl_mx_thread(ompi_object_t *arg)
         } else {
             ompi_output(0, "mca_ptl_mx_progress: mx_test() failed with status=%dn",
                 mx_return);
+        }
+
+        /* pre-post receive */
+        if(ptl->mx_recvs_posted == 0) {
+            OMPI_THREAD_ADD32(&ptl->mx_recvs_posted,1);
+            MCA_PTL_MX_POST(ptl,MCA_PTL_HDR_TYPE_MATCH,sizeof(mca_ptl_base_match_header_t));
         }
     }
     return NULL;
@@ -283,7 +290,7 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
     /* open local endpoint */
     status = mx_open_endpoint(
         addr,
-        1,
+        MX_ANY_ENDPOINT,
         mca_ptl_mx_component.mx_filter,
         NULL,
         0,
