@@ -102,8 +102,7 @@ ompi_datatype_t ompi_mpi_cxx_ldblcplex = INIT_BASIC_DATA( ompi_complex_long_doub
 ompi_datatype_t ompi_mpi_cxx_ldblcplex = INIT_BASIC_DATA( void*, 0, UNAVAILABLE );
 #endif  /* HAVE_LONG_DOUBLE */
 
-/* JMS this doesn't look right */
-ompi_datatype_t ompi_mpi_cxx_bool = INIT_BASIC_DATA( int, OMPI_ALIGNMENT_INT, CXX_BOOL );
+ompi_datatype_t ompi_mpi_cxx_bool = INIT_BASIC_DATA( SIZEOF_BOOL, OMPI_ALIGNMENT_CXX_BOOL, CXX_BOOL );
 ompi_datatype_t ompi_mpi_2cplex = INIT_BASIC_TYPE( DT_2COMPLEX, 2COMPLEX );
 ompi_datatype_t ompi_mpi_2dblcplex = INIT_BASIC_TYPE( DT_2DOUBLE_COMPLEX, 2DOUBLE_COMPLEX );
 ompi_datatype_t ompi_mpi_unavailable = INIT_BASIC_TYPE( DT_UNAVAILABLE, UNAVAILABLE );
@@ -124,13 +123,11 @@ ompi_datatype_t ompi_mpi_integer8 = INIT_BASIC_FORTRAN_TYPE( DT_LONG_LONG, INTEG
 ompi_datatype_t ompi_mpi_integer8 = INIT_BASIC_TYPE( DT_UNAVAILABLE, INTEGER8 );
 #endif  /* HAVE_LONG_LONG */
 ompi_datatype_t ompi_mpi_integer16 = INIT_BASIC_TYPE( DT_UNAVAILABLE, INTEGER16 );
-/* JMS this doesn't look right */
-ompi_datatype_t ompi_mpi_complex8 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_FLOAT, COMPLEX8, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_REAL );
-/* JMS this doesn't look right */
-ompi_datatype_t ompi_mpi_complex16 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_DOUBLE, COMPLEX16, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_DBLPREC );
+ompi_datatype_t ompi_mpi_complex8 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_FLOAT, COMPLEX8, OMPI_SIZEOF_FORTRAN_COMPLEX, OMPI_ALIGNMENT_FORTRAN_REAL );
+ompi_datatype_t ompi_mpi_complex16 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_DOUBLE, COMPLEX16, OMPI_SIZEOF_FORTRAN_DBLCOMPLEX, OMPI_ALIGNMENT_FORTRAN_DBLPREC );
 #if HAVE_LONG_DOUBLE
-/* JMS this doesn't look right */
-ompi_datatype_t ompi_mpi_complex32 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_LONG_DOUBLE, COMPLEX32, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_DBLPREC );
+/* TODO: still have to add the discovery of long double complex in configure */
+ompi_datatype_t ompi_mpi_complex32 = INIT_BASIC_FORTRAN_TYPE( DT_COMPLEX_LONG_DOUBLE, COMPLEX32, OMPI_SIZEOF_FORTRAN_DBLCOMPLEX * 2, OMPI_ALIGNMENT_FORTRAN_DBLPREC );
 #else
 ompi_datatype_t ompi_mpi_complex32 = INIT_BASIC_TYPE( DT_UNAVAILABLE, COMPLEX32 );
 #endif  /* HAVE_LONG_DOUBLE */
