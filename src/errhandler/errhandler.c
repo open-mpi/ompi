@@ -32,58 +32,9 @@ OBJ_CLASS_INSTANCE(ompi_errhandler_t, ompi_object_t, ompi_errhandler_construct,
                    ompi_errhandler_destruct);
 
 
-/*
- * MPI_ERRHANDLER_NULL
- */
-ompi_errhandler_t ompi_mpi_errhandler_null = {
-    { NULL, 0 },
-
-    "MPI_ERRHANDLER_NULL",
-    OMPI_ERRHANDLER_TYPE_PREDEFINED,
-    false,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    -1
-};
-void ompi_mpi_errors_return_handler(struct ompi_communicator_t **comm,
-                                   int *error_code, ...);
-
-
-/*
- * MPI_ERRORS_ARE_FATAL
- */
-ompi_errhandler_t ompi_mpi_errors_are_fatal = {
-    { NULL, 0 },
-
-    "MPI_ERRORS_ARE_FATAL",
-    OMPI_ERRHANDLER_TYPE_PREDEFINED,
-    false,
-    ompi_mpi_errors_are_fatal_comm_handler,
-    ompi_mpi_errors_are_fatal_file_handler,
-    ompi_mpi_errors_are_fatal_win_handler,
-    NULL,
-    -1
-};
-
-
-/*
- * MPI_ERRORS_RETURN
- */
-ompi_errhandler_t ompi_mpi_errors_return = {
-    { NULL, 0 },
-
-    "MPI_ERRORS_RETURN",
-    OMPI_ERRHANDLER_TYPE_PREDEFINED,
-    false,
-    ompi_mpi_errors_return_comm_handler,
-    ompi_mpi_errors_return_file_handler,
-    ompi_mpi_errors_return_win_handler,
-    NULL,
-    -1
-};
-
+ompi_errhandler_t ompi_mpi_errhandler_null;
+ompi_errhandler_t ompi_mpi_errors_are_fatal;
+ompi_errhandler_t ompi_mpi_errors_return;
 
 /*
  * Initialize OMPI errhandler infrastructure
@@ -101,14 +52,39 @@ int ompi_errhandler_init(void)
   OBJ_CONSTRUCT( &ompi_mpi_errhandler_null, ompi_errhandler_t );
   if( ompi_mpi_errhandler_null.eh_f_to_c_index != OMPI_ERRHANDLER_NULL_FORTRAN )
       return OMPI_ERROR;
+  ompi_mpi_errhandler_null.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
+  ompi_mpi_errhandler_null.eh_fortran_function = false;
+  ompi_mpi_errhandler_null.eh_comm_fn = NULL;
+  ompi_mpi_errhandler_null.eh_file_fn = NULL;
+  ompi_mpi_errhandler_null.eh_win_fn  = NULL ;
+  ompi_mpi_errhandler_null.eh_fort_fn = NULL;
+  strncpy (ompi_mpi_errhandler_null.eh_name, "MPI_ERRHANDLER_NULL", 
+	   strlen("MPI_ERRHANDLER_NULL")+1 );
+
 
   OBJ_CONSTRUCT( &ompi_mpi_errors_are_fatal, ompi_errhandler_t );
   if( ompi_mpi_errors_are_fatal.eh_f_to_c_index != OMPI_ERRORS_ARE_FATAL_FORTRAN )
       return OMPI_ERROR;
+  ompi_mpi_errors_are_fatal.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
+  ompi_mpi_errors_are_fatal.eh_fortran_function = false;
+  ompi_mpi_errors_are_fatal.eh_comm_fn = ompi_mpi_errors_are_fatal_comm_handler;
+  ompi_mpi_errors_are_fatal.eh_file_fn = ompi_mpi_errors_are_fatal_file_handler;
+  ompi_mpi_errors_are_fatal.eh_win_fn  = ompi_mpi_errors_are_fatal_win_handler ;
+  ompi_mpi_errors_are_fatal.eh_fort_fn = NULL;
+  strncpy (ompi_mpi_errors_are_fatal.eh_name, "MPI_ERRORS_ARE_FATAL", 
+	   strlen("MPI_ERRORS_ARE_FATAL")+1 );
   
   OBJ_CONSTRUCT( &ompi_mpi_errors_return, ompi_errhandler_t );
   if( ompi_mpi_errors_return.eh_f_to_c_index != OMPI_ERRORS_RETURN_FORTRAN )
       return OMPI_ERROR;
+  ompi_mpi_errors_return.eh_mpi_object_type  = OMPI_ERRHANDLER_TYPE_PREDEFINED;
+  ompi_mpi_errors_return.eh_fortran_function = false;
+  ompi_mpi_errors_return.eh_comm_fn = ompi_mpi_errors_return_comm_handler;
+  ompi_mpi_errors_return.eh_file_fn = ompi_mpi_errors_return_file_handler;
+  ompi_mpi_errors_return.eh_win_fn  = ompi_mpi_errors_return_win_handler;
+  ompi_mpi_errors_return.eh_fort_fn = NULL;
+  strncpy (ompi_mpi_errors_return.eh_name, "MPI_ERRORS_RETURN", 
+	   strlen("MPI_ERRORS_RETURN")+1 );
 
   /* All done */
 

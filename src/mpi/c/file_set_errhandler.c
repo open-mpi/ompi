@@ -36,7 +36,8 @@ int MPI_File_set_errhandler( MPI_File file, MPI_Errhandler errhandler)
                                           FUNC_NAME);
         } else if (NULL == errhandler ||
                    MPI_ERRHANDLER_NULL == errhandler ||
-                   OMPI_ERRHANDLER_TYPE_FILE != errhandler->eh_mpi_object_type) {
+                   (OMPI_ERRHANDLER_TYPE_FILE != errhandler->eh_mpi_object_type && 
+		    OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
             return OMPI_ERRHANDLER_INVOKE(file, MPI_ERR_ARG, FUNC_NAME);
         }
     }

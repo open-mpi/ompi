@@ -40,7 +40,8 @@ int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler)
                                    "MPI_Win_set_errhandler");
     } else if (NULL == errhandler ||
                MPI_ERRHANDLER_NULL == errhandler ||
-               OMPI_ERRHANDLER_TYPE_WIN != errhandler->eh_mpi_object_type) {
+               (OMPI_ERRHANDLER_TYPE_WIN != errhandler->eh_mpi_object_type && 
+		OMPI_ERRHANDLER_TYPE_PREDEFINED != errhandler->eh_mpi_object_type) ) {
       return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG,
                                "MPI_Win_set_errhandler");
     }
