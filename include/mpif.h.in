@@ -96,7 +96,7 @@
        parameter (MPI_WIN_BASE=6)
        parameter (MPI_WIN_SIZE=7)
        parameter (MPI_WIN_DISP_UNIT=8)
-       parameter (MPI_BSEND_OVERHEAD=40)
+       parameter (MPI_BSEND_OVERHEAD=128)
        parameter (MPI_MAX_INFO_KEY=35)
        parameter (MPI_MAX_INFO_VAL=255)
        parameter (MPI_MAX_PORT_NAME=35)
