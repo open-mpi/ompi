@@ -31,8 +31,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-AM_CPPFLAGS	= -I$(top_srcdir)/src
-lib_LTLIBRARIES	= liblfc.la
+noinst_LTLIBRARIES = liblfc.la
 
 liblfc_la_SOURCES = \
 	array.c \

@@ -31,7 +31,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-lib_LTLIBRARIES	= libmem.la
+noinst_LTLIBRARIES = libmem.la
 
 libmem_la_SOURCES = \
 	allocator.c \

@@ -19,7 +19,7 @@ endif
 SUBDIRS			= $(profile_dir)
 DIST_SUBDIRS		= profile
 
-lib_LTLIBRARIES		= libmpi_c.la
+noinst_LTLIBRARIES	= libmpi_c.la
 
 libmpi_c_la_SOURCES	= \
 			comm_get_name.c \
