@@ -86,5 +86,8 @@ void ompi_sys_info(void)
 	ompi_system_info.user = strdup("unknown");
     }
 
+    /* get the process id */
+    ompi_system_info.pid = getpid();
+
     ompi_system_info.init = true;  /* only indicates that we have been through here once - still have to test for NULL values */
 }
