@@ -24,6 +24,12 @@ extern lam_class_t lam_communicator_t_class;
 #define LAM_COMM_NAMEISSET 0x00000008
 #define LAM_COMM_ISFREED   0x00000010
 
+/* some utility #defines */
+#define LAM_COMM_IS_INTER(comm) ((comm)->c_flags & LAM_COMM_INTER)
+#define LAM_COMM_IS_INTRA(comm) (!((comm)->c_flags & LAM_COMM_INTER))
+#define LAM_COMM_IS_CART(comm) ((comm)->c_flags & LAM_COMM_CART)
+#define LAM_COMM_IS_GRAPH(comm) ((comm)->c_flags & LAM_COMM_GRAPH)
+
 /* modes reqquired for accquiring the new comm-id */
 #define LAM_COMM_INTRA_INTRA 0x00000020
 #define LAM_COMM_INTRA_INTER 0x00000040
@@ -43,6 +49,8 @@ struct lam_communicator_t {
   
     /* Attributes */
     lam_hash_table_t       *c_keyhash;
+
+    int c_cube_dim; /**< inscribing cube dimension */
 
     /* Hooks for topo module to hang things */
     mca_topo_1_0_0_t c_topo; /**< structure of function pointers */
@@ -132,6 +140,15 @@ static inline bool lam_comm_peer_invalid(lam_communicator_t* comm, int peer_id)
     return false;
 }
 
+static inline int lam_cube_dim(int nprocs) {
+    int dim;
+    size_t size;
+
+    if (1 > nprocs) return LAM_ERROR;
+    for(dim = 0, size = 1; size < nprocs; ++dim, size <<= 1);
+
+    return dim;
+}
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

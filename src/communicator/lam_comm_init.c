@@ -79,6 +79,7 @@ int lam_comm_init(void)
     lam_mpi_comm_world.c_my_rank = group->grp_my_rank;
     lam_mpi_comm_world.c_local_group = group;
     lam_mpi_comm_world.c_remote_group = group;
+    lam_mpi_comm_world.c_cube_dim = lam_cube_dim(size);
     mca_pml.pml_add_comm(&lam_mpi_comm_world);
     lam_pointer_array_set_item(&lam_mpi_communicators, 0, &lam_mpi_comm_world);
 
@@ -134,8 +135,13 @@ lam_communicator_t *lam_comm_allocate ( int local_size, int remote_size )
                 new_comm->c_remote_group = new_comm->c_local_group;
             }
         }
+        /* fill in the inscribing hyper-cube dimensions */
+        new_comm->c_cube_dim = lam_cube_dim(local_size);
+        if (LAM_ERROR == new_comm->c_cube_dim) {
+            OBJ_RELEASE(new_comm);
+            new_comm = NULL;
+        }
     }
-                
     return new_comm;
 }
 
@@ -409,6 +415,7 @@ static void lam_comm_construct(lam_communicator_t* comm)
     comm->c_contextid = 0;
     comm->c_flags     = 0;
     comm->c_my_rank   = 0;
+    comm->c_cube_dim  = 0;
     comm->c_local_group  = NULL;
     comm->c_remote_group = NULL;
     comm->error_handler  = NULL;
