@@ -60,6 +60,11 @@ int ompi_mpi_register_params(void)
             ompi_mpi_param_check = false;
         }
     }
+
+    /*
+     * This string is going to be used in src/util/showstackframe.c
+     */
+    mca_base_param_register_string("mpi", NULL, "signal", NULL, NULL);
     
     /* Whether or not to show MPI handle leaks */
     
