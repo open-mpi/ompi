@@ -41,8 +41,13 @@ void lam_pointer_array_construct(lam_pointer_array_t *array){
  */
 void lam_pointer_array_destruct(lam_pointer_array_t *array){
 
-    /* return */
+    /* free table */
+    if( NULL != array->addr)
+        free(array->addr);
+
     lam_mutex_destroy(&array->lock);
+
+    /* return */
     return;
 }
 
