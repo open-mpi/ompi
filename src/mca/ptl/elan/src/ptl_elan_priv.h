@@ -52,12 +52,16 @@
 #define  PTL_ELAN_DEBUG_GET   (0x400)
 #define  PTL_ELAN_DEBUG_CHAIN (0x800)
 
+#define  OMPI_PTL_ELAN_ENABLE_GET    (1)
+#define  OMPI_PTL_ELAN_COMP_QUEUE    (0) 
+
 #define  OMPI_PTL_ELAN_MAX_QSIZE     (2048)
 #define  OMPI_PTL_ELAN_MAX_QSLOTS    (128)
 #define  OMPI_PTL_ELAN_LOST_QSLOTS   (1)
 
 #define  OMPI_PTL_ELAN_MAX_QDESCS    (128)
 #define  OMPI_PTL_ELAN_NUM_QDESCS    (4)
+#define  OMPI_PTL_ELAN_QDMA_RETRY    (16)
 
 #define  OMPI_PTL_ELAN_MAX_PUTGET    (32)
 #define  OMPI_PTL_ELAN_NUM_PUTGET    (8)
@@ -68,9 +72,6 @@
 #define  OMPI_PTL_ELAN_GET_MAX(a,b)  ((a>b)? a:b)
 #define  OMPI_PTL_ELAN_GET_MIN(a,b)  ((a<b)? a:b)
 #define  OMPI_PTL_ELAN_ALIGNUP(x,a)  (((unsigned int)(x) + ((a)-1)) & (-(a)))
-
-#define  OMPI_PTL_ELAN_ENABLE_GET    (1)
-#define  OMPI_PTL_ELAN_QDMA_RETRY    (16)
 
 /* For now only debug send's */
 #if 1
@@ -158,6 +159,18 @@ struct ompi_ptl_elan_recv_queue_t {
     RAIL       *qr_rail;
 };
 typedef struct ompi_ptl_elan_recv_queue_t ompi_ptl_elan_recv_queue_t;
+
+struct ompi_ptl_elan_comp_queue_t {
+    /** <Elan located INPUT_QUEUE_ALIGN'ed with INPUT_QUEUE_SIZE */
+    E4_InputQueue    *input;
+    ompi_mutex_t      rx_lock;
+    int               rx_buffsize;
+    int               rx_slotsize;
+    int               rx_nslots;
+    /* Recv Queue has to be well-aligned */
+    ompi_ptl_elan_recv_queue_t *rxq;
+};
+typedef struct ompi_ptl_elan_comp_queue_t ompi_ptl_elan_comp_queue_t;
 
 /**
  * ELAN descriptor for send

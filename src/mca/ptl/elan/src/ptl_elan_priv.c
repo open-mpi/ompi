@@ -49,11 +49,9 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_module_t *ptl,
      *    No information about which peer until checking the header
      *    Somewhere after the frag is matched, this peer information needs
      *    to be filled in so that ACK can be sent out.
-     *
      * b) Possibly, another drawback of hooking the ack to the particular 
      *    recv fragment. If the ack fragment is not hooked this way,
      *    PML will provide the peer information when the ack is requested.
-     * 
      * c) What if the recv request specifies MPI_ANY_SOURCE, then 
      *    for the handshaking to complete, peer should be fixed the
      *    handshaking. Then in this case, PML needs information from
@@ -190,8 +188,9 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
         hdr->hdr_frag.hdr_src_ptr.lval = 0;
 	hdr->hdr_frag.hdr_src_ptr.pval = frag; 
 	/* Stash local buffer address into the header, for ptl_elan_get */
-	hdr->hdr_frag.hdr_dst_ptr.lval = 0;
-	hdr->hdr_frag.hdr_dst_ptr.pval = pml_req->req_base.req_addr,
+	hdr->hdr_frag.hdr_dst_ptr.pval = 0;
+	hdr->hdr_frag.hdr_dst_ptr.lval = elan4_main2elan(
+		ptl->ptl_elan_ctx, pml_req->req_base.req_addr);
 
 	hdr->hdr_match.hdr_contextid = pml_req->req_base.req_comm->c_contextid;
 	hdr->hdr_match.hdr_src = pml_req->req_base.req_comm->c_my_rank;
@@ -376,17 +375,21 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
     desc->chain_dma.dma_vproc    = destvp;
     desc->chain_dma.dma_srcAddr  = elan4_main2elan (ctx, (void *) hdr);
     desc->chain_dma.dma_dstAddr  = 0x0ULL; 
-    desc->chain_dma.dma_srcEvent = elan4_main2elan (ctx, desc->elan_event);
 
     /* causes the inputter to redirect the dma to the inputq */
     desc->chain_dma.dma_dstEvent = elan4_main2elan (ctx, 
 	    (void *) ptl->queue->input);
 
+#if OMPI_PTL_ELAN_COMP_QUEUE
+    /* Have all the source event fired to the Queue */
+#else
+    desc->chain_dma.dma_srcEvent = elan4_main2elan (ctx, desc->elan_event);
     INITEVENT_WORD (ctx, (E4_Event *) desc->elan_event, &desc->main_doneWord);
     RESETEVENT_WORD (&desc->main_doneWord);
 
     /* Be sure that padding E4_Event is not causing problems */
     PRIMEEVENT_WORD (ctx, (E4_Event *)desc->elan_event, 1);
+#endif
 
     desc->chain_dma.dma_typeSize |= RUN_DMA_CMD;
     desc->chain_dma.dma_pad       = NOP_CMD;
@@ -444,31 +447,37 @@ mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
 
 #if OMPI_PTL_ELAN_ENABLE_GET
 static void
-mca_ptl_elan_init_get_desc (struct mca_ptl_elan_send_frag_t *frag,
-                            mca_ptl_elan_module_t * ptl,
-			    struct mca_ptl_elan_peer_t *ptl_peer,
+mca_ptl_elan_init_get_desc (mca_ptl_elan_module_t *ptl, 
+			    struct mca_ptl_elan_send_frag_t *frag,
+			    mca_ptl_elan_recv_frag_t * recv_frag,
                             mca_pml_base_recv_request_t *pml_req,
-			    size_t offset,
 			    size_t *size,
 			    int flags)
 {
     int         destvp;
     int         size_out;
     int         size_in;
+    size_t      offset;
     ELAN4_CTX   *ctx;
     struct ompi_ptl_elan_putget_desc_t * desc;
     mca_ptl_base_header_t *hdr;
+    mca_ptl_base_header_t *recv_header;
+    struct mca_ptl_elan_peer_t *ptl_peer;
 
     START_FUNC(PTL_ELAN_DEBUG_GET);
 
     ctx  =  ptl->ptl_elan_ctx;
     hdr  = &frag->frag_base.frag_header;
+    recv_header= &recv_frag->frag_recv.frag_base.frag_header;
+    ptl_peer = recv_frag->frag_recv.frag_base.frag_peer,
+    offset = pml_req->req_bytes_received, 
     desc = (ompi_ptl_elan_putget_desc_t *)frag->desc;
     destvp  = ptl_peer->peer_vp;
     size_in = *size;
 
-    desc->src_elan_addr = elan4_main2elan(ctx, pml_req->req_base.req_addr);
-    desc->dst_elan_addr = 0; // (E4_Addr)pml_req->req_peer_addr.lval;
+    /* XXX: If doing get, the first frag will be left as 0-byte */
+    desc->src_elan_addr = recv_header->hdr_frag.hdr_dst_ptr.lval;
+    desc->dst_elan_addr = elan4_main2elan(ctx, pml_req->req_base.req_addr);
     desc->desc_buff = hdr;
 
     /* FIXME: 
@@ -485,12 +494,17 @@ mca_ptl_elan_init_get_desc (struct mca_ptl_elan_send_frag_t *frag,
     desc->chain_dma.dma_vproc    = destvp;
     desc->chain_dma.dma_srcAddr  = elan4_main2elan (ctx, (void *) hdr);
     desc->chain_dma.dma_dstAddr  = 0x0ULL; 
-    desc->chain_dma.dma_srcEvent = elan4_main2elan (ctx, desc->elan_event);
     desc->chain_dma.dma_dstEvent = elan4_main2elan (ctx, 
 	    (void *) ptl->queue->input);
+
+#if OMPI_PTL_ELAN_COMP_QUEUE
+    /* Have all the source event fired to the Queue */
+#else
+    desc->chain_dma.dma_srcEvent = elan4_main2elan (ctx, desc->elan_event);
     INITEVENT_WORD (ctx, (E4_Event *) desc->elan_event, &desc->main_doneWord);
     RESETEVENT_WORD (&desc->main_doneWord);
     PRIMEEVENT_WORD (ctx, (E4_Event *)desc->elan_event, 1);
+#endif
     desc->chain_dma.dma_typeSize |= RUN_DMA_CMD;
     desc->chain_dma.dma_pad       = NOP_CMD;
 
@@ -515,7 +529,6 @@ mca_ptl_elan_init_get_desc (struct mca_ptl_elan_send_frag_t *frag,
      * Allocate space from command queues hanged off the CTX.  */
     desc->chain_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
 
-    /* FIXME: Find the correct addresses to fill in */
     desc->main_dma.dma_srcAddr = desc->src_elan_addr;
     desc->main_dma.dma_dstAddr = desc->dst_elan_addr;
     desc->main_dma.dma_srcEvent= 0x0ULL; /*disable remote event */
@@ -541,10 +554,11 @@ mca_ptl_elan_init_get_desc (struct mca_ptl_elan_send_frag_t *frag,
     END_FUNC(PTL_ELAN_DEBUG_SEND);
 }
 
+#if OMPI_PTL_ELAN_ENABLE_GET && defined (HAVE_GET_INTERFACE)
 int
 mca_ptl_elan_start_get (mca_ptl_elan_send_frag_t * frag,
 			struct mca_ptl_elan_peer_t *ptl_peer,
-			struct mca_pml_base_recv_request_t *req,
+			struct mca_pml_base_recv_request_t *request,
 			size_t offset,
 			size_t *size,
 			int flags)
@@ -552,29 +566,38 @@ mca_ptl_elan_start_get (mca_ptl_elan_send_frag_t * frag,
     mca_ptl_elan_module_t *ptl;
     struct ompi_ptl_elan_putget_desc_t *gdesc;
 
-    START_FUNC(PTL_ELAN_DEBUG_SEND);
+    START_FUNC(PTL_ELAN_DEBUG_GET);
     ptl = ptl_peer->peer_ptl;
     gdesc = (ompi_ptl_elan_putget_desc_t *)frag->desc;
-    /*mca_ptl_elan_init_putget_desc */
-    mca_ptl_elan_init_get_desc (frag, ptl, ptl_peer, 
+    mca_ptl_elan_init_get_desc (ptl, frag, ptl_peer, 
 	    req, offset, size, flags);
-    elan4_run_dma_cmd (ptl->putget->get_cmdq, (E4_DMA *) &gdesc->main_dma);
-    elan4_flush_cmdq_reorder (ptl->putget->get_cmdq);
-    ompi_list_append (&ptl->send_frags, (ompi_list_item_t *) frag);
 
-    frag->frag_base.frag_owner = (struct mca_ptl_base_module_t *) 
-	&ptl_peer->peer_ptl->super;
-    frag->frag_base.frag_peer = (struct mca_ptl_base_peer_t *) ptl_peer;
-    frag->frag_base.frag_addr = NULL;
-    frag->frag_base.frag_size = *size;
-    frag->frag_progressed  = 0;
-    frag->frag_ack_pending = 0; /* this is ack for internal elan */
+    /* XXX: 
+     * Trigger a STEN packet to the remote side and then from there
+     * a elan_get is triggered
+     * Not sure which remote queue is being used by GET_DMA here */
+    elan4_remote_dma(elan_ptl->putget->get_cmdq, 
+	    (E4_DMA *)&gdesc->main_dma, destvp, 
+	    elan4_local_cookie(elan_ptl->putget->pg_cpool,
+	       	E4_COOKIE_TYPE_STEN , destvp));
+    elan4_flush_cmdq_reorder (elan_ptl->putget->get_cmdq);
+    MEMBAR_DRAIN();
+    ompi_list_append (&elan_ptl->send_frags, (ompi_list_item_t *) frag);
 
-    END_FUNC(PTL_ELAN_DEBUG_SEND);
+    /* XXX: fragment state, remember the recv_frag may be gone */
+    frag->desc->req = (mca_pml_base_request_t *) request ; /*recv req*/
+    frag->desc->desc_status   = MCA_PTL_ELAN_DESC_LOCAL;
+    frag->frag_base.frag_owner= &ptl_peer->peer_ptl->super;
+    frag->frag_base.frag_peer = recv_frag->frag_recv.frag_base.frag_peer; 
+    frag->frag_base.frag_addr = req->req_base.req_addr;/*final buff*/
+    frag->frag_base.frag_size = *size; 
+    frag->frag_progressed     = 0;
+
+    END_FUNC(PTL_ELAN_DEBUG_GET);
     return OMPI_SUCCESS;
 }
+#endif
 #endif /* End of OMPI_PTL_ELAN_ENABLE_GET */
-
 
 int
 mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * frag,
@@ -649,7 +672,7 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
 
     flags = 0; /* XXX: No special flags for get */
     elan_ptl = (mca_ptl_elan_module_t *) ptl;
-    request = recv_frag->frag_recv.frag_request;
+    request  = recv_frag->frag_recv.frag_request;
     destvp   = ((mca_ptl_elan_peer_t *)
 	    recv_frag->frag_recv.frag_base.frag_peer)->peer_vp;
     frag->desc->desc_type = MCA_PTL_ELAN_DESC_PUT; 
@@ -672,16 +695,15 @@ mca_ptl_elan_get_with_ack ( mca_ptl_base_module_t * ptl,
     hdr->hdr_ack.hdr_dst_size = remain_len;
 
     LOG_PRINT(PTL_ELAN_DEBUG_ACK,
-		"remote frag %p local req %p buffer %p size %d \n",
+		"remote buff %x frag %p local req %p buffer %p size %d \n",
+		hdr->hdr_frag.hdr_dst_ptr.lval,
 	       	hdr->hdr_ack.hdr_src_ptr.pval,
 	       	hdr->hdr_ack.hdr_dst_match.pval,
 	       	hdr->hdr_ack.hdr_dst_addr.pval,
 	       	hdr->hdr_ack.hdr_dst_size);           
 
     mca_ptl_elan_init_get_desc (frag, ptl, 
-	    recv_frag->frag_recv.frag_base.frag_peer,
-	    request, request->req_bytes_received, 
-	    remain_len, flags);
+	    recv_frag, request, remain_len, flags);
 
     /* Trigger a STEN packet to the remote side and then from there
      * a elan_get is triggered */

@@ -334,7 +334,7 @@ mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
 {
     int rc = OMPI_SUCCESS;
 
-#if OMPI_PTL_ELAN_ENABLE_GET
+#if OMPI_PTL_ELAN_ENABLE_GET && defined (HAVE_GET_INTERFACE)
     mca_ptl_elan_send_frag_t *desc;
 
     /* TODO: 
