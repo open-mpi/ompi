@@ -12,13 +12,24 @@
 #include "lam/util/output.h"
 
 
-int lam_abort(int status, char *message)
+int lam_abort(int status, char *fmt, ...)
 {
-  if (NULL != message) {
-    lam_output(0, message);
+  va_list arglist;
+
+  /* If there was a message, output it */
+
+#if __STDC__
+  va_start(arglist, fmt);
+#else
+  va_start(arglist);
+#endif
+  if (NULL != fmt) {
+    lam_output(0, fmt);
   }
+  va_end(arglist);
+
+  /* Shut down and exit */
 
   lam_finalize();
-
   exit(status);
 }
