@@ -9,10 +9,10 @@
                          0, 0, 0, 0, 0, 0, 0, 0, 0 }
 #define EMPTY_DATA(NAME) NULL, 0, "MPI_" # NAME, {0, 0, NULL}, {0, 0, NULL}, NULL, ZERO_DDT_ARRAY
 #define BASEOBJ_DATA { OBJ_CLASS(ompi_datatype_t), 1 }
-#define INIT_BASIC_DATA( TYPE, ALIGN, NAME )                             \
-    { BASEOBJ_DATA, sizeof(TYPE), 0, sizeof(TYPE), ALIGN,               \
-      0, sizeof(TYPE), DT_FLAG_BASIC | DT_FLAG_DATA, DT_##NAME, 1, \
-      (((unsigned long long)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
+#define INIT_BASIC_DATA( TYPE, ALIGN, NAME )                            \
+    { BASEOBJ_DATA, sizeof(TYPE), ALIGN, 0, sizeof(TYPE),               \
+            0, sizeof(TYPE), DT_FLAG_BASIC | DT_FLAG_DATA, DT_##NAME, 1, \
+            (((unsigned long long)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
 /* Using this macro implies that at this point not all informations needed
  * to fill up the datatype are known. We fill them with zeros and then later
  * when the datatype engine will be initialized we complete with the
@@ -494,7 +494,7 @@ void ompi_ddt_dump( dt_desc_t* data )
 {
     dt_desc_t* pData = (dt_desc_t*)data;
 
-    printf( "Datatype %p size %d align %d id %d length %d used %d\n\
+    printf( "Datatype %p size %ld align %d id %d length %d used %d\n\
    true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n\
    nbElems %d loops %d flags %X (",
             (void*)pData, pData->size, pData->align, pData->id, pData->desc.length, pData->desc.used,

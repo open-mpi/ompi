@@ -55,11 +55,11 @@ int ompi_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
 				      scount, NULL, 0, NULL );
         err = ompi_convertor_get_packed_size(local_convertor, &size);
         OBJ_RELEASE(local_convertor);
-        if (OMPI_SUCCESS != err) {
+        if( OMPI_SUCCESS != err ) {
             return err;
         }
 
-	if (size <= rcount) {
+	if( (int)size <= rcount ) {
 	    err = MPI_Pack(sbuf, scount, sdtype,
                            rbuf, rcount, &position, MPI_COMM_WORLD);
 	} else {
@@ -75,11 +75,11 @@ int ompi_ddt_sndrcv(void *sbuf, int scount, MPI_Datatype sdtype, void *rbuf,
                                      rcount, NULL, 0, NULL );
         err = ompi_convertor_get_packed_size(local_convertor, &size);
         OBJ_RELEASE(local_convertor);
-        if (OMPI_SUCCESS != err) {
+        if( OMPI_SUCCESS != err ) {
             return err;
         }
 
-	if (scount <= size) {
+	if( scount <= (int)size ) {
 	    err = MPI_Unpack(sbuf, scount, &position,
                              rbuf, rcount, rdtype, 
                              MPI_COMM_WORLD);

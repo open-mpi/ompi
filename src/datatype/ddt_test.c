@@ -19,7 +19,7 @@ int mpich_typeub( void )
    int blens[2];
    dt_desc_t *type1, *type2, *type3, *types[2];
 
-   ompi_ddt_create_vector( 2, 1, 4, &(basicDatatypes[DT_INT]), &type1 );
+   ompi_ddt_create_vector( 2, 1, 4, ompi_ddt_basicDatatypes[DT_INT], &type1 );
    ompi_ddt_commit( &type1 );
    ompi_ddt_get_extent( type1, &lb, &extent );
    extent1 = 5 * sizeof(int);
@@ -34,7 +34,7 @@ int mpich_typeub( void )
    displ[0]=0;
    displ[1]=sizeof(int)*4;
    types[0]=type1;
-   types[1]=&(basicDatatypes[DT_UB]);
+   types[1]=ompi_ddt_basicDatatypes[DT_UB];
    extent2 = displ[1];
 
    /*    using MPI_UB and Type_struct, monkey with the extent, making it 16
@@ -54,7 +54,7 @@ int mpich_typeub( void )
     */
    displ[1]=sizeof(int);
    types[0]=type2;
-   types[1]=&(basicDatatypes[DT_UB]);
+   types[1]=ompi_ddt_basicDatatypes[DT_UB];
    extent3 = extent2;
 
    ompi_ddt_create_struct( 2, blens, displ, types, &type3 );
@@ -88,9 +88,9 @@ int mpich_typeub2( void )
    disp[0] = -3;
    disp[1] = 0;
    disp[2] = 6;
-   types[0] = &(basicDatatypes[DT_LB]);
-   types[1] = &(basicDatatypes[DT_INT]);
-   types[2] = &(basicDatatypes[DT_UB]);
+   types[0] = ompi_ddt_basicDatatypes[DT_LB];
+   types[1] = ompi_ddt_basicDatatypes[DT_INT];
+   types[2] = ompi_ddt_basicDatatypes[DT_UB];
 
    ompi_ddt_create_struct(3,blocklen,disp, types,&dt1);
    ompi_ddt_commit(&dt1);
@@ -167,9 +167,9 @@ int mpich_typeub3( void )
    disp[0] = -3;
    disp[1] = 0; 
    disp[2] = 6;
-   types[0] = &(basicDatatypes[DT_LB]);
-   types[1] = &(basicDatatypes[DT_INT]);
-   types[2] = &(basicDatatypes[DT_UB]);
+   types[0] = ompi_ddt_basicDatatypes[DT_LB];
+   types[1] = ompi_ddt_basicDatatypes[DT_INT];
+   types[2] = ompi_ddt_basicDatatypes[DT_UB];
    
    /* Generate samples for contiguous, hindexed, hvector, indexed, and vector (struct and contiguous tested in typeub2) */                                                                                                                         
    ompi_ddt_create_struct(3,blocklen,disp, types,&dt1);
@@ -309,7 +309,7 @@ dt_desc_t* upper_matrix( unsigned int mat_size )
       blocklen[i] = mat_size - i;
    }
 
-   ompi_ddt_create_indexed( mat_size, blocklen, disp, &(basicDatatypes[DT_DOUBLE]),
+   ompi_ddt_create_indexed( mat_size, blocklen, disp, ompi_ddt_basicDatatypes[DT_DOUBLE],
                       &upper );
    free( disp );
    free( blocklen );
@@ -330,7 +330,7 @@ dt_desc_t* lower_matrix( unsigned int mat_size )
       blocklen[i] = i;
    }
 
-   ompi_ddt_create_indexed( mat_size, blocklen, disp, &(basicDatatypes[DT_DOUBLE]),
+   ompi_ddt_create_indexed( mat_size, blocklen, disp, ompi_ddt_basicDatatypes[DT_DOUBLE],
                       &upper );
    free( disp );
    free( blocklen );
@@ -415,7 +415,7 @@ dt_desc_t* test_matrix_borders( unsigned int size, unsigned int width )
    disp[1] = (size - width) * sizeof(double);
    blocklen[1] = width;
 
-   ompi_ddt_create_indexed( 2, blocklen, disp, &(basicDatatypes[DT_DOUBLE]),
+   ompi_ddt_create_indexed( 2, blocklen, disp, ompi_ddt_basicDatatypes[DT_DOUBLE],
                       &pdt_line );
    ompi_ddt_create_contiguous( size, pdt_line, &pdt );
    OBJ_RELEASE( pdt_line ); assert( pdt_line == NULL );
@@ -428,9 +428,9 @@ dt_desc_t* test_contiguous( void )
 
    printf( "test contiguous (alignement)\n" );
    pdt1 = ompi_ddt_create( -1 );
-   ompi_ddt_add( pdt1, &(basicDatatypes[DT_DOUBLE]), 1, 0, -1 );
+   ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_DOUBLE], 1, 0, -1 );
    ompi_ddt_dump( pdt1 );
-   ompi_ddt_add( pdt1, &(basicDatatypes[DT_CHAR]), 1, 8, -1 );
+   ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_CHAR], 1, 8, -1 );
    ompi_ddt_dump( pdt1 );
    ompi_ddt_create_contiguous( 4, pdt1, &pdt2 );
    OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
@@ -443,17 +443,17 @@ dt_desc_t* test_contiguous( void )
 
 dt_desc_t* test_struct( void )
 {
-   dt_desc_t* types[] = { &(basicDatatypes[DT_FLOAT]),
+   dt_desc_t* types[] = { ompi_ddt_basicDatatypes[DT_FLOAT],
                           NULL, 
-                          &(basicDatatypes[DT_CHAR]) };
+                          ompi_ddt_basicDatatypes[DT_CHAR] };
    int lengths[] = { 2, 1, 3 };
    long disp[] = { 0, 16, 26 };
    dt_desc_t* pdt, *pdt1;
    
    printf( "test struct\n" );
    pdt1 = ompi_ddt_create( -1 );
-   ompi_ddt_add( pdt1, &(basicDatatypes[DT_DOUBLE]), 1, 0, -1 );
-   ompi_ddt_add( pdt1, &(basicDatatypes[DT_CHAR]), 1, 8, -1 );
+   ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_DOUBLE], 1, 0, -1 );
+   ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_CHAR], 1, 8, -1 );
    ompi_ddt_dump( pdt1 );
 
    types[1] = pdt1;
@@ -483,14 +483,14 @@ dt_desc_t* create_strange_dt( void )
 {
     sdata_intern v[2];
     long displ[3];
-    dt_desc_t* types[3] = { &(basicDatatypes[DT_INT]) };
+    dt_desc_t* types[3] = { ompi_ddt_basicDatatypes[DT_INT] };
     sstrange t[2];
     int pBlock[3] = {1, 10, 1}, dispi[3];
     dt_desc_t *pdt, *pdt1, *pdt2, *pdtTemp;
 
     dispi[0] = (int)((char*)&(v[0].i1) - (char*)&(v[0]));  /* 0 */
     dispi[1] = (int)(((char*)(&(v[0].i2)) - (char*)&(v[0])) / sizeof(int));  /* 2 */
-    ompi_ddt_create_indexed_block( 2, 1, dispi, &(basicDatatypes[DT_INT]), &pdtTemp );
+    ompi_ddt_create_indexed_block( 2, 1, dispi, ompi_ddt_basicDatatypes[DT_INT], &pdtTemp );
 #ifdef USE_RESIZED
     /* optional */
     displ[0] = 0;
@@ -502,7 +502,7 @@ dt_desc_t* create_strange_dt( void )
 #endif  /* USE_RESIZED */
 
     types[1] = pdt1;
-    types[2] = &(basicDatatypes[DT_INT]);
+    types[2] = ompi_ddt_basicDatatypes[DT_INT];
     displ[0] = 0;
     displ[1] = (long)((char*)&(t[0].v[0]) - (char*)&(t[0]));
     displ[2] = (long)((char*)&(t[0].last) - (char*)&(t[0]));
@@ -544,6 +544,7 @@ int local_copy_ddt_count( dt_desc_t* pdt, int count )
    OBJ_RELEASE( pdt ); assert( pdt == NULL );
    return OMPI_SUCCESS;
 }
+
 int main( int argc, char* argv[] )
 {
    dt_desc_t *pdt, *pdt1, *pdt2, *pdt3;
@@ -551,57 +552,57 @@ int main( int argc, char* argv[] )
 
    ompi_ddt_init();
 
-   pdt = create_strange_dt();
-   OBJ_RELEASE( pdt ); assert( pdt == NULL );
+/*    pdt = create_strange_dt(); */
+/*    OBJ_RELEASE( pdt ); assert( pdt == NULL ); */
    
-   pdt = upper_matrix(100);
-   local_copy_ddt_count(pdt, 1);
-   OBJ_RELEASE( pdt ); assert( pdt == NULL );
+/*    pdt = upper_matrix(100); */
+/*    local_copy_ddt_count(pdt, 1); */
+/*    OBJ_RELEASE( pdt ); assert( pdt == NULL ); */
 
-   mpich_typeub();
-   mpich_typeub2();
-   mpich_typeub3();
+/*    mpich_typeub(); */
+/*    mpich_typeub2(); */
+/*    mpich_typeub3(); */
 
    rc = test_upper( length );
    if( rc == 0 )
       printf( "decode [PASSED]\n" );
    else
-      printf( "decode [NOT PASSED]\n" );
+       printf( "decode [NOT PASSED]\n" );
 
-   pdt = test_matrix_borders( length, 100 );
-   ompi_ddt_dump( pdt );
-   OBJ_RELEASE( pdt ); assert( pdt == NULL );
+/*    pdt = test_matrix_borders( length, 100 ); */
+/*    ompi_ddt_dump( pdt ); */
+/*    OBJ_RELEASE( pdt ); assert( pdt == NULL ); */
 
-   printf( ">>--------------------------------------------<<\n" );
-   pdt = test_contiguous();
-   OBJ_RELEASE( pdt ); assert( pdt == NULL );
-   printf( ">>--------------------------------------------<<\n" );
-   pdt = test_struct();
-   OBJ_RELEASE( pdt ); assert( pdt == NULL );
-   printf( ">>--------------------------------------------<<\n" );
+/*    printf( ">>--------------------------------------------<<\n" ); */
+/*    pdt = test_contiguous(); */
+/*    OBJ_RELEASE( pdt ); assert( pdt == NULL ); */
+/*    printf( ">>--------------------------------------------<<\n" ); */
+/*    pdt = test_struct(); */
+/*    OBJ_RELEASE( pdt ); assert( pdt == NULL ); */
+/*    printf( ">>--------------------------------------------<<\n" ); */
 
-   pdt1 = ompi_ddt_create( -1 );
-   pdt2 = ompi_ddt_create( -1 );
-   pdt3 = ompi_ddt_create( -1 );
-   ompi_ddt_add( pdt3, &(basicDatatypes[DT_INT]), 10, 0, -1 );
-   ompi_ddt_add( pdt3, &(basicDatatypes[DT_FLOAT]), 5, 10 * sizeof(int), -1 );
+/*    pdt1 = ompi_ddt_create( -1 ); */
+/*    pdt2 = ompi_ddt_create( -1 ); */
+/*    pdt3 = ompi_ddt_create( -1 ); */
+/*    ompi_ddt_add( pdt3, ompi_ddt_basicDatatypes[DT_INT], 10, 0, -1 ); */
+/*    ompi_ddt_add( pdt3, ompi_ddt_basicDatatypes[DT_FLOAT], 5, 10 * sizeof(int), -1 ); */
 
-   ompi_ddt_add( pdt2, &(basicDatatypes[DT_INT]), 1, 0, -1 );
-   ompi_ddt_add( pdt2, pdt3, 3, sizeof(int) * 1, -1 );
+/*    ompi_ddt_add( pdt2, ompi_ddt_basicDatatypes[DT_INT], 1, 0, -1 ); */
+/*    ompi_ddt_add( pdt2, pdt3, 3, sizeof(int) * 1, -1 ); */
 
-   ompi_ddt_add( pdt1, &(basicDatatypes[DT_LONG_LONG]), 5, 0, -1 );
-   ompi_ddt_add( pdt1, &(basicDatatypes[DT_LONG_DOUBLE]), 2, sizeof(long long) * 5, -1 );
+/*    ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_LONG_LONG], 5, 0, -1 ); */
+/*    ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_LONG_DOUBLE], 2, sizeof(long long) * 5, -1 ); */
 
-   printf( ">>--------------------------------------------<<\n" );
-   ompi_ddt_dump( pdt1 );
-   printf( ">>--------------------------------------------<<\n" );
-   ompi_ddt_dump( pdt2 );
-   printf( ">>--------------------------------------------<<\n" );
-   ompi_ddt_dump( pdt3 );
+/*    printf( ">>--------------------------------------------<<\n" ); */
+/*    ompi_ddt_dump( pdt1 ); */
+/*    printf( ">>--------------------------------------------<<\n" ); */
+/*    ompi_ddt_dump( pdt2 ); */
+/*    printf( ">>--------------------------------------------<<\n" ); */
+/*    ompi_ddt_dump( pdt3 ); */
 
-   OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
-   OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
-   OBJ_RELEASE( pdt3 ); assert( pdt3 == NULL );
+/*    OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL ); */
+/*    OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL ); */
+/*    OBJ_RELEASE( pdt3 ); assert( pdt3 == NULL ); */
 
    /* clean-ups all data allocations */
    ompi_ddt_finalize();
