@@ -43,26 +43,13 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
         OMPI_THREAD_LOCK(&ptl_base->ptl_cache_lock);                       \
         sendreq = (mca_pml_base_send_request_t*)                           \
             ompi_list_remove_first(&ptl_base->ptl_cache);                  \
-            /* debug */ \
-            fprintf(stderr," alloc %d cached %d \n", \
-                    ptl_base->ptl_cache_alloc,ptl_base->ptl_cache_size); \
-            fflush(stderr); \
-            /* end debug */ \
         if(NULL != sendreq) {                                              \
-            /* debug */ \
-            fprintf(stderr," request cached \n"); \
-            fflush(stderr); \
-            /* end debug */ \
             OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
             rc = OMPI_SUCCESS;                                             \
         } else if (ptl_base->ptl_cache_alloc < ptl_base->ptl_cache_size) { \
             /*                                                             \
              * allocate an additional request to the cache                 \
             */                                                             \
-            /* debug */ \
-            fprintf(stderr," allocate additional \n"); \
-            fflush(stderr); \
-            /* end debug */ \
             mca_ptl_base_module_t* ptl = ptl_base->ptl;                    \
             ompi_list_item_t* item;                                        \
             OMPI_FREE_LIST_WAIT(&mca_pml_teg.teg_send_requests, item, rc); \
@@ -77,10 +64,6 @@ OBJ_CLASS_DECLARATION(mca_pml_teg_send_request_t);
             /*                                                             \
              * take a request from the global pool                         \
             */                                                             \
-            /* debug */ \
-            fprintf(stderr," global pool \n"); \
-            fflush(stderr); \
-            /* end debug */ \
             ompi_list_item_t* item;                                        \
             OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
             OMPI_FREE_LIST_WAIT(&mca_pml_teg.teg_send_requests, item, rc); \
