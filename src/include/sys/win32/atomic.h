@@ -112,7 +112,7 @@ static inline int ompi_atomic_cmpset_64( volatile int64_t *addr,
 #define OMPI_ARCHITECTURE_DEFINE_ATOMIC_ADD_32
 static inline int32_t ompi_atomic_add_32(volatile int32_t *addr, int32_t delta)
 {
-   return InterlockedExchangeAdd ((int32_t volatile *) addr,
+   return InterlockedExchangeAdd ((LONG volatile *) addr,
                                   (int32_t) delta);
    
 }
@@ -132,7 +132,7 @@ static inline int64_t ompi_atomic_add_64(volatile int64_t *addr, int64_t delta)
 #define OMPI_ARCHITECTURE_DEFINE_ATOMIC_SUB_32
 static inline int32_t ompi_atomic_sub_32(volatile int32_t *addr, int32_t delta)
 {
-   return InterlockedExchangeAdd( (int32_t volatile *) addr,
+   return InterlockedExchangeAdd( (LONG volatile *) addr,
                                   (int32_t) (-delta));
 
 }
