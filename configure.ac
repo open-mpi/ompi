@@ -289,9 +289,9 @@ AC_SUBST(MCA_topo_STATIC_SUBDIRS)
 AC_SUBST(MCA_topo_DYNAMIC_SUBDIRS)
 AC_SUBST(MCA_topo_ALL_SUBDIRS)
 
-MCA_oob_STATIC_SUBDIRS=
+MCA_oob_STATIC_SUBDIRS="cofs"
 MCA_oob_DYNAMIC_SUBDIRS=
-MCA_oob_ALL_SUBDIRS=
+MCA_oob_ALL_SUBDIRS="${MCA_oob_STATIC_SUBDIRS}"
 AC_SUBST(MCA_oob_STATIC_SUBDIRS)
 AC_SUBST(MCA_oob_DYNAMIC_SUBDIRS)
 AC_SUBST(MCA_oob_ALL_SUBDIRS)
@@ -428,6 +428,8 @@ AC_CONFIG_FILES([
     src/mca/lam/Makefile
     src/mca/lam/oob/Makefile
     src/mca/lam/oob/base/Makefile
+    src/mca/lam/oob/cofs/Makefile
+    src/mca/lam/oob/cofs/src/Makefile
     src/mca/lam/pcm/Makefile
     src/mca/lam/pcm/base/Makefile
     src/mca/lam/registry/Makefile
