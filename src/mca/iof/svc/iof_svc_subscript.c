@@ -12,11 +12,14 @@
 
 static void mca_iof_svc_subscript_construct(mca_iof_svc_subscript_t* subscript)
 {
+    subscript->sub_endpoint = NULL;
 }
 
 
 static void mca_iof_svc_subscript_destruct(mca_iof_svc_subscript_t* subscript)
 {
+    if(subscript->sub_endpoint != NULL)
+        OBJ_RELEASE(subscript->sub_endpoint);
 }
 
 
@@ -27,7 +30,7 @@ OBJ_CLASS_INSTANCE(
     mca_iof_svc_subscript_destruct);
 
 /**
- *
+ *  Create a subscription/forwarding entry.
  */
 
 int mca_iof_svc_subscript_create(
@@ -46,14 +49,16 @@ int mca_iof_svc_subscript_create(
     sub->dst_mask = dst_mask;
     sub->dst_tag = dst_tag;
     sub->sub_endpoint = mca_iof_base_endpoint_match(&sub->dst_name, sub->dst_mask, sub->dst_tag);
+    OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
     ompi_list_append(&mca_iof_svc_component.svc_subscribed, &sub->super);
+    OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
     return OMPI_SUCCESS;
 }
 
 /**
- *
+ *  Delete all matching subscriptions.
  */
-                                                                                                           
+
 int mca_iof_svc_subscript_delete(
     const ompi_process_name_t *src_name,
     ompi_ns_cmp_bitmask_t src_mask,
@@ -62,12 +67,30 @@ int mca_iof_svc_subscript_delete(
     ompi_ns_cmp_bitmask_t dst_mask,
     mca_iof_base_tag_t dst_tag)
 {
+    ompi_list_item_t *item;
+    OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+    item =  ompi_list_get_first(&mca_iof_svc_component.svc_subscribed);
+    while(item != ompi_list_get_end(&mca_iof_svc_component.svc_subscribed)) {
+        ompi_list_item_t* next =  ompi_list_get_next(item);
+        mca_iof_svc_subscript_t* sub = (mca_iof_svc_subscript_t*)item;
+        if (sub->src_mask == src_mask &&
+            ompi_name_server.compare(sub->src_mask,&sub->src_name,src_name) == 0 &&
+            sub->src_tag == src_tag &&
+            sub->dst_mask == dst_mask &&
+            ompi_name_server.compare(sub->dst_mask,&sub->dst_name,dst_name) == 0 &&
+            sub->dst_tag == dst_tag) {
+            ompi_list_remove_item(&mca_iof_svc_component.svc_subscribed, item);
+            OBJ_RELEASE(item);
+        }
+        item = next;
+    }
+    OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
     return OMPI_SUCCESS;
 }
 
 
 /*
- *
+ * Callback on send completion. Release send resources (fragment).
  */
                                                                                                         
 static void mca_iof_svc_subscript_send_cb(
@@ -83,7 +106,8 @@ static void mca_iof_svc_subscript_send_cb(
 }
 
 /**
- *
+ *  Check for matching endpoints that have been published to the
+ *  server. Forward data out each matching endpoint.
  */
 
 int mca_iof_svc_subscript_forward(

@@ -129,7 +129,7 @@ static void mca_iof_svc_proxy_msg(
             mca_iof_svc_subscript_forward(sub,src,hdr,data);
         }
     }
-    OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+    OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
 }
 
 /**

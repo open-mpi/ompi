@@ -19,7 +19,7 @@
 #include "iof_base_fragment.h"
 
 /**
- *
+ *  Construct/Destructor
  */
 
 static void mca_iof_base_endpoint_construct(mca_iof_base_endpoint_t* endpoint)
@@ -45,7 +45,7 @@ OBJ_CLASS_INSTANCE(
 
 
 /*
- *
+ * Callback when non-blocking OOB send completes.
  */
 
 static void mca_iof_base_endpoint_send_cb(
@@ -64,11 +64,10 @@ static void mca_iof_base_endpoint_send_cb(
 
 
 /*
- *  Receive from pipe/pty/etc. and forward to the 
- *  service.
+ *  Callback when data is available on the endpoint to read.
  */
 
-static void mca_iof_base_endpoint_recv_handler(int fd, short flags, void *cbdata)
+static void mca_iof_base_endpoint_read_handler(int fd, short flags, void *cbdata)
 {
     mca_iof_base_endpoint_t* endpoint = (mca_iof_base_endpoint_t*)cbdata;
     mca_iof_base_frag_t* frag;
@@ -88,6 +87,13 @@ static void mca_iof_base_endpoint_recv_handler(int fd, short flags, void *cbdata
     /* read up to the fragment size */
     rc = read(fd, frag->frag_data, sizeof(frag->frag_data));
     if(rc <= 0) {
+        /* non-blocking */
+        if(rc < 0 && errno == EAGAIN) {
+            MCA_IOF_BASE_FRAG_RETURN(frag);
+            OMPI_THREAD_UNLOCK(&mca_iof_base.iof_lock);
+            return;
+        }
+
         /* peer has closed the connection */
         mca_iof_base_endpoint_closed(endpoint);
         rc = 0;
@@ -108,7 +114,7 @@ static void mca_iof_base_endpoint_recv_handler(int fd, short flags, void *cbdata
     if(MCA_IOF_BASE_SEQDIFF(endpoint->ep_seq,endpoint->ep_ack) > mca_iof_base.iof_window_size) {
         ompi_event_del(&endpoint->ep_event);
     }
-    OMPI_THREAD_LOCK(&mca_iof_base.iof_lock);
+    OMPI_THREAD_UNLOCK(&mca_iof_base.iof_lock);
 
     /* start non-blocking OOB call to forward received data */
     rc = mca_oob_send_nb(
@@ -122,15 +128,29 @@ static void mca_iof_base_endpoint_recv_handler(int fd, short flags, void *cbdata
 }
 
 
-static void mca_iof_base_endpoint_send_handler(int sd, short flags, void *user)
+/**
+ * Callback when the endpoint is available for write.
+ */
+
+static void mca_iof_base_endpoint_write_handler(int sd, short flags, void *user)
 {
     mca_iof_base_endpoint_t* endpoint = (mca_iof_base_endpoint_t*)user; 
+    ompi_list_t completed;
+    ompi_process_name_t last = mca_oob_name_any;
+    OBJ_CONSTRUCT(&completed, ompi_list_t);
+
+    /*
+     * step through the list of queued fragments and attempt to write
+     * until the output descriptor would block
+    */
     OMPI_THREAD_LOCK(&mca_iof_base.iof_lock);
     while(ompi_list_get_size(&endpoint->ep_frags)) {
         mca_iof_base_frag_t* frag = (mca_iof_base_frag_t*)ompi_list_get_first(&endpoint->ep_frags);
         
         int rc = write(endpoint->ep_fd, frag->frag_ptr, frag->frag_len);
         if(rc < 0) {
+            if(errno == EAGAIN)
+               break;
             mca_iof_base_endpoint_closed(endpoint);
             OMPI_THREAD_UNLOCK(&mca_iof_base.iof_lock);
             return;
@@ -152,10 +172,11 @@ static void mca_iof_base_endpoint_send_handler(int sd, short flags, void *user)
 }
 
 /*
- * 
+ * Lookup existing endpoint matching parameters
+ * supplied to create.
  */
  
-mca_iof_base_endpoint_t* mca_iof_base_endpoint_lookup(
+static mca_iof_base_endpoint_t* mca_iof_base_endpoint_lookup(
     const ompi_process_name_t* proc,
     mca_iof_base_mode_t mode,
     int tag)
@@ -165,7 +186,7 @@ mca_iof_base_endpoint_t* mca_iof_base_endpoint_lookup(
 
 
 /*
- *
+ *  Create a local endpoint.
  */
 
 int mca_iof_base_endpoint_create(
@@ -177,7 +198,6 @@ int mca_iof_base_endpoint_create(
     mca_iof_base_endpoint_t* endpoint;
     int flags;
  
-    /* create local endpoint */
     OMPI_THREAD_LOCK(&mca_iof_base.iof_lock);
     if((endpoint = mca_iof_base_endpoint_lookup(proc,mode,tag)) != NULL) {
         OMPI_THREAD_UNLOCK(&mca_iof_base.iof_lock);
@@ -208,7 +228,7 @@ int mca_iof_base_endpoint_create(
                 &endpoint->ep_event,
                 endpoint->ep_fd,
                 OMPI_EV_READ|OMPI_EV_PERSIST,
-                mca_iof_base_endpoint_recv_handler,
+                mca_iof_base_endpoint_read_handler,
                 endpoint);
             ompi_event_add(&endpoint->ep_event, 0);
             break;
@@ -216,8 +236,8 @@ int mca_iof_base_endpoint_create(
             ompi_event_set(
                 &endpoint->ep_event,
                 endpoint->ep_fd,
-                OMPI_EV_WRITE,
-                mca_iof_base_endpoint_send_handler,
+                OMPI_EV_WRITE|OMPI_EV_PERSIST,
+                mca_iof_base_endpoint_write_handler,
                 endpoint);
             break;
         default:
@@ -232,7 +252,7 @@ int mca_iof_base_endpoint_create(
 
 
 /*
- * 
+ * Close one or more matching endpoints.
  */
 
 int mca_iof_base_endpoint_delete(
@@ -249,7 +269,6 @@ int mca_iof_base_endpoint_delete(
 
 int mca_iof_base_endpoint_close(mca_iof_base_endpoint_t* endpoint)
 { 
-    bool closed = false;
     endpoint->ep_state = MCA_IOF_EP_CLOSING;
     switch(endpoint->ep_mode) {
     case MCA_IOF_SOURCE:
@@ -276,7 +295,7 @@ void mca_iof_base_endpoint_closed(mca_iof_base_endpoint_t* endpoint)
 }
 
 /*
- *
+ *  Lookup endpoint based on destination process name/mask/tag.
  */
 
 mca_iof_base_endpoint_t* mca_iof_base_endpoint_match(
@@ -303,7 +322,9 @@ mca_iof_base_endpoint_t* mca_iof_base_endpoint_match(
 }
 
 /*
- *
+ * Forward data out the endpoint as the destination 
+ * is available. Queue incomplete fragments in order
+ * received and process as the destination becomes available.
  */
 
 int mca_iof_base_endpoint_forward(
@@ -316,13 +337,18 @@ int mca_iof_base_endpoint_forward(
     size_t len = hdr->msg_len;
     int rc = 0;
 
+    if(endpoint->ep_mode != MCA_IOF_SINK) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
     /* allocate and initialize a fragment */
     MCA_IOF_BASE_FRAG_ALLOC(frag, rc);
     if(NULL == frag) {
-         return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     OMPI_THREAD_LOCK(&mca_iof_base.iof_lock);
+    endpoint->ep_seq = hdr->msg_seq + hdr->msg_len;
     frag->frag_owner = endpoint;
     frag->frag_src = *src;
     frag->frag_hdr.hdr_msg = *hdr;
@@ -348,6 +374,7 @@ int mca_iof_base_endpoint_forward(
         }
     } else {
         /* acknowledge fragment */
+        endpoint->ep_ack = frag->frag_hdr.hdr_msg.msg_seq + frag->frag_hdr.hdr_msg.msg_len;
         mca_iof_base_frag_ack(frag);
     }
     OMPI_THREAD_UNLOCK(&mca_iof_base.iof_lock);
@@ -356,7 +383,9 @@ int mca_iof_base_endpoint_forward(
 
 
 /**
- *
+ * Update the acknowledged sequence number. If forwarding had
+ * previously been disabled as the window closed, and the window
+ * is now open, re-enable forwarding.
  */
 
 int mca_iof_base_endpoint_ack(
@@ -379,7 +408,7 @@ int mca_iof_base_endpoint_ack(
             ompi_condition_signal(&mca_iof_base.iof_condition);
         }
 
-    /* otherwise check to see if we can reenable forwarding */
+    /* otherwise check to see if we need to reenable forwarding */
     } else if(window_closed && window_open) {
         ompi_event_add(&endpoint->ep_event, 0);
     }

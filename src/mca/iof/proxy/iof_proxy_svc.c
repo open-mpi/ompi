@@ -8,8 +8,8 @@
 #include "iof_proxy_svc.h"
 
 
-/**
- *
+/*
+ * Local function prototypes.
  */
 
 static void mca_iof_proxy_svc_msg(
@@ -22,8 +22,9 @@ static void mca_iof_proxy_svc_ack(
     mca_iof_base_msg_header_t* msg);
 
 
-/**
- *
+/*
+ *  Publish the availability of a local endpoint
+ *  to the servver.
  */
 
 int mca_iof_proxy_svc_publish(
@@ -59,8 +60,8 @@ int mca_iof_proxy_svc_publish(
 }
 
 
-/**
- *
+/*
+ * Remove published endpoint from the server.
  */
 
 int mca_iof_proxy_svc_unpublish(
@@ -97,8 +98,9 @@ int mca_iof_proxy_svc_unpublish(
 }
 
 
-/**
- *
+/*
+ *  Subscribe one or more destination process(es) to
+ *  one/more source process.
  */
 
 int mca_iof_proxy_svc_subscribe(
@@ -141,6 +143,10 @@ int mca_iof_proxy_svc_subscribe(
 }
 
 
+/*
+ * Remove subscription message from the server.
+ */
+
 int mca_iof_proxy_svc_unsubscribe(
     const ompi_process_name_t* src_name,
     ompi_ns_cmp_bitmask_t src_mask,
@@ -179,6 +185,11 @@ int mca_iof_proxy_svc_unsubscribe(
     return OMPI_SUCCESS;
 }
 
+
+/*
+ *  Handle receipt of data/ack messages from the server
+ *  and forward on to the appropriate endpoint.
+ */
 
 void mca_iof_proxy_svc_recv(
     int status,
@@ -225,6 +236,10 @@ void mca_iof_proxy_svc_recv(
 }
 
 
+/*
+ * Forward data message to the matching endpoint.
+ */
+
 static void mca_iof_proxy_svc_msg(
     const ompi_process_name_t* src,
     mca_iof_base_msg_header_t* msg,
@@ -239,7 +254,7 @@ static void mca_iof_proxy_svc_msg(
 }
 
 /**
- *
+ * Forward ack message to the matching endpoint.
  */
 
 static void mca_iof_proxy_svc_ack(

@@ -3,7 +3,8 @@
 
 
 /**
- *
+ * A subscription maps data from a specified set
+ * of source endpoints to one or more destination(s).
  */
 
 struct mca_iof_svc_subscript_t {

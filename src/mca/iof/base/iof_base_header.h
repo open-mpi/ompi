@@ -42,7 +42,7 @@
     n.cellid,n.jobid,n.vpid
 
 /**
- *
+ * Fields common to all headers.
  */
 
 struct mca_iof_base_common_header_t {
@@ -60,7 +60,7 @@ typedef struct mca_iof_base_common_header_t mca_iof_base_common_header_t;
 
 
 /**
- *
+ * Header for data.
  */
 
 struct mca_iof_base_msg_header_t {
@@ -144,7 +144,7 @@ typedef struct mca_iof_base_sub_header_t mca_iof_base_sub_header_t;
     (h).dst_tag = htonl((h).dst_tag);
 
 /**
- *
+ * Union of all header types.
  */
 
 union mca_iof_base_header_t {
