@@ -22,9 +22,8 @@
  */
 
 struct mca_pml_teg_t {
-    mca_pml_t super; /**< comment */
+    mca_pml_t super; 
 
-    /* available ptls */
     mca_ptl_base_module_t **teg_ptl_modules;
     size_t teg_num_ptl_modules;
 
@@ -47,10 +46,7 @@ extern mca_pml_teg_t mca_pml_teg;
 extern mca_pml_base_module_1_0_0_t mca_pml_teg_module_1_0_0_0;
 
 
-extern int mca_pml_teg_open(
-    lam_cmd_line_t* cmd_line
-);
-
+extern int mca_pml_teg_open(void);
 extern int mca_pml_teg_close(void);
 
 extern mca_pml_t* mca_pml_teg_init(
@@ -133,9 +129,7 @@ extern int mca_pml_teg_irecv(
     struct lam_request_t **request
 );
 
-extern int mca_pml_teg_progress(
-    mca_pml_base_tstamp_t tstamp
-);
+extern int mca_pml_teg_progress(void);
 
 extern int mca_pml_teg_start(
     lam_request_t* request

@@ -69,7 +69,7 @@ mca_pml_teg_t mca_pml_teg = {
  *  long description
  */
 
-int mca_pml_teg_open(lam_cmd_line_t* cmd_line)
+int mca_pml_teg_open(void)
 {
     return LAM_SUCCESS;
 }

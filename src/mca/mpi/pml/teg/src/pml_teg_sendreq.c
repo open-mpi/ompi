@@ -76,33 +76,3 @@ int mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req, bool* co
     return LAM_SUCCESS;
 }
 
-
-/*
- *  Check for queued messages that need to be scheduled. 
- *
- */
-
-int mca_pml_teg_send_request_progress(void)
-{
-    THREAD_LOCK(&mca_pml_teg.teg_lock);
-    mca_ptl_base_send_request_t* req;
-    for(req =  (mca_ptl_base_send_request_t*)lam_list_get_first(&mca_pml_teg.teg_incomplete_sends); 
-        req != (mca_ptl_base_send_request_t*)lam_list_get_end(&mca_pml_teg.teg_incomplete_sends);
-        req =  (mca_ptl_base_send_request_t*)lam_list_get_next(req)) {
-
-        bool complete;
-        int rc = mca_pml_teg_send_request_schedule(req, &complete);
-        if(rc != LAM_SUCCESS) {
-             THREAD_UNLOCK(&mca_pml_teg.teg_lock);
-             return rc;
-        }
-        if(complete) {
-            req = (mca_ptl_base_send_request_t*)lam_list_remove(
-                &mca_pml_teg.teg_incomplete_sends, (lam_list_item_t*)req);
-        }
-    }
-    THREAD_UNLOCK(&mca_pml_teg.teg_lock);
-    return LAM_SUCCESS;
-}
-
-
