@@ -34,6 +34,8 @@ int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler)
   /* We have a valid comm and errhandler */
 
   comm->error_handler = errhandler;
+
+  /* All done */
   
   return MPI_SUCCESS;
 }

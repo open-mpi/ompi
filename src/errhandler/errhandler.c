@@ -39,6 +39,7 @@ lam_errhandler_t lam_mpi_errhandler_null = {
     { NULL, 0 },
 
     "MPI_ERRHANDLER_NULL",
+    true,
     false,
     LAM_ERRHANDLER_TYPE_COMM,
     { NULL }
@@ -52,6 +53,7 @@ lam_errhandler_t lam_mpi_errors_are_fatal = {
     { NULL, 0 },
 
     "MPI_ERRORS_ARE_FATAL",
+    true,
     false,
     LAM_ERRHANDLER_TYPE_COMM,
     { lam_mpi_errors_are_fatal_handler },
@@ -66,6 +68,7 @@ lam_errhandler_t lam_mpi_errors_return = {
     { NULL, 0 },
 
     "MPI_ERRORS_ARE_RETURN",
+    true,
     false,
     LAM_ERRHANDLER_TYPE_COMM,
     { lam_mpi_errors_return_handler },

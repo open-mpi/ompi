@@ -49,8 +49,9 @@ struct lam_errhandler_t {
 
   lam_errhandler_type_t eh_mpi_object_type;
 
-  /* Is this a fortran function? */
+  /* Flags about the error handler */
 
+  bool eh_is_intrinsic;
   bool eh_fortran_function;
 
   /* Function pointers */
@@ -213,5 +214,19 @@ extern "C" {
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
+
+
+/**
+ * Check to see if an errhandler is intrinsic.
+ *
+ * @param errhandler The errhandler to check
+ *
+ * @returns true If the errhandler is intrinsic
+ * @returns false If the errhandler is not intrinsic
+ */
+static inline bool lam_errhandler_is_intrinsic(lam_errhandler_t *errhandler)
+{
+  return errhandler->eh_is_intrinsic;
+}
 
 #endif /* LAM_ERRHANDLER_H */

@@ -22,10 +22,10 @@ int MPI_Comm_get_errhandler(MPI_Comm comm, MPI_Errhandler *errhandler)
     if (NULL == comm || 
         MPI_COMM_NULL == comm) {
       return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_Comm_set_errhandler");
+                                   "MPI_Comm_get_errhandler");
     } else if (NULL == errhandler) {
       return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_Comm_create_errhandler");
+                                   "MPI_Comm_get_errhandler");
     }
   }
 
