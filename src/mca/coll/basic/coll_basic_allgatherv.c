@@ -36,7 +36,6 @@ int mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
     err = comm->c_coll.coll_gatherv(sbuf, scount, sdtype, rbuf,
                                     rcounts, disps, rdtype, i, comm);
     if (MPI_SUCCESS != err) {
-      printf("allgatherv barfed: errcode %d\n", err);
       return err;
     }
   }
@@ -69,7 +68,7 @@ int mca_coll_basic_allgatherv_inter(void *sbuf, int scount,
     scounts = (int *) malloc (rsize * sizeof(int) );
     sdisps  = (int *) calloc (rsize, sizeof(int));
     if ( NULL == scounts || NULL == sdisps ) {
-        return err;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
     for ( i=0; i<rsize; i++) {
