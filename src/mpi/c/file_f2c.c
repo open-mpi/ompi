@@ -38,5 +38,5 @@ MPI_File MPI_File_f2c(MPI_Fint file_f)
         return MPI_FILE_NULL;
     }
 
-    return ompi_file_f_to_c_table.addr[file_index];
+    return ompi_pointer_array_get_item(&ompi_file_f_to_c_table, file_index);
 }

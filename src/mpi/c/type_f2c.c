@@ -38,6 +38,6 @@ MPI_Datatype MPI_Type_f2c(MPI_Fint datatype)
         return MPI_DATATYPE_NULL;
     }
 
-    return ompi_datatype_f_to_c_table->addr[datatype];
+    return ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, datatype);
 }
 

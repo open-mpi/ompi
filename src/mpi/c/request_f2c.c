@@ -40,5 +40,5 @@ MPI_Request MPI_Request_f2c(MPI_Fint request)
         return MPI_REQUEST_NULL;
     }
 
-    return ompi_req_f_to_c_table->addr[request_index];
+    return ompi_pointer_array_get_item(ompi_req_f_to_c_table, request_index);
 }
