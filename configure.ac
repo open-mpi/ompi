@@ -399,8 +399,10 @@ AC_CONFIG_FILES([
     src/lam/util/Makefile
 
     src/mpi/Makefile
+    src/mpi/attribute/Makefile
     src/mpi/communicator/Makefile
     src/mpi/datatype/Makefile
+    src/mpi/errhandler/Makefile
     src/mpi/group/Makefile
     src/mpi/info/Makefile
     src/mpi/interface/Makefile
