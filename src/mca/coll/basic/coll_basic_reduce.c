@@ -262,6 +262,16 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
    char *snd_buffer = sbuf;
    char *rcv_buffer = rbuf;
 
+   /* JMS Codearound for now -- if the operations is not communative,
+      just call the linear algorithm.  Need to talk to Edgar / George
+      about fixing this algorithm here to work with non-communative
+      operations. */
+
+   if (!ompi_op_is_commute(op)) {
+       return mca_coll_basic_reduce_lin_intra(sbuf, rbuf, count, dtype, 
+                                              op, root, comm);
+   }
+
    /* Some variables */
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);                       
