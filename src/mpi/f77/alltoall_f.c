@@ -57,7 +57,7 @@ void mpi_alltoall_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
     c_sendtype = MPI_Type_f2c(*sendtype);
     c_recvtype = MPI_Type_f2c(*recvtype);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Allgather(sendbuf,
+    *ierr = OMPI_INT_2_FINT(MPI_Alltoall(sendbuf,
 					  OMPI_FINT_2_INT(*sendcount),
 					  c_sendtype, 
 					  recvbuf, 
