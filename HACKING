@@ -12,7 +12,7 @@ Use of GNU Autoconf, Automake, and Libtool
 If you are building OMPI/MPI from a developer's tree, you must first
 use fairly recent versions of the GNU tools Autoconf, Automake, and
 Libtool.  As of this writing, you need at least Autoconf v2.58,
-Automake v1.6, and Libtool 1.5.  You can check what versions you have
+Automake v1.7(or better), and Libtool 1.5.  You can check what versions you have
 installed with the following:
 
 shell$ autoconf --version
@@ -21,6 +21,9 @@ shell$ libtool --version
 
 If you need newer versions, you are *strongly* encouraged to heed the
 following advice:
+
+*NOTE: MacOS/X libtool is broken.  
+*Download and install the GNU Version. 
 
 1. Unless your OS distribution has easy-to-use binary installations,
    the sources can be can be downloaded from:
@@ -66,7 +69,7 @@ following advice:
 
       --> if on csh or tcsh, run the "rehash" command
 
-      shell$ cd ../automake-1.6
+      shell$ cd ../automake-1.7
       shell$ ./configure --prefix=PREFIX
       shell$ make all install
 
