@@ -99,7 +99,7 @@ void lam_reactor_destroy(lam_reactor_t* r)
 }
 
 
-bool lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* listener, int flags)
+bool lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* listener, void* user, int flags)
 {
 #ifndef NDEBUG
     if(sd < 0 || sd > LAM_FD_SETSIZE) {
@@ -123,14 +123,17 @@ bool lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* listen
     descriptor->rd_flags |= flags;
     if(flags & LAM_NOTIFY_RECV) {
         descriptor->rd_recv = listener;
+        descriptor->rd_recv_user = user;
         LAM_FD_SET(sd, &r->r_recv_set);
     }
     if(flags & LAM_NOTIFY_SEND) {
         descriptor->rd_send = listener;
+        descriptor->rd_send_user = user;
         LAM_FD_SET(sd, &r->r_send_set);
     }
     if(flags & LAM_NOTIFY_EXCEPT) {
         descriptor->rd_except = listener;
+        descriptor->rd_except_user = user;
         LAM_FD_SET(sd, &r->r_except_set);
     }
     r->r_changes++;
@@ -139,7 +142,7 @@ bool lam_reactor_insert(lam_reactor_t* r, int sd, lam_reactor_listener_t* listen
 }
 
 
-bool lam_reactor_remove(lam_reactor_t* r, int sd, lam_reactor_listener_t* rl, int flags)
+bool lam_reactor_remove(lam_reactor_t* r, int sd, int flags)
 {
 #ifndef NDEBUG
     if(sd < 0 || sd > LAM_FD_SETSIZE) {
@@ -190,15 +193,15 @@ void lam_reactor_dispatch(lam_reactor_t* r, int cnt, lam_fd_set_t* rset, lam_fd_
         int rd = descriptor->rd; 
         int flags = 0;
         if(LAM_FD_ISSET(rd, rset) && descriptor->rd_flags & LAM_NOTIFY_RECV) {
-            descriptor->rd_recv->rl_recv_handler(descriptor->rd_recv, rd);
+            descriptor->rd_recv->rl_recv_handler(rd, descriptor->rd_recv_user);
             flags |= LAM_NOTIFY_RECV;
         }
         if(LAM_FD_ISSET(rd, sset) && descriptor->rd_flags & LAM_NOTIFY_SEND) {
-            descriptor->rd_send->rl_send_handler(descriptor->rd_send, rd);
+            descriptor->rd_send->rl_send_handler(rd, descriptor->rd_send_user);
             flags |= LAM_NOTIFY_SEND;
         }
         if(LAM_FD_ISSET(rd, eset) && descriptor->rd_flags & LAM_NOTIFY_EXCEPT) {
-            descriptor->rd_except->rl_except_handler(descriptor->rd_except, rd);
+            descriptor->rd_except->rl_except_handler(rd, descriptor->rd_except_user);
             flags |= LAM_NOTIFY_EXCEPT;
         }
         if(flags) cnt--;

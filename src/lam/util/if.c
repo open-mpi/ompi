@@ -145,7 +145,7 @@ static int lam_ifinit(void)
  *  as a dotted decimal formatted string.
  */
 
-int lam_ifnametoaddr(const char* if_name, char* if_addr, int length)
+int lam_ifnametoaddr(const char* if_name, struct sockaddr* addr, int length)
 {
     lam_if_t* intf;
     int rc = lam_ifinit();
@@ -156,7 +156,7 @@ int lam_ifnametoaddr(const char* if_name, char* if_addr, int length)
         intf != (lam_if_t*)lam_list_get_end(&lam_if_list);
         intf =  (lam_if_t*)lam_list_get_next(intf)) {
         if(strcmp(intf->if_name, if_name) == 0) {
-            strncpy(if_addr, inet_ntoa(intf->if_addr.sin_addr), length);
+            memcpy(addr, &intf->if_addr, length);
             return LAM_SUCCESS;
         }
     }
@@ -253,7 +253,7 @@ int lam_ifnext(int if_index)
  *  primary address assigned to the interface.
  */
 
-int lam_ifindextoaddr(int if_index, char* if_addr, int length)
+int lam_ifindextoaddr(int if_index, struct sockaddr* if_addr, int length)
 {
     lam_if_t* intf;
     int rc = lam_ifinit();
@@ -264,7 +264,7 @@ int lam_ifindextoaddr(int if_index, char* if_addr, int length)
         intf != (lam_if_t*)lam_list_get_end(&lam_if_list);
         intf =  (lam_if_t*)lam_list_get_next(intf)) {
         if(intf->if_index == if_index) {
-            strncpy(if_addr, inet_ntoa(intf->if_addr.sin_addr), length);
+            memcpy(if_addr, &intf->if_addr, length);
             return LAM_SUCCESS;
         }
     }

@@ -13,7 +13,7 @@
  *  @param if_addr (OUT)  Interface address buffer
  *  @param size    (IN)   Interface address buffer size
  */
-int lam_ifnametoaddr(const char* if_name, char* if_addr, int);
+int lam_ifnametoaddr(const char* if_name, struct sockaddr*, int);
 
 /**
  *  Lookup an interface by address and return its name.
@@ -67,7 +67,7 @@ int lam_ifindextoname(int if_index, char* if_name, int);
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-int lam_ifindextoaddr(int if_index, char* if_addr, int);
+int lam_ifindextoaddr(int if_index, struct sockaddr*, int);
 
 #endif
 
