@@ -306,9 +306,73 @@ LAM_MCA
 # (after C compiler setup)
 ############################################################################
 
-lam_show_title "Libtool configuration"
+lam_show_title "Libtool / libltdl configuration"
 
+# Use convenience libltdl for the moment, because we need to force the
+# use of the newest libltdl (i.e., the one that ships with libtool
+# 1.5) because it has support for a lot more things than older
+# versions of libtool (which are generally installed by default).
+
+AC_LIBLTDL_CONVENIENCE(src/mca/libltdl)
+AC_SUBST(LTDLINCL)
+AC_SUBST(LIBLTDL)
+AC_LIBTOOL_DLOPEN
 AM_PROG_LIBTOOL
+
+# AC_CONFIG_SUBDIRS appears to be broken for non-gcc compilers (i.e.,
+# passing precious variables down to the sub-configure).  
+#
+# Note that we also did some magic scripty-foo in autogen.sh to rename
+# the output libtool library "liblamltdl", so add -llamltdl here.
+# This is because so many systems have older versions of libltdl
+# installed very early in ld.so's search path; if we installed our own
+# libltdl in some non-standard path (e.g., $HOME/local or even
+# /usr/local), the libltdl in /usr/lib might get found first.  And if
+# it's older -- or just not matching the version that we need, Bad
+# Things happen.  [sigh]
+#
+# Finally, make liblamltdl follow the same shared/static convention
+# that was user for the main LAM libraries.  So manually examine
+# $enable_shared and $enable_static and pass down the corresponding
+# flags.
+
+lam_show_subtitle "GNU libltdl setup" 
+
+lam_subdir_args="$lam_subdir_args --enable-ltdl-convenience --disable-ltdl-install"
+if test "$enable_shared" = "yes"; then
+    lam_subdir_args="$lam_subdir_args --enable-shared"
+else
+    lam_subdir_args="$lam_subdir_args --disable-shared"
+fi
+if test "$enable_static" = "yes"; then
+    lam_subdir_args="$lam_subdir_args --enable-static"
+else
+    lam_subdir_args="$lam_subdir_args --disable-static"
+fi
+
+LAM_CONFIG_SUBDIR(src/mca/libltdl, [$lam_subdir_args], [HAPPY=1], [HAPPY=0])
+if test "$HAPPY" = "1"; then
+    LIBLTDL_SUBDIR=libltdl
+    LIBLTDL_LTLIB=libltdl/libltdlc.la
+    WANT_LIBLTDL=1
+
+    # Arrgh.  This is gross.  But I can't think of any other way to do
+    # it.  :-(
+
+    flags="`egrep ^LIBADD_DL src/mca/libltdl/Makefile | cut -d= -f2-`"
+    LAM_CHECK_LINKER_FLAGS([src/mca/libltdl/libtool], [-export-dynamic $flags])
+    WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $extra_ldflags"
+    LDFLAGS="-export-dynamic $LDFLAGS"
+else
+    LIBLTDL_SUBDIR=
+    LIBLTDL_LTLIB=
+    WANT_LIBLTDL=0
+fi
+AC_SUBST(LIBLTDL_SUBDIR)
+AC_SUBST(LIBLTDL_LTLIB)
+AM_CONDITIONAL(WANT_LIBLTDL, test "$WANT_LIBLTDL" = "1")
+AC_DEFINE_UNQUOTED(LAM_WANT_LIBLTDL, $WANT_LIBLTDL,
+    [Whether to include support for libltdl or not])
 
 
 ############################################################################
