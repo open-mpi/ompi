@@ -174,13 +174,11 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
         pElems = pData->desc.desc;
     }
     pStack = pConv->pStack + pConv->stack_pos;
-    pStack--;
-    DUMP_STACK( pStack, pConv->stack_pos, pElems, "starting" );
     pos_desc = pStack->index;
     lastDisp = pStack->disp;
     last_count = pStack->count; 
     pStack--;
-    pConv->stack_pos -= 2;
+    pConv->stack_pos--;
 
  next_loop:
     while( pos_desc >= 0 ) {
@@ -201,6 +199,8 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
                     pStack->disp += pElems[pStack->index].extent;
                 pos_desc = pStack->index + 1;
             }
+            lastDisp = pStack->disp + pElems[pos_desc].disp;
+            last_count = pElems[pos_desc].count;
             goto next_loop;
         }
         while( pElems[pos_desc].type == DT_LOOP ) {
@@ -233,12 +233,11 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
             PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_count,
                         pStack->disp, pos_desc + pElems[pos_desc].disp );
             pos_desc++;
+            lastDisp = pStack->disp + pElems[pos_desc].disp;
+            last_count = pElems[pos_desc].count;
         }
         /* now here we have a basic datatype */
         while( pElems[pos_desc].flags & DT_FLAG_DATA ) {
-            lastDisp = pStack->disp + pElems[pos_desc].disp;
-            last_count = pElems[pos_desc].count;
-
             /* do we have enough space in the buffer ? */
             last_blength = last_count * ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
             if( space < last_blength ) {
@@ -255,6 +254,8 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
             space -= last_blength;
             pSrcBuf += last_blength;
             pos_desc++;  /* advance to the next data */
+            lastDisp = pStack->disp + pElems[pos_desc].disp;
+            last_count = pElems[pos_desc].count;
         }
     }
     last_count = 0;  /* complete the data */
@@ -607,19 +608,20 @@ int ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
         pConv->stack_pos = 0;
     }
 
+    pConv->flags = CONVERTOR_RECV | CONVERTOR_HOMOGENEOUS;
     pConv->pBaseBuf = pUserBuf;
     pConv->available_space = count * (pData->ub - pData->lb);
     pConv->count = count;
     pConv->pFunctions = ompi_ddt_copy_functions;
     pConv->converted = 0;
     pConv->bConverted = 0;
-    pConv->fAdvance = ompi_convertor_unpack_homogeneous; /* default behaviour */
     pConv->fAdvance = ompi_convertor_unpack_general;     /* TODO: just stop complaining */
+    pConv->fAdvance = ompi_convertor_unpack_homogeneous; /* default behaviour */
     pConv->memAlloc_fn = allocfn;
 
     /* TODO: work only on homogeneous architectures */
     if( pData->flags & DT_FLAG_CONTIGUOUS ) {
-        pConv->flags |= DT_FLAG_CONTIGUOUS | CONVERTOR_HOMOGENEOUS;
+        pConv->flags |= DT_FLAG_CONTIGUOUS;
         pConv->fAdvance = ompi_convertor_unpack_homogeneous_contig;
     }
     if( starting_point != 0 )

@@ -59,8 +59,13 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
      * last fake DT_END_LOOP that we add to the data representation and
      * allow us to move quickly inside the datatype when we have a count.
      */
-    pElems = pData->desc.desc;
-    pStack->end_loop = pData->desc.used;
+    if( pData->opt_desc.desc != NULL ) {
+        pElems = pData->opt_desc.desc;
+        pStack->end_loop = pData->opt_desc.used;
+    } else {
+        pElems = pData->desc.desc;
+        pStack->end_loop = pData->desc.used;
+    }
     pStack->count    = pConvertor->count;
     pStack->index    = -1;
     if( pConvertor->flags & CONVERTOR_HOMOGENEOUS ) {

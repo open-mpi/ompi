@@ -190,12 +190,12 @@ do { \
     /*printf( "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) );*/ \
     memcpy( (DST), (SRC), (BLENGTH) ); }
 
-#if defined(DO_INTENSIVE_DEBUGGING)
+#if OMPI_ENABLE_DEBUG
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT ) \
     ompi_ddt_safeguard_pointer( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) )
 #else
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT )
-#endif  /* DO_INTENSIVE_DEBUGGING */
+#endif  /* OMPI_ENABLE_DEBUG */
 
 static inline void ompi_ddt_safeguard_pointer( void* actual_ptr, int length,
                                                void* initial_ptr,
@@ -287,7 +287,11 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
     }
 
     /* Special case for contiguous datatypes */
-    count = starting_point / pData->size;
+    if( pData->size == 0 ) {  /* special case for empty datatypes */
+        count = pConvertor->count;
+    } else {
+        count = starting_point / pData->size;
+    }
     extent = pData->ub - pData->lb;
     
     pStack[0].disp = count * extent;
@@ -312,32 +316,48 @@ static inline
 int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, int* sizes )
 {
     ompi_datatype_t* pData = pConvertor->pDesc;
+    dt_stack_t* pStack;
     dt_elem_desc_t* pElems;
-    int index;
+    int index = 0;
 
-    pConvertor->stack_pos = 1;
+    pConvertor->stack_pos = 0;
+    pStack = pConvertor->pStack;
     /* Fill the first position on the stack. This one correspond to the
      * last fake DT_END_LOOP that we add to the data representation and
      * allow us to move quickly inside the datatype when we have a count.
      */
     pConvertor->pStack[0].index = -1;
     pConvertor->pStack[0].count = pConvertor->count;
+    pConvertor->pStack[0].disp  = 0;
     /* first here we should select which data representation will be used for
      * this operation: normal one or the optimized version ? */
     pElems = pData->desc.desc;
-    pConvertor->pStack[0].end_loop = pData->desc.used;
+    pStack[0].end_loop = pData->desc.used;
     if( pConvertor->flags & CONVERTOR_HOMOGENEOUS ) {
         if( pData->opt_desc.used > 0 ) {
             pElems = pData->opt_desc.desc;
             pConvertor->pStack[0].end_loop = pData->opt_desc.used;
         }
     }
-    index = GET_FIRST_NON_LOOP(pData->desc.desc);
-    pConvertor->pStack[0].disp     = pElems[index].disp;
-    pConvertor->pStack[1].index    = 0;
-    pConvertor->pStack[1].count    = pElems->count;
-    pConvertor->pStack[1].disp     = pConvertor->pStack[0].disp;
-    pConvertor->pStack[1].end_loop = pConvertor->pStack[0].end_loop;
+    /* In the case where the datatype start with loops, we should push them on the stack.
+     * Otherwise when we reach the end_loop field we will pop too many entries and finish
+     * by overriding other places in memory. Now the big question is when to stop creating
+     * the entries on the stack ? Should I stop when I reach the first data element or
+     * should I stop on the first contiguous loop ?
+     */
+    while( pElems[index].type == DT_LOOP ) {
+        dt_loop_desc_t* loop = (dt_loop_desc_t*)&(pElems[index]);
+
+        PUSH_STACK( pStack, pConvertor->stack_pos, index,
+                    loop->loops, 0, loop->items );
+        index++;
+    }
+    if( pElems[index].flags & DT_FLAG_DATA ) {  /* let's stop here */
+        PUSH_STACK( pStack, pConvertor->stack_pos, index,
+                    pElems[index].count, pElems[index].disp, 0 );
+    } else {
+        ompi_output( 0, "Here we should have a data in the datatype description\n" );
+    }
     /* And set the correct status */
     pConvertor->converted          = 0;
     pConvertor->bConverted         = 0;
