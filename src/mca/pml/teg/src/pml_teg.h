@@ -17,6 +17,7 @@
 #include "mca/pml/base/pml_base_request.h"
 #include "mca/pml/base/pml_base_bsend.h"
 #include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/pml/base/pml_base_recvreq.h"
 #include "mca/ptl/ptl.h"
 
 #define MCA_PML_TEG_STATISTICS 0
