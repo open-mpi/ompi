@@ -178,13 +178,15 @@ int mca_pml_base_bsend_detach(void* addr, int* size)
      
 /*
  *  Initialize a request for use w/ buffered send 
- */                                                                                                        
+ */
+
 int mca_pml_base_bsend_request_init(ompi_request_t* request, bool persistent)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
     struct iovec iov;
     void* buf;
-    int rc;
+    int rc, freeAfter;
+    unsigned int max_data, iov_count;
  
     OMPI_THREAD_LOCK(&mca_pml_bsend_mutex);
     if(NULL == mca_pml_bsend_addr) {
@@ -202,14 +204,19 @@ int mca_pml_base_bsend_request_init(ompi_request_t* request, bool persistent)
     /* pack users message into buffer */
     iov.iov_base = buf;
     iov.iov_len = sendreq->req_bytes_packed;
-    if((rc = ompi_convertor_pack(&sendreq->req_convertor, &iov, 1)) < 0) {
+    iov_count = 1;
+    max_data = iov.iov_len;
+    if((rc = ompi_convertor_pack(&sendreq->req_convertor, &iov, &iov_count, 
+				 &max_data, &freeAfter)) <= 0) {
         mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, buf);
         OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERROR;
     }
 
     /* setup convertor to reflect contiguous buffer */
-    if((rc = ompi_convertor_init_for_send(&sendreq->req_convertor, 0, MPI_BYTE, iov.iov_len, iov.iov_base, 0)) != OMPI_SUCCESS) {
+    if((rc = ompi_convertor_init_for_send(&sendreq->req_convertor, 0, MPI_BYTE,
+					  iov.iov_len, iov.iov_base,
+					  0, NULL /*never allocate*/)) != OMPI_SUCCESS) {
         mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, buf);
         OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return rc;
