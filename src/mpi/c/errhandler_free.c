@@ -17,12 +17,15 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Errhandler_free";
+
 
 int MPI_Errhandler_free(MPI_Errhandler *errhandler)
 {
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (NULL == errhandler ||
         ompi_errhandler_is_intrinsic(*errhandler)) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,

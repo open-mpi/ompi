@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Group_union";
+static const char FUNC_NAME[] = "MPI_Group_union";
 
 
 int MPI_Group_union(MPI_Group group1, MPI_Group group2, MPI_Group *new_group) 

@@ -18,19 +18,23 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-int MPI_Win_call_errhandler(MPI_Win win, int errorcode) {
+static const char FUNC_NAME[] = "MPI_Win_call_errhandler";
+
+
+int MPI_Win_call_errhandler(MPI_Win win, int errorcode) 
+{
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (NULL == win ||
         MPI_WIN_NULL == win) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_Win_call_errhandler");
+                                    FUNC_NAME);
     }
   }
 
   /* Invoke the errhandler */
 
-  return OMPI_ERRHANDLER_INVOKE(win, errorcode,
-                               "MPI_Win_call_errhandler");
+  return OMPI_ERRHANDLER_INVOKE(win, errorcode, FUNC_NAME);
 }

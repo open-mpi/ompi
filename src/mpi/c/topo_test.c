@@ -17,29 +17,28 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Topo_test";
+
+
 int MPI_Topo_test(MPI_Comm comm, int *status) 
 {
-
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
-                                         "MPI_Topo_test");
-
-        if ( MPI_COMM_NULL == comm || ompi_comm_invalid (comm))
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (ompi_comm_invalid (comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                         "MPI_Topo_test");
-
-        if ( NULL == status )
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                         "MPI_Topo_test");
+                                          FUNC_NAME);
+        } else if ( NULL == status ) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        }
     }
 
-    if ( comm->c_flags & OMPI_COMM_CART ) 
+    if ( comm->c_flags & OMPI_COMM_CART ) {
         *status = MPI_CART;
-    else if ( comm->c_flags & OMPI_COMM_GRAPH ) 
+    } else if ( comm->c_flags & OMPI_COMM_GRAPH ) {
         *status = MPI_GRAPH;
-    else
+    } else {
         *status = MPI_UNDEFINED;
+    }
 
     return MPI_SUCCESS;
 }

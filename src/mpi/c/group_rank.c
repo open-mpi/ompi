@@ -18,11 +18,11 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Group_rank";
+static const char FUNC_NAME[] = "MPI_Group_rank";
 
 
-int MPI_Group_rank(MPI_Group group, int *rank) {
-
+int MPI_Group_rank(MPI_Group group, int *rank) 
+{
     /* error checking */
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

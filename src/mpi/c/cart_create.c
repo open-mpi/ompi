@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Cart_create";
+
+
 int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
                     int *periods, int reorder, MPI_Comm *comm_cart) {
 
@@ -26,25 +29,26 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (MPI_COMM_NULL == old_comm) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          "MPI_Cart_create");
+                                          FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(old_comm)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          "MPI_Cart_create");
+                                          FUNC_NAME);
         }
         if (1 > ndims) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          "MPI_Cart_create");
+                                          FUNC_NAME);
         }
         if (NULL == dims || NULL == periods || NULL == comm_cart) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          "MPI_Cart_create");
+                                          FUNC_NAME);
         }
         if (0 > reorder || 1 < reorder) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          "MPI_Cart_create");
+                                          FUNC_NAME);
         }
 
         /* check if the number of processes on the grid are corrct */
@@ -61,7 +65,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
 
            if (parent_procs < count_nodes) {
                return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
-                                              "MPI_Cart_create");
+                                              FUNC_NAME);
            }
         }
     }
@@ -83,7 +87,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
 
     /* check the error status */
     if (MPI_SUCCESS != err) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Cart_create");
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
     }
     
     /* All done */

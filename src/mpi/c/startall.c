@@ -18,19 +18,20 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Startall";
+
 
 int MPI_Startall(int count, MPI_Request *requests) 
 {
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
-        if (ompi_mpi_finalized) {
-            rc = MPI_ERR_INTERN;
-        } else if (requests == NULL) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == requests) {
             rc = MPI_ERR_REQUEST;
+        } else if (count < 0) {
+            rc = MPI_ERR_ARG;
         }
-        if (rc != MPI_SUCCESS) {
-            return rc;
-        }
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
     return mca_pml.pml_start(count, requests);
 }

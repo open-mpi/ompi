@@ -18,15 +18,18 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Op_c2f";
+
+
 MPI_Fint MPI_Op_c2f(MPI_Op op) 
 {
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
-    if (NULL == op ||
-        MPI_OP_NULL == op) {
-      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_Op_c2f");
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    if (NULL == op || MPI_OP_NULL == op) {
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OP,
+                                    FUNC_NAME);
     }
   }
 

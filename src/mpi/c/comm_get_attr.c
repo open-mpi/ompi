@@ -18,12 +18,14 @@
 
 static const char FUNC_NAME[] = "MPI_Comm_get_attr";
 
+
 int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
                       void *attribute_val, int *flag)
 {
     int ret;
 
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 	if ((NULL == attribute_val) || (NULL == flag)) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
 					 FUNC_NAME);

@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Reduce";
+static const char FUNC_NAME[] = "MPI_Reduce";
 
 
 int MPI_Reduce(void *sendbuf, void *recvbuf, int count,

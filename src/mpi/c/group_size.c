@@ -18,11 +18,11 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Group_size";
+static const char FUNC_NAME[] = "MPI_Group_size";
 
 
-int MPI_Group_size(MPI_Group group, int *size) {
-
+int MPI_Group_size(MPI_Group group, int *size) 
+{
     /* error checking */
     if( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

@@ -18,18 +18,19 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Comm_c2f";
+
+
 MPI_Fint MPI_Comm_c2f(MPI_Comm comm) 
 {
     ompi_communicator_t *cptr=(ompi_communicator_t *)comm;
 
     if ( MPI_PARAM_CHECK) {
-        if ( ompi_mpi_finalized )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
-                                         "MPI_Comm_c2f");
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         
         if ( ompi_comm_invalid (cptr))
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                        "MPI_Comm_c2f");
+                                        FUNC_NAME);
     }
 
     /* Since MPI_COMM_NULL is an object itself, we do not have to check

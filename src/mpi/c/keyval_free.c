@@ -18,6 +18,7 @@
 
 static const char FUNC_NAME[] = "MPI_Keyval_free";
 
+
 int MPI_Keyval_free(int *keyval) 
 {
     int ret;
@@ -25,12 +26,11 @@ int MPI_Keyval_free(int *keyval)
     /* Check for valid key pointer */
     if (MPI_PARAM_CHECK) {
 	if (NULL == keyval) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_KEYVAL,
 					 FUNC_NAME);
 	}
     }
       
     ret = ompi_attr_free_keyval(COMM_ATTR, keyval, 0);
-
     OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
 }

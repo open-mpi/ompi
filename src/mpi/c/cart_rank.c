@@ -18,6 +18,8 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Cart_rank";
+
 
 int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) {
     int err;
@@ -25,21 +27,22 @@ int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) {
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (MPI_COMM_NULL == comm) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          "MPI_Cart_rank");
+                                          FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(comm)) { 
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          "MPI_Cart_rank");
+                                          FUNC_NAME);
         }
         if (!OMPI_COMM_IS_CART(comm)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
-                                          "MPI_Cart_rank");
+                                          FUNC_NAME);
         }
         if ((NULL == coords) || (NULL == rank)){
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          "MPI_Cart_rank");
+                                          FUNC_NAME);
         }
     }
 
@@ -47,12 +50,12 @@ int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank) {
     func = comm->c_topo->topo_cart_rank;
     if (NULL == func) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                     "MPI_Cart_rank");
+                                     FUNC_NAME);
     }
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, coords, rank))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Cart_rank");
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
     }
 
     return MPI_SUCCESS;

@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_File_create_errhandler";
+
+
 int MPI_File_create_errhandler(MPI_File_errhandler_fn *function,
 		                        MPI_Errhandler *errhandler) {
   int err = MPI_SUCCESS;
@@ -25,6 +28,7 @@ int MPI_File_create_errhandler(MPI_File_errhandler_fn *function,
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (NULL == function || 
         NULL == errhandler) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,

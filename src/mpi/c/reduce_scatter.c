@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Reduce_scatter";
+static const char FUNC_NAME[] = "MPI_Reduce_scatter";
 
 
 int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,

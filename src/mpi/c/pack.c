@@ -33,24 +33,16 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
     struct iovec invec;
 
     if (MPI_PARAM_CHECK) {
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if (MPI_COMM_NULL == comm) {
 	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
-      }
-
-      if ((NULL == inbuf) || (NULL == outbuf) || (NULL == position)) {
+      } else if ((NULL == inbuf) || (NULL == outbuf) || (NULL == position)) {
 	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-      }
-#if 0
-      if (count < 0) {
+      } else if (incount < 0) {
 	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
-      }
-#endif
-
-      if (outsize < 0) {
+      } else if (outsize < 0) {
 	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-      }
-    
-      if (MPI_DATATYPE_NULL == datatype) {
+      } else if (MPI_DATATYPE_NULL == datatype) {
 	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
       }
     }
@@ -81,6 +73,5 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
      * OBJ_RELEASE.
      */
     OBJ_RELEASE(local_convertor);
-
     OMPI_ERRHANDLER_RETURN(rc, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }

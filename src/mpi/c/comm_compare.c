@@ -17,7 +17,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Comm_compare";
+static const char FUNC_NAME[] = "MPI_Comm_compare";
 
 
 int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {

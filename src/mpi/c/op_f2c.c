@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Op_f2c";
+
+
 MPI_Op MPI_Op_f2c(MPI_Fint op_f)
 {
   size_t o_index = (size_t) op_f;
@@ -25,6 +28,7 @@ MPI_Op MPI_Op_f2c(MPI_Fint op_f)
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (0 > o_index || 
         o_index >= ompi_pointer_array_get_size(ompi_op_f_to_c_table)) {
       return MPI_OP_NULL;

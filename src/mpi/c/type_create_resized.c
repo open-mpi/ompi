@@ -21,18 +21,20 @@
 
 static const char FUNC_NAME[] = "MPI_Type_create_resized";
 
-int
-MPI_Type_create_resized(MPI_Datatype oldtype,
-                        MPI_Aint lb,
-                        MPI_Aint extent,
-                        MPI_Datatype *newtype)
+
+int MPI_Type_create_resized(MPI_Datatype oldtype,
+                            MPI_Aint lb,
+                            MPI_Aint extent,
+                            MPI_Datatype *newtype)
 {
    int rc;
 
    if( MPI_PARAM_CHECK ) {
-      if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
-                                MPI_ERR_INTERN, FUNC_NAME );
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      if (NULL == oldtype || MPI_DATATYPE_NULL == oldtype ||
+          NULL == newtype) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
+                                      FUNC_NAME );
       }
    }
 

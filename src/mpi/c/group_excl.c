@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Group_excl";
+static const char FUNC_NAME[] = "MPI_Group_excl";
 
 
 int MPI_Group_excl(MPI_Group group, int n, int *ranks,

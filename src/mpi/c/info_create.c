@@ -19,6 +19,8 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Info_create";
+
 /**
  * Create a new info object 
  *
@@ -39,9 +41,10 @@ int MPI_Info_create(MPI_Info *info) {
      * Yet to add stuff for fortran handles
      */
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == info) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                         "MPI_Info_create");
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                          FUNC_NAME);
         }
     }
 
@@ -52,10 +55,9 @@ int MPI_Info_create(MPI_Info *info) {
      * handle is valid
      */
     (*info) = OBJ_NEW(ompi_info_t);
-    
     if (NULL == (*info)) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_SYSRESOURCE,
-                                     "MPI_Info_create");
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
+                                      FUNC_NAME);
     }
 
     return MPI_SUCCESS;

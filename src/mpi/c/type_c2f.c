@@ -7,6 +7,8 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "datatype/datatype.h"
+#include "communicator/communicator.h"
+#include "errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_c2f = PMPI_Type_c2f
@@ -16,7 +18,20 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Type_c2f";
+
+
 MPI_Fint MPI_Type_c2f(MPI_Datatype datatype)
 {
-    return (MPI_Fint)(datatype->d_f_to_c_index);
+  if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    if (NULL == datatype || MPI_DATATYPE_NULL == datatype) {
+      return (MPI_Fint)
+        OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
+    }
+  }
+
+  /* Simple */
+
+  return (MPI_Fint)(datatype->d_f_to_c_index);
 }

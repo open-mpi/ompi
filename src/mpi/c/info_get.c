@@ -22,6 +22,8 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Info_get";
+
 /**
  *   MPI_Info_get - Get a (key, value) pair from an 'MPI_Info' object
  *
@@ -40,8 +42,8 @@
  *   to allow for for the null terminator.
  */
 int MPI_Info_get(MPI_Info info, char *key, int valuelen,
-                 char *value, int *flag) {
-
+                 char *value, int *flag) 
+{
     int err;
     int key_length;
 
@@ -51,24 +53,32 @@ int MPI_Info_get(MPI_Info info, char *key, int valuelen,
      * necessary structures.
      */
     if (MPI_PARAM_CHECK) {
-        if (NULL == info || NULL == key || 0 > valuelen){
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == info || MPI_INFO_NULL == info) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                          FUNC_NAME);
+        }
+        if (0 > valuelen){
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                         "MPI_Info_get");
+                                          FUNC_NAME);
         }
 
         key_length = (key) ? strlen (key) : 0;
-        if ( (0 == key_length) || (MPI_MAX_INFO_KEY <= key_length)) {
+        if ((NULL == key) || (0 == key_length) ||
+            (MPI_MAX_INFO_KEY <= key_length)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
-                                         "MPI_Info_get");
+                                          FUNC_NAME);
+        }
+        if (NULL == value) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_VALUE,
+                                          FUNC_NAME);
+        }
+        if (NULL == flag) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                          FUNC_NAME);
         }
     }
 
     err = ompi_info_get (info, key, valuelen, value, flag);
-    
-    /*
-     * Once again, ompi_info_get does not return any error. So, as of
-     * now there is no error condition to check for. But maybe this 
-     * needs to be re-evaluated and then something can be done 
-     */
-    return MPI_SUCCESS;
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

@@ -18,12 +18,12 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Group_intersection";
+static const char FUNC_NAME[] = "MPI_Group_intersection";
 
 
 int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
-        MPI_Group *new_group) {
-
+        MPI_Group *new_group) 
+{
     /* local variables */
     int my_group_rank;
     int group_size,proc1,proc2,cnt;

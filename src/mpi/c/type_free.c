@@ -21,15 +21,16 @@
 
 static const char FUNC_NAME[] = "MPI_Type_free";
 
-int
-MPI_Type_free(MPI_Datatype *type)
+
+int MPI_Type_free(MPI_Datatype *type)
 {
    int rc;
 
    if( MPI_PARAM_CHECK ) {
-      if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
-                                MPI_ERR_INTERN, FUNC_NAME );
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      if (NULL == type || NULL == *type || MPI_DATATYPE_NULL == *type) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
+                                      FUNC_NAME );
       }
    }
 

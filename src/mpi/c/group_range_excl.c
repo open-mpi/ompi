@@ -18,12 +18,12 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Group_range_excl";
+static const char FUNC_NAME[] = "MPI_Group_range_excl";
 
 
 int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
-                         MPI_Group *new_group) {
-
+                         MPI_Group *new_group) 
+{
     /* local variables */
     int new_group_size, proc, first_rank, last_rank;
 	int stride, triplet, index, *elements_int_list, my_group_rank;

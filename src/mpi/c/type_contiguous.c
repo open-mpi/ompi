@@ -21,21 +21,20 @@
 
 static const char FUNC_NAME[] = "MPI_Type_contiguous";
 
-int
-MPI_Type_contiguous(int count,
-                    MPI_Datatype oldtype,
-                    MPI_Datatype *newtype)
+
+int MPI_Type_contiguous(int count,
+                        MPI_Datatype oldtype,
+                        MPI_Datatype *newtype)
 {
    int rc;
 
    if( MPI_PARAM_CHECK ) {
-      if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
-                                MPI_ERR_INTERN, FUNC_NAME );
-      }
-      if( count < 0 ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_COUNT, MPI_COMM_WORLD,
-                                MPI_ERR_COUNT, FUNC_NAME );
+     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+     if (MPI_DATATYPE_NULL == oldtype || NULL == newtype ||
+         NULL == newtype) {
+       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
+     } else if( count < 0 ) {
+       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT, FUNC_NAME);
       }
    }
    

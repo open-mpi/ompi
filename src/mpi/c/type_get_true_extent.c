@@ -21,17 +21,21 @@
 
 static const char FUNC_NAME[] = "MPI_Type_get_true_extent";
 
-int
-MPI_Type_get_true_extent(MPI_Datatype datatype,
-                         MPI_Aint *true_lb, 
-                         MPI_Aint *true_extent)
+
+int MPI_Type_get_true_extent(MPI_Datatype datatype,
+                             MPI_Aint *true_lb, 
+                             MPI_Aint *true_extent)
 {
    int rc;
 
    if( MPI_PARAM_CHECK ) {
-      if( OMPI_MPI_INVALID_STATE ) {
-         OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
-                                MPI_ERR_INTERN, FUNC_NAME );
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      if (NULL == datatype || MPI_DATATYPE_NULL == datatype) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
+                                      FUNC_NAME );
+      } else if (NULL == true_lb || NULL == true_extent) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                      FUNC_NAME );
       }
    }
 

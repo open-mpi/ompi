@@ -18,14 +18,15 @@
 
 static const char FUNC_NAME[] = "MPI_Type_free_keyval";
 
-int
-MPI_Type_free_keyval(int *type_keyval)
+
+int MPI_Type_free_keyval(int *type_keyval)
 {
     int ret;
 
     /* Check for valid key pointer */
 
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 	if (NULL == type_keyval) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
 					 MPI_ERR_ARG, 

@@ -18,6 +18,9 @@
 #endif
 
 
+static const char FUNC_NAME[] = "MPI_Comm_create_errhandler";
+
+
 int MPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *function,
                                MPI_Errhandler *errhandler) 
 {
@@ -26,10 +29,12 @@ int MPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *function,
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+
     if (NULL == function || 
         NULL == errhandler) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_Comm_create_errhandler");
+                                    FUNC_NAME);
     }
   }
 
@@ -42,6 +47,5 @@ int MPI_Comm_create_errhandler(MPI_Comm_errhandler_fn *function,
     err = MPI_ERR_INTERN;
   }
 
-  OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN,
-                        "MPI_Comm_create_errhandler");
+  OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
 }

@@ -8,6 +8,8 @@
 #include "runtime/runtime.h"
 #include "mpi/c/bindings.h"
 #include "mca/pml/pml.h"
+#include "communicator/communicator.h"
+#include "errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Cancel = PMPI_Cancel
@@ -17,14 +19,16 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Cancel";
+
+
 int MPI_Cancel(MPI_Request *request) 
 {
     int rc;
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
-        if ( OMPI_MPI_INVALID_STATE ) {
-            rc = MPI_ERR_INTERN;
-        } else if (request == NULL) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (request == NULL) {
             rc = MPI_ERR_REQUEST;
         }
         /* JMS: Tim will fix to invoke on the communicator/window/file

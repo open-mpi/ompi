@@ -7,6 +7,8 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "runtime/runtime.h"
+#include "communicator/communicator.h"
+#include "errhandler/errhandler.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/pml_base_bsend.h"
 
@@ -19,9 +21,18 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Buffer_attach";
+
 
 int MPI_Buffer_attach(void *buffer, int size) 
 {
-    return mca_pml_base_bsend_attach(buffer, size);
+  if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+    if (NULL == buffer || size < 0) {
+      return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+    }
+  }
+
+  return mca_pml_base_bsend_attach(buffer, size);
 }
 

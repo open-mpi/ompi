@@ -17,16 +17,19 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Comm_get_parent";
+
+
 int MPI_Comm_get_parent(MPI_Comm *parent) 
 {
 
     if ( MPI_PARAM_CHECK ) {
-        if ( ompi_mpi_finalized )
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, 
-                                          "MPI_Comm_get_parent");
-        if ( NULL == parent )
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+
+        if ( NULL == parent ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
-                                         "MPI_Comm_get_parent");
+                                          FUNC_NAME);
+        }
     }
     /*
      * ompi_mpi_comm_parent is MPI_COMM_NULL, in case this 
@@ -40,5 +43,7 @@ int MPI_Comm_get_parent(MPI_Comm *parent)
        *parent  = &ompi_mpi_comm_null;
      */
 
-    return MPI_SUCCESS;
+    /* This function is not yet implemented */
+
+    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
 }

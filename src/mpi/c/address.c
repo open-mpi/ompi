@@ -21,14 +21,16 @@
 
 static const char FUNC_NAME[] = "MPI_Address";
 
+
 int MPI_Address(void *location, MPI_Aint *address)
 {
     if( MPI_PARAM_CHECK ) {
-        if( OMPI_MPI_INVALID_STATE ) {
-            OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, (ompi_communicator_t*)NULL,
-                                    MPI_ERR_INTERN, FUNC_NAME );
-        }
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      if (NULL == location || NULL == address) {
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+      }
     }
+
     *address = (MPI_Aint)location;
-	return MPI_SUCCESS;
+    return MPI_SUCCESS;
 }

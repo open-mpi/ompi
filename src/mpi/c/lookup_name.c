@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Lookup_name";
+static const char FUNC_NAME[] = "MPI_Lookup_name";
 
 
 int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name) 
@@ -28,12 +28,14 @@ int MPI_Lookup_name(char *service_name, MPI_Info info, char *port_name)
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
-        if ( NULL == port_name )
+        if ( NULL == port_name ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
                                           FUNC_NAME);
-        if ( NULL == service_name )
+        }
+        if ( NULL == service_name ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
                                           FUNC_NAME);
+        }
     }
 
     /* 

@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Scatterv";
+static const char FUNC_NAME[] = "MPI_Scatterv";
 
 
 int MPI_Scatterv(void *sendbuf, int *sendcounts, int *displs,

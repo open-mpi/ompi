@@ -18,6 +18,7 @@
 
 static const char FUNC_NAME[] = "MPI_Comm_free_keyval";
 
+
 int MPI_Comm_free_keyval(int *comm_keyval) 
 {
     int ret;
@@ -25,6 +26,7 @@ int MPI_Comm_free_keyval(int *comm_keyval)
     /* Check for valid key pointer */
 
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 	if (NULL == comm_keyval) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
 					 FUNC_NAME);

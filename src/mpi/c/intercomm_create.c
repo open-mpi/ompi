@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Intercomm_create";
+static const char FUNC_NAME[] = "MPI_Intercomm_create";
 
 
 int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,

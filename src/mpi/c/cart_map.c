@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Cart_map";
+
+
 int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims,
                 int *periods, int *newrank) {
     int err;
@@ -25,21 +28,22 @@ int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims,
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (MPI_COMM_NULL == comm) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          "MPI_Cart_map");
+                                          FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(comm)) { 
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          "MPI_Cart_map");
+                                          FUNC_NAME);
         }
         if(!OMPI_COMM_IS_CART(comm)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
-                                          "MPI_Cart_map");
+                                          FUNC_NAME);
         }
         if ((NULL == dims) || (NULL == periods) || (NULL == newrank)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          "MPI_Cart_map");
+                                          FUNC_NAME);
         }
     }
 
@@ -47,12 +51,12 @@ int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims,
     func = comm->c_topo->topo_cart_map;
     if (NULL == func) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                     "MPI_Cart_map");
+                                     FUNC_NAME);
     }
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, ndims, dims, periods, newrank))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Cart_map");
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
     }
 
     return MPI_SUCCESS;

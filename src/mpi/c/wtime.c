@@ -16,7 +16,11 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-double MPI_Wtime(void) {
+static const char FUNC_NAME[] = "MPI_Wtime";
+
+
+double MPI_Wtime(void) 
+{
     struct timeval tv;
     double wtime;
     gettimeofday(&tv, NULL);

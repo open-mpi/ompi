@@ -18,17 +18,21 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-MPI_Fint MPI_Request_c2f(MPI_Request request) {
+static const char FUNC_NAME[] = "MPI_Request_f2c";
+
+
+MPI_Fint MPI_Request_c2f(MPI_Request request) 
+{
     /* local variables */
     ompi_request_t *request_c;
 
     /* error checking */
     if( MPI_PARAM_CHECK ) {
-        /* check for MPI_REQUEST_NULL */
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if( (NULL == request) ) {
             return (MPI_Fint) 
                 OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST,
-                        "MPI_Request_c2f");
+                                       FUNC_NAME);
         }
     }
 

@@ -19,7 +19,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Init_thread";
+static const char FUNC_NAME[] = "MPI_Init_thread";
 
 
 int MPI_Init_thread(int *argc, char ***argv, int required,
@@ -27,6 +27,16 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
 {
   int err;
   MPI_Comm null = NULL;
+
+  /* Ensure that we were not already initialized or finalized */
+
+  if (ompi_mpi_finalized) {
+    /* JMS show_help */
+    return OMPI_ERRHANDLER_INVOKE(null, MPI_ERR_OTHER, FUNC_NAME);
+  } else if (ompi_mpi_initialized) {
+    /* JMS show_help */
+    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+  }
 
   /* Call the back-end initialization function (we need to put as
      little in this function as possible so that if it's profiled, we

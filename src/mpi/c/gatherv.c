@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Gatherv";
+static const char FUNC_NAME[] = "MPI_Gatherv";
 
 
 int MPI_Gatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,

@@ -19,19 +19,26 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Info_f2c";
+
+
 /**
  * Converts the MPI_Fint info into a valid C MPI_Info handle
  *
  * @param info Integer handle to an MPI_INFO object
  * @retval C handle corresponding to MPI_INFOO object
  */
-MPI_Info MPI_Info_f2c(MPI_Fint info) {
+MPI_Info MPI_Info_f2c(MPI_Fint info) 
+{
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
-        if (0 > info || info >= ompi_pointer_array_get_size(ompi_info_f_to_c_table)) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (0 > info || 
+            info >= ompi_pointer_array_get_size(ompi_info_f_to_c_table)) {
             return MPI_INFO_NULL;
         }
     }
+
     /* return the index */ 
     return ompi_info_f_to_c_table->addr[info];
 }

@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Group_incl";
+static const char FUNC_NAME[] = "MPI_Group_incl";
 
 
 int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group) 

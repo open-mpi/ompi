@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Cart_get";
+
+
 int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims,
                  int *periods, int *coords) {
     /* local variables */
@@ -26,31 +29,33 @@ int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims,
 
     /* check the arguments */
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (MPI_COMM_NULL == comm || OMPI_COMM_IS_INTER(comm)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
-                                          "MPI_Cart_get");
+                                          FUNC_NAME);
         }
         if (!OMPI_COMM_IS_CART(comm)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
-                                          "MPI_Cart_get");
+                                          FUNC_NAME);
         }
         if ((0 > maxdims) || (0 < maxdims && 
-                        ((NULL == dims) || (NULL == periods) || (NULL == coords)))) {
+                              ((NULL == dims) || (NULL == periods) ||
+                               (NULL == coords)))) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          "MPI_Cart_get");
+                                          FUNC_NAME);
         }
     }
     /* get the function pointer to do the right thing */
     func = comm->c_topo->topo_cart_get;
     if (NULL == func) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, 
-                                     "MPI_Cart_get");
+                                     FUNC_NAME);
     }
 
     /* all arguments are checked and now call the back end function */
     if ( MPI_SUCCESS != 
             (err = func(comm, maxdims, dims, periods, coords))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, "MPI_Cart_get");
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
     }
     
     /* All done */

@@ -17,7 +17,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Comm_disconnect";
+static const char FUNC_NAME[] = "MPI_Comm_disconnect";
 
 
 int MPI_Comm_disconnect(MPI_Comm *comm) 

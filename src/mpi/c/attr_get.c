@@ -24,6 +24,7 @@ int MPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag)
     int ret;
 
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 	if ((NULL == attribute_val) || (NULL == flag)) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
 					 FUNC_NAME);

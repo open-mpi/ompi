@@ -18,6 +18,7 @@
 
 static const char FUNC_NAME[] = "MPI_Comm_create_keyval";
 
+
 int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn,
                            MPI_Comm_delete_attr_function *comm_delete_attr_fn,
 			   int *comm_keyval, void *extra_state)
@@ -27,6 +28,7 @@ int MPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn,
     ompi_attribute_fn_ptr_union_t del_fn;
 
     if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 	if ((NULL == comm_copy_attr_fn) || (NULL == comm_delete_attr_fn) ||
 	    (NULL == comm_keyval)) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 

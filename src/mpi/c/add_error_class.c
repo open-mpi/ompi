@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Add_error_class";
+static const char FUNC_NAME[] = "MPI_Add_error_class";
 
 
 int MPI_Add_error_class(int *errorclass) 

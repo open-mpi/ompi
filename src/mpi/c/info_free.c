@@ -19,6 +19,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Info_free";
+
+
 /**
  *   MPI_Info_free - Free an 'MPI_Info' object.
  *
@@ -29,28 +32,22 @@
  *
  *   Upon successful completion, 'info' will be set to 'MPI_INFO_NULL'.
  */
-int MPI_Info_free(MPI_Info *info) {
+int MPI_Info_free(MPI_Info *info) 
+{
     int err;
     /*
      * Free all the alloced items from MPI_Info info.
      * Make sure the items are freed in an orderly
      * fashion so that there are no dangling pointers.
-     * Also, something needs to be done about the 
-     * fortran handle.
      */
     if (MPI_PARAM_CHECK) {
-        if (NULL == info){
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == info) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                         "MPI_Info_free");
+                                          FUNC_NAME);
         }
     }
 
-    /*
-     * Now call the back end. Once again, it does not look like 
-     * there can be any error from this, but then who knows. Have
-     * to recheck this part too.
-     */
-    err = ompi_info_free (info);
-    
-    return MPI_SUCCESS;
+    err = ompi_info_free(info);
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }

@@ -17,11 +17,11 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Comm_dup";
+static const char FUNC_NAME[] = "MPI_Comm_dup";
 
 
-int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
-    
+int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) 
+{
     /* local variables */
     ompi_communicator_t *comp, *newcomp;
     int rsize, mode, rc=MPI_SUCCESS;

@@ -9,6 +9,8 @@
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 #include "win/win.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Win_get_errhandler = PMPI_Win_get_errhandler
@@ -18,17 +20,22 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler) {
+static const char FUNC_NAME[] = "MPI_Win_get_errhandler";
+
+
+int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler) 
+{
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (NULL == win || 
         MPI_WIN_NULL == win) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_Win_get_errhandler");
+                                    FUNC_NAME);
     } else if (NULL == errhandler) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_Win_get_errhandler");
+                                    FUNC_NAME);
     }
   }
 

@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Group_c2f";
+
+
 MPI_Fint MPI_Group_c2f(MPI_Group group) {
 
     /* local variables */
@@ -25,11 +28,12 @@ MPI_Fint MPI_Group_c2f(MPI_Group group) {
 
     /* error checking */
     if( MPI_PARAM_CHECK ) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         /* check for MPI_GROUP_NULL */
         if( (NULL == group) ) {
             return (MPI_Fint) 
                 OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                        "MPI_Group_c2f");
+                                       FUNC_NAME);
         }
     }
 

@@ -18,17 +18,22 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Win_create_errhandler";
+
+
 int MPI_Win_create_errhandler(MPI_Win_errhandler_fn *function,
-                              MPI_Errhandler *errhandler) {
+                              MPI_Errhandler *errhandler) 
+{
   int err = MPI_SUCCESS;
 
   /* Error checking */
 
   if (MPI_PARAM_CHECK) {
+    OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (NULL == function || 
         NULL == errhandler) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                   "MPI_Win_create_errhandler");
+                                    FUNC_NAME);
     }
   }
 
@@ -41,6 +46,5 @@ int MPI_Win_create_errhandler(MPI_Win_errhandler_fn *function,
     err = MPI_ERR_INTERN;
   }
 
-  OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN,
-                        "MPI_Win_create_errhandler");
+  OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
 }

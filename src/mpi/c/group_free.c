@@ -18,7 +18,7 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static char FUNC_NAME[] = "MPI_Group_free";
+static const char FUNC_NAME[] = "MPI_Group_free";
 
 
 int MPI_Group_free(MPI_Group *group)

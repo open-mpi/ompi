@@ -28,15 +28,12 @@ int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
     ompi_convertor_t *local_convertor;
 
     if (MPI_PARAM_CHECK) {
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
       if (MPI_COMM_NULL == comm) {
 	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
-      }
-
-      if (NULL == size) {
+      } else if (NULL == size) {
 	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-      }
-    
-      if (MPI_DATATYPE_NULL == datatype) {
+      } else if (MPI_DATATYPE_NULL == datatype) {
 	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
       }
     }

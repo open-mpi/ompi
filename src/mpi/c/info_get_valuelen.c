@@ -21,6 +21,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Info_get_valuelen";
+
+
 /**
  *   MPI_Info_get_valuelen - Get the length of a value for a given key in an 'M
  *
@@ -39,8 +42,8 @@
  *   alone.
  */
 int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen,
-                          int *flag) {
-
+                          int *flag) 
+{
     int key_length;
     int err;
 
@@ -49,21 +52,23 @@ int MPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen,
      * having the "key" associated with it and return the length
      */
     if (MPI_PARAM_CHECK) {
-        if (NULL == info || NULL == key){
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                         "MPI_Info_get_valuelen");
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == info || MPI_INFO_NULL == info) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                          FUNC_NAME);
         }
         key_length = (key) ? strlen (key) : 0;
-        if ( (0 == key_length) || (MPI_MAX_INFO_KEY <= key_length)) {
+        if ((NULL == key) || (0 == key_length) || 
+            (MPI_MAX_INFO_KEY <= key_length)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
-                                         "MPI_Info_get_valuelen");
+                                          FUNC_NAME);
+        }
+        if (NULL == flag || NULL == valuelen) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+                                          FUNC_NAME);
         }
     }
 
     err = ompi_info_get_valuelen (info, key, valuelen, flag);
-    /*
-     * Once again, the error problem. ompi_info_get_valuelen
-     * does not have an obvious error return.
-     */
-    return err;
+    OMPI_ERRHANDLER_RETURN(err, MPI_COMM_WORLD, err, FUNC_NAME);
 }
