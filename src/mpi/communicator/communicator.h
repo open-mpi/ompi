@@ -58,7 +58,7 @@ static inline lam_communicator_t *lam_comm_lookup(uint32_t cid)
     return lam_communicator_array[cid]; 
 }
 
-static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, int peer_id)
+static inline lam_proc_t* lam_comm_lookup_peer(lam_communicator_t* comm, size_t peer_id)
 {
 #ifdef LAM_ENABLE_DEBUG
     if(peer_id >= comm->c_remote_group->g_proc_count) {
