@@ -74,8 +74,11 @@ int ompi_rte_set_process_status(ompi_rte_process_status_t *status,
 
     /* create the buffer to store the status information */
     ompi_buffer_init(&buffer, 0);
-    ompi_pack(buffer, &status->status_key, 1, MCA_GPR_OOB_PACK_STATUS_KEY);
-    ompi_pack(buffer, &status->exit_code, 1, MCA_GPR_OOB_PACK_EXIT_CODE);
+    ompi_pack(buffer, &status->rank, 1, OMPI_INT32);
+    ompi_pack(buffer, &status->local_pid, 1, OMPI_INT32);
+    ompi_pack_string(buffer, status->nodename);
+    ompi_pack(buffer, &status->status_key, 1, OMPI_PROCESS_STATUS);
+    ompi_pack(buffer, &status->exit_code, 1, OMPI_EXIT_CODE);
 
     /* peek the buffer and resulting size */
     ompi_buffer_get(buffer, &addr, &size);
@@ -84,7 +87,8 @@ int ompi_rte_set_process_status(ompi_rte_process_status_t *status,
 		      segment, tokens, addr, size);
 
     if ((OMPI_PROC_STOPPED == status->status_key) ||
-	(OMPI_PROC_KILLED == status->status_key)) {
+	(OMPI_PROC_KILLED == status->status_key) ||
+	(OMPI_PROC_EXITED == status->status_key)) {
 	ompi_registry.cleanup_process(true, proc);  /* purge subscriptions */
     } else if (OMPI_PROC_TERMINATING == status->status_key) {
 	ompi_registry.cleanup_process(false, proc);  /* just cleanup - don't purge subs */
@@ -113,8 +117,11 @@ ompi_rte_process_status_t
     value->object_size = 0;
     OBJ_RELEASE(value);
 
-    ompi_unpack(buffer, &stat_ptr->status_key, 1, MCA_GPR_OOB_PACK_STATUS_KEY);
-    ompi_unpack(buffer, &stat_ptr->exit_code, 1, MCA_GPR_OOB_PACK_EXIT_CODE);
+    ompi_unpack(buffer, &stat_ptr->rank, 1, OMPI_INT32);
+    ompi_unpack(buffer, &stat_ptr->local_pid, 1, OMPI_INT32);
+    ompi_unpack_string(buffer, &stat_ptr->nodename);
+    ompi_unpack(buffer, &stat_ptr->status_key, 1, OMPI_PROCESS_STATUS);
+    ompi_unpack(buffer, &stat_ptr->exit_code, 1, OMPI_EXIT_CODE);
 
     return stat_ptr;
 }

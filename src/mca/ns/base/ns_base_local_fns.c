@@ -185,6 +185,34 @@ char* mca_ns_base_get_vpid_string(const ompi_process_name_t* name)
 }
 
 
+char* mca_ns_base_convert_vpid_to_string(const mca_ns_base_vpid_t vpid)
+{
+    char *vpid_string;
+
+    if (0 > asprintf(&vpid_string, "%0X", vpid)) {
+        return NULL;
+    }
+
+    return vpid_string;
+}
+
+
+mca_ns_base_vpid_t mca_ns_base_convert_string_to_vpid(const char* vpidstring)
+{
+    unsigned long int tmpint;
+    mca_ns_base_vpid_t vpid;
+
+    tmpint = strtoul(vpidstring, NULL, 16);
+    if (MCA_NS_BASE_VPID_MAX >= tmpint) {
+        vpid = (mca_ns_base_vpid_t)tmpint;
+    } else {
+        vpid = MCA_NS_BASE_VPID_MAX;
+    }
+
+    return vpid;
+}
+
+
 char* mca_ns_base_get_jobid_string(const ompi_process_name_t* name)
 {
     char *name_string;
@@ -242,6 +270,34 @@ char* mca_ns_base_get_cellid_string(const ompi_process_name_t* name)
     }
 
     return(name_string);
+}
+
+
+char *mca_ns_base_convert_cellid_to_string(const mca_ns_base_cellid_t cellid)
+{
+    char *cellid_string;
+    
+    if (0 > asprintf(&cellid_string, "%0X", cellid)) {
+        return NULL;
+    }
+    
+    return cellid_string;
+}
+
+
+mca_ns_base_cellid_t mca_ns_base_convert_string_to_cellid(const char *cellidstring)
+{
+    unsigned long int tmpint;
+    mca_ns_base_cellid_t cellid;
+    
+    tmpint = strtoul(cellidstring, NULL, 16);
+    if (MCA_NS_BASE_CELLID_MAX >= tmpint) {
+        cellid = (mca_ns_base_cellid_t)tmpint;
+    } else {
+        cellid = MCA_NS_BASE_CELLID_MAX;
+    }
+    
+    return cellid;
 }
 
 
@@ -356,6 +412,40 @@ int mca_ns_base_unpack_name(void *dest, void *src, int n)
 	dn->jobid = ntohl(sn->jobid);
 	dn->vpid = ntohl(sn->vpid);
 	dn++; sn++;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+int mca_ns_base_pack_cellid(void *dest, void *src, int n)
+{
+    mca_ns_base_cellid_t *dj, *sj;
+    int i;
+
+    dj = (mca_ns_base_cellid_t*) dest;
+    sj = (mca_ns_base_cellid_t*) src;
+
+    for (i=0; i<n; i++) {
+        *dj = htonl(*sj);
+        dj++; sj++;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+int mca_ns_base_unpack_cellid(void *dest, void *src, int n)
+{
+    mca_ns_base_cellid_t *dj, *sj;
+    int i;
+
+    dj = (mca_ns_base_cellid_t*) dest;
+    sj = (mca_ns_base_cellid_t*) src;
+
+    for (i=0; i<n; i++) {
+        *dj = ntohl(*sj);
+        dj++; sj++;
     }
 
     return OMPI_SUCCESS;

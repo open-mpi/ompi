@@ -44,7 +44,7 @@ libruntime_la_SOURCES = \
     ompi_rte_wait_startup_shutdown_msg.c \
     ompi_rte_process_status.c \
     ompi_rte_cmd_line_setup.c \
-    ompi_vm_register.c \
+    ompi_rte_vm_status.c \
     universe_exists.c \
     ompi_rte_parse_environ.c \
     ompi_rte_parse_cmd_line.c \

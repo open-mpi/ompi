@@ -49,6 +49,10 @@ typedef enum {
     OMPI_STRING, /**< a NULL terminated string */
     OMPI_NAME,  /**< an ompi_process_name_t */
     OMPI_JOBID,  /**< a jobid */
+    OMPI_CELLID, /**< a cellid */
+    OMPI_NODE_STATE,  /**< node status flag */
+    OMPI_PROCESS_STATUS,  /**< process status key */
+    OMPI_EXIT_CODE,       /**< process exit code */
     OMPI_PACKED /**< already packed data. */
 } ompi_pack_type_t;
 

@@ -68,6 +68,10 @@ OMPI_DECLSPEC    char* mca_ns_base_get_proc_name_string(const ompi_process_name_
 
 OMPI_DECLSPEC    char* mca_ns_base_get_vpid_string(const ompi_process_name_t* name);
 
+OMPI_DECLSPEC    char* mca_ns_base_convert_vpid_to_string(const mca_ns_base_vpid_t vpid);
+
+OMPI_DECLSPEC    mca_ns_base_vpid_t mca_ns_base_convert_string_to_vpid(const char* vpid_string);
+
 OMPI_DECLSPEC    char* mca_ns_base_get_jobid_string(const ompi_process_name_t* name);
 
 OMPI_DECLSPEC    char* mca_ns_base_convert_jobid_to_string(const mca_ns_base_jobid_t jobid);
@@ -75,6 +79,10 @@ OMPI_DECLSPEC    char* mca_ns_base_convert_jobid_to_string(const mca_ns_base_job
 OMPI_DECLSPEC    mca_ns_base_jobid_t mca_ns_base_convert_string_to_jobid(const char* jobid_string);
 
 OMPI_DECLSPEC    char* mca_ns_base_get_cellid_string(const ompi_process_name_t* name);
+
+OMPI_DECLSPEC    mca_ns_base_cellid_t mca_ns_base_convert_string_to_cellid(const char* cellid_string);
+
+OMPI_DECLSPEC    char* mca_ns_base_convert_cellid_to_string(const mca_ns_base_cellid_t cellid);
 
 OMPI_DECLSPEC    mca_ns_base_vpid_t mca_ns_base_get_vpid(const ompi_process_name_t* name);
 
@@ -89,6 +97,10 @@ OMPI_DECLSPEC    int mca_ns_base_compare(ompi_ns_cmp_bitmask_t fields,
 OMPI_DECLSPEC    int mca_ns_base_pack_name(void *dest, void *src, int n);
 
 OMPI_DECLSPEC    int mca_ns_base_unpack_name(void *dest, void *src, int n);
+
+OMPI_DECLSPEC    int mca_ns_base_pack_cellid(void *dest, void *src, int n);
+
+OMPI_DECLSPEC    int mca_ns_base_unpack_cellid(void *dest, void *src, int n);
 
 OMPI_DECLSPEC    int mca_ns_base_pack_jobid(void *dest, void *src, int n);
 

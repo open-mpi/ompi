@@ -62,6 +62,9 @@ int ompi_mpi_finalize(void)
     ompi_registry.begin_compound_cmd();
 
     /* Set process status to "terminating"*/
+    my_status.rank = mca_ns_base_get_vpid(ompi_rte_get_self());
+    my_status.local_pid = (int32_t)ompi_process_info.pid;
+    my_status.nodename = strdup(ompi_system_info.nodename);
     my_status.status_key = OMPI_PROC_TERMINATING;
     my_status.exit_code = 0;
     if (OMPI_SUCCESS != (ret = ompi_rte_set_process_status(&my_status, ompi_rte_get_self()))) {
