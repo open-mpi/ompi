@@ -31,6 +31,7 @@
 #include "pls_rsh.h"
 #include "mca/pls/rsh/pls-rsh-version.h"
 #include "mca/base/mca_base_param.h"
+#include "mca/rml/rml.h"
 
 extern char **environ;
 
@@ -176,6 +177,10 @@ int orte_pls_rsh_component_close(void)
         OMPI_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
     }
 
+    /* cleanup any pending recvs */
+    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RMGR_CLNT);
+
+    /* cleanup state */
     OBJ_DESTRUCT(&mca_pls_rsh_component.lock);
     OBJ_DESTRUCT(&mca_pls_rsh_component.cond);
     if(NULL != mca_pls_rsh_component.argv)
