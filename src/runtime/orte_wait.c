@@ -252,16 +252,13 @@ orte_waitpid(pid_t wpid, int *status, int options)
            the callback is registered.  There is a race condition
            between starting to sit in the condition_wait and the
            callback being triggered, so poll for completion on the
-           event just in case.  Also, if we have pthreads but they
-           aren't active, we won't progress in cond_timedwait, so do
-           it here. */
+           event just in case. */
         data = OBJ_NEW(blk_waitpid_data_t);
         if (NULL == data) {
             ret = -1;
             goto cleanup;
         }
 
-        /* must use mutex_lock to match what is in the condition_wait */
         register_callback(wpid, blk_waitpid_cb, data);
         
         while (0 == data->done) {
@@ -270,35 +267,44 @@ orte_waitpid(pid_t wpid, int *status, int options)
             ompi_condition_timedwait(data->cond, 
                                      &mutex, 
                                      &spintime);
-#if OMPI_HAVE_THREAD_SUPPORT
-            if (ompi_event_progress_thread()) {
+
+            /* if we have pthreads and progress threads and we are the
+               event thread, ompi_condition_timedwait won't progress
+               anything, so we need to do it. */
+#if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
+            if (ompi_using_threads()) {
+                ompi_mutex_unlock(&mutex);
                 ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+                ompi_mutex_lock(&mutex);
             }
-#else
-            ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
-#endif
+#endif            
 	    do_waitall(0);
         }
 
         ret = wpid;
         *status = data->status;
 
+        /* Unlock the mutex first, so as to not cause any deadlocks.
+           We aren't going to touch any variables that could cause
+           problems with thread badness, so it's ok to be here without
+           the thread locked.  Wich is also the reason we go to done
+           instead of cleanup. */
+        OMPI_THREAD_UNLOCK(&mutex);
+
         while (0 == data->free) {
             /* don't free the condition variable until we are positive
                that the broadcast is done being sent.  Otherwise,
                pthreads gets really unhappy when we pull the rug out
                from under it. Yes, it's spinning.  No, we won't spin
-               for long */
-#if OMPI_HAVE_THREAD_SUPPORT
-            if (ompi_event_progress_thread()) {
+               for long. */
+
+            if (!OMPI_HAVE_THREAD_SUPPORT || ompi_event_progress_thread()) {
                 ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
             }
-#else
-            ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
-#endif
         }
 
         OBJ_RELEASE(data);
+        /* see note above while loop for why we jump to done */
         goto done;
 
     } else {
