@@ -129,13 +129,12 @@ static int mca_ptl_tcp_peer_send_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
     while(cnt < size) {
         int retval = send(ptl_peer->peer_sd, ptr+cnt, size-cnt, 0);
         if(retval < 0) {
-            if(errno == EINTR)
-                continue;
-            if(errno != EAGAIN && errno != EWOULDBLOCK) {
+            if(errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
                 lam_output(0, "mca_ptl_tcp_peer_send_blocking: send() failed with errno=%d\n",errno);
                 mca_ptl_tcp_peer_close_i(ptl_peer);
                 return -1;
             }
+            continue;
         }
         cnt += retval;
     }
@@ -265,16 +264,17 @@ static int mca_ptl_tcp_peer_recv_blocking(mca_ptl_base_peer_t* ptl_peer, void* d
 
         /* socket is non-blocking so handle errors */
         if(retval < 0) {
-            if(errno == EINTR)
-                continue;
-            if(errno != EAGAIN && errno != EWOULDBLOCK) {
+            if(errno != EINTR && errno != EAGAIN && errno != EWOULDBLOCK) {
                 lam_output(0, "mca_ptl_tcp_peer_recv_blocking: recv() failed with errno=%d\n",errno);
                 mca_ptl_tcp_peer_close_i(ptl_peer);
                 return -1;
             }
+            continue;
         }
         cnt += retval;
     }
+    if((int)cnt == -1)
+        lam_output(0, "mca_ptl_tcp_peer_recv_blocking: invalid cnt\n");
     return cnt;
 }
 
@@ -290,16 +290,19 @@ static int mca_ptl_tcp_peer_recv_connect_ack(mca_ptl_base_peer_t* ptl_peer)
 {
     uint32_t size_n, size_h;
     void* guid;
+    int rc;
     mca_ptl_tcp_proc_t* ptl_proc = ptl_peer->peer_proc;
 
-    if(mca_ptl_tcp_peer_recv_blocking(ptl_peer, &size_n, sizeof(size_n)) != sizeof(size_n))
+    if((rc = mca_ptl_tcp_peer_recv_blocking(ptl_peer, &size_n, sizeof(size_n))) != sizeof(size_n)) 
         return LAM_ERR_UNREACH;
     size_h = ntohl(size_n);
     guid = malloc(size_h);
-    if(NULL == guid)
+    if(NULL == guid) {
+        lam_output(0, "mca_ptl_tcp_peer_recv_connect_ack: malloc(%d) failed\n", size_h);
         return LAM_ERR_OUT_OF_RESOURCE;
+    }
 
-    if(mca_ptl_tcp_peer_recv_blocking(ptl_peer, guid, size_h) != size_h) {
+    if((rc = mca_ptl_tcp_peer_recv_blocking(ptl_peer, guid, size_h)) != size_h) {
         free(guid);
         return LAM_ERR_UNREACH;
     }
