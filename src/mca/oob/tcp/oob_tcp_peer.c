@@ -125,24 +125,32 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
 /*
  * Lookup a peer by name, create one if it doesn't exist.
  * @param name  Peers globally unique identifier.
+ * @param get_lock says whether the function should get the main tcp lock or not.
+ *              this should be true unless the caller already owns the lock.
  * @retval      Pointer to the newly created struture or NULL on error.
  */
-mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name)
+mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name, bool get_lock)
 {
     int rc;
     mca_oob_tcp_peer_t * peer, * old;
 
-    OMPI_THREAD_LOCK(&mca_oob_tcp_module.tcp_lock);
+    if(get_lock) {
+        OMPI_THREAD_LOCK(&mca_oob_tcp_module.tcp_lock);
+    }
     peer = (mca_oob_tcp_peer_t*)ompi_rb_tree_find(&mca_oob_tcp_module.tcp_peer_tree,
            (ompi_process_name_t *)  name);
     if(NULL != peer) {
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+        if(get_lock) {
+            OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+        }
         return peer;
     }
 
     MCA_OOB_TCP_PEER_ALLOC(peer, rc);
     if(NULL == peer) {
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+        if(get_lock) {
+            OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+        }
         return NULL;
     }
 
@@ -155,7 +163,9 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name)
     if(OMPI_SUCCESS != ompi_rb_tree_insert(&mca_oob_tcp_module.tcp_peer_tree, 
                        (ompi_process_name_t *) name, peer)) {
         MCA_OOB_TCP_PEER_RETURN(peer);
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+        if(get_lock) {
+            OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+        }
         return NULL;
     }
     ompi_list_prepend(&mca_oob_tcp_module.tcp_peer_list, (ompi_list_item_t *) peer);
@@ -181,7 +191,9 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const ompi_process_name_t* name)
             }
         }
     }
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+    if(get_lock) {
+        OMPI_THREAD_UNLOCK(&mca_oob_tcp_module.tcp_lock);
+    }
     return peer;
 }
 

@@ -1,5 +1,5 @@
-#include "oob_tcp.h"
-#include "oob_tcp_msg.h"
+#include "mca/oob/tcp/oob_tcp.h"
+#include "mca/oob/tcp/oob_tcp_msg.h"
 
 
 static void mca_oob_tcp_msg_construct(mca_oob_tcp_msg_t*);
@@ -52,12 +52,12 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* size)
  *  @param peer (IN) the peer of the message
  *  @retval OMPI_SUCCESS or error code on failure.
  */
-int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_peer_t * peer)
+int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, ompi_process_name_t * peer)
 {
     ompi_mutex_lock(&msg->msg_lock);
     msg->msg_complete = true;
     if(NULL != msg->msg_cbfunc) {
-        msg->msg_cbfunc(msg->msg_state, &peer->peer_name, msg->msg_iov, msg->msg_count, msg->msg_cbdata);
+        msg->msg_cbfunc(msg->msg_state, peer, msg->msg_iov, msg->msg_count, msg->msg_cbdata);
         ompi_mutex_unlock(&msg->msg_lock);
         MCA_OOB_TCP_MSG_RETURN(msg);
     } else {
@@ -67,14 +67,14 @@ int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_peer_t *
     return OMPI_SUCCESS;
 }
 
-/**
+/*
  * The function that actually sends the data!
  * @param msg a pointer to the message to send
  * @param peer the peer we are sending to
  * @retval true if the entire message has been sent
  * @retval false if the entire message has not been sent
  */
-bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t * peer)
+bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_peer_t * peer)
 {
     int rc;
     while(1) {
@@ -102,7 +102,7 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t * p
                 (msg->msg_rwptr)++;
                 if(0 == msg->msg_rwcnt) {
                     ompi_list_remove_item(&peer->peer_send_queue, (ompi_list_item_t *) msg);
-                    mca_oob_tcp_msg_complete(msg, peer);
+                    mca_oob_tcp_msg_complete(msg, &peer->peer_name);
                     return true;
                 }
             }
@@ -118,9 +118,15 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t * p
  * @retval true if the whole message was recieved
  * @retval false if the whole message was not recieved
  */
-bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t * peer)
+bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_peer_t * peer)
 {
     int rc;
+    /* get the first sizeof(unint32_t) bytes of the message
+     * to either match this with a posted recieve, or to create
+     * message
+     * then use this information to allocate an array of size 2
+     * of iovecs and a buffer for the second part large enough to hold the
+     * whole message */
     while(1) {
         rc = readv(peer->peer_sd, msg->msg_rwptr, msg->msg_rwcnt);
         if(rc <= 0) {
@@ -145,7 +151,7 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t * p
                 (msg->msg_rwcnt)--;
                 (msg->msg_rwptr)++;
                 if(0 == msg->msg_rwcnt) {
-                    mca_oob_tcp_msg_complete(msg, peer);
+                    mca_oob_tcp_msg_complete(msg, &peer->peer_name);
                     return true;
                 }
             }

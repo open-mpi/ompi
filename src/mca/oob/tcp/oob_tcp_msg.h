@@ -13,7 +13,7 @@
 #include "mca/oob/tcp/oob_tcp_peer.h"
 #include "mca/oob/oob.h"
 #include <errno.h>
-
+struct mca_oob_tcp_peer_t;
 /**
  * describes each message being progressed.
  */
@@ -29,7 +29,7 @@ struct mca_oob_tcp_msg_t {
     mca_oob_callback_fn_t msg_cbfunc; /**< the callback function for the send/recieve */    
     void *msg_cbdata;                 /**< the data for the callback fnuction */
     bool  msg_complete;               /**< whether the message is done sending or not */
-    struct mca_oob_tcp_peer_t *msg_peer; /**< the peer it belongs to */
+    ompi_process_name_t * msg_peer;   /**< the name of the peer */
     ompi_mutex_t msg_lock;            /**< lock for the condition variable */
     ompi_condition_t msg_condition;   /**< the message condition */
 };
@@ -56,7 +56,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
 #define MCA_OOB_TCP_MSG_RETURN(msg) \
     { \
     /* frees the iovec allocated during the send/recieve */ \
-    free(msg->msg_iov); \
+    if(NULL != msg->msg_iov) free(msg->msg_iov); \
     OMPI_FREE_LIST_RETURN(&mca_oob_tcp_module.tcp_msgs, (ompi_list_item_t*)msg); \
     }
 
@@ -72,9 +72,10 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* size);
  *  Signal that a message has completed. Wakes up any pending threads (for blocking send)
  *  or invokes callbacks for non-blocking case.
  *  @param  msg (IN)   Message send/recv that has completed.
+ *  @param  peer (IN)  The peer the send/recieve was from
  *  @retval OMPI_SUCCESS or error code on failure.
  */
-int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_peer_t * peer);
+int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, ompi_process_name_t * peer);
 
 /**
  *  Called asynchronously to progress sending a message from the event library thread.

@@ -6,15 +6,14 @@
 /*
 * Similiar to unix recv(2)
 *
-* @param peer (IN)    Opaque name of peer process or OOB_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or MCA_OOB_BASE_ANY for wildcard receive.
 * @param msg (IN)     Array of iovecs describing user buffers and lengths.
 * @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
 * @param count (IN)   Number of elements in iovec array.
-* @param flags (IN)   May be OOB_PEEK to return up to the number of bytes provided in the
+* @param flags (IN)   May be MCA_OOB_PEEK to return up to the number of bytes provided in the
 *                     iovec array without removing the message from the queue.
 * @return             OMPI error code (<0) on error or number of bytes actually received.
 */
-                                                                                                         
 int mca_oob_recv(ompi_process_name_t* peer, const struct iovec *msg, int count, int flags)
 {
     return(mca_oob.oob_recv(peer, msg, count, flags));
@@ -23,15 +22,14 @@ int mca_oob_recv(ompi_process_name_t* peer, const struct iovec *msg, int count, 
 /*
  * Receive data and convert (if required) to host byte order.
  *
- * @param peer (IN)    Opaque name of peer process or OOB_NAME_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or MCA_OOB_BASE_ANY for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
  * @param count (IN)   Number of elements in iovec array.
- * @param flags (IN)   May be OOB_PEEK to return up to the number of bytes provided in the
+ * @param flags (IN)   May be MCA_OOB_PEEK to return up to the number of bytes provided in the
  *                     iovec array without removing the message from the queue.
  * @return             OMPI error code (<0) on error or number of bytes actually received.
  */
-
 int mca_oob_recv_ntoh(ompi_process_name_t* peer, const struct iovec *msg,
                       const mca_oob_base_type_t *types, int count, int flags)
 {
