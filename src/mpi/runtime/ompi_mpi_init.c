@@ -153,14 +153,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	goto error;
     }
 
-    /*
-     *  Register my process info with my replica.
-     */
-/*     if (OMPI_SUCCESS != (ret = ompi_rte_register())) { */
-/* 	error = "ompi_rte_init: failed in ompi_rte_register()\n"; */
-/* 	goto error; */
-/*     } */
-
 
     /* finalize the rte startup */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&allow_multi_user_threads,
@@ -169,6 +161,14 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /*
+     *  Register my process info with my replica. Note that this must be done
+     *  after the rte init is completed.
+     */
+    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
+        error = "ompi_rte_init: failed in ompi_rte_register()\n";
+        goto error;
+    } 
 
     /* Once we've joined the RTE, see if any MCA parameters were
        passed to the MPI level */
