@@ -175,7 +175,7 @@ static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
 #endif  /* __GNU__ */
 
 extern conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED];
-
+extern int32_t ompi_ddt_external32_init( void );
 extern void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
                                  const dt_elem_desc_t* pDesc, const char* name );
 #define SAVE_STACK( PSTACK, INDEX, COUNT, DISP, END_LOOP) \

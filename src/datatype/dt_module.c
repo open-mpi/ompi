@@ -459,6 +459,7 @@ int ompi_ddt_init( void )
     }
 #endif  /* VERBOSE */
 
+    ompi_ddt_external32_init();
     return OMPI_SUCCESS;
 }
 

@@ -182,6 +182,7 @@ OMPI_DECLSPEC int32_t ompi_ddt_copy_content_same_ddt( const dt_desc_t* pData, in
                                                       char* pDestBuf, const char* pSrcBuf );
 
 OMPI_DECLSPEC int32_t ompi_ddt_optimize_short( dt_desc_t* pData, int32_t count, dt_type_desc_t* pTypeDesc );
+OMPI_DECLSPEC const ompi_datatype_t* ompi_ddt_match_size( int size, uint16_t datakind, uint16_t datalang );
 
 typedef int32_t (*conversion_fct_t)( uint32_t count,
                                      const void* from, uint32_t from_len, long from_extent,
