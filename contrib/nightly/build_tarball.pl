@@ -28,8 +28,8 @@ my $sha1_checksums = "sha1sums.txt";
 my $max_log_len = 100;
 
 # email subjects
-my $success_subject = "Build success (\@version@)";
-my $fail_subject = "=== BUILD FAILURE (\@version@) ===";
+my $success_subject = "Open MPI: Build success (\@version@)";
+my $fail_subject = "Open MPI: === BUILD FAILURE (\@version@) ===";
 
 # max number of snapshots to keep downloaded
 my $max_snapshots = 3;
@@ -582,6 +582,7 @@ foreach my $dir (qw(downloads)) {
 if ($url_arg) {
     chdir("downloads");
 
+    unlink($latest_name);
     do_command(1, "$download $url_arg/$latest_name");
     test_abort("Could not download latest snapshot number -- aborting")
         if (! -f $latest_name);
