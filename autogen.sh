@@ -7,7 +7,7 @@
 # information, see the LICENSE file in the top level directory of the
 # LAM/MPI source distribution.
 #
-# $Id: autogen.sh,v 1.1 2003/11/22 16:36:20 jsquyres Exp $
+# $Id: autogen.sh,v 1.2 2003/11/22 16:40:48 jsquyres Exp $
 #
 # This script is run on developer copies of LAM/MPI -- *not*
 # distribution tarballs.
@@ -109,7 +109,7 @@ find_and_delete() {
 # Main
 ##########################################################################
 
-if test -f VERSION -a -f configure.ac -a -f src/mpi/datatype/get_name.c ; then
+if test -f VERSION -a -f configure.ac -a -f src/mpi/datatype/d_get_name.c ; then
     bad=0
 else
     cat <<EOF
