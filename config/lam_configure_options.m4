@@ -129,13 +129,13 @@ fi
 AC_MSG_CHECKING([if want Fortran 90 bindings])
 AC_ARG_ENABLE(f90, 
     AC_HELP_STRING([--enable-f90],
-                   [enable f90 MPI bindings (default: disabled)]))
-if test "$enable_f90" != "yes"; then
-    AC_MSG_RESULT([no])
-    LAM_WANT_F90_BINDINGS=0
-else
+                   [enable f90 MPI bindings (default: enabled)]))
+if test "$enable_f90" != "no"; then
     AC_MSG_RESULT([yes])
     LAM_WANT_F90_BINDINGS=1
+else
+    AC_MSG_RESULT([no])
+    LAM_WANT_F90_BINDINGS=0
 fi
 
 

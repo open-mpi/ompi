@@ -20,23 +20,29 @@ AC_DEFINE_UNQUOTED(LAM_CXX, "$CXX", [LAM underlying C++ compiler])
 # Do we want debugging?
 
 if test "$WANT_DEBUG" = "1"; then
-    if test "$GXX" = "yes"; then
-	add="-g -Wall -Wundef -Wno-long-long"
-	add="$add -Wmissing-prototypes -Wstrict-prototypes"
+    CXXFLAGS="$CFLAGS -g"
+    LAM_UNIQ(CXXFLAGS)
+    AC_MSG_WARN([-g has been added to CXXFLAGS (--enable-debug)])
+fi
 
-        # see if -Wno-long-double works...
-        CXXFLAGS_orig="$CXXFLAGS"
-        CXXFLAGS="$CXXFLAGS -Wno-long-double"
-	AC_LANG_PUSH(C++)
-        AC_TRY_COMPILE([], [], add="$add -Wno-long-double")
-	AC_LANG_POP
-        CXXFLAGS="$CXXFLAGS_orig"
-    else
-	add="-g"
-    fi
+LAM_CXXFLAGS_BEFORE_PICKY="$CXXFLAGS"
+if test "$GCC" = "yes" -a "$WANT_PICKY_COMPILER" = 1; then
+    add="-g -Wall -Wundef -Wno-long-long"
+    add="$add -Wmissing-prototypes -Wstrict-prototypes"
+
+    # see if -Wno-long-double works...
+    AC_LANG_PUSH(C++)
+    CXXFLAGS_orig="$CXXFLAGS"
+    CXXFLAGS="$CXXFLAGS -Wno-long-double"
+    AC_TRY_COMPILE([], [], add="$add -Wno-long-double")
+    CXXFLAGS="$CXXFLAGS_orig"
+    AC_LANG_POP(C++)
+
+    add="$add -Werror-implicit-function-declaration "
+
     CXXFLAGS="$CXXFLAGS $add"
     LAM_UNIQ(CXXFLAGS)
-    AC_MSG_WARN([$add has been added to CXXFLAGS (--with-debug)])
+    AC_MSG_WARN([$add has been added to CXXFLAGS (developer copy)])
     unset add
 fi
 
