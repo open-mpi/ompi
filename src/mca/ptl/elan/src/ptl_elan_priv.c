@@ -163,7 +163,7 @@ mca_ptl_elan_last_frag_ack (struct mca_ptl_elan_module_t *ptl,
     } else {
 	LOG_PRINT(PTL_ELAN_DEBUG_ACK,
 		"PML will return frag to list %p, length %d\n", 
-		&ptl->queue->tx_desc_free,
+		(void*)&ptl->queue->tx_desc_free,
 		ptl->queue->tx_desc_free.super.ompi_list_length);
     }
 
@@ -191,9 +191,9 @@ mca_ptl_elan_ctrl_frag (struct mca_ptl_elan_module_t *ptl,
      req->req_peer_size  = header->hdr_ack.hdr_dst_size;
 
      LOG_PRINT(PTL_ELAN_DEBUG_ACK, "desc %p remote req %p addr %p, len %d\n", 
-	    desc,
+	    (void*)desc,
 	    req->req_peer_match.pval, 
-	    req->req_peer_addr.pval, 
+	    (void*)req->req_peer_addr.pval, 
 	    req->req_peer_size);
 
      /* XXX: This sort of synchronized fragment release will lead
@@ -262,10 +262,10 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 
     LOG_PRINT(PTL_ELAN_DEBUG_SEND, 
 	    "req %p frag %p dst_ptr %p addr %p offset %d \n",
-	    pml_req,
-	    hdr->hdr_frag.hdr_src_ptr.pval,
-	    hdr->hdr_frag.hdr_dst_ptr.pval,
-	    pml_req->req_base.req_addr, offset);
+	    (void*)pml_req,
+	    (void*)hdr->hdr_frag.hdr_src_ptr.pval,
+	    (void*)hdr->hdr_frag.hdr_dst_ptr.pval,
+	    (void*)pml_req->req_base.req_addr, offset);
 
     /* initialize convertor */
     if(size_in > 0) {
@@ -300,8 +300,8 @@ mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
 			 __FILE__, __LINE__);
             return;
 	}
-#endif
         size_out = max_data;
+#endif
     } else {
 	size_out = size_in;
     }
@@ -731,7 +731,7 @@ mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
 
     LOG_PRINT(PTL_ELAN_DEBUG_NONE,
 	    "rail %p ctx %p ready %p readyWord %p\n",
-	    rail, ctx, ready, readyWord);
+	    (void*)rail, (void*)ctx, (void*)ready, (void*)readyWord);
 
     /* Poll for usec (at least one), then go to sleep. */
     if (elan4_pollevent_word(ctx, readyWord, usecs)) {
@@ -739,7 +739,7 @@ mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
     }
 
     LOG_PRINT(PTL_ELAN_DEBUG_NONE,
-	    "eventWord(%p) TIMED_OUT: ready %lx [%d.%x] \n",
+	    "eventWord TIMED_OUT: ready %lx [%d.%x] \n",
 	    ready, 
 	    EVENT_COUNT(((EVENT32 *)(ready))),
 	    EVENT_TYPE(((EVENT32 *)(ready))));
@@ -756,7 +756,7 @@ mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
 
 	LOG_PRINT(PTL_ELAN_DEBUG_NONE,
 		"eventWord(%p): es %p cookie %x cmdq %p ecmdq %p\n",
-		ready, es, es->es_cookie, es->es_cmdq, es->es_ecmdq);
+		(void*)ready, (void*)es, es->es_cookie, (void*)es->es_cmdq, (void*)es->es_ecmdq);
 	WAITEVENT_WORD(ctx, es->es_cmdq, es->es_ecmdq, es->es_cmdBlk, 
 		es->es_cookie, ready, readyWord, usecs);
 
@@ -984,7 +984,7 @@ mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl,
     hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed - recv_len;
 
     LOG_PRINT(PTL_ELAN_DEBUG_ACK, "desc %p hdr %p packed %d received %d\n", 
-	    desc, hdr, request->req_bytes_packed, recv_len);
+	    (void*)desc, (void*)hdr, request->req_bytes_packed, recv_len);
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
 
@@ -1129,7 +1129,7 @@ ptl_elan_recv_comp:
 		E4_EVENT_INIT_VALUE (-32, E4_EVENT_WRITE,
 		    E4_EVENT_DTYPE_LONG, 0), 
 		MAIN2ELAN (ctx, (void *) &rxq->qr_doneWord),
-		0xfeedfacedeadbeef);
+		0xfeedfacedeadbeefLL);
 	elan4_flush_cmdq_reorder (rxq->qr_cmdq);
     }
     OMPI_UNLOCK (&queue->rx_lock);
@@ -1188,7 +1188,7 @@ ptl_elan_send_comp:
 	}
 	basic = (ompi_ptl_elan_base_desc_t*)frag->desc;
 
-	LOG_PRINT(PTL_ELAN_DEBUG_SEND, "frag %p desc %p \n", frag, basic);
+	LOG_PRINT(PTL_ELAN_DEBUG_SEND, "frag %p desc %p \n", (void*)frag, (void*)basic);
 
 	/* XXX: please reset additional chained event for put/get desc */
 	mca_ptl_elan_send_desc_done (frag, 
@@ -1221,7 +1221,7 @@ ptl_elan_send_comp:
 		E4_EVENT_INIT_VALUE (-32, E4_EVENT_WRITE,
 		    E4_EVENT_DTYPE_LONG, 0), 
 		MAIN2ELAN (ctx, (void *) &rxq->qr_doneWord),
-		0xfeedfacedeadbeef);
+		0xfeedfacedeadbeefLL);
 	elan4_flush_cmdq_reorder (rxq->qr_cmdq);
     }
     OMPI_UNLOCK (&comp->rx_lock);
@@ -1309,7 +1309,7 @@ ptl_elan_recv_comp:
 	}
 	basic = (ompi_ptl_elan_base_desc_t*)frag->desc;
 
-	LOG_PRINT(PTL_ELAN_DEBUG_SEND, "frag %p desc %p \n", frag, basic);
+	LOG_PRINT(PTL_ELAN_DEBUG_SEND, "frag %p desc %p \n", (void*)frag, (void*)basic);
 
 	/* XXX: please reset additional chained event for put/get desc */
 	mca_ptl_elan_send_desc_done (frag, 
@@ -1377,7 +1377,7 @@ ptl_elan_recv_comp:
 		E4_EVENT_INIT_VALUE (-32, E4_EVENT_WRITE,
 		    E4_EVENT_DTYPE_LONG, 0), 
 		MAIN2ELAN (ctx, (void *) &rxq->qr_doneWord),
-		0xfeedfacedeadbeef);
+		0xfeedfacedeadbeefLL);
 	elan4_flush_cmdq_reorder (rxq->qr_cmdq);
     }
     OMPI_UNLOCK (&queue->rx_lock);
