@@ -70,7 +70,7 @@ mca_pcm_proc_t *mca_pcm_cofs_procs = NULL;
 size_t mca_pcm_cofs_nprocs = 0;
 
 int
-mca_pcm_cofs_open(lam_cmd_line_t *cmd)
+mca_pcm_cofs_open(void)
 {
   return LAM_SUCCESS;
 }

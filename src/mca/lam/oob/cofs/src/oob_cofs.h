@@ -11,7 +11,7 @@
 /*
  * Module open / close
  */
-int mca_oob_cofs_open(lam_cmd_line_t *cmd);
+int mca_oob_cofs_open(void);
 int mca_oob_cofs_close(void);
 
 

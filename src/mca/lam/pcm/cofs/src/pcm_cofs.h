@@ -11,7 +11,7 @@
 /*
  * Module open / close
  */
-int mca_pcm_cofs_open(lam_cmd_line_t *cmd);
+int mca_pcm_cofs_open(void);
 int mca_pcm_cofs_close(void);
 
 /*
