@@ -107,9 +107,9 @@ typedef mca_topo_comm_1_0_0_t mca_topo_comm_t;
  * ***********************************************************************
  */
 
-typedef int (*mca_topo_base_init_1_0_0_fn_t) (void);
-/*                    (MPI_Comm comm,
-                     mca_topo_1_0_0_t **new_topo); */
+typedef int (*mca_topo_base_init_1_0_0_fn_t) 
+                    (MPI_Comm comm,
+                     const struct mca_topo_1_0_0_t **new_topo); 
 
 typedef int (*mca_topo_base_cart_coords_fn_t) 
                     (MPI_Comm comm, 
