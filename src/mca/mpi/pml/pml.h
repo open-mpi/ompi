@@ -45,9 +45,6 @@ typedef struct mca_pml_1_0_0_t * (*mca_pml_base_module_init_fn_t)(
     int* min_thread, 
     int* max_thread);
 
-typedef int (*mca_pml_base_module_finalize_fn_t)(void);
-
-
 /**
  * PML module version and interface functions.
  */
@@ -56,7 +53,6 @@ struct mca_pml_base_module_1_0_0_t {
    mca_base_module_t pmlm_version;
    mca_base_module_data_1_0_0_t pmlm_data;
    mca_pml_base_module_init_fn_t pmlm_init;
-   mca_pml_base_module_finalize_fn_t pmlm_finalize;
 };
 typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
 typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;
