@@ -12,8 +12,6 @@ AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include \
 
 SUBDIRS = src tests
 
-EXTRA_DIST = VERSION
-
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
