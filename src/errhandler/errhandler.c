@@ -81,8 +81,6 @@ ompi_errhandler_t ompi_mpi_errors_return = {
  */
 int ompi_errhandler_init(void)
 {
-  int ret_val;
-  
   /* initialize ompi_errhandler_f_to_c_table */
 
   ompi_errhandler_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
