@@ -39,6 +39,9 @@ typedef enum {
 
 typedef struct ompi_buffer_internal_t* ompi_buffer_t;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * This function creates a managed buffer
@@ -80,9 +83,6 @@ typedef struct ompi_buffer_internal_t* ompi_buffer_t;
 
     int ompi_buffer_free (ompi_buffer_t buffer);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
         
 
 /*

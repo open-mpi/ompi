@@ -20,6 +20,7 @@ headers = \
     numtostr.h \
     output.h \
     path.h \
+    pack.h \
     sys_info.h \
     printf.h \
     proc_info.h \
@@ -39,6 +40,7 @@ libutil_la_SOURCES = \
     numtostr.c \
     output.c \
     path.c \
+    pack.c \
     printf.c \
     proc_info.c \
     sys_info.c \
