@@ -172,7 +172,7 @@ typedef int (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
                                         unsigned int* inputCount,
                                         unsigned int* max_data,
                                         int* freeAfter );
-typedef void*(*memalloc_fct_t)( unsigned int* pLength );
+typedef void*(*memalloc_fct_t)( size_t* pLength );
 
 struct ompi_convertor_t {
     ompi_object_t           super;    /**< basic superclass */
