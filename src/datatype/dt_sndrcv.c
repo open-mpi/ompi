@@ -57,14 +57,11 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
    if (sdtype == rdtype) {
       max_data = ( scount < rcount ? scount : rcount );
       ompi_ddt_copy_content_same_ddt(rdtype, max_data, (char*)rbuf, (char*)sbuf);
-      if( scount > rcount )
-         return MPI_ERR_TRUNCATE;
-      return MPI_SUCCESS;
+      return ((scount > rcount) ? MPI_ERR_TRUNCATE : MPI_SUCCESS);
    }
 
    /* If receive packed. */
-
-   else if (rdtype == MPI_PACKED) {
+   if (rdtype == MPI_PACKED) {
       send_convertor = OBJ_NEW(ompi_convertor_t);
       ompi_convertor_init_for_send( send_convertor, 0, sdtype, scount, sbuf, 0, NULL );
 
@@ -74,14 +71,12 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
       max_data = ( iov.iov_len > (scount * sdtype->size) ? (scount * sdtype->size) : iov.iov_len );
 
       err = ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data, &freeAfter );
-      if( max_data < (uint32_t)rcount )
-         err = MPI_ERR_TRUNCATE;
       OBJ_RELEASE( send_convertor );
+      return ((max_data < (uint32_t)rcount) ? MPI_ERR_TRUNCATE : MPI_SUCCESS);
    }
 
    /* If send packed. */
-
-   else if (sdtype == MPI_PACKED) {
+   if (sdtype == MPI_PACKED) {
       recv_convertor = OBJ_NEW(ompi_convertor_t);
       ompi_convertor_init_for_recv( recv_convertor, 0, rdtype, rcount, rbuf, 0, NULL );
 
@@ -94,6 +89,7 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
       if( scount > (int32_t)(rcount * rdtype->size) )
          err = MPI_ERR_TRUNCATE;
       OBJ_RELEASE( recv_convertor );
+      return err;
    }
 
    iov.iov_len = length = 64 * 1024;
