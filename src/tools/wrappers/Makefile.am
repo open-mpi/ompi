@@ -4,7 +4,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-libs = $(LIBLAM_LA)
+libs = $(top_builddir)/src/libmpi.la
 
 # This is ugly, but we need it so that people can change things at
 # "make" time (e.g., "make sysconfdir=/foo/bar all") as documented in
