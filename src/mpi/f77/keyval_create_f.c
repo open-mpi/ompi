@@ -32,7 +32,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_KEYVAL_CREATE,
                            pmpi_keyval_create_,
                            pmpi_keyval_create__,
                            pmpi_keyval_create_f,
-                           (MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr),
+                           (void *copy_fn, void *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr),
                            (copy_fn, delete_fn, keyval, extra_state, ierr) )
 #endif
 
@@ -49,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_KEYVAL_CREATE,
                            mpi_keyval_create_,
                            mpi_keyval_create__,
                            mpi_keyval_create_f,
-                           (MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr),
+                           (void *copy_fn, void *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr),
                            (copy_fn, delete_fn, keyval, extra_state, ierr) )
 #endif
 
@@ -60,7 +60,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_KEYVAL_CREATE,
 
 static const char FUNC_NAME[] = "MPI_keyval_create_f";
 
-void mpi_keyval_create_f(MPI_Fint *copy_attr_fn, MPI_Fint *delete_attr_fn,
+void mpi_keyval_create_f(void *copy_attr_fn, void *delete_attr_fn,
 			 MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr)
 {
     int ret, c_err;

@@ -188,7 +188,7 @@ void mpi_graph_neighbors_count_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *nneig
 void mpi_graph_neighbors_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxneighbors, MPI_Fint *neighbors, MPI_Fint *ierr);
 void mpi_graphdims_get_f(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *nedges, MPI_Fint *ierr);
 void mpi_grequest_complete_f(MPI_Fint *request, MPI_Fint *ierr);
-void mpi_grequest_start_f(MPI_Fint *query_fn, MPI_Fint *free_fn, MPI_Fint *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr);
+void mpi_grequest_start_f(void *query_fn, void *free_fn, void *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr);
 void mpi_group_compare_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *result, MPI_Fint *ierr);
 void mpi_group_difference_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr);
 void mpi_group_excl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr);
@@ -222,7 +222,7 @@ void mpi_irsend_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest
 void mpi_isend_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
 void mpi_issend_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
 void mpi_is_thread_main_f(MPI_Fint *flag, MPI_Fint *ierr);
-void mpi_keyval_create_f(MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_keyval_create_f(void *copy_fn, void *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_keyval_free_f(MPI_Fint *keyval, MPI_Fint *ierr);
 void mpi_lookup_name_f(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr);
 void mpi_op_create_f(void *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
@@ -241,7 +241,7 @@ void mpi_recv_init_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *s
 void mpi_recv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr);
 void mpi_reduce_f(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr);
 void mpi_reduce_scatter_f(char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr);
-void mpi_register_datarep_f(char *datarep, MPI_Fint *read_conversion_fn, MPI_Fint *write_conversion_fn, MPI_Fint *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr);
+void mpi_register_datarep_f(char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr);
 void mpi_request_free_f(MPI_Fint *request, MPI_Fint *ierr);
 void mpi_request_get_status_f(MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr);
 void mpi_rsend_f(char *ibuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr);
@@ -492,7 +492,7 @@ void mpi_graph_neighbors_count(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *nneighb
 void mpi_graph_neighbors(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxneighbors, MPI_Fint *neighbors, MPI_Fint *ierr);
 void mpi_graphdims_get(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *nedges, MPI_Fint *ierr);
 void mpi_grequest_complete(MPI_Fint *request, MPI_Fint *ierr);
-void mpi_grequest_start(MPI_Fint *query_fn, MPI_Fint *free_fn, MPI_Fint *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr);
+void mpi_grequest_start(void *query_fn, void *free_fn, void *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr);
 void mpi_group_compare(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *result, MPI_Fint *ierr);
 void mpi_group_difference(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr);
 void mpi_group_excl(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr);
@@ -526,7 +526,7 @@ void mpi_irsend(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, 
 void mpi_isend(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
 void mpi_issend(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
 void mpi_is_thread_main(MPI_Fint *flag, MPI_Fint *ierr);
-void mpi_keyval_create(MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_keyval_create(void *copy_fn, void *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_keyval_free(MPI_Fint *keyval, MPI_Fint *ierr);
 void mpi_lookup_name(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr);
 void mpi_op_create(void *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
@@ -545,7 +545,7 @@ void mpi_recv_init(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *sou
 void mpi_recv(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr);
 void mpi_reduce(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr);
 void mpi_reduce_scatter(char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr);
-void mpi_register_datarep(char *datarep, MPI_Fint *read_conversion_fn, MPI_Fint *write_conversion_fn, MPI_Fint *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr);
+void mpi_register_datarep(char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr);
 void mpi_request_free(MPI_Fint *request, MPI_Fint *ierr);
 void mpi_request_get_status(MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr);
 void mpi_rsend(char *ibuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr);
@@ -793,7 +793,7 @@ void mpi_graph_neighbors_count_(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *nneigh
 void mpi_graph_neighbors_(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxneighbors, MPI_Fint *neighbors, MPI_Fint *ierr);
 void mpi_graphdims_get_(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *nedges, MPI_Fint *ierr);
 void mpi_grequest_complete_(MPI_Fint *request, MPI_Fint *ierr);
-void mpi_grequest_start_(MPI_Fint *query_fn, MPI_Fint *free_fn, MPI_Fint *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr);
+void mpi_grequest_start_(void *query_fn, void *free_fn, void *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr);
 void mpi_group_compare_(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *result, MPI_Fint *ierr);
 void mpi_group_difference_(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr);
 void mpi_group_excl_(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr);
@@ -827,7 +827,7 @@ void mpi_irsend_(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest,
 void mpi_isend_(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
 void mpi_issend_(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
 void mpi_is_thread_main_(MPI_Fint *flag, MPI_Fint *ierr);
-void mpi_keyval_create_(MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_keyval_create_(void *copy_fn, void *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_keyval_free_(MPI_Fint *keyval, MPI_Fint *ierr);
 void mpi_lookup_name_(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr);
 void mpi_op_create_(void *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
@@ -846,7 +846,7 @@ void mpi_recv_init_(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *so
 void mpi_recv_(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr);
 void mpi_reduce_(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr);
 void mpi_reduce_scatter_(char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr);
-void mpi_register_datarep_(char *datarep, MPI_Fint *read_conversion_fn, MPI_Fint *write_conversion_fn, MPI_Fint *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr);
+void mpi_register_datarep_(char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr);
 void mpi_request_free_(MPI_Fint *request, MPI_Fint *ierr);
 void mpi_request_get_status_(MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr);
 void mpi_rsend_(char *ibuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr);
@@ -1094,7 +1094,7 @@ void mpi_graph_neighbors_count__(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *nneig
 void mpi_graph_neighbors__(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxneighbors, MPI_Fint *neighbors, MPI_Fint *ierr);
 void mpi_graphdims_get__(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *nedges, MPI_Fint *ierr);
 void mpi_grequest_complete__(MPI_Fint *request, MPI_Fint *ierr);
-void mpi_grequest_start__(MPI_Fint *query_fn, MPI_Fint *free_fn, MPI_Fint *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr);
+void mpi_grequest_start__(void *query_fn, void *free_fn, void *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr);
 void mpi_group_compare__(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *result, MPI_Fint *ierr);
 void mpi_group_difference__(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr);
 void mpi_group_excl__(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr);
@@ -1128,7 +1128,7 @@ void mpi_irsend__(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest
 void mpi_isend__(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
 void mpi_issend__(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
 void mpi_is_thread_main__(MPI_Fint *flag, MPI_Fint *ierr);
-void mpi_keyval_create__(MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
+void mpi_keyval_create__(void *copy_fn, void *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
 void mpi_keyval_free__(MPI_Fint *keyval, MPI_Fint *ierr);
 void mpi_lookup_name__(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr);
 void mpi_op_create__(void *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
@@ -1147,7 +1147,7 @@ void mpi_recv_init__(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *s
 void mpi_recv__(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr);
 void mpi_reduce__(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr);
 void mpi_reduce_scatter__(char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr);
-void mpi_register_datarep__(char *datarep, MPI_Fint *read_conversion_fn, MPI_Fint *write_conversion_fn, MPI_Fint *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr);
+void mpi_register_datarep__(char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr);
 void mpi_request_free__(MPI_Fint *request, MPI_Fint *ierr);
 void mpi_request_get_status__(MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr);
 void mpi_rsend__(char *ibuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr);
@@ -1395,7 +1395,7 @@ void MPI_GRAPH_NEIGHBORS_COUNT(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *nneighb
 void MPI_GRAPH_NEIGHBORS(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxneighbors, MPI_Fint *neighbors, MPI_Fint *ierr);
 void MPI_GRAPHDIMS_GET(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *nedges, MPI_Fint *ierr);
 void MPI_GREQUEST_COMPLETE(MPI_Fint *request, MPI_Fint *ierr);
-void MPI_GREQUEST_START(MPI_Fint *query_fn, MPI_Fint *free_fn, MPI_Fint *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr);
+void MPI_GREQUEST_START(void *query_fn, void *free_fn, void *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr);
 void MPI_GROUP_COMPARE(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *result, MPI_Fint *ierr);
 void MPI_GROUP_DIFFERENCE(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr);
 void MPI_GROUP_EXCL(MPI_Fint *group, MPI_Fint *n, MPI_Fint *ranks, MPI_Fint *newgroup, MPI_Fint *ierr);
@@ -1429,7 +1429,7 @@ void MPI_IRSEND(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, 
 void MPI_ISEND(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
 void MPI_ISSEND(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr);
 void MPI_IS_THREAD_MAIN(MPI_Fint *flag, MPI_Fint *ierr);
-void MPI_KEYVAL_CREATE(MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
+void MPI_KEYVAL_CREATE(void *copy_fn, void *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr);
 void MPI_KEYVAL_FREE(MPI_Fint *keyval, MPI_Fint *ierr);
 void MPI_LOOKUP_NAME(char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr);
 void MPI_OP_CREATE(void *function, MPI_Fint *commute, MPI_Fint *op, MPI_Fint *ierr);
@@ -1448,7 +1448,7 @@ void MPI_RECV_INIT(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *sou
 void MPI_RECV(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr);
 void MPI_REDUCE(char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr);
 void MPI_REDUCE_SCATTER(char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr);
-void MPI_REGISTER_DATAREP(char *datarep, MPI_Fint *read_conversion_fn, MPI_Fint *write_conversion_fn, MPI_Fint *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr);
+void MPI_REGISTER_DATAREP(char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr);
 void MPI_REQUEST_FREE(MPI_Fint *request, MPI_Fint *ierr);
 void MPI_REQUEST_GET_STATUS(MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr);
 void MPI_RSEND(char *ibuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr);
