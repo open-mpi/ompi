@@ -21,6 +21,7 @@ main(int argc, char *argv[])
     pid_t pid;
     int i;
     int ret;
+    int jobid;
 
     ompi_init(argc, argv);
 
@@ -30,7 +31,7 @@ main(int argc, char *argv[])
     sched = OBJ_NEW(ompi_rte_node_schedule_t);
 
     /* recv_schedule wants an already initialized ompi_list_t */
-    ret = mca_pcm_base_recv_schedule(stdin, sched,
+    ret = mca_pcm_base_recv_schedule(stdin, &jobid, sched,
                                      sched->nodelist);
     if (ret != OMPI_SUCCESS) {
         fprintf(stderr, "Failure in receiving schedule information\n");

@@ -28,10 +28,12 @@ extern "C" {
 
 
     int mca_pcm_base_send_schedule(FILE *fd, 
+                                   int jobid,
                                    ompi_rte_node_schedule_t *sched,
                                    ompi_list_t *nodelist);
 
     int  mca_pcm_base_recv_schedule(FILE *fd, 
+                                    int *jobid,
                                     ompi_rte_node_schedule_t *sched,
                                     ompi_list_t *nodelist);
 

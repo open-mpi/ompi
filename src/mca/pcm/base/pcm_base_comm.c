@@ -17,6 +17,7 @@
 
 int
 mca_pcm_base_send_schedule(FILE *fp, 
+                           int jobid,
                           ompi_rte_node_schedule_t *sched,
                           ompi_list_t *nodelist)
 {
@@ -27,6 +28,9 @@ mca_pcm_base_send_schedule(FILE *fp,
 
     fprintf(fp, START_KEY);
     fprintf(fp, "%d\n", PROTOCOL_VERSION);
+
+    /* JOBID */
+    fprintf(fp, "%d\n", jobid);
 
     /* ARGC */
     fprintf(fp, "%d\n", sched->argc);
@@ -131,13 +135,26 @@ get_key(FILE *fp, const char *key)
 
 
 static int
+get_int(FILE *fp, int *num)
+{
+    int ret;
+
+    ret = fscanf(fp, "%d\n", num);
+    if (ret != 1) return OMPI_ERROR;
+
+    return OMPI_SUCCESS;
+}
+
+
+static int
 get_check_version(FILE *fp)
 {
     int ret;
     int ver;
 
-    ret = fscanf(fp, "%d\n", &ver);
-    if (ret != 1) return OMPI_ERROR;
+    ret = get_int(fp, &ver);
+    if (OMPI_SUCCESS != ret) return ret;
+
     if (ver != PROTOCOL_VERSION) return OMPI_ERROR;
 
     return OMPI_SUCCESS;
@@ -152,8 +169,8 @@ get_string(FILE *fp, char **strp)
     char *str;
     size_t str_read;;
 
-    ret = fscanf(fp, "%d ", &len);
-    if (ret != 1) return OMPI_ERROR;
+    ret = get_int(fp, &len);
+    if (OMPI_SUCCESS != ret) return ret;
 
     str = (char*) malloc(sizeof(char) * (len + 2));
     if (NULL == str) return OMPI_ERROR;
@@ -344,6 +361,7 @@ get_nodelist(FILE *fp, ompi_list_t *nodelist)
 
 int 
 mca_pcm_base_recv_schedule(FILE *fp, 
+                           int *jobid,
                           ompi_rte_node_schedule_t *sched,
                           ompi_list_t *nodelist)
 {
@@ -354,23 +372,27 @@ mca_pcm_base_recv_schedule(FILE *fp,
     if (OMPI_SUCCESS != ret) return ret;
 
     /* check our version */
-    get_check_version(fp);
+    ret = get_check_version(fp);
+    if (OMPI_SUCCESS != ret) return ret;
+
+    /* get our jobid */
+    ret = get_int(fp, jobid);
     if (OMPI_SUCCESS != ret) return ret;
 
     /* get argc */
-    get_argv_array(fp, &(sched->argc), &(sched->argv));
+    ret = get_argv_array(fp, &(sched->argc), &(sched->argv));
     if (OMPI_SUCCESS != ret) return ret;
 
     /* get env */
-    get_argv_array(fp, &val, &(sched->env));
+    ret = get_argv_array(fp, &val, &(sched->env));
     if (OMPI_SUCCESS != ret) return ret;
 
     /* get cwd */
-    get_string(fp, &(sched->cwd));
+    ret = get_string(fp, &(sched->cwd));
     if (OMPI_SUCCESS != ret) return ret;
 
     /* get node list */
-    get_nodelist(fp, nodelist);
+    ret = get_nodelist(fp, nodelist);
     if (OMPI_SUCCESS != ret) return ret;
 
     /* make sure we have our end */
