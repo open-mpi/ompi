@@ -107,7 +107,7 @@ int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, const struct iovec* iov, int co
 /**
  *  Called asynchronously to progress sending a message from the event library thread.
  *  @param  msg (IN)   Message send that is in progress. 
- *  @param  sd (IN)    Socket descriptor to use for send.
+ *  @param  peer (IN)  Peer we are sending to.
  *  @retval            Number of bytes copied.
  */
 bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_peer_t * peer);
@@ -115,7 +115,7 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
 /**
  *  Called asynchronously to progress sending a message from the event library thread.
  *  @param  msg (IN)   Message send that is in progress. 
- *  @param  sd (IN)    Socket descriptor to use for send.
+ *  @param  peer (IN)  Peer theat we are recieving from.
  *  @retval bool       Bool flag indicating wether operation has completed.
  */
 
@@ -131,7 +131,7 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
  *  Note - this routine requires the caller to be holding the module lock.
  */
 
-mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(const ompi_process_name_t*, int tag);
+mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(const ompi_process_name_t* name, int tag);
 
 /**
  *  Match name to a posted recv request.
@@ -144,7 +144,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(const ompi_process_name_t*, int ta
  *  Note - this routine requires the caller to be holding the module lock.
  */
 
-mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(const ompi_process_name_t*, int tag, bool peek);
+mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(const ompi_process_name_t* name, int tag, bool peek);
 
 /**
  *  Allocate space for iovec array - if the request number of elements is less than
@@ -152,11 +152,10 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(const ompi_process_name_t*, int ta
  *  allocate count elements.
  *
  *  @param  msg (IN)  Message to allocate array.
+ *  @param  count (IN) the number of iovecs
  *  @return           Array of iovec elements.
  *
  */
-
-
 static inline struct iovec* mca_oob_tcp_msg_iov_alloc(mca_oob_tcp_msg_t* msg, int count)
 {
     if(count <= MCA_OOB_TCP_IOV_MAX) 

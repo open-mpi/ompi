@@ -22,7 +22,7 @@
 
 static int do_recv(mca_ns_base_jobid_t jobid, mca_ns_base_vpid_t procid, const struct iovec* iov, int count, int tag, int flags);
 
-/**
+/*
 *  Similiar to unix send(2).
 *
 * @param peer (IN)   Opaque name of peer process.

@@ -33,23 +33,21 @@ int mca_oob_tcp_close(void);
 mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
 int mca_oob_tcp_finalize(void);
 
-/*
+/**
  * Convert process name from network to host byte order.
  *
  * @param name
  */
-
 #define OMPI_PROCESS_NAME_NTOH(n) \
     n.cellid = ntohl(n.cellid); \
     n.jobid = ntohl(n.jobid); \
     n.vpid = ntohl(n.vpid); 
 
-/*
+/**
  * Convert process name from host to network byte order.
  *
  * @param name
  */
-
 #define OMPI_PROCESS_NAME_HTON(n) \
     n.cellid = htonl(n.cellid); \
     n.jobid = htonl(n.jobid); \
@@ -101,7 +99,7 @@ int mca_oob_tcp_send(
 
 int mca_oob_tcp_recv(
     ompi_process_name_t* peer, 
-    const struct iovec *iov, 
+    const struct iovec * msg, 
     int count, 
     int tag,
     int flags);
@@ -127,7 +125,7 @@ int mca_oob_tcp_recv(
 
 int mca_oob_tcp_send_nb(
     const ompi_process_name_t* peer, 
-    const struct iovec* iov, 
+    const struct iovec* msg, 
     int count,
     int tag,
     int flags, 
@@ -149,7 +147,7 @@ int mca_oob_tcp_send_nb(
 
 int mca_oob_tcp_recv_nb(
     ompi_process_name_t* peer, 
-    const struct iovec* iov, 
+    const struct iovec* msg, 
     int count, 
     int tag,
     int flags,
@@ -177,6 +175,9 @@ struct mca_oob_tcp_component_t {
     ompi_list_t      tcp_msg_recv;         /**< list of recieved messages */
     ompi_mutex_t     tcp_match_lock;       /**< lock held while searching/posting messages */
 };
+/**
+ * Convenience Typedef
+ */
 typedef struct mca_oob_tcp_component_t mca_oob_tcp_component_t;
 
 extern mca_oob_tcp_component_t mca_oob_tcp_component;

@@ -316,8 +316,8 @@ int mca_oob_tcp_finalize(void)
                  errno);
         }
         /*** temporarily disable the removal of the revieve event
-         * to prevent segfaults
-         * ompi_event_del(&mca_oob_tcp_component.tcp_recv_event); */
+         * to prevent segfaults */
+         ompi_event_del(&mca_oob_tcp_component.tcp_recv_event); 
         if(0 != close(mca_oob_tcp_component.tcp_listen_sd)) {
             ompi_output(0, "mca_oob_tcp_finalize: error closing listen socket. errno=%d", errno);
         }
@@ -332,7 +332,7 @@ int mca_oob_tcp_finalize(void)
     return OMPI_SUCCESS;
 }
 
-/**
+/*
 * Compare two process names for equality.
 *
 * @param  n1  Process name 1.
