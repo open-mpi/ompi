@@ -28,20 +28,22 @@ int MPI_Pack_size(int incount, MPI_Datatype datatype, MPI_Comm comm,
     ompi_convertor_t *local_convertor;
 
     if (MPI_PARAM_CHECK) {
-      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if (MPI_COMM_NULL == comm) {
-	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
-      } else if (NULL == size) {
-	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-      } else if (MPI_DATATYPE_NULL == datatype) {
-	return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
-      }
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (MPI_COMM_NULL == comm) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
+                                          FUNC_NAME);
+        } else if (NULL == size) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
+        } else if (MPI_DATATYPE_NULL == datatype) {
+            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TYPE, FUNC_NAME);
+        }
     }
 
+    local_convertor = OBJ_NEW(ompi_convertor_t);
     ompi_convertor_init_for_send(local_convertor, 0, datatype, 
-				incount, NULL, 0);
+                                 incount, NULL, 0);
     ret = ompi_convertor_get_packed_size(local_convertor, size);
     OBJ_RELEASE(local_convertor);
 
-    OMPI_ERRHANDLER_RETURN((ret >= 0), comm, MPI_ERR_UNKNOWN, FUNC_NAME);
+    OMPI_ERRHANDLER_RETURN(ret, comm, MPI_ERR_UNKNOWN, FUNC_NAME);
 }
