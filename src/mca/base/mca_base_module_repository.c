@@ -58,7 +58,7 @@ static void release_repository_item(repository_item_t *ri);
 /*
  * Initialize the repository
  */
-int mca_base_module_repository_construct(void)
+int mca_base_module_repository_initialize(void)
 {
   /* Setup internal structures */
 
@@ -205,7 +205,7 @@ static repository_item_t *find_module(const char *type, const char *name)
   for (item = ompi_list_get_first(&repository);
        ompi_list_get_end(&repository) != item;
        item = ompi_list_get_next(item)) {
-    ri = (repository_item_t *) ri;
+    ri = (repository_item_t *) item;
     if (0 == strcmp(ri->ri_type, type) && 
         0 == strcmp(ri->ri_module_struct->mca_module_name, name))
       return ri;
@@ -283,7 +283,7 @@ static void release_repository_item(repository_item_t *ri)
        pointer is no longer valid because it has [potentially] been
        unloaded from memory.  So don't try to use it.  :-) */
 
-    OBJ_DESTRUCT(&di->di_repository_entry->ri_dependencies);
+    OBJ_DESTRUCT(&ri->ri_dependencies);
     ompi_list_remove_item(&repository, (ompi_list_item_t *) ri);
     free(ri);
   }
