@@ -26,12 +26,6 @@ headers = \
         mca_base_param_internal.h \
         mca_base_parse_paramfile_lex.h
 
-# Test program -- to be removed
-
-noinst_PROGRAMS = paramparse
-paramparse_SOURCES = paramparse.c
-paramparse_LDADD = libmca_base.la
-
 # Library
 
 libmca_base_la_SOURCES = \
