@@ -20,6 +20,7 @@ int mca_pml_teg_test(
                 *status = pml_request->req_status;
             if(false == pml_request->req_persistent)
                 MCA_PML_TEG_FREE(requests+i);
+            return OMPI_SUCCESS;
         }
     }
 
