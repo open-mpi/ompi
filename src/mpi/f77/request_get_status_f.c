@@ -46,12 +46,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REQUEST_GET_STATUS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_request_get_status_f(MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr)
+void mpi_request_get_status_f(MPI_Fint *request, MPI_Fint *flag,
+			      MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Status c_status;
     MPI_Request c_req = MPI_Request_f2c( *request ); 
+    OMPI_SINGLE_NAME_DECL(flag);
 
-    *ierr = MPI_Request_get_status( c_req, flag, &c_status );
+    *ierr = OMPI_INT_2_FINT(MPI_Request_get_status(c_req, 
+						   OMPI_SINGLE_NAME_CONVERT(flag),
+						   &c_status));
 
+    OMPI_SINGLE_INT_2_FINT(flag);
     MPI_Status_c2f( &c_status, status );
 }

@@ -46,14 +46,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STATUS_SET_ELEMENTS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_status_set_elements_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr)
+void mpi_status_set_elements_f(MPI_Fint *status, MPI_Fint *datatype, 
+			       MPI_Fint *count, MPI_Fint *ierr)
 {
     MPI_Datatype c_type;
     MPI_Status c_status;
 
     MPI_Status_f2c( status, &c_status );
 
-    *ierr = MPI_Status_set_elements(&c_status, c_type, *count);
+    *ierr = OMPI_INT_2_FINT(MPI_Status_set_elements(&c_status, c_type, 
+						    OMPI_FINT_2_INT(*count)));
 
     /* If datatype is really being set, then that needs to be converted.... */
     if (MPI_SUCCESS == *ierr) {
