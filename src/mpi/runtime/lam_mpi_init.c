@@ -21,6 +21,8 @@
 int lam_mpi_init(int argc, char **argv, int requested, int *provided)
 {
   int ret;
+  bool allow_multi_user_threads;
+  bool have_hidden_threads;
 
   /* Become a LAM process */
 
@@ -36,7 +38,8 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
 
   /* Join the run-time environment */
 
-  if (LAM_SUCCESS != (ret = lam_rte_init())) {
+  if (LAM_SUCCESS != (ret = lam_rte_init(&allow_multi_user_threads,
+                                         &have_hidden_threads))) {
     return ret;
   }
 
@@ -61,7 +64,8 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
      final thread level */
 
   if (LAM_SUCCESS != 
-      (ret = mca_mpi_init_select_modules(requested, provided))) {
+      (ret = mca_mpi_init_select_modules(requested, allow_multi_user_threads,
+                                         have_hidden_threads, provided))) {
     /* JMS show_help */
     return ret;
   }
