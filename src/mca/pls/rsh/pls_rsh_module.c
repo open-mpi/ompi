@@ -402,6 +402,20 @@ cleanup:
  * Wait for a pending job to complete.
  */
 
+static void orte_pls_rsh_terminate_job_rsp(
+    int status,
+    orte_process_name_t* peer,
+    orte_buffer_t* rsp,
+    orte_rml_tag_t tag,
+    void* cbdata)
+{
+    int rc;
+    if(ORTE_SUCCESS != (rc = orte_rmgr_base_unpack_rsp(rsp))) {
+        ORTE_ERROR_LOG(rc);
+    }
+}
+
+
 static void orte_pls_rsh_terminate_job_cb(
     int status,
     orte_process_name_t* peer,
@@ -410,20 +424,16 @@ static void orte_pls_rsh_terminate_job_cb(
     void* cbdata)
 {
     /* wait for response */
-    orte_buffer_t rsp;
     int rc;
-
-    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(peer, &rsp, ORTE_RML_TAG_RMGR_CLNT))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&rsp);
+    if(status < 0) {
+        ORTE_ERROR_LOG(status);
+        OBJ_RELEASE(req);
         return;
     }
 
-    if(ORTE_SUCCESS != (rc = orte_rmgr_base_unpack_rsp(&rsp))) {
+    if(0 > (rc = orte_rml.recv_buffer_nb(peer, ORTE_RML_TAG_RMGR_CLNT, 0, orte_pls_rsh_terminate_job_rsp, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
-    OBJ_DESTRUCT(&rsp);
     OBJ_RELEASE(req);
 }
 
