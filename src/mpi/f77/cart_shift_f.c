@@ -51,8 +51,17 @@ void mpi_cart_shift_f(MPI_Fint *comm, MPI_Fint *direction, MPI_Fint *disp,
 		      MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
+    OMPI_SINGLE_NAME_DECL(rank_source);
+    OMPI_SINGLE_NAME_DECL(rank_dest);
+
     c_comm = MPI_Comm_f2c(*comm);
 
-    *ierr = MPI_Cart_shift(c_comm, *direction, *disp, rank_source, 
-			   rank_dest);
+    *ierr = OMPI_INT_2_FINT(MPI_Cart_shift(c_comm, 
+					   OMPI_FINT_2_INT(*direction),
+					   OMPI_FINT_2_INT(*disp),
+					   OMPI_SINGLE_NAME_CONVERT(rank_source),
+					   OMPI_SINGLE_NAME_CONVERT(rank_dest)));
+
+    OMPI_SINGLE_INT_2_FINT(rank_source);
+    OMPI_SINGLE_INT_2_FINT(rank_dest);
 }

@@ -51,10 +51,23 @@ void mpi_cart_create_f(MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims,
 		       MPI_Fint *comm_cart, MPI_Fint *ierr)
 {
     MPI_Comm c_comm1, c_comm2;
-    
+    int size;
+    OMPI_ARRAY_NAME_DECL(dims);
+    OMPI_ARRAY_NAME_DECL(periods);
+
     c_comm1 = MPI_Comm_f2c(*old_comm);
     c_comm2 = MPI_Comm_f2c(*comm_cart);
 
-    *ierr = MPI_Cart_create(c_comm1, *ndims, dims, periods, 
-			    *reorder, &c_comm2);
+    size = OMPI_FINT_2_INT(*ndims);
+    OMPI_ARRAY_FINT_2_INT(dims, size);
+    OMPI_ARRAY_FINT_2_INT(periods, size);
+
+    *ierr = OMPI_INT_2_FINT(MPI_Cart_create(c_comm1, OMPI_FINT_2_INT(*ndims),
+					    OMPI_ARRAY_NAME_CONVERT(dims),
+					    OMPI_ARRAY_NAME_CONVERT(periods), 
+					    OMPI_FINT_2_INT(*reorder),
+					    &c_comm2));
+
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(dims);
+    OMPI_ARRAY_FINT_2_INT_CLEANUP(periods);
 }

@@ -49,8 +49,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CARTDIM_GET,
 void mpi_cartdim_get_f(MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
+    OMPI_SINGLE_NAME_DECL(ndims);
     
     c_comm = MPI_Comm_f2c(*comm);
 
-    *ierr = MPI_Cartdim_get(c_comm, ndims);
+    *ierr = OMPI_INT_2_FINT(MPI_Cartdim_get(c_comm,
+					    OMPI_SINGLE_NAME_CONVERT(ndims)));
+
+    OMPI_SINGLE_INT_2_FINT(ndims);
 }
