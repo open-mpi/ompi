@@ -76,41 +76,41 @@ extern "C" {
  * Miscellaneous constants
  * JMS: Some of these may be L7-specific and should be removed...
  */
-#define MPI_SUCCESS		0		/* no errors */
-#define MPI_ANY_SOURCE		-1		/* match any source rank */
-#define MPI_PROC_NULL		-2		/* rank of null process */
-#define MPI_CANCEL_SOURCE	-3		/* successful cancel */
-#define MPI_ANY_TAG		-1		/* match any message tag */
-#define MPI_GER_TAG		-2		/* used for GER protocol */
-#define MPI_MERGE_TAG		-3		/* used to merge inter-comm */
-#define MPI_MAX_PROCESSOR_NAME	256		/* max proc. name length */
-#define MPI_MAX_ERROR_STRING	256		/* max error message length */
-#define MPI_MAX_OBJECT_NAME	64		/* max object name length */
-#define MPI_UNDEFINED		-32766		/* undefined stuff */
-#define MPI_CART		1		/* cartesian topology */
-#define MPI_GRAPH		2		/* graph topology */
-#define MPI_KEYVAL_INVALID	-1		/* invalid key value */
+#define MPI_SUCCESS     0       /* no errors */
+#define MPI_ANY_SOURCE      -1      /* match any source rank */
+#define MPI_PROC_NULL       -2      /* rank of null process */
+#define MPI_CANCEL_SOURCE   -3      /* successful cancel */
+#define MPI_ANY_TAG     -1      /* match any message tag */
+#define MPI_GER_TAG     -2      /* used for GER protocol */
+#define MPI_MERGE_TAG       -3      /* used to merge inter-comm */
+#define MPI_MAX_PROCESSOR_NAME  256     /* max proc. name length */
+#define MPI_MAX_ERROR_STRING    256     /* max error message length */
+#define MPI_MAX_OBJECT_NAME 64      /* max object name length */
+#define MPI_UNDEFINED       -32766      /* undefined stuff */
+#define MPI_CART        1       /* cartesian topology */
+#define MPI_GRAPH       2       /* graph topology */
+#define MPI_KEYVAL_INVALID  -1      /* invalid key value */
 
 /*
  * More constants
  * JMS: Copied straight from L7 -- feel free to change
  * JMS: Some of these are probably L7-specific and should be deleted
  */
-#define MPI_BOTTOM		((void *) 0)	/* base reference address */
-#define MPI_BSEND_OVERHEAD	40		/* size of bsend header + ptr */
-#define MPI_MAX_INFO_KEY	36		/* max info key length */
-#define MPI_MAX_INFO_VAL	256		/* max info value length */
-#define MPI_ARGV_NULL		((char **) 0)	/* NULL argument vector */
-#define MPI_ARGVS_NULL		((char ***) 0)	/* NULL argument vectors */
-#define MPI_ERRCODES_IGNORE	((void *) 0)	/* don't return error codes */
+#define MPI_BOTTOM      ((void *) 0)    /* base reference address */
+#define MPI_BSEND_OVERHEAD  40      /* size of bsend header + ptr */
+#define MPI_MAX_INFO_KEY    36      /* max info key length */
+#define MPI_MAX_INFO_VAL    256     /* max info value length */
+#define MPI_ARGV_NULL       ((char **) 0)   /* NULL argument vector */
+#define MPI_ARGVS_NULL      ((char ***) 0)  /* NULL argument vectors */
+#define MPI_ERRCODES_IGNORE ((void *) 0)    /* don't return error codes */
 #define MPI_MAX_PORT_NAME       36              /* max port name length */
-#define MPI_MAX_NAME_LEN	MPI_MAX_PORT_NAME /* max port name length */
-#define MPI_ORDER_C		0		/* C row major order */
-#define MPI_ORDER_FORTRAN	1		/* Fortran column major order */
-#define MPI_DISTRIBUTE_BLOCK	0		/* block distribution */
-#define MPI_DISTRIBUTE_CYCLIC	1		/* cyclic distribution */
-#define MPI_DISTRIBUTE_NONE     2		/* not distributed */
-#define MPI_DISTRIBUTE_DFLT_DARG (-1)		/* default distribution arg */
+#define MPI_MAX_NAME_LEN    MPI_MAX_PORT_NAME /* max port name length */
+#define MPI_ORDER_C     0       /* C row major order */
+#define MPI_ORDER_FORTRAN   1       /* Fortran column major order */
+#define MPI_DISTRIBUTE_BLOCK    0       /* block distribution */
+#define MPI_DISTRIBUTE_CYCLIC   1       /* cyclic distribution */
+#define MPI_DISTRIBUTE_NONE     2       /* not distributed */
+#define MPI_DISTRIBUTE_DFLT_DARG (-1)       /* default distribution arg */
 
 /*
  * Predefined attribute keyvals
@@ -375,34 +375,48 @@ extern "C" {
   int MPI_TYPE_DUP_FN(MPI_Datatype, int, void *, void *, void *, int *);
   int MPI_WIN_DUP_FN(MPI_Win, int, void *, void *, void *, int *);
 
-  int MPI_Abort(MPI_Comm, int);
-  int MPI_Accumulate(void *, int, MPI_Datatype, int, MPI_Aint, 
-                     int, MPI_Datatype, MPI_Op, MPI_Win);
-  int MPI_Address(void *, MPI_Aint *);
-  int MPI_Allgather(void *, int, MPI_Datatype, void *, int, 
-                    MPI_Datatype, MPI_Comm);
-  int MPI_Allgatherv(void *, int, MPI_Datatype, void *, int *, 
-                     int *, MPI_Datatype, MPI_Comm);
+  int MPI_Abort(MPI_Comm comm, int errorcode);
+  int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+                   int target_rank, MPI_Aint target_disp, int target_count,
+                   MPI_Datatype target_datatype, MPI_Op op, MPI_Win win); 
+  int MPI_Add_error_class(int *errorclass);
+  int MPI_Add_error_code(int errorclass, int *errorcode);
+  int MPI_Add_error_string(int errorcode, char *string);
+  int MPI_Address(void *location, MPI_Aint *address);
+  int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+                    void *recvbuf, int recvcount, 
+                    MPI_Datatype recvtype, MPI_Comm comm);
+  int MPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+                     void *recvbuf, int *recvcounts, 
+                     int *displs, MPI_Datatype recvtype, MPI_Comm comm);
   int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, 
                     void *baseptr);
-  int MPI_Allreduce(void *, void *, int, MPI_Datatype, 
-                    MPI_Op, MPI_Comm);
-  int MPI_Alltoall(void *, int, MPI_Datatype, void *, int, 
-                   MPI_Datatype, MPI_Comm);
-  int MPI_Alltoallv(void *, int *, int *, MPI_Datatype, void *, 
-                    int *, int *, MPI_Datatype, MPI_Comm);
-  int MPI_Alltoallw(void *, int *, int *, MPI_Datatype *, void *,
-                    int *, int *, MPI_Datatype *, MPI_Comm);
-  int MPI_Attr_delete(MPI_Comm, int);
-  int MPI_Attr_get(MPI_Comm, int, void *, int *);
-  int MPI_Attr_put(MPI_Comm, int, void *);
-  int MPI_Barrier(MPI_Comm);
-  int MPI_Bcast(void *, int, MPI_Datatype, int, MPI_Comm);
-  int MPI_Bsend(void *, int, MPI_Datatype, int, int, MPI_Comm);
-  int MPI_Bsend_init(void *, int, MPI_Datatype, int, int, 
-                     MPI_Comm, MPI_Request *);
-  int MPI_Buffer_attach(void *, int);
-  int MPI_Buffer_detach(void *, int *);
+  int MPI_Allreduce(void *sendbuf, void *recvbuf, int count, 
+                    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm); 
+  int MPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype, 
+                   void *recvbuf, int recvcount, 
+                   MPI_Datatype recvtype, MPI_Comm comm);
+  int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls, 
+                    MPI_Datatype sendtype, void *recvbuf, int *recvcounts,
+                    int *rdispls, MPI_Datatype recvtype, MPI_Comm comm);
+  int MPI_Alltoallw(void *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype *sendtypes, 
+                    void *recvbuf, int *recvcounts, int *rdispls, MPI_Datatype *recvtypes,
+                    MPI_Comm comm);
+  int MPI_Attr_delete(MPI_Comm comm, int keyval);
+  int MPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag);
+  int MPI_Attr_put(MPI_Comm comm, int keyval, void *attribute_val);
+  /* i
+   * Anju: Shell functions done till here 
+   */
+  int MPI_Barrier(MPI_Comm comm);
+  int MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, 
+                int root, MPI_Comm comm);
+  int MPI_Bsend(void *buf, int count, MPI_Datatype datatype, 
+                int dest, int tag, MPI_Comm comm);
+  int MPI_Bsend_init(void *buf, int count, MPI_Datatype datatype, 
+                     int dest, int tag, MPI_Comm comm, MPI_Request *request); 
+  int MPI_Buffer_attach(void *buffer, int size);
+  int MPI_Buffer_detach(void *buffer, int *size);
   int MPI_Cancel(MPI_Request *);
   int MPI_Cart_coords(MPI_Comm, int, int, int *);
   int MPI_Cart_create(MPI_Comm, int, int *, int *, int, MPI_Comm *);
