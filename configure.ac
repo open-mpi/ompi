@@ -863,7 +863,6 @@ AC_CONFIG_FILES([
     src/mca/topo/base/Makefile
     src/mca/ns/Makefile
     src/mca/ns/base/Makefile
-    src/mca/ns/replica/Makefile
 
     src/dynamic-mca/common/Makefile
 
@@ -896,7 +895,6 @@ AC_CONFIG_FILES([
     src/tools/wrappers/Makefile
     src/tools/openmpi/Makefile
 
-
     test/Makefile
     test/include/Makefile
     test/support/Makefile
@@ -904,6 +902,5 @@ AC_CONFIG_FILES([
     test/threads/Makefile
     test/util/Makefile
     test/rte/Makefile
-    test/ns/Makefile
 ])
 AC_OUTPUT
