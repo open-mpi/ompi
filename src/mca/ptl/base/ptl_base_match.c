@@ -238,7 +238,7 @@ mca_ptl_base_check_specific_and_wild_receives_for_match(
                 /* remove descriptor from specific receive list */ 
                 ompi_list_remove_item((pml_comm->c_specific_receives)+frag_src, 
                     (ompi_list_item_t *)specific_recv); 
-                return return_match; 
+                break;
             } 
  
             /* 
@@ -251,11 +251,11 @@ mca_ptl_base_check_specific_and_wild_receives_for_match(
              * If that was the last specific irecv, process the 
              * rest of the wild ones. 
              */ 
-            if (specific_recv == (mca_pml_base_recv_request_t *) \
-                    ompi_list_get_end((pml_comm->c_specific_receives)+frag_src) ) \
+            if (specific_recv == (mca_pml_base_recv_request_t *) 
+                    ompi_list_get_end((pml_comm->c_specific_receives)+frag_src) ) 
             { 
                 MCA_PTL_BASE_CHECK_WILD_RECEIVES_FOR_MATCH(frag_header, pml_comm, return_match); 
-                return return_match; 
+                break;
             } 
             /* 
              * Get the sequence number for this recv, and go 
@@ -264,7 +264,7 @@ mca_ptl_base_check_specific_and_wild_receives_for_match(
             specific_recv_seq = specific_recv->req_base.req_sequence; 
         } 
     } 
-    return NULL;
+    return return_match;
 } 
 
 
