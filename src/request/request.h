@@ -180,12 +180,9 @@ int ompi_request_complete(ompi_request_t* request);
 
 static inline int ompi_request_free(ompi_request_t** request)
 {
-    int rc = OMPI_SUCCESS;
-    if(*request != NULL) {
-        rc = (*request)->req_free(*request);
-        if(rc == OMPI_SUCCESS)
-            *request = NULL;
-    }
+    int rc = (*request)->req_free(*request);
+    if(rc == OMPI_SUCCESS)
+        *request = MPI_REQUEST_NULL;
     return rc;
 }
 

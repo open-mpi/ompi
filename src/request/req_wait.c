@@ -125,7 +125,7 @@ int ompi_request_wait_all(
             rptr = requests;
             for (i = 0; i < count; i++) {
                 request = *rptr;
-                if (request == NULL || request->req_complete == true) {
+                if (request->req_complete == true) {
                     completed++;
                     continue;
                 }
