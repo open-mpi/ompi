@@ -28,8 +28,8 @@ int mca_oob_tcp_recv(
 
     if(mca_oob_tcp_component.tcp_debug > 1) {
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_recv: tag %d\n",
-            OMPI_NAME_COMPONENTS(mca_oob_name_self),
-            OMPI_NAME_COMPONENTS(*peer),
+            OMPI_NAME_ARGS(mca_oob_name_self),
+            OMPI_NAME_ARGS(*peer),
             tag);
     }
 
