@@ -600,6 +600,17 @@ AC_PROG_LN_S
 AM_PROG_AS
 AM_PROG_LEX
 
+# If we don't have lex and we don't have a generated .c file
+# (distribution tarballs will have the .c file included, but SVN
+# checkouts will not), then error
+if test -z "$LEX" -o -n "`echo $LEX | grep missing`"; then
+    if -f "$srcdir/mca/llm/base/llm_base_parse_hosefile_lex.c"; then
+        AC_MSG_WARN([*** Could not find lex or flex on your system])
+        AC_MSG_WARN([*** Flex or lex is required for developer builds of Open MPI])
+        AC_MSG_ERROR([Cannot continue])
+    fi
+fi
+
 #
 # File system case sensitivity
 #
