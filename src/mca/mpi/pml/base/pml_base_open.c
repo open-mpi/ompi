@@ -44,6 +44,11 @@ int mca_pml_base_open(void)
     return LAM_ERROR;
   }
 
+  /* Set a sentinel in case we don't select any modules (e.g.,
+     laminfo) */
+
+  mca_pml.pml_finalize = NULL;
+
   /* All done */
 
   return LAM_SUCCESS;
