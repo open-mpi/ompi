@@ -95,10 +95,11 @@ mca_pcm_rsh_open(void)
 int
 mca_pcm_rsh_close(void)
 {
+#if 0
   /* BWB - free list? */
 
   OBJ_DESTRUCT(&mca_pcm_rsh_connections);
-
+#endif
   return LAM_SUCCESS;
 }
 
@@ -107,6 +108,7 @@ struct mca_pcm_1_0_0_t*
 mca_pcm_rsh_init(int *priority, bool *allow_multi_user_threads, 
                   bool *have_hidden_threads)
 {
+#if 0
   *priority = 0;
   /* BWB - reevaluate this setting at some point */
   *allow_multi_user_threads = true;
@@ -115,6 +117,9 @@ mca_pcm_rsh_init(int *priority, bool *allow_multi_user_threads,
   /* That's about all we wrote thus far */
 
   return &mca_pcm_rsh_1_0_0;
+#else
+  return NULL;
+#endif
 }
 
 
