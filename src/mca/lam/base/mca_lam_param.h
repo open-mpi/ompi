@@ -66,8 +66,8 @@ extern "C" {
                                      char *param_name, 
                                      char *mca_param_name,
                                      char *default_value);
-  int mca_base_param_lookup_int(int index);
-  char *mca_base_param_lookup_string(int index);
+  int mca_base_param_lookup_int(int index, int *value);
+  int mca_base_param_lookup_string(int index, char **value);
   int mca_base_param_find(char *type, char *module, char *param);
   int mca_base_param_finalize(void);
 
