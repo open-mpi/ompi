@@ -233,7 +233,7 @@ main(int argc, char *argv[])
      * register to monitor the startup and shutdown processes
      */
     /* setup segment for this job */
-    asprintf(&segment, "ompi-job-%d", new_jobid);
+    asprintf(&segment, "ompi-job-%X", new_jobid);
 
     /* register a synchro on the segment so we get notified when everyone registers */
     rc = ompi_registry.synchro(
