@@ -25,15 +25,15 @@ extern "C" {
 struct mca_ptl_self_component_t {
    mca_ptl_base_component_1_0_0_t super;              /**< base PTL component */
    struct mca_ptl_base_module_t** self_ptl_modules;   /**< array of available PTL modules */
-   u_int32_t                   self_num_ptl_modules;  /**< number of ptl modules actually used */
-  u_int32_t                   self_max_ptl_modules;  /**< maximum number of ptl modules */
-   u_int32_t                   self_buf_size;         /**< the size of the internal buffer used to pack/unpack the data */
-   u_int32_t                   self_is_non_blocking;  /**< how the memcopy operations are done segmented or not */
-   int32_t                     self_free_list_num;    /**< initial size of free lists */
-   int32_t                     self_free_list_max;    /**< maximum size of free lists */
-   int32_t                     self_free_list_inc;    /**< number of elements to alloc when growing free lists */
-   ompi_free_list_t            self_send_requests;    /**< free list of self send requests -- sendreq + sendfrag */
-   ompi_proc_t*                self_local;            /**< the self proc instance corresponding to the local process */
+   uint32_t           self_num_ptl_modules;  /**< number of ptl modules actually used */
+   uint32_t           self_max_ptl_modules;  /**< maximum number of ptl modules */
+   uint32_t           self_buf_size;         /**< the size of the internal buffer used to pack/unpack the data */
+   uint32_t           self_is_non_blocking;  /**< how the memcopy operations are done segmented or not */
+   int32_t            self_free_list_num;    /**< initial size of free lists */
+   int32_t            self_free_list_max;    /**< maximum size of free lists */
+   int32_t            self_free_list_inc;    /**< number of elements to alloc when growing free lists */
+   ompi_free_list_t   self_send_requests;    /**< free list of self send requests -- sendreq + sendfrag */
+   ompi_proc_t*       self_local;            /**< the self proc instance corresponding to the local process */
 };
 typedef struct mca_ptl_self_component_t mca_ptl_self_component_t;
 
