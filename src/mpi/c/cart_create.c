@@ -18,6 +18,7 @@
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
 #include "mca/topo/topo.h"
+#include "mca/topo/base/base.h"
 #include "errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
@@ -77,6 +78,24 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
                return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
                                               FUNC_NAME);
            }
+        }
+    }
+
+    /*
+     * Now we have to check if the topo module exists or not. This has been
+     * removed from initialization since most of the MPI calls do not use 
+     * this module 
+     */
+    if (!(mca_topo_base_components_opened_valid ||
+          mca_topo_base_components_available_valid)) {
+        bool user_threads = true;
+        bool hidden_threads = true;
+        if (OMPI_SUCCESS != (err = mca_topo_base_open())) {
+            return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
+        }
+        if (OMPI_SUCCESS != (err = mca_topo_base_find_available (&user_threads,
+                                                                 &hidden_threads))) {
+            return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
         }
     }
 
