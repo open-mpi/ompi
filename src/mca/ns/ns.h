@@ -352,6 +352,25 @@ typedef char* (*mca_ns_base_module_get_vpid_string_fn_t)(const ompi_process_name
 typedef char* (*mca_ns_base_module_get_jobid_string_fn_t)(const ompi_process_name_t *name);
 
 /**
+ * Convert jobid to character string
+ * The convert_jobid_to_string() function returns the jobid in a character string representation.
+ * The string is created by expressing the provided jobid in hexadecimal. Memory
+ * for the string is allocated by the function - releasing that allocation is the
+ * responsibility of the calling program.
+ *
+ * @param jobid The jobid to be converted.
+ *
+ * @retval *jobid_string A pointer to a character string representation of the
+ * jobid.
+ * @retval NULL Indicates an error occurred - probably no memory could be allocated.
+ *
+ * @code
+ * jobid-string = ompi_name_server.convert_jobid_to_string(jobid);
+ * @endcode
+ */
+typedef char* (*mca_ns_base_module_convert_jobid_to_string_fn_t)(const mca_ns_base_jobid_t jobid);
+
+/**
  * Get the cell id as a character string.
  * The get_cellid_string() function returns the cell id in a character string
  * representation. The string is created by expressing the field in hexadecimal. Memory
@@ -469,6 +488,7 @@ struct mca_ns_base_module_1_0_0_t {
     mca_ns_base_module_get_proc_name_string_fn_t get_proc_name_string;
     mca_ns_base_module_get_vpid_string_fn_t get_vpid_string;
     mca_ns_base_module_get_jobid_string_fn_t get_jobid_string;
+    mca_ns_base_module_convert_jobid_to_string_fn_t convert_jobid_to_string;
     mca_ns_base_module_get_cellid_string_fn_t get_cellid_string;
     mca_ns_base_module_get_vpid_fn_t get_vpid;
     mca_ns_base_module_get_jobid_fn_t get_jobid;

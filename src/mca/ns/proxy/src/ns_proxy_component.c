@@ -62,6 +62,7 @@ static mca_ns_base_module_t mca_ns_proxy = {
     ns_base_get_proc_name_string,
     ns_base_get_vpid_string,
     ns_base_get_jobid_string,
+    ns_base_convert_jobid_to_string,
     ns_base_get_cellid_string,
     ns_base_get_vpid,
     ns_base_get_jobid,
