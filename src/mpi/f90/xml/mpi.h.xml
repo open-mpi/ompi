@@ -2510,7 +2510,6 @@
 
     <!-- 
       -  METHOD: int MPI_File_get_amode(MPI_File, int *) C
-      - NOTE: First parameter is an external function
       -->
     <method name="MPI_File_get_amode" kind="final">
 
@@ -2539,7 +2538,6 @@
     
     <!-- 
       -  METHOD: int MPI_File_get_atomicity(MPI_File, int *) C
-      - NOTE: First parameter is an external function
       -->
     <method name="MPI_File_get_atomicity" kind="final">
 
@@ -2568,7 +2566,6 @@
     
     <!-- 
       -  METHOD: int MPI_File_get_byte_offset(MPI_File, int64_t, int64_t *) C
-      - NOTE: First parameter is an external function
       -->
     <method name="MPI_File_get_byte_offset" kind="final">
 
