@@ -5,10 +5,16 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+noinst_LTLIBRARIES = libmpi_request.la
+
 # Source code files
 
 headers = \
         request.h
+
+libmpi_request_la_SOURCES = \
+        $(headers) \
+	request.c
 
 # Conditionally install the header files
 
