@@ -161,16 +161,3 @@ int mca_coll_basic_barrier_inter_lin(struct ompi_communicator_t *comm)
     rank = ompi_comm_rank (comm);
     return comm->c_coll.coll_allreduce (&rank, &result, 1, MPI_INT, MPI_MAX, comm);
 }
-
-
-/*
- *	barrier_inter_log
- *
- *	Function:	- barrier using O(log(N)) algorithm
- *	Accepts:	- same as MPI_Barrier()
- *	Returns:	- MPI_SUCCESS or error code
- */
-int mca_coll_basic_barrier_inter_log(struct ompi_communicator_t *comm)
-{
-  return OMPI_ERR_NOT_IMPLEMENTED;
-}

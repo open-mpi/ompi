@@ -110,39 +110,6 @@ static const mca_coll_base_module_1_0_0_t inter_linear = {
 
 
 /*
- * Lograthmic set of collective algorithms.  Note that not all
- * collectives have lograthmic algorithms.  For example, scan will use
- * the same algorithm as in the linear set.
- */
-static const mca_coll_base_module_1_0_0_t inter_log = {
-
-  /* Initialization / finalization functions */
-
-  mca_coll_basic_module_init,
-  mca_coll_basic_module_finalize,
-
-  /* Collective function pointers */
-
-  mca_coll_basic_allgather_inter,
-  mca_coll_basic_allgatherv_inter,
-  mca_coll_basic_allreduce_inter,
-  mca_coll_basic_alltoall_inter,
-  mca_coll_basic_alltoallv_inter,
-  mca_coll_basic_alltoallw_inter,
-  mca_coll_basic_barrier_inter_log,
-  mca_coll_basic_bcast_log_inter,
-  NULL,
-  mca_coll_basic_gather_inter,
-  mca_coll_basic_gatherv_inter,
-  mca_coll_basic_reduce_log_inter,
-  mca_coll_basic_reduce_scatter_inter,
-  NULL,
-  mca_coll_basic_scatter_inter,
-  mca_coll_basic_scatterv_inter
-};
-
-
-/*
  * Initial query function that is invoked during MPI_INIT, allowing
  * this module to indicate what level of thread support it provides.
  */

@@ -109,7 +109,6 @@ extern "C" {
   int mca_coll_basic_barrier_inter_lin(struct ompi_communicator_t *comm);
 
   int mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm);
-  int mca_coll_basic_barrier_inter_log(struct ompi_communicator_t *comm);
 
   int mca_coll_basic_bcast_lin_intra(void *buff, int count, 
                                      struct ompi_datatype_t *datatype,
