@@ -156,12 +156,12 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
 					      unsigned int* max_data,
 					      int* freeAfter )
 {
-    dt_stack_t* pStack;   /* pointer to the position on the stack */
-    int pos_desc;         /* actual position in the description of the derived datatype */
-    int i;                /* counter for basic datatype with extent */
-    int bConverted = 0;   /* number of bytes converted this time */
-    long lastDisp = 0, last_count = 0;
-    size_t space = iov[0].iov_len, last_blength = 0;
+    dt_stack_t* pStack;    /* pointer to the position on the stack */
+    unsigned int pos_desc; /* actual position in the description of the derived datatype */
+    unsigned int i;        /* counter for basic datatype with extent */
+    int bConverted = 0;    /* number of bytes converted this time */
+    long lastDisp = 0;
+    size_t space = iov[0].iov_len, last_count = 0, last_blength = 0;
     char* pSrcBuf;
     dt_desc_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
@@ -193,14 +193,14 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
                 }
                 pStack--;
                 pConv->stack_pos--;
+                pos_desc++;
             } else {
-                pos_desc = pStack->index;
-                if( pos_desc == -1 )
+                if( pStack->index == -1 )
                     pStack->disp += (pData->ub - pData->lb);
                 else
-                    pStack->disp += pElems[pos_desc].extent;
+                    pStack->disp += pElems[pStack->index].extent;
+                pos_desc = pStack->index + 1;
             }
-            pos_desc++;
             goto next_loop;
         }
         while( pElems[pos_desc].type == DT_LOOP ) {
@@ -266,10 +266,9 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
         bConverted += last_count;
         lastDisp += last_count;
     }
-    if( pos_desc < pStack->end_loop ) {  /* cleanup the stack */
+    if( pos_desc < (unsigned int)pStack->end_loop ) {  /* cleanup the stack */
         PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_blength,
                     lastDisp, pos_desc );
-        PUSH_STACK( pStack, pConv->stack_pos, 0, 0, 0, 0 );
     }
 
     pConv->bConverted += bConverted;  /* update the converted field */
@@ -406,6 +405,14 @@ static int copy_##TYPENAME( unsigned int count,                         \
     return count;                                                       \
 }
 
+static int copy_bytes_1( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
+static int copy_bytes_2( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
+static int copy_bytes_4( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
+static int copy_bytes_8( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
+static int copy_bytes_12( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
+static int copy_bytes_16( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
+static int copy_bytes_20( unsigned int count, char* from, unsigned int from_len, long from_extent, char* to, unsigned int to_len, long to_extent );
+
 #define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                        \
 static int copy_##TYPENAME##_##COUNT( unsigned int count,               \
                                       char* from, unsigned int from_len, long from_extent, \
@@ -457,12 +464,6 @@ COPY_TYPE( 2float, float, 2 )
 COPY_TYPE( 2double, double, 2 )
 COPY_TYPE( 2complex_float, ompi_complex_float_t, 2 )
 COPY_TYPE( 2complex_double, ompi_complex_double_t, 2 )
-COPY_CONTIGUOUS_BYTES( bytes, 1 )
-COPY_CONTIGUOUS_BYTES( bytes, 4 )
-COPY_CONTIGUOUS_BYTES( bytes, 8 )
-COPY_CONTIGUOUS_BYTES( bytes, 12 )
-COPY_CONTIGUOUS_BYTES( bytes, 16 )
-COPY_CONTIGUOUS_BYTES( bytes, 20 )
 
 conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)NULL,                      /* DT_LOOP                */ 
@@ -491,34 +492,43 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)NULL,                      /* DT_PACKED              */
 #if OMPI_SIZEOF_FORTRAN_LOGICAL == 1
    (conversion_fct_t)copy_bytes_1,              /* DT_LOGIC               */
+#define REQUIRE_COPY_BYTES_1
 #elif OMPI_SIZEOF_FORTRAN_LOGICAL == 4
    (conversion_fct_t)copy_bytes_4,              /* DT_LOGIC               */
+#define REQUIRE_COPY_BYTES_4
 #elif
    NULL,                                        /* DT_LOGIC               */
 #endif
 #if (SIZEOF_FLOAT + SIZEOF_INT) == 8
    (conversion_fct_t)copy_bytes_8,              /* DT_FLOAT_INT           */
+#define REQUIRE_COPY_BYTES_8
 #else
 #error Complete me please
 #endif
 #if (SIZEOF_DOUBLE + SIZEOF_INT) == 12
    (conversion_fct_t)copy_bytes_12,             /* DT_DOUBLE_INT          */
+#define REQUIRE_COPY_BYTES_12
 #else
 #error Complete me please
 #endif
 #if (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 12
    (conversion_fct_t)copy_bytes_12,             /* DT_LONG_DOUBLE_INT     */ 
+#define REQUIRE_COPY_BYTES_12
 #elif (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 16
    (conversion_fct_t)copy_bytes_16,             /* DT_LONG_DOUBLE_INT     */ 
+#define REQUIRE_COPY_BYTES_16
 #elif (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 20
    (conversion_fct_t)copy_bytes_20,             /* DT_LONG_DOUBLE_INT     */ 
+#define REQUIRE_COPY_BYTES_20
 #else
 #error Complete me please
 #endif
 #if (SIZEOF_LONG + SIZEOF_INT) == 8
    (conversion_fct_t)copy_bytes_8,              /* DT_LONG_INT            */ 
+#define REQUIRE_COPY_BYTES_8
 #elif (SIZEOF_LONG + SIZEOF_INT) == 12
    (conversion_fct_t)copy_bytes_12,              /* DT_LONG_INT            */ 
+#define REQUIRE_COPY_BYTES_12
 #else
 #error Complete me please
 #endif
@@ -535,15 +545,40 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)copy_2complex_double,      /* DT_2DOUBLE_COMPLEX     */ 
 #if SIZEOF_BOOL == 1
    (conversion_fct_t)copy_bytes_1,              /* DT_CXX_BOOL            */
+#define REQUIRE_COPY_BYTES_1
 #elif SIZEOF_BOOL == 4
    (conversion_fct_t)copy_bytes_4,              /* DT_CXX_BOOL            */
+#define REQUIRE_COPY_BYTES_4
 #elif SIZEOF_BOOL == 8
    (conversion_fct_t)copy_bytes_8,              /* DT_CXX_BOOL            */
+#define REQUIRE_COPY_BYTES_8
 #else
 #error Complete me please
 #endif
    (conversion_fct_t)NULL,                      /* DT_UNAVAILABLE         */ 
 };
+
+#if defined(REQUIRE_COPY_BYTES_1)
+COPY_CONTIGUOUS_BYTES( bytes, 1 )
+#endif  /* REQUIRE_COPY_BYTES_1 */
+#if defined(REQUIRE_COPY_BYTES_2)
+COPY_CONTIGUOUS_BYTES( bytes, 2 )
+#endif  /* REQUIRE_COPY_BYTES_2 */
+#if defined(REQUIRE_COPY_BYTES_4)
+COPY_CONTIGUOUS_BYTES( bytes, 4 )
+#endif  /* REQUIRE_COPY_BYTES_4 */
+#if defined(REQUIRE_COPY_BYTES_8)
+COPY_CONTIGUOUS_BYTES( bytes, 8 )
+#endif  /* REQUIRE_COPY_BYTES_8 */
+#if defined(REQUIRE_COPY_BYTES_12)
+COPY_CONTIGUOUS_BYTES( bytes, 12 )
+#endif  /* REQUIRE_COPY_BYTES_12 */
+#if defined(REQUIRE_COPY_BYTES_16)
+COPY_CONTIGUOUS_BYTES( bytes, 16 )
+#endif  /* REQUIRE_COPY_BYTES_16 */
+#if defined(REQUIRE_COPY_BYTES_20)
+COPY_CONTIGUOUS_BYTES( bytes, 20 )
+#endif  /* REQUIRE_COPY_BYTES_20 */
 
 /* Should we supply buffers to the convertor or can we use directly
  * the user buffer ?
