@@ -1,10 +1,9 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
 /*
  *HEADER$
  */
 #include "ompi_config.h"
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/errno.h>
 #include "include/types.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_gm.h"
