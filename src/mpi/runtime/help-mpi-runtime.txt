@@ -1,0 +1,16 @@
+# -*- text -*-
+#
+# $HEADER$
+#
+# This is the US/English general help file for Open MPI.
+#
+[mpi_init:startup:internal-failure]
+It looks like %s failed for some reason; your parallel process is
+likely to abort.  There are many reasons that a parallel process can
+fail during %s; some of which are due to configuration or environment
+problems.  This failure appears to be an internal failure; here's some
+additional information (which may only be relevant to an Open MPI
+developer):
+
+  %s
+  --> Returned value %d instead of OMPI_SUCCESS

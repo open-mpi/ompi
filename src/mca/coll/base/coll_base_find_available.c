@@ -11,6 +11,7 @@
 #include "include/constants.h"
 #include "class/ompi_list.h"
 #include "util/output.h"
+#include "util/show_help.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/coll/coll.h"
@@ -130,7 +131,8 @@ int mca_coll_base_find_available(bool *allow_multi_user_threads,
     mca_coll_base_components_available_valid = false;
     ompi_output_verbose(10, mca_coll_base_output,
                        "coll:find_available: no coll components available!");
-    /* JMS show_help */
+    ompi_show_help("help-mca-base", "find-available:none-found", true,
+                   "coll");
     return OMPI_ERROR;
   }
 
@@ -164,11 +166,10 @@ static int init_query(const mca_base_component_t *m,
     /* Unrecognized coll API version */
 
     ompi_output_verbose(10, mca_coll_base_output,
-                       "coll:find_available: unrecognized coll API version (%d.%d.%d)", 
+                       "coll:find_available: unrecognized coll API version (%d.%d.%d, ignored)", 
                        m->mca_type_major_version,
                        m->mca_type_minor_version,
                        m->mca_type_release_version);
-    /* JMS show_help */
     return OMPI_ERROR;
   }
 

@@ -9,6 +9,8 @@ AM_CPPFLAGS = -I$(top_builddir)/src/event
 
 noinst_LTLIBRARIES = libmpiruntime.la
 
+pkgdata_DATA = help-mpi-runtime.txt
+
 # Source code files
 
 headers = \
