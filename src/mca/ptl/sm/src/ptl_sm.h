@@ -35,6 +35,10 @@ struct mca_ptl_sm_module_resource_t {
 typedef struct mca_ptl_sm_module_resource_t mca_ptl_sm_module_resource_t;
 extern mca_ptl_sm_module_resource_t mca_ptl_sm_module_resource;
 
+#define SM_CONNECTED 1
+#define SM_CONNECTED_SAME_BASE_ADDR  2
+#define SM_CONNECTED_DIFFERENT_BASE_ADDR  3
+
 /**
  * Shared Memory (SM) PTL module.
  */
@@ -69,12 +73,39 @@ struct mca_ptl_sm_component_t {
                              a real virtual address */
     size_t size_of_cb_queue; /**< size of each circular buffer queue array */
     size_t cb_lazy_free_freq; /**< frequency of lazy free */
-    size_t sm_offset;        /**< offset to be applied to shared memory
-                              addresses */
+    size_t *sm_offset;        /**< offset to be applied to shared memory
+                              addresses, per local process value */
+    int *sm_proc_connect;    /* scratch array used by the 0'th ptl to
+                              * set indicate sm connectivty.  Used by
+                              * the 1'st ptl */
     size_t num_smp_procs;      /**< current number of smp procs on this
                               host */
+    int num_smp_procs_same_base_addr;  /* number of procs with same
+                                          base shared memory virtual
+                                          address as this process */
+    int num_smp_procs_different_base_addr;  /* number of procs with
+                                               different base shared memory
+                                               virtual address as this
+                                               process */
+    int *list_smp_procs_same_base_addr;  /* number of procs with same 
+                                            base shared memory virtual 
+                                            address as this process */
+    int *list_smp_procs_different_base_addr;  /* number of procs with different 
+                                            base shared memory virtual 
+                                            address as this process */
     int my_smp_rank;    /**< My SMP process rank.  Used for accessing
                          *   SMP specfic data structures. */
+    ompi_free_list_t sm_first_frags;    /**< free list of sm first
+                                             fragments */
+    ompi_free_list_t sm_second_frags;   /**< free list of sm second
+                                              and above fragments */
+    ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
+    ompi_free_list_t sm_first_frags_to_progress;  /**< list of first
+                                                    fragments that are
+                                                    awaiting resources */
+    ompi_mutex_t sm_pending_ack_lock;
+    ompi_list_t sm_pending_ack; /**< list of fragmnent that need to be
+                                   acked */
 };
 typedef struct mca_ptl_sm_component_t mca_ptl_sm_component_t;
 extern mca_ptl_sm_component_t mca_ptl_sm_component;
@@ -125,22 +156,11 @@ extern int mca_ptl_sm_component_progress(
 struct mca_ptl_sm_t {
     mca_ptl_base_module_t  super;       /**< base PTL interface */
 
-    ompi_free_list_t sm_first_frags;    /**< free list of sm first
-                                             fragments */
-    ompi_free_list_t sm_second_frags;   /**< free list of sm second
-                                              and above fragments */
-    ompi_free_list_t sm_send_requests;    /**< free list of sm send requests -- sendreq + sendfrag */
-    ompi_free_list_t sm_first_frags_to_progress;  /**< list of first
-                                                    fragments that are
-                                                    awaiting resources */
-    ompi_mutex_t sm_pending_ack_lock;
-    ompi_list_t sm_pending_ack; /**< list of fragmnent that need to be
-                                   acked */
     bool ptl_inited;  /**< flag indicating if ptl has been inited */
 };
 typedef struct mca_ptl_sm_t mca_ptl_sm_t;
 
-extern mca_ptl_sm_t mca_ptl_sm;
+extern mca_ptl_sm_t mca_ptl_sm[2];
 
 
 /**
@@ -157,6 +177,10 @@ extern int mca_ptl_sm_finalize(
 
 /**
  * PML->PTL notification of change in the process list.
+ * PML->PTL Notification that a receive fragment has been matched.
+ * Called for message that is send from process with the virtual
+ * address of the shared memory segment being different than that of
+ * the receiver.
  * 
  * @param ptl (IN)
  * @param proc (IN)  
@@ -166,6 +190,29 @@ extern int mca_ptl_sm_finalize(
  */
 
 extern int mca_ptl_sm_add_procs(
+    struct mca_ptl_base_module_t* ptl,
+    size_t nprocs,
+    struct ompi_proc_t **procs,
+    struct mca_ptl_base_peer_t** peers,
+    ompi_bitmap_t* reachability
+);
+
+                                                                                                               
+/**
+ * PML->PTL notification of change in the process list.
+ * PML->PTL Notification that a receive fragment has been matched.
+ * Called for message that is send from process with the virtual
+ * address of the shared memory segment being the same as that of
+ * the receiver.
+ * 
+ * @param ptl (IN)
+ * @param proc (IN)  
+ * @param peer (OUT)
+ * @return     OMPI_SUCCESS or error status on failure.
+ * 
+ */
+
+extern int mca_ptl_sm_add_procs_same_base_addr(
     struct mca_ptl_base_module_t* ptl,
     size_t nprocs,
     struct ompi_proc_t **procs,
@@ -217,6 +264,65 @@ extern void mca_ptl_sm_request_return(
 
 /**
  * PML->PTL Notification that a receive fragment has been matched.
+ * Called for message that is send from process with the virtual
+ * address of the shared memory segment being the same as that of
+ * the receiver.
+ *
+ * @param ptl (IN)          PTL instance
+ * @param recv_frag (IN)    Receive fragment
+ *
+ */
+extern void mca_ptl_sm_matched_same_base_addr(
+    struct mca_ptl_base_module_t* ptl,
+    struct mca_ptl_base_recv_frag_t* frag
+);
+
+/**
+ * PML->PTL notification of change in the process list.
+ *
+ * @param ptl (IN)     PTL instance
+ * @param proc (IN)    Peer process
+ * @param peer (IN)    Peer addressing information.
+ * @return             Status indicating if cleanup was successful
+ *
+ */
+extern int mca_ptl_sm_del_procs(
+    struct mca_ptl_base_module_t* ptl,
+    size_t nprocs,
+    struct ompi_proc_t **procs,
+    struct mca_ptl_base_peer_t **peers
+);
+
+/**
+ * PML->PTL Allocate a send request from the PTL modules free list.
+ *
+ * @param ptl (IN)       PTL instance
+ * @param request (OUT)  Pointer to allocated request.
+ * @return               Status indicating if allocation was successful.
+ *
+ */
+extern int mca_ptl_sm_request_alloc(
+    struct mca_ptl_base_module_t* ptl,
+    struct mca_pml_base_send_request_t*
+);
+
+/**
+ * PML->PTL Return a send request to the PTL modules free list.
+ *
+ * @param ptl (IN)       PTL instance
+ * @param request (IN)   Pointer to allocated request.
+ *
+ */
+extern void mca_ptl_sm_request_return(
+    struct mca_ptl_base_module_t* ptl,
+    struct mca_pml_base_send_request_t*
+);
+
+/**
+ * PML->PTL Notification that a receive fragment has been matched.
+ * Called for message that is send from process with the virtual
+ * address of the shared memory segment being different than that of
+ * the receiver.
  *
  * @param ptl (IN)          PTL instance
  * @param recv_frag (IN)    Receive fragment
@@ -226,7 +332,22 @@ extern void mca_ptl_sm_matched(
     struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_recv_frag_t* frag
 );
-                                                                                                 
+
+/**
+ * PML->PTL Notification that a receive fragment has been matched.
+ * Called for message that is send from process with the virtual
+ * address of the shared memory segment being the same as that of
+ * the receiver.
+ *
+ * @param ptl (IN)          PTL instance
+ * @param recv_frag (IN)    Receive fragment
+ *
+ */
+extern void mca_ptl_sm_matched_common_base_addr(
+    struct mca_ptl_base_module_t* ptl,
+    struct mca_ptl_base_recv_frag_t* frag
+);
+
 /**
  * PML->PTL Initiate a send of the specified size.
  *

@@ -61,12 +61,10 @@ int mca_ptl_sm_send_request_init(struct mca_ptl_base_module_t* ptl,
      * processes may have different base addresses 
      */
     sm_request->req_frag=(mca_ptl_sm_frag_t *)ompi_list_get_first(
-            (void *)&(ptl_sm->sm_first_frags));
+            (void *)&(mca_ptl_sm_component.sm_first_frags));
     if(NULL == sm_request->req_frag){
         return_value=OMPI_ERR_OUT_OF_RESOURCE;
     }
-    sm_request->req_frag_offset_from_base=RELATIVE_ADDRESS(
-            sm_request->req_frag,mca_ptl_sm_component.sm_mpool_base);
 
     return return_value;
 }

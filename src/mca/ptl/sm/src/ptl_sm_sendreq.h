@@ -30,10 +30,6 @@ struct mca_ptl_sm_send_request_t {
   
     /* pointer to first fragment descriptor */
     mca_ptl_sm_frag_t *req_frag;
-    /* same pointer, but relative to the base of the shared memory
-       segment */
-    mca_ptl_sm_frag_t *req_frag_offset_from_base;
-
 };
 typedef struct mca_ptl_sm_send_request_t mca_ptl_sm_send_request_t;
 
