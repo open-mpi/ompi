@@ -37,7 +37,27 @@ int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
   }
 
-  /* This function is not yet implemented */
+   if      (r > 38) *newtype = &ompi_mpi_datatype_null;
+#if OMPI_HAVE_F90_INTEGER16
+   else if (r > 18) *newtype = &ompi_mpi_long_long;
+#else
+   else if (r > 18) *newtype = &ompi_mpi_datatype_null;
+#endif  /* OMPI_HAVE_F90_INTEGER16 */
+#if SIZEOF_LONG > SIZEOF_INT
+   else if (r >  9) *newtype = &ompi_mpi_long;
+#else
+#if SIZEOF_LONG_LONG > SIZEOF_INT
+   else if (r >  9) *newtype = &ompi_mpi_long_long;
+#else
+   else if (r >  9) *newtype = &ompi_mpi_datatype_null;
+#endif  /* SIZEOF_LONG_LONG > SIZEOF_INT */
+#endif  /* SIZEOF_LONG > SIZEOF_INT */
+   else if (r >  4) *newtype = &ompi_mpi_int;
+   else if (r >  2) *newtype = &ompi_mpi_short;
+   else             *newtype = &ompi_mpi_byte;
+
+   if( *newtype == &ompi_mpi_datatype_null )
+      return MPI_SUCCESS;
 
   return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
 }
