@@ -29,23 +29,21 @@
  */
 struct mca_io_base_request_t {
     /** Base request */
-    ompi_request_t req_ompi;
-
-    /** io component version number of the module that owns this
-        request */
-    mca_io_base_version_t req_ver;
+    ompi_request_t super;
 
     /** ompi_file_t of the file that owns this request */
     ompi_file_t *req_file;
 
-    /* JMS ...nothing more needed for io v1.x, but will likely need
-       more for io v2.x -- probably need to keep other things,
-       analogout to the pml_base_request_t */
+    /** io component version number of the module that owns this
+        request (i.e., this defines what follows this entry in
+        memory) */
+    mca_io_base_version_t req_ver;
 };
 /**
  * Convenience typedef
  */
 typedef struct mca_io_base_request_t mca_io_base_request_t;
+
 
 /**
  * Declare the class
@@ -57,12 +55,23 @@ OBJ_CLASS_DECLARATION(mca_io_base_request_t);
 extern "C" {
 #endif
     /**
+     * Setup freelist of IO requests
+     *
+     * @returns OMPI_SUCCESS upon success
+     *
+     * Initialize the IO freelist of requests, making each request be
+     * the size of the base IO request plus the maxiumum number of
+     * bytes from all the available IO components.
+     */
+    int mca_io_base_request_create_freelist(void);
+
+    /**
      * Get a new IO request
      *
      * @param fh The file handle
      * @param req Pointer to an IO base request
      *
-     * @returns MPI_SUCCESS on success
+     * @returns OMPI_SUCCESS on success
      * @returns err otherwise
      *
      * This function allocates an MPI_Request (ompi_request_t)
@@ -100,7 +109,7 @@ extern "C" {
      * For optimization reasons, \em no error checking is performed.
      */
     void mca_io_base_request_free(ompi_file_t *file,
-                                  mca_io_base_request_t **req);
+                                  mca_io_base_request_t *req);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

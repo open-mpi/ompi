@@ -518,11 +518,17 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_ERRORS_RETURN (&ompi_mpi_errors_return)
 
 
+/*
+ * For applications still using the old [non-standard] ROMIO conventions
+ */
+#define MPIO_Request MPI_Request
+#define MPIO_Test MPI_Test
+#define MPIO_Wait MPI_Wait
 
-  /*
-   * MPI API
-   */
-  /* JMS: Look for missing functions (e.g., MPI_File_*) */
+
+/*
+ * MPI API
+ */
 
 OMPI_DECLSPEC  int MPI_Abort(MPI_Comm comm, int errorcode);
 OMPI_DECLSPEC  int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,

@@ -16,6 +16,7 @@
 #define OMPI_FILE_H
 
 #include "mpi.h"
+#include "class/ompi_list.h"
 #include "errhandler/errhandler.h"
 #include "threads/mutex.h"
 #include "mca/io/io.h"
@@ -68,13 +69,23 @@ struct ompi_file_t {
         indicates what member to look at in the union, below) */
     mca_io_base_version_t f_io_version;
 
+    /** The selected component (note that this is a union) -- we need
+        this to add and remove the component from the list of
+        components currently in use by the io framework for
+        progression porpoises. */
+    mca_io_base_components_t f_io_selected_component;
+
     /** The selected module (note that this is a union) */
     mca_io_base_modules_t f_io_selected_module;
 
     /** Allow the selected module to cache data on the file */
     struct mca_io_base_file_t *f_io_selected_data;
 
-    /* JMS: also put io request freelist here */
+    /** Per-module io request freelist */
+    ompi_list_t f_io_requests;
+
+    /** Lock for the per-module io request freelist */
+    ompi_mutex_t f_io_requests_lock;
 };
 /**
  * Convenience typedef

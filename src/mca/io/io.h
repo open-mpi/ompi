@@ -16,23 +16,35 @@
 #define MCA_IO_H
 
 #include "mca/mca.h"
+#include "request/request.h"
 #include "datatype/datatype.h"
+
 
 /*
  * Forward declaration for private data on io components and modules.
  */
+struct ompi_file_t;
 struct mca_io_base_file_t;
 struct mca_io_base_delete_t;
+
 
 /*
  * Forward declataion so that we don't create an include file loop.
  */
 struct mca_io_base_request_t;
 
-/* * Forward declarations of things declared in this file
+
+/*
+ * Forward declarations of things declared in this file
  */
 struct mca_io_base_module_1_0_0_t;
 union mca_io_base_modules_t;
+
+
+/**
+ * External progress function; invoked from ompi_progress()
+ */
+int mca_io_base_progress(void);
 
 
 /**
@@ -90,10 +102,17 @@ typedef int (*mca_io_base_component_file_delete_unselect_fn_t)
     (char *filename, struct ompi_info_t *info,
      struct mca_io_base_delete_t *private_data);
 
+typedef int (*mca_io_base_component_progress_fn_t)(void);
+
 /* IO component version and interface functions. */
 struct mca_io_base_component_1_0_0_t {
     mca_base_component_t io_version;
     mca_base_component_data_1_0_0_t io_data;
+
+    /** Additional bytes that this module needs to be allocated when
+        an MPI_Request (ompi_request_t) is allocated. */
+
+    size_t io_request_bytes;
 
     mca_io_base_component_init_query_fn_t io_init_query;
     mca_io_base_component_file_query_1_0_0_fn_t io_file_query;
@@ -102,6 +121,8 @@ struct mca_io_base_component_1_0_0_t {
     mca_io_base_component_file_delete_query_fn_t io_delete_query;
     mca_io_base_component_file_delete_unselect_fn_t io_delete_unquery;
     mca_io_base_component_file_delete_select_fn_t io_delete_select;
+
+    mca_io_base_component_progress_fn_t io_progress;
 };
 typedef struct mca_io_base_component_1_0_0_t mca_io_base_component_1_0_0_t;
 
@@ -128,11 +149,12 @@ typedef union mca_io_base_components_t mca_io_base_components_t;
  * To reduce latency (number of required allocations), the io base
  * allocates additional space along with each request that may be used
  * by the io module for additional control information. If the io
- * module intends to use this space, the io_module_cache_bytes
- * attributes should be set to reflect the number of bytes needed by
- * the io module on a per-request basis. This space is allocated
- * contiguously along with the mca_io_base_request_t with the space
- * immediately following the base request available to the io module.
+ * module intends to use this space, the io_request_bytes attribute
+ * should be set to reflect the number of bytes above
+ * sizeof(mca_io_base_request_t) are needed by the io component. This
+ * space is allocated contiguously along with the
+ * mca_io_base_request_t with the space immediately following the base
+ * request available to the io module.
  * 
  * This init function is called the first time the request is created
  * by the io base. On completion of the request, the io base will
@@ -140,7 +162,7 @@ typedef union mca_io_base_components_t mca_io_base_components_t;
  * request is re-used from the cache, this init function is NOT called
  * again.
  */
-typedef int (*mca_io_base_module_request_init_fn_t)(
+typedef int (*mca_io_base_module_request_once_init_fn_t)(
     union mca_io_base_modules_t* module_union,
     struct mca_io_base_request_t* request);
 
@@ -152,14 +174,18 @@ typedef int (*mca_io_base_module_request_init_fn_t)(
  * @param module (IN)    io module
  * @param request (IN)   Pointer to allocated request.
  *
- * The fini function is called when the io base removes a request from
- * the io module's cache (due to resource constraints) or the cache
- * limit has been reached, prior to re-using the request for another
- * io module. This provides the io module the chance to
- * cleanup/release any resources cached on the request by the io
- * module.
+ * This function is called when the io base removes a request from the
+ * io module's cache (due to resource constraints) or the cache limit
+ * has been reached, prior to re-using the request for another io
+ * module. This provides the io module the chance to cleanup/release
+ * any resources cached on the request by the io module.
  */
-typedef int (*mca_io_base_module_request_finalize_fn_t)(
+typedef int (*mca_io_base_module_request_once_finalize_fn_t)(
+    union mca_io_base_modules_t* module_union,
+    struct mca_io_base_request_t* request);
+
+typedef int (*mca_io_base_module_request_fini_fn_t)(
+    struct ompi_file_t *file,
     union mca_io_base_modules_t* module_union,
     struct mca_io_base_request_t* request);
 
@@ -307,26 +333,27 @@ typedef int (*mca_io_base_module_file_get_atomicity_fn_t)
     (struct ompi_file_t *fh, int *flag);
 typedef int (*mca_io_base_module_file_sync_fn_t)(struct ompi_file_t *fh);
 
-typedef int (*mca_io_base_module_test_fn_t)
-    (struct mca_io_base_request_t *request, int *flag, 
-     struct ompi_status_public_t *status);
-typedef int (*mca_io_base_module_wait_fn_t)
-    (struct mca_io_base_request_t *request,
-     struct ompi_status_public_t *status);
-
 struct mca_io_base_module_1_0_0_t {
 
-    /* Additional data */
+    /** Once-per-process request initializtion function */
 
-    /** Maximum number of requests to hold in the cache */
-    size_t io_module_cache_size;
+    mca_io_base_module_request_once_init_fn_t io_module_request_once_init;
 
-    /** Additional bytes that this module needs to be allocated when
-        an MPI_Request (ompi_request_t) is allocated. */
-    size_t io_module_cache_bytes;
+    /** Once-per-process request finalization function */
 
-    mca_io_base_module_request_init_fn_t io_module_request_init;
-    mca_io_base_module_request_finalize_fn_t io_module_request_finalize;
+    mca_io_base_module_request_once_finalize_fn_t io_module_request_once_finalize;
+
+    /** Finalize a request (per usage) */
+
+    ompi_request_free_fn_t io_module_request_fini;
+
+    /** Free a request (per usage) */
+
+    ompi_request_free_fn_t io_module_request_free;
+
+    /** Cancel a request (per usage) */
+
+    ompi_request_cancel_fn_t io_module_request_cancel;
 
     /* Back-ends to MPI API calls (pretty much a 1-to-1 mapping) */
 
@@ -390,9 +417,6 @@ struct mca_io_base_module_1_0_0_t {
     mca_io_base_module_file_set_atomicity_fn_t        io_module_file_set_atomicity;
     mca_io_base_module_file_get_atomicity_fn_t        io_module_file_get_atomicity;
     mca_io_base_module_file_sync_fn_t                 io_module_file_sync;
-    
-    mca_io_base_module_test_fn_t                      io_module_file_fn_test;
-    mca_io_base_module_wait_fn_t                      io_module_file_wait;
 };
 typedef struct mca_io_base_module_1_0_0_t mca_io_base_module_1_0_0_t;
 

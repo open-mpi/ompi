@@ -70,6 +70,10 @@ int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, void *buf,
         rc = fh->f_io_selected_module.v1_0_0.
             io_module_file_iwrite_at(fh, offset, buf, count, datatype, 
                                      io_request);
+        if (MPI_SUCCESS == rc) {
+            ++ompi_progress_pending_io_reqs;
+            (*request)->req_state = OMPI_REQUEST_ACTIVE;
+        }
         break;
 
     default:

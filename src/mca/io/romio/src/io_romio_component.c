@@ -14,6 +14,8 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
+#include "class/ompi_list.h"
+#include "mca/base/base.h"
 #include "mca/io/io.h"
 #include "io_romio.h"
 #include "io-romio-version.h"
@@ -22,6 +24,8 @@
 /*
  * Private functions
  */
+static int open_component(void);
+static int close_component(void);
 static int init_query(bool *enable_multi_user_threads,
                       bool *have_hidden_threads);
 static const struct mca_io_base_module_1_0_0_t *
@@ -36,6 +40,25 @@ static int delete_query(char *filename, struct ompi_info_t *info,
                         bool *usable, int *priorty);
 static int delete_select(char *filename, struct ompi_info_t *info,
                          struct mca_io_base_delete_t *private_data);
+static int progress(void);
+
+/*
+ * Private variables
+ */
+static int priority_param = -1;
+static int delete_priority_param = -1;
+
+
+/*
+ * Global, component-wide ROMIO mutex because ROMIO is not thread safe
+ */
+ompi_mutex_t mca_io_romio_mutex;
+
+
+/*
+ * Global list of requests for this component
+ */
+ompi_list_t mca_io_romio_pending_requests;
 
 
 /*
@@ -57,8 +80,8 @@ mca_io_base_component_1_0_0_t mca_io_romio_component = {
         MCA_io_romio_MAJOR_VERSION,
         MCA_io_romio_MINOR_VERSION,
         MCA_io_romio_RELEASE_VERSION,
-        NULL,
-        NULL
+        open_component,
+        close_component,
     },
 
     /* Next the MCA v1.0.0 component meta data */
@@ -67,6 +90,11 @@ mca_io_base_component_1_0_0_t mca_io_romio_component = {
         /* Whether the component is checkpointable or not */
         false
     },
+
+    /* Additional number of bytes required for this component's
+       requests */
+
+    sizeof(mca_io_romio_request_t) - sizeof(mca_io_base_request_t),
 
     /* Initial configuration / Open a new file */
 
@@ -78,8 +106,42 @@ mca_io_base_component_1_0_0_t mca_io_romio_component = {
 
     delete_query,
     NULL,
-    delete_select
+    delete_select,
+
+    /* Progression of non-blocking requests */
+
+    progress
 };
+
+
+static int open_component(void)
+{
+    /* Use a low priority, but allow other components to be lower */
+    
+    priority_param = 
+        mca_base_param_register_int("io", "romio", "priority", NULL, 10);
+    delete_priority_param = 
+        mca_base_param_register_int("io", "romio", "delete_priority", 
+                                    NULL, 10);
+
+    /* Create the list of pending requests */
+
+    OBJ_CONSTRUCT(&mca_io_romio_pending_requests, ompi_list_t);
+
+    return OMPI_SUCCESS;
+}
+
+
+static int close_component(void)
+{
+    /* Destroy the list of pending requests */
+    /* JMS: Good opprotunity here to list out all the IO requests that
+       were not destroyed / completed upon MPI_FINALIZE */
+
+    OBJ_DESTRUCT(&mca_io_romio_pending_requests);
+
+    return OMPI_SUCCESS;
+}
 
 
 static int init_query(bool *allow_multi_user_threads,
@@ -99,6 +161,13 @@ file_query(struct ompi_file_t *file,
 {
     mca_io_romio_data_t *data;
 
+    /* Lookup our priority */
+
+    if (OMPI_SUCCESS != mca_base_param_lookup_int(priority_param,
+                                                  priority)) {
+        return NULL;
+    }
+
     /* Allocate a space for this module to hang private data (e.g.,
        the ROMIO file handle) */
 
@@ -109,10 +178,8 @@ file_query(struct ompi_file_t *file,
     data->romio_fh = NULL;
     *private_data = (struct mca_io_base_file_t*) data;
 
-    /* The priority level of 20 is pretty arbitrary, since this
-       component is likely to be the only one in io v1.x */
+    /* All done */
 
-    *priority = 20;
     return &mca_io_romio_module;
 }
 
@@ -135,8 +202,14 @@ static int delete_query(char *filename, struct ompi_info_t *info,
                         struct mca_io_base_delete_t **private_data,
                         bool *usable, int *priority)
 {
+    /* Lookup our priority */
+
+    if (OMPI_SUCCESS != mca_base_param_lookup_int(delete_priority_param,
+                                                  priority)) {
+        return OMPI_ERROR;
+    }
+
     *usable = true;
-    *priority = 10;
     *private_data = NULL;
 
     return OMPI_SUCCESS;
@@ -153,4 +226,41 @@ static int delete_select(char *filename, struct ompi_info_t *info,
     OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
+}
+
+
+static int progress(void)
+{
+    ompi_list_item_t *item, *next;
+    int ret, flag, count = 0;
+    ROMIO_PREFIX(MPIO_Request) romio_rq;
+
+    /* Troll through all pending requests and try to progress them.
+       If a request finishes, remove it from the list. */
+
+    OMPI_THREAD_LOCK (&mca_io_romio_mutex);
+    for (item = ompi_list_get_first(&mca_io_romio_pending_requests);
+         item != ompi_list_get_end(&mca_io_romio_pending_requests); 
+         item = next) {
+        next = ompi_list_get_next(item);
+
+        romio_rq = ((mca_io_romio_request_t *) item)->romio_rq;
+        ret = ROMIO_PREFIX(MPIO_Test)(&romio_rq, &flag, 
+                                      &(((ompi_request_t *) item)->req_status));
+        if (ret < 0) {
+            return ret;
+        } else if (1 == flag) {
+            ++count;
+            ompi_request_complete((ompi_request_t*) item);
+            OMPI_REQUEST_FINI((ompi_request_t*) item);
+            ompi_list_remove_item(&mca_io_romio_pending_requests, item);
+            mca_io_base_request_free(((mca_io_base_request_t *) item)->req_file,
+                                     (mca_io_base_request_t *) item);
+        }
+    }
+    OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
+
+    /* Return how many requests completed */
+
+    return count;
 }

@@ -22,6 +22,7 @@ headers = \
 
 libmca_io_base_la_SOURCES = \
 	$(headers) \
+	io_base_component_list.c \
 	io_base_close.c \
         io_base_delete.c \
 	io_base_file_select.c \
