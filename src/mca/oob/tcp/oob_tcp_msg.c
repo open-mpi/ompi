@@ -211,8 +211,8 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(const ompi_process_name_t* name, i
         msg != (mca_oob_tcp_msg_t*) ompi_list_get_end(&mca_oob_tcp_component.tcp_msg_recv);
         msg =  (mca_oob_tcp_msg_t*) ompi_list_get_next(msg)) {
 
-        if((0 == ompi_process_name_compare(name,MCA_OOB_NAME_ANY) ||
-           (0 == ompi_process_name_compare(name, &msg->msg_peer)))) {
+        if((0 == mca_oob_tcp_process_name_compare(name,MCA_OOB_NAME_ANY) ||
+           (0 == mca_oob_tcp_process_name_compare(name, &msg->msg_peer)))) {
             if (tag == MCA_OOB_TAG_ANY || tag == msg->msg_hdr.msg_tag) {
                 return msg;
             }
@@ -237,8 +237,8 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(const ompi_process_name_t* name, i
         msg != (mca_oob_tcp_msg_t*) ompi_list_get_end(&mca_oob_tcp_component.tcp_msg_post);
         msg =  (mca_oob_tcp_msg_t*) ompi_list_get_next(msg)) {
 
-        if((0 == ompi_process_name_compare(&msg->msg_peer,MCA_OOB_NAME_ANY) ||
-           (0 == ompi_process_name_compare(&msg->msg_peer,name)))) {
+        if((0 == mca_oob_tcp_process_name_compare(&msg->msg_peer,MCA_OOB_NAME_ANY) ||
+           (0 == mca_oob_tcp_process_name_compare(&msg->msg_peer,name)))) {
             if (msg->msg_hdr.msg_tag == MCA_OOB_TAG_ANY || msg->msg_hdr.msg_tag == tag) {
                 if((msg->msg_flags & MCA_OOB_PEEK) == 0 || peek) {
                     ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);

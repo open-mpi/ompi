@@ -706,7 +706,7 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
     OMPI_THREAD_LOCK(&peer->peer_lock);
     if ((peer->peer_state == MCA_OOB_TCP_CLOSED) ||
         (peer->peer_state != MCA_OOB_TCP_CONNECTED &&
-         ompi_process_name_compare(&peer->peer_name, MCA_OOB_NAME_SELF) < 0)) {
+         mca_oob_tcp_process_name_compare(&peer->peer_name, MCA_OOB_NAME_SELF) < 0)) {
         mca_oob_tcp_peer_close(peer);
         peer->peer_sd = sd;
         mca_oob_tcp_peer_event_init(peer);
