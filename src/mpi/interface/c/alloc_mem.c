@@ -9,10 +9,9 @@
 #include "mpi.h"
 #include "mpi/interface/c/bindings.h"
 
-#if LAM_WANT_MPI_PROFILING && LAM_HAVE_WEAK_SYMBOLS
-#pragma weak PMPI_Alloc_mem = MPI_Alloc_mem
+#if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
+#pragma weak MPI_Alloc_mem = PMPI_Alloc_mem
 #endif
-
 
 int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 {
