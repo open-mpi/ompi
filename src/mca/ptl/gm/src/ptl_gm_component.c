@@ -110,7 +110,7 @@ mca_ptl_gm_component_open(void)
 	mca_ptl_gm_param_register_int( "max_ptl_modules", 1 );
 
     mca_ptl_gm_component.gm_segment_size = 
-        mca_ptl_gm_param_register_int( "segment_size", 16 * 1024 ); /* 16K by default */
+        mca_ptl_gm_param_register_int( "segment_size", 32 * 1024 );
     default_first_frag_size = mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_rendezvous_header_t);
 
     mca_ptl_gm_module.super.ptl_first_frag_size =
@@ -123,14 +123,14 @@ mca_ptl_gm_component_open(void)
     }
 
     mca_ptl_gm_module.super.ptl_min_frag_size =
-        mca_ptl_gm_param_register_int ("min_frag_size", 1<<16);
+        mca_ptl_gm_param_register_int ("min_frag_size", 64 * 1024);
     mca_ptl_gm_module.super.ptl_max_frag_size =
         mca_ptl_gm_param_register_int ("max_frag_size", 256 * 1024 * 1024);
     /* Parameters setting the message limits. */
     mca_ptl_gm_component.gm_eager_limit = 
-        mca_ptl_gm_param_register_int( "eager_limit", 2 * mca_ptl_gm_component.gm_segment_size );
+        mca_ptl_gm_param_register_int( "eager_limit", 512 * 1024 );
     mca_ptl_gm_component.gm_rdma_frag_size =
-        mca_ptl_gm_param_register_int ("rdma_frag_size", 512 * 1024);
+        mca_ptl_gm_param_register_int ("rdma_frag_size", 128 * 1024);
     
     mca_ptl_gm_component.gm_free_list_num =
         mca_ptl_gm_param_register_int ("free_list_num", 256);
