@@ -339,15 +339,16 @@ static int mca_base_modex_subscribe(ompi_process_name_t* name)
     /* otherwise - subscribe */
     asprintf(&segment, "%s-%s", OMPI_RTE_MODEX_SEGMENT, mca_ns_base_get_jobid_string(name));
     rctag = ompi_registry.subscribe(
-        OMPI_REGISTRY_OR,
-        OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
-        OMPI_REGISTRY_NOTIFY_MODIFICATION|
-	OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA|
-	OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN,
-        segment,
-        NULL,
-        mca_base_modex_registry_callback,
-        NULL);
+        	OMPI_REGISTRY_OR,
+        	OMPI_REGISTRY_NOTIFY_ADD_ENTRY|OMPI_REGISTRY_NOTIFY_DELETE_ENTRY|
+        	OMPI_REGISTRY_NOTIFY_MODIFICATION|
+		OMPI_REGISTRY_NOTIFY_ON_STARTUP|OMPI_REGISTRY_NOTIFY_INCLUDE_STARTUP_DATA|
+		OMPI_REGISTRY_NOTIFY_PRE_EXISTING|
+		OMPI_REGISTRY_NOTIFY_ON_SHUTDOWN,
+        	segment,
+        	NULL,
+        	mca_base_modex_registry_callback,
+        	NULL);
     if(rctag == OMPI_REGISTRY_NOTIFY_ID_MAX) {
         ompi_output(0, "mca_base_modex_exchange: "
 		    "ompi_registry.subscribe failed with return code %d\n", (int)rctag);
