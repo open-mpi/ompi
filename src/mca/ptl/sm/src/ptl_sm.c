@@ -333,14 +333,38 @@ int mca_ptl_sm_finalize(struct mca_ptl_base_module_t* ptl)
 }
 
 
-int mca_ptl_sm_request_alloc(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t** request)
+int mca_ptl_sm_request_alloc(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request)
 {
+    mca_ptl_sm_send_request_t *sm_request;
+    ompi_list_item_t* item;
+    int rc;
+
+    /* allocate shared memory, first fragment */
+    OMPI_FREE_LIST_GET(&(mca_ptl_sm.sm_first_frags),item,rc);
+    if( OMPI_SUCCESS != rc ) {
+        return rc;
+    }
+
+    /* associate this fragment with the send descriptor */
+    sm_request=(mca_ptl_sm_send_request_t *)request;
+    sm_request->req_frag=(mca_ptl_sm_frag_t *)item;
+    sm_request->req_frag_offset_from_base=(mca_ptl_sm_frag_t *)
+        ((char *)item-mca_ptl_sm_component.sm_offset);
+
     return OMPI_SUCCESS;
 }
 
 
 void mca_ptl_sm_request_return(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request)
 {
+    mca_ptl_sm_send_request_t *sm_request;
+    ompi_list_item_t* item;
+
+    /* return the fragment descriptor to the free list */
+    sm_request=(mca_ptl_sm_send_request_t *)request;
+    item=(ompi_list_item_t *)sm_request->req_frag;
+    OMPI_FREE_LIST_RETURN(&(mca_ptl_sm.sm_first_frags),item);
+
 }
 
 
@@ -637,6 +661,7 @@ void mca_ptl_sm_matched(
     sm_frag_desc = (mca_ptl_sm_frag_t *)frag;
 
     /* copy, only if there is data to copy */
+    max_data=0;
     if( 0 <  sm_frag_desc->super.frag_base.frag_size ) {
         header = &((frag)->frag_base.frag_header.hdr_match);
  

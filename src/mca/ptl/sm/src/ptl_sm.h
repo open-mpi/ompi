@@ -196,7 +196,7 @@ extern int mca_ptl_sm_del_procs(
  */
 extern int mca_ptl_sm_request_alloc(
     struct mca_ptl_base_module_t* ptl,
-    struct mca_pml_base_send_request_t**
+    struct mca_pml_base_send_request_t*
 );
 
 /**

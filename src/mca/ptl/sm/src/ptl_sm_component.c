@@ -170,6 +170,7 @@ int mca_ptl_sm_component_close(void)
     OBJ_DESTRUCT(&mca_ptl_sm.sm_send_requests);
     OBJ_DESTRUCT(&mca_ptl_sm.sm_first_frags);
     OBJ_DESTRUCT(&mca_ptl_sm.sm_second_frags);
+    OBJ_DESTRUCT(&mca_ptl_sm.sm_pending_ack_lock);
     OBJ_DESTRUCT(&mca_ptl_sm.sm_pending_ack);
     return OMPI_SUCCESS;
 }
@@ -335,6 +336,10 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
         header_ptr=(mca_ptl_sm_frag_t *)ompi_fifo_read_from_tail( send_fifo,
                 mca_ptl_sm_component.sm_offset);
         if( OMPI_CB_FREE == header_ptr ) {
+            /* release thread lock */
+            if( ompi_using_threads() ) {
+                ompi_atomic_unlock(&(send_fifo->tail_lock));
+            }
             continue;
         }
 
@@ -415,7 +420,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
          *   sending the ack, so that when the ack is recieved,
          *   manipulated, and put on a new list, it is not also
          *   on a different list */
-        item = ompi_list_get_first(&(mca_ptl_sm.sm_pending_ack));
+        item = ompi_list_remove_first(&(mca_ptl_sm.sm_pending_ack));
         while ( item != ompi_list_get_end(&(mca_ptl_sm.sm_pending_ack)) ) {
 
             /* get fragment pointer */
@@ -440,7 +445,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
             }
 
             /* get next fragment to ack */
-            item = ompi_list_get_first(&(mca_ptl_sm.sm_pending_ack));
+            item = ompi_list_remove_first(&(mca_ptl_sm.sm_pending_ack));
 
         }
 
