@@ -31,6 +31,7 @@ struct lam_if_t {
     int                 if_flags;
     struct sockaddr_in  if_addr;
     struct sockaddr_in  if_mask;
+    uint32_t            if_bandwidth;
 };
 typedef struct lam_if_t lam_if_t;
 
@@ -69,7 +70,7 @@ static int lam_ifinit(void)
         struct ifreq* ifr = (struct ifreq*)ptr;
         lam_if_t intf;
         lam_if_t *intf_ptr;
-        lam_list_init(&intf.if_item);
+        lam_list_item_init(&intf.if_item);
 
 #if defined(__APPLE__)
         ptr += (sizeof(ifr->ifr_name) + 
@@ -271,6 +272,31 @@ int lam_ifindextoaddr(int if_index, struct sockaddr* if_addr, int length)
     }
     return LAM_ERROR;
 }
+
+
+/* 
+ *  Lookup the interface by kernel index and return the 
+ *  network mask assigned to the interface.
+ */
+
+int lam_ifindextomask(int if_index, struct sockaddr* if_mask, int length)
+{
+    lam_if_t* intf;
+    int rc = lam_ifinit();
+    if(rc != LAM_SUCCESS)
+        return rc;
+
+    for(intf =  (lam_if_t*)lam_list_get_first(&lam_if_list);
+        intf != (lam_if_t*)lam_list_get_end(&lam_if_list);
+        intf =  (lam_if_t*)lam_list_get_next(intf)) {
+        if(intf->if_index == if_index) {
+            memcpy(if_mask, &intf->if_mask, length);
+            return LAM_SUCCESS;
+        }
+    }
+    return LAM_ERROR;
+}
+
 
 
 /* 

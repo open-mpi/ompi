@@ -72,5 +72,14 @@ int lam_ifindextoname(int if_index, char* if_name, int);
  */
 int lam_ifindextoaddr(int if_index, struct sockaddr*, int);
 
+/**
+ *  Lookup an interface by index and return its network mask.
+ *
+ *  @param if_index (IN)  Interface index
+ *  @param if_name (OUT)  Interface address buffer
+ *  @param size (IN)      Interface address buffer size
+ */
+int lam_ifindextomask(int if_index, struct sockaddr*, int);
+
 #endif
 
