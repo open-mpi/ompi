@@ -29,7 +29,6 @@
 /*
  * Struct of function pointers that need to be initialized
  */
-OMPI_EXPORT
 mca_ns_base_component_t mca_ns_proxy_component = {
   {
     MCA_NS_BASE_VERSION_1_0_0,

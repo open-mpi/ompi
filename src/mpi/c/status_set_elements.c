@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Status_set_elements";
 
 
-OMPI_EXPORT
 int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                             int count) 
 {

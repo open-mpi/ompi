@@ -1,7 +1,6 @@
 #include "svc_stdio.h"
 
 
-OMPI_EXPORT
 mca_svc_base_component_t mca_svc_stdio_component = {
       /* First, the mca_base_module_t struct containing meta
          information about the module itself */

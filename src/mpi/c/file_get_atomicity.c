@@ -22,7 +22,6 @@
 static const char FUNC_NAME[] = "MPI_File_get_atomicity";
 
 
-OMPI_EXPORT
 int MPI_File_get_atomicity(MPI_File fh, int *flag)
 {
     int rc;

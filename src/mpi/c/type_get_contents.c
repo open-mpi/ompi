@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Type_get_contents";
 
 
-OMPI_EXPORT
 int MPI_Type_get_contents(MPI_Datatype mtype,
                           int max_integers,
                           int max_addresses,

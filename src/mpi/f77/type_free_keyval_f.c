@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_FREE_KEYVAL,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_type_free_keyval_f(MPI_Fint *type_keyval, MPI_Fint *ierr)
 {
     OMPI_SINGLE_NAME_DECL(type_keyval);

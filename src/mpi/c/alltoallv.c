@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Alltoallv";
 
 
-OMPI_EXPORT
 int MPI_Alltoallv(void *sendbuf, int *sendcounts, int *sdispls,
                   MPI_Datatype sendtype, 
                   void *recvbuf, int *recvcounts, int *rdispls, 

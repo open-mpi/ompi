@@ -23,7 +23,6 @@
 static const char FUNC_NAME[] = "MPI_Buffer_attach";
 
 
-OMPI_EXPORT
 int MPI_Buffer_attach(void *buffer, int size) 
 {
   if (MPI_PARAM_CHECK) {

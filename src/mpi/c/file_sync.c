@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_File_sync";
 
 
-OMPI_EXPORT
 int MPI_File_sync(MPI_File fh)
 {
     int rc;

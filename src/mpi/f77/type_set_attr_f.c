@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SET_ATTR,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_type_set_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attr_val, MPI_Fint *ierr)
 {
     MPI_Datatype c_type = MPI_Type_f2c( *type );

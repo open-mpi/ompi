@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Type_c2f";
 
 
-OMPI_EXPORT
 MPI_Fint MPI_Type_c2f(MPI_Datatype datatype)
 {
   if (MPI_PARAM_CHECK) {

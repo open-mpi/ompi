@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Comm_c2f";
 
 
-OMPI_EXPORT
 MPI_Fint MPI_Comm_c2f(MPI_Comm comm) 
 {
     ompi_communicator_t *cptr=(ompi_communicator_t *)comm;

@@ -19,7 +19,6 @@
 static const char FUNC_NAME[] = "MPI_Type_delete_attr";
 
 
-OMPI_EXPORT
 int MPI_Type_delete_attr (MPI_Datatype type, int type_keyval)
 {
    int ret;

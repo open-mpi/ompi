@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CLOSE_PORT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_close_port_f(char *port_name, MPI_Fint *ierr)
 {
     *ierr = OMPI_INT_2_FINT(MPI_Close_port(port_name));

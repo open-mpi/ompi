@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OP_FREE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_op_free_f(MPI_Fint *op, MPI_Fint *ierr)
 {
     MPI_Op c_op;

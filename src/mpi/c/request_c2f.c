@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Request_f2c";
 
 
-OMPI_EXPORT
 MPI_Fint MPI_Request_c2f(MPI_Request request) 
 {
     /* local variables */

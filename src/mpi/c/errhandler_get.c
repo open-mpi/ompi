@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Errhandler_get";
 
 
-OMPI_EXPORT
 int MPI_Errhandler_get(MPI_Comm comm, MPI_Errhandler *errhandler) 
 {
   if (MPI_PARAM_CHECK) {

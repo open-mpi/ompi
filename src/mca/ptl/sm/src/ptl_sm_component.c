@@ -41,7 +41,6 @@ static int mca_ptl_sm_component_exchange(void);
  * Shared Memory (SM) component instance. 
  */
 
-OMPI_EXPORT
 mca_ptl_sm_component_t mca_ptl_sm_component = {
     {  /* super is being filled in */
         /* First, the mca_base_component_t struct containing meta information

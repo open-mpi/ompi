@@ -22,7 +22,6 @@
 static const char FUNC_NAME[] = "MPI_Open_port";
 
 
-OMPI_EXPORT
 int MPI_Open_port(MPI_Info info, char *port_name) 
 {
     int rc;

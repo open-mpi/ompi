@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Win_set_attr";
 
 
-OMPI_EXPORT
 int MPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val) 
 {
     int ret;

@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_AMODE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_file_get_amode_f(MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr)
 {
     MPI_File c_fh;

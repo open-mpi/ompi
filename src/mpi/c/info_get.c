@@ -43,7 +43,6 @@ static const char FUNC_NAME[] = "MPI_Info_get";
  *   In C and C++, 'valuelen' should be one less than the allocated space
  *   to allow for for the null terminator.
  */
-OMPI_EXPORT
 int MPI_Info_get(MPI_Info info, char *key, int valuelen,
                  char *value, int *flag) 
 {

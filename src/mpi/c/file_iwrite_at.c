@@ -23,7 +23,6 @@
 static const char FUNC_NAME[] = "MPI_File_iwrite_at";
 
 
-OMPI_EXPORT
 int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, void *buf,
                        int count, MPI_Datatype datatype, 
                        MPI_Request *request)

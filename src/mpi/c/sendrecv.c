@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Sendrecv";
 
 
-OMPI_EXPORT
 int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype recvtype,
                  int dest, int sendtag, void *recvbuf, int recvcount,
                  MPI_Datatype sendtype, int source, int recvtag,

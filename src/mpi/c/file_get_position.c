@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_File_get_position";
 
 
-OMPI_EXPORT
 int MPI_File_get_position(MPI_File fh, MPI_Offset *offset)
 {
     int rc;

@@ -22,7 +22,6 @@
 static const char FUNC_NAME[] = "MPI_File_write_all_begin";
 
 
-OMPI_EXPORT
 int MPI_File_write_all_begin(MPI_File fh, void *buf, int count,
                              MPI_Datatype datatype)
 {

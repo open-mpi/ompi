@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Add_error_code";
 
 
-OMPI_EXPORT
 int MPI_Add_error_code(int errorclass, int *errorcode)
 {
     int code;

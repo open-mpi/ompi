@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_ATTR,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_win_set_attr_f(MPI_Fint *win, MPI_Fint *win_keyval,
 			MPI_Aint *attribute_val, MPI_Fint *ierr)
 {

@@ -47,7 +47,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_RANGE_INCL,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_group_range_incl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], MPI_Fint *newgroup, MPI_Fint *ierr)
 {
   ompi_group_t *c_group, *c_newgroup;

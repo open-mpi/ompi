@@ -23,7 +23,6 @@
 static const char FUNC_NAME[] = "MPI_Type_set_name";
 
 
-OMPI_EXPORT
 int MPI_Type_set_name (MPI_Datatype type, char *type_name)
 {
   int length;

@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Op_f2c";
 
 
-OMPI_EXPORT
 MPI_Op MPI_Op_f2c(MPI_Fint op_f)
 {
     size_t op_index = (size_t) op_f;

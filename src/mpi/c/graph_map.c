@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Graph_map";
 
 
-OMPI_EXPORT
 int MPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges,
                   int *newrank) 
 {

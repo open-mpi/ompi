@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Pack_external";
 
 
-OMPI_EXPORT
 int MPI_Pack_external(char *datarep, void *inbuf, int incount,
                       MPI_Datatype datatype, void *outbuf,
                       MPI_Aint outsize, MPI_Aint *position) 

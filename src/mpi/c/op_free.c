@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Op_free";
 
 
-OMPI_EXPORT
 int MPI_Op_free(MPI_Op *op) 
 {
   /* Error checking */

@@ -19,7 +19,6 @@
 static const char FUNC_NAME[] = "MPI_Wait";
 
 
-OMPI_EXPORT
 int MPI_Wait(MPI_Request *request, MPI_Status *status) 
 {
     int index, rc;

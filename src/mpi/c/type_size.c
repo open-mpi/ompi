@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Type_size";
 
 
-OMPI_EXPORT
 int MPI_Type_size(MPI_Datatype type, int *size)
 {
   if (MPI_PARAM_CHECK) {

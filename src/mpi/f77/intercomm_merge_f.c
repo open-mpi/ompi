@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_MERGE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_intercomm_merge_f(MPI_Fint *intercomm, MPI_Fint *high,
 			   MPI_Fint *newintracomm, 
                            MPI_Fint *ierr)

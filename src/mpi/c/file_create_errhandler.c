@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_File_create_errhandler";
 
 
-OMPI_EXPORT
 int MPI_File_create_errhandler(MPI_File_errhandler_fn *function,
 		                        MPI_Errhandler *errhandler) {
   int err = MPI_SUCCESS;

@@ -19,7 +19,6 @@
 #include "ptl_ib_priv.h"
 
 
-OMPI_EXPORT
 mca_ptl_ib_component_t mca_ptl_ib_component = {
     {
         /* First, the mca_base_component_t struct containing meta information

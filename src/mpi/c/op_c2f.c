@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Op_c2f";
 
 
-OMPI_EXPORT
 MPI_Fint MPI_Op_c2f(MPI_Op op) 
 {
   /* Error checking */

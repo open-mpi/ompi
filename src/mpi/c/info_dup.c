@@ -37,7 +37,6 @@ static const char FUNC_NAME[] = "MPI_Info_dup";
  *   When an info object is no longer being used, it should be freed with
  *   'MPI_Info_free'.
  */
-OMPI_EXPORT
 int MPI_Info_dup(MPI_Info info, MPI_Info *newinfo) {
     int err;
     /**

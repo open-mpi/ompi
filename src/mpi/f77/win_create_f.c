@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_win_create_f(char *base, MPI_Fint *size, MPI_Fint *disp_unit,
 		      MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win,
 		      MPI_Fint *ierr)

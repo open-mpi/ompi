@@ -26,7 +26,6 @@ static int delete_select(char *filename, struct ompi_info_t *info,
                          struct mca_io_base_delete_t *private_data);
 
 
-OMPI_EXPORT
 mca_io_base_component_1_0_0_t mca_io_romio_component = {
     /* First, the mca_base_component_t struct containing meta information
        about the component itself */

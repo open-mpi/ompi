@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_DARRAY,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
 			      MPI_Fint *ndims, MPI_Fint *gsize_array, 
 			      MPI_Fint *distrib_array, MPI_Fint *darg_array,

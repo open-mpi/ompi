@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Status_set_cancelled";
 
 
-OMPI_EXPORT
 int MPI_Status_set_cancelled(MPI_Status *status, int flag) 
 {
   if (MPI_PARAM_CHECK) {

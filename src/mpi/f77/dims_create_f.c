@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_DIMS_CREATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_dims_create_f(MPI_Fint *nnodes, MPI_Fint *ndims, 
 		       MPI_Fint *dims, MPI_Fint *ierr)
 {

@@ -19,7 +19,6 @@
 static const char FUNC_NAME[] = "MPI_Testsome";
 
 
-OMPI_EXPORT
 int MPI_Testsome(int incount, MPI_Request requests[],
                  int *outcount, int indices[],
                  MPI_Status statuses[]) 

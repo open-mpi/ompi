@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IBSEND,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_ibsend_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 		  MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, 
 		  MPI_Fint *request, MPI_Fint *ierr)

@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERROR_STRING,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_error_string_f(MPI_Fint *errorcode, char *string,
 			MPI_Fint *resultlen, MPI_Fint *ierr)
 {

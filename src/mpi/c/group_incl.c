@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Group_incl";
 
 
-OMPI_EXPORT
 int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group) 
 {
     /* local variables */

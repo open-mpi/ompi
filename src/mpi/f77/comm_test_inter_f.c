@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_TEST_INTER,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_comm_test_inter_f(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr)
 {
     MPI_Comm c_comm = MPI_Comm_f2c (*comm);

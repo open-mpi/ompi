@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_SET,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_info_set_f(MPI_Fint *info, char *key, char *value, MPI_Fint *ierr)
 {
     MPI_Info c_info;

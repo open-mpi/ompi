@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Barrier";
 
 
-OMPI_EXPORT
 int MPI_Barrier(MPI_Comm comm) 
 {
   int err = MPI_SUCCESS;

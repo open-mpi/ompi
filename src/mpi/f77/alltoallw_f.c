@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLTOALLW,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_alltoallw_f(char *sendbuf, MPI_Fint *sendcounts,
 		     MPI_Fint *sdispls, MPI_Fint *sendtypes, 
 		     char *recvbuf, MPI_Fint *recvcounts,

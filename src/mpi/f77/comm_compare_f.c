@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_COMPARE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_comm_compare_f(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr)
 {
     MPI_Comm c_comm1 = MPI_Comm_f2c(*comm1);

@@ -32,7 +32,6 @@ static const char FUNC_NAME[] = "MPI_Info_free";
  *
  *   Upon successful completion, 'info' will be set to 'MPI_INFO_NULL'.
  */
-OMPI_EXPORT
 int MPI_Info_free(MPI_Info *info) 
 {
     int err;

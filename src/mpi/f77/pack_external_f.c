@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK_EXTERNAL,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount,
 			 MPI_Fint *datatype, char *outbuf, 
 			 MPI_Fint *outsize, MPI_Fint *position,

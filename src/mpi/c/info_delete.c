@@ -35,7 +35,6 @@ static const char FUNC_NAME[] = "MPI_Info_delete";
  * @retval MPI_ERR_INFO
  * @retval MPI_ERR_INFO_KEYY
  */
-OMPI_EXPORT
 int MPI_Info_delete(MPI_Info info, char *key) {
     int key_length;
     int err;

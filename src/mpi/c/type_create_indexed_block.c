@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Type_create_indexed_block";
 
 
-OMPI_EXPORT
 int MPI_Type_create_indexed_block(int count,
                                   int blocklength, 
                                   int array_of_displacements[],

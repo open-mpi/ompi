@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Type_extent";
 
 
-OMPI_EXPORT
 int MPI_Type_extent(MPI_Datatype type, MPI_Aint *extent)
 {
   int rc;

@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_RANK,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_cart_rank_f(MPI_Fint *comm, MPI_Fint *coords, MPI_Fint *rank, 
 		     MPI_Fint *ierr)
 {

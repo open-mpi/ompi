@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Errhandler_c2f";
 
 
-OMPI_EXPORT
 MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler)
 {
   /* Error checking */

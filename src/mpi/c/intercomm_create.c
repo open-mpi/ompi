@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Intercomm_create";
 
 
-OMPI_EXPORT
 int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                          MPI_Comm bridge_comm, int remote_leader,
                          int tag, MPI_Comm *newintercomm) 

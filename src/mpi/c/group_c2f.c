@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Group_c2f";
 
 
-OMPI_EXPORT
 MPI_Fint MPI_Group_c2f(MPI_Group group) {
 
     /* local variables */

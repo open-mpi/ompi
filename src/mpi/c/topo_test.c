@@ -19,7 +19,6 @@
 static const char FUNC_NAME[] = "MPI_Topo_test";
 
 
-OMPI_EXPORT
 int MPI_Topo_test(MPI_Comm comm, int *status) 
 {
     if ( MPI_PARAM_CHECK ) {

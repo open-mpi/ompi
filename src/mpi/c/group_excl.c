@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Group_excl";
 
 
-OMPI_EXPORT
 int MPI_Group_excl(MPI_Group group, int n, int *ranks,
                    MPI_Group *new_group) {
 

@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Grequest_complete";
 
 
-OMPI_EXPORT
 int MPI_Grequest_complete(MPI_Request request) 
 {
   if (MPI_PARAM_CHECK) {

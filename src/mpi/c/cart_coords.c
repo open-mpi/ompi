@@ -22,7 +22,6 @@
 static const char FUNC_NAME[] = "MPI_Cart_coords";
 
 
-OMPI_EXPORT
 int MPI_Cart_coords(MPI_Comm comm, int rank, int maxdims, int *coords) 
 {
     int err;

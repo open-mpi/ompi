@@ -19,7 +19,6 @@
 static const char FUNC_NAME[] = "MPI_Type_create_keyval";
 
 
-OMPI_EXPORT
 int MPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
                            MPI_Type_delete_attr_function *type_delete_attr_fn,
                            int *type_keyval,

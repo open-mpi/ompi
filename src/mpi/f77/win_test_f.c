@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_TEST,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_win_test_f(MPI_Fint *win, MPI_Fint *flag, MPI_Fint *ierr)
 {
     MPI_Win c_win = MPI_Win_f2c(*win);

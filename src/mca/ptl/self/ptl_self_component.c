@@ -24,7 +24,6 @@
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_self.h"
 
-OMPI_EXPORT
 mca_ptl_self_component_t mca_ptl_self_component = {
     {
         /* First, the mca_base_component_t struct containing meta information

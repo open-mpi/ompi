@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_VERSION,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_get_version_f(MPI_Fint *version, MPI_Fint *subversion, MPI_Fint *ierr)
 {
     OMPI_SINGLE_NAME_DECL(version);

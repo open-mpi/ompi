@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_START,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_start_f(MPI_Fint *request, MPI_Fint *ierr)
 {
     MPI_Request c_req = MPI_Request_f2c(*request);

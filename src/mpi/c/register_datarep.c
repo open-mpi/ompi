@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Register_datarep";
 
 
-OMPI_EXPORT
 int MPI_Register_datarep(char *datarep,
                        MPI_Datarep_conversion_function *read_conversion_fn,
                        MPI_Datarep_conversion_function *write_conversion_fn,

@@ -16,7 +16,6 @@
 #include "pml_teg_proc.h"
 
 
-OMPI_EXPORT
 mca_pml_base_component_1_0_0_t mca_pml_teg_component = {
 
     /* First, the mca_base_component_t struct containing meta
