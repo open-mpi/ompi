@@ -1,4 +1,6 @@
 #
+# $HEADER$
+#
 # Copyright 2002-2003. The Regents of the University of California. This material
 # was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
 # National Laboratory, which is operated by the University of California for
@@ -32,4 +34,8 @@ include $(top_srcdir)/config/Makefile.options
 lib_LTLIBRARIES	= libthreads.la
 
 libthreads_la_SOURCES = \
-	thread.c
+	mutex.h \
+	mutex_spinlock.h \
+	mutex_spinwait.h \
+	thread.c \
+	thread.h
