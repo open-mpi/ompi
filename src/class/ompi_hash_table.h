@@ -80,11 +80,16 @@ OMPI_DECLSPEC int ompi_hash_table_remove_all(ompi_hash_table_t *ht);
  *
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
- *  @return  The value associated with the key or NULL if the item is not found.
+ *  @param   ptr     The value associated with the key
+ *  @return  integer return code:
+ *           - OMPI_SUCCESS       if key was found
+ *           - OMPI_ERR_NOT_FOUND if key was not found
+ *           - OMPI_ERROR         other error
  *
  */
 
-OMPI_DECLSPEC void *ompi_hash_table_get_value_uint32(ompi_hash_table_t* table, uint32_t key);
+OMPI_DECLSPEC int ompi_hash_table_get_value_uint32(ompi_hash_table_t* table, uint32_t key, 
+						   void** ptr);
 
 /**
  *  Set value based on uint32_t key.
@@ -114,11 +119,16 @@ OMPI_DECLSPEC int ompi_hash_table_remove_value_uint32(ompi_hash_table_t* table, 
  *
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
- *  @return  The value associated with the key or NULL if the item is not found.
+ *  @param   ptr     The value associated with the key
+ *  @return  integer return code:
+ *           - OMPI_SUCCESS       if key was found
+ *           - OMPI_ERR_NOT_FOUND if key was not found
+ *           - OMPI_ERROR         other error
  *
  */
 
-OMPI_DECLSPEC void *ompi_hash_table_get_value_uint64(ompi_hash_table_t *table, uint64_t key);
+OMPI_DECLSPEC int ompi_hash_table_get_value_uint64(ompi_hash_table_t *table, uint64_t key,
+						   void **ptr);
 
 /**
  *  Set value based on uint64_t key.
@@ -148,11 +158,16 @@ OMPI_DECLSPEC int ompi_hash_table_remove_value_uint64(ompi_hash_table_t *table, 
  *
  *  @param   table   The input hash table (IN).
  *  @param   key     The input key (IN).
- *  @return  The value associated with the key or NULL if the item is not found.
+ *  @param   ptr     The value associated with the key
+ *  @return  integer return code:
+ *           - OMPI_SUCCESS       if key was found
+ *           - OMPI_ERR_NOT_FOUND if key was not found
+ *           - OMPI_ERROR         other error
  *
  */
 
-OMPI_DECLSPEC void *ompi_hash_table_get_value_ptr(ompi_hash_table_t *table, const void* key, size_t keylen);
+OMPI_DECLSPEC int ompi_hash_table_get_value_ptr(ompi_hash_table_t *table, const void* key, 
+						size_t keylen, void **ptr);
 
 /**
  *  Set value based on arbitrary length binary key.
