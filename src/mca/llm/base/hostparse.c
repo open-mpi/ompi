@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 extern int yylex(void);
-extern FILE *yyin;
+extern FILE *mca_llm_base_yyin;
 
 int
 main(int argc, char *argv[])
@@ -24,9 +24,9 @@ main(int argc, char *argv[])
         exit(1);
     }
 
-    yyin = fopen(argv[1], "r");
+    mca_llm_base_yyin = fopen(argv[1], "r");
     while (!mca_llm_base_parse_done) {
-        ret = yylex();
+        ret = mca_llm_base_yylex();
         printf("%d: %s\n", ret, mca_llm_base_string);
     }
 

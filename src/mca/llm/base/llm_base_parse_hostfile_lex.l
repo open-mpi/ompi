@@ -6,23 +6,23 @@
 /*
  * local functions
  */
-static int yyerror(void);
-int yywrap(void);
+static int mca_llm_base_yyerror(void);
+static int mca_llm_base_yywrap(void);
 
 /*
  * global variables
  */
-int yynewlines=1;
-int mca_llm_base_parse_done = 0;
+int mca_llm_base_yynewlines=1;
+bool mca_llm_base_parse_done = false;
 char *mca_llm_base_string = NULL;
 
 %}
 
 %%
 
-\n                 { yynewlines++; return MCA_LLM_BASE_NEWLINE; }
+\n                 { mca_llm_base_yynewlines++; return MCA_LLM_BASE_NEWLINE; }
 
-\"[^\"]*\"        { mca_llm_base_string = yytext; return MCA_LLM_BASE_QUOTED_STRING; }
+\"[^\"]*\"         { mca_llm_base_string = yytext; return MCA_LLM_BASE_QUOTED_STRING; }
 
 [\f\t\v ]          ;			/* whitespace */
 
@@ -33,23 +33,20 @@ count              { mca_llm_base_string = yytext; return MCA_LLM_BASE_COUNT; }
 
 [A-Za-z0-9_\-\.]*  { mca_llm_base_string = yytext; return MCA_LLM_BASE_STRING; }
 
-.	{ mca_llm_base_string = yytext; return MCA_LLM_BASE_ERROR; }
+.	           { mca_llm_base_string = yytext; return MCA_LLM_BASE_ERROR; }
 
 %%
 
 
-static
-int
-yyerror()
+static int mca_llm_base_yyerror(void)
 {
-    printf("%d: Invalid input (%s)\n", yynewlines, yytext);
+    printf("%d: Invalid input (%s)\n", mca_llm_base_yynewlines, yytext);
     return MCA_LLM_BASE_ERROR; 
 }
 
 
-int
-yywrap()
+static int mca_llm_base_yywrap(void)
 {
-    mca_llm_base_parse_done = 1;
+    mca_llm_base_parse_done = true;
     return 1;
 }

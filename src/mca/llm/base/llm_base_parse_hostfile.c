@@ -22,7 +22,7 @@ static void
 parse_error()
 {
     printf("hostfile: error reading hostfile at line %d, %s\n",
-           yynewlines, mca_llm_base_string);
+           mca_llm_base_yynewlines, mca_llm_base_string);
 }
 
 static
@@ -44,13 +44,13 @@ parse_keyval(int first, ompi_rte_node_allocation_t *node)
     }
 
     /* find the equals */
-    if (MCA_LLM_BASE_EQUAL != yylex()) {
+    if (MCA_LLM_BASE_EQUAL != mca_llm_base_yylex()) {
         free(key);
         return OMPI_ERROR;
     }
 
     /* make sure we have a value */
-    val = yylex();
+    val = mca_llm_base_yylex();
     if (MCA_LLM_BASE_STRING != val && MCA_LLM_BASE_QUOTED_STRING != val) {
         free(key);
         return OMPI_ERROR;
@@ -79,9 +79,9 @@ int
 parse_count(void)
 {
     /* find the equals */
-    if (MCA_LLM_BASE_EQUAL != yylex()) return -1;
+    if (MCA_LLM_BASE_EQUAL != mca_llm_base_yylex()) return -1;
     /* and now the string */
-    if (MCA_LLM_BASE_STRING != yylex()) return -1;
+    if (MCA_LLM_BASE_STRING != mca_llm_base_yylex()) return -1;
 
     return atoi(mca_llm_base_string);
 }
@@ -103,7 +103,7 @@ parse_line(int first, ompi_rte_node_allocation_t *node)
     }
 
     while (!mca_llm_base_parse_done) {
-        val = yylex();
+        val = mca_llm_base_yylex();
         switch (val) {
         case MCA_LLM_BASE_DONE:
             return OMPI_SUCCESS;
@@ -147,10 +147,10 @@ mca_llm_base_parse_hostfile(const char *hostfile)
 
     list = OBJ_NEW(ompi_list_t);
 
-    mca_llm_base_parse_done = 0;
+    mca_llm_base_parse_done = false;
 
-    yyin = fopen(hostfile, "r");
-    if (NULL == yyin) {
+    mca_llm_base_yyin = fopen(hostfile, "r");
+    if (NULL == mca_llm_base_yyin) {
         printf("hostfile: could not open %s\n", hostfile);
         OBJ_RELEASE(list);
         list = NULL;
@@ -158,7 +158,7 @@ mca_llm_base_parse_hostfile(const char *hostfile)
     }
 
     while (!mca_llm_base_parse_done) {
-        val = yylex();
+        val = mca_llm_base_yylex();
         switch (val) {
         case MCA_LLM_BASE_DONE:
             goto parse_exit;
