@@ -12,6 +12,7 @@
 #include "lam/mem/malloc.h"
 #include "lam/util/reactor.h"
 #include "lam/util/output.h"
+#include "lam/runtime/runtime.h"
 
 
 const int LAM_NOTIFY_RECV = 1;
@@ -264,15 +265,9 @@ void lam_reactor_poll(lam_reactor_t* r)
     int rc = select(r->r_max+1, (fd_set*)&rset, (fd_set*)&sset, (fd_set*)&eset, &tm);
     if(rc < 0) {
 #ifndef WIN32
-      if(EINTR != errno) {
+      if (EINTR != errno) {
 #endif
-        lam_output(0, "lam_reactor_poll: select() failed with errno=%d",
-                   errno);
-#if NEED_TO_IMPLEMENT_LAM_EXIT
-        lam_exit(1);
-#else
-        exit(1);
-#endif
+        lam_abort(1, "lam_reactor_poll: select() failed with errno=%d", errno);
 #ifndef WIN32
       }
 #endif
@@ -293,13 +288,8 @@ void lam_reactor_run(lam_reactor_t* r)
 #ifndef WIN32
           if (EINTR != errno) {
 #endif
-            lam_output(0, "lam_reactor_run: select() failed with errno=%d",
-                       errno);
-#if NEED_TO_IMPLEMENT_LAM_EXIT
-            lam_exit(1);
-#else
-            exit(1);
-#endif
+            lam_abort(1, "lam_reactor_run: select() failed with errno=%d",
+                      errno);
 #ifndef WIN32
           }
 #endif
