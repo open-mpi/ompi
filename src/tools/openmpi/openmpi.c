@@ -189,5 +189,6 @@ int main(int argc, char **argv)
     } else {
 	fprintf(stderr, "local universe check reports not implemented code\n");
     }
+    ompi_rte_init_stage2(&multi_thread, &hidden_thread);  /* stick this in for now just for static compiles */
     return -1;
 }
