@@ -514,7 +514,8 @@ ompi_hash_table_get_next_key_uint32(ompi_hash_table_t *ht, uint32_t *key,
     /* We found it.  Save the values (use "next" to avoid some
        typecasting) */
 
-    next = (ompi_uint32_hash_node_t *)*out_node = (void *) item;
+    *out_node = (void *) item;
+    next = (ompi_uint32_hash_node_t *) *out_node;
     *key = next->hn_key;
     *value = next->hn_value;
 
@@ -585,7 +586,8 @@ ompi_hash_table_get_next_key_uint64(ompi_hash_table_t *ht, uint64_t *key,
     /* We found it.  Save the values (use "next" to avoid some
        typecasting) */
 
-    next = (ompi_uint64_hash_node_t *)*out_node = (void *) item;
+    *out_node = (void *) item;
+    next = (ompi_uint64_hash_node_t *) *out_node;
     *key = next->hn_key;
     *value = next->hn_value;
 
