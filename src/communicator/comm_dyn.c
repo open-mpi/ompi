@@ -94,17 +94,22 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
             rc = mca_oob_recv_packed(rport, &nrbuf, &tag);
             rc = mca_oob_send_packed(rport, nbuf, tag, 0);
         }
+	ompi_buffer_get(nrbuf, &rnamebuf, &rnamebuflen);
     }
     else {
 	/* non root processes need to allocate the buffer manually */
-	ompi_buffer_init(&nrbuf, rnamebuflen);
+	rnamebuf = (char *) malloc(rnamebuflen);
+	if ( NULL == rnamebuf ) {
+	    rc = OMPI_ERR_OUT_OF_RESOURCE;
+	    goto exit;
+	}
+	ompi_buffer_init_preallocated(&nrbuf, rnamebuf, rnamebuflen);
     }
     /* bcast list of processes to all procs in local group 
        and reconstruct the data. Note that proc_get_proclist
        adds processes, which were not known yet to our
        process pool.
     */
-    ompi_buffer_get(nrbuf, &rnamebuf, &rnamebuflen);
     rc = comm->c_coll.coll_bcast (rnamebuf, rnamebuflen, MPI_BYTE, root, comm );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
