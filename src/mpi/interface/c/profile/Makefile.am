@@ -162,6 +162,34 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         pfinalize.c \
         pfinalized.c \
         pfree_mem.c \
+		pgather.c \
+		pgatherv.c \
+		pget_address.c \
+		pget_count.c \
+		pget_elements.c \
+		pget.c \
+		pget_processor_name.c \
+		pget_version.c \
+		pgraph_create.c \
+		pgraph_get.c \
+		pgraph_map.c \
+		pgraph_neighbors_count.c \
+		pgraph_neighbors.c \
+		pgraphdims_get.c \
+		pgroup_c2f.c \
+		pgroup_compare.c \
+		pgroup_difference.c \
+		pgroup_excl.c \
+		pgroup_f2c.c \
+		pgroup_free.c \
+		pgroup_incl.c \
+		pgroup_intersection.c \
+		pgroup_range_excl.c \
+		pgroup_range_incl.c \
+		pgroup_rank.c \
+		pgroup_size.c \
+		pgroup_translate_ranks.c \
+		pgroup_union.c \
         pinit.c \
         ptestall.c \
         ptestany.c \
@@ -206,6 +234,10 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
         ptype_struct.c \
         ptype_ub.c \
         ptype_vector.c 
+
+bogus_stuff= \
+		pgrequest_complete.c \
+		pgrequest_start.c 
 #
 # Sym link in the sources from the real MPI directory
 #

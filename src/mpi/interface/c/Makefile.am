@@ -189,6 +189,34 @@ libmpi_c_mpi_la_SOURCES = \
         finalize.c \
         finalized.c \
         free_mem.c \
+		gather.c \
+		gatherv.c \
+		get_address.c \
+		get_count.c \
+		get_elements.c \
+		get.c \
+		get_processor_name.c \
+		get_version.c \
+		graph_create.c \
+		graph_get.c \
+		graph_map.c \
+		graph_neighbors_count.c \
+		graph_neighbors.c \
+		graphdims_get.c \
+		group_c2f.c \
+		group_compare.c \
+		group_difference.c \
+		group_excl.c \
+		group_f2c.c \
+		group_free.c \
+		group_incl.c \
+		group_intersection.c \
+		group_range_excl.c \
+		group_range_incl.c \
+		group_rank.c \
+		group_size.c \
+		group_translate_ranks.c \
+		group_union.c \
         init.c \
         testall.c \
         testany.c \
@@ -232,8 +260,11 @@ libmpi_c_mpi_la_SOURCES = \
         type_size.c \
         type_struct.c \
         type_ub.c \
-        type_vector.c 
+        type_vector.c  
 
+bogus_stuff= \
+		grequest_complete.c \
+		grequest_start.c
 
 EXTRA_DIST = $(libmpi_c_mpi_la_SOURCES) 
 # Conditionally install the header files
