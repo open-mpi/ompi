@@ -17,8 +17,9 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
 
     /* local varibles */
     int return_value, new_group_size, proc1, proc2, found_in_group2, cnt;
+    int my_group_rank;
     lam_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
-    lam_proc_t *proc1_pointer, *proc2_pointer;
+    lam_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer;
 
     return_value=MPI_SUCCESS;
     group1_pointer=(lam_group_t *)group1;
@@ -94,6 +95,13 @@ int MPI_Group_difference(MPI_Group group1, MPI_Group group2,
 
         cnt++;
     }  /* end proc loop */
+
+    /* find my rank */
+    my_group_rank=group1_pointer->grp_my_rank;
+    my_proc_pointer=group1_pointer->grp_proc_pointers[my_group_rank];
+    lam_set_group_rank(new_group_pointer,my_proc_pointer);
+
+    *new_group = (MPI_Group)new_group_pointer;
 
     return return_value;
 }
