@@ -115,7 +115,7 @@ extern "C" {
  * JMS: Some of these are probably LAM-specific and should be deleted
  */
 #define MPI_BOTTOM               ((void *) 0)    /* base reference address */
-#define MPI_BSEND_OVERHEAD       40      /* size of bsend header + ptr */
+#define MPI_BSEND_OVERHEAD       128     /* size of bsend header + ptr */
 #define MPI_MAX_INFO_KEY         36      /* max info key length */
 #define MPI_MAX_INFO_VAL         256     /* max info value length */
 #define MPI_ARGV_NULL            ((char **) 0)   /* NULL argument vector */
