@@ -12,42 +12,46 @@
 #include <sys/param.h>
 #include <errno.h>
 
-#include "runtime/runtime.h"
+#include "include/constants.h"
+
+#include "threads/mutex.h"
+#include "threads/condition.h"
+
 #include "util/output.h"
 #include "util/sys_info.h"
+#include "util/os_path.h"
 #include "util/cmd_line.h"
 #include "util/proc_info.h"
 #include "util/session_dir.h"
 #include "util/printf.h"
 #include "util/daemon_init.h"
+#include "util/universe_setup_file_io.h"
 
 #include "mca/base/base.h"
 #include "mca/ns/base/base.h"
 #include "mca/gpr/base/base.h"
 
+#include "runtime/runtime.h"
+
 #include "tools/ompid/ompid.h"
 
-/*
- * Public variables
- */
+static bool ompi_daemon_debug;
+static ompi_mutex_t ompi_daemon_mutex;
+static ompi_condition_t ompi_daemon_condition;
+static bool ompi_daemon_exit_condition = false;
 
-bool pretty = true;
-ompi_cmd_line_t *cmd_line = NULL;
+static void ompi_daemon_recv(int status, ompi_process_name_t* sender,
+			     ompi_buffer_t buffer, int tag,
+			     void* cbdata);
 
-const char *type_all  = "all";
-const char *type_ompi = "ompi";
-const char *type_base = "base";
 
 int main(int argc, char *argv[])
 {
     int ret = 0;
-
+    ompi_cmd_line_t *cmd_line = NULL;
     bool allow_multi_user_threads   = false;
     bool have_hidden_threads  = false;
-    char *jobid_str, *procid_str;
-
-    /* daemonize myself */
-    ompi_daemon_init(NULL);
+    char *jobid_str, *procid_str, *enviro_val, *contact_file;
 
     /*
      * Intialize the Open MPI environment
@@ -57,6 +61,28 @@ int main(int argc, char *argv[])
         printf("show_help: ompi_init failed\n");
         return ret;
     }
+
+    /* check for debug flag */
+    enviro_val = getenv("OMPI_daemon_debug");
+    if (NULL != enviro_val) {  /* flag was set */
+	ompi_daemon_debug = true;
+	ompi_output(0, "ompid: entered daemon");
+    } else {
+	ompi_daemon_debug = false;
+    }
+
+    ompi_daemon_debug = true;  /**** DEBUGGING PURPOSES */
+
+    if (ompi_daemon_debug) {
+	ompi_output(0, "ompid: daemonizing");
+    }
+
+    /* daemonize myself */
+/*     ompi_daemon_init(NULL); */
+
+    /* setup the thread lock and condition variable */
+    OBJ_CONSTRUCT(&ompi_daemon_mutex, ompi_mutex_t);
+    OBJ_CONSTRUCT(&ompi_daemon_condition, ompi_condition_t);
 
     /* get the system info and setup defaults */
     ompi_sys_info();
@@ -159,13 +185,23 @@ int main(int argc, char *argv[])
     }
 
     /*****    SET MY NAME   *****/
-    if (NULL == ompi_process_info.name) { /* don't overwrite an existing name */
 	if (ompi_process_info.seed) {
+	    if (ompi_daemon_debug) {
+		ompi_output(0, "ompid: seed flag set");
+	    }
+	    if (NULL != ompi_process_info.name) { /* overwrite it */
+		free(ompi_process_info.name);
+	    }
 	    ompi_process_info.name = ompi_name_server.create_process_name(0, 0, 0);
 	} else {
+	    if (ompi_daemon_debug) {
+		ompi_output(0, "ompid: seed flag NOT set");
+	    }
+	    if (NULL != ompi_process_info.name) { /* overwrite it */
+		free(ompi_process_info.name);
+	    }
 	    ompi_process_info.name = ompi_rte_get_self();
 	}
-    }
 
     /* get my process info */
     ompi_proc_info();
@@ -174,7 +210,7 @@ int main(int argc, char *argv[])
     jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);
     procid_str = ompi_name_server.get_vpid_string(ompi_process_info.name);
  
-    if (ompi_rte_debug_flag) {
+    if (ompi_daemon_debug) {
 	ompi_output(0, "[%d,%d,%d] setting up session dir with", ompi_process_info.name->cellid, ompi_process_info.name->jobid, ompi_process_info.name->vpid);
 	if (NULL != ompi_process_info.tmpdir_base) {
 	    ompi_output(0, "\ttmpdir %s", ompi_process_info.tmpdir_base);
@@ -200,24 +236,77 @@ int main(int argc, char *argv[])
      *  Register my process info with my replica.
      */
     if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
-	ompi_output(0, "ompi_rte_init: failed in ompi_rte_register()\n");
+	ompi_output(0, "ompi_rte_init: failed in ompi_rte_register");
 	return ret;
     }
 
     /* finalize the rte startup */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&allow_multi_user_threads,
-							 &have_hidden_threads))) {
+							&have_hidden_threads))) {
         /* JMS show_help */
-        printf("show_help: ompid failed in ompi_rte_init\n");
+        ompi_output(0, "show_help: ompid failed in ompi_rte_init");
         return ret;
     }
+
+    /* if i'm the seed, get my contact info and write my setup file for others to find */
+    if (ompi_process_info.seed) {
+	ompi_universe_info.oob_contact_info = mca_oob_get_contact_info();
+	contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
+				    "universe-setup.txt", NULL);
+
+	if (OMPI_SUCCESS != (ret = ompi_write_universe_setup_file(contact_file))) {
+	    if (ompi_daemon_debug) {
+		ompi_output(0, "[%d,%d,%d] ompid: couldn't write setup file", ompi_process_info.name->cellid,
+			    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	    }
+	}
+    }
+
+
+    if (ompi_daemon_debug) {
+	ompi_output(0, "[%d,%d,%d] ompid: registering", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
+
 
     /* register this node on the virtual machine */
     /* 	ompi_vm_register(); */
 
-    /* register the daemon callback function */
+    if (ompi_daemon_debug) {
+	ompi_output(0, "[%d,%d,%d] ompid: issuing callback", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
 
-    /* setup and enter the event monitor */
+     /* register the daemon callback function */
+    ret = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_DAEMON, 0, ompi_daemon_recv, NULL);
+    if(ret != OMPI_SUCCESS && ret != OMPI_ERR_NOT_IMPLEMENTED) {
+	ompi_output(0, "daemon callback not registered: error code %d", ret);
+	return ret;
+    }
+
+   /* go through the universe fields and see what else I need to do
+     * - could be setup a virtual machine, spawn a console, etc.
+     */
+
+    if (ompi_daemon_debug) {
+	ompi_output(0, "[%d,%d,%d] ompid: setting up event monitor", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
+
+     /* setup and enter the event monitor */
+    OMPI_THREAD_LOCK(&ompi_daemon_mutex);
+
+    while (false == ompi_daemon_exit_condition) {
+	ompi_condition_wait(&ompi_daemon_condition, &ompi_daemon_mutex);
+    }
+
+    OMPI_THREAD_UNLOCK(&ompi_daemon_mutex);
+
+    if (ompi_daemon_debug) {
+	ompi_output(0, "[%d,%d,%d] ompid: mutex cleared - finalizing", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
+
 
     ompi_rte_finalize();
     mca_base_close();
@@ -225,23 +314,39 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+static void ompi_daemon_recv(int status, ompi_process_name_t* sender,
+			     ompi_buffer_t buffer, int tag,
+			     void* cbdata)
+{
+    ompi_buffer_t answer;
+    ompi_daemon_cmd_flag_t command;
 
-/*     /\* convert myself to be a daemon *\/ */
-/*     if (OMPI_SUCCESS != ompi_daemon_init(ompi_process_info.universe_session_dir)) { */
-/* 	fprintf(stderr, "could not convert to daemon - please report error to bugs@open-mpi.org\n"); */
-/* 	exit(1); */
-/*     } */
+    OMPI_THREAD_LOCK(&ompi_daemon_mutex);
 
-/*      * as file "contact-info" so others can find us. */
-/*      *\/ */
+    if (ompi_daemon_debug) {
+	ompi_output(0, "[%d,%d,%d] ompid: received message", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
 
-/*     /\* Add in the calls to initialize the services *\/ */
+    if (OMPI_SUCCESS != ompi_buffer_init(&answer, 0)) {
+	/* RHC -- not sure what to do if this fails */
+    }
 
-/*     /\* Add the section for the event loop... *\/ */
+    if (OMPI_SUCCESS != ompi_unpack(buffer, &command, 1, OMPI_DAEMON_OOB_PACK_CMD)) {
+	goto RETURN_ERROR;
+    }
 
-/*     /\* All done *\/ */
+    /****    EXIT COMMAND    ****/
+    if (OMPI_DAEMON_EXIT_CMD == command) {
+	ompi_daemon_exit_condition = true;
+	ompi_condition_signal(&ompi_daemon_condition);
 
-/*     /\* Close services *\/ */
+    } else if (OMPI_DAEMON_HEARTBEAT_CMD == command) {
+	/* send back an "i'm alive" message */
+    }
 
-/*     OBJ_RELEASE(cmd_line); */
-/*     mca_base_close(); */
+ RETURN_ERROR:
+
+    OMPI_THREAD_UNLOCK(&ompi_daemon_mutex);
+    return;
+}

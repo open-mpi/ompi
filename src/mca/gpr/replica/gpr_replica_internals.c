@@ -22,6 +22,7 @@
 #include "include/constants.h"
 #include "util/output.h"
 #include "util/printf.h"
+#include "util/proc_info.h"
 #include "mca/mca.h"
 #include "mca/oob/base/base.h"
 #include "mca/gpr/base/base.h"
@@ -654,6 +655,10 @@ ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_regist
     }
 
     OBJ_RELEASE(reg_entries);
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr replica-construct_notify: msg built", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
 
     return msg;
 }
@@ -669,6 +674,11 @@ void gpr_replica_process_triggers(char *segment,
     int i;
     bool found;
 
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr replica: process_trig entered", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
+
     /* protect against errors */
     if (NULL == message || NULL == segment) {
 	return;
@@ -677,6 +687,11 @@ void gpr_replica_process_triggers(char *segment,
     seg = gpr_replica_find_seg(false, segment);
     if (NULL == seg) { /* couldn't find segment */
 	return;
+    }
+
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: segment found", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
     }
 
     /* find corresponding notify request */
@@ -697,10 +712,15 @@ void gpr_replica_process_triggers(char *segment,
 
     /* process request */
     if (NULL == trackptr->requestor) {  /* local request - callback fn with their tag */
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: local callback", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
 	trackptr->callback(message, trackptr->user_tag);
 	/* dismantle message and free memory */
 	while (NULL != (data = (ompi_registry_object_t*)ompi_list_remove_first(&message->data))) {
 	    OBJ_RELEASE(data);
+
 	}
 	for (i=0, tokptr=message->tokens; i < message->num_tokens; i++, tokptr++) {
 	    free(*tokptr);
@@ -709,9 +729,18 @@ void gpr_replica_process_triggers(char *segment,
 	    free(message->tokens);
     }
 	free(message);
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: data released", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
 
     } else {  /* remote request - send message back */
 	gpr_replica_remote_notify(trackptr->requestor, trackptr->req_tag, message);
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: remote message sent", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
+
     }
 
     /* if one-shot, remove request from tracking system */
@@ -723,6 +752,11 @@ void gpr_replica_process_triggers(char *segment,
 	    ompi_list_remove_item(&seg->triggers, &trig->item);
 	    OBJ_RELEASE(trig);
     }
+    if (mca_gpr_replica_debug) {
+	ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: complete", ompi_process_info.name->cellid,
+		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+    }
+
 }
 
 ompi_list_t *gpr_replica_test_internals(int level)

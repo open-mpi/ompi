@@ -8,6 +8,8 @@
  * Parse environmental paramater options for the Open MPI Run Time Environment. This function
  * MUST be called BEFORE calling any of the rte command line parsers.
  *
+ * NOTE: Sets all key structure values to defaults if no environ value provided!!
+ *
  */
 #include "ompi_config.h"
 
@@ -23,7 +25,12 @@ void ompi_rte_parse_environ(void)
 {
     char *enviro_val;
 
+    /* ensure that sys_info and proc_info have been run */
+    ompi_sys_info();
+    ompi_proc_info();
+
     enviro_val = getenv("OMPI_universe_seed");
+    ompi_output(0, "parse_env: seed %s", enviro_val);
     if (NULL != enviro_val) {  /* seed flag passed */
 	ompi_process_info.seed = true;
     } else {
@@ -47,6 +54,7 @@ void ompi_rte_parse_environ(void)
 	if (NULL != ompi_universe_info.scope) {
 	    free(ompi_universe_info.scope);
 	}
+	ompi_universe_info.scope = strdup("exclusive");
     }
 
     enviro_val = getenv("OMPI_universe_persistent");
@@ -94,6 +102,23 @@ void ompi_rte_parse_environ(void)
 	}
     }
 
+    if (NULL != ompi_universe_info.name) {
+	free(ompi_universe_info.name);
+    }
+    ompi_universe_info.name = strdup("default-universe");
+    if (NULL != ompi_process_info.my_universe) {
+	free(ompi_process_info.my_universe);
+    }
+    ompi_process_info.my_universe = strdup("default-universe");
+    if (NULL != ompi_universe_info.host) {
+	free(ompi_universe_info.host);
+    }
+    ompi_universe_info.host = strdup(ompi_system_info.nodename);
+    if (NULL != ompi_universe_info.uid) {
+	free(ompi_universe_info.uid);
+    }
+    ompi_universe_info.uid = strdup(ompi_system_info.user);
+
     enviro_val = getenv("OMPI_universe_name");
     if (NULL != enviro_val) {  /* universe name passed in environment */
 	if (NULL != ompi_universe_info.name) {  /* got something in it - overwrite */
@@ -104,15 +129,6 @@ void ompi_rte_parse_environ(void)
 	    free(ompi_process_info.my_universe);
 	}
 	ompi_process_info.my_universe = strdup(enviro_val);
-    } else {
-	if (NULL != ompi_universe_info.name) {
-	    free(ompi_universe_info.name);
-	}
-	ompi_universe_info.name = strdup("default-universe");
-	if (NULL != ompi_process_info.my_universe) {
-	    free(ompi_process_info.my_universe);
-	}
-	ompi_process_info.my_universe = strdup("default-universe");
     }
 
     enviro_val = getenv("OMPI_tmpdir_base");
@@ -126,4 +142,7 @@ void ompi_rte_parse_environ(void)
 	    free(ompi_process_info.tmpdir_base);
 	}
     }
+
+    ompi_universe_info.pid = ompi_process_info.pid;
+
 }

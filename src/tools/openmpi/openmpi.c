@@ -160,8 +160,9 @@ int main(int argc, char **argv)
 	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
 
 	/* ensure the enviro variables do NOT specify any replicas so that seed
-	 * will start them up
+	 * will start them up. set seed flag
 	 */
+	setenv("OMPI_universe_seed", "1", 1);
 	unsetenv("OMPI_MCA_ns_base_replica");
 	unsetenv("OMPI_MCA_gpr_base_replica");
 
