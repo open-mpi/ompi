@@ -258,6 +258,7 @@ static inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
             if( iov[0].iov_len < length )
                 length = iov[0].iov_len;
             iov[0].iov_len = length;
+	    *max_data = length;
             pConv->bConverted += length;
             return (pConv->bConverted == (pData->size * pConv->count));
         }
