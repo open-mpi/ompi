@@ -148,7 +148,7 @@ int ns_base_compare(ompi_ns_cmp_bitmask_t fields,
 		    const ompi_process_name_t* name1,
 		    const ompi_process_name_t* name2)
 {
-    if ((fields <= 0) || (fields > 7) || NULL == name1 || NULL == name2) {  /* got an error */
+    if (NULL == name1 || NULL == name2) {  /* got an error */
 	return(-100);
     }
 
