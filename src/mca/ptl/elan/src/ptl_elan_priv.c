@@ -424,7 +424,10 @@ mca_ptl_elan_init_put_desc (struct mca_ptl_elan_send_frag_t *frag,
     hdr->hdr_frag.hdr_src_ptr.pval = frag; /* No need to hook a frag */
     hdr->hdr_frag.hdr_dst_ptr = pml_req->req_peer_match;
     hdr->hdr_frag.hdr_frag_length = size_in;
-    desc->src_elan_addr = elan4_main2elan (ctx, pml_req->req_base.req_addr);
+
+    /* FIXME: provide a fix according to data contiguity */
+    desc->src_elan_addr = elan4_main2elan (ctx, 
+	    ((char *)pml_req->req_base.req_addr + offset));
     desc->dst_elan_addr = (E4_Addr)pml_req->req_peer_addr.lval;
     desc->desc_buff = hdr;
     LOG_PRINT(PTL_ELAN_DEBUG_PUT, " remote req %p addr %lx, length %d\n", 
