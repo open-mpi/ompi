@@ -9,6 +9,7 @@ noinst_LTLIBRARIES = libmca_mpi_ptl_base.la
 # Source code files
 
 headers = \
+        base.h \
 	ptl_base_comm.h \
 	ptl_base_fragment.h \
 	ptl_base_header.h \
@@ -26,6 +27,7 @@ libmca_mpi_ptl_base_la_SOURCES = \
         ptl_base_open.c \
         ptl_base_recvfrag.c \
         ptl_base_recvreq.c \
+        ptl_base_select.c \
         ptl_base_sendfrag.c \
         ptl_base_sendreq.c
 

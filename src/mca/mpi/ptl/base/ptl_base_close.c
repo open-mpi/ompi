@@ -5,12 +5,12 @@
 #include "lam_config.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "lam/constants.h"
 #include "mca/mca.h"
 #include "mca/lam/base/base.h"
 #include "mca/mpi/ptl/ptl.h"
+#include "mca/mpi/ptl/base/base.h"
 
 
 int mca_ptl_base_close(void)
