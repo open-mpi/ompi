@@ -9,6 +9,9 @@
 #include "mca/iof/base/base.h"
 #include "mca/iof/base/iof_base_header.h"
 
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
 
 /**
  *
