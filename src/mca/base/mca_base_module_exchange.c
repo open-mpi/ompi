@@ -293,7 +293,7 @@ int mca_base_modex_exchange(void)
                 free(procs);
                 OMPI_THREAD_UNLOCK(&proc->proc_lock);
                 OMPI_THREAD_UNLOCK(&self->proc_lock);
-                return rc;
+                return size;
             }
  
             proc_module->module_data = malloc(size); 
