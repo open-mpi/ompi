@@ -98,7 +98,7 @@ static const mca_coll_base_module_1_0_0_t inter_linear = {
   mca_coll_basic_alltoallw_inter,
   mca_coll_basic_barrier_inter_lin,
   mca_coll_basic_bcast_lin_inter,
-  mca_coll_basic_exscan_inter,
+  NULL,
   mca_coll_basic_gather_inter,
   mca_coll_basic_gatherv_inter,
   mca_coll_basic_reduce_lin_inter,
@@ -131,7 +131,7 @@ static const mca_coll_base_module_1_0_0_t inter_log = {
   mca_coll_basic_alltoallw_inter,
   mca_coll_basic_barrier_inter_log,
   mca_coll_basic_bcast_log_inter,
-  mca_coll_basic_exscan_inter,
+  NULL,
   mca_coll_basic_gather_inter,
   mca_coll_basic_gatherv_inter,
   mca_coll_basic_reduce_log_inter,
@@ -174,13 +174,8 @@ mca_coll_basic_comm_query(struct ompi_communicator_t *comm, int *priority)
      algorithms. */
 
   if (OMPI_COMM_IS_INTER(comm)) {
-    /* Intercommunicators */
-
-    if (ompi_comm_remote_size(comm) <= mca_coll_base_crossover) {
+      /* Intercommunicators */
       return &inter_linear;
-    } else {
-      return &inter_log;
-    }
   } else {
     
     /* Intracommunicators */
@@ -209,25 +204,26 @@ mca_coll_basic_module_init(struct ompi_communicator_t *comm)
 
   comm->c_coll_basic_data = NULL;
 
-  size = ompi_comm_size(comm);
+  if (OMPI_COMM_IS_INTER(comm)) {
+      /* Intercommunicators */
+      /* JMS Continue here */
+      size = ompi_comm_remote_size(comm);
+  } else {
+      /* Intracommunicators */
+      /* JMS Continue here */
+      size = ompi_comm_size(comm);
+  }
   data = malloc(sizeof(struct mca_coll_base_comm_t) +
                 (sizeof(ompi_request_t) * size * 2));
-
+  
   if (NULL == data) {
-    return NULL;
+      return NULL;
   }
   data->mccb_reqs = (ompi_request_t **) (data + 1);
   data->mccb_num_reqs = size * 2;
 
   /* Initialize the communicator */
 
-  if (OMPI_COMM_IS_INTER(comm)) {
-    /* Intercommunicators */
-    /* JMS Continue here */
-  } else {
-    /* Intracommunicators */
-    /* JMS Continue here */
-  }
 
   /* All done */
 

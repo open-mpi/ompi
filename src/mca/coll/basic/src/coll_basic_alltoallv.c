@@ -139,7 +139,62 @@ mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
                                struct ompi_datatype_t *rdtype, 
                                struct ompi_communicator_t *comm)
 {
-  /* Need to implement this */
+  int i;
+  int rsize;
+  int rank;
+  int err;
+  char *psnd;
+  char *prcv;
+  size_t nreqs;
+  MPI_Aint sndextent;
+  MPI_Aint rcvextent;
+  ompi_request_t **preq = comm->c_coll_basic_data->mccb_reqs;
 
-  return OMPI_ERR_NOT_IMPLEMENTED;
+  /* Initialize. */
+
+  rsize = ompi_comm_remote_size(comm);
+  rank = ompi_comm_rank(comm);
+
+  ompi_ddt_type_extent(sdtype, &sndextent);
+  ompi_ddt_type_extent(rdtype, &rcvextent);
+        
+  /* Initiate all send/recv to/from others. */
+  nreqs = rsize * 2;
+
+  /* Post all receives first  */
+  /* A simple optimization: do not send and recv msgs of length zero */
+  for (i = 0; i < rsize; ++i) {
+      prcv = ((char *) rbuf) + (rdisps[i] * rcvextent);
+      if ( rcounts[i] > 0 ){
+          err = mca_pml.pml_irecv(prcv, rcounts[i], rdtype,
+                                  i, MCA_COLL_BASE_TAG_ALLTOALLV, comm, &preq[i]);
+          if (MPI_SUCCESS != err) {
+              return err;
+          }
+      }
+      else {
+          preq[i] = MPI_REQUEST_NULL;
+      }
+  }
+  
+  /* Now post all sends */
+  for (i = 0; i < rsize; ++i) {
+      psnd = ((char *) sbuf) + (sdisps[i] * sndextent);
+      if ( scounts[i] > 0 ) {
+          err = mca_pml.pml_isend(psnd, scounts[i], sdtype,
+                                  i, MCA_COLL_BASE_TAG_ALLTOALLV, 
+                                  MCA_PML_BASE_SEND_STANDARD, comm, &preq[rsize+i]);
+          if (MPI_SUCCESS != err) {
+              return err;
+          }
+      }
+      else {
+          preq[rsize+i] = MPI_REQUEST_NULL;
+      }
+  }
+  
+  err = mca_pml.pml_wait_all(nreqs, preq, MPI_STATUSES_IGNORE);
+  
+  /* All done */
+  return err;
 }

@@ -155,7 +155,11 @@ int mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm)
  */
 int mca_coll_basic_barrier_inter_lin(struct ompi_communicator_t *comm)
 {
-  return OMPI_ERR_NOT_IMPLEMENTED;
+    int rank;
+    int result;
+
+    rank = ompi_comm_rank (comm);
+    return comm->c_coll.coll_allreduce (&rank, &result, 1, MPI_INT, MPI_MAX, comm);
 }
 
 
