@@ -239,7 +239,6 @@ typedef void (*mca_oob_callback_packed_fn_t)(
     int status,
     ompi_process_name_t* peer, 
     ompi_buffer_t* buffer,
-    int count,
     int* tag,
     void* cbdata);
 

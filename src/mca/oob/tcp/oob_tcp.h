@@ -68,6 +68,18 @@ int mca_oob_tcp_finalize(mca_oob_t*);
 int mca_oob_tcp_process_name_compare(const ompi_process_name_t* n1, const ompi_process_name_t* n2);
                                                                                                                       
 /**
+ *  Obtain contact information for this host (e.g. <ipaddress>:<port>)
+ */
+
+char* mca_oob_tcp_get_addr(void);
+
+/**
+ *  Set address for the seed.
+ */
+
+int mca_oob_tcp_set_seed(const char*);
+
+/**
  *  Similiar to unix writev(2).
  *
  * @param peer (IN)   Opaque name of peer process.
@@ -160,21 +172,23 @@ int mca_oob_tcp_recv_nb(
 */
 struct mca_oob_tcp_component_t {
     mca_oob_base_component_1_0_0_t super;  /**< base OOB component */
-    int              tcp_listen_sd;        /**< listen socket for incoming connection requests */
-    unsigned short   tcp_listen_port;      /**< listen port */
-    ompi_list_t      tcp_peer_list;        /**< list of peers sorted in mru order */
-    ompi_rb_tree_t   tcp_peer_tree;        /**< tree of peers sorted by name */
-    ompi_free_list_t tcp_peer_free;        /**< free list of peers */
-    size_t           tcp_peer_limit;       /**< max size of tcp peer cache */
-    int              tcp_peer_retries;     /**< max number of retries before declaring peer gone */
-    ompi_free_list_t tcp_msgs;             /**< free list of messages */
-    ompi_event_t     tcp_send_event;       /**< event structure for sends */
-    ompi_event_t     tcp_recv_event;       /**< event structure for recvs */
-    ompi_mutex_t     tcp_lock;             /**< lock for accessing module state */
-    ompi_list_t      tcp_msg_post;         /**< list of recieves user has posted */
-    ompi_list_t      tcp_msg_recv;         /**< list of recieved messages */
-    ompi_mutex_t     tcp_match_lock;       /**< lock held while searching/posting messages */
+    int                tcp_listen_sd;        /**< listen socket for incoming connection requests */
+    unsigned short     tcp_listen_port;      /**< listen port */
+    struct sockaddr_in tcp_seed_addr;        /**< uri string of tcp peer address */
+    ompi_list_t        tcp_peer_list;        /**< list of peers sorted in mru order */
+    ompi_rb_tree_t     tcp_peer_tree;        /**< tree of peers sorted by name */
+    ompi_free_list_t   tcp_peer_free;        /**< free list of peers */
+    size_t             tcp_peer_limit;       /**< max size of tcp peer cache */
+    int                tcp_peer_retries;     /**< max number of retries before declaring peer gone */
+    ompi_free_list_t   tcp_msgs;             /**< free list of messages */
+    ompi_event_t       tcp_send_event;       /**< event structure for sends */
+    ompi_event_t       tcp_recv_event;       /**< event structure for recvs */
+    ompi_mutex_t       tcp_lock;             /**< lock for accessing module state */
+    ompi_list_t        tcp_msg_post;         /**< list of recieves user has posted */
+    ompi_list_t        tcp_msg_recv;         /**< list of recieved messages */
+    ompi_mutex_t       tcp_match_lock;       /**< lock held while searching/posting messages */
 };
+
 /**
  * Convenience Typedef
  */

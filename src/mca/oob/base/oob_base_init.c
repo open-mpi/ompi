@@ -8,6 +8,7 @@
 
 #include "runtime/runtime.h"
 #include "util/output.h"
+#include "util/proc_info.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/ns/base/base.h"
@@ -34,6 +35,29 @@ ompi_process_name_t mca_oob_name_self;
 ompi_process_name_t mca_oob_name_any;                                                                                                                          
 
 /**
+ * Parse contact info string into process name and list of uri strings.
+ */
+
+static int mca_oob_base_parse_contact_info(
+    char* contact_info,
+    ompi_process_name_t* name,
+    char*** uri)
+{
+    /* parse the process name */
+    char* ptr = strchr(contact_info, '=');
+    if(NULL == ptr)
+        return OMPI_ERR_BAD_PARAM;
+    *ptr = '\0';
+    ptr++;
+    *name = *ns_base_convert_string_to_process_name(contact_info);
+
+    /* parse the remainder of the string into an array of uris */
+    *uri = ompi_argv_split(ptr, ';');
+    return OMPI_SUCCESS;
+}
+
+
+/**
  * Function for selecting one module from all those that are
  * available.
  *
@@ -48,6 +72,9 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     mca_oob_t *module;
     extern ompi_list_t mca_oob_base_components;
     ompi_process_name_t *self;
+    int i, id;
+    char* seed;
+    char** uri = NULL;
 
     /* setup local name */
     self = mca_pcm.pcm_self();
@@ -58,12 +85,25 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
     mca_oob_name_self = *self;
 
     /* setup wildcard name */
-    mca_oob_name_any = *ompi_name_server.create_process_name(MCA_NS_BASE_CELLID_MAX,
-							    MCA_NS_BASE_JOBID_MAX,
-							    MCA_NS_BASE_VPID_MAX);
+    mca_oob_name_any = *ompi_name_server.create_process_name(
+        MCA_NS_BASE_CELLID_MAX,
+        MCA_NS_BASE_JOBID_MAX,
+        MCA_NS_BASE_VPID_MAX);
 
-    /* setup seed daemons name */
-    mca_oob_name_seed = *ompi_name_server.create_process_name(0,0,0);
+    /* setup seed daemons name and address */
+    id = mca_base_param_register_string("oob","base","seed",NULL,NULL);
+    mca_base_param_lookup_string(id,&seed);
+    if(seed == NULL) {
+        /* we are seed daemon */
+        mca_oob_name_seed = mca_oob_name_self;
+    } else {
+        /* resolve name of seed daemon */
+        mca_oob_base_parse_contact_info(seed,&mca_oob_name_seed, &uri);
+        if(NULL == uri || NULL == *uri) {
+            ompi_output(0, "mca_oob_base_init: unable to parse seed contact info.");
+            return OMPI_ERROR; 
+        }
+    }
 
     /* Traverse the list of available modules; call their init functions. */
     for (item = ompi_list_get_first(&mca_oob_base_components);
@@ -85,9 +125,23 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
               inited->oob_component = component;
               inited->oob_module = module;
               ompi_list_append(&mca_oob_base_modules, &inited->super);
+
+              /* lookup contact info for this component */
+              if(NULL != uri) {
+                  for(i=0; NULL != uri[i]; i++) {
+                     if(strncmp(uri[i], component->oob_base.mca_component_name, 
+                        strlen(component->oob_base.mca_component_name)) == 0) { 
+                        module->oob_set_seed(uri[i]);
+                     }
+                  }
+               }
             }
         }
     }
+    if(uri != NULL) {
+        ompi_argv_free(uri);
+    }
+
     /* set the global variable to point to the first initialize module */
     if (0 < ompi_list_get_size(&mca_oob_base_modules)) {
       first = (mca_oob_base_info_t *) ompi_list_get_first(&mca_oob_base_modules);
@@ -113,5 +167,13 @@ int mca_oob_base_init(bool *user_threads, bool *hidden_threads)
                                                                                                              
 char* mca_oob_get_contact_info()
 {
-    return strdup("tcp:localhost:5000");
+    char *proc_name = ns_base_get_proc_name_string(MCA_OOB_NAME_SELF);
+    char *proc_addr = mca_oob.oob_get_addr();
+    size_t size = strlen(proc_name) + 1 + strlen(proc_addr) + 1;
+    char *contact_info = malloc(size);
+    sprintf(contact_info, "%s=%s", proc_name, proc_addr);
+    free(proc_name);
+    free(proc_addr);
+    return contact_info;
 }
+

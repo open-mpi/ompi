@@ -39,6 +39,20 @@ typedef struct mca_oob_1_0_0_t mca_oob_t;
  */
 
 /**
+*  Implementation of mca_oob_base_module_get_addr().
+*/
+
+typedef char* (*mca_oob_base_module_get_addr_fn_t)(void);
+
+/**
+*  Implementation of mca_oob_base_module_set_seed().
+*
+*  @param addr    Address of seed in component specific uri format.
+*/
+
+typedef int (*mca_oob_base_module_set_seed_fn_t)(const char* addr);
+
+/**
 *  Implementation of mca_oob_send().
 *   
 *  @param peer (IN)   Opaque name of peer process.
@@ -130,12 +144,15 @@ typedef int (*mca_oob_base_module_finalize_fn_t)(mca_oob_t*);
  * OOB Module
  */
 struct mca_oob_1_0_0_t {
-    mca_oob_base_module_send_fn_t     oob_send;
-    mca_oob_base_module_recv_fn_t     oob_recv;
-    mca_oob_base_module_send_nb_fn_t  oob_send_nb;
-    mca_oob_base_module_recv_nb_fn_t  oob_recv_nb;
-    mca_oob_base_module_finalize_fn_t oob_finalize;
+    mca_oob_base_module_get_addr_fn_t  oob_get_addr;
+    mca_oob_base_module_set_seed_fn_t  oob_set_seed;
+    mca_oob_base_module_send_fn_t      oob_send;
+    mca_oob_base_module_recv_fn_t      oob_recv;
+    mca_oob_base_module_send_nb_fn_t   oob_send_nb;
+    mca_oob_base_module_recv_nb_fn_t   oob_recv_nb;
+    mca_oob_base_module_finalize_fn_t  oob_finalize;
 };
+
 /**
  * OOB Component
  */
@@ -147,7 +164,7 @@ typedef mca_oob_t* (*mca_oob_base_component_init_fn_t)(
  * the standard component data structure
  */
 struct mca_oob_base_component_1_0_0_t {
-   mca_base_component_t oob_version;
+   mca_base_component_t oob_base;
    mca_base_component_data_1_0_0_t oob_data;
    mca_oob_base_component_init_fn_t oob_init;
 };
