@@ -4,7 +4,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = base $(MCA_pml_STATIC_SUBDIRS)
+SUBDIRS = base teg $(MCA_pml_STATIC_SUBDIRS)
 DIST_SUBDIRS = base $(MCA_pml_ALL_SUBDIRS)
 
 # Source code files
