@@ -10,26 +10,28 @@
 #include "file/file.h"
 #include "errhandler/errhandler.h"
 #include "errhandler/errhandler_predefined.h"
-
-
-/* define class information */
-
-static void lam_errhandler_construct(lam_errhandler_t *eh);
-static void lam_errhandler_destruct(lam_errhandler_t *eh);
-
-
-lam_class_t lam_errhandler_t_class = {
-    "lam_errhandler_t",
-    OBJ_CLASS(lam_object_t),
-    (lam_construct_t) lam_errhandler_construct,
-    (lam_destruct_t) lam_errhandler_destruct
-};
+#include "lfc/lam_pointer_array.h"
 
 
 /*
  * Table for Fortran <-> C errhandler handle conversion
  */
 lam_pointer_array_t *lam_errhandler_f_to_c_table;
+
+
+/*
+ * Class information
+ */
+static void lam_errhandler_construct(lam_errhandler_t *eh);
+static void lam_errhandler_destruct(lam_errhandler_t *eh);
+
+
+static lam_class_t lam_errhandler_t_class = {
+    "lam_errhandler_t",
+    OBJ_CLASS(lam_object_t),
+    (lam_construct_t) lam_errhandler_construct,
+    (lam_destruct_t) lam_errhandler_destruct
+};
 
 
 /*

@@ -9,6 +9,7 @@
 
 #include "mpi.h"
 #include "lfc/lam_object.h"
+#include "lfc/lam_pointer_array.h"
 
 /* This must correspond to the fortran MPI_ERRHANDLER_NULL index */
 #define LAM_ERRHANDLER_NULL_FORTRAN 0
@@ -86,6 +87,10 @@ extern lam_errhandler_t lam_mpi_errors_are_fatal;
  */
 extern lam_errhandler_t lam_mpi_errors_return;
 
+/**
+ * Table for Fortran <-> C errhandler handle conversion
+ */
+extern lam_pointer_array_t *lam_errhandler_f_to_c_table;
 
 
 /**
