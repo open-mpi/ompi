@@ -360,7 +360,7 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
     /* dismantle message and free memory */
 
  RETURN_ERROR:
-    free(message);
+    mca_gpr_base_release_notify_msg(message);
 
     /* reissue non-blocking receive */
     mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_GPR_NOTIFY, 0, mca_gpr_proxy_notify_recv, NULL);
