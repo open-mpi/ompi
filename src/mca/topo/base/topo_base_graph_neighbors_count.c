@@ -3,6 +3,8 @@
  */
 
 #include "mca/topo/base/base.h"
+#include "communicator/communicator.h"
+#include "mca/topo/topo.h"
 
 /*
  * function - returns the number of neighbors of a node
@@ -15,12 +17,12 @@
  * @retval MPI_SUCCESS
  */                             
 
-int topo_base_graph_neighbors_count (lam_communicator_t *comm,
+int topo_base_graph_neighbors_count (MPI_Comm comm,
                                      int rank,
                                      int *nneighbors){
-   *nneighbors = comm->c_topo_index[rank];
+   *nneighbors = comm->c_topo_comm->mtc_index[rank];
    if (rank > 0) {
-      *nneighbors -= comm->c_topo_index[rank - 1];
+      *nneighbors -= comm->c_topo_comm->mtc_index[rank - 1];
     }
 
     return MPI_SUCCESS;

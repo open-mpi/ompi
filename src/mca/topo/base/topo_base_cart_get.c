@@ -3,6 +3,8 @@
  */
 
 #include "mca/topo/base/base.h"
+#include "communicator/communicator.h"
+#include "mca/topo/topo.h"
 
 /*
  * function - retrieves Cartesian topology information associated with a
@@ -19,7 +21,7 @@
  *
  * @retval MPI_SUCCESS
  */
-int topo_base_cart_get (lam_communicator_t *comm,
+int topo_base_cart_get (MPI_Comm comm,
                         int maxdims,
                         int *dims,
                         int *periods,
@@ -28,9 +30,9 @@ int topo_base_cart_get (lam_communicator_t *comm,
     int *d;
     int *c;
 
-    d = comm->c_topo_dims;
-    c = comm->c_topo_coords;
-    for (i = 0; (i < comm->c_topo_ndims) && (i < maxdims); ++i) {
+    d = comm->c_topo_comm->mtc_dims;
+    c = comm->c_topo_comm->mtc_coords;
+    for (i = 0; (i < comm->c_topo_comm->mtc_ndims) && (i < maxdims); ++i) {
         if (*d > 0) {
             *dims++ = *d++;
             *periods++ = 0;

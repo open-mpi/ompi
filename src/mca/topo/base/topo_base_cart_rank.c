@@ -3,6 +3,8 @@
  */
 
 #include "mca/topo/base/base.h"
+#include "communicator/communicator.h"
+#include "mca/topo/topo.h"
 
 /*
  * function - Determines process rank in communicator given Cartesian
@@ -19,7 +21,7 @@
  * @retval MPI_ERR_ARG
  */                   
 
-int topo_base_cart_rank (lam_communicator_t *comm, 
+int topo_base_cart_rank (MPI_Comm comm, 
                          int *coords, 
                          int *rank){
    int prank;
@@ -35,8 +37,8 @@ int topo_base_cart_rank (lam_communicator_t *comm,
     */
     factor = 1;
     prank = 0;
-    i = comm->c_topo_ndims - 1;
-    d = comm->c_topo_dims + i;
+    i = comm->c_topo_comm->mtc_ndims - 1;
+    d = comm->c_topo_comm->mtc_dims + i;
     c = coords + i;
 
    for (; i >= 0; --i, --c, --d) {

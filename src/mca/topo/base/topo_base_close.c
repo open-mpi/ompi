@@ -5,11 +5,11 @@
 
 #include <stdio.h>
 
-#include "constants.h"
+#include "include/constants.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
-#include "mca/coll/coll.h"
-#include "mca/coll/base/base.h"
+#include "mca/topo/topo.h"
+#include "mca/topo/base/base.h"
 
 int mca_topo_base_close(void) {
     extern lam_list_t mca_topo_base_modules_available;

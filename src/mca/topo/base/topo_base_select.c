@@ -4,13 +4,13 @@
 
 #include "lam_config.h"
 
-#include "mca/mca.h"
 #include "lfc/lam_list.h"
 #include "runtime/runtime.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
+#include "util/output.h"
 
 
 /*
@@ -46,18 +46,21 @@ typedef struct opened_module_t opened_module_t;
  */  
 
 int mca_topo_base_select (mca_topo_t *selected, 
-                          bool *allow_multi_user_thread,
+                          bool *allow_multi_user_threads,
                           bool *have_hidden_threads) {
 
     int priority; 
     int best_priority; 
     bool user_threads;
     bool hidden_threads;
+    bool best_user_threads;
+    bool best_hidden_threads;
     lam_list_item_t *item; 
     mca_base_module_list_item_t *mli;
     mca_topo_base_module_t *module; 
     mca_topo_base_module_t *best_module;
     mca_topo_t *actions; 
+    lam_list_t opened;
     opened_module_t *om;
 
     /*
@@ -98,10 +101,10 @@ int mca_topo_base_select (mca_topo_t *selected,
                /*
                 * query did not return any action which can be used
                 */ 
-               lam_output_verbose(10, mca_topo_base_module,
+               lam_output_verbose(10, mca_topo_base_output,
                                   "select: query returned failure");
            } else {
-               lam_output_verbose(10, mca_topo_base_module,
+               lam_output_verbose(10, mca_topo_base_output,
                                   "select: query returned priority &d",
                                   priority);
                /* 
@@ -170,7 +173,7 @@ int mca_topo_base_select (mca_topo_t *selected,
                  * structure we need to fill it in with the base structure
                  * function pointers. This is yet to be done 
                  */ 
-                if (NULL != om->om_actions->init) { 
+                if (NULL != om->om_actions->topo_init) { 
                     /*
                      * commenting this out for now since I m
                      * not sure of the calling conventions

@@ -3,6 +3,8 @@
  */
 
 #include "mca/topo/base/base.h"
+#include "communicator/communicator.h"
+#include "mca/topo/topo.h"
 
 /*
  * function - makes a new communicator to which topology information
@@ -22,17 +24,19 @@
  * @retval MPI_SUCCESS
  */                       
 
-int topo_base_cart_create (lam_communicator_t *old_comm,
+int topo_base_cart_create (MPI_Comm old_comm,
                            int ndims,
                            int *dims,
                            int *periods,
                            int reorder,
-                           lam_communicator_t *comm_cart){
-   lam_group_t *newcomm;
-   lam_group_t *newgroup;
+                           MPI_Comm *comm_cart){
+   MPI_Comm newcomm;
+#if 0
+   MPI_Group newgroup;
+   int rank;
+#endif
    int size;
    int nprocs;
-   int rank;
    int err;
    int range[1][3];
    int i;
@@ -51,7 +55,9 @@ int topo_base_cart_create (lam_communicator_t *old_comm,
   /*
    * Create the group for the new communicator.
    */
+#if 0
    err = lam_comm_size (comm, &size);
+#endif
    if (err != MPI_SUCCESS) {
        return err;
    }
@@ -61,12 +67,16 @@ int topo_base_cart_create (lam_communicator_t *old_comm,
    }
 
    if (nprocs == size) {
+#if 0
       err = lam_comm_group (comm, &newgroup);
+#endif
    } else {
       range[0][0] = 0;
       range[0][1] = nprocs - 1;
       range[0][2] = 1;
+#if 0
       err = lam_group_range_incl (comm->c_group, 1, range, &newgroup);
+#endif
    }
 
    if (err != MPI_SUCCESS) {
@@ -75,9 +85,13 @@ int topo_base_cart_create (lam_communicator_t *old_comm,
   /*
    * Create the new communicator.
    */
+#if 0
    err = lam_comm_create (comm, newgroup, comm_cart);
+#endif
    if (err != MPI_SUCCESS) {
+#if 0
        lam_group_free (&newgroup);
+#endif
        return err;
    }
    /*
@@ -85,16 +99,16 @@ int topo_base_cart_create (lam_communicator_t *old_comm,
     */
    newcomm = *comm_cart;
    if (newcomm != MPI_COMM_NULL) {
-      newcomm->c_topo_type = MPI_CART;
-      newcomm->c_topo_nprocs = nprocs;
-      newcomm->c_topo_ndims = ndims;
-      newcomm->c_topo_dims = (int *)
+      newcomm->c_topo_comm->mtc_type = MPI_CART;
+      newcomm->c_topo_comm->mtc_nprocs = nprocs;
+      newcomm->c_topo_comm->mtc_ndims = ndims;
+      newcomm->c_topo_comm->mtc_dims = (int *)
                              malloc((unsigned) 2 * ndims * sizeof(int));
-      if (newcomm->c_topo_dims == 0) {
+      if (newcomm->c_topo_comm->mtc_dims == 0) {
          return MPI_ERR_OTHER;
       }
-      newcomm->c_topo_coords = newcomm->c_topo_dims + ndims;
-      for (i = 0, p = newcomm->c_topo_dims; i < ndims; ++i, ++p) {
+      newcomm->c_topo_comm->mtc_coords = newcomm->c_topo_comm->mtc_dims + ndims;
+      for (i = 0, p = newcomm->c_topo_comm->mtc_dims; i < ndims; ++i, ++p) {
           *p = (*periods) ? -(*dims) : *dims;
           ++dims;
           ++periods;
@@ -102,19 +116,25 @@ int topo_base_cart_create (lam_communicator_t *old_comm,
       /*
        * Compute the caller's coordinates.
        */
+#if 0
        err = lam_comm_rank (newcomm, &rank);
+#endif
        if (err != MPI_SUCCESS) {
            return err;
        }
 
-       err = lam_cart_coors (newcomm, rank,
-                             ndims, newcomm->c_topo_coords);
+#if 0
+       err = lam_cart_coords (newcomm, rank,
+                             ndims, newcomm->c_topo_comm->mtc_coords);
+#endif
        if (err != MPI_SUCCESS) {
            return err;
        }
    }
 
+#if 0
    err = lam_group_free (&newgroup);
+#endif
    if (err != MPI_SUCCESS) {
       return err;
    }

@@ -3,6 +3,8 @@
  */
 
 #include "mca/topo/base/base.h"
+#include "communicator/communicator.h"
+#include "mca/topo/topo.h"
 
 /*
  * function - retrieves graph topology information associated with a
@@ -17,7 +19,7 @@
  * @retval MPI_SUCCESS
  */                 
 
-int topo_base_graph_get (lam_communicator_t *comm,
+int topo_base_graph_get (MPI_Comm comm,
                          int maxindex,
                          int maxedges,
                          int *index,
@@ -28,13 +30,13 @@ int topo_base_graph_get (lam_communicator_t *comm,
     /*
      * Fill the nodes and edges arrays.
      */
-     p = comm->c_topo_index;
-     for (i = 0; (i < comm->c_topo_nprocs) && (i < maxindex); ++i, ++p) {
-         *nodes++ = *p;
+     p = comm->c_topo_comm->mtc_index;
+     for (i = 0; (i < comm->c_topo_comm->mtc_nprocs) && (i < maxindex); ++i, ++p) {
+         *index++ = *p;
       }
 
-      p = comm->c_topo_edges;
-      for (i = 0; (i < comm->c_topo_nedges) && (i < maxedges); ++i, ++p) {
+      p = comm->c_topo_comm->mtc_edges;
+      for (i = 0; (i < comm->c_topo_comm->mtc_nedges) && (i < maxedges); ++i, ++p) {
          *edges++ = *p;
       }
 

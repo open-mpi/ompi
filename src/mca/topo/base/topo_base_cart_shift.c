@@ -3,6 +3,8 @@
  */
 
 #include "mca/topo/base/base.h"
+#include "communicator/communicator.h"
+#include "mca/topo/topo.h"
 
 /*
  * function - Returns the shifted source and destination ranks, given a
@@ -23,7 +25,7 @@
  * @retval MPI_ERR_COMM
  * @retval MPI_ERR_ARG
  */                  
-int topo_base_cart_shift (lam_communicator_t *comm,
+int topo_base_cart_shift (MPI_Comm comm,
                           int direction,
                           int disp,
                           int *rank_source,
@@ -40,7 +42,9 @@ int topo_base_cart_shift (lam_communicator_t *comm,
    /*
     * Handle the trivial case.
     */
-    ord = comm->c_group->g_myrank;
+#if 0
+    ord = lam_comm_rank(comm);
+#endif 
     if (disp == 0) {
         *rank_dest = *rank_source = ord;
         return MPI_SUCCESS;
@@ -48,9 +52,9 @@ int topo_base_cart_shift (lam_communicator_t *comm,
    /*
     * Compute the rank factor and ordinate.
     */
-    factor = comm->c_topo_nprocs;
-    p = comm->c_topo_dims;
-    for (i = 0; (i < comm->c_topo_ndims) && (i <= direction); ++i, ++p) {
+    factor = comm->c_topo_comm->mtc_nprocs;
+    p = comm->c_topo_comm->mtc_dims;
+    for (i = 0; (i < comm->c_topo_comm->mtc_ndims) && (i <= direction); ++i, ++p) {
         if ((thisdirection = *p) > 0) {
             thisperiod = 0;
         } else {
@@ -75,14 +79,20 @@ int topo_base_cart_shift (lam_communicator_t *comm,
     } else {
        destord %= thisdirection;
        if (destord < 0) destord += thisdirection;
-       *rank_dest = comm->c_group->g_myrank + ((destord - ord) * factor);
+#if 0
+       *rank_dest = lam_comm_rank(comm);
+#endif
+       *rank_dest += ((destord - ord) * factor);
     }
     if ( ((srcord < 0) || (srcord >= thisdirection)) && (!thisperiod) ) {
          *rank_source = MPI_PROC_NULL;
     } else {
        srcord %= thisdirection;
        if (srcord < 0) srcord += thisdirection;
-       *rank_source = comm->c_group->g_myrank + ((srcord - ord) * factor);
+#if 0
+       *rank_dest = lam_comm_rank(comm);
+#endif
+       *rank_dest += ((srcord - ord) * factor);
     }
 
     return MPI_SUCCESS;
