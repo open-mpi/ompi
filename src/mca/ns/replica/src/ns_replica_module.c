@@ -19,6 +19,7 @@
 
 #include "include/constants.h"
 #include "util/proc_info.h"
+#include "util/output.h"
 #include "mca/mca.h"
 #include "mca/ns/base/base.h"
 #include "ns_replica.h"
@@ -118,7 +119,11 @@ mca_ns_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *have_hidden_
     /* If we're the seed, then we want to be selected, so do all the
        setup and return the module */
 
+    ompi_output(mca_ns_base_output, "replica init called\n");
+
     if (ompi_process_info.seed) {
+
+	ompi_output(mca_ns_base_output, "replica: am seed\n");
 
       mca_ns_replica_last_used_cellid = 0;
       mca_ns_replica_last_used_jobid = 0;
@@ -132,10 +137,14 @@ mca_ns_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *have_hidden_
 
       /* We allow multi user threads but don't have any hidden threads */
 
+      ompi_output(mca_ns_base_output, "replica: assign thread values\n");
+
       *allow_multi_user_threads = true;
       *have_hidden_threads = false;
 
       /* initialize the name tracker */
+
+      ompi_output(mca_ns_base_output, "replica: construct name tracker");
 
       OBJ_CONSTRUCT(&mca_ns_replica_name_tracker, ompi_list_t);
 

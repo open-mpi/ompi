@@ -6,6 +6,7 @@
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
+#include "util/output.h"
 #include "mca/ns/base/base.h"
 
 
@@ -65,6 +66,13 @@ int mca_ns_base_open(void)
                             &mca_ns_base_components_available)) {
     return OMPI_ERROR;
   }
+
+  /* setup output for debug messages */
+  if (!ompi_output_init) {  /* can't open output */
+      return OMPI_ERROR;
+  }
+
+  mca_ns_base_output = ompi_output_open(NULL);
 
   /* All done */
 
