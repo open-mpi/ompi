@@ -54,6 +54,7 @@ static mca_ns_base_module_t mca_ns_replica = {
     ns_replica_create_cellid,
     ns_replica_create_jobid,
     ns_base_create_process_name,
+    ns_base_convert_string_to_process_name,
     ns_replica_reserve_range,
     ns_replica_free_name,
     ns_base_get_proc_name_string,
@@ -167,7 +168,7 @@ int mca_ns_replica_finalize(void)
 
   return OMPI_SUCCESS;
 }
-
+/*
 mca_oob_callback_fn_t mca_ns_replica_recv(int status, const ompi_process_name_t *sender,
 					  const struct iovec *msg, size_t count,
 					  void *cbdata)
@@ -177,9 +178,9 @@ mca_oob_callback_fn_t mca_ns_replica_recv(int status, const ompi_process_name_t 
     struct iovec reply;
     int i;
 
-    for (i=0; i<count; i++) {  /* loop through all included commands */
+    for (i=0; i<count; i++) {  loop through all included commands
 	cmd = (ompi_ns_msg_buffer_t*)msg->iov_base;
-	if (OMPI_NS_CREATE_CELLID == cmd->command) { /* got create_cellid command */
+	if (OMPI_NS_CREATE_CELLID == cmd->command) { got create_cellid command
 	    tmp1 = ompi_name_server.create_cellid();
 	    answer.command = cmd->command;
 	    answer.buflen = sizeof(tmp1);
@@ -192,3 +193,4 @@ mca_oob_callback_fn_t mca_ns_replica_recv(int status, const ompi_process_name_t 
     }
     return OMPI_SUCCESS;
 }
+*/
