@@ -11,7 +11,8 @@
 #pragma weak MPI_File_iwrite_at = PMPI_File_iwrite_at
 #endif
 
-int MPI_File_write_at(MPI_File fh, MPI_Offset offset, void *buf,
-		            int count, MPI_Datatype datatype, MPI_Status *status) {
+int MPI_File_iwrite_at(MPI_File fh, MPI_Offset offset, void *buf,
+                       int count, MPI_Datatype datatype, 
+                       MPI_Request *request) {
     return MPI_SUCCESS;
 }
