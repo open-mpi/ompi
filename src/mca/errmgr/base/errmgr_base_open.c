@@ -84,9 +84,6 @@ int orte_errmgr_base_open(void)
             return ORTE_ERROR;
         }
     
-        if (0 > orte_errmgr_base_output)
-            orte_errmgr_base_output = ompi_output_open(NULL);
-      
         orte_errmgr_initialized = true;
     }
     
