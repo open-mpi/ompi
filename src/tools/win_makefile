@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# This is a simple makefile for windows which makes all the components which are 
+# required for super computing. Too lazy to open up visual studio each and every
+# time to compile a component, so just adding this to the svn repository 
+#
+
+# this is hardcoded for now. but will change shortly
+topdir = C:\cygwin\home\pkambadu\ompi
+
+# list of components to build with the c compiler
+C_SUBDIRS = \
+        mpirun \
+        ompid
+
+# list of components to build with the cpp compiler
+# (because of the problem with OBJ_CLASS_INSTANCE)
+CPP_SUBDIRS = \
+        ompi_info
+
+CC = cl
+
+INCL = \
+        /I"${topdir}/src/win32/generated_include" \
+        /I"${topdir}/src/win32/" \
+        /I"${topdir}/src" \
+        /I"${topdir}/include"
+
+CFLAGS = \
+        /DWIN32 \
+        /DOMPI_SYSCONFDIR \
+        /c 
+
+CPPFLAGS = \
+        /DWIN32 \
+        /DOMPI_SYSCONFDIR \
+        /c \
+        /TP \
+        /EHsc
+
+ADD_INCL = \
+        /DOMPI_WANT_F90_BINDINGS "" \
+        /DOMPI_WANT_F90_BINDINGS  ""\
+        /DOMPI_CONFIGURE_USER  ""\
+        /DOMPI_CONFIGURE_DATE "" \
+        /DOMPI_CONFIGURE_HOST "" \
+        /DOMPI_F90 "" \
+        /DOMPI_WANT_F90_BINDINGS "" \
+        /DOMPI_BUILD_CFLAGS "" \
+        /DOMPI_BUILD_CXXFLAGS "" \
+        /DOMPI_BUILD_FFLAGS "" \
+        /DOMPI_BUILD_FCFLAGS "" \
+        /DOMPI_BUILD_LDFLAGS "" \
+        /DOMPI_BUILD_LIBS "" \
+        /DOMPI_MAJOR_VERSION "" \
+        /DOMPI_MINOR_VERSION  ""\
+        /DOMPI_RELEASE_VERSION "" \
+        /DOMPI_ALPHA_VERSION "" \
+        /DOMPI_BETA_VERSION "" \
+        /DOMPI_SVN_VERSION "" \
+        /DOMPI_PREFIX "" \
+        /DOMPI_BINDIR "" \
+        /DOMPI_LIBDIR "" \
+        /DOMPI_INCDIR "" \
+        /DOMPI_PKGLIBDIR
+
+
+# link with ompi.lib to resolve external symbols
+OMPILIB = \
+        "${topdir}/vcproj/ompi/Debug/ompi.lib"
+
+LINK = link
+
+LINKFLAGS = \
+        /DLL \
+        /DEFAULTLIB:${OMPILIB}
+
+all: \
+    clibs \
+    cpplibs
+
+clibs: ${C_SUBDIRS}
+	@for dirs in ${C_SUBDIRS}; do \
+	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} *.obj); \
+	done
+
+cpplibs: ${CPP_SUBDIRS}
+	@for dirs in ${CPP_SUBDIRS}; do \
+	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} ${ADD_INCL} *.cc; ${LINK} ${LINKFLAGS} *.obj); \
+	done
+
+.PHONY: clean
+
+clean:
+	@for dirs in ${C_SUBDIRS}; do \
+	    (echo "Entering $$dirs"; cd $$dirs; rm -rf *.lib *.obj *.exp;); \
+	done
+	@for dirs in ${C_PPSUBDIRS}; do \
+	    (echo "Entering $$dirs"; cd $$dirs; rm -rf *.lib *.obj *.exp;); \
+	done
