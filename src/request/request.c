@@ -19,7 +19,6 @@ ompi_request_t        ompi_request_null;
 static void ompi_request_construct(ompi_request_t* req)
 {
     OMPI_REQUEST_INIT(req);
-    req->req_query = NULL;
     req->req_fini = NULL;
     req->req_free = NULL;
     req->req_cancel = NULL;
@@ -62,7 +61,6 @@ int ompi_request_init(void)
 
     ompi_request_null.req_complete = true;
     ompi_request_null.req_type = OMPI_REQUEST_NULL;
-    ompi_request_null.req_query = NULL;
     ompi_request_null.req_fini = ompi_request_null_free;
     ompi_request_null.req_free = ompi_request_null_free;
     ompi_request_null.req_cancel = ompi_request_null_cancel;
@@ -89,13 +87,6 @@ int ompi_request_complete(ompi_request_t* request)
 {
     OMPI_THREAD_LOCK(&ompi_request_lock);
     request->req_complete = true;
-    if (request->req_query != NULL) {
-        int rc = request->req_query(request, &request->req_status);
-        if(rc != OMPI_SUCCESS) {
-            OMPI_THREAD_UNLOCK(&ompi_request_lock);
-            return rc;
-        }
-    }
     if(ompi_request_waiting)
         ompi_condition_signal(&ompi_request_cond);
     OMPI_THREAD_UNLOCK(&ompi_request_lock);

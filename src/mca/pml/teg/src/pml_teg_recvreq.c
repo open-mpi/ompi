@@ -35,7 +35,6 @@ static int mca_pml_teg_recv_request_cancel(struct ompi_request_t* request, int c
 static void mca_pml_teg_recv_request_construct(mca_pml_base_recv_request_t* request)
 {
     request->req_base.req_type = MCA_PML_REQUEST_RECV;
-    request->req_base.req_ompi.req_query = NULL;
     request->req_base.req_ompi.req_fini = mca_pml_teg_recv_request_fini;
     request->req_base.req_ompi.req_free = mca_pml_teg_recv_request_free;
     request->req_base.req_ompi.req_cancel = mca_pml_teg_recv_request_cancel;
@@ -68,9 +67,6 @@ void mca_pml_teg_recv_request_progress(
     req->req_bytes_delivered += bytes_delivered;
     if (req->req_bytes_received >= req->req_bytes_packed) {
         /* initialize request status */
-        req->req_base.req_ompi.req_status.MPI_SOURCE = req->req_base.req_peer;
-        req->req_base.req_ompi.req_status.MPI_TAG = req->req_base.req_tag;
-        req->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
         req->req_base.req_ompi.req_status._count = req->req_bytes_delivered;
         req->req_base.req_pml_complete = true; 
         req->req_base.req_ompi.req_complete = true;
@@ -200,8 +196,8 @@ static mca_ptl_base_recv_frag_t* mca_pml_teg_recv_request_match_specific_proc(
             }
             ompi_list_remove_item(unexpected_frags, (ompi_list_item_t*)frag);
             request->req_bytes_packed = header->hdr_msg_length;
-            request->req_base.req_tag = header->hdr_tag;
-            request->req_base.req_peer = header->hdr_src;
+            request->req_base.req_ompi.req_status.MPI_TAG = header->hdr_tag;
+            request->req_base.req_ompi.req_status.MPI_SOURCE = header->hdr_src;
             frag->frag_request = request;
             return frag;
         } 
