@@ -274,7 +274,7 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
    /* Some variables */
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);                       
-   vrank = rank - root + size) % size;
+   vrank = (rank - root + size) % size;
    dim = comm->c_cube_dim;
 
    /* Allocate the incoming and resulting message buffers.  See lengthy
