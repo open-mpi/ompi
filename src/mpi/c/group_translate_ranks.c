@@ -7,6 +7,8 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "group/group.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Group_translate_ranks = PMPI_Group_translate_ranks
@@ -24,15 +26,19 @@ int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
 
     /* check for errors */
     if( MPI_PARAM_CHECK ) {
-        if( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2 ) ) {
-            return MPI_ERR_GROUP;
+        if ((MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
+                (NULL == group1) || (NULL == group2) ) {
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
+                        "MPI_Group_translate_ranks");
         }
         if( (n_ranks > group1_pointer->grp_proc_count) ||
                 ( 0 >= n_ranks ) ){
-            return MPI_ERR_GROUP;
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
+                        "MPI_Group_translate_ranks - II ");
         }
         if( (NULL == ranks1) || (NULL == ranks2 ) ) {
-            return MPI_ERR_GROUP;
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP, 
+                        "MPI_Group_translate_ranks - III ");
         }
     }
 

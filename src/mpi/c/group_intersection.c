@@ -7,6 +7,8 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "group/group.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Group_intersection = PMPI_Group_intersection
@@ -16,17 +18,16 @@ int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
         MPI_Group *new_group) {
 
     /* local variables */
-    int return_value,my_group_rank;
+    int my_group_rank;
     int group_size,proc1,proc2,cnt;
     lam_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
     lam_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer;
 
-    /* initialize data */
-    return_value = MPI_SUCCESS;
-
     /* verify that groups are valid */
-    if ( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ) {
-        return MPI_ERR_GROUP;
+    if ( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
+            ( NULL == group1) || (NULL == group2) ) {
+        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                        "MPI_Group_intersection");
     }
 
     group1_pointer=(lam_group_t *)group1;
@@ -55,7 +56,8 @@ int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
     /* fill in new group */
     new_group_pointer=lam_group_allocate(group_size);
     if( NULL == new_group_pointer ) {
-        return MPI_ERR_GROUP;
+        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                        "MPI_Group_intersection - II");
     }
 
     cnt = 0;
@@ -84,5 +86,5 @@ int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
 
     *new_group = (MPI_Group)new_group_pointer;
 
-    return return_value;
+    return MPI_SUCCESS;
 }

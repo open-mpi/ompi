@@ -7,6 +7,8 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "group/group.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Group_incl = PMPI_Group_incl
@@ -15,23 +17,25 @@
 int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group) 
 {
     /* local variables */
-    int return_value,proc,my_group_rank;
+    int proc,my_group_rank;
     lam_group_t *group_pointer, *new_group_pointer;
     lam_proc_t *my_proc_pointer;
 
-    return_value = MPI_SUCCESS;
     group_pointer = (lam_group_t *)group;
 
     if( MPI_PARAM_CHECK ) {
 
         /* verify that group is valid group */
-        if ( MPI_GROUP_NULL == group || NULL == ranks ) {
-            return MPI_ERR_GROUP;
+        if ( (MPI_GROUP_NULL == group) || ( NULL == group) 
+                || NULL == ranks ) {
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                        "MPI_Group_incl");
         }
 
         /* check that new group is no larger than old group */
         if ( n > group_pointer->grp_proc_count) {
-            return MPI_ERR_RANK;
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                        "MPI_Group_incl - II");
         }
 
     }  /* end if( MPI_CHECK_ARGS) */
@@ -40,14 +44,16 @@ int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group)
     /* get new group struct */
     new_group_pointer=lam_group_allocate(n);
     if( NULL == new_group_pointer ) {
-        return MPI_ERR_GROUP;
+        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                        "MPI_Group_incl - III");
     }
 
     /* put group elements in the list */
     for (proc = 0; proc < n; proc++) {
         if ((ranks[proc] < 0) ||
                 (ranks[proc] >= group_pointer->grp_proc_count)){
-            return MPI_ERR_RANK;
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                        "MPI_Group_incl - IV");
         }
 
         new_group_pointer->grp_proc_pointers[proc] =

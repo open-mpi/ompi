@@ -7,6 +7,8 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "group/group.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Group_range_excl = PMPI_Group_range_excl
@@ -16,25 +18,19 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
                          MPI_Group *new_group) {
 
     /* local variables */
-    int return_value, new_group_size, proc, first_rank, last_rank;
+    int new_group_size, proc, first_rank, last_rank;
 	int stride, triplet, index, *elements_int_list, my_group_rank;
     lam_group_t *group_pointer, *new_group_pointer;
     lam_proc_t *my_proc_pointer;
 
-    return_value = MPI_SUCCESS;
     group_pointer=(lam_group_t *)group;
 
     /* can't act on NULL group */
     if( MPI_PARAM_CHECK ) {
-        if ( MPI_GROUP_NULL == group ) {
-            return MPI_ERR_GROUP;
+        if ( (MPI_GROUP_NULL == group) || (NULL == group) ) {
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                        "MPI_Group_range_excl");
         }
-    }
-
-    /* special case: nothing to exclude... */
-    if (n_triplets == 0) {
-        *new_group = group;
-        return return_value;
     }
 
     /*
@@ -43,7 +39,8 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
     elements_int_list = (int *) 
         malloc(sizeof(int) * group_pointer->grp_proc_count);
     if (NULL == elements_int_list) {
-        return MPI_ERR_OTHER;
+        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER,
+                "MPI_Group_range_excl - II");
     }
     for (proc = 0; proc < group_pointer->grp_proc_count; proc++) {
         elements_int_list[proc] = -1;
@@ -59,20 +56,24 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
         /* check for error conditions */
         if ((0 > first_rank) || (first_rank > group_pointer->grp_proc_count)) {
             free(elements_int_list);
-            return MPI_ERR_RANK;
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                "MPI_Group_range_excl - III");
         }
         if ((0 > last_rank) || (last_rank > group_pointer->grp_proc_count)) {
             free(elements_int_list);
-            return MPI_ERR_RANK;
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                "MPI_Group_range_excl - IV");
         }
         if (stride == 0) {
             free(elements_int_list);
-            return MPI_ERR_RANK;
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                "MPI_Group_range_excl - V");
         }
         if (first_rank < last_rank) {
             if (stride < 0) {
                 free(elements_int_list);
-                return MPI_ERR_RANK;
+                return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                "MPI_Group_range_excl - VI");
             }
 
             /* positive stride */
@@ -81,7 +82,8 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
                 /* make sure rank has not already been selected */
                 if (elements_int_list[index] != -1) {
                     free(elements_int_list);
-                    return MPI_ERR_RANK;
+                    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                            "MPI_Group_range_excl - VII");
                 }
                 elements_int_list[index] = new_group_size;
                 index += stride;
@@ -92,7 +94,8 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
 
             if (stride > 0) {
                 free(elements_int_list);
-                return MPI_ERR_RANK;
+                return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                        "MPI_Group_range_excl - VIII");
             }
             /* negative stride */
             index = first_rank;
@@ -100,7 +103,8 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
                 /* make sure rank has not already been selected */
                 if (elements_int_list[index] != -1) {
                     free(elements_int_list);
-                    return MPI_ERR_RANK;
+                    return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                            "MPI_Group_range_excl - IX");
                 }
                 elements_int_list[index] = new_group_size;
                 index += stride;
@@ -112,7 +116,8 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
             index = first_rank;
             if (elements_int_list[index] != -1) {
                 free(elements_int_list);
-                return MPI_ERR_RANK;
+                return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                        "MPI_Group_range_excl - X");
             }
             elements_int_list[index] = new_group_size;
             new_group_size++;
@@ -126,7 +131,8 @@ int MPI_Group_range_excl(MPI_Group group, int n_triplets, int ranges[][3],
     new_group_pointer=lam_group_allocate(new_group_size);
     if( NULL == new_group_pointer ) {
         free(elements_int_list);
-        return MPI_ERR_GROUP;
+        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                "MPI_Group_range_excl - XI");
     }
 
     /* fill in group list */

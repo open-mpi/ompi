@@ -7,6 +7,8 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "group/group.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Group_excl = PMPI_Group_excl
@@ -25,13 +27,16 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
 
     if( MPI_PARAM_CHECK ) {
         /* verify that group is valid group */
-        if ( MPI_GROUP_NULL == group  || NULL == ranks ) {
-            return MPI_ERR_GROUP;
+        if ( (MPI_GROUP_NULL == group)  || (NULL == group) || 
+                (NULL == ranks) ) {
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                        "MPI_Group_excl");
         }
 
         /* check that new group is no larger than old group */
         if ( n > group_pointer->grp_proc_count) {
-            return MPI_ERR_RANK;
+            return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                        "MPI_Group_excl - II");
         }
 
     }  /* end if( MPI_CHECK_ARGS) */
@@ -43,7 +48,8 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
     /* get new group struct */
     new_group_pointer=lam_group_allocate(group_pointer->grp_proc_count-n);
     if( NULL == new_group_pointer ) {
-        return MPI_ERR_GROUP;
+        return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
+                        "MPI_Group_union - III");
     }
 
     /* put group elements in the list */
@@ -56,7 +62,8 @@ int MPI_Group_excl(MPI_Group group, int n, int *ranks,
             /* check to see if this proc is within range */
             if( ( 0 > excl_proc ) ||
                 (excl_proc >= group_pointer->grp_proc_count)){
-                    return MPI_ERR_RANK;
+                return LAM_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
+                        "MPI_Group_union - IV");
                 }
             if(excl_proc == proc ){
                 found=1;
