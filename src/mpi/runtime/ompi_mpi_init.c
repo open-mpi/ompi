@@ -47,8 +47,6 @@
 #include "mca/pml/base/base.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
-#include "mca/topo/topo.h"
-#include "mca/topo/base/base.h"
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
 #include "mca/oob/oob.h"
@@ -161,11 +159,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "mca_coll_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_topo_base_open())) {
-        error = "mca_topo_base_open() failed";
-        goto error;
-    }
-
     /* The io framework is initialized lazily, at the first use of any
        MPI_File_* function, so it is not included here. */
 

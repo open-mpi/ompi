@@ -21,8 +21,6 @@
 #include "mca/base/base.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
-#include "mca/topo/topo.h"
-#include "mca/topo/base/base.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
 #include "mca/pml/pml.h"
@@ -80,14 +78,7 @@ int mca_base_init_select_components(int requested,
   allow_multi_user_threads &= user_threads;
   have_hidden_threads |= hidden_threads;
 
-  if (OMPI_SUCCESS != mca_topo_base_find_available(&user_threads, 
-                                                   &hidden_threads)) {
-    return OMPI_ERROR;
-  }
-  allow_multi_user_threads &= user_threads;
-  have_hidden_threads |= hidden_threads;
-
-  /* io components are selected later, because the io framework is
+  /* io and topo components are selected later, because the io framework is
      opened lazily (at the first MPI_File_* function invocation). */
 
   /* Now that we have a final list of all available modules, do the
