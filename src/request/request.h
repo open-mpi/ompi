@@ -195,7 +195,8 @@ static inline int ompi_request_test(
 {
     ompi_request_t *request = *rptr;
     ompi_atomic_mb();
-    if (request == MPI_REQUEST_NULL) {
+    if (request == MPI_REQUEST_NULL ||
+        request->req_state == OMPI_REQUEST_INACTIVE) {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
             *status = ompi_status_empty;
