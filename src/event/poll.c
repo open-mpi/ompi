@@ -62,7 +62,8 @@ extern struct ompi_event_list ompi_eventqueue;
 extern volatile sig_atomic_t ompi_evsignal_caught;
 extern ompi_mutex_t ompi_event_lock;
 
-struct pollop {
+/* Open MPI: make this struct instance be static */
+static struct pollop {
 	int event_count;		/* Highest number alloc */
 	struct pollfd *event_set;
 	struct ompi_event **event_back;
