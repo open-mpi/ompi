@@ -147,13 +147,16 @@ static void mca_gpr_replica_trigger_list_destructor(mca_gpr_replica_trigger_list
 
     if (NULL != trig->keys) {
 	free(trig->keys);
+	trig->keys = NULL;
     }
     if (NULL != trig->tokens) {
 	for (i=0, tok=trig->tokens; i< trig->num_keys; i++) {
 	    free(*tok);
+	    *tok = NULL;
 	    tok++;
 	}
 	free(trig->tokens);
+	trig->tokens = NULL;
     }
 }
 
@@ -176,6 +179,7 @@ static void mca_gpr_replica_list_destructor(mca_gpr_replica_list_t* replica)
 {
     if (NULL != replica->replica) {
 	free(replica->replica);
+	replica->replica = NULL;
     }
 }
 
@@ -208,10 +212,12 @@ static void mca_gpr_replica_core_destructor(mca_gpr_replica_core_t* reg)
 
     if (NULL != reg->keys) {
 	free(reg->keys);
+	reg->keys = NULL;
     }
 
     if (NULL != reg->object) {
 	free(reg->object);
+	reg->object = NULL;
     }
 
     while (NULL != (ptr = (mca_gpr_replica_list_t*)ompi_list_remove_first(&reg->replicas))) {
@@ -221,6 +227,7 @@ static void mca_gpr_replica_core_destructor(mca_gpr_replica_core_t* reg)
 
     if (NULL != reg->write_invalidate.valid_replica) {
 	free(reg->write_invalidate.valid_replica);
+	reg->write_invalidate.valid_replica = NULL;
     }
 }
 

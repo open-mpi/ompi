@@ -78,8 +78,8 @@ static bool initialized = false;
  * globals needed within proxy component
  */
 
-ompi_process_name_t *mca_ns_my_replica;
-int mca_ns_proxy_debug;
+ompi_process_name_t* mca_ns_my_replica=NULL;
+int mca_ns_proxy_debug=0;
 
 /*
  * Open the proxy component and obtain the name of my replica.
