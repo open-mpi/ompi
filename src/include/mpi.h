@@ -42,7 +42,7 @@ struct lam_status_public_t {
   int MPI_TAG;
   int MPI_ERROR;
 };
-struct lam_status_public_t lam_status_public_t;
+typedef struct lam_status_public_t lam_status_public_t;
 
 /*
  * User typedefs
