@@ -34,9 +34,9 @@ static inline void ompi_atomic_wmb(void)
     MB();
 }
 
-static inline int ompi_atomic_cmpset_acq_32(volatile uint32_t *addr,
-                                           uint32_t oldval,
-                                           uint32_t newval)
+#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_32
+static inline int ompi_atomic_cmpset_acq_32( volatile uint32_t *addr,
+                                             uint32_t oldval, uint32_t newval)
 {
     uint32_t ret;
 
@@ -51,9 +51,8 @@ static inline int ompi_atomic_cmpset_acq_32(volatile uint32_t *addr,
 }
 
 
-static inline int ompi_atomic_cmpset_rel_32(volatile uint32_t *addr,
-                                            uint32_t oldval,
-                                            uint32_t newval)
+static inline int ompi_atomic_cmpset_rel_32( volatile uint32_t *addr,
+                                             uint32_t oldval, uint32_t newval)
 {
    uint32_t ret;
 
@@ -70,9 +69,9 @@ static inline int ompi_atomic_cmpset_rel_32(volatile uint32_t *addr,
 
 #define ompi_atomic_cmpset_32 ompi_atomic_cmpset_acq_32
 
-static inline int ompi_atomic_cmpset_acq_64(volatile uint64_t *addr,
-                                            uint64_t oldval,
-                                            uint64_t newval)
+#define OMPI_ARCHITECTURE_DEFINE_ATOMIC_CMPSET_64
+static inline int ompi_atomic_cmpset_acq_64( volatile uint64_t *addr,
+                                             uint64_t oldval, uint64_t newval)
 {
    uint64_t ret;
 
@@ -87,9 +86,8 @@ static inline int ompi_atomic_cmpset_acq_64(volatile uint64_t *addr,
 }
 
 
-static inline int ompi_atomic_cmpset_rel_64(volatile uint64_t *addr,
-                                            uint64_t oldval,
-                                            uint64_t newval)
+static inline int ompi_atomic_cmpset_rel_64( volatile uint64_t *addr,
+                                             uint64_t oldval, uint64_t newval)
 {
    uint64_t ret;
 
