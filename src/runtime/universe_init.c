@@ -20,13 +20,11 @@ char *ompi_universe_init(char *tmpdir, char *user, char *universe)
     FILE *fp;
 
 
-    if (NULL == (tmp = ompi_session_dir(true, tmpdir, user, universe, "seed", NULL))) {
+    if (OMPI_ERROR == ompi_session_dir(true, tmpdir, user, NULL, NULL, universe, "seed", NULL)) {
 	/* not found, and could not be created */
 	return(NULL);
     }
 
-    ompi_process_info.job_session_dir = strdup(tmp);
-    ompi_process_info.universe_session_dir = dirname(tmp);
     oob_info_path = ompi_os_path(false, ompi_process_info.job_session_dir, "oob", NULL);
     fp = fopen(oob_info_path, "w"); /* must be a new file - fail if one already exists */
     if (NULL == fp) {

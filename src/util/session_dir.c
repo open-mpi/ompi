@@ -8,11 +8,14 @@
 
 #include <stdio.h>
 #include <pwd.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
 /*
 #include <sys/socket.h>
 #include <netdb.h>      MAXHOSTNAMELEN in Solaris
@@ -56,107 +59,129 @@ int ompi_check_dir(bool create, char *directory)
     return(OMPI_ERROR);  /* couldn't find it, or don't have access rights, and not asked to create it */
 }
 
-char *ompi_session_dir(bool create, char *prefix, char *user, char *universe, char *job, char *proc)
+int ompi_session_dir(bool create, char *prefix, char *user, char *hostid, char *batchid, char *universe, char *job, char *proc)
 {
-    char *tmpprefix=NULL, *tmp=NULL;
-    char *sessions;
-    int length=0;
+    char *fulldirpath=NULL, *tmp=NULL, *hostname=NULL, *batchname=NULL;
+    char *sessions=NULL, *frontend=NULL;
+    int return_code;
 
     if (NULL == user || NULL == universe) { /* error conditions - have to provide at least that much */
-	return(NULL);
+	return OMPI_ERROR;
     }
 
-    length = strlen("openmpi-sessions-") + strlen(user) + strlen(universe) + 2;
-
     if (NULL == job && NULL != proc) { /* can't give a proc without a job */
-	return(NULL);
+	return OMPI_ERROR;
+    }
+
+    if (NULL == hostid) {  /* check if hostname set elsewhere */
+	if (NULL == ompi_system_info.nodename) { /* don't have a hostname anywhere  - error */
+	    return_code = OMPI_ERROR;
+	    goto CLEANUP;
+	} else {
+	    hostname = strdup(ompi_system_info.nodename);
+	}
+    } else {
+	hostname = strdup(hostid);
+    }
+
+    if (NULL == batchid) {
+	batchname = strdup("0");
+    } else {
+	batchname = batchid;
+    }
+
+    if (0 > asprintf(&frontend, "openmpi-sessions-%s@%s:%s", user, hostname, batchname)) {
+	return_code = OMPI_ERROR;
+	goto CLEANUP;
     }
 
     if (NULL != proc) {
-	length = length + strlen(job) + strlen(proc) + 2;
-	sessions = (char *)malloc(length*sizeof(char));
-	sprintf(sessions, "openmpi-sessions-%s%s%s%s%s%s%s", user, ompi_system_info.path_sep, universe,
-		ompi_system_info.path_sep, job, ompi_system_info.path_sep, proc);
+	if (0 > asprintf(&sessions, "%s%s%s%s%s%s%s", frontend,
+			 ompi_system_info.path_sep, universe,
+		         ompi_system_info.path_sep, job,
+			 ompi_system_info.path_sep, proc)) {
+	    return_code = OMPI_ERROR;
+	    goto CLEANUP;
+	}
     } else if (NULL != job) {
-	length = length + strlen(job) + 1;
-	sessions = (char *)malloc(length*sizeof(char));
-	sprintf(sessions, "openmpi-sessions-%s%s%s%s%s", user, ompi_system_info.path_sep, universe,
-		ompi_system_info.path_sep, job);
+	if (0 > asprintf(&sessions, "%s%s%s%s%s", frontend,
+			 ompi_system_info.path_sep, universe,
+			 ompi_system_info.path_sep, job)) {
+	    return_code = OMPI_ERROR;
+	    goto CLEANUP;
+	}
     } else {
-	sessions = (char *)malloc(length*sizeof(char));
-	sprintf(sessions, "openmpi-sessions-%s%s%s", user, ompi_system_info.path_sep, universe);
+	if (0 > asprintf(&sessions, "%s%s%s", frontend, ompi_system_info.path_sep, universe)) {
+	    return_code = OMPI_ERROR;
+	    goto CLEANUP;
+	}
     }
 
-    if (NULL != prefix) {
-	tmpprefix = strdup(ompi_os_path(false, prefix, sessions, NULL)); /* make sure it's an absolute pathname */
-	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
-	    return(tmpprefix);
+    if (NULL != prefix) {  /* if a prefix is specified, this is the only place we look */
+	fulldirpath = strdup(ompi_os_path(false, prefix, sessions, NULL)); /* make sure it's an absolute pathname */
+	if (OMPI_SUCCESS == ompi_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+	    return_code = OMPI_SUCCESS;
+	    goto COMPLETE;
 	}
 	else {
-	    return(NULL); /* user specified location, but we can't access it nor create it */
+	    return_code = OMPI_ERROR;
+	    goto CLEANUP; /* user specified location, but we can't access it nor create it */
 	}
     }
  
+    /* no prefix was specified, so check other options in order */
     if (NULL != getenv("OMPI_PREFIX_ENV")) {
 	tmp = strdup(getenv("OMPI_PREFIX_ENV"));
-	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
-	    free(tmp);
-	    return(tmpprefix);
-	}
-    }
-   if (tmp != NULL) {
-        free(tmp);
-    }
-    if (tmpprefix != NULL) {
-        free(tmpprefix);
-    }
-
-    if (NULL != getenv("TMPDIR")) {
+    } else if (NULL != getenv("TMPDIR")) {
 	tmp = strdup(getenv("TMPDIR"));
-	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
-	    free(tmp);
-	    return(tmpprefix);
-	}
-    }
-    if (tmp != NULL) {
-        free(tmp);
-    }
-    if (tmpprefix != NULL) {
-        free(tmpprefix);
-    }
-
-    if (NULL != getenv("TMP")) {
+    } else if (NULL != getenv("TMP")) {
 	tmp = strdup(getenv("TMP"));
-	tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-	if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
-	    free(tmp);
-	    return(tmpprefix);
-	}
-    }
-    if (tmp != NULL) {
-        free(tmp);
-    }
-    if (tmpprefix != NULL) {
-        free(tmpprefix);
+    } else {
+	tmp = strdup(OMPI_DEFAULT_TMPDIR);
     }
 
-    tmp = strdup(OMPI_DEFAULT_TMPDIR);
-    tmpprefix = strdup(ompi_os_path(false, tmp, sessions, NULL));
-    if (OMPI_SUCCESS == ompi_check_dir(create, tmpprefix)) { /* check for existence and access, or create it */
-	free(tmp);
-	return(tmpprefix);
+    fulldirpath = strdup(ompi_os_path(false, tmp, sessions, NULL));
+    if (OMPI_SUCCESS == ompi_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
+	return_code = OMPI_SUCCESS;
+	goto COMPLETE;
+    } else {
+	return_code = OMPI_ERROR;
+	goto CLEANUP;
     }
 
-    /* possibilities exhausted - time to surrender! */
-    if (tmp != NULL) {
+ COMPLETE:
+    if (proc) {
+	ompi_process_info.proc_session_dir = strdup(fulldirpath);
+	fulldirpath = dirname(fulldirpath);
+    }
+    if (job) {
+	ompi_process_info.job_session_dir = strdup(fulldirpath);
+	fulldirpath = dirname(fulldirpath);
+    }
+    ompi_process_info.universe_session_dir = strdup(fulldirpath);
+
+ CLEANUP:
+    if (tmp) {
         free(tmp);
     }
-    if (tmpprefix != NULL) {
-        free(tmpprefix);
+    if (fulldirpath) {
+        free(fulldirpath);
     }
-    return(NULL);
+    if (frontend) {
+	free(frontend);
+    }
+    if (batchname) {
+	free(batchname);
+    }
+    if (hostname) {
+	free(hostname);
+    }
+    if (sessions) {
+	free(sessions);
+    }
+
+
+    return return_code;
 }
 
 
