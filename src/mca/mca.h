@@ -108,7 +108,7 @@ typedef struct mca_base_module_priority_t mca_base_module_priority_t;
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  int mca_base_open(lam_cmd_line_t *cmd);
+  int mca_base_open(void);
   int mca_base_close(void);
 
   int mca_base_arg_setup(lam_cmd_line_t *cmd);
