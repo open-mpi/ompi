@@ -45,7 +45,15 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
 static void ud_completion_handler(VAPI_hca_hndl_t nic,
         VAPI_cq_hndl_t cq_hndl, void* priv_data)
 {
+    VAPI_ret_t ret;
+
     D_PRINT("Got interrupt!!\n");
+
+    ret = VAPI_req_comp_notif(nic, cq_hndl, VAPI_NEXT_COMP);
+
+    if(VAPI_OK != ret) {
+        MCA_PTL_IB_VAPI_RET(ret, "VAPI_req_comp_notif");
+    }
 }
 
 int mca_ptl_ib_ud_cq_init(VAPI_hca_hndl_t nic,
@@ -89,8 +97,8 @@ int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
         VAPI_cq_hndl_t ud_rcq_hndl,
         VAPI_cq_hndl_t ud_scq_hndl,
         VAPI_pd_hndl_t ptag,
-        VAPI_qp_hndl_t ud_qp_hndl,
-        VAPI_qp_prop_t ud_qp_prop)
+        VAPI_qp_hndl_t* ud_qp_hndl,
+        VAPI_qp_prop_t* ud_qp_prop)
 {
     VAPI_qp_init_attr_t     qp_init_attr;
     VAPI_qp_attr_t          qp_attr;
@@ -119,7 +127,7 @@ int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
     qp_init_attr.ts_type            = VAPI_TS_UD;
 
     ret = VAPI_create_qp(nic, &qp_init_attr, 
-            &ud_qp_hndl, &ud_qp_prop);
+            ud_qp_hndl, ud_qp_prop);
 
     if(VAPI_OK != ret) {
         MCA_PTL_IB_VAPI_RET(ret, "VAPI_create_qp");
@@ -127,8 +135,8 @@ int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
     }
 
     D_PRINT("UD QP[%d] created ..hndl=%d\n",
-            ud_qp_prop.qp_num,
-            (int)ud_qp_hndl);
+            ud_qp_prop->qp_num,
+            (int)*ud_qp_hndl);
 
     /* Modifying  QP to INIT */
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
@@ -142,7 +150,7 @@ int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QKEY);
 
     ret = VAPI_modify_qp(nic, 
-            ud_qp_hndl, &qp_attr, 
+            (VAPI_qp_hndl_t)*ud_qp_hndl, &qp_attr, 
             &qp_attr_mask, &qp_cap);
 
     if(VAPI_OK != ret) {
@@ -160,7 +168,7 @@ int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_QP_STATE);
 
     ret = VAPI_modify_qp(nic, 
-            ud_qp_hndl, &qp_attr, 
+            (VAPI_qp_hndl_t)*ud_qp_hndl, &qp_attr, 
             &qp_attr_mask, &qp_cap);
 
     if(VAPI_OK != ret) {
@@ -180,7 +188,7 @@ int mca_ptl_ib_ud_qp_init(VAPI_hca_hndl_t nic,
     QP_ATTR_MASK_SET(qp_attr_mask,QP_ATTR_SQ_PSN);
 
     ret = VAPI_modify_qp(nic, 
-            ud_qp_hndl, &qp_attr, 
+            (VAPI_qp_hndl_t)*ud_qp_hndl, &qp_attr, 
             &qp_attr_mask, &qp_cap);
 
     if(VAPI_OK != ret) {
@@ -218,12 +226,16 @@ int mca_ptl_ib_get_num_hcas(uint32_t* num_hcas)
 
 int mca_ptl_ib_get_hca_id(int num, VAPI_hca_id_t* hca_id)
 {
-    int num_hcas;
+    uint32_t num_hcas;
     VAPI_ret_t ret;
     VAPI_hca_id_t* hca_ids = NULL;
 
     hca_ids = (VAPI_hca_id_t*) malloc(mca_ptl_ib_component.ib_num_hcas *
             sizeof(VAPI_hca_id_t));
+
+    if(NULL == hca_ids) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     /* Now get the hca_id from underlying VAPI layer */
     ret = EVAPI_list_hcas(mca_ptl_ib_component.ib_num_hcas, 
@@ -299,7 +311,7 @@ int mca_ptl_ib_alloc_pd(VAPI_hca_hndl_t nic,
 int mca_ptl_ib_create_cq(VAPI_hca_hndl_t nic,
                 VAPI_cq_hndl_t* cq_hndl)
 {
-    int act_num_cqe = 0;
+    uint32_t act_num_cqe = 0;
     VAPI_ret_t ret;
 
     ret = VAPI_create_cq(nic, DEFAULT_CQ_SIZE,
@@ -314,12 +326,12 @@ int mca_ptl_ib_create_cq(VAPI_hca_hndl_t nic,
 }
 
 int mca_ptl_ib_set_async_handler(VAPI_hca_hndl_t nic,
-        EVAPI_async_handler_hndl_t async_handler)
+        EVAPI_async_handler_hndl_t *async_handler)
 {
     VAPI_ret_t ret;
 
     ret = EVAPI_set_async_event_handler(nic,
-            async_event_handler, 0, &async_handler);
+            async_event_handler, 0, async_handler);
 
     if(VAPI_OK != ret) {
         MCA_PTL_IB_VAPI_RET(ret, "EVAPI_set_async_event_handler");
@@ -330,15 +342,14 @@ int mca_ptl_ib_set_async_handler(VAPI_hca_hndl_t nic,
 }
 
 int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t nic,
-        mca_ptl_ib_ud_buf_t* ud_buf)
+        mca_ptl_ib_ud_buf_t** ud_buf_ptr)
 {
     int size, len;
     int i, num_ud_bufs;
     vapi_descriptor_t* desc;
     mca_ptl_ib_ud_buf_data_t* buf_data;
     vapi_memhandle_t* memhandle;
-
-    ud_buf = NULL;
+    mca_ptl_ib_ud_buf_t* ud_buf;
 
     num_ud_bufs = MAX_UD_PREPOST_DEPTH;
 
@@ -346,10 +357,13 @@ int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t nic,
 
     len = sizeof(mca_ptl_ib_ud_buf_data_t);
 
-    ud_buf = (mca_ptl_ib_ud_buf_t*) malloc(size);
-    if(NULL == ud_buf) {
-        return OMPI_ERROR;
+    (mca_ptl_ib_ud_buf_t*)*ud_buf_ptr = (mca_ptl_ib_ud_buf_t*) malloc(size);
+
+    if(NULL == *ud_buf_ptr) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
+
+    ud_buf = (mca_ptl_ib_ud_buf_t*)*ud_buf_ptr;
 
     /* Walk through the list of UD bufs */
     for(i = 0; i < num_ud_bufs; i++) {
@@ -359,7 +373,7 @@ int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t nic,
 
         buf_data = (mca_ptl_ib_ud_buf_data_t*) malloc(len);
         if(NULL == buf_data) {
-            return OMPI_ERROR;
+            return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         if(mca_ptl_ib_register_mem(nic, buf_data, len, memhandle) 
@@ -369,7 +383,7 @@ int mca_ptl_ib_prep_ud_bufs(VAPI_hca_hndl_t nic,
 
         desc->rr.comp_type = VAPI_SIGNALED;
         desc->rr.opcode = VAPI_RECEIVE;
-        desc->rr.id = (VAPI_virt_addr_t) &ud_buf[i];
+        desc->rr.id = (VAPI_virt_addr_t) (unsigned int) &ud_buf[i];
         desc->rr.sg_lst_len = 1;
         desc->rr.sg_lst_p = &(desc->sg_entry);
         desc->sg_entry.len = len;
@@ -457,6 +471,9 @@ int mca_ptl_ib_set_comp_ev_hndl(VAPI_hca_hndl_t nic,
         MCA_PTL_IB_VAPI_RET(ret, "EVAPI_set_comp_eventh");
         return OMPI_ERROR;
     }
+
+    D_PRINT("Completion hander: %p, Handle = %d\n",
+            handler, (int)*handler_hndl);
     
     return OMPI_SUCCESS;
 }
@@ -478,6 +495,8 @@ int mca_ptl_ib_req_comp_notif(VAPI_hca_hndl_t nic, VAPI_cq_hndl_t cq_hndl)
 int mca_ptl_ib_get_comp_ev_hndl(VAPI_completion_event_handler_t* handler_ptr)
 {
     *handler_ptr = ud_completion_handler;
+
+    D_PRINT("UD Completion Event Handler = %p\n", ud_completion_handler);
 
     return OMPI_SUCCESS;
 }

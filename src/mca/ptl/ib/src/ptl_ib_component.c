@@ -140,7 +140,7 @@ static int mca_ptl_ib_component_send(void)
     ud_qp_addr = (mca_ptl_ib_ud_addr_t*) malloc(size);
 
     if(NULL == ud_qp_addr) {
-        return OMPI_ERROR;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
@@ -154,6 +154,10 @@ static int mca_ptl_ib_component_send(void)
 
     rc =  mca_base_modex_send(&mca_ptl_ib_component.super.ptlm_version, 
             ud_qp_addr, size);
+
+    if(OMPI_SUCCESS != rc) {
+        D_PRINT("mca_base_modex_send didn't succeed : %d\n", rc);
+    }
 
     free(ud_qp_addr);
 
@@ -171,11 +175,11 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
         bool *allow_multi_user_threads,
         bool *have_hidden_threads)
 {
-    mca_ptl_base_module_t **ptls;
+    mca_ptl_base_module_t **modules;
     int i, ret;
 
     uint32_t  num_hcas;
-    mca_ptl_ib_module_t* ptl_ib = NULL;
+    mca_ptl_ib_module_t* ib_modules = NULL;
     *num_ptl_modules = 0;
 
     *allow_multi_user_threads = true;
@@ -225,83 +229,83 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
           mca_ptl_ib_component.ib_num_ptl_modules,
          mca_ptl_ib_component.ib_max_ptl_modules); 
 
-    ptl_ib = (mca_ptl_ib_module_t*) malloc(sizeof(mca_ptl_ib_module_t) * 
+    ib_modules = (mca_ptl_ib_module_t*) malloc(sizeof(mca_ptl_ib_module_t) * 
             mca_ptl_ib_component.ib_num_ptl_modules);
-    if(NULL == ptl_ib) {
+    if(NULL == ib_modules) {
         return NULL;
     }
 
     /* Zero out the PTL struct memory region */
-    memset((void*)ptl_ib, 0, sizeof(mca_ptl_ib_module_t) *
+    memset((void*)ib_modules, 0, sizeof(mca_ptl_ib_module_t) *
             mca_ptl_ib_component.ib_num_ptl_modules);
 
-    /* Copy the function pointers to the IB ptls */
-    for(i = 0; i< mca_ptl_ib_component.ib_num_ptl_modules; i++) {
-        memcpy((void*)&ptl_ib[i], 
+    /* Copy the function pointers to the IB modules */
+    for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
+        memcpy((void*)&ib_modules[i], 
                 &mca_ptl_ib_module, 
                 sizeof(mca_ptl_ib_module));
     }
 
-    D_PRINT("About to initialize IB ptls ...\n");
+    D_PRINT("About to initialize IB modules ...\n");
 
     /* For each ptl, do this */
     for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
 
-        if(mca_ptl_ib_get_hca_id(i, &ptl_ib[i].hca_id) 
+        if(mca_ptl_ib_get_hca_id(i, &ib_modules[i].hca_id) 
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
-        D_PRINT("hca_id: %s\n", ptl_ib[i].hca_id);
+        D_PRINT("hca_id: %s\n", ib_modules[i].hca_id);
 
-        if(mca_ptl_ib_get_hca_hndl(ptl_ib[i].hca_id, &ptl_ib[i].nic)
+        if(mca_ptl_ib_get_hca_hndl(ib_modules[i].hca_id, &ib_modules[i].nic)
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
-        D_PRINT("hca_hndl: %d\n", ptl_ib[i].nic);
+        D_PRINT("hca_hndl: %d\n", ib_modules[i].nic);
 
         /* Each HCA uses only port 1. Need to change
          * this so that each ptl can choose different
          * ports */
 
-        if(mca_ptl_ib_query_hca_prop(ptl_ib[i].nic, &ptl_ib[i].port)
+        if(mca_ptl_ib_query_hca_prop(ib_modules[i].nic, &ib_modules[i].port)
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
-        D_PRINT("LID: %d\n", ptl_ib[i].port.lid);
+        D_PRINT("LID: %d\n", ib_modules[i].port.lid);
 
-        if(mca_ptl_ib_alloc_pd(ptl_ib[i].nic, &ptl_ib[i].ptag)
+        if(mca_ptl_ib_alloc_pd(ib_modules[i].nic, &ib_modules[i].ptag)
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
-        D_PRINT("Protection Domain: %d\n", (int)ptl_ib[i].ptag);
+        D_PRINT("Protection Domain: %d\n", (int)ib_modules[i].ptag);
 
-        if(mca_ptl_ib_create_cq(ptl_ib[i].nic, &ptl_ib[i].cq_hndl)
+        if(mca_ptl_ib_create_cq(ib_modules[i].nic, &ib_modules[i].cq_hndl)
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
-        D_PRINT("CQ handle: %d\n", (int)ptl_ib[i].cq_hndl);
+        D_PRINT("CQ handle: %d\n", (int)ib_modules[i].cq_hndl);
 
-        if(mca_ptl_ib_ud_cq_init(ptl_ib[i].nic, &ptl_ib[i].ud_scq_hndl,
-                    &ptl_ib[i].ud_rcq_hndl)
+        if(mca_ptl_ib_ud_cq_init(ib_modules[i].nic, &ib_modules[i].ud_scq_hndl,
+                    &ib_modules[i].ud_rcq_hndl)
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
-        if(mca_ptl_ib_ud_qp_init(ptl_ib[i].nic, ptl_ib[i].ud_rcq_hndl,
-                    ptl_ib[i].ud_scq_hndl, ptl_ib[i].ptag,
-                    ptl_ib[i].ud_qp_hndl, ptl_ib[i].ud_qp_prop)
+        if(mca_ptl_ib_ud_qp_init(ib_modules[i].nic, ib_modules[i].ud_rcq_hndl,
+                    ib_modules[i].ud_scq_hndl, ib_modules[i].ptag,
+                    &ib_modules[i].ud_qp_hndl, &ib_modules[i].ud_qp_prop)
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
         /* Attach asynchronous handler */
-        if(mca_ptl_ib_set_async_handler(ptl_ib[i].nic, 
-                    ptl_ib[i].async_handler) 
+        if(mca_ptl_ib_set_async_handler(ib_modules[i].nic, 
+                    &ib_modules[i].async_handler) 
                 != OMPI_SUCCESS) {
             return NULL;
         }
@@ -311,34 +315,36 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
          * 1. register
          * 2. fill up descriptors
          */
-        if(mca_ptl_ib_prep_ud_bufs(ptl_ib[i].nic, ptl_ib[i].ud_buf) 
+        ib_modules[i].ud_buf = NULL;
+
+        if(mca_ptl_ib_prep_ud_bufs(ib_modules[i].nic, &ib_modules[i].ud_buf) 
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
         /* Post the UD recv descriptors */
-        if(mca_ptl_ib_post_ud_recv(ptl_ib[i].nic, ptl_ib[i].ud_qp_hndl, 
-                    ptl_ib[i].ud_buf)
+        if(mca_ptl_ib_post_ud_recv(ib_modules[i].nic, ib_modules[i].ud_qp_hndl, 
+                    ib_modules[i].ud_buf)
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
-        if(mca_ptl_ib_get_comp_ev_hndl(&ptl_ib[i].ud_comp_ev_handler)
+        if(mca_ptl_ib_get_comp_ev_hndl(&ib_modules[i].ud_comp_ev_handler)
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
         /* Set the completion event handler for the UD recv queue */
-        if(mca_ptl_ib_set_comp_ev_hndl(ptl_ib[i].nic, 
-                    ptl_ib[i].ud_rcq_hndl,
-                    ptl_ib[i].ud_comp_ev_handler, 
-                    (void*)NULL, &ptl_ib[i].ud_comp_ev_hndl) 
+        if(mca_ptl_ib_set_comp_ev_hndl(ib_modules[i].nic, 
+                    ib_modules[i].ud_rcq_hndl,
+                    ib_modules[i].ud_comp_ev_handler, 
+                    (void*)NULL, &ib_modules[i].ud_comp_ev_hndl) 
                 != OMPI_SUCCESS) {
             return NULL;
         }
 
         /* Request for interrupts on the UD recv queue */
-        if(mca_ptl_ib_req_comp_notif(ptl_ib[i].nic, ptl_ib[i].ud_rcq_hndl)
+        if(mca_ptl_ib_req_comp_notif(ib_modules[i].nic, ib_modules[i].ud_rcq_hndl)
                 != OMPI_SUCCESS) {
             return NULL;
         }
@@ -354,7 +360,7 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
 
     /* Set the pointers for all IB ptls */
     for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
-        mca_ptl_ib_component.ib_ptl_modules[i] = &ptl_ib[i];
+        mca_ptl_ib_component.ib_ptl_modules[i] = &ib_modules[i];
     }
 
     if(mca_ptl_ib_component_send() != OMPI_SUCCESS) {
@@ -362,19 +368,19 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
     }
 
     /* Allocate list of MCA ptl pointers */
-    ptls = (mca_ptl_base_module_t**) malloc(mca_ptl_ib_component.ib_num_ptl_modules * 
+    modules = (mca_ptl_base_module_t**) malloc(mca_ptl_ib_component.ib_num_ptl_modules * 
             sizeof(mca_ptl_base_module_t*));
-    if(NULL == ptls) {
+    if(NULL == modules) {
         return NULL;
     }
 
-    memcpy(ptls, mca_ptl_ib_component.ib_ptl_modules, 
+    memcpy(modules, mca_ptl_ib_component.ib_ptl_modules, 
             mca_ptl_ib_component.ib_num_ptl_modules * 
             sizeof(mca_ptl_ib_module_t*));
 
     *num_ptl_modules = mca_ptl_ib_component.ib_num_ptl_modules;
 
-    return ptls;
+    return modules;
 }
 
 /*
