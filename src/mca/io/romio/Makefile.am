@@ -6,6 +6,8 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
+EXTRA_DIST = VERSION
+
 SUBDIRS = src romio-dist
 
 # Make the output library in this directory, and name it either
