@@ -162,3 +162,111 @@ ompi_proc_t * ompi_proc_find ( const ompi_process_name_t * name )
     return proc;
 }
 
+
+/* 
+** The functions in this chapter are at the moment purely for 
+** homogeneous environments. Support for heterogeneous environments 
+** to follow as soon as the datatype engine supports heterogeneous envs. 
+** I just wanted to avoid duplicating data conversion code here...
+*/
+int ompi_proc_get_namebuf_by_proc ( ompi_proc_t **proclist, int proclistsize,
+                                    char **namebuf, size_t *namebuflen )
+{
+    int i;
+    ompi_process_name_t *nbuf=NULL;
+
+    nbuf = ( ompi_process_name_t *) calloc (proclistsize, sizeof(ompi_process_name_t));
+    if ( NULL == nbuf ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    OMPI_THREAD_LOCK(&ompi_proc_lock);
+    for (i=0; i<proclistsize; i++) {
+        nbuf[i] = proclist[i]->proc_name;
+    }
+    OMPI_THREAD_UNLOCK(&ompi_proc_lock);
+
+    *namebuf    = (char *)nbuf;
+    *namebuflen = (proclistsize * sizeof(ompi_process_name_t));
+    
+    return OMPI_SUCCESS;
+}
+
+int ompi_proc_namebuf_returnbuf ( char *namebuf )
+{
+    if ( NULL != namebuf ) {
+        free (namebuf);
+    }
+    
+    return OMPI_SUCCESS;
+}
+
+
+int ompi_proc_get_proclist (char *namebuf, size_t namebuflen,
+                            int proclistsize, ompi_proc_t ***proclist)
+{
+    int i;
+    ompi_proc_t **plist=NULL;
+    ompi_process_name_t *nlist= (ompi_process_name_t *) namebuf;
+
+    plist = (ompi_proc_t **) calloc ( proclistsize, sizeof (ompi_proc_t *));
+    if ( NULL == plist ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    for ( i=0; i<proclistsize; i++ ){
+        plist[i] = ompi_proc_find ( &(nlist[i]));
+        if ( NULL == plist[i] ) {
+            /* to do: look the process information for this name up */
+        }
+    }
+
+    *proclist = plist;
+    return OMPI_SUCCESS;
+}
+
+/* These two functions are at the moment trivial */
+int ompi_proc_get_namebuf_by_name ( ompi_process_name_t **namelist, int namelistsize, 
+                                    char **namebuf, size_t *namebuflen )
+{
+    int i;
+    ompi_process_name_t *nbuf=NULL;
+
+    nbuf = ( ompi_process_name_t *) calloc (namelistsize, sizeof(ompi_process_name_t));
+    if ( NULL == nbuf ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    for (i=0; i<namelistsize; i++) {
+        nbuf[i] =  *(namelist[i]);
+    }
+
+    *namebuf    = (char *)nbuf;
+    *namebuflen = (namelistsize * sizeof(ompi_process_name_t));
+    
+    return OMPI_SUCCESS;
+}
+
+int ompi_proc_get_namelist ( char *namebuf, size_t namebuflen,
+                             int namelistsize, ompi_process_name_t ***namelist )
+{
+    int i;
+    ompi_proc_t *proc;
+    ompi_process_name_t **plist=NULL;
+    ompi_process_name_t *nlist= (ompi_process_name_t *) namebuf;
+
+    plist = (ompi_process_name_t**)calloc(namelistsize,sizeof(ompi_process_name_t *));
+    if ( NULL == plist ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    for ( i=0; i<namelistsize; i++ ){
+        proc = ompi_proc_find ( &(nlist[i]));
+        if ( NULL == plist[i] ) {
+            /* to do: look the process information for this name up */
+        }
+        plist[i] = &(proc->proc_name);
+    }
+    
+    return OMPI_SUCCESS;
+}
