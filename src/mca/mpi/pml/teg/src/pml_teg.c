@@ -2,7 +2,7 @@
 #include "mca/mpi/pml/base/pml_base_recvreq.h"
 #include "pml_teg.h"
 
-#define mca_teg_param_register(n,v) \
+#define mca_pml_teg_param_register_int(n,v) \
     mca_base_param_lookup_int( \
         mca_base_param_register_int("pml","teg",n,0,v))
 
@@ -32,72 +32,39 @@ mca_pml_base_module_1_0_0_t mca_pml_teg_module = {
                                                                                                                             
     false
     },
-                                                                                                                            
-    mca_pml_teg_query,  /* module query */
+
     mca_pml_teg_init  /* module init */
 };
                                                                                                                             
 
-mca_pml_teg_1_0_0_t mca_pml_teg = {
+mca_pml_teg_t mca_pml_teg = {
     {
-    mca_pml_teg_addprocs,
+    mca_pml_teg_add_procs,
+    mca_pml_teg_add_ptls,
+    mca_pml_teg_fini,
+    mca_pml_teg_irecv_init,
+    mca_pml_teg_irecv,
+    mca_pml_teg_isend_init,
     mca_pml_teg_isend,
-    mca_pml_teg_progress
+    mca_pml_teg_progress,
+    mca_pml_teg_start,
+    mca_pml_teg_test,
+    mca_pml_teg_wait,
     }
 };
 
 
 int mca_pml_teg_open(lam_cmd_line_t* cmd_line)
 {
-    mca_pml_teg.teg_send_free_list_min_pages =
-        mca_pml_teg_register_int("send_free_list_min_pages", 10);
-    mca_pml_teg.teg_send_free_list_max_pages =
-        mca_pml_teg_register_int("send_free_list_max_pages", -1);
-    mca_pml_teg.teg_send_free_list_inc_pages =
-        mca_pml_teg_register_int("send_free_list_inc_pages", 1);
-    mca_pml_teg.teg_recv_free_list_min_pages =
-        mca_pml_teg_register_int("recv_free_list_min_pages", 10);
-    mca_pml_teg.teg_recv_free_list_max_pages =
-        mca_pml_teg_register_int("recv_free_list_max_pages", -1);
-    mca_pml_teg.teg_recv_free_list_inc_pages =
-        mca_pml_teg_register_int("recv_free_list_inc_pages", 1);
     return LAM_SUCCESS;
 }
 
 
-mca_pml_1_0_0_t* mca_pml_teg_init(
-    struct lam_proc_t **procs,
-    int nprocs,
-    int *max_tag,
-    int *max_cid)
+mca_pml_1_0_0_t* mca_pml_teg_init(int* priority, int* min_thread, int* max_thread)
 {
-    int rc;
-    lam_free_list_init(&mca_pml_teg.teg_send_free_list);
-    if((rc = lam_free_list_init_with(
-        &mca_pml_teg.teg_send_free_list,
-        sizeof(mca_pml_base_send_request_t),
-        mca_pml_teg.teg_send_free_list_min_pages,
-        mca_pml_teg.teg_send_free_list_max_pages,
-        mca_pml_teg.teg_send_free_list_inc_pages,
-        NULL)) != LAM_SUCCESS)
-    {
-        return NULL;
-    }
-
-    lam_free_list_init(&mca_pml_teg.teg_recv_free_list);
-    if((rc = lam_free_list_init_with(
-        &mca_pml_teg.teg_recv_free_list,
-        sizeof(mca_pml_base_recv_request_t),
-        mca_pml_teg.teg_recv_free_list_min_pages,
-        mca_pml_teg.teg_recv_free_list_max_pages,
-        mca_pml_teg.teg_recv_free_list_inc_pages,
-        NULL)) != LAM_SUCCESS)
-    {
-        return NULL;
-    }
-
-    lam_free_list_init(&mca_pml_teg.teg_incomplete_sends);
+    *priority = 0;
+    *min_thread = 0;
+    *max_thread = 0;
     return &mca_pml_teg.super;
 }
-                                                                                                 
-                                                                                                 
+

@@ -24,69 +24,86 @@ extern int mca_pml_teg_open(
 
 extern int mca_pml_teg_close(void);
 
-extern int mca_pml_teg_query(
-    int *priority, 
-    int *min_thread, 
-    int* max_thread
-);
-
 extern mca_pml_1_0_0_t* mca_pml_teg_init(
-    lam_proc_t **procs, 
-    int nprocs, 
+    int *priority, 
     int *max_tag, 
     int *max_cid
 );
 
 
+
 /*
  * TEG PML Interface
- *
- * JMS: Tim--Note that you don't have to do versioning here.
- * Versioning is only for the MCA framework (i.e., able to load
- * modules of different versions).  This type is going to be used
- * specifically within your module, and the framework will never see
- * it.  Ergo, no other teg modules (even those of different versions)
- * will ever see it, either.  So while you can do the 1_0_0 stuff
- * here, it isn't strictly necessary.
  */
 
-struct mca_pml_teg_1_0_0_t {
-    mca_pml_1_0_0_t super;
-
-    /* send request free list and parameters */
-    lam_free_list_t teg_send_free_list;
-    int teg_send_free_list_min_pages;
-    int teg_send_free_list_max_pages;
-    int teg_send_free_list_inc_pages;
-
-    /* recv request free list and parameters */
-    lam_free_list_t teg_recv_free_list;
-    int teg_recv_free_list_min_pages;
-    int teg_recv_free_list_max_pages;
-    int teg_recv_free_list_inc_pages;
+struct mca_pml_teg_t {
+    mca_pml_t super;
 
     /* incomplete posted sends */
     lam_list_t  teg_incomplete_sends;
     lam_mutex_t teg_lock;
 };
-typedef struct mca_pml_teg_1_0_0_t mca_pml_teg_1_0_0_t;
+typedef struct mca_pml_teg_t mca_pml_teg_t;
 
-extern mca_pml_teg_1_0_0_t mca_pml_teg;
+extern mca_pml_teg_t mca_pml_teg;
 
 /*
  * PML interface functions.
  */
 
-extern mca_pml_teg_1_0_0_t mca_pml_teg_1_0_0_0;
+extern int mca_pml_teg_add_procs(
+    struct lam_proc_t **procs,
+    int nprocs
+);
+
+extern int mca_pml_teg_add_ptls(
+    struct mca_ptl_t **ptls,
+    int nptls
+);
+
+extern int mca_pml_teg_fini(void);
+
+extern int mca_pml_teg_isend_init(
+    void *buf,
+    size_t size,
+    struct lam_datatype_t *datatype,
+    int dst,
+    int tag,
+    mca_pml_base_send_mode_t mode,
+    bool persistent,
+    struct lam_communicator_t* comm,
+    struct lam_request_t **request
+);
 
 extern int mca_pml_teg_isend(
     void *buf,
     size_t size,
     struct lam_datatype_t *datatype,
-    int dest,
+    int dst,
+    int tag,
+    mca_pml_base_send_mode_t mode,
+    struct lam_communicator_t* comm,
+    struct lam_request_t **request
+);
+
+extern int mca_pml_teg_irecv_init(
+    void *buf,
+    size_t size,
+    struct lam_datatype_t *datatype,
+    int src,
+    int tag,
+    bool persistent,
+    struct lam_communicator_t* comm,
+    struct lam_request_t **request
+);
+
+extern int mca_pml_teg_irecv(
+    void *buf,
+    size_t size,
+    struct lam_datatype_t *datatype,
+    int src,
     int tag,
     struct lam_communicator_t* comm,
-    mca_pml_base_request_type_t req_type,
     struct lam_request_t **request
 );
 
@@ -94,10 +111,21 @@ extern int mca_pml_teg_progress(
     mca_pml_base_tstamp_t tstamp
 );
 
-extern int mca_pml_teg_addprocs(
-    lam_proc_t **procs,
-    int nprocs
+extern int mca_pml_teg_start(
+    lam_request_t* request
 );
+                                                                                                                          
+extern int mca_pml_teg_test(
+    lam_request_t** request,
+    int count,
+    int *completed
+);
+                                                                                                                          
+extern int mca_pml_teg_wait(
+    lam_request_t* request,
+    mca_pml_base_status_t* status
+);
+                                                                                                                          
 
 #endif
 

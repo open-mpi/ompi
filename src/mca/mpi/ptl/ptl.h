@@ -25,13 +25,14 @@ typedef struct mca_ptl_1_0_0_t mca_ptl_t;
  * PTL module functions.
  */
 
-typedef int (*mca_ptl_query_fn_t)(int *priority, int *thread_min, int *thread_max);
-typedef struct mca_ptl_1_0_0* (*mca_ptl_init_1_0_0_fn_t)();
+typedef bool (*mca_ptl_init_1_0_0_fn_t)(struct mca_ptl_1_0_0_t** ptls, int* num_ptls, int *thread_min, int *thread_max);
+typedef int (*mca_ptl_fini_1_0_0_fn_t)(struct mca_ptl_1_0_0_t*);
                                                                                                          
 /*
  * PTL action functions.
  */
 
+typedef mca_pml_base_send_request_t* (*mca_ptl_send_request_alloc_fn_t)(mca_ptl_t*);
 typedef int (*mca_ptl_fragment_fn_t)(mca_ptl_t*, mca_pml_base_send_request_t*, size_t);
 typedef int (*mca_ptl_progress_fn_t)(mca_ptl_t*, mca_pml_base_tstamp_t);
 
@@ -44,7 +45,6 @@ struct mca_ptl_module_1_0_0_t {
   mca_base_module_t ptlm_version;
   mca_base_module_data_1_0_0_t ptlm_data;
 
-  mca_ptl_query_fn_t ptlm_query;
   mca_ptl_init_1_0_0_fn_t ptlm_init;
 };
 
@@ -66,10 +66,12 @@ struct mca_ptl_1_0_0_t {
     size_t       ptl_endpoint_count;      /* number endpoints supported by this CDI */
 
     /* PTL function table */
-    mca_ptl_fragment_fn_t  ptl_fragment;
-    mca_ptl_progress_fn_t  ptl_progress;
+    mca_ptl_send_request_alloc_fn_t ptl_send_request_alloc;
+    mca_ptl_fragment_fn_t ptl_fragment;
+    mca_ptl_progress_fn_t ptl_progress;
 
 };
+
 
 typedef struct mca_ptl_1_0_0_t mca_ptl_1_0_0_t;
 

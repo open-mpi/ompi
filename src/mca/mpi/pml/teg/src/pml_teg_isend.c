@@ -2,24 +2,27 @@
  * $HEADER$
  */
 
-#include "mca/mpi/pml/base/pml_base_sendreq.h"
 #include "pml_teg.h"
+#include "pml_teg_proc.h"
+#include "pml_teg_sendreq.h"
 
 
-int mca_pml_teg_isend(
+
+int mca_pml_teg_isend_init(
     void *buf,
     size_t size,
     lam_datatype_t *datatype,
-    int dest,
+    int dst,
     int tag,
+    mca_pml_base_send_mode_t sendmode,
+    bool persistent,
     lam_communicator_t* comm,
-    mca_pml_base_send_type_t req_type,
     lam_request_t **request)
 {
     int rc;
-    mca_pml_base_send_request_t* sendreq = 
-        (mca_pml_base_send_request_t*)lam_free_list_get(&mca_pml_teg.teg_send_free_list, &rc);
-    if(sendreq == 0) 
+    mca_pml_base_send_request_t* sendreq;
+    mca_pml_proc_t *proc = mca_pml_teg_proc_lookup_remote(comm,dst);
+    if((rc = mca_pml_teg_send_request_alloc(proc, &sendreq)) != LAM_SUCCESS)
         return rc;
 
     mca_pml_base_send_request_rinit(
@@ -27,10 +30,43 @@ int mca_pml_teg_isend(
         buf,
         size,
         datatype,
-        dest,
+        dst,
         tag,
         comm,
-        req_type,
+        sendmode,
+        persistent
+        );
+
+    *request = (lam_request_t*)sendreq;
+    return LAM_SUCCESS;
+}
+         
+
+int mca_pml_teg_isend(
+    void *buf,
+    size_t size,
+    lam_datatype_t *datatype,
+    int dst,
+    int tag,
+    mca_pml_base_send_mode_t sendmode,
+    lam_communicator_t* comm,
+    lam_request_t **request)
+{
+    int rc;
+    mca_pml_base_send_request_t* sendreq;
+    mca_pml_proc_t* proc = mca_pml_teg_proc_lookup_remote(comm,dst);
+    if((rc = mca_pml_teg_send_request_alloc(proc, &sendreq)) != LAM_SUCCESS)
+        return rc;
+
+    mca_pml_base_send_request_rinit(
+        sendreq,
+        buf,
+        size,
+        datatype,
+        dst,
+        tag,
+        comm,
+        sendmode,
         false
         );
          
