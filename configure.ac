@@ -432,8 +432,6 @@ AC_CONFIG_FILES([
     src/mpi/request/Makefile
 
     src/mca/Makefile
-    src/mca/base/Makefile
-    src/mca/common/Makefile
     src/mca/lam/Makefile
     src/mca/lam/oob/Makefile
     src/mca/lam/oob/base/Makefile
