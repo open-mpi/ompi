@@ -688,7 +688,6 @@ int mca_ptl_sm_send(
         struct iovec address;
 
         convertor = &sendreq->req_convertor;
-        ompi_convertor_copy(&sendreq->req_convertor, convertor);
         ompi_convertor_init_for_send( convertor, 0, 
                 sendreq->req_datatype,
                 sendreq->req_count, 
@@ -701,7 +700,6 @@ int mca_ptl_sm_send(
         address.iov_base=sm_data_ptr;
         address.iov_len= (size < send_frag->buff_length) ? size : send_frag->buff_length;
 
-        convertor = &sendreq->req_convertor;
         iov_count=1;
         max_data=address.iov_len;
         return_status=ompi_convertor_pack(convertor,&address,&iov_count,
@@ -715,7 +713,6 @@ int mca_ptl_sm_send(
     /* fill in the fragment descriptor */
     /* get pointer to the fragment header */
     hdr = &(send_frag->super.frag_base.frag_header);
-
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
     hdr->hdr_common.hdr_flags = flags;
     hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
@@ -830,20 +827,20 @@ int mca_ptl_sm_send_continue(
 
     /* pack data in payload buffer */
     convertor = &sendreq->req_convertor;
+#if 0
     ompi_convertor_copy(&sendreq->req_convertor, convertor);
     ompi_convertor_init_for_send( convertor, 0, 
             sendreq->req_datatype,
             sendreq->req_count, 
             sendreq->req_addr,
             offset, NULL);
-
+#endif
     sm_data_ptr=send_frag->buff;
 
     /* set up the shared memory iovec */
     address.iov_base=sm_data_ptr;
     address.iov_len=(size < send_frag->buff_length) ? size : send_frag->buff_length;
 
-    convertor = &sendreq->req_convertor;
     iov_count=1;
     max_data=address.iov_len;
     return_status=ompi_convertor_pack(convertor,&address,&iov_count,

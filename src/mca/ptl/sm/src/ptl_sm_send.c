@@ -88,8 +88,9 @@ void mca_ptl_sm_matched(
         /* 
          * Initialize convertor and use it to unpack data  
          */ 
+        OBJ_CONSTRUCT(&frag_convertor, ompi_convertor_t);
         proc = ompi_comm_peer_lookup(recv_desc->req_base.req_comm,
-                    recv_desc->req_base.req_peer); 
+                    frag->frag_base.frag_header.hdr_match.hdr_src);
         /* write over converter set on the send side */
         ompi_convertor_copy(proc->proc_convertor,
                 &frag_convertor); 
@@ -113,8 +114,8 @@ void mca_ptl_sm_matched(
         iov.iov_len = sm_frag_desc->super.frag_base.frag_size;
         iov_count = 1;
         max_data = iov.iov_len;
-        ompi_convertor_unpack( &frag_convertor,
-                &iov, &iov_count, &max_data, &free_after ); 
+        ompi_convertor_unpack( &frag_convertor, &iov, &iov_count, &max_data, &free_after ); 
+        OBJ_DESTRUCT(&frag_convertor);
     }
 
     /* update receive request information */
@@ -146,7 +147,8 @@ void mca_ptl_sm_matched(
     }
 
     /* change address to be relative to offset from base of shared
-     *   memory segment */
+     *   memory segment 
+     */
 
     /* set the fragment type to be an ack */
     sm_frag_desc->super.frag_base.frag_header.hdr_common.hdr_type=
