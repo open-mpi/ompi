@@ -70,9 +70,10 @@
     int i; \
     ompi_op_predefined_##type_name##_t *a = (ompi_op_predefined_##type_name##_t*) in; \
     ompi_op_predefined_##type_name##_t *b = (ompi_op_predefined_##type_name##_t*) out; \
-    for (i = 0; i < *count; ++i) { \
+    for (i = 0; i < *count; ++i, a++, b++ ) { \
       if (a->v op b->v) { \
-        *b = *a; \
+        b->v = a->v; \
+        b->k = a->k; \
       } else if (a->v == b->v) { \
         b->k = (b->k < a->k ? b->k : a->k); \
       } \
@@ -227,7 +228,7 @@ FUNC_FUNC(lor, fortran_logical, ompi_fortran_logical_t)
  *************************************************************************/
 
 #undef current_func
-#define current_func(a, b) ((a) ^ (b))
+#define current_func(a, b) ((a ? 1 : 0) ^ (b ? 1: 0))
 /* C integer */
 FUNC_FUNC(lxor, int, int)
 FUNC_FUNC(lxor, long, long)
