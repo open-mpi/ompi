@@ -5,6 +5,6 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=ptl_gm.c
+PARAM_INIT_FILE=src/ptl_gm.c
 PARAM_CONFIG_HEADER_FILE="gm_config.h"
-PARAM_CONFIG_FILES="Makefile"
+PARAM_CONFIG_FILES="Makefile src/Makefile"
