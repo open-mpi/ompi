@@ -14,27 +14,6 @@
 #include "mca/ns/ns.h"
 
 /*
- * list class for tracking vpids/jobid
- * This structure is used to create a linked list of jobid-max vpid pairs. Basically, we
- * are tracking the max used vpid for each jobid that has been created.
- */
-struct ompi_name_tracker_t {
-    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
-    ompi_process_id_t job;  /**< Job id */
-    ompi_process_id_t last_used_vpid;      /**< Tracks the vpid last given out */
-};
-typedef struct ompi_name_tracker_t ompi_name_tracker_t;
-
-OBJ_CLASS_DECLARATION(ompi_name_tracker_t);
-
-/*
- * globals needed within component
- */
-extern ompi_process_id_t last_used_cellid;
-extern ompi_process_id_t last_used_jobid;
-extern ompi_list_t ompi_name_tracker;
-
-/*
  * Module open / close
  */
 int mca_ns_proxy_open(void);
