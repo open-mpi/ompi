@@ -1,0 +1,26 @@
+# -*- makefile -*-
+#
+# $HEADER$
+#
+
+include $(top_srcdir)/config/Makefile.options
+
+noinst_LTLIBRARIES = libdatatype.la
+
+# Source code files
+
+headers = \
+	datatype.h
+
+liblfc_la_SOURCES = \
+	$(headers) \
+	datatype.c
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+lamdir = $(includedir)/lam/lam/datatype
+lam_HEADERS = $(headers)
+else
+lamdir = $(includedir)
+endif
