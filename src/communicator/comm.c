@@ -1029,13 +1029,15 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
          * structure. The base component functions are free to change
          * it as they deem fit */
 
-        new_comm->c_topo_comm->mtc_periods_or_edges = malloc (sizeof(int) * ndims_or_nnodes);
+        new_comm->c_topo_comm->mtc_periods_or_edges = 
+	    malloc (sizeof(int) * dims_or_index[ndims_or_nnodes - 1]);
         if (NULL == new_comm->c_topo_comm->mtc_periods_or_edges) {
             FREE_COMMUNICATOR(new_comm);
             return OMPI_ERROR;
         }
         memcpy (new_comm->c_topo_comm->mtc_periods_or_edges,
-                periods_or_edges, ndims_or_nnodes * sizeof(int));
+                periods_or_edges, dims_or_index[ndims_or_nnodes - 1]
+		* sizeof(int));
 
         new_comm->c_topo_comm->mtc_coords = malloc (sizeof(int) * ndims_or_nnodes);
         if (NULL == new_comm->c_topo_comm->mtc_coords) {
