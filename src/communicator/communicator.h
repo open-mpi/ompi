@@ -287,6 +287,16 @@ extern "C" {
      */
     int ompi_comm_dump ( ompi_communicator_t *comm );
 
+
+
+    /** 
+     * routines handling name publishing, lookup and unpublishing
+     */
+    int ompi_comm_namepublish ( char *service_name, char *port_name );
+    char* ompi_comm_namelookup ( char *service_name );
+    int ompi_comm_nameunpublish ( char *service_name ); 
+
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
