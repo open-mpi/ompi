@@ -1,7 +1,7 @@
 /*
  * $HEADER
  */
-#include "lam/threads/mutex.h"
+#include "threads/mutex.h"
 #include "io_romio.h"
 
 lam_mutex_t mca_io_romio_mutex;

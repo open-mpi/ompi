@@ -5,8 +5,8 @@
 #ifndef LAM_PTL_ARRAY_H
 #define LAM_PTL_ARRAY_H
 
-#include "lam/util/output.h"
-#include "mca/mpi/ptl/ptl.h"
+#include "util/output.h"
+#include "mca/ptl/ptl.h"
 
 extern lam_class_t mca_pml_teg_ptl_array_t_class;
 

@@ -7,7 +7,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "mpi/interface/f77/bindings.h"
+#include "mpi/f77/bindings.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILE_LAYER
 #pragma weak PMPI_ALLOC_MEM = mpi_alloc_mem_f

@@ -5,10 +5,10 @@
 #include "lam_config.h"
 #include "coll_basic.h"
 
-#include "lam/constants.h"
+#include "constants.h"
 #include "mpi.h"
-#include "mca/mpi/coll/coll.h"
-#include "mca/mpi/coll/base/coll_tags.h"
+#include "mca/coll/coll.h"
+#include "mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
 
 

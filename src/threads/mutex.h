@@ -12,11 +12,11 @@
 
 
 #if defined(LAM_USE_SPINLOCK)
-#include "lam/threads/mutex_spinlock.h"
+#include "threads/mutex_spinlock.h"
 #elif defined(LAM_USE_SPINWAIT)
-#include "lam/threads/mutex_spinwait.h"
+#include "threads/mutex_spinwait.h"
 #elif defined(LAM_USE_PTHREADS)
-#include "lam/threads/mutex_pthread.h"
+#include "threads/mutex_pthread.h"
 #else
 #error "concurrency model not configured"
 #endif

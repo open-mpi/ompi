@@ -6,8 +6,8 @@
 #define _LAM_POINTER_ARRAY
 
 
-#include "lam/threads/mutex.h"
-#include "lam/lfc/lam_object.h"
+#include "threads/mutex.h"
+#include "lfc/lam_object.h"
 
 /*
  * typedefs

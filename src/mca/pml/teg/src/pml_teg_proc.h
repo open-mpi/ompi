@@ -5,10 +5,10 @@
 #ifndef MCA_PML_PROC_H
 #define MCA_PML_PROC_H
 
-#include "lam/threads/mutex.h"
-#include "mpi/communicator/communicator.h"
-#include "mpi/group/group.h"
-#include "mpi/proc/proc.h"
+#include "threads/mutex.h"
+#include "communicator/communicator.h"
+#include "group/group.h"
+#include "proc/proc.h"
 #include "pml_ptl_array.h"
 
 /*

@@ -9,8 +9,8 @@
 
 #include "mpi.h"
 #include "mca/mca.h"
-#include "mca/mpi/base/base.h"
-#include "mpi/communicator/communicator.h"
+#include "mca/base/base.h"
+#include "communicator/communicator.h"
 
 /*
  * ******************************************************************

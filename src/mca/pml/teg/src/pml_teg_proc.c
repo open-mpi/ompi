@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "lam/atomic.h"
+#include "atomic.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
 #include "pml_ptl_array.h"

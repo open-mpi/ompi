@@ -2,5 +2,5 @@
  * $HEADER$
  */
 
-#include "lam/ctnetwork/ctclient.h"
+#include "ctnetwork/ctclient.h"
 

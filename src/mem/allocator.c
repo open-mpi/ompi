@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#include "lam/mem/allocator.h"
-#include "lam/mem/sharedmem_util.h"
+#include "mem/allocator.h"
+#include "mem/sharedmem_util.h"
 
 void *lam_allocator_malloc(lam_allocator_t *allocator, size_t chunk_size);
 void lam_allocator_default_free(lam_allocator_t *allocator, void *base_ptr);

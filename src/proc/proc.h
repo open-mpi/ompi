@@ -5,8 +5,8 @@
 #ifndef LAM_PROC
 #define LAM_PROC
 
-#include "lam/types.h"
-#include "lam/lfc/lam_list.h"
+#include "types.h"
+#include "lfc/lam_list.h"
 
 
 extern lam_class_t lam_proc_t_class;

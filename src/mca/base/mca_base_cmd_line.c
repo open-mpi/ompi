@@ -7,10 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "lam/constants.h"
-#include "lam/util/cmd_line.h"
-#include "lam/util/argv.h"
-#include "mca/lam/base/base.h"
+#include "constants.h"
+#include "util/cmd_line.h"
+#include "util/argv.h"
+#include "mca/base/base.h"
 
 
 /* 

@@ -18,11 +18,11 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "lam/util/path.h"
+#include "util/path.h"
 #include "tools/wrappers/lamwrap.h"
-#include "lam/util/argv.h"
-#include "lam/util/few.h"
-#include "lam/util/path.h"
+#include "util/argv.h"
+#include "util/few.h"
+#include "util/path.h"
 
 extern char **environ;
 

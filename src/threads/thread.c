@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#include "lam/constants.h"
-#include "lam/threads/thread.h"
+#include "constants.h"
+#include "threads/thread.h"
 
 
 static void lam_thread_construct(lam_thread_t* t)

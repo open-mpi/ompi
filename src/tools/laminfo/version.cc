@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 
-#include "mca/lam/base/base.h"
+#include "mca/base/base.h"
 #include "tools/laminfo/laminfo.h"
 
 using namespace std;

@@ -9,8 +9,8 @@
 #include <sys/socket.h>
 
 #include "lam_config.h"
-#include "lam/stdint.h"
-#include "lam/types.h"
-#include "lam/constants.h"
+#include "stdint.h"
+#include "types.h"
+#include "constants.h"
 
 #endif /* LAM_H */

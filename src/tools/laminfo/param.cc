@@ -11,8 +11,8 @@
 #include <unistd.h>
 #include <sys/param.h>
 
-#include "lam/lfc/lam_value_array.h"
-#include "mca/lam/base/mca_base_param.h"
+#include "lfc/lam_value_array.h"
+#include "mca/base/mca_base_param.h"
 #include "tools/laminfo/laminfo.h"
 
 using namespace std;
@@ -36,7 +36,7 @@ string laminfo::path_sysconfdir = "sysconfdir";
 //
 // External variables
 //
-// This exists in mca/lam/base/mca_base_param.c.  It's not extern'ed
+// This exists in mca/base/mca_base_param.c.  It's not extern'ed
 // in mca_base_param.h so that no one else will use it.
 //
 

@@ -19,7 +19,7 @@
  * daemons will always provide the complete pcm interface.
  *
  * Like the other LAM run-time interfaces, the pcm interface is
- * implemented through mca modules (lam/pcm).  For details on the
+ * implemented through mca modules (pcm).  For details on the
  * capabilities of a particular module, please see the individual
  * module's documentation.
  *
@@ -57,7 +57,7 @@
 #include "lam_config.h"
 
 #include "mca/mca.h"
-#include "lam/types.h"
+#include "types.h"
 
 #include <sys/param.h>
 

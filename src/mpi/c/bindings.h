@@ -15,7 +15,7 @@
    header file. */
 
 #if LAM_PROFILING_DEFINES
-#include "mpi/interface/c/profile/defines.h"
+#include "mpi/c/profile/defines.h"
 #endif
 
 /* This variable is actually in src/mpi/runtime/lam_mpi_init.c, but it

@@ -8,12 +8,12 @@
 #include <sys/errno.h>
 #include <unistd.h>
 
-#include "lam/constants.h"
-#include "lam/runtime/runtime.h"
-#include "lam/mem/mem_pool.h"
-#include "lam/mem/sharedmem_util.h"
-#include "lam/util/output.h"
-#include "lam/os/numa.h"
+#include "constants.h"
+#include "runtime/runtime.h"
+#include "mem/mem_pool.h"
+#include "mem/sharedmem_util.h"
+#include "util/output.h"
+#include "os/numa.h"
 
 lam_class_t lam_mem_pool_t_class = {
     "lam_mem_pool_t",

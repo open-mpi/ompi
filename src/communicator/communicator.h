@@ -5,14 +5,14 @@
 #ifndef LAM_COMMUNICATOR_H
 #define LAM_COMMUNICATOR_H
 
-#include "lam/stdint.h"
-#include "lam/lfc/lam_object.h"
-#include "lam/threads/mutex.h"
-#include "lam/util/output.h"
+#include "stdint.h"
+#include "lfc/lam_object.h"
+#include "threads/mutex.h"
+#include "util/output.h"
 #include "mpi.h"
-#include "mpi/group/group.h"
-#include "mca/mpi/coll/coll.h"
-#include "lam/lfc/lam_hash_table.h"
+#include "group/group.h"
+#include "mca/coll/coll.h"
+#include "lfc/lam_hash_table.h"
 
 
 extern lam_class_t lam_communicator_t_class;

@@ -10,8 +10,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "lam_config.h"
-#include "mca/mpi/ptl/base/ptl_base_sendreq.h"
-#include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_recvfrag.h"
 

@@ -6,15 +6,15 @@
 
 #include <stdio.h>
 
-#include "lam/constants.h"
-#include "lam/lfc/lam_list.h"
-#include "mca/mpi/base/base.h"
-#include "mca/mpi/coll/coll.h"
-#include "mca/mpi/coll/base/base.h"
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/ptl/base/base.h"
-#include "mca/mpi/pml/pml.h"
-#include "mca/mpi/pml/base/base.h"
+#include "constants.h"
+#include "lfc/lam_list.h"
+#include "mca/base/base.h"
+#include "mca/coll/coll.h"
+#include "mca/coll/base/base.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/base.h"
+#include "mca/pml/pml.h"
+#include "mca/pml/base/base.h"
 
 
 /*
@@ -25,7 +25,7 @@
  *
  * The contents of this function will likely be replaced 
  */
-int mca_mpi_init_select_modules(int requested, 
+int mca_base_init_select_modules(int requested, 
                                 bool allow_multi_user_threads,
                                 bool have_hidden_threads, int *provided)
 {

@@ -5,10 +5,10 @@
 #ifndef LAM_MEMORY_POOL_H
 #define LAM_MEMORY_POOL_H
 
-#include "lam/types.h"
-#include "lam/lfc/lam_object.h"
-#include "lam/mem/allocator.h"
-#include "lam/threads/mutex.h"
+#include "types.h"
+#include "lfc/lam_object.h"
+#include "mem/allocator.h"
+#include "threads/mutex.h"
 
 #define ALLOCELEMENT_FLAG_UNUSABLE  (0)
 #define ALLOCELEMENT_FLAG_AVAILABLE (1)

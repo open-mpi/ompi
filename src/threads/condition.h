@@ -5,7 +5,7 @@
 #define LAM_CONDITION_H
 
 #include "lam_config.h"
-#include "lam/threads/mutex.h"
+#include "threads/mutex.h"
 
 #if defined(LAM_USE_SPINLOCK)
 #include "condition_spinlock.h"

@@ -3,7 +3,7 @@
  */
 
 #include "mpi.h"
-#include "mca/mpi/io/io.h"
+#include "mca/io/io.h"
 #include "io_romio.h"
 
 

@@ -2,7 +2,7 @@
  * $HEADER$
  */
 
-#include "mpi/info/info.h"
+#include "info/info.h"
 
 /*
  * lam_info_t classes

@@ -5,7 +5,7 @@
 #ifndef MCA_PTL_BASE_HEADER_H
 #define MCA_PTL_BASE_HEADER_H
 
-#include "mca/mpi/ptl/ptl.h"
+#include "mca/ptl/ptl.h"
 
 
 #define MCA_PTL_HDR_TYPE_MATCH  0

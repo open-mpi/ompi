@@ -6,9 +6,9 @@
 
 #include "lam_config.h"
 
-#include "mca/lam/oob/oob.h"
-#include "mca/lam/oob/cofs/src/oob_cofs.h"
-#include "lam/types.h"
+#include "mca/oob/oob.h"
+#include "mca/oob/cofs/src/oob_cofs.h"
+#include "types.h"
 
 #include <stdio.h>
 #include <sys/types.h>

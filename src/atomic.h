@@ -17,7 +17,7 @@
 #define LAM_ATOMIC_H 1
 
 #include "lam_config.h"
-#include "lam/stdint.h"
+#include "stdint.h"
 
 /*
  * prototypes (we may not implement all of this interface)
@@ -97,6 +97,6 @@ void lam_atomic_subtract_rel_uint64_t(volatile uint64_t *p, uint64_t v);
  * implementation (system specific)
  */
 
-#include "lam/os/atomic.h"
+#include "os/atomic.h"
 
 #endif /* LAM_ATOMIC_H */

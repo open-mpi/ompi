@@ -6,11 +6,11 @@
 
 #include <stdio.h>
 
-#include "lam/constants.h"
+#include "constants.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
-#include "mca/lam/registry/registry.h"
-#include "mca/lam/registry/base/base.h"
+#include "mca/base/base.h"
+#include "mca/registry/registry.h"
+#include "mca/registry/base/base.h"
 
 
 int mca_registry_base_close(void)

@@ -7,9 +7,9 @@
 
 #include "lam_config.h"
 
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/pml/base/pml_base_request.h"
-#include "mca/mpi/ptl/base/ptl_base_comm.h"
+#include "mca/ptl/ptl.h"
+#include "mca/pml/base/pml_base_request.h"
+#include "mca/ptl/base/ptl_base_comm.h"
 
 
 extern lam_class_t mca_ptl_base_send_request_t_class;

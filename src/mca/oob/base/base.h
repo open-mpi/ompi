@@ -8,9 +8,9 @@
 
 #include "lam_config.h"
 
-#include "lam/types.h"
+#include "types.h"
 #include "mca/mca.h"
-#include "mca/lam/oob/oob.h"
+#include "mca/oob/oob.h"
 
 /*
  * Global functions for MCA overall collective open and close

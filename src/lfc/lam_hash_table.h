@@ -13,9 +13,9 @@
 #define LAM_HASH_TABLE_H
 
 #include "lam_config.h"
-#include "lam/stdint.h"
-#include "lam/types.h"
-#include "lam/lfc/lam_list.h"
+#include "stdint.h"
+#include "types.h"
+#include "lfc/lam_list.h"
 
 
 extern lam_class_t lam_hash_table_t_class;

@@ -6,10 +6,10 @@
 
 #include <stdio.h>
 
-#include "lam/constants.h"
+#include "constants.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
-#include "mca/lam/pcm/pcm.h"
+#include "mca/base/base.h"
+#include "mca/pcm/pcm.h"
 
 
 int mca_pcm_base_close(void)

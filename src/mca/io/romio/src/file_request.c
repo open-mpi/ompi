@@ -3,9 +3,9 @@
  */
 
 #include "mpi.h"
-#include "mpi/file/file.h"
+#include "file/file.h"
 #include "io_romio.h"
-#include "mpi/request/request.h"
+#include "request/request.h"
 #include <string.h>
 
 

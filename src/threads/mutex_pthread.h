@@ -6,8 +6,8 @@
 #define _LAM_MUTEX_PTHREAD_
 
 #include <pthread.h>
-#include "lam/lfc/lam_object.h"
-#include "lam/os/atomic.h"
+#include "lfc/lam_object.h"
+#include "os/atomic.h"
 
 
 struct lam_mutex_t {

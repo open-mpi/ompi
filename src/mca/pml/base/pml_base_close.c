@@ -6,11 +6,11 @@
 
 #include <stdio.h>
 
-#include "lam/constants.h"
+#include "constants.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
-#include "mca/mpi/pml/pml.h"
-#include "mca/mpi/pml/base/base.h"
+#include "mca/base/base.h"
+#include "mca/pml/pml.h"
+#include "mca/pml/base/base.h"
 
 
 int mca_pml_base_close(void)

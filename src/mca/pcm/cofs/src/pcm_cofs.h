@@ -5,8 +5,8 @@
  */
 #include "lam_config.h"
 
-#include "mca/lam/pcm/pcm.h"
-#include "lam/types.h"
+#include "mca/pcm/pcm.h"
+#include "types.h"
 
 /*
  * Module open / close

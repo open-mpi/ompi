@@ -1,10 +1,10 @@
 #ifndef MCA_PML_COMM_H
 #define MCA_PML_COMM_H
 
-#include "lam/threads/mutex.h"
-#include "lam/threads/condition.h"
-#include "mca/mpi/ptl/ptl.h"
-#include "lam/lfc/lam_list.h"
+#include "threads/mutex.h"
+#include "threads/condition.h"
+#include "mca/ptl/ptl.h"
+#include "lfc/lam_list.h"
 
 /*
  *  Structure associated w/ lam_communicator_t that contains data 

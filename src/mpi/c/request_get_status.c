@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
-#include "mpi/interface/c/bindings.h"
+#include "mpi/c/bindings.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Request_get_status = PMPI_Request_get_status

@@ -6,9 +6,9 @@
 #define LAM_PML_TEG_SEND_REQUEST_H
 
 #include "pml_teg_proc.h"
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/ptl/base/ptl_base_sendreq.h"
-#include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendfrag.h"
 
 
 void mca_pml_teg_send_request_schedule(mca_ptl_base_send_request_t* req);

@@ -7,9 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "lam/constants.h"
-#include "lam/util/argv.h"
-#include "lam/util/strncpy.h"
+#include "constants.h"
+#include "util/argv.h"
+#include "util/strncpy.h"
 
 #define ARGSIZE 128
 

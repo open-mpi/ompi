@@ -15,9 +15,9 @@
 #include <string.h>
 
 #include "lam_config.h"
-#include "lam/stdint.h"
-#include "lam/types.h"
-#include "lam/lfc/lam_object.h"
+#include "stdint.h"
+#include "types.h"
+#include "lfc/lam_object.h"
 
 /* VPS: Just to compile right now, has to move later on */
 #define LAM_ERR_SYSRESOURCE -1

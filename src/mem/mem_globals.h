@@ -5,7 +5,7 @@
 #ifndef MEM_GLOBALS_H
 #define MEM_GLOBALS_H
 
-#include "lam/mem/mem_pool.h"
+#include "mem/mem_pool.h"
 
 /* shared memory pool for use before fork.
     should be initialized during prefork init.

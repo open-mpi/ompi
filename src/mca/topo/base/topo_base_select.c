@@ -5,12 +5,12 @@
 #include "lam_config.h"
 
 #include "mca/mca.h"
-#include "lam/lfc/lam_list.h"
-#include "lam/runtime/runtime.h"
+#include "lfc/lam_list.h"
+#include "runtime/runtime.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
-#include "mca/mpi/topo/topo.h"
-#include "mca/mpi/topo/base/base.h"
+#include "mca/base/base.h"
+#include "mca/topo/topo.h"
+#include "mca/topo/base/base.h"
 
 
 /*

@@ -3,8 +3,8 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#include "lam/constants.h"
-#include "mca/mpi/ptl/ptl.h"
+#include "constants.h"
+#include "mca/ptl/ptl.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
 #include "pml_teg_sendreq.h"

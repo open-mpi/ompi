@@ -6,7 +6,7 @@
 #define LAM_THREAD_H
 
 #include <pthread.h>
-#include "lam/lfc/lam_object.h"
+#include "lfc/lam_object.h"
 
 typedef void* (*lam_thread_fn_t)(lam_object_t*);
 

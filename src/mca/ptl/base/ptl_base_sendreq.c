@@ -1,8 +1,8 @@
 /*
  * $HEADER$
  */
-#include "mca/mpi/ptl/base/ptl_base_sendreq.h"
-#include "mca/mpi/ptl/base/ptl_base_sendfrag.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendfrag.h"
 
 static void mca_ptl_base_send_request_construct(mca_ptl_base_send_request_t* req);
 static void mca_ptl_base_send_request_destruct(mca_ptl_base_send_request_t* req);

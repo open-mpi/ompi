@@ -6,8 +6,8 @@
 #define LAM_GROUP_H
 
 #include "mpi.h"
-#include "mpi/proc/proc.h"
-#include "lam/lfc/lam_pointer_array.h"
+#include "proc/proc.h"
+#include "lfc/lam_pointer_array.h"
 
 /* This must correspond to the fortran MPI_GROUP_NULL index */
 #define LAM_GROUP_NULL_FORTRAN 0

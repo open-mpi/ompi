@@ -6,13 +6,13 @@
 
 #include "lam_config.h"
 
-#include "lam/constants.h"
-#include "lam/runtime/runtime.h"
-#include "lam/util/output.h"
-#include "lam/threads/mutex.h"
-#include "mca/lam/pcm/base/base.h"
-#include "mca/lam/oob/base/base.h"
-#include "mca/lam/registry/base/base.h"
+#include "constants.h"
+#include "runtime/runtime.h"
+#include "util/output.h"
+#include "threads/mutex.h"
+#include "mca/pcm/base/base.h"
+#include "mca/oob/base/base.h"
+#include "mca/registry/base/base.h"
 
 
 /**

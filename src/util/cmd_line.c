@@ -9,13 +9,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "lam/lfc/lam_object.h"
-#include "lam/lfc/lam_list.h"
-#include "lam/threads/mutex.h"
-#include "lam/util/argv.h"
-#include "lam/util/cmd_line.h"
-#include "lam/util/strncpy.h"
-#include "lam/util/output.h"
+#include "lfc/lam_object.h"
+#include "lfc/lam_list.h"
+#include "threads/mutex.h"
+#include "util/argv.h"
+#include "util/cmd_line.h"
+#include "util/strncpy.h"
+#include "util/output.h"
 
 
 /*

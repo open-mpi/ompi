@@ -11,9 +11,9 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "lam/constants.h"
-#include "lam/lfc/lam_pointer_array.h"
-#include "lam/util/output.h"
+#include "constants.h"
+#include "lfc/lam_pointer_array.h"
+#include "util/output.h"
 
 static void lam_pointer_array_construct(lam_pointer_array_t *);
 static void lam_pointer_array_destruct(lam_pointer_array_t *);

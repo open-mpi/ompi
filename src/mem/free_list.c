@@ -2,7 +2,7 @@
  * $HEADER$
  */
 #include "lam_config.h"
-#include "lam/mem/free_list.h"
+#include "mem/free_list.h"
 
 
 static void lam_free_list_construct(lam_free_list_t* fl);

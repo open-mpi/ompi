@@ -4,20 +4,20 @@
 
 #include "lam_config.h"
 
-#include "lam/constants.h"
-#include "lam/runtime/runtime.h"
+#include "constants.h"
+#include "runtime/runtime.h"
 #include "mpi.h"
-#include "mpi/runtime/runtime.h"
-#include "mpi/communicator/communicator.h"
-#include "mpi/group/group.h"
-#include "mca/lam/base/base.h"
-#include "mca/mpi/base/base.h"
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/ptl/base/base.h"
-#include "mca/mpi/pml/pml.h"
-#include "mca/mpi/pml/base/base.h"
-#include "mca/mpi/coll/coll.h"
-#include "mca/mpi/coll/base/base.h"
+#include "runtime/runtime.h"
+#include "communicator/communicator.h"
+#include "group/group.h"
+#include "mca/base/base.h"
+#include "mca/base/base.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/base.h"
+#include "mca/pml/pml.h"
+#include "mca/pml/base/base.h"
+#include "mca/coll/coll.h"
+#include "mca/coll/base/base.h"
 
 
 /*
@@ -55,7 +55,7 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
     if (LAM_SUCCESS != (ret = mca_base_open())) {
         return ret;
     }
-    if (LAM_SUCCESS != (ret = mca_mpi_open())) {
+    if (LAM_SUCCESS != (ret = mca_base_open())) {
         return ret;
     }
 
@@ -90,7 +90,7 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
          final thread level */
 
     if (LAM_SUCCESS != 
-            (ret = mca_mpi_init_select_modules(requested, allow_multi_user_threads,
+            (ret = mca_base_init_select_modules(requested, allow_multi_user_threads,
              have_hidden_threads, provided))) {
         /* JMS show_help */
         return ret;

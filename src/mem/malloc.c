@@ -6,8 +6,8 @@
 
 #include <stdlib.h>
 
-#include "lam/mem/malloc.h"
-#include "lam/util/output.h"
+#include "mem/malloc.h"
+#include "util/output.h"
 
 
 /*

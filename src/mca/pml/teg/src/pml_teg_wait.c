@@ -1,6 +1,6 @@
 #include "pml_teg.h"
-#include "mca/mpi/ptl/base/ptl_base_comm.h"
-#include "mca/mpi/pml/base/pml_base_request.h"
+#include "mca/ptl/base/ptl_base_comm.h"
+#include "mca/pml/base/pml_base_request.h"
 
 
 

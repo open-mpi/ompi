@@ -4,12 +4,12 @@
 
 #include "lam_config.h"
 
-#include "lam/lfc/lam_list.h"
-#include "lam/runtime/runtime.h"
+#include "lfc/lam_list.h"
+#include "runtime/runtime.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
-#include "mca/mpi/pml/pml.h"
-#include "mca/mpi/pml/base/base.h"
+#include "mca/base/base.h"
+#include "mca/pml/pml.h"
+#include "mca/pml/base/base.h"
 
 
 typedef struct opened_module_t {

@@ -8,10 +8,10 @@
 #define LAM_CMD_LINE_H
 
 #include "lam_config.h"
-#include "lam/constants.h"
-#include "lam/lfc/lam_list.h"
-#include "lam/threads/mutex.h"
-#include "lam/util/argv.h"
+#include "constants.h"
+#include "lfc/lam_list.h"
+#include "threads/mutex.h"
+#include "util/argv.h"
 
 /*
  * Top-level descriptor

@@ -16,11 +16,11 @@
 #include <netdb.h>
 #include <sys/param.h>
 
-#include "lam/runtime/runtime.h"
-#include "lam/util/output.h"
-#include "lam/util/cmd_line.h"
-#include "mpi/communicator/communicator.h"
-#include "mca/lam/base/base.h"
+#include "runtime/runtime.h"
+#include "util/output.h"
+#include "util/cmd_line.h"
+#include "communicator/communicator.h"
+#include "mca/base/base.h"
 #include "tools/laminfo/laminfo.h"
 
 

@@ -2,8 +2,8 @@
  * $HEADER$
  */
 
-#include "mpi/attribute/attribute.h"
-#include "mpi/communicator/communicator.h"
+#include "attribute/attribute.h"
+#include "communicator/communicator.h"
 
 /**
  * Macros - Lots of them!

@@ -13,11 +13,11 @@
 #include <net/if.h>
 #include <netdb.h>
 
-#include "lam/constants.h"
-#include "lam/lfc/lam_list.h"
-#include "lam/util/if.h"
-#include "lam/util/output.h"
-#include "lam/util/strncpy.h"
+#include "constants.h"
+#include "lfc/lam_list.h"
+#include "util/if.h"
+#include "util/output.h"
+#include "util/strncpy.h"
 
 #ifndef IF_NAMESIZE
 #define IF_NAMESIZE 32

@@ -9,23 +9,23 @@
 
 #if defined (__mips)
 
-#include "lam/os/irix/ulm_os.h"
+#include "os/irix/ulm_os.h"
 
 #elif defined (__linux__)
 
-#include "lam/os/linux/ulm_os.h"
+#include "os/linux/ulm_os.h"
 
 #elif defined (__osf__)
 
-#include "lam/os/tru64/ulm_os.h"
+#include "os/tru64/ulm_os.h"
 
 #elif defined (__APPLE__)
 
-#include "lam/os/darwin/ulm_os.h"
+#include "os/darwin/ulm_os.h"
 
 #elif defined (__CYGWIN__)
 
-#include "lam/os/cygwin/ulm_os.h"
+#include "os/cygwin/ulm_os.h"
 
 #else
 # error

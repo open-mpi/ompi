@@ -9,10 +9,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "lam/lfc/lam_list.h"
-#include "lam/event/event.h"
-#include "mca/mpi/pml/pml.h"
-#include "mca/mpi/ptl/ptl.h"
+#include "lfc/lam_list.h"
+#include "event/event.h"
+#include "mca/pml/pml.h"
+#include "mca/ptl/ptl.h"
 #include "ptl_tcp_recvfrag.h"
 #include "ptl_tcp_sendfrag.h"
 

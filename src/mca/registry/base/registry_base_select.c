@@ -6,12 +6,12 @@
 
 #include <stdio.h>
 
-#include "lam/runtime/runtime.h"
-#include "lam/util/output.h"
+#include "runtime/runtime.h"
+#include "util/output.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
-#include "mca/lam/registry/registry.h"
-#include "mca/lam/registry/base/base.h"
+#include "mca/base/base.h"
+#include "mca/registry/registry.h"
+#include "mca/registry/base/base.h"
 
 
 /**

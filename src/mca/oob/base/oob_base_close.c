@@ -6,11 +6,11 @@
 
 #include <stdio.h>
 
-#include "lam/constants.h"
+#include "constants.h"
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
-#include "mca/lam/oob/oob.h"
-#include "mca/lam/oob/base/base.h"
+#include "mca/base/base.h"
+#include "mca/oob/oob.h"
+#include "mca/oob/base/base.h"
 
 
 int mca_oob_base_close(void)

@@ -6,9 +6,9 @@
 
 #include "lam_config.h"
 
-#include "mca/lam/registry/registry.h"
-#include "mca/lam/registry/cofs/src/registry_cofs.h"
-#include "lam/types.h"
+#include "mca/registry/registry.h"
+#include "mca/registry/cofs/src/registry_cofs.h"
+#include "types.h"
 
 #include <stdio.h>
 #include <sys/types.h>

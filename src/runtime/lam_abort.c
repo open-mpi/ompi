@@ -7,9 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "lam/constants.h"
-#include "lam/runtime/runtime.h"
-#include "lam/util/output.h"
+#include "constants.h"
+#include "runtime/runtime.h"
+#include "util/output.h"
 
 
 int lam_abort(int status, char *fmt, ...)

@@ -6,10 +6,10 @@
 #ifndef MCA_PTL_BASE_RECVFRAG_H
 #define MCA_PTL_BASE_RECVFRAG_H
 
-#include "mca/mpi/ptl/ptl.h"
-#include "mca/mpi/ptl/base/ptl_base_fragment.h"
-#include "mca/mpi/ptl/base/ptl_base_recvreq.h"
-#include "mca/mpi/ptl/base/ptl_base_match.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/ptl_base_fragment.h"
+#include "mca/ptl/base/ptl_base_recvreq.h"
+#include "mca/ptl/base/ptl_base_match.h"
 
 extern lam_class_t mca_ptl_base_recv_frag_t_class;
 

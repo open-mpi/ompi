@@ -5,8 +5,8 @@
 #ifndef LAM_MUTEX_SPINLOCK_
 #define LAM_MUTEX_SPINLOCK_
 
-#include "lam/lfc/lam_object.h"
-#include "lam/os/atomic.h"
+#include "lfc/lam_object.h"
+#include "os/atomic.h"
 
 
 struct lam_mutex_t {

@@ -4,7 +4,7 @@
 
 #include <string.h>
 
-#include "lam/ctnetwork/ctchannel.h"
+#include "ctnetwork/ctchannel.h"
 
 #define CHANNEL_CLS(chnl) \
     ((lam_ctchannel_class_t *)(((lam_object_t *) chnl)->obj_class))

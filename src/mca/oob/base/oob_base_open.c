@@ -5,9 +5,9 @@
 #include "lam_config.h"
 
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
-#include "mca/lam/oob/oob.h"
-#include "mca/lam/oob/base/base.h"
+#include "mca/base/base.h"
+#include "mca/oob/oob.h"
+#include "mca/oob/base/base.h"
 
 
 /*
@@ -16,7 +16,7 @@
  * module's public mca_base_module_t struct.
  */
 
-#include "mca/lam/oob/base/static-modules.h"
+#include "mca/oob/base/static-modules.h"
 
 
 /*

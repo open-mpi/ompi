@@ -6,8 +6,8 @@
 #define LAM_MCA_H
 
 #include "mpi.h"
-#include "lam/lfc/lam_list.h"
-#include "lam/util/cmd_line.h"
+#include "lfc/lam_list.h"
+#include "util/cmd_line.h"
 
 /*
  * Types for each function

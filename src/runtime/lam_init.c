@@ -6,11 +6,11 @@
 
 #include "lam_config.h"
 
-#include "lam/constants.h"
-#include "lam/runtime/runtime.h"
-#include "lam/util/output.h"
-#include "lam/threads/mutex.h"
-#include "lam/event/event.h"
+#include "constants.h"
+#include "runtime/runtime.h"
+#include "util/output.h"
+#include "threads/mutex.h"
+#include "event/event.h"
 
 /**
  * First function that must be called in a LAM process.

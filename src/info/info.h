@@ -8,9 +8,9 @@
 #include <string.h>
 
 #include "mpi.h"
-#include "lam/util/strncpy.h"
-#include "lam/lfc/lam_list.h"
-#include "lam/lam.h"
+#include "util/strncpy.h"
+#include "lfc/lam_list.h"
+#include "lam.h"
 
 
 /**

@@ -3,12 +3,12 @@
  */
 
 #include "lam_config.h"
-#include "lam/mem/free_lists.h"
-#include "lam/runtime/runtime.h"
-#include "lam/util/output.h"
-#include "lam/os/numa.h"
-#include "lam/os/lam_system.h"
-#include "lam/mem/mem_globals.h"
+#include "mem/free_lists.h"
+#include "runtime/runtime.h"
+#include "util/output.h"
+#include "os/numa.h"
+#include "os/lam_system.h"
+#include "mem/mem_globals.h"
 
 #ifndef ROB_HASNT_FINISHED_THIS_YET
 #define ROB_HASNT_FINISHED_THIS_YET 0

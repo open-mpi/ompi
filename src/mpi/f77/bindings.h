@@ -33,11 +33,11 @@
  * .h files and lower-level includes "src/mpi/interface/f77/profile" .h files
  */
 
-#include "mpi/interface/f77/prototypes_mpi.h"
-#include "mpi/interface/f77/profile/prototypes_pmpi.h"
+#include "mpi/f77/prototypes_mpi.h"
+#include "mpi/f77/profile/prototypes_pmpi.h"
 
 #if LAM_PROFILE_LAYER && ! LAM_HAVE_WEAK_SYMBOLS
-#include "mpi/interface/f77/profile/defines.h"
+#include "mpi/f77/profile/defines.h"
 #endif
 
 #endif /* LAM_F77_BINDINGS_H */

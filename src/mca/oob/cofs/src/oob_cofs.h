@@ -5,8 +5,8 @@
  */
 #include "lam_config.h"
 
-#include "mca/lam/oob/oob.h"
-#include "lam/types.h"
+#include "mca/oob/oob.h"
+#include "types.h"
 
 /*
  * Module open / close

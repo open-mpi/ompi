@@ -8,8 +8,8 @@
 #include "lam_config.h"
 
 #include "mpi.h"
-#include "lam/lfc/lam_list.h"
-#include "mca/mpi/coll/coll.h"
+#include "lfc/lam_list.h"
+#include "mca/coll/coll.h"
 
 
 /*

@@ -7,9 +7,9 @@
 #include <stdio.h>
 
 #include "mca/mca.h"
-#include "mca/lam/base/base.h"
-#include "mca/mpi/pml/pml.h"
-#include "mca/mpi/pml/base/base.h"
+#include "mca/base/base.h"
+#include "mca/pml/pml.h"
+#include "mca/pml/base/base.h"
 
 
 /*
@@ -18,7 +18,7 @@
  * module's public mca_base_module_t struct.
  */
 
-#include "mca/mpi/pml/base/static-modules.h"
+#include "mca/pml/base/static-modules.h"
 
 
 /*

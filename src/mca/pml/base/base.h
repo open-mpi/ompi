@@ -8,7 +8,7 @@
 #include "lam_config.h"
 
 #include "mca/mca.h"
-#include "mca/mpi/pml/pml.h"
+#include "mca/pml/pml.h"
 
 
 /*

@@ -6,10 +6,10 @@
 #include <stdlib.h>
 
 #include "lam_config.h"
-#include "lam/stdint.h"
-#include "lam/constants.h"
-#include "lam/util/output.h"
-#include "lam/lfc/lam_hash_table.h"
+#include "stdint.h"
+#include "constants.h"
+#include "util/output.h"
+#include "lfc/lam_hash_table.h"
 
 /*
  * lam_hash_table_t

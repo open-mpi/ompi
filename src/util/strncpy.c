@@ -9,7 +9,7 @@
 
 #include <string.h>
 
-#include "lam/util/strncpy.h"
+#include "util/strncpy.h"
 
 
 /**

@@ -26,7 +26,7 @@
  * on the interface.
  *
  * The out-of-band messaging interface is actually implemented through
- * the lam/oob mca module - details of a particular implementation
+ * the oob mca module - details of a particular implementation
  * will be found there.
  */
 
@@ -35,7 +35,7 @@
 
 #include "lam_config.h"
 
-#include "lam/types.h"
+#include "types.h"
 #include "mca/mca.h"
 
 /*

@@ -6,10 +6,10 @@
 #ifndef MCA_PML_BASE_REQUEST_H
 #define MCA_PML_BASE_REQUEST_H
 
-#include "lam/mem/free_list.h"
-#include "mpi/request/request.h"
-#include "mpi/datatype/datatype.h"
-#include "mpi/communicator/communicator.h"
+#include "mem/free_list.h"
+#include "request/request.h"
+#include "datatype/datatype.h"
+#include "communicator/communicator.h"
 
 extern lam_class_t mca_pml_base_request_t_class;
 

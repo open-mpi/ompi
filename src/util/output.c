@@ -16,9 +16,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "lam/constants.h"
-#include "lam/util/output.h"
-#include "lam/threads/mutex.h"
+#include "constants.h"
+#include "util/output.h"
+#include "threads/mutex.h"
 
 
 /*

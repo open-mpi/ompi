@@ -6,11 +6,11 @@
 
 #include "lam_config.h"
 
-#include "lam/constants.h"
+#include "constants.h"
 #include "mca/mca.h"
-#include "mca/lam/registry/registry.h"
-#include "mca/lam/registry/cofs/src/registry_cofs.h"
-#include "lam/types.h"
+#include "mca/registry/registry.h"
+#include "mca/registry/cofs/src/registry_cofs.h"
+#include "types.h"
 
 #include <stdio.h>
 #include <stdlib.h>
