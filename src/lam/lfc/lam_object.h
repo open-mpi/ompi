@@ -185,11 +185,11 @@
 #define OBJ_RETAIN(object)                                              \
     do {                                                                \
         assert(NULL != object);                                         \
-        assert(NULL != ((lam_object_t *) object)->obj_class);           \
+        assert(NULL != ((lam_object_t *) (object))->obj_class);         \
         if (object) {                                                   \
-            lam_obj_update((lam_object_t *) object, 1);                 \
+            lam_obj_update((lam_object_t *) (object), 1);               \
         }                                                               \
-        assert(((lam_object_t *) object)->obj_reference_count >= 0);    \
+        assert(((lam_object_t *) (object))->obj_reference_count >= 0);  \
     } while (0)
 
 
@@ -206,9 +206,9 @@
 #define OBJ_RELEASE(object)                                             \
     do {                                                                \
         assert(NULL != object);                                         \
-        assert(NULL != ((lam_object_t *) object)->obj_class);           \
-        if (0 == lam_obj_update((lam_object_t *) object, -1)) {         \
-            lam_obj_run_destructors((lam_object_t *) object);           \
+        assert(NULL != ((lam_object_t *) (object))->obj_class);         \
+        if (0 == lam_obj_update((lam_object_t *) (object), -1)) {       \
+            lam_obj_run_destructors((lam_object_t *) (object));         \
             free(object);                                               \
             object = NULL;                                              \
         }                                                               \
@@ -227,9 +227,9 @@
             lam_class_initialize(OBJ_CLASS(type));                      \
         }                                                               \
         if (object) {                                                   \
-            ((lam_object_t *) object)->obj_class = OBJ_CLASS(type);     \
-            ((lam_object_t *) object)->obj_reference_count = 1;         \
-            lam_obj_run_constructors((lam_object_t *) object);          \
+            ((lam_object_t *) (object))->obj_class = OBJ_CLASS(type);   \
+            ((lam_object_t *) (object))->obj_reference_count = 1;       \
+            lam_obj_run_constructors((lam_object_t *) (object));        \
         }                                                               \
     } while (0)
 
@@ -242,7 +242,7 @@
 #define OBJ_DESTRUCT(object)                                    \
     do {                                                        \
         if (object) {                                           \
-            lam_obj_run_destructors((lam_object_t *) object);   \
+            lam_obj_run_destructors((lam_object_t *) (object)); \
         }                                                       \
     } while (0)
 
