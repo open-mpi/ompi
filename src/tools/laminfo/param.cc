@@ -325,9 +325,6 @@ void laminfo::do_config(bool want_all)
         "compiler:fortran:sizeof:double_complex", 
         LAM_SIZEOF_FORTRAN_REAL);
 
-#if 0
-    // Added only for bug 819 -- once fortran support is fixed
-    // properly in configure, this #if 0 should be removed.
     out("Fort integer align", "compiler:fortran:align:integer", 
         LAM_ALIGNMENT_FORTRAN_INT);
     out("Fort real align", "compiler:fortran:align:real", 
@@ -339,7 +336,6 @@ void laminfo::do_config(bool want_all)
     out("Fort dbl cplx align",
         "compiler:fortran:align:double_complex", 
         LAM_ALIGNMENT_FORTRAN_REAL);
-#endif
   }
 
   out("C profiling", "option:profiling:c", cprofiling);
