@@ -97,12 +97,11 @@ mca_ptl_gm_component_open(void)
 
     /* register GM component parameters */
     mca_ptl_gm_module.super.ptl_first_frag_size =
-        mca_ptl_gm_param_register_int ("first_frag_size", 
-                                       ((PTL_GM_FIRST_FRAG_SIZE) - 64));
+        mca_ptl_gm_param_register_int ("first_frag_size", ((PTL_GM_FIRST_FRAG_SIZE) - 64));
     mca_ptl_gm_module.super.ptl_min_frag_size =
         mca_ptl_gm_param_register_int ("min_frag_size", 1<<16);
     mca_ptl_gm_module.super.ptl_max_frag_size =
-        mca_ptl_gm_param_register_int ("max_frag_size", 256 * 1024);
+        mca_ptl_gm_param_register_int ("max_frag_size", 256 * 1024 * 1024);
     /* Parameters setting the message limits. */
     mca_ptl_gm_component.gm_port_name =
         mca_ptl_gm_param_register_string( "port_name", "OMPI_GM" );
@@ -112,6 +111,8 @@ mca_ptl_gm_component_open(void)
         mca_ptl_gm_param_register_int ("max_boards_number", 4 );
     mca_ptl_gm_component.gm_max_rdma_frag_size =
         mca_ptl_gm_param_register_int ("max_rdma_frag_size", 512 * 1024);
+    mca_ptl_gm_component.gm_max_eager_fragments = 
+        mca_ptl_gm_param_register_int( "max_eager_fragments", 5 );
     mca_ptl_gm_component.gm_max_ptl_modules = 
 	mca_ptl_gm_param_register_int( "max_ptl_modules", 1 );
     
