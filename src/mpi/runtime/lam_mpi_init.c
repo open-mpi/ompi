@@ -9,6 +9,7 @@
 #include "mpi.h"
 #include "mpi/runtime/runtime.h"
 #include "mpi/communicator/communicator.h"
+#include "mpi/group/group.h"
 #include "mca/lam/base/base.h"
 #include "mca/mpi/base/base.h"
 #include "mca/mpi/ptl/ptl.h"
@@ -84,6 +85,11 @@ int lam_mpi_init(int argc, char **argv, int requested, int *provided)
 
      /* initialize lam procs */
      if (LAM_SUCCESS != (ret = lam_proc_init())) {
+         return ret;
+     }
+
+     /* initialize groups  */
+     if (LAM_SUCCESS != (ret = lam_group_init())) {
          return ret;
      }
 
