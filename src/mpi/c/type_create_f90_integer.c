@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Type_create_f90_integer";
 
 
-OMPI_EXPORT
 int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
 
 {

@@ -20,7 +20,6 @@
 
 static const char FUNC_NAME[] = "MPI_Type_indexed";
 
-OMPI_EXPORT
 int MPI_Type_indexed(int count,
                      int array_of_blocklengths[],
                      int array_of_displacements[],

@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ERRHANDLER_CREATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_errhandler_create_f(MPI_Fint *function, 
 			     MPI_Fint *errhandler, MPI_Fint *ierr)
 {

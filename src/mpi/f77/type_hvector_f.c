@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_HVECTOR,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_type_hvector_f(MPI_Fint *count, MPI_Fint *blocklength, 
 			MPI_Fint *stride, MPI_Fint *oldtype, 
 			MPI_Fint *newtype, MPI_Fint *ierr)

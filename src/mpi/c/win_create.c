@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Win_create";
 
 
-OMPI_EXPORT
 int MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
                    MPI_Info info, MPI_Comm comm, MPI_Win *win) 
 {

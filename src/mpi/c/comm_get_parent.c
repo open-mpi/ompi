@@ -19,7 +19,6 @@
 static const char FUNC_NAME[] = "MPI_Comm_get_parent";
 
 
-OMPI_EXPORT
 int MPI_Comm_get_parent(MPI_Comm *parent) 
 {
 

@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Win_test";
 
 
-OMPI_EXPORT
 int MPI_Win_test(MPI_Win win, int *flag) 
 {
   if (MPI_PARAM_CHECK) {

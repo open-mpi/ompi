@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Ssend";
 
 
-OMPI_EXPORT
 int MPI_Ssend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Comm comm) 
 {
     int rc;

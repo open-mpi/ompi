@@ -49,7 +49,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PROBE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_probe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr)
 {   
     MPI_Status *c_status;

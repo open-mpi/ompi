@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_CREATE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_intercomm_create_f(MPI_Fint *local_comm, MPI_Fint *local_leader,
 			    MPI_Fint *bridge_comm, 
                             MPI_Fint *remote_leader, MPI_Fint *tag,

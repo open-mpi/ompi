@@ -52,7 +52,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STARTALL,
 static const char FUNC_NAME[] = "MPI_STARTALL";
 
 
-OMPI_EXPORT
 void mpi_startall_f(MPI_Fint *count, MPI_Fint *array_of_requests, 
 		    MPI_Fint *ierr)
 {

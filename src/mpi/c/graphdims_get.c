@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Graphdims_get";
 
 
-OMPI_EXPORT
 int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges) 
 {
     int err;

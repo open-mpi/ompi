@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Type_hvector";
 
 
-OMPI_EXPORT
 int MPI_Type_hvector(int count,
                      int blocklength,
                      MPI_Aint stride,

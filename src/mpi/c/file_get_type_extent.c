@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_File_get_type_extent";
 
 
-OMPI_EXPORT
 int MPI_File_get_type_extent(MPI_File fh, MPI_Datatype datatype,
                              MPI_Aint *extent)
 {

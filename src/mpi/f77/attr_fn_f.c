@@ -171,7 +171,6 @@ OMPI_GENERATE_F77_BINDINGS( MPI_WIN_DUP_FN,
  *
  * The reason why is discussed in a lengthy comment in mpi.h.
  */
-OMPI_EXPORT
 void mpi_type_null_delete_fn_f( MPI_Fint* type, int* type_keyval,
                                 void* attribute_val_out, int* flag, int* ierr )
 {
@@ -181,7 +180,6 @@ void mpi_type_null_delete_fn_f( MPI_Fint* type, int* type_keyval,
                                            attribute_val_out, flag );
 }
 
-OMPI_EXPORT
 void mpi_type_null_copy_fn_f( MPI_Fint* type, int* type_keyval, void* extra_state,
                               void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
@@ -192,7 +190,6 @@ void mpi_type_null_copy_fn_f( MPI_Fint* type, int* type_keyval, void* extra_stat
                                          flag );
 }
 
-OMPI_EXPORT
 void mpi_type_dup_fn_f( MPI_Fint* type, int* type_keyval, void* extra_state,
                         void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
@@ -202,7 +199,6 @@ void mpi_type_dup_fn_f( MPI_Fint* type, int* type_keyval, void* extra_state,
                                    attribute_val_in, attribute_val_out, flag );
 }
 
-OMPI_EXPORT
 void mpi_comm_null_delete_fn_f( MPI_Fint* comm, int* comm_keyval,
                                 void* attribute_val_out, int* flag, int* ierr )
 {
@@ -212,7 +208,6 @@ void mpi_comm_null_delete_fn_f( MPI_Fint* comm, int* comm_keyval,
                                            attribute_val_out, flag );
 }
 
-OMPI_EXPORT
 void mpi_comm_null_copy_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                               void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
@@ -223,7 +218,6 @@ void mpi_comm_null_copy_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_stat
                                          flag );
 }
 
-OMPI_EXPORT
 void mpi_comm_dup_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                         void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
@@ -233,7 +227,6 @@ void mpi_comm_dup_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                                    attribute_val_in, attribute_val_out, flag );
 }
 
-OMPI_EXPORT
 void mpi_null_delete_fn_f( MPI_Fint* comm, int* comm_keyval,
                            void* attribute_val_out, int* flag, int* ierr )
 {
@@ -243,7 +236,6 @@ void mpi_null_delete_fn_f( MPI_Fint* comm, int* comm_keyval,
                                       attribute_val_out, flag );
 }
 
-OMPI_EXPORT
 void mpi_null_copy_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                          void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
@@ -254,7 +246,6 @@ void mpi_null_copy_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                                     flag );
 }
 
-OMPI_EXPORT
 void mpi_dup_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                    void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
@@ -264,7 +255,6 @@ void mpi_dup_fn_f( MPI_Fint* comm, int* comm_keyval, void* extra_state,
                               attribute_val_in, attribute_val_out, flag );
 }
 
-OMPI_EXPORT
 void mpi_win_null_delete_fn_f( MPI_Fint* window, int* win_keyval,
                                void* attribute_val_out, int* flag, int* ierr )
 {
@@ -274,7 +264,6 @@ void mpi_win_null_delete_fn_f( MPI_Fint* window, int* win_keyval,
                                           attribute_val_out, flag );
 }
 
-OMPI_EXPORT
 void mpi_win_null_copy_fn_f( MPI_Fint* window, int* win_keyval, void* extra_state,
                              void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {
@@ -285,7 +274,6 @@ void mpi_win_null_copy_fn_f( MPI_Fint* window, int* win_keyval, void* extra_stat
                                         flag );
 }
 
-OMPI_EXPORT
 void mpi_win_dup_fn_f( MPI_Fint* window, int* win_keyval, void* extra_state,
                        void* attribute_val_in, void* attribute_val_out, int* flag, int* ierr )
 {

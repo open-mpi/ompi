@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_EXTENT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_type_get_extent_f(MPI_Fint *type, MPI_Fint *lb,
 			   MPI_Fint *extent, MPI_Fint *ierr)
 {

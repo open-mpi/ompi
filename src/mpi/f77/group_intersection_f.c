@@ -47,7 +47,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_INTERSECTION,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_group_intersection_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr)
 {
   ompi_group_t *c_group1, *c_group2, *c_newgroup;

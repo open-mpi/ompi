@@ -19,7 +19,6 @@
 static const char FUNC_NAME[] = "MPI_Comm_split";
 
 
-OMPI_EXPORT
 int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm) {
 
     int rc;

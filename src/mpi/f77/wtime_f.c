@@ -20,29 +20,24 @@
 
 #else
 
-    OMPI_EXPORT
     double mpi_wtime(void) {
         return MPI_Wtime();
     }
 
-    OMPI_EXPORT
     double mpi_wtime_(void) {
         return MPI_Wtime();
     }
 
-    OMPI_EXPORT
     double mpi_wtime__(void) {
         return MPI_Wtime();
     }
 
-    OMPI_EXPORT
     double MPI_WTIME(void) {
         return MPI_Wtime();
     }
 
 #endif
 
-OMPI_EXPORT
 double mpi_wtime_f(void)
 {
     return MPI_Wtime();

@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_File_seek_shared";
 
 
-OMPI_EXPORT
 int MPI_File_seek_shared(MPI_File fh, MPI_Offset offset, int whence)
 {
     int rc;

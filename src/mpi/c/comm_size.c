@@ -19,7 +19,6 @@
 static const char FUNC_NAME[] = "MPI_comm_size";
 
 
-OMPI_EXPORT
 int MPI_Comm_size(MPI_Comm comm, int *size) {
 
     if ( MPI_PARAM_CHECK ) {

@@ -26,7 +26,6 @@
 #include "ptl_gm_req.h"
 #include "ptl_gm_priv.h"
 
-OMPI_EXPORT
 mca_ptl_gm_component_t mca_ptl_gm_component = {
     {
         /* First, the mca_base_component_t struct containing meta information

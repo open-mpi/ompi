@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Type_commit";
 
 
-OMPI_EXPORT
 int MPI_Type_commit(MPI_Datatype *type)
 {
   int rc;

@@ -22,7 +22,6 @@
 static const char FUNC_NAME[] = "MPI_Free_mem";
 
 
-OMPI_EXPORT
 int MPI_Free_mem(void *baseptr)
 {
   if (NULL == baseptr) {

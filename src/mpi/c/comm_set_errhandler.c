@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Comm_set_errhandler";
 
 
-OMPI_EXPORT
 int MPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler) 
 {
   /* Error checking */

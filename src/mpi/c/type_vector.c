@@ -20,7 +20,6 @@
 
 static const char FUNC_NAME[] = "MPI_Type_vector";
 
-OMPI_EXPORT
 int MPI_Type_vector(int count,
                     int blocklength,
                     int stride,

@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Request_free";
 
 
-OMPI_EXPORT
 int MPI_Request_free(MPI_Request *request) 
 {
     int rc;

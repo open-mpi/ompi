@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Type_create_resized";
 
 
-OMPI_EXPORT
 int MPI_Type_create_resized(MPI_Datatype oldtype,
                             MPI_Aint lb,
                             MPI_Aint extent,

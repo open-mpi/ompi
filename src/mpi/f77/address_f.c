@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADDRESS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_address_f(char *location, MPI_Fint *address, MPI_Fint *ierr)
 {
     MPI_Aint addr;

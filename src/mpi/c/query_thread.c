@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Query_thread";
 
 
-OMPI_EXPORT
 int MPI_Query_thread(int *provided) 
 {
   if (MPI_PARAM_CHECK) {

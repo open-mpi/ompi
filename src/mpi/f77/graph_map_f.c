@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_MAP,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_graph_map_f(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *index,
 		     MPI_Fint *edges, MPI_Fint *nrank, MPI_Fint *ierr)
 {

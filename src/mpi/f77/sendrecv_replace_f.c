@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SENDRECV_REPLACE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_sendrecv_replace_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
 			    MPI_Fint *dest, MPI_Fint *sendtag,
 			    MPI_Fint *source, MPI_Fint *recvtag,

@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Intercomm_merge";
 
 
-OMPI_EXPORT
 int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                         MPI_Comm *newcomm) 
 {

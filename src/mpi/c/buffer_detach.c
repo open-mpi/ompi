@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Buffer_detach";
 
 
-OMPI_EXPORT
 int MPI_Buffer_detach(void *buffer, int *size) 
 {
   if (MPI_PARAM_CHECK) {

@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_File_preallocate";
 
 
-OMPI_EXPORT
 int MPI_File_preallocate(MPI_File fh, MPI_Offset size)
 {
     int rc;

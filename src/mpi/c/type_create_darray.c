@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Type_create_darray";
 
 
-OMPI_EXPORT
 int MPI_Type_create_darray(int size,
                            int rank,
                            int ndims,

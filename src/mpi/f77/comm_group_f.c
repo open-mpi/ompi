@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GROUP,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_comm_group_f(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *ierr)
 {
     MPI_Group c_group;

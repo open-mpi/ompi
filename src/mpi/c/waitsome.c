@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Waitsome";
 
 
-OMPI_EXPORT
 int MPI_Waitsome(int incount, MPI_Request *requests,
                  int *outcount, int *indices,
                  MPI_Status *statuses) 

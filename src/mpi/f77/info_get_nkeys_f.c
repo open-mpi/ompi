@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INFO_GET_NKEYS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_info_get_nkeys_f(MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr)
 {
     MPI_Info c_info;

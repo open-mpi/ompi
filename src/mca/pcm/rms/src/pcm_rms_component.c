@@ -31,7 +31,6 @@ extern char **environ;
 /*
  * Struct of function pointers and all that to let us be initialized
  */
-OMPI_EXPORT
 mca_pcm_base_component_1_0_0_t mca_pcm_rms_component = {
   {
     MCA_PCM_BASE_VERSION_1_0_0,

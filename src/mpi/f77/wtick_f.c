@@ -20,29 +20,24 @@
 
 #else
 
-    OMPI_EXPORT
     double mpi_wtick(void) {
         return MPI_Wtick();
     }
 
-    OMPI_EXPORT
     double mpi_wtick_(void) {
         return MPI_Wtick();
     }
 
-    OMPI_EXPORT
     double mpi_wtick__(void) {
         return MPI_Wtick();
     }
 
-    OMPI_EXPORT
     double MPI_WTICK(void) {
         return MPI_Wtick();
     }
 
 #endif
 
-OMPI_EXPORT
 double mpi_wtick_f(void)
 {
     return MPI_Wtick();

@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FINALIZE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_finalize_f(MPI_Fint *ierr)
 {
     *ierr = OMPI_INT_2_FINT(MPI_Finalize());

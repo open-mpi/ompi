@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FREE_MEM,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_free_mem_f(char *base, MPI_Fint *ierr)
 {
     *ierr = OMPI_INT_2_FINT(MPI_Free_mem(base));

@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_MAP,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_cart_map_f(MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *dims,
 		    MPI_Fint *periods, MPI_Fint *newrank, MPI_Fint *ierr)
 {

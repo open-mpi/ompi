@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ABORT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT 
 void mpi_abort_f(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr)
 {
     MPI_Comm c_comm = MPI_Comm_f2c(*comm);

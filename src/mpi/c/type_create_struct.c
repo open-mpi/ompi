@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Type_create_struct";
 
 
-OMPI_EXPORT
 int MPI_Type_create_struct(int count,
                            int array_of_blocklengths[],
                            MPI_Aint array_of_displacements[],

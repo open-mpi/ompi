@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_File_call_errhandler";
 
 
-OMPI_EXPORT
 int MPI_File_call_errhandler(MPI_File fh, int errorcode) 
 {
   /* Error checking */

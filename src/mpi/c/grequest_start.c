@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Grequest_start";
 
 
-OMPI_EXPORT
 int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
                        MPI_Grequest_free_function *free_fn,
                        MPI_Grequest_cancel_function *cancel_fn,

@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Get";
 
 
-OMPI_EXPORT
 int MPI_Get(void *origin_addr, int origin_count,
             MPI_Datatype origin_datatype, int target_rank,
             MPI_Aint target_disp, int target_count,

@@ -19,7 +19,6 @@
 static const char FUNC_NAME[] = "MPI_Close_port";
 
 
-OMPI_EXPORT
 int MPI_Close_port(char *port_name) 
 {
     if ( MPI_PARAM_CHECK ) {

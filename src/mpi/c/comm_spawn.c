@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Comm_spawn";
 
 
-OMPI_EXPORT
 int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
                     int root, MPI_Comm comm, MPI_Comm *intercomm,
                     int *array_of_errcodes) 

@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_init_f( MPI_Fint *ierr )
 {
     int argc = 0;

@@ -17,7 +17,6 @@
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
-OMPI_EXPORT
 const mca_llm_base_component_1_0_0_t mca_llm_hostfile_component = {
 
   /* First, the mca_module_t struct containing meta information

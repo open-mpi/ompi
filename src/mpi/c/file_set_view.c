@@ -22,7 +22,6 @@
 static const char FUNC_NAME[] = "MPI_File_set_view";
 
 
-OMPI_EXPORT
 int MPI_File_set_view(MPI_File fh, MPI_Offset disp, MPI_Datatype etype,
                       MPI_Datatype filetype, char *datarep, MPI_Info info)
 {

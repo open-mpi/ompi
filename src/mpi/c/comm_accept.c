@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Comm_accept";
 
 
-OMPI_EXPORT
 int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
                     MPI_Comm comm, MPI_Comm *newcomm) 
 {

@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_SHIFT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_cart_shift_f(MPI_Fint *comm, MPI_Fint *direction, MPI_Fint *disp,
 		      MPI_Fint *rank_source, MPI_Fint *rank_dest, 
 		      MPI_Fint *ierr)

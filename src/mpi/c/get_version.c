@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Get_version";
 
 
-OMPI_EXPORT
 int MPI_Get_version(int *version, int *subversion) 
 {
   if (MPI_PARAM_CHECK) {

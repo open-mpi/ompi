@@ -18,7 +18,6 @@ static int mca_mpool_sm_open(void);
 static mca_mpool_base_module_t* mca_mpool_sm_init(bool *allow_multi_user_threads);
 
 
-OMPI_EXPORT
 mca_mpool_sm_component_t mca_mpool_sm_component = {
     {
       /* First, the mca_base_component_t struct containing meta

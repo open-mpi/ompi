@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Win_f2c";
 
 
-OMPI_EXPORT
 MPI_Win MPI_Win_f2c(MPI_Fint win) 
 {
   if (MPI_PARAM_CHECK) {

@@ -28,7 +28,6 @@
 
 extern ompi_proc_t *ompi_proc_local_proc;
 
-OMPI_EXPORT
 mca_ptl_elan_component_t mca_ptl_elan_component = {
     {
         /* Base module information about itself */

@@ -28,7 +28,6 @@ static const char FUNC_NAME[] = "MPI_Info_f2c";
  * @param info Integer handle to an MPI_INFO object
  * @retval C handle corresponding to MPI_INFO object
  */
-OMPI_EXPORT
 MPI_Info MPI_Info_f2c(MPI_Fint info) 
 {
     size_t info_index = (size_t) info;

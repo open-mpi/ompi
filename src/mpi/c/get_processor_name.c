@@ -22,7 +22,6 @@
 static const char FUNC_NAME[] = "MPI_Get_processor_name";
 
 
-OMPI_EXPORT
 int MPI_Get_processor_name(char *name, int *resultlen) 
 {
     char tmp[MPI_MAX_PROCESSOR_NAME];

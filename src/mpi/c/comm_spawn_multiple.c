@@ -20,7 +20,6 @@
 static const char FUNC_NAME[] = "MPI_Comm_spawn_multiple";
 
 
-OMPI_EXPORT
 int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_of_argv,
                             int *array_of_maxprocs, MPI_Info *array_of_info,
                             int root, MPI_Comm comm, MPI_Comm *intercomm,

@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Cartdim_get";
 
 
-OMPI_EXPORT
 int MPI_Cartdim_get(MPI_Comm comm, int *ndims) 
 {
     mca_topo_base_module_cartdim_get_fn_t func;

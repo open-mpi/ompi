@@ -46,7 +46,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_PUT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_attr_put_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, 
 		    MPI_Fint *ierr)
 {

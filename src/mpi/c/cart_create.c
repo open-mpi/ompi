@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Cart_create";
 
 
-OMPI_EXPORT
 int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
                     int *periods, int reorder, MPI_Comm *comm_cart) {
 

@@ -49,7 +49,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IPROBE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
 		  MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr)
 {

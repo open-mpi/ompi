@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Type_f2c";
 
 
-OMPI_EXPORT
 MPI_Datatype MPI_Type_f2c(MPI_Fint datatype)
 {
     size_t datatype_index = (size_t) datatype;

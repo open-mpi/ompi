@@ -49,7 +49,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_ORDERED_END,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_file_write_ordered_end_f(MPI_Fint *fh, char *buf,
 				  MPI_Fint *status, MPI_Fint *ierr)
 {

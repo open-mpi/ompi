@@ -52,7 +52,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTANY,
 static const char FUNC_NAME[] = "MPI_TESTANY";
 
 
-OMPI_EXPORT
 void mpi_testany_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Request *c_req;

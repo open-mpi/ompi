@@ -21,7 +21,6 @@
 static const char FUNC_NAME[] = "MPI_Graph_neighbors";
 
 
-OMPI_EXPORT
 int MPI_Graph_neighbors(MPI_Comm comm, int rank, int maxneighbors,
                         int *neighbors) 
 {

@@ -47,7 +47,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_EXCL,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-OMPI_EXPORT
 void mpi_group_excl_f(MPI_Fint *group, MPI_Fint *n,
 		      MPI_Fint *ranks, MPI_Fint *newgroup, 
 		      MPI_Fint *ierr)
