@@ -346,12 +346,12 @@ ompi_op_t ompi_mpi_op_minloc = {
 
     "MPI_OP_MINLOC",
     (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
-    { C_INTEGER(replace),
-      FORTRAN_INTEGER(replace),
-      FLOATING_POINT(replace),
-      LOGICAL(replace),
-      COMPLEX(replace),
-      BYTE(replace),
+    { C_INTEGER_NULL,
+      FORTRAN_INTEGER_NULL,
+      FLOATING_POINT_NULL,
+      LOGICAL_NULL,
+      COMPLEX_NULL,
+      BYTE_NULL,
       TWOLOC(minloc) }
 };
 
@@ -363,12 +363,12 @@ ompi_op_t ompi_mpi_op_replace = {
 
     "MPI_OP_REPLACE",
     (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
-    { C_INTEGER_NULL,
-      FORTRAN_INTEGER_NULL,
-      FLOATING_POINT_NULL,
-      LOGICAL_NULL,
-      COMPLEX_NULL,
-      BYTE_NULL,
+    { C_INTEGER(replace),
+      FORTRAN_INTEGER(replace),
+      FLOATING_POINT(replace),
+      LOGICAL(replace),
+      COMPLEX(replace),
+      BYTE(replace),
       TWOLOC_NULL }
 };
 
