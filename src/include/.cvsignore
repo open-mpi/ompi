@@ -1,0 +1,5 @@
+Makefile
+Makefile.in
+cmpi_config.h
+cmpi_config.h.in
+stamp-h1
