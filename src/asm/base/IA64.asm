@@ -35,10 +35,8 @@ ompi_atomic_wmb:
 ompi_atomic_cmpset_acq_32:
 	.prologue
 	.body
-#APP
 	mov ar.ccv=r33;;
 	cmpxchg4.acq r32=[r32],r34,ar.ccv
-#NO_APP
 	;;
 	cmp4.eq p6, p7 = r32, r33
 	;;
@@ -53,10 +51,8 @@ ompi_atomic_cmpset_acq_32:
 ompi_atomic_cmpset_rel_32:
 	.prologue
 	.body
-#APP
 	mov ar.ccv=r33;;
 	cmpxchg4.rel r32=[r32],r34,ar.ccv
-#NO_APP
 	;;
 	cmp4.eq p6, p7 = r32, r33
 	;;
@@ -71,10 +67,8 @@ ompi_atomic_cmpset_rel_32:
 ompi_atomic_cmpset_acq_64:
 	.prologue
 	.body
-#APP
 	mov ar.ccv=r33;;
 	cmpxchg8.acq r32=[r32],r34,ar.ccv
-#NO_APP
 	;;
 	sxt4 r32 = r32
 	;;
@@ -91,10 +85,8 @@ ompi_atomic_cmpset_acq_64:
 ompi_atomic_cmpset_rel_64:
 	.prologue
 	.body
-#APP
 	mov ar.ccv=r33;;
 	cmpxchg8.rel r32=[r32],r34,ar.ccv
-#NO_APP
 	;;
 	sxt4 r32 = r32
 	;;
