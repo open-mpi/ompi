@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_IWRITE_AT,
 
 void mpi_file_iwrite_at_f(MPI_Fint *fh, MPI_Fint *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *request, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INTERCOMM_MERGE,
 
 void mpi_intercomm_merge_f(MPI_Fint *intercomm, MPI_Fint *high, MPI_Fint *newintercomm, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_KEYVAL_CREATE,
 
 void mpi_keyval_create_f(MPI_Fint *copy_fn, MPI_Fint *delete_fn, MPI_Fint *keyval, char *extra_state, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_DUP,
 
 void mpi_comm_dup_f(MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

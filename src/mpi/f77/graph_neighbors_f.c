@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_NEIGHBORS,
 
 void mpi_graph_neighbors_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxneighbors, MPI_Fint *neighbors, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

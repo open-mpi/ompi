@@ -54,6 +54,7 @@ void mpi_type_indexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fi
     *ierr = MPI_Type_indexed(*count, array_of_blocklengths, 
                              array_of_displacements, c_old, &c_new);
 
-    if (*ierr == MPI_SUCCESS)
+    if (MPI_SUCCESS == *ierr) {
       *newtype = MPI_Type_c2f(c_new);
+    }
 }

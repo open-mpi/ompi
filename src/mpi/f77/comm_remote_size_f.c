@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_REMOTE_SIZE,
 
 void mpi_comm_remote_size_f(MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GREQUEST_START,
 
 void mpi_grequest_start_f(MPI_Fint *query_fn, MPI_Fint *free_fn, MPI_Fint *cancel_fn, char *extra_state, MPI_Fint *request, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

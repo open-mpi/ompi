@@ -63,7 +63,7 @@ void mpi_win_delete_attr_f(MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr)
     ret = ompi_attr_delete(WIN_ATTR, c_win, c_win->w_keyhash, *win_keyval, 
                            OMPI_KEYVAL_F77);
 
-    if (ret != OMPI_SUCCESS) {
+    if (MPI_SUCCESS != ret) {
         OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);  
     } else {
         *ierr = MPI_SUCCESS;

@@ -50,6 +50,5 @@ void mpi_init_thread_f( MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr )
 {
     int argc = 0;
     char** argv = NULL;
-
     *ierr = MPI_Init_thread( &argc, &argv, *required, provided );
 }

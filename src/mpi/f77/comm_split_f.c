@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPLIT,
 
 void mpi_comm_split_f(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key, MPI_Fint *newcomm, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

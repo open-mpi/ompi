@@ -55,7 +55,7 @@ void mpi_test_f(MPI_Fint *request, MPI_Fint *flag, MPI_Fint *status, MPI_Fint *i
 
     MPI_Status_c2f( &c_status, status); 
 
-    if ( (*ierr == MPI_SUCCESS) && (c_req == NULL) )
+    if ( (MPI_SUCCESS == *ierr) && (NULL == c_req) ) {
       *request = -1;
-
+    }
 }

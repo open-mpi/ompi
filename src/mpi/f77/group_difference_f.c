@@ -58,6 +58,7 @@ void mpi_group_difference_f(MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgro
   *ierr = MPI_Group_difference(c_group1, c_group2, &c_newgroup);
 
   /* translate the results from c to fortran */
-  if (*ierr == OMPI_SUCCESS)
+  if (MPI_SUCCESS == *ierr) {
     *newgroup = c_newgroup->grp_f_to_c_index; 
+  }
 }

@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_DELETE,
 
 void mpi_attr_delete_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

@@ -52,6 +52,7 @@ void mpi_type_match_size_f(MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type, 
 
     *ierr = MPI_Type_match_size(*typeclass, *size, &c_type);
 
-    if (*ierr == MPI_SUCCESS)
+    if (MPI_SUCCESS == *ierr) {
       *type = MPI_Type_c2f(c_type);
+    }
 }

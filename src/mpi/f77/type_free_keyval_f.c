@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_FREE_KEYVAL,
 
 void mpi_type_free_keyval_f(MPI_Fint *type_keyval, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

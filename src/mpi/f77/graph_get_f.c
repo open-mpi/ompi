@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_GET,
 
 void mpi_graph_get_f(MPI_Fint *comm, MPI_Fint *maxindex, MPI_Fint *maxedges, MPI_Fint *index, MPI_Fint *edges, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

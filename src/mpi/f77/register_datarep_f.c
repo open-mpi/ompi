@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
 
 void mpi_register_datarep_f(char *datarep, MPI_Fint *read_conversion_fn, MPI_Fint *write_conversion_fn, MPI_Fint *dtype_file_extent_fn, char *extra_state, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

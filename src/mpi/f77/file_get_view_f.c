@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_VIEW,
 
 void mpi_file_get_view_f(MPI_Fint *fh, MPI_Fint *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

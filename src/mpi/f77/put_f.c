@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PUT,
 
 void mpi_put_f(char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Fint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

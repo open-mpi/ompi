@@ -49,6 +49,6 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT,
 void mpi_init_f( MPI_Fint *ierr )
 {
     int argc = 0;
-	char **argv = NULL;
+    char **argv = NULL;
     *ierr = MPI_Init( &argc, &argv );
 }

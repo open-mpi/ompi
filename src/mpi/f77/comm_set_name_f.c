@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_NAME,
 
 void mpi_comm_set_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

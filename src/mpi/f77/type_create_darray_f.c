@@ -55,6 +55,7 @@ void mpi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank, MPI_Fint *ndims, M
                                    distrib_array, darg_array, psize_array,
                                    *order, c_old, &c_new);
 
-    if (*ierr == MPI_SUCCESS) 
+    if (MPI_SUCCESS == *ierr) {
       *newtype = MPI_Type_c2f(c_new);
+    }
 }

@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BARRIER,
 
 void mpi_barrier_f(MPI_Fint *comm, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

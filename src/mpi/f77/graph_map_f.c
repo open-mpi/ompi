@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GRAPH_MAP,
 
 void mpi_graph_map_f(MPI_Fint *comm, MPI_Fint *nnodes, MPI_Fint *index, MPI_Fint *edges, MPI_Fint *newrank, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

@@ -53,6 +53,7 @@ void mpi_get_count_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_
 
     *ierr = MPI_Status_f2c(status, &c_status);
 
-    if (*ierr == MPI_SUCCESS)
+    if (MPI_SUCCESS == *ierr) {
       *ierr = MPI_Get_count(&c_status, c_type, count);
+    }
 }

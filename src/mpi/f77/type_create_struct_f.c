@@ -9,6 +9,8 @@
 
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_CREATE_STRUCT = mpi_type_create_struct_f
@@ -47,6 +49,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_STRUCT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_TYPE_CREATE_STRUCT";
+
+
 void mpi_type_create_struct_f(MPI_Fint *count, MPI_Fint *array_of_block_lengths, MPI_Fint *array_of_displacements, MPI_Fint *array_of_types, MPI_Fint *newtype, MPI_Fint *ierr)
 {
     MPI_Datatype c_new;
@@ -54,30 +59,24 @@ void mpi_type_create_struct_f(MPI_Fint *count, MPI_Fint *array_of_block_lengths,
     MPI_Aint *c_disp_array;
     int i;
 
-    c_type_old_array = malloc(*count * sizeof(MPI_Datatype));
-    if (c_type_old_array == (MPI_Datatype *) NULL) {
-        *ierr = MPI_ERR_INTERN;
+    c_type_old_array = malloc(*count * (sizeof(MPI_Datatype) + 
+                                        sizeof(MPI_Aint)));
+    if (NULL == c_type_old_array) {
+        *ierr = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM,
+                                       FUNC_NAME);
         return;
     }
+    c_disp_array = (MPI_Aint*) c_type_old_array + *count;
 
-    c_disp_array = malloc(*count * sizeof(MPI_Aint));
-    if (c_disp_array == (MPI_Aint *) NULL) {
-        if (c_type_old_array != (MPI_Datatype *) NULL)
-            free(c_type_old_array);
-
-        *ierr = MPI_ERR_INTERN;
-        return;
-    }
     for (i = 0; i < *count; i++) {
         c_disp_array[i] = (MPI_Aint) array_of_displacements[i];
         c_type_old_array[i] = MPI_Type_f2c(array_of_types[i]);
     }
 
-    *ierr = MPI_Type_create_struct(*count, array_of_block_lengths, c_disp_array,
-                                   c_type_old_array, &c_new);
+    *ierr = MPI_Type_create_struct(*count, array_of_block_lengths,
+                                   c_disp_array, c_type_old_array, &c_new);
 
-    if (*ierr == MPI_SUCCESS) {
+    if (MPI_SUCCESS == *ierr) {
         *newtype = MPI_Type_c2f(c_new);
     }
-
 }

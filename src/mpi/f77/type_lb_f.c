@@ -53,6 +53,7 @@ void mpi_type_lb_f(MPI_Fint *type, MPI_Fint *lb, MPI_Fint *ierr)
 
     *ierr = MPI_Type_lb(c_type, &c_lb);
 
-    if (*ierr == MPI_SUCCESS)
+    if (MPI_SUCCESS == *ierr) {
       *lb = (MPI_Fint)c_lb;
+    }
 }

@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GET_PROCESSOR_NAME,
 
 void mpi_get_processor_name_f(char *name, MPI_Fint *resultlen, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }

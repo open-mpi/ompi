@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ABORT,
 
 void mpi_abort_f(MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr)
 {
-
+  /* This function not yet implemented */
 }
