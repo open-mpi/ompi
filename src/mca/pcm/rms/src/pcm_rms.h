@@ -54,13 +54,17 @@ extern "C" {
                                          mca_ns_base_jobid_t jobid,
                                          ompi_list_t *nodelist);
 
+    struct mca_pcm_rms_module_t {
+        mca_pcm_base_module_t super;
+
+        char *partition;
+        char *prun_args;
+        int constraints;
+    };
+    typedef struct mca_pcm_rms_module_t mca_pcm_rms_module_t;
+
 #ifdef __cplusplus
 }
 #endif
-
-/*
- * Module variables
- */
-extern int mca_pcm_rms_output;
 
 #endif /* MCA_PCM_RMS_H_ */

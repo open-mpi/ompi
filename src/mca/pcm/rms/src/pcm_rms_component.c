@@ -50,27 +50,14 @@ mca_pcm_base_component_1_0_0_t mca_pcm_rms_component = {
 };
 
 
-/* need to create output stream to dump in file */
-ompi_output_stream_t mca_pcm_rms_output_stream = {
-    false, /* lds_is_debugging  BWB - change me for release */
-    0,     /* lds_verbose_level */
-    false, /* lds_want_syslog */
-    0,     /* lds_syslog_priority */
-    NULL,  /* lds_syslog_ident */
-    "pcm: rms: ", /* lds_prefix */
-    true,  /* lds_want_stdout */
-    false, /* lds_want_stderr */
-    true,  /* lds_want_file */
-    true,  /* lds_want_file_append */
-    "pcm_rms" /* lds_file_suffix */
-};
-
 
 /*
  * Module variables handles
  */
 static int mca_pcm_rms_param_priority;
-static int mca_pcm_rms_param_debug;
+static int mca_pcm_rms_param_prun_args;
+static int mca_pcm_rms_param_partition;
+static int mca_pcm_rms_param_prun_args;
 
 /*
  * Component variables.  All of these are shared among the module
@@ -83,13 +70,14 @@ int mca_pcm_rms_output = -1;
 int
 mca_pcm_rms_component_open(void)
 {
-  mca_pcm_rms_param_debug =
-    mca_base_param_register_int("pcm", "rms", "debug", NULL, 100);
-
   mca_pcm_rms_param_priority =
     mca_base_param_register_int("pcm", "rms", "priority", NULL, 5);
 
-  mca_pcm_rms_output = ompi_output_open(&mca_pcm_rms_output_stream);
+  mca_pcm_rms_param_partition =
+    mca_base_param_register_string("pcm", "rms", "patition", NULL, NULL);
+
+  mca_pcm_rms_param_prun_args =
+    mca_base_param_register_string("pcm", "rms", "prun_args", NULL, NULL);
 
   return OMPI_SUCCESS;
 }
@@ -107,14 +95,9 @@ mca_pcm_rms_init(int *priority,
                  bool have_threads,
                  int constraints)
 {
-    int debug;
     char *prun;
     int num_cpus;
-    mca_pcm_base_module_t *me;
-
-    /* debugging gorp */
-    mca_base_param_lookup_int(mca_pcm_rms_param_debug, &debug);
-    ompi_output_set_verbosity(mca_pcm_rms_output, debug);
+    mca_pcm_rms_module_t *me;
 
     /* get our priority - if 0, we don't run */
     mca_base_param_lookup_int(mca_pcm_rms_param_priority, priority);
@@ -127,7 +110,6 @@ mca_pcm_rms_init(int *priority,
     if (0 != (constraints & OMPI_RTE_SPAWN_FROM_MPI)) return NULL;
 
     /* see if we are an RMS system */
-    /* BWB - is there a better way to do this */
     num_cpus = rms_numCpus(NULL);
     if (num_cpus <= 0) return NULL;
 
@@ -136,26 +118,37 @@ mca_pcm_rms_init(int *priority,
     free(prun);
 
     /* ok, now let's try to fire up */
-    me = malloc(sizeof(mca_pcm_base_module_t));
+    me = malloc(sizeof(mca_pcm_rms_module_t));
     if (NULL == me) return NULL;
 
-    me->pcm_allocate_resources = mca_pcm_rms_allocate_resources;
-    me->pcm_spawn_procs = mca_pcm_rms_spawn_procs;
-    me->pcm_kill_proc = mca_pcm_rms_kill_proc;
-    me->pcm_kill_job = mca_pcm_rms_kill_job;
-    me->pcm_deallocate_resources = mca_pcm_rms_deallocate_resources;
-    me->pcm_finalize = mca_pcm_rms_finalize;
+    me->super.pcm_allocate_resources = mca_pcm_rms_allocate_resources;
+    me->super.pcm_spawn_procs = mca_pcm_rms_spawn_procs;
+    me->super.pcm_kill_proc = mca_pcm_rms_kill_proc;
+    me->super.pcm_kill_job = mca_pcm_rms_kill_job;
+    me->super.pcm_deallocate_resources = mca_pcm_rms_deallocate_resources;
+    me->super.pcm_finalize = mca_pcm_rms_finalize;
+
+    mca_base_param_lookup_string(mca_pcm_rms_param_partition,
+                                 &(me->partition));
+
+    mca_base_param_lookup_string(mca_pcm_rms_param_prun_args,
+                                 &(me->prun_args));
 
     return me;
 }
 
 
 int
-mca_pcm_rms_finalize(struct mca_pcm_base_module_1_0_0_t* me)
+mca_pcm_rms_finalize(struct mca_pcm_base_module_1_0_0_t* me_super)
 {
-    if (mca_pcm_rms_output > 0) {
-        ompi_output_close(mca_pcm_rms_output);
-    }
+    mca_pcm_rms_module_t *me = (mca_pcm_rms_module_t*) me_super;
+
+    if (NULL == me) return OMPI_ERR_BAD_PARAM;
+
+    if (NULL != me->partition) free(me->partition);
+    if (NULL != me->prun_args) free(me->prun_args);
+
+    free(me);
 
     return OMPI_SUCCESS;
 }
