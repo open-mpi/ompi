@@ -106,8 +106,7 @@ int mca_base_param_register_string(const char *type_name, const char *module_nam
                                    const char *default_value)
 {
   mca_base_param_storage_t storage;
-  /* TSW - need to fix this cast - make stringval const */
-  storage.stringval = (char*)default_value;
+  storage.stringval = strdup(default_value);
   return param_register(type_name, module_name, param_name, mca_param_name,
                         MCA_BASE_PARAM_TYPE_STRING, &storage);
 }
