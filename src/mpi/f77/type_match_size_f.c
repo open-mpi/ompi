@@ -14,10 +14,13 @@
 
 #include "ompi_config.h"
 
-#include <stdio.h>
-
 #include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
+#include "datatype/datatype.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
+#include "mpi/runtime/params.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_MATCH_SIZE = mpi_type_match_size_f
@@ -56,15 +59,37 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_MATCH_SIZE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+static const char FUNC_NAME[] = "MPI_Type_match_size_f";
+
+/*  We cannot use the C function as from Fortran we should check for Fortran types. The only
+ * difference is the type of predefined datatypes we are looking for.
+ */
 void mpi_type_match_size_f(MPI_Fint *typeclass, MPI_Fint *size, MPI_Fint *type, MPI_Fint *ierr)
 {
     MPI_Datatype c_type;
+    int c_size = OMPI_FINT_2_INT( *size );
 
-    *ierr = OMPI_INT_2_FINT(MPI_Type_match_size(OMPI_FINT_2_INT(*typeclass),
-						OMPI_FINT_2_INT(*size),
-						&c_type));
-
-    if (MPI_SUCCESS == *ierr) {
-      *type = MPI_Type_c2f(c_type);
+    if (MPI_PARAM_CHECK) {
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
+
+    switch( OMPI_FINT_2_INT(*typeclass) ) {
+    case MPI_TYPECLASS_REAL:
+        c_type = (MPI_Datatype)ompi_ddt_match_size( c_size, DT_FLAG_DATA_FLOAT, DT_FLAG_DATA_FORTRAN );
+        break;
+    case MPI_TYPECLASS_INTEGER:
+        c_type = (MPI_Datatype)ompi_ddt_match_size( c_size, DT_FLAG_DATA_INT, DT_FLAG_DATA_FORTRAN );
+        break;
+    case MPI_TYPECLASS_COMPLEX:
+        c_type = (MPI_Datatype)ompi_ddt_match_size( c_size, DT_FLAG_DATA_COMPLEX, DT_FLAG_DATA_FORTRAN );
+        break;
+    default:
+        c_type = &ompi_mpi_datatype_null;
+    }
+    *type = MPI_Type_c2f( c_type );
+    if( c_type != &ompi_mpi_datatype_null )
+        *ierr = OMPI_INT_2_FINT( MPI_SUCCESS );
+    else 
+        *ierr = OMPI_INT_2_FINT( MPI_ERR_ARG );
+    (void)OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
 }
