@@ -6,9 +6,9 @@
 
 #include "ompi_config.h"
 
+#include "pcm_bproc.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
-#include "mca/pcm/bproc/pcm_bproc.h"
 #include "class/ompi_list.h"
 
 
