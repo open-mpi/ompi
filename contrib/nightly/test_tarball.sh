@@ -146,12 +146,9 @@ find_program() {
         if test -z "$prog"; then
             am_done=1
         else
-            which $prog
-            echo status: $?
             not_found="`which $prog 2>&1 | egrep '^no'`"
             which $prog > /dev/null 2>&1
             if test "$?" = "0" -a -z "$not_found"; then
-                echo found: $prog
                 str="$var=$prog"
                 eval $str
                 am_done=1
@@ -221,11 +218,17 @@ fi
 md5_file="`grep $version.tar.gz $md5_checksums`"
 find_program md5sum md5sum
 if test -z "$md5sum"; then
-    echo "WARNING: could not find md5sum executable"
-    echo "WARNING: proceeding anyway..."
+    cat > $logdir/05_md5sum_warning.txt <<EOF
+WARNING: Could not find md5sum executable, so I will not be able to check
+WARNING: the validity of downloaded executables against their known MD5 
+WARNING: checksums.  Proceeding anyway...
+EOF
 elif test -z "$md5_file"; then
-    echo "WARNING: could not find md5sum in checksum file!"
-    echo "WARNING: proceeding anyway..."
+    cat > $logdir/05_md5sum_warning.txt <<EOF
+WARNING: Could not find md5sum check file, so I will not be able to check
+WARNING: the validity of downloaded executables against their known MD5 
+WARNING: checksums.  Proceeding anyway...
+EOF
 else
     md5_actual="`$md5sum $tarball_name 2>&1`"
     if test "$md5_file" != "$md5_actual"; then
@@ -235,13 +238,18 @@ fi
 
 sha1_file="`grep $version.tar.gz $sha1_checksums`"
 find_program sha1sum sha1sum
-echo found sha1sum: $sha1sum
 if test -z "$sha1sum"; then
-    echo "WARNING: could not find sha1sum executable"
-    echo "WARNING: proceeding anyway..."
+    cat > $logdir/05_md5sum_warning.txt <<EOF
+WARNING: Could not find sha1sum executable, so I will not be able to check
+WARNING: the validity of downloaded executables against their known SHA1
+WARNING: checksums.  Proceeding anyway...
+EOF
 elif test -z "$sha1_file"; then
-    echo "WARNING: could not find sha1sum in checksum file!"
-    echo "WARNING: proceeding anyway..."
+    cat > $logdir/05_md5sum_warning.txt <<EOF
+WARNING: Could not find sha1sum check file, so I will not be able to check
+WARNING: the validity of downloaded executables against their known SHA1
+WARNING: checksums.  Proceeding anyway...
+EOF
 else
     sha1_actual="`$sha1sum $tarball_name 2>&1`"
     if test "$sha1_file" != "$sha1_actual"; then
