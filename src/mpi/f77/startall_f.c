@@ -48,5 +48,23 @@ OMPI_GENERATE_F77_BINDINGS (MPI_STARTALL,
 
 void mpi_startall_f(MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *ierr)
 {
+    MPI_Request *c_req;
+    int i;
 
+    c_req = malloc(*count * sizeof(MPI_Request));
+    if (c_req == NULL) {
+        *ierr = MPI_ERR_INTERN;
+        return;
+    }
+
+    for (i = 0; i < *count; i++) {
+        c_req[i] = MPI_Request_f2c(array_of_requests[i]);
+    }
+
+    *ierr = MPI_Startall(*count, c_req);
+
+    if (c_req) {
+        free(c_req);
+    }
 }
+

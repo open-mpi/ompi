@@ -47,6 +47,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PROBE,
 #endif
 
 void mpi_probe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr)
-{
+{   
+    MPI_Comm c_comm;
 
+    c_comm = MPI_Comm_f2c (*comm);
+
+    *ierr = MPI_Probe(*source, *tag, c_comm, (MPI_Status*) *status);
 }

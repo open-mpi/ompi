@@ -48,5 +48,18 @@ OMPI_GENERATE_F77_BINDINGS (MPI_START,
 
 void mpi_start_f(MPI_Fint *request, MPI_Fint *ierr)
 {
+    MPI_Request c_req = MPI_Request_f2c(*request);
+    MPI_Request tmp_req = c_req;
 
+    *ierr = MPI_Start(&c_req);
+
+    if (*ierr == MPI_SUCCESS) {
+        /* For a persistent request, the underlying request descriptor could
+           change (i.e. the old descriptor has not completed and cannot be 
+           reused).
+           So commit new descriptor.
+        */
+        if ( tmp_req != c_req )
+            *request = MPI_Request_c2f(c_req);
+    }
 }

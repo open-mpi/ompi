@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_BUFFER_DETACH,
 
 void mpi_buffer_detach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
 {
-
+  *ierr = MPI_Buffer_detach(buffer, size);
 }

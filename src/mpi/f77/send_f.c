@@ -48,5 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SEND,
 
 void mpi_send_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr)
 {
+    MPI_Comm c_comm;
+    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
 
+    c_comm = MPI_Comm_f2c (*comm);
+
+    *ierr = MPI_Send(buf, *count, c_type, *dest, *tag, c_comm);
 }

@@ -41,12 +41,13 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CANCEL,
                            (request, ierr) )
 #endif
 
-
 #if OMPI_PROFILE_LAYER && ! OMPI_HAVE_WEAK_SYMBOLS
 #include "mpi/c/profile/defines.h"
 #endif
 
 void mpi_cancel_f(MPI_Fint *request, MPI_Fint *ierr)
 {
+    MPI_Request c_req = MPI_Request_f2c(*request);
 
+    *ierr = MPI_Cancel(&c_req);
 }

@@ -48,5 +48,15 @@ OMPI_GENERATE_F77_BINDINGS (MPI_IRECV,
 
 void mpi_irecv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
 {
+    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+    MPI_Request c_req;
+    MPI_Comm c_comm;
 
+    c_comm = MPI_Comm_f2c (*comm);
+
+    *ierr = MPI_Irecv(buf, *count, c_type, *source, *tag, c_comm, &c_req);
+
+    if (*ierr == MPI_SUCCESS) {
+        *request = MPI_Request_c2f(c_req);
+    }
 }
