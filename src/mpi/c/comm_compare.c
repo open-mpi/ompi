@@ -106,7 +106,6 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
         /* we need to check whether the communicators contain
            the same processes and in the same order */
         sameranks = sameorder = 1;
-        rresult = MPI_SIMILAR;
 
         grp1 = (ompi_group_t *)comp1->c_remote_group;
         grp2 = (ompi_group_t *)comp2->c_remote_group;
@@ -117,9 +116,9 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
             }
         }
 
-        for ( i = 0; i < size1; i++ ) {
+        for ( i = 0; i < rsize1; i++ ) {
             found = 0;
-            for ( j = 0; j < size2; j++ ) {
+            for ( j = 0; j < rsize2; j++ ) {
                 if ( grp1->grp_proc_pointers[i] == grp2->grp_proc_pointers[j]) {
                     found = 1;
                     break;
@@ -132,22 +131,23 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
         }
         
         if ( sameranks && sameorder )
-            rresult = MPI_SIMILAR;
-        else if ( sameranks && !sameorder )
             rresult = MPI_CONGRUENT;
+        else if ( sameranks && !sameorder )
+            rresult = MPI_SIMILAR;
         else
             rresult = MPI_UNEQUAL;
     }
 
     /* determine final results */
-    if ( MPI_SIMILAR == rresult ) {
+    if ( MPI_CONGRUENT == rresult ) {
         *result = lresult;
     }
-    else if ( MPI_CONGRUENT == rresult ) {
-        if ( MPI_SIMILAR == lresult )
-            *result = MPI_CONGRUENT;
-        else
+    else if ( MPI_SIMILAR == rresult ) {
+        if ( MPI_SIMILAR == lresult || MPI_CONGRUENT == lresult ) {
             *result = MPI_SIMILAR;
+	}
+	else 
+	    *result = MPI_UNEQUAL;
     }
     else if ( MPI_UNEQUAL == rresult ) 
         *result = MPI_UNEQUAL;
