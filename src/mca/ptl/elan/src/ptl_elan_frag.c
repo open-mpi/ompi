@@ -83,7 +83,7 @@ extern mca_ptl_elan_state_t mca_ptl_elan_global_state;
 mca_ptl_elan_send_frag_t *
 mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
                   struct mca_pml_base_send_request_t *sendreq, 
-		  int oneside)
+		  int desc_type)
 {
 
     ompi_free_list_t *flist;
@@ -93,11 +93,18 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
     START_FUNC();
 
     /* For now, bind to queue DMA directly */
-    if (oneside) {
-	/*struct mca_ptl_elan_peer_t *peer;*/
-        flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->putget)->tx_desc_free;
-    } else {
+    if (MCA_PTL_ELAN_DESC_QDMA) {
         flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->queue)->tx_desc_free;
+    } else if (MCA_PTL_ELAN_DESC_PUT) {
+        flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->putget)->put_desc_free;
+    } else if (MCA_PTL_ELAN_DESC_GET) {
+	/*struct mca_ptl_elan_peer_t *peer;*/
+        flist = &(((mca_ptl_elan_module_t *) ptl_ptr)->putget)->get_desc_free;
+    } else {
+        ompi_output (0,
+                     "[%s:%d] Error: unknown to descriptor desc type\n",
+                     __FILE__, __LINE__);
+	return NULL;
     }
 
     if (ompi_using_threads ()) {
@@ -134,11 +141,7 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
     desc = (mca_ptl_elan_send_frag_t *) item; 
     desc->desc->req = (struct mca_ptl_elan_send_request_t *) sendreq;
 
-    if (oneside) {
-	desc->desc->desc_type = MCA_PTL_ELAN_DESC_PUTGET;
-    } else {
-	desc->desc->desc_type = MCA_PTL_ELAN_DESC_QDMA;
-    }
+    desc->desc->desc_type = desc_type;
 
     END_FUNC();
     return desc;
