@@ -52,7 +52,10 @@ int main(int argc, char *argv[])
     bool allow_multi_user_threads   = false;
     bool have_hidden_threads  = false;
     char *jobid_str, *procid_str, *enviro_val, *contact_file;
-    char *filenm;
+    char *filenm, *universe;
+    pid_t pid;
+    mca_ns_base_jobid_t jobid;
+    mca_ns_base_vpid_t vpid;
 
     /*
      * Intialize the Open MPI environment
@@ -165,6 +168,44 @@ int main(int argc, char *argv[])
      */
     ompi_rte_parse_daemon_cmd_line(cmd_line);
 
+    /* check for existing universe to join */
+    if (OMPI_SUCCESS != (ret = ompi_rte_universe_exists())) {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "ompi_mpi_init: could not join existing universe");
+	}
+	if (OMPI_ERR_NOT_FOUND != ret) {
+	    /* if it exists but no contact could be established,
+	     * define unique name based on current one.
+	     * and start new universe with me as seed
+	     */
+	    universe = strdup(ompi_universe_info.name);
+	    free(ompi_universe_info.name);
+	    ompi_universe_info.name = NULL;
+	    pid = getpid();
+	    if (0 > asprintf(&ompi_universe_info.name, "%s-%d", universe, pid) && ompi_rte_debug_flag) {
+		ompi_output(0, "mpi_init: error creating unique universe name");
+	    }
+	}
+
+	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
+	ompi_process_info.seed = true;
+	if (NULL != ompi_universe_info.ns_replica) {
+	    free(ompi_universe_info.ns_replica);
+	    ompi_universe_info.ns_replica = NULL;
+	}
+	if (NULL != ompi_process_info.ns_replica) {
+	    free(ompi_process_info.ns_replica);
+	    ompi_process_info.ns_replica = NULL;
+	}
+	if (NULL != ompi_universe_info.gpr_replica) {
+	    free(ompi_universe_info.gpr_replica);
+	    ompi_universe_info.gpr_replica = NULL;
+	}
+	if (NULL != ompi_process_info.gpr_replica) {
+	    free(ompi_process_info.gpr_replica);
+	    ompi_process_info.gpr_replica = NULL;
+	}
+    }
 
     /* setup the rest of the rte */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
@@ -175,23 +216,20 @@ int main(int argc, char *argv[])
     }
 
     /*****    SET MY NAME   *****/
-	if (ompi_process_info.seed) {
-	    if (ompi_daemon_debug) {
-		ompi_output(0, "ompid: seed flag set");
-	    }
-	    if (NULL != ompi_process_info.name) { /* overwrite it */
-		free(ompi_process_info.name);
-	    }
-	    ompi_process_info.name = ompi_name_server.create_process_name(0, 0, 0);
-	} else {
-	    if (ompi_daemon_debug) {
-		ompi_output(0, "ompid: seed flag NOT set");
-	    }
-	    if (NULL != ompi_process_info.name) { /* overwrite it */
-		free(ompi_process_info.name);
-	    }
-	    ompi_process_info.name = ompi_rte_get_self();
-	}
+    if (NULL != ompi_process_info.name) { /* should not have been previously set */
+	free(ompi_process_info.name);
+	ompi_process_info.name = NULL;
+    }
+
+    if (NULL != ompi_rte_get_self()) {  /* name set in environment - record name */
+	ompi_process_info.name = ompi_rte_get_self();
+    } else if (NULL == ompi_process_info.ns_replica) { /* couldn't join existing univ */
+	ompi_process_info.name = ompi_name_server.create_process_name(0,0,0);
+    } else {  /* name server exists elsewhere - get a name for me */
+	jobid = ompi_name_server.create_jobid();
+	vpid = ompi_name_server.reserve_range(jobid, 1);
+	ompi_process_info.name = ompi_name_server.create_process_name(0, jobid, vpid);
+    }
 
     /* setup my session directory */
     jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);
@@ -219,13 +257,6 @@ int main(int argc, char *argv[])
 	exit(-1);
     }
 
-    /*
-     *  Register my process info with my replica.
-     */
-    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
-	ompi_output(0, "ompi_rte_init: failed in ompi_rte_register");
-	return ret;
-    }
 
     /* finalize the rte startup */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&allow_multi_user_threads,
@@ -235,8 +266,21 @@ int main(int argc, char *argv[])
         return ret;
     }
 
+    /*
+     *  Register my process info with my replica. Note that this must be done
+     *  after the rte init is completed.
+     */
+    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
+        ompi_output(0, "ompid: failed in ompi_rte_register()");
+        return ret;
+    } 
+
     /* if i'm the seed, get my contact info and write my setup file for others to find */
     if (ompi_process_info.seed) {
+	if (NULL != ompi_universe_info.seed_contact_info) {
+	    free(ompi_universe_info.seed_contact_info);
+	    ompi_universe_info.seed_contact_info = NULL;
+	}
 	ompi_universe_info.seed_contact_info = mca_oob_get_contact_info();
 	contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
 				    "universe-setup.txt", NULL);
@@ -298,9 +342,11 @@ int main(int argc, char *argv[])
 		    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
     }
 
-    /* remove the universe-setup file */
-    filenm = ompi_os_path(false, ompi_process_info.universe_session_dir, "universe-setup.txt", NULL);
-    unlink(filenm);
+    /* if i'm the seed, remove the universe-setup file */
+    if (ompi_process_info.seed) {
+	filenm = ompi_os_path(false, ompi_process_info.universe_session_dir, "universe-setup.txt", NULL);
+	unlink(filenm);
+    }
 
     /* finalize the system */
     ompi_rte_finalize();
@@ -322,7 +368,6 @@ static void ompi_daemon_recv(int status, ompi_process_name_t* sender,
     ompi_buffer_t answer;
     ompi_daemon_cmd_flag_t command;
     int ret;
-    int32_t str_len;
     char *contact_info;
 
     OMPI_THREAD_LOCK(&ompi_daemon_mutex);

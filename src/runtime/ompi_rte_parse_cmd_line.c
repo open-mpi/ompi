@@ -15,6 +15,7 @@
 #include <string.h>
 
 #include "mca/oob/base/base.h"
+#include "mca/ns/base/base.h"
 
 #include "util/output.h"
 #include "util/cmd_line.h"
@@ -30,9 +31,6 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 
     /* get universe name and store it, if user specified it */
     /* otherwise, stick with default name */
-    if (NULL != ompi_universe_info.name) {
-	universe = strdup(ompi_universe_info.name); /* save the current value, if exists */
-    }
 
     if (ompi_cmd_line_is_taken(cmd_line, "universe") ||
 	ompi_cmd_line_is_taken(cmd_line, "u")) {
@@ -52,23 +50,44 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	    if (NULL != (tmp = strchr(universe, '@'))) {  /* remote name includes remote uid */
 		*tmp = '\0';
 		tmp++;
+		if (NULL != ompi_universe_info.host) {  /* overwrite it */
+		    free(ompi_universe_info.host);
+		    ompi_universe_info.host = NULL;
+		}
 		ompi_universe_info.host = strdup(tmp);
+		if (NULL != ompi_universe_info.uid) {
+		    free(ompi_universe_info.uid);
+		    ompi_universe_info.uid = NULL;
+		}
 		ompi_universe_info.uid = strdup(universe);
 	    } else {  /* no remote id - just remote host */
+		if (NULL != ompi_universe_info.host) {
+		    free(ompi_universe_info.host);
+		    ompi_universe_info.host = NULL;
+		}
 		ompi_universe_info.host = strdup(universe);
 	    }
 	} else { /* no remote host - just universe name provided */
+	    if (NULL != ompi_universe_info.name) {
+		free(ompi_universe_info.name);
+		ompi_universe_info.name = NULL;
+	    }
 	    ompi_universe_info.name = strdup(universe);
 	}
     }
 
     /* copy the universe name into the process_info structure */
     if (NULL != ompi_universe_info.name) {
+	if (NULL != ompi_process_info.my_universe) {
+	    free(ompi_process_info.my_universe);
+	    ompi_process_info.my_universe = NULL;
+	}
 	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
     } else {  /* set it to default value */
 	ompi_universe_info.name = strdup("default-universe");
 	if (NULL != ompi_process_info.my_universe) { /* overwrite it */
 	    free(ompi_process_info.my_universe);
+	    ompi_process_info.my_universe = NULL;
 	}
 	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
     }
@@ -84,6 +103,7 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	}
 	if (NULL != ompi_process_info.tmpdir_base) { /* overwrite it */
 	    free(ompi_process_info.tmpdir_base);
+	    ompi_process_info.tmpdir_base = NULL;
 	}
 	ompi_process_info.tmpdir_base = strdup(ompi_cmd_line_get_param(cmd_line, "tmpdir", 0, 0));
 	setenv("OMPI_tmpdir_base", ompi_process_info.tmpdir_base, 1);
@@ -96,6 +116,16 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	    return;
 	}
 	nsreplica = strdup(ompi_cmd_line_get_param(cmd_line, "nsreplica", 0, 0));
+	if (NULL != ompi_universe_info.ns_replica) {
+	    free(ompi_universe_info.ns_replica);
+	    ompi_universe_info.ns_replica = NULL;
+	}
+	ompi_universe_info.ns_replica = strdup(nsreplica);
+	if (NULL == ompi_process_info.ns_replica) {
+	    ompi_process_info.ns_replica = ns_base_create_process_name(0,0,0);
+	}
+	mca_oob_parse_contact_info(ompi_universe_info.ns_replica,
+				   ompi_process_info.ns_replica, NULL);
 	setenv("OMPI_MCA_ns_base_replica", nsreplica, 1);  /* set the ns_replica enviro variable */
     } /* otherwise, leave it alone */
 
@@ -106,6 +136,16 @@ void ompi_rte_parse_cmd_line(ompi_cmd_line_t *cmd_line)
 	    return;
 	}
 	gprreplica = strdup(ompi_cmd_line_get_param(cmd_line, "gprreplica", 0, 0));
+	if (NULL != ompi_universe_info.gpr_replica) {
+	    free(ompi_universe_info.gpr_replica);
+	    ompi_universe_info.gpr_replica = NULL;
+	}
+	ompi_universe_info.gpr_replica = strdup(nsreplica);
+	if (NULL == ompi_process_info.gpr_replica) {
+	    ompi_process_info.gpr_replica = ns_base_create_process_name(0,0,0);
+	}
+	mca_oob_parse_contact_info(ompi_universe_info.gpr_replica,
+				   ompi_process_info.gpr_replica, NULL);
 	setenv("OMPI_MCA_gpr_base_replica", gprreplica, 1);  /* set the gpr_replica enviro variable */
     }  /* otherwise leave it alone */
 }

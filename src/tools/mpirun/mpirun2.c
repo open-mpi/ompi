@@ -179,6 +179,7 @@ main(int argc, char *argv[])
 	     */
 	    universe = strdup(ompi_universe_info.name);
 	    free(ompi_universe_info.name);
+	    ompi_universe_info.name = NULL;
 	    pid = getpid();
 	    if (0 > asprintf(&ompi_universe_info.name, "%s-%d", universe, pid) && ompi_rte_debug_flag) {
 		ompi_output(0, "mpi_init: error creating unique universe name");
@@ -189,15 +190,19 @@ main(int argc, char *argv[])
 	ompi_process_info.seed = true;
 	if (NULL != ompi_universe_info.ns_replica) {
 	    free(ompi_universe_info.ns_replica);
+	    ompi_universe_info.ns_replica = NULL;
 	}
 	if (NULL != ompi_process_info.ns_replica) {
 	    free(ompi_process_info.ns_replica);
+	    ompi_process_info.ns_replica = NULL;
 	}
 	if (NULL != ompi_universe_info.gpr_replica) {
 	    free(ompi_universe_info.gpr_replica);
+	    ompi_universe_info.gpr_replica = NULL;
 	}
 	if (NULL != ompi_process_info.gpr_replica) {
 	    free(ompi_process_info.gpr_replica);
+	    ompi_process_info.gpr_replica = NULL;
 	}
     }
 
@@ -209,10 +214,12 @@ main(int argc, char *argv[])
     }
 
     /*****    SET MY NAME   *****/
+    if (NULL != ompi_process_info.name) { /* should NOT have been set yet */
+	free(ompi_process_info.name);
+	ompi_process_info.name = NULL;
+    }
+
     if (ompi_process_info.seed) {
-	if (NULL != ompi_process_info.name) { /* overwrite it */
-	    free(ompi_process_info.name);
-	}
 	ompi_process_info.name = ompi_name_server.create_process_name(0, 0, 0);
     } else { /* if not seed, then we joined universe - get jobid and name */
 	jobid = ompi_name_server.create_jobid();
@@ -256,6 +263,10 @@ main(int argc, char *argv[])
 
     /* if i'm the seed, get my contact info and write my setup file for others to find */
     if (ompi_process_info.seed) {
+	if (NULL != ompi_universe_info.seed_contact_info) {
+	    free(ompi_universe_info.seed_contact_info);
+	    ompi_universe_info.seed_contact_info = NULL;
+	}
 	ompi_universe_info.seed_contact_info = mca_oob_get_contact_info();
 	contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
 				    "universe-setup.txt", NULL);

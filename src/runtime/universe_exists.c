@@ -35,9 +35,9 @@ static struct timeval ompi_rte_ping_wait = {2, 0};
 int ompi_rte_universe_exists()
 {
     char *contact_file;
-    int ret, i;
+    int ret;
     ompi_process_name_t proc={0,0,0};
-    bool ns_found, gpr_found, ping_success;
+    bool ns_found=false, gpr_found=false, ping_success=false;
 
     /* if both ns_replica and gpr_replica were provided, check for contact with them */
     if (NULL != ompi_universe_info.ns_replica && NULL != ompi_universe_info.gpr_replica) {
@@ -50,11 +50,13 @@ int ompi_rte_universe_exists()
 	    free(ompi_universe_info.ns_replica);
 	    if (NULL != ompi_process_info.ns_replica) {
 		free(ompi_process_info.ns_replica);
+		ompi_process_info.ns_replica = NULL;
 	    }
 	} else {  /* name server found, now try gpr */
 	    ns_found = true;
 	    if (NULL != ompi_process_info.ns_replica) {
 		free(ompi_process_info.ns_replica);
+		ompi_process_info.ns_replica = NULL;
 	    }
 	    ompi_process_info.ns_replica = ns_base_copy_process_name(&proc);
 	}
@@ -68,10 +70,12 @@ int ompi_rte_universe_exists()
 	    free(ompi_universe_info.gpr_replica);
 	    if (NULL != ompi_process_info.gpr_replica) {
 		free(ompi_process_info.gpr_replica);
+		ompi_process_info.gpr_replica = NULL;
 	    }
 	} else { 
 	    if (NULL != ompi_process_info.gpr_replica) {
 		free(ompi_process_info.gpr_replica);
+		ompi_process_info.gpr_replica = NULL;
 	    }
 	    ompi_process_info.gpr_replica = ns_base_copy_process_name(&proc);
 	    gpr_found = true;
@@ -129,20 +133,22 @@ int ompi_rte_universe_exists()
 	    ompi_output(0, "contact info read");
 	}
 
-	if (!ompi_universe_info.persistence ||   /* not persistent... */
-	    (0 == strncmp(ompi_universe_info.scope, "exclusive", strlen("exclusive")))) {  /* ...or no connection allowed */
-	    /* also need to check "local" and that we did not specify the exact
-	     * matching universe name
-	     */
-	    if (ompi_rte_debug_flag) {
-		ompi_output(0, "connection not allowed");
+	if (!ompi_universe_info.console) {  /* if we aren't trying to connect a console */
+	    if (!ompi_universe_info.persistence ||   /* not persistent... */
+		(0 == strncmp(ompi_universe_info.scope, "exclusive", strlen("exclusive")))) {  /* ...or no connection allowed */
+		/* also need to check "local" and that we did not specify the exact
+		 * matching universe name
+		 */
+		if (ompi_rte_debug_flag) {
+		    ompi_output(0, "connection not allowed");
+		}
+		return OMPI_ERR_NO_CONNECTION_ALLOWED;
 	    }
-	    return OMPI_ERR_NO_CONNECTION_ALLOWED;
 	}
 
-    if (ompi_rte_debug_flag) {
-	ompi_output(0, "contact info to set: %s", ompi_universe_info.seed_contact_info);
-    }
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "contact info to set: %s", ompi_universe_info.seed_contact_info);
+	}
 
 
 	/* if persistent, set contact info... */
@@ -174,11 +180,34 @@ int ompi_rte_universe_exists()
 	}
 
 	/* set the my_universe field */
+	if (NULL != ompi_process_info.my_universe) {
+	    free(ompi_process_info.my_universe);
+	    ompi_process_info.my_universe = NULL;
+	}
 	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
+
+	if (NULL != ompi_process_info.ns_replica) {
+	    free(ompi_process_info.ns_replica);
+	    ompi_process_info.ns_replica = NULL;
+	}
 	ompi_process_info.ns_replica = ns_base_copy_process_name(&proc);
+
+	if (NULL != ompi_process_info.gpr_replica) {
+	    free(ompi_process_info.gpr_replica);
+	    ompi_process_info.gpr_replica = NULL;
+	}
 	ompi_process_info.gpr_replica = ns_base_copy_process_name(&proc);
 
+	if (NULL != ompi_universe_info.ns_replica) {
+	    free(ompi_universe_info.ns_replica);
+	    ompi_universe_info.ns_replica = NULL;
+	}
 	ompi_universe_info.ns_replica = strdup(ompi_universe_info.seed_contact_info);
+
+	if (NULL != ompi_universe_info.gpr_replica) {
+	    free(ompi_universe_info.gpr_replica);
+	    ompi_universe_info.gpr_replica = NULL;
+	}
 	ompi_universe_info.gpr_replica = strdup(ompi_universe_info.seed_contact_info);
 
 	/* request ns_replica and gpr_replica info for this process

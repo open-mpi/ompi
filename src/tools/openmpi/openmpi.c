@@ -156,6 +156,7 @@ int main(int argc, char **argv)
 	     */
 	    universe = strdup(ompi_universe_info.name);
 	    free(ompi_universe_info.name);
+	    ompi_universe_info.name = NULL;
 	    pid = getpid();
 	    if (0 < asprintf(&ompi_universe_info.name, "%s-%d", universe, pid)) {
 		fprintf(stderr, "error creating unique universe name - please report error to bugs@open-mpi.org\n");
@@ -163,6 +164,10 @@ int main(int argc, char **argv)
 	    }
 	}
 
+	if (NULL != ompi_process_info.my_universe) {
+	    free(ompi_process_info.my_universe);
+	    ompi_process_info.my_universe = NULL;
+	}
 	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
 
 	/* ensure the enviro variables do NOT specify any replicas so that seed

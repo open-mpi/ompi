@@ -47,12 +47,14 @@ void ompi_rte_parse_environ(void)
     if (NULL != enviro_val) { /* contact info passed */
 	if (NULL != ompi_universe_info.seed_contact_info) {  /* overwrite */
 	    free(ompi_universe_info.seed_contact_info);
+	    ompi_universe_info.seed_contact_info = NULL;
 	}
 	ompi_universe_info.seed_contact_info = strdup(enviro_val);
 	mca_oob_set_contact_info(ompi_universe_info.seed_contact_info);
     } else {
 	if (NULL != ompi_universe_info.seed_contact_info) {
 	    free(ompi_universe_info.seed_contact_info);
+	    ompi_universe_info.seed_contact_info = NULL;
 	}
     }
 
@@ -66,6 +68,7 @@ void ompi_rte_parse_environ(void)
     } else {
 	if (NULL != ompi_process_info.gpr_replica) {
 	    free(ompi_process_info.gpr_replica);
+	    ompi_process_info.gpr_replica = NULL;
 	}
     }
 
@@ -79,6 +82,7 @@ void ompi_rte_parse_environ(void)
     } else {
 	if (NULL != ompi_process_info.ns_replica) {
 	    free(ompi_process_info.ns_replica);
+	    ompi_process_info.ns_replica = NULL;
 	}
     }
 
@@ -93,20 +97,16 @@ void ompi_rte_parse_environ(void)
     if (NULL != enviro_val) { /* scope passed */
 	if (NULL != ompi_universe_info.scope) {  /* overwrite */
 	    free(ompi_universe_info.scope);
+	    ompi_universe_info.scope = NULL;
 	}
 	ompi_universe_info.scope = strdup(enviro_val);
     } else {
 	if (NULL != ompi_universe_info.scope) {
 	    free(ompi_universe_info.scope);
+	    ompi_universe_info.scope = NULL;
 	}
 	ompi_universe_info.scope = strdup("exclusive");
     }
-
-    /*** FOR DEBUGGING PURPOSES IN THIS EARLY STAGE - FORCE PUBLIC */
-    if (NULL != ompi_universe_info.scope) {
-	free(ompi_universe_info.scope);
-    }
-    ompi_universe_info.scope = strdup("public");
 
     enviro_val = getenv("OMPI_universe_persistent");
     if (NULL != enviro_val) {  /* persistence flag passed */
@@ -114,9 +114,6 @@ void ompi_rte_parse_environ(void)
     } else {
 	ompi_universe_info.persistence = false;
     }
-
-    /*** FOR DEBUGGING PURPOSES IN THIS EARLY STAGE - FORCE PERSISTENCE */
-    ompi_universe_info.persistence = true;
 
     enviro_val = getenv("OMPI_universe_console");
     if (NULL != enviro_val) {  /* console flag passed */
@@ -129,11 +126,13 @@ void ompi_rte_parse_environ(void)
     if (NULL != enviro_val) { /* scriptfile passed */
 	if (NULL != ompi_universe_info.scriptfile) {  /* overwrite */
 	    free(ompi_universe_info.scriptfile);
+	    ompi_universe_info.scriptfile = NULL;
 	}
 	ompi_universe_info.scriptfile = strdup(enviro_val);
     } else {
 	if (NULL != ompi_universe_info.scriptfile) {
 	    free(ompi_universe_info.scriptfile);
+	    ompi_universe_info.scriptfile = NULL;
 	}
     }
 
@@ -141,28 +140,34 @@ void ompi_rte_parse_environ(void)
     if (NULL != enviro_val) { /* hostfile passed */
 	if (NULL != ompi_universe_info.hostfile) {  /* overwrite */
 	    free(ompi_universe_info.hostfile);
+	    ompi_universe_info.hostfile = NULL;
 	}
 	ompi_universe_info.hostfile = strdup(enviro_val);
     } else {
 	if (NULL != ompi_universe_info.hostfile) {
 	    free(ompi_universe_info.hostfile);
+	    ompi_universe_info.hostfile = NULL;
 	}
     }
 
     if (NULL != ompi_universe_info.name) {
 	free(ompi_universe_info.name);
+	ompi_universe_info.name = NULL;
     }
     ompi_universe_info.name = strdup("default-universe");
     if (NULL != ompi_process_info.my_universe) {
 	free(ompi_process_info.my_universe);
+	ompi_process_info.my_universe = NULL;
     }
     ompi_process_info.my_universe = strdup("default-universe");
     if (NULL != ompi_universe_info.host) {
 	free(ompi_universe_info.host);
+	ompi_universe_info.host = NULL;
     }
     ompi_universe_info.host = strdup(ompi_system_info.nodename);
     if (NULL != ompi_universe_info.uid) {
 	free(ompi_universe_info.uid);
+	ompi_universe_info.uid = NULL;
     }
     ompi_universe_info.uid = strdup(ompi_system_info.user);
 
@@ -170,10 +175,12 @@ void ompi_rte_parse_environ(void)
     if (NULL != enviro_val) {  /* universe name passed in environment */
 	if (NULL != ompi_universe_info.name) {  /* got something in it - overwrite */
 	    free(ompi_universe_info.name);
+	    ompi_universe_info.name = NULL;
 	}
 	ompi_universe_info.name = strdup(enviro_val);
 	if (NULL != ompi_process_info.my_universe) {
 	    free(ompi_process_info.my_universe);
+	    ompi_process_info.my_universe = NULL;
 	}
 	ompi_process_info.my_universe = strdup(enviro_val);
     }
@@ -182,11 +189,13 @@ void ompi_rte_parse_environ(void)
     if (NULL != enviro_val) {  /* tmpdir base passed in environment */
 	if (NULL != ompi_process_info.tmpdir_base) {  /* overwrite it */
 	    free(ompi_process_info.tmpdir_base);
+	    ompi_process_info.tmpdir_base = NULL;
 	}
 	ompi_process_info.tmpdir_base = strdup(enviro_val);
     } else {
 	if (NULL != ompi_process_info.tmpdir_base) {
 	    free(ompi_process_info.tmpdir_base);
+	    ompi_process_info.tmpdir_base = NULL;
 	}
     }
 
