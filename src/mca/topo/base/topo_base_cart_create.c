@@ -28,7 +28,7 @@ int topo_base_cart_create (lam_communicator_t *old_comm,
                            int *periods,
                            int reorder,
                            lam_communicator_t *comm_cart){
-   lam_groupt_t *newcomm;
+   lam_group_t *newcomm;
    lam_group_t *newgroup;
    int size;
    int nprocs;
