@@ -19,10 +19,18 @@
 #include "runtime/runtime.h"
 
 
+/*
+ * Local functions
+ */
+static void backend_fatal(char *type, char *name, int *error_code, 
+                          va_list arglist);
+static void out(char *str, char *arg);
+
+
 void ompi_mpi_errors_are_fatal_comm_handler(struct ompi_communicator_t **comm,
 					    int *error_code, ...)
 {
-  char *arg;
+  char *name;
   va_list arglist;
 
 #if __STDC__
@@ -31,47 +39,19 @@ void ompi_mpi_errors_are_fatal_comm_handler(struct ompi_communicator_t **comm,
   va_start(arglist);
 #endif
 
-  fflush(stdout);
-  fflush(stderr);
-  arg = va_arg(arglist, char*);
-  if (NULL != arg) {
-    ompi_output(0, "*** An error occurred in %s", arg);
+  if (NULL != comm) {
+      name = (*comm)->c_name;
   } else {
-    ompi_output(0, "*** An error occurred");
+      name = NULL;
   }
-
-  if (NULL != comm && ompi_mpi_initialized && !ompi_mpi_finalized) {
-    ompi_output(0, "*** on communicator %s", (*comm)->c_name);
-  } else if (!ompi_mpi_initialized) {
-    ompi_output(0, "*** before MPI was initialized");
-  } else if (ompi_mpi_finalized) {
-    ompi_output(0, "*** after MPI was finalized");
-  } else if (NULL == comm) {
-    ompi_output(0, "*** on a NULL communicator");
-  }
-
-  if (NULL != error_code) {
-    char *tmp = ompi_mpi_errcode_get_string(*error_code);
-    if (NULL != tmp) {
-      ompi_output(0, "*** %s\n", tmp);
-    } else {
-      ompi_output(0, "*** Error code: %d (no associated error message)\n",
-                  *error_code);
-    }
-  }
-  ompi_output(0, "*** MPI_ERRORS_ARE_FATAL (goodbye)");
-  va_end(arglist);
-
-  /* Should we do something more intelligent here? */
-
-  abort();
+  backend_fatal("communicator", name, error_code, arglist);
 }
 
 
 void ompi_mpi_errors_are_fatal_file_handler(struct ompi_file_t **file,
 					    int *error_code, ...)
 {
-  char *arg;
+  char *name;
   va_list arglist;
 
 #if __STDC__
@@ -80,46 +60,19 @@ void ompi_mpi_errors_are_fatal_file_handler(struct ompi_file_t **file,
   va_start(arglist);
 #endif
 
-  fflush(stdout);
-  fflush(stderr);
-  arg = va_arg(arglist, char*);
-  if (NULL != arg) {
-    ompi_output(0, "*** An error occurred in %s", arg);
+  if (NULL != file) {
+      name = (*file)->f_filename;
   } else {
-    ompi_output(0, "*** An error occurred");
+      name = NULL;
   }
-
-  if (NULL != file && ompi_mpi_initialized && !ompi_mpi_finalized) {
-    ompi_output(0, "*** on file %s", (*file)->f_filename);
-  } else if (!ompi_mpi_initialized) {
-    ompi_output(0, "*** before MPI was initialized");
-  } else if (ompi_mpi_finalized) {
-    ompi_output(0, "*** after MPI was finalized");
-  } else if (NULL == file) {
-    ompi_output(0, "*** on a NULL file");
-  }
-
-  if (NULL != error_code) {
-    char *tmp = ompi_mpi_errcode_get_string(*error_code);
-    if (NULL != tmp) {
-      ompi_output(0, "*** %s\n", tmp);
-    } else {
-      ompi_output(0, "*** Error code: %d (no associated error message)\n",
-                  *error_code);
-    }
-  }
-  ompi_output(0, "*** MPI_ERRORS_ARE_FATAL (goodbye)");
-  va_end(arglist);
-
-  /* Should we do something more intelligent here? */
-
-  abort();
+  backend_fatal("file", name, error_code, arglist);
 }
+
 
 void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
 					   int *error_code, ...)
 {
-  char *arg;
+  char *name;
   va_list arglist;
 
 #if __STDC__
@@ -128,41 +81,14 @@ void ompi_mpi_errors_are_fatal_win_handler(struct ompi_win_t **win,
   va_start(arglist);
 #endif
 
-  fflush(stdout);
-  fflush(stderr);
-  arg = va_arg(arglist, char*);
-  if (NULL != arg) {
-    ompi_output(0, "*** An error occurred in %s", arg);
+  if (NULL != win) {
+      name = (*win)->w_name;
   } else {
-    ompi_output(0, "*** An error occurred");
+      name = NULL;
   }
-
-  if (NULL != win && ompi_mpi_initialized && !ompi_mpi_finalized) {
-    ompi_output(0, "*** on win %s", (*win)->w_name);
-  } else if (!ompi_mpi_initialized) {
-    ompi_output(0, "*** before MPI was initialized");
-  } else if (ompi_mpi_finalized) {
-    ompi_output(0, "*** after MPI was finalized");
-  } else if (NULL == win) {
-    ompi_output(0, "*** on a NULL window");
-  }
-
-  if (NULL != error_code) {
-    char *tmp = ompi_mpi_errcode_get_string(*error_code);
-    if (NULL != tmp) {
-      ompi_output(0, "*** %s\n", tmp);
-    } else {
-      ompi_output(0, "*** Error code: %d (no associated error message)\n",
-                  *error_code);
-    }
-  }
-  ompi_output(0, "*** MPI_ERRORS_ARE_FATAL (goodbye)");
-  va_end(arglist);
-
-  /* Should we do something more intelligent here? */
-
-  abort();
+  backend_fatal("win", name, error_code, arglist);
 }
+
 
 void ompi_mpi_errors_return_comm_handler(struct ompi_communicator_t **comm,
 					 int *error_code, ...)
@@ -170,14 +96,77 @@ void ompi_mpi_errors_return_comm_handler(struct ompi_communicator_t **comm,
   /* Don't need anything more -- just need this function to exist */
 }
 
+
 void ompi_mpi_errors_return_file_handler(struct ompi_file_t **file,
 					 int *error_code, ...)
 {
     /* Don't need anything more -- just need this function to exist */
 }
 
+
 void ompi_mpi_errors_return_win_handler(struct ompi_win_t **win,
 					int *error_code, ...)
 {
   /* Don't need anything more -- just need this function to exist */
+}
+
+
+static void out(char *str, char *arg)
+{
+    if (ompi_mpi_initialized && !ompi_mpi_finalized) {
+        if (NULL != arg) {
+            ompi_output(0, str, arg);
+        } else {
+            ompi_output(0, str);
+        }
+    } else {
+        if (NULL != arg) {
+            fprintf(stderr, str, arg);
+        } else {
+            fprintf(stderr, str);
+        }
+    }
+}
+
+static void backend_fatal(char *type, char *name, int *error_code, 
+                          va_list arglist)
+{
+    char *arg;
+
+    fflush(stdout);
+    fflush(stderr);
+    arg = va_arg(arglist, char*);
+    if (NULL != arg) {
+        out("*** An error occurred in %s\n", arg);
+    } else {
+        out("*** An error occurred\n", NULL);
+    }
+
+    if (NULL != name && ompi_mpi_initialized && !ompi_mpi_finalized) {
+        out("*** on %s ", type);
+        out("%s\n", name);
+    } else if (!ompi_mpi_initialized) {
+        out("*** before MPI was initialized\n", NULL);
+    } else if (ompi_mpi_finalized) {
+        out("*** after MPI was finalized\n", NULL);
+    } else if (NULL == name) {
+        out("*** on a NULL %s\n", type);
+    }
+
+    if (NULL != error_code) {
+        char *tmp = ompi_mpi_errcode_get_string(*error_code);
+        if (NULL != tmp) {
+            out("*** %s\n", tmp);
+        } else {
+            char intbuf[32];
+            snprintf(intbuf, 32, "%d", *error_code);
+            out("*** Error code: %d (no associated error message)\n", intbuf);
+        }
+    }
+    out("*** MPI_ERRORS_ARE_FATAL (goodbye)\n", NULL);
+    va_end(arglist);
+
+    /* Should we do something more intelligent here? */
+    
+    abort();
 }
