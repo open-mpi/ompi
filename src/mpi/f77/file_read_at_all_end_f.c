@@ -82,6 +82,4 @@ void mpi_file_read_at_all_end_f(MPI_Fint *fh, char *buf,
         MPI_Status_c2f(c_status, status);
     }
 #endif
-
-
 }
