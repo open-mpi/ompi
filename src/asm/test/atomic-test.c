@@ -149,7 +149,7 @@ static void *thread_main(void *arg)
 int main(int argc, char *argv[])
 {
     int c;
-#if HAVE_PTHREAD_H
+#if OMPI_HAVE_POSIX_THREADS
     int tid;
     pthread_t *th;
 #endif
@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
     valint = 0;
 
     /* -- create the thread set -- */
-#if HAVE_PTHREAD_H
+#if OMPI_HAVE_POSIX_THREADS
     th = (pthread_t *) malloc(nthreads * sizeof(pthread_t));
     if (!th) {
         perror("malloc");

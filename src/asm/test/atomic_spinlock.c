@@ -45,7 +45,7 @@ static void* atomic_spinlock_start(void* arg)
 int
 atomic_spinlock_test_th(ompi_lock_t *lock, int count, int id, int thr_count)
 {
-#if HAVE_PTHREAD_H
+#if OMPI_HAVE_POSIX_THREADS
     pthread_t *th;
     int tid, ret = 0;
     struct start_info *data;
