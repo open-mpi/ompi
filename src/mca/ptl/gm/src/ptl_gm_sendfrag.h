@@ -73,7 +73,7 @@ extern "C" {
      * GM send fragment derived type.
      */
     struct mca_ptl_gm_send_frag_t {
-        mca_ptl_base_send_frag_t send_frag; /**< base send fragment descriptor */
+        mca_ptl_base_send_frag_t frag_send; /**< base send fragment descriptor */
         void* send_buf;
         ompi_ptr_t* registered_buf;
 	
@@ -102,17 +102,17 @@ extern "C" {
     typedef struct mca_ptl_gm_recv_frag_t mca_ptl_gm_recv_frag_t;
 
     mca_ptl_gm_send_frag_t *
-    mca_ptl_gm_alloc_send_frag ( struct mca_ptl_gm_module_t* ptl,
-                                 struct mca_pml_base_send_request_t* sendreq );
+    mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t* ptl,
+				struct mca_pml_base_send_request_t* sendreq );
     
     int
-    mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t* sendfrag,
-                              struct mca_ptl_gm_peer_t * ptl_peer,
-                              struct mca_ptl_gm_module_t *ptl,
-                              struct mca_pml_base_send_request_t * sendreq,
-                              size_t offset,
-                              size_t* size,
-                              int flags );
+    mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t** sendfrag,
+			      struct mca_ptl_gm_peer_t * ptl_peer,
+			      struct mca_ptl_gm_module_t *ptl,
+			      struct mca_pml_base_send_request_t * sendreq,
+			      size_t offset,
+			      size_t* size,
+			      int flags );
 
 #define OMPI_FREE_LIST_TRY_GET(fl, item) \
 { \
