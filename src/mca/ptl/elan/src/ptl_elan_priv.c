@@ -15,428 +15,6 @@
 #include "ptl_elan_frag.h"
 #include "ptl_elan_priv.h"
 
-/* Initialize an ack descriptor and queue it to the command queue */
-int
-mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl, 
-			 mca_ptl_elan_send_frag_t * desc,
-			 mca_ptl_elan_recv_frag_t * recv_frag)
-{
-    struct ompi_ptl_elan_qdma_desc_t *qdma;
-    mca_ptl_base_header_t *hdr;
-    mca_pml_base_recv_request_t* request;
-
-
-    START_FUNC();
-
-    desc->desc->desc_type = MCA_PTL_ELAN_DESC_QDMA; 
-    qdma = (ompi_ptl_elan_qdma_desc_t *)desc->desc;
-
-    hdr = (mca_ptl_base_header_t *) & desc->buff[0];
-
-    request = recv_frag->frag_recv.frag_request;
-
-    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
-    hdr->hdr_common.hdr_flags = 0;
-    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
-
-    hdr->hdr_ack.hdr_src_ptr = 
-	recv_frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr;
-    hdr->hdr_ack.hdr_dst_match.lval = 0; 
-    hdr->hdr_ack.hdr_dst_match.pval = request;
-    hdr->hdr_ack.hdr_dst_addr.lval = 0; 
-    hdr->hdr_ack.hdr_dst_addr.pval = request->req_base.req_addr;
-    hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed;
-
-    hdr->hdr_frag.hdr_frag_length = sizeof(mca_ptl_base_ack_header_t);
-
-    /* Filling up QDMA descriptor */
-    qdma->main_dma.dma_srcAddr = MAIN2ELAN (desc->rail->r_ctx,
-					    &desc->buff[0]);
-
-    /* XXX: Hardcoded DMA retry count */
-    qdma->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE ((header_length +
-						     size_out),
-						    DMA_DataTypeByte,
-						DMA_QueueWrite, 16);
-    qdma->main_dma.dma_cookie = elan4_local_cookie (ptl->queue->tx_cpool, 
-		E4_COOKIE_TYPE_LOCAL_DMA, destvp);
-    qdma->main_dma.dma_vproc = ((mca_ptl_elan_peer_t *)
-	 recv_frag->frag_recv.frag_base.frag_peer)->peer_vp;
-
-    /* Make main memory coherent with IO domain (IA64) */
-    MEMBAR_VISIBLE ();
-
-    elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & qdma->main_dma);
-
-    /*ptl->queue->tx_cmdq->cmdq_flush */
-    elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
-
-    /* Insert desc into the list of outstanding DMA's */
-    ompi_list_append (&ptl->queue->tx_desc, (ompi_list_item_t *) desc);
-
-    /* fragment state */
-    desc->desc->req = NULL;
-    desc->frag_base.frag_owner = ptl;
-    desc->frag_base.frag_peer = recv_frag->frag_recv.frag_base.frag_peer; 
-    desc->frag_base.frag_addr = NULL;
-    desc->frag_base.frag_size = 0;
-    desc->frag_progressed     = 0;
-    desc->desc->desc_status   = MCA_PTL_ELAN_DESC_LOCAL;
-
-    END_FUNC();
-    return OMPI_SUCCESS;
-}
-
-static void
-mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
-                             mca_ptl_elan_module_t * ptl,
-			     struct mca_ptl_elan_peer_t *ptl_peer,
-                             mca_pml_base_send_request_t *pml_req,
-			     size_t offset,
-			     size_t *size,
-			     int flags)
-{
-    int         header_length;
-    int         destvp;
-    int         size_out;
-    int         size_in;
-    int         rc = OMPI_SUCCESS;
-   
-    mca_ptl_base_header_t *hdr;
-    struct ompi_ptl_elan_qdma_desc_t * desc;
-   
-    START_FUNC();
-
-    desc   = (ompi_ptl_elan_qdma_desc_t *)frag->desc;
-    destvp = ptl_peer->peer_vp;
-    size_in = *size;
-
-    hdr = (mca_ptl_base_header_t *) & desc->buff[0];
-
-    if(offset == 0) {
-	hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
-	hdr->hdr_common.hdr_flags = flags;
-	hdr->hdr_common.hdr_size = sizeof (mca_ptl_base_match_header_t);
-	hdr->hdr_frag.hdr_frag_offset = offset;
-	hdr->hdr_frag.hdr_frag_seq = 0;
-        hdr->hdr_frag.hdr_src_ptr.lval = 0;
-	hdr->hdr_frag.hdr_src_ptr.pval = desc;
-	hdr->hdr_frag.hdr_dst_ptr.lval = 0;
-
-	hdr->hdr_match.hdr_contextid = pml_req->req_base.req_comm->c_contextid;
-	hdr->hdr_match.hdr_src = pml_req->req_base.req_comm->c_my_rank;
-	hdr->hdr_match.hdr_dst = pml_req->req_base.req_peer;
-	hdr->hdr_match.hdr_tag = pml_req->req_base.req_tag;
-	hdr->hdr_match.hdr_msg_length = pml_req->req_bytes_packed;
-	hdr->hdr_match.hdr_msg_seq = pml_req->req_base.req_sequence;
-	header_length = sizeof (mca_ptl_base_match_header_t);
-    } else {
-	hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
-	hdr->hdr_common.hdr_flags = flags;
-	hdr->hdr_common.hdr_size = sizeof (mca_ptl_base_frag_header_t);
-	hdr->hdr_frag.hdr_frag_offset = offset;
-	hdr->hdr_frag.hdr_frag_seq = 0;
-        hdr->hdr_frag.hdr_src_ptr.lval = 0;
-	hdr->hdr_frag.hdr_src_ptr.pval = desc;
-        hdr->hdr_frag.hdr_dst_ptr = pml_req->req_peer_match;
-	header_length = sizeof (mca_ptl_base_frag_header_t);
-    }
-
-    /* initialize convertor */
-    if(size_in > 0) {
-	struct iovec iov;
-        ompi_convertor_t *convertor;
-
-        if( offset <= mca_ptl_elan_module.super.ptl_first_frag_size ) {
-            convertor = &pml_req->req_convertor;
-        } else {
-            convertor = &frag->frag_base->frag_convertor;
-            ompi_convertor_copy(&pml_req->req_convertor, convertor);
-            ompi_convertor_init_for_send( 
-                convertor,
-                0, 
-                pml_req->req_base.req_datatype,
-                pml_req->req_base.req_count,
-                pml_req->req_base.req_addr,
-                offset);
-        }
-
-	/* For now, eager sends are always packed into the descriptor
-         * TODO: Inline up to 256 bytes (including the header), then
-	 *       do a chained send for mesg < first_frag_size */
-        iov.iov_base = &desc->buff[header_length];
-        iov.iov_len  = size_in;
-        rc = ompi_convertor_pack(convertor, &iov, 1);
-       	if (rc < 0) {
-	    ompi_output (0, "[%s:%d] Unable to pack data\n",
-			 __FILE__, __LINE__);
-            return;
-	}
-        size_out = iov.iov_len;
-    } else {
-	size_out = size_in;
-    }
-
-    *size = size_out;
-    hdr->hdr_frag.hdr_frag_length = size_out;
-
-    desc->main_dma.dma_srcAddr = MAIN2ELAN (desc->rail->r_ctx,
-                                            &desc->buff[0]);
-
-    /* XXX: Hardcoded DMA retry count */
-    desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE ((header_length +
-                                                     size_out),
-                                                    DMA_DataTypeByte,
-                                                    DMA_QueueWrite, 16);
-
-    desc->main_dma.dma_cookie =
-        elan4_local_cookie (ptl->queue->tx_cpool, 
-		E4_COOKIE_TYPE_LOCAL_DMA, destvp);
-
-    if (CHECK_ELAN) {
-	char hostname[32];
-
-	gethostname(hostname, 32);
-	fprintf(stderr, "[%s send...] destvp %d type %d flag %d size %d\n",
-		hostname, destvp, hdr->hdr_common.hdr_type,
-		hdr->hdr_common.hdr_flags,
-		hdr->hdr_common.hdr_size);
-    }
-	
-    desc->main_dma.dma_vproc = destvp;
-
-    /* Make main memory coherent with IO domain (IA64) */
-    MEMBAR_VISIBLE ();
-    END_FUNC();
-}
-
-static void
-mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
-                               mca_ptl_elan_module_t * ptl,
-			       struct mca_ptl_elan_peer_t *ptl_peer,
-                               mca_pml_base_send_request_t *pml_req,
-			       size_t offset,
-			       size_t *size,
-			       int flags)
-{
-    int         header_length;
-    int         destvp;
-    int         size_out;
-    int         size_in;
-    int         flags;
-    int         rc = OMPI_SUCCESS;
-
-    struct ompi_ptl_elan_putget_desc_t * desc;
-
-    mca_ptl_base_header_t *hdr;
-
-    START_FUNC();
-
-    desc   = (ompi_ptl_elan_putget_desc_t *)frag->desc;
-    destvp = ptl_peer->peer_vp;
-    size_in = *size;
-    hdr = &sendfrag->frag_base.frag_header;
-
-    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
-    hdr->hdr_common.hdr_flags = flags;
-    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_frag_header_t);
-    hdr->hdr_frag.hdr_frag_offset = offset;
-    hdr->hdr_frag.hdr_frag_seq = 0;
-    hdr->hdr_frag.hdr_src_ptr.lval = 0; 
-    hdr->hdr_frag.hdr_src_ptr.pval = frag;
-    hdr->hdr_frag.hdr_dst_ptr = pml_req->req_peer_match;
-
-    desc->src_elan_addr = MAIN2ELAN (desc->rail->r_ctx,
-	    pml_req->req_base.req_addr);
-    desc->dst_elan_addr = (E4_Addr)pml_req->req_peer_addr;
-
-#define PUT_NON_CONTIGUOUS_DATA 0
-    /* initialize convertor */
-    if(size_in > 0 && PUT_NON_CONTIGUOUS_DATA) {
-	struct iovec iov;
-        ompi_convertor_t *convertor;
-
-        if( offset <= mca_ptl_elan_module.super.ptl_first_frag_size ) {
-            convertor = &pml_req->req_convertor;
-        } else {
-            convertor = &frag->frag_base.frag_convertor;
-            ompi_convertor_copy(&pml_req->req_convertor, convertor);
-            ompi_convertor_init_for_send( 
-                convertor,
-                0, 
-                pml_req->req_base.req_datatype,
-                pml_req->req_base.req_count,
-                pml_req->req_base.req_addr,
-                offset);
-        }
-
-	/* For now, eager sends are always packed into the descriptor
-         * TODO: Inline up to 256 bytes (including the header), then
-	 *       do a chained send for mesg < first_frag_size */
-
-	desc->src_elan_addr = elan4_main2elan(ptl->ptl_elan_ctx,
-		desc->desc_buff);
-        iov.iov_base = desc->desc_buff;
-        iov.iov_len  = size_in;
-
-        rc = ompi_convertor_pack(convertor, &iov, 1);
-       	if (rc < 0) {
-	    ompi_output (0, "[%s:%d] Unable to pack data\n",
-			 __FILE__, __LINE__);
-            return;
-	}
-        size_out = iov.iov_len;
-    } else {
-	size_out = size_in;
-    }
-
-    *size = size_out;
-    hdr->hdr_frag.hdr_frag_length = size_out;
-
-
-    /* XXX: no additional flags for the DMA, remote, shmem, qwrite, 
-     *      broadcast, etc */
-    flags = 0;
-
-#define MCA_PTL_ELAN_USE_CHAINED_DMA 0
-
-#if defined(MCA_PTL_ELAN_USE_CHAINED_DMA)
-    /* Setup a chained DMA 
-     * FIXME: remember 
-     */
-    /* Setup the chain dma */
-    desc->chain_dma.dma_typeSize = E4_DMA_TYPE_SIZE (
-	    sizeof(mca_ptl_base_frag_header_t), 
-	    DMA_DataTypeByte, DMA_QueueWrite, 8);
-    desc->chain_dma.dma_cookie   = elan4_local_cookie(ptl->putget->pg_cpool,
-	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
-    desc->chain_dma.dma_vproc    = destvp;
-    desc->chain_dma.dma_srcAddr  = elan4_main2elan (ctx, (void *) hdr);
-    desc->chain_dma.dma_dstAddr  = 0x0ULL; 
-    desc->chain_dma.dma_srcEvent = SDRAM2ELAN (ctx, 
-	    &desc->elan_data_event->event32);
-    /* causes the inputter to redirect the dma to the inputq */
-    desc->chain_dma.dma_dstEvent = elan4_main2elan (ctx, 
-	    (void *) ptl->queue->input);
-
-    INITEVENT_WORD (ctx, (EVENT *) & desc->elan_data_event->event32,
-		    &desc->main_doneWord);
-    RESETEVENT_WORD (&desc->main_doneWord);
-    PRIMEEVENT_WORD (ctx, 
-	    (EVENT *) & desc->elan_data_event->event32, 1);
-
-    desc->chain_dma.dma_typeSize |= RUN_DMA_CMD;
-    desc->chain_dma.dma_pad       = NOP_CMD;
-
-    /* Copy down the chain dma to the chain buffer in elan sdram  */
-    memcpy ((void *)desc->chain_buf, (void *)&chain_dma, sizeof (E4_DMA64));
-    desc->chain_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
-	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
-    desc->chain_event->ev_Params[0]    = elan4_main2elan (ctx, 
-	    (void *)desc->chain_buf);
-    /* XXX: 
-     * The chain dma will go directly into a command stream
-     * so we need addend the command queue control bits.
-     * Allocate space from command queues hanged off the CTX.
-     */
-    desc->chain_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
-#endif
-
-    desc->main_dma.dma_srcAddr = desc->src_elan_addr;
-    desc->main_dma.dma_dstAddr = desc->dst_elan_addr;
-
-    /* Chain an event */
-    desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, desc->chain_event);
-    desc->main_dma.dma_dstEvent= 0x0ULL; /*disable remote event */
-
-    /* XXX: Hardcoded DMA retry count */
-    desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE (size_out, 
-	    DMA_DataTypeByte, flags, putget->pg_retryCount);
-
-    /* Just a normal DMA, no need to have additional flags */
-    desc->main_dma.dma_cookie = elan4_local_cookie (
-	    ptl->putget->pg_cpool, 
-	    E4_COOKIE_TYPE_LOCAL_DMA, 
-	    destvp);
-    desc->main_dma.dma_vproc = destvp;
-
-    if (CHECK_ELAN) {
-	char hostname[32];
-
-	gethostname(hostname, 32);
-	fprintf(stderr, "[%s send...] destvp %d type %d flag %d size %d\n",
-		hostname, destvp, hdr->hdr_common.hdr_type,
-		hdr->hdr_common.hdr_flags,
-		hdr->hdr_common.hdr_size);
-    }
-
-    /* Make main memory coherent with IO domain (IA64) */
-    MEMBAR_VISIBLE ();
-    END_FUNC();
-}
-
-
-int
-mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
-			 struct mca_ptl_elan_peer_t *ptl_peer,
-			 struct mca_pml_base_send_request_t *sendreq,
-			 size_t offset,
-			 size_t *size,
-			 int flags)
-{
-    mca_ptl_elan_module_t *ptl;
-
-    ptl = &ptl_peer->peer_ptl;
-
-    START_FUNC();
-
-    if (desc->desc->desc_type == MCA_PTL_ELAN_DESC_QDMA) {
-        struct ompi_ptl_elan_qdma_desc_t *qdma;
-
-        qdma = (ompi_ptl_elan_qdma_desc_t *)desc->desc;
-	
-        mca_ptl_elan_init_qdma_desc (qdma, ptl, ptl_peer, sendreq, 
-		offset, size, flags);
-        elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & qdma->main_dma);
-	/*ptl->queue->tx_cmdq->cmdq_flush */
-	elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
-
-        /* Insert desc into the list of outstanding DMA's */
-        ompi_list_append (&ptl->queue->tx_desc, (ompi_list_item_t *) desc);
-
-    } else if (desc->desc->desc_type == MCA_PTL_ELAN_DESC_PUTGET) {
-
-        struct ompi_ptl_elan_putget_desc_t *pdesc;
-
-        pdesc = (ompi_ptl_elan_putget_desc_t *)desc->desc;
-
-	/* For each put/get descriptor, a QDMA is chained off. */
-        mca_ptl_elan_init_putget_desc (pdesc, ptl, ptl_peer, sendreq, 
-		offset, size, flags);
-        elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & pdesc->main_dma);
-	/*ptl->queue->tx_cmdq->cmdq_flush */
-	elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
-
-        /* Insert desc into the list of outstanding DMA's */
-        ompi_list_append (&ptl->queue->put_desc, (ompi_list_item_t *) desc);
-    } else {
-        ompi_output (0, "Other types of DMA are not supported right now \n");
-        return OMPI_ERROR;
-    }
-
-    /* fragment state */
-    desc->frag_base.frag_owner = &ptl_peer->peer_ptl->super;
-    desc->frag_base.frag_peer = ptl_peer;
-    desc->frag_base.frag_addr = NULL;
-    desc->frag_base.frag_size = *size;
-    desc->frag_progressed  = 0;
-    desc->frag_ack_pending = 0; /* this is ack for internal elan */
-
-    END_FUNC();
-    return OMPI_SUCCESS;
-}
-
-
 static void
 mca_ptl_elan_data_frag (struct mca_ptl_elan_module_t *ptl,
                         mca_ptl_base_header_t * header)
@@ -444,7 +22,7 @@ mca_ptl_elan_data_frag (struct mca_ptl_elan_module_t *ptl,
     /* Allocate a recv frag descriptor */
     mca_ptl_elan_recv_frag_t *recv_frag;
     ompi_list_item_t *item;
-    mca_pml_base_recv_request_t *request;
+    /*mca_pml_base_recv_request_t *request;*/
 
     bool        matched; 
     int         rc = OMPI_SUCCESS;
@@ -527,6 +105,485 @@ mca_ptl_elan_ctrl_frag (struct mca_ptl_elan_module_t *ptl,
       * to race conditions, also see the note insize the follwoing routine */
      mca_ptl_elan_send_desc_done (desc, req); 
 }
+
+
+static void
+mca_ptl_elan_init_qdma_desc (struct mca_ptl_elan_send_frag_t *frag,
+                             mca_ptl_elan_module_t * ptl,
+			     struct mca_ptl_elan_peer_t *ptl_peer,
+                             mca_pml_base_send_request_t *pml_req,
+			     size_t offset,
+			     size_t *size,
+			     int flags)
+{
+    int         header_length;
+    int         destvp;
+    int         size_out;
+    int         size_in;
+    int         rc = OMPI_SUCCESS;
+   
+    mca_ptl_base_header_t *hdr;
+    struct ompi_ptl_elan_qdma_desc_t * desc;
+   
+    START_FUNC();
+
+    desc   = (ompi_ptl_elan_qdma_desc_t *)frag->desc;
+    destvp = ptl_peer->peer_vp;
+    size_in = *size;
+
+    hdr = (mca_ptl_base_header_t *) & desc->buff[0];
+
+    if(offset == 0) {
+	hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
+	hdr->hdr_common.hdr_flags = flags;
+	hdr->hdr_common.hdr_size = sizeof (mca_ptl_base_match_header_t);
+	hdr->hdr_frag.hdr_frag_offset = offset;
+	hdr->hdr_frag.hdr_frag_seq = 0;
+        hdr->hdr_frag.hdr_src_ptr.lval = 0;
+	hdr->hdr_frag.hdr_src_ptr.pval = desc;
+	hdr->hdr_frag.hdr_dst_ptr.lval = 0;
+
+	hdr->hdr_match.hdr_contextid = pml_req->req_base.req_comm->c_contextid;
+	hdr->hdr_match.hdr_src = pml_req->req_base.req_comm->c_my_rank;
+	hdr->hdr_match.hdr_dst = pml_req->req_base.req_peer;
+	hdr->hdr_match.hdr_tag = pml_req->req_base.req_tag;
+	hdr->hdr_match.hdr_msg_length = pml_req->req_bytes_packed;
+	hdr->hdr_match.hdr_msg_seq = pml_req->req_base.req_sequence;
+	header_length = sizeof (mca_ptl_base_match_header_t);
+    } else {
+	hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+	hdr->hdr_common.hdr_flags = flags;
+	hdr->hdr_common.hdr_size = sizeof (mca_ptl_base_frag_header_t);
+	hdr->hdr_frag.hdr_frag_offset = offset;
+	hdr->hdr_frag.hdr_frag_seq = 0;
+        hdr->hdr_frag.hdr_src_ptr.lval = 0;
+	hdr->hdr_frag.hdr_src_ptr.pval = desc;
+        hdr->hdr_frag.hdr_dst_ptr = pml_req->req_peer_match;
+	header_length = sizeof (mca_ptl_base_frag_header_t);
+    }
+
+    /* initialize convertor */
+    if(size_in > 0) {
+	struct iovec iov;
+        ompi_convertor_t *convertor;
+
+        if( offset <= mca_ptl_elan_module.super.ptl_first_frag_size ) {
+            convertor = &pml_req->req_convertor;
+        } else {
+            convertor = &frag->frag_base.frag_convertor;
+            ompi_convertor_copy(&pml_req->req_convertor, convertor);
+            ompi_convertor_init_for_send( 
+                convertor,
+                0, 
+                pml_req->req_base.req_datatype,
+                pml_req->req_base.req_count,
+                pml_req->req_base.req_addr,
+                offset);
+        }
+
+	/* For now, eager sends are always packed into the descriptor
+         * TODO: Inline up to 256 bytes (including the header), then
+	 *       do a chained send for mesg < first_frag_size */
+        iov.iov_base = &desc->buff[header_length];
+        iov.iov_len  = size_in;
+        rc = ompi_convertor_pack(convertor, &iov, 1);
+       	if (rc < 0) {
+	    ompi_output (0, "[%s:%d] Unable to pack data\n",
+			 __FILE__, __LINE__);
+            return;
+	}
+        size_out = iov.iov_len;
+    } else {
+	size_out = size_in;
+    }
+
+    *size = size_out;
+    hdr->hdr_frag.hdr_frag_length = size_out;
+
+    desc->main_dma.dma_srcAddr = MAIN2ELAN (desc->ptl->ptl_elan_ctx, 
+                                            &desc->buff[0]);
+
+    /* XXX: Hardcoded DMA retry count */
+    desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE ((header_length +
+                                                     size_out),
+                                                    DMA_DataTypeByte,
+                                                    DMA_QueueWrite, 16);
+
+    desc->main_dma.dma_cookie =
+        elan4_local_cookie (ptl->queue->tx_cpool, 
+		E4_COOKIE_TYPE_LOCAL_DMA, destvp);
+
+    if (CHECK_ELAN) {
+	char hostname[32];
+
+	gethostname(hostname, 32);
+	fprintf(stderr, "[%s send...] destvp %d type %d flag %d size %d\n",
+		hostname, destvp, hdr->hdr_common.hdr_type,
+		hdr->hdr_common.hdr_flags,
+		hdr->hdr_common.hdr_size);
+    }
+	
+    desc->main_dma.dma_vproc = destvp;
+
+    /* Make main memory coherent with IO domain (IA64) */
+    MEMBAR_VISIBLE ();
+    END_FUNC();
+}
+
+static void
+mca_ptl_elan_init_putget_desc (struct mca_ptl_elan_send_frag_t *frag,
+                               mca_ptl_elan_module_t * ptl,
+			       struct mca_ptl_elan_peer_t *ptl_peer,
+                               mca_pml_base_send_request_t *pml_req,
+			       size_t offset,
+			       size_t *size,
+			       int flags)
+{
+    int         destvp;
+    int         size_out;
+    int         size_in;
+    int         rc = OMPI_SUCCESS;
+    ELAN4_CTX   *ctx;
+
+    struct ompi_ptl_elan_putget_desc_t * desc;
+
+    mca_ptl_base_header_t *hdr;
+
+    START_FUNC();
+
+    hdr = &frag->frag_base.frag_header;
+    desc   = (ompi_ptl_elan_putget_desc_t *)frag->desc;
+    destvp = ptl_peer->peer_vp;
+    size_in = *size;
+    ctx =  ptl->ptl_elan_ctx;
+
+    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+    hdr->hdr_common.hdr_flags = flags;
+    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_frag_header_t);
+    hdr->hdr_frag.hdr_frag_offset = offset;
+    hdr->hdr_frag.hdr_frag_seq = 0;
+    hdr->hdr_frag.hdr_src_ptr.lval = 0; 
+    hdr->hdr_frag.hdr_src_ptr.pval = frag;
+    hdr->hdr_frag.hdr_dst_ptr = pml_req->req_peer_match;
+
+    desc->src_elan_addr = MAIN2ELAN (ctx, pml_req->req_base.req_addr);
+    desc->dst_elan_addr = (E4_Addr)pml_req->req_peer_addr.lval;
+
+#define PUT_NON_CONTIGUOUS_DATA 0
+    /* initialize convertor */
+    if(size_in > 0 && PUT_NON_CONTIGUOUS_DATA) {
+	struct iovec iov;
+        ompi_convertor_t *convertor;
+
+        if( offset <= mca_ptl_elan_module.super.ptl_first_frag_size ) {
+            convertor = &pml_req->req_convertor;
+        } else {
+            convertor = &frag->frag_base.frag_convertor;
+            ompi_convertor_copy(&pml_req->req_convertor, convertor);
+            ompi_convertor_init_for_send( 
+                convertor,
+                0, 
+                pml_req->req_base.req_datatype,
+                pml_req->req_base.req_count,
+                pml_req->req_base.req_addr,
+                offset);
+        }
+
+	/* For now, eager sends are always packed into the descriptor
+         * TODO: Inline up to 256 bytes (including the header), then
+	 *       do a chained send for mesg < first_frag_size */
+
+	desc->src_elan_addr = elan4_main2elan(ctx, desc->desc_buff);
+        iov.iov_base = desc->desc_buff;
+        iov.iov_len  = size_in;
+
+        rc = ompi_convertor_pack(convertor, &iov, 1);
+       	if (rc < 0) {
+	    ompi_output (0, "[%s:%d] Unable to pack data\n",
+			 __FILE__, __LINE__);
+            return;
+	}
+        size_out = iov.iov_len;
+    } else {
+	size_out = size_in;
+    }
+
+    *size = size_out;
+    hdr->hdr_frag.hdr_frag_length = size_out;
+
+
+    /* XXX: no additional flags for the DMA, remote, shmem, qwrite, 
+     *      broadcast, etc */
+    flags = 0;
+
+#define MCA_PTL_ELAN_USE_CHAINED_DMA 0
+
+#if defined(MCA_PTL_ELAN_USE_CHAINED_DMA)
+    /* Setup a chained DMA 
+     * FIXME: remember 
+     */
+    /* Setup the chain dma */
+    desc->chain_dma.dma_typeSize = E4_DMA_TYPE_SIZE (
+	    sizeof(mca_ptl_base_frag_header_t), 
+	    DMA_DataTypeByte, DMA_QueueWrite, 8);
+    desc->chain_dma.dma_cookie   = elan4_local_cookie(ptl->putget->pg_cpool,
+	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
+    desc->chain_dma.dma_vproc    = destvp;
+    desc->chain_dma.dma_srcAddr  = 
+	elan4_main2elan (ctx, (void *) hdr);
+    desc->chain_dma.dma_dstAddr  = 0x0ULL; 
+    desc->chain_dma.dma_srcEvent = SDRAM2ELAN (ctx, desc->elan_event);
+    /* causes the inputter to redirect the dma to the inputq */
+    desc->chain_dma.dma_dstEvent = elan4_main2elan (ctx, 
+	    (void *) ptl->queue->input);
+
+    INITEVENT_WORD (ctx, (E4_Event *) desc->elan_event, &desc->main_doneWord);
+    RESETEVENT_WORD (&desc->main_doneWord);
+
+    /* Be sure that padding E4_Event is not causing problems */
+    PRIMEEVENT_WORD (ctx, (E4_Event *)desc->elan_event, 1);
+
+    desc->chain_dma.dma_typeSize |= RUN_DMA_CMD;
+    desc->chain_dma.dma_pad       = NOP_CMD;
+
+    /* Copy down the chain dma to the chain buffer in elan sdram  */
+    memcpy ((void *)desc->chain_buff, (void *)&desc->chain_dma, 
+	    sizeof (E4_DMA64));
+    desc->chain_event->ev_CountAndType = E4_EVENT_INIT_VALUE(-32,
+	    E4_EVENT_COPY, E4_EVENT_DTYPE_LONG, 8);
+    desc->chain_event->ev_Params[0]    = elan4_main2elan (ctx, 
+	    (void *)desc->chain_buff);
+    /* XXX: 
+     * The chain dma will go directly into a command stream
+     * so we need addend the command queue control bits.
+     * Allocate space from command queues hanged off the CTX.
+     */
+    desc->chain_event->ev_Params[1] = elan4_alloccq_space (ctx, 8, CQ_Size8K);
+#endif
+
+    desc->main_dma.dma_srcAddr = desc->src_elan_addr;
+    desc->main_dma.dma_dstAddr = desc->dst_elan_addr;
+
+    /* Chain an event */
+    desc->main_dma.dma_srcEvent= elan4_main2elan(ctx, 
+	    (E4_Event *)desc->chain_event);
+    desc->main_dma.dma_dstEvent= 0x0ULL; /*disable remote event */
+
+    /* XXX: Hardcoded DMA retry count */
+    desc->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE (size_out, 
+	    DMA_DataTypeByte, flags, ptl->putget->pg_retryCount);
+
+    /* Just a normal DMA, no need to have additional flags */
+    desc->main_dma.dma_cookie = elan4_local_cookie (
+	    ptl->putget->pg_cpool, 
+	    E4_COOKIE_TYPE_LOCAL_DMA, 
+	    destvp);
+    desc->main_dma.dma_vproc = destvp;
+
+    if (CHECK_ELAN) {
+	char hostname[32];
+
+	gethostname(hostname, 32);
+	fprintf(stderr, "[%s send...] destvp %d type %d flag %d size %d\n",
+		hostname, destvp, hdr->hdr_common.hdr_type,
+		hdr->hdr_common.hdr_flags,
+		hdr->hdr_common.hdr_size);
+    }
+
+    /* Make main memory coherent with IO domain (IA64) */
+    MEMBAR_VISIBLE ();
+    END_FUNC();
+}
+
+int
+mca_ptl_elan_start_desc (mca_ptl_elan_send_frag_t * desc,
+			 struct mca_ptl_elan_peer_t *ptl_peer,
+			 struct mca_pml_base_send_request_t *sendreq,
+			 size_t offset,
+			 size_t *size,
+			 int flags)
+{
+    mca_ptl_elan_module_t *ptl;
+
+    ptl = ptl_peer->peer_ptl;
+
+    START_FUNC();
+
+    if (desc->desc->desc_type == MCA_PTL_ELAN_DESC_QDMA) {
+        struct ompi_ptl_elan_qdma_desc_t *qdma;
+
+        qdma = (ompi_ptl_elan_qdma_desc_t *)desc->desc;
+	
+        mca_ptl_elan_init_qdma_desc (desc, ptl, ptl_peer, sendreq, 
+		offset, size, flags);
+        elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & qdma->main_dma);
+	/*ptl->queue->tx_cmdq->cmdq_flush */
+	elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
+
+        /* Insert desc into the list of outstanding DMA's */
+        ompi_list_append (&ptl->queue->tx_desc, (ompi_list_item_t *) desc);
+
+    } else if (MCA_PTL_ELAN_DESC_PUT == desc->desc->desc_type) {
+
+        struct ompi_ptl_elan_putget_desc_t *pdesc;
+
+        pdesc = (ompi_ptl_elan_putget_desc_t *)desc->desc;
+
+	/* For each put/get descriptor, a QDMA is chained off. */
+        mca_ptl_elan_init_putget_desc (desc, ptl, ptl_peer, sendreq, 
+		offset, size, flags);
+        elan4_run_dma_cmd (ptl->putget->put_cmdq, (E4_DMA *) &pdesc->main_dma);
+
+	/*ptl->queue->tx_cmdq->cmdq_flush */
+	elan4_flush_cmdq_reorder (ptl->putget->put_cmdq);
+
+        /* Insert desc into the list of outstanding DMA's */
+        ompi_list_append (&ptl->putget->put_desc, (ompi_list_item_t *) desc);
+    } else {
+        ompi_output (0, "To support GET and Other types of DMA "
+	       "are not supported right now \n");
+        return OMPI_ERROR;
+    }
+
+    /* fragment state */
+    desc->frag_base.frag_owner = (struct mca_ptl_base_module_t *) 
+	&ptl_peer->peer_ptl->super;
+    desc->frag_base.frag_peer = (struct mca_ptl_base_peer_t *) ptl_peer;
+    desc->frag_base.frag_addr = NULL;
+    desc->frag_base.frag_size = *size;
+    desc->frag_progressed  = 0;
+    desc->frag_ack_pending = 0; /* this is ack for internal elan */
+
+    END_FUNC();
+    return OMPI_SUCCESS;
+}
+
+/* Initialize an ack descriptor and queue it to the command queue */
+int
+mca_ptl_elan_start_ack ( mca_ptl_base_module_t * ptl, 
+			 mca_ptl_elan_send_frag_t * desc,
+			 mca_ptl_elan_recv_frag_t * recv_frag)
+{
+    struct ompi_ptl_elan_qdma_desc_t *qdma;
+    mca_ptl_base_header_t *hdr;
+    mca_pml_base_recv_request_t* request;
+    mca_ptl_elan_module_t *elan_ptl;
+
+    int destvp;
+
+    START_FUNC();
+
+    destvp = ((mca_ptl_elan_peer_t *)
+	    recv_frag->frag_recv.frag_base.frag_peer)->peer_vp;
+	
+    elan_ptl = (mca_ptl_elan_module_t *) ptl;
+    desc->desc->desc_type = MCA_PTL_ELAN_DESC_QDMA; 
+    qdma = (ompi_ptl_elan_qdma_desc_t *)desc->desc;
+
+    hdr = (mca_ptl_base_header_t *) & qdma->buff[0];
+
+    request = recv_frag->frag_recv.frag_request;
+
+    hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
+    hdr->hdr_common.hdr_flags = 0;
+    hdr->hdr_common.hdr_size = sizeof(mca_ptl_base_ack_header_t);
+
+    hdr->hdr_ack.hdr_src_ptr = 
+	recv_frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_src_ptr;
+    hdr->hdr_ack.hdr_dst_match.lval = 0; 
+    hdr->hdr_ack.hdr_dst_match.pval = request;
+    hdr->hdr_ack.hdr_dst_addr.lval = 0; 
+    hdr->hdr_ack.hdr_dst_addr.pval = request->req_base.req_addr;
+    hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed;
+    hdr->hdr_frag.hdr_frag_length = sizeof(mca_ptl_base_ack_header_t);
+
+    /* Filling up QDMA descriptor */
+    qdma->main_dma.dma_srcAddr = elan4_main2elan(
+	    elan_ptl->ptl_elan_ctx, &qdma->buff[0]);
+
+    /* XXX: Hardcoded DMA retry count */
+    qdma->main_dma.dma_typeSize = E4_DMA_TYPE_SIZE (
+	    sizeof(mca_ptl_base_ack_header_t),
+	    DMA_DataTypeByte, DMA_QueueWrite, 16);
+    qdma->main_dma.dma_vproc = destvp;
+    qdma->main_dma.dma_cookie = elan4_local_cookie (
+	    elan_ptl->queue->tx_cpool, 
+	    E4_COOKIE_TYPE_LOCAL_DMA, destvp);
+
+    /* Make main memory coherent with IO domain (IA64) */
+    MEMBAR_VISIBLE ();
+
+    elan4_run_dma_cmd (elan_ptl->queue->tx_cmdq, (DMA *) & qdma->main_dma);
+
+    /*ptl->queue->tx_cmdq->cmdq_flush */
+    elan4_flush_cmdq_reorder (elan_ptl->queue->tx_cmdq);
+
+    /* Insert desc into the list of outstanding DMA's */
+    ompi_list_append (&elan_ptl->queue->tx_desc, (ompi_list_item_t *) desc);
+
+    /* fragment state */
+    desc->desc->req = NULL;
+    desc->frag_base.frag_owner = ptl;
+    desc->frag_base.frag_peer = recv_frag->frag_recv.frag_base.frag_peer; 
+    desc->frag_base.frag_addr = NULL;
+    desc->frag_base.frag_size = 0;
+    desc->frag_progressed     = 0;
+    desc->desc->desc_status   = MCA_PTL_ELAN_DESC_LOCAL;
+
+    END_FUNC();
+    return OMPI_SUCCESS;
+}
+
+#if 0
+int
+mca_ptl_elan_start_ack (mca_ptl_elan_send_frag_t * desc,
+			 struct mca_ptl_elan_peer_t *ptl_peer,
+			 struct mca_pml_base_send_request_t *sendreq,
+			 size_t offset,
+			 size_t *size,
+			 int flags)
+{
+    mca_ptl_elan_module_t *ptl;
+
+    START_FUNC();
+
+    if (desc->desc->desc_type == MCA_PTL_ELAN_DESC_QDMA) {
+        struct ompi_ptl_elan_qdma_desc_t *qdma;
+
+        qdma = (ompi_ptl_elan_qdma_desc_t *)desc->desc;
+        ptl = qdma->ptl;
+	
+        mca_ptl_elan_init_qdma_desc (qdma, ptl, ptl_peer, sendreq, 
+		offset, size, flags);
+
+        elan4_run_dma_cmd (ptl->queue->tx_cmdq, (DMA *) & qdma->main_dma);
+
+	/*ptl->queue->tx_cmdq->cmdq_flush */
+	elan4_flush_cmdq_reorder (ptl->queue->tx_cmdq);
+
+        /* Insert desc into the list of outstanding DMA's */
+        ompi_list_append (&ptl->queue->tx_desc, (ompi_list_item_t *) desc);
+
+    } else {
+        ompi_output (0,
+                     "Other types of DMA are not supported right now \n");
+        return OMPI_ERROR;
+    }
+
+    /*mca_ptl_base_frag_t frag_base;  */
+
+    /* fragment state */
+    desc->frag_base.frag_owner = &ptl_peer->peer_ptl->super;
+    desc->frag_base.frag_peer = ptl_peer;
+    desc->frag_base.frag_addr = NULL;
+    desc->frag_base.frag_size = *size;
+    desc->frag_progressed  = 0;
+    desc->frag_ack_pending = 0; /* this is ack for internal elan */
+
+    END_FUNC();
+    return OMPI_SUCCESS;
+}
+#endif 
 
 int
 mca_ptl_elan_drain_recv (mca_ptl_elan_component_t * emp)
@@ -670,12 +727,15 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
 	    if (rc) {
 		mca_ptl_base_header_t *header;
                 mca_ptl_elan_send_request_t *req;
+		struct ompi_ptl_elan_qdma_desc_t *qdma;
+
                 /* Remove the desc, update the request, put back to free list */
                 desc = (mca_ptl_elan_send_frag_t *)
                     ompi_list_remove_first (&queue->tx_desc);
-                req = desc->desc->req;
-		header = (mca_ptl_base_header_t *)& 
-                    ((ompi_ptl_elan_qdma_desc_t *)desc->desc)->buff[0];
+		qdma = (ompi_ptl_elan_qdma_desc_t*)desc->desc;
+
+                req = (mca_ptl_elan_send_request_t *)qdma->req;
+		header = (mca_ptl_base_header_t *)&qdma->buff[0];
 
 		if (CHECK_ELAN) {
 		    char hostname[32];
@@ -691,12 +751,9 @@ mca_ptl_elan_update_desc (mca_ptl_elan_component_t * emp)
  		mca_ptl_elan_send_desc_done (desc, req);
 
 		/* Remember to reset the events */
-		INITEVENT_WORD (ctx, 
-			(EVENT *) & desc->elan_data_event->event32,
-		       	&desc->main_doneWord);
-		RESETEVENT_WORD (&desc->main_doneWord);
-		PRIMEEVENT_WORD (ctx, 
-			(EVENT *) & desc->elan_data_event->event32, 1);
+		INITEVENT_WORD (ctx, qdma->elan_event, &qdma->main_doneWord);
+		RESETEVENT_WORD (&qdma->main_doneWord);
+		PRIMEEVENT_WORD (ctx, qdma->elan_event, 1);
 
  	    } else {
  		/* XXX: Stop at any incomplete send desc */

@@ -9,9 +9,11 @@
 #include "ptl_elan.h"
 #include "ptl_elan_priv.h"
 
-#define ELAN_QUEUE_MAX             INPUT_QUEUE_MAX
-#define ELAN_QUEUE_LOST_SLOTS      1
-#define SLOT_ALIGN                 128
+#define PUTGET_THROTTLE	           (32)
+#define ELAN_PTL_FASTPATH	   (0x1)
+#define ELAN_QUEUE_MAX             (INPUT_QUEUE_MAX)
+#define ELAN_QUEUE_LOST_SLOTS      (1)
+#define SLOT_ALIGN                 (128)
 #define MAX(a,b)                   ((a>b)? a:b)
 #define ALIGNUP(x,a)	           (((unsigned int)(x) + ((a)-1)) & (-(a)))
 
@@ -43,7 +45,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 
     ompi_free_list_t *flist;
     ompi_ptl_elan_qdma_desc_t *desc;
-    ompi_elan_event_t *elan_ptr;
+    E4_Event *elan_ptr;
 
     START_FUNC();
 
@@ -59,7 +61,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     main_align = MAX (sizeof (void *), 8);
     elan_align = MAX (sizeof (int *), ELAN_BLOCK_ALIGN);
     main_size = ALIGNUP (sizeof (ompi_ptl_elan_qdma_desc_t), main_align);
-    elan_size = ALIGNUP (sizeof (ompi_elan_event_t), elan_align);
+    elan_size = ALIGNUP (sizeof (E4_Event), elan_align);
 
     OBJ_CONSTRUCT(&flist->fl_lock, ompi_mutex_t);
     flist->fl_elem_size = flist->fl_max_to_alloc = 128;
@@ -80,30 +82,25 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
     OMPI_PTL_ELAN_CHECK_UNEX (desc, NULL, OMPI_ERROR, 0);
 
     /* Allocating elan related structures */
-    elan_ptr = (ompi_elan_event_t *) elan4_allocElan (rail->r_alloc,
-                                                      elan_align,
-                                                      elan_size * count);
+    elan_ptr = (E4_Event *) elan4_allocElan (rail->r_alloc,
+	    elan_align, elan_size * count);
     OMPI_PTL_ELAN_CHECK_UNEX (elan_ptr, NULL, OMPI_ERROR, 0);
 
     for (i = 0; i < flist->fl_num_per_alloc; i++) {
         ompi_list_item_t *item;
 
-        desc->rail  = rail;
         desc->ptl   = ptl;
-        desc->elan_data_event = elan_ptr;
+        desc->elan_event = elan_ptr;
         frag->desc = (ompi_ptl_elan_base_desc_t *)desc;
 
         /* Initialize some of the dma structures */
         {
             desc->main_dma.dma_dstAddr = 0;
-            desc->main_dma.dma_srcEvent =
-                SDRAM2ELAN (ctx, &desc->elan_data_event->event32);
+            desc->main_dma.dma_srcEvent = SDRAM2ELAN (ctx, desc->elan_event);
             desc->main_dma.dma_dstEvent = SDRAM2ELAN (ctx, queue->input);
-            INITEVENT_WORD (ctx, (EVENT *) & desc->elan_data_event->event32,
-                            &desc->main_doneWord);
+            INITEVENT_WORD (ctx, desc->elan_event, &desc->main_doneWord);
             RESETEVENT_WORD (&desc->main_doneWord);
-            PRIMEEVENT_WORD (ctx, 
-		    (EVENT *) & desc->elan_data_event->event32, 1);
+            PRIMEEVENT_WORD (ctx, desc->elan_event, 1);
         }
 
         item = (ompi_list_item_t *) frag;
@@ -111,7 +108,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 
         /* Progress to the next element */
         desc = (ompi_ptl_elan_qdma_desc_t *) ((char *) desc + main_size);
-        elan_ptr = (ompi_elan_event_t *) ((char *) elan_ptr + elan_size);
+        elan_ptr = (E4_Event *) ((char *) elan_ptr + elan_size);
         frag ++;
     }
     flist->fl_num_allocated += flist->fl_num_per_alloc;
@@ -132,9 +129,9 @@ mca_ptl_elan_putget_desc_contruct (
     /* Zero this descriptor */
     memset(desc, 0, sizeof(desc));
 
-    desc->dma_typeSize = 0;
-    desc->dma_cookie   = 0;
-    desc->dma_vproc    = 0;
+    desc->main_dma.dma_typeSize = 0;
+    desc->main_dma.dma_cookie   = 0;
+    desc->main_dma.dma_vproc    = 0;
 
     /* Remember all the address needs to be converted 
      * before assigning to DMA descritpor */
@@ -155,26 +152,26 @@ mca_ptl_elan_putget_desc_contruct (
     mb();
 }
 
-#define OMPI_ELAN_DESC_LIST(ctx, flist, frag, desc, eptr, msize, esize, local)\
+#define OMPI_ELAN_DESC_LIST(ctx, flist, frag, dp, eptr, msize, esize, local)\
 do {                                                                      \
     int i;                                                                \
     for (i = 0; i < flist->fl_num_per_alloc; i++) {                       \
         ompi_list_item_t *item;                                           \
                                                                           \
-        desc->elan_data_event = eptr;                                     \
-        frag->desc = (ompi_ptl_elan_base_desc_t *)desc;                   \
+        dp->elan_event = eptr;                                            \
+        frag->desc = (ompi_ptl_elan_base_desc_t *)dp;                     \
                                                                           \
         /* Initialize some of the dma structures */                       \
-	mca_ptl_elan_putget_desc_contruct (ctx, desc,                     \
+	mca_ptl_elan_putget_desc_contruct (ctx, dp,                       \
 		eptr, 0, 0, local);                                       \
                                                                           \
         item = (ompi_list_item_t *) frag;                                 \
         ompi_list_append (&flist->super, item);                           \
                                                                           \
         /* Progress to the next element */                                \
-        desc = (ompi_ptl_elan_putget_desc_t *)                            \
-	    ((char *)desc + msize);                                       \
-        eptr = (ompi_elan_event_t *) ((char *) eptr + esize);             \
+        dp= (ompi_ptl_elan_putget_desc_t *)                               \
+	    ((char *)dp + msize);                                         \
+        eptr = (E4_Event *) ((char *) eptr + esize);                      \
         frag ++;                                                          \
     }                                                                     \
     flist->fl_num_allocated += flist->fl_num_per_alloc;                   \
@@ -187,15 +184,13 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
 				ompi_ptl_elan_putget_ctrl_t * putget,
 				int init_num, int inc_num, int max_num)
 {
-    int         i;
     int         main_size; 
     int         main_align;
     int         elan_size; 
     int         elan_align;
 
-    RAIL       *rail;
     ELAN4_CTX  *ctx;
-    ompi_elan_event_t *elan_ptr;
+    E4_Event   *elan_ptr;
     mca_ptl_elan_send_frag_t *frag;
     ompi_free_list_t *put_list, *get_list;
     ompi_ptl_elan_putget_desc_t *put_desc, *get_desc;
@@ -205,7 +200,7 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     main_align = MAX (sizeof (void *), ELAN_ALIGN);
     elan_align = MAX (sizeof (int *), ELAN_BLOCK_ALIGN);
     main_size  = ALIGNUP(sizeof(ompi_ptl_elan_putget_desc_t), main_align);
-    elan_size  = ALIGNUP(sizeof(ompi_elan_event_t), elan_align);
+    elan_size  = ALIGNUP(sizeof(E4_Event), elan_align);
 
     rail = (RAIL *) ptl->ptl_elan_rail;
     ctx  = (ELAN4_CTX *) ptl->ptl_elan_ctx;
@@ -222,15 +217,15 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     OMPI_PTL_ELAN_CHECK_UNEX (frag, NULL, OMPI_ERROR, 0);
 
     /* Allocating elan related structures */
-    elan_ptr = (ompi_elan_event_t *) elan4_allocElan (rail->r_alloc,
+    elan_ptr = (E4_Event *) elan4_allocElan (rail->r_alloc,
 	    elan_align, elan_size * inc_num);
     OMPI_PTL_ELAN_CHECK_UNEX (elan_ptr, NULL, OMPI_ERROR, 0);
 
     put_desc = (ompi_ptl_elan_putget_desc_t *) elan4_allocMain (
 	    rail->r_alloc, main_align, main_size * inc_num);
     OMPI_PTL_ELAN_CHECK_UNEX (put_desc, NULL, OMPI_ERROR, 0);
-    OMPI_PTL_ELAN_GROW_DESC_LIST(ctx, put_list, frag,
-	    put_desc, elan_ptr, main_size, elan_size, 1)           
+    OMPI_ELAN_DESC_LIST(ctx, put_list, frag, put_desc, elan_ptr, 
+	    main_size, elan_size, 1);
 
     OBJ_CONSTRUCT (&putget->get_desc, ompi_list_t);
     OBJ_CONSTRUCT (&putget->get_desc_free, ompi_free_list_t);
@@ -243,15 +238,15 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
     OMPI_PTL_ELAN_CHECK_UNEX (frag, NULL, OMPI_ERROR, 0);
 
     /* Allocating elan related structures */
-    elan_ptr = (ompi_elan_event_t *) elan4_allocElan (rail->r_alloc,
+    elan_ptr = (E4_Event *) elan4_allocElan (rail->r_alloc,
 	    elan_align, elan_size * inc_num);
     OMPI_PTL_ELAN_CHECK_UNEX (elan_ptr, NULL, OMPI_ERROR, 0);
 
     get_desc = (ompi_ptl_elan_putget_desc_t *) elan4_allocMain (
 	    rail->r_alloc, main_align, main_size * inc_num);
     OMPI_PTL_ELAN_CHECK_UNEX (get_desc, NULL, OMPI_ERROR, 0);
-    OMPI_PTL_ELAN_GROW_DESC_LIST(ctx, get_list, frag,
-	    get_desc, elan_ptr, main_size, elan_size, 0)           
+    OMPI_ELAN_DESC_LIST(ctx, get_list, frag, get_desc, elan_ptr, 
+	    main_size, elan_size, 0);
                                                                       
     END_FUNC();
     return OMPI_SUCCESS;
@@ -422,7 +417,7 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
         memset (putget, 0, sizeof (ompi_ptl_elan_putget_ctrl_t));
 
 	putget->pg_throttle = PUTGET_THROTTLE;
-	putget->pg_flags    = ELAN_PUT_FASTPATH;
+	putget->pg_flags    = ELAN_PTL_FASTPATH;
 	putget->pg_retryCount = 16;
 	putget->pg_evictCache = TRUE;
 	putget->pg_waitType   = ELAN_POLL_EVENT;
@@ -430,9 +425,10 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
 	/* construct the lock variable */
         OBJ_CONSTRUCT (&putget->pg_lock, ompi_mutex_t);
 
-	*cqp = elan4_probe_cmdq(ctx, rail->r_alloc, 0x10, CQ_AutoCtrlFlowOn);
+	cqp = elan4_probe_cmdq(ctx, rail->r_alloc, 0x10, CQ_AutoCtrlFlowOn);
+
 	putget->put_cmdq = elan4_alloc_cmdq(ctx,
-			rail>r_alloc, 
+			rail->r_alloc, 
 			CQ_Size8K, 
 			CQ_WriteEnableBit | 
 			CQ_DmaStartEnableBit | 
@@ -456,14 +452,14 @@ ompi_init_elan_putget (mca_ptl_elan_component_t * emp,
         OMPI_PTL_ELAN_CHECK_UNEX (putget->pg_cmdStream, NULL, OMPI_ERROR, 0);
 
 	/* Allocate a per vp counter to throttle outstanding get DMAs */
-	putget->pg_pendingGetCount = malloc(sizeof(u_int)*state->nvp);
+	putget->pg_pendingGetCount = malloc(sizeof(u_int)*ptl->elan_nvp);
         OMPI_PTL_ELAN_CHECK_UNEX (putget->pg_pendingGetCount, 
 		NULL, OMPI_ERROR, 0);
-	memset(putget->pg_pendingGetCount, 0, sizeof(u_int)*state->nvp);
+	memset(putget->pg_pendingGetCount, 0, sizeof(u_int)*ptl->elan_nvp);
 
-	putget->pg_cpool = elan4_allocCookiePool(ctx, state->vp);
+	putget->pg_cpool = elan4_allocCookiePool(ctx, ptl->elan_vp);
 
-       	ompi_ptl_elan_init_putget_ctrl (ptl, rail, putget, 0, 16, 32)
+       	ompi_ptl_elan_init_putget_ctrl (ptl, rail, putget, 0, 16, 32);
     }
 
     END_FUNC();

@@ -19,6 +19,10 @@
 #include "ptl_elan_frag.h"
 #include "ptl_elan_priv.h"
 
+#if 0
+#elif defined(ABC)
+#endif
+
 /* XXX: There must be multiple PTL's. This could be the template */
 mca_ptl_elan_module_t mca_ptl_elan_module = {
     {
@@ -312,13 +316,14 @@ mca_ptl_elan_put (struct mca_ptl_base_module_t *ptl,
 
 int
 mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
-                  struct mca_ptl_base_peer_t *ptl_base_peer,
-                  struct mca_pml_base_recv_request_t *request,
+                  struct mca_ptl_base_peer_t *ptl_peer,
+                  struct mca_pml_base_recv_request_t *sendreq,
                   size_t offset,
                   size_t size,
                   int flags)
 {
     int rc = OMPI_SUCCESS;
+#if 0
     mca_ptl_elan_send_frag_t *desc;
 
     /* XXX: 
@@ -341,6 +346,7 @@ mca_ptl_elan_get (struct mca_ptl_base_module_t *ptl,
 
     /* Update all the sends until the put is done */
     END_FUNC();
+#endif
     return rc;
 }
 

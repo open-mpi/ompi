@@ -47,7 +47,7 @@ mca_ptl_elan_recv_frag_construct (mca_ptl_elan_recv_frag_t * frag)
     frag->frag_msg_cnt = 0;
     frag->frag_progressed = 0;
 
-    frag->frag.qdma = NULL;
+    /*frag->frag.qdma = NULL;*/
     frag->alloc_buff = (char *) malloc (sizeof (char) * 2048 + 32);
     if (NULL == frag->alloc_buff) {
         ompi_output (0,
@@ -64,7 +64,7 @@ mca_ptl_elan_recv_frag_destruct (mca_ptl_elan_recv_frag_t * frag)
     frag->frag_msg_cnt = 0;
     frag->frag_progressed = 0;
 
-    frag->frag.qdma = NULL;
+    /*frag->frag.qdma = NULL;*/
     free (frag->alloc_buff);
     frag->alloc_buff = NULL;
     frag->unex_buff = NULL;
@@ -139,7 +139,7 @@ mca_ptl_elan_alloc_send_desc (struct mca_ptl_base_module_t *ptl_ptr,
 	}
     }
     desc = (mca_ptl_elan_send_frag_t *) item; 
-    desc->desc->req = (struct mca_ptl_elan_send_request_t *) sendreq;
+    desc->desc->req = sendreq;
 
     desc->desc->desc_type = desc_type;
 
@@ -157,7 +157,7 @@ mca_ptl_elan_alloc_recv_desc (struct mca_pml_base_recv_request_t * req)
 void 
 mca_ptl_elan_send_desc_done (
        	mca_ptl_elan_send_frag_t *desc,
-       	mca_ptl_elan_send_request_t *req) 
+       	mca_pml_base_send_request_t *req) 
 { 
     mca_ptl_elan_module_t *ptl;
     ompi_ptl_elan_queue_ctrl_t *queue;
