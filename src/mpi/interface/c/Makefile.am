@@ -4,68 +4,102 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
-
-# We must traverse into the profile directory to install the proper
-# header files.  So only only expect to find the C profiling library
-# if we're compiling profiling separately.
-
-if COMPILE_PROFILING_SEPARATELY
-profile_lib = profile/libmpi_c_profile.la
+#
+# LAM_IS_PMPI_BINDING flag s enabled when we want our MPI_* symbols
+# to be replaced by PMPI_*. In other words, this flag decides 
+# whether "profile/defines.h" is included or not. "profile/defines.h"
+# replaces all MPI_* symbols with PMPI_* symbols. In this directory,
+# we need it to be 0
+#
+AM_CPPFLAGS		= -DLAM_PROFILING_DEFINES=0
+			
+#
+# The top directory always builds MPI_* bindings. The bottom directory
+# always builds PMPI_* bindings. The cases where the top directory
+# needs to be built are
+# 1. When profiling is disabled.
+# 2. When profiling is enabled but weak symbol support is absent.
+#
+if WANT_MPI_BINDINGS_LAYER
+mpi_lib = libmpi_c_mpi.la
 else
-profile_lib =
+mpi_lib = 
 endif
+		
+noinst_LTLIBRARIES = libmpi_c.la $(mpi_lib)
 
+#
+# The profile subdirectory always builds PMPI_* bindings. Hence, this
+# directory needs to be built whenever profiling is enabled
+#
+if WANT_PMPI_BINDINGS_LAYER
+	pmpi_lib = profile/libmpi_c_pmpi.la
+else
+	pmpi_lib = 
+endif
+#
+# 
 SUBDIRS = profile
-
-noinst_LTLIBRARIES = libmpi_c.la
-
+#
+# 
 headers = bindings.h
+#
+# libmpi_c.la is the final library that will be built. This will try
+# to snarf in mpi_lib and pmpi_lib. So, the right things will be done
+# by default
+#
 
-libmpi_c_la_SOURCES = \
-        alloc_mem.c \
-	comm_get_name.c \
-	comm_set_name.c \
-	init.c \
-	finalize.c \
-        free_mem.c \
-	type_commit.c \
-	type_contiguous.c \
-	type_create_darray.c \
-	type_create_f90_complex.c \
-	type_create_f90_integer.c \
-	type_create_f90_real.c \
-	type_create_hindexed.c \
-	type_create_hvector.c \
-	type_create_indexed_block.c \
-	type_create_keyval.c \
-	type_create_resized.c \
-	type_create_struct.c \
-	type_create_subarray.c \
-	type_delete_attr.c \
-	type_dup.c \
-	type_extent.c \
-	type_free.c \
-	type_free_keyval.c \
-	type_get_attr.c \
-	type_get_contents.c \
-	type_get_envelope.c \
-	type_get_extent.c \
-	type_get_name.c \
-	type_get_true_extent.c \
-	type_hindexed.c \
-	type_hvector.c \
-	type_indexed.c \
-	type_lb.c \
-	type_match_size.c \
-	type_set_attr.c \
-	type_set_name.c \
-	type_size.c \
-	type_struct.c \
-	type_ub.c \
-	type_vector.c
+libmpi_c_la_SOURCES	= 
 
-libmpi_c_la_LIBADD	= $(profile_lib)
+libmpi_c_la_LIBADD	= \
+					$(mpi_lib) \
+					$(pmpi_lib)
 
+libmpi_c_mpi_la_SOURCES = \
+				alloc_mem.c \
+                comm_get_name.c \
+                comm_set_name.c \
+                finalize.c \
+                free_mem.c \
+                init.c \
+                type_commit.c \
+                type_contiguous.c \
+                type_create_darray.c \
+                type_create_f90_complex.c \
+                type_create_f90_integer.c \
+                type_create_f90_real.c \
+                type_create_hindexed.c \
+                type_create_hvector.c \
+                type_create_indexed_block.c \
+                type_create_keyval.c \
+                type_create_resized.c \
+                type_create_struct.c \
+                type_create_subarray.c \
+                type_delete_attr.c \
+                type_dup.c \
+                type_extent.c \
+                type_free.c \
+                type_free_keyval.c \
+                type_get_attr.c \
+                type_get_contents.c \
+                type_get_envelope.c \
+                type_get_extent.c \
+                type_get_name.c \
+                type_get_true_extent.c \
+                type_hindexed.c \
+                type_hvector.c \
+                type_indexed.c \
+                type_lb.c \
+                type_match_size.c \
+                type_set_attr.c \
+                type_set_name.c \
+                type_size.c \
+                type_struct.c \
+                type_ub.c \
+                type_vector.c
+
+
+EXTRA_DIST = $(libmpi_c_mpi_la_SOURCES) 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
