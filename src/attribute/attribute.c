@@ -43,6 +43,9 @@
                             ((ompi_##type##_t *)object, \
 			    key, attribute, \
 			    key_item->extra_state)) != MPI_SUCCESS) {\
+            if (need_lock) { \
+                OMPI_THREAD_UNLOCK(&alock); \
+            } \
 	    return err;\
         } \
     }
@@ -58,6 +61,7 @@
         if ((err = (*((hash_value->copy_attr_fn).attr_##type##_copy_fn)) \
               ((ompi_##type##_t *)old_object, key, hash_value->extra_state, \
                old_attr, &new_attr, &flag)) != MPI_SUCCESS) { \
+            OMPI_THREAD_UNLOCK(&alock); \
            return err; \
         }\
     }
@@ -571,7 +575,7 @@ int
 ompi_attr_delete_all(ompi_attribute_type_t type, void *object, 
                      ompi_hash_table_t *keyhash)
 {
-    int ret;
+    int key_ret, del_ret;
     uint32_t key, oldkey;
     void *node, *in_node, *old_attr;
 
@@ -594,10 +598,11 @@ ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
     OMPI_THREAD_LOCK(&alock);
 
     /* Get the first key in local CWD hash  */
-    ret = ompi_hash_table_get_first_key_uint32(keyhash,
+    key_ret = ompi_hash_table_get_first_key_uint32(keyhash,
                                                &key, &old_attr,
                                                &node);
-    while (OMPI_SUCCESS == ret) {
+    del_ret = OMPI_SUCCESS;
+    while (OMPI_SUCCESS == key_ret && OMPI_SUCCESS == del_ret) {
 
 	/* Save this node info for deletion, before we move onto the
 	   next node */
@@ -607,16 +612,16 @@ ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
 	
 	/* Move to the next node */
 
-	ret = ompi_hash_table_get_next_key_uint32(keyhash,
-                                                  &key, &old_attr, 
-                                                  in_node, &node);
+	key_ret = ompi_hash_table_get_next_key_uint32(keyhash,
+                                                      &key, &old_attr, 
+                                                      in_node, &node);
 	/* Now delete this attribute */
 
-	ompi_attr_delete(type, object, keyhash, oldkey, true, false);
+	del_ret = ompi_attr_delete(type, object, keyhash, oldkey, true, false);
     }
 
     /* All done */
 
     OMPI_THREAD_UNLOCK(&alock);
-    return MPI_SUCCESS;
+    return del_ret;
 }
