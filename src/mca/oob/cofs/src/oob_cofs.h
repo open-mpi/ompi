@@ -24,6 +24,9 @@ int mca_oob_cofs_close(void);
 mca_oob_t* mca_oob_cofs_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
 int mca_oob_cofs_finalize(mca_oob_t*);
 
+/* stubs */
+char* mca_oob_cofs_get_addr(void);
+int mca_oob_cofs_set_seed(const char*);
 
                                                                                                           
 /**

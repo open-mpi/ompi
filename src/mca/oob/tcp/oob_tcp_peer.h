@@ -117,6 +117,11 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd);
  */
 void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer);
 
+/**
+ * Attempt to resolve peer address.
+ */
+int mca_oob_tcp_peer_name_lookup(mca_oob_tcp_peer_t* peer);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

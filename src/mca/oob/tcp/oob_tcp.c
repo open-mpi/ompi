@@ -7,7 +7,10 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "util/output.h"
+#include "util/if.h"
 #include "mca/oob/tcp/oob_tcp.h"
 
 
@@ -38,6 +41,8 @@ mca_oob_tcp_component_t mca_oob_tcp_component = {
 };
 
 static mca_oob_t mca_oob_tcp = {
+    mca_oob_tcp_get_addr,
+    mca_oob_tcp_set_seed,
     mca_oob_tcp_send,
     mca_oob_tcp_recv,
     mca_oob_tcp_send_nb,
@@ -61,6 +66,17 @@ static inline int mca_oob_tcp_param_register_int(
 }
 
 
+static inline char* mca_oob_tcp_param_register_str(
+    const char* param_name,
+    const char* default_value)
+{
+    int id = mca_base_param_register_string("ptl","tcp",param_name,NULL,default_value);
+    char* param_value = NULL;
+    mca_base_param_lookup_string(id,&param_value);
+    return param_value;
+}
+
+
 /*
  * Initialize global variables used w/in this module.
  */
@@ -80,6 +96,7 @@ int mca_oob_tcp_open(void)
         mca_oob_tcp_param_register_int("peer_limit", -1);
     mca_oob_tcp_component.tcp_peer_retries =
         mca_oob_tcp_param_register_int("peer_retries", 60);
+    memset(&mca_oob_tcp_component.tcp_seed_addr, 0, sizeof(mca_oob_tcp_component.tcp_seed_addr));
 
     /* initialize state */
     mca_oob_tcp_component.tcp_listen_sd = -1;
@@ -362,4 +379,105 @@ int mca_oob_tcp_process_name_compare(const ompi_process_name_t* n1, const ompi_p
        return 1;
    return(0);
 }
+
+
+/*
+* Return local process address as a URI string.
+*/
+
+char* mca_oob_tcp_get_addr(void)
+{
+    int i;
+    char *contact_info = malloc((ompi_ifcount()+1) * 32);
+    char *ptr = contact_info;
+    *ptr = 0;
+
+    for(i=ompi_ifbegin(); i>0; i=ompi_ifnext(i)) {
+        struct sockaddr_in addr;
+        ompi_ifindextoaddr(i, (struct sockaddr*)&addr, sizeof(addr));
+        if(ptr != contact_info) {
+            ptr += sprintf(ptr, ";");
+        }
+        ptr += sprintf(ptr, "tcp://%s:%d", inet_ntoa(addr.sin_addr), ntohs(mca_oob_tcp_component.tcp_listen_port));
+    }
+    return contact_info;
+}
+
+/*
+* Parse a URI string into an IP address and port number.
+*/
+
+static int mca_oob_tcp_parse_uri(const char* uri, struct sockaddr_in* inaddr)
+{
+    char* tmp = strdup(uri);
+    char* ptr = tmp + 6;
+    char* addr = ptr;
+    char* port;
+    if(strncmp(tmp, "tcp://", 6) != 0) {
+        free(tmp);
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    ptr = strchr(addr, ':');
+    if(NULL == ptr) {
+        free(tmp);
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    *ptr = '\0';
+    ptr++;
+    port = ptr;
+
+    memset(inaddr, 0, sizeof(inaddr));
+    inaddr->sin_family = AF_INET;
+    inaddr->sin_addr.s_addr = inet_addr(addr);
+    if(inaddr->sin_addr.s_addr == INADDR_ANY) {
+        free(tmp);
+        return OMPI_ERR_BAD_PARAM;
+    }
+    inaddr->sin_port = htons(atoi(port));
+    free(tmp);
+    return OMPI_SUCCESS;
+}
+
+
+/*
+ * Set address for the seed daemon. Note that this could be called multiple
+ * times if the seed daemon exports multiple addresses.
+ */
+
+int mca_oob_tcp_set_seed(const char* uri)
+{
+    struct sockaddr_in inaddr;
+    int rc;
+    int ifindex;
+
+    if((rc = mca_oob_tcp_parse_uri(uri,&inaddr)) != OMPI_SUCCESS)
+        return rc;
+
+    /* scan through the list of interface address exported by this host 
+     * and look for a match on a directly connected network 
+    */
+
+    for(ifindex=ompi_ifbegin(); ifindex>0; ifindex=ompi_ifnext(ifindex)) {
+        struct sockaddr_in ifaddr;
+        struct sockaddr_in ifmask;
+        ompi_ifindextoaddr(ifindex, (struct sockaddr*)&ifaddr, sizeof(ifaddr));
+        ompi_ifindextomask(ifindex, (struct sockaddr*)&ifmask, sizeof(ifmask));
+        if((ifaddr.sin_addr.s_addr & ifmask.sin_addr.s_addr) ==
+           (inaddr.sin_addr.s_addr & ifmask.sin_addr.s_addr)) {
+           mca_oob_tcp_component.tcp_seed_addr = inaddr;
+           return OMPI_SUCCESS;
+        }
+    }
+ 
+    /* if no match was found - may be still be reachable - go ahead and
+     * set this adddress as seed address.
+    */
+    if (mca_oob_tcp_component.tcp_seed_addr.sin_family == 0) {
+        mca_oob_tcp_component.tcp_seed_addr = inaddr;
+    }
+    return OMPI_SUCCESS;
+}
+
 

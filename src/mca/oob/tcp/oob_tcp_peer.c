@@ -237,6 +237,12 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
             ompi_output(0, "mca_oob_tcp_peer_connect: fcntl(F_SETFL) failed with errno=%d\n", errno);
     }
 
+    /* resolve the peer address */
+    if ((rc = mca_oob_tcp_peer_name_lookup(peer)) != OMPI_SUCCESS) {
+        mca_oob_tcp_peer_close(peer);
+        return OMPI_ERR_UNREACH;
+    }
+
     /* start the connect - will likely fail with EINPROGRESS */
     if(connect(peer->peer_sd, (struct sockaddr*)&(peer->peer_addr), sizeof(peer->peer_addr)) < 0) {
         /* non-blocking so wait for completion */
@@ -247,7 +253,6 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
         }
         ompi_output(0, "mca_oob_tcp_msg_peer_start_connect: unable to connect to peer. errno=%d", errno);
         mca_oob_tcp_peer_close(peer);
-        peer->peer_retries++;
         return OMPI_ERR_UNREACH;
     }
 
@@ -744,4 +749,23 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
     return false;
 }
 
+
+/*
+ * resolve process name to an actual internet address.
+ */
+
+int mca_oob_tcp_peer_name_lookup(mca_oob_tcp_peer_t* peer)
+{
+    if(mca_oob_tcp_process_name_compare(&peer->peer_name, MCA_OOB_NAME_SEED) == 0) {
+        peer->peer_addr = mca_oob_tcp_component.tcp_seed_addr;
+        return OMPI_SUCCESS;
+    } else {
+        peer->peer_addr.sin_family = AF_INET;
+        peer->peer_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+        peer->peer_addr.sin_port = htons(5000+peer->peer_name.vpid);
+    }
+
+    /* insert code to resolve name via registry */
+    return OMPI_ERROR;
+}
 
