@@ -304,9 +304,6 @@ static void mca_base_modex_registry_callback(
 
         /* update the pml/ptls with new proc */
     }
-    
-    /* release the message storage */
-    OBJ_RELEASE(msg);
 
     if(NULL != new_procs) {
         mca_pml.pml_add_procs(new_procs, new_proc_count);
