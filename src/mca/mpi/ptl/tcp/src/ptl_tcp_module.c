@@ -97,8 +97,8 @@ int mca_ptl_tcp_module_open(void)
         mca_ptl_tcp_param_register_string("if-include", "");
     mca_ptl_tcp_module.tcp_if_exclude =
         mca_ptl_tcp_param_register_string("if-exclude", "");
-    mca_ptl_tcp.super.ptl_exclusive =
-        mca_ptl_tcp_param_register_int("exclusive", 0);
+    mca_ptl_tcp.super.ptl_exclusivity =
+        mca_ptl_tcp_param_register_int("exclusivity", 0);
     mca_ptl_tcp.super.ptl_first_frag_size =
         mca_ptl_tcp_param_register_int("first-frag-size", 16*1024);
     mca_ptl_tcp.super.ptl_min_frag_size = 
