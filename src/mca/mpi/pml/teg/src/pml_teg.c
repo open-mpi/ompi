@@ -39,7 +39,7 @@ int mca_pml_teg_add_comm(lam_communicator_t* comm)
     if (NULL == pml_comm) {
         return LAM_ERR_OUT_OF_RESOURCE;
     }
-    mca_pml_ptl_comm_init_size(pml_comm, comm->c_remote_group->g_proc_count);
+    mca_pml_ptl_comm_init_size(pml_comm, comm->c_remote_group->grp_proc_count);
     comm->c_pml_comm = pml_comm;
     return LAM_SUCCESS;
 }
