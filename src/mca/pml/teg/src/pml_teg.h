@@ -286,7 +286,7 @@ extern int mca_pml_teg_free(
             } \
         case MCA_PML_REQUEST_RECV: \
             { \
-            OMPI_FREE_LIST_RETURN(&mca_pml_teg.teg_recv_requests, (ompi_list_item_t*)pml_request); \
+            MCA_PML_TEG_RECV_REQUEST_RETURN(sendreq); \
             break; \
             } \
         default: \
