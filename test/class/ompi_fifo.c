@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
     int i,j,size_of_fifo,lazy_free,return_status,error_cnt,loop_cnt;
 	void *ptr;
     cb_slot_t *slot_data;
-    size_t cnt, r_offset;
+    size_t cnt;
 
 #if 0
     /* get queue size */
@@ -78,53 +78,42 @@ int main(int argc, char **argv) {
         test_failure(" ompi_fifo_init \n");
     }
 
-	/* populate fifo */
+    /* populate fifo */
     error_cnt=0;
-	for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
-                &(fifo.head->cb_fifo)); i++ ) {
+    for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
+                                               &(fifo.head->cb_fifo)); i++ ) {
         return_status=ompi_fifo_write_to_head((void *)(i+5),
-                (ompi_fifo_t *)&(fifo), &pool, (size_t)pool.mpool_base());
+                                              (ompi_fifo_t *)&(fifo), &pool, (size_t)pool.mpool_base());
         if( OMPI_CB_ERROR == return_status ) {
-  		test_failure(" ompi_cb_fifo_write_to_head\n");
-          error_cnt++;
+            test_failure(" ompi_cb_fifo_write_to_head\n");
+            error_cnt++;
         }
-	}
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
-	/* pop items off the queue */
+    /* pop items off the queue */
     error_cnt=0;
-	for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
-                &(fifo.head->cb_fifo)); i++ ) {
-		ptr=ompi_fifo_read_from_tail(&fifo, (size_t)pool.mpool_base());
-		if( (void *)(i+5) != ptr ) {
-	   		test_failure(" ompi_cb_fifo_read_from_tail\n");
+    for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
+                                               &(fifo.head->cb_fifo)); i++ ) {
+        ptr=ompi_fifo_read_from_tail(&fifo, (size_t)pool.mpool_base());
+        if( (void *)(i+5) != ptr ) {
+            test_failure(" ompi_cb_fifo_read_from_tail\n");
             error_cnt++;
-		}
-	}
+        }
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
 
-	/* free fifo */
-	return_status=ompi_fifo_free(&fifo,&pool);
+    /* free fifo */
+    return_status=ompi_fifo_free(&fifo,&pool);
     if( OMPI_SUCCESS == return_status ) {
         test_success();
     } else {
         test_failure(" ompi_fifo_free \n");
     }
 
-    /*
-     * test slot reservation
-     */
-    cnt=sizeof(cb_slot_t)*loop_cnt;
-    cnt*=fifo.head->cb_fifo.size;
-    slot_data=malloc(cnt);
-    if( !slot_data ) {
-        test_failure(" can't allocate memory for slot_data");
-        goto ERRORS;
-    }
-    
     /* init fifo */
     return_status=ompi_fifo_init(size_of_fifo,lazy_free,0,0,0,&fifo,
             &pool);
@@ -135,52 +124,62 @@ int main(int argc, char **argv) {
         test_failure(" ompi_fifo_init \n");
     }
 
-	/* reserve slot fifo */
+    /*
+     * test slot reservation
+     */
+    cnt = sizeof(cb_slot_t) * loop_cnt * fifo.head->cb_fifo.size;
+    slot_data=malloc(cnt);
+    if( !slot_data ) {
+        test_failure(" can't allocate memory for slot_data");
+        goto ERRORS;
+    }
+    
+    /* reserve slot fifo */
     error_cnt=0;
-	for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
-                &(fifo.head->cb_fifo)); i++ ) {
-        slot_data[i]=ompi_fifo_get_slot((ompi_fifo_t *)&(fifo),
-                &pool, (size_t)pool.mpool_base());
-        if( 0 > slot_data[i].index ) {
+    for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
+                                               &(fifo.head->cb_fifo)); i++ ) {
+        slot_data[i]=ompi_fifo_get_slot(&fifo,
+                                        &pool, (size_t)pool.mpool_base());
+        if( slot_data[i].index < 0 ) {
             test_failure(" ompi_fifo_get_slot \n");
             error_cnt++;
         }
-	}
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
 
     /* populate the reserved slots */
     error_cnt=0;
-	for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
-                &(fifo.head->cb_fifo)); i++ ) {
+    for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
+                                               &(fifo.head->cb_fifo)); i++ ) {
         return_status=ompi_fifo_write_to_slot(&(slot_data[i]),
-                (void *)(i+5), (size_t)pool.mpool_base());
+                                              (void *)(i+5), (size_t)pool.mpool_base());
         if( OMPI_CB_ERROR == return_status ) {
             test_failure(" ompi_fifo_write_to_slot \n");
             error_cnt++;
         }
-	}
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
 
-	/* pop items off the queue */
+    /* pop items off the queue */
     error_cnt=0;
-	for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
-                &(fifo.head->cb_fifo)); i++ ) {
-		ptr=ompi_fifo_read_from_tail(&fifo, (size_t)pool.mpool_base());
-		if( (void *)(i+5) != ptr ) {
-	   		test_failure(" ompi_cb_fifo_read_from_tail II\n");
+    for( i=0 ; i < loop_cnt*ompi_cb_fifo_size( (ompi_cb_fifo_t *)
+                                               &(fifo.head->cb_fifo)); i++ ) {
+        ptr=ompi_fifo_read_from_tail(&fifo, (size_t)pool.mpool_base());
+        if( (void *)(i+5) != ptr ) {
+            test_failure(" ompi_cb_fifo_read_from_tail II\n");
             error_cnt++;
-		}
-	}
+        }
+    }
     if( 0 == error_cnt ) {
         test_success();
     }
 
-	/* free fifo */
-	return_status=ompi_fifo_free(&fifo,&pool);
+    /* free fifo */
+    return_status=ompi_fifo_free(&fifo,&pool);
     if( OMPI_SUCCESS == return_status ) {
         test_success();
     } else {
@@ -200,14 +199,14 @@ int main(int argc, char **argv) {
         test_failure(" ompi_fifo_init \n");
     }
 
-	/* populate fifo */
+    /* populate fifo */
     for( j=0 ; j < loop_cnt ; j++ ) {
         error_cnt=0;
         for( i=0 ; i < ompi_cb_fifo_size( (ompi_cb_fifo_t *)
-                    &(fifo.head->cb_fifo)); i++ ) {
+                                          &(fifo.head->cb_fifo)); i++ ) {
             return_status=ompi_fifo_write_to_head((void *)((i+5)*(j+1)),
-                    (ompi_fifo_t *)&(fifo), &pool,
-                    (size_t)pool.mpool_base());
+                                                  (ompi_fifo_t *)&(fifo), &pool,
+                                                  (size_t)pool.mpool_base());
             if( OMPI_CB_ERROR == return_status ) {
                 test_failure(" ompi_cb_fifo_write_to_head\n");
                 error_cnt++;
@@ -220,9 +219,9 @@ int main(int argc, char **argv) {
         /* pop items off the queue */
         error_cnt=0;
         for( i=0 ; i < ompi_cb_fifo_size( (ompi_cb_fifo_t *)
-                    &(fifo.head->cb_fifo)); i++ ) {
+                                          &(fifo.head->cb_fifo)); i++ ) {
             ptr=ompi_fifo_read_from_tail(&fifo,
-                    (size_t)pool.mpool_base());
+                                         (size_t)pool.mpool_base());
             if( (void *)((i+5)*(j+1)) != ptr ) {
                 test_failure(" ompi_cb_fifo_read_from_tail\n");
                 error_cnt++;
