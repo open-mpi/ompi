@@ -55,14 +55,7 @@ static void mca_oob_tcp_peer_construct(mca_oob_tcp_peer_t* peer)
  */
 static void mca_oob_tcp_peer_destruct(mca_oob_tcp_peer_t * peer)
 {
-    /* temporarily not delete the events to prevent segfaults */
     mca_oob_tcp_peer_close(peer); 
-    /*if(peer->peer_state != MCA_OOB_TCP_CLOSED &&
-       peer->peer_sd >= 0) {
-        ompi_event_del(&peer->peer_send_event);
-        close(peer->peer_sd);
-        peer->peer_sd = -1;
-    }*/
     OBJ_DESTRUCT(&(peer->peer_send_queue));
     OBJ_DESTRUCT(&(peer->peer_lock));
 }

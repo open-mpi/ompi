@@ -140,6 +140,7 @@ static void mca_oob_tcp_accept(void)
 static int mca_oob_tcp_create_listen(void)
 {
     int flags;
+    int optval;
     struct sockaddr_in inaddr;
     ompi_socklen_t addrlen;
                                                                                                                    
@@ -149,7 +150,14 @@ static int mca_oob_tcp_create_listen(void)
         ompi_output(0,"mca_oob_tcp_component_init: socket() failed with errno=%d", errno);
         return OMPI_ERROR;
     }
-                                                                                                                   
+    optval = 1;
+    if(setsockopt(mca_oob_tcp_component.tcp_listen_sd, SOL_SOCKET, 
+                  SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
+        ompi_output(0,
+            "mca_oob_tcp_finalize: setsockopt(SO_REUSEADDR) failed with errno=%d\n",
+             errno);
+    }
+     
     /* bind to all addresses and dynamically assigned port */
     memset(&inaddr, 0, sizeof(inaddr));
     inaddr.sin_family = AF_INET;
@@ -305,18 +313,8 @@ mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_th
  */
 int mca_oob_tcp_finalize(mca_oob_t* oob)
 {
-    int optval;
     mca_oob_tcp_peer_t * peer;
     if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
-        optval = 1;
-        if(setsockopt(mca_oob_tcp_component.tcp_listen_sd, SOL_SOCKET, 
-                      SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
-            ompi_output(0,
-                "mca_oob_tcp_finalize: setsockopt(SO_REUSEADDR) failed with errno=%d\n",
-                 errno);
-        }
-        /*** temporarily disable the removal of the revieve event
-         * to prevent segfaults */
          ompi_event_del(&mca_oob_tcp_component.tcp_recv_event); 
         if(0 != close(mca_oob_tcp_component.tcp_listen_sd)) {
             ompi_output(0, "mca_oob_tcp_finalize: error closing listen socket. errno=%d", errno);
