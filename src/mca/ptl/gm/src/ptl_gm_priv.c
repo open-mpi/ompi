@@ -428,7 +428,6 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
     unsigned int in_size, max_data = 0;
     mca_ptl_gm_peer_t* ptl_peer = (mca_ptl_gm_peer_t*)ptl_base_peer;
     ompi_list_item_t *item;
-    gm_send_completion_callback_t completion_cb;
     char* sendbuf;
 
     OMPI_FREE_LIST_WAIT( &(((mca_ptl_gm_module_t*)ptl)->gm_send_dma_frags), item, rc );
