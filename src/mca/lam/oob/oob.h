@@ -59,11 +59,11 @@ typedef int (*mca_oob_base_query_fn_t)(int *priority);
 typedef struct mca_oob_1_0_0_t* (*mca_oob_base_init_fn_t)(void);
 typedef int (*mca_oob_base_send_fn_t)(lam_job_handle_t job_handle, int vpid, int tag, 
                                       void* data, size_t data_len);
-typedef int (*mca_oob_base_recv_fn_t)(lam_job_handle_t job_handle, int* tag, int* vpid, 
+typedef int (*mca_oob_base_recv_fn_t)(lam_job_handle_t job_handle,  int vpid, int* tag, 
                                       void** data, size_t* data_len);
-typedef int (*mca_oob_base_recv_nb_fn_t)(lam_job_handle_t job_handle, int* tag, int* vpid, 
+typedef int (*mca_oob_base_recv_nb_fn_t)(lam_job_handle_t job_handle, int vpid, int* tag,  
                                          void** data, size_t* data_len);
-typedef int (*mca_oob_base_recv_cb_fn_t)(lam_job_handle_t job_handle, int tag, 
+typedef int (*mca_oob_base_recv_cb_fn_t)(lam_job_handle_t job_handle, int vpid, int tag, 
                                          mca_oob_base_recv_cb_t callback);
 typedef int (*mca_oob_base_finalize_fn_t)(void);
 
