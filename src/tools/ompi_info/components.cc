@@ -213,7 +213,6 @@ void ompi_info::close_components()
         orte_iof_base_close();
         orte_soh_base_close();
         orte_pls_base_close();
-        orte_rml_base_close();
         orte_rmgr_base_close();
         orte_rmaps_base_close();
         orte_rds_base_close();
@@ -221,6 +220,7 @@ void ompi_info::close_components()
         orte_ns_base_close();
         orte_gpr_base_close();
         orte_errmgr_base_close();
+        orte_rml_base_close();
         mca_oob_base_close();
     
         component_map.clear();
