@@ -24,9 +24,9 @@
 static const char FUNC_NAME[] = "MPI_Comm_set_name";
 
 
-int MPI_Comm_set_name(MPI_Comm comm, char *name) {
-
-    ompi_communicator_t* comp;
+int MPI_Comm_set_name(MPI_Comm comm, char *name) 
+{
+    int rc;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -42,15 +42,7 @@ int MPI_Comm_set_name(MPI_Comm comm, char *name) {
         }
     }
 
-    /* -- Thread safety entrance -- */
-
-    /* Copy in the name */
-    comp = (ompi_communicator_t*) comm;
-    
-    strncpy(comp->c_name, name, MPI_MAX_OBJECT_NAME);
-    comp->c_name[MPI_MAX_OBJECT_NAME - 1] = 0;
-    comp->c_flags |= OMPI_COMM_NAMEISSET;
-
+    rc = ompi_comm_set_name (comm, name );
     /* -- Tracing information for new communicator name -- */
 #if 0  
   /* Force TotalView DLL to take note of this name setting */
@@ -61,8 +53,5 @@ int MPI_Comm_set_name(MPI_Comm comm, char *name) {
 #if OMPI_PROFILING_DEFINES
 #include "mpi/c/profile/defines.h"
 #endif
-
-  /* -- Thread safety exit -- */
-  
-  return MPI_SUCCESS;
+   OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME); 
 }

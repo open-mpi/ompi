@@ -25,7 +25,7 @@ static const char FUNC_NAME[] = "MPI_Intercomm_merge";
 int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                         MPI_Comm *newcomm) 
 {
-    ompi_communicator_t *newcomp;
+    ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t **procs=NULL;
     int local_size, remote_size;
     int local_rank;
@@ -53,11 +53,16 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     total_size  = local_size + remote_size;
     procs = (ompi_proc_t **) malloc ( total_size * sizeof(ompi_proc_t *));
     if ( NULL == procs ) {
-        return OMPI_ERRHANDLER_INVOKE(intercomm,MPI_ERR_INTERN,
-                                      FUNC_NAME);
+        rc = MPI_ERR_INTERN;
+        goto exit;
     }
     
     first = ompi_comm_determine_first ( intercomm, thigh );
+    if ( MPI_UNDEFINED == first ) {
+        rc = MPI_ERR_INTERN;
+        goto exit;
+    }
+
     if ( first ) {
         memcpy ( procs, intercomm->c_local_group->grp_proc_pointers, 
                  local_size * sizeof(ompi_proc_t *));
@@ -109,6 +114,9 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
         free ( procs );
     }
     if ( MPI_SUCCESS != rc ) {
+        if ( MPI_COMM_NULL != newcomp ) {
+            OBJ_RELEASE(newcomp);
+        }
         *newcomm = MPI_COMM_NULL;
         return OMPI_ERRHANDLER_INVOKE(intercomm, rc,  FUNC_NAME);
     }

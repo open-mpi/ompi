@@ -12,6 +12,7 @@
 #include "mpi/c/bindings.h"
 #include "runtime/runtime.h"
 #include "communicator/communicator.h"
+#include "threads/mutex.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_get_name = PMPI_Comm_get_name
@@ -24,9 +25,8 @@
 static const char FUNC_NAME[] = "MPI_Comm_get_name";
 
 
-int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)  {
-
-    ompi_communicator_t* comp;
+int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)  
+{
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -40,16 +40,16 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)  {
                                             FUNC_NAME);
     }
 
-    comp = (ompi_communicator_t*) comm;
-
-    if ( comp->c_flags & OMPI_COMM_NAMEISSET ) {
-        strncpy ( name, comp->c_name, MPI_MAX_OBJECT_NAME );
-        *length = strlen ( comp->c_name );
+    OMPI_THREAD_LOCK(&(comm->c_lock));
+    if ( comm->c_flags & OMPI_COMM_NAMEISSET ) {
+        strncpy ( name, comm->c_name, MPI_MAX_OBJECT_NAME );
+        *length = strlen ( comm->c_name );
     }
     else {
         memset ( name, 0, MPI_MAX_OBJECT_NAME );
         *length = 0;
     }
+    OMPI_THREAD_UNLOCK(&(comm->c_lock));
 
     return MPI_SUCCESS;
 }
