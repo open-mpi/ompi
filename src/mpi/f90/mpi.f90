@@ -1,5 +1,7 @@
 module mpi_kinds
 
+  include "mpif.h"
+
 !
 ! Copyright (c) 2004-2005 The Trustees of Indiana University.
 !                         All rights reserved.
@@ -22,6 +24,12 @@ module mpi_kinds
   parameter(MPI_ADDRESS_KIND = selected_int_kind(9))
 
 !
+! kind for int64_t equivalent, used for offsets
+!
+  integer :: MPI_OFFSET_KIND
+  parameter(MPI_OFFSET_KIND = selected_int_kind(18))
+
+!
 ! integer kinds
 !
 
@@ -35,49 +43,10 @@ module mpi_kinds
 
 end module mpi_kinds
 
-
 module mpi
 
   use mpi_kinds
 
-  include "mpif.h"
-
-  interface mpi_send
-
-!
-! Integer array types
-!
-
-    subroutine mpi_send_1DI(a, count, datatype, dest, tag, comm, ierr)
-      integer :: a(:)
-      integer, intent(in) :: count, datatype, dest, tag, comm
-      integer, intent(out), optional :: ierr
-    end subroutine mpi_send_1DI
-
-    subroutine mpi_send_1DI1(a, count, datatype, dest, tag, comm, ierr)
-      use mpi_kinds
-      integer(kind=MPI_INTEGER1_KIND) :: a(:)
-      integer, intent(in) :: count, datatype, dest, tag, comm
-      integer, intent(out), optional :: ierr
-    end subroutine mpi_send_1DI1
-
-    subroutine mpi_send_1DI2(a, count, datatype, dest, tag, comm, ierr)
-      use mpi_kinds
-      integer(kind=MPI_INTEGER2_KIND) :: a(:)
-      integer, intent(in) :: count, datatype, dest, tag, comm
-      integer, intent(out), optional :: ierr
-    end subroutine mpi_send_1DI2
-
-!
-! Real array types
-!
-
-    subroutine mpi_send_1DR(a, count, datatype, dest, tag, comm, ierr)
-      real :: a(:)
-      integer, intent(in) :: count, datatype, dest, tag, comm
-      integer, intent(out), optional :: ierr
-    end subroutine mpi_send_1DR
-
-  end interface
+  include "mpi.i.h"
 
 end module mpi
