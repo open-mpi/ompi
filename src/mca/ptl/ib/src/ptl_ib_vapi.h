@@ -31,9 +31,8 @@
 /* Debug Print */
 #if 1
 #define D_PRINT(fmt, args...) {                                     \
-    fprintf(stderr, "[%s:%d:%s] ", __FILE__, __LINE__, __func__);   \
-    fprintf(stderr, fmt, ## args);                                  \
-    fflush(stderr);                                                 \
+    ompi_output(0, "[%s:%d:%s] " fmt, __FILE__, __LINE__, __func__, \
+        ##args);                                                    \
 }
 #else
 #define D_PRINT(fmt, args...)
