@@ -481,7 +481,6 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
                          0,  /* maximum number of list allocated elements will be zero */
                          0,
                          NULL ); /* not using mpool */
-
     return (mca_ptl_gm_component.gm_num_ptl_modules > 0 ? OMPI_SUCCESS : OMPI_ERR_OUT_OF_RESOURCE);
 }
 
