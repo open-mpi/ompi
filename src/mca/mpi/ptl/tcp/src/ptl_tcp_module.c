@@ -59,7 +59,6 @@ mca_ptl_tcp_module_1_0_0_t mca_ptl_tcp_module = {
  */
 
 static void mca_ptl_tcp_module_recv_handler(int, short, void*);
-static void mca_ptl_tcp_module_send_handler(int, short, void*);
 
 
 /*
@@ -93,6 +92,11 @@ static inline int mca_ptl_tcp_param_register_int(
 
 int mca_ptl_tcp_module_open(void)
 {
+    /* initialize state */
+    mca_ptl_tcp_module.tcp_ptls = NULL;
+    mca_ptl_tcp_module.tcp_num_ptls = 0;
+
+    /* initialize objects */
     lam_mutex_init(&mca_ptl_tcp_module.tcp_lock);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_procs, lam_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_module.tcp_acks, lam_list_t);
@@ -119,6 +123,7 @@ int mca_ptl_tcp_module_open(void)
         mca_ptl_tcp_param_register_int("min_frag_size", 64*1024);
     mca_ptl_tcp.super.ptl_max_frag_size =
         mca_ptl_tcp_param_register_int("max_frag_size", -1);
+
     return LAM_SUCCESS;
 }
 
@@ -276,6 +281,7 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
                                     bool *allow_multi_user_threads,
                                     bool *have_hidden_threads)
 {
+    mca_ptl_t **ptls;
     *num_ptls = 0;
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
@@ -318,8 +324,13 @@ mca_ptl_t** mca_ptl_tcp_module_init(int *num_ptls,
     if(mca_ptl_tcp_module_exchange() != LAM_SUCCESS)
         return 0;
 
+    ptls = malloc(mca_ptl_tcp_module.tcp_num_ptls * sizeof(mca_ptl_t*));
+    if(NULL == ptls)
+        return NULL;
+
+    memcpy(ptls, mca_ptl_tcp_module.tcp_ptls, mca_ptl_tcp_module.tcp_num_ptls*sizeof(mca_ptl_tcp_t*));
     *num_ptls = mca_ptl_tcp_module.tcp_num_ptls;
-    return (mca_ptl_t**)mca_ptl_tcp_module.tcp_ptls;
+    return ptls;
 }
 
 
