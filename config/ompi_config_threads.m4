@@ -78,7 +78,7 @@ elif test "$THREAD_TYPE" = "posix"; then
     fi
 elif test "$THREAD_TYPE" = "no"; then
     THREAD_TYPE="none"
-elif test "$THREAD_TYPE" = ""; then
+elif test "$THREAD_TYPE" = "yes"; then
 
     # Actual logic here - properly set THREAD_TYPE - we go for system
     # optimized where ever possible
@@ -100,6 +100,8 @@ elif test "$THREAD_TYPE" = ""; then
 	    fi
 	    ;;
     esac
+elif test -z "$THREAD_TYPE" ; then
+    THREAD_TYPE="none"
 else
 
     AC_MSG_WARN(["*** You have specified a thread type that I do not"])

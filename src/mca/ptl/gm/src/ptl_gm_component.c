@@ -447,13 +447,8 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
             ptl->thread.t_run = (ompi_thread_fn_t)mca_ptl_gm_thread_progress;
             ptl->thread.t_arg = (void*)ptl;
 #endif  /* OMPI_HAVE_POSIX_THREADS */
-<<<<<<< .working
 	    if( OMPI_SUCCESS != ompi_thread_start( &(ptl->thread) ) ) {
 		break;
-=======
-            if( OMPI_SUCCESS != ompi_thread_start( &(ptl->thread) ) )
-                break;
->>>>>>> .merge-right.r5039
             }
         }
     }
