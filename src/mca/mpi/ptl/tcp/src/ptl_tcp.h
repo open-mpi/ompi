@@ -46,8 +46,8 @@ extern int mca_ptl_tcp_module_close(void);
 
 extern mca_ptl_t** mca_ptl_tcp_module_init(
     int *num_ptls, 
-    int *thread_min, 
-    int *thread_max
+    bool *allow_multi_user_threads,
+    bool *have_hidden_threads
 );
 
 extern void mca_ptl_tcp_module_progress(
@@ -75,7 +75,7 @@ extern int mca_ptl_tcp_create(
     int if_index
 );
 
-extern int mca_ptl_tcp_fini(
+extern int mca_ptl_tcp_finalize(
     struct mca_ptl_t* ptl
 );
 

@@ -26,7 +26,7 @@ mca_ptl_tcp_t mca_ptl_tcp = {
     0, /* ptl_frag_max_size */
     mca_ptl_tcp_add_proc,
     mca_ptl_tcp_del_proc,
-    mca_ptl_tcp_fini,
+    mca_ptl_tcp_finalize,
     mca_ptl_tcp_send,
     mca_ptl_tcp_request_alloc,
     mca_ptl_tcp_request_return
@@ -97,7 +97,7 @@ int mca_ptl_tcp_del_proc(struct mca_ptl_t* ptl, struct lam_proc_t *proc, struct 
     return LAM_SUCCESS;
 }
 
-int mca_ptl_tcp_fini(struct mca_ptl_t* ptl)
+int mca_ptl_tcp_finalize(struct mca_ptl_t* ptl)
 {
     
     return LAM_SUCCESS;

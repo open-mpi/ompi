@@ -7,8 +7,18 @@
 
 #include "lam_config.h"
 
+#include "lam/lfc/list.h"
 #include "mca/mca.h"
 #include "mca/mpi/ptl/ptl.h"
+
+
+struct mca_ptl_base_selected_module_t {
+  lam_list_item_t super;
+
+  mca_ptl_base_module_t *pbsm_module;
+  mca_ptl_t *pbsm_actions;
+};
+typedef struct mca_ptl_base_selected_module_t mca_ptl_base_selected_module_t;
 
 
 /*
@@ -25,10 +35,12 @@ extern "C" {
 }
 #endif
 
+
 /*
  * Globals
  */
 extern int mca_ptl_base_output;
 extern lam_list_t mca_ptl_base_modules_available;
+extern lam_list_t mca_ptl_base_modules_initialized;
 
 #endif /* MCA_PTL_BASE_H */
