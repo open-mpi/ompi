@@ -23,10 +23,14 @@ extern MPI_Comm MPI_COMM_SELF;
 extern MPI_Datatype MPI_TYPE_NULL;
 
 int MPI_Comm_set_name(MPI_Comm comm, char *name);
+int MPI_Init(int *argc, char ***argv);
+int MPI_Finalize(void);
 
 #if LAM_WANT_MPI_PROFILING
 
 int PMPI_Comm_set_name(MPI_Comm comm, char *name);
+int PMPI_Init(int *argc, char ***argv);
+int PMPI_Finalize(void);
 
 #endif
 
