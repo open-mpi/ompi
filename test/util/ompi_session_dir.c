@@ -15,6 +15,7 @@
 #include "util/sys_info.h"
 #include "util/os_path.h"
 #include "util/session_dir.h"
+#include "support.h"
 
 struct ompi_proc_info_t {
     bool init;             /**< Certifies that values have been filled.
@@ -47,52 +48,55 @@ static bool test6(void);   /* no prefix given, nothing set, one good and one bad
 
 int main(int argc, char* argv[])
 {
-    bool test1f, test2f, test3f, test4f, test5f, test6f;
-
-    test1f = test2f = test3f = test4f = test5f = test6f = false;
     ompi_sys_info(); /* initialize system */
+
+    test_init("ompi_session_dir_t");
  
-    /* All done */
 
     if (test1()) {
-        printf("test1 passed\n");
-        test1f = true;
-    } else {
-	printf("test1 failed\n");
+        test_success();
+    }
+    else {
+      test_failure("ompi_session_dir_t test1 failed");
     }
 
     if (test2()) {
-        printf("test2 passed\n");
-        test2f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_session_dir_t test2 failed");
     }
 
     if (test3()) {
-        printf("test3 passed\n");
-        test3f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_session_dir_t test3 failed");
     }
 
     if (test4()) {
-        printf("test4 passed\n");
-        test4f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_session_dir_t test4 failed");
     }
 
     if (test5()) {
-        printf("test5 passed\n");
-        test5f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_session_dir_t test5 failed");
     }
 
     if (test6()) {
-        printf("test6 passed\n");
-        test6f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_session_dir_t test6 failed");
     }
 
-    if (test1f && test2f && test3f && test4f && test5f && test6f) {
-        printf("test succeeded\n");
-        return 0;
-    }
-
-    printf("test failed\n");
-    return -1;
+    test_finalize();
+    return 0;
 }
 
 
