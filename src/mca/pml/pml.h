@@ -142,7 +142,7 @@ typedef int (*mca_pml_base_send_fn_t)(
 );
 
 typedef int (*mca_pml_base_start_fn_t)(
-    lam_request_t* request
+    lam_request_t** request
 );
 
 typedef int (*mca_pml_base_test_fn_t)(
