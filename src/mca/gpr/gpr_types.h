@@ -80,6 +80,7 @@ typedef int32_t orte_gpr_notify_id_t;
 #define ORTE_GPR_DUMP_ALL_CMD           (uint16_t)0x0800
 #define ORTE_GPR_DUMP_SEGMENTS_CMD      (uint16_t)0x0810
 #define ORTE_GPR_DUMP_TRIGGERS_CMD      (uint16_t)0x0820
+#define ORTE_GPR_DUMP_CALLBACKS_CMD     (uint16_t)0x0830
 #define ORTE_GPR_INCREMENT_VALUE_CMD    (uint16_t)0x2000
 #define ORTE_GPR_DECREMENT_VALUE_CMD    (uint16_t)0x4000
 #define ORTE_GPR_COMPOUND_CMD           (uint16_t)0x8000

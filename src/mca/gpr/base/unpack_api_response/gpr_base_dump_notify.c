@@ -32,112 +32,152 @@
 
 #include "mca/gpr/base/base.h"
 
-static void orte_gpr_base_dump_data(orte_gpr_notify_data_t *data, int output_id);
+static void orte_gpr_base_dump_data(orte_buffer_t *buffer, orte_gpr_notify_data_t *data);
 
-int orte_gpr_base_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_id)
+static void orte_gpr_base_dump_load_string(orte_buffer_t *buffer, char **tmp);
+
+int orte_gpr_base_dump_notify_msg(orte_buffer_t *buffer,
+                                  orte_gpr_notify_message_t *msg)
 {
+    char *tmp_out;
     int i;
     
-    ompi_output(output_id, "\n\nDUMP OF NOTIFY MESSAGE STRUCTURE\n");
+    asprintf(&tmp_out, "\nDUMP OF NOTIFY MESSAGE STRUCTURE");
+    orte_gpr_base_dump_load_string(buffer, &tmp_out);
 
     if (NULL == msg) {
-        ompi_output(output_id, "NULL msg pointer");
+        asprintf(&tmp_out, "NULL msg pointer");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
         return ORTE_SUCCESS;
     }
     
-    ompi_output(output_id, "%d Notify data structures in message", msg->cnt);
+    asprintf(&tmp_out, "%d Notify data structures in message going to trigger %d",
+                    msg->cnt, msg->idtag);
+    orte_gpr_base_dump_load_string(buffer, &tmp_out);
     
     if (0 < msg->cnt && NULL != msg->data) {
         for (i=0; i < msg->cnt; i++) {
-            ompi_output(output_id, "\n\nDump of data structure %d", i);
-            orte_gpr_base_dump_data(msg->data[i], output_id);
+            asprintf(&tmp_out, "\nDump of data structure %d", i);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
+            orte_gpr_base_dump_data(buffer, msg->data[i]);
         }
     }
 
     return ORTE_SUCCESS;
 }
 
-int orte_gpr_base_dump_notify_data(orte_gpr_notify_data_t *data, int output_id)
+int orte_gpr_base_dump_notify_data(orte_buffer_t *buffer,
+                                   orte_gpr_notify_data_t *data)
 {
-    ompi_output(output_id, "\n\nDUMP OF NOTIFY DATA STRUCTURE\n");
+    char *tmp_out;
+
+    asprintf(&tmp_out, "\nDUMP OF NOTIFY DATA STRUCTURE");
+    orte_gpr_base_dump_load_string(buffer, &tmp_out);
+
     if (NULL == data) {
-        ompi_output(output_id, "NULL data pointer");
+        asprintf(&tmp_out, "NULL data pointer");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
         return ORTE_SUCCESS;
     }
     
-    orte_gpr_base_dump_data(data, output_id);
+    orte_gpr_base_dump_data(buffer, data);
     return ORTE_SUCCESS;
 }
 
-static void orte_gpr_base_dump_data(orte_gpr_notify_data_t *data, int output_id)
+static void orte_gpr_base_dump_data(orte_buffer_t *buffer,
+                                    orte_gpr_notify_data_t *data)
 {
+    char *tmp_out;
     orte_gpr_addr_mode_t addr;
     orte_gpr_value_t **values;
     int i, j;
 
-    ompi_output(output_id, "%d Values from segment %s", data->cnt, data->segment);
+    asprintf(&tmp_out, "%d Values from segment %s", data->cnt, data->segment);
+    orte_gpr_base_dump_load_string(buffer, &tmp_out);
     
     if (0 < data->cnt && NULL != data->values) {
         values = data->values;
         for (i=0; i < data->cnt; i++) {
-            ompi_output(output_id, "\nData for value %d", i);
+            asprintf(&tmp_out, "\nData for value %d going to callback num %d",
+                        i, data->cb_num);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             if (NULL == values[i]) {
-                ompi_output(output_id, "\tError encountered: NULL value pointer");
+                asprintf(&tmp_out, "\tError encountered: NULL value pointer");
+                orte_gpr_base_dump_load_string(buffer, &tmp_out);
             } else {
                 addr = values[i]->addr_mode;
                 if (NULL == values[i]->tokens) {
-                    ompi_output(output_id, "\tNULL tokens (wildcard)");
+                    asprintf(&tmp_out, "\tNULL tokens (wildcard)");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 } else {
-                    ompi_output(output_id, "\t%d Tokens returned", values[i]->num_tokens);
+                    asprintf(&tmp_out, "\t%d Tokens returned", values[i]->num_tokens);
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                     for (j=0; j < values[i]->num_tokens; j++) {
-                        ompi_output(output_id, "\tToken %d: %s", j, values[i]->tokens[j]);
+                        asprintf(&tmp_out, "\tToken %d: %s", j, values[i]->tokens[j]);
+                        orte_gpr_base_dump_load_string(buffer, &tmp_out);
                     }
                 }
-                ompi_output(output_id, "\tToken addressing mode:");
+                asprintf(&tmp_out, "\tToken addressing mode:");
+                orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 if (ORTE_GPR_TOKENS_AND & addr) {
-                    ompi_output(output_id, "\t\tORTE_GPR_TOKENS_AND");
+                    asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_AND");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 }
                 if (ORTE_GPR_TOKENS_OR & addr) {
-                    ompi_output(output_id, "\t\tORTE_GPR_TOKENS_OR");
+                    asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_OR");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 }
                 if (ORTE_GPR_TOKENS_XAND & addr) {
-                    ompi_output(output_id, "\t\tORTE_GPR_TOKENS_XAND");
+                    asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_XAND");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 }
                 if (ORTE_GPR_TOKENS_XOR & addr) {
-                    ompi_output(output_id, "\t\tORTE_GPR_TOKENS_XOR");
+                    asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_XOR");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 }
                 if (ORTE_GPR_TOKENS_NOT & addr) {
-                    ompi_output(output_id, "\t\tORTE_GPR_TOKENS_NOT");
+                    asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_NOT");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 }
 
-                ompi_output(output_id, "\n\tKey addressing mode:");
+                asprintf(&tmp_out, "\n\tKey addressing mode:");
+                orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 if (0x0000 == addr) {
-                    ompi_output(output_id, "\t\tNONE");
+                    asprintf(&tmp_out, "\t\tNONE");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 }
                 if (ORTE_GPR_KEYS_AND & addr) {
-                    ompi_output(output_id, "\t\tORTE_GPR_KEYS_AND");
+                    asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_AND");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 }
                 if (ORTE_GPR_KEYS_OR & addr) {
-                    ompi_output(output_id, "\t\tORTE_GPR_KEYS_OR");
+                    asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_OR");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 }
                 if (ORTE_GPR_KEYS_XAND & addr) {
-                    ompi_output(output_id, "\t\tORTE_GPR_KEYS_XAND");
+                    asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_XAND");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 }
                 if (ORTE_GPR_KEYS_XOR & addr) {
-                    ompi_output(output_id, "\t\tORTE_GPR_KEYS_XOR");
+                    asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_XOR");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 }
                 if (ORTE_GPR_KEYS_NOT & addr) {
-                    ompi_output(output_id, "\t\tORTE_GPR_KEYS_NOT");
+                    asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_NOT");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 }
                 
                 if (NULL == values[i]->keyvals) {
-                    ompi_output(output_id, "\tNo keyvals returned");
+                    asprintf(&tmp_out, "\tNo keyvals returned");
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                 } else {
-                    ompi_output(output_id, "\t%d Keyvals returned", values[i]->cnt);
+                    asprintf(&tmp_out, "\t%d Keyvals returned", values[i]->cnt);
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
                     for (j=0; j < values[i]->cnt; j++) {
-                        ompi_output(output_id, "\t\tData for keyval %d: Key: %s", j,
+                    asprintf(&tmp_out, "\t\tData for keyval %d: Key: %s", j,
                                             (values[i]->keyvals[j])->key);
-                        orte_gpr_base_dump_keyval_value(values[i]->keyvals[j], output_id);
+                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
+                        orte_gpr_base_dump_keyval_value(buffer, values[i]->keyvals[j]);
                     }
                 }
             }
@@ -146,108 +186,141 @@ static void orte_gpr_base_dump_data(orte_gpr_notify_data_t *data, int output_id)
 }
 
 
-void orte_gpr_base_dump_keyval_value(orte_gpr_keyval_t *iptr, int output_id)
+void orte_gpr_base_dump_keyval_value(orte_buffer_t *buffer, orte_gpr_keyval_t *iptr)
 {
+    char *tmp_out;
+    
     switch(iptr->type) {
 
         case ORTE_BYTE:
-            ompi_output(output_id, "\t\t\tData type: ORTE_BYTE");
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_BYTE: no value field");
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_BOOL:
-            ompi_output(output_id, "\t\t\tData type: ORTE_BOOL");
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_BOOL: no value field");
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_STRING:
-            ompi_output(output_id, "\t\t\tData type: ORTE_STRING\tValue: %s", iptr->value.strptr);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_STRING\tValue: %s", iptr->value.strptr);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_SIZE:
-            ompi_output(output_id, "\t\t\tData type: ORTE_SIZE");
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_SIZE: no value field");
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_INT:
-            ompi_output(output_id, "\t\t\tData type: ORTE_INT\tValue: %d", (int)iptr->value.i32);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_INT: no value field");
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_UINT8:
-            ompi_output(output_id, "\t\t\tData type: ORTE_UINT8\tValue: %d", (int)iptr->value.ui8);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT8\tValue: %d", (int)iptr->value.ui8);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_UINT16:
-            ompi_output(output_id, "\t\t\tData type: ORTE_UINT16\tValue: %d", (int)iptr->value.ui16);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT16\tValue: %d", (int)iptr->value.ui16);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_UINT32:
-            ompi_output(output_id, "\t\t\tData type: ORTE_UINT32\tValue: %d", (int)iptr->value.ui32);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT32\tValue: %d", (int)iptr->value.ui32);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
 #ifdef HAVE_I64
         case ORTE_UINT64:
-            ompi_output(output_id, "\t\t\tData type: ORTE_UINT64\tValue: %d", (int)iptr->value.ui64);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT64\tValue: %d", (int)iptr->value.ui64);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
 #endif
 
         case ORTE_INT8:
-            ompi_output(output_id, "\t\t\tData type: ORTE_INT8\tValue: %d", (int)iptr->value.i8);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_INT8\tValue: %d", (int)iptr->value.i8);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
         
         case ORTE_INT16:
-            ompi_output(output_id, "\t\t\tData type: ORTE_INT16\tValue: %d", (int)iptr->value.i16);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_INT16\tValue: %d", (int)iptr->value.i16);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
         
         case ORTE_INT32:
-            ompi_output(output_id, "\t\t\tData type: ORTE_INT32\tValue: %d", (int)iptr->value.i32);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_INT32\tValue: %d", (int)iptr->value.i32);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
         
 #ifdef HAVE_I64
         case ORTE_INT64:
-            ompi_output(output_id, "\t\t\tData type: ORTE_INT64\tValue: %d", (int)iptr->value.i64);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_INT64\tValue: %d", (int)iptr->value.i64);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
 #endif
 
         case ORTE_BYTE_OBJECT:
-            ompi_output(output_id, "\t\t\tData type: ORTE_BYTE_OBJECT\tSize: %d", (int)(iptr->value.byteobject).size);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_BYTE_OBJECT\tSize: %d", (int)(iptr->value.byteobject).size);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_NAME:
-            ompi_output(output_id, "\t\t\tData type: ORTE_NAME\tValue: [%d,%d,%d]", ORTE_NAME_ARGS(&(iptr->value.proc)));
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_NAME\tValue: [%d,%d,%d]", ORTE_NAME_ARGS(&(iptr->value.proc)));
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_VPID:
-            ompi_output(output_id, "\t\t\tData type: ORTE_VPID\tValue: %d", (int)iptr->value.vpid);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_VPID\tValue: %d", (int)iptr->value.vpid);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_JOBID:
-            ompi_output(output_id, "\t\t\tData type: ORTE_JOBID\tValue: %d", (int)iptr->value.jobid);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_JOBID\tValue: %d", (int)iptr->value.jobid);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_CELLID:
-            ompi_output(output_id, "\t\t\tData type: ORTE_CELLID\tValue: %d", (int)iptr->value.cellid);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_CELLID\tValue: %d", (int)iptr->value.cellid);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_NODE_STATE:
-            ompi_output(output_id, "\t\t\tData type: ORTE_NODE_STATE\tValue: %d", (int)iptr->value.node_state);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_NODE_STATE\tValue: %d", (int)iptr->value.node_state);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_PROC_STATE:
-            ompi_output(output_id, "\t\t\tData type: ORTE_PROC_STATE\tValue: %d", (int)iptr->value.proc_state);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_PROC_STATE\tValue: %d", (int)iptr->value.proc_state);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_EXIT_CODE:
-            ompi_output(output_id, "\t\t\tData type: ORTE_EXIT_CODE\tValue: %d", (int)iptr->value.exit_code);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_EXIT_CODE\tValue: %d", (int)iptr->value.exit_code);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_NULL:
-            ompi_output(output_id, "\t\t\tData type: ORTE_NULL");
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_NULL");
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
         
         case ORTE_APP_CONTEXT:
-            ompi_output(output_id, "\t\t\tData type: ORTE_APP_CONTEXT");
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_APP_CONTEXT");
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         default:
-            ompi_output(output_id, "\t\t\tData type: UNKNOWN");
+            asprintf(&tmp_out, "\t\t\tData type: UNKNOWN");
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
     }
  }
+
+static void orte_gpr_base_dump_load_string(orte_buffer_t *buffer, char **tmp)
+{
+    orte_dps.pack(buffer, tmp, 1, ORTE_STRING);
+    free(*tmp);
+
+}

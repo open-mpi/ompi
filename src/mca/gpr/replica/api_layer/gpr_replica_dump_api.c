@@ -153,3 +153,94 @@ int orte_gpr_replica_dump_triggers(int output_id)
 
     return rc;
 }
+
+int orte_gpr_replica_dump_callbacks(int output_id)
+{
+    orte_buffer_t *buffer;
+    int rc;
+
+    if (orte_gpr_replica_globals.debug) {
+      ompi_output(0, "[%d,%d,%d] gpr_replica_dump_callbacks: entered for output on %d",
+         ORTE_NAME_ARGS(orte_process_info.my_name), output_id);
+    }
+
+    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+
+    if (orte_gpr_replica_globals.compound_cmd_mode) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_dump_callbacks(orte_gpr_replica_globals.compound_cmd))) {
+            ORTE_ERROR_LOG(rc);
+        }
+     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+       return rc;
+    }
+
+    buffer = OBJ_NEW(orte_buffer_t);
+    if (NULL == buffer) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_callbacks_fn(buffer))) {
+        ORTE_ERROR_LOG(rc);
+    }
+
+    if (ORTE_SUCCESS == rc) {
+        orte_gpr_base_print_dump(buffer, output_id);
+    }
+    OBJ_RELEASE(buffer);
+
+    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+
+    return rc;
+}
+
+int orte_gpr_replica_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_id)
+{
+    orte_buffer_t *answer;
+    int rc;
+    
+    answer = OBJ_NEW(orte_buffer_t);
+    if (NULL == answer) { /* got a problem */
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+     return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_dump_notify_msg(answer, msg))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(answer);
+       return rc;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    OBJ_RELEASE(answer);
+    return rc;
+}
+
+
+int orte_gpr_replica_dump_notify_data(orte_gpr_notify_data_t *data, int output_id)
+{
+    orte_buffer_t *answer;
+    int rc;
+    
+    answer = OBJ_NEW(orte_buffer_t);
+    if (NULL == answer) { /* got a problem */
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+     return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_dump_notify_data(answer, data))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(answer);
+       return rc;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    OBJ_RELEASE(answer);
+    return rc;
+}

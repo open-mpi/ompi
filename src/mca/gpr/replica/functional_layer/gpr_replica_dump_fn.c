@@ -141,40 +141,73 @@ int orte_gpr_replica_dump_segments_fn(orte_buffer_t *buffer)
     return ORTE_SUCCESS;
 }
 
-int orte_gpr_replica_dump_triggers_fn(orte_buffer_t *buffer)
+
+int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer)
 {
-    orte_gpr_replica_triggers_t **trig;
     ompi_list_item_t *item;
     orte_gpr_replica_callbacks_t *cb;
+    orte_gpr_replica_notify_msg_list_t *msg;
     char *tmp_out;
     int i, j, k;
     
-    asprintf(&tmp_out, "\nDUMP OF GPR TRIGGERS\n");
+    asprintf(&tmp_out, "\nDUMP OF GPR REGISTERED CALLBACKS\n");
     orte_gpr_replica_dump_load_string(buffer, &tmp_out);
 
-    if (0 < ompi_list_get_size(&(orte_gpr_replica.callbacks))) {
-        asprintf(&tmp_out, "Registered Callbacks");
+    if (0 >= (k= ompi_list_get_size(&(orte_gpr_replica.callbacks)))) {
+        asprintf(&tmp_out, "--- None registered at this time ---");
         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-        
-        for (i=0, item=ompi_list_get_first(&(orte_gpr_replica.callbacks));
-             item != ompi_list_get_end(&(orte_gpr_replica.callbacks));
-             i++, item=ompi_list_get_next(item)) {
-             cb = (orte_gpr_replica_callbacks_t*)item;
-             asprintf(&tmp_out, "\tInfo for callback %d", i);
-             orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-             if (NULL == cb->requestor) {
-                asprintf(&tmp_out, "\t\tLocal requestor - local notify idtag %d", (cb->message)->idtag);
-             } else {
-                asprintf(&tmp_out, "\t\tRequestor: [%d,%d,%d] - remote notify idtag %d",
-                        ORTE_NAME_ARGS(cb->requestor), cb->remote_idtag);
-             }
-             orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-             asprintf(&tmp_out, "\t\tNum values: %d", (cb->message)->cnt);
-             orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-        }
-        asprintf(&tmp_out, "\n");
+        return ORTE_SUCCESS;
+    } else {
+        asprintf(&tmp_out, "--- %d callback(s) registered at this time", k);
         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
     }
+    
+    i=0;
+    for (cb = (orte_gpr_replica_callbacks_t*)ompi_list_get_first(&(orte_gpr_replica.callbacks));
+         cb != (orte_gpr_replica_callbacks_t*)ompi_list_get_end(&(orte_gpr_replica.callbacks));
+         cb = (orte_gpr_replica_callbacks_t*)ompi_list_get_next(cb)) {
+         if (NULL == cb) {
+            asprintf(&tmp_out, "\n\t---  BAD CALLBACK POINTER %d ---", i);
+            orte_gpr_replica_dump_load_string(buffer, &tmp_out);
+            return ORTE_SUCCESS;
+         }
+         asprintf(&tmp_out, "\nInfo for callback %d", i);
+         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
+         if (NULL == cb->requestor) {
+            asprintf(&tmp_out, "Local requestor");
+         } else {
+            asprintf(&tmp_out, "Requestor: [%d,%d,%d]", ORTE_NAME_ARGS(cb->requestor));
+         }
+         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
+         j = ompi_list_get_size(&(cb->messages));
+         asprintf(&tmp_out, "Num messages: %d", j);
+         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
+         for (k=0, item = ompi_list_get_first(&(cb->messages));
+              item != ompi_list_get_end(&(cb->messages));
+              item = ompi_list_get_next(item), k++) {
+              msg = (orte_gpr_replica_notify_msg_list_t*)item;
+              asprintf(&tmp_out, "\n\nInfo for message %d sending %d data objects to notifier id %d",
+                            k, (msg->message)->cnt, (msg->message)->idtag);
+              orte_gpr_replica_dump_load_string(buffer, &tmp_out);
+              orte_gpr_base_dump_notify_msg(buffer, msg->message);
+         }
+         i++;
+     }
+         
+    asprintf(&tmp_out, "\n");
+    orte_gpr_replica_dump_load_string(buffer, &tmp_out);
+    return ORTE_SUCCESS;
+}
+
+
+int orte_gpr_replica_dump_triggers_fn(orte_buffer_t *buffer)
+{
+    orte_gpr_replica_triggers_t **trig;
+    char *tmp_out;
+    int j, k;
+    
+    asprintf(&tmp_out, "\nDUMP OF GPR TRIGGERS\n");
+    orte_gpr_replica_dump_load_string(buffer, &tmp_out);
 
     trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
     k = 0;
@@ -262,13 +295,13 @@ static void orte_gpr_replica_dump_trigger(orte_buffer_t *buffer, int cnt,
         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
     }
 
-	asprintf(&tmp_out, "\tData covered by this subscription");
+	asprintf(&tmp_out, "\n\tData covered by this subscription");
 	orte_gpr_replica_dump_load_string(buffer, &tmp_out);
 
     data = (orte_gpr_replica_subscribed_data_t**)((trig->subscribed_data)->addr);
     for (i=0; i < (trig->subscribed_data)->size; i++) {
         if (NULL != data[i]) {
-            asprintf(&tmp_out, "\t\tData on segment %s", (data[i]->seg)->name);
+            asprintf(&tmp_out, "\n\t\tData on segment %s", (data[i]->seg)->name);
             orte_gpr_replica_dump_load_string(buffer, &tmp_out);
             
             k = (int)orte_value_array_get_size(&(data[i]->tokentags));

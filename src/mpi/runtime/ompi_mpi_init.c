@@ -307,18 +307,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         }
     }
 
-    /* First barrier -- wait for message from RMGR_PROC_STAGE_GATE_MGR
-       to arrive */
-
+     /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
     if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL, NULL))) {
         ORTE_ERROR_LOG(ret);
 	    error = "ompi_mpi_init: failed to see all procs register\n";
 	    goto error;
-    }
-
-    if (orte_debug_flag) {
-	ompi_output(0, "[%d,%d,%d] process startup completed",
-		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     /* add all ompi_proc_t's to PML */

@@ -490,6 +490,8 @@ typedef int (*orte_gpr_base_module_dump_segments_fn_t)(int output_id);
 
 typedef int (*orte_gpr_base_module_dump_triggers_fn_t)(int output_id);
 
+typedef int (*orte_gpr_base_module_dump_callbacks_fn_t) (int output_id);
+
 typedef int (*orte_gpr_base_module_dump_notify_msg_fn_t)(orte_gpr_notify_message_t *msg, int output_id);
 
 typedef int (*orte_gpr_base_module_dump_notify_data_fn_t)(orte_gpr_notify_data_t *data, int output_id);
@@ -575,6 +577,7 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_dump_all_fn_t dump_all;
     orte_gpr_base_module_dump_segments_fn_t dump_segments;
     orte_gpr_base_module_dump_triggers_fn_t dump_triggers;
+    orte_gpr_base_module_dump_callbacks_fn_t dump_callbacks;
     orte_gpr_base_module_dump_notify_msg_fn_t dump_notify_msg;
     orte_gpr_base_module_dump_notify_data_fn_t dump_notify_data;
     /* CLEANUP OPERATIONS */

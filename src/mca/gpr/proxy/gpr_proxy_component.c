@@ -96,8 +96,9 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_proxy_dump_all,
     orte_gpr_proxy_dump_segments,
     orte_gpr_proxy_dump_triggers,
-    orte_gpr_base_dump_notify_msg,
-    orte_gpr_base_dump_notify_data,
+    orte_gpr_proxy_dump_callbacks,
+    orte_gpr_proxy_dump_notify_msg,
+    orte_gpr_proxy_dump_notify_data,
     /* CLEANUP OPERATIONS */
     orte_gpr_proxy_cleanup_job,
     orte_gpr_proxy_cleanup_proc
@@ -294,7 +295,7 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
     orte_gpr_proxy_subscriber_t **subs;
     size_t n;
     int rc;
-    int32_t cnt, i, j;
+    int32_t num_msgs, cnt, i, j, k;
 
     if (orte_gpr_proxy_globals.debug) {
 	    ompi_output(0, "[%d,%d,%d] gpr proxy: received trigger message",
@@ -313,52 +314,59 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &id_tag, &n, ORTE_GPR_NOTIFY_ID))) {
-        ORTE_ERROR_LOG(rc);
-	    goto RETURN_ERROR;
-    }
-	
-    /* locate request corresponding to this message */
-    trackptr = (orte_gpr_proxy_notify_tracker_t*)((orte_gpr_proxy_globals.notify_tracker)->addr[id_tag]);
-    if (NULL == trackptr) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        goto RETURN_ERROR;
-    }
-    
-    n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &cnt, &n, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &num_msgs, &n, ORTE_INT32))) {
         ORTE_ERROR_LOG(rc);
         goto RETURN_ERROR;
     }
 
-    if(cnt > 0) {
-        /* allocate space for the array */
-        data = (orte_gpr_notify_data_t**)malloc(cnt * sizeof(orte_gpr_notify_data_t*));
-        if (NULL == data) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+    for (k=0; k < num_msgs; k++) {
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &id_tag, &n, ORTE_GPR_NOTIFY_ID))) {
+            ORTE_ERROR_LOG(rc);
+    	    goto RETURN_ERROR;
+        }
+    	
+        /* locate request corresponding to this message */
+        trackptr = (orte_gpr_proxy_notify_tracker_t*)((orte_gpr_proxy_globals.notify_tracker)->addr[id_tag]);
+        if (NULL == trackptr) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             goto RETURN_ERROR;
         }
-
-        n = cnt;
-        if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, data, &n, ORTE_GPR_NOTIFY_DATA))) {
+        
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &cnt, &n, ORTE_INT32))) {
             ORTE_ERROR_LOG(rc);
             goto RETURN_ERROR;
         }
     
-
-        for (i=0; i < cnt; i++) {
-           /* locate the data callback */
-           subs = (orte_gpr_proxy_subscriber_t**)((trackptr->callbacks)->addr);
-           for (j=0; j < (trackptr->callbacks)->size; j++) {
-               if (NULL != subs[j] && subs[j]->index == data[i]->cb_num) {
-                   /* process request */
-                   subs[j]->callback(data[i], subs[j]->user_tag);
-                   break;
+        if(cnt > 0) {
+            /* allocate space for the array */
+            data = (orte_gpr_notify_data_t**)malloc(cnt * sizeof(orte_gpr_notify_data_t*));
+            if (NULL == data) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                goto RETURN_ERROR;
+            }
+    
+            n = cnt;
+            if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, data, &n, ORTE_GPR_NOTIFY_DATA))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+        
+    
+            for (i=0; i < cnt; i++) {
+               /* locate the data callback */
+               subs = (orte_gpr_proxy_subscriber_t**)((trackptr->callbacks)->addr);
+               for (j=0; j < (trackptr->callbacks)->size; j++) {
+                   if (NULL != subs[j] && subs[j]->index == data[i]->cb_num) {
+                       /* process request */
+                       subs[j]->callback(data[i], subs[j]->user_tag);
+                       break;
+                   }
                }
            }
-       }
+        }
     }
-    /* dismantle message and free memory */
 
  RETURN_ERROR:
 
