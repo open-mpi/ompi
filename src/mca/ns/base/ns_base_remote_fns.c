@@ -31,11 +31,11 @@ mca_ns_base_cellid_t ns_base_create_cellid(void)
     msg.iov_base = (char*)&cmd;
     msg.iov_len = sizeof(cmd);
 
-    if (0 > mca_oob_send(&mca_ns_my_replica, &msg, 1, 0)) { /* error on send */
+    if (0 > mca_oob_send(&mca_ns_my_replica, &msg, 1, MCA_OOB_TAG_ANY, 0)) { /* error on send */
 	    return 0;
 	}
 
-    if (0 > mca_oob_recv(&mca_ns_my_replica, &msg, 1, 0)) { /* error on recv */
+    if (0 > mca_oob_recv(&mca_ns_my_replica, &msg, 1, MCA_OOB_TAG_ANY, 0)) { /* error on recv */
 	    return 0;
 	}
 

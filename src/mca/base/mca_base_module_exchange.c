@@ -125,8 +125,10 @@ static mca_base_modex_module_t* mca_base_modex_create_module(
  *  during mca_base_modex_exchange().
  */
 
-int mca_base_modex_send(mca_base_component_t *source_component, 
-                        const void *buffer, size_t size)
+int mca_base_modex_send(
+    mca_base_component_t *source_component, 
+    const void *buffer, 
+    size_t size)
 {
     ompi_proc_t *self = ompi_proc_local();
     mca_base_modex_t* modex;
@@ -243,7 +245,7 @@ int mca_base_modex_exchange(void)
 
             iov.iov_base = self_module->module_data;
             iov.iov_len = self_module->module_data_size;
-            rc = mca_oob_send(&proc->proc_name, &iov, 1, 0);
+            rc = mca_oob_send(&proc->proc_name, &iov, 1, MCA_OOB_TAG_ANY, 0);
             if(rc != iov.iov_len) {
                free(procs); 
                OMPI_THREAD_UNLOCK(&self->proc_lock);
@@ -284,7 +286,7 @@ int mca_base_modex_exchange(void)
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
 
-            size = mca_oob_recv(&proc->proc_name, 0, 0, MCA_OOB_TRUNC|MCA_OOB_PEEK);
+            size = mca_oob_recv(&proc->proc_name, 0, 0, MCA_OOB_TAG_ANY, MCA_OOB_TRUNC|MCA_OOB_PEEK);
             if(size <= 0) {
                 free(procs);
                 OMPI_THREAD_UNLOCK(&proc->proc_lock);
@@ -297,7 +299,7 @@ int mca_base_modex_exchange(void)
             iov.iov_base = proc_module->module_data;
             iov.iov_len = size;
 
-            rc = mca_oob_recv(&proc->proc_name, &iov, 1, 0);
+            rc = mca_oob_recv(&proc->proc_name, &iov, 1, MCA_OOB_TAG_ANY, 0);
             if(rc != size) {
                 free(procs);
                 OMPI_THREAD_UNLOCK(&proc->proc_lock);

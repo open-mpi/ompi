@@ -10,11 +10,18 @@
  * @return            OMPI error code (<0) on error number of bytes actually sent.
  */
 
-int mca_oob_tcp_send(const ompi_process_name_t* name, const struct iovec *iov, int count, int flags)
+int mca_oob_tcp_send(
+    const ompi_process_name_t* name, 
+    const struct iovec *iov, 
+    int count, 
+    int tag,
+    int flags)
 {
     mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name, true);
     mca_oob_tcp_msg_t* msg;
-    int rc, sent;
+    int size;
+    int rc;
+
     if(NULL == peer)
         return OMPI_ERR_UNREACH;
 
@@ -23,25 +30,32 @@ int mca_oob_tcp_send(const ompi_process_name_t* name, const struct iovec *iov, i
         return rc;
 
     /* calculate the size of the message */
-    msg->msg_size = sizeof(uint32_t);
+    size = 0;
     for(rc = 0; rc < count; rc++) {
-        msg->msg_size += iov[rc].iov_len;
+        size += iov[rc].iov_len;
     }
+   
     /* turn the size to network byte order so there will be no problems */
-    msg->msg_size = htonl(msg->msg_size);
-    msg->msg_user = iov;
-    /* create one additional iovect that will hold the size of the message */
-    msg->msg_iov = (struct iovec*)malloc(sizeof(struct iovec)*(count + 1));
-    msg->msg_iov[0].iov_base = &msg->msg_size;
-    msg->msg_iov[0].iov_len = sizeof(uint32_t);
-    msg->msg_rwptr = msg->msg_iov;
-    msg->msg_count = msg->msg_rwcnt = count + 1;
-    memcpy(msg->msg_iov, &(msg->msg_user[1]), sizeof(struct iovec)*count);
+    msg->msg_hdr.msg_size = htonl(size);
+    msg->msg_hdr.msg_tag = htonl(tag);
+
+    /* create one additional iovect that will hold the header */
+    msg->msg_type = MCA_OOB_TCP_POSTED;
+    msg->msg_rc = 0;
+    msg->msg_flags = flags;
+    msg->msg_uiov = iov;
+    msg->msg_ucnt = count;
+    msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg, count+1);
+    msg->msg_rwiov[0].iov_base = &msg->msg_hdr;
+    msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
+    msg->msg_rwptr = msg->msg_rwiov;
+    msg->msg_rwcnt = msg->msg_rwnum = count + 1;
+    memcpy(msg->msg_rwiov+1, msg->msg_uiov, sizeof(struct iovec)*msg->msg_ucnt);
+    msg->msg_rwbuf = NULL;
     msg->msg_cbfunc = NULL;
     msg->msg_cbdata = NULL;
     msg->msg_complete = false;
-    msg->msg_peer = &peer->peer_name;
-    msg->msg_state = 0;
+    msg->msg_peer = peer->peer_name;
     
     rc = mca_oob_tcp_peer_send(peer, msg);
     if(rc != OMPI_SUCCESS) {
@@ -49,10 +63,12 @@ int mca_oob_tcp_send(const ompi_process_name_t* name, const struct iovec *iov, i
         return rc;
     }
 
-    rc = mca_oob_tcp_msg_wait(msg, &sent);
+    rc = mca_oob_tcp_msg_wait(msg, &size);
+    MCA_OOB_TCP_MSG_RETURN(msg);
     if(rc != OMPI_SUCCESS)
         return rc;
-    return sent;
+    size -= sizeof(mca_oob_tcp_hdr_t);
+    return size;
 }
 
 /*
@@ -72,13 +88,16 @@ int mca_oob_tcp_send_nb(
     const ompi_process_name_t* name, 
     const struct iovec* iov, 
     int count,
+    int tag,
     int flags, 
     mca_oob_callback_fn_t cbfunc, 
     void* cbdata)
 {
     mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name, true);
     mca_oob_tcp_msg_t* msg;
+    int size;
     int rc;
+
     if(NULL == peer)
         return OMPI_ERR_UNREACH;
 
@@ -87,26 +106,31 @@ int mca_oob_tcp_send_nb(
         return rc;
 
     /* calculate the size of the message */
-    msg->msg_size = sizeof(size_t);
+    size = 0;
     for(rc = 0; rc < count; rc++) {
-        msg->msg_size += iov[rc].iov_len;
+        size += iov[rc].iov_len;
     }
     /* turn the size to network byte order so there will be no problems */
-    msg->msg_size = htonl(msg->msg_size);
+    msg->msg_hdr.msg_size = htonl(size);
+    msg->msg_hdr.msg_tag = htonl(tag);
 
-    msg->msg_user = iov;
     /* create one additional iovect that will hold the size of the message */
-    msg->msg_iov = (struct iovec*)malloc(sizeof(struct iovec)*(count + 1));
-    msg->msg_iov[0].iov_base = &msg->msg_size;
-    msg->msg_iov[0].iov_len = sizeof(size_t);
-    msg->msg_rwptr = msg->msg_iov;
-    msg->msg_count = msg->msg_rwcnt = count + 1;
-    memcpy(msg->msg_iov, &(msg->msg_user[1]), sizeof(struct iovec)*count);
+    msg->msg_type = MCA_OOB_TCP_POSTED;
+    msg->msg_rc = 0;
+    msg->msg_flags = flags;
+    msg->msg_uiov = iov;
+    msg->msg_ucnt = count;
+    msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,count+1);
+    msg->msg_rwiov[0].iov_base = &msg->msg_hdr;
+    msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
+    msg->msg_rwptr = msg->msg_rwiov;
+    msg->msg_rwcnt = msg->msg_rwnum = count + 1;
+    memcpy(msg->msg_rwiov+1, msg->msg_uiov, sizeof(struct iovec)*msg->msg_ucnt);
+    msg->msg_rwbuf = NULL;
     msg->msg_cbfunc = cbfunc;
     msg->msg_cbdata = cbdata;
     msg->msg_complete = false;
-    msg->msg_peer = &peer->peer_name;
-    msg->msg_state = 0;
+    msg->msg_peer = peer->peer_name;
     
     rc = mca_oob_tcp_peer_send(peer, msg);
     if(rc != OMPI_SUCCESS) {

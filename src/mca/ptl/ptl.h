@@ -328,16 +328,20 @@ typedef int (*mca_ptl_base_module_del_procs_fn_t)(
  * PML->PTL Initialize a send request for use by the PTL. 
  *
  * @param ptl (IN)       PTL instance
- * @param request (OUT)  Pointer to allocated request.
+ * @param request (IN)   Pointer to allocated request.
  *
  * To reduce latency (number of required allocations), the PML allocates additional
  * space along w/ each request - that may be used by the PTL for additional control
- * information (e.g. first fragment descriptor).
+ * information (e.g. first fragment descriptor). If the PTL intends to use this space
+ * the ptl_cache_bytes attributes should be set to reflect the number of bytes needed
+ * by the PTL on a per-request basis. This space is allocated contiguously along with
+ * the mca_pml_base_send_request_t, w/ the space available to the PTL immediately 
+ * following the request.
  * 
  * The init function is called the first time the request is ued by the PTL. On 
  * completion of the request - the PML will cache the request for later use by the
  * same PTL. When the request is re-used from the cache, the init function is NOT
- * called for subsequent sends.
+ * called for subsequent sends. 
  */
 typedef int (*mca_ptl_base_module_request_init_fn_t)(
     struct mca_ptl_base_module_t* ptl, 
@@ -350,12 +354,12 @@ typedef int (*mca_ptl_base_module_request_init_fn_t)(
  *          request by the PTL.
  *
  * @param ptl (IN)       PTL instance
- * @param request (OUT)  Pointer to allocated request.
+ * @param request (IN)   Pointer to allocated request.
  *
  * The fini function is called when the PML removes a request from the PTLs
- * cache (due to resource constraints) or reaching cache limit, prior to re-using 
- * the request for another PTL. This provides the PTL the chance to cleanup/release 
- * any resources cached on the send descriptor by the PTL.
+ * cache (due to resource constraints) or the cache limit has been reached, prior 
+ * to re-using the request for another PTL. This provides the PTL the chance to 
+ * cleanup/release any resources cached on the send descriptor by the PTL.
  */
 
 typedef void (*mca_ptl_base_module_request_fini_fn_t)(

@@ -30,7 +30,7 @@ typedef enum {
 
 
 /**
- * This structire describes a peer
+ * This structure describes a peer
  */
 struct mca_oob_tcp_peer_t {
     ompi_list_item_t super;           /**< allow this to be on a list */
@@ -41,12 +41,18 @@ struct mca_oob_tcp_peer_t {
     int peer_sd;                      /**< socket descriptor of the connection */
     ompi_event_t peer_send_event;     /**< registration with event thread for send events */
     ompi_event_t peer_recv_event;     /**< registration with event thread for recv events */
-    ompi_mutex_t peer_lock;           /**< make sure only one thread accesses critical data structures */
+    ompi_mutex_t peer_lock;           /**< protect critical data structures */
     ompi_list_t peer_send_queue;      /**< list of messages to send */
     mca_oob_tcp_msg_t *peer_send_msg; /**< current send in progress */
     mca_oob_tcp_msg_t *peer_recv_msg; /**< current recv in progress */
 };
 typedef struct mca_oob_tcp_peer_t mca_oob_tcp_peer_t;
+
+/*
+ * Class declaration.
+ */
+
+OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
 
 /**
  * Get a new peer data structure
@@ -91,6 +97,22 @@ mca_oob_tcp_peer_t *mca_oob_tcp_peer_lookup(const ompi_process_name_t* peer_name
  * @retval      OMPI_SUCCESS or error code on failure.
  */
 int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg);
+
+/**
+ * Connection request for this peer. Check the status of our connection
+ * before accepting the peers.
+ * 
+ * @param peer  The peer process.
+ * @param sd    Incoming connection request.
+ */
+bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd);
+
+/**
+ * Cleanup/close the connection to the peer.
+ *
+ * @param peer  The peer process.
+ */
+void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

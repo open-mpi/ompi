@@ -10,13 +10,13 @@ struct mca_oob_base_cb_data_t {
 };
 
 /* this is the callback function we will register when we have to do any conversion */
-static void mca_oob_base_send_cb(int status, const ompi_process_name_t* peer, 
-                                 const struct iovec* msg,
-                                 size_t count, void* cbdata);
-
-static void mca_oob_base_send_cb(int status, const ompi_process_name_t* peer,
-                                 const struct iovec* msg,
-                                 size_t count, void* cbdata)
+static void mca_oob_base_send_cb(
+    int status, 
+    const ompi_process_name_t* peer,
+    const struct iovec* msg,
+    int count, 
+    int tag, 
+    void* cbdata)
 {
     int i;
     struct mca_oob_base_cb_data_t * cb_struct = (struct mca_oob_base_cb_data_t *) cbdata;
@@ -28,11 +28,10 @@ static void mca_oob_base_send_cb(int status, const ompi_process_name_t* peer,
     }
     free((void *)msg);
     /* call the user callback function */
-    cb_struct->user_callback(status, peer, cb_struct->user_iovec, count, cb_struct->user_data);
+    cb_struct->user_callback(status, peer, cb_struct->user_iovec, count, tag, cb_struct->user_data);
     free(cb_struct);
     return;
 }
-
 
     
 
@@ -49,10 +48,10 @@ static void mca_oob_base_send_cb(int status, const ompi_process_name_t* peer,
  *
  */
 
-int mca_oob_send_nb(const ompi_process_name_t* peer, const struct iovec* msg, int count,
+int mca_oob_send_nb(const ompi_process_name_t* peer, const struct iovec* msg, int count, int tag,
                     int flags, mca_oob_callback_fn_t cbfunc, void* cbdata)
 {
-    return(mca_oob.oob_send_nb(peer, msg, count, flags, cbfunc, cbdata));
+    return(mca_oob.oob_send_nb(peer, msg, count, tag, flags, cbfunc, cbdata));
 }
 
 /*
@@ -69,7 +68,7 @@ int mca_oob_send_nb(const ompi_process_name_t* peer, const struct iovec* msg, in
  */
 
 int mca_oob_send_hton_nb(const ompi_process_name_t* peer, const struct iovec* msg,
-                         const mca_oob_base_type_t* types, int count, int flags,
+                         const mca_oob_base_type_t* types, int count, int tag, int flags,
                          mca_oob_callback_fn_t cbfunc, void* cbdata)
 {
     int rc, i = 0;
@@ -113,11 +112,9 @@ int mca_oob_send_hton_nb(const ompi_process_name_t* peer, const struct iovec* ms
                 mca_oob_base_pack(converted[i].iov_base, msg[i].iov_base, rc, MCA_OOB_BASE_INT32);
             }
         }
-        rc = mca_oob.oob_send_nb(peer, converted, count, flags, 
-                                                    &mca_oob_base_send_cb,
-                                                    (void *) cb_struct);
+        rc = mca_oob.oob_send_nb(peer, converted, count, tag, flags, mca_oob_base_send_cb, cb_struct);
     } else {
-        rc = mca_oob.oob_send_nb(peer, msg, count, flags, cbfunc, cbdata);
+        rc = mca_oob.oob_send_nb(peer, msg, count, tag, flags, cbfunc, cbdata);
     }
     return rc;                       
 }

@@ -19,7 +19,7 @@
  * This is the first module on the list. This is here temporarily
  * to make things work
  */
-extern mca_oob_base_module_t mca_oob;
+extern mca_oob_t mca_oob;
 
 /**
  * associate a component and a module that belongs to it
@@ -27,7 +27,7 @@ extern mca_oob_base_module_t mca_oob;
 struct mca_oob_base_info_t {
   ompi_list_item_t super;
   mca_oob_base_component_t *oob_component;
-  mca_oob_base_module_t *oob_module;
+  mca_oob_t *oob_module;
 };
 typedef struct mca_oob_base_info_t mca_oob_base_info_t;
 
