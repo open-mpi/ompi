@@ -48,5 +48,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_DELETE,
 
 void mpi_file_delete_f(char *filename, MPI_Fint *info, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Info c_info;
+
+    c_info = MPI_Info_f2c(*info);
+    
+    *ierr = OMPI_INT_2_FINT(MPI_File_delete(filename, c_info));
 }

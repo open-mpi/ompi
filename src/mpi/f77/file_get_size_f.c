@@ -48,5 +48,10 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_SIZE,
 
 void mpi_file_get_size_f(MPI_Fint *fh, MPI_Fint *size, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_File c_fh = MPI_File_f2c(*fh);
+    MPI_Offset c_size;
+
+    *ierr = OMPI_INT_2_FINT(MPI_File_get_size(c_fh, 
+					      &c_size));
+    *size = (MPI_Fint) c_size;
 }
