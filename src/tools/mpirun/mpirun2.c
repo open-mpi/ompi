@@ -5,24 +5,28 @@
 
 #include "ompi_config.h"
 
-#include "util/proc_info.h"
-#include "mca/ns/ns.h"
-#include "mca/ns/base/base.h"
-#include "mca/pcm/base/base.h"
-#include "runtime/runtime.h"
-#include "mca/base/base.h"
-#include "util/argv.h"
-#include "mca/oob/base/base.h"
-#include "util/cmd_line.h"
-#include "util/sys_info.h"
-#include "runtime/runtime.h"
-#include "util/session_dir.h"
-#include "include/constants.h"
-#include "util/output.h"
-
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/param.h>
+
+#include "include/constants.h"
+
+#include "util/proc_info.h"
+#include "util/argv.h"
+#include "util/cmd_line.h"
+#include "util/sys_info.h"
+#include "util/session_dir.h"
+#include "util/output.h"
+#include "util/os_path.h"
+#include "util/universe_setup_file_io.h"
+
+#include "mca/base/base.h"
+#include "mca/ns/ns.h"
+#include "mca/ns/base/base.h"
+#include "mca/pcm/base/base.h"
+#include "mca/oob/base/base.h"
+
+#include "runtime/runtime.h"
 
 extern char** environ;
 
@@ -41,6 +45,7 @@ main(int argc, char *argv[])
     ompi_rte_node_schedule_t *sched;
     char cwd[MAXPATHLEN];
     char *my_contact_info, *tmp, *jobid_str, *procid_str;
+    char *contact_file;
 
     /*
      * Intialize our Open MPI environment
@@ -53,17 +58,54 @@ main(int argc, char *argv[])
         return ret;
     }
 
+    /* setup to read common command line options that span all Open MPI programs */
+    cmd_line = OBJ_NEW(ompi_cmd_line_t);
+
+    ompi_cmd_line_make_opt(cmd_line, 'v', "version", 0,
+			   "Show version of Open MPI and this program");
+
+    ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0,
+			   "Show help for this function");
+
+
+    /* setup rte command line arguments */
+    ompi_rte_cmd_line_setup(cmd_line);
+
     /*
-     * Start command line arguments
+     * setup  mca command line arguments
      */
     if (OMPI_SUCCESS != (ret = mca_base_cmd_line_setup(cmd_line))) {
-        /* BWB show_help */
-        printf("show_help: mca_base_cmd_line_setup failed\n");
-        return ret;
+	/* BWB show_help */
+	printf("show_help: mca_base_cmd_line_setup failed\n");
+	return ret;
     }
 
-    ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0, 
-                           "Show this help message");
+    if (OMPI_SUCCESS != mca_base_cmd_line_process_args(cmd_line)) {
+	/* BWB show_help */
+	printf("show_help: mca_base_cmd_line_process_args\n");
+	return ret;
+    }
+
+    /* parse the local commands */
+    if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv)) {
+	exit(ret);
+    }
+
+    if (ompi_cmd_line_is_taken(cmd_line, "help") || 
+        ompi_cmd_line_is_taken(cmd_line, "h")) {
+        printf("...showing ompi_info help message...\n");
+        exit(1);
+    }
+
+    if (ompi_cmd_line_is_taken(cmd_line, "version") ||
+	ompi_cmd_line_is_taken(cmd_line, "v")) {
+	printf("...showing off my version!\n");
+	exit(1);
+    }
+
+    /*
+     * Setup mpirun-specific command line arguments
+     */
     ompi_cmd_line_make_opt3(cmd_line, 'n', "np", "np", 1,
                             "Number of processes to start");
     ompi_cmd_line_make_opt3(cmd_line, '\0', "hostfile", "hostfile", 1,
@@ -92,14 +134,6 @@ main(int argc, char *argv[])
     ompi_rte_parse_cmd_line(cmd_line);
 
     /*
-     * TSW - temporarily force to be a seed - and to use tcp oob.
-     * 
-     */
-    ompi_process_info.seed = true;
-    ompi_process_info.ns_replica = NULL;
-    ompi_process_info.gpr_replica = NULL;
-
-    /*
      * Start the Open MPI Run Time Environment
      */
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
@@ -108,26 +142,61 @@ main(int argc, char *argv[])
         return ret;
     }
 
-    if (OMPI_SUCCESS != ompi_rte_init_stage1(&multi_thread, &hidden_thread) ||
-	OMPI_SUCCESS != ompi_rte_init_stage2(&multi_thread, &hidden_thread)) {
-        /* BWB show_help */
-        printf("show_help: ompi_rte_init failed\n");
-        return ret;
+    multi_thread = true;
+    hidden_thread=false;
+    if (OMPI_SUCCESS != ompi_rte_init_stage1(&multi_thread, &hidden_thread)) {
+        /* JMS show_help */
+        printf("show_help: mpirun failed in ompi_rte_init\n");
+	return ret;
+    }
+
+    /* parse environmental variables and fill corresponding info structures
+     * need the oob to be open so we can pass the contact info we extract
+     */
+    ompi_rte_parse_environ();
+
+    /* parse the cmd_line for rte options - override settings from enviro, where necessary
+     * copy everything into enviro variables for passing later on
+     */
+    ompi_rte_parse_cmd_line(cmd_line);
+
+    /* parse the cmd_line for daemon options - gets all the options relating
+     * specifically to seed behavior, in case i'm a seed, but also gets
+     * options about scripts and hostfiles that might be of use to me
+     * overrride enviro variables where necessary
+     */
+    ompi_rte_parse_daemon_cmd_line(cmd_line);
+
+    /* eventually, this is where we will check for existing universe and
+     * spin one up if it isn't there. for now, though
+     * temporarily force to be a seed.
+     * 
+     */
+    ompi_process_info.seed = true;
+    ompi_process_info.ns_replica = NULL;
+    ompi_process_info.gpr_replica = NULL;
+
+    /* setup rest of rte */
+    if (OMPI_SUCCESS != ompi_rte_init_stage2(&multi_thread, &hidden_thread)) {
+	/* BWB show_help */
+	printf("show_help: ompi_rte_init failed\n");
+	return ret;
     }
 
     /*****    SET MY NAME   *****/
-    if (NULL == ompi_process_info.name) { /* don't overwrite an existing name */
-	if (ompi_process_info.seed) {
-	    ompi_process_info.name = ompi_name_server.create_process_name(0, 0, 0);
-	} else {
-	    ompi_process_info.name = ompi_rte_get_self();
+    if (ompi_process_info.seed) {
+	if (NULL != ompi_process_info.name) { /* overwrite it */
+	    free(ompi_process_info.name);
 	}
+	ompi_process_info.name = ompi_name_server.create_process_name(0, 0, 0);
+    } else { /* if not seed, then someone spawned me - must have provided name info */
+	if (NULL != ompi_process_info.name) { /* overwrite it */
+	    free(ompi_process_info.name);
+	}
+	ompi_process_info.name = ompi_rte_get_self();
     }
 
-    /* get my process info */
-    ompi_proc_info();
-
-/* setup my session directory */
+    /* setup my session directory */
     jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);
     procid_str = ompi_name_server.get_vpid_string(ompi_process_info.name);
  
@@ -142,7 +211,7 @@ main(int argc, char *argv[])
 	ompi_output(0, "\tjobid %s", jobid_str);
 	ompi_output(0, "\tprocid %s", procid_str);
     }
-   if (OMPI_ERROR == ompi_session_dir(true,
+    if (OMPI_ERROR == ompi_session_dir(true,
 				       ompi_process_info.tmpdir_base,
 				       ompi_system_info.user,
 				       ompi_system_info.nodename, NULL, 
@@ -153,23 +222,37 @@ main(int argc, char *argv[])
 	exit(-1);
     }
 
-   /*
-    *  Register my process info with my replica.
-    */
-   if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
-       ompi_output(0, "ompi_rte_init: failed in ompi_rte_register()\n");
-       return ret;
-   }
+    /*
+     *  Register my process info with my replica.
+     */
+    if (OMPI_SUCCESS != (ret = ompi_rte_register())) {
+	ompi_output(0, "ompi_rte_init: failed in ompi_rte_register()\n");
+	return ret;
+    }
  
-   /* finalize the rte startup */
-   if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&multi_thread,
-						       &hidden_thread))) {
-        /* JMS show_help */
-        printf("show_help: ompid failed in ompi_rte_init\n");
-        return ret;
+    /* finalize the rte startup */
+    if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&multi_thread,
+							&hidden_thread))) {
+	/* JMS show_help */
+	printf("show_help: ompid failed in ompi_rte_init\n");
+	return ret;
     }
 
-       /*****    PREP TO START THE APPLICATION    *****/
+    /* if i'm the seed, get my contact info and write my setup file for others to find */
+    if (ompi_process_info.seed) {
+	ompi_universe_info.seed_contact_info = mca_oob_get_contact_info();
+	contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
+				    "universe-setup.txt", NULL);
+
+	if (OMPI_SUCCESS != (ret = ompi_write_universe_setup_file(contact_file))) {
+	    if (ompi_rte_debug_flag) {
+		ompi_output(0, "[%d,%d,%d] ompid: couldn't write setup file", ompi_process_info.name->cellid,
+			    ompi_process_info.name->jobid, ompi_process_info.name->vpid);
+	    }
+	}
+    }
+
+    /*****    PREP TO START THE APPLICATION    *****/
 
     /* get the jobid for the application */
     new_jobid = ompi_name_server.create_jobid();
@@ -177,9 +260,9 @@ main(int argc, char *argv[])
     /* BWB - fix jobid, procs, and nodes */
     nodelist = ompi_rte_allocate_resources(new_jobid, 0, num_procs);
     if (NULL == nodelist) {
-        /* BWB show_help */
-        printf("show_help: ompi_rte_allocate_resources failed\n");
-        return -1;
+	/* BWB show_help */
+	printf("show_help: ompi_rte_allocate_resources failed\n");
+	return -1;
     }
 
     /*
@@ -214,8 +297,8 @@ main(int argc, char *argv[])
     sched->nodelist = nodelist;
 
     if (sched->argc == 0) {
-        printf("no app to start\n");
-        return 1;
+	printf("no app to start\n");
+	return 1;
     }
 
 
@@ -229,8 +312,8 @@ main(int argc, char *argv[])
      * spawn procs
      */
     if (OMPI_SUCCESS != ompi_rte_spawn_procs(new_jobid, &schedlist)) {
-        printf("show_help: woops!  we didn't spawn :( \n");
-        return -1;
+	printf("show_help: woops!  we didn't spawn :( \n");
+	return -1;
     }
 
     /*

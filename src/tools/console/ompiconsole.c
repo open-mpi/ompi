@@ -130,17 +130,9 @@ int main(int argc, char *argv[])
         return ret;
     }
 
-    fprintf(stderr, "check hostname for local host: univ %s sys %s\n", ompi_universe_info.host, ompi_system_info.nodename);
-
-    /* check for local universe existence */
-    if (0 != strncmp(ompi_universe_info.host, ompi_system_info.nodename, strlen(ompi_system_info.nodename))) {
-	fprintf(stderr, "remote universe operations not supported at this time\n");
-	exit(1);
-    }
-
     fprintf(stderr, "check local univ\n");
 
-    if (OMPI_SUCCESS != (ret = ompi_rte_local_universe_exists())) {
+    if (OMPI_SUCCESS != (ret = ompi_rte_universe_exists())) {
 	fprintf(stderr, "could not contact local universe %s\n", ompi_universe_info.name);
 	exit(1);
     }

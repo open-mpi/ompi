@@ -84,11 +84,6 @@ int main(int argc, char *argv[])
     OBJ_CONSTRUCT(&ompi_daemon_mutex, ompi_mutex_t);
     OBJ_CONSTRUCT(&ompi_daemon_condition, ompi_condition_t);
 
-    /* get the system info and setup defaults */
-    ompi_sys_info();
-    ompi_universe_info.host = strdup(ompi_system_info.nodename);
-    ompi_universe_info.uid = strdup(ompi_system_info.user);
-
     /* setup to read common command line options that span all Open MPI programs */
     cmd_line = OBJ_NEW(ompi_cmd_line_t);
 
@@ -134,22 +129,6 @@ int main(int argc, char *argv[])
 	exit(1);
     }
 
-    /* parse environmental variables and fill corresponding info structures */
-    ompi_rte_parse_environ();
-
-    /* parse the cmd_line for rte options - override settings from enviro, where necessary
-     * copy everything into enviro variables for passing later on
-     */
-    ompi_rte_parse_cmd_line(cmd_line);
-
-    /* parse the cmd_line for daemon options - gets all the options relating
-     * specifically to seed behavior, in case i'm a seed, but also gets
-     * options about scripts and hostfiles that might be of use to me
-     * overrride enviro variables where necessary
-     */
-    ompi_rte_parse_daemon_cmd_line(cmd_line);
-
-
     /* Open up the MCA */
 
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
@@ -168,13 +147,23 @@ int main(int argc, char *argv[])
         return ret;
     }
 
-    /* if I'm not the seed and don't have my replica info, look for them in the
-     * named universe
+    /* parse environmental variables and fill corresponding info structures
+     * need the oob to be open so we can pass the contact info we extract
      */
-    if (!ompi_process_info.seed &&
-	NULL == ompi_process_info.gpr_replica &&
-	NULL == ompi_process_info.ns_replica) {
-    }
+    ompi_rte_parse_environ();
+
+    /* parse the cmd_line for rte options - override settings from enviro, where necessary
+     * copy everything into enviro variables for passing later on
+     */
+    ompi_rte_parse_cmd_line(cmd_line);
+
+    /* parse the cmd_line for daemon options - gets all the options relating
+     * specifically to seed behavior, in case i'm a seed, but also gets
+     * options about scripts and hostfiles that might be of use to me
+     * overrride enviro variables where necessary
+     */
+    ompi_rte_parse_daemon_cmd_line(cmd_line);
+
 
     /* setup the rest of the rte */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
@@ -202,9 +191,6 @@ int main(int argc, char *argv[])
 	    }
 	    ompi_process_info.name = ompi_rte_get_self();
 	}
-
-    /* get my process info */
-    ompi_proc_info();
 
     /* setup my session directory */
     jobid_str = ompi_name_server.get_jobid_string(ompi_process_info.name);
@@ -250,7 +236,7 @@ int main(int argc, char *argv[])
 
     /* if i'm the seed, get my contact info and write my setup file for others to find */
     if (ompi_process_info.seed) {
-	ompi_universe_info.oob_contact_info = mca_oob_get_contact_info();
+	ompi_universe_info.seed_contact_info = mca_oob_get_contact_info();
 	contact_file = ompi_os_path(false, ompi_process_info.universe_session_dir,
 				    "universe-setup.txt", NULL);
 

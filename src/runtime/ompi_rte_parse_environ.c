@@ -6,7 +6,8 @@
  * @file
  *
  * Parse environmental paramater options for the Open MPI Run Time Environment. This function
- * MUST be called BEFORE calling any of the rte command line parsers.
+ * MUST be called BEFORE calling any of the rte command line parsers, AFTER calling
+ * rte_init_stage1, and BEFORE calling rte_init_stage2.
  *
  * NOTE: Sets all key structure values to defaults if no environ value provided!!
  *
@@ -19,22 +20,66 @@
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 
+#include "mca/base/base.h"
+#include "mca/base/mca_base_param.h"
+#include "mca/oob/base/base.h"
+#include "mca/ns/base/base.h"
+
 #include "runtime/runtime.h"
 
 void ompi_rte_parse_environ(void)
 {
     char *enviro_val;
+    int id;
 
     /* ensure that sys_info and proc_info have been run */
     ompi_sys_info();
     ompi_proc_info();
 
     enviro_val = getenv("OMPI_universe_seed");
-    ompi_output(0, "parse_env: seed %s", enviro_val);
     if (NULL != enviro_val) {  /* seed flag passed */
 	ompi_process_info.seed = true;
     } else {
 	ompi_process_info.seed = false;
+    }
+
+    enviro_val = getenv("OMPI_universe_contact");
+    if (NULL != enviro_val) { /* contact info passed */
+	if (NULL != ompi_universe_info.seed_contact_info) {  /* overwrite */
+	    free(ompi_universe_info.seed_contact_info);
+	}
+	ompi_universe_info.seed_contact_info = strdup(enviro_val);
+	mca_oob_set_contact_info(ompi_universe_info.seed_contact_info);
+    } else {
+	if (NULL != ompi_universe_info.seed_contact_info) {
+	    free(ompi_universe_info.seed_contact_info);
+	}
+    }
+
+    id = mca_base_param_register_string("gpr", "base", "replica", NULL, NULL);
+    mca_base_param_lookup_string(id, &ompi_universe_info.gpr_replica);
+    if (NULL != ompi_universe_info.gpr_replica) {
+	mca_oob_set_contact_info(ompi_universe_info.gpr_replica);
+	ompi_process_info.gpr_replica = ns_base_create_process_name(0,0,0);
+	mca_oob_parse_contact_info(ompi_universe_info.gpr_replica,
+				   ompi_process_info.gpr_replica, NULL);
+    } else {
+	if (NULL != ompi_process_info.gpr_replica) {
+	    free(ompi_process_info.gpr_replica);
+	}
+    }
+
+    id = mca_base_param_register_string("ns", "base", "replica", NULL, NULL);
+    mca_base_param_lookup_string(id, &ompi_universe_info.ns_replica);
+    if (NULL != ompi_universe_info.ns_replica) {
+	mca_oob_set_contact_info(ompi_universe_info.ns_replica);
+	ompi_process_info.ns_replica = ns_base_create_process_name(0,0,0);
+	mca_oob_parse_contact_info(ompi_universe_info.ns_replica,
+				   ompi_process_info.ns_replica, NULL);
+    } else {
+	if (NULL != ompi_process_info.ns_replica) {
+	    free(ompi_process_info.ns_replica);
+	}
     }
 
     enviro_val = getenv("OMPI_universe_probe");
@@ -57,6 +102,12 @@ void ompi_rte_parse_environ(void)
 	ompi_universe_info.scope = strdup("exclusive");
     }
 
+    /*** FOR DEBUGGING PURPOSES IN THIS EARLY STAGE - FORCE PUBLIC */
+    if (NULL != ompi_universe_info.scope) {
+	free(ompi_universe_info.scope);
+    }
+    ompi_universe_info.scope = strdup("public");
+
     enviro_val = getenv("OMPI_universe_persistent");
     if (NULL != enviro_val) {  /* persistence flag passed */
 	ompi_universe_info.persistence = true;
@@ -64,18 +115,14 @@ void ompi_rte_parse_environ(void)
 	ompi_universe_info.persistence = false;
     }
 
-    enviro_val = getenv("OMPI_universe_silent");
-    if (NULL != enviro_val) {  /* silent flag passed */
-	ompi_universe_info.silent_mode = true;
-    } else {
-	ompi_universe_info.silent_mode = false;
-    }
+    /*** FOR DEBUGGING PURPOSES IN THIS EARLY STAGE - FORCE PERSISTENCE */
+    ompi_universe_info.persistence = true;
 
-    enviro_val = getenv("OMPI_universe_webserver");
-    if (NULL != enviro_val) {  /* webserver flag passed */
-	ompi_universe_info.web_server = true;
+    enviro_val = getenv("OMPI_universe_console");
+    if (NULL != enviro_val) {  /* console flag passed */
+	ompi_universe_info.console = true;
     } else {
-	ompi_universe_info.web_server = false;
+	ompi_universe_info.console = false;
     }
 
     enviro_val = getenv("OMPI_universe_script");

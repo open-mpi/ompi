@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 	exit(1);
     }
 
-    if (OMPI_SUCCESS != (ret = ompi_rte_local_universe_exists()) &&
+    if (OMPI_SUCCESS != (ret = ompi_rte_universe_exists()) &&
 	(OMPI_ERR_NOT_IMPLEMENTED != ret)) {
 
 	if (OMPI_ERR_NOT_FOUND != ret) {
