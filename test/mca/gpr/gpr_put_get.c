@@ -34,6 +34,7 @@
 #include "include/orte_schema.h"
 
 #include "support.h"
+#include "components.h"
 
 #include "class/orte_pointer_array.h"
 #include "dps/dps.h"
@@ -59,6 +60,11 @@ int main(int argc, char **argv)
     char *names[15], *keys[5];
     orte_gpr_keyval_t **kvals;
     orte_gpr_value_t **values, *val;
+    test_component_handle_t handle;
+    mca_gpr_base_component_t *gpr_component = NULL;
+    orte_gpr_base_module_t *gpr_module = NULL;
+    bool allow, have;
+    int priority;
     
     test_init("test_gpr_replica");
 
@@ -80,12 +86,13 @@ int main(int argc, char **argv)
     if (!ompi_output_init()) {
         return OMPI_ERROR;
     }
-                                                                                                                   
+
     /* 
-     * If threads are supported - assume that we are using threads - and reset otherwise. 
+     * If threads are supported - assume that we are using threads -
+     * and reset otherwise.
      */
     ompi_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
-                                                                                                                   
+
     /* For malloc debugging */
     ompi_malloc_init();
 
@@ -98,7 +105,6 @@ int main(int argc, char **argv)
     if (ORTE_SUCCESS != (rc = orte_proc_info())) {
         return rc;
     }
-    
 
     orte_process_info.seed = true;
     orte_process_info.my_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
@@ -114,18 +120,18 @@ int main(int argc, char **argv)
         exit (1);
     }
 
-    if (ORTE_SUCCESS == orte_gpr_base_open()) {
-        fprintf(test_out, "GPR started\n");
-    } else {
-        fprintf(test_out, "GPR could not start\n");
-        exit (1);
+    /* Open the gpr replica component and initialize a module */
+    if (OMPI_SUCCESS != 
+        test_component_open("gpr", "replica", &handle, 
+                            (mca_base_component_t**) &gpr_component) ||
+        NULL == gpr_component) {
+        fprintf(test_out, "Could not open replica\n");
+        exit(1);
     }
-    
-    if (ORTE_SUCCESS == orte_gpr_base_select()) {
-        fprintf(test_out, "GPR replica selected\n");
-    } else {
-        fprintf(test_out, "GPR replica could not be selected\n");
-        exit (1);
+    gpr_module = gpr_component->gpr_init(&allow, &have, &priority);
+    if (NULL == gpr_module) {
+        fprintf(test_out, "replica component did not return a module\n");
+        exit(1);
     }
                   
     if (ORTE_SUCCESS == orte_dps_open()) {
@@ -150,7 +156,7 @@ int main(int argc, char **argv)
     (val->keyvals[0])->key = strdup("stupid-value-next-one");
     (val->keyvals[0])->type = ORTE_INT32;
     (val->keyvals[0])->value.i32 = 654321;
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_put(1, &val))) {
+    if (ORTE_SUCCESS != (rc = gpr_module->put(1, &val))) {
         fprintf(test_out, "gpr_test: put of 1 value/1 keyval failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
         test_failure("gpr_test: put of 1 value/1 keyval failed");
@@ -178,7 +184,7 @@ int main(int argc, char **argv)
         (val->keyvals[i])->type = ORTE_UINT32;
         (val->keyvals[i])->value.ui32 = (uint32_t)i;
     }
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_put(1, &val))) {
+    if (ORTE_SUCCESS != (rc = gpr_module->put(1, &val))) {
         fprintf(test_out, "gpr_test: put 1 value/multiple keyval failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
         test_failure("gpr_test: put 1 value/multiple keyval failed");
@@ -206,7 +212,7 @@ int main(int argc, char **argv)
         (val->keyvals[i])->type = ORTE_UINT32;
         (val->keyvals[i])->value.ui32 = (uint32_t)i;
     }
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_put(1, &val))) {
+    if (ORTE_SUCCESS != (rc = gpr_module->put(1, &val))) {
         fprintf(test_out, "gpr_test: put 1 value/multiple keyval in second container failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
         test_failure("gpr_test: put 1 value/multiple keyval in second container failed");
@@ -218,7 +224,7 @@ int main(int argc, char **argv)
     OBJ_RELEASE(val);
     
     fprintf(stderr, "dump\n");
-    if (ORTE_SUCCESS != (rc = orte_gpr.dump_all(0))) {
+    if (ORTE_SUCCESS != (rc = gpr_module->dump_all(0))) {
         fprintf(test_out, "gpr_test: dump failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
         test_failure("gpr_test: dump failed");
@@ -233,7 +239,7 @@ int main(int argc, char **argv)
     names[1] = NULL;
     keys[0] = strdup("stupid-test-1");
     keys[1] = NULL;
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_get(ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
+    if (ORTE_SUCCESS != (rc = gpr_module->get(ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
                                 "test-put-segment",
                                 names, keys,
                                 &cnt, &values))) {
@@ -269,7 +275,7 @@ int main(int argc, char **argv)
     keys[2] = strdup("stupid-test-5");
     keys[3] = strdup("stupid-test-8");
     keys[4] = NULL;
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_get(ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
+    if (ORTE_SUCCESS != (rc = gpr_module->get(ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
                                 "test-put-segment",
                                 names, keys,
                                 &cnt, &values))) {
@@ -317,7 +323,7 @@ int main(int argc, char **argv)
     (val->keyvals[0])->value.strptr = strdup("try-string-value");
     for (i = 0; i < 10; i++) {
         fprintf(stderr, "\tputting copy %d\n", i);
-        if (ORTE_SUCCESS != (rc = orte_gpr_replica_put(1, &val))) {
+        if (ORTE_SUCCESS != (rc = gpr_module->put(1, &val))) {
             fprintf(test_out, "gpr_test: put multiple copies of one keyval in a container failed with error code %s\n",
                         ORTE_ERROR_NAME(rc));
             test_failure("gpr_test: put multiple copies of one keyval in a container failed");
@@ -327,7 +333,7 @@ int main(int argc, char **argv)
     }
     OBJ_RELEASE(val);
     
-    orte_gpr.dump_all(0);
+    gpr_module->dump_all(0);
     
     fprintf(stderr, "put with no tokens puts in every container\n");
     val = OBJ_NEW(orte_gpr_value_t);
@@ -341,7 +347,7 @@ int main(int argc, char **argv)
     (val->keyvals[0])->key = strdup("stupid-value-next-one");
     (val->keyvals[0])->type = ORTE_STRING;
     (val->keyvals[0])->value.strptr = strdup("try-string-value");
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_put(1, &val))) {
+    if (ORTE_SUCCESS != (rc = gpr_module->put(1, &val))) {
             fprintf(test_out, "gpr_test: put with no tokens failed - returned %s\n",
                     ORTE_ERROR_NAME(rc));
             test_failure("gpr_test: put with no tokens failed");
@@ -351,12 +357,11 @@ int main(int argc, char **argv)
     }
     OBJ_RELEASE(val);
     
-    orte_gpr.dump_all(0);
-    
+    gpr_module->dump_all(0);
 
     fprintf(stderr, "now finalize and see if all memory cleared\n");
+    test_component_close(&handle);
     orte_dps_close();
-    orte_gpr_base_close();
     orte_sys_info_finalize();
     orte_proc_info_finalize();
     mca_base_close();
