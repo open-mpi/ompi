@@ -41,12 +41,14 @@ main(int argc, char *argv[])
     ompi_cmd_line_t *cmd_line = NULL;
     ompi_list_t *nodelist = NULL;
     ompi_list_t schedlist;
-    mca_ns_base_jobid_t new_jobid;
+    mca_ns_base_jobid_t new_jobid, jobid;
+    mca_ns_base_vpid_t vpid;
     int num_procs = 1;
     ompi_rte_node_schedule_t *sched;
     char cwd[MAXPATHLEN];
     char *my_contact_info, *tmp, *jobid_str, *procid_str;
-    char *contact_file, *filenm;
+    char *contact_file, *filenm, *universe;
+    pid_t pid;
 
     /*
      * Intialize our Open MPI environment
@@ -165,14 +167,39 @@ main(int argc, char *argv[])
      */
     ompi_rte_parse_daemon_cmd_line(cmd_line);
 
-    /* eventually, this is where we will check for existing universe and
-     * spin one up if it isn't there. for now, though
-     * temporarily force to be a seed.
-     * 
-     */
-    ompi_process_info.seed = true;
-    ompi_process_info.ns_replica = NULL;
-    ompi_process_info.gpr_replica = NULL;
+    /* check for existing universe to join */
+    if (OMPI_SUCCESS != (ret = ompi_rte_universe_exists())) {
+	if (ompi_rte_debug_flag) {
+	    ompi_output(0, "ompi_mpi_init: could not join existing universe");
+	}
+	if (OMPI_ERR_NOT_FOUND != ret) {
+	    /* if it exists but no contact could be established,
+	     * define unique name based on current one.
+	     * and start new universe with me as seed
+	     */
+	    universe = strdup(ompi_universe_info.name);
+	    free(ompi_universe_info.name);
+	    pid = getpid();
+	    if (0 > asprintf(&ompi_universe_info.name, "%s-%d", universe, pid) && ompi_rte_debug_flag) {
+		ompi_output(0, "mpi_init: error creating unique universe name");
+	    }
+	}
+
+	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
+	ompi_process_info.seed = true;
+	if (NULL != ompi_universe_info.ns_replica) {
+	    free(ompi_universe_info.ns_replica);
+	}
+	if (NULL != ompi_process_info.ns_replica) {
+	    free(ompi_process_info.ns_replica);
+	}
+	if (NULL != ompi_universe_info.gpr_replica) {
+	    free(ompi_universe_info.gpr_replica);
+	}
+	if (NULL != ompi_process_info.gpr_replica) {
+	    free(ompi_process_info.gpr_replica);
+	}
+    }
 
     /* setup rest of rte */
     if (OMPI_SUCCESS != ompi_rte_init_stage2(&multi_thread, &hidden_thread)) {
@@ -187,11 +214,10 @@ main(int argc, char *argv[])
 	    free(ompi_process_info.name);
 	}
 	ompi_process_info.name = ompi_name_server.create_process_name(0, 0, 0);
-    } else { /* if not seed, then someone spawned me - must have provided name info */
-	if (NULL != ompi_process_info.name) { /* overwrite it */
-	    free(ompi_process_info.name);
-	}
-	ompi_process_info.name = ompi_rte_get_self();
+    } else { /* if not seed, then we joined universe - get jobid and name */
+	jobid = ompi_name_server.create_jobid();
+	vpid = ompi_name_server.reserve_range(jobid, 1);
+	ompi_process_info.name = ompi_name_server.create_process_name(0, jobid, vpid);
     }
 
     /* setup my session directory */
@@ -263,7 +289,11 @@ main(int argc, char *argv[])
     ompi_list_append(&schedlist, (ompi_list_item_t*) sched);
     ompi_cmd_line_get_tail(cmd_line, &(sched->argc), &(sched->argv));
     /* set initial contact info */
-    my_contact_info = mca_oob_get_contact_info();
+    if (ompi_process_info.seed) {  /* i'm the seed - direct them towards me */
+	my_contact_info = mca_oob_get_contact_info();
+    } else { /* i'm not the seed - direct them to it */
+	my_contact_info = strdup(ompi_universe_info.ns_replica);
+    }
     mca_pcm_base_build_base_env(environ, &(sched->envc), &(sched->env));
     asprintf(&tmp, "OMPI_MCA_ns_base_replica=%s", my_contact_info);
     ompi_argv_append(&(sched->envc), &(sched->env), tmp);
@@ -326,8 +356,10 @@ main(int argc, char *argv[])
      * for now, though, remove the universe-setup.txt file so the directories
      * can cleanup
      */
-    filenm = ompi_os_path(false, ompi_process_info.universe_session_dir, "universe-setup.txt", NULL);
-    unlink(filenm);
+    if (ompi_process_info.seed) {
+	filenm = ompi_os_path(false, ompi_process_info.universe_session_dir, "universe-setup.txt", NULL);
+	unlink(filenm);
+    }
 
     /* finalize the system */
     ompi_event_fini();

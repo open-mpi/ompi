@@ -67,6 +67,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_proc_t** procs;
     size_t nprocs;
     char *error, *jobid_str, *procid_str;
+    char *universe;
+    pid_t pid;
 
     /* Become an OMPI process */
 
@@ -98,6 +100,33 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	if (ompi_rte_debug_flag) {
 	    ompi_output(0, "ompi_mpi_init: could not join existing universe");
 	}
+	if (OMPI_ERR_NOT_FOUND != ret) {
+	    /* if it exists but no contact could be established,
+	     * define unique name based on current one.
+	     * and start new universe with me as seed
+	     */
+	    universe = strdup(ompi_universe_info.name);
+	    free(ompi_universe_info.name);
+	    pid = getpid();
+	    if (0 > asprintf(&ompi_universe_info.name, "%s-%d", universe, pid) && ompi_rte_debug_flag) {
+		ompi_output(0, "mpi_init: error creating unique universe name");
+	    }
+	}
+
+	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
+	ompi_process_info.seed = true;
+	if (NULL != ompi_universe_info.ns_replica) {
+	    free(ompi_universe_info.ns_replica);
+	}
+	if (NULL != ompi_process_info.ns_replica) {
+	    free(ompi_process_info.ns_replica);
+	}
+	if (NULL != ompi_universe_info.gpr_replica) {
+	    free(ompi_universe_info.gpr_replica);
+	}
+	if (NULL != ompi_process_info.gpr_replica) {
+	    free(ompi_process_info.gpr_replica);
+	}
     }
 
     /* start the rest of the rte */
@@ -111,16 +140,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (NULL != ompi_process_info.name) {  /* should NOT have been previously set */
 	free(ompi_process_info.name);
     }
-    if (NULL == ompi_rte_get_self()) {  /* no name set in environment - must be singleton */
-	if (NULL == ompi_process_info.ns_replica) { /* couldn't join existing univ */
-	    ompi_process_info.name = ompi_name_server.create_process_name(0,0,0);
-	} else {  /* name server exists elsewhere - get a name for me */
-	    jobid = ompi_name_server.create_jobid();
-	    vpid = ompi_name_server.reserve_range(jobid, 1);
-	    ompi_process_info.name = ompi_name_server.create_process_name(0, jobid, vpid);
-	}
-    } else {  /* name set in environment - record it */
+
+    if (NULL != ompi_rte_get_self()) {  /* name set in environment - nonsingleton - record name */
 	ompi_process_info.name = ompi_rte_get_self();
+    } else if (NULL == ompi_process_info.ns_replica) { /* singleton - couldn't join existing univ */
+	ompi_process_info.name = ompi_name_server.create_process_name(0,0,0);
+    } else {  /* singleton - name server exists elsewhere - get a name for me */
+	jobid = ompi_name_server.create_jobid();
+	vpid = ompi_name_server.reserve_range(jobid, 1);
+	ompi_process_info.name = ompi_name_server.create_process_name(0, jobid, vpid);
     }
 
     /* setup my session directory */
