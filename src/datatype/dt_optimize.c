@@ -307,6 +307,5 @@ int ompi_ddt_commit( dt_desc_t** data )
         pLast->total_extent = pData->ub - pData->lb;
         pLast->size         = pData->size;
     }
-    ompi_ddt_dump( pData );
     return OMPI_SUCCESS;
 }
