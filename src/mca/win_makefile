@@ -1,0 +1,86 @@
+#!/bin/sh
+#
+# This is a simple makefile for windows which makes all the components which are 
+# required for super computing. Too lazy to open up visual studio each and every
+# time to compile a component, so just adding this to the svn repository 
+#
+
+# this is hardcoded for now. but will change shortly
+topdir = C:\cygwin\home\pkambadu\ompi
+
+# list of components to build with the c compiler
+C_SUBDIRS = \
+        allocator/bucket \
+        coll/basic \
+        llm/hostfile/src \
+        ns/proxy/src \
+        pcmclient/env \
+        pcmclient/seed \
+        pcmclient/singleton \
+        topo/unity/src
+
+# list of components to build with the cpp compiler
+# (because of the problem with OBJ_CLASS_INSTANCE)
+CPP_SUBDIRS = \
+        ns/replica/src 
+
+#list of components that are not working as yet
+CPP_EXCLUDE = \
+        pml/teg/src \
+        ptl/tcp/src \
+        oob/tcp/ \
+        pcm/wmi
+
+CC = cl
+
+INCL = \
+        /I"${topdir}/src/win32/generated_include" \
+        /I"${topdir}/src/win32/" \
+        /I"${topdir}/src" \
+        /I"${topdir}/include"
+
+CFLAGS = \
+        /DWIN32 \
+        /DOMPI_SYSCONFDIR \
+        /c 
+
+CPPFLAGS = \
+        /DWIN32 \
+        /DOMPI_SYSCONFDIR \
+        /c \
+        /TP \
+        /EHsc
+
+# link with ompi.lib to resolve external symbols
+OMPILIB = \
+        "${topdir}/vcproj/ompi/Debug/ompi.lib"
+
+LINK = link
+
+LINKFLAGS = \
+        /DLL \
+        /DEFAULTLIB:${OMPILIB}
+
+all: \
+    clibs \
+    cpplibs
+
+clibs: ${C_SUBDIRS}
+	@for dirs in ${C_SUBDIRS}; do \
+	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} *.obj); \
+	done
+
+cpplibs: ${CPP_SUBDIRS}
+	@for dirs in ${CPP_SUBDIRS}; do \
+	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} *.obj); \
+	done
+
+.PHONY: clean
+
+clean:
+	@for dirs in ${C_SUBDIRS}; do \
+	    (echo "Entering $$dirs"; cd $$dirs; rm -rf *.lib *.obj *.exp;); \
+	done
+	@for dirs in ${C_PPSUBDIRS}; do \
+	    (echo "Entering $$dirs"; cd $$dirs; rm -rf *.lib *.obj *.exp;); \
+	done
