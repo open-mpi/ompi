@@ -15,6 +15,7 @@ struct ompi_universe_t {
     char *host;
     char *uid;
     bool persistence;
+    char *scope;
     bool silent_mode;
     bool script_mode;
     bool web_server;
