@@ -295,8 +295,8 @@ static ompi_list_t *check_components(ompi_list_t *components,
 {
   int i, priority;
   const mca_base_component_t *component;
-  ompi_list_item_t *item, *next, *item2;
-  const mca_coll_base_module_1_0_0_t *actions;
+  ompi_list_item_t *item, *item2;
+  const mca_coll_base_module_1_0_0_t *module;
   bool want_to_check;
   ompi_list_t *selectable;
   avail_coll_t *avail, *avail2;
@@ -311,10 +311,9 @@ static ompi_list_t *check_components(ompi_list_t *components,
   
   for (item = ompi_list_get_first(components); 
        item != ompi_list_get_end(components); 
-       item = next) {
+       item = ompi_list_get_next(item)) {
     component = ((mca_base_component_priority_list_item_t *) 
                  item)->cpli_component;
-    next = ompi_list_get_next(component);
 
     /* If we have a list of names, scan through it */
 
@@ -333,7 +332,7 @@ static ompi_list_t *check_components(ompi_list_t *components,
        so */
 
     if (want_to_check) {
-      priority = check_one_component(comm, component, &actions);
+      priority = check_one_component(comm, component, &module);
       if (priority > 0) {
 
         /* We have a component that indicated that it wants to run by
@@ -342,6 +341,7 @@ static ompi_list_t *check_components(ompi_list_t *components,
         avail = OBJ_NEW(avail_coll_t);
         avail->ac_priority = 0;
         avail->ac_component = (mca_coll_base_component_1_0_0_t *) component;
+        avail->ac_module = module;
 
         /* Put this item on the list in priority order (highest
            priority first).  Should it go first? */
@@ -349,13 +349,13 @@ static ompi_list_t *check_components(ompi_list_t *components,
         item2 = ompi_list_get_first(selectable); 
         avail2 = (avail_coll_t *) item2;
         if (avail->ac_priority > avail2->ac_priority) {
-          ompi_list_prepend(selectable, item);
+          ompi_list_prepend(selectable, avail);
         } else {
           for (i = 1; item2 != ompi_list_get_end(selectable); 
                item2 = ompi_list_get_next(selectable), ++i) {
             avail2 = (avail_coll_t *) item2;
             if (avail->ac_priority > avail2->ac_priority) {
-              ompi_list_insert(selectable, item, i);
+              ompi_list_insert(selectable, avail, i);
               break;
             }
           }
@@ -364,7 +364,7 @@ static ompi_list_t *check_components(ompi_list_t *components,
              append it (because it has the lowest priority found so
              far) */
           if (ompi_list_get_end(selectable) == item2) {
-            ompi_list_append(selectable, item);
+            ompi_list_append(selectable, avail);
           }
         }
       }
@@ -419,7 +419,7 @@ static int check_one_component(ompi_communicator_t *comm,
 
 /*
  * Take any version of a coll module, query it, and return the right
- * actions struct
+ * module struct
  */
 static int query(const mca_base_component_t *component, 
                  ompi_communicator_t *comm, 
