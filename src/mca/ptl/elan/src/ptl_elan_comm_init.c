@@ -121,7 +121,7 @@ ompi_init_elan_queue_events (mca_ptl_elan_module_t * ptl,
 		(E4_Event *)desc->comp_event);
 	desc->main_dma.dma_dstEvent= SDRAM2ELAN (ctx, queue->input);
 
-	LOG_PRINT(PTL_ELAN_DEBUG_NONE, 
+	LOG_PRINT(PTL_ELAN_DEBUG_DESC, 
 		"desc %p comp_buff %p elan_event %p comp_event %p \n", 
 		desc, desc->comp_buff, desc->elan_event, desc->comp_event);
 #else
@@ -172,6 +172,8 @@ mca_ptl_elan_putget_desc_construct (
 {
     ELAN4_CTX *ctx;
 
+    START_FUNC(PTL_ELAN_DEBUG_DESC);
+
     ctx = (ELAN4_CTX *)ptl->ptl_elan_ctx;
     memset(desc, 0, sizeof(desc));
     desc->ptl = ptl;
@@ -187,7 +189,7 @@ mca_ptl_elan_putget_desc_construct (
     desc->comp_event= (E4_Event *) ((char *)elan_event 
 	    + 2 * ELAN_BLOCK_SIZE + 2 * sizeof (E4_Event32));
 
-    LOG_PRINT(PTL_ELAN_DEBUG_NONE, 
+    LOG_PRINT(PTL_ELAN_DEBUG_DESC, 
 	    "desc %p chain_buff %p comp_buff %p elan_event %p "
 	    " chain_event %p comp_event %p \n", 
 	    desc, desc->chain_buff, desc->comp_buff, desc->elan_event,
@@ -241,6 +243,7 @@ mca_ptl_elan_putget_desc_construct (
 
     /* Make PCI write visable */
     mb();
+    END_FUNC(PTL_ELAN_DEBUG_DESC);
 }
 
 #define OMPI_ELAN_PUTGET_GROW(ptl, flist, frag, dp, eptr, msize, esize, local)\
@@ -292,11 +295,11 @@ ompi_ptl_elan_init_putget_ctrl (mca_ptl_elan_module_t * ptl,
 	    main_align);
 
 #if OMPI_PTL_ELAN_COMP_QUEUE
-    elan_size  = OMPI_PTL_ELAN_ALIGNUP( 
-	    (ELAN_BLOCK_SIZE + sizeof(E4_Event32)*2 ), elan_align);
-#else
     elan_size  = OMPI_PTL_ELAN_ALIGNUP(
 	    (ELAN_BLOCK_SIZE * 2 + sizeof(E4_Event32)*3 ), elan_align);
+#else
+    elan_size  = OMPI_PTL_ELAN_ALIGNUP( 
+	    (ELAN_BLOCK_SIZE + sizeof(E4_Event32)*2 ), elan_align);
 #endif
 
     rail = (RAIL *) ptl->ptl_elan_rail;
