@@ -17,6 +17,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Comm_dup";
+
+
 int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
     
     /* local variables */
@@ -26,15 +29,15 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
     
     /* argument checking */
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (MPI_COMM_NULL == comm || ompi_comm_invalid (comm))
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                         "MPI_Comm_dup");
+                                          FUNC_NAME);
         
         if ( NULL == newcomm )
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                         "MPI_Comm_dup");
+                                          FUNC_NAME);
     }
 
     comp = (ompi_communicator_t *) comm;
@@ -61,7 +64,7 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
                              );
 
     if ( MPI_COMM_NULL == newcomp ) { 
-        OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_INTERN, "MPI_Comm_dup");
+        OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_INTERN, FUNC_NAME);
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
@@ -73,7 +76,7 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) {
                              mode );   /* mode */
     if ( OMPI_SUCCESS != rc ) {
         *newcomm = MPI_COMM_NULL;
-        OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INTERN, "MPI_Comm_dup");
+        OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INTERN, FUNC_NAME);
     }
     
     *newcomm = newcomp;

@@ -17,9 +17,11 @@
 /*
  * These must correspond to the fortran handle indices
  */
-#define OMPI_ERRHANDLER_NULL_FORTRAN 0
-#define OMPI_ERRORS_ARE_FATAL_FORTRAN 1
-#define OMPI_ERRORS_RETURN_FORTRAN 2
+enum {
+  OMPI_ERRHANDLER_NULL_FORTRAN = 0,
+  OMPI_ERRORS_ARE_FATAL_FORTRAN,
+  OMPI_ERRORS_RETURN_FORTRAN
+};
 
 
 /**
@@ -102,9 +104,9 @@ extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
  * when an error occurs because MPI_COMM_WORLD does not exist (because
  * we're before MPI_Init() or after MPI_Finalize()).
  */
-#define OMPI_ERR_INIT_FINALIZE \
+#define OMPI_ERR_INIT_FINALIZE(name) \
   if (!ompi_mpi_initialized || ompi_mpi_finalized) { \
-    ompi_mpi_errors_are_fatal_handler(NULL, NULL); \
+    ompi_mpi_errors_are_fatal_handler(NULL, NULL, name); \
   }
 
 /**
@@ -141,7 +143,8 @@ extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
  */
 #define OMPI_ERRHANDLER_CHECK(rc, mpi_object, err_code, message) \
   if (rc != OMPI_SUCCESS) { \
-    ompi_errhandler_invoke((mpi_object) != NULL ? (mpi_object)->error_handler : NULL, (mpi_object), \
+    ompi_errhandler_invoke((mpi_object) != NULL ? \
+                          (mpi_object)->error_handler : NULL, (mpi_object), \
                           (err_code), (message)); \
     return (err_code); \
   }

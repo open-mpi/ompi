@@ -19,6 +19,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Intercomm_create";
+
+
 int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                          MPI_Comm bridge_comm, int remote_leader,
                          int tag, MPI_Comm *newintercomm) 
@@ -29,20 +32,20 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     int rc, rsize;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
         if ( MPI_COMM_NULL == local_comm || ompi_comm_invalid ( local_comm ) ||
              ( local_comm->c_flags & OMPI_COMM_INTER ) ) 
             return OMPI_ERRHANDLER_INVOKE ( MPI_COMM_WORLD, MPI_ERR_COMM,
-                                           "MPI_Intercomm_create");
+                                            FUNC_NAME);
 
         if ( NULL == newintercomm )
             return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG, 
-                                           "MPI_Intercomm_create");
+                                            FUNC_NAME);
         
         if ( tag < 0 || tag > MPI_TAG_UB )
             return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG, 
-                                           "MPI_Intercomm_create");
+                                            FUNC_NAME);
     }
     
     local_size = ompi_comm_size ( local_comm );
@@ -51,7 +54,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     if ( MPI_PARAM_CHECK ) {
         if ( 0 < local_leader || local_leader > local_size ) 
             return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG, 
-                                           "MPI_Intercomm_create");
+                                            FUNC_NAME);
 
         /* remember that the remote_leader and bridge_comm arguments
            just have to be valid at the local_leader */
@@ -59,12 +62,12 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
             if ( MPI_COMM_NULL == bridge_comm || ompi_comm_invalid ( bridge_comm) ||
                  bridge_comm->c_flags & OMPI_COMM_INTER ) {
                 return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_COMM, 
-                                               "MPI_Intercomm_create");
+                                                FUNC_NAME);
             }            
 
             if ( remote_leader < 0 || remote_leader > ompi_comm_size(bridge_comm)) {
                 return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_ARG,
-                                               "MPI_Intercomm_create");
+                                                FUNC_NAME);
             }
         } /* if ( local_rank == local_leader ) */
     }
@@ -112,7 +115,8 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                               );
 
     if ( newcomp == MPI_COMM_NULL ) {
-        return OMPI_ERRHANDLER_INVOKE (local_comm, MPI_ERR_INTERN, "MPI_Intercomm_create");
+      return OMPI_ERRHANDLER_INVOKE (local_comm, MPI_ERR_INTERN,
+                                     FUNC_NAME);
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
@@ -129,7 +133,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     if ( OMPI_SUCCESS != rc ) {
         *newintercomm = MPI_COMM_NULL;
         return OMPI_ERRHANDLER_INVOKE(local_comm, MPI_ERR_INTERN,
-                                      "MPI_Intercom_create");
+                                      FUNC_NAME);
     }
 
     *newintercomm = newcomp;

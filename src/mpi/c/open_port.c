@@ -18,14 +18,17 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Open_port";
+
+
 int MPI_Open_port(MPI_Info info, char *port_name) 
 {
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
         if ( NULL == port_name )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
-                                          "MPI_Open_port");
+                                          FUNC_NAME);
     }
 
     if ( MPI_INFO_NULL != info ) {

@@ -17,15 +17,18 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Comm_disconnect";
+
+
 int MPI_Comm_disconnect(MPI_Comm *comm) 
 {
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( MPI_COMM_NULL == *comm || ompi_comm_invalid (*comm))
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                         "MPI_Comm_disconnect");
+                                          FUNC_NAME);
     }
     
     /* disconnect means, just decrease the refcount, without calling

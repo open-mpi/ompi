@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Group_intersection";
+
+
 int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
         MPI_Group *new_group) {
 
@@ -28,13 +31,13 @@ int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
     ompi_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         /* verify that groups are valid */
         if ( (MPI_GROUP_NULL == group1) || (MPI_GROUP_NULL == group2) ||
              ( NULL == group1) || (NULL == group2) ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                                      "MPI_Group_intersection");
+                                      FUNC_NAME);
         }
     }
 
@@ -65,7 +68,7 @@ int MPI_Group_intersection(MPI_Group group1, MPI_Group group2,
     new_group_pointer=ompi_group_allocate(group_size);
     if( NULL == new_group_pointer ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                        "MPI_Group_intersection - II");
+                                      FUNC_NAME);
     }
 
     cnt = 0;

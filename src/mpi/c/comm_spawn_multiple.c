@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Comm_spawn_multiple";
+
+
 int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_of_argv,
                             int *array_of_maxprocs, MPI_Info *array_of_info,
                             int root, MPI_Comm comm, MPI_Comm *intercomm,
@@ -32,23 +35,23 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
     comp = (ompi_communicator_t *) comm;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( MPI_COMM_NULL == comm || ompi_comm_invalid (comm))
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                         "MPI_Comm_spawn_multiple");
+                                          FUNC_NAME);
         if ( OMPI_COMM_IS_INTER(comm))
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COMM,
-                                          "MPI_Comm_spawn_multiple");
+                                          FUNC_NAME);
         if ( 0 > root || ompi_comm_size(comm) < root ) 
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                          "MPI_Comm_spawn_multiple");
+                                          FUNC_NAME);
         if ( NULL == intercomm ) 
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                          "MPI_Comm_spawn_multiple");
+                                          FUNC_NAME);
         if ( NULL == array_of_errcodes ) 
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                          "MPI_Comm_spawn_multiple");
+                                          FUNC_NAME);
     }
    
    rank = ompi_comm_rank ( comm );
@@ -56,29 +59,29 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
        if ( rank == root ) {
            if ( 0 > count ) 
                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
-                                             "MPI_Comm_spawn_multiple");
+                                             FUNC_NAME);
            if ( NULL == array_of_commands ) 
                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             "MPI_Comm_spawn_multiple");
+                                             FUNC_NAME);
            if ( NULL == array_of_argv ) 
                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                         "MPI_Comm_spawn_multiple");
+                                             FUNC_NAME);
            if ( NULL ==  array_of_maxprocs ) 
                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             "MPI_Comm_spawn_multiple");
+                                             FUNC_NAME);
            if ( NULL == array_of_info ) 
                return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                             "MPI_Comm_spawn_multiple");
+                                             FUNC_NAME);
            for ( i=0; i<count; i++ ) {
                if ( NULL == array_of_commands[i] ) 
                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                                 "MPI_Comm_spawn_multiple");
+                                                 FUNC_NAME);
                if ( NULL == array_of_argv[i] ) 
                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                                 "MPI_Comm_spawn_multiple");
+                                                 FUNC_NAME);
                if ( 0 > array_of_maxprocs[i] ) 
                    return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                                 "MPI_Comm_spawn_multiple");
+                                                 FUNC_NAME);
            }
        }
    }
@@ -180,7 +183,7 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
     }
     if ( MPI_SUCCESS != rc ) {
         *intercomm = MPI_COMM_NULL;
-        return OMPI_ERRHANDLER_INVOKE(comm, rc, "MPI_Comm_spawn_multiple");
+        return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
     }
 
 

@@ -18,18 +18,21 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Add_error_class";
+
+
 int MPI_Add_error_class(int *errorclass) 
 {
     int class;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
     
     class = ompi_errclass_add();
     if ( 0 > class ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
-                                      "MPI_Add_error_class");
+                                      FUNC_NAME);
     }
 
     *errorclass = class;

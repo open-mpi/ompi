@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Group_incl";
+
+
 int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group) 
 {
     /* local variables */
@@ -28,19 +31,19 @@ int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group)
     group_pointer = (ompi_group_t *)group;
 
     if( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         /* verify that group is valid group */
         if ( (MPI_GROUP_NULL == group) || ( NULL == group) 
                 || NULL == ranks ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                        "MPI_Group_incl");
+                                          FUNC_NAME);
         }
 
         /* check that new group is no larger than old group */
         if ( n > group_pointer->grp_proc_count) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
-                        "MPI_Group_incl - II");
+                                          FUNC_NAME);
         }
 
     }  /* end if( MPI_CHECK_ARGS) */
@@ -50,7 +53,7 @@ int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group)
     new_group_pointer=ompi_group_allocate(n);
     if( NULL == new_group_pointer ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                        "MPI_Group_incl - III");
+                                      FUNC_NAME);
     }
 
     /* put group elements in the list */
@@ -58,7 +61,7 @@ int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group)
         if ((ranks[proc] < 0) ||
                 (ranks[proc] >= group_pointer->grp_proc_count)){
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
-                        "MPI_Group_incl - IV");
+                                          FUNC_NAME);
         }
 
         new_group_pointer->grp_proc_pointers[proc] =

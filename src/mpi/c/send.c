@@ -31,7 +31,7 @@ int MPI_Send(void *buf, int count, MPI_Datatype type, int dest,
 
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
-        OMPI_ERR_INIT_FINALIZE;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);

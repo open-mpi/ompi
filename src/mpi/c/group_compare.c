@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Group_compare";
+
+
 int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
 
     /* local variables */
@@ -31,12 +34,12 @@ int MPI_Group_compare(MPI_Group group1, MPI_Group group2, int *result) {
 
     /* check for errors */
     if( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if( ( MPI_GROUP_NULL == group1 ) || ( MPI_GROUP_NULL == group2 ) ||
                 (NULL == group1) || (NULL==group2) ){
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                        "MPI_Group_compare");
+                                          FUNC_NAME);
         }
     }
 

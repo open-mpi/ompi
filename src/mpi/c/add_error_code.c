@@ -19,23 +19,26 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Add_error_code";
+
+
 int MPI_Add_error_code(int errorclass, int *errorcode)
 {
     int code;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( ompi_errclass_is_invalid(errorclass) )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
-                                          "MPI_Add_error_code");
+                                          FUNC_NAME);
         
     }
     
     code = ompi_mpi_errcode_add ( errorclass);
     if ( 0 > code ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
-                                      "MPI_Add_error_code");
+                                      FUNC_NAME);
     }
     
     *errorcode = code;

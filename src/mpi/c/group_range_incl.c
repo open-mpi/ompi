@@ -18,6 +18,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Group_range_incl";
+
+
 int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
                          MPI_Group *new_group) {
     /* local variables */
@@ -30,11 +33,11 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
 
     /* can't act on NULL group */
     if( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( (MPI_GROUP_NULL == group) || (NULL == group) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
-                        "MPI_Group_range_incl");
+                                          FUNC_NAME);
         }
     }
 
@@ -45,7 +48,7 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
         (int *) malloc(sizeof(int) * group_pointer->grp_proc_count);
     if (NULL == elements_int_list) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER,
-                "MPI_Group_range_incl - II");
+                                      FUNC_NAME);
     }
     for (proc = 0; proc < group_pointer->grp_proc_count; proc++) {
         elements_int_list[proc] = -1;
@@ -61,7 +64,7 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
         if(( 0 > first_rank ) || (first_rank > group_pointer->grp_proc_count)) {
             free(elements_int_list);
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK,
-                    "MPI_Group_range_incl - III");
+                                          FUNC_NAME);
         }
         if((0 > last_rank) || (last_rank > group_pointer->grp_proc_count)) {
             free(elements_int_list);

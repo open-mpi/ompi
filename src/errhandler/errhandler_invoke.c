@@ -28,7 +28,7 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
       fortran_handle = comm->c_f_to_c_index;
       errhandler->eh_func.fort_fn(&fortran_handle, &err_code);
     } else {
-      errhandler->eh_func.c_comm_fn(&comm, &err_code, message);
+      errhandler->eh_func.c_comm_fn(&comm, &err_code, message, NULL);
     }
     break;
 
@@ -38,7 +38,7 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
       fortran_handle = win->w_f_to_c_index;
       errhandler->eh_func.fort_fn(&fortran_handle, &err_code);
     } else {
-      errhandler->eh_func.c_win_fn(&win, &err_code, message);
+      errhandler->eh_func.c_win_fn(&win, &err_code, message, NULL);
     }
     break;
 
@@ -48,7 +48,7 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
       fortran_handle = file->f_f_to_c_index;
       errhandler->eh_func.fort_fn(&fortran_handle, &err_code);
     } else {
-      errhandler->eh_func.c_file_fn(&file, &err_code, message);
+      errhandler->eh_func.c_file_fn(&file, &err_code, message, NULL);
     }
     break;
   }

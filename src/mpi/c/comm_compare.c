@@ -17,6 +17,9 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Comm_compare";
+
+
 int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
 
     /* local variables */
@@ -30,16 +33,16 @@ int MPI_Comm_compare(MPI_Comm comm1, MPI_Comm comm2, int *result) {
     int found = 0;
     
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if ( MPI_COMM_NULL == comm1 || MPI_COMM_NULL == comm2 || 
              ompi_comm_invalid ( comm1 ) || ompi_comm_invalid (comm2) )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                         "MPI_Comm_compare");  
+                                          FUNC_NAME);
 
         if ( NULL == result )
             return OMPI_ERRHANDLER_INVOKE(comm1, MPI_ERR_ARG, 
-                                         "MPI_Comm_compare");
+                                          FUNC_NAME);
     }
     
     comp1 = (ompi_communicator_t *) comm1;

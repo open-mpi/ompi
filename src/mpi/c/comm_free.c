@@ -17,15 +17,18 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
+static char FUNC_NAME[] = "MPI_Comm_free";
+
+
 int MPI_Comm_free(MPI_Comm *comm) {
     
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         
         if ( NULL == *comm  || MPI_COMM_WORLD == *comm ||
              MPI_COMM_SELF == *comm  || ompi_comm_invalid (*comm))
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, 
-                                         "MPI_Comm_free");
+                                          FUNC_NAME);
     }
     
     ompi_comm_free ( comm ); 

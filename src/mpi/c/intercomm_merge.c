@@ -19,6 +19,9 @@
 
 #define INTERCOMM_MERGE_TAG 1010
 
+static char FUNC_NAME[] = "MPI_Intercomm_merge";
+
+
 int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
                         MPI_Comm *newcomm) 
 {
@@ -31,16 +34,16 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     int rc=MPI_SUCCESS;
 
     if ( MPI_PARAM_CHECK ) {
-        OMPI_ERR_INIT_FINALIZE; 
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
         if ( MPI_COMM_NULL == intercomm || ompi_comm_invalid ( intercomm ) ||
              !( intercomm->c_flags & OMPI_COMM_INTER ) ) 
             return OMPI_ERRHANDLER_INVOKE ( MPI_COMM_WORLD, MPI_ERR_COMM,
-                                           "MPI_Intercomm_merge");
+                                            FUNC_NAME);
 
         if ( NULL == newcomm )
             return OMPI_ERRHANDLER_INVOKE ( intercomm, MPI_ERR_ARG, 
-                                           "MPI_Intercomm_merge");
+                                            FUNC_NAME);
     }
 
     local_size  = ompi_comm_size ( intercomm );
@@ -49,7 +52,8 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     total_size  = local_size + remote_size;
     procs = (ompi_proc_t **) malloc ( total_size * sizeof(ompi_proc_t *));
     if ( NULL == procs ) {
-        return OMPI_ERRHANDLER_INVOKE(intercomm,MPI_ERR_INTERN, "MPI_Intercomm_merge");
+        return OMPI_ERRHANDLER_INVOKE(intercomm,MPI_ERR_INTERN,
+                                      FUNC_NAME);
     }
     
     first = ompi_comm_determine_first ( intercomm, high );
@@ -79,7 +83,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
 
     if ( newcomp == MPI_COMM_NULL ) {
         return OMPI_ERRHANDLER_INVOKE (intercomm, MPI_ERR_INTERN, 
-                                       "MPI_Intercomm_merge");
+                                       FUNC_NAME);
     }
 
     /* Determine context id. It is identical to f_2_c_handle */
@@ -100,7 +104,7 @@ int MPI_Intercomm_merge(MPI_Comm intercomm, int high,
     if ( OMPI_SUCCESS != rc ) {
         *newcomm = MPI_COMM_NULL;
         return OMPI_ERRHANDLER_INVOKE(intercomm, MPI_ERR_INTERN,
-                                      "MPI_Intercom_merge");
+                                      FUNC_NAME);
     }
 
     *newcomm = newcomp;
