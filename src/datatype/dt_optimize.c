@@ -64,13 +64,13 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
                 lastDisp += lastLength;
                 lastLength = 0;
             }
-            pStartLoop = (dt_loop_desc_t*)&(pTypeDesc->desc[pStack->index - 1]);
             SAVE_ELEM( pElemDesc, DT_END_LOOP, pData->desc.desc[pos_desc].flags,
                        nbElems - pStack->index + 1,  /* # of elems in this loop */
                        pData->desc.desc[pos_desc].disp,
                        pData->desc.desc[pos_desc].extent );
             pStack--;  /* go down one position on the stack */
             if( --stack_pos >= 0 ) {  /* still something to do ? */
+                pStartLoop = (dt_loop_desc_t*)&(pTypeDesc->desc[pStack->index - 1]);
                 pStartLoop->loops = (pElemDesc - 1)->count;
                 totalDisp = pStack->disp;  /* update the displacement position */
             }
@@ -79,7 +79,7 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
         }
         if( pData->desc.desc[pos_desc].type == DT_LOOP ) {
             dt_loop_desc_t* loop = (dt_loop_desc_t*)&(pData->desc.desc[pos_desc]);
-            dt_endloop_desc_t* end_loop = (dt_endloop_desc_t*)&(pData->desc.desc[pos_desc + loop->items + 1]);
+            dt_endloop_desc_t* end_loop = (dt_endloop_desc_t*)&(pData->desc.desc[pos_desc + loop->items]);
             int index = GET_FIRST_NON_LOOP( &(pData->desc.desc[pos_desc]) );
             long loop_disp = pData->desc.desc[pos_desc + index].disp;
 
@@ -95,11 +95,12 @@ int ompi_ddt_optimize_short( dt_desc_t* pData, int count,
                     lastLength += loop->loops * end_loop->size;
                 } else {
                     int counter = loop->loops;
-                    if( (lastDisp + lastLength) == (totalDisp + loop_disp) ) {
-                        lastLength += end_loop->size;
-                        counter--;
-                    }
+                    /* if the previous data is contiguous with this piece and it has a length not ZERO */
                     if( lastLength != 0 ) {
+                        if( (lastDisp + lastLength) == (totalDisp + loop_disp) ) {
+                            lastLength += end_loop->size;
+                            counter--;
+                        }
                         SAVE_DESC( pElemDesc, lastDisp, lastLength );
                         lastDisp += lastLength;
                         lastLength = 0;
