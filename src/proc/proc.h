@@ -87,7 +87,7 @@ ompi_proc_t * ompi_proc_find ( const ompi_process_name_t* name );
  *  OMPI_ERROR:                other errors
  */
 int ompi_proc_get_namebuf_by_proc ( ompi_proc_t **proclist, int proclistsize,
-                                    char **namebuf, size_t *namebuflen );
+                                    char **namebuf, int *namebuflen );
 
 /**
  * Since ompi_proc_get_namebuf_by_proc allocates the namebuf, we decided to 
@@ -121,7 +121,7 @@ int ompi_proc_namebuf_returnbuf ( char *namebuf );
  *   OMPI_ERROR                 else
  */
 
-int ompi_proc_get_proclist (char *namebuf, size_t namebuflen,
+int ompi_proc_get_proclist (char *namebuf, int namebuflen,
                             int proclistsize, ompi_proc_t ***proclist);
 
 /**
@@ -131,13 +131,13 @@ int ompi_proc_get_proclist (char *namebuf, size_t namebuflen,
  */
 
 int ompi_proc_get_namebuf_by_name ( ompi_process_name_t **namelist, int namelistsize, 
-                                    char **namebuf, size_t *namebuflen );
+                                    char **namebuf, int *namebuflen );
 
 /**
  * similar to ompi_proc_get_proclist, returns however a list of 
  * ompi_process_name_t pointers.
  */
-int ompi_proc_get_namelist ( char *namebuf, size_t namebuflen,
+int ompi_proc_get_namelist ( char *namebuf, int namebuflen,
                              int namelistlen, ompi_process_name_t ***namelist );
 
 

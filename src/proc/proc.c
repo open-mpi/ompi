@@ -170,12 +170,12 @@ ompi_proc_t * ompi_proc_find ( const ompi_process_name_t * name )
 ** I just wanted to avoid duplicating data conversion code here...
 */
 int ompi_proc_get_namebuf_by_proc ( ompi_proc_t **proclist, int proclistsize,
-                                    char **namebuf, size_t *namebuflen )
+                                    char **namebuf, int *namebuflen )
 {
     int i;
     ompi_process_name_t *nbuf=NULL;
 
-    nbuf = ( ompi_process_name_t *) calloc (proclistsize, sizeof(ompi_process_name_t));
+    nbuf = (ompi_process_name_t *) calloc (proclistsize, sizeof(ompi_process_name_t));
     if ( NULL == nbuf ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -202,7 +202,7 @@ int ompi_proc_namebuf_returnbuf ( char *namebuf )
 }
 
 
-int ompi_proc_get_proclist (char *namebuf, size_t namebuflen,
+int ompi_proc_get_proclist (char *namebuf, int namebuflen,
                             int proclistsize, ompi_proc_t ***proclist)
 {
     int i;
@@ -227,7 +227,7 @@ int ompi_proc_get_proclist (char *namebuf, size_t namebuflen,
 
 /* These two functions are at the moment trivial */
 int ompi_proc_get_namebuf_by_name ( ompi_process_name_t **namelist, int namelistsize, 
-                                    char **namebuf, size_t *namebuflen )
+                                    char **namebuf, int *namebuflen )
 {
     int i;
     ompi_process_name_t *nbuf=NULL;
@@ -247,7 +247,7 @@ int ompi_proc_get_namebuf_by_name ( ompi_process_name_t **namelist, int namelist
     return OMPI_SUCCESS;
 }
 
-int ompi_proc_get_namelist ( char *namebuf, size_t namebuflen,
+int ompi_proc_get_namelist ( char *namebuf, int namebuflen,
                              int namelistsize, ompi_process_name_t ***namelist )
 {
     int i;
