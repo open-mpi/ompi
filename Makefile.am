@@ -1,15 +1,10 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2003 The Trustees of Indiana University.  
-#                    All rights reserved.
-# 
-# This file is part of the CMPI software package.  For license
-# information, see the LICENSE file in the top level directory of the
-# CMPI source distribution.
+# $HEADER$
 #
-# $Id: Makefile.am,v 1.1 2003/11/22 16:36:19 jsquyres Exp $
+# $Id: Makefile.am,v 1.2 2004/01/07 08:17:40 jsquyres Exp $
 #
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= config doc src test
+SUBDIRS		= config src test
