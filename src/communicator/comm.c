@@ -599,8 +599,6 @@ int ompi_comm_set_name (ompi_communicator_t *comm, char *name )
  * 2. an inter-bcast from rank 0 in remote_group.
  */
 
-#define OMPI_COMM_ALLGATHER_TAG 31078
-
 static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount, 
                                               MPI_Datatype intype, void* outbuf,
                                               int outcount, MPI_Datatype outtype,
