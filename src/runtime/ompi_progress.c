@@ -262,9 +262,16 @@ ompi_progress_unregister(ompi_progress_callback_t cb)
         }
     }
     
-    /* now tightly pack the array */
-    for ( ; i < callbacks_len - 1 ; ++i) {
-        callbacks[i] = callbacks[i + 1];
+    /* If callbacks_len  is 0, we're not goig to do anything
+       interesting anyway, so skip.  If callbacks_len is 1, it
+       will soon be 0, so no need to do any repacking.  size_t
+       can be unsigned, so 0 - 1 is bad for a loop condition :).
+     */
+    if (callbacks_len > 1 ) {
+        /* now tightly pack the array */
+        for ( ; i < callbacks_len - 1 ; ++i) {
+            callbacks[i] = callbacks[i + 1];
+        }
     }
     callbacks[callbacks_len - 1] = NULL;
     callbacks_len--;
