@@ -25,6 +25,9 @@ fi
 if test "$WANT_MEM_DEBUG" = "0" -a -z "$enable_mem_zero" -a -d CVS; then
     WANT_MEM_DEBUG=1
     echo "--> developer override: enable mem profiling by default"
+elif test "$WANT_MEM_DEBUG" = "0" -a -z "$enable_mem_zero" -a -d .svn; then
+    WANT_MEM_DEBUG=1
+    echo "--> developer override: enable mem profiling by default"
 fi
 #################### Early development override ####################
 AC_DEFINE_UNQUOTED(LAM_ENABLE_MEM_DEBUG, $WANT_MEM_DEBUG,
@@ -47,6 +50,9 @@ else
 fi
 #################### Early development override ####################
 if test "$WANT_MEM_PROFILE" = "0" -a -z "$enable_mem_zero" -a -d CVS; then
+    WANT_MEM_PROFILE=1
+    echo "--> developer override: enable mem profiling by default"
+elif test "$WANT_MEM_PROFILE" = "0" -a -z "$enable_mem_zero" -a -d .svn; then
     WANT_MEM_PROFILE=1
     echo "--> developer override: enable mem profiling by default"
 fi
@@ -73,6 +79,9 @@ fi
 if test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a -d CVS; then
     WANT_PICKY_COMPILER=1
     echo "--> developer override: enable picky compiler by default"
+elif test "$WANT_PICKY_COMPILER" = "0" -a -z "$enable_picky" -a -d .svn; then
+    WANT_PICKY_COMPILER=1
+    echo "--> developer override: enable picky compiler by default"
 fi
 #################### Early development override ####################
 
@@ -93,6 +102,9 @@ else
 fi
 #################### Early development override ####################
 if test "$WANT_DEBUG" = "0" -a -z "$enable_debug" -a -d CVS; then
+    WANT_DEBUG=1
+    echo "--> developer override: enable debugging code by default"
+elif test "$WANT_DEBUG" = "0" -a -z "$enable_debug" -a -d .svn; then
     WANT_DEBUG=1
     echo "--> developer override: enable debugging code by default"
 fi
