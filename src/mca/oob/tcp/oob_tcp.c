@@ -140,35 +140,34 @@ static void mca_oob_tcp_accept(void)
 static int mca_oob_tcp_create_listen(void)
 {
     int flags;
-    int optval;
+    int optval = 1;
     struct sockaddr_in inaddr;
     ompi_socklen_t addrlen;
-                                                                                                                   
+
     /* create a listen socket for incoming connections */
     mca_oob_tcp_component.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
     if(mca_oob_tcp_component.tcp_listen_sd < 0) {
         ompi_output(0,"mca_oob_tcp_component_init: socket() failed with errno=%d", errno);
         return OMPI_ERROR;
     }
-    optval = 1;
-    if(setsockopt(mca_oob_tcp_component.tcp_listen_sd, SOL_SOCKET, 
-                  SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
-        ompi_output(0,
-            "mca_oob_tcp_finalize: setsockopt(SO_REUSEADDR) failed with errno=%d\n",
-             errno);
+    /* allow port to be re-used - for temporary fixed port numbers */
+    if (setsockopt(
+        mca_oob_tcp_component.tcp_listen_sd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
+        ompi_output(0, "mca_oob_tcp_create_listen: setsockopt(SO_REUSEADDR) failed with errno=%d\n", 
+            errno);
     }
-     
+
     /* bind to all addresses and dynamically assigned port */
     memset(&inaddr, 0, sizeof(inaddr));
     inaddr.sin_family = AF_INET;
     inaddr.sin_addr.s_addr = INADDR_ANY;
     inaddr.sin_port = htons(5000+mca_oob_name_self.vpid);
-                                                                                                                   
+
     if(bind(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
         ompi_output(0,"mca_oob_tcp_create_listen: bind() failed with errno=%d", errno);
         return OMPI_ERROR;
     }
-                                                                                                                   
+
     /* resolve system assignend port */
     addrlen = sizeof(struct sockaddr_in);
     if(getsockname(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
@@ -314,19 +313,23 @@ mca_oob_t* mca_oob_tcp_init(bool *allow_multi_user_threads, bool *have_hidden_th
 int mca_oob_tcp_finalize(mca_oob_t* oob)
 {
     mca_oob_tcp_peer_t * peer;
+ 
+    /* close listen socket */
     if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
-         ompi_event_del(&mca_oob_tcp_component.tcp_recv_event); 
+        ompi_event_del(&mca_oob_tcp_component.tcp_recv_event); 
         if(0 != close(mca_oob_tcp_component.tcp_listen_sd)) {
             ompi_output(0, "mca_oob_tcp_finalize: error closing listen socket. errno=%d", errno);
         }
     }
-    /* TODO: need to cleanup all peers - check for pending send/recvs. etc. */
+
+    /* cleanup all peers */
     while(NULL != (peer = (mca_oob_tcp_peer_t *) 
         ompi_list_remove_first(&mca_oob_tcp_component.tcp_peer_list))) {
         OBJ_DESTRUCT(peer);
     }
+
+    /* cleanup event handling thread */
     ompi_event_fini();
- 
     return OMPI_SUCCESS;
 }
 
