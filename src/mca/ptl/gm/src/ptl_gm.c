@@ -1,3 +1,5 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
 /*
  * $HEADER$
  */
@@ -220,8 +222,8 @@ mca_ptl_gm_send (struct mca_ptl_base_module_t *ptl,
     gm_ptl = (mca_ptl_gm_module_t *)ptl;
     if (offset == 0) 
     {
-        GM_DBG(PTL_GM_DBG_COMM,"INSIDE PTL GM SEND, OFFSET = 0,request is %p
-               frag is %p\n",sendreq,((mca_ptl_gm_send_request_t *)sendreq)->req_frag);
+        GM_DBG(PTL_GM_DBG_COMM,"INSIDE PTL GM SEND, OFFSET = 0,request is %p frag is %p\n",
+	       (void*)sendreq, (void*)((mca_ptl_gm_send_request_t *)sendreq)->req_frag);
         
         #if 0
             sendfrag = ((mca_ptl_gm_send_request_t *)sendreq)->req_frag;
@@ -411,6 +413,9 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
     if (header->hdr_frag.hdr_frag_length > 0) 
     {
         ompi_proc_t *proc;
+	unsigned int max_data, out_size;
+	int freeAfter;
+
         proc = ompi_comm_peer_lookup(request->req_base.req_comm,
                                      request->req_base.req_peer);
         ompi_convertor_copy(proc->proc_convertor,
@@ -421,8 +426,11 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
                                      request->req_base.req_datatype,
                                      request->req_base.req_count,
                                      request->req_base.req_addr,
-                                     header->hdr_frag.hdr_frag_offset);
-        rc = ompi_convertor_unpack(&frag->frag_base.frag_convertor, &(iov), 1);
+                                     header->hdr_frag.hdr_frag_offset, NULL );
+	out_size = 1;
+	max_data = iov.iov_len;
+        rc = ompi_convertor_unpack( &frag->frag_base.frag_convertor, &(iov),
+				    &out_size, &max_data, &freeAfter );
         assert( rc >= 0 );
         A_PRINT("in matched: bytes received is %d\n", bytes_recv);
     }

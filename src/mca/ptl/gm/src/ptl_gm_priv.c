@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 
 /*
  * $HEADER$
@@ -34,9 +35,9 @@ int mca_ptl_gm_peer_put(mca_ptl_gm_peer_t *ptl_peer,
 {
 
    gm_put( ptl_peer->peer_ptl->my_port, fragment->registered_buf,
-            (gm_remote_ptr_t) target_buffer,bytes, GM_LOW_PRIORITY,
-                ptl_peer->local_id, ptl_peer->port_number, 
-                put_callback, (void *)fragment );
+	   (gm_remote_ptr_t)target_buffer, bytes, GM_LOW_PRIORITY,
+	   ptl_peer->local_id, ptl_peer->port_number, 
+	   put_callback, (void *)fragment );
 
 
     fragment->send_frag.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
@@ -76,7 +77,8 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
 
     if(size_in > 0) {
         ompi_convertor_t *convertor;
-        int rc;
+        int rc, freeAfter;
+	unsigned int in_size, max_data;
 
         /* first fragment (eager send) and first fragment of long protocol
          * can use the convertor initialized on the request, remaining
@@ -94,7 +96,7 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
                                           sendreq->req_base.req_datatype,
                                           sendreq->req_base.req_count,
                                           sendreq->req_base.req_addr,
-                                          offset);
+                                          offset, NULL );
         }
 
         /* if data is contigous convertor will return an offset
@@ -104,8 +106,9 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
 
         /*copy the data to the registered buffer*/
         outvec.iov_base = ((char*)fragment->send_buf) + header_length;
-
-        if((rc = ompi_convertor_pack(convertor, &(outvec), 1)) < 0)
+	max_data = outvec.iov_len;
+	in_size = 1;
+        if((rc = ompi_convertor_pack(convertor, &(outvec), &in_size, &max_data, &freeAfter)) < 0)
             return OMPI_ERROR;
     }
     /* update the fields */
@@ -116,9 +119,9 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
      * packed by convertor */
     size_out = outvec.iov_len;
   
-    A_PRINT(" inside peer_send  request is %p\t, frag->req = %p, fragment is
-                %p,size is %d, send_frag is %p\n",sendreq, fragment->req,fragment,size_out,
-                ((mca_ptl_base_header_t *)header)->hdr_ack.hdr_src_ptr);
+    A_PRINT( "peer_send request is %p\t, frag->req = %p, fragment is %p,size is %d, send_frag is %p\n",
+	     sendreq, fragment->req,fragment,size_out,
+	     ((mca_ptl_base_header_t *)header)->hdr_ack.hdr_src_ptr);
  
     /* initiate the gm send */
     gm_send_with_callback( ptl_peer->peer_ptl->my_port, fragment->send_buf, 
@@ -127,7 +130,7 @@ int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
 
     fragment->send_frag.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
     fragment->send_frag.frag_base.frag_peer = (struct mca_ptl_base_peer_t*)ptl_peer;
-    fragment->send_frag.frag_base.frag_addr = outvec.iov_base + header_length; 
+    fragment->send_frag.frag_base.frag_addr = ((char*)outvec.iov_base) + header_length; 
     fragment->send_frag.frag_base.frag_size = size_out - header_length;
 
   #if 1 
@@ -234,7 +237,7 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
 
               else if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FIN) 
               {
-                    A_PRINT("send callback : Completion of fin, bytes complete =
+                    A_PRINT("send callback : Completion of fin, bytes complete =\
                                 %d\n",header->hdr_ack.hdr_dst_size);
                     ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl, frag->send_frag.frag_request, 
                                         header->hdr_ack.hdr_dst_size);
@@ -265,8 +268,7 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
                    /* Not going to call progress on this send,
                     * and not free-ing descriptor */
                    frag->send_complete = 1;
-                   A_PRINT("send callback : match required but not yet recv ack
-                            sendfrag is %p\n",frag);
+                   A_PRINT("send callback : match required but not yet recv ack sendfrag is %p\n",frag);
             }
             break;
 
@@ -304,10 +306,8 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
     frag = (mca_ptl_gm_send_frag_t *)context;
     ptl = (mca_ptl_gm_module_t *)frag->send_frag.frag_base.frag_owner;
     gm_send_req = frag->req;
-    GM_DBG(PTL_GM_DBG_COMM,"INSIDE SENDCALLBACK  request is %p\t, frag->req =
-                %p, frag is %p \n",gm_send_req, frag->req,frag);
-
-
+    GM_DBG(PTL_GM_DBG_COMM,"INSIDE SENDCALLBACK  request is %p\t, frag->req = %p, frag is %p\n",
+	   gm_send_req, frag->req,frag);
 
     header = (mca_ptl_base_header_t*)frag->send_buf;
     header_length = ((mca_ptl_base_header_t*)header)->hdr_common.hdr_size;
@@ -391,73 +391,72 @@ void send_callback(struct gm_port *port,void * context, gm_status_t status)
 void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl,
                     mca_ptl_base_header_t * header)
 {
-    mca_ptl_gm_send_frag_t * frag;
-    mca_pml_base_send_request_t *req;
-    mca_pml_base_recv_request_t *request;
-    int header_length, bytes;
-    char * reg_buf; 
-    int status;
+  mca_ptl_gm_send_frag_t * frag;
+  mca_pml_base_send_request_t *req;
+  mca_pml_base_recv_request_t *request;
+  int header_length, bytes;
+  char * reg_buf; 
+  int status;
   
-   if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_ACK)
-   {
-   
-    A_PRINT("ack header is %d, frag_ptr is
-             %p\n",header->hdr_common.hdr_size,header->hdr_ack.hdr_src_ptr.pval);
-    frag = (mca_ptl_gm_send_frag_t *)(header->hdr_ack.hdr_src_ptr.pval);
-    A_PRINT("inside ACK, corresp frag pointer  %p\n",frag);
-    req = (mca_pml_base_send_request_t *) frag->req;
-    assert(req != NULL);
-    req->req_peer_match.pval = header->hdr_ack.hdr_dst_match.pval;
-    req->req_peer_addr.pval = header->hdr_ack.hdr_dst_addr.pval;
-    req->req_peer_size = header->hdr_ack.hdr_dst_size;
-    frag->wait_for_ack = 0;
-  
-    header_length = frag->send_frag.frag_base.frag_header.hdr_frag.hdr_common.hdr_size;
-    bytes = frag->send_frag.frag_base.frag_size; 
-     
-    if(frag->send_complete == 1)
+  if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_ACK)
     {
+   
+      A_PRINT( "ack header is %d, frag_ptr is %p\n", header->hdr_common.hdr_size,
+	       header->hdr_ack.hdr_src_ptr.pval);
+      frag = (mca_ptl_gm_send_frag_t *)(header->hdr_ack.hdr_src_ptr.pval);
+      A_PRINT("inside ACK, corresp frag pointer  %p\n",frag);
+      req = (mca_pml_base_send_request_t *) frag->req;
+      assert(req != NULL);
+      req->req_peer_match.pval = header->hdr_ack.hdr_dst_match.pval;
+      req->req_peer_addr.pval = header->hdr_ack.hdr_dst_addr.pval;
+      req->req_peer_size = header->hdr_ack.hdr_dst_size;
+      frag->wait_for_ack = 0;
+  
+      header_length = frag->send_frag.frag_base.frag_header.hdr_frag.hdr_common.hdr_size;
+      bytes = frag->send_frag.frag_base.frag_size; 
+     
+      if(frag->send_complete == 1)
+	{
 
-        ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl,
-                    frag->send_frag.frag_request,bytes); 
+	  ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl,
+					frag->send_frag.frag_request,bytes); 
             
-        OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), (ompi_list_item_t *)frag);
-        A_PRINT("inside ACK,returning frag pointer  %p, request is %p, bytes
-                    is %d\n",frag, frag->send_frag.frag_request, header->hdr_frag.hdr_frag_length );
-         
+	  OMPI_FREE_LIST_RETURN(&(ptl->gm_send_frags), (ompi_list_item_t *)frag);
+	  A_PRINT( "inside ACK,returning frag pointer  %p, request is %p, bytes is %d\n",
+		   frag, frag->send_frag.frag_request, header->hdr_frag.hdr_frag_length );
+	}
+
     }
 
-   }
+  if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FIN)
+    {
 
-   if(header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FIN)
-   {
-
-     GM_DBG(PTL_GM_DBG_COMM,"CASE: HDR_TYPE_FIN\n");
-     request = (mca_pml_base_recv_request_t*)
-                                header->hdr_ack.hdr_dst_match.pval;
-     /* call receive progress and indicate the recv has been completed  */
+      GM_DBG(PTL_GM_DBG_COMM,"CASE: HDR_TYPE_FIN\n");
+      request = (mca_pml_base_recv_request_t*)
+	header->hdr_ack.hdr_dst_match.pval;
+      /* call receive progress and indicate the recv has been completed  */
     
-     GM_DBG(PTL_GM_DBG_COMM,"Calling recv_progress with bytes = %d\n",header->hdr_ack.hdr_dst_size);
-     ptl->super.ptl_recv_progress (
-                            (mca_ptl_base_module_t *) ptl,
-                            request , 
-                            header->hdr_ack.hdr_dst_size,
-                            header->hdr_ack.hdr_dst_size);
+      GM_DBG(PTL_GM_DBG_COMM,"Calling recv_progress with bytes = %d\n",header->hdr_ack.hdr_dst_size);
+      ptl->super.ptl_recv_progress (
+				    (mca_ptl_base_module_t *) ptl,
+				    request , 
+				    header->hdr_ack.hdr_dst_size,
+				    header->hdr_ack.hdr_dst_size);
       /* deregister the memory */
-     bytes = header->hdr_ack.hdr_dst_size;
-     reg_buf =(char *) header->hdr_ack.hdr_dst_addr.pval; 
-     status = gm_deregister_memory(ptl->my_port, reg_buf, bytes);
+      bytes = header->hdr_ack.hdr_dst_size;
+      reg_buf =(char *) header->hdr_ack.hdr_dst_addr.pval; 
+      status = gm_deregister_memory(ptl->my_port, reg_buf, bytes);
 
-     if(GM_SUCCESS != status) 
-     {
-         ompi_output(0," unpinning memory failed\n");
-     }
-     else 
-     {
-	   GM_DBG(PTL_GM_DBG_COMM, "unpinning memory success,addr:%p,bytes:%d\n",reg_buf,bytes);
-     }
+      if(GM_SUCCESS != status) 
+	{
+	  ompi_output(0," unpinning memory failed\n");
+	}
+      else 
+	{
+	  GM_DBG(PTL_GM_DBG_COMM, "unpinning memory success,addr:%p,bytes:%d\n",reg_buf,bytes);
+	}
 
-   }
+    }
 
 }
 
