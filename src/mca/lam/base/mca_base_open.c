@@ -8,7 +8,6 @@
 #include <string.h>
 #include <syslog.h>
 
-#include "lam/mem/malloc.h"
 #include "lam/util/output.h"
 #include "mca/mca.h"
 #include "mca/lam/base/base.h"
