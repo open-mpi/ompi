@@ -23,16 +23,8 @@ pkgdata_DATA = help-bootproxy.txt
 
 bin_PROGRAMS = mca_pcm_rsh_bootproxy
 
-mca_pcm_rsh_bootproxy_SOURCES = \
-	bootproxy.c	
-mca_pcm_rsh_bootproxy_LDADD = \
-	$(libs) \
-	$(LIBMPI_EXTRA_LIBS) \
-	$(LIBOMPI_EXTRA_LIBS) \
-	-lm
-mca_pcm_rsh_bootproxy_LDFLAGS = \
-	$(LIBMPI_EXTRA_LDFLAGS) \
-	$(LIBOMPI_EXTRA_LDFLAGS)
-mca_pcm_rsh_bootproxy_DEPENDENCIES = \
-	$(libs)
+mca_pcm_rsh_bootproxy_SOURCES = bootproxy.c
+mca_pcm_rsh_bootproxy_LDADD = $(libs) $(LIBMPI_EXTRA_LIBS) -lm
+mca_pcm_rsh_bootproxy_LDFLAGS = $(LIBMPI_EXTRA_LDFLAGS)
+mca_pcm_rsh_bootproxy_DEPENDENCIES = $(libs)
 

@@ -28,22 +28,12 @@ AM_CPPFLAGS = \
 
 libs = $(top_builddir)/src/libmpi.la
 
-bin_PROGRAMS = \
-        openmpi
+bin_PROGRAMS = openmpi
 
-openmpi_SOURCES = \
-        openmpi.h \
-        openmpi.c 
-
-openmpi_LDADD = \
-        $(libs) \
-        $(LIBMPI_EXTRA_LIBS) \
-        $(LIBOMPI_EXTRA_LIBS) \
-        $(top_builddir)/src/libmpi.la
-
-openmpi_DFLAGS = $(LIBMPI_EXTRA_LDFLAGS) $(LIBOMPI_EXTRA_LDFLAGS)
-openmpi_DEPENDENCIES = $(libs) \
-                       $(openmpi_LDADD)
+openmpi_SOURCES = openmpi.h openmpi.c
+openmpi_LDADD = $(libs) $(LIBMPI_EXTRA_LIBS) $(top_builddir)/src/libmpi.la
+openmpi_DFLAGS = $(LIBMPI_EXTRA_LDFLAGS)
+openmpi_DEPENDENCIES = $(libs) $(openmpi_LDADD)
 
 clean-local:
 	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)

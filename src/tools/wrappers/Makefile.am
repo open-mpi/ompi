@@ -34,23 +34,23 @@ libs = $(top_builddir)/src/libmpi.la
 wrap_sources = wrap.cc wrap_engine.cc ompi_wrap.h
 
 mpicc_SOURCES       = mpicc.cc ompi_wrap.h $(wrap_sources)
-mpicc_LDADD         = $(libs)  $(LIBOMPI_EXTRA_LIBS)
-mpicc_LDFLAGS       = $(LIBOMPI_EXTRA_LDFLAGS)
+mpicc_LDADD         = $(libs)  $(LIBMPI_EXTRA_LIBS)
+mpicc_LDFLAGS       = $(LIBMPI_EXTRA_LDFLAGS)
 mpicc_DEPENDENCIES  = $(libs)
 
 mpic___SOURCES      = mpicxx.cc ompi_wrap.h $(wrap_sources)
-mpic___LDADD        = $(libs) $(LIBOMPI_EXTRA_LIBS)
-mpic___LDFLAGS      = $(LIBOMPI_EXTRA_LDFLAGS)
+mpic___LDADD        = $(libs) $(LIBMPI_EXTRA_LIBS)
+mpic___LDFLAGS      = $(LIBMPI_EXTRA_LDFLAGS)
 mpic___DEPENDENCIES = $(libs)
 
 mpif77_SOURCES      = mpif77.cc ompi_wrap.h $(wrap_sources)
-mpif77_LDADD        = $(libs) $(LIBOMPI_EXTRA_LIBS)
-mpif77_LDFLAGS      = $(LIBOMPI_EXTRA_LDFLAGS)
+mpif77_LDADD        = $(libs) $(LIBMPI_EXTRA_LIBS)
+mpif77_LDFLAGS      = $(LIBMPI_EXTRA_LDFLAGS)
 mpif77_DEPENDENCIES = $(libs)
 
 mpif90_SOURCES      = mpif90.cc ompi_wrap.h $(wrap_sources)
-mpif90_LDADD        = $(libs) $(LIBOMPI_EXTRA_LIBS)
-mpif90_LDFLAGS      = $(LIBOMPI_EXTRA_LDFLAGS)
+mpif90_LDADD        = $(libs) $(LIBMPI_EXTRA_LIBS)
+mpif90_LDFLAGS      = $(LIBMPI_EXTRA_LDFLAGS)
 mpif90_DEPENDENCIES = $(libs)
 
 # Since this is C++ and we use templates (the STL), also ditch the
