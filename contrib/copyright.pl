@@ -6,6 +6,8 @@
 #                         All rights reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -36,8 +38,10 @@ my $osu = "Copyright (c) 2004 The Ohio State University
                         All rights reserved.";
 my $hlrs = "Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
                         University of Stuttgart.  All rights reserved.";
+my $uc = "Copyright (c) 2004-2005 The Regents of the University of California.
+                        All rights reserved.";
 
-my $copy = "$hlrs\n\$COPYRIGHT\$";
+my $copy = "$uc\n\$COPYRIGHT\$";
 
 sub wanted {
     # Setup
