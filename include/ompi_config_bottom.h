@@ -165,7 +165,7 @@ typedef long long bool;
  * If we're mem debugging, make the OMPI_DEBUG_ZERO resolve to memset
  */
 #    include <string.h>
-#    define OMPI_DEBUG_ZERO(obj) memset(&obj, 0, sizeof(obj))
+#    define OMPI_DEBUG_ZERO(obj) memset(&(obj), 0, sizeof(obj))
 #else
 #    define OMPI_DEBUG_ZERO(obj)
 #endif

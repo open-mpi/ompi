@@ -62,3 +62,6 @@ Post-milestone:
 - Jeff: collapse MCA params from 3 names to 1 name
 
 - ?: Apply LANL copyright to trunk (post all merging activity)
+
+- Probably during/after OMPI/ORTE split:
+  - re-merge [orte|ompi]_pointer_array and [orte|ompi]_value_array

@@ -383,7 +383,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
      * the message header has already been converted back to host -
      * so must convert back to network to match.
     */
-    post = mca_oob_tcp_msg_match_post(&peer->peer_name, msg->msg_hdr.msg_tag, true);
+    post = mca_oob_tcp_msg_match_post(&peer->peer_name, msg->msg_hdr.msg_tag);
     if(NULL != post) {
                                                                                                                           
         if(post->msg_flags & MCA_OOB_ALLOC) {
@@ -513,7 +513,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(orte_process_name_t* name, int tag
  *  Note - this routine requires the caller to be holding the module lock.
  */
                                                                                                                     
-mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag, bool peek)
+mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag)
 {
     mca_oob_tcp_msg_t* msg;
     for(msg =  (mca_oob_tcp_msg_t*) ompi_list_get_first(&mca_oob_tcp_component.tcp_msg_post);
@@ -525,7 +525,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag
 
         if((0 == cmpval1) || (0 == cmpval2)) {
             if (msg->msg_hdr.msg_tag == tag) {
-                if((msg->msg_flags & MCA_OOB_PEEK) == 0 || peek) {
+                if((msg->msg_flags & MCA_OOB_PEEK) == 0) {
                     ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);
                     return msg;
                 } else {

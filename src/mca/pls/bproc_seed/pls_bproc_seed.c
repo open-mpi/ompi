@@ -295,7 +295,7 @@ static void orte_pls_bproc_wait_proc(pid_t pid, int status, void* cbdata)
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
         }
-        OBJ_RELEASE(proc);
+        OBJ_RELEASE(proc); 
     }
 
     /* release any waiting threads */
@@ -325,7 +325,7 @@ static void orte_pls_bproc_wait_node(pid_t pid, int status, void* cbdata)
             ORTE_ERROR_LOG(rc);
         }
     }
-    /* OBJ_RELEASE(node); */
+    OBJ_RELEASE(node);
 
     /* release any waiting threads */
     OMPI_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
@@ -612,7 +612,7 @@ int orte_pls_bproc_seed_launch(orte_jobid_t jobid)
     }
     if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_vpid_range(jobid, &vpid_start, &vpid_range))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        goto cleanup;
     }
 
     /* for each application context - launch across the first n nodes required */

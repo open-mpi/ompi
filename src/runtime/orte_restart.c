@@ -49,10 +49,9 @@
 
 int orte_restart(orte_process_name_t *name, const char* uri)
 {
-    int rc, id;
+    int rc;
     orte_process_name_t* old_name;
     orte_process_name_t* new_name;
-    char *jobid_str, *procid_str;
 
     if (ORTE_SUCCESS != (rc = orte_ns.copy_process_name(&old_name, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);

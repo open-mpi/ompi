@@ -64,11 +64,14 @@ extern struct ompi_event_list ompi_signalqueue;
 static short ompi_evsigcaught[NSIG];
 static int ompi_needrecalc;
 static int ompi_event_signal_pipe[2];
+#if 0
 static ompi_event_t ompi_event_signal_pipe_event;
+#endif
 volatile sig_atomic_t ompi_event_signal_count = 0;
 static bool initialized = false;
 volatile sig_atomic_t ompi_evsignal_caught = 0;
 
+#if 0
 static void ompi_event_signal_pipe_handler(int sd, short flags, void* user)
 {
     ompi_output(0, "ompi_event_signal_pipe_handler: %d\n", ompi_event_signal_count);
@@ -77,6 +80,7 @@ static void ompi_event_signal_pipe_handler(int sd, short flags, void* user)
         read(ompi_event_signal_pipe[0], &byte, 1);
     }
 }
+#endif
 
 void ompi_evsignal_handler(int sig);
 
@@ -146,12 +150,16 @@ int
 ompi_evsignal_del(sigset_t *evsigmask, struct ompi_event *ev)
 {
 	int evsignal;
+        struct sigaction sa;
 
 	evsignal = OMPI_EVENT_SIGNAL(ev);
 	sigdelset(evsigmask, evsignal);
 	ompi_needrecalc = 1;
 
-	return (sigaction(OMPI_EVENT_SIGNAL(ev),(struct sigaction *)SIG_DFL, NULL));
+	memset(&sa, 0, sizeof(sa));
+        sa.sa_handler = SIG_DFL;
+
+        return sigaction(evsignal, &sa, NULL);
 }
 
 void

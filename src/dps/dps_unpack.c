@@ -143,7 +143,6 @@ int orte_dps_unpack_nobuffer(void *dst, void *src, size_t num_vals,
 {
     int rc;
     size_t i;
-    size_t j;
     size_t n;
     uint16_t * d16;
     uint32_t * d32;

@@ -110,7 +110,7 @@ int mca_oob_recv_packed_nb(
     oob_cbdata->cbdata = cbdata;
     
     rc = mca_oob.oob_recv_nb(peer, &oob_cbdata->cbiov, 1, tag, flags|MCA_OOB_ALLOC, mca_oob_recv_callback, oob_cbdata);
-    if(rc != OMPI_SUCCESS) {
+    if(rc < 0) {
         free(oob_cbdata);
     }
     return rc;

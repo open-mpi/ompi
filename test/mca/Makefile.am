@@ -14,4 +14,4 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS		= ns gpr rds
+SUBDIRS		= gpr ns oob rds

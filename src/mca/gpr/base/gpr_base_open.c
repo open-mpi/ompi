@@ -56,6 +56,12 @@ static void orte_gpr_keyval_destructor(orte_gpr_keyval_t* keyval)
         if (NULL != byteptr->bytes) {
             free(byteptr->bytes);
         }
+    } else if (ORTE_STRING == keyval->type) {
+        if (NULL != keyval->value.strptr)
+            free(keyval->value.strptr);
+    } else if (ORTE_APP_CONTEXT == keyval->type) {
+        if (NULL != keyval->value.app_context)
+            OBJ_RELEASE(keyval->value.app_context);
     }
 }
 

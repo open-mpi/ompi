@@ -234,7 +234,9 @@ static int orte_rds_hostfile_query(void)
         }
         goto cleanup;
     }
-    rc = orte_ras_base_node_insert(&updates);
+    if(ompi_list_get_size(&updates)) {
+        rc = orte_ras_base_node_insert(&updates);
+    }
    
 cleanup:
     while(NULL != (item = ompi_list_remove_first(&existing))) {

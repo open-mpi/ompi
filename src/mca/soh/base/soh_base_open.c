@@ -51,6 +51,7 @@ orte_soh_base_module_t orte_soh = {
     orte_soh_base_set_proc_soh,
 	orte_soh_base_get_node_soh_not_available,
     orte_soh_base_set_node_soh_not_available,
+    orte_soh_base_begin_monitoring_not_available,
     orte_soh_base_module_finalize_not_available
 };
 

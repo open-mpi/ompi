@@ -167,13 +167,12 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(orte_process_name_t* name, int tag
  *
  *  @param  name (IN)  Name associated with peer or wildcard to match first posted recv.
  *  @param  tag (IN)   Message tag. 
- *  @param  peek (IN)  Match message with MCA_OOB_PEEK flag set.
  *  @return msg        Matched message or NULL.
  *
  *  Note - this routine requires the caller to be holding the module lock.
  */
 
-mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag, bool peek);
+mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag);
 
 /**
  *  Allocate space for iovec array - if the request number of elements is less than

@@ -184,7 +184,6 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
             }
         }
     }
-    OBJ_RELEASE(data);
 }
 
 

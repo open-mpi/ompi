@@ -14,4 +14,4 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = support util class rte dps mca runtime
+SUBDIRS = class dps include mca mpi runtime support threads util

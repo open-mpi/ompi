@@ -131,6 +131,9 @@ int test_finalize(void)
         return_value = 0;
     }
 
+    if (NULL != ompi_description)
+        free(ompi_description);
+        
     return return_value;
 }
 
