@@ -12,6 +12,11 @@
 
 #include "mca/lam/base/base.h"
 #include "mca/lam/pcm/pcm.h"
+#include "mca/lam/pcm/base/base.h"
+#include "mca/lam/oob/oob.h"
+#include "mca/lam/oob/base/base.h"
+#include "mca/lam/registry/registry.h"
+#include "mca/lam/registry/base/base.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/pml/base/base.h"
 #include "mca/mpi/ptl/ptl.h"
@@ -74,17 +79,13 @@ void laminfo::open_modules()
   mca_pcm_base_open();
   module_map["pcm"] = &mca_pcm_base_modules_available;
 
-#if 0
   // oob module opening not implemented yet
   mca_oob_base_open();
   module_map["oob"] = &mca_oob_base_modules_available;
-#endif
 
-#if 0
   // registry module opening not implemented yet
   mca_registry_base_open();
   module_map["registry"] = &mca_registry_base_modules_available;
-#endif
 
   // coll module opening not implemented yet
   mca_coll_base_open();
@@ -126,16 +127,13 @@ void laminfo::close_modules()
 {
   if (opened_modules) {
     mca_pcm_base_close();
-#if 0
-    mca_crmpi_base_close();
-#endif
+    mca_oob_base_close();
+    mca_registry_base_close();
     mca_coll_base_close();
     mca_pml_base_close();
-#if 0
-    mca_boot_close();
-#endif
-    mca_base_close();
+    mca_ptl_base_close();
 
+    mca_base_close();
     module_map.clear();
   }
 

@@ -336,20 +336,12 @@ int main(int argc, char *argv[])
     laminfo::do_arch(cmd_line);
     laminfo::do_config(false);
     laminfo::open_modules();
+    laminfo::show_module_version("oob", module_all, ver_full, type_all);
     laminfo::show_module_version("pcm", module_all, ver_full, type_all);
+    laminfo::show_module_version("registry", module_all, ver_full, type_all);
     laminfo::show_module_version("coll", module_all, ver_full, type_all);
     laminfo::show_module_version("pml", module_all, ver_full, type_all);
     laminfo::show_module_version("ptl", module_all, ver_full, type_all);
-#if 0
-    laminfo::show_boot_version(mca_boot_modules, type_all, ver_full, 
-                               ver_module);
-    laminfo::show_coll_version(mca_coll_modules, type_all, ver_full, 
-                               ver_module);
-    laminfo::show_pml_version(mca_pml_modules, type_all, ver_full, 
-                              ver_module);
-    laminfo::show_cr_version(mca_crmpi_modules, type_all, ver_full, 
-                             ver_module);
-#endif
   }
 
   // All done
