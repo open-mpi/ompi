@@ -458,6 +458,71 @@ int mca_base_param_dump(ompi_list_t **info, bool internal)
 
 
 /*
+ * Make an argv-style list of strings suitable for an environment
+ */
+int mca_base_param_build_env(char ***env, int *num_env, bool internal)
+{
+    size_t i, len;
+    mca_base_param_t *array;
+    char *str;
+    mca_base_param_storage_t storage;
+
+    /* Check for bozo cases */
+    
+    if (!initialized) {
+        return OMPI_ERROR;
+    }
+
+    /* Iterate through all the registered parameters */
+
+    *env = NULL;
+    *num_env = 0;
+    len = ompi_value_array_get_size(&mca_base_params);
+    array = OMPI_VALUE_ARRAY_GET_BASE(&mca_base_params, mca_base_param_t);
+    for (i = 0; i < len; ++i) {
+        if (array[i].mbp_internal == internal || internal) {
+            if (param_lookup(i, &storage, NULL)) {
+                if (MCA_BASE_PARAM_TYPE_INT == array[i].mbp_type) {
+                    asprintf(&str, "%s=%d", array[i].mbp_env_var_name, 
+                             storage.intval);
+                    ompi_argv_append(num_env, env, str);
+                    free(str);
+                } else if (MCA_BASE_PARAM_TYPE_STRING == array[i].mbp_type) {
+                    if (NULL != storage.stringval) {
+                        asprintf(&str, "%s=%s", array[i].mbp_env_var_name, 
+                                 storage.stringval);
+                        free(storage.stringval);
+                    } else {
+                        asprintf(&str, "%s=", array[i].mbp_env_var_name);
+                    }
+                    ompi_argv_append(num_env, env, str);
+                    free(str);
+                } else {
+                    goto cleanup;
+                }
+            } else {
+                goto cleanup;
+            }
+        }
+    }
+
+    /* All done */
+
+    return OMPI_SUCCESS;
+
+    /* Error condition */
+
+ cleanup:
+    if (*num_env > 0) {
+        ompi_argv_free(*env);
+        *num_env = 0;
+        *env = NULL;
+    }
+    return OMPI_ERR_NOT_FOUND;
+}
+
+
+/*
  * Free a list -- and all associated memory -- that was previously
  * returned from mca_base_param_dump()
  */
