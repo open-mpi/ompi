@@ -129,22 +129,6 @@ extern "C" {
                            int *level, int *did);
 #endif
 
-  int mca_base_param_register_int(char *type_name, char *module_name,
-                                  char *param_name, char *mca_param_name,
-                                  int default_value);
-  int mca_base_param_register_string(char *type_name, char *module_name,
-                                     char *param_name, 
-                                     char *mca_param_name,
-                                     char *default_value);
-  int mca_base_param_lookup_int(int index);
-  char *mca_base_param_lookup_string(int index);
-  int mca_base_param_find(char *type, char *module, char *param);
-  int mca_base_param_finalize(void);
-
-  int mca_base_param_kv_associate(int index, int keyval);
-  int mca_base_param_kv_lookup_int(int index, MPI_Comm comm);
-  char *mca_base_param_kv_lookup_string(int index, MPI_Comm comm);
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
