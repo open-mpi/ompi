@@ -59,16 +59,16 @@ extern lam_array_t mca_base_params;
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-  int mca_base_param_register_int(char *type_name, char *module_name,
-                                  char *param_name, char *mca_param_name,
+  int mca_base_param_register_int(const char *type_name, const char *module_name,
+                                  const char *param_name, const char *mca_param_name,
                                   int default_value);
-  int mca_base_param_register_string(char *type_name, char *module_name,
-                                     char *param_name, 
-                                     char *mca_param_name,
-                                     char *default_value);
+  int mca_base_param_register_string(const char *type_name, const char *module_name,
+                                     const char *param_name, 
+                                     const char *mca_param_name,
+                                     const char *default_value);
   int mca_base_param_lookup_int(int index, int *value);
   int mca_base_param_lookup_string(int index, char **value);
-  int mca_base_param_find(char *type, char *module, char *param);
+  int mca_base_param_find(const char *type, const char *module, const char *param);
   int mca_base_param_finalize(void);
 
 #if 0

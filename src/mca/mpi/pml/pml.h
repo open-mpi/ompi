@@ -20,6 +20,8 @@
  */
 
 struct mca_ptl_t;
+struct mca_ptl_addr_t;
+
 
 typedef enum {
     MCA_PML_BASE_SEND_STANDARD,
@@ -126,6 +128,16 @@ typedef int (*mca_pml_base_wait_fn_t)(
     lam_status_public_t* status
 );
 
+/**
+ * PTL->PML Upcall from PTL to PML to add themself to proc array
+ */
+
+typedef int (*mca_ptl_pml_add_proc_fn_t)(
+    struct lam_proc_t* proc,
+    struct mca_ptl_t* ptl,
+    struct mca_ptl_addr_t*
+);
+
 
 /**
  *  PML instance interface functions.
@@ -133,22 +145,25 @@ typedef int (*mca_pml_base_wait_fn_t)(
 
 struct mca_pml_t {
 
+    /* downcalls from MCA to PML */
     mca_pml_base_add_comm_fn_t     pml_add_comm;
     mca_pml_base_del_comm_fn_t     pml_del_comm;
     mca_pml_base_add_procs_fn_t    pml_add_procs;
     mca_pml_base_del_procs_fn_t    pml_del_procs;
-    mca_pml_base_add_ptls_fn_t     pml_add_ptls;
     mca_pml_base_fini_fn_t         pml_fini;
+    mca_pml_base_progress_fn_t     pml_progress;
 
+    /* downcalls from MPI to PML */
     mca_pml_base_irecv_init_fn_t   pml_irecv_init;
     mca_pml_base_irecv_fn_t        pml_irecv;
     mca_pml_base_isend_init_fn_t   pml_isend_init;
     mca_pml_base_isend_fn_t        pml_isend;
-    mca_pml_base_progress_fn_t     pml_progress;
     mca_pml_base_start_fn_t        pml_start;
     mca_pml_base_test_fn_t         pml_test;
     mca_pml_base_wait_fn_t         pml_wait;
 
+    /* upcalls from PTL to PML */
+    mca_ptl_pml_add_proc_fn_t      ptl_pml_add_proc;
 };
 typedef struct mca_pml_t mca_pml_t;
 

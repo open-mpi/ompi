@@ -3,10 +3,13 @@
  */
 #include <errno.h>
 #include "lam/constants.h"
+#include "lam/util/if.h"
 #include "lam/util/argv.h"
+#include "lam/util/output.h"
 #include "lam/mem/malloc.h"
 #include "mca/mpi/pml/pml.h"
 #include "mca/mpi/ptl/ptl.h"
+#include "mca/lam/base/param.h"
 #include "mca/lam/base/module_exchange.h"
 #include "ptl_tcp.h"
 
@@ -76,8 +79,10 @@ static inline int mca_ptl_tcp_param_register_int(
     const char* param_name, 
     int default_value)
 {
-    int id = mca_base_param_register_string("ptl","tcp",param_name,NULL,default_value);
-    return mca_base_param_lookup_int(id);
+    int id = mca_base_param_register_int("ptl","tcp",param_name,NULL,default_value);
+    int param_value = default_value;
+    mca_base_param_lookup_int(id,&param_value);
+    return param_value;
 }
                                                                                                                             
 /*
@@ -95,11 +100,11 @@ int mca_ptl_tcp_module_open(void)
     mca_ptl_tcp.super.ptl_exclusive =
         mca_ptl_tcp_param_register_int("exclusive", 0);
     mca_ptl_tcp.super.ptl_first_frag_size =
-        mca_ptl_tcp_param_register_uint32("first-frag-size", 16*1024);
+        mca_ptl_tcp_param_register_int("first-frag-size", 16*1024);
     mca_ptl_tcp.super.ptl_min_frag_size = 
-        mca_ptl_tcp_param_register_uint32("min-frag-size", 64*1024);
+        mca_ptl_tcp_param_register_int("min-frag-size", 64*1024);
     mca_ptl_tcp.super.ptl_max_frag_size =
-        mca_ptl_tcp_param_register_uint32("max-frag-size", -1);
+        mca_ptl_tcp_param_register_int("max-frag-size", -1);
     return LAM_SUCCESS;
 }
 
@@ -153,8 +158,7 @@ static int mca_ptl_tcp_module_create_instances(void)
      * a PTL for each interface that was not excluded.
     */
     exclude = lam_argv_split(mca_ptl_tcp_module.tcp_if_exclude,'\'');
-    for(if_index = lam_ifbegin(); if_index >= 0; if_index = lam_ifnext()) {
-        int argc;
+    for(if_index = lam_ifbegin(); if_index >= 0; if_index = lam_ifnext(if_index)) {
         char if_name[32];
         lam_ifindextoname(if_index, if_name, sizeof(if_name));
 
@@ -271,20 +275,68 @@ mca_ptl_t** mca_ptl_tcp_module_init(int* num_ptls, int* thread_min, int* thread_
     return (mca_ptl_t**)mca_ptl_tcp_module.tcp_ptls;
 }
 
+
 /*
  *  All TCP progress is handled via an event loop based on select. Events
  *  are dispatched to the appropriate callbacks as file descriptors become
  *  available for read/write.
  */
+
 void mca_ptl_tcp_module_progress(mca_ptl_base_tstamp_t tstamp)
 {
     lam_reactor_poll(&mca_ptl_tcp_module.tcp_reactor);
 }
 
+                                                                                                                
+/*
+ *  Called by mca_ptl_tcp_module_recv() when the TCP listen
+ *  socket has pending connection requests. Accept incoming
+ *  requests and queue for completion of the connection handshake.
+ *  We wait for the peer to send a 4 byte global process ID(rank)
+ *  to complete the connection.
+*/
 
+static void mca_ptl_tcp_module_accept(void)
+{
+#if defined(__linux__)
+    socklen_t addrlen = sizeof(struct sockaddr_in);
+#else
+    int addrlen = sizeof(struct sockaddr_in);
+#endif
+    while(true) {
+        struct sockaddr_in addr;
+        int sd = accept(mca_ptl_tcp_module.tcp_listen, (struct sockaddr*)&addr, &addrlen);
+        if(sd < 0) {
+            if(errno == EINTR)
+                continue;
+            if(errno != EAGAIN || errno != EWOULDBLOCK)
+                lam_output(0, "mca_ptl_tcp_module_accept: accept() failed with errno %d.", errno);
+            return;
+        }
+ 
+        /* wait for receipt of data to complete the connect */
+        lam_reactor_insert(
+            &mca_ptl_tcp_module.tcp_reactor, 
+            sd,
+            &mca_ptl_tcp_module_listener,
+            0,
+            LAM_NOTIFY_RECV|LAM_NOTIFY_EXCEPT);
+    }
+}
+
+
+/*
+ * Called by reactor when registered socket is ready to read.
+ */
 static void mca_ptl_tcp_module_recv(int sd, void* user)
 {
-    mca_ptl_tcp_module_accept();
+    /* accept new connections on the listen socket */
+    if(mca_ptl_tcp_module.tcp_listen == sd) {
+        mca_ptl_tcp_module_accept();
+        return;
+    }
+    lam_reactor_remove(&mca_ptl_tcp_module.tcp_reactor, sd, LAM_NOTIFY_ALL);
+    
 }
 
 static void mca_ptl_tcp_module_send(int sd, void* user)

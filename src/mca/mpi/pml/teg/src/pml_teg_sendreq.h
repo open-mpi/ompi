@@ -19,15 +19,17 @@ static inline int mca_pml_teg_send_request_alloc(
     mca_ptl_base_send_request_t** sendreq)
 {
     mca_pml_proc_t *proc = mca_pml_teg_proc_lookup_remote(comm,dst);
+    mca_ptl_proc_t* ptl_proc;
     mca_ptl_t* ptl;
 
     THREAD_SCOPED_LOCK(&proc->proc_lock,
-        (ptl = mca_ptl_array_get_next_ptl(&proc->proc_ptl_first)));
+        (ptl_proc = mca_ptl_array_get_next(&proc->proc_ptl_first)));
+    ptl = ptl_proc->ptl;
 
     int rc = ptl->ptl_request_alloc(ptl,sendreq);
     if(rc != LAM_SUCCESS)
         return rc;
-    (*sendreq)->req_owner = ptl;
+    (*sendreq)->req_owner = ptl_proc;
     return LAM_SUCCESS;
 }
 
@@ -35,7 +37,8 @@ static inline int mca_pml_teg_send_request_alloc(
 static inline int mca_pml_teg_send_request_start(
     mca_ptl_base_send_request_t* req)
 {
-    mca_ptl_t* ptl = req->req_owner;
+    mca_ptl_proc_t* ptl_proc = req->req_owner;
+    mca_ptl_t* ptl = ptl_proc->ptl;
     size_t first_fragment_size = ptl->ptl_first_frag_size;
     int rc;
     bool complete;
@@ -43,7 +46,7 @@ static inline int mca_pml_teg_send_request_start(
     // start the first fragment
     if(req->req_length < first_fragment_size)
         first_fragment_size = req->req_length;
-    rc = ptl->ptl_send(ptl, req, first_fragment_size, &complete);
+    rc = ptl->ptl_send(ptl, ptl_proc->ptl_addr, req, first_fragment_size, &complete);
     if(rc != LAM_SUCCESS)
         return rc;
 
