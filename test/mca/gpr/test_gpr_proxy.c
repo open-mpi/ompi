@@ -103,7 +103,6 @@ int main(int argc, char **argv)
 
     /* if daemon seed - just wait for requests */
     if(ompi_process_info.seed) {
-#if 0
         /* wait on child to exit */
         int pid = exec_client(argc, argv);
         while(true) {
@@ -112,10 +111,6 @@ int main(int argc, char **argv)
                 break;
             ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
         }
-#else
-        fprintf(stderr, "OMPI_MCA_oob_base_seed=%s", mca_oob_get_contact_info());
-        ompi_event_loop(0);
-#endif
         return(0);
     } else {
         return run_test();
