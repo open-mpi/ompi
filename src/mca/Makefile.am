@@ -4,7 +4,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = lam mpi
+SUBDIRS = $(LIBLTDL_SUBDIR) lam mpi
 
 # Source code files
 
@@ -19,7 +19,8 @@ libmca_mpi_la_LIBADD = mpi/libmca_mpi_convenience.la
 libmca_mpi_la_DEPENDENCIES = $(libmca_mpi_la_LIBADD)
 
 libmca_lam_la_SOURCES =
-libmca_lam_la_LIBADD = lam/libmca_lam_convenience.la
+libmca_lam_la_LIBADD = $(LIBLTDL_LTLIB) \
+        lam/libmca_lam_convenience.la
 libmca_lam_la_DEPENDENCIES = $(libmca_lam_la_LIBADD)
 
 # Conditionally install the header files

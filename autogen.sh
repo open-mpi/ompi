@@ -352,9 +352,9 @@ EOF
 	    run_and_check $lam_autoconf
 
 	    # We only need the libltdl stuff for the top-level
-	    # configure, not any of the SSI modules.
+	    # configure, not any of the MCA modules.
 
-	    if test -d src/include/mpi.h; then
+	    if test -f src/include/mpi.h; then
 		rm -rf libltdl src/mca/libltdl src/mca/ltdl.h
 		run_and_check $lam_libtoolize --automake --copy --ltdl
 		mv libltdl src/mca
