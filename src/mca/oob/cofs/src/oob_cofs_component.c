@@ -42,7 +42,7 @@ mca_oob_base_component_1_0_0_t mca_oob_cofs_component = {
 
 mca_oob_t mca_oob_cofs = {
   mca_oob_cofs_get_addr,
-  mca_oob_cofs_set_seed,
+  mca_oob_cofs_set_addr,
   mca_oob_cofs_send,
   mca_oob_cofs_recv,
   mca_oob_cofs_send_nb,
@@ -62,7 +62,7 @@ char* mca_oob_cofs_get_addr(void)
     return strdup("cofs://");
 }
 
-int mca_oob_cofs_set_seed(const char* addr)
+int mca_oob_cofs_set_addr(const ompi_process_name_t* name, const char* addr)
 {
     return OMPI_SUCCESS;
 }
@@ -113,6 +113,11 @@ mca_oob_t* mca_oob_cofs_init(int* priority, bool *allow_multi_user_threads, bool
 
 int mca_oob_cofs_module_init(void)
 {
+    if(memcmp(&mca_oob_name_self, &mca_oob_name_any, sizeof(ompi_process_name_t)) == 0) {
+        mca_oob_name_self.cellid = 0;
+        mca_oob_name_self.jobid = 1;
+        mca_oob_name_self.vpid = 0;
+    }
     return OMPI_SUCCESS;
 }
 

@@ -122,6 +122,13 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
 bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_peer_t * peer);
 
 /**
+ * The message has been completely received - so attempt to match
+ * against posted recvs.
+ */
+
+void mca_oob_tcp_msg_recv_complete(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_peer_t* peer);
+
+/**
  *  Match name to a message that has been received asynchronously (unexpected).
  *
  *  @param  name (IN)  Name associated with peer or wildcard to match first posted recv.

@@ -105,9 +105,9 @@ mca_gpr_base_module_t* mca_gpr_proxy_init(bool *allow_multi_user_threads, bool *
 	ompi_output(0, "gpr_proxy_init called");
     }
 
-    /* If we're NOT the seed, then we want to be selected, so do all
+    /* If we are NOT to host a replica, then we want to be selected, so do all
        the setup and return the module */
-    if (!ompi_process_info.seed) {
+    if (NULL != ompi_process_info.gpr_replica) {
 
 	if (mca_gpr_proxy_debug) {
 	    ompi_output(0, "gpr_proxy_init: proxy selected");
@@ -125,8 +125,11 @@ mca_gpr_base_module_t* mca_gpr_proxy_init(bool *allow_multi_user_threads, bool *
     *allow_multi_user_threads = true;
     *have_hidden_threads = false;
 
-    /* define the replica for us to use - for now, use only the seed */
-    mca_gpr_my_replica = ompi_name_server.create_process_name(0,0,0);
+    /* define the replica for us to use - get it from process_info */
+    mca_gpr_my_replica = ompi_name_server.copy_process_name(ompi_process_info.gpr_replica);
+    if (NULL == mca_gpr_my_replica) { /* can't function */
+	return NULL;
+    }
 
     /* initialize the notify list */
     OBJ_CONSTRUCT(&mca_gpr_proxy_notify_request_tracker, ompi_list_t);

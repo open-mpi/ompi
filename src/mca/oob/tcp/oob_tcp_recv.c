@@ -51,8 +51,8 @@ int mca_oob_tcp_recv(
             if(NULL == iov || 0 == count) {
                 return OMPI_ERR_BAD_PARAM;
             }
-            iov[0].iov_base = msg->msg_rwiov->iov_base;
-            iov[0].iov_len = msg->msg_rwiov->iov_len;
+            iov[0].iov_base = msg->msg_rwiov[1].iov_base;
+            iov[0].iov_len = msg->msg_rwiov[1].iov_len;
             msg->msg_rwbuf = NULL;
  
         } else {
@@ -61,7 +61,8 @@ int mca_oob_tcp_recv(
             rc = mca_oob_tcp_msg_copy(msg, iov, count);
             if(rc >= 0 && MCA_OOB_TRUNC & flags) {
                 rc = 0;
-                for(i=0; i<msg->msg_rwcnt; i++)
+                /* skip first iovec element which is the header */
+                for(i=1; i<msg->msg_rwcnt+1; i++)
                    rc += msg->msg_rwiov[i].iov_len;
             }
             if(MCA_OOB_PEEK & flags) {
@@ -153,17 +154,30 @@ int mca_oob_tcp_recv_nb(
         if(msg->msg_rc < 0) 
             return msg->msg_rc;
 
-        /* if we are just doing peek, return bytes without dequeing message */
-        rc = mca_oob_tcp_msg_copy(msg, iov, count);
-        if(rc >= 0 && MCA_OOB_TRUNC & flags) {
-            rc = 0;
-            for(i=0; i<msg->msg_rwcnt; i++)
-               rc += msg->msg_rwiov[i].iov_len;
-        }
-        if(MCA_OOB_PEEK & flags) {
-             OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
-             cbfunc(rc, &msg->msg_peer, iov, count, tag, cbdata);
-             return 0;
+        /* if we are returning an allocated buffer - just take it from the message */
+        if(flags & MCA_OOB_ALLOC) {
+
+            if(NULL == iov || 0 == count) {
+                return OMPI_ERR_BAD_PARAM;
+            }
+            iov[0].iov_base = msg->msg_rwiov[1].iov_base;
+            iov[0].iov_len = msg->msg_rwiov[1].iov_len;
+            msg->msg_rwbuf = NULL;
+ 
+        } else {
+
+            /* if we are just doing peek, return bytes without dequeing message */
+            rc = mca_oob_tcp_msg_copy(msg, iov, count);
+            if(rc >= 0 && MCA_OOB_TRUNC & flags) {
+                rc = 0;
+                for(i=1; i<msg->msg_rwcnt+1; i++)
+                   rc += msg->msg_rwiov[i].iov_len;
+            }
+            if(MCA_OOB_PEEK & flags) {
+                 OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+                 cbfunc(rc, &msg->msg_peer, iov, count, tag, cbdata);
+                 return 0;
+            }
         }
 
         /* otherwise dequeue the message and return to free list */

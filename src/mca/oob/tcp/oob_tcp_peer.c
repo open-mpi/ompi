@@ -29,7 +29,6 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user);
 static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user);
 static void mca_oob_tcp_peer_timer_handler(int sd, short flags, void* user);
 static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg);
-static mca_oob_tcp_msg_t* mca_oob_tcp_peer_msg_start(mca_oob_tcp_peer_t* peer, mca_oob_tcp_hdr_t* hdr);
 
 
 OBJ_CLASS_INSTANCE(
@@ -148,7 +147,7 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
 mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(ompi_process_name_t* name)
 {
     int rc;
-    mca_oob_tcp_peer_t * peer, * old;
+    mca_oob_tcp_peer_t * peer, *old;
 
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     peer = (mca_oob_tcp_peer_t*)ompi_rb_tree_find(&mca_oob_tcp_component.tcp_peer_tree,
@@ -183,8 +182,8 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(ompi_process_name_t* name)
 
     /* if the peer list is over the maximum size, remove one unsed peer */
     ompi_list_prepend(&mca_oob_tcp_component.tcp_peer_list, (ompi_list_item_t *) peer);
-    if(ompi_list_get_size(&mca_oob_tcp_component.tcp_peer_list) > 
-        mca_oob_tcp_component.tcp_peer_limit) {
+    if(mca_oob_tcp_component.tcp_peer_limit > 0 &&
+       ompi_list_get_size(&mca_oob_tcp_component.tcp_peer_list) > mca_oob_tcp_component.tcp_peer_limit) {
         old = (mca_oob_tcp_peer_t *) 
               ompi_list_get_last(&mca_oob_tcp_component.tcp_peer_list);
         while(1) {
@@ -226,7 +225,14 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
     peer->peer_state = MCA_OOB_TCP_CONNECTING;
     peer->peer_sd = socket(AF_INET, SOCK_STREAM, 0);
     if (peer->peer_sd < 0) {
-        peer->peer_retries++;
+        struct timeval tv = { 1,0 };
+        ompi_output(0, 
+            "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_start_connect: socket() failed with errno=%d\n",
+            OMPI_NAME_COMPONENTS(mca_oob_name_self),
+            OMPI_NAME_COMPONENTS(peer->peer_name),
+            errno);
+        mca_oob_tcp_peer_close(peer);
+        ompi_evtimer_add(&peer->peer_timer_event, &tv);
         return OMPI_ERR_UNREACH;
     }
 
@@ -324,6 +330,10 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         return;
     } else if (so_error == ECONNREFUSED) {
         struct timeval tv = { 1,0 };
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_complete_connect: "
+            "connection refused - retrying\n", 
+            OMPI_NAME_COMPONENTS(mca_oob_name_self),
+            OMPI_NAME_COMPONENTS(peer->peer_name));
         mca_oob_tcp_peer_close(peer);
         if(peer->peer_retries > mca_oob_tcp_component.tcp_peer_retries) {
            return;
@@ -356,6 +366,7 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
  */
 static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer)
 {
+    ompi_event_del(&peer->peer_timer_event);
     peer->peer_state = MCA_OOB_TCP_CONNECTED;
     peer->peer_retries = 0;
     if(ompi_list_get_size(&peer->peer_send_queue) > 0) {
@@ -440,7 +451,11 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
                                                                                                             
     /* compare the peers name to the expected value */
     if(memcmp(&peer->peer_name, &guid[0], sizeof(ompi_process_name_t)) != 0) {
-        ompi_output(0, "mca_oob_tcp_peer_connect: received unexpected process identifier");
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_connect: "
+            "received unexpected process identifier [%d,%d,%d]\n",
+            OMPI_NAME_COMPONENTS(mca_oob_name_self),
+            OMPI_NAME_COMPONENTS(peer->peer_name),
+            OMPI_NAME_COMPONENTS(guid[0]));
         mca_oob_tcp_peer_close(peer);
         return OMPI_ERR_UNREACH;
     }
@@ -471,6 +486,11 @@ static int mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data, 
 
         /* remote closed connection */
         if(retval == 0) {
+            ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_blocking: "
+                "peer closed connection: peer state %d",
+                OMPI_NAME_COMPONENTS(mca_oob_name_self),
+                OMPI_NAME_COMPONENTS(peer->peer_name),
+                peer->peer_state);
             mca_oob_tcp_peer_close(peer);
             return -1;
         }
@@ -518,76 +538,6 @@ static int mca_oob_tcp_peer_send_blocking(mca_oob_tcp_peer_t* peer, void* data, 
     return cnt;
 }
 
-/*
- * Progress a completed recv:
- * (1) signal a posted recv as complete
- * (2) queue an unexpected message in the recv list
- */
-static void mca_oob_tcp_peer_recv_progress(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t *msg)
-{
-    /* was this a posted recv? */
-    if(msg->msg_type == MCA_OOB_TCP_POSTED) {
-
-        if(msg->msg_flags & MCA_OOB_ALLOC) {
-            /* set the users iovec struct to point to pre-allocated buffer */
-            if(NULL == msg->msg_uiov || 0 == msg->msg_ucnt) {
-                msg->msg_rc = OMPI_ERR_BAD_PARAM;
-            } else {
-                msg->msg_uiov[0].iov_base = msg->msg_rwiov->iov_base;
-                msg->msg_uiov[0].iov_len = msg->msg_rwiov->iov_len;
-                msg->msg_rwbuf = NULL;
-                msg->msg_rc = msg->msg_rwiov->iov_len;
-            }
-         }
-         mca_oob_tcp_msg_complete(msg, &peer->peer_name);
-
-     } else {
-        /* if not attempt to match unexpected message to a posted recv */
-        mca_oob_tcp_msg_t* post;
-        OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
-        post = mca_oob_tcp_msg_match_post(&peer->peer_name, msg->msg_hdr.msg_tag,true);
-        if(NULL != post) {
-
-            if(post->msg_flags & MCA_OOB_ALLOC) {
-
-                /* set the users iovec struct to point to pre-allocated buffer */
-                if(NULL == post->msg_uiov || 0 == post->msg_ucnt) {
-                    post->msg_rc = OMPI_ERR_BAD_PARAM;
-                } else {
-                    post->msg_uiov[0].iov_base = msg->msg_rwiov->iov_base;
-                    post->msg_uiov[0].iov_len = msg->msg_rwiov->iov_len;
-                    msg->msg_rwbuf = NULL;
-                    post->msg_rc = msg->msg_rwiov->iov_len;
-                }
-
-            } else {
-       
-                /* copy msg data into posted recv */
-                post->msg_rc = mca_oob_tcp_msg_copy(msg, post->msg_uiov, post->msg_ucnt);
-                if(post->msg_flags & MCA_OOB_TRUNC) {
-                     int i, size = 0;
-                     for(i=0; i<msg->msg_rwcnt; i++)
-                         size += msg->msg_rwiov[i].iov_len;
-                     post->msg_rc = size;
-                }
-            }
-
-            if(post->msg_flags & MCA_OOB_PEEK) {
-                /* will need message for actual receive */
-                ompi_list_append(&mca_oob_tcp_component.tcp_msg_recv, &msg->super);
-            } else {
-                MCA_OOB_TCP_MSG_RETURN(msg);
-            }
-            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
-            mca_oob_tcp_msg_complete(post, &peer->peer_name);
-           
-        } else {
-            ompi_list_append(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t*)msg);
-            OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
-        }
-    }
-}
-
 
 int mca_oob_tcp_peer_send_ident(mca_oob_tcp_peer_t* peer)
 {
@@ -617,108 +567,6 @@ static void mca_oob_tcp_peer_recv_ident(mca_oob_tcp_peer_t* peer, mca_oob_tcp_hd
 
 
 /*
- * Start receiving a new message. 
- * (1) receive header
- * (2) attempt to match posted receives
- * (3) if a posted receive is available - receive into users buffer
- * (4) otherwise, allocate a new message and buffer for receive
- */
-static mca_oob_tcp_msg_t* mca_oob_tcp_peer_recv_start(mca_oob_tcp_peer_t* peer)
-{
-    mca_oob_tcp_hdr_t hdr;
-
-    /* blocking receive of the message header */
-    if(mca_oob_tcp_peer_recv_blocking(peer, &hdr, sizeof(hdr)) == sizeof(hdr)) {
-        MCA_OOB_TCP_HDR_NTOH(&hdr);
-
-        if(mca_oob_tcp_component.tcp_debug > 2) {
-           ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_handler: src [%d,%d,%d] dst [%d,%d,%d] tag %d type %d\n",
-               OMPI_NAME_COMPONENTS(mca_oob_name_self),
-               OMPI_NAME_COMPONENTS(peer->peer_name),
-               OMPI_NAME_COMPONENTS(hdr.msg_src),
-               OMPI_NAME_COMPONENTS(hdr.msg_dst),
-               hdr.msg_tag,
-               hdr.msg_type);
-        }
-
-        switch(hdr.msg_type) {
-        case MCA_OOB_TCP_IDENT:
-            mca_oob_tcp_peer_recv_ident(peer, &hdr);
-            return NULL;
-        case MCA_OOB_TCP_MSG:
-            return mca_oob_tcp_peer_msg_start(peer,&hdr);
-        }
-    }
-    return NULL;
-}
-
-
-static mca_oob_tcp_msg_t* mca_oob_tcp_peer_msg_start(mca_oob_tcp_peer_t* peer, mca_oob_tcp_hdr_t* hdr)
-{
-    mca_oob_tcp_msg_t* msg;
-    uint32_t size = hdr->msg_size;
-
-    /* attempt to match posted receive 
-     * however - dont match message w/ peek attribute, as we need to
-     * queue the message anyway to match subsequent recv.
-    */
-    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
-    msg = mca_oob_tcp_msg_match_post(&peer->peer_name, hdr->msg_tag, false);
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
-    if(NULL != msg) {
-        uint32_t posted_size = 0;
-        int i;
-
-        /* setup buffer for receive */
-        for(i=0; i<msg->msg_ucnt; i++)
-            posted_size += msg->msg_uiov[i].iov_len;
-
-        /* allocate an additional buffer to receive entire message */
-        if(msg->msg_flags & MCA_OOB_ALLOC) {
-            msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,1);
-            msg->msg_rwbuf = malloc(size);
-            msg->msg_rwiov[0].iov_base = msg->msg_rwbuf;
-            msg->msg_rwiov[0].iov_len = size;
-            msg->msg_rwcnt = msg->msg_rwnum = 1;
-        } else if (posted_size < size) {
-            uint32_t alloc_size = size - posted_size;
-            msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,msg->msg_ucnt+1);
-            memcpy(msg->msg_rwiov, msg->msg_uiov, msg->msg_ucnt * sizeof(struct iovec));
-            msg->msg_rwbuf = malloc(alloc_size);
-            msg->msg_rwiov[msg->msg_ucnt].iov_base = msg->msg_rwbuf;
-            msg->msg_rwiov[msg->msg_ucnt].iov_len = alloc_size;
-            msg->msg_rwcnt = msg->msg_rwnum = msg->msg_ucnt+1;
-        } else {
-            msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,msg->msg_ucnt);
-            memcpy(msg->msg_rwiov, msg->msg_uiov, msg->msg_ucnt * sizeof(struct iovec));
-            msg->msg_rwcnt = msg->msg_rwnum = msg->msg_ucnt;
-        }
-
-    } else {
-        /* allocate a new message along with buffer */
-        int rc;
-        MCA_OOB_TCP_MSG_ALLOC(msg, rc);
-        if(NULL == msg) {
-            return NULL;
-        } 
-        msg->msg_type = MCA_OOB_TCP_UNEXPECTED;
-        msg->msg_rc = 0;
-        msg->msg_flags = 0;
-        msg->msg_peer = peer->peer_name;
-        msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,1);
-        msg->msg_rwbuf = malloc(size);
-        msg->msg_rwiov->iov_base = msg->msg_rwbuf;
-        msg->msg_rwiov->iov_len = size;
-        msg->msg_rwcnt = msg->msg_rwnum = 1;
-    } 
-
-    msg->msg_rwptr = msg->msg_rwiov;
-    msg->msg_hdr = *hdr;
-    return msg;
-}
-
-
-/*
  * Dispatch to the appropriate action routine based on the state
  * of the connection with the peer.
  */
@@ -735,15 +583,38 @@ static void mca_oob_tcp_peer_recv_handler(int sd, short flags, void* user)
         }
         case MCA_OOB_TCP_CONNECTED: 
         {
+            /* allocate a new message and setup for recv */
             if(NULL == peer->peer_recv_msg) {
-                peer->peer_recv_msg = mca_oob_tcp_peer_recv_start(peer);
+                int rc;
+                mca_oob_tcp_msg_t* msg;
+                MCA_OOB_TCP_MSG_ALLOC(msg, rc);
+                if(NULL == msg) {
+                    ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_handler: unable to allocate recv message\n",
+                        OMPI_NAME_COMPONENTS(mca_oob_name_self),
+                        OMPI_NAME_COMPONENTS(peer->peer_name));
+                    return;
+                }
+                msg->msg_type = MCA_OOB_TCP_UNEXPECTED;
+                msg->msg_rc = 0;
+                msg->msg_flags = 0;
+                msg->msg_peer = peer->peer_name;
+                msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg,2);
+                msg->msg_rwbuf = NULL;
+                msg->msg_rwiov->iov_base = msg->msg_rwbuf;
+                msg->msg_rwiov->iov_len = 1;
+                msg->msg_rwcnt = msg->msg_rwnum = 1;
+                msg->msg_rwptr = msg->msg_rwiov;
+                msg->msg_rwiov[0].iov_base = &msg->msg_hdr;
+                msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
+                peer->peer_recv_msg = msg;
             }
+
             if (peer->peer_recv_msg && 
                 mca_oob_tcp_msg_recv_handler(peer->peer_recv_msg, peer)) {
                mca_oob_tcp_msg_t* msg = peer->peer_recv_msg;
                peer->peer_recv_msg = NULL;
                OMPI_THREAD_UNLOCK(&peer->peer_lock);
-               mca_oob_tcp_peer_recv_progress(peer, msg);
+               mca_oob_tcp_msg_recv_complete(msg, peer);
                return;
             }
             break;
@@ -870,6 +741,7 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
 {
     OMPI_THREAD_LOCK(&peer->peer_lock);
     if ((peer->peer_state == MCA_OOB_TCP_CLOSED) ||
+        (peer->peer_state == MCA_OOB_TCP_RESOLVE) ||
         (peer->peer_state != MCA_OOB_TCP_CONNECTED &&
          mca_oob_tcp_process_name_compare(&peer->peer_name, MCA_OOB_NAME_SELF) < 0)) {
 
@@ -880,6 +752,7 @@ bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
         mca_oob_tcp_peer_event_init(peer);
 
         if(mca_oob_tcp_peer_send_connect_ack(peer) != OMPI_SUCCESS) {
+            ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_accept: mca_oob_tcp_peer_send_blocking failed\n");
             mca_oob_tcp_peer_close(peer);
             OMPI_THREAD_UNLOCK(&peer->peer_lock);
             return false;
@@ -906,7 +779,8 @@ void mca_oob_tcp_peer_resolved(mca_oob_tcp_peer_t* peer, mca_oob_tcp_addr_t* add
 {
     OMPI_THREAD_LOCK(&peer->peer_lock);
     peer->peer_addr = addr;
-    if(peer->peer_state == MCA_OOB_TCP_RESOLVE) {
+    if((peer->peer_state == MCA_OOB_TCP_RESOLVE) ||
+       (peer->peer_state == MCA_OOB_TCP_CLOSED && ompi_list_get_size(&peer->peer_send_queue))) {
         mca_oob_tcp_peer_start_connect(peer);
     }
     OMPI_THREAD_UNLOCK(&peer->peer_lock);
@@ -921,7 +795,8 @@ static void mca_oob_tcp_peer_timer_handler(int sd, short flags, void* user)
     /* start the connection to the peer */
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)user;
     OMPI_THREAD_LOCK(&peer->peer_lock);
-    mca_oob_tcp_peer_start_connect(peer);
+    if(peer->peer_state == MCA_OOB_TCP_CLOSED)
+        mca_oob_tcp_peer_start_connect(peer);
     OMPI_THREAD_UNLOCK(&peer->peer_lock);
 }
 

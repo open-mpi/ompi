@@ -19,17 +19,12 @@
  */
 
 extern ompi_process_name_t mca_oob_name_any;
-extern ompi_process_name_t mca_oob_name_seed;
 extern ompi_process_name_t mca_oob_name_self;
 
 /**
  * The wildcard for recieves from any peer.
  */
 #define MCA_OOB_NAME_ANY  &mca_oob_name_any
-/**
- * The process name of the seed deamon
- */
-#define MCA_OOB_NAME_SEED &mca_oob_name_seed
 /**
  * Process name of self
  */
@@ -94,33 +89,27 @@ char* mca_oob_get_contact_info(void);
 *  Set the MCA parameter (OMPI_MCA_oob_base_seed) used by the OOB to 
 *  bootstrap communication between peers. 
 *
-*  @param  seed   The contact information of the peer process obtained
+*  @param  uri   The contact information of the peer process obtained
 *  via a call to mca_oob_get_contact_info().
 *
-*  Note that this routine currently just sets the MCA parameter - so
-*  this function must be called prior to mca_oob_base_init().
 */
 
 int mca_oob_set_contact_info(const char*);
 
 /**
-*  Returns a null terminated character string returning contact info
-*  for all supported OOB channels.
+*  Extract from the contact info the peer process identifier.
 *
-*  @return  
-*
-*  Note that the caller is responsible for freeing the returned string.
+*  @param  cinfo (IN)   The contact information of the peer process.
+*  @param  name (OUT)   The peer process identifier.
+*  @param  uris (OUT)   Will return an array of uri strings corresponding
+*                       to the peers exported protocols.
+*              
+*  Note the caller may pass NULL for the uris if they only wish to extact
+*  the process name.
 */
 
-char* mca_oob_get_contact_info(void);
+int mca_oob_parse_contact_info(const char* uri, ompi_process_name_t* peer, char*** uris);
 
-/**
- * Temporary routine to aid in debugging. Don't attempt to use TCP
- * and/or register w/ the GPR if the contact info for the seed daemon
- * is not available.
- */
-
-bool mca_oob_has_seed(void);
 
 /**
  *  Set the contact info for the seed daemon.

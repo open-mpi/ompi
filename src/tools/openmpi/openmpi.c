@@ -175,13 +175,11 @@ int main(int argc, char **argv)
 	     * including universe name and tmpdir_base
 	     */
 	    seed_argv = NULL;
+	    seed_argc = 0;
 	    ompi_argv_append(&seed_argc, &seed_argv, "ompid");
 	    ompi_argv_append(&seed_argc, &seed_argv, "-seed");
-	    ompi_argv_append(&seed_argc, &seed_argv, "-nameserver");
-	    ompi_argv_append(&seed_argc, &seed_argv, "-registry");
-	    asprintf(&tmp, "-scope %s", ompi_universe_info.scope);
-	    ompi_argv_append(&seed_argc, &seed_argv, tmp);
-	    free(tmp);
+	    ompi_argv_append(&seed_argc, &seed_argv, "-scope");
+	    ompi_argv_append(&seed_argc, &seed_argv, ompi_universe_info.scope);
 	    if (ompi_universe_info.persistence) {
 		ompi_argv_append(&seed_argc, &seed_argv, "-persistent");
 	    }
@@ -189,44 +187,29 @@ int main(int argc, char **argv)
 		ompi_argv_append(&seed_argc, &seed_argv, "-webserver");
 	    }
 	    if (NULL != ompi_universe_info.scriptfile) {
-		asprintf(&tmp, "-script %s", ompi_universe_info.scriptfile);
-		ompi_argv_append(&seed_argc, &seed_argv, tmp);
-		free(tmp);
+		ompi_argv_append(&seed_argc, &seed_argv, "-script");
+		ompi_argv_append(&seed_argc, &seed_argv, ompi_universe_info.scriptfile);
 	    }
 	    if (NULL != ompi_universe_info.hostfile) {
-		asprintf(&tmp, "-hostfile %s", ompi_universe_info.hostfile);
-		ompi_argv_append(&seed_argc, &seed_argv, tmp);
-		free(tmp);
+		ompi_argv_append(&seed_argc, &seed_argv, "-hostfile");
+		ompi_argv_append(&seed_argc, &seed_argv, ompi_universe_info.hostfile);
 	    }
 	    /* provide my contact info */
 	    contact_info = mca_oob_get_contact_info();
-	    asprintf(&tmp, "-initcontact %s", contact_info);
-	    ompi_argv_append(&seed_argc, &seed_argv, tmp);
-	    free(contact_info);
-	    free(tmp);
+	    ompi_argv_append(&seed_argc, &seed_argv, "-initcontact");
+	    ompi_argv_append(&seed_argc, &seed_argv, contact_info);
 	    /* add options for universe name and tmpdir_base, if provided */
-	    asprintf(&tmp, "-universe %s", ompi_universe_info.name);
-	    ompi_argv_append(&seed_argc, &seed_argv, tmp);
-	    free(tmp);
+	    ompi_argv_append(&seed_argc, &seed_argv, "-universe");
+	    ompi_argv_append(&seed_argc, &seed_argv, ompi_universe_info.name);
 	    if (NULL != ompi_process_info.tmpdir_base) {
-		asprintf(&tmp, "-tmpdir %s", ompi_process_info.tmpdir_base);
-		ompi_argv_append(&seed_argc, &seed_argv, tmp);
-		free(tmp);
+		ompi_argv_append(&seed_argc, &seed_argv, "-tmpdir");
+		ompi_argv_append(&seed_argc, &seed_argv, ompi_process_info.tmpdir_base);
 	    }
-	    /* 	mca_pcm_base_build_base_env(environ, &(sched->env)); */
-
-/* 	    fprintf(stderr, "getting ready to disgorge\n"); */
-
-/* 	    tmp2 = seed_argv; */
-/* 	    for (i=0; i<seed_argc; i++) { */
-/* 		fprintf(stderr, "i %d %s\n", i, *tmp2); */
-/* 		tmp2++; */
-/* 	    } */
 
 	    /*
-	     * spawn the seed
+	     * spawn the local seed
 	     */
-	    	if (0 > execv("../ompid/.libs/ompid", seed_argv)) {
+	    	if (0 > execvp("ompid", seed_argv)) {
 	    	    fprintf(stderr, "unable to exec daemon - please report error to bugs@open-mpi.org\n");
 		    fprintf(stderr, "errno: %s\n", strerror(errno));
 	    	    exit(1);

@@ -7,6 +7,9 @@
 
 static void mca_oob_tcp_msg_construct(mca_oob_tcp_msg_t*);
 static void mca_oob_tcp_msg_destruct(mca_oob_tcp_msg_t*);
+static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
+static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
+static void mca_oob_tcp_msg_match(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer);
 
 
 OBJ_CLASS_INSTANCE(
@@ -106,7 +109,10 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
             else if (errno == EAGAIN)
                 return false;
             else {
-                ompi_output(0, "mca_oob_tcp_msg_send_handler: bad return from writev. errno=%d", errno);
+                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_send_handler: writev failed with errno=%d", 
+                    OMPI_NAME_COMPONENTS(mca_oob_name_self), 
+                    OMPI_NAME_COMPONENTS(peer->peer_name), 
+                    errno);
                 mca_oob_tcp_peer_close(peer);
                 return false;
             }
@@ -139,6 +145,48 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
  */
 bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_peer_t * peer)
 {
+    /* has entire header been received */
+    if(msg->msg_rwptr == msg->msg_rwiov) {
+        if(mca_oob_tcp_msg_recv(msg, peer) == false)
+            return false;
+
+        /* allocate a buffer for the receive */
+        MCA_OOB_TCP_HDR_NTOH(&msg->msg_hdr);
+        if(msg->msg_hdr.msg_size > 0) {
+             msg->msg_rwbuf = malloc(msg->msg_hdr.msg_size);
+             if(NULL == msg->msg_rwbuf) {
+                 ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_recv_handler: malloc(%d) failed\n", 
+                     OMPI_NAME_COMPONENTS(mca_oob_name_self),
+                     OMPI_NAME_COMPONENTS(peer->peer_name),
+                     msg->msg_hdr.msg_size);
+                 mca_oob_tcp_peer_close(peer);
+                 return false;
+             }
+             msg->msg_rwiov[1].iov_base = msg->msg_rwbuf;
+             msg->msg_rwiov[1].iov_len = msg->msg_hdr.msg_size;
+             msg->msg_rwnum = 1;
+        }
+    }
+
+    /* do the right thing based on the message type */
+    switch(msg->msg_hdr.msg_type)  {
+        case MCA_OOB_TCP_IDENT:
+            /* done - there is nothing else to receive */
+            return true; 
+        case MCA_OOB_TCP_MSG:
+            /* finish receiving message */
+            return mca_oob_tcp_msg_recv(msg, peer);
+        default:
+            return true;
+    }
+}
+
+/**
+ * Process the current iovec
+ */
+
+static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer)
+{
     int rc;
     while(1) {
         rc = readv(peer->peer_sd, msg->msg_rwptr, msg->msg_rwnum);
@@ -148,12 +196,18 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
             else if (errno == EAGAIN)
                 return false;
             else {
-                ompi_output(0, "mca_oob_tcp_msg_recv_handler: readv failed with errno=%d", errno);
+                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_recv: readv failed with errno=%d", 
+                    OMPI_NAME_COMPONENTS(mca_oob_name_self),
+                    OMPI_NAME_COMPONENTS(peer->peer_name),
+                    errno);
                 mca_oob_tcp_peer_close(peer);
                 return false;
             }
         } else if (rc == 0)  {
-            ompi_output(0, "mca_oob_tcp_msg_recv_handler: read failedd - peer closed connection");
+            ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_msg_recv: peer closed connection", 
+               OMPI_NAME_COMPONENTS(mca_oob_name_self),
+               OMPI_NAME_COMPONENTS(peer->peer_name),
+               errno);
             mca_oob_tcp_peer_close(peer);
             return false;
         }
@@ -175,6 +229,100 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
     }
 }
 
+/**
+ * Process a completed message.
+ */
+
+void mca_oob_tcp_msg_recv_complete(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer)
+{
+    switch(msg->msg_hdr.msg_type)  {
+        case MCA_OOB_TCP_IDENT:
+            mca_oob_tcp_msg_ident(msg,peer);
+            break;
+        case MCA_OOB_TCP_MSG:
+            mca_oob_tcp_msg_match(msg,peer);
+            break;
+        default:
+            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_msg_recv_complete: invalid message type: %d\n",
+                 OMPI_NAME_COMPONENTS(mca_oob_name_self), msg->msg_hdr.msg_type);
+            MCA_OOB_TCP_MSG_RETURN(msg);
+            break;
+    }
+}
+
+/**
+ * Process an ident message.
+ */
+
+static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer)
+{
+    ompi_process_name_t src = msg->msg_hdr.msg_src;
+    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+    if(mca_oob_tcp_process_name_compare(&peer->peer_name, &src) != 0) {
+        ompi_rb_tree_delete(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name);
+        peer->peer_name = src;
+        ompi_rb_tree_insert(&mca_oob_tcp_component.tcp_peer_tree, &peer->peer_name, peer);
+    }
+    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+}
+
+/*
+ * Progress a completed recv:
+ * (1) signal a posted recv as complete
+ * (2) queue an unexpected message in the recv list
+ */
+
+static void mca_oob_tcp_msg_match(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer)
+{
+    /* attempt to match unexpected message to a posted recv */
+    mca_oob_tcp_msg_t* post;
+    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
+    post = mca_oob_tcp_msg_match_post(&peer->peer_name, msg->msg_hdr.msg_tag,true);
+    if(NULL != post) {
+                                                                                                                          
+        if(post->msg_flags & MCA_OOB_ALLOC) {
+                                                                                                                          
+            /* set the users iovec struct to point to pre-allocated buffer */
+            if(NULL == post->msg_uiov || 0 == post->msg_ucnt) {
+                post->msg_rc = OMPI_ERR_BAD_PARAM;
+            } else {
+                /* first iovec of recv message contains the header -
+                 * subsequent contain user data
+                */
+                post->msg_uiov[0].iov_base = msg->msg_rwiov[1].iov_base;
+                post->msg_uiov[0].iov_len = msg->msg_rwiov[1].iov_len;
+                msg->msg_rwbuf = NULL;
+                post->msg_rc = msg->msg_rwiov[1].iov_len;
+            }
+                                                                                                                          
+        } else {
+                                                                                                                          
+            /* copy msg data into posted recv */
+            post->msg_rc = mca_oob_tcp_msg_copy(msg, post->msg_uiov, post->msg_ucnt);
+            if(post->msg_flags & MCA_OOB_TRUNC) {
+                 int i, size = 0;
+                 for(i=1; i<msg->msg_rwcnt+1; i++)
+                     size += msg->msg_rwiov[i].iov_len;
+                 post->msg_rc = size;
+            }
+        }
+                                                                                                                          
+        if(post->msg_flags & MCA_OOB_PEEK) {
+            /* will need message for actual receive */
+            ompi_list_append(&mca_oob_tcp_component.tcp_msg_recv, &msg->super);
+        } else {
+            MCA_OOB_TCP_MSG_RETURN(msg);
+        }
+        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+        mca_oob_tcp_msg_complete(post, &peer->peer_name);
+                                                                                                                          
+    } else {
+        ompi_list_append(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t*)msg);
+        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+    }
+}
+                                                                                                                              
+
 /*
  *  Called to copy the results of a message into user supplied iovec array.
  *  @param  msg (IN)   Message send that is in progress.
@@ -185,7 +333,7 @@ bool mca_oob_tcp_msg_recv_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
 int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, struct iovec* iov, int count)
 {
     int i;
-    struct iovec *src = msg->msg_rwiov;
+    struct iovec *src = msg->msg_rwiov+1;
     struct iovec *dst = iov;
     unsigned char* src_ptr = (unsigned char*)src->iov_base;
     size_t src_len = src->iov_len;
@@ -204,7 +352,7 @@ int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, struct iovec* iov, int count)
             src_ptr += len;
             src_len -= len;
             if(src_len == 0) {
-                if(++src_cnt == count)
+                if(++src_cnt == msg->msg_rwcnt)
                     return rc;
                 src++;
                 src_ptr = (unsigned char*)src->iov_base;

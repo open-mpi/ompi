@@ -38,44 +38,20 @@ int mca_oob_recv(ompi_process_name_t* peer, struct iovec *msg, int count, int* t
 *                     iovec array without removing the message from the queue.
 * @return             OMPI error code (<0) on error or number of bytes actually received.
 */
-int mca_oob_recv_packed (ompi_process_name_t* peer, ompi_buffer_t *buf, int* tag)
+int mca_oob_recv_packed(ompi_process_name_t* peer, ompi_buffer_t *buf, int* tag)
 {
-	/* ok, this routine is a bit of a cow */
-        /* the oob_recv actually needs the real target buffers in advance */
-	
-	/* this forces a three stage method */
-	/* first we need to peek the size we will need */
-	/* then we allocate a buffer of the correct size and then */
-	/* we post a recv with the matching iov :) */
-	/* and we hope that someone inbtween has not posted a recv */
-	/* that matches. */
-	/* To avoid any RACE we NEED to change the OOB lowlevel to */
-	/* alloc the buffer for us.. as per original design.  */
-	/* Or do locking on all recv posting between the peek and recv! GEF */
-
-	uint32_t insize;
     int rc;
     struct iovec msg[1];
-	ompi_buffer_t tmpbuf;
-	void *targetptr;
 
-	insize = mca_oob.oob_recv(peer, NULL, 0, tag, MCA_OOB_PEEK|MCA_OOB_TRUNC);
+	/* setup iov */
+	msg[0].iov_base = NULL;
+	msg[0].iov_len  = 0;
 
-	if (OMPI_ERROR==insize) { return (rc); }
+    rc = mca_oob.oob_recv(peer, msg, 1, tag, MCA_OOB_ALLOC);
+    if(rc < 0)
+        return rc;
 
-	targetptr = (void*) malloc (insize);
-	if (!targetptr) { return (OMPI_ERROR); }
-
-	rc = ompi_buffer_init_preallocated (&tmpbuf, targetptr, insize);
-	if (OMPI_ERROR==rc) { return (rc); }
-
-	/* now update the IOV */
-	msg[0].iov_base = (char*) targetptr;
-	msg[0].iov_len  = insize;
-
-    rc = mca_oob.oob_recv(peer, msg, 1, tag, 0);
-
-	if (OMPI_ERROR!=rc) *buf = tmpbuf;
-
-	return (rc);
+    /* initialize buffer */
+	return ompi_buffer_init_preallocated (buf, msg[0].iov_base, msg[0].iov_len);
 }
+

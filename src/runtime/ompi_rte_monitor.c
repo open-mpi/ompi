@@ -27,7 +27,7 @@ static ompi_condition_t ompi_rte_condition;
 static bool ompi_rte_job_started = false;
 static bool ompi_rte_job_finished = false;
 
-
+extern char* mca_oob_base_include;
 
 /*
  * Update the registry with an entry for this process.
@@ -36,7 +36,7 @@ static bool ompi_rte_job_finished = false;
 int ompi_rte_register(void)
 {
     /* temporarily disable this if dont know seed - e.g. using cofs */
-    if(mca_oob_has_seed()) {
+    if(NULL == mca_oob_base_include) {
         ompi_buffer_t buffer;
         char segment[32];
         char *jobid = ompi_name_server.get_jobid_string(ompi_process_info.name);
@@ -85,7 +85,7 @@ int ompi_rte_register(void)
 int ompi_rte_unregister(void)
 {
     /* temporarily disable this if dont know seed - e.g. using cofs */
-    if(mca_oob_has_seed()) {
+    if(NULL == mca_oob_base_include) {
         char segment[32];
         char *jobid = ompi_name_server.get_jobid_string(ompi_process_info.name);
         char *keys[2];

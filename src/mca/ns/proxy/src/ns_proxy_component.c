@@ -104,10 +104,10 @@ int mca_ns_proxy_close(void)
 
 mca_ns_base_module_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
-    /* If we're NOT the seed, then we want to be selected, so do all
+    /* If we are NOT to host a replica, then we want to be selected, so do all
        the setup and return the module */
     /*    ompi_output(mca_ns_base_output, "ns_proxy: entered init\n"); */
-    if (!ompi_process_info.seed) {
+    if (NULL != ompi_process_info.ns_replica) {
 
 	/* Return a module (choose an arbitrary, positive priority --
 	   it's only relevant compared to other ns components).  If
@@ -123,8 +123,8 @@ mca_ns_base_module_t* mca_ns_proxy_init(bool *allow_multi_user_threads, bool *ha
 
 	/* define the replica for us to use */
 	/* default to seed for now */
-	mca_ns_my_replica = mca_ns_proxy.create_process_name(0,0,0);
-	if (NULL == mca_ns_my_replica) {  /* couldn't create process name - can't operate */
+	mca_ns_my_replica = mca_ns_proxy.copy_process_name(ompi_process_info.ns_replica);
+	if (NULL == mca_ns_my_replica) {  /* can't operate */
 	    return NULL;
 	}
 

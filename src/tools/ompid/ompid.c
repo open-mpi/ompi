@@ -13,7 +13,6 @@
 #include <errno.h>
 
 #include "runtime/runtime.h"
-#include "runtime/universe_connect.h"
 #include "util/output.h"
 #include "util/sys_info.h"
 #include "util/cmd_line.h"
@@ -38,17 +37,14 @@ const char *type_base = "base";
 
 int main(int argc, char *argv[])
 {
-    int ret = 0;
-    int i;
-    char **tmp;
+    int ret = 0, i;
 
-    bool multi_thread   = false;
-    bool hidden_thread  = false;
+    bool allow_multi_user_threads   = false;
+    bool have_hidden_threads  = false;
 
-    ompi_cmd_line_t *mca_cmd_line=NULL;
-
-    /* require tcp oob */
-    setenv("OMPI_MCA_oob_base_include", "tcp", 1);
+    for (i=0; i<argc; i++) {
+	ompi_output(0, "i %d argv %s", i, argv[i]);
+    }
 
     /*
      * Intialize the Open MPI environment
@@ -59,15 +55,24 @@ int main(int argc, char *argv[])
         return ret;
     }
 
+    /* Open up the MCA */
+
+    if (OMPI_SUCCESS != (ret = mca_base_open())) {
+        /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_base_open\n");
+        return ret;
+    }
+
+    /* Join the run-time environment */
+    allow_multi_user_threads = true;
+    have_hidden_threads = false;
+    if (OMPI_SUCCESS != (ret = ompi_rte_init_stage1(&allow_multi_user_threads,
+						    &have_hidden_threads))) {
+	return ret;
+    }
+
     /* get the system info */
     ompi_sys_info();
-
-    ompi_output(0, "HEY - YOU CALLED ME");
-    tmp = argv;
-    for (i=0; i<argc; i++) {
-	ompi_output(0, "\tompid args: %d %s", i,*tmp);
-	tmp++;
-    }
 
     /* setup to read common command line options that span all Open MPI programs */
     if (OMPI_SUCCESS != (ret = ompi_common_cmd_line_init(argc, argv))) {
@@ -112,70 +117,77 @@ int main(int argc, char *argv[])
 
 
     /* parse the cmd_line for rte options - provides the universe name
-    * and temp directory base, if provided by user. Both loaded into
-    * ompi_universe_info and ompi_process_info structures as specified
-    */
+     * and temp directory base, if provided by user. Both loaded into
+     * ompi_universe_info and ompi_process_info structures as specified
+     * Also provides name server and gpr replicas, if provided, and the
+     * initial contact info for the "i'm alive" callback.
+     */
     ompi_rte_parse_cmd_line(cmd_line);
 
+    /* parse the cmd_line for daemon options - gets all the options relating
+     * specifically to seed behavior, in case i'm a seed, but also gets
+     * options about scripts and hostfiles that might be of use to me
+     */
+    ompi_rte_parse_daemon_cmd_line(cmd_line);
 
+    /* start the rest of the rte */
+    if (OMPI_SUCCESS != (ret = ompi_rte_init_stage2(&allow_multi_user_threads,
+						    &have_hidden_threads))) {
+        /* JMS show_help */
+        printf("show_help: ompi_mpi_init failed in mca_rte_init\n");
+        return ret;
+    }
 
+    ompi_output(0, "HEY - I DID IT");
+ 
+    /*     /\* Execute the desired action(s) *\/ */
 
+    /*     if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "version")) { */
+    /* 	printf ("ompid (OpenMpi Daemon) version: 0\n"); */
+    /*     } */
+ 
 
-/*     if (OMPI_SUCCESS != (ret = mca_base_open())) { */
-/* 	/\* JMS show_help *\/ */
-/* 	printf("show_help: mca_base_open failed\n"); */
-/* 	return ret; */
-/*     } */
+    /*     /\* setup universe session directory *\/ */
+    /*     if (OMPI_SUCCESS != ompi_session_dir(true, tmpdir, ompi_system_info.user, ompi_system_info.nodename, NULL, */
+    /* 					 ompi_universe.name, NULL, NULL)) { /\* couldn't create session dir - error *\/ */
+    /* 	fprintf(stderr, "could not create universe session directory tree - please report error to bugs@open-mpi.org\n"); */
+    /* 	exit(1); */
+    /*     } */
+
+    /*     /\* If there is a seed argument, this is the magic */
+    /*      * seed daemon. */
+    /*      *\/ */
+    /*     if ( ompi_cmd_line_is_taken(cmd_line, "seed")) { */
+    /* 	ompi_process_info.seed = true; */
+    /* 	ompi_process_info.my_universe = strdup(ompi_universe.name); */
+    /*     } */
+
+    /*     /\* convert myself to be a daemon *\/ */
+    /*     if (OMPI_SUCCESS != ompi_daemon_init(ompi_process_info.universe_session_dir)) { */
+    /* 	fprintf(stderr, "could not convert to daemon - please report error to bugs@open-mpi.org\n"); */
+    /* 	exit(1); */
+    /*     } */
 
  
-/*     /\* Execute the desired action(s) *\/ */
-
-/*     if (ompi_cmd_line_is_taken(ompi_common_cmd_line, "version")) { */
-/* 	printf ("ompid (OpenMpi Daemon) version: 0\n"); */
-/*     } */
+    /*     /\* before calling anything else we to call rte init *\/ */
+    /*     if (OMPI_SUCCESS != ompi_rte_init(&multi_thread, &hidden_thread)) { */
+    /* 	printf("ompid: ompi_rte_init failed\n"); */
  
+    /* 	/\* Do a partial clean-up.  This needs to be reviewed */
+    /* 	 * at a later date to make certain we are not  */
+    /* 	 * missing soemthing */
+    /* 	 *\/ */
+    /* 	ompi_rte_finalize(); */
+    /* 	OBJ_RELEASE(cmd_line); */
+    /* 	mca_base_close(); */
 
-/*     /\* setup universe session directory *\/ */
-/*     if (OMPI_SUCCESS != ompi_session_dir(true, tmpdir, ompi_system_info.user, ompi_system_info.nodename, NULL, */
-/* 					 ompi_universe.name, NULL, NULL)) { /\* couldn't create session dir - error *\/ */
-/* 	fprintf(stderr, "could not create universe session directory tree - please report error to bugs@open-mpi.org\n"); */
-/* 	exit(1); */
-/*     } */
-
-/*     /\* If there is a seed argument, this is the magic */
-/*      * seed daemon. */
-/*      *\/ */
-/*     if ( ompi_cmd_line_is_taken(cmd_line, "seed")) { */
-/* 	ompi_process_info.seed = true; */
-/* 	ompi_process_info.my_universe = strdup(ompi_universe.name); */
-/*     } */
-
-/*     /\* convert myself to be a daemon *\/ */
-/*     if (OMPI_SUCCESS != ompi_daemon_init(ompi_process_info.universe_session_dir)) { */
-/* 	fprintf(stderr, "could not convert to daemon - please report error to bugs@open-mpi.org\n"); */
-/* 	exit(1); */
-/*     } */
-
- 
-/*     /\* before calling anything else we to call rte init *\/ */
-/*     if (OMPI_SUCCESS != ompi_rte_init(&multi_thread, &hidden_thread)) { */
-/* 	printf("ompid: ompi_rte_init failed\n"); */
- 
-/* 	/\* Do a partial clean-up.  This needs to be reviewed */
-/* 	 * at a later date to make certain we are not  */
-/* 	 * missing soemthing */
-/* 	 *\/ */
-/* 	ompi_rte_finalize(); */
-/* 	OBJ_RELEASE(cmd_line); */
-/* 	mca_base_close(); */
-
-/* 	return 1; */
-/*     } */
+    /* 	return 1; */
+    /*     } */
 
 
-/*     /\* */
-/*      * if seed, call open functions of comm frameworks (oob, socket, etc.) to */
-/*      * get contact info. write contact info into universe session directory */
+    /*     /\* */
+    /*      * if seed, call open functions of comm frameworks (oob, socket, etc.) to */
+    /*      * get contact info. write contact info into universe session directory */
 
     /*     /\* get OOB contact info *\/ */
     /*     ompi_universe.oob_contact_info = mca_oob_get_contact_info(); */
@@ -205,19 +217,19 @@ int main(int argc, char *argv[])
 
 
 
-/*      * as file "contact-info" so others can find us. */
-/*      *\/ */
+    /*      * as file "contact-info" so others can find us. */
+    /*      *\/ */
 
-/*     /\* Add in the calls to initialize the services *\/ */
+    /*     /\* Add in the calls to initialize the services *\/ */
 
-/*     /\* Add the section for the event loop... *\/ */
+    /*     /\* Add the section for the event loop... *\/ */
 
-/*     /\* All done *\/ */
+    /*     /\* All done *\/ */
 
-/*     /\* Close services *\/ */
+    /*     /\* Close services *\/ */
 
-/*     OBJ_RELEASE(cmd_line); */
-/*     mca_base_close(); */
+    /*     OBJ_RELEASE(cmd_line); */
+    /*     mca_base_close(); */
     ompi_finalize();
     return 0;
 }

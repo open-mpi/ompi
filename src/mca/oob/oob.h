@@ -45,12 +45,12 @@ typedef struct mca_oob_1_0_0_t mca_oob_t;
 typedef char* (*mca_oob_base_module_get_addr_fn_t)(void);
 
 /**
-*  Implementation of mca_oob_base_module_set_seed().
+*  Implementation of mca_oob_base_module_set_addr().
 *
 *  @param addr    Address of seed in component specific uri format.
 */
 
-typedef int (*mca_oob_base_module_set_seed_fn_t)(const char* addr);
+typedef int (*mca_oob_base_module_set_addr_fn_t)(const ompi_process_name_t*, const char* addr);
 
 /**
 *  Implementation of mca_oob_send().
@@ -151,7 +151,7 @@ typedef int (*mca_oob_base_module_fini_fn_t)(void);
  */
 struct mca_oob_1_0_0_t {
     mca_oob_base_module_get_addr_fn_t  oob_get_addr;
-    mca_oob_base_module_set_seed_fn_t  oob_set_seed;
+    mca_oob_base_module_set_addr_fn_t  oob_set_addr;
     mca_oob_base_module_send_fn_t      oob_send;
     mca_oob_base_module_recv_fn_t      oob_recv;
     mca_oob_base_module_send_nb_fn_t   oob_send_nb;
