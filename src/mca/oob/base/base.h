@@ -75,16 +75,15 @@ extern "C" {
 #endif
         
 /**
-*  Obtains the contact info (oob implementation specific) URI strings through
-*  which this process can be contacted on an OOB channel.
+*  Returns a null terminated character string returning contact info
+*  for all supported OOB channels.
 *
-*  @return  A null terminated array of strings.
+*  @return  A null terminated string.
 *
-*  The caller is responsible for freeing both the array and the strings that
-*  it points to.
+*  The caller is responsible for freeing the returned string.
 */
 
-char** mca_oob_get_contact_info(void);
+char* mca_oob_get_contact_info(void);
 
 /**
 *  Similiar to unix writev(2).
