@@ -171,7 +171,7 @@ int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
             goto exit;
         }
         
-        err = mca_pml.pml_wait(1, &req, NULL, MPI_STATUS_IGNORE);
+        err = mca_pml.pml_wait_all (1, &req, MPI_STATUS_IGNORE);
         if (OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -226,7 +226,7 @@ int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
             goto exit;
         }
         
-        err = mca_pml.pml_wait (1, &req, NULL, MPI_STATUS_IGNORE);
+        err = mca_pml.pml_wait_all (1, &req, MPI_STATUS_IGNORE);
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -269,4 +269,5 @@ int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
         free ( tmpbuf2 );
     }
 
+    return err;
 }
