@@ -355,6 +355,16 @@ main(int argc, char *argv[])
 	 NULL,
 	 num_procs,
 	 ompi_rte_all_procs_registered, NULL);
+    /* register a synchro on the segment so we get notified when everyone is gone
+     */
+    rc = ompi_registry.synchro(
+         OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
+         OMPI_REGISTRY_OR,
+         segment,
+         NULL,
+         0,
+         ompi_rte_all_procs_unregistered, NULL);
+
 
 
     /*
@@ -369,18 +379,6 @@ main(int argc, char *argv[])
     if (OMPI_SUCCESS != ompi_rte_monitor_procs_registered()) {
 	printf("procs didn't all register - aborting\n");
     } else {
-	/* register a synchro on the segment so we get notified when everyone is gone
-	 *  this needs to occur after spawning processes so that mpirun gets notified
-	 *  last!
-	 */
-	rc = ompi_registry.synchro(
-	       OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT,
-	       OMPI_REGISTRY_OR,
-	       segment,
-	       NULL,
-	       0,
-	       ompi_rte_all_procs_unregistered, NULL);
-
 	ompi_rte_monitor_procs_unregistered();
     }
     /*

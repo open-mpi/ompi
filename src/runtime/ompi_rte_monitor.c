@@ -39,7 +39,9 @@ void ompi_rte_all_procs_registered(ompi_registry_notify_message_t* match, void* 
 {
     OMPI_THREAD_LOCK(&ompi_rte_mutex);
     ompi_rte_job_started = true;
-    ompi_condition_signal(&ompi_rte_condition);
+    if (ompi_rte_waiting) {
+        ompi_condition_signal(&ompi_rte_condition);
+    }
     OMPI_THREAD_UNLOCK(&ompi_rte_mutex);
 }
 
@@ -71,12 +73,14 @@ int ompi_rte_monitor_procs_registered(void)
 
     /* block until a timeout occurs or all processes have registered */
     gettimeofday(&tv, NULL);
-    ts.tv_sec = tv.tv_sec + 30;
+    ts.tv_sec = tv.tv_sec + 1000000;
     ts.tv_nsec = 0;
 
     OMPI_THREAD_LOCK(&ompi_rte_mutex);
     if(ompi_rte_job_started == false) {
+        ompi_rte_waiting = true;
         ompi_condition_timedwait(&ompi_rte_condition, &ompi_rte_mutex, &ts);
+        ompi_rte_waiting = false;
         if(ompi_rte_job_started == false) {
             ompi_mutex_unlock(&ompi_rte_mutex);
             return OMPI_ERROR;
@@ -93,6 +97,7 @@ int ompi_rte_monitor_procs_unregistered(void)
     while(ompi_rte_job_finished == false) {
 	ompi_rte_waiting = true;
 	ompi_condition_wait(&ompi_rte_condition, &ompi_rte_mutex);
+        ompi_rte_waiting = false;
     }
 
     OMPI_THREAD_UNLOCK(&ompi_rte_mutex);

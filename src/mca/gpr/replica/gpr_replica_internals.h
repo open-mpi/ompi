@@ -103,3 +103,4 @@ mca_gpr_notify_id_t gpr_replica_enter_notify_request(ompi_process_name_t *reques
 
 mca_gpr_notify_id_t gpr_replica_remove_notify_request(mca_gpr_notify_id_t idtag);
 
+void gpr_replica_process_callbacks(void);
