@@ -19,6 +19,13 @@ extern int mca_pcmclient_slurm_procid;
 extern ompi_process_name_t *mca_pcmclient_slurm_procs;
 
 
+int
+mca_pcmclient_slurm_init_cleanup(void)
+{
+    return OMPI_SUCCESS;
+}
+
+
 int 
 mca_pcmclient_slurm_get_peers(ompi_process_name_t **procs, 
                                   size_t *num_procs)

@@ -24,6 +24,12 @@ static ompi_process_name_t peers[] = {
 };
 
 
+int
+mca_pcmclient_seed_init_cleanup(void)
+{
+    return OMPI_SUCCESS;
+}
+
 int 
 mca_pcmclient_seed_get_peers(ompi_process_name_t **procs, 
                                   size_t *num_procs)

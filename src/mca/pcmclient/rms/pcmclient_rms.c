@@ -22,6 +22,12 @@ extern int mca_pcmclient_rms_num_procs;
 extern int mca_pcmclient_rms_procid;
 extern ompi_process_name_t *mca_pcmclient_rms_procs;
 
+int
+mca_pcmclient_rms_init_cleanup(void)
+{
+    return OMPI_SUCCESS;
+}
+
 
 int 
 mca_pcmclient_rms_get_peers(ompi_process_name_t **procs, 

@@ -42,6 +42,7 @@ mca_pcmclient_base_component_1_0_0_t mca_pcmclient_slurm_component = {
 
 
 struct mca_pcmclient_base_module_1_0_0_t mca_pcmclient_slurm_1_0_0 = {
+    mca_pcmclient_slurm_init_cleanup,
     mca_pcmclient_slurm_get_self,
     mca_pcmclient_slurm_get_peers,
 };

@@ -8,9 +8,22 @@ include $(top_ompi_srcdir)/config/Makefile.options
 
 sources = \
         gpr_replica_component.c \
+        gpr_replica_recv_proxy_msgs.c \
+        gpr_replica_xmit_alerts.c \
         gpr_replica.h \
-        gpr_replica.c \
-        gpr_replica_internals.c \
+        gpr_replica_del_index.c \
+        gpr_replica_put_get.c \
+        gpr_replica_dump.c \
+        gpr_replica_cleanup.c \
+        gpr_replica_subscribe.c \
+        gpr_replica_compound_cmd.c \
+        gpr_replica_synchro.c \
+        gpr_replica_mode_ops.c \
+        gpr_replica_messaging.c \
+        gpr_replica_internals_dict_ops.c \
+        gpr_replica_internals_segment_ops.c \
+        gpr_replica_internals_trigger_ops.c \
+        gpr_replica_test_internals.c \
         gpr_replica_internals.h
 
 # Make the output library in this directory, and name it either

@@ -19,6 +19,7 @@
 #include "class/ompi_object.h"
 #include "class/ompi_bitmap.h"
 #include "class/ompi_hash_table.h"
+#include "mca/gpr/base/base.h"
 
 #define ATTR_HASH_SIZE 10
 
@@ -274,6 +275,17 @@ int ompi_attr_delete_all(ompi_attribute_type_t type, void *object,
  * @returns OMPI_SUCCESS
  */
 int ompi_attr_create_predefined(void);
+
+
+/**
+ * \internal
+ * Callback function to get data from registry and create predefined attributes
+ *
+ * @returns Nothing
+ */
+void ompi_attr_create_predefined_callback(
+	ompi_registry_notify_message_t *msg,
+	void *cbdata);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

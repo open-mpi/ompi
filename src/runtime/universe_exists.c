@@ -190,13 +190,13 @@ int ompi_rte_universe_exists()
 	    free(ompi_process_info.ns_replica);
 	    ompi_process_info.ns_replica = NULL;
 	}
-	ompi_process_info.ns_replica = ns_base_copy_process_name(&proc);
+	ompi_process_info.ns_replica = mca_ns_base_copy_process_name(&proc);
 
 	if (NULL != ompi_process_info.gpr_replica) {
 	    free(ompi_process_info.gpr_replica);
 	    ompi_process_info.gpr_replica = NULL;
 	}
-	ompi_process_info.gpr_replica = ns_base_copy_process_name(&proc);
+	ompi_process_info.gpr_replica = mca_ns_base_copy_process_name(&proc);
 
 	if (NULL != ompi_universe_info.ns_replica) {
 	    free(ompi_universe_info.ns_replica);
