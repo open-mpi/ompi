@@ -40,6 +40,7 @@
 #define OMPI_REGISTRY_NOTIFY_ADD_SUBSCRIBER 0x0002   /**< Notifies subscriber when another subscriber added */
 #define OMPI_REGISTRY_NOTIFY_DELETE_ENTRY   0x0004   /**< Notifies subscriber when object deleted */
 #define OMPI_REGISTRY_NOTIFY_ADD_ENTRY      0x0008   /**< Notifies subscriber when object added */
+#define OMPI_REGISTRY_NOTIFY_PRE_EXISTING   0x0010   /**< Send all pre-existing entries that meet conditions */
 #define OMPI_REGISTRY_NOTIFY_ALL            0xffff   /**< Notifies subscriber upon any action */
 
 typedef uint16_t ompi_registry_notify_action_t;
@@ -47,10 +48,25 @@ typedef uint16_t ompi_registry_notify_action_t;
 typedef uint32_t mca_gpr_notify_id_t;
 #define MCA_GPR_NOTIFY_ID_MAX UINT32_MAX
 
+/*
+ * Define synchro mode flags
+ */
+#define OMPI_REGISTRY_SYNCHRO_MODE_NONE        0x00   /**< No synchronization */
+#define OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING   0x01   /**< Notify when trigger is reached, ascending mode */
+#define OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING  0x02   /**< Notify when trigger is reached, descending mode */
+#define OMPI_REGISTRY_SYNCHRO_MODE_LEVEL       0x04   /**< Notify when trigger is reached, regardless of direction */
+#define OMPI_REGISTRY_SYNCHRO_MODE_CONTINUOUS  0x08   /**< Notify whenever conditions are met */
+#define OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT    0x10   /**< Fire once, then terminate synchro command */
+
+typedef uint16_t ompi_registry_synchro_mode_t;
+
+
 /** Return value for notify requests
  */
 struct ompi_registry_notify_message_t {
     ompi_list_t data;    /**< List of data objects */
+    ompi_registry_notify_action_t trig_action;
+    ompi_registry_synchro_mode_t trig_synchro;
     uint32_t num_tokens;
     char **tokens;
 };
@@ -75,18 +91,6 @@ typedef void (*ompi_registry_notify_cb_fn_t)(ompi_registry_notify_message_t *not
 
 typedef uint16_t ompi_registry_mode_t;
 
-
-/*
- * Define synchro mode flags
- */
-#define OMPI_REGISTRY_SYNCHRO_MODE_NONE        0x00   /**< No synchronization */
-#define OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING   0x01   /**< Notify when trigger is reached, ascending mode */
-#define OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING  0x02   /**< Notify when trigger is reached, descending mode */
-#define OMPI_REGISTRY_SYNCHRO_MODE_LEVEL       0x04   /**< Notify when trigger is reached, regardless of direction */
-#define OMPI_REGISTRY_SYNCHRO_MODE_CONTINUOUS  0x08   /**< Notify whenever conditions are met */
-#define OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT    0x10   /**< Fire once, then terminate synchro command */
-
-typedef uint16_t ompi_registry_synchro_mode_t;
 
 /*
  * Define flag values for remote commands - only used internally

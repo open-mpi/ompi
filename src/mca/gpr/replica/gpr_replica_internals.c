@@ -409,13 +409,14 @@ bool gpr_replica_check_key_list(ompi_registry_mode_t addr_mode,
     return false;
 }
 
-int gpr_replica_construct_trigger(ompi_registry_synchro_mode_t synchro_mode,
-				  ompi_registry_notify_action_t action,
-				  ompi_registry_mode_t addr_mode,
-				  char *segment, char **tokens, int trigger,
-				  mca_gpr_notify_id_t id_tag)
+mca_gpr_replica_trigger_list_t *gpr_replica_construct_trigger(ompi_registry_synchro_mode_t synchro_mode,
+							      ompi_registry_notify_action_t action,
+							      ompi_registry_mode_t addr_mode,
+							      char *segment, char **tokens, int trigger,
+							      mca_gpr_notify_id_t id_tag)
 {
     mca_gpr_replica_segment_t *seg;
+    mca_gpr_replica_core_t *reg;
     mca_gpr_replica_trigger_list_t *trig;
     char **tokptr;
     mca_gpr_replica_key_t *keyptr;
@@ -423,7 +424,7 @@ int gpr_replica_construct_trigger(ompi_registry_synchro_mode_t synchro_mode,
 
     seg = gpr_replica_find_seg(true, segment);
     if (NULL == seg) { /* couldn't find or create segment */
-	return OMPI_ERROR;
+	return NULL;
     }
 
     trig = OBJ_NEW(mca_gpr_replica_trigger_list_t);
@@ -460,9 +461,20 @@ int gpr_replica_construct_trigger(ompi_registry_synchro_mode_t synchro_mode,
 	trig->num_keys = num_tokens;
     }
 
+    /* traverse segment entries and initialize trigger count */
+    for (reg = (mca_gpr_replica_core_t*)ompi_list_get_first(&seg->registry_entries);
+	 reg != (mca_gpr_replica_core_t*)ompi_list_get_end(&seg->registry_entries);
+	 reg = (mca_gpr_replica_core_t*)ompi_list_get_next(reg)) {
+	if (gpr_replica_check_key_list(addr_mode, trig->num_keys, trig->keys,
+				       reg->num_keys, reg->keys)) {
+	    trig->count++;
+	}
+    }
+
+
     ompi_list_append(&seg->triggers, &trig->item);
 
-    return OMPI_SUCCESS;
+    return trig;
 
 }
 
@@ -544,6 +556,7 @@ mca_gpr_notify_id_t gpr_replica_remove_trigger(ompi_registry_synchro_mode_t sync
     return MCA_GPR_NOTIFY_ID_MAX;
 }
 
+
 ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_registry_mode_t addr_mode, char *segment, char **tokens)
 {
     ompi_list_t *reg_entries;
@@ -592,10 +605,11 @@ ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_regist
     return msg;
 }
 
-void gpr_replica_process_triggers(mca_gpr_replica_segment_t *seg,
+void gpr_replica_process_triggers(char *segment,
 				  mca_gpr_replica_trigger_list_t *trig,
 				  ompi_registry_notify_message_t *message)
 {
+    mca_gpr_replica_segment_t *seg;
     mca_gpr_notify_request_tracker_t *trackptr;
     ompi_registry_object_t *data;
     char **tokptr;
@@ -603,7 +617,12 @@ void gpr_replica_process_triggers(mca_gpr_replica_segment_t *seg,
     bool found;
 
     /* protect against errors */
-    if (NULL == message) {
+    if (NULL == message || NULL == segment) {
+	return;
+    }
+
+    seg = gpr_replica_find_seg(false, segment);
+    if (NULL == seg) { /* couldn't find segment */
 	return;
     }
 

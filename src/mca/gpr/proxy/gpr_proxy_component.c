@@ -182,6 +182,14 @@ void mca_gpr_proxy_notify_recv(int status, ompi_process_name_t* sender,
 	goto RETURN_ERROR;
     }
 
+    if (OMPI_SUCCESS != ompi_unpack(buffer, &message->trig_action, 1, MCA_GPR_OOB_PACK_ACTION)) {
+	goto RETURN_ERROR;
+    }
+
+    if (OMPI_SUCCESS != ompi_unpack(buffer, &message->trig_synchro, 1, MCA_GPR_OOB_PACK_SYNCHRO_MODE)) {
+	goto RETURN_ERROR;
+    }
+
     if (OMPI_SUCCESS != ompi_unpack(buffer, &num_items, 1, OMPI_INT32)) {
 	goto RETURN_ERROR;
     }
