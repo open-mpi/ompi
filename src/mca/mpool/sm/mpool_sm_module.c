@@ -8,7 +8,7 @@
 #include "mca/mpool/sm/mpool_sm_mmap.h"
 
 
-mca_mpool_base_module_t mca_mpool_sm = {
+mca_mpool_base_module_t mca_mpool_sm_module = {
     &mca_mpool_sm_component.super,
     mca_mpool_sm_base,
     mca_mpool_sm_alloc,
