@@ -35,6 +35,8 @@ extern "C" {
                                     ompi_rte_node_schedule_t *sched,
                                     ompi_list_t *nodelist);
 
+    int mca_pcm_base_build_base_env(char ***envp);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

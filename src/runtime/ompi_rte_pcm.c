@@ -7,7 +7,10 @@
 #include "runtime/runtime.h"
 #include "runtime/runtime_types.h"
 #include "mca/pcm/pcm.h"
+#include "mca/pcmclient/pcmclient.h"
+#include "mca/pcmclient/base/base.h"
 
+mca_pcm_base_module_t mca_pcm;
 
 bool
 ompi_rte_can_spawn(void)
@@ -34,22 +37,22 @@ ompi_rte_spawn_procs(int jobid, ompi_list_t *schedule_list)
 ompi_process_name_t*
 ompi_rte_get_self(void)
 {
-    if (NULL == mca_pcm.pcm_self) {
+    if (NULL == mca_pcmclient.pcmclient_get_self) {
         return NULL;
     }
 
-    return mca_pcm.pcm_self();
+    return mca_pcmclient.pcmclient_get_self();
 }
 
 
 int
 ompi_rte_get_peers(ompi_process_name_t **peers, size_t *npeers)
 {
-    if (NULL == mca_pcm.pcm_peers) {
+    if (NULL == mca_pcmclient.pcmclient_get_peers) {
         return OMPI_ERROR;
     }
 
-    return mca_pcm.pcm_peers(peers, npeers);
+    return mca_pcmclient.pcmclient_get_peers(peers, npeers);
 }
 
 

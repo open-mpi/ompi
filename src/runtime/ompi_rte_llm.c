@@ -8,7 +8,7 @@
 #include "runtime/runtime_types.h"
 #include "mca/pcm/pcm.h"
 
-
+extern mca_pcm_base_module_t mca_pcm;
 ompi_list_t*
 ompi_rte_allocate_resources(int jobid, int nodes, int procs)
 {

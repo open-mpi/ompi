@@ -142,7 +142,6 @@ mca_llm_base_select(const char *active_pcm,
   /* Save the winner */
 
   mca_llm_base_selected_component = *best_component;
-  mca_llm = *best_module;
   *selected = *best_module;
   *allow_multi_user_threads = best_user_threads;
   *have_hidden_threads = best_hidden_threads;

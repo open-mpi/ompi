@@ -7,7 +7,8 @@
 #include "threads/mutex.h"
 #include "util/output.h"
 #include "proc/proc.h"
-#include "mca/pcm/pcm.h"
+#include "mca/pcmclient/pcmclient.h"
+#include "mca/pcmclient/base/base.h"
 #include "mca/oob/oob.h"
 #include "mca/ns/base/base.h"
 
@@ -65,11 +66,12 @@ int ompi_proc_init(void)
     size_t i, npeers;
     int rc;
 
-    if(OMPI_SUCCESS != (rc = mca_pcm.pcm_peers(&peers, &npeers))) {
+    if(OMPI_SUCCESS != (rc = mca_pcmclient.pcmclient_get_peers(&peers, 
+                                                               &npeers))) {
         ompi_output(0, "ompi_proc_init: mca_pcm.pcm_peers failed with errno=%d", rc);
         return rc;
     }
-    if(NULL == (self = mca_pcm.pcm_self())) {
+    if(NULL == (self = mca_pcmclient.pcmclient_get_self())) {
         ompi_output(0, "ompi_proc_init: mca_pcm.pcm_self failed with errno=%d", rc);
         return rc;
     }

@@ -12,5 +12,5 @@
 int
 mca_pcm_rsh_kill_job(int jobid, int flags)
 {
-    return OMPI_SUCCESS;
+    return OMPI_ERROR;
 }

@@ -12,5 +12,8 @@
 bool
 mca_pcm_rsh_can_spawn(void)
 {
-    return false;
+    /* we can always try to rsh some more...  Might not always work as
+     * the caller hopes
+     */
+    return true;
 }

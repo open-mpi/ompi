@@ -20,6 +20,8 @@
 #include "mca/llm/base/base.h"
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/base/base.h"
+#include "mca/pcmclient/pcmclient.h"
+#include "mca/pcmclient/base/base.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
 #include "mca/pml/pml.h"
@@ -147,6 +149,9 @@ void ompi_info::open_components()
 
   mca_pcm_base_open();
   component_map["pcm"] = &mca_pcm_base_components_available;
+
+  mca_pcmclient_base_open();
+  component_map["pcmclient"] = &mca_pcmclient_base_components_available;
 
   mca_pml_base_open();
   component_map["pml"] = &mca_pml_base_components_available;

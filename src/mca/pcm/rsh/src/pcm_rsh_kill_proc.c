@@ -12,5 +12,5 @@
 int
 mca_pcm_rsh_kill_proc(ompi_process_name_t *name, int flags)
 {
-    return OMPI_SUCCESS;
+    return OMPI_ERROR;
 }

@@ -869,6 +869,8 @@ AC_CONFIG_FILES([
     src/mca/oob/base/Makefile
     src/mca/pcm/Makefile
     src/mca/pcm/base/Makefile
+    src/mca/pcmclient/Makefile
+    src/mca/pcmclient/base/Makefile
 
     src/mca/llm/Makefile
     src/mca/llm/base/Makefile
@@ -898,6 +900,7 @@ AC_CONFIG_FILES([
 
     src/dynamic-mca/oob/Makefile
     src/dynamic-mca/pcm/Makefile
+    src/dynamic-mca/pcmclient/Makefile
     src/dynamic-mca/llm/Makefile
 
     src/dynamic-mca/Makefile
@@ -922,6 +925,7 @@ AC_CONFIG_FILES([
     src/mpi/runtime/Makefile
 
     src/tools/Makefile
+    src/tools/bootproxy/Makefile
     src/tools/ompid/Makefile
     src/tools/ompi_info/Makefile
     src/tools/mpirun/Makefile

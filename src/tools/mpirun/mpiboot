@@ -93,10 +93,11 @@ fi
 # Set the environment
 #
 ######################################################################
-export OMPI_MCA_pcm_cofs_cellid="${ompi_cellid}"
-export OMPI_MCA_pcm_cofs_jobid="${ompi_jobid}"
-export OMPI_MCA_pcm_cofs_procid="${ompi_procid}"
-export OMPI_MCA_pcm_cofs_num_procs="${ompi_numprocs}"
+export OMPI_MCA_pcmclient_env_cellid="${ompi_cellid}"
+export OMPI_MCA_pcmclient_env_jobid="${ompi_jobid}"
+export OMPI_MCA_pcmclient_env_procid="${ompi_procid}"
+export OMPI_MCA_pcmclient_env_num_procs="${ompi_numprocs}"
+export OMPI_MCA_pcmclient_env_vpid_start="0"
 if test ! -z "${ompi_commdir}"; then
     export OMPI_MCA_oob_cofs_dir="${ompi_commdir}"
 fi
