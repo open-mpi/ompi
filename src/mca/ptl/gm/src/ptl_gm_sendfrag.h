@@ -169,8 +169,19 @@ extern "C" {
     int mca_ptl_gm_send_frag_done( struct mca_ptl_gm_send_frag_t* frag,
                                    struct mca_pml_base_send_request_t* req);
 
-    mca_ptl_gm_recv_frag_t *
-    mca_ptl_gm_alloc_recv_frag( struct mca_ptl_base_module_t *ptl );
+    static inline mca_ptl_gm_recv_frag_t*
+    mca_ptl_gm_alloc_recv_frag( struct mca_ptl_base_module_t *ptl )
+    {
+        int rc;
+        ompi_list_item_t* item;
+        mca_ptl_gm_recv_frag_t* frag;
+        
+        OMPI_FREE_LIST_GET( &(((mca_ptl_gm_module_t *)ptl)->gm_recv_frags_free), item, rc );
+        
+        frag = (mca_ptl_gm_recv_frag_t*)item;
+        frag->frag_recv.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
+        return frag;
+    }
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

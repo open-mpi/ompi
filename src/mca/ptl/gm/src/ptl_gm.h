@@ -134,14 +134,6 @@ extern "C" {
     extern int  mca_ptl_gm_component_progress (mca_ptl_tstamp_t tstamp);
 
     /**
-     *  GM send
-     */
-    extern int  mca_ptl_gm_send( struct mca_ptl_base_module_t *ptl,
-                                 struct mca_ptl_base_peer_t *ptl_peer,
-                                 struct mca_pml_base_send_request_t *sendreq,
-                                 size_t offset, size_t size, int flags);
-
-    /**
      *  GM put
      */
     extern int  mca_ptl_gm_put( struct mca_ptl_base_module_t *ptl,

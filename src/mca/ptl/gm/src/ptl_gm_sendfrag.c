@@ -28,13 +28,6 @@ static void mca_ptl_gm_send_frag_destruct (mca_ptl_gm_send_frag_t * frag);
 static void mca_ptl_gm_recv_frag_construct (mca_ptl_gm_recv_frag_t * frag);
 static void mca_ptl_gm_recv_frag_destruct (mca_ptl_gm_recv_frag_t * frag);
 
-ompi_class_t mca_ptl_gm_send_frag_t_class = {
-    "mca_ptl_gm_send_frag_t",
-    OBJ_CLASS (mca_ptl_base_send_frag_t),
-    (ompi_construct_t) mca_ptl_gm_send_frag_construct,
-    (ompi_destruct_t) mca_ptl_gm_send_frag_destruct
-};
-
 /*
  * send fragment constructor/destructors.
  */
@@ -48,6 +41,13 @@ static void
 mca_ptl_gm_send_frag_destruct (mca_ptl_gm_send_frag_t * frag)
 {
 }
+
+ompi_class_t mca_ptl_gm_send_frag_t_class = {
+    "mca_ptl_gm_send_frag_t",
+    OBJ_CLASS (mca_ptl_base_send_frag_t),
+    (ompi_construct_t) mca_ptl_gm_send_frag_construct,
+    (ompi_destruct_t) mca_ptl_gm_send_frag_destruct
+};
 
 /* It's not yet clear for me what's the best solution here. Block until we
  * get a free request or allocate a new one. The fist case allow us to never
@@ -63,29 +63,26 @@ mca_ptl_gm_send_frag_t *
 mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t *ptl,
 			    struct mca_pml_base_send_request_t * sendreq )
 {
-
-    ompi_free_list_t *flist;
     ompi_list_item_t *item;
     mca_ptl_gm_send_frag_t *sendfrag;
     int32_t rc;
 
-    flist = &(ptl->gm_send_frags);
-
     /* first get a gm_send_frag */
-    OMPI_FREE_LIST_WAIT( &(ptl->gm_send_frags), item, rc );
+    OMPI_FREE_LIST_GET( &(ptl->gm_send_frags), item, rc );
     sendfrag = (mca_ptl_gm_send_frag_t *)item;
     /* And then get some DMA memory to put the data */
     OMPI_FREE_LIST_WAIT( &(ptl->gm_send_dma_frags), item, rc );
     ompi_atomic_sub( &(ptl->num_send_tokens), 1 );
     assert( ptl->num_send_tokens >= 0 );
-
     sendfrag->send_buf = (void*)item;
 
-    sendfrag->req = (struct mca_pml_base_send_request_t *)sendreq;
-    sendfrag->status        = -1;
-    sendfrag->type          = -1;
-    sendfrag->wait_for_ack  =  0;
-    sendfrag->put_sent      = -1;
+    sendfrag->req                            = sendreq;
+    sendfrag->send_frag.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
+    sendfrag->frag_bytes_processed           = 0;
+    sendfrag->status                         = -1;
+    sendfrag->type                           = -1;
+    sendfrag->wait_for_ack                   =  0;
+    sendfrag->put_sent                       = -1;
     
     return sendfrag;
 }
@@ -175,13 +172,6 @@ int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t* putfrag,
     return OMPI_SUCCESS; 
 }
 
-ompi_class_t mca_ptl_gm_recv_frag_t_class = {
-    "mca_ptl_gm_recv_frag_t",
-    OBJ_CLASS (mca_ptl_base_recv_frag_t),
-    (ompi_construct_t) mca_ptl_gm_recv_frag_construct,
-    (ompi_construct_t) mca_ptl_gm_recv_frag_destruct
-};
-
 /*
  * recv fragment constructor/destructors.
  */
@@ -196,18 +186,10 @@ mca_ptl_gm_recv_frag_destruct (mca_ptl_gm_recv_frag_t *frag)
 {
 }
 
-mca_ptl_gm_recv_frag_t *
-mca_ptl_gm_alloc_recv_frag( struct mca_ptl_base_module_t *ptl )
-{
-    int rc;
-    ompi_list_item_t* item;
-    mca_ptl_gm_recv_frag_t* frag;
-
-    OMPI_FREE_LIST_GET( &(((mca_ptl_gm_module_t *)ptl)->gm_recv_frags_free), item, rc );
-
-    frag = (mca_ptl_gm_recv_frag_t*)item;
-    frag->frag_recv.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
-    return frag;
-
-}
+ompi_class_t mca_ptl_gm_recv_frag_t_class = {
+    "mca_ptl_gm_recv_frag_t",
+    OBJ_CLASS (mca_ptl_base_recv_frag_t),
+    (ompi_construct_t) mca_ptl_gm_recv_frag_construct,
+    (ompi_construct_t) mca_ptl_gm_recv_frag_destruct
+};
 
