@@ -18,4 +18,4 @@
  * @retval OMPI_SUCCESS Indicates that the conversion was successful
  * @retval OMPI_ERROR Indicates that the conversion was not successful - a fork could not be completed.
  */
-int daemon_init(char *working_dir);
+int ompi_daemon_init(char *working_dir);
