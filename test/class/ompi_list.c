@@ -25,15 +25,15 @@ typedef struct test_data {
     /* link list data structure */
     ompi_list_item_t ll_element;
     /* test data */
-    int data;
+    size_t data;
 } test_data_t;
 
 int main(int argc, char **argv)
 {
     /* local variables */
     ompi_list_t list, x;
-    size_t list_size, tmp_size_1, tmp_size_2;
-    int size_elements,i,indx,error_cnt;
+    size_t indx,i,list_size, tmp_size_1, tmp_size_2,size_elements;
+    int error_cnt;
     test_data_t *elements, *ele;
     ompi_list_item_t *item;
 
@@ -262,6 +262,7 @@ int main(int argc, char **argv)
 #ifdef OMPI_ENABLE_DEBUG
     /* try and remove a non existant element from the list -
      *   testing debug code */
+    printf("This should generate a warning:\n");
     ele = (test_data_t *) 
         ompi_list_remove_item(&list,(ompi_list_item_t *)(elements+indx));
     if( ((test_data_t *)NULL) == ele ) {
