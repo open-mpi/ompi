@@ -2711,6 +2711,15 @@
 					RelativePath="..\..\src\mca\pml\teg\src\pml_teg_start.c">
 				</File>
 				<File
+					RelativePath="..\..\src\mca\ptl\self\ptl_self.c">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\self\ptl_self.h">
+				</File>
+				<File
+					RelativePath="..\..\src\mca\ptl\self\ptl_self_component.c">
+				</File>
+				<File
 					RelativePath="..\..\src\mca\ptl\tcp\src\ptl_tcp.c">
 				</File>
 				<File
