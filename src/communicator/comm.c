@@ -41,8 +41,7 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
                                 int num_procs,
                                 ompi_proc_t **proc_pointers,
                                 int my_rank,
-                                ompi_errhandler_t *errh,
-                                mca_base_component_t *coll_component);
+                                ompi_errhandler_t *errh );
 /*
 ** typedef for the allgather_intra required in comm_split.
 ** the reason for introducing this abstraction is, that
@@ -76,7 +75,6 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
                     ompi_proc_t **remote_procs,
                     ompi_hash_table_t *attr,
                     ompi_errhandler_t *errh,
-                    mca_base_component_t *collcomponent,
                     mca_base_component_t *topocomponent )
 {
     ompi_proc_t *my_gpointer;
@@ -140,14 +138,6 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
     if ( OMPI_ERROR == mca_pml.pml_add_comm(newcomm) ) {
         return OMPI_ERROR;
     }
-
-    /* Initialize the coll components */
-    /* Let the collectives components fight over who will do
-       collective on this new comm.  */
-    if (OMPI_ERROR == mca_coll_base_comm_select(newcomm, collcomponent)) {
-	return OMPI_ERROR;
-    }
-
     return (OMPI_SUCCESS);
 }
 
@@ -251,7 +241,8 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
                              NULL,     /* bridge comm */
                              NULL,     /* local leader */
                              NULL,     /* remote_leader */
-                             mode );   /* mode */
+                             mode,     /* mode */
+                             -1 );     /* send first */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -264,9 +255,22 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
                          rprocs,                   /* remote_procs */
                          NULL,                     /* attrs */
                          comm->error_handler,      /* error handler */
-                         NULL,                     /* coll component */
                          NULL                      /* topo component */
                          );
+    if ( OMPI_SUCCESS != rc ) {
+        goto exit;
+    }
+
+    /* Activate the communicator and init coll-component */
+    rc = ompi_comm_activate ( newcomp,  /* new communicator */ 
+                             comm,     /* old comm */
+                             NULL,     /* bridge comm */
+                             NULL,     /* local leader */
+                             NULL,     /* remote_leader */
+                             mode,     /* mode */
+                             -1,       /* send first */
+                             NULL );   /* coll component */
+                             
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -289,8 +293,8 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
     if ( NULL != rprocs ) {
         free ( rprocs );
     }
-    *newcomm = newcomp;
 
+    *newcomm = newcomp;
     return ( rc );
 }
 
@@ -458,7 +462,8 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
                              NULL,     /* bridge comm */
                              NULL,     /* local leader */
                              NULL,     /* remote_leader */
-                             mode );   /* mode */
+                             mode,     /* mode */
+                             -1 );     /* send first, doesn't matter */
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -471,10 +476,23 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
                          rprocs,             /* remote_procs */
                          NULL,               /* attrs */
                          comm->error_handler,/* error handler */
-                         NULL,               /* coll component */
                          NULL                /* topo component */
                          );
     if ( OMPI_SUCCESS != rc  ) {
+        goto exit;
+    }
+
+    /* Activate the communicator and init coll-component */
+    rc = ompi_comm_activate ( newcomp,  /* new communicator */ 
+                             comm,     /* old comm */
+                             NULL,     /* bridge comm */
+                             NULL,     /* local leader */
+                             NULL,     /* remote_leader */
+                             mode,     /* mode */
+                             -1,       /* send first */
+                             NULL );   /* coll component */
+                             
+    if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
 
@@ -1101,8 +1119,8 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
                               NULL,     /* bridge comm */
                               NULL,     /* local leader */
                               NULL,     /* remote_leader */
-                              OMPI_COMM_CID_INTRA);   /* mode */
-
+                              OMPI_COMM_CID_INTRA,   /* mode */
+                             -1 );     /* send first, doesn't matter */
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened during setting the communicator */
         FREE_COMMUNICATOR(new_comm);
@@ -1119,14 +1137,28 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
                               num_procs,               /* local size */
                               topo_procs,              /* process structure */
                               new_rank,                /* rank of the process */
-                              old_comm->error_handler, /* error handler */
-                              NULL);                   /*coll component */
+                              old_comm->error_handler); /* error handler */
 
     if (OMPI_SUCCESS != ret) {
         /* something wrong happened during setting the communicator */
         FREE_COMMUNICATOR(new_comm);
         return ret;
     }
+
+    ret = ompi_comm_activate ( new_comm,  /* new communicator */
+                               old_comm,     /* old comm */
+                               NULL,     /* bridge comm */
+                               NULL,     /* local leader */
+                               NULL,     /* remote_leader */
+                               OMPI_COMM_CID_INTRA,   /* mode */
+                               -1,       /* send first, doesn't matter */
+                               NULL );   /* coll component */
+    if (OMPI_SUCCESS != ret) {
+        /* something wrong happened during setting the communicator */
+        FREE_COMMUNICATOR(new_comm);
+        return ret;
+    }
+
     
 #undef FREE_COMMUNICATOR
     /* finally, set the communicator to comm_cart */
@@ -1140,8 +1172,7 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
                                 int num_procs,
                                 ompi_proc_t **proc_pointers,
                                 int my_rank,
-                                ompi_errhandler_t *errh,
-                                mca_base_component_t *coll_component) 
+                                ompi_errhandler_t *errh )
 {
     int ret;
 
@@ -1184,12 +1215,6 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
 
     /* initialize PML stuff on the communicator */
     if (OMPI_SUCCESS != (ret = mca_pml.pml_add_comm(comm))) {
-        /* some error has happened */
-        return ret;
-    }
-
-    /* initialize the coll component */
-    if (OMPI_SUCCESS != (ret = mca_coll_base_comm_select (comm, NULL))) {
         /* some error has happened */
         return ret;
     }

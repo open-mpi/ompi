@@ -17,6 +17,7 @@ libcommunicator_la_SOURCES = \
         comm_init.c \
 	comm.c \
 	comm_cid.c \
+	comm_dyn.c \
 	comm_publish.c 
 
 # Conditionally install the header files
