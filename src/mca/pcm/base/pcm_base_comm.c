@@ -6,6 +6,7 @@
 
 #include <string.h>
 
+#include "include/constants.h"
 #include "class/ompi_list.h"
 #include "mca/pcm/base/base.h"
 

@@ -4,6 +4,7 @@
 
 #include "ompi_config.h"
 
+#include "include/constants.h"
 #include "runtime/runtime.h"
 #include "mca/pcm/base/base.h"
 
@@ -36,7 +37,7 @@ main(int argc, char *argv[])
     char *env_buf;
 
     ompi_init(argc, argv);
-    cmd_line = ompi_cmd_line_create();
+    cmd_line = OBJ_NEW(ompi_cmd_line_t);
     ompi_cmd_line_make_opt(cmd_line, '\0', "local_start_vpid", 1, 
                            "starting vpid to use when launching");
     ompi_cmd_line_make_opt(cmd_line, '\0', "global_start_vpid", 1, 

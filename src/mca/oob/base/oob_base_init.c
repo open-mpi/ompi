@@ -9,6 +9,7 @@
 #include "runtime/runtime.h"
 #include "util/output.h"
 #include "util/proc_info.h"
+#include "util/argv.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/pcmclient/pcmclient.h"

@@ -9,6 +9,7 @@
 #include "mca/pcm/pcm.h"
 #include "mca/pcm/cofs/src/pcm_cofs.h"
 #include "include/types.h"
+#include "include/constants.h"
 
 #include <stdio.h>
 #include <sys/types.h>

@@ -4,6 +4,7 @@
 
 #include "ompi_config.h"
 
+#include "include/constants.h"
 #include "runtime/runtime.h"
 #include "runtime/runtime_types.h"
 #include "mca/pcm/pcm.h"

@@ -7,6 +7,7 @@
 #include "mca/pcmclient/pcmclient.h"
 #include "mca/pcmclient/rms/pcmclient_rms.h"
 #include "include/types.h"
+#include "include/constants.h"
 
 #include <stdio.h>
 #include <sys/types.h>

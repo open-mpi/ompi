@@ -8,7 +8,9 @@
 
 #include <string.h>
 
+#include "include/constants.h"
 #include "class/ompi_list.h"
+#include "util/argv.h"
 #include "runtime/runtime_types.h"
 #include "mca/pcm/base/base.h"
 #include "mca/pcm/base/base.h"

@@ -6,6 +6,7 @@
 #include "ompi_config.h"
 #include "llm_hostfile.h"
 
+#include "include/constants.h"
 #include "mca/llm/llm.h"
 #include "mca/llm/base/base.h"
 

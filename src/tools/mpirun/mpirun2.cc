@@ -46,7 +46,7 @@ main(int argc, char *argv[])
     /*
      * Intialize our Open MPI environment
      */
-    cmd_line = ompi_cmd_line_create();
+    cmd_line = OBJ_NEW(ompi_cmd_line_t);
 
     if (OMPI_SUCCESS != ompi_init(argc, argv)) {
         /* BWB show_help */
@@ -65,12 +65,12 @@ main(int argc, char *argv[])
 
     ompi_cmd_line_make_opt(cmd_line, 'h', "help", 0, 
                            "Show this help message");
-    ompi_cmd_line_make_opt(cmd_line, '\0', "np", 1,
-                           "Number of processes to start");
-    ompi_cmd_line_make_opt(cmd_line, 'h', "hostfile", 1,
+    ompi_cmd_line_make_opt3(cmd_line, 'n', "np", "np", 1,
+                            "Number of processes to start");
+    ompi_cmd_line_make_opt3(cmd_line, '\0', "hostfile", "hostfile", 1,
                            "Host description file");
 
-    if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, false, argc, argv) ||
+    if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, true, argc, argv) ||
         ompi_cmd_line_is_taken(cmd_line, "help") || 
         ompi_cmd_line_is_taken(cmd_line, "h")) {
         printf("...showing ompi_info help message...\n");
@@ -161,7 +161,7 @@ main(int argc, char *argv[])
      * Clean up
      */
     if (NULL != nodelist) ompi_rte_deallocate_resources(new_jobid, nodelist);
-    if (NULL != cmd_line) ompi_cmd_line_free(cmd_line);
+    if (NULL != cmd_line) OBJ_RELEASE(cmd_line);
     ompi_rte_finalize();
     mca_base_close();
     ompi_finalize();

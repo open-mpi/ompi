@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 
   // Initialize the argv parsing handle
 
-  cmd_line = ompi_cmd_line_create();
+  cmd_line = OBJ_NEW(ompi_cmd_line_t);
   if (NULL == cmd_line) {
     ret = errno;
 #if 0
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
   // All done
 
   ompi_info::close_components();
-  ompi_cmd_line_free(cmd_line);
+  OBJ_RELEASE(cmd_line);
   mca_base_close();
   ompi_finalize();
   return 0;

@@ -12,6 +12,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
+#include "include/constants.h"
 #include "util/output.h"
 #include "util/printf.h"
 #include "mca/mca.h"
