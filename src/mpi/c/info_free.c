@@ -28,7 +28,7 @@ static const char FUNC_NAME[] = "MPI_Info_free";
  *   @param info pointer to info object to be freed (handle)
  *
  *   @retval MPI_SUCCESS
- *   @retval MPI_ERR_ARG
+ *   @retval MPI_ERR_INFO
  *
  *   Upon successful completion, 'info' will be set to 'MPI_INFO_NULL'.
  */
@@ -42,8 +42,9 @@ int MPI_Info_free(MPI_Info *info)
      */
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+        if (NULL == info || MPI_INFO_NULL == *info ||
+            ompi_info_is_freed(*info)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                           FUNC_NAME);
         }
     }

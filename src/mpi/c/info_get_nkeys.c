@@ -31,6 +31,7 @@ static const char FUNC_NAME[] = "MPI_Info_get_nkeys";
  *
  * @retval MPI_SUCCESS
  * @retval MPI_ERR_ARG
+ * @retval MPI_ERR_INFO
  *
  * This function returns the number of elements in the list 
  * containing the key-value pairs
@@ -41,7 +42,8 @@ int MPI_Info_get_nkeys(MPI_Info info, int *nkeys)
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info || MPI_INFO_NULL == info) {
+        if (NULL == info || MPI_INFO_NULL == info ||
+            ompi_info_is_freed(info)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                           FUNC_NAME);
         }

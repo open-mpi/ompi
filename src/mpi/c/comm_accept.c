@@ -47,6 +47,10 @@ int MPI_Comm_accept(char *port_name, MPI_Info info, int root,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, 
                                           FUNC_NAME);
         }
+        if (NULL == info || ompi_info_is_freed(info)) {
+          return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                        FUNC_NAME);
+        }
     }
     
     rank = ompi_comm_rank ( comm );

@@ -19,7 +19,10 @@
 
 extern bool ompi_mpi_initialized;
 extern bool ompi_mpi_finalized;
+
 extern bool ompi_mpi_param_check;
+extern bool ompi_debug_show_handle_leaks;
+extern bool ompi_debug_handle_never_free;
 
 extern bool ompi_mpi_thread_multiple;
 extern int ompi_mpi_thread_requested;

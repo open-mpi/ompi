@@ -32,8 +32,8 @@ static const char FUNC_NAME[] = "MPI_Info_delete";
  *            needs to be deleted
  *
  * @retval MPI_SUCCESS If the (key,val) pair was deleted
- * @retval MPI_ERR_ARG
- * @retval MPI_ERR_NOKEY
+ * @retval MPI_ERR_INFO
+ * @retval MPI_ERR_INFO_KEYY
  */
 int MPI_Info_delete(MPI_Info info, char *key) {
     int key_length;
@@ -43,7 +43,8 @@ int MPI_Info_delete(MPI_Info info, char *key) {
      */
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info || MPI_INFO_NULL == info) {
+        if (NULL == info || MPI_INFO_NULL == info ||
+            ompi_info_is_freed(info)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                           FUNC_NAME);
         }

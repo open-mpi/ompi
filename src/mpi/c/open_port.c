@@ -36,6 +36,10 @@ int MPI_Open_port(MPI_Info info, char *port_name)
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
                                           FUNC_NAME);
         }
+        if (NULL == info || ompi_info_is_freed(info)) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
+                                          FUNC_NAME);
+        }
     }
 
     if ( MPI_INFO_NULL != info ) {

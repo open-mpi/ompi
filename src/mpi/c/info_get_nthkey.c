@@ -32,6 +32,8 @@ static const char FUNC_NAME[] = "MPI_Info_get_nthkey";
  *   
  *   @retval MPI_SUCCESS
  *   @retval MPI_ERR_ARG
+ *   @retval MPI_ERR_INFO
+ *   @retval MPI_ERR_INFO_KEY
  */
 int MPI_Info_get_nthkey(MPI_Info info, int n, char *key) 
 {
@@ -45,7 +47,8 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
      */
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == info || MPI_INFO_NULL == info) {
+        if (NULL == info || MPI_INFO_NULL == info ||
+            ompi_info_is_freed(info)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO,
                                            FUNC_NAME);
         }
