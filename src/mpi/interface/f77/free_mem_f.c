@@ -20,7 +20,7 @@ LAM_GENERATE_F77_BINDINGS (PMPI_FREE_MEM,
         pmpi_free_mem,
         pmpi_free_mem_,
         pmpi_free_mem__,
-        mpi_free_mem_f,
+        pmpi_free_mem_f,
         (char *baseptr, MPI_Fint *ierr),
         (baseptr, ierr))
 #endif

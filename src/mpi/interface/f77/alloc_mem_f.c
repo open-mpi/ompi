@@ -19,7 +19,7 @@ LAM_GENERATE_F77_BINDINGS (PMPI_ALLOC_MEM,
                      pmpi_alloc_mem,
                      pmpi_alloc_mem_,
                      pmpi_alloc_mem__,
-                     mpi_alloc_mem_f,
+                     pmpi_alloc_mem_f,
                      (MPI_Fint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr), 
                      (size, info, baseptr, ierr))
 #endif

@@ -17,7 +17,7 @@ LAM_GENERATE_F77_BINDINGS (PMPI_COMM_SET_NAME,
             pmpi_comm_set_name,
             pmpi_comm_set_name_,
             pmpi_comm_set_name__,
-            mpi_comm_set_name_f,
+            pmpi_comm_set_name_f,
             (MPI_Fint *comm, char *name, MPI_Fint *ierror, MPI_Fint charlen),
             (comm, name, ierror, charlen))
 #endif
