@@ -109,7 +109,7 @@ public:
   inline void init() const {
 #if ! 0 /* OMPI_ENABLE_MPI_PROFILING */
     // $%%@#%# AIX/POE 2.3.0.0 makes us put in this cast here
-    (void)MPI_Errhandler_create((MPI_Handler_function*) &throw_excptn_fctn,
+    (void)MPI_Errhandler_create((MPI_Handler_function*) &ompi_mpi_cxx_throw_excptn_fctn,
 				(MPI_Errhandler *) &mpi_errhandler); 
 #else
     pmpi_errhandler.init();
