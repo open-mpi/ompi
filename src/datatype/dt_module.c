@@ -6,8 +6,8 @@
 
 /* other fields starting after bdt_used (index of DT_LOOP should be ONE) */
 #define ZERO_DDT_ARRAY { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
-                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
-                         0, 0, 0, 0, 0, 0, 0, 0, 0 }
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,             \
+            0, 0, 0, 0, 0, 0, 0, 0, 0 }
 #define EMPTY_DATA(NAME) NULL, 0, "MPI_" # NAME, {0, 0, NULL}, {0, 0, NULL}, NULL, ZERO_DDT_ARRAY
 #define BASEOBJ_DATA { OBJ_CLASS(ompi_datatype_t), 1 }
 #define INIT_BASIC_DATA( TYPE, ALIGN, NAME )                            \
@@ -19,21 +19,21 @@
  * when the datatype engine will be initialized we complete with the
  * correct information.
  */
-#define INIT_BASIC_TYPE( TYPE, NAME ) \
-    { BASEOBJ_DATA, 0/*size*/, 0/*true_lb*/, 0/*true_ub*/, 0 /*align*/,    \
-      0/*lb*/, 0/*ub*/, DT_FLAG_BASIC | DT_FLAG_DATA, TYPE, 1,  \
+#define INIT_BASIC_TYPE( TYPE, NAME )                                   \
+    { BASEOBJ_DATA, 0/*size*/, 0 /*align*/, 0/*true_lb*/, 0/*true_ub*/, \
+            0/*lb*/, 0/*ub*/, DT_FLAG_BASIC | DT_FLAG_DATA, TYPE, 1,    \
       (((unsigned long long)1)<<(TYPE)), EMPTY_DATA(NAME) }
 /* The upeer bound and the true UB are set to the size of the datatype.
  * If it's not the case then they should be modified in the initialization
  * function.
  */
 #if OMPI_WANT_F77_BINDINGS
-#define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN ) \
-    { BASEOBJ_DATA, SIZE, 0/*true_lb*/, SIZE/*true_ub*/, ALIGN, \
+#define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN )              \
+    { BASEOBJ_DATA, SIZE, ALIGN, 0/*true_lb*/, SIZE/*true_ub*/,         \
             0/*lb*/, SIZE/*ub*/, DT_FLAG_BASIC | DT_FLAG_DATA, (TYPE), 1, \
       (((unsigned long long)1)<<(TYPE)), EMPTY_DATA(NAME) }
 #else
-#define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN ) \
+#define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN )      \
     INIT_BASIC_TYPE( TYPE, NAME )
 #endif  /* OMPI_WANT_F77_BINDINGS */
 
