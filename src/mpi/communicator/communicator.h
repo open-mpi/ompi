@@ -31,8 +31,7 @@ struct lam_communicator_t {
     MPI_Errhandler c_error_handler;
 
     /* Hooks for PML to hang things */
-
-    struct mca_pml_comm_t* c_pml_comm;
+    void* c_pml_comm;
 
     /* Hooks for collectives to hang things */
 
