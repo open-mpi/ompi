@@ -65,15 +65,15 @@
 #            define false 0
 #            define true 1
 #            if SIZEOF_BOOL == SIZEOF_CHAR && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_CHAR
-typedef bool char
+typedef char bool;
 #            elif SIZEOF_BOOL == SIZEOF_SHORT && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_SHORT
-typedef bool short
+typedef short bool;
 #            elif SIZEOF_BOOL == SIZEOF_INT && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_INT
-typedef bool int
+typedef int bool;
 #            elif SIZEOF_BOOL == SIZEOF_LONG && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_LONG
-typedef bool long
+typedef long bool;
 #            elif defined(SIZEOF_LONG_LONG) && defined(OMPI_ALIGNMENT_LONG) && SIZEOF_BOOL == SIZEOF_LONG && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_LONG
-typedef bool long long
+typedef long long bool;
 #            else
 #                error Cannot find a C type that corresponds to the size and alignment of C++ bool!
 #            endif
