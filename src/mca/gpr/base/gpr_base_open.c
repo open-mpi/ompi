@@ -16,7 +16,7 @@
  * component's public mca_base_module_t struct.
  */
 
-#include "mca/gpr/base/static-modules.h"
+#include "mca/gpr/base/static-components.h"
 
 /*
  * globals
@@ -51,7 +51,7 @@ OBJ_CLASS_INSTANCE(
  */
 int mca_gpr_base_output = -1;
 mca_gpr_base_module_t ompi_registry;
-/* bool mca_gpr_base_selected = false; */
+bool mca_gpr_base_selected = false;
 ompi_list_t mca_gpr_base_components_available;
 mca_gpr_base_component_t mca_gpr_base_selected_component;
 
@@ -66,7 +66,7 @@ int mca_gpr_base_open(void)
   /* Open up all available components */
 
   if (OMPI_SUCCESS != 
-      mca_base_modules_open("gpr", 0, mca_gpr_base_static_modules, 
+      mca_base_components_open("gpr", 0, mca_gpr_base_static_components, 
                             &mca_gpr_base_components_available)) {
     return OMPI_ERROR;
   }

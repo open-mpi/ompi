@@ -23,7 +23,7 @@ int mca_gpr_proxy_close(void);
 /*
  * Startup / Shutdown
  */
-mca_ns_t* mca_gpr_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority);
+mca_gpr_base_module_t* mca_gpr_proxy_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority);
 int mca_gpr_proxy_finalize(void);
 
 /*
@@ -59,14 +59,14 @@ int gpr_proxy_delete(ompi_registry_mode_t mode,
 /*
  * Implementation of index()
  */
-ompi_keytable_t* gpr_proxy_index(char *segment);
+ompi_registry_index_t* gpr_proxy_index(char *segment);
 
 
 /*
  * Implementation of subscribe()
  */
 int gpr_proxy_subscribe(ompi_registry_mode_t mode,
-			ompi_registry_action_t action,
+			ompi_registry_notify_action_t action,
 			char *segment, char **tokens);
 
 /*

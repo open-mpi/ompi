@@ -170,8 +170,8 @@ int mca_gpr_replica_finalize(void);
 int gpr_replica_define_segment(char *segment);
 int gpr_replica_delete_segment(char *segment);
 int gpr_replica_put(ompi_registry_mode_t mode, char *segment,
-		    char **tokens, mca_gpr_buffer_t *object,
-		    mca_gpr_buffer_size_t size);
+		    char **tokens, ompi_registry_object_t *object,
+		    ompi_registry_object_size_t size);
 int gpr_replica_delete(ompi_registry_mode_t mode,
 		       char *segment, char **tokens);
 ompi_registry_index_t* gpr_replica_index(char *segment);

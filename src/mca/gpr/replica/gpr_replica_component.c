@@ -20,7 +20,6 @@
 #include "mca/oob/base/base.h"
 #include "mca/gpr/base/base.h"
 #include "gpr_replica.h"
-#include "gpr_replica_internals.h"
 
 
 /*
@@ -226,6 +225,8 @@ int mca_gpr_replica_close(void)
 
 mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
+    /*    ompi_registry_segment_t *seg; */
+
     /* If we're the seed, then we want to be selected, so do all the
        setup and return the module */
 
@@ -253,15 +254,15 @@ mca_gpr_base_module_t *mca_gpr_replica_init(bool *allow_multi_user_threads, bool
 	mca_gpr_head.lastkey = 0;
 
 	/* define the "universe" segment key */
-	if (0 == gpr_replica_definekey("universe", NULL)) {
+	/*	if (0 == gpr_replica_definekey("universe", NULL)) {
 	    ompi_output(0, "registry_init(error): could not create universe dictionary entry\n");
 	    exit(OMPI_ERROR);
 	}
-
+	*/
 	/* initialize the "universe" segment */
-	seg = OBJ_NEW(ompi_registry_segment_t);  /* allocate a new segment */
+	/*	seg = OBJ_NEW(ompi_registry_segment_t);
 	seg->segment = gpr_replica_getkey("universe", NULL);
-	ompi_list_append(&mca_gpr_head.registry, &seg->item);  /* add to the global registry */
+	ompi_list_append(&mca_gpr_head.registry, &seg->item); */
 
 	/* Return the module */
 

@@ -15,7 +15,6 @@
 #include "util/proc_info.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
-#include "mca/gpr/gpr.h"
 #include "mca/gpr/base/base.h"
 
 
@@ -27,9 +26,9 @@ int mca_gpr_base_select(bool *allow_multi_user_threads,
                        bool *have_hidden_threads)
 {
   ompi_list_item_t *item;
-  mca_base_module_list_item_t *mli;
+  mca_base_component_list_item_t *cli;
   mca_gpr_base_component_t *component, *best_component = NULL;
-  mca_gpr_t *module, *best_module = NULL;
+  mca_gpr_base_module_t *module, *best_module = NULL;
   bool multi, hidden;
   int priority, best_priority = -1;
 
@@ -38,8 +37,8 @@ int mca_gpr_base_select(bool *allow_multi_user_threads,
   for (item = ompi_list_get_first(&mca_gpr_base_components_available);
        item != ompi_list_get_end(&mca_gpr_base_components_available);
        item = ompi_list_get_next(item)) {
-    mli = (mca_base_module_list_item_t *) item;
-    component = (mca_gpr_base_component_t *) mli->mli_module;
+    cli = (mca_base_component_list_item_t *) item;
+    component = (mca_gpr_base_component_t *) cli->cli_component;
 
     /* Call the component's init function and see if it wants to be
        selected */
