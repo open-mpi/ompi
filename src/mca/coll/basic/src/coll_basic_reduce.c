@@ -417,7 +417,74 @@ int mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
                                     struct ompi_op_t *op,
                                     int root, struct ompi_communicator_t *comm)
 {
-  return OMPI_ERR_NOT_IMPLEMENTED;
+  int i;
+  int rank;
+  int err;
+  int size;
+  long true_lb, true_extent, lb, extent;
+  char *free_buffer = NULL;
+  char *pml_buffer = NULL;
+
+  /* Initialize */
+  rank = ompi_comm_rank(comm);
+  size = ompi_comm_remote_size(comm);
+
+  if ( MPI_PROC_NULL == root ) {
+      /* do nothing */
+      err = OMPI_SUCCESS;
+  }
+  else if ( MPI_ROOT != root ) {
+      /* If not root, send data to the root. */
+      err = mca_pml.pml_send(sbuf, count, dtype, root, 
+                             MCA_COLL_BASE_TAG_REDUCE, 
+                             MCA_PML_BASE_SEND_STANDARD, comm);
+  }
+  else {
+      /* Root receives and reduces messages  */
+      ompi_ddt_get_extent(dtype, &lb, &extent);
+      ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
+
+      free_buffer = malloc(true_extent + (count - 1) * extent);
+      if (NULL == free_buffer) {
+          return OMPI_ERR_OUT_OF_RESOURCE;
+      }
+      pml_buffer = free_buffer - lb;
+      
+
+      /* Initialize the receive buffer. */
+      err = mca_pml.pml_recv(rbuf, count, dtype, 0,
+                             MCA_COLL_BASE_TAG_REDUCE, comm, 
+                             MPI_STATUS_IGNORE);
+      if (MPI_SUCCESS != err) {
+          if (NULL != free_buffer) {
+              free(free_buffer);
+          }
+          return err;
+      }
+
+      /* Loop receiving and calling reduction function (C or Fortran). */
+      for (i = 1; i < size; i++) {
+          err = mca_pml.pml_recv(pml_buffer, count, dtype, i, 
+                                 MCA_COLL_BASE_TAG_REDUCE, comm, 
+                                 MPI_STATUS_IGNORE);
+          if (MPI_SUCCESS != err) {
+              if (NULL != free_buffer) {
+                  free(free_buffer);
+              }
+              return err;
+          }
+
+          /* Perform the reduction */
+          ompi_op_reduce(op, pml_buffer, rbuf, count, dtype);
+      }
+  
+      if (NULL != free_buffer) {
+          free(free_buffer);
+      }
+  }
+  
+  /* All done */
+  return err;
 }
 
 

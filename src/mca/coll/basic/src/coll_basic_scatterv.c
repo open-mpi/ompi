@@ -92,5 +92,50 @@ int mca_coll_basic_scatterv_inter(void *sbuf, int *scounts,
                                   struct ompi_datatype_t *rdtype, int root,
                                   struct ompi_communicator_t *comm)
 {
-  return OMPI_ERR_NOT_IMPLEMENTED;
+  int i;
+  int rank;
+  int size;
+  int err;
+  char *ptmp;
+  long lb;
+  long extent;
+  ompi_request_t **reqs=comm->c_coll_basic_data->mccb_reqs;
+
+  /* Initialize */
+
+  rank = ompi_comm_rank(comm);
+  size = ompi_comm_remote_size(comm);
+
+  if ( MPI_PROC_NULL == root ) {
+      /* do nothing */
+      err = OMPI_SUCCESS;
+  }
+  else if ( MPI_ROOT != root ) {
+      /* If not root, receive data. */
+      err = mca_pml.pml_recv(rbuf, rcount, rdtype,
+                             root, MCA_COLL_BASE_TAG_SCATTERV, 
+                             comm, MPI_STATUS_IGNORE);
+  }
+  else {
+      /* I am the root, loop sending data. */
+      err = ompi_ddt_get_extent(rdtype, &lb, &extent);
+      if (OMPI_SUCCESS != err) {
+          return OMPI_ERROR;
+      }
+      
+      for (i = 0; i < size; ++i) {
+          ptmp = ((char *) sbuf) + (extent * disps[i]);
+          err = mca_pml.pml_isend(ptmp, scounts[i], sdtype, i, 
+                                  MCA_COLL_BASE_TAG_SCATTERV, 
+                                  MCA_PML_BASE_SEND_STANDARD, comm, reqs++);
+          if (MPI_SUCCESS != err) {
+              return err;
+          }
+      }
+
+      err = mca_pml.pml_wait_all (size, reqs, MPI_STATUSES_IGNORE);
+  }
+  
+  /* All done */
+  return err;
 }

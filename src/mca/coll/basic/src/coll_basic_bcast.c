@@ -191,7 +191,42 @@ int mca_coll_basic_bcast_lin_inter(void *buff, int count,
                                    struct ompi_datatype_t *datatype, int root,
                                    struct ompi_communicator_t *comm)
 {
-  return OMPI_ERR_NOT_IMPLEMENTED;
+    int i;
+    int rsize;
+    int rank;
+    int err;
+    ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
+
+    rsize = ompi_comm_remote_size(comm);
+    rank  = ompi_comm_rank(comm);
+
+    if ( MPI_PROC_NULL == root ) {
+        /* do nothing */
+        err = OMPI_SUCCESS;
+    }
+    else if ( MPI_ROOT != root ) {
+        /* Non-root receive the data. */
+	err = mca_pml.pml_recv(buff, count, datatype, root,
+                               MCA_COLL_BASE_TAG_BCAST, comm, 
+                               MPI_STATUS_IGNORE);
+    }
+    else {
+        /* root section */
+        for (i = 0; i < rsize; i++) {
+            err = mca_pml.pml_isend(buff, count, datatype, i, 
+                                    MCA_COLL_BASE_TAG_BCAST,
+                                    MCA_PML_BASE_SEND_STANDARD, 
+                                    comm, &(reqs[i]));
+            if (OMPI_SUCCESS != err) {
+                return err;
+            }
+        }
+        err = mca_pml.pml_wait_all(rsize, reqs, MPI_STATUSES_IGNORE);
+    }
+
+    
+    /* All done */
+    return err;
 }
 
 

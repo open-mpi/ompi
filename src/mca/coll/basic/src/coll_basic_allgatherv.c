@@ -58,7 +58,32 @@ int mca_coll_basic_allgatherv_inter(void *sbuf, int scount,
                                     struct ompi_datatype_t *rdtype, 
                                     struct ompi_communicator_t *comm)
 {
-  /* Need to implement this */
+    int size, rsize;
+    int err;
+    int *scounts=NULL;
+    MPI_Aint *sdisps=NULL;
+    
+    rsize = ompi_comm_remote_size (comm);
+    size  = ompi_comm_size (comm);
 
-  return OMPI_ERR_NOT_IMPLEMENTED;
+    scounts = (int *) calloc(rsize, sizeof(int) );
+    sdisps = (MPI_Aint *) calloc (rsize, sizeof(MPI_Aint));
+    if ( NULL == scounts || NULL == sdisps ) {
+        return err;
+    }
+    
+    scounts[0] = scount;    
+
+    err = comm->c_coll.coll_alltoallv (sbuf, scounts, sdisps, sdtype,
+                                       rbuf, rcounts, disps, rdtype,
+                                       comm );
+
+    if (NULL != sdisps  ) {
+        free (sdisps);
+    }
+    if ( NULL != scounts ) {
+        free (scounts);
+    }
+    
+    return err;
 }
