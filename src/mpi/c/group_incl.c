@@ -49,6 +49,12 @@ int MPI_Group_incl(MPI_Group group, int n, int *ranks, MPI_Group *new_group)
     }  /* end if( MPI_CHECK_ARGS) */
 
 
+    if ( 0 == n ) {
+        *new_group = MPI_GROUP_EMPTY;
+        OBJ_RETAIN(MPI_GROUP_EMPTY);
+        return MPI_SUCCESS;
+    }
+
     /* get new group struct */
     new_group_pointer=ompi_group_allocate(n);
     if( NULL == new_group_pointer ) {
