@@ -317,7 +317,7 @@ typedef struct ompi_ptl_elan_putget_desc_t ompi_ptl_elan_putget_desc_t;
 struct ompi_ptl_elan_putget_ctrl_t {
 
     /** <transmit queue structures */
-    u_int             pg_throttle;
+    uint32_t          pg_throttle;
     int               pg_retryCount;
     int               pg_evictCache;
     int32_t           pg_waitType;
@@ -331,7 +331,7 @@ struct ompi_ptl_elan_putget_ctrl_t {
     ELAN4_COOKIEPOOL *pg_cpool;
     E4_CmdQParams    *pg_cmdPar;
 
-    u_int            *pg_pendingGetCount; 
+    uint32_t          *pg_pendingGetCount; 
     ompi_list_t       put_desc;
     ompi_list_t       get_desc;
                       
