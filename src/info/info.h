@@ -83,20 +83,17 @@ int lam_info_get_valuelen (lam_info_t *info, char *key, int *valuelen,
 static inline lam_info_entry_t *lam_info_find_key (lam_info_t *info, 
                                                    char *key) {
     lam_info_entry_t *iterator;
-    int nkeys;
 
     /* Iterate over all the entries. If the key is found, then 
      * return immediately. Else, the loop will fall of the edge
      * and NULL is returned
      */
-    nkeys = lam_list_get_size(&(info->super));
     for (iterator = (lam_info_entry_t *)lam_list_get_first(&(info->super));
-         nkeys > 0;
-         nkeys--) {
+         NULL != iterator;
+         iterator = (lam_info_entry_t *)lam_list_get_next(iterator)) {
         if (0 == strcmp(key, iterator->ie_key)) {
             return iterator;
         }
-        iterator = (lam_info_entry_t *)iterator->super.lam_list_next;
     }
     return (lam_info_entry_t *)0;
 }
@@ -130,10 +127,13 @@ lam_info_get_nthkey (lam_info_t *info, int n, char *key) {
     /*
      * Iterate over and over till we get to the nth key
      */
-    iterator = (lam_info_entry_t *)lam_list_get_first(&(info->super));
-    for ( ; n > 0; n--) {
-        iterator = (lam_info_entry_t *)
-        iterator->super.lam_list_next;
+    for (iterator = (lam_info_entry_t *)lam_list_get_first(&(info->super));
+         n > 0;
+         n--) {
+         iterator = (lam_info_entry_t *)lam_list_get_next(iterator);
+         if ( NULL == iterator) {
+             return MPI_ERR_ARG;
+         }
     }
     /*
      * iterator is of the type lam_list_item_t. We have to
