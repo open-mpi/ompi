@@ -69,7 +69,7 @@ static inline void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag, str
                                                                                                                 
 bool mca_ptl_tcp_recv_frag_send_ack(mca_ptl_tcp_recv_frag_t* frag);
 
-extern void* mca_ptl_tcp_memalloc( unsigned int* length );
+extern void* mca_ptl_tcp_memalloc( size_t* length );
 
 static inline void mca_ptl_tcp_recv_frag_matched(mca_ptl_tcp_recv_frag_t* frag)
 {
