@@ -138,9 +138,6 @@ struct lam_object_t {
     int obj_reference_count;          /**< reference count for the class */
 };
 
-extern void lam_object_construct(lam_object_t *obj);
-extern void lam_object_destruct(lam_object_t *obj);
-
 
 /* Inline functions and prototypes *******************************/
 
@@ -172,16 +169,6 @@ static inline lam_object_t *lam_new(size_t size,
  * atomic.h's).
  */
 static inline int fetchNadd(volatile int *addr, int inc);
-
-/**
- * Test if object inherits from class
- *
- * @param obj           Pointer to the object
- * @param class         Class to query
- * @return              1 if the object is of, or derived from, typ
- *
- */
-#define OBJ_IS_KIND_OF(obj, class) lam_obj_is_kind_of(obj, class ## _class_info)
 
 
 /**
@@ -248,15 +235,6 @@ static inline void lam_obj_release(lam_object_t *obj)
  */
 
 /**
- * Return a pointer to the object cast to the base object type
- *
- * @param obj   Pointer to the object
- * @return      Cast pointer to the object
- */
-#define OBJECT(obj)     ((lam_object_t *)(obj))
-
-
-/**
  * Return a pointer to the class info descriptor associated with a
  * class type.
  *
@@ -284,7 +262,7 @@ static inline void lam_obj_release(lam_object_t *obj)
  */
 #define OBJ_RETAIN(obj)                                                \
     do {                                                               \
-        if (obj) lam_obj_retain(OBJECT(obj));                          \
+        if (obj) lam_obj_retain((lam_object_t *) obj);                 \
     } while (0)
 
 
@@ -297,7 +275,7 @@ static inline void lam_obj_release(lam_object_t *obj)
  */
 #define OBJ_RELEASE(obj)                                               \
     do {                                                               \
-        if (obj) lam_obj_release(OBJECT(obj));                         \
+        if (obj) lam_obj_release((lam_object_t *) obj);                \
     } while (0)
 
 
@@ -309,8 +287,9 @@ static inline void lam_obj_release(lam_object_t *obj)
  */
 #define OBJ_CONSTRUCT(obj, type)                                       \
     do {                                                               \
-        OBJECT(obj)->obj_class_info = CLASS_INFO(type);                \
-        OBJECT(obj)->obj_class_info->cls_construct(OBJECT(obj));       \
+        ((lam_object_t *) obj)->obj_class_info = CLASS_INFO(type);     \
+        ((lam_object_t *) obj)                                         \
+            ->obj_class_info->cls_construct((lam_object_t *) obj);     \
     } while (0)
 
 
@@ -321,7 +300,8 @@ static inline void lam_obj_release(lam_object_t *obj)
  */
 #define OBJ_DESTRUCT(obj)                                              \
     do {                                                               \
-        OBJECT(obj)->obj_class_info->cls_destruct(OBJECT(obj));        \
+       ((lam_object_t *) obj)                                          \
+           ->obj_class_info->cls_destruct((lam_object_t *) obj);       \
     } while (0)
 
 
@@ -333,7 +313,7 @@ static inline void lam_obj_release(lam_object_t *obj)
  */
 #define OBJ_CONSTRUCT_SUPER(obj, super_type)                           \
     do {                                                               \
-        CLASS_INFO(super_type)->cls_construct(OBJECT(obj));            \
+        CLASS_INFO(super_type)->cls_construct((lam_object_t *) obj);   \
     } while (0)
 
 
@@ -345,7 +325,7 @@ static inline void lam_obj_release(lam_object_t *obj)
  */
 #define OBJ_DESTRUCT_SUPER(obj, super_type)                            \
     do {                                                               \
-        CLASS_INFO(super_type)->cls_destruct(OBJECT(obj));             \
+        CLASS_INFO(super_type)->cls_destruct((lam_object_t *) obj);    \
     } while (0)
 
 #endif				/* LAM_OBJECT_H */

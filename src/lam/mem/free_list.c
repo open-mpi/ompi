@@ -63,9 +63,10 @@ int lam_free_list_grow(lam_free_list_t* flist, size_t num_elements)
     for(i=0; i<num_elements; i++) {
         lam_list_item_t* item = (lam_list_item_t*)ptr;
         if (NULL != flist->fl_elem_class) {
-            /* by-pass OBJ_CONSTRUCT() in this case */
-            OBJECT(item)->obj_class_info = flist->fl_elem_class;
-            OBJECT(item)->obj_class_info->cls_construct(OBJECT(item));
+            /* bypass OBJ_CONSTRUCT() in this case (generic types) */
+            ((lam_object_t *) item)->obj_class_info = flist->fl_elem_class;
+            ((lam_object_t *) item)
+                ->obj_class_info->cls_construct((lam_object_t *) item);
         }
         lam_list_append(&flist->super, item);
         ptr += flist->fl_elem_size;

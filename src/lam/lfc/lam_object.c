@@ -8,13 +8,13 @@
 
 #include "lam/lfc/lam_object.h"
 
-void lam_object_construct(lam_object_t * obj)
+static void lam_object_construct(lam_object_t * obj)
 {
     obj->obj_reference_count = 1;
 }
 
 
-void lam_object_destruct(lam_object_t * obj)
+static void lam_object_destruct(lam_object_t * obj)
 {
     /* Move along, nothing to see here! */
 }
