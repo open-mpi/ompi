@@ -4,7 +4,7 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-SUBDIRS = 
+SUBDIRS = bootproxy
 
 noinst_LTLIBRARIES = libmca_pcm_rsh.la
 libmca_pcm_rsh_la_SOURCES = \
