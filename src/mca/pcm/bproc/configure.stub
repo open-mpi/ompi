@@ -99,6 +99,7 @@ if test "$OMPI_HAVE_BPROC" = "1"; then
 #
     WRAPPER_EXTRAN_LDFLAGS="$BPROC_LDFLAGS"
     WRAPPER_EXTRA_LIBS="-lbproc"
+    LIBS="-lbproc"
 else
     AC_MSG_RESULT([no])
     LAM_HAVE_BPROC3_API=0

@@ -25,6 +25,7 @@
 #include "mca/llm/llm.h"
 #include "include/types.h"
 #include "class/ompi_list.h"
+#include "mca/pcm/base/base_job_track.h"
 
 #include <sys/types.h>
 
@@ -75,6 +76,7 @@ extern "C" {
         mca_pcm_base_module_t super;
 
         mca_llm_base_module_t *llm;
+        mca_pcm_base_job_list_t *jobs;
 
         int constraints;
     };
