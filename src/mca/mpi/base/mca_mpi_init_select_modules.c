@@ -42,7 +42,6 @@ int mca_mpi_init_select_modules(int requested, int *provided)
     return LAM_ERROR;
   }
 
-  lam_list_init(&ptls);
   if (LAM_SUCCESS != mca_ptl_base_select(&ptls)) {
     return LAM_ERROR;
   }
@@ -61,11 +60,7 @@ int mca_mpi_init_select_modules(int requested, int *provided)
   /* Tell the selected pml module about all the selected ptl
      modules */
 
-#if TIM_HASNT_IMPLEMENTED_THIS_YET
   mca_pml.pml_add_ptls(&ptls);
-#else
-  mca_pml.pml_add_ptls(NULL, 0);
-#endif
 
   /* All done */
 
