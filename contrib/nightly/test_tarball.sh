@@ -32,7 +32,7 @@ md5_checksums="md5sums.txt"
 sha1_checksums="sha1sums.txt"
 
 # max length of logfile to send in an e-mail
-max_log_len=250
+max_log_len=100
 
 # email subjects
 success_subject="Success"
@@ -66,6 +66,7 @@ send_error_mail() {
     for file in `/bin/ls $logdir/* | sort`; do
         len="`wc -l $file | awk '{ print $1}'`"
         if test "`expr $len \> $max_log_len`" = "1"; then
+            echo "[... previous lines snipped ...]" >> "$outfile"
             tail -$max_log_len "$file" >> "$outfile"
         else
             cat "$file" >> "$outfile"
