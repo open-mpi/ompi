@@ -1,6 +1,4 @@
 /*
- * $HEADER$
- *
  * Copyright 2002-2003. The Regents of the University of California. This material
  * was produced under U.S. Government contract W-7405-ENG-36 for Los Alamos
  * National Laboratory, which is operated by the University of California for
@@ -30,6 +28,7 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
+#include "lam_config.h"
 #include "lam/mem/free_list.h"
 #include "lam/util/lam_log.h"
 #include "lam/os/numa.h"
@@ -37,7 +36,17 @@
 #include "lam/mem/mem_globals.h"
 
 /* private list functions */
-void lam_frl_append_nl(lam_free_list_t *flist, void *chunk, int pool_idx);
+inline lam_flist_elt_t *lam_flr_request_elt(lam_free_list_t *flist, int pool_idx)
+{
+    lam_dbl_list_t      *seg_list = &(flist->fl_free_lists[pool_idx]->sgl_list);
+    volatile lam_flist_elt_t *elt = lam_dbl_get_last(seg_list);
+    
+    if ( elt )
+        lam_sgl_set_consec_fail(seg_list, 0);
+    return elt;
+}
+
+void lam_frl_append(lam_free_list_t *flist, void *chunk, int pool_idx);
 
 int lam_frl_create_more_elts(lam_free_list_t *flist, int pool_idx);
 
@@ -48,7 +57,7 @@ int lam_frl_mem_pool_init(lam_free_list_t *flist, int nlists, long pages_per_lis
                       long default_min_pages_per_list, long default_pages_per_list,
                       long max_pages_per_list, ssize_t max_mem_in_pool);
 
-lam_class_info_t free_list_cls = {"lam_free_list_t", &object_cls, 
+lam_class_info_t free_list_cls = {"lam_free_list_t", &lam_object_cls, 
     (class_init_t)lam_frl_init, (class_destroy_t)lam_frl_destroy};
 
 
@@ -121,9 +130,9 @@ int lam_frl_init_with(
         int max_pages_per_list,
         int max_consec_req_fail,
         const char *description,
-        lam_bool_t retry_for_more_resources,
+        bool_t retry_for_more_resources,
         lam_affinity_t *affinity,
-        lam_bool_t enforce_affinity,
+        bool_t enforce_affinity,
         lam_mem_pool_t *mem_pool)
 {
     /* lam_frl_init must have been called prior to calling this function */
@@ -335,8 +344,8 @@ void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int 
     sz_to_add = lam_mp_get_chunk_size(flist->fl_pool);
     
     /* need to add option to configure */
-    /* if (OPT_MEMPROFILE) { */
-    if ( 0 ) {
+    if (OPT_MEMPROFILE)
+    {
         flist->fl_chunks_req[index]++;
     }
     
@@ -372,7 +381,7 @@ void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int 
     
     // get chunk of memory
     chunk = lam_mp_request_chunk(flist->fl_pool, index);
-    if ( chunk == 0 )
+    if ( 0 == chunk )
     {
         // increment failure count
         lam_sgl_inc_consec_fail(flist->fl_free_lists[index]); 
@@ -393,8 +402,8 @@ void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int 
        this far in the code. */
     lam_sgl_set_consec_fail(flist->fl_free_lists[index], 0);
     
-    /* if (OPT_MEMPROFILE) { */
-    if ( 0 ) {
+    if (OPT_MEMPROFILE)
+    {
         flist->fl_chunks_returned[index]++;
     }
 
@@ -403,7 +412,7 @@ void *lam_frl_get_mem_chunk(lam_free_list_t *flist, int index, size_t *len, int 
 
 
 
-void lam_frl_append_nl(lam_free_list_t *flist, void *chunk, int pool_idx)
+void lam_frl_append(lam_free_list_t *flist, void *chunk, int pool_idx)
 {
     /* ASSERT: mp_chunk_sz >= fl_elt_per_chunk * fl_elt_size */
     // push items onto list 
@@ -454,7 +463,75 @@ int lam_frl_create_more_elts(lam_free_list_t *flist, int pool_idx)
     }
     
     /* push chunk of memory onto the list */
-    lam_frl_append_nl(flist, ptr, pool_idx);
+    lam_frl_append(flist, ptr, pool_idx);
     
     return err;
 }
+
+
+
+
+lam_flist_elt_t *lam_frl_get_elt(lam_free_list_t *flist, int index, int *error)
+{
+    int         error;
+    volatile    lam_flist_elt_t *elem = 0;
+    
+    elem = lam_flr_request_elt(flist, index);
+    
+    if ( elem ) 
+    {
+        error = LAM_SUCCESS;
+    } 
+    else if ( lam_sgl_get_consec_fail(&(flist->fl_free_lists[index]->sgl_list))
+               < flist->fl_threshold_grow ) 
+    {
+        error = LAM_ERR_TEMP_OUT_OF_RESOURCE;
+    } 
+    else 
+    {
+        error = LAM_SUCCESS;
+        while ( (LAM_SUCCESS) && (0 == elem) &&
+                (flist->fl_retry_more_resources) )
+        {
+            error = lam_frl_create_more_elts(flist, index);
+            /* get element if managed to add resources to the list */
+            if ( LAM_SUCCESS == error )
+            {
+                elem = lam_flr_request_elt(flist, index);
+            }            
+        }
+
+        if ( (LAM_ERR_OUT_OF_RESOURCE == error)
+             || (LAM_ERR_FATAL == error) )
+        {
+            return 0;
+        }
+    }
+    if ( OPT_MEMPROFILE )
+    {
+        flist->fl_elt_out[index]++;
+        flist->fl_elt_sum[index] += flist->fl_elt_out[index];
+        flist->fl_nevents[index]++;
+        if (flist->fl_elt_max[index] < flist->fl_elt_out[index])
+        {
+            flist->fl_elt_max[index] = flist->fl_elt_out[index];
+        }
+    }
+    
+    return elem;
+}
+
+int lam_frl_return_elt(lam_free_list_t *flist, int index, lam_flist_elt_t *item)
+{
+    mb();
+    lam_dbl_append(&(flist->fl_free_lists[index]->sgl_list), item);
+    mb();
+    
+    if ( OPT_MEMPROFILE ) {
+        flist->fl_elt_out[index]--;
+    }
+    
+    return LAM_SUCCESS;
+}
+
+

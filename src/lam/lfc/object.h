@@ -41,10 +41,10 @@
  *
  */
 
-struct _object;
+struct lam_object;
 
-typedef void (*class_init_t)(struct _object *);
-typedef void (*class_destroy_t)(struct _object *);
+typedef void (*class_init_t)(struct lam_object *);
+typedef void (*class_destroy_t)(struct lam_object *);
 
 typedef struct lam_class_info
 {
@@ -71,7 +71,7 @@ typedef struct lam_class_info
  *
  */
  
-extern lam_class_info_t object_cls;
+extern lam_class_info_t lam_object_cls;
  
 /*
  *
@@ -100,7 +100,7 @@ extern lam_class_info_t object_cls;
 #define OBJ_RETAIN(obj)         if ( obj ) lam_obj_retain(OBJECT(obj))
 #define OBJ_RELEASE(obj)        if ( obj ) lam_obj_release(OBJECT(obj))
 
-typedef struct _object
+typedef struct lam_object
 {
     lam_class_info_t  *obj_class;
     int                obj_refcnt;

@@ -33,8 +33,8 @@
  */
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
-#ifndef LAM_REACTOR
-#define LAM_REACTOR
+#ifndef LAM_REACTOR_H
+#define LAM_REACTOR_H
 
 #include "include/lam_types.h"
 #include "lam/lfc/list.h"
@@ -101,5 +101,5 @@ lam_bool_t lam_reactor_remove(lam_reactor_t*, int sd, lam_reactor_listener_t*, i
 void   lam_reactor_poll(lam_reactor_t*);
 void   lam_reactor_run(lam_reactor_t*);
 
-#endif /* LAM_REACTOR */
+#endif /* LAM_REACTOR_H */
 

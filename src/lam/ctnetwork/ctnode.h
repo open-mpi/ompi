@@ -114,11 +114,11 @@ void lam_ctn_set_neighbor(lam_ctnode_t *node, uint32_t label, void *neighbor);
  *
  */
 
-INLINE uint32_t lam_ctn_get_label(lam_ctnode_t *node) {return node->ctn_label;}
-INLINE void lam_ctn_set_label(lam_ctnode_t *node, uint32_t label)
+inline uint32_t lam_ctn_get_label(lam_ctnode_t *node) {return node->ctn_label;}
+inline void lam_ctn_set_label(lam_ctnode_t *node, uint32_t label)
     {node->ctn_label = label;}
 
-INLINE uint32_t lam_ctn_get_num_nodes(lam_ctnode_t *node) {return node->ctn_num_nodes;}
+inline uint32_t lam_ctn_get_num_nodes(lam_ctnode_t *node) {return node->ctn_num_nodes;}
 
 
 /*

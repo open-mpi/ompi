@@ -52,7 +52,7 @@ const int LAM_NOTIFY_ALL = 7;
 
                                                                             
 lam_class_info_t lam_reactor_cls = {
-    "lam_reactor_t", &object_cls, (class_init_t)lam_reactor_init,
+    "lam_reactor_t", &lam_object_cls, (class_init_t)lam_reactor_init,
     (class_destroy_t)lam_reactor_destroy
 };
                                                                                                                 

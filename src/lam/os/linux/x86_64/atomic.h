@@ -79,7 +79,7 @@ extern "C"
 /*
  *  Spin until I can get the lock
  */
-INLINE void spinlock(lam_lock_data_t *lockData)
+inline void spinlock(lam_lock_data_t *lockData)
 {
     __asm__ __volatile__(
         "cmp $1, %0\n"
@@ -98,7 +98,7 @@ INLINE void spinlock(lam_lock_data_t *lockData)
 /*
  * This routine tries once to obtain the lock
  */
-INLINE int spintrylock(lam_lock_data_t *lockData)
+inline int spintrylock(lam_lock_data_t *lockData)
 {
     int gotLock;
 
@@ -128,7 +128,7 @@ INLINE int spintrylock(lam_lock_data_t *lockData)
  *  atomically add a constant to the input integer returning the
  *  previous value
  */
-INLINE int fetchNadd(volatile int *addr, int inc)
+inline int fetchNadd(volatile int *addr, int inc)
 {
     int inputValue;
     __asm__ __volatile__(
@@ -144,7 +144,7 @@ INLINE int fetchNadd(volatile int *addr, int inc)
 }
 
 
-INLINE int fetchNset(volatile int *addr, int setValue)
+inline int fetchNset(volatile int *addr, int setValue)
 {
     int inputValue;
 
@@ -166,13 +166,13 @@ INLINE int fetchNset(volatile int *addr, int setValue)
 /*
  * Clear the lock
  */
-INLINE void spinunlock(lam_lock_data_t *lockData)
+inline void spinunlock(lam_lock_data_t *lockData)
 {
     lockData->data.lockData_m = 1;
 }
 
 
-INLINE unsigned long long fetchNaddLong(bigAtomicUnsignedInt *addr,
+inline unsigned long long fetchNaddLong(bigAtomicUnsignedInt *addr,
                                                int inc)
 {
     unsigned long long returnValue;
@@ -186,7 +186,7 @@ INLINE unsigned long long fetchNaddLong(bigAtomicUnsignedInt *addr,
 }
 
 
-INLINE unsigned long long fetchNsetLong(bigAtomicUnsignedInt *addr,
+inline unsigned long long fetchNsetLong(bigAtomicUnsignedInt *addr,
                                                unsigned long long val)
 {
     unsigned long long returnValue;
@@ -200,7 +200,7 @@ INLINE unsigned long long fetchNsetLong(bigAtomicUnsignedInt *addr,
 }
 
 
-INLINE unsigned long long fetchNaddLongNoLock(bigAtomicUnsignedInt *addr,
+inline unsigned long long fetchNaddLongNoLock(bigAtomicUnsignedInt *addr,
                                                      int inc)
 {
     unsigned long long returnValue;
@@ -211,7 +211,7 @@ INLINE unsigned long long fetchNaddLongNoLock(bigAtomicUnsignedInt *addr,
     return returnValue;
 }
 
-INLINE void setBigAtomicUnsignedInt(bigAtomicUnsignedInt *addr,
+inline void setBigAtomicUnsignedInt(bigAtomicUnsignedInt *addr,
                                            unsigned long long value)
 {
     addr->data = value;

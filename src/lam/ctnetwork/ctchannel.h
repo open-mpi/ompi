@@ -95,19 +95,19 @@ void lam_cth_init(lam_ctchannel_t *channel);
  *
  */
 
-INLINE int lam_cth_is_connected(lam_ctchannel_t *channel)
+inline int lam_cth_is_connected(lam_ctchannel_t *channel)
 {
     return (CT_CHNL_CONNECTED == channel->cth_status);
 }
 
-INLINE uint32_t lam_cth_get_id(lam_ctchannel_t *channel) {return channel->cth_id;}
-INLINE void lam_cth_set_id(lam_ctchannel_t *channel, uint32_t cid)
+inline uint32_t lam_cth_get_id(lam_ctchannel_t *channel) {return channel->cth_id;}
+inline void lam_cth_set_id(lam_ctchannel_t *channel, uint32_t cid)
 {
     channel->cth_id = cid;
 }
 
-INLINE uint32_t lam_cth_get_timeout(lam_ctchannel_t *channel) {return channel->cth_timeout_secs;}
-INLINE void lam_cth_set_id(lam_ctchannel_t *channel, uint32_t timeout)
+inline uint32_t lam_cth_get_timeout(lam_ctchannel_t *channel) {return channel->cth_timeout_secs;}
+inline void lam_cth_set_id(lam_ctchannel_t *channel, uint32_t timeout)
 {
     channel->cth_timeout_secs = timeout;
 }

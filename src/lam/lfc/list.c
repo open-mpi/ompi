@@ -38,9 +38,9 @@
  */
 
 
-lam_class_info_t  lam_dbl_item_cls = {"lam_dbl_link_item_t", &object_cls, 
+lam_class_info_t  lam_dbl_item_cls = {"lam_dbl_link_item_t", &lam_object_cls, 
     (class_init_t) lam_dbl_item_init, (class_destroy_t)lam_obj_destroy};
-lam_class_info_t  lam_dbl_list_cls = {"lam_dbl_list_t", &object_cls,
+lam_class_info_t  lam_dbl_list_cls = {"lam_dbl_list_t", &lam_object_cls,
     (class_init_t)lam_dbl_init, (class_destroy_t)lam_dbl_destroy};
 
 

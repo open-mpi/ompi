@@ -30,7 +30,7 @@
 
 #include "lam/mem/seg_list.h"
 
-lam_class_info_t seg_list_cls = {"lam_seg_list_t", &object_cls, 
+lam_class_info_t seg_list_cls = {"lam_seg_list_t", &lam_object_cls, 
     (class_init_t)lam_sgl_init, (class_destroy_t)lam_sgl_destroy};
 
 void lam_sgl_init(lam_seg_list_t *slist)
