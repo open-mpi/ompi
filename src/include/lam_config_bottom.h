@@ -44,3 +44,18 @@ typedef enum { false, true } bool;
 #if HAVE_STDINT_H
 #include <stdint.h>
 #endif
+
+/*
+ * Do we want memory debugging?
+ */
+#if LAM_ENABLE_MEM_DEBUG && defined(LAM_BUILDING) && LAM_BUILDING
+
+/* It is safe to include lam/mem/malloc.h here because a) it will only
+   happen when we are building LAM and therefore have a full LAM
+   source tree [including headers] available, and b) we guaranteed to
+   *not* to include anything else via lam/mem/malloc.h, so we won't
+   have Cascading Includes Of Death. */
+#include "lam/mem/malloc.h"
+#define malloc(size) lam_malloc((size), __FILE__, __LINE__)
+#define free(ptr) lam_free((ptr), __FILE__, __LINE__)
+#endif
