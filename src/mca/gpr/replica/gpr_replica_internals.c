@@ -11,6 +11,8 @@
  * includes
  */
 
+#include "ompi_config.h"
+
 #include <stdio.h>
 #include <stdint.h>
 #include <stdarg.h>
@@ -18,7 +20,6 @@
 #include <unistd.h>
 #include <libgen.h>
 
-#include "ompi_config.h"
 #include "include/constants.h"
 #include "util/output.h"
 #include "mca/mca.h"

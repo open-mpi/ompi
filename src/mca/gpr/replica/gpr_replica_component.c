@@ -332,7 +332,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
     }
 
     if (MCA_GPR_DELETE_SEGMENT_CMD == command) {   /* got command to delete a segment */
-	if (OMPI_SUCCESS != ompi_unpack_string(buffer, &segment)) {
+	if (0 > ompi_unpack_string(buffer, &segment)) {
 	    goto RETURN_ERROR;
 	}
 
@@ -353,7 +353,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    goto RETURN_ERROR;
 	}
 
-	if (OMPI_SUCCESS != ompi_unpack_string(buffer, &segment)) {
+	if (0 > ompi_unpack_string(buffer, &segment)) {
 	    goto RETURN_ERROR;
 	}
 
@@ -365,7 +365,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 
 	tokptr = tokens;
 	for (i=0; i<num_tokens; i++) {
-	    if (OMPI_SUCCESS != ompi_unpack_string(buffer, tokptr)) {
+	    if (0 > ompi_unpack_string(buffer, tokptr)) {
 		goto RETURN_ERROR;
 	    }
 	    tokptr++;
@@ -398,7 +398,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	    goto RETURN_ERROR;
 	}
 
-	if (OMPI_SUCCESS != ompi_unpack_string(buffer, &segment)) {
+	if (0 > ompi_unpack_string(buffer, &segment)) {
 	    goto RETURN_ERROR;
 	}
 
@@ -409,7 +409,7 @@ void mca_gpr_replica_recv(int status, ompi_process_name_t* sender,
 	tokens = (char**)malloc(num_tokens*sizeof(char*));
 	tokptr = tokens;
 	for (i=0; i<num_tokens; i++) {
-	    if (OMPI_SUCCESS != ompi_unpack_string(buffer, tokptr)) {
+	    if (0 > ompi_unpack_string(buffer, tokptr)) {
 		goto RETURN_ERROR;
 	    }
 	    tokptr++;
