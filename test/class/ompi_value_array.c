@@ -33,24 +33,32 @@
 
 int main(int argc, char **argv)
 {
-    uint64_t i;
+    uint64_t i, val;
     uint64_t count;
 
     ompi_value_array_t array;
     OBJ_CONSTRUCT(&array, ompi_value_array_t);
 
     test_init("ompi_value_array_t");
-    ompi_value_array_init(&array, sizeof(int));
+    ompi_value_array_init(&array, sizeof(uint64_t));
     test_verify_int(0, ompi_value_array_get_size(&array));
 
     /* add several items to the array */
-    for(i=0; i < NUM_ITEMS; i++)
+    for(i=0; i < NUM_ITEMS; i++) {
         ompi_value_array_append_item(&array, &i);
+    }
     test_verify_int(NUM_ITEMS, ompi_value_array_get_size(&array));
 
     /* verify contents */
-    for(i=0; i < NUM_ITEMS; i++)
-        test_verify_int(i, OMPI_VALUE_ARRAY_GET_ITEM(&array, int, i));
+    for(i=0; i < NUM_ITEMS; i++) {
+        val = OMPI_VALUE_ARRAY_GET_ITEM(&array, uint64_t, i);
+        if (val != i) {
+            test_failure("Comparison failure");
+            fprintf(stderr, " Expected result: %lld\n", (long long) i);
+            fprintf(stderr, " Test result: %lld\n", (long long) val);
+            fflush(stderr);
+        }
+    }
 
     /* re-init array with new type */
     ompi_value_array_init(&array, sizeof(uint64_t));
@@ -61,8 +69,9 @@ int main(int argc, char **argv)
     
     /* initialize array */
     count = 0;
-    for(i=0; i < NUM_ITEMS; i++) 
+    for(i=0; i < NUM_ITEMS; i++) {
         OMPI_VALUE_ARRAY_SET_ITEM(&array, uint64_t, i, count++);
+    }
 
     /* grow it */
     for(i=0; i < NUM_ITEMS; i++) {
@@ -73,8 +82,9 @@ int main(int argc, char **argv)
     test_verify_int(count, ompi_value_array_get_size(&array));
 
     /* validate contents */
-    for(i=0; i < count; i++)
+    for(i=0; i < count; i++) {
         test_verify_int(i, OMPI_VALUE_ARRAY_GET_ITEM(&array, uint64_t, i));
+    }
     
     /* remove an item */
     ompi_value_array_remove_item(&array, NUM_ITEMS);
@@ -83,11 +93,13 @@ int main(int argc, char **argv)
     test_verify_int(count-1, ompi_value_array_get_size(&array));
 
     /* validate contents */
-    for(i=0; i < count-1; i++)
-        if(i >= NUM_ITEMS)
+    for(i=0; i < count-1; i++) {
+        if(i >= NUM_ITEMS) {
             test_verify_int(i+1, OMPI_VALUE_ARRAY_GET_ITEM(&array, uint64_t, i));
-        else
+        } else {
             test_verify_int(i, OMPI_VALUE_ARRAY_GET_ITEM(&array, uint64_t, i));
+        }
+    }
     
     OBJ_DESTRUCT(&array);
     return test_finalize();
