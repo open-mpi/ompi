@@ -8,6 +8,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define TEST_AND_REPORT(res, exp_res, str)  \
+    if( res == exp_res ) test_success(); \
+    else test_failure(str);
+
 void test_init(char *a);
 void test_success(void);
 void test_failure(char *a);
