@@ -207,7 +207,7 @@ int mca_ptl_mx_send(
     /* must update the offset after actual fragment size is determined 
      * before attempting to send the fragment
      */
-    sendreq->req_offset += size;
+    mca_pml_base_send_request_offset(sendreq, size);
 
     /* start the fragment */
     mx_return = mx_isend(
@@ -338,7 +338,7 @@ int mca_ptl_mx_send_continue(
     /* must update the offset after actual fragment size is determined 
      * before attempting to send the fragment
      */
-    sendreq->req_offset += size;
+    mca_pml_base_send_request_offset(sendreq, size);
 
     /* start the fragment */
     match.sval.uval = (uint32_t)sendreq;
