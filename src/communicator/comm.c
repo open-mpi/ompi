@@ -100,18 +100,21 @@ ompi_communicator_t * ompi_comm_set ( ompi_communicator_t* oldcomm,
     newcomm->c_cube_dim = ompi_cube_dim(newcomm->c_local_group->grp_proc_count);
 
     /* Set Topology, if required */
+    
     if ( NULL != topomodule ) {
         if (OMPI_COMM_IS_CART ( oldcomm ) )
             newcomm->c_flags |= OMPI_COMM_CART;
         if (OMPI_COMM_IS_GRAPH ( oldcomm ) ) 
             newcomm->c_flags |= OMPI_COMM_GRAPH;
         
-        /* set the topo-module */
+        /*set the topo-module */
     }
 
     /* Copy attributes and call according copy functions, 
        if required */
+    ompi_attr_hash_init(&newcomm->c_keyash);
     if ( attr != NULL ) {
+        ompi_attr_copy_all (COMM_ATTR, oldcomm, newcomm, attr, newcomm->c_keyhash);
     }
 
     /* Initialize the PML stuff in the newcomm  */
@@ -610,10 +613,9 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
 int ompi_comm_free ( ompi_communicator_t **comm )
 {
 
-#if 0
     /* Release attributes */
-    ompi_attr_delete_all ( COMM_ATTR, comm );
-#endif
+    ompi_attr_delete_all ( COMM_ATTR, comm, comm->c_keyhash );
+    OBJ_RELEASE(comm->c_keyhash);
 
     /* Release the communicator */
     OBJ_RELEASE ( comm );
