@@ -103,6 +103,7 @@ static int ompi_ifinit(void)
         ptr += (sizeof(ifr->ifr_name) + 
                MAX(sizeof(struct sockaddr),ifr->ifr_addr.sa_len));
 #else
+#if 0
         switch(ifr->ifr_addr.sa_family) {
         case AF_INET6:
             ptr += sizeof(ifr->ifr_name) + sizeof(struct sockaddr_in6);
@@ -112,6 +113,18 @@ static int ompi_ifinit(void)
             ptr += sizeof(ifr->ifr_name) + sizeof(struct sockaddr);
             break;
         }
+#else
+
+	/* Jeff/George/Graham fix.  According to LAM/MPI and FT-MPI
+	   and /usr/include/linux/if.h, you should really be advancing
+	   by sizeof(struct ifreq) -- sizeof(ifr->ifr_name) +
+	   sizeof(struct sockaddr) may be smaller than sizeof(struct
+	   ifreq).  More specifically, the second element of struct
+	   ifreq may be a union, of which struct sockaddr is only one
+	   element (and may not be the smallest). */
+
+	ptr += sizeof(struct ifreq);
+#endif
 #endif
         if(ifr->ifr_addr.sa_family != AF_INET)
             continue;
