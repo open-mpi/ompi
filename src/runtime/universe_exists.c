@@ -170,6 +170,8 @@ int ompi_rte_universe_exists()
 
 	/* set the my_universe field */
 	ompi_process_info.my_universe = strdup(ompi_universe_info.name);
+	ompi_process_info.ns_replica = ns_base_copy_process_name(&proc);
+	ompi_process_info.gpr_replica = ns_base_copy_process_name(&proc);
 
 	/* request ns_replica and gpr_replica info for this process
 	 * only request info required - check ns_found/gpr_found

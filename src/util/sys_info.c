@@ -12,6 +12,8 @@
 #include "ompi_config.h"
 
 #include "include/constants.h"
+#include "util/output.h"
+
 #include "util/sys_info.h"
 
 ompi_sys_info_t ompi_system_info = {
@@ -64,6 +66,8 @@ int ompi_sys_info(void)
         ompi_system_info.release = strdup(sys_info.release);
         ompi_system_info.version = strdup(sys_info.version);
         ompi_system_info.machine = strdup(sys_info.machine);
+
+	ompi_output(0, "sysname: %s", sys_info.sysname);
     }
 
     if (NULL != (path_name = getcwd(NULL, 0))) {

@@ -134,6 +134,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	goto error;
     }
 
+    ompi_output(0, "proc sessiondir(1): %s", ompi_process_info.proc_session_dir);
     /*
      *  Register my process info with my replica.
      */
@@ -142,12 +143,16 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 	goto error;
     }
 
+    ompi_output(0, "proc sessiondir(2): %s", ompi_process_info.proc_session_dir);
+
     /* finalize the rte startup */
     if (OMPI_SUCCESS != (ret = ompi_rte_init_finalstage(&allow_multi_user_threads,
 							 &have_hidden_threads))) {
         error = "mpi_init: failed in ompi_rte_init\n";
         goto error;
     }
+
+    ompi_output(0, "proc sessiondir(3): %s", ompi_process_info.proc_session_dir);
 
     /* Once we've joined the RTE, see if any MCA parameters were
        passed to the MPI level */
@@ -156,6 +161,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "mca_mpi_register_params() failed";
         goto error;
     }
+    ompi_output(0, "proc sessiondir(4): %s", ompi_process_info.proc_session_dir);
 
     /* initialize ompi procs */
     if (OMPI_SUCCESS != (ret = ompi_proc_init())) {
@@ -335,6 +341,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* All done */
+    ompi_output(0, "proc sessiondir(end): %s", ompi_process_info.proc_session_dir);
 
     ompi_mpi_initialized = true;
     ompi_mpi_finalized = false;

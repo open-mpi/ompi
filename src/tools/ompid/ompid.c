@@ -256,7 +256,7 @@ int main(int argc, char *argv[])
 
 
     /* register this node on the virtual machine */
-    /* 	ompi_vm_register(); */
+    ompi_vm_register();
 
     if (ompi_daemon_debug) {
 	ompi_output(0, "[%d,%d,%d] ompid: issuing callback", ompi_process_info.name->cellid,
@@ -357,6 +357,12 @@ static void ompi_daemon_recv(int status, ompi_process_name_t* sender,
     }
 
  RETURN_ERROR:
+    /* reissue the non-blocking receive */
+    ret = mca_oob_recv_packed_nb(MCA_OOB_NAME_ANY, MCA_OOB_TAG_DAEMON, 0, ompi_daemon_recv, NULL);
+    if(ret != OMPI_SUCCESS && ret != OMPI_ERR_NOT_IMPLEMENTED) {
+	ompi_output(0, "daemon callback not registered: error code %d", ret);
+	return;
+    }
 
     OMPI_THREAD_UNLOCK(&ompi_daemon_mutex);
     return;

@@ -304,6 +304,13 @@ extern "C" {
      */
     void ompi_rte_parse_environ(void);
 
+
+    /**
+     * Register a daemon on the virtual machine segment.
+     */
+    int ompi_vm_register(void);
+
+
 #ifdef __cplusplus
 }
 #endif

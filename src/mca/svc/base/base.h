@@ -1,6 +1,7 @@
 /*
  * $HEADER$
  */
+/** @file **/
 
 #ifndef MCA_SVC_BASE_H
 #define MCA_SVC_BASE_H
