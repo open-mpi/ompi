@@ -4,49 +4,72 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
-
-# We must traverse into this directory to install the proper header
-# files.  So only build the f77 bindings if we want to build them, and
-# only expect to find the f77 profiling library if we're building the
-# f77 bindings *and* we're compiling profiling separately.
-
-# If the user selected --disable-profiling, then we don't traverse
-# into the profile directory.
-
-if BUILD_MPI_F77
-f77_lib = libmpi_f77.la
-
-if COMPILE_PROFILING_SEPARATELY
-profile_lib = profile/libmpi_f77_profile.la
+#
+# LAM_PRPOFILING_DEFINES flag is enabled when we want our MPI_* symbols
+# to be replaced by PMPI_*. In other words, this flag decides 
+# whether "profile/defines.h" is included or not. "profile/defines.h"
+# replaces all MPI_* symbols with PMPI_* symbols. In this directory,
+# we need it to be 0
+#
+AM_CPPFLAGS		= -DLAM_PROFILE_LAYER=0
+#
+# The top directory always builds MPI_* bindings. The bottom directory
+# always builds PMPI_* bindings. The cases where the top directory
+# needs to be built are
+# 1. When profiling is disabled.
+# 2. When profiling is enabled but weak symbol support is absent.
+#
+if WANT_MPI_BINDINGS_LAYER
+mpi_lib = libmpi_f77_mpi.la
 else
-profile_lib =
+mpi_lib = 
 endif
 
-else
-f77_lib =
-profile_lib =
-endif
+noinst_LTLIBRARIES = libmpi_f77.la $(mpi_lib)
 
+#
+# The profile subdirectory always builds PMPI_* bindings. Hence, this
+# directory needs to be built whenever profiling is enabled
+#
+if WANT_PMPI_BINDINGS_LAYER
+	pmpi_lib = profile/libmpi_f77_pmpi.la
+else
+	pmpi_lib = 
+endif
+#
+# 
 SUBDIRS = profile
-
-noinst_LTLIBRARIES = $(f77_lib)
-
+#
+# 
 headers = \
 	bindings.h \
-	prototypes.h
+	prototypes_mpi.h
+#
+# libmpi_f77.la is the final library that will be built. This will try
+# to snarf in mpi_lib and pmpi_lib. So, the right things will be done
+# by default
+#
 
-libmpi_f77_la_SOURCES = \
-        alloc_mem_f.c \
-	comm_get_name_f.c \
-	comm_set_name_f.c \
-	init_f.c \
-	finalize_f.c \
-        free_mem_f.c
+libmpi_f77_la_SOURCES	= 
 
-libmpi_f77_la_LIBADD	= $(profile_lib)
+libmpi_f77_la_LIBADD	= \
+					$(mpi_lib) \
+					$(pmpi_lib)
 
+libmpi_f77_mpi_la_SOURCES = \
+        	alloc_mem_f.c 
+
+bogus_stuff = \
+			comm_get_name_f.c \
+			comm_set_name_f.c \
+			init_f.c \
+			finalize_f.c \
+        	free_mem_f.c
+#
+EXTRA_DIST = $(libmpi_f77_mpi_la_SOURCES)
+#
 # Conditionally install the header files
-
+#
 if WANT_INSTALL_HEADERS
 lamdir = $(includedir)/lam/mpi/f77
 lam_HEADERS = $(headers)
