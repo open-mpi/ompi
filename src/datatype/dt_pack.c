@@ -3,7 +3,7 @@
 #include "datatype.h"
 #include "datatype_internal.h"
 
-static int convertor_pack_general( convertor_t* pConvertor, struct iovec* out, unsigned int outCount )
+static int convertor_pack_general( lam_convertor_t* pConvertor, struct iovec* out, unsigned int outCount )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */
@@ -125,7 +125,7 @@ static int convertor_pack_general( convertor_t* pConvertor, struct iovec* out, u
    return 0;
 }
 
-int convertor_pack_homogeneous( convertor_t* pConv, struct iovec* iov, unsigned int out_size )
+int convertor_pack_homogeneous( lam_convertor_t* pConv, struct iovec* iov, unsigned int out_size )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */
@@ -375,7 +375,7 @@ int dt_unroll( dt_desc_t* pData, int count )
  *        1 if everything went fine and the data was completly converted
  *       -1 something wrong occurs.
  */
-int lam_convertor_pack( convertor_t* pConv, struct iovec* out, unsigned int out_size )
+int lam_convertor_pack( lam_convertor_t* pConv, struct iovec* out, unsigned int out_size )
 {
    dt_desc_t* pData = pConv->pDesc;
    int extent;
@@ -403,22 +403,35 @@ int lam_convertor_pack( convertor_t* pConv, struct iovec* out, unsigned int out_
    return lam_convertor_progress( pConv, out, out_size );
 }
 
-int lam_convertor_init_for_send( convertor_t* pConv, unsigned int flags,
+extern int local_sizes[DT_MAX_PREDEFINED];
+int lam_convertor_init_for_send( lam_convertor_t* pConv, unsigned int flags,
                                  dt_desc_t* dt, int count,
-                                 void* pUserBuf, int starting_point )
+                                 void* pUserBuf, int local_starting_point )
 {
    OBJ_RETAIN( dt );
-   pConv->pDesc = dt;
-   pConv->flags = CONVERTOR_SEND;
-   if( pConv->pStack != NULL ) free( pConv->pStack );
-   pConv->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * (dt->btypes[DT_LOOP] + 2) );
-   pConv->stack_pos = 0;
-   pConv->pStack[0].index = -1;         /* fake entry for the first step */
-   pConv->pStack[0].count = count;      /* fake entry for the first step */
-   pConv->pStack[0].disp  = 0;
-   /* first hre we should select which data representation will be used for
-    * this operation: normal one or the optimized version ? */
-   pConv->pStack[0].end_loop = dt->desc.used;
+   if( pConv->pDesc != dt ) {
+       pConv->pDesc = dt;
+       pConv->flags = CONVERTOR_SEND;
+       if( pConv->pStack != NULL ) free( pConv->pStack );
+       pConv->pStack = NULL;
+   }
+   if( pConv->pStack == NULL ) {
+       pConv->pStack = (dt_stack_t*)malloc(sizeof(dt_stack_t) * (dt->btypes[DT_LOOP] + 2) );
+       pConv->stack_pos = 0;  /* just to be sure */
+   }
+   if( local_starting_point == 0 ) {
+       pConv->stack_pos = 0;
+       pConv->pStack[0].index = -1;         /* fake entry for the first step */
+       pConv->pStack[0].count = count;      /* fake entry for the first step */
+       pConv->pStack[0].disp  = 0;
+       /* first hre we should select which data representation will be used for
+        * this operation: normal one or the optimized version ? */
+       pConv->pStack[0].end_loop = dt->desc.used;
+   } else {
+       if( pConv->bConverted != local_starting_point ) {
+           lam_create_stack_with_pos( pConv, local_starting_point, local_sizes );
+       } /* else we just continue from the previsious point */
+   }
    pConv->pBaseBuf = pUserBuf;
    pConv->available_space = count * (dt->ub - dt->lb);
    pConv->count = count;
@@ -435,9 +448,9 @@ int lam_convertor_init_for_send( convertor_t* pConv, unsigned int flags,
    return 0;
 }
 
-convertor_t* lam_convertor_create( int remote_arch, int mode )
+lam_convertor_t* lam_convertor_create( int remote_arch, int mode )
 {
-   convertor_t* pConv = (convertor_t*)calloc( 1, sizeof(convertor_t) );
+   lam_convertor_t* pConv = OBJ_NEW(lam_convertor_t);
 
    pConv->pStack = NULL;
    pConv->remoteArch = remote_arch;
@@ -445,16 +458,47 @@ convertor_t* lam_convertor_create( int remote_arch, int mode )
    return pConv;
 }
 
+static int lam_convertor_destroy( lam_convertor_t* pConv )
+{
+   if( pConv == NULL ) return 0;
+   if( pConv->pStack != NULL ) free( pConv->pStack );
+   if( pConv->pDesc != NULL ) OBJ_RELEASE( pConv->pDesc );
+   if( pConv->freebuf != NULL ) free( pConv->freebuf );
+   return 0;
+}
+
+OBJ_CLASS_INSTANCE(lam_convertor_t, lam_object_t, NULL, lam_convertor_destroy );
+
+inline int lam_convertor_copy( lam_convertor_t* pSrcConv, lam_convertor_t* pDestConv )
+{
+   MEMCPY( pDestConv, pSrcConv, sizeof(lam_convertor_t) );
+   pDestConv->pStack     = NULL;
+   pDestConv->pDesc      = NULL;
+   pDestConv->count      = 0;
+   pDestConv->converted  = 0;
+   pDestConv->bConverted = 0;
+   pDestConv->freebuf    = NULL;
+   return LAM_SUCCESS;
+}
+
+lam_convertor_t* lam_convertor_get_copy( lam_convertor_t* pConvertor )
+{
+   lam_convertor_t* pDestConv = OBJ_NEW(lam_convertor_t);
+   (void)lam_convertor_copy( pConvertor, pDestConv );
+   return pDestConv;
+}
+
 /* Actually we suppose that we can only do receiver side conversion */
-int lam_convertor_get_packed_size( convertor_t* pConv, unsigned int* pSize )
+int lam_convertor_get_packed_size( lam_convertor_t* pConv, unsigned int* pSize )
 {
    if( lam_ddt_type_size( pConv->pDesc, pSize ) != 0 )
       return -1;
+   /* actually *pSize contain the size of one instance of the data */
    *pSize = (*pSize) * pConv->count;
    return 0;
 }
 
-int lam_convertor_get_unpacked_size( convertor_t* pConv, unsigned int* pSize )
+int lam_convertor_get_unpacked_size( lam_convertor_t* pConv, unsigned int* pSize )
 {
    int i;
    dt_desc_t* pData = pConv->pDesc;

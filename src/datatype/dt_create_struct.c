@@ -2,12 +2,12 @@
 
 #include "datatype.h"
 
-int lam_ddt_create_struct( size_t count, size_t* pBlockLength, long* pDisp,
+int lam_ddt_create_struct( int count, int* pBlockLength, long* pDisp,
                            dt_desc_t** pTypes, dt_desc_t** newType )
 {
    int i;
    long disp, endto, lastExtent, lastDisp;
-   size_t lastBlock;
+   int lastBlock;
    dt_desc_t *pdt, *lastType;
    /* if we compute the total number of elements before we can
     * avoid increasing the size of the desc array often.

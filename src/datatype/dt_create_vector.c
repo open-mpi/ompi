@@ -8,7 +8,7 @@
  *
  */
 
-int lam_ddt_create_vector( size_t count, int bLength, long stride,
+int lam_ddt_create_vector( int count, int bLength, long stride,
                            dt_desc_t* oldType, dt_desc_t** newType )
 {
    long extent = oldType->ub - oldType->lb;
@@ -39,7 +39,7 @@ int lam_ddt_create_vector( size_t count, int bLength, long stride,
    return 0;
 }
 
-int lam_ddt_create_hvector( size_t count, int bLength, long stride,
+int lam_ddt_create_hvector( int count, int bLength, long stride,
                             dt_desc_t* oldType, dt_desc_t** newType )
 {
    long extent = oldType->ub - oldType->lb;

@@ -1,4 +1,6 @@
-#include "ddt.h"
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+
+#include "datatype.h"
 #include <time.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -16,9 +18,9 @@ int mpich_typeub( void )
    int blens[2];
    dt_desc_t *type1, *type2, *type3, *types[2];
 
-   dt_create_vector( 2, 1, 4, &(basicDatatypes[DT_INT]), &type1 );
-   dt_commit( &type1 );
-   dt_get_extent( type1, &lb, &extent );
+   lam_ddt_create_vector( 2, 1, 4, &(basicDatatypes[DT_INT]), &type1 );
+   lam_ddt_commit( &type1 );
+   lam_ddt_get_extent( type1, &lb, &extent );
    extent1 = 5 * sizeof(int);
    if (extent != extent1) {
       printf("EXTENT 1 %ld != %ld\n",extent,extent1);
@@ -36,9 +38,9 @@ int mpich_typeub( void )
                                                                                                                                          
    /*    using MPI_UB and Type_struct, monkey with the extent, making it 16
     */
-   dt_create_struct( 2, blens, displ, types, &type2 );
-   dt_commit( &type2 );
-   dt_get_extent( type2, &lb, &extent );
+   lam_ddt_create_struct( 2, blens, displ, types, &type2 );
+   lam_ddt_commit( &type2 );
+   lam_ddt_get_extent( type2, &lb, &extent );
    if (extent != extent2) {
       printf("EXTENT 2 %ld != %ld\n",extent,extent2);
       errs++;
@@ -54,19 +56,22 @@ int mpich_typeub( void )
    types[1]=&(basicDatatypes[DT_UB]);
    extent3 = extent2;
                                                                                                                                          
-   dt_create_struct( 2, blens, displ, types, &type3 );
-   dt_commit( &type3 );
+   lam_ddt_create_struct( 2, blens, displ, types, &type3 );
+   lam_ddt_commit( &type3 );
                                                                                                                                          
-   dt_get_extent( type3, &lb, &extent );
+   lam_ddt_get_extent( type3, &lb, &extent );
    if (extent != extent3) {
       printf("EXTENT 3 %ld != %ld\n",extent,extent3);
       errs++;
       printf("extent(type3)=%ld\n",(long)extent);
    }
                                                                                                                                          
-   dt_free( &type1 );
-   dt_free( &type2 );
-   dt_free( &type3 );
+   OBJ_RELEASE( type1 );
+   assert( type1 == NULL );
+   OBJ_RELEASE( type2 );
+   assert( type2 == NULL );
+   OBJ_RELEASE( type3 );
+   assert( type3 == NULL );
    return errs;
 }
 
@@ -86,11 +91,11 @@ int mpich_typeub2( void )
    types[1] = &(basicDatatypes[DT_INT]);
    types[2] = &(basicDatatypes[DT_UB]);
                                                                                                                          
-   dt_create_struct(3,blocklen,disp, types,&dt1);
-   dt_commit(&dt1);
+   lam_ddt_create_struct(3,blocklen,disp, types,&dt1);
+   lam_ddt_commit(&dt1);
                                                                                                                          
-   dt_type_lb(dt1, &lb);          dt_type_ub(dt1, &ub);
-   dt_type_extent(dt1,&ex1);      dt_type_size(dt1,&sz1);
+   lam_ddt_type_lb(dt1, &lb);          lam_ddt_type_ub(dt1, &ub);
+   lam_ddt_type_extent(dt1,&ex1);      lam_ddt_type_size(dt1,&sz1);
                                                                                                                          
    /* Values should be lb = -3, ub = 6 extent 9; size depends on implementation */
    if (lb != -3 || ub != 6 || ex1 != 9) {
@@ -100,9 +105,9 @@ int mpich_typeub2( void )
    else
       printf("Example 3.26 type1 correct\n" );
                                                                                                                          
-   dt_create_contiguous(2,dt1,&dt2);
-   dt_type_lb(dt2, &lb);          dt_type_ub(dt2, &ub);
-   dt_type_extent(dt2,&ex2);      dt_type_size(dt2,&sz2);
+   lam_ddt_create_contiguous(2,dt1,&dt2);
+   lam_ddt_type_lb(dt2, &lb);          lam_ddt_type_ub(dt2, &ub);
+   lam_ddt_type_extent(dt2,&ex2);      lam_ddt_type_size(dt2,&sz2);
    /* Values should be lb = -3, ub = 15, extent = 18, size depends on implementation */
    if (lb != -3 || ub != 15 || ex2 != 18) {
       printf("Example 3.26 type2 lb %d ub %d extent %d size %d\n", (int)-3, (int)15, (int)18, 8);
@@ -112,9 +117,9 @@ int mpich_typeub2( void )
    else
       printf("Example 3.26 type1 correct\n" );
                                                                                                                          
-   dt_create_contiguous(2,dt1,&dt2);
-   dt_type_lb(dt2, &lb);          dt_type_ub(dt2, &ub);
-   dt_type_extent(dt2,&ex2);      dt_type_size(dt2,&sz2);
+   lam_ddt_create_contiguous(2,dt1,&dt2);
+   lam_ddt_type_lb(dt2, &lb);          lam_ddt_type_ub(dt2, &ub);
+   lam_ddt_type_extent(dt2,&ex2);      lam_ddt_type_size(dt2,&sz2);
    /* Values should be lb = -3, ub = 15, extent = 18, size depends on implementation */
    if (lb != -3 || ub != 15 || ex2 != 18) {
       printf("Example 3.26 type2 lb %d ub %d extent %d size %d\n", (int)-3, (int)15, (int)18, 8);
@@ -128,11 +133,11 @@ int mpich_typeub2( void )
    blocklen[0]=1;              blocklen[1]=1;
    disp[0]=0;                  disp[1]=ex1;
                                                                                                                          
-   dt_create_struct(2, blocklen, disp, types, &dt3);
-   dt_commit(&dt3);
+   lam_ddt_create_struct(2, blocklen, disp, types, &dt3);
+   lam_ddt_commit(&dt3);
                                                                                                                          
-   dt_type_lb(dt3, &lb);          dt_type_ub(dt3, &ub);
-   dt_type_extent(dt3,&ex3);      dt_type_size(dt3,&sz3);
+   lam_ddt_type_lb(dt3, &lb);          lam_ddt_type_ub(dt3, &ub);
+   lam_ddt_type_extent(dt3,&ex3);      lam_ddt_type_size(dt3,&sz3);
    /* Another way to express type2 */
    if (lb != -3 || ub != 15 || ex3 != 18) {
       printf("type3 lb %d ub %d extent %d size %d\n", (int)-3, (int)15, (int)18, 8);
@@ -142,9 +147,12 @@ int mpich_typeub2( void )
    else
       printf( "type3 correct\n" );
                                                                                                                          
-   dt_free( &dt1 );
-   dt_free( &dt2 );
-   dt_free( &dt3 );
+   OBJ_RELEASE( dt1 );
+   assert( dt1 == NULL );
+   OBJ_RELEASE( dt2 );
+   assert( dt2 == NULL );
+   OBJ_RELEASE( dt3 );
+   assert( dt3 == NULL );
    return err;
 }
 
@@ -166,8 +174,8 @@ int mpich_typeub3( void )
    types[2] = &(basicDatatypes[DT_UB]);
    
    /* Generate samples for contiguous, hindexed, hvector, indexed, and vector (struct and contiguous tested in typeub2) */                                                                                                                         
-   dt_create_struct(3,blocklen,disp, types,&dt1);
-   dt_commit(&dt1);
+   lam_ddt_create_struct(3,blocklen,disp, types,&dt1);
+   lam_ddt_commit(&dt1);
 
 /* This type is the same as in typeub2, and is tested there */
                                                                                                                          
@@ -176,11 +184,11 @@ int mpich_typeub3( void )
    disp[0]=-4;                 disp[1]=7;
    idisp[0]=-4;                idisp[1]=7;
                                                                                                                          
-   dt_create_hindexed( 2, blocklen, disp, dt1, &dt2 );
-   dt_commit( &dt2 );
+   lam_ddt_create_hindexed( 2, blocklen, disp, dt1, &dt2 );
+   lam_ddt_commit( &dt2 );
                                                                                                                          
-   dt_type_lb( dt2, &lb );       dt_type_ub( dt2, &ub );
-   dt_type_extent( dt2, &ex );   dt_type_size( dt2, &sz );
+   lam_ddt_type_lb( dt2, &lb );       lam_ddt_type_ub( dt2, &ub );
+   lam_ddt_type_extent( dt2, &ex );   lam_ddt_type_size( dt2, &sz );
                                                                                                                          
    if (lb != -7 || ub != 13 || ex != 20) {
       printf("hindexed lb %d ub %d extent %d size %d\n", (int)-7, (int)13, (int)20, sz);
@@ -190,11 +198,11 @@ int mpich_typeub3( void )
    else
       printf( "hindexed ok\n" );
 
-   dt_create_indexed( 2, blocklen, idisp, dt1, &dt3 );
-   dt_commit( &dt3 );
+   lam_ddt_create_indexed( 2, blocklen, idisp, dt1, &dt3 );
+   lam_ddt_commit( &dt3 );
                                                                                                                          
-   dt_type_lb( dt3, &lb );       dt_type_ub( dt3, &ub );
-   dt_type_extent( dt3, &ex );   dt_type_size( dt3, &sz );
+   lam_ddt_type_lb( dt3, &lb );       lam_ddt_type_ub( dt3, &ub );
+   lam_ddt_type_extent( dt3, &ex );   lam_ddt_type_size( dt3, &sz );
                                                                                                                          
    if (lb != -39 || ub != 69 || ex != 108) {
       printf("indexed lb %d ub %d extent %d size %d\n", (int)-39, (int)69, (int)108, sz);
@@ -204,11 +212,11 @@ int mpich_typeub3( void )
    else
       printf( "indexed ok\n" );
 
-   dt_create_hvector( 2, 1, 14, dt1, &dt4 );
-   dt_commit( &dt4 );
+   lam_ddt_create_hvector( 2, 1, 14, dt1, &dt4 );
+   lam_ddt_commit( &dt4 );
                                                                                                                          
-   dt_type_lb( dt4, &lb );       dt_type_ub( dt4, &ub );
-   dt_type_extent( dt4, &ex );   dt_type_size( dt4, &sz );
+   lam_ddt_type_lb( dt4, &lb );       lam_ddt_type_ub( dt4, &ub );
+   lam_ddt_type_extent( dt4, &ex );   lam_ddt_type_size( dt4, &sz );
                                                                                                                          
    if (lb != -3 || ub != 20 || ex != 23) {
       printf("hvector lb %d ub %d extent %d size %d\n", (int)-3, (int)20, (int)23, sz);
@@ -218,11 +226,11 @@ int mpich_typeub3( void )
    else
       printf( "hvector ok\n" );
 
-   dt_create_vector( 2, 1, 14, dt1, &dt5 );
-   dt_commit( &dt5 );
+   lam_ddt_create_vector( 2, 1, 14, dt1, &dt5 );
+   lam_ddt_commit( &dt5 );
                                                                                                                          
-   dt_type_lb( dt5, &lb );       dt_type_ub( dt5, &ub );
-   dt_type_extent( dt5, &ex );   dt_type_size( dt5, &sz );
+   lam_ddt_type_lb( dt5, &lb );       lam_ddt_type_ub( dt5, &ub );
+   lam_ddt_type_extent( dt5, &ex );   lam_ddt_type_size( dt5, &sz );
                                                                                                                          
                                                                                                                          
    if (lb != -3 || ub != 132 || ex != 135) {
@@ -233,11 +241,11 @@ int mpich_typeub3( void )
    else
       printf( "vector ok\n" );
 
-   dt_free( &dt1 );
-   dt_free( &dt2 );
-   dt_free( &dt3 );
-   dt_free( &dt4 );
-   dt_free( &dt5 );
+   OBJ_RELEASE( dt1 ); assert( dt1 == NULL );
+   OBJ_RELEASE( dt2 ); assert( dt2 == NULL );
+   OBJ_RELEASE( dt3 ); assert( dt3 == NULL );
+   OBJ_RELEASE( dt4 ); assert( dt4 == NULL );
+   OBJ_RELEASE( dt5 ); assert( dt5 == NULL );
    return err;
 }
 
@@ -303,7 +311,7 @@ dt_desc_t* upper_matrix( size_t mat_size )
       blocklen[i] = mat_size - i;
    }
 
-   dt_create_indexed( mat_size, blocklen, disp, &(basicDatatypes[DT_DOUBLE]),
+   lam_ddt_create_indexed( mat_size, blocklen, disp, &(basicDatatypes[DT_DOUBLE]),
                       &upper );
    free( disp );
    free( blocklen );
@@ -324,7 +332,7 @@ dt_desc_t* lower_matrix( size_t mat_size )
       blocklen[i] = i;
    }
 
-   dt_create_indexed( mat_size, blocklen, disp, &(basicDatatypes[DT_DOUBLE]),
+   lam_ddt_create_indexed( mat_size, blocklen, disp, &(basicDatatypes[DT_DOUBLE]),
                       &upper );
    free( disp );
    free( blocklen );
@@ -337,7 +345,7 @@ int test_upper( size_t length )
 {
    double *mat1, *mat2, *inbuf;
    dt_desc_t *pdt, *pdt1;
-   convertor_t * pConv;
+   lam_convertor_t * pConv;
    char *ptr;
    int i, j, split_chunk, total_length, rc;
    struct iovec a;
@@ -363,12 +371,12 @@ int test_upper( size_t length )
          inbuf++;
       }
    inbuf = (double*)ptr;
-   pConv = convertor_create( 0, 0 );
-   convertor_init_for_recv( pConv, 0, pdt, 1, mat2 );
+   pConv = lam_convertor_create( 0, 0 );
+   lam_convertor_init_for_recv( pConv, 0, pdt, 1, mat2, 0 );
 
 /* test the automatic destruction pf the data */
-   dt_destroy( &pdt );
-   dt_destroy( &pdt1 );
+   OBJ_RELEASE( pdt );  assert( pdt == NULL );
+   OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
 
    GET_TIME( start );
    split_chunk = (length + 1) * sizeof(double);
@@ -377,7 +385,7 @@ int test_upper( size_t length )
       if( i < split_chunk ) split_chunk = i;
       a.iov_base = ptr;
       a.iov_len = split_chunk;
-      convertor_unpack( pConv, &a, 1 );
+      lam_convertor_unpack( pConv, &a, 1 );
       ptr += split_chunk;
       i -= split_chunk;
    }
@@ -404,10 +412,10 @@ dt_desc_t* test_matrix_borders( unsigned int size, unsigned int width )
    disp[1] = (size - width) * sizeof(double);
    blocklen[1] = width;
 
-   dt_create_indexed( 2, blocklen, disp, &(basicDatatypes[DT_DOUBLE]),
+   lam_ddt_create_indexed( 2, blocklen, disp, &(basicDatatypes[DT_DOUBLE]),
                       &pdt_line );
-   dt_create_contiguous( size, pdt_line, &pdt );
-   dt_destroy( &pdt_line );
+   lam_ddt_create_contiguous( size, pdt_line, &pdt );
+   OBJ_RELEASE( pdt_line ); assert( pdt_line == NULL );
    return pdt;
 }
 
@@ -416,18 +424,18 @@ dt_desc_t* test_contiguous( void )
    dt_desc_t *pdt, *pdt1, *pdt2;
 
    printf( "test contiguous (alignement)\n" );
-   pdt1 = dt_create( -1 );
-   dt_add( pdt1, &(basicDatatypes[DT_DOUBLE]), 1, 0, -1 );
-   dt_dump( pdt1 );
-   dt_add( pdt1, &(basicDatatypes[DT_CHAR]), 1, 8, -1 );
-   dt_dump( pdt1 );
-   dt_create_contiguous( 4, pdt1, &pdt2 );
-   dt_destroy( &pdt1 );
-   dt_dump( pdt2 );
-   dt_create_contiguous( 2, pdt2, &pdt );
-   dt_destroy( &pdt2 );
-   dt_dump( pdt );
-   dt_dump_complete( pdt );
+   pdt1 = lam_ddt_create( -1 );
+   lam_ddt_add( pdt1, &(basicDatatypes[DT_DOUBLE]), 1, 0, -1 );
+   lam_ddt_dump( pdt1 );
+   lam_ddt_add( pdt1, &(basicDatatypes[DT_CHAR]), 1, 8, -1 );
+   lam_ddt_dump( pdt1 );
+   lam_ddt_create_contiguous( 4, pdt1, &pdt2 );
+   OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
+   lam_ddt_dump( pdt2 );
+   lam_ddt_create_contiguous( 2, pdt2, &pdt );
+   OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
+   lam_ddt_dump( pdt );
+   lam_ddt_dump_complete( pdt );
    return pdt;
 }
 
@@ -441,16 +449,16 @@ dt_desc_t* test_struct( void )
    dt_desc_t* pdt, *pdt1;
    
    printf( "test struct\n" );
-   pdt1 = dt_create( -1 );
-   dt_add( pdt1, &(basicDatatypes[DT_DOUBLE]), 1, 0, -1 );
-   dt_add( pdt1, &(basicDatatypes[DT_CHAR]), 1, 8, -1 );
-   dt_dump_complete( pdt1 );
+   pdt1 = lam_ddt_create( -1 );
+   lam_ddt_add( pdt1, &(basicDatatypes[DT_DOUBLE]), 1, 0, -1 );
+   lam_ddt_add( pdt1, &(basicDatatypes[DT_CHAR]), 1, 8, -1 );
+   lam_ddt_dump_complete( pdt1 );
 
    types[1] = pdt1;
 
-   dt_create_struct( 3, lengths, disp, types, &pdt );
-   dt_destroy( &pdt1 );
-   dt_dump_complete( pdt );
+   lam_ddt_create_struct( 3, lengths, disp, types, &pdt );
+   OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
+   lam_ddt_dump_complete( pdt );
    return pdt;
 }
 
@@ -480,13 +488,13 @@ dt_desc_t* create_strange_dt( void )
 
    dispi[0] = (int)((char*)&(v[0].i1) - (char*)&(v[0]));  /* 0 */
    dispi[1] = (int)(((char*)(&(v[0].i2)) - (char*)&(v[0])) / sizeof(int));  /* 2 */
-   dt_create_indexed_block( 2, 1, dispi, &(basicDatatypes[DT_INT]), &pdtTemp );
+   lam_ddt_create_indexed_block( 2, 1, dispi, &(basicDatatypes[DT_INT]), &pdtTemp );
 #ifdef USE_RESIZED
    /* optional */
    displ[0] = 0;
    displ[1] = (char*)&(v[1]) - (char*)&(v[0]);
-   dt_create_resized( pdtTemp, displ[0], displ[1], &pdt1 );
-   dt_destroy( &pdtTemp );
+   lam_ddt_create_resized( pdtTemp, displ[0], displ[1], &pdt1 );
+   OBJ_RELEASE( pdtTemp ); assert( pdtTemp == NULL );
 #else
    pdt1 = pdtTemp;
 #endif  /* USE_RESIZED */
@@ -496,26 +504,24 @@ dt_desc_t* create_strange_dt( void )
    displ[0] = 0;
    displ[1] = (long)((char*)&(t[0].v[0]) - (char*)&(t[0]));
    displ[2] = (long)((char*)&(t[0].last) - (char*)&(t[0]));
-   dt_create_struct( 3, pBlock, displ, types, &pdtTemp );
+   lam_ddt_create_struct( 3, pBlock, displ, types, &pdtTemp );
 #ifdef USE_RESIZED
    /* optional */
    displ[1] = (char*)&(t[1]) - (char*)&(t[0]);
-   dt_create_resized( pdtTemp, displ[0], displ[1], &pdt2 );
-   dt_destroy( &pdtTemp );
+   lam_ddt_create_resized( pdtTemp, displ[0], displ[1], &pdt2 );
+   OBJ_RELEASE( pdtTemp ); assert( pdtTemp == NULL );
 #else
    pdt2 = pdtTemp;
 #endif  /* USE_RESIZED */
 
-   dt_create_contiguous( SSTRANGE_CNT, pdt2, &pdt );
+   lam_ddt_create_contiguous( SSTRANGE_CNT, pdt2, &pdt );
 
-   dt_destroy( &pdt1 );
-   dt_destroy( &pdt2 );
-   dt_dump( pdt );
+   OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
+   OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
+   lam_ddt_dump( pdt );
    {
-      dt_elem_desc_t* pElemDesc;
-      dt_optimize_short( pdt, 1, &pElemDesc );
-      
-      free( pElemDesc );
+      dt_type_desc_t pElemDesc;
+      lam_ddt_optimize_short( pdt, 1, &pElemDesc );
    }
    return pdt;
 }
@@ -524,14 +530,14 @@ int local_copy_ddt_count( dt_desc_t* pdt, int count )
 {
    long extent;
    void *pdst, *psrc;
-   dt_type_extent( pdt, &extent );
+   lam_ddt_type_extent( pdt, &extent );
 
    pdst = malloc( extent * count );
    psrc = malloc( extent * count );
 
    pdt = create_strange_dt();
 
-   //dt_copy_content_same_dt( pdt, count, pdst, psrc );
+   lam_ddt_copy_content_same_ddt( pdt, count, pdst, psrc );
 
    free(pdst );
    free( psrc );
@@ -542,15 +548,17 @@ int main( int argc, char* argv[] )
    dt_desc_t *pdt, *pdt1, *pdt2, *pdt3;
    int rc, length = 500;
 
+   lam_ddt_init();
+
    pdt = create_strange_dt();
    return 0;
    /*
      local_copy_ddt_count(pdt, 10);
-     dt_destroy( &pdt );
+     OBJ_RELEASE( pdt ); assert( pdt == NULL );
    */
    pdt = upper_matrix(100);
    local_copy_ddt_count(pdt, 1);
-   dt_destroy( &pdt );
+   OBJ_RELEASE( pdt ); assert( pdt == NULL );
    return 0;
 
    return 0;
@@ -566,38 +574,38 @@ int main( int argc, char* argv[] )
       printf( "decode [NOT PASSED]\n" );
 
    pdt = test_matrix_borders( length, 100 );
-   dt_dump( pdt );
-   dt_free( &pdt );
+   lam_ddt_dump( pdt );
+   OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
    printf( ">>--------------------------------------------<<\n" );
    pdt = test_contiguous();
-   dt_destroy( &pdt );
+   OBJ_RELEASE( pdt ); assert( pdt == NULL );
    printf( ">>--------------------------------------------<<\n" );
    pdt = test_struct();
-   dt_destroy( &pdt );
+   OBJ_RELEASE( pdt ); assert( pdt == NULL );
    printf( ">>--------------------------------------------<<\n" );
 
-   pdt1 = dt_create( -1 );
-   pdt2 = dt_create( -1 );
-   pdt3 = dt_create( -1 );
-   dt_add( pdt3, &(basicDatatypes[DT_INT]), 10, 0, -1 );
-   dt_add( pdt3, &(basicDatatypes[DT_FLOAT]), 5, 10 * sizeof(int), -1 );
+   pdt1 = lam_ddt_create( -1 );
+   pdt2 = lam_ddt_create( -1 );
+   pdt3 = lam_ddt_create( -1 );
+   lam_ddt_add( pdt3, &(basicDatatypes[DT_INT]), 10, 0, -1 );
+   lam_ddt_add( pdt3, &(basicDatatypes[DT_FLOAT]), 5, 10 * sizeof(int), -1 );
 
-   dt_add( pdt2, &(basicDatatypes[DT_INT]), 1, 0, -1 );
-   dt_add( pdt2, pdt3, 3, sizeof(int) * 1, -1 );
+   lam_ddt_add( pdt2, &(basicDatatypes[DT_INT]), 1, 0, -1 );
+   lam_ddt_add( pdt2, pdt3, 3, sizeof(int) * 1, -1 );
 
-   dt_add( pdt1, &(basicDatatypes[DT_LONG_LONG]), 5, 0, -1 );
-   dt_add( pdt1, &(basicDatatypes[DT_LONG_DOUBLE]), 2, sizeof(long long) * 5, -1 );
+   lam_ddt_add( pdt1, &(basicDatatypes[DT_LONG_LONG]), 5, 0, -1 );
+   lam_ddt_add( pdt1, &(basicDatatypes[DT_LONG_DOUBLE]), 2, sizeof(long long) * 5, -1 );
 
    printf( ">>--------------------------------------------<<\n" );
-   dt_dump( pdt1 );
+   lam_ddt_dump( pdt1 );
    printf( ">>--------------------------------------------<<\n" );
-   dt_dump( pdt2 );
+   lam_ddt_dump( pdt2 );
    printf( ">>--------------------------------------------<<\n" );
-   dt_dump( pdt3 );
+   lam_ddt_dump( pdt3 );
 
-   dt_destroy( &pdt1 );
-   dt_destroy( &pdt2 );
-   dt_destroy( &pdt3 );
+   OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
+   OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
+   OBJ_RELEASE( pdt3 ); assert( pdt3 == NULL );
    return 0;
 }
