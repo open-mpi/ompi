@@ -46,7 +46,14 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
            information of the remote process. Therefore, we have to
            exchange that.
         */
-        rport = ompi_comm_get_rport (port,send_first,group->grp_proc_pointers[rank], tag);
+	if ( OMPI_COMM_JOIN_TAG != tag ) {
+	    rport = ompi_comm_get_rport (port,send_first,
+					 group->grp_proc_pointers[rank], tag);
+	}
+	else {
+	    rport = port;
+	}
+	    
 
         /* Exchange number of processes and msg length on both sides */
 	ompi_buffer_init (&nbuf, size*sizeof(ompi_process_name_t));
