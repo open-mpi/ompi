@@ -2,7 +2,7 @@
  * $HEADER$
  */
 #include "lam/atomic.h"
-#include "lam/lfc/hash_table.h"
+#include "lam/lfc/lam_hash_table.h"
 #include "mca/lam/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
