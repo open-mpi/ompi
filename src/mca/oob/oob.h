@@ -228,7 +228,7 @@ extern "C" {
 #endif
     int mca_oob_base_open(void);
     int mca_oob_base_init(bool *allow_multi_user_threads, bool *have_hidden_threads);
-    int mca_oob_base_register(void);
+    int mca_oob_base_module_init(void);
     int mca_oob_base_close(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -138,10 +138,7 @@ mca_oob_cofs_recv_nb(
    mca_oob_callback_fn_t cbfunc, 
    void* cbdata)
 {
-   int status = mca_oob_cofs_recv(peer, iov, count, &tag, flags);
-   if(NULL != cbfunc)
-       cbfunc(status, peer, iov, count, tag, cbdata);
-   return status;
+   return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
 
