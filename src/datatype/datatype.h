@@ -100,11 +100,11 @@ dt_desc_t* ompi_ddt_create( int expectedSize );
 int ompi_ddt_commit( dt_desc_t** );
 int ompi_ddt_destroy( dt_desc_t** );
 static inline int ompi_ddt_is_committed( ompi_datatype_t* type ) 
-{ return (type->flags & DT_FLAG_COMMITED); }
+{ return ((type->flags & DT_FLAG_COMMITED) == DT_FLAG_COMMITED); }
 static inline int ompi_ddt_is_overlapped( ompi_datatype_t* type )
-{ return (type->flags & DT_FLAG_OVERLAP); }
+{ return ((type->flags & DT_FLAG_OVERLAP) == DT_FLAG_OVERLAP); }
 static inline int ompi_ddt_is_acceptable_for_one_sided( ompi_datatype_t* type )
-{ return (type->flags & DT_FLAG_ONE_SIDED); }
+{ return ((type->flags & DT_FLAG_ONE_SIDED) == DT_FLAG_ONE_SIDED); }
 void ompi_ddt_dump( dt_desc_t* pData );
 /* data creation functions */
 int ompi_ddt_duplicate( dt_desc_t* oldType, dt_desc_t** newType );
