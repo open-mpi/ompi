@@ -5,8 +5,14 @@
 
 /** @file
  *
- *  A bitmap implementation. The bits start off with 0, so this
- *  bitmap has bits numbered as bit 0, bit 1, bit 2 and so on
+ *  A bitmap implementation. The bits start off with 0, so this bitmap
+ *  has bits numbered as bit 0, bit 1, bit 2 and so on. This bitmap
+ *  has auto-expansion capabilities, that is once the size is set
+ *  during init, it can be automatically expanded by setting the bit
+ *  beyond the current size. But note, this is allowed just when the
+ *  bit is set -- so the valid functions are set_bit and
+ *  find_and_set_bit. Other functions like clear, if passed a bit
+ *  outside the initialized range will result in an error.
  */
 
 #ifndef LAM_BITMAP_H
@@ -19,15 +25,21 @@
 #include "lfc/lam_object.h"
 
 /* VPS: Just to compile right now, has to move later on */
+
 #define LAM_ERR_SYSRESOURCE -1
+#define LAM_INVALID_BIT -1
+#define LAM_ERR_ARG -2
 
 extern lam_class_t lam_bitmap_t_class;
 
 struct lam_bitmap_t {
     lam_object_t super; /**< Subclass of lam_object_t */
-    char *bitmap;       /**< The actual bitmap array of characters */
-    size_t size;        /**< The number of bits in the bitmap */
+    unsigned char *bitmap; /**< The actual bitmap array of characters */
     size_t array_size;  /**< The actual array size that maintains the bitmap */
+    size_t legal_numbits; /**< The number of bits which are legal (the
+			    actual bitmap may contain more bits, since
+			    it needs to be rounded to the nearest
+			    char  */
 };
 
 typedef struct lam_bitmap_t lam_bitmap_t;
@@ -100,23 +112,27 @@ int lam_bitmap_find_and_set_first_unset_bit(lam_bitmap_t *bm);
  * Clear all bits in the bitmap
  *
  * @param bitmap The input bitmap (IN)
+ * @return LAM error code if bm is NULL
  * 
  */
-void lam_bitmap_clear_all_bits(lam_bitmap_t *bm);
+int lam_bitmap_clear_all_bits(lam_bitmap_t *bm);
 
 
 /**
  * Set all bits in the bitmap
  * @param bitmap The input bitmap (IN)
+ * @return LAM error code if bm is NULL
  *
  */
-void lam_bitmap_set_all_bits(lam_bitmap_t *bm);
+int lam_bitmap_set_all_bits(lam_bitmap_t *bm);
 
 
 /**
- * Gives the current size (number of bits) in the bitmap
+ * Gives the current size (number of bits) in the bitmap. This is the
+ * legal (accessible) number of bits
  *
  * @param bitmap The input bitmap (IN)
+ * @return LAM error code if bm is NULL
  *
  */
 size_t lam_bitmap_size (lam_bitmap_t *bm);
