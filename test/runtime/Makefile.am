@@ -20,21 +20,10 @@ AM_CPPFLAGS = \
             -I$(top_srcdir)/test/support
 
 check_PROGRAMS = \
-	sigchld \
-	parse_context
+	sigchld
 
 TESTS = \
 	$(check_PROGRAMS)
-
-parse_context_SOURCES = \
-	parse_context.c
-parse_context_LDADD = \
-	$(top_builddir)/src/libmpi.la \
-	$(top_builddir)/test/support/libsupport.a
-
-parse_context_LDFLAGS = $(LIBMPI_EXTRA_LDFLAGS)
-parse_context_DEPENDENCIES = $(parse_context_LDADD)
-
 
 sigchld_SOURCES = \
 	sigchld.c
