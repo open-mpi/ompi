@@ -100,6 +100,7 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
       request->req_base.req_persistent = persistent;                      \
       request->req_base.req_pml_complete = (persistent ? true : false);   \
       request->req_base.req_free_called = false;                          \
+      request->req_base.req_ompi.req_status._cancelled = 0;               \
                                                                           \
       /* initialize datatype convertor for this request */                \
       if(count > 0) {                                                     \

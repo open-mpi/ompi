@@ -50,5 +50,11 @@ int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
     if (status != MPI_STATUS_IGNORE) {
         status->_count = count;
     }
+    /* I dont have the MPI standard with me but I strongly suppose
+     * that the expected behaviour of this function should take in
+     * account the real size of the datatype. Otherwise this argument
+     * is completly useless ...
+     */
+    /* This function is not yet implemented */
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }

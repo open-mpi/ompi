@@ -20,6 +20,10 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
+#include "errhandler/errhandler.h"
+#include "attribute/attribute.h"
+#include "op/op.h"
+#include "request/grequest.h"
 
 /*
  * We now build all four fortran bindings and dont care too much about 

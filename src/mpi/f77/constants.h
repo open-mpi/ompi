@@ -37,7 +37,7 @@
  */
 
 #if defined(HAVE_LONG_DOUBLE) && OMPI_ALIGNMENT_LONG_DOUBLE == 16
-typedef struct { long double bogus; } ompi_fortran_common_t;
+typedef struct { long double bogus[1]; } ompi_fortran_common_t;
 #else
 typedef struct { double bogus[2]; } ompi_fortran_common_t;
 #endif
@@ -102,7 +102,6 @@ DECL(MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
  * Create macros to do the checking.  Only check for all 4 if we have
  * weak symbols.  Otherwise, just check for the one relevant symbol.
  */
-
 #if OMPI_HAVE_WEAK_SYMBOLS
 #define OMPI_IS_FORTRAN_BOTTOM(addr) \
   (addr == (void*) &MPI_FORTRAN_BOTTOM || \
@@ -192,5 +191,8 @@ DECL(MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
    (addr == (void*) &mpi_fortran_statuses_ignore)
 
 #endif /* weak / specific symbol type */
+
+/* Convert between Fortran and C MPI_BOTTOM */
+#define OMPI_ADDR(addr)  (OMPI_IS_FORTRAN_BOTTOM(addr) ? MPI_BOTTOM : (addr))
 
 #endif /* OMPI_F77_CONSTANTS_H */

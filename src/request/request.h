@@ -100,7 +100,7 @@ typedef struct ompi_request_t ompi_request_t;
 
 
 /**
- * Iniitialize a request.  This is a macro to avoid function call
+ * Initialize a request.  This is a macro to avoid function call
  * overhead, since this is typically invoked in the critical
  * performance path (since requests may be re-used, it is possible
  * that we will have to initialize a request multiple times).

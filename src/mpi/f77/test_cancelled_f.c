@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TEST_CANCELLED = mpi_test_cancelled_f
@@ -61,11 +61,19 @@ void mpi_test_cancelled_f(MPI_Fint *status, MPI_Fint *flag, MPI_Fint *ierr)
     MPI_Status c_status;
     OMPI_SINGLE_NAME_DECL(flag);
 
-    MPI_Status_f2c( status, &c_status );
+    /* This seems silly, but someone will do it */
 
-    *ierr = OMPI_INT_2_FINT(MPI_Test_cancelled(&c_status, 
-					       OMPI_SINGLE_NAME_CONVERT(flag)
-					       ));
-    
-    OMPI_SINGLE_INT_2_FINT(flag);
+    if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
+        *flag = OMPI_INT_2_FINT(0);
+        *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
+    } else {
+        *ierr = MPI_Status_f2c( status, &c_status );
+
+        if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+            *ierr = OMPI_INT_2_FINT(MPI_Test_cancelled(&c_status, 
+                                                       OMPI_SINGLE_NAME_CONVERT(flag)));
+            
+            OMPI_SINGLE_INT_2_FINT(flag);
+        }
+    }
 }

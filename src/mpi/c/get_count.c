@@ -46,13 +46,11 @@ int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count)
    if( ompi_ddt_type_size( datatype, &size ) == MPI_SUCCESS ) {
       if( size == 0 ) {
          *count = 0;
-         return MPI_SUCCESS;
+      } else {
+         *count = status->_count / size;
+         if( ((*count) * size) != status->_count )
+            *count = MPI_UNDEFINED;
       }
-      
-      *count = status->_count / size;
-      if( ((*count) * size) == status->_count )
-         return MPI_SUCCESS;
-      *count = MPI_UNDEFINED;
    }
-   return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+   return MPI_SUCCESS;
 }

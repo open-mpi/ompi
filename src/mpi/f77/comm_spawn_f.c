@@ -18,11 +18,10 @@
 
 #include <stdio.h>
 
-#include "mpi.h"
-#include "util/argv.h"
 #include "mpi/f77/bindings.h"
 #include "mpi/f77/constants.h"
 #include "mpi/f77/strings.h"
+#include "util/argv.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_SPAWN = mpi_comm_spawn_f

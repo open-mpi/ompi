@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"

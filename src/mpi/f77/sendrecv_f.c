@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_SENDRECV = mpi_sendrecv_f
@@ -62,18 +62,23 @@ void mpi_sendrecv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
 		    MPI_Fint *source, MPI_Fint *recvtag, MPI_Fint *comm,
 		    MPI_Fint *status, MPI_Fint *ierr)
 {
-    MPI_Comm c_comm;
-    MPI_Datatype c_sendtype = MPI_Type_f2c(*sendtype);
-    MPI_Datatype c_recvtype = MPI_Type_f2c(*recvtype);
+   MPI_Comm c_comm;
+   MPI_Datatype c_sendtype = MPI_Type_f2c(*sendtype);
+   MPI_Datatype c_recvtype = MPI_Type_f2c(*recvtype);
+   MPI_Status c_status;
+   
+   c_comm = MPI_Comm_f2c (*comm);
+   
+   *ierr = OMPI_INT_2_FINT(MPI_Sendrecv(OMPI_ADDR(sendbuf), OMPI_FINT_2_INT(*sendcount),
+                                        c_sendtype,
+                                        OMPI_FINT_2_INT(*dest),
+                                        OMPI_FINT_2_INT(*sendtag),
+                                        OMPI_ADDR(recvbuf), *recvcount,
+                                        c_recvtype, OMPI_FINT_2_INT(*source),
+                                        OMPI_FINT_2_INT(*recvtag),
+                                        c_comm, &c_status));
 
-    c_comm = MPI_Comm_f2c (*comm);
-
-    *ierr = OMPI_INT_2_FINT(MPI_Sendrecv(sendbuf, OMPI_FINT_2_INT(*sendcount),
-					 c_sendtype,
-					 OMPI_FINT_2_INT(*dest),
-					 OMPI_FINT_2_INT(*sendtag),
-					 recvbuf, *recvcount,
-					 c_recvtype, OMPI_FINT_2_INT(*source),
-					 OMPI_FINT_2_INT(*recvtag),
-					 c_comm, (MPI_Status*)status));
+   if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
+      MPI_Status_c2f(&c_status, status);
+   }
 }

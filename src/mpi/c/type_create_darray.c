@@ -32,6 +32,10 @@
 
 static const char FUNC_NAME[] = "MPI_Type_create_darray";
 
+static MPI_Datatype cyclic( int32_t darg, int32_t gsize, int32_t r, int32_t psize, MPI_Datatype oldtype )
+{
+    return &ompi_mpi_datatype_null;
+}
 
 int MPI_Type_create_darray(int size,
                            int rank,
@@ -45,9 +49,11 @@ int MPI_Type_create_darray(int size,
                            MPI_Datatype *newtype)
 
 {
-    int32_t i;
+    int32_t i, step, end_loop, *r;
+    MPI_Datatype temptype;
 
     if (MPI_PARAM_CHECK) {
+        int prod_psize = 1;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if( (rank < 0) || (size < 0) || (rank >= size) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
@@ -68,17 +74,50 @@ int MPI_Type_create_darray(int size,
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
             } else if( (gsize_array[i] < 1) || (darg_array[i] < 0) || (psize_array[i] < 0) ) {
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-            } else if( (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) && (MPI_DISTRIBUTE_BLOCK == distrib_array[i]) &&
+            } else if( (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) &&
+                       (MPI_DISTRIBUTE_BLOCK == distrib_array[i]) &&
                        ((darg_array[i] * psize_array[i]) < gsize_array[i]) ) {
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-            }
+            } else if( 1 > psize_array[i] )
+                return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
+            prod_psize *= psize_array[i];
         }
+        if( prod_psize != size )
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
     }
     if( ndims < 1 ) {
         *newtype = &ompi_mpi_datatype_null;
         return MPI_SUCCESS;
     }
 
+    r = (int*)malloc( ndims * sizeof(int) );
+    {
+        int t_rank = rank;
+        int t_size = size;
+        for( i = 0; i < ndims; i++ ) {
+            t_size = t_size / psize_array[i];
+            r[i] = t_rank / t_size;
+            t_rank = t_rank % t_size;
+        }
+    }
+    if( MPI_ORDER_FORTRAN == order ) {
+        i = 0;
+        step = 1;
+        end_loop = ndims;
+    } else {
+        i = ndims - 1;
+        step = -1;
+        end_loop = -1;
+    }
+
+    temptype = cyclic( darg_array[i], gsize_array[i], r[i], psize_array[i], oldtype );
+    for( i += step; i != end_loop; i += step ) {
+        *newtype = cyclic( darg_array[i], gsize_array[i], r[i], psize_array[i], temptype );
+        ompi_ddt_destroy( &temptype );
+        temptype = *newtype;
+    }
+
+    free( r );
     /* This function is not yet implemented */
 
     {

@@ -16,9 +16,7 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
-#include "attribute/attribute.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_WIN_DELETE_ATTR = mpi_win_delete_attr_f

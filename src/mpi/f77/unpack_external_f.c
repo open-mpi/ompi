@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_UNPACK_EXTERNAL = mpi_unpack_external_f
@@ -61,13 +61,13 @@ void mpi_unpack_external_f (char *datarep, char *inbuf, MPI_Fint *insize,
 			    MPI_Fint *outcount, MPI_Fint *datatype,
 			    MPI_Fint *ierr)
 {
-    MPI_Datatype c_type;
-    c_type = MPI_Type_f2c(*datatype);
+   MPI_Datatype c_type;
+   c_type = MPI_Type_f2c(*datatype);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Unpack_external(datarep, inbuf, 
-						(MPI_Aint)*insize, 
-						(MPI_Aint *)position,
-						outbuf, 
-						OMPI_FINT_2_INT(*outcount),
-						c_type));
+   *ierr = OMPI_INT_2_FINT(MPI_Unpack_external(datarep, inbuf, 
+                                               (MPI_Aint)*insize, 
+                                               (MPI_Aint *)position,
+                                               OMPI_ADDR(outbuf),
+                                               OMPI_FINT_2_INT(*outcount),
+                                               c_type));
 }

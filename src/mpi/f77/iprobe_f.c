@@ -16,7 +16,6 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
 #include "mpi/f77/constants.h"
 #include "errhandler/errhandler.h"
@@ -64,7 +63,6 @@ void mpi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
 		  MPI_Fint *flag, MPI_Fint *status, MPI_Fint *ierr)
 {
     MPI_Status *c_status;
-    int c_err;
     MPI_Comm c_comm;
 #if OMPI_SIZEOF_FORTRAN_INT != SIZEOF_INT
     MPI_Status c_status2;
@@ -73,19 +71,7 @@ void mpi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
 
     c_comm = MPI_Comm_f2c (*comm);
 
-    /* Only check for the bad value if we're checking MPI parameters */
-
-    if (MPI_PARAM_CHECK) {
-        if (OMPI_IS_FORTRAN_STATUSES_IGNORE(status)) {
-            c_err = OMPI_ERRHANDLER_INVOKE(c_comm, MPI_ERR_ARG,
-					   "MPI_RECV");
-	    *ierr = OMPI_INT_2_FINT(c_err);
-            return;
-        }
-    }
-
     /* See if we got MPI_STATUS_IGNORE */
-
     if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
         c_status = MPI_STATUS_IGNORE;
     } else {

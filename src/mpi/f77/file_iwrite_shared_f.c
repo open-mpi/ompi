@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_FILE_IWRITE_SHARED = mpi_file_iwrite_shared_f
@@ -60,17 +60,16 @@ void mpi_file_iwrite_shared_f(MPI_Fint *fh, char *buf, MPI_Fint *count,
 			      MPI_Fint *datatype, MPI_Fint *request,
 			      MPI_Fint *ierr)
 {
-    MPI_File c_fh = MPI_File_f2c(*fh);
-    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
-    MPI_Request c_request;
-
-    *ierr = OMPI_INT_2_FINT(MPI_File_iwrite_shared(c_fh, 
-						   buf, 
-						   OMPI_FINT_2_INT(*count),
-						   c_type, 
-						   &c_request));
-    if (MPI_SUCCESS == *ierr) {
-        *request = MPI_Request_c2f(c_request);
-    }
-
+   MPI_File c_fh = MPI_File_f2c(*fh);
+   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
+   MPI_Request c_request;
+   
+   *ierr = OMPI_INT_2_FINT(MPI_File_iwrite_shared(c_fh,
+                                                  OMPI_ADDR(buf),
+                                                  OMPI_FINT_2_INT(*count),
+                                                  c_type,
+                                                  &c_request));
+   if (MPI_SUCCESS == *ierr) {
+      *request = MPI_Request_c2f(c_request);
+   }
 }

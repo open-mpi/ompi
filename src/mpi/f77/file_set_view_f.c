@@ -16,7 +16,6 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
@@ -60,12 +59,12 @@ void mpi_file_set_view_f(MPI_Fint *fh, MPI_Offset *disp,
 			 MPI_Fint *etype, MPI_Fint *filetype,
 			 char *datarep, MPI_Fint *info, MPI_Fint *ierr)
 {
-    MPI_File c_fh = MPI_File_f2c(*fh);
-    MPI_Datatype c_etype = MPI_Type_f2c(*etype);
-    MPI_Datatype c_filetype = MPI_Type_f2c(*filetype);
-    MPI_Info c_info = MPI_Info_f2c(*info);
+   MPI_File c_fh = MPI_File_f2c(*fh);
+   MPI_Datatype c_etype = MPI_Type_f2c(*etype);
+   MPI_Datatype c_filetype = MPI_Type_f2c(*filetype);
+   MPI_Info c_info = MPI_Info_f2c(*info);
 
-    *ierr = OMPI_INT_2_FINT(MPI_File_set_view(c_fh, (MPI_Offset) *disp,
-					      c_etype, c_filetype,
-					      datarep, c_info));
+   *ierr = OMPI_INT_2_FINT(MPI_File_set_view(c_fh, (MPI_Offset) *disp,
+                                             c_etype, c_filetype,
+                                             datarep, c_info));
 }

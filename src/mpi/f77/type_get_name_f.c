@@ -16,10 +16,9 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
+#include "mpi/f77/bindings.h"
 #include "include/constants.h"
 #include "errhandler/errhandler.h"
-#include "mpi/f77/bindings.h"
 #include "mpi/f77/strings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER

@@ -51,7 +51,6 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
       if( (datatype->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC ) {
          if( size != 0 ) {
             *count = MPI_UNDEFINED;
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
          }
          return MPI_SUCCESS;
       }

@@ -88,8 +88,7 @@ int mca_pml_teg_recv(void *addr,
                                    count, datatype, src, tag, comm, false);
 
     if ((rc = mca_pml_teg_recv_request_start(recvreq)) != OMPI_SUCCESS) {
-        MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq);
-        return rc;
+        goto recv_finish;
     }
 
     if (recvreq->req_base.req_ompi.req_complete == false) {
@@ -108,12 +107,11 @@ int mca_pml_teg_recv(void *addr,
             ompi_request_waiting--;
         }
     }
-
-    /* return status */
-    if (NULL != status) {
+ recv_finish:
+    if (NULL != status) {  /* return status */
         *status = recvreq->req_base.req_ompi.req_status;
     }
 
     MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq);
-    return OMPI_SUCCESS;
+    return recvreq->req_base.req_ompi.req_status.MPI_ERROR;
 }

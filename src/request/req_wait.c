@@ -59,8 +59,8 @@ int ompi_request_wait_any(
 
     /* give up and sleep until completion */
     OMPI_THREAD_LOCK(&ompi_request_lock);
+    ompi_request_waiting++;
     do {
-        ompi_request_waiting++;
         rptr = requests;
         num_requests_null_inactive = 0;
         for (i = 0; i < count; i++, rptr++) {

@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_PACK = mpi_pack_f
@@ -60,19 +60,19 @@ void mpi_pack_f(char *inbuf, MPI_Fint *incount, MPI_Fint *datatype,
 		char *outbuf, MPI_Fint *outsize, MPI_Fint *position, 
 		MPI_Fint *comm, MPI_Fint *ierr)
 {
-    MPI_Comm c_comm;
-    MPI_Datatype c_type;
-    OMPI_SINGLE_NAME_DECL(position);
+   MPI_Comm c_comm;
+   MPI_Datatype c_type;
+   OMPI_SINGLE_NAME_DECL(position);
 
-    c_comm = MPI_Comm_f2c(*comm);
-    c_type = MPI_Type_f2c(*datatype);
-    OMPI_SINGLE_FINT_2_INT(position);
-
-    *ierr = OMPI_INT_2_FINT(MPI_Pack(inbuf, OMPI_FINT_2_INT(*incount),
-				     c_type, outbuf,
-				     OMPI_FINT_2_INT(*outsize),
-				     OMPI_SINGLE_NAME_CONVERT(position),
-				     c_comm));
+   c_comm = MPI_Comm_f2c(*comm);
+   c_type = MPI_Type_f2c(*datatype);
+   OMPI_SINGLE_FINT_2_INT(position);
+   
+   *ierr = OMPI_INT_2_FINT(MPI_Pack(OMPI_ADDR(inbuf), OMPI_FINT_2_INT(*incount),
+                                    c_type, outbuf,
+                                    OMPI_FINT_2_INT(*outsize),
+                                    OMPI_SINGLE_NAME_CONVERT(position),
+                                    c_comm));
 				     
-    OMPI_SINGLE_INT_2_FINT(position);			     
+   OMPI_SINGLE_INT_2_FINT(position);			     
 }

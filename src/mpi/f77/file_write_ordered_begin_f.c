@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_FILE_WRITE_ORDERED_BEGIN = mpi_file_write_ordered_begin_f
@@ -60,11 +60,10 @@ void mpi_file_write_ordered_begin_f(MPI_Fint *fh, char *buf,
 				    MPI_Fint *count, MPI_Fint *datatype, 
 				    MPI_Fint *ierr)
 {
-    MPI_File c_fh = MPI_File_f2c(*fh);
+   MPI_File c_fh = MPI_File_f2c(*fh);
+   MPI_Datatype c_type = MPI_Type_f2c(*datatype);
 
-    MPI_Datatype c_type = MPI_Type_f2c(*datatype);
-
-    *ierr = OMPI_INT_2_FINT(MPI_File_write_ordered_begin(c_fh, buf, 
-						 OMPI_FINT_2_INT(*count),
-						 c_type));
+   *ierr = OMPI_INT_2_FINT(MPI_File_write_ordered_begin(c_fh, OMPI_ADDR(buf), 
+                                                        OMPI_FINT_2_INT(*count),
+                                                        c_type));
 }

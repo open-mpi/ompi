@@ -20,13 +20,13 @@
 #include "constants.h"
 
 #define INST(upper_case, lower_case, single_u, double_u) \
-ompi_fortran_common_t upper_case; \
 ompi_fortran_common_t lower_case; \
+ompi_fortran_common_t upper_case; \
 ompi_fortran_common_t single_u; \
 ompi_fortran_common_t double_u
 
-INST(MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
-     mpi_fortran_status_ignore_, mpi_fortran_status_ignore__);
+INST(MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
+     mpi_fortran_bottom_, mpi_fortran_bottom__);
 INST(MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
      mpi_fortran_argv_null_, mpi_fortran_argv_null__);
 INST(MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,

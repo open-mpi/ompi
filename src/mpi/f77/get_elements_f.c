@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mpi.h"
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_GET_ELEMENTS = mpi_get_elements_f
@@ -62,12 +62,16 @@ void mpi_get_elements_f(MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, M
     MPI_Status   c_status;
     OMPI_SINGLE_NAME_DECL(count);
 
-    *ierr = MPI_Status_f2c(status, &c_status);
+    if (OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
+        *count = OMPI_INT_2_FINT(0);
+        *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
+    } else {
+        *ierr = MPI_Status_f2c(status, &c_status);
 
-    if (MPI_SUCCESS == *ierr) {
-      *ierr = OMPI_INT_2_FINT(MPI_Get_elements(&c_status, c_type, 
-					       OMPI_SINGLE_NAME_CONVERT(count)
-					       ));
-      OMPI_SINGLE_INT_2_FINT(count);
+        if (MPI_SUCCESS == *ierr) {
+            *ierr = OMPI_INT_2_FINT(MPI_Get_elements(&c_status, c_type, 
+                                                     OMPI_SINGLE_NAME_CONVERT(count)));
+            OMPI_SINGLE_INT_2_FINT(count);
+        }
     }
 }

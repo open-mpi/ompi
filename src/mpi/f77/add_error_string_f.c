@@ -16,9 +16,9 @@
 
 #include "ompi_config.h"
 
-#include "mpi/f77/strings.h"
 #include "mpi/f77/bindings.h"
 #include "mpi/f77/constants.h"
+#include "mpi/f77/strings.h"
 #include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
