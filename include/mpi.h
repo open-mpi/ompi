@@ -529,6 +529,10 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_ERRORS_ARE_FATAL (&ompi_mpi_errors_are_fatal)
 #define MPI_ERRORS_RETURN (&ompi_mpi_errors_return)
 
+/* Typeclass definition for MPI_Type_match_size */
+#define MPI_TYPECLASS_INTEGER    1
+#define MPI_TYPECLASS_REAL       2
+#define MPI_TYPECLASS_COMPLEX    3
 
 /*
  * For applications still using the old [non-standard] ROMIO conventions

@@ -82,6 +82,8 @@
        integer MPI_ORDER_C, MPI_ORDER_FORTRAN
        integer MPI_DISTRIBUTE_BLOCK, MPI_DISTRIBUTE_CYCLIC
        integer MPI_DISTRIBUTE_NONE, MPI_DISTRIBUTE_DFLT_DARG
+       integer MPI_TYPECLASS_INTEGER, MPI_TYPECLASS_REAL
+       integer MPI_TYPECLASS_COMPLEX
        @OMPI_F77_WIN_ATTR_KEYS@
 
        parameter (MPI_ANY_SOURCE=-1)
@@ -117,6 +119,9 @@
        parameter (MPI_DISTRIBUTE_CYCLIC=1)
        parameter (MPI_DISTRIBUTE_NONE=2)
        parameter (MPI_DISTRIBUTE_DFLT_DARG=-1)
+       parameter (MPI_TYPECLASS_INTEGER=1)
+       parameter (MPI_TYPECLASS_REAL=2)
+       parameter (MPI_TYPECLASS_COMPLEX=3)
 !
 ! global variables
 !
