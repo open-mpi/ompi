@@ -30,12 +30,18 @@ OMPI_DECLSPEC    int mca_pcm_base_close(void);
 
     /* communicate the important parts of our structs around  */
 OMPI_DECLSPEC    int mca_pcm_base_send_schedule(FILE *fd, 
+                                   mca_ns_base_cellid_t cellid,
                                    mca_ns_base_jobid_t jobid,
+                                   mca_ns_base_vpid_t global_start_vpid,
+                                   int global_spawn_size,
                                    ompi_rte_node_schedule_t *sched,
                                    int num_procs);
 
 OMPI_DECLSPEC    int  mca_pcm_base_recv_schedule(FILE *fd, 
+                                    mca_ns_base_cellid_t *cellid,
                                     mca_ns_base_jobid_t *jobid,
+                                    mca_ns_base_vpid_t *starting_vpid,
+                                    int *spawn_size,
                                     ompi_rte_node_schedule_t *sched,
                                     int *num_procs);
 

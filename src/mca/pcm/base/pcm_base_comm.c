@@ -19,17 +19,29 @@
 
 int
 mca_pcm_base_send_schedule(FILE *fp, 
+                           mca_ns_base_cellid_t cellid,
                            mca_ns_base_jobid_t jobid,
+                           mca_ns_base_vpid_t global_start_vpid,
+                           int global_spawn_size,
                            ompi_rte_node_schedule_t *sched,
                            int num_procs)
 {
-    int i, envc;
+    int i;
 
     fprintf(fp, START_KEY);
     fprintf(fp, "%d\n", PROTOCOL_VERSION);
 
+    /* CELLID */
+    fprintf(fp, "%d\n", cellid);
+
     /* JOBID */
     fprintf(fp, "%d\n", jobid);
+
+    /* SPAWN-WIDE STARTING VPID */
+    fprintf(fp, "%d\n", global_start_vpid);
+
+    /* SPAWN-WIDE JOB SIZE */
+    fprintf(fp, "%d\n", global_spawn_size);
 
     /* ARGC */
     fprintf(fp, "%d\n", sched->argc);
@@ -38,13 +50,12 @@ mca_pcm_base_send_schedule(FILE *fp,
                 (sched->argv)[i]);
     }
 
-    /* ENV - since we don't have a envc, must create ourselves...*/
+    /* ENV */
     if (sched->env == NULL) {
         fprintf(fp, "%d\n", 0);
     } else {
-        for (envc = 0 ; (sched->env)[envc] != NULL ; ++envc) ;
-        fprintf(fp, "%d\n", envc);
-        for (i = 0 ; i < envc ; ++i) {
+        fprintf(fp, "%d\n", sched->envc);
+        for (i = 0 ; i < sched->envc ; ++i) {
             fprintf(fp, "%d %s\n", (int) strlen((sched->env)[i]), 
                     (sched->env)[i]);
         }
@@ -226,7 +237,10 @@ get_argv_array(FILE *fp, int *argcp, char ***argvp)
 
 int 
 mca_pcm_base_recv_schedule(FILE *fp, 
+                           mca_ns_base_cellid_t *cellid,
                            mca_ns_base_jobid_t *jobid,
+                           mca_ns_base_vpid_t *starting_vpid,
+                           int *spawn_size,
                            ompi_rte_node_schedule_t *sched,
                            int *num_procs)
 {
@@ -240,8 +254,20 @@ mca_pcm_base_recv_schedule(FILE *fp,
     ret = get_check_version(fp);
     if (OMPI_SUCCESS != ret) return ret;
 
+    /* get our cellid */
+    ret = get_uint(fp, cellid);
+    if (OMPI_SUCCESS != ret) return ret;
+
     /* get our jobid */
     ret = get_uint(fp, jobid);
+    if (OMPI_SUCCESS != ret) return ret;
+
+    /* get our spawn-wide starting vpid */
+    ret = get_uint(fp, starting_vpid);
+    if (OMPI_SUCCESS != ret) return ret;
+
+    /* get our spawn-wide job size */
+    ret = get_int(fp, spawn_size);
     if (OMPI_SUCCESS != ret) return ret;
 
     /* get argc */
