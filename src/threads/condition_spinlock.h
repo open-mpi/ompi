@@ -61,7 +61,7 @@ static inline int ompi_condition_timedwait(ompi_condition_t *c,
     struct timeval tv;
     struct timeval abs;
     abs.tv_sec = abstime->tv_sec;
-    abs.tv_usec = abstime->tv_nsec * 1000;
+    abs.tv_usec = abstime->tv_nsec / 1000;
     gettimeofday(&tv,NULL);
 
     c->c_waiting++;
