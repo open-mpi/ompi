@@ -87,7 +87,7 @@ OBJ_CLASS_INSTANCE(
  */
 ompi_process_id_t last_used_cellid;
 ompi_process_id_t last_used_jobid;
-ompi_list_t name_tracker;
+ompi_list_t ompi_name_tracker;
 
 /*
  * don't really need this function - could just put NULL in the above structure
@@ -96,11 +96,11 @@ ompi_list_t name_tracker;
 int
 mca_ns_replica_open(void)
 {
-    max_used_cellid = 0;
-    max_used_jobid = 0;
+    last_used_cellid = 0;
+    last_used_jobid = 0;
 
     /* initialize the name tracker */
-    OBJ_CONSTRUCT(&name_tracker, ompi_list_t);
+    OBJ_CONSTRUCT(&ompi_name_tracker, ompi_list_t);
 
     return OMPI_SUCCESS;
 }
