@@ -20,7 +20,7 @@ MPI_Type_hindexed(int count,
 {
     return MPI_Type_create_hindexed(count,
                                     array_of_blocklengths,
-                                    array_of_displacelments,
+                                    array_of_displacements,
                                     oldtype,
                                     newtype);
 }

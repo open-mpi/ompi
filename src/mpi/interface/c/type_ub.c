@@ -18,7 +18,7 @@ MPI_Type_ub(MPI_Datatype mtype, MPI_Aint *ub)
     MPI_Aint extent;
     int status;
 
-    status = MPI_Type_get_extent(type, &lb, &extent);
+    status = MPI_Type_get_extent(mtype, &lb, &extent);
     if (MPI_SUCCESS == status) {
         *ub = lb + extent;
     }

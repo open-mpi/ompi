@@ -16,7 +16,7 @@ MPI_Type_create_indexed_block(int count,
                               int blocklength, 
                               int array_of_displacements[],
                               MPI_Datatype oldtype,
-                              MPI_datatype *newtype)
+                              MPI_Datatype *newtype)
 {
     return MPI_SUCCESS;
 }
