@@ -156,6 +156,29 @@ typedef int (*mca_pml_base_add_ptls_fn_t)(lam_list_t *ptls);
 
 
 /**
+ * Downcall from MCA layer to enable the PML/PTLs.
+ *
+ * @param   param   parameter to change
+ * @param   value   optional value
+ * @param   size    size of value
+ * @return          LAM_SUCCESS or failure status.
+*/
+typedef int (*mca_pml_base_control_fn_t)(
+    int param,
+    void *value,
+    size_t size
+);
+
+
+/**
+ * For non-threaded case, provides MCA the opportunity to
+ * progress outstanding requests on all ptls.
+ *
+ * @return         LAM_SUCCESS or failure status.
+*/
+typedef int (*mca_pml_base_progress_fn_t)(void);
+
+/**
  * MPI Interface Functions
  */
 
@@ -445,6 +468,8 @@ struct mca_pml_1_0_0_t {
     mca_pml_base_add_procs_fn_t    pml_add_procs;
     mca_pml_base_del_procs_fn_t    pml_del_procs;
     mca_pml_base_add_ptls_fn_t     pml_add_ptls;
+    mca_pml_base_control_fn_t      pml_control;
+    mca_pml_base_progress_fn_t     pml_progress;
 
     /* downcalls from MPI to PML */
     mca_pml_base_add_comm_fn_t     pml_add_comm;

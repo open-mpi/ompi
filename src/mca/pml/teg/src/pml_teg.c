@@ -22,6 +22,8 @@ mca_pml_teg_t mca_pml_teg = {
     mca_pml_teg_add_procs,
     mca_pml_teg_del_procs,
     mca_pml_teg_add_ptls,
+    mca_pml_teg_control,
+    mca_pml_teg_progress,
     mca_pml_teg_add_comm,
     mca_pml_teg_del_comm,
     mca_pml_teg_irecv_init,
@@ -106,6 +108,21 @@ int mca_pml_teg_add_ptls(lam_list_t *ptls)
 
     /* sort ptl list by exclusivity */
     qsort(mca_pml_teg.teg_ptls, mca_pml_teg.teg_num_ptls, sizeof(struct mca_ptl_t*), ptl_exclusivity_compare);
+    return LAM_SUCCESS;
+}
+
+/*
+ * Pass control information through to all PTL modules.
+ */
+
+int mca_pml_teg_control(int param, void* value, size_t size)
+{
+    size_t i=0;
+    for(i=0; i<mca_pml_teg.teg_num_ptl_modules; i++) {
+        int rc = mca_pml_teg.teg_ptl_modules[i]->ptlm_control(param,value,size);
+        if(rc != LAM_SUCCESS)
+            return rc;
+    }
     return LAM_SUCCESS;
 }
 

@@ -37,7 +37,7 @@ struct mca_ptl_base_frag_header_t {
     mca_ptl_base_common_header_t hdr_common; /**< common attributes */
     uint32_t hdr_frag_length;                /**< fragment length */
     uint32_t hdr_frag_offset;                /**< offset into message */
-    mca_ptl_base_sequence_t hdr_frag_seq;    /**< fragment sequence number */
+    mca_ptl_sequence_t hdr_frag_seq;    /**< fragment sequence number */
     lam_ptr_t hdr_src_ptr;                   /**< pointer to source fragment */
     lam_ptr_t hdr_dst_ptr;                   /**< pointer to matched receive */
 };
@@ -55,7 +55,7 @@ struct mca_ptl_base_match_header_t {
     int32_t hdr_dst;                     /**< destination rank */
     int32_t hdr_tag;                     /**< user tag */
     uint32_t hdr_msg_length;             /**< message length */
-    mca_ptl_base_sequence_t hdr_msg_seq; /**< message sequence number */
+    mca_ptl_sequence_t hdr_msg_seq; /**< message sequence number */
 };
 typedef struct mca_ptl_base_match_header_t mca_ptl_base_match_header_t;
 

@@ -15,10 +15,13 @@ void mca_pml_teg_recv_request_progress(
         req->super.req_status.MPI_TAG = req->super.req_tag;
         req->super.req_status.MPI_ERROR = LAM_SUCCESS;
         req->super.req_status._count = req->req_bytes_delivered;
-        req->super.req_mpi_done = true;
         req->super.req_pml_done = true; 
+        req->super.req_mpi_done = true;
         if(mca_pml_teg.teg_request_waiting) {
+#if MCA_PML_TEG_STATISTICS
+            mca_pml_teg.teg_condition_broadcasts++;
             lam_condition_broadcast(&mca_pml_teg.teg_request_cond);
+#endif
         }
     }
     lam_mutex_unlock(&mca_pml_teg.teg_request_lock);

@@ -42,16 +42,16 @@ int mca_pml_ptl_comm_init_size(mca_pml_ptl_comm_t* comm, size_t size)
     size_t i;
 
     /* send message sequence-number support - sender side */
-    comm->c_msg_seq = malloc(sizeof(mca_ptl_base_sequence_t) * size);
+    comm->c_msg_seq = malloc(sizeof(mca_ptl_sequence_t) * size);
     if(NULL == comm->c_msg_seq)
         return LAM_ERR_OUT_OF_RESOURCE;
-    memset(comm->c_msg_seq, 0, sizeof(mca_ptl_base_sequence_t) * size);
+    memset(comm->c_msg_seq, 0, sizeof(mca_ptl_sequence_t) * size);
 
     /* send message sequence-number support - receiver side */
-    comm->c_next_msg_seq = malloc(sizeof(mca_ptl_base_sequence_t) * size);
+    comm->c_next_msg_seq = malloc(sizeof(mca_ptl_sequence_t) * size);
     if(NULL == comm->c_next_msg_seq)
         return LAM_ERR_OUT_OF_RESOURCE;
-    memset(comm->c_next_msg_seq, 0, sizeof(mca_ptl_base_sequence_t) * size);
+    memset(comm->c_next_msg_seq, 0, sizeof(mca_ptl_sequence_t) * size);
 
     /* unexpected fragments queues */
     comm->c_unexpected_frags = malloc(sizeof(lam_list_t) * size);

@@ -79,7 +79,7 @@ bool mca_ptl_base_match(
     lam_list_t *additional_matches)
 {
     /* local variables */
-    mca_ptl_base_sequence_t frag_msg_seq,next_msg_seq_expected;
+    mca_ptl_sequence_t frag_msg_seq,next_msg_seq_expected;
     lam_communicator_t *comm_ptr;
     mca_ptl_base_recv_request_t *matched_receive;
     mca_pml_ptl_comm_t *pml_comm;
@@ -374,7 +374,7 @@ static mca_ptl_base_recv_request_t *mca_ptl_base_check_specific_and_wild_receive
 {
     /* local variables */
     mca_ptl_base_recv_request_t *specific_recv, *wild_recv, *return_match;
-    mca_ptl_base_sequence_t wild_recv_seq, specific_recv_seq;
+    mca_ptl_sequence_t wild_recv_seq, specific_recv_seq;
     int frag_src,frag_tag, wild_recv_tag, specific_recv_tag;
 
     /* initialization */
@@ -513,7 +513,7 @@ static void mca_ptl_base_check_cantmatch_for_match(lam_list_t *additional_matche
 {
     /* local parameters */
     int match_found;
-    mca_ptl_base_sequence_t next_msg_seq_expected, frag_seq;
+    mca_ptl_sequence_t next_msg_seq_expected, frag_seq;
     mca_ptl_base_recv_frag_t *frag_desc;
     mca_ptl_base_recv_request_t *matched_receive;
 
