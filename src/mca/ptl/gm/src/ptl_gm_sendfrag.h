@@ -57,6 +57,8 @@ struct mca_ptl_gm_recv_frag_t {
     bool frag_ack_pending;
     void *alloc_recv_buffer;
     void *unex_recv_buffer;
+    void * registered_buf;
+    mca_ptl_gm_module_t *ptl;
     bool matched;
     bool have_allocated_buffer;
 };

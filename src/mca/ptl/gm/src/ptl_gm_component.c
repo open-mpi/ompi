@@ -111,14 +111,14 @@ mca_ptl_gm_component_open (void)
 
     /* register GM component parameters */
     mca_ptl_gm_module.super.ptl_first_frag_size =
-        mca_ptl_gm_param_register_int ("first_frag_size", 16 * 1024);
+        mca_ptl_gm_param_register_int ("first_frag_size", ((16 * 1024) - 64));
     mca_ptl_gm_module.super.ptl_min_frag_size =
         mca_ptl_gm_param_register_int ("min_frag_size", 1<<16);
     mca_ptl_gm_module.super.ptl_max_frag_size =
         mca_ptl_gm_param_register_int ("max_frag_size", 256 * 1024);
     
     mca_ptl_gm_component.gm_free_list_num =
-        mca_ptl_gm_param_register_int ("free_list_num", 32);
+        mca_ptl_gm_param_register_int ("free_list_num", 256);
     mca_ptl_gm_component.gm_free_list_inc =
         mca_ptl_gm_param_register_int ("free_list_inc", 32);
 
@@ -296,7 +296,7 @@ ompi_mca_ptl_gm_init_sendrecv (mca_ptl_gm_component_t * gm)
         ompi_free_list_init (&(ptl->gm_send_frags),
                              sizeof (mca_ptl_gm_send_frag_t),
                              OBJ_CLASS (mca_ptl_gm_send_frag_t),
-                             32, 32, 1, NULL); /* not using mpool */
+                             ptl->num_send_tokens,ptl->num_send_tokens, 1, NULL); /* not using mpool */
 
         /* allocate the elements */
         sfragment = (mca_ptl_gm_send_frag_t *)
@@ -329,11 +329,18 @@ ompi_mca_ptl_gm_init_sendrecv (mca_ptl_gm_component_t * gm)
 
         }
 
+        OBJ_CONSTRUCT (&(ptl->gm_recv_outstanding_queue), ompi_list_t);
 
         /* construct the list of recv fragments free */
         OBJ_CONSTRUCT (&(ptl->gm_recv_frags_free), ompi_free_list_t);
         free_rlist = &(ptl->gm_recv_frags_free);
-   
+  
+        ompi_free_list_init (&(ptl->gm_recv_frags_free),
+                             sizeof (mca_ptl_gm_recv_frag_t),
+                             OBJ_CLASS (mca_ptl_gm_recv_frag_t),
+                             ptl->num_recv_tokens,ptl->num_recv_tokens, 1, NULL); /* not using mpool */
+        
+ 
         /*allocate the elements */
         free_rfragment = (mca_ptl_gm_recv_frag_t *)
                     malloc(sizeof(mca_ptl_gm_recv_frag_t) * NUM_RECV_FRAGS);
