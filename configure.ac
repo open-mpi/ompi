@@ -10,7 +10,7 @@
 
 # Init autoconf
 
-AC_INIT(./src/mpi/c/datatype_get_name.c)
+AC_INIT(./src/mpi/c/init.c)
 AC_PREREQ(2.52)
 AC_CONFIG_AUX_DIR(./config)
 
@@ -200,6 +200,10 @@ LAM_SETUP_CXX
 ##################################
 
 LAM_SETUP_F77
+if test -n "$F77"; then
+    LAM_F77_FIND_EXT_SYMBOL_CONVENTION($F77)
+fi
+
 LAM_SETUP_F90
 
 
@@ -253,9 +257,9 @@ lam_show_title "System-specific tests"
 # all: type of getsockopt optlen
 # all: type of recvfrom optlen
 
-#################################
+#
 # File system case sensitivity
-#################################
+#
 
 LAM_CASE_SENSITIVE_FS_SETUP
 
@@ -352,11 +356,17 @@ AC_CONFIG_FILES([
     src/mca/lam/Makefile
     src/mca/mpi/Makefile
     src/mca/mpi/coll/Makefile
+    src/mca/mpi/coll/base/Makefile
     src/mca/mpi/io/Makefile
+    src/mca/mpi/io/base/Makefile
     src/mca/mpi/one/Makefile
+    src/mca/mpi/one/base/Makefile
     src/mca/mpi/pml/Makefile
+    src/mca/mpi/pml/base/Makefile
     src/mca/mpi/ptl/Makefile
+    src/mca/mpi/ptl/base/Makefile
     src/mca/mpi/topo/Makefile
+    src/mca/mpi/topo/base/Makefile
 
     src/tools/Makefile
     src/tools/wrappers/Makefile
