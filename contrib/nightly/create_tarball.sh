@@ -19,6 +19,16 @@ destdir="$4"
 # debugging
 debug=
 
+# do you want a success mail?
+want_success_mail=1
+
+# how many snapshots to keep in the destdir?
+max_snapshots=10
+
+############################################################################
+# Shouldn't need to change below this line
+############################################################################
+
 start_time="`date`"
 
 # Sanity checks
@@ -145,8 +155,12 @@ done
 # remove temp dirs
 rm -rf "$scratch_root/logs" "$scratch_root/ompi"
 
+# trim the destdir to $max_snapshots
+# JMS fill in here...
+
 # send success mail
-Mail -s "Success" "$email" <<EOF
+if test "$want_success_mail" = "1"; then
+    Mail -s "Success" "$email" <<EOF
 Creating nightly snapshot SVN tarball a success.
 
 Start time: $start_time
@@ -155,3 +169,4 @@ End time:   `date`
 Your friendly daemon,
 Cyrador
 EOF
+fi
