@@ -11145,27 +11145,13 @@
     
     <!-- 
       -  METHOD: double MPI_Wtick() C
+      -  NOTE: already defined in mpif.h
       -->
-    <method name="MPI_Wtick" kind="final">
-
-      <!-- return type (name=double) -->
-      <return>
-        <type kind="float" fkind="dbl" >
-        </type>
-      </return>
-    </method>
     
     <!-- 
       -  METHOD: double MPI_Wtime() C
+      -  NOTE: already defined in mpif.h
       -->
-    <method name="MPI_Wtime" kind="final">
-
-      <!-- return type (name=double) -->
-      <return>
-        <type kind="float" fkind="dbl" >
-        </type>
-      </return>
-    </method>
     
     <!--
          ################################################
