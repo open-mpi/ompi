@@ -110,9 +110,6 @@ mca_pcm_slurm_init(int *priority,
     char *srun;
     mca_pcm_base_module_t *me;
 
-    /* BWB - temporarily disable */
-    return NULL;
-
     /* debugging gorp */
     mca_base_param_lookup_int(mca_pcm_slurm_param_debug, &debug);
     ompi_output_set_verbosity(mca_pcm_slurm_output, debug);
