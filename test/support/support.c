@@ -55,7 +55,7 @@ void test_failure(char *a){
     fflush(stderr);
 }
 
-int test_verify(const char *expected_result, const char *test_result){
+int test_verify_str(const char *expected_result, const char *test_result){
 
     /* local variables */
     size_t len_expect,len_result;
