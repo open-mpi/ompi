@@ -59,22 +59,58 @@ OBJ_CLASS_DECLARATION(ompi_rte_node_schedule_t);
 
 
 /**
- * Node 
+ * Base container for node-related information
  *
- * Container for allocation and deallocation of resources used to
- * launch parallel jobs.
- * 
+ * Base container type for holding llm/pcm private information on a \c
+ * ompi_rte_node_allocation_t container.
+ */
+struct ompi_rte_node_allocation_data_t {
+    /** make us an instance of object so our constructors go boom */
+    ompi_object_t super;
+};
+/** shorten ompi_rte_node_allocation_data_t declarations */
+typedef struct ompi_rte_node_allocation_data_t ompi_rte_node_allocation_data_t;
+/** create the required instance information */
+OBJ_CLASS_DECLARATION(ompi_rte_node_allocation_data_t);
+
+
+/**
+ * Resource allocation container
+ *
+ * Container for passing information between the resource allocator,
+ * the resource/job mapper, and the job starter portions of the
+ * run-time environment.
+ *
+ * \c count has a strange meaning.  If \c nodes is 0, \c count is the
+ * total number of cpus available in this block of resources.  If \c
+ * nodes is non-zero, \c count is the number of cpus available per
+ * node.
+ *
+ * \c start provides an integer number of where in the job the
+ * resource is available.  If you had two node_allocation_t elements
+ * returned from a call to allocate resources, one with
+ * nodes=4,count=2 and one with nodes=2,count=4, start would be 0 for
+ * the first element and 8 for the second.
+ *
+ * The contents of the structure (with the exception of \c data) may
+ * be examined by the process mapping functions.  However, the fields
+ * should be considered read-only.  The \c data field may contain
+ * private data that reflects the status of the \c nodes and \c count
+ * fields.  The \c ompi_rte_node_* functions are available for
+ * manipulating \c ompi_rte_node_allocation_t structures.
  */
 struct ompi_rte_node_allocation_t {
     /** make us an instance of list item */
     ompi_list_item_t super;
-    /** hostname for this node.  Can be used as generic description
-        field if hostnames aren't used on this platform */
-    char hostname[MAXHOSTNAMELEN];
-    /** number of MPI processes Open MPI can start on this host */
+    /** start of allocation numbers for this block of nodes */
+    int start;
+    /** number of nodes in this allocation - 0 means unknown */
+    int nodes;
+    /** number of "process slots" (places to start a process) that
+        are allocated as part of this block of processes */
     int count;
-    /** generic key=value storage mechanism */
-    ompi_list_t *info;    
+    /** data store for use by the Open MPI run-time environment */
+    ompi_rte_node_allocation_data_t *data;
 };
 /** shorten ompi_rte_allocation_t declarations */
 typedef struct ompi_rte_node_allocation_t ompi_rte_node_allocation_t;

@@ -9,6 +9,7 @@
 #include "include/constants.h"
 #include "class/ompi_list.h"
 #include "mca/pcm/base/base.h"
+#include "mca/llm/base/base_internal.h"
 
 #define START_KEY "@MCA_PCM@\n"
 #define END_KEY "@MCA_PCM_END@\n"
@@ -19,13 +20,12 @@
 int
 mca_pcm_base_send_schedule(FILE *fp, 
                            int jobid,
-                          ompi_rte_node_schedule_t *sched,
-                          ompi_list_t *nodelist)
+                           ompi_rte_node_schedule_t *sched,
+                           int num_procs)
 {
     int i, envc;
-    ompi_list_item_t *node_item, *info_item;
-    ompi_rte_node_allocation_t *node;
-    ompi_rte_valuepair_t *valpair;
+    ompi_list_item_t *node_item;
+    mca_llm_base_hostfile_data_t *node;
 
     fprintf(fp, START_KEY);
     fprintf(fp, "%d\n", PROTOCOL_VERSION);
@@ -57,30 +57,8 @@ mca_pcm_base_send_schedule(FILE *fp,
             (strlen(sched->cwd) > 0) ? sched->cwd : "");
     fflush(fp);
 
-    /* NODE LIST */
-    fprintf(fp, "%d\n", (int) ompi_list_get_size(nodelist));
-    for (node_item = ompi_list_get_first(nodelist) ;
-         node_item != ompi_list_get_end(nodelist) ;
-         node_item = ompi_list_get_next(node_item)) {
-        node = (ompi_rte_node_allocation_t*) node_item;
-
-        fprintf(fp, NODE_KEY);
-        fprintf(fp, "%d %s\n", (int) strlen(node->hostname), 
-                node->hostname);
-        fprintf(fp, "%d\n", node->count);
-
-        /* INFO */
-        fprintf(fp, "%d\n", (int) ompi_list_get_size(node->info));
-        for (info_item = ompi_list_get_first(node->info) ;
-             info_item != ompi_list_get_end(node->info) ;
-             info_item = ompi_list_get_next(info_item)) {
-            valpair = (ompi_rte_valuepair_t*) info_item;
-
-            fprintf(fp, "%d %d %s %s\n",
-                    (int) strlen(valpair->key), (int) strlen(valpair->value),
-                    valpair->key, valpair->value);
-        }
-    }
+    /* number of processes to start */
+    fprintf(fp, "%d\n", num_procs);
 
     /*
      * so we've basically ignored the fact we might error out up until
@@ -236,139 +214,11 @@ get_argv_array(FILE *fp, int *argcp, char ***argvp)
 }
 
 
-static int
-get_keyval(FILE *fp, char **keyp, char **valp)
-{
-    int ret;
-    char *key, *val;
-    int keylen, vallen; 
-    size_t str_read;;
-
-    ret = fscanf(fp, "%d %d ", &keylen, &vallen);
-    if (ret != 2) return OMPI_ERROR;
-
-    key = (char*) malloc(sizeof(char) * (keylen + 2));
-    if (NULL == key) return OMPI_ERROR;
-
-    val = (char*) malloc(sizeof(char) * (vallen + 2));
-    if (NULL == val) {
-        free(key);
-        return OMPI_ERROR;
-    }
-
-    /* get the key */
-    str_read = fread(key, keylen, 1, fp);
-    if (str_read != 1) {
-        free(key);
-        free(val);
-        return OMPI_ERROR;
-    }
-
-    /* get the space */
-    ret = fgetc(fp);
-    if (ret != ' ') {
-        free(key);
-        free(val);
-        return OMPI_ERROR;
-    }
-
-    /* get the value */
-    str_read = fread(val, vallen, 1, fp);
-    if (str_read != 1) {
-        free(key);
-        free(val);
-        return OMPI_ERROR;
-    }
-
-    /* get the end of line newline */
-    ret = fgetc(fp);
-    if (ret != '\n') {
-        free(key);
-        free(val);
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-static int
-get_nodeinfo(FILE *fp, ompi_list_t *info)
-{
-    ompi_rte_valuepair_t *newinfo;
-    int ret;
-    int info_len;
-    int i;
-
-    ret = fscanf(fp, "%d\n", &info_len);
-    if (ret != 1) return OMPI_ERROR;
-
-    for (i = 0 ; i < info_len ; ++i) {
-        ret = get_keyval(fp, &(newinfo->key), &(newinfo->value));
-        if (OMPI_SUCCESS != ret) {
-            OBJ_RELEASE(newinfo);
-            return ret;
-        }
-
-        ompi_list_append(info, (ompi_list_item_t*) newinfo);
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-static int
-get_nodelist(FILE *fp, ompi_list_t *nodelist)
-{
-    int nodelist_len;
-    int ret;
-    ompi_rte_node_allocation_t *newnode;
-    int i;
-    char *tmpstr;
-
-    ret = fscanf(fp, "%d\n", &nodelist_len);
-    if (ret != 1) return OMPI_ERROR;
-
-    for (i = 0 ; i < nodelist_len ; ++i) {
-        /* make sure we have a key */
-        ret = get_key(fp, NODE_KEY);
-        if (OMPI_SUCCESS != ret) return ret;
-
-        /* create the node */
-        newnode = OBJ_NEW(ompi_rte_node_allocation_t);
-        /* fill in fields */
-        ret = get_string(fp, &tmpstr);
-        if (OMPI_SUCCESS != ret) {
-            OBJ_RELEASE(newnode);
-            return OMPI_ERROR;
-        }
-        strncpy(newnode->hostname, tmpstr, sizeof(newnode->hostname));
-        free(tmpstr);
-
-        ret = fscanf(fp, "%d\n", &(newnode->count));
-        if (ret != 1) {
-            OBJ_RELEASE(newnode);
-            return OMPI_ERROR;
-        }
-
-        ret = get_nodeinfo(fp, newnode->info);
-        if (OMPI_SUCCESS != ret) {
-            OBJ_RELEASE(newnode);
-            return OMPI_ERROR;
-        }
-
-        ompi_list_append(nodelist, (ompi_list_item_t*) newnode);
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
 int 
 mca_pcm_base_recv_schedule(FILE *fp, 
                            int *jobid,
                           ompi_rte_node_schedule_t *sched,
-                          ompi_list_t *nodelist)
+                           int *num_procs)
 {
     int ret, val;
 
@@ -396,9 +246,8 @@ mca_pcm_base_recv_schedule(FILE *fp,
     ret = get_string(fp, &(sched->cwd));
     if (OMPI_SUCCESS != ret) return ret;
 
-    /* get node list */
-    ret = get_nodelist(fp, nodelist);
-    if (OMPI_SUCCESS != ret) return ret;
+    /* get num procs */
+    ret = get_int(fp, num_procs);
 
     /* make sure we have our end */
     ret = get_key(fp, END_KEY);

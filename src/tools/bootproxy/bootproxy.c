@@ -25,7 +25,6 @@ int
 main(int argc, char *argv[])
 {
     ompi_rte_node_schedule_t *sched;
-    ompi_rte_node_allocation_t *node;
     pid_t pid;
     int i;
     int ret;
@@ -33,7 +32,8 @@ main(int argc, char *argv[])
     ompi_cmd_line_t *cmd_line = NULL;
     int local_vpid_start, global_vpid_start;
     int cellid = 0;
-    int num_procs;
+    int total_num_procs;
+    int fork_num_procs;
     char *env_buf;
 
     ompi_init(argc, argv);
@@ -68,24 +68,16 @@ main(int argc, char *argv[])
         show_usage(argv[0]);
         exit(1);
     }
-    num_procs = atoi(ompi_cmd_line_get_param(cmd_line, "num_procs", 0, 0));
+    total_num_procs = atoi(ompi_cmd_line_get_param(cmd_line, "num_procs", 0, 0));
 
     sched = OBJ_NEW(ompi_rte_node_schedule_t);
 
     /* recv_schedule wants an already initialized ompi_list_t */
     ret = mca_pcm_base_recv_schedule(stdin, &jobid, sched,
-                                     sched->nodelist);
+                                     &fork_num_procs);
     if (ret != OMPI_SUCCESS) {
         fprintf(stderr, "Failure in receiving schedule information\n");
         exit(1);
-    }
-
-    /* sanity check */
-    if (ompi_list_get_size(sched->nodelist) > 1) {
-        fprintf(stderr, "Received more than one node - ignoring extra info\n");
-    }
-    if (ompi_list_get_size(sched->nodelist) < 1) {
-        fprintf(stderr, "Received less than one node\n");
     }
 
     /* fill our environment */
@@ -97,7 +89,7 @@ main(int argc, char *argv[])
     putenv(env_buf);
     asprintf(&env_buf, "OMPI_MCA_pcmclient_env_jobid=%d", jobid);
     putenv(env_buf);
-    asprintf(&env_buf, "OMPI_MCA_pcmclient_env_num_procs=%d", num_procs);
+    asprintf(&env_buf, "OMPI_MCA_pcmclient_env_num_procs=%d", total_num_procs);
     putenv(env_buf);
     asprintf(&env_buf, "OMPI_MCA_pcmclient_env_vpid_start=%d", 
              global_vpid_start);
@@ -112,9 +104,8 @@ main(int argc, char *argv[])
         }
     }
 
-    node = (ompi_rte_node_allocation_t*) ompi_list_get_first(sched->nodelist);
     /* let's go! - if we are the parent, don't stick around... */
-    for (i = 0 ; i < node->count ; ++i) {
+    for (i = 0 ; i < fork_num_procs ; ++i) {
         pid = fork();
         if (pid < 0) {
             /* error :( */

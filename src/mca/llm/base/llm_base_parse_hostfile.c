@@ -16,7 +16,7 @@
 #include "runtime/runtime_types.h"
 
 static void parse_error(void);
-static int parse_keyval(int, ompi_rte_node_allocation_t*);
+static int parse_keyval(int, mca_llm_base_hostfile_node_t*);
 
 static void
 parse_error()
@@ -27,7 +27,7 @@ parse_error()
 
 static
 int
-parse_keyval(int first, ompi_rte_node_allocation_t *node)
+parse_keyval(int first, mca_llm_base_hostfile_node_t *node)
 {
     int val;
     char *key, *value;
@@ -89,7 +89,7 @@ parse_count(void)
 
 static
 int
-parse_line(int first, ompi_rte_node_allocation_t *node)
+parse_line(int first, mca_llm_base_hostfile_node_t *node)
 {
     int val;
     int ret;
@@ -139,7 +139,7 @@ parse_line(int first, ompi_rte_node_allocation_t *node)
 ompi_list_t *
 mca_llm_base_parse_hostfile(const char *hostfile)
 {
-    ompi_rte_node_allocation_t *newnode;
+    mca_llm_base_hostfile_node_t *newnode;
     ompi_list_t *list;
     int val, ret;
 
@@ -169,7 +169,7 @@ mca_llm_base_parse_hostfile(const char *hostfile)
             break;
 
         case MCA_LLM_BASE_STRING:
-            newnode = OBJ_NEW(ompi_rte_node_allocation_t);
+            newnode = OBJ_NEW(mca_llm_base_hostfile_node_t);
             ret = parse_line(val, newnode);
             if (OMPI_SUCCESS != ret) {
                 OBJ_RELEASE(newnode);

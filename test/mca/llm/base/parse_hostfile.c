@@ -21,7 +21,7 @@ int
 main(int argc, char *argv[])
 {
     ompi_list_t *hostlist;
-    ompi_rte_node_allocation_t *node;
+    mca_llm_base_hostfile_node_t *node;
     ompi_rte_valuepair_t *valpair;
     ompi_list_item_t *nodeitem, *valpairitem; 
     FILE *test1_out=NULL; /* output file for first test */
@@ -55,7 +55,7 @@ main(int argc, char *argv[])
          nodeitem != ompi_list_get_end(hostlist);
          nodeitem = ompi_list_get_next(nodeitem)) {
 
-        node = (ompi_rte_node_allocation_t*) nodeitem;
+        node = (mca_llm_base_hostfile_node_t*) nodeitem;
         fprintf(test1_out, "\t%s %d\n", node->hostname, node->count);
 
         for (valpairitem = ompi_list_get_first(node->info);
@@ -84,7 +84,7 @@ main(int argc, char *argv[])
          nodeitem != ompi_list_get_end(hostlist);
          nodeitem = ompi_list_get_next(nodeitem)) {
 
-        node = (ompi_rte_node_allocation_t*) nodeitem;
+        node = (mca_llm_base_hostfile_node_t*) nodeitem;
         fprintf(test2_out, "\t%s %d\n", node->hostname, node->count);
 
         for (valpairitem = ompi_list_get_first(node->info);

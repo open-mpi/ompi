@@ -2,11 +2,11 @@
 1
 123
 1
-12 ./sched_comm
+73 /Users/brbarret/research/ompi/nodelist/test/mca/pcm/base/.libs/sched_comm
 3
 19 ENV1=blah blah blah
 19 ENV2=foo bar is fun
 8 ENV3=123
 12 /foo/bar/baz
-0
+5
 @MCA_PCM_END@

@@ -9,6 +9,7 @@
 #include <stdio.h>
 
 #include "mca/pcm/base/base.h"
+#include "util/argv.h"
 
 char *env[] = {
     "ENV0=",
