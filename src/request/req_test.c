@@ -16,6 +16,7 @@ int ompi_request_test_any(
     ompi_status_public_t * status)
 {
     size_t i;
+    size_t num_requests_null_inactive = 0;
     ompi_request_t **rptr;
     ompi_request_t *request;
 
@@ -23,8 +24,11 @@ int ompi_request_test_any(
     rptr = requests;
     for (i = 0; i < count; i++) {
         request = *rptr;
-        if (request == MPI_REQUEST_NULL)
+        if (request == MPI_REQUEST_NULL ||
+            request->req_state == OMPI_REQUEST_INACTIVE) {
+            num_requests_null_inactive++;
             continue;
+        }
         if (request->req_complete) {
             *index = i;
             *completed = true;
@@ -37,9 +41,8 @@ int ompi_request_test_any(
     }
 
     /* Only fall through here if we found nothing */
-
     *index = MPI_UNDEFINED;
-    *completed = false;
+    *completed = (num_requests_null_inactive == count) ? true : false;
     if (MPI_STATUS_IGNORE != status) {
         *status = ompi_status_empty;
     }
@@ -74,13 +77,18 @@ int ompi_request_test_all(
     }
 
     *completed = true;
-    if (MPI_STATUS_IGNORE != statuses) {
+    if (MPI_STATUSES_IGNORE != statuses) {
         /* fill out completion status and free request if required */
         rptr = requests;
         for (i = 0; i < count; i++) {
             int rc;
             request  = *rptr;
-            statuses[i] = request->req_status;
+            if(request == MPI_REQUEST_NULL || 
+               request->req_state == OMPI_REQUEST_INACTIVE) {
+                statuses[i] = ompi_status_empty;
+            } else {
+                statuses[i] = request->req_status;
+            }
             rc = request->req_fini(rptr);
             if(rc != OMPI_SUCCESS)
                 return rc;

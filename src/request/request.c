@@ -61,6 +61,7 @@ int ompi_request_init(void)
     ompi_request_null.req_status.MPI_ERROR = MPI_SUCCESS;
     ompi_request_null.req_status._count = 0;
 
+    ompi_request_null.req_state = OMPI_REQUEST_INACTIVE;
     ompi_request_null.req_complete = true;
     ompi_request_null.req_type = OMPI_REQUEST_NULL;
     ompi_request_null.req_fini = ompi_request_null_free;
