@@ -116,11 +116,15 @@ static int mca_ptl_ib_peer_send_conn_info(mca_ptl_base_peer_t* peer)
 {
     int rc;
     ompi_process_name_t *name;
-    char sendbuf[50];
-
-    D_PRINT("");
+    char* sendbuf;
 
     name = &peer->peer_proc->proc_guid;
+
+    sendbuf = (char*) malloc(sizeof(char)*50);
+
+    if(NULL == sendbuf) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     /* Zero out the send buffer */
     memset(sendbuf, 0, 50);
@@ -146,6 +150,9 @@ static int mca_ptl_ib_peer_send_conn_info(mca_ptl_base_peer_t* peer)
     if(rc != OMPI_SUCCESS) {
         return rc;
     }
+
+    D_PRINT("Sent buffer : %s", sendbuf);
+
     return OMPI_SUCCESS;
 }
 
@@ -211,8 +218,6 @@ static int mca_ptl_ib_peer_start_connect(mca_ptl_base_peer_t* peer)
     /* Update status of peer to as connecting */
     peer->peer_state = MCA_PTL_IB_CONNECTING;
 
-    DUMP_PEER(peer);
-
     return rc;
 }
 
@@ -257,8 +262,6 @@ static int mca_ptl_ib_peer_reply_start_connect(mca_ptl_ib_peer_t *peer,
     /* Update status of peer to as connected */
     peer->peer_state = MCA_PTL_IB_CONNECTED;
 
-    DUMP_PEER(peer);
-
     return rc;
 }
 
@@ -269,6 +272,8 @@ static int mca_ptl_ib_peer_reply_start_connect(mca_ptl_ib_peer_t *peer,
 static void mca_ptl_ib_peer_connected(mca_ptl_ib_peer_t *peer)
 {
     peer->peer_state = MCA_PTL_IB_CONNECTED;
+
+    DUMP_PEER(peer);
 }
 
 /*

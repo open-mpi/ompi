@@ -119,6 +119,7 @@ int mca_ptl_ib_finalize(struct mca_ptl_base_module_t* ptl)
 int mca_ptl_ib_request_init( struct mca_ptl_base_module_t* ptl,
         struct mca_pml_base_send_request_t* request)
 {
+    mca_ptl_ib_send_request_t *ib_send_req;
     mca_ptl_ib_send_frag_t *ib_send_frag;
 
     ib_send_frag = mca_ptl_ib_alloc_send_frag(ptl,
@@ -128,13 +129,10 @@ int mca_ptl_ib_request_init( struct mca_ptl_base_module_t* ptl,
         D_PRINT("Unable to allocate ib_send_frag");
         return OMPI_ERR_OUT_OF_RESOURCE;
     } else {
-        ((mca_ptl_ib_send_request_t *)request)->req_frag = 
-            ib_send_frag;
-    }
 
-    D_PRINT("sendfrag = %p, lkey = %d", 
-            ib_send_frag,
-            ib_send_frag->ib_buf.hndl.lkey);
+        ib_send_req = (mca_ptl_ib_send_request_t *) request;
+        ib_send_req->req_frag = ib_send_frag;
+    }
 
     return OMPI_SUCCESS;
 }
@@ -165,7 +163,7 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
 
     if (0 == offset) {
         sendfrag = (mca_ptl_ib_send_frag_t *)
-            &((mca_ptl_ib_send_request_t*)sendreq)->req_frag;
+            ((mca_ptl_ib_send_request_t*)sendreq)->req_frag;
     } else {
 
         /* TODO: Implementation for messages > frag size */
@@ -176,10 +174,6 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
             return rc;
         }
     }
-
-    D_PRINT("Sendfrag = %p, Lkey = %d", 
-            sendfrag,
-            sendfrag->ib_buf.hndl.lkey);
 
     rc = mca_ptl_ib_send_frag_init(sendfrag, ptl_peer,
             sendreq, offset, &size, flags);

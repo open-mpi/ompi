@@ -15,12 +15,19 @@ OBJ_CLASS_INSTANCE(mca_ptl_ib_send_request_t,
 void mca_ptl_ib_send_request_construct(mca_ptl_ib_send_request_t* request)
 {
     D_PRINT("\n");
+    request->req_frag = NULL;
+
+    /*
     OBJ_CONSTRUCT(&request->req_frag, mca_ptl_ib_send_frag_t);
+    */
 }
 
 
 void mca_ptl_ib_send_request_destruct(mca_ptl_ib_send_request_t* request)
 {
     D_PRINT("\n");
+
+    /*
     OBJ_DESTRUCT(&request->req_frag);
+    */
 }
