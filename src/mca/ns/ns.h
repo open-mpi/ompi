@@ -26,6 +26,7 @@
 #include "class/ompi_list.h"
 
 #include "mca/mca.h"
+#include "util/pack.h"
 
 
 /*
@@ -44,13 +45,38 @@
 #define MCA_NS_BASE_VPID_MAX   UINT32_MAX
 
 /*
+ * define flag values for remote commands - only used internally
+ */
+#define MCA_NS_CREATE_CELLID_CMD   0x01
+#define MCA_NS_CREATE_JOBID_CMD    0x02
+#define MCA_NS_RESERVE_RANGE_CMD   0x04
+#define MCA_NS_FREE_NAME_CMD       0x08
+
+
+/*
  * general typedefs & structures
  */
-/**< Set the allowed range for ids in each space */
+/** Set the allowed range for ids in each space */
+/* CAUTION - any changes here must also change corresponding
+ * OOB_PACK definitions below
+ */
 typedef uint32_t mca_ns_base_jobid_t;
 typedef uint32_t mca_ns_base_cellid_t;
 typedef uint32_t mca_ns_base_vpid_t;
 typedef uint8_t ompi_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */
+typedef uint16_t mca_ns_cmd_flag_t;
+
+/*
+ * packing type definitions
+ */
+/* CAUTION - any changes here must also change corresponding
+ * typedefs above
+ */
+#define MCA_NS_OOB_PACK_JOBID   OMPI_INT32
+#define MCA_NS_OOB_PACK_CELLID  OMPI_INT32
+#define MCA_NS_OOB_PACK_VPID    OMPI_INT32
+#define MCA_NS_OOB_PACK_CMD     OMPI_INT16
+
 
 struct ompi_process_name_t {
     mca_ns_base_cellid_t cellid;  /**< Cell number */
@@ -59,8 +85,6 @@ struct ompi_process_name_t {
 };
 typedef struct ompi_process_name_t ompi_process_name_t;
 
-/* declare the class */
-OBJ_CLASS_DECLARATION(ompi_process_name_t);
 
 /*
  * define the command names/ids for use in OOB buffers.
@@ -161,6 +185,18 @@ typedef mca_ns_base_jobid_t (*mca_ns_base_module_create_jobid_fn_t)(void);
  */
 typedef ompi_process_name_t* (*mca_ns_base_module_create_proc_name_fn_t)(mca_ns_base_cellid_t cell, mca_ns_base_jobid_t job, mca_ns_base_vpid_t vpid);
 
+/**
+ * Make a copy of a process name.
+ * Given a process name, this function creates a copy of it and returns a pointer
+ * to the duplicate structure.
+ *
+ * @param *name Pointer to an existing process name structure.
+ *
+ * @retval *newname Pointer to the duplicate structure, with all fields transferred.
+ * @retval NULL Indicates an error - most likely due to a NULL process name
+ * pointer being supplied as input.
+ */
+typedef ompi_process_name_t* (*mca_ns_base_module_copy_proc_name_fn_t)(ompi_process_name_t* name);
 
 /**
  * Convert a string representation to a process name.
@@ -403,6 +439,7 @@ struct mca_ns_base_module_1_0_0_t {
     mca_ns_base_module_create_cellid_fn_t create_cellid;
     mca_ns_base_module_create_jobid_fn_t create_jobid;
     mca_ns_base_module_create_proc_name_fn_t create_process_name;
+    mca_ns_base_module_copy_proc_name_fn_t copy_process_name;
     mca_ns_base_module_convert_string_to_process_name_fn_t convert_string_to_process_name;
     mca_ns_base_module_reserve_range_fn_t reserve_range;
     mca_ns_base_module_free_name_fn_t free_name;

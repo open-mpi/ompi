@@ -54,6 +54,7 @@ static mca_ns_base_module_t mca_ns_replica = {
     ns_replica_create_cellid,
     ns_replica_create_jobid,
     ns_base_create_process_name,
+    ns_base_copy_process_name,
     ns_base_convert_string_to_process_name,
     ns_replica_reserve_range,
     ns_replica_free_name,
@@ -118,6 +119,7 @@ int mca_ns_replica_close(void)
 
 mca_ns_base_module_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
+
     /* If we're the seed, then we want to be selected, so do all the
        setup and return the module */
 
@@ -141,6 +143,10 @@ mca_ns_base_module_t* mca_ns_replica_init(bool *allow_multi_user_threads, bool *
       /* initialize the name tracker */
 
       OBJ_CONSTRUCT(&mca_ns_replica_name_tracker, ompi_list_t);
+
+      /* set my_replica to point to myself */
+
+      mca_ns_my_replica = mca_ns_replica.copy_process_name(&ompi_process_info.name);
 
       /* Return the module */
 

@@ -7,6 +7,7 @@
 
 #include "ompi_config.h"
 #include "mca/mca.h"
+#include "util/pack.h"
 #include "mca/oob/base/base.h"
 #include "mca/ns/base/base.h"
 
@@ -20,45 +21,118 @@
 
 mca_ns_base_cellid_t ns_base_create_cellid(void)
 {
-    ompi_ns_msg_buffer_t cmd, *answer;
-    struct iovec msg;
+    ompi_buffer_t cmd;
     mca_ns_base_cellid_t cell;
+    ompi_buffer_t *answer;
+    mca_ns_cmd_flag_t command;
+    int recv_tag;
 
-    cmd.command = OMPI_NS_CREATE_CELLID;
-    cmd.buflen = 0;
-    cmd.buf = NULL;
+    command = MCA_NS_CREATE_CELLID_CMD;
+    recv_tag = MCA_OOB_TAG_NS;
 
-    msg.iov_base = (char*)&cmd;
-    msg.iov_len = sizeof(cmd);
+    if (OMPI_SUCCESS != ompi_buffer_init(&cmd, 0)) { /* got a problem */
+	return OMPI_ERROR;
+    }
 
-    if (0 > mca_oob_send(&mca_ns_my_replica, &msg, 1, MCA_OOB_TAG_ANY, 0)) { /* error on send */
-	    return 0;
-	}
+    if (OMPI_SUCCESS != ompi_pack(cmd, (void*)&command, 1, MCA_NS_OOB_PACK_CMD)) {
+	return OMPI_ERROR;
+    }
 
-    if (0 > mca_oob_recv(&mca_ns_my_replica, &msg, 1, MCA_OOB_TAG_ANY, 0)) { /* error on recv */
-	    return 0;
-	}
+    if (0 > mca_oob_send_packed(mca_ns_my_replica, cmd, MCA_OOB_TAG_NS, 0)) {
+	return MCA_NS_BASE_CELLID_MAX;
+    }
 
-    answer = (ompi_ns_msg_buffer_t*)msg.iov_base;
-    cell = (mca_ns_base_cellid_t)answer->buf;
-    return cell;
+    if (0 > mca_oob_recv_packed(mca_ns_my_replica, answer, &recv_tag)) {
+	return MCA_NS_BASE_CELLID_MAX;
+    }
+
+    if (OMPI_SUCCESS != ompi_unpack(*answer, &cell, 1, MCA_NS_OOB_PACK_CELLID)) {
+	ompi_buffer_free(*answer);
+	return MCA_NS_BASE_CELLID_MAX;
+    } else {
+	ompi_buffer_free(*answer);
+	return cell;
+    }
 }
+
 
 mca_ns_base_jobid_t ns_base_create_jobid(void)
 {
-  /* JMS fill in here */
-  return 0;
+    ompi_buffer_t cmd;
+    mca_ns_base_jobid_t job;
+    ompi_buffer_t *answer;
+    mca_ns_cmd_flag_t command;
+    int recv_tag;
+
+    command = MCA_NS_CREATE_JOBID_CMD;
+    recv_tag = MCA_OOB_TAG_NS;
+
+    if (OMPI_SUCCESS != ompi_buffer_init(&cmd, 0)) { /* got a problem */
+	return OMPI_ERROR;
+    }
+
+    if (OMPI_SUCCESS != ompi_pack(cmd, (void*)&command, 1, MCA_NS_OOB_PACK_CMD)) { /* got a problem */
+	return OMPI_ERROR;
+    }
+
+    if (0 > mca_oob_send_packed(mca_ns_my_replica, cmd, MCA_OOB_TAG_NS, 0)) {
+	return MCA_NS_BASE_JOBID_MAX;
+    }
+
+    if (0 > mca_oob_recv_packed(mca_ns_my_replica, answer, &recv_tag)) {
+	return MCA_NS_BASE_JOBID_MAX;
+    }
+
+    if (OMPI_SUCCESS != ompi_unpack(*answer, &job, 1, MCA_NS_OOB_PACK_JOBID)) {
+	ompi_buffer_free(*answer);
+	return MCA_NS_BASE_JOBID_MAX;
+    } else {
+	ompi_buffer_free(*answer);
+	return job;
+    }
 }
 
 
 mca_ns_base_vpid_t ns_base_reserve_range(mca_ns_base_jobid_t job, mca_ns_base_vpid_t range)
 {
-  /* JMS fill in here */
-  return 0;
-}
+    ompi_buffer_t cmd;
+    mca_ns_base_vpid_t starting_vpid;
+    ompi_buffer_t *answer;
+    mca_ns_cmd_flag_t command;
+    int recv_tag;
 
+    command = MCA_NS_RESERVE_RANGE_CMD;
+    recv_tag = MCA_OOB_TAG_NS;
 
-int ns_base_free_name(ompi_process_name_t* name)
-{
-    return OMPI_SUCCESS;
+    if (OMPI_SUCCESS != ompi_buffer_init(&cmd, 0)) { /* got a problem */
+	return OMPI_ERROR;
+    }
+
+    if (OMPI_SUCCESS != ompi_pack(cmd, (void*)&command, 1, MCA_NS_OOB_PACK_CMD)) { /* got a problem */
+	return OMPI_ERROR;
+    }
+
+    if (OMPI_SUCCESS != ompi_pack(cmd, (void*)&job, 1, MCA_NS_OOB_PACK_JOBID)) { /* got a problem */
+	return OMPI_ERROR;
+    }
+
+    if (OMPI_SUCCESS != ompi_pack(cmd, (void*)&range, 1, MCA_NS_OOB_PACK_VPID)) { /* got a problem */
+	return OMPI_ERROR;
+    }
+
+    if (0 > mca_oob_send_packed(mca_ns_my_replica, cmd, MCA_OOB_TAG_NS, 0)) {
+	return MCA_NS_BASE_VPID_MAX;
+    }
+
+    if (0 > mca_oob_recv_packed(mca_ns_my_replica, answer, &recv_tag)) {
+	return MCA_NS_BASE_VPID_MAX;
+    }
+
+    if (OMPI_SUCCESS != ompi_unpack(*answer, &starting_vpid, 1, MCA_NS_OOB_PACK_VPID)) {
+	ompi_buffer_free(*answer);
+	return MCA_NS_BASE_VPID_MAX;
+    } else {
+	ompi_buffer_free(*answer);
+	return starting_vpid;
+    }
 }

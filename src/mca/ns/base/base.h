@@ -35,6 +35,8 @@ extern "C" {
 						     mca_ns_base_jobid_t job,
 						     mca_ns_base_vpid_t vpid);
 
+    ompi_process_name_t* ns_base_copy_process_name(ompi_process_name_t* name);
+
     ompi_process_name_t* ns_base_convert_string_to_process_name(const char* name);
 
     char* ns_base_get_proc_name_string(const ompi_process_name_t* name);
@@ -74,7 +76,7 @@ extern "C" {
 
 extern int mca_ns_base_output;
 extern mca_ns_base_module_t ompi_name_server;  /* holds selected module's function pointers */
-extern ompi_process_name_t mca_ns_my_replica;
+extern ompi_process_name_t *mca_ns_my_replica;  /* the name of the replica for this process */
 extern bool mca_ns_base_selected;
 extern ompi_list_t mca_ns_base_components_available;
 extern mca_ns_base_component_t mca_ns_base_selected_component;
