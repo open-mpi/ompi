@@ -14,4 +14,5 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = class dps include mca mpi runtime support threads util
+# support needs to be first for dependencies
+SUBDIRS = support asm class dps mca runtime threads util

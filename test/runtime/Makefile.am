@@ -17,15 +17,17 @@ include $(top_srcdir)/config/Makefile.options
 AM_CPPFLAGS = \
             -I$(top_srcdir)/test/support
 
-bin_PROGRAMS = \
+check_PROGRAMS = \
 	parse_context
 
+TESTS = \
+	$(check_PROGRAMS)
 
 parse_context_SOURCES = \
 	parse_context.c
 parse_context_LDADD = \
 	$(top_builddir)/src/libmpi.la \
-	$(top_builddir)/test/support/libsupport.la
+	$(top_builddir)/test/support/libsupport.a
 
 parse_context_LDFLAGS = $(LIBMPI_EXTRA_LDFLAGS)
 parse_context_DEPENDENCIES = $(parse_context_LDADD)

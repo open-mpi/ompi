@@ -117,7 +117,7 @@ int test_finalize(void)
 {
     int return_value;
 
-    return_value = 1;
+    return_value = 0;
 
     if (ompi_n_tests == ompi_n_success) {
         fprintf(stderr, "SUPPORT: OMPI Test Passed: %s: (%d tests)\n",
@@ -128,7 +128,7 @@ int test_finalize(void)
                 "SUPPORT: OMPI Test failed: %s (%d of %d failed)\n",
                 ompi_description, ompi_n_failures, ompi_n_tests);
         fflush(stderr);
-        return_value = 0;
+        return_value = 1;
     }
 
     if (NULL != ompi_description)

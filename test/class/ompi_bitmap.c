@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "support.h"
 #include "class/ompi_bitmap.h"
+#include "include/constants.h"
 
 #define BSIZE 26
 #define SIZE_OF_CHAR (sizeof(char) * 8)
@@ -57,12 +58,12 @@ int main(int argc, char *argv[])
 
     PRINT_VALID_ERR;
     err = ompi_bitmap_init(NULL, 2);
-    if (err == OMPI_ERR_ARG)
+    if (err == OMPI_ERR_BAD_PARAM)
 	fprintf(error_out, "ERROR: Initialization of bitmap failed\n\n");
 
     PRINT_VALID_ERR;
     err = ompi_bitmap_init(&bm, -1);
-    if (err == OMPI_ERR_ARG)
+    if (err == OMPI_ERR_BAD_PARAM)
 	fprintf(error_out, "ERROR: Initialization of bitmap failed \n\n");
 
     err = ompi_bitmap_init(&bm, BSIZE);
@@ -272,10 +273,12 @@ int is_set_bit(ompi_bitmap_t *bm, int bit)
 
 int find_and_set(ompi_bitmap_t *bm, int bit) 
 {
+    int ret, pos;
     /* bit here is the bit that should be found and set, in the top
        level stub, this function will be called in sequence to test */
 
-    int pos = ompi_bitmap_find_and_set_first_unset_bit(bm);
+    ret = ompi_bitmap_find_and_set_first_unset_bit(bm, &pos);
+    if (ret != OMPI_SUCCESS) return ret;
 
     if (pos != bit) {
 	fprintf(error_out, "ERROR: find_and_set: expected to find_and_set %d\n\n",

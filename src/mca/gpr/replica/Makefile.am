@@ -34,7 +34,7 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_gpr_replica_la_SOURCES = gpr_replica.h \
                              gpr_replica_component.c
-    
+
 mca_gpr_replica_la_LIBADD = \
 	api_layer/libmca_gpr_replica_api.la \
 	transition_layer/libmca_gpr_replica_tl.la \

@@ -14,8 +14,6 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = . test
-
 ######################################################################
 #
 # This is a bit complicated.  If there is anything in the library,
