@@ -93,6 +93,82 @@ OBJ_CLASS_INSTANCE(
 		   ompi_registry_internal_test_results_destructor);  /* destructor */
 
 
+/* constructor - used to initialize notify message instance */
+static void mca_gpr_notify_request_tracker_construct(mca_gpr_notify_request_tracker_t* req)
+{
+    req->requestor = NULL;
+    req->req_tag = 0;
+    req->callback = NULL;
+    req->user_tag = NULL;
+    req->id_tag = 0;
+    req->synchro = OMPI_REGISTRY_SYNCHRO_MODE_NONE;
+}
+
+/* destructor - used to free any resources held by instance */
+static void mca_gpr_notify_request_tracker_destructor(mca_gpr_notify_request_tracker_t* req)
+{
+    if (NULL != req->requestor) {
+	free(req->requestor);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   mca_gpr_notify_request_tracker_t,            /* type name */
+		   ompi_list_item_t,                          /* parent "class" name */
+		   mca_gpr_notify_request_tracker_construct,    /* constructor */
+		   mca_gpr_notify_request_tracker_destructor);  /* destructor */
+
+
+/* constructor - used to initialize notify idtag list instance */
+static void mca_gpr_idtag_list_construct(mca_gpr_idtag_list_t* req)
+{
+    req->id_tag = 0;
+}
+
+/* destructor - used to free any resources held by instance */
+static void mca_gpr_idtag_list_destructor(mca_gpr_idtag_list_t* req)
+{
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   mca_gpr_idtag_list_tracker_t,    /* type name */
+		   ompi_list_item_t,                /* parent "class" name */
+		   mca_gpr_idtag_list_construct,    /* constructor */
+		   mca_gpr_idtag_list_destructor);  /* destructor */
+
+
+/* constructor - used to initialize notify message instance */
+static void ompi_registry_notify_message_construct(ompi_registry_notify_message_t* msg)
+{
+    OBJ_CONSTRUCT(&msg->data, ompi_list_t);
+    msg->num_tokens = 0;
+    msg->tokens = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void ompi_registry_notify_message_destructor(ompi_registry_notify_message_t* msg)
+{
+    uint32_t i;
+    char **tokptr;
+
+    OBJ_DESTRUCT(&msg->data);
+    for (i=0, tokptr=msg->tokens; i < msg->num_tokens; i++, tokptr++) {
+	free(*tokptr);
+    }
+    if (NULL != msg->tokens) {
+	free(msg->tokens);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+		   ompi_registry_notify_message_t,            /* type name */
+		   ompi_list_item_t,                          /* parent "class" name */
+		   ompi_registry_notify_message_construct,    /* constructor */
+		   ompi_registry_notify_message_destructor);  /* destructor */
+
 
 /*
  * Global variables

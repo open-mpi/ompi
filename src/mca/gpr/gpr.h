@@ -39,10 +39,28 @@
 #define OMPI_REGISTRY_NOTIFY_ADD_SUBSCRIBER 0x0002   /**< Notifies subscriber when another subscriber added */
 #define OMPI_REGISTRY_NOTIFY_DELETE         0x0004   /**< Notifies subscriber when object deleted */
 #define OMPI_REGISTRY_NOTIFY_SYNCHRO        0x0008   /**< Indicate that synchro trigger occurred - not valid for subscribe command */
-#define OMPI_REGISTRY_NOTIFY_MESSAGE        0x0010   /**< Indicates a notify message */
 #define OMPI_REGISTRY_NOTIFY_ALL            0xffff   /**< Notifies subscriber upon any action */
 
 typedef uint16_t ompi_registry_notify_action_t;
+
+typedef uint32_t mca_gpr_notify_id_t;
+#define MCA_GPR_NOTIFY_ID_MAX UINT32_MAX
+
+/** Return value for notify requests
+ */
+struct ompi_registry_notify_message_t {
+    ompi_list_t data;    /**< List of data objects */
+    uint32_t num_tokens;
+    char **tokens;
+};
+typedef struct ompi_registry_notify_message_t ompi_registry_notify_message_t;
+
+OBJ_CLASS_DECLARATION(ompi_registry_notify_message_t);
+
+/** Notify callback function
+ */
+typedef void (*ompi_registry_notify_cb_fn_t)(ompi_registry_notify_message_t *notify_msg, void *user_tag);
+
 
 
 /** Define the mode bit-masks for registry operations.
@@ -58,6 +76,18 @@ typedef uint16_t ompi_registry_mode_t;
 
 
 /*
+ * Define synchro mode flags
+ */
+#define OMPI_REGISTRY_SYNCHRO_MODE_NONE        0x00   /**< No synchronization */
+#define OMPI_REGISTRY_SYNCHRO_MODE_ASCENDING   0x01   /**< Notify when trigger is reached, ascending mode */
+#define OMPI_REGISTRY_SYNCHRO_MODE_DESCENDING  0x02   /**< Notify when trigger is reached, descending mode */
+#define OMPI_REGISTRY_SYNCHRO_MODE_LEVEL       0x04   /**< Notify when trigger is reached, regardless of direction */
+#define OMPI_REGISTRY_SYNCHRO_MODE_CONTINUOUS  0x08   /**< Notify whenever conditions are met */
+#define OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT    0x10   /**< Fire once, then terminate synchro command */
+
+typedef uint16_t ompi_registry_synchro_mode_t;
+
+/*
  * Define flag values for remote commands - only used internally
  */
 #define MCA_GPR_DELETE_SEGMENT_CMD     0x0001
@@ -69,6 +99,7 @@ typedef uint16_t ompi_registry_mode_t;
 #define MCA_GPR_SYNCHRO_CMD            0x0040
 #define MCA_GPR_GET_CMD                0x0080
 #define MCA_GPR_TEST_INTERNALS_CMD     0x0100
+#define MCA_GPR_NOTIFY_CMD             0x0200   /**< Indicates a notify message */
 #define MCA_GPR_ERROR                  0xffff
 
 typedef uint16_t mca_gpr_cmd_flag_t;
@@ -83,6 +114,7 @@ typedef uint16_t mca_gpr_cmd_flag_t;
 #define MCA_GPR_OOB_PACK_ACTION        OMPI_INT16
 #define MCA_GPR_OOB_PACK_MODE          OMPI_INT16
 #define MCA_GPR_OOB_PACK_OBJECT_SIZE   OMPI_INT32
+#define MCA_GPR_OOB_PACK_SYNCHRO_MODE  OMPI_INT16
 
 
 /*
@@ -91,7 +123,6 @@ typedef uint16_t mca_gpr_cmd_flag_t;
 
 typedef void* ompi_registry_object_t;
 typedef uint32_t ompi_registry_object_size_t;
-
 
 /*
  * structures
@@ -136,28 +167,52 @@ typedef struct ompi_registry_internal_test_results_t ompi_registry_internal_test
 OBJ_CLASS_DECLARATION(ompi_registry_internal_test_results_t);
 
 
+struct mca_gpr_notify_request_tracker_t {
+    ompi_list_item_t item;
+    ompi_process_name_t *requestor;
+    int req_tag;
+    ompi_registry_notify_cb_fn_t callback;
+    void *user_tag;
+    mca_gpr_notify_id_t id_tag;
+    ompi_registry_synchro_mode_t synchro;
+};
+typedef struct mca_gpr_notify_request_tracker_t mca_gpr_notify_request_tracker_t;
+
+OBJ_CLASS_DECLARATION(mca_gpr_notify_request_tracker_t);
+
+
+struct mca_gpr_idtag_list_t {
+    ompi_list_item_t item;
+    mca_gpr_notify_id_t id_tag;
+};
+typedef struct mca_gpr_idtag_list_t mca_gpr_idtag_list_t;
+
+OBJ_CLASS_DECLARATION(mca_gpr_idtag_list_t);
+
 /*
  * Component functions that MUST be provided
  */
 typedef int (*mca_gpr_base_module_delete_segment_fn_t)(char *segment);
 typedef int (*mca_gpr_base_module_put_fn_t)(ompi_registry_mode_t mode, char *segment,
-				     char **tokens, ompi_registry_object_t *object,
+				     char **tokens, ompi_registry_object_t object,
 				     ompi_registry_object_size_t size);
 typedef ompi_list_t* (*mca_gpr_base_module_get_fn_t)(ompi_registry_mode_t mode,
 						     char *segment, char **tokens);
 typedef int (*mca_gpr_base_module_delete_fn_t)(ompi_registry_mode_t mode,
 					char *segment, char **tokens);
 typedef ompi_list_t* (*mca_gpr_base_module_index_fn_t)(char *segment);
-typedef int (*mca_gpr_base_module_subscribe_fn_t)(ompi_process_name_t *subscriber, int tag,
-						  ompi_registry_mode_t mode,
+typedef int (*mca_gpr_base_module_subscribe_fn_t)(ompi_registry_mode_t mode,
 						  ompi_registry_notify_action_t action,
-						  char *segment, char **tokens);
-typedef int (*mca_gpr_base_module_unsubscribe_fn_t)(ompi_process_name_t *subscriber,
-						    ompi_registry_mode_t mode,
-						    char *segment, char **tokens);
-typedef int (*mca_gpr_base_module_synchro_fn_t)(ompi_process_name_t *subscriber, int tag,
+						  char *segment, char **tokens,
+						  ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
+typedef int (*mca_gpr_base_module_unsubscribe_fn_t)(ompi_registry_mode_t mode,
+						    ompi_registry_notify_action_t action,
+						    char *segment, char **tokens,
+						    ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
+typedef int (*mca_gpr_base_module_synchro_fn_t)(ompi_registry_synchro_mode_t synchro_mode,
 						ompi_registry_mode_t mode,
-						char *segment, char **tokens, int num);
+						char *segment, char **tokens, int trigger,
+						ompi_registry_notify_cb_fn_t cb_func, void *user_tag);
 
 /*
  * test interface for internal functions - optional to provide

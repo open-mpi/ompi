@@ -30,11 +30,10 @@ mca_gpr_replica_key_t gpr_replica_get_key(char *segment, char *token);
  * @param token Pointer to a character string containing the token to be defined. If token=NULL,
  * the function adds the token to the segment dictionary, thus defining a new segment name.
  *
- * @retval OMPI_EXISTS Indicates that the requested dictionary entry already exists.
- * @retval OMPI_ERR_OUT_OF_RESOURCE Indicates that the dictionary is full.
- * @retval OMPI_SUCCESS Indicates that the dictionary entry was created.
+ * @retval key New key value
+ * @retval MCA_GPR_REPLICA_KEY_MAX Indicates that the dictionary is full or some other error.
  */
-int gpr_replica_define_key(char *segment, char *token);
+mca_gpr_replica_key_t gpr_replica_define_key(char *segment, char *token);
 
 /** Delete a token from a segment's dictionary.
  * The gpr_replica_deletekey() function allows the removal of a definition from the
@@ -63,14 +62,27 @@ int gpr_replica_delete_key(char *segment, char *token);
  * @retval *seg Pointer to the segment
  * @retval NULL Indicates that the specified segment could not be found
  */
-mca_gpr_registry_segment_t *gpr_replica_find_seg(char *segment);
+mca_gpr_replica_segment_t *gpr_replica_find_seg(bool create, char *segment);
 
-mca_gpr_keytable_t *gpr_replica_find_dict_entry(char *segment, char *token);
+mca_gpr_replica_keytable_t *gpr_replica_find_dict_entry(char *segment, char *token);
 
-int gpr_replica_empty_segment(mca_gpr_registry_segment_t *seg);
+int gpr_replica_empty_segment(mca_gpr_replica_segment_t *seg);
 
 ompi_list_t *gpr_replica_get_key_list(char *segment, char **tokens);
 
-bool gpr_replica_check_key_list(ompi_registry_mode_t mode, ompi_list_t *key_list, ompi_list_t *entry_keys);
+bool gpr_replica_check_key_list(ompi_registry_mode_t mode,
+				mca_gpr_replica_key_t num_keys_search, mca_gpr_replica_key_t *keys,
+				mca_gpr_replica_key_t num_keys_entry, mca_gpr_replica_key_t *entry_keys);
 
-int gpr_replica_define_segment(char *segment);
+mca_gpr_replica_segment_t *gpr_replica_define_segment(char *segment);
+
+int gpr_replica_construct_synchro(ompi_registry_synchro_mode_t synchro_mode,
+				  ompi_registry_mode_t addr_mode,
+				  char *segment, char **tokens, int trigger,
+				  mca_gpr_notify_id_t id_tag);
+
+ompi_registry_notify_message_t *gpr_replica_construct_notify_message(ompi_registry_mode_t addr_mode,
+								     char *segment, char **tokens);
+
+void gpr_replica_process_triggers(ompi_registry_notify_message_t *message,
+				  mca_gpr_notify_id_t id_tag);
