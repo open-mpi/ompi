@@ -20,7 +20,8 @@
 
 #include <stdio.h>
 
-extern int mca_base_yylex(void);
+int mca_base_yylex(void);
+int mca_base_param_init_buffer(FILE *file);
 
 extern FILE *mca_base_yyin;
 extern bool mca_base_parse_done;

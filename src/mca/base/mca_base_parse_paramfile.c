@@ -31,6 +31,7 @@ int mca_base_parse_paramfile(const char *paramfile)
     }
 
     mca_base_parse_done = false;
+    mca_base_param_init_buffer(mca_base_yyin);
     while (!mca_base_parse_done) {
         val = mca_base_yylex();
         switch (val) {
