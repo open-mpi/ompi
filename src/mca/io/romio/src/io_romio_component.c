@@ -111,7 +111,7 @@ mca_io_base_component_1_0_0_t mca_io_romio_component = {
 
     /* Progression of non-blocking requests */
 
-    progress
+    (mca_io_base_component_progress_fn_t) progress
 };
 
 

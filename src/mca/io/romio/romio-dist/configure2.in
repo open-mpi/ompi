@@ -877,7 +877,10 @@ else
     F77=":"
 fi
 #
-PAC_C_INLINE
+# This is checked by the top-level OpenMPI configure-script.
+# Avoid redefinition
+#
+# PAC_C_INLINE
 
 # Header files
 PAC_CHECK_HEADERS(unistd.h)

@@ -186,7 +186,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
                struct mca_ptl_base_peer_t *peer = peers[proc];
 #if OMPI_HAVE_THREADS == 1
                char path[PATH_MAX];
-               int flags;
+               /* int flags; */
 #endif
 
                /* initialize the peers information */

@@ -29,8 +29,12 @@ AC_DEFUN([OMPI_INTL_PTHREAD_TRY_LINK], [
 # Make sure that we can run a small application in C or C++, which
 # ever is the current language.  Do make sure that C or C++ is the
 # current language.
+#
+# As long as this is not being run....
+# pthread_t may be anything from an int to a struct -- init with self-tid.
+#
     AC_TRY_LINK([#include <pthread.h>],
-                 [pthread_t th; pthread_join(th, 0);
+                 [pthread_t th=pthread_self(); pthread_join(th, 0);
                  pthread_attr_init(0); pthread_cleanup_push(0, 0);
                  pthread_create(0,0,0,0); pthread_cleanup_pop(0); ],
                  [$1], [$2])

@@ -275,7 +275,7 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
     }
 
     OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_fifo_thread, ompi_thread_t);
-    mca_ptl_sm_component.sm_fifo_thread.t_run = mca_ptl_sm_component_event_thread;
+    mca_ptl_sm_component.sm_fifo_thread.t_run = (ompi_thread_fn_t) mca_ptl_sm_component_event_thread;
     ompi_thread_start(&mca_ptl_sm_component.sm_fifo_thread);
 #endif
 
