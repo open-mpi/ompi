@@ -17,7 +17,7 @@ ompi_bitmap_SOURCES = ompi_bitmap.c
 ompi_bitmap_LDADD = \
         $(top_builddir)/src/class/ompi_bitmap.lo \
         $(top_builddir)/src/class/ompi_object.lo \
-        $(top_builddir)/src/mem/malloc.lo \
+        $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/threads/mutex.lo \
         $(top_builddir)/src/threads/mutex_pthread.lo \
@@ -29,7 +29,7 @@ ompi_list_SOURCES = ompi_list.c
 ompi_list_LDADD = \
         $(top_builddir)/src/class/ompi_list.lo \
         $(top_builddir)/src/class/ompi_object.lo \
-        $(top_builddir)/src/mem/malloc.lo \
+        $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/threads/mutex.lo \
         $(top_builddir)/src/threads/mutex_pthread.lo \
@@ -42,7 +42,7 @@ ompi_hash_table_LDADD = \
         $(top_builddir)/src/class/ompi_hash_table.lo \
         $(top_builddir)/src/class/ompi_list.lo \
         $(top_builddir)/src/class/ompi_object.lo \
-        $(top_builddir)/src/mem/malloc.lo \
+        $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/threads/mutex.lo \
         $(top_builddir)/src/threads/mutex_pthread.lo \
@@ -54,7 +54,7 @@ ompi_pointer_array_SOURCES = ompi_pointer_array.c
 ompi_pointer_array_LDADD = \
         $(top_builddir)/src/class/ompi_pointer_array.lo \
         $(top_builddir)/src/class/ompi_object.lo \
-        $(top_builddir)/src/mem/malloc.lo \
+        $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/threads/mutex.lo \
         $(top_builddir)/src/threads/mutex_pthread.lo \
@@ -67,7 +67,7 @@ ompi_value_array_SOURCES = ompi_value_array.c
 ompi_value_array_LDADD = \
         $(top_builddir)/src/class/ompi_value_array.lo \
         $(top_builddir)/src/class/ompi_object.lo \
-        $(top_builddir)/src/mem/malloc.lo \
+        $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/threads/mutex.lo \
         $(top_builddir)/src/threads/mutex_pthread.lo \

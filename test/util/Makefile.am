@@ -15,7 +15,7 @@ noinst_PROGRAMS = \
 ompi_argv_SOURCES = ompi_argv.c
 ompi_argv_LDADD = \
         $(top_builddir)/src/class/ompi_object.lo \
-        $(top_builddir)/src/mem/malloc.lo \
+        $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/util/argv.lo \
         $(top_builddir)/src/util/strncpy.lo \
@@ -30,7 +30,7 @@ ompi_os_path_SOURCES = ompi_os_path.c
 ompi_os_path_LDADD = \
 	$(top_builddir)/src/util/sys_info.lo \
         $(top_builddir)/src/class/ompi_object.lo \
-        $(top_builddir)/src/mem/malloc.lo \
+        $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/util/argv.lo \
         $(top_builddir)/src/util/strncpy.lo \
@@ -47,7 +47,7 @@ ompi_sys_info_SOURCES = ompi_sys_info.c
 ompi_sys_info_LDADD = \
 	$(top_builddir)/src/util/sys_info.lo \
         $(top_builddir)/src/class/ompi_object.lo \
-        $(top_builddir)/src/mem/malloc.lo \
+        $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/util/argv.lo \
         $(top_builddir)/src/util/strncpy.lo \
@@ -62,7 +62,7 @@ ompi_os_create_dirpath_SOURCES = ompi_os_create_dirpath.c
 ompi_os_create_dirpath_LDADD = \
 	$(top_builddir)/src/util/sys_info.lo \
         $(top_builddir)/src/class/ompi_object.lo \
-        $(top_builddir)/src/mem/malloc.lo \
+        $(top_builddir)/src/util/malloc.lo \
         $(top_builddir)/src/util/output.lo \
         $(top_builddir)/src/util/argv.lo \
         $(top_builddir)/src/util/strncpy.lo \
