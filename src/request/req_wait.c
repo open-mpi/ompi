@@ -17,7 +17,7 @@ int ompi_request_wait_any(
     int c;
 #endif
     size_t i, null_requests;
-    int rc;
+    int rc = OMPI_SUCCESS;
     int completed = -1;
     ompi_request_t **rptr;
     ompi_request_t *request;
@@ -28,7 +28,7 @@ int ompi_request_wait_any(
     for (c = 0; completed < 0 && c < ompi_request_poll_iterations; c++) {
         rptr = requests;
         null_requests = 0;
-        for (i = 0; i < count; i++) {
+        for (i = 0; i < count; i++, rptr++) {
             request = *rptr;
             if (MPI_REQUEST_NULL == request) {
                 if(++null_requests == count)
@@ -39,7 +39,6 @@ int ompi_request_wait_any(
                 completed = i;
                 goto finished;
             } 
-            rptr++;
         }
     }
 #endif
@@ -50,7 +49,7 @@ int ompi_request_wait_any(
         ompi_request_waiting++;
         rptr = requests;
         null_requests = 0;
-        for (i = 0; i < count; i++) {
+        for (i = 0; i < count; i++, rptr++) {
             request = *rptr;
             if (MPI_REQUEST_NULL == request) {
                 null_requests++;
@@ -60,7 +59,6 @@ int ompi_request_wait_any(
                 completed = i;
                 break;
             }
-            rptr++;
         }
         if(null_requests == count)
             break;
@@ -75,7 +73,6 @@ finished:
 
     if(null_requests == count) {
         *index = MPI_UNDEFINED;
-        *status = ompi_request_null.req_status;
     } else {
 
         /* return status */
