@@ -41,20 +41,21 @@
  *
  */
 
-typedef enum {
-    OMPI_BYTE, /**< a byte of data */
-    OMPI_INT8,  /**< an 8-bit integer */
-    OMPI_INT16, /**< a 16 bit integer */
-    OMPI_INT32, /**< a 32 bit integer */
-    OMPI_STRING, /**< a NULL terminated string */
-    OMPI_NAME,  /**< an ompi_process_name_t */
-    OMPI_JOBID,  /**< a jobid */
-    OMPI_CELLID, /**< a cellid */
-    OMPI_NODE_STATE,  /**< node status flag */
-    OMPI_PROCESS_STATUS,  /**< process status key */
-    OMPI_EXIT_CODE,       /**< process exit code */
-    OMPI_PACKED /**< already packed data. */
-} ompi_pack_type_t;
+typedef uint8_t ompi_pack_type_t;
+
+#define OMPI_BYTE               (ompi_pack_type_t)   1     /**< a byte of data */
+#define OMPI_INT8               (ompi_pack_type_t)   2     /**< an 8-bit integer */
+#define OMPI_INT16              (ompi_pack_type_t)   3     /**< a 16 bit integer */
+#define OMPI_INT32              (ompi_pack_type_t)   4     /**< a 32 bit integer */
+#define OMPI_STRING             (ompi_pack_type_t)   5     /**< a NULL terminated string */
+#define OMPI_NAME               (ompi_pack_type_t)   6     /**< an ompi_process_name_t */
+#define OMPI_JOBID              (ompi_pack_type_t)   7     /**< a jobid */
+#define OMPI_CELLID             (ompi_pack_type_t)   8     /**< a cellid */
+#define OMPI_NODE_STATE         (ompi_pack_type_t)   9     /**< node status flag */
+#define OMPI_PROCESS_STATUS     (ompi_pack_type_t)  10     /**< process status key */
+#define OMPI_EXIT_CODE          (ompi_pack_type_t)  11     /**< process exit code */
+#define OMPI_PACKED             (ompi_pack_type_t)  12     /**< already packed data. */
+
 
 typedef struct ompi_buffer_internal_t* ompi_buffer_t;
 
