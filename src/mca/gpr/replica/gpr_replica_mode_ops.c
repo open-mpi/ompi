@@ -183,10 +183,9 @@ void mca_gpr_replica_triggers_inactive_nl(mca_ns_base_jobid_t jobid)
 }
 
 
-int mca_gpr_replica_assume_ownership(char *segment)
+int mca_gpr_replica_assign_ownership(char *segment, mca_ns_base_jobid_t jobid)
 {
     int rc;
-    mca_ns_base_jobid_t jobid;
     mca_gpr_replica_segment_t *seg;
 
     /* protect against error */
@@ -196,23 +195,21 @@ int mca_gpr_replica_assume_ownership(char *segment)
 
     OMPI_THREAD_LOCK(&mca_gpr_replica_mutex);
 
-    jobid = ompi_name_server.get_jobid(ompi_rte_get_self());
-
     /* find the segment */
     seg = mca_gpr_replica_find_seg(true, segment, jobid);
     if (NULL == seg) {  /* segment couldn't be found or created */
-	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
-	return OMPI_ERROR;
+        	OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
+        	return OMPI_ERROR;
     }
 
-    rc = mca_gpr_replica_assume_ownership_nl(seg, jobid);
+    rc = mca_gpr_replica_assign_ownership_nl(seg, jobid);
 
     OMPI_THREAD_UNLOCK(&mca_gpr_replica_mutex);
 
     return rc;
 }
 
-int mca_gpr_replica_assume_ownership_nl(mca_gpr_replica_segment_t *seg, mca_ns_base_jobid_t jobid)
+int mca_gpr_replica_assign_ownership_nl(mca_gpr_replica_segment_t *seg, mca_ns_base_jobid_t jobid)
 {
 
     seg->owning_job = jobid;

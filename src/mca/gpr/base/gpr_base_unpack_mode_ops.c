@@ -47,13 +47,13 @@ int mca_gpr_base_unpack_notify_off(ompi_buffer_t cmd)
     return OMPI_SUCCESS;
 }
 
-int mca_gpr_base_unpack_assume_ownership(ompi_buffer_t cmd)
+int mca_gpr_base_unpack_assign_ownership(ompi_buffer_t cmd)
 {
     mca_gpr_cmd_flag_t command;
     int32_t response;
 
     if ((OMPI_SUCCESS != ompi_unpack(cmd, &command, 1, MCA_GPR_OOB_PACK_CMD)) ||
-	(MCA_GPR_ASSUME_OWNERSHIP_CMD != command)) {
+	(MCA_GPR_ASSIGN_OWNERSHIP_CMD != command)) {
 	return OMPI_ERROR;
     }
 

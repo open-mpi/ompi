@@ -197,7 +197,13 @@ int main(int argc, char *argv[])
      */
     asprintf(&segment, "%s-%s", OMPI_RTE_JOB_STATUS_SEGMENT,
 	     ompi_name_server.get_jobid_string(ompi_rte_get_self()));
-    ompi_registry.assume_ownership(segment);
+    ompi_registry.assign_ownership(segment, ompi_name_server.get_jobid(ompi_rte_get_self()));
+    free(segment);
+    
+    asprintf(&segment, "%s-%s", OMPI_RTE_OOB_SEGMENT,
+        ompi_name_server.get_jobid_string(ompi_rte_get_self()));
+    ompi_registry.assign_ownership(segment, ompi_name_server.get_jobid(ompi_rte_get_self()));
+    free(segment);
 
     my_status.status_key = OMPI_PROC_STARTING;
     my_status.exit_code = 0;

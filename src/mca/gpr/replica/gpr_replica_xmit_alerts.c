@@ -124,7 +124,8 @@ mca_gpr_replica_construct_startup_msg_nl(mca_ns_base_jobid_t jobid,
 			OMPI_NAME_ARGS(*ompi_rte_get_self()), seg->name, (int)seg->owning_job);
 	}
 
-	if (jobid == seg->owning_job) {  /* this segment is part of the specified jobid */
+	if ((jobid == seg->owning_job) ||    /* this segment is part of the specified jobid */
+        (MCA_NS_BASE_JOBID_MAX == seg->owning_job)) {    /* wildcard segment - belongs to all */
 
 	    ompi_pack_string(msg, seg->name);  /* pack the segment name */
 	    include_data = false;
