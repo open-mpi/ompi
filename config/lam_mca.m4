@@ -125,7 +125,7 @@ for type in $found_types; do
     for module in $found_modules; do
         m=`basename "$module"`
 
-        if test -d $module -a ! -f $module/.lam_ignore; then
+        if test -d $srcdir/$module -a ! -f $srcdir/$module/.lam_ignore; then
             lam_show_subtitle "MCA module $type:$m (no configure script)"
 
 	    # Remove any possible sym link in the mca-dynamic tree
