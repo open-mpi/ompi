@@ -60,7 +60,7 @@ ompi_datatype_t ompi_mpi_datatype_null =
 
 ompi_datatype_t ompi_mpi_loop = INIT_BASIC_TYPE( DT_LOOP, LOOP );
 ompi_datatype_t ompi_mpi_end_loop = INIT_BASIC_TYPE( DT_END_LOOP, END_LOOP );
-ompi_datatype_t ompi_mpi_ub = INIT_BASIC_TYPE( DT_LB, UB );
+ompi_datatype_t ompi_mpi_ub = INIT_BASIC_TYPE( DT_UB, UB );
 ompi_datatype_t ompi_mpi_lb = INIT_BASIC_TYPE( DT_LB, LB );
 ompi_datatype_t ompi_mpi_char = INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, CHAR );
 ompi_datatype_t ompi_mpi_character = INIT_BASIC_DATA( char, OMPI_ALIGNMENT_CHAR, CHARACTER );
