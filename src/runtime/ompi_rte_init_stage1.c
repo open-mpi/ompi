@@ -150,5 +150,23 @@ int ompi_rte_init_stage1(bool *allow_multi_user_threads, bool *have_hidden_threa
     *allow_multi_user_threads &= user_threads;
     *have_hidden_threads |= hidden_threads;
 
+    /*
+     * Name Server - just do the open so we can access base components
+     */
+    if (OMPI_SUCCESS != (ret = mca_ns_base_open())) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in ns_base_open\n");
+	return ret;
+    }
+
+    /*
+     * Process Control and Monitoring Client - just open for now
+     */
+    if (OMPI_SUCCESS != (ret = mca_pcmclient_base_open())) {
+	/* JMS show_help */
+	printf("show_help: ompi_rte_init failed in pcmclient_base_open\n");
+	return ret;
+    }
+
     return OMPI_SUCCESS;
 }

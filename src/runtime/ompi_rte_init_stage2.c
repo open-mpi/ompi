@@ -37,13 +37,9 @@ int ompi_rte_init_stage2(bool *allow_multi_user_threads, bool *have_hidden_threa
     int pcm_modules_len;
 
     /*
-     * Name Server
+     * Name Server - base already opened in stage1, so just complete the selection
+     * of the proper module
      */
-    if (OMPI_SUCCESS != (ret = mca_ns_base_open())) {
-	/* JMS show_help */
-	printf("show_help: ompi_rte_init failed in ns_base_open\n");
-	return ret;
-    }
     user_threads = true;
     hidden_threads = false;
     if (OMPI_SUCCESS != (ret = mca_ns_base_select(&user_threads,
@@ -56,13 +52,9 @@ int ompi_rte_init_stage2(bool *allow_multi_user_threads, bool *have_hidden_threa
     *have_hidden_threads |= hidden_threads;
 
     /*
-     * Process Control and Monitoring Client
+     * Process Control and Monitoring Client - base already opened in stage1, so
+     * just complete selection of proper module
      */
-    if (OMPI_SUCCESS != (ret = mca_pcmclient_base_open())) {
-	/* JMS show_help */
-	printf("show_help: ompi_rte_init failed in pcmclient_base_open\n");
-	return ret;
-    }
     user_threads = true;
     hidden_threads = false;
     if (OMPI_SUCCESS != (ret = mca_pcmclient_base_select(&user_threads, 
