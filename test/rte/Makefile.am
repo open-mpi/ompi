@@ -16,27 +16,15 @@ AM_CPPFLAGS = \
             -DLAM_CONFIGURE_HOST="\"@LAM_CONFIGURE_HOST@\"" \
             -DLAM_CONFIGURE_DATE="\"@LAM_CONFIGURE_DATE@\""
 
-libs = $(top_builddir)/src/libmpi.la
-
 bin_PROGRAMS = \
         openmpi
 
 openmpi_SOURCES = \
         ompi_session_dir.c
 
-bogus_sources = \
-        openmpi.h \
-        ompi_init.h \
-        ompi_init.c \
-        openmpi.c 
-
 openmpi_LDADD = \
-        $(libs) \
-        $(LIBMPI_EXTRA_LIBS) \
-        $(LIBLAM_EXTRA_LIBS) \
-        $(top_builddir)/src/util/os_path.lo \
-        $(top_builddir)/src/util/os_create_dirpath.lo \
-        $(top_builddir)/src/util/sys_info.lo
+       $(top_builddir)/src/mca/pcm/base/pcm_base_open.lo \
+       $(top_builddir)/src/libmpi.la
 
 openmpi_DFLAGS = $(LIBMPI_EXTRA_LDFLAGS) $(LIBLAM_EXTRA_LDFLAGS)
 openmpi_DEPENDENCIES = $(libs) \
