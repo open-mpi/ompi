@@ -46,7 +46,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLGATHERV,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_allgatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr)
+void mpi_allgatherv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
+		      char *recvbuf, MPI_Fint *recvcount, MPI_Fint *displs,
+		      MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    MPI_Datatype c_sendtype, c_recvtype;
+
+    c_comm = MPI_Comm_f2c(*comm);
+    c_sendtype = MPI_Type_f2c(*sendtype);
+    c_recvtype = MPI_Type_f2c(*recvtype);
+
+    *ierr = MPI_Allgatherv(sendbuf, *sendcount, c_sendtype, 
+			  recvbuf, *recvcount, displs, c_recvtype, c_comm);
 }

@@ -46,7 +46,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_COORDS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_cart_coords_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxdims, MPI_Fint *coords, MPI_Fint *ierr)
+void mpi_cart_coords_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxdims,
+		       MPI_Fint *coords, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+
+    c_comm = MPI_Comm_f2c(*comm);
+    
+    *ierr = MPI_Cart_coords(c_comm, *rank, *maxdims, coords);
 }

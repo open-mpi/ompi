@@ -48,5 +48,5 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CLOSE_PORT,
 
 void mpi_close_port_f(char *port_name, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    *ierr = MPI_Close_port(port_name);
 }

@@ -46,7 +46,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_SUB,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_cart_sub_f(MPI_Fint *comm, MPI_Fint *remain_dims, MPI_Fint *new_comm, MPI_Fint *ierr)
+void mpi_cart_sub_f(MPI_Fint *comm, MPI_Fint *remain_dims,
+		    MPI_Fint *new_comm, MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm, c_new_comm;
+    c_comm = MPI_Comm_f2c(*comm);
+    c_new_comm = MPI_Comm_f2c(*new_comm);
+
+    *ierr = MPI_Cart_sub(c_comm, remain_dims, &c_new_comm);
 }

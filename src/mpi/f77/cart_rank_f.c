@@ -33,12 +33,12 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CART_RANK,
 
 #if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_CART_RANK,
-                           mpi_cart_rank,
-                           mpi_cart_rank_,
-                           mpi_cart_rank__,
-                           mpi_cart_rank_f,
-                           (MPI_Fint *comm, MPI_Fint *coords, MPI_Fint *rank, MPI_Fint *ierr),
-                           (comm, coords, rank, ierr) )
+			    mpi_cart_rank,
+			    mpi_cart_rank_,
+			    mpi_cart_rank__,
+			    mpi_cart_rank_f,
+			    (MPI_Fint *comm, MPI_Fint *coords, MPI_Fint *rank, MPI_Fint *ierr),
+			    (comm, coords, rank, ierr) )
 #endif
 
 
@@ -46,7 +46,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CART_RANK,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_cart_rank_f(MPI_Fint *comm, MPI_Fint *coords, MPI_Fint *rank, MPI_Fint *ierr)
+void mpi_cart_rank_f(MPI_Fint *comm, MPI_Fint *coords, MPI_Fint *rank, 
+		     MPI_Fint *ierr)
 {
-  /* This function not yet implemented */
+    MPI_Comm c_comm;
+    c_comm = MPI_Comm_f2c(*comm);
+
+    *ierr = MPI_Cart_rank(c_comm, coords, rank);
 }
