@@ -68,7 +68,6 @@ struct mca_ptl_gm_module_t {
     /*struct mca_ptl_gm_addr_t *proc_id_table;*/
 
     ompi_free_list_t gm_send_frags;
-    ompi_free_list_t gm_recv_frags;
     ompi_free_list_t gm_recv_frags_free;
     ompi_list_t gm_send_frags_queue;
     ompi_list_t gm_pending_acks;

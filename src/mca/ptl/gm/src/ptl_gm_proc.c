@@ -80,7 +80,6 @@ mca_ptl_gm_proc_create (mca_ptl_gm_module_t * ptl, ompi_proc_t * ompi_proc)
 {
     int         rc;
     size_t      size;
-    int         i;
     mca_ptl_gm_proc_t *ptl_proc;
 
     ptl_proc = mca_ptl_gm_proc_lookup_ompi (ompi_proc);

@@ -3,7 +3,6 @@
  * $HEADER$
  */
 
-#if 0
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -23,6 +22,7 @@
 #include "ptl_gm_proc.h"
 #include "ptl_gm_sendfrag.h"
 
+#if 0
 int mca_ptl_gm_peer_send(mca_ptl_gm_peer_t *ptl_peer,
                         mca_ptl_gm_send_frag_t *fragment, 
                         struct mca_pml_base_send_request_t *sendreq, 

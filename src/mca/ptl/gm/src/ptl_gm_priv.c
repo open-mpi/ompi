@@ -169,134 +169,119 @@ void ptl_gm_ctrl_frag(struct mca_ptl_gm_module_t *ptl,
 
 
 
-void ptl_gm_data_frag( struct mca_ptl_gm_module_t *ptl,
-		       gm_recv_event_t* event )
+mca_ptl_gm_recv_frag_t* ptl_gm_data_frag( struct mca_ptl_gm_module_t *ptl,
+                                          gm_recv_event_t* event )
 {
-   #if 1
-   mca_ptl_gm_recv_frag_t * recv_frag;
-   bool matched;
-   mca_ptl_base_header_t *header;
+    mca_ptl_gm_recv_frag_t * recv_frag;
+    bool matched;
+    mca_ptl_base_header_t *header;
 
-   header = (mca_ptl_base_header_t *)gm_ntohp(event->recv.message);
+    header = (mca_ptl_base_header_t *)gm_ntohp(event->recv.message);
 
-   recv_frag = mca_ptl_gm_alloc_recv_frag( (struct mca_ptl_base_module_t*)ptl );
-   /* allocate a receive fragment */
+    recv_frag = mca_ptl_gm_alloc_recv_frag( (struct mca_ptl_base_module_t*)ptl );
+    /* allocate a receive fragment */
    
-   recv_frag->frag_recv.frag_base.frag_peer = NULL;
-   recv_frag->frag_recv.frag_request = NULL;
-   recv_frag->frag_recv.frag_is_buffered = false;
-   recv_frag->frag_hdr_cnt = 0;
-   recv_frag->frag_msg_cnt = 0;
-   recv_frag->frag_ack_pending = false;
-   recv_frag->frag_progressed = 0;
+    recv_frag->frag_recv.frag_base.frag_peer = NULL;
+    recv_frag->frag_recv.frag_request = NULL;
+    recv_frag->frag_recv.frag_is_buffered = false;
+    recv_frag->frag_hdr_cnt = 0;
+    recv_frag->frag_msg_cnt = 0;
+    recv_frag->frag_ack_pending = false;
+    recv_frag->frag_progressed = 0;
    
-   recv_frag->frag_recv.frag_base.frag_header = *header;
+    recv_frag->frag_recv.frag_base.frag_header = *header;
 
-   recv_frag->frag_recv.frag_base.frag_addr =
-            (char *)header + sizeof(mca_ptl_base_header_t);
-   recv_frag->frag_recv.frag_base.frag_size = gm_ntohl(event->recv.length);
-   /* header->hdr_frag.hdr_frag_length; */
+    recv_frag->frag_recv.frag_base.frag_addr = header;
+    recv_frag->frag_recv.frag_base.frag_size = gm_ntohl(event->recv.length);
 
-   matched = mca_ptl_base_match(
-                    &recv_frag->frag_recv.frag_base.frag_header.hdr_match,
-                    &(recv_frag->frag_recv),
-                    NULL );
+    recv_frag->matched = false;
+    recv_frag->have_allocated_buffer = false;
+
+    matched = mca_ptl_base_match(
+                                 &recv_frag->frag_recv.frag_base.frag_header.hdr_match,
+                                 &(recv_frag->frag_recv),
+                                 NULL );
 
 
-   if (!matched)
-   {
-    
-    ompi_output(0,"matching receive not yet posted\n");
-   }
-   /**/
-   #endif
-
+    if (!matched) {
+        ompi_output(0,"matching receive not yet posted\n");
+        return recv_frag;
+    }
+    /* this one was matched => nothing more to do */
+    return NULL;
 }
 
 
 
-int ptl_gm_handle_recv(mca_ptl_gm_module_t *ptl, gm_recv_event_t* event )
+mca_ptl_gm_recv_frag_t* ptl_gm_handle_recv( mca_ptl_gm_module_t *ptl, gm_recv_event_t* event )
 {
+    mca_ptl_gm_recv_frag_t* frag = NULL;
+    mca_ptl_base_header_t *header;
 
-  #if 1
-   /*int matched;*/
-   mca_ptl_base_header_t *header;
+    header = (mca_ptl_base_header_t *)gm_ntohp(event->recv.message);
 
-   header = (mca_ptl_base_header_t *)gm_ntohp(event->recv.message);
- 
-   switch(header->hdr_common.hdr_type)
-   {
+    switch(header->hdr_common.hdr_type) {
     case MCA_PTL_HDR_TYPE_MATCH:
     case MCA_PTL_HDR_TYPE_FRAG:
-         ptl_gm_data_frag( ptl, event );
-         break;
+        frag = ptl_gm_data_frag( ptl, event );
+        break;
 
     case MCA_PTL_HDR_TYPE_ACK:
     case MCA_PTL_HDR_TYPE_NACK:
-         ptl_gm_ctrl_frag(ptl,header);
-         break;
-   default:
+        ptl_gm_ctrl_frag(ptl,header);
+        break;
+    default:
         ompi_output(0,"[%s:%d] unexpected frag type %d\n",
                     __FILE__,__LINE__,header->hdr_common.hdr_type);
         break;
     }
- #endif
-  return OMPI_SUCCESS;
-
+    return frag;
 }
 
 
 int mca_ptl_gm_incoming_recv (mca_ptl_gm_component_t * gm_comp)
 {
-/*#if 0*/
-    int i,rc;
-    int num_ptls;
+    int i;
     gm_recv_event_t *event;
     void * mesg;
     mca_ptl_gm_module_t *ptl;
     mca_ptl_gm_recv_frag_t * frag;
-    ompi_list_item_t* item;
-    num_ptls = gm_comp->gm_num_ptl_modules;
 
-   for (i=0; i< num_ptls; i++)
-   {
+    for( i = 0; i< gm_comp->gm_num_ptl_modules; i++) {
         ptl = gm_comp->gm_ptl_modules[i];
 
-      {
-         event = gm_receive(ptl->my_port);
+        event = gm_receive(ptl->my_port);
 
-         switch (gm_ntohc(event->recv.type))
-         {
-          case GM_RECV_EVENT:
-          case GM_HIGH_RECV_EVENT:
-          case GM_PEER_RECV_EVENT:
-          case GM_HIGH_PEER_RECV_EVENT:
+        switch (gm_ntohc(event->recv.type)) {
+        case GM_RECV_EVENT:
+        case GM_HIGH_RECV_EVENT:
+        case GM_PEER_RECV_EVENT:
+        case GM_HIGH_PEER_RECV_EVENT:
             mesg = gm_ntohp(event->recv.message);
-            ptl_gm_handle_recv( ptl, event );
+            frag = ptl_gm_handle_recv( ptl, event );
+            if( (frag != NULL) && !(frag->matched) ) {
+                /* allocate temporary buffer: temporary until the fragment will be finally matched */
+                char* buffer = malloc( GM_SEND_BUF_SIZE );
+                /* copy the data from the registered buffer to the newly allocated one */
+                memcpy( buffer, mesg, gm_ntohl(event->recv.length) );
+                /* associate the buffer with the unexpected fragment */
+                frag->frag_recv.frag_base.frag_addr = buffer;
+                /* mark the fragment as having pending buffers */
+                frag->have_allocated_buffer = true;
+            }
+            break;
+        case GM_NO_RECV_EVENT:
+            break;
 
-            /* post a replacement buffer */ /*XXX: do this after frag done*/
-            OMPI_FREE_LIST_GET( &(ptl->gm_recv_frags), item, rc );
-           if(rc != OMPI_SUCCESS)
-              ompi_output(0,"unable to allocate a buffer\n");
-           frag = (mca_ptl_gm_recv_frag_t*)item;
-         /*frag =(mca_ptl_gm_recv_frag_t *) st_remove_first (*/
-                                                /*&ptl->gm_recv_frags);*/
-            gm_provide_receive_buffer(ptl->my_port,
-                                     frag->alloc_recv_buffer,
-                                     GM_SIZE,
-                                     GM_LOW_PRIORITY
-                                      );
-           case GM_NO_RECV_EVENT:
-                break;
+        default:
+            gm_unknown(ptl->my_port, event);
 
-           default:
-             gm_unknown(ptl->my_port, event);
-
-         }
-      }
-   }  
-   return 0;
-/* #endif*/
+        }
+        /* Alway repost the message */
+        gm_provide_receive_buffer( ptl->my_port, gm_ntohp(event->recv.message),
+                                   GM_SIZE, GM_LOW_PRIORITY );
+    }  
+    return 0;
 }
 
 

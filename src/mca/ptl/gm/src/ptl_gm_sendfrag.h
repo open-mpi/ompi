@@ -52,6 +52,8 @@ struct mca_ptl_gm_recv_frag_t {
     bool frag_ack_pending;
     void *alloc_recv_buffer;
     void *unex_recv_buffer;
+    bool matched;
+    bool have_allocated_buffer;
 };
 
 typedef struct mca_ptl_gm_recv_frag_t mca_ptl_gm_recv_frag_t;

@@ -314,81 +314,79 @@ mca_ptl_gm_get (struct mca_ptl_base_module_t *ptl,
  */
 
 void
-mca_ptl_gm_matched (mca_ptl_base_module_t * ptl,
-                    mca_ptl_base_recv_frag_t * frag)
+mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
+                    mca_ptl_base_recv_frag_t * frag )
 {
+    mca_pml_base_recv_request_t *request;
+    /*mca_ptl_base_recv_request_t *request;*/
+    mca_ptl_base_header_t *header;
+    int bytes_recv, rc;
+    mca_ptl_gm_module_t *gm_ptl;   
+    struct iovec iov[1];
 
-  /* might need to send an ack back */
-#if 1
-
-  mca_pml_base_recv_request_t *request;
-  /*mca_ptl_base_recv_request_t *request;*/
-  mca_ptl_base_header_t *header;
-  int bytes_recv, rc;
-  mca_ptl_gm_module_t *gm_ptl;   
-  struct iovec iov[1];
-
-
-  header = &frag->frag_base.frag_header;
-  request = frag->frag_request;
-  if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
+    header = &frag->frag_base.frag_header;
+    request = frag->frag_request;
+    if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK_MATCHED) {
 #if 0
-    int         rc;
-    mca_ptl_gm_send_frag_t *ack;
-    recv_frag = (mca_ptl_gm_recv_frag_t *) frag;
-    ack = mca_ptl_gm_alloc_send_frag(ptl,NULL);
+        /* might need to send an ack back */
+        int         rc;
+        mca_ptl_gm_send_frag_t *ack;
+        recv_frag = (mca_ptl_gm_recv_frag_t *) frag;
+        ack = mca_ptl_gm_alloc_send_frag(ptl,NULL);
 
-    if (NULL == ack) {
-      ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n",
-		  __FILE__,___LINE__);
-      OMPI_THREAD_LOCK (&mca_ptl_gm_module.gm_lock);
-      recv_frag->frag_ack_pending = true;
-      ompi_list_append (&mca_ptl_gm_module.gm_pending_acks,
-			(ompi_list_item_t *) frag);
-      OMPI_THREAD_UNLOCK (&mca_ptl_gm_module.gm_lock);
-    } else {
-      mca_ptl_gm_send_frag_init_ack (ack, ptl,
-				     recv_frag->super.super.
-				     frag_peer, recv_frag);
-      /*XXX: check this*/
-      mca_ptl_gm_peer_send (ack->super.super.frag_peer, ack,0,0,0 );
+        if (NULL == ack) {
+            ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n",
+                        __FILE__,___LINE__);
+            OMPI_THREAD_LOCK (&mca_ptl_gm_module.gm_lock);
+            recv_frag->frag_ack_pending = true;
+            ompi_list_append (&mca_ptl_gm_module.gm_pending_acks,
+                              (ompi_list_item_t *) frag);
+            OMPI_THREAD_UNLOCK (&mca_ptl_gm_module.gm_lock);
+        } else {
+            mca_ptl_gm_send_frag_init_ack (ack, ptl,
+                                           recv_frag->super.super.
+                                           frag_peer, recv_frag);
+            /*XXX: check this*/
+            mca_ptl_gm_peer_send (ack->super.super.frag_peer, ack,0,0,0 );
+        }
+#endif
     }
-#endif
 
-  }
+    /* Here we expect that frag_addr is the beging of the buffer header included */
+    iov[0].iov_base = ((char*)frag->frag_base.frag_addr) + header->hdr_common.hdr_size;
+    bytes_recv = frag->frag_base.frag_size - header->hdr_common.hdr_size;
+    iov[0].iov_len = bytes_recv;
 
-  iov[0].iov_base = ((char*)frag->frag_base.frag_addr) + header->hdr_common.hdr_size;
-  bytes_recv = frag->frag_base.frag_size - header->hdr_common.hdr_size;
-  iov[0].iov_len = bytes_recv;
+    /*process fragment if complete */
+    if (header->hdr_frag.hdr_frag_length > 0) {
+        ompi_proc_t *proc;
 
-  /*process fragment if complete */
-  if (header->hdr_frag.hdr_frag_length > 0) {
-    ompi_proc_t *proc;
+        proc = ompi_comm_peer_lookup(request->req_base.req_comm,
+                                     request->req_base.req_peer);
 
-    proc = ompi_comm_peer_lookup(request->req_base.req_comm,
-				 request->req_base.req_peer);
+        ompi_convertor_copy(proc->proc_convertor,
+                            &frag->frag_base.frag_convertor);
+        ompi_convertor_init_for_recv(
+                                     &frag->frag_base.frag_convertor,
+                                     0,
+                                     request->req_base.req_datatype,
+                                     request->req_base.req_count,
+                                     request->req_base.req_addr,
+                                     header->hdr_frag.hdr_frag_offset);
+        rc = ompi_convertor_unpack(&frag->frag_base.frag_convertor, &(iov[0]), 1);
+        assert( rc == 1 );
+    } 
 
-    ompi_convertor_copy(proc->proc_convertor,
-			&frag->frag_base.frag_convertor);
-    ompi_convertor_init_for_recv(
-				 &frag->frag_base.frag_convertor,
-				 0,
-				 request->req_base.req_datatype,
-				 request->req_base.req_count,
-				 request->req_base.req_addr,
-				 header->hdr_frag.hdr_frag_offset);
-    rc = ompi_convertor_unpack(&frag->frag_base.frag_convertor, &(iov[0]), 1);
-    assert( rc == 1 );
-  } 
+    /*update progress*/   /* XXX : check this */
+    ptl->ptl_recv_progress( ptl, request, bytes_recv, iov[0].iov_len );
 
-  /*update progress*/   /* XXX : check this */
-  ptl->ptl_recv_progress( ptl, request, bytes_recv, iov[0].iov_len );
-
-
-  /*return to free list   */
-  gm_ptl = (mca_ptl_gm_module_t *)ptl;
-  OMPI_FREE_LIST_RETURN(&(gm_ptl->gm_recv_frags),(ompi_list_item_t*)frag); 
-
-
-#endif
+    /* Now update the status of the fragment */
+    ((mca_ptl_gm_recv_frag_t*)frag)->matched = true;
+    if( ((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer == true ) {
+        free( frag->frag_base.frag_addr );
+        ((mca_ptl_gm_recv_frag_t*)frag)->have_allocated_buffer = false;
+    }
+    /*return to free list   */
+    gm_ptl = (mca_ptl_gm_module_t *)ptl;
+    OMPI_FREE_LIST_RETURN(&(gm_ptl->gm_recv_frags_free), (ompi_list_item_t*)frag); 
 }
