@@ -6,13 +6,20 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
+#include "runtime/runtime.h"
+#include "datatype/datatype.h"
+#include "errhandler/errhandler.h"
+#include "communicator/communicator.h"
 
 #if LAM_HAVE_WEAK_SYMBOLS && LAM_PROFILING_DEFINES
 #pragma weak MPI_Type_match_size = PMPI_Type_match_size
 #endif
 
+static char FUNC_NAME[] = "MPI_Type_match_size";
+
 int
 MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type)
 {
-    return MPI_SUCCESS;
+   /* TODO */
+   return MPI_SUCCESS;
 }
