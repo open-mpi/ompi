@@ -11,13 +11,6 @@ DIST_SUBDIRS = base $(MCA_coll_ALL_SUBDIRS)
 
 headers = coll.h
 
-noinst_LTLIBRARIES = libmca_coll.la
-libmca_coll_la_SOURCES =
-libmca_coll_la_LIBADD = \
-        base/libmca_coll_base.la \
-        $(MCA_coll_STATIC_LTLIBS)
-libmca_coll_la_DEPENDENCIES = $(libmca_coll_la_LIBADD)
-
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS

@@ -1,4 +1,3 @@
-# -*- makefile -*-
 #
 # $HEADER$
 #
@@ -51,11 +50,6 @@ headers = bindings.h
 
 libmpi_c_la_SOURCES = \
         attr_fn.c
-
-
-libmpi_c_la_LIBADD  = \
-                    $(mpi_lib) \
-                    $(pmpi_lib)
 
 libmpi_c_mpi_la_SOURCES = \
         abort.c \
