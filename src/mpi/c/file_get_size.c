@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_File_get_size";
 
 
+OMPI_EXPORT
 int MPI_File_get_size(MPI_File fh, MPI_Offset *size)
 {
     int rc;

@@ -36,6 +36,7 @@ static const char FUNC_NAME[] = "MPI_Info_get_nkeys";
  * This function returns the number of elements in the list 
  * containing the key-value pairs
  */
+OMPI_EXPORT
 int MPI_Info_get_nkeys(MPI_Info info, int *nkeys) 
 {
     int err;

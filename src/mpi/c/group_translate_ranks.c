@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Group_translate_ranks";
 
 
+OMPI_EXPORT
 int MPI_Group_translate_ranks(MPI_Group group1, int n_ranks, int *ranks1,
                               MPI_Group group2, int *ranks2) 
 {

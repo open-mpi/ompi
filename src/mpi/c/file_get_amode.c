@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_File_get_amode";
 
 
+OMPI_EXPORT
 int MPI_File_get_amode(MPI_File fh, int *amode)
 {
     int rc;

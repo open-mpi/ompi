@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FENCE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_win_fence_f(MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr)
 {
     MPI_Win c_win = MPI_Win_f2c(*win);

@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ADD_ERROR_CLASS,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_add_error_class_f(MPI_Fint *errorclass, MPI_Fint *ierr)
 {
     OMPI_SINGLE_NAME_DECL(errorclass);

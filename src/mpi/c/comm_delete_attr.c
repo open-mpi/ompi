@@ -19,6 +19,7 @@
 static const char FUNC_NAME[] = "MPI_Comm_delete_attr";
 
 
+OMPI_EXPORT
 int MPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval) 
 {
     int ret;

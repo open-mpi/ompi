@@ -22,6 +22,7 @@
 static const char FUNC_NAME[] = "MPI_File_open";
 
 
+OMPI_EXPORT
 int MPI_File_open(MPI_Comm comm, char *filename, int amode,
                   MPI_Info info, MPI_File *fh)
 {

@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Cancel";
 
 
+OMPI_EXPORT
 int MPI_Cancel(MPI_Request *request) 
 {
     int rc;

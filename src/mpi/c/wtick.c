@@ -16,6 +16,7 @@
 #endif
 
 
+OMPI_EXPORT
 double MPI_Wtick(void) 
 {
     return (double)0.000001;

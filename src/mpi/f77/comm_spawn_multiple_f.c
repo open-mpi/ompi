@@ -50,6 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN_MULTIPLE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 			       char *array_argv,
 			       MPI_Fint *array_maxprocs,

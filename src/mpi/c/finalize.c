@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Finalize";
 
 
+OMPI_EXPORT
 int MPI_Finalize(void)
 {
   if (MPI_PARAM_CHECK) {

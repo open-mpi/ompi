@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Type_create_subarray";
 
 
+OMPI_EXPORT
 int MPI_Type_create_subarray(int ndims,
                              int size_array[],
                              int subsize_array[],

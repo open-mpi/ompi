@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Add_error_class";
 
 
+OMPI_EXPORT
 int MPI_Add_error_class(int *errorclass) 
 {
     int class;

@@ -28,6 +28,7 @@ static const char FUNC_NAME[] = "MPI_Comm_join";
 static int ompi_socket_send (int fd, char *buf, int len );
 static int ompi_socket_recv (int fd, char *buf, int len );
 
+OMPI_EXPORT
 int MPI_Comm_join(int fd, MPI_Comm *intercomm) 
 {
     int rc, tag=OMPI_COMM_JOIN_TAG;

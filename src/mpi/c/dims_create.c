@@ -26,9 +26,10 @@ static int getprimes(int num, int *pnprime, int **pprimes);
 
 
 /*
- * This is a utility function, no need to have anything in the lower layer for this
- * at all
+ * This is a utility function, no need to have anything in the lower
+ * layer for this at all
  */ 
+OMPI_EXPORT
 int MPI_Dims_create(int nnodes, int ndims, int *dims) 
 {
     int i;

@@ -48,6 +48,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_DELETE_ATTR,
 #endif
 static const char FUNC_NAME[] = "MPI_Win_delete_attr_f";
 
+OMPI_EXPORT
 void mpi_win_delete_attr_f(MPI_Fint *win, MPI_Fint *win_keyval, MPI_Fint *ierr)
 {
     MPI_Win c_win = MPI_Win_f2c( *win );

@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_SCATTER,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_scatter_f(char *sendbuf, MPI_Fint *sendcount, 
 		   MPI_Fint *sendtype, char *recvbuf,
 		   MPI_Fint *recvcount, MPI_Fint *recvtype,

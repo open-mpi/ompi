@@ -49,6 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_KEYVAL,
 
      static const char FUNC_NAME[] = "MPI_Comm_create_keyval_f";
 
+OMPI_EXPORT
 void mpi_comm_create_keyval_f(MPI_Fint *comm_copy_attr_fn,
 			      MPI_Fint *comm_delete_attr_fn,
 			      MPI_Fint *comm_keyval,

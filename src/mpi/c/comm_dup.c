@@ -19,6 +19,7 @@
 static const char FUNC_NAME[] = "MPI_Comm_dup";
 
 
+OMPI_EXPORT
 int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) 
 {
     /* local variables */

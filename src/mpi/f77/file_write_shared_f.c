@@ -49,6 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_WRITE_SHARED,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_file_write_shared_f(MPI_Fint *fh, char *buf, MPI_Fint *count,
 			     MPI_Fint *datatype, MPI_Fint *status,
 			     MPI_Fint *ierr)

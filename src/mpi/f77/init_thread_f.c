@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_INIT_THREAD,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_init_thread_f( MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr )
 {
     int argc = 0;

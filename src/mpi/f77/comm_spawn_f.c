@@ -49,6 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SPAWN,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs, 
 		      MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, 
 		      MPI_Fint *intercomm, MPI_Fint *array_of_errcodes,

@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Test";
 
 
+OMPI_EXPORT
 int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status) 
 {
     int rc, index;

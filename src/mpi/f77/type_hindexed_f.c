@@ -52,6 +52,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_HINDEXED,
 static const char FUNC_NAME[] = "MPI_TYPE_HINDEXED";
 
 
+OMPI_EXPORT
 void mpi_type_hindexed_f(MPI_Fint *count, MPI_Fint *array_of_blocklengths, 
 			 MPI_Fint *array_of_displacements, 
 			 MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr)

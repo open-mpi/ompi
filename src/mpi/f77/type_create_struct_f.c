@@ -52,6 +52,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_CREATE_STRUCT,
 static const char FUNC_NAME[] = "MPI_TYPE_CREATE_STRUCT";
 
 
+OMPI_EXPORT
 void mpi_type_create_struct_f(MPI_Fint *count, 
 			      MPI_Fint *array_of_block_lengths,
 			      MPI_Fint *array_of_displacements, 

@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Is_thread_main";
 
 
+OMPI_EXPORT
 int MPI_Is_thread_main(int *flag) 
 {
   if (MPI_PARAM_CHECK) {

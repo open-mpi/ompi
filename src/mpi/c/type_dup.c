@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Type_dup";
 
 
+OMPI_EXPORT
 int MPI_Type_dup (MPI_Datatype type,
                   MPI_Datatype *newtype)
 {

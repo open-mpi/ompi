@@ -49,6 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE_KEYVAL,
 
 static char FUNC_NAME[] = "MPI_Win_create_keyval";
 
+OMPI_EXPORT
 void mpi_win_create_keyval_f(MPI_Fint *win_copy_attr_fn, MPI_Fint *win_delete_attr_fn, MPI_Fint *win_keyval, char *extra_state, MPI_Fint *ierr)
 {
     int ret, c_err;

@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_SET_VIEW,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_file_set_view_f(MPI_Fint *fh, MPI_Fint *disp,
 			 MPI_Fint *etype, MPI_Fint *filetype,
 			 char *datarep, MPI_Fint *info, MPI_Fint *ierr)

@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Finalized";
 
 
+OMPI_EXPORT
 int MPI_Finalized(int *flag) 
 {
     MPI_Comm null = NULL;

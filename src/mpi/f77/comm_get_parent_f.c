@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GET_PARENT,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_comm_get_parent_f(MPI_Fint *parent, MPI_Fint *ierr)
 {
     MPI_Comm c_parent;

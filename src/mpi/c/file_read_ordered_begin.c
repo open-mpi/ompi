@@ -22,6 +22,7 @@
 static const char FUNC_NAME[] = "MPI_File_read_ordered_begin";
 
 
+OMPI_EXPORT
 int MPI_File_read_ordered_begin(MPI_File fh, void *buf, int count,
                                 MPI_Datatype datatype)
 {

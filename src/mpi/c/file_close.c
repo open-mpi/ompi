@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_File_close";
 
 
+OMPI_EXPORT
 int MPI_File_close(MPI_File *fh) 
 {
     int rc;

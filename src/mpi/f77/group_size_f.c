@@ -47,6 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_GROUP_SIZE,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_group_size_f(MPI_Fint *group, MPI_Fint *size, MPI_Fint *ierr)
 {
   ompi_group_t *c_group;

@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Type_get_envelope";
 
 
+OMPI_EXPORT
 int MPI_Type_get_envelope(MPI_Datatype type,
                           int *num_integers,
                           int *num_addresses,

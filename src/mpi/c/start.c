@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Start";
 
 
+OMPI_EXPORT
 int MPI_Start(MPI_Request *request) 
 {
     if ( MPI_PARAM_CHECK ) {

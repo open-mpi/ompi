@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Type_lb";
 
 
+OMPI_EXPORT
 int MPI_Type_lb(MPI_Datatype type, MPI_Aint *lb)
 {
   int rc;

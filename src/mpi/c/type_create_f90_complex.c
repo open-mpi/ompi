@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Type_create_f90_complex";
 
 
+OMPI_EXPORT
 int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype)
 {
   if (MPI_PARAM_CHECK) {

@@ -52,6 +52,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TESTSOME,
 static const char FUNC_NAME[] = "MPI_TESTSOME";
 
 
+OMPI_EXPORT
 void mpi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests, 
 		    MPI_Fint *outcount, MPI_Fint *array_of_indices,
 		    MPI_Fint *array_of_statuses, MPI_Fint *ierr)

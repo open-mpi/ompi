@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_Type_get_true_extent";
 
 
+OMPI_EXPORT
 int MPI_Type_get_true_extent(MPI_Datatype datatype,
                              MPI_Aint *true_lb, 
                              MPI_Aint *true_extent)

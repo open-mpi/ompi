@@ -31,6 +31,7 @@ static const char FUNC_NAME[] = "MPI_Info_c2f";
  * If info is a valid C handle, the MPI_Info_c2f returns a valid 
  * fortran handle to the same MPI_INFO object.
  */
+OMPI_EXPORT
 MPI_Fint MPI_Info_c2f(MPI_Info info) 
 {
     /* check the arguments */

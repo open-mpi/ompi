@@ -50,6 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_NAME,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_comm_set_name_f(MPI_Fint *comm, char *comm_name, MPI_Fint *ierr, 
                          int name_len)
 {

@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Iprobe";
 
 
+OMPI_EXPORT
 int MPI_Iprobe(int source, int tag, MPI_Comm comm, int *flag, MPI_Status *status) 
 {
     int rc;

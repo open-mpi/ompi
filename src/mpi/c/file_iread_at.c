@@ -23,6 +23,7 @@
 static const char FUNC_NAME[] = "MPI_File_iread_at";
 
 
+OMPI_EXPORT
 int MPI_File_iread_at(MPI_File fh, MPI_Offset offset, void *buf,
                       int count, MPI_Datatype datatype, MPI_Request *request)
 {

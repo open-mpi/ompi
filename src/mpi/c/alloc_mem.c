@@ -23,6 +23,7 @@
 static const char FUNC_NAME[] = "MPI_Alloc_mem";
 
 
+OMPI_EXPORT
 int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 {
   if (MPI_PARAM_CHECK) {

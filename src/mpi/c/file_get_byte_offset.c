@@ -22,6 +22,7 @@
 static const char FUNC_NAME[] = "MPI_File_get_byte_offset";
 
 
+OMPI_EXPORT
 int MPI_File_get_byte_offset(MPI_File fh, MPI_Offset offset,
                              MPI_Offset *disp)
 {

@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Rsend_init";
 
 
+OMPI_EXPORT
 int MPI_Rsend_init(void *buf, int count, MPI_Datatype type,
                    int dest, int tag, MPI_Comm comm,
                    MPI_Request *request) 

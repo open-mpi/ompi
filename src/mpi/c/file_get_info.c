@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_File_get_info";
 
 
+OMPI_EXPORT
 int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
 {
     int rc;

@@ -52,6 +52,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WAITANY,
 static const char FUNC_NAME[] = "MPI_WAITANY";
 
 
+OMPI_EXPORT
 void mpi_waitany_f(MPI_Fint *count, MPI_Fint *array_of_requests,
 		   MPI_Fint *index, MPI_Fint *status, MPI_Fint *ierr)
 {

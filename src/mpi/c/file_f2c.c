@@ -21,6 +21,7 @@
 static const char FUNC_NAME[] = "MPI_File_f2c";
 
 
+OMPI_EXPORT
 MPI_File MPI_File_f2c(MPI_Fint file_f) 
 {
     size_t file_index = (size_t) file_f;

@@ -20,6 +20,7 @@
 static const char FUNC_NAME[] = "MPI_Publish_name";
 
 
+OMPI_EXPORT
 int MPI_Publish_name(char *service_name, MPI_Info info,
                      char *port_name) 
 {

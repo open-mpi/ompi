@@ -46,6 +46,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ALLOC_MEM,
 #include "mpi/f77/profile/defines.h"
 #endif
 
+OMPI_EXPORT
 void mpi_alloc_mem_f(MPI_Fint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr)
 {
     MPI_Info c_info = MPI_Info_f2c(*info);

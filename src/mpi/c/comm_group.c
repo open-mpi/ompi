@@ -19,6 +19,7 @@
 static const char FUNC_NAME[] = "MPI_Comm_group";
 
 
+OMPI_EXPORT
 int MPI_Comm_group(MPI_Comm comm, MPI_Group *group) {
 
     int rc;
