@@ -181,7 +181,6 @@ LAM_C_GET_ALIGNMENT(void *, LAM_ALIGNMENT_VOID_P)
 
 AC_C_INLINE
 AC_C_RESTRICT
-AC_CHECK_HEADERS([stdbool.h alloca.h])
 LAM_C_WEAK_SYMBOLS
 
 # If we want the profiling layer:
@@ -263,8 +262,8 @@ LAM_ALIGNMENT_FORTRAN_COMPLEX=0
 LAM_ALIGNMENT_FORTRAN_DBLCOMPLEX=0
 
 LAM_SETUP_F77
-if test "$F77" != "none" ; then
-    LAM_F77_FIND_EXT_SYMBOL_CONVENTION($F77)
+if test "$LAM_F77" != "none" ; then
+    LAM_F77_FIND_EXT_SYMBOL_CONVENTION($LAM_F77)
 
     # checking the sizeof fortran interger. This is needed to define 
     # MPI_Fint. This is needed for C bindings and hence there is no
@@ -328,6 +327,8 @@ LAM_SETUP_F90
 # Header files
 ##################################
 
+lam_show_title "Header file tests"
+
 # snprintf declaration
 # gethostname declaration
 # headers:
@@ -337,6 +338,7 @@ LAM_SETUP_F90
 # SA_RESTART in signal.h
 # sa_len in struct sockaddr
 # union semun in sys/sem.h
+AC_CHECK_HEADERS([stdbool.h alloca.h])
 
 
 ##################################
@@ -391,7 +393,7 @@ lam_show_title "System-specific tests"
 # This test should be carried out ONLY if there is a f77 compiler
 # available. Else we should default to MPI_Fint being an int.
 #
-if test "$F77" != "none"; then
+if test "$LAM_F77" != "none"; then
 	MPI_FINT_TYPE="not found"
 	AC_MSG_CHECKING([checking for type of MPI_Fint])
 	if test "$LAM_SIZEOF_FORTRAN_INT" = 4 ; then

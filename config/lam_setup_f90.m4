@@ -27,14 +27,12 @@ lam_show_subtitle "Fortran 90/95 compiler"
 if test "$LAM_WANT_F77_BINDINGS" = "0" ; then
     AC_MSG_WARN([*** Fortran 90/95 bindings disabled (Fortran 77 was disabled)])
     LAM_WANT_F90_BINDINGS=0
-    FC="none"
-    F90="$FC"
+    LAM_F90="none"
     BASEF90="none"
 elif test "$LAM_WANT_F90_BINDINGS" = "0" ; then
     AC_MSG_WARN([*** Fortran 90/95 bindings disabled by user])
     LAM_WANT_F90_BINDINGS=0
-    FC="none"
-    F90="$FC"
+    LAM_F90="none"
     BASEF90="none"
 else
 
@@ -53,19 +51,17 @@ else
     if test -z "$FC"; then
         AC_MSG_WARN([*** Fortran 90/95 bindings disabled (could not find compiler)])
         LAM_WANT_F90_BINDINGS=0
-        FC=none
-        F90=none
-        BASEF90=none
+        LAM_F90="none"
+        BASEF90="none"
     elif test "$FC" = "$F77"; then
         AC_MSG_WARN([*** Found same compiler for Fortran 77 and 90/95.])
         AC_MSG_WARN([*** Assuming no Fortran 90/95 compiler; disabling])
         AC_MSG_WARN([*** Fortran 90/95 MPI bindings.])
         LAM_WANT_F90_BINDINGS=0
-        FC=none
-        F90=none
-        BASEF90=none
+        LAM_F90="none"
+        BASEF90="none"
     else
-        F90="$FC"
+        LAM_F90="$FC"
         BASEF90="`basename $FC`"
 
         AC_LANG_PUSH(Fortran)
@@ -74,7 +70,7 @@ else
         AC_FC_SRCEXT(f95)
         AC_LANG_POP(Fortran)
 
-        AC_MSG_CHECKING([whether $F77 and $F90 compilers are compatible])
+        AC_MSG_CHECKING([whether $LAM_F77 and $LAM_F90 compilers are compatible])
         LAM_INTL_F90_F77_INTERACTION(fortran_goodness=1, fortran_goodness=0)
         if test "$fortran_goodness" = "0" ; then
             AC_MSG_RESULT([no])
@@ -90,7 +86,7 @@ fi
 
 AC_DEFINE_UNQUOTED(LAM_WANT_F90_BINDINGS, $LAM_WANT_F90_BINDINGS,
     [Whether we want the MPI f90 bindings or not])
-AC_DEFINE_UNQUOTED(LAM_F90, "$F90", [LAM underlying F90 compiler])
+AC_DEFINE_UNQUOTED(LAM_F90, "$LAM_F90", [LAM underlying F90 compiler])
 AM_CONDITIONAL(LAM_WANT_F90_BINDINGS, test "$LAM_WANT_F90_BINDINGS" = "1")
 unset fortran_goodness
 ])
@@ -112,11 +108,11 @@ EOF
 
 # Try the compile
 LAM_LOG_COMMAND(
-    [$F90 $FCFLAGS $FCFLAGS_f -c conftestf90.f],
+    [$LAM_F90 $FCFLAGS $FCFLAGS_f -c conftestf90.f],
     LAM_LOG_COMMAND(
-        [$F77 $FFLAGS -c conftestf77.f],
+        [$LAM_F77 $FFLAGS -c conftestf77.f],
         LAM_LOG_COMMAND(
-            [$F90 $FCFLAGS -o conftest conftestf90.o conftestf77.o $LIBS],
+            [$LAM_F90 $FCFLAGS -o conftest conftestf90.o conftestf77.o $LIBS],
             [HAPPY=1],
             [HAPPY=0]),
 	[HAPPY=0]),

@@ -39,21 +39,23 @@ FFLAGS="$lam_fflags_save"
 if test -z "$F77"; then
     AC_MSG_WARN([*** Fortran 77 bindings disabled (could not find compiler)])
     LAM_WANT_F77_BINDINGS=0
-    F77="none"
+    LAM_F77="none"
     BASEF77="none"
 else
     if test "$LAM_WANT_F77_BINDINGS" = "0" ; then
         AC_MSG_WARN([*** Fortran 77 bindings disabled by user])
         LAM_WANT_F77_BINDINGS=0
-        BASEF77="`basename $F77`"
+        LAM_F77="$F77"
+        BASEF77="`basename $LAM_F77`"
     else
         LAM_WANT_F77_BINDINGS=1
-        BASEF77="`basename $F77`"
+        LAM_F77="$F77"
+        BASEF77="`basename $LAM_F77`"
     fi
 fi
 
 AC_DEFINE_UNQUOTED(LAM_WANT_F77_BINDINGS, $LAM_WANT_F77_BINDINGS,
     [Whether we want the MPI f77 bindings or not])
-AC_DEFINE_UNQUOTED(LAM_F77, "$F77", [LAM underlying F77 compiler])
+AC_DEFINE_UNQUOTED(LAM_F77, "$LAM_F77", [LAM underlying F77 compiler])
 AM_CONDITIONAL(LAM_WANT_F77_BINDINGS, test "$LAM_WANT_F77_BINDINGS" = "1")
 ])
