@@ -12,6 +12,9 @@
 #include "mca/pml/base/pml_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 typedef mca_pml_base_recv_request_t mca_pml_teg_recv_request_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_teg_recv_request_t);
@@ -98,5 +101,8 @@ void mca_pml_teg_recv_request_progress(
     size_t bytes_delivered
 );
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

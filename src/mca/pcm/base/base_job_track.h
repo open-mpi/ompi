@@ -13,7 +13,7 @@
 #include "mca/ns/ns.h"
 #include "runtime/runtime_types.h"
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -55,7 +55,7 @@ extern "C" {
     typedef struct mca_pcm_base_job_item_t mca_pcm_base_job_item_t;
     OBJ_CLASS_DECLARATION(mca_pcm_base_job_item_t);
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

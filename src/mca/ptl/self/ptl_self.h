@@ -15,6 +15,9 @@
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/pml/base/pml_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * SELF PTL component.
@@ -82,5 +85,8 @@ int  mca_ptl_self_send( struct mca_ptl_base_module_t* ptl, struct mca_ptl_base_p
                       size_t offset, size_t size, int flags );
 void mca_ptl_self_matched( mca_ptl_base_module_t* ptl, mca_ptl_base_recv_frag_t* frag );
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif  /* PTL_SELF_H_HAS_BEEN_INCLUDED */
 

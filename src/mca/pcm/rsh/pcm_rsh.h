@@ -15,7 +15,7 @@
 #ifndef MCA_PCM_RSH_H_
 #define MCA_PCM_RSH_H_
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -65,7 +65,7 @@ extern "C" {
     };
     typedef struct mca_pcm_rsh_module_t mca_pcm_rsh_module_t;
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

@@ -4,7 +4,9 @@
 #include "class/ompi_object.h"
 #include "class/ompi_list.h"
 #include "include/sys/atomic.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 struct mca_common_sm_file_header_t {
     /* lock to control atomic access */
     ompi_lock_t seg_lock;
@@ -67,6 +69,9 @@ void  mca_common_sm_mmap_free(void* addr);
 
 extern mca_common_sm_mmap_t *mca_common_sm_mmap;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif
 

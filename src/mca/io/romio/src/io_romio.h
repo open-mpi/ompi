@@ -14,6 +14,9 @@
 #include "mca/io/base/io_base_request.h"
 
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /*
  * global variables, instantiated in module.c  
  */
@@ -267,5 +270,7 @@ int         mca_io_romio_test (mca_io_base_request_t * request,
                                ompi_status_public_t * status);
 int         mca_io_romio_wait (mca_io_base_request_t * request,
                                ompi_status_public_t * status);
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif                          /* MCA_IO_ROMIO_H */

@@ -20,7 +20,7 @@
 #ifndef MCA_PCM_SLURM_H_
 #define MCA_PCM_SLURM_H_
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -54,13 +54,13 @@ extern "C" {
                                          mca_ns_base_jobid_t jobid,
                                          ompi_list_t *nodelist);
 
-#ifdef __cplusplus
-}
-#endif
 
 /*
  * Module variables
  */
 extern int mca_pcm_slurm_output;
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* MCA_PCM_SLURM_H_ */

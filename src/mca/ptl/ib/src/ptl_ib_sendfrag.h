@@ -7,6 +7,9 @@
 
 #include "ptl_ib_priv.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 OBJ_CLASS_DECLARATION(mca_ptl_ib_send_frag_t);
 
 /**
@@ -68,4 +71,7 @@ int mca_ptl_ib_put_frag_init(mca_ptl_ib_send_frag_t *sendfrag,
         struct mca_pml_base_send_request_t *req, 
         size_t offset, size_t *size, int flags);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

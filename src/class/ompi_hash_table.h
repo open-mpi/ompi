@@ -18,6 +18,9 @@
 #include "include/types.h"
 #include "class/ompi_list.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 extern ompi_class_t ompi_hash_table_t_class;
                            
@@ -35,9 +38,6 @@ struct ompi_hash_table_t
 typedef struct ompi_hash_table_t ompi_hash_table_t;
 
                            
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
     
 /**
  *  Initializes the table size, must be called before using

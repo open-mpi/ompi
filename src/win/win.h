@@ -10,6 +10,9 @@
 #include "errhandler/errhandler.h"
 #include "class/ompi_object.h"
 #include "class/ompi_hash_table.h"
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 
 struct ompi_win_t {
@@ -35,4 +38,7 @@ typedef struct ompi_win_t ompi_win_t;
 
 OBJ_CLASS_DECLARATION(ompi_win_t);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

@@ -8,6 +8,9 @@
 #include "ompi_config.h"
 #include "request/request.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 OBJ_CLASS_DECLARATION(ompi_grequest_t);
 
 
@@ -36,7 +39,9 @@ int ompi_grequest_start(
  * Mark a generalized request as complete.
  */
 int ompi_grequest_complete(ompi_grequest_t*);
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif
 

@@ -17,6 +17,9 @@
 #include "mca/mpool/mpool.h"
 #include "mca/common/sm/common_sm_mmap.h"
 #include "class/ompi_fifo.h"
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * Shared Memory resource managment
@@ -271,5 +274,8 @@ typedef struct mca_ptl_sm_exchange{
     char host_name[MCA_PTL_SM_MAX_HOSTNAME_LEN];
 }mca_ptl_sm_exchange_t;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

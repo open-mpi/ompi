@@ -29,7 +29,7 @@
 #ifndef _EVENT_H_
 #define _EVENT_H_
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -266,7 +266,7 @@ ompi_event_pending(struct ompi_event *ev, short event, struct timeval *tv)
 #define ompi_event_initialized(ev)	((ev)->ev_flags & OMPI_EVLIST_INIT)
 #endif
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

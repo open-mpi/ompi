@@ -31,6 +31,9 @@
 #include <stdlib.h>
 #include "class/ompi_object.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  * \internal
  *
@@ -499,9 +502,6 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
     list->ompi_list_length++;
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
   /**
    * Add an item to the list at a specific index location in the list.
    *

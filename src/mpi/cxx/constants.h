@@ -4,6 +4,9 @@
 //
 
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 // return  codes
 extern const int SUCCESS;
 extern const int ERR_BUFFER;
@@ -207,4 +210,7 @@ extern const Group  GROUP_EMPTY;
 extern const int GRAPH;
 extern const int CART;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 

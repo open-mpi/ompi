@@ -14,7 +14,9 @@
 #include "proc/proc.h"
 #include "ptl_elan.h"
 #include "ptl_elan_peer.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_class_t mca_ptl_elan_proc_t_class;
 
 /**
@@ -49,4 +51,7 @@ int  mca_ptl_elan_proc_remove(mca_ptl_elan_proc_t *, mca_ptl_elan_peer_t *);
 bool mca_ptl_elan_proc_accept(mca_ptl_elan_proc_t *, 
 	struct sockaddr_in *, int sd);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

@@ -11,6 +11,9 @@
 #include "datatype/datatype.h"
 #include "mca/pml/base/pml_base_request.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_class_t mca_pml_base_send_request_t_class;
 
 
@@ -120,5 +123,8 @@ static inline bool mca_pml_base_send_request_matched(
     return (NULL != request->req_peer_match.pval);
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

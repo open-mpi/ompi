@@ -31,7 +31,7 @@ typedef struct {
 /*
 #ifdef __INTEL_COMPILER
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C"
 {
 #endif
@@ -41,7 +41,7 @@ extern "C"
     int fetchNadd(volatile int *addr, int inc);
     int fetchNset(volatile int *addr, int setValue);
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

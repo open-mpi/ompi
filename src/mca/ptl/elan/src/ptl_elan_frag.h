@@ -16,7 +16,9 @@
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "ptl_elan.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 struct mca_ptl_elan_peer_t;
 struct ompi_ptl_elan_base_desc_t;
 
@@ -81,4 +83,7 @@ mca_ptl_elan_recv_frag_done (
        	mca_ptl_base_header_t *header,
        	mca_ptl_elan_recv_frag_t* frag,
        	mca_pml_base_recv_request_t *request);
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

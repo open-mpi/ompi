@@ -12,6 +12,9 @@
 #include "class/ompi_object.h"
 #include "class/ompi_pointer_array.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * Back-end type for MPI error codes
@@ -59,9 +62,6 @@ static inline char* ompi_mpi_errcode_get_string (int errcode)
     return err->errstring;
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
     /**
      * Initialize the error codes

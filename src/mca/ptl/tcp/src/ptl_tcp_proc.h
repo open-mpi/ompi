@@ -15,6 +15,9 @@
 #include "proc/proc.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 extern ompi_class_t mca_ptl_tcp_proc_t_class;
 
@@ -55,6 +58,8 @@ static inline mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_local(void)
 int  mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t*, struct mca_ptl_base_peer_t*);
 int  mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t*, struct mca_ptl_base_peer_t*);
 bool mca_ptl_tcp_proc_accept(mca_ptl_tcp_proc_t*, struct sockaddr_in*, int sd);
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

@@ -15,6 +15,9 @@
 #define OMPID_EXEC_CMD  1
 #define OMPID_KILL_CMD  2
 #define OMPID_PING_CMD  3
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 
 /**
@@ -39,5 +42,8 @@ typedef struct mca_svc_exec_component_t mca_svc_exec_component_t;
 extern mca_svc_base_module_t mca_svc_exec_module;
 extern mca_svc_exec_component_t mca_svc_exec_component;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

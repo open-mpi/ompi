@@ -9,6 +9,9 @@
 #define MCA_ALLOCATOR_H
 #include "mca/mca.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /* Here so that we can use mca_allocator_base_module_t in the function typedefs */
 struct mca_allocator_base_module_t;
 
@@ -121,6 +124,8 @@ typedef struct mca_allocator_base_component_1_0_0_t mca_allocator_base_component
  * The output integer used for the mca base
  */
 extern int mca_allocator_base_output;
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* MCA_ALLOCATOR_H */
 

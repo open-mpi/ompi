@@ -11,7 +11,9 @@
 #include "threads/condition.h"
 #include "mca/ptl/ptl.h"
 #include "class/ompi_list.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_class_t mca_pml_ptl_comm_t_class;
 
 /**
@@ -58,5 +60,8 @@ static inline mca_ptl_sequence_t mca_pml_ptl_comm_send_sequence(mca_pml_ptl_comm
    return sequence;
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

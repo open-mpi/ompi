@@ -117,9 +117,6 @@ extern "C" {
    * checkout).
    */
   void ompi_free(void *addr, char *file, int line);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 extern int ompi_malloc_debug_level;
 extern int ompi_malloc_output;
@@ -139,4 +136,7 @@ static inline void ompi_malloc_debug(int level)
   ompi_malloc_debug_level = level;
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* OMPI_MALLOC_H */

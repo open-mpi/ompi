@@ -12,6 +12,9 @@
 #include "class/ompi_object.h"
 #include "class/ompi_pointer_array.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * Back-end type for MPI error class. It is close
@@ -37,9 +40,6 @@ static inline bool ompi_errclass_is_invalid(int errclass)
 }
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
     /**
      * Initialize the error classes

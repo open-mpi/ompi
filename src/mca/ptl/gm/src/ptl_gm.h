@@ -28,6 +28,9 @@
 #define GM_RECV_BUF_SIZE 16384 
 #define NUM_RECV_FRAGS 256 
 #define MCA_PTL_GM_FRAG_CACHED
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * GM PTL component
@@ -226,4 +229,7 @@ extern void mca_ptl_gm_matched (struct mca_ptl_base_module_t *ptl,
 extern int  mca_ptl_gm_finalize (struct mca_ptl_base_module_t *ptl);
 
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

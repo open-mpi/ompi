@@ -79,6 +79,9 @@
 
 #define DT_INCREASE_STACK  32
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 struct __dt_stack {
     int32_t index;    /**< index in the element description */
     int32_t count;    /**< number of times we still have to do it */
@@ -278,5 +281,7 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, int* 
     pConvertor->bConverted         = 0;
     return OMPI_SUCCESS;
 }
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif  /* DATATYPE_INTERNAL_H_HAS_BEEN_INCLUDED */

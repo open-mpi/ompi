@@ -17,7 +17,9 @@
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "ptl_tcp_peer.h"
 #include "ptl_tcp.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_class_t mca_ptl_tcp_recv_frag_t_class;
 
 /**
@@ -154,6 +156,7 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
         }
     } 
 }
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
 #endif
-
+#endif

@@ -14,6 +14,9 @@
 #include "threads/mutex.h"
 #include "class/ompi_object.h"
 #include "mca/allocator/allocator.h"
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
   * Structure for the header of each memory chunk
@@ -79,9 +82,6 @@ struct mca_allocator_bucket_t {
   */
 typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
   /**
    * Initializes the mca_allocator_bucket_options_t data structure for the passed
    * parameters.

@@ -20,7 +20,7 @@
 #ifndef MCA_PCM_BPROC_H_
 #define MCA_PCM_BPROC_H_
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -86,13 +86,13 @@ extern "C" {
     typedef struct mca_pcm_bproc_job_item_t mca_pcm_bproc_job_item_t;
     OBJ_CLASS_DECLARATION(mca_pcm_bproc_job_item_t);
 
-#ifdef __cplusplus
-}
-#endif
 
 /*
  * Module variables
  */
 extern int mca_pcm_bproc_output;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* MCA_PCM_BPROCx_H_ */

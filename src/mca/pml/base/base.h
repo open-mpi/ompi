@@ -23,9 +23,6 @@ extern "C" {
                           bool *allow_multi_user_threads, 
                           bool *have_hidden_threads);
   int mca_pml_base_close(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 
 /*
@@ -36,4 +33,7 @@ extern ompi_list_t mca_pml_base_components_available;
 extern mca_pml_base_component_t mca_pml_base_selected_component;
 extern mca_pml_base_module_t mca_pml;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* MCA_PML_BASE_H */

@@ -18,7 +18,9 @@
 #endif
 
 #include <stdio.h>
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 int ompi_show_help_yylex(void);
 int ompi_show_help_init_buffer(FILE *file);
 
@@ -45,5 +47,7 @@ enum {
 
     OMPI_SHOW_HELP_PARSE_MAX
 };
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

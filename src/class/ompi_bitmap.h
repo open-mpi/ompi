@@ -24,6 +24,11 @@
 #include "include/types.h"
 #include "class/ompi_object.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+extern ompi_class_t ompi_bitmap_t_class;
+
 struct ompi_bitmap_t {
     ompi_object_t super; /**< Subclass of ompi_object_t */
     unsigned char *bitmap; /**< The actual bitmap array of characters */
@@ -37,11 +42,6 @@ struct ompi_bitmap_t {
 typedef struct ompi_bitmap_t ompi_bitmap_t;
 
 OBJ_CLASS_DECLARATION(ompi_bitmap_t);
-
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
 
 /**

@@ -16,7 +16,9 @@
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_recvfrag.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_class_t mca_ptl_tcp_send_frag_t_class;
 struct mca_ptl_base_peer_t;
 
@@ -135,6 +137,8 @@ static inline void mca_ptl_tcp_send_frag_init_ack(
     ack->free_after = 0;
 }
 
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

@@ -58,6 +58,9 @@
 #include "mca/mca.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * PML component types
@@ -483,4 +486,7 @@ extern mca_pml_base_module_t mca_pml;
   /* pml v1.0 */ \
   "pml", 1, 0, 0
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* MCA_PML_H */

@@ -16,6 +16,9 @@
 #include "mca/ptl/ptl.h"
 
 #define MCA_PTL_TCP_STATISTICS 0
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * TCP PTL module.
@@ -246,5 +249,8 @@ extern void mca_ptl_tcp_send_frag_return(
     struct mca_ptl_tcp_send_frag_t*
 );
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

@@ -4,6 +4,9 @@
 
 #ifndef OMPI_RUNTIME_PARAMS_H
 #define OMPI_RUNTIME_PARAMS_H
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * Global variables
@@ -49,9 +52,6 @@ extern bool ompi_debug_show_handle_leaks;
 extern bool ompi_debug_no_free_handles;
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
     /**
      * Register MCA parameters used by the MPI layer.
      *
@@ -61,7 +61,7 @@ extern "C" {
      * global variables to the values obtained from the MCA system.
      */
     int ompi_mpi_register_params(void);
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

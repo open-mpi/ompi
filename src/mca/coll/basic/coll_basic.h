@@ -13,6 +13,9 @@
 #include "request/request.h"
 #include "mca/pml/pml.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * Globally exported variable
@@ -26,9 +29,6 @@ extern int mca_coll_basic_priority_param;
  * coll API functions
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
   /* API functions */
 
@@ -220,9 +220,6 @@ extern "C" {
                                     struct ompi_datatype_t *rdtype, int root, 
                                     struct ompi_communicator_t *comm);
 
-#ifdef __cplusplus
-}
-#endif
 
 
 /* Utility functions */
@@ -243,4 +240,7 @@ struct mca_coll_base_comm_t {
   int mccb_num_reqs;
 };
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* MCA_COLL_BASIC_EXPORT_H */

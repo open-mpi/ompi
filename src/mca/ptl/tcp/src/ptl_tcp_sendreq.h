@@ -14,7 +14,9 @@
 #include "ompi_config.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_tcp_sendfrag.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_class_t mca_ptl_tcp_send_request_t_class;
 
 /**
@@ -29,6 +31,8 @@ struct mca_ptl_tcp_send_request_t {
 };
 typedef struct mca_ptl_tcp_send_request_t mca_ptl_tcp_send_request_t;
 
-
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

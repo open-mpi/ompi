@@ -20,7 +20,7 @@
 #ifndef MCA_PCM_RMS_H_
 #define MCA_PCM_RMS_H_
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
@@ -63,7 +63,7 @@ extern "C" {
     };
     typedef struct mca_pcm_rms_module_t mca_pcm_rms_module_t;
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

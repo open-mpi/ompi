@@ -15,6 +15,9 @@
 #include "errhandler/errhandler_predefined.h"
 #include "errhandler/errcode-internal.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /*
  * These must correspond to the fortran handle indices
  */
@@ -183,9 +186,6 @@ extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
   }
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
   /**
    * Initialize the error handler interface.
@@ -269,9 +269,6 @@ extern "C" {
    */
   ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
 					    ompi_errhandler_generic_handler_fn_t *func);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 
 /**
@@ -293,5 +290,8 @@ static inline bool ompi_errhandler_is_intrinsic(ompi_errhandler_t *errhandler)
 
     return false;
 }
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* OMPI_ERRHANDLER_H */

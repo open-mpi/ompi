@@ -176,9 +176,6 @@ extern "C" {
      * It must be the last function invoked on the io MCA framework.
      */
     int mca_io_base_close(void);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 
 /*
@@ -219,4 +216,7 @@ extern bool mca_io_base_components_available_valid;
  */
 extern ompi_list_t mca_io_base_components_available;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* MCA_BASE_IO_H */

@@ -7,7 +7,9 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /* If compiling in the profile directory, then we don't have weak
    symbols and therefore we need the defines to map from MPI->PMPI.
    NOTE: pragma weak stuff is handled on a file-by-file basis; it
@@ -51,4 +53,7 @@ extern bool ompi_mpi_param_check;
       else if( !ompi_ddt_is_acceptable_for_one_sided((DDT)) ) (RC) = MPI_ERR_TYPE; \
    } while(0)
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif /* OMPI_C_BINDINGS_H */

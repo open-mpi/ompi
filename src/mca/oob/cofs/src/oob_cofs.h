@@ -11,6 +11,9 @@
 #include "mca/oob/base/base.h"
 #include "include/types.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /*
  * Module open / close
  */
@@ -117,5 +120,8 @@ int mca_oob_cofs_recv_nb(
 extern char mca_oob_cofs_comm_loc[OMPI_PATH_MAX]; /* location for file drop-off */
 extern uint64_t mca_oob_cofs_serial;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

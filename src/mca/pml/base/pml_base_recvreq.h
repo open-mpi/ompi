@@ -8,7 +8,9 @@
 #define MCA_PML_BASE_RECV_REQUEST_H
 
 #include "mca/pml/base/pml_base_request.h"
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 extern ompi_class_t mca_pml_base_recv_request_t_class;
 
 /**
@@ -64,5 +66,8 @@ typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;
                                                           \
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

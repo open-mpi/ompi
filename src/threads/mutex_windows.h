@@ -21,6 +21,9 @@
 
 #include "class/ompi_object.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 struct ompi_mutex_t {
     ompi_object_t super;
     volatile LONG m_lock;
@@ -68,5 +71,8 @@ static inline void ompi_mutex_atomic_unlock(ompi_mutex_t *m)
     ompi_mutex_unlock(m);
 }
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif  /* OMPI_MUTEX_WINDOWS_H */

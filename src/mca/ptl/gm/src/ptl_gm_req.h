@@ -17,6 +17,9 @@
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "ptl_gm_sendfrag.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 OBJ_CLASS_DECLARATION (mca_ptl_gm_send_request_t);
 
 
@@ -28,4 +31,7 @@ struct mca_ptl_gm_send_request_t {
 };
 typedef struct mca_ptl_gm_send_request_t mca_ptl_gm_send_request_t;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif

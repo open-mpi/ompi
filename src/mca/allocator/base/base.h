@@ -13,6 +13,9 @@
 #include "mca/mca.h"
 #include "mca/allocator/allocator.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  * Structure which describes a selected module.
  */
@@ -39,15 +42,9 @@ OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
  * Global functions for MCA: overall allocator open and close
  */
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
   int mca_allocator_base_open(void);
   int mca_allocator_base_close(void);
   mca_allocator_base_component_t* mca_allocator_component_lookup(const char* name);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 
 /*
@@ -57,5 +54,8 @@ extern "C" {
  * The list of all the selected components.
  */
 extern ompi_list_t mca_allocator_base_components;
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* MCA_ALLOCATOR_BASE_H */

@@ -13,6 +13,9 @@
 
 #define OMPI_NAME_ARGS(n)  (n).cellid,(n).jobid,(n).vpid
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  * Component open/close/init
  */
@@ -40,5 +43,8 @@ extern mca_svc_base_module_t mca_svc_sched_module;
 extern mca_svc_sched_component_t mca_svc_sched_component;
 
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

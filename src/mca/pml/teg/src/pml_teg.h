@@ -21,6 +21,9 @@
 
 #define MCA_PML_TEG_STATISTICS 0
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 /**
  * TEG PML module
  */
@@ -209,6 +212,9 @@ extern int mca_pml_teg_start(
     ompi_request_t** requests
 );
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #define MCA_PML_TEG_FINI(request) \
 { \
     mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)(request); \
