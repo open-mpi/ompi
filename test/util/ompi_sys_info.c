@@ -9,6 +9,7 @@
 
 #include "ompi_config.h"
 #include "util/sys_info.h"
+#include "support.h"
 
 static bool test1(void);   /* verify it returns info */
 static bool test2(void);   /* test second time through */
@@ -16,29 +17,25 @@ static bool test2(void);   /* test second time through */
 
 int main(int argc, char* argv[])
 {
-    bool test1f, test2f;
 
-    test1f = test2f = false;
-
-    /* All done */
+    test_init("ompi_sys_info_t");
 
     if (test1()) {
-        printf("test1 passed\n");
-        test1f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_sys_info_t test1 failed");
     }
 
     if (test2()) {
-        printf("test2 passed\n");
-        test2f = true;
+        test_success();
+    }
+    else {
+      test_failure("ompi_sys_info_t test2 failed");
     }
 
-    if (test1f && test2f) {
-        printf("test succeeded\n");
-        return 0;
-    }
-
-    printf("test failed\n");
-    return -1;
+    test_finalize();
+    return 0;
 }
 
 
