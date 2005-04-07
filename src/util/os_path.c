@@ -29,7 +29,8 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-#include "include/constants.h"
+#include "include/orte_constants.h"
+#include "util/sys_info.h"
 #include "util/os_path.h"
 #include "util/sys_info.h"
 
@@ -91,7 +92,9 @@ char *orte_os_path(bool relative, ...)
     }
 
     while (NULL != (element=va_arg(ap1, char*))) {
-    	strcat(path, orte_system_info.path_sep);
+    	if (orte_system_info.path_sep[0] != element[0]) {
+            strcat(path, orte_system_info.path_sep);
+        }
         strcat(path, element);
     }
 

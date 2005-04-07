@@ -35,6 +35,7 @@
 #include "util/os_create_dirpath.h"
 #include "util/session_dir.h"
 #include "util/proc_info.h"
+#include "runtime/runtime.h"
 #include "support.h"
 
 
@@ -54,7 +55,7 @@ static FILE *test_out=NULL;
 int main(int argc, char* argv[])
 {
     orte_sys_info(); /* initialize system */
-
+    
     test_init("orte_session_dir_t");
     test_out = fopen( "test_session_dir_out", "w+" );
     if( test_out == NULL ) {
@@ -140,7 +141,7 @@ static bool test1(void)
 {
     /* Test proper action when given a prefix */
 
-    char *prefix, *tmp;
+    char *prefix;
 
     /* see if we can create a specified path */
 
@@ -160,12 +161,9 @@ static bool test1(void)
         return(false);
     }
 
-    rmdir(orte_process_info.universe_session_dir);
-    tmp = strdup(dirname(orte_process_info.universe_session_dir));
-    rmdir(tmp);
+    orte_session_dir_finalize();
     free(orte_process_info.universe_session_dir);
     free(prefix);
-    free(tmp);
 
     return true;
 }
@@ -173,8 +171,6 @@ static bool test1(void)
 
 static bool test2(void)
 {
-    char *tmp;
-
     clear_proc_info();
 
     /* use the OMPI_PREFIX_ENV variable */
@@ -186,10 +182,7 @@ static bool test2(void)
         return(false);
     }
 
-    rmdir(orte_process_info.universe_session_dir);
-    tmp = strdup(dirname(orte_process_info.universe_session_dir));
-    rmdir(tmp);
-    free(tmp);
+    orte_session_dir_finalize();
 
     unsetenv("OMPI_PREFIX_ENV");
 
@@ -201,8 +194,6 @@ static bool test2(void)
 static bool test3(void)
 {
     /* use the TMPDIR enviro variable */
-    char *tmp;
-
     clear_proc_info();
 
     setenv("TMPDIR", "/tmp/trythis", 1);
@@ -212,10 +203,7 @@ static bool test3(void)
         return(false);
     }
 
-    rmdir(orte_process_info.universe_session_dir);
-    tmp = strdup(dirname(orte_process_info.universe_session_dir));
-    rmdir(tmp);
-    free(tmp);
+    orte_session_dir_finalize();
 
     unsetenv("TMPDIR");
 
@@ -226,7 +214,6 @@ static bool test3(void)
 static bool test4(void)
 {
     /* use the TMP enviro variable */
-    char *tmp;
 
     clear_proc_info();
 
@@ -237,10 +224,7 @@ static bool test4(void)
         return(false);
     }
 
-    rmdir(orte_process_info.universe_session_dir);
-    tmp = strdup(dirname(orte_process_info.universe_session_dir));
-    rmdir(tmp);
-    free(tmp);
+    orte_session_dir_finalize();
 
     unsetenv("TMP");
 
@@ -251,7 +235,6 @@ static bool test4(void)
 static bool test5(void)
 {
     /* use the HOME enviro variable */
-    char *tmp;
 
     clear_proc_info();
 
@@ -262,10 +245,7 @@ static bool test5(void)
         return(false);
     }
 
-    rmdir(orte_process_info.universe_session_dir);
-    tmp = strdup(dirname(orte_process_info.universe_session_dir));
-    rmdir(tmp);
-    free(tmp);
+    orte_session_dir_finalize();
 
     unsetenv("HOME");
 
@@ -275,7 +255,6 @@ static bool test5(void)
 
 static bool test6(void)
 {
-    char *tmp;
 
     clear_proc_info();
 
@@ -287,17 +266,16 @@ static bool test6(void)
         return(false);
     }
 
-    rmdir(orte_process_info.universe_session_dir);
-    tmp = strdup(dirname(orte_process_info.universe_session_dir));
-    rmdir(tmp);
+    orte_session_dir_finalize();
 
     return(true);
 }
 
 static bool test7(void)
 {
-    char *filenm;
+    char *filenm[5];
     FILE *fp;
+    int i;
 
     clear_proc_info();
 
@@ -313,18 +291,18 @@ static bool test7(void)
 
     /* create some files */
 
-    filenm = orte_os_path(false, orte_process_info.proc_session_dir, "dum1", NULL);
-    fp = fopen(filenm, "w");
+    filenm[0] = orte_os_path(false, orte_process_info.proc_session_dir, "dum1", NULL);
+    fp = fopen(filenm[0], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    filenm = orte_os_path(false, orte_process_info.job_session_dir, "dum2", NULL);
-    fp = fopen(filenm, "w");
+    filenm[1] = orte_os_path(false, orte_process_info.job_session_dir, "dum2", NULL);
+    fp = fopen(filenm[1], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    filenm = orte_os_path(false, orte_process_info.universe_session_dir, "dum3", NULL);
-    fp = fopen(filenm, "w");
+    filenm[2] = orte_os_path(false, orte_process_info.universe_session_dir, "dum3", NULL);
+    fp = fopen(filenm[2], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
@@ -332,18 +310,22 @@ static bool test7(void)
 	return(false);
     }
 
+    for (i=0; i < 3; i++) unlink(filenm[i]);
+    orte_session_dir_finalize();
+
     return true;
 }
 
 static bool test8(void)
 {
-    char *filenm;
+    char *filenm[5];
     FILE *fp;
+    int i;
 
     clear_proc_info();
 
     /* create test proc session directory tree */
-    if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, "localhost", NULL, "test-universe2", "test-job", "test-proc")) {
+    if (OMPI_ERROR == orte_session_dir(true, NULL, orte_system_info.user, "localhost", NULL, "test-universe2", "test-job2", "test-proc2")) {
 	return(false);
     }
 
@@ -354,29 +336,29 @@ static bool test8(void)
 
     /* create some files */
 
-    filenm = orte_os_path(false, orte_process_info.proc_session_dir, "dum1", NULL);
-    fp = fopen(filenm, "w");
+    filenm[0] = orte_os_path(false, orte_process_info.proc_session_dir, "dum1", NULL);
+    fp = fopen(filenm[0], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    filenm = orte_os_path(false, orte_process_info.job_session_dir, "dum2", NULL);
-    fp = fopen(filenm, "w");
+    filenm[1] = orte_os_path(false, orte_process_info.job_session_dir, "dum2", NULL);
+    fp = fopen(filenm[1], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-    filenm = orte_os_path(false, orte_process_info.universe_session_dir, "dum3", NULL);
-    fp = fopen(filenm, "w");
+    filenm[2] = orte_os_path(false, orte_process_info.universe_session_dir, "dum3", NULL);
+    fp = fopen(filenm[2], "w");
     fprintf(fp, "ss");
     fclose(fp);
 
-
-    filenm = orte_os_path( false, orte_process_info.job_session_dir, "dir1", NULL);
-    orte_os_create_dirpath(filenm, 0777);
 
     if (OMPI_ERROR == orte_session_dir_finalize()) {
-	return(false);
+	   return(false);
     }
 
+    for (i=0; i < 3; i++) unlink(filenm[i]);
+    orte_session_dir_finalize();
+    
     return true;
 }
 
