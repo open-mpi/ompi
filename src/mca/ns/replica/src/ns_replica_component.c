@@ -299,7 +299,7 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
     char *tagname;
     orte_rml_tag_t oob_tag;
     size_t count;
-    int rc=ORTE_SUCCESS, ret;
+    int32_t rc=ORTE_SUCCESS, ret;
 
     count = 1;
     if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, (void*)&command, &count, ORTE_NS_CMD))) {
@@ -421,7 +421,7 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
     RETURN_ERROR:
 	    OBJ_CONSTRUCT(&error_answer, orte_buffer_t);
 	    orte_dps.pack(&error_answer, (void*)&command, 1, ORTE_NS_CMD);
-        orte_dps.pack(&error_answer, (void*)&rc, 1, ORTE_INT32);
+        orte_dps.pack(&error_answer, &rc, 1, ORTE_INT32);
 	    orte_rml.send_buffer(sender, &error_answer, tag, 0);
         OBJ_DESTRUCT(&error_answer);
     }
