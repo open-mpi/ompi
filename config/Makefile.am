@@ -17,6 +17,7 @@
 include $(top_srcdir)/config/Makefile.options
 
 EXTRA_DIST = \
+        distscript.csh \
         c_get_alignment.m4 \
         c_weak_symbols.m4 \
         cxx_find_template_parameters.m4 \
