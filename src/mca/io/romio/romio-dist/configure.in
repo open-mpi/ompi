@@ -1284,7 +1284,8 @@ else
     F77=":"
 fi
 #
-PAC_C_INLINE
+# Open MPI: we already do this test in the top-level configure
+#PAC_C_INLINE
 
 # Header files
 PAC_CHECK_HEADERS(unistd.h)
