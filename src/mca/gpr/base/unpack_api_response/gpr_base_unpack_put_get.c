@@ -63,8 +63,7 @@ int orte_gpr_base_unpack_put(orte_buffer_t *buffer, int *ret)
 int orte_gpr_base_unpack_get(orte_buffer_t *buffer, int *ret, int *cnt, orte_gpr_value_t ***values)
 {
     orte_gpr_cmd_flag_t command;
-    int rc;
-    int32_t num;
+    int rc, num;
     size_t n;
 
     n=1;
@@ -79,7 +78,7 @@ int orte_gpr_base_unpack_get(orte_buffer_t *buffer, int *ret, int *cnt, orte_gpr
     }
 
     /* find out how many values came back */
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &num, &n, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &num, &n, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

@@ -60,7 +60,7 @@ int orte_gpr_base_pack_get(orte_buffer_t *cmd,
     orte_gpr_cmd_flag_t command;
     char **ptr;
     int rc;
-    int32_t n;
+    int n;
 
     command = ORTE_GPR_GET_CMD;
 
@@ -86,7 +86,7 @@ int orte_gpr_base_pack_get(orte_buffer_t *cmd,
     }
 
     /* pack number of tokens */
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &n, 1, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &n, 1, ORTE_INT))) {
       return rc;
     }
     
@@ -106,7 +106,7 @@ int orte_gpr_base_pack_get(orte_buffer_t *cmd,
     }
 
     /* pack number of keys */
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &n, 1, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &n, 1, ORTE_INT))) {
       return rc;
     }
     
