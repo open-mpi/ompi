@@ -55,6 +55,18 @@
 #define IF_NAMESIZE 32
 #endif
 
+/*
+ * Define INADDR_NONE if we don't have it.  Solaris is the only system
+ * where I have found that it does not exist, and the man page for
+ * inet_addr() says that it returns -1 upon failure.  On Linux and
+ * other systems with INADDR_NONE, it's just a #define to -1 anyway.
+ * So just #define it to -1 here if it doesn't already exist.
+ */
+
+#if !defined(INADDR_NONE)
+#define INADDR_NONE -1
+#endif
+
 struct ompi_if_t {
     ompi_list_item_t     super;
     char                if_name[IF_NAMESIZE];
