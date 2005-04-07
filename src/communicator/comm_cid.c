@@ -623,7 +623,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     
     
     local_rank = ompi_comm_rank ( comm );
-    tmpbuf     = (int *) malloc ( count * sizeof(int));
+    tmpbuf     = (int *) malloc ( count * sizeof(int32_t));
     if ( NULL == tmpbuf ) {
         return MPI_ERR_INTERN;
     }
@@ -641,7 +641,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
         sbuf = OBJ_NEW(orte_buffer_t);
         rbuf = OBJ_NEW(orte_buffer_t);
         
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(sbuf, tmpbuf, count, ORTE_INT32))) {
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(sbuf, tmpbuf, count, ORTE_INT))) {
             goto exit;
         }
 
@@ -654,7 +654,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
             rc = orte_rml.send_buffer(remote_leader, sbuf, 0, 0);
         }
 
-        if (ORTE_SUCCESS != (rc = orte_dps.unpack(rbuf, outbuf, (size_t*)&count, ORTE_INT32))) {
+        if (ORTE_SUCCESS != (rc = orte_dps.unpack(rbuf, outbuf, (size_t*)&count, ORTE_INT))) {
             goto exit;
         }
         OBJ_RELEASE(sbuf);
