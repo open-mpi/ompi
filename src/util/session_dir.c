@@ -377,58 +377,66 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
 int
 orte_session_dir_finalize()
 {
+    char *tmp;
+    
+    /* need to setup the top_session_dir with the prefix */
+    tmp = strdup(orte_os_path(false,
+            orte_process_info.tmpdir_base,
+            orte_process_info.top_session_dir, NULL));
+    
     orte_dir_empty(orte_process_info.proc_session_dir);
     orte_dir_empty(orte_process_info.job_session_dir);
     orte_dir_empty(orte_process_info.universe_session_dir);
-    orte_dir_empty(orte_process_info.top_session_dir);
+    orte_dir_empty(tmp);
 
     if (orte_is_empty(orte_process_info.proc_session_dir)) {
-	if (orte_debug_flag) {
-	    ompi_output(0, "sess_dir_finalize: found proc session dir empty - deleting");
-	}
-	rmdir(orte_process_info.proc_session_dir);
+    	if (orte_debug_flag) {
+    	    ompi_output(0, "sess_dir_finalize: found proc session dir empty - deleting");
+    	}
+    	rmdir(orte_process_info.proc_session_dir);
     } else {
-	if (orte_debug_flag) {
-	    ompi_output(0, "sess_dir_finalize: proc session dir not empty - leaving");
-	}
-	return OMPI_SUCCESS;
+    	if (orte_debug_flag) {
+    	    ompi_output(0, "sess_dir_finalize: proc session dir not empty - leaving");
+    	}
+    	return OMPI_SUCCESS;
     }
 
     if (orte_is_empty(orte_process_info.job_session_dir)) {
-	if (orte_debug_flag) {
-	    ompi_output(0, "sess_dir_finalize: found job session dir empty - deleting");
-	}
-	rmdir(orte_process_info.job_session_dir);
+    	if (orte_debug_flag) {
+    	    ompi_output(0, "sess_dir_finalize: found job session dir empty - deleting");
+    	}
+    	rmdir(orte_process_info.job_session_dir);
     } else {
-	if (orte_debug_flag) {
-	    ompi_output(0, "sess_dir_finalize: job session dir not empty - leaving");
-	}
-	return OMPI_SUCCESS;
+    	if (orte_debug_flag) {
+    	    ompi_output(0, "sess_dir_finalize: job session dir not empty - leaving");
+    	}
+    	return OMPI_SUCCESS;
     }
 
     if (orte_is_empty(orte_process_info.universe_session_dir)) {
-	if (orte_debug_flag) {
-	    ompi_output(0, "sess_dir_finalize: found univ session dir empty - deleting");
-	}
-	rmdir(orte_process_info.universe_session_dir);
+    	if (orte_debug_flag) {
+    	    ompi_output(0, "sess_dir_finalize: found univ session dir empty - deleting");
+    	}
+    	rmdir(orte_process_info.universe_session_dir);
     } else {
-	if (orte_debug_flag) {
-	    ompi_output(0, "sess_dir_finalize: univ session dir not empty - leaving");
-	}
-	return OMPI_SUCCESS;
+    	if (orte_debug_flag) {
+    	    ompi_output(0, "sess_dir_finalize: univ session dir not empty - leaving");
+    	}
+    	return OMPI_SUCCESS;
     }
 
-    if (orte_is_empty(orte_process_info.top_session_dir)) {
-	if (orte_debug_flag) {
-	    ompi_output(0, "sess_dir_finalize: found top session dir empty - deleting");
-	}
-	rmdir(orte_process_info.top_session_dir);
+    if (orte_is_empty(tmp)) {
+    	if (orte_debug_flag) {
+    	    ompi_output(0, "sess_dir_finalize: found top session dir empty - deleting");
+    	}
+    	rmdir(tmp);
     } else {
-	if (orte_debug_flag) {
-	    ompi_output(0, "sess_dir_finalize: top session dir not empty - leaving");
-	}
+    	if (orte_debug_flag) {
+    	    ompi_output(0, "sess_dir_finalize: top session dir not empty - leaving");
+    	}
     }
 
+    free(tmp);
     return OMPI_SUCCESS;
 }
 
@@ -524,22 +532,21 @@ static bool orte_is_empty(char *pathname)
 #ifndef WIN32
     DIR *dp;
     struct dirent *ep;
-
     if (NULL != pathname) {  /* protect against error */
-	dp = opendir(pathname);
-	if (NULL != dp) {
-	    while ((ep = readdir(dp))) {
-		if ((0 != strcmp(ep->d_name, ".")) &&
-		    (0 != strcmp(ep->d_name, ".."))) {
-		    return false;
-		}
-	    }
-	    closedir(dp);
-	    return true;
-	}
-	return false;
+    	dp = opendir(pathname);
+    	if (NULL != dp) {
+    	    while ((ep = readdir(dp))) {
+        		if ((0 != strcmp(ep->d_name, ".")) &&
+        		    (0 != strcmp(ep->d_name, ".."))) {
+        		    return false;
+        		}
+    	    }
+    	    closedir(dp);
+    	    return true;
+    	}
+    	return false;
     }
-    return false;
+    return true;
 #else 
     char search_path[MAX_PATH];
     HANDLE file;
