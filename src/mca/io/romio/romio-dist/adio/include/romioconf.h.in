@@ -229,6 +229,3 @@
 
 /* Building XFS support or not */
 #undef XFS
-
-/* Define if inline is not supported */
-#undef inline
