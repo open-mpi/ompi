@@ -22,6 +22,6 @@ while(<DATAFILE>) {
     if (! $ASMARCH || ! $ASMFORMAT) { next; }
 
     print "--> Generating assembly for \"$ASMARCH\" \"$ASMFORMAT\"\n";
-    system("$perl generate-asm.pl \"$ASMARCH\" \"$ASMFORMAT\" \"$srcdir/base\" \"$destdir/generated/atomic-$ASMFILE.s\"");
+    system("$perl \"$srcdir/generate-asm.pl\" \"$ASMARCH\" \"$ASMFORMAT\" \"$srcdir/base\" \"$destdir/generated/atomic-$ASMFILE.s\"");
 
 }
