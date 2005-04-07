@@ -41,7 +41,7 @@ static int orte_rmgr_base_cmd_create(orte_buffer_t* req, orte_buffer_t* rsp)
     size_t i, cnt, num_context;
 
     cnt = 1;
-    if(ORTE_SUCCESS != (rc = orte_dps.unpack(req, &num_context, &cnt, ORTE_SIZE))) {
+    if(ORTE_SUCCESS != (rc = orte_dps.unpack(req, &num_context, &cnt, ORTE_UINT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -107,7 +107,7 @@ static int orte_rmgr_base_cmd_deallocate(orte_buffer_t* req, orte_buffer_t* rsp)
 
 static int orte_rmgr_base_cmd_map(orte_buffer_t* req, orte_buffer_t* rsp)
 {
-    int32_t rc;
+    int rc;
     orte_jobid_t jobid;
     size_t cnt = 1;
 
@@ -121,7 +121,7 @@ static int orte_rmgr_base_cmd_map(orte_buffer_t* req, orte_buffer_t* rsp)
 
 static int orte_rmgr_base_cmd_launch(orte_buffer_t* req, orte_buffer_t* rsp)
 {
-    int32_t rc;
+    int rc;
     orte_jobid_t jobid;
     size_t cnt = 1;
 
@@ -136,7 +136,7 @@ static int orte_rmgr_base_cmd_launch(orte_buffer_t* req, orte_buffer_t* rsp)
 
 static int orte_rmgr_base_cmd_term_job(orte_buffer_t* req, orte_buffer_t* rsp)
 {
-    int32_t rc;
+    int rc;
     orte_jobid_t jobid;
     size_t cnt = 1;
 
@@ -151,7 +151,7 @@ static int orte_rmgr_base_cmd_term_job(orte_buffer_t* req, orte_buffer_t* rsp)
 
 static int orte_rmgr_base_cmd_term_proc(orte_buffer_t* req, orte_buffer_t* rsp)
 {
-    int32_t rc;
+    int rc;
     orte_process_name_t name;
     size_t cnt = 1;
 
