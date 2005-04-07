@@ -385,11 +385,13 @@ static void signal_callback(int fd, short flags, void *arg)
     int ret;
     struct timeval tv = { 5, 0 };
     ompi_event_t* event;
+    char msg[] = "orterun: killing job...\n";
 
     static int signalled = 0;
     if (0 != signalled++) {
          return;
     }
+    write(2, msg, sizeof(msg));
 
     if (jobid != ORTE_JOBID_MAX) {
         ret = orte_rmgr.terminate_job(jobid);
