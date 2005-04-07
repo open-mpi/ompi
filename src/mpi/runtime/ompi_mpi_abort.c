@@ -25,6 +25,7 @@
 #include "util/proc_info.h"
 #include "runtime/runtime.h"
 #include "mca/ns/ns.h"
+#include "mca/rmgr/rmgr.h"
 
 #include "event/event.h"
 
@@ -48,9 +49,8 @@ abort_procs(ompi_proc_t **procs, int proc_count,
         }
         if (jobid == my_jobid) continue;
 
-#if 0
-        killret = ompi_rte_terminate_job(jobid, 0);
-#endif
+        killret = orte_rmgr.terminate_job(jobid);
+
         if (OMPI_SUCCESS != killret) ret = killret;
     }
 
@@ -88,11 +88,8 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
                 comm->c_local_group->grp_proc_count,
                 my_jobid);
 
-#if 0
-    ret = ompi_rte_terminate_job(my_jobid, 0);
-#else
-    ret = OMPI_ERROR;
-#endif
+
+    ret = orte_rmgr.terminate_job(my_jobid);
 
     if (OMPI_SUCCESS == ret) {
         while (1) {
