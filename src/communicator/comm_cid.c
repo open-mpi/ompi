@@ -623,7 +623,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     
     
     local_rank = ompi_comm_rank ( comm );
-    tmpbuf     = (int *) malloc ( count * sizeof(int32_t));
+    tmpbuf     = (int *) malloc ( count * sizeof(int));
     if ( NULL == tmpbuf ) {
         return MPI_ERR_INTERN;
     }
