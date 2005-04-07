@@ -31,6 +31,20 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     AC_ARG_WITH(ptl-gm-libdir,
         AC_HELP_STRING([--with-ptl-gm-libdir=DIR],
                        [directory where the GM library can be found, if it is not in \$GMDIR/lib or \$GMDIR/binary/lib]))
+    AC_ARG_ENABLE(gm-ptl-cache,
+        AC_HELP_STRING([--enable-gm-ptl-cache],[Enable/disable the internal registered memory cache (default=yes if memory registration supported by GM)]),
+                 [enable_gm_cache=$(enable_gm_ptl_cache)],
+                 [enable_gm_cache="yes"])
+
+    if test "$enable_gm_cache" = "yes"; then
+        AC_DEFINE_UNQUOTED( OMPI_MCA_PTL_GM_CACHE_ENABLE, 1,
+                            [Enable GM PTL internal cache for registered memory])
+    else
+        AC_DEFINE_UNQUOTED( OMPI_MCA_PTL_GM_CACHE_ENABLE, 1,
+                            [Disable GM PTL internal cache for registered memory])
+    fi
+    AM_CONDITIONAL( OMPI_ENABLE_GM_CACHE, test "$enable_gm_cache" = "yes" )
+
 
     # Add to CPPFLAGS if necessary
 
@@ -143,6 +157,23 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     AC_DEFINE_UNQUOTED(OMPI_MCA_PTL_GM_HAVE_RDMA_GET, $HAVE_RDMA_GET,
         [Whether we have get_get() or not])
     AC_MSG_RESULT([$MSG])
+
+    # Now test to see if the targetted GM is a broken one broken gm builds
+    AC_MSG_CHECKING(for broken GM 2.x RDMA gets build)
+    AC_TRY_COMPILE([
+        #include <gm.h>
+        ], [
+        #if GM_API_VERSION_2_0 &&                                 \
+           ((GM_API_VERSION_2_1_0 && GM_API_VERSION < 0x20102) || \
+             GM_API_VERSION < 0x2000c)
+          #error GM build is broken
+        #endif         ],
+       [ mca_ptl_gm_broken=0 gm_build_broken=no ],
+       [ mca_ptl_gm_broken=1 gm_build_broken=yes ]) 
+    AC_MSG_RESULT( [$gm_build_broken] )
+    AC_DEFINE_UNQUOTED( OMPI_MCA_PTL_GM_GET_BROKEN, $mca_ptl_gm_broken,
+                        [The GM build has or not a broker gm_get function] )
+    unset gm_build_broken mca_ptl_gm_broken
 
     #
     # Save extra compiler/linker flags so that they can be added in
