@@ -79,6 +79,7 @@ struct globals_t {
     bool no_wait_for_job_completion;
     bool debug;
     int num_procs;
+    int exit_code;
     char *hostfile;
     char *env_val;
     char *appfile;
@@ -238,6 +239,8 @@ int main(int argc, char *argv[], char* env[])
                 ompi_condition_wait(&orterun_globals.cond, 
                                     &orterun_globals.lock);
             }
+            /* Make sure we propagate the exit code */
+            rc = orterun_globals.exit_code;
             OMPI_THREAD_UNLOCK(&orterun_globals.lock);
         }
     }
@@ -327,6 +330,11 @@ static void dump_aborted_procs(orte_jobid_t jobid)
         if(WIFSIGNALED(exit_code)) { 
             fprintf(stderr, "[%d,%d,%d] process rank %d pid %d on node \"%s\" exited on signal %d\n",
                  ORTE_NAME_ARGS(&name),rank,pid,node_name,WTERMSIG(exit_code));
+
+            /* Hold the exit_code so we can return it when exiting */
+            OMPI_THREAD_LOCK(&orterun_globals.lock);
+            orterun_globals.exit_code = exit_code;
+            OMPI_THREAD_UNLOCK(&orterun_globals.lock);
         }
         OBJ_RELEASE(value);
     }
@@ -407,6 +415,7 @@ static int init_globals(void)
         false,
         false,
         -1,
+        0,
         NULL,
         NULL,
         NULL,
