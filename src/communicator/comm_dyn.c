@@ -50,7 +50,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                                orte_process_name_t *port, int send_first,
                                ompi_communicator_t **newcomm, orte_rml_tag_t tag )
 {
-    int size, rsize, rank, rc;
+    int32_t size, rsize, rank, rc;
     size_t num_vals;
     size_t namebuflen, rnamebuflen;
     void *namebuf=NULL, *rnamebuf=NULL;
