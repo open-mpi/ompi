@@ -322,6 +322,10 @@ void ompi_info::do_config(bool want_all)
   out("Configured on", "config:timestamp", OMPI_CONFIGURE_DATE);
   out("Configure host", "config:host", OMPI_CONFIGURE_HOST);
 
+  out("Built by", "build:user", OMPI_BUILD_USER);
+  out("Built on", "build:timestamp", OMPI_BUILD_DATE);
+  out("Built host", "build:host", OMPI_BUILD_HOST);
+
   out("C bindings", "bindings:c", "yes");
   out("C++ bindings", "bindings:cxx", "yes");
   out("Fortran77 bindings", "bindings:f77", f77);
