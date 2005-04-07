@@ -29,12 +29,12 @@ generated/@OMPI_ASM_FILE@: base/@OMPI_ASSEMBLY_ARCH@.asm
 
 atomic-asm.s: generated/@OMPI_ASM_FILE@
 	rm -f atomic-asm.s
-	@ if test -f $(top_srcdir)/src/asm/generated/@OMPI_ASM_FILE@ ; then \
-	    cmd="ln -s $(top_srcdir)/src/asm/generated/@OMPI_ASM_FILE@ atomic-asm.s" ; \
+	@ if test -f "$(top_srcdir)/src/asm/generated/@OMPI_ASM_FILE@" ; then \
+	    cmd="ln -s \"$(top_srcdir)/src/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
 	    echo "$$cmd" ; \
 	    $$cmd ; \
 	else \
-	    cmd="ln -s $(top_builddir)/src/asm/generated/@OMPI_ASM_FILE@ atomic-asm.s" ; \
+	    cmd="ln -s \"$(top_builddir)/src/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
 	    echo "$$cmd" ; \
 	    $$cmd ; \
 	fi
@@ -79,5 +79,5 @@ maintainer-clean-local:
 # Copy over all the generated files
 #
 dist-hook:
-	mkdir ${distdir}/generated
-	$(PERL) generate-all-asm.pl "$(PERL)" "$(srcdir)" "$(distdir)"
+	mkdir "${distdir}/generated"
+	$(PERL) "$(top_srcdir)/src/asm/generate-all-asm.pl" "$(PERL)" "$(srcdir)" "$(distdir)"
