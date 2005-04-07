@@ -36,7 +36,7 @@ int orte_gpr_replica_recv_cleanup_job_cmd(orte_buffer_t *input_buffer,
     orte_gpr_cmd_flag_t command=ORTE_GPR_CLEANUP_JOB_CMD;
     orte_jobid_t jobid=0;
     size_t n;
-    int32_t rc, ret;
+    int rc, ret;
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -56,7 +56,7 @@ int orte_gpr_replica_recv_cleanup_job_cmd(orte_buffer_t *input_buffer,
     }
     
 RETURN_ERROR:
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -71,7 +71,7 @@ int orte_gpr_replica_recv_cleanup_proc_cmd(orte_buffer_t *input_buffer,
     orte_gpr_cmd_flag_t command=ORTE_GPR_CLEANUP_PROC_CMD;
     orte_process_name_t proc;
     size_t n;
-    int32_t rc, ret;
+    int rc, ret;
     
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -91,7 +91,7 @@ int orte_gpr_replica_recv_cleanup_proc_cmd(orte_buffer_t *input_buffer,
     }
     
 RETURN_ERROR:
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

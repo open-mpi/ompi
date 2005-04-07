@@ -36,8 +36,7 @@ int orte_gpr_replica_recv_delete_segment_cmd(orte_buffer_t *buffer, orte_buffer_
     char *segment=NULL;
     orte_gpr_replica_segment_t *seg=NULL;
     size_t n;
-    int rc;
-    int32_t ret;
+    int rc, ret;
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -60,7 +59,7 @@ int orte_gpr_replica_recv_delete_segment_cmd(orte_buffer_t *buffer, orte_buffer_
     }
 
  RETURN_ERROR:
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -75,8 +74,7 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
     orte_gpr_replica_itag_t *token_itags=NULL, *key_itags=NULL;
     orte_gpr_replica_segment_t *seg=NULL;
     char *segment=NULL, **tokens=NULL, **keys=NULL;
-    int32_t num_tokens=0, num_keys=0, ret;
-    int rc, i;
+    int num_tokens=0, num_keys=0, rc, i, ret;
     size_t n;
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
@@ -97,7 +95,7 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &num_tokens, &n, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &num_tokens, &n, ORTE_INT))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -118,7 +116,7 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
      }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &num_keys, &n, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &num_keys, &n, ORTE_INT))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -190,7 +188,7 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
         free(key_itags);
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -206,8 +204,7 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
     size_t n, cnt;
     orte_gpr_replica_segment_t *seg=NULL;
     char *segment=NULL, **index=NULL;
-    int rc;
-    int32_t ret;
+    int rc, ret;
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -272,7 +269,7 @@ RETURN_PACK_ERROR:
        free(index);
     }
     
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

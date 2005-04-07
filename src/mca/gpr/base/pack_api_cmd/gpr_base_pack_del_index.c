@@ -80,7 +80,7 @@ int orte_gpr_base_pack_delete_entries(orte_buffer_t *cmd,
     }
 
     /* pack number of tokens */
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &n, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, (int*)&n, 1, ORTE_INT))) {
         return rc;
     }
 
@@ -102,7 +102,7 @@ int orte_gpr_base_pack_delete_entries(orte_buffer_t *cmd,
     }
 
     /* pack number of keys */
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &n, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, (int*)&n, 1, ORTE_INT))) {
         return rc;
     }
 

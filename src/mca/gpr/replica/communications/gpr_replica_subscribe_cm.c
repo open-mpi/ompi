@@ -39,8 +39,7 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
     orte_gpr_cmd_flag_t command=ORTE_GPR_SUBSCRIBE_CMD;
     orte_data_type_t type;
     orte_gpr_notify_id_t local_idtag=ORTE_GPR_NOTIFY_ID_MAX, idtag=ORTE_GPR_NOTIFY_ID_MAX;
-    int32_t rc;
-    int ret, num_subs, num_trigs;
+    int rc, ret, num_subs, num_trigs;
     size_t n;
     orte_gpr_notify_action_t action;
     orte_gpr_value_t **trigs;
@@ -149,7 +148,7 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
         goto RETURN_ERROR;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_dps.pack(output_buffer, &rc, 1, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (ret = orte_dps.pack(output_buffer, &rc, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -162,8 +161,7 @@ int orte_gpr_replica_recv_unsubscribe_cmd(orte_buffer_t *input_buffer,
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_UNSUBSCRIBE_CMD;
     orte_gpr_notify_id_t sub_number=0;
-    int rc;
-    int32_t ret;
+    int rc, ret;
     size_t n;
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
@@ -184,7 +182,7 @@ int orte_gpr_replica_recv_unsubscribe_cmd(orte_buffer_t *input_buffer,
     }
 
 RETURN_ERROR:
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
