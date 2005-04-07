@@ -61,7 +61,7 @@ int orte_rmgr_base_pack_create_cmd(
          return rc;
      }
 
-     rc = orte_dps.pack(buffer, &num_context, 1, ORTE_SIZE);
+     rc = orte_dps.pack(buffer, &num_context, 1, ORTE_UINT32);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
          return rc;
@@ -102,7 +102,7 @@ int orte_rmgr_base_unpack_rsp(
 {
     int32_t rc;
     size_t cnt = 1;
-    if(ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &rc, &cnt, ORTE_INT32))) {
+    if(ORTE_SUCCESS != (rc = orte_dps.unpack(buffer,&rc,&cnt,ORTE_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
