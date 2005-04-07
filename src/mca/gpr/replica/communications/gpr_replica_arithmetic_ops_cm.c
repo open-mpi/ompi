@@ -37,7 +37,8 @@ int orte_gpr_replica_recv_increment_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *itags=NULL;
     size_t n;
-    int rc, ret;
+    int rc;
+    int32_t ret;
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -85,7 +86,7 @@ int orte_gpr_replica_recv_increment_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
     }
 
  RETURN_ERROR:
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -100,7 +101,8 @@ int orte_gpr_replica_recv_decrement_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *itags=NULL;
     size_t n;
-    int rc, ret;
+    int rc;
+    int32_t ret;
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -148,7 +150,7 @@ int orte_gpr_replica_recv_decrement_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
     }
     
  RETURN_ERROR:
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &ret, 1, ORTE_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

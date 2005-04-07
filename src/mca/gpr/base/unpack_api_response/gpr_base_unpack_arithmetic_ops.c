@@ -77,7 +77,7 @@ int orte_gpr_base_unpack_decrement_value(orte_buffer_t *cmd, int *ret)
     }
 
     n=1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(cmd, ret, &n, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(cmd, ret, &n, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

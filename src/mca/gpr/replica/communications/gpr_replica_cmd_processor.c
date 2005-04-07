@@ -40,7 +40,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
 {
     orte_buffer_t *answer;
     orte_gpr_cmd_flag_t command;
-    int rc, ret, rc2;
+    int32_t ret, rc, rc2;
     size_t n;
     bool compound_cmd=false;
 
@@ -309,7 +309,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
         }
         
         ret = ORTE_SUCCESS;
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(*output_buffer, &ret, 1, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(*output_buffer, &ret, 1, ORTE_INT32))) {
             ORTE_ERROR_LOG(rc);
             goto RETURN_ERROR;
         }
@@ -331,10 +331,10 @@ RETURN_ERROR:
          ORTE_ERROR_LOG(rc2);
     }
     if (ORTE_SUCCESS != ret) {
-        orte_dps.pack(answer, &ret, 1, ORTE_INT);
+        orte_dps.pack(answer, &ret, 1, ORTE_INT32);
         return rc;
     }
-    orte_dps.pack(answer, &rc, 1, ORTE_INT);
+    orte_dps.pack(answer, &rc, 1, ORTE_INT32);
     return rc;
 }
 
