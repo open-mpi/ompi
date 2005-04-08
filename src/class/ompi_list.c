@@ -53,6 +53,10 @@ OBJ_CLASS_INSTANCE(
 static void ompi_list_item_construct(ompi_list_item_t *item)
 {
     item->ompi_list_next = item->ompi_list_prev = NULL;
+#if OMPI_ENABLE_DEBUG
+    ompi_atomic_init(&item->ompi_list_item_lock, OMPI_ATOMIC_UNLOCKED);
+    item->ompi_list_item_refcount = 0;
+#endif
 }
 
 static void ompi_list_item_destruct(ompi_list_item_t *item)
@@ -73,6 +77,19 @@ static void ompi_list_construct(ompi_list_t *list)
     list->ompi_list_tail.ompi_list_prev = &list->ompi_list_head;
     list->ompi_list_tail.ompi_list_next = NULL;
     list->ompi_list_length = 0;
+
+#if OMPI_ENABLE_DEBUG
+    /* These refcounts should never be used in assertions because they
+       should never be removed from this list, added to another list,
+       etc.  So set them to sentinel values. */
+
+    ompi_atomic_init(&list->ompi_list_head.ompi_list_item_lock, 
+                     OMPI_ATOMIC_UNLOCKED);
+    list->ompi_list_head.ompi_list_item_refcount = 1;
+    ompi_atomic_init(&list->ompi_list_tail.ompi_list_item_lock, 
+                     OMPI_ATOMIC_UNLOCKED);
+    list->ompi_list_tail.ompi_list_item_refcount = 1;
+#endif
 }
 
 
@@ -82,15 +99,7 @@ static void ompi_list_construct(ompi_list_t *list)
  */
 static void ompi_list_destruct(ompi_list_t *list)
 {
-/*     ompi_list_item_t *item; */
-
-/*     if (NULL != list) { */
-/* 	while (NULL != (item = ompi_list_remove_first(list))) { */
-/* 	    OBJ_RELEASE(item); */
-/* 	} */
-
-	ompi_list_construct(list);
-/*     } */
+    ompi_list_construct(list);
 }
 
 
@@ -113,6 +122,12 @@ bool ompi_list_insert(ompi_list_t *list, ompi_list_item_t *item, long long idx)
     }
     else
     {
+#if OMPI_ENABLE_DEBUG
+        /* Spot check: ensure that this item is previously on no
+           lists */
+
+        assert(0 == item->ompi_list_item_refcount);
+#endif
         /* pointer to element 0 */
         ptr = list->ompi_list_head.ompi_list_next;
         for ( i = 0; i < idx-1; i++ )
@@ -123,6 +138,16 @@ bool ompi_list_insert(ompi_list_t *list, ompi_list_item_t *item, long long idx)
         item->ompi_list_prev = ptr;
         next->ompi_list_prev = item;
         ptr->ompi_list_next = item;
+
+#if OMPI_ENABLE_DEBUG
+        /* Spot check: ensure this item is only on the list that we
+           just insertted it into */
+
+        ompi_atomic_lock(&item->ompi_list_item_lock);
+        ++item->ompi_list_item_refcount;
+        assert(1 == item->ompi_list_item_refcount);
+        ompi_atomic_unlock(&item->ompi_list_item_lock);
+#endif
     }
     
     list->ompi_list_length++;    

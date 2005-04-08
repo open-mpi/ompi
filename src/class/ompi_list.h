@@ -34,6 +34,27 @@
  * and then add it to another list (without first removing it from the
  * first list), you will effectively be hosing the first list.  You
  * have been warned.
+ *
+ * If OMPI_ENABLE_DEBUG is true, a bunch of checks occur, including
+ * some spot checks for a debugging reference count in an attempt to
+ * ensure that an ompi_list_item_t is only one *one* list at a time.
+ * Given the highly concurrent nature of this class, these spot checks
+ * cannot guarantee that an item is only one list at a time.
+ * Specifically, since it is a desirable attribute of this class to
+ * not use locks for normal operations, it is possible that two
+ * threads may [erroneously] modify an ompi_list_item_t concurrently.
+ *
+ * The only way to guarantee that a debugging reference count is valid
+ * for the duration of an operation is to lock the item_t during the
+ * operation.  But this fundamentally changes the desirable attribute
+ * of this class (i.e., no locks).  So all we can do is spot-check the
+ * reference count in a bunch of places and check that it is still the
+ * value that we think it should be.  But this doesn't mean that you
+ * can run into "unlucky" cases where two threads are concurrently
+ * modifying an item_t, but all the spot checks still return the
+ * "right" values.  All we can do is hope that we have enough spot
+ * checks to statistically drive down the possibility of the unlucky
+ * cases happening.
  */
 
 #ifndef OMPI_LIST_H
@@ -42,6 +63,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "class/ompi_object.h"
+
+#if OMPI_ENABLE_DEBUG
+/* Need atomics for debugging (reference counting) */
+#include "include/sys/atomic.h"
+#endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -73,6 +99,13 @@ struct ompi_list_item_t
     /**< Pointer to next list item */
     volatile struct ompi_list_item_t *ompi_list_prev;
     /**< Pointer to previous list item */
+
+#if OMPI_ENABLE_DEBUG
+    /** Atomic lock for debugging (atomic reference counting) */
+    ompi_lock_t ompi_list_item_lock;
+    /** Reference count for debugging */
+    volatile int32_t ompi_list_item_refcount;
+#endif
 };
 /**
  * Base type for items that are put in a list (ompi_list_t) containers.
@@ -158,6 +191,12 @@ static inline bool ompi_list_is_empty(ompi_list_t* list)
  */
 static inline ompi_list_item_t* ompi_list_get_first(ompi_list_t* list)
 {
+#if OMPI_ENABLE_DEBUG
+    /* Spot check: ensure that the first item is only on one list */
+
+    assert(1 == list->ompi_list_head.ompi_list_next->ompi_list_item_refcount);
+#endif
+
     return (ompi_list_item_t *)list->ompi_list_head.ompi_list_next;
 }
 
@@ -177,6 +216,12 @@ static inline ompi_list_item_t* ompi_list_get_first(ompi_list_t* list)
  */
 static inline ompi_list_item_t* ompi_list_get_last(ompi_list_t* list)
 {
+#if OMPI_ENABLE_DEBUG
+    /* Spot check: ensure that the last item is only on one list */
+
+    assert(1 == list->ompi_list_tail.ompi_list_prev->ompi_list_item_refcount);
+#endif
+
     return (ompi_list_item_t *)list->ompi_list_tail.ompi_list_prev;
 }
 
@@ -297,14 +342,8 @@ static inline ompi_list_item_t *ompi_list_remove_item
 {
 #if OMPI_ENABLE_DEBUG
     ompi_list_item_t *item_ptr;
-    bool found;
-#endif
+    bool found = false;
 
-#if OMPI_ENABLE_DEBUG
-    found = false;
-#endif
-
-#if OMPI_ENABLE_DEBUG
     /* check to see that the item is in the list */
     for (item_ptr = ompi_list_get_first(list);
             item_ptr != ompi_list_get_end(list);
@@ -319,6 +358,13 @@ static inline ompi_list_item_t *ompi_list_remove_item
         fflush(stderr);
         return (ompi_list_item_t *)NULL;
     }
+
+    /* Spot check: ensure this item is only on one list */
+
+    ompi_atomic_lock(&item->ompi_list_item_lock);
+    --item->ompi_list_item_refcount;
+    assert(0 == item->ompi_list_item_refcount);
+    ompi_atomic_unlock(&item->ompi_list_item_lock);
 #endif
 
     /* reset next pointer of previous element */
@@ -328,6 +374,13 @@ static inline ompi_list_item_t *ompi_list_remove_item
     item->ompi_list_next->ompi_list_prev=item->ompi_list_prev;
 
     list->ompi_list_length--;
+
+#if OMPI_ENABLE_DEBUG
+    /* Spot check: ensure that this item is still only on one list */
+
+    assert(0 == item->ompi_list_item_refcount);
+#endif
+
     return (ompi_list_item_t *)item->ompi_list_prev;
 }
 
@@ -347,6 +400,12 @@ static inline ompi_list_item_t *ompi_list_remove_item
  */
 static inline void ompi_list_append(ompi_list_t *list, ompi_list_item_t *item)
 {
+#if OMPI_ENABLE_DEBUG
+  /* Spot check: ensure that this item is previously on no lists */
+
+  assert(0 == item->ompi_list_item_refcount);
+#endif
+
   /* set new element's previous pointer */
   item->ompi_list_prev=list->ompi_list_tail.ompi_list_prev;
 
@@ -361,6 +420,16 @@ static inline void ompi_list_append(ompi_list_t *list, ompi_list_item_t *item)
 
   /* increment list element counter */
   list->ompi_list_length++;
+
+#if OMPI_ENABLE_DEBUG
+  /* Spot check: ensure this item is only on the list that we just
+     appended it to */
+
+  ompi_atomic_lock(&item->ompi_list_item_lock);
+  ++item->ompi_list_item_refcount;
+  assert(1 == item->ompi_list_item_refcount);
+  ompi_atomic_unlock(&item->ompi_list_item_lock);
+#endif
 }
 
 
@@ -380,6 +449,12 @@ static inline void ompi_list_append(ompi_list_t *list, ompi_list_item_t *item)
 static inline void ompi_list_prepend(ompi_list_t *list, 
                                      ompi_list_item_t *item) 
 {
+#if OMPI_ENABLE_DEBUG
+  /* Spot check: ensure that this item is previously on no lists */
+
+  assert(0 == item->ompi_list_item_refcount);
+#endif
+
   /* reset item's next pointer */
   item->ompi_list_next = list->ompi_list_head.ompi_list_next;
   
@@ -394,6 +469,16 @@ static inline void ompi_list_prepend(ompi_list_t *list,
   
   /* increment list element counter */
   list->ompi_list_length++;
+
+#if OMPI_ENABLE_DEBUG
+  /* Spot check: ensure this item is only on the list that we just
+     prepended it to */
+
+  ompi_atomic_lock(&item->ompi_list_item_lock);
+  ++item->ompi_list_item_refcount;
+  assert(1 == item->ompi_list_item_refcount);
+  ompi_atomic_unlock(&item->ompi_list_item_lock);
+#endif
 }
 
 
@@ -424,6 +509,12 @@ static inline ompi_list_item_t *ompi_list_remove_first(ompi_list_t *list)
     return (ompi_list_item_t *)NULL;
   }
   
+#if OMPI_ENABLE_DEBUG
+  /* Spot check: ensure that the first item is only on this list */
+
+  assert(1 == list->ompi_list_head.ompi_list_next->ompi_list_item_refcount);
+#endif
+
   /* reset list length counter */
   list->ompi_list_length--;
   
@@ -440,7 +531,16 @@ static inline ompi_list_item_t *ompi_list_remove_first(ompi_list_t *list)
   /* debug code */
   item->ompi_list_prev=(ompi_list_item_t *)NULL;
   item->ompi_list_next=(ompi_list_item_t *)NULL;
+
+  /* Spot check: ensure that the item we're returning is now on no
+     lists */
+
+  ompi_atomic_lock(&((ompi_list_item_t*) item)->ompi_list_item_lock);
+  --item->ompi_list_item_refcount;
+  assert(0 == item->ompi_list_item_refcount);
+  ompi_atomic_unlock(&((ompi_list_item_t*) item)->ompi_list_item_lock);
 #endif
+
   return (ompi_list_item_t *) item;
 }
 
@@ -468,9 +568,16 @@ static inline ompi_list_item_t *ompi_list_remove_last(ompi_list_t *list)
       when caller is done with it.
   */
   volatile ompi_list_item_t  *item;
-  if ( 0 == list->ompi_list_length )
+  if ( 0 == list->ompi_list_length ) {
     return (ompi_list_item_t *)NULL;
+  }
   
+#if OMPI_ENABLE_DEBUG
+  /* Spot check: ensure that the first item is only on this list */
+
+  assert(1 == list->ompi_list_tail.ompi_list_prev->ompi_list_item_refcount);
+#endif
+
   /* reset list length counter */
   list->ompi_list_length--;
   
@@ -486,7 +593,16 @@ static inline ompi_list_item_t *ompi_list_remove_last(ompi_list_t *list)
 #if OMPI_ENABLE_DEBUG
   /* debug code */
   item->ompi_list_next = item->ompi_list_prev = (ompi_list_item_t *)NULL;
+
+  /* Spot check: ensure that the item we're returning is now on no
+     lists */
+
+  ompi_atomic_lock(&((ompi_list_item_t*) item)->ompi_list_item_lock);
+  --item->ompi_list_item_refcount;
+  assert(0 == item->ompi_list_item_refcount);
+  ompi_atomic_unlock(&((ompi_list_item_t*) item)->ompi_list_item_lock);
 #endif
+
   return (ompi_list_item_t *) item;
 }
 
@@ -502,6 +618,13 @@ static inline ompi_list_item_t *ompi_list_remove_last(ompi_list_t *list)
 static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos,
                                         ompi_list_item_t *item)
 {
+#if OMPI_ENABLE_DEBUG
+    /* Spot check: ensure that the item we're insertting is currently
+       not on any list */
+
+    assert(0 == item->ompi_list_item_refcount);
+#endif
+
     /* point item at the existing elements */
     item->ompi_list_next = pos;
     item->ompi_list_prev = pos->ompi_list_prev;
@@ -512,6 +635,16 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
 
     /* reset list length counter */
     list->ompi_list_length++;
+
+#if OMPI_ENABLE_DEBUG
+    /* Spot check: double check that this item is only on the list
+       that we just added it to */
+
+    ompi_atomic_lock(&item->ompi_list_item_lock);
+    ++item->ompi_list_item_refcount;
+    assert(1 == item->ompi_list_item_refcount);
+    ompi_atomic_unlock(&item->ompi_list_item_lock);
+#endif
 }
 
   /**
