@@ -31,7 +31,7 @@ static int ompi_n_success;
 static int ompi_n_failures;
 static char *ompi_description;
 
-void test_init(char *a)
+void test_init(const char *a)
 {
     /* local variables */
     size_t len;
@@ -60,7 +60,7 @@ void test_success(void)
 }
 
 
-void test_failure(char *a)
+void test_failure(const char *a)
 {
     ompi_n_tests++;
     ompi_n_failures++;
@@ -141,7 +141,15 @@ int test_finalize(void)
 
 
 /* note this is for additional output that does NOT go to STDERR but STDOUT */
-void test_comment (char* userstr)
+void test_comment (const char* userstr)
 {
 	fprintf(stdout, "%s:%s\n", ompi_description, userstr);
+}
+
+
+void test_fail_stop(const char *msg, int status)
+{
+    test_failure(msg);
+    test_finalize();
+    exit(status);
 }
