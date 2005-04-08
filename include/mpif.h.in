@@ -61,7 +61,7 @@
        parameter (OMPI_RELEASE_VERSION=@OMPI_RELEASE_VERSION@)
        parameter (OMPI_ALPHA_VERSION=@OMPI_ALPHA_VERSION@)
        parameter (OMPI_BETA_VERSION=@OMPI_BETA_VERSION@)
-       parameter (OMPI_SVN_VERSION="@OMPI_SVN_VERSION@")
+       parameter (OMPI_SVN_VERSION="@OMPI_SVN_R@")
 !
 ! MPI version
 !
