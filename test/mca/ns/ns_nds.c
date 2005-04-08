@@ -14,7 +14,6 @@
  * $HEADER$
  */
 
-
 #include "orte_config.h"
 
 #include <stdio.h>
@@ -27,11 +26,13 @@
 #include <netinet/in.h>
 #endif
 
+#include "support.h"
+#include "components.h"
+
 #include "include/constants.h"
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 
-#include "support.h"
 #include "runtime/runtime.h"
 #include "util/proc_info.h"
 #include "mca/base/base.h"
@@ -41,10 +42,15 @@
 static bool test1(void);        /* verify different buffer inits */
 static bool test2(void);        /* verify int16 */
 
-FILE *test_out;
+static FILE *test_out;
+static mca_ns_base_module_t *ns_module = NULL;
+
 
 int main (int argc, char* argv[])
 {
+    test_component_handle_t ns_handle;
+    mca_ns_base_component_t *ns_component = NULL;
+    int priority;
 
     test_init("orte_ns_nds");
     test_out = stderr;
@@ -53,12 +59,13 @@ int main (int argc, char* argv[])
     if (!ompi_output_init()) {
         return OMPI_ERROR;
     }
-                                                                                                                   
+
     /* 
-     * If threads are supported - assume that we are using threads - and reset otherwise. 
+     * If threads are supported - assume that we are using threads -
+     * and reset otherwise.
      */
     ompi_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
-                                                                                                                   
+
     /* For malloc debugging */
     ompi_malloc_init();
 
@@ -67,7 +74,7 @@ int main (int argc, char* argv[])
 
     /* ensure the replica is isolated */
     setenv("OMPI_MCA_ns_replica_isolate", "1", 1);
-    
+
     /* init the proc info structure */
     orte_proc_info();
     
@@ -77,21 +84,16 @@ int main (int argc, char* argv[])
         exit (1);
     }
     
-    /* startup the name services */
-    if (OMPI_SUCCESS != orte_ns_base_open()) {
-        fprintf(stderr, "can't open name services\n");
-        exit (1);
+    /* Open the ns replica component and initialize a module */
+    if (OMPI_SUCCESS != 
+        test_component_open("ns", "replica", &ns_handle, 
+                            (mca_base_component_t**) &ns_component) ||
+        NULL == ns_component) {
+        test_fail_stop("Could not open ns replica\n", 1);
     }
-        
-    /* startup the name server */
-    if (OMPI_SUCCESS != orte_ns_base_select()) {
-    fprintf(test_out, "NS could not start\n");
-    test_failure("test_ns_replica mca_ns_base_select failed");
-        test_finalize();
-    exit(1);
-    } else {
-    fprintf(test_out, "NS started\n");
-    test_success();
+    ns_module = ns_component->ns_init(&priority);
+    if (NULL == ns_module) {
+        test_fail_stop("NS replica component did not return a module\n", 1);
     }
 
     fprintf(test_out, "executing test1\n");
@@ -111,7 +113,11 @@ int main (int argc, char* argv[])
     }
 
     /* finalize and see if memory cleared */
-    orte_ns_base_close();
+    if (NULL != ns_component->ns_finalize) {
+        ns_component->ns_finalize();
+    }
+    test_component_close(&ns_handle);
+
     orte_proc_info_finalize();
     mca_base_close();
     ompi_malloc_finalize();
@@ -130,7 +136,7 @@ static bool test1(void)        /* check seed/singleton name discovery */
     
     orte_process_info.seed = true;
     
-    if (ORTE_SUCCESS != (rc = orte_ns.set_my_name())) {
+    if (ORTE_SUCCESS != (rc = ns_module->set_my_name())) {
         test_comment("set_my_name failed for seed/singleton case");
         fprintf(test_out, "set_my_name failed for seed/singleton case with return %s\n",
                     ORTE_ERROR_NAME(rc));
@@ -143,7 +149,7 @@ static bool test1(void)        /* check seed/singleton name discovery */
         return false;
     }
     
-    if (0 != orte_ns.compare(ORTE_NS_CMP_ALL, orte_process_info.my_name, &seed)) {
+    if (0 != ns_module->compare(ORTE_NS_CMP_ALL, orte_process_info.my_name, &seed)) {
         test_comment("name_discovery failed for seed/singleton case - name mismatch");
         fprintf(test_out, "name_discovery failed for seed/singleton case - name mismatch\n");
         return false;
@@ -166,7 +172,7 @@ static bool test2(void)
     }
     
     orte_process_info.seed = false;
-    if (ORTE_SUCCESS != (rc = orte_ns.copy_process_name(&orte_process_info.ns_replica, &dummy))) {
+    if (ORTE_SUCCESS != (rc = ns_module->copy_process_name(&orte_process_info.ns_replica, &dummy))) {
         test_comment("unable to copy name");
         fprintf(test_out, "unable to copy name with return %s\n",
                     ORTE_ERROR_NAME(rc));
@@ -180,7 +186,7 @@ static bool test2(void)
     setenv("OMPI_MCA_ns_nds_vpid_start", "0", 1);
     setenv("OMPI_MCA_ns_nds_num_procs", "100000", 1);
     
-    if (ORTE_SUCCESS != (rc = orte_ns.set_my_name())) {
+    if (ORTE_SUCCESS != (rc = ns_module->set_my_name())) {
         test_comment("set_my_name failed for env case");
         fprintf(test_out, "set_my_name failed for env case with return %s\n",
                     ORTE_ERROR_NAME(rc));
@@ -193,7 +199,7 @@ static bool test2(void)
         return false;
     }
     
-    if (0 != orte_ns.compare(ORTE_NS_CMP_ALL, orte_process_info.my_name, &dummy)) {
+    if (0 != ns_module->compare(ORTE_NS_CMP_ALL, orte_process_info.my_name, &dummy)) {
         test_comment("name_discovery failed for env case - name mismatch");
         fprintf(test_out, "name_discovery failed for env case - name mismatch\n");
         return false;

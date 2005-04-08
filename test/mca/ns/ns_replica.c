@@ -1,19 +1,25 @@
 /*
- * unit test for name server replica.
-
- --------------------------------------------------------------------------
-
- Authors:	Ralph H. Castain <rhc@lanl.gov>
-
- --------------------------------------------------------------------------
-
-*/
+ * Copyright (c) 2004-2005 The Trustees of Indiana University.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
 
 #include "orte_config.h"
 #include <stdio.h>
 #include <string.h>
 
 #include "support.h"
+#include "components.h"
 
 #include "include/orte_constants.h"
 #include "include/orte_schema.h"
@@ -35,6 +41,10 @@ int main(int argc, char **argv)
     orte_vpid_t vpid;
     int i, j, rc;
     char *tmp;
+    test_component_handle_t ns_handle;
+    mca_ns_base_component_t *ns_component = NULL;
+    mca_ns_base_module_t *ns_module = NULL;
+    int priority;
 
     test_init("test_ns_replica");
 
@@ -49,12 +59,13 @@ int main(int argc, char **argv)
     if (!ompi_output_init()) {
         return OMPI_ERROR;
     }
-                                                                                                                   
+
     /* 
-     * If threads are supported - assume that we are using threads - and reset otherwise. 
+     * If threads are supported - assume that we are using threads -
+     * and reset otherwise.
      */
     ompi_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
-                                                                                                                   
+
     /* For malloc debugging */
     ompi_malloc_init();
 
@@ -75,30 +86,20 @@ int main(int argc, char **argv)
 	exit (1);
     }
 
-    /* open the name server */
-    if (OMPI_SUCCESS == orte_ns_base_open()) {
-	fprintf(test_out, "NS opened\n");
-	test_success();
-    } else {
-	fprintf(test_out, "NS could not open\n");
-        test_failure("test_ns_replica mca_ns_base_open failed");
-        test_finalize();
-	exit(1);
+    /* Open the ns replica component and initialize a module */
+    if (OMPI_SUCCESS != 
+        test_component_open("ns", "replica", &ns_handle, 
+                            (mca_base_component_t**) &ns_component) ||
+        NULL == ns_component) {
+        test_fail_stop("Could not open ns replica\n", 1);
     }
-
-    /* startup the name server */
-    if (OMPI_SUCCESS != orte_ns_base_select()) {
-	fprintf(test_out, "NS could not start\n");
-	test_failure("test_ns_replica mca_ns_base_select failed");
-        test_finalize();
-	exit(1);
-    } else {
-	fprintf(test_out, "NS started\n");
-	test_success();
+    ns_module = ns_component->ns_init(&priority);
+    if (NULL == ns_module) {
+        test_fail_stop("NS replica component did not return a module\n", 1);
     }
 
     /* create a name */
-    if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&test_name, 0, 1, 1))) { /* got error */
+    if (ORTE_SUCCESS != (rc = ns_module->create_process_name(&test_name, 0, 1, 1))) { /* got error */
 	   fprintf(test_out, "create process name failed with error %s\n",
                 ORTE_ERROR_NAME(rc));
 	   test_failure("test_ns_replica orte_ns create_process_name failed");
@@ -112,7 +113,7 @@ int main(int argc, char **argv)
     
     /* convert a string to a name */
     tmp = strdup("1234.5678.9AEF");
-    if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&test_name, tmp))) {  /* got error */
+    if (ORTE_SUCCESS != (rc = ns_module->convert_string_to_process_name(&test_name, tmp))) {  /* got error */
 	   fprintf(test_out, "convert string to process name failed with error %s\n",
                 ORTE_ERROR_NAME(rc));
 	   test_failure("test_ns_replica orte_ns convert_string_to_process_name failed");
@@ -127,7 +128,7 @@ int main(int argc, char **argv)
     free(test_name);
     
     /* create a cellid */
-    if (ORTE_SUCCESS != (rc = orte_ns.create_cellid(&cell))) { /* got error */
+    if (ORTE_SUCCESS != (rc = ns_module->create_cellid(&cell))) { /* got error */
        test_failure("test_ns_replica orte_ns test create_cellid failed");
 	   fprintf(test_out, "create cellid: error with error %s\n", ORTE_ERROR_NAME(rc));
 	   test_finalize();
@@ -139,7 +140,7 @@ int main(int argc, char **argv)
 
     for (i=0; i<10; i++) { /* loop through */
     	/* create jobid */
-    	if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(&job))) { /* got error */
+    	if (ORTE_SUCCESS != (rc = ns_module->create_jobid(&job))) { /* got error */
     	    fprintf(test_out, "create jobid: error with error %s\n", ORTE_ERROR_NAME(rc));
     	    test_failure("test_ns_replica orte_ns create_jobid failed");
     	    test_finalize();
@@ -151,7 +152,7 @@ int main(int argc, char **argv)
     
     	for (j=0; j<5; j++) { /* loop through several vpid ranges */
     	    /* get range of vpids */
-    	    if (ORTE_SUCCESS != (rc = orte_ns.reserve_range(job, 250, &vpid))) { /* got error */
+    	    if (ORTE_SUCCESS != (rc = ns_module->reserve_range(job, 250, &vpid))) { /* got error */
     		   fprintf(test_out, "get range: error with error %s\n",
                 ORTE_ERROR_NAME(rc));
     		   test_failure("test_ns_replica orte_ns reserve_range failed");
@@ -163,7 +164,7 @@ int main(int argc, char **argv)
     	    }
     
     	    /* create a name */
-    	    if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&test_name, (orte_cellid_t)i, 
+    	    if (ORTE_SUCCESS != (rc = ns_module->create_process_name(&test_name, (orte_cellid_t)i, 
     							     job, vpid))) {
                fprintf(test_out, "test_ns_replica: failed to create proc name after vpid range with error %s\n",
                 ORTE_ERROR_NAME(rc));
@@ -173,7 +174,7 @@ int main(int argc, char **argv)
             }
     
     	    /* get and print its string values */
-    	    if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string(&tmp, test_name))) {
+    	    if (ORTE_SUCCESS != (rc = ns_module->get_proc_name_string(&tmp, test_name))) {
                fprintf(test_out, "test_ns_replica: failed to get proc_name_string with error %s\n",
                 ORTE_ERROR_NAME(rc));
                test_failure("test_ns_replica: failed to get proc_name_string");
@@ -183,7 +184,7 @@ int main(int argc, char **argv)
     	       fprintf(test_out, "(%d) strings: name - %s\n", i, tmp);
             }
             free(tmp);
-            if (ORTE_SUCCESS != (rc = orte_ns.get_vpid_string(&tmp, test_name))) {
+            if (ORTE_SUCCESS != (rc = ns_module->get_vpid_string(&tmp, test_name))) {
                fprintf(test_out, "test_ns_replica: failed to get vpid_string with error %s\n",
                 ORTE_ERROR_NAME(rc));
                test_failure("test_ns_replica: failed to get vpid_string");
@@ -193,7 +194,7 @@ int main(int argc, char **argv)
                fprintf(test_out, "(%d) strings: vpid - %s\n", i, tmp);
             }
             free(tmp);
-            if (ORTE_SUCCESS != (rc = orte_ns.get_jobid_string(&tmp, test_name))) {
+            if (ORTE_SUCCESS != (rc = ns_module->get_jobid_string(&tmp, test_name))) {
                fprintf(test_out, "test_ns_replica: failed to get jobid_string with error %s\n",
                 ORTE_ERROR_NAME(rc));
                test_failure("test_ns_replica: failed to get jobid_string");
@@ -203,7 +204,7 @@ int main(int argc, char **argv)
                fprintf(test_out, "(%d) strings: jobid - %s\n", i, tmp);
             }
             free(tmp);
-            if (ORTE_SUCCESS != (rc = orte_ns.get_cellid_string(&tmp, test_name))) {
+            if (ORTE_SUCCESS != (rc = ns_module->get_cellid_string(&tmp, test_name))) {
                fprintf(test_out, "test_ns_replica: failed to get cellid_string with error %s\n",
                 ORTE_ERROR_NAME(rc));
                test_failure("test_ns_replica: failed to get cellid_string");
@@ -215,21 +216,21 @@ int main(int argc, char **argv)
             free(tmp);
     
     	    /* get and print its numeric values */
-            if (ORTE_SUCCESS != (rc = orte_ns.get_vpid(&vpid, test_name))) {
+            if (ORTE_SUCCESS != (rc = ns_module->get_vpid(&vpid, test_name))) {
                fprintf(test_out, "test_ns_replica: failed to get vpid with error %s\n",
                 ORTE_ERROR_NAME(rc));
                test_failure("test_ns_replica: failed to get vpid");
                test_finalize();
                exit(1);
             }
-            if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&job, test_name))) {
+            if (ORTE_SUCCESS != (rc = ns_module->get_jobid(&job, test_name))) {
                fprintf(test_out, "test_ns_replica: failed to get jobid with error %s\n",
                 ORTE_ERROR_NAME(rc));
                test_failure("test_ns_replica: failed to get jobid");
                test_finalize();
                exit(1);
             }
-            if (ORTE_SUCCESS != (rc = orte_ns.get_cellid(&cell, test_name))) {
+            if (ORTE_SUCCESS != (rc = ns_module->get_cellid(&cell, test_name))) {
                fprintf(test_out, "test_ns_replica: failed to get cellid with error %s\n",
                 ORTE_ERROR_NAME(rc));
                test_failure("test_ns_replica: failed to get cellid");
@@ -243,7 +244,11 @@ int main(int argc, char **argv)
     }
 
     /* finalize and see if memory cleared */
-    orte_ns_base_close();
+    if (NULL != ns_component->ns_finalize) {
+        ns_component->ns_finalize();
+    }
+    test_component_close(&ns_handle);
+
     orte_proc_info_finalize();
     mca_base_close();
     ompi_malloc_finalize();
