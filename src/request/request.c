@@ -56,7 +56,7 @@ static int ompi_request_null_cancel(ompi_request_t* request, int flag)
 
 OBJ_CLASS_INSTANCE(
     ompi_request_t,
-    ompi_object_t,
+    ompi_list_item_t,
     ompi_request_construct,
     ompi_request_destruct);
 
