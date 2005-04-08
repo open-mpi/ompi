@@ -24,13 +24,14 @@
     if( res == exp_res ) test_success(); \
     else test_failure(str);
 
-void test_init(char *a);
+void test_init(const char *a);
 void test_success(void);
-void test_failure(char *a);
+void test_failure(const char *a);
 int test_verify_str(const char *expected_result, const char *test_result);
 int test_verify_int(int expected_result, int test_result);
 int test_finalize(void);
-void test_comment (char* userstr);
+void test_comment (const char* userstr);
+void test_fail_stop(const char *msg, int status);
 
 
 
