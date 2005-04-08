@@ -32,11 +32,11 @@ atomic-asm.s: generated/@OMPI_ASM_FILE@
 	@ if test -f "$(top_srcdir)/src/asm/generated/@OMPI_ASM_FILE@" ; then \
 	    cmd="ln -s \"$(top_srcdir)/src/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
 	    echo "$$cmd" ; \
-	    $$cmd ; \
+	    eval $$cmd ; \
 	else \
 	    cmd="ln -s \"$(top_builddir)/src/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
 	    echo "$$cmd" ; \
-	    $$cmd ; \
+	    eval $$cmd ; \
 	fi
 
 if OMPI_HAVE_ASM_FILE
