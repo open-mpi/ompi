@@ -41,6 +41,7 @@
 #include "mca/rml/rml.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/soh/soh.h"
+#include "mca/soh/base/base.h"
 #include "mca/ras/base/base.h"
 #include "mca/rmaps/base/rmaps_base_map.h"
 
