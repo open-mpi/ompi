@@ -30,6 +30,10 @@ typedef struct test_data {
     size_t data;
 } test_data_t;
 
+OBJ_CLASS_INSTANCE(test_data_t,
+                   ompi_list_item_t,
+                   NULL, NULL);
+
 int main(int argc, char **argv)
 {
     /* local variables */
@@ -65,6 +69,7 @@ int main(int argc, char **argv)
     elements=(test_data_t *)malloc(sizeof(test_data_t)*size_elements);
     assert(elements);
     for(i=0 ; i < size_elements ; i++) {
+        OBJ_CONSTRUCT(elements + i, test_data_t);
         (elements+i)->data=i;
     }
 
