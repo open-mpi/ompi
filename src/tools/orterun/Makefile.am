@@ -23,8 +23,6 @@ libs = $(top_builddir)/src/libmpi.la
 
 bin_PROGRAMS = orterun
 
-AM_CPPFLAGS = -DOMPI_VERSION=\"$(OMPI_VERSION)\"
-
 orterun_SOURCES = \
         orterun.c 
 
