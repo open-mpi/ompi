@@ -35,11 +35,12 @@
 /* depth of the GM internal pipeline */
 #define GM_PIPELINE_DEPTH           3
 
-#define PTL_GM_PIPELINE_EMPTY       0x00
-#define PTL_GM_PIPELINE_DEREGISTER  0x01
-#define PTL_GM_PIPELINE_REGISTER    0x02
-#define PTL_GM_PIPELINE_REMOTE      0x04
-#define PTL_GM_PIPELINE_TRANSFERT   (PTL_GM_PIPELINE_REGISTER | PTL_GM_PIPELINE_REMOTE)
+#define PTL_GM_PIPELINE_EMPTY                 0x0000
+#define PTL_GM_PIPELINE_DEREGISTER            0x0001
+#define PTL_GM_PIPELINE_REGISTER              0x0002
+#define PTL_GM_PIPELINE_REMOTE                0x0004
+#define PTL_GM_PIPELINE_TRANSFERT             (PTL_GM_PIPELINE_REGISTER | PTL_GM_PIPELINE_REMOTE)
+#define PTL_GM_PIPELINE_HAS_INTERNAL_BUFFERS  0x0008
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -105,7 +106,6 @@ extern "C" {
 	uint32_t     type;
         bool         matched;
         bool         have_allocated_buffer;
-        ompi_ptr_t   remote_registered_memory;
     };
     typedef struct mca_ptl_gm_recv_frag_t mca_ptl_gm_recv_frag_t;
 
@@ -202,8 +202,8 @@ extern "C" {
         frag->frag_recv.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
         frag->frag_bytes_processed   = 0;
         frag->frag_bytes_validated   = 0;
-	frag->frag_offset            = 0;
-	ompi_ptl_gm_init_pipeline( &(frag->pipeline) );
+        frag->frag_offset            = 0;
+        ompi_ptl_gm_init_pipeline( &(frag->pipeline) );
         return frag;
     }
 
