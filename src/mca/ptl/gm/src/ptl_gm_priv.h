@@ -17,14 +17,22 @@
  * 
  * $HEADER$
  */
+#include "gm_config.h"
 #include "gm.h"
 
 struct mca_ptl_gm_send_frag_t;
 struct mca_ptl_gm_peer_t;
 
+/* Pinning down memory pages is a costly operation. We can avoid it by using a LRU list
+ * of pinned down memory, managed inside the GM PTL.
+ */
+gm_status_t mca_ptl_gm_register_memory( struct gm_port *port, void *ptr, unsigned len );
+gm_status_t mca_ptl_gm_deregister_memory( struct gm_port *port, void *ptr, unsigned len );
+
 /* Some flags that have to go in the header hdr_common.hdr_flags field */
 #define PTL_FLAG_GM_HAS_FRAGMENT    0x04
 #define PTL_FLAG_GM_LAST_FRAGMENT   0x08
+#define PTL_FLAG_GM_REQUIRE_LOCK    0x10
 
 /* Internal flags for handling long messages */
 #define GM_PTL_REGISTER_MEMORY      0x01

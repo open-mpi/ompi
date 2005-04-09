@@ -18,11 +18,17 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
+if OMPI_ENABLE_GM_CACHE
+  additional_source =
+else
+  additional_source =
+endif
+
 AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include -I$(top_ompi_builddir)/include \
     -I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/src/include
 
 noinst_LTLIBRARIES = libmca_ptl_gm.la
-libmca_ptl_gm_la_SOURCES = \
+libmca_ptl_gm_la_SOURCES = $(additional_source) \
         ptl_gm.c \
         ptl_gm.h \
         ptl_gm_component.c \
@@ -32,4 +38,5 @@ libmca_ptl_gm_la_SOURCES = \
         ptl_gm_proc.c \
         ptl_gm_proc.h \
         ptl_gm_sendfrag.c \
-        ptl_gm_sendfrag.h
+        ptl_gm_sendfrag.h \
+	ptl_gm_memory.c
