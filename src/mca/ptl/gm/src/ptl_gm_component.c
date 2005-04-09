@@ -265,7 +265,7 @@ mca_ptl_gm_discover_boards( mca_ptl_gm_module_t** pptl,
             } else if (GM_SUCCESS == 
                        gm_open(&gm_port, board_no, port_no,
                                mca_ptl_gm_component.gm_port_name, 
-                               GM_API_VERSION_2_0) ) {
+                               OMPI_MCA_PTL_GM_API_VERSION) ) {
 		break;
             }
         }
