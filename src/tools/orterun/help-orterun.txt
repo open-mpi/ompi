@@ -51,3 +51,12 @@ Double check that this file exists and is readable.
 No executable was specified on the %s command line.
 
 Aborting.
+[orterun:num-procs-unspecified]
+%s was unable to determine how many processes to launch for the
+following process:
+
+    %s
+
+You must specify how many processes to launch, either via the -np
+argument or by using the mapping argument (the C, N, cX, and/or nX
+nomenclature).
