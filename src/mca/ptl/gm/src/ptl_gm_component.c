@@ -128,7 +128,9 @@ mca_ptl_gm_component_open(void)
         mca_ptl_gm_param_register_int ("max_frag_size", 256 * 1024 * 1024);
     /* Parameters setting the message limits. */
     mca_ptl_gm_component.gm_eager_limit = 
-        mca_ptl_gm_param_register_int( "eager_limit", 512 * 1024 );
+        mca_ptl_gm_param_register_int( "eager_limit", 128 * 1024 );
+    mca_ptl_gm_component.gm_rndv_burst_limit = 
+        mca_ptl_gm_param_register_int( "rndv_burst_limit", 512 * 1024 );
     mca_ptl_gm_component.gm_rdma_frag_size =
         mca_ptl_gm_param_register_int ("rdma_frag_size", 128 * 1024);
     
@@ -481,6 +483,9 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
                          0,  /* maximum number of list allocated elements will be zero */
                          0,
                          NULL ); /* not using mpool */
+#if OMPI_MCA_PTL_GM_CACHE_ENABLE
+    gmpi_regcache_init();
+#endif  /* OMPI_MCA_PTL_GM_CACHE_ENABLE */
     return (mca_ptl_gm_component.gm_num_ptl_modules > 0 ? OMPI_SUCCESS : OMPI_ERR_OUT_OF_RESOURCE);
 }
 

@@ -55,6 +55,7 @@ extern "C" {
         uint32_t    gm_eager_limit;          /**< number of bytes before the rendez-vous protocol. If the
                                               **< size of the message is less than this number then GM 
                                               **< use a eager protocol.  */
+        uint32_t    gm_rndv_burst_limit;
         uint32_t    gm_rdma_frag_size;       /**< maximum fragment size used to transfer data over RDMA */
         char*       gm_port_name;            /**< the name used to get the port */
 
