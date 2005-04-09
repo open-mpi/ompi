@@ -67,6 +67,8 @@ static struct ompi_event int_handler;
 static orte_jobid_t jobid = ORTE_JOBID_MAX;
 static ompi_pointer_array_t apps_pa;
 static bool wait_for_job_completion = true;
+static char *abort_msg = NULL;
+static size_t abort_msg_len = -1;
 
 /*
  * setup globals for catching orterun command line options
@@ -184,6 +186,11 @@ int main(int argc, char *argv[], char* env[])
     orte_app_context_t **apps;
     int rc, i, num_apps;
 
+    /* Setup the abort message (for use in the signal handler) */
+
+    asprintf(&abort_msg, "%s: killing job...\n", argv[0]);
+    abort_msg_len = strlen(abort_msg);
+
     /* Check for some "global" command line params */
 
     parse_globals(argc, argv);
@@ -252,6 +259,7 @@ int main(int argc, char *argv[], char* env[])
     free(apps);
     OBJ_DESTRUCT(&apps_pa);
     orte_finalize();
+    free(abort_msg);
     return rc;
 }
 
@@ -385,13 +393,12 @@ static void signal_callback(int fd, short flags, void *arg)
     int ret;
     struct timeval tv = { 5, 0 };
     ompi_event_t* event;
-    char msg[] = "orterun: killing job...\n";
 
     static int signalled = 0;
     if (0 != signalled++) {
          return;
     }
-    write(2, msg, sizeof(msg));
+    write(2, abort_msg, abort_msg_len);
 
     if (jobid != ORTE_JOBID_MAX) {
         ret = orte_rmgr.terminate_job(jobid);
@@ -686,7 +693,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         goto cleanup;
     }
 
-    /* Grab all OMPI_MCA_* environment variables */
+    /* Grab all OMPI_* environment variables */
 
     app->env = NULL;
     app->num_env = 0;
@@ -769,9 +776,15 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     /* Get the numprocs */
 
     app->num_procs = orterun_globals.num_procs;
-    /* JMS This may not be a valid assumption -- e.g., mpirun C foo */
-    if (0 == app->num_procs) {
-        app->num_procs = 1; 
+
+    /* If the user didn't specify a num procs or any map data, then we
+       really have no idea what the launch... */
+
+    if (app->num_procs <= 0 && !map_data) {
+        ompi_show_help("help-orterun.txt", "orterun:num-procs-unspecified",
+                       true, argv[0], app->argv[0]);
+        rc = ORTE_ERR_BAD_PARAM;
+        goto cleanup;
     }
 
     /* Find the argv[0] in the path */
