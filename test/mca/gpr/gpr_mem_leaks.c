@@ -38,6 +38,7 @@
 #include "runtime/runtime.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
+#include "util/malloc.h"
 
 #include "mca/gpr/base/base.h"
 #include "mca/gpr/gpr.h"
