@@ -267,8 +267,8 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
     sprintf(mca_ptl_sm_component.sm_fifo_path, 
-        "%s/sm_fifo.%d", ompi_process_info.job_session_dir,
-         mca_oob_name_self.vpid);
+        "%s/sm_fifo.%d", orte_process_info.job_session_dir,
+         orte_process_info.my_name->vpid);
     if(mkfifo(mca_ptl_sm_component.sm_fifo_path, 0660) < 0) {
         ompi_output(0, "mca_ptl_sm_component_init: mkfifo failed with errno=%d\n",errno);
         return NULL;
