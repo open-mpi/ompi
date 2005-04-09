@@ -32,18 +32,19 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
         AC_HELP_STRING([--with-ptl-gm-libdir=DIR],
                        [directory where the GM library can be found, if it is not in \$GMDIR/lib or \$GMDIR/binary/lib]))
     AC_ARG_ENABLE(gm-ptl-cache,
-        AC_HELP_STRING([--enable-gm-ptl-cache],[Enable/disable the internal registered memory cache (default=yes if memory registration supported by GM)]),
+        AC_HELP_STRING([--enable-gm-ptl-cache],[Enable/disable the internal registered memory cache (default=no)]),
                  [enable_gm_cache=$(enable_gm_ptl_cache)],
-                 [enable_gm_cache="yes"])
+                 [enable_gm_cache="no"])
 
     if test "$enable_gm_cache" = "yes"; then
         AC_DEFINE_UNQUOTED( OMPI_MCA_PTL_GM_CACHE_ENABLE, 1,
                             [Enable GM PTL internal cache for registered memory])
     else
-        AC_DEFINE_UNQUOTED( OMPI_MCA_PTL_GM_CACHE_ENABLE, 1,
+        AC_DEFINE_UNQUOTED( OMPI_MCA_PTL_GM_CACHE_ENABLE, 0,
                             [Disable GM PTL internal cache for registered memory])
     fi
-    AM_CONDITIONAL( OMPI_ENABLE_GM_CACHE, test "$enable_gm_cache" = "yes" )
+    ##AM_CONDITIONAL( OMPI_ENABLE_GM_CACHE, test "$enable_gm_cache" = "yes" )
+    AM_CONDITIONAL( OMPI_ENABLE_GM_CACHE, test "yes" = "yes" )
 
 
     # Add to CPPFLAGS if necessary
@@ -174,6 +175,9 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     AC_DEFINE_UNQUOTED( OMPI_MCA_PTL_GM_GET_BROKEN, $mca_ptl_gm_broken,
                         [The GM build has or not a broker gm_get function] )
     unset gm_build_broken mca_ptl_gm_broken
+
+    AC_DEFINE_UNQUOTED( OMPI_MCA_PTL_GM_SUPPORT_REGISTERING, 1,
+                        [The OS support or not the virtal page registration] )
 
     #
     # Save extra compiler/linker flags so that they can be added in
