@@ -484,7 +484,7 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
                          0,
                          NULL ); /* not using mpool */
 #if OMPI_MCA_PTL_GM_CACHE_ENABLE
-    gmpi_regcache_init();
+    mca_ptl_gm_regcache_init();
 #endif  /* OMPI_MCA_PTL_GM_CACHE_ENABLE */
     return (mca_ptl_gm_component.gm_num_ptl_modules > 0 ? OMPI_SUCCESS : OMPI_ERR_OUT_OF_RESOURCE);
 }
@@ -504,8 +504,8 @@ mca_ptl_gm_component_init (int *num_ptl_modules,
     *num_ptl_modules = 0;
 
     if (OMPI_SUCCESS != mca_ptl_gm_init (&mca_ptl_gm_component)) {
-        ompi_output( 0, "[%s:%d] error in initializing gm state and PTL's. (%d PTL's)\n",
-                     __FILE__, __LINE__, mca_ptl_gm_component.gm_num_ptl_modules );
+        /*ompi_output( 0, "[%s:%d] error in initializing gm state and PTL's. (%d PTL's)\n",
+                     __FILE__, __LINE__, mca_ptl_gm_component.gm_num_ptl_modules );*/
         return NULL;
     }
 
