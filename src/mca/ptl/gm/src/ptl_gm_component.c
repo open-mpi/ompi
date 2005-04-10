@@ -213,9 +213,13 @@ mca_ptl_gm_module_store_data_toexchange (void)
 
     for (i = 0; i < mca_ptl_gm_component.gm_num_ptl_modules; i++) {
         mca_ptl_gm_module_t *ptl = mca_ptl_gm_component.gm_ptl_modules[i];
-        addrs[i].local_id = ptl->local_id;
-        addrs[i].global_id = ptl->global_id;
-        addrs[i].port_id = ptl->port_id;
+        addrs[i].local_id = ptl->local_addr.local_id;
+#if GM_API_VERSION > 0x200
+        addrs[i].global_id = ptl->local_addr.global_id;
+#else
+	strncpy( addrs[i].global_id, ptl->local_addr.global_id, GM_MAX_HOST_NAME_LEN );
+#endif  /* GM_API_VERSION > 0x200 */
+        addrs[i].port_id = ptl->local_addr.port_id;
     }
     rc = mca_base_modex_send (&mca_ptl_gm_component.super.ptlm_version, addrs,
                               size);
@@ -251,10 +255,13 @@ static int32_t
 mca_ptl_gm_discover_boards( mca_ptl_gm_module_t** pptl,
 			    uint32_t max_ptls, uint32_t max_boards, uint32_t max_port )
 {
-    uint32_t        board_no, port_no;
+    uint32_t        board_no, port_no, index = 0, local_id;
     struct gm_port* gm_port;
-    uint32_t        index = 0;
-    uint32_t        local_id, global_id;
+#if GM_API_VERSION > 0x200
+    int32_t         global_id;
+#else
+    char        global_id[GM_MAX_HOST_NAME_LEN];
+#endif  /* GM_API_VERSION > 0x200 */
 
     for( board_no = 0; board_no < max_boards; board_no++ ) {
 
@@ -278,22 +285,34 @@ mca_ptl_gm_discover_boards( mca_ptl_gm_module_t** pptl,
             ompi_output (0, " failure to get local_id \n");
             continue;
         }
-	
-        /* Convert local id to global id */
+        /* Gather an unique id for the node */
+#if GM_API_VERSION > 0x200
         if (GM_SUCCESS != gm_node_id_to_global_id( gm_port, local_id, &global_id) ) {
-            ompi_output (0, " Error: Unable to get my GM global id \n");
-            continue;
-        }
+	    ompi_output (0, " Error: Unable to get my GM global unique id \n");
+	    continue;
+	}
+#else
+	{
+	    if( GM_SUCCESS != gm_get_host_name( gm_port, global_id ) ) {
+		ompi_output( 0, "Error: Unable to get the GM host name\n" );
+		continue;
+	    }
+	}
+#endif  /* GM_API_VERSION > 0x200 */
 
 	/* Create the ptl. If fail return the number of already created */
 	if( OMPI_SUCCESS != mca_ptl_gm_create( &(pptl[index]) ) ) {
 	    return index;
         }
 
-        pptl[index]->port_id   = port_no;
-        pptl[index]->gm_port   = gm_port;
-        pptl[index]->local_id  = local_id;
-        pptl[index]->global_id = global_id;
+        pptl[index]->gm_port              = gm_port;
+        pptl[index]->local_addr.port_id   = port_no;
+        pptl[index]->local_addr.local_id  = local_id;
+#if GM_API_VERSION > 0x200
+        pptl[index]->local_addr.global_id = global_id;
+#else
+        strncpy( pptl[index]->local_addr.global_id, global_id, GM_MAX_HOST_NAME_LEN );
+#endif  /* GM_API_VERSION > 0x200 */
 
 	/* everything is OK let's mark it as usable and go to the next one */
 	if( (++index) >= max_ptls ) {
@@ -359,10 +378,10 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     }
     for (i = 0; i < ptl->num_send_tokens; i++) {
         sfragment->send_buf = NULL;
-        OMPI_FREE_LIST_RETURN( &(ptl->gm_send_frags), (ompi_list_item_t *)sfragment );
-        OMPI_FREE_LIST_RETURN( &(ptl->gm_send_dma_frags),
-                               (ompi_list_item_t *)((char*)ptl->gm_send_dma_memory +
-                                i * mca_ptl_gm_component.gm_segment_size) );
+        OMPI_GM_FREE_LIST_RETURN( &(ptl->gm_send_frags), (ompi_list_item_t*)sfragment );
+        OMPI_GM_FREE_LIST_RETURN( &(ptl->gm_send_dma_frags),
+				  (ompi_list_item_t*)((char*)ptl->gm_send_dma_memory +
+						      i * mca_ptl_gm_component.gm_segment_size) );
         sfragment++;
     }
 
@@ -399,14 +418,14 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     }
 
     for( i = 0; i < 2; i++ ) {
-        OMPI_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
+        OMPI_GM_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
         free_rfragment++;
 
         gm_provide_receive_buffer( ptl->gm_port, (char*)ptl->gm_recv_dma_memory + i * mca_ptl_gm_component.gm_segment_size,
                                    GM_SIZE, GM_HIGH_PRIORITY );
     }
     for( i = 2; i < ptl->num_recv_tokens; i++ ) {
-        OMPI_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
+        OMPI_GM_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
         free_rfragment++;
 
         gm_provide_receive_buffer( ptl->gm_port, (char*)ptl->gm_recv_dma_memory + i * mca_ptl_gm_component.gm_segment_size,
@@ -547,7 +566,7 @@ char* gm_get_local_buffer( void )
 
 void gm_release_local_buffer( char* ptr )
 {
-    OMPI_FREE_LIST_RETURN( &(mca_ptl_gm_component.gm_unexpected_frags_data), (ompi_list_item_t*)ptr );
+    OMPI_GM_FREE_LIST_RETURN( &(mca_ptl_gm_component.gm_unexpected_frags_data), (ompi_list_item_t*)ptr );
 }
 
 /*

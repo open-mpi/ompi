@@ -34,7 +34,11 @@ extern "C" {
  * Structure used to publish GM id information to peers.
  */
 struct mca_ptl_gm_addr_t {
+#if GM_API_VERSION > 0x200
     unsigned int global_id;
+#else
+    char global_id[GM_MAX_HOST_NAME_LEN];
+#endif  /* GM_API_VERSION > 0x200 */
     unsigned int local_id;
     unsigned int port_id;
 };
@@ -48,10 +52,7 @@ struct mca_ptl_gm_peer_t {
     ompi_list_item_t super;
     struct mca_ptl_gm_module_t* peer_ptl;
     struct mca_ptl_gm_proc_t*   peer_proc;
-    struct mca_ptl_gm_addr_t*   peer_addr;   /**< address of peer */
-    unsigned int                global_id;
-    unsigned int                port_number;
-    unsigned int                local_id;
+    struct mca_ptl_gm_addr_t    peer_addr;   /**< address of peer */
     int                         num_credits;
     int                         max_credits;
     int                         resending;

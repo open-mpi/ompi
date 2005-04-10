@@ -23,11 +23,14 @@
 #ifndef MCA_PTL_GM_H
 #define MCA_PTL_GM_H
 
+#include "ompi_config.h"
+#include "gm_config.h"
 #include "class/ompi_free_list.h"
 #include "mca/ptl/ptl.h"
+#include "ptl_gm_priv.h"
+#include "ptl_gm_peer.h"
 
 #define MCA_PTL_GM_STATISTICS 0
-#define THRESHOLD 16384 
 #define MAX_RECV_TOKENS 256
 #define PTL_GM_ADMIN_SEND_TOKENS 0
 #define PTL_GM_ADMIN_RECV_TOKENS 0
@@ -76,9 +79,7 @@ extern "C" {
     struct mca_ptl_gm_module_t {
         mca_ptl_base_module_t super;    /**< base PTL module interface */
         struct gm_port *gm_port;
-        unsigned int local_id;
-        unsigned int global_id;
-        unsigned int port_id;
+        mca_ptl_gm_addr_t local_addr;
         unsigned int num_send_tokens;
         unsigned int num_recv_tokens;
         unsigned int max_send_tokens;
@@ -99,7 +100,7 @@ extern "C" {
 #if MCA_PTL_GM_STATISTICS
         size_t      ptl_bytes_sent;
         size_t      ptl_bytes_recv;
-#endif
+#endif  /* MCA_PTL_GM_STATISTICS */
     };
 
     typedef struct mca_ptl_gm_module_t mca_ptl_gm_module_t;
@@ -225,6 +226,19 @@ extern "C" {
 
     union mca_ptl_base_header_t;
     void mca_ptl_gm_dump_header( char* str, union mca_ptl_base_header_t* hdr );
+
+#if OMPI_ENABLE_DEBUG
+#include "class/ompi_list.h"
+/* If debug is enabled we have to work around the item validity checks. */
+#define OMPI_GM_FREE_LIST_RETURN( LIST, ITEM ) \
+do {                                           \
+    (ITEM)->ompi_list_item_refcount = 0;       \
+    (ITEM)->ompi_list_item_lock.u.lock = 0;    \
+    OMPI_FREE_LIST_RETURN( (LIST), (ITEM) );   \
+} while(0)
+#else
+#define OMPI_GM_FREE_LIST_RETURN OMPI_FREE_LIST_RETURN
+#endif  /* OMPI_ENABLE_DEBUG */
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
