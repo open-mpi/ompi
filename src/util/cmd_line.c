@@ -468,7 +468,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
  */
 char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
 {
-    int i, len, prev_len;
+    int i, len=MAX_WIDTH * 2, prev_len;
     int argc;
     char **argv;
     char *ret, temp[MAX_WIDTH * 2], line[MAX_WIDTH * 2];
