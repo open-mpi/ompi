@@ -107,11 +107,10 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
     OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 
     /* lookup tcp parameters exported by this proc */
-    rc = mca_base_modex_recv(
-        &mca_ptl_tcp_component.super.ptlm_version, 
-        ompi_proc, 
-        (void**)&ptl_proc->proc_addrs, 
-        &size);
+    rc = mca_base_modex_recv( &mca_ptl_tcp_component.super.ptlm_version, 
+			      ompi_proc, 
+			      (void**)&ptl_proc->proc_addrs, 
+			      &size);
     if(rc != OMPI_SUCCESS) {
         ompi_output(0, "mca_ptl_tcp_proc_create: mca_base_modex_recv: failed with return value=%d", rc);
         OBJ_RELEASE(ptl_proc);
@@ -150,7 +149,8 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(const orte_process_name_t *name)
     return proc;
 }
 
-
+#include <netinet/in.h>
+#include <arpa/inet.h>
 /*
  * Note that this routine must be called with the lock on the process already 
  * held.  Insert a ptl instance into the proc array and assign it an address.
@@ -159,11 +159,13 @@ int mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
 {
     struct mca_ptl_tcp_module_t *ptl_tcp = ptl_peer->peer_ptl;
     size_t i;
+    unsigned long net1;
 
     /* insert into peer array */ 
     ptl_peer->peer_proc = ptl_proc;
     ptl_proc->proc_peers[ptl_proc->proc_peer_count++] = ptl_peer;
 
+    net1 = ptl_tcp->ptl_ifaddr.sin_addr.s_addr & ptl_tcp->ptl_ifmask.sin_addr.s_addr;
     /*
      * Look through the proc instance for an address that is on the 
      * directly attached network. If we don't find one, pick the first
@@ -171,7 +173,6 @@ int mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
     */
     for(i=0; i<ptl_proc->proc_addr_count; i++) {
         mca_ptl_tcp_addr_t* peer_addr = ptl_proc->proc_addrs + i;
-        unsigned long net1 = ptl_tcp->ptl_ifaddr.sin_addr.s_addr & ptl_tcp->ptl_ifmask.sin_addr.s_addr;
         unsigned long net2 = peer_addr->addr_inet.s_addr & ptl_tcp->ptl_ifmask.sin_addr.s_addr;
         if(peer_addr->addr_inuse != 0)
             continue;

@@ -34,9 +34,9 @@
  * Structure used to publish TCP connection information to peers.
  */
 struct mca_ptl_tcp_addr_t {
-    struct in_addr addr_inet;  /**< IPv4 address in network byte order */
-    in_port_t      addr_port;  /**< listen port */
-    unsigned short addr_inuse; /**< local meaning only */
+    struct in_addr addr_inet;     /**< IPv4 address in network byte order */
+    in_port_t      addr_port;     /**< listen port */
+    unsigned short addr_inuse;    /**< local meaning only */
 };
 typedef struct mca_ptl_tcp_addr_t mca_ptl_tcp_addr_t;
 

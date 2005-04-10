@@ -102,9 +102,9 @@ int mca_ptl_tcp_add_procs(
         */
         OMPI_THREAD_LOCK(&ptl_proc->proc_lock);
         if(ptl_proc->proc_addr_count == ptl_proc->proc_peer_count) {
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
-            return OMPI_ERR_UNREACH;
-        }
+	    OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+	    continue;
+	}
 
         /* The ptl_proc datastructure is shared by all TCP PTL instances that are trying 
          * to reach this destination. Cache the peer instance on the ptl_proc.

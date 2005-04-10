@@ -122,7 +122,7 @@ mca_ptl_tcp_component_t mca_ptl_tcp_component = {
       
       mca_ptl_tcp_component_init,  
       mca_ptl_tcp_component_control,
-      mca_ptl_tcp_component_progress,
+      NULL /*mca_ptl_tcp_component_progress*/,
     }
 };
 
@@ -441,7 +441,7 @@ static int mca_ptl_tcp_component_create_listen(void)
             return OMPI_ERROR;
         }
     }
-   
+
     /* register listen port */
     ompi_event_set(
         &mca_ptl_tcp_component.tcp_recv_event,
@@ -466,9 +466,9 @@ static int mca_ptl_tcp_component_exchange(void)
          mca_ptl_tcp_addr_t *addrs = (mca_ptl_tcp_addr_t *)malloc(size);
          for(i=0; i<mca_ptl_tcp_component.tcp_num_ptl_modules; i++) {
              mca_ptl_tcp_module_t* ptl = mca_ptl_tcp_component.tcp_ptl_modules[i];
-             addrs[i].addr_inet = ptl->ptl_ifaddr.sin_addr;
-             addrs[i].addr_port = mca_ptl_tcp_component.tcp_listen_port;
-             addrs[i].addr_inuse = 0;
+             addrs[i].addr_inet    = ptl->ptl_ifaddr.sin_addr;
+             addrs[i].addr_port    = mca_ptl_tcp_component.tcp_listen_port;
+             addrs[i].addr_inuse   = 0;
          }
          rc =  mca_base_modex_send(&mca_ptl_tcp_component.super.ptlm_version, addrs, size);
          free(addrs);
