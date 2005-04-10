@@ -29,40 +29,6 @@
 #include "ptl_gm_priv.h"
 #include "mca/pml/teg/src/pml_teg_proc.h"
 
-static void send_continue_callback( struct gm_port *port, void * context, gm_status_t status )
-{
-    mca_ptl_gm_module_t* gm_ptl;
-    mca_ptl_gm_send_frag_t* frag;
-    mca_ptl_base_header_t* header;
-
-    header = (mca_ptl_base_header_t*)context;
-
-    frag = header->hdr_frag.hdr_src_ptr.pval;
-    gm_ptl = (mca_ptl_gm_module_t *)frag->frag_send.frag_base.frag_owner;
-
-    switch( status ) {
-    case GM_SUCCESS:
-        /*frag->frag_bytes_validated += header->hdr_frag.hdr_frag_length;*/
-
-        OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
-        /* release the send token */
-        ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
-
-        if( frag->frag_bytes_validated >= frag->frag_send.frag_base.frag_size ) {
-            OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_send_frags), ((ompi_list_item_t*)frag) );
-        }
-        break;
-    case GM_SEND_TIMED_OUT:
-        ompi_output( 0, "send_continue timed out\n" );
-        break;
-    case GM_SEND_DROPPED:
-        ompi_output( 0, "send_continue dropped\n" );
-        break;
-    default:
-        ompi_output( 0, "send_continue other error %d\n", status );
-    }
-}
-
 static void mca_ptl_gm_basic_frag_callback( struct gm_port* port, void* context, gm_status_t status )
 {
     mca_ptl_gm_module_t* gm_ptl;
@@ -74,9 +40,21 @@ static void mca_ptl_gm_basic_frag_callback( struct gm_port* port, void* context,
     frag_base = (mca_ptl_base_frag_t*)header->hdr_frag.hdr_src_ptr.pval;
     gm_ptl = (mca_ptl_gm_module_t *)frag_base->frag_owner;
 
-    OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
-    /* release the send token */
-    ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
+    switch( status ) {
+    case GM_SUCCESS:
+	OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
+	/* release the send token */
+	ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
+        break;
+    case GM_SEND_TIMED_OUT:
+        ompi_output( 0, "send_continue timed out\n" );
+        break;
+    case GM_SEND_DROPPED:
+        ompi_output( 0, "send_continue dropped\n" );
+        break;
+    default:
+        ompi_output( 0, "send_continue other error %d\n", status );
+    }
 }
 
 static void mca_ptl_gm_get_callback( struct gm_port *port, void * context, gm_status_t status );
@@ -98,9 +76,12 @@ int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int only
     get_line = &(frag->pipeline.lines[frag->pipeline.pos_transfert]);
     if( (PTL_GM_PIPELINE_TRANSFERT & get_line->flags) == PTL_GM_PIPELINE_TRANSFERT ) {
         peer->get_started = true;
+#if OMPI_MCA_PTL_GM_HAVE_RDMA_GET
         gm_get( peer->peer_ptl->gm_port, get_line->remote_memory.lval, 
                 get_line->local_memory.pval, get_line->length,
-                GM_LOW_PRIORITY, peer->local_id, peer->port_number, mca_ptl_gm_get_callback, frag );
+                GM_LOW_PRIORITY, peer->peer_addr.local_id, peer->peer_addr.port_id,
+		mca_ptl_gm_get_callback, frag );
+#endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
         get_line->flags ^= PTL_GM_PIPELINE_REMOTE;
         DO_DEBUG( count += sprintf( buffer + count, " start get %lld (%d)", get_line->length, frag->pipeline.pos_transfert ); );
         frag->pipeline.pos_transfert = (frag->pipeline.pos_transfert + 1) % GM_PIPELINE_DEPTH;
@@ -195,8 +176,8 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
 	
         gm_send_with_callback( peer->peer_ptl->gm_port, hdr,
                                GM_SIZE, sizeof(mca_ptl_gm_frag_header_t),
-                               GM_HIGH_PRIORITY, peer->local_id, peer->port_number,
-                               send_continue_callback, (void*)hdr );
+                               GM_HIGH_PRIORITY, peer->peer_addr.local_id, peer->peer_addr.port_id,
+                               mca_ptl_gm_basic_frag_callback, (void*)hdr );
 	
         send_line->flags ^= PTL_GM_PIPELINE_REMOTE;
         frag->pipeline.pos_transfert = (frag->pipeline.pos_transfert + 1) % GM_PIPELINE_DEPTH;
@@ -290,7 +271,7 @@ int mca_ptl_gm_send_internal_rndv_header( mca_ptl_gm_peer_t *ptl_peer,
                            hdr->hdr_frag.hdr_frag_offset, hdr->hdr_frag.hdr_frag_length, max_data ); );
     gm_send_with_callback( ptl_peer->peer_ptl->gm_port, hdr, GM_SIZE,
                            sizeof(mca_ptl_gm_frag_header_t) + max_data,
-                           GM_LOW_PRIORITY, ptl_peer->local_id, ptl_peer->port_number,
+                           GM_LOW_PRIORITY, ptl_peer->peer_addr.local_id, ptl_peer->peer_addr.port_id,
                            mca_ptl_gm_basic_frag_callback, (void *)hdr );
     fragment->frag_bytes_processed += max_data;
     fragment->frag_bytes_validated += max_data;
@@ -346,8 +327,8 @@ int mca_ptl_gm_send_burst_data( mca_ptl_gm_peer_t *ptl_peer,
         /* for the last piece set the header type to FIN */
         gm_send_with_callback( ptl_peer->peer_ptl->gm_port, hdr, GM_SIZE,
                                iov.iov_len + sizeof(mca_ptl_base_frag_header_t),
-                               GM_LOW_PRIORITY, ptl_peer->local_id, ptl_peer->port_number,
-                               send_continue_callback, (void*)hdr );
+                               GM_LOW_PRIORITY, ptl_peer->peer_addr.local_id, ptl_peer->peer_addr.port_id,
+                               mca_ptl_gm_basic_frag_callback, (void*)hdr );
         hdr = NULL;  /* force to retrieve a new one on the next loop */
     }
     DO_DEBUG( ompi_output( 0, "sender after burst offset %lld, processed %lld, validated %lld\n",
@@ -383,13 +364,19 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     remaining_bytes = fragment->frag_send.frag_base.frag_size - fragment->frag_bytes_processed;
     if( remaining_bytes < mca_ptl_gm_component.gm_eager_limit ) {
         burst_length = remaining_bytes;
-    } else if( remaining_bytes < mca_ptl_gm_component.gm_rndv_burst_limit ) {
-        burst_length = remaining_bytes % (mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_frag_header_t));
     } else {
-        if( mca_ptl_gm_component.gm_rdma_frag_size == UINT_MAX )
-            burst_length = 0;
-        else
-            burst_length = remaining_bytes % mca_ptl_gm_component.gm_rdma_frag_size;
+#if OMPI_MCA_PTL_GM_HAVE_RDMA_GET
+	if( remaining_bytes < mca_ptl_gm_component.gm_rndv_burst_limit ) {
+	    burst_length = remaining_bytes % (mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_frag_header_t));
+	} else {
+	    if( mca_ptl_gm_component.gm_rdma_frag_size == UINT_MAX )
+		burst_length = 0;
+	    else
+		burst_length = remaining_bytes % mca_ptl_gm_component.gm_rdma_frag_size;
+	}
+#else
+        burst_length = remaining_bytes % (mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_frag_header_t));
+#endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
     }
 
     if( burst_length > 0 ) {
@@ -404,6 +391,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
             ptl_peer->peer_ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl_peer->peer_ptl,
                                                          fragment->frag_send.frag_request,
                                                          (*size) );
+	    OMPI_FREE_LIST_RETURN( &(ptl_peer->peer_ptl->gm_send_frags), ((ompi_list_item_t*)fragment) );
         }
         return OMPI_SUCCESS;
     }
@@ -418,8 +406,11 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
      * with the others informations. When we reach this point the rendez-vous protocol
      * has already been realized so we know that the receiver expect our message.
      */
+#if OMPI_MCA_PTL_GM_HAVE_RDMA_GET == 0
+    /* Trigger the long rendez-vous protocol only if gm_get is supported */
     if( remaining_bytes > mca_ptl_gm_component.gm_rndv_burst_limit )
         flags |= PTL_FLAG_GM_REQUIRE_LOCK;
+#endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
     mca_ptl_gm_send_internal_rndv_header( ptl_peer, fragment, hdr, flags );
     if( !(PTL_FLAG_GM_REQUIRE_LOCK & flags) )
         return OMPI_SUCCESS;
@@ -457,7 +448,7 @@ static void send_match_callback( struct gm_port* port, void* context, gm_status_
 
     gm_ptl = (mca_ptl_gm_module_t*)((long)header->hdr_rndv.hdr_frag_length);
 
-    OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
+    OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
     /* release the send token */
     ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
 }
@@ -533,8 +524,7 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
     /* Send the first fragment */
     gm_send_with_callback(ptl_peer->peer_ptl->gm_port, hdr,
                           GM_SIZE, size_out, GM_LOW_PRIORITY, 
-                          ptl_peer->local_id,
-                          ptl_peer->port_number,
+                          ptl_peer->peer_addr.local_id, ptl_peer->peer_addr.port_id,
                           send_match_callback, (void *)hdr );
     
     if( !(flags & MCA_PTL_FLAGS_ACK) ) {
@@ -649,7 +639,7 @@ static void recv_short_callback( struct gm_port* port, void* context, gm_status_
     frag_base = (mca_ptl_base_frag_t*)header->hdr_dst_match.pval;
     gm_ptl = (mca_ptl_gm_module_t *)frag_base->frag_owner;
 
-    OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
+    OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
     /* release the send token */
     ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
 }
@@ -676,7 +666,7 @@ static int mca_ptl_gm_send_quick_fin_message( struct mca_ptl_gm_peer_t* ptl_peer
 
     gm_send_with_callback(ptl_peer->peer_ptl->gm_port, hdr,
                           GM_SIZE, sizeof(mca_ptl_base_ack_header_t),
-                          GM_HIGH_PRIORITY, ptl_peer->local_id, ptl_peer->port_number,
+                          GM_HIGH_PRIORITY, ptl_peer->peer_addr.local_id, ptl_peer->peer_addr.port_id,
                           recv_short_callback, (void*)hdr );
     DO_DEBUG( ompi_output( 0, "receiver %p send quick message for length %lld", frag, frag->frag_header.hdr_frag.hdr_frag_length ); )
     return OMPI_SUCCESS;

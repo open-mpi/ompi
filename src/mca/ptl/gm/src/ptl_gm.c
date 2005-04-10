@@ -19,6 +19,7 @@
  */
 
 #include "ompi_config.h"
+#include "gm_config.h"
 #include <string.h>
 #include "class/ompi_bitmap.h"
 #include "util/output.h"
@@ -28,8 +29,8 @@
 #include "mca/ptl/base/ptl_base_header.h"
 #include "ptl_gm.h"
 #include "ptl_gm_proc.h"
-#include "ptl_gm_peer.h"
 #include "ptl_gm_priv.h"
+#include "ptl_gm_peer.h"
 #include "ptl_gm_sendfrag.h"
 
 mca_ptl_gm_module_t mca_ptl_gm_module = {
@@ -75,7 +76,6 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
     struct ompi_proc_t *orte_proc;
     mca_ptl_gm_proc_t *ptl_proc;
     mca_ptl_gm_peer_t *ptl_peer;
-    unsigned int lid;
     ompi_proc_t* local_proc = ompi_proc_local();
 
     for (i = 0; i < nprocs; i++) {
@@ -102,20 +102,28 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
 
             ptl_peer->peer_ptl = (mca_ptl_gm_module_t *) ptl;
             ptl_peer->peer_proc = ptl_proc;
-            ptl_peer->global_id = ptl_proc->proc_addrs->global_id;
-            ptl_peer->port_number = ptl_proc->proc_addrs->port_id;
-            if (GM_SUCCESS !=
-                gm_global_id_to_node_id (((mca_ptl_gm_module_t *) ptl)->gm_port,
-                                         ptl_proc->proc_addrs[j].global_id,
-                                         &lid)) {
+            ptl_peer->peer_addr.port_id = ptl_proc->proc_addrs->port_id;
+#if GM_API_VERSION > 0x200
+            ptl_peer->peer_addr.global_id = ptl_proc->proc_addrs->global_id;
+            if (GM_SUCCESS != gm_global_id_to_node_id(((mca_ptl_gm_module_t *) ptl)->gm_port,
+						      ptl_proc->proc_addrs[j].global_id,
+						      &(ptl_peer->peer_addr.local_id))) {
                 ompi_output( 0, "[%s:%d] error in converting global to local id \n", 
 			     __FILE__, __LINE__ );
                 return OMPI_ERR_BAD_PARAM;
             }
-            ptl_peer->local_id = lid;
+#else
+            strncpy( ptl_peer->peer_addr.global_id, ptl_proc->proc_addrs->global_id, GM_MAX_HOST_NAME_LEN );
+	    ptl_peer->peer_addr.local_id = gm_host_name_to_node_id( ((mca_ptl_gm_module_t *) ptl)->gm_port,
+								    ptl_proc->proc_addrs[j].global_id );
+	    if( GM_NO_SUCH_NODE_ID == ptl_peer->peer_addr.local_id ) {
+		ompi_output( 0, "Unable to convert the remote host name (%s) to a host id",
+			     ptl_proc->proc_addrs[j].global_id );
+                return OMPI_ERR_BAD_PARAM;	
+	    }
+#endif  /* GM_API_VERSION > 0x200 */
             ptl_proc->peer_arr[ptl_proc->proc_peer_count] = ptl_peer;
             ptl_proc->proc_peer_count++;
-            ptl_peer->peer_addr = ptl_proc->proc_addrs + i;
         }
         ompi_bitmap_set_bit (reachable, i);
         OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
@@ -307,7 +315,7 @@ static void mca_ptl_gm_basic_ack_callback( struct gm_port* port, void* context, 
     frag_base = (mca_ptl_base_frag_t*)header->hdr_ack.hdr_dst_addr.pval;
     gm_ptl = (mca_ptl_gm_module_t *)frag_base->frag_owner;
 
-    OMPI_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
+    OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
     /* release the send token */
     ompi_atomic_add( &(gm_ptl->num_send_tokens), 1 );
 }
@@ -358,8 +366,8 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
 	    gm_send_with_callback( ((mca_ptl_gm_module_t*)ptl)->gm_port, hdr,
                                    GM_SIZE, sizeof(mca_ptl_base_ack_header_t),
                                    GM_LOW_PRIORITY,
-                                   peer->local_id,
-                                   peer->port_number,
+                                   peer->peer_addr.local_id,
+                                   peer->peer_addr.port_id,
                                    mca_ptl_gm_basic_ack_callback,
                                    (void *)hdr );
         }

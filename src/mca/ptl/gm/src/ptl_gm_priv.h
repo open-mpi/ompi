@@ -22,6 +22,7 @@
 
 struct mca_ptl_gm_send_frag_t;
 struct mca_ptl_gm_peer_t;
+struct mca_ptl_gm_module_t;
 
 /* Pinning down memory pages is a costly operation. We can avoid it by using a LRU list
  * of pinned down memory, managed inside the GM PTL.
