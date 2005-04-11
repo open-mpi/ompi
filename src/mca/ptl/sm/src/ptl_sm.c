@@ -423,7 +423,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
             ompi_atomic_unlock(&(my_fifos[j].head_lock));
             ompi_atomic_unlock(&(my_fifos[j].tail_lock));
         }
-        fifo_tmp=(ompi_fifo_t **)
+        fifo_tmp=(ompi_fifo_t * volatile *)
                 ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo) +
                   (size_t)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
         /* RLG : need memory barrier */
@@ -441,7 +441,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
     }
 
     /* cache the pointers to the rest of the fifo arrays */
-    fifo_tmp=(ompi_fifo_t **)
+    fifo_tmp=(ompi_fifo_t * volatile *)
         ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo) +
           (size_t)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
     for( j=mca_ptl_sm_component.num_smp_procs ; j <
