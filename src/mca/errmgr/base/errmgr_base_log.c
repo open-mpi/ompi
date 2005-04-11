@@ -27,5 +27,10 @@
 void mca_errmgr_base_log(char *msg, char *filename, int line)
 {
     ompi_output(0, "[%d,%d,%d] ORTE_ERROR_LOG: %s in file %s at line %d",
-                OMPI_NAME_ARGS(*ompi_rte_get_self()), msg, filename, line);
+#ifdef WIN32
+                OMPI_NAME_ARGS(ompi_rte_get_self()),
+#else
+                OMPI_NAME_ARGS(*ompi_rte_get_self()), 
+#endif
+                msg, filename, line);
 }
