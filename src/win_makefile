@@ -53,14 +53,14 @@ C_SUBDIRS =  \
         mca/gpr/base \
         mca/io/base \
         mca/iof/base \
-        mca/llm/base \
+#        mca/llm/base \
         mca/mpool/base \
         mca/ns/base \
-        mca/one/base \
+#        mca/one/base \
         mca/oob/base \
-        mca/op/ \
-        mca/pcm/base \
-        mca/pcmclient/base \
+#        mca/op/ \
+#        mca/pcm/base \
+#        mca/pcmclient/base \
         mca/pml/base \
         mca/ptl/base \
         mca/topo/base \
@@ -121,10 +121,10 @@ CFLAGS = \
 STATIC_LIBS = \
         allocator \
         coll\
-        llm\
+#        llm\
         ns\
         gpr \
-        pcmclient\
+#        pcmclient\
         topo\
         ptl\
         oob\
@@ -169,9 +169,9 @@ prebuild:
 	@echo "Creating mca_base_parse_paramfile_lex.c"
 	@/usr/bin/flex -t -Pmca_base_yy "${topdir}/src/mca/base/mca_base_parse_paramfile_lex.l" \
                 >"${topdir}/src/mca/base/mca_base_parse_paramfile_lex.c" 2>/dev/null
-	@echo "Creating mca_llm_base_parse_hostfile_lex.c"
-	@/usr/bin/flex -t -Pmca_llm_base_yy "${topdir}/src/mca/llm/base/llm_base_parse_hostfile_lex.l" \
-                > "${topdir}/src/mca/llm/base/mca_llm_base_parse_hostfile_lex.c" 2>/dev/null
+#	@echo "Creating mca_llm_base_parse_hostfile_lex.c"
+#	@/usr/bin/flex -t -Pmca_llm_base_yy "${topdir}/src/mca/llm/base/llm_base_parse_hostfile_lex.l" \
+#                > "${topdir}/src/mca/llm/base/mca_llm_base_parse_hostfile_lex.c" 2>/dev/null
 	@echo "Creating show_help_lex.c"
 	@/usr/bin/flex -t -Pompi_show_help_yy "${topdir}/src/util/show_help_lex.l" \
                 > "${topdir}/src/util/show_help_lex.c" 2>/dev/null
