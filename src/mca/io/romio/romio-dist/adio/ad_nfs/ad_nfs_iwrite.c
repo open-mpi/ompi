@@ -200,13 +200,21 @@ int error_code, this_errno;
     aiocbp->aio_nbytes = len;
     if (wr) {
 	ADIOI_WRITE_LOCK(fd, offset, SEEK_SET, len);
+#if !defined(_AIO_AIX_SOURCE) && !defined(_NO_PROTO)
+	err = aio_write(aiocbp);
+#else
 	err = aio_write(fd_sys, aiocbp);
+#endif
         this_errno = errno;
 	ADIOI_UNLOCK(fd, offset, SEEK_SET, len);
     }
     else {
 	ADIOI_READ_LOCK(fd, offset, SEEK_SET, len);
+#if !defined(_AIO_AIX_SOURCE) && !defined(_NO_PROTO)
+	err = aio_read(aiocbp);
+#else
 	err = aio_read(fd_sys, aiocbp);
+#endif
         this_errno = errno;
 	ADIOI_UNLOCK(fd, offset, SEEK_SET, len);
     }
@@ -219,13 +227,21 @@ int error_code, this_errno;
 	    ADIOI_Complete_async(&error_code);
 	    if (wr) {
 		ADIOI_WRITE_LOCK(fd, offset, SEEK_SET, len);
+#if !defined(_AIO_AIX_SOURCE) && !defined(_NO_PROTO)
+		err = aio_write(aiocbp);
+#else
 		err = aio_write(fd_sys, aiocbp);
+#endif
 		this_errno = errno;
 		ADIOI_UNLOCK(fd, offset, SEEK_SET, len);
 	    }
 	    else {
 		ADIOI_READ_LOCK(fd, offset, SEEK_SET, len);
+#if !defined(_AIO_AIX_SOURCE) && !defined(_NO_PROTO)
+		err = aio_read(aiocbp);
+#else
 		err = aio_read(fd_sys, aiocbp);
+#endif
 		this_errno = errno;
 		ADIOI_UNLOCK(fd, offset, SEEK_SET, len);
 	    }
@@ -236,13 +252,21 @@ int error_code, this_errno;
                     sleep(1);
 		    if (wr) {
 			ADIOI_WRITE_LOCK(fd, offset, SEEK_SET, len);
+#if !defined(_AIO_AIX_SOURCE) && !defined(_NO_PROTO)
+			err = aio_write(aiocbp);
+#else
 			err = aio_write(fd_sys, aiocbp);
+#endif
 			this_errno = errno;
 			ADIOI_UNLOCK(fd, offset, SEEK_SET, len);
 		    }
 		    else {
 			ADIOI_READ_LOCK(fd, offset, SEEK_SET, len);
+#if !defined(_AIO_AIX_SOURCE) && !defined(_NO_PROTO)
+			err = aio_read(aiocbp);
+#else
 			err = aio_read(fd_sys, aiocbp);
+#endif
 			this_errno = errno;
 			ADIOI_UNLOCK(fd, offset, SEEK_SET, len);
 		    }

@@ -69,7 +69,11 @@ void ADIOI_NFS_ReadComplete(ADIO_Request *request, ADIO_Status *status, int *err
 /* IBM */
     if ((*request)->queued) {
 	do {
+#if !defined(_AIO_AIX_SOURCE) && !defined(_NO_PROTO)
+	    err = aio_suspend((*request)->handle,1,NULL);
+#else
 	    err = aio_suspend(1, (struct aiocb **) &((*request)->handle));
+#endif
 	} while ((err == -1) && (errno == EINTR));
 
 	tmp1 = (struct aiocb *) (*request)->handle;
