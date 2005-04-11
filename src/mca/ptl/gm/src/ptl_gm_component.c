@@ -394,8 +394,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     OBJ_CONSTRUCT (&(ptl->gm_recv_outstanding_queue), ompi_list_t);
 
     /* construct the list of recv fragments free */
-    OBJ_CONSTRUCT (&(ptl->gm_recv_frags_free), ompi_free_list_t);
-  
+    OBJ_CONSTRUCT (&(ptl->gm_recv_frags_free), ompi_free_list_t);  
     ompi_free_list_init( &(ptl->gm_recv_frags_free),
                          sizeof (mca_ptl_gm_recv_frag_t),
                          OBJ_CLASS (mca_ptl_gm_recv_frag_t),
@@ -495,6 +494,7 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
     mca_ptl_gm_component.gm_num_ptl_modules = save_counter;
 
     /* A free list containing all memory used for keep data for unexpected requests. */
+    OBJ_CONSTRUCT( &(mca_ptl_gm_component.gm_unexpected_frags_data) );
     ompi_free_list_init( &(mca_ptl_gm_component.gm_unexpected_frags_data),
                          mca_ptl_gm_component.gm_segment_size,
                          OBJ_CLASS (ompi_list_item_t),
