@@ -1,7 +1,18 @@
 #! /bin/sh
 
+if test ! -f fortran_kinds.sh; then
+    echo "ERROR: Cannot find fortran_kinds.sh"
+    exit 1
+elif test -z fortran_kinds.sh; then
+    echo "ERROR: fortran_kinds.sh appears to be empty!"
+    exit 1
+fi
+
+echo "Reading Fortran KIND information..." >&2
 . fortran_kinds.sh
 
+
+echo "Generating F90 interface functions..." >&2
 
 procedure='MPI_Abort'
 
@@ -15830,3 +15841,4 @@ echo "end interface ${procedure}"
 echo
 echo
 
+echo "Finished generating Fortran 90 interface functions" >&2
