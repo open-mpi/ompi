@@ -144,3 +144,22 @@ $(nodist_libmpi_f90_la_SOURCES):
 MOSTLYCLEANFILES = *.mod
 
 DISTCLEANFILES = $(nodist_libmpi_f90_la_SOURCES) $(BUILT_SOURCES)
+
+#
+# Install the generated .mod files.  Unfortunately, each F90 compiler
+# may generate different filenames, so we have to use a glob.  :-(
+#
+
+if OMPI_WANT_F90_BINDINGS
+install-exec-hook:
+	@ for file in `ls *.mod`; do \
+	  echo $(INSTALL) $$file $(DESTDIR)$(libdir); \
+	  $(INSTALL) $$file $(DESTDIR)$(libdir); \
+	done
+
+uninstall-local:
+	@ for file in `ls *.mod`; do \
+	  echo rm -f $(DESTDIR)$(libdir)/$$file; \
+	  rm -f $(DESTDIR)$(libdir)/$$file; \
+	done
+endif
