@@ -169,8 +169,13 @@ int ADIOI_UFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
     aiocbp->aio_offset = offset;
     aiocbp->aio_buf = buf;
     aiocbp->aio_nbytes = len;
+#if !defined(_AIO_AIX_SOURCE) && !defined(_NO_PROTO)
+    if (wr) err = aio_write(aiocbp);
+    else err = aio_read(aiocbp);
+#else
     if (wr) err = aio_write(fd_sys, aiocbp);
     else err = aio_read(fd_sys, aiocbp);
+#endif
 
     if (err == -1) {
 	if (errno == EAGAIN) {
@@ -178,15 +183,25 @@ int ADIOI_UFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
           complete all previous async. requests and try again. */
 
 	    ADIOI_Complete_async(&error_code);
+#if !defined(_AIO_AIX_SOURCE) && !defined(_NO_PROTO)
+	    if (wr) err = aio_write(aiocbp);
+	    else err = aio_read(aiocbp);
+#else
 	    if (wr) err = aio_write(fd_sys, aiocbp);
 	    else err = aio_read(fd_sys, aiocbp);
+#endif
 
             while (err == -1) {
                 if (errno == EAGAIN) {
                     /* sleep and try again */
                     sleep(1);
+#if !defined(_AIO_AIX_SOURCE) && !defined(_NO_PROTO)
+		    if (wr) err = aio_write(aiocbp);
+		    else err = aio_read(aiocbp);
+#else
 		    if (wr) err = aio_write(fd_sys, aiocbp);
 		    else err = aio_read(fd_sys, aiocbp);
+#endif
 		}
                 else {
                     FPRINTF(stderr, "Unknown errno %d in ADIOI_UFS_aio\n", errno);
