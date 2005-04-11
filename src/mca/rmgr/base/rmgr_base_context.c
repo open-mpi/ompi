@@ -15,7 +15,7 @@
  */
 #include "ompi_config.h"
 #include <errno.h>
-#ifndef WIN32
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <string.h>

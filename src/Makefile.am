@@ -29,6 +29,10 @@ WIN32_FILES = win32/ompi_declspec.h \
               win32/win_compat.h    \
               win32/generated_include/allocator_static-components.h  \
               win32/generated_include/iof_static-components.h   \
+              win32/generated_include/errmgr_static-components.h \
+              win32/generated_include/rml_static-components.h   \
+              win32/generated_include/rmgr_static-components.h  \
+              win32/generated_include/soh_static-components.h \
               win32/generated_include/ns_static-components.h    \
               win32/generated_include/pcmclient-seed-version.h  \
               win32/generated_include/pml_static-components.h   \

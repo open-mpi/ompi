@@ -43,10 +43,8 @@
 #include <sys/queue.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef WIN32
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #endif
 #include <errno.h>
 #include <string.h>
