@@ -71,5 +71,8 @@ typedef unsigned int uint;
 #define mkdir _mkdir
 
 #define UINT32_MAX _UI32_MAX
+#define INT32_MAX _I32_MAX
+
+#define __func__ __FUNCTION__
 
 #endif /* compat */
