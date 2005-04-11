@@ -73,6 +73,7 @@ typedef unsigned int uint;
 #define UINT32_MAX _UI32_MAX
 #define INT32_MAX _I32_MAX
 
+#define SIZEOF_SIZE_T 4
 #define __func__ __FUNCTION__
 
 #endif /* compat */

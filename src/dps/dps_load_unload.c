@@ -25,11 +25,13 @@
 #include "orte_config.h"
 
 #include <sys/types.h>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 
 #include "mca/ns/base/base.h"
 
-#include "dps_internal.h"
+#include "dps/dps_internal.h"
 
 
 int orte_dps_unload(orte_buffer_t *buffer,

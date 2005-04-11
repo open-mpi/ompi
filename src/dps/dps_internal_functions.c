@@ -21,7 +21,9 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <math.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include <string.h>
 
 #include "util/output.h"
@@ -30,9 +32,11 @@
 #include "mca/ns/ns_types.h"
 #include "mca/rmgr/rmgr_types.h"
 
-#include "dps_internal.h"
+#include "dps/dps_internal.h"
 
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h> 
+#endif
 
 /**
  * Internal-use only functions
