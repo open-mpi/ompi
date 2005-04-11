@@ -498,9 +498,9 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
     ompi_free_list_init( &(mca_ptl_gm_component.gm_unexpected_frags_data),
                          mca_ptl_gm_component.gm_segment_size,
                          OBJ_CLASS (ompi_list_item_t),
-                         0,  /* do not allocate any items I'll provide them */
-                         0,  /* maximum number of list allocated elements will be zero */
-                         0,
+                         1,   /* keep is small in the begining */
+                         32,  /* maximum number of list allocated elements will be zero */
+                         1,   /* Number of elements to grow by per allocation */
                          NULL ); /* not using mpool */
 #if OMPI_MCA_PTL_GM_CACHE_ENABLE
     mca_ptl_gm_regcache_init();
