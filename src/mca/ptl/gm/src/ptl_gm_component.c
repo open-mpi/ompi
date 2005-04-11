@@ -258,7 +258,7 @@ mca_ptl_gm_discover_boards( mca_ptl_gm_module_t** pptl,
     uint32_t        board_no, port_no, index = 0, local_id;
     struct gm_port* gm_port;
 #if GM_API_VERSION > 0x200
-    int32_t         global_id;
+    uint32_t         global_id;
 #else
     char        global_id[GM_MAX_HOST_NAME_LEN];
 #endif  /* GM_API_VERSION > 0x200 */
@@ -494,7 +494,7 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
     mca_ptl_gm_component.gm_num_ptl_modules = save_counter;
 
     /* A free list containing all memory used for keep data for unexpected requests. */
-    OBJ_CONSTRUCT( &(mca_ptl_gm_component.gm_unexpected_frags_data) );
+    OBJ_CONSTRUCT( &(mca_ptl_gm_component.gm_unexpected_frags_data), ompi_free_list_t );
     ompi_free_list_init( &(mca_ptl_gm_component.gm_unexpected_frags_data),
                          mca_ptl_gm_component.gm_segment_size,
                          OBJ_CLASS (ompi_list_item_t),
