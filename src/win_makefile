@@ -55,6 +55,8 @@ C_SUBDIRS =  \
         mca/io/base \
         mca/iof/base \
 		  mca/errmgr/base \
+		  mca/rml/base \
+		  mca/rmgr/base \
         mca/mpool/base \
         mca/ns/base \
         mca/oob/base \
@@ -122,6 +124,8 @@ STATIC_LIBS = \
         gpr \
         topo\
 		  errmgr \
+		  rml \
+		  rmgr \
         ptl\
         oob\
         pml\
