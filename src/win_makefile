@@ -57,6 +57,7 @@ C_SUBDIRS =  \
 		  mca/errmgr/base \
 		  mca/rml/base \
 		  mca/rmgr/base \
+		  mca/soh/base \
         mca/mpool/base \
         mca/ns/base \
         mca/oob/base \
@@ -126,6 +127,7 @@ STATIC_LIBS = \
 		  errmgr \
 		  rml \
 		  rmgr \
+		  soh \
         ptl\
         oob\
         pml\
