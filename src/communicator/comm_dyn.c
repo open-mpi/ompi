@@ -358,156 +358,110 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         return rc;
     }
 
-    /* get the spawn handle to start spawning stuff */
-    requires = OMPI_RTE_SPAWN_FROM_MPI | OMPI_RTE_SPAWN_HIGH_QOS;
-    if (count > 1) requires |= OMPI_RTE_SPAWN_MPMD;
-    spawn_handle = ompi_rte_get_spawn_handle(requires, true);
-    if (NULL == spawn_handle) {
-        printf("show_help: get_spawn_handle failed\n");
-        return OMPI_ERROR;
+    /* Convert the list of commands to an array of orte_app_context_t
+       pointers */
+
+    apps = (orte_app_context_t**)malloc(count * sizeof(orte_app_context_t *));
+    if (NULL == apps) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
-
-    /* get our allocations and set them up, one by one */
-    OBJ_CONSTRUCT(&schedlist,  ompi_list_t);
-    nodelists = malloc(sizeof(ompi_list_t*) * count);
-    if (NULL == nodelists) {
-        return OMPI_ERROR;
-    }
-
-    /* iterate through all the counts, creating an app schema entry
-       for each one */
-    for (i = 0 ; i < count ; ++i) {
-        nodelists[i] = ompi_rte_allocate_resources(spawn_handle, 
-                                                   new_jobid, 0, 
-                                                   array_of_maxprocs[i]);
-        if (NULL == nodelists[i]) {
-            /* BWB - XXX - help - need to unwind what already done */
-            return OMPI_ERROR;
+    for (i = 0; i < count; ++i) {
+        apps[i] = OBJ_NEW(orte_app_context_t);
+        if (NULL == apps[i]) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            /* rollback what was already done */
+            for (j=0; j < i; j++) OBJ_RELEASE(apps[j]);
+            return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        total_start_procs += array_of_maxprocs[i];
-
-        
-        /*
-         * Process mapping
+        /* copy over the name of the executable */
+        apps[i]->app = strdup(array_of_commands[i]);
+        if (NULL == apps[i]->app) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            /* rollback what was already done */
+            for (j=0; j < i; j++) OBJ_RELEASE(apps[j]);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        /* record the number of procs to be generated */
+        apps[i]->num_procs = array_of_maxprocs[i];
+        /* copy over the argv array */
+        if (MPI_ARGVS_NULL != array_of_argv &&
+            MPI_ARGV_NULL != array_of_argv[i]) {
+            /* first need to find out how many entries there are */
+            apps[i]->argc = 0;
+            j=0;
+            while (NULL != array_of_argv[i][j]) {
+                j++;
+            }
+            apps[i]->argc = j;
+            /* now copy them over, ensuring to NULL terminate the array */
+            if (0 < j) {
+                apps[i]->argv = (char**)malloc((1 + apps[i]->argc) * sizeof(char*));
+                if (NULL == apps[i]->argv) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    /* rollback what was already done */
+                    for (j=0; j < i; j++) OBJ_RELEASE(apps[j]);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+                for (j=0; j < apps[i]->argc; j++) {
+                    apps[i]->argv[j] = strdup(array_of_argv[i][j]);
+                }
+                apps[i]->argv[apps[i]->argc] = NULL;
+            }
+        }
+        /* the environment gets set by the launcher
+         * all we need to do is add the specific values
+         * needed for comm_spawn
          */
-        sched = OBJ_NEW(ompi_rte_node_schedule_t);
-        ompi_argv_append (&(sched->argc), &(sched->argv), 
-                          array_of_commands[i]);
-    
-        if (array_of_argv != MPI_ARGVS_NULL && 
-            array_of_argv[i] != MPI_ARGV_NULL ) {
-            int j = 0;
-            char *arg = array_of_argv[i][j];
-	
-            while (arg != NULL) {
-                ompi_argv_append(&(sched->argc), &(sched->argv), arg);
-                arg = array_of_argv[i][++j];
-            } 
-        }
-
-        /*
-         * build environment to be passed
-         */
-        mca_pcm_base_build_base_env(environ, &(sched->envc), &(sched->env));
-
-        /* set initial contact info */
-        if (ompi_process_info.seed) {
-            my_contact_info = mca_oob_get_contact_info();
-        } else {
-            my_contact_info = strdup(ompi_universe_info.ns_replica);
-        }
-
-        asprintf(&tmp, "OMPI_MCA_ns_base_replica=%s", my_contact_info);
-        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
-        free(tmp);
-
-        asprintf(&tmp, "OMPI_MCA_gpr_base_replica=%s", my_contact_info);
-        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
-        free(tmp);
-
-        if (NULL != ompi_universe_info.name) {
-            asprintf(&tmp, "OMPI_universe_name=%s", ompi_universe_info.name);
-            ompi_argv_append(&(sched->envc), &(sched->env), tmp);
-            free(tmp);
-        }
-
         /* Add environment variable with the contact information for the 
            child processes. 
-	   12.23.2004 EG: the content of the environment variable
-	   does know hold additionally to the oob contact information
-	   also the information, which application in spawn/spawn_multiple
-	   it has been. This information is needed to construct the 
-	   attribute MPI_APPNUM on the children side (an optional 
-	   MPI-2 attribute. */
-        asprintf(&envvarname, "OMPI_PARENT_PORT_%u", new_jobid);
-        asprintf(&tmp, "%s=%s:%d", envvarname, port_name, i);
-        ompi_argv_append(&(sched->envc), &(sched->env), tmp);
-        free(tmp);
-        free(envvarname);
-
-	/* Check for the 'wdir' and later potentially for the
-	   'path' Info object */
-	have_wdir = 0; 
-	if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
-	    ompi_info_get (array_of_info[i], "wdir", valuelen, cwd, &flag);
-	    if ( flag ) {
-		sched->cwd = cwd;
-		have_wdir = 1;
-	    }
-	}
-	
-	/* default value: If the user did not tell us where to look for the 
-	   executable, we assume the current working directory */
-	if ( !have_wdir ) {
-	    getcwd(cwd, OMPI_PATH_MAX);
-	    sched->cwd = strdup(cwd);
-	}
-	sched->nodelist = nodelists[i];
-	    
-        if (sched->argc == 0) {
-            printf("no app to start\n");
-            return MPI_ERR_ARG;
+        12.23.2004 EG: the content of the environment variable
+        does know hold additionally to the oob contact information
+        also the information, which application in spawn/spawn_multiple
+        it has been. This information is needed to construct the 
+        attribute MPI_APPNUM on the children side (an optional 
+        MPI-2 attribute. */
+        apps[i]->num_env = 1;
+        apps[i]->env = (char**)malloc((1+apps[i]->num_env) * sizeof(char*));
+        if (NULL == apps[i]->env) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            /* rollback what was already done */
+            for (j=0; j < i; j++) OBJ_RELEASE(apps[j]);
+            return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        ompi_list_append(&schedlist, (ompi_list_item_t*) sched);
+        asprintf(&envvarname, "OMPI_PARENT_PORT_%u", new_jobid);
+        asprintf(&(apps[i]->env[0]), "%s=%s:%d", envvarname, port_name, i);
+        free(envvarname);
+        apps[i]->env[1] = NULL;
+        /* Check for the 'wdir' and later potentially for the
+           'path' Info object */
+        have_wdir = 0; 
+        if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
+            ompi_info_get (array_of_info[i], "wdir", valuelen, cwd, &flag);
+            if ( flag ) {
+                apps[i]->cwd = cwd;
+                have_wdir = 1;
+            }
+        }
+        
+        /* default value: If the user did not tell us where to look for the 
+           executable, we assume the current working directory */
+        if ( !have_wdir ) {
+            getcwd(cwd, OMPI_PATH_MAX);
+            apps[i]->cwd = strdup(cwd);
+        }
+        /* leave the map info alone - the launcher will
+         * decide where to put things
+         */
     } /* for (i = 0 ; i < count ; ++i) */
 
 
-    /*
-     * register to monitor the startup
-     */
-    /* setup segment for this job */
-    asprintf(&segment, "%s-%s", OMPI_RTE_JOB_STATUS_SEGMENT,
-	     ompi_name_server.convert_jobid_to_string(new_jobid));
-
-    /* register a synchro on the segment so we get notified when everyone registers */
-    rc_tag = ompi_registry.synchro(
-	     OMPI_REGISTRY_SYNCHRO_MODE_LEVEL|OMPI_REGISTRY_SYNCHRO_MODE_ONE_SHOT|
-	     OMPI_REGISTRY_SYNCHRO_MODE_STARTUP,
-	     OMPI_REGISTRY_OR,
-	     segment,
-	     NULL,
-             total_start_procs,
-	     ompi_rte_all_procs_registered, NULL);
-         
-	free(segment);
-    /*
-     * spawn procs
-     */
-    if (OMPI_SUCCESS != ompi_rte_spawn_procs(spawn_handle, new_jobid, &schedlist)) {
-	printf("show_help: woops!  we didn't spawn :( \n");
-	return MPI_ERR_SPAWN;
+    /* spawn procs */
+    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn(apps, count, new_jobid,
+                                    ompi_comm_spawn_monitor))) {
+    	ORTE_ERROR_LOG(rc);
+    	return MPI_ERR_SPAWN;
     }
-    
-    if (OMPI_SUCCESS != ompi_rte_monitor_procs_registered()) {
-		ompi_output(0, "[%d,%d,%d] procs didn't all register - returning an error",
-					OMPI_NAME_ARGS(*ompi_rte_get_self()));
-		return MPI_ERR_SPAWN;
-    }  
-
-    /*
-     * tell processes okay to start by sending startup msg
-     */
-    ompi_rte_job_startup(new_jobid);
 
     /*
      * Clean up
