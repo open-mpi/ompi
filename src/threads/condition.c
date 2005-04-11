@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "mutex.h"
-#include "condition.h"
+#include "threads/mutex.h"
+#include "threads/condition.h"
 
 
 static void ompi_condition_construct(ompi_condition_t *c)

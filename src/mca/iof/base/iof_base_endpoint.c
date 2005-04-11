@@ -17,12 +17,14 @@
 #endif
 #endif
 
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #include "util/output.h"
 #include "mca/rml/rml.h"
 #include "mca/iof/base/base.h"
-#include "iof_base_endpoint.h"
-#include "iof_base_fragment.h"
+#include "mca/iof/base/iof_base_endpoint.h"
+#include "mca/iof/base/iof_base_fragment.h"
 
 /**
  *  Construct/Destructor
