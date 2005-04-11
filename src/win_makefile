@@ -30,6 +30,7 @@ pkglibdir = ${prefix}/lib
 # list of components to build with the c compiler
 C_SUBDIRS =  \
         attribute \
+		  dps \
         class \
         communicator \
         datatype \
@@ -54,14 +55,9 @@ C_SUBDIRS =  \
         mca/io/base \
         mca/iof/base \
 		  mca/errmgr/base \
-#        mca/llm/base \
         mca/mpool/base \
         mca/ns/base \
-#        mca/one/base \
         mca/oob/base \
-#        mca/op/ \
-#        mca/pcm/base \
-#        mca/pcmclient/base \
         mca/pml/base \
         mca/ptl/base \
         mca/topo/base \

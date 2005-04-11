@@ -20,7 +20,7 @@
 
 #include "mca/base/mca_base_param.h"
 
-#include "dps_internal.h"
+#include "dps/dps_internal.h"
 
 /**
  * globals
