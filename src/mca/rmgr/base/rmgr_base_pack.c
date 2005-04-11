@@ -13,7 +13,9 @@
  */
 #include "ompi_config.h"
 #include <errno.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include <string.h>
 
 #include "include/constants.h"
