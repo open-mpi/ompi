@@ -25,14 +25,14 @@
 #include <sys/types.h>
 #endif
 #include "include/ompi_socket_errno.h"
-#ifdef HAVE_NETINET_TCP_H
-#include <netinet/tcp.h>
-#endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
 #endif
 
 #include "class/ompi_proc_table.h"
