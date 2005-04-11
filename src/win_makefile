@@ -53,6 +53,7 @@ C_SUBDIRS =  \
         mca/gpr/base \
         mca/io/base \
         mca/iof/base \
+		  mca/errmgr/base \
 #        mca/llm/base \
         mca/mpool/base \
         mca/ns/base \
@@ -121,11 +122,10 @@ CFLAGS = \
 STATIC_LIBS = \
         allocator \
         coll\
-#        llm\
         ns\
         gpr \
-#        pcmclient\
         topo\
+		  errmgr \
         ptl\
         oob\
         pml\
@@ -176,7 +176,7 @@ prebuild:
 	@/usr/bin/flex -t -Pompi_show_help_yy "${topdir}/src/util/show_help_lex.l" \
                 > "${topdir}/src/util/show_help_lex.c" 2>/dev/null
 	@for dirs in ${STATIC_LIBS}; do \
-        (dir="mca/$${dirs}/base"; comp_name="$${dirs}_static-components.h"; cp "${topdir}/src/win32/generated_include/$${comp_name}" "$${dir}/static-components.h";); \
+        (dir="mca/$${dirs}/base"; echo "Making Static components in $${dirs}"; comp_name="$${dirs}_static-components.h"; cp "${topdir}/src/win32/generated_include/$${comp_name}" "$${dir}/static-components.h";); \
      done
 	@for dirs in ${C_SUBDIRS}; do \
 	    (echo "Entering $${dirs}"; cd $$dirs; if test -f .compile_files; then (more .compile_files| xargs -i'{}' ln -f '{}' ${topdir}/src/Debug/'{}'); else (ls *.c 2>/dev/null | xargs -i'{}' ln -f '{}' ${topdir}/src/Debug/'{}'); fi); \

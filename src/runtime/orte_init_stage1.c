@@ -19,7 +19,9 @@
 #include "orte_config.h"
 
 #include <sys/types.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 
 #include "include/constants.h"
 #include "event/event.h"

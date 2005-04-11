@@ -491,6 +491,7 @@ orte_dir_empty(char *pathname)
     }
     closedir(dp);
 #else
+    bool empty = false;
     char search_path[MAX_PATH];
     HANDLE file;
     WIN32_FIND_DATA file_data;

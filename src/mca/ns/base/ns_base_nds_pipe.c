@@ -17,7 +17,9 @@
  */
 
 #include "orte_config.h"
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 
 #include "include/orte_constants.h"
