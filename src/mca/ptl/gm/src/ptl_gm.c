@@ -307,13 +307,11 @@ mca_ptl_gm_get (struct mca_ptl_base_module_t *ptl,
 static void mca_ptl_gm_basic_ack_callback( struct gm_port* port, void* context, gm_status_t status )
 {
     mca_ptl_gm_module_t* gm_ptl;
-    mca_ptl_base_frag_t* frag_base;
     mca_ptl_base_header_t* header;
 
     header = (mca_ptl_base_header_t*)context;
 
-    frag_base = (mca_ptl_base_frag_t*)header->hdr_ack.hdr_dst_addr.pval;
-    gm_ptl = (mca_ptl_gm_module_t *)frag_base->frag_owner;
+    gm_ptl = (mca_ptl_gm_module_t*)header->hdr_ack.hdr_dst_addr.pval;
 
     OMPI_GM_FREE_LIST_RETURN( &(gm_ptl->gm_send_dma_frags), ((ompi_list_item_t*)header) );
     /* release the send token */
@@ -324,8 +322,8 @@ static void mca_ptl_gm_basic_ack_callback( struct gm_port* port, void* context, 
  *  ack back to the peer and process the fragment.
  */
 void
-mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
-                    mca_ptl_base_recv_frag_t * frag )
+mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
+                    mca_ptl_base_recv_frag_t* frag )
 {
     mca_pml_base_recv_request_t *request;
     mca_ptl_base_header_t *hdr;
@@ -355,12 +353,12 @@ mca_ptl_gm_matched( mca_ptl_base_module_t * ptl,
             hdr = (mca_ptl_base_header_t*)item;
 
 	    hdr->hdr_ack.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
-	    hdr->hdr_ack.hdr_common.hdr_flags = 0;
+	    hdr->hdr_ack.hdr_common.hdr_flags = frag->frag_base.frag_header.hdr_common.hdr_flags;
 	    hdr->hdr_ack.hdr_src_ptr = frag->frag_base.frag_header.hdr_rndv.hdr_src_ptr;
 	    hdr->hdr_ack.hdr_dst_match.lval = 0L;
 	    hdr->hdr_ack.hdr_dst_match.pval = request;
 	    hdr->hdr_ack.hdr_dst_addr.lval = 0L;
-	    hdr->hdr_ack.hdr_dst_addr.pval = frag;
+	    hdr->hdr_ack.hdr_dst_addr.pval = ptl;  /* local use */
 	    hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed;
 
 	    gm_send_with_callback( ((mca_ptl_gm_module_t*)ptl)->gm_port, hdr,
