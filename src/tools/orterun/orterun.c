@@ -861,9 +861,18 @@ static int parse_appfile(char *filename)
             break;
         }
 
-        /* Remove comments */
+        /* Remove a trailing newline */
 
         len = strlen(line);
+        if (len > 0 && '\n' == line[len - 1]) {
+            line[len - 1] = '\0';
+            if (len > 0) {
+                --len;
+            }
+        }
+
+        /* Remove comments */
+
         for (i = 0; i < len; ++i) {
             if ('#' == line[i]) {
                 line[i] = '\0';
