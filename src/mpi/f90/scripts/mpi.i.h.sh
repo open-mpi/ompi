@@ -1,4 +1,22 @@
 #! /bin/sh
+# -*- shell-script -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+
+# Do a little error checking
 
 if test ! -f fortran_kinds.sh; then
     echo "ERROR: Cannot find fortran_kinds.sh"
@@ -8,11 +26,36 @@ elif test -z fortran_kinds.sh; then
     exit 1
 fi
 
+# Read the setup information
+
 echo "Reading Fortran KIND information..." >&2
 . fortran_kinds.sh
 
+# Do the work
 
 echo "Generating F90 interface functions..." >&2
+
+# Setup
+
+rank=2
+array_ranks="1"
+while test "`expr $rank \\<= $max_array_rank`" = "1"; do
+    array_ranks="$array_ranks $rank"
+    rank="`expr $rank + 1`"
+done
+
+# Subroutine helper used to make dimension strings
+
+make_dims() {
+    dim=":"
+    j=2
+    while test "`expr $j \\<= $rank`" = "1"; do
+        dim="$dim,:"
+        j="`expr $j + 1`"
+    done
+}
+
+# Work for each procedure
 
 procedure='MPI_Abort'
 
@@ -119,17 +162,9 @@ do
   echo
 done
 
-
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -324,16 +359,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -470,16 +498,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -644,16 +665,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -832,16 +846,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -998,16 +1005,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -1176,16 +1176,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -1362,16 +1355,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -1602,16 +1588,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -1760,16 +1739,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -1926,16 +1898,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -2072,16 +2037,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -2194,16 +2152,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -3011,16 +2962,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -3429,16 +3373,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -3587,16 +3524,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -3745,16 +3675,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -3899,16 +3822,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -4057,16 +3973,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -4215,16 +4124,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -4407,16 +4309,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -4561,16 +4456,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -4707,16 +4595,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -4841,16 +4722,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -4987,16 +4861,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -5149,16 +5016,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -5307,16 +5167,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -5449,16 +5302,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -5591,16 +5437,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -5737,16 +5576,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -5871,16 +5703,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -6013,16 +5838,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -6309,16 +6127,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -6463,16 +6274,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -6609,16 +6413,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -6743,16 +6540,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -6889,16 +6679,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -7051,16 +6834,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -7209,16 +6985,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -7351,16 +7120,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -7493,16 +7255,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -7639,16 +7394,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -7773,16 +7521,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -7915,16 +7656,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -8080,16 +7814,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -8226,16 +7953,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -8408,16 +8128,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -8590,16 +8303,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -8740,16 +8446,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -9331,16 +9030,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -9769,16 +9461,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -9939,16 +9624,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -10125,16 +9803,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -10295,16 +9966,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -10534,16 +10198,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -10704,16 +10361,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -10951,16 +10601,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -11141,16 +10784,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -11311,16 +10947,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -11481,16 +11110,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -11647,16 +11269,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -11864,16 +11479,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -12030,16 +11638,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -12196,16 +11797,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -12366,16 +11960,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -12548,16 +12135,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -12722,16 +12302,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -12888,16 +12461,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -13078,16 +12644,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -13276,16 +12835,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -13430,16 +12982,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -13572,16 +13117,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -13738,16 +13276,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -14756,16 +14287,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -14926,16 +14450,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
@@ -15200,16 +14717,9 @@ do
 done
 
 
-for rank in $ranks
+for rank in $array_ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
+  make_dims $rank
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
