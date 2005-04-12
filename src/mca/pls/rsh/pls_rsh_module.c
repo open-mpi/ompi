@@ -129,21 +129,26 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 
  cleanup:
         /* tell the user something went wrong */
-        ompi_output(0, "A daemon on node %s failed to start as expected."
-               "There may be more information available above from the"
-               "remote shell.", info->node->node_name);
+        ompi_output(0, "ERROR: A daemon on node %s failed to start as expected.",
+        			info->node->node_name);
+        ompi_output(0, "ERROR: There may be more information available from");
+        ompi_output(0, "ERROR: the remote shell (see above).");
         if (WIFEXITED(status)) {
-            ompi_output(0, "The daemon exited unexpectedly with status %d.",
+            ompi_output(0, "ERROR: The daemon exited unexpectedly with status %d.",
                    WEXITSTATUS(status));
         } else if (WIFSIGNALED(status)) {
-            ompi_output(0, "The daemon received a signal %d.", WTERMSIG(status));
 #ifdef WCOREDUMP
             if (WCOREDUMP(status)) {
-                ompi_output(0, "The daemon process dumped core.");
+                ompi_output(0, "The daemon received a signal %d (with core).",
+                			WTERMSIG(status));
+            } else {
+            	ompi_output(0, "The daemon received a signal %d.", WTERMSIG(status));
             }
+#else
+			ompi_output(0, "The daemon received a signal %d.", WTERMSIG(status));
 #endif /* WCOREDUMP */
         } else {
-            ompi_output(0, "No status information is available: %d.", status);
+            ompi_output(0, "No extra status information is available: %d.", status);
         }
     }
 
