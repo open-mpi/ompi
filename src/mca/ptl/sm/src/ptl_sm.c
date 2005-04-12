@@ -46,6 +46,7 @@
 #include "class/ompi_free_list.h"
 #include "threads/mutex.h"
 #include "datatype/datatype.h"
+#include "include/sys/atomic.h"
 
 mca_ptl_sm_t mca_ptl_sm[2] = {
     {
@@ -240,8 +241,8 @@ int mca_ptl_sm_add_procs_same_base_addr(
 
     if ( !mca_ptl_sm[0].ptl_inited ) {
         /* set the shared memory offset */
-        mca_ptl_sm_component.sm_offset=(size_t *)
-            malloc(n_to_allocate*sizeof(size_t));
+        mca_ptl_sm_component.sm_offset=(ssize_t *)
+            malloc(n_to_allocate*sizeof(ssize_t));
             if(NULL == mca_ptl_sm_component.sm_offset ) {
             return_code=OMPI_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;
@@ -379,6 +380,10 @@ int mca_ptl_sm_add_procs_same_base_addr(
 
             /* allow other procs to use this shared memory map */
             mca_ptl_sm_component.mmap_file->map_seg->seg_inited=true;
+
+            /* memory barrier to ensure this flag is set before other
+             *  flags are set */
+            ompi_atomic_mb();
         }
    
         /* Note:  Need to make sure that proc 0 initializes control
@@ -395,10 +400,13 @@ int mca_ptl_sm_add_procs_same_base_addr(
         tmp_ptr=(volatile char **)
             ( (char *)(mca_ptl_sm_component.sm_ctl_header->segment_header.
               base_shared_mem_segment)  +
-              (size_t )(mca_ptl_sm_component.sm_mpool->mpool_base()) );
+		      (long )(mca_ptl_sm_component.sm_mpool->mpool_base()) );
         tmp_ptr[mca_ptl_sm_component.my_smp_rank]=
             mca_ptl_sm_component.sm_mpool->mpool_base();
-        /* RLG:  need memory barrier */
+        /* memory barrier to ensure this flag is set before other
+         *  flags are set */
+        ompi_atomic_mb();
+
         mca_ptl_sm_component.sm_ctl_header->segment_header.
             base_shared_mem_flags[mca_ptl_sm_component.my_smp_rank]=1;
 
@@ -425,7 +433,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
         }
         fifo_tmp=(ompi_fifo_t * volatile *)
                 ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo) +
-                  (size_t)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
+                  (long)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
         /* RLG : need memory barrier */
         fifo_tmp[mca_ptl_sm_component.my_smp_rank]=my_fifos;
 
@@ -443,7 +451,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
     /* cache the pointers to the rest of the fifo arrays */
     fifo_tmp=(ompi_fifo_t * volatile *)
         ( (char *)(mca_ptl_sm_component.sm_ctl_header->fifo) +
-          (size_t)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
+          (long)(mca_ptl_sm_component.sm_mpool->mpool_base()) );
     for( j=mca_ptl_sm_component.num_smp_procs ; j <
             mca_ptl_sm_component.num_smp_procs+n_local_procs ; j++ ) {
 
@@ -454,7 +462,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
         tmp_ptr=(volatile char **)
             ( (char *)mca_ptl_sm_component.sm_ctl_header->
               segment_header.base_shared_mem_segment +
-              (size_t)mca_ptl_sm_component.sm_mpool->mpool_base());
+              (long)mca_ptl_sm_component.sm_mpool->mpool_base());
         diff= tmp_ptr[mca_ptl_sm_component.my_smp_rank]-tmp_ptr[j];
         mca_ptl_sm_component.fifo[j]=
             ( ompi_fifo_t *)( (char *)fifo_tmp[j]+diff);
@@ -533,7 +541,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
         tmp_ptr=(volatile char **)
             ( (char *)mca_ptl_sm_component.sm_ctl_header->
               segment_header.base_shared_mem_segment +
-              (size_t)mca_ptl_sm_component.sm_mpool->mpool_base());
+              (long)mca_ptl_sm_component.sm_mpool->mpool_base());
         same_sm_base=(tmp_ptr[peer->peer_smp_rank] ==
             tmp_ptr[mca_ptl_sm_component.my_smp_rank]);
 
