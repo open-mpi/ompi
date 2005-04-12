@@ -16,17 +16,18 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-EXTRA_DIST = \
+ompi_config_files = \
 		openmpi-default-hostfile \
 		openmpi-mca-params.conf
 
+EXTRA_DIST = $(ompi_config_files)
 sysconf_DATA = 
 
 # Steal a little trickery from a generated Makefile to only install
 # lam-bhost.def if one does not already exist at the target.
 
 install-data-local:
-	@ p="openmpi-mca-params.conf openmpi-default-hostfile"; \
+	@ p="$(ompi_config_files)"; \
 	for file in $$p; do \
 	  if test -f $(DESTDIR)$(sysconfdir)/$$file; then \
 	    echo "******************************* WARNING ************************************"; \
@@ -39,4 +40,20 @@ install-data-local:
 	    echo " $(INSTALL_DATA) $$d$$file $(DESTDIR)$(sysconfdir)/$$f"; \
 	    $(INSTALL_DATA) $$d$$file $(DESTDIR)$(sysconfdir)/$$f; \
 	  fi; \
+	done
+
+# Only remove if exactly the same as what in our tree
+# NOTE TO READER: Bourne shell if ... fi evaluates the body if 
+#    the return of the evaluted command is 0 (as opposed to non-zero
+#    as used by everyone else)
+uninstall-local:
+	@ p="$(ompi_config_files)"; \
+	for file in $$p; do \
+	  if test -f "$(DESTDIR)$(sysconfdir)/$$file"; then \
+	  	if test -f "$$file"; then d=; else d="$(srcdir)/"; fi; \
+	    if diff "$(DESTDIR)$(sysconfdir)/$$file" "$$d$$file" > /dev/null 2>&1 ; then \
+	      echo "rm -f $(DESTDIR)$(sysconfdir)/$$file" ; \
+	      rm -f "$(DESTDIR)$(sysconfdir)/$$file" ; \
+	    fi ; \
+	  fi ; \
 	done
