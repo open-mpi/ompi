@@ -199,11 +199,6 @@ int mca_oob_tcp_component_open(void)
         mca_oob_tcp_param_register_str("include", NULL);
     mca_oob_tcp_component.tcp_exclude =
         mca_oob_tcp_param_register_str("exclude", NULL);
-    mca_oob_tcp_component.tcp_include =
-        mca_oob_tcp_param_register_str("include", NULL);
-    mca_oob_tcp_component.tcp_exclude =
-        mca_oob_tcp_param_register_str("exclude", NULL);
-
 
     /* initialize state */
     mca_oob_tcp_component.tcp_listen_sd = -1;
