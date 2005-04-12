@@ -611,6 +611,10 @@ else
                             OMPI_SIZEOF_F90_INT1)
         OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(2)),
                                OMPI_ALIGNMENT_F90_INT1)
+        OMPI_F90_GET_SIZEOF(logical(selected_int_kind(2)), 
+                            OMPI_SIZEOF_F90_LOGICAL)
+        OMPI_F90_GET_ALIGNMENT(logical(selected_int_kind(2)),
+                               OMPI_ALIGNMENT_F90_LOGICAL1)
     fi
 
     OMPI_F90_CHECK_TYPE(selected_int_kind(4),  OMPI_HAVE_F90_INTEGER2)
@@ -621,6 +625,10 @@ else
                             OMPI_SIZEOF_F90_INT2)
         OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(4)),
                                OMPI_ALIGNMENT_F90_INT2)
+        OMPI_F90_GET_SIZEOF(logical(selected_int_kind(4)), 
+                            OMPI_SIZEOF_F90_LOGICAL2)
+        OMPI_F90_GET_ALIGNMENT(logical(selected_int_kind(4)),
+                               OMPI_ALIGNMENT_F90_LOGICAL2)
     fi
 
     OMPI_F90_CHECK_TYPE(selected_int_kind(9),  OMPI_HAVE_F90_INTEGER4)
@@ -631,6 +639,10 @@ else
                             OMPI_SIZEOF_F90_INT4)
         OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(9)),
                                OMPI_ALIGNMENT_F90_INT4)
+        OMPI_F90_GET_SIZEOF(logical(selected_int_kind(9)),
+                            OMPI_SIZEOF_F90_LOGICAL4)
+        OMPI_F90_GET_ALIGNMENT(logical(selected_int_kind(9)),
+                               OMPI_ALIGNMENT_F90_LOGICAL4)
     fi
 
     OMPI_F90_CHECK_TYPE(selected_int_kind(18), OMPI_HAVE_F90_INTEGER8)
@@ -641,6 +653,10 @@ else
                             OMPI_SIZEOF_F90_INT8)
         OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(18)),
                                OMPI_ALIGNMENT_F90_INT8)
+        OMPI_F90_GET_SIZEOF(logical(selected_int_kind(18)), 
+                            OMPI_SIZEOF_F90_LOGICAL8)
+        OMPI_F90_GET_ALIGNMENT(logical(selected_int_kind(18)),
+                               OMPI_ALIGNMENT_F90_LOGICAL8)
     fi
 
     OMPI_F90_CHECK_TYPE(selected_int_kind(19), OMPI_HAVE_F90_INTEGER16)
@@ -651,6 +667,10 @@ else
                             OMPI_SIZEOF_F90_INT16)
         OMPI_F90_GET_ALIGNMENT(integer(selected_int_kind(19)),
                                OMPI_ALIGNMENT_F90_INT16)
+        OMPI_F90_GET_SIZEOF(logical(selected_int_kind(19)), 
+                            OMPI_SIZEOF_F90_LOGICAL16)
+        OMPI_F90_GET_ALIGNMENT(logical(selected_int_kind(19)),
+                               OMPI_ALIGNMENT_F90_LOGICAL16)
     fi
 
     OMPI_F90_CHECK_TYPE(selected_real_kind(6), OMPI_HAVE_F90_REAL4)
