@@ -281,7 +281,7 @@ int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag,
 
     count = 1;
     if ((ORTE_SUCCESS != orte_dps.unpack(answer, &command, &count, ORTE_NS_CMD))
-        || (ORTE_NS_CREATE_CELLID_CMD != command)) {
+        || (ORTE_NS_ASSIGN_OOB_TAG_CMD != command)) {
             OBJ_RELEASE(answer);
             return ORTE_ERR_UNPACK_FAILURE;
     }

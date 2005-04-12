@@ -131,7 +131,8 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
     /* not in list or not provided, so allocate next tag
      * first check to see if one available - else error
      */
-    if (ORTE_RML_TAG_MAX < orte_ns_replica_next_rml_tag) {
+/*     if (ORTE_RML_TAG_MAX < orte_ns_replica_next_rml_tag) { */
+    if (ORTE_RML_TAG_MAX > orte_ns_replica_next_rml_tag) {
         /* okay, one available - assign it */
         tagitem = OBJ_NEW(orte_ns_replica_tagitem_t);
         if (NULL == tagitem) { /* out of memory */
