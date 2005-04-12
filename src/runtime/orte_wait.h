@@ -29,8 +29,6 @@
 #include <sys/types.h>
 #endif
 
-#ifndef WIN32
-
 /** typedef for callback function used in \c ompi_rte_wait_cb */
 typedef void (*orte_wait_fn_t)(pid_t wpid, int status, void *data);
 
@@ -91,5 +89,4 @@ int orte_wait_kill(int sig);
  */
 int orte_wait_finalize(void);
 
-#endif /* #ifndef WIN32 */
 #endif /* #ifndef ORTE_WAIT_H */
