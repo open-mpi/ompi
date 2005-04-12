@@ -174,12 +174,13 @@ static inline bool ompi_set_using_threads(bool have)
  */
 #define OMPI_THREAD_LOCK(mutex)                 \
     do {                                        \
-        if (ompi_using_threads()) {             \
+        if (OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) {             \
             ompi_mutex_lock(mutex);             \
         }                                       \
     } while (0)
 
-/*
+
+/**
  * Unlock a mutex if ompi_using_threads() says that multiple threads
  * may be active in the process.
  *
@@ -194,11 +195,10 @@ static inline bool ompi_set_using_threads(bool have)
  */
 #define OMPI_THREAD_UNLOCK(mutex)               \
     do {                                        \
-        if (ompi_using_threads()) {             \
+        if (OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) {             \
             ompi_mutex_unlock(mutex);           \
         }                                       \
     } while (0)
-
 
 /**
  * Lock a mutex if ompi_using_threads() says that multiple threads may
@@ -217,7 +217,7 @@ static inline bool ompi_set_using_threads(bool have)
  */
 #define OMPI_THREAD_SCOPED_LOCK(mutex, action)  \
     do {                                        \
-        if(ompi_using_threads()) {              \
+        if(OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) {              \
             ompi_mutex_lock(mutex);             \
             (action);                           \
             ompi_mutex_unlock(mutex);           \
@@ -226,17 +226,18 @@ static inline bool ompi_set_using_threads(bool have)
         }                                       \
     } while (0)
 
-
 /**
  * Use an atomic operation for increment/decrement if ompi_using_threads()
  * indicates that threads are in use by the application or library.
  */
 
 #define OMPI_THREAD_ADD32(x,y) \
-   (ompi_using_threads() ? ompi_atomic_add_32(x,y) : (*x += y))
+   ((OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) ? \
+   ompi_atomic_add_32(x,y) : (*x += y))
 
 #define OMPI_THREAD_ADD64(x,y) \
-   (ompi_using_threads() ? ompi_atomic_add_32(x,y) : (*x += y))
+   ((OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) ? \
+    ompi_atomic_add_32(x,y) : (*x += y))
 
 /**
  * Always locks a mutex (never compile- or run-time removed)
