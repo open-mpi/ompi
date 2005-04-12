@@ -356,7 +356,11 @@ ompi_wrap_build_libs(const ompi_sv_t & env_list,
 #if OMPI_WANT_CXX_BINDINGS
     // The C++ bindings come next
     if (want_cxx_libs) {
-	if (!ompi_wrap_check_file(libdir, "libmpi_cxx.a") &&
+	if (
+#ifdef WIN32
+	    !ompi_wrap_check_file(libdir, "libmpi_cxx.dll") &&
+#endif
+            !ompi_wrap_check_file(libdir, "libmpi_cxx.a") &&
 	    !ompi_wrap_check_file(libdir, "libmpi_cxx.so") &&
 	    !ompi_wrap_check_file(libdir, "libmpi_cxx.dylib")) {
 	    cerr << "WARNING: " << cmd_name
