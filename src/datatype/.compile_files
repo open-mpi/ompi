@@ -13,3 +13,4 @@ dt_pack.c
 dt_sndrcv.c
 dt_unpack.c
 fake_stack.c
+dt_external32.c

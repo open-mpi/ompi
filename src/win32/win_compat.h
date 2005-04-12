@@ -76,4 +76,18 @@ typedef unsigned int uint;
 #define SIZEOF_SIZE_T 4
 #define __func__ __FUNCTION__
 
+/* Ugly signal mapping since windows doesn't support the full spectrum
+ * just a very small subset... :/
+ * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclib/html/_crt_raise.asp
+ */
+#define SIGCHLD SIGILL
+
+/* Note: 
+ *   The two defines below are likely to break the orte_wait
+ *   functionality. The proper method of replacing these bits
+ *   of functionality is left for further investigated.
+ */
+#define WUNTRACED 0
+#define WNOHANG   0
+
 #endif /* compat */

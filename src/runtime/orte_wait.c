@@ -39,8 +39,6 @@
 #include "threads/condition.h"
 
 
-#ifndef WIN32
-
 /*********************************************************************
  *
  * Local Class Declarations
@@ -612,6 +610,3 @@ internal_waitpid_callback(int fd, short event, void *arg)
     ompi_condition_signal(&(data->cond));
 }
 #endif
-
-
-#endif /* ifndef WIN32 */
