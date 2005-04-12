@@ -73,10 +73,17 @@ EXTRA_DIRS =
 #
 # Files included by the dist that we don't want to compile
 # 
-EXCLUDE_FILES = dt_arch.c epoll.c \
-                epoll_sub.c kqueue.c \
+EXCLUDE_FILES = dt_arch.c \
+                epoll.c \
+                epoll_sub.c \
+                kqueue.c \
                 llm_base_parse_hostfile_lex.c \
-                misc.c poll.c rtsig.c signal.c stacktrace.c
+                misc.c \
+                poll.c \
+                rtsig.c \
+                signal.c \
+                stacktrace.c \
+                environ.c
 
 #
 # A small function to extract the list of all files in these directories
