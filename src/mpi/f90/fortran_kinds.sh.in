@@ -15,7 +15,7 @@
 # $HEADER$
 #
 
-ranks="1 2 3 4 5 6 7"
+max_array_rank="@OMPI_FORTRAN_MAX_ARRAY_RANK@"
 
 lkinds="@OMPI_FORTRAN_LKINDS@"
 ikinds="@OMPI_FORTRAN_IKINDS@"
