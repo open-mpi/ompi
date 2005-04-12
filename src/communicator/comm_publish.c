@@ -110,8 +110,12 @@ int ompi_comm_namepublish ( char *service_name, char *port_name )
     
     value->tokens[0] = strdup(service_name);
     value->tokens[1] = NULL;
-    
-    value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    value->num_tokens = 1;
+        
+   value->keyvals = (orte_gpr_keyval_t *)malloc(sizeof(orte_gpr_keyval_t *)); 
+   value->cnt = 1;
+
+   value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
     if (NULL == value->keyvals[0]) {
        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
        OBJ_RELEASE(value);
@@ -166,8 +170,10 @@ int ompi_comm_nameunpublish ( char *service_name )
     
     token[0] = service_name;
     token[1] = NULL;
-    
+#if 0    
     return orte_gpr.delete_entries(ORTE_GPR_TOKENS_AND,
                                         OMPI_NAMESPACE_SEGMENT,
                                         token, NULL); 
+#endif
+    return OMPI_SUCCESS;
 }
