@@ -779,8 +779,10 @@ static int param_register(const char *type_name, const char *component_name,
     } else {
       param.mbp_file_value = *file_value;
     }
+    param.mbp_file_value_set = true;
   } else {
     memset(&param.mbp_file_value, 0, sizeof(param.mbp_file_value));
+    param.mbp_file_value_set = false;
   }
 
   /* Figure out the override value; zero it out if a override is not
@@ -793,8 +795,10 @@ static int param_register(const char *type_name, const char *component_name,
     } else {
       param.mbp_override_value = *override_value;
     }
+    param.mbp_override_value_set = true;
   } else {
     memset(&param.mbp_override_value, 0, sizeof(param.mbp_override_value));
+    param.mbp_override_value_set = false;
   }
 
   /* See if this entry is already in the array */
@@ -804,62 +808,125 @@ static int param_register(const char *type_name, const char *component_name,
   for (i = 0; i < len; ++i) {
     if (0 == strcmp(param.mbp_full_name, array[i].mbp_full_name)) {
 
-      /* We found an entry with the same param name.  Free the old
-         value (if it was a string */
+        /* We found an entry with the same param name.  Check to see
+           if we're changing types */
+        /* Easy case: both are INT */
 
-      if (MCA_BASE_PARAM_TYPE_STRING == array[i].mbp_type) {
-          if (NULL != array[i].mbp_default_value.stringval) {
-              free(array[i].mbp_default_value.stringval);
+      if (MCA_BASE_PARAM_TYPE_INT == array[i].mbp_type &&
+          MCA_BASE_PARAM_TYPE_INT == param.mbp_type) {
+          if (NULL != default_value) {
+              array[i].mbp_default_value.intval =
+                  param.mbp_default_value.intval;
           }
-          if (NULL != array[i].mbp_file_value.stringval) {
-              free(array[i].mbp_file_value.stringval);
+          if (NULL != file_value) {
+              array[i].mbp_file_value.intval =
+                  param.mbp_file_value.intval;
+              array[i].mbp_file_value_set = true;
           }
-
-          /* Do *not* free the override value on the found entry here
-             -- we will down below, but only *if* the new entry
-             provides a new override value */
-      }
-
-      /* Now put in the new value */
-
-      if (MCA_BASE_PARAM_TYPE_STRING == param.mbp_type) {
-        if (NULL != param.mbp_default_value.stringval) {
-          array[i].mbp_default_value.stringval =
-            strdup(param.mbp_default_value.stringval);
-        } else {
-          array[i].mbp_default_value.stringval = NULL;
-        }
-        if (NULL != param.mbp_file_value.stringval) {
-          array[i].mbp_file_value.stringval =
-            strdup(param.mbp_file_value.stringval);
-        } else {
-          array[i].mbp_file_value.stringval = NULL;
-        }
-
-        /* Do we need to replace the override value? */
-
-        if (NULL != override_value && 
-            NULL != param.mbp_override_value.stringval) {
-            if (NULL != array[i].mbp_override_value.stringval) {
-                free(array[i].mbp_override_value.stringval);
-            }
-            array[i].mbp_override_value.stringval =
-                strdup(param.mbp_override_value.stringval);
-        }
-      } else {
-          array[i].mbp_default_value.intval =
-            param.mbp_default_value.intval;
-          array[i].mbp_file_value.intval =
-            param.mbp_file_value.intval;
           if (NULL != override_value) {
               array[i].mbp_override_value.intval =
                   param.mbp_override_value.intval;
+              array[i].mbp_override_value_set = true;
           }
+      } 
+
+      /* Both are STRING */
+
+      else if (MCA_BASE_PARAM_TYPE_STRING == array[i].mbp_type &&
+               MCA_BASE_PARAM_TYPE_STRING == param.mbp_type) {
+          if (NULL != default_value) {
+              if (NULL != array[i].mbp_default_value.stringval) {
+                  free(array[i].mbp_default_value.stringval);
+                  array[i].mbp_default_value.stringval = NULL;
+              }
+              if (NULL != param.mbp_default_value.stringval) {
+                  array[i].mbp_default_value.stringval =
+                      strdup(param.mbp_default_value.stringval);
+              }
+          }
+
+          if (NULL != file_value) {
+              if (NULL != array[i].mbp_file_value.stringval) {
+                  free(array[i].mbp_file_value.stringval);
+                  array[i].mbp_file_value.stringval = NULL;
+              }
+              if (NULL != param.mbp_file_value.stringval) {
+                  array[i].mbp_file_value.stringval =
+                      strdup(param.mbp_file_value.stringval);
+              }
+              array[i].mbp_file_value_set = true;
+          }
+
+          if (NULL != override_value) {
+              if (NULL != array[i].mbp_override_value.stringval) {
+                  free(array[i].mbp_override_value.stringval);
+                  array[i].mbp_override_value.stringval = NULL;
+              }
+              if (NULL != param.mbp_override_value.stringval) {
+                  array[i].mbp_override_value.stringval =
+                      strdup(param.mbp_override_value.stringval);
+              }
+              array[i].mbp_override_value_set = true;
+          }
+      } 
+
+      /* Original is INT, new is STRING */
+
+      else if (MCA_BASE_PARAM_TYPE_INT == array[i].mbp_type &&
+               MCA_BASE_PARAM_TYPE_STRING == param.mbp_type) {
+          if (NULL != default_value && 
+              NULL != param.mbp_default_value.stringval) {
+              array[i].mbp_default_value.stringval =
+                  strdup(param.mbp_default_value.stringval);
+          }
+
+          if (NULL != file_value &&
+              NULL != param.mbp_file_value.stringval) {
+              array[i].mbp_file_value.stringval =
+                  strdup(param.mbp_file_value.stringval);
+              array[i].mbp_file_value_set = true;
+          }
+
+          if (NULL != override_value &&
+              NULL != param.mbp_override_value.stringval) {
+              array[i].mbp_override_value.stringval =
+                  strdup(param.mbp_override_value.stringval);
+              array[i].mbp_override_value_set = true;
+          }
+
+          array[i].mbp_type = param.mbp_type;
+      } 
+
+      /* Original is STRING, new is INT */
+
+      else if (MCA_BASE_PARAM_TYPE_STRING == array[i].mbp_type &&
+                 MCA_BASE_PARAM_TYPE_INT == param.mbp_type) {
+          if (NULL != default_value) {
+              if (NULL != array[i].mbp_default_value.stringval) {
+                  free(array[i].mbp_default_value.stringval);
+              }
+              array[i].mbp_default_value.intval =
+                  param.mbp_default_value.intval;
+          }
+          if (NULL != file_value) {
+              if (NULL != array[i].mbp_file_value.stringval) {
+                  free(array[i].mbp_file_value.stringval);
+              }
+              array[i].mbp_file_value.intval =
+                  param.mbp_file_value.intval;
+              array[i].mbp_file_value_set = true;
+          }
+          if (NULL != override_value) {
+              if (NULL != array[i].mbp_override_value.stringval) {
+                  free(array[i].mbp_override_value.stringval);
+              }
+              array[i].mbp_override_value.intval =
+                  param.mbp_override_value.intval;
+              array[i].mbp_override_value_set = true;
+          }
+
+          array[i].mbp_type = param.mbp_type;
       }
-
-      /* Just in case we changed type */
-
-      array[i].mbp_type = param.mbp_type;
 
       /* Now delete the newly-created entry (since we just saved the
          value in the old entry) */
