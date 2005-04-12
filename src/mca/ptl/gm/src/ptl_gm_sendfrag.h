@@ -137,19 +137,21 @@ extern "C" {
 }
 
     static inline int
-    mca_ptl_gm_init_header_match( mca_ptl_base_header_t *hdr,
-                                  struct mca_pml_base_send_request_t * sendreq,
-                                  int flags )
+    mca_ptl_gm_init_header_rndv( mca_ptl_base_header_t *hdr,
+                                 struct mca_pml_base_send_request_t * sendreq,
+                                 int flags )
     {
         hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
+        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_RNDV;
         
-        hdr->hdr_match.hdr_contextid  = sendreq->req_base.req_comm->c_contextid;
-        hdr->hdr_match.hdr_src        = sendreq->req_base.req_comm->c_my_rank;
-        hdr->hdr_match.hdr_dst        = sendreq->req_base.req_peer;
-        hdr->hdr_match.hdr_tag        = sendreq->req_base.req_tag;
-        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-        hdr->hdr_match.hdr_msg_seq    = sendreq->req_base.req_sequence;
+        hdr->hdr_rndv.hdr_match.hdr_contextid  = sendreq->req_base.req_comm->c_contextid;
+        hdr->hdr_rndv.hdr_match.hdr_src        = sendreq->req_base.req_comm->c_my_rank;
+        hdr->hdr_rndv.hdr_match.hdr_dst        = sendreq->req_base.req_peer;
+        hdr->hdr_rndv.hdr_match.hdr_tag        = sendreq->req_base.req_tag;
+        hdr->hdr_rndv.hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
+        hdr->hdr_rndv.hdr_match.hdr_msg_seq    = sendreq->req_base.req_sequence;
+        hdr->hdr_rndv.hdr_src_ptr.lval         = 0L;
+        hdr->hdr_rndv.hdr_src_ptr.pval         = sendreq;
 
         return OMPI_SUCCESS;
     }
