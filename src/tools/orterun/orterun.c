@@ -69,6 +69,7 @@ static ompi_pointer_array_t apps_pa;
 static bool wait_for_job_completion = true;
 static char *abort_msg = NULL;
 static size_t abort_msg_len = -1;
+static char *orterun_basename = NULL;
 
 /*
  * setup globals for catching orterun command line options
@@ -185,10 +186,13 @@ int main(int argc, char *argv[], char* env[])
 {
     orte_app_context_t **apps;
     int rc, i, num_apps;
+    char *dir;
 
     /* Setup the abort message (for use in the signal handler) */
 
-    asprintf(&abort_msg, "%s: killing job...\n", argv[0]);
+    dir = strdup(argv[0]);
+    orterun_basename = basename(dir);
+    asprintf(&abort_msg, "%s: killing job...\n", orterun_basename);
     abort_msg_len = strlen(abort_msg);
 
     /* Check for some "global" command line params */
@@ -260,6 +264,7 @@ int main(int argc, char *argv[], char* env[])
     OBJ_DESTRUCT(&apps_pa);
     orte_finalize();
     free(abort_msg);
+    free(dir);
     return rc;
 }
 
@@ -462,11 +467,11 @@ static int parse_globals(int argc, char* argv[])
 
     /* Check for help and version requests */
 
-    if (orterun_globals.help) {
+    if (1 == argc || orterun_globals.help) {
         char *args = NULL;
         args = ompi_cmd_line_get_usage_msg(&cmd_line);
         ompi_show_help("help-orterun.txt", "orterun:usage", false,
-                       argv[0], args);
+                       orterun_basename, args);
         free(args);
 
         /* If someone asks for help, that should be all we do */
@@ -688,7 +693,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     if (0 == app->argc) {
         ompi_show_help("help-orterun.txt", "orterun:executable-not-specified",
-                       true, argv[0], argv[0]);
+                       true, orterun_basename, orterun_basename);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
@@ -782,7 +787,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     if (app->num_procs <= 0 && !map_data) {
         ompi_show_help("help-orterun.txt", "orterun:num-procs-unspecified",
-                       true, argv[0], app->argv[0]);
+                       true, orterun_basename, app->argv[0]);
         rc = ORTE_ERR_BAD_PARAM;
         goto cleanup;
     }
@@ -792,7 +797,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     app->app = ompi_path_findv(app->argv[0], 0, environ, app->cwd); 
     if (NULL == app->app) {
         ompi_show_help("help-orterun.txt", "orterun:executable-not-found",
-                       true, argv[0], app->argv[0], argv[0]);
+                       true, orterun_basename, app->argv[0], orterun_basename);
         rc = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
