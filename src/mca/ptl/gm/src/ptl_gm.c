@@ -83,21 +83,24 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
         if( orte_proc == local_proc ) continue;
         ptl_proc = mca_ptl_gm_proc_create ((mca_ptl_gm_module_t *) ptl, orte_proc);
         if (NULL == ptl_proc) {
-            return OMPI_ERR_OUT_OF_RESOURCE;
+            ompi_output( 0, "[%s:%d] cannot allocate memory for the GM module", __FILE__, __LINE__ );
+            continue;
         }
 
         OMPI_THREAD_LOCK (&ptl_proc->proc_lock);
         if (ptl_proc->proc_addr_count == ptl_proc->proc_peer_count) {
             OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
-            return OMPI_ERR_UNREACH;
+            ompi_output( 0, "[%s:%d] modex exchange failed for GM module", __FILE__, __LINE__ );
+            continue;
         }
-
+        ptl_peer = NULL;  /* force it to NULL before looping through the ptls */
         /* TODO: make this extensible to multiple nics */
         for( j = 0; j < num_peer_ptls; j++ ) {
             ptl_peer = OBJ_NEW (mca_ptl_gm_peer_t);
             if (NULL == ptl_peer) {
                 OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
-                return OMPI_ERR_OUT_OF_RESOURCE;
+                ompi_output( 0, "[%s:%d] cannot allocate memory for one of the GM ptl", __FILE__, __LINE__ );
+                continue;
             }
 
             ptl_peer->peer_ptl = (mca_ptl_gm_module_t *) ptl;
@@ -110,7 +113,9 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
 						      &(ptl_peer->peer_addr.local_id))) {
                 ompi_output( 0, "[%s:%d] error in converting global to local id \n", 
 			     __FILE__, __LINE__ );
-                return OMPI_ERR_BAD_PARAM;
+                OBJ_RELEASE( ptl_peer );
+                assert( NULL == ptl_peer );
+                continue;
             }
 #else
             strncpy( ptl_peer->peer_addr.global_id, ptl_proc->proc_addrs->global_id, GM_MAX_HOST_NAME_LEN );
@@ -119,13 +124,15 @@ mca_ptl_gm_add_procs (struct mca_ptl_base_module_t *ptl,
 	    if( GM_NO_SUCH_NODE_ID == ptl_peer->peer_addr.local_id ) {
 		ompi_output( 0, "Unable to convert the remote host name (%s) to a host id",
 			     ptl_proc->proc_addrs[j].global_id );
-                return OMPI_ERR_BAD_PARAM;	
+                OBJ_RELEASE( ptl_peer );
+                assert( NULL == ptl_peer );
+                continue;
 	    }
 #endif  /* GM_API_VERSION > 0x200 */
             ptl_proc->peer_arr[ptl_proc->proc_peer_count] = ptl_peer;
             ptl_proc->proc_peer_count++;
+            ompi_bitmap_set_bit (reachable, i);  /* set the bit again and again */
         }
-        ompi_bitmap_set_bit (reachable, i);
         OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
         peers[i] = (struct mca_ptl_base_peer_t*)ptl_peer;
     }
@@ -341,7 +348,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
     if( frag->frag_base.frag_header.hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK ) {  /* need to send an ack back */
         ompi_list_item_t *item;
 
-        OMPI_FREE_LIST_TRY_GET( &(gm_ptl->gm_send_dma_frags), item );
+        OMPI_FREE_LIST_WAIT( &(gm_ptl->gm_send_dma_frags), item, rc );
         if( NULL == item ) {
             ompi_output(0,"[%s:%d] unable to alloc a gm fragment\n", __FILE__,__LINE__);
             OMPI_THREAD_LOCK (&mca_ptl_gm_component.gm_lock);
