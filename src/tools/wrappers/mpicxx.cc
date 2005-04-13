@@ -54,5 +54,5 @@ main(int argc, char *argv[])
 
     return ompi_wrap_engine(argc, argv, compiler, cxxcppflags, cxxflags,
 			    ldflags, libs, OMPI_CXX,
-			    WRAPPER_EXTRA_CXXFLAGS, true, false);
+			    WRAPPER_EXTRA_CXXFLAGS, true, false, false);
 }

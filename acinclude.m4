@@ -35,6 +35,7 @@ sinclude(config/f77_get_fortran_handle_max.m4)
 sinclude(config/f77_get_sizeof.m4)
 
 sinclude(config/f90_check_type.m4)
+sinclude(config/f90_find_module_include_flag.m4)
 sinclude(config/f90_get_alignment.m4)
 sinclude(config/f90_get_precision.m4)
 sinclude(config/f90_get_range.m4)

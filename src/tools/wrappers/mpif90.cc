@@ -41,6 +41,7 @@ main(int argc, char *argv[])
     ompi_sv_t fcflags;
     ompi_sv_t ldflags;
     ompi_sv_t libs;
+    string wrapper_extra_fcflags;
 
     compiler.clear();
     compiler.push_back("OMPI_MPIF90");
@@ -61,8 +62,14 @@ main(int argc, char *argv[])
     libs.push_back("OMPI_MPIF90_LIBS");
     libs.push_back("OMPI_LIBS");
 
+    wrapper_extra_fcflags = OMPI_FC_MODULE_FLAG;
+    wrapper_extra_fcflags += " ";
+    wrapper_extra_fcflags += OMPI_LIBDIR;
+    wrapper_extra_fcflags += " ";
+    wrapper_extra_fcflags += WRAPPER_EXTRA_FCFLAGS;
+
     return ompi_wrap_engine(argc, argv, compiler, fcflags, fcflags,
-			    ldflags, libs, OMPI_F90, WRAPPER_EXTRA_FCFLAGS,
-			    false, true);
+			    ldflags, libs, OMPI_F90, wrapper_extra_fcflags,
+			    false, true, true);
 #endif
 }

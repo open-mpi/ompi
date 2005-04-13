@@ -23,7 +23,8 @@ include $(top_srcdir)/config/Makefile.options
 AM_CPPFLAGS   = \
       -DOMPI_PREFIX="\"$(prefix)\"" \
       -DOMPI_INCDIR="\"$(includedir)\"" \
-      -DOMPI_LIBDIR="\"$(libdir)\""
+      -DOMPI_LIBDIR="\"$(libdir)\"" \
+      -DOMPI_FC_MODULE_FLAG="\"$(OMPI_FC_MODULE_FLAG)\""
 
 EXTRA_DIST = wrap.cc wrap_engine.cc $(pkgdata_DATA)
 

@@ -19,7 +19,7 @@ include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = scripts
 
-AM_FCFLAGS = -I$(top_srcdir)/include
+AM_FCFLAGS = -I$(top_srcdir)/include $(OMPI_FC_MODULE_FLAG) .
 
 # Override the default f90 rules because we have to insert
 # $(FCFLAGS_f90) right before the source filename.  This is necessary
@@ -43,11 +43,34 @@ else
 lib_LTLIBRARIES +=
 endif
 
-libmpi_f90_la_SOURCES = \
-     mpi.f90
+#
+# Force the mpi_kinds module to be generated before trying to compile
+# any of the library files
+#
+
+$(libmpi_f90_la_SOURCES): mpi_kinds.o
+$(nodist_libmpi_f90_la_SOURCES): mpi_kinds.o
+
+#
+# Print a warning indicating that compiling mpi.f90 can take a while
+#
+
+mpi.lo: long-warning
+long-warning:
+	@echo "***************************************************************"
+	@echo "* Compiling the mpi.f90 file may take a few minutes."
+	@echo "* This is quite normal -- do not be alarmed if the compile"
+	@echo "* process seems to 'hang' at this point for several minutes."
+	@echo "***************************************************************"
+
+#
+# Source for the f90 library
+#
+
+libmpi_f90_la_SOURCES = mpi.f90
 
 nodist_libmpi_f90_la_SOURCES = \
-     mpi.i.h \
+     mpi-f90-interfaces.h \
      mpi_address_f90.f90 \
      mpi_bcast_f90.f90 \
      mpi_bsend_f90.f90 \
@@ -131,7 +154,7 @@ endif
 #        win_wait_f.c
 
 BUILT_SOURCES = \
-     mpi.i.h
+     mpi-f90-interfaces.h
 
 #
 # Sym link in the sources from the real MPI directory
