@@ -112,7 +112,7 @@ int ompi_comm_namepublish ( char *service_name, char *port_name )
     value->tokens[1] = NULL;
     value->num_tokens = 1;
         
-   value->keyvals = (orte_gpr_keyval_t *)malloc(sizeof(orte_gpr_keyval_t *)); 
+   value->keyvals = malloc(sizeof(orte_gpr_keyval_t *)); 
    value->cnt = 1;
 
    value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
