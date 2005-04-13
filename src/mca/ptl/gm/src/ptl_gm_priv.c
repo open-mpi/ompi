@@ -97,7 +97,6 @@ static void mca_ptl_gm_get_callback( struct gm_port *port, void * context, gm_st
         ompi_output( 0, "mca_ptl_gm_get_callback other error %d\n", status );
     }
 }
-#endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
 
 static inline
 int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int onlyifget )
@@ -114,12 +113,10 @@ int mca_ptl_gm_receiver_advance_pipeline( mca_ptl_gm_recv_frag_t* frag, int only
     get_line = &(frag->pipeline.lines[frag->pipeline.pos_transfert]);
     if( (PTL_GM_PIPELINE_TRANSFERT & get_line->flags) == PTL_GM_PIPELINE_TRANSFERT ) {
         peer->get_started = true;
-#if OMPI_MCA_PTL_GM_HAVE_RDMA_GET
         gm_get( peer->peer_ptl->gm_port, get_line->remote_memory.lval, 
                 get_line->local_memory.pval, get_line->length,
                 GM_LOW_PRIORITY, peer->peer_addr.local_id, peer->peer_addr.port_id,
 		mca_ptl_gm_get_callback, frag );
-#endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
         get_line->flags ^= PTL_GM_PIPELINE_REMOTE;
         DO_DEBUG( count += sprintf( buffer + count, " start get %lld (%d)", get_line->length, frag->pipeline.pos_transfert ); );
         frag->pipeline.pos_transfert = (frag->pipeline.pos_transfert + 1) % GM_PIPELINE_DEPTH;
@@ -272,6 +269,7 @@ int mca_ptl_gm_sender_advance_pipeline( mca_ptl_gm_send_frag_t* frag )
     DO_DEBUG( ompi_output( 0, "sender %d %s", orte_process_info.my_name->vpid, buffer ); )
     return OMPI_SUCCESS;
 }
+#endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
 
 static inline
 int mca_ptl_gm_send_internal_rndv_header( mca_ptl_gm_peer_t *ptl_peer,
@@ -385,8 +383,10 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     uint64_t remaining_bytes, burst_length;
     ompi_list_item_t *item;
     int rc = 0;
+#if OMPI_MCA_PTL_GM_HAVE_RDMA_GET
     gm_status_t status;
     mca_ptl_gm_pipeline_line_t* pipeline;
+#endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
 
     fragment->frag_offset = offset;
 
@@ -444,7 +444,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
      * with the others informations. When we reach this point the rendez-vous protocol
      * has already been realized so we know that the receiver expect our message.
      */
-#if OMPI_MCA_PTL_GM_HAVE_RDMA_GET == 0
+#if OMPI_MCA_PTL_GM_HAVE_RDMA_GET
     /* Trigger the long rendez-vous protocol only if gm_get is supported */
     if( remaining_bytes > mca_ptl_gm_component.gm_rndv_burst_limit )
         flags |= PTL_FLAG_GM_REQUIRE_LOCK;
@@ -453,6 +453,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     if( !(PTL_FLAG_GM_REQUIRE_LOCK & flags) )
         return OMPI_SUCCESS;
 
+#if OMPI_MCA_PTL_GM_HAVE_RDMA_GET
     pipeline = &(fragment->pipeline.lines[0]);
     pipeline->length = fragment->frag_send.frag_base.frag_size - fragment->frag_bytes_processed;
     if( pipeline->length > mca_ptl_gm_component.gm_rdma_frag_size ) {
@@ -476,6 +477,9 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     /* Now we are waiting for the ack message. Meanwhile we can register the sender first piece
      * of data. In this way we have a recovery between the expensive registration on both sides.
      */
+#else
+    assert( 0 );
+#endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
     return OMPI_SUCCESS;
 }
 
@@ -700,7 +704,6 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
     uint32_t iov_count, max_data = 0, header_length;
     int32_t freeAfter, rc;
     mca_ptl_gm_recv_frag_t* frag;
-    mca_ptl_gm_pipeline_line_t* pipeline;
 
     header_length = sizeof(mca_ptl_base_frag_header_t);
     if( hdr->hdr_frag.hdr_common.hdr_flags & PTL_FLAG_GM_HAS_FRAGMENT ) {
@@ -783,28 +786,36 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
         return NULL;
     }
 
-    /* There is a kind of rendez-vous protocol used internally by the GM driver. If the amount of data
-     * to transfert is large enough, then the sender will start sending a frag message with the 
-     * remote_memory set to NULL (but with the length set to the length of the first fragment).
-     * It will allow the receiver to start to register it's own memory. Later when the receiver
-     * get a fragment with the remote_memory field not NULL it can start getting the data.
-     */
-    if( NULL == hdr->registered_memory.pval ) {  /* first round of the local rendez-vous protocol */
-        pipeline = &(frag->pipeline.lines[0]);
-        pipeline->hdr_flags = hdr->hdr_frag.hdr_common.hdr_flags;
-        pipeline->offset    = frag->frag_offset + frag->frag_bytes_processed;
-        pipeline->length    = 0;  /* we can lie about this one */
-        mca_ptl_gm_receiver_advance_pipeline( frag, 0 );
-    } else {
-        pipeline = &(frag->pipeline.lines[frag->pipeline.pos_remote]);
-        DO_DEBUG( ompi_output( 0, "receiver %d %p get remote memory length %lld (%d)\n",
-                               orte_process_info.my_name->vpid, frag, hdr->hdr_frag.hdr_frag_length, frag->pipeline.pos_remote ); );
-        frag->pipeline.pos_remote = (frag->pipeline.pos_remote + 1) % GM_PIPELINE_DEPTH;
-        assert( (pipeline->flags & PTL_GM_PIPELINE_REMOTE) == 0 );
-        pipeline->remote_memory = hdr->registered_memory;
-        pipeline->flags |= PTL_GM_PIPELINE_REMOTE;
-        mca_ptl_gm_receiver_advance_pipeline( frag, 0 );
+#if OMPI_MCA_PTL_GM_HAVE_RDMA_GET
+    {
+        mca_ptl_gm_pipeline_line_t* pipeline;
+
+        /* There is a kind of rendez-vous protocol used internally by the GM driver. If the amount of data
+         * to transfert is large enough, then the sender will start sending a frag message with the 
+         * remote_memory set to NULL (but with the length set to the length of the first fragment).
+         * It will allow the receiver to start to register it's own memory. Later when the receiver
+         * get a fragment with the remote_memory field not NULL it can start getting the data.
+         */
+        if( NULL == hdr->registered_memory.pval ) {  /* first round of the local rendez-vous protocol */
+            pipeline = &(frag->pipeline.lines[0]);
+            pipeline->hdr_flags = hdr->hdr_frag.hdr_common.hdr_flags;
+            pipeline->offset    = frag->frag_offset + frag->frag_bytes_processed;
+            pipeline->length    = 0;  /* we can lie about this one */
+            mca_ptl_gm_receiver_advance_pipeline( frag, 0 );
+        } else {
+            pipeline = &(frag->pipeline.lines[frag->pipeline.pos_remote]);
+            DO_DEBUG( ompi_output( 0, "receiver %d %p get remote memory length %lld (%d)\n",
+                                   orte_process_info.my_name->vpid, frag, hdr->hdr_frag.hdr_frag_length, frag->pipeline.pos_remote ); );
+            frag->pipeline.pos_remote = (frag->pipeline.pos_remote + 1) % GM_PIPELINE_DEPTH;
+            assert( (pipeline->flags & PTL_GM_PIPELINE_REMOTE) == 0 );
+            pipeline->remote_memory = hdr->registered_memory;
+            pipeline->flags |= PTL_GM_PIPELINE_REMOTE;
+            mca_ptl_gm_receiver_advance_pipeline( frag, 0 );
+        }
     }
+#else
+    assert( 0 );
+#endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
 
     return NULL;
 }
@@ -821,6 +832,7 @@ mca_ptl_gm_recv_frag_fin( struct mca_ptl_gm_module_t* ptl,
     frag->frag_send.frag_base.frag_header.hdr_ack.hdr_dst_match = hdr->hdr_ack.hdr_dst_match;
     frag->frag_send.frag_request->req_peer_match = hdr->hdr_ack.hdr_dst_match;
     if( PTL_FLAG_GM_REQUIRE_LOCK & hdr->hdr_common.hdr_flags ) {
+#if OMPI_MCA_PTL_GM_HAVE_RDMA_GET
         if( 0 == hdr->hdr_ack.hdr_dst_size ) {
             DO_DEBUG( ompi_output( 0, "sender %d %p get FIN message (initial)", orte_process_info.my_name->vpid, frag ); );
             /* I just receive the ack for the first fragment => setup the pipeline */
@@ -832,6 +844,9 @@ mca_ptl_gm_recv_frag_fin( struct mca_ptl_gm_module_t* ptl,
         }
         /* continue the pipeline ... send the next segment */
         mca_ptl_gm_sender_advance_pipeline( frag );
+#else
+        assert( 0 );
+#endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
     } else {
         DO_DEBUG( ompi_output( 0, "sender %d burst data after rendez-vous protocol", orte_process_info.my_name->vpid ); );
         /* do a burst but with the remote fragment as we just get it from the message */

@@ -160,7 +160,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     AC_MSG_RESULT([$MSG])
 
     # Now test to see if the targetted GM is a broken one broken gm builds
-    AC_MSG_CHECKING(for broken GM 2.x RDMA gets build)
+    AC_MSG_CHECKING([for broken GM 2.x RDMA gets build])
     AC_TRY_COMPILE([
         #include <gm.h>
         ], [
