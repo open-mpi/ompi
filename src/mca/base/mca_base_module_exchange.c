@@ -200,8 +200,6 @@ static void mca_base_modex_registry_callback(
     orte_gpr_notify_data_t* data,
     void* cbdata)
 {
-    ompi_proc_t **new_procs = NULL;
-    size_t new_proc_count = 0;
     int32_t i, j;
     orte_gpr_keyval_t **keyval;
     orte_gpr_value_t **value;
@@ -225,6 +223,8 @@ orte_gpr_base_dump_notify_data(data,0);
     for (i=0; i < data->cnt; i++) {
 
         if (0 < value[i]->cnt) {  /* needs to be at least one value */
+            ompi_proc_t **new_procs;
+            size_t new_proc_count = 0;
             new_procs = malloc(sizeof(ompi_proc_t*) * value[i]->cnt);
 
             /*
@@ -263,18 +263,6 @@ orte_gpr_base_dump_notify_data(data,0);
                  */
                 keyval = value[i]->keyvals;
                 for (j=0; j < value[i]->cnt; j++) {
-#if 0
-                    if(sscanf(keyval[j]->key, "modex-%[^-]-%[^-]-%d-%d", 
-                        component.mca_type_name,
-                        component.mca_component_name,
-                        &component.mca_component_major_version,
-                        &component.mca_component_minor_version) != 4) {
-                        ompi_output(0, "mca_base_modex_registry_callback: invalid component name %s\n", 
-                            keyval[j]->key);
-                        OMPI_THREAD_UNLOCK(&proc->proc_lock);
-                        continue;
-                    }
-#else
                     orte_buffer_t buffer;
                     char *ptr;
                     void* bytes = NULL;
@@ -335,7 +323,6 @@ orte_gpr_base_dump_notify_data(data,0);
                         ORTE_ERROR_LOG(rc);
                         continue;
                     }
-#endif
         
                     /*
                      * Lookup the corresponding modex structure
@@ -347,17 +334,8 @@ orte_gpr_base_dump_notify_data(data,0);
                         return;
                     }
 
-#if 0
-                    /* 
-                     * Create a copy of the data.
-                     */
-                    modex_module->module_data = (void*)keyval[j]->value.byteobject.bytes;
-                    keyval[j]->value.byteobject.bytes = NULL;  /* dereference this pointer to avoid free'ng space */
-                    modex_module->module_data_size = keyval[j]->value.byteobject.size;
-#else
                     modex_module->module_data = bytes;
                     modex_module->module_data_size = num_bytes;
-#endif
                     modex_module->module_data_avail = true;
 #if 0
 ompi_output(0, "[%d,%d,%d] mca_base_modex_registry_callback: %s-%s-%d-%d received %d bytes\n",
@@ -372,12 +350,12 @@ ompi_output(0, "[%d,%d,%d] mca_base_modex_registry_callback: %s-%s-%d-%d receive
                 }
                 OMPI_THREAD_UNLOCK(&proc->proc_lock);
             }  /* convert string to process name */
-        }  /* if value[i]->cnt > 0 */
         
-        if(NULL != new_procs) {
-            MCA_PML_CALL(add_procs(new_procs, new_proc_count));
+            if(new_proc_count > 0) {
+                MCA_PML_CALL(add_procs(new_procs, new_proc_count));
+            }
             free(new_procs);
-        }
+        }  /* if value[i]->cnt > 0 */
     }
 }
 
