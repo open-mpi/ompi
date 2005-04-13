@@ -131,8 +131,8 @@ int mca_coll_basic_scatterv_inter(void *sbuf, int *scounts,
   else if ( MPI_ROOT != root ) {
       /* If not root, receive data. */
       err = MCA_PML_CALL(recv(rbuf, rcount, rdtype,
-                             root, MCA_COLL_BASE_TAG_SCATTERV, 
-                             comm, MPI_STATUS_IGNORE));
+			      root, MCA_COLL_BASE_TAG_SCATTERV, 
+			      comm, MPI_STATUS_IGNORE));
   }
   else {
       /* I am the root, loop sending data. */
@@ -142,15 +142,12 @@ int mca_coll_basic_scatterv_inter(void *sbuf, int *scounts,
       }
       
       for (i = 0; i < size; ++i) {
-          if (0 == scounts[i]) {
-              continue;
-          }
-
           ptmp = ((char *) sbuf) + (extent * disps[i]);
           err = MCA_PML_CALL(isend(ptmp, scounts[i], sdtype, i, 
                                   MCA_COLL_BASE_TAG_SCATTERV, 
-                                  MCA_PML_BASE_SEND_STANDARD, comm, reqs++));
-          if (MPI_SUCCESS != err) {
+                                  MCA_PML_BASE_SEND_STANDARD, comm, 
+				  &(reqs[i])));
+          if (OMPI_SUCCESS != err) {
               return err;
           }
       }
