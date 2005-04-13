@@ -132,6 +132,48 @@
 #define END_C_DECLS            /* empty */
 #endif
 
+/* typedefs ***********************************************************/
+
+typedef struct ompi_object_t ompi_object_t;
+typedef struct ompi_class_t ompi_class_t;
+typedef void (*ompi_construct_t) (ompi_object_t *);
+typedef void (*ompi_destruct_t) (ompi_object_t *);
+
+
+/* types **************************************************************/
+
+/**
+ * Class descriptor.
+ *
+ * There should be a single instance of this descriptor for each class
+ * definition.
+ */
+struct ompi_class_t {
+    const char *cls_name;           /**< symbolic name for class */
+    ompi_class_t *cls_parent;       /**< parent class descriptor */
+    ompi_construct_t cls_construct; /**< class constructor */
+    ompi_destruct_t cls_destruct;   /**< class destructor */
+    int cls_initialized;            /**< is class initialized */
+    int cls_depth;                  /**< depth of class hierarchy tree */
+    ompi_construct_t *cls_construct_array;
+                                    /**< array of parent class constructors */
+    ompi_destruct_t *cls_destruct_array;
+                                    /**< array of parent class destructors */
+};
+
+/**
+ * Base object.
+ *
+ * This is special and does not follow the pattern for other classes.
+ */
+struct ompi_object_t {
+    ompi_class_t *obj_class;            /**< class descriptor */
+    volatile int obj_reference_count;   /**< reference count */
+#if OMPI_ENABLE_DEBUG
+   char* cls_init_file_name;        /**< In debug mode store the file where the object get contructed */
+   int   cls_init_lineno;           /**< In debug mode store the line number where the object get contructed */
+#endif  /* OMPI_ENABLE_DEBUG */
+};
 
 /* macros ************************************************************/
 
@@ -183,9 +225,21 @@
  * @param type          Type (class) of the object
  * @return              Pointer to the object 
  */
-#define OBJ_NEW(type)                                           \
+#if OMPI_ENABLE_DEBUG
+static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t * cls);
+static inline void* __OBJ_NEW( size_t obj_size, ompi_class_t* type, char* file, int line )
+{
+    ompi_object_t* object = ompi_obj_new(obj_size, type);
+    object->cls_init_file_name = file;
+    object->cls_init_lineno = line;
+    return object;
+}
+#define OBJ_NEW(type)                                   \
+    ((type *)__OBJ_NEW(sizeof(type), OBJ_CLASS(type), __FILE__, __LINE__))
+#else
+#define OBJ_NEW(type)                                   \
     ((type *) ompi_obj_new(sizeof(type), OBJ_CLASS(type)))
-
+#endif  /* OMPI_ENABLE_DEBUG */
 
 /**
  * Retain an object (by incrementing its reference count)
@@ -232,15 +286,24 @@
  * @param type          The object type
  */
 
-#define OBJ_CONSTRUCT(object, type)                     \
+#if OMPI_ENABLE_DEBUG
+#define OBJ_CONSTRUCT(object, type)                             \
+do {                                                            \
+    OBJ_CONSTRUCT_INTERNAL((object), OBJ_CLASS(type));          \
+    ((ompi_object_t *)(object))->cls_init_file_name = __FILE__; \
+    ((ompi_object_t *)(object))->cls_init_lineno = __LINE__;    \
+} while (0)
+#else
+#define OBJ_CONSTRUCT(object, type)                             \
     OBJ_CONSTRUCT_INTERNAL(object, OBJ_CLASS(type))
+#endif  /* OMPI_ENABLE_DEBUG */
 
 #define OBJ_CONSTRUCT_INTERNAL(object, type)                            \
     do {                                                                \
         if (0 == (type)->cls_initialized) {                             \
             ompi_class_initialize((type));                              \
         }                                                               \
-        if (NULL != object) {                                          \
+        if (NULL != object) {                                           \
             ((ompi_object_t *) (object))->obj_class = (type);           \
             ((ompi_object_t *) (object))->obj_reference_count = 1;      \
             ompi_obj_run_constructors((ompi_object_t *) (object));      \
@@ -259,47 +322,6 @@
             ompi_obj_run_destructors((ompi_object_t *) (object)); \
         }                                                         \
     } while (0)
-
-
-/* typedefs ***********************************************************/
-
-typedef struct ompi_object_t ompi_object_t;
-typedef struct ompi_class_t ompi_class_t;
-typedef void (*ompi_construct_t) (ompi_object_t *);
-typedef void (*ompi_destruct_t) (ompi_object_t *);
-
-
-/* types **************************************************************/
-
-/**
- * Class descriptor.
- *
- * There should be a single instance of this descriptor for each class
- * definition.
- */
-struct ompi_class_t {
-    const char *cls_name;          /**< symbolic name for class */
-    ompi_class_t *cls_parent;       /**< parent class descriptor */
-    ompi_construct_t cls_construct; /**< class constructor */
-    ompi_destruct_t cls_destruct;   /**< class destructor */
-    int cls_initialized;           /**< is class initialized */
-    int cls_depth;                 /**< depth of class hierarchy tree */
-    ompi_construct_t *cls_construct_array;
-                                   /**< array of parent class constructors */
-    ompi_destruct_t *cls_destruct_array;
-                                   /**< array of parent class destructors */
-};
-
-
-/**
- * Base object.
- *
- * This is special and does not follow the pattern for other classes.
- */
-struct ompi_object_t {
-    ompi_class_t *obj_class;            /**< class descriptor */
-    volatile int obj_reference_count;   /**< reference count */
-};
 
 BEGIN_C_DECLS
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_object_t);
