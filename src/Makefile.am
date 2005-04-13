@@ -93,22 +93,6 @@ f77_mpi_lib =
 f77_pmpi_lib =
 endif
 
-# See if we have F90 MPI bindings
-
-if OMPI_WANT_F90_BINDINGS
-f90_lib =
-else
-f90_lib =
-endif
-
-# See if we have C++ MPI bindings
-
-if WANT_MPI_CXX_BINDINGS
-cxx_lib = 
-else
-cxx_lib =
-endif
-
 SUBDIRS = \
         include \
         $(LIBLTDL_SUBDIR) \
@@ -178,7 +162,6 @@ libmpi_la_LIBADD = \
         mca/topo/base/libmca_topo_base.la $(MCA_topo_STATIC_LTLIBS) \
         mpi/c/libmpi_c.la $(c_mpi_lib) $(c_pmpi_lib) \
         $(f77_base_lib) $(f77_mpi_lib) $(f77_pmpi_lib) \
-        $(f90_lib) $(cxx_lib) \
         mpi/runtime/libmpiruntime.la \
         op/libop.la \
         proc/libproc.la \
