@@ -63,7 +63,7 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t* ptl,
 
     frag->frag_send.frag_request         = sendreq;
     frag->frag_send.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
-    frag->frag_send.frag_base.frag_addr  = sendreq->req_base.req_addr;
+    frag->frag_send.frag_base.frag_addr  = sendreq->req_addr;
     frag->frag_bytes_processed           = 0;
     frag->frag_bytes_validated           = 0;
     frag->status                         = -1;
@@ -92,9 +92,9 @@ int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t** putfrag,
         convertor = &(frag->frag_send.frag_base.frag_convertor);
         ompi_convertor_copy( &(sendreq->req_convertor), convertor );
         ompi_convertor_init_for_send( convertor, 0,
-                                      sendreq->req_base.req_datatype,
-                                      sendreq->req_base.req_count,
-                                      sendreq->req_base.req_addr,
+                                      sendreq->req_datatype,
+                                      sendreq->req_count,
+                                      sendreq->req_addr,
                                       offset, NULL );
     }
     *putfrag = frag;
