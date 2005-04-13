@@ -583,12 +583,20 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
         pSrc = pConv->pBaseBuf + pStack[0].disp;
         if( 0 == length ) break;
     }
+    /* The logic here should be quite simple. As the data is contiguous we will just copy data
+     * (we dont have to do any conversion). Then the only thing that is interesting is to
+     * be sure that the bConverted is the correct displacement. So we can always set the
+     * stack[1].disp to ZERO and keep the stack[1].disp equal to bConverted (by lower bound) .
+     */
+    pStack[1].disp = 0;
+#if 0
     /* the number of complete datatypes still to be copied */
     pStack[0].count = pConv->count - (pConv->bConverted / pData->size);
     /* the amount of data (in bytes) that still have to be done on the last data */
     pStack[1].count = pConv->bConverted - pData->size * (pConv->count - pStack[0].count);
     pStack[1].disp  = pData->size - pStack[1].count;
     pStack[0].disp -= (pData->size - pStack[1].count);
+#endif
     /* update the return value */
     *max_data = pConv->bConverted - initial_amount;
     *out_size = iov_count;
