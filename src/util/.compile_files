@@ -18,3 +18,4 @@ show_help_lex.c
 strncpy.c
 sys_info.c
 universe_setup_file_io.c
+univ_info.c

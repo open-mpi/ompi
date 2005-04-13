@@ -48,6 +48,7 @@
 #include <ws2tcpip.h>
 #include <process.h>
 #include <io.h>
+#include <signal.h>
 #include "win32/ompi_uio.h"
 #include "win32/ompi_time.h"
 #include "win32/ompi_utsname.h"
@@ -89,5 +90,7 @@ typedef unsigned int uint;
  */
 #define WUNTRACED 0
 #define WNOHANG   0
+
+#define sigset_t int
 
 #endif /* compat */
