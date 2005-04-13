@@ -601,6 +601,10 @@ if test "$OMPI_WANT_F90_BINDINGS" = "0" ; then
     OMPI_SIZEOF_F90_REAL=$ac_cv_sizeof_float
     OMPI_SIZEOF_F90_DBLPREC=$ac_cv_sizeof_double
 else
+    # Look for the fortran module compiler flag
+
+    OMPI_F90_FIND_MODULE_INCLUDE_FLAG
+
     # If we want modern Fortran support, then get supported types and sizes
 
     OMPI_F90_CHECK_TYPE(selected_int_kind(2),  OMPI_HAVE_F90_INTEGER1)

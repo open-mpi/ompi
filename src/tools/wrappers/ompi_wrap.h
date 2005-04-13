@@ -70,7 +70,9 @@ int ompi_wrap_engine(int argc, char *argv[],
                      const ompi_sv_t & libs_env_var,
                      const std::string & default_compiler,
                      const std::string & default_xflags,
-                     bool want_cxx_libs, bool want_f77_includes);
+                     bool want_cxx_libs, 
+                     bool want_f90_libs,
+                     bool want_f77_includes);
 
 ///
 /// Parse the command line arguments of the wrapper compiler
@@ -145,7 +147,8 @@ void ompi_wrap_build_ldflags(const ompi_sv_t & env_list, ompi_sv_t & ldflags);
 ///             linked to the backend compiler
 ///
 void ompi_wrap_build_libs(const ompi_sv_t & env_list,
-                          bool want_cxx_libs, ompi_sv_t & libs);
+                          bool want_cxx_libs, bool want_f90_libs,
+                          ompi_sv_t & libs);
 
 ///
 /// Print out a vector of strings

@@ -50,7 +50,9 @@ ompi_wrap_engine(int argc, char *argv[],
 		 const ompi_sv_t & libs_env_var,
 		 const std::string & default_compiler,
 		 const std::string & default_xflags,
-		 bool want_cxx_libs, bool want_f77_includes)
+		 bool want_cxx_libs, 
+                 bool want_f90_libs,
+                 bool want_f77_includes)
 {
     int ret(0);
 
@@ -95,7 +97,7 @@ ompi_wrap_engine(int argc, char *argv[],
 
     // Build the LIBS (-l stuff and WRAPPER_EXTRA_LIBS)
 
-    ompi_wrap_build_libs(libs_env_var, want_cxx_libs, libs);
+    ompi_wrap_build_libs(libs_env_var, want_cxx_libs, want_f90_libs, libs);
 
     // Now assemble the command line
 

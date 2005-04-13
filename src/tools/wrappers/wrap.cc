@@ -327,7 +327,7 @@ ompi_wrap_build_ldflags(const ompi_sv_t & env_list, ompi_sv_t & ldflags)
 
 void
 ompi_wrap_build_libs(const ompi_sv_t & env_list,
-		     bool want_cxx_libs, ompi_sv_t & libs)
+		     bool want_cxx_libs, bool want_f90_libs, ompi_sv_t & libs)
 {
     char *env;
     string temp;
@@ -368,6 +368,24 @@ ompi_wrap_build_libs(const ompi_sv_t & env_list,
 		<< "WARNING: MPI C++ support will be disabled" << endl;
 	} else {
 	    libs.push_back("-lmpi_cxx");
+	}
+    }
+#endif
+#if OMPI_WANT_F90_BINDINGS
+    // The F90 bindings come next
+    if (want_f90_libs) {
+	if (
+#ifdef WIN32
+	    !ompi_wrap_check_file(libdir, "libmpi_f90.dll") &&
+#endif
+            !ompi_wrap_check_file(libdir, "libmpi_f90.a") &&
+	    !ompi_wrap_check_file(libdir, "libmpi_f90.so") &&
+	    !ompi_wrap_check_file(libdir, "libmpi_f90.dylib")) {
+	    cerr << "WARNING: " << cmd_name
+		<< " expected to find libmpi_f90.* in " << libdir << endl
+		<< "WARNING: MPI F90 support will be disabled" << endl;
+	} else {
+	    libs.push_back("-lmpi_f90");
 	}
     }
 #endif

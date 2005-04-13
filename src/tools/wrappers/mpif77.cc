@@ -63,6 +63,6 @@ main(int argc, char *argv[])
 
     return ompi_wrap_engine(argc, argv, compiler, fppflags, fflags,
 			    ldflags, libs, OMPI_F77, WRAPPER_EXTRA_FFLAGS,
-			    false, true);
+			    false, false, true);
 #endif
 }

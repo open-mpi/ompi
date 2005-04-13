@@ -29,6 +29,7 @@ EXTRA_DIST = \
         f77_get_alignment.m4 \
         f77_get_sizeof.m4 \
         f90_check_type.m4 \
+        f90_find_module_include_flag.m4 \
         f90_get_alignment.m4 \
         f90_get_precision.m4 \
         f90_get_range.m4 \
