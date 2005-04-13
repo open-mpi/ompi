@@ -178,9 +178,12 @@ ompi_list_transfer(ompi_list_item_t *pos, ompi_list_item_t *begin,
         begin->ompi_list_prev = tmp;
 #if OMPI_ENABLE_DEBUG
         {
-           ompi_list_item_t* item = begin;
-           while( end != item )
-              item->ompi_list_item_belong_to = pos->ompi_list_item_belong_to;
+            volatile ompi_list_item_t* item = begin;
+            while( pos != item ) {
+                item->ompi_list_item_belong_to = pos->ompi_list_item_belong_to;
+                item = item->ompi_list_next;
+                assert(NULL != item);
+            }
         }
 #endif  /* OMPI_ENABLE_DEBUG */
     }
