@@ -101,10 +101,10 @@ struct ompi_list_item_t
     /**< Pointer to previous list item */
 
 #if OMPI_ENABLE_DEBUG
-    /** Atomic lock for debugging (atomic reference counting) */
-    ompi_lock_t ompi_list_item_lock;
-    /** Reference count for debugging */
+    /** Atomic reference count for debugging */
     volatile int32_t ompi_list_item_refcount;
+    /** The list this item belong to */
+    volatile struct ompi_list_t* ompi_list_item_belong_to;
 #endif
 };
 /**
@@ -191,13 +191,15 @@ static inline bool ompi_list_is_empty(ompi_list_t* list)
  */
 static inline ompi_list_item_t* ompi_list_get_first(ompi_list_t* list)
 {
+    ompi_list_item_t* item = (ompi_list_item_t *)list->ompi_list_head.ompi_list_next;
 #if OMPI_ENABLE_DEBUG
     /* Spot check: ensure that the first item is only on one list */
 
-    assert(1 == list->ompi_list_head.ompi_list_next->ompi_list_item_refcount);
+    assert(1 == item->ompi_list_item_refcount);
+    assert( list == item->ompi_list_item_belong_to );
 #endif
 
-    return (ompi_list_item_t *)list->ompi_list_head.ompi_list_next;
+    return item;
 }
 
 /**
@@ -216,13 +218,15 @@ static inline ompi_list_item_t* ompi_list_get_first(ompi_list_t* list)
  */
 static inline ompi_list_item_t* ompi_list_get_last(ompi_list_t* list)
 {
+    ompi_list_item_t* item = (ompi_list_item_t *)list->ompi_list_tail.ompi_list_prev;
 #if OMPI_ENABLE_DEBUG
     /* Spot check: ensure that the last item is only on one list */
 
-    assert(1 == list->ompi_list_tail.ompi_list_prev->ompi_list_item_refcount);
+    assert( 1 == item->ompi_list_item_refcount );
+    assert( list == item->ompi_list_item_belong_to );
 #endif
 
-    return (ompi_list_item_t *)list->ompi_list_tail.ompi_list_prev;
+    return item;
 }
 
 /**
@@ -359,12 +363,7 @@ static inline ompi_list_item_t *ompi_list_remove_item
         return (ompi_list_item_t *)NULL;
     }
 
-    /* Spot check: ensure this item is only on one list */
-
-    ompi_atomic_lock(&item->ompi_list_item_lock);
-    --item->ompi_list_item_refcount;
-    assert(0 == item->ompi_list_item_refcount);
-    ompi_atomic_unlock(&item->ompi_list_item_lock);
+    assert( list == item->ompi_list_item_belong_to );
 #endif
 
     /* reset next pointer of previous element */
@@ -378,7 +377,9 @@ static inline ompi_list_item_t *ompi_list_remove_item
 #if OMPI_ENABLE_DEBUG
     /* Spot check: ensure that this item is still only on one list */
 
+    ompi_atomic_sub( &(item->ompi_list_item_refcount), 1 );
     assert(0 == item->ompi_list_item_refcount);
+    item->ompi_list_item_belong_to = NULL;
 #endif
 
     return (ompi_list_item_t *)item->ompi_list_prev;
@@ -398,12 +399,28 @@ static inline ompi_list_item_t *ompi_list_remove_item
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
  */
-static inline void ompi_list_append(ompi_list_t *list, ompi_list_item_t *item)
+
+#if OMPI_ENABLE_DEBUG
+#define ompi_list_append(l,i) \
+_ompi_list_append(l,i,__FILE__,__LINE__)
+#else
+#define ompi_list_append(l,i) \
+_ompi_list_append(l,i)
+#endif  /* OMPI_ENABLE_DEBUG */
+
+static inline void _ompi_list_append(ompi_list_t *list, ompi_list_item_t *item
+#if OMPI_ENABLE_DEBUG
+                                     , char* FILE, int LINENO
+#endif  /* OMPI_ENABLE_DEBUG */
+                                     )
 {
 #if OMPI_ENABLE_DEBUG
   /* Spot check: ensure that this item is previously on no lists */
 
   assert(0 == item->ompi_list_item_refcount);
+  assert( NULL == item->ompi_list_item_belong_to );
+  item->super.cls_init_file_name = FILE;
+  item->super.cls_init_lineno    = LINENO;
 #endif
 
   /* set new element's previous pointer */
@@ -425,10 +442,9 @@ static inline void ompi_list_append(ompi_list_t *list, ompi_list_item_t *item)
   /* Spot check: ensure this item is only on the list that we just
      appended it to */
 
-  ompi_atomic_lock(&item->ompi_list_item_lock);
-  ++item->ompi_list_item_refcount;
+  ompi_atomic_add( &(item->ompi_list_item_refcount), 1 );
   assert(1 == item->ompi_list_item_refcount);
-  ompi_atomic_unlock(&item->ompi_list_item_lock);
+  item->ompi_list_item_belong_to = list;
 #endif
 }
 
@@ -453,6 +469,7 @@ static inline void ompi_list_prepend(ompi_list_t *list,
   /* Spot check: ensure that this item is previously on no lists */
 
   assert(0 == item->ompi_list_item_refcount);
+  assert( NULL == item->ompi_list_item_belong_to );
 #endif
 
   /* reset item's next pointer */
@@ -474,10 +491,9 @@ static inline void ompi_list_prepend(ompi_list_t *list,
   /* Spot check: ensure this item is only on the list that we just
      prepended it to */
 
-  ompi_atomic_lock(&item->ompi_list_item_lock);
-  ++item->ompi_list_item_refcount;
+  ompi_atomic_add( &(item->ompi_list_item_refcount), 1 );
   assert(1 == item->ompi_list_item_refcount);
-  ompi_atomic_unlock(&item->ompi_list_item_lock);
+  item->ompi_list_item_belong_to = list;
 #endif
 }
 
@@ -528,17 +544,16 @@ static inline ompi_list_item_t *ompi_list_remove_first(ompi_list_t *list)
   list->ompi_list_head.ompi_list_next=item->ompi_list_next;
   
 #if OMPI_ENABLE_DEBUG
-  /* debug code */
+  assert( list == item->ompi_list_item_belong_to );
+  item->ompi_list_item_belong_to = NULL;
   item->ompi_list_prev=(ompi_list_item_t *)NULL;
   item->ompi_list_next=(ompi_list_item_t *)NULL;
 
   /* Spot check: ensure that the item we're returning is now on no
      lists */
 
-  ompi_atomic_lock(&((ompi_list_item_t*) item)->ompi_list_item_lock);
-  --item->ompi_list_item_refcount;
+  ompi_atomic_sub( &(item->ompi_list_item_refcount), 1 );
   assert(0 == item->ompi_list_item_refcount);
-  ompi_atomic_unlock(&((ompi_list_item_t*) item)->ompi_list_item_lock);
 #endif
 
   return (ompi_list_item_t *) item;
@@ -591,16 +606,15 @@ static inline ompi_list_item_t *ompi_list_remove_last(ompi_list_t *list)
   list->ompi_list_tail.ompi_list_prev=item->ompi_list_prev;
   
 #if OMPI_ENABLE_DEBUG
-  /* debug code */
+  assert( list == item->ompi_list_item_belong_to );
   item->ompi_list_next = item->ompi_list_prev = (ompi_list_item_t *)NULL;
 
   /* Spot check: ensure that the item we're returning is now on no
      lists */
 
-  ompi_atomic_lock(&((ompi_list_item_t*) item)->ompi_list_item_lock);
-  --item->ompi_list_item_refcount;
+  ompi_atomic_sub( &(item->ompi_list_item_refcount), 1 );
   assert(0 == item->ompi_list_item_refcount);
-  ompi_atomic_unlock(&((ompi_list_item_t*) item)->ompi_list_item_lock);
+  item->ompi_list_item_belong_to = NULL;
 #endif
 
   return (ompi_list_item_t *) item;
@@ -623,6 +637,7 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
        not on any list */
 
     assert(0 == item->ompi_list_item_refcount);
+    assert( NULL == item->ompi_list_item_belong_to );
 #endif
 
     /* point item at the existing elements */
@@ -640,10 +655,9 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
     /* Spot check: double check that this item is only on the list
        that we just added it to */
 
-    ompi_atomic_lock(&item->ompi_list_item_lock);
-    ++item->ompi_list_item_refcount;
+    ompi_atomic_add( &(item->ompi_list_item_refcount), 1 );
     assert(1 == item->ompi_list_item_refcount);
-    ompi_atomic_unlock(&item->ompi_list_item_lock);
+    item->ompi_list_item_belong_to = list;
 #endif
 }
 
