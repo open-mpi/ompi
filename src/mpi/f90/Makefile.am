@@ -153,9 +153,6 @@ endif
 #        win_unlock_f.c \
 #        win_wait_f.c
 
-BUILT_SOURCES = \
-     mpi-f90-interfaces.h
-
 #
 # Sym link in the sources from the real MPI directory
 #
