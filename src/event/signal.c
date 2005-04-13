@@ -87,7 +87,9 @@ void ompi_evsignal_handler(int sig);
 void
 ompi_evsignal_init(sigset_t *evsigmask)
 {
+#ifndef WIN32
     sigemptyset(evsigmask);
+#endif
 }
 
 
@@ -116,7 +118,10 @@ ompi_evsignal_add(sigset_t *evsigmask, struct ompi_event *ev)
 	if (ev->ev_events & (OMPI_EV_READ|OMPI_EV_WRITE))
 		errx(1, "%s: OMPI_EV_SIGNAL incompatible use", __func__);
 	evsignal = OMPI_EVENT_SIGNAL(ev);
+
+#ifndef WIN32
 	sigaddset(evsigmask, evsignal);
+#endif
 	return (0);
 }
 
@@ -149,17 +154,21 @@ ompi_evsignal_restart(void)
 int
 ompi_evsignal_del(sigset_t *evsigmask, struct ompi_event *ev)
 {
+#ifdef WIN32
+   return 0;
+#else
 	int evsignal;
-        struct sigaction sa;
-
+   struct sigaction sa;
+   
 	evsignal = OMPI_EVENT_SIGNAL(ev);
 	sigdelset(evsigmask, evsignal);
 	ompi_needrecalc = 1;
 
 	memset(&sa, 0, sizeof(sa));
-        sa.sa_handler = SIG_DFL;
-
-        return sigaction(evsignal, &sa, NULL);
+   sa.sa_handler = SIG_DFL;
+   
+   return sigaction(evsignal, &sa, NULL);
+#endif
 }
 
 void
@@ -183,6 +192,9 @@ ompi_evsignal_handler(int sig)
 int
 ompi_evsignal_recalc(sigset_t *evsigmask)
 {
+#ifdef WIN32
+   return 0;
+#else
 	struct sigaction sa;
 	struct ompi_event *ev;
 
@@ -206,6 +218,7 @@ ompi_evsignal_recalc(sigset_t *evsigmask)
 			return (-1);
 	}
 	return (0);
+#endif
 }
 
 int
@@ -214,8 +227,12 @@ ompi_evsignal_deliver(sigset_t *evsigmask)
 	if (TAILQ_FIRST(&ompi_signalqueue) == NULL)
 		return (0);
 
+#ifdef WIN32
+   return 0;
+#else
 	return (sigprocmask(SIG_UNBLOCK, evsigmask, NULL));
 	/* XXX - pending signals handled here */
+#endif
 }
 
 void

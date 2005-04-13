@@ -37,9 +37,9 @@ static void ompi_condition_destruct(ompi_condition_t *c)
 #endif
 }
 
-
+#ifndef WIN32
 OBJ_CLASS_INSTANCE(ompi_condition_t,
                    ompi_object_t,
                    ompi_condition_construct,
                    ompi_condition_destruct);
-
+#endif
