@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <libgen.h>
 
 #include "include/orte_constants.h"
 
