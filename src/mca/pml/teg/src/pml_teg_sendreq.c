@@ -42,6 +42,7 @@ static int mca_pml_teg_send_request_free(struct ompi_request_t** request)
 
 static int mca_pml_teg_send_request_cancel(struct ompi_request_t* request, int complete)
 {
+    /* we dont cancel send requests by now */
     return OMPI_SUCCESS;
 }
                                                                                                              
