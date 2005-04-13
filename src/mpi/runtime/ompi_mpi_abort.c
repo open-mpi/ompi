@@ -76,17 +76,26 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
         return ret;
     }
 
-    /* kill everyone in the remote group execpt our jobid, if requested */
-    if (kill_remote_of_intercomm && OMPI_COMM_IS_INTER(comm)) {
-        abort_procs(comm->c_remote_group->grp_proc_pointers,
-                    comm->c_remote_group->grp_proc_count,
+    /* Corner case: if we're being called as a result of the
+       OMPI_ERR_INIT_FINALIZE macro (meaning that this is before
+       MPI_INIT or after MPI_FINALIZE), then comm is not setup yet /
+       has already been cleaned up. */
+
+    if (ompi_mpi_initialized && !ompi_mpi_finalized) {
+
+        /* kill everyone in the remote group execpt our jobid, if
+           requested */
+        if (kill_remote_of_intercomm && OMPI_COMM_IS_INTER(comm)) {
+            abort_procs(comm->c_remote_group->grp_proc_pointers,
+                        comm->c_remote_group->grp_proc_count,
+                        my_jobid);
+        }
+
+        /* kill everyone in the local group, except our jobid. */
+        abort_procs(comm->c_local_group->grp_proc_pointers,
+                    comm->c_local_group->grp_proc_count,
                     my_jobid);
     }
-
-    /* kill everyone in the local group, except our jobid */
-    abort_procs(comm->c_local_group->grp_proc_pointers,
-                comm->c_local_group->grp_proc_count,
-                my_jobid);
 
 
     ret = orte_rmgr.terminate_job(my_jobid);
