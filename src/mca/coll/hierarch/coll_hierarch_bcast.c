@@ -25,22 +25,8 @@
 #include "mca/coll/base/coll_tags.h"
 #include "coll_hierarch.h"
 
-static int mca_coll_hierarch_intra_segmented_bcast ( void* buffer, 
-						     int count, 
-						     ompi_datatype_t * datatype, 
-						     int root, 
-						     ompi_communicator_t * comm, 
-						     int segsize,
-						     struct mca_coll_hierarch_topo *topo);
 
-static int mca_coll_hierarch_intra_bcast_setup_topo (int count, 
-						     ompi_datatype_t *datatype, 
-						     int root, 
-						     struct mca_coll_base_comm_t *data,
-						     int *segsize);
-static void setup_topo_bmtree ( int root, struct mca_coll_base_comm_t *data );
-
-#ifdef SIMPLE_HIERARCH_BCAST
+#ifdef SIMPLE_HIERARCH
 /*
  *	bcast_intra
  *
@@ -108,6 +94,22 @@ int mca_coll_hierarch_bcast_intra(void *buff,
  }
 
 #else
+static int mca_coll_hierarch_intra_segmented_bcast ( void* buffer, 
+						     int count, 
+						     ompi_datatype_t * datatype, 
+						     int root, 
+						     ompi_communicator_t * comm, 
+						     int segsize,
+						     struct mca_coll_hierarch_topo *topo);
+
+static int mca_coll_hierarch_intra_bcast_setup_topo (int count, 
+						     ompi_datatype_t *datatype, 
+						     int root, 
+						     struct mca_coll_base_comm_t *data,
+						     int *segsize);
+static void setup_topo_bmtree ( int root, struct mca_coll_base_comm_t *data );
+
+
 int mca_coll_hierarch_bcast_intra(void *buff, 
 				  int count,
 				  struct ompi_datatype_t *datatype, 
@@ -242,7 +244,12 @@ static int mca_coll_hierarch_intra_segmented_bcast ( void* buffer,
   /* Post Irecv if not root-node */
   if (rank != root)  {
       /* has a parent. need to receive before sending */
-      recv_request = (MPI_Request*)malloc ( sizeof(ompi_request_t *)*num_segments );
+      if ( num_segments > 2 * size ) {
+	  recv_request = (MPI_Request*)malloc ( sizeof(ompi_request_t *)*num_segments );
+      }
+      else {
+	  recv_request = comm->c_coll_selected_data->hier_reqs;
+      }
 
       for( i = 0; i < num_segments; i++) {
 	  if ( i == (num_segments -1) ) {
@@ -301,8 +308,10 @@ static int mca_coll_hierarch_intra_segmented_bcast ( void* buffer,
       } /* for ( i = 0; i < num_segments; i++) */
   }
   
-  if(recv_request != NULL) {
-      free(recv_request);
+  if ( num_segments > 2 * size ) {
+      if(recv_request != NULL) {
+	  free(recv_request);
+      }
   }
 
   return OMPI_SUCCESS;
@@ -356,7 +365,7 @@ static void setup_topo_bmtree ( int root, struct mca_coll_base_comm_t *data )
     }
     else {
 	size = data->hier_num_lleaders + 1;	
-	data->hier_lleaders[data->hier_num_lleaders] = root;
+	data->hier_lleaders[rootpos] = root;
     }
     rank = data->hier_my_lleader;
 
