@@ -174,16 +174,20 @@ int mca_pml_base_bsend_detach(void* addr, int* size)
 } 
 
      
-/*
- *  Initialize a request for use w/ buffered send 
+/* 
+ * pack send buffer into buffer
  */
 
-int mca_pml_base_bsend_request_init(ompi_request_t* request, bool persistent)
+int mca_pml_base_bsend_request_start(ompi_request_t* request)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
- 
-    /* alloc buffer and pack user data */
+    struct iovec iov;
+    unsigned int max_data, iov_count;
+    int rc, freeAfter;
+
     if(sendreq->req_count > 0) {
+
+        /* has a buffer been provided */
         OMPI_THREAD_LOCK(&mca_pml_bsend_mutex);
         if(NULL == mca_pml_bsend_addr) {
             sendreq->req_addr = NULL;
@@ -208,25 +212,7 @@ int mca_pml_base_bsend_request_init(ompi_request_t* request, bool persistent)
         /* increment count of pending requests */
         mca_pml_bsend_count++;
         OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
-    }
 
-    /* set flag indicating mpi layer is done */
-    sendreq->req_base.req_persistent = persistent;
-    return OMPI_SUCCESS;
-}
-                                                                                                             
-/* 
- * pack send buffer into buffer
- */
-
-int mca_pml_base_bsend_request_start(ompi_request_t* request)
-{
-    mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
-    struct iovec iov;
-    unsigned int max_data, iov_count;
-    int rc, freeAfter;
-
-    if(sendreq->req_count > 0) {
         /* setup convertor to point to app buffer */
         ompi_convertor_init_for_send( &sendreq->req_convertor,
            0,

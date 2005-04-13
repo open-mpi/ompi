@@ -30,7 +30,6 @@ OMPI_DECLSPEC int mca_pml_base_bsend_fini(void);
 OMPI_DECLSPEC int mca_pml_base_bsend_attach(void* addr, int size);
 OMPI_DECLSPEC int mca_pml_base_bsend_detach(void* addr, int* size);
 
-OMPI_DECLSPEC int mca_pml_base_bsend_request_init(ompi_request_t*, bool persistent);
 OMPI_DECLSPEC int mca_pml_base_bsend_request_start(ompi_request_t*);
 OMPI_DECLSPEC int mca_pml_base_bsend_request_fini(ompi_request_t*);
 #if defined(c_plusplus) || defined(__cplusplus)

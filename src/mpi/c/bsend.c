@@ -36,8 +36,6 @@ static const char FUNC_NAME[] = "MPI_Bsend";
 int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Comm comm) 
 {
     int rc;
-    ompi_request_t* request;
-
     if (dest == MPI_PROC_NULL) {
         return MPI_SUCCESS;
     }
@@ -59,29 +57,7 @@ int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    rc = MCA_PML_CALL(isend_init(buf, count, type, dest, tag, MCA_PML_BASE_SEND_BUFFERED, comm, &request));
-    if(OMPI_SUCCESS != rc)
-        goto error_return;
-
-    rc = mca_pml_base_bsend_request_init(request, false);
-    if(OMPI_SUCCESS != rc) {
-        ompi_request_free(&request);
-        goto error_return;
-    }
-
-    rc = MCA_PML_CALL(start(1, &request));
-    if(OMPI_SUCCESS != rc) {
-        ompi_request_free(&request);
-        goto error_return;
-    }
-
-    rc = ompi_request_wait(&request, MPI_STATUS_IGNORE);
-    if(OMPI_SUCCESS != rc) {
-        ompi_request_free(&request);
-        return rc;
-    }
-
-error_return:
+    rc = MCA_PML_CALL(send(buf, count, type, dest, tag, MCA_PML_BASE_SEND_BUFFERED, comm));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 

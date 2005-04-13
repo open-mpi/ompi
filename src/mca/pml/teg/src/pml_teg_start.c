@@ -69,9 +69,6 @@ int mca_pml_teg_start(size_t count, ompi_request_t** requests)
                               sendmode,
                               pml_request->req_comm,
                               &request);
-                         if (sendmode == MCA_PML_BASE_SEND_BUFFERED) {
-                             mca_pml_base_bsend_request_init(request, true);
-                         }
                          break;
                     }
                     case MCA_PML_REQUEST_RECV:
