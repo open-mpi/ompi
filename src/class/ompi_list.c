@@ -54,13 +54,17 @@ static void ompi_list_item_construct(ompi_list_item_t *item)
 {
     item->ompi_list_next = item->ompi_list_prev = NULL;
 #if OMPI_ENABLE_DEBUG
-    ompi_atomic_init(&item->ompi_list_item_lock, OMPI_ATOMIC_UNLOCKED);
     item->ompi_list_item_refcount = 0;
+    item->ompi_list_item_belong_to = NULL;
 #endif
 }
 
 static void ompi_list_item_destruct(ompi_list_item_t *item)
 {
+#if OMPI_ENABLE_DEBUG
+    assert( 0 == item->ompi_list_item_refcount );
+    assert( NULL == item->ompi_list_item_belong_to );
+#endif  /* OMPI_ENABLE_DEBUG */
 }
 
 
@@ -72,24 +76,24 @@ static void ompi_list_item_destruct(ompi_list_item_t *item)
 
 static void ompi_list_construct(ompi_list_t *list)
 {
-    list->ompi_list_head.ompi_list_prev = NULL;
-    list->ompi_list_head.ompi_list_next = &list->ompi_list_tail;
-    list->ompi_list_tail.ompi_list_prev = &list->ompi_list_head;
-    list->ompi_list_tail.ompi_list_next = NULL;
-    list->ompi_list_length = 0;
-
 #if OMPI_ENABLE_DEBUG
     /* These refcounts should never be used in assertions because they
        should never be removed from this list, added to another list,
        etc.  So set them to sentinel values. */
 
-    ompi_atomic_init(&list->ompi_list_head.ompi_list_item_lock, 
-                     OMPI_ATOMIC_UNLOCKED);
-    list->ompi_list_head.ompi_list_item_refcount = 1;
-    ompi_atomic_init(&list->ompi_list_tail.ompi_list_item_lock, 
-                     OMPI_ATOMIC_UNLOCKED);
-    list->ompi_list_tail.ompi_list_item_refcount = 1;
+    OBJ_CONSTRUCT( &(list->ompi_list_head), ompi_list_item_t );
+    list->ompi_list_head.ompi_list_item_refcount  = 1;
+    list->ompi_list_head.ompi_list_item_belong_to = list;
+    OBJ_CONSTRUCT( &(list->ompi_list_tail), ompi_list_item_t );
+    list->ompi_list_tail.ompi_list_item_refcount  = 1;
+    list->ompi_list_tail.ompi_list_item_belong_to = list;
 #endif
+
+    list->ompi_list_head.ompi_list_prev = NULL;
+    list->ompi_list_head.ompi_list_next = &list->ompi_list_tail;
+    list->ompi_list_tail.ompi_list_prev = &list->ompi_list_head;
+    list->ompi_list_tail.ompi_list_next = NULL;
+    list->ompi_list_length = 0;
 }
 
 
@@ -143,10 +147,9 @@ bool ompi_list_insert(ompi_list_t *list, ompi_list_item_t *item, long long idx)
         /* Spot check: ensure this item is only on the list that we
            just insertted it into */
 
-        ompi_atomic_lock(&item->ompi_list_item_lock);
-        ++item->ompi_list_item_refcount;
+        ompi_atomic_add( &(item->ompi_list_item_refcount), 1 );
         assert(1 == item->ompi_list_item_refcount);
-        ompi_atomic_unlock(&item->ompi_list_item_lock);
+        item->ompi_list_item_belong_to = list;
 #endif
     }
     
@@ -173,6 +176,13 @@ ompi_list_transfer(ompi_list_item_t *pos, ompi_list_item_t *begin,
         pos->ompi_list_prev = end->ompi_list_prev;
         end->ompi_list_prev = begin->ompi_list_prev;
         begin->ompi_list_prev = tmp;
+#if OMPI_ENABLE_DEBUG
+        {
+           ompi_list_item_t* item = begin;
+           while( end != item )
+              item->ompi_list_item_belong_to = pos->ompi_list_item_belong_to;
+        }
+#endif  /* OMPI_ENABLE_DEBUG */
     }
 }
 
