@@ -230,11 +230,13 @@ extern "C" {
 #if OMPI_ENABLE_DEBUG
 #include "class/ompi_list.h"
 /* If debug is enabled we have to work around the item validity checks. */
-#define OMPI_GM_FREE_LIST_RETURN( LIST, ITEM ) \
-do {                                           \
-    (ITEM)->ompi_list_item_refcount = 0;       \
-    (ITEM)->ompi_list_item_lock.u.lock = 0;    \
-    OMPI_FREE_LIST_RETURN( (LIST), (ITEM) );   \
+#define OMPI_GM_FREE_LIST_RETURN( LIST, ITEM )    \
+do {                                              \
+    (ITEM)->ompi_list_item_refcount = 0;          \
+    (ITEM)->ompi_list_item_belong_to = NULL;      \
+    (ITEM)->super.cls_init_file_name = __FILE__;  \
+    (ITEM)->super.cls_init_lineno = __LINE__;     \
+    OMPI_FREE_LIST_RETURN( (LIST), (ITEM) );      \
 } while(0)
 #else
 #define OMPI_GM_FREE_LIST_RETURN OMPI_FREE_LIST_RETURN
