@@ -132,12 +132,9 @@ mca_ptl_gm_component_open(void)
 #if OMPI_MCA_PTL_GM_HAVE_RDMA_GET
     mca_ptl_gm_component.gm_rndv_burst_limit = 
         mca_ptl_gm_param_register_int( "rndv_burst_limit", 512 * 1024 );
-#else
-    mca_ptl_gm_component.gm_rndv_burst_limit = 
-        mca_ptl_gm_param_register_int( "rndv_burst_limit", mca_ptl_gm_module.super.ptl_max_frag_size );
-#endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
     mca_ptl_gm_component.gm_rdma_frag_size =
         mca_ptl_gm_param_register_int ("rdma_frag_size", 128 * 1024);
+#endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
     
     mca_ptl_gm_component.gm_free_list_num =
         mca_ptl_gm_param_register_int ("free_list_num", 256);
