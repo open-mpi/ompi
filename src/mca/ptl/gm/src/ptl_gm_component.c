@@ -463,9 +463,9 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
 
     mca_ptl_gm_component.gm_num_ptl_modules = 
 	mca_ptl_gm_discover_boards( mca_ptl_gm_component.gm_ptl_modules,
-                                mca_ptl_gm_component.gm_max_ptl_modules,
-                                mca_ptl_gm_component.gm_max_boards_number,
-                                mca_ptl_gm_component.gm_max_port_number );
+                                    mca_ptl_gm_component.gm_max_ptl_modules,
+                                    mca_ptl_gm_component.gm_max_boards_number,
+                                    mca_ptl_gm_component.gm_max_port_number );
 
     /* In the case when we are in a multi-threaded environment each
      * PTL will have its own thread. At this point all structures are
