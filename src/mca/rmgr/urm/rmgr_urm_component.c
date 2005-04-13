@@ -27,6 +27,7 @@
 #include "mca/rmaps/base/base.h"
 #include "mca/pls/base/base.h"
 #include "mca/rmgr/base/base.h"
+#include "mca/rml/rml.h"
 #include "rmgr_urm.h"
 
 /*
@@ -111,6 +112,42 @@ static int orte_rmgr_urm_open(void)
 }
 
 
+static void orte_rmgr_urm_recv(
+    int status,
+    orte_process_name_t* peer,
+    orte_buffer_t* req,
+    orte_rml_tag_t tag,
+    void* cbdata)
+{
+    int rc;
+    orte_buffer_t rsp;
+    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
+                                                                                                                          
+    if (ORTE_SUCCESS != (rc = orte_rmgr_base_cmd_dispatch(req,&rsp))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+                                                                                                                          
+    rc = orte_rml.send_buffer(peer, &rsp, ORTE_RML_TAG_RMGR_CLNT, 0);
+    if (rc < 0) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+                                                                                                                          
+cleanup:
+                                                                                                                          
+    rc = orte_rml.recv_buffer_nb(
+        ORTE_RML_NAME_ANY,
+        ORTE_RML_TAG_RMGR_SVC,
+        0,
+        orte_rmgr_urm_recv,
+        NULL);
+    if(rc < 0) {
+        ORTE_ERROR_LOG(rc);
+    }
+    OBJ_DESTRUCT(&rsp);
+}
+
 
 static orte_rmgr_base_module_t *orte_rmgr_urm_init(int* priority)
 {
@@ -159,6 +196,18 @@ static orte_rmgr_base_module_t *orte_rmgr_urm_init(int* priority)
      */
     if (NULL == (mca_rmgr_urm_component.urm_pls = orte_pls_base_select(pls))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return NULL;
+    }
+
+    /* Post non-blocking receive */
+
+    if (0 > (rc = orte_rml.recv_buffer_nb(
+        ORTE_RML_NAME_ANY,
+        ORTE_RML_TAG_RMGR_SVC,
+        0,
+        orte_rmgr_urm_recv,
+        NULL))) {
+        ORTE_ERROR_LOG(rc);
         return NULL;
     }
 
