@@ -25,24 +25,21 @@
 #include "mca/coll/base/base.h"
 #include "coll_hierarch.h"
 
-/**
- * NOTE NOTE NOTE NOTE:
- * this is a preliminary version dealing just with sm/non-sm layers.
- * It's main purpose is to understand the information and data flow
- * better, and for developing a first cut of the required interfaces.
- *
- * EG, Stuttgart, Feb. 24 2005
- */
-
 #include "mca/ptl/ptl.h"
 #include "mca/pml/teg/src/pml_teg_proc.h"
 #include "mca/pml/teg/src/pml_teg_ptl.h"
 
 /* local functions and data */
+#define HIER_MAXPROTOCOL 7
+static int mca_coll_hierarch_max_protocol=HIER_MAXPROTOCOL;
+
+static char hier_prot[HIER_MAXPROTOCOL][5]={"0","tcp","ib","gm","mx","elan4","sm"};
+
 static void mca_coll_hierarch_checkfor_component (struct ompi_communicator_t *comm,
 						  char *component_name, int *key,
 						  int *done );
 static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c);
+
 
 /*
  * Linear set of collective algorithms
@@ -106,7 +103,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
     int size;
     int color, ncount, maxncount;
     int *colorarr=NULL;
-    
+    int level;
 
     /* Get the priority level attached to this module */
     if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_priority_param, 
@@ -120,44 +117,64 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 	return NULL;
     }
 
-    /* Check now, whether all process in this communicator can talk with
-       sm or not. If yes, then there is no need for the hierarchical
-       module */
+    /* This array will hold the color of each process returned for a certain
+       protocol. The array is one element larger than required to store
+       the position of the selected protocol in the hier_prot array.
+       This avoids, that we have to walk through the whole list in
+       module_init again.
+    */
     size = ompi_comm_size(comm);
-    colorarr = (int *) malloc ( sizeof(int) * size );
+    colorarr = (int *) malloc ( sizeof(int) * size + 1);
     if ( NULL == colorarr ) {
 	*priority = 0;
 	return NULL;
     }
 
-    mca_coll_hierarch_checkfor_component ( comm, "sm", &color, &ncount);
+    /* 
+     * walk through the list of registered protocols, and check which one
+     * is feasable. 
+     * Later we start with level=0, and introduce the multi-cell check 
+    */
+    for ( level = 1; level < mca_coll_hierarch_max_protocol; level++) {
+	mca_coll_hierarch_checkfor_component ( comm, hier_prot[level], &color, &ncount);
  
-    comm->c_coll_basic_module->coll_allreduce (&ncount, &maxncount, 1, MPI_INT, 
-					       MPI_MAX, comm );
-    comm->c_coll_basic_module->coll_allgather (&color, 1, MPI_INT, 
-					       colorarr, 1, MPI_INT, comm );
+	comm->c_coll_basic_module->coll_allreduce (&ncount, &maxncount, 1, MPI_INT, 
+						   MPI_MAX, comm );
+	comm->c_coll_basic_module->coll_allgather (&color, 1, MPI_INT, 
+						   colorarr, 1, MPI_INT, comm );
 
-    if ( 1 == maxncount ) {
-	/* 
-	 * this means, no process has a partner to which it can talk with 'sm',
-	 * no need for the hierarchical component 
-	 */
-	*priority = 0;
-	return NULL;
+	if ( 0 == maxncount ) {
+	    /* 
+	     * this means, no process has a partner to which it can talk with this protocol,
+	     * so continue to next level
+	     */
+	    continue;
+	}
+	else if ( maxncount == (size-1) ) {
+	    /* 
+	     * everybody can talk to every other process with this protocol, 
+	     * no need to continue in the hierarchy tree and for the 
+	     * hierarchical component.
+	     * Its (size-1) because we do not count ourselves.
+	     */
+	    goto err_exit;
+	}
+	else {
+	    colorarr[size] = level;
+	    *data = (struct mca_coll_base_comm_t *) colorarr; 
+	    return &intra;
+	}
     }
-    else if ( maxncount == size ) {
-	/* 
-	 * everybody can talk to every other process with sm, 
-	 * no need for the hierarchical module 
-	 */
-	*priority = 0;
-	return NULL;
+	
+ err_exit:
+    if ( NULL != colorarr ) {
+	free ( colorarr ) ;
     }
 
-    *data = (struct mca_coll_base_comm_t *) colorarr; 
-    return &intra;
+    *priority = 0;
+    return NULL;
 }
-
+    
 
 /*
  * Init module on the communicator
@@ -168,7 +185,7 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     int color, ncount;
     int *colorarr=NULL, *llr=NULL;
     int size, rank, ret=OMPI_SUCCESS;
-    int i, j, c;
+    int i, j, c, level;
     int found;
 
     struct ompi_communicator_t *llcomm=NULL;
@@ -176,7 +193,11 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
-    mca_coll_hierarch_checkfor_component ( comm, "sm", &color, &ncount);
+
+    colorarr = (int *) comm->c_coll_selected_data;
+    level = colorarr[size+1];
+
+    mca_coll_hierarch_checkfor_component ( comm, hier_prot[level], &color, &ncount);
     
     /* Generate the subcommunicator based on the color returned by
        the previous function. */
@@ -201,7 +222,6 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     data->hier_am_lleader=0; /* false */
 
     /* determine how many local leader there are and who they are */
-    colorarr = (int *) comm->c_coll_selected_data;
     llr      = (int *) calloc (1, sizeof(int) * size);
     if (NULL == llr ) {
 	goto exit;
@@ -319,44 +339,74 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
     mca_ptl_base_module_t *ptl_module=NULL;
     mca_ptl_base_component_t *ptr=NULL;
 
-    int i, j, size, listsize;
+    int i, j, size;
 
     int counter=0;
     int firstproc=999999;
-    int myrank = -1;
+    int rank = -1;
 
+    int listsize=1;
+    int use_next, walk_through_list;
+
+    /* default values in case an error occurs */
+    *ncount=0;
+    *key=MPI_UNDEFINED;
+
+    /* Shall we just check the first element in the ptl list ? */
+    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_walk_through_list_param, 
+						  &walk_through_list)) {
+	return;
+    }
+
+    /* Shall we use the first_elem list or the next_elem list? */
+    if (OMPI_SUCCESS != mca_base_param_lookup_int(mca_coll_hierarch_use_next_param, 
+						  &use_next)) {
+	return;
+    }
+
+    
     size = ompi_comm_size ( comm );
+    rank = ompi_comm_rank ( comm );
     for ( i=0; i<size; i++ ) {
-	proc = mca_pml_teg_proc_lookup_remote (comm, i);
+	if ( rank ==  i ) {
+	    /* skip myself */
+	    continue;
+	}
 
-#ifdef TRY_NEXT_INSTEAD_OF_FIRST
-	ptl_proc=mca_ptl_array_get_next(&proc->proc_ptl_next);
-	listsize = mca_ptl_array_get_size(&proc->proc_ptl_next);
-#else
-	ptl_proc=mca_ptl_array_get_next(&proc->proc_ptl_first);
-	listsize = mca_ptl_array_get_size(&proc->proc_ptl_first);
-#endif
-	for ( j=0; j<listsize; j++) {
+	proc = mca_pml_teg_proc_lookup_remote (comm, i);
+	if ( use_next ) {
+	    ptl_proc=mca_ptl_array_get_next(&proc->proc_ptl_first);
+	    if ( walk_through_list ) {
+		/* 
+		 * Walking through the listmight be unecessary.  Assumption is,
+		 * that if we did not register this as the first protocol, there is
+		 * a protocol which is faster than this one.  
+		 *
+		 * Example: on a IB-cluster with dual processor nodes, I can talk
+		 * to all procs with IB, however the process on my node will
+		 * hopefully have sm registered as its first protocoll. 
+		 */
+		
+		listsize = mca_ptl_array_get_size(&proc->proc_ptl_first);
+	    }
+	}
+	else {
+	    ptl_proc=mca_ptl_array_get_next(&proc->proc_ptl_next);
+	    if ( walk_through_list ) {
+		listsize = mca_ptl_array_get_size(&proc->proc_ptl_next);
+	    }
+	}
+
+	for ( j=0; j<listsize;j++) {
 	    ptl_module = ptl_proc->ptl;
 	    ptr = ptl_module->ptl_component;
-
+	    
 	    /* sanity check */
 	    if ( strcmp(ptr->ptlm_version.mca_type_name,"ptl") ) {
 		printf("Oops, got the wrong component! type_name = %s\n",
 		       ptr->ptlm_version.mca_type_name );
 	    }
 	    
-	    /* check for myself.
-	       ATTENTION: this relies on having the self-ptl-component loaded
-	       at this case. Need something better! 
-	    */
-	    if ( !strcmp (ptr->ptlm_version.mca_component_name, "self")) {
-		counter++;
-		myrank = i;
-		continue;
-	    }
-
-		
 	    /* check for the required component */
 	    if (! strcmp (ptr->ptlm_version.mca_component_name, component_name)){
 		counter++;
@@ -367,21 +417,17 @@ mca_coll_hierarch_checkfor_component ( struct ompi_communicator_t *comm,
 	    }
 	}
     }
-    
+
     *ncount = counter; /* true */
     /* final decision */
-    if ( counter == 1 ) {
+    if ( counter == 0 ) {
 	/* this is the section indicating, that we are not 
 	   using this component */
-	if ( myrank == -1 ) {
-	}
-	else {
-	    firstproc = MPI_UNDEFINED;
-	}
+	firstproc = MPI_UNDEFINED;
     }
     else {
-	if ( myrank < firstproc ) {
-	    firstproc = myrank;
+	if ( rank < firstproc ) {
+	    firstproc = rank;
 	}
     }
 

@@ -40,6 +40,9 @@ const char *mca_coll_hierarch_component_version_string =
 int mca_coll_hierarch_priority_param = -1;
 int mca_coll_hierarch_verbose_param = -1;
 int mca_coll_hierarch_verbose = 0;
+int mca_coll_hierarch_walk_through_list_param=-1; 
+int mca_coll_hierarch_use_next_param=-1;   
+
 
 /*
  * Local function
@@ -93,13 +96,17 @@ const mca_coll_base_component_1_0_0_t mca_coll_hierarch_component = {
 
 static int hierarch_open(void)
 {
-    /* Use a low priority, but allow other components to be lower */
+    /* Use a high priority, but allow other components to be higher */
     
     mca_coll_hierarch_priority_param = 
-        mca_base_param_register_int("coll", "hierarch", "priority", NULL, 20);
+        mca_base_param_register_int("coll", "hierarch", "priority", NULL, 50);
     mca_coll_hierarch_verbose_param = 
         mca_base_param_register_int("coll", "hierarch", "verbose", NULL, 
                                     mca_coll_hierarch_verbose);
+    mca_coll_hierarch_walk_through_list_param = 
+        mca_base_param_register_int("coll", "hierarch", "walk_through_list", NULL, 0);
+    mca_coll_hierarch_use_next_param = 
+        mca_base_param_register_int("coll", "hierarch", "use_next", NULL, 0);
 
     return OMPI_SUCCESS;
 }
