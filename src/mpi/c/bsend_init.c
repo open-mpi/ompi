@@ -61,16 +61,6 @@ int MPI_Bsend_init(void *buf, int count, MPI_Datatype type,
     }
 
     rc = MCA_PML_CALL(isend_init(buf,count,type,dest,tag,MCA_PML_BASE_SEND_BUFFERED,comm,request));
-    if(OMPI_SUCCESS != rc)
-        goto error_return;
-
-    rc = mca_pml_base_bsend_request_init(*request, true);
-    if(OMPI_SUCCESS != rc) {
-        ompi_request_free(request);
-        goto error_return;
-    }
-
-error_return:
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 

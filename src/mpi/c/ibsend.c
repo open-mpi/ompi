@@ -61,19 +61,7 @@ int MPI_Ibsend(void *buf, int count, MPI_Datatype type, int dest,
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    rc = MCA_PML_CALL(isend_init(buf, count, type, dest, tag, MCA_PML_BASE_SEND_BUFFERED, comm, request));
-    if(OMPI_SUCCESS != rc)
-        goto error_return;
-
-    rc = mca_pml_base_bsend_request_init(*request, false);
-    if(OMPI_SUCCESS != rc)
-        goto error_return;
-
-    rc = MCA_PML_CALL(start(1, request));
-    if(OMPI_SUCCESS != rc)
-        goto error_return;
-
-error_return:
+    rc = MCA_PML_CALL(isend(buf, count, type, dest, tag, MCA_PML_BASE_SEND_BUFFERED, comm, request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 
