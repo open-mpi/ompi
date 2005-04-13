@@ -135,10 +135,6 @@ extern int mca_pml_teg_probe(
     ompi_status_public_t* status
 );
 
-extern int mca_pml_teg_cancel(
-    ompi_request_t* request
-);
-
 extern int mca_pml_teg_cancelled(
     ompi_request_t* request,
     int *flag

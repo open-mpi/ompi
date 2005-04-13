@@ -86,6 +86,9 @@ static inline int mca_pml_teg_recv_request_start(mca_pml_base_recv_request_t* re
     request->req_base.req_pml_complete = false;
     request->req_base.req_ompi.req_complete = false;
     request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;
+    /* always set the req_status.MPI_TAG to ANY_TAG before starting the request. This field
+     * is used on the cancel part in order to find out if the request has been matched or not.
+     */
     request->req_base.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;
     request->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
     request->req_base.req_ompi.req_status._cancelled = 0;

@@ -42,6 +42,40 @@ static int mca_pml_teg_recv_request_free(struct ompi_request_t** request)
 
 static int mca_pml_teg_recv_request_cancel(struct ompi_request_t* request, int complete)
 {
+    mca_pml_base_request_t* teg_request = (mca_pml_base_request_t*)request;
+    ompi_communicator_t* ompi_comm = teg_request->req_comm;
+    mca_pml_ptl_comm_t* pml_comm = (mca_pml_ptl_comm_t*)ompi_comm->c_pml_comm;
+
+    if( true == request->req_complete ) {  /* way to late to cancel this one */
+       return OMPI_SUCCESS;
+    }
+    
+    /* The rest should be protected behind the match logic lock */
+    OMPI_THREAD_LOCK(&pml_comm->c_matching_lock);
+    
+    if( OMPI_ANY_TAG == request->req_status.MPI_TAG ) { /* the match have not been already done */
+       
+       if( teg_request->req_peer == OMPI_ANY_SOURCE ) {
+          ompi_list_remove_item( &(pml_comm->c_wild_receives),
+                                 (ompi_list_item_t*)request );
+       } else {
+          ompi_list_remove_item( pml_comm->c_specific_receives + teg_request->req_peer,
+                                 (ompi_list_item_t*)request );
+       }
+    }
+    
+    OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
+    
+    request->req_status._cancelled = true;
+    request->req_complete = true;  /* mark it as completed so all the test/wait  functions
+                                    * on this particular request will finish */
+    /* Now we have a problem if we are in a multi-threaded environment. We shou ld
+     * broadcast the condition on the request in order to allow the other threa ds
+     * to complete their test/wait functions.
+     */
+    if(ompi_request_waiting) {
+       ompi_condition_broadcast(&ompi_request_cond);
+    }
     return OMPI_SUCCESS;
 }
 
