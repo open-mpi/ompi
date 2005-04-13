@@ -170,7 +170,7 @@ struct ompi_object_t {
     ompi_class_t *obj_class;            /**< class descriptor */
     volatile int obj_reference_count;   /**< reference count */
 #if OMPI_ENABLE_DEBUG
-   char* cls_init_file_name;        /**< In debug mode store the file where the object get contructed */
+   const char* cls_init_file_name;        /**< In debug mode store the file where the object get contructed */
    int   cls_init_lineno;           /**< In debug mode store the line number where the object get contructed */
 #endif  /* OMPI_ENABLE_DEBUG */
 };
@@ -225,9 +225,9 @@ struct ompi_object_t {
  * @param type          Type (class) of the object
  * @return              Pointer to the object 
  */
-#if OMPI_ENABLE_DEBUG
 static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t * cls);
-static inline void* __OBJ_NEW( size_t obj_size, ompi_class_t* type, char* file, int line )
+#if OMPI_ENABLE_DEBUG
+static inline ompi_object_t *ompi_obj_new_debug(size_t obj_size, ompi_class_t* type, const char* file, int line)
 {
     ompi_object_t* object = ompi_obj_new(obj_size, type);
     object->cls_init_file_name = file;
@@ -235,7 +235,7 @@ static inline void* __OBJ_NEW( size_t obj_size, ompi_class_t* type, char* file, 
     return object;
 }
 #define OBJ_NEW(type)                                   \
-    ((type *)__OBJ_NEW(sizeof(type), OBJ_CLASS(type), __FILE__, __LINE__))
+    ((type *)ompi_obj_new_debug(sizeof(type), OBJ_CLASS(type), __FILE__, __LINE__))
 #else
 #define OBJ_NEW(type)                                   \
     ((type *) ompi_obj_new(sizeof(type), OBJ_CLASS(type)))
