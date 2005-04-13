@@ -202,8 +202,9 @@ static void mca_base_modex_registry_callback(
 {
     int32_t i, j;
     orte_gpr_keyval_t **keyval;
-    orte_gpr_value_t **value;
     ompi_proc_t *proc;
+    ompi_proc_t **new_procs = NULL;
+    size_t new_proc_count = 0;
     char **token;
     orte_process_name_t *proc_name;
     mca_base_modex_t *modex;
@@ -218,19 +219,22 @@ ompi_output(0, "[%d,%d,%d] mca_base_modex_registry_callback\n",
 orte_gpr_base_dump_notify_data(data,0);
 #endif
 
+    if(data->cnt) {
+        new_procs = (ompi_proc_t**)malloc(sizeof(ompi_proc_t*) * data->cnt);
+        if(NULL == new_procs) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return; 
+        }
+    }
+
     /* process the callback */
-    value = data->values;
     for (i=0; i < data->cnt; i++) {
-
-        if (0 < value[i]->cnt) {  /* needs to be at least one value */
-            ompi_proc_t **new_procs;
-            size_t new_proc_count = 0;
-            new_procs = malloc(sizeof(ompi_proc_t*) * value[i]->cnt);
-
+        orte_gpr_value_t *value = data->values[i];
+        if (0 < value->cnt) {  /* needs to be at least one keyval */
             /*
              * Token for the value should be the process name - look it up
              */
-            token = value[i]->tokens;
+            token = value->tokens;
             if (ORTE_SUCCESS == orte_ns.convert_string_to_process_name(&proc_name, token[0])) {
                 proc = ompi_proc_find_and_add(proc_name, &isnew);
                 if(NULL == proc)
@@ -261,8 +265,8 @@ orte_gpr_base_dump_notify_data(data,0);
                  * Could be multiple keyvals returned since there is one for each
                  * component type/name/version - process them all
                  */
-                keyval = value[i]->keyvals;
-                for (j=0; j < value[i]->cnt; j++) {
+                keyval = value->keyvals;
+                for (j=0; j < value->cnt; j++) {
                     orte_buffer_t buffer;
                     char *ptr;
                     void* bytes = NULL;
@@ -351,11 +355,15 @@ ompi_output(0, "[%d,%d,%d] mca_base_modex_registry_callback: %s-%s-%d-%d receive
                 OMPI_THREAD_UNLOCK(&proc->proc_lock);
             }  /* convert string to process name */
         
-            if(new_proc_count > 0) {
-                MCA_PML_CALL(add_procs(new_procs, new_proc_count));
-            }
-            free(new_procs);
         }  /* if value[i]->cnt > 0 */
+    }
+
+    /* pml add procs */
+    if(NULL != new_procs) {
+        if(new_proc_count > 0) {
+            MCA_PML_CALL(add_procs(new_procs, new_proc_count));
+        }
+        free(new_procs);
     }
 }
 
