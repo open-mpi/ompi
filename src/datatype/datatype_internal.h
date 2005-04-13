@@ -312,10 +312,10 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
     pStack[1].index    = 0;  /* useless */
     pStack[1].count    = pData->size - count;
     pStack[1].end_loop = 0;  /* useless */
-    /* we save the currecnt displacement starting from the begining
+    /* we save the current displacement starting from the begining
      * of this data.
      */
-    pStack[1].disp     = count;
+    pStack[1].disp     = pData->true_lb + count;
 
     pConvertor->bConverted = starting_point;
     pConvertor->stack_pos = 1;
