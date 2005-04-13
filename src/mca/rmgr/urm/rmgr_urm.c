@@ -100,18 +100,6 @@ static int orte_rmgr_urm_query(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
-    /* Post non-blocking receive */
-
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(
-        ORTE_RML_NAME_ANY,
-        ORTE_RML_TAG_RMGR_SVC,
-        0,
-        orte_rmgr_urm_recv,
-        NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
     return ORTE_SUCCESS;
 }
 
@@ -325,39 +313,3 @@ static int orte_rmgr_urm_finalize(void)
     return ORTE_SUCCESS;
 }
 
-
-static void orte_rmgr_urm_recv(
-    int status,
-    orte_process_name_t* peer,
-    orte_buffer_t* req,
-    orte_rml_tag_t tag,
-    void* cbdata)
-{
-    int rc;
-    orte_buffer_t rsp;
-    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-
-    if (ORTE_SUCCESS != (rc = orte_rmgr_base_cmd_dispatch(req,&rsp))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    rc = orte_rml.send_buffer(peer, &rsp, ORTE_RML_TAG_RMGR_CLNT, 0);
-    if (rc < 0) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-cleanup:
-  
-    rc = orte_rml.recv_buffer_nb(
-        ORTE_RML_NAME_ANY,
-        ORTE_RML_TAG_RMGR_SVC,
-        0,
-        orte_rmgr_urm_recv,
-        NULL);
-    if(rc < 0) {
-        ORTE_ERROR_LOG(rc);
-    }
-    OBJ_DESTRUCT(&rsp);
-}
