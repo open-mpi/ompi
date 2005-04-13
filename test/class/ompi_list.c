@@ -266,19 +266,7 @@ int main(int argc, char **argv)
     } else {
         test_failure(" error in ompi_list_remove - list size changed incorrectly");
     }
-#ifdef OMPI_ENABLE_DEBUG
-    /* try and remove a non existant element from the list -
-     *   testing debug code */
-    printf("This should generate a warning:\n");
-    fflush(stdout);
-    ele = (test_data_t *) 
-        ompi_list_remove_item(&list,(ompi_list_item_t *)(elements+indx));
-    if( ((test_data_t *)NULL) == ele ) {
-        test_success();
-    } else {
-        test_failure(" error in ompi_list_remove - trying to remove element not on list");
-    }
-#endif /* OMPI_ENABLE_DEBUG */
+
     /* test the insert function */
     i=ompi_list_insert(&list,(ompi_list_item_t *)(elements+indx),indx);
     if( 1 == i ) {
