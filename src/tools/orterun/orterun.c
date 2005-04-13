@@ -29,7 +29,6 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <libgen.h>
 
 #include "include/orte_constants.h"
 
@@ -187,12 +186,23 @@ int main(int argc, char *argv[], char* env[])
 {
     orte_app_context_t **apps;
     int rc, i, num_apps;
-    char *dir;
+    size_t j;
 
     /* Setup the abort message (for use in the signal handler) */
 
-    dir = strdup(argv[0]);
-    orterun_basename = basename(dir);
+    for (j = strlen(argv[0]); j > 0; --j) {
+        if ('/' == argv[0][j]) {
+            orterun_basename = strdup(&(argv[0][j + 1]));
+            break;
+        }
+    }
+    if (0 == j) {
+        if ('/' == argv[0][0]) {
+            orterun_basename = strdup(&(argv[0][1]));
+        } else {
+            orterun_basename = strdup(argv[0]);
+        }
+    }
     asprintf(&abort_msg, "%s: killing job...\n", orterun_basename);
     abort_msg_len = strlen(abort_msg);
 
@@ -265,7 +275,7 @@ int main(int argc, char *argv[], char* env[])
     OBJ_DESTRUCT(&apps_pa);
     orte_finalize();
     free(abort_msg);
-    free(dir);
+    free(orterun_basename);
     return rc;
 }
 
