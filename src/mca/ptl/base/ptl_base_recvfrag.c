@@ -16,6 +16,8 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include "ompi_config.h"
+
+#include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/ptl/base/ptl_base_match.h"

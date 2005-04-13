@@ -76,7 +76,7 @@ int orte_rmaps_base_open(void)
 
     if (ORTE_SUCCESS != 
         mca_base_components_open("rmaps", 0, mca_rmaps_base_static_components, 
-                                 &orte_rmaps_base.rmaps_opened)) {
+                                 &orte_rmaps_base.rmaps_opened, true)) {
        return ORTE_ERROR;
     }
 

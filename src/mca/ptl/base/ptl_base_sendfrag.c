@@ -15,6 +15,8 @@
  */
 
 #include "ompi_config.h"
+
+#include "mca/pml/pml.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 
 static void mca_ptl_base_send_frag_construct(mca_ptl_base_send_frag_t* frag);

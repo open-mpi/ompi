@@ -84,7 +84,7 @@ int orte_soh_base_open(void)
 
   if (OMPI_SUCCESS != 
 		mca_base_components_open("soh", 0, mca_soh_base_static_components,
-                                 &orte_soh_base.soh_components)) {
+                                 &orte_soh_base.soh_components, true)) {
 
 /* fprintf(stderr,"orte_soh_base_open:failed\n"); */
     return OMPI_ERROR;

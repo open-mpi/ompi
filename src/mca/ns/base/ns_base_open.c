@@ -121,10 +121,10 @@ int orte_ns_base_open(void)
     }
 
     /* Open up all available components */
-    
+
     if (ORTE_SUCCESS != 
         mca_base_components_open("ns", 0, mca_ns_base_static_components, 
-                                 &mca_ns_base_components_available)) {
+                                 &mca_ns_base_components_available, true)) {
         return ORTE_ERROR;
     }
 

@@ -20,6 +20,7 @@
 #define MCA_PML_BASE_SEND_REQUEST_H
 
 #include "ompi_config.h"
+#include "mca/pml/pml.h"
 #include "datatype/datatype.h"
 #include "mca/pml/base/pml_base_request.h"
 

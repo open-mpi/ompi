@@ -281,7 +281,7 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
 
     }
     if (isnew) {
-        mca_pml.pml_add_procs(&rproc, 1);
+        MCA_PML_CALL(add_procs(&rproc, 1));
     }
 
     return rport;
@@ -588,9 +588,9 @@ ompi_comm_disconnect_obj *ompi_comm_disconnect_init ( ompi_communicator_t *comm)
     /* initiate all isend_irecvs. We use a dummy buffer stored on
        the object, since we are sending zero size messages anyway. */
     for ( i=0; i < obj->size; i++ ) {
-	ret = mca_pml.pml_irecv (&(obj->buf), 0, MPI_INT, i,
+	ret = MCA_PML_CALL(irecv (&(obj->buf), 0, MPI_INT, i,
 				 OMPI_COMM_BARRIER_TAG, comm, 
-				 &(obj->reqs[2*i]));
+				 &(obj->reqs[2*i])));
 				 
 	if ( OMPI_SUCCESS != ret ) {
 	    free (obj->reqs);
@@ -598,10 +598,10 @@ ompi_comm_disconnect_obj *ompi_comm_disconnect_init ( ompi_communicator_t *comm)
 	    return NULL;
 	}
 
-	ret = mca_pml.pml_isend (&(obj->buf), 0, MPI_INT, i,
+	ret = MCA_PML_CALL(isend (&(obj->buf), 0, MPI_INT, i,
 				 OMPI_COMM_BARRIER_TAG, 
 				 MCA_PML_BASE_SEND_STANDARD,
-				 comm, &(obj->reqs[2*i+1]));
+				 comm, &(obj->reqs[2*i+1])));
 				 
 	if ( OMPI_SUCCESS != ret ) {
 	    free (obj->reqs);

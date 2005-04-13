@@ -91,9 +91,9 @@ int mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
 
     /* Receive the prior answer */
 
-    err = mca_pml.pml_recv(pml_buffer, count, dtype,
+    err = MCA_PML_CALL(recv(pml_buffer, count, dtype,
                            rank - 1, MCA_COLL_BASE_TAG_SCAN, comm, 
-                           MPI_STATUS_IGNORE);
+                           MPI_STATUS_IGNORE));
     if (MPI_SUCCESS != err) {
       if (NULL != free_buffer) {
 	free(free_buffer);
@@ -115,9 +115,9 @@ int mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
   /* Send result to next process. */
 
   if (rank < (size - 1)) {
-    return mca_pml.pml_send(rbuf, count, dtype, rank + 1, 
+    return MCA_PML_CALL(send(rbuf, count, dtype, rank + 1, 
                             MCA_COLL_BASE_TAG_SCAN, 
-                            MCA_PML_BASE_SEND_STANDARD, comm);
+                            MCA_PML_BASE_SEND_STANDARD, comm));
   }
 
   /* All done */

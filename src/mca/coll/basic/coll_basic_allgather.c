@@ -21,6 +21,7 @@
 #include "include/constants.h"
 #include "communicator/communicator.h"
 #include "mca/coll/coll.h"
+#include "mca/pml/pml.h"
 #include "mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
 
@@ -92,9 +93,9 @@ int mca_coll_basic_allgather_inter(void *sbuf, int scount,
     /* Step one: gather operations: */
     if ( rank != root ) {
         /* send your data to root */
-        err = mca_pml.pml_send(sbuf, scount, sdtype, root, 
+        err = MCA_PML_CALL(send(sbuf, scount, sdtype, root, 
                                MCA_COLL_BASE_TAG_ALLGATHER, 
-                               MCA_PML_BASE_SEND_STANDARD, comm);
+                               MCA_PML_BASE_SEND_STANDARD, comm));
         if ( OMPI_SUCCESS != err ) {
             return err;
         }
@@ -111,17 +112,17 @@ int mca_coll_basic_allgather_inter(void *sbuf, int scount,
         }
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
-        err = mca_pml.pml_isend (sbuf, scount, sdtype, 0, 
+        err = MCA_PML_CALL(isend (sbuf, scount, sdtype, 0, 
                                  MCA_COLL_BASE_TAG_ALLGATHER,
                                  MCA_PML_BASE_SEND_STANDARD, 
-                                 comm, &reqs[rsize] );
+                                 comm, &reqs[rsize] ));
         if ( OMPI_SUCCESS != err ) {
             return err;
         }
 
-        err = mca_pml.pml_irecv(rbuf, rcount, rdtype, 0,
+        err = MCA_PML_CALL(irecv(rbuf, rcount, rdtype, 0,
                                 MCA_COLL_BASE_TAG_ALLGATHER, comm, 
-                                &reqs[0]);
+                                &reqs[0]));
         if (OMPI_SUCCESS != err) {
             return err;
         }
@@ -129,9 +130,9 @@ int mca_coll_basic_allgather_inter(void *sbuf, int scount,
         incr = rextent * rcount;
         ptmp = (char *) rbuf + incr;
         for (i = 1; i < rsize; ++i, ptmp += incr) {
-	    err = mca_pml.pml_irecv(ptmp, rcount, rdtype, i,
+	    err = MCA_PML_CALL(irecv(ptmp, rcount, rdtype, i,
                                     MCA_COLL_BASE_TAG_ALLGATHER, 
-                                    comm, &reqs[i]);
+                                    comm, &reqs[i]));
             if (MPI_SUCCESS != err) {
                 return err;
             }
@@ -148,17 +149,17 @@ int mca_coll_basic_allgather_inter(void *sbuf, int scount,
             return err;
         }
 
-        err = mca_pml.pml_isend (rbuf, rsize*rcount, rdtype, 0, 
+        err = MCA_PML_CALL(isend (rbuf, rsize*rcount, rdtype, 0, 
                                  MCA_COLL_BASE_TAG_ALLGATHER,
                                  MCA_PML_BASE_SEND_STANDARD, 
-                                 comm, &req );
+                                 comm, &req ));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
 
-        err = mca_pml.pml_recv(tmpbuf, size *scount, sdtype, 0,
+        err = MCA_PML_CALL(recv(tmpbuf, size *scount, sdtype, 0,
                                MCA_COLL_BASE_TAG_ALLGATHER, comm, 
-                               MPI_STATUS_IGNORE);
+                               MPI_STATUS_IGNORE));
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
@@ -176,9 +177,9 @@ int mca_coll_basic_allgather_inter(void *sbuf, int scount,
     */
     if ( rank != root ) {
         /* post the recv */
-        err = mca_pml.pml_recv (rbuf, size*rcount, rdtype, 0,
+        err = MCA_PML_CALL(recv (rbuf, size*rcount, rdtype, 0,
                                 MCA_COLL_BASE_TAG_ALLGATHER, comm,
-                                MPI_STATUS_IGNORE);
+                                MPI_STATUS_IGNORE));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -187,10 +188,10 @@ int mca_coll_basic_allgather_inter(void *sbuf, int scount,
         /* Send the data to every other process in the remote group
            except to rank zero. which has it already. */
         for ( i=1; i<rsize; i++ ) {
-            err = mca_pml.pml_isend(tmpbuf, size*scount, sdtype, i,
+            err = MCA_PML_CALL(isend(tmpbuf, size*scount, sdtype, i,
                                     MCA_COLL_BASE_TAG_ALLGATHER, 
                                     MCA_PML_BASE_SEND_STANDARD,
-                                    comm, &reqs[i-1] );
+                                    comm, &reqs[i-1] ));
             if ( OMPI_SUCCESS != err ) {
                 goto exit;
             }

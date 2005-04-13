@@ -16,6 +16,7 @@
 
 #include "ompi_config.h"
 
+#include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_comm.h"
 #include "pml_teg_recvreq.h"

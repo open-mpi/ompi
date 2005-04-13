@@ -55,7 +55,7 @@ int mca_oob_base_open(void)
 
   if (OMPI_SUCCESS != 
       mca_base_components_open("oob", 0, mca_oob_base_static_components, 
-                               &mca_oob_base_components)) {
+                               &mca_oob_base_components, true)) {
     return OMPI_ERROR;
   }
 

@@ -107,7 +107,7 @@ int orte_ras_base_open(void)
 
     if (ORTE_SUCCESS != 
         mca_base_components_open("ras", 0, mca_ras_base_static_components, 
-                                 &orte_ras_base.ras_opened)) {
+                                 &orte_ras_base.ras_opened, true)) {
         return ORTE_ERROR;
     }
     OBJ_CONSTRUCT(&orte_ras_base.ras_available, ompi_list_t);

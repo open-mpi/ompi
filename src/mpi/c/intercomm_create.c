@@ -90,13 +90,13 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         MPI_Request req;
         
         /* local leader exchange group sizes lists */
-        rc =mca_pml.pml_irecv (&rsize, 1, MPI_INT, rleader, tag, bridge_comm,
-                               &req );
+        rc = MCA_PML_CALL(irecv(&rsize, 1, MPI_INT, rleader, tag, bridge_comm,
+                                &req));
         if ( rc != MPI_SUCCESS ) {
             goto err_exit;
         }
-        rc = mca_pml.pml_send ( &local_size, 1, MPI_INT, rleader, tag,
-                                MCA_PML_BASE_SEND_STANDARD, bridge_comm );
+        rc = MCA_PML_CALL(send (&local_size, 1, MPI_INT, rleader, tag,
+                                MCA_PML_BASE_SEND_STANDARD, bridge_comm));
         if ( rc != MPI_SUCCESS ) {
             goto err_exit;
         }

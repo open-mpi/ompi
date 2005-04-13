@@ -91,8 +91,8 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
     }
 
     prcv = ((char *) rbuf) + (rdisps[i] * rcvextent);
-    err = mca_pml.pml_irecv_init(prcv, rcounts[i], rdtype,
-                                 i, MCA_COLL_BASE_TAG_ALLTOALLV, comm, preq++);
+    err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtype,
+                                 i, MCA_COLL_BASE_TAG_ALLTOALLV, comm, preq++));
     ++nreqs;
     if (MPI_SUCCESS != err) {
       mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs, nreqs);
@@ -108,9 +108,9 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
     }
 
     psnd = ((char *) sbuf) + (sdisps[i] * sndextent);
-    err = mca_pml.pml_isend_init(psnd, scounts[i], sdtype,
+    err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtype,
                                  i, MCA_COLL_BASE_TAG_ALLTOALLV, 
-                                 MCA_PML_BASE_SEND_STANDARD, comm, preq++);
+                                 MCA_PML_BASE_SEND_STANDARD, comm, preq++));
     ++nreqs;
     if (MPI_SUCCESS != err) {
       mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs, nreqs);
@@ -120,7 +120,7 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
 
   /* Start your engines.  This will never return an error. */
 
-  mca_pml.pml_start(nreqs, comm->c_coll_basic_data->mccb_reqs);
+  MCA_PML_CALL(start(nreqs, comm->c_coll_basic_data->mccb_reqs));
 
   /* Wait for them all.  If there's an error, note that we don't care
      what the error was -- just that there *was* an error.  The PML
@@ -184,8 +184,8 @@ mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
   for (i = 0; i < rsize; ++i) {
       prcv = ((char *) rbuf) + (rdisps[i] * rcvextent);
       if ( rcounts[i] > 0 ){
-          err = mca_pml.pml_irecv(prcv, rcounts[i], rdtype,
-                                  i, MCA_COLL_BASE_TAG_ALLTOALLV, comm, &preq[i]);
+          err = MCA_PML_CALL(irecv(prcv, rcounts[i], rdtype,
+                                  i, MCA_COLL_BASE_TAG_ALLTOALLV, comm, &preq[i]));
           if (MPI_SUCCESS != err) {
               return err;
           }
@@ -199,9 +199,9 @@ mca_coll_basic_alltoallv_inter(void *sbuf, int *scounts, int *sdisps,
   for (i = 0; i < rsize; ++i) {
       psnd = ((char *) sbuf) + (sdisps[i] * sndextent);
       if ( scounts[i] > 0 ) {
-          err = mca_pml.pml_isend(psnd, scounts[i], sdtype,
+          err = MCA_PML_CALL(isend(psnd, scounts[i], sdtype,
                                   i, MCA_COLL_BASE_TAG_ALLTOALLV, 
-                                  MCA_PML_BASE_SEND_STANDARD, comm, &preq[rsize+i]);
+                                  MCA_PML_BASE_SEND_STANDARD, comm, &preq[rsize+i]));
           if (MPI_SUCCESS != err) {
               return err;
           }

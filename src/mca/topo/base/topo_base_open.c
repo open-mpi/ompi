@@ -61,7 +61,7 @@ int mca_topo_base_open(void)
      if (OMPI_SUCCESS !=
          mca_base_components_open("topo", mca_topo_base_output, 
                                   mca_topo_base_static_components,
-                                  &mca_topo_base_components_opened)) {
+                                  &mca_topo_base_components_opened, true)) {
         return OMPI_ERROR;
     }
          

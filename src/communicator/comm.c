@@ -31,7 +31,7 @@
 
 #include "attribute/attribute.h"
 #include "communicator/communicator.h"
-
+#include "mca/pml/pml.h"
 #include "mca/ptl/base/ptl_base_comm.h"
 
 
@@ -185,7 +185,7 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
     }
 
     /* Initialize the PML stuff in the newcomm  */
-    if ( OMPI_ERROR == mca_pml.pml_add_comm(newcomm) ) {
+    if ( OMPI_ERROR == MCA_PML_CALL(add_comm(newcomm)) ) {
         OBJ_RELEASE(newcomm);
         return OMPI_ERROR;
     }
@@ -630,15 +630,15 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
         }
 
         for ( i=0; i<rsize; i++) {
-            rc = mca_pml.pml_irecv ( &tmpbuf[outcount*i], outcount, outtype, i,
-                                     OMPI_COMM_ALLGATHER_TAG, comm, &req[i] );
+            rc = MCA_PML_CALL(irecv( &tmpbuf[outcount*i], outcount, outtype, i,
+                                     OMPI_COMM_ALLGATHER_TAG, comm, &req[i] ));
             if ( OMPI_SUCCESS != rc ) {
                 goto exit;       
             }
         }
     }        
-    rc = mca_pml.pml_isend ( inbuf, incount, intype, 0, OMPI_COMM_ALLGATHER_TAG,
-                             MCA_PML_BASE_SEND_STANDARD, comm, &sendreq );
+    rc = MCA_PML_CALL(isend( inbuf, incount, intype, 0, OMPI_COMM_ALLGATHER_TAG,
+                             MCA_PML_BASE_SEND_STANDARD, comm, &sendreq ));
     if ( OMPI_SUCCESS != rc ) {
         goto exit;       
     }
@@ -656,17 +656,17 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
     }
 
     /* Step 2: the inter-bcast step */
-    rc = mca_pml.pml_irecv (outbuf, rsize*outcount, outtype, 0, 
-                            OMPI_COMM_ALLGATHER_TAG, comm, &sendreq);
+    rc = MCA_PML_CALL(irecv (outbuf, rsize*outcount, outtype, 0, 
+                            OMPI_COMM_ALLGATHER_TAG, comm, &sendreq));
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
 
     if ( 0 == rank ) {
         for ( i=0; i < rsize; i++ ){
-            rc = mca_pml.pml_send (tmpbuf, rsize*outcount, outtype, i, 
+            rc = MCA_PML_CALL(send (tmpbuf, rsize*outcount, outtype, i, 
                                    OMPI_COMM_ALLGATHER_TAG, 
-                                   MCA_PML_BASE_SEND_STANDARD, comm );
+                                   MCA_PML_BASE_SEND_STANDARD, comm));
             if ( OMPI_SUCCESS != rc ) {
                 goto exit;       
             }
@@ -781,13 +781,13 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
        }
 	
         /* send the remote_leader the length of the buffer */
-        rc = mca_pml.pml_irecv (&rlen, 1, MPI_INT, remote_leader, tag,
-                                bridge_comm, &req );
+        rc = MCA_PML_CALL(irecv (&rlen, 1, MPI_INT, remote_leader, tag,
+                                bridge_comm, &req ));
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        rc = mca_pml.pml_send (&len, 1, MPI_INT, remote_leader, tag, 
-                               MCA_PML_BASE_SEND_STANDARD, bridge_comm );
+        rc = MCA_PML_CALL(send (&len, 1, MPI_INT, remote_leader, tag, 
+                               MCA_PML_BASE_SEND_STANDARD, bridge_comm ));
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
@@ -823,13 +823,13 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
 
     if ( local_rank == local_leader ) {
         /* local leader exchange name lists */
-        rc = mca_pml.pml_irecv (recvbuf, rlen, MPI_BYTE, remote_leader, tag,
-                                bridge_comm, &req );
+        rc = MCA_PML_CALL(irecv (recvbuf, rlen, MPI_BYTE, remote_leader, tag,
+                                bridge_comm, &req ));
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        rc = mca_pml.pml_send (sendbuf, len, MPI_BYTE, remote_leader, tag, 
-                               MCA_PML_BASE_SEND_STANDARD, bridge_comm );
+        rc = MCA_PML_CALL(send(sendbuf, len, MPI_BYTE, remote_leader, tag, 
+                               MCA_PML_BASE_SEND_STANDARD, bridge_comm ));
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
@@ -1326,7 +1326,7 @@ static int ompi_comm_fill_rest (ompi_communicator_t *comm,
     comm->c_cube_dim = ompi_cube_dim(comm->c_local_group->grp_proc_count);
 
     /* initialize PML stuff on the communicator */
-    if (OMPI_SUCCESS != (ret = mca_pml.pml_add_comm(comm))) {
+    if (OMPI_SUCCESS != (ret = MCA_PML_CALL(add_comm(comm)))) {
         /* some error has happened */
         return ret;
     }

@@ -168,17 +168,17 @@ int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
         }
 
         /* Do a send-recv between the two root procs. to avoid deadlock */
-        err = mca_pml.pml_isend (sbuf, totalcounts, dtype, 0, 
+        err = MCA_PML_CALL(isend (sbuf, totalcounts, dtype, 0, 
                                  MCA_COLL_BASE_TAG_REDUCE_SCATTER,
                                  MCA_PML_BASE_SEND_STANDARD, 
-                                 comm, &req );
+                                 comm, &req ));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
 
-        err = mca_pml.pml_recv(tmpbuf2, totalcounts, dtype, 0,
+        err = MCA_PML_CALL(recv(tmpbuf2, totalcounts, dtype, 0,
                                MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm, 
-                               MPI_STATUS_IGNORE);
+                               MPI_STATUS_IGNORE));
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
@@ -194,9 +194,9 @@ int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
          tmpbuf2. 
       */
       for (i = 1; i < rsize; i++) {
-          err = mca_pml.pml_recv(tmpbuf, totalcounts, dtype, i, 
+          err = MCA_PML_CALL(recv(tmpbuf, totalcounts, dtype, i, 
                                  MCA_COLL_BASE_TAG_REDUCE_SCATTER, comm, 
-                                 MPI_STATUS_IGNORE);
+                                 MPI_STATUS_IGNORE));
           if (MPI_SUCCESS != err) {
               goto exit;
           }
@@ -207,9 +207,9 @@ int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
     }    
     else {
         /* If not root, send data to the root. */
-        err = mca_pml.pml_send(sbuf, totalcounts, dtype, root, 
+        err = MCA_PML_CALL(send(sbuf, totalcounts, dtype, root, 
                                MCA_COLL_BASE_TAG_REDUCE_SCATTER, 
-                               MCA_PML_BASE_SEND_STANDARD, comm);
+                               MCA_PML_BASE_SEND_STANDARD, comm));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -224,16 +224,16 @@ int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
     /***************************************************************************/
     if ( rank == root ) {
         /* sendrecv between the two roots */
-        err = mca_pml.pml_irecv (tmpbuf, totalcounts, dtype, 0, 
+        err = MCA_PML_CALL(irecv (tmpbuf, totalcounts, dtype, 0, 
                                  MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                 comm, &req);
+                                 comm, &req));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
         
-        err = mca_pml.pml_send (tmpbuf2, totalcounts, dtype, 0, 
+        err = MCA_PML_CALL(send (tmpbuf2, totalcounts, dtype, 0, 
                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                MCA_PML_BASE_SEND_STANDARD, comm );
+                                MCA_PML_BASE_SEND_STANDARD, comm ));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -248,17 +248,17 @@ int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
            has already the correct data AND we avoid a potential 
            deadlock here. 
         */
-        err = mca_pml.pml_irecv (rbuf, rcounts[rank], dtype, root, 
+        err = MCA_PML_CALL(irecv (rbuf, rcounts[rank], dtype, root, 
                                  MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                 comm, &req);
+                                 comm, &req));
         
         tcount = 0;
         for ( i=0; i<rsize; i++ ) {
             tbuf = (char *) tmpbuf + tcount *extent;
-            err = mca_pml.pml_isend (tbuf, rcounts[i], dtype,i,
+            err = MCA_PML_CALL(isend (tbuf, rcounts[i], dtype,i,
                                      MCA_COLL_BASE_TAG_REDUCE_SCATTER,
                                      MCA_PML_BASE_SEND_STANDARD, comm,
-                                     reqs++);
+                                     reqs++));
             if ( OMPI_SUCCESS != err ) {
                 goto exit;
             }
@@ -277,9 +277,9 @@ int mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
         }
     }
     else {
-        err = mca_pml.pml_recv (rbuf, rcounts[rank], dtype, root, 
+        err = MCA_PML_CALL(recv (rbuf, rcounts[rank], dtype, root, 
                                 MCA_COLL_BASE_TAG_REDUCE_SCATTER,
-                                comm, MPI_STATUS_IGNORE);
+                                comm, MPI_STATUS_IGNORE));
     }
 
  exit:

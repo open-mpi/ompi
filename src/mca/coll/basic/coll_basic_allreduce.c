@@ -25,6 +25,7 @@
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
 #include "coll_basic.h"
+#include "mca/pml/pml.h"
 
 
 /*
@@ -98,17 +99,17 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
         pml_buffer = tmpbuf - lb;
         
         /* Do a send-recv between the two root procs. to avoid deadlock */
-        err = mca_pml.pml_irecv(rbuf, count, dtype, 0,
+        err = MCA_PML_CALL(irecv(rbuf, count, dtype, 0,
                                 MCA_COLL_BASE_TAG_ALLREDUCE, comm, 
-                                &(req[0]));
+                                &(req[0])));
         if (OMPI_SUCCESS != err) {
             goto exit;
         }
 
-        err = mca_pml.pml_isend (sbuf, count, dtype, 0, 
+        err = MCA_PML_CALL(isend (sbuf, count, dtype, 0, 
                                  MCA_COLL_BASE_TAG_ALLREDUCE,
                                  MCA_PML_BASE_SEND_STANDARD, 
-                                 comm, &(req[1]) );
+                                 comm, &(req[1]) ));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -121,9 +122,9 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
         
         /* Loop receiving and calling reduction function (C or Fortran). */
         for (i = 1; i < rsize; i++) {
-            err = mca_pml.pml_recv(pml_buffer, count, dtype, i, 
+            err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i, 
                                    MCA_COLL_BASE_TAG_ALLREDUCE, comm, 
-                                   MPI_STATUS_IGNORE);
+                                   MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
                 goto exit;
           }
@@ -134,9 +135,9 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
     }    
     else {
         /* If not root, send data to the root. */
-        err = mca_pml.pml_send(sbuf, count, dtype, root, 
+        err = MCA_PML_CALL(send(sbuf, count, dtype, root, 
                                MCA_COLL_BASE_TAG_ALLREDUCE, 
-                               MCA_PML_BASE_SEND_STANDARD, comm);
+                               MCA_PML_BASE_SEND_STANDARD, comm));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -150,17 +151,17 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
     /***************************************************************************/
     if ( rank == root ) {
         /* sendrecv between the two roots */
-        err = mca_pml.pml_irecv (pml_buffer, count, dtype, 0, 
+        err = MCA_PML_CALL(irecv (pml_buffer, count, dtype, 0, 
                                  MCA_COLL_BASE_TAG_ALLREDUCE,
-                                 comm, &(req[1]));
+                                 comm, &(req[1])));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
         
-        err = mca_pml.pml_isend (rbuf, count, dtype, 0, 
+        err = MCA_PML_CALL(isend (rbuf, count, dtype, 0, 
                                 MCA_COLL_BASE_TAG_ALLREDUCE,
                                 MCA_PML_BASE_SEND_STANDARD, comm,
-                                 &(req[0]));
+                                 &(req[0])));
         if ( OMPI_SUCCESS != err ) {
             goto exit;
         }
@@ -176,10 +177,10 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
         */
         if (rsize > 1) {
             for ( i=1; i<rsize; i++ ) {
-                err = mca_pml.pml_isend (pml_buffer, count, dtype,i,
+                err = MCA_PML_CALL(isend (pml_buffer, count, dtype,i,
                                          MCA_COLL_BASE_TAG_ALLREDUCE,
                                          MCA_PML_BASE_SEND_STANDARD, comm,
-                                         &reqs[i - 1]);
+                                         &reqs[i - 1]));
                 if ( OMPI_SUCCESS != err ) {
                     goto exit;
                 }
@@ -192,9 +193,9 @@ int mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
         }
     }
     else {
-        err = mca_pml.pml_recv (rbuf, count, dtype, root, 
+        err = MCA_PML_CALL(recv (rbuf, count, dtype, root, 
                                 MCA_COLL_BASE_TAG_ALLREDUCE,
-                                comm, MPI_STATUS_IGNORE);
+                                comm, MPI_STATUS_IGNORE));
     }
 
  exit:

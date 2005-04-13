@@ -64,7 +64,7 @@ int orte_rml_base_open(void)
 
     /* Open up all available components */
     if ((rc = mca_base_components_open("rml", 0, mca_rml_base_static_components, 
-            &orte_rml_base.rml_components)) != OMPI_SUCCESS) {
+            &orte_rml_base.rml_components, true)) != OMPI_SUCCESS) {
         return rc;
     }
     return OMPI_SUCCESS;

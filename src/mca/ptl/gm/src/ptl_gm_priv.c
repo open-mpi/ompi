@@ -29,6 +29,9 @@
 #include "ptl_gm_priv.h"
 #include "mca/pml/teg/src/pml_teg_proc.h"
 
+static int mca_ptl_gm_send_quick_fin_message( struct mca_ptl_gm_peer_t* ptl_peer,
+					      struct mca_ptl_base_frag_t* frag );
+
 static void mca_ptl_gm_basic_frag_callback( struct gm_port* port, void* context, gm_status_t status )
 {
     mca_ptl_gm_module_t* gm_ptl;

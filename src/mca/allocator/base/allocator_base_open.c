@@ -48,7 +48,7 @@ int mca_allocator_base_open(void)
 
   return mca_base_components_open("allocator", 0, 
                                   mca_allocator_base_static_components, 
-                                  &mca_allocator_base_components);
+                                  &mca_allocator_base_components, true);
 }
 
 /**

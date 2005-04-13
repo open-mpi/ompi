@@ -19,6 +19,7 @@
 
 #include "ompi_config.h"
 #include "include/constants.h"
+#include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"

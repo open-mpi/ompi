@@ -145,7 +145,7 @@ int mca_ptl_base_select(bool enable_progress_threads,
 
   /* Once we have some modules, tell the PML about them */
 
-  mca_pml.pml_add_ptls(&mca_ptl_base_modules_initialized);
+  MCA_PML_CALL(add_ptls(&mca_ptl_base_modules_initialized));
 
   /* All done */
 

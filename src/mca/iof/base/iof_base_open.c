@@ -95,7 +95,8 @@ int orte_iof_base_open(void)
     /* Open up all available components */
     if (OMPI_SUCCESS != 
         mca_base_components_open("iof", 0, mca_iof_base_static_components, 
-                                 &orte_iof_base.iof_components_opened)) {
+                                 &orte_iof_base.iof_components_opened,
+                                 true)) {
       return OMPI_ERROR;
     }
   

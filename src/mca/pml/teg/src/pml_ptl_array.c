@@ -17,6 +17,8 @@
 #include "ompi_config.h"
 
 #include <string.h>
+
+#include "mca/pml/pml.h"
 #include "pml_ptl_array.h"
 
 

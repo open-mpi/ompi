@@ -53,9 +53,9 @@ int mca_coll_basic_gather_intra(void *sbuf, int scount,
     /* Everyone but root sends data and returns. */
 
     if (rank != root) {
-        return mca_pml.pml_send(sbuf, scount, sdtype, root,
+        return MCA_PML_CALL(send(sbuf, scount, sdtype, root,
                                 MCA_COLL_BASE_TAG_GATHER, 
-                                MCA_PML_BASE_SEND_STANDARD, comm);
+                                MCA_PML_BASE_SEND_STANDARD, comm));
     }
 
     /* I am the root, loop receiving the data. */
@@ -73,9 +73,9 @@ int mca_coll_basic_gather_intra(void *sbuf, int scount,
 	    err = ompi_ddt_sndrcv(sbuf, scount, sdtype, ptmp,
                                   rcount, rdtype);
 	} else {
-	    err = mca_pml.pml_recv(ptmp, rcount, rdtype, i,
+	    err = MCA_PML_CALL(recv(ptmp, rcount, rdtype, i,
 				   MCA_COLL_BASE_TAG_GATHER, 
-				   comm, MPI_STATUS_IGNORE);
+				   comm, MPI_STATUS_IGNORE));
 	}
 	if (MPI_SUCCESS != err) {
 	    return err;
@@ -120,9 +120,9 @@ int mca_coll_basic_gather_inter(void *sbuf, int scount,
     }
     else if ( MPI_ROOT != root ) {
         /* Everyone but root sends data and returns. */
-	err = mca_pml.pml_send(sbuf, scount, sdtype, root,
+	err = MCA_PML_CALL(send(sbuf, scount, sdtype, root,
 			       MCA_COLL_BASE_TAG_GATHER, 
-			       MCA_PML_BASE_SEND_STANDARD, comm);
+			       MCA_PML_BASE_SEND_STANDARD, comm));
     }
     else {
         /* I am the root, loop receiving the data. */
@@ -133,9 +133,9 @@ int mca_coll_basic_gather_inter(void *sbuf, int scount,
 
         incr = extent * rcount;
         for (i = 0, ptmp = (char *) rbuf; i < size; ++i, ptmp += incr) {
-	    err = mca_pml.pml_recv(ptmp, rcount, rdtype, i,
+	    err = MCA_PML_CALL(recv(ptmp, rcount, rdtype, i,
 				   MCA_COLL_BASE_TAG_GATHER, 
-				   comm, MPI_STATUS_IGNORE);
+				   comm, MPI_STATUS_IGNORE));
             if (MPI_SUCCESS != err) {
                 return err;
             }

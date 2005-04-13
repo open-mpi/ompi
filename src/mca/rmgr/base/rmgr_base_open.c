@@ -161,7 +161,7 @@ int orte_rmgr_base_open(void)
 
     if (ORTE_SUCCESS != 
         mca_base_components_open("rmgr", 0, mca_rmgr_base_static_components, 
-                                 &orte_rmgr_base.rmgr_components)) {
+                                 &orte_rmgr_base.rmgr_components, true)) {
         return ORTE_ERROR;
     }
 

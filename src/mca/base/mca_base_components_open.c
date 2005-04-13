@@ -58,7 +58,8 @@ static int parse_requested(int mca_param, char ***requested_component_names);
  */
 int mca_base_components_open(const char *type_name, int output_id,
                              const mca_base_component_t **static_components,
-                             ompi_list_t *components_available)
+                             ompi_list_t *components_available,
+                             bool open_dso_components)
 {
   int ret, param;
   ompi_list_item_t *item;
@@ -92,7 +93,7 @@ int mca_base_components_open(const char *type_name, int output_id,
 
   if (OMPI_SUCCESS != 
       mca_base_component_find(NULL, type_name, static_components,
-                              &components_found)) {
+                              &components_found, open_dso_components)) {
     return OMPI_ERROR;
   }
 

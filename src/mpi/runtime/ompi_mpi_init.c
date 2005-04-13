@@ -43,6 +43,7 @@
 #include "mca/allocator/allocator.h"
 #include "mca/mpool/base/base.h"
 #include "mca/mpool/mpool.h"
+#include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
 #include "mca/pml/pml.h"

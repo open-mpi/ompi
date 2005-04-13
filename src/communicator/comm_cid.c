@@ -437,15 +437,15 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
 
         /* local leader exchange their data and determine the overall result
            for both groups */
-        rc = mca_pml.pml_irecv (outbuf, count, MPI_INT, 0, 
+        rc = MCA_PML_CALL(irecv (outbuf, count, MPI_INT, 0, 
                                 OMPI_COMM_ALLREDUCE_TAG
-                                , intercomm, &req );
+                                , intercomm, &req));
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
-        rc = mca_pml.pml_send (tmpbuf, count, MPI_INT, 0,
+        rc = MCA_PML_CALL(send (tmpbuf, count, MPI_INT, 0,
                                OMPI_COMM_ALLREDUCE_TAG, 
-                               MCA_PML_BASE_SEND_STANDARD, intercomm );
+                               MCA_PML_BASE_SEND_STANDARD, intercomm));
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }
@@ -542,15 +542,15 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
     if (local_rank == local_leader ) {
         MPI_Request req;
         
-        rc = mca_pml.pml_irecv ( outbuf, count, MPI_INT, remote_leader,
+        rc = MCA_PML_CALL(irecv ( outbuf, count, MPI_INT, remote_leader,
                                  OMPI_COMM_ALLREDUCE_TAG, 
-                                 bcomm, &req );
+                                 bcomm, &req));
         if ( OMPI_SUCCESS != rc ) {
             goto exit;       
         }
-        rc = mca_pml.pml_send (tmpbuf, count, MPI_INT, remote_leader, 
+        rc = MCA_PML_CALL(send (tmpbuf, count, MPI_INT, remote_leader, 
                                OMPI_COMM_ALLREDUCE_TAG,
-                               MCA_PML_BASE_SEND_STANDARD,  bcomm );
+                               MCA_PML_BASE_SEND_STANDARD,  bcomm));
         if ( OMPI_SUCCESS != rc ) {
             goto exit;
         }

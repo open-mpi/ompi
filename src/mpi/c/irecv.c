@@ -60,7 +60,7 @@ int MPI_Irecv(void *buf, int count, MPI_Datatype type, int source,
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    rc = mca_pml.pml_irecv(buf,count,type,source,tag,comm,request);
+    rc = MCA_PML_CALL(irecv(buf,count,type,source,tag,comm,request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 
