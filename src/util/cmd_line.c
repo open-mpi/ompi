@@ -1121,7 +1121,7 @@ static void set_dest(cmd_line_option_t *option, char *sval)
             *((int*) option->clo_variable_dest) = ival;
             break;
         case OMPI_CMD_LINE_TYPE_BOOL:
-            *((int*) option->clo_variable_dest) = 1;
+            *((bool*) option->clo_variable_dest) = 1;
             break;
         default:
             break;
