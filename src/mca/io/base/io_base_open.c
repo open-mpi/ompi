@@ -82,7 +82,7 @@ int mca_io_base_open(void)
     if (OMPI_SUCCESS != 
         mca_base_components_open("io", mca_io_base_output,
                                  mca_io_base_static_components, 
-                                 &mca_io_base_components_opened)) {
+                                 &mca_io_base_components_opened, true)) {
         return OMPI_ERROR;
     }
     mca_io_base_components_opened_valid = true;

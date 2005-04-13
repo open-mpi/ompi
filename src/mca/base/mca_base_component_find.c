@@ -109,7 +109,8 @@ static ompi_list_t found_files;
  */
 int mca_base_component_find(const char *directory, const char *type, 
                          const mca_base_component_t *static_components[], 
-                         ompi_list_t *found_components)
+                            ompi_list_t *found_components,
+                            bool open_dso_components)
 {
   int i;
   mca_base_component_list_item_t *cli;
@@ -127,8 +128,13 @@ int mca_base_component_find(const char *directory, const char *type,
   }
 
   /* Find any available dynamic components in the specified directory */
-
-  find_dyn_components(directory, type, NULL, found_components);
+  if (open_dso_components) {
+      find_dyn_components(directory, type, NULL, found_components);
+  } else {
+    ompi_output_verbose(40, 0, 
+                        "mca: base: component_find: dso loading for %s MCA components disabled", 
+                        type);
+  }
 
   /* All done */
 

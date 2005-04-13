@@ -239,11 +239,16 @@
  *
  */
 
+/* Thses are unprotected because if the pml is direct called, pml.h
+   has a dependencies on ptl.h and must have ptl.h fully included
+   before pml.h is parsed.  It's weird, but there isn't a better way
+   without doing some strange type forward declarations. */
+#include "mca/mca.h"
+#include "mca/pml/pml.h"
+
 #ifndef MCA_PTL_H
 #define MCA_PTL_H
 
-#include "mca/mca.h"
-#include "mca/pml/pml.h"
 #include "include/types.h"
 
 /*

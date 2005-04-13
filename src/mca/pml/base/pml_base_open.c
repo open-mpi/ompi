@@ -75,7 +75,8 @@ int mca_pml_base_open(void)
 
   if (OMPI_SUCCESS != 
       mca_base_components_open("pml", 0, mca_pml_base_static_components, 
-                               &mca_pml_base_components_available)) {
+                               &mca_pml_base_components_available,
+                               !MCA_pml_DIRECT_CALL)) {
     return OMPI_ERROR;
   }
 

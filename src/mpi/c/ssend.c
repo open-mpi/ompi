@@ -56,7 +56,8 @@ int MPI_Ssend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    rc = mca_pml.pml_send(buf, count, type, dest, tag, MCA_PML_BASE_SEND_SYNCHRONOUS, comm);
+    rc = MCA_PML_CALL(send(buf, count, type, dest, tag, 
+                           MCA_PML_BASE_SEND_SYNCHRONOUS, comm));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 

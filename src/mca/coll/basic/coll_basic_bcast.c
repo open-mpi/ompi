@@ -52,9 +52,9 @@ int mca_coll_basic_bcast_lin_intra(void *buff, int count,
     /* Non-root receive the data. */
 
     if (rank != root) {
-	return mca_pml.pml_recv(buff, count, datatype, root,
+	return MCA_PML_CALL(recv(buff, count, datatype, root,
 				MCA_COLL_BASE_TAG_BCAST, comm, 
-				MPI_STATUS_IGNORE);
+				MPI_STATUS_IGNORE));
     }
 
     /* Root sends data to all others. */
@@ -64,10 +64,10 @@ int mca_coll_basic_bcast_lin_intra(void *buff, int count,
         continue;
       }
 
-      err = mca_pml.pml_isend_init(buff, count, datatype, i, 
+      err = MCA_PML_CALL(isend_init(buff, count, datatype, i, 
                                    MCA_COLL_BASE_TAG_BCAST,
                                    MCA_PML_BASE_SEND_STANDARD, 
-                                   comm, preq++);
+                                   comm, preq++));
       if (MPI_SUCCESS != err) {
         return err;
       }
@@ -76,7 +76,7 @@ int mca_coll_basic_bcast_lin_intra(void *buff, int count,
 
     /* Start your engines.  This will never return an error. */
 
-    mca_pml.pml_start(i, reqs);
+    MCA_PML_CALL(start(i, reqs));
 
     /* Wait for them all.  If there's an error, note that we don't
        care what the error was -- just that there *was* an error.  The
@@ -134,9 +134,9 @@ int mca_coll_basic_bcast_log_intra(void *buff, int count,
     if (vrank > 0) {
 	peer = ((vrank & ~(1 << hibit)) + root) % size;
 
-	err = mca_pml.pml_recv(buff, count, datatype, peer,
+	err = MCA_PML_CALL(recv(buff, count, datatype, peer,
 			       MCA_COLL_BASE_TAG_BCAST,
-			       comm, MPI_STATUS_IGNORE);
+			       comm, MPI_STATUS_IGNORE));
 	if (MPI_SUCCESS != err) {
 	    return err;
 	}
@@ -153,10 +153,10 @@ int mca_coll_basic_bcast_log_intra(void *buff, int count,
 	    peer = (peer + root) % size;
 	    ++nreqs;
 
-	    err = mca_pml.pml_isend_init(buff, count, datatype, peer,
+	    err = MCA_PML_CALL(isend_init(buff, count, datatype, peer,
                                          MCA_COLL_BASE_TAG_BCAST, 
                                          MCA_PML_BASE_SEND_STANDARD, 
-                                         comm, preq++);
+                                         comm, preq++));
 	    if (MPI_SUCCESS != err) {
                 mca_coll_basic_free_reqs(reqs, preq - reqs);
 		return err;
@@ -170,7 +170,7 @@ int mca_coll_basic_bcast_log_intra(void *buff, int count,
 
       /* Start your engines.  This will never return an error. */
 
-      mca_pml.pml_start(nreqs, reqs);
+      MCA_PML_CALL(start(nreqs, reqs));
 
       /* Wait for them all.  If there's an error, note that we don't
          care what the error was -- just that there *was* an error.
@@ -218,17 +218,17 @@ int mca_coll_basic_bcast_lin_inter(void *buff, int count,
     }
     else if ( MPI_ROOT != root ) {
         /* Non-root receive the data. */
-	err = mca_pml.pml_recv(buff, count, datatype, root,
+	err = MCA_PML_CALL(recv(buff, count, datatype, root,
                                MCA_COLL_BASE_TAG_BCAST, comm, 
-                               MPI_STATUS_IGNORE);
+                               MPI_STATUS_IGNORE));
     }
     else {
         /* root section */
         for (i = 0; i < rsize; i++) {
-            err = mca_pml.pml_isend(buff, count, datatype, i, 
+            err = MCA_PML_CALL(isend(buff, count, datatype, i, 
                                     MCA_COLL_BASE_TAG_BCAST,
                                     MCA_PML_BASE_SEND_STANDARD, 
-                                    comm, &(reqs[i]));
+                                    comm, &(reqs[i])));
             if (OMPI_SUCCESS != err) {
                 return err;
             }

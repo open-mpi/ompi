@@ -67,7 +67,7 @@ int orte_rds_base_open(void)
 
     if (ORTE_SUCCESS != 
         mca_base_components_open("rds", 0, mca_rds_base_static_components, 
-                                 &orte_rds_base.rds_components)) {
+                                 &orte_rds_base.rds_components, true)) {
         return ORTE_ERROR;
     }
     OBJ_CONSTRUCT(&orte_rds_base.rds_selected, ompi_list_t);

@@ -59,7 +59,7 @@ int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    rc = mca_pml.pml_isend_init(buf, count, type, dest, tag, MCA_PML_BASE_SEND_BUFFERED, comm, &request);
+    rc = MCA_PML_CALL(isend_init(buf, count, type, dest, tag, MCA_PML_BASE_SEND_BUFFERED, comm, &request));
     if(OMPI_SUCCESS != rc)
         goto error_return;
 
@@ -69,7 +69,7 @@ int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
         goto error_return;
     }
 
-    rc = mca_pml.pml_start(1, &request);
+    rc = MCA_PML_CALL(start(1, &request));
     if(OMPI_SUCCESS != rc) {
         ompi_request_free(&request);
         goto error_return;

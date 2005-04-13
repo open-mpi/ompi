@@ -44,6 +44,6 @@ int MPI_Startall(int count, MPI_Request *requests)
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
-    return mca_pml.pml_start(count, requests);
+    return MCA_PML_CALL(start(count, requests));
 }
 

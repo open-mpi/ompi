@@ -44,14 +44,14 @@ int mca_coll_basic_barrier_intra_lin(struct ompi_communicator_t *comm)
   /* All non-root send & receive zero-length message. */
 
   if (rank > 0) {
-    err = mca_pml.pml_send(NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER, 
-                           MCA_PML_BASE_SEND_STANDARD, comm);
+    err = MCA_PML_CALL(send(NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER, 
+                           MCA_PML_BASE_SEND_STANDARD, comm));
     if (MPI_SUCCESS != err) {
       return err;
     }
 
-    err = mca_pml.pml_recv(NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER, 
-                           comm, MPI_STATUS_IGNORE);
+    err = MCA_PML_CALL(recv(NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER, 
+                           comm, MPI_STATUS_IGNORE));
     if (MPI_SUCCESS != err) {
       return err;
     }
@@ -61,17 +61,17 @@ int mca_coll_basic_barrier_intra_lin(struct ompi_communicator_t *comm)
 
   else {
     for (i = 1; i < size; ++i) {
-      err = mca_pml.pml_recv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE,
+      err = MCA_PML_CALL(recv(NULL, 0, MPI_BYTE, MPI_ANY_SOURCE,
                              MCA_COLL_BASE_TAG_BARRIER, 
-                             comm, MPI_STATUS_IGNORE);
+                             comm, MPI_STATUS_IGNORE));
       if (MPI_SUCCESS != err) {
         return err;
       }
     }
 
     for (i = 1; i < size; ++i) {
-      err = mca_pml.pml_send(NULL, 0, MPI_BYTE, i, MCA_COLL_BASE_TAG_BARRIER, 
-                             MCA_PML_BASE_SEND_STANDARD, comm);
+      err = MCA_PML_CALL(send(NULL, 0, MPI_BYTE, i, MCA_COLL_BASE_TAG_BARRIER, 
+                             MCA_PML_BASE_SEND_STANDARD, comm));
       if (MPI_SUCCESS != err) {
         return err;
       }
@@ -114,9 +114,9 @@ int mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm)
   for (i = dim, mask = 1 << i; i > hibit; --i, mask >>= 1) {
     peer = rank | mask;
     if (peer < size) {
-      err = mca_pml.pml_recv(NULL, 0, MPI_BYTE, peer,
+      err = MCA_PML_CALL(recv(NULL, 0, MPI_BYTE, peer,
                              MCA_COLL_BASE_TAG_BARRIER, 
-                             comm, MPI_STATUS_IGNORE);
+                             comm, MPI_STATUS_IGNORE));
       if (MPI_SUCCESS != err) {
 	return err;
       }
@@ -127,15 +127,15 @@ int mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm)
 
   if (rank > 0) {
     peer = rank & ~(1 << hibit);
-    err = mca_pml.pml_send(NULL, 0, MPI_BYTE, peer, MCA_COLL_BASE_TAG_BARRIER, 
-                           MCA_PML_BASE_SEND_STANDARD, comm);
+    err = MCA_PML_CALL(send(NULL, 0, MPI_BYTE, peer, MCA_COLL_BASE_TAG_BARRIER, 
+                           MCA_PML_BASE_SEND_STANDARD, comm));
     if (MPI_SUCCESS != err) {
       return err;
     }
 
-    err = mca_pml.pml_recv(NULL, 0, MPI_BYTE, peer,
+    err = MCA_PML_CALL(recv(NULL, 0, MPI_BYTE, peer,
                            MCA_COLL_BASE_TAG_BARRIER, 
-                           comm, MPI_STATUS_IGNORE);
+                           comm, MPI_STATUS_IGNORE));
   }
 
   /* Send to children. */
@@ -143,9 +143,9 @@ int mca_coll_basic_barrier_intra_log(struct ompi_communicator_t *comm)
   for (i = hibit + 1, mask = 1 << i; i <= dim; ++i, mask <<= 1) {
     peer = rank | mask;
     if (peer < size) {
-      err = mca_pml.pml_send(NULL, 0, MPI_BYTE, peer,
+      err = MCA_PML_CALL(send(NULL, 0, MPI_BYTE, peer,
                              MCA_COLL_BASE_TAG_BARRIER, 
-                             MCA_PML_BASE_SEND_STANDARD, comm);
+                             MCA_PML_BASE_SEND_STANDARD, comm));
       if (MPI_SUCCESS != err) {
 	return err;
       }

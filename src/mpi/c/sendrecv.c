@@ -66,14 +66,14 @@ int MPI_Sendrecv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 
     if (source != MPI_PROC_NULL) { /* post recv */
-        rc = mca_pml.pml_irecv(recvbuf, recvcount, recvtype,
-                           source, recvtag, comm, &req);
+        rc = MCA_PML_CALL(irecv(recvbuf, recvcount, recvtype,
+                                source, recvtag, comm, &req));
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
     if (dest != MPI_PROC_NULL) { /* send */
-        rc = mca_pml.pml_send(sendbuf, sendcount, sendtype, dest,
-                           sendtag, MCA_PML_BASE_SEND_STANDARD, comm);
+        rc = MCA_PML_CALL(send(sendbuf, sendcount, sendtype, dest,
+                               sendtag, MCA_PML_BASE_SEND_STANDARD, comm));
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 

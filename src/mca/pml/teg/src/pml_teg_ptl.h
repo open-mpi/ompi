@@ -17,6 +17,7 @@
 #ifndef _MCA_PML_BASE_PTL_
 #define _MCA_PML_BASE_PTL_
 
+#include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "threads/condition.h"
 #if defined(c_plusplus) || defined(__cplusplus)

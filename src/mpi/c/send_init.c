@@ -61,7 +61,7 @@ int MPI_Send_init(void *buf, int count, MPI_Datatype type,
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    rc = mca_pml.pml_isend_init(buf,count,type,dest,tag,MCA_PML_BASE_SEND_STANDARD,comm,request);
+    rc = MCA_PML_CALL(isend_init(buf,count,type,dest,tag,MCA_PML_BASE_SEND_STANDARD,comm,request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 

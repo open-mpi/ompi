@@ -63,7 +63,7 @@ int orte_pls_base_open(void)
 
     if (ORTE_SUCCESS != 
         mca_base_components_open("pls", 0, mca_pls_base_static_components, 
-                                 &orte_pls_base.pls_opened)) {
+                                 &orte_pls_base.pls_opened, true)) {
        return ORTE_ERROR;
     }
     orte_pls_base.pls_opened_valid = true;

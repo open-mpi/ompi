@@ -58,17 +58,17 @@ int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
   /* If we're rank 0, then we send our sbuf to the next rank */
 
   if (0 == rank) {
-    return mca_pml.pml_send(sbuf, count, dtype, rank + 1, 
+    return MCA_PML_CALL(send(sbuf, count, dtype, rank + 1, 
                             MCA_COLL_BASE_TAG_EXSCAN,
-                            MCA_PML_BASE_SEND_STANDARD, comm);
+                            MCA_PML_BASE_SEND_STANDARD, comm));
   }
 
   /* If we're the last rank, then just receive the result from the
      prior rank */
 
   else if ((size - 1) == rank) {
-    return mca_pml.pml_recv(rbuf, count, dtype, rank - 1, 
-                            MCA_COLL_BASE_TAG_EXSCAN, comm, MPI_STATUS_IGNORE);
+    return MCA_PML_CALL(recv(rbuf, count, dtype, rank - 1, 
+                            MCA_COLL_BASE_TAG_EXSCAN, comm, MPI_STATUS_IGNORE));
   }
 
   /* Otherwise, get the result from the prior rank, combine it with my
@@ -76,8 +76,8 @@ int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
   
   /* Start the receive for the prior rank's answer */
       
-  err = mca_pml.pml_irecv(rbuf, count, dtype, rank - 1,
-                          MCA_COLL_BASE_TAG_EXSCAN, comm, &req);
+  err = MCA_PML_CALL(irecv(rbuf, count, dtype, rank - 1,
+                          MCA_COLL_BASE_TAG_EXSCAN, comm, &req));
   if (MPI_SUCCESS != err) {
     goto error;
   }
@@ -142,9 +142,9 @@ int mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
 
   /* Send my result off to the next rank */
 
-  err = mca_pml.pml_send(reduce_buffer, count, dtype, rank + 1, 
+  err = MCA_PML_CALL(send(reduce_buffer, count, dtype, rank + 1, 
                          MCA_COLL_BASE_TAG_EXSCAN, 
-                         MCA_PML_BASE_SEND_STANDARD, comm);
+                         MCA_PML_BASE_SEND_STANDARD, comm));
 
   /* Error */
 

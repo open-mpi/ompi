@@ -22,6 +22,7 @@
 #include "event/event.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
+#include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
 

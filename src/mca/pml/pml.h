@@ -488,7 +488,6 @@ struct mca_pml_base_module_1_0_0_t {
 };
 typedef struct mca_pml_base_module_1_0_0_t mca_pml_base_module_1_0_0_t;
 typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;
-OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
 
 /*
  * Macro for use in components that are of type pml v1.0.0
@@ -498,6 +497,22 @@ OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
   MCA_BASE_VERSION_1_0_0, \
   /* pml v1.0 */ \
   "pml", 1, 0, 0
+
+    /*
+     * macro for doing direct call / call through struct
+     */
+#if MCA_pml_DIRECT_CALL
+
+#include "mca/pml/pml_direct_call.h"
+
+#define MCA_PML_CALL_STAMP(a, b) mca_pml_ ## a ## _ ## b
+#define MCA_PML_CALL_EXPANDER(a, b) MCA_PML_CALL_STAMP(a,b)
+#define MCA_PML_CALL(a) MCA_PML_CALL_EXPANDER(MCA_pml_DIRECT_CALL_COMPONENT, a)
+
+#else
+#define MCA_PML_CALL(a) mca_pml.pml_ ## a
+OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
+#endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -59,9 +59,9 @@ int mca_coll_basic_gatherv_intra(void *sbuf, int scount,
      get here if scount > 0 or rank == root. */
 
   if (rank != root) {
-    err = mca_pml.pml_send(sbuf, scount, sdtype, root,
+    err = MCA_PML_CALL(send(sbuf, scount, sdtype, root,
                            MCA_COLL_BASE_TAG_GATHERV, 
-                           MCA_PML_BASE_SEND_STANDARD, comm);
+                           MCA_PML_BASE_SEND_STANDARD, comm));
     return err;
   }
 
@@ -84,9 +84,9 @@ int mca_coll_basic_gatherv_intra(void *sbuf, int scount,
       err = ompi_ddt_sndrcv(sbuf, scount, sdtype,
                             ptmp, rcounts[i], rdtype);
     } else {
-      err = mca_pml.pml_recv(ptmp, rcounts[i], rdtype, i,
+      err = MCA_PML_CALL(recv(ptmp, rcounts[i], rdtype, i,
                              MCA_COLL_BASE_TAG_GATHERV, 
-                             comm, MPI_STATUS_IGNORE);
+                             comm, MPI_STATUS_IGNORE));
     }
 
     if (MPI_SUCCESS != err) {
@@ -134,9 +134,9 @@ int mca_coll_basic_gatherv_inter(void *sbuf, int scount,
   }
   else if ( MPI_ROOT != root ) {
       /* Everyone but root sends data and returns. */
-      err = mca_pml.pml_send(sbuf, scount, sdtype, root,
+      err = MCA_PML_CALL(send(sbuf, scount, sdtype, root,
                              MCA_COLL_BASE_TAG_GATHERV, 
-                             MCA_PML_BASE_SEND_STANDARD, comm);
+                             MCA_PML_BASE_SEND_STANDARD, comm));
   }
   else {
       /* I am the root, loop receiving data. */
@@ -151,9 +151,9 @@ int mca_coll_basic_gatherv_inter(void *sbuf, int scount,
           }
 
           ptmp = ((char *) rbuf) + (extent * disps[i]);
-          err = mca_pml.pml_irecv(ptmp, rcounts[i], rdtype, i,
+          err = MCA_PML_CALL(irecv(ptmp, rcounts[i], rdtype, i,
                                   MCA_COLL_BASE_TAG_GATHERV, 
-                                  comm, &reqs[i]);
+                                  comm, &reqs[i]));
           if (OMPI_SUCCESS != err) {
               return err;
           }

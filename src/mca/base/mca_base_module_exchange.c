@@ -375,7 +375,7 @@ ompi_output(0, "[%d,%d,%d] mca_base_modex_registry_callback: %s-%s-%d-%d receive
         }  /* if value[i]->cnt > 0 */
         
         if(NULL != new_procs) {
-            mca_pml.pml_add_procs(new_procs, new_proc_count);
+            MCA_PML_CALL(add_procs(new_procs, new_proc_count));
             free(new_procs);
         }
     }

@@ -101,8 +101,8 @@ int mca_coll_basic_alltoall_intra(void *sbuf, int scount,
 
     for (i = (rank + 1) % size; i != rank; 
 	 i = (i + 1) % size, ++rreq) {
-	err = mca_pml.pml_irecv_init(prcv + (i * rcvinc), rcount, rdtype, i,
-				     MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq);
+	err = MCA_PML_CALL(irecv_init(prcv + (i * rcvinc), rcount, rdtype, i,
+				     MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
 	if (MPI_SUCCESS != err) {
           mca_coll_basic_free_reqs(req, rreq - req);
           return err;
@@ -113,9 +113,9 @@ int mca_coll_basic_alltoall_intra(void *sbuf, int scount,
 
     for (i = (rank + 1) % size; i != rank; 
 	 i = (i + 1) % size, ++sreq) {
-	err = mca_pml.pml_isend_init(psnd + (i * sndinc), scount, sdtype, i,
+	err = MCA_PML_CALL(isend_init(psnd + (i * sndinc), scount, sdtype, i,
                                      MCA_COLL_BASE_TAG_ALLTOALL, 
-                                     MCA_PML_BASE_SEND_STANDARD, comm, sreq);
+                                     MCA_PML_BASE_SEND_STANDARD, comm, sreq));
 	if (MPI_SUCCESS != err) {
           mca_coll_basic_free_reqs(req, sreq - req);
           return err;
@@ -124,7 +124,7 @@ int mca_coll_basic_alltoall_intra(void *sbuf, int scount,
 
     /* Start your engines.  This will never return an error. */
 
-    mca_pml.pml_start(nreqs, req);
+    MCA_PML_CALL(start(nreqs, req));
 
     /* Wait for them all.  If there's an error, note that we don't
        care what the error was -- just that there *was* an error.  The
@@ -200,8 +200,8 @@ int mca_coll_basic_alltoall_inter(void *sbuf, int scount,
 
     /* Post all receives first */
     for (i = 0; i < size;  i++, ++rreq) {
-	err = mca_pml.pml_irecv(prcv + (i * rcvinc), rcount, rdtype, i,
-				     MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq);
+	err = MCA_PML_CALL(irecv(prcv + (i * rcvinc), rcount, rdtype, i,
+				     MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
 	if (OMPI_SUCCESS != err) {
             return err;
 	}
@@ -209,9 +209,9 @@ int mca_coll_basic_alltoall_inter(void *sbuf, int scount,
 
     /* Now post all sends */
     for (i = 0; i < size; i++, ++sreq) {
-	err = mca_pml.pml_isend(psnd + (i * sndinc), scount, sdtype, i,
+	err = MCA_PML_CALL(isend(psnd + (i * sndinc), scount, sdtype, i,
                                 MCA_COLL_BASE_TAG_ALLTOALL, 
-                                MCA_PML_BASE_SEND_STANDARD, comm, sreq);
+                                MCA_PML_BASE_SEND_STANDARD, comm, sreq));
 	if (OMPI_SUCCESS != err) {
             return err;
 	}

@@ -72,8 +72,6 @@ extern mca_pml_teg_t mca_pml_teg;
  * PML module functions.
  */
 
-OMPI_COMP_EXPORT extern mca_pml_base_component_1_0_0_t mca_pml_teg_component;
-
 
 extern int mca_pml_teg_component_open(void);
 extern int mca_pml_teg_component_close(void);

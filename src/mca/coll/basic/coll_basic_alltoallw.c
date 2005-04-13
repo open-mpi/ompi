@@ -83,8 +83,8 @@ int mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
       continue;
 
     prcv = ((char *) rbuf) + rdisps[i];
-    err = mca_pml.pml_irecv_init(prcv, rcounts[i], rdtypes[i],
-                                 i, MCA_COLL_BASE_TAG_ALLTOALLW, comm, preq++);
+    err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtypes[i],
+                                 i, MCA_COLL_BASE_TAG_ALLTOALLW, comm, preq++));
     ++nreqs;
     if (MPI_SUCCESS != err) {
       mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs, nreqs);
@@ -99,9 +99,9 @@ int mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
       continue;
 
     psnd = ((char *) sbuf) + sdisps[i];
-    err = mca_pml.pml_isend_init(psnd, scounts[i], sdtypes[i],
+    err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtypes[i],
                                  i, MCA_COLL_BASE_TAG_ALLTOALLW, 
-                                 MCA_PML_BASE_SEND_STANDARD, comm, preq++);
+                                 MCA_PML_BASE_SEND_STANDARD, comm, preq++));
     ++nreqs;
     if (MPI_SUCCESS != err) {
       mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs, nreqs);
@@ -111,7 +111,7 @@ int mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
 
   /* Start your engines.  This will never return an error. */
 
-  mca_pml.pml_start(nreqs, comm->c_coll_basic_data->mccb_reqs);
+  MCA_PML_CALL(start(nreqs, comm->c_coll_basic_data->mccb_reqs));
 
   /* Wait for them all.  If there's an error, note that we don't care
      what the error was -- just that there *was* an error.  The PML
@@ -166,9 +166,9 @@ int mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
     /* Post all receives first -- a simple optimization */
     for (i = 0; i < size; ++i) {
         prcv = ((char *) rbuf) + rdisps[i];
-        err = mca_pml.pml_irecv_init(prcv, rcounts[i], rdtypes[i],
+        err = MCA_PML_CALL(irecv_init(prcv, rcounts[i], rdtypes[i],
                                      i, MCA_COLL_BASE_TAG_ALLTOALLW, 
-                                     comm, preq++);
+                                     comm, preq++));
         if (OMPI_SUCCESS != err) {
             mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs, nreqs);
             return err;
@@ -178,9 +178,9 @@ int mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
     /* Now post all sends */
     for (i = 0; i < size; ++i) {
         psnd = ((char *) sbuf) + sdisps[i];
-        err = mca_pml.pml_isend_init(psnd, scounts[i], sdtypes[i],
+        err = MCA_PML_CALL(isend_init(psnd, scounts[i], sdtypes[i],
                                      i, MCA_COLL_BASE_TAG_ALLTOALLW, 
-                                     MCA_PML_BASE_SEND_STANDARD, comm, preq++);
+                                     MCA_PML_BASE_SEND_STANDARD, comm, preq++));
         if (OMPI_SUCCESS != err) {
             mca_coll_basic_free_reqs(comm->c_coll_basic_data->mccb_reqs, nreqs);
             return err;
@@ -188,7 +188,7 @@ int mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
     }
     
     /* Start your engines.  This will never return an error. */
-    mca_pml.pml_start(nreqs, comm->c_coll_basic_data->mccb_reqs);
+    MCA_PML_CALL(start(nreqs, comm->c_coll_basic_data->mccb_reqs));
     
     /* Wait for them all.  If there's an error, note that we don't care
        what the error was -- just that there *was* an error.  The PML

@@ -68,7 +68,7 @@ int mca_coll_base_open(void)
   if (OMPI_SUCCESS != 
       mca_base_components_open("coll", mca_coll_base_output,
                                mca_coll_base_static_components, 
-                               &mca_coll_base_components_opened)) {
+                               &mca_coll_base_components_opened, true)) {
     return OMPI_ERROR;
   }
   mca_coll_base_components_opened_valid = true;

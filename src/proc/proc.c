@@ -260,7 +260,7 @@ int ompi_proc_get_proclist (orte_buffer_t* buf, int proclistsize, ompi_proc_t **
             return rc;
         plist[i] = ompi_proc_find_and_add ( &name, &isnew );
         if(isnew) {
-            mca_pml.pml_add_procs(&plist[i], 1);
+            MCA_PML_CALL(add_procs(&plist[i], 1));
         }
     }
     *proclist = plist;

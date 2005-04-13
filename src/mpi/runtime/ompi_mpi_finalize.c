@@ -38,10 +38,10 @@
 
 #include "mca/base/base.h"
 #include "mca/base/mca_base_module_exchange.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/base.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/base.h"
+#include "mca/ptl/ptl.h"
+#include "mca/ptl/base/base.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "mca/topo/topo.h"

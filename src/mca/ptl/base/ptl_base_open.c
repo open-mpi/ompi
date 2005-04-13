@@ -21,6 +21,7 @@
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
+#include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/base.h"
 
@@ -54,7 +55,7 @@ int mca_ptl_base_open(void)
 
   if (OMPI_SUCCESS != 
       mca_base_components_open("ptl", 0, mca_ptl_base_static_components, 
-                               &mca_ptl_base_components_opened)) {
+                               &mca_ptl_base_components_opened, true)) {
     return OMPI_ERROR;
   }
 

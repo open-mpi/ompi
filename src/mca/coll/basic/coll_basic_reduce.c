@@ -55,9 +55,9 @@ int mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
   /* If not root, send data to the root. */
 
   if (rank != root) {
-    err = mca_pml.pml_send(sbuf, count, dtype, root, 
+    err = MCA_PML_CALL(send(sbuf, count, dtype, root, 
                            MCA_COLL_BASE_TAG_REDUCE, 
-                           MCA_PML_BASE_SEND_STANDARD, comm);
+                           MCA_PML_BASE_SEND_STANDARD, comm));
     return err;
   }
 
@@ -202,8 +202,8 @@ int mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
   if (rank == (size - 1)) {
     err = ompi_ddt_sndrcv(sbuf, count, dtype, rbuf, count, dtype);
   } else {
-    err = mca_pml.pml_recv(rbuf, count, dtype, size - 1,
-                           MCA_COLL_BASE_TAG_REDUCE, comm, MPI_STATUS_IGNORE);
+    err = MCA_PML_CALL(recv(rbuf, count, dtype, size - 1,
+                           MCA_COLL_BASE_TAG_REDUCE, comm, MPI_STATUS_IGNORE));
   }
   if (MPI_SUCCESS != err) {
     if (NULL != free_buffer) {
@@ -218,9 +218,9 @@ int mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
     if (rank == i) {
       inbuf = sbuf;
     } else {
-      err = mca_pml.pml_recv(pml_buffer, count, dtype, i, 
+      err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i, 
                              MCA_COLL_BASE_TAG_REDUCE, comm, 
-                             MPI_STATUS_IGNORE);
+                             MPI_STATUS_IGNORE));
       if (MPI_SUCCESS != err) {
 	if (NULL != free_buffer) {
 	  free(free_buffer);
@@ -320,9 +320,9 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
              peer = (peer + root) % size;
           }
 
-          err = mca_pml.pml_send( snd_buffer, count,
+          err = MCA_PML_CALL(send( snd_buffer, count,
                                   dtype, peer, MCA_COLL_BASE_TAG_REDUCE, 
-                                  MCA_PML_BASE_SEND_STANDARD, comm);
+                                  MCA_PML_BASE_SEND_STANDARD, comm));
           if (MPI_SUCCESS != err) {
              if (NULL != free_buffer) {
                 free(free_buffer);
@@ -354,9 +354,9 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
             the data in the pml_buffer and then apply to operation
             between this buffer and the user provided data. */
 
-         err = mca_pml.pml_recv( rcv_buffer, count, dtype, peer,
+         err = MCA_PML_CALL(recv( rcv_buffer, count, dtype, peer,
                                  MCA_COLL_BASE_TAG_REDUCE, comm,
-                                 MPI_STATUS_IGNORE );
+                                 MPI_STATUS_IGNORE ));
          if (MPI_SUCCESS != err) {
             if (NULL != free_buffer) {
               free(free_buffer);
@@ -396,14 +396,14 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
       if (root == rank) {
          ompi_ddt_sndrcv( snd_buffer, count, dtype, rbuf, count, dtype);
       } else {
-         err = mca_pml.pml_send( snd_buffer, count,
+         err = MCA_PML_CALL(send( snd_buffer, count,
                                  dtype, root, MCA_COLL_BASE_TAG_REDUCE,
-                                 MCA_PML_BASE_SEND_STANDARD, comm);
+                                 MCA_PML_BASE_SEND_STANDARD, comm));
       }
    } else if (rank == root) {
-      err = mca_pml.pml_recv( rcv_buffer, count, dtype, 0, 
+      err = MCA_PML_CALL(recv( rcv_buffer, count, dtype, 0, 
                               MCA_COLL_BASE_TAG_REDUCE,
-                              comm, MPI_STATUS_IGNORE);
+                              comm, MPI_STATUS_IGNORE));
       if( rcv_buffer != rbuf ) {
          ompi_op_reduce(op, rcv_buffer, rbuf, count, dtype);
       }
@@ -449,9 +449,9 @@ int mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
   }
   else if ( MPI_ROOT != root ) {
       /* If not root, send data to the root. */
-      err = mca_pml.pml_send(sbuf, count, dtype, root, 
+      err = MCA_PML_CALL(send(sbuf, count, dtype, root, 
                              MCA_COLL_BASE_TAG_REDUCE, 
-                             MCA_PML_BASE_SEND_STANDARD, comm);
+                             MCA_PML_BASE_SEND_STANDARD, comm));
   }
   else {
       /* Root receives and reduces messages  */
@@ -466,9 +466,9 @@ int mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
       
 
       /* Initialize the receive buffer. */
-      err = mca_pml.pml_recv(rbuf, count, dtype, 0,
+      err = MCA_PML_CALL(recv(rbuf, count, dtype, 0,
                              MCA_COLL_BASE_TAG_REDUCE, comm, 
-                             MPI_STATUS_IGNORE);
+                             MPI_STATUS_IGNORE));
       if (MPI_SUCCESS != err) {
           if (NULL != free_buffer) {
               free(free_buffer);
@@ -478,9 +478,9 @@ int mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
 
       /* Loop receiving and calling reduction function (C or Fortran). */
       for (i = 1; i < size; i++) {
-          err = mca_pml.pml_recv(pml_buffer, count, dtype, i, 
+          err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i, 
                                  MCA_COLL_BASE_TAG_REDUCE, comm, 
-                                 MPI_STATUS_IGNORE);
+                                 MPI_STATUS_IGNORE));
           if (MPI_SUCCESS != err) {
               if (NULL != free_buffer) {
                   free(free_buffer);

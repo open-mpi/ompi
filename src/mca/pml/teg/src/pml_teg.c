@@ -28,6 +28,7 @@
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "pml_teg.h"
+#include "pml_teg_component.h"
 #include "pml_teg_proc.h"
 #include "pml_teg_ptl.h"
 #include "pml_teg_recvreq.h"

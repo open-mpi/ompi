@@ -57,6 +57,6 @@ int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status)
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, "MPI_Probe");
     }
 
-    rc = mca_pml.pml_probe(source, tag, comm, status);
+    rc = MCA_PML_CALL(probe(source, tag, comm, status));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, "MPI_Probe");
 }

@@ -63,7 +63,7 @@ int MPI_Recv(void *buf, int count, MPI_Datatype type, int source,
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 
-    rc = mca_pml.pml_recv(buf, count, type, source, tag, comm, status);
+    rc = MCA_PML_CALL(recv(buf, count, type, source, tag, comm, status));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
 }
 

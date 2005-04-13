@@ -55,9 +55,9 @@ int mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
      rcount > 0 or rank == root. */
 
   if (rank != root) {
-    err = mca_pml.pml_recv(rbuf, rcount, rdtype,
+    err = MCA_PML_CALL(recv(rbuf, rcount, rdtype,
                            root, MCA_COLL_BASE_TAG_SCATTERV, 
-                           comm, MPI_STATUS_IGNORE);
+                           comm, MPI_STATUS_IGNORE));
     return err;
   }
 
@@ -79,9 +79,9 @@ int mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
     if (i == rank) {
       err = ompi_ddt_sndrcv(ptmp, scounts[i], sdtype, rbuf, rcount, rdtype);
     } else {
-      err = mca_pml.pml_send(ptmp, scounts[i], sdtype, i, 
+      err = MCA_PML_CALL(send(ptmp, scounts[i], sdtype, i, 
                              MCA_COLL_BASE_TAG_SCATTERV, 
-                             MCA_PML_BASE_SEND_STANDARD, comm);
+                             MCA_PML_BASE_SEND_STANDARD, comm));
     }
     if (MPI_SUCCESS != err) {
       return err;
@@ -130,9 +130,9 @@ int mca_coll_basic_scatterv_inter(void *sbuf, int *scounts,
   }
   else if ( MPI_ROOT != root ) {
       /* If not root, receive data. */
-      err = mca_pml.pml_recv(rbuf, rcount, rdtype,
+      err = MCA_PML_CALL(recv(rbuf, rcount, rdtype,
                              root, MCA_COLL_BASE_TAG_SCATTERV, 
-                             comm, MPI_STATUS_IGNORE);
+                             comm, MPI_STATUS_IGNORE));
   }
   else {
       /* I am the root, loop sending data. */
@@ -147,9 +147,9 @@ int mca_coll_basic_scatterv_inter(void *sbuf, int *scounts,
           }
 
           ptmp = ((char *) sbuf) + (extent * disps[i]);
-          err = mca_pml.pml_isend(ptmp, scounts[i], sdtype, i, 
+          err = MCA_PML_CALL(isend(ptmp, scounts[i], sdtype, i, 
                                   MCA_COLL_BASE_TAG_SCATTERV, 
-                                  MCA_PML_BASE_SEND_STANDARD, comm, reqs++);
+                                  MCA_PML_BASE_SEND_STANDARD, comm, reqs++));
           if (MPI_SUCCESS != err) {
               return err;
           }
