@@ -28,7 +28,7 @@ incdir = ${installdir}/include
 
 # list of components to build with the c compiler
 C_SUBDIRS = \
-        ompid
+        orted
 
 # list of components to build with the cpp compiler
 # (because of the problem with OBJ_CLASS_INSTANCE)
