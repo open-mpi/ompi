@@ -86,6 +86,11 @@ extern "C" {
      *   ompi_setenv("foo", "bar", true, &environ);
      * \endcode
      *
+     * NOTE: If you use the real environ, ompi_setenv() will turn
+     * around and perform putenv() to put the value in the
+     * environment.  This may very well lead to a memory leak, so its
+     * use is strongly discouraged.
+     *
      * It is also permissable to call this function with an empty \em
      * env, as long as it is pre-initialized with NULL:
      *
