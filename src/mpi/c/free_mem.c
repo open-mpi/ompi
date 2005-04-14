@@ -45,8 +45,7 @@ int MPI_Free_mem(void *baseptr)
     }
 
     /* For this release, we're just calling malloc(). */
-
-    free(*((void **) baseptr));
+    free( baseptr );
 
     /* All done */
 
