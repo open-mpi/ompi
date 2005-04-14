@@ -236,7 +236,6 @@ int main(int argc, char *argv[], char* env[])
 
     /* Spawn the job */
     
-    jobid = ORTE_JOBID_MAX; /* initialize jobid so that one is allocated */
     rc = orte_rmgr.spawn(apps, num_apps, &jobid, job_state_callback);
     if (ORTE_SUCCESS != rc) {
         /* JMS show_help */
