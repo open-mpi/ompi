@@ -109,7 +109,7 @@ static int orte_rmgr_urm_create(
     int rc;
 
     /* allocate a jobid  */
-    if (*jobid == ORTE_JOBID_MAX && ORTE_SUCCESS != (rc = orte_ns.create_jobid(jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
