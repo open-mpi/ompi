@@ -560,6 +560,8 @@
 
 #define OMPI_WANT_MPI2_ONE_SIDED 1
 
+#define MCA_pml_DIRECT_CALL 0
+
 #include "ompi_config_bottom.h"
 #endif /* OMPI_CONFIG_H */
 
