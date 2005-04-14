@@ -386,7 +386,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
             for (j=0; j < i; j++) OBJ_RELEASE(apps[j]);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        asprintf(&(apps[i]->env[0]), "OMPI_PARENT_PORT=%s", envvarname, port_name);
+        asprintf(&(apps[i]->env[0]), "OMPI_PARENT_PORT=%s", port_name);
         free(envvarname);
         apps[i]->env[1] = NULL;
         /* Check for the 'wdir' and later potentially for the
@@ -433,7 +433,6 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 /**********************************************************************/
 int ompi_comm_dyn_init (void)
 {
-    orte_jobid_t jobid;
     char *envvarname=NULL, *port_name=NULL;
     char *oob_port=NULL;
     int root=0, send_first=1, rc;
