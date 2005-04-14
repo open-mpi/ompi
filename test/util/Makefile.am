@@ -24,7 +24,8 @@ check_PROGRAMS = \
 	orte_sys_info \
 	orte_os_create_dirpath \
         orte_session_dir \
-	ompi_argv 
+	ompi_argv \
+        ompi_basename
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -46,6 +47,12 @@ ompi_argv_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.a 
 ompi_argv_DEPENDENCIES = $(ompi_argv_LDADD)
+
+ompi_basename_SOURCES = ompi_basename.c
+ompi_basename_LDADD = \
+        $(top_builddir)/src/libmpi.la \
+        $(top_builddir)/test/support/libsupport.a 
+ompi_basename_DEPENDENCIES = $(ompi_basename_LDADD)
 
 orte_os_path_SOURCES = orte_os_path.c
 orte_os_path_LDADD = \

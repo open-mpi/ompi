@@ -28,6 +28,7 @@ noinst_LTLIBRARIES = libutil.la
 
 headers = \
     argv.h \
+    basename.h \
     bit_ops.h \
     cmd_line.h \
     environ.h \
@@ -55,6 +56,7 @@ headers = \
 libutil_la_SOURCES = \
     $(headers) \
     argv.c \
+    basename.c \
     cmd_line.c \
     environ.c \
     few.c \
