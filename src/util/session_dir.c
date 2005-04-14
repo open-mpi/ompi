@@ -13,9 +13,6 @@
  * 
  * $HEADER$
  *
- *  $Id: tmpdir.c $
- *
- *  Function: - 
  */
 
 #include "orte_config.h"
@@ -45,28 +42,6 @@
 #include <dirent.h>
 #endif
 
-/*  
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETDB_H
-#include <netdb.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#include <errno.h>
-#ifdef HAVE_DIRENT_H 
-#include <dirent.h>
-#endif
-   
-#include <orte_debug.h>
-#include <orte_internal.h>
-#include <terror.h>
-#include <typical.h>
-#include <etc_misc.h>
-*/
-
 #include "include/constants.h"
 
 #include "util/univ_info.h"
@@ -76,6 +51,7 @@
 #include "util/os_path.h"
 #include "util/os_create_dirpath.h"
 
+#include "mca/errmgr/errmgr.h"
 #include "runtime/runtime.h"
 
 #include "util/session_dir.h"
@@ -375,42 +351,77 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
 
 
 int
-orte_session_dir_finalize()
+orte_session_dir_finalize(orte_process_name_t *proc)
 {
+    int rc;
     char *tmp;
+    char *job, *job_session_dir, *vpid, *proc_session_dir;
     
     /* need to setup the top_session_dir with the prefix */
     tmp = strdup(orte_os_path(false,
             orte_process_info.tmpdir_base,
             orte_process_info.top_session_dir, NULL));
     
-    orte_dir_empty(orte_process_info.proc_session_dir);
-    orte_dir_empty(orte_process_info.job_session_dir);
+    /* define the proc and job session directories for this process */
+    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid_string(&job, proc))) {
+        ORTE_ERROR_LOG(rc);
+        free(tmp);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_ns.get_vpid_string(&vpid, proc))) {
+        ORTE_ERROR_LOG(rc);
+        free(tmp);
+        free(job);
+        return rc;
+    }
+    
+    if (0 > asprintf(&job_session_dir, "%s%s%s",
+                        orte_process_info.universe_session_dir,
+                        orte_system_info.path_sep, job)) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        free(tmp);
+        free(job);
+        free(vpid);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    if (0 > asprintf(&proc_session_dir, "%s%s%s",
+                        job_session_dir,
+                        orte_system_info.path_sep, vpid)) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        free(tmp);
+        free(job);
+        free(vpid);
+        free(job_session_dir);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    orte_dir_empty(proc_session_dir);
+    orte_dir_empty(job_session_dir);
     orte_dir_empty(orte_process_info.universe_session_dir);
     orte_dir_empty(tmp);
 
-    if (orte_is_empty(orte_process_info.proc_session_dir)) {
+    if (orte_is_empty(proc_session_dir)) {
     	if (orte_debug_flag) {
     	    ompi_output(0, "sess_dir_finalize: found proc session dir empty - deleting");
     	}
-    	rmdir(orte_process_info.proc_session_dir);
+    	rmdir(proc_session_dir);
     } else {
     	if (orte_debug_flag) {
     	    ompi_output(0, "sess_dir_finalize: proc session dir not empty - leaving");
     	}
-    	return OMPI_SUCCESS;
+        goto CLEANUP;
     }
 
-    if (orte_is_empty(orte_process_info.job_session_dir)) {
+    if (orte_is_empty(job_session_dir)) {
     	if (orte_debug_flag) {
     	    ompi_output(0, "sess_dir_finalize: found job session dir empty - deleting");
     	}
-    	rmdir(orte_process_info.job_session_dir);
+    	rmdir(job_session_dir);
     } else {
     	if (orte_debug_flag) {
     	    ompi_output(0, "sess_dir_finalize: job session dir not empty - leaving");
     	}
-    	return OMPI_SUCCESS;
+        goto CLEANUP;
     }
 
     if (orte_is_empty(orte_process_info.universe_session_dir)) {
@@ -422,7 +433,7 @@ orte_session_dir_finalize()
     	if (orte_debug_flag) {
     	    ompi_output(0, "sess_dir_finalize: univ session dir not empty - leaving");
     	}
-    	return OMPI_SUCCESS;
+    	goto CLEANUP;
     }
 
     if (orte_is_empty(tmp)) {
@@ -436,7 +447,12 @@ orte_session_dir_finalize()
     	}
     }
 
+CLEANUP:
     free(tmp);
+    free(job);
+    free(vpid);
+    free(job_session_dir);
+    free(proc_session_dir);
     return OMPI_SUCCESS;
 }
 

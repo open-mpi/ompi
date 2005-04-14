@@ -84,6 +84,8 @@
  */
 #include "orte_config.h"
 
+#include "mca/ns/ns_types.h"
+
 /** @param create A boolean variable that indicates whether or not to
  *                create the specified directory. If set to "false",
  *                the function only checks to see if an existing
@@ -141,4 +143,4 @@ OMPI_DECLSPEC int orte_session_dir(bool create, char *prefix, char *user, char *
  * @retval OMPI_ERROR If something prevents the tree from being
  *                properly cleaned up.
  */
-OMPI_DECLSPEC int orte_session_dir_finalize(void);
+OMPI_DECLSPEC int orte_session_dir_finalize(orte_process_name_t *proc);
