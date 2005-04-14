@@ -430,7 +430,7 @@ int
 ompi_progress_unregister(ompi_progress_callback_t cb)
 {
     size_t i;
-    int ret = OMPI_ERR_NOT_FOUND;;
+    int ret = OMPI_ERR_NOT_FOUND;
 
 #if OMPI_HAVE_THREAD_SUPPORT
     ompi_atomic_lock(&progress_lock);
@@ -444,19 +444,21 @@ ompi_progress_unregister(ompi_progress_callback_t cb)
         }
     }
     
-    /* If callbacks_len  is 0, we're not goig to do anything
-       interesting anyway, so skip.  If callbacks_len is 1, it
-       will soon be 0, so no need to do any repacking.  size_t
-       can be unsigned, so 0 - 1 is bad for a loop condition :).
-     */
-    if (callbacks_len > 1 ) {
-        /* now tightly pack the array */
-        for ( ; i < callbacks_len - 1 ; ++i) {
-            callbacks[i] = callbacks[i + 1];
+    /* If we found the function we're unregistering: If callbacks_len
+       is 0, we're not goig to do anything interesting anyway, so
+       skip.  If callbacks_len is 1, it will soon be 0, so no need to
+       do any repacking.  size_t can be unsigned, so 0 - 1 is bad for
+       a loop condition :). */
+    if (OMPI_SUCCESS == ret) {
+        if (callbacks_len > 1 ) {
+            /* now tightly pack the array */
+            for ( ; i < callbacks_len - 1 ; ++i) {
+                callbacks[i] = callbacks[i + 1];
+            }
         }
+        callbacks[callbacks_len - 1] = NULL;
+        callbacks_len--;
     }
-    callbacks[callbacks_len - 1] = NULL;
-    callbacks_len--;
 
 #if OMPI_HAVE_THREAD_SUPPORT
     ompi_atomic_unlock(&progress_lock);
