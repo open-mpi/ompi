@@ -34,7 +34,6 @@
 #include "mca/base/mca_base_param.h"
 #include "mca/rml/rml.h"
 
-extern char **environ;
 
 /*
  * Public string showing the pls ompi_rsh component version number
