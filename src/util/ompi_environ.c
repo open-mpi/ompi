@@ -91,6 +91,7 @@ int ompi_setenv(const char *name, const char *value, bool overwrite,
     int i;
     char *newvalue, *compare;
     size_t len;
+    extern char **environ;
 
     /* Make the new value */
 
@@ -110,6 +111,18 @@ int ompi_setenv(const char *name, const char *value, bool overwrite,
     } else if (NULL == *env) {
         i = 0;
         ompi_argv_append(&i, env, newvalue);
+        return OMPI_SUCCESS;
+    }
+
+    /* If this is the "environ" array, use putenv */
+
+    if (*env == environ) {
+        /* THIS IS POTENTIALLY A MEMORY LEAK!  But I am doing it
+           because so that we don't violate the law of least
+           astonishmet for OMPI developers (i.e., those that don't
+           check the return code of ompi_setenv() and notice that we
+           returned an error if you passed in the real environ) */
+        putenv(newvalue);
         return OMPI_SUCCESS;
     }
 

@@ -58,7 +58,6 @@ libutil_la_SOURCES = \
     argv.c \
     basename.c \
     cmd_line.c \
-    environ.c \
     few.c \
     if.c \
     malloc.c \
@@ -69,6 +68,7 @@ libutil_la_SOURCES = \
     proc_info.c \
     sys_info.c \
     univ_info.c \
+    ompi_environ.c \
     os_path.c \
     os_create_dirpath.c \
     pow2.c \
