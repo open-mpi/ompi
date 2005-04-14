@@ -27,6 +27,7 @@
 #include "include/orte_constants.h"
 #include "util/argv.h"
 #include "util/path.h"
+#include "util/basename.h"
 #include "mca/pls/pls.h"
 #include "pls_rsh.h"
 #include "mca/pls/rsh/pls-rsh-version.h"
@@ -90,7 +91,7 @@ orte_pls_rsh_component_t mca_pls_rsh_component = {
 /**
  *  Convience functions to lookup MCA parameter values.
  */
-                                                                                                  
+
 static  int orte_pls_rsh_param_register_int(
     const char* param_name,
     int default_value)
@@ -100,8 +101,8 @@ static  int orte_pls_rsh_param_register_int(
     mca_base_param_lookup_int(id,&param_value);
     return param_value;
 }
-                                                                                                  
-                                                                                                  
+
+
 static char* orte_pls_rsh_param_register_string(
     const char* param_name,
     const char* default_value)
@@ -111,12 +112,14 @@ static char* orte_pls_rsh_param_register_string(
     mca_base_param_lookup_string(id, &param_value);
     return param_value;
 }
-                                                                                                  
-                                                                                                  
+
 
 int orte_pls_rsh_component_open(void)
 {
     char* param;
+    char *bname;
+    size_t i;
+
     /* initialize globals */
     OBJ_CONSTRUCT(&mca_pls_rsh_component.lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_pls_rsh_component.cond, ompi_condition_t);
@@ -141,6 +144,26 @@ int orte_pls_rsh_component_open(void)
     mca_pls_rsh_component.argv = ompi_argv_split(param, ' ');
     mca_pls_rsh_component.argc = ompi_argv_count(mca_pls_rsh_component.argv);
     if (mca_pls_rsh_component.argc > 0) {
+        /* If the agent is ssh, and debug was not selected, then
+           automatically add "-x" */
+
+        bname = ompi_basename(mca_pls_rsh_component.argv[0]);
+        if (NULL != bname && 0 == strcmp(bname, "ssh") && 
+            !mca_pls_rsh_component.debug) {
+            for (i = 1; NULL != mca_pls_rsh_component.argv[i]; ++i) {
+                if (0 == strcasecmp("-x", mca_pls_rsh_component.argv[i])) {
+                    break;
+                }
+            }
+            if (NULL == mca_pls_rsh_component.argv[i]) {
+                ompi_argv_append(&mca_pls_rsh_component.argc, 
+                                 &mca_pls_rsh_component.argv, "-x");
+            }
+        }
+        if (NULL != bname) {
+            free(bname);
+        }
+
         mca_pls_rsh_component.path = strdup(mca_pls_rsh_component.argv[0]);
         return ORTE_SUCCESS;
     } else {
