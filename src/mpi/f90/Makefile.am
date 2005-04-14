@@ -21,6 +21,11 @@ SUBDIRS = scripts
 
 AM_FCFLAGS = -I$(top_srcdir)/include $(OMPI_FC_MODULE_FLAG) .
 
+# We have to EXTRA_DIST mpi_kinds.f90 because there is no explicit
+# Automake rule to compile this file.
+
+EXTRA_DIST = mpi_kinds.f90
+
 # Override the default f90 rules because we have to insert
 # $(FCFLAGS_f90) right before the source filename.  This is necessary
 # for cases where the compiler expects source files to end in .f, and
@@ -36,32 +41,44 @@ AM_FCFLAGS = -I$(top_srcdir)/include $(OMPI_FC_MODULE_FLAG) .
 .f90.lo:
 	$(LTFCCOMPILE) -c -o $@ $(FCFLAGS_f90) $<
 
+# Do different things if the top-level configure decided that we're
+# going to build F90 bindings or not.
+
 lib_LTLIBRARIES =
 if OMPI_WANT_F90_BINDINGS
+
+# Add the f90 library to the list of libraries to build
+
 lib_LTLIBRARIES += libmpi_f90.la
+
+# Ensure that the F90 interfaces are re-generated based on the values
+# that come in from configure
+
+mpi-f90-interfaces.h: fortran_kinds.sh
+
+# Ensure that the mpi_kinds F90 module is generated before compiling
+# any of the sources.  The *.lo file is a side-effect of generating
+# the F90 module file -- we can't know ahead of time the exact
+# filename of the generated F90 module file :-(, so we can only depend
+# on the libtool .lo file.
+
+$(libmpi_f90_la_SOURCES) $(nodist_libmpi_f90_la_SOURCES): mpi_kinds.lo
+
+# Run scripts to generate the f90 source files.  We only need to
+# generate the .f90 files once, so the "test" checks to see if the
+# file exists before running the script.  However, the
+# mpi-f90-interfaces.h file may need to be generated multiple times
+# (even if it already exists), such as if someone re-runs configure
+# and changes the value fortran_kinds.sh.
+
+$(nodist_libmpi_f90_la_SOURCES):
+	@ if test ! -r $@ -o "$@" = "mpi-f90-interfaces.h"; then \
+	    echo $(srcdir)/scripts/$@.sh > $@ ; \
+	    $(srcdir)/scripts/$@.sh > $@ ; \
+	fi
 else
 lib_LTLIBRARIES +=
 endif
-
-#
-# Force the mpi_kinds module to be generated before trying to compile
-# any of the library files
-#
-
-$(libmpi_f90_la_SOURCES): mpi_kinds.o
-$(nodist_libmpi_f90_la_SOURCES): mpi_kinds.o
-
-#
-# Print a warning indicating that compiling mpi.f90 can take a while
-#
-
-mpi.lo: long-warning
-long-warning:
-	@echo "***************************************************************"
-	@echo "* Compiling the mpi.f90 file may take a few minutes."
-	@echo "* This is quite normal -- do not be alarmed if the compile"
-	@echo "* process seems to 'hang' at this point for several minutes."
-	@echo "***************************************************************"
 
 #
 # Source for the f90 library
@@ -130,40 +147,24 @@ nodist_libmpi_f90_la_SOURCES += \
      mpi_win_create_f90.f90
 endif
 
-#        win_call_errhandler_f.c \
-#        win_complete_f.c \
-#        win_create_errhandler_f.c \
-#        win_create_f.c \
-#        win_create_keyval_f.c \
-#        win_delete_attr_f.c \
-#        win_fence_f.c \
-#        win_free_f.c \
-#        win_free_keyval_f.c \
-#        win_get_attr_f.c \
-#        win_get_errhandler_f.c \
-#        win_get_group_f.c \
-#        win_get_name_f.c \
-#        win_lock_f.c \
-#        win_post_f.c \
-#        win_set_attr_f.c \
-#        win_set_errhandler_f.c \
-#        win_set_name_f.c \
-#        win_start_f.c \
-#        win_test_f.c \
-#        win_unlock_f.c \
-#        win_wait_f.c
-
 #
-# Sym link in the sources from the real MPI directory
+# Clean up all F90 module files and all generated files
 #
-$(nodist_libmpi_f90_la_SOURCES):
-	if test ! -r $@ ; then \
-	    $(srcdir)/scripts/$@.sh > $@ ; \
-	fi
 
 MOSTLYCLEANFILES = *.mod
+DISTCLEANFILES = $(nodist_libmpi_f90_la_SOURCES)
 
-DISTCLEANFILES = $(nodist_libmpi_f90_la_SOURCES) $(BUILT_SOURCES)
+#
+# Print a warning indicating that compiling mpi.f90 can take a while
+#
+
+mpi.lo: long-warning
+long-warning:
+	@echo "***************************************************************"
+	@echo "* Compiling the mpi.f90 file may take a few minutes."
+	@echo "* This is quite normal -- do not be alarmed if the compile"
+	@echo "* process seems to 'hang' at this point for several minutes."
+	@echo "***************************************************************"
 
 #
 # Install the generated .mod files.  Unfortunately, each F90 compiler
