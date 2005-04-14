@@ -115,7 +115,7 @@ register_node_schedule_callback(void)
     /* setup the subscription definition */
     OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
     sub.addr_mode = ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR;
-    sub.segment = ORTE_NODE_SEGMENT;
+    sub.segment = strdup(ORTE_NODE_SEGMENT);
     sub.tokens = tokens;
     sub.num_tokens = num_tokens;
     sub.num_keys = 0;
