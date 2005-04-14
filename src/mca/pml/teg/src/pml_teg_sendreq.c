@@ -180,10 +180,8 @@ void mca_pml_teg_send_request_progress(
             }
         } else if (req->req_base.req_free_called) {
             MCA_PML_TEG_FREE((ompi_request_t**)&req);
-        } else if (req->req_base.req_persistent) {
-            if(req->req_base.req_type == MCA_PML_BASE_SEND_BUFFERED) {
-                mca_pml_base_bsend_request_fini((ompi_request_t*)req);
-            }
+        } else if(req->req_base.req_type == MCA_PML_BASE_SEND_BUFFERED) {
+           mca_pml_base_bsend_request_fini((ompi_request_t*)req);
         }
     /* test to see if we have scheduled the entire request */
     } else if (req->req_offset < req->req_bytes_packed)
