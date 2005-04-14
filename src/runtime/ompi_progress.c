@@ -24,6 +24,9 @@
 #include "mca/pml/pml.h"
 #include "runtime/ompi_progress.h"
 #include "include/constants.h"
+#include "mca/ns/ns.h"
+#include "mca/gpr/gpr.h"
+#include "include/orte_schema.h"
 
 static int ompi_progress_event_flag = OMPI_EVLOOP_ONCE;
 
@@ -40,7 +43,151 @@ static int call_yield = 1;
 static long event_progress_counter = 0;
 static long event_progress_counter_reset = 0;
 
+#define BWB_DEBUG_PRINTF 0
 
+static void
+node_schedule_callback(orte_gpr_notify_data_t *notify_data, void *user_tag)
+{
+    uint32_t proc_slots = 0;
+    uint32_t used_proc_slots = 0;
+    int param, i;
+
+#if BWB_DEBUG_PRINTF
+    printf("callback triggered\n");
+#endif
+
+    /* parse the response */
+    for(i = 0 ; i < notify_data->cnt ; i++) {
+        orte_gpr_value_t* value = notify_data->values[i];
+        int k;
+
+        for(k = 0 ; k < value->cnt ; k++) {
+            orte_gpr_keyval_t* keyval = value->keyvals[k];
+            if(strcmp(keyval->key, ORTE_NODE_SLOTS_KEY) == 0) {
+                proc_slots = keyval->value.ui32;
+#if BWB_DEBUG_PRINTF
+                printf("setting proc_slots to %d\n", proc_slots);
+#endif
+                continue;
+            }
+            if(strncmp(keyval->key, ORTE_NODE_SLOTS_ALLOC_KEY, 
+                       strlen(ORTE_NODE_SLOTS_ALLOC_KEY)) == 0) {
+                used_proc_slots += keyval->value.ui32;
+#if BWB_DEBUG_PRINTF
+                printf("setting used_proc_slots to %d\n", used_proc_slots);
+#endif
+                continue;
+            }
+        }
+    }
+
+    param = mca_base_param_find("mpi", NULL, "yield_when_idle");
+    mca_base_param_set_int(param, (used_proc_slots <= proc_slots) ? 0 : 1);
+}
+
+
+static int
+register_node_schedule_callback(void)
+{
+    orte_gpr_notify_id_t rctag;
+    orte_gpr_value_t trig, *trigs;
+    orte_gpr_subscription_t sub, *subs;
+    orte_jobid_t jobid;
+    int rc;
+    char **tokens;
+    int32_t num_tokens;
+    char *my_name_string;
+    orte_cellid_t cellid;
+
+    /* query our node... */
+    rc = orte_ns.get_proc_name_string(&my_name_string, 
+                                      orte_process_info.my_name);
+    if (ORTE_SUCCESS != rc) return rc;
+
+    rc = orte_ns.get_cellid(&cellid, orte_process_info.my_name);
+    if (ORTE_SUCCESS != rc) return rc;
+
+    rc = orte_schema.get_node_tokens(&tokens, &num_tokens, 
+                                     cellid,
+                                     my_name_string);
+    if (ORTE_SUCCESS != rc) return rc;
+
+    /* setup the subscription definition */
+    OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
+    sub.addr_mode = ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR;
+    sub.segment = ORTE_NODE_SEGMENT;
+    sub.tokens = tokens;
+    sub.num_tokens = num_tokens;
+    sub.num_keys = 0;
+    sub.keys = NULL;
+    sub.cbfunc = node_schedule_callback;
+    sub.user_tag = NULL;
+
+    /* setup the trigger definition */
+    OBJ_CONSTRUCT(&trig, orte_gpr_value_t);
+    trig.addr_mode = ORTE_GPR_TOKENS_XAND;
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(trig.segment), jobid))) {
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return rc;
+    }
+    trig.tokens = (char**)malloc(sizeof(char*));
+    if (NULL == trig.tokens) {
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig.tokens[0] = strdup(ORTE_JOB_GLOBALS);
+    trig.num_tokens = 1;
+
+    trig.cnt = 2;
+    trig.keyvals = (orte_gpr_keyval_t**)malloc(2*sizeof(orte_gpr_keyval_t*));
+    if (NULL == trig.keyvals) {
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == trig.keyvals[0]) {
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig.keyvals[0]->key = strdup(ORTE_JOB_SLOTS_KEY);
+    trig.keyvals[0]->type = ORTE_NULL;
+    
+    trig.keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == trig.keyvals[1]) {
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig.keyvals[1]->key = strdup(ORTE_PROC_NUM_AT_STG1);
+    trig.keyvals[1]->type = ORTE_NULL;
+
+
+    /* register the subscription */
+    subs = &sub;
+    trigs = &trig;
+    rc = orte_gpr.subscribe(
+        	ORTE_GPR_NOTIFY_ADD_ENTRY | ORTE_GPR_NOTIFY_VALUE_CHG |
+                ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_ONE_SHOT,
+        	1, &subs,
+                1, &trigs,
+                &rctag);
+    if(ORTE_SUCCESS != rc) {
+        OBJ_DESTRUCT(&sub);
+        OBJ_DESTRUCT(&trig);
+        return OMPI_ERROR;
+    }
+
+    OBJ_DESTRUCT(&sub);
+    OBJ_DESTRUCT(&trig);
+    return OMPI_SUCCESS;
+}
+
+
+/* init the progress engine - called from orte_init */
 int
 ompi_progress_init(void)
 {
@@ -58,22 +205,57 @@ ompi_progress_init(void)
 }
 
 
+/* do all the registration stuff during the compound command */
 int
 ompi_progress_mpi_init(void)
 {
+    int param, value, rc;
+    /* call sched yield when oversubscribed. */
+    param = mca_base_param_find("mpi", NULL, "yield_when_idle");
+    mca_base_param_lookup_int(param, &value);
+
+    if (value < 0) {
+        /* no default given.  Register a callback so that we have a
+           value when we get to mpi_enable() */
+        rc = register_node_schedule_callback();
+        if (OMPI_SUCCESS != rc) return rc;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+/* turn on MPI optimizations */
+int
+ompi_progress_mpi_enable(void)
+{
     int param, value;
 
-    /* call sched yield when oversubscribed.  Should really set 
-     *  the default to something based on the RTE input
-     */
+    /* call sched yield when oversubscribed. */
     param = mca_base_param_find("mpi", NULL, "yield_when_idle");
-    mca_base_param_lookup_int(param, &call_yield);
+    mca_base_param_lookup_int(param, &value);
+
+    if (value < 0) {
+        /* this should never happen (as mpi_enable should be called
+           after the compound command is executed). set to 1 if this
+           happens */
+        call_yield = 1;
+    } else {
+        call_yield = value;
+    }
+
+#if BWB_DEBUG_PRINTF
+    printf("call_yield: %d\n", call_yield);
+#endif
 
     /* set the event tick rate */
     param = mca_base_param_find("mpi", NULL, "event_tick_rate");
     mca_base_param_lookup_int(param, &value);
 
-    if (value <= 0) {
+    if (value < 0) {
+        /* default - tick all the time */
+        event_progress_counter_reset = 0;
+    } else if (value == 0) {
+        /* user specified - don't count often */
         event_progress_counter_reset = INT_MAX;
     } else {
         /* subtract one so that we can do post-fix subtraction
@@ -88,7 +270,7 @@ ompi_progress_mpi_init(void)
 
 
 int
-ompi_progress_mpi_finalize(void)
+ompi_progress_mpi_disable(void)
 {
     /* always call sched yield from here on... */
     call_yield = 1;

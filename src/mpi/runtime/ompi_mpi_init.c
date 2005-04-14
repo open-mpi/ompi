@@ -142,6 +142,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* initialize the progress engine for MPI functionality */
+    if (OMPI_SUCCESS != ompi_progress_mpi_init()) {
+        error = "ompi_progress_mpi_init() failed";
+        goto error;
+    }
+
     /* Open up MPI-related MCA components */
 
     if (OMPI_SUCCESS != (ret = mca_allocator_base_open())) {
@@ -340,7 +346,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        MPI_THREAD_MULTIPLE. */
 
     ompi_mpi_thread_requested = requested;
-    if (OMPI_HAVE_THREAD_SUPPORT == 1) {
+    if (OMPI_HAVE_THREAD_SUPPORT == 0) {
         ompi_mpi_thread_provided = *provided = MPI_THREAD_SINGLE;
         ompi_mpi_main_thread = NULL;
     } else if (OMPI_ENABLE_MPI_THREADS == 1) {
@@ -428,8 +434,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
 
     /* put the event library in "high performance MPI mode" */
-    if (OMPI_SUCCESS != ompi_progress_mpi_init()) {
-        error = "ompi_progress_mpi_init() failed";
+    if (OMPI_SUCCESS != ompi_progress_mpi_enable()) {
+        error = "ompi_progress_mpi_enable() failed";
         goto error;
     }
 
