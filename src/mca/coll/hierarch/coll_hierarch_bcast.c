@@ -48,6 +48,7 @@ int mca_coll_hierarch_bcast_intra(void *buff,
     data   = comm->c_coll_selected_data;
     llcomm = data->hier_llcomm;
 
+
     /* trivial linear distribution of the data to all local leaders.
        need something significantly better */
     if ( rank == root ) {
@@ -118,14 +119,20 @@ int mca_coll_hierarch_bcast_intra(void *buff,
 {
     struct mca_coll_base_comm_t *data=NULL;
     struct ompi_communicator_t *llcomm=NULL;
-    int rank, ret;
+    int lleader_of_root, lleader_replaced_by_root=0;
+    int rank, ret, lroot;
     int segsize;
 
     rank   = ompi_comm_rank ( comm );
     data   = comm->c_coll_selected_data;
     llcomm = data->hier_llcomm;
 
-    if ( rank == root || data->hier_am_lleader ) {
+    mca_coll_hierarch_get_lleader (root, data, &lleader_of_root);
+    if ( lleader_of_root != root ) {
+	lleader_replaced_by_root = 1;
+    }
+
+    if ( rank == root || ( data->hier_am_lleader && !lleader_replaced_by_root) ) {
 	/* this functions sets up the topology used in the segmented
 	   bcast afterwards and determines the segment size. */
 	ret = mca_coll_hierarch_intra_bcast_setup_topo (count, datatype, root, data,
@@ -150,12 +157,21 @@ int mca_coll_hierarch_bcast_intra(void *buff,
        it to the processes in their local, low-leve communicator.
     */
     if ( MPI_COMM_NULL != llcomm ) {
-	ret = llcomm->c_coll.coll_bcast(buff, count, datatype, 
-					data->hier_my_lleader, llcomm );
+	if ( lleader_replaced_by_root ) {
+	    mca_coll_hierarch_map_rank(root, data, &lroot);
+	    ret = llcomm->c_coll.coll_bcast(buff, count, datatype, lroot,
+					    llcomm);
+	}
+	else {
+	    ret = llcomm->c_coll.coll_bcast(buff, count, datatype, 
+					    data->hier_my_lleader_on_llcomm, llcomm );
+	}
     }
 
     return  ret;
 }
+
+
 
 /* 
  *  This is the mother of all segmented bcast algorithms of any type.
