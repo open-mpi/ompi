@@ -65,13 +65,6 @@ static int orte_rmgr_urm_spawn(
 
 static int orte_rmgr_urm_finalize(void);
 
-static void orte_rmgr_urm_recv(
-    int status,
-    orte_process_name_t* peer,
-    orte_buffer_t* req,
-    orte_rml_tag_t tag,
-    void* cbdata);
-
 
 orte_rmgr_base_module_t orte_rmgr_urm_module = {
     orte_rmgr_urm_query,
@@ -116,7 +109,7 @@ static int orte_rmgr_urm_create(
     int rc;
 
     /* allocate a jobid  */
-    if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(jobid))) {
+    if (*jobid != ORTE_JOBID_MAX && ORTE_SUCCESS != (rc = orte_ns.create_jobid(jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
