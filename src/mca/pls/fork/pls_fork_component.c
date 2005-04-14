@@ -107,9 +107,15 @@ int orte_pls_fork_component_open(void)
     OBJ_CONSTRUCT(&mca_pls_fork_component.cond, ompi_condition_t);
 
     /* lookup parameters */
-    mca_pls_fork_component.debug = orte_pls_fork_param_register_int("debug",1);
     mca_pls_fork_component.reap = orte_pls_fork_param_register_int("reap",1);
     mca_pls_fork_component.priority = orte_pls_fork_param_register_int("priority",1);
+    mca_pls_fork_component.debug = orte_pls_fork_param_register_int("debug",0);
+    if(mca_pls_fork_component.debug == 0) {
+        int id = mca_base_param_register_int("debug",NULL,NULL,NULL,0);
+        int value;
+        mca_base_param_lookup_int(id,&value);
+        mca_pls_fork_component.debug = (value > 0) ? 1 : 0;
+    }
     return ORTE_SUCCESS;
 }
 

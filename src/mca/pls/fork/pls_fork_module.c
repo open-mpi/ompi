@@ -135,6 +135,11 @@ static int orte_pls_fork_proc(
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         }
 
+        /* setup base environment */
+        environ_copy = ompi_argv_copy(environ);
+        param = mca_base_param_environ_variable("rmgr","bootproxy","jobid");
+        ompi_unsetenv(param, &environ_copy);
+
         /* setup ns contact info */
         if(NULL != orte_process_info.ns_replica_uri) {
             uri = strdup(orte_process_info.ns_replica_uri);
@@ -142,7 +147,7 @@ static int orte_pls_fork_proc(
             uri = orte_rml.get_uri();
         }
         param = mca_base_param_environ_variable("ns","replica","uri");
-        ompi_setenv(param, uri, true, &environ);
+        ompi_setenv(param, uri, true, &environ_copy);
         free(param);
         free(uri);
                                                                                                     
@@ -153,12 +158,11 @@ static int orte_pls_fork_proc(
             uri = orte_rml.get_uri();
         }
         param = mca_base_param_environ_variable("gpr","replica","uri");
-        ompi_setenv(param, uri, true, &environ);
+        ompi_setenv(param, uri, true, &environ_copy);
         free(param);
         free(uri);
 
         /* push name into environment */
-        environ_copy = ompi_argv_copy(environ);
         orte_ns_nds_env_put(&proc->proc_name, vpid_start, vpid_range, 
                             &environ_copy);
 
@@ -177,6 +181,12 @@ static int orte_pls_fork_proc(
         /* execute application */
         new_env = ompi_environ_merge(context->env, environ_copy);
         ompi_argv_free(environ_copy);
+
+        if(context->argv == NULL) {
+            context->argv = malloc(sizeof(char*)*2);
+            context->argv[0] = strdup(context->app);
+            context->argv[1] = NULL;
+        }
         execve(context->app, context->argv, new_env);
         ompi_output(0, "orte_pls_fork: %s - %s\n", context->app, 
             ompi_argv_join(context->argv, ' '));
@@ -184,6 +194,13 @@ static int orte_pls_fork_proc(
         exit(-1);
 
     } else {
+
+        /* wait for the child process */
+        OMPI_THREAD_LOCK(&mca_pls_fork_component.lock);
+        mca_pls_fork_component.num_children++;
+        OMPI_THREAD_UNLOCK(&mca_pls_fork_component.lock);
+        OBJ_RETAIN(proc);
+        orte_wait_cb(pid, orte_pls_fork_wait_proc, proc);
 
         /* close write end of pipes */
         close(p_stdout[1]);
@@ -208,12 +225,6 @@ static int orte_pls_fork_proc(
             return rc;
         }
 
-        /* wait for the child process */
-        OMPI_THREAD_LOCK(&mca_pls_fork_component.lock);
-        mca_pls_fork_component.num_children++;
-        OMPI_THREAD_UNLOCK(&mca_pls_fork_component.lock);
-        OBJ_RETAIN(proc);
-        orte_wait_cb(pid, orte_pls_fork_wait_proc, proc);
     }
     return ORTE_SUCCESS;
 }
