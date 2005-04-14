@@ -36,7 +36,7 @@
 mca_ptl_gm_module_t mca_ptl_gm_module = {
     {
 	&mca_ptl_gm_component.super,
-	1,  /* max size of request cache */
+	16,  /* max size of request cache */
 	sizeof(mca_ptl_gm_send_frag_t), /* bytes required by ptl for a request */
 	0,  /* max size of first fragment */
 	0,  /* min fragment size */
@@ -254,7 +254,7 @@ mca_ptl_gm_request_init( struct mca_ptl_base_module_t *ptl,
     return OMPI_SUCCESS;
 #endif
 
-    return OMPI_ERROR;
+    return OMPI_SUCCESS;
 }
 
 /*
