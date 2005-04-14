@@ -42,6 +42,7 @@
 #include "util/output.h"
 #include "util/universe_setup_file_io.h"
 #include "util/show_help.h"
+#include "util/basename.h"
 #include "threads/condition.h"
 
 #include "mca/base/base.h"
@@ -186,23 +187,10 @@ int main(int argc, char *argv[], char* env[])
 {
     orte_app_context_t **apps;
     int rc, i, num_apps;
-    size_t j;
 
     /* Setup the abort message (for use in the signal handler) */
 
-    for (j = strlen(argv[0]); j > 0; --j) {
-        if ('/' == argv[0][j]) {
-            orterun_basename = strdup(&(argv[0][j + 1]));
-            break;
-        }
-    }
-    if (0 == j) {
-        if ('/' == argv[0][0]) {
-            orterun_basename = strdup(&(argv[0][1]));
-        } else {
-            orterun_basename = strdup(argv[0]);
-        }
-    }
+    orterun_basename = ompi_basename(argv[0]);
     asprintf(&abort_msg, "%s: killing job...\n", orterun_basename);
     abort_msg_len = strlen(abort_msg);
 
@@ -804,9 +792,17 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         goto cleanup;
     }
 
-    /* Find the argv[0] in the path */
+    /* Find the argv[0] in the path, but only if not absolute or
+       relative pathname was specified */
 
-    app->app = ompi_path_findv(app->argv[0], 0, environ, app->cwd); 
+    value = ompi_basename(app->argv[0]);
+    if (strlen(value) == strlen(app->argv[0])) {
+        app->app = ompi_path_findv(app->argv[0], 0, environ, app->cwd); 
+    } else {
+        app->app = strdup(app->argv[0]);
+    }
+    free(value);
+
     if (NULL == app->app) {
         ompi_show_help("help-orterun.txt", "orterun:executable-not-found",
                        true, orterun_basename, app->argv[0], orterun_basename);
