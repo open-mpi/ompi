@@ -33,17 +33,20 @@ OMPI_DECLSPEC extern int ompi_progress_init(void);
 /**
  * Configure the progress engine for executing MPI applications
  *
- * Initialize and configrue the progress engine to optimize for MPI
- * applications, or any application where low latency is critical.
- * Will configure itself for lowest latency (look at the yield MCA
- * parameter, adjust calling frequency into the event library, etc.)
+ * Register to receive any needed information from the GPR and 
+ * intialize any data structures required for MPI applications.
  */
 OMPI_DECLSPEC extern int ompi_progress_mpi_init(void);
 
-/**
- * Turn off all optimizations enabled by ompi_progress_mpi_init().
+/** 
+ * Turn on optimizations for MPI progress
  */
-OMPI_DECLSPEC extern int ompi_progress_mpi_finalize(void);
+OMPI_DECLSPEC extern int ompi_progress_mpi_enable(void);
+
+/**
+ * Turn off all optimizations enabled by ompi_progress_mpi_enable().
+ */
+OMPI_DECLSPEC extern int ompi_progress_mpi_disable(void);
 
 /** 
  * Shut down the progress engine
