@@ -59,7 +59,7 @@ int orte_finalize(void)
     ompi_event_fini();
 
 #ifndef WIN32
-    orte_session_dir_finalize();
+    orte_session_dir_finalize(orte_process_info.my_name);
 #endif
 
     /* clean out the global structures */

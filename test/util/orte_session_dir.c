@@ -29,7 +29,9 @@
 #endif
 #include <sys/stat.h>
 
-#include "include/constants.h"
+#include "include/orte_constants.h"
+#include "mca/ns/ns_types.h"
+#include "util/proc_info.h"
 #include "util/sys_info.h"
 #include "util/os_path.h"
 #include "util/os_create_dirpath.h"
@@ -55,6 +57,11 @@ static FILE *test_out=NULL;
 int main(int argc, char* argv[])
 {
     orte_sys_info(); /* initialize system */
+    orte_proc_info(); /* initialize proc info structure */
+    orte_process_info.my_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    orte_process_info.my_name->cellid = 0;
+    orte_process_info.my_name->jobid = 0;
+    orte_process_info.my_name->vpid = 0;
     
     test_init("orte_session_dir_t");
     test_out = fopen( "test_session_dir_out", "w+" );
@@ -132,6 +139,11 @@ int main(int argc, char* argv[])
     fprintf(test_out, "completed all tests\n");
 
     fclose(test_out);
+    
+    /* clean up */
+    orte_sys_info_finalize();
+    orte_proc_info_finalize();
+    
     test_finalize();
     return 0;
 }
@@ -161,7 +173,7 @@ static bool test1(void)
         return(false);
     }
 
-    orte_session_dir_finalize();
+    orte_session_dir_finalize(orte_process_info.my_name);
     free(orte_process_info.universe_session_dir);
     free(prefix);
 
@@ -182,7 +194,7 @@ static bool test2(void)
         return(false);
     }
 
-    orte_session_dir_finalize();
+    orte_session_dir_finalize(orte_process_info.my_name);
 
     unsetenv("OMPI_PREFIX_ENV");
 
@@ -203,7 +215,7 @@ static bool test3(void)
         return(false);
     }
 
-    orte_session_dir_finalize();
+    orte_session_dir_finalize(orte_process_info.my_name);
 
     unsetenv("TMPDIR");
 
@@ -224,7 +236,7 @@ static bool test4(void)
         return(false);
     }
 
-    orte_session_dir_finalize();
+    orte_session_dir_finalize(orte_process_info.my_name);
 
     unsetenv("TMP");
 
@@ -245,7 +257,7 @@ static bool test5(void)
         return(false);
     }
 
-    orte_session_dir_finalize();
+    orte_session_dir_finalize(orte_process_info.my_name);
 
     unsetenv("HOME");
 
@@ -266,7 +278,7 @@ static bool test6(void)
         return(false);
     }
 
-    orte_session_dir_finalize();
+    orte_session_dir_finalize(orte_process_info.my_name);
 
     return(true);
 }
@@ -306,12 +318,12 @@ static bool test7(void)
     fprintf(fp, "ss");
     fclose(fp);
 
-    if (OMPI_ERROR == orte_session_dir_finalize()) {
+    if (OMPI_ERROR == orte_session_dir_finalize(orte_process_info.my_name)) {
 	return(false);
     }
 
     for (i=0; i < 3; i++) unlink(filenm[i]);
-    orte_session_dir_finalize();
+    orte_session_dir_finalize(orte_process_info.my_name);
 
     return true;
 }
@@ -352,12 +364,12 @@ static bool test8(void)
     fclose(fp);
 
 
-    if (OMPI_ERROR == orte_session_dir_finalize()) {
+    if (OMPI_ERROR == orte_session_dir_finalize(orte_process_info.my_name)) {
 	   return(false);
     }
 
     for (i=0; i < 3; i++) unlink(filenm[i]);
-    orte_session_dir_finalize();
+    orte_session_dir_finalize(orte_process_info.my_name);
     
     return true;
 }
