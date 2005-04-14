@@ -102,7 +102,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 {
     int size;
     int color, ncount, maxncount;
-    int *colorarr=NULL;
+    struct mca_coll_base_comm_t *tdata=NULL;
     int level;
 
     /* Get the priority level attached to this module */
@@ -117,15 +117,19 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 	return NULL;
     }
 
-    /* This array will hold the color of each process returned for a certain
-       protocol. The array is one element larger than required to store
-       the position of the selected protocol in the hier_prot array.
-       This avoids, that we have to walk through the whole list in
-       module_init again.
-    */
     size = ompi_comm_size(comm);
-    colorarr = (int *) malloc ( sizeof(int) * size + 1);
-    if ( NULL == colorarr ) {
+
+    /* allocate the data structure holding all information */
+    tdata = calloc ( 1, sizeof(struct mca_coll_base_comm_t));
+    if ( NULL == tdata ) {
+	*priority = 0;
+	return NULL;
+    }
+    
+    tdata->hier_num_colorarr  = size;
+    tdata->hier_type_colorarr = MCA_COLL_HIERARCH_COLORARR_LINEAR; 
+    tdata->hier_colorarr      = (int *) malloc ( sizeof(int) * size);
+    if ( NULL == tdata->hier_colorarr ) {
 	*priority = 0;
 	return NULL;
     }
@@ -141,7 +145,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 	comm->c_coll_basic_module->coll_allreduce (&ncount, &maxncount, 1, MPI_INT, 
 						   MPI_MAX, comm );
 	comm->c_coll_basic_module->coll_allgather (&color, 1, MPI_INT, 
-						   colorarr, 1, MPI_INT, comm );
+						   tdata->hier_colorarr, 1, MPI_INT, comm );
 
 	if ( 0 == maxncount ) {
 	    /* 
@@ -157,18 +161,24 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 	     * hierarchical component.
 	     * Its (size-1) because we do not count ourselves.
 	     */
-	    goto err_exit;
+	    goto exit;
 	}
 	else {
-	    colorarr[size] = level;
-	    *data = (struct mca_coll_base_comm_t *) colorarr; 
+	    tdata->hier_level   = level;
+	    /* This is just a temporary assigned, which will be removed
+	       once this component has been selected */
+	    *data = tdata;
 	    return &intra;
 	}
     }
 	
- err_exit:
-    if ( NULL != colorarr ) {
-	free ( colorarr ) ;
+ exit:
+    if ( NULL != tdata->hier_colorarr ) {
+	free ( tdata->hier_colorarr ) ;
+    }
+    
+    if ( NULL != tdata ) {
+	free ( tdata );
     }
 
     *priority = 0;
@@ -194,10 +204,8 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
     rank = ompi_comm_rank(comm);
     size = ompi_comm_size(comm);
 
-    colorarr = (int *) comm->c_coll_selected_data;
-    level = colorarr[size+1];
-
-    mca_coll_hierarch_checkfor_component ( comm, hier_prot[level], &color, &ncount);
+    data = comm->c_coll_selected_data;
+    color = data->hier_colorarr[rank];
     
     /* Generate the subcommunicator based on the color returned by
        the previous function. */
@@ -206,69 +214,40 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 	goto exit;
     }
 
-    /* store the low-level communicator and a certain number of requests
-       on the communicator */
-    data = calloc ( 1, sizeof(struct mca_coll_base_comm_t));
-    if ( NULL == data ) {
-	goto exit;
-    }
-        
+    data->hier_comm     = comm;
     data->hier_llcomm   = llcomm;
     data->hier_num_reqs = 2 * size;
     data->hier_reqs     = (ompi_request_t **) malloc (sizeof(ompi_request_t)*size*2);
     if ( NULL == data->hier_reqs ) {
 	goto exit;
     }
-    data->hier_am_lleader=0; /* false */
 
     /* determine how many local leader there are and who they are */
-    llr      = (int *) calloc (1, sizeof(int) * size);
-    if (NULL == llr ) {
-	goto exit;
-    }
-
-    for (c=0, i=0; i<size; i++ ){
-	found=0;
-	for (j=0; j<c ; j++) {
-	    if ( colorarr[i] == llr[j] ) {
-		found=0;
-		break;
-	    }
-	}
-	if ( !found ) {
-	    if ( MPI_UNDEFINED == colorarr[i] ) {
-		llr[c] = i;
-	    }
-	    else {
-		llr[c] = colorarr[i];
-	    }
-	    if ( llr[c] == color ) {
-		data->hier_my_lleader = c;
-	    }
-	    c++;
-	    if ( llr[c] == rank ) {
-		data->hier_am_lleader = 1; 
-	    }
-	}
-    }
-    
-    data->hier_num_lleaders = c-1;
-    /* we allocate one more element than required to be able to add the 
-       root of an operation to this list */
-    data->hier_lleaders = (int *) malloc ( sizeof(int) * data->hier_num_lleaders + 1);
+    data->hier_num_lleaders = mca_coll_hierarch_count_lleaders (size, data->hier_colorarr);
+    data->hier_lleaders = (int *) malloc ( sizeof(int) * data->hier_num_lleaders);
     if ( NULL == data->hier_lleaders ) {
 	goto exit;
     }
+    mca_coll_hierarch_get_all_lleaders ( data->hier_num_colorarr,
+					 data->hier_colorarr, 
+					 data->hier_num_lleaders,
+					 data->hier_lleaders );
 
-    memcpy ( data->hier_lleaders, llr, data->hier_num_lleaders * sizeof(int));
-    comm->c_coll_selected_data = (struct mca_coll_base_comm_t *)data;
+    /* determine my lleader, maybe its me */
+    data->hier_am_lleader=0;       /* false */
+    mca_coll_hierarch_get_lleader ( rank, data, &data->hier_my_lleader );
+    if ( data->hier_colorarr[data->hier_my_lleader] == rank ) {
+	data->hier_am_lleader = 1; /*true */
+    }
+
+
+    /* This is the point where I will introduce later on a function trying to 
+       compact the colorarr array. Not done at the moment */
+
 
  exit:
     if ( NULL != llr ) {
 	free (llr);
-    }
-    if ( NULL != colorarr ) {
-	free ( colorarr ) ;
     }
     if ( OMPI_SUCCESS != ret ) {
 	ompi_comm_free ( &llcomm );
@@ -278,6 +257,9 @@ mca_coll_hierarch_module_init(struct ompi_communicator_t *comm)
 	    }
 	    if ( NULL != data->hier_lleaders ) {
 		free ( data->hier_lleaders);
+	    }
+	    if ( NULL != data->hier_colorarr ) {
+		free ( data->hier_colorarr ) ;
 	    }
 
 	    free ( data );
@@ -301,8 +283,9 @@ int mca_coll_hierarch_module_finalize(struct ompi_communicator_t *comm)
     llcomm = data->hier_llcomm;
 
     ompi_comm_free (&llcomm);
-    free ( data->hier_reqs);
-    free ( data->hier_lleaders);
+    free ( data->hier_reqs );
+    free ( data->hier_lleaders );
+    free ( data->hier_colorarr );
     if ( NULL != data->hier_topo.topo_next ) {
 	free (data->hier_topo.topo_next);
     }
@@ -315,7 +298,8 @@ int mca_coll_hierarch_module_finalize(struct ompi_communicator_t *comm)
 int mca_coll_hierarch_comm_unquery ( struct ompi_communicator_t *comm,
 				     struct mca_coll_base_comm_t *data )
 {
-    free (data);
+    free ( data->hier_colorarr );
+    free ( data );
     return OMPI_SUCCESS;
 }
 
