@@ -48,7 +48,7 @@ int ompi_mpi_register_params(void)
     
     param_check_param = 
         mca_base_param_register_int("mpi", NULL, "param_check", NULL,
-                                    (int) ompi_mpi_param_check);
+                                    MPI_PARAM_CHECK);
     mca_base_param_lookup_int(param_check_param, &value);
     ompi_mpi_param_check = (bool) value;
     if (ompi_mpi_param_check) {
