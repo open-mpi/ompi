@@ -27,14 +27,10 @@ the directory at the top of the tree:
 shell$ ./configure --prefix=/where/to/install
 shell$ make all install
 
---> NOTE:                    
-          If a user is going to do a parallel build, they should just use
-          make -j 8 install
-
-          make -j 8 all install
-          it will build and only install the /include directory.
-          if you re-run "make -j 8 all install" again, then all the proper files and
-          directories will be installed.
+If you need special access to install, then you can execute "make
+all" as a user with write permissions in the build tree, and a
+separate "make install" as a user with write permissions to the
+install tree.
 
 To compile an MPI program:
 
@@ -42,8 +38,4 @@ C programs:   mpicc your-code.c
 C++ programs: mpiCC your-code.cc    or
               mpic++ your-code.cc   (for case-insensitive filesystems)
 F77 programs: mpif77 your-code.f
-
-We do not yet have a proper mpirun program.  There is a script in
-src/mpirun/mpirun that uses ssh to start individual MPI processes
-(along with a bunch of associated environment variables); it will
-eventually be replaced with a real mpirun command.
+F90 programs: mpif90 your-code.f90
