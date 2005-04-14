@@ -38,6 +38,8 @@
 #include "mca/ns/ns.h"
 #include "mca/gpr/gpr.h"
 #include "mca/oob/oob_types.h"
+#include "mca/errmgr/errmgr.h"
+#include "mca/rmgr/rmgr.h"
 
 #include "mca/pml/pml.h"
 #include "mca/rml/rml.h"
@@ -298,20 +300,15 @@ ompi_comm_start_processes(int count, char **array_of_commands,
                           MPI_Info *array_of_info, 
                           char *port_name)
 {
-#if 0
-    orte_jobid_t new_jobid;
-    int rc;
-    ompi_rte_node_schedule_t *sched;
-    ompi_rte_spawn_handle_t *spawn_handle;
-    ompi_list_t **nodelists = NULL;
-    ompi_list_t schedlist;
-    char *tmp, *envvarname, *segment, *my_contact_info;
-    char cwd[MAXPATHLEN];
+    int rc, i, j;
     int have_wdir=0;
-    ompi_registry_notify_id_t rc_tag;
-    int i, valuelen=MAXPATHLEN, flag=0;
-    int total_start_procs = 0;
-    int requires;
+    int valuelen=OMPI_PATH_MAX, flag=0;
+    char *envvarname;
+    char cwd[OMPI_PATH_MAX];
+
+    orte_jobid_t new_jobid;
+    orte_app_context_t **apps=NULL;
+
 
     /* parse the info object */
     /* check potentially for: 
@@ -323,14 +320,9 @@ ompi_comm_start_processes(int count, char **array_of_commands,
        - "soft": see page 92 of MPI-2.
     */
 
-    /* get the jobid for the new processes */
-    if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(&new_jobid))) {
-        return rc;
-    }
 
     /* Convert the list of commands to an array of orte_app_context_t
        pointers */
-
     apps = (orte_app_context_t**)malloc(count * sizeof(orte_app_context_t *));
     if (NULL == apps) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -385,12 +377,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
          */
         /* Add environment variable with the contact information for the 
            child processes. 
-        12.23.2004 EG: the content of the environment variable
-        does know hold additionally to the oob contact information
-        also the information, which application in spawn/spawn_multiple
-        it has been. This information is needed to construct the 
-        attribute MPI_APPNUM on the children side (an optional 
-        MPI-2 attribute. */
+	*/
         apps[i]->num_env = 1;
         apps[i]->env = (char**)malloc((1+apps[i]->num_env) * sizeof(char*));
         if (NULL == apps[i]->env) {
@@ -399,8 +386,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
             for (j=0; j < i; j++) OBJ_RELEASE(apps[j]);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        asprintf(&envvarname, "OMPI_PARENT_PORT_%u", new_jobid);
-        asprintf(&(apps[i]->env[0]), "%s=%s:%d", envvarname, port_name, i);
+        asprintf(&(apps[i]->env[0]), "OMPI_PARENT_PORT=%s", envvarname, port_name);
         free(envvarname);
         apps[i]->env[1] = NULL;
         /* Check for the 'wdir' and later potentially for the
@@ -427,27 +413,18 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 
 
     /* spawn procs */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn(apps, count, new_jobid,
-                                    ompi_comm_spawn_monitor))) {
+    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn(apps, count, &new_jobid,
+                                    NULL))) {
     	ORTE_ERROR_LOG(rc);
     	return MPI_ERR_SPAWN;
     }
-
-    /*
-     * Clean up
-     */
-    if (NULL != nodelists) {
-        for (i = 0 ; i < count ; ++i) {
-            if (NULL != nodelists[i]) {
-                ompi_rte_deallocate_resources(spawn_handle, 
-                                              new_jobid, nodelists[i]);
-            }
-        }
-        free(nodelists);
+    
+    /* clean up */
+    for ( i=0; i<count; i++) {
+	OBJ_RELEASE(apps[i]);
     }
-    if (NULL != spawn_handle) OBJ_RELEASE(spawn_handle); 
-    OBJ_DESTRUCT(&schedlist);
-#endif
+    free (apps);
+
     return OMPI_SUCCESS;
 }
 			       
@@ -466,19 +443,8 @@ int ompi_comm_dyn_init (void)
     ompi_group_t *group = NULL;
     ompi_errhandler_t *errhandler = NULL;
 
-    /* get jobid */
-    /* JMS: Previous was using ompi_proc_self() here, which
-       incremented the refcount.  That would be fine, but we would
-       have to OBJ_RELEASE it as well.  The global
-       ompi_proc_local_proc seemed to have been created for exactly
-       this kind of purpose, so I took the liberty of using it. */
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, &(ompi_proc_local_proc->proc_name)))) {
-        return rc;
-    }
-
-
     /* check for appropriate env variable */
-    asprintf(&envvarname, "OMPI_PARENT_PORT_%u", jobid);
+    asprintf(&envvarname, "OMPI_PARENT_PORT");
     port_name = getenv(envvarname);
     free (envvarname);
     
