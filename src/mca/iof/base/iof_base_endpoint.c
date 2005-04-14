@@ -226,7 +226,7 @@ int orte_iof_base_endpoint_create(
     OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
     if((endpoint = orte_iof_base_endpoint_lookup(proc,mode,tag)) != NULL) {
         OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-        return OMPI_EXISTS;
+        return OMPI_SUCCESS;
     }
     endpoint = OBJ_NEW(orte_iof_base_endpoint_t);
     if(NULL == endpoint) {
