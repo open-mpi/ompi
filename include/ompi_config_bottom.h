@@ -174,17 +174,6 @@ typedef long long bool;
 
 
 /*
- * Do we want to override debugging controls?
- */
-#if defined(OMPI_ENABLE_DEBUG_OVERRIDE)
-#    if OMPI_ENABLE_DEBUG_OVERRIDE
-#        undef OMPI_ENABLE_DEBUG
-#        define OMPI_ENABLE_DEBUG 1
-#    endif
-#endif
-
-
-/*
  * C type for Fortran COMPLEX
  */
 typedef struct {

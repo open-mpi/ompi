@@ -18,7 +18,7 @@ include $(top_srcdir)/config/Makefile.options
 
 AM_CFLAGS = -g
 AM_CPPFLAGS = \
-        -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1 \
+        -I$(top_srcdir)/test/support \
         -DBUILDDIR=\"$(OMPI_TOP_BUILDDIR)\" \
         -DSRCDIR=\"$(OMPI_TOP_SRCDIR)\"
 
