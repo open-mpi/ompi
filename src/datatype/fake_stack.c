@@ -94,7 +94,8 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
             pStack->count -= cnt;
             cnt = starting_point - cnt * pData->size;  /* number of bytes after the loop */
             pStack[1].index    = 0;
-            pStack[1].count    = pElems[loop_length].count - cnt;
+            pStack[1].count    = (pElems[loop_length].count * 
+                                  ompi_ddt_basicDatatypes[pElems[loop_length].type]->size) - cnt;
             pStack[1].end_loop = pStack->end_loop;
             
             if( (long)pData->size == extent ) { /* all elements are contiguous */
