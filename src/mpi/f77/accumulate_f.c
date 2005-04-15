@@ -17,6 +17,8 @@
 #include "ompi_config.h"
 
 #include "mpi/f77/bindings.h"
+#include "mpi/f77/constants.h"
+
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ACCUMULATE = mpi_accumulate_f
