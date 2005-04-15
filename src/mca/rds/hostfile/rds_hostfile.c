@@ -124,8 +124,8 @@ static int orte_rds_hostfile_parse_line(int token, ompi_list_t* existing, ompi_l
                 OBJ_RELEASE(node);
                 return OMPI_ERROR;
             }
-            /* Only take this update if it puts us > node_slots */
-            if (((size_t) rc) > node->node_slots) {
+            /* Only take this update if it puts us >= node_slots */
+            if (((size_t) rc) >= node->node_slots) {
                 if (node->node_slots_max != (size_t)rc) {
                     node->node_slots_max = rc;
                     update++;
