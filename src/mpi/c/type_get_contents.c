@@ -79,5 +79,5 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
         }
     }
 
-    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN, FUNC_NAME);
+    return MPI_SUCCESS;
 }
