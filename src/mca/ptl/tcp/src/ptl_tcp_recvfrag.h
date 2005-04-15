@@ -113,8 +113,11 @@ static inline void mca_ptl_tcp_recv_frag_matched(
             frag->frag_recv.frag_is_buffered = true;
 	    /* determine offset into users buffer */
         } else {
+            long true_lb, true_extent;
+
+            ompi_ddt_get_true_extent( request->req_base.req_datatype, &true_lb, &true_extent );
             frag->frag_recv.frag_base.frag_addr = ((unsigned char*)request->req_base.req_addr) + 
-                frag_offset;
+               frag_offset + true_lb;
         }
 	frag->frag_size = frag_length;
         if(frag_offset + frag_length > request->req_bytes_packed) {
