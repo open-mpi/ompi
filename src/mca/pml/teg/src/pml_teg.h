@@ -238,19 +238,19 @@ extern int mca_pml_teg_start(
         switch(pml_request->req_type) { \
         case MCA_PML_REQUEST_SEND: \
             { \
-            mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)pml_request; \
-            while(sendreq->req_lock > 0); \
-            if(sendreq->req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
-                mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq); \
-            } \
-            MCA_PML_TEG_SEND_REQUEST_RETURN(sendreq); \
-            break; \
+                mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)pml_request; \
+                while(sendreq->req_lock > 0); \
+                if(sendreq->req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
+                    mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq); \
+                } \
+                MCA_PML_TEG_SEND_REQUEST_RETURN(sendreq); \
+                break; \
             } \
         case MCA_PML_REQUEST_RECV: \
             { \
-            mca_pml_base_recv_request_t* recvreq = (mca_pml_base_recv_request_t*)pml_request; \
-            MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq); \
-            break; \
+                mca_pml_base_recv_request_t* recvreq = (mca_pml_base_recv_request_t*)pml_request; \
+                MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq); \
+                break; \
             } \
         default: \
             break; \
