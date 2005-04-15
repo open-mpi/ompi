@@ -39,6 +39,7 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
     int rc;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
+    int i;
 
     value = OBJ_NEW(orte_gpr_value_t);
     if (NULL == value) {
@@ -127,21 +128,30 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
     }
     value->tokens[0] = strdup(ORTE_JOB_GLOBALS);
     value->num_tokens = 1;
-    
-    value->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+
+    /* If we're setting ABORTED, we're also setting TERMINATED, so we
+       need 2 keyvals.  Everything else only needs 1 keyval. */
+
+    value->cnt = 1;
+    if (ORTE_PROC_STATE_ABORTED == state) {
+        ++value->cnt;
+    }
+    value->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*) *
+                                                 value->cnt);
     if (NULL == value->keyvals) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(value);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    value->cnt = 1;
-    value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == value->keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_RELEASE(value);
-        return ORTE_ERR_OUT_OF_RESOURCE;
+    for (i = 0; i < value->cnt; ++i) {
+        value->keyvals[i] = OBJ_NEW(orte_gpr_keyval_t);
+        if (NULL == value->keyvals[i]) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            OBJ_RELEASE(value);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        (value->keyvals[i])->type = ORTE_NULL;
     }
-    (value->keyvals[0])->type = ORTE_NULL;
     
     /* see which state we are in - let that determine the counter, if any */
     switch (state) {
@@ -167,6 +177,7 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
             
         case ORTE_PROC_STATE_ABORTED:
             (value->keyvals[0])->key = strdup(ORTE_PROC_NUM_ABORTED);
+            (value->keyvals[1])->key = strdup(ORTE_PROC_NUM_TERMINATED);
             break;
     }
     if (NULL != (value->keyvals[0])->key) { /* need to increment a counter */
