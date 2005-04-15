@@ -43,6 +43,7 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
    *count = 0;
    if( ompi_ddt_type_size( datatype, &size ) == MPI_SUCCESS ) {
       if( size == 0 ) {
+         *count = MPI_UNDEFINED;
          return MPI_SUCCESS;
       }
       *count = status->_count / size;
@@ -61,7 +62,10 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
          *count = total * (*count);
       }
       if( size > 0 ) {
-         *count += ompi_ddt_get_element_count( datatype, size );
+         if( (i = ompi_ddt_get_element_count( datatype, size )) != -1 )
+            *count += i;
+         else
+            *count = MPI_UNDEFINED;
       }
       return MPI_SUCCESS;
    }
