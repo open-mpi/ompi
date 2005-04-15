@@ -25,7 +25,7 @@
 #include "mca/rds/base/base.h"
 
 
-int orte_rds_base_close(void)
+int orte_rds_base_finalize(void)
 {
     ompi_list_item_t* item;
 
@@ -35,7 +35,10 @@ int orte_rds_base_close(void)
         selected->module->finalize();
         OBJ_RELEASE(selected);
     }
+}
     
+int orte_rds_base_close(void)
+{
     /* Close all remaining available components (may be one if this is a
        Open RTE program, or [possibly] multiple if this is ompi_info) */
 

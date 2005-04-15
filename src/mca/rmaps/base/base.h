@@ -99,6 +99,7 @@ extern "C" {
     /**
      * Close down the rmaps framework
      */
+    OMPI_DECLSPEC int orte_rmaps_base_finalize(void);
     OMPI_DECLSPEC int orte_rmaps_base_close(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)

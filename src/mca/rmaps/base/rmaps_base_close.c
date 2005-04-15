@@ -26,7 +26,7 @@
 #include "mca/rmaps/base/base.h"
 
 
-int orte_rmaps_base_close(void)
+int orte_rmaps_base_finalize(void)
 {
     ompi_list_item_t* item;
 
@@ -43,7 +43,10 @@ int orte_rmaps_base_close(void)
         }
         OBJ_RELEASE(cmp);
     }
+}
 
+int orte_rmaps_base_close(void)
+{
     /* Close all remaining open components */
 
     mca_base_components_close(orte_rmaps_base.rmaps_output, 

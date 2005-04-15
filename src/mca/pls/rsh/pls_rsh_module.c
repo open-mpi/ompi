@@ -543,6 +543,14 @@ int orte_pls_rsh_terminate_proc(const orte_process_name_t* proc)
 
 int orte_pls_rsh_finalize(void)
 {
+    if(mca_pls_rsh_component.reap) {
+        OMPI_THREAD_LOCK(&mca_pls_rsh_component.lock);
+        while(mca_pls_rsh_component.num_children > 0) {
+            ompi_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
+        }
+        OMPI_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
+    }
+                                                                                                                          
     /* cleanup any pending recvs */
     orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RMGR_CLNT);
     return ORTE_SUCCESS;

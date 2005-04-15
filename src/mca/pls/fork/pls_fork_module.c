@@ -349,6 +349,14 @@ int orte_pls_fork_terminate_proc(const orte_process_name_t* proc)
 
 int orte_pls_fork_finalize(void)
 {
+    if(mca_pls_fork_component.reap) {
+        OMPI_THREAD_LOCK(&mca_pls_fork_component.lock);
+        while(mca_pls_fork_component.num_children > 0) {
+            ompi_condition_wait(&mca_pls_fork_component.cond,
+                &mca_pls_fork_component.lock);
+        }
+        OMPI_THREAD_UNLOCK(&mca_pls_fork_component.lock);
+    }
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 

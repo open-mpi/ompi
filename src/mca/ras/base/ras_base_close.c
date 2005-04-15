@@ -26,17 +26,20 @@
 #include "mca/ras/base/base.h"
 
 
-int orte_ras_base_close(void)
+int orte_ras_base_finalize(void)
 {
     ompi_list_item_t* item;
-                                                                                                                      
+
     /* Finalize all available modules */
     while((item = ompi_list_remove_first(&orte_ras_base.ras_available)) != NULL) {
         orte_ras_base_cmp_t* cmp = (orte_ras_base_cmp_t*)item;
         cmp->module->finalize();
         OBJ_RELEASE(cmp);
     }
-                                                                                                                      
+}
+
+int orte_ras_base_close(void)
+{
     /* Close all remaining available components (may be one if this is a
        Open RTE program, or [possibly] multiple if this is ompi_info) */
 
