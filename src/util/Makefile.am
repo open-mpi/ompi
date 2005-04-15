@@ -31,7 +31,7 @@ headers = \
     basename.h \
     bit_ops.h \
     cmd_line.h \
-    environ.h \
+    ompi_environ.h \
     few.h \
     if.h \
     malloc.h \
