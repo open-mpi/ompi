@@ -121,7 +121,7 @@ extern "C" {
     /**
      * So that others don't have to declare it
      */
-    OMPI_DECLSPEC extern char **environ;
+    OMPI_DECLSPEC extern char **ompi_environ;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
