@@ -50,23 +50,27 @@ int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims,
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
-        if(!OMPI_COMM_IS_CART(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
-                                          FUNC_NAME);
-        }
         if ((NULL == dims) || (NULL == periods) || (NULL == newrank)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
     }
 
-    /* get the function pointer on this communicator */
-    func = comm->c_topo->topo_cart_map;
-
-    /* call the function */
-    if ( MPI_SUCCESS != 
-            (err = func(comm, ndims, dims, periods, newrank))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
+    if(!OMPI_COMM_IS_CART(comm)) {
+	/* In case the communicator has no topo-module attached to 
+	   it, we just return the "default" value suggested by MPI:
+	   newrank = rank */
+	*newrank = ompi_comm_rank(comm);
+    }
+    else {
+	/* get the function pointer on this communicator */
+	func = comm->c_topo->topo_cart_map;
+	
+	/* call the function */
+	if ( MPI_SUCCESS != 
+	     (err = func(comm, ndims, dims, periods, newrank))) {
+	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
+	}
     }
 
     return MPI_SUCCESS;
