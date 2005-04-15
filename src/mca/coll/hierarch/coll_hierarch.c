@@ -165,8 +165,6 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
 	}
 	else {
 	    tdata->hier_level   = level;
-	    /* This is just a temporary assigned, which will be removed
-	       once this component has been selected */
 	    *data = tdata;
 	    return &intra;
 	}
@@ -433,5 +431,6 @@ static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c)
 	printf("      lleader[%d] = %d\n", i, c->hier_lleaders[i]);
     }
 
+    
     return;
 }
