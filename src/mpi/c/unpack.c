@@ -50,7 +50,7 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
                                           FUNC_NAME);
         }
       
-        if ((NULL == inbuf) || (NULL == outbuf) || (NULL == position)) {
+        if ((NULL == inbuf) || (NULL == position)) {  /* outbuf can be MPI_BOTTOM */
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
         }
     

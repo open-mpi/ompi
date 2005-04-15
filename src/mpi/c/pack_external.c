@@ -45,7 +45,7 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if ((NULL == inbuf) || (NULL == outbuf) || (NULL == position)) {
+        if ((NULL == outbuf) || (NULL == position)) {  /* inbuf can be MPI_BOTTOM */
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
         } else if (incount < 0) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT, FUNC_NAME);
