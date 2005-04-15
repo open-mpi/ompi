@@ -28,7 +28,8 @@ headers = \
         base.h \
         iof_base_header.h \
         iof_base_endpoint.h \
-        iof_base_fragment.h
+        iof_base_fragment.h \
+	iof_base_setup.h
 
 libmca_iof_base_la_SOURCES = \
         $(headers) \
@@ -37,7 +38,8 @@ libmca_iof_base_la_SOURCES = \
         iof_base_flush.c \
         iof_base_endpoint.c \
         iof_base_fragment.c \
- 	    iof_base_select.c
+	iof_base_select.c \
+	iof_base_setup.c
 
 # Conditionally install the header files
 

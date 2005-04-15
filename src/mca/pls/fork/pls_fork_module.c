@@ -38,6 +38,7 @@
 #include "runtime/orte_wait.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/iof/iof.h"
+#include "mca/iof/base/iof_base_setup.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/ns/ns.h"
 #include "mca/ns/base/ns_base_nds.h"
@@ -109,12 +110,15 @@ static int orte_pls_fork_proc(
     orte_vpid_t vpid_range)
 {
     pid_t pid;
-    int p_stdout[2];
-    int p_stderr[2];
+    mca_iof_base_io_conf_t opts;
     int rc;
 
-    if(pipe(p_stdout) < 0 ||
-       pipe(p_stderr) < 0) {
+    /* should pull this information from MPIRUN instead of going with
+       default */
+    opts.usepty = OMPI_ENABLE_PTY_SUPPORT;
+
+    rc = iof_base_setup_prefork(&opts);
+    if (OMPI_SUCCESS != rc) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -167,16 +171,7 @@ static int orte_pls_fork_proc(
                             &environ_copy);
 
         /* setup stdout/stderr */
-        close(p_stdout[0]);
-        close(p_stderr[0]);
-        if(p_stdout[1] != STDOUT_FILENO) {
-            dup2(p_stdout[1], STDOUT_FILENO);
-            close(p_stdout[1]);
-        }
-        if(p_stderr[1] != STDERR_FILENO) {
-            dup2(p_stderr[1], STDERR_FILENO);
-            close(p_stderr[1]);
-        }
+        iof_base_setup_child(&opts);
 
         /* execute application */
         new_env = ompi_environ_merge(context->env, environ_copy);
@@ -202,10 +197,6 @@ static int orte_pls_fork_proc(
         OBJ_RETAIN(proc);
         orte_wait_cb(pid, orte_pls_fork_wait_proc, proc);
 
-        /* close write end of pipes */
-        close(p_stdout[1]);
-        close(p_stderr[1]);
-
         /* save the pid in the registry */
         if(ORTE_SUCCESS != (rc = orte_pls_base_set_proc_pid(&proc->proc_name, pid))) {
             ORTE_ERROR_LOG(rc);
@@ -213,13 +204,7 @@ static int orte_pls_fork_proc(
         }
 
         /* connect read end to IOF */
-        rc = orte_iof.iof_publish(&proc->proc_name, ORTE_IOF_SOURCE, ORTE_IOF_STDOUT, p_stdout[0]);
-        if(ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        rc = orte_iof.iof_publish(&proc->proc_name, ORTE_IOF_SOURCE, ORTE_IOF_STDERR, p_stderr[0]);
+        rc = iof_base_setup_parent(&proc->proc_name, &opts);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
