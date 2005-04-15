@@ -26,6 +26,11 @@ int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* 
     int lastBlock;
     dt_desc_t *pdt, *lastType;
 
+    if( 0 == count ) {
+        *newType = ompi_ddt_create( disp );
+        return OMPI_SUCCESS;
+    }
+
     /* if we compute the total number of elements before we can
      * avoid increasing the size of the desc array often.
      */
