@@ -55,15 +55,25 @@ int MPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges,
                                            FUNC_NAME);
         }
     }
-    /* map the function pointer to do the right thing */
-    func = comm->c_topo->topo_graph_map;
 
-    /* call the function */
-    if ( MPI_SUCCESS != 
-            (err = func(comm, nnodes, index, edges, newrank))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
+
+    if(!OMPI_COMM_IS_GRAPH(comm)) {
+	/* In case the communicator has no topo-module attached to 
+	   it, we just return the "default" value suggested by MPI:
+	   newrank = rank */
+	*newrank = ompi_comm_rank(comm);
     }
-    
+    else {
+	/* map the function pointer to do the right thing */
+	func = comm->c_topo->topo_graph_map;
+	
+	/* call the function */
+	if ( MPI_SUCCESS != 
+	     (err = func(comm, nnodes, index, edges, newrank))) {
+	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
+	}
+    }
+
     /* All done */
     return MPI_SUCCESS;
 }
