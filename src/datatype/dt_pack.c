@@ -579,7 +579,7 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
         }
 	length -= iov[iov_count].iov_len;
         pConv->bConverted += iov[iov_count].iov_len;
-        pStack[0].disp += iov[iov_count].iov_len;
+        pStack[0].disp += iov[iov_count].iov_len + pStack[1].disp;
         pSrc = pConv->pBaseBuf + pStack[0].disp;
         if( 0 == length ) break;
     }
@@ -762,7 +762,7 @@ int32_t ompi_convertor_init_for_send( ompi_convertor_t* pConv,
     pConv->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
     if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
         pConv->flags |= DT_FLAG_CONTIGUOUS;
-        if( (datatype->ub - datatype->lb) == (long)datatype->size )
+        if( (datatype->true_ub - datatype->true_lb) == (long)datatype->size )
             pConv->fAdvance = ompi_convertor_pack_no_conv_contig;
         else
             pConv->fAdvance = ompi_convertor_pack_no_conv_contig_with_gaps;
