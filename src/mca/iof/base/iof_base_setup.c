@@ -59,6 +59,8 @@ iof_base_setup_prefork(mca_iof_base_io_conf_t *opts)
     if (opts->usepty) {
         ret = openpty(&(opts->p_stdout[0]), &(opts->p_stdout[1]),
                       NULL, NULL, NULL);
+    } else {
+        ret = -1;
     }
 #else
     ret = -1;
@@ -100,18 +102,18 @@ iof_base_setup_child(mca_iof_base_io_conf_t *opts)
         if (ret < 0) return OMPI_ERROR;
     } else {
         if(opts->p_stdout[1] != fileno(stdout)) {
-            dup2(opts->p_stdout[1], fileno(stdout));
+            ret = dup2(opts->p_stdout[1], fileno(stdout));
             if (ret < 0) return OMPI_ERROR;
             close(opts->p_stdout[1]); 
         }
         if(opts->p_stdin[1] != fileno(stdin)) {
-            dup2(opts->p_stdin[1], fileno(stdin));
+            ret = dup2(opts->p_stdin[1], fileno(stdin));
             if (ret < 0) return OMPI_ERROR;
             close(opts->p_stdin[1]); 
         }
     }
     if(opts->p_stderr[1] != fileno(stderr)) {
-        dup2(opts->p_stderr[1], fileno(stderr));
+        ret = dup2(opts->p_stderr[1], fileno(stderr));
         if (ret < 0) return OMPI_ERROR;
         close(opts->p_stderr[1]);
     }
