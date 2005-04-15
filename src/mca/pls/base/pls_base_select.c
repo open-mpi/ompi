@@ -71,6 +71,7 @@ static orte_pls_base_module_t *select_preferred(char *name)
     mca_base_component_list_item_t *cli;
     orte_pls_base_component_t *component;
     orte_pls_base_module_t *module;
+    orte_pls_base_cmp_t *cmp;
     int priority;
 
     /* Look for a matching selected name */
@@ -100,6 +101,13 @@ static orte_pls_base_module_t *select_preferred(char *name)
                             "orte:base:open: component %s returns priority %d", 
                             component->pls_version.mca_component_name,
                             priority);
+
+                cmp = OBJ_NEW(orte_pls_base_cmp_t);
+                cmp->component = component;
+                cmp->module = module;
+                cmp->priority = priority;
+
+                ompi_list_append(&orte_pls_base.pls_available, &cmp->super);
                 return module;
             }
         }
@@ -119,8 +127,8 @@ static orte_pls_base_module_t *select_any(void)
     mca_base_component_list_item_t *cli;
     orte_pls_base_component_t *component;
     orte_pls_base_module_t *module;
-    int priority;
     orte_pls_base_cmp_t *cmp;
+    int priority;
 
     /* Query all the opened components and see if they want to run */
 

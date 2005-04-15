@@ -56,6 +56,7 @@ typedef struct orte_ras_base_cmp_t orte_ras_base_cmp_t;
  * function definitions
  */
 ORTE_DECLSPEC int orte_ras_base_open(void);
+ORTE_DECLSPEC int orte_ras_base_finalize(void);
 ORTE_DECLSPEC int orte_ras_base_close(void);
 ORTE_DECLSPEC orte_ras_base_module_t* orte_ras_base_select(const char*);
 ORTE_DECLSPEC int orte_ras_base_allocate(orte_jobid_t job);

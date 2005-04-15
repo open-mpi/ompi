@@ -85,6 +85,7 @@ extern "C" {
     /**
      * Close the pls framework
      */
+    OMPI_DECLSPEC int orte_pls_base_finalize(void);
     OMPI_DECLSPEC int orte_pls_base_close(void);
     /**
      * Utility routine to get/set proces pid

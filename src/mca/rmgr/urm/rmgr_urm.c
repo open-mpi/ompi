@@ -299,6 +299,40 @@ static int orte_rmgr_urm_spawn(
 
 static int orte_rmgr_urm_finalize(void)
 {
+    int rc;
+
+    /**
+     * Finalize Process Launch Subsystem (PLS)
+     */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_finalize())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /**
+     * Finalize Resource Mapping Subsystem (RMAPS)
+     */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_finalize())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /**
+     * Finalize Resource Allocation Subsystem (RAS)
+     */
+    if (ORTE_SUCCESS != (rc = orte_ras_base_finalize())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /**
+     * Finalize Resource Discovery Subsystem (RDS)
+     */
+    if (ORTE_SUCCESS != (rc = orte_rds_base_finalize())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* Cancel pending receive. */
 
     orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RMGR_SVC);

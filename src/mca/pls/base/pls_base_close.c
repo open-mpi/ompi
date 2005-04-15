@@ -25,13 +25,11 @@
 #include "util/output.h"
 
 
-int orte_pls_base_close(void)
+int orte_pls_base_finalize(void)
 {
-    ompi_list_item_t* item;
-
     /* Finalize all available modules */
-
     if (orte_pls_base.pls_available_valid) {
+        ompi_list_item_t* item;
         while (NULL != 
                (item = ompi_list_remove_first(&orte_pls_base.pls_available))) {
             orte_pls_base_cmp_t* cmp = (orte_pls_base_cmp_t*) item;
@@ -45,15 +43,17 @@ int orte_pls_base_close(void)
         }
     }
     orte_pls_base.pls_available_valid = false;
+}
 
+
+int orte_pls_base_close(void)
+{
     /* Close all remaining open components */
-
     if (orte_pls_base.pls_opened_valid) {
         mca_base_components_close(orte_pls_base.pls_output, 
                                   &orte_pls_base.pls_opened, NULL);
     }
     orte_pls_base.pls_opened_valid = false;
-
     return ORTE_SUCCESS;
 }
 

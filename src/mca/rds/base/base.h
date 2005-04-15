@@ -54,6 +54,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_rds_base_selected_t);
  */
 OMPI_DECLSPEC int orte_rds_base_open(void);
 OMPI_DECLSPEC int orte_rds_base_select(void);
+OMPI_DECLSPEC int orte_rds_base_finalize(void);
 OMPI_DECLSPEC int orte_rds_base_close(void);
 OMPI_DECLSPEC int orte_rds_base_query(void);
 

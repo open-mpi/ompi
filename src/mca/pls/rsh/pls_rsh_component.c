@@ -191,14 +191,6 @@ orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
 
 int orte_pls_rsh_component_close(void)
 {
-    if(mca_pls_rsh_component.reap) {
-        OMPI_THREAD_LOCK(&mca_pls_rsh_component.lock);
-        while(mca_pls_rsh_component.num_children > 0) {
-            ompi_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
-        }
-        OMPI_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
-    }
-
     /* cleanup state */
     OBJ_DESTRUCT(&mca_pls_rsh_component.lock);
     OBJ_DESTRUCT(&mca_pls_rsh_component.cond);
