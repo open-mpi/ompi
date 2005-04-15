@@ -75,7 +75,7 @@ int orte_ras_base_allocate_nodes(orte_jobid_t jobid, ompi_list_t* nodes)
             if (node->node_slots_inuse >= node->node_slots) {
                                                                                                                      
                 /* if there is a constraint on the max number of slots - skip this node */
-                if(node->node_slots_max && node->node_slots_max >= node->node_slots_inuse) {
+                if(node->node_slots_max && node->node_slots_inuse >= node->node_slots_max) {
                     num_constrained++;
                     continue;
                 }
