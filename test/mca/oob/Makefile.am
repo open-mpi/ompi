@@ -16,7 +16,7 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
-AM_CPPFLAGS = -g -I$(top_srcdir)/test/support -DOMPI_ENABLE_DEBUG_OVERRIDE=1
+AM_CPPFLAGS = -g -I$(top_srcdir)/test/support
 
 check_PROGRAMS = \
     oob_test \
