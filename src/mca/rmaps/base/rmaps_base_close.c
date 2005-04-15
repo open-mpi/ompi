@@ -43,6 +43,7 @@ int orte_rmaps_base_finalize(void)
         }
         OBJ_RELEASE(cmp);
     }
+    return ORTE_SUCCESS;
 }
 
 int orte_rmaps_base_close(void)

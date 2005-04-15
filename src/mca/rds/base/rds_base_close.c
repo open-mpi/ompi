@@ -35,6 +35,7 @@ int orte_rds_base_finalize(void)
         selected->module->finalize();
         OBJ_RELEASE(selected);
     }
+    return ORTE_SUCCESS;
 }
     
 int orte_rds_base_close(void)
