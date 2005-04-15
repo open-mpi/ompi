@@ -88,7 +88,7 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
     size_t num_ptl;
 
     /*
-     * Only allow one thread can be in this routine for a given request. 
+     * Only allow one thread in this routine for a given request. 
      * However, we cannot block callers on a mutex, so simply keep track 
      * of the number of times the routine has been called and run through
      * the scheduling logic once for every call.
@@ -143,6 +143,11 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
 
         /* fragments completed while scheduling - so retry */
         } while(OMPI_THREAD_ADD32(&req->req_lock,-1) > 0);
+
+        /* free the request if completed while in the scheduler */
+        if (req->req_base.req_free_called && req->req_base.req_pml_complete) {
+            MCA_PML_TEG_FREE((ompi_request_t**)&req);
+        }
     }
     return OMPI_SUCCESS;
 }
@@ -155,7 +160,7 @@ int mca_pml_teg_send_request_schedule(mca_pml_base_send_request_t* req)
  *  acknowledged (if required). Note that this routine should NOT be called
  *  directly by the PTL, a function pointer is setup on the PTL at init to 
  *  enable upcalls into the PML w/out directly linking to a specific PML 
- * implementation.
+ *  implementation.
  */
 
 void mca_pml_teg_send_request_progress(
@@ -178,14 +183,18 @@ void mca_pml_teg_send_request_progress(
             if(ompi_request_waiting) {
                 ompi_condition_broadcast(&ompi_request_cond);
             }
-        } else if (req->req_base.req_free_called) {
-            MCA_PML_TEG_FREE((ompi_request_t**)&req);
-        } else if(req->req_base.req_type == MCA_PML_BASE_SEND_BUFFERED) {
-           mca_pml_base_bsend_request_fini((ompi_request_t*)req);
+        } else if(req->req_base.req_free_called) {
+            /* don't free the request if in the scheduler */
+            if(req->req_lock == 0) {
+                MCA_PML_TEG_FREE((ompi_request_t**)&req);
+            }
+        } else if (req->req_base.req_type == MCA_PML_BASE_SEND_BUFFERED) {
+            mca_pml_base_bsend_request_fini((ompi_request_t*)req);
         }
     /* test to see if we have scheduled the entire request */
-    } else if (req->req_offset < req->req_bytes_packed)
+    } else if (req->req_offset < req->req_bytes_packed) {
         schedule = true;
+    }
     OMPI_THREAD_UNLOCK(&ompi_request_lock);
 
     /* schedule remaining fragments of this request */
