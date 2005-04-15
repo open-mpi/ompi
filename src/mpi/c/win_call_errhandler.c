@@ -48,5 +48,8 @@ int MPI_Win_call_errhandler(MPI_Win win, int errorcode)
 
   /* Invoke the errhandler */
 
-  return OMPI_ERRHANDLER_INVOKE(win, errorcode, FUNC_NAME);
+  OMPI_ERRHANDLER_INVOKE(win, errorcode, FUNC_NAME);
+  /* See MPI-2 8.5 why this function has to return MPI_SUCCESS */
+  return MPI_SUCCESS;
+
 }
