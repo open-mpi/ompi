@@ -25,8 +25,6 @@
 #include "mca/coll/base/coll_tags.h"
 #include "coll_hierarch.h"
 
-
-#ifdef SIMPLE_HIERARCH
 /*
  *	bcast_intra
  *
@@ -34,67 +32,8 @@
  *	Accepts:	- same arguments as MPI_Bcast()
  *	Returns:	- MPI_SUCCESS or error code
  */
-int mca_coll_hierarch_bcast_intra(void *buff, 
-				  int count,
-				  struct ompi_datatype_t *datatype, 
-				  int root,
-				  struct ompi_communicator_t *comm)
-{
-    struct mca_coll_base_comm_t *data=NULL;
-    struct ompi_communicator_t *llcomm=NULL;
-    int i, rank, ret;
-
-    rank   = ompi_comm_rank ( comm );
-    data   = comm->c_coll_selected_data;
-    llcomm = data->hier_llcomm;
 
 
-    /* trivial linear distribution of the data to all local leaders.
-       need something significantly better */
-    if ( rank == root ) {
-	for (i=0; i< data->hier_num_lleaders; i++) {
-	    if ( data->hier_lleaders[i] == root ) {
-		data->hier_reqs[i] = MPI_REQUEST_NULL;
-		continue;
-	    }
-	    ret = mca_pml.pml_isend (buff, count, datatype, data->hier_lleaders[i],
-				     MCA_COLL_BASE_TAG_BCAST, 
-				     MCA_PML_BASE_SEND_STANDARD, 
-				     comm, &(data->hier_reqs[i]));
-	    if ( OMPI_SUCCESS != ret ) {
-		return ret;
-	    }
-	}
-
-	ret = ompi_request_wait_all ( data->hier_num_lleaders, data->hier_reqs, 
-				      MPI_STATUSES_IGNORE);
-	if ( OMPI_SUCCESS != ret ) {
-	    return ret;
-	}
-
-    }
-
-    if ( data->hier_am_lleader ) {
-	ret = mca_pml.pml_recv ( buff, count, datatype, root, 
-				 MCA_COLL_BASE_TAG_BCAST, comm, 
-				 MPI_STATUS_IGNORE );
-	if ( OMPI_SUCCESS != ret ) {
-	    return ret;
-	}
-    }
-
-    /* once the local leaders got the data from the root, they can distribute
-       it to the processes in their local, low-leve communicator.
-    */
-    if ( MPI_COMM_NULL != llcomm ) {
-	ret = llcomm->c_coll.coll_bcast(buff, count, datatype, 
-					data->hier_my_lleader, llcomm );
-    }
-
-    return  ret;
- }
-
-#else
 static int mca_coll_hierarch_intra_segmented_bcast ( void* buffer, 
 						     int count, 
 						     ompi_datatype_t * datatype, 
@@ -109,6 +48,8 @@ static int mca_coll_hierarch_intra_bcast_setup_topo (int count,
 						     struct mca_coll_base_comm_t *data,
 						     int *segsize);
 static void setup_topo_bmtree ( int root, struct mca_coll_base_comm_t *data );
+
+
 
 
 int mca_coll_hierarch_bcast_intra(void *buff, 
@@ -127,16 +68,25 @@ int mca_coll_hierarch_bcast_intra(void *buff,
     data   = comm->c_coll_selected_data;
     llcomm = data->hier_llcomm;
 
+    /* Determine whether
+       a) we have the same local leader like the root of this operation
+       b) the root and the local leader are the identical
+
+       If a) is true and b) not, we will replace the local leader for this
+       subgroup by the root 
+    */
+
     mca_coll_hierarch_get_lleader (root, data, &lleader_of_root);
-    if ( lleader_of_root != root ) {
+    if ( (lleader_of_root == data->hier_my_lleader) && (lleader_of_root != root )) {
 	lleader_replaced_by_root = 1;
     }
 
+    /* Bcast on the upper level among the local leaders */
     if ( rank == root || ( data->hier_am_lleader && !lleader_replaced_by_root) ) {
 	/* this functions sets up the topology used in the segmented
 	   bcast afterwards and determines the segment size. */
-	ret = mca_coll_hierarch_intra_bcast_setup_topo (count, datatype, root, data,
-							&segsize);
+	ret = mca_coll_hierarch_intra_bcast_setup_topo (count, datatype, root, 
+							data, &segsize);
 	if ( OMPI_SUCCESS != ret ) {
 	    return ret;
 	}
@@ -163,8 +113,8 @@ int mca_coll_hierarch_bcast_intra(void *buff,
 					    llcomm);
 	}
 	else {
-	    ret = llcomm->c_coll.coll_bcast(buff, count, datatype, 
-					    data->hier_my_lleader_on_llcomm, llcomm );
+	    /* Assumption: the rank of the local leader on llcomm is always 0 */	       
+	    ret = llcomm->c_coll.coll_bcast(buff, count, datatype, 0, llcomm );
 	}
     }
 
@@ -363,7 +313,6 @@ static void setup_topo_bmtree ( int root, struct mca_coll_base_comm_t *data )
        significant modifications:
        - we are not having a contiguous list of participating processes,
          but a list containing the ranks of the participating processes.
-       - if the root is not part of this list, we add him to the list
     */
 
     int childs = 0;
@@ -372,10 +321,8 @@ static void setup_topo_bmtree ( int root, struct mca_coll_base_comm_t *data )
     int rootpos;
     struct mca_coll_hierarch_topo *topo=&(data->hier_topo);
 
-    MCA_COLL_HIERARCH_IS_ROOT_LLEADER (root, data->hier_lleaders,
-				       data->hier_num_lleaders, found,
-				       rootpos);
     
+
     if (found) {
 	size = data->hier_num_lleaders;
     }
