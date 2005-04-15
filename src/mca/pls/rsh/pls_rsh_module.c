@@ -33,6 +33,7 @@
 #include "include/orte_constants.h"
 #include "util/argv.h"
 #include "util/output.h"
+#include "util/session_dir.h"
 #include "event/event.h"
 #include "runtime/orte_wait.h"
 #include "mca/ns/ns.h"
@@ -118,6 +119,13 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             size_t i;
 
             for (i = 0 ; i < map->num_procs ; ++i) {
+                /* Clean up the session directory as if we were the
+                   process itself.  This covers the case where the
+                   process died abnormally and didn't cleanup its own
+                   session directory. */
+
+                orte_session_dir_finalize(&(map->procs[i])->proc_name);
+
                 rc = orte_soh.set_proc_soh(&(map->procs[i]->proc_name), 
                                            ORTE_PROC_STATE_ABORTED, status);
             }
