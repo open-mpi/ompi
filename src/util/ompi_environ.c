@@ -23,7 +23,7 @@
 #include "include/constants.h"
 #include "util/printf.h"
 #include "util/argv.h"
-#include "util/environ.h"
+#include "util/ompi_environ.h"
 
 
 /*

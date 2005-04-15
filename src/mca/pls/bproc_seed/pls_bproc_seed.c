@@ -26,7 +26,7 @@
 
 #include "util/argv.h"
 #include "util/output.h"
-#include "util/environ.h"
+#include "util/ompi_environ.h"
 #include "util/proc_info.h"
 #include "event/event.h"
 #include "runtime/orte_wait.h"

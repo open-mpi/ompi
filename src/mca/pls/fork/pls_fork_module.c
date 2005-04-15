@@ -34,7 +34,7 @@
 #include "util/argv.h"
 #include "util/output.h"
 #include "util/sys_info.h"
-#include "util/environ.h"
+#include "util/ompi_environ.h"
 #include "runtime/orte_wait.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/iof/iof.h"
