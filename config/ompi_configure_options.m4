@@ -341,4 +341,19 @@ fi
 AC_MSG_RESULT([$OMPI_FORTRAN_MAX_ARRAY_RANK])
 AC_SUBST(OMPI_FORTRAN_MAX_ARRAY_RANK)
 
+# do we want PTY support?
+AC_MSG_CHECKING([if pty support should be enabled])
+AC_ARG_ENABLE(pty-support,
+    AC_HELP_STRING([--enable-pty-support],
+                   [Enable/disable PTY support for STDIO forwarding.  default: enabled]))
+if test "$enable_pty_support" = "no" ; then
+    AC_MSG_RESULT([no])
+    OMPI_ENABLE_PTY_SUPPORT=0
+else
+    AC_MSG_RESULT([yes])
+    OMPI_ENABLE_PTY_SUPPORT=1
+fi
+AC_DEFINE_UNQUOTED([OMPI_ENABLE_PTY_SUPPORT], [$OMPI_ENABLE_PTY_SUPPORT],
+                   [Whether user wants PTY support or not])
+
 ])

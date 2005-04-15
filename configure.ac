@@ -980,13 +980,16 @@ AC_DEFINE_UNQUOTED(OMPI_RANGE_F90_COMPLEX32, $OMPI_RANGE_F90_COMPLEX32,
 
 ompi_show_title "Header file tests"
 
-AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h dlfcn.h execinfo.h \
-    fcntl.h sys/fcntl.h inttypes.h libgen.h net/if.h netdb.h netinet/in.h netinet/tcp.h \
-    sys/stat.h poll.h pthread.h pwd.h sched.h stdint.h string.hstrings.h stropts.h \
-    sys/types.h sys/ipc.h sys/mman.h sys/resource.h sys/select.h sys/socket.h \
-    sys/ioctl.h err.h sys/statvfs.h sys/time.h sys/uio.h sys/utsname.h sys/wait.h \
-    syslog.h termios.h ulimit.h unistd.h sys/param.h sys/tree.h sys/queue.h \
-    sys/sockio.h time.h])
+AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
+    dlfcn.h execinfo.h err.h fcntl.h inttypes.h libgen.h \
+    net/if.h netdb.h netinet/in.h netinet/tcp.h \
+    poll.h pthread.h pty.h pwd.h sched.h stdint.h \
+    string.h strings.h stropts.h sys/fcntl.h sys/ipc.h \
+    sys/ioctl.h sys/mman.h  sys/param.h sys/queue.h \
+    sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
+    sys/stat.h sys/statvfs.h sys/time.h sys/tree.h \
+    sys/types.h sys/uio.h sys/utsname.h sys/wait.h syslog.h \
+    time.h termios.h ulimit.h unistd.h util.h])
 
 # SA_RESTART in signal.h
 AC_MSG_CHECKING([if SA_RESTART defined in signal.h])
@@ -1053,17 +1056,15 @@ ompi_show_title "Library and Function tests"
 
 # -lsocket
 # -lnsl
-# -lutil (openpty)
-# openpty
 # atexit
 # getcwd
-# snprintf
 # atoll
 # strtoll
 # yield
 # vscanf
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf])
+AC_CHECK_LIB([util], [openpty], [WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS -lutil" LIBLAM_EXTRA_LIBS="$LIBLAMEXTRALIBS -lutil" LIBS="$LIBS -lutil]")
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty])
 
 #
 # Make sure we can copy va_lists (need check declared, not linkable)
@@ -1247,10 +1248,7 @@ AC_WORDS_BIGENDIAN
 
 # all: SYSV semaphores
 # all: SYSV shared memory
-# all: thread flavor
 # all: size of FD_SET
-# all: FD passing (or not!!)
-# all: BSD vs. SYSV ptys
 # all: sizeof struct stat members
 # all: type of getsockopt optlen
 # all: type of recvfrom optlen
