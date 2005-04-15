@@ -43,6 +43,7 @@ int orte_pls_base_finalize(void)
         }
     }
     orte_pls_base.pls_available_valid = false;
+    return ORTE_SUCCESS;
 }
 
 

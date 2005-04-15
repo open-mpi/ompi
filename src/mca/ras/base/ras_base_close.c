@@ -36,6 +36,7 @@ int orte_ras_base_finalize(void)
         cmp->module->finalize();
         OBJ_RELEASE(cmp);
     }
+    return OMPI_SUCCESS;
 }
 
 int orte_ras_base_close(void)
