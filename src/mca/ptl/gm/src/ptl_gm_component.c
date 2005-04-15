@@ -582,13 +582,16 @@ mca_ptl_gm_component_progress (mca_ptl_tstamp_t tstamp)
     gm_recv_event_t *event;
     mca_ptl_gm_module_t *ptl;
 
-    for( i = 0; i < mca_ptl_gm_component.gm_num_ptl_modules; i++) {
+    for( i = 0; i < mca_ptl_gm_component.gm_num_ptl_modules;) {
         ptl = mca_ptl_gm_component.gm_ptl_modules[i];
         event = gm_receive(ptl->gm_port);
         /* If there are no receive events just skip the function call */
         if( GM_NO_RECV_EVENT != gm_ntohc(event->recv.type) ) {
             mca_ptl_gm_analyze_recv_event( ptl, event );
+            /* we try to empty the GM event queue */
+            continue;
         }
+        i++;
     }
     return OMPI_SUCCESS;
 }
