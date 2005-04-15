@@ -35,6 +35,7 @@
 #include "util/output.h"
 #include "util/sys_info.h"
 #include "util/ompi_environ.h"
+#include "util/session_dir.h"
 #include "runtime/orte_wait.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/iof/iof.h"
@@ -75,11 +76,17 @@ orte_pls_base_module_1_0_0_t orte_pls_fork_module = {
 /*
  *  Wait for a callback indicating the child has completed.
  */
-                                                                                                                  
+
 static void orte_pls_fork_wait_proc(pid_t pid, int status, void* cbdata)
 {
     orte_rmaps_base_proc_t* proc = (orte_rmaps_base_proc_t*)cbdata;
     int rc;
+
+    /* Clean up the session directory as if we were the process
+       itself.  This covers the case where the process died abnormally
+       and didn't cleanup its own session directory. */
+
+    orte_session_dir_finalize(&proc->proc_name);
 
     /* set the state of this process */
     if(WIFEXITED(status)) {
@@ -301,7 +308,7 @@ int orte_pls_fork_terminate_job(orte_jobid_t jobid)
         free(segment);
         return rc;
     }
-                                                                                                    
+
     for(i=0; i<num_values; i++) {
         orte_gpr_value_t* value = values[i];
         pid_t pid = 0;
@@ -315,7 +322,7 @@ int orte_pls_fork_terminate_job(orte_jobid_t jobid)
                 pid = keyval->value.ui32;
             } 
         }
-        if(pid != 0) {
+        if (0 != pid) {
             kill(pid, SIGKILL);
         }
         OBJ_RELEASE(value);
