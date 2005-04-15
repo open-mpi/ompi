@@ -49,8 +49,9 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
         if (NULL == mtype || MPI_DATATYPE_NULL == mtype) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE,
                                           FUNC_NAME );
-        } else if (NULL == array_of_integers || NULL == array_of_addresses ||
-                   NULL == array_of_datatypes) {
+        } else if( ((NULL == array_of_integers) && (max_integers != 0)) ||
+                   ((NULL == array_of_addresses) && (max_addresses != 0)) ||
+                   ((NULL == array_of_datatypes) && (max_datatypes != 0)) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                           FUNC_NAME );
         }
