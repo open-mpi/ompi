@@ -48,7 +48,7 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     if (MPI_COMM_NULL == comm) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
-    } else if ((NULL == inbuf) || (NULL == outbuf) || (NULL == position)) {
+    } else if ((NULL == outbuf) || (NULL == position)) {  /* inbuf can be MPI_BOTTOM */
       return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
     } else if (incount < 0) {
       return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_COUNT, FUNC_NAME);
