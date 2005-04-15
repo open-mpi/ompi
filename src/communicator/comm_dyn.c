@@ -302,7 +302,6 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     int rc, i, j;
     int have_wdir=0;
     int valuelen=OMPI_PATH_MAX, flag=0;
-    char *envvarname;
     char cwd[OMPI_PATH_MAX];
 
     orte_jobid_t new_jobid;
@@ -355,6 +354,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
                 j++;
             }
             apps[i]->argc = j;
+	    apps[i]->argv = NULL;
             /* now copy them over, ensuring to NULL terminate the array */
             if (0 < j) {
                 apps[i]->argv = (char**)malloc((1 + apps[i]->argc) * sizeof(char*));
@@ -386,7 +386,6 @@ ompi_comm_start_processes(int count, char **array_of_commands,
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         asprintf(&(apps[i]->env[0]), "OMPI_PARENT_PORT=%s", port_name);
-        free(envvarname);
         apps[i]->env[1] = NULL;
         /* Check for the 'wdir' and later potentially for the
            'path' Info object */
