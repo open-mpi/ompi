@@ -36,7 +36,7 @@
 mca_ptl_gm_module_t mca_ptl_gm_module = {
     {
 	&mca_ptl_gm_component.super,
-	16,  /* max size of request cache */
+	1,  /* max size of request cache */
 	sizeof(mca_ptl_gm_send_frag_t), /* bytes required by ptl for a request */
 	0,  /* max size of first fragment */
 	0,  /* min fragment size */
