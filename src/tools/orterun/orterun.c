@@ -71,6 +71,9 @@ static bool wait_for_job_completion = true;
 static char *abort_msg = NULL;
 static size_t abort_msg_len = -1;
 static char *orterun_basename = NULL;
+static int max_display_aborted = 1;
+static int num_aborted = 0;
+static int num_killed = 0;
 
 /*
  * setup globals for catching orterun command line options
@@ -93,6 +96,12 @@ struct globals_t {
     ompi_condition_t cond;
 } orterun_globals;
 static bool globals_init = false;
+
+struct proc_info_t {
+    bool reported;
+    int32_t exit_code;
+};
+struct proc_info_t *proc_infos = NULL;
 
 
 ompi_cmd_line_init_t cmd_line_init[] = {
@@ -136,6 +145,11 @@ ompi_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "nw", "nw", 0,
       &orterun_globals.no_wait_for_job_completion, OMPI_CMD_LINE_TYPE_BOOL,
       "Launch the processes and do not wait for their completion (i.e., let orterun complete as soon a successful launch occurs)" },
+
+    /* Set the max number of aborted processes to show */
+    { NULL, NULL, NULL, '\0', "aborted", "aborted", 1,
+      &max_display_aborted, OMPI_CMD_LINE_TYPE_INT,
+      "The maximum number of aborted processes to display" },
 
     /* Export environment variables; potentially used multiple times,
        so it does not make sense to set into a variable */
@@ -186,7 +200,7 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state);
 int main(int argc, char *argv[], char* env[])
 {
     orte_app_context_t **apps;
-    int rc, i, num_apps;
+    int rc, i, num_apps, j;
 
     /* Setup the abort message (for use in the signal handler) */
 
@@ -209,12 +223,23 @@ int main(int argc, char *argv[], char* env[])
     apps = malloc(sizeof(orte_app_context_t *) * num_apps);
     if (NULL == apps) {
         /* JMS show_help */
-        ompi_output(0, "orterun: malloc failed");
+        ompi_output(0, "%s: malloc failed", orterun_basename);
         exit(1);
     }
-    for (i = 0; i < num_apps; ++i) {
+    for (j = i = 0; i < num_apps; ++i) {
         apps[i] = (orte_app_context_t *) 
             ompi_pointer_array_get_item(&apps_pa, i);
+        j += apps[i]->num_procs;
+    }
+    proc_infos = malloc(sizeof(struct proc_info_t) * j);
+    if (NULL == proc_infos) {
+        /* JMS show_help */
+        ompi_output(0, "%s: malloc failed", orterun_basename);
+        exit(1);
+    }
+    for (i = 0; i < j; ++i) {
+        proc_infos[i].reported = false;
+        proc_infos[i].exit_code = 0;
     }
 
     /* Intialize our Open RTE environment */
@@ -239,7 +264,7 @@ int main(int argc, char *argv[], char* env[])
     rc = orte_rmgr.spawn(apps, num_apps, &jobid, job_state_callback);
     if (ORTE_SUCCESS != rc) {
         /* JMS show_help */
-        ompi_output(0, "orterun: spawn failed with errno=%d\n", rc);
+        ompi_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);
     } else {
         /* Wait for the app to complete */
 
@@ -252,6 +277,18 @@ int main(int argc, char *argv[], char* env[])
             /* Make sure we propagate the exit code */
             rc = orterun_globals.exit_code;
             OMPI_THREAD_UNLOCK(&orterun_globals.lock);
+
+            /* If we showed more abort messages than were allowed,
+               show a followup message here */
+            if (num_aborted > max_display_aborted) {
+                i = num_aborted - max_display_aborted;
+                printf("%d additional process%s aborted (not shown)\n",
+                       i, ((i > 1) ? "es" : ""));
+            }
+            if (num_killed > 0) {
+                printf("%d process%s killed (possibly by Open MPI)\n",
+                       num_killed, ((num_killed > 1) ? "es" : ""));
+            }
         }
     }
 
@@ -311,7 +348,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
         orte_gpr_value_t* value = values[i];
         orte_process_name_t name;
         uint32_t pid = 0;
-        uint32_t rank = 0;
+        uint32_t rank = -1;
         int32_t exit_code = 0;
         char* node_name = NULL;
 
@@ -338,10 +375,23 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 continue;
             }
         }
+        if (rank >= 0) {
+            proc_infos[rank].exit_code = exit_code;
+        }
  
-        if(WIFSIGNALED(exit_code)) { 
-            fprintf(stderr, "[%d,%d,%d] process rank %d pid %d on node \"%s\" exited on signal %d\n",
-                 ORTE_NAME_ARGS(&name),rank,pid,node_name,WTERMSIG(exit_code));
+        if(WIFSIGNALED(exit_code) && rank >= 0 && 
+           !proc_infos[rank].reported) { 
+            proc_infos[rank].reported = true;
+
+            if (9 == WTERMSIG(exit_code)) {
+                ++num_killed;
+            } else {
+                if (num_aborted < max_display_aborted) {
+                    fprintf(stderr, "Job rank %d (pid %d) on node \"%s\" exited on signal %d\n",
+                            rank, pid, node_name, WTERMSIG(exit_code));
+                }
+                ++num_aborted;
+            }
 
             /* Hold the exit_code so we can return it when exiting */
             OMPI_THREAD_LOCK(&orterun_globals.lock);
@@ -363,11 +413,28 @@ static void dump_aborted_procs(orte_jobid_t jobid)
 static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 {
     OMPI_THREAD_LOCK(&orterun_globals.lock);
+
+    /* Note that there's only two states that we're interested in
+       here:
+
+       ABORTED: which means that one or more processes have aborted
+                (terminated abnormally).  In which case, we probably
+                want to print out some information.
+
+       TERMINATED: which means that all the processes in the job have
+                completed (normally and/or abnormally).
+
+       Remember that the rmgr itself will also be called for the
+       ABORTED state and call the pls.terminate_job, which will result
+       in killing all the other processes. */
+    
     switch(state) {
         case ORTE_PROC_STATE_ABORTED:
             dump_aborted_procs(jobid);
-            /* fall through */
+            break;
+
         case ORTE_PROC_STATE_TERMINATED:
+            dump_aborted_procs(jobid);
             orterun_globals.exit = true;
             ompi_condition_signal(&orterun_globals.cond);
             break;
@@ -382,7 +449,7 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
 
 static void exit_callback(int fd, short event, void *arg)
 {
-    fprintf(stderr, "orterun: abnormal exit\n");
+    fprintf(stderr, "%s: abnormal exit\n", orterun_basename);
     exit(1);
 }
 
