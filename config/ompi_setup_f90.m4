@@ -37,10 +37,16 @@ AC_DEFUN([OMPI_SETUP_F90],[
 ompi_show_subtitle "Fortran 90/95 compiler" 
 
 if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
-    AC_MSG_WARN([*** Fortran 90/95 bindings disabled (Fortran 77 was disabled)])
+    AC_MSG_WARN([*** Fortran 90/95 bindings implicitly disabled because])
+    AC_MSG_WARN([*** Fortran 77 bindings were disabled)])
+
     OMPI_WANT_F90_BINDINGS=0
     OMPI_F90="none"
     BASEF90="none"
+    if test "$enable_f90" = "yes"; then
+        AC_MSG_WARN([*** but --enable-f90 was explicitly specified])
+        AC_MSG_ERROR([Cannot continue])
+    fi
 elif test "$OMPI_WANT_F90_BINDINGS" = "0" ; then
     AC_MSG_WARN([*** Fortran 90/95 bindings disabled by user])
     OMPI_WANT_F90_BINDINGS=0
