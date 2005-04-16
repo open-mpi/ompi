@@ -28,6 +28,7 @@
 #include "util/proc_info.h"
 #include "util/sys_info.h"
 #include "util/malloc.h"
+#include "util/output.h"
 
 #include "mca/gpr/base/base.h"
 #include "mca/rmaps/base/base.h"

@@ -27,6 +27,7 @@
 #include "include/constants.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
+#include "util/output.h"
 #include "event/event.h"
 #include "runtime/runtime.h"
 #include "mca/mca.h"
