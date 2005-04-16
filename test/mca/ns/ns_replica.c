@@ -25,6 +25,7 @@
 #include "include/orte_schema.h"
 #include "util/proc_info.h"
 #include "util/malloc.h"
+#include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/ns/base/base.h"

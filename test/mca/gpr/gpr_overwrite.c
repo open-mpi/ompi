@@ -28,6 +28,7 @@
 #include "util/proc_info.h"
 #include "util/sys_info.h"
 #include "util/malloc.h"
+#include "util/output.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/ns/ns_types.h"
 #include "mca/gpr/gpr.h"

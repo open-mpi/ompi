@@ -36,6 +36,7 @@
 #include "runtime/runtime.h"
 #include "util/proc_info.h"
 #include "util/malloc.h"
+#include "util/output.h"
 #include "mca/base/base.h"
 #include "mca/ns/ns.h"
 #include "mca/ns/base/base.h"
