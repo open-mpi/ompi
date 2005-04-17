@@ -44,7 +44,7 @@
 #include "mca/ns/ns.h"
 
 int
-iof_base_setup_prefork(mca_iof_base_io_conf_t *opts)
+orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
 {
     int ret;
 
@@ -85,7 +85,7 @@ iof_base_setup_prefork(mca_iof_base_io_conf_t *opts)
 
 
 int
-iof_base_setup_child(mca_iof_base_io_conf_t *opts)
+orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
 {
     int ret;
 
@@ -123,8 +123,8 @@ iof_base_setup_child(mca_iof_base_io_conf_t *opts)
 
 
 int
-iof_base_setup_parent(const orte_process_name_t* name,
-                      mca_iof_base_io_conf_t *opts)
+orte_iof_base_setup_parent(const orte_process_name_t* name,
+                           orte_iof_base_io_conf_t *opts)
 {
     int ret;
 

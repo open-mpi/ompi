@@ -25,14 +25,14 @@
 
 #include "mca/ns/ns.h"
 
-struct mca_iof_base_io_conf_t {
+struct orte_iof_base_io_conf_t {
     int p_stdin[2];
     int p_stdout[2];
     int p_stderr[2];
 
     int usepty;
 };
-typedef struct mca_iof_base_io_conf_t mca_iof_base_io_conf_t;
+typedef struct orte_iof_base_io_conf_t orte_iof_base_io_conf_t;
 
 
 /**
@@ -41,11 +41,11 @@ typedef struct mca_iof_base_io_conf_t mca_iof_base_io_conf_t;
  * Do all stdio forwarding that must be done before fork() is called.
  * This might include creating pipes or ptys or similar work.
  */
-int iof_base_setup_prefork(mca_iof_base_io_conf_t *opts);
+int orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts);
 
-int iof_base_setup_child(mca_iof_base_io_conf_t *opts);
+int orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts);
 
-int iof_base_setup_parent(const orte_process_name_t* name,
-                          mca_iof_base_io_conf_t *opts);
+int orte_iof_base_setup_parent(const orte_process_name_t* name,
+                               orte_iof_base_io_conf_t *opts);
 
 #endif
