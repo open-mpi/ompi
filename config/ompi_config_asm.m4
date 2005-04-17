@@ -258,7 +258,7 @@ AC_DEFUN([OMPI_CHECK_ASM_ALIGN_LOG],[
         .align 4
 foo$ompi_cv_asm_label_suffix
         .byte 2], 
-        [ompi_asm_addr=[`$NM conftest.$OBJEXT | sed -e 's/.*\([0-9a-fA-F][0-9a-fA-F]\).*foo.*/\1/'`]],
+        [ompi_asm_addr=[`$NM conftest.$OBJEXT | grep foo | sed -e 's/.*\([0-9a-fA-F][0-9a-fA-F]\).*foo.*/\1/'`]],
         [ompi_asm_addr=""])
     # test for both 16 and 10 (decimal and hex notations)
     echo "configure: .align test address offset is $ompi_asm_addr" >& AC_FD_CC
