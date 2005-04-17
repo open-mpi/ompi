@@ -117,14 +117,14 @@ static int orte_pls_fork_proc(
     orte_vpid_t vpid_range)
 {
     pid_t pid;
-    mca_iof_base_io_conf_t opts;
+    orte_iof_base_io_conf_t opts;
     int rc;
 
     /* should pull this information from MPIRUN instead of going with
        default */
     opts.usepty = OMPI_ENABLE_PTY_SUPPORT;
 
-    rc = iof_base_setup_prefork(&opts);
+    rc = orte_iof_base_setup_prefork(&opts);
     if (OMPI_SUCCESS != rc) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -178,7 +178,7 @@ static int orte_pls_fork_proc(
                             &environ_copy);
 
         /* setup stdout/stderr */
-        iof_base_setup_child(&opts);
+        orte_iof_base_setup_child(&opts);
 
         /* execute application */
         new_env = ompi_environ_merge(context->env, environ_copy);
@@ -211,7 +211,7 @@ static int orte_pls_fork_proc(
         }
 
         /* connect read end to IOF */
-        rc = iof_base_setup_parent(&proc->proc_name, &opts);
+        rc = orte_iof_base_setup_parent(&proc->proc_name, &opts);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
