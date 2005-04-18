@@ -33,7 +33,7 @@ my @comp_suffixes = (".so");
 
 # Acceptable public symbol prefixes
 
-my @lib_acceptable = ("ompi_" , "mpi_", "MPI_", "OMPI_", "MPI::", "PMPI_", "PMPI::", "mca_", "lt_", "orte_");
+my @lib_acceptable = ("ompi_" , "mpi_", "MPI_", "OMPI_", "MPI::", "PMPI_", "PMPI::", "mca_", "lt_", "orte_", "epoll_");
 my @comp_acceptable = ("mca_");
 
 # Subject line for e-mail
