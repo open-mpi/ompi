@@ -70,9 +70,7 @@ static void *thread_main(void *arg)
     for (i = 0; i < nreps; i++) {
         ompi_atomic_add_32(&val32, 5);
 #if OMPI_HAVE_ATOMIC_MATH_64
-        if (enable_64_bit_tests) {
-            ompi_atomic_add_64(&val64, 5);
-        }
+        ompi_atomic_add_64(&val64, 5);
 #endif
         ompi_atomic_add(&valint, 5);
     }
