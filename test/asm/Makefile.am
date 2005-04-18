@@ -16,28 +16,22 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_HEADERS = atomic_test.h
+TESTS_ENVIRONMENT = $(SHELL) run_tests
 
 check_PROGRAMS = \
 	atomic_barrier \
 	atomic_barrier_noinline \
-	atomic_spinlock_serial \
-	atomic_spinlock_serial_noinline \
-	atomic_spinlock_2 \
-	atomic_spinlock_2_noinline \
-	atomic_spinlock_5 \
-	atomic_spinlock_5_noinline \
-	atomic_spinlock_8 \
-	atomic_spinlock_8_noinline \
-	atomic_cmpset_32_serial \
-	atomic_cmpset_32_serial_noinline \
-	atomic_cmpset_64_serial \
-	atomic_cmpset_64_serial_noinline \
-	atomic-test \
-	atomic-test_noinline
+	atomic_spinlock \
+	atomic_spinlock_noinline \
+	atomic_math \
+	atomic_math_noinline \
+	atomic_cmpset \
+	atomic_cmpset_noinline
 
 TESTS = \
 	$(check_PROGRAMS)
+
+EXTRA_DIST = run_tests
 
 ######################################################################
 
@@ -52,96 +46,42 @@ atomic_barrier_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
 
 ######################################################################
 
-atomic_spinlock_serial_SOURCES = \
-	atomic_spinlock_serial.c \
-	atomic_spinlock.c
-atomic_spinlock_serial_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
+atomic_spinlock_SOURCES = atomic_spinlock.c
+atomic_spinlock_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
 
-atomic_spinlock_serial_noinline.c:
-	ln -s $(top_srcdir)/test/asm/atomic_spinlock_serial.c atomic_spinlock_serial_noinline.c
-atomic_spinlock_serial_noinline_SOURCES = \
-	atomic_spinlock_serial_noinline.c \
-	atomic_spinlock.c
-atomic_spinlock_serial_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_spinlock_serial_noinline_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
-
-atomic_spinlock_2_SOURCES = \
-	atomic_spinlock_2.c \
-	atomic_spinlock.c
-atomic_spinlock_2_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
-
-atomic_spinlock_2_noinline.c:
-	ln -s $(top_srcdir)/test/asm/atomic_spinlock_2.c atomic_spinlock_2_noinline.c
-atomic_spinlock_2_noinline_SOURCES = \
-	atomic_spinlock_2_noinline.c \
-	atomic_spinlock.c
-atomic_spinlock_2_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_spinlock_2_noinline_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
-
-atomic_spinlock_5_SOURCES = \
-	atomic_spinlock_5.c \
-	atomic_spinlock.c
-atomic_spinlock_5_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
-
-atomic_spinlock_5_noinline.c:
-	ln -s $(top_srcdir)/test/asm/atomic_spinlock_5.c atomic_spinlock_5_noinline.c
-atomic_spinlock_5_noinline_SOURCES = \
-	atomic_spinlock_5_noinline.c \
-	atomic_spinlock.c
-atomic_spinlock_5_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_spinlock_5_noinline_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
-
-atomic_spinlock_8_SOURCES = \
-	atomic_spinlock_8.c \
-	atomic_spinlock.c
-atomic_spinlock_8_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
-
-atomic_spinlock_8_noinline.c:
-	ln -s $(top_srcdir)/test/asm/atomic_spinlock_8.c atomic_spinlock_8_noinline.c
-atomic_spinlock_8_noinline_SOURCES = \
-	atomic_spinlock_8_noinline.c \
-	atomic_spinlock.c
-atomic_spinlock_8_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_spinlock_8_noinline_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
-
+atomic_spinlock_noinline.c:
+	ln -s $(top_srcdir)/test/asm/atomic_spinlock.c atomic_spinlock_noinline.c
+atomic_spinlock_noinline_SOURCES = atomic_spinlock_noinline.c
+atomic_spinlock_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
+atomic_spinlock_noinline_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
 
 ######################################################################
 
-atomic_cmpset_32_serial_SOURCES = atomic_cmpset_32_serial.c
-atomic_cmpset_32_serial_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
+atomic_math_SOURCES = atomic_math.c
+atomic_math_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
 
-atomic_cmpset_32_serial_noinline.c:
-	ln -s $(top_srcdir)/test/asm/atomic_cmpset_32_serial.c atomic_cmpset_32_serial_noinline.c
-atomic_cmpset_32_serial_noinline_SOURCES = atomic_cmpset_32_serial_noinline.c
-atomic_cmpset_32_serial_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_cmpset_32_serial_noinline_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
-
-######################################################################
-
-atomic_cmpset_64_serial_SOURCES = atomic_cmpset_64_serial.c
-atomic_cmpset_64_serial_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
-
-atomic_cmpset_64_serial_noinline.c:
-	ln -s $(top_srcdir)/test/asm/atomic_cmpset_64_serial.c atomic_cmpset_64_serial_noinline.c
-atomic_cmpset_64_serial_noinline_SOURCES = atomic_cmpset_64_serial_noinline.c
-atomic_cmpset_64_serial_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_cmpset_64_serial_noinline_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
+atomic_math_noinline.c:
+	ln -s $(top_srcdir)/test/asm/atomic_math.c atomic_math_noinline.c
+atomic_math_noinline_SOURCES = atomic_math_noinline.c
+atomic_math_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
+atomic_math_noinline_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
 
 ######################################################################
 
-atomic_test_SOURCES = atomic-test.c
-atomic_test_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
+atomic_cmpset_SOURCES = atomic_cmpset.c
+atomic_cmpset_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
 
-atomic-test_noinline.c:
-	ln -s $(top_srcdir)/test/asm/atomic-test.c atomic-test_noinline.c
-atomic_test_noinline_SOURCES = atomic-test_noinline.c
-atomic_test_serial_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
-atomic_test_noinline_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
+atomic_cmpset_noinline.c:
+	ln -s $(top_srcdir)/test/asm/atomic_cmpset.c atomic_cmpset_noinline.c
+atomic_cmpset_noinline_SOURCES = atomic_cmpset_noinline.c
+atomic_cmpset_noinline_CFLAGS = $(AM_CFLAGS) -DOMPI_DISABLE_INLINE_ASM
+atomic_cmpset_noinline_LDADD = $(top_builddir)/src/asm/libasm.la $(libs)
+
+######################################################################
 
 
 clean-local:
-	rm -f atomic_barrier_noinline.c atomic-test_noinline.c \
-	atomic_cmpset_32_serial_noinline.c \
-	atomic_cmpset_64_serial_noinline.c atomic_spinlock_2_noinline.c \
-	atomic_spinlock_5_noinline.c atomic_spinlock_8_noinline.c \
-	atomic_spinlock_serial_noinline.c
+	rm -f atomic_barrier_noinline.c \
+	atomic_spinlock_noinline.c \
+	atomic_math_noinline.c \
+	atomic_cmpset_noinline.c

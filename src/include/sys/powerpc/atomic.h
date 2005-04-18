@@ -132,7 +132,6 @@ static inline int ompi_atomic_cmpset_32(volatile int32_t *addr,
                          "   bne-    2f         \n\t"
                          "   stwcx.  %4, 0, %2  \n\t"
                          "   bne-    1b         \n\t"
-                         SMP_SYNC
                          "2:"
                          : "=&r" (ret), "=m" (*addr)
                          : "r" (addr), "r" (oldval), "r" (newval), "m" (*addr)

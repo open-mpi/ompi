@@ -17,14 +17,13 @@
 #undef OMPI_BUILDING
 #include "ompi_config.h"
 
-#include <assert.h>
-
 #include "include/sys/atomic.h"
-#include "atomic_test.h"
 
 int
 main(int argc, char *argv[])
 {
+#if OMPI_HAVE_ATOMIC_MEM_BARRIER
+
     /* there really isn't a great way to test that the barriers
        actually barrier, but at least make sure they don't kill the
        machine.*/
@@ -34,5 +33,8 @@ main(int argc, char *argv[])
     ompi_atomic_wmb();
 
     return 0;
+#else
+    return 77;
+#endif
 }
 
