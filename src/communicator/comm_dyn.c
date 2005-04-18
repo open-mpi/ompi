@@ -60,7 +60,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     ompi_proc_t **rprocs=NULL;
     ompi_group_t *group=comm->c_local_group;
     orte_process_name_t *rport=NULL;
-    orte_buffer_t *nbuf, *nrbuf;
+    orte_buffer_t *nbuf=NULL, *nrbuf=NULL;
 
     size = ompi_comm_size ( comm );
     rank = ompi_comm_rank ( comm );
@@ -344,32 +344,37 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         }
         /* record the number of procs to be generated */
         apps[i]->num_procs = array_of_maxprocs[i];
+
         /* copy over the argv array */
+	apps[i]->argc = 1;	
+
         if (MPI_ARGVS_NULL != array_of_argv &&
             MPI_ARGV_NULL != array_of_argv[i]) {
             /* first need to find out how many entries there are */
-            apps[i]->argc = 0;
             j=0;
             while (NULL != array_of_argv[i][j]) {
                 j++;
             }
-            apps[i]->argc = j;
-	    apps[i]->argv = NULL;
-            /* now copy them over, ensuring to NULL terminate the array */
-            if (0 < j) {
-                apps[i]->argv = (char**)malloc((1 + apps[i]->argc) * sizeof(char*));
-                if (NULL == apps[i]->argv) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    /* rollback what was already done */
-                    for (j=0; j < i; j++) OBJ_RELEASE(apps[j]);
-                    return ORTE_ERR_OUT_OF_RESOURCE;
-                }
-                for (j=0; j < apps[i]->argc; j++) {
-                    apps[i]->argv[j] = strdup(array_of_argv[i][j]);
-                }
-                apps[i]->argv[apps[i]->argc] = NULL;
-            }
-        }
+            apps[i]->argc += j;
+	}
+	
+	/* now copy them over, ensuring to NULL terminate the array */
+	apps[i]->argv = (char**)malloc((1 + apps[i]->argc) * sizeof(char*));
+	if (NULL == apps[i]->argv) {
+	    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+	    /* rollback what was already done */
+	    for (j=0; j < i; j++) {
+		OBJ_RELEASE(apps[j]);
+	    }
+	    return ORTE_ERR_OUT_OF_RESOURCE;
+	}
+	apps[i]->argv[0] = strdup(array_of_commands[i]);
+	for (j=1; j < apps[i]->argc; j++) {
+	    apps[i]->argv[j] = strdup(array_of_argv[i][j-1]);
+	}
+	apps[i]->argv[apps[i]->argc] = NULL;
+
+	    
         /* the environment gets set by the launcher
          * all we need to do is add the specific values
          * needed for comm_spawn

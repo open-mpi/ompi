@@ -733,7 +733,9 @@ int ompi_comm_free ( ompi_communicator_t **comm )
     }
 
     /* Release the communicator */
-
+    if ( OMPI_COMM_IS_DYNAMIC (*comm) ) {
+	ompi_comm_num_dyncomm --;
+    }
     OBJ_RELEASE ( (*comm) );
 
     *comm = MPI_COMM_NULL;
@@ -878,12 +880,12 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
-    /**
-     * This routine verifies, whether local_group and remote group are overlapping
-     * in intercomm_create
-     */
-    int ompi_comm_overlapping_groups (int size, ompi_proc_t **lprocs,
-				      int rsize, ompi_proc_t ** rprocs)
+/**
+ * This routine verifies, whether local_group and remote group are overlapping
+ * in intercomm_create
+ */
+int ompi_comm_overlapping_groups (int size, ompi_proc_t **lprocs,
+				  int rsize, ompi_proc_t ** rprocs)
 
 {
     int rc=OMPI_SUCCESS;
