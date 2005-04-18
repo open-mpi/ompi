@@ -30,6 +30,22 @@ if ($ret < 0) {
       exit(3);
 }
 
+system("rm -f coverage_stats.txt zero_coverage.txt touched_files.txt untouched_files.txt");
+
+open (COVERAGE_STATS, "> coverage_stats.txt");
+open (ZERO_COVERAGE, "> zero_coverage.txt");
+
+print COVERAGE_STATS "#Index                             Filename                          Directory                 Usage(%)\n";
+print COVERAGE_STATS "#======================================================================================================\n";
+print ZERO_COVERAGE "#Index                             Filename                          Directory                 Usage(%)\n";
+print ZERO_COVERAGE "#======================================================================================================\n";
+
+close(COVERAGE_STATS);
+close(ZERO_COVERAGE);
+
+my $k = 0;
+my $l = 0;
+
 while(<DIRFILES>) {
     chomp();
     my $c_files = `find $_ -name \"*.c\"`;
@@ -52,8 +68,8 @@ while(<DIRFILES>) {
 
     # Now do the manual diff 
     open(TEMP1, "< temp1");
-    open(UNTOUCHED_FILES, "> untouched_files.txt");
-    open(TOUCHED_FILES, "> touched_files.txt");
+    open(UNTOUCHED_FILES, ">> untouched_files.txt");
+    open(TOUCHED_FILES, ">> touched_files.txt");
 
     while(<TEMP1>) {
         my $c_file = $_;
@@ -77,55 +93,51 @@ while(<DIRFILES>) {
     close(TOUCHED_FILES);
     close(TEMP1);
     system("rm temp1 temp2");
-    
-    #Now to print the stats of all the files which are touched
-    open (TOUCHED_FILES, "< touched_files.txt"); 
-    open (COVERAGE_STATS, "> coverage_stats.txt");
-    open (ZERO_COVERAGE, "> zero_coverage.txt");
-
-    print COVERAGE_STATS "#Index                             Filename                          Directory                 Usage(%)\n";
-    print COVERAGE_STATS "#======================================================================================================\n";
-    print ZERO_COVERAGE "#Index                             Filename                          Directory                 Usage(%)\n";
-    print ZERO_COVERAGE "#======================================================================================================\n";
-
-    my $k = 0;
-    my $l = 0;
-    while (<TOUCHED_FILES>) {
-        #generate the gcov file for this particular file
-        #1. Get the directory name and filename seperately
-        #2. Invoke gcov on the file
-        #3. Print the statistic onto a file
-        
-        chomp();
-        my $full_name = $_;
-        my $file_name = `basename $full_name`;
-        my $dir_name = `dirname $full_name`;
-        chomp($dir_name);
-        chomp($file_name);
-
-        open(RESULT, "cd $dir_name; gcov $file_name 2> /dev/null |");
-        while (<RESULT>) {
-            if (/Creating/) {} 
-            else  {
-                #Now we are doing the right line. Search for this file
-                if (/$file_name/) {
-                    s/^([0-9]+\.[0-9]+\%)\.*/$1/;
-                    my $val = $1; 
-                    $k++;
-                    my $print_string = sprintf("%4d   %40s %40s       %3.2f\n", $k, $file_name, $dir_name, $val);
-                    if ($val == 0.00) { 
-                        $l++;
-                        my $zero_string = sprintf("%4d   %40s %40s       %3.2f\n", $l, $file_name, $dir_name, $val);
-                        print ZERO_COVERAGE $zero_string;
-                    }
-                    print COVERAGE_STATS $print_string;
-                }
-            } 
-        }
-        close(RESULT);
-    }
-    close(TOUCHED_FILES);
-    close(COVERAGE_STATS);
-    close(ZERO_COVERAGE);
 }
 close(DIRFILES);
+    
+#Now to print the stats of all the files which are touched
+system("sort touched_files.txt -o temp; uniq temp touched_files.txt");
+system("sort untouched_files.txt -o temp; uniq temp untouched_files.txt");
+
+open (TOUCHED_FILES, "< touched_files.txt"); 
+open (COVERAGE_STATS, ">> coverage_stats.txt");
+open (ZERO_COVERAGE, ">> zero_coverage.txt");
+
+while (<TOUCHED_FILES>) {
+    #generate the gcov file for this particular file
+    #1. Get the directory name and filename seperately
+    #2. Invoke gcov on the file
+    #3. Print the statistic onto a file
+    
+    chomp();
+    my $full_name = $_;
+    my $file_name = `basename $full_name`;
+    my $dir_name = `dirname $full_name`;
+    chomp($dir_name);
+    chomp($file_name);
+
+    open(RESULT, "cd $dir_name; gcov $file_name 2> /dev/null |");
+    while (<RESULT>) {
+        if (/Creating/) {} 
+        else  {
+            #Now we are doing the right line. Search for this file
+            if (/$file_name/) {
+                s/^([0-9]+\.[0-9]+\%)\.*/$1/;
+                my $val = $1; 
+                $k++;
+                my $print_string = sprintf("%4d   %40s %40s       %3.2f\n", $k, $file_name, $dir_name, $val);
+                if ($val == 0.00) { 
+                    $l++;
+                    my $zero_string = sprintf("%4d   %40s %40s       %3.2f\n", $l, $file_name, $dir_name, $val);
+                    print ZERO_COVERAGE $zero_string;
+                }
+                print COVERAGE_STATS $print_string;
+            }
+        } 
+    }
+    close(RESULT);
+}
+close(TOUCHED_FILES);
+close(COVERAGE_STATS);
+close(ZERO_COVERAGE);
