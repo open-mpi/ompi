@@ -133,8 +133,13 @@ void mca_ptl_sm_matched(
 
     send_fifo=&(mca_ptl_sm_component.fifo
             [my_local_smp_rank][peer_local_smp_rank]);
+
+    /* lock as multiple processes can attempt to init the head */
+    if(ompi_using_threads())
+        ompi_atomic_lock(&send_fifo->head_lock);
+
     /* check to see if fifo is allocated */
-    if(OMPI_CB_FREE == send_fifo->head){
+    if(OMPI_CB_FREE == send_fifo->head) {
         /* no queues have been allocated - allocate now */
         return_status=ompi_fifo_init_same_base_addr(
                 mca_ptl_sm_component.size_of_cb_queue,
@@ -144,7 +149,8 @@ void mca_ptl_sm_matched(
                 0,0,0,
                 send_fifo, mca_ptl_sm_component.sm_mpool);
         if( return_status != OMPI_SUCCESS ) {
-            ompi_atomic_unlock(&(send_fifo->head_lock));
+            if(ompi_using_threads())
+                ompi_atomic_unlock(&send_fifo->head_lock);
             return;
         }
     }
@@ -158,6 +164,9 @@ void mca_ptl_sm_matched(
         MCA_PTL_HDR_TYPE_ACK;
     return_status=ompi_fifo_write_to_head_same_base_addr(sm_frag_desc,
             send_fifo, mca_ptl_sm_component.sm_mpool);
+
+    if(ompi_using_threads())
+        ompi_atomic_unlock(&send_fifo->head_lock);
 
     /* if can't ack, put on list for later delivery */
     if( 0 > return_status ) {
