@@ -109,7 +109,7 @@ int mca_pml_base_bsend_fini()
  */
 int mca_pml_base_bsend_attach(void* addr, int size)
 {
-    bool thread_safe = (ompi_mpi_thread_multiple == MPI_THREAD_MULTIPLE ? true : false);
+    bool thread_safe = ompi_mpi_thread_multiple;
     if(NULL == addr || size <= 0) {
         return OMPI_ERR_BUFFER;
     }
