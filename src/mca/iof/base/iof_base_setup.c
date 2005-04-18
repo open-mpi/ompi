@@ -23,10 +23,14 @@
 #include "ompi_config.h"
 
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <errno.h>
 #include <sys/types.h>
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
 #include <signal.h>
 #ifdef HAVE_UTIL_H
 #include <util.h>
@@ -35,7 +39,7 @@
 #include <pty.h>
 #endif
 
-#include "iof_base_setup.h"
+#include "mca/iof/base/iof_base_setup.h"
 
 #include "include/orte_constants.h"
 #include "util/output.h"
@@ -65,6 +69,14 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
 #else
     ret = -1;
 #endif
+
+#if defined(WIN32)
+    /* Windows doesn't have a 'pipe' function.
+     * So we need to do something a bit more complex */
+    /* XXX Implement this properly JJH
+     * http://www-106.ibm.com/developerworks/linux/library/l-rt4/?open&t=grl,l=252,p=pipes
+     */
+#else
     if (ret < 0) {
         if (pipe(opts->p_stdout) < 0) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -79,6 +91,7 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+#endif
 
     return OMPI_SUCCESS;
 }
