@@ -24,16 +24,26 @@
 #
 
 use strict;
-my $ret = open(DIRFILES, "< ./dir_list");
-if ($ret < 0) {
-      print "ERROR: could not open directory listing\n";
-      exit(3);
+
+my $num_arguments = scalar(@ARGV);
+my $percentage;
+
+if ($num_arguments == 0) {
+    print "WARN: All files with coverage of 0% will be reported.\n Please use -p percentage to specify something else\n";
+    $percentage = 0.00;
+} else {
+    if ($num_arguments == 2) {
+        $percentage = $ARGV[1];
+    } else {
+        print "ERROR:Please enter the number below which you want to list all the files\n";
+        exit(3);
+    }
 }
 
 system("rm -f coverage_stats.txt zero_coverage.txt touched_files.txt untouched_files.txt");
 
 open (COVERAGE_STATS, "> coverage_stats.txt");
-open (ZERO_COVERAGE, "> zero_coverage.txt");
+open (ZERO_COVERAGE, "> percent_coverage.txt");
 
 print COVERAGE_STATS "#Index                             Filename                          Directory                 Usage(%)\n";
 print COVERAGE_STATS "#======================================================================================================\n";
@@ -45,6 +55,13 @@ close(ZERO_COVERAGE);
 
 my $k = 0;
 my $l = 0;
+
+# Get the list of files for which stats are required
+my $ret = open(DIRFILES, "< ./dir_list");
+if ($ret < 0) {
+      print "ERROR: could not open directory listing\n";
+      exit(3);
+}
 
 while(<DIRFILES>) {
     chomp();
@@ -102,8 +119,10 @@ system("sort untouched_files.txt -o temp; uniq temp untouched_files.txt");
 
 open (TOUCHED_FILES, "< touched_files.txt"); 
 open (COVERAGE_STATS, ">> coverage_stats.txt");
-open (ZERO_COVERAGE, ">> zero_coverage.txt");
+open (ZERO_COVERAGE, ">> percent_coverage.txt");
 
+my $average = 0.0;
+my $num_files = `wc -l touched_files.txt`;
 while (<TOUCHED_FILES>) {
     #generate the gcov file for this particular file
     #1. Get the directory name and filename seperately
@@ -125,9 +144,10 @@ while (<TOUCHED_FILES>) {
             if (/$file_name/) {
                 s/^([0-9]+\.[0-9]+\%)\.*/$1/;
                 my $val = $1; 
+                $average += $val;
                 $k++;
                 my $print_string = sprintf("%4d   %40s %40s       %3.2f\n", $k, $file_name, $dir_name, $val);
-                if ($val == 0.00) { 
+                if ($val <= $percentage) { 
                     $l++;
                     my $zero_string = sprintf("%4d   %40s %40s       %3.2f\n", $l, $file_name, $dir_name, $val);
                     print ZERO_COVERAGE $zero_string;
@@ -138,6 +158,9 @@ while (<TOUCHED_FILES>) {
     }
     close(RESULT);
 }
+print COVERAGE_STATS "==============================================================\n";
+print COVERAGE_STATS "Average coverage was: ", $average/$num_files, "  \n";
+print COVERAGE_STATS "==============================================================\n";
 close(TOUCHED_FILES);
 close(COVERAGE_STATS);
 close(ZERO_COVERAGE);
