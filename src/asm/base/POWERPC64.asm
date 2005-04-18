@@ -26,7 +26,6 @@ START_FUNC(ompi_atomic_cmpset_32)
 	   bne-    REFLSYM(2)         
 	   stwcx.  r5, 0, r3  
 	   bne-    REFLSYM(1)
-	sync 
 	LSYM(2)
 	cmpw cr7,r0,r4
 	mfcr r3
