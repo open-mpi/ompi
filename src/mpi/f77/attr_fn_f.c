@@ -272,7 +272,7 @@ void mpi_dup_fn_f( MPI_Fint* comm, MPI_Fint* comm_keyval,
 }
 
 #if OMPI_WANT_MPI2_ONE_SIDED
-void mpi_win_null_delete_fn_f( MPI_FMPI_Fint* window, MPI_Fint* win_keyval,
+void mpi_win_null_delete_fn_f( MPI_Fint* window, MPI_Fint* win_keyval,
                                MPI_Fint* attribute_val_out, 
                                MPI_Fint* extra_state, MPI_Fint* ierr )
 {
