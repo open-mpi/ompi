@@ -67,6 +67,20 @@ else
 fi
 AC_MSG_RESULT([$msg])
 
+# Do we want code coverage
+if test "$WANT_COVERAGE" = "1"; then 
+     if test "$TRULY_GCC" = "yes"; then 
+         CLEANFILES="*.bb *.bbg *.da *.*.gcov ${CLEANFILES}"
+         AC_MSG_WARN([-fprofile-arcs -ftest-coverage has been added to CFLAGS (--enable-coverage)])
+         WANT_DEBUG=1
+         CFLAGS="-ftest-coverage -fprofile-arcs ${CFLAGS}"
+         WRAPPER_EXTRA_CFLAGS="-ftest-coverage -fprofile-arcs ${WRAPPER_EXTRA_CFLAGS}"
+      else
+         AC_MSG_WARN([Code coverage functionality is currently available only with GCC])
+         AC_MSG_ERROR([Configure: Cannot continue])
+      fi
+fi
+
 # Do we want debugging?
 
 if test "$WANT_DEBUG" = "1"; then

@@ -55,6 +55,19 @@ else
 fi
 AC_MSG_RESULT([$msg])
 
+# Do we want code coverage
+if test "$WANT_COVERAGE" = "1"; then 
+     if test "$TRULY_GXX" = "yes"; then 
+         AC_MSG_WARN([-fprofile-arcs -ftest-coverage has been added to CFLAGS (--enable-coverage)])
+         WANT_DEBUG=1
+         CXXFLAGS="-ftest-coverage -fprofile-arcs ${CXXFLAGS}"
+         WRAPPER_EXTRA_CXXFLAGS="-ftest-coverage -fprofile-arcs ${WRAPPER_EXTRA_CXXFLAGS}"
+      else
+         AC_MSG_WARN([Code coverage functionality is currently available only with GCC suite])
+         AC_MSG_ERROR([Configure: cannot continue])
+      fi
+fi
+
 # Do we want debugging?
 
 if test "$WANT_DEBUG" = "1"; then
@@ -99,11 +112,6 @@ fi
 
 # Check for special things due to C++ exceptions
 
-WRAPPER_EXTRA_CFLAGS=
-WRAPPER_EXTRA_FFLAGS=
-WRAPPER_EXTRA_CXXFLAGS=
-WRAPPER_EXTRA_LDFLAGS=
-WRAPPER_EXTRA_LIBS=
 ENABLE_CXX_EXCEPTIONS=no
 HAVE_CXX_EXCEPTIONS=0
 AC_ARG_ENABLE(cxx-exceptions, 
@@ -125,9 +133,9 @@ if test "$ENABLE_CXX_EXCEPTIONS" = "yes"; then
 	CXXFLAGS="$CXXFLAGS $OMPI_CXX_EXCEPTIONS_CXXFLAGS"
 	LDFLAGS="$LDFLAGS $OMPI_CXX_EXCEPTIONS_LDFLAGS"
 
-	WRAPPER_EXTRA_CFLAGS="$OMPI_CXX_EXCEPTIONS_CFLAGS"
-	WRAPPER_EXTRA_FFLAGS="$OMPI_CXX_EXCEPTIONS_FFLAGS"
-	WRAPPER_EXTRA_CXXFLAGS="$OMPI_CXX_EXCEPTIONS_CXXFLAGS"
+	WRAPPER_EXTRA_CFLAGS="$OMPI_CXX_EXCEPTIONS_CFLAGS ${WRAPPER_EXTRA_CFLAGS}"
+	WRAPPER_EXTRA_FFLAGS="$OMPI_CXX_EXCEPTIONS_FFLAGS ${WRAPPER_EXTRA_FFLAGS}"
+	WRAPPER_EXTRA_CXXFLAGS="$OMPI_CXX_EXCEPTIONS_CXXFLAGS ${WRAPPER_EXTRA_CXXFLAGS}"
     fi
 fi
 AC_DEFINE_UNQUOTED(OMPI_HAVE_CXX_EXCEPTION_SUPPORT, $HAVE_CXX_EXCEPTIONS,

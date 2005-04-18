@@ -151,6 +151,13 @@ ompi_enable_static="$enable_static"
 AM_ENABLE_SHARED
 AM_DISABLE_STATIC
 
+WRAPPER_EXTRA_CFLAGS=
+WRAPPER_EXTRA_FFLAGS=
+WRAPPER_EXTRA_CXXFLAGS=
+WRAPPER_EXTRA_LDFLAGS=
+WRAPPER_EXTRA_LIBS=
+
+
 
 ############################################################################
 # Check for compilers and preprocessors

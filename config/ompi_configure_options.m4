@@ -19,6 +19,30 @@ AC_DEFUN([OMPI_CONFIGURE_OPTIONS],[
 ompi_show_subtitle "Configuration options"
 
 #
+# Code coverage options
+#
+AC_MSG_CHECKING([Whether to run code coverage])
+AC_ARG_ENABLE(coverage,
+              AC_HELP_STRING([--enable-coverage],
+                             [enable code coverage files to be generated]))
+if test "$enable_coverage" = "yes"; then
+    if test "$enable_shared" = "yes"; then 
+        AC_MSG_WARN([Code coverage can run only with static libraries. Please 
+run configure with --enable-static --disable-shared if 
+you want code coverage. Also ensure that you execute 
+make clean too ensure removal of all leftover shared 
+mpi libraries])
+        AC_MSG_ERROR([Cannot continue processing])
+    fi
+    AC_MSG_RESULT([yes])
+    WANT_COVERAGE=1
+else 
+    AC_MSG_RESULT([yes])
+    WANT_COVERAGE=0
+fi
+
+
+#
 # Memory debugging
 #
 
