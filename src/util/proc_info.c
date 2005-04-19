@@ -31,7 +31,7 @@
 
 #include "util/proc_info.h"
 
-orte_proc_info_t orte_process_info = {
+OMPI_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_name =              */   NULL,
     /*  .vpid_start =           */   0,
     /*  .num_procs =            */   1,
