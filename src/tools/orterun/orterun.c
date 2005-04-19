@@ -645,7 +645,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     orte_app_context_t *app = NULL;
     extern char **environ;
     size_t l, len;
-    bool map_data, save_arg, cmd_line_made = false;
+    bool map_data = false, save_arg, cmd_line_made = false;
     int new_argc = 0;
     char **new_argv = NULL;
 
