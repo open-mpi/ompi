@@ -172,12 +172,17 @@ static inline bool ompi_set_using_threads(bool have)
  * If there is no possibility that multiple threads are running in the
  * process, return immediately.
  */
+
+#if OMPI_HAVE_THREAD_SUPPORT
 #define OMPI_THREAD_LOCK(mutex)                 \
     do {                                        \
-        if (OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) {             \
+        if (ompi_using_threads()) {             \
             ompi_mutex_lock(mutex);             \
         }                                       \
     } while (0)
+#else
+#define OMPI_THREAD_LOCK(mutex)
+#endif
 
 
 /**
@@ -193,12 +198,18 @@ static inline bool ompi_set_using_threads(bool have)
  * If there is no possibility that multiple threads are running in the
  * process, return immediately without modifying the mutex.
  */
+
+#if OMPI_HAVE_THREAD_SUPPORT
 #define OMPI_THREAD_UNLOCK(mutex)               \
     do {                                        \
-        if (OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) {             \
+        if (ompi_using_threads()) {             \
             ompi_mutex_unlock(mutex);           \
         }                                       \
     } while (0)
+#else
+#define OMPI_THREAD_UNLOCK(mutex)
+#endif
+
 
 /**
  * Lock a mutex if ompi_using_threads() says that multiple threads may
@@ -215,9 +226,11 @@ static inline bool ompi_set_using_threads(bool have)
  * If there is no possibility that multiple threads are running in the
  * process, invoke the action without acquiring the lock.
  */
+
+#if OMPI_HAVE_THREAD_SUPPORT
 #define OMPI_THREAD_SCOPED_LOCK(mutex, action)  \
     do {                                        \
-        if(OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) {              \
+        if(ompi_using_threads()) {              \
             ompi_mutex_lock(mutex);             \
             (action);                           \
             ompi_mutex_unlock(mutex);           \
@@ -225,19 +238,31 @@ static inline bool ompi_set_using_threads(bool have)
             (action);                           \
         }                                       \
     } while (0)
+#else
+#define OMPI_THREAD_SCOPED_LOCK(mutex,action)
+#endif
 
 /**
  * Use an atomic operation for increment/decrement if ompi_using_threads()
  * indicates that threads are in use by the application or library.
  */
 
+#if OMPI_HAVE_THREAD_SUPPORT
 #define OMPI_THREAD_ADD32(x,y) \
    ((OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) ? \
    ompi_atomic_add_32(x,y) : (*x += y))
+#else
+#define OMPI_THREAD_ADD32(x,y) (*x += y)
+#endif
 
+#if OMPI_HAVE_THREAD_SUPPORT
 #define OMPI_THREAD_ADD64(x,y) \
    ((OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) ? \
     ompi_atomic_add_32(x,y) : (*x += y))
+#else
+#define OMPI_THREAD_ADD64(x,y) (*x += y)
+#endif
+
 
 /**
  * Always locks a mutex (never compile- or run-time removed)
