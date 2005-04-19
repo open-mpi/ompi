@@ -20,6 +20,7 @@
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
+#include "datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Status_set_elements = PMPI_Status_set_elements
@@ -36,6 +37,7 @@ int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                             int count) 
 {
     int rc = MPI_SUCCESS;
+    int32_t size;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -48,13 +50,8 @@ int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
     }
 
     if (status != MPI_STATUS_IGNORE) {
-        status->_count = count;
+        ompi_ddt_type_size( datatype, &size );
+        status->_count = count * size;
     }
-    /* I dont have the MPI standard with me but I strongly suppose
-     * that the expected behaviour of this function should take in
-     * account the real size of the datatype. Otherwise this argument
-     * is completly useless ...
-     */
-    /* This function is not yet implemented */
-    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    return OMPI_SUCCESS;
 }
