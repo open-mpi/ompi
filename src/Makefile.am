@@ -19,10 +19,12 @@ include $(top_srcdir)/config/Makefile.options
 # Include Windows only files in dist
 WIN32_FILES = win32/ompi_declspec.h \
               win32/ompi_time.c     \
+              win32/ompi_process.c  \
               win32/ompi_uio.c      \
               win32/ompi_util.h     \
               win32/ompi_utsname.h  \
               win32/ompi_misc.h     \
+              win32/ompi_process.h  \
               win32/ompi_time.h     \
               win32/ompi_uio.h      \
               win32/ompi_utsname.c  \
