@@ -25,6 +25,7 @@
 #include "include/orte_constants.h"
 #include "mca/pls/pls.h"
 #include "pls_poe.h"
+#include "util/path.h"
 #include "mca/pls/poe/pls-poe-version.h"
 #include "mca/base/mca_base_param.h"
 
@@ -43,19 +44,12 @@ static int param_priority = -1;
 
 
 /*
- * Local functions
- */
-static int pls_poe_open(void);
-static struct orte_pls_base_module_1_0_0_t *pls_poe_init(int *priority);
-
-
-/*
  * Instantiate the public struct with all of our public information
  * and pointers to our public functions in it
  */
 
-orte_pls_base_component_1_0_0_t mca_pls_poe_component = {
-
+orte_pls_poe_component_t mca_pls_poe_component = {
+    {
     /* First, the mca_component_t struct containing meta information
        about the component itself */
 
@@ -74,7 +68,7 @@ orte_pls_base_component_1_0_0_t mca_pls_poe_component = {
 
         /* Component open and close functions */
 
-        pls_poe_open,
+        orte_pls_poe_component_open,
         NULL
     },
 
@@ -88,11 +82,12 @@ orte_pls_base_component_1_0_0_t mca_pls_poe_component = {
 
     /* Initialization / querying functions */
 
-    pls_poe_init
+    orte_pls_poe_component_init
+    }
 };
 
 
-static int pls_poe_open(void)
+static int orte_pls_poe_component_open(void)
 {
     param_priority = 
         mca_base_param_register_int("pls", "poe", "priority", NULL, 75);
@@ -101,11 +96,13 @@ static int pls_poe_open(void)
 }
 
 
-static struct orte_pls_base_module_1_0_0_t *pls_poe_init(int *priority)
+orte_pls_base_module_t *orte_pls_poe_component_init(int *priority)
 {
-    /* Are we runing under POE? */
-
-
-
-    return NULL;
+    extern char **environ;
+    mca_pls_poe_component.path = ompi_path_findv("poe", 0, environ, NULL);
+    if (NULL == mca_pls_poe_component.path) {
+        return NULL;
+    }
+    *priority = mca_pls_poe_component.priority;
+    return &orte_pls_poe_module;
 }
