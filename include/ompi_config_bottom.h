@@ -69,13 +69,14 @@ typedef struct {
  **********************************************************************/
 
 #if defined(WIN32)
-#  if OMPI_BUILDING
+#  if defined(OMPI_BUILDING)
 #    include "win32/win_compat.h"
 #    define OMPI_COMP_EXPORT __declspec(dllexport)
-#    define OMPI_DECLSPEC __declspec(dllexport)
-#  else
-#    define OMPI_COMP_EXPORT
-#    define OMPI_DECLSPEC __declspec(dllimport)
+#    if OMPI_BUILDING
+#      define OMPI_DECLSPEC __declspec(dllexport)
+#    else
+#      define OMPI_DECLSPEC __declspec(dllimport)
+#    endif
 #  endif
 #else
 #  define OMPI_COMP_EXPORT
@@ -90,7 +91,7 @@ typedef struct {
  * building MPI applicatiosn
  *
  **********************************************************************/
-#if OMPI_BUILDING
+#if (defined(WIN32) && defined(OMPI_BUILDING)) || OMPI_BUILDING
 
 /*
  * If we're in C, we may need to bring in the bool type and true/false
@@ -173,7 +174,7 @@ typedef long long bool;
  * setting OMPI_BUILDING to 0  For 3, it's the same as 1 -- just include
  * <ompi_config.h> first.
  */
-#if OMPI_ENABLE_MEM_DEBUG
+#if OMPI_ENABLE_MEM_DEBUG && OMPI_BUILDING
 
 /* It is safe to include util/malloc.h here because a) it will only
    happen when we are building OMPI and therefore have a full OMPI
