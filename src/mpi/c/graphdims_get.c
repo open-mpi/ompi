@@ -46,15 +46,15 @@ int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges)
                                            FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_COMM,
                                            FUNC_NAME);
         }
         if (!OMPI_COMM_IS_GRAPH(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
                                            FUNC_NAME);
         }
         if (NULL == nnodes || NULL == nedges) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_ARG,
                                            FUNC_NAME);
         }
     }
@@ -64,7 +64,7 @@ int MPI_Graphdims_get(MPI_Comm comm, int *nnodes, int *nedges)
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, nnodes, nedges))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
     
     /* All done */

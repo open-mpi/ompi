@@ -47,19 +47,19 @@ int MPI_Cart_shift(MPI_Comm comm, int direction, int disp,
                                           FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(comm)) { 
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
         if (!OMPI_COMM_IS_CART(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
                                           FUNC_NAME);
         }
         if (0 > direction) { /* yet to detect direction >= comm->c_topo_ndims */
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_DIMS,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_DIMS,
                                           FUNC_NAME);
         }
         if (NULL == rank_source || NULL == rank_dest) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
     }
@@ -70,7 +70,7 @@ int MPI_Cart_shift(MPI_Comm comm, int direction, int disp,
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, direction, disp, rank_source, rank_dest))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
 
     /* all done */

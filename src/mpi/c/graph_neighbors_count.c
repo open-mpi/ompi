@@ -46,19 +46,19 @@ int MPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors)
                                            FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_COMM,
                                            FUNC_NAME);
         }
         if (!OMPI_COMM_IS_GRAPH(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
                                            FUNC_NAME);
         }
         if ((0 > rank) || (rank > ompi_group_size(comm->c_local_group))) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_RANK,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_RANK,
                                            FUNC_NAME);
         }
         if (NULL == nneighbors) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_ARG,
                                            FUNC_NAME);
         }
     }
@@ -68,7 +68,7 @@ int MPI_Graph_neighbors_count(MPI_Comm comm, int rank, int *nneighbors)
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, rank, nneighbors))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
     
     /* All done */

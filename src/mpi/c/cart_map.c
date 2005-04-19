@@ -47,11 +47,11 @@ int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims,
                                           FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(comm)) { 
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
         if ((NULL == dims) || (NULL == periods) || (NULL == newrank)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
     }
@@ -69,7 +69,7 @@ int MPI_Cart_map(MPI_Comm comm, int ndims, int *dims,
 	/* call the function */
 	if ( MPI_SUCCESS != 
 	     (err = func(comm, ndims, dims, periods, newrank))) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
+	    return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
 	}
     }
 

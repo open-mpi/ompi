@@ -46,15 +46,15 @@ int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank)
                                           FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(comm)) { 
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
         if (!OMPI_COMM_IS_CART(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
                                           FUNC_NAME);
         }
         if ((NULL == coords) || (NULL == rank)){
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
     }
@@ -65,7 +65,7 @@ int MPI_Cart_rank(MPI_Comm comm, int *coords, int *rank)
     /* call the function */
     if ( MPI_SUCCESS != 
             (err = func(comm, coords, rank))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
 
     return MPI_SUCCESS;
