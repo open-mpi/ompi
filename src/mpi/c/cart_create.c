@@ -48,19 +48,19 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
                                           FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(old_comm)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
         if (1 > ndims) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
         if (NULL == dims || NULL == periods || NULL == comm_cart) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
         if (0 > reorder || 1 < reorder) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
 
@@ -77,7 +77,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
            }
 
            if (parent_procs < count_nodes) {
-               return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+               return OMPI_ERRHANDLER_INVOKE (old_comm, MPI_ERR_ARG,
                                               FUNC_NAME);
            }
         }
@@ -117,7 +117,7 @@ int MPI_Cart_create(MPI_Comm old_comm, int ndims, int *dims,
 
     /* check the error status */
     if (MPI_SUCCESS != err) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(old_comm, err, FUNC_NAME);
     }
     
     /* All done */

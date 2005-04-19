@@ -48,13 +48,13 @@ int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims,
                                           FUNC_NAME);
         }
         if (!OMPI_COMM_IS_CART(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_TOPOLOGY,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_TOPOLOGY,
                                           FUNC_NAME);
         }
         if ((0 > maxdims) || (0 < maxdims && 
                               ((NULL == dims) || (NULL == periods) ||
                                (NULL == coords)))) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
     }
@@ -64,7 +64,7 @@ int MPI_Cart_get(MPI_Comm comm, int maxdims, int *dims,
     /* all arguments are checked and now call the back end function */
     if ( MPI_SUCCESS != 
             (err = func(comm, maxdims, dims, periods, coords))) {
-        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
     }
     
     /* All done */

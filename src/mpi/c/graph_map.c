@@ -47,11 +47,11 @@ int MPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges,
                                            FUNC_NAME);
         }
         if (OMPI_COMM_IS_INTER(comm)) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_COMM,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_COMM,
                                            FUNC_NAME);
         }
         if (1 > nnodes || NULL == index || NULL == edges || NULL == newrank) {
-            return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_ARG,
                                            FUNC_NAME);
         }
     }
@@ -70,7 +70,7 @@ int MPI_Graph_map(MPI_Comm comm, int nnodes, int *index, int *edges,
 	/* call the function */
 	if ( MPI_SUCCESS != 
 	     (err = func(comm, nnodes, index, edges, newrank))) {
-	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, err, FUNC_NAME);
+	    return OMPI_ERRHANDLER_INVOKE(comm, err, FUNC_NAME);
 	}
     }
 
