@@ -14,7 +14,7 @@
  * $HEADER$
  */
 
-#undef OMPI_BUILDING
+#define OMPI_BUILDING 0
 #include "ompi_config.h"
 
 #ifdef HAVE_PTHREAD_H

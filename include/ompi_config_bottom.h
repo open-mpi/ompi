@@ -22,42 +22,82 @@
  * need to #ifndef/#endif protection here.
  */
 
-#ifndef OMPI_CONFIG_BOTTOM_H 
-#define OMPI_CONFIG_BOTTOM_H
- 
-#if defined(WIN32) && defined(OMPI_BUILDING) && OMPI_BUILDING
-#include "win32/win_compat.h"
-#define OMPI_COMP_EXPORT __declspec(dllexport)
+#ifndef OMPI_CONFIG_H 
+#error "ompi_config_bottom.h should only be included from ompi_config.h"
 #endif
 
-#if defined(WIN32) 
-#    if defined(OMPI_BUILDING)
-#        if OMPI_BUILDING
-#            define OMPI_DECLSPEC __declspec(dllexport)
-#        else
-#            define OMPI_DECLSPEC __declspec(dllimport)
-#        endif
-#   endif
-#   ifndef OMPI_DECLSPEC 
-    /* this is for the applications. here WIN32 is defined, but no OMPI_BUILDING */
-#       define OMPI_DECLSPEC __declspec(dllimport)
-#   endif
+/*
+ * OMPI_BUILDING will be true whenever ompi_config.h is included in a
+ * file that is "internal" to Open MPI, meaning something that is
+ * below the MPI layer.  It will be false whenever we should provide
+ * the most "untampered" environment possible.  The user is free to
+ * override this before including either mpi.h or ompi_config.h, if so
+ * desired.
+ */
+#ifndef OMPI_BUILDING
+#define OMPI_BUILDING 1
 #endif
 
-#ifndef OMPI_DECLSPEC 
-#define OMPI_DECLSPEC
+/***********************************************************************
+ *
+ * code that should be in ompi_config_bottom.h regardless of build
+ * status
+ *
+ **********************************************************************/
+
+/* Do we have thread support? */
+#define OMPI_HAVE_THREAD_SUPPORT (OMPI_ENABLE_MPI_THREADS || OMPI_ENABLE_PROGRESS_THREADS)
+
+/* * C type for Fortran COMPLEX */
+typedef struct {
+  ompi_fortran_real_t real;
+  ompi_fortran_real_t imag;
+} ompi_fortran_complex_t;
+
+
+/* * C type for Fortran DOUBLE COMPLEX */
+typedef struct {
+  ompi_fortran_dblprec_t real;
+  ompi_fortran_dblprec_t imag;
+} ompi_fortran_dblcomplex_t;
+
+
+/***********************************************************************
+ *
+ * Windows library interface declaration code
+ *
+ **********************************************************************/
+
+#if defined(WIN32)
+#  if OMPI_BUILDING
+#    include "win32/win_compat.h"
+#    define OMPI_COMP_EXPORT __declspec(dllexport)
+#    define OMPI_DECLSPEC __declspec(dllexport)
+#  else
+#    define OMPI_COMP_EXPORT
+#    define OMPI_DECLSPEC __declspec(dllimport)
+#  endif
+#else
+#  define OMPI_COMP_EXPORT
+#  define OMPI_DECLSPEC
 #endif
 
-#ifndef OMPI_COMP_EXPORT
-#define OMPI_COMP_EXPORT
-#endif
+
+/***********************************************************************
+ *
+ * Code that is only for when building Open MPI or utilities that are
+ * using the internals of Open MPI.  It should not be included when
+ * building MPI applicatiosn
+ *
+ **********************************************************************/
+#if OMPI_BUILDING
 
 /*
  * If we're in C, we may need to bring in the bool type and true/false
  * constants.  OMPI_NEED_C_BOOL will be true if the compiler either
  * needs <stdbool.h> or doesn't define the bool type at all.
  */
-#if !defined(__cplusplus) && defined(OMPI_BUILDING)
+#if !defined(__cplusplus)
 #    if OMPI_NEED_C_BOOL
 #        if OMPI_USE_STDBOOL_H
              /* If we're using <stdbool.h>, there is an implicit
@@ -104,11 +144,6 @@ typedef long long bool;
 #endif
 
 /*
- * Do we have thread support?
- */
-#define OMPI_HAVE_THREAD_SUPPORT (OMPI_ENABLE_MPI_THREADS || OMPI_ENABLE_PROGRESS_THREADS)
-
-/*
  * Do we have <stdint.h>?
  */
 #ifdef HAVE_STDINT_H
@@ -135,10 +170,10 @@ typedef long long bool;
  * So for 1, everyone must include <ompi_config.h> first.  For 2, the
  * C++ bindings will never include <ompi_config.h> -- they will only
  * include <mpi.h>, which includes <ompi_config.h>, but after
- * OMPI_MPI_H is defined.  For 3, it's the same as 1 -- just include
+ * setting OMPI_BUILDING to 0  For 3, it's the same as 1 -- just include
  * <ompi_config.h> first.
  */
-#if OMPI_ENABLE_MEM_DEBUG && defined(OMPI_BUILDING) && OMPI_BUILDING && !defined(OMPI_MPI_H)
+#if OMPI_ENABLE_MEM_DEBUG
 
 /* It is safe to include util/malloc.h here because a) it will only
    happen when we are building OMPI and therefore have a full OMPI
@@ -173,29 +208,10 @@ typedef long long bool;
 #endif
 
 
-/*
- * C type for Fortran COMPLEX
- */
-typedef struct {
-  ompi_fortran_real_t real;
-  ompi_fortran_real_t imag;
-} ompi_fortran_complex_t;
-
-
-/*
- * C type for Fortran DOUBLE COMPLEX
- */
-typedef struct {
-  ompi_fortran_dblprec_t real;
-  ompi_fortran_dblprec_t imag;
-} ompi_fortran_dblcomplex_t;
-
 
 /*
  * printf functions for portability (only when building Open MPI)
  */
-
-#if defined(OMPI_BUILDING) && OMPI_BUILDING
 #if !defined(HAVE_VASPRINTF) || !defined(HAVE_VSNPRINTF)
 #include <stdarg.h>
 #include <stdlib.h>
@@ -220,7 +236,6 @@ typedef struct {
 #ifndef HAVE_VSNPRINTF
 # define vsnprintf ompi_vsnprintf
 #endif
-#endif
 
 /*
  * Define __func__-preprocessor directive if the compiler does not
@@ -229,9 +244,8 @@ typedef struct {
  * coming from (assuming that __func__ is typically used for
  * printf-style debugging).
  */
-
-#if defined(OMPI_BUILDING) && OMPI_BUILDING && defined(HAVE_DECL___FUNC__) && !HAVE_DECL___FUNC__
+#if defined(HAVE_DECL___FUNC__) && !HAVE_DECL___FUNC__
 #define __func__ __FILE__
 #endif
 
-#endif /* OMPI_CONFIG_BOTTOM_H */
+#endif /* OMPI_BUILDING */

@@ -37,10 +37,6 @@ BASECC="`basename $CC`"
 CFLAGS="$ompi_cflags_save"
 AC_DEFINE_UNQUOTED(OMPI_CC, "$CC", [OMPI underlying C compiler])
 
-# When building OMPI, we need this everywhere
-
-CPPFLAGS="$CPPFLAGS -DOMPI_BUILDING=1"
-
 # Check for compilers that impersonate gcc
 
 AC_MSG_CHECKING([for compilers that impersonate gcc])

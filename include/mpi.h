@@ -17,6 +17,16 @@
 #ifndef OMPI_MPI_H
 #define OMPI_MPI_H
 
+/*
+ * Turn off OMPI_BUILDING if we were included before ompi_config.h,
+ * which should happen whenever an MPI application is involved.  This
+ * will turn off most of the includes / compatibility code in
+ * ompi_config_bottom.h, giving the user an expected experience.
+ */
+#ifndef OMPI_BUILDING
+#define OMPI_BUILDING 0
+#endif
+
 #include "ompi_config.h"
 
 /*
@@ -34,7 +44,7 @@
  * To accomodate programs written for MPI implementations that use a
  * straight ROMIO import
  */
-#if !defined(OMPI_BUILDING) || !OMPI_BUILDING
+#if !OMPI_BUILDING
 #define MPIO_Request MPI_Request
 #define MPIO_Test MPI_Test
 #define MPIO_Wait MPI_Wait
@@ -1636,11 +1646,9 @@ OMPI_DECLSPEC  double PMPI_Wtime(void);
  *   - We are using a C++ compiler
  */
 
-#if defined(OMPI_WANT_CXX_BINDINGS)
-#if !defined(OMPI_BUILDING) || !OMPI_BUILDING
+#if defined(OMPI_WANT_CXX_BINDINGS) && !OMPI_BUILDING
 #if defined(__cplusplus) || defined(c_plusplus) 
 #include "mpi/cxx/mpicxx.h"
-#endif
 #endif
 #endif
 
