@@ -48,6 +48,9 @@ struct mca_pml_teg_t {
     mca_ptl_base_module_t** teg_ptl_modules;
     size_t teg_num_ptl_modules;
 
+    mca_ptl_base_component_progress_fn_t* teg_ptl_progress;
+    size_t teg_num_ptl_progress;
+
     ompi_list_t  teg_procs;
     ompi_mutex_t teg_lock;
 

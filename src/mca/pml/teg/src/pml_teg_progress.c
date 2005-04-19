@@ -29,12 +29,9 @@ int mca_pml_teg_progress(void)
     /*
      * Progress each of the PTL modules
      */
-    for(i=0; i<mca_pml_teg.teg_num_ptl_components; i++) {
-        mca_ptl_base_component_progress_fn_t progress = mca_pml_teg.teg_ptl_components[i]->ptlm_progress;
-        if(NULL != progress) {
-            int rc = progress(tstamp);
-            if(rc < 0)
-                return rc;
+    for(i=0; i<mca_pml_teg.teg_num_ptl_progress; i++) {
+        int rc = mca_pml_teg.teg_ptl_progress[i](tstamp);
+        if(rc > 0) {
             count += rc;
         }
     }
