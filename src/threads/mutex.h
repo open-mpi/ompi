@@ -239,7 +239,7 @@ static inline bool ompi_set_using_threads(bool have)
         }                                       \
     } while (0)
 #else
-#define OMPI_THREAD_SCOPED_LOCK(mutex,action)
+#define OMPI_THREAD_SCOPED_LOCK(mutex,action) (action)
 #endif
 
 /**
