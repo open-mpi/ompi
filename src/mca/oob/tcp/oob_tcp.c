@@ -683,7 +683,11 @@ int mca_oob_tcp_init(void)
     ompi_list_item_t* item;
 
     /* random delay to stagger connections back to seed */
+#if defined(WIN32)
+    sleep((orte_process_info.my_name->vpid % orte_process_info.num_procs % 1000) * 1000);
+#else
     usleep((orte_process_info.my_name->vpid % orte_process_info.num_procs % 1000) * 1000);
+#endif
 
     /* get my jobid */
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, 
