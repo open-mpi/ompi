@@ -149,7 +149,9 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(const orte_process_name_t *name)
     return proc;
 }
 
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
 #include <arpa/inet.h>
 /*
  * Note that this routine must be called with the lock on the process already 
