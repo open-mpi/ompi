@@ -152,7 +152,10 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(const orte_process_name_t *name)
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+
 /*
  * Note that this routine must be called with the lock on the process already 
  * held.  Insert a ptl instance into the proc array and assign it an address.

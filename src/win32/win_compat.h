@@ -49,12 +49,14 @@
 #include <process.h>
 #include <io.h>
 #include <signal.h>
+/*#if defined(OMPI_BUILDING) && OMPI_BUILDING */
 #include "win32/ompi_uio.h"
 #include "win32/ompi_time.h"
 #include "win32/ompi_utsname.h"
 #include "win32/ompi_util.h"
 #include "win32/ompi_misc.h"
 #include "util/printf.h"
+/*#endif*/
 
 #define MAXPATHLEN MAX_PATH
 #define MAXHOSTNAMELEN MAX_PATH
