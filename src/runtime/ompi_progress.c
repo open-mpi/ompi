@@ -92,7 +92,7 @@ register_node_schedule_callback(void)
     orte_gpr_notify_id_t rctag;
     orte_gpr_value_t trig, *trigs;
     orte_gpr_subscription_t sub, *subs;
-    orte_jobid_t jobid;
+    orte_jobid_t jobid = orte_process_info.my_name->jobid;
     int rc;
     char **tokens;
     int32_t num_tokens;
