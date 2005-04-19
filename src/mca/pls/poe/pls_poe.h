@@ -26,15 +26,28 @@
 extern "C" {
 #endif
 
-    /*
-     * Globally exported variable
-     */
-    
-    OMPI_COMP_EXPORT extern orte_pls_base_component_1_0_0_t 
-        orte_pls_poe_component;
-    OMPI_COMP_EXPORT extern orte_pls_base_module_1_0_0_t
-        orte_pls_poe_module;
-    OMPI_COMP_EXPORT extern int orte_pls_poe_param_priorty;
+/*
+ * Module open / close
+ */
+int orte_pls_poe_component_open(void);
+int orte_pls_poe_component_close(void);
+orte_pls_base_module_t* orte_pls_poe_component_init(int *priority);
+
+/**
+ * PLS Component
+ */
+struct orte_pls_poe_component_t {
+    orte_pls_base_component_t super;
+    int priority;
+    char* path;
+};
+typedef struct orte_pls_poe_component_t orte_pls_poe_component_t;
+
+
+ORTE_DECLSPEC extern orte_pls_poe_component_t mca_pls_poe_component;
+ORTE_DECLSPEC extern orte_pls_base_module_t orte_pls_poe_module;
+
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
