@@ -294,7 +294,11 @@ static int kill_tids(tm_task_id *tids, orte_process_name_t *names, size_t size)
                                     "pls:tm:kill: tid %d died", tids[i]);
                         break;
                     }
+#if defined(WIN32)
+                    sleep(1);
+#else
                     usleep(1);
+#endif
                 }
                 
                 /* No, it did not die.  Try with SIGKILL */
@@ -342,7 +346,11 @@ static int kill_tids(tm_task_id *tids, orte_process_name_t *names, size_t size)
                                 died = true;
                                 break;
                             }
+#if defined(WIN32)
+                            sleep(1);
+#else
                             usleep(1);
+#endif
                         }
                         
                         if (j >= NUM_SIGNAL_POLL_ITERS) {
