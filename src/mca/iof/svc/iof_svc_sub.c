@@ -177,7 +177,7 @@ int orte_iof_svc_sub_forward(
             ORTE_IOF_BASE_FRAG_ALLOC(frag,rc);
             frag->frag_hdr.hdr_msg = *hdr;
             frag->frag_len = frag->frag_hdr.hdr_msg.msg_len;
-            frag->frag_iov[0].iov_base = &frag->frag_hdr;
+            frag->frag_iov[0].iov_base = (void*)&frag->frag_hdr;
             frag->frag_iov[0].iov_len = sizeof(frag->frag_hdr);
             frag->frag_iov[1].iov_base = frag->frag_data;
             frag->frag_iov[1].iov_len = frag->frag_len;
