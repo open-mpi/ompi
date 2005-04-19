@@ -98,10 +98,14 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
     size_t num_ptls = ompi_list_get_size(ptls);
     size_t cache_bytes = 0;
     mca_pml_teg.teg_num_ptl_modules = 0;
+    mca_pml_teg.teg_num_ptl_progress = 0;
     mca_pml_teg.teg_num_ptl_components = 0;
     mca_pml_teg.teg_ptl_modules = (mca_ptl_base_module_t **)malloc(sizeof(mca_ptl_base_module_t*) * num_ptls);
+    mca_pml_teg.teg_ptl_progress = (mca_ptl_base_component_progress_fn_t*)malloc(sizeof(mca_ptl_base_component_progress_fn_t) * num_ptls);
     mca_pml_teg.teg_ptl_components = (mca_ptl_base_component_t **)malloc(sizeof(mca_ptl_base_component_t*) * num_ptls);
-    if (NULL == mca_pml_teg.teg_ptl_modules || NULL == mca_pml_teg.teg_ptl_components) {
+    if (NULL == mca_pml_teg.teg_ptl_modules || 
+        NULL == mca_pml_teg.teg_ptl_progress ||
+        NULL == mca_pml_teg.teg_ptl_components) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -212,6 +216,7 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
     ptl_peers = (struct mca_ptl_base_peer_t **)malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
     for(p_index = 0; p_index < mca_pml_teg.teg_num_ptl_modules; p_index++) {
         mca_ptl_base_module_t* ptl = mca_pml_teg.teg_ptl_modules[p_index];
+        int ptl_inuse = 0;
 
         /* if the ptl can reach the destination proc it sets the
          * corresponding bit (proc index) in the reachable bitmap
@@ -233,6 +238,9 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
                 mca_pml_proc_t* proc_pml = proc->proc_pml;
                 mca_ptl_proc_t* proc_ptl;
                 size_t size;
+
+                /* this ptl can be used */
+                ptl_inuse++;
 
                 /* initialize each proc */
                 if(NULL == proc_pml) {
@@ -271,6 +279,21 @@ int mca_pml_teg_add_procs(ompi_proc_t** procs, size_t nprocs)
                 proc_ptl->ptl_peer = ptl_peers[p];
                 proc_ptl->ptl_weight = 0;
                 proc_pml->proc_ptl_flags |= ptl->ptl_flags;
+            }
+        }
+        if(ptl_inuse > 0 && NULL != ptl->ptl_component->ptlm_progress) {
+            size_t p;
+            bool found = false;
+            for(p=0; p<mca_pml_teg.teg_num_ptl_progress; p++) {
+                if(mca_pml_teg.teg_ptl_progress[p] == ptl->ptl_component->ptlm_progress) {
+                    found = true;
+                    break;
+                }
+            }
+            if(found == false) {
+                mca_pml_teg.teg_ptl_progress[mca_pml_teg.teg_num_ptl_progress] = 
+                    ptl->ptl_component->ptlm_progress;
+                mca_pml_teg.teg_num_ptl_progress++;
             }
         }
     }
