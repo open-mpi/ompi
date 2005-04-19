@@ -294,7 +294,7 @@ enum {
 /*
  * Datatype combiners.
  */
-OMPI_DECLSPEC enum {
+enum {
   MPI_COMBINER_NAMED,
   MPI_COMBINER_DUP,
   MPI_COMBINER_CONTIGUOUS,
