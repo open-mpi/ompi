@@ -132,7 +132,7 @@ static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
 		    : "=qm"(ret)
 		    : "D"(addr), "a"(ll_low(oldval)), "d"(ll_high(oldval)),
 		      "r"(ll_low(newval)), "c"(ll_high(newval))
-		    : "cc", "memory");
+		    : "cc", "memory", "ebx");
     return (int) ret;
 }
 
