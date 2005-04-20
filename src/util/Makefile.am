@@ -20,8 +20,6 @@ AM_CPPFLAGS = -DOMPI_PKGDATADIR=\"$(pkgdatadir)\"
 AM_LFLAGS = -Pompi_show_help_yy
 LEX_OUTPUT_ROOT = lex.ompi_show_help_yy
 
-#libompiutil_la_CCASFLAGS = $(CPPFLAGS)
-
 noinst_LTLIBRARIES = libompiutil.la
 
 # Source code files
