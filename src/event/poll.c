@@ -192,13 +192,9 @@ poll_dispatch(void *arg, struct timeval *tv)
 #endif
 
 	sec = tv->tv_sec * 1000 + tv->tv_usec / 1000;
-        if(ompi_using_threads()) {
-            ompi_mutex_unlock(&ompi_event_lock);
+        OMPI_THREAD_UNLOCK(&ompi_event_lock);
 	    res = poll(pop->event_set, nfds, sec);
-            ompi_mutex_lock(&ompi_event_lock);
-        } else {
-	    res = poll(pop->event_set, nfds, sec);
-        }
+        OMPI_THREAD_LOCK(&ompi_event_lock);
 
 #if OMPI_EVENT_USE_SIGNALS
 	if (ompi_evsignal_recalc(&pop->evsigmask) == -1)

@@ -291,7 +291,7 @@ int ompi_event_disable(void)
     if(ompi_using_threads()) {
         OMPI_THREAD_LOCK(&ompi_event_lock);
         if(ompi_event_inited > 0 && ompi_event_enabled == false) {
-            OMPI_THREAD_LOCK(&ompi_event_lock);
+            OMPI_THREAD_UNLOCK(&ompi_event_lock);
             return OMPI_SUCCESS;
         }
 
@@ -321,7 +321,7 @@ int ompi_event_enable(void)
 
         OMPI_THREAD_LOCK(&ompi_event_lock);
         if(ompi_event_inited > 0 && ompi_event_enabled == true) {
-            OMPI_THREAD_LOCK(&ompi_event_lock);
+            OMPI_THREAD_UNLOCK(&ompi_event_lock);
             return OMPI_SUCCESS;
         }
 
