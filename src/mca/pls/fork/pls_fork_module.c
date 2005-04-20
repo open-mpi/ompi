@@ -211,7 +211,10 @@ static int orte_pls_fork_proc(
             return rc;
         }
 
-        /* wait for the child process */
+        /* wait for the child process - dont register for wait callback until
+         * after I/O is setup and the pid registered - otherwise can receive the
+         * wait callback before the above is ever completed
+        */
         OMPI_THREAD_LOCK(&mca_pls_fork_component.lock);
         mca_pls_fork_component.num_children++;
         OMPI_THREAD_UNLOCK(&mca_pls_fork_component.lock);
