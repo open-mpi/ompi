@@ -380,18 +380,21 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                  ompi_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
             OMPI_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
 
-            /* setup callback on sigchild */
+            /* save the daemons name on the node */
+            if (ORTE_SUCCESS != (rc = orte_pls_rsh_set_node_name(node,jobid,name))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+
+            /* setup callback on sigchild - wait until setup above is complete 
+             * as the callback can occur in the call to orte_wait_cb
+             */
             daemon_info = OBJ_NEW(rsh_daemon_info_t);
             OBJ_RETAIN(node);
             daemon_info->node = node;
             daemon_info->jobid = jobid;
             orte_wait_cb(pid, orte_pls_rsh_wait_daemon, daemon_info);
 
-            /* save the daemons name on the node */
-            if (ORTE_SUCCESS != (rc = orte_pls_rsh_set_node_name(node,jobid,name))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
 
             /* if required - add delay to avoid problems w/ X11 authentication */
             if (mca_pls_rsh_component.debug && mca_pls_rsh_component.delay) {
