@@ -85,8 +85,9 @@ static void orte_pls_fork_wait_proc(pid_t pid, int status, void* cbdata)
     /* Clean up the session directory as if we were the process
        itself.  This covers the case where the process died abnormally
        and didn't cleanup its own session directory. */
-
+ 
     orte_session_dir_finalize(&proc->proc_name);
+    orte_iof.iof_flush();
 
     /* set the state of this process */
     if(WIFEXITED(status)) {
@@ -197,13 +198,6 @@ static int orte_pls_fork_proc(
 
     } else {
 
-        /* wait for the child process */
-        OMPI_THREAD_LOCK(&mca_pls_fork_component.lock);
-        mca_pls_fork_component.num_children++;
-        OMPI_THREAD_UNLOCK(&mca_pls_fork_component.lock);
-        OBJ_RETAIN(proc);
-        orte_wait_cb(pid, orte_pls_fork_wait_proc, proc);
-
         /* save the pid in the registry */
         if(ORTE_SUCCESS != (rc = orte_pls_base_set_proc_pid(&proc->proc_name, pid))) {
             ORTE_ERROR_LOG(rc);
@@ -217,6 +211,12 @@ static int orte_pls_fork_proc(
             return rc;
         }
 
+        /* wait for the child process */
+        OMPI_THREAD_LOCK(&mca_pls_fork_component.lock);
+        mca_pls_fork_component.num_children++;
+        OMPI_THREAD_UNLOCK(&mca_pls_fork_component.lock);
+        OBJ_RETAIN(proc);
+        orte_wait_cb(pid, orte_pls_fork_wait_proc, proc);
     }
     return ORTE_SUCCESS;
 }
