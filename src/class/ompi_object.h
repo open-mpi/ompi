@@ -339,6 +339,17 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_object_t);
  */
 OMPI_DECLSPEC void ompi_class_initialize(ompi_class_t *);
 
+/**
+ * Shut down the class system and release all memory
+ *
+ * This function should be invoked as the ABSOLUTE LAST function to
+ * use the class subsystem.  It frees all associated memory with ALL
+ * classes, rendering all of them inoperable.  It is here so that
+ * tools like valgrind and purify don't report still-reachable memory
+ * upon process termination.
+ */
+int ompi_class_finalize(void);
+
 END_C_DECLS
 /**
  * Run the hierarchy of class constructors for this object, in a
@@ -438,18 +449,6 @@ static inline int ompi_obj_update(ompi_object_t *object, int inc)
     ompi_atomic_add(&(object->obj_reference_count), inc );
     return object->obj_reference_count;
 }
-
-
-/**
- * Shut down the class system and release all memory
- *
- * This function should be invoked as the ABSOLUTE LAST function to
- * use the class subsystem.  It frees all associated memory with ALL
- * classes, rendering all of them inoperable.  It is here so that
- * tools like valgrind and purify don't report still-reachable memory
- * upon process termination.
- */
-int ompi_class_finalize(void);
 
 
 /**********************************************************************/
