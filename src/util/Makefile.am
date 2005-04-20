@@ -20,9 +20,9 @@ AM_CPPFLAGS = -DOMPI_PKGDATADIR=\"$(pkgdatadir)\"
 AM_LFLAGS = -Pompi_show_help_yy
 LEX_OUTPUT_ROOT = lex.ompi_show_help_yy
 
-libutil_la_CCASFLAGS = $(CPPFLAGS)
+#libompiutil_la_CCASFLAGS = $(CPPFLAGS)
 
-noinst_LTLIBRARIES = libutil.la
+noinst_LTLIBRARIES = libompiutil.la
 
 # Source code files
 
@@ -53,7 +53,7 @@ headers = \
     universe_setup_file_io.h \
     strncpy.h
 
-libutil_la_SOURCES = \
+libompiutil_la_SOURCES = \
     $(headers) \
     argv.c \
     basename.c \
