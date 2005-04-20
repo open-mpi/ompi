@@ -170,7 +170,7 @@ libmpi_la_LIBADD = \
         request/librequest.la \
         runtime/libruntime.la \
         threads/libthreads.la \
-        util/libutil.la
+        util/libompiutil.la
 libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
 
 # Conditionally install the header files
