@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
         }
 
         /* connect output to a log file in the session directory */
-        sprintf(log_file, "orted-%d-%s.log", 
+        sprintf(log_file, "output-orted-%d-%s.log", 
             orte_process_info.my_name->jobid, orte_system_info.nodename);
 	    log_path = orte_os_path(false, 
             orte_process_info.tmpdir_base, 
