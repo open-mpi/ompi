@@ -49,19 +49,23 @@ int orte_iof_base_flush(void)
                                                                                                                               
     /* flush any pending output */
     fflush(NULL);
-                                                                                                                              
+
     /* force all file descriptors to be progressed at least once,
      * wait on a timer callback to be called out of the event loop
     */
 
-    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    if(ompi_event_progress_thread() == false) {
+        OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+        ompi_evtimer_set(&ev, orte_iof_base_timer_cb, &flushed);
+        ompi_event_add(&ev, &tv);
+        while(flushed == 0)
+            ompi_condition_wait(&orte_iof_base.iof_condition, &orte_iof_base.iof_lock);
+    } else {
+        ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+        OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    }
     orte_iof_base.iof_waiting++;
 
-    ompi_evtimer_set(&ev, orte_iof_base_timer_cb, &flushed);
-    ompi_event_add(&ev, &tv);
-    while(flushed == 0)
-        ompi_condition_wait(&orte_iof_base.iof_condition, &orte_iof_base.iof_lock);
-                                                                                                                              
     /* wait for all of the endpoints to reach an idle state */
     pending = ompi_list_get_size(&orte_iof_base.iof_endpoints);
     while(pending > 0) {
@@ -75,7 +79,13 @@ int orte_iof_base_flush(void)
             }
         }
         if(pending != 0) {
-            ompi_condition_wait(&orte_iof_base.iof_condition, &orte_iof_base.iof_lock);
+            if(ompi_event_progress_thread() == false) {
+                ompi_condition_wait(&orte_iof_base.iof_condition, &orte_iof_base.iof_lock);
+            } else {
+                OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+                ompi_event_loop(OMPI_EVLOOP_ONCE);
+                OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+            }
         }
     }
     orte_iof_base.iof_waiting--;

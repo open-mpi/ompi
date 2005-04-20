@@ -193,7 +193,6 @@ static orte_iof_base_endpoint_t* orte_iof_base_endpoint_lookup(
     int tag)
 {
     ompi_list_item_t* item;
-    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
     for(item =  ompi_list_get_first(&orte_iof_base.iof_endpoints);
         item != ompi_list_get_end(&orte_iof_base.iof_endpoints);
         item =  ompi_list_get_next(item)) {
@@ -205,7 +204,6 @@ static orte_iof_base_endpoint_t* orte_iof_base_endpoint_lookup(
             return endpoint;
         }
     }
-    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return NULL;
 }
 
@@ -412,12 +410,14 @@ int orte_iof_base_endpoint_forward(
         if(ompi_list_get_size(&endpoint->ep_frags) == 1) {
             ompi_event_add(&endpoint->ep_event,0);
         }
+        OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     } else {
+        OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+
         /* acknowledge fragment */
         orte_iof_base_endpoint_ack(endpoint, frag->frag_hdr.hdr_msg.msg_seq + frag->frag_hdr.hdr_msg.msg_len);
         orte_iof_base_frag_ack(frag);
     }
-    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return ORTE_SUCCESS;
 }
 
