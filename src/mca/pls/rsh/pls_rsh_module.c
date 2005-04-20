@@ -353,10 +353,11 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             }
             argv[proc_name_index] = name_string;
 
-            if (mca_pls_rsh_component.debug > 1) {
+            if (mca_pls_rsh_component.debug > 2) {
                 /* debug output */
                 char* cmd = ompi_argv_join(argv, ' ');  
                 ompi_output(0, "orte_pls_rsh: %s\n", cmd);
+                exit(0);
             } 
 
             if (mca_pls_rsh_component.debug == 0) {
