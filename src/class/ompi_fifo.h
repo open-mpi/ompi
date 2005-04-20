@@ -142,8 +142,6 @@ static inline int ompi_fifo_init(int size_of_cb_fifo, int lazy_free_freq,
         (volatile struct ompi_cb_fifo_wrapper_t *)fifo->head;  /* only one element 
                                                             in the link list */
     fifo->head->cb_overflow=false;  /* no attempt to overflow the queue */
-    ompi_atomic_unlock(&(fifo->head_lock));
-    ompi_atomic_unlock(&(fifo->tail_lock));
 
     /* set the tail */
     fifo->tail=fifo->head;
@@ -468,8 +466,6 @@ static inline int ompi_fifo_init_same_base_addr(int size_of_cb_fifo,
         (volatile struct ompi_cb_fifo_wrapper_t *)fifo->head;  /* only one element 
                                                             in the link list */
     fifo->head->cb_overflow=false;  /* no attempt to overflow the queue */
-    ompi_atomic_unlock(&(fifo->head_lock));
-    ompi_atomic_unlock(&(fifo->tail_lock));
 
     /* set the tail */
     fifo->tail=fifo->head;
