@@ -216,7 +216,7 @@ sub generate_stats {
             else  {
                 #Now we are doing the right line. Search for this file
                 if (/$file_name/) {
-                    s/^([0-9]+\.[0-9]+\%)\.*/$1/;
+                    s/^([\s,0-9]*\.[0-9]+\%)\.*/$1/;
                     my $val = $1; 
                     $average += $val;
                     $k++;
