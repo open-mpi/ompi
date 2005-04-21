@@ -234,9 +234,11 @@ sub generate_stats {
         }
         close(RESULT);
     }
-    print COVERAGE "==============================================================\n";
-    print COVERAGE "Average coverage was: ", $average/$num_files, "  \n";
-    print COVERAGE "==============================================================\n";
+    if ($num_files != 0){
+        print COVERAGE "==============================================================\n";
+        print COVERAGE "Average coverage was: ", $average/$num_files, "  \n";
+        print COVERAGE "==============================================================\n";
+    }
     close(INPUT);
     close(COVERAGE);
     if ($calculate == 1) {
