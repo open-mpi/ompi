@@ -28,22 +28,35 @@
 #include "mca/gpr/gpr.h"
 #include "include/orte_schema.h"
 
+/* 
+ * default parameters 
+ */
 static int ompi_progress_event_flag = OMPI_EVLOOP_ONCE;
+static const int ompi_progress_default_tick_rate = 100;
 
+/*
+ * Local variables
+ */
 #if OMPI_HAVE_THREAD_SUPPORT
 static ompi_lock_t progress_lock;
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
+/* callbacks to progress */
 static ompi_progress_callback_t *callbacks = NULL;
 static size_t callbacks_len = 0;
 static size_t callbacks_size = 0;
 
+/* do we want to call sched_yield() if nothing happened */
 static int call_yield = 1;
 
+/* current count down until we tick the event library */
 static long event_progress_counter = 0;
+/* reset value for counter when it hits 0 */
 static long event_progress_counter_reset = 0;
+/* users of the event library from MPI cause the tick rate to 
+   be every time */
+static int32_t event_num_mpi_users = 0;
 
-#define BWB_DEBUG_PRINTF 0
 
 static void
 node_schedule_callback(orte_gpr_notify_data_t *notify_data, void *user_tag)
@@ -51,10 +64,6 @@ node_schedule_callback(orte_gpr_notify_data_t *notify_data, void *user_tag)
     uint32_t proc_slots = 0;
     uint32_t used_proc_slots = 0;
     int param, i;
-
-#if BWB_DEBUG_PRINTF
-    printf("callback triggered\n");
-#endif
 
     /* parse the response */
     for(i = 0 ; i < notify_data->cnt ; i++) {
@@ -65,17 +74,11 @@ node_schedule_callback(orte_gpr_notify_data_t *notify_data, void *user_tag)
             orte_gpr_keyval_t* keyval = value->keyvals[k];
             if(strcmp(keyval->key, ORTE_NODE_SLOTS_KEY) == 0) {
                 proc_slots = keyval->value.ui32;
-#if BWB_DEBUG_PRINTF
-                printf("setting proc_slots to %d\n", proc_slots);
-#endif
                 continue;
             }
             if(strncmp(keyval->key, ORTE_NODE_SLOTS_ALLOC_KEY, 
                        strlen(ORTE_NODE_SLOTS_ALLOC_KEY)) == 0) {
                 used_proc_slots += keyval->value.ui32;
-#if BWB_DEBUG_PRINTF
-                printf("setting used_proc_slots to %d\n", used_proc_slots);
-#endif
                 continue;
             }
         }
@@ -221,6 +224,8 @@ ompi_progress_mpi_init(void)
         if (OMPI_SUCCESS != rc) return rc;
     }
 
+    event_num_mpi_users = 0;
+
     return OMPI_SUCCESS;
 }
 
@@ -243,19 +248,15 @@ ompi_progress_mpi_enable(void)
         call_yield = value;
     }
 
-#if BWB_DEBUG_PRINTF
-    printf("call_yield: %d\n", call_yield);
-#endif
-
     /* set the event tick rate */
     param = mca_base_param_find("mpi", NULL, "event_tick_rate");
     mca_base_param_lookup_int(param, &value);
 
     if (value < 0) {
-        /* default - tick all the time */
-        event_progress_counter_reset = 0;
+        /* user didn't specify - default tick rate */
+        event_progress_counter_reset = ompi_progress_default_tick_rate;
     } else if (value == 0) {
-        /* user specified - don't count often */
+        /* user specified as never tick - don't count often */
         event_progress_counter_reset = INT_MAX;
     } else {
         /* subtract one so that we can do post-fix subtraction
@@ -263,7 +264,11 @@ ompi_progress_mpi_enable(void)
         event_progress_counter_reset = value - 1;
     }
 
-    event_progress_counter = event_progress_counter_reset;
+    /* it's possible that an init function bumped up our tick rate.
+     * If so, set the event_progress counter to 0.  Otherwise, set it to
+     * the reset value */
+    event_progress_counter = (event_num_mpi_users > 0) ? 
+        0 : event_progress_counter_reset;
 
     return OMPI_SUCCESS;
 }
@@ -351,7 +356,8 @@ ompi_progress(void)
     /* trip the event library if we've reached our tick rate and we are
        enabled */
     if (event_progress_counter-- <= 0 && ompi_progress_event_flag != 0) {
-        event_progress_counter = event_progress_counter_reset;
+        event_progress_counter = 
+            (event_num_mpi_users > 0) ? 1 : event_progress_counter_reset;
         events += ompi_event_loop(ompi_progress_event_flag);
     }
 #endif
@@ -376,11 +382,7 @@ ompi_progress(void)
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
     if (call_yield && events <= 0) {
-        /*
-         * TSW - BWB - XXX - FIXME: this has a non-zero impact on
-         * performance.  Evaluate reasonable defaults.
-         * 
-         * If there is nothing to do - yield the processor - otherwise
+        /* If there is nothing to do - yield the processor - otherwise
          * we could consume the processor for the entire time slice. If
          * the processor is oversubscribed - this will result in a best-case
          * latency equivalent to the time-slice.
@@ -465,4 +467,29 @@ ompi_progress_unregister(ompi_progress_callback_t cb)
 #endif
 
     return ret;
+}
+
+
+int
+ompi_progress_event_increment()
+{
+    int32_t val;
+    val = ompi_atomic_add_32(&event_num_mpi_users, 1);
+    /* always reset the tick rate - can't hurt */
+    event_progress_counter = 0;
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_progress_event_decrement()
+{
+    int32_t val;
+   val = ompi_atomic_sub_32(&event_num_mpi_users, 1);
+   if (val >= 0) {
+       event_progress_counter = event_progress_counter_reset;
+   }
+
+   return OMPI_SUCCESS;
 }

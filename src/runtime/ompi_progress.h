@@ -14,6 +14,12 @@
  * $HEADER$
  */
 
+/**
+ * @file
+ *
+ * Progress engine for Open MPI
+ */
+
 #ifndef _OMPI_PROGRESS_H_
 #define _OMPI_PROGRESS_H_
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -35,16 +41,28 @@ OMPI_DECLSPEC extern int ompi_progress_init(void);
  *
  * Register to receive any needed information from the GPR and 
  * intialize any data structures required for MPI applications.
+ *
+ * \note ompi_progress_init() must be called before calling
+ * this function.  Failure to do so is an error.
  */
 OMPI_DECLSPEC extern int ompi_progress_mpi_init(void);
 
 /** 
  * Turn on optimizations for MPI progress
+ *
+ * Turn on optimizations for MPI applications.  This includes lowering
+ * the rate at which the event library is ticked if it is not under
+ * active use and possibly disabling the sched_yield call when the
+ * progress engine is idle 
  */
 OMPI_DECLSPEC extern int ompi_progress_mpi_enable(void);
 
 /**
  * Turn off all optimizations enabled by ompi_progress_mpi_enable().
+ *
+ * Completely reverses all optimizations enabled by
+ * ompi_progress_mpi_enable().  The event library resumes constant
+ * ticking and the progress engine yields the CPU when idle.
  */
 OMPI_DECLSPEC extern int ompi_progress_mpi_disable(void);
 
@@ -81,6 +99,16 @@ OMPI_DECLSPEC int ompi_progress_register(ompi_progress_callback_t cb);
  */
 OMPI_DECLSPEC int ompi_progress_unregister(ompi_progress_callback_t cb);
 
+
+/**
+ * Increase count of MPI users of the event library
+ */   
+OMPI_DECLSPEC int ompi_progress_event_increment(void);
+
+/**
+ * Decrease count of MPI users of the event library
+ */   
+OMPI_DECLSPEC int ompi_progress_event_decrement(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
