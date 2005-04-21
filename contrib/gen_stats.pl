@@ -140,8 +140,8 @@ sub get_file_list {
  
         # Now do the manual diff 
         open(TEMP1, "< temp1");
-        open(UNTOUCHED_FILES, ">> $touched");
-        open(TOUCHED_FILES, ">> $untouched");
+        open(UNTOUCHED_FILES, ">> $untouched");
+        open(TOUCHED_FILES, ">> $touched");
  
         while(<TEMP1>) {
             my $c_file = $_;
