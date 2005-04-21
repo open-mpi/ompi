@@ -302,8 +302,6 @@ void ompi_info::do_config(bool want_all)
                       (OMPI_F77_SINGLE_UNDERSCORE ? "single underscore" : 
                        "double underscore")))) + string(")"): "no");
   const string f90(OMPI_WANT_F90_BINDINGS ? "yes" : "no");
-  const string threads(OMPI_HAVE_SOLARIS_THREADS ? "solaris" :
-                       (OMPI_HAVE_POSIX_THREADS ? "posix" : "no"));
   const string memprofile(OMPI_ENABLE_MEM_PROFILE ? "yes" : "no");
   const string memdebug(OMPI_ENABLE_MEM_DEBUG ? "yes" : "no");
   const string debug(OMPI_ENABLE_DEBUG ? "yes" : "no");
@@ -317,6 +315,20 @@ void ompi_info::do_config(bool want_all)
   int ompi_mpi_param_check = 3;
   const string paramcheck(0 == MPI_PARAM_CHECK ? "never" :
                           1 == MPI_PARAM_CHECK ? "always" : "runtime");
+  string threads;
+
+  if (OMPI_HAVE_SOLARIS_THREADS || OMPI_HAVE_POSIX_THREADS) {
+      threads = OMPI_HAVE_SOLARIS_THREADS ? "solaris" :
+          OMPI_HAVE_POSIX_THREADS ? "posix" : "type unknown";
+          threads += " (";
+          threads += "mpi: ";
+          threads += OMPI_ENABLE_MPI_THREADS ? "yes" : "no";
+          threads += ", progress: ";
+          threads += OMPI_ENABLE_PROGRESS_THREADS ? "yes" : "no";
+          threads += ")";
+  } else {
+      threads = "no";
+  }
 
   out("Configured by", "config:user", OMPI_CONFIGURE_USER);
   out("Configured on", "config:timestamp", OMPI_CONFIGURE_DATE);
