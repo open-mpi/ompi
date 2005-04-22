@@ -123,6 +123,7 @@ static OBJ_CLASS_INSTANCE(ompi_attrkey_item_t,
 static ompi_hash_table_t *keyval_hash;
 static ompi_bitmap_t *key_bitmap;
 
+#if OMPI_HAVE_THREAD_SUPPORT
 /*
  * Have one lock protect all access to any attribute stuff (keyval
  * hash, key bitmap, attribute hashes on MPI objects, etc.).
@@ -132,7 +133,7 @@ static ompi_bitmap_t *key_bitmap;
  * So why bother?
  */
 static ompi_mutex_t alock;
-
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 /*
  * ompi_attrkey_item_t interface functions
