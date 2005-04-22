@@ -210,3 +210,13 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
     pConvertor->bConverted = pData->size * pConvertor->count;
     return OMPI_SUCCESS;
 }
+
+void ompi_convertor_dump( ompi_convertor_t* convertor )
+{
+    printf( "Convertor %p count %d stack position %d bConverted %d\n", (void*)convertor,
+            convertor->count, convertor->stack_pos, convertor->bConverted );
+    ompi_ddt_dump( convertor->pDesc );
+    printf( "Actual stack representation\n" );
+    ompi_ddt_dump_stack( convertor->pStack, convertor->stack_pos,
+                         convertor->pDesc->desc.desc, convertor->pDesc->name );
+}
