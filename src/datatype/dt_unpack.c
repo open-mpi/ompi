@@ -176,7 +176,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
     long lastDisp = 0;
     size_t space = iov[0].iov_len, last_count = 0, last_blength = 0;
     char* pSrcBuf;
-    dt_desc_t* pData = pConv->pDesc;
+    ompi_datatype_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
 
     pSrcBuf = iov[0].iov_base;
@@ -251,19 +251,33 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
         while( pElems[pos_desc].flags & DT_FLAG_DATA ) {
             /* do we have enough space in the buffer ? */
             last_blength = last_count * ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
-            if( space < last_blength ) {
-                last_blength = space / ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
-                last_count -= last_blength;
-                last_blength *= ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
+            if( pElems[pos_desc].flags & DT_FLAG_CONTIGUOUS ) {
+                if( space < last_blength ) {
+                    last_blength = space / ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
+                    last_count -= last_blength;
+                    last_blength *= ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
+                    space -= last_blength;
+                    goto end_loop;  /* or break whatever but go out of this while */
+                }
+                OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
+                                            pConv->pBaseBuf, pData, pConv->count );
+                MEMCPY( pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength );
+                bConverted += last_blength;
                 space -= last_blength;
-                goto end_loop;  /* or break whatever but go out of this while */
+                pSrcBuf += last_blength;
+            } else {
+                uint32_t i;
+
+                last_blength = ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
+                for( i = 0; i < last_count; i++ ) {
+                    OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
+                                                pConv->pBaseBuf, pData, pConv->count );
+                    MEMCPY( pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength );
+                    lastDisp += pElems[pos_desc].extent;
+                    pSrcBuf += ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size;
+                }
+                bConverted += ompi_ddt_basicDatatypes[pElems[pos_desc].type]->size * last_count;
             }
-            OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
-                                        pConv->pBaseBuf, pData, pConv->count );
-            MEMCPY( pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength );
-            bConverted += last_blength;
-            space -= last_blength;
-            pSrcBuf += last_blength;
             pos_desc++;  /* advance to the next data */
             lastDisp = pStack->disp + pElems[pos_desc].disp;
             last_count = pElems[pos_desc].count;
@@ -296,7 +310,7 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
 						     uint32_t* max_data,
 						     int32_t* freeAfter )
 {
-    dt_desc_t *pData = pConv->pDesc;
+    ompi_datatype_t *pData = pConv->pDesc;
     char* pDstBuf = pConv->pBaseBuf;
     char* pSrcBuf = iov[0].iov_base;
     int bConverted = 0;
@@ -606,7 +620,7 @@ int32_t ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
 
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 int32_t ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
-				      const dt_desc_t* datatype, int32_t count,
+				      const ompi_datatype_t* datatype, int32_t count,
 				      const void* pUserBuf, int32_t starting_point,
 				      memalloc_fct_t allocfn )
 {
@@ -642,7 +656,7 @@ int32_t ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
  *   positive = number of basic elements inside
  *   negative = some error occurs
  */
-int32_t ompi_ddt_get_element_count( const dt_desc_t* datatype, int32_t iSize )
+int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSize )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     uint32_t pos_desc;    /* actual position in the description of the derived datatype */
@@ -650,10 +664,9 @@ int32_t ompi_ddt_get_element_count( const dt_desc_t* datatype, int32_t iSize )
     int rc, nbElems = 0;
     int stack_pos = 0;
 
-    /* Normally the size should be less or equal to the size of the datatype. But we still can protect here */
-    if( datatype->size > (uint32_t)iSize ) {
-        return -1;
-    }
+    /* Normally the size should be less or equal to the size of the datatype. 
+     * This function does not support a iSize bigger than the size of the datatype.
+     */
 
     DUMP( "dt_count_elements( %p, %d )\n", (void*)datatype, iSize );
     pStack = alloca( sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 2) );
@@ -693,8 +706,10 @@ int32_t ompi_ddt_get_element_count( const dt_desc_t* datatype, int32_t iSize )
             type = datatype->desc.desc[pos_desc].type;
             rc = datatype->desc.desc[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
             if( rc >= iSize ) {
-                nbElems += iSize / ompi_ddt_basicDatatypes[type]->size;
-                break;
+                rc = iSize / ompi_ddt_basicDatatypes[type]->size;
+                nbElems += rc;
+                iSize -= rc * ompi_ddt_basicDatatypes[type]->size;
+                return (iSize == 0 ? nbElems : -1);
             }
             nbElems += datatype->desc.desc[pos_desc].count;
             iSize -= rc;
@@ -703,10 +718,10 @@ int32_t ompi_ddt_get_element_count( const dt_desc_t* datatype, int32_t iSize )
     }
 
     /* cleanup the stack */
-    return nbElems;
+    return -1;  /* never reached */
 }
 
-int32_t ompi_ddt_copy_content_same_ddt( const dt_desc_t* datatype, int32_t count,
+int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t count,
                                         char* pDestBuf, const char* pSrcBuf )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
