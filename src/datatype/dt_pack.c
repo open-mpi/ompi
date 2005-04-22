@@ -25,6 +25,8 @@
 #endif
 #include <stdlib.h>
 
+#define DO_DEBUG(INST)
+
 static
 int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
 				 struct iovec* iov, uint32_t* out_size,
@@ -38,7 +40,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
     uint32_t advance;      /* number of bytes that we should advance the buffer */
     long disp_desc = 0;    /* compute displacement for truncated data */
     int bConverted = 0;    /* number of bytes converted this time */
-    dt_desc_t *pData = pConvertor->pDesc;
+    ompi_datatype_t *pData = pConvertor->pDesc;
     dt_elem_desc_t* pElem;
     char* pOutput = pConvertor->pBaseBuf;
     char* pInput;
@@ -167,7 +169,7 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
     long lastDisp = 0, last_count = 0;
     uint32_t space = iov[0].iov_len, last_blength = 0;
     char* pDestBuf;
-    dt_desc_t* pData = pConv->pDesc;
+    ompi_datatype_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
 
     pDestBuf = iov[0].iov_base;
@@ -306,7 +308,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     long lastDisp = 0, last_count = 0;
     uint32_t space = *max_data, last_blength = 0, saveLength;
     char *pDestBuf, *savePos;
-    dt_desc_t* pData = pConv->pDesc;
+    ompi_datatype_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
 
     if( pData->opt_desc.desc != NULL ) {
@@ -357,6 +359,8 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                                 }
                                 OMPI_DDT_SAFEGUARD_POINTER( savePos, copy_length,
                                                             pConv->pBaseBuf, pData, pConv->count );
+                                DO_DEBUG( ompi_output( 0, "1. memcpy( %p, %p, %ld ) bConverted %ld space %ld pConv->bConverted %ld\n", pDestBuf, savePos,
+                                                       copy_length, bConverted, space_on_iovec, pConv->bConverted ); );
                                 MEMCPY( pDestBuf, savePos, copy_length );
                                 savePos += copy_length;
                                 pDestBuf += copy_length;
@@ -411,10 +415,14 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                 for( i = 0; i < last_count; i++ ) {
                     OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, pLast->extent,
                                                 pConv->pBaseBuf, pData, pConv->count );
+                    DO_DEBUG (ompi_output( 0, "2. memcpy( %p, %p, %ld )\n", pDestBuf, pConv->pBaseBuf + lastDisp,
+                                           pLast->extent ); );
                     MEMCPY( pDestBuf, pConv->pBaseBuf + lastDisp, pLast->extent );
                     lastDisp += pElems[pos_desc].extent;
                     pDestBuf += pLast->extent;
                 }
+                DO_DEBUG( ompi_output( 0, "\t\tbConverted %ld space %ld pConv->bConverted %ld\n",
+                                       bConverted, space_on_iovec, pConv->bConverted ); );
                 i = pLast->extent * last_count;  /* temporary value */
                 space_on_iovec -= i;
                 space          -= i;
@@ -485,6 +493,8 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                     if( space_on_iovec > saveLength ) {
                         OMPI_DDT_SAFEGUARD_POINTER( savePos, saveLength,
                                                     pConv->pBaseBuf, pData, pConv->count );
+                        DO_DEBUG( ompi_output( 0, "3. memcpy( %p, %p, %ld ) bConverted %ld space %ld pConv->bConverted %ld\n", pDestBuf, savePos,
+                                               saveLength, bConverted, space_on_iovec, pConv->bConverted ); );
                         MEMCPY( pDestBuf, savePos, saveLength );
                         pDestBuf += saveLength;
                         /* update the pack counters values */
@@ -498,6 +508,8 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                     }
                     OMPI_DDT_SAFEGUARD_POINTER( savePos, space_on_iovec,
                                                 pConv->pBaseBuf, pData, pConv->count );
+                    DO_DEBUG( ompi_output( 0, "4. memcpy( %p, %p, %ld )  bConverted %ld space %ld pConv->bConverted %ld\n", pDestBuf, savePos,
+                                           space_on_iovec, bConverted, space_on_iovec, pConv->bConverted ); );
                     MEMCPY( pDestBuf, savePos, space_on_iovec );
                     /* let's prepare for the next round. As I keep trace of the amount that I still
                      * have to pack, the next time when I came here, I'll try to append something.
@@ -513,16 +525,17 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                     lastDisp += space_on_iovec;
                     /* check for the next step */
                     if( ++iov_pos == (*out_size) ) {  /* are there more iovecs to fill ? */
-                        pDestBuf = NULL;
-                        space_on_iovec = 0;
-                        last_count = 0;
-                        last_blength = 0;
+                        if( saveLength == 0 ) {
+                            saveLength = last_blength;
+                            last_blength = 0;
+                        }
                         goto end_loop;
                     }
                     pDestBuf = iov[iov_pos].iov_base;
                     space_on_iovec = iov[iov_pos].iov_len;
                 } while(1);  /* continue forever */
             }
+
             if( saveLength > space )  /* this will be the last element copied this time */
                 continue;
             pos_desc++;  /* advance to the next data */
@@ -541,6 +554,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     if( ((*out_size) == iov_pos) || (iov[iov_pos].iov_base == NULL) ) *out_size = iov_pos;
     else *out_size = iov_pos + 1;
     assert( pConv->bConverted <= (pData->size * pConv->count) );
+    DO_DEBUG( ompi_output( 0, "--------------------------------------------------------------------\n" ); );
     return (pConv->bConverted == (pData->size * pConv->count));
 }
 
@@ -554,7 +568,7 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
                                     uint32_t* max_data,
                                     int* freeAfter )
 {
-    dt_desc_t* pData = pConv->pDesc;
+    ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
     char *pSrc;
     size_t length = pData->size * pConv->count - pConv->bConverted;
@@ -610,7 +624,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
                                               uint32_t* max_data,
                                               int* freeAfter )
 {
-    dt_desc_t* pData = pConv->pDesc;
+    ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
     char *pSrc, *pDest;
     size_t length = pData->size * pConv->count;
@@ -741,7 +755,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 int32_t ompi_convertor_init_for_send( ompi_convertor_t* pConv,
 				      uint32_t flags,
-				      const dt_desc_t* datatype,
+				      const ompi_datatype_t* datatype,
 				      int32_t count,
 				      const void* pUserBuf,
 				      int32_t starting_pos,
@@ -819,7 +833,7 @@ int32_t ompi_convertor_get_packed_size( const ompi_convertor_t* pConv, uint32_t*
 int32_t ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv, uint32_t* pSize )
 {
    int i;
-   dt_desc_t* pData = pConv->pDesc;
+   ompi_datatype_t* pData = pConv->pDesc;
 
    if( pConv->count == 0 ) {
       *pSize = 0;
