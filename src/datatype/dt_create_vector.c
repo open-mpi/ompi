@@ -25,10 +25,10 @@
  */
 
 int32_t ompi_ddt_create_vector( int count, int bLength, long stride,
-                                const dt_desc_t* oldType, dt_desc_t** newType )
+                                const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     long extent = oldType->ub - oldType->lb;
-    dt_desc_t *pTempData, *pData;
+    ompi_datatype_t *pTempData, *pData;
 
     pTempData = ompi_ddt_create( oldType->desc.used + 2 );
     if( (bLength == stride) || (1 >= count) ) {  /* the elements are contiguous */
@@ -53,10 +53,10 @@ int32_t ompi_ddt_create_vector( int count, int bLength, long stride,
 }
 
 int32_t ompi_ddt_create_hvector( int count, int bLength, long stride,
-                                 const dt_desc_t* oldType, dt_desc_t** newType )
+                                 const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     long extent = oldType->ub - oldType->lb;
-    dt_desc_t *pTempData, *pData;
+    ompi_datatype_t *pTempData, *pData;
 
     pTempData = ompi_ddt_create( oldType->desc.used + 2 );
     if( ((extent * bLength) == stride) || (1 >= count) ) {  /* contiguous */
