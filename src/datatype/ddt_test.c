@@ -446,21 +446,43 @@ ompi_datatype_t* test_matrix_borders( unsigned int size, unsigned int width )
 
 ompi_datatype_t* test_contiguous( void )
 {
-   ompi_datatype_t *pdt, *pdt1, *pdt2;
+    ompi_datatype_t *pdt, *pdt1, *pdt2;
 
-   printf( "test contiguous (alignement)\n" );
-   pdt1 = ompi_ddt_create( -1 );
-   ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_DOUBLE], 1, 0, -1 );
-   ompi_ddt_dump( pdt1 );
-   ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_CHAR], 1, 8, -1 );
-   ompi_ddt_dump( pdt1 );
-   ompi_ddt_create_contiguous( 4, pdt1, &pdt2 );
-   OBJ_RELEASE( pdt1 ); /*assert( pdt1 == NULL );*/
-   ompi_ddt_dump( pdt2 );
-   ompi_ddt_create_contiguous( 2, pdt2, &pdt );
-   OBJ_RELEASE( pdt2 ); /*assert( pdt2 == NULL );*/
-   ompi_ddt_dump( pdt );
-   return pdt;
+    printf( "test contiguous (alignement)\n" );
+    pdt1 = ompi_ddt_create( -1 );
+    ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_DOUBLE], 1, 0, -1 );
+    ompi_ddt_dump( pdt1 );
+    ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_CHAR], 1, 8, -1 );
+    ompi_ddt_dump( pdt1 );
+    ompi_ddt_create_contiguous( 4, pdt1, &pdt2 );
+    OBJ_RELEASE( pdt1 ); /*assert( pdt1 == NULL );*/
+    ompi_ddt_dump( pdt2 );
+    ompi_ddt_create_contiguous( 2, pdt2, &pdt );
+    OBJ_RELEASE( pdt2 ); /*assert( pdt2 == NULL );*/
+    ompi_ddt_dump( pdt );
+    return pdt;
+}
+
+typedef struct __struct_char_double {
+    char c;
+    double d;
+} char_double_t;
+
+ompi_datatype_t* test_struct_char_double( void )
+{
+    char_double_t data;
+    int lengths[] = {1, 1};
+    long displ[] = {0, 0};
+    ompi_datatype_t *pdt;
+    ompi_datatype_t* types[] = { &ompi_mpi_char, &ompi_mpi_double };
+
+    displ[0] = (char*)&(data.c) - (char*)&(data);
+    displ[1] = (char*)&(data.d) - (char*)&(data);
+
+    ompi_ddt_create_struct( 2, lengths, displ, types, &pdt );
+    ompi_ddt_commit( &pdt );
+    ompi_ddt_dump( pdt );
+    return pdt;
 }
 
 ompi_datatype_t* test_struct( void )
@@ -468,34 +490,34 @@ ompi_datatype_t* test_struct( void )
     ompi_datatype_t* types[] = { &ompi_mpi_float  /* ompi_ddt_basicDatatypes[DT_FLOAT] */,
                                  NULL, 
                                  &ompi_mpi_char  /* ompi_ddt_basicDatatypes[DT_CHAR] */ };
-   int lengths[] = { 2, 1, 3 };
-   long disp[] = { 0, 16, 26 };
-   ompi_datatype_t* pdt, *pdt1;
+    int lengths[] = { 2, 1, 3 };
+    long disp[] = { 0, 16, 26 };
+    ompi_datatype_t* pdt, *pdt1;
    
-   printf( "test struct\n" );
-   pdt1 = ompi_ddt_create( -1 );
-   ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_DOUBLE], 1, 0, -1 );
-   ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_CHAR], 1, 8, -1 );
-   ompi_ddt_dump( pdt1 );
+    printf( "test struct\n" );
+    pdt1 = ompi_ddt_create( -1 );
+    ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_DOUBLE], 1, 0, -1 );
+    ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_CHAR], 1, 8, -1 );
+    ompi_ddt_dump( pdt1 );
 
-   types[1] = pdt1;
+    types[1] = pdt1;
 
-   ompi_ddt_create_struct( 3, lengths, disp, types, &pdt );
-   OBJ_RELEASE( pdt1 ); /*assert( pdt1 == NULL );*/
-   ompi_ddt_dump( pdt );
-   return pdt;
+    ompi_ddt_create_struct( 3, lengths, disp, types, &pdt );
+    OBJ_RELEASE( pdt1 ); /*assert( pdt1 == NULL );*/
+    ompi_ddt_dump( pdt );
+    return pdt;
 }
 
 typedef struct {
-   int i1;
-   int gap;
-   int i2;
+    int i1;
+    int gap;
+    int i2;
 } sdata_intern;
 
 typedef struct {
-   int counter;
-   sdata_intern v[10];
-   int last;
+    int counter;
+    sdata_intern v[10];
+    int last;
 } sstrange;
 
 #define SSTRANGE_CNT 10
@@ -575,7 +597,7 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
     ompi_convertor_t *pSendConvertor = NULL, *pRecvConvertor = NULL;
     struct iovec iov;
     uint32_t iov_count, max_data;
-    int32_t free_after = 0, length = 0, done1, done2;
+    int32_t free_after = 0, length = 0, done1 = 0, done2 = 0;
 
     ompi_ddt_type_extent( pdt, &extent );
 
@@ -595,21 +617,30 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
     }
 
     while( (done1 & done2) != 1 ) {
+        /* They are supposed to finish in exactly the same time. */
+        if( done1 | done2 ) {
+            printf( "WRONG !!! the send is %d but the receive is %d\n", done1, done2 );
+        }
+
         max_data = chunk;
         iov_count = 1;
         iov.iov_base = ptemp;
         iov.iov_len = chunk;
 
-        done1 = ompi_convertor_pack( pSendConvertor, &iov, &iov_count, &max_data, &free_after );
-        assert( free_after == 0 );
-        if( 1 == done1 ) {
-            printf( "pack finished\n" );
+        if( done1 == 0 ) {
+            done1 = ompi_convertor_pack( pSendConvertor, &iov, &iov_count, &max_data, &free_after );
+            assert( free_after == 0 );
+            if( 1 == done1 ) {
+                printf( "pack finished\n" );
+            }
         }
 
-        done2 = ompi_convertor_unpack( pRecvConvertor, &iov, &iov_count, &max_data, &free_after );
-        assert( free_after == 0 );
-        if( 1 == done2 ) {
-            printf( "unpack finished\n" );
+        if( done2 == 0 ) {
+            done2 = ompi_convertor_unpack( pRecvConvertor, &iov, &iov_count, &max_data, &free_after );
+            assert( free_after == 0 );
+            if( 1 == done2 ) {
+                printf( "unpack finished\n" );
+            }
         }
 
         length += max_data;
@@ -635,10 +666,10 @@ int main( int argc, char* argv[] )
 
     ompi_ddt_init();
 
-    /*pdt = create_strange_dt();
+    pdt = create_strange_dt();
     local_copy_ddt_count(pdt, 1);
     local_copy_with_convertor(pdt, 1, 4008);
-    OBJ_RELEASE( pdt ); assert( pdt == NULL );*/
+    OBJ_RELEASE( pdt ); assert( pdt == NULL );
    
     pdt = upper_matrix(100);
     local_copy_ddt_count(pdt, 1);
@@ -689,6 +720,10 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
     OBJ_RELEASE( pdt3 ); /*assert( pdt3 == NULL );*/
+
+    pdt = test_struct_char_double();
+    local_copy_with_convertor( pdt, 4500, 12 );
+    OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     /* clean-ups all data allocations */
     ompi_ddt_finalize();
