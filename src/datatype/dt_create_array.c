@@ -19,14 +19,14 @@
 #include "datatype/datatype.h"
 
 int32_t ompi_ddt_create_subarray( int ndims, const int* pSizes, const int* pSubSizes, const int* pStarts,
-                             int order, const dt_desc_t* oldType, dt_desc_t** newType )
+                             int order, const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
    return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
 int32_t ompi_ddt_create_darray( int size, int rank, int ndims, const int* pGSizes, const int *pDistrib,
-                            const int* pDArgs, const int* pPSizes, int order, const dt_desc_t* oldType,
-                            dt_desc_t** newType )
+                            const int* pDArgs, const int* pPSizes, int order, const ompi_datatype_t* oldType,
+                            ompi_datatype_t** newType )
 {
    return OMPI_ERR_NOT_IMPLEMENTED;
 }

@@ -20,9 +20,9 @@
 
 /* We try to merge together data that are contiguous */
 int32_t ompi_ddt_create_indexed( int count, const int* pBlockLength, const int* pDisp,
-			         const dt_desc_t* oldType, dt_desc_t** newType )
+			         const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
-    dt_desc_t* pdt;
+    ompi_datatype_t* pdt;
     int i, dLength, endat, disp;
     long extent = oldType->ub - oldType->lb;
 
@@ -55,9 +55,9 @@ int32_t ompi_ddt_create_indexed( int count, const int* pBlockLength, const int* 
 }
 
 int32_t ompi_ddt_create_hindexed( int count, const int* pBlockLength, const long* pDisp,
-                                  const dt_desc_t* oldType, dt_desc_t** newType )
+                                  const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
-    dt_desc_t* pdt;
+    ompi_datatype_t* pdt;
     int i, dLength;
     long extent = oldType->ub - oldType->lb;
     long disp, endat;
@@ -90,9 +90,9 @@ int32_t ompi_ddt_create_hindexed( int count, const int* pBlockLength, const long
 }
 
 int32_t ompi_ddt_create_indexed_block( int count, int bLength, const int* pDisp,
-                                       const dt_desc_t* oldType, dt_desc_t** newType )
+                                       const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
-   dt_desc_t* pdt;
+   ompi_datatype_t* pdt;
    int i, dLength, endat, disp;
    long extent = oldType->ub - oldType->lb;
 

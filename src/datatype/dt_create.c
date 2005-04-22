@@ -21,7 +21,7 @@
 #include "limits.h"
 #include "attribute/attribute.h"
 
-static void __get_free_dt_struct(  dt_desc_t* pData )
+static void __get_free_dt_struct( ompi_datatype_t* pData )
 {
     int i;
 
@@ -47,7 +47,7 @@ static void __get_free_dt_struct(  dt_desc_t* pData )
     pData->d_keyhash       = NULL;
 }
 
-static void __destroy_ddt_struct( dt_desc_t* pData )
+static void __destroy_ddt_struct( ompi_datatype_t* pData )
 {
     if( pData->desc.desc != NULL ) free( pData->desc.desc );
     pData->desc.desc   = NULL;
@@ -72,9 +72,9 @@ static void __destroy_ddt_struct( dt_desc_t* pData )
 
 OBJ_CLASS_INSTANCE(ompi_datatype_t, ompi_object_t, __get_free_dt_struct, __destroy_ddt_struct );
 
-dt_desc_t* ompi_ddt_create( int32_t expectedSize )
+ompi_datatype_t* ompi_ddt_create( int32_t expectedSize )
 {
-    dt_desc_t* pdt = (dt_desc_t*)OBJ_NEW(ompi_datatype_t);
+    ompi_datatype_t* pdt = (ompi_datatype_t*)OBJ_NEW(ompi_datatype_t);
 
     if( expectedSize == -1 ) expectedSize = DT_INCREASE_STACK;
     pdt->desc.length = expectedSize + 1;  /* one for the fake elem at the end */
@@ -84,7 +84,7 @@ dt_desc_t* ompi_ddt_create( int32_t expectedSize )
     return pdt;
 }
 
-int32_t ompi_ddt_create_resized( const dt_desc_t* oldType, long lb, long extent, dt_desc_t** newType )
+int32_t ompi_ddt_create_resized( const ompi_datatype_t* oldType, long lb, long extent, ompi_datatype_t** newType )
 {
     ompi_ddt_duplicate( oldType, newType );
     (*newType)->lb = lb;
