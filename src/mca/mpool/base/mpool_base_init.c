@@ -25,7 +25,8 @@
 
 
 OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, ompi_list_item_t, NULL, NULL);
-
+static bool mca_mpool_enable_progress_threads = true;
+static bool mca_mpool_enable_mpi_threads = true;
 
 /**
  * Function for weeding out mpool modules that don't want to run.
@@ -36,6 +37,13 @@ OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, ompi_list_item_t, NULL, NUL
  * to the caller in a ompi_list_t.
  */
 int mca_mpool_base_init(bool enable_progress_threads, bool enable_mpi_threads)
+{
+    mca_mpool_enable_progress_threads = enable_progress_threads;
+    mca_mpool_enable_mpi_threads = enable_mpi_threads;
+    return OMPI_SUCCESS;
+}
+
+mca_mpool_base_module_t* mca_mpool_base_module_init(const char* name)
 {
   ompi_list_item_t *item;
   mca_base_component_list_item_t *cli;
@@ -51,6 +59,8 @@ int mca_mpool_base_init(bool enable_progress_threads, bool enable_mpi_threads)
        item = ompi_list_get_next(item)) {
     cli = (mca_base_component_list_item_t *) item;
     component = (mca_mpool_base_component_t *) cli->cli_component;
+    if(strcmp(component->mpool_version.mca_component_name,name) != 0)
+        continue;
 
     ompi_output_verbose(10, mca_mpool_base_output, 
                         "select: initializing %s module %s",
@@ -60,8 +70,8 @@ int mca_mpool_base_init(bool enable_progress_threads, bool enable_mpi_threads)
       ompi_output_verbose(10, mca_mpool_base_output,
                           "select: no init function; ignoring module");
     } else {
-      module = component->mpool_init(enable_progress_threads,
-                                     enable_mpi_threads);
+      module = component->mpool_init(mca_mpool_enable_progress_threads,
+                                     mca_mpool_enable_mpi_threads);
 
       /* If the module didn't initialize, unload it */
 
@@ -85,10 +95,11 @@ int mca_mpool_base_init(bool enable_progress_threads, bool enable_mpi_threads)
           sm->mpool_component = component;
           sm->mpool_module = module;
           ompi_list_append(&mca_mpool_base_modules, (ompi_list_item_t*) sm);
+          return module;
         }
       }
   }
-  return OMPI_SUCCESS;
+  return NULL;
 }
 
 

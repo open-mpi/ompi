@@ -32,6 +32,7 @@
 #include "mca/ptl/base/ptl_base_header.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "mca/mpool/base/base.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "mca/oob/base/base.h"
 #include "mca/common/sm/common_sm_mmap.h"
@@ -214,6 +215,24 @@ int mca_ptl_sm_add_procs_same_base_addr(
                mca_ptl_sm_component.sm_proc_connect[proc]=SM_CONNECTED;
            }
        }
+    }
+    if( n_local_procs == 0) {
+        return_code = OMPI_SUCCESS;
+        goto CLEANUP;
+    }
+
+    /* lookup shared memory pool */
+    if(NULL == mca_ptl_sm_component.sm_mpool) {
+        mca_ptl_sm_component.sm_mpool =
+            mca_mpool_base_module_lookup(mca_ptl_sm_component.sm_mpool_name);
+                                                                                                                     
+        /* Sanity check to ensure that we found it */
+        if (NULL == mca_ptl_sm_component.sm_mpool) {
+           return_code = OMPI_ERR_OUT_OF_RESOURCE;
+           goto CLEANUP;
+        }
+        mca_ptl_sm_component.sm_mpool_base =
+            mca_ptl_sm_component.sm_mpool->mpool_base();
     }
 
     /* make sure that my_smp_rank has been defined */

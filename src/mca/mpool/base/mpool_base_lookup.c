@@ -46,7 +46,7 @@ mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
 
 mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name)
 {
-    /* Finalize all the mpool modules and free their list items */
+    /* does the module already exist? */
     ompi_list_item_t *item;
     for(item =  ompi_list_get_first(&mca_mpool_base_modules);
         item != ompi_list_get_end(&mca_mpool_base_modules);
@@ -57,6 +57,8 @@ mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name)
              return sm->mpool_module;
         }
     }
-    return NULL;
+
+    /* if not create it */
+    return mca_mpool_base_module_init(name);;
 }
 

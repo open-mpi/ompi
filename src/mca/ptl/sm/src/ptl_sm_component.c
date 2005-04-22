@@ -248,16 +248,9 @@ mca_ptl_base_module_t** mca_ptl_sm_component_init(
 
     *num_ptls = 0;
 
-    /* lookup shared memory pool */
-    mca_ptl_sm_component.sm_mpool =
-        mca_mpool_base_module_lookup(mca_ptl_sm_component.sm_mpool_name);
-
-    /* Sanity check to ensure that we found it */
-    if (NULL == mca_ptl_sm_component.sm_mpool) {
-        return NULL;
-    }
-    mca_ptl_sm_component.sm_mpool_base = 
-        mca_ptl_sm_component.sm_mpool->mpool_base();
+    /* lookup/create shared memory pool only when used */
+    mca_ptl_sm_component.sm_mpool = NULL;
+    mca_ptl_sm_component.sm_mpool_base = NULL;
 
     /* publish shared memory parameters with the MCA framework */
     if (OMPI_SUCCESS != mca_ptl_sm_component_exchange()) {
