@@ -28,7 +28,9 @@
 #include "mca/gpr/gpr.h"
 #include "mca/rml/rml_types.h"
 
+#if OMPI_HAVE_THREAD_SUPPORT
 static ompi_mutex_t ompi_port_lock;
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 #define OMPI_COMM_PORT_KEY  "ompi-port-name"
 

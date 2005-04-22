@@ -28,7 +28,9 @@
  */
 static bool initialized = false;
 static ompi_list_t components_in_use;
+#if OMPI_HAVE_THREAD_SUPPORT
 static ompi_mutex_t mutex;
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 struct component_item_t {
     ompi_list_item_t super;

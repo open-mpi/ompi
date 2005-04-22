@@ -104,7 +104,9 @@ OBJ_CLASS_INSTANCE (ompi_comm_reg_t,
 		    ompi_comm_reg_constructor,
 		    ompi_comm_reg_destructor );
 
+#if OMPI_HAVE_THREAD_SUPPORT
 static ompi_mutex_t ompi_cid_lock;
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 static ompi_list_t ompi_registered_comms;
 
 
