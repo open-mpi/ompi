@@ -24,13 +24,13 @@
 #endif
 #include <stdlib.h>
 
-#define SAVE_DESC( PELEM, DISP, COUNT ) \
+#define SAVE_DESC( PELEM, DISP, COUNT, EXTENT ) \
 do { \
   (PELEM)->flags  = DT_FLAG_BASIC | DT_FLAG_DATA; \
   (PELEM)->type   = DT_BYTE; \
   (PELEM)->count  = (COUNT); \
   (PELEM)->disp   = (DISP); \
-  (PELEM)->extent = 1; \
+  (PELEM)->extent = (EXTENT); \
   (PELEM)++; \
   nbElems++; \
 } while(0)
@@ -46,15 +46,15 @@ do { \
   nbElems++; \
 } while(0)
 
-int32_t ompi_ddt_optimize_short( dt_desc_t* pData, int32_t count, 
+int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count, 
 			         dt_type_desc_t* pTypeDesc )
 {
     dt_elem_desc_t* pElemDesc;
     long lastDisp = 0;
     dt_stack_t* pStack;   /* pointer to the position on the stack */
-    int pos_desc;         /* actual position in the description of the derived datatype */
-    int stack_pos = 0;
-    int type, lastLength = 0, nbElems = 0, changes = 0;
+    int32_t pos_desc;         /* actual position in the description of the derived datatype */
+    int32_t stack_pos = 0;
+    int32_t type, lastLength = 0, nbElems = 0, changes = 0, lastExtent = 1;
     long totalDisp;
 
     pTypeDesc->length = 2 * pData->desc.used + 1 /* for the fake DT_END_LOOP at the end */;
@@ -75,7 +75,7 @@ int32_t ompi_ddt_optimize_short( dt_desc_t* pData, int32_t count,
         if( pData->desc.desc[pos_desc].type == DT_END_LOOP ) { /* end of the current loop */
             dt_loop_desc_t* pStartLoop;
             if( lastLength != 0 ) {
-                SAVE_DESC( pElemDesc, lastDisp, lastLength );
+                SAVE_DESC( pElemDesc, lastDisp, lastLength, lastExtent );
                 lastDisp += lastLength;
                 lastLength = 0;
             }
@@ -103,7 +103,7 @@ int32_t ompi_ddt_optimize_short( dt_desc_t* pData, int32_t count,
                 if( loop->extent == end_loop->size ) {
                     /* the whole loop is contiguous */
                     if( (lastDisp + lastLength) != (totalDisp + loop_disp) ) {
-                        SAVE_DESC( pElemDesc, lastDisp, lastLength );
+                        SAVE_DESC( pElemDesc, lastDisp, lastLength, lastExtent );
                         lastLength = 0;
                         lastDisp = totalDisp + loop_disp;
                     }
@@ -116,7 +116,7 @@ int32_t ompi_ddt_optimize_short( dt_desc_t* pData, int32_t count,
                             lastLength += end_loop->size;
                             counter--;
                         }
-                        SAVE_DESC( pElemDesc, lastDisp, lastLength );
+                        SAVE_DESC( pElemDesc, lastDisp, lastLength, lastExtent );
                         lastDisp += lastLength;
                         lastLength = 0;
                     }                  
@@ -125,7 +125,7 @@ int32_t ompi_ddt_optimize_short( dt_desc_t* pData, int32_t count,
                      */
                     SAVE_ELEM( pElemDesc, DT_LOOP, pData->desc.desc[pos_desc].flags,
                                counter, (long)2, pData->desc.desc[pos_desc].extent );
-                    SAVE_DESC( pElemDesc, loop_disp, end_loop->size );
+                    SAVE_DESC( pElemDesc, loop_disp, end_loop->size, lastExtent );
                     SAVE_ELEM( pElemDesc, DT_END_LOOP, end_loop->flags,
                                2, end_loop->total_extent, end_loop->size );
                 }
@@ -133,7 +133,7 @@ int32_t ompi_ddt_optimize_short( dt_desc_t* pData, int32_t count,
                 changes++;
             } else {
                 if( lastLength != 0 ) {
-                    SAVE_DESC( pElemDesc, lastDisp, lastLength );
+                    SAVE_DESC( pElemDesc, lastDisp, lastLength, lastExtent );
                     lastDisp += lastLength;
                     lastLength = 0;
                 }                  
@@ -151,20 +151,23 @@ int32_t ompi_ddt_optimize_short( dt_desc_t* pData, int32_t count,
         while( pData->desc.desc[pos_desc].flags & DT_FLAG_DATA ) {  /* keep doing it until we reach a non datatype element */
             /* now here we have a basic datatype */
             type = pData->desc.desc[pos_desc].type;
-            if( (lastDisp + lastLength) == (totalDisp + pData->desc.desc[pos_desc].disp) ) {
+            if( (pData->desc.desc[pos_desc].flags & DT_FLAG_CONTIGUOUS) && 
+                (lastDisp + lastLength) == (totalDisp + pData->desc.desc[pos_desc].disp) ) {
                 lastLength += pData->desc.desc[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
+                lastExtent = 1;
             } else {
                 if( lastLength != 0 )
-                    SAVE_DESC( pElemDesc, lastDisp, lastLength );
+                    SAVE_DESC( pElemDesc, lastDisp, lastLength, lastExtent );
                 lastDisp = totalDisp + pData->desc.desc[pos_desc].disp;
                 lastLength = pData->desc.desc[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
+                lastExtent = 1;
             }
             pos_desc++;  /* advance to the next data */
         }
     }
     
     if( lastLength != 0 )
-        SAVE_DESC( pElemDesc, lastDisp, lastLength );
+        SAVE_DESC( pElemDesc, lastDisp, lastLength, lastExtent );
     /* cleanup the stack */
     pTypeDesc->used = nbElems - 1;  /* except the last fake END_LOOP */
     return OMPI_SUCCESS;
@@ -178,7 +181,7 @@ int32_t ompi_ddt_optimize_short( dt_desc_t* pData, int32_t count,
 }
 
 #if defined(COMPILE_USELSS_CODE)
-static int ompi_ddt_unroll( dt_desc_t* pData, int count )
+static int ompi_ddt_unroll( ompi_datatype_t* pData, int count )
 {
    dt_stack_t* pStack;   /* pointer to the position on the stack */
    int pos_desc;         /* actual position in the description of the derived datatype */
@@ -292,9 +295,9 @@ static int ompi_ddt_unroll( dt_desc_t* pData, int count )
 }
 #endif  /* COMPILE_USELSS_CODE */
 
-int32_t ompi_ddt_commit( dt_desc_t** data )
+int32_t ompi_ddt_commit( ompi_datatype_t** data )
 {
-    dt_desc_t* pData = (dt_desc_t*)*data;
+    ompi_datatype_t* pData = *data;
     dt_endloop_desc_t* pLast = (dt_endloop_desc_t*)&(pData->desc.desc[pData->desc.used]);
 
     if( pData->flags & DT_FLAG_COMMITED ) return OMPI_SUCCESS;

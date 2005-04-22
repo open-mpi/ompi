@@ -19,12 +19,12 @@
 #include "datatype/datatype.h"
 
 int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* pDisp,
-                                const dt_desc_t ** pTypes, dt_desc_t** newType )
+                                ompi_datatype_t* const * pTypes, ompi_datatype_t** newType )
 {
     int i;
     long disp = 0, endto, lastExtent, lastDisp;
     int lastBlock;
-    dt_desc_t *pdt, *lastType;
+    ompi_datatype_t *pdt, *lastType;
 
     if( 0 == count ) {
         *newType = ompi_ddt_create( disp );
@@ -38,7 +38,7 @@ int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* 
         disp += pTypes[i]->desc.used;
         if( pBlockLength[i] != 1 ) disp += 2;
     }
-    lastType = (dt_desc_t*)pTypes[0];
+    lastType = (ompi_datatype_t*)pTypes[0];
     lastBlock = pBlockLength[0];
     lastExtent = lastType->ub - lastType->lb;
     lastDisp = pDisp[0];
@@ -51,7 +51,7 @@ int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* 
         } else {
             disp += lastType->desc.used;
             if( lastBlock > 1 ) disp += 2;
-            lastType = (dt_desc_t*)pTypes[i];
+            lastType = (ompi_datatype_t*)pTypes[i];
             lastExtent = lastType->ub - lastType->lb;
             lastBlock = pBlockLength[i];
             lastDisp = pDisp[i];
@@ -61,7 +61,7 @@ int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* 
     disp += lastType->desc.used;
     if( lastBlock != 1 ) disp += 2;
 
-    lastType = (dt_desc_t*)pTypes[0];
+    lastType = (ompi_datatype_t*)pTypes[0];
     lastBlock = pBlockLength[0];
     lastExtent = lastType->ub - lastType->lb;
     lastDisp = pDisp[0];
@@ -76,7 +76,7 @@ int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* 
             endto = lastDisp + lastBlock * lastExtent;
         } else {
             ompi_ddt_add( pdt, lastType, lastBlock, lastDisp, lastExtent );
-            lastType = (dt_desc_t*)pTypes[i];
+            lastType = (ompi_datatype_t*)pTypes[i];
             lastExtent = lastType->ub - lastType->lb;
             lastBlock = pBlockLength[i];
             lastDisp = pDisp[i];

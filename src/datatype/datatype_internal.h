@@ -180,6 +180,8 @@ extern conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED];
 extern int32_t ompi_ddt_external32_init( void );
 extern void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
                                  const dt_elem_desc_t* pDesc, const char* name );
+extern void ompi_convertor_dump( ompi_convertor_t* convertor );
+
 #define SAVE_STACK( PSTACK, INDEX, COUNT, DISP, END_LOOP) \
 do { \
    (PSTACK)->index    = (INDEX); \
@@ -196,9 +198,11 @@ do { \
    (PSTACK) = pTempStack; \
 } while(0)
 
-#define MEMCPY( DST, SRC, BLENGTH ) { \
+#define MEMCPY( DST, SRC, BLENGTH ) \
+do { \
     /*printf( "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) );*/ \
-    memcpy( (DST), (SRC), (BLENGTH) ); }
+    memcpy( (DST), (SRC), (BLENGTH) ); \
+} while (0)
 
 #if OMPI_ENABLE_DEBUG
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT ) \
@@ -373,14 +377,14 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const
 }
 
 static inline void
-convertor_init_generic( ompi_convertor_t* pConv, const dt_desc_t* datatype, int count,
+convertor_init_generic( ompi_convertor_t* pConv, const ompi_datatype_t* datatype, int count,
 			const void* pUserBuf )
 {
     uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 3;
 
     OBJ_RETAIN( datatype );
     if( pConv->pDesc != datatype ) {
-        pConv->pDesc = (dt_desc_t*)datatype;
+        pConv->pDesc = (ompi_datatype_t*)datatype;
         if( pConv->pStack != NULL ) {
             if( pConv->stack_size > DT_STATIC_STACK_SIZE )
                 free( pConv->pStack );
