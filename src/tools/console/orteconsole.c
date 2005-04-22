@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     ompi_cmd_line_t *cmd_line;
     bool exit_cmd;
     char *usercmd, *str_response;
-    orte_buffer_t *buffer;
+    orte_buffer_t *buffer = NULL;
     orte_process_name_t seed={0,0,0};
     size_t n;
 
