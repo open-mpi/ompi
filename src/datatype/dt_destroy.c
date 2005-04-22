@@ -19,9 +19,9 @@
 #include "datatype/datatype.h"
 #include "datatype/datatype_internal.h"
 
-int32_t ompi_ddt_destroy( dt_desc_t** dt )
+int32_t ompi_ddt_destroy( ompi_datatype_t** dt )
 {
-   dt_desc_t* pData = *dt;
+   ompi_datatype_t* pData = *dt;
 
    if( pData->flags & DT_FLAG_FOREVER )
       return OMPI_ERROR;

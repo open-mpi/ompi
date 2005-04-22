@@ -33,7 +33,7 @@
  * be sure that the pdtBase datatype is correctly initialized with all fields
  * set to ZERO if it's a empty datatype.
  */
-int32_t ompi_ddt_add( dt_desc_t* pdtBase, const dt_desc_t* pdtAdd, 
+int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd, 
                       uint32_t count, long disp, long extent )
 {
     uint32_t newLength, place_needed = 0, i;
