@@ -66,7 +66,7 @@ int MPI_Type_create_struct(int count,
     }
 
     rc = ompi_ddt_create_struct( count, array_of_blocklengths, array_of_displacements,
-                                 (const dt_desc_t**)array_of_types, newtype );
+                                 array_of_types, newtype );
     if( rc != MPI_SUCCESS ) {
         ompi_ddt_destroy( newtype );
         OMPI_ERRHANDLER_RETURN( rc, MPI_COMM_WORLD,
