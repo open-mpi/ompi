@@ -45,10 +45,9 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */
-    int type, lastLength = 0;
+    int lastLength = 0, loop_length;
     ompi_datatype_t* pData = pConvertor->pDesc;
     int* remoteLength;
-    int loop_length;
     int resting_place = starting_point;
     dt_elem_desc_t* pElems;
     size_t remote_size;
@@ -84,7 +83,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
     if( pConvertor->flags & CONVERTOR_HOMOGENEOUS ) {
 
         loop_length = GET_FIRST_NON_LOOP( pElems );
-        pStack->disp = pElems[loop_length].disp;
+        pStack->disp = pElems[loop_length].elem.disp;
         
         /* Special case for contiguous datatypes */
         if( pData->flags & DT_FLAG_CONTIGUOUS ) {
@@ -94,8 +93,8 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
             pStack->count -= cnt;
             cnt = starting_point - cnt * pData->size;  /* number of bytes after the loop */
             pStack[1].index    = 0;
-            pStack[1].count    = (pElems[loop_length].count * 
-                                  ompi_ddt_basicDatatypes[pElems[loop_length].type]->size) - cnt;
+            pStack[1].count    = (pElems[loop_length].elem.count * 
+                                  ompi_ddt_basicDatatypes[pElems[loop_length].elem.common.type]->size) - cnt;
             pStack[1].end_loop = pStack->end_loop;
             
             if( (long)pData->size == extent ) { /* all elements are contiguous */
@@ -119,7 +118,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
     pConvertor->bConverted += (remote_size * count);
 
     loop_length = GET_FIRST_NON_LOOP( pElems );
-    pStack->disp = count * (pData->ub - pData->lb) + pElems[loop_length].disp;
+    pStack->disp = count * (pData->ub - pData->lb) + pElems[loop_length].elem.disp;
 
     pos_desc  = 0;
     remoteLength = (int*)alloca( sizeof(int) * (pConvertor->pDesc->btypes[DT_LOOP] + 1));
@@ -131,8 +130,8 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
   next_loop:
     loop_length = remoteLength[pConvertor->stack_pos];
     while( pos_desc < pConvertor->pStack[0].end_loop ) {  /* protect in case when the starting_pos is bigger than the total size */
-        if( pElems->type == DT_END_LOOP ) { /* end of the current loop */
-            dt_endloop_desc_t* end_loop = (dt_endloop_desc_t*)pElems;
+        if( DT_END_LOOP == pElems->elem.common.type ) { /* end of the current loop */
+            ddt_endloop_desc_t* end_loop = (ddt_endloop_desc_t*)pElems;
             long extent;
 
             pStack->count--;
@@ -147,7 +146,8 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                 if( pStack->index == -1 ) {
                     extent = pData->ub - pData->lb;
                 } else {
-                    extent = ((dt_loop_desc_t*)(pElems - end_loop->items + 1))->extent;
+                    assert( DT_LOOP == pElems[1 - end_loop->items].loop.common.type );
+                    extent = ((ddt_loop_desc_t*)(pElems - end_loop->items + 1))->extent;
                 }
                 pStack->count -= cnt;
                 resting_place -= cnt * loop_length;
@@ -174,27 +174,27 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
             pElems++;
             goto next_loop;
         }
-        if( pElems->type == DT_LOOP ) {
+        if( DT_LOOP == pElems->elem.common.type ) {
             remoteLength[pConvertor->stack_pos] += loop_length;
             PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc,
-                        pData->desc.desc[pos_desc].count,
-                        pStack->disp, pos_desc + pElems->disp );
+                        pElems->loop.loops,  /*pData->desc.desc[pos_desc].loop.loops,*/
+                        pStack->disp, pos_desc + pElems->loop.items );
             remoteLength[pConvertor->stack_pos] = 0;
             pos_desc++;
             pElems++;
             loop_length = 0;  /* starting a new loop */
         }
-        while( pElems->flags & DT_FLAG_DATA ) {
+        while( pElems->elem.common.flags & DT_FLAG_DATA ) {
             /* now here we have a basic datatype */
-            type = pElems->type;
-            lastLength = pElems->count * ompi_ddt_basicDatatypes[type]->size;
+            const ompi_datatype_t* basic_type = BASIC_DDT_FROM_ELEM( (*pElems) );
+            lastLength = pElems->elem.count * basic_type->size;
             if( resting_place < lastLength ) {
-                int cnt = resting_place / ompi_ddt_basicDatatypes[type]->size;
-                loop_length += cnt * ompi_ddt_basicDatatypes[type]->size;
-                resting_place -= (cnt * ompi_ddt_basicDatatypes[type]->size);
+                int cnt = resting_place / basic_type->size;
+                loop_length += cnt * basic_type->size;
+                resting_place -= (cnt * basic_type->size);
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, 
-                            pElems->count - cnt,
-                            pStack->disp + pElems->disp + cnt * pElems->extent,
+                            pElems->elem.count - cnt,
+                            pStack->disp + pElems->elem.disp + cnt * pElems->elem.extent,
                             pos_desc );
                 pConvertor->bConverted = starting_point - resting_place;
                 return OMPI_SUCCESS;

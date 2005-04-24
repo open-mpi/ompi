@@ -485,6 +485,74 @@ ompi_datatype_t* test_struct_char_double( void )
     return pdt;
 }
 
+ompi_datatype_t* test_create_twice_two_doubles( void )
+{
+    ompi_datatype_t* pdt;
+
+    ompi_ddt_create_vector( 2, 2, 5, &ompi_mpi_double, &pdt );
+    ompi_ddt_commit( &pdt );
+    ompi_ddt_dump( pdt );
+    return pdt;
+}
+
+/*
+  Datatype 0x832cf28 size 0 align 1 id 0 length 4 used 0
+  true_lb 0 true_ub 0 (true_extent 0) lb 0 ub 0 (extent 0)
+  nbElems 0 loops 0 flags 6 (commited contiguous )-cC--------[---][---]
+  contain 13 disp 0x420 (1056) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 13 disp 0x478 (1144) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 13 disp 0x4d0 (1232) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 13 disp 0x528 (1320) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 13 disp 0x580 (1408) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 13 disp 0x5d8 (1496) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 13 disp 0x630 (1584) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 12 disp 0x68c (1676) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 11 disp 0x6e8 (1768) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 10 disp 0x744 (1860) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 9 disp 0x7a0 (1952) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 8 disp 0x7fc (2044) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 7 disp 0x858 (2136) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 6 disp 0x8b4 (2228) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 5 disp 0x910 (2320) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 4 disp 0x96c (2412) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 3 disp 0x9c8 (2504) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 2 disp 0xa24 (2596) extent 4
+  --C-----D*-[ C ][INT]        MPI_INT count 1 disp 0xa80 (2688) extent 4
+*/
+static int blacs_length[] = { 13, 13, 13, 13, 13, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+static int blacs_indices[] = { 1144/4, 1232/4, 1320/4, 1408/4, 1496/4, 1584/4, 1676/4, 1768/4,
+                               1860/4, 1952/4, 2044/4, 2136/4, 2228/4, 2320/4, 2412/4, 2504/4,
+                               2596/4, 2688/4 };
+ompi_datatype_t* test_create_blacs_type( void )
+{
+    ompi_datatype_t *pdt;
+
+    ompi_ddt_create_indexed( 18, blacs_length, blacs_indices, &ompi_mpi_int, &pdt );
+    ompi_ddt_commit( &pdt );
+    ompi_ddt_dump( pdt );
+    return pdt;
+}
+
+ompi_datatype_t* test_create_blacs_type1( ompi_datatype_t* base_type )
+{
+    ompi_datatype_t *pdt;
+
+    ompi_ddt_create_vector( 7, 1, 3, base_type, &pdt );
+    ompi_ddt_commit( &pdt );
+    ompi_ddt_dump( pdt );
+    return pdt;
+}
+
+ompi_datatype_t* test_create_blacs_type2( ompi_datatype_t* base_type )
+{
+    ompi_datatype_t *pdt;
+
+    ompi_ddt_create_vector( 7, 1, 2, base_type, &pdt );
+    ompi_ddt_commit( &pdt );
+    ompi_ddt_dump( pdt );
+    return pdt;
+}
+
 ompi_datatype_t* test_struct( void )
 {
     ompi_datatype_t* types[] = { &ompi_mpi_float  /* ompi_ddt_basicDatatypes[DT_FLOAT] */,
@@ -590,6 +658,110 @@ int local_copy_ddt_count( ompi_datatype_t* pdt, int count )
     return OMPI_SUCCESS;
 }
 
+int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count,
+                                          ompi_datatype_t* recv_type, int recv_count,
+                                          int chunk )
+{
+    long send_extent, recv_extent;
+    void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
+    ompi_convertor_t *pSendConvertor = NULL, *pRecvConvertor = NULL;
+    struct iovec iov;
+    uint32_t iov_count, max_data;
+    int32_t free_after = 0, length = 0, done1 = 0, done2 = 0;
+
+    ompi_ddt_type_extent( send_type, &send_extent );
+    ompi_ddt_type_extent( recv_type, &recv_extent );
+
+    pdst  = malloc( recv_extent * recv_count );
+    psrc  = malloc( send_extent * send_count );
+    ptemp = malloc( chunk );
+
+    /* fill up the receiver with ZEROS */
+    memset( pdst, recv_count * recv_extent, 0 );
+    {
+        int i;
+        for( i = 0; i < (send_count * send_extent); i++ )
+            ((char*)psrc)[i] = i % 128 + 32;
+    }
+    memset( pdst, 0, recv_count * recv_extent );
+
+    pSendConvertor = ompi_convertor_create( 0, 0 );
+    if( OMPI_SUCCESS != ompi_convertor_init_for_send( pSendConvertor, 0, send_type, send_count, psrc, 0, NULL ) ) {
+        printf( "Unable to create the send convertor. Is the datatype committed ?\n" );
+        goto clean_and_return;
+    }
+    pRecvConvertor = ompi_convertor_create( 0, 0 );
+    if( OMPI_SUCCESS != ompi_convertor_init_for_recv( pRecvConvertor, 0, recv_type, recv_count, pdst, 0, NULL ) ) {
+        printf( "Unable to create the recv convertor. Is the datatype committed ?\n" );
+        goto clean_and_return;
+    }
+
+    {  /* Initial destination */
+        int i, j;
+        for( j = 0; j < 7; j++ ) {
+            for( i = 0; i < 2; i++ ) {
+                printf( "%08x ", ((int*)pdst)[i*7+j] );
+            }
+            printf( "\n" );
+        }
+    }
+
+    while( (done1 & done2) != 1 ) {
+        /* They are supposed to finish in exactly the same time. */
+        if( done1 | done2 ) {
+            printf( "WRONG !!! the send is %d but the receive is %d\n", done1, done2 );
+        }
+
+        max_data = chunk;
+        iov_count = 1;
+        iov.iov_base = ptemp;
+        iov.iov_len = chunk;
+
+        if( done1 == 0 ) {
+            done1 = ompi_convertor_pack( pSendConvertor, &iov, &iov_count, &max_data, &free_after );
+            assert( free_after == 0 );
+            if( 1 == done1 ) {
+                printf( "pack finished\n" );
+            }
+            {
+                int i;
+                for( i = 0; i < 7; i++ )
+                    printf( "%x\n", ((int*)ptemp)[i] );
+            }
+        }
+
+        if( done2 == 0 ) {
+            done2 = ompi_convertor_unpack( pRecvConvertor, &iov, &iov_count, &max_data, &free_after );
+            assert( free_after == 0 );
+            if( 1 == done2 ) {
+                printf( "unpack finished\n" );
+            }
+        }
+
+        length += max_data;
+    }
+    {  /* final destination */
+        int i, j;
+        for( j = 0; j < 7; j++ ) {
+            for( i = 0; i < 2; i++ ) {
+                printf( "%08x ", ((int*)pdst)[i*7+j] );
+            }
+            printf( "\n" );
+        }
+    }
+ clean_and_return:
+    if( pSendConvertor != NULL ) {
+        OBJ_RELEASE( pSendConvertor ); assert( pSendConvertor == NULL );
+    }
+    if( pRecvConvertor != NULL ) {
+        OBJ_RELEASE( pRecvConvertor ); assert( pRecvConvertor == NULL );
+    }
+    if( NULL != pdst ) free( pdst );
+    if( NULL != psrc ) free( psrc );
+    if( NULL != ptemp ) free( ptemp );
+    return OMPI_SUCCESS;
+}
+
 int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
 {
     long extent;
@@ -645,7 +817,6 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
 
         length += max_data;
     }
-
  clean_and_return:
     if( pSendConvertor != NULL ) {
         OBJ_RELEASE( pSendConvertor ); assert( pSendConvertor == NULL );
@@ -666,7 +837,7 @@ int main( int argc, char* argv[] )
 
     ompi_ddt_init();
 
-    pdt = create_strange_dt();
+    /*    pdt = create_strange_dt();
     local_copy_ddt_count(pdt, 1);
     local_copy_with_convertor(pdt, 1, 4008);
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
@@ -719,11 +890,25 @@ int main( int argc, char* argv[] )
 
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
-    OBJ_RELEASE( pdt3 ); /*assert( pdt3 == NULL );*/
+    OBJ_RELEASE( pdt3 ); *//*assert( pdt3 == NULL );*/
 
-    pdt = test_struct_char_double();
+    /*pdt = test_struct_char_double();
+    local_copy_with_convertor( pdt, 4500, 12 );
+    OBJ_RELEASE( pdt ); assert( pdt == NULL );*/
+
+    /*pdt = test_create_twice_two_doubles();
     local_copy_with_convertor( pdt, 4500, 12 );
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
+
+    pdt = test_create_blacs_type();
+    local_copy_with_convertor( pdt, 4500, 1023 );
+    OBJ_RELEASE( pdt ); assert( pdt == NULL );*/
+
+    pdt1 = test_create_blacs_type1( &ompi_mpi_int );
+    pdt2 = test_create_blacs_type2( &ompi_mpi_int );
+    local_copy_with_convertor_2datatypes( pdt1, 1, pdt2, 1, 100 );
+    OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
+    OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
 
     /* clean-ups all data allocations */
     ompi_ddt_finalize();

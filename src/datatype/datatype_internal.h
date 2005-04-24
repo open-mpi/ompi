@@ -110,24 +110,44 @@ static inline void DUMP( char* fmt, ... )
 extern "C" {
 #endif
 
-/* These 2 typedefs are the same as the dt_elem_desc_t except
- * for the name of the fields.
- */
-typedef struct __dt_loop_desc {
-    uint16_t flags;  /**< flags for the record */
-    uint16_t type;   /**< the basic data type id */
-    uint32_t loops;  /**< number of times the loop have to be done */
-    long     items;  /**< number of items in the loop */
-    uint32_t extent; /**< extent of the whole loop */
-} dt_loop_desc_t;
+struct ddt_elem_id_description {
+    uint16_t   flags;  /**< flags for the record */
+    uint16_t   type;   /**< the basic data type id */
+};
+typedef struct ddt_elem_id_description ddt_elem_id_description;
 
-typedef struct __dt_endloop_desc {
-    uint16_t flags;        /**< flags for the record */
-    uint16_t type;         /**< the basic data type id */
-    uint32_t items;        /**< number of items in the loop */
-    long     total_extent; /**< total extent of the loop taking in account the repetitions */
-    uint32_t size;         /**< real size of the data in the loop */
-} dt_endloop_desc_t;
+/* the basic element. A data description is composed
+ * by a set of basic elements.
+ */
+struct ddt_elem_desc {
+    ddt_elem_id_description common; /**< basic data description and flags */
+    uint32_t                count;  /**< number of elements */
+    long                    disp;   /**< displacement of the first element */
+    int32_t                 extent; /**< extent of each element */
+};
+typedef struct ddt_elem_desc ddt_elem_desc_t;
+
+struct ddt_loop_desc {
+    ddt_elem_id_description common; /**< basic data description and flags */
+    uint32_t                loops;  /**< number of elements */
+    long                    items;  /**< number of items in the loop */
+    uint32_t                extent; /**< extent of the whole loop */
+};
+typedef struct ddt_loop_desc ddt_loop_desc_t;
+
+struct ddt_endloop_desc {
+    ddt_elem_id_description common;       /**< basic data description and flags */
+    uint32_t                items;        /**< number of elements */
+    long                    total_extent; /**< total extent of the loop taking in account the repetitions */
+    uint32_t                size;         /**< real size of the data in the loop */
+};
+typedef struct ddt_endloop_desc ddt_endloop_desc_t;
+
+union dt_elem_desc {
+    ddt_elem_desc_t    elem;
+    ddt_loop_desc_t    loop;
+    ddt_endloop_desc_t end_loop;
+};
 
 /* keep the last 16 bits free for data flags */
 #define CONVERTOR_USELESS          0x00010000
@@ -155,26 +175,7 @@ typedef struct {
 } ompi_complex_long_double_t;
 
 extern const ompi_datatype_t* ompi_ddt_basicDatatypes[];
-
-/* macros to play with the flags */
-#define SWAP( INT_VALUE, FLAG )  (INT_VALUE) = (INT_VALUE) ^ (FLAG)
-#define SET_FLAG( INT_VALUE, FLAG )     (INT_VALUE) = (INT_VALUE) | (FLAG)
-#define UNSET_FLAG( INT_VALUE, FLAG)    (INT_VALUE) = (INT_VALUE) & (~(FLAG))
-
-#define SET_CONTIGUOUS_FLAG( INT_VALUE )     SET_FLAG(INT_VALUE, DT_FLAG_CONTIGUOUS)
-#define UNSET_CONTIGUOUS_FLAG( INT_VALUE )   UNSET_FLAG(INT_VALUE, DT_FLAG_CONTIGUOUS)
-
-#if defined(__GNUC__) && !defined(__STDC__)
-#define LMAX(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _b : _a) })
-#define LMIN(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _a : _b); })
-#define IMAX(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _b : _a); })
-#define IMIN(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _a : _b); })
-#else
-static inline long LMAX( long a, long b ) { return ( a < b ? b : a ); }
-static inline long LMIN( long a, long b ) { return ( a < b ? a : b ); }
-static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
-static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
-#endif  /* __GNU__ */
+#define BASIC_DDT_FROM_ELEM( ELEM ) (ompi_ddt_basicDatatypes[(ELEM).elem.common.type])
 
 extern conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED];
 extern int32_t ompi_ddt_external32_init( void );
@@ -270,7 +271,7 @@ static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
     /* We dont have to check for the end as we always put an END_LOOP
      * at the end of all datatype descriptions.
      */
-    while( _pElem->type == DT_LOOP ) {
+    while( _pElem->elem.common.type == DT_LOOP ) {
         ++_pElem; index++;
     }
     return index;
@@ -359,16 +360,14 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const
      * the entries on the stack ? Should I stop when I reach the first data element or
      * should I stop on the first contiguous loop ?
      */
-    while( pElems[index].type == DT_LOOP ) {
-        dt_loop_desc_t* loop = (dt_loop_desc_t*)&(pElems[index]);
-
+    while( pElems[index].elem.common.type == DT_LOOP ) {
         PUSH_STACK( pStack, pConvertor->stack_pos, index,
-                    loop->loops, 0, loop->items );
+                    pElems[index].loop.loops, 0, pElems[index].loop.items );
         index++;
     }
-    if( pElems[index].flags & DT_FLAG_DATA ) {  /* let's stop here */
+    if( pElems[index].elem.common.flags & DT_FLAG_DATA ) {  /* let's stop here */
         PUSH_STACK( pStack, pConvertor->stack_pos, index,
-                    pElems[index].count, pElems[index].disp, 0 );
+                    pElems[index].elem.count, pElems[index].elem.disp, 0 );
     } else {
         ompi_output( 0, "Here we should have a data in the datatype description\n" );
     }
