@@ -19,6 +19,22 @@
 #include "datatype/datatype.h"
 #include "datatype/datatype_internal.h"
 
+/* macros to play with the flags */
+#define SET_CONTIGUOUS_FLAG( INT_VALUE )     (INT_VALUE) = (INT_VALUE) | (DT_FLAG_CONTIGUOUS)
+#define UNSET_CONTIGUOUS_FLAG( INT_VALUE )   (INT_VALUE) = (INT_VALUE) & (~(DT_FLAG_CONTIGUOUS))
+
+#if defined(__GNUC__) && !defined(__STDC__)
+#define LMAX(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _b : _a) })
+#define LMIN(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _a : _b); })
+#define IMAX(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _b : _a); })
+#define IMIN(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _a : _b); })
+#else
+static inline long LMAX( long a, long b ) { return ( a < b ? b : a ); }
+static inline long LMIN( long a, long b ) { return ( a < b ? a : b ); }
+static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
+static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
+#endif  /* __GNU__ */
+
 /* When we add a datatype we should update it's definition depending on
  * the initial displacement for the whole data, so the displacement of
  * all elements inside a datatype depend only on the loop displacement
@@ -105,15 +121,15 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
     }
     pLast = &(pdtBase->desc.desc[pdtBase->desc.used]);
     if( (pdtAdd->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC ) { /* add a basic datatype */
-        pLast->type   = pdtAdd->id;
-        pLast->count  = count;
-        pLast->disp   = disp;
-        pLast->extent = extent;
+        pLast->elem.common.type = pdtAdd->id;
+        pLast->elem.count       = count;
+        pLast->elem.disp        = disp;
+        pLast->elem.extent      = extent;
         pdtBase->desc.used++;
         pdtBase->btypes[pdtAdd->id] += count;
-        pLast->flags  = pdtAdd->flags & ~(DT_FLAG_FOREVER | DT_FLAG_COMMITED | DT_FLAG_CONTIGUOUS);
+        pLast->elem.common.flags  = pdtAdd->flags & ~(DT_FLAG_FOREVER | DT_FLAG_COMMITED | DT_FLAG_CONTIGUOUS);
         if( extent == (int)pdtAdd->size )
-            pLast->flags |= DT_FLAG_CONTIGUOUS;
+            pLast->elem.common.flags |= DT_FLAG_CONTIGUOUS;
     } else {
         /* We handle a user defined datatype. We should make sure that the user will not have the
          * oportunity to destroy it before all datatypes derived are destroyed. As we keep pointers
@@ -136,11 +152,11 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
          */
         if( count != 1 ) {
             pLoop = pLast;
-            pLast->type   = DT_LOOP;
-            pLast->count  = count;
-            pLast->disp   = (long)pdtAdd->desc.used + 1;
-            pLast->extent = extent;
-            pLast->flags  = (pdtAdd->flags & ~(DT_FLAG_COMMITED | DT_FLAG_FOREVER));
+            pLast->loop.common.type   = DT_LOOP;
+            pLast->loop.loops         = count;
+            pLast->loop.items         = (long)pdtAdd->desc.used + 1;
+            pLast->loop.extent        = extent;
+            pLast->loop.common.flags  = (pdtAdd->flags & ~(DT_FLAG_COMMITED | DT_FLAG_FOREVER));
             localFlags = DT_FLAG_IN_LOOP;
             pdtBase->btypes[DT_LOOP] += 2;
             pdtBase->desc.used += 2;
@@ -148,23 +164,20 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         }
         
         for( i = 0; i < pdtAdd->desc.used; i++ ) {
-            pLast->type   = pdtAdd->desc.desc[i].type;
-            pLast->flags  = pdtAdd->desc.desc[i].flags | localFlags;
-            pLast->count  = pdtAdd->desc.desc[i].count;
-            pLast->extent = pdtAdd->desc.desc[i].extent;
-            pLast->disp   = pdtAdd->desc.desc[i].disp;
-            if( pdtAdd->desc.desc[i].type != DT_LOOP )
-                pLast->disp += disp /* + pdtAdd->lb */;
+            pLast->elem              = pdtAdd->desc.desc[i].elem;
+            pLast->elem.common.flags = pdtAdd->desc.desc[i].elem.common.flags | localFlags;
+            if( DT_LOOP != pdtAdd->desc.desc[i].elem.common.type )
+                pLast->elem.disp += disp /* + pdtAdd->lb */;
             pLast++;
         }
         pdtBase->desc.used += pdtAdd->desc.used;
         if( pLoop != NULL ) {
-            pLast->type = DT_END_LOOP;
-            pLast->count = pdtAdd->desc.used + 1;   /* where the loop start */
-            pLast->disp = disp + (count - 1) * extent
-                + (pdtAdd->true_ub - pdtAdd->true_lb) ;  /* the final extent for the loop */
-            pLast->extent = pdtAdd->size;        /* the size of the data inside the loop */
-            pLast->flags = pLoop->flags;
+            pLast->end_loop.common.type = DT_END_LOOP;
+            pLast->end_loop.items = pdtAdd->desc.used + 1;   /* where the loop start */
+            pLast->end_loop.total_extent = disp + (count - 1) * extent +
+                                           (pdtAdd->true_ub - pdtAdd->true_lb) ;  /* the final extent for the loop */
+            pLast->end_loop.size = pdtAdd->size;        /* the size of the data inside the loop */
+            pLast->end_loop.common.flags = pLoop->loop.common.flags;
         }
         /* should I add some space until the extent of this datatype ? */
     }

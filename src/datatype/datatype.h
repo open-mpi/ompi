@@ -76,21 +76,12 @@ OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 #define DT_FLAG_DATA_FORTRAN  0xC000
 #define DT_FLAG_DATA_LANGUAGE 0xC000
 
-/* the basic element. A data description is composed
- * by a set of basic elements.
- */
-typedef struct __dt_elem_desc {
-    uint16_t   flags;  /**< flags for the record */
-    uint16_t   type;   /**< the basic data type id */
-    uint32_t   count;  /**< number of elements */
-    long       disp;   /**< displacement of the first element */
-    int32_t    extent; /**< extent of each element */
-} dt_elem_desc_t;
+typedef union dt_elem_desc dt_elem_desc_t;
 
 typedef struct __dt_struct_desc {
-    uint32_t        length;  /* the maximum number of elements in the description array */
-    uint32_t        used;    /* the number of used elements in the description array */
-    dt_elem_desc_t* desc;
+    uint32_t          length;  /* the maximum number of elements in the description array */
+    uint32_t          used;    /* the number of used elements in the description array */
+    dt_elem_desc_t*   desc;
 } dt_type_desc_t;
 
 /* the data description.
@@ -204,6 +195,7 @@ typedef struct __dt_stack {
     int32_t end_loop; /**< for loops the end of the loop, otherwise useless */
     long    disp;     /**< actual displacement depending on the count field */
 } dt_stack_t;
+
 #define DT_STATIC_STACK_SIZE   5
 
 struct ompi_convertor_t {
@@ -211,6 +203,7 @@ struct ompi_convertor_t {
     uint32_t                remoteArch;         /**< the remote architecture */
     uint32_t                flags;              /**< the properties of this convertor */
     ompi_datatype_t*        pDesc;              /**< the datatype description associated with the convertor */
+    dt_type_desc_t*         use_desc;           /**< the datatype version used by the convertor (normal or optimized) */
     uint32_t                count;              /**< the total number of full datatype elements */
     char*                   pBaseBuf;           /**< initial buffer as supplied by the user */
     dt_stack_t*             pStack;             /**< the local stack for the actual conversion */

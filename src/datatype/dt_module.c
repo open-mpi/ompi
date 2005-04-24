@@ -287,17 +287,17 @@ int32_t ompi_ddt_init( void )
         ompi_datatype_t* datatype = (ompi_datatype_t*)ompi_ddt_basicDatatypes[i];
 
         datatype->desc.desc         = (dt_elem_desc_t*)malloc(2*sizeof(dt_elem_desc_t));
-        datatype->desc.desc[0].flags  = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS | DT_FLAG_DATA;
-        datatype->desc.desc[0].type   = i;
-        datatype->desc.desc[0].count  = 1;
-        datatype->desc.desc[0].disp   = 0;
-        datatype->desc.desc[0].extent = datatype->size;
+        datatype->desc.desc[0].elem.common.flags = DT_FLAG_BASIC | DT_FLAG_CONTIGUOUS | DT_FLAG_DATA;
+        datatype->desc.desc[0].elem.common.type  = i;
+        datatype->desc.desc[0].elem.count        = 1;
+        datatype->desc.desc[0].elem.disp         = 0;
+        datatype->desc.desc[0].elem.extent       = datatype->size;
 
-        datatype->desc.desc[1].flags  = 0;
-        datatype->desc.desc[1].type   = DT_END_LOOP;
-        datatype->desc.desc[1].count  = 1;
-        datatype->desc.desc[1].disp   = datatype->ub - datatype->lb;
-        datatype->desc.desc[1].extent = datatype->size;
+        datatype->desc.desc[1].elem.common.flags = 0;
+        datatype->desc.desc[1].elem.common.type  = DT_END_LOOP;
+        datatype->desc.desc[1].elem.count        = 1;
+        datatype->desc.desc[1].elem.disp         = datatype->ub - datatype->lb;
+        datatype->desc.desc[1].elem.extent       = datatype->size;
 
         datatype->desc.length       = 1;
         datatype->desc.used         = 1;
@@ -543,19 +543,20 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr )
     int i, index = 0;
 
     for( i = 0; i < nbElems; i++ ) {
-        index += _dump_data_flags( pDesc->flags, ptr + index );
-        if( pDesc->type == DT_LOOP )
-            index += sprintf( ptr + index, "%15s %d times the next %d elements extent %d\n",
-                              ompi_ddt_basicDatatypes[pDesc->type]->name,
-                              (int)pDesc->count, (int)pDesc->disp, (int)pDesc->extent );
-	else if( pDesc->type == DT_END_LOOP )
-	    index += sprintf( ptr + index, "%15s prev %d elements total true extent %d size of data %d\n",
-                              ompi_ddt_basicDatatypes[pDesc->type]->name,
-                              (int)pDesc->count, (int)pDesc->disp, (int)pDesc->extent );
+        index += _dump_data_flags( pDesc->elem.common.flags, ptr + index );
+        index += sprintf( ptr + index, "%15s ", ompi_ddt_basicDatatypes[pDesc->elem.common.type]->name );
+        if( DT_LOOP == pDesc->elem.common.type )
+            index += sprintf( ptr + index, "%d times the next %d elements extent %d\n",
+                              (int)pDesc->loop.loops, (int)pDesc->loop.items,
+                              (int)pDesc->loop.extent );
+	else if( DT_END_LOOP == pDesc->elem.common.type )
+	    index += sprintf( ptr + index, "prev %d elements total true extent %d size of data %d\n",
+                              (int)pDesc->end_loop.items, (int)pDesc->end_loop.total_extent,
+                              (int)pDesc->end_loop.size );
         else
-            index += sprintf( ptr + index, "%15s count %d disp 0x%lx (%ld) extent %d\n",
-                              ompi_ddt_basicDatatypes[pDesc->type]->name,
-                              (int)pDesc->count, pDesc->disp, pDesc->disp, (int)pDesc->extent );
+            index += sprintf( ptr + index, "count %d disp 0x%lx (%ld) extent %d\n",
+                              (int)pDesc->elem.count, pDesc->elem.disp, pDesc->elem.disp,
+                              (int)pDesc->elem.extent );
         pDesc++;
     }
     return index;
