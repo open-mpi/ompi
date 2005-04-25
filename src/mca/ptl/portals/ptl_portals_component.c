@@ -15,6 +15,7 @@
  */
 
 #include "ompi_config.h"
+#include "portals_config.h"
 
 #include "include/constants.h"
 
@@ -22,7 +23,7 @@
 #include "threads/thread.h"
 
 #include "ptl_portals.h"
-#include "ptl_portals_nal.h"
+
 
 
 /*
@@ -116,18 +117,18 @@ mca_ptl_portals_component_open(void)
     mca_ptl_portals_component.portals_modules = NULL;
 
     /* initialize objects */
+    printf("here\n");
 
     /* register portals module parameters */
-    mca_ptl_portals_component.portals_free_list_num =
-        mca_ptl_portals_param_register_int("free_list_num", 256);
-    mca_ptl_portals_component.portals_free_list_max =
-        mca_ptl_portals_param_register_int("free_list_max", -1);
-    mca_ptl_portals_component.portals_free_list_inc =
-        mca_ptl_portals_param_register_int("free_list_inc", 256);
+#if PTL_PORTALS_UTCP
     mca_ptl_portals_component.portals_ifname = 
         mca_ptl_portals_param_register_string("ifname", "eth0");
+#endif
     portals_output_stream.lds_verbose_level = 
-        mca_ptl_portals_param_register_int("debug_level", 100);
+        mca_ptl_portals_param_register_int("debug_level", 1000);
+
+    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                        "mca_ptl_portals_component_open()");
 
     /* finish with objects */
     mca_ptl_portals_component.portals_output = 
@@ -143,6 +144,9 @@ mca_ptl_portals_component_open(void)
 int
 mca_ptl_portals_component_close(void)
 {
+    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                        "mca_ptl_portals_component_close()");
+
     /* finalize interface? */
 
     /* print out debugging if anything is pending */
@@ -167,23 +171,20 @@ mca_ptl_portals_component_init(int *num_ptls,
     mca_ptl_base_module_t** ptls;
     *num_ptls = 0;
 
-    /* do the non-portable global initialization stuff for a
-       particular network link */
-    if (OMPI_SUCCESS != mca_ptl_portals_nal_init()) {
-        ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
-                            "nal_init() failed - failing component_init()\n");
+    /* BWB - no support for progress threads */
+    if (enable_progress_threads) return NULL;
+
+    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                        "mca_ptl_portals_component_init()");
+
+    /* initialize portals ptl.  note that this is in the compat code because
+       it's fairly non-portable between implementations */
+    if (OMPI_SUCCESS != mca_ptl_portals_init(&mca_ptl_portals_component)) {
+        /* error message should already be displayed */
         return NULL;
     }
 
-    if (OMPI_SUCCESS != mca_ptl_portals_module_init()) {
-        ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
-                            "module_init() failed - failing component_init()\n");
-        return NULL;
-    }
-
-    /* BWB - why do we duplicate / copy here?  do we need to free
-       anything? */
-    mca_ptl_portals_component.portals_num_modules = 1;
+    /* return array of ptls */
     ptls = malloc(mca_ptl_portals_component.portals_num_modules * 
                   sizeof(mca_ptl_base_module_t*));
     if (NULL == ptls) return NULL;
@@ -191,7 +192,7 @@ mca_ptl_portals_component_init(int *num_ptls,
     memcpy(ptls, 
            mca_ptl_portals_component.portals_modules, 
            mca_ptl_portals_component.portals_num_modules * 
-           sizeof(mca_ptl_portals_module_t*));
+           sizeof(mca_ptl_base_module_t*));
     *num_ptls = mca_ptl_portals_component.portals_num_modules;
     return ptls;
 }
@@ -203,6 +204,9 @@ mca_ptl_portals_component_init(int *num_ptls,
 int
 mca_ptl_portals_component_control(int param, void* value, size_t size)
 {
+    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                        "mca_ptl_portals_component_control(%d)", param);
+
     switch(param) {
         case MCA_PTL_ENABLE:
             if(*(int*)value) {
@@ -224,6 +228,9 @@ int
 mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
 {
     int num_progressed = 0;
+
+    ompi_output_verbose(110, mca_ptl_portals_component.portals_output,
+                        "mca_ptl_portals_component_progress(%ld)", tstamp);
 
     /* BWB - write me */
 

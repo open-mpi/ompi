@@ -15,21 +15,31 @@
  */
 
 
-#ifndef PTL_PORTALS_NAL_H
-#define PTL_PORTALS_NAL_H
+#ifndef PTL_PORTALS_COMPAT_H
+#define PTL_PORTALS_COMPAT_H
 
-/******************* UTCP CONFIGURATION **********************/
+#if PTL_PORTALS_UTCP
 
 #include <portals3.h>
 #include <p3nal_utcp.h>
 #include <p3rt/p3rt.h>
 #include <p3api/debug.h>
 
-int mca_ptl_portals_nal_init(void);
+#elif PTL_PORTALS_REDSTORM
 
-int mca_ptl_portals_nal_configure(size_t nprocs, struct ompi_proc_t **procs);
+#error "Red Storm Compatibility not implemented"
 
-/******************* CRAY CONFIGURATION **********************/
+#else
 
+#error "Unknown Portals library configuration"
+
+#endif
+
+int mca_ptl_portals_init(mca_ptl_portals_component_t *comp);
+
+int mca_ptl_portals_add_procs_compat(struct mca_ptl_base_module_t* ptl,
+                                     size_t nprocs, struct ompi_proc_t **procs,
+                                     struct mca_ptl_base_peer_t** peers,
+                                     ompi_bitmap_t* reachable);
 
 #endif /* PTL_PORTALS_NAL_H */
