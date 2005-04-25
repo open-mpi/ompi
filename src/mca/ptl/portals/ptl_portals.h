@@ -19,12 +19,17 @@
 #ifndef MCA_PTL_PORTALS_H
 #define MCA_PTL_PORTALS_H
 
-#include "ompi_config.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "class/ompi_bitmap.h"
 #include "class/ompi_free_list.h"
 #include "class/ompi_proc_table.h"
+
+/* need this type for the compat header */
+struct mca_ptl_portals_component_t;
+typedef struct mca_ptl_portals_component_t mca_ptl_portals_component_t;
+
+#include "ptl_portals_compat.h"
 
 
 /**
@@ -51,17 +56,9 @@ struct mca_ptl_portals_component_t {
     /** Number of currently active portals modules */
     uint32_t portals_num_modules;
     /** List of currently running modules */
-    struct mca_ptl_base_module_t **portals_modules;
-
-    /** Initial size of the free lists */
-    int32_t portals_free_list_num;
-    /** maximum size of the free lists */
-    int32_t portals_free_list_max;
-    /** number of elements to alloc when group free lists */
-    int32_t portals_free_list_inc;
+    struct mca_ptl_portals_module_t **portals_modules;
 };
 
-typedef struct mca_ptl_portals_component_t mca_ptl_portals_component_t;
 struct mca_ptl_portals_recv_frag_t;
 struct mca_ptl_portals_send_frag_t;
 
@@ -103,8 +100,8 @@ extern int mca_ptl_portals_component_close(void);
 
 extern mca_ptl_base_module_t** mca_ptl_portals_component_init(
     int *num_ptls, 
-    bool *allow_multi_user_threads,
-    bool *have_hidden_threads
+    bool enable_progress_threads,
+    bool enable_mpi_threads
 );
 
 
@@ -144,6 +141,11 @@ extern int mca_ptl_portals_component_progress(
  */
 struct mca_ptl_portals_module_t {
     mca_ptl_base_module_t super;         /**< base PTL module interface */
+
+    /** our portals network interface */
+    ptl_handle_ni_t ni_handle;
+    /** the limits returned from PtlNIInit for interface */
+    ptl_ni_limits_t limits;
 };
 typedef struct mca_ptl_portals_module_t mca_ptl_portals_module_t;
 
@@ -353,5 +355,6 @@ extern int mca_ptl_portals_send_continue(
     size_t size,
     int flags
 );
+
 
 #endif

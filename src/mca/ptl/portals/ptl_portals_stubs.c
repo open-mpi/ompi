@@ -16,6 +16,7 @@
 
 
 #include "ompi_config.h"
+#include "portals_config.h"
 
 #include "ptl_portals.h"
 
@@ -30,23 +31,7 @@
 
 
 int
-mca_ptl_portals_module_init()
-{
-    return OMPI_ERROR;
-}
-
-int
 mca_ptl_portals_finalize(struct mca_ptl_base_module_t *ptl)
-{
-    return OMPI_ERROR;
-}
-
-int
-mca_ptl_portals_add_procs(struct mca_ptl_base_module_t *ptl,
-			  size_t nprocs,
-			  struct ompi_proc_t **procs,
-			  struct mca_ptl_base_peer_t **peers,
-			  ompi_bitmap_t * reachable)
 {
     return OMPI_ERROR;
 }
