@@ -47,7 +47,7 @@ int mca_pml_base_select(bool enable_progress_threads,
   ompi_list_item_t *item = NULL;
   mca_base_component_list_item_t *cli = NULL;
   mca_pml_base_component_t *component = NULL, *best_component = NULL;
-  mca_pml_base_module_t *module = NULL;
+  mca_pml_base_module_t *module = NULL, *best_module = NULL;
   ompi_list_t opened;
   opened_component_t *om = NULL;
 
@@ -83,6 +83,7 @@ int mca_pml_base_select(bool enable_progress_threads,
         if (priority > best_priority) {
           best_priority = priority;
           best_component = component;
+          best_module = module;
         }
 
         om = malloc(sizeof(opened_component_t));
@@ -139,7 +140,7 @@ int mca_pml_base_select(bool enable_progress_threads,
   /* Save the winner */
 
   mca_pml_base_selected_component = *best_component;
-  mca_pml = *module;
+  mca_pml = *best_module;
   ompi_output_verbose(10, mca_pml_base_output, 
                      "select: component %s selected",
                      component->pmlm_version.mca_component_name);
