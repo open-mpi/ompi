@@ -102,7 +102,7 @@ mca_mpool_sm_init(bool enable_progress_threads,
                   bool enable_mpi_threads)
 {
     char *file_name;
-    size_t len;
+    int len;
 
     mca_allocator_base_component_t* allocator_component = mca_allocator_component_lookup(
         mca_mpool_sm_component.sm_allocator_name);
