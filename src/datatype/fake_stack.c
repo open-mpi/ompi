@@ -264,7 +264,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
             /* if we are embedded in another loop we should update it's length too */
             pStack--;
             pConvertor->stack_pos--;
-            if( pConvertor->stack_pos >= 0 ) {
+            if( pConvertor->stack_pos > 0 ) {
                 remoteLength[pConvertor->stack_pos] += remoteLength[pConvertor->stack_pos + 1];
             }
             pos_desc++;
