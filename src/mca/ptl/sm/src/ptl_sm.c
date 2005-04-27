@@ -169,6 +169,10 @@ int mca_ptl_sm_add_procs_same_base_addr(
         if( my_proc == procs[proc] ) {
             mca_ptl_sm_component.my_smp_rank=n_local_procs;
         }
+        if( procs[proc]->proc_name.jobid != my_proc->proc_name.jobid ) {
+            continue;
+        }
+
         return_code = mca_base_modex_recv(
                 &mca_ptl_sm_component.super.ptlm_version, procs[proc],
                 (void**)(&(sm_proc_info[proc])), &size);
