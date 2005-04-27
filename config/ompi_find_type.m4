@@ -48,7 +48,7 @@ for type in $types; do
 
         # If the size matches the target size, we're done
 
-        if test -n "$target_size" -a \
+        if test "$target_size" != "" -a \
             "$type_size" = "$target_size"; then
             real_type="`echo $type | sed -e 's/:/ /'g`"
         fi
