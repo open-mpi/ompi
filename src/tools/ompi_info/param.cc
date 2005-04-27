@@ -371,11 +371,36 @@ void ompi_info::do_config(bool want_all)
     // Will always have the size of Fortran integer
 
     out("Fort integer size", "compiler:fortran:sizeof:integer", 
-        OMPI_SIZEOF_FORTRAN_INT);
+        OMPI_SIZEOF_FORTRAN_INTEGER);
 
     // May or may not have the other Fortran sizes
 
     if (OMPI_WANT_F77_BINDINGS || OMPI_WANT_F90_BINDINGS) {
+      out("Fort have integer1", "compiler:fortran:have:integer1", 
+          OMPI_HAVE_FORTRAN_INTEGER1 ? "yes" : "no");
+      out("Fort have integer2", "compiler:fortran:have:integer2", 
+          OMPI_HAVE_FORTRAN_INTEGER2 ? "yes" : "no");
+      out("Fort have integer4", "compiler:fortran:have:integer4", 
+          OMPI_HAVE_FORTRAN_INTEGER4 ? "yes" : "no");
+      out("Fort have integer8", "compiler:fortran:have:integer8", 
+          OMPI_HAVE_FORTRAN_INTEGER8 ? "yes" : "no");
+      out("Fort have integer16", "compiler:fortran:have:integer16", 
+          OMPI_HAVE_FORTRAN_INTEGER16 ? "yes" : "no");
+
+      out("Fort have real4", "compiler:fortran:have:real4", 
+          OMPI_HAVE_FORTRAN_REAL4 ? "yes" : "no");
+      out("Fort have real8", "compiler:fortran:have:real8", 
+          OMPI_HAVE_FORTRAN_REAL8 ? "yes" : "no");
+      out("Fort have real16", "compiler:fortran:have:real16", 
+          OMPI_HAVE_FORTRAN_REAL16 ? "yes" : "no");
+
+      out("Fort have complex8", "compiler:fortran:have:complex8", 
+          OMPI_HAVE_FORTRAN_COMPLEX8 ? "yes" : "no");
+      out("Fort have complex16", "compiler:fortran:have:complex16", 
+          OMPI_HAVE_FORTRAN_COMPLEX16 ? "yes" : "no");
+      out("Fort have complex32", "compiler:fortran:have:complex32", 
+          OMPI_HAVE_FORTRAN_COMPLEX32 ? "yes" : "no");
+
       out("Fort real size", "compiler:fortran:sizeof:real", 
           OMPI_SIZEOF_FORTRAN_REAL);
       out("Fort dbl prec size", 
@@ -388,7 +413,7 @@ void ompi_info::do_config(bool want_all)
           OMPI_SIZEOF_FORTRAN_REAL);
       
       out("Fort integer align", "compiler:fortran:align:integer", 
-          OMPI_ALIGNMENT_FORTRAN_INT);
+          OMPI_ALIGNMENT_FORTRAN_INTEGER);
       out("Fort real align", "compiler:fortran:align:real", 
           OMPI_ALIGNMENT_FORTRAN_REAL);
       out("Fort dbl prec align", 

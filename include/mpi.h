@@ -550,7 +550,7 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_INTEGER2 (&ompi_mpi_integer2)
 #define MPI_INTEGER4 (&ompi_mpi_integer4)
 #if HAVE_LONG_LONG
-#define MPI_INTEGER8 (&ompi_mpi_integr8)
+#define MPI_INTEGER8 (&ompi_mpi_integer8)
 #endif  /* HAVE_LONG_LONG */
 #define MPI_REAL (&ompi_mpi_real)
 #define MPI_REAL4 (&ompi_mpi_real4)

@@ -25,7 +25,7 @@
  * Define MACROS to take account of different size of MPI_Fint from int
  */
 
-#if OMPI_SIZEOF_FORTRAN_INT == SIZEOF_INT
+#if OMPI_SIZEOF_FORTRAN_INTEGER == SIZEOF_INT
   #define OMPI_ARRAY_NAME_DECL(a)
   #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2)
   #define OMPI_SINGLE_NAME_DECL(a)
@@ -41,7 +41,7 @@
   #define OMPI_SINGLE_INT_2_FINT(in)
   #define OMPI_ARRAY_INT_2_FINT(in, n)
 
-#elif OMPI_SIZEOF_FORTRAN_INT > SIZEOF_INT
+#elif OMPI_SIZEOF_FORTRAN_INTEGER > SIZEOF_INT
   #define OMPI_ARRAY_NAME_DECL(a) int *c_##a
   #define OMPI_2_DIM_ARRAY_NAME_DECL(a, dim2) int (*c_##a)[dim2], dim2_index
   #define OMPI_SINGLE_NAME_DECL(a) int c_##a

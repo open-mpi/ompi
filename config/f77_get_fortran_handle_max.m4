@@ -28,7 +28,7 @@ AC_MSG_CHECKING([for max fortran MPI handle index])
 if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
     ompi_fint_max=-1
 else
-    ompi_sizeof_fint=`expr $OMPI_SIZEOF_FORTRAN_INT \* 8 - 1`
+    ompi_sizeof_fint=`expr $OMPI_SIZEOF_FORTRAN_INTEGER \* 8 - 1`
     ompi_fint_max=1
     while test "$ompi_sizeof_fint" != "0"; do
         ompi_fint_max=`expr $ompi_fint_max \* 2`
