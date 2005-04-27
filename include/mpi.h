@@ -32,7 +32,7 @@
 /*
  * Just in case you need it.  :-)
  */
-#define OMPI_MPI 1
+#define OPEN_MPI 1
 
 /*
  * MPI version
