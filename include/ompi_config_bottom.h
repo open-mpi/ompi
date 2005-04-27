@@ -84,6 +84,29 @@ typedef struct {
   ompi_fortran_real_t imag;
 } ompi_fortran_complex_t;
 
+#if OMPI_HAVE_FORTRAN_REAL4
+/* * C type for Fortran COMPLEX*8 */
+typedef struct {
+  ompi_fortran_real4_t real;
+  ompi_fortran_real4_t imag;
+} ompi_fortran_complex8_t;
+#endif
+
+#if OMPI_HAVE_FORTRAN_REAL8
+/* * C type for Fortran COMPLEX*16 */
+typedef struct {
+  ompi_fortran_real8_t real;
+  ompi_fortran_real8_t imag;
+} ompi_fortran_complex16_t;
+#endif
+
+#if OMPI_HAVE_FORTRAN_REAL16
+/* * C type for Fortran COMPLEX*32 */
+typedef struct {
+  ompi_fortran_real16_t real;
+  ompi_fortran_real16_t imag;
+} ompi_fortran_complex32_t;
+#endif
 
 /* * C type for Fortran DOUBLE COMPLEX */
 typedef struct {

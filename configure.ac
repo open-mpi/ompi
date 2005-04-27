@@ -368,13 +368,13 @@ OMPI_HAVE_FORTRAN_COMPLEX8=0
 OMPI_HAVE_FORTRAN_COMPLEX16=0
 OMPI_HAVE_FORTRAN_COMPLEX32=0
 
-OMPI_SIZEOF_FORTRAN_INT=0
+OMPI_SIZEOF_FORTRAN_INTEGER=0
 OMPI_SIZEOF_FORTRAN_REAL=0
 OMPI_SIZEOF_FORTRAN_DBLPREC=0
 OMPI_SIZEOF_FORTRAN_COMPLEX=0
 OMPI_SIZEOF_FORTRAN_DBLCOMPLEX=0
 
-OMPI_ALIGNMENT_FORTRAN_INT=0
+OMPI_ALIGNMENT_FORTRAN_INTEGER=0
 OMPI_ALIGNMENT_FORTRAN_REAL=0
 OMPI_ALIGNMENT_FORTRAN_DBLPREC=0
 OMPI_ALIGNMENT_FORTRAN_COMPLEX=0
@@ -393,7 +393,7 @@ OMPI_F77_FIND_EXT_SYMBOL_CONVENTION($OMPI_F77)
 
 if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
     OMPI_SIZEOF_FORTRAN_LOGICAL=$ac_cv_sizeof_int
-    OMPI_SIZEOF_FORTRAN_INT=$ac_cv_sizeof_int
+    OMPI_SIZEOF_FORTRAN_INTEGER=$ac_cv_sizeof_int
     OMPI_SIZEOF_FORTRAN_REAL=$ac_cv_sizeof_float
     OMPI_SIZEOF_FORTRAN_DBLPREC=$ac_cv_sizeof_double
 else
@@ -415,14 +415,14 @@ else
     OMPI_F77_CHECK_TYPE(COMPLEX*32, OMPI_HAVE_FORTRAN_COMPLEX32)
 
     OMPI_F77_GET_SIZEOF(LOGICAL, OMPI_SIZEOF_FORTRAN_LOGICAL)
-    OMPI_F77_GET_SIZEOF(INTEGER, OMPI_SIZEOF_FORTRAN_INT)
+    OMPI_F77_GET_SIZEOF(INTEGER, OMPI_SIZEOF_FORTRAN_INTEGER)
     OMPI_F77_GET_SIZEOF(REAL, OMPI_SIZEOF_FORTRAN_REAL)
     OMPI_F77_GET_SIZEOF(DOUBLE PRECISION, OMPI_SIZEOF_FORTRAN_DBLPREC)
     OMPI_F77_GET_SIZEOF(COMPLEX, OMPI_SIZEOF_FORTRAN_COMPLEX)
     OMPI_F77_GET_SIZEOF(DOUBLE COMPLEX, OMPI_SIZEOF_FORTRAN_DBLCOMPLEX)
 
     OMPI_F77_GET_ALIGNMENT(LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL)
-    OMPI_F77_GET_ALIGNMENT(INTEGER, OMPI_ALIGNMENT_FORTRAN_INT)
+    OMPI_F77_GET_ALIGNMENT(INTEGER, OMPI_ALIGNMENT_FORTRAN_INTEGER)
     OMPI_F77_GET_ALIGNMENT(REAL, OMPI_ALIGNMENT_FORTRAN_REAL)
     OMPI_F77_GET_ALIGNMENT(DOUBLE PRECISION, OMPI_ALIGNMENT_FORTRAN_DBLPREC)
     OMPI_F77_GET_ALIGNMENT(COMPLEX, OMPI_ALIGNMENT_FORTRAN_COMPLEX)
@@ -457,7 +457,7 @@ AC_DEFINE_UNQUOTED(OMPI_HAVE_FORTRAN_COMPLEX32, $OMPI_HAVE_FORTRAN_COMPLEX32,
 
 AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_LOGICAL, $OMPI_SIZEOF_FORTRAN_LOGICAL,
     [Size of fortran logical])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_INT, $OMPI_SIZEOF_FORTRAN_INT,
+AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_INTEGER, $OMPI_SIZEOF_FORTRAN_INTEGER,
     [Size of fortran integer])
 AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_REAL, $OMPI_SIZEOF_FORTRAN_REAL,
     [Size of fortran real])
@@ -472,7 +472,8 @@ AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_DBLCOMPLEX,
 AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_LOGICAL, 
     $OMPI_ALIGNMENT_FORTRAN_LOGICAL,
     [Alignment of fortran logical])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_INT, $OMPI_ALIGNMENT_FORTRAN_INT,
+AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_INTEGER, 
+    $OMPI_ALIGNMENT_FORTRAN_INTEGER,
     [Alignment of fortran integer])
 AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_REAL, $OMPI_ALIGNMENT_FORTRAN_REAL,
     [alignment of fortran real])
@@ -1139,32 +1140,123 @@ ompi_show_title "System-specific tests"
 if test "$OMPI_F77" != "none"; then
         OMPI_FIND_TYPE(Fortran LOGICAL, FORTRAN_LOGICAL,
             char int int32_t)
-        OMPI_FIND_TYPE(Fortran INTEGER, FORTRAN_INT, 
+
+        OMPI_FIND_TYPE(Fortran INTEGER, FORTRAN_INTEGER, 
             int32_t int intr64_t long:long long)
+        if test "$OMPI_HAVE_FORTRAN_INTEGER1" = "1"; then
+            OMPI_SIZEOF_FORTRAN_INTEGER1=1
+            OMPI_FIND_TYPE(Fortran INTEGER1, FORTRAN_INTEGER1, 
+                char int8_t short int int64_t long:long long)
+        else
+            MPI_FORTRAN_INTEGER1_TYPE=int
+        fi
+        if test "$OMPI_HAVE_FORTRAN_INTEGER2" = "1"; then
+            OMPI_SIZEOF_FORTRAN_INTEGER2=2
+            OMPI_FIND_TYPE(Fortran INTEGER2, FORTRAN_INTEGER2, 
+                short int16_t int int64_t long:long long)
+        else
+            MPI_FORTRAN_INTEGER2_TYPE=int
+        fi
+        if test "$OMPI_HAVE_FORTRAN_INTEGER4" = "1"; then
+            OMPI_SIZEOF_FORTRAN_INTEGER4=4
+            OMPI_FIND_TYPE(Fortran INTEGER4, FORTRAN_INTEGER4, 
+                short int int64_t long:long long)
+        else
+            MPI_FORTRAN_INTEGER4_TYPE=int
+        fi
+        if test "$OMPI_HAVE_FORTRAN_INTEGER8" = "1"; then
+            OMPI_SIZEOF_FORTRAN_INTEGER8=8
+            OMPI_FIND_TYPE(Fortran INTEGER8, FORTRAN_INTEGER8, 
+                int int64_t long:long long)
+        else
+            MPI_FORTRAN_INTEGER8_TYPE=int
+        fi
+        if test "$OMPI_HAVE_FORTRAN_INTEGER16" = "1"; then
+            OMPI_SIZEOF_FORTRAN_INTEGER16=16
+            OMPI_FIND_TYPE(Fortran INTEGER16, FORTRAN_INTEGER16, 
+                int int64_t long:long long)
+        else
+            MPI_FORTRAN_INTEGER16_TYPE=int
+        fi
+
         OMPI_FIND_TYPE(Fortran REAL, FORTRAN_REAL,
             float double long:double)
+        if test "$OMPI_HAVE_FORTRAN_REAL4" = "1"; then
+            OMPI_SIZEOF_FORTRAN_REAL4=4
+            OMPI_FIND_TYPE(Fortran REAL, FORTRAN_REAL4,
+                float double long:double)
+        else
+            MPI_FORTRAN_REAL4_TYPE=float
+        fi
+        if test "$OMPI_HAVE_FORTRAN_REAL8" = "1"; then
+            OMPI_SIZEOF_FORTRAN_REAL8=8
+            OMPI_FIND_TYPE(Fortran REAL, FORTRAN_REAL8,
+                float double long:double)
+        else
+            MPI_FORTRAN_REAL8_TYPE=float
+        fi
+        if test "$OMPI_HAVE_FORTRAN_REAL16" = "1"; then
+            OMPI_SIZEOF_FORTRAN_REAL16=16
+            OMPI_FIND_TYPE(Fortran REAL, FORTRAN_REAL16,
+                float double long:double)
+        else
+            MPI_FORTRAN_REAL16_TYPE=float
+        fi
+
         OMPI_FIND_TYPE(Fortran DOUBLE PRECISION, FORTRAN_DBLPREC,
             float double long:double)
 else
         MPI_FORTRAN_LOGICAL_TYPE=char
-	MPI_FORTRAN_INT_TYPE=int
+	MPI_FORTRAN_INTEGER_TYPE=int
+	MPI_FORTRAN_INTEGER1_TYPE=char
+	MPI_FORTRAN_INTEGER2_TYPE=short
+	MPI_FORTRAN_INTEGER4_TYPE=int
+	MPI_FORTRAN_INTEGER8_TYPE=long
+	MPI_FORTRAN_INTEGER16_TYPE=long
         MPI_FORTRAN_REAL_TYPE=float
+        MPI_FORTRAN_REAL4_TYPE=float
+        MPI_FORTRAN_REAL8_TYPE=double
+        MPI_FORTRAN_REAL16_TYPE="long double"
         MPI_FORTRAN_DBLPREC_TYPE=double
 	AC_MSG_WARN([*** Did not detect a f77 compiler.  Assuming default corresponding types])
         AC_MSG_WARN([*** Fortran LOGICAL = C $MPI_FORTRAN_LOGICAL_TYPE])
-        AC_MSG_WARN([*** Fortran INTEGER = C $MPI_FORTRAN_INT_TYPE])
+        AC_MSG_WARN([*** Fortran INTEGER = C $MPI_FORTRAN_INTEGER_TYPE])
+        AC_MSG_WARN([*** Fortran INTEGER1 = C $MPI_FORTRAN_INTEGER1_TYPE])
+        AC_MSG_WARN([*** Fortran INTEGER2 = C $MPI_FORTRAN_INTEGER2_TYPE])
+        AC_MSG_WARN([*** Fortran INTEGER4 = C $MPI_FORTRAN_INTEGER4_TYPE])
+        AC_MSG_WARN([*** Fortran INTEGER8 = C $MPI_FORTRAN_INTEGER8_TYPE])
+        AC_MSG_WARN([*** Fortran INTEGER16 = C $MPI_FORTRAN_INTEGER16_TYPE])
         AC_MSG_WARN([*** Fortran REAL = C $MPI_FORTRAN_REAL_TYPE])
+        AC_MSG_WARN([*** Fortran REAL4 = C $MPI_FORTRAN_REAL4_TYPE])
+        AC_MSG_WARN([*** Fortran REAL8 = C $MPI_FORTRAN_REAL8_TYPE])
+        AC_MSG_WARN([*** Fortran REAL16 = C $MPI_FORTRAN_REAL16_TYPE])
         AC_MSG_WARN([*** Fortran DOUBLE PRECISION = C $MPI_FORTRAN_DBLPREC_TYPE])
 fi
-AC_DEFINE_UNQUOTED(MPI_Fint, $MPI_FORTRAN_INT_TYPE, 
-    [C type corresponding to Fortran INTEGER])
-
 AC_DEFINE_UNQUOTED(ompi_fortran_logical_t, $MPI_FORTRAN_LOGICAL_TYPE, 
     [C type corresponding to Fortran LOGICAL])
-AC_DEFINE_UNQUOTED(ompi_fortran_integer_t, $MPI_FORTRAN_INT_TYPE, 
+
+AC_DEFINE_UNQUOTED(MPI_Fint, $MPI_FORTRAN_INTEGER_TYPE, 
+    [C type corresponding to Fortran INTEGER])
+AC_DEFINE_UNQUOTED(ompi_fortran_integer_t, $MPI_FORTRAN_INTEGER_TYPE, 
     [C type corresponding to Fortran LOGICAL])
+AC_DEFINE_UNQUOTED(ompi_fortran_integer1_t, $MPI_FORTRAN_INTEGER1_TYPE, 
+    [C type corresponding to Fortran INTEGER1])
+AC_DEFINE_UNQUOTED(ompi_fortran_integer2_t, $MPI_FORTRAN_INTEGER2_TYPE, 
+    [C type corresponding to Fortran INTEGER2])
+AC_DEFINE_UNQUOTED(ompi_fortran_integer4_t, $MPI_FORTRAN_INTEGER4_TYPE, 
+    [C type corresponding to Fortran INTEGER4])
+AC_DEFINE_UNQUOTED(ompi_fortran_integer8_t, $MPI_FORTRAN_INTEGER8_TYPE, 
+    [C type corresponding to Fortran INTEGER4])
+
 AC_DEFINE_UNQUOTED(ompi_fortran_real_t, $MPI_FORTRAN_REAL_TYPE, 
     [C type corresponding to Fortran REAL])
+AC_DEFINE_UNQUOTED(ompi_fortran_real4_t, $MPI_FORTRAN_REAL4_TYPE, 
+    [C type corresponding to Fortran REAL4])
+AC_DEFINE_UNQUOTED(ompi_fortran_real8_t, $MPI_FORTRAN_REAL8_TYPE, 
+    [C type corresponding to Fortran REAL8])
+AC_DEFINE_UNQUOTED(ompi_fortran_real16_t, $MPI_FORTRAN_REAL16_TYPE, 
+    [C type corresponding to Fortran REAL16])
+
 AC_DEFINE_UNQUOTED(ompi_fortran_dblprec_t, $MPI_FORTRAN_DBLPREC_TYPE, 
     [C type corresponding to Fortran DOUBLE PRECISION])
 
