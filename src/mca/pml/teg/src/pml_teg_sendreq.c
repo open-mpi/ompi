@@ -188,7 +188,7 @@ void mca_pml_teg_send_request_progress(
             if(req->req_lock == 0) {
                 MCA_PML_TEG_FREE((ompi_request_t**)&req);
             }
-        } else if (req->req_base.req_type == MCA_PML_BASE_SEND_BUFFERED) {
+        } else if (req->req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
             mca_pml_base_bsend_request_fini((ompi_request_t*)req);
         }
     /* test to see if we have scheduled the entire request */
