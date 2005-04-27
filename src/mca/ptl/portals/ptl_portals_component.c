@@ -23,7 +23,7 @@
 #include "threads/thread.h"
 
 #include "ptl_portals.h"
-
+#include "ptl_portals_compat.h"
 
 
 /*

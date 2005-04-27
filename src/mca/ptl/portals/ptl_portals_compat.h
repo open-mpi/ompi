@@ -20,7 +20,6 @@
 
 #if PTL_PORTALS_UTCP
 
-#include <portals3.h>
 #include <p3nal_utcp.h>
 #include <p3rt/p3rt.h>
 #include <p3api/debug.h>
@@ -37,9 +36,8 @@
 
 int mca_ptl_portals_init(mca_ptl_portals_component_t *comp);
 
-int mca_ptl_portals_add_procs_compat(struct mca_ptl_base_module_t* ptl,
+int mca_ptl_portals_add_procs_compat(mca_ptl_portals_module_t* ptl,
                                      size_t nprocs, struct ompi_proc_t **procs,
-                                     struct mca_ptl_base_peer_t** peers,
-                                     ompi_bitmap_t* reachable);
+                                     ptl_process_id_t **portals_procs);
 
 #endif /* PTL_PORTALS_NAL_H */
