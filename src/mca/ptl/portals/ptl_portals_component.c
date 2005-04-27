@@ -110,14 +110,11 @@ mca_ptl_portals_param_register_int(const char* param_name,
 int
 mca_ptl_portals_component_open(void)
 {
-    int debug_level;
-
     /* initialize state */
     mca_ptl_portals_component.portals_num_modules = 0;
     mca_ptl_portals_component.portals_modules = NULL;
 
     /* initialize objects */
-    printf("here\n");
 
     /* register portals module parameters */
 #if PTL_PORTALS_UTCP
@@ -127,12 +124,12 @@ mca_ptl_portals_component_open(void)
     portals_output_stream.lds_verbose_level = 
         mca_ptl_portals_param_register_int("debug_level", 1000);
 
-    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "mca_ptl_portals_component_open()");
-
     /* finish with objects */
     mca_ptl_portals_component.portals_output = 
         ompi_output_open(&portals_output_stream);
+
+    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                        "mca_ptl_portals_component_open()");
 
     return OMPI_SUCCESS;
 }

@@ -26,37 +26,40 @@
 #include "util/output.h"
 
 #include "ptl_portals.h"
-#include "ptl_portals_nal.h"
+#include "ptl_portals_compat.h"
 
 mca_ptl_portals_module_t mca_ptl_portals_module = {
     {
         &mca_ptl_portals_component.super,
-        1, /* max size of request cache */
-        0, /* byest required by ptl for a request */
-        0, /* max size of first frag */
-        0, /* min size of frag */
-        0, /* max size of frag */
-        50, /* latency */
-        0, /* bandwidth */
-        0, /* ptl flags */
+        1,   /* max size of request cache */
+        1,   /* byest required by ptl for a request */
+        128, /* max size of first frag */
+        0,   /* min size of frag */
+        128, /* max size of frag */
+        0,   /* exclusivity */
+        50,  /* latency */
+        0,   /* bandwidth */
+        0,   /* ptl flags */
 
         mca_ptl_portals_add_procs,
         mca_ptl_portals_del_procs,
         mca_ptl_portals_finalize,
         mca_ptl_portals_send,
-        mca_ptl_portals_put,
-        mca_ptl_portals_get,
+        NULL,
+        NULL,
         mca_ptl_portals_matched,
         mca_ptl_portals_request_init,
         mca_ptl_portals_request_fini,
 
-        mca_ptl_portals_match,
-        mca_ptl_portals_send_progess,
-        mca_ptl_portals_recv_progress,
+        NULL,
+        NULL,
+        NULL,
 
         NULL,  /* PTL stack */
         NULL   /* PML use */
-    }
+    },
+
+    0,
 };
 
 
@@ -65,11 +68,11 @@ int
 mca_ptl_portals_add_procs(struct mca_ptl_base_module_t* ptl,
                           size_t nprocs, struct ompi_proc_t **procs,
                           struct mca_ptl_base_peer_t** peers,
-                          ompi_bitmap_t* reachable);
+                          ompi_bitmap_t* reachable)
 {
     int ret;
     struct ompi_proc_t *local_proc = ompi_proc_local();
-    struct ompi_ptoc_t *curr_proc;
+    struct ompi_proc_t *curr_proc;
     size_t i;
 
     ret = mca_ptl_portals_add_procs_compat(ptl, nprocs, procs, 

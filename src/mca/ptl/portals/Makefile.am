@@ -37,6 +37,7 @@ EXTRA_DIST = \
 portals_SOURCES = \
 	ptl_portals.h \
 	ptl_portals_compat.h \
+	ptl_portals.c \
 	ptl_portals_component.c \
 	ptl_portals_stubs.c \
 	ptl_portals_compat_utcp.c
