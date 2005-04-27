@@ -27,6 +27,7 @@
 #include "util/output.h"
 
 #include "ptl_portals.h"
+#include "ptl_portals_compat.h"
 
 /* how's this for source code diving? - find private method for
    getting interface */
@@ -73,6 +74,7 @@ mca_ptl_portals_init(mca_ptl_portals_component_t *comp)
                             "malloc failed in mca_ptl_portals_init");
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
+    *(comp->portals_modules[0]) = mca_ptl_portals_module;
 
     return OMPI_SUCCESS;
 }
@@ -85,10 +87,11 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_base_module_t* ptl_base,
                                  ompi_bitmap_t* reachable)
 {
     int ret, my_rid;
-    char *env;
     ptl_process_id_t *info;
     char *nidmap = NULL;
     char *pidmap = NULL;
+    char *nid_str;
+    char *pid_str;
     const size_t map_size = nprocs * 12 + 1; /* 12 is max length of long in decimal */
     size_t size, i;
     char *tmp;
@@ -102,7 +105,10 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_base_module_t* ptl_base,
     /* each nid is a int, so need 10 there, plus the : */
     nidmap = malloc(map_size);
     pidmap = malloc(map_size);
-    if (NULL == nidmap || NULL == pidmap) return OMPI_ERROR;
+    nid_str = malloc(12 + 1);
+    pid_str = malloc(12 + 1);
+    if (NULL == nidmap || NULL == pidmap || NULL == nid_str || NULL == pid_str)
+        return OMPI_ERROR;
         
     for (i = 0 ; i < nprocs ; ++i) {
         if (proc_self == procs[i]) my_rid = i;
@@ -124,9 +130,12 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_base_module_t* ptl_base,
             snprintf(nidmap, map_size, "%u", info->nid);
             snprintf(pidmap, map_size, "%u", info->pid);
         } else {
-            snprintf(nidmap, map_size, "%s:%u", nidmap, info->nid);
-            snprintf(pidmap, map_size, "%s:%u", nidmap, info->pid);
+            snprintf(nid_str, 12 + 1, ":%u", info->nid);
+            snprintf(pid_str, 12 + 1, ":%u", info->pid);
+            strncat(nidmap, nid_str, 12);
+            strncat(pidmap, pid_str, 12);
         }
+
     }
 
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
