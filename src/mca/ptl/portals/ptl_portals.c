@@ -73,10 +73,15 @@ mca_ptl_portals_add_procs(struct mca_ptl_base_module_t* ptl,
     int ret;
     struct ompi_proc_t *local_proc = ompi_proc_local();
     struct ompi_proc_t *curr_proc;
+    ptl_process_id_t *portals_procs;
     size_t i;
 
-    ret = mca_ptl_portals_add_procs_compat(ptl, nprocs, procs, 
-                                            peers, reachable);
+    /* make sure our environment is fully initialized.  At end of this
+       call, we have a working network handle on our module and
+       portals_procs will have the portals process identifier for each
+       proc (ordered, in theory) */
+    ret = mca_ptl_portals_add_procs_compat((struct mca_ptl_portals_module_t*) ptl,
+                                           nprocs, procs, &portals_procs);
     if (OMPI_SUCCESS != ret) return ret;
 
     /* loop through all procs, setting our reachable flag */

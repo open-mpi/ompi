@@ -19,6 +19,8 @@
 #ifndef MCA_PTL_PORTALS_H
 #define MCA_PTL_PORTALS_H
 
+#include <portals3.h>
+
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "class/ompi_bitmap.h"
@@ -28,8 +30,6 @@
 /* need this type for the compat header */
 struct mca_ptl_portals_component_t;
 typedef struct mca_ptl_portals_component_t mca_ptl_portals_component_t;
-
-#include "ptl_portals_compat.h"
 
 
 /**

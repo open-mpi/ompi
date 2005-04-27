@@ -22,6 +22,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
+#include <netinet/in.h>
 
 #include "include/constants.h"
 #include "util/output.h"
@@ -46,8 +47,8 @@ mca_ptl_portals_init(mca_ptl_portals_component_t *comp)
     utcp_lib_out = stderr;
     utcp_api_out = stderr;
 
-    info.nid = utcp_my_nid(mca_ptl_portals_component.portals_ifname);
-    info.pid = (ptl_pid_t) getpid();
+    info.nid = htonl(utcp_my_nid(mca_ptl_portals_component.portals_ifname));
+    info.pid = htonl((ptl_pid_t) getpid());
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
                         "contact info: %u, %u", info.nid, info.pid);
 
@@ -81,10 +82,9 @@ mca_ptl_portals_init(mca_ptl_portals_component_t *comp)
 
 
 int
-mca_ptl_portals_add_procs_compat(struct mca_ptl_base_module_t* ptl_base,
+mca_ptl_portals_add_procs_compat(struct mca_ptl_portals_module_t* ptl,
                                  size_t nprocs, struct ompi_proc_t **procs,
-                                 struct mca_ptl_base_peer_t** peers,
-                                 ompi_bitmap_t* reachable)
+                                 ptl_process_id_t **portals_procs)
 {
     int ret, my_rid;
     ptl_process_id_t *info;
@@ -97,7 +97,6 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_base_module_t* ptl_base,
     char *tmp;
     ompi_proc_t* proc_self = ompi_proc_local();
     int max_interfaces;
-    struct mca_ptl_portals_module_t *ptl = (struct mca_ptl_portals_module_t*) ptl_base;
 
     /*
      * Do all the NID/PID map setup
@@ -109,7 +108,15 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_base_module_t* ptl_base,
     pid_str = malloc(12 + 1);
     if (NULL == nidmap || NULL == pidmap || NULL == nid_str || NULL == pid_str)
         return OMPI_ERROR;
-        
+
+    /* get space for the portals procs list */
+    *portals_procs = calloc(nprocs, sizeof(ptl_process_id_t));
+    if (NULL == *portals_procs) {
+        ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+                            "calloc(nprocs, sizeof(ptl_process_id_t)) failed");
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+         
     for (i = 0 ; i < nprocs ; ++i) {
         if (proc_self == procs[i]) my_rid = i;
 
@@ -127,25 +134,31 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_base_module_t* ptl_base,
         }
 
         if (i == 0) {
-            snprintf(nidmap, map_size, "%u", info->nid);
-            snprintf(pidmap, map_size, "%u", info->pid);
+            snprintf(nidmap, map_size, "%u", ntohl(info->nid));
+            snprintf(pidmap, map_size, "%u", ntohl(info->pid));
         } else {
-            snprintf(nid_str, 12 + 1, ":%u", info->nid);
-            snprintf(pid_str, 12 + 1, ":%u", info->pid);
+            snprintf(nid_str, 12 + 1, ":%u", ntohl(info->nid));
+            snprintf(pid_str, 12 + 1, ":%u", ntohl(info->pid));
             strncat(nidmap, nid_str, 12);
             strncat(pidmap, pid_str, 12);
         }
 
+        /* update my local array of proc structs */
+        (*portals_procs)[i].nid = info->nid;
+        (*portals_procs)[i].pid = info->pid;
+
+        free(info);
     }
 
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "my rid: %u", my_rid);
+                        "%d: my rid: %u", getpid(), my_rid);
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "nid map: %s", nidmap);
+                        "%d: nid map: %s", getpid(), nidmap);
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "pid map: %s", pidmap);
+                        "%d: pid map: %s", getpid(), pidmap);
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "iface: %s", mca_ptl_portals_component.portals_ifname);
+                        "%d: iface: %s", getpid(), 
+                        mca_ptl_portals_component.portals_ifname);
 
     asprintf(&tmp, "PTL_MY_RID=%u", my_rid);
     putenv(tmp);
@@ -155,6 +168,11 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_base_module_t* ptl_base,
     putenv(tmp);
     asprintf(&tmp, "PTL_IFACE=%s", mca_ptl_portals_component.portals_ifname);
     putenv(tmp);
+
+    free(pidmap);
+    free(nidmap);
+    free(pid_str);
+    free(nid_str);
 
     /*
      * Initialize Portals
