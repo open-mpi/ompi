@@ -32,14 +32,14 @@ static int ompi_convertor_generic_parse( ompi_convertor_t* pConvertor,
 {
     dt_stack_t* pStack;    /* pointer to the position on the stack */ 
     uint32_t pos_desc;     /* actual position in the description of the derived datatype */ 
-    int count_desc;        /* the number of items already done in the actual pos_desc */ 
+    uint32_t count_desc;   /* the number of items already done in the actual pos_desc */ 
     int type;              /* type at current position */ 
     long disp_desc = 0;    /* compute displacement for truncated data */ 
     int bConverted = 0;    /* number of bytes converted this time */ 
     ompi_datatype_t *pData = pConvertor->pDesc; 
     dt_elem_desc_t* pElem; 
     char* iov_base; 
-    int iov_len; 
+    uint32_t iov_len, i; 
     uint32_t iov_count, total_bytes_converted = 0; 
  
     DUMP( "convertor_decode( %p, {%p, %d}, %d )\n", (void*)pConvertor, 
@@ -85,12 +85,35 @@ static int ompi_convertor_generic_parse( ompi_convertor_t* pConvertor,
                 disp_desc = pElem[pos_desc].elem.disp; 
             } 
             if( DT_LOOP == pElem[pos_desc].elem.common.type ) { 
-                do { 
-                    PUSH_STACK( pStack, pConvertor->stack_pos, 
-                                pos_desc, pElem[pos_desc].elem.count, 
-                                pStack->disp, pos_desc + pElem[pos_desc].elem.disp + 1); 
-                    pos_desc++; 
-                } while( DT_LOOP == pElem[pos_desc].elem.common.type ); /* let's start another loop */
+                int stop_in_loop = 0;
+                if( pElem[pos_desc].loop.common.flags & DT_FLAG_CONTIGUOUS ) {
+                    ddt_endloop_desc_t* end_loop = &(pElem[pos_desc + pElem[pos_desc].loop.items].end_loop);
+                    if( (end_loop->size * count_desc) > iov_len ) {
+                        stop_in_loop = count_desc;
+                        count_desc = iov_len / end_loop->size;
+                    }
+                    for( i = 0; i < count_desc; i++ ) {
+                        /*
+                         *  DO SOMETHING USEFULL ...
+                         */
+                        iov_base += end_loop->size;  /* size of the contiguous data */
+                        disp_desc += pElem[pos_desc].loop.extent;
+                    }
+                    iov_len -= (end_loop->size * count_desc);
+                    bConverted += (end_loop->size * count_desc);
+                    if( stop_in_loop == 0 ) {
+                        pos_desc += pElem[pos_desc].loop.items + 1;
+                        count_desc = pElem[pos_desc].elem.count;
+                        continue;
+                    }
+                    /* mark some of the iterations as completed */
+                    count_desc = stop_in_loop - count_desc;
+                    /* Save the stack with the correct last_count value. */
+                }
+		PUSH_STACK( pStack, pConvertor->stack_pos, 
+			    pos_desc, pElem[pos_desc].elem.count, 
+			    pStack->disp, pos_desc + pElem[pos_desc].elem.disp + 1); 
+		pos_desc++; 
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
                 /* update the current state */ 
                 count_desc = pElem[pos_desc].elem.count; 
