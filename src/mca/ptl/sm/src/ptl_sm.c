@@ -114,8 +114,8 @@ int mca_ptl_sm_add_procs_same_base_addr(
     ompi_bitmap_t* reachability)
 {
     int return_code=OMPI_SUCCESS;
-    size_t i,j,proc,size,my_len,n_to_allocate,length;
-    int n_local_procs,cnt,len;
+    size_t i,j,proc,size,n_to_allocate,length;
+    int n_local_procs,cnt,len, my_len;
     mca_ptl_sm_exchange_t **sm_proc_info;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_ptl_sm_t *ptl_sm;
