@@ -322,6 +322,8 @@ sub try_build {
         $vpath_mode, $confargs) = @_;
     my $ret;
     my $startdir = `pwd`;
+    my $unpacker;
+    my $status;
 
     chomp($startdir);
 
@@ -336,14 +338,32 @@ sub try_build {
     # "interesting" command, anyway -- we don't need any stdout or
     # stderr.  So if it fails, it fails -- no big deal.
 
-    system("gunzip -c $tarball | tar xf -");
-    my $status = $? >> 8;
+
+    if ($tarball =~ /.*\.bz2$/) {
+        $unpacker="bunzip2";
+    }
+    elsif ($tarball =~ /.*\.gz$/) {
+        $unpacker="gunzip";
+    }
+    else {
+        return {
+            status => $status,
+            message => "Failed to figure out compression of tarball",
+        }
+    }
+
+    system("$unpacker -c $tarball | tar xf -");
+    $status = $? >> 8;
     if ($status != 0) {
         return {
             status => $status,
             message => "Failed to unzip the tarball",
         }
     }
+
+    test_abort ("Tarball does not contain expected openmpi-directory:openmpi-$version -- aborting")
+	    if (! -d "openmpi-$version");
+
     chdir("openmpi-$version");
     
     # configure it
@@ -521,7 +541,6 @@ if ($file_arg && $url_arg) {
 # if the --file argument was a relative file, convert it to absolute
 # because we're going to chdir before using it
 if ($file_arg) {
-    my $foo = $file_arg =~ /^\//;
     if (! ($file_arg =~ /^\//)) {
         my $tmp = `pwd`;
         chomp($tmp);
@@ -531,7 +550,6 @@ if ($file_arg) {
 
 # ditto for --config arg
 if ($config_arg) {
-    my $foo = $config_arg =~ /^\//;
     if (! ($config_arg =~ /^\//)) {
         my $tmp = `pwd`;
         chomp($tmp);
@@ -578,9 +596,13 @@ die "Could not find mail program; aborting in despair\n"
     if (!defined($mail));
 
 # figure out what download command to use
-my $download = find_program(qw(wget lynx curl));
-test_abort("Cannot find downloading program -- aborting in despair\n")
-    if (!defined($download));
+# if we need to download a version -- with file_arg, we do not
+my $download = "true";
+if ($url_arg) {
+    $download = find_program(qw(wget lynx curl));
+    test_abort("Cannot find downloading program -- aborting in despair\n")
+        if (!defined($download));
+}
 
 # move into the scratch directory, and ensure we have an absolute path
 # for it
@@ -619,7 +641,7 @@ if ($url_arg) {
     $tarball_name = "openmpi-$version.tar.gz";
     if (! -f $tarball_name) {
         do_command(1, "$download $url_arg/$tarball_name");
-        test_abort "Could not download tarball -- aborting"
+        test_abort ("Could not download tarball -- aborting")
             if (! -f $tarball_name);
         
         # get the checksums
@@ -680,7 +702,7 @@ WARNING: checksums.  Proceeding anyway...\n\n");
     die "ERROR: Cannot read file $tarball_name\n"
         if (! -r $tarball_name);
     $version = $tarball_name;
-    $version =~ s/.*openmpi-(.+).tar.gz/$1/;
+    $version =~ s/.*openmpi-(.+)\.tar.*/$1/;
 
     check_last_version($version);
 

@@ -16,7 +16,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-TESTS_ENVIRONMENT = $(SHELL) run_tests
+TESTS_ENVIRONMENT = $(SHELL) $(srcdir)/run_tests
 
 check_PROGRAMS = \
 	atomic_barrier \
