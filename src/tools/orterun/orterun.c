@@ -315,6 +315,8 @@ static void dump_aborted_procs(orte_jobid_t jobid)
     orte_gpr_value_t** values = NULL;
     int i, k, num_values = 0;
     int rc;
+    int32_t exit_code = 0;
+    bool exit_code_set;
     char *keys[] = {
         ORTE_PROC_NAME_KEY,
         ORTE_PROC_PID_KEY,
@@ -344,14 +346,15 @@ static void dump_aborted_procs(orte_jobid_t jobid)
         return;
     }
 
-    for(i=0; i<num_values; i++) {
+    for (i = 0; i < num_values; i++) {
         orte_gpr_value_t* value = values[i];
         orte_process_name_t name;
         uint32_t pid = 0;
         uint32_t rank = -1;
-        int32_t exit_code = 0;
         char* node_name = NULL;
 
+        exit_code = 0;
+        exit_code_set = false;
         for(k=0; k < value->cnt; k++) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
             if(strcmp(keyval->key, ORTE_PROC_NAME_KEY) == 0) {
@@ -368,6 +371,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
             }
             if(strcmp(keyval->key, ORTE_PROC_EXIT_CODE_KEY) == 0) {
                 exit_code = keyval->value.i32;
+                exit_code_set = true;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
@@ -375,12 +379,12 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 continue;
             }
         }
-        if (rank >= 0) {
+        if (rank >= 0 && exit_code_set) {
             proc_infos[rank].exit_code = exit_code;
         }
  
-        if(WIFSIGNALED(exit_code) && rank >= 0 && 
-           !proc_infos[rank].reported) { 
+        if (WIFSIGNALED(exit_code) && rank >= 0 && 
+            !proc_infos[rank].reported) { 
             proc_infos[rank].reported = true;
 
             if (9 == WTERMSIG(exit_code)) {
@@ -392,15 +396,22 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 }
                 ++num_aborted;
             }
-
-            /* Hold the exit_code so we can return it when exiting */
-            OMPI_THREAD_LOCK(&orterun_globals.lock);
-            orterun_globals.exit_code = exit_code;
-            OMPI_THREAD_UNLOCK(&orterun_globals.lock);
         }
+
+        /* If we haven't done so already, hold the exit_code so we can
+           return it when exiting.  Specifically, keep the first
+           non-zero entry.  If they all return zero, we'll return
+           zero. */
+
+        OMPI_THREAD_LOCK(&orterun_globals.lock);
+        if (0 == orterun_globals.exit_code && exit_code_set) {
+            orterun_globals.exit_code = exit_code;
+        }
+        OMPI_THREAD_UNLOCK(&orterun_globals.lock);
+
         OBJ_RELEASE(value);
     }
-    if(NULL != values) {
+    if (NULL != values) {
         free(values);
     }
 }
