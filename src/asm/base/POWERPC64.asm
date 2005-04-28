@@ -84,8 +84,8 @@ START_FUNC(ompi_atomic_cmpset_64)
 	   bne-    REFLSYM(3)
 	LSYM(4)
 	xor r3,r4,r0
-	subfic r2,r3,0
-	adde r3,r2,r3
+	subfic r5,r3,0
+	adde r3,r5,r3
 	blr
 END_FUNC(ompi_atomic_cmpset_64)
 
@@ -99,8 +99,8 @@ START_FUNC(ompi_atomic_cmpset_acq_64)
         LSYM(8)
         lwsync
         xor r3,r4,r0
-        subfic r2,r3,0
-        adde r3,r2,r3
+        subfic r5,r3,0
+        adde r3,r5,r3
         blr
 END_FUNC(ompi_atomic_cmpset_acq_64)
 
@@ -114,8 +114,8 @@ START_FUNC(ompi_atomic_cmpset_rel_64)
            bne-    REFLSYM(9)
         LSYM(10)
         xor r3,r4,r0
-        subfic r2,r3,0
-        adde r3,r2,r3
+        subfic r5,r3,0
+        adde r3,r5,r3
         blr
 END_FUNC(ompi_atomic_cmpset_rel_64)
 
