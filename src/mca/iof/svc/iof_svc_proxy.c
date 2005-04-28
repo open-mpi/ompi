@@ -233,7 +233,7 @@ static void orte_iof_svc_proxy_ack(
         }
 
         frag->frag_hdr.hdr_msg = *hdr;
-        frag->frag_iov[0].iov_base = &frag->frag_hdr;
+        frag->frag_iov[0].iov_base = (void*)&frag->frag_hdr;
         frag->frag_iov[0].iov_len = sizeof(frag->frag_hdr);
         ORTE_IOF_BASE_HDR_MSG_HTON(frag->frag_hdr.hdr_msg);
 
