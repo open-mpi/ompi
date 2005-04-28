@@ -38,7 +38,6 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
                             int *array_of_errcodes) 
 {
     int i=0, rc=0, rank=0;
-    int totalnumprocs=0;
     ompi_communicator_t *newcomp=NULL;
     int send_first=0; /* they are contacting us first */
     char port_name[MPI_MAX_PORT_NAME];
@@ -130,7 +129,7 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
 
    /* set array of errorcodes */
    if (MPI_ERRCODES_IGNORE != array_of_errcodes) {
-       for ( i=0; i < totalnumprocs; i++ ) {
+       for ( i=0; i < newcomp->c_remote_group->grp_proc_count; i++ ) {
            array_of_errcodes[i]=rc;
        }
    }
