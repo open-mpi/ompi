@@ -475,13 +475,40 @@ OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_cxx_cplex, ompi_mpi_cxx_dbl
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_cxx_ldblcplex;
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_cxx_bool;
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_2cplex, ompi_mpi_2dblcplex;
-/* other MPI2 datatype */
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_real4, ompi_mpi_real8;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_real16;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_complex8, ompi_mpi_complex16;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_real32;
-OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer1, ompi_mpi_integer2, ompi_mpi_integer4;
+/* other MPI2 datatypes */
+#if OMPI_HAVE_FORTRAN_INTEGER1
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer1;
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER2
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer2;
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER4
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer4;
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER8
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer8;
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER16
 OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_integer16;
+#endif
+#if OMPI_HAVE_FORTRAN_REAL4
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_real4; 
+#endif
+#if OMPI_HAVE_FORTRAN_REAL8
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_real8;
+#endif
+#if OMPI_HAVE_FORTRAN_REAL16
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_real16;
+#endif
+#if OMPI_HAVE_FORTRAN_REAL4
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_complex8;
+#endif
+#if OMPI_HAVE_FORTRAN_REAL8
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_complex16;
+#endif
+#if OMPI_HAVE_FORTRAN_REAL16
+OMPI_DECLSPEC extern struct ompi_datatype_t ompi_mpi_complex32;
+#endif
 
 OMPI_DECLSPEC extern struct ompi_errhandler_t ompi_mpi_errhandler_null;
 OMPI_DECLSPEC extern struct ompi_errhandler_t ompi_mpi_errors_are_fatal;
@@ -546,23 +573,41 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #endif  /* HAVE_LONG_LONG */
 
 /* Fortran datatype bindings */
+#define MPI_INTEGER (&ompi_mpi_integer)
+#if OMPI_HAVE_FORTRAN_INTEGER1
 #define MPI_INTEGER1 (&ompi_mpi_integer1)
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER2
 #define MPI_INTEGER2 (&ompi_mpi_integer2)
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER4
 #define MPI_INTEGER4 (&ompi_mpi_integer4)
-#if HAVE_LONG_LONG
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER8
 #define MPI_INTEGER8 (&ompi_mpi_integer8)
-#endif  /* HAVE_LONG_LONG */
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER16
+#define MPI_INTEGER16 (&ompi_mpi_integer16)
+#endif
 #define MPI_REAL (&ompi_mpi_real)
+#if OMPI_HAVE_FORTRAN_REAL4
 #define MPI_REAL4 (&ompi_mpi_real4)
+#endif
+#if OMPI_HAVE_FORTRAN_REAL8
 #define MPI_REAL8 (&ompi_mpi_real8)
-#if HAVE_LONG_DOUBLE
+#endif
+#if OMPI_HAVE_FORTRAN_REAL16
 #define MPI_REAL16 (&ompi_mpi_real16)
-#endif  /* HAVE_LONG_DOUBLE */
+#endif
+#if OMPI_HAVE_FORTRAN_REAL4
 #define MPI_COMPLEX8 (&ompi_mpi_complex8)
+#endif
+#if OMPI_HAVE_FORTRAN_REAL8
 #define MPI_COMPLEX16 (&ompi_mpi_complex16)
-#if HAVE_LONG_DOUBLE
+#endif
+#if OMPI_HAVE_FORTRAN_REAL16
 #define MPI_COMPLEX32 (&ompi_mpi_complex32)
-#endif  /* HAVE_LONG_DOUBLE */
+#endif
 
 #define MPI_ERRORS_ARE_FATAL (&ompi_mpi_errors_are_fatal)
 #define MPI_ERRORS_RETURN (&ompi_mpi_errors_return)
