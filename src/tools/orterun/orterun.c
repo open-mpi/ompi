@@ -86,7 +86,7 @@ struct globals_t {
     bool no_wait_for_job_completion;
     bool debug;
     int num_procs;
-    int exit_code;
+    int exit_status;
     char *hostfile;
     char *env_val;
     char *appfile;
@@ -99,7 +99,7 @@ static bool globals_init = false;
 
 struct proc_info_t {
     bool reported;
-    int32_t exit_code;
+    int32_t exit_status;
 };
 struct proc_info_t *proc_infos = NULL;
 
@@ -239,7 +239,7 @@ int main(int argc, char *argv[], char* env[])
     }
     for (i = 0; i < j; ++i) {
         proc_infos[i].reported = false;
-        proc_infos[i].exit_code = 0;
+        proc_infos[i].exit_status = 0;
     }
 
     /* Intialize our Open RTE environment */
@@ -275,8 +275,13 @@ int main(int argc, char *argv[], char* env[])
                                     &orterun_globals.lock);
             }
             /* Make sure we propagate the exit code */
-            rc = orterun_globals.exit_code;
+            if (WIFEXITED(orterun_globals.exit_status)) {
+                rc = WEXITSTATUS(orterun_globals.exit_status);
+            } else {
+                rc = WTERMSIG(orterun_globals.exit_status);
+            }
             OMPI_THREAD_UNLOCK(&orterun_globals.lock);
+            orte_gpr.dump_segments(0);
 
             /* If we showed more abort messages than were allowed,
                show a followup message here */
@@ -315,8 +320,8 @@ static void dump_aborted_procs(orte_jobid_t jobid)
     orte_gpr_value_t** values = NULL;
     int i, k, num_values = 0;
     int rc;
-    int32_t exit_code = 0;
-    bool exit_code_set;
+    int32_t exit_status = 0;
+    bool exit_status_set;
     char *keys[] = {
         ORTE_PROC_NAME_KEY,
         ORTE_PROC_PID_KEY,
@@ -353,8 +358,8 @@ static void dump_aborted_procs(orte_jobid_t jobid)
         uint32_t rank = -1;
         char* node_name = NULL;
 
-        exit_code = 0;
-        exit_code_set = false;
+        exit_status = 0;
+        exit_status_set = false;
         for(k=0; k < value->cnt; k++) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
             if(strcmp(keyval->key, ORTE_PROC_NAME_KEY) == 0) {
@@ -370,8 +375,8 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_EXIT_CODE_KEY) == 0) {
-                exit_code = keyval->value.i32;
-                exit_code_set = true;
+                exit_status = keyval->value.exit_code;
+                exit_status_set = true;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
@@ -379,33 +384,33 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 continue;
             }
         }
-        if (rank >= 0 && exit_code_set) {
-            proc_infos[rank].exit_code = exit_code;
+        if (rank >= 0 && exit_status_set) {
+            proc_infos[rank].exit_status = exit_status;
         }
  
-        if (WIFSIGNALED(exit_code) && rank >= 0 && 
+        if (WIFSIGNALED(exit_status) && rank >= 0 && 
             !proc_infos[rank].reported) { 
             proc_infos[rank].reported = true;
 
-            if (9 == WTERMSIG(exit_code)) {
+            if (9 == WTERMSIG(exit_status)) {
                 ++num_killed;
             } else {
                 if (num_aborted < max_display_aborted) {
                     fprintf(stderr, "Job rank %d (pid %d) on node \"%s\" exited on signal %d\n",
-                            rank, pid, node_name, WTERMSIG(exit_code));
+                            rank, pid, node_name, WTERMSIG(exit_status));
                 }
                 ++num_aborted;
             }
         }
 
-        /* If we haven't done so already, hold the exit_code so we can
+        /* If we haven't done so already, hold the exit_status so we can
            return it when exiting.  Specifically, keep the first
            non-zero entry.  If they all return zero, we'll return
            zero. */
 
         OMPI_THREAD_LOCK(&orterun_globals.lock);
-        if (0 == orterun_globals.exit_code && exit_code_set) {
-            orterun_globals.exit_code = exit_code;
+        if (0 == orterun_globals.exit_status && exit_status_set) {
+            orterun_globals.exit_status = exit_status;
         }
         OMPI_THREAD_UNLOCK(&orterun_globals.lock);
 
