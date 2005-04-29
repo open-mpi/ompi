@@ -281,7 +281,6 @@ int main(int argc, char *argv[], char* env[])
                 rc = WTERMSIG(orterun_globals.exit_status);
             }
             OMPI_THREAD_UNLOCK(&orterun_globals.lock);
-            orte_gpr.dump_segments(0);
 
             /* If we showed more abort messages than were allowed,
                show a followup message here */
