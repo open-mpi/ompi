@@ -330,10 +330,11 @@ int orte_pls_fork_terminate_job(orte_jobid_t jobid)
         }
         OBJ_RELEASE(value);
     }
-    if(NULL != values)
+    if(NULL != values) {
         free(values);
+    }
     free(segment);
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    return ORTE_SUCCESS;
 }
 
 
@@ -352,7 +353,7 @@ int orte_pls_fork_finalize(void)
         }
         OMPI_THREAD_UNLOCK(&mca_pls_fork_component.lock);
     }
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    return ORTE_SUCCESS;
 }
 
 
@@ -361,7 +362,7 @@ int orte_pls_fork_finalize(void)
  */
 
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
-                                                                                                        
+
 struct orte_pls_fork_stack_t {
     ompi_condition_t cond;
     ompi_mutex_t mutex;
@@ -370,7 +371,7 @@ struct orte_pls_fork_stack_t {
     int rc;
 };
 typedef struct orte_pls_fork_stack_t orte_pls_fork_stack_t;
-                                                                                                        
+
 static void orte_pls_fork_stack_construct(orte_pls_fork_stack_t* stack)
 {
     OBJ_CONSTRUCT(&stack->mutex, ompi_mutex_t);
@@ -378,19 +379,19 @@ static void orte_pls_fork_stack_construct(orte_pls_fork_stack_t* stack)
     stack->rc = 0;
     stack->complete = false;
 }
-                                                                                                        
+
 static void orte_pls_fork_stack_destruct(orte_pls_fork_stack_t* stack)
 {
     OBJ_DESTRUCT(&stack->mutex);
     OBJ_DESTRUCT(&stack->cond);
 }
-                                                                                                        
+
 static OBJ_CLASS_INSTANCE(
     orte_pls_fork_stack_t,
     ompi_object_t,
     orte_pls_fork_stack_construct,
     orte_pls_fork_stack_destruct);
-                                                                                                        
+
 
 static void orte_pls_fork_launch_cb(int fd, short event, void* args)
 {
@@ -408,20 +409,21 @@ static int orte_pls_fork_launch_threaded(orte_jobid_t jobid)
     struct timeval tv = { 0, 0 };
     struct ompi_event event;
     struct orte_pls_fork_stack_t stack;
-                                                                                                        
+
     OBJ_CONSTRUCT(&stack, orte_pls_fork_stack_t);
-                                                                                                        
+
     stack.jobid = jobid;
     ompi_evtimer_set(&event, orte_pls_fork_launch_cb, &stack);
     ompi_evtimer_add(&event, &tv);
-                                                                                                        
+
     OMPI_THREAD_LOCK(&stack.mutex);
-    while(stack.complete == false)
+    while(false == stack.complete) {
          ompi_condition_wait(&stack.cond, &stack.mutex);
+    }
     OMPI_THREAD_UNLOCK(&stack.mutex);
     OBJ_DESTRUCT(&stack);
     return stack.rc;
 }
-                                                                                                        
+
 #endif
 
