@@ -54,6 +54,8 @@ struct mca_pml_teg_t {
     ompi_list_t  teg_procs;
     ompi_mutex_t teg_lock;
 
+    int teg_priority;
+
     int teg_free_list_num;   /* initial size of free list */
     int teg_free_list_max;   /* maximum size of free list */
     int teg_free_list_inc;   /* number of elements to grow free list */
