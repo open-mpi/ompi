@@ -101,6 +101,8 @@ int mca_pml_teg_component_open(void)
         mca_pml_teg_param_register_int("free_list_inc", 256);
     mca_pml_teg.teg_poll_iterations =
         mca_pml_teg_param_register_int("poll_iterations", 100000);
+    mca_pml_teg.teg_priority =
+        mca_pml_teg_param_register_int("priority", 0);
 
     return OMPI_SUCCESS;
 }
@@ -145,7 +147,7 @@ mca_pml_base_module_t* mca_pml_teg_component_init(int* priority,
 {
     uint32_t proc_arch;
     int rc;
-    *priority = 0;
+    *priority = mca_pml_teg.teg_priority;
 
     /* recv requests */
     ompi_free_list_init(
