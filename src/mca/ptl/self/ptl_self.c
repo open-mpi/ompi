@@ -129,6 +129,7 @@ int mca_ptl_self_send(
 {
     mca_ptl_self_send_request_t* req = (mca_ptl_self_send_request_t*)request;
     mca_ptl_base_header_t* hdr = &(req->req_frag.frag_base.frag_header);
+    bool match;
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
     hdr->hdr_common.hdr_flags = flags;
@@ -145,7 +146,16 @@ int mca_ptl_self_send(
     req->req_frag.frag_base.frag_owner = &mca_ptl_self_module;
     req->req_frag.frag_request = NULL;
     req->req_frag.frag_is_buffered = 0;
-    ptl->ptl_match( ptl, &(req->req_frag), &(hdr->hdr_match) );
+    match = ptl->ptl_match( ptl, &(req->req_frag), &(hdr->hdr_match) );
+#if !OMPI_ENABLE_MPI_THREADS && 0
+    /* If we are in a non threaded case and the send is blocking for MPI correctness
+     * the receive should be already posted. Otherwise the program will lead to a deadlock.
+     */
+    if( (false == match) && (MCA_PML_REQUEST_SEND == req->req_send.req_base.req_type) ) {
+        ompi_output( 0, "OMPI reach a dead-lock situation. A send to self was posted without a proper receive\n" );
+        return OMPI_ERROR;
+    }
+#endif  /* OMPI_ENABLE_MPI_THREADS */
     return OMPI_SUCCESS;
 }
 
@@ -214,8 +224,8 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
     ptl->ptl_send_progress( ptl, &sendreq->req_send,
                             sendreq->req_send.req_bytes_packed );
     ptl->ptl_recv_progress( ptl, 
-			    recvreq, 
-			    frag->frag_base.frag_header.hdr_match.hdr_msg_length,
-			    frag->frag_base.frag_size );
+                            recvreq, 
+                            frag->frag_base.frag_header.hdr_match.hdr_msg_length,
+                            frag->frag_base.frag_size );
 }
 
