@@ -34,7 +34,32 @@ static const char FUNC_NAME[] = "MPI_Type_create_darray";
 
 static MPI_Datatype cyclic( int32_t darg, int32_t gsize, int32_t r, int32_t psize, MPI_Datatype oldtype )
 {
-    return &ompi_mpi_datatype_null;
+   int count, darg_last;
+
+   {  /* compute the count */
+      int nblocks, left_over;
+      nblocks = (gsize + (darg - 1)) / darg;
+      count = nblocks / psize;
+      left_over = nblocks - count * psize;
+      if( r < left_over )
+         count++;
+   }
+   { /* compute the darg_last */
+      int32_t num_in_last_cyclic;
+      if( 0 == (num_in_last_cyclic = gsize % (psize * darg)) ) {
+         darg_last = darg;
+      } else {
+         darg_last = num_in_last_cyclic - darg * r;
+         if( darg_last > darg )
+            darg_last = darg;
+         if( darg_last <= 0 )
+            darg_last = darg;
+      }
+   }
+
+   
+
+   return &ompi_mpi_datatype_null;
 }
 
 int MPI_Type_create_darray(int size,
@@ -93,7 +118,7 @@ int MPI_Type_create_darray(int size,
     r = (int*)malloc( ndims * sizeof(int) );
     {
         int t_rank = rank;
-        int t_size = size;
+        int t_size = size;  /* if prod(psize_array) != size it's a user ERROR */
         for( i = 0; i < ndims; i++ ) {
             t_size = t_size / psize_array[i];
             r[i] = t_rank / t_size;
@@ -112,7 +137,18 @@ int MPI_Type_create_darray(int size,
 
     temptype = cyclic( darg_array[i], gsize_array[i], r[i], psize_array[i], oldtype );
     for( i += step; i != end_loop; i += step ) {
-        *newtype = cyclic( darg_array[i], gsize_array[i], r[i], psize_array[i], temptype );
+        int darg_i = darg_array[i];
+        if( distrib_array[i] == MPI_DISTRIBUTE_BLOCK ) {
+            if( darg_array[i] == MPI_DISTRIBUTE_DFLT_DARG )
+                darg_i = (gsize_array[i] + psize_array[i] - 1) / psize_array[i];
+        } else if( distrib_array[i] == MPI_DISTRIBUTE_NONE ) {
+            darg_i = gsize_array[i];
+        } else if( distrib_array[i] == MPI_DISTRIBUTE_CYCLIC ) {
+            if( darg_array[i] == MPI_DISTRIBUTE_DFLT_DARG )
+                darg_i = 1;
+        }
+        
+        *newtype = cyclic( darg_i, gsize_array[i], r[i], psize_array[i], temptype );
         ompi_ddt_destroy( &temptype );
         temptype = *newtype;
     }
