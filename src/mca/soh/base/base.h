@@ -27,6 +27,7 @@
 #include "include/orte_types.h"
 
 #include "class/ompi_list.h"
+#include "dps/dps_types.h"
 #include "mca/mca.h"
 /* #include "mca/ns/ns_types.h" */
 #include "mca/soh/soh.h"
@@ -63,6 +64,30 @@ int orte_soh_base_begin_monitoring_not_available(orte_jobid_t job);
 
 
 int orte_soh_base_module_finalize_not_available (void);
+
+/*
+ * DATA TYPE PACKING FUNCTIONS
+ */
+int orte_soh_base_pack_exit_code(orte_buffer_t *buffer, void *src,
+                                 size_t num_vals, orte_data_type_t type);
+
+int orte_soh_base_pack_node_state(orte_buffer_t *buffer, void *src,
+                                  size_t num_vals, orte_data_type_t type);
+
+int orte_soh_base_pack_proc_state(orte_buffer_t *buffer, void *src,
+                                  size_t num_vals, orte_data_type_t type);
+
+/*
+ * DATA TYPE UNPACKING FUNCTIONS
+ */
+int orte_soh_base_unpack_exit_code(orte_buffer_t *buffer, void *dest,
+                                 size_t *num_vals, orte_data_type_t type);
+
+int orte_soh_base_unpack_node_state(orte_buffer_t *buffer, void *dest,
+                                  size_t *num_vals, orte_data_type_t type);
+
+int orte_soh_base_unpack_proc_state(orte_buffer_t *buffer, void *dest,
+                                  size_t *num_vals, orte_data_type_t type);
 
 /*
  * globals that might be needed

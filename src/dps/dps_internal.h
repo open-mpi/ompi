@@ -21,7 +21,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-#include "class/orte_value_array.h"
+#include "class/orte_pointer_array.h"
 
 #include "dps/dps.h"
 
@@ -83,12 +83,31 @@ extern "C" {
 #error Unsupported int size!
 #endif
 
+/**
+ * Internal struct used for holding registered dps functions
+ */
+struct orte_dps_type_info_t {
+    /* type identifier */
+    orte_data_type_t odti_type;
+    /** Debugging string name */
+    char *odti_name;
+    /** Pack function */
+    orte_dps_pack_fn_t odti_pack_fn;
+    /** Unpack function */
+    orte_dps_unpack_fn_t odti_unpack_fn;
+};
+/**
+ * Convenience typedef
+ */
+typedef struct orte_dps_type_info_t orte_dps_type_info_t;
+
 /*
  * globals needed within dps
  */
 extern bool orte_dps_initialized;
 extern bool orte_dps_debug;
 extern int orte_dps_page_size;
+extern orte_pointer_array_t *orte_dps_types;
 
     /*
      * Implementations of API functions
@@ -105,6 +124,21 @@ extern int orte_dps_page_size;
     int orte_dps_unload(orte_buffer_t *buffer, void **payload, 
                         size_t *bytes_used);
     int orte_dps_load(orte_buffer_t *buffer, void *payload, size_t bytes_used);
+
+    int orte_dps_register(orte_dps_pack_fn_t pack_fn,
+                          orte_dps_unpack_fn_t unpack_fn,
+                          const char *name, orte_data_type_t *type);
+
+    char *orte_dps_lookup_data_type(orte_data_type_t type);
+
+    /*
+     * Non-API functions that need to be reachable
+     */
+    int orte_dps_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_vals,
+                  orte_data_type_t type);
+
+    int orte_dps_unpack_buffer(orte_buffer_t *buffer, void *dst, size_t *num_vals,
+                    orte_data_type_t type);
 
     /*
      * Internal pack functions
@@ -144,33 +178,33 @@ extern int orte_dps_page_size;
      */
 
     int orte_dps_unpack_null(orte_buffer_t *buffer, void *dest,
-                             size_t num_vals, orte_data_type_t type);
+                             size_t *num_vals, orte_data_type_t type);
     int orte_dps_unpack_byte(orte_buffer_t *buffer, void *dest,
-                             size_t num_vals, orte_data_type_t type);
+                             size_t *num_vals, orte_data_type_t type);
 
     int orte_dps_unpack_bool(orte_buffer_t *buffer, void *dest,
-                             size_t num_vals, orte_data_type_t type);
+                             size_t *num_vals, orte_data_type_t type);
 
     int orte_dps_unpack_int(orte_buffer_t *buffer, void *dest,
-                            size_t num_vals, orte_data_type_t type);
+                            size_t *num_vals, orte_data_type_t type);
     int orte_dps_unpack_int16(orte_buffer_t *buffer, void *dest,
-                              size_t num_vals, orte_data_type_t type);
+                              size_t *num_vals, orte_data_type_t type);
     int orte_dps_unpack_int32(orte_buffer_t *buffer, void *dest,
-                              size_t num_vals, orte_data_type_t type);
+                              size_t *num_vals, orte_data_type_t type);
     int orte_dps_unpack_int64(orte_buffer_t *buffer, void *dest,
-                              size_t num_vals, orte_data_type_t type);
+                              size_t *num_vals, orte_data_type_t type);
 
     int orte_dps_unpack_sizet(orte_buffer_t *buffer, void *dest,
-                              size_t num_vals, orte_data_type_t type);
+                              size_t *num_vals, orte_data_type_t type);
 
     int orte_dps_unpack_string(orte_buffer_t *buffer, void *dest,
-                               size_t num_vals, orte_data_type_t type);
+                               size_t *num_vals, orte_data_type_t type);
 
     int orte_dps_unpack_data_type(orte_buffer_t *buffer, void *dest,
-                             size_t num_vals, orte_data_type_t type);
+                             size_t *num_vals, orte_data_type_t type);
 
     int orte_dps_unpack_byte_object(orte_buffer_t *buffer, void *dest,
-                             size_t num_vals, orte_data_type_t type);
+                             size_t *num_vals, orte_data_type_t type);
 
     /*
      * Internal helper functions
@@ -184,6 +218,8 @@ extern int orte_dps_page_size;
 
     int orte_dps_get_data_type(orte_buffer_t *buffer, orte_data_type_t *type);
 
+    orte_dps_type_info_t* orte_dps_find_type(orte_data_type_t type);
+    
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

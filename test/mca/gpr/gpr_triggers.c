@@ -46,6 +46,11 @@
 
 #include "mca/errmgr/errmgr.h"
 #include "mca/errmgr/base/base.h"
+#include "mca/schema/schema.h"
+#include "mca/schema/base/base.h"
+#include "mca/ns/base/base.h"
+#include "mca/soh/base/base.h"
+#include "mca/rmgr/base/base.h"
 
 #include "mca/gpr/base/base.h"
 #include "mca/gpr/replica/api_layer/gpr_replica_api.h"
@@ -127,6 +132,46 @@ int main(int argc, char **argv)
         fprintf(test_out, "MCA started\n");
     } else {
         fprintf(test_out, "MCA could not start\n");
+        exit (1);
+    }
+
+    /* startup the dps */
+    if (OMPI_SUCCESS == orte_dps_open()) {
+        fprintf(test_out, "DPS started\n");
+    } else {
+        fprintf(test_out, "DPS could not start\n");
+        exit (1);
+    }
+
+    /* startup the name services */
+    if (OMPI_SUCCESS == orte_ns_base_open()) {
+        fprintf(test_out, "NS started\n");
+    } else {
+        fprintf(test_out, "NS could not start\n");
+        exit (1);
+    }
+
+    /* startup the soh */
+    if (OMPI_SUCCESS == orte_soh_base_open()) {
+        fprintf(test_out, "SOH started\n");
+    } else {
+        fprintf(test_out, "SOH could not start\n");
+        exit (1);
+    }
+
+    /* startup the rmgr */
+    if (OMPI_SUCCESS == orte_rmgr_base_open()) {
+        fprintf(test_out, "RMGR started\n");
+    } else {
+        fprintf(test_out, "RMGR could not start\n");
+        exit (1);
+    }
+
+    /* startup the schema */
+    if (OMPI_SUCCESS == orte_schema_base_open()) {
+        fprintf(test_out, "SCHEMA started\n");
+    } else {
+        fprintf(test_out, "SCHEMA could not start\n");
         exit (1);
     }
 

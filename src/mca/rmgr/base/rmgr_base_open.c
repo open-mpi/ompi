@@ -18,13 +18,15 @@
 #include "orte_config.h"
 #include "include/orte_constants.h"
 
+#include "dps/dps.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
+#include "mca/errmgr/errmgr.h"
 #include "util/output.h"
-#include "mca/rmgr/base/base.h"
-
 #include "util/argv.h"
+
+#include "mca/rmgr/base/base.h"
 
 
 
@@ -144,7 +146,8 @@ OBJ_CLASS_INSTANCE(orte_app_context_map_t,
 
 int orte_rmgr_base_open(void)
 {
-    int param, value;
+    int param, value, rc;
+    orte_data_type_t tmp;
 
     /* Debugging / verbose output */
 
@@ -157,6 +160,23 @@ int orte_rmgr_base_open(void)
         orte_rmgr_base.rmgr_output = -1;
     }
 
+    /* register the base system types with the DPS */
+    tmp = ORTE_APP_CONTEXT;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_rmgr_base_pack_app_context,
+                                          orte_rmgr_base_unpack_app_context,
+                                          "ORTE_APP_CONTEXT", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    tmp = ORTE_APP_CONTEXT_MAP;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_rmgr_base_pack_app_context_map,
+                                          orte_rmgr_base_unpack_app_context_map,
+                                          "ORTE_APP_CONTEXT_MAP", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* Open up all available components */
 
     if (ORTE_SUCCESS != 

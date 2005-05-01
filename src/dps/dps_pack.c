@@ -16,23 +16,19 @@
  
 #include "orte_config.h"
 
+#include <sys/types.h>
 #if HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
 
 #include "mca/errmgr/errmgr.h"
-#include "mca/ns/ns.h"
 
 #include "dps/dps_internal.h"
-
-static int orte_dps_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_vals,
-                  orte_data_type_t type);
 
 int orte_dps_pack(orte_buffer_t *buffer, void *src, size_t num_vals,
                   orte_data_type_t type)
 {
     int rc;
-    orte_data_type_t size_tmp=ORTE_SIZE;
 
     /* check for error */
     if (NULL == buffer || NULL == src || num_vals < 0) {
@@ -41,7 +37,7 @@ int orte_dps_pack(orte_buffer_t *buffer, void *src, size_t num_vals,
     }
 
     /* Pack the number of values */
-    if (ORTE_SUCCESS != (rc = orte_dps_pack_data_type(buffer, &size_tmp, 1, ORTE_DATA_TYPE))) {
+    if (ORTE_SUCCESS != (rc = orte_dps_store_data_type(buffer, ORTE_SIZE))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -58,11 +54,11 @@ int orte_dps_pack(orte_buffer_t *buffer, void *src, size_t num_vals,
     return rc;
 }
 
-static int orte_dps_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_vals,
+int orte_dps_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_vals,
                   orte_data_type_t type)
 {
     int rc;
-    orte_dps_pack_fn_t pack_fn;
+    orte_dps_type_info_t *info;
     
     /* Pack the declared data type */
     if (ORTE_SUCCESS != (rc = orte_dps_pack_data_type(buffer, &type, 1, type))) {
@@ -72,12 +68,12 @@ static int orte_dps_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_val
 
     /* Lookup the pack function for this type and call it */
 
-    if (ORTE_SUCCESS != (rc = orte_ns.lookup_data_type(&pack_fn, NULL, NULL, type))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    if (NULL == (info = orte_pointer_array_get_item(orte_dps_types, type))) {
+        ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
+        return ORTE_ERR_PACK_FAILURE;
     }
     
-    if (ORTE_SUCCESS != (rc = pack_fn(buffer, src, num_vals, type))) {
+    if (ORTE_SUCCESS != (rc = info->odti_pack_fn(buffer, src, num_vals, type))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -189,7 +185,7 @@ int orte_dps_pack_int16(orte_buffer_t *buffer, void *src,
                         size_t num_vals, orte_data_type_t type)
 {
     size_t i;
-    uint16_t tmp, *srctmp = (uint16_t*) src;
+    uint16_t tmp, *dsttmp, *srctmp = (uint16_t*) src;
     char *dst;
     
     /* check to see if buffer needs extending */
@@ -198,9 +194,10 @@ int orte_dps_pack_int16(orte_buffer_t *buffer, void *src,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
+    dsttmp = (uint16_t*)dst;
     for (i = 0; i < num_vals; ++i) {
         tmp = htons(srctmp[i]);
-        memcpy(((uint16_t*) dst) + i, &tmp, sizeof(tmp));
+        memcpy(&dsttmp[i], &tmp, sizeof(tmp));
     }
     buffer->pack_ptr += num_vals * sizeof(tmp);
     buffer->bytes_used += num_vals * sizeof(tmp);
@@ -216,7 +213,7 @@ int orte_dps_pack_int32(orte_buffer_t *buffer, void *src,
                         size_t num_vals, orte_data_type_t type)
 {
     size_t i;
-    uint32_t tmp, *srctmp = (uint32_t*) src;
+    uint32_t tmp, *dsttmp, *srctmp = (uint32_t*) src;
     char *dst;
     
     /* check to see if buffer needs extending */
@@ -225,9 +222,10 @@ int orte_dps_pack_int32(orte_buffer_t *buffer, void *src,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
+    dsttmp = (uint32_t*)dst;
     for (i = 0; i < num_vals; ++i) {
         tmp = htonl(srctmp[i]);
-        memcpy(((uint32_t*) dst) + i, &tmp, sizeof(tmp));
+        memcpy(&dsttmp[i], &tmp, sizeof(tmp));
     }
     buffer->pack_ptr += num_vals * sizeof(tmp);
     buffer->bytes_used += num_vals * sizeof(tmp);
@@ -243,10 +241,8 @@ int orte_dps_pack_int64(orte_buffer_t *buffer, void *src,
                         size_t num_vals, orte_data_type_t type)
 {
     size_t i;
-    uint32_t tmp, *srctmp = (uint32_t*) src;
+    uint32_t tmp, *dsttmp, *srctmp = (uint32_t*) src;
     char *dst;
-    
-    num_vals *= 2;
     
     /* check to see if buffer needs extending */
     if (NULL == (dst = orte_dps_buffer_extend(buffer, num_vals*sizeof(tmp)))) {
@@ -254,12 +250,15 @@ int orte_dps_pack_int64(orte_buffer_t *buffer, void *src,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    for (i = 0; i < num_vals; ++i) {
+    dsttmp = (uint32_t*)dst;
+    for (i = 0; i < num_vals; i += 2) {
         tmp = htonl(srctmp[i]);
-        memcpy(((uint32_t*) dst) + i, &tmp, sizeof(tmp));
+        memcpy(&dsttmp[i], &tmp, sizeof(tmp));
+        tmp = htonl(srctmp[i+1]);
+        memcpy(&dsttmp[i+1], &tmp, sizeof(tmp));
     }
-    buffer->pack_ptr += num_vals * sizeof(tmp);
-    buffer->bytes_used += num_vals * sizeof(tmp);
+    buffer->pack_ptr += 2*num_vals * sizeof(tmp);
+    buffer->bytes_used += 2*num_vals * sizeof(tmp);
     buffer->bytes_avail -= num_vals * sizeof(tmp);
     
     return ORTE_SUCCESS;
@@ -347,5 +346,27 @@ int orte_dps_pack_data_type(orte_buffer_t *buffer, void *src, size_t num,
 int orte_dps_pack_byte_object(orte_buffer_t *buffer, void *src, size_t num,
                              orte_data_type_t type)
 {
+    orte_byte_object_t *sbyteptr;
+    size_t i, n;
+    int ret;
+    
+    sbyteptr = (orte_byte_object_t *) src;
+
+    for (i = 0; i < num; ++i) {
+        n = sbyteptr->size;
+        if (0 < n) {
+            if (ORTE_SUCCESS != (ret = orte_dps_pack_sizet(buffer, &n, 1, ORTE_SIZE))) {
+                ORTE_ERROR_LOG(ret);
+                return ret;
+            }
+            if (ORTE_SUCCESS != (ret = 
+                orte_dps_pack_byte(buffer, sbyteptr->bytes, n, ORTE_BYTE))) {
+                ORTE_ERROR_LOG(ret);
+                return ret;
+            }
+        }
+        sbyteptr++;
+    }
+    
     return ORTE_SUCCESS;
 }

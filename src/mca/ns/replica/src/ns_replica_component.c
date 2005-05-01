@@ -94,7 +94,6 @@ static mca_ns_base_module_t orte_ns_replica = {
     orte_ns_base_derive_vpid,
     orte_ns_replica_assign_rml_tag,
     orte_ns_replica_define_data_type,
-    orte_ns_replica_lookup_data_type,
     orte_ns_base_set_my_name,
     orte_ns_base_get_peers
 };
@@ -151,8 +150,6 @@ static void orte_ns_replica_dti_construct(orte_ns_replica_dti_t* dti)
 {
     dti->id = ORTE_DPS_ID_MAX;
     dti->name = NULL;
-    dti->pack_fn = NULL;
-    dti->unpack_fn = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -462,15 +459,9 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                  goto RETURN_ERROR;
                }
         
-               if (0 == strncmp(tagname, "NULL", 4)) {
-                    if (ORTE_SUCCESS != (rc = orte_ns_replica_define_data_type(NULL, NULL, NULL, &type))) {
-                        goto RETURN_ERROR;
-                    }
-               } else {
-                    if (ORTE_SUCCESS != (rc = orte_ns_replica_define_data_type(NULL, NULL, tagname, &type))) {
-                        goto RETURN_ERROR;
-                    }
-               }
+                if (ORTE_SUCCESS != (rc = orte_ns_replica_define_data_type(tagname, &type))) {
+                    goto RETURN_ERROR;
+                }
                
               if (OMPI_SUCCESS != (rc = orte_dps.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
                  goto RETURN_ERROR;

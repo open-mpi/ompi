@@ -334,6 +334,37 @@ OMPI_DECLSPEC int orte_dps_close(void);
 
 
 /**
+ * Register a pack/unpack function pair.
+ *
+ * @param pack_fn [IN] Function pointer to the pack routine
+ * @param unpack_fn [IN] Function pointer to the unpack routine
+ * @param name [IN] String name for this pair (mainly for debugging)
+ * @param type [OUT] Type number for this registration
+ *
+ * @returns ORTE_SUCCESS upon success
+ *
+ * This function registers a pack/unpack function pair for a specific
+ * type.  An integer is returned that should be used a an argument to
+ * future invocations of orte_dps.pack() and orte_dps.unpack(), which
+ * will trigger calls to pack_fn and unpack_fn (as appropriate).  This
+ * is most useful when extending the datatypes that the DPS can
+ * handle; pack and unpack functions can nest calls to orte_dps.pack()
+ * / orte_dps.unpack(), so defining small pack/unpack functions can be
+ * used recursively to build larger types (e.g., packing/unpacking
+ * structs can use calls to orte_dps.pack()/unpack() to serialize /
+ * deserialize individual members).
+ */
+typedef int (*orte_dps_register_fn_t)(orte_dps_pack_fn_t pack_fn,
+                                    orte_dps_unpack_fn_t unpack_fn,
+                                    const char *name, orte_data_type_t *type);
+
+/*
+ * This function looks up the string name corresponding to the identified
+ * data type - used for debugging messages.
+ */
+typedef char* (*orte_dps_lookup_data_type_fn_t)(orte_data_type_t type);
+
+/**
  * Base structure for the DPS
  *
  * Base module structure for the DPS - presents the required function
@@ -345,6 +376,8 @@ struct orte_dps_t {
     orte_dps_peek_next_item_fn_t peek;
     orte_dps_unload_fn_t unload;
     orte_dps_load_fn_t load;
+    orte_dps_register_fn_t register_type;
+    orte_dps_lookup_data_type_fn_t lookup_data_type;
 };
 typedef struct orte_dps_t orte_dps_t;
 

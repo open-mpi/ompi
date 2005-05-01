@@ -172,52 +172,29 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
 }
 
 
-int orte_ns_replica_define_data_type(orte_dps_pack_fn_t pack_fn,
-                                     orte_dps_unpack_fn_t unpack_fn,
-                                     const char *name,
+int orte_ns_replica_define_data_type(const char *name,
                                      orte_data_type_t *type)
 {
     orte_ns_replica_dti_t *dti;
     
+    if (NULL == name || 0 < *type) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
     OMPI_THREAD_LOCK(&orte_ns_replica_mutex);
 
-    if (NULL != name) {
-        /* see if this name is already in list - if so, return id */
-        for (dti = (orte_ns_replica_dti_t*)ompi_list_get_first(&orte_ns_replica_dtlist);
-             dti != (orte_ns_replica_dti_t*)ompi_list_get_end(&orte_ns_replica_dtlist);
-             dti = (orte_ns_replica_dti_t*)ompi_list_get_next(dti)) {
-            if (dti->name != NULL && 0 == strcmp(name, dti->name)) { /* found name on list */
-                *type = dti->id;
-                OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
-                return ORTE_SUCCESS;
-            }
+    /* see if this name is already in list - if so, return id */
+    for (dti = (orte_ns_replica_dti_t*)ompi_list_get_first(&orte_ns_replica_dtlist);
+         dti != (orte_ns_replica_dti_t*)ompi_list_get_end(&orte_ns_replica_dtlist);
+         dti = (orte_ns_replica_dti_t*)ompi_list_get_next(dti)) {
+        if (dti->name != NULL && 0 == strcmp(name, dti->name)) { /* found name on list */
+            *type = dti->id;
+            OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+            return ORTE_SUCCESS;
         }
     }
       
-    /* if we are provided with the type (i.e., *type > 0), then
-     * just store the name and the pack/unpack fn pointers
-     * for later use
-     */
-    if (0 < *type) {
-        if (NULL == name) { /* must provide the name in this situation */
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
-            return ORTE_ERR_BAD_PARAM;
-        }
-        dti = OBJ_NEW(orte_ns_replica_dti_t);
-        if (NULL == dti) { /* out of memory */
-            OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        dti->id = *type;
-        dti->name = strdup(name);
-        dti->pack_fn = pack_fn;
-        dti->unpack_fn = unpack_fn;
-        ompi_list_append(&orte_ns_replica_dtlist, &dti->item);
-        return ORTE_SUCCESS;
-    }
-    
     /* not in list or not provided, so allocate next id
      * first check to see if one available - else error
      */
@@ -231,13 +208,7 @@ int orte_ns_replica_define_data_type(orte_dps_pack_fn_t pack_fn,
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         dti->id = orte_ns_replica_next_dti;
-        if (NULL != name) {  /* provided - can look it up later */
-            dti->name = strdup(name);
-        } else {
-            dti->name = NULL;
-        }
-        dti->pack_fn = pack_fn;
-        dti->unpack_fn = unpack_fn;
+        dti->name = strdup(name);
         orte_ns_replica_next_dti++;
         ompi_list_append(&orte_ns_replica_dtlist, &dti->item);
     
@@ -254,37 +225,3 @@ int orte_ns_replica_define_data_type(orte_dps_pack_fn_t pack_fn,
 
 }
 
-int orte_ns_replica_lookup_data_type(orte_dps_pack_fn_t *pack_fn,
-                                     orte_dps_unpack_fn_t *unpack_fn,
-                                     char **name, orte_data_type_t type)
-{
-    orte_ns_replica_dti_t *dti;
-    
-    OMPI_THREAD_LOCK(&orte_ns_replica_mutex);
-
-    for (dti = (orte_ns_replica_dti_t*)ompi_list_get_first(&orte_ns_replica_dtlist);
-         dti != (orte_ns_replica_dti_t*)ompi_list_get_end(&orte_ns_replica_dtlist);
-         dti = (orte_ns_replica_dti_t*)ompi_list_get_next(dti)) {
-        if (dti->name != NULL && type != dti->id) { /* found name on list */
-            if (NULL != name) {
-                *name = strdup(dti->name);
-            }
-            if (NULL != pack_fn) {
-                *pack_fn = dti->pack_fn;
-            }
-            if (NULL != unpack_fn) {
-                *unpack_fn = dti->unpack_fn;
-            }
-            OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
-            return ORTE_SUCCESS;
-        }
-    }
-
-    if (NULL != name) *name = NULL;
-    if (NULL != pack_fn) *pack_fn = NULL;
-    if (NULL != unpack_fn) *unpack_fn = NULL;
-    
-    OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
-    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-    return ORTE_ERR_NOT_FOUND;
-}

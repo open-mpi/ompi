@@ -129,6 +129,25 @@ int orte_rmgr_base_spawn_not_available(
 int orte_rmgr_base_finalize_not_available(void);
 
 /*
+ * DATA TYPE PACKING FUNCTIONS
+ */
+int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
+                                    size_t num_vals, orte_data_type_t type);
+
+int orte_rmgr_base_pack_app_context_map(orte_buffer_t *buffer, void *src,
+                                        size_t num_vals, orte_data_type_t type);
+
+/*
+ * DATA TYPE UNPACKING FUNCTIONS
+ */
+int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
+                                      size_t *num_vals, orte_data_type_t type);
+
+int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
+                                          size_t *num_vals, orte_data_type_t type);
+
+
+/*
  * globals that might be needed
  */
 

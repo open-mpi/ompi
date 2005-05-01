@@ -34,6 +34,7 @@
 #include "mca/schema/schema.h"
 #include "class/ompi_object.h"
 #include "dps/dps_types.h"
+#include "dps/dps_internal.h"
 #include "mca/ns/ns_types.h"
 #include "mca/rmgr/rmgr_types.h"
 #include "mca/soh/soh_types.h"
@@ -62,8 +63,10 @@
 #define ORTE_GPR_TRIG_ANY               (uint16_t)0xff00   /**< Used to test if any trigs are set */
 
 typedef uint16_t orte_gpr_notify_action_t;
+#define ORTE_GPR_NOTIFY_ACTION_T ORTE_UINT16
 
 typedef size_t orte_gpr_notify_id_t;
+#define ORTE_GPR_NOTIFY_ID_T DPS_TYPE_SIZE_T
 #define ORTE_GPR_NOTIFY_ID_MAX SIZE_MAX
 
 /*
@@ -91,7 +94,7 @@ typedef size_t orte_gpr_notify_id_t;
 #define ORTE_GPR_ERROR                  (uint16_t)0xffff
 
 typedef uint16_t orte_gpr_cmd_flag_t;
-
+#define ORTE_GPR_CMD_T ORTE_UINT16
 
 /** Define the addressing mode bit-masks for registry operations.
  *
@@ -117,7 +120,7 @@ typedef uint16_t orte_gpr_cmd_flag_t;
 #define ORTE_GPR_NO_OVERWRITE   (uint16_t)0x0000    /**< Do not allow overwrite of existing info */
 
 typedef uint16_t orte_gpr_addr_mode_t;
-
+#define ORTE_GPR_ADDR_MODE_T ORTE_UINT16
 /*
  * typedefs
  */

@@ -22,7 +22,7 @@
 #include "components.h"
 
 #include "include/orte_constants.h"
-#include "include/orte_schema.h"
+#include "mca/schema/schema.h"
 #include "util/proc_info.h"
 #include "util/malloc.h"
 #include "util/output.h"

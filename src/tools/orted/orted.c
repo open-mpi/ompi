@@ -35,7 +35,7 @@
 #include "threads/mutex.h"
 #include "threads/condition.h"
 
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 #include "util/output.h"
 #include "util/show_help.h"
 #include "util/sys_info.h"

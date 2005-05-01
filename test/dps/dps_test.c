@@ -17,7 +17,6 @@
 #include "orte_config.h"
 #include "../src/include/orte_constants.h"
 #include "../src/include/orte_types.h"
-#include "../src/include/orte_schema.h"
 #include "../../src/dps/dps.h"
 #include "../../src/dps/dps_types.h"
 
@@ -36,9 +35,15 @@
 
 #include "support.h"
 #include "../src/runtime/runtime.h"
+#include "../src/util/proc_info.h"
+#include "../src/util/sys_info.h"
 #include "../src/mca/base/base.h"
 #include "../src/dps/dps.h"
-#include "../src/mca/ns/ns_types.h"
+#include "../src/mca/ns/ns.h"
+#include "../src/mca/ns/base/base.h"
+#include "../src/mca/gpr/base/base.h"
+#include "../src/mca/rmgr/base/base.h"
+#include "../src/mca/soh/base/base.h"
 
 #define NUM_ITERS 2
 #define NUM_ELEMS 3
@@ -68,18 +73,86 @@ int main (int argc, char* argv[])
     test_init("orte_dps");
     test_out = stderr;
     
-    /* open up the mca so we can get parameters */
-    orte_init();
+    /* Open up the output streams */
+    if (!ompi_output_init()) {
+        return OMPI_ERROR;
+    }
+
+    /* 
+     * If threads are supported - assume that we are using threads -
+     * and reset otherwise.
+     */
+    ompi_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
+
+    /* For malloc debugging */
+    ompi_malloc_init();
+
+    /* Ensure the system_info structure is instantiated and initialized */
+    if (ORTE_SUCCESS != (ret = orte_sys_info())) {
+        return ret;
+    }
+
+    /* Ensure the process info structure is instantiated and initialized */
+    if (ORTE_SUCCESS != (ret = orte_proc_info())) {
+        return ret;
+    }
+
+    orte_process_info.seed = true;
+    orte_process_info.my_name = (orte_process_name_t*)malloc(sizeof(orte_process_name_t));
+    orte_process_info.my_name->cellid = 0;
+    orte_process_info.my_name->jobid = 0;
+    orte_process_info.my_name->vpid = 0;
 
     /* startup the MCA */
-    if (OMPI_SUCCESS != mca_base_open()) {
-        fprintf(stderr, "can't open mca\n");
+    if (OMPI_SUCCESS == mca_base_open()) {
+        fprintf(test_out, "MCA started\n");
+    } else {
+        fprintf(test_out, "MCA could not start\n");
         exit (1);
     }
-    
-    /* setup the dps */
-    orte_dps_open();
 
+    /* open the dps */
+    if (ORTE_SUCCESS == orte_dps_open()) {
+        fprintf(test_out, "DPS started\n");
+    } else {
+        fprintf(test_out, "DPS could not start\n");
+        exit (1);
+    }
+
+    /* open the name services */
+    if (ORTE_SUCCESS == orte_ns_base_open()) {
+        fprintf(test_out, "NS started\n");
+    } else {
+        fprintf(test_out, "NS could not start\n");
+        exit (1);
+    }
+
+    /* open the registry */
+    if (ORTE_SUCCESS == orte_gpr_base_open()) {
+        fprintf(test_out, "GPR started\n");
+    } else {
+        fprintf(test_out, "GPR could not start\n");
+        exit (1);
+    }
+
+    /* open the resource manager */
+    if (ORTE_SUCCESS == orte_rmgr_base_open()) {
+        fprintf(test_out, "RMGR started\n");
+    } else {
+        fprintf(test_out, "RMGR could not start\n");
+        exit (1);
+    }
+
+    /* open the soh */
+    if (ORTE_SUCCESS == orte_soh_base_open()) {
+        fprintf(test_out, "SOH started\n");
+    } else {
+        fprintf(test_out, "SOH could not start\n");
+        exit (1);
+    }
+
+    /* run the tests */
+    
     fprintf(test_out, "executing test1\n");
     if (test1()) {
         test_success();
@@ -136,7 +209,6 @@ int main (int argc, char* argv[])
       test_failure("orte_dps test6 failed");
     }
 
-#if 0    
     fprintf(test_out, "executing test7\n");
     if (test7()) {
         test_success();
@@ -200,7 +272,6 @@ int main (int argc, char* argv[])
     else {
       test_failure("orte_dps test14 failed");
     }
-#endif
 
     ret = test_finalize();
     fclose(test_out);
@@ -487,18 +558,15 @@ static bool test4(void)
 
 static bool test5(void)
 {
-#if 1
-    return true;
-#else
     orte_buffer_t *bufA;
     int rc;
-    int32_t i;
+    size_t i;
     orte_process_name_t src[NUM_ELEMS];
     orte_process_name_t dst[NUM_ELEMS];
 
     for(i=0; i<NUM_ELEMS; i++) {
-        src[i].cellid = 1000 + i;
-        src[i].jobid = 100 + i;
+        src[i].cellid = 1000+i;
+        src[i].jobid = 100+i;
         src[i].vpid = i;
     }
 
@@ -521,7 +589,6 @@ static bool test5(void)
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count = NUM_ELEMS;
-        memset(dst,-1,sizeof(dst));
 
         rc = orte_dps.unpack(bufA, dst, &count, ORTE_NAME);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
@@ -531,13 +598,17 @@ static bool test5(void)
         }
 
         for(j=0; j<NUM_ELEMS; j++) {
-            if(memcmp(&src[j],&dst[j],sizeof(orte_process_name_t)) != 0) {
+            if(src[j].cellid != dst[j].cellid ||
+               src[j].jobid != dst[j].jobid ||
+               src[j].vpid != dst[j].vpid) {
                 test_comment ("test5: invalid results from unpack");
                 return(false);
             }
         }
     }
-         
+    
+    /* cleanup */
+     
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -546,7 +617,6 @@ static bool test5(void)
     }
 
     return(true);
-#endif
 }
 
 /**
@@ -610,7 +680,6 @@ static bool test6(void)
     return (true);
 }
 
-#if 0
 /**
  * OMPI_BYTE_OBJECT pack/unpack
  */
@@ -625,8 +694,8 @@ static bool test7(void)
     orte_byte_object_t dst[NUM_ELEMS];
 
     for(i=0; i<NUM_ELEMS; i++) {
-        asprintf((char**)&src[i].bytes, "%d", i);
-        src[i].size = strlen((char*)src[i].bytes) + 1;
+        asprintf((char**)&(src[i].bytes), "%d", i);
+        src[i].size = strlen((char*)(src[i].bytes)) + 1;
     }
 
     bufA = OBJ_NEW(orte_buffer_t);
@@ -649,8 +718,6 @@ static bool test7(void)
         int j;
         size_t count = NUM_ELEMS;
 
-        memset(dst,0,sizeof(dst));
-
         rc = orte_dps.unpack(bufA, dst, &count, ORTE_BYTE_OBJECT);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
             test_comment ("test7: orte_dps.unpack failed");
@@ -662,12 +729,13 @@ static bool test7(void)
             if(src[j].size != dst[j].size ||
                memcmp(src[j].bytes,dst[j].bytes,src[j].size) != 0) {
                 test_comment ("test7: invalid results from unpack");
-                fprintf(test_out, "test7: element %d has incorrect unpacked value\n", j);
+                fprintf(test_out, "test7: object element %d has incorrect unpacked value\n", j);
                 return(false);
             }
         }
     }
-         
+    
+    /* cleanup */
     OBJ_RELEASE(bufA);
     if (NULL != bufA) {
         test_comment("OBJ_RELEASE did not NULL the buffer pointer");
@@ -706,12 +774,12 @@ static bool test8(void)
 
     for(i=0; i<NUM_ELEMS; i++) {
 		/* object offset 100 */
-        asprintf((char**)&srco[i].bytes, "%d", i+100);
-        srco[i].size = strlen((char*)srco[i].bytes) + 1;
+        asprintf((char**)&(srco[i].bytes), "%d", i+100);
+        srco[i].size = strlen((char*)(srco[i].bytes)) + 1;
 
 		/* process name */
-		srcp[i].cellid = 1000 + i;
-        srcp[i].jobid = 100 + i;
+        srcp[i].cellid = 1000+i;
+        srcp[i].jobid = 100+i;
         srcp[i].vpid = i;
 
 		/* strings +200 */
@@ -785,10 +853,6 @@ static bool test8(void)
         int j;
         size_t count;
 
-		/* object */
-        memset(dsto,0,sizeof(dsto));
-		/* name */
-		memset(dstp,-1,sizeof(dstp));
 		/* string */
         for(j=0; j<NUM_ELEMS; j++) dsts[j] = NULL;
 		/* bool */
@@ -812,7 +876,7 @@ static bool test8(void)
             if(srco[j].size != dsto[j].size ||
                memcmp(srco[j].bytes,dsto[j].bytes,srco[j].size) != 0) {
                 test_comment ("test8: invalid results from unpack");
-                fprintf(test_out, "test8: element %d has incorrect unpacked value\n", j);
+                fprintf(test_out, "test8: object element %d has incorrect unpacked value\n", j);
                 return(false);
             }
         }
@@ -822,13 +886,16 @@ static bool test8(void)
         rc = orte_dps.unpack(bufA, dstp, &count, ORTE_NAME);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
             test_comment ("test8: orte_dps.unpack on name failed");
-            fprintf(test_out, "orte_pack_value failed with return code %d\n", rc);
+            fprintf(test_out, "test8: unpack name failed with return code %d\n", rc);
             return(false);
         }
 
         for(j=0; j<NUM_ELEMS; j++) {
-            if(memcmp(&srcp[j],&dstp[j],sizeof(orte_process_name_t)) != 0) {
+            if(srcp[j].cellid != dstp[j].cellid ||
+               srcp[j].jobid != dstp[j].jobid ||
+               srcp[j].vpid != dstp[j].vpid) {
                 test_comment ("test8: invalid results from unpack");
+                fprintf(test_out, "test8: name %d has incorrect unpacked value\n", j);
                 return(false);
             }
         }
@@ -964,17 +1031,17 @@ static bool test9(void)
         for(j=0; j<NUM_ELEMS; j++) {
             if (0 != strcmp(src[j]->key, dst[j]->key) ||
                 src[j]->type != dst[j]->type) {
-                test_comment ("test9: invalid results from unpack");
+                test_comment ("test9: invalid results type/key mismatch from unpack");
                 return(false);
             }
             if (ORTE_INT16 == src[j]->type) {
                 if (src[j]->value.i16 != dst[j]->value.i16) {
-                    test_comment ("test9: invalid results from unpack");
+                    test_comment ("test9: invalid results i16 value mismatch from unpack");
                     return(false);
                 }
             } else if (ORTE_INT32 == src[j]->type) {
                 if (src[j]->value.i32 != dst[j]->value.i32) {
-                    test_comment ("test9: invalid results from unpack");
+                    test_comment ("test9: invalid results i32 mismatch from unpack");
                     return(false);
                 }
             }
@@ -997,7 +1064,7 @@ static bool test10(void)
 {
     orte_buffer_t *bufA;
     int rc;
-    int32_t i, j, k;
+    size_t i, j, k;
     orte_gpr_value_t *src[NUM_ELEMS];
     orte_gpr_value_t *dst[NUM_ELEMS];
 
@@ -1172,8 +1239,8 @@ static bool test11(void)
 static bool test12(void)
 {
     orte_buffer_t *bufA;
-    int rc;
-    int32_t i, j, k;
+    int rc, n;
+    size_t i, j, k;
     orte_app_context_t *src[NUM_ELEMS];
     orte_app_context_t *dst[NUM_ELEMS];
 
@@ -1187,8 +1254,8 @@ static bool test12(void)
 		src[i]->argc = i+1;
 		if (src[i]->argc) { /* if to allow testing of argv count of zero */
         	src[i]->argv = (char**)malloc(src[i]->argc * sizeof(char*));
-        	for (j=0; j < src[i]->argc; j++) {
-            	src[i]->argv[j] = strdup("test-argv");
+        	for (n=0; n < src[i]->argc; n++) {
+            	src[i]->argv[n] = strdup("test-argv");
         	}
 		}
 
@@ -1274,8 +1341,8 @@ static bool test12(void)
             }
 
 			/* now compare each of the size/cnt depedant values */
-            for (k=0; k<src[j]->argc; k++) {
-                if (0 != strcmp(src[j]->argv[k], dst[j]->argv[k])) {
+            for (n=0; n<src[j]->argc; n++) {
+                if (0 != strcmp(src[j]->argv[n], dst[j]->argv[n])) {
                    test_comment ("test12: invalid results (argv) from unpack");
                     return(false);
                 }
@@ -1316,7 +1383,7 @@ static bool test13(void)
 {
     orte_buffer_t *bufA;
     int rc;
-    int32_t i, j, k;
+    size_t i, j, k;
     orte_gpr_subscription_t *src[NUM_ELEMS];
     orte_gpr_subscription_t *dst[NUM_ELEMS];
 
@@ -1420,26 +1487,26 @@ static bool test14(void)
 {
     orte_buffer_t *bufA;
     int rc;
-    int32_t i, j, k, l;
+    size_t i, j, k, l;
     orte_gpr_notify_data_t *src[NUM_ELEMS];
     orte_gpr_notify_data_t *dst[NUM_ELEMS];
 
     for(i=0; i<NUM_ELEMS; i++) {
         src[i] = OBJ_NEW(orte_gpr_notify_data_t);
-		src[i]->cb_num = (uint32_t) i; 
-		src[i]->addr_mode = (uint16_t) i; 
+		src[i]->cb_num = i; 
+		src[i]->addr_mode = (orte_gpr_addr_mode_t) i; 
         src[i]->segment = strdup("test-segment-name");
 
 		/* test value counts of 0 to NUM_ELEMS-1 */
-		src[i]->cnt = (uint32_t) i; /* value count */
+		src[i]->cnt = i; /* value count */
 
-		if (src[i]->cnt) { /* if to allow testing of GPR value count of zero */
+		if (0 < src[i]->cnt) { /* if to allow testing of GPR value count of zero */
 
         	src[i]->values = (orte_gpr_value_t**)malloc(src[i]->cnt * sizeof(orte_gpr_value_t*));
 
         	for (j=0; j < src[i]->cnt; j++) {
             	src[i]->values[j] = OBJ_NEW(orte_gpr_value_t);
-				src[i]->values[j]->addr_mode = (uint16_t) i+j+1; 
+				src[i]->values[j]->addr_mode = (orte_gpr_addr_mode_t) i+j+1; 
 				src[i]->values[j]->segment = strdup("test-gpr-notify-value-segment-name");	/* ek segment name again! */
 
 				/* tokens */
@@ -1458,7 +1525,7 @@ static bool test14(void)
         			for (k=0; k < src[i]->values[j]->cnt; k++) {
             			src[i]->values[j]->keyvals[k] = OBJ_NEW (orte_gpr_keyval_t);
             			src[i]->values[j]->keyvals[k]->key = strdup("test-grp-notify-value-key");
-            			src[i]->values[j]->keyvals[k]->type = (uint8_t) (ORTE_INT32); /* make it simplier */
+            			src[i]->values[j]->keyvals[k]->type = ORTE_INT32; /* make it simplier */
 						src[i]->values[j]->keyvals[k]->value.i32 = (uint32_t) (i*100)+(j*10)+k; /* something variable */
         			} /* for each keyval pair */
 				} /* if keyvals */
@@ -1490,7 +1557,6 @@ static bool test14(void)
     for (i=0; i<NUM_ITERS; i++) {
         int j;
         size_t count = NUM_ELEMS;
-        memset(dst,-1,sizeof(dst));
 
         rc = orte_dps.unpack(bufA, dst, &count, ORTE_GPR_NOTIFY_DATA);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
@@ -1567,6 +1633,3 @@ static bool test14(void)
 
     return (true);
 }
-
-
-#endif

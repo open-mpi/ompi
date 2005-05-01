@@ -21,6 +21,7 @@
 #include "util/output.h"
 
 #include "dps/dps.h"
+#include "mca/errmgr/errmgr.h"
 
 #include "mca/gpr/base/base.h"
 
@@ -257,7 +258,8 @@ ompi_mutex_t orte_gpr_mutex;
  */
 int orte_gpr_base_open(void)
 {
-    int param, value;
+    int param, value, rc;
+    orte_data_type_t tmp;
 
     /* Debugging / verbose output */
     
@@ -270,8 +272,71 @@ int orte_gpr_base_open(void)
         orte_gpr_base_output = -1;
     }
 
-    /* register data types */
+    /* register the base data types with the DPS */
+    tmp = ORTE_GPR_CMD;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_cmd,
+                                          orte_gpr_base_unpack_cmd,
+                                          "ORTE_GPR_CMD", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     
+    tmp = ORTE_GPR_NOTIFY_ID;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_notify_id,
+                                          orte_gpr_base_unpack_notify_id,
+                                          "ORTE_GPR_NOTIFY_ID", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_NOTIFY_ACTION;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_notify_action,
+                                          orte_gpr_base_unpack_notify_action,
+                                          "ORTE_NOTIFY_ACTION", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_GPR_ADDR_MODE;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_addr_mode,
+                                          orte_gpr_base_unpack_addr_mode,
+                                          "ORTE_GPR_ADDR_MODE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_KEYVAL;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_keyval,
+                                          orte_gpr_base_unpack_keyval,
+                                          "ORTE_KEYVAL", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_GPR_VALUE;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_value,
+                                          orte_gpr_base_unpack_value,
+                                          "ORTE_GPR_VALUE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_GPR_SUBSCRIPTION;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_subscription,
+                                          orte_gpr_base_unpack_subscription,
+                                          "ORTE_GPR_SUBSCRIPTION", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_GPR_NOTIFY_DATA;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_notify_data,
+                                          orte_gpr_base_unpack_notify_data,
+                                          "ORTE_GPR_NOTIFY_DATA", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     /* Open up all available components */
 
     if (OMPI_SUCCESS != 
