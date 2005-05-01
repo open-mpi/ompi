@@ -24,7 +24,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 
 #include "util/sys_info.h"
 #include "util/cmd_line.h"

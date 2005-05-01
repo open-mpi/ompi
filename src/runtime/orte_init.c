@@ -50,68 +50,8 @@ int orte_init(void)
     return ORTE_SUCCESS;
 }
 
-/* This array is provided so that users can output an intelligible name for a data
- * type during debugging. It is called by the ORTE_DATA_NAME macro defined in
- * include/orte_names.h. For example, you can call it as:
- * ompi_output(0, "data type: %s", ORTE_DATA_NAME(keyval.type));
- * 
- * THE CORRESPONDING MACRO IS DEFINED IN include/orte_schema.h
- * AS IS THE EXTERN STATEMENT FOR ACCESSING THIS ARRAY
- */
-
-char *orte_data_strings[] = {
-    "DATA_TYPE_NOT_DEFINED",
-    "ORTE_BYTE",
-    "ORTE_BOOL",
-    "ORTE_STRING",
-    "ORTE_SIZE",
-    "ORTE_PID",
-    /* all the integer flavors */
-    "ORTE_INT",
-    "ORTE_INT8",
-    "ORTE_INT16",
-    "ORTE_INT32",
-    "ORTE_INT64",
-    /* all the unsigned integer flavors */
-    "ORTE_UINT",
-    "ORTE_UINT8",
-    "ORTE_UINT16",
-    "ORTE_UINT32",
-    "ORTE_UINT64",
-    /* all the floating point flavors */
-    "ORTE_FLOAT",
-    "ORTE_FLOAT4",
-    "ORTE_DOUBLE",
-    "ORTE_FLOAT8",
-    "ORTE_LONG_DOUBLE",
-    "ORTE_FLOAT12",
-    "ORTE_FLOAT16",
-    /* orte-specific typedefs */
-    "ORTE_NAME",
-    "ORTE_VPID",
-    "ORTE_JOBID",
-    "ORTE_CELLID",
-    "ORTE_NODE_STATE",
-    "ORTE_PROC_STATE",
-    "ORTE_EXIT_CODE",
-    "ORTE_BYTE_OBJECT",
-    "ORTE_KEYVAL",
-    "ORTE_NOTIFY_ACTION",
-    "ORTE_GPR_CMD",
-    "ORTE_GPR_NOTIFY_ID",
-    "ORTE_GPR_VALUE",
-    "ORTE_DATA_TYPE",
-    "ORTE_APP_CONTEXT",
-    "ORTE_APP_CONTEXT_MAP",
-    "ORTE_GPR_ADDR_MODE",
-    "ORTE_GPR_SUBSCRIPTION",
-    "ORTE_GPR_NOTIFY_DATA",
-    "ORTE_NULL"
-};
-
-
 /*
- * Similar to the above, this array is used to output intelligible error
+ * This array is used to output intelligible error
  * messages. It is disturbing to think that we are still outputing error numbers and
  * expecting users to look them up in the "big book" to find out what they represent.
  * This array allows the user to output an actual string representation of the error.

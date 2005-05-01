@@ -57,8 +57,6 @@ struct orte_ns_replica_dti_t {
     ompi_list_item_t item;  /**< Allows this item to be placed on a list */
     orte_data_type_t id;  /**< data type id */
     char *name;      /**< Name associated with data type */
-    orte_dps_pack_fn_t pack_fn;  /**< packing fn for data type */
-    orte_dps_unpack_fn_t unpack_fn;   /**< unpack fn for data type */
 };
 typedef struct orte_ns_replica_dti_t orte_ns_replica_dti_t;
 
@@ -123,14 +121,8 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
                                    char *name);
 
 
-int orte_ns_replica_define_data_type(orte_dps_pack_fn_t pack_fn,
-                                     orte_dps_unpack_fn_t unpack_fn,
-                                     const char *name,
+int orte_ns_replica_define_data_type(const char *name,
                                      orte_data_type_t *type);
-
-int orte_ns_replica_lookup_data_type(orte_dps_pack_fn_t *pack_fn,
-                                     orte_dps_unpack_fn_t *unpack_fn,
-                                     char **name, orte_data_type_t type);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

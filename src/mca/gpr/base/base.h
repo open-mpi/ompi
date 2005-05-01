@@ -163,6 +163,55 @@ extern "C" {
     OMPI_DECLSPEC int orte_gpr_base_pack_decrement_value(orte_buffer_t *cmd, orte_gpr_value_t *value);
     OMPI_DECLSPEC int orte_gpr_base_unpack_decrement_value(orte_buffer_t *buffer, int *ret);
 
+/* GPR DATA TYPE PACKING FUNCTIONS */
+int orte_gpr_base_pack_cmd(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+int orte_gpr_base_pack_notify_id(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+int orte_gpr_base_pack_notify_action(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+int orte_gpr_base_pack_addr_mode(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+int orte_gpr_base_pack_keyval(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+int orte_gpr_base_pack_value(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+int orte_gpr_base_pack_subscription(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+/* GPR DATA TYPE UNPACKING FUNCTIONS */
+int orte_gpr_base_unpack_cmd(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
+
+int orte_gpr_base_unpack_notify_id(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
+
+int orte_gpr_base_unpack_notify_action(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
+
+int orte_gpr_base_unpack_addr_mode(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
+
+int orte_gpr_base_unpack_keyval(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
+
+int orte_gpr_base_unpack_value(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
+
+int orte_gpr_base_unpack_subscription(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
+
+int orte_gpr_base_unpack_notify_data(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

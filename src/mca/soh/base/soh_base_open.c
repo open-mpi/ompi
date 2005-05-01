@@ -15,12 +15,15 @@
  */
 
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
-#include "include/constants.h"
+#include "include/orte_constants.h"
+
+#include "dps/dps.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
+#include "mca/errmgr/errmgr.h"
 #include "util/output.h"
 #include "util/proc_info.h"
 #include "mca/oob/base/base.h"
@@ -64,7 +67,8 @@ orte_soh_base_module_t orte_soh = {
 int orte_soh_base_open(void)
 {
 
-    int param, value;
+    int param, value, rc;
+    orte_data_type_t tmp;
 
 /* fprintf(stderr,"orte_soh_base_open:enter\n"); */
 
@@ -79,6 +83,31 @@ int orte_soh_base_open(void)
         orte_soh_base.soh_output = -1;
     }
 
+
+    /* register the base system types with the DPS */
+    tmp = ORTE_NODE_STATE;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_soh_base_pack_node_state,
+                                          orte_soh_base_unpack_node_state,
+                                          "ORTE_NODE_STATE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    tmp = ORTE_PROC_STATE;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_soh_base_pack_proc_state,
+                                          orte_soh_base_unpack_proc_state,
+                                          "ORTE_PROC_STATE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_EXIT_CODE;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_soh_base_pack_exit_code,
+                                          orte_soh_base_unpack_exit_code,
+                                          "ORTE_EXIT_CODE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
   /* Open up all available components */
 

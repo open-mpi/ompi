@@ -21,20 +21,7 @@
 #include "mca/ns/ns_types.h"
 
 /*
- * ORTE_DATA_NAME macro
- * This macro is provided so that users can output an intelligible name for a data
- * type during debugging. It is called by passing the data type into the macro and
- * outputing the result via some print variant. For example, you can call it as:
- * ompi_output(0, "data type: %s", ORTE_DATA_NAME(keyval.type));
- * 
- * THE ACTUAL ARRAY IS INSTANTIATED IN runtime/ompi_init.c
- */
-
-#define ORTE_DATA_NAME(n) orte_data_strings[n]
-extern char *orte_data_strings[];
-
-/*
- * Similar to the above, this macro and array are used to output intelligible error
+ * This macro and array are used to output intelligible error
  * messages. It is disturbing to think that we are still outputing error numbers and
  * expecting users to look them up in the "big book" to find out what they represent.
  * This macro allows the user to output an actual string representation of the error.

@@ -355,7 +355,6 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
     }
     
     /* if something found, convert it to array of values */
-ompi_output(0, "REPLICA-GET: VALUES FOUND");
     *values = (orte_gpr_value_t**)malloc((*cnt) * sizeof(orte_gpr_value_t*));
     if (NULL == *values) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -419,7 +418,6 @@ ompi_output(0, "REPLICA-GET: VALUES FOUND");
             OBJ_RELEASE(ival_list);
         }
         OBJ_RELEASE(gptr);
-        orte_gpr_replica_dump_value((*values)[i], 0);
     }
 
 CLEANUP:

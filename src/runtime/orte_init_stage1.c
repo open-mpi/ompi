@@ -95,6 +95,14 @@ int orte_init_stage1(void)
     }
  
     /*
+     * Initialize the data packing service.
+     */
+    if (ORTE_SUCCESS != (ret = orte_dps_open())) {
+        ORTE_ERROR_LOG(ret);
+        return ret;
+    }
+    
+    /*
      * Open the name services to ensure access to local functions 
      */
     if (OMPI_SUCCESS != (ret = orte_ns_base_open())) {
@@ -142,14 +150,6 @@ int orte_init_stage1(void)
         return ret;
     }
 
-    /*
-     * Initialize the data packing service.
-     */
-    if (ORTE_SUCCESS != (ret = orte_dps_open())) {
-        ORTE_ERROR_LOG(ret);
-        return ret;
-    }
-    
     /*
      * Runtime Messaging Layer
      */

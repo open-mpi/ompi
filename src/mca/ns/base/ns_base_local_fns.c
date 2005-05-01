@@ -79,24 +79,10 @@ orte_ns_base_assign_rml_tag_not_available(orte_rml_tag_t *tag, char *name)
 
 int
 orte_ns_base_define_data_type_not_available(
-                                  orte_dps_pack_fn_t pack_fn,
-                                  orte_dps_unpack_fn_t unpack_fn,
                                   const char *name,
                                   orte_data_type_t *type)
 {
     *type = ORTE_DPS_ID_MAX;
-    return ORTE_ERR_UNREACH;
-}
-
-int
-orte_ns_base_lookup_data_type_not_available(
-                                  orte_dps_pack_fn_t *pack_fn,
-                                  orte_dps_unpack_fn_t *unpack_fn,
-                                  char **name, orte_data_type_t type)
-{
-    *pack_fn = NULL;
-    *unpack_fn = NULL;
-    *name = NULL;
     return ORTE_ERR_UNREACH;
 }
 

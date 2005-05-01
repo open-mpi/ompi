@@ -76,8 +76,6 @@ int orte_gpr_replica_process_callbacks(void)
                     goto CLEANUP;
                 }
         
-              orte_gpr_replica_dump_notify_msg(msg->message, 0);
-              
                 data = (msg->message)->data;
                 sdata = (orte_gpr_replica_subscribed_data_t**)((trig->subscribed_data)->addr);
                 for (i=0; i < (msg->message)->cnt; i++) {

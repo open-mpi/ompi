@@ -368,10 +368,8 @@ int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag,
 }
 
 
-int orte_ns_proxy_define_data_type(orte_dps_pack_fn_t pack_fn,
-                                  orte_dps_unpack_fn_t unpack_fn,
-                                  const char *name,
-                                  orte_data_type_t *type)
+int orte_ns_proxy_define_data_type(const char *name,
+                                   orte_data_type_t *type)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
@@ -380,22 +378,25 @@ int orte_ns_proxy_define_data_type(orte_dps_pack_fn_t pack_fn,
     size_t count;
     int rc;
 
+    if (NULL == name || 0 < *type) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
     OMPI_THREAD_LOCK(&orte_ns_proxy_mutex);
 
-    if (NULL != name) {
-        /* first, check to see if name is already on local list
-         * if so, return id
-         */
-        for (dti = (orte_ns_proxy_dti_t*)ompi_list_get_first(&orte_ns_proxy_dtlist);
-             dti != (orte_ns_proxy_dti_t*)ompi_list_get_end(&orte_ns_proxy_dtlist);
-             dti = (orte_ns_proxy_dti_t*)ompi_list_get_next(dti)) {
-            if (0 == strcmp(name, dti->name)) { /* found name on list */
-                *type = dti->id;
-                OMPI_THREAD_UNLOCK(&orte_ns_proxy_mutex);
-                return ORTE_SUCCESS;
-            }
+    /* first, check to see if name is already on local list
+     * if so, return id, ensure registered with dps
+     */
+    for (dti = (orte_ns_proxy_dti_t*)ompi_list_get_first(&orte_ns_proxy_dtlist);
+         dti != (orte_ns_proxy_dti_t*)ompi_list_get_end(&orte_ns_proxy_dtlist);
+         dti = (orte_ns_proxy_dti_t*)ompi_list_get_next(dti)) {
+        if (0 == strcmp(name, dti->name)) { /* found name on list */
+            *type = dti->id;
+            OMPI_THREAD_UNLOCK(&orte_ns_proxy_mutex);
+            return rc;
         }
-    }   
+    }
 
     /* okay, not on local list - so go get one from tag server */
     command = ORTE_NS_DEFINE_DATA_TYPE_CMD;
@@ -412,10 +413,6 @@ int orte_ns_proxy_define_data_type(orte_dps_pack_fn_t pack_fn,
         OBJ_RELEASE(cmd);
         OMPI_THREAD_UNLOCK(&orte_ns_proxy_mutex);
         return rc;
-    }
-
-    if (NULL == name) {
-        name = "NULL";
     }
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &name, 1, ORTE_STRING))) {
@@ -479,43 +476,11 @@ int orte_ns_proxy_define_data_type(orte_dps_pack_fn_t pack_fn,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     dti->id = *type;
-    if (NULL != name) {
-        dti->name = strdup(name);
-    } else {
-        dti->name = NULL;
-    }
-    dti->pack_fn = pack_fn;
-    dti->unpack_fn = unpack_fn;
+    dti->name = strdup(name);
     ompi_list_append(&orte_ns_proxy_taglist, &dti->item);
     OMPI_THREAD_UNLOCK(&orte_ns_proxy_mutex);
     
     /* all done */
-    return ORTE_SUCCESS;
+    return rc;
 }
 
-int orte_ns_proxy_lookup_data_type(orte_dps_pack_fn_t *pack_fn,
-                                     orte_dps_unpack_fn_t *unpack_fn,
-                                     char **name, orte_data_type_t type)
-{
-    orte_ns_proxy_dti_t *dti;
-    
-    OMPI_THREAD_LOCK(&orte_ns_proxy_mutex);
-
-    for (dti = (orte_ns_proxy_dti_t*)ompi_list_get_first(&orte_ns_proxy_dtlist);
-         dti != (orte_ns_proxy_dti_t*)ompi_list_get_end(&orte_ns_proxy_dtlist);
-         dti = (orte_ns_proxy_dti_t*)ompi_list_get_next(dti)) {
-        if (dti->name != NULL && type != dti->id) { /* found name on list */
-            if (NULL != name) {
-                *name = strdup(dti->name);
-            }
-            *pack_fn = dti->pack_fn;
-            *unpack_fn = dti->unpack_fn;
-            OMPI_THREAD_UNLOCK(&orte_ns_proxy_mutex);
-            return ORTE_SUCCESS;
-        }
-    }
-
-    OMPI_THREAD_UNLOCK(&orte_ns_proxy_mutex);
-    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-    return ORTE_ERR_NOT_FOUND;
-}

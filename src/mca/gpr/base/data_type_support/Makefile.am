@@ -16,36 +16,23 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = data_type_support
-
-noinst_LTLIBRARIES = libmca_soh_base.la
-
-# For VPATH builds, have to specify where static-modules.h will be found
-
-AM_CPPFLAGS = -I$(top_builddir)/src
+noinst_LTLIBRARIES = libmca_gpr_base_data_type.la
 
 # Source code files
 
-headers = \
-        base.h
+headers =
 
-# Library
-
-libmca_soh_base_la_SOURCES = \
+libmca_gpr_base_data_type_la_SOURCES = \
         $(headers) \
-        soh_base_close.c \
-        soh_base_select.c \
-        soh_base_local_functions.c \
-        soh_base_get_proc_soh.c \
-        soh_base_set_proc_soh.c \
-        soh_base_open.c
-
+        gpr_data_type_packing_fns.c \
+        gpr_data_type_unpacking_fns.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/soh/base
+ompidir = $(includedir)/openmpi/mca/gpr/base/data_type_support
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
 endif
+

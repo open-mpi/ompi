@@ -21,7 +21,10 @@
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
+#include "mca/errmgr/errmgr.h"
 #include "util/output.h"
+
+#include "dps/dps.h"
 
 #include "mca/ns/base/base.h"
 
@@ -71,7 +74,6 @@ mca_ns_base_module_t orte_ns = {
     orte_ns_base_derive_vpid,
     orte_ns_base_assign_rml_tag_not_available,
     orte_ns_base_define_data_type_not_available,
-    orte_ns_base_lookup_data_type_not_available,
     orte_ns_base_set_my_name,
     orte_ns_base_get_peers
 };
@@ -109,7 +111,8 @@ OBJ_CLASS_INSTANCE(
  */
 int orte_ns_base_open(void)
 {
-    int param, value;
+    int param, value, rc;
+    orte_data_type_t tmp;
 
     /* Debugging / verbose output */
     
@@ -122,6 +125,39 @@ int orte_ns_base_open(void)
         mca_ns_base_output = -1;
     }
 
+    /* register the base system types with the DPS */
+    tmp = ORTE_NAME;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_ns_base_pack_name,
+                                          orte_ns_base_unpack_name,
+                                          "ORTE_NAME", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    tmp = ORTE_VPID;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_ns_base_pack_vpid, 
+                                          orte_ns_base_unpack_vpid,
+                                          "ORTE_VPID", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    tmp = ORTE_JOBID;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_ns_base_pack_jobid, 
+                                          orte_ns_base_unpack_jobid,
+                                          "ORTE_JOBID", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    tmp = ORTE_CELLID;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_ns_base_pack_cellid, 
+                                          orte_ns_base_unpack_cellid,
+                                          "ORTE_CELLID", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* Open up all available components */
 
     if (ORTE_SUCCESS != 

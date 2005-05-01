@@ -16,6 +16,8 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+SUBDIRS = data_type_support
+
 noinst_LTLIBRARIES = libmca_orte_rmgr_base.la
 
 # For VPATH builds, have to specify where static-modules.h will be found

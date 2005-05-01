@@ -41,9 +41,9 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
     orte_buffer_t *answer;
     orte_gpr_cmd_flag_t command;
     int rc, ret, rc2;
-    size_t n;
+    size_t n, num_vals;
     bool compound_cmd=false;
-
+    orte_data_type_t type;
 
     *output_buffer = OBJ_NEW(orte_buffer_t);
     if (NULL == *output_buffer) {
@@ -55,9 +55,12 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
     n = 1;
     rc = ORTE_SUCCESS;
     ret = ORTE_SUCCESS;
-    
-    while (ORTE_SUCCESS == orte_dps.unpack(input_buffer, &command, &n, ORTE_GPR_CMD)) {
 
+    while (ORTE_SUCCESS == orte_dps.peek(input_buffer, &type, &num_vals)) {
+                if (ORTE_SUCCESS != 
+                    orte_dps.unpack(input_buffer, &command, &n, ORTE_GPR_CMD)) {
+                    break;
+                }
         	switch(command) {
         
             	case ORTE_GPR_COMPOUND_CMD:  /*****     COMPOUND COMMAND     ******/

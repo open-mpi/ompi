@@ -17,7 +17,7 @@
 #include "orte_config.h"
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "include/orte_schema.h"
+#include "mca/schema/schema.h"
 
 #include <stdio.h>
 #include <string.h>

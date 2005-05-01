@@ -16,7 +16,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = pack_api_cmd unpack_api_response
+SUBDIRS = pack_api_cmd unpack_api_response data_type_support
 
 noinst_LTLIBRARIES = libmca_gpr_base.la
 

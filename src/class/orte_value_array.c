@@ -59,6 +59,7 @@ int orte_value_array_set_size(orte_value_array_t* array, size_t size)
         if (NULL == array->array_items)
             return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    
     array->array_size = size;
     return ORTE_SUCCESS;
 }

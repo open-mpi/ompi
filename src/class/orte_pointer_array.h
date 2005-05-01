@@ -98,7 +98,8 @@ OMPI_DECLSPEC int orte_pointer_array_add(size_t *index, orte_pointer_array_t *ar
 
 /**
  * Set the value of an element in array
- *
+ * Automatically extend array if required.
+ * 
  * @param array Pointer to array (IN)
  * @param index Index of element to be reset (IN)
  * @param value New value to be set at element index (IN)

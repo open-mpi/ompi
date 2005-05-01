@@ -1677,10 +1677,12 @@ AC_CONFIG_FILES([
     src/mca/iof/base/Makefile
     src/mca/gpr/Makefile
     src/mca/gpr/base/Makefile
+    src/mca/gpr/base/data_type_support/Makefile
     src/mca/gpr/base/pack_api_cmd/Makefile
     src/mca/gpr/base/unpack_api_response/Makefile
     src/mca/ns/Makefile
     src/mca/ns/base/Makefile
+    src/mca/ns/base/data_type_support/Makefile
     src/mca/oob/Makefile
     src/mca/oob/base/Makefile
     src/mca/pls/Makefile
@@ -1693,10 +1695,12 @@ AC_CONFIG_FILES([
     src/mca/rmaps/base/Makefile
     src/mca/rmgr/Makefile
     src/mca/rmgr/base/Makefile
+    src/mca/rmgr/base/data_type_support/Makefile
     src/mca/schema/Makefile
     src/mca/schema/base/Makefile
     src/mca/soh/Makefile
     src/mca/soh/base/Makefile
+    src/mca/soh/base/data_type_support/Makefile
 
     src/mca/allocator/Makefile
     src/mca/allocator/base/Makefile

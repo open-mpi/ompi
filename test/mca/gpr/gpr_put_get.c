@@ -31,7 +31,11 @@
 #endif
 
 #include "include/orte_constants.h"
-#include "include/orte_schema.h"
+#include "mca/schema/schema.h"
+#include "mca/schema/base/base.h"
+#include "mca/ns/base/base.h"
+#include "mca/soh/base/base.h"
+#include "mca/rmgr/base/base.h"
 
 #include "support.h"
 #include "components.h"
@@ -58,7 +62,7 @@ static char *cmd_str="diff ./test_gpr_replica_out ./test_gpr_replica_out_std";
 int main(int argc, char **argv)
 {
     int rc;
-    int32_t i, j, cnt;
+    size_t i, j, cnt;
     char *names[15], *keys[5];
     orte_gpr_keyval_t **kvals;
     orte_gpr_value_t **values, *val;
@@ -119,6 +123,46 @@ int main(int argc, char **argv)
         fprintf(test_out, "MCA started\n");
     } else {
         fprintf(test_out, "MCA could not start\n");
+        exit (1);
+    }
+
+    /* startup the dps */
+    if (OMPI_SUCCESS == orte_dps_open()) {
+        fprintf(test_out, "DPS started\n");
+    } else {
+        fprintf(test_out, "DPS could not start\n");
+        exit (1);
+    }
+
+    /* startup the name services */
+    if (OMPI_SUCCESS == orte_ns_base_open()) {
+        fprintf(test_out, "NS started\n");
+    } else {
+        fprintf(test_out, "NS could not start\n");
+        exit (1);
+    }
+
+    /* startup the soh */
+    if (OMPI_SUCCESS == orte_soh_base_open()) {
+        fprintf(test_out, "SOH started\n");
+    } else {
+        fprintf(test_out, "SOH could not start\n");
+        exit (1);
+    }
+
+    /* startup the rmgr */
+    if (OMPI_SUCCESS == orte_rmgr_base_open()) {
+        fprintf(test_out, "RMGR started\n");
+    } else {
+        fprintf(test_out, "RMGR could not start\n");
+        exit (1);
+    }
+
+    /* startup the schema */
+    if (OMPI_SUCCESS == orte_schema_base_open()) {
+        fprintf(test_out, "SCHEMA started\n");
+    } else {
+        fprintf(test_out, "SCHEMA could not start\n");
         exit (1);
     }
 

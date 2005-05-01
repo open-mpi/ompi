@@ -89,7 +89,6 @@ static mca_ns_base_module_t orte_ns_proxy = {
     orte_ns_base_derive_vpid,
     orte_ns_proxy_assign_rml_tag,
     orte_ns_proxy_define_data_type,
-    orte_ns_proxy_lookup_data_type,
     orte_ns_base_set_my_name,
     orte_ns_base_get_peers
 };
@@ -126,8 +125,6 @@ static void orte_ns_proxy_dti_construct(orte_ns_proxy_dti_t* dti)
 {
     dti->id = ORTE_DPS_ID_MAX;
     dti->name = NULL;
-    dti->pack_fn = NULL;
-    dti->unpack_fn = NULL;
 }
 
 /* destructor - used to free any resources held by instance */

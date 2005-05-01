@@ -145,20 +145,37 @@ OMPI_DECLSPEC    int orte_ns_base_derive_vpid(orte_vpid_t *vpid,
 OMPI_DECLSPEC    int orte_ns_base_assign_rml_tag_not_available(orte_rml_tag_t *tag, char *name);
 
 OMPI_DECLSPEC    int orte_ns_base_define_data_type_not_available(
-                                  orte_dps_pack_fn_t pack_fn,
-                                  orte_dps_unpack_fn_t unpack_fn,
                                   const char *name,
                                   orte_data_type_t *type);
 
-OMPI_DECLSPEC    int orte_ns_base_lookup_data_type_not_available(
-                                  orte_dps_pack_fn_t *pack_fn,
-                                  orte_dps_unpack_fn_t *unpack_fn,
-                                  char **name, orte_data_type_t type);
-                                  
 OMPI_DECLSPEC    int orte_ns_base_set_my_name(void);
 
 OMPI_DECLSPEC    int orte_ns_base_get_peers(orte_process_name_t **procs, 
                                   size_t *num_procs, size_t *self);
+
+OMPI_DECLSPEC    int orte_ns_base_pack_name(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+OMPI_DECLSPEC    int orte_ns_base_pack_cellid(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+OMPI_DECLSPEC    int orte_ns_base_pack_jobid(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+OMPI_DECLSPEC    int orte_ns_base_pack_vpid(orte_buffer_t *buffer, void *src,
+                       size_t num_vals, orte_data_type_t type);
+
+OMPI_DECLSPEC    int orte_ns_base_unpack_name(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
+
+OMPI_DECLSPEC    int orte_ns_base_unpack_cellid(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
+
+OMPI_DECLSPEC    int orte_ns_base_unpack_jobid(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
+
+OMPI_DECLSPEC    int orte_ns_base_unpack_vpid(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type);
 /*
  * globals that might be needed
  */
