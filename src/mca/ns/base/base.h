@@ -65,10 +65,11 @@ typedef uint8_t orte_ns_cmd_bitmask_t;
 /*
  * define flag values for remote commands - only used internally
  */
-#define ORTE_NS_CREATE_CELLID_CMD   0x01
-#define ORTE_NS_CREATE_JOBID_CMD    0x02
-#define ORTE_NS_RESERVE_RANGE_CMD   0x04
-#define ORTE_NS_ASSIGN_OOB_TAG_CMD  0x08
+#define ORTE_NS_CREATE_CELLID_CMD       0x01
+#define ORTE_NS_CREATE_JOBID_CMD        0x02
+#define ORTE_NS_RESERVE_RANGE_CMD       0x04
+#define ORTE_NS_ASSIGN_OOB_TAG_CMD      0x08
+#define ORTE_NS_DEFINE_DATA_TYPE_CMD    0x10
 
 /*
  * function definitions
@@ -143,6 +144,17 @@ OMPI_DECLSPEC    int orte_ns_base_derive_vpid(orte_vpid_t *vpid,
 
 OMPI_DECLSPEC    int orte_ns_base_assign_rml_tag_not_available(orte_rml_tag_t *tag, char *name);
 
+OMPI_DECLSPEC    int orte_ns_base_define_data_type_not_available(
+                                  orte_dps_pack_fn_t pack_fn,
+                                  orte_dps_unpack_fn_t unpack_fn,
+                                  const char *name,
+                                  orte_data_type_t *type);
+
+OMPI_DECLSPEC    int orte_ns_base_lookup_data_type_not_available(
+                                  orte_dps_pack_fn_t *pack_fn,
+                                  orte_dps_unpack_fn_t *unpack_fn,
+                                  char **name, orte_data_type_t type);
+                                  
 OMPI_DECLSPEC    int orte_ns_base_set_my_name(void);
 
 OMPI_DECLSPEC    int orte_ns_base_get_peers(orte_process_name_t **procs, 

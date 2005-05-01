@@ -26,6 +26,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
+#include "include/orte_types.h"
 
 #include "dps/dps_types.h"
 
@@ -324,19 +325,7 @@ OMPI_DECLSPEC int orte_dps_open(void);
  * @param type [OUT] Type number for this registration
  *
  * @returns ORTE_SUCCESS upon success
- *
- * This function registers a pack/unpack function pair for a specific
- * type. This
- * is most useful when extending the datatypes that the DPS can
- * handle; pack and unpack functions can nest calls to orte_dps.pack()
- * / orte_dps.unpack(), so defining small pack/unpack functions can be
- * used recursively to build larger types (e.g., packing/unpacking
- * structs can use calls to orte_dps.pack()/unpack() to serialize /
- * deserialize individual members).
  */
-typedef int (*orte_dps_register_fn_t)(orte_dps_pack_fn_t pack_fn,
-                                    orte_dps_unpack_fn_t unpack_fn,
-                                    const char *name, orte_data_type_t type);
 
 /**
  * DPS finalize function
@@ -356,7 +345,6 @@ struct orte_dps_t {
     orte_dps_peek_next_item_fn_t peek;
     orte_dps_unload_fn_t unload;
     orte_dps_load_fn_t load;
-    orte_dps_register_fn_t register_type;
 };
 typedef struct orte_dps_t orte_dps_t;
 

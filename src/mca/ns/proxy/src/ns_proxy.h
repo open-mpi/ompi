@@ -23,6 +23,7 @@
 #include "include/types.h"
 #include "include/orte_constants.h"
 #include "class/ompi_list.h"
+#include "dps/dps.h"
 
 #include "mca/ns/base/base.h"
 
@@ -38,6 +39,17 @@ struct orte_ns_proxy_tagitem_t {
 typedef struct orte_ns_proxy_tagitem_t orte_ns_proxy_tagitem_t;
 
 OBJ_CLASS_DECLARATION(orte_ns_proxy_tagitem_t);
+
+struct orte_ns_proxy_dti_t {
+    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
+    orte_data_type_t id;  /**< data type id */
+    char *name;      /**< Name associated with data type */
+    orte_dps_pack_fn_t pack_fn;  /**< packing fn for data type */
+    orte_dps_unpack_fn_t unpack_fn;   /**< unpack fn for data type */
+};
+typedef struct orte_ns_proxy_dti_t orte_ns_proxy_dti_t;
+
+OBJ_CLASS_DECLARATION(orte_ns_proxy_dti_t);
 
 
 /*
@@ -61,6 +73,7 @@ int orte_ns_proxy_finalize(void);
 extern orte_process_name_t *orte_ns_my_replica;
 extern int orte_ns_proxy_debug;
 extern ompi_list_t orte_ns_proxy_taglist;
+extern ompi_list_t orte_ns_proxy_dtlist;
 extern ompi_mutex_t orte_ns_proxy_mutex;
 
 /*
@@ -74,6 +87,15 @@ int orte_ns_proxy_reserve_range(orte_jobid_t job, orte_vpid_t range,
                                 orte_vpid_t *startvpid);
 
 int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag, char *name);
+
+int orte_ns_proxy_define_data_type(orte_dps_pack_fn_t pack_fn,
+                                  orte_dps_unpack_fn_t unpack_fn,
+                                  const char *name,
+                                  orte_data_type_t *type);
+
+int orte_ns_proxy_lookup_data_type(orte_dps_pack_fn_t *pack_fn,
+                                   orte_dps_unpack_fn_t *unpack_fn,
+                                   char **name, orte_data_type_t type);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

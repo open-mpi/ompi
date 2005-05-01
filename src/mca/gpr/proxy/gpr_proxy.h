@@ -24,7 +24,7 @@
 #include "include/orte_types.h"
 #include "class/ompi_object.h"
 #include "class/orte_pointer_array.h"
-#include "mca/dps/dps_types.h"
+#include "dps/dps_types.h"
 #include "util/proc_info.h"
 
 #include "mca/gpr/base/base.h"

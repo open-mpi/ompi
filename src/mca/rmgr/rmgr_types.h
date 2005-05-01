@@ -96,10 +96,6 @@ typedef struct {
     orte_app_context_map_t **map_data;
 } orte_app_context_t;
 
-/* data type definitions */
-#define ORTE_APP_CONTEXT        37
-#define ORTE_APP_CONTEXT_MAP    38
-
 OBJ_CLASS_DECLARATION(orte_app_context_t);
 
 #endif

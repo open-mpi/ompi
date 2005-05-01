@@ -66,7 +66,7 @@
 #include "threads/condition.h"
 
 #include "class/ompi_list.h"
-#include "mca/dps/dps_types.h"
+#include "dps/dps_types.h"
 
 #include "mca/mca.h"
 #include "mca/base/base.h"

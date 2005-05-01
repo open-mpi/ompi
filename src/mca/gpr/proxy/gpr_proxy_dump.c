@@ -37,7 +37,7 @@
 
 #include "include/orte_constants.h"
 
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 
 #include "mca/oob/oob_types.h"

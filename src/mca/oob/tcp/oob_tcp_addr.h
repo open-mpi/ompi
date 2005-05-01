@@ -28,7 +28,7 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 #include "class/ompi_object.h"
 #include "mca/ns/ns_types.h"
 #if defined(c_plusplus) || defined(__cplusplus)

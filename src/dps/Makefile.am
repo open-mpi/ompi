@@ -31,7 +31,6 @@ libdps_la_SOURCES = \
     dps_load_unload.c \
     dps_pack.c \
     dps_peek.c \
-    dps_register.c \
     dps_unpack.c \
     orte_dps_open_close.c
 

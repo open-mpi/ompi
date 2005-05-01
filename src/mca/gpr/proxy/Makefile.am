@@ -24,7 +24,6 @@ sources = \
         gpr_proxy_del_index.c \
         gpr_proxy_cleanup.c \
         gpr_proxy_dump.c \
-        gpr_proxy_messaging.c \
         gpr_proxy_internals.c \
         gpr_proxy_put_get.c \
         gpr_proxy_general_operations.c \

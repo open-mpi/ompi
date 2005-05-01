@@ -61,10 +61,4 @@ typedef int8_t orte_node_state_t;
     orte_node_state_t) */
 #define ORTE_NODE_STATE_REBOOT   0x03
 
-
-/* data type definitions */
-#define ORTE_NODE_STATE     27
-#define ORTE_PROC_STATE     28
-#define ORTE_EXIT_CODE      29
-
 #endif

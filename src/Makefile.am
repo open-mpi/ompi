@@ -102,6 +102,7 @@ SUBDIRS = \
         attribute \
         communicator \
         datatype \
+	dps \
         errhandler \
         event \
         file \

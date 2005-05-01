@@ -27,7 +27,7 @@
 #include "include/orte_types.h"
 
 #include "class/ompi_list.h"
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 #include "mca/mca.h"
 #include "mca/gpr/gpr_types.h"
 #include "mca/rmgr/rmgr.h"

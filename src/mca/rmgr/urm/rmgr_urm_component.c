@@ -18,7 +18,7 @@
 #include "include/orte_constants.h"
 #include "util/proc_info.h"
 #include "util/output.h"
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 
 #include "mca/rds/base/base.h"

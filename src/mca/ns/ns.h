@@ -32,6 +32,9 @@
 
 #include "orte_config.h"
 #include "include/constants.h"
+#include "include/orte_types.h"
+
+#include "dps/dps.h"
 
 #include "mca/mca.h"
 #include "mca/oob/oob_types.h"
@@ -527,6 +530,26 @@ typedef int (*orte_ns_base_module_compare_fn_t)(orte_ns_cmp_bitmask_t fields,
 typedef int (*orte_ns_base_module_assign_rml_tag_fn_t)(orte_rml_tag_t *tag,
                                                    char *name);
 
+/* This function registers a pack/unpack function pair for a specific
+ * type. This
+ * is most useful when extending the datatypes that the DPS can
+ * handle; pack and unpack functions can nest calls to orte_dps.pack()
+ * / orte_dps.unpack(), so defining small pack/unpack functions can be
+ * used recursively to build larger types (e.g., packing/unpacking
+ * structs can use calls to orte_dps.pack()/unpack() to serialize /
+ * deserialize individual members).
+ */
+typedef int (*orte_ns_base_module_define_data_type_fn_t)(
+                     orte_dps_pack_fn_t pack_fn,
+                     orte_dps_unpack_fn_t unpack_fn,
+                     const char *name,
+                     orte_data_type_t *type);
+
+typedef int (*orte_ns_base_module_lookup_data_type_fn_t)(
+                     orte_dps_pack_fn_t *pack_fn,
+                     orte_dps_unpack_fn_t *unpack_fn,
+                     char **name, orte_data_type_t type);
+
 /*
  * Discover my name
  * Upon startup, each process must discover its official ORTE process name. There are
@@ -578,6 +601,8 @@ struct mca_ns_base_module_1_0_0_t {
     orte_ns_base_module_compare_fn_t compare;
     orte_ns_base_module_derive_vpid_fn_t derive_vpid;
     orte_ns_base_module_assign_rml_tag_fn_t assign_rml_tag;
+    orte_ns_base_module_define_data_type_fn_t define_data_type;
+    orte_ns_base_module_lookup_data_type_fn_t lookup_data_type;
     orte_ns_base_module_set_my_name_fn_t set_my_name;
     orte_ns_base_module_get_peers_fn_t get_peers;
 };

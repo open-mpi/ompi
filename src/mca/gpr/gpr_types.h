@@ -29,6 +29,8 @@
 #define ORTE_GPR_TYPES_H_
 
 #include "orte_config.h"
+#include "include/orte_types.h"
+
 #include "mca/schema/schema.h"
 #include "class/ompi_object.h"
 #include "dps/dps_types.h"
@@ -237,15 +239,5 @@ typedef struct {
 } orte_gpr_subscription_t;
 
 OBJ_CLASS_DECLARATION(orte_gpr_subscription_t);
-
-/** Type name definitions for pack/unpack functions */
-#define ORTE_KEYVAL             31
-#define ORTE_NOTIFY_ACTION      32
-#define ORTE_GPR_CMD            33
-#define ORTE_GPR_NOTIFY_ID      34
-#define ORTE_GPR_VALUE          35
-#define ORTE_GPR_ADDR_MODE      39
-#define ORTE_GPR_SUBSCRIPTION   40
-#define ORTE_GPR_NOTIFY_DATA    41
 
 #endif /* GPR_TYPES_H */

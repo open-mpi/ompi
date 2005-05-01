@@ -88,6 +88,8 @@ static mca_ns_base_module_t orte_ns_proxy = {
     orte_ns_base_compare,
     orte_ns_base_derive_vpid,
     orte_ns_proxy_assign_rml_tag,
+    orte_ns_proxy_define_data_type,
+    orte_ns_proxy_lookup_data_type,
     orte_ns_base_set_my_name,
     orte_ns_base_get_peers
 };
@@ -119,6 +121,30 @@ OBJ_CLASS_INSTANCE(
         orte_ns_proxy_tagitem_construct, /* constructor */
         orte_ns_proxy_tagitem_destructor); /* destructor */
 
+/* constructor - used to initialize state of dtilist instance */
+static void orte_ns_proxy_dti_construct(orte_ns_proxy_dti_t* dti)
+{
+    dti->id = ORTE_DPS_ID_MAX;
+    dti->name = NULL;
+    dti->pack_fn = NULL;
+    dti->unpack_fn = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void orte_ns_proxy_dti_destructor(orte_ns_proxy_dti_t* dti)
+{
+    if (NULL != dti->name) {
+       free(dti->name);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+        orte_ns_proxy_dti_t,  /* type name */
+        ompi_list_item_t, /* parent "class" name */
+        orte_ns_proxy_dti_construct, /* constructor */
+        orte_ns_proxy_dti_destructor); /* destructor */
+
 /*
  * globals needed within proxy component
  */
@@ -126,6 +152,7 @@ OBJ_CLASS_INSTANCE(
 orte_process_name_t* orte_ns_my_replica=NULL;
 int orte_ns_proxy_debug=0;
 ompi_list_t orte_ns_proxy_taglist;
+ompi_list_t orte_ns_proxy_dtlist;
 ompi_mutex_t orte_ns_proxy_mutex;
 
 /*
@@ -171,8 +198,10 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
         	}
         
         /* initialize the taglist */
-    
         OBJ_CONSTRUCT(&orte_ns_proxy_taglist, ompi_list_t);
+    
+        /* initialize the dtlist */
+        OBJ_CONSTRUCT(&orte_ns_proxy_dtlist, ompi_list_t);
     
     	    /* Return the module */
     

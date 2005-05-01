@@ -11,7 +11,7 @@
  * 
  * $HEADER$
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "include/constants.h"
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 #include "mca/rmgr/base/base.h"
 #include "mca/errmgr/errmgr.h"
 
