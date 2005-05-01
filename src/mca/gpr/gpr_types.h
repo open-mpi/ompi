@@ -34,7 +34,6 @@
 #include "mca/schema/schema.h"
 #include "class/ompi_object.h"
 #include "dps/dps_types.h"
-#include "dps/dps_internal.h"
 #include "mca/ns/ns_types.h"
 #include "mca/rmgr/rmgr_types.h"
 #include "mca/soh/soh_types.h"
