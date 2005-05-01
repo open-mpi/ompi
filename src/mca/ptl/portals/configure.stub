@@ -16,6 +16,37 @@
 #
 
 #
+# quicky function to set #defines based on argument values
+#
+# ARGUMENTS:
+#  1    configure name (first argument to ARG_WITH, minus the ptl-portals-)
+#  2    define name
+#  3    default value
+#  4    description (used for both ARG_WITH and DEFINE)
+AC_DEFUN([MCA_PTL_PORTALS_CONFIG_VAL],
+[
+    AC_ARG_WITH([ptl-portals-$1], AC_HELP_STRING([--with-ptl-portals-$1], 
+                [$4 (default: $3)]))
+    AC_MSG_CHECKING([for $1 value])
+    case "[$with_]m4_bpatsubst([ptl-portals-$1], -, _)" in
+        "")
+            $2=$3
+            AC_MSG_RESULT([[$]$2 (default)])
+            ;;
+        "no")
+            AC_MSG_RESULT([error])
+            AC_MSG_ERROR([--without-ptl-portals-$1 is invalid argument])
+            ;;
+        *)
+            $2="$with_m4_bpatsubst([ptl-portals-$1], -, _)"
+            AC_MSG_RESULT([[$]$2])
+            ;;
+    esac
+    AC_DEFINE_UNQUOTED([$2], [[$]$2], [$4])
+])dnl
+
+
+#
 # Main function.  This will be invoked in the middle of the templated
 # configure script.
 #
@@ -112,6 +143,46 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     AC_DEFINE_UNQUOTED([PTL_PORTALS_REDSTORM], [$PTL_PORTALS_REDSTORM],
                        [Use the Red Storm implementation or Portals])
     AM_CONDITIONAL([PTL_PORTALS_REDSTORM], [test "$PTL_PORTALS_REDSTORM" = "1"])
+
+    MCA_PTL_PORTALS_CONFIG_VAL([first-frag-table-id],
+                      [PTL_PORTALS_FIRST_FRAG_TABLE_ID], [1],
+                      [Portals table id to use for first fragment receive queue])
+
+    MCA_PTL_PORTALS_CONFIG_VAL([rndv-frag-table-id],
+                      [PTL_PORTALS_RNDV_FRAG_TABLE_ID], [2],
+                      [Portals table id to use for rndv fragment receive queue])
+
+    MCA_PTL_PORTALS_CONFIG_VAL([ack-table-id],
+                      [PTL_PORTALS_ACK_TABLE_ID], [3],
+                      [Portals table id to use for ack queue])
+
+    MCA_PTL_PORTALS_CONFIG_VAL([debug-level],
+                      [PTL_PORTALS_DEFAULT_DEBUG_LEVEL], [1000],
+                      [Default debugging level for portals ptl])
+
+    MCA_PTL_PORTALS_CONFIG_VAL([request-cache-size],
+                      [PTL_PORTALS_DEFAULT_REQUEST_CACHE_SIZE], [1],
+                      [Default request cache size for portals ptl])
+
+    MCA_PTL_PORTALS_CONFIG_VAL([first-frag-size],
+                      [PTL_PORTALS_DEFAULT_FIRST_FRAG_SIZE], [16384],
+                      [Default first frag size for portals ptl])
+
+    MCA_PTL_PORTALS_CONFIG_VAL([first-frag-num-entries],
+                      [PTL_PORTALS_DEFAULT_FIRST_FRAG_NUM_ENTRIES], [3],
+                      [Default number of memory descriptors for first fragments])
+
+    MCA_PTL_PORTALS_CONFIG_VAL([first-frag-entry-size],
+                      [PTL_PORTALS_DEFAULT_FIRST_FRAG_ENTRY_SIZE], [1048576],
+                      [Default size of memory associeted with first fag md])
+
+    MCA_PTL_PORTALS_CONFIG_VAL([rndv-frag-min-size],
+                      [PTL_PORTALS_DEFAULT_RNDV_FRAG_MIN_SIZE], [0],
+                      [Default minimum size of rndv fragments])
+
+    MCA_PTL_PORTALS_CONFIG_VAL([rndv-frag-max-size],
+                      [PTL_PORTALS_DEFAULT_RNDV_FRAG_MAX_SIZE], [32768],
+                      [Default maximum size of rndv fragments])
 
     #
     # Save extra compiler/linker flags so that they can be added in

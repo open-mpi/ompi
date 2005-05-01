@@ -115,6 +115,7 @@ mca_ptl_portals_component_open(void)
     mca_ptl_portals_component.portals_modules = NULL;
 
     /* initialize objects */
+    OBJ_CONSTRUCT(&mca_ptl_portals_component.portals_lock, ompi_mutex_t);
 
     /* register portals module parameters */
 #if PTL_PORTALS_UTCP
@@ -122,7 +123,28 @@ mca_ptl_portals_component_open(void)
         mca_ptl_portals_param_register_string("ifname", "eth0");
 #endif
     portals_output_stream.lds_verbose_level = 
-        mca_ptl_portals_param_register_int("debug_level", 1000);
+        mca_ptl_portals_param_register_int("debug_level",
+                                           PTL_PORTALS_DEFAULT_DEBUG_LEVEL);
+
+    mca_ptl_portals_module.super.ptl_cache_size =
+        mca_ptl_portals_param_register_int("request_cache_size",
+                                           PTL_PORTALS_DEFAULT_REQUEST_CACHE_SIZE);
+    mca_ptl_portals_module.super.ptl_first_frag_size =
+        mca_ptl_portals_param_register_int("first_frag_size",
+                                           PTL_PORTALS_DEFAULT_FIRST_FRAG_SIZE);
+    mca_ptl_portals_module.super.ptl_min_frag_size =
+        mca_ptl_portals_param_register_int("rndv_frag_min_size",
+                                           PTL_PORTALS_DEFAULT_RNDV_FRAG_MIN_SIZE);
+    mca_ptl_portals_module.super.ptl_max_frag_size =
+        mca_ptl_portals_param_register_int("rndv_frag_max_size",
+                                           PTL_PORTALS_DEFAULT_RNDV_FRAG_MAX_SIZE);
+
+    mca_ptl_portals_module.first_frag_num_mds = 
+        mca_ptl_portals_param_register_int("first_frag_num_entries",
+                                           PTL_PORTALS_DEFAULT_FIRST_FRAG_NUM_ENTRIES);
+    mca_ptl_portals_module.first_frag_md_size = 
+        mca_ptl_portals_param_register_int("first_frag_entry_size",
+                                           PTL_PORTALS_DEFAULT_FIRST_FRAG_ENTRY_SIZE);
 
     /* finish with objects */
     mca_ptl_portals_component.portals_output = 
@@ -149,6 +171,8 @@ mca_ptl_portals_component_close(void)
     /* print out debugging if anything is pending */
 
     /* release resources */
+    OBJ_DESTRUCT(&mca_ptl_portals_component.portals_lock);
+
     if (NULL != mca_ptl_portals_component.portals_ifname) {
         free(mca_ptl_portals_component.portals_ifname);
     }
@@ -201,20 +225,27 @@ mca_ptl_portals_component_init(int *num_ptls,
 int
 mca_ptl_portals_component_control(int param, void* value, size_t size)
 {
+    uint32_t i;
+    int ret = OMPI_SUCCESS;
+
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "mca_ptl_portals_component_control(%d)", param);
+                        "mca_ptl_portals_component_control(%d, %d)", 
+                        param, (*(int*) value));
 
     switch(param) {
         case MCA_PTL_ENABLE:
-            if(*(int*)value) {
-                /* BWB - enable the ptl */
-            } else
-                /* BWB - disable the ptl */
+            OMPI_THREAD_LOCK(&mca_ptl_portals_component.portals_lock);
+            for (i = 0 ; i < mca_ptl_portals_component.portals_num_modules ; ++i) {
+                ret = mca_ptl_portals_module_enable(mca_ptl_portals_component.portals_modules[i],
+                                                    *(int*)value);                  
+                if (ret != OMPI_SUCCESS) break;
+            }
+            OMPI_THREAD_UNLOCK(&mca_ptl_portals_component.portals_lock);
             break;
         default:
             break;
     }
-    return OMPI_SUCCESS;
+    return ret;
 }
 
 
