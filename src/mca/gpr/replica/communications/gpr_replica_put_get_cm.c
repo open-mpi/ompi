@@ -25,7 +25,7 @@
  */
 #include "orte_config.h"
 
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 
 #include "gpr_replica_comm.h"
@@ -38,8 +38,8 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
     orte_gpr_replica_itag_t *itags=NULL;
     orte_data_type_t type;
     int8_t action_taken=0;
-    int i=0, rc, ret;
-    size_t cnt;
+    int rc, ret;
+    size_t i=0, cnt;
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -73,7 +73,7 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
         goto RETURN_ERROR;
     }
 
-    for (i=0; i < (int)cnt; i++) {
+    for (i=0; i < cnt; i++) {
         val = values[i];
         
         /* find the segment */
@@ -117,7 +117,7 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
 
     /* release values */
     if (NULL != values) {
-        for (i=0; i < (int)cnt; i++) {
+        for (i=0; i < cnt; i++) {
             if (NULL != values[i]) {
                 OBJ_RELEASE(values[i]);
             }
@@ -140,10 +140,10 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
     orte_gpr_addr_mode_t addr_mode;
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *tokentags=NULL, *keytags=NULL;
-    int num_tokens=0, num_keys=0, rc, ret;
+    int rc, ret;
     char *segment=NULL, **tokens=NULL, **keys=NULL;
-    int i=0, cnt=0;
-    size_t n;
+    size_t i=0, cnt=0;
+    size_t num_tokens=0, num_keys=0, n;
     orte_gpr_value_t **values=NULL;
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &command, 1, ORTE_GPR_CMD))) {
@@ -164,7 +164,7 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, &num_tokens, &n, ORTE_INT))) {
+    if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, &num_tokens, &n, ORTE_SIZE))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -187,7 +187,7 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, &num_keys, &n, ORTE_INT))) {
+    if (ORTE_SUCCESS != (ret = orte_dps.unpack(input_buffer, &num_keys, &n, ORTE_SIZE))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -240,7 +240,7 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
  RETURN_ERROR:
 
     /* pack the number of values */
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &cnt, 1, ORTE_INT))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(output_buffer, &cnt, 1, ORTE_SIZE))) {
         ORTE_ERROR_LOG(rc);
         ret = rc;
     }
@@ -292,6 +292,7 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
         ORTE_ERROR_LOG(rc);
     }
 
+ompi_output(0, "REPLICA-GET: FINAL NUMBER OF BYTES PACKED %d", output_buffer->len);
     return ret;
 }
 

@@ -20,6 +20,8 @@
 
 #include "util/output.h"
 
+#include "dps/dps.h"
+
 #include "mca/gpr/base/base.h"
 
 
@@ -92,7 +94,7 @@ static void orte_gpr_value_construct(orte_gpr_value_t* reg_val)
 static void orte_gpr_value_destructor(orte_gpr_value_t* reg_val)
 {
     char **tokens;
-    int32_t i;
+    size_t i;
 
     if (NULL != reg_val->segment) free(reg_val->segment);
     
@@ -136,7 +138,7 @@ static void orte_gpr_notify_data_construct(orte_gpr_notify_data_t* ptr)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_notify_data_destructor(orte_gpr_notify_data_t* ptr)
 {
-    int32_t i;
+    size_t i;
 
     if (NULL != ptr->segment) free(ptr->segment);
     
@@ -175,7 +177,7 @@ static void orte_gpr_subscription_construct(orte_gpr_subscription_t* sub)
 static void orte_gpr_subscription_destructor(orte_gpr_subscription_t* sub)
 {
     char **tokens;
-    int32_t i;
+    size_t i;
 
     if (NULL != sub->segment) free(sub->segment);
     
@@ -219,7 +221,7 @@ static void orte_gpr_notify_message_construct(orte_gpr_notify_message_t* msg)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_notify_message_destructor(orte_gpr_notify_message_t* msg)
 {
-    int i;
+    size_t i;
     
     if (0 < msg->cnt && NULL != msg->data) {
         for (i=0; i < msg->cnt; i++) {
@@ -236,33 +238,6 @@ OBJ_CLASS_INSTANCE(
             ompi_object_t,                             /* parent "class" name */
             orte_gpr_notify_message_construct,    /* constructor */
             orte_gpr_notify_message_destructor);  /* destructor */
-
-
-/** TEST RESULTS */
-/* constructor - used to initialize state of test results instance */
-static void orte_gpr_internal_test_results_construct(orte_gpr_internal_test_results_t* results)
-{
-    results->test = NULL;
-    results->message = NULL;
-}
-
-/* destructor - used to free any resources held by instance */
-static void orte_gpr_internal_test_results_destructor(orte_gpr_internal_test_results_t* results)
-{
-    if (NULL != results->test) {
-	free(results->test);
-    }
-    if (NULL != results->message) {
-	free(results->message);
-    }
-}
-
-/* define instance of ompi_class_t */
-OBJ_CLASS_INSTANCE(
-		   orte_gpr_internal_test_results_t,            /* type name */
-		   ompi_list_item_t,                                 /* parent "class" name */
-		   orte_gpr_internal_test_results_construct,    /* constructor */
-		   orte_gpr_internal_test_results_destructor);  /* destructor */
 
 
 /*
@@ -295,6 +270,8 @@ int orte_gpr_base_open(void)
         orte_gpr_base_output = -1;
     }
 
+    /* register data types */
+    
     /* Open up all available components */
 
     if (OMPI_SUCCESS != 

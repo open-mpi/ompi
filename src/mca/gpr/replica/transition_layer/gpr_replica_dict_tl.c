@@ -37,7 +37,7 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
                              orte_gpr_replica_segment_t *seg, char *name)
 {
     orte_gpr_replica_dict_t **ptr, *new;
-    int i;
+    size_t i;
     size_t len, len2;
 
     /* default to illegal value */
@@ -69,7 +69,7 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     new->entry = strdup(name);
-    if (0 > (i = orte_pointer_array_add(seg->dict, (void*)new))) {
+    if (0 > orte_pointer_array_add(&i, seg->dict, (void*)new)) {
         *itag = ORTE_GPR_REPLICA_ITAG_MAX;
         free(new);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -125,7 +125,7 @@ orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
                              orte_gpr_replica_segment_t *seg, char *name)
 {
     orte_gpr_replica_dict_t **ptr;
-    int i;
+    size_t i;
     size_t len, len2;
     
     /* initialize to illegal value */
@@ -202,10 +202,11 @@ int orte_gpr_replica_dict_reverse_lookup(char **name,
 int
 orte_gpr_replica_get_itag_list(orte_gpr_replica_itag_t **itaglist,
                     orte_gpr_replica_segment_t *seg, char **names,
-                    int *num_names)
+                    size_t *num_names)
 {
     char **namptr;
-    int rc, i;
+    int rc;
+    size_t i;
 
     *itaglist = NULL;
 

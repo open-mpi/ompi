@@ -36,14 +36,15 @@
 int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
                                 orte_gpr_replica_segment_t *seg,
                                 orte_gpr_replica_itag_t *tokentags,
-                                int num_tokens, int cnt,
+                                size_t num_tokens, size_t cnt,
                                 orte_gpr_keyval_t **keyvals)
 {
     orte_gpr_replica_container_t **cptr;
     orte_gpr_replica_itag_t itag;
     orte_gpr_replica_addr_mode_t tok_mode;
     orte_gpr_replica_itagval_t **ival;
-    int rc, i, j, k, num_found;
+    int rc;
+    size_t i, j, k, num_found;
 
     /* extract the token address mode */
     tok_mode = 0x004f & addr_mode;
@@ -77,6 +78,10 @@ int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
                     for (k=0; k < (orte_gpr_replica_globals.srch_ival)->size; k++) { /* for each found keyval */
                         if (NULL != ival[k]) {
                             switch (ival[k]->type) {
+                                case ORTE_SIZE:
+                                    ival[k]->value.size++;
+                                    break;
+                                    
                                 case ORTE_UINT8:
                                     ival[k]->value.ui8++;
                                     break;
@@ -89,7 +94,7 @@ int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
                                     ival[k]->value.ui32++;
                                     break;
                                 
-                            #ifdef HAVE_I64
+                            #ifdef HAVE_INT64_T
                                 case ORTE_UINT64:
                                     ival[k]->value.ui64++;
                                     break;
@@ -125,14 +130,15 @@ int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
 int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
                                 orte_gpr_replica_segment_t *seg,
                                 orte_gpr_replica_itag_t *tokentags,
-                                int num_tokens, int cnt,
+                                size_t num_tokens, size_t cnt,
                                 orte_gpr_keyval_t **keyvals)
 {
     orte_gpr_replica_container_t **cptr;
     orte_gpr_replica_itag_t itag;
     orte_gpr_replica_addr_mode_t tok_mode;
     orte_gpr_replica_itagval_t **ival;
-    int rc, i, j, k, num_found;
+    int rc;
+    size_t i, j, k, num_found;
 
     /* extract the token address mode */
     tok_mode = 0x004f & addr_mode;
@@ -166,6 +172,10 @@ int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
                     for (k=0; k < (orte_gpr_replica_globals.srch_ival)->size; k++) { /* for each found keyval */
                         if (NULL != ival[k]) {
                             switch (ival[k]->type) {
+                                case ORTE_SIZE:
+                                    ival[k]->value.size--;
+                                    break;
+                                    
                                 case ORTE_UINT8:
                                     ival[k]->value.ui8--;
                                     break;
@@ -178,7 +188,7 @@ int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
                                     ival[k]->value.ui32--;
                                     break;
                                 
-                            #ifdef HAVE_I64
+                            #ifdef HAVE_INT64_T
                                 case ORTE_UINT64:
                                     ival[k]->value.ui64--;
                                     break;

@@ -20,7 +20,7 @@
 
 #include "mca/ns/ns_types.h"
 
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
 #ifdef HAVE_NETINET_IN_H

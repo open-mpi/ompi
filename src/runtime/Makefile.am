@@ -41,7 +41,6 @@ libruntime_la_SOURCES = \
     orte_monitor.c \
     orte_universe_exists.c \
     orte_restart.c \
-    orte_schema.c \
     orte_wait.c
 
 # Conditionally install the header files

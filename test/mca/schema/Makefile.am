@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -15,20 +16,16 @@
 #
 
 include $(top_srcdir)/config/Makefile.options
+AM_CPPFLAGS = -I$(top_srcdir)/test/support
 
-SUBDIRS = base $(MCA_dps_STATIC_SUBDIRS)
-DIST_SUBDIRS = base $(MCA_dps_ALL_SUBDIRS)
+check_PROGRAMS = \
+	test_schema
 
-# Source code files
+TESTS = \
+	$(check_PROGRAMS)
 
-headers = dps.h \
-	  dps_types.h
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/dps
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+test_schema_SOURCES = test_schema.c
+test_schema_LDADD = \
+        $(top_builddir)/test/support/libsupport.a \
+        $(top_builddir)/src/libmpi.la 
+test_schema_DEPENDENCIES = $(test_schema_LDADD)

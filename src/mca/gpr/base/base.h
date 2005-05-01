@@ -66,7 +66,7 @@
 #include "threads/condition.h"
 
 #include "class/ompi_list.h"
-#include "dps/dps_types.h"
+#include "mca/dps/dps_types.h"
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -114,9 +114,9 @@ extern "C" {
                                                  char **index);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
-                    orte_gpr_notify_action_t action, int num_subs,
+                    orte_gpr_notify_action_t action, size_t num_subs,
                     orte_gpr_subscription_t **subscriptions,
-                    int num_trigs, orte_gpr_value_t **trig);
+                    size_t num_trigs, orte_gpr_value_t **trig);
     OMPI_DECLSPEC int orte_gpr_base_unpack_subscribe(orte_buffer_t *buffer, int *ret,
 				      orte_gpr_notify_id_t *remote_idtag);
 
@@ -125,20 +125,15 @@ extern "C" {
     OMPI_DECLSPEC int orte_gpr_base_unpack_unsubscribe(orte_buffer_t *buffer, int *ret);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_put(orte_buffer_t *cmd,
-			                                 int cnt, orte_gpr_value_t **values);
+			                                 size_t cnt, orte_gpr_value_t **values);
     OMPI_DECLSPEC int orte_gpr_base_unpack_put(orte_buffer_t *buffer, int *ret);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_get(orte_buffer_t *cmd,
 			      orte_gpr_addr_mode_t mode,
 			      char *segment, char **tokens, char **keys);
     OMPI_DECLSPEC int orte_gpr_base_unpack_get(orte_buffer_t *buffer, int *ret,
-                   int *cnt, orte_gpr_value_t ***values);
+                   size_t *cnt, orte_gpr_value_t ***values);
 
-    OMPI_DECLSPEC void orte_gpr_base_decode_startup_msg(int status,
-                                 orte_process_name_t *peer,
-                                 orte_buffer_t* msg,
-                                 orte_rml_tag_t tag, void *cbdata);
-                                 
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_all(orte_buffer_t *cmd);
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_segments(orte_buffer_t *cmd);
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_triggers(orte_buffer_t *cmd);
@@ -151,6 +146,8 @@ extern "C" {
                         orte_gpr_notify_message_t *msg);
     OMPI_DECLSPEC int orte_gpr_base_dump_notify_data(orte_buffer_t *buffer,
                         orte_gpr_notify_data_t *data);
+    OMPI_DECLSPEC int orte_gpr_base_dump_value(orte_buffer_t *buffer,
+                        orte_gpr_value_t *value);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_cleanup_job(orte_buffer_t *buffer,
                                                      orte_jobid_t jobid);

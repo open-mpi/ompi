@@ -35,7 +35,6 @@
 
 #include <sys/types.h>
 
-#include "include/orte_types.h"
 #include "include/orte_constants.h"
 #include "class/ompi_list.h"
 
@@ -176,7 +175,7 @@ typedef int (*orte_gpr_base_module_cleanup_proc_fn_t)(orte_process_name_t *proc)
  * status_code = orte_gpr.preallocate_segment("MY_SEGMENT", num_slots);
  * @endcode
  */
-typedef int (*orte_gpr_base_module_preallocate_segment_fn_t)(char *name, int num_slots);
+typedef int (*orte_gpr_base_module_preallocate_segment_fn_t)(char *name, size_t num_slots);
 
 /*
  * Delete a segment from the registry (BLOCKING)
@@ -245,13 +244,13 @@ typedef int (*orte_gpr_base_module_delete_segment_nb_fn_t)(char *segment,
  * status_code = orte_gpr.put(1, &value);
  * @endcode
  */
-typedef int (*orte_gpr_base_module_put_fn_t)(int cnt, orte_gpr_value_t **values);
+typedef int (*orte_gpr_base_module_put_fn_t)(size_t cnt, orte_gpr_value_t **values);
 
 /*
  * Put data on the registry (NON-BLOCKING)
  * A non-blocking version of put.
  */
-typedef int (*orte_gpr_base_module_put_nb_fn_t)(int cnt, orte_gpr_value_t **values,
+typedef int (*orte_gpr_base_module_put_nb_fn_t)(size_t cnt, orte_gpr_value_t **values,
                       orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);
 
 
@@ -296,7 +295,7 @@ typedef int (*orte_gpr_base_module_put_nb_fn_t)(int cnt, orte_gpr_value_t **valu
  */
 typedef int (*orte_gpr_base_module_get_fn_t)(orte_gpr_addr_mode_t addr_mode,
                                 char *segment, char **tokens, char **keys,
-                                int *cnt, orte_gpr_value_t ***values);
+                                size_t *cnt, orte_gpr_value_t ***values);
 
 /*
  * Get data from the registry (NON-BLOCKING)
@@ -446,9 +445,9 @@ typedef int (*orte_gpr_base_module_index_nb_fn_t)(char *segment,
  */
 typedef int (*orte_gpr_base_module_subscribe_fn_t)(
                             orte_gpr_notify_action_t actions,
-                            int num_subs,
+                            size_t num_subs,
                             orte_gpr_subscription_t **subscriptions,
-                            int num_trigs,
+                            size_t num_trigs,
                             orte_gpr_value_t **trig_value,
                             orte_gpr_notify_id_t *sub_number);
 
@@ -496,36 +495,7 @@ typedef int (*orte_gpr_base_module_dump_notify_msg_fn_t)(orte_gpr_notify_message
 
 typedef int (*orte_gpr_base_module_dump_notify_data_fn_t)(orte_gpr_notify_data_t *data, int output_id);
 
-/* Deliver a notify message.
- * The registry generates notify messages whenever a subscription is fired. Normally,
- * this happens completely "under the covers" - i.e., the notification process is transparent
- * to the rest of the system, with the message simply delivered to the specified callback function.
- * However, there are two circumstances when the system needs to explicitly deliver a notify
- * message - namely, during startup and shutdown. In these two cases, a special message is
- * "xcast" to all processes, with each process receiving the identical message. In order to
- * ensure that the correct data gets to each subsystem, the message must be disassembled and
- * the appropriate callback function called.
- *
- * This, unfortunately, means that the decoder must explicitly call the message notification
- * subsystem in order to find the callback function. Alternatively, the entire startup/shutdown
- * logic could be buried in the registry, but this violates the design philosophy of the registry
- * acting solely as a publish/subscribe-based cache memory - it should not contain logic pertinent
- * to any usage of that memory.
- *
- * This function provides the necessary "hook" for an external program to request delivery of
- * a message via the publish/subscribe's notify mechanism.
- *
- * @param message The message to be delivered.
- *
- * @retval ORTE_SUCCESS Operation was successfully completed.
- * @retval ORTE_ERROR(s) Operation failed, returning the provided error code.
- *
- * @code
- * status_code = orte_gpr.deliver_notify_msg(message);
- * @endcode
- *
- */
-typedef int (*orte_gpr_base_module_deliver_notify_msg_fn_t)(orte_gpr_notify_message_t *message);
+typedef int (*orte_gpr_base_module_dump_value_fn_t)(orte_gpr_value_t *value, int output_id);
 
 /*
  * Increment value
@@ -562,7 +532,6 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_index_nb_fn_t index_nb;
     /* GENERAL OPERATIONS */
     orte_gpr_base_module_preallocate_segment_fn_t preallocate_segment;
-    orte_gpr_base_module_deliver_notify_msg_fn_t deliver_notify_msg;
     /* ARITHMETIC OPERATIONS */
     orte_gpr_base_module_increment_value_fn_t increment_value;
     orte_gpr_base_module_decrement_value_fn_t decrement_value;
@@ -580,6 +549,7 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_dump_callbacks_fn_t dump_callbacks;
     orte_gpr_base_module_dump_notify_msg_fn_t dump_notify_msg;
     orte_gpr_base_module_dump_notify_data_fn_t dump_notify_data;
+    orte_gpr_base_module_dump_value_fn_t dump_value;
     /* CLEANUP OPERATIONS */
     orte_gpr_base_module_cleanup_job_fn_t cleanup_job;
     orte_gpr_base_module_cleanup_proc_fn_t cleanup_process;

@@ -26,7 +26,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-#include "dps/dps_types.h"
+#include "mca/dps/dps_types.h"
 #include "util/output.h"
 #include "util/proc_info.h"
 
@@ -36,7 +36,7 @@
 
 #include "gpr_proxy.h"
 
-int orte_gpr_proxy_preallocate_segment(char *name, int num_slots)
+int orte_gpr_proxy_preallocate_segment(char *name, size_t num_slots)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }

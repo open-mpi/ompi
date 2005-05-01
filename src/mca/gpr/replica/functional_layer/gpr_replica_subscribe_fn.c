@@ -33,9 +33,9 @@
 #include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 #include "gpr_replica_fn.h"
 
-int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, int num_subs,
+int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, size_t num_subs,
                                   orte_gpr_subscription_t **subscriptions,
-                                  int num_trigs,
+                                  size_t num_trigs,
                                   orte_gpr_value_t **trigs,
                                   orte_gpr_notify_id_t idtag)
 {
@@ -47,12 +47,13 @@ int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, int num_subs,
     orte_gpr_replica_itag_t itag, *tokentags=NULL, *keytags=NULL;
     orte_gpr_replica_itagval_t *iptr=NULL;
     orte_gpr_replica_addr_mode_t tok_mode, key_mode;
-    int i, j, k, rc, num_tokens, num_keys, num_found;
+    size_t i, j, k, index, num_tokens, num_keys, num_found;
+    int rc;
     bool found;
 
     if (orte_gpr_replica_globals.debug) {
-	   ompi_output(0, "[%d,%d,%d] gpr replica: subscribe entered",
-		    ORTE_NAME_ARGS(orte_process_info.my_name));
+	   ompi_output(0, "[%d,%d,%d] gpr replica: subscribe entered - registering idtag %d",
+		    ORTE_NAME_ARGS(orte_process_info.my_name), idtag);
         ompi_output(0, "Received %d subscriptions", num_subs);
         for (i=0; i < num_subs; i++) {
             ompi_output(0, "Subscription %d on segment %s with %d tokens, %d keys",
@@ -63,6 +64,16 @@ int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, int num_subs,
             }
             for (j=0; j < subscriptions[i]->num_keys; j++) {
                 ompi_output(0, "\tKey num: %d\tKey: %s", j, subscriptions[i]->keys[j]);
+            }
+        }
+        for (i=0; i < num_trigs; i++) {
+            ompi_output(0, "Trigger %d on segment %s with %d tokens, %d keyvals",
+                    i, trigs[i]->segment, trigs[i]->num_tokens, trigs[i]->cnt);
+            for (j=0; j < trigs[i]->num_tokens; j++) {
+                ompi_output(0, "\tToken num: %d\tToken: %s", j, trigs[i]->tokens[j]);
+            }
+            for (j=0; j < trigs[i]->cnt; j++) {
+                ompi_output(0, "\tKey num: %d\tKey: %s", j, (trigs[i]->keyvals[j])->key);
             }
         }
     }
@@ -214,7 +225,7 @@ int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, int num_subs,
                         ORTE_ERROR_LOG(rc);
                         goto CLEANUP;
                     }
-                    if (0 > orte_pointer_array_add(trig->counters, cntr)) {
+                    if (0 > orte_pointer_array_add(&index, trig->counters, cntr)) {
                         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                         rc = ORTE_ERR_OUT_OF_RESOURCE;
                         goto CLEANUP;
@@ -259,7 +270,7 @@ int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, int num_subs,
                                     ORTE_ERROR_LOG(rc);
                                     goto CLEANUP;
                                 }
-                                if (0 > orte_pointer_array_add(trig->counters, cntr)) {
+                                if (0 > orte_pointer_array_add(&index, trig->counters, cntr)) {
                                     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                                     rc = ORTE_ERR_OUT_OF_RESOURCE;
                                     goto CLEANUP;

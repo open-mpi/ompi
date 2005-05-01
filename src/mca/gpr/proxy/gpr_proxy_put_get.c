@@ -26,7 +26,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-#include "dps/dps_types.h"
+#include "mca/dps/dps_types.h"
 #include "util/output.h"
 #include "util/proc_info.h"
 
@@ -37,7 +37,7 @@
 
 #include "gpr_proxy.h"
 
-int orte_gpr_proxy_put(int cnt, orte_gpr_value_t **values)
+int orte_gpr_proxy_put(size_t cnt, orte_gpr_value_t **values)
 {
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
@@ -92,7 +92,7 @@ int orte_gpr_proxy_put(int cnt, orte_gpr_value_t **values)
     return ret;
 }
 
-int orte_gpr_proxy_put_nb(int cnt, orte_gpr_value_t **values,
+int orte_gpr_proxy_put_nb(size_t cnt, orte_gpr_value_t **values,
                           orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
@@ -100,7 +100,7 @@ int orte_gpr_proxy_put_nb(int cnt, orte_gpr_value_t **values,
 
 int orte_gpr_proxy_get(orte_gpr_addr_mode_t mode,
                        char *segment, char **tokens, char **keys,
-                       int *cnt, orte_gpr_value_t ***values)
+                       size_t *cnt, orte_gpr_value_t ***values)
 
 {
     orte_buffer_t *cmd;

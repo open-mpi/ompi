@@ -20,7 +20,6 @@ SUBDIRS = \
         common \
         allocator \
         coll \
-	dps \
         errmgr \
         gpr \
         io \

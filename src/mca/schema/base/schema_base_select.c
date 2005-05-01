@@ -18,33 +18,33 @@
 
 #include "include/orte_constants.h"
 
-#include "mca/gpr/base/base.h"
+#include "mca/schema/base/base.h"
 
 
 /**
  * Function for selecting one component from all those that are
  * available.
  */
-int orte_gpr_base_select(void)
+int orte_schema_base_select(void)
 {
   ompi_list_item_t *item;
   mca_base_component_list_item_t *cli;
-  mca_gpr_base_component_t *component, *best_component = NULL;
-  orte_gpr_base_module_t *module, *best_module = NULL;
+  mca_schema_base_component_t *component, *best_component = NULL;
+  orte_schema_base_module_t *module, *best_module = NULL;
   bool multi, hidden;
   int priority, best_priority = -1;
 
   /* Iterate through all the available components */
 
-  for (item = ompi_list_get_first(&orte_gpr_base_components_available);
-       item != ompi_list_get_end(&orte_gpr_base_components_available);
+  for (item = ompi_list_get_first(&orte_schema_base_components_available);
+       item != ompi_list_get_end(&orte_schema_base_components_available);
        item = ompi_list_get_next(item)) {
     cli = (mca_base_component_list_item_t *) item;
-    component = (mca_gpr_base_component_t *) cli->cli_component;
+    component = (mca_schema_base_component_t *) cli->cli_component;
 
     /* Call the component's init function and see if it wants to be
        selected */
-    module = component->gpr_init(&multi, &hidden, &priority);
+    module = component->schema_init(&multi, &hidden, &priority);
 
     /* If we got a non-NULL module back, then the component wants to
        be selected.  So save its multi/hidden values and save the
@@ -57,7 +57,7 @@ int orte_gpr_base_select(void)
         /* If there was a previous best one, finalize */
 
         if (NULL != best_component) {
-          best_component->gpr_finalize();
+          best_component->schema_finalize();
         }
 
         /* Save the new best one */
@@ -71,23 +71,23 @@ int orte_gpr_base_select(void)
       /* If it's not the best one, finalize it */
 
       else {
-        component->gpr_finalize();
+        component->schema_finalize();
       }
     }
   }
 
-  /* If we didn't find one to select, barf */
+  /* If we didn't find one to select, that's okay - stick with default */
 
   if (NULL == best_component) {
-    return ORTE_ERROR;
+    return ORTE_SUCCESS;
   }
 
   /* We have happiness -- save the component and module for later
      usage */
 
-  orte_gpr = *best_module;
-  orte_gpr_base_selected_component = *best_component;
-  orte_gpr_base_selected = true;
+  orte_schema = *best_module;
+  orte_schema_base_selected_component = *best_component;
+  orte_schema_base_selected = true;
 
   /* all done */
 

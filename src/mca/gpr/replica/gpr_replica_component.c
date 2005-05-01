@@ -78,7 +78,6 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     orte_gpr_replica_index_nb,
     /* GENERAL OPERATIONS */
     orte_gpr_replica_preallocate_segment,
-    orte_gpr_replica_deliver_notify_msg,
     /* ARITHMETIC OPERATIONS */
     orte_gpr_replica_increment_value,
     orte_gpr_replica_decrement_value,
@@ -96,6 +95,7 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     orte_gpr_replica_dump_callbacks,
     orte_gpr_replica_dump_notify_msg,
     orte_gpr_replica_dump_notify_data,
+    orte_gpr_replica_dump_value,
     /* CLEANUP OPERATIONS */
     orte_gpr_replica_cleanup_job,
     orte_gpr_replica_cleanup_proc
@@ -138,7 +138,7 @@ static void orte_gpr_replica_segment_construct(orte_gpr_replica_segment_t* seg)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_replica_segment_destructor(orte_gpr_replica_segment_t* seg)
 {
-    int i, j;
+    size_t i, j;
     orte_gpr_replica_dict_t **dptr;
     orte_gpr_replica_container_t **cptr;
     
@@ -200,7 +200,7 @@ static void orte_gpr_replica_container_construct(orte_gpr_replica_container_t* r
 static void orte_gpr_replica_container_destructor(orte_gpr_replica_container_t* reg)
 {
     orte_gpr_replica_itagval_t **ptr;
-    int i, j;
+    size_t i, j;
 
     if (NULL != reg->itags) {
          free(reg->itags);
@@ -343,7 +343,7 @@ static void orte_gpr_replica_trigger_construct(orte_gpr_replica_triggers_t* trig
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_replica_trigger_destructor(orte_gpr_replica_triggers_t* trig)
 {
-    int i, j;
+    size_t i, j;
     orte_gpr_replica_subscribed_data_t **data;
     orte_gpr_replica_counter_t **cntrs;
     
@@ -490,12 +490,14 @@ int orte_gpr_replica_open(void)
     
     id = mca_base_param_register_int("gpr", "replica", "maxsize", NULL,
                                      ORTE_GPR_REPLICA_MAX_SIZE);
-    mca_base_param_lookup_int(id, &orte_gpr_replica_globals.max_size);
-
+    mca_base_param_lookup_int(id, &tmp);
+    orte_gpr_replica_globals.max_size = (size_t)tmp;
+    
     id = mca_base_param_register_int("gpr", "replica", "blocksize", NULL,
                                      ORTE_GPR_REPLICA_BLOCK_SIZE);
-    mca_base_param_lookup_int(id, &orte_gpr_replica_globals.block_size);
-
+    mca_base_param_lookup_int(id, &tmp);
+    orte_gpr_replica_globals.block_size = (size_t)tmp;
+    
     id = mca_base_param_register_int("gpr", "replica", "isolate", NULL, 0);
     mca_base_param_lookup_int(id, &tmp);
     if (tmp) {
@@ -606,7 +608,7 @@ int orte_gpr_replica_module_init(void)
  */
 int orte_gpr_replica_finalize(void)
 {
-    int i, j;
+    size_t i, j;
     orte_gpr_replica_segment_t** seg;
     orte_gpr_replica_triggers_t** trig;
     orte_gpr_replica_callbacks_t* cb;

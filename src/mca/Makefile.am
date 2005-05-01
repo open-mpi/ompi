@@ -23,7 +23,6 @@ SUBDIRS = \
 	base \
 	coll \
 	common \
-	dps \
 	errmgr \
 	io \
 	iof \

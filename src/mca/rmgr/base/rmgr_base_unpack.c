@@ -19,7 +19,7 @@
 #include <string.h>
 
 #include "include/constants.h"
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "mca/rmgr/base/base.h"
 #include "mca/errmgr/errmgr.h"
 

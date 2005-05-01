@@ -32,9 +32,10 @@
 
 #include "gpr_replica_api.h"
 
-int orte_gpr_replica_put(int cnt, orte_gpr_value_t **values)
+int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values)
 {
-    int rc = ORTE_SUCCESS, i, j;
+    int rc = ORTE_SUCCESS;
+    size_t i, j;
     int8_t action_taken;
     orte_gpr_value_t *val;
     orte_gpr_replica_segment_t *seg=NULL;
@@ -112,7 +113,7 @@ CLEANUP:
 }
 
 
-int orte_gpr_replica_put_nb(int cnt, orte_gpr_value_t **values,
+int orte_gpr_replica_put_nb(size_t cnt, orte_gpr_value_t **values,
                             orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
@@ -121,11 +122,12 @@ int orte_gpr_replica_put_nb(int cnt, orte_gpr_value_t **values,
 
 int orte_gpr_replica_get(orte_gpr_addr_mode_t addr_mode,
                          char *segment, char **tokens, char **keys,
-                         int *cnt, orte_gpr_value_t ***values)
+                         size_t *cnt, orte_gpr_value_t ***values)
 {
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *tokentags=NULL, *keytags=NULL;
-    int num_tokens=0, num_keys=0, rc;
+    size_t num_tokens=0, num_keys=0;
+    int rc;
 
     *cnt = 0;
     *values = NULL;

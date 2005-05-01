@@ -49,6 +49,7 @@
 #include "mca/ns/ns.h"
 #include "mca/gpr/gpr.h"
 #include "mca/rmgr/rmgr.h"
+#include "mca/schema/schema.h"
 #include "mca/errmgr/errmgr.h"
 
 #include "runtime/runtime.h"

@@ -91,14 +91,14 @@ int orte_gpr_replica_cleanup_proc(orte_process_name_t *proc);
 /*
  * Put-get functions
  */
-int orte_gpr_replica_put(int cnt, orte_gpr_value_t **values);
+int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values);
 
-int orte_gpr_replica_put_nb(int cnt, orte_gpr_value_t **values,
+int orte_gpr_replica_put_nb(size_t cnt, orte_gpr_value_t **values,
                             orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);
                       
 int orte_gpr_replica_get(orte_gpr_addr_mode_t addr_mode,
                                 char *segment, char **tokens, char **keys,
-                                int *cnt, orte_gpr_value_t ***values);
+                                size_t *cnt, orte_gpr_value_t ***values);
 
 int orte_gpr_replica_get_nb(orte_gpr_addr_mode_t addr_mode,
                                 char *segment, char **tokens, char **keys,
@@ -109,9 +109,9 @@ int orte_gpr_replica_get_nb(orte_gpr_addr_mode_t addr_mode,
  * Subscribe functions
  */
 int orte_gpr_replica_subscribe(orte_gpr_notify_action_t action,
-                               int num_subs,
+                               size_t num_subs,
                                orte_gpr_subscription_t **subscriptions,
-                               int num_trigs,
+                               size_t num_trigs,
                                orte_gpr_value_t **trigs,
                                orte_gpr_notify_id_t *sub_number);
 
@@ -133,13 +133,12 @@ int orte_gpr_replica_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_
 
 int orte_gpr_replica_dump_notify_data(orte_gpr_notify_data_t *data, int output_id);
 
+int orte_gpr_replica_dump_value(orte_gpr_value_t *value, int output_id);
 
 /*
  * General functions
  */
-int orte_gpr_replica_preallocate_segment(char *name, int num_slots);
-
-int orte_gpr_replica_deliver_notify_msg(orte_gpr_notify_message_t *msg);
+int orte_gpr_replica_preallocate_segment(char *name, size_t num_slots);
 
 
 #endif

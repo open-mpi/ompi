@@ -28,7 +28,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "util/output.h"
 
 #include "mca/errmgr/errmgr.h"
@@ -43,7 +43,7 @@ static void orte_gpr_replica_dump_load_string(orte_buffer_t *buffer, char **tmp)
 void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
                                          orte_gpr_replica_itagval_t *iptr);
 
-static void orte_gpr_replica_dump_trigger(orte_buffer_t *buffer, int cnt,
+static void orte_gpr_replica_dump_trigger(orte_buffer_t *buffer, size_t cnt,
                                           orte_gpr_replica_triggers_t *trig);
 
 
@@ -72,8 +72,8 @@ int orte_gpr_replica_dump_segments_fn(orte_buffer_t *buffer)
     orte_gpr_replica_itag_t *itaglist;
     orte_gpr_replica_itagval_t **iptr;
     char *token;
-    int num_objects;
-    int i, j, k;
+    size_t num_objects;
+    size_t i, j, k;
     char *tmp_out;
 
     tmp_out = (char*)malloc(1000);
@@ -157,7 +157,7 @@ int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer)
     orte_gpr_replica_callbacks_t *cb;
     orte_gpr_replica_notify_msg_list_t *msg;
     char *tmp_out;
-    int i, j, k;
+    size_t i, j, k;
     
     tmp_out = (char*)malloc(1000);
     if (NULL == tmp_out) {
@@ -220,7 +220,7 @@ int orte_gpr_replica_dump_triggers_fn(orte_buffer_t *buffer)
 {
     orte_gpr_replica_triggers_t **trig;
     char tmp_out[100], *tmp;
-    int j, k;
+    size_t j, k;
     
     tmp = tmp_out;
     sprintf(tmp_out, "\nDUMP OF GPR TRIGGERS\n");
@@ -246,11 +246,11 @@ int orte_gpr_replica_dump_triggers_fn(orte_buffer_t *buffer)
     return ORTE_SUCCESS;
 }    
     
-static void orte_gpr_replica_dump_trigger(orte_buffer_t *buffer, int cnt,
+static void orte_gpr_replica_dump_trigger(orte_buffer_t *buffer, size_t cnt,
                                           orte_gpr_replica_triggers_t *trig)
 {
     char *tmp_out, *token;
-    int i, j, k;
+    size_t i, j, k;
     orte_gpr_replica_subscribed_data_t **data;
     orte_gpr_replica_counter_t **cntr;
     
@@ -472,7 +472,7 @@ void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
             break;
             
         case ORTE_SIZE:
-            sprintf(tmp, "\t\tData type: ORTE_SIZE");
+            sprintf(tmp, "\t\tData type: ORTE_SIZE\tValue: %d", iptr->value.size);
             break;
             
         case ORTE_INT:
@@ -491,7 +491,7 @@ void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
             sprintf(tmp, "\t\tData type: ORTE_UINT32\tValue: %d", (int)iptr->value.ui32);
             break;
             
-#ifdef HAVE_I64
+#ifdef HAVE_INT64_T
         case ORTE_UINT64:
             sprintf(tmp, "\t\tData type: ORTE_UINT64\tValue: %d", (int)iptr->value.ui64);
             break;
@@ -509,7 +509,7 @@ void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
             sprintf(tmp, "\t\tData type: ORTE_INT32\tValue: %d", (int)iptr->value.i32);
             break;
         
-#ifdef HAVE_I64
+#ifdef HAVE_INT64_T
         case ORTE_INT64:
             sprintf(tmp, "\t\tData type: ORTE_INT64\tValue: %d", (int)iptr->value.i64);
             break;

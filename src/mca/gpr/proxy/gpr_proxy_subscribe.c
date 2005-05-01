@@ -26,7 +26,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "util/output.h"
 #include "util/proc_info.h"
 
@@ -39,9 +39,9 @@
 
 int
 orte_gpr_proxy_subscribe(orte_gpr_notify_action_t action,
-                         int num_subs,
+                         size_t num_subs,
                          orte_gpr_subscription_t **subscriptions,
-                         int num_trigs,
+                         size_t num_trigs,
                          orte_gpr_value_t **trigs,
                          orte_gpr_notify_id_t *sub_number)
 {

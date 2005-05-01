@@ -31,7 +31,8 @@ int orte_gpr_replica_find_seg(orte_gpr_replica_segment_t **seg,
                               bool create, char *segment)
 {
     size_t len;
-    int rc, i;
+    int rc;
+    size_t i;
     orte_gpr_replica_segment_t **ptr;
 
     /* initialize to nothing */
@@ -58,10 +59,10 @@ int orte_gpr_replica_find_seg(orte_gpr_replica_segment_t **seg,
     /* add the segment to the registry */
     *seg = OBJ_NEW(orte_gpr_replica_segment_t);
     (*seg)->name = strdup(segment);
-    if (0 > (rc = orte_pointer_array_add(orte_gpr_replica.segments, (void*)(*seg)))) {
+    if (0 > orte_pointer_array_add(&i, orte_gpr_replica.segments, (void*)(*seg))) {
         OBJ_RELEASE(*seg);
         return rc;
     }
-    (*seg)->itag = rc;
+    (*seg)->itag = i;
     return ORTE_SUCCESS;
 }

@@ -37,10 +37,11 @@ int
 orte_gpr_replica_enter_notify_request(orte_gpr_notify_id_t *local_idtag,
                                       orte_process_name_t *requestor,
                                       orte_gpr_notify_id_t remote_idtag,
-                                      int cnt, orte_gpr_subscription_t **subscriptions)
+                                      size_t cnt, orte_gpr_subscription_t **subscriptions)
 {
     orte_gpr_replica_triggers_t *trig;
-    int rc, i;
+    int rc;
+    size_t i, index;
     orte_gpr_replica_subscribed_data_t *data;
     
     *local_idtag = ORTE_GPR_NOTIFY_ID_MAX;
@@ -73,7 +74,7 @@ orte_gpr_replica_enter_notify_request(orte_gpr_notify_id_t *local_idtag,
         data->callback = subscriptions[i]->cbfunc;
         data->user_tag = subscriptions[i]->user_tag;
         /* add the object to the trigger's subscribed_data pointer array */
-        if (0 > (rc = orte_pointer_array_add(trig->subscribed_data, data))) {
+        if (0 > (rc = orte_pointer_array_add(&index, trig->subscribed_data, data))) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
@@ -81,13 +82,12 @@ orte_gpr_replica_enter_notify_request(orte_gpr_notify_id_t *local_idtag,
     }
     trig->num_subscribed_data = cnt;
     
-    if (0 > (rc = orte_pointer_array_add(orte_gpr_replica.triggers, trig))) {
+    if (0 > (rc = orte_pointer_array_add(&(trig->index), orte_gpr_replica.triggers, trig))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    trig->index = rc;
-    *local_idtag = (orte_gpr_notify_id_t)rc;
+    *local_idtag = (orte_gpr_notify_id_t)trig->index;
 
     return ORTE_SUCCESS;
 }
@@ -117,7 +117,7 @@ int orte_gpr_replica_update_storage_locations(orte_gpr_replica_itagval_t *new_ip
     orte_gpr_replica_triggers_t **trig;
     orte_gpr_replica_counter_t **cntrs;
     orte_gpr_replica_itagval_t **old_iptrs;
-    int i, j, k;
+    size_t i, j, k;
     bool replaced;
     
     trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
@@ -151,7 +151,8 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg,
                                          orte_gpr_replica_action_t action_taken)
 {
     orte_gpr_replica_triggers_t **trig;
-     int i, rc;
+    size_t i;
+    int rc;
 
     trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
     for (i=0; i < (orte_gpr_replica.triggers)->size; i++) {
@@ -172,8 +173,11 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg,
 int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
 {
     orte_gpr_replica_counter_t **cntr;
+    orte_gpr_replica_itagval_t *base_value;
     bool first, fire;
-    int i, rc, level, level2;
+    size_t i;
+    int cmp;
+    int rc;
     
     if (ORTE_GPR_TRIG_CMP_LEVELS & trig->action) { /* compare the levels of the counters */
         cntr = (orte_gpr_replica_counter_t**)((trig->counters)->addr);
@@ -182,17 +186,16 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
         for (i=0; i < (trig->counters)->size && fire; i++) {
             if (NULL != cntr[i]) {
                 if (first) {
-                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_value((void*)&level, cntr[i]->iptr))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
-                    }
+                    base_value = cntr[i]->iptr;
                     first = false;
                 } else {
-                   if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_value((void*)&level2, cntr[i]->iptr))) {
+                   if (ORTE_SUCCESS != (rc =
+                            orte_gpr_replica_compare_values(&cmp, base_value,
+                                                            cntr[i]->iptr))) {
                         ORTE_ERROR_LOG(rc);
                         return rc;
                    }
-                   if (level2 != level) {
+                   if (0 != cmp) {
                         fire = false;
                    }
                 }
@@ -215,17 +218,15 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
         fire = true;
         for (i=0; i < (trig->counters)->size && fire; i++) {
             if (NULL != cntr[i]) {
-                if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_value(&level, cntr[i]->iptr))) {
+                if (ORTE_SUCCESS != (rc =
+                            orte_gpr_replica_compare_values(&cmp, cntr[i]->iptr,
+                                                            &(cntr[i]->trigger_level)))) {
                     ORTE_ERROR_LOG(rc);
                     return rc;
-                }
-                if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_value(&level2, &(cntr[i]->trigger_level)))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                if (level2 != level) {
+               }
+               if (0 != cmp) {
                     fire = false;
-                }
+               }
             }
         }
         if (fire) { /* all counters at specified trigger level */
@@ -260,7 +261,8 @@ FIRED:
 int orte_gpr_replica_purge_subscriptions(orte_process_name_t *proc)
 {
     orte_gpr_replica_triggers_t **trig;
-    int i, rc;
+    size_t i;
+    int rc;
     
     /* locate any notification events that have proc as the recipient
      */

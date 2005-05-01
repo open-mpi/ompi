@@ -76,7 +76,7 @@ int orte_gpr_replica_delete_entries(orte_gpr_addr_mode_t addr_mode,
     int rc;
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *token_itags=NULL, *key_itags=NULL;
-    int num_tokens, num_keys;
+    size_t num_tokens, num_keys;
 
     /* protect against errors */
     if (NULL == segment) {

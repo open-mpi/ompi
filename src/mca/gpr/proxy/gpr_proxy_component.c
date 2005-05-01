@@ -27,7 +27,7 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "util/output.h"
 #include "util/proc_info.h"
 
@@ -81,7 +81,6 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_proxy_index_nb,
     /* GENERAL OPERATIONS */
     orte_gpr_proxy_preallocate_segment,
-    orte_gpr_proxy_deliver_notify_msg,
     /* ARITHMETIC OPERATIONS */
     orte_gpr_proxy_increment_value,
     orte_gpr_proxy_decrement_value,
@@ -99,6 +98,7 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_proxy_dump_callbacks,
     orte_gpr_proxy_dump_notify_msg,
     orte_gpr_proxy_dump_notify_data,
+    orte_gpr_proxy_dump_value,
     /* CLEANUP OPERATIONS */
     orte_gpr_proxy_cleanup_job,
     orte_gpr_proxy_cleanup_proc
@@ -179,11 +179,13 @@ int orte_gpr_proxy_open(void)
 
     id = mca_base_param_register_int("gpr", "proxy", "maxsize", NULL,
                                      ORTE_GPR_PROXY_MAX_SIZE);
-    mca_base_param_lookup_int(id, &orte_gpr_proxy_globals.max_size);
+    mca_base_param_lookup_int(id, &tmp);
+    orte_gpr_proxy_globals.max_size = (size_t)tmp;
 
     id = mca_base_param_register_int("gpr", "proxy", "blocksize", NULL,
                                      ORTE_GPR_PROXY_BLOCK_SIZE);
-    mca_base_param_lookup_int(id, &orte_gpr_proxy_globals.block_size);
+    mca_base_param_lookup_int(id, &tmp);
+    orte_gpr_proxy_globals.block_size = (size_t)tmp;
 
     return ORTE_SUCCESS;
 }
@@ -295,7 +297,7 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
     orte_gpr_proxy_subscriber_t **subs;
     size_t n;
     int rc;
-    int32_t num_msgs, cnt, i, j, k;
+    size_t num_msgs, cnt, i, j, k;
 
     if (orte_gpr_proxy_globals.debug) {
 	    ompi_output(0, "[%d,%d,%d] gpr proxy: received trigger message",
@@ -314,7 +316,7 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &num_msgs, &n, ORTE_INT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &num_msgs, &n, ORTE_SIZE))) {
         ORTE_ERROR_LOG(rc);
         goto RETURN_ERROR;
     }
@@ -334,7 +336,7 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
         }
         
         n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &cnt, &n, ORTE_INT32))) {
+        if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &cnt, &n, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             goto RETURN_ERROR;
         }
@@ -347,8 +349,7 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
                 goto RETURN_ERROR;
             }
     
-            n = cnt;
-            if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, data, &n, ORTE_GPR_NOTIFY_DATA))) {
+            if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, data, &cnt, ORTE_GPR_NOTIFY_DATA))) {
                 ORTE_ERROR_LOG(rc);
                 goto RETURN_ERROR;
             }

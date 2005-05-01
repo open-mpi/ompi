@@ -1645,7 +1645,6 @@ AC_CONFIG_FILES([
     src/include/sys/win32/Makefile
 
     src/class/Makefile
-    src/dps/Makefile
     src/runtime/Makefile
     src/threads/Makefile
     src/util/Makefile
@@ -1658,6 +1657,7 @@ AC_CONFIG_FILES([
     src/asm/Makefile
     src/communicator/Makefile
     src/datatype/Makefile
+    src/dps/Makefile
     src/errhandler/Makefile
     src/file/Makefile
     src/group/Makefile
@@ -1671,8 +1671,6 @@ AC_CONFIG_FILES([
     src/mca/base/Makefile
     src/mca/common/Makefile
 
-    src/mca/dps/Makefile
-    src/mca/dps/base/Makefile
     src/mca/errmgr/Makefile
     src/mca/errmgr/base/Makefile
     src/mca/iof/Makefile
@@ -1719,7 +1717,6 @@ AC_CONFIG_FILES([
 
     src/dynamic-mca/common/Makefile
 
-    src/dynamic-mca/dps/Makefile
     src/dynamic-mca/errmgr/Makefile
     src/dynamic-mca/iof/Makefile
     src/dynamic-mca/gpr/Makefile
@@ -1766,7 +1763,7 @@ AC_CONFIG_FILES([
     test/Makefile
     test/asm/Makefile
     test/class/Makefile
-    test/mca/dps/Makefile
+    test/dps/Makefile
     test/mca/Makefile
     test/mca/gpr/Makefile
     test/mca/ns/Makefile
