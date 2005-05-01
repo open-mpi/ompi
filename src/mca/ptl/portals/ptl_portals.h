@@ -49,14 +49,19 @@ struct mca_ptl_portals_component_t {
      */
     int portals_output;
 
+#if PTL_PORTALS_UTCP
     /** ethernet interface to use - only has meaning with utcp
         reference */
     char *portals_ifname;
+#endif
 
     /** Number of currently active portals modules */
     uint32_t portals_num_modules;
-    /** List of currently running modules */
+    /** List of currently available modules */
     struct mca_ptl_portals_module_t **portals_modules;
+
+    /** lock for accessing component */
+    ompi_mutex_t portals_lock;
 };
 
 struct mca_ptl_portals_recv_frag_t;
@@ -141,6 +146,11 @@ extern int mca_ptl_portals_component_progress(
  */
 struct mca_ptl_portals_module_t {
     mca_ptl_base_module_t super;         /**< base PTL module interface */
+
+    /* number of mds for first frags */
+    int first_frag_num_mds;
+    /* size of each md for first frags */
+    int first_frag_md_size;
 
     /** our portals network interface */
     ptl_handle_ni_t ni_handle;
@@ -356,5 +366,8 @@ extern int mca_ptl_portals_send_continue(
     int flags
 );
 
+
+extern int mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
+                                         int value);
 
 #endif

@@ -27,17 +27,18 @@
 
 #include "ptl_portals.h"
 #include "ptl_portals_compat.h"
+#include "ptl_portals_sendfrag.h"
 
 mca_ptl_portals_module_t mca_ptl_portals_module = {
     {
         &mca_ptl_portals_component.super,
-        1,   /* max size of request cache */
-        1,   /* byest required by ptl for a request */
-        128, /* max size of first frag */
+        0,   /* max size of request cache */
+        sizeof(mca_ptl_portals_send_frag_t),   /* byes required by ptl for a request */
+        0,   /* max size of first frag */
         0,   /* min size of frag */
-        128, /* max size of frag */
+        0,   /* max size of frag */
         0,   /* exclusivity */
-        50,  /* latency */
+        0,   /* latency */
         0,   /* bandwidth */
         0,   /* ptl flags */
 
@@ -59,7 +60,9 @@ mca_ptl_portals_module_t mca_ptl_portals_module = {
         NULL   /* PML use */
     },
 
-    0,
+    0, /* num first frag mds */
+    0, /* size first frag md */
+    0, /* ni handle */
 };
 
 
@@ -75,6 +78,8 @@ mca_ptl_portals_add_procs(struct mca_ptl_base_module_t* ptl,
     struct ompi_proc_t *curr_proc;
     ptl_process_id_t *portals_procs;
     size_t i;
+    unsigned long distance;
+    struct mca_ptl_portals_module_t *myptl = (struct mca_ptl_portals_module_t*) ptl;
 
     /* make sure our environment is fully initialized.  At end of this
        call, we have a working network handle on our module and
@@ -90,7 +95,31 @@ mca_ptl_portals_add_procs(struct mca_ptl_base_module_t* ptl,
         /* BWB - do we want to send to self?  No for now */
         if (curr_proc == local_proc) continue;
 
+        /* make sure we can reach the process */
+        ret = PtlNIDist(myptl->ni_handle,
+                        portals_procs[i],
+                        &distance);
+        if (ret != PTL_OK) {
+            ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                                "Could not find distance to process %d", i);
+            continue;
+        }
+
+        /* set the peer as a pointer to the address */
+        peers[i] = (struct mca_ptl_base_peer_t*) &(portals_procs[i]);
+
+        /* and here we can reach */
+        ompi_bitmap_set_bit(reachable, i);
     }
 
+    return OMPI_SUCCESS;
+}
+
+
+int
+mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
+                              int value)
+{
+    /* need to do all the portals cleanup code here... */
     return OMPI_SUCCESS;
 }
