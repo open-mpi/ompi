@@ -405,16 +405,15 @@ static void dump_aborted_procs(orte_jobid_t jobid)
             }
         }
 
-        /* If we haven't done so already, hold the exit_status so we can
-           return it when exiting.  Specifically, keep the first
+        /* If we haven't done so already, hold the exit_status so we
+           can return it when exiting.  Specifically, keep the first
            non-zero entry.  If they all return zero, we'll return
-           zero. */
+           zero.  We already have the globals.lock (from
+           job_state_callback), so don't try to get it again. */
 
-        OMPI_THREAD_LOCK(&orterun_globals.lock);
         if (0 == orterun_globals.exit_status && exit_status_set) {
             orterun_globals.exit_status = exit_status;
         }
-        OMPI_THREAD_UNLOCK(&orterun_globals.lock);
 
         OBJ_RELEASE(value);
     }
