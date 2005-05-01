@@ -184,7 +184,8 @@ static int orte_pls_rsh_set_node_name(orte_ras_base_node_t* node, orte_jobid_t j
     orte_gpr_keyval_t kv_name = {{OBJ_CLASS(orte_gpr_keyval_t),0},ORTE_NODE_BOOTPROXY_KEY,ORTE_NAME};
     orte_gpr_keyval_t* keyvals[1];
     char* jobid_string;
-    int i, rc;
+    size_t i;
+    int rc;
                                                                                                                   
     if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -463,7 +464,7 @@ int orte_pls_rsh_terminate_job(orte_jobid_t jobid)
     char *keys[2];
     char *jobid_string;
     orte_gpr_value_t** values = NULL;
-    int i, j, num_values = 0;
+    size_t i, j, num_values = 0;
     int rc;
                                                                                                                            
     if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {

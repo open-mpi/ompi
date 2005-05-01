@@ -69,7 +69,8 @@ enum {
     ORTE_UNPACK_READ_PAST_END_OF_BUFFER = -42,
     ORTE_ERR_NOT_AVAILABLE = -43,
     ORTE_ERR_GPR_DATA_CORRUPT = -44,
-    ORTE_ERR_PERM /* no permission */
+    ORTE_ERR_PERM = -45, /* no permission */
+    ORTE_ERR_TYPE_MISMATCH = -46
 };
 
 #endif /* ORTE_CONSTANTS_H */

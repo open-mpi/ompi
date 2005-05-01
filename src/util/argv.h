@@ -59,6 +59,7 @@ extern "C" {
    * string (i.e., the arg parameter) after invoking this function.
    */
 OMPI_DECLSPEC  int ompi_argv_append(int *argc, char ***argv, const char *arg);
+OMPI_DECLSPEC  int ompi_argv_append_nosize(char ***argv, const char *arg);
 
   /**
    * Free a NULL-terminated argv array.

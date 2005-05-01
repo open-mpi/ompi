@@ -39,7 +39,7 @@ int orte_soh_base_set_proc_soh(orte_process_name_t *proc,
     int rc;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
-    int i;
+    size_t i;
 
     value = OBJ_NEW(orte_gpr_value_t);
     if (NULL == value) {

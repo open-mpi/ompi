@@ -67,7 +67,7 @@ struct orte_rmaps_base_proc_t {
     ompi_list_item_t super;
     orte_rmaps_base_node_t* proc_node;
     orte_process_name_t proc_name;
-    int proc_rank;
+    size_t proc_rank;
 };
 typedef struct orte_rmaps_base_proc_t orte_rmaps_base_proc_t;
 

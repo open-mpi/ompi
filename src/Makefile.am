@@ -102,7 +102,6 @@ SUBDIRS = \
         attribute \
         communicator \
         datatype \
-        dps \
         errhandler \
         event \
         file \
@@ -133,7 +132,6 @@ libmpi_la_LIBADD = \
         class/liblfc.la \
         communicator/libcommunicator.la \
         datatype/libdatatype.la \
-        dps/libdps.la \
         errhandler/liberrhandler.la \
         event/libevent.la \
         file/libfile.la \
@@ -143,6 +141,7 @@ libmpi_la_LIBADD = \
         mca/allocator/base/libmca_allocator_base.la $(MCA_allocator_STATIC_LTLIBS) \
         mca/coll/base/libmca_coll_base.la $(MCA_coll_STATIC_LTLIBS) \
         $(MCA_common_STATIC_LTLIBS) \
+        mca/dps/base/libmca_dps_base.la $(MCA_dps_STATIC_LTLIBS) \
         mca/errmgr/base/libmca_errmgr_base.la \
         mca/gpr/base/pack_api_cmd/libmca_gpr_base_pack.la \
         mca/gpr/base/unpack_api_response/libmca_gpr_base_unpack.la \
@@ -160,6 +159,7 @@ libmpi_la_LIBADD = \
         mca/rmaps/base/libmca_rmaps_base.la $(MCA_rmaps_STATIC_LTLIBS) \
         mca/rmgr/base/libmca_orte_rmgr_base.la $(MCA_rmgr_STATIC_LTLIBS) \
         mca/rml/base/libmca_rml_base.la $(MCA_rml_STATIC_LTLIBS) \
+	mca/schema/base/libmca_schema_base.la $(MCA_schema_STATIC_LTLIBS) \
         mca/soh/base/libmca_soh_base.la $(MCA_soh_STATIC_LTLIBS) \
         mca/topo/base/libmca_topo_base.la $(MCA_topo_STATIC_LTLIBS) \
         mpi/c/libmpi_c.la $(c_mpi_lib) $(c_pmpi_lib) \

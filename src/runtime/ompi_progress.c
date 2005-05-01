@@ -24,6 +24,7 @@
 #include "mca/pml/pml.h"
 #include "runtime/ompi_progress.h"
 #include "include/constants.h"
+#include "mca/errmgr/errmgr.h"
 #include "mca/ns/ns.h"
 #include "mca/gpr/gpr.h"
 #include "include/orte_schema.h"
@@ -61,24 +62,25 @@ static int32_t event_num_mpi_users = 0;
 static void
 node_schedule_callback(orte_gpr_notify_data_t *notify_data, void *user_tag)
 {
-    uint32_t proc_slots = 0;
-    uint32_t used_proc_slots = 0;
-    int param, i;
+    size_t proc_slots = 0;
+    size_t used_proc_slots = 0;
+    int param;
+    size_t i;
 
     /* parse the response */
     for(i = 0 ; i < notify_data->cnt ; i++) {
         orte_gpr_value_t* value = notify_data->values[i];
-        int k;
+        size_t k;
 
         for(k = 0 ; k < value->cnt ; k++) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
             if(strcmp(keyval->key, ORTE_NODE_SLOTS_KEY) == 0) {
-                proc_slots = keyval->value.ui32;
+                proc_slots = keyval->value.size;
                 continue;
             }
             if(strncmp(keyval->key, ORTE_NODE_SLOTS_ALLOC_KEY, 
                        strlen(ORTE_NODE_SLOTS_ALLOC_KEY)) == 0) {
-                used_proc_slots += keyval->value.ui32;
+                used_proc_slots += keyval->value.size;
                 continue;
             }
         }
@@ -98,22 +100,37 @@ register_node_schedule_callback(void)
     orte_jobid_t jobid = orte_process_info.my_name->jobid;
     int rc;
     char **tokens;
-    int32_t num_tokens;
+    size_t num_tokens;
     char *my_name_string;
     orte_cellid_t cellid;
 
     /* query our node... */
     rc = orte_ns.get_proc_name_string(&my_name_string, 
                                       orte_process_info.my_name);
-    if (ORTE_SUCCESS != rc) return rc;
+    if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
     rc = orte_ns.get_cellid(&cellid, orte_process_info.my_name);
-    if (ORTE_SUCCESS != rc) return rc;
+    if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = orte_ns.get_jobid(&jobid, orte_process_info.my_name);
+    if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
     rc = orte_schema.get_node_tokens(&tokens, &num_tokens, 
                                      cellid,
                                      my_name_string);
-    if (ORTE_SUCCESS != rc) return rc;
+    if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
     /* setup the subscription definition */
     OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
@@ -173,12 +190,12 @@ register_node_schedule_callback(void)
     subs = &sub;
     trigs = &trig;
     rc = orte_gpr.subscribe(
-        	ORTE_GPR_NOTIFY_ADD_ENTRY | ORTE_GPR_NOTIFY_VALUE_CHG |
-                ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_ONE_SHOT,
+            ORTE_GPR_TRIG_ALL_CMP,
         	1, &subs,
-                1, &trigs,
-                &rctag);
+            1, &trigs,
+            &rctag);
     if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
         return OMPI_ERROR;
@@ -221,7 +238,10 @@ ompi_progress_mpi_init(void)
         /* no default given.  Register a callback so that we have a
            value when we get to mpi_enable() */
         rc = register_node_schedule_callback();
-        if (OMPI_SUCCESS != rc) return rc;
+        if (OMPI_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     event_num_mpi_users = 0;

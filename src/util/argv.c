@@ -30,38 +30,55 @@
  */
 int ompi_argv_append(int *argc, char ***argv, const char *arg)
 {
+    int rc;
+    
+    /* add the new element */
+    if (OMPI_SUCCESS != (rc = ompi_argv_append_nosize(argv, arg))) {
+        return rc;
+    }
+    
+    *argc = ompi_argv_count(*argv);
+    
+    return OMPI_SUCCESS;
+}
+
+int ompi_argv_append_nosize(char ***argv, const char *arg)
+{
+    int argc;
+    
   /* Create new argv. */
 
   if (NULL == *argv) {
-      *argv = (char**) malloc(2 * sizeof(char *));
+    *argv = (char**) malloc(2 * sizeof(char *));
     if (NULL == *argv)
-      return OMPI_ERROR;
-    *argc = 0;
+        return OMPI_ERROR;
+    argc = 0;
     (*argv)[0] = NULL;
     (*argv)[1] = NULL;
   }
 
   /* Extend existing argv. */
-
   else {
-      *argv = (char**) realloc(*argv, (*argc + 2) * sizeof(char *));
-    if (NULL == *argv)
-      return OMPI_ERROR;
-  }
+        /* count how many entries currently exist */
+        argc = ompi_argv_count(*argv);
+        
+        *argv = (char**) realloc(*argv, (argc + 2) * sizeof(char *));
+        if (NULL == *argv)
+            return OMPI_ERROR;
+    }
 
-  /* Set the newest element to point to a copy of the arg string */
+    /* Set the newest element to point to a copy of the arg string */
 
-  (*argv)[*argc] = (char*) malloc(strlen(arg) + 1);
-  if (NULL == (*argv)[*argc])
-    return OMPI_ERROR;
+    (*argv)[argc] = (char*) malloc(strlen(arg) + 1);
+    if (NULL == (*argv)[argc])
+        return OMPI_ERROR;
 
-  strcpy((*argv)[*argc], arg);
-  *argc = *argc + 1;
-  (*argv)[*argc] = NULL;
+    strcpy((*argv)[argc], arg);
+    argc = argc + 1;
+    (*argv)[argc] = NULL;
 
-  return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
-
 
 /*
  * Free a NULL-terminated argv array.

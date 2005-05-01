@@ -175,7 +175,7 @@ void ompi_attr_create_predefined_callback(
     void *cbdata)
 {
     int err;
-    int32_t i, j;
+    size_t i, j;
     orte_gpr_keyval_t **keyval;
     orte_gpr_value_t **value;
     orte_jobid_t job;

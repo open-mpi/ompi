@@ -170,7 +170,8 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
     orte_rmgr_cb_fn_t cbfunc = (orte_rmgr_cb_fn_t)cbdata;
     orte_gpr_keyval_t** keyvals;
     orte_jobid_t jobid;
-    int i, j, rc;
+    size_t i, j;
+    int rc;
 
     /* get the jobid from the segment name */
     if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_segment_name(&jobid, data->segment))) {
@@ -338,5 +339,15 @@ static int orte_rmgr_urm_finalize(void)
     orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RMGR_SVC);
 
     return ORTE_SUCCESS;
+}
+
+static void orte_rmgr_urm_recv(
+    int status,
+    orte_process_name_t* peer,
+    orte_buffer_t* req,
+    orte_rml_tag_t tag,
+    void* cbdata)
+{
+    return;
 }
 

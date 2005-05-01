@@ -168,6 +168,7 @@ int orte_dps_unpack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_DATA_TYPE:
         case ORTE_NODE_STATE:
         case ORTE_PROC_STATE:
+        case ORTE_EXIT_CODE:
         case ORTE_BYTE:
         case ORTE_INT8:
         case ORTE_UINT8:
@@ -208,7 +209,6 @@ int orte_dps_unpack_nobuffer(void *dst, void *src, size_t num_vals,
         case ORTE_JOBID:
         case ORTE_CELLID:
         case ORTE_GPR_NOTIFY_ID:
-        case ORTE_EXIT_CODE:
         case ORTE_INT32:
         case ORTE_UINT32:
 

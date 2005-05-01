@@ -62,8 +62,9 @@ static void find(const char *name, test_component_handle_t *handle,
 
 int main(int argc, char **argv)
 {
-    int rc, num_names, num_found;
-    int32_t i;
+    int rc;
+    size_t num_names, num_found;
+    size_t i;
     char *tmp=NULL, *tmp2=NULL, *names[15], *keys[5];
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t itag[10], itag2, *itaglist;
@@ -208,6 +209,8 @@ int main(int argc, char **argv)
         fprintf(test_out, "gpr_test: find_seg passed\n");
     }
 
+    gpr_module->dump_all(0);
+
     fprintf(stderr, "creating tags\n");
     for (i=0; i<10; i++) {
         asprintf(&tmp, "test-tag-%d", i);
@@ -307,6 +310,8 @@ int main(int argc, char **argv)
     } else {
         fprintf(test_out, "gpr_test: create_container passed\n");
     }
+
+    gpr_module->dump_all(0);
     
     fprintf(test_out, "itags for container\n");
     for (i=0; i < cptr->num_itags; i++) {

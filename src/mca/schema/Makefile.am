@@ -16,26 +16,19 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-        common \
-        allocator \
-        coll \
-	dps \
-        errmgr \
-        gpr \
-        io \
-        iof \
-        mpool \
-        ns \
-        oob \
-	pls \
-        pml \
-        ptl \
-        rml \
-	ras \
-	rds \
-	rmaps \
-	rmgr \
-	schema \
-        soh \
-        topo
+SUBDIRS = base $(MCA_schema_STATIC_SUBDIRS)
+DIST_SUBDIRS = base $(MCA_schema_ALL_SUBDIRS)
+
+# Source code files
+
+headers = schema.h \
+	  schema_types.h
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/mca/schema
+ompi_HEADERS = $(headers)
+else
+ompidir = $(includedir)
+endif

@@ -286,7 +286,7 @@ int orte_pls_fork_terminate_job(orte_jobid_t jobid)
     char *segment;
     char *keys[3];
     orte_gpr_value_t** values = NULL;
-    int i, k, num_values = 0;
+    size_t i, k, num_values = 0;
     int rc;
 
     /* query the job segment on the registry */

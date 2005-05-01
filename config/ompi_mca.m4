@@ -157,7 +157,7 @@ unset msg
 # The list of MCA types (it's fixed)
 
 AC_MSG_CHECKING([for MCA types])
-found_types="common allocator coll errmgr gpr io iof mpool ns oob pls pml ptl ras rds rmaps rmgr rml soh topo"
+found_types="common allocator coll dps errmgr gpr io iof mpool ns oob pls pml ptl ras rds rmaps rmgr rml soh topo"
 AC_MSG_RESULT([$found_types])
 
 # Get the list of all the non-configure MCA components that were found by
@@ -480,10 +480,10 @@ AC_SUBST(MCA_oob_STATIC_SUBDIRS)
 AC_SUBST(MCA_oob_DSO_SUBDIRS)
 AC_SUBST(MCA_oob_STATIC_LTLIBS)
 
-AC_SUBST(MCA_errmgr_ALL_SUBDIRS)
-AC_SUBST(MCA_errmgr_STATIC_SUBDIRS)
-AC_SUBST(MCA_errmgr_DSO_SUBDIRS)
-AC_SUBST(MCA_errmgr_STATIC_LTLIBS)
+AC_SUBST(MCA_dps_ALL_SUBDIRS)
+AC_SUBST(MCA_dps_STATIC_SUBDIRS)
+AC_SUBST(MCA_dps_DSO_SUBDIRS)
+AC_SUBST(MCA_dps_STATIC_LTLIBS)
 
 AC_SUBST(MCA_errmgr_ALL_SUBDIRS)
 AC_SUBST(MCA_errmgr_STATIC_SUBDIRS)
@@ -577,6 +577,11 @@ AC_SUBST(MCA_ptl_ALL_SUBDIRS)
 AC_SUBST(MCA_ptl_STATIC_SUBDIRS)
 AC_SUBST(MCA_ptl_DSO_SUBDIRS)
 AC_SUBST(MCA_ptl_STATIC_LTLIBS)
+
+AC_SUBST(MCA_schema_ALL_SUBDIRS)
+AC_SUBST(MCA_schema_STATIC_SUBDIRS)
+AC_SUBST(MCA_schema_DSO_SUBDIRS)
+AC_SUBST(MCA_schema_STATIC_LTLIBS)
 
 AC_SUBST(MCA_topo_ALL_SUBDIRS)
 AC_SUBST(MCA_topo_STATIC_SUBDIRS)

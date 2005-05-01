@@ -317,7 +317,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
 {
     char *segment;
     orte_gpr_value_t** values = NULL;
-    int i, k, num_values = 0;
+    size_t i, k, num_values = 0;
     int rc;
     int32_t exit_status = 0;
     bool exit_status_set;
@@ -353,8 +353,9 @@ static void dump_aborted_procs(orte_jobid_t jobid)
     for (i = 0; i < num_values; i++) {
         orte_gpr_value_t* value = values[i];
         orte_process_name_t name;
-        uint32_t pid = 0;
-        uint32_t rank = -1;
+        size_t pid = 0;
+        size_t rank = 0;
+        bool rank_found=false;
         char* node_name = NULL;
 
         exit_status = 0;
@@ -366,11 +367,12 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_PID_KEY) == 0) {
-                pid = keyval->value.ui32;
+                pid = keyval->value.size;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
-                rank = keyval->value.ui32;
+                rank_found = true;
+                rank = keyval->value.size;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_EXIT_CODE_KEY) == 0) {
@@ -383,11 +385,11 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 continue;
             }
         }
-        if (rank >= 0 && exit_status_set) {
+        if (rank_found && exit_status_set) {
             proc_infos[rank].exit_status = exit_status;
         }
  
-        if (WIFSIGNALED(exit_status) && rank >= 0 && 
+        if (WIFSIGNALED(exit_status) && rank_found && 
             !proc_infos[rank].reported) { 
             proc_infos[rank].reported = true;
 
@@ -785,7 +787,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     app->num_env = 0;
     for (i = 0; NULL != environ[i]; ++i) {
         if (0 == strncmp("OMPI_", environ[i], 5)) {
-            ompi_argv_append(&app->num_env, &app->env, environ[i]);
+            ompi_argv_append_nosize(&app->env, environ[i]);
         }
     }
 
@@ -797,15 +799,15 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
             param = ompi_cmd_line_get_param(&cmd_line, "x", i, 0);
 
             if (NULL != strchr(param, '=')) {
-                ompi_argv_append(&app->num_env, &app->env, param);
+                ompi_argv_append_nosize(&app->env, param);
             } else {
                 value = getenv(param);
                 if (NULL != value) {
                     if (NULL != strchr(value, '=')) {
-                        ompi_argv_append(&app->num_env, &app->env, value);
+                        ompi_argv_append_nosize(&app->env, value);
                     } else {
                         asprintf(&value2, "%s=%s", param, value);
-                        ompi_argv_append(&app->num_env, &app->env, value2);
+                        ompi_argv_append_nosize(&app->env, value2);
                     }
                 } else {
                     ompi_output(0, "Warning: could not find environment variable \"%s\"\n", param);
@@ -819,7 +821,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     if (NULL != orterun_globals.path) {
         asprintf(&value, "PATH=%s", orterun_globals.path);
-        ompi_argv_append(&app->num_env, &app->env, value);
+        ompi_argv_append_nosize(&app->env, value);
         free(value);
     }
 

@@ -1316,6 +1316,10 @@ AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype cor
 
 AC_WORDS_BIGENDIAN
 
+# Size of pid_t
+
+AC_CHECK_SIZEOF(pid_t)
+
 # all: SYSV semaphores
 # all: SYSV shared memory
 # all: size of FD_SET
@@ -1667,6 +1671,8 @@ AC_CONFIG_FILES([
     src/mca/base/Makefile
     src/mca/common/Makefile
 
+    src/mca/dps/Makefile
+    src/mca/dps/base/Makefile
     src/mca/errmgr/Makefile
     src/mca/errmgr/base/Makefile
     src/mca/iof/Makefile
@@ -1689,6 +1695,8 @@ AC_CONFIG_FILES([
     src/mca/rmaps/base/Makefile
     src/mca/rmgr/Makefile
     src/mca/rmgr/base/Makefile
+    src/mca/schema/Makefile
+    src/mca/schema/base/Makefile
     src/mca/soh/Makefile
     src/mca/soh/base/Makefile
 
@@ -1711,6 +1719,7 @@ AC_CONFIG_FILES([
 
     src/dynamic-mca/common/Makefile
 
+    src/dynamic-mca/dps/Makefile
     src/dynamic-mca/errmgr/Makefile
     src/dynamic-mca/iof/Makefile
     src/dynamic-mca/gpr/Makefile
@@ -1721,6 +1730,7 @@ AC_CONFIG_FILES([
     src/dynamic-mca/rds/Makefile
     src/dynamic-mca/rmaps/Makefile
     src/dynamic-mca/rmgr/Makefile
+    src/dynamic-mca/schema/Makefile
     src/dynamic-mca/soh/Makefile
 
     src/dynamic-mca/Makefile
@@ -1756,7 +1766,7 @@ AC_CONFIG_FILES([
     test/Makefile
     test/asm/Makefile
     test/class/Makefile
-    test/dps/Makefile
+    test/mca/dps/Makefile
     test/mca/Makefile
     test/mca/gpr/Makefile
     test/mca/ns/Makefile
@@ -1764,6 +1774,7 @@ AC_CONFIG_FILES([
     test/mca/ras/Makefile
     test/mca/rds/Makefile
     test/mca/rmaps/Makefile
+    test/mca/schema/Makefile
     test/runtime/Makefile
     test/support/Makefile
     test/threads/Makefile
