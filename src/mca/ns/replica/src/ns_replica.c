@@ -16,15 +16,16 @@
 /** @file:
  *
  */
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #include <stdio.h>
 #include <string.h>
 
+#include "dps/dps.h"
 #include "threads/mutex.h"
 
 #include "util/output.h"
-#include "mca/mca.h"
+#include "mca/errmgr/errmgr.h"
 #include "mca/ns/base/base.h"
 #include "ns_replica.h"
 
@@ -49,6 +50,7 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid)
     
     *cellid = ORTE_CELLID_MAX;
 	OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
 	return ORTE_ERR_OUT_OF_RESOURCE;
 }
 
@@ -64,6 +66,8 @@ int orte_ns_replica_create_jobid(orte_jobid_t *jobid)
 	    new_nt = OBJ_NEW(orte_ns_replica_name_tracker_t);
         if (NULL == new_nt) {  /* out of memory */
             *jobid = ORTE_JOBID_MAX;
+            OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
 	    new_nt->job = *jobid;
@@ -75,6 +79,7 @@ int orte_ns_replica_create_jobid(orte_jobid_t *jobid)
     
     *jobid = ORTE_JOBID_MAX;
 	OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
 	return ORTE_ERR_OUT_OF_RESOURCE;
 }
 
@@ -99,6 +104,8 @@ int orte_ns_replica_reserve_range(orte_jobid_t job, orte_vpid_t range, orte_vpid
 		      return ORTE_SUCCESS;
 	       } else {  /* range not available */
                 *start = ORTE_VPID_MAX;
+                OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
            }
 	   }
@@ -106,7 +113,8 @@ int orte_ns_replica_reserve_range(orte_jobid_t job, orte_vpid_t range, orte_vpid
     
     /* get here if the job couldn't be found */
     OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
-    return ORTE_ERR_BAD_PARAM;
+    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    return ORTE_ERR_NOT_FOUND;
 }
 
 int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
@@ -123,6 +131,7 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
              tagitem = (orte_ns_replica_tagitem_t*)ompi_list_get_next(tagitem)) {
             if (tagitem->name != NULL && 0 == strcmp(name, tagitem->name)) { /* found name on list */
                 *tag = tagitem->tag;
+                OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
                 return ORTE_SUCCESS;
             }
         }
@@ -137,6 +146,7 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
         if (NULL == tagitem) { /* out of memory */
             *tag = ORTE_RML_TAG_MAX;
             OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         tagitem->tag = orte_ns_replica_next_rml_tag;
@@ -156,7 +166,125 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
     /* no tag available */
     *tag = ORTE_RML_TAG_MAX;
     OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
     return ORTE_ERR_OUT_OF_RESOURCE;
 
 }
 
+
+int orte_ns_replica_define_data_type(orte_dps_pack_fn_t pack_fn,
+                                     orte_dps_unpack_fn_t unpack_fn,
+                                     const char *name,
+                                     orte_data_type_t *type)
+{
+    orte_ns_replica_dti_t *dti;
+    
+    OMPI_THREAD_LOCK(&orte_ns_replica_mutex);
+
+    if (NULL != name) {
+        /* see if this name is already in list - if so, return id */
+        for (dti = (orte_ns_replica_dti_t*)ompi_list_get_first(&orte_ns_replica_dtlist);
+             dti != (orte_ns_replica_dti_t*)ompi_list_get_end(&orte_ns_replica_dtlist);
+             dti = (orte_ns_replica_dti_t*)ompi_list_get_next(dti)) {
+            if (dti->name != NULL && 0 == strcmp(name, dti->name)) { /* found name on list */
+                *type = dti->id;
+                OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+                return ORTE_SUCCESS;
+            }
+        }
+    }
+      
+    /* if we are provided with the type (i.e., *type > 0), then
+     * just store the name and the pack/unpack fn pointers
+     * for later use
+     */
+    if (0 < *type) {
+        if (NULL == name) { /* must provide the name in this situation */
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+            return ORTE_ERR_BAD_PARAM;
+        }
+        dti = OBJ_NEW(orte_ns_replica_dti_t);
+        if (NULL == dti) { /* out of memory */
+            OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        dti->id = *type;
+        dti->name = strdup(name);
+        dti->pack_fn = pack_fn;
+        dti->unpack_fn = unpack_fn;
+        ompi_list_append(&orte_ns_replica_dtlist, &dti->item);
+        return ORTE_SUCCESS;
+    }
+    
+    /* not in list or not provided, so allocate next id
+     * first check to see if one available - else error
+     */
+    if (ORTE_DPS_ID_MAX > orte_ns_replica_next_dti) {
+        /* okay, one available - assign it */
+        dti = OBJ_NEW(orte_ns_replica_dti_t);
+        if (NULL == dti) { /* out of memory */
+            *type = ORTE_DPS_ID_MAX;
+            OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        dti->id = orte_ns_replica_next_dti;
+        if (NULL != name) {  /* provided - can look it up later */
+            dti->name = strdup(name);
+        } else {
+            dti->name = NULL;
+        }
+        dti->pack_fn = pack_fn;
+        dti->unpack_fn = unpack_fn;
+        orte_ns_replica_next_dti++;
+        ompi_list_append(&orte_ns_replica_dtlist, &dti->item);
+    
+        *type = dti->id;
+        OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+        return ORTE_SUCCESS;
+    }
+    
+    /* no id available */
+    *type = ORTE_DPS_ID_MAX;
+    OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+    return ORTE_ERR_OUT_OF_RESOURCE;
+
+}
+
+int orte_ns_replica_lookup_data_type(orte_dps_pack_fn_t *pack_fn,
+                                     orte_dps_unpack_fn_t *unpack_fn,
+                                     char **name, orte_data_type_t type)
+{
+    orte_ns_replica_dti_t *dti;
+    
+    OMPI_THREAD_LOCK(&orte_ns_replica_mutex);
+
+    for (dti = (orte_ns_replica_dti_t*)ompi_list_get_first(&orte_ns_replica_dtlist);
+         dti != (orte_ns_replica_dti_t*)ompi_list_get_end(&orte_ns_replica_dtlist);
+         dti = (orte_ns_replica_dti_t*)ompi_list_get_next(dti)) {
+        if (dti->name != NULL && type != dti->id) { /* found name on list */
+            if (NULL != name) {
+                *name = strdup(dti->name);
+            }
+            if (NULL != pack_fn) {
+                *pack_fn = dti->pack_fn;
+            }
+            if (NULL != unpack_fn) {
+                *unpack_fn = dti->unpack_fn;
+            }
+            OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+            return ORTE_SUCCESS;
+        }
+    }
+
+    if (NULL != name) *name = NULL;
+    if (NULL != pack_fn) *pack_fn = NULL;
+    if (NULL != unpack_fn) *unpack_fn = NULL;
+    
+    OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    return ORTE_ERR_NOT_FOUND;
+}

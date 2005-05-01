@@ -70,6 +70,8 @@ mca_ns_base_module_t orte_ns = {
     orte_ns_base_compare,
     orte_ns_base_derive_vpid,
     orte_ns_base_assign_rml_tag_not_available,
+    orte_ns_base_define_data_type_not_available,
+    orte_ns_base_lookup_data_type_not_available,
     orte_ns_base_set_my_name,
     orte_ns_base_get_peers
 };

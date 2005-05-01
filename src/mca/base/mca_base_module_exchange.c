@@ -21,7 +21,7 @@
 #include "util/output.h"
 #include "util/proc_info.h"
 
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/errmgr/errmgr.h"

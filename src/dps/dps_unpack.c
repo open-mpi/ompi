@@ -15,6 +15,7 @@
  */
  
 #include "orte_config.h"
+#include "include/orte_types.h"
 
 #include <sys/types.h>
 #ifdef HAVE_NETINET_IN_H
@@ -23,6 +24,7 @@
 #include <string.h>
 
 #include "mca/errmgr/errmgr.h"
+#include "mca/ns/ns.h"
 
 #include "dps/dps_internal.h"
 
@@ -34,8 +36,7 @@ int orte_dps_unpack(orte_buffer_t *buffer, void *dst, size_t *num_vals,
     size_t local_num;
 
     /* check for error */
-    if (NULL == buffer || NULL == dst || NULL == num_vals || 0 > *num_vals ||
-        type >= orte_value_array_get_size(&orte_dps_types)) { 
+    if (NULL == buffer || NULL == dst || NULL == num_vals || 0 > *num_vals) { 
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
@@ -94,10 +95,9 @@ int orte_dps_unpack_buffer(orte_buffer_t *buffer, void *dst, size_t num_vals,
                     orte_data_type_t type)
 {
     int rc;
-    orte_dps_type_info_t *info;
     orte_data_type_t local_type;
 
-    /* Unpack the data type and check it for compatibility */
+    /* Unpack the data type */
     if (ORTE_SUCCESS != (rc = orte_dps_get_data_type(buffer, &local_type))) {
         ORTE_ERROR_LOG(rc);
         return rc;

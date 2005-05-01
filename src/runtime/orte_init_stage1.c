@@ -27,7 +27,7 @@
 #include "event/event.h"
 #include "util/output.h"
 #include "threads/mutex.h"
-#include "mca/dps/base/base.h"
+#include "dps/dps.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
@@ -145,7 +145,7 @@ int orte_init_stage1(void)
     /*
      * Initialize the data packing service.
      */
-    if (ORTE_SUCCESS != (ret = orte_dps_base_open())) {
+    if (ORTE_SUCCESS != (ret = orte_dps_open())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }

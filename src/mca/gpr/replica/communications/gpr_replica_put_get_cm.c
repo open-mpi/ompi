@@ -25,7 +25,7 @@
  */
 #include "orte_config.h"
 
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 
 #include "gpr_replica_comm.h"
@@ -292,7 +292,6 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
         ORTE_ERROR_LOG(rc);
     }
 
-ompi_output(0, "REPLICA-GET: FINAL NUMBER OF BYTES PACKED %d", output_buffer->len);
     return ret;
 }
 

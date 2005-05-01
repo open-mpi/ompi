@@ -21,23 +21,30 @@
 #endif
 
 #include "mca/errmgr/errmgr.h"
+#include "mca/ns/ns.h"
 
 #include "dps/dps_internal.h"
 
+static int orte_dps_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_vals,
+                  orte_data_type_t type);
 
 int orte_dps_pack(orte_buffer_t *buffer, void *src, size_t num_vals,
                   orte_data_type_t type)
 {
     int rc;
+    orte_data_type_t size_tmp=ORTE_SIZE;
 
     /* check for error */
-    if (NULL == buffer || NULL == src || num_vals < 0 ||
-        type > orte_value_array_get_size(&orte_dps_types)) {
+    if (NULL == buffer || NULL == src || num_vals < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
 
     /* Pack the number of values */
+    if (ORTE_SUCCESS != (rc = orte_dps_pack_data_type(buffer, &size_tmp, 1, ORTE_DATA_TYPE))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     if (ORTE_SUCCESS != (rc = orte_dps_pack_sizet(buffer, &num_vals, 1, ORTE_SIZE))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -51,22 +58,26 @@ int orte_dps_pack(orte_buffer_t *buffer, void *src, size_t num_vals,
     return rc;
 }
 
-int orte_dps_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_vals,
+static int orte_dps_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_vals,
                   orte_data_type_t type)
 {
-    orte_dps_type_info_t *info;
     int rc;
+    orte_dps_pack_fn_t pack_fn;
     
     /* Pack the declared data type */
-    if (ORTE_SUCCESS != (rc = orte_dps_store_data_type(buffer, type))) {
+    if (ORTE_SUCCESS != (rc = orte_dps_pack_data_type(buffer, &type, 1, type))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     /* Lookup the pack function for this type and call it */
 
-    info = orte_value_array_get_item(&orte_dps_types, type);
-    if (ORTE_SUCCESS != (rc = info->odti_pack_fn(buffer, src, num_vals, type))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.lookup_data_type(&pack_fn, NULL, NULL, type))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    if (ORTE_SUCCESS != (rc = pack_fn(buffer, src, num_vals, type))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -82,7 +93,7 @@ int orte_dps_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_vals,
 int orte_dps_pack_null(orte_buffer_t *buffer, void *src,
                        size_t num_vals, orte_data_type_t type)
 {
-    char null=NULL;
+    char null=0x00;
     int rc;
     
     if (ORTE_SUCCESS != (rc = orte_dps_pack_byte(buffer, &null, num_vals, ORTE_BYTE))) {
@@ -164,9 +175,9 @@ int orte_dps_pack_byte(orte_buffer_t *buffer, void *src,
     memcpy(dst, src, num_vals);
     
     /* update buffer pointers */
-    buffer->pack_ptr += num_bytes;
-    buffer->bytes_used += num_bytes;
-    buffer->bytes_avail -= num_bytes;
+    buffer->pack_ptr += num_vals;
+    buffer->bytes_used += num_vals;
+    buffer->bytes_avail -= num_vals;
     
     return ORTE_SUCCESS;
 }
@@ -177,7 +188,6 @@ int orte_dps_pack_byte(orte_buffer_t *buffer, void *src,
 int orte_dps_pack_int16(orte_buffer_t *buffer, void *src,
                         size_t num_vals, orte_data_type_t type)
 {
-    int ret;
     size_t i;
     uint16_t tmp, *srctmp = (uint16_t*) src;
     char *dst;
@@ -205,7 +215,6 @@ int orte_dps_pack_int16(orte_buffer_t *buffer, void *src,
 int orte_dps_pack_int32(orte_buffer_t *buffer, void *src,
                         size_t num_vals, orte_data_type_t type)
 {
-    int ret;
     size_t i;
     uint32_t tmp, *srctmp = (uint32_t*) src;
     char *dst;
@@ -233,7 +242,6 @@ int orte_dps_pack_int32(orte_buffer_t *buffer, void *src,
 int orte_dps_pack_int64(orte_buffer_t *buffer, void *src,
                         size_t num_vals, orte_data_type_t type)
 {
-    int ret;
     size_t i;
     uint32_t tmp, *srctmp = (uint32_t*) src;
     char *dst;
@@ -280,5 +288,64 @@ int orte_dps_pack_string(orte_buffer_t *buffer, void *src,
         }
     }
 
+    return ORTE_SUCCESS;
+}
+
+/* PACK FUNCTIONS FOR GENERIC ORTE TYPES */
+
+/*
+ * ORTE_DATA_TYPE
+ */
+int orte_dps_pack_data_type(orte_buffer_t *buffer, void *src, size_t num,
+                             orte_data_type_t type)
+{
+    size_t required;
+    int rc;
+    
+    required = sizeof(orte_data_type_t);
+    switch (required) {
+    
+        case 1:
+            if (ORTE_SUCCESS != (
+                rc = orte_dps_pack_byte(buffer, src, num, ORTE_BYTE))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            break;
+        
+        case 2:
+            if (ORTE_SUCCESS != (
+                rc = orte_dps_pack_int16(buffer, src, num, ORTE_INT16))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            break;
+        
+        case 4:
+            if (ORTE_SUCCESS != (
+                rc = orte_dps_pack_int32(buffer, src, num, ORTE_INT32))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            break;
+        
+        case 8:
+            if (ORTE_SUCCESS != (
+                rc = orte_dps_pack_int64(buffer, src, num, ORTE_INT64))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            break;
+        
+        default:
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            return ORTE_ERR_BAD_PARAM;
+    }
+
+    return rc;
+}
+
+/*
+ * ORTE_BYTE_OBJECT
+ */
+int orte_dps_pack_byte_object(orte_buffer_t *buffer, void *src, size_t num,
+                             orte_data_type_t type)
+{
     return ORTE_SUCCESS;
 }

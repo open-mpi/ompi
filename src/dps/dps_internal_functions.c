@@ -162,28 +162,28 @@ int orte_dps_get_data_type(orte_buffer_t *buffer, orte_data_type_t *type)
     
         case 1:
             if (ORTE_SUCCESS != (
-                rc = orte_dps_unpack_byte(buffer, &type, 1, ORTE_BYTE))) {
+                rc = orte_dps_unpack_byte(buffer, type, 1, ORTE_BYTE))) {
                 ORTE_ERROR_LOG(rc);
             }
             break;
         
         case 2:
             if (ORTE_SUCCESS != (
-                rc = orte_dps_unpack_int16(buffer, &type, 1, ORTE_INT16))) {
+                rc = orte_dps_unpack_int16(buffer, type, 1, ORTE_INT16))) {
                 ORTE_ERROR_LOG(rc);
             }
             break;
         
         case 4:
             if (ORTE_SUCCESS != (
-                rc = orte_dps_unpack_int32(buffer, &type, 1, ORTE_INT32))) {
+                rc = orte_dps_unpack_int32(buffer, type, 1, ORTE_INT32))) {
                 ORTE_ERROR_LOG(rc);
             }
             break;
         
         case 8:
             if (ORTE_SUCCESS != (
-                rc = orte_dps_unpack_int64(buffer, &type, 1, ORTE_INT64))) {
+                rc = orte_dps_unpack_int64(buffer, type, 1, ORTE_INT64))) {
                 ORTE_ERROR_LOG(rc);
             }
             break;

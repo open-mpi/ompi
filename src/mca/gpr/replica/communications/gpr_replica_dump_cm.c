@@ -25,7 +25,7 @@
  */
 #include "orte_config.h"
 
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 
 #include "gpr_replica_comm.h"

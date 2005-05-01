@@ -67,56 +67,7 @@ extern "C" {
 
     /** formalize the declaration */
     OMPI_DECLSPEC OBJ_CLASS_DECLARATION (orte_buffer_t);
-    
-    /* define the basic orte data type */
-    typedef uint8_t orte_data_type_t;
-    
-    
-    /* define an object for holding blocks of bytes */
-    typedef struct {
-        size_t size;
-        uint8_t *bytes;
-    } orte_byte_object_t;
-
-    /* DEFINE INTRINSIC DATA TYPE NAMES */
-    /** Intrinsic type: nothing */
-#define ORTE_NULL   42
-    /** Intrinsic type: byte */
-#define ORTE_BYTE   1
-    /** Intrinsic type: bool */
-#define ORTE_BOOL   2
-
-    /** Intrinsic type: int */
-#define ORTE_INT    6
-    /** Intrinsic type: uint */
-#define ORTE_UINT   11
-
-    /** Intrinsic type: int8 */
-#define ORTE_INT8   7
-    /** Intrinsic type: uint8 */
-#define ORTE_UINT8  12
-    /** Intrinsic type: int16 */
-#define ORTE_INT16  8
-    /** Intrinsic type: uint16 */
-#define ORTE_UINT16 13
-    /** Intrinsic type: int32 */
-#define ORTE_INT32  9
-    /** Intrinsic type: uint32 */
-#define ORTE_UINT32 14
-    /** Intrinsic type: int64 */
-#define ORTE_INT64  10
-    /** Intrinsic type: uint64 */
-#define ORTE_UINT64 15
-
-    /** Intrinsic type: size_t */
-#define ORTE_SIZE   4
-
-    /** Intrinsic type: string */
-#define ORTE_STRING 3
-
-    /** Intrinsic type: byte object */
-#define ORTE_BYTE_OBJECT    30
-
+        
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

@@ -27,7 +27,7 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 
 #include "mca/gpr/base/base.h"
@@ -66,8 +66,6 @@ int orte_gpr_base_unpack_get(orte_buffer_t *buffer, int *ret, size_t *cnt, orte_
     int rc;
     size_t n, num;
 
-ompi_output(0, "UNPACK GET: NUMBER OF BYTES PACKED IN BUFFER %d", buffer->len);
-
     n=1;
     if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &command, &n, ORTE_GPR_PACK_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -86,7 +84,6 @@ ompi_output(0, "UNPACK GET: NUMBER OF BYTES PACKED IN BUFFER %d", buffer->len);
         return rc;
     }
     
-ompi_output(0, "UNPACK GET: NUMBER OF VALUES %d", num);
     /* if there were some, then get them */
     if (0 < num) {
         *values = (orte_gpr_value_t**)malloc(num*sizeof(orte_gpr_value_t*));
@@ -106,13 +103,11 @@ ompi_output(0, "UNPACK GET: NUMBER OF VALUES %d", num);
     }
     
     /* unpack the response code */
-ompi_output(0, "UNPACKING GET RESPONSE CODE");
     n=1;
     if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, ret, &n, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-ompi_output(0, "COMPLETED UNPACKING GET RESPONSE CODE");
 
     if (ORTE_SUCCESS != *ret) {
         ORTE_ERROR_LOG(*ret);

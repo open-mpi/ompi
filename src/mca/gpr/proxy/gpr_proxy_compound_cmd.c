@@ -27,7 +27,7 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 #include "util/output.h"
 #include "util/proc_info.h"
 

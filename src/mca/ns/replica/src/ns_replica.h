@@ -23,7 +23,7 @@
 #include "include/orte_constants.h"
 #include "threads/mutex.h"
 #include "class/ompi_list.h"
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 #include "mca/oob/oob_types.h"
 #include "mca/ns/base/base.h"
 
@@ -53,6 +53,17 @@ typedef struct orte_ns_replica_tagitem_t orte_ns_replica_tagitem_t;
 
 OBJ_CLASS_DECLARATION(orte_ns_replica_tagitem_t);
 
+struct orte_ns_replica_dti_t {
+    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
+    orte_data_type_t id;  /**< data type id */
+    char *name;      /**< Name associated with data type */
+    orte_dps_pack_fn_t pack_fn;  /**< packing fn for data type */
+    orte_dps_unpack_fn_t unpack_fn;   /**< unpack fn for data type */
+};
+typedef struct orte_ns_replica_dti_t orte_ns_replica_dti_t;
+
+OBJ_CLASS_DECLARATION(orte_ns_replica_dti_t);
+
 /*
  * globals needed within component
  */
@@ -60,7 +71,9 @@ extern orte_cellid_t orte_ns_replica_next_cellid;
 extern orte_jobid_t orte_ns_replica_next_jobid;
 extern ompi_list_t orte_ns_replica_name_tracker;
 extern orte_rml_tag_t orte_ns_replica_next_rml_tag;
+extern orte_data_type_t orte_ns_replica_next_dti;
 extern ompi_list_t orte_ns_replica_taglist;
+extern ompi_list_t orte_ns_replica_dtlist;
 extern int orte_ns_replica_debug;
 extern ompi_mutex_t orte_ns_replica_mutex;
 
@@ -109,6 +122,15 @@ int orte_ns_replica_reserve_range(orte_jobid_t job,
 int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
                                    char *name);
 
+
+int orte_ns_replica_define_data_type(orte_dps_pack_fn_t pack_fn,
+                                     orte_dps_unpack_fn_t unpack_fn,
+                                     const char *name,
+                                     orte_data_type_t *type);
+
+int orte_ns_replica_lookup_data_type(orte_dps_pack_fn_t *pack_fn,
+                                     orte_dps_unpack_fn_t *unpack_fn,
+                                     char **name, orte_data_type_t type);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

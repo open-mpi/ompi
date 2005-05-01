@@ -26,7 +26,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-#include "mca/dps/dps.h"
+#include "dps/dps.h"
 
 #include "mca/gpr/base/base.h"
 
