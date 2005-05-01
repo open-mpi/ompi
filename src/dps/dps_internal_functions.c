@@ -20,7 +20,6 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include <string.h>
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h> 
 #endif

@@ -25,6 +25,13 @@
 
 #include "dps/dps.h"
 
+#if HAVE_STRING_H
+#    if !defined(STDC_HEADERS) && HAVE_MEMORY_H
+#        include <memory.h>
+#    endif
+#    include <string.h>
+#endif
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
