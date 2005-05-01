@@ -74,7 +74,7 @@ int MPI_Type_create_darray(int size,
                            MPI_Datatype *newtype)
 
 {
-    int32_t i, step, end_loop, *r;
+    int32_t i, darg_i, step, end_loop, *r;
     MPI_Datatype temptype;
 
     if (MPI_PARAM_CHECK) {
@@ -135,9 +135,8 @@ int MPI_Type_create_darray(int size,
         end_loop = -1;
     }
 
-    temptype = cyclic( darg_array[i], gsize_array[i], r[i], psize_array[i], oldtype );
-    for( i += step; i != end_loop; i += step ) {
-        int darg_i = darg_array[i];
+    do {
+        darg_i = darg_array[i];
         if( distrib_array[i] == MPI_DISTRIBUTE_BLOCK ) {
             if( darg_array[i] == MPI_DISTRIBUTE_DFLT_DARG )
                 darg_i = (gsize_array[i] + psize_array[i] - 1) / psize_array[i];
@@ -151,7 +150,8 @@ int MPI_Type_create_darray(int size,
         *newtype = cyclic( darg_i, gsize_array[i], r[i], psize_array[i], temptype );
         ompi_ddt_destroy( &temptype );
         temptype = *newtype;
-    }
+        i += step;
+    } while( i != end_loop );
 
     free( r );
     /* This function is not yet implemented */
