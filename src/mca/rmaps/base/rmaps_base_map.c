@@ -121,32 +121,32 @@ OBJ_CLASS_INSTANCE(
 
 static int orte_rmaps_value_compare(orte_gpr_value_t** val1, orte_gpr_value_t** val2)
 {
-    int32_t i;
-    int32_t app1 = -1;
-    int32_t app2 = -1;
-    int32_t rank1 = -1;
-    int32_t rank2 = -1;
+    size_t i;
+    size_t app1 = 0;
+    size_t app2 = 0;
+    size_t rank1 = 0;
+    size_t rank2 = 0;
     orte_gpr_value_t* value;
 
     for(i=0, value=*val1; i<value->cnt; i++) {
         orte_gpr_keyval_t* keyval = value->keyvals[i];
         if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
-            rank1 = keyval->value.i32;
+            rank1 = keyval->value.size;
             continue;
         }
         if(strcmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
-            app1 = keyval->value.i32;
+            app1 = keyval->value.size;
             continue;
         }
     }
     for(i=0, value=*val2; i<value->cnt; i++) {
         orte_gpr_keyval_t* keyval = value->keyvals[i];
         if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
-            rank1 = keyval->value.i32;
+            rank1 = keyval->value.size;
             continue;
         }
         if(strcmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
-            app1 = keyval->value.i32;
+            app1 = keyval->value.size;
             continue;
         }
     }
@@ -204,7 +204,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
     char* segment = NULL;
     char* jobid_str = NULL;
     orte_gpr_value_t** values;
-    int32_t v, num_values;
+    size_t v, num_values;
     int rc;
     char* keys[] = {
         ORTE_PROC_RANK_KEY,
@@ -263,7 +263,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
         orte_rmaps_base_map_t* map = NULL;
         orte_rmaps_base_proc_t* proc;
         char* node_name = NULL;
-        int32_t kv;
+        size_t kv;
 
         proc = OBJ_NEW(orte_rmaps_base_proc_t);
         if(NULL == proc) {
@@ -274,7 +274,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
         for(kv = 0; kv<value->cnt; kv++) {
             orte_gpr_keyval_t* keyval = value->keyvals[kv];
             if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
-                proc->proc_rank = keyval->value.i32;
+                proc->proc_rank = keyval->value.size;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_NAME_KEY) == 0) {
@@ -282,8 +282,8 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
-                int32_t app_index = keyval->value.i32;
-                if(app_index >= (int32_t)num_context) {
+                size_t app_index = keyval->value.size;
+                if(app_index >= num_context) {
                     ompi_output(0, "orte_rmaps_base_get_map: invalid context\n");
                     rc = ORTE_ERR_BAD_PARAM;
                     goto cleanup;
@@ -352,7 +352,7 @@ int orte_rmaps_base_get_node_map(
     char* segment = NULL;
     char* jobid_str = NULL;
     orte_gpr_value_t** values;
-    int32_t v, num_values;
+    size_t v, num_values;
     int rc;
     char* keys[] = {
         ORTE_PROC_RANK_KEY,
@@ -412,7 +412,7 @@ int orte_rmaps_base_get_node_map(
         orte_rmaps_base_map_t* map = NULL;
         orte_rmaps_base_proc_t* proc;
         char* node_name = NULL;
-        int32_t kv;
+        size_t kv;
 
         proc = OBJ_NEW(orte_rmaps_base_proc_t);
         if(NULL == proc) {
@@ -423,7 +423,7 @@ int orte_rmaps_base_get_node_map(
         for(kv = 0; kv<value->cnt; kv++) {
             orte_gpr_keyval_t* keyval = value->keyvals[kv];
             if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
-                proc->proc_rank = keyval->value.i32;
+                proc->proc_rank = keyval->value.size;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_NAME_KEY) == 0) {
@@ -431,8 +431,8 @@ int orte_rmaps_base_get_node_map(
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
-                int32_t app_index = keyval->value.i32;
-                if(app_index >= (int32_t)num_context) {
+                size_t app_index = keyval->value.size;
+                if(app_index >= num_context) {
                     ompi_output(0, "orte_rmaps_base_get_map: invalid context\n");
                     rc = ORTE_ERR_BAD_PARAM;
                     goto cleanup;
@@ -573,8 +573,8 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
 
             /* initialize keyvals */
             keyvals[0]->key = strdup(ORTE_PROC_RANK_KEY);
-            keyvals[0]->type = ORTE_INT32;
-            keyvals[0]->value.i32 = proc->proc_rank;
+            keyvals[0]->type = ORTE_SIZE;
+            keyvals[0]->value.size = proc->proc_rank;
 
             keyvals[1]->key = strdup(ORTE_PROC_NAME_KEY);
             keyvals[1]->type = ORTE_NAME;
@@ -585,8 +585,8 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
             keyvals[2]->value.strptr = strdup(proc->proc_node->node_name);
 
             keyvals[3]->key = strdup(ORTE_PROC_APP_CONTEXT_KEY);
-            keyvals[3]->type = ORTE_INT32;
-            keyvals[3]->value.i32 = map->app->idx;
+            keyvals[3]->type = ORTE_SIZE;
+            keyvals[3]->value.size = map->app->idx;
 
             keyvals[4]->key = strdup(ORTE_PROC_STATE_KEY);
             keyvals[4]->type = ORTE_PROC_STATE;
@@ -663,7 +663,7 @@ int orte_rmaps_base_get_vpid_range(orte_jobid_t jobid, orte_vpid_t *start, orte_
     char *tokens[2];
     char *keys[3];
     orte_gpr_value_t** values = NULL;
-    int i, num_values = 0;
+    size_t i, num_values = 0;
     int rc;
 
     /* query the job segment on the registry */

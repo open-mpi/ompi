@@ -38,7 +38,9 @@
 
 int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 {
-    int i, rc, num_counters=6;
+    size_t i, num_counters=6;
+    orte_gpr_notify_id_t subnum;
+    int rc;
     orte_gpr_value_t *values, value, trig, *trigs;
     orte_gpr_subscription_t sub, *subs;
     char* keys[] = {
@@ -82,8 +84,8 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         value.keyvals[i]->key = strdup(keys[i]);
-        value.keyvals[i]->type = ORTE_UINT32;
-        value.keyvals[i]->value.ui32 = 0;
+        value.keyvals[i]->type = ORTE_SIZE;
+        value.keyvals[i]->value.size = 0;
     }
     values = &value;
     
@@ -95,7 +97,9 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     }
     OBJ_DESTRUCT(&value);
     
-    /* for the trigger, we want the counter values returned to us
+    /* for the trigger, we want the counter values returned to us AND
+     * information on VPID_START so we can generate the list of peers
+     * to receive the xcast messages for barrier release.
      * setup subscriptions for that purpose. we'll enter the precise data
      * keys when we are ready to register the subscription - for now,
      * do all the basic stuff
@@ -115,14 +119,15 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     }
     sub.tokens[0] = strdup(ORTE_JOB_GLOBALS); /* the counters are in the job's globals container */
     sub.num_tokens = 1;
-    sub.keys = (char**)malloc(sizeof(char*)*3);
+    sub.num_keys = 3;
+    sub.keys = (char**)malloc(sizeof(char*) * sub.num_keys);
     if (NULL == sub.keys) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OBJ_DESTRUCT(&sub);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    sub.num_keys = 2;
     sub.keys[1] = strdup(ORTE_JOB_SLOTS_KEY);
+    sub.keys[2] = strdup(ORTE_JOB_VPID_START_KEY);
 
     sub.cbfunc = orte_rmgr_base_proc_stage_gate_mgr;
     sub.user_tag = NULL;
@@ -205,7 +210,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
              ORTE_GPR_TRIG_ALL_CMP,
              1, &subs,
              1, &trigs,
-             &rc);
+             &subnum);
     
          if(ORTE_SUCCESS != rc) {
              ORTE_ERROR_LOG(rc);
@@ -257,8 +262,8 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
         OBJ_DESTRUCT(&trig);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    trig.keyvals[0]->type = ORTE_INT32;
-    trig.keyvals[0]->value.i32 = 1;  /* trigger on the first process that aborts */
+    trig.keyvals[0]->type = ORTE_SIZE;
+    trig.keyvals[0]->value.size = 1;  /* trigger on the first process that aborts */
     
     subs = &sub;
     trigs = &trig;
@@ -266,7 +271,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
          ORTE_GPR_TRIG_ALL_AT,
          1, &subs,
          1, &trigs,
-         &rc);
+         &subnum);
 
      if (ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
@@ -288,7 +293,10 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
     orte_gpr_value_t **values;
     orte_gpr_keyval_t **kvals;
     orte_process_name_t *recipients;
-    int i, j, n, k, rc;
+    size_t i, j, n=0;
+    orte_vpid_t k=0;
+    int rc;
+    bool found_slots=false, found_start=false;
     orte_buffer_t msg;
     orte_jobid_t job;
     
@@ -302,31 +310,36 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
      * procs in this job
      */
     values = data->values;
-    n = -1; k = 0;
-    for (i=0; i < data->cnt && (0 > n || 0 > k); i++) {
+    for (i=0; i < data->cnt && (!found_slots || !found_start); i++) {
         kvals = values[i]->keyvals;
         /* check to see if ORTE_JOB_GLOBALS is the token */
         if (NULL != values[i]->tokens &&
             0 == strcmp(ORTE_JOB_GLOBALS, values[i]->tokens[0])) {
             /* find the ORTE_JOB_SLOTS_KEY and the ORTE_JOB_VPID_START_KEY keyval */
-            for (j=0; j < values[i]->cnt && (0 > n); j++) {
-                if (NULL != kvals[j] && 0 > n &&
+            for (j=0; j < values[i]->cnt && (!found_slots || !found_start); j++) {
+                if (NULL != kvals[j] && !found_slots &&
                     0 == strcmp(ORTE_JOB_SLOTS_KEY, kvals[j]->key)) {
-                    n = (int)(kvals[j]->value.ui32);
+                    n = kvals[j]->value.size;
+                    found_slots = true;
                 }
-                if (NULL != kvals[j] && 0 > k &&
+                if (NULL != kvals[j] && !found_start &&
                     0 == strcmp(ORTE_JOB_VPID_START_KEY, kvals[j]->key)) {
-                    k = (int)(kvals[j]->value.ui32);
+                    k = kvals[j]->value.vpid;
+                    found_start = true;
                 }
             }
         }
     }
     
-    if (0 > n) {
+    if (!found_slots) {
         ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
         return;
     }
     
+    if (!found_start) {
+        ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
+        return;
+    }
     /* now can generate the list of recipients */
     recipients = (orte_process_name_t*)malloc(n * sizeof(orte_process_name_t));
     for (i=0; i < n; i++) {
@@ -337,7 +350,9 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
     
     /* for the purposes of the stage gate manager, we don't actually have
      * to determine anything from the message. All we have to do is respond
-     * by sending an xcast to all processes
+     * by sending an xcast to all processes. However, the buffer has to include
+     * at least one piece of data for the RML to function, so pack something
+     * meaningless.
      */
     
     OBJ_CONSTRUCT(&msg, orte_buffer_t);
@@ -379,7 +394,8 @@ void orte_rmgr_base_proc_stage_gate_mgr_abort(orte_gpr_notify_data_t *data,
 
 int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc, void* cbdata)
 {
-    int i, rc;
+    size_t i, sub_num;
+    int rc;
     orte_gpr_value_t trig, *trigs;
     orte_gpr_subscription_t sub, *subs;
     char* keys[] = {
@@ -390,7 +406,7 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
         ORTE_PROC_NUM_FINALIZED,
         ORTE_PROC_NUM_TERMINATED
     };
-    int num_counters = sizeof(keys)/sizeof(keys[0]);
+    size_t num_counters = sizeof(keys)/sizeof(keys[0]);
 
     /* for the trigger, we want the counter values returned to us
      * setup subscriptions for that purpose. we'll enter the precise data
@@ -494,7 +510,7 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
              ORTE_GPR_TRIG_ALL_CMP,
              1, &subs,
              1, &trigs,
-             &rc);
+             &sub_num);
     
          if(ORTE_SUCCESS != rc) {
              ORTE_ERROR_LOG(rc);
@@ -541,8 +557,8 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
         OBJ_DESTRUCT(&trig);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    trig.keyvals[0]->type = ORTE_INT32;
-    trig.keyvals[0]->value.i32 = 1;  /* trigger on the first process that aborts */
+    trig.keyvals[0]->type = ORTE_SIZE;
+    trig.keyvals[0]->value.size = 1;  /* trigger on the first process that aborts */
 
     subs = &sub;
     trigs = &trig;
@@ -550,7 +566,7 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
          ORTE_GPR_TRIG_ALL_AT,
          1, &subs,
          1, &trigs,
-         &rc);
+         &sub_num);
 
      if (ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);

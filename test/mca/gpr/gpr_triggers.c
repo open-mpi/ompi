@@ -582,7 +582,7 @@ int test2(void)
     trig.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
     trig.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
     trig.keyvals[0]->key = strdup("level-counter");
-    trig.keyvals[0]->type = ORTE_INT32;
+    trig.keyvals[0]->type = ORTE_UINT32;
     trig.keyvals[0]->value.i32 = 2;
 
    fprintf(test_out, "setting level trigger\n");

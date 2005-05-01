@@ -137,7 +137,7 @@ int orte_rmgr_base_get_app_context(
     char *tokens[2];
     char *keys[2];
     orte_gpr_value_t** values = NULL;
-    int i, num_values = 0, index = 0;
+    size_t i, num_values = 0, index = 0;
     int rc;
 
     /* create the job segment on the registry */
@@ -170,7 +170,7 @@ int orte_rmgr_base_get_app_context(
     for(i=0; i<num_values; i++) {
         orte_gpr_value_t* value = values[i];
         orte_gpr_keyval_t** keyvals = value->keyvals;
-        int k;
+        size_t k;
         for(k=0; k < value->cnt; k++) {
             orte_gpr_keyval_t* keyval = keyvals[k];
             (*app_context)[index++] = keyval->value.app_context;
@@ -201,7 +201,7 @@ int orte_rmgr_base_get_job_slots(orte_jobid_t jobid, size_t* proc_slots)
     char *tokens[2];
     char *keys[2];
     orte_gpr_value_t** values = NULL;
-    int i, num_values = 0;
+    size_t i, num_values = 0;
     int rc;
 
     /* query the job segment on the registry */
@@ -268,9 +268,9 @@ int orte_rmgr_base_set_job_slots(orte_jobid_t jobid, size_t proc_slots)
     tokens[0] = ORTE_JOB_GLOBALS;
     tokens[1] = NULL;
 
-    keyval.type = ORTE_UINT32;
+    keyval.type = ORTE_SIZE;
     keyval.key = ORTE_JOB_SLOTS_KEY;
-    keyval.value.ui32 = proc_slots;
+    keyval.value.size = proc_slots;
     keyvals[0] = &keyval;
 
     value.addr_mode = ORTE_GPR_OVERWRITE;

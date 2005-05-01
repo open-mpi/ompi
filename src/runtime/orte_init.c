@@ -55,7 +55,7 @@ int orte_init(void)
  * include/orte_names.h. For example, you can call it as:
  * ompi_output(0, "data type: %s", ORTE_DATA_NAME(keyval.type));
  * 
- * THE CORRESPONDING MACRO IS DEFINED IN include/orte_names.h
+ * THE CORRESPONDING MACRO IS DEFINED IN include/orte_schema.h
  * AS IS THE EXTERN STATEMENT FOR ACCESSING THIS ARRAY
  */
 
@@ -65,6 +65,7 @@ char *orte_data_strings[] = {
     "ORTE_BOOL",
     "ORTE_STRING",
     "ORTE_SIZE",
+    "ORTE_PID",
     /* all the integer flavors */
     "ORTE_INT",
     "ORTE_INT8",
@@ -115,7 +116,7 @@ char *orte_data_strings[] = {
  * expecting users to look them up in the "big book" to find out what they represent.
  * This array allows the user to output an actual string representation of the error.
  *
- * THE CORRESPONDING MACRO IS DEFINED IN include/orte_names.h
+ * THE CORRESPONDING MACRO IS DEFINED IN include/orte_schema.h
  * AS IS THE EXTERN STATEMENT FOR ACCESSING THIS ARRAY
  */
 
@@ -165,6 +166,7 @@ char *orte_error_strings[] = {
     "ORTE_UNPACK_READ_PAST_END_OF_BUFFER",
     "ORTE_ERR_NOT_AVAILABLE",
     "ORTE_ERR_GPR_DATA_CORRUPT",
-    "ORTE_ERR_PERM"
+    "ORTE_ERR_PERM",
+    "ORTE_ERR_TYPE_MISMATCH"
 };
 

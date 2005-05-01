@@ -480,7 +480,7 @@ void mca_oob_tcp_registry_callback(
     orte_gpr_notify_data_t* data,
     void* cbdata)
 {
-    int32_t i;
+    size_t i;
     if(mca_oob_tcp_component.tcp_debug > 1) {
         ompi_output(0, "[%d,%d,%d] mca_oob_tcp_registry_callback\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
@@ -493,7 +493,7 @@ void mca_oob_tcp_registry_callback(
         orte_buffer_t buffer;
         mca_oob_tcp_addr_t* addr, *existing;
         mca_oob_tcp_peer_t* peer;
-        int32_t j;
+        size_t j;
 
         for(j = 0; j < value->cnt; j++) {
 

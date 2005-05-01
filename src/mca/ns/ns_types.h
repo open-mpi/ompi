@@ -41,9 +41,9 @@
 #include "class/ompi_list.h"
 
 #define ORTE_NAME_ARGS(n) \
-    ((NULL == n) ? -1 : (n)->cellid), \
-    ((NULL == n) ? -1 : (n)->jobid), \
-    ((NULL == n) ? -1 : (n)->vpid)
+    ((NULL == n) ? -1 : (ssize_t)(n)->cellid), \
+    ((NULL == n) ? -1 : (ssize_t)(n)->jobid), \
+    ((NULL == n) ? -1 : (ssize_t)(n)->vpid)
 
 
 /*
@@ -59,18 +59,18 @@
 /*
  * define maximum value for id's in any field
  */
-#define ORTE_CELLID_MAX INT32_MAX
-#define ORTE_JOBID_MAX  INT32_MAX
-#define ORTE_VPID_MAX   INT32_MAX
+#define ORTE_CELLID_MAX SIZE_MAX
+#define ORTE_JOBID_MAX  SIZE_MAX
+#define ORTE_VPID_MAX   SIZE_MAX
 
 /*
  * general typedefs & structures
  */
 /** Set the allowed range for ids in each space
  */
-typedef int32_t orte_jobid_t;
-typedef int32_t orte_cellid_t;
-typedef int32_t orte_vpid_t;
+typedef size_t orte_jobid_t;
+typedef size_t orte_cellid_t;
+typedef size_t orte_vpid_t;
 typedef uint8_t  orte_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */
 typedef uint16_t orte_ns_cmd_flag_t;
 

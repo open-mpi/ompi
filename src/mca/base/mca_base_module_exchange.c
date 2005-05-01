@@ -200,7 +200,7 @@ static void mca_base_modex_registry_callback(
     orte_gpr_notify_data_t* data,
     void* cbdata)
 {
-    int32_t i, j;
+    size_t i, j;
     orte_gpr_keyval_t **keyval;
     ompi_proc_t *proc;
     ompi_proc_t **new_procs = NULL;

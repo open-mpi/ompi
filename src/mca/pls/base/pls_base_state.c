@@ -39,7 +39,8 @@ int orte_pls_base_set_proc_pid(const orte_process_name_t* name, pid_t pid)
     orte_gpr_keyval_t kv_pid = {{OBJ_CLASS(orte_gpr_keyval_t),0},ORTE_PROC_PID_KEY,ORTE_UINT32};
     orte_gpr_keyval_t kv_state = {{OBJ_CLASS(orte_gpr_keyval_t),0},ORTE_PROC_STATE_KEY,ORTE_PROC_STATE};
     orte_gpr_keyval_t* keyvals[2];
-    int i, rc;
+    size_t i;
+    int rc;
 
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&value.segment, name->jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -81,10 +82,10 @@ int orte_pls_base_get_proc_pid(const orte_process_name_t* name, pid_t* pid)
 {
     char *segment;
     char **tokens;
-    int num_tokens;
+    size_t num_tokens;
     char *keys[2];
     orte_gpr_value_t** values = NULL;
-    int i, num_values = 0;
+    size_t i, num_values = 0;
     int rc;
 
     /* query the job segment on the registry */
@@ -141,14 +142,14 @@ cleanup:
 }
 
 /**
- *  Retreive all process pids for the specified job.
+ *  Retrieve all process pids for the specified job.
  */
 int orte_pls_base_get_proc_pids(orte_jobid_t jobid, pid_t **pids, size_t* num_pids)
 {
     char *segment;
     char *keys[2];
     orte_gpr_value_t** values = NULL;
-    int i, num_values = 0;
+    size_t i, num_values = 0;
     int rc;
 
     /* query the job segment on the registry */
@@ -208,7 +209,8 @@ int orte_pls_base_set_node_pid(orte_cellid_t cellid, char* node_name, orte_jobid
     orte_gpr_keyval_t kv_pid = {{OBJ_CLASS(orte_gpr_keyval_t),0},ORTE_PROC_PID_KEY,ORTE_UINT32};
     orte_gpr_keyval_t* keyvals[1];
     char* jobid_string;
-    int i, rc;
+    size_t i;
+    int rc;
 
     if(ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&value.tokens, &value.num_tokens, cellid, node_name)))
         return rc;
@@ -249,7 +251,7 @@ int orte_pls_base_get_node_pids(orte_jobid_t jobid, pid_t **pids, size_t* num_pi
 {
     char *keys[2];
     orte_gpr_value_t** values = NULL;
-    int i, num_values = 0;
+    size_t i, num_values = 0;
     int rc;
     char *jobid_string;
 

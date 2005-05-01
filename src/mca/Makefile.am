@@ -23,6 +23,7 @@ SUBDIRS = \
 	base \
 	coll \
 	common \
+	dps \
 	errmgr \
 	io \
 	iof \
@@ -38,6 +39,7 @@ SUBDIRS = \
 	rds \
 	rmaps \
 	rmgr \
+	schema \
 	soh \
 	topo
 

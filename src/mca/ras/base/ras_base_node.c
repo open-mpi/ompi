@@ -61,7 +61,7 @@ OBJ_CLASS_INSTANCE(
 
 int orte_ras_base_node_query(ompi_list_t* nodes)
 {
-    int i, cnt;
+    size_t i, cnt;
     orte_gpr_value_t** values;
     int rc;
     
@@ -80,7 +80,7 @@ int orte_ras_base_node_query(ompi_list_t* nodes)
     for(i=0; i<cnt; i++) {
         orte_gpr_value_t* value = values[i];
         orte_ras_base_node_t* node = OBJ_NEW(orte_ras_base_node_t);
-        int k;
+        size_t k;
 
         for(k=0; k<value->cnt; k++) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
@@ -133,7 +133,7 @@ int orte_ras_base_node_query_alloc(ompi_list_t* nodes, orte_jobid_t jobid)
         ORTE_CELLID_KEY,
         NULL
     };
-    int i, cnt;
+    size_t i, cnt;
     orte_gpr_value_t** values;
     char* jobid_str;
     int rc;
@@ -158,7 +158,7 @@ int orte_ras_base_node_query_alloc(ompi_list_t* nodes, orte_jobid_t jobid)
     for(i=0; i<cnt; i++) {
         orte_gpr_value_t* value = values[i];
         orte_ras_base_node_t* node = OBJ_NEW(orte_ras_base_node_t);
-        int k;
+        size_t k;
 
         for(k=0; k<value->cnt; k++) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
@@ -209,7 +209,8 @@ int orte_ras_base_node_insert(ompi_list_t* nodes)
 {
     ompi_list_item_t* item;
     orte_gpr_value_t **values;
-    int rc, num_values, i, j;
+    int rc;
+    size_t num_values, i, j;
     orte_ras_base_node_t* node;
     
     num_values = ompi_list_get_size(nodes);
@@ -363,7 +364,8 @@ int orte_ras_base_node_assign(ompi_list_t* nodes, orte_jobid_t jobid)
 {
     ompi_list_item_t* item;
     orte_gpr_value_t **values;
-    int rc, num_values, i, j;
+    int rc;
+    size_t num_values, i, j;
     orte_ras_base_node_t* node;
     char* jobid_str;
     

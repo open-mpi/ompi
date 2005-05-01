@@ -61,38 +61,4 @@ typedef int8_t orte_node_state_t;
     orte_node_state_t) */
 #define ORTE_NODE_STATE_REBOOT   0x03
 
-
-/* composite (union) type used to reduce number of function calls to SOH routines */
-/* only used on routines that do not store data in this format (coms) */
-typedef enum {orte_soh_entity_type_not_set, orte_soh_entity_type_cellid, orte_soh_entity_type_jobid, 
-		  orte_soh_entity_type_proc, orte_soh_entity_type_node
-} orte_soh_entity_type_t;
-
-typedef union {
-	orte_cellid_t         cellid;
-	orte_jobid_t          jobid;
-	orte_process_name_t   procname;
-	orte_process_name_t   nodename;
-} orte_soh_entity_value_t;
-
-
-/* master SOH constants and types */
-
-typedef int8_t orte_soh_master_update_policy_t;
-
-/* these depend on soh master implementation so not all possible */
-/* power2 so some can be combined */
-
-/* update GPR on all changes */
-#define ORTE_SOH_MASTER_UPDATE_IMMEDIATE  0x01
-/* update GPR after time out (bundle/pack updates) */
-#define ORTE_SOH_MASTER_UPDATE_PERIOD     0x02
-/* update GPR on severity/level of change of status */
-#define ORTE_SOH_MASTER_UPDATE_ON_LEVEL   0x04
-/* update GPR on request/push only */
-#define ORTE_SOH_MASTER_UPDATE_ON_REQUEST 0x08
-
-/* key used by soh slaves to find master soh services in GPR */
-#define ORTE_SOH_MASTER_LOC       "orte-soh-master-location"
-
 #endif

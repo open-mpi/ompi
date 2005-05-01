@@ -62,6 +62,7 @@ size_t orte_dps_memory_required(void *src, size_t num_vals, orte_data_type_t typ
         case ORTE_DATA_TYPE:
         case ORTE_NODE_STATE:
         case ORTE_PROC_STATE:
+        case ORTE_EXIT_CODE:
         case ORTE_BOOL:
         case ORTE_BYTE:
         case ORTE_INT8:
@@ -79,7 +80,6 @@ size_t orte_dps_memory_required(void *src, size_t num_vals, orte_data_type_t typ
         case ORTE_JOBID:
         case ORTE_CELLID:
         case ORTE_GPR_NOTIFY_ID:
-        case ORTE_EXIT_CODE:
         case ORTE_INT32:
         case ORTE_UINT32:
             return (size_t)(num_vals * sizeof(uint32_t));

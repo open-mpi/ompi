@@ -37,7 +37,8 @@ int orte_soh_base_get_proc_soh(orte_proc_state_t *state,
 {
     orte_gpr_value_t **values;
     orte_gpr_keyval_t **keyvals;
-    int rc, cnt, num_tokens, i, j;
+    int rc;
+    size_t cnt, num_tokens, i, j;
     char *segment, **tokens, *keys[3];
     orte_jobid_t jobid;
 

@@ -16,26 +16,31 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-        common \
-        allocator \
-        coll \
-	dps \
-        errmgr \
-        gpr \
-        io \
-        iof \
-        mpool \
-        ns \
-        oob \
-	pls \
-        pml \
-        ptl \
-        rml \
-	ras \
-	rds \
-	rmaps \
-	rmgr \
-	schema \
-        soh \
-        topo
+SUBDIRS = 
+
+noinst_LTLIBRARIES = libmca_schema_base.la
+
+# For VPATH builds, have to specify where static-modules.h will be found
+
+AM_CPPFLAGS = -I$(top_builddir)/src
+
+# Source code files
+
+headers = \
+        base.h
+
+libmca_schema_base_la_SOURCES = \
+        $(headers) \
+        schema_base_open.c \
+        schema_base_close.c \
+        schema_base_select.c
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/mca/schema/base
+ompi_HEADERS = $(headers)
+else
+ompidir = $(includedir)
+endif
+

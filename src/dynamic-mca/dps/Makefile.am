@@ -16,26 +16,11 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-        common \
-        allocator \
-        coll \
-	dps \
-        errmgr \
-        gpr \
-        io \
-        iof \
-        mpool \
-        ns \
-        oob \
-	pls \
-        pml \
-        ptl \
-        rml \
-	ras \
-	rds \
-	rmaps \
-	rmgr \
-	schema \
-        soh \
-        topo
+SUBDIRS			= $(MCA_dps_DSO_SUBDIRS)
+DISTCLEANFILES		= $(SUBDIRS)
+
+# Every directory under here is a sym link to something in the main
+# src/mca tree.  Hence, we don't want to distribute anything under
+# here.
+
+DIST_SUBDIRS		=

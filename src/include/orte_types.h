@@ -33,47 +33,48 @@ typedef uint8_t orte_data_type_t ;
 #define    ORTE_BOOL                (orte_data_type_t)    2 /**< boolean */
 #define    ORTE_STRING              (orte_data_type_t)    3 /**< a NULL terminated string */
 #define    ORTE_SIZE                (orte_data_type_t)    4 /**< the generic size_t */
+#define    ORTE_PID                 (orte_data_type_t)    5 /**< process pid */
     /* all the integer flavors */
-#define    ORTE_INT                 (orte_data_type_t)    5 /**< generic integer */
-#define    ORTE_INT8                (orte_data_type_t)    6 /**< an 8-bit integer */
-#define    ORTE_INT16               (orte_data_type_t)    7 /**< a 16-bit integer */
-#define    ORTE_INT32               (orte_data_type_t)    8 /**< a 32-bit integer */
-#define    ORTE_INT64               (orte_data_type_t)    9 /**< a 64-bit integer */
+#define    ORTE_INT                 (orte_data_type_t)    6 /**< generic integer */
+#define    ORTE_INT8                (orte_data_type_t)    7 /**< an 8-bit integer */
+#define    ORTE_INT16               (orte_data_type_t)    8 /**< a 16-bit integer */
+#define    ORTE_INT32               (orte_data_type_t)    9 /**< a 32-bit integer */
+#define    ORTE_INT64               (orte_data_type_t)   10 /**< a 64-bit integer */
     /* all the unsigned integer flavors */
-#define    ORTE_UINT                (orte_data_type_t)   10 /**< generic unsigned integer */
-#define    ORTE_UINT8               (orte_data_type_t)   11 /**< an 8-bit unsigned integer */
-#define    ORTE_UINT16              (orte_data_type_t)   12 /**< a 16-bit unsigned integer */
-#define    ORTE_UINT32              (orte_data_type_t)   13 /**< a 32-bit unsigned integer */
-#define    ORTE_UINT64              (orte_data_type_t)   14 /**< a 64-bit unsigned integer */
+#define    ORTE_UINT                (orte_data_type_t)   11 /**< generic unsigned integer */
+#define    ORTE_UINT8               (orte_data_type_t)   12 /**< an 8-bit unsigned integer */
+#define    ORTE_UINT16              (orte_data_type_t)   13 /**< a 16-bit unsigned integer */
+#define    ORTE_UINT32              (orte_data_type_t)   14 /**< a 32-bit unsigned integer */
+#define    ORTE_UINT64              (orte_data_type_t)   15 /**< a 64-bit unsigned integer */
     /* all the floating point flavors */
-#define    ORTE_FLOAT               (orte_data_type_t)   15 /**< single-precision float */
-#define    ORTE_FLOAT4              (orte_data_type_t)   16 /**< 4-byte float - usually equiv to single */
-#define    ORTE_DOUBLE              (orte_data_type_t)   17 /**< double-precision float */
-#define    ORTE_FLOAT8              (orte_data_type_t)   18 /**< 8-byte float - usually equiv to double */
-#define    ORTE_LONG_DOUBLE         (orte_data_type_t)   19 /**< long-double precision float */
-#define    ORTE_FLOAT12             (orte_data_type_t)   20 /**< 12-byte float - used as long-double on some systems */
-#define    ORTE_FLOAT16             (orte_data_type_t)   21 /**< 16-byte float - used as long-double on some systems */
+#define    ORTE_FLOAT               (orte_data_type_t)   16 /**< single-precision float */
+#define    ORTE_FLOAT4              (orte_data_type_t)   17 /**< 4-byte float - usually equiv to single */
+#define    ORTE_DOUBLE              (orte_data_type_t)   18 /**< double-precision float */
+#define    ORTE_FLOAT8              (orte_data_type_t)   19 /**< 8-byte float - usually equiv to double */
+#define    ORTE_LONG_DOUBLE         (orte_data_type_t)   20 /**< long-double precision float */
+#define    ORTE_FLOAT12             (orte_data_type_t)   21 /**< 12-byte float - used as long-double on some systems */
+#define    ORTE_FLOAT16             (orte_data_type_t)   22 /**< 16-byte float - used as long-double on some systems */
     /* orte-specific typedefs */
-#define    ORTE_NAME                (orte_data_type_t)   22 /**< an ompi_process_name_t */
-#define    ORTE_VPID                (orte_data_type_t)   23 /**< a vpid */
-#define    ORTE_JOBID               (orte_data_type_t)   24 /**< a jobid */
-#define    ORTE_CELLID              (orte_data_type_t)   25 /**< a cellid */
-#define    ORTE_NODE_STATE          (orte_data_type_t)   26 /**< node status flag */
-#define    ORTE_PROC_STATE          (orte_data_type_t)   27 /**< process/resource status */
-#define    ORTE_EXIT_CODE           (orte_data_type_t)   28 /**< process exit code */
-#define    ORTE_BYTE_OBJECT         (orte_data_type_t)   29 /**< byte object structure */
-#define    ORTE_KEYVAL              (orte_data_type_t)   30 /**< registry key-value pair */
-#define    ORTE_NOTIFY_ACTION       (orte_data_type_t)   31 /**< registry notify action */
-#define    ORTE_GPR_CMD             (orte_data_type_t)   32 /**< registry command */
-#define    ORTE_GPR_NOTIFY_ID       (orte_data_type_t)   33 /**< registry notify id tag */
-#define    ORTE_GPR_VALUE           (orte_data_type_t)   34 /**< registry return value */
-#define    ORTE_DATA_TYPE           (orte_data_type_t)   35 /**< data type */
-#define    ORTE_APP_CONTEXT         (orte_data_type_t)   36 /**< argv and enviro arrays */
-#define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   37 /**< application context mapping array */
-#define    ORTE_GPR_ADDR_MODE       (orte_data_type_t)   38 /**< Addressing mode for registry cmds */
-#define    ORTE_GPR_SUBSCRIPTION    (orte_data_type_t)   39 /**< describes data returned by subscription */
-#define    ORTE_GPR_NOTIFY_DATA     (orte_data_type_t)   40 /**< data returned from a subscription */
-#define    ORTE_NULL                (orte_data_type_t)   41 /**< don't interpret data type */
+#define    ORTE_NAME                (orte_data_type_t)   23 /**< an ompi_process_name_t */
+#define    ORTE_VPID                (orte_data_type_t)   24 /**< a vpid */
+#define    ORTE_JOBID               (orte_data_type_t)   25 /**< a jobid */
+#define    ORTE_CELLID              (orte_data_type_t)   26 /**< a cellid */
+#define    ORTE_NODE_STATE          (orte_data_type_t)   27 /**< node status flag */
+#define    ORTE_PROC_STATE          (orte_data_type_t)   28 /**< process/resource status */
+#define    ORTE_EXIT_CODE           (orte_data_type_t)   29 /**< process exit code */
+#define    ORTE_BYTE_OBJECT         (orte_data_type_t)   30 /**< byte object structure */
+#define    ORTE_KEYVAL              (orte_data_type_t)   31 /**< registry key-value pair */
+#define    ORTE_NOTIFY_ACTION       (orte_data_type_t)   32 /**< registry notify action */
+#define    ORTE_GPR_CMD             (orte_data_type_t)   33 /**< registry command */
+#define    ORTE_GPR_NOTIFY_ID       (orte_data_type_t)   34 /**< registry notify id tag */
+#define    ORTE_GPR_VALUE           (orte_data_type_t)   35 /**< registry return value */
+#define    ORTE_DATA_TYPE           (orte_data_type_t)   36 /**< data type */
+#define    ORTE_APP_CONTEXT         (orte_data_type_t)   37 /**< argv and enviro arrays */
+#define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   38 /**< application context mapping array */
+#define    ORTE_GPR_ADDR_MODE       (orte_data_type_t)   39 /**< Addressing mode for registry cmds */
+#define    ORTE_GPR_SUBSCRIPTION    (orte_data_type_t)   40 /**< describes data returned by subscription */
+#define    ORTE_GPR_NOTIFY_DATA     (orte_data_type_t)   41 /**< data returned from a subscription */
+#define    ORTE_NULL                (orte_data_type_t)   42 /**< don't interpret data type */
 
 
 typedef struct {
@@ -116,23 +117,23 @@ typedef struct {
     /** Parent object */
     ompi_object_t super;
     /** Unique index when multiple apps per job */
-    int32_t idx;
+    size_t idx;
     /** Absolute pathname of argv[0] */
     char   *app;
     /** Number of copies of this process that are to be launched */
-    int32_t num_procs;
+    size_t num_procs;
     /** Length of the argv array, not including final NULL entry */
-    int32_t argc;
+    int argc;
     /** Standard argv-style array, including a final NULL pointer */
     char  **argv;
     /** Length of the env array, not including the final NULL entry */
-    int32_t num_env;
+    size_t num_env;
     /** Standard environ-style array, including a final NULL pointer */
     char  **env;
     /** Current working directory for this app */
     char   *cwd;
     /** Length of the map_data array, not including the final NULL entry */
-    int32_t num_map;
+    size_t num_map;
     /** Mapping data about how this app should be laid out across CPUs
         / nodes */
     orte_app_context_map_t **map_data;
