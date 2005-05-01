@@ -189,12 +189,12 @@ int main(int argc, char *argv[])
 
         /* connect output to a log file in the session directory */
         sprintf(log_file, "output-orted-%d-%s.log", 
-            orte_process_info.my_name->jobid, orte_system_info.nodename);
-	    log_path = orte_os_path(false, 
-            orte_process_info.tmpdir_base, 
-            orte_process_info.top_session_dir, 
-            log_file, 
-            NULL);
+                (int)orte_process_info.my_name->jobid, orte_system_info.nodename);
+        log_path = orte_os_path(false, 
+                                orte_process_info.tmpdir_base, 
+                                orte_process_info.top_session_dir, 
+                                log_file, 
+                                NULL);
 
         fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0666);
         if(fd < 0) {

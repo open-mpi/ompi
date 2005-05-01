@@ -398,7 +398,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 ++num_killed;
             } else {
                 if (num_aborted < max_display_aborted) {
-                    fprintf(stderr, "Job rank %d (pid %d) on node \"%s\" exited on signal %d\n",
+                    fprintf(stderr, "Job rank %ld (pid %ld) on node \"%s\" exited on signal %d\n",
                             rank, pid, node_name, WTERMSIG(exit_status));
                 }
                 ++num_aborted;
