@@ -21,7 +21,6 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include <string.h>
 
 #include "mca/errmgr/errmgr.h"
 
