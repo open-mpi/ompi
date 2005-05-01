@@ -33,7 +33,8 @@ libmca_schema_base_la_SOURCES = \
         $(headers) \
         schema_base_open.c \
         schema_base_close.c \
-        schema_base_select.c
+        schema_base_select.c \
+        schema_base_fns.c
 
 # Conditionally install the header files
 

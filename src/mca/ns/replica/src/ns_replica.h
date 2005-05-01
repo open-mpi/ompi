@@ -23,7 +23,7 @@
 #include "include/orte_constants.h"
 #include "threads/mutex.h"
 #include "class/ompi_list.h"
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "mca/oob/oob_types.h"
 #include "mca/ns/base/base.h"
 

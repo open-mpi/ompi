@@ -27,7 +27,7 @@
 
 #include "include/orte_types.h"
 #include "util/output.h"
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/rml/rml.h"
 
@@ -39,7 +39,7 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient, ompi_list_t *
     orte_gpr_replica_notify_msg_list_t *msg;
     orte_gpr_notify_message_t *message;
     orte_gpr_cmd_flag_t command;
-    int32_t count;
+    size_t count;
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
@@ -55,8 +55,8 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient, ompi_list_t *
         return rc;
     }
 
-    count = (int32_t)ompi_list_get_size(messages);
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &count, 1, ORTE_INT32))) {
+    count = (size_t)ompi_list_get_size(messages);
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &count, 1, ORTE_SIZE))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -70,7 +70,7 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient, ompi_list_t *
             return rc;
         }
     
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &(message->cnt), 1, ORTE_INT32))) {
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &(message->cnt), 1, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

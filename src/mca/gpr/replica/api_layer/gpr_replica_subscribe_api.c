@@ -25,7 +25,7 @@
 
 #include "orte_config.h"
 
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 
 #include "mca/ns/ns.h"
 #include "mca/errmgr/errmgr.h"
@@ -34,9 +34,9 @@
 
 int
 orte_gpr_replica_subscribe(orte_gpr_notify_action_t action,
-			              int num_subs,
+			               size_t num_subs,
                            orte_gpr_subscription_t **subscriptions,
-                           int num_trigs,
+                           size_t num_trigs,
                            orte_gpr_value_t **trigs,
                            orte_gpr_notify_id_t *sub_number)
 {

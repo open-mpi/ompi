@@ -26,7 +26,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-#include "include/orte_schema.h"
+#include "mca/schema/schema.h"
 
 #include "util/output.h"
 #include "util/proc_info.h"
@@ -35,6 +35,7 @@
 #include "mca/errmgr/errmgr.h"
 
 #include "mca/gpr/base/base.h"
+#include "mca/gpr/replica/api_layer/gpr_replica_api.h"
 #include "mca/gpr/replica/communications/gpr_replica_comm.h"
 #include "gpr_replica_fn.h"
 
@@ -47,7 +48,8 @@ int orte_gpr_replica_process_callbacks(void)
     orte_gpr_replica_subscribed_data_t **sdata;
     orte_gpr_replica_triggers_t *trig, **trigs;
     bool processed;
-    int i, k, rc;
+    size_t i, k;
+    int rc;
 
     if (orte_gpr_replica_globals.debug) {
 	   ompi_output(0, "gpr replica: process_callbacks entered");
@@ -74,6 +76,8 @@ int orte_gpr_replica_process_callbacks(void)
                     goto CLEANUP;
                 }
         
+              orte_gpr_replica_dump_notify_msg(msg->message, 0);
+              
                 data = (msg->message)->data;
                 sdata = (orte_gpr_replica_subscribed_data_t**)((trig->subscribed_data)->addr);
                 for (i=0; i < (msg->message)->cnt; i++) {
@@ -240,7 +244,7 @@ int orte_gpr_replica_construct_notify_message(orte_gpr_notify_message_t **msg,
     int rc=ORTE_SUCCESS;
     orte_gpr_notify_data_t **data;
     orte_gpr_replica_subscribed_data_t **sptr;
-    int i, k;
+    size_t i, k;
     
     /* if we don't have data, just return */
     if (0 >= trig->num_subscribed_data) {
@@ -311,13 +315,14 @@ MOVEON:
 int orte_gpr_replica_add_values(orte_gpr_notify_data_t **data,
                                 orte_gpr_replica_subscribed_data_t *sptr)
 {
-    int i, rc, j, k, n, m, matches, num_tokens, num_keys, cnt;
+    size_t i, j, k, n, m, matches, num_tokens, num_keys, cnt;
+    int rc;
     orte_gpr_value_t **values = NULL, **data_values;
     orte_gpr_keyval_t **kptr;
     
     /* get the data off the registry */
-    num_tokens = (int)orte_value_array_get_size(&(sptr->tokentags));
-    num_keys = (int) orte_value_array_get_size(&(sptr->keytags));
+    num_tokens = orte_value_array_get_size(&(sptr->tokentags));
+    num_keys = orte_value_array_get_size(&(sptr->keytags));
 
     if (orte_gpr_replica_globals.debug) {
         ompi_output(0, "add_values: performing a get");

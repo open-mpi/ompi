@@ -33,12 +33,12 @@
 #include "gpr_replica_fn.h"
 
 
-int orte_gpr_replica_find_containers(int *num_found, orte_gpr_replica_segment_t *seg,
+int orte_gpr_replica_find_containers(size_t *num_found, orte_gpr_replica_segment_t *seg,
                                      orte_gpr_replica_addr_mode_t addr_mode,
-                                     orte_gpr_replica_itag_t *taglist, int num_tags)
+                                     orte_gpr_replica_itag_t *taglist, size_t num_tags)
 {
     orte_gpr_replica_container_t **cptr;
-    int i;
+    size_t i, index;
     
     /* ensure the search array is clear */
     orte_pointer_array_clear(orte_gpr_replica_globals.srch_cptr);
@@ -49,7 +49,7 @@ int orte_gpr_replica_find_containers(int *num_found, orte_gpr_replica_segment_t 
         if (NULL != cptr[i] && orte_gpr_replica_check_itag_list(addr_mode,
                                              num_tags, taglist,
                                              cptr[i]->num_itags, cptr[i]->itags)) {
-            if (0 > orte_pointer_array_add(orte_gpr_replica_globals.srch_cptr, cptr[i])) {
+            if (0 > orte_pointer_array_add(&index, orte_gpr_replica_globals.srch_cptr, cptr[i])) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 orte_pointer_array_clear(orte_gpr_replica_globals.srch_cptr);
                 return ORTE_ERR_OUT_OF_RESOURCE;
@@ -63,10 +63,11 @@ int orte_gpr_replica_find_containers(int *num_found, orte_gpr_replica_segment_t 
 
 int orte_gpr_replica_create_container(orte_gpr_replica_container_t **cptr,
                                       orte_gpr_replica_segment_t *seg,
-                                      int num_itags,
+                                      size_t num_itags,
                                       orte_gpr_replica_itag_t *itags)
 {
     int rc;
+    size_t index;
     
     *cptr = OBJ_NEW(orte_gpr_replica_container_t);
     if (NULL == *cptr) {
@@ -82,11 +83,12 @@ int orte_gpr_replica_create_container(orte_gpr_replica_container_t **cptr,
     
     (*cptr)->num_itags = num_itags;
     
-    if (0 > ((*cptr)->index = orte_pointer_array_add(seg->containers, (void*)(*cptr)))) {
+    if (0 > orte_pointer_array_add(&index, seg->containers, (void*)(*cptr))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
+    (*cptr)->index = index;
     return ORTE_SUCCESS;
 }
 
@@ -95,7 +97,8 @@ int orte_gpr_replica_release_container(orte_gpr_replica_segment_t *seg,
                                        orte_gpr_replica_container_t *cptr)
 {
     orte_gpr_replica_itagval_t **iptr;
-    int i, rc;
+    size_t i;
+    int rc;
     
     /* delete all the itagvals in the container */
     iptr = (orte_gpr_replica_itagval_t**)((cptr->itagvals)->addr);
@@ -146,7 +149,7 @@ int orte_gpr_replica_add_keyval(orte_gpr_replica_itagval_t **ivalptr,
         return rc;
     }
     
-    if (0 > (iptr->index = orte_pointer_array_add(cptr->itagvals, (void*)iptr))) {
+    if (0 > orte_pointer_array_add(&(iptr->index), cptr->itagvals, (void*)iptr)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(iptr);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -168,7 +171,7 @@ int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_container_t *cptr,
                                    orte_gpr_replica_itagval_t *iptr)
 {
-    int i;
+    size_t i;
     
     /* see if anyone cares that this value is deleted */
 /*    trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
@@ -202,7 +205,8 @@ int orte_gpr_replica_update_keyval(orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_container_t *cptr,
                                    orte_gpr_keyval_t *kptr)
 {
-    int i, rc;
+    size_t i;
+    int rc;
     orte_pointer_array_t *ptr;
     orte_gpr_replica_itagval_t *iptr;
 
@@ -235,12 +239,12 @@ int orte_gpr_replica_update_keyval(orte_gpr_replica_segment_t *seg,
 }
 
 
-int orte_gpr_replica_search_container(int *cnt, orte_gpr_replica_addr_mode_t addr_mode,
-                                      orte_gpr_replica_itag_t *itags, int num_itags,
+int orte_gpr_replica_search_container(size_t *cnt, orte_gpr_replica_addr_mode_t addr_mode,
+                                      orte_gpr_replica_itag_t *itags, size_t num_itags,
                                       orte_gpr_replica_container_t *cptr)
 {
     orte_gpr_replica_itagval_t **ptr;
-    int i;
+    size_t i, index;
     
     /* ensure the search array is clear */
     orte_pointer_array_clear(orte_gpr_replica_globals.srch_ival);
@@ -250,7 +254,7 @@ int orte_gpr_replica_search_container(int *cnt, orte_gpr_replica_addr_mode_t add
      * to addr_mode spec
      */
     if (orte_gpr_replica_check_itag_list(addr_mode, num_itags, itags,
-            (int)orte_value_array_get_size(&(cptr->itaglist)),
+            orte_value_array_get_size(&(cptr->itaglist)),
             ORTE_VALUE_ARRAY_GET_BASE(&(cptr->itaglist), orte_gpr_replica_itag_t))) {
         /* there is! so now collect those values into the search array */
         ptr = (orte_gpr_replica_itagval_t**)((cptr->itagvals)->addr);
@@ -259,7 +263,7 @@ int orte_gpr_replica_search_container(int *cnt, orte_gpr_replica_addr_mode_t add
                                                  num_itags, itags,
                                                  1, &(ptr[i]->itag))) {
         
-                if (0 > orte_pointer_array_add(orte_gpr_replica_globals.srch_ival, ptr[i])) {
+                if (0 > orte_pointer_array_add(&index, orte_gpr_replica_globals.srch_ival, ptr[i])) {
                     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                     orte_pointer_array_clear(orte_gpr_replica_globals.srch_ival);
                     return ORTE_ERR_OUT_OF_RESOURCE;
@@ -281,6 +285,14 @@ int orte_gpr_replica_get_value(void *value, orte_gpr_replica_itagval_t *ival)
     
     switch(ival->type) {
 
+        case ORTE_STRING:
+            value = strdup(src->strptr);
+            break;
+            
+        case ORTE_SIZE:
+            *((size_t*)value) = src->size;
+            break;
+            
         case ORTE_UINT8:
             *((uint8_t*)value) = src->ui8;
             break;
@@ -293,7 +305,7 @@ int orte_gpr_replica_get_value(void *value, orte_gpr_replica_itagval_t *ival)
             *((uint32_t*)value) = src->ui32;
             break;
             
-#ifdef HAVE_I64
+#ifdef HAVE_INT64_T
         case ORTE_UINT64:
             *((uint64_t*)value) = src->ui64;
             break;
@@ -311,7 +323,7 @@ int orte_gpr_replica_get_value(void *value, orte_gpr_replica_itagval_t *ival)
             *((int32_t*)value) = src->i32;
             break;
         
-#ifdef HAVE_I64
+#ifdef HAVE_INT64_T
         case ORTE_INT64:
             *((int64_t*)value) = src->i64;
             break;
@@ -357,10 +369,14 @@ int orte_gpr_replica_xfer_payload(orte_gpr_value_union_t *dest,
                                   orte_gpr_value_union_t *src,
                                   orte_data_type_t type)
 {
-    int i;
+    size_t i;
 
     switch(type) {
 
+        case ORTE_SIZE:
+            dest->size = src->size;
+            break;
+            
         case ORTE_STRING:
             dest->strptr = strdup(src->strptr);
             if (NULL == dest->strptr) {
@@ -381,7 +397,7 @@ int orte_gpr_replica_xfer_payload(orte_gpr_value_union_t *dest,
             dest->ui32 = src->ui32;
             break;
             
-#ifdef HAVE_I64
+#ifdef HAVE_INT64_T
         case ORTE_UINT64:
             dest->ui64 = src->ui64;
             break;
@@ -399,7 +415,7 @@ int orte_gpr_replica_xfer_payload(orte_gpr_value_union_t *dest,
             dest->i32 = src->i32;
             break;
         
-#ifdef HAVE_I64
+#ifdef HAVE_INT64_T
         case ORTE_INT64:
             dest->i64 = src->i64;
             break;
@@ -491,10 +507,201 @@ int orte_gpr_replica_xfer_payload(orte_gpr_value_union_t *dest,
     return ORTE_SUCCESS;
 }
 
+int orte_gpr_replica_compare_values(int *cmp, orte_gpr_replica_itagval_t *ival1,
+                                    orte_gpr_replica_itagval_t *ival2)
+{
+    /* sanity check */
+    if (ival1->type != ival2->type) {  /* can't compare mismatch */
+        ORTE_ERROR_LOG(ORTE_ERR_TYPE_MISMATCH);
+        return ORTE_ERR_TYPE_MISMATCH;
+    }
+    
+    switch(ival1->type) {
+
+        case ORTE_STRING:
+            *cmp = strcmp(ival1->value.strptr, ival2->value.strptr);
+            break;
+            
+        case ORTE_SIZE:
+            if (ival1->value.size == ival2->value.size) {
+                *cmp = 0;
+            } else if (ival1->value.size < ival2->value.size) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+        case ORTE_UINT8:
+            if (ival1->value.ui8 == ival2->value.ui8) {
+                *cmp = 0;
+            } else if (ival1->value.ui8 < ival2->value.ui8) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+        case ORTE_UINT16:
+            if (ival1->value.ui16 == ival2->value.ui16) {
+                *cmp = 0;
+            } else if (ival1->value.ui16 < ival2->value.ui16) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+        case ORTE_UINT32:
+            if (ival1->value.ui32 == ival2->value.ui32) {
+                *cmp = 0;
+            } else if (ival1->value.ui32 < ival2->value.ui32) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+#ifdef HAVE_INT64_T
+        case ORTE_UINT64:
+            if (ival1->value.ui64 == ival2->value.ui64) {
+                *cmp = 0;
+            } else if (ival1->value.ui64 < ival2->value.ui64) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+        case ORTE_INT64:
+            if (ival1->value.i64 == ival2->value.i64) {
+                *cmp = 0;
+            } else if (ival1->value.i64 < ival2->value.i64) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+#endif
+        case ORTE_INT8:
+            if (ival1->value.i8 == ival2->value.i8) {
+                *cmp = 0;
+            } else if (ival1->value.i8 < ival2->value.i8) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+        case ORTE_INT16:
+            if (ival1->value.i16 == ival2->value.i16) {
+                *cmp = 0;
+            } else if (ival1->value.i16 < ival2->value.i16) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+        case ORTE_INT32:
+            if (ival1->value.i32 == ival2->value.i32) {
+                *cmp = 0;
+            } else if (ival1->value.i32 < ival2->value.i32) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+        case ORTE_JOBID:
+            if (ival1->value.jobid == ival2->value.jobid) {
+                *cmp = 0;
+            } else if (ival1->value.jobid < ival2->value.jobid) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+            break;
+            
+        case ORTE_CELLID:
+            if (ival1->value.cellid == ival2->value.cellid) {
+                *cmp = 0;
+            } else if (ival1->value.cellid < ival2->value.cellid) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+            break;
+            
+        case ORTE_VPID:
+            if (ival1->value.vpid == ival2->value.vpid) {
+                *cmp = 0;
+            } else if (ival1->value.vpid < ival2->value.vpid) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+            break;
+            
+        case ORTE_NODE_STATE:
+            if (ival1->value.node_state == ival2->value.node_state) {
+                *cmp = 0;
+            } else if (ival1->value.node_state < ival2->value.node_state) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+            break;
+            
+        case ORTE_PROC_STATE:
+            if (ival1->value.proc_state == ival2->value.proc_state) {
+                *cmp = 0;
+            } else if (ival1->value.proc_state < ival2->value.proc_state) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+            break;
+            
+        case ORTE_EXIT_CODE:
+            if (ival1->value.exit_code == ival2->value.exit_code) {
+                *cmp = 0;
+            } else if (ival1->value.exit_code < ival2->value.exit_code) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+            break;
+            
+        case ORTE_NULL:
+            *cmp = 0;
+            break;
+            
+        default:
+            return ORTE_ERR_BAD_PARAM;
+            break;
+    }
+    return ORTE_SUCCESS;
+}
+
 
 int orte_gpr_replica_release_segment(orte_gpr_replica_segment_t **seg)
 {
-    int rc, i;
+    int rc;
+    size_t i;
     
     i = (*seg)->itag;
     OBJ_RELEASE(*seg);

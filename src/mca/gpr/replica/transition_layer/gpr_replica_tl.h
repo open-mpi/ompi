@@ -123,7 +123,7 @@ typedef int (*orte_gpr_replica_dict_reverse_lookup_fn_t)
  */
 int orte_gpr_replica_get_itag_list(orte_gpr_replica_itag_t **itaglist,
                     orte_gpr_replica_segment_t *seg, char **names,
-                    int *num_names);
+                    size_t *num_names);
 
 /**
  * Typedef of the orte_gpr_replica_get_itag_list() function signature
@@ -132,7 +132,7 @@ int orte_gpr_replica_get_itag_list(orte_gpr_replica_itag_t **itaglist,
 typedef int (*orte_gpr_replica_get_itag_list_fn_t)
     (orte_gpr_replica_itag_t **itaglist,
      orte_gpr_replica_segment_t *seg, char **names,
-     int *num_names);
+     size_t *num_names);
 
 
 /*

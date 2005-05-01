@@ -27,7 +27,7 @@
 #include "event/event.h"
 #include "util/output.h"
 #include "threads/mutex.h"
-#include "dps/dps.h"
+#include "mca/dps/base/base.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
@@ -38,6 +38,7 @@
 #include "mca/gpr/base/base.h"
 #include "mca/rmgr/base/base.h"
 #include "mca/rmaps/base/base.h"
+#include "mca/schema/base/base.h"
 #include "mca/soh/base/base.h"
 #include "util/malloc.h"
 #include "util/univ_info.h"
@@ -144,7 +145,7 @@ int orte_init_stage1(void)
     /*
      * Initialize the data packing service.
      */
-    if (ORTE_SUCCESS != (ret = orte_dps_open())) {
+    if (ORTE_SUCCESS != (ret = orte_dps_base_open())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -177,7 +178,7 @@ int orte_init_stage1(void)
      * Initialize schema utilities
      */
 
-    if (ORTE_SUCCESS != (ret = orte_schema_open())) {
+    if (ORTE_SUCCESS != (ret = orte_schema_base_open())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }

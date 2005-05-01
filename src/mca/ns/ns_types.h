@@ -95,4 +95,10 @@ typedef struct orte_name_services_namelist_t orte_name_services_namelist_t;
 
 OMPI_DECLSPEC    OBJ_CLASS_DECLARATION(orte_name_services_namelist_t);
 
+/** Type name definitions for pack/unpack functions */
+#define ORTE_NAME   23
+#define ORTE_VPID   24
+#define ORTE_JOBID  25
+#define ORTE_CELLID 26
+
 #endif

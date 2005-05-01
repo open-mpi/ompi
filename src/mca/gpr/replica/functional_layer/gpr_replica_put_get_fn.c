@@ -31,6 +31,7 @@
 #include "mca/errmgr/errmgr.h"
 
 #include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
+#include "mca/gpr/replica/api_layer/gpr_replica_api.h"
 
 #include "gpr_replica_fn.h"
  
@@ -60,8 +61,13 @@ static void orte_gpr_replica_ival_list_destructor(orte_gpr_replica_ival_list_t* 
 {
     if (ORTE_BYTE_OBJECT == ptr->type) {
         free(((ptr->value).byteobject).bytes);
+    } else if (ORTE_STRING == ptr->type) {
+        if (NULL != ptr->value.strptr)
+            free(ptr->value.strptr);
+    } else if (ORTE_APP_CONTEXT == ptr->type) {
+        if (NULL != ptr->value.app_context)
+            OBJ_RELEASE(ptr->value.app_context);
     }
-
 }
 
 /* define instance of ival_list_t */
@@ -117,8 +123,8 @@ OBJ_CLASS_INSTANCE(
  
 int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
                             orte_gpr_replica_segment_t *seg,
-                            orte_gpr_replica_itag_t *token_itags, int num_tokens,
-                            int cnt, orte_gpr_keyval_t **keyvals,
+                            orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
+                            size_t cnt, orte_gpr_keyval_t **keyvals,
                             int8_t *action_taken)
 {
     orte_gpr_replica_container_t **cptr, *cptr2;
@@ -128,7 +134,8 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_replica_itagval_t *iptr;
     bool overwrite;
     char **tmp;
-    int rc, i, j, num_found;
+    int rc;
+    size_t i, j, num_found;
 
     if (orte_gpr_replica_globals.debug) {
 	    ompi_output(0, "[%d,%d,%d] gpr replica: put entered on segment %s\nValues:",
@@ -231,8 +238,8 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
 
 int orte_gpr_replica_put_nb_fn(orte_gpr_addr_mode_t addr_mode,
                 orte_gpr_replica_segment_t *seg,
-                orte_gpr_replica_itag_t *token_itags, int num_tokens,
-                int cnt, orte_gpr_keyval_t **keyvals,
+                orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
+                size_t cnt, orte_gpr_keyval_t **keyvals,
                 orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
@@ -241,9 +248,9 @@ int orte_gpr_replica_put_nb_fn(orte_gpr_addr_mode_t addr_mode,
 
 int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
                             orte_gpr_replica_segment_t *seg,
-                            orte_gpr_replica_itag_t *tokentags, int num_tokens,
-                            orte_gpr_replica_itag_t *keytags, int num_keys,
-                            int *cnt, orte_gpr_value_t ***values)
+                            orte_gpr_replica_itag_t *tokentags, size_t num_tokens,
+                            orte_gpr_replica_itag_t *keytags, size_t num_keys,
+                            size_t *cnt, orte_gpr_value_t ***values)
 {
     ompi_list_t get_list;
     orte_gpr_replica_get_list_t *gptr;
@@ -252,7 +259,8 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_replica_itagval_t **iptr;
     orte_gpr_keyval_t **kptr;
     orte_gpr_replica_addr_mode_t tokmode, keymode;
-    int rc, i, j, num_found;
+    int rc;
+    size_t i, j, num_found;
     char *token;
     
     if (orte_gpr_replica_globals.debug) {
@@ -347,6 +355,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
     }
     
     /* if something found, convert it to array of values */
+ompi_output(0, "REPLICA-GET: VALUES FOUND");
     *values = (orte_gpr_value_t**)malloc((*cnt) * sizeof(orte_gpr_value_t*));
     if (NULL == *values) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -410,6 +419,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
             OBJ_RELEASE(ival_list);
         }
         OBJ_RELEASE(gptr);
+        orte_gpr_replica_dump_value((*values)[i], 0);
     }
 
 CLEANUP:
@@ -428,8 +438,8 @@ CLEANUP:
 
 int orte_gpr_replica_get_nb_fn(orte_gpr_addr_mode_t addr_mode,
                                 orte_gpr_replica_segment_t *seg,
-                                orte_gpr_replica_itag_t *tokentags, int num_tokens,
-                                orte_gpr_replica_itag_t *keytags, int num_keys,
+                                orte_gpr_replica_itag_t *tokentags, size_t num_tokens,
+                                orte_gpr_replica_itag_t *keytags, size_t num_keys,
                                 orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;

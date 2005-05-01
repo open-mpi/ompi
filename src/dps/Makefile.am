@@ -16,11 +16,30 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS			= $(MCA_dps_DSO_SUBDIRS)
-DISTCLEANFILES		= $(SUBDIRS)
+noinst_LTLIBRARIES = libdps.la
 
-# Every directory under here is a sym link to something in the main
-# src/mca tree.  Hence, we don't want to distribute anything under
-# here.
+# Source code files
 
-DIST_SUBDIRS		=
+headers = \
+    dps.h \
+    dps_types.h \
+    dps_internal.h
+
+libdps_la_SOURCES = \
+    $(headers) \
+    dps_internal_functions.c \
+    dps_load_unload.c \
+    dps_pack.c \
+    dps_peek.c \
+    dps_register.c \
+    dps_unpack.c \
+    orte_dps_open_close.c
+
+# Conditionally install the header files
+
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/dps
+ompi_HEADERS = $(headers)
+else
+ompidir = $(includedir)
+endif

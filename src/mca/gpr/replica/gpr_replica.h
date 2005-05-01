@@ -40,12 +40,12 @@
  * typedefs needed in replica component
  */
 
-#define ORTE_GPR_REPLICA_MAX_SIZE INT32_MAX
+#define ORTE_GPR_REPLICA_MAX_SIZE SIZE_MAX
 #define ORTE_GPR_REPLICA_BLOCK_SIZE 100
 
 
-typedef int32_t orte_gpr_replica_itag_t;
-#define ORTE_GPR_REPLICA_ITAG_MAX INT32_MAX
+typedef size_t orte_gpr_replica_itag_t;
+#define ORTE_GPR_REPLICA_ITAG_MAX SIZE_MAX
 
 
 typedef uint8_t orte_gpr_replica_addr_mode_t;
@@ -74,8 +74,8 @@ typedef int8_t orte_gpr_replica_action_t;
 typedef struct {
     int debug;
     int isolate;
-    int32_t block_size;
-    int32_t max_size;
+    size_t block_size;
+    size_t max_size;
     ompi_mutex_t mutex;
     bool compound_cmd_mode;
     bool exec_compound_cmd_mode;
@@ -161,9 +161,9 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_segment_t);
  */
 struct orte_gpr_replica_container_t {
     ompi_object_t super;              /**< Make this an object */
-    int index;                        /**< Location in the pointer array */
+    size_t index;                        /**< Location in the pointer array */
     orte_gpr_replica_itag_t *itags;   /**< Array of itags that define this container */
-    int num_itags;                    /**< Number of itags in array */
+    size_t num_itags;                    /**< Number of itags in array */
     orte_pointer_array_t *itagvals;   /**< Array of itagval pointers */
     orte_value_array_t itaglist;      /**< Array of itags from all itagvals - used for rapid search */
 };
@@ -176,7 +176,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_container_t);
  */
 typedef struct {
     ompi_object_t super;                /**< required for this to be an object */
-    int index;                          /**< index of this itagval on the container array */
+    size_t index;                          /**< index of this itagval on the container array */
     orte_gpr_replica_itag_t itag;       /**< itag for this value's key */
     orte_data_type_t type;              /**< the type of value stored */
     orte_gpr_value_union_t value;       /**< Actual stored value */
@@ -196,7 +196,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_counter_t);
 
 typedef struct {
     ompi_object_t super;                    /**< Makes this an object */
-    int index;                              /**< Index of this entry in original subscription */
+    size_t index;                              /**< Index of this entry in original subscription */
     /* the segment upon which this data is located */
     orte_gpr_replica_segment_t *seg;
     /* describe the data to be returned with the message -
@@ -216,7 +216,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_subscribed_data_t);
 struct orte_gpr_replica_triggers_t {
     ompi_object_t super;                            /**< Make this an object */
     /* index of this trigger in the triggers array */
-    int index;
+    size_t index;
     /* flag that indicates this trigger is a one-shot, has fired and
      * now should be cleaned up
      */
@@ -234,14 +234,14 @@ struct orte_gpr_replica_triggers_t {
      * fires. for subscriptions that do not involve trigger events, these objects
      * describe the data being monitored
      */
-    int num_subscribed_data;
+    size_t num_subscribed_data;
     orte_pointer_array_t *subscribed_data;
     /* for triggers, store a pointer to the counters being monitored. This could
      * be counters we are using ourselves, or could be counters being run by someone
      * else. Store the trigger level for each counter that we are monitoring until they reach
      * a specified level (as opposed to comparing values in two or more counters).
      */
-    int num_counters;
+    size_t num_counters;
     orte_pointer_array_t *counters;
 };
 typedef struct orte_gpr_replica_triggers_t orte_gpr_replica_triggers_t;

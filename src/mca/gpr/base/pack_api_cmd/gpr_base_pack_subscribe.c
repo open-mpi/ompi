@@ -27,15 +27,15 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 
 #include "mca/gpr/base/base.h"
 
 int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
-				orte_gpr_notify_action_t action, int num_subs,
+				orte_gpr_notify_action_t action, size_t num_subs,
                  orte_gpr_subscription_t **subscriptions,
-                 int num_trigs,
+                 size_t num_trigs,
                  orte_gpr_value_t **trigs)
 {
     orte_gpr_cmd_flag_t command;

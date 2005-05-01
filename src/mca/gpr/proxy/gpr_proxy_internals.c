@@ -38,11 +38,11 @@
 
 int
 orte_gpr_proxy_enter_notify_request(orte_gpr_notify_id_t *local_idtag,
-                    int cnt, orte_gpr_subscription_t **subscriptions)
+                    size_t cnt, orte_gpr_subscription_t **subscriptions)
 {
     orte_gpr_proxy_notify_tracker_t *trackptr;
     orte_gpr_proxy_subscriber_t *sub;
-    int idtag, i;
+    size_t idtag, i;
     
     *local_idtag = ORTE_GPR_NOTIFY_ID_MAX;
     
@@ -62,13 +62,13 @@ orte_gpr_proxy_enter_notify_request(orte_gpr_notify_id_t *local_idtag,
         sub->index = i;
         sub->callback = subscriptions[i]->cbfunc;
         sub->user_tag = subscriptions[i]->user_tag;
-        if (0 > (idtag = orte_pointer_array_add(trackptr->callbacks, sub))) {
+        if (0 > orte_pointer_array_add(&idtag, trackptr->callbacks, sub)) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
     }
     
-    if (0 > (idtag = orte_pointer_array_add(orte_gpr_proxy_globals.notify_tracker, trackptr))) {
+    if (0 > orte_pointer_array_add(&idtag, orte_gpr_proxy_globals.notify_tracker, trackptr)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }

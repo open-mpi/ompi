@@ -27,7 +27,7 @@
 
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "util/output.h"
 
 #include "mca/gpr/base/base.h"
@@ -40,7 +40,7 @@ int orte_gpr_base_dump_notify_msg(orte_buffer_t *buffer,
                                   orte_gpr_notify_message_t *msg)
 {
     char *tmp_out;
-    int i;
+    size_t i;
     
     asprintf(&tmp_out, "\nDUMP OF NOTIFY MESSAGE STRUCTURE");
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
@@ -88,9 +88,8 @@ static void orte_gpr_base_dump_data(orte_buffer_t *buffer,
                                     orte_gpr_notify_data_t *data)
 {
     char *tmp_out;
-    orte_gpr_addr_mode_t addr;
     orte_gpr_value_t **values;
-    int i, j;
+    size_t i;
 
     asprintf(&tmp_out, "%d Values from segment %s", data->cnt, data->segment);
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
@@ -105,84 +104,92 @@ static void orte_gpr_base_dump_data(orte_buffer_t *buffer,
                 asprintf(&tmp_out, "\tError encountered: NULL value pointer");
                 orte_gpr_base_dump_load_string(buffer, &tmp_out);
             } else {
-                addr = values[i]->addr_mode;
-                if (NULL == values[i]->tokens) {
-                    asprintf(&tmp_out, "\tNULL tokens (wildcard)");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                } else {
-                    asprintf(&tmp_out, "\t%d Tokens returned", values[i]->num_tokens);
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                    for (j=0; j < values[i]->num_tokens; j++) {
-                        asprintf(&tmp_out, "\tToken %d: %s", j, values[i]->tokens[j]);
-                        orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                    }
-                }
-                asprintf(&tmp_out, "\tToken addressing mode:");
-                orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                if (ORTE_GPR_TOKENS_AND & addr) {
-                    asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_AND");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                }
-                if (ORTE_GPR_TOKENS_OR & addr) {
-                    asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_OR");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                }
-                if (ORTE_GPR_TOKENS_XAND & addr) {
-                    asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_XAND");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                }
-                if (ORTE_GPR_TOKENS_XOR & addr) {
-                    asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_XOR");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                }
-                if (ORTE_GPR_TOKENS_NOT & addr) {
-                    asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_NOT");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                }
-
-                asprintf(&tmp_out, "\n\tKey addressing mode:");
-                orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                if (0x0000 == addr) {
-                    asprintf(&tmp_out, "\t\tNONE");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                }
-                if (ORTE_GPR_KEYS_AND & addr) {
-                    asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_AND");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                }
-                if (ORTE_GPR_KEYS_OR & addr) {
-                    asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_OR");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                }
-                if (ORTE_GPR_KEYS_XAND & addr) {
-                    asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_XAND");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                }
-                if (ORTE_GPR_KEYS_XOR & addr) {
-                    asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_XOR");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                }
-                if (ORTE_GPR_KEYS_NOT & addr) {
-                    asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_NOT");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                }
-                
-                if (NULL == values[i]->keyvals) {
-                    asprintf(&tmp_out, "\tNo keyvals returned");
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                } else {
-                    asprintf(&tmp_out, "\t%d Keyvals returned", values[i]->cnt);
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                    for (j=0; j < values[i]->cnt; j++) {
-                    asprintf(&tmp_out, "\t\tData for keyval %d: Key: %s", j,
-                                            (values[i]->keyvals[j])->key);
-                    orte_gpr_base_dump_load_string(buffer, &tmp_out);
-                        orte_gpr_base_dump_keyval_value(buffer, values[i]->keyvals[j]);
-                    }
-                }
+                orte_gpr_base_dump_value(buffer, values[i]);
             }
         }
     }
+}
+
+int orte_gpr_base_dump_value(orte_buffer_t *buffer, orte_gpr_value_t *value)
+{
+    char *tmp_out;
+    orte_gpr_addr_mode_t addr;
+    size_t j;
+
+    asprintf(&tmp_out, "\tValue from segment %s with %d keyvals",
+                            value->segment, value->cnt);
+    orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    
+    addr = value->addr_mode;
+    if (NULL == value->tokens) {
+        asprintf(&tmp_out, "\tNULL tokens (wildcard)");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    } else {
+        asprintf(&tmp_out, "\t%d Tokens returned", value->num_tokens);
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+        for (j=0; j < value->num_tokens; j++) {
+            asprintf(&tmp_out, "\tToken %d: %s", j, value->tokens[j]);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
+        }
+    }
+    asprintf(&tmp_out, "\tToken addressing mode:");
+    orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    if (ORTE_GPR_TOKENS_AND & addr) {
+        asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_AND");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    }
+    if (ORTE_GPR_TOKENS_OR & addr) {
+        asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_OR");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    }
+    if (ORTE_GPR_TOKENS_XAND & addr) {
+        asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_XAND");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    }
+    if (ORTE_GPR_TOKENS_XOR & addr) {
+        asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_XOR");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    }
+    if (ORTE_GPR_TOKENS_NOT & addr) {
+        asprintf(&tmp_out, "\t\tORTE_GPR_TOKENS_NOT");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    }
+
+    asprintf(&tmp_out, "\n\tKey addressing mode:");
+    orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    if (0x0000 == addr) {
+        asprintf(&tmp_out, "\t\tNONE");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    }
+    if (ORTE_GPR_KEYS_AND & addr) {
+        asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_AND");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    }
+    if (ORTE_GPR_KEYS_OR & addr) {
+        asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_OR");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    }
+    if (ORTE_GPR_KEYS_XAND & addr) {
+        asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_XAND");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    }
+    if (ORTE_GPR_KEYS_XOR & addr) {
+        asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_XOR");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    }
+    if (ORTE_GPR_KEYS_NOT & addr) {
+        asprintf(&tmp_out, "\t\tORTE_GPR_KEYS_NOT");
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+    }
+    
+    for (j=0; j < value->cnt; j++) {
+        asprintf(&tmp_out, "\t\tData for keyval %d: Key: %s", j,
+                                (value->keyvals[j])->key);
+        orte_gpr_base_dump_load_string(buffer, &tmp_out);
+        orte_gpr_base_dump_keyval_value(buffer, value->keyvals[j]);
+    }
+    
+    return ORTE_SUCCESS;
 }
 
 
@@ -208,7 +215,7 @@ void orte_gpr_base_dump_keyval_value(orte_buffer_t *buffer, orte_gpr_keyval_t *i
             break;
             
         case ORTE_SIZE:
-            asprintf(&tmp_out, "\t\t\tData type: ORTE_SIZE: no value field");
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_SIZE:\tValue: %d", iptr->value.size);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
@@ -232,7 +239,7 @@ void orte_gpr_base_dump_keyval_value(orte_buffer_t *buffer, orte_gpr_keyval_t *i
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
-#ifdef HAVE_I64
+#ifdef HAVE_INT64_T
         case ORTE_UINT64:
             asprintf(&tmp_out, "\t\t\tData type: ORTE_UINT64\tValue: %d", (int)iptr->value.ui64);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
@@ -254,7 +261,7 @@ void orte_gpr_base_dump_keyval_value(orte_buffer_t *buffer, orte_gpr_keyval_t *i
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
         
-#ifdef HAVE_I64
+#ifdef HAVE_INT64_T
         case ORTE_INT64:
             asprintf(&tmp_out, "\t\t\tData type: ORTE_INT64\tValue: %d", (int)iptr->value.i64);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);

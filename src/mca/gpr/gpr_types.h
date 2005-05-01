@@ -29,11 +29,11 @@
 #define ORTE_GPR_TYPES_H_
 
 #include "orte_config.h"
-#include "include/orte_types.h"
-#include "include/orte_schema.h"
+#include "mca/schema/schema.h"
 #include "class/ompi_object.h"
-
+#include "dps/dps_types.h"
 #include "mca/ns/ns_types.h"
+#include "mca/rmgr/rmgr_types.h"
 #include "mca/soh/soh_types.h"
 
 /** Define the notify actions for the subscription system - can be OR'd
@@ -61,8 +61,8 @@
 
 typedef uint16_t orte_gpr_notify_action_t;
 
-typedef int32_t orte_gpr_notify_id_t;
-#define ORTE_GPR_NOTIFY_ID_MAX INT32_MAX
+typedef size_t orte_gpr_notify_id_t;
+#define ORTE_GPR_NOTIFY_ID_MAX SIZE_MAX
 
 /*
  * Define flag values for remote commands - normally used internally, but required
@@ -121,16 +121,17 @@ typedef uint16_t orte_gpr_addr_mode_t;
  */
 typedef union {                             /* shared storage for the value */
     char *strptr;
+    size_t size;
     uint8_t ui8;
     uint16_t ui16;
     uint32_t ui32;
-#ifdef HAVE_I64
+#ifdef HAVE_INT64_T
     uint64_t ui64;
 #endif
     int8_t i8;
     int16_t i16;
     int32_t i32;
-#ifdef HAVE_I64
+#ifdef HAVE_INT64_T
     int64_t i64;
 #endif
     orte_byte_object_t byteobject;
@@ -172,9 +173,9 @@ typedef struct {
     ompi_object_t super;                    /**< Makes this an object */
     orte_gpr_addr_mode_t addr_mode;         /**< Address mode that was used for combining keys/tokens */
     char *segment;                          /**< Name of the segment this came from */
-    int32_t cnt;                            /**< Number of keyval objects returned */
+    size_t cnt;                             /**< Number of keyval objects returned */
     orte_gpr_keyval_t **keyvals;            /**< Contiguous array of keyval object pointers */
-    int32_t num_tokens;                     /**< Number of tokens from the container that held these keyvals */
+    size_t num_tokens;                      /**< Number of tokens from the container that held these keyvals */
     char **tokens;                          /**< List of tokens that described the container */
 } orte_gpr_value_t;
 
@@ -187,10 +188,10 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
  */
 typedef struct {
     ompi_object_t super;                    /**< Makes this an object */
-    int32_t cb_num;                         /**< Number of the subscribed data - indicates which callback to use */
+    size_t cb_num;                          /**< Number of the subscribed data - indicates which callback to use */
     orte_gpr_addr_mode_t addr_mode;         /**< Address mode that was used for combining keys/tokens */
     char *segment;                          /**< Name of the segment this came from */
-    int32_t cnt;                            /**< Number of value objects returned, one per container */
+    size_t cnt;                             /**< Number of value objects returned, one per container */
     orte_gpr_value_t **values;              /**< Array of value objects returned */
 } orte_gpr_notify_data_t;
 
@@ -201,7 +202,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
 typedef struct {
     ompi_object_t super;                        /**< Make this an object */
     orte_gpr_notify_id_t idtag;                 /**< Referenced notify request */
-    int32_t cnt;                                /**< number of data objects */
+    size_t cnt;                                 /**< number of data objects */
     orte_gpr_notify_data_t **data;              /**< Contiguous array of pointers to data objects */
 } orte_gpr_notify_message_t;
 
@@ -227,9 +228,9 @@ typedef struct {
     ompi_object_t super;                    /**< Makes this an object */
     orte_gpr_addr_mode_t addr_mode;         /**< Address mode for combining keys/tokens */
     char *segment;                          /**< Name of the segment where the data is located */
-    int32_t num_tokens;                     /**< Number of tokens used to describe data */
+    size_t num_tokens;                      /**< Number of tokens used to describe data */
     char **tokens;                          /**< List of tokens that describe the data */
-    int32_t num_keys;                       /**< Number of keys describing data */
+    size_t num_keys;                        /**< Number of keys describing data */
     char **keys;                            /**< Contiguous array of keys */
     orte_gpr_notify_cb_fn_t cbfunc;         /**< Function to be called with this data */
     void *user_tag;                         /**< User-provided tag to be used in cbfunc */
@@ -237,16 +238,14 @@ typedef struct {
 
 OBJ_CLASS_DECLARATION(orte_gpr_subscription_t);
 
-/** Return value for test results on internal test
- */
-struct orte_gpr_internal_test_results_t {
-    ompi_list_item_t item;          /**< Allows this item to be placed on a list */
-    char *test;
-    char *message;
-    int exit_code;
-};
-typedef struct orte_gpr_internal_test_results_t orte_gpr_internal_test_results_t;
-
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_internal_test_results_t);
+/** Type name definitions for pack/unpack functions */
+#define ORTE_KEYVAL             31
+#define ORTE_NOTIFY_ACTION      32
+#define ORTE_GPR_CMD            33
+#define ORTE_GPR_NOTIFY_ID      34
+#define ORTE_GPR_VALUE          35
+#define ORTE_GPR_ADDR_MODE      39
+#define ORTE_GPR_SUBSCRIPTION   40
+#define ORTE_GPR_NOTIFY_DATA    41
 
 #endif /* GPR_TYPES_H */

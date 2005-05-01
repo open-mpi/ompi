@@ -68,7 +68,8 @@ int orte_gpr_replica_cleanup_proc_fn(orte_process_name_t *proc)
     orte_gpr_replica_itag_t itag;
     char *procname, *segment, *jobidstring;
     orte_jobid_t jobid;
-    int rc, i, j;
+    int rc;
+    size_t i, j;
 
 	if (orte_gpr_replica_globals.debug) {
 		ompi_output(0, "[%d,%d,%d] gpr_replica_cleanup_proc: function entered for process [%d,%d,%d]",

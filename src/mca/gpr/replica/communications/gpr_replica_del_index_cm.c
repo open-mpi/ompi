@@ -25,7 +25,7 @@
  */
 #include "orte_config.h"
 
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 
 #include "gpr_replica_comm.h"
@@ -74,8 +74,8 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
     orte_gpr_replica_itag_t *token_itags=NULL, *key_itags=NULL;
     orte_gpr_replica_segment_t *seg=NULL;
     char *segment=NULL, **tokens=NULL, **keys=NULL;
-    int num_tokens=0, num_keys=0, rc, i, ret;
-    size_t n;
+    size_t num_tokens=0, num_keys=0, i, n;
+    int rc, ret;
 
     if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -95,7 +95,7 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &num_tokens, &n, ORTE_INT))) {
+    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &num_tokens, &n, ORTE_SIZE))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -109,14 +109,14 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
             ret = ORTE_ERR_OUT_OF_RESOURCE;
             goto RETURN_ERROR;
         }
-        if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, tokens, (size_t*)&num_tokens, ORTE_STRING))) {
+        if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, tokens, &num_tokens, ORTE_STRING))) {
             ORTE_ERROR_LOG(ret);
             goto RETURN_ERROR;
         }
      }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &num_keys, &n, ORTE_INT))) {
+    if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, &num_keys, &n, ORTE_SIZE))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -130,7 +130,7 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
             ret = ORTE_ERR_OUT_OF_RESOURCE;
             goto RETURN_ERROR;
         }
-        if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, keys, (size_t*)&num_keys, ORTE_STRING))) {
+        if (ORTE_SUCCESS != (ret = orte_dps.unpack(buffer, keys, &num_keys, ORTE_STRING))) {
             ORTE_ERROR_LOG(ret);
             goto RETURN_ERROR;
         }

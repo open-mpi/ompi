@@ -35,8 +35,8 @@
 
 int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
 				     orte_gpr_replica_segment_t *seg,
-				     orte_gpr_replica_itag_t *token_itags, int num_tokens,
-                      orte_gpr_replica_itag_t *key_itags, int num_keys)
+				     orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
+                      orte_gpr_replica_itag_t *key_itags, size_t num_keys)
 {
 #if 0
     orte_gpr_replica_container_t **ptr;
@@ -125,8 +125,8 @@ int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
 int orte_gpr_replica_delete_entries_nb_fn(
                     orte_gpr_addr_mode_t addr_mode,
                     orte_gpr_replica_segment_t *seg,
-                    orte_gpr_replica_itag_t *token_itags, int num_tokens,
-                    orte_gpr_replica_itag_t *key_tags, int num_keys)
+                    orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
+                    orte_gpr_replica_itag_t *key_tags, size_t num_keys)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }                           

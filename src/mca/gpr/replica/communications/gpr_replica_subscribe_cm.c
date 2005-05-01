@@ -25,7 +25,7 @@
  */
 #include "orte_config.h"
 
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "mca/errmgr/errmgr.h"
 #include "util/proc_info.h"
 #include "util/output.h"
@@ -39,8 +39,8 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
     orte_gpr_cmd_flag_t command=ORTE_GPR_SUBSCRIBE_CMD;
     orte_data_type_t type;
     orte_gpr_notify_id_t local_idtag=ORTE_GPR_NOTIFY_ID_MAX, idtag=ORTE_GPR_NOTIFY_ID_MAX;
-    int rc, ret, num_subs, num_trigs;
-    size_t n;
+    int rc, ret;
+    size_t n, num_subs, num_trigs;
     orte_gpr_notify_action_t action;
     orte_gpr_value_t **trigs;
     orte_gpr_subscription_t **subscriptions;

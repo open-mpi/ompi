@@ -34,9 +34,8 @@
 #include "dps/dps_internal.h"
 
 
-int orte_dps_unload(orte_buffer_t *buffer,
-                    void **payload,
-                    size_t *size)
+int orte_dps_unload(orte_buffer_t *buffer, void **payload,
+                    size_t *bytes_used)
 {
     /* check that buffer is not null */
     if (!buffer) {
@@ -49,32 +48,29 @@ int orte_dps_unload(orte_buffer_t *buffer,
     }
     
     /* anything in the buffer - if not, nothing to do */
-    if (NULL == buffer->base_ptr || 0 == buffer->len) {
+    if (NULL == buffer->base_ptr || 0 == buffer->bytes_used) {
         *payload = NULL;
-        *size = 0;
+        *bytes_used = 0;
         return ORTE_SUCCESS;
     }
     
-    /* okay, we have something to provide - pass it back
-     */
+    /* okay, we have something to provide - pass it back */
     *payload = buffer->base_ptr;
-    *size = buffer->len;
+    *bytes_used = buffer->bytes_used;
 
     /* dereference everything in buffer */
     buffer->base_ptr = NULL;
-    buffer->size = 0;
-    buffer->len  = 0;
-    buffer->space = 0;
-    buffer->toend = 0;
-    
-    return (OMPI_SUCCESS);
+    buffer->pack_ptr = buffer->unpack_ptr = NULL;
+    buffer->bytes_allocated = buffer->bytes_used = buffer->bytes_avail = 0;
 
+    /* All done */
+
+    return OMPI_SUCCESS;
 }
 
 
-int orte_dps_load(orte_buffer_t *buffer,
-                  void *payload,
-                  size_t size)
+int orte_dps_load(orte_buffer_t *buffer, void *payload,
+                  size_t bytes_used)
 {
     /* check to see if the buffer has been initialized */
     if (NULL == buffer) {
@@ -82,7 +78,7 @@ int orte_dps_load(orte_buffer_t *buffer,
     }
     
     /* check that the payload is there */
-    if (NULL == payload || 0 >= size) {
+    if (NULL == payload || bytes_used < 0) {
         return ORTE_SUCCESS;
     }
     
@@ -92,22 +88,18 @@ int orte_dps_load(orte_buffer_t *buffer,
     }
     
     /* populate the buffer */
-    buffer->base_ptr = payload; /* set the start of the buffer */
+    buffer->base_ptr = payload; 
 
-    /* set data pointer to END of the buffer */
-    buffer->data_ptr = ((char*)buffer->base_ptr) + size; 
+    /* set pack/unpack pointers */
+    buffer->pack_ptr = ((char*)buffer->base_ptr) + bytes_used; 
+    buffer->unpack_ptr = buffer->base_ptr;
 
-    buffer->from_ptr = buffer->base_ptr; /* set the unpack start at start */
+    /* set counts for size and space */
+    buffer->bytes_allocated = buffer->bytes_used = bytes_used;
+    buffer->bytes_avail = 0;
 
-  /* set counts for size and space */
-    buffer->size = size;
-    buffer->len  = size;     /* users buffer is expected to be full */
-    buffer->space = 0;                /* ditto */
-    buffer->toend = size;    /* ditto */
+    /* All done */
 
-    /* dereference the payload pointer to protect it */
-    payload = NULL;
-    
     return ORTE_SUCCESS;    
 }
 

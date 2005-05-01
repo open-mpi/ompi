@@ -38,5 +38,68 @@
 #define ORTE_RMGR_CMD  ORTE_UINT32
 typedef uint32_t orte_rmgr_cmd_t;
 
+/* RESOURCE MANAGER DATA TYPES */
+
+/** Value for orte_app_context_map_t: the data is uninitialized (!) */
+#define ORTE_APP_CONTEXT_MAP_INVALID     0
+/** Value for orte_app_context_map_t: the data is a comma-delimited
+    string of hostnames */
+#define ORTE_APP_CONTEXT_MAP_HOSTNAME    1
+/** Value for orte_app_context_map_t: the data is a comma-delimited
+    list of architecture names */
+#define ORTE_APP_CONTEXT_MAP_ARCH        2
+/** Value for orte_app_context_map_t: the data is a comma-delimited
+    list of C, cX, N, nX mappsing */
+#define ORTE_APP_CONTEXT_MAP_CN          3
+
+/**
+ * Information about mapping requested by the user
+ */
+typedef struct {
+    /** Parent object */
+    ompi_object_t super;
+    /** One of the ORTE_APP_CONTEXT_MAP_* values */
+    uint8_t map_type;
+    /** String data */
+    char *map_data;
+} orte_app_context_map_t;
+
+OBJ_CLASS_DECLARATION(orte_app_context_map_t);
+
+
+/**
+ * Information about a specific application to be launched in the RTE.
+ */
+typedef struct {
+    /** Parent object */
+    ompi_object_t super;
+    /** Unique index when multiple apps per job */
+    size_t idx;
+    /** Absolute pathname of argv[0] */
+    char   *app;
+    /** Number of copies of this process that are to be launched */
+    size_t num_procs;
+    /** Length of the argv array, not including final NULL entry */
+    int argc;
+    /** Standard argv-style array, including a final NULL pointer */
+    char  **argv;
+    /** Length of the env array, not including the final NULL entry */
+    size_t num_env;
+    /** Standard environ-style array, including a final NULL pointer */
+    char  **env;
+    /** Current working directory for this app */
+    char   *cwd;
+    /** Length of the map_data array, not including the final NULL entry */
+    size_t num_map;
+    /** Mapping data about how this app should be laid out across CPUs
+        / nodes */
+    orte_app_context_map_t **map_data;
+} orte_app_context_t;
+
+/* data type definitions */
+#define ORTE_APP_CONTEXT        37
+#define ORTE_APP_CONTEXT_MAP    38
+
+OBJ_CLASS_DECLARATION(orte_app_context_t);
 
 #endif

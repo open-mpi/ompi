@@ -32,14 +32,14 @@
 /*
  */
 bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
-                    int num_itags_search,
+                    size_t num_itags_search,
                     orte_gpr_replica_itag_t *itags,
-                    int num_itags_entry,
+                    size_t num_itags_entry,
                     orte_gpr_replica_itag_t *entry_itags)
 {
-    int num_found;
+    size_t num_found;
     bool exclusive, no_match, not_set;
-    int i, j;
+    size_t i, j;
 
     /* check for trivial case */
     if (NULL == itags || 0 >= num_itags_search) {  /* wildcard case - automatically true */
@@ -122,7 +122,7 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
 
 
 int orte_gpr_replica_copy_itag_list(orte_gpr_replica_itag_t **dest,
-                                    orte_gpr_replica_itag_t *src, int num_itags)
+                                    orte_gpr_replica_itag_t *src, size_t num_itags)
 {
     if (0 == num_itags || NULL == src) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);

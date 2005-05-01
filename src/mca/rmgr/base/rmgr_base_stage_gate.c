@@ -28,7 +28,7 @@
 
 #include "util/output.h"
 
-#include "dps/dps.h"
+#include "mca/dps/dps.h"
 #include "mca/gpr/gpr.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/rml/rml.h"

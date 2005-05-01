@@ -18,7 +18,7 @@
 
 #include "include/constants.h"
 #include "include/orte_constants.h"
-#include "include/orte_schema.h"
+#include "mca/schema/schema.h"
 
 #include "mpi.h"
 #include "event/event.h"

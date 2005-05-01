@@ -23,7 +23,7 @@
 
 #include <string.h>
 
-#include "include/orte_schema.h"
+#include "mca/schema/schema.h"
 
 #include "mca/errmgr/errmgr.h"
 #include "mca/gpr/gpr.h"

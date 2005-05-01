@@ -30,7 +30,7 @@
 
 #include "gpr_replica_api.h"
 
-int orte_gpr_replica_preallocate_segment(char *name, int num_slots)
+int orte_gpr_replica_preallocate_segment(char *name, size_t num_slots)
 {
     int rc;
     orte_gpr_replica_segment_t *seg=NULL;
