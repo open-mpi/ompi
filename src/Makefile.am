@@ -34,6 +34,7 @@ WIN32_FILES = win32/ompi_declspec.h \
               win32/generated_include/errmgr_static-components.h \
               win32/generated_include/rml_static-components.h   \
               win32/generated_include/rmgr_static-components.h  \
+              win32/generated_include/schema_static-components.h  \
               win32/generated_include/rmaps_static-components.h \
               win32/generated_include/soh_static-components.h \
               win32/generated_include/ns_static-components.h    \

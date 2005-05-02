@@ -37,7 +37,7 @@ bool orte_dps_debug = false;
 int orte_dps_page_size;
 orte_pointer_array_t *orte_dps_types;
 
-orte_dps_t orte_dps = {
+OMPI_DECLSPEC orte_dps_t orte_dps = {
     orte_dps_pack,
     orte_dps_unpack,
     orte_dps_peek,

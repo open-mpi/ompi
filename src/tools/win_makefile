@@ -48,7 +48,6 @@ INCL = \
 
 CFLAGS = \
         /DWIN32 \
-        /DOMPI_BUILDING=0 \
         /DHAVE_CONFIG_H \
         /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
         /EHsc \
@@ -64,7 +63,6 @@ CFLAGS = \
 CPPFLAGS = \
         /DWIN32 \
         /TP \
-        /DOMPI_BUILDING=0 \
         /DHAVE_CONFIG_H \
         /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
         /EHsc \

@@ -36,7 +36,7 @@
  * globals
  */
 
-orte_schema_base_module_t orte_schema = {
+OMPI_DECLSPEC orte_schema_base_module_t orte_schema = {
     orte_schema_base_get_proc_tokens,
     orte_schema_base_get_node_tokens,
     orte_schema_base_get_cell_tokens,
