@@ -243,9 +243,10 @@ int orte_dps_pack_int64(orte_buffer_t *buffer, void *src,
     size_t i;
     uint32_t tmp, *dsttmp, *srctmp = (uint32_t*) src;
     char *dst;
+    size_t bytes_packed = num_vals * sizeof(tmp) * 2;
     
     /* check to see if buffer needs extending */
-    if (NULL == (dst = orte_dps_buffer_extend(buffer, num_vals*sizeof(tmp)))) {
+    if (NULL == (dst = orte_dps_buffer_extend(buffer, bytes_packed))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -257,9 +258,9 @@ int orte_dps_pack_int64(orte_buffer_t *buffer, void *src,
         tmp = htonl(srctmp[i+1]);
         memcpy(&dsttmp[i+1], &tmp, sizeof(tmp));
     }
-    buffer->pack_ptr += 2*num_vals * sizeof(tmp);
-    buffer->bytes_used += 2*num_vals * sizeof(tmp);
-    buffer->bytes_avail -= num_vals * sizeof(tmp);
+    buffer->pack_ptr += bytes_packed;
+    buffer->bytes_used += bytes_packed;
+    buffer->bytes_avail -= bytes_packed;
     
     return ORTE_SUCCESS;
 }
