@@ -86,9 +86,17 @@ typedef uint8_t orte_data_type_t ;
 /* define the starting point for dynamically assigning data types */
 #define ORTE_DPS_ID_DYNAMIC 50
 
+/* define a structure to hold generic byte objects */
 typedef struct {
     size_t size;
     uint8_t *bytes;
 } orte_byte_object_t;
+
+/* define a print format to handle the variations in size_t */
+#if SIZEOF_SIZE_T == SIZEOF_INT
+#define ORTE_SIZE_T_PRINTF "%u"
+#elif SIZEOF_SIZE_T == SIZE_OF_LONG
+#define ORTE_SIZE_T_PRINTF "%lu"
+#endif
 
 #endif

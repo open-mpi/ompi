@@ -251,7 +251,7 @@ int orte_dps_pack_int64(orte_buffer_t *buffer, void *src,
     }
     
     dsttmp = (uint32_t*)dst;
-    for (i = 0; i < num_vals; i += 2) {
+    for (i = 0; i < 2*num_vals; i += 2) {
         tmp = htonl(srctmp[i]);
         memcpy(&dsttmp[i], &tmp, sizeof(tmp));
         tmp = htonl(srctmp[i+1]);
