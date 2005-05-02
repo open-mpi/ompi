@@ -77,40 +77,6 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
  *
  */
 
-static int mca_ptl_ib_get_hca_id(int num, VAPI_hca_id_t* hca_id)
-{
-    uint32_t num_hcas;
-    VAPI_ret_t ret;
-    VAPI_hca_id_t* hca_ids = NULL;
-
-    hca_ids = (VAPI_hca_id_t*) malloc(mca_ptl_ib_component.ib_num_hcas *
-            sizeof(VAPI_hca_id_t));
-
-    if(NULL == hca_ids) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* Now get the hca_id from underlying VAPI layer */
-    ret = EVAPI_list_hcas(mca_ptl_ib_component.ib_num_hcas, 
-            &num_hcas, hca_ids);
-
-    /* HACK: right now, I have put VAPI_EAGAIN as
-     * acceptable condition since we are trying to have
-     * only 1 ptl support */
-    if((VAPI_OK != ret) && (VAPI_EAGAIN != ret)) {
-        MCA_PTL_IB_VAPI_RET(ret, "EVAPI_list_hcas");
-        return OMPI_ERROR;
-    } else {
-
-        num = num % num_hcas;
-
-        memcpy(hca_id, hca_ids[num], sizeof(VAPI_hca_id_t));
-    }
-
-    free(hca_ids);
-
-    return OMPI_SUCCESS;
-}
 
 static int mca_ptl_ib_get_hca_hndl(VAPI_hca_id_t hca_id,
         VAPI_hca_hndl_t* hca_hndl) 
@@ -194,7 +160,7 @@ static int mca_ptl_ib_set_async_handler(VAPI_hca_hndl_t nic,
     return OMPI_SUCCESS;
 }
 
-static int mca_ptl_ib_create_qp(VAPI_hca_hndl_t nic,
+int mca_ptl_ib_create_qp(VAPI_hca_hndl_t nic,
         VAPI_pd_hndl_t ptag,
         VAPI_cq_hndl_t recv_cq,
         VAPI_cq_hndl_t send_cq,
@@ -242,29 +208,23 @@ static int mca_ptl_ib_create_qp(VAPI_hca_hndl_t nic,
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_ib_init_module(mca_ptl_ib_state_t *ib_state, int module_num)
+int mca_ptl_ib_module_init(mca_ptl_ib_module_t *ib_ptl)
 {
-    /* Get the HCA id ... InfiniHost0, 1 etc */
-    if(mca_ptl_ib_get_hca_id(module_num, &ib_state->hca_id) 
-            != OMPI_SUCCESS) {
-        return OMPI_ERROR;
-    }
-
     /* Get HCA handle */
-    if(mca_ptl_ib_get_hca_hndl(ib_state->hca_id, &ib_state->nic)
+    if(mca_ptl_ib_get_hca_hndl(ib_ptl->hca_id, &ib_ptl->nic)
             != OMPI_SUCCESS) {
         return OMPI_ERROR;
     }
 
     /* Allocate a protection domain for this NIC */
-    if(mca_ptl_ib_alloc_pd(ib_state->nic, &ib_state->ptag)
+    if(mca_ptl_ib_alloc_pd(ib_ptl->nic, &ib_ptl->ptag)
             != OMPI_SUCCESS) {
         return OMPI_ERROR;
     }
 
     /* Get the properties of the HCA,
      * LID etc. are part of the properties */
-    if(mca_ptl_ib_query_hca_prop(ib_state->nic, &ib_state->port)
+    if(mca_ptl_ib_query_hca_prop(ib_ptl->nic, &ib_ptl->port)
             != OMPI_SUCCESS) {
         return OMPI_ERROR;
     }
@@ -272,27 +232,26 @@ int mca_ptl_ib_init_module(mca_ptl_ib_state_t *ib_state, int module_num)
     /* Create Completion Q */
     /* We use a single completion Q for sends & recvs
      * This saves us overhead of polling 2 separate Qs */
-    if(mca_ptl_ib_create_cq(ib_state->nic, &ib_state->cq_hndl)
+    if(mca_ptl_ib_create_cq(ib_ptl->nic, &ib_ptl->cq_hndl)
             != OMPI_SUCCESS) {
         return OMPI_ERROR;
     }
 
     /* Attach asynchronous handler */
-    if(mca_ptl_ib_set_async_handler(ib_state->nic, 
-                &ib_state->async_handler) 
+    if(mca_ptl_ib_set_async_handler(ib_ptl->nic, 
+                &ib_ptl->async_handler) 
             != OMPI_SUCCESS) {
         return OMPI_ERROR;
     }
 
     /* initialize memory region registry */
-    OBJ_CONSTRUCT(&(ib_state->mem_registry), mca_ptl_ib_mem_registry_t);
-    mca_ptl_ib_mem_registry_init(&(ib_state->mem_registry), ib_state);
-
+    OBJ_CONSTRUCT(&ib_ptl->mem_registry, mca_ptl_ib_mem_registry_t);
+    mca_ptl_ib_mem_registry_init(&ib_ptl->mem_registry, ib_ptl);
     return OMPI_SUCCESS;
 }
 
 
-static int mca_ptl_ib_rc_qp_init(VAPI_hca_hndl_t nic,
+int mca_ptl_ib_qp_init(VAPI_hca_hndl_t nic,
         VAPI_qp_hndl_t qp_hndl,
         VAPI_qp_num_t remote_qp,
         IB_lid_t      remote_lid)
@@ -419,195 +378,40 @@ int mca_ptl_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_ib_init_peer(mca_ptl_ib_state_t *ib_state,
-        mca_ptl_ib_peer_conn_t *peer_conn)
-{
-    /* Local resources */
-    peer_conn->lres = (mca_ptl_ib_peer_local_res_t *)
-        malloc(sizeof(mca_ptl_ib_peer_local_res_t));
-    if(NULL == peer_conn->lres) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
-    /* Remote resources */
-    peer_conn->rres = (mca_ptl_ib_peer_remote_res_t *)
-        malloc(sizeof(mca_ptl_ib_peer_remote_res_t));
-    if(NULL == peer_conn->rres) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-    /* Create the Queue Pair */
-    if(mca_ptl_ib_create_qp(ib_state->nic,
-                    ib_state->ptag,
-                    ib_state->cq_hndl,
-                    ib_state->cq_hndl,
-                    &peer_conn->lres->qp_hndl,
-                    &peer_conn->lres->qp_prop,
-                    VAPI_TS_RC)
-            != OMPI_SUCCESS) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-/*
- * 1. Establish Reliable Connection with peer
- * 2. Allocate resources to this connection
- * 3. Post receives for this connection
- *
- */
-
-int mca_ptl_ib_peer_connect(mca_ptl_ib_state_t *ib_state,
-        mca_ptl_ib_peer_conn_t *peer_conn)
-{
-    int rc, i;
-    VAPI_ret_t ret;
-    ib_buffer_t *ib_buf_ptr;
-
-    /* Establish Reliable Connection */
-    rc = mca_ptl_ib_rc_qp_init(ib_state->nic,
-                peer_conn->lres->qp_hndl,
-                peer_conn->rres->qp_num,
-                peer_conn->rres->lid);
-
-    if(rc != OMPI_SUCCESS) {
-        return rc;
-    }
-
-    /* Allocate resources to this connection */
-    peer_conn->lres->recv = (ib_buffer_t*)
-        malloc(sizeof(ib_buffer_t) * NUM_IB_RECV_BUF);
-
-    if(NULL == peer_conn->lres->recv) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* Register the buffers */
-    for(i = 0; i < NUM_IB_RECV_BUF; i++) {
-
-        rc = mca_ptl_ib_register_mem(ib_state->nic, ib_state->ptag,
-                (void*) peer_conn->lres->recv[i].buf, 
-                MCA_PTL_IB_FIRST_FRAG_SIZE, 
-                &peer_conn->lres->recv[i].hndl);
-        if(rc != OMPI_SUCCESS) {
-            return OMPI_ERROR;
-        }
-
-        ib_buf_ptr = &peer_conn->lres->recv[i];
-
-        ib_buf_ptr->qp_hndl = peer_conn->lres->qp_hndl;
-
-        IB_PREPARE_RECV_DESC(ib_buf_ptr);
-    }
-
-    /* Post receives */
-    for(i = 0; i < NUM_IB_RECV_BUF; i++) {
-
-        ret = VAPI_post_rr(ib_state->nic,
-                peer_conn->lres->qp_hndl,
-                &peer_conn->lres->recv[i].desc.rr);
-
-        if(VAPI_OK != ret) {
-            MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_rr");
-        }
-    }
-
-    D_PRINT("Done posting recvs");
-
-    return OMPI_SUCCESS;
-}
-
-int mca_ptl_ib_post_send(mca_ptl_ib_state_t *ib_state,
-        mca_ptl_ib_peer_conn_t *peer_conn, 
+int mca_ptl_ib_post_send(mca_ptl_ib_module_t *ib_ptl,
+        mca_ptl_ib_peer_t *peer, 
         ib_buffer_t *ib_buf, void* addr)
 {
     VAPI_ret_t ret;
     int msg_len = ib_buf->desc.sg_entry.len;
 
-    //IB_SET_REMOTE_QP_NUM(ib_buf, (peer_conn->rres->qp_num));
-
-    //IB_SET_SEND_DESC_ID(ib_buf, addr);
-    
-    IB_PREPARE_SEND_DESC(ib_buf, (peer_conn->rres->qp_num),
+    IB_PREPARE_SEND_DESC(ib_buf, (peer->rem_qp_num),
                 msg_len, addr);
 
-    D_PRINT("length : %d, qp_num = %d", 
-            ib_buf->desc.sg_entry.len,
-            (peer_conn->rres->qp_num));
-
-    ret = VAPI_post_sr(ib_state->nic,
-            peer_conn->lres->qp_hndl,
+    /* TODO - get this from NIC properties */
+    if(msg_len < 128) { 
+    ret = EVAPI_post_inline_sr(ib_ptl->nic,
+            peer->lcl_qp_hndl,
             &ib_buf->desc.sr);
+    } else {
+    ret = VAPI_post_sr(ib_ptl->nic,
+            peer->lcl_qp_hndl,
+            &ib_buf->desc.sr);
+    }
 
     if(VAPI_OK != ret) {
         MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_sr");
         return OMPI_ERROR;
     }
-    
     return OMPI_SUCCESS;
 }
 
-void mca_ptl_ib_drain_network(VAPI_hca_hndl_t nic,
-        VAPI_cq_hndl_t cq_hndl, int* comp_type, void** comp_addr)
+
+void mca_ptl_ib_buffer_repost(VAPI_hca_hndl_t nic, void* addr)
 {
     VAPI_ret_t ret;
-    VAPI_wc_desc_t comp;
-
-    ret = VAPI_poll_cq(nic, cq_hndl, &comp);
-    if(VAPI_OK == ret) {
-        if(comp.status != VAPI_SUCCESS) {
-            ompi_output(0, "Got error : %s, Vendor code : %d Frag : %p",
-                    VAPI_wc_status_sym(comp.status),
-                    comp.vendor_err_syndrome, comp.id);
-
-            *comp_type = IB_COMP_ERROR;
-            *comp_addr = NULL;
-
-        } else {
-            if(VAPI_CQE_SQ_SEND_DATA == comp.opcode) {
-                D_PRINT("Send completion, id:%d\n",
-                        comp.id);
-
-                *comp_type = IB_COMP_SEND;
-                *comp_addr = (void*) (unsigned long) comp.id;
-
-            } else if(VAPI_CQE_RQ_SEND_DATA == comp.opcode) {
-                A_PRINT("Received message completion len = %d, id : %d\n",
-                        comp.byte_len, comp.id);
-
-                *comp_type = IB_COMP_RECV;
-                *comp_addr = (void*) (unsigned long) comp.id;
-
-            } else if(VAPI_CQE_SQ_RDMA_WRITE == comp.opcode) {
-
-                A_PRINT("RDMA Write completion");
-                *comp_type = IB_COMP_RDMA_W;
-                *comp_addr = (void*) (unsigned long) comp.id;
-
-            } else {
-                ompi_output(0, "Got Unknown completion! Opcode : %d\n", 
-                        comp.opcode);
-
-                *comp_type = IB_COMP_ERROR;
-                *comp_addr = NULL;
-            }
-        }
-    } else {
-        /* No completions from the network */
-        *comp_type = IB_COMP_NOTHING;
-        *comp_addr = NULL;
-    }
-}
-
-void mca_ptl_ib_buffer_repost(VAPI_hca_hndl_t nic,
-        void* addr)
-{
-    VAPI_ret_t ret;
-    ib_buffer_t *ib_buf;
-
-    D_PRINT("");
-
-    ib_buf = (ib_buffer_t *) (unsigned long) addr;
+    ib_buffer_t *ib_buf = (ib_buffer_t*)addr;
 
     IB_PREPARE_RECV_DESC(ib_buf);
 
@@ -619,12 +423,12 @@ void mca_ptl_ib_buffer_repost(VAPI_hca_hndl_t nic,
     }
 }
 
-void mca_ptl_ib_prepare_ack(mca_ptl_ib_state_t *ib_state,
+void mca_ptl_ib_prepare_ack(mca_ptl_ib_module_t *ib_ptl,
         void* addr_to_reg, int len_to_reg,
         void* ack_buf, int* len_added)
 {
     mca_ptl_ib_mem_registry_info_t *info = 
-        mca_ptl_ib_register_mem_with_registry(ib_state, 
+        mca_ptl_ib_register_mem_with_registry(ib_ptl, 
             addr_to_reg, (size_t)len_to_reg);
 
     if(NULL == info) {
@@ -638,15 +442,15 @@ void mca_ptl_ib_prepare_ack(mca_ptl_ib_state_t *ib_state,
     *len_added = sizeof(VAPI_rkey_t);
 }
 
-int mca_ptl_ib_rdma_write(mca_ptl_ib_state_t *ib_state,
-        mca_ptl_ib_peer_conn_t *peer_conn, ib_buffer_t *ib_buf,
+int mca_ptl_ib_rdma_write(mca_ptl_ib_module_t *ib_ptl,
+        mca_ptl_ib_peer_t *peer, ib_buffer_t *ib_buf,
         void* send_buf, size_t send_len, void* remote_buf,
         VAPI_rkey_t remote_key, void* id_buf)
 {
     VAPI_ret_t ret;
 
     mca_ptl_ib_mem_registry_info_t *info = 
-        mca_ptl_ib_register_mem_with_registry(ib_state, 
+        mca_ptl_ib_register_mem_with_registry(ib_ptl, 
             send_buf, send_len);
 
     if (NULL == info) {
@@ -654,12 +458,12 @@ int mca_ptl_ib_rdma_write(mca_ptl_ib_state_t *ib_state,
     }
 
     /* Prepare descriptor */
-    IB_PREPARE_RDMA_W_DESC(ib_buf, (peer_conn->rres->qp_num),
+    IB_PREPARE_RDMA_W_DESC(ib_buf, (peer->rem_qp_num),
             send_len, send_buf, (info->reply.l_key), remote_key, 
             id_buf, remote_buf);
 
-    ret = VAPI_post_sr(ib_state->nic,
-            peer_conn->lres->qp_hndl,
+    ret = VAPI_post_sr(ib_ptl->nic,
+            peer->lcl_qp_hndl,
             &ib_buf->desc.sr);
     if(ret != VAPI_OK) {
         MCA_PTL_IB_VAPI_RET(ret, "VAPI_post_sr");

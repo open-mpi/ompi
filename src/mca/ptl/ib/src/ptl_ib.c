@@ -57,93 +57,23 @@ mca_ptl_ib_module_t mca_ptl_ib_module = {
     }
 };
 
-/*
- * 1. RDMA local buffer to remote buffer address.
- * 2. Generate a FIN
- */
-
-int mca_ptl_ib_put( struct mca_ptl_base_module_t* ptl,
-    struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_pml_base_send_request_t* req, size_t offset,
-    size_t size, int flags)
+int mca_ptl_ib_add_procs(
+    struct mca_ptl_base_module_t* ptl, 
+    size_t nprocs, 
+    struct ompi_proc_t **ompi_procs, 
+    struct mca_ptl_base_peer_t** peers, 
+    ompi_bitmap_t* reachable)
 {
-    int rc;
-    mca_ptl_ib_send_frag_t *send_frag, *send_frag_fin;
-    mca_ptl_ib_state_t *ib_state;
-    mca_ptl_ib_peer_conn_t *peer_conn;
-    void *local_addr, *remote_addr;
-    VAPI_rkey_t rkey;
-
-    /* RDMA the data over to the peer */
-    send_frag = mca_ptl_ib_alloc_send_frag(ptl, req);
-
-    if(NULL == send_frag) {
-        ompi_output(0, "Unable to allocate send descriptor");
-        return OMPI_ERROR;
-    }
-
-    A_PRINT("IB put to %p, rkey : %d", 
-            req->req_peer_addr.pval,
-            *(VAPI_rkey_t *)(((mca_ptl_ib_send_request_t *)req)->req_buf));
-
-    ib_state = ((mca_ptl_ib_module_t *)ptl)->ib_state;
-    peer_conn = ((mca_ptl_ib_peer_t *)ptl_peer)->peer_conn;
-    local_addr = (void*) ((char*) req->req_base.req_addr + offset);
-    remote_addr = (void*) req->req_peer_addr.pval;
-    rkey = *(VAPI_rkey_t *)(((mca_ptl_ib_send_request_t *)req)->req_buf);
-
-    rc = mca_ptl_ib_rdma_write(ib_state, peer_conn,
-            &send_frag->ib_buf, local_addr, size, remote_addr, rkey,
-            (void*) send_frag);
-
-    if(rc != OMPI_SUCCESS) {
-        return OMPI_ERROR;
-    }
-
-    /* Send FIN to receiver */
-#if 0
-    send_frag_fin = mca_ptl_ib_alloc_send_frag(ptl, req);
-
-
-    if(NULL == send_frag_fin) {
-        ompi_output(0, "Unable to allocate send descriptor");
-        return OMPI_ERROR;
-    }
-    rc = mca_ptl_ib_put_frag_init(send_frag_fin, ptl_peer,
-            req, offset, &size, flags);
-    if(rc != OMPI_SUCCESS) {
-        return rc;
-    }
-#endif
-    rc = mca_ptl_ib_put_frag_init(send_frag, ptl_peer,
-            req, offset, &size, flags);
-    if(rc != OMPI_SUCCESS) {
-        return rc;
-    }
-
-    /* Update offset */
-    req->req_offset += size;
-
-    rc = mca_ptl_ib_peer_send(ptl_peer, send_frag);
-
-    return rc;
-}
-
-int mca_ptl_ib_add_procs(struct mca_ptl_base_module_t* base_module, 
-        size_t nprocs, struct ompi_proc_t **ompi_procs, 
-        struct mca_ptl_base_peer_t** peers, ompi_bitmap_t* reachable)
-{
+    mca_ptl_ib_module_t* ib_ptl = (mca_ptl_ib_module_t*)ptl;
     int i, rc;
-    struct ompi_proc_t* ompi_proc;
-    mca_ptl_ib_proc_t* module_proc;
-    mca_ptl_base_peer_t* module_peer;
 
     for(i = 0; i < nprocs; i++) {
 
-        ompi_proc = ompi_procs[i];
-        module_proc = mca_ptl_ib_proc_create(ompi_proc);
+        struct ompi_proc_t* ompi_proc = ompi_procs[i];
+        mca_ptl_ib_proc_t* ib_proc;
+        mca_ptl_base_peer_t* ib_peer;
 
-        if(NULL == module_proc) {
+        if(NULL == (ib_proc = mca_ptl_ib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -153,35 +83,29 @@ int mca_ptl_ib_add_procs(struct mca_ptl_base_module_t* base_module,
          * don't bind this PTL instance to the proc.
          */
 
-        OMPI_THREAD_LOCK(&module_proc->proc_lock);
-        if(module_proc->proc_addr_count == module_proc->proc_peer_count) {
-            OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
-            return OMPI_ERR_UNREACH;
-        }
+        OMPI_THREAD_LOCK(&ib_proc->proc_lock);
 
         /* The ptl_proc datastructure is shared by all IB PTL
          * instances that are trying to reach this destination. 
          * Cache the peer instance on the ptl_proc.
          */
-        module_peer = OBJ_NEW(mca_ptl_ib_peer_t);
-
-        if(NULL == module_peer) {
+        ib_peer = OBJ_NEW(mca_ptl_ib_peer_t);
+        if(NULL == ib_peer) {
             OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        module_peer->peer_module = (mca_ptl_ib_module_t*)base_module;
-
-        rc = mca_ptl_ib_proc_insert(module_proc, module_peer);
+        ib_peer->peer_ptl = ib_ptl;
+        rc = mca_ptl_ib_proc_insert(ib_proc, ib_peer);
         if(rc != OMPI_SUCCESS) {
-            OBJ_RELEASE(module_peer);
+            OBJ_RELEASE(ib_peer);
             OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
-            return rc;
+            continue;
         }
 
         ompi_bitmap_set_bit(reachable, i);
         OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
-        peers[i] = module_peer;
+        peers[i] = ib_peer;
     }
 
     return OMPI_SUCCESS;
@@ -205,36 +129,28 @@ int mca_ptl_ib_finalize(struct mca_ptl_base_module_t* ptl)
 }
 
 int mca_ptl_ib_request_init( struct mca_ptl_base_module_t* ptl,
-        struct mca_pml_base_send_request_t* request)
+    struct mca_pml_base_send_request_t* request)
 {
-#if 0
-    mca_ptl_ib_send_request_t *ib_send_req;
-    mca_ptl_ib_send_frag_t *ib_send_frag;
+    mca_ptl_ib_module_t* ib_ptl = (mca_ptl_ib_module_t*)ptl;
+    mca_ptl_ib_send_frag_t* sendfrag;
+    ompi_list_item_t* item;
+    int rc;
 
-    A_PRINT("");
-
-    ib_send_frag = mca_ptl_ib_alloc_send_frag(ptl,
-            request);
-
-    if(NULL == ib_send_frag) {
-        D_PRINT("Unable to allocate ib_send_frag");
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    } else {
-
-        ib_send_req = (mca_ptl_ib_send_request_t *) request;
-        ib_send_req->req_frag = ib_send_frag;
-        memset(ib_send_req->req_buf, 7, 8);
+    OMPI_FREE_LIST_GET(&ib_ptl->send_free, item, rc);
+    if(NULL == (sendfrag = (mca_ptl_ib_send_frag_t*)item)) {
+        return rc;
     }
-
-#endif
-    return OMPI_ERROR;
+    ((mca_ptl_ib_send_request_t*) request)->req_frag = sendfrag;
+    return OMPI_SUCCESS;
 }
 
+
 void mca_ptl_ib_request_fini( struct mca_ptl_base_module_t* ptl,
-        struct mca_pml_base_send_request_t* request)
+    struct mca_pml_base_send_request_t* request)
 {
-    D_PRINT("");
-    OBJ_DESTRUCT(request+1);
+    mca_ptl_ib_module_t* ib_ptl = (mca_ptl_ib_module_t*)ptl;  
+    mca_ptl_ib_send_request_t* sendreq = (mca_ptl_ib_send_request_t*)request;
+    OMPI_FREE_LIST_RETURN(&ib_ptl->send_free, (ompi_list_item_t*)sendreq->req_frag);
 }
 
 /*
@@ -251,58 +167,138 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
     size_t size,
     int flags)
 {
+    mca_ptl_ib_module_t* ib_ptl = (mca_ptl_ib_module_t*)ptl;
     mca_ptl_ib_send_frag_t* sendfrag;
-    mca_ptl_ib_send_request_t *ib_send_req;
+    mca_ptl_base_header_t *hdr;
+    size_t hdr_length;
     int rc = OMPI_SUCCESS;
 
-    sendfrag = mca_ptl_ib_alloc_send_frag(ptl,
-            sendreq);
-
-    if(NULL == sendfrag) {
-        D_PRINT("Unable to allocate ib_send_frag");
-        return OMPI_ERR_OUT_OF_RESOURCE;
+    if(sendreq->req_cached) {
+        sendfrag = ((mca_ptl_ib_send_request_t*)sendreq)->req_frag;
     } else {
-
-        ib_send_req = (mca_ptl_ib_send_request_t *) sendreq;
-        ib_send_req->req_frag = sendfrag;
-        memset(ib_send_req->req_buf, 7, 8);
-    }
-
-#if 0
-    if (0 == offset) {
-        sendfrag = (mca_ptl_ib_send_frag_t *)
-            ((mca_ptl_ib_send_request_t*)sendreq)->req_frag;
-    } else {
-
-        /* Implementation for messages > frag size */
-        sendfrag = mca_ptl_ib_alloc_send_frag(ptl,
-                sendreq);
-
-        if(NULL == sendfrag) {
-            ompi_output(0,"Unable to allocate send fragment");
+        ompi_list_item_t* item;
+        OMPI_FREE_LIST_GET(&ib_ptl->send_free, item, rc);
+        if(NULL == (sendfrag = (mca_ptl_ib_send_frag_t*)item)) {
+            return rc;
         }
     }
-#endif
 
-    rc = mca_ptl_ib_send_frag_init(sendfrag, ptl_peer,
-            sendreq, offset, &size, flags);
-    if(rc != OMPI_SUCCESS) {
-        return rc;
+    /* initialize convertor */
+    if(size > 0) {
+        ompi_convertor_t *convertor;
+        int rc, freeAfter;
+        unsigned int iov_count, max_data;
+        struct iovec iov;
+
+        /* first fragment (eager send) and first fragment of long
+         * protocol can use the convertor initialized on the request,
+         * remaining fragments must copy/reinit the convertor as the
+         * transfer could be in parallel.
+         */
+        if( offset <= mca_ptl_ib_module.super.ptl_first_frag_size ) {
+            convertor = &sendreq->req_convertor;
+        } else {
+            convertor = &sendfrag->frag_send.frag_base.frag_convertor;
+            ompi_convertor_copy(&sendreq->req_convertor, convertor);
+            ompi_convertor_init_for_send( convertor,
+                                          0,
+                                          sendreq->req_base.req_datatype,
+                                          sendreq->req_base.req_count,
+                                          sendreq->req_base.req_addr,
+                                          offset,
+                                          NULL );
+        }
+
+        /* if data is contigous, convertor will return an offset
+         * into users buffer - otherwise will return an allocated buffer
+         * that holds the packed data
+         */
+        if((flags & MCA_PTL_FLAGS_ACK) == 0) {
+            iov.iov_base = &sendfrag->ib_buf.buf[sizeof(mca_ptl_base_match_header_t)];
+        } else {
+            iov.iov_base = &sendfrag->ib_buf.buf[sizeof(mca_ptl_base_rendezvous_header_t)];
+        }
+        iov.iov_len = size;
+        iov_count = 1;
+        max_data = size;
+
+        if((rc = ompi_convertor_pack(convertor,&iov, &iov_count, &max_data, &freeAfter)) < 0) {
+            ompi_output(0, "Unable to pack data");
+            return rc;
+        }
+
+        /* adjust size to reflect actual number of bytes packed by convertor */
+        size = iov.iov_len;
+        sendfrag->frag_send.frag_base.frag_addr = iov.iov_base;
+        sendfrag->frag_send.frag_base.frag_size = iov.iov_len;
+    } else {
+        sendfrag->frag_send.frag_base.frag_addr = NULL;
+        sendfrag->frag_send.frag_base.frag_size = 0;
+    }
+
+    /* fragment state */
+    sendfrag->frag_send.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
+    sendfrag->frag_send.frag_request = sendreq;
+    sendfrag->frag_send.frag_base.frag_peer = ptl_peer;
+    sendfrag->frag_progressed = 0;
+
+    /* Initialize header */
+    hdr = (mca_ptl_base_header_t *) &sendfrag->ib_buf.buf[0];
+    hdr->hdr_common.hdr_flags = flags;
+    hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
+    hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
+    hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
+    hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
+    hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
+    hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
+    if((flags & MCA_PTL_FLAGS_ACK) == 0) {
+        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
+        hdr_length = sizeof(mca_ptl_base_match_header_t);
+    } else {
+        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
+        hdr->hdr_rndv.hdr_frag_length = sendfrag->frag_send.frag_base.frag_size;
+        hdr->hdr_rndv.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+        hdr->hdr_rndv.hdr_src_ptr.pval = sendfrag;
+        hdr_length = sizeof(mca_ptl_base_rendezvous_header_t);
     }
 
     /* Update the offset after actual fragment size is determined,
      * and before attempting to send the fragment */
     sendreq->req_offset += size;
 
-    rc = mca_ptl_ib_peer_send(ptl_peer, sendfrag);
+    IB_SET_SEND_DESC_LEN((&sendfrag->ib_buf), (hdr_length + size));
+    if(OMPI_SUCCESS != (rc = mca_ptl_ib_peer_send(ptl_peer, sendfrag))) {
+        return rc;
+    }
 
-    return rc;
+    /* if this is the entire message - signal request is complete */
+    if(sendreq->req_bytes_packed == size) {
+        ompi_request_complete( &(sendreq->req_base.req_ompi) );
+    }
+    return OMPI_SUCCESS;
+}
+
+/*
+ * RDMA local buffer to remote buffer address.
+ */
+
+int mca_ptl_ib_put( struct mca_ptl_base_module_t* ptl,
+    struct mca_ptl_base_peer_t* ptl_peer,
+    struct mca_pml_base_send_request_t* req, size_t offset,
+    size_t size, int flags)
+{
+    return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
 
-static void mca_ptl_ib_start_ack(mca_ptl_base_module_t *module,
-        mca_ptl_ib_send_frag_t *send_frag,
-        mca_ptl_ib_recv_frag_t *recv_frag)
+/*
+ * On a match send an ack to the peer.
+ */
+
+static void mca_ptl_ib_ack(
+    mca_ptl_ib_module_t *ib_ptl,
+    mca_ptl_ib_send_frag_t *send_frag,
+    mca_ptl_ib_recv_frag_t *recv_frag)
 {
     mca_ptl_base_header_t *hdr;
     mca_pml_base_recv_request_t *request;
@@ -311,8 +307,6 @@ static void mca_ptl_ib_start_ack(mca_ptl_base_module_t *module,
     int recv_len;
     int len_to_reg, len_added = 0;
     void *addr_to_reg, *ack_buf;
-
-    A_PRINT("");
 
     /* Header starts at beginning of registered
      * buffer space */
@@ -353,8 +347,7 @@ static void mca_ptl_ib_start_ack(mca_ptl_base_module_t *module,
         sizeof(mca_ptl_base_ack_header_t));
 
     /* Prepare ACK packet with IB specific stuff */
-    mca_ptl_ib_prepare_ack(((mca_ptl_ib_module_t *)module)->ib_state,
-            addr_to_reg, len_to_reg,
+    mca_ptl_ib_prepare_ack(ib_ptl, addr_to_reg, len_to_reg,
             ack_buf, &len_added);
 
     /* Send it right away! */
@@ -366,12 +359,10 @@ static void mca_ptl_ib_start_ack(mca_ptl_base_module_t *module,
     IB_SET_SEND_DESC_LEN(ib_buf,
             (sizeof(mca_ptl_base_ack_header_t) + len_added));
 
-    mca_ptl_ib_post_send(((mca_ptl_ib_module_t *)module)->ib_state,
-            ib_peer->peer_conn, 
-            &send_frag->ib_buf, send_frag);
+    mca_ptl_ib_post_send(ib_ptl, ib_peer, &send_frag->ib_buf, send_frag);
 
     /* fragment state */
-    send_frag->frag_send.frag_base.frag_owner = module;
+    send_frag->frag_send.frag_base.frag_owner = &ib_ptl->super;
     send_frag->frag_send.frag_base.frag_peer = recv_frag->super.frag_base.frag_peer;
     send_frag->frag_send.frag_base.frag_addr = NULL;
     send_frag->frag_send.frag_base.frag_size = 0;
@@ -383,9 +374,11 @@ static void mca_ptl_ib_start_ack(mca_ptl_base_module_t *module,
  *  data to user buffer
  */
 
-void mca_ptl_ib_matched(mca_ptl_base_module_t* module,
+void mca_ptl_ib_matched(
+    mca_ptl_base_module_t* ptl,
     mca_ptl_base_recv_frag_t* frag)
 {
+    mca_ptl_ib_module_t* ib_ptl = (mca_ptl_ib_module_t*)ptl;
     mca_pml_base_recv_request_t *request;
     mca_ptl_base_header_t *header;
     mca_ptl_ib_recv_frag_t *recv_frag;
@@ -398,13 +391,11 @@ void mca_ptl_ib_matched(mca_ptl_base_module_t* module,
 
     if (header->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) {
         mca_ptl_ib_send_frag_t *send_frag;
-
-        send_frag = mca_ptl_ib_alloc_send_frag(module, NULL);
-
+        send_frag = mca_ptl_ib_alloc_send_frag(ib_ptl, NULL);
         if(NULL == send_frag) {
             ompi_output(0, "Cannot get send descriptor");
         } else {
-            mca_ptl_ib_start_ack(module, send_frag, recv_frag);
+            mca_ptl_ib_ack(ib_ptl, send_frag, recv_frag);
         }
     }
 
@@ -419,7 +410,7 @@ void mca_ptl_ib_matched(mca_ptl_base_module_t* module,
      * unex_buffer to application buffer */
 
     if ((header->hdr_common.hdr_type & MCA_PTL_HDR_TYPE_MATCH) &&
-        (header->hdr_rndv.hdr_frag_length > 0)) {
+        (header->hdr_match.hdr_msg_length > 0)) {
         struct iovec iov;
         ompi_proc_t *proc;
 	unsigned int iov_count, max_data;
@@ -429,7 +420,7 @@ void mca_ptl_ib_matched(mca_ptl_base_module_t* module,
         iov.iov_len  = frag->frag_base.frag_size;
 
         proc = ompi_comm_peer_lookup(request->req_base.req_comm,
-                request->req_base.req_peer);
+                request->req_base.req_ompi.req_status.MPI_SOURCE);
 
         ompi_convertor_copy(proc->proc_convertor, &frag->frag_base.frag_convertor);
 

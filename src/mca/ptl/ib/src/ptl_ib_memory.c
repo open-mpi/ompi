@@ -53,7 +53,7 @@ static void mca_ptl_ib_mem_registry_construct(ompi_object_t *object)
         registry->hints[i].pval = (void *)NULL;
     }
 
-    registry->ib_state = NULL;
+    registry->ib_ptl = NULL;
     registry->evictable = NULL;
 
     return;
@@ -177,7 +177,7 @@ mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_mem_registry_register(
         memcpy(&(info->request),mr,sizeof(VAPI_mr_t));
         info->ref_cnt = 1;
         do {
-            vapi_result = VAPI_register_mr(registry->ib_state->nic, mr, 
+            vapi_result = VAPI_register_mr(registry->ib_ptl->nic, mr, 
                 &(info->hndl), &(info->reply));
             if (VAPI_OK != vapi_result) {
                 if (VAPI_EAGAIN == vapi_result) {
@@ -214,7 +214,7 @@ mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_mem_registry_register(
 }
 
 mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_register_mem_with_registry(
-    mca_ptl_ib_state_t *ib_state,
+    mca_ptl_ib_module_t *ib_module,
     void *addr, size_t len)
 {
     mca_ptl_ib_mem_registry_info_t *info;
@@ -223,17 +223,17 @@ mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_register_mem_with_registry(
     mr.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
     mr.l_key = 0;
     mr.r_key = 0;
-    mr.pd_hndl = ib_state->ptag;
+    mr.pd_hndl = ib_module->ptag;
     mr.size = len;
     mr.start = (VAPI_virt_addr_t) (MT_virt_addr_t) addr;
     mr.type = VAPI_MR;
 
-    info = mca_ptl_ib_mem_registry_register(&(ib_state->mem_registry),&mr);
+    info = mca_ptl_ib_mem_registry_register(&(ib_module->mem_registry),&mr);
     return info;
 }
 
 int mca_ptl_ib_deregister_mem_with_registry(
-    mca_ptl_ib_state_t *ib_state,
+    mca_ptl_ib_module_t *ib_module,
     void *addr, size_t len)
 {
     VAPI_mr_t mr;
@@ -242,12 +242,12 @@ int mca_ptl_ib_deregister_mem_with_registry(
     mr.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
     mr.l_key = 0;
     mr.r_key = 0;
-    mr.pd_hndl = ib_state->ptag;
+    mr.pd_hndl = ib_module->ptag;
     mr.size = len;
     mr.start = (VAPI_virt_addr_t) (MT_virt_addr_t) addr;
     mr.type = VAPI_MR;
 
-    rc =  mca_ptl_ib_mem_registry_deregister(&(ib_state->mem_registry),&mr);
+    rc =  mca_ptl_ib_mem_registry_deregister(&(ib_module->mem_registry),&mr);
     return rc;
 }
 
@@ -268,7 +268,7 @@ static int mca_ptl_ib_mem_registry_real_deregister(
     /* delete the info object from the red/black tree */
     ompi_rb_tree_delete(&(registry->rb_tree), &(info->reply));
     /* do the real deregistration */
-    vapi_result = VAPI_deregister_mr(registry->ib_state->nic, info->hndl); 
+    vapi_result = VAPI_deregister_mr(registry->ib_ptl->nic, info->hndl); 
     /* return the info object to the free list */
     item = (ompi_list_item_t *)info;
     OMPI_FREE_LIST_RETURN(&(registry->info_free_list), item);
@@ -300,10 +300,12 @@ int mca_ptl_ib_mem_registry_deregister(
     return OMPI_SUCCESS;
 }
 
-void mca_ptl_ib_mem_registry_init(
-    mca_ptl_ib_mem_registry_t *registry,
-    mca_ptl_ib_state_t *ib_state) 
+
+int mca_ptl_ib_mem_registry_init(
+    mca_ptl_ib_mem_registry_t *registry, 
+    struct mca_ptl_ib_module_t *ib_ptl)
 {
-    registry->ib_state = ib_state;
-    return;
+    registry->ib_ptl = ib_ptl;
+    return OMPI_SUCCESS;
 }
+

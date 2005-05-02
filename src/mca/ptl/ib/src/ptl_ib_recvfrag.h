@@ -40,11 +40,13 @@ struct mca_ptl_ib_recv_frag_t {
 };
 typedef struct mca_ptl_ib_recv_frag_t mca_ptl_ib_recv_frag_t;
 
+struct mca_ptl_ib_module_t;
+
 
 void mca_ptl_ib_recv_frag_done (mca_ptl_base_header_t*,
         mca_ptl_base_recv_frag_t*, mca_pml_base_recv_request_t*);
 
-void mca_ptl_ib_process_recv(mca_ptl_base_module_t* , void*);
+void mca_ptl_ib_process_recv(struct mca_ptl_ib_module_t* , void*);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

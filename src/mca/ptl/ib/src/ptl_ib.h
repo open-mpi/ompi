@@ -54,16 +54,12 @@ extern "C" {
 
 struct mca_ptl_ib_component_t {
     mca_ptl_base_component_1_0_0_t          super; 
-    /**< base PTL component */
 
-    struct mca_ptl_ib_module_t              **ib_ptl_modules;
+    uint32_t                                ib_num_ptls;
+    /**< number of hcas available to the IB component */
+
+    struct mca_ptl_ib_module_t             *ib_ptls;
     /**< array of available PTLs */
-
-    uint32_t                                ib_num_ptl_modules;
-    /**< number of ptl modules actually used */
-
-    uint32_t                                ib_max_ptl_modules;         
-    /**< maximum number of ptls */
 
     int                                     ib_free_list_num;
     /**< initial size of free lists */
@@ -95,9 +91,6 @@ struct mca_ptl_ib_component_t {
     ompi_mutex_t                            ib_lock;
     /**< lock for accessing module state */
 
-    uint32_t                                ib_num_hcas;
-    /**< number of hcas available to the IB component */
-
     int                                     ib_mem_registry_hints_log_size;
     /**< log2 size of hints hash array used by memory registry */
 };
@@ -110,18 +103,19 @@ extern mca_ptl_ib_component_t mca_ptl_ib_component;
  * IB PTL Interface
  */
 struct mca_ptl_ib_module_t {
-    mca_ptl_base_module_t                   super;  
-    /**< base PTL interface */
+    mca_ptl_base_module_t  super;  /**< base PTL interface */
+    VAPI_hca_id_t   hca_id;        /**< ID of HCA */
+    VAPI_hca_port_t port;          /**< IB port of this PTL */
+    VAPI_hca_hndl_t nic;           /**< NIC handle */
+    VAPI_pd_hndl_t  ptag;          /**< Protection Domain tag */
+    VAPI_cq_hndl_t  cq_hndl;       /**< Completion Queue handle */
 
-    mca_ptl_ib_state_t                      *ib_state;
-    /* IB state holds info about queue handles, HCA handles,
-     * protection domain etc. which are private to this module */
+    EVAPI_async_handler_hndl_t async_handler;
+    /**< Async event handler used to detect weird/unknown events */
 
-    ompi_free_list_t                        send_free;
-    /**< free list of send buffer descriptors */
-
-    ompi_free_list_t                        recv_free;
-    /**< free list of recv buffer descriptors */
+    mca_ptl_ib_mem_registry_t mem_registry; /**< registry of memory regions */
+    ompi_free_list_t send_free;    /**< free list of send buffer descriptors */
+    ompi_list_t repost;            /**< list of buffers to repost */
 };
 
 typedef struct mca_ptl_ib_module_t mca_ptl_ib_module_t;
@@ -164,8 +158,8 @@ extern int mca_ptl_ib_component_close(void);
  */
 extern mca_ptl_base_module_t** mca_ptl_ib_component_init(
     int *num_ptl_modules, 
-    bool *allow_multi_user_threads,
-    bool *have_hidden_threads
+    bool allow_multi_user_threads,
+    bool have_hidden_threads
 );
 
 /**

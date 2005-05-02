@@ -40,6 +40,7 @@ extern "C" {
 #include <vapi.h>
 #include <vapi_common.h>
 
+struct mca_ptl_ib_module_t;
 typedef struct mca_ptl_ib_mem_registry_info_t mca_ptl_ib_mem_registry_info_t;
 
 struct mca_ptl_ib_mem_registry_info_t {
@@ -60,7 +61,7 @@ struct mca_ptl_ib_mem_registry_t {
     ompi_free_list_t info_free_list;
     ompi_ptr_t *hints;
     mca_ptl_ib_mem_registry_info_t *evictable;
-    struct mca_ptl_ib_state_t *ib_state;
+    struct mca_ptl_ib_module_t *ib_ptl;
     int hints_log_size;
     int hints_size;
 };
@@ -135,20 +136,20 @@ mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_mem_registry_register(
     VAPI_mr_t *mr);
 
 mca_ptl_ib_mem_registry_info_t *mca_ptl_ib_register_mem_with_registry(
-    struct mca_ptl_ib_state_t *ib_state,
+    struct mca_ptl_ib_module_t *ib_ptl,
     void *addr, size_t len);
 
 int mca_ptl_ib_deregister_mem_with_registry(
-    struct mca_ptl_ib_state_t *ib_state,
+    struct mca_ptl_ib_module_t *ib_ptl,
     void *addr, size_t len);
 
 int mca_ptl_ib_mem_registry_deregister(
     mca_ptl_ib_mem_registry_t *registry,
     VAPI_mr_t *mr);
 
-void mca_ptl_ib_mem_registry_init(
-    mca_ptl_ib_mem_registry_t *registry,
-    struct mca_ptl_ib_state_t *ib_state);
+int mca_ptl_ib_mem_registry_init(
+    mca_ptl_ib_mem_registry_t* registry,
+    struct mca_ptl_ib_module_t *ib_ptl);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
