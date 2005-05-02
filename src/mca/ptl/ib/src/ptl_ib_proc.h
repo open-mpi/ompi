@@ -45,7 +45,7 @@ struct mca_ptl_ib_proc_t {
     ompi_proc_t *proc_ompi;                  
     /**< pointer to corresponding ompi_proc_t */
 
-    ompi_process_name_t proc_guid;           
+    orte_process_name_t proc_guid;           
     /**< globally unique identifier for the process */
 
     size_t proc_addr_count;                  

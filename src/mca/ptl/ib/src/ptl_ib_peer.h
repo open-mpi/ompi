@@ -67,7 +67,7 @@ typedef enum {
 struct mca_ptl_base_peer_t {
     ompi_list_item_t            super;
 
-    struct mca_ptl_ib_module_t* peer_module;
+    struct mca_ptl_ib_module_t* peer_ptl;
     /**< PTL instance that created this connection */
 
     struct mca_ptl_ib_proc_t*   peer_proc;
@@ -76,13 +76,10 @@ struct mca_ptl_base_peer_t {
     mca_ptl_ib_peer_state_t     peer_state;
     /**< current state of the connection */
 
-    mca_ptl_ib_peer_conn_t*     peer_conn;
-    /**< IB specific private information about peer */
-
     size_t                      peer_retries;
     /**< number of connection retries attempted */
 
-    double                      peer_ts;
+    double                      peer_tstamp;
     /**< timestamp of when the first connection was attempted */
 
     ompi_mutex_t                peer_send_lock;
@@ -93,13 +90,29 @@ struct mca_ptl_base_peer_t {
 
     ompi_list_t                 pending_send_frags;
     /**< list of pending send frags for this peer */
+
+    VAPI_qp_num_t               rem_qp_num;
+    /* Remote side QP number */
+
+    IB_lid_t                    rem_lid;
+    /* Local identifier of the remote process */
+
+    VAPI_qp_hndl_t              lcl_qp_hndl;
+    /* Local QP handle */
+
+    VAPI_qp_prop_t              lcl_qp_prop;
+    /* Local QP properties */
+
+    ib_buffer_t                *lcl_recv;
+    /* Remote resources associated with this connection */
 };
 
 typedef struct mca_ptl_base_peer_t mca_ptl_base_peer_t;
 typedef struct mca_ptl_base_peer_t mca_ptl_ib_peer_t;
 
 int  mca_ptl_ib_peer_send(mca_ptl_base_peer_t*, mca_ptl_ib_send_frag_t*);
-void mca_ptl_ib_post_oob_recv_nb(void);
+int  mca_ptl_ib_peer_connect(mca_ptl_base_peer_t*);
+void mca_ptl_ib_post_recv(void);
 
 void mca_ptl_ib_progress_send_frags(mca_ptl_ib_peer_t*);
 

@@ -16,7 +16,7 @@
  * $HEADER$
  */
 
-#include <hh_common.h>
+/* #include <hh_common.h> */
 
 /* Open MPI includes */
 #include "ompi_config.h"
@@ -30,10 +30,10 @@
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/base/mca_base_module_exchange.h"
+#include "mca/errmgr/errmgr.h"
 
 /* IB ptl includes */
 #include "ptl_ib.h"
-#include "ptl_ib_priv.h"
 
 
 mca_ptl_ib_component_t mca_ptl_ib_component = {
@@ -101,7 +101,7 @@ static inline int mca_ptl_ib_param_register_int(
 
 int mca_ptl_ib_component_open(void)
 {
-    /* register super component parameters */
+    /* register component parameters */
     mca_ptl_ib_module.super.ptl_exclusivity =
         mca_ptl_ib_param_register_int ("exclusivity", 0);
 
@@ -120,7 +120,7 @@ int mca_ptl_ib_component_open(void)
 
     /* register IB component parameters */
     mca_ptl_ib_component.ib_free_list_num =
-        mca_ptl_ib_param_register_int ("free_list_num", 64);
+        mca_ptl_ib_param_register_int ("free_list_num", 8);
     mca_ptl_ib_component.ib_free_list_max =
         mca_ptl_ib_param_register_int ("free_list_max", 1024);
     mca_ptl_ib_component.ib_free_list_inc =
@@ -128,8 +128,10 @@ int mca_ptl_ib_component_open(void)
     mca_ptl_ib_component.ib_mem_registry_hints_log_size = 
         mca_ptl_ib_param_register_int ("hints_log_size", 8);
 
+    /* initialize global state */
+    mca_ptl_ib_component.ib_num_ptls=0;
+    mca_ptl_ib_component.ib_ptls=NULL;
     OBJ_CONSTRUCT(&mca_ptl_ib_component.ib_procs, ompi_list_t);
-
     OBJ_CONSTRUCT (&mca_ptl_ib_component.ib_recv_frags, ompi_free_list_t);
 
     return OMPI_SUCCESS;
@@ -147,16 +149,6 @@ int mca_ptl_ib_component_close(void)
 }
 
 /*
- *  Register IB component addressing information. The MCA framework
- *  will make this available to all peers. 
- */
-
-static int mca_ptl_ib_component_send(void)
-{
-    return OMPI_SUCCESS;
-}
-
-/*
  *  IB component initialization:
  *  (1) read interface list from kernel and compare against component parameters
  *      then create a PTL instance for selected interfaces
@@ -167,16 +159,47 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
                                                   bool enable_progress_threads,
                                                   bool enable_mpi_threads)
 {
-    mca_ptl_base_module_t **modules;
     VAPI_ret_t vapi_ret;
+    VAPI_hca_id_t* hca_ids;
+    mca_ptl_base_module_t** ptls;
     int i, ret;
-    mca_ptl_ib_module_t* ib_modules = NULL;
 
     /* initialization */
     *num_ptl_modules = 0;
-    mca_ptl_ib_component.ib_num_hcas=0;
 
-    /* Initialize Receive fragments */
+    /* query the list of available hcas */
+    vapi_ret=EVAPI_list_hcas(0, &(mca_ptl_ib_component.ib_num_ptls), NULL);
+    if( VAPI_EAGAIN != vapi_ret || 0 == mca_ptl_ib_component.ib_num_ptls ) {
+        ompi_output(0,"Warning: no IB HCAs found\n");
+        return NULL;
+    }
+
+    hca_ids = (VAPI_hca_id_t*) malloc(mca_ptl_ib_component.ib_num_ptls * sizeof(VAPI_hca_id_t));
+    if(NULL == hca_ids) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return NULL;
+    }
+    vapi_ret=EVAPI_list_hcas(mca_ptl_ib_component.ib_num_ptls, &mca_ptl_ib_component.ib_num_ptls, hca_ids);
+    if( VAPI_OK != vapi_ret ) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return NULL;
+    }
+                                                                                                                      
+    /* Allocate space for ptl modules */
+    mca_ptl_ib_component.ib_ptls = (mca_ptl_ib_module_t*) malloc(sizeof(mca_ptl_ib_module_t) * 
+            mca_ptl_ib_component.ib_num_ptls);
+    if(NULL == mca_ptl_ib_component.ib_ptls) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return NULL;
+    }
+    ptls = (struct mca_ptl_base_module_t**) 
+        malloc(mca_ptl_ib_component.ib_num_ptls * sizeof(struct mca_ptl_ib_module_t*));
+    if(NULL == ptls) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return NULL;
+    }
+
+    /* Initialize pool of receive fragments */
     ompi_free_list_init (&(mca_ptl_ib_component.ib_recv_frags),
             sizeof (mca_ptl_ib_recv_frag_t),
             OBJ_CLASS (mca_ptl_ib_recv_frag_t),
@@ -184,76 +207,18 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
             mca_ptl_ib_component.ib_free_list_max,
             mca_ptl_ib_component.ib_free_list_inc, NULL);
 
+    /* Initialize each module */
+    for(i = 0; i < mca_ptl_ib_component.ib_num_ptls; i++) {
+        mca_ptl_ib_module_t* ib_ptl = &mca_ptl_ib_component.ib_ptls[i];
 
-    /* figure out how many HCA's are available for use - don't allocate
-     * any resrouces at this stage. */
-    vapi_ret=EVAPI_list_hcas(0,&(mca_ptl_ib_component.ib_num_hcas),
-            NULL);
-    if( HH_EAGAIN != vapi_ret ) {
-        ompi_output(0, "mca_ptl_ib_component_init: "
-                "Unexpect return from EVAPI_list_hcas - %s\n",
-                VAPI_strerror(vapi_ret));
-        return NULL;
-    }
-    if( 0 == mca_ptl_ib_component.ib_num_hcas )  {
-        ompi_output(0,"Warniing :: mca_ptl_ib_component_init: "
-                "  No IB devices found \n");
-        return NULL;
-    }
+        /* Initialize the modules function pointers */
+        memcpy(ib_ptl, &mca_ptl_ib_module, sizeof(mca_ptl_ib_module));
 
-    /* Number of InfiniBand PTLs is equal to
-     * number of physical HCAs. Is this always the
-     * case, or under some conditions, there can be
-     * multiple PTLs for one HCA? */
-    mca_ptl_ib_component.ib_num_ptl_modules = 
-        mca_ptl_ib_component.ib_num_hcas;
+        /* Initialize module state */
+        OBJ_CONSTRUCT(&ib_ptl->send_free, ompi_free_list_t);
+        OBJ_CONSTRUCT(&ib_ptl->repost, ompi_list_t);
 
-    /* Not sure what max_ptl_modules does */
-    mca_ptl_ib_component.ib_max_ptl_modules = 
-        mca_ptl_ib_component.ib_num_hcas;
-
-    /* Allocate space for number of modules available
-     * to this component */
-    ib_modules = (mca_ptl_ib_module_t*) malloc(sizeof(mca_ptl_ib_module_t) * 
-            mca_ptl_ib_component.ib_num_ptl_modules);
-    if(NULL == ib_modules) {
-        return NULL;
-    }
-
-    /* Zero out the PTL struct memory region */
-    memset((void*)ib_modules, 0, sizeof(mca_ptl_ib_module_t) *
-            mca_ptl_ib_component.ib_num_ptl_modules);
-
-    /* Copy the function pointers to the IB modules */
-    for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
-        memcpy((void*)&ib_modules[i], 
-                &mca_ptl_ib_module, 
-                sizeof(mca_ptl_ib_module));
-    }
-
-    /* For each module, Initialize! */
-    for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
-
-        /* Allocate space for the state of the IB module */
-        ib_modules[i].ib_state = malloc(sizeof(mca_ptl_ib_state_t));
-
-        if(NULL == ib_modules[i].ib_state) {
-            return NULL;
-        }
-        
-        if(mca_ptl_ib_init_module(ib_modules[i].ib_state, i)
-                != OMPI_SUCCESS) {
-            return NULL;
-        }
-
-        /* Find a better place for this */
-        OBJ_CONSTRUCT(&(ib_modules[i].send_free), ompi_free_list_t);
-
-        A_PRINT("Free list addr : %p", &ib_modules[i].send_free);
-
-        OBJ_CONSTRUCT(&(ib_modules[i].recv_free), ompi_free_list_t);
-
-        ompi_free_list_init(&(ib_modules[i].send_free),
+        ompi_free_list_init(&ib_ptl->send_free,
                 sizeof(mca_ptl_ib_send_frag_t),
                 OBJ_CLASS(mca_ptl_ib_send_frag_t),
                 mca_ptl_ib_component.ib_free_list_num,
@@ -261,51 +226,27 @@ mca_ptl_base_module_t** mca_ptl_ib_component_init(int *num_ptl_modules,
                 mca_ptl_ib_component.ib_free_list_inc,
                 NULL);
 
-        /* Initialize the send descriptors */
-        if(mca_ptl_ib_register_send_frags((mca_ptl_base_module_t *) &ib_modules[i])
-                != OMPI_SUCCESS) {
-
+      
+        memcpy(ib_ptl->hca_id, hca_ids[i], sizeof(ib_ptl->hca_id));
+        if(mca_ptl_ib_module_init(ib_ptl) != OMPI_SUCCESS) {
+            free(hca_ids);
             return NULL;
         }
 
-        DUMP_IB_STATE(ib_modules[i].ib_state);
+        /* Initialize the send descriptors */
+        if(mca_ptl_ib_send_frag_register(ib_ptl) != OMPI_SUCCESS) {
+            free(hca_ids);
+            return NULL;
+        }
+        ptls[i] = &ib_ptl->super;
     }
 
-    /* Post OOB receives */
-    mca_ptl_ib_post_oob_recv_nb();
+    /* Post OOB receive to support dynamic connection setup */
+    mca_ptl_ib_post_recv();
 
-    /* Allocate list of IB ptl pointers */
-    mca_ptl_ib_component.ib_ptl_modules = (struct mca_ptl_ib_module_t**) 
-        malloc(mca_ptl_ib_component.ib_num_ptl_modules * 
-                sizeof(struct mca_ptl_ib_module_t*));
-    if(NULL == mca_ptl_ib_component.ib_ptl_modules) {
-        return NULL;
-    }
-
-    /* Set the pointers for all IB ptls */
-    for(i = 0; i < mca_ptl_ib_component.ib_num_ptl_modules; i++) {
-        mca_ptl_ib_component.ib_ptl_modules[i] = &ib_modules[i];
-    }
-
-    if(mca_ptl_ib_component_send() != OMPI_SUCCESS) {
-        return NULL;
-    }
-
-    /* Allocate list of MCA ptl pointers */
-    modules = (mca_ptl_base_module_t**) 
-        malloc(mca_ptl_ib_component.ib_num_ptl_modules * 
-            sizeof(mca_ptl_base_module_t*));
-    if(NULL == modules) {
-        return NULL;
-    }
-
-    memcpy(modules, mca_ptl_ib_component.ib_ptl_modules, 
-            mca_ptl_ib_component.ib_num_ptl_modules * 
-            sizeof(mca_ptl_ib_module_t*));
-
-    *num_ptl_modules = mca_ptl_ib_component.ib_num_ptl_modules;
-
-    return modules;
+    *num_ptl_modules = mca_ptl_ib_component.ib_num_ptls;
+    free(hca_ids);
+    return ptls;
 }
 
 /*
@@ -322,79 +263,89 @@ int mca_ptl_ib_component_control(int param, void* value, size_t size)
  *  IB component progress.
  */
 
+#define MCA_PTL_IB_DRAIN_NETWORK(nic, cq_hndl, comp_type, comp_addr) \
+{ \
+    VAPI_ret_t ret; \
+    VAPI_wc_desc_t comp; \
+ \
+    ret = VAPI_poll_cq(nic, cq_hndl, &comp); \
+    if(VAPI_OK == ret) { \
+        if(comp.status != VAPI_SUCCESS) { \
+            ompi_output(0, "Got error : %s, Vendor code : %d Frag : %p", \
+                    VAPI_wc_status_sym(comp.status), \
+                    comp.vendor_err_syndrome, comp.id);  \
+            *comp_type = IB_COMP_ERROR; \
+            *comp_addr = NULL; \
+        } else { \
+            if(VAPI_CQE_SQ_SEND_DATA == comp.opcode) { \
+                *comp_type = IB_COMP_SEND; \
+                *comp_addr = (void*) (unsigned long) comp.id; \
+            } else if(VAPI_CQE_RQ_SEND_DATA == comp.opcode) { \
+                *comp_type = IB_COMP_RECV; \
+                *comp_addr = (void*) (unsigned long) comp.id; \
+            } else if(VAPI_CQE_SQ_RDMA_WRITE == comp.opcode) { \
+                *comp_type = IB_COMP_RDMA_W; \
+                *comp_addr = (void*) (unsigned long) comp.id; \
+            } else { \
+                ompi_output(0, "VAPI_poll_cq: returned unknown opcode : %d\n", \
+                        comp.opcode); \
+                *comp_type = IB_COMP_ERROR; \
+                *comp_addr = NULL; \
+            } \
+        } \
+    } else { \
+        /* No completions from the network */ \
+        *comp_type = IB_COMP_NOTHING; \
+        *comp_addr = NULL; \
+    } \
+}
+
+
 int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
 {
-    int i, num_procs, num_modules;
-    ompi_list_item_t *item;
-    mca_ptl_ib_peer_t *peer;
-    mca_ptl_ib_proc_t *proc;
-    mca_ptl_ib_module_t *module;
-    int comp_type = IB_COMP_NOTHING;
-    void* comp_addr;
-
-    num_procs = ompi_list_get_size(&(mca_ptl_ib_component.ib_procs));
-
-    /* Traverse the list of procs associated with the
-     * IB component */
-
-    item = ompi_list_get_first(&(mca_ptl_ib_component.ib_procs));
-
-    for(i = 0; i < num_procs; 
-            item = ompi_list_get_next(item), i++) {
-
-        proc = (mca_ptl_ib_proc_t *) item;
-
-        /* We only have one peer per proc right now */
-        peer = (mca_ptl_ib_peer_t *) proc->proc_peers[0];
-
-        if(!ompi_list_is_empty(&(peer->pending_send_frags))) {
-
-            mca_ptl_ib_progress_send_frags(peer);
-        }
-    }
+    int i;
+    int count = 0;
 
     /* Poll for completions */
-
-    num_modules = mca_ptl_ib_component.ib_num_ptl_modules;
-
-    for(i = 0; i < num_modules; i++) {
+    for(i = 0; i < mca_ptl_ib_component.ib_num_ptls; i++) {
+        mca_ptl_ib_module_t* ib_ptl = &mca_ptl_ib_component.ib_ptls[i];
+        int comp_type = IB_COMP_NOTHING;
+        void* comp_addr;
         
-        module = mca_ptl_ib_component.ib_ptl_modules[i];
-
-        mca_ptl_ib_drain_network(module->ib_state->nic,
-                    module->ib_state->cq_hndl,
-                    &comp_type, &comp_addr);
+        MCA_PTL_IB_DRAIN_NETWORK(ib_ptl->nic, ib_ptl->cq_hndl, &comp_type, &comp_addr);
 
         /* Handle n/w completions */
-
         switch(comp_type) {
             case IB_COMP_SEND :
-                D_PRINT("Caught a send completion");
 
                 /* Process a completed send */
-                mca_ptl_ib_process_send_comp(
-                        (mca_ptl_base_module_t *) module,
-                        comp_addr);
-
+                mca_ptl_ib_send_frag_send_complete(ib_ptl, (mca_ptl_ib_send_frag_t*)comp_addr);
+                count++;
                 break;
+
             case IB_COMP_RECV :
-                D_PRINT("Caught a recv completion");
 
                 /* Process incoming receives */
-                mca_ptl_ib_process_recv((mca_ptl_base_module_t *)module, 
-                        comp_addr);
+                mca_ptl_ib_process_recv(ib_ptl, comp_addr);
                 /* Re post recv buffers */
-                mca_ptl_ib_buffer_repost(module->ib_state->nic,
-                        comp_addr);
-                
+                if(ompi_list_get_size(&ib_ptl->repost) <= 1) {
+                    ompi_list_append(&ib_ptl->repost, (ompi_list_item_t*)comp_addr);
+                } else {
+                    ompi_list_item_t* item;
+                    while(NULL != (item = ompi_list_remove_first(&ib_ptl->repost))) {
+                         mca_ptl_ib_buffer_repost(ib_ptl->nic, item);
+                    }
+                    mca_ptl_ib_buffer_repost(ib_ptl->nic, comp_addr);
+                }
+                count++;
                 break;
+
             case IB_COMP_RDMA_W :
 
-                mca_ptl_ib_process_rdma_w_comp(
-                        (mca_ptl_base_module_t *) module,
-                        comp_addr);
-
+                ompi_output(0, "%s:%d RDMA not implemented\n", __FILE__,__LINE__);
+                count++;
                 break;
+
             case IB_COMP_NOTHING:
                 break;
             default:
@@ -402,6 +353,6 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
                 break;
         }
     }
-
-    return OMPI_SUCCESS;
+    return count;
 }
+
