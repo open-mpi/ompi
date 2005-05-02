@@ -139,10 +139,10 @@ mca_ptl_portals_component_open(void)
         mca_ptl_portals_param_register_int("rndv_frag_max_size",
                                            PTL_PORTALS_DEFAULT_RNDV_FRAG_MAX_SIZE);
 
-    mca_ptl_portals_module.first_frag_num_mds = 
+    mca_ptl_portals_module.first_frag_num_entries = 
         mca_ptl_portals_param_register_int("first_frag_num_entries",
                                            PTL_PORTALS_DEFAULT_FIRST_FRAG_NUM_ENTRIES);
-    mca_ptl_portals_module.first_frag_md_size = 
+    mca_ptl_portals_module.first_frag_entry_size = 
         mca_ptl_portals_param_register_int("first_frag_entry_size",
                                            PTL_PORTALS_DEFAULT_FIRST_FRAG_ENTRY_SIZE);
 
@@ -193,7 +193,7 @@ mca_ptl_portals_component_init(int *num_ptls,
     *num_ptls = 0;
 
     /* BWB - no support for progress threads */
-    if (enable_progress_threads) return NULL;
+    if (enable_progress_threads || enable_mpi_threads) return NULL;
 
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
                         "mca_ptl_portals_component_init()");

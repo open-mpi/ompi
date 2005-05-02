@@ -148,9 +148,16 @@ struct mca_ptl_portals_module_t {
     mca_ptl_base_module_t super;         /**< base PTL module interface */
 
     /* number of mds for first frags */
-    int first_frag_num_mds;
+    int first_frag_num_entries;
     /* size of each md for first frags */
-    int first_frag_md_size;
+    int first_frag_entry_size;
+    /* size for event queue */
+    int first_frag_queue_size;
+
+    /* frag receive data */
+    bool frag_queues_created;
+    /* frag receive event queue */
+    ptl_handle_eq_t frag_receive_eq_handle;
 
     /** our portals network interface */
     ptl_handle_ni_t ni_handle;
@@ -369,5 +376,6 @@ extern int mca_ptl_portals_send_continue(
 
 extern int mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
                                          int value);
+extern int ptl_portals_new_frag_entry(struct mca_ptl_portals_module_t *ptl);
 
 #endif
