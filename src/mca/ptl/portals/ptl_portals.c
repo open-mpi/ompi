@@ -59,10 +59,6 @@ mca_ptl_portals_module_t mca_ptl_portals_module = {
         NULL,  /* PTL stack */
         NULL   /* PML use */
     },
-
-    0, /* num first frag mds */
-    0, /* size first frag md */
-    0, /* ni handle */
 };
 
 
@@ -118,8 +114,82 @@ mca_ptl_portals_add_procs(struct mca_ptl_base_module_t* ptl,
 
 int
 mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
-                              int value)
+                              int enable)
 {
-    /* need to do all the portals cleanup code here... */
+    int i, ret;
+
+    if (enable == 0) {
+        /* disable the unexpected receive queue */
+        /* BWB - not really sure how - would have to track a lot more data... */
+    } else {
+        /* only do all the hard stuff if we haven't created the queue */
+        if (ptl->frag_queues_created) return OMPI_SUCCESS;
+
+        /* create an event queue, then the match entries for the match
+           entries */
+        ret = PtlEQAlloc(ptl->ni_handle,
+                         ptl->first_frag_queue_size,
+                         PTL_EQ_HANDLER_NONE,
+                         &(ptl->frag_receive_eq_handle));
+
+        for (i = 0 ; i < ptl->first_frag_num_entries ; ++i) {
+            ret = ptl_portals_new_frag_entry(ptl);
+            if (OMPI_SUCCESS != ret) return ret;
+            ptl->frag_queues_created = true;
+        }
+    }
+    
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+ptl_portals_new_frag_entry(struct mca_ptl_portals_module_t *ptl)
+{
+    ptl_handle_me_t me_handle;
+    ptl_handle_md_t md_handle;
+    ptl_md_t md;
+    void *mem;
+    int ret;
+    ptl_process_id_t proc = { PTL_NID_ANY, PTL_PID_ANY };
+
+
+    /* create match entry */
+    ret = PtlMEAttach(ptl->ni_handle,
+                      PTL_PORTALS_FRAG_TABLE_ID,
+                      proc,
+                      0, /* match bits */
+                      0, /* ignore bits */
+                      PTL_UNLINK,
+                      PTL_INS_AFTER,
+                      &me_handle);
+    if (PTL_OK != ret) return OMPI_ERROR;
+
+    /* and some memory */
+    mem = malloc(ptl->first_frag_entry_size);
+    if (NULL == mem) {
+        PtlMEUnlink(me_handle);
+        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+
+    /* and the memory descriptor */
+    md.start = mem;
+    md.length = ptl->first_frag_entry_size;
+    md.threshold = PTL_MD_THRESH_INF;
+    md.max_size = md.length - ptl->super.ptl_first_frag_size;
+    md.options = PTL_MD_OP_PUT | PTL_MD_MAX_SIZE;
+    md.user_ptr = NULL;
+    md.eventq = ptl->frag_receive_eq_handle;
+
+    ret = PtlMDAttach(me_handle,
+                      md,
+                      PTL_UNLINK,
+                      &md_handle);
+    if (PTL_OK != ret) {
+        PtlMEUnlink(me_handle);
+        return OMPI_ERROR;
+    }
+
     return OMPI_SUCCESS;
 }

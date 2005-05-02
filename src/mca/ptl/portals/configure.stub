@@ -144,17 +144,9 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
                        [Use the Red Storm implementation or Portals])
     AM_CONDITIONAL([PTL_PORTALS_REDSTORM], [test "$PTL_PORTALS_REDSTORM" = "1"])
 
-    MCA_PTL_PORTALS_CONFIG_VAL([first-frag-table-id],
-                      [PTL_PORTALS_FIRST_FRAG_TABLE_ID], [1],
-                      [Portals table id to use for first fragment receive queue])
-
-    MCA_PTL_PORTALS_CONFIG_VAL([rndv-frag-table-id],
-                      [PTL_PORTALS_RNDV_FRAG_TABLE_ID], [2],
-                      [Portals table id to use for rndv fragment receive queue])
-
-    MCA_PTL_PORTALS_CONFIG_VAL([ack-table-id],
-                      [PTL_PORTALS_ACK_TABLE_ID], [3],
-                      [Portals table id to use for ack queue])
+    MCA_PTL_PORTALS_CONFIG_VAL([frag-table-id],
+                      [PTL_PORTALS_FRAG_TABLE_ID], [1],
+                      [Portals table id to use for fragment receive queue])
 
     MCA_PTL_PORTALS_CONFIG_VAL([debug-level],
                       [PTL_PORTALS_DEFAULT_DEBUG_LEVEL], [1000],
