@@ -38,8 +38,8 @@ static int ompi_convertor_generic_parse( ompi_convertor_t* pConvertor,
     int bConverted = 0;    /* number of bytes converted this time */ 
     ompi_datatype_t *pData = pConvertor->pDesc; 
     dt_elem_desc_t* pElem; 
-    char* iov_base; 
-    uint32_t iov_len, i; 
+    char * iov_base_local; 
+    uint32_t iov_len_local, i; 
     uint32_t iov_count, total_bytes_converted = 0; 
  
     DUMP( "convertor_decode( %p, {%p, %d}, %d )\n", (void*)pConvertor, 
@@ -61,8 +61,8 @@ static int ompi_convertor_generic_parse( ompi_convertor_t* pConvertor,
              */
             *freeAfter = (*freeAfter) | (1 << iov_count);
         }
-        iov_base = iov[iov_count].iov_base; 
-        iov_len = iov[iov_count].iov_len; 
+        iov_base_local = iov[iov_count].iov_base; 
+        iov_len_local = iov[iov_count].iov_len; 
         bConverted = 0;
         while( 1 ) { 
             if( DT_END_LOOP == pElem[pos_desc].elem.common.type ) { /* end of the current loop */
@@ -88,18 +88,18 @@ static int ompi_convertor_generic_parse( ompi_convertor_t* pConvertor,
                 int stop_in_loop = 0;
                 if( pElem[pos_desc].loop.common.flags & DT_FLAG_CONTIGUOUS ) {
                     ddt_endloop_desc_t* end_loop = &(pElem[pos_desc + pElem[pos_desc].loop.items].end_loop);
-                    if( (end_loop->size * count_desc) > iov_len ) {
+                    if( (end_loop->size * count_desc) > iov_len_local ) {
                         stop_in_loop = count_desc;
-                        count_desc = iov_len / end_loop->size;
+                        count_desc = iov_len_local / end_loop->size;
                     }
                     for( i = 0; i < count_desc; i++ ) {
                         /*
                          *  DO SOMETHING USEFULL ...
                          */
-                        iov_base += end_loop->size;  /* size of the contiguous data */
+                        iov_base_local += end_loop->size;  /* size of the contiguous data */
                         disp_desc += pElem[pos_desc].loop.extent;
                     }
-                    iov_len -= (end_loop->size * count_desc);
+                    iov_len_local -= (end_loop->size * count_desc);
                     bConverted += (end_loop->size * count_desc);
                     if( stop_in_loop == 0 ) {
                         pos_desc += pElem[pos_desc].loop.items + 1;

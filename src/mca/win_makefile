@@ -30,7 +30,6 @@ installdir = ${topdir}/src/Debug/lib
 C_SUBDIRS = \
         allocator/bucket \
         coll/basic \
-        ns/proxy/src \
         topo/unity/src
 
 # list of components to build with the cpp compiler
@@ -42,6 +41,7 @@ CPP_SUBDIRS = \
         oob/tcp \
         pml/teg/src \
         ns/replica/src \
+        ns/proxy/src \
         gpr/proxy \
         gpr/replica
 
@@ -61,7 +61,6 @@ INCL = \
 
 CFLAGS = \
         /DWIN32 \
-        /DOMPI_BUILDING=0 \
         /DHAVE_CONFIG_H \
         /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
         /EHsc \
@@ -77,7 +76,6 @@ CFLAGS = \
 CPPFLAGS = \
         /DWIN32 \
         /TP \
-        /DOMPI_BUILDING=0 \
         /DHAVE_CONFIG_H \
         /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
         /EHsc \
@@ -132,12 +130,12 @@ prebuild:
 
 clibs: ${C_SUBDIRS} prebuild
 	@for dirs in ${C_SUBDIRS}; do \
-	    (libname=`echo mca_$${dirs}.dll | sed 's/\/src[\/]*//g' | sed 's/\//_/g' | sed 's/_\./\./g'` ; cd $$dirs; ${CC} ${CFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:$${libname} *.obj); \
+	    (libname=`echo mca_$${dirs}.dll | sed 's/\/src[\/]*//g' | sed 's/\//_/g' | sed 's/_\./\./g'` ; cd $$dirs; echo ${CC} ${CPPFLAGS} ${INCL} *.c; ${CC} ${CFLAGS} ${INCL} *.c; echo ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:$${libname} *.obj; ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:$${libname} *.obj); \
 	done
 
 cpplibs: ${CPP_SUBDIRS} prebuild
 	@for dirs in ${CPP_SUBDIRS}; do \
-	    (libname=`echo mca_$${dirs}.dll | sed 's/\/src[\/]*//g' | sed 's/\//_/g' | sed 's/_\./\./g'` ; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:$${libname} *.obj); \
+	    (libname=`echo mca_$${dirs}.dll | sed 's/\/src[\/]*//g' | sed 's/\//_/g' | sed 's/_\./\./g'` ; cd $$dirs; echo ${CC} ${CPPFLAGS} ${INCL} *.c; ${CC} ${CPPFLAGS} ${INCL} *.c; echo ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:$${libname} *.obj; ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:$${libname} *.obj); \
 	done
 
 install: win_makefile

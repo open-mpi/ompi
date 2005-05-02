@@ -562,6 +562,9 @@
 
 #define MCA_pml_DIRECT_CALL 0
 
+#define SIZE_MAX ((size_t) 0)
+#define UINT8_MAX 255
+
 #include "ompi_config_bottom.h"
 #endif /* OMPI_CONFIG_H */
 

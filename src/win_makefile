@@ -30,13 +30,13 @@ pkglibdir = ${prefix}/lib
 # list of components to build with the c compiler
 C_SUBDIRS =  \
         attribute \
-		  dps \
         class \
         communicator \
         datatype \
         errhandler \
         event \
         event/WIN32-Code \
+        dps \
         file \
         group \
         info \
@@ -52,19 +52,24 @@ C_SUBDIRS =  \
         mca/allocator/base \
         mca/coll/base \
         mca/gpr/base \
+        mca/gpr/base/data_type_support \
         mca/io/base \
         mca/iof/base \
 		  mca/errmgr/base \
 		  mca/rml/base \
 		  mca/rmgr/base \
+        mca/rmgr/base/data_type_support \
         mca/rmaps/base \
 		  mca/soh/base \
+        mca/soh/base/data_type_support \
         mca/mpool/base \
         mca/ns/base \
+        mca/ns/base/data_type_support \
         mca/oob/base \
         mca/pml/base \
         mca/ptl/base \
         mca/topo/base \
+        mca/schema/base \
         win32/generated_source \
         win \
         win32 
@@ -109,6 +114,7 @@ INCL = \
 CFLAGS = \
         /DWIN32 \
         /DOMPI_BUILDING=1 \
+        /DOMPI_BUILDING_LIBRARY=1 \
         /DOMPI_SYSCONFDIR="\"${sysconfdir}\"" \
         /DOMPI_PKGLIBDIR="\"${pkglibdir}\"" \
         /DOMPI_PKGDATADIR="\"${pkgdatadir}\"" \
@@ -138,6 +144,7 @@ STATIC_LIBS = \
         ptl\
         oob\
         pml\
+        schema \
         ns\
         gpr \
         iof
