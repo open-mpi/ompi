@@ -95,7 +95,7 @@ typedef struct {
 /* define a print format to handle the variations in size_t */
 #if SIZEOF_SIZE_T == SIZEOF_INT
 #define ORTE_SIZE_T_PRINTF "%u"
-#elif SIZEOF_SIZE_T == SIZE_OF_LONG
+#elif SIZEOF_SIZE_T == SIZEOF_LONG
 #define ORTE_SIZE_T_PRINTF "%lu"
 #endif
 
