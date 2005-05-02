@@ -166,7 +166,7 @@ static bool test1(void)        /* check seed/singleton name discovery */
 static bool test2(void) 
 {
     int rc;
-    orte_process_name_t dummy={2,5,0x21456};
+    orte_process_name_t dummy={2,5,21456};
     
     if (NULL != orte_process_info.my_name) {  /* cleanup from prior test */
         free(orte_process_info.my_name);
