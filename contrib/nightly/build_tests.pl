@@ -14,14 +14,6 @@
 # 
 # $HEADER$
 #
-# This script is used to take a nightly snapshot tarball of Open MPI
-# and try building it.
-#
-# $1: scratch root
-# $2: e-mail address for destination
-# $3: URL_ARG
-# $4: config file
-#
 
 use strict;
 use Getopt::Long;
@@ -54,8 +46,8 @@ my $sha1_checksums = "sha1sums.txt";
 my $max_log_len = 100;
 
 # email subjects
-my $success_subject = "Open MPI: Build success (\@version@)";
-my $fail_subject = "Open MPI: === BUILD FAILURE (\@version@) ===";
+my $success_subject = "Open MPI-TESTS: Build success (\@version@)";
+my $fail_subject = "Open MPI-TESTS: === BUILD FAILURE (\@version@) ===";
 
 # max number of snapshots to keep downloaded
 my $max_snapshots = 3;
@@ -63,6 +55,11 @@ my $max_snapshots = 3;
 # max number of old build roots to maintain (note that build roots are
 # only left if a) you use --leave-install or b) a build fails)
 my $max_build_roots = 3;
+
+my $file_base_name="openmpi-tests";
+
+my $outfile;
+my $outfile_arg;
 
 ############################################################################
 # Shouldn't need to change below this line
@@ -117,7 +114,7 @@ sub send_mail {
 sub test_abort {
     my $msg = \@_;
 
-    push(@email_output, "Building the nightly tarball ended in error:\n\n");
+    push(@email_output, "Building the nightly test-tarball ended in error:\n\n");
     push(@email_output, @$msg);
     send_mail($fail_subject, $email_arg, @email_output);
     exit(1);
@@ -332,7 +329,7 @@ sub trim {
 #--------------------------------------------------------------------------
 
 # subroutine for building a single configuration
-sub try_build {
+sub try_untar {
     my ($name, $merge_output, $tarball, $srcroot, $installdir,
         $vpath_mode, $confargs) = @_;
     my $ret;
@@ -352,7 +349,6 @@ sub try_build {
     # do_command here because we need to use a pipe.  This isn't an
     # "interesting" command, anyway -- we don't need any stdout or
     # stderr.  So if it fails, it fails -- no big deal.
-
 
     if ($tarball =~ /.*\.bz2$/) {
         $unpacker="bunzip2";
@@ -376,11 +372,16 @@ sub try_build {
         }
     }
 
-    test_abort ("Tarball does not contain expected openmpi-directory:openmpi-$version -- aborting")
-	    if (! -d "openmpi-$version");
-
-    chdir("openmpi-$version");
+    test_abort ("Tarball does not contain expected directory:$file_base_name-$version -- aborting")
+	    if (! -d "$file_base_name-$version");
+    chdir("$file_base_name-$version");
+}
     
+sub try_configure {
+    my ($name, $merge_output, $tarball, $srcroot, $installdir,
+        $vpath_mode, $confargs) = @_;
+    my $ret;
+
     # configure it
     my $config_command = "./configure";
     if ($vpath_mode) {
@@ -388,10 +389,14 @@ sub try_build {
         chdir("vpath_build");
         if ($vpath_mode eq "relative") {
             $config_command = "../configure";
-        } else {
-            $config_command = "$srcroot/openmpi-$version/configure";
         }
+#
+# Disable absolute for now
+#         else {
+#            $config_command = "$srcroot/$file_base_name-$version/configure";
+#        }
     }
+
     $ret = do_command(1, "$config_command $confargs --prefix=$installdir");
     if ($ret->{status} != 0) {
         $ret->{message} = "Failed to configure the tarball";
@@ -426,75 +431,21 @@ sub try_build {
         return $ret;
     }
 
-    # try compiling and linking a simple C application
-    chdir("..");
-    if (! -d test) {
-        mkdir("test", 0777);
-    }
-    chdir("test");
-    open C, ">hello.c";
-    print C "#include <mpi.h>
-int main(int argc, char* argv[]) {
-  MPI_Init(&argc, &argv);
-  MPI_Finalize();
-  return 0;
-}\n";
-    $ret = do_command(1, "$installdir/bin/mpicc hello.c -o hello");
-    if ($ret->{status} != 0) {
-        $ret->{make_all_stderr} = $make_all_stderr;
-        $ret->{message} = "Failed to compile/link C \"hello world\" MPI app";
-        return $ret;
-    }
-    unlink("hello");
-
-    # if we have a C++ compiler, try compiling and linking a simple
-    # C++ application
-    open INFO, "$installdir/bin/ompi_info --parsable|";
-    my @have_cxx = grep { /^bindings:cxx:/ } <INFO>;
-    chomp @have_cxx;
-    close INFO;
-    if ($have_cxx[0] eq "bindings:cxx:yes") {
-        open CXX, ">hello.cc";
-        print CXX "#include <mpi.h>
-int main(int argc, char* argv[]) {
-  MPI::Init(argc, argv);
-  MPI::Finalize();
-  return 0;
-}\n";
-        do_command(1, "$installdir/bin/mpic++ hello.cc -o hello");
-        if ($ret->{status} != 0) {
-            $ret->{make_all_stderr} = $make_all_stderr;
-            $ret->{message} =
-                "Failed to compile/link C++ \"hello world\" MPI app";
-            return $ret;
-        }
-        unlink("hello");
+    if ($vpath_mode) {
+      chdir ("..");
     }
 
-    # if we have a F77 compiler, try compiling and linking a simple
-    # F77 application
-    open INFO, "$installdir/bin/ompi_info --parsable|";
-    my @have_f77 = grep { /^bindings:f77:/ } <INFO>;
-    chomp(@have_f77);
-    close INFO;
-    if ($have_f77[0] eq "bindings:f77:yes") {
-        open F77, ">hello.f";
-        print F77 "C
-        program main
-        include 'mpif.h'
-        call MPI_INIT(ierr)
-        call MPI_FINALIZE(ierr)
-        stop
-        end\n";
-        do_command(1, "$installdir/bin/mpif77 hello.f -o hello");
-        if ($ret->{status} != 0) {
-            $ret->{make_all_stderr} = $make_all_stderr;
-            $ret->{message} = 
-                "Failed to compile/link F77 \"hello world\" MPI app";
-            return $ret;
-        }
-        unlink("hello");
-    }
+    return {
+        make_all_stderr => $make_all_stderr,
+        status => 0,
+    };
+}
+
+
+sub cleanup {
+    my ($name, $merge_output, $tarball, $srcroot, $installdir,
+        $vpath_mode, $confargs) = @_;
+    my $startdir=`pwd`;
 
     # all done -- clean up (unless user specified --leave-install)
     chdir($startdir);
@@ -503,11 +454,6 @@ int main(int argc, char* argv[]) {
     } else {
         system("rm -rf $srcroot");
     }
-
-    return {
-        make_all_stderr => $make_all_stderr,
-        status => 0,
-    };
 }
 
 #--------------------------------------------------------------------------
@@ -526,6 +472,7 @@ my $ok = Getopt::Long::GetOptions("url|u=s" => \$url_arg,
                                   "debug|d" => \$debug_arg,
                                   "leave-install|l=s" => \$leave_install_arg,
                                   "install-dir=s" => \$install_dir_arg,
+                                  "outfile=s" => \$outfile_arg,
                                   "help|h" => \$help_arg,
                                   "force" => \$force_arg,
                                   "nocheck" => \$nocheck_arg
@@ -537,8 +484,8 @@ if (!$ok || $help_arg) {
     print "Usage: $0 [--scratch|-s scratch_directory_root] [--email|-e address]\n";
     print "  [--config|-c config_file] [--help|-h] [--debug|-d]\n";
     print "  [[--file|-f local_ompi_tarball] [--url|-u URL_base]]\n";
-    print "  [--leave-install output_filename] [--install-dir install_dir]\n";
-    print "  [--nocheck]\n";
+    print "  [--leave-install output_filename] [--outfile output_filename]\n";
+    print "  [--install-dir install_dir] [--nocheck]\n";
     exit(0);
 }
 
@@ -663,7 +610,7 @@ if ($url_arg) {
     push(@email_output, "Snapshot: $version\n\n");
 
     # see if we need to download the tarball
-    $tarball_name = "openmpi-$version.tar.gz";
+    $tarball_name = "$file_base_name-$version.tar.gz";
     if (! -f $tarball_name) {
         do_command(1, "$download $url_arg/$tarball_name");
         test_abort ("Could not download tarball -- aborting")
@@ -727,7 +674,7 @@ WARNING: checksums.  Proceeding anyway...\n\n");
     die "ERROR: Cannot read file $tarball_name\n"
         if (! -r $tarball_name);
     $version = $tarball_name;
-    $version =~ s/.*openmpi-(.+)\.tar.*/$1/;
+    $version =~ s/.*$file_base_name-(.+)\.tar.*/$1/;
 
     check_last_version($version);
 
@@ -741,17 +688,36 @@ system("rm -rf $root");
 mkdir($root, 0777);
 chdir($root);
 
+$outfile="out-$version.txt";
+
+if ($outfile_arg) {
+   $outfile="$outfile_arg";
+}
+
+test_abort("Could not find output file:$outfile -- aborting")
+  if ( ! -f $outfile );
+
+open OUTFILE, "$outfile";
+
 # loop over all configurations
 # be lazy: if no configurations supplied, do a default
 # configure/build
 my $results;
 my $do_default = 0;
+
 if (! $config_arg || ! -f $config_arg) {
     my $dir = "$root/default";
     my $name = "[default]";
     my $config = "CFLAGS=-g --disable-f77 --enable-debug";
-    $ret = try_build($name, 0, $tarball_name,
+
+    die "NOT SUPPORTED YET\n";
+
+    $ret = try_untar($name, 0, $tarball_name,
                      $dir, "$dir/install", "", $config);
+    $ret = try_configure($name, 0, $tarball_name,
+                         $dir, "$dir/install", "", $config);
+    $ret = cleanup($name, 0, $tarball_name,
+                   $dir, "$dir/install", "", $config);
     $results->{$name} = $ret;
     $results->{$name}->{config} = $config;
     $results->{$name}->{want_stderr} = 1;
@@ -780,21 +746,44 @@ if (! $config_arg || ! -f $config_arg) {
             my $dir = "$root/$name";
             $dir =~ s/[\[\] \t"']/_/g;
             # stupid emacs: '"
-
-            $install_dir="$dir/install";
-            if ($install_dir_arg) {
-                $install_dir="$install_dir_arg/$name";
-            }
-
             my $merge_output = $want_stderr ? 0 : 1;
-            $ret = try_build($name, $merge_output, $tarball_name,
-                             $dir, $install_dir,
+            $ret = try_untar($name, $merge_output, $tarball_name,
+                             $dir, "$dir/install",
                              $vpath_mode, $config);
-            $results->{$name} = $ret;
-            $results->{$name}->{config} = $config;
-            $results->{$name}->{want_stderr} = $want_stderr;
-            $results->{$name}->{vpath_mode} = $vpath_mode;
-            $results->{$name}->{installdir} = "$install_dir";
+
+            while (<OUTFILE>) {
+                my $mpi_dir=$_;
+                my $added_config="$config --with-mpi-dir=$mpi_dir";
+
+                $install_dir="$dir/install";
+
+                if ($install_dir_arg) {
+                    $install_dir="$install_dir_arg/$name";
+                }
+ 
+                chdir ("PMB-2.2");
+                $ret = try_configure($name, $merge_output, $tarball_name,
+                                     $dir, "$install_dir",
+                                     $vpath_mode, $added_config);
+                chdir ("..");
+
+                chdir ("mpich_tester");
+                $ret = try_configure($name, $merge_output, $tarball_name,
+                                     $dir, "$install_dir",
+                                     $vpath_mode, $added_config);
+                chdir ("..");
+                $results->{$name} = $ret;
+                $results->{$name} = $ret;
+                $results->{$name} = $ret;
+                $results->{$name}->{config} = $config;
+                $results->{$name}->{want_stderr} = $want_stderr;
+                $results->{$name}->{vpath_mode} = $vpath_mode;
+                $results->{$name}->{installdir} = "$install_dir";
+
+            }
+            $ret = cleanup($name, $merge_output, $tarball_name,
+                           $dir, "$install_dir",
+                           $vpath_mode, $config);
             ++$i;
         }
     }
@@ -847,8 +836,9 @@ open LEAVE, ">$leave_install_arg"
 my $email_subject;
 push(@email_output,
 "SUMMARY OF RESULTS:
-  (Building tarball and compiling/linking MPI \"hello world\")
+  (Building and compiling/linking PMB-2.2 and MPIch-testsuite)
 --------------------------------------------------------------------------\n");
+
 foreach my $config (keys(%$results)) {
     my $str;
     if ($results->{$config}->{status} == 0) {
