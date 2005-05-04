@@ -17,6 +17,7 @@
 # This script is run on developer copies of Open MPI -- *not*
 # distribution tarballs.
 
+#set -x
 
 ##############################################################################
 #
@@ -309,11 +310,11 @@ EOF
         # If we need to make a version header template file, do so
 
         rgt_abs_dir="`pwd`"
-        rgt_component_name="`basename $rgt_abs_dir`"
-        rgt_component_type="`dirname $rgt_abs_dir`"
-        rgt_component_type="`basename $rgt_component_type`"
+        rgt_component_name="`basename \"$rgt_abs_dir\"`"
+        rgt_component_type="`dirname \"$rgt_abs_dir\"`"
+        rgt_component_type="`basename \"$rgt_component_type\"`"
         rgt_ver_header="$rgt_abs_dir/$rgt_component_type-$rgt_component_name-version.h"
-        rgt_ver_header_base="`basename $rgt_ver_header`"
+        rgt_ver_header_base="`basename \"$rgt_ver_header\"`"
         make_version_header_template "$rgt_ver_header_base" "$rgt_component_type" "$rgt_component_name"
 
 	happy=1
@@ -326,7 +327,7 @@ EOF
 	file=configure.ac
     else
         cat <<EOF
---> Err... there's no configure.in or configure.ac file in this directory"
+--> Err... there's no configure.in or configure.ac file in this directory
 --> Confused; aborting in despair
 EOF
 	exit 1
@@ -382,6 +383,7 @@ EOF
 
    {
 EOF
+#'
         else
             echo "     ==> your libtool doesn't need this! yay!"
         fi
@@ -521,23 +523,23 @@ EOF
 *** Nothing to do -- skipping this directory
 EOF
             else
-                pd_component_name="`basename $pd_abs_dir`"
-                pd_component_type="`dirname $pd_abs_dir`"
-                pd_component_type="`basename $pd_component_type`"
+                pd_component_name="`basename \"$pd_abs_dir\"`"
+                pd_component_type="`dirname \"$pd_abs_dir\"`"
+                pd_component_type="`basename \"$pd_component_type\"`"
 
                 # Write out to two files (they're merged at the end)
 
                 pd_list_file="$pd_ompi_topdir/$mca_no_config_list_file"
                 pd_amc_file="$pd_ompi_topdir/$mca_no_config_amc_file"
 
-                cat >> $pd_list_file <<EOF
+                cat >> "$pd_list_file" <<EOF
 dnl ----------------------------------------------------------------
 
 dnl No-configure component: 
 dnl    $pd_dir
 
 EOF
-                cat >> $pd_amc_file <<EOF
+                cat >> "$pd_amc_file" <<EOF
 dnl ----------------------------------------------------------------
 
 dnl No-configure component: 
@@ -548,13 +550,13 @@ EOF
                 # the AC_CONFIG_FILES list.
 
                 for file in $PARAM_CONFIG_FILES; do
-                    echo "AC_CONFIG_FILES([$pd_dir/$file])" >> $pd_list_file
+                    echo "AC_CONFIG_FILES([$pd_dir/$file])" >> "$pd_list_file"
                 done
 
                 # Add this component directory to the list of
                 # subdirectories to traverse when building.
 
-                cat >> $pd_list_file <<EOF
+                cat >> "$pd_list_file" <<EOF
 
 dnl Add this component directory to the list of directories to
 dnl traverse for this component framework
@@ -589,7 +591,7 @@ EOF
                     # Get all the version numbers
 
                     pd_get_ver="$pd_ompi_topdir/config/ompi_get_version.sh"
-                    pd_ver="`sh $pd_get_ver $PARAM_VERSION_FILE --all`"
+                    pd_ver="`sh \"$pd_get_ver\" \"$PARAM_VERSION_FILE\" \"--all\"`"
                     pd_ver_full="`echo $pd_ver | awk '{ print $1 }'`"
                     pd_ver_major="`echo $pd_ver | awk '{ print $2 }'`"
                     pd_ver_minor="`echo $pd_ver | awk '{ print $3 }'`"
@@ -614,7 +616,7 @@ EOF
                     # AC_CONFIG_FILES so that AC_SUBST'ed things will
                     # be substituted in.
 
-                    cat >> $pd_list_file <<EOF
+                    cat >> "$pd_list_file" <<EOF
 dnl Generate the version header template
 
 AC_CONFIG_FILES([$pd_ver_header.template])
@@ -635,7 +637,7 @@ EOF
                     # therefore its timestamp unaltered) if nothing
                     # changed.
 
-                    cat >> $pd_list_file <<EOF
+                    cat >> "$pd_list_file" <<EOF
 dnl Assign and AC_SUBST all the version number components
 
 MCA_${pd_component_type}_${pd_component_name}_MAJOR_VERSION=$pd_ver_major
@@ -680,7 +682,7 @@ EOF
 
                 # Setup the AM_CONDITIONAL to build this component
 
-                cat >> $pd_amc_file <<EOF
+                cat >> "$pd_amc_file" <<EOF
 AM_CONDITIONAL(OMPI_BUILD_${pd_component_type}_${pd_component_name}_DSO,
     test "\$BUILD_${pd_component_type}_${pd_component_name}_DSO" = "1")
 
