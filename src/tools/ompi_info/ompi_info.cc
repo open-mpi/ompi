@@ -77,14 +77,6 @@ int main(int argc, char *argv[])
     exit(ret);
   }
 
-  /*
-   * Initialize the data packing service.
-   */
-  if (ORTE_SUCCESS != (ret = orte_dps_open())) {
-     printf( "Unable to initialize the DPS component\n" );
-     return ret;
-  }
-    
   ompi_cmd_line_make_opt(cmd_line, 'v', "version", 2, 
                          "Show version of Open MPI or a component");
   ompi_cmd_line_make_opt(cmd_line, '\0', "param", 2, 
