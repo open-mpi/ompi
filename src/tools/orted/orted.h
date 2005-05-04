@@ -50,6 +50,7 @@ typedef struct {
     bool help;
     bool version;
     bool debug;
+    bool no_daemonize;
     bool probe;
     char* name;
     int bootproxy;

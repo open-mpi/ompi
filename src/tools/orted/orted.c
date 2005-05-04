@@ -83,6 +83,9 @@ ompi_cmd_line_init_t orte_cmd_line_opts[] = {
     { NULL, NULL, NULL, 'd', NULL, "debug", 0,
       &orted_globals.debug, OMPI_CMD_LINE_TYPE_BOOL,
       "Run in debug mode (not generally intended for users)" },
+    { NULL, NULL, NULL, '\0', NULL, "no-daemonize", 0,
+      &orted_globals.no_daemonize, OMPI_CMD_LINE_TYPE_BOOL,
+      "Don't daemonize into the background" },
     { "rmgr", "bootproxy", "jobid", '\0', NULL, "bootproxy", 1,
       &orted_globals.bootproxy, OMPI_CMD_LINE_TYPE_INT,
       "Run as boot proxy for <job-id>" },
@@ -165,7 +168,7 @@ int main(int argc, char *argv[])
 
 
     /* detach from controlling terminal */
-    if(orted_globals.debug == false) {
+    if(orted_globals.debug == false || orted_globals.no_daemonize == true) {
         orte_daemon_init(NULL);
     }
 
