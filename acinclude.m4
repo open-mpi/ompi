@@ -33,6 +33,7 @@ sinclude(config/f77_find_ext_symbol_convention.m4)
 sinclude(config/f77_get_alignment.m4)
 sinclude(config/f77_get_fortran_handle_max.m4)
 sinclude(config/f77_get_sizeof.m4)
+sinclude(config/f77_purge_unsupported_kind.m4)
 
 sinclude(config/f90_check_type.m4)
 sinclude(config/f90_find_module_include_flag.m4)
