@@ -413,7 +413,8 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
 		burst_length = remaining_bytes % mca_ptl_gm_component.gm_rdma_frag_size;
 	}
 #else
-        burst_length = remaining_bytes % (mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_frag_header_t));
+        /*burst_length = remaining_bytes % (mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_frag_header_t));*/
+        burst_length = (mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_frag_header_t));
 #endif  /* OMPI_MCA_PTL_GM_HAVE_RDMA_GET */
     }
 
