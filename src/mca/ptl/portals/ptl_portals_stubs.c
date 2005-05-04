@@ -30,22 +30,6 @@
  * BWB - README - BWB - README - BWB - README - BWB - README - BWB */
 
 
-int
-mca_ptl_portals_finalize(struct mca_ptl_base_module_t *ptl)
-{
-    return OMPI_ERROR;
-}
-
-
-int
-mca_ptl_portals_del_procs(struct mca_ptl_base_module_t *ptl,
-			  size_t nprocs,
-			  struct ompi_proc_t **procs,
-			  struct mca_ptl_base_peer_t **peers)
-{
-    return OMPI_ERROR;
-}
-
 
 int
 mca_ptl_portals_request_init(struct mca_ptl_base_module_t *ptl,

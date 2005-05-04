@@ -351,29 +351,6 @@ extern int mca_ptl_portals_send(
 );
 
 
-/**
- * PML->PTL Continue sending fragments of a large message.
- *
- * @param ptl (IN)               PTL instance
- * @param ptl_base_peer (IN)     PTL peer addressing
- * @param request (IN)           Send request
- * @param offset                 Current offset into packed/contiguous buffer.
- * @param size (IN)              Number of bytes PML is requesting PTL to deliver,
- * @param flags (IN)             Flags that should be passed to the peer via the message header.
- * @param request (OUT)          OMPI_SUCCESS if the PTL was able to queue one or more fragments
- *
- */
-
-extern int mca_ptl_portals_send_continue(
-    struct mca_ptl_base_module_t* ptl,
-    struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_pml_base_send_request_t*,
-    size_t offset,
-    size_t size,
-    int flags
-);
-
-
 extern int mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
                                          int value);
 extern int ptl_portals_new_frag_entry(struct mca_ptl_portals_module_t *ptl);
