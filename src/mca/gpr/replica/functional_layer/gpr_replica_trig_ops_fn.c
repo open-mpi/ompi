@@ -173,7 +173,7 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg,
 int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
 {
     orte_gpr_replica_counter_t **cntr;
-    orte_gpr_replica_itagval_t *base_value;
+    orte_gpr_replica_itagval_t *base_value=NULL;
     bool first, fire;
     size_t i;
     int cmp;

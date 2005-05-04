@@ -376,7 +376,7 @@ int orte_ns_proxy_define_data_type(const char *name,
     orte_ns_cmd_flag_t command;
     orte_ns_proxy_dti_t *dti;
     size_t count;
-    int rc;
+    int rc=ORTE_SUCCESS;
 
     if (NULL == name || 0 < *type) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);

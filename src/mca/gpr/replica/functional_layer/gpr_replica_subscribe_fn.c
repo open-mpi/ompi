@@ -48,7 +48,7 @@ int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, size_t num_su
     orte_gpr_replica_itagval_t *iptr=NULL;
     orte_gpr_replica_addr_mode_t tok_mode, key_mode;
     size_t i, j, k, index, num_tokens, num_keys, num_found;
-    int rc;
+    int rc=ORTE_SUCCESS;
     bool found;
 
     if (orte_gpr_replica_globals.debug) {
