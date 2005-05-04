@@ -114,6 +114,13 @@ void ompi_info::open_components()
     }
   }
 
+  // Open the DPS
+
+  if (ORTE_SUCCESS != orte_dps_open()) {
+     printf( "Unable to initialize the DPS\n" );
+     return;
+  }
+    
   // Open up the MCA
 
   mca_base_open();
