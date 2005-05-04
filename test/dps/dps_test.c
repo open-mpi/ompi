@@ -37,6 +37,8 @@
 #include "../src/runtime/runtime.h"
 #include "../src/util/proc_info.h"
 #include "../src/util/sys_info.h"
+#include "util/malloc.h"
+#include "util/output.h"
 #include "../src/mca/base/base.h"
 #include "../src/dps/dps.h"
 #include "../src/mca/ns/ns.h"
