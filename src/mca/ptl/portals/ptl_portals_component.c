@@ -192,11 +192,11 @@ mca_ptl_portals_component_init(int *num_ptls,
     mca_ptl_base_module_t** ptls;
     *num_ptls = 0;
 
-    /* BWB - no support for progress threads */
-    if (enable_progress_threads || enable_mpi_threads) return NULL;
-
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
                         "mca_ptl_portals_component_init()");
+
+    /* BWB - no support for progress threads */
+    if (enable_progress_threads) return NULL;
 
     /* initialize portals ptl.  note that this is in the compat code because
        it's fairly non-portable between implementations */

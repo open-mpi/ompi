@@ -40,13 +40,13 @@ mca_ptl_portals_module_t mca_ptl_portals_module = {
         0,   /* exclusivity */
         0,   /* latency */
         0,   /* bandwidth */
-        0,   /* ptl flags */
+        MCA_PTL_PUT,   /* ptl flags */
 
         mca_ptl_portals_add_procs,
         mca_ptl_portals_del_procs,
         mca_ptl_portals_finalize,
         mca_ptl_portals_send,
-        NULL,
+        mca_ptl_portals_send,
         NULL,
         mca_ptl_portals_matched,
         mca_ptl_portals_request_init,
@@ -113,6 +113,19 @@ mca_ptl_portals_add_procs(struct mca_ptl_base_module_t* ptl,
 
 
 int
+mca_ptl_portals_del_procs(struct mca_ptl_base_module_t *ptl,
+			  size_t nprocs,
+			  struct ompi_proc_t **procs,
+			  struct mca_ptl_base_peer_t **peers)
+{
+    /* yeah, I have no idea what to do here */
+
+    return OMPI_SUCCESS;
+}
+
+
+
+int
 mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
                               int enable)
 {
@@ -138,7 +151,6 @@ mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
             ptl->frag_queues_created = true;
         }
     }
-    
 
     return OMPI_SUCCESS;
 }
@@ -188,6 +200,27 @@ ptl_portals_new_frag_entry(struct mca_ptl_portals_module_t *ptl)
                       &md_handle);
     if (PTL_OK != ret) {
         PtlMEUnlink(me_handle);
+        return OMPI_ERROR;
+    }
+
+    ompi_output_verbose(50, mca_ptl_portals_component.portals_output,
+                        "new fragment added");
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+mca_ptl_portals_finalize(struct mca_ptl_base_module_t *ptl_base)
+{
+    struct mca_ptl_portals_module_t *ptl =
+        (struct mca_ptl_portals_module_t *) ptl_base;
+    int ret;
+
+    ret = PtlNIFini(ptl->ni_handle);
+    if (PTL_OK != ret) {
+        ompi_output_verbose(50, mca_ptl_portals_component.portals_output,
+                            "PtlNIFini returned %d\n", ret);
         return OMPI_ERROR;
     }
 
