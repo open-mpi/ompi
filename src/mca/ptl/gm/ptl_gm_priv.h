@@ -29,6 +29,13 @@ struct mca_ptl_gm_module_t;
  */
 gm_status_t mca_ptl_gm_register_memory( struct gm_port *port, void *ptr, unsigned len );
 gm_status_t mca_ptl_gm_deregister_memory( struct gm_port *port, void *ptr, unsigned len );
+#if OMPI_MCA_PTL_GM_CACHE_ENABLE
+void mca_ptl_gm_regcache_init(void);
+unsigned int gmpi_use_interval(struct gm_port *gmpi_gm_port, gm_up_t start, unsigned int length);
+gm_status_t gmpi_unuse_interval(struct gm_port *gmpi_gm_port, gm_up_t start, unsigned int length);
+void gmpi_clear_interval(struct gm_port *gmpi_gm_port, gm_up_t start, unsigned int length);
+void gmpi_clear_all_intervals(void);
+#endif  /* OMPI_MCA_PTL_GM_CACHE_ENABLE */
 
 /* Some flags that have to go in the header hdr_common.hdr_flags field */
 #define PTL_FLAG_GM_HAS_FRAGMENT    0x04

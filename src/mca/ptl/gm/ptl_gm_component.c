@@ -589,7 +589,7 @@ mca_ptl_gm_component_progress (mca_ptl_tstamp_t tstamp)
         if( GM_NO_RECV_EVENT != gm_ntohc(event->recv.type) ) {
             mca_ptl_gm_analyze_recv_event( ptl, event );
             /* we try to empty the GM event queue */
-            continue;
+            /*continue;*/
         }
         i++;
     }
