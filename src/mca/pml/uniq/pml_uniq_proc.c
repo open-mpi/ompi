@@ -19,7 +19,6 @@
 #include "include/sys/atomic.h"
 #include "pml_uniq.h"
 #include "pml_uniq_proc.h"
-#include "pml_ptl_array.h"
 
 
 static void mca_pml_uniq_proc_construct(mca_pml_proc_t* proc)
