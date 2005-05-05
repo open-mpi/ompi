@@ -47,7 +47,7 @@ extern "C" {
 struct orte_proc_info_t {
     orte_process_name_t *my_name;   /**< My official process name */
     orte_vpid_t vpid_start;         /**< starting vpid for this job */
-    int num_procs;                  /**< number of processes in this job */
+    size_t num_procs;               /**< number of processes in this job */
     pid_t pid;                      /**< Local process ID for this process */
     bool seed;                      /**< Indicate whether or not this is seed daemon */
     bool daemon;                    /**< Indicate whether or not I am a daemon */
