@@ -24,6 +24,8 @@
 
 #include "include/constants.h"
 #include "util/output.h"
+#include "mca/pml/pml.h"
+#include "mca/pml/base/pml_base_sendreq.h"
 
 #include "ptl_portals.h"
 #include "ptl_portals_compat.h"
@@ -144,6 +146,14 @@ mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
                          ptl->first_frag_queue_size,
                          PTL_EQ_HANDLER_NONE,
                          &(ptl->frag_receive_eq_handle));
+        if (ret != PTL_OK) {
+            ompi_output(mca_ptl_portals_component.portals_output,
+                        "Failed to allocate event queue: %d", ret);
+            return OMPI_ERROR;
+        }
+        ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                            "allocated event queue: %d",
+                            ptl->frag_receive_eq_handle);
 
         for (i = 0 ; i < ptl->first_frag_num_entries ; ++i) {
             ret = ptl_portals_new_frag_entry(ptl);
@@ -165,7 +175,6 @@ ptl_portals_new_frag_entry(struct mca_ptl_portals_module_t *ptl)
     void *mem;
     int ret;
     ptl_process_id_t proc = { PTL_NID_ANY, PTL_PID_ANY };
-
 
     /* create match entry */
     ret = PtlMEAttach(ptl->ni_handle,
@@ -192,7 +201,7 @@ ptl_portals_new_frag_entry(struct mca_ptl_portals_module_t *ptl)
     md.max_size = md.length - ptl->super.ptl_first_frag_size;
     md.options = PTL_MD_OP_PUT | PTL_MD_MAX_SIZE;
     md.user_ptr = NULL;
-    md.eventq = ptl->frag_receive_eq_handle;
+    md.eq_handle = ptl->frag_receive_eq_handle;
 
     ret = PtlMDAttach(me_handle,
                       md,
@@ -204,9 +213,89 @@ ptl_portals_new_frag_entry(struct mca_ptl_portals_module_t *ptl)
     }
 
     ompi_output_verbose(50, mca_ptl_portals_component.portals_output,
-                        "new fragment added");
+                        "new receive buffer posted");
 
     return OMPI_SUCCESS;
+}
+
+
+int
+mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
+		     struct mca_ptl_base_peer_t *ptl_peer,
+		     struct mca_pml_base_send_request_t *sendreq,
+		     size_t offset, size_t size, int flags)
+{
+    mca_ptl_portals_module_t* ptl = (mca_ptl_portals_module_t*) ptl_base;
+    ptl_process_id_t *peer_id = (ptl_process_id_t*) ptl_peer;
+    mca_ptl_portals_send_frag_t* sendfrag;
+    mca_ptl_base_header_t* hdr;
+    int ret;
+    ptl_md_t md;
+
+    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                        "mca_ptl_portals_send to %lu, %lu",
+                        peer_id->nid, peer_id->pid);
+
+    if (sendreq->req_cached) {
+        sendfrag = (mca_ptl_portals_send_frag_t*)(sendreq+1);
+    } else {
+        ompi_output(mca_ptl_portals_component.portals_output,
+                    "request not cached - not implemented.");
+        return OMPI_ERROR;
+    }
+
+    /* initialize convertor */
+    if (size > 0) {
+        ompi_output(mca_ptl_portals_component.portals_output,
+                    "request size > 0, not implemented");
+        return OMPI_ERROR;
+    } else {
+        sendfrag->frag_send.frag_base.frag_addr = NULL;
+        sendfrag->frag_send.frag_base.frag_size = 0;
+    }
+
+    /* setup message header */
+    hdr = &sendfrag->frag_send.frag_base.frag_header;
+    if(offset == 0) {
+        hdr->hdr_common.hdr_flags = flags;
+        hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
+        hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
+        hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
+        hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
+        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
+        hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
+    } else {
+        ompi_output(mca_ptl_portals_component.portals_output,
+                    "offset > 0, not implemented");
+        return OMPI_ERROR;
+    }
+
+    /* fragment state */
+#if 0
+    sendfrag->frag_send.frag_base.frag_owner = &ptl_peer->peer_ptl->super;
+#endif
+    sendfrag->frag_send.frag_request = sendreq;
+#if 0
+    sendfrag->frag_send.frag_base.frag_peer = ptl_peer;
+#endif
+
+
+    /* must update the offset after actual fragment size is determined 
+     * before attempting to send the fragment
+     */
+    mca_pml_base_send_request_offset(sendreq,
+        sendfrag->frag_send.frag_base.frag_size);
+#if 0
+    md.start = mem;
+    md.length = ptl->first_frag_entry_size;
+    md.threshold = PTL_MD_THRESH_INF;
+    md.max_size = md.length - ptl->super.ptl_first_frag_size;
+    md.options = PTL_MD_OP_PUT | PTL_MD_MAX_SIZE;
+    md.user_ptr = NULL;
+    md.eq_handle = ptl->frag_receive_eq_handle;
+#endif
+
+    return OMPI_ERROR;
 }
 
 

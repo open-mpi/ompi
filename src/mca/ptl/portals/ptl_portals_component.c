@@ -145,6 +145,10 @@ mca_ptl_portals_component_open(void)
     mca_ptl_portals_module.first_frag_entry_size = 
         mca_ptl_portals_param_register_int("first_frag_entry_size",
                                            PTL_PORTALS_DEFAULT_FIRST_FRAG_ENTRY_SIZE);
+    mca_ptl_portals_module.first_frag_queue_size = 
+        mca_ptl_portals_param_register_int("first_frag_queue_size",
+                                           PTL_PORTALS_DEFAULT_FIRST_FRAG_QUEUE_SIZE);
+
 
     /* finish with objects */
     mca_ptl_portals_component.portals_output = 
@@ -256,11 +260,34 @@ int
 mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
 {
     int num_progressed = 0;
+    size_t i;
+    int ret;
 
-    ompi_output_verbose(110, mca_ptl_portals_component.portals_output,
-                        "mca_ptl_portals_component_progress(%ld)", tstamp);
+    for (i = 0 ; i < mca_ptl_portals_component.portals_num_modules ; ++i) {
+        struct mca_ptl_portals_module_t *module = 
+            mca_ptl_portals_component.portals_modules[i];
+        ptl_event_t my_event;
 
-    /* BWB - write me */
+        if (! module->frag_queues_created) continue;
+
+        ret = PtlEQGet(module->frag_receive_eq_handle, &my_event);
+        if (PTL_EQ_EMPTY == ret) {
+            continue;
+        } else if (!(PTL_OK == ret || PTL_EQ_DROPPED == ret)) {
+            ompi_output(mca_ptl_portals_component.portals_output,
+                        "Error calling PtlEQGet: %d", ret);
+            continue;
+        } else if (PTL_EQ_DROPPED == ret) {
+            ompi_output_verbose(20, mca_ptl_portals_component.portals_output,
+                                "Progress found dropped packets");
+        }
+
+        ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                            "my_event: %d, %d, %d, %d %d %d",
+                            my_event.type, my_event.rlength, my_event.offset,
+                            my_event.link, my_event.ni_fail_type, my_event.sequence);
+        num_progressed++;
+    }
 
     return num_progressed;
 }
