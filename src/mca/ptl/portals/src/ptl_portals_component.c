@@ -115,6 +115,9 @@ mca_ptl_portals_component_open(void)
     mca_ptl_portals_component.portals_modules = NULL;
 
     /* initialize objects */
+    OBJ_CONSTRUCT(&mca_ptl_portals_component.portals_send_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_portals_component.portals_recv_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_portals_component.portals_pending_acks, ompi_list_t);
     OBJ_CONSTRUCT(&mca_ptl_portals_component.portals_lock, ompi_mutex_t);
 
     /* register portals module parameters */
@@ -175,6 +178,9 @@ mca_ptl_portals_component_close(void)
     /* print out debugging if anything is pending */
 
     /* release resources */
+    OBJ_DESTRUCT(&mca_ptl_portals_component.portals_lock);
+    OBJ_DESTRUCT(&mca_ptl_portals_component.portals_recv_frags);
+    OBJ_DESTRUCT(&mca_ptl_portals_component.portals_pending_acks);
     OBJ_DESTRUCT(&mca_ptl_portals_component.portals_lock);
 
     if (NULL != mca_ptl_portals_component.portals_ifname) {
@@ -270,7 +276,7 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
 
         if (! module->frag_queues_created) continue;
 
-        ret = PtlEQGet(module->frag_receive_eq_handle, &my_event);
+        ret = PtlEQGet(module->frag_eq_handle, &my_event);
         if (PTL_EQ_EMPTY == ret) {
             continue;
         } else if (!(PTL_OK == ret || PTL_EQ_DROPPED == ret)) {
@@ -281,11 +287,6 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
             ompi_output_verbose(20, mca_ptl_portals_component.portals_output,
                                 "Progress found dropped packets");
         }
-
-        ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                            "my_event: %d, %d, %d, %d %d %d",
-                            my_event.type, my_event.rlength, my_event.offset,
-                            my_event.link, my_event.ni_fail_type, my_event.sequence);
         num_progressed++;
     }
 

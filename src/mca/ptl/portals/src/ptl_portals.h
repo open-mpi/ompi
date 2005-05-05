@@ -60,6 +60,15 @@ struct mca_ptl_portals_component_t {
     /** List of currently available modules */
     struct mca_ptl_portals_module_t **portals_modules;
 
+    /** free list of portals send fragments */
+    ompi_free_list_t portals_send_frags;
+
+    /** free list of portals recv fragments */
+    ompi_free_list_t portals_recv_frags;
+
+    /** queue of pending sends */
+    ompi_list_t portals_pending_acks;
+
     /** lock for accessing component */
     ompi_mutex_t portals_lock;
 };
@@ -157,7 +166,7 @@ struct mca_ptl_portals_module_t {
     /* frag receive data */
     bool frag_queues_created;
     /* frag receive event queue */
-    ptl_handle_eq_t frag_receive_eq_handle;
+    ptl_handle_eq_t frag_eq_handle;
 
     /** our portals network interface */
     ptl_handle_ni_t ni_handle;
@@ -353,6 +362,5 @@ extern int mca_ptl_portals_send(
 
 extern int mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
                                          int value);
-extern int ptl_portals_new_frag_entry(struct mca_ptl_portals_module_t *ptl);
 
 #endif
