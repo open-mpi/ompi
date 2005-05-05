@@ -94,7 +94,7 @@ typedef int (*orte_rml_module_parse_uris_fn_t)(const char* uri,
 *  @return            OMPI error code (<0) or OMPI_SUCCESS
 */
 
-typedef int (*orte_rml_module_ping_fn_t)(const orte_process_name_t*, const struct timeval* tv);
+typedef int (*orte_rml_module_ping_fn_t)(const char* uri, const struct timeval* tv);
 
 /**
 *  orte_rml.rml_send()

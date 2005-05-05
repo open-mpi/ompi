@@ -70,7 +70,7 @@ typedef char* (*mca_oob_base_module_get_addr_fn_t)(void);
 *  @param addr    Address of seed in component specific uri format.
 */
 
-typedef int (*mca_oob_base_module_set_addr_fn_t)(const orte_process_name_t*, const char* addr);
+typedef int (*mca_oob_base_module_set_addr_fn_t)(const orte_process_name_t*, const char* uri);
 
 
 /**
@@ -81,7 +81,7 @@ typedef int (*mca_oob_base_module_set_addr_fn_t)(const orte_process_name_t*, con
 *  @return            OMPI error code (<0) or OMPI_SUCCESS
 */
 
-typedef int (*mca_oob_base_module_ping_fn_t)(const orte_process_name_t*, const struct timeval* tv);
+typedef int (*mca_oob_base_module_ping_fn_t)(const orte_process_name_t*, const char* uri, const struct timeval* tv);
 
 /**
 *  Implementation of mca_oob_send().

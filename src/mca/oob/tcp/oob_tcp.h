@@ -115,7 +115,7 @@ int mca_oob_tcp_set_addr(const orte_process_name_t*, const char*);
  *  an error status is returned.
  */
                                                                                                        
-int mca_oob_tcp_ping(const orte_process_name_t* name, const struct timeval* tv);
+int mca_oob_tcp_ping(const orte_process_name_t*, const char* uri, const struct timeval* tv);
 
 /**
  *  Similiar to unix writev(2).

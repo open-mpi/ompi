@@ -337,43 +337,42 @@ static int mca_oob_tcp_create_listen(void)
 
 
 /*
- * Event callback when there is data available on the registered
- * socket to recv.
+ * Handle probe
  */
-
-static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
+static void mca_oob_tcp_recv_probe(int sd, mca_oob_tcp_hdr_t* hdr)
 {
-    orte_process_name_t guid[2];
-    mca_oob_tcp_peer_t* peer;
-    int rc, cmpval;
-    mca_oob_tcp_event_t* event = (mca_oob_tcp_event_t *)user;
+    unsigned char* ptr = (unsigned char*)&hdr;
+    size_t cnt = 0;
 
-    /* accept new connections on the listen socket */
-    if(mca_oob_tcp_component.tcp_listen_sd == sd) {
-        mca_oob_tcp_accept();
-        return;
-    }
-    OBJ_RELEASE(event);
-
-    /* recv the process identifier */
-    while((rc = recv(sd, (char *)guid, sizeof(guid), 0)) != sizeof(guid)) {
-        if(rc >= 0) {
-            if(mca_oob_tcp_component.tcp_debug > 1) {
-                ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: peer closed connection",
-                    ORTE_NAME_ARGS(orte_process_info.my_name));
+    hdr->msg_dst = hdr->msg_src;
+    hdr->msg_src = *orte_process_info.my_name;
+    while(cnt < sizeof(mca_oob_tcp_hdr_t)) {
+        int retval = send(sd, (char *)ptr+cnt, sizeof(mca_oob_tcp_hdr_t)-cnt, 0);
+        if(retval < 0) {
+            IMPORTANT_WINDOWS_COMMENT();
+            if(ompi_socket_errno != EINTR && ompi_socket_errno != EAGAIN && ompi_socket_errno != EWOULDBLOCK) {
+                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_probe: send() failed with errno=%d\n",
+                    ORTE_NAME_ARGS(orte_process_info.my_name),
+                    ORTE_NAME_ARGS(&(hdr->msg_src)),
+                    ompi_socket_errno);
+                close(sd);
+                return;
             }
-            close(sd);
-            return;
+            continue;
         }
-        if(ompi_socket_errno != EINTR) {
-            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n", 
-                ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
-            close(sd);
-            return;
-        }
+        cnt += retval;
     }
-    OMPI_PROCESS_NAME_NTOH(guid[0]);
-    OMPI_PROCESS_NAME_NTOH(guid[1]);
+    close(sd);
+}
+
+/*
+ * Handle connection request
+ */
+static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
+{
+    mca_oob_tcp_peer_t* peer;
+    int flags;
+    int cmpval;
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
@@ -390,21 +389,21 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     /* check for wildcard name - if this is true - we allocate a name from the name server 
      * and return to the peer 
      */
-    cmpval = orte_ns.compare(ORTE_NS_CMP_ALL, guid, MCA_OOB_NAME_ANY);
+    cmpval = orte_ns.compare(ORTE_NS_CMP_ALL, &hdr->msg_src, MCA_OOB_NAME_ANY);
     if (cmpval == 0) {
-        if (ORTE_SUCCESS != orte_ns.create_jobid(&guid->jobid)) {
+        if (ORTE_SUCCESS != orte_ns.create_jobid(&hdr->msg_src.jobid)) {
            return;
         }
-        if (ORTE_SUCCESS != orte_ns.reserve_range(guid->jobid, 1, &guid->vpid)) {
+        if (ORTE_SUCCESS != orte_ns.reserve_range(hdr->msg_src.jobid, 1, &hdr->msg_src.vpid)) {
            return;
         }
-        if (ORTE_SUCCESS != orte_ns.assign_cellid_to_process(guid)) {
+        if (ORTE_SUCCESS != orte_ns.assign_cellid_to_process(&hdr->msg_src)) {
            return;
         }
     }
 
     /* lookup the corresponding process */
-    peer = mca_oob_tcp_peer_lookup(guid);
+    peer = mca_oob_tcp_peer_lookup(&hdr->msg_src);
     if(NULL == peer) {
         ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: unable to locate peer",
                 ORTE_NAME_ARGS(orte_process_info.my_name));
@@ -418,13 +417,66 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
                     "rejected connection from [%d,%d,%d] connection state %d",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(peer->peer_name)),
-                    ORTE_NAME_ARGS(&(guid[0])),
+                    ORTE_NAME_ARGS(&(hdr->msg_src)),
                     peer->peer_state);
         }
         close(sd);
         return;
     }
 }
+
+/*
+ * Event callback when there is data available on the registered
+ * socket to recv.
+ */
+
+static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
+{
+    mca_oob_tcp_hdr_t hdr;
+    mca_oob_tcp_event_t* event = (mca_oob_tcp_event_t *)user;
+    int rc;
+
+    /* accept new connections on the listen socket */
+    if(mca_oob_tcp_component.tcp_listen_sd == sd) {
+        mca_oob_tcp_accept();
+        return;
+    }
+    OBJ_RELEASE(event);
+
+    /* recv the process identifier */
+    while((rc = recv(sd, (char *)&hdr, sizeof(hdr), 0)) != sizeof(hdr)) {
+        if(rc >= 0) {
+            if(mca_oob_tcp_component.tcp_debug > 1) {
+                ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: peer closed connection",
+                    ORTE_NAME_ARGS(orte_process_info.my_name));
+            }
+            close(sd);
+            return;
+        }
+        if(ompi_socket_errno != EINTR) {
+            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n", 
+                ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
+            close(sd);
+            return;
+        }
+    }
+    MCA_OOB_TCP_HDR_NTOH(&hdr);
+
+    /* dispatch based on message type */
+    switch(hdr.msg_type) {
+        case MCA_OOB_TCP_PROBE:
+            mca_oob_tcp_recv_probe(sd, &hdr);
+            break;
+        case MCA_OOB_TCP_CONNECT:
+            mca_oob_tcp_recv_connect(sd, &hdr);
+            break;
+        default:
+            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: invalid message type: %d\n", hdr.msg_type);
+            close(sd);
+            break;
+    }
+}
+
 
 /*
  * Component initialization - create a module.
