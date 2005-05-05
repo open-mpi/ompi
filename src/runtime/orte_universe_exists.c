@@ -73,8 +73,7 @@ int orte_universe_exists(orte_universe_t *univ)
     }
 
 	if (ORTE_SUCCESS != (ret = orte_read_universe_setup_file(contact_file, univ))) {
-        /* NOTE: THIS IS AN ERROR - ERROR_LOG IT */
-        ORTE_ERROR_LOG(ret);
+        /* NOTE: THIS IS NOT AN ERROR - DON'T ERROR_LOG IT */
         free(contact_file);
 	    return ret;
 	}
