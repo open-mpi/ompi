@@ -31,18 +31,20 @@ component_install =
 endif
 
 EXTRA_DIST = \
-	ptl_portals_compat_utcp.c \
-	ptl_portals_compat_redstorm.c
+	src/ptl_portals_compat_utcp.c \
+	src/ptl_portals_compat_redstorm.c
 
 portals_SOURCES = \
-	ptl_portals.h \
-	ptl_portals_compat.h \
-	ptl_portals_sendfrag.h \
-	ptl_portals.c \
-	ptl_portals_component.c \
-	ptl_portals_stubs.c \
-	ptl_portals_compat_utcp.c \
-	ptl_portals_sendfrag.c
+	src/ptl_portals.h \
+	src/ptl_portals_compat.h \
+	src/ptl_portals_send.h \
+	src/ptl_portals_recv.h \
+	src/ptl_portals.c \
+	src/ptl_portals_component.c \
+	src/ptl_portals_stubs.c \
+	src/ptl_portals_compat_utcp.c \
+	src/ptl_portals_send.c \
+	src/ptl_portals_recv.c
 
 
 mcacomponentdir = $(libdir)/openmpi
