@@ -34,7 +34,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
 {
     int rc;
     orte_app_context_t **app_context;
-    size_t i, max_n=1;
+    size_t i, max_n=1, temp;
     
     /* unpack into array of app_context objects */
     app_context = (orte_app_context_t**) dest;
@@ -85,8 +85,9 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
             app_context[i]->argv[app_context[i]->argc] = NULL;
 
             /* and unpack them */
+            temp = (size_t)app_context[i]->argc;
             if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, app_context[i]->argv,
-                        (size_t*)(&app_context[i]->argc), ORTE_STRING))) {
+                        (size_t*)(&temp), ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
