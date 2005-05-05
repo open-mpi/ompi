@@ -39,6 +39,7 @@ libruntime_la_SOURCES = \
     orte_init_stage1.c \
     orte_init_stage2.c \
     orte_monitor.c \
+    orte_setup_hnp.c \
     orte_universe_exists.c \
     orte_restart.c \
     orte_wait.c

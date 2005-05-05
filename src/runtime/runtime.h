@@ -153,6 +153,11 @@ OMPI_DECLSPEC    int orte_universe_exists(orte_universe_t *univ);
      */
 OMPI_DECLSPEC   int ompi_rte_init_io(void);
 
+    /**
+     * Establish a Head Node Process on a cluster's front end
+     */
+OMPI_DECLSPEC   int orte_setup_hnp(char *target_cluster);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
