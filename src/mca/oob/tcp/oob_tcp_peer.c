@@ -490,16 +490,17 @@ static int mca_oob_tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
      * have assigned the peer a unique process name - if it came up
      * without one.
     */
-    orte_process_name_t guid[2];
+    mca_oob_tcp_hdr_t hdr;
+    memset(&hdr,0,sizeof(hdr));
     if (NULL == orte_process_info.my_name) {  /* my name isn't defined yet */
-        guid[0] = *MCA_OOB_NAME_ANY;
+        hdr.msg_src = *MCA_OOB_NAME_ANY;
     } else {
-        guid[0] = *(orte_process_info.my_name);
+        hdr.msg_src = *(orte_process_info.my_name);
     }
-    guid[1] = peer->peer_name;
-    OMPI_PROCESS_NAME_HTON(guid[0]);
-    OMPI_PROCESS_NAME_HTON(guid[1]);
-    if(mca_oob_tcp_peer_send_blocking(peer, guid, sizeof(guid)) != sizeof(guid)) {
+    hdr.msg_dst = peer->peer_name;
+    hdr.msg_type = MCA_OOB_TCP_CONNECT;
+    MCA_OOB_TCP_HDR_HTON(&hdr);
+    if(mca_oob_tcp_peer_send_blocking(peer, &hdr, sizeof(hdr)) != sizeof(hdr)) {
         return OMPI_ERR_UNREACH;
     }
     return OMPI_SUCCESS;
@@ -512,28 +513,32 @@ static int mca_oob_tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
  */
 static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
 {
-    orte_process_name_t guid[2];
-    if((mca_oob_tcp_peer_recv_blocking(peer, guid, sizeof(guid))) != sizeof(guid)) {
+    mca_oob_tcp_hdr_t hdr;
+    if((mca_oob_tcp_peer_recv_blocking(peer, &hdr, sizeof(hdr))) != sizeof(hdr)) {
         mca_oob_tcp_peer_close(peer);
         return OMPI_ERR_UNREACH;
     }
-    OMPI_PROCESS_NAME_NTOH(guid[0]);
-    OMPI_PROCESS_NAME_NTOH(guid[1]);
+    MCA_OOB_TCP_HDR_NTOH(&hdr);
+    if(hdr.msg_type != MCA_OOB_TCP_CONNECT) {
+        ompi_output(0, "mca_oob_tcp_peer_recv_connect_ack: invalid header type: %d\n", hdr.msg_type);
+        mca_oob_tcp_peer_close(peer);
+        return OMPI_ERR_UNREACH;
+    }
                                                                                                             
     /* compare the peers name to the expected value */
-    if(memcmp(&peer->peer_name, &guid[0], sizeof(orte_process_name_t)) != 0) {
+    if(memcmp(&peer->peer_name, &hdr.msg_src, sizeof(orte_process_name_t)) != 0) {
         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_connect_ack: "
             "received unexpected process identifier [%d,%d,%d]\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
-            ORTE_NAME_ARGS(&(guid[0])));
+            ORTE_NAME_ARGS(&(hdr.msg_src)));
         mca_oob_tcp_peer_close(peer);
         return OMPI_ERR_UNREACH;
     }
 
     /* if we have a wildcard name - use the name returned by the peer */
     if(orte_ns.compare(ORTE_NS_CMP_ALL, orte_process_info.my_name, &mca_oob_name_any) == 0) {
-        *orte_process_info.my_name = guid[1];
+        *orte_process_info.my_name = hdr.msg_dst;
     }
 
     /* connected */

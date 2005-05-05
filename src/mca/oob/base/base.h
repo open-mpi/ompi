@@ -102,7 +102,7 @@ OMPI_DECLSPEC int mca_oob_set_contact_info(const char*);
  *  an error status is returned.
  */
 
-OMPI_DECLSPEC int mca_oob_ping(orte_process_name_t* name, struct timeval* tv);
+OMPI_DECLSPEC int mca_oob_ping(const char*, struct timeval* tv);
 
 /**
  *  A barrier across all processes w/in the same job.

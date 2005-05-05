@@ -23,9 +23,11 @@
 
 #include "mca/ns/ns_types.h"
 
-#define MCA_OOB_TCP_IDENT    1
-#define MCA_OOB_TCP_DATA     2
-#define MCA_OOB_TCP_PING     3
+#define MCA_OOB_TCP_PROBE    1
+#define MCA_OOB_TCP_CONNECT  2
+#define MCA_OOB_TCP_IDENT    3
+#define MCA_OOB_TCP_DATA     4
+#define MCA_OOB_TCP_PING     5
 
 /**
  * Header used by tcp oob protocol.

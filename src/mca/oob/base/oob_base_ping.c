@@ -24,13 +24,30 @@
 #endif
     
 #include "include/constants.h"
+#include "util/argv.h"
 #include "mca/ns/ns_types.h"
 #include "mca/oob/oob.h"
 #include "mca/oob/base/base.h"
 
 
-int mca_oob_ping(orte_process_name_t* peer, struct timeval* tv)
+int mca_oob_ping(const char* contact_info, struct timeval* tv)
 {
-    return(mca_oob.oob_ping(peer, tv));
+    orte_process_name_t name;
+    char** uris;
+    char** ptr;
+    int rc;
+
+    if(ORTE_SUCCESS != (rc = mca_oob_parse_contact_info(contact_info, &name, &uris))) {
+        return rc;
+    }
+ 
+    ptr = uris;
+    while(ptr && *ptr) {
+        if(ORTE_SUCCESS == (rc = mca_oob.oob_ping(&name, *ptr, tv)))
+            break;
+        ptr++;
+    }
+    ompi_argv_free(uris);
+    return rc;
 }
 

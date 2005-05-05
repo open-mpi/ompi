@@ -14,8 +14,29 @@
  * $HEADER$
  */
 #include "ompi_config.h"
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#include <fcntl.h>
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#include "include/ompi_socket_errno.h"
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
+#endif
 #include "mca/ns/ns_types.h"
 #include "mca/oob/tcp/oob_tcp.h"
+
 
 /*
  * Ping a peer to see if it is alive.
@@ -26,78 +47,110 @@
  */
 
 int mca_oob_tcp_ping(
-    const orte_process_name_t* name, 
+    const orte_process_name_t* name,
+    const char* uri,
     const struct timeval *timeout)
 {
-    mca_oob_tcp_peer_t* peer = mca_oob_tcp_peer_lookup(name);
-    mca_oob_tcp_msg_t* msg;
+    int sd, flags, rc;
+    struct sockaddr_in inaddr;
+    fd_set fdset;
+    mca_oob_tcp_hdr_t hdr;
     struct timeval tv;
-    struct timespec ts;
-    int rc;
 
-    if(mca_oob_tcp_component.tcp_debug > 1) {
-        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_ping: timout %d secs %d usecs\n",
+    /* parse uri string */
+    if(OMPI_SUCCESS != (rc = mca_oob_tcp_parse_uri(uri, &inaddr))) {
+       ompi_output(0,
+            "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_ping: invalid uri: %s\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
-            ORTE_NAME_ARGS(&(peer->peer_name)),
-            timeout->tv_sec, timeout->tv_usec);
+            ORTE_NAME_ARGS(name),
+            uri);
+        return rc;
     }
-    if(NULL == peer)
+
+    /* create socket */
+    sd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sd < 0) {
+       ompi_output(0,
+            "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_ping: socket() failed with errno=%d\n",
+            ORTE_NAME_ARGS(orte_process_info.my_name),
+            ORTE_NAME_ARGS(name),
+            ompi_socket_errno);
         return OMPI_ERR_UNREACH;
+    }
 
-    MCA_OOB_TCP_MSG_ALLOC(msg, rc);
-    if(NULL == msg) 
-        return rc;
-
-    /* convert the header network byte order */
-    msg->msg_hdr.msg_type = MCA_OOB_TCP_PING;
-    msg->msg_hdr.msg_size = 0;
-    msg->msg_hdr.msg_tag = 0;
-    if (NULL == orte_process_info.my_name) {  /* don't know my name yet */
-        msg->msg_hdr.msg_src = *MCA_OOB_NAME_ANY;
+    /* setup the socket as non-blocking */
+    if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
+        ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_ping: fcntl(F_GETFL) failed with errno=%d\n", 
+            ORTE_NAME_ARGS(orte_process_info.my_name),
+            ORTE_NAME_ARGS(name),
+            ompi_socket_errno);
     } else {
-        msg->msg_hdr.msg_src = *orte_process_info.my_name;
-    }
-    msg->msg_hdr.msg_dst = *name;
-    MCA_OOB_TCP_HDR_HTON(&msg->msg_hdr);
-
-    /* create an iovec to hold the header */
-    msg->msg_type = MCA_OOB_TCP_POSTED;
-    msg->msg_rc = 0;
-    msg->msg_flags = 0;
-    msg->msg_uiov = NULL;
-    msg->msg_ucnt = 0;
-    msg->msg_rwiov = mca_oob_tcp_msg_iov_alloc(msg, 1);
-    msg->msg_rwiov[0].iov_base = (ompi_iov_base_ptr_t)&msg->msg_hdr;
-    msg->msg_rwiov[0].iov_len = sizeof(msg->msg_hdr);
-    msg->msg_rwptr = msg->msg_rwiov;
-    msg->msg_rwcnt = msg->msg_rwnum = 1;
-    msg->msg_rwbuf = NULL;
-    msg->msg_cbfunc = NULL;
-    msg->msg_cbdata = NULL;
-    msg->msg_complete = false;
-    msg->msg_peer = peer->peer_name;
-    
-    /* initiate the send */
-    rc = mca_oob_tcp_peer_send(peer, msg);
-    if(rc != OMPI_SUCCESS) {
-        MCA_OOB_TCP_MSG_RETURN(msg);
-        return rc;
+        flags |= O_NONBLOCK;
+        if(fcntl(sd, F_SETFL, flags) < 0) {
+            ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_ping: fcntl(F_SETFL) failed with errno=%d\n",
+                ORTE_NAME_ARGS(orte_process_info.my_name),
+                ORTE_NAME_ARGS(name),
+                ompi_socket_errno);
+        }
     }
 
-    /* setup a timeout based on absolute time and wait for completion */
-    gettimeofday(&tv, NULL);
-    tv.tv_sec += timeout->tv_sec;
-    tv.tv_usec += timeout->tv_usec;
-    while(tv.tv_usec > 1000000) {
-        tv.tv_sec++;
-        tv.tv_usec -= 1000000;
+    /* start the connect - will likely fail with EINPROGRESS */
+    FD_ZERO(&fdset);
+    if(connect(sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
+        /* connect failed? */
+        if(ompi_socket_errno != EINPROGRESS && ompi_socket_errno != EWOULDBLOCK) {
+            close(sd);
+            return OMPI_ERR_UNREACH;
+        }
+
+        /* select with timeout to wait for connect to complete */
+        FD_SET(sd, &fdset);
+        tv = *timeout;
+        rc = select(sd+1, NULL, &fdset, NULL, &tv);
+        if(rc <= 0) {
+             close(sd);
+             return OMPI_ERR_UNREACH;
+        }
     }
-    ts.tv_sec = tv.tv_sec;
-    ts.tv_nsec = (tv.tv_usec * 1000);
-    rc = mca_oob_tcp_msg_timedwait(msg, NULL, &ts);
-    if(rc != OMPI_SUCCESS)
-        mca_oob_tcp_peer_dequeue_msg(peer,msg);
-    MCA_OOB_TCP_MSG_RETURN(msg);
-    return rc;
+
+    /* set socket back to blocking */
+    flags &= ~O_NONBLOCK;
+    if(fcntl(sd, F_SETFL, flags) < 0) {
+         ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_ping: fcntl(F_SETFL) failed with errno=%d\n",
+             ORTE_NAME_ARGS(orte_process_info.my_name),
+             ORTE_NAME_ARGS(name),
+             ompi_socket_errno);
+    }
+
+    /* send a probe message */
+    memset(&hdr, 0, sizeof(hdr));
+    if(orte_process_info.my_name != NULL) {
+        hdr.msg_src = *orte_process_info.my_name;
+    } else {
+        hdr.msg_src = mca_oob_name_any;
+    }
+    hdr.msg_dst = *name;
+    hdr.msg_type = MCA_OOB_TCP_PROBE;
+ 
+    if((rc = write(sd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
+        close(sd);
+        return OMPI_ERR_UNREACH;
+    }
+
+    /* select with timeout to wait for response */
+    FD_SET(sd, &fdset);
+    tv = *timeout;
+    rc = select(sd+1, &fdset, NULL, NULL, &tv);
+    if(rc <= 0) {
+        close(sd);
+        return OMPI_ERR_UNREACH;
+    }
+    if((rc = read(sd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
+        close(sd);
+        return OMPI_ERR_UNREACH;
+    }
+    close(sd);
+    return OMPI_SUCCESS;
 }
+
 
