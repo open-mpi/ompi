@@ -31,19 +31,54 @@
 #
 #############################################################################
 
+# Part of the purpose of this specfile is to help Los Alamos National
+# Labs (LANL), so we're going to put in a bunch of defaults for them.
+
+%define lanl 0
+
 # Define this if you want to make this SRPM build in /opt/NAME/VERSION-RELEASE
 # instead of the default /usr/
 # type: bool (0/1)
-%define install_in_opt	1
+%define install_in_opt	0
+
+# Define this if you want this RPM to install environment setup
+# scripts, currently either a modulefile or profile.d script.
+# type: bool (0/1)
+%define install_env_scripts 0
 
 # Should this drop a modulefile (if being used with enviornment modules)? 
 # Specify the modulefile PATH you wish to use, or '0' for null (which will
 # cause /etc/profile.d/ scripts to be created.
 # note: This will only work if %{install_in_opt} is true.
 # type: bool (0/1)
-%define use_modulefile 1
-# type: string (path to install modulefiles)
-%define modulepath /etc/modulefiles/
+%define install_modulefile 0
+# type: string (root path to install modulefiles)
+%define modulefile_path /etc/modulefiles/openmpi
+# type: string (subdir to install modulefile)
+%define modulefile_subdir %{name}
+# type: string (name of modulefile)
+%define modulefile_name %{version}-%{release}
+
+# The name of the modules RPM.  Can vary from system to system.
+# type: string (name of modules RPM)
+%define modules_rpm_name modules
+
+
+#############################################################################
+#
+# LANL-specific defaults
+#
+#############################################################################
+
+%if %{lanl}
+%define install_in_opt 1
+%define install_env_scripts 1
+%define install_modulefile 1
+%define modulefile_path /usr/share/modules/modulefiles/mpi/openmpi-%{version}
+%define modulefile_path_subdir mpi
+%define modulefile_name %{name}-%{version}
+%define modules_rpm_name environment-modules
+%endif
 
 
 #############################################################################
@@ -67,24 +102,24 @@
 
 Summary: A powerful implementaion of MPI
 Name: openmpi
-Version: 10.0a1r5001
+Version: $VERSION
 Release: 1
 License: BSD
-Group: FIXME/SetThis
-Source: openmpi-10.0a1r5001.tar.bz2
+Group: Development/Libraries
+Source: openmpi-%{version}.tar.bz2
 Packager: %{?_packager:%{_packager}}%{!?_packager:%{_vendor}}
 Vendor: %{?_vendorinfo:%{_vendorinfo}}%{!?_vendorinfo:%{_vendor}}
 Distribution: %{?_distribution:%{_distribution}}%{!?_distribution:%{_vendor}}
 Prefix: %{_prefix}
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
-%if %{use_modulefile}
-Requires: modules
+%if %{module_modulefile}
+Requires: %{modules_rpm_name}
 %endif
 
 %description
-Open MPI is a project combining technologies and resources from several other
-projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in order to build the best
-MPI library available.
+Open MPI is a project combining technologies and resources from
+several other projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in
+order to build the best MPI library available.
 
 #############################################################################
 #
@@ -98,11 +133,12 @@ Group: Development/Libraries
 Provides: mpi
 
 %description devel
-Open MPI is a project combining technologies and resources from several other
-projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in order to build the best
-MPI library available.
+Open MPI is a project combining technologies and resources from
+several other projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in
+order to build the best MPI library available.
 
-This subpackage provides the development components for OpenMPI.
+This subpackage provides the development files for Open MPI, such as
+header files for MPI development.
 
 #############################################################################
 #
@@ -119,7 +155,7 @@ Open MPI is a project combining technologies and resources from several other
 projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in order to build the best
 MPI library available.
 
-This subpackage provides the documentation for OpenMPI.
+This subpackage provides the documentation for Open MPI.
 
 #############################################################################
 #
@@ -141,8 +177,8 @@ Open MPI is a project combining technologies and resources from several other
 projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in order to build the best
 MPI library available.
 
-This subpackage provides the general "MCA"s -- Modular Component Architecture 
-modules
+This subpackage provides the general Module Component Architecture
+(MCA) components.
 
 #############################################################################
 #
@@ -176,32 +212,78 @@ export CFLAGS CXXFLAGS
 %install
 %{__make} install DESTDIR=$RPM_BUILD_ROOT %{?mflags_install}
 
-%if %{install_in_opt}
 # An attempt to make enviornment happier when installed into non /usr path
-%if %{use_modulefile}
+
+%if %{install_env_scripts}
+
+%if %{install_modulefile}
 %{__mkdir_p} $RPM_BUILD_ROOT/%{modulepath}/%{name}/
 cat <<EOF >$RPM_BUILD_ROOT/%{modulepath}/%{name}/%{version}-%{release}
 #%Module
+
+# NOTE: This is an automatically-generated file!  (generated by the
+# Open MPI RPM).  Any changes made here will be lost a) if the RPM is
+# uninstalled, or b) if the RPM is upgraded or uninstalled.
+
 proc ModulesHelp { } {
    puts stderr "This module adds Open MPI (%{version}-%{release}) to various paths"
 }
+
 module-whatis   "Sets up Open MPI in your enviornment"
+
 append-path PATH "%{_prefix}/bin/"
 append-path LD_LIBRARY_PATH %{_libdir}
 append-path MANPATH %{_mandir}
+%if %{lanl}
+setenv MPI_ROOT %{_prefix}
+setenv MPIHOME %{_prefix}
+# These flags are now obsolete -- use mpicc (etc.)
+setenv MPI_LD_FLAGS ""
+setenv MPI_COMPILE_FLAGS ""
+%endif
 EOF
 %else
 %{__mkdir_p} $RPM_BUILD_ROOT/etc/profile.d/
 cat <<EOF > $RPM_BUILD_ROOT/etc/profile.d/%{name}-%{version}-%{release}.sh
-PATH=\${PATH}:%{_prefix}/bin/
-LD_LIBRARY_PATH=\${LD_LIBRARY_PATH}:%{_libdir}
-MANPATH=\${MANPATH}:%{_mandir}
-export PATH LD_LIBRARY_PATH MANPATH
+# NOTE: This is an automatically-generated file!  (generated by the
+# Open MPI RPM).  Any changes made here will be lost a) if the RPM is
+# uninstalled, or b) if the RPM is upgraded or uninstalled.
+
+CHANGED=0
+if test -z "`echo $PATH | grep %{_prefix}/bin`"; then
+    PATH=\${PATH}:%{_prefix}/bin/
+    CHANGED=1
+fi
+if test -z "`echo $LD_LIBRARY_PATH | grep %{_libdir}`"; then
+    LD_LIBRARY_PATH=\${LD_LIBRARY_PATH}:%{_libdir}
+    CHANGED=1
+fi
+if test -z "`echo $MANPATH | grep %{_mandir}`"; then
+    MANPATH=\${MANPATH}:%{_mandir}
+    CHANGED=1
+fi
+if test "$CHANGED" = "1"; then
+    export PATH LD_LIBRARY_PATH MANPATH
+fi
 EOF
 cat <<EOF > $RPM_BUILD_ROOT/etc/profile.d/%{name}-%{version}-%{release}.csh
-setenv PATH \${PATH}:%{_prefix}/bin/
-setenv LD_LIBRARY_PATH \${LD_LIBRARY_PATH}:%{_libdir}
-setenv MANPATH \${MANPATH}:%{_mandir}
+# NOTE: This is an automatically-generated file!  (generated by the
+# Open MPI RPM).  Any changes made here will be lost a) if the RPM is
+# uninstalled, or b) if the RPM is upgraded or uninstalled.
+
+if ("`echo $PATH | grep %{_prefix}/bin`") then
+    setenv PATH \${PATH}:%{_prefix}/bin/
+endif
+if ("$?LD_LIBRARY_PATH") then
+    if ("`echo $LD_LIBRARY_PATH | grep %{_libdir}`") then
+        setenv LD_LIBRARY_PATH \${LD_LIBRARY_PATH}:%{_libdir}
+    endif
+endif
+if ("$?MANPATH") then
+    if ("`echo $MANPATH | grep %{_mandir}`") then
+        setenv MANPATH \${MANPATH}:%{_mandir}
+    endif
+endif
 EOF
 %endif
 %endif
@@ -216,7 +298,15 @@ find $RPM_BUILD_ROOT -type f | \
 
 find $RPM_BUILD_ROOT -type f | \
    sed -e "s@$RPM_BUILD_ROOT@@" |\
-   egrep ".la|include" > devel.files
+   egrep "lib\*.a|lib\*.so|.la|include" > devel.files
+
+find $RPM_BUILD_ROOT -type f | \
+   sed -e "s@$RPM_BUILD_ROOT@@" |\
+   egrep "/man/" > man.files
+
+find $RPM_BUILD_ROOT -type f | \
+   sed -e "s@$RPM_BUILD_ROOT@@" |\
+   egrep "mca\*so" > mca.files
 
 
 #############################################################################
@@ -251,6 +341,12 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %files devel -f devel.files
 %defattr(-, root, root)
 
+%files man -f man.files
+%defattr(-, root, root)
+
+%files mca-general -f mca.files
+%defattr(-, root, root)
+
 
 #############################################################################
 #
@@ -258,6 +354,14 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Wed May 03 2005 Jeff Squyres <jsquyres@open-mpi.org>
+- Added some defines for LANL defaults
+- Added more defines for granulatirty of installation location for
+  modulefile
+- Differentiate between installing in /opt and whether we want to
+  install environment script files
+- Filled in files for man and mca-general subpackages
+
 * Thu Apr 07 2005 Greg Kurtzer <GMKurtzer@lbl.gov>
 - Added opt building
 - Added profile.d/modulefile logic and creation
