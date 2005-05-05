@@ -185,7 +185,7 @@ int orte_dps_pack_int16(orte_buffer_t *buffer, void *src,
                         size_t num_vals, orte_data_type_t type)
 {
     size_t i;
-    uint16_t tmp, *dsttmp, *srctmp = (uint16_t*) src;
+    uint16_t tmp, *srctmp = (uint16_t*) src;
     char *dst;
     
     /* check to see if buffer needs extending */
@@ -194,10 +194,10 @@ int orte_dps_pack_int16(orte_buffer_t *buffer, void *src,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    dsttmp = (uint16_t*)dst;
     for (i = 0; i < num_vals; ++i) {
         tmp = htons(srctmp[i]);
-        memcpy(&dsttmp[i], &tmp, sizeof(tmp));
+        memcpy(dst, &tmp, sizeof(tmp));
+        dst += sizeof(tmp);
     }
     buffer->pack_ptr += num_vals * sizeof(tmp);
     buffer->bytes_used += num_vals * sizeof(tmp);
@@ -213,7 +213,7 @@ int orte_dps_pack_int32(orte_buffer_t *buffer, void *src,
                         size_t num_vals, orte_data_type_t type)
 {
     size_t i;
-    uint32_t tmp, *dsttmp, *srctmp = (uint32_t*) src;
+    uint32_t tmp, *srctmp = (uint32_t*) src;
     char *dst;
     
     /* check to see if buffer needs extending */
@@ -222,10 +222,10 @@ int orte_dps_pack_int32(orte_buffer_t *buffer, void *src,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    dsttmp = (uint32_t*)dst;
     for (i = 0; i < num_vals; ++i) {
         tmp = htonl(srctmp[i]);
-        memcpy(&dsttmp[i], &tmp, sizeof(tmp));
+        memcpy(dst, &tmp, sizeof(tmp));
+        dst += sizeof(tmp);
     }
     buffer->pack_ptr += num_vals * sizeof(tmp);
     buffer->bytes_used += num_vals * sizeof(tmp);
@@ -241,7 +241,7 @@ int orte_dps_pack_int64(orte_buffer_t *buffer, void *src,
                         size_t num_vals, orte_data_type_t type)
 {
     size_t i;
-    uint32_t tmp, *dsttmp, *srctmp = (uint32_t*) src;
+    uint32_t tmp, *srctmp = (uint32_t*) src;
     char *dst;
     size_t bytes_packed = num_vals * sizeof(tmp) * 2;
     
@@ -251,12 +251,13 @@ int orte_dps_pack_int64(orte_buffer_t *buffer, void *src,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    dsttmp = (uint32_t*)dst;
     for (i = 0; i < 2*num_vals; i += 2) {
         tmp = htonl(srctmp[i]);
-        memcpy(&dsttmp[i], &tmp, sizeof(tmp));
+        memcpy(dst, &tmp, sizeof(tmp));
+        dst += sizeof(tmp);
         tmp = htonl(srctmp[i+1]);
-        memcpy(&dsttmp[i+1], &tmp, sizeof(tmp));
+        memcpy(dst, &tmp, sizeof(tmp));
+        dst += sizeof(tmp);
     }
     buffer->pack_ptr += bytes_packed;
     buffer->bytes_used += bytes_packed;
