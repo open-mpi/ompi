@@ -30,11 +30,11 @@ static void mca_pml_uniq_proc_construct(mca_pml_proc_t* proc)
     proc->proc_ptl_first.ptl_peer = NULL;
     proc->proc_ptl_first.ptl_base = NULL;
     proc->proc_ptl_first.ptl = NULL;
-
+#if PML_UNIQ_ACCEPT_NEXT_PTL
     proc->proc_ptl_next.ptl_peer = NULL;
     proc->proc_ptl_next.ptl_base = NULL;
     proc->proc_ptl_next.ptl = NULL;
-
+#endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
     OMPI_THREAD_LOCK(&mca_pml_uniq.uniq_lock);
     ompi_list_append(&mca_pml_uniq.uniq_procs, (ompi_list_item_t*)proc);
     OMPI_THREAD_UNLOCK(&mca_pml_uniq.uniq_lock);

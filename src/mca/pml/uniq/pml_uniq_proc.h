@@ -24,6 +24,11 @@
 #include "group/group.h"
 #include "proc/proc.h"
 
+/* This define has to move outside of this file. Maybe on some configuration file.
+ * Anyway by for, for the debugging purpose, here it's quite a safe place.
+ */
+#define PML_UNIQ_ACCEPT_NEXT_PTL 1
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -49,7 +54,9 @@ extern "C" {
       ompi_proc_t *proc_ompi;           /**< back-pointer to ompi_proc_t */
       ompi_mutex_t proc_lock;           /**< lock to protect against concurrent access */
       mca_ptl_proc_t proc_ptl_first;    /**< ptl for the first fragment */
+#if PML_UNIQ_ACCEPT_NEXT_PTL
       mca_ptl_proc_t proc_ptl_next;     /**< ptl for the remaining fragments */
+#endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
       uint32_t proc_ptl_flags;          /**< aggregate ptl flags */
    };
    typedef struct mca_pml_proc_t mca_pml_proc_t;
@@ -103,8 +110,10 @@ extern "C" {
       mca_pml_proc_t* proc_pml = proc->proc_pml;
       if( proc_pml->proc_ptl_first.ptl == ptl )
          return proc_pml->proc_ptl_first.ptl_peer;
+#if PML_UNIQ_ACCEPT_NEXT_PTL
       if( proc_pml->proc_ptl_next.ptl == ptl )
          return proc_pml->proc_ptl_next.ptl_peer;
+#endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
       return NULL;
    }
 
