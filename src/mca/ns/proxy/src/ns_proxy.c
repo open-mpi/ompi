@@ -394,7 +394,7 @@ int orte_ns_proxy_define_data_type(const char *name,
         if (0 == strcmp(name, dti->name)) { /* found name on list */
             *type = dti->id;
             OMPI_THREAD_UNLOCK(&orte_ns_proxy_mutex);
-            return rc;
+            return ORTE_SUCCESS;
         }
     }
 
