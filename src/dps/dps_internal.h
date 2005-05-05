@@ -113,6 +113,7 @@ typedef struct orte_dps_type_info_t orte_dps_type_info_t;
  */
 extern bool orte_dps_initialized;
 extern bool orte_dps_debug;
+extern int orte_dps_verbose;
 extern int orte_dps_page_size;
 extern orte_pointer_array_t *orte_dps_types;
 

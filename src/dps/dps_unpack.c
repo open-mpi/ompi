@@ -25,6 +25,7 @@
 #include "mca/errmgr/errmgr.h"
 
 #include "dps/dps_internal.h"
+#include "util/output.h"
 
 int orte_dps_unpack(orte_buffer_t *buffer, void *dst, size_t *num_vals,
                     orte_data_type_t type)
@@ -107,6 +108,7 @@ int orte_dps_unpack_buffer(orte_buffer_t *buffer, void *dst, size_t *num_vals,
     orte_data_type_t local_type;
     orte_dps_type_info_t *info;
 
+    OMPI_OUTPUT( ( orte_dps_verbose, "orte_dps_unpack_buffer( %p, %p, %lu, %d )\n", buffer, dst, *num_vals, (int)type ) );
     /* Unpack the declared data type */
     if (ORTE_SUCCESS != (rc = orte_dps_get_data_type(buffer, &local_type))) {
         ORTE_ERROR_LOG(rc);
@@ -211,6 +213,7 @@ int orte_dps_unpack_sizet(orte_buffer_t *buffer, void *dest,
 int orte_dps_unpack_byte(orte_buffer_t *buffer, void *dest,
                          size_t *num_vals, orte_data_type_t type)
 {
+    OMPI_OUTPUT( ( orte_dps_verbose, "orte_dps_unpack_byte * %d\n", (int)*num_vals ) );
     /* check to see if there's enough data in buffer */
     if (orte_dps_too_small(buffer, *num_vals)) {
         ORTE_ERROR_LOG(ORTE_UNPACK_READ_PAST_END_OF_BUFFER);
@@ -231,8 +234,8 @@ int orte_dps_unpack_int16(orte_buffer_t *buffer, void *dest,
 {
     size_t i;
     uint16_t tmp, *desttmp = (uint16_t*) dest;
-    uint16_t *srctmp = (uint16_t*) buffer->unpack_ptr;
 
+   OMPI_OUTPUT( ( orte_dps_verbose, "orte_dps_unpack_int16 * %d\n", (int)*num_vals ) );
     /* check to see if there's enough data in buffer */
     if (orte_dps_too_small(buffer, (*num_vals)*sizeof(tmp))) {
         ORTE_ERROR_LOG(ORTE_UNPACK_READ_PAST_END_OF_BUFFER);
@@ -241,10 +244,10 @@ int orte_dps_unpack_int16(orte_buffer_t *buffer, void *dest,
     
     /* unpack the data */
     for (i = 0; i < (*num_vals); ++i) {
-        tmp = ntohs(srctmp[i]);
-        memcpy(&desttmp[i], &tmp, sizeof(tmp));
+        memcpy( &(tmp), buffer->unpack_ptr, sizeof(tmp) );
+        desttmp[i] = ntohs(tmp);
+        buffer->unpack_ptr += sizeof(tmp);
     }
-    buffer->unpack_ptr += (*num_vals) * sizeof(tmp);
     
     return ORTE_SUCCESS;
 }
@@ -254,8 +257,8 @@ int orte_dps_unpack_int32(orte_buffer_t *buffer, void *dest,
 {
     size_t i;
     uint32_t tmp, *desttmp = (uint32_t*) dest;
-    uint32_t *srctmp = (uint32_t*) buffer->unpack_ptr;
 
+   OMPI_OUTPUT( ( orte_dps_verbose, "orte_dps_unpack_int32 * %d\n", (int)*num_vals ) );
     /* check to see if there's enough data in buffer */
     if (orte_dps_too_small(buffer, (*num_vals)*sizeof(tmp))) {
         ORTE_ERROR_LOG(ORTE_UNPACK_READ_PAST_END_OF_BUFFER);
@@ -264,10 +267,10 @@ int orte_dps_unpack_int32(orte_buffer_t *buffer, void *dest,
     
     /* unpack the data */
     for (i = 0; i < (*num_vals); ++i) {
-        tmp = ntohl(srctmp[i]);
-        memcpy(&desttmp[i], &tmp, sizeof(tmp));
+        memcpy( &(tmp), buffer->unpack_ptr, sizeof(tmp) );
+        desttmp[i] = ntohl(tmp);
+        buffer->unpack_ptr += sizeof(tmp);
     }
-    buffer->unpack_ptr += (*num_vals) * sizeof(tmp);
     
     return ORTE_SUCCESS;
 }
@@ -277,8 +280,8 @@ int orte_dps_unpack_int64(orte_buffer_t *buffer, void *dest,
 {
     size_t i;
     uint32_t tmp, *desttmp = (uint32_t*) dest;
-    uint32_t *srctmp = (uint32_t*) buffer->unpack_ptr;
 
+   OMPI_OUTPUT( ( orte_dps_verbose, "orte_dps_unpack_int64 * %d\n", (int)*num_vals ) );
     /* check to see if there's enough data in buffer */
     if (orte_dps_too_small(buffer, 2*(*num_vals)*sizeof(tmp))) {
         ORTE_ERROR_LOG(ORTE_UNPACK_READ_PAST_END_OF_BUFFER);
@@ -286,13 +289,14 @@ int orte_dps_unpack_int64(orte_buffer_t *buffer, void *dest,
     }
     
     /* unpack the data */
-    for (i = 0; i < 2*(*num_vals); i += 2) {
-        tmp = ntohl(srctmp[i]);
-        memcpy(&desttmp[i], &tmp, sizeof(tmp));
-        tmp = ntohl(srctmp[i+1]);
-        memcpy(&desttmp[i+1], &tmp, sizeof(tmp));
+    for (i = 0; i < (2 * (*num_vals)); i += 2) {
+        memcpy( &(tmp), buffer->unpack_ptr, sizeof(tmp) );
+        desttmp[i] = ntohl(tmp);
+        buffer->unpack_ptr += sizeof(tmp);
+        memcpy( &(tmp), buffer->unpack_ptr, sizeof(tmp) );
+        desttmp[i+1] = ntohl(tmp);
+        buffer->unpack_ptr += sizeof(tmp);
     }
-    buffer->unpack_ptr += 2*(*num_vals) * sizeof(tmp);
     
     return ORTE_SUCCESS;
 }
