@@ -32,6 +32,7 @@
 #include "util/cmd_line.h"
 
 #include "runtime/runtime_types.h"
+#include "util/univ_info.h"
 #include "mca/ns/ns.h"
 
 /* For backwards compatibility.  If you only need MPI stuff, please include
@@ -133,8 +134,8 @@ OMPI_DECLSPEC    int orte_monitor_procs_unregistered(void);
      * If both ns and gpr replicas provided, first checks for those
      * connections. Gets any missing info from the universe contact.
      *
-     * @param None Reads everything from the process_info and system_info
-     * structures
+     * @param univ Pointer to universe info struct where any found info
+     * is to be stored
      *
      * @retval OMPI_SUCCESS Universe found and connection accepted
      * @retval OMPI_NO_CONNECTION_ALLOWED Universe found, but not persistent or
@@ -145,7 +146,7 @@ OMPI_DECLSPEC    int orte_monitor_procs_unregistered(void);
      * @retval OMPI_CONNECTION_REFUSED Universe found and contact made, but
      * universe refused to allow connection.
      */
-OMPI_DECLSPEC    int orte_universe_exists(void);
+OMPI_DECLSPEC    int orte_universe_exists(orte_universe_t *univ);
 
     /**
      * Setup I/O forwarding.

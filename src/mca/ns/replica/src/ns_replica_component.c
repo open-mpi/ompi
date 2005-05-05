@@ -213,7 +213,7 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
     /* If we are to host a replica, then we want to be selected, so do all the
        setup and return the module */
 
-    if (NULL == orte_process_info.ns_replica) {
+    if (NULL == orte_process_info.ns_replica_uri) {
 
       orte_ns_replica_next_cellid = 0;
       orte_ns_replica_next_jobid = 1;  /* jobid 0 reserved for universe */

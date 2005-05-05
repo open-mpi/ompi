@@ -40,7 +40,7 @@
 
 static char *orte_getline(FILE *fp);
 
-int orte_write_universe_setup_file(char *filename)
+int orte_write_universe_setup_file(char *filename, orte_universe_t *info)
 {
     FILE *fp;
 
@@ -49,48 +49,48 @@ int orte_write_universe_setup_file(char *filename)
 	    return ORTE_ERROR;
     }
 
-    if (NULL == orte_universe_info.name) {
+    if (NULL == info->name) {
         /* fatal error - must have a name */
         fclose(fp);
         return ORTE_ERROR;
     } else {
-        fprintf(fp, "%s\n", orte_universe_info.name);
+        fprintf(fp, "%s\n", info->name);
     }
 
-    if (NULL == orte_universe_info.host) {
+    if (NULL == info->host) {
 	   fprintf(fp, "LOCALHOST\n");
     } else {
-        fprintf(fp, "%s\n", orte_universe_info.host);
+        fprintf(fp, "%s\n", info->host);
     }
     
-    if (NULL == orte_universe_info.uid) {
+    if (NULL == info->uid) {
         fprintf(fp, "NO-UID\n");
     } else {
-        fprintf(fp, "%s\n", orte_universe_info.uid);
+        fprintf(fp, "%s\n", info->uid);
     }
 
-    if (orte_universe_info.persistence) {
+    if (info->persistence) {
 	   fprintf(fp, "persistent\n");
     } else {
 	   fprintf(fp, "non-persistent\n");
     }
 
-    if (NULL == orte_universe_info.scope) {
+    if (NULL == info->scope) {
         fprintf(fp, "NO-SCOPE\n");
     } else {
-        fprintf(fp, "%s\n", orte_universe_info.scope);
+        fprintf(fp, "%s\n", info->scope);
     }
 
-    if (orte_universe_info.console) {
+    if (info->console) {
 	   fprintf(fp, "console\n");
     } else {
 	   fprintf(fp, "silent\n");
     }
 
-    if (NULL == orte_universe_info.seed_uri) {
+    if (NULL == info->seed_uri) {
         fprintf(fp, "NO-SEED-URI\n");
     } else {
-        fprintf(fp, "%s\n", orte_universe_info.seed_uri);
+        fprintf(fp, "%s\n", info->seed_uri);
     }
     
     fclose(fp);
@@ -98,7 +98,7 @@ int orte_write_universe_setup_file(char *filename)
     return ORTE_SUCCESS;
 }
 
-int orte_read_universe_setup_file(char *filename)
+int orte_read_universe_setup_file(char *filename, orte_universe_t *info)
 {
     char *input;
     FILE *fp;
@@ -111,25 +111,25 @@ int orte_read_universe_setup_file(char *filename)
 	   }
     }
 
-    orte_universe_info.name = orte_getline(fp);
-    if (NULL == orte_universe_info.name) {
+    info->name = orte_getline(fp);
+    if (NULL == info->name) {
 	   goto CLEANUP;
     }
 
-    orte_universe_info.host = orte_getline(fp);
-    if (NULL == orte_universe_info.host) {
+    info->host = orte_getline(fp);
+    if (NULL == info->host) {
        goto CLEANUP;
-    } else if (0 == strcmp("LOCALHOST", orte_universe_info.host)) {
-        free(orte_universe_info.host);
-        orte_universe_info.host = NULL;
+    } else if (0 == strcmp("LOCALHOST", info->host)) {
+        free(info->host);
+        info->host = NULL;
     }
 
-    orte_universe_info.uid = orte_getline(fp);
-    if (NULL == orte_universe_info.uid) {
+    info->uid = orte_getline(fp);
+    if (NULL == info->uid) {
        goto CLEANUP;
-    } else if (0 == strcmp("NO-UID", orte_universe_info.uid)) {
-        free(orte_universe_info.uid);
-        orte_universe_info.uid = NULL;
+    } else if (0 == strcmp("NO-UID", info->uid)) {
+        free(info->uid);
+        info->uid = NULL;
     }
 
     input = orte_getline(fp);
@@ -137,21 +137,21 @@ int orte_read_universe_setup_file(char *filename)
        goto CLEANUP;
     }
     if (0 == strncmp(input, "persistent", strlen("persistent"))) {
-	   orte_universe_info.persistence = true;
+	   info->persistence = true;
     } else if (0 == strncmp(input, "non-persistent", strlen("non-persistent"))) {
-	   orte_universe_info.persistence = false;
+	   info->persistence = false;
     } else {
 	   free(input);
        goto CLEANUP;
     }
     free(input);
 
-    orte_universe_info.scope = orte_getline(fp);
-    if (NULL == orte_universe_info.scope) {
+    info->scope = orte_getline(fp);
+    if (NULL == info->scope) {
        goto CLEANUP;
-    } else if (0 == strcmp("NO-SCOPE", orte_universe_info.scope)) {
-        free(orte_universe_info.scope);
-        orte_universe_info.scope = strdup("exclusive");
+    } else if (0 == strcmp("NO-SCOPE", info->scope)) {
+        free(info->scope);
+        info->scope = strdup("exclusive");
     }
  
     input = orte_getline(fp);
@@ -159,21 +159,21 @@ int orte_read_universe_setup_file(char *filename)
        goto CLEANUP;
     }
     if (0 == strncmp(input, "silent", strlen("silent"))) {
-	    orte_universe_info.console = false;
+	    info->console = false;
     } else if (0 == strncmp(input, "console", strlen("console"))) {
-	    orte_universe_info.console = true;
+	    info->console = true;
     } else {
 	    free(input);
 	    goto CLEANUP;
     }
     free(input);
 
-    orte_universe_info.seed_uri = orte_getline(fp);
-    if (NULL == orte_universe_info.seed_uri) {
+    info->seed_uri = orte_getline(fp);
+    if (NULL == info->seed_uri) {
 	    goto CLEANUP;
-    } else if (0 == strcmp("NO-SEED-URI", orte_universe_info.seed_uri)) {
-        free(orte_universe_info.seed_uri);
-        orte_universe_info.seed_uri = NULL;
+    } else if (0 == strcmp("NO-SEED-URI", info->seed_uri)) {
+        free(info->seed_uri);
+        info->seed_uri = NULL;
     }
 
     fclose(fp);

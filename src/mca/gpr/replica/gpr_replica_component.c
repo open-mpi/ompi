@@ -522,7 +522,7 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
     /* If we are to host a replica, then we want to be selected, so do all the
        setup and return the module */
 
-    if (NULL == orte_process_info.gpr_replica) {
+    if (NULL == orte_process_info.gpr_replica_uri) {
 
         	/* Return a module (choose an arbitrary, positive priority --
         	   it's only relevant compared to other ns components).  If
