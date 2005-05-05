@@ -1002,9 +1002,15 @@ static int split_shorts(ompi_cmd_line_t *cmd, char *token, char **args,
     num_args = ompi_argv_count(args);
     *num_args_used = 0;
 
-    /* Traverse the token */
+    /* Traverse the token.  If it's empty (e.g., if someone passes a
+       "-" token, which, since the upper level calls this function as
+       (argv[i] + 1), will be empty by the time it gets down here),
+       just return that we didn't find a short option. */
 
     len = strlen(token);
+    if (0 == len) {
+        return OMPI_ERR_BAD_PARAM;
+    }
     fake_token[0] = '-';
     fake_token[2] = '\0';
     for (i = 0; i < len; ++i) {
