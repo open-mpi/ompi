@@ -21,6 +21,7 @@
 #include <unistd.h>
 #endif
 #include <stdlib.h>
+#include <errno.h>
 
 #include "include/orte_constants.h"
 #include "util/proc_info.h"
@@ -53,12 +54,14 @@ int orte_ns_nds_pipe_get(void)
 
     rc = read(fd,&orte_process_info.vpid_start, sizeof(orte_process_info.vpid_start));
     if(rc != sizeof(orte_process_info.vpid_start)) {
+        ompi_output(0, "orte_ns_nds_pipe_get: read returned %d, errno=%d\n", rc, errno);
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
 
     rc = read(fd,&num_procs, sizeof(num_procs));
-    if(rc != sizeof(orte_process_info.num_procs)) {
+    if(rc != sizeof(num_procs)) {
+        ompi_output(0, "orte_ns_nds_pipe_get: read returned %d, errno=%d\n", rc, errno);
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
