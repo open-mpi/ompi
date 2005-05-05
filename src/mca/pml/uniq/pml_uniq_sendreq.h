@@ -46,7 +46,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
     if(NULL == proc) {                                                     \
        return OMPI_ERR_OUT_OF_RESOURCE;                                    \
     }                                                                      \
-    ptl_base = proc->proc_ptl_first->ptl_base;                             \
+    ptl_base = proc->proc_ptl_first.ptl_base;                              \
     /*                                                                     \
      * check to see if there is a cache of send requests associated with   \
      * this ptl - if so try the allocation from there.                     \
@@ -80,7 +80,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
             OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
             OMPI_FREE_LIST_WAIT(&mca_pml_uniq.uniq_send_requests, item, rc); \
             sendreq = (mca_pml_base_send_request_t*)item;                  \
-            sendreq->req_ptl = proc->proc_ptl_first->ptl;                  \
+            sendreq->req_ptl = proc->proc_ptl_first.ptl;                   \
         }                                                                  \
                                                                            \
     /* otherwise - take the allocation from the global list */             \
@@ -88,10 +88,10 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
         ompi_list_item_t* item;                                            \
         OMPI_FREE_LIST_WAIT(&mca_pml_uniq.uniq_send_requests, item, rc);   \
         sendreq = (mca_pml_base_send_request_t*)item;                      \
-        sendreq->req_ptl = proc->proc_ptl_first->ptl;                      \
+        sendreq->req_ptl = proc->proc_ptl_first.ptl;                       \
     }                                                                      \
     /* update request to point to current peer */                          \
-    sendreq->req_peer = proc->proc_ptl_first->ptl_peer;                    \
+    sendreq->req_peer = proc->proc_ptl_first.ptl_peer;                     \
 }
 
 

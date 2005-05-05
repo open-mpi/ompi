@@ -45,5 +45,5 @@ pml_uniq_la_sources = pml_uniq.c pml_uniq.h pml_uniq_cancel.c pml_uniq_component
    pml_uniq_component.h pml_uniq_iprobe.c pml_uniq_irecv.c pml_uniq_isend.c \
    pml_uniq_ptl.c pml_uniq_ptl.h pml_uniq_proc.c pml_uniq_proc.h pml_uniq_progress.c \
    pml_uniq_recvfrag.c pml_uniq_recvfrag.h pml_uniq_recvreq.c pml_uniq_recvreq.h \
-   pml_uniq_sendreq.c pml_uniq_sendreq.h pml_uniq_start.c pml_ptl_array.c pml_ptl_array.h
+   pml_uniq_sendreq.c pml_uniq_sendreq.h pml_uniq_start.c
 

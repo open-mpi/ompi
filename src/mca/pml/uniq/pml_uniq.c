@@ -27,9 +27,9 @@
 #include "mca/ptl/base/ptl_base_header.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
+#include "pml_uniq_proc.h"
 #include "pml_uniq.h"
 #include "pml_uniq_component.h"
-#include "pml_uniq_proc.h"
 #include "pml_uniq_ptl.h"
 #include "pml_uniq_recvreq.h"
 #include "pml_uniq_sendreq.h"
@@ -235,8 +235,6 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
       for( p = 0; p < nprocs; p++) {
          ompi_proc_t *proc;
          mca_pml_proc_t* proc_pml;
-         mca_ptl_proc_t* proc_ptl;
-         size_t size;
 
          if( !ompi_bitmap_is_set_bit(&reachable, p) ) continue;
 
@@ -256,40 +254,32 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
                free(ptl_peers);
                return OMPI_ERR_OUT_OF_RESOURCE;
             }
-#ifdef TOTO
-            /* preallocate space in array for max number of ptls */
-            mca_ptl_array_reserve(&proc_pml->proc_ptl_first, mca_pml_uniq.uniq_num_ptl_modules);
-            mca_ptl_array_reserve(&proc_pml->proc_ptl_next, mca_pml_uniq.uniq_num_ptl_modules);
-#endif  /* TOTO */
+
             proc_pml->proc_ompi = proc;
             proc->proc_pml = proc_pml;
             /* it's the first PTL so add it to both first and next */
             proc_pml->proc_ptl_flags |= ptl->ptl_flags;
-            proc_pml->proc_ptl_first = proc_ptl;
-            proc_pml->proc_ptl_next = proc_ptl;
+            proc_pml->proc_ptl_first.ptl_peer = ptl_peers[p];
+            proc_pml->proc_ptl_first.ptl_base = NULL;
+            proc_pml->proc_ptl_first.ptl = ptl;
+            proc_pml->proc_ptl_next.ptl_peer = ptl_peers[p];
+            proc_pml->proc_ptl_next.ptl_base = NULL;
+            proc_pml->proc_ptl_next.ptl = ptl;
          } else {
             /* choose the best for first and next. For the first look at the latency when
              * for the next at the maximum bandwidth.
              */
          }
          /* dont allow an additional PTL with a lower exclusivity ranking */
-         size = mca_ptl_array_get_size(&proc_pml->proc_ptl_next);
-         if( size > 0 ) {
-            proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, size-1);
-            /* skip this ptl if the exclusivity is less than the previous */
-            if(proc_ptl->ptl->ptl_exclusivity > ptl->ptl_exclusivity) {
+         if( NULL != proc_pml->proc_ptl_first.ptl ) {
+            if( proc_pml->proc_ptl_first.ptl->ptl_exclusivity > ptl->ptl_exclusivity ) {
+               /* skip this ptl if the exclusivity is less than the previous */
                if(ptl_peers[p] != NULL) {
                   ptl->ptl_del_procs(ptl, 1, &proc, &ptl_peers[p]);
                }
                continue;
             }
          }
-         
-         /* cache the ptl on the proc */
-         proc_ptl = mca_ptl_array_insert(&proc_pml->proc_ptl_next);
-         proc_ptl->ptl = ptl;
-         proc_ptl->ptl_peer = ptl_peers[p];
-         proc_ptl->ptl_weight = 0;
          proc_pml->proc_ptl_flags |= ptl->ptl_flags;
       }
 
@@ -311,74 +301,6 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
    }
    free(ptl_peers);
 
-   /* iterate back through procs and compute metrics for registered ptls */
-   for( p = 0; p < nprocs; p++ ) {
-      ompi_proc_t *proc = procs[p];
-      mca_pml_proc_t* proc_pml = proc->proc_pml;
-      double total_bandwidth = 0;
-      uint32_t latency = 0;
-      size_t n_index;
-      size_t n_size;
-
-      /* skip over procs w/ no ptls registered */
-      if(NULL == proc_pml)
-         continue;
-
-      /* (1) determine the total bandwidth available across all ptls
-       *     note that we need to do this here, as we may already have ptls configured
-       * (2) determine the highest priority ranking for latency
-       */
-      n_size = mca_ptl_array_get_size(&proc_pml->proc_ptl_next); 
-      for(n_index = 0; n_index < n_size; n_index++) {
-         struct mca_ptl_proc_t* proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
-         struct mca_ptl_base_module_t* ptl = proc_ptl->ptl;
-         total_bandwidth += proc_ptl->ptl->ptl_bandwidth; 
-         if(ptl->ptl_latency > latency)
-            latency = ptl->ptl_latency;
-      }
-
-      /* (1) set the weight of each ptl as a percentage of overall bandwidth
-       * (2) copy all ptl instances at the highest priority ranking into the
-       *     list of ptls used for first fragments
-       */
-
-      for(n_index = 0; n_index < n_size; n_index++) {
-         struct mca_ptl_proc_t* proc_ptl = mca_ptl_array_get_index(&proc_pml->proc_ptl_next, n_index);
-         struct mca_ptl_base_module_t *ptl = proc_ptl->ptl;
-         double weight;
-
-         /* compute weighting factor for this ptl */
-         if(ptl->ptl_bandwidth)
-            weight = proc_ptl->ptl->ptl_bandwidth / total_bandwidth;
-         else
-            weight = 1.0 / n_size;
-         proc_ptl->ptl_weight = (int)(weight * 100);
-
-         /*
-          * save/create ptl extension for use by pml
-          */
-         proc_ptl->ptl_base = ptl->ptl_base;
-         if (NULL == proc_ptl->ptl_base && 
-             ptl->ptl_cache_bytes > 0 &&
-             NULL != ptl->ptl_request_init &&
-             NULL != ptl->ptl_request_fini) {
-
-            mca_pml_base_ptl_t* ptl_base = OBJ_NEW(mca_pml_base_ptl_t);
-            ptl_base->ptl = ptl;
-            ptl_base->ptl_cache_size = ptl->ptl_cache_size;
-            proc_ptl->ptl_base = ptl->ptl_base = ptl_base;
-         }
-
-         /* check to see if this ptl is already in the array of ptls used for first
-          * fragments - if not add it.
-          */
-         if(ptl->ptl_latency == latency) {
-            struct mca_ptl_proc_t* proc_new = mca_ptl_array_insert(&proc_pml->proc_ptl_first);
-            *proc_new = *proc_ptl;
-         }
-        
-      }
-   }
    return OMPI_SUCCESS;
 }
 
@@ -401,14 +323,14 @@ int mca_pml_uniq_del_procs(ompi_proc_t** procs, size_t nprocs)
          * the same then we have to remove the processor from both of them.
          */
 
-        ptl_proc = proc_pml->proc_ptl_first;
+        ptl_proc = &(proc_pml->proc_ptl_first);
         ptl = ptl_proc->ptl;
         rc = ptl->ptl_del_procs( ptl, 1, &proc, &ptl_proc->ptl_peer );
         if( OMPI_SUCCESS != rc ) {
            return rc;
         }
-        if( proc_pml->proc_ptl_first != proc_pml->proc_ptl_next ) {
-           ptl_proc = proc_pml->proc_ptl_next;
+        if( proc_pml->proc_ptl_first.ptl != proc_pml->proc_ptl_next.ptl ) {
+           ptl_proc = &(proc_pml->proc_ptl_next);
            ptl = ptl_proc->ptl;
            rc = ptl->ptl_del_procs( ptl, 1, &proc, &ptl_proc->ptl_peer );
            if( OMPI_SUCCESS != rc ) {
