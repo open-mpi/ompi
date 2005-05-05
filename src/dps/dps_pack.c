@@ -24,6 +24,7 @@
 #include "mca/errmgr/errmgr.h"
 
 #include "dps/dps_internal.h"
+#include "util/output.h"
 
 int orte_dps_pack(orte_buffer_t *buffer, void *src, size_t num_vals,
                   orte_data_type_t type)
@@ -60,6 +61,7 @@ int orte_dps_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_vals,
     int rc;
     orte_dps_type_info_t *info;
     
+    OMPI_OUTPUT( ( orte_dps_verbose, "orte_dps_pack_buffer( %p, %p, %lu, %d )\n", buffer, src, num_vals, (int)type ) );
     /* Pack the declared data type */
     if (ORTE_SUCCESS != (rc = orte_dps_pack_data_type(buffer, &type, 1, type))) {
         ORTE_ERROR_LOG(rc);
@@ -161,6 +163,7 @@ int orte_dps_pack_byte(orte_buffer_t *buffer, void *src,
 {
     char *dst;
     
+    OMPI_OUTPUT( ( orte_dps_verbose, "orte_dps_pack_byte * %d\n", num_vals ) );
     /* check to see if buffer needs extending */
     if (NULL == (dst = orte_dps_buffer_extend(buffer, num_vals))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -188,6 +191,7 @@ int orte_dps_pack_int16(orte_buffer_t *buffer, void *src,
     uint16_t tmp, *srctmp = (uint16_t*) src;
     char *dst;
     
+    OMPI_OUTPUT( ( orte_dps_verbose, "orte_dps_pack_int16 * %d\n", num_vals ) );
     /* check to see if buffer needs extending */
     if (NULL == (dst = orte_dps_buffer_extend(buffer, num_vals*sizeof(tmp)))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -216,6 +220,7 @@ int orte_dps_pack_int32(orte_buffer_t *buffer, void *src,
     uint32_t tmp, *srctmp = (uint32_t*) src;
     char *dst;
     
+    OMPI_OUTPUT( ( orte_dps_verbose, "orte_dps_pack_int32 * %d\n", num_vals ) );
     /* check to see if buffer needs extending */
     if (NULL == (dst = orte_dps_buffer_extend(buffer, num_vals*sizeof(tmp)))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -245,6 +250,7 @@ int orte_dps_pack_int64(orte_buffer_t *buffer, void *src,
     char *dst;
     size_t bytes_packed = num_vals * sizeof(tmp) * 2;
     
+    OMPI_OUTPUT( ( orte_dps_verbose, "orte_dps_pack_int64 * %d\n", num_vals ) );
     /* check to see if buffer needs extending */
     if (NULL == (dst = orte_dps_buffer_extend(buffer, bytes_packed))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);

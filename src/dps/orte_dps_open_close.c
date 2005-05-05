@@ -34,6 +34,7 @@
  */
 bool orte_dps_initialized = false;
 bool orte_dps_debug = false;
+int orte_dps_verbose = -1;  /* by default disabled */
 int orte_dps_page_size;
 orte_pointer_array_t *orte_dps_types;
 
