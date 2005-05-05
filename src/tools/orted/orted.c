@@ -248,7 +248,7 @@ int main(int argc, char *argv[])
 				    "universe-setup.txt", NULL);
 	    ompi_output(0, "ompid: contact_file %s", contact_path);
 
-	    if (OMPI_SUCCESS != (ret = orte_write_universe_setup_file(contact_path))) {
+	    if (OMPI_SUCCESS != (ret = orte_write_universe_setup_file(contact_path, &orte_universe_info))) {
 	        if (orted_globals.debug) {
 		        ompi_output(0, "[%d,%d,%d] ompid: couldn't write setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
 	        }

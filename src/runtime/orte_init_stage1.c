@@ -58,6 +58,7 @@ int orte_init_stage1(void)
     char *jobid_str = NULL;
     char *procid_str = NULL;
     pid_t pid;
+    orte_universe_t univ;
 
     /* Open up the output streams */
     if (!ompi_output_init()) {
@@ -183,34 +184,63 @@ int orte_init_stage1(void)
         return ret;
     }
 
-    /* check for existing universe to join */
-    if (ORTE_SUCCESS != (ret = orte_universe_exists())) {
-        if (orte_debug_flag) {
-                ompi_output(0, "orte_init: could not join existing universe");
-        }
-        if (ORTE_ERR_NOT_FOUND != ret) {
-                /* if it exists but no contact could be established,
-                 * define unique name based on current one.
-                 * and start new universe with me as seed
-                 */
-                universe = strdup(orte_universe_info.name);
-                free(orte_universe_info.name);
-                orte_universe_info.name = NULL;
-                pid = getpid();
-                if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, pid)) {
-                    ompi_output(0, "orte_init: failed to create unique universe name");
-                    return ret;
-                }
-        }
-
-        orte_process_info.seed = true;
-        if (NULL != orte_process_info.ns_replica) {
-                free(orte_process_info.ns_replica);
-                orte_process_info.ns_replica = NULL;
-        }
-        if (NULL != orte_process_info.gpr_replica) {
-                free(orte_process_info.gpr_replica);
-                orte_process_info.gpr_replica = NULL;
+    /* if we were NOT given registry and name service replicas (i.e., we
+     * weren't told a universe contact point), check for some
+     * existing universe to join */
+    if (NULL == orte_process_info.ns_replica_uri || NULL == orte_process_info.gpr_replica_uri) {
+        if (ORTE_SUCCESS == (ret = orte_universe_exists(&univ))) {
+            /* copy universe info into our universe structure */
+            orte_universe_info.path = univ.path;
+            orte_universe_info.name = univ.name;
+            orte_universe_info.host = univ.host;
+            orte_universe_info.uid = univ.uid;
+            orte_universe_info.persistence = univ.persistence;
+            orte_universe_info.scope = univ.scope;
+            orte_universe_info.console = univ.console;
+            orte_universe_info.seed_uri = univ.seed_uri;
+            orte_universe_info.console_connected = univ.console_connected;
+            orte_universe_info.scriptfile = univ.scriptfile;
+            /* define the replica contact points */
+            orte_process_info.ns_replica_uri = strdup(univ.seed_uri);
+            orte_process_info.gpr_replica_uri = strdup(univ.seed_uri);
+        } else {
+            if (orte_debug_flag) {
+                    ompi_output(0, "orte_init: could not join existing universe");
+            }
+            if (ORTE_ERR_NOT_FOUND != ret) {
+                    /* if it exists but no contact could be established,
+                     * define unique name based on current one.
+                     * and start new universe with me as seed
+                     */
+                    universe = strdup(orte_universe_info.name);
+                    free(orte_universe_info.name);
+                    orte_universe_info.name = NULL;
+                    pid = getpid();
+                    if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, pid)) {
+                        ompi_output(0, "orte_init: failed to create unique universe name");
+                        return ret;
+                    }
+            }
+    
+            orte_process_info.seed = true;
+            /* since we are seed, ensure that all replica info is NULL'd */
+            if (NULL != orte_process_info.ns_replica_uri) {
+                free(orte_process_info.ns_replica_uri);
+                orte_process_info.ns_replica_uri = NULL;
+            }
+            if (NULL != orte_process_info.ns_replica) {
+                    free(orte_process_info.ns_replica);
+                    orte_process_info.ns_replica = NULL;
+            }
+    
+            if (NULL != orte_process_info.gpr_replica_uri) {
+                free(orte_process_info.gpr_replica_uri);
+                orte_process_info.gpr_replica_uri = NULL;
+            }
+            if (NULL != orte_process_info.gpr_replica) {
+                    free(orte_process_info.gpr_replica);
+                    orte_process_info.gpr_replica = NULL;
+            }
         }
     }
 

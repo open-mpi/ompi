@@ -202,18 +202,31 @@ orte_gpr_base_module_t*
 orte_gpr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidden_threads,
                             int *priority)
 {
+    orte_process_name_t name;
+    int ret;
+    
     if (orte_gpr_proxy_globals.debug) {
 	    ompi_output(0, "gpr_proxy_init called");
     }
 
     /* If we are NOT to host a replica, then we want to be selected, so do all
        the setup and return the module */
-    if (NULL != orte_process_info.gpr_replica) {
+    if (NULL != orte_process_info.gpr_replica_uri) {
 
 	if (orte_gpr_proxy_globals.debug) {
 	    ompi_output(0, "gpr_proxy_init: proxy selected");
 	}
 
+    /* setup the replica location */
+   if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(orte_process_info.gpr_replica_uri, &name, NULL))) {
+       ORTE_ERROR_LOG(ret);
+       return NULL;
+   }
+   if(ORTE_SUCCESS != (ret = orte_ns.copy_process_name(&orte_process_info.gpr_replica, &name))) {
+       ORTE_ERROR_LOG(ret);
+       return NULL;
+    }
+    
 	/* Return a module (choose an arbitrary, positive priority --
 	   it's only relevant compared to other ns components).  If
 	   we're not the seed, then we don't want to be selected, so

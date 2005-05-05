@@ -34,6 +34,8 @@
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/mca_base_param.h"
+#include "mca/errmgr/errmgr.h"
+#include "mca/rml/rml.h"
 
 #include "ns_proxy.h"
 
@@ -175,10 +177,13 @@ int orte_ns_proxy_close(void)
 
 mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
 {
+    orte_process_name_t name;
+    int ret;
+    
     /* If we are NOT to host a replica, then we want to be selected, so do all
        the setup and return the module */
     /*    ompi_output(mca_ns_base_output, "ns_proxy: entered init\n"); */
-    if (NULL != orte_process_info.ns_replica) {
+    if (NULL != orte_process_info.ns_replica_uri) {
 
         	/* Return a module (choose an arbitrary, positive priority --
         	   it's only relevant compared to other ns components).  If
@@ -188,7 +193,14 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
         	*priority = 10;
         
         	/* define the replica for us to use */
-        	/* default to seed for now */
+           if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(orte_process_info.ns_replica_uri, &name, NULL))) {
+               ORTE_ERROR_LOG(ret);
+               return NULL;
+           }
+           if(ORTE_SUCCESS != (ret = orte_ns.copy_process_name(&orte_process_info.ns_replica, &name))) {
+               ORTE_ERROR_LOG(ret);
+               return NULL;
+           }
         	if (ORTE_SUCCESS != orte_ns_base_copy_process_name(&orte_ns_my_replica,
                                 orte_process_info.ns_replica)) {  /* can't operate */
         	    return NULL;
