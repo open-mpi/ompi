@@ -266,7 +266,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     }
 
     /* need integer value for command line parameter - NOT hex */
-    asprintf(&jobid_string, "%d", jobid);
+    asprintf(&jobid_string, "%lu", (unsigned long)jobid);
 
     /*
      * Build argv/env arrays.
