@@ -50,7 +50,8 @@ mca_ptl_portals_init(mca_ptl_portals_component_t *comp)
     info.nid = htonl(utcp_my_nid(mca_ptl_portals_component.portals_ifname));
     info.pid = htonl((ptl_pid_t) getpid());
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "contact info: %u, %u", info.nid, info.pid);
+                        "contact info: %u, %u", ntohl(info.nid), 
+                        ntohl(info.pid));
 
     ret = mca_base_modex_send(&mca_ptl_portals_component.super.ptlm_version,
                               &info, sizeof(ptl_process_id_t));
@@ -144,8 +145,8 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_portals_module_t* ptl,
         }
 
         /* update my local array of proc structs */
-        (*portals_procs)[i].nid = info->nid;
-        (*portals_procs)[i].pid = info->pid;
+        (*portals_procs)[i].nid = ntohl(info->nid);
+        (*portals_procs)[i].pid = ntohl(info->pid);
 
         free(info);
     }

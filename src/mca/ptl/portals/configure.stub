@@ -168,6 +168,10 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
                       [PTL_PORTALS_DEFAULT_FIRST_FRAG_ENTRY_SIZE], [1048576],
                       [Default size of memory associeted with first fag md])
 
+    MCA_PTL_PORTALS_CONFIG_VAL([first-frag-queue-size],
+                      [PTL_PORTALS_DEFAULT_FIRST_FRAG_QUEUE_SIZE], [512],
+                      [Default size of event queue for first frag mds])
+
     MCA_PTL_PORTALS_CONFIG_VAL([rndv-frag-min-size],
                       [PTL_PORTALS_DEFAULT_RNDV_FRAG_MIN_SIZE], [0],
                       [Default minimum size of rndv fragments])

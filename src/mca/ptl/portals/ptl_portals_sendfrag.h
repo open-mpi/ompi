@@ -27,9 +27,6 @@ extern "C" {
 
     struct mca_ptl_portals_send_frag_t {
         mca_ptl_base_send_frag_t frag_send;
-        ptl_md_t memory_descriptor; /* BWB - not sure if we need this */
-        ptl_handle_eq_t eq_handle;
-        int status;
     };
     typedef struct mca_ptl_portals_send_frag_t mca_ptl_portals_send_frag_t;
 

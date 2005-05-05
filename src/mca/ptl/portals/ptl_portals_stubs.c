@@ -35,7 +35,9 @@ int
 mca_ptl_portals_request_init(struct mca_ptl_base_module_t *ptl,
 			     struct mca_pml_base_send_request_t *req)
 {
-    return OMPI_ERROR;
+    ompi_output(mca_ptl_portals_component.portals_output,
+                "unimplemented function mca_ptl_request_init");
+    return OMPI_SUCCESS;
 }
 
 
@@ -43,6 +45,8 @@ void
 mca_ptl_portals_request_fini(struct mca_ptl_base_module_t *ptl,
 			     struct mca_pml_base_send_request_t *req)
 {
+    ompi_output(mca_ptl_portals_component.portals_output,
+                "unimplemented function mca_ptl_request_fini");
     return;
 }
 
@@ -50,23 +54,7 @@ void
 mca_ptl_portals_matched(struct mca_ptl_base_module_t *ptl,
 			struct mca_ptl_base_recv_frag_t *frag)
 {
+    ompi_output(mca_ptl_portals_component.portals_output,
+                "unimplemented function mca_ptl_portals_matched");
     return;
-}
-
-int
-mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl,
-		     struct mca_ptl_base_peer_t *ptl_peer,
-		     struct mca_pml_base_send_request_t *req,
-		     size_t offset, size_t size, int flags)
-{
-    return OMPI_ERROR;
-}
-
-int
-mca_ptl_portals_send_continue(struct mca_ptl_base_module_t *ptl,
-			      struct mca_ptl_base_peer_t *ptl_peer,
-			      struct mca_pml_base_send_request_t *req,
-			      size_t offset, size_t size, int flags)
-{
-    return OMPI_ERROR;
 }
