@@ -92,7 +92,11 @@ int mca_pml_uniq_send_request_schedule(mca_pml_base_send_request_t* req)
      * the scheduling logic once for every call.
     */
     if(OMPI_THREAD_ADD32(&req->req_lock,1) == 1) {
+#if PML_UNIQ_ACCEPT_NEXT_PTL
         mca_ptl_proc_t* ptl_proc = &(proc_pml->proc_ptl_next);
+#else
+        mca_ptl_proc_t* ptl_proc = &(proc_pml->proc_ptl_first);
+#endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
         mca_ptl_base_module_t* ptl = ptl_proc->ptl;
         /* allocate remaining bytes to PTLs */
         bytes_remaining = req->req_bytes_packed - req->req_offset;

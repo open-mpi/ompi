@@ -262,13 +262,17 @@ int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
             proc_pml->proc_ptl_first.ptl_peer = ptl_peers[p];
             proc_pml->proc_ptl_first.ptl_base = NULL;
             proc_pml->proc_ptl_first.ptl = ptl;
+#if PML_UNIQ_ACCEPT_NEXT_PTL
             proc_pml->proc_ptl_next.ptl_peer = ptl_peers[p];
             proc_pml->proc_ptl_next.ptl_base = NULL;
             proc_pml->proc_ptl_next.ptl = ptl;
+#endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
          } else {
             /* choose the best for first and next. For the first look at the latency when
              * for the next at the maximum bandwidth.
              */
+#if PML_UNIQ_ACCEPT_NEXT_PTL
+#endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
          }
          /* dont allow an additional PTL with a lower exclusivity ranking */
          if( NULL != proc_pml->proc_ptl_first.ptl ) {
@@ -329,6 +333,7 @@ int mca_pml_uniq_del_procs(ompi_proc_t** procs, size_t nprocs)
         if( OMPI_SUCCESS != rc ) {
            return rc;
         }
+#if PML_UNIQ_ACCEPT_NEXT_PTL
         if( proc_pml->proc_ptl_first.ptl != proc_pml->proc_ptl_next.ptl ) {
            ptl_proc = &(proc_pml->proc_ptl_next);
            ptl = ptl_proc->ptl;
@@ -337,6 +342,7 @@ int mca_pml_uniq_del_procs(ompi_proc_t** procs, size_t nprocs)
               return rc;
            }
         }
+#endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
         
         /* do any required cleanup */
         OBJ_RELEASE(proc_pml);
