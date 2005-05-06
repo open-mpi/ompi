@@ -18,27 +18,31 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-SUBDIRS = src
+sources =
+include src/Makefile.extra
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
 if OMPI_BUILD_ptl_tcp_DSO
-component_noinst =
-component_install = mca_ptl_tcp.la
+lib =
+lib_sources = 
+component = mca_ptl_tcp.la
+component_sources = $(sources)
 else
-component_noinst = libmca_ptl_tcp.la
-component_install =
+lib = libmca_ptl_tcp.la
+lib_sources = $(sources)
+component =
+component_sources =
 endif
 
 mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component_install)
-mca_ptl_tcp_la_SOURCES = 
-mca_ptl_tcp_la_LIBADD = src/libmca_ptl_tcp.la
+mcacomponent_LTLIBRARIES = $(component)
+mca_ptl_tcp_la_SOURCES = $(component_sources)
 mca_ptl_tcp_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = $(component_noinst)
-libmca_ptl_tcp_la_SOURCES =
+noinst_LTLIBRARIES = $(lib)
+libmca_ptl_tcp_la_SOURCES = $(lib_sources)
 libmca_ptl_tcp_la_LIBADD = src/libmca_ptl_tcp.la
 libmca_ptl_tcp_la_LDFLAGS = -module -avoid-version

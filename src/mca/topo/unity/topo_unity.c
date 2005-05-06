@@ -28,7 +28,7 @@
 #include "communicator/communicator.h"
 #include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
-#include "mca/topo/unity/src/topo_unity.h"
+#include "mca/topo/unity/topo_unity.h"
 
 /*
  * *******************************************************************

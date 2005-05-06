@@ -16,4 +16,4 @@
 #
 
 PARAM_INIT_FILE=src/pls_tm_component.c
-PARAM_CONFIG_FILES="Makefile src/Makefile"
+PARAM_CONFIG_FILES="Makefile"

@@ -15,7 +15,7 @@
  */ 
 
 #include "ompi_config.h"
-#include "mca/topo/unity/src/topo_unity.h"
+#include "mca/topo/unity/topo_unity.h"
 
 #include "communicator/communicator.h"
 

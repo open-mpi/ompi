@@ -1,4 +1,4 @@
-# -*- shell-script -*-
+# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -15,5 +15,26 @@
 # $HEADER$
 #
 
-PARAM_INIT_FILE=src/ras_tm_component.c
-PARAM_CONFIG_FILES="Makefile"
+sources += \
+	src/pml_teg.c \
+	src/pml_teg.h \
+	src/pml_teg_cancel.c \
+	src/pml_teg_component.c \
+	src/pml_teg_component.h \
+	src/pml_teg_iprobe.c \
+	src/pml_teg_irecv.c \
+	src/pml_teg_isend.c \
+	src/pml_teg_ptl.c \
+	src/pml_teg_ptl.h \
+	src/pml_teg_proc.c \
+	src/pml_teg_proc.h \
+	src/pml_teg_progress.c \
+	src/pml_teg_recvfrag.c \
+	src/pml_teg_recvfrag.h \
+	src/pml_teg_recvreq.c \
+	src/pml_teg_recvreq.h \
+	src/pml_teg_sendreq.c \
+	src/pml_teg_sendreq.h \
+	src/pml_teg_start.c \
+	src/pml_ptl_array.c  \
+	src/pml_ptl_array.h 

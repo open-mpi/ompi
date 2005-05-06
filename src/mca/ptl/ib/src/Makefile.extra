@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -16,15 +17,23 @@
 # $HEADER$
 #
 
-include $(top_ompi_srcdir)/config/Makefile.options
-
-AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include \
-    -I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/src/include
-
-noinst_LTLIBRARIES = libmca_pls_tm.la
-libmca_pls_tm_la_SOURCES = \
-        pls_tm.h \
-        pls_tm_child.c \
-        pls_tm_component.c \
-        pls_tm_module.c \
-        pls_tm_registry.c
+sources += \
+	src/ptl_ib.c \
+	src/ptl_ib.h \
+	src/ptl_ib_addr.h \
+	src/ptl_ib_component.c \
+	src/ptl_ib_proc.c \
+	src/ptl_ib_proc.h \
+	src/ptl_ib_priv.c \
+	src/ptl_ib_priv.h \
+	src/ptl_ib_peer.c \
+	src/ptl_ib_peer.h \
+	src/ptl_ib_recvfrag.c \
+	src/ptl_ib_recvfrag.h \
+	src/ptl_ib_sendfrag.c \
+	src/ptl_ib_sendfrag.h \
+	src/ptl_ib_sendreq.c \
+	src/ptl_ib_sendreq.h \
+	src/ptl_ib_vapi.h \
+	src/ptl_ib_memory.c \
+	src/ptl_ib_memory.h
