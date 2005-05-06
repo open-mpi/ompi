@@ -15,6 +15,8 @@
  */
  
 #include "orte_config.h"
+#include "include/orte_constants.h"
+#include "include/orte_types.h"
 
 #include <sys/types.h>
 #if HAVE_NETINET_IN_H
@@ -91,6 +93,11 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
+            if (INT_MAX < temp) {
+                ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+                return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+            }
+            app_context[i]->argc = (int)temp;
         }
         
         /* get the number of env strings */

@@ -65,6 +65,8 @@ OBJ_CLASS_INSTANCE(
 static void orte_rmaps_base_proc_construct(orte_rmaps_base_proc_t* proc)
 {
     proc->proc_node = NULL;
+    proc->pid = 0;
+    proc->local_pid = 0;
 }
 
 static void orte_rmaps_base_proc_destruct(orte_rmaps_base_proc_t* proc)
@@ -210,20 +212,25 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
         ORTE_PROC_RANK_KEY,
         ORTE_PROC_NAME_KEY,
         ORTE_PROC_APP_CONTEXT_KEY,
+        ORTE_PROC_PID_KEY,
+        ORTE_PROC_LOCAL_PID_KEY,
         ORTE_NODE_NAME_KEY,
         NULL
     };
 
     /* query the application context */
     if(ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(jobid, &app_context, &num_context))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
     if(NULL == (mapping = malloc(sizeof(orte_rmaps_base_map_t*) * num_context))) {
         rc = ORTE_ERR_OUT_OF_RESOURCE;
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
     if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_str, jobid))) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
@@ -235,6 +242,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
         if(NULL == map->procs) {
             OBJ_RELEASE(map);
             rc = ORTE_ERR_OUT_OF_RESOURCE;
+            ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
         map->num_procs = 0;
@@ -250,8 +258,10 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
         keys,
         &num_values,
         &values);
-    if(ORTE_SUCCESS != rc)
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
+    }
 
     /* sort the response */
     qsort(values, num_values, sizeof(orte_gpr_value_t*), 
@@ -268,6 +278,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
         proc = OBJ_NEW(orte_rmaps_base_proc_t);
         if(NULL == proc) {
             rc = ORTE_ERR_OUT_OF_RESOURCE;
+            ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
     
@@ -284,11 +295,19 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
             if(strcmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
                 size_t app_index = keyval->value.size;
                 if(app_index >= num_context) {
-                    ompi_output(0, "orte_rmaps_base_get_map: invalid context\n");
                     rc = ORTE_ERR_BAD_PARAM;
+                    ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
                 map = mapping[app_index];
+                continue;
+            }
+            if (strcmp(keyval->key, ORTE_PROC_PID_KEY) == 0) {
+                proc->pid = keyval->value.pid;
+                continue;
+            }
+            if (strcmp(keyval->key, ORTE_PROC_LOCAL_PID_KEY) == 0) {
+                proc->local_pid = keyval->value.pid;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
@@ -358,20 +377,25 @@ int orte_rmaps_base_get_node_map(
         ORTE_PROC_RANK_KEY,
         ORTE_PROC_NAME_KEY,
         ORTE_PROC_APP_CONTEXT_KEY,
+        ORTE_PROC_PID_KEY,
+        ORTE_PROC_LOCAL_PID_KEY,
         ORTE_NODE_NAME_KEY,
         NULL
     };
 
     /* query the application context */
     if(ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(jobid, &app_context, &num_context))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
     if(NULL == (mapping = malloc(sizeof(orte_rmaps_base_map_t*) * num_context))) {
         rc = ORTE_ERR_OUT_OF_RESOURCE;
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
     if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_str, jobid))) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
@@ -384,6 +408,7 @@ int orte_rmaps_base_get_node_map(
         if(NULL == map->procs) {
             OBJ_RELEASE(map);
             rc = ORTE_ERR_OUT_OF_RESOURCE;
+            ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
         map->num_procs = 0;
@@ -399,8 +424,10 @@ int orte_rmaps_base_get_node_map(
         keys,
         &num_values,
         &values);
-    if(ORTE_SUCCESS != rc)
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
         goto cleanup;
+    }
 
     /* sort the response */
     qsort(values, num_values, sizeof(orte_gpr_value_t*), 
@@ -417,6 +444,7 @@ int orte_rmaps_base_get_node_map(
         proc = OBJ_NEW(orte_rmaps_base_proc_t);
         if(NULL == proc) {
             rc = ORTE_ERR_OUT_OF_RESOURCE;
+            ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
     
@@ -435,9 +463,18 @@ int orte_rmaps_base_get_node_map(
                 if(app_index >= num_context) {
                     ompi_output(0, "orte_rmaps_base_get_map: invalid context\n");
                     rc = ORTE_ERR_BAD_PARAM;
+                    ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
                 map = mapping[app_index];
+                continue;
+            }
+            if (strcmp(keyval->key, ORTE_PROC_PID_KEY) == 0) {
+                proc->pid = keyval->value.pid;
+                continue;
+            }
+            if (strcmp(keyval->key, ORTE_PROC_LOCAL_PID_KEY) == 0) {
+                proc->local_pid = keyval->value.pid;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
@@ -519,13 +556,16 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
         num_procs += map->num_procs;
     }
-    if(num_procs == 0)
+    if(num_procs == 0) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
+    }
 
     /* allocate value array */
     size = sizeof(orte_gpr_value_t*) * num_procs;
     values = (orte_gpr_value_t**)malloc(size);
     if(NULL == values) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     for(i=0; i<num_procs; i++) {
@@ -536,6 +576,7 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
                  OBJ_RELEASE(values[j]);
              }
              free(values);
+             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
              return ORTE_ERR_OUT_OF_RESOURCE;
          }
     }
@@ -554,17 +595,19 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
             size_t kv;
 
             /* allocate keyval array */
-            size = sizeof(orte_gpr_keyval_t*) * 5;
+            size = sizeof(orte_gpr_keyval_t*) * 7;
             keyvals = (orte_gpr_keyval_t**)malloc(size);
             if(NULL == keyvals) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 goto cleanup;
             }
 
             /* allocate keyvals */
-            for(kv=0; kv < 5; kv++) {
+            for(kv=0; kv < 7; kv++) {
                 orte_gpr_keyval_t* value = OBJ_NEW(orte_gpr_keyval_t);
                 if(value == NULL) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                     rc = ORTE_ERR_OUT_OF_RESOURCE;
                     goto cleanup;
                 }
@@ -592,20 +635,32 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
             keyvals[4]->type = ORTE_PROC_STATE;
             keyvals[4]->value.proc_state = ORTE_PROC_STATE_INIT;
 
-            value->cnt = 5;
+            keyvals[5]->key = strdup(ORTE_PROC_PID_KEY);
+            keyvals[5]->type = ORTE_PID;
+            keyvals[5]->value.pid = proc->pid;
+
+            keyvals[6]->key = strdup(ORTE_PROC_LOCAL_PID_KEY);
+            keyvals[6]->type = ORTE_PID;
+            keyvals[6]->value.pid = proc->local_pid;
+
+            value->cnt = 7;
             value->addr_mode = ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND;
             value->keyvals = keyvals;
             if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&value->segment,jobid))) {
+                ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
             if(ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&value->tokens,&value->num_tokens,&proc->proc_name))) {
+                ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
         }
     }
 
     /* insert all values in one call */
-    rc = orte_gpr.put(num_procs, values);
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(num_procs, values))) {
+        ORTE_ERROR_LOG(rc);
+    }
 
 cleanup:
     for(i=0; i<num_procs; i++) {
@@ -642,8 +697,10 @@ int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid, orte_vpid_t start, orte_v
     value.cnt = 2;
     values = &value;
                                                                                                            
-    if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&value.segment, jobid)))
+    if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&value.segment, jobid))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
+    }
                                                                                                            
     vpid_start.value.vpid = start;
     vpid_range.value.vpid = range;
@@ -667,8 +724,10 @@ int orte_rmaps_base_get_vpid_range(orte_jobid_t jobid, orte_vpid_t *start, orte_
     int rc;
 
     /* query the job segment on the registry */
-    if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid)))
+    if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
+    }
 
     tokens[0] = ORTE_JOB_GLOBALS;
     tokens[1] = NULL;

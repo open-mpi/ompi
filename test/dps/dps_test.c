@@ -47,8 +47,8 @@
 #include "../src/mca/rmgr/base/base.h"
 #include "../src/mca/soh/base/base.h"
 
-#define NUM_ITERS 2
-#define NUM_ELEMS 3
+#define NUM_ITERS 3
+#define NUM_ELEMS 10
 
 static bool test1(void);        /* verify different buffer inits */
 static bool test2(void);        /* verify int16 */
@@ -66,6 +66,7 @@ static bool test11(void);        /* verify size_t */
 static bool test12(void);        /* verify APP_CONTEXT */
 static bool test13(void);        /* verify ORTE_GPR_SUBSCRIPTION */
 static bool test14(void);        /* verify ORTE_GPR_NOTIFY_DATA */
+static bool test15(void);        /* verify pid_t */
 
 FILE *test_out;
 
@@ -282,6 +283,14 @@ int main (int argc, char* argv[])
     }
     else {
       test_failure("orte_dps test14 failed");
+    }
+
+    fprintf(test_out, "executing test15\n");
+    if (test15()) {
+        test_success();
+    }
+    else {
+      test_failure("orte_dps test15 failed");
     }
 
     ret = test_finalize();
@@ -1706,3 +1715,65 @@ static bool test14(void)
 
     return (true);
 }
+
+
+/*
+ * pid_t pack/unpack
+ */
+static bool test15(void) 
+{
+    orte_buffer_t *bufA;
+    int rc;
+    size_t i;
+    pid_t src[NUM_ELEMS];
+    pid_t dst[NUM_ELEMS];
+
+    for(i=0; i<NUM_ELEMS; i++)
+        src[i] = (pid_t)i;
+
+    bufA = OBJ_NEW(orte_buffer_t);
+    if (NULL == bufA) {
+        test_comment("orte_buffer failed init in OBJ_NEW");
+        fprintf(test_out, "OBJ_NEW failed\n");
+        return false;
+    }
+    
+    for (i=0;i<NUM_ITERS;i++) {
+        rc = orte_dps.pack(bufA, src, NUM_ELEMS, ORTE_PID);
+        if (ORTE_SUCCESS != rc) {
+            test_comment ("orte_dps.pack failed");
+            fprintf(test_out, "orte_pack pid_t failed with return code %d\n", rc);
+            return(false);
+        }
+    }
+    
+    for (i=0; i<NUM_ITERS; i++) {
+        size_t j;
+        size_t count;
+
+        count = NUM_ELEMS;
+        rc = orte_dps.unpack(bufA, dst, &count, ORTE_PID);
+        if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
+            test_comment ("orte_dps.unpack failed");
+            fprintf(test_out, "orte_pack pid_t failed with return code %d\n", rc);
+            return(false);
+        }
+
+        for(j=0; j<NUM_ELEMS; j++) {
+            if(src[j] != dst[j]) {
+                test_comment ("test2: invalid results from unpack");
+                return(false);
+            }
+        }
+    }
+         
+    OBJ_RELEASE(bufA);
+    if (NULL != bufA) {
+        test_comment("OBJ_RELEASE did not NULL the buffer pointer");
+        fprintf(test_out, "OBJ_RELEASE did not NULL the buffer pointer");
+        return false;
+    }
+
+    return (true);
+}
+

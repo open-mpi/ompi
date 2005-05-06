@@ -65,7 +65,8 @@ enum {
     OMPI_ERR_NOT_AVAILABLE = -43,
     OMPI_ERR_GPR_DATA_CORRUPT = -44,
     OMPI_ERR_PERM = -45, /* no permission */
-    OMPI_ERR_TYPE_MISMATCH = -46
+    OMPI_ERR_TYPE_MISMATCH = -46,
+    OMPI_ERR_VALUE_OUT_OF_BOUNDS = -47
 };
 
 #define OMPI_NAMESPACE_SEGMENT        "ompi-namespace"

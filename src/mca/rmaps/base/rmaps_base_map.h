@@ -26,6 +26,10 @@
 #include "orte_config.h"
 #include "include/orte_constants.h"
 
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
 #include "class/ompi_list.h"
 #include "mca/mca.h"
 #include "mca/ns/ns_types.h"
@@ -68,6 +72,8 @@ struct orte_rmaps_base_proc_t {
     orte_rmaps_base_node_t* proc_node;
     orte_process_name_t proc_name;
     size_t proc_rank;
+    pid_t pid;          /* PLS-assigned pid */
+    pid_t local_pid;    /* pid found by local process */
 };
 typedef struct orte_rmaps_base_proc_t orte_rmaps_base_proc_t;
 

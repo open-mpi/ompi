@@ -57,6 +57,7 @@
 #include "mca/ns/ns.h"
 #include "mca/gpr/gpr.h"
 #include "mca/rml/rml.h"
+#include "mca/schema/schema.h"
 #include "mca/soh/soh.h"
 #include "mca/soh/base/base.h"
 #include "mca/errmgr/errmgr.h"
@@ -295,6 +296,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* store our process info on registry */
+    if (ORTE_SUCCESS != (ret = orte_schema.store_my_info())) {
+        ORTE_ERROR_LOG(ret);
+        error = "could not store my info on registry";
+        goto error;
+    }
+    
     /* Let system know we are at STG1 Barrier */
     if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
                                 ORTE_PROC_STATE_AT_STG1, 0))) {

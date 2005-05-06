@@ -70,6 +70,7 @@ extern char *orte_error_strings[];
 #define ORTE_PROC_NAME_KEY          "orte-proc-name"
 #define ORTE_PROC_RANK_KEY          "orte-proc-rank"
 #define ORTE_PROC_PID_KEY           "orte-proc-pid"
+#define ORTE_PROC_LOCAL_PID_KEY     "orte-proc-local-pid"
 #define ORTE_PROC_STATE_KEY         "orte-proc-state"
 #define ORTE_PROC_APP_CONTEXT_KEY   "orte-proc-app-context"
 #define ORTE_PROC_EXIT_CODE_KEY     "orte-proc-exit-code"

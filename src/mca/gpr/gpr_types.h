@@ -31,6 +31,10 @@
 #include "orte_config.h"
 #include "include/orte_types.h"
 
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
 #include "mca/schema/schema.h"
 #include "class/ompi_object.h"
 #include "dps/dps_types.h"
@@ -126,6 +130,7 @@ typedef uint16_t orte_gpr_addr_mode_t;
 typedef union {                             /* shared storage for the value */
     char *strptr;
     size_t size;
+    pid_t pid;
     uint8_t ui8;
     uint16_t ui16;
     uint32_t ui32;

@@ -222,6 +222,11 @@ void orte_gpr_base_dump_keyval_value(orte_buffer_t *buffer, orte_gpr_keyval_t *i
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
+        case ORTE_PID:
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_PID:\tValue: " ORTE_PID_T_PRINTF, iptr->value.pid);
+            orte_gpr_base_dump_load_string(buffer, &tmp_out);
+            break;
+            
         case ORTE_INT:
             asprintf(&tmp_out, "\t\t\tData type: ORTE_INT: no value field");
             orte_gpr_base_dump_load_string(buffer, &tmp_out);

@@ -29,7 +29,10 @@
 
 #include "include/orte_constants.h"
 #include "util/output.h"
+#include "util/proc_info.h"
+#include "util/sys_info.h"
 #include "mca/ns/ns.h"
+#include "mca/gpr/gpr.h"
 #include "mca/errmgr/errmgr.h"
 
 #include "mca/schema/base/base.h"
@@ -154,5 +157,53 @@ int orte_schema_base_extract_jobid_from_segment_name(orte_jobid_t *jobid, char *
     }
     *jobid = job;
     return ORTE_SUCCESS;
+}
+
+
+/**
+ * Set the process mapping in the registry.
+ */
+
+int orte_schema_base_store_my_info(void)
+{
+    int rc = ORTE_SUCCESS;
+    orte_gpr_value_t value, *values;
+    orte_gpr_keyval_t local_pid = { {OBJ_CLASS(ompi_object_t),0}, ORTE_PROC_LOCAL_PID_KEY, ORTE_PID };
+    orte_gpr_keyval_t nodename = { {OBJ_CLASS(ompi_object_t),0}, ORTE_NODE_NAME_KEY, ORTE_STRING };
+    orte_gpr_keyval_t* keyvals[2];
+    size_t i;
+
+    /* NOTE: cannot destruct the value object since the keyval's are statically
+     * defined, so don't construct it either
+     */
+     
+    keyvals[0] = &local_pid;
+    keyvals[1] = &nodename;
+    value.addr_mode = ORTE_GPR_OVERWRITE;
+    
+    if (ORTE_SUCCESS != (rc = orte_schema_base_get_proc_tokens(&value.tokens,
+                                &value.num_tokens, orte_process_info.my_name))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+                                
+    value.keyvals = keyvals;
+    value.cnt = 2;
+    values = &value;
+                                                                                                           
+    local_pid.value.pid = orte_process_info.pid;
+    nodename.value.strptr = strdup(orte_system_info.nodename);
+    
+    /* insert values into registry */
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
+        ORTE_ERROR_LOG(rc);
+    }
+
+    /* cleanup memory */
+    for (i=0; i < value.num_tokens; i++) {
+        free(value.tokens[i]);
+    }
+    
+    return rc;
 }
 

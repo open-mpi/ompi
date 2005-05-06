@@ -488,6 +488,11 @@ void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
                             iptr->value.size);
             break;
             
+        case ORTE_PID:
+            sprintf(tmp, "\t\tData type: ORTE_PID\tValue: " ORTE_PID_T_PRINTF,
+                            iptr->value.pid);
+            break;
+            
         case ORTE_INT:
             sprintf(tmp, "\t\tData type: ORTE_INT\tValue: %d", (int)iptr->value.i32);
             break;
