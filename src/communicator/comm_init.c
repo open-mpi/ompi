@@ -194,12 +194,24 @@ int ompi_comm_finalize(void)
     int max, i;
     ompi_communicator_t *comm;
 
+    /* MPI-2 section  4.8: call the attribute
+       delete functions attached to MPI_COMM_SELF
+       and destroy comm_self before any other communicator */
+    comm = ompi_mpi_comm_self;
+    if (NULL != comm->c_keyhash) {
+        ompi_attr_delete_all(COMM_ATTR, comm, comm->c_keyhash);
+	/* ignoring that the attribute delete functions might
+	   return an errorcode != MPI_SUCCESS. 
+	   Hey, we are in finalize, can finalize fail ??? */
+        OBJ_RELEASE(comm->c_keyhash);
+    }
+    OBJ_DESTRUCT( &ompi_mpi_comm_self );
+
     /* disconnect all dynamic communicators */
     ompi_comm_dyn_finalize();
 
     /* Destroy all predefined communicators */    
     OBJ_DESTRUCT( &ompi_mpi_comm_world );
-    OBJ_DESTRUCT( &ompi_mpi_comm_self );
 
     if( ompi_mpi_comm_parent != &ompi_mpi_comm_null ) {
        OBJ_DESTRUCT (&ompi_mpi_comm_parent);
