@@ -37,7 +37,7 @@ component_noinst = libmca_io_romio.la
 component_install =
 endif
 
-libs = src/libmca_io_romio.la romio-dist/libromio_dist.la
+libs = romio-dist/libromio_dist.la
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
