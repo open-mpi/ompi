@@ -25,6 +25,7 @@
 
 #include "include/orte_constants.h"
 #include "util/proc_info.h"
+#include "util/output.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/ns/ns.h"
 #include "mca/errmgr/errmgr.h"
