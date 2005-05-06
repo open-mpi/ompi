@@ -197,7 +197,7 @@ int ompi_comm_finalize(void)
     /* MPI-2 section  4.8: call the attribute
        delete functions attached to MPI_COMM_SELF
        and destroy comm_self before any other communicator */
-    comm = ompi_mpi_comm_self;
+    comm = &ompi_mpi_comm_self;
     if (NULL != comm->c_keyhash) {
         ompi_attr_delete_all(COMM_ATTR, comm, comm->c_keyhash);
 	/* ignoring that the attribute delete functions might
