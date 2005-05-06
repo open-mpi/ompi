@@ -78,7 +78,21 @@ fi
 havepoll=no
 havertsig=no
 AC_CHECK_FUNCS(poll, [havepoll=yes], )
-if test "x$havepoll" = "xyes" ; then
+case "$host" in
+    *apple-darwin*)
+        haveworkingpoll=0
+    ;;
+    *)
+        if test "$havepoll" = "yes" ; then
+	    haveworkingpoll=1
+	else
+	    haveworkingpoll=0
+	fi
+    ;;
+esac
+AC_DEFINE_UNQUOTED([HAVE_WORKING_POLL], [$haveworkingpoll], 
+                   [Whether poll works for file descriptors and devices])
+if test "x$havepoll" = "xyes" -a "$haveworkingpoll" = "1" ; then
 	# OMPI: Don't use AC_LIBOBJ
 	sources="poll.c $sources"
 	needsignal=yes

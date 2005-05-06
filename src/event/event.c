@@ -69,7 +69,7 @@
 #if defined(HAVE_SELECT) && HAVE_SELECT
 extern const struct ompi_eventop ompi_selectops;
 #endif
-#if defined(HAVE_POLL) && HAVE_POLL
+#if defined(HAVE_POLL) && HAVE_POLL && HAVE_WORKING_POLL
 extern const struct ompi_eventop ompi_pollops;
 #endif
 #if defined(HAVE_RTSIG) && HAVE_RTSIG
@@ -104,7 +104,7 @@ static const struct ompi_eventop *ompi_eventops[] = {
     &ompi_rtsigops,
 #endif
 #endif
-#if defined(HAVE_POLL) && HAVE_POLL
+#if defined(HAVE_POLL) && HAVE_POLL && HAVE_WORKING_POLL
     &ompi_pollops,
 #endif
 #if defined(HAVE_SELECT) && HAVE_SELECT
