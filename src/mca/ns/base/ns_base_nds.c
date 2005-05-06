@@ -88,7 +88,8 @@ int orte_ns_base_set_my_name(void)
 int orte_ns_base_get_peers(orte_process_name_t **procs, 
                            size_t *num_procs, size_t *self)
 {
-    int i, rc;
+    size_t i;
+    int rc;
     orte_cellid_t mycellid;
     orte_jobid_t myjobid;
     orte_vpid_t myvpid;
@@ -120,7 +121,7 @@ int orte_ns_base_get_peers(orte_process_name_t **procs,
         (*procs)[i].vpid = orte_process_info.vpid_start + i;
     }
 
-    *num_procs = (size_t)orte_process_info.num_procs;
+    *num_procs = orte_process_info.num_procs;
     *self = (size_t)(myvpid - orte_process_info.vpid_start);
     
     return ORTE_SUCCESS;

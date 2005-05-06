@@ -204,6 +204,23 @@ int orte_dps_unpack_sizet(orte_buffer_t *buffer, void *dest,
     return ret;
 }
 
+/*
+ * PID_T
+ */
+int orte_dps_unpack_pid(orte_buffer_t *buffer, void *dest,
+                        size_t *num_vals, orte_data_type_t type)
+{
+    int ret;
+
+    /* Turn around and unpack the real type */
+    if (ORTE_SUCCESS != (
+        ret = orte_dps_unpack_buffer(buffer, dest, num_vals, DPS_TYPE_PID_T))) {
+        ORTE_ERROR_LOG(ret);
+    }
+
+    return ret;
+}
+
 
 /* UNPACK FUNCTIONS FOR NON-GENERIC SYSTEM TYPES */
 

@@ -25,6 +25,7 @@
 #include "mca/gpr/gpr.h"
 #include "mca/soh/soh_types.h"
 #include "mca/errmgr/errmgr.h"
+#include "mca/schema/schema.h"
 
 
 /**
@@ -36,7 +37,7 @@ int orte_pls_base_set_proc_pid(const orte_process_name_t* name, pid_t pid)
 {
     orte_gpr_value_t* values[1];
     orte_gpr_value_t value;
-    orte_gpr_keyval_t kv_pid = {{OBJ_CLASS(orte_gpr_keyval_t),0},ORTE_PROC_PID_KEY,ORTE_UINT32};
+    orte_gpr_keyval_t kv_pid = {{OBJ_CLASS(orte_gpr_keyval_t),0},ORTE_PROC_PID_KEY,ORTE_PID};
     orte_gpr_keyval_t kv_state = {{OBJ_CLASS(orte_gpr_keyval_t),0},ORTE_PROC_STATE_KEY,ORTE_PROC_STATE};
     orte_gpr_keyval_t* keyvals[2];
     size_t i;
@@ -53,7 +54,7 @@ int orte_pls_base_set_proc_pid(const orte_process_name_t* name, pid_t pid)
         return rc;
     }
 
-    kv_pid.value.ui32 = pid;
+    kv_pid.value.pid = pid;
     kv_state.value.proc_state = ORTE_PROC_STATE_LAUNCHED;
     keyvals[0] = &kv_pid;
     keyvals[1] = &kv_state;
@@ -126,7 +127,7 @@ int orte_pls_base_get_proc_pid(const orte_process_name_t* name, pid_t* pid)
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    *pid = values[0]->keyvals[0]->value.ui32;
+    *pid = values[0]->keyvals[0]->value.pid;
 
 cleanup:
     if(NULL != values) {
@@ -179,7 +180,7 @@ int orte_pls_base_get_proc_pids(orte_jobid_t jobid, pid_t **pids, size_t* num_pi
     } else {
         *pids = (pid_t*)malloc(sizeof(pid_t)*num_values);
         for(i=0; i<num_values; i++) {
-            (*pids)[i] = values[i]->keyvals[0]->value.ui32;
+            (*pids)[i] = values[i]->keyvals[0]->value.pid;
         }
     } 
     *num_pids = num_values;
@@ -206,7 +207,7 @@ int orte_pls_base_set_node_pid(orte_cellid_t cellid, char* node_name, orte_jobid
 {
     orte_gpr_value_t* values[1];
     orte_gpr_value_t value;
-    orte_gpr_keyval_t kv_pid = {{OBJ_CLASS(orte_gpr_keyval_t),0},ORTE_PROC_PID_KEY,ORTE_UINT32};
+    orte_gpr_keyval_t kv_pid = {{OBJ_CLASS(orte_gpr_keyval_t),0},ORTE_PROC_PID_KEY,ORTE_PID};
     orte_gpr_keyval_t* keyvals[1];
     char* jobid_string;
     size_t i;
@@ -221,7 +222,7 @@ int orte_pls_base_set_node_pid(orte_cellid_t cellid, char* node_name, orte_jobid
     asprintf(&kv_pid.key, "%s-%s", ORTE_PROC_PID_KEY, jobid_string);
     free(jobid_string);
 
-    kv_pid.value.ui32 = pid;
+    kv_pid.value.pid = pid;
     keyvals[0] = &kv_pid;
     
     value.segment = ORTE_NODE_SEGMENT;
@@ -280,7 +281,7 @@ int orte_pls_base_get_node_pids(orte_jobid_t jobid, pid_t **pids, size_t* num_pi
     } else {
         *pids = (pid_t*)malloc(sizeof(pid_t)*num_values);
         for(i=0; i<num_values; i++) {
-            (*pids)[i] = values[i]->keyvals[0]->value.ui32;
+            (*pids)[i] = values[i]->keyvals[0]->value.pid;
         }
     }
     *num_pids = num_values;

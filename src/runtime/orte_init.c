@@ -107,6 +107,7 @@ char *orte_error_strings[] = {
     "ORTE_ERR_NOT_AVAILABLE",
     "ORTE_ERR_GPR_DATA_CORRUPT",
     "ORTE_ERR_PERM",
-    "ORTE_ERR_TYPE_MISMATCH"
+    "ORTE_ERR_TYPE_MISMATCH",
+    "ORTE_ERR_VALUE_OUT_OF_BOUNDS"
 };
 

@@ -47,6 +47,8 @@ typedef int (*orte_schema_get_job_segment_name_fn_t)(char **name, orte_jobid_t j
 
 typedef int (*orte_schema_extract_jobid_from_segment_name_fn_t)(orte_jobid_t *jobid, char *name);
 
+typedef int (*orte_schema_store_my_info_fn_t)(void);
+
 /*
  * Ver 1.0.0
  */
@@ -56,6 +58,7 @@ struct orte_schema_base_module_1_0_0_t {
     orte_schema_get_cell_tokens_fn_t get_cell_tokens;
     orte_schema_get_job_segment_name_fn_t get_job_segment_name;
     orte_schema_extract_jobid_from_segment_name_fn_t extract_jobid_from_segment_name;
+    orte_schema_store_my_info_fn_t store_my_info;
 };
 
 

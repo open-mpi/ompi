@@ -293,6 +293,10 @@ int orte_gpr_replica_get_value(void *value, orte_gpr_replica_itagval_t *ival)
             *((size_t*)value) = src->size;
             break;
             
+        case ORTE_PID:
+            *((pid_t*)value) = src->pid;
+            break;
+            
         case ORTE_UINT8:
             *((uint8_t*)value) = src->ui8;
             break;
@@ -375,6 +379,10 @@ int orte_gpr_replica_xfer_payload(orte_gpr_value_union_t *dest,
 
         case ORTE_SIZE:
             dest->size = src->size;
+            break;
+            
+        case ORTE_PID:
+            dest->pid = src->pid;
             break;
             
         case ORTE_STRING:
@@ -526,6 +534,16 @@ int orte_gpr_replica_compare_values(int *cmp, orte_gpr_replica_itagval_t *ival1,
             if (ival1->value.size == ival2->value.size) {
                 *cmp = 0;
             } else if (ival1->value.size < ival2->value.size) {
+                *cmp = -1;
+            } else {
+                *cmp = 1;
+            }
+            break;
+            
+        case ORTE_PID:
+            if (ival1->value.pid == ival2->value.pid) {
+                *cmp = 0;
+            } else if (ival1->value.pid < ival2->value.pid) {
                 *cmp = -1;
             } else {
                 *cmp = 1;

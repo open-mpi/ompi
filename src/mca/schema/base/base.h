@@ -59,7 +59,7 @@ int orte_schema_base_get_node_tokens(char ***tokens, size_t* num_tokens, orte_ce
 int orte_schema_base_get_cell_tokens(char ***tokens, size_t* num_tokens, orte_cellid_t cellid);
 int orte_schema_base_get_job_segment_name(char **name, orte_jobid_t jobid);
 int orte_schema_base_extract_jobid_from_segment_name(orte_jobid_t *jobid, char *name);
-
+int orte_schema_base_store_my_info(void);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -90,6 +90,21 @@ extern "C" {
 #error Unsupported int size!
 #endif
 
+/*
+ * ORTE type corresponding to pid_t
+ */
+#if SIZEOF_PID_T == 1
+#define DPS_TYPE_PID_T ORTE_UINT8
+#elif SIZEOF_PID_T == 2
+#define DPS_TYPE_PID_T ORTE_UINT16
+#elif SIZEOF_PID_T == 4
+#define DPS_TYPE_PID_T ORTE_UINT32
+#elif SIZEOF_PID_T == 8
+#define DPS_TYPE_PID_T ORTE_UINT64
+#else
+#error Unsupported pid_t size!
+#endif
+
 /**
  * Internal struct used for holding registered dps functions
  */
@@ -172,6 +187,9 @@ extern orte_pointer_array_t *orte_dps_types;
     int orte_dps_pack_sizet(orte_buffer_t *buffer, void *src,
                             size_t num_vals, orte_data_type_t type);
 
+    int orte_dps_pack_pid(orte_buffer_t *buffer, void *src,
+                          size_t num_vals, orte_data_type_t type);
+
     int orte_dps_pack_string(orte_buffer_t *buffer, void *src,
                              size_t num_vals, orte_data_type_t type);
 
@@ -204,6 +222,9 @@ extern orte_pointer_array_t *orte_dps_types;
 
     int orte_dps_unpack_sizet(orte_buffer_t *buffer, void *dest,
                               size_t *num_vals, orte_data_type_t type);
+
+    int orte_dps_unpack_pid(orte_buffer_t *buffer, void *dest,
+                            size_t *num_vals, orte_data_type_t type);
 
     int orte_dps_unpack_string(orte_buffer_t *buffer, void *dest,
                                size_t *num_vals, orte_data_type_t type);

@@ -152,6 +152,23 @@ int orte_dps_pack_sizet(orte_buffer_t *buffer, void *src,
     return ret;
 }
 
+/*
+ * PID_T
+ */
+int orte_dps_pack_pid(orte_buffer_t *buffer, void *src,
+                      size_t num_vals, orte_data_type_t type)
+{
+    int ret;
+
+    /* Turn around and pack the real type */
+    if (ORTE_SUCCESS != (
+        ret = orte_dps_pack_buffer(buffer, src, num_vals, DPS_TYPE_PID_T))) {
+        ORTE_ERROR_LOG(ret);
+    }
+
+    return ret;
+}
+
 
 /* PACK FUNCTIONS FOR NON-GENERIC SYSTEM TYPES */
 

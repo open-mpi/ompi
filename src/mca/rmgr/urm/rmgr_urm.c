@@ -341,6 +341,7 @@ static int orte_rmgr_urm_finalize(void)
     return ORTE_SUCCESS;
 }
 
+#if 0
 static void orte_rmgr_urm_recv(
     int status,
     orte_process_name_t* peer,
@@ -350,4 +351,5 @@ static void orte_rmgr_urm_recv(
 {
     return;
 }
+#endif
 

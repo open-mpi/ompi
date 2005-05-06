@@ -213,6 +213,13 @@ int orte_dps_open(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    tmp = ORTE_PID;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_dps_pack_pid, 
+                                          orte_dps_unpack_pid,
+                                          "ORTE_PID", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     tmp = ORTE_STRING;
     if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_dps_pack_string, 
                                           orte_dps_unpack_string,

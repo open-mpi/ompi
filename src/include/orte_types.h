@@ -99,4 +99,11 @@ typedef struct {
 #define ORTE_SIZE_T_PRINTF "%lu"
 #endif
 
+/* define a print format to handle the variations in pid_t */
+#if SIZEOF_PID_T == SIZEOF_INT
+#define ORTE_PID_T_PRINTF "%u"
+#elif SIZEOF_PID_T == SIZEOF_LONG
+#define ORTE_PID_T_PRINTF "%lu"
+#endif
+
 #endif

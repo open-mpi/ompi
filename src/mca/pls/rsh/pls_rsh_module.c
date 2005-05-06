@@ -20,7 +20,7 @@
  * entire components just to query their version and parameters.
  */
 
-#include "ompi_config.h"
+#include "orte_config.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -265,8 +265,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         goto cleanup;
     }
 
-    /* need integer value for command line parameter - NOT hex */
-    asprintf(&jobid_string, "%lu", (unsigned long)jobid);
+    /* need integer value for command line parameter */
+    asprintf(&jobid_string, ORTE_SIZE_T_PRINTF, jobid);
 
     /*
      * Build argv/env arrays.

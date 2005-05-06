@@ -70,7 +70,8 @@ enum {
     ORTE_ERR_NOT_AVAILABLE = -43,
     ORTE_ERR_GPR_DATA_CORRUPT = -44,
     ORTE_ERR_PERM = -45, /* no permission */
-    ORTE_ERR_TYPE_MISMATCH = -46
+    ORTE_ERR_TYPE_MISMATCH = -46,
+    ORTE_ERR_VALUE_OUT_OF_BOUNDS = -47
 };
 
 #endif /* ORTE_CONSTANTS_H */
