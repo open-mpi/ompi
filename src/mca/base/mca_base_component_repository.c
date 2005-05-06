@@ -135,6 +135,21 @@ int mca_base_component_repository_retain(char *type,
 
 
 /*
+ * Bump up the refcount on a component
+ */
+int mca_base_component_repository_retain_component(const char *type, 
+                                                   const char *name)
+{
+    repository_item_t *ri = find_component(type, name);
+    if (NULL != ri) {
+        OBJ_RETAIN(ri);
+        return OMPI_SUCCESS;
+    }
+    return OMPI_ERR_NOT_FOUND;
+}
+
+
+/*
  * Create a dependency from one component entry to another
  */
 int mca_base_component_repository_link(const char *src_type, 

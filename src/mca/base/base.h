@@ -127,6 +127,8 @@ OMPI_DECLSPEC  int mca_base_component_repository_initialize(void);
 OMPI_DECLSPEC  int mca_base_component_repository_retain(char *type, 
                                         lt_dlhandle component_handle, 
                                         const mca_base_component_t *component_struct);
+OMPI_DECLSPEC int mca_base_component_repository_retain_component(const char *type, 
+                                                                 const char *name);
 OMPI_DECLSPEC  int mca_base_component_repository_link(const char *src_type, 
                                       const char *src_name,
                                       const char *depend_type,
