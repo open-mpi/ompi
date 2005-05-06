@@ -30,12 +30,3 @@
  * BWB - README - BWB - README - BWB - README - BWB - README - BWB */
 
 
-
-void
-mca_ptl_portals_matched(struct mca_ptl_base_module_t *ptl,
-			struct mca_ptl_base_recv_frag_t *frag)
-{
-    ompi_output(mca_ptl_portals_component.portals_output,
-                "unimplemented function mca_ptl_portals_matched");
-    return;
-}

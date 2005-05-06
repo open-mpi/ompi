@@ -60,9 +60,15 @@ struct mca_ptl_portals_component_t {
     /** List of currently available modules */
     struct mca_ptl_portals_module_t **portals_modules;
 
+    /** initial size of free lists */
+    int portals_free_list_init_num;
+    /** max size of free lists */
+    int portals_free_list_max_num;
+    /** numer of elements to grow free lists */
+    int portals_free_list_inc_num;
+
     /** free list of portals send fragments */
     ompi_free_list_t portals_send_frags;
-
     /** free list of portals recv fragments */
     ompi_free_list_t portals_recv_frags;
 
