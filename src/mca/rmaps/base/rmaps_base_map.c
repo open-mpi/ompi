@@ -64,6 +64,7 @@ OBJ_CLASS_INSTANCE(
 
 static void orte_rmaps_base_proc_construct(orte_rmaps_base_proc_t* proc)
 {
+    proc->app = NULL;
     proc->proc_node = NULL;
     proc->pid = 0;
     proc->local_pid = 0;
@@ -71,6 +72,7 @@ static void orte_rmaps_base_proc_construct(orte_rmaps_base_proc_t* proc)
 
 static void orte_rmaps_base_proc_destruct(orte_rmaps_base_proc_t* proc)
 {
+    if (NULL != proc->app) free(proc->app);
 }
 
 OBJ_CLASS_INSTANCE(
@@ -300,6 +302,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
                     goto cleanup;
                 }
                 map = mapping[app_index];
+                proc->app = strdup(app_context[app_index]->app);
                 continue;
             }
             if (strcmp(keyval->key, ORTE_PROC_PID_KEY) == 0) {
@@ -467,6 +470,7 @@ int orte_rmaps_base_get_node_map(
                     goto cleanup;
                 }
                 map = mapping[app_index];
+                proc->app = strdup(app_context[app_index]->app);
                 continue;
             }
             if (strcmp(keyval->key, ORTE_PROC_PID_KEY) == 0) {

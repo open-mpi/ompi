@@ -69,6 +69,7 @@ OBJ_CLASS_DECLARATION(orte_rmaps_base_node_t);
 
 struct orte_rmaps_base_proc_t {
     ompi_list_item_t super;
+    char *app;          /* name of executable */
     orte_rmaps_base_node_t* proc_node;
     orte_process_name_t proc_name;
     size_t proc_rank;
