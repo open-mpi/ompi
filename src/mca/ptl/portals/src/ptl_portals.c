@@ -40,7 +40,7 @@ mca_ptl_portals_module_t mca_ptl_portals_module = {
         0,   /* max size of first frag */
         0,   /* min size of frag */
         0,   /* max size of frag */
-        0,   /* exclusivity */
+        60,   /* exclusivity */
         0,   /* latency */
         0,   /* bandwidth */
         MCA_PTL_PUT,   /* ptl flags */

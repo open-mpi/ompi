@@ -24,6 +24,8 @@
 
 #include "ptl_portals.h"
 #include "ptl_portals_compat.h"
+#include "ptl_portals_recv.h"
+#include "ptl_portals_send.h"
 
 
 /*
@@ -69,7 +71,7 @@ static ompi_output_stream_t portals_output_stream = {
     0,
     0,
     NULL,
-    "ptl_portals: ",
+    NULL,
     false,
     true,
     false,
@@ -129,6 +131,16 @@ mca_ptl_portals_component_open(void)
         mca_ptl_portals_param_register_int("debug_level",
                                            PTL_PORTALS_DEFAULT_DEBUG_LEVEL);
 
+    mca_ptl_portals_component.portals_free_list_init_num = 
+        mca_ptl_portals_param_register_int("free_list_init_num",
+                                           PTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM);
+    mca_ptl_portals_component.portals_free_list_max_num = 
+        mca_ptl_portals_param_register_int("free_list_max_num",
+                                           PTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM);
+    mca_ptl_portals_component.portals_free_list_inc_num = 
+        mca_ptl_portals_param_register_int("free_list_inc_num",
+                                           PTL_PORTALS_DEFAULT_FREE_LIST_inc_NUM);
+
     mca_ptl_portals_module.super.ptl_cache_size =
         mca_ptl_portals_param_register_int("request_cache_size",
                                            PTL_PORTALS_DEFAULT_REQUEST_CACHE_SIZE);
@@ -153,7 +165,10 @@ mca_ptl_portals_component_open(void)
                                            PTL_PORTALS_DEFAULT_FIRST_FRAG_QUEUE_SIZE);
 
 
+
     /* finish with objects */
+    asprintf(&(portals_output_stream.lds_prefix), "ptl_portals (%5d): ", getpid());
+
     mca_ptl_portals_component.portals_output = 
         ompi_output_open(&portals_output_stream);
 
@@ -187,6 +202,10 @@ mca_ptl_portals_component_close(void)
         free(mca_ptl_portals_component.portals_ifname);
     }
 
+    if (NULL != portals_output_stream.lds_prefix) {
+        free(portals_output_stream.lds_prefix);
+    }
+
     return OMPI_SUCCESS;
 }
 
@@ -204,6 +223,22 @@ mca_ptl_portals_component_init(int *num_ptls,
 
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
                         "mca_ptl_portals_component_init()");
+
+    ompi_free_list_init(&mca_ptl_portals_component.portals_send_frags, 
+        sizeof(mca_ptl_portals_send_frag_t),
+        OBJ_CLASS(mca_ptl_portals_send_frag_t),
+        mca_ptl_portals_component.portals_free_list_init_num,
+        mca_ptl_portals_component.portals_free_list_max_num,
+        mca_ptl_portals_component.portals_free_list_inc_num,
+        NULL); /* use default allocator */
+
+    ompi_free_list_init(&mca_ptl_portals_component.portals_recv_frags, 
+        sizeof(mca_ptl_portals_recv_frag_t),
+        OBJ_CLASS(mca_ptl_portals_recv_frag_t),
+        mca_ptl_portals_component.portals_free_list_init_num,
+        mca_ptl_portals_component.portals_free_list_max_num,
+        mca_ptl_portals_component.portals_free_list_inc_num,
+        NULL); /* use default allocator */
 
     /* BWB - no support for progress threads */
     if (enable_progress_threads) return NULL;
@@ -268,25 +303,53 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
     int num_progressed = 0;
     size_t i;
     int ret;
+    int which;
 
     for (i = 0 ; i < mca_ptl_portals_component.portals_num_modules ; ++i) {
         struct mca_ptl_portals_module_t *module = 
             mca_ptl_portals_component.portals_modules[i];
-        ptl_event_t my_event;
+        ptl_event_t ev;
 
         if (! module->frag_queues_created) continue;
 
-        ret = PtlEQGet(module->frag_eq_handle, &my_event);
+        ret = PtlEQPoll(&(module->frag_eq_handle),
+                        1, /* number of eq handles */
+                        (int) tstamp,
+                        &ev,
+                        &which);
         if (PTL_EQ_EMPTY == ret) {
+            /* nothing to see here - move along */
             continue;
         } else if (!(PTL_OK == ret || PTL_EQ_DROPPED == ret)) {
+            /* BWB - we need to figure out what to do here - this is not
+               supposed to happen */
             ompi_output(mca_ptl_portals_component.portals_output,
                         "Error calling PtlEQGet: %d", ret);
             continue;
         } else if (PTL_EQ_DROPPED == ret) {
+            /* BWB - drop events should be handled already, but nice to know
+               they happened. */
             ompi_output_verbose(20, mca_ptl_portals_component.portals_output,
                                 "Progress found dropped packets");
         }
+
+        /* only one place we can have an event */
+        assert(which == 0);        
+
+        if (ev.md.user_ptr == NULL) {
+            /* no request associated with it - it's a receive */
+            mca_ptl_portals_process_recv_event(module, &ev);
+        } else {
+            /* there's a request associated with it */
+            mca_ptl_base_frag_t *frag = 
+                (mca_ptl_base_frag_t*) ev.md.user_ptr;
+            if (frag->frag_type == MCA_PTL_FRAGMENT_SEND) {
+                mca_ptl_portals_process_send_event(&ev);
+            } else {
+                mca_ptl_portals_process_recv_event(module, &ev);
+            }
+        }
+
         num_progressed++;
     }
 

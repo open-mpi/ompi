@@ -27,6 +27,7 @@ extern "C" {
 
     struct mca_ptl_portals_send_frag_t {
         mca_ptl_base_send_frag_t frag_send;
+        ptl_md_iovec_t frag_vector[2];
     };
     typedef struct mca_ptl_portals_send_frag_t mca_ptl_portals_send_frag_t;
 
@@ -36,5 +37,6 @@ extern "C" {
 }
 #endif
 
+extern int mca_ptl_portals_process_send_event(ptl_event_t *ev);
 
 #endif /* MCA_PTL_PORTALS_SENDFRAG_H_ */

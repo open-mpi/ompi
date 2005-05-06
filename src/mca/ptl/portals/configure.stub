@@ -180,6 +180,16 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
                       [PTL_PORTALS_DEFAULT_RNDV_FRAG_MAX_SIZE], [32768],
                       [Default maximum size of rndv fragments])
 
+    MCA_PTL_PORTALS_CONFIG_VAL([free-list-init-num],
+                      [PTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM], [256],
+                      [Default starting size of free lists])
+    MCA_PTL_PORTALS_CONFIG_VAL([free-list-max-num],
+                      [PTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM], [-1],
+                      [Default maximum size of free lists])
+    MCA_PTL_PORTALS_CONFIG_VAL([free-list-inc-num],
+                      [PTL_PORTALS_DEFAULT_FREE_LIST_inc_NUM], [256],
+                      [Default grow size for freelists])
+
     #
     # Save extra compiler/linker flags so that they can be added in
     # the wrapper compilers, if necessary

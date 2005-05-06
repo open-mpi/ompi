@@ -23,9 +23,33 @@
 #include "mca/pml/pml.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 
+static void mca_ptl_portals_send_frag_construct(mca_ptl_portals_send_frag_t* frag);
+static void mca_ptl_portals_send_frag_destruct(mca_ptl_portals_send_frag_t* frag);
+
 OBJ_CLASS_INSTANCE(mca_ptl_portals_send_frag_t,
                    mca_ptl_base_send_frag_t,
-                   NULL, NULL);
+                   mca_ptl_portals_send_frag_construct,
+                   mca_ptl_portals_send_frag_destruct);
+
+static void
+mca_ptl_portals_send_frag_construct(mca_ptl_portals_send_frag_t* frag)
+{
+    frag->frag_vector[0].iov_base = &(frag->frag_send.frag_base.frag_header);
+    frag->frag_vector[0].iov_len = sizeof(mca_ptl_base_header_t);
+}
+
+
+static void
+mca_ptl_portals_send_frag_destruct(mca_ptl_portals_send_frag_t* frag)
+{
+}
+
+
+static void*
+mca_ptl_portals_alloc(size_t *size)
+{
+    return malloc(*size);
+}
 
 
 int
@@ -58,9 +82,44 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
 
     /* initialize convertor */
     if (size > 0) {
-        ompi_output(mca_ptl_portals_component.portals_output,
-                    "request size > 0, not implemented");
-        return OMPI_ERROR;
+       ompi_convertor_t *convertor;
+       struct iovec iov;
+       unsigned int iov_count;
+       unsigned int max_data;
+       int32_t freeAfter;
+       int rc;
+
+       convertor = &sendfrag->frag_send.frag_base.frag_convertor;
+       ompi_convertor_copy(&sendreq->req_convertor, convertor);
+       ompi_convertor_init_for_send(
+                    convertor,
+                    0,
+                    sendreq->req_datatype,
+                    sendreq->req_count,
+                    sendreq->req_addr,
+                    offset,
+                    mca_ptl_portals_alloc );
+                                                                                                                      
+        /* if data is contigous convertor will return an offset
+         * into users buffer - otherwise will return an allocated buffer
+         * that holds the packed data
+         */
+        iov.iov_base = NULL;
+        iov.iov_len = size;
+        iov_count = 1;
+        max_data = size;
+        if((rc = ompi_convertor_pack(
+            convertor,
+            &iov,
+            &iov_count,
+            &max_data,
+            &freeAfter)) < 0) {
+            return OMPI_ERROR;
+        }
+        sendfrag->frag_vector[1].iov_base = iov.iov_base;
+        sendfrag->frag_vector[1].iov_len = iov.iov_len;
+        sendfrag->frag_send.frag_base.frag_addr = iov.iov_base;
+        sendfrag->frag_send.frag_base.frag_size = iov.iov_len;
     } else {
         sendfrag->frag_send.frag_base.frag_addr = NULL;
         sendfrag->frag_send.frag_base.frag_size = 0;
@@ -68,7 +127,9 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
 
     /* setup message header */
     hdr = &sendfrag->frag_send.frag_base.frag_header;
-    if(offset == 0) {
+
+    /* first frag - needs all matching */
+    if (offset == 0) {
         hdr->hdr_common.hdr_flags = flags;
         hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
         hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
@@ -76,10 +137,28 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
         hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
         hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
         hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
+        
+        /* if an acknoweldgment is not required - can get by with a
+           shorter header */
+        if ((flags & MCA_PTL_FLAGS_ACK) == 0) {
+            hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
+            sendfrag->frag_vector[0].iov_len = sizeof(mca_ptl_base_match_header_t);
+        } else {
+            hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_RNDV;
+            hdr->hdr_rndv.hdr_frag_length = sendfrag->frag_send.frag_base.frag_size;
+            hdr->hdr_rndv.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+            hdr->hdr_rndv.hdr_src_ptr.pval = sendfrag;
+            sendfrag->frag_vector[0].iov_len = sizeof(mca_ptl_base_rendezvous_header_t);
+        }
+
     } else {
-        ompi_output(mca_ptl_portals_component.portals_output,
-                    "offset > 0, not implemented");
-        return OMPI_ERROR;
+        hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+        hdr->hdr_common.hdr_flags = flags;
+        hdr->hdr_frag.hdr_frag_offset = offset;
+        hdr->hdr_frag.hdr_frag_length = sendfrag->frag_send.frag_base.frag_size;
+        hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
+        hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
     }
 
     /* fragment state */
@@ -94,12 +173,13 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
     mca_pml_base_send_request_offset(sendreq,
         sendfrag->frag_send.frag_base.frag_size);
 
-    md.start = hdr;
-    md.length = sizeof(mca_ptl_base_header_t);
-    md.threshold = 2; /* we do a put, we get out of here */
+    /* setup the send and go */
+    md.start = sendfrag->frag_vector;
+    md.length = 2; /* header + data */
+    md.threshold = PTL_MD_THRESH_INF; /* unlink based on protocol */
     md.max_size = 0;
-    md.options = 0;
-    md.user_ptr = 123;
+    md.options = PTL_MD_IOVEC; /* BWB - can we optimize? */
+    md.user_ptr = sendfrag;
     md.eq_handle = ptl->frag_eq_handle;
 
     /* make a free-floater */
@@ -114,17 +194,72 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
     }
 
     ret = PtlPut(md_handle,
-                 PTL_NO_ACK_REQ,
+                 PTL_ACK_REQ,
                  *((ptl_process_id_t*) ptl_peer),
                  PTL_PORTALS_FRAG_TABLE_ID,
                  0, /* ac_index */
                  0, /* match bits */
                  0, /* remote offset - not used */
-                 321); /* hdr_data - not used */
+                 0); /* hdr_data - not used */
     if (ret != PTL_OK) {
         ompi_output(mca_ptl_portals_component.portals_output,
                     "PtlPut failed with error %d", ret);
         return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+mca_ptl_portals_process_send_event(ptl_event_t *ev)
+{
+    mca_ptl_portals_send_frag_t* frag = 
+        (mca_ptl_portals_send_frag_t*) ev->md.user_ptr;
+    mca_ptl_base_header_t* hdr = 
+        &(frag->frag_send.frag_base.frag_header);
+
+    if (ev->type == PTL_EVENT_SEND_START) {
+        ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                            "SEND_START event for msg %d, length: %d",
+                            (int) hdr->hdr_match.hdr_msg_seq,
+                            (int) ev->mlength);
+    } else if (ev->type == PTL_EVENT_SEND_END) {
+        ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                            "SEND_END event for msg %d",
+                            (int) hdr->hdr_match.hdr_msg_seq);
+    } else if (ev->type == PTL_EVENT_ACK) {
+        bool frag_ack;
+        ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                            "ACK event for msg %d",
+                            (int) hdr->hdr_match.hdr_msg_seq);
+        frag_ack = (hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? true : false;
+        if (frag_ack == false) {
+            /* this frag is done! */
+
+            /* unlink memory descriptor */
+            PtlMDUnlink(ev->md_handle);
+
+            /* let the PML know */
+            frag->frag_send.frag_base.frag_owner->
+                ptl_send_progress(frag->frag_send.frag_base.frag_owner,
+                                  frag->frag_send.frag_request,
+                                  frag->frag_send.frag_base.frag_size);
+
+            /* return frag to freelist if not part of request */
+            if (frag->frag_send.frag_request->req_cached == false) {
+                if (frag->frag_send.frag_base.frag_addr == NULL) {
+                    free(frag->frag_send.frag_base.frag_addr);
+                }
+                OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
+                                      (ompi_list_item_t*) frag);
+            }
+        }
+
+    } else {
+        ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
+                            "unknown event for msg %d: %d",
+                            (int) hdr->hdr_match.hdr_msg_seq, ev->type);
     }
 
     return OMPI_SUCCESS;

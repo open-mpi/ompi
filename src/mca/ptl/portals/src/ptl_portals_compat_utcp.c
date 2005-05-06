@@ -152,13 +152,13 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_portals_module_t* ptl,
     }
 
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "%d: my rid: %u", getpid(), my_rid);
+                        "my rid: %u", my_rid);
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "%d: nid map: %s", getpid(), nidmap);
+                        "nid map: %s", nidmap);
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "%d: pid map: %s", getpid(), pidmap);
+                        "pid map: %s", pidmap);
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "%d: iface: %s", getpid(), 
+                        "iface: %s",
                         mca_ptl_portals_component.portals_ifname);
 
     asprintf(&tmp, "PTL_MY_RID=%u", my_rid);
