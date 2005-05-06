@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -14,10 +15,22 @@
 # $HEADER$
 #
 
-include $(top_ompi_srcdir)/config/Makefile.options
+AM_CPPFLAGS = \
+        -I$(top_ompi_builddir)/include \
+        -I$(top_ompi_builddir)/src \
+        -I$(top_ompi_builddir)/src/include \
+        -I$(top_ompi_srcdir)/src \
+        -I$(top_ompi_srcdir)/src/include \
+        -I$(top_srcdir) \
+        -I$(top_srcdir)/romio-dist/include \
+        -I$(top_builddir)
 
-noinst_LTLIBRARIES = libmca_ns_proxy.la
-libmca_ns_proxy_la_SOURCES = \
-	ns_proxy.h \
-        ns_proxy.c \
-	ns_proxy_component.c
+sources += \
+	src/io_romio.h \
+	src/io_romio_component.c \
+	src/io_romio_file_open.c \
+	src/io_romio_file_read.c \
+	src/io_romio_file_write.c \
+	src/io_romio_module.c \
+	src/io_romio_request.c
+

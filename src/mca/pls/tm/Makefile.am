@@ -18,7 +18,8 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-SUBDIRS = src
+sources =
+include src/Makefile.extra
 
 EXTRA_DIST = VERSION
 
@@ -27,20 +28,22 @@ EXTRA_DIST = VERSION
 # (for static builds).
 
 if OMPI_BUILD_pls_tm_DSO
-component_noinst =
-component_install = mca_pls_tm.la
+lib =
+lib_sources = 
+component = mca_pls_tm.la
+component_sources = $(sources)
 else
-component_noinst = libmca_pls_tm.la
-component_install =
+lib = libmca_pls_tm.la
+lib_sources = $(sources)
+component =
+component_sources =
 endif
 
 mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component_install)
-mca_pls_tm_la_SOURCES =
-mca_pls_tm_la_LIBADD = src/libmca_pls_tm.la
+mcacomponent_LTLIBRARIES = $(component)
+mca_pls_tm_la_SOURCES = $(component_sources)
 mca_pls_tm_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = $(component_noinst)
-libmca_pls_tm_la_SOURCES =
-libmca_pls_tm_la_LIBADD = src/libmca_pls_tm.la
+noinst_LTLIBRARIES = $(lib)
+libmca_pls_tm_la_SOURCES = $(lib_sources)
 libmca_pls_tm_la_LDFLAGS = -module -avoid-version

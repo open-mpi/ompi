@@ -1,3 +1,4 @@
+# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -14,11 +15,10 @@
 # $HEADER$
 #
 
-include $(top_ompi_srcdir)/config/Makefile.options
+AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include \
+    -I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/src/include
 
-noinst_LTLIBRARIES = libmca_ns_replica.la
-libmca_ns_replica_la_SOURCES = \
-	ns_replica.h \
-        ns_replica.c \
-	ns_replica_component.c
-
+sources += \
+        src/ras_tm.h \
+        src/ras_tm_component.c \
+        src/ras_tm_module.c

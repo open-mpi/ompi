@@ -18,27 +18,30 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-SUBDIRS = src
+sources =
+include src/Makefile.extra
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
 if OMPI_BUILD_ns_proxy_DSO
-component_noinst = 
-component_install = mca_ns_proxy.la
+lib =
+lib_sources = 
+component = mca_ns_proxy.la
+component_sources = $(sources)
 else
-component_noinst = libmca_ns_proxy.la
-component_install =
+lib = libmca_ns_proxy.la
+lib_sources = $(sources)
+component =
+component_sources =
 endif
 
 mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component_install)
-mca_ns_proxy_la_SOURCES =
-mca_ns_proxy_la_LIBADD = src/libmca_ns_proxy.la
+mcacomponent_LTLIBRARIES = $(component)
+mca_ns_proxy_la_SOURCES = $(component_sources)
 mca_ns_proxy_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = $(component_noinst)
-libmca_ns_proxy_la_SOURCES =
-libmca_ns_proxy_la_LIBADD = src/libmca_ns_proxy.la
+noinst_LTLIBRARIES = $(lib)
+libmca_ns_proxy_la_SOURCES = $(lib_sources)
 libmca_ns_proxy_la_LDFLAGS = -module -avoid-version

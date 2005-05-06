@@ -18,7 +18,12 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-SUBDIRS = src
+sources = \
+    topo_unity.h \
+    topo_unity_cart_map.c \
+    topo_unity_graph_map.c \
+    topo_unity.c \
+    topo_unity_component.c
 
 EXTRA_DIST = VERSION
 
@@ -27,21 +32,24 @@ EXTRA_DIST = VERSION
 # (for static builds).
 
 if OMPI_BUILD_topo_unity_DSO
-component_noinst =
-component_install = mca_topo_unity.la
+lib =
+lib_sources = 
+component = mca_topo_unity.la
+component_sources = $(sources)
 else
-component_noinst = libmca_topo_unity.la
-component_install =
+lib = libmca_topo_unity.la
+lib_sources = $(sources)
+component =
+component_sources =
 endif
 
 mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component_install)
-mca_topo_unity_la_SOURCES =
-mca_topo_unity_la_LIBADD = src/libmca_topo_unity.la $(LIBMPI_LA)
+mcacomponent_LTLIBRARIES = $(component)
+mca_topo_unity_la_SOURCES = $(component_sources)
+mca_topo_unity_la_LIBADD = $(LIBMPI_LA)
 mca_topo_unity_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = $(component_noinst)
-libmca_topo_unity_la_SOURCES =
-libmca_topo_unity_la_LIBADD = src/libmca_topo_unity.la
+noinst_LTLIBRARIES = $(lib)
+libmca_topo_unity_la_SOURCES = $(lib_sources)
 libmca_topo_unity_la_LDFLAGS = -module -avoid-version
 

@@ -22,27 +22,32 @@ AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include \
 	-I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/src/include  \
 	-I/usr/lib/qsnet/elan4/include
 
-SUBDIRS = src tests
+SUBDIRS = tests
+
+sources =
+include src/Makefile.extra
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
 if OMPI_BUILD_ptl_elan_DSO
-component_noinst =
-component_install = mca_ptl_elan.la
+lib =
+lib_sources = 
+component = mca_ptl_elan.la
+component_sources = $(sources)
 else
-component_noinst = libmca_ptl_elan.la
-component_install =
+lib = libmca_ptl_elan.la
+lib_sources = $(sources)
+component =
+component_sources =
 endif
 
 mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component_install)
-mca_ptl_elan_la_SOURCES = 
-mca_ptl_elan_la_LIBADD = src/libmca_ptl_elan.la
+mcacomponent_LTLIBRARIES = $(component)
+mca_ptl_elan_la_SOURCES = $(component_sources)
 mca_ptl_elan_la_LDFLAGS = -module -avoid-version 
 
-noinst_LTLIBRARIES = $(component_noinst)
-libmca_ptl_elan_la_SOURCES =
-libmca_ptl_elan_la_LIBADD = src/libmca_ptl_elan.la
+noinst_LTLIBRARIES = $(lib)
+libmca_ptl_elan_la_SOURCES = $(lib_sources)
 libmca_ptl_elan_la_LDFLAGS = -module -avoid-version 
