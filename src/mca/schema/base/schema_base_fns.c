@@ -193,7 +193,7 @@ int orte_schema_base_store_my_info(void)
                                                                                                            
     local_pid.value.pid = orte_process_info.pid;
     nodename.value.strptr = strdup(orte_system_info.nodename);
-    
+    value.segment = "";
     /* insert values into registry */
     if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
         ORTE_ERROR_LOG(rc);
