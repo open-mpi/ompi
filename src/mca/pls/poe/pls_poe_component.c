@@ -40,7 +40,6 @@ const char *mca_pls_poe_component_version_string =
 /*
  * Local variable
  */
-static int param_priority = -1;
 
 
 /*
@@ -86,16 +85,50 @@ orte_pls_poe_component_t mca_pls_poe_component = {
     }
 };
 
-
-static int orte_pls_poe_component_open(void)
+/**
+orte_pls_poe_param_reg_int - register and lookup a integer parameter 
+@param param_name parameter name [INPUT]
+@param default_value default value [INPUT]
+@return parameter value
+*/
+int orte_pls_poe_param_reg_int(char * param_name, int default_value)
 {
-    param_priority = 
-        mca_base_param_register_int("pls", "poe", "priority", NULL, 75);
+    int id, param_value;
+    id = mca_base_param_register_int("pls","poe",param_name,NULL,default_value);
+    param_value = default_value;
+    mca_base_param_lookup_int(id,&param_value);
+    return param_value;
+}
 
+/**
+orte_pls_poe_param_reg_string - register and lookup a string parameter 
+@param param_name parameter name [INPUT]
+@param default_value default value [INPUT]
+@return parameter value
+*/
+char* orte_pls_rsh_param_register_string(char* param_name, char* default_value)
+{
+    char *param_value;
+    int id;
+    id = mca_base_param_register_string("pls","poe",param_name,NULL,default_value);
+    mca_base_param_lookup_string(id, &param_value);
+    return param_value;
+}
+
+/**
+orte_pls_poe_component_open - open component and register all parameters
+@return error number
+*/
+int orte_pls_poe_component_open(void)
+{
+    mca_pls_poe_component.priority = orte_pls_poe_param_reg_int("priority", 100);
     return ORTE_SUCCESS;
 }
 
-
+/**
+orte_pls_poe_component_init - initialize component, check if we can run on this machine.
+@return error number
+*/
 orte_pls_base_module_t *orte_pls_poe_component_init(int *priority)
 {
     extern char **environ;
