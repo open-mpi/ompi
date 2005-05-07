@@ -172,6 +172,7 @@ int orte_schema_base_store_my_info(void)
     orte_gpr_keyval_t nodename = { {OBJ_CLASS(ompi_object_t),0}, ORTE_NODE_NAME_KEY, ORTE_STRING };
     orte_gpr_keyval_t* keyvals[2];
     size_t i;
+    orte_jobid_t jobid;
 
     /* NOTE: cannot destruct the value object since the keyval's are statically
      * defined, so don't construct it either
@@ -187,13 +188,23 @@ int orte_schema_base_store_my_info(void)
         return rc;
     }
                                 
+    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, orte_process_info.my_name))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_schema_base_get_job_segment_name(&value.segment, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     value.keyvals = keyvals;
     value.cnt = 2;
     values = &value;
                                                                                                            
     local_pid.value.pid = orte_process_info.pid;
     nodename.value.strptr = strdup(orte_system_info.nodename);
-    value.segment = "";
+
     /* insert values into registry */
     if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
         ORTE_ERROR_LOG(rc);
