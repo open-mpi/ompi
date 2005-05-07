@@ -30,24 +30,28 @@ SUBDIRS = romio-dist
 # (for static builds).
 
 if OMPI_BUILD_io_romio_DSO
-component_noinst =
-component_install = mca_io_romio.la
+lib =
+lib_sources =
+component = mca_io_romio.la
+component_sources = $(sources)
 else
-component_noinst = libmca_io_romio.la
-component_install =
+lib = libmca_io_romio.la
+lib_sources = $(sources)
+component =
+component_sources =
 endif
 
 libs = romio-dist/libromio_dist.la
 
 mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component_install)
-mca_io_romio_la_SOURCES = 
+mcacomponent_LTLIBRARIES = $(component)
+mca_io_romio_la_SOURCES = $(component_sources)
 mca_io_romio_la_LIBADD = $(libs)
 mca_io_romio_la_DEPENDENCIES = $(libs)
 mca_io_romio_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = $(component_noinst)
-libmca_io_romio_la_SOURCES =
+noinst_LTLIBRARIES = $(lib)
+libmca_io_romio_la_SOURCES = $(lib_sources)
 libmca_io_romio_la_LIBADD = $(libs)
 libmca_io_romio_la_DEPENDENCIES = $(libs)
 libmca_io_romio_la_LDFLAGS = -module -avoid-version
