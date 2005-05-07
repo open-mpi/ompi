@@ -496,8 +496,9 @@ int32_t ompi_ddt_finalize( void )
  * Data dumping functions
  ********************************************************/
 
-static int _dump_data_flags( unsigned short usflags, char* ptr )
+static int _dump_data_flags( unsigned short usflags, char* ptr, size_t length )
 {
+    if( length < 21 ) return 0;
     sprintf( ptr, "-----------[---][---]" );  /* set everything to - */
     if( usflags & DT_FLAG_DESTROYED )                ptr[0]  = 'd';
     if( usflags & DT_FLAG_COMMITED )                 ptr[1]  = 'c';
@@ -538,51 +539,57 @@ static int _dump_data_flags( unsigned short usflags, char* ptr )
     return 21;
 }
 
-static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr )
+static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr, size_t length )
 {
-    int i, index = 0;
+    int i;
+    size_t index = 0;
 
     for( i = 0; i < nbElems; i++ ) {
-        index += _dump_data_flags( pDesc->elem.common.flags, ptr + index );
-        index += sprintf( ptr + index, "%15s ", ompi_ddt_basicDatatypes[pDesc->elem.common.type]->name );
+        index += _dump_data_flags( pDesc->elem.common.flags, ptr + index, length );
+        index += snprintf( ptr + index, length - index, "%15s ", ompi_ddt_basicDatatypes[pDesc->elem.common.type]->name );
         if( DT_LOOP == pDesc->elem.common.type )
-            index += sprintf( ptr + index, "%d times the next %d elements extent %d\n",
-                              (int)pDesc->loop.loops, (int)pDesc->loop.items,
-                              (int)pDesc->loop.extent );
+            index += snprintf( ptr + index, length - index, "%d times the next %d elements extent %d\n",
+                               (int)pDesc->loop.loops, (int)pDesc->loop.items,
+                               (int)pDesc->loop.extent );
 	else if( DT_END_LOOP == pDesc->elem.common.type )
-	    index += sprintf( ptr + index, "prev %d elements total true extent %d size of data %d\n",
-                              (int)pDesc->end_loop.items, (int)pDesc->end_loop.total_extent,
-                              (int)pDesc->end_loop.size );
+	    index += snprintf( ptr + index, length - index, "prev %d elements total true extent %d size of data %d\n",
+                               (int)pDesc->end_loop.items, (int)pDesc->end_loop.total_extent,
+                               (int)pDesc->end_loop.size );
         else
-            index += sprintf( ptr + index, "count %d disp 0x%lx (%ld) extent %d\n",
-                              (int)pDesc->elem.count, pDesc->elem.disp, pDesc->elem.disp,
-                              (int)pDesc->elem.extent );
+            index += snprintf( ptr + index, length - index, "count %d disp 0x%lx (%ld) extent %d\n",
+                               (int)pDesc->elem.count, pDesc->elem.disp, pDesc->elem.disp,
+                               (int)pDesc->elem.extent );
         pDesc++;
+
+        if( length <= index ) break;
     }
     return index;
 }
 
-static inline int __dt_contain_basic_datatypes( const ompi_datatype_t* pData, char* ptr )
+static inline int __dt_contain_basic_datatypes( const ompi_datatype_t* pData, char* ptr, size_t length )
 {
-    int i, index = 0;
+    int i;
+    size_t index = 0;
     unsigned long long mask = 1;
    
-    if( pData->flags & DT_FLAG_USER_LB ) index += sprintf( ptr, "lb " );
-    if( pData->flags & DT_FLAG_USER_UB ) index += sprintf( ptr, "ub " );
+    if( pData->flags & DT_FLAG_USER_LB ) index += snprintf( ptr, length - index, "lb " );
+    if( pData->flags & DT_FLAG_USER_UB ) index += snprintf( ptr, length - index, "ub " );
     for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
         if( pData->bdt_used & mask )
-            index += sprintf( ptr + index, "%s ", ompi_ddt_basicDatatypes[i]->name );
+            index += snprintf( ptr + index, length - index, "%s ", ompi_ddt_basicDatatypes[i]->name );
         mask <<= 1;
+        if( length <= index ) break;
     }
     return index;
 }
 
 void ompi_ddt_dump( const ompi_datatype_t* pData )
 {
-    char buffer[1024*10];
+    size_t length = 10 * 1024;
     int index = 0;
+    char buffer[1024*10];
 
-    index += sprintf( buffer, "Datatype %p size %ld align %d id %d length %d used %d\n\
+    index += snprintf( buffer, length - index, "Datatype %p size %ld align %d id %d length %d used %d\n\
    true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n \
    nbElems %d loops %d flags %X (",
                  (void*)pData, pData->size, (int)pData->align, pData->id, (int)pData->desc.length, (int)pData->desc.used,
@@ -590,23 +597,23 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
                  pData->lb, pData->ub, pData->ub - pData->lb,
                  (int)pData->nbElems, (int)pData->btypes[DT_LOOP], (int)pData->flags );
     /* dump the flags */
-    if( pData->flags == DT_FLAG_BASIC ) index += sprintf( buffer + index, "basic datatype " );
+    if( pData->flags == DT_FLAG_BASIC ) index += snprintf( buffer + index, length - index, "basic datatype " );
     else {
-        if( pData->flags & DT_FLAG_DESTROYED ) index += sprintf( buffer + index, "destroyed " );
-        if( pData->flags & DT_FLAG_COMMITED ) index += sprintf( buffer + index, "commited " );
-        if( pData->flags & DT_FLAG_CONTIGUOUS) index += sprintf( buffer + index, "contiguous " );
+        if( pData->flags & DT_FLAG_DESTROYED ) index += snprintf( buffer + index, length - index, "destroyed " );
+        if( pData->flags & DT_FLAG_COMMITED ) index += snprintf( buffer + index, length - index, "commited " );
+        if( pData->flags & DT_FLAG_CONTIGUOUS) index += snprintf( buffer + index, length - index, "contiguous " );
     }
-    index += sprintf( buffer + index, ")" );
-    index += _dump_data_flags( pData->flags, buffer + index );
+    index += snprintf( buffer + index, length - index, ")" );
+    index += _dump_data_flags( pData->flags, buffer + index, length - index );
     {
-        index += sprintf( buffer + index, "\n   contain " );
-        index += __dt_contain_basic_datatypes( pData, buffer + index );
-        index += sprintf( buffer + index, "\n" );
+        index += snprintf( buffer + index, length - index, "\n   contain " );
+        index += __dt_contain_basic_datatypes( pData, buffer + index, length - index );
+        index += snprintf( buffer + index, length - index, "\n" );
     }
-    index += __dump_data_desc( pData->desc.desc, pData->desc.used, buffer + index );
+    index += __dump_data_desc( pData->desc.desc, pData->desc.used, buffer + index, length - index );
     if( pData->opt_desc.desc != NULL ) {
-        index += sprintf( buffer + index, "Optimized description \n" );
-        index += __dump_data_desc( pData->opt_desc.desc, pData->opt_desc.used, buffer + index );
+        index += snprintf( buffer + index, length - index, "Optimized description \n" );
+        index += __dump_data_desc( pData->opt_desc.desc, pData->opt_desc.used, buffer + index, length - index );
     }
     buffer[index] = '\0';  /* make sure we end the string with 0 */
     ompi_output( 0, "%s\n", buffer );
