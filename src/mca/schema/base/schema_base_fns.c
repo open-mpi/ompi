@@ -214,6 +214,8 @@ int orte_schema_base_store_my_info(void)
     for (i=0; i < value.num_tokens; i++) {
         free(value.tokens[i]);
     }
+
+    free(value.segment);
     
     return rc;
 }
