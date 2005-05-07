@@ -44,5 +44,4 @@ mca_ptl_tcp_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(lib)
 libmca_ptl_tcp_la_SOURCES = $(lib_sources)
-libmca_ptl_tcp_la_LIBADD = src/libmca_ptl_tcp.la
 libmca_ptl_tcp_la_LDFLAGS = -module -avoid-version
