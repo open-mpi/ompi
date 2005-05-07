@@ -302,8 +302,8 @@ TEST_F77=""
 TRY_WEAK_SYMBOLS=1
 #
 known_filesystems="nfs ufs pfs piofs pvfs testfs xfs hfs sfs"
-# Open MPI: added "open_mpi"
-known_mpi_impls="mpich_mpi sgi_mpi hp_mpi cray_mpi lam_mpi open_mpi"
+# Open MPI: added "open_mpi_mpi"
+known_mpi_impls="mpich_mpi sgi_mpi hp_mpi cray_mpi lam_mpi open_mpi_mpi"
 #
 # Defaults
 enable_aio=notgiven
