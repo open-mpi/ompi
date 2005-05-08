@@ -26,6 +26,7 @@
 #include "mca/pls/pls.h"
 #include "pls_poe.h"
 #include "util/path.h"
+#include "util/argv.h"
 #include "mca/pls/poe/pls-poe-version.h"
 #include "mca/base/mca_base_param.h"
 
@@ -106,7 +107,7 @@ orte_pls_poe_param_reg_string - register and lookup a string parameter
 @param default_value default value [INPUT]
 @return parameter value
 */
-char* orte_pls_rsh_param_register_string(char* param_name, char* default_value)
+char* orte_pls_poe_param_reg_string(char* param_name, char* default_value)
 {
     char *param_value;
     int id;
@@ -121,7 +122,20 @@ orte_pls_poe_component_open - open component and register all parameters
 */
 int orte_pls_poe_component_open(void)
 {
+    char *param;
+
+    mca_pls_poe_component.debug = orte_pls_poe_param_reg_int("debug",0);
     mca_pls_poe_component.priority = orte_pls_poe_param_reg_int("priority", 100);
+    param = orte_pls_poe_param_reg_string("progname","poe");
+    mca_pls_poe_component.argv = ompi_argv_split(param, ' ');
+    mca_pls_poe_component.argc = ompi_argv_count(mca_pls_poe_component.argv);
+    if (mca_pls_poe_component.argc > 0) {
+        mca_pls_poe_component.path = strdup(mca_pls_poe_component.argv[0]);
+        return ORTE_SUCCESS;
+    } else {
+        mca_pls_poe_component.path = NULL;
+        return ORTE_ERR_BAD_PARAM;
+    }
     return ORTE_SUCCESS;
 }
 
@@ -132,7 +146,7 @@ orte_pls_poe_component_init - initialize component, check if we can run on this 
 orte_pls_base_module_t *orte_pls_poe_component_init(int *priority)
 {
     extern char **environ;
-    mca_pls_poe_component.path = ompi_path_findv("poe", 0, environ, NULL);
+    mca_pls_poe_component.path = ompi_path_findv(mca_pls_poe_component.argv[0], 0, environ, NULL);
     if (NULL == mca_pls_poe_component.path) {
         return NULL;
     }

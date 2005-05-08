@@ -40,6 +40,10 @@ struct orte_pls_poe_component_t {
     orte_pls_base_component_t super;
     int priority;
     char* path;
+    char** argv;
+    int argc;
+    int debug;
+    char* orted;
 };
 typedef struct orte_pls_poe_component_t orte_pls_poe_component_t;
 
