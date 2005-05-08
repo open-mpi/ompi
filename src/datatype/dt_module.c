@@ -573,7 +573,7 @@ static inline int __dt_contain_basic_datatypes( const ompi_datatype_t* pData, ch
     unsigned long long mask = 1;
    
     if( pData->flags & DT_FLAG_USER_LB ) index += snprintf( ptr, length - index, "lb " );
-    if( pData->flags & DT_FLAG_USER_UB ) index += snprintf( ptr, length - index, "ub " );
+    if( pData->flags & DT_FLAG_USER_UB ) index += snprintf( ptr + index, length - index, "ub " );
     for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
         if( pData->bdt_used & mask )
             index += snprintf( ptr + index, length - index, "%s ", ompi_ddt_basicDatatypes[i]->name );
