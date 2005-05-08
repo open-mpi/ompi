@@ -40,7 +40,7 @@ int orte_gpr_replica_dump_all(int output_id)
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-	   ompi_output(0, "[%d,%d,%d] gpr_replica_dump_all: entered for output on %d",
+	   ompi_output(0, "[%lu,%lu,%lu] gpr_replica_dump_all: entered for output on %d",
 		    ORTE_NAME_ARGS(orte_process_info.my_name), output_id);
     }
 
@@ -80,7 +80,7 @@ int orte_gpr_replica_dump_segments(int output_id)
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-      ompi_output(0, "[%d,%d,%d] gpr_replica_dump_segments: entered for output on %d",
+      ompi_output(0, "[%lu,%lu,%lu] gpr_replica_dump_segments: entered for output on %d",
          ORTE_NAME_ARGS(orte_process_info.my_name), output_id);
     }
 
@@ -120,7 +120,7 @@ int orte_gpr_replica_dump_triggers(int output_id)
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-      ompi_output(0, "[%d,%d,%d] gpr_replica_dump_triggers: entered for output on %d",
+      ompi_output(0, "[%lu,%lu,%lu] gpr_replica_dump_triggers: entered for output on %d",
          ORTE_NAME_ARGS(orte_process_info.my_name), output_id);
     }
 
@@ -160,7 +160,7 @@ int orte_gpr_replica_dump_callbacks(int output_id)
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-      ompi_output(0, "[%d,%d,%d] gpr_replica_dump_callbacks: entered for output on %d",
+      ompi_output(0, "[%lu,%lu,%lu] gpr_replica_dump_callbacks: entered for output on %d",
          ORTE_NAME_ARGS(orte_process_info.my_name), output_id);
     }
 

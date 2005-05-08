@@ -93,7 +93,7 @@ int orte_gpr_replica_process_callbacks(void)
             }
     	} else {  /* remote request - send messages back */
     	       if (orte_gpr_replica_globals.debug) {
-    		      ompi_output(0, "process_callbacks: remote to [%d,%d,%d]",
+    		      ompi_output(0, "process_callbacks: remote to [%lu,%lu,%lu]",
                         ORTE_NAME_ARGS(cb->requestor));
     	       }
     	       orte_gpr_replica_remote_notify(cb->requestor, &(cb->messages));
@@ -181,7 +181,7 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_triggers_t *trig)
     if (NULL == trig->requestor) {  /* local request - queue local callback */
         cb->requestor = NULL;
         if (orte_gpr_replica_globals.debug) {
-           ompi_output(0, "[%d,%d,%d] process_trig: queueing local message\n",
+           ompi_output(0, "[%lu,%lu,%lu] process_trig: queueing local message\n",
                         ORTE_NAME_ARGS(orte_process_info.my_name));
         }
   
@@ -192,7 +192,7 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_triggers_t *trig)
             return rc;
         }
         if (orte_gpr_replica_globals.debug) {
-            ompi_output(0, "[%d,%d,%d] process_trig: queueing message for [%d,%d,%d] using remoteid %d\n",
+            ompi_output(0, "[%lu,%lu,%lu] process_trig: queueing message for [%lu,%lu,%lu] using remoteid %d\n",
                    ORTE_NAME_ARGS(orte_process_info.my_name), ORTE_NAME_ARGS(cb->requestor),
                     (int)trig->remote_idtag);
         }
@@ -228,7 +228,7 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_triggers_t *trig)
     }
     
     if (orte_gpr_replica_globals.debug) {
-        ompi_output(0, "[%d,%d,%d] gpr replica-process_trig: complete",
+        ompi_output(0, "[%lu,%lu,%lu] gpr replica-process_trig: complete",
             ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 

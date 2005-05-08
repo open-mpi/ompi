@@ -243,7 +243,7 @@ static void orte_rmgr_proxy_callback(orte_gpr_notify_data_t *data, void *cbdata)
     /* get the jobid from the segment name */
     if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_segment_name(&jobid, data->segment))) {
         ORTE_ERROR_LOG(rc);
-        ompi_output(0, "[%d,%d,%d] orte_rmgr_proxy_callback: %s\n", 
+        ompi_output(0, "[%lu,%lu,%lu] orte_rmgr_proxy_callback: %s\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), data->segment);
         return;
     }

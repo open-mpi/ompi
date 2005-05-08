@@ -103,7 +103,7 @@ int orte_gpr_replica_exec_compound_cmd(void)
     orte_buffer_t *answer;
     
     if (orte_gpr_replica_globals.debug) {
-	   ompi_output(0, "[%d,%d,%d] Executing compound command",
+	   ompi_output(0, "[%lu,%lu,%lu] Executing compound command",
 		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 

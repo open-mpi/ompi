@@ -214,7 +214,7 @@ static void mca_base_modex_registry_callback(
     int rc;
 
 #if 0
-ompi_output(0, "[%d,%d,%d] mca_base_modex_registry_callback\n", 
+ompi_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback\n", 
     ORTE_NAME_ARGS(orte_process_info.my_name));
 orte_gpr_base_dump_notify_data(data,0);
 #endif
@@ -342,7 +342,7 @@ orte_gpr_base_dump_notify_data(data,0);
                     modex_module->module_data_size = num_bytes;
                     modex_module->module_data_avail = true;
 #if 0
-ompi_output(0, "[%d,%d,%d] mca_base_modex_registry_callback: %s-%s-%d-%d received %d bytes\n",
+ompi_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback: %s-%s-%d-%d received %d bytes\n",
     ORTE_NAME_ARGS(orte_process_info.my_name),
     component.mca_type_name,
     component.mca_component_name,
@@ -644,7 +644,7 @@ int mca_base_modex_recv(
     /* wait until data is available */
     while(modex_module->module_data_avail == false) {
 #if 0
-ompi_output(0, "[%d,%d,%d] mca_base_modex_registry_callback: waiting for %s-%s-%d-%d\n",
+ompi_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback: waiting for %s-%s-%d-%d\n",
     ORTE_NAME_ARGS(orte_process_info.my_name),
     component->mca_type_name,
     component->mca_component_name,

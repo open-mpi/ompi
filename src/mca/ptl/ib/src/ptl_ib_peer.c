@@ -196,7 +196,7 @@ static int mca_ptl_ib_peer_start_connect(mca_ptl_base_peer_t* peer)
                     &peer->lcl_qp_hndl,
                     &peer->lcl_qp_prop,
                     VAPI_TS_RC))) {
-        ompi_output(0, "[%d,%d,%d] %s:%d errcode %d\n", 
+        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
@@ -204,7 +204,7 @@ static int mca_ptl_ib_peer_start_connect(mca_ptl_base_peer_t* peer)
     /* Send connection info over to remote peer */
     peer->peer_state = MCA_PTL_IB_CONNECTING;
     if(OMPI_SUCCESS != (rc = mca_ptl_ib_peer_send_connect_req(peer))) {
-        ompi_output(0, "[%d,%d,%d] %s:%d errcode %d\n", 
+        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
@@ -228,7 +228,7 @@ static int mca_ptl_ib_peer_reply_start_connect(mca_ptl_ib_peer_t *peer, orte_buf
                     &peer->lcl_qp_hndl,
                     &peer->lcl_qp_prop,
                     VAPI_TS_RC))) {
-        ompi_output(0, "[%d,%d,%d] %s:%d errcode %d\n", 
+        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
@@ -239,14 +239,14 @@ static int mca_ptl_ib_peer_reply_start_connect(mca_ptl_ib_peer_t *peer, orte_buf
     /* Connect to peer */
     rc = mca_ptl_ib_peer_connect(peer);
     if(rc != OMPI_SUCCESS) {
-        ompi_output(0, "[%d,%d,%d] %s:%d errcode %d\n", 
+        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
 
     /* Send connection info over to remote peer */
     if(OMPI_SUCCESS != (rc = mca_ptl_ib_peer_send_connect_req(peer))) {
-        ompi_output(0, "[%d,%d,%d] %s:%d errcode %d\n", 
+        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
@@ -310,7 +310,7 @@ static void mca_ptl_ib_peer_recv(
                      * and then reply with our QP information */
 
                     if(OMPI_SUCCESS != (rc = mca_ptl_ib_peer_reply_start_connect(ib_peer, buffer))) {
-                        ompi_output(0, "[%d,%d,%d] %s:%d errcode %d\n", 
+                        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
                             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
                         break;
                     }
@@ -323,7 +323,7 @@ static void mca_ptl_ib_peer_recv(
 
                     mca_ptl_ib_peer_set_remote_info(ib_peer, buffer);
                     if(OMPI_SUCCESS != (rc = mca_ptl_ib_peer_connect(ib_peer))) {
-                        ompi_output(0, "[%d,%d,%d] %s:%d errcode %d\n", 
+                        ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
                             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
                         break;
                     }

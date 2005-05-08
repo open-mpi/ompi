@@ -44,7 +44,7 @@ int orte_gpr_proxy_increment_value(orte_gpr_value_t *value)
     int rc, ret;
     
     if (orte_gpr_proxy_globals.debug) {
-	    ompi_output(0, "[%d,%d,%d] gpr_proxy_increment_value entered", 
+	    ompi_output(0, "[%lu,%lu,%lu] gpr_proxy_increment_value entered", 
                     ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
@@ -105,7 +105,7 @@ int orte_gpr_proxy_decrement_value(orte_gpr_value_t *value)
     int rc, ret;
     
     if (orte_gpr_proxy_globals.debug) {
-        ompi_output(0, "[%d,%d,%d] gpr_proxy_decrement_value entered", 
+        ompi_output(0, "[%lu,%lu,%lu] gpr_proxy_decrement_value entered", 
                     ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 

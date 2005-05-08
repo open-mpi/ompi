@@ -26,7 +26,7 @@
 
 void mca_errmgr_base_log(char *msg, char *filename, int line)
 {
-    ompi_output(0, "[%d,%d,%d] ORTE_ERROR_LOG: %s in file %s at line %d",
+    ompi_output(0, "[%lu,%lu,%lu] ORTE_ERROR_LOG: %s in file %s at line %d",
                 ORTE_NAME_ARGS(orte_process_info.my_name), 
                 msg, filename, line);
 }

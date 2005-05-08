@@ -313,7 +313,7 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
     size_t num_msgs, cnt, i, j, k;
 
     if (orte_gpr_proxy_globals.debug) {
-	    ompi_output(0, "[%d,%d,%d] gpr proxy: received trigger message",
+	    ompi_output(0, "[%lu,%lu,%lu] gpr proxy: received trigger message",
 				ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 

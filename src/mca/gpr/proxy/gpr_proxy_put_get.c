@@ -44,7 +44,7 @@ int orte_gpr_proxy_put(size_t cnt, orte_gpr_value_t **values)
     int rc, ret;
 
     if (orte_gpr_proxy_globals.debug) {
-	    ompi_output(0, "[%d,%d,%d] gpr_proxy_put: entered with %d values",
+	    ompi_output(0, "[%lu,%lu,%lu] gpr_proxy_put: entered with %d values",
                     ORTE_NAME_ARGS(orte_process_info.my_name), cnt);
     }
 

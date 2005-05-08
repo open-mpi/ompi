@@ -46,7 +46,7 @@ static bool ompi_rte_waiting = false;
 void orte_all_procs_registered(orte_gpr_notify_message_t* match, void* cbdata)
 {
     if (orte_debug_flag) {
-	    ompi_output(0, "[%d,%d,%d] all procs registered",
+	    ompi_output(0, "[%lu,%lu,%lu] all procs registered",
 		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 

@@ -41,9 +41,9 @@
 #include "class/ompi_list.h"
 
 #define ORTE_NAME_ARGS(n) \
-    ((NULL == n) ? -1 : (ssize_t)(n)->cellid), \
-    ((NULL == n) ? -1 : (ssize_t)(n)->jobid), \
-    ((NULL == n) ? -1 : (ssize_t)(n)->vpid)
+    (unsigned long) ((NULL == n) ? -1 : (ssize_t)(n)->cellid), \
+    (unsigned long) ((NULL == n) ? -1 : (ssize_t)(n)->jobid), \
+    (unsigned long) ((NULL == n) ? -1 : (ssize_t)(n)->vpid)
 
 
 /*
@@ -67,6 +67,9 @@
  * general typedefs & structures
  */
 /** Set the allowed range for ids in each space
+ *
+ * NOTE: Be sure to update the ORTE_NAME_ARGS #define (above) and all
+ * uses of it if these types change to be larger than (unsigned long)!
  */
 typedef size_t orte_jobid_t;
 typedef size_t orte_cellid_t;
