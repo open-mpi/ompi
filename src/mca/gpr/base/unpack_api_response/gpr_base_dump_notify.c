@@ -51,15 +51,14 @@ int orte_gpr_base_dump_notify_msg(orte_buffer_t *buffer,
         return ORTE_SUCCESS;
     }
     
-    asprintf(&tmp_out, ORTE_SIZE_T_PRINTF
-                       " Notify data structures in message going to trigger "
-                       ORTE_SIZE_T_PRINTF,
-                       msg->cnt, msg->idtag);
+    asprintf(&tmp_out, "%lu Notify data structures in message going to trigger %lu",
+             (unsigned long) msg->cnt, (unsigned long) msg->idtag);
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
     
     if (0 < msg->cnt && NULL != msg->data) {
         for (i=0; i < msg->cnt; i++) {
-            asprintf(&tmp_out, "\nDump of data structure " ORTE_SIZE_T_PRINTF, i);
+            asprintf(&tmp_out, "\nDump of data structure %lu", 
+                     (unsigned long) i);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             orte_gpr_base_dump_data(buffer, msg->data[i]);
         }
@@ -93,15 +92,15 @@ static void orte_gpr_base_dump_data(orte_buffer_t *buffer,
     orte_gpr_value_t **values;
     size_t i;
 
-    asprintf(&tmp_out, ORTE_SIZE_T_PRINTF " Values from segment %s", data->cnt, data->segment);
+    asprintf(&tmp_out, "%lu Values from segment %s", 
+             (unsigned long) data->cnt, data->segment);
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
     
     if (0 < data->cnt && NULL != data->values) {
         values = data->values;
         for (i=0; i < data->cnt; i++) {
-            asprintf(&tmp_out, "\nData for value " ORTE_SIZE_T_PRINTF
-                               " going to callback num " ORTE_SIZE_T_PRINTF,
-                               i, data->cb_num);
+            asprintf(&tmp_out, "\nData for value %lu going to callback num %lu",
+                     (unsigned long) i, (unsigned long) data->cb_num);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             if (NULL == values[i]) {
                 asprintf(&tmp_out, "\tError encountered: NULL value pointer");
@@ -119,8 +118,8 @@ int orte_gpr_base_dump_value(orte_buffer_t *buffer, orte_gpr_value_t *value)
     orte_gpr_addr_mode_t addr;
     size_t j;
 
-    asprintf(&tmp_out, "\tValue from segment %s with " ORTE_SIZE_T_PRINTF " keyvals",
-                            value->segment, value->cnt);
+    asprintf(&tmp_out, "\tValue from segment %s with %lu keyvals",
+             value->segment, (unsigned long) value->cnt);
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
     
     addr = value->addr_mode;
@@ -128,10 +127,12 @@ int orte_gpr_base_dump_value(orte_buffer_t *buffer, orte_gpr_value_t *value)
         asprintf(&tmp_out, "\tNULL tokens (wildcard)");
         orte_gpr_base_dump_load_string(buffer, &tmp_out);
     } else {
-        asprintf(&tmp_out, "\t" ORTE_SIZE_T_PRINTF " Tokens returned", value->num_tokens);
+        asprintf(&tmp_out, "\t%lu Tokens returned", 
+                 (unsigned long) value->num_tokens);
         orte_gpr_base_dump_load_string(buffer, &tmp_out);
         for (j=0; j < value->num_tokens; j++) {
-            asprintf(&tmp_out, "\tToken " ORTE_SIZE_T_PRINTF ": %s", j, value->tokens[j]);
+            asprintf(&tmp_out, "\tToken %lu: %s", (unsigned long) j, 
+                     value->tokens[j]);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
         }
     }
@@ -186,8 +187,8 @@ int orte_gpr_base_dump_value(orte_buffer_t *buffer, orte_gpr_value_t *value)
     }
     
     for (j=0; j < value->cnt; j++) {
-        asprintf(&tmp_out, "\t\tData for keyval " ORTE_SIZE_T_PRINTF ": Key: %s", j,
-                                (value->keyvals[j])->key);
+        asprintf(&tmp_out, "\t\tData for keyval %lu: Key: %s", 
+                 (unsigned long) j, (value->keyvals[j])->key);
         orte_gpr_base_dump_load_string(buffer, &tmp_out);
         orte_gpr_base_dump_keyval_value(buffer, value->keyvals[j]);
     }
@@ -218,7 +219,8 @@ void orte_gpr_base_dump_keyval_value(orte_buffer_t *buffer, orte_gpr_keyval_t *i
             break;
             
         case ORTE_SIZE:
-            asprintf(&tmp_out, "\t\t\tData type: ORTE_SIZE:\tValue: " ORTE_SIZE_T_PRINTF, iptr->value.size);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_SIZE:\tValue: %lu",
+                     (unsigned long) iptr->value.size);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
@@ -277,35 +279,32 @@ void orte_gpr_base_dump_keyval_value(orte_buffer_t *buffer, orte_gpr_keyval_t *i
 #endif
 
         case ORTE_BYTE_OBJECT:
-            asprintf(&tmp_out, "\t\t\tData type: ORTE_BYTE_OBJECT\tSize: "
-                     ORTE_SIZE_T_PRINTF, (iptr->value.byteobject).size);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_BYTE_OBJECT\tSize: %lu",
+                     (unsigned long) (iptr->value.byteobject).size);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_NAME:
-            asprintf(&tmp_out, "\t\t\tData type: ORTE_NAME\tValue: ["
-                               ORTE_SIZE_T_PRINTF ","
-                               ORTE_SIZE_T_PRINTF ","
-                               ORTE_SIZE_T_PRINTF "]",
-                               ORTE_NAME_ARGS(&(iptr->value.proc)));
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_NAME\tValue: [%lu,%lu,%lu]",
+                     ORTE_NAME_ARGS(&(iptr->value.proc)));
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_VPID:
-            asprintf(&tmp_out, "\t\t\tData type: ORTE_VPID\tValue: " ORTE_SIZE_T_PRINTF,
-                                    iptr->value.vpid);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_VPID\tValue: %lu",
+                     (unsigned long) iptr->value.vpid);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_JOBID:
-            asprintf(&tmp_out, "\t\t\tData type: ORTE_JOBID\tValue: " ORTE_SIZE_T_PRINTF,
-                                    iptr->value.jobid);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_JOBID\tValue: %lu",
+                     (unsigned long) iptr->value.jobid);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             
         case ORTE_CELLID:
-            asprintf(&tmp_out, "\t\t\tData type: ORTE_CELLID\tValue: " ORTE_SIZE_T_PRINTF,
-                                    iptr->value.cellid);
+            asprintf(&tmp_out, "\t\t\tData type: ORTE_CELLID\tValue: %lu",
+                     (unsigned long) iptr->value.cellid);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             break;
             

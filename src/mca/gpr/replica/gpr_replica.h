@@ -40,7 +40,10 @@
  * typedefs needed in replica component
  */
 
-#define ORTE_GPR_REPLICA_MAX_SIZE SIZE_MAX
+/* JMS: This is only INT_MAX until bug 1345 is fixed, because this
+   value is used to set an MAC parameter, which can [currently] only
+   take an int. */
+#define ORTE_GPR_REPLICA_MAX_SIZE INT_MAX
 #define ORTE_GPR_REPLICA_BLOCK_SIZE 100
 
 

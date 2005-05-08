@@ -277,7 +277,7 @@ int orte_init_stage1(void)
     }
  
     if (orte_debug_flag) {
-        ompi_output(0, "[%d,%d,%d] setting up session dir with",
+        ompi_output(0, "[%lu,%lu,%lu] setting up session dir with",
                     ORTE_NAME_ARGS(orte_process_info.my_name));
         if (NULL != orte_process_info.tmpdir_base) {
             ompi_output(0, "\ttmpdir %s", orte_process_info.tmpdir_base);

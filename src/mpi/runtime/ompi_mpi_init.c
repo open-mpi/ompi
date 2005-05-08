@@ -451,7 +451,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     ompi_mpi_initialized = true;
 
     if (orte_debug_flag) {
-	ompi_output(0, "[%d,%d,%d] ompi_mpi_init completed",
+	ompi_output(0, "[%lu,%lu,%lu] ompi_mpi_init completed",
 		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 

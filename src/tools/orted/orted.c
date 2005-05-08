@@ -250,16 +250,16 @@ int main(int argc, char *argv[])
 
 	    if (OMPI_SUCCESS != (ret = orte_write_universe_setup_file(contact_path, &orte_universe_info))) {
 	        if (orted_globals.debug) {
-		        ompi_output(0, "[%d,%d,%d] ompid: couldn't write setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
+		        ompi_output(0, "[%lu,%lu,%lu] ompid: couldn't write setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
 	        }
 	    } else if (orted_globals.debug) {
-	        ompi_output(0, "[%d,%d,%d] ompid: wrote setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
+	        ompi_output(0, "[%lu,%lu,%lu] ompid: wrote setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
 	    }
     }
 
 
     if (orted_globals.debug) {
-	    ompi_output(0, "[%d,%d,%d] ompid: issuing callback", ORTE_NAME_ARGS(orte_process_info.my_name));
+	    ompi_output(0, "[%lu,%lu,%lu] ompid: issuing callback", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
      /* register the daemon main callback function */
@@ -274,7 +274,7 @@ int main(int argc, char *argv[])
      */
 
     if (orted_globals.debug) {
-	    ompi_output(0, "[%d,%d,%d] ompid: setting up event monitor", ORTE_NAME_ARGS(orte_process_info.my_name));
+	    ompi_output(0, "[%lu,%lu,%lu] ompid: setting up event monitor", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
      /* setup and enter the event monitor */
@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
     OMPI_THREAD_UNLOCK(&orted_globals.mutex);
 
     if (orted_globals.debug) {
-	   ompi_output(0, "[%d,%d,%d] ompid: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
+	   ompi_output(0, "[%lu,%lu,%lu] ompid: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     /* cleanup */
@@ -302,7 +302,7 @@ int main(int argc, char *argv[])
     orte_finalize();
 
     if (orted_globals.debug) {
-	   ompi_output(0, "[%d,%d,%d] ompid: done - exiting", ORTE_NAME_ARGS(orte_process_info.my_name));
+	   ompi_output(0, "[%lu,%lu,%lu] ompid: done - exiting", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     exit(0);
@@ -321,7 +321,7 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
     OMPI_THREAD_LOCK(&orted_globals.mutex);
 
     if (orted_globals.debug) {
-	   ompi_output(0, "[%d,%d,%d] ompid: received message", ORTE_NAME_ARGS(orte_process_info.my_name));
+	   ompi_output(0, "[%lu,%lu,%lu] ompid: received message", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     answer = OBJ_NEW(orte_buffer_t);

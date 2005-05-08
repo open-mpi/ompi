@@ -259,7 +259,7 @@ static void mca_oob_tcp_accept(void)
 
         /* log the accept */
         if(mca_oob_tcp_component.tcp_debug) {
-            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_accept: %s:%d\n",
+            ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_accept: %s:%d\n",
                 ORTE_NAME_ARGS(orte_process_info.my_name),
                 inet_ntoa(addr.sin_addr),
                 addr.sin_port);
@@ -351,7 +351,7 @@ static void mca_oob_tcp_recv_probe(int sd, mca_oob_tcp_hdr_t* hdr)
         if(retval < 0) {
             IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno != EINTR && ompi_socket_errno != EAGAIN && ompi_socket_errno != EWOULDBLOCK) {
-                ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_peer_recv_probe: send() failed with errno=%d\n",
+                ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_probe: send() failed with errno=%d\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(hdr->msg_src)),
                     ompi_socket_errno);
@@ -376,12 +376,12 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: fcntl(F_GETFL) failed with errno=%d", 
+        ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: fcntl(F_GETFL) failed with errno=%d", 
                 ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: fcntl(F_SETFL) failed with errno=%d", 
+            ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: fcntl(F_SETFL) failed with errno=%d", 
                 ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
         }
     }
@@ -405,7 +405,7 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
     /* lookup the corresponding process */
     peer = mca_oob_tcp_peer_lookup(&hdr->msg_src);
     if(NULL == peer) {
-        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: unable to locate peer",
+        ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: unable to locate peer",
                 ORTE_NAME_ARGS(orte_process_info.my_name));
         close(sd);
         return;
@@ -413,8 +413,8 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
     /* is the peer instance willing to accept this connection */
     if(mca_oob_tcp_peer_accept(peer, sd) == false) {
         if(mca_oob_tcp_component.tcp_debug > 0) {
-            ompi_output(0, "[%d,%d,%d]-[%d,%d,%d] mca_oob_tcp_recv_handler: "
-                    "rejected connection from [%d,%d,%d] connection state %d",
+            ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_recv_handler: "
+                    "rejected connection from [%lu,%lu,%lu] connection state %d",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(peer->peer_name)),
                     ORTE_NAME_ARGS(&(hdr->msg_src)),
@@ -447,14 +447,14 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
     while((rc = recv(sd, (char *)&hdr, sizeof(hdr), 0)) != sizeof(hdr)) {
         if(rc >= 0) {
             if(mca_oob_tcp_component.tcp_debug > 1) {
-                ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: peer closed connection",
+                ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: peer closed connection",
                     ORTE_NAME_ARGS(orte_process_info.my_name));
             }
             close(sd);
             return;
         }
         if(ompi_socket_errno != EINTR) {
-            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n", 
+            ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n", 
                 ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
             close(sd);
             return;
@@ -471,7 +471,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
             mca_oob_tcp_recv_connect(sd, &hdr);
             break;
         default:
-            ompi_output(0, "[%d,%d,%d] mca_oob_tcp_recv_handler: invalid message type: %d\n", hdr.msg_type);
+            ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: invalid message type: %d\n", hdr.msg_type);
             close(sd);
             break;
     }
@@ -534,7 +534,7 @@ void mca_oob_tcp_registry_callback(
 {
     size_t i;
     if(mca_oob_tcp_component.tcp_debug > 1) {
-        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_registry_callback\n",
+        ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
@@ -568,13 +568,13 @@ void mca_oob_tcp_registry_callback(
             addr = mca_oob_tcp_addr_unpack(&buffer);
             OBJ_DESTRUCT(&buffer);
             if(NULL == addr) {
-                ompi_output(0, "[%d,%d,%d] mca_oob_tcp_registry_callback: unable to unpack peer address\n",
+                ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback: unable to unpack peer address\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name));
                 continue;
             }
 
             if(mca_oob_tcp_component.tcp_debug > 1) {
-                ompi_output(0, "[%d,%d,%d] mca_oob_tcp_registry_callback: received peer [%d,%d,%d]\n",
+                ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_registry_callback: received peer [%lu,%lu,%lu]\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(addr->addr_name)));
             }
@@ -768,7 +768,7 @@ int mca_oob_tcp_init(void)
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
     if(mca_oob_tcp_component.tcp_debug > 2) {
-        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_init: calling orte_gpr.subscribe\n", 
+        ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: calling orte_gpr.subscribe\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
@@ -912,7 +912,7 @@ int mca_oob_tcp_init(void)
     }
 
     if(mca_oob_tcp_component.tcp_debug > 2) {
-        ompi_output(0, "[%d,%d,%d] mca_oob_tcp_init: calling orte_gpr.put(%s)\n", 
+        ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_init: calling orte_gpr.put(%s)\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name),
             value->segment);
     }

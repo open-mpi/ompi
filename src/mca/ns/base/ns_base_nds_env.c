@@ -185,7 +185,7 @@ int orte_ns_nds_env_put(const orte_process_name_t* name,
     free(param);
     free(vpid);
 
-    asprintf(&value, ORTE_SIZE_T_PRINTF, vpid_start);
+    asprintf(&value, "%lu", (unsigned long) vpid_start);
     if(NULL == (param = mca_base_param_environ_variable("ns","nds","vpid_start"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -194,7 +194,7 @@ int orte_ns_nds_env_put(const orte_process_name_t* name,
     free(param);
     free(value);
 
-    asprintf(&value, ORTE_SIZE_T_PRINTF, num_procs);
+    asprintf(&value, "%lu", (unsigned long) num_procs);
     if(NULL == (param = mca_base_param_environ_variable("ns","nds","num_procs"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;

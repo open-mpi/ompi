@@ -108,7 +108,7 @@ int main(int argc, char **argv)
        test_finalize();
 	   exit(1);
     } else {
-	   fprintf(test_out, "got process name: %0X %0X %0X\n", ORTE_NAME_ARGS(test_name));
+	   fprintf(test_out, "got process name: %lu %lu %lu\n", ORTE_NAME_ARGS(test_name));
 	   test_success();
     }
     free(test_name);
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
        test_finalize();
 	   exit(1);
     } else {
-        fprintf(test_out, "got process name: %0X  %0X  %0X\n", 
+        fprintf(test_out, "got process name: %lu  %lu  %lu\n", 
 	       ORTE_NAME_ARGS(test_name));
         test_success();
     }

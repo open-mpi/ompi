@@ -52,7 +52,7 @@ int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, size_t num_su
     bool found;
 
     if (orte_gpr_replica_globals.debug) {
-	   ompi_output(0, "[%d,%d,%d] gpr replica: subscribe entered - registering idtag %d",
+	   ompi_output(0, "[%lu,%lu,%lu] gpr replica: subscribe entered - registering idtag %d",
 		    ORTE_NAME_ARGS(orte_process_info.my_name), idtag);
         ompi_output(0, "Received %d subscriptions", num_subs);
         for (i=0; i < num_subs; i++) {
@@ -312,7 +312,7 @@ int orte_gpr_replica_unsubscribe_fn(orte_gpr_notify_id_t sub_number)
     orte_gpr_replica_triggers_t *trig;
 
     if (orte_gpr_replica_globals.debug) {
-	   ompi_output(0, "[%d,%d,%d] gpr replica: unsubscribe entered for sub number %d",
+	   ompi_output(0, "[%lu,%lu,%lu] gpr replica: unsubscribe entered for sub number %d",
 		    ORTE_NAME_ARGS(orte_process_info.my_name), sub_number);
     }
 

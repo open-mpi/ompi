@@ -152,7 +152,7 @@ int orte_schema_base_extract_jobid_from_segment_name(orte_jobid_t *jobid, char *
     jobstring++;
     if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_jobid(&job, jobstring))) {
         ORTE_ERROR_LOG(rc);
-        ompi_output(0, "[%d,%d,%d] %s\n", ORTE_NAME_ARGS(orte_process_info.my_name), jobstring);
+        ompi_output(0, "[%lu,%lu,%lu] %s\n", ORTE_NAME_ARGS(orte_process_info.my_name), jobstring);
         return rc;
     }
     *jobid = job;

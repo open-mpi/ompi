@@ -527,7 +527,7 @@ static int orte_pls_bproc_launch_app(
             pid_t pid;
 
             if(mca_pls_bproc_seed_component.debug) {
-                ompi_output(0, "orte_pls_bproc: starting: %d.%d.%d\n", ORTE_NAME_ARGS(&proc->proc_name));
+                ompi_output(0, "orte_pls_bproc: starting: [%lu,%lu,%lu]\n", ORTE_NAME_ARGS(&proc->proc_name));
             }
             rc = orte_pls_bproc_undump(proc, vpid_start, vpid_range, image, image_len, &pid);
             if(ORTE_SUCCESS != rc) {
@@ -542,7 +542,7 @@ static int orte_pls_bproc_launch_app(
             orte_wait_cb(pid, orte_pls_bproc_wait_proc, proc);
 
             if(mca_pls_bproc_seed_component.debug) {
-                ompi_output(0, "orte_pls_bproc: started: %d.%d.%d\n", ORTE_NAME_ARGS(&proc->proc_name));
+                ompi_output(0, "orte_pls_bproc: started: [%lu,%lu,%lu]\n", ORTE_NAME_ARGS(&proc->proc_name));
             }
         }
 

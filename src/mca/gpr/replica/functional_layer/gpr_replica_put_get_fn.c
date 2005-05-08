@@ -138,7 +138,7 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
     size_t i, j, num_found;
 
     if (orte_gpr_replica_globals.debug) {
-	    ompi_output(0, "[%d,%d,%d] gpr replica: put entered on segment %s\nValues:",
+	    ompi_output(0, "[%lu,%lu,%lu] gpr replica: put entered on segment %s\nValues:",
 		    ORTE_NAME_ARGS(orte_process_info.my_name), seg->name);
         for (i=0; i < cnt; i++) {
             ompi_output(0, "\tKey: %s", keyvals[i]->key);
@@ -229,7 +229,7 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
     }
 
     if (orte_gpr_replica_globals.debug) {
-	    ompi_output(0, "[%d,%d,%d] gpr replica-put: complete", ORTE_NAME_ARGS(orte_process_info.my_name));
+	    ompi_output(0, "[%lu,%lu,%lu] gpr replica-put: complete", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     return ORTE_SUCCESS;
@@ -264,7 +264,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
     char *token;
     
     if (orte_gpr_replica_globals.debug) {
-        	ompi_output(0, "[%d,%d,%d] gpr replica: get entered", ORTE_NAME_ARGS(orte_process_info.my_name));
+        	ompi_output(0, "[%lu,%lu,%lu] gpr replica: get entered", ORTE_NAME_ARGS(orte_process_info.my_name));
             ompi_output(0, "\tGetting data from segment %s wiht %d tokens and %d keys",
                     seg->name, num_tokens, num_keys);
             for (i=0; i < num_tokens; i++) {
@@ -428,7 +428,7 @@ CLEANUP:
     OBJ_DESTRUCT(&get_list);
     
     if (orte_gpr_replica_globals.debug) {
-        	ompi_output(0, "[%d,%d,%d] gpr replica-get: finished search", ORTE_NAME_ARGS(orte_process_info.my_name));
+        	ompi_output(0, "[%lu,%lu,%lu] gpr replica-get: finished search", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     return rc;

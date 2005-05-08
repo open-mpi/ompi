@@ -190,7 +190,7 @@ int orte_ns_base_get_proc_name_string(char **name_string,
 	    return ORTE_ERR_BAD_PARAM;
     }
 
-    if (0 > asprintf(name_string, "%0X.%0X.%0X", name->cellid, name->jobid, name->vpid)) {
+    if (0 > asprintf(name_string, "%lu.%lu.%lu", name->cellid, name->jobid, name->vpid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
 	   return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -284,7 +284,7 @@ int orte_ns_base_get_vpid_string(char **vpid_string, const orte_process_name_t* 
 	   return ORTE_ERR_BAD_PARAM;
     }
 
-    if (0 > asprintf(vpid_string, ORTE_SIZE_T_PRINTF, name->vpid)) {
+    if (0 > asprintf(vpid_string, "%lu", (unsigned long) name->vpid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
 	   return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -297,7 +297,7 @@ int orte_ns_base_convert_vpid_to_string(char **vpid_string, const orte_vpid_t vp
 {
     *vpid_string = NULL;
     
-    if (0 > asprintf(vpid_string, ORTE_SIZE_T_PRINTF, vpid)) {
+    if (0 > asprintf(vpid_string, "%lu", (unsigned long) vpid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -339,7 +339,7 @@ int orte_ns_base_get_jobid_string(char **jobid_string, const orte_process_name_t
 	   return ORTE_ERR_BAD_PARAM;
     }
 
-    if (0 > asprintf(jobid_string, ORTE_SIZE_T_PRINTF, name->jobid)) {
+    if (0 > asprintf(jobid_string, "%lu", (unsigned long) name->jobid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
 	   return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -352,7 +352,7 @@ int orte_ns_base_convert_jobid_to_string(char **jobid_string, const orte_jobid_t
 {
     *jobid_string = NULL;
     
-    if (0 > asprintf(jobid_string, ORTE_SIZE_T_PRINTF, jobid)) {
+    if (0 > asprintf(jobid_string, "%lu", (unsigned long) jobid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
 	   return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -394,7 +394,7 @@ int orte_ns_base_get_cellid_string(char **cellid_string, const orte_process_name
 	   return ORTE_ERR_BAD_PARAM;
     }
 
-    if (0 > asprintf(cellid_string, ORTE_SIZE_T_PRINTF, name->cellid)) {
+    if (0 > asprintf(cellid_string, "%lu", (unsigned long) name->cellid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
 	   return ORTE_ERR_OUT_OF_RESOURCE;
     }
@@ -407,7 +407,7 @@ int orte_ns_base_convert_cellid_to_string(char **cellid_string, const orte_celli
 {
     *cellid_string = NULL;
     
-    if (0 > asprintf(cellid_string, ORTE_SIZE_T_PRINTF, cellid)) {
+    if (0 > asprintf(cellid_string, "%lu", (unsigned long) cellid)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }

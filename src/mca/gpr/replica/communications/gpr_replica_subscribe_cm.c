@@ -107,7 +107,7 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
     if (NULL != sender) {  /* remote sender */
 
         if (orte_gpr_replica_globals.debug) {
-            ompi_output(0, "[%d,%d,%d] subscribe requested for remote sender [%d,%d,%d] for idtag %d",
+            ompi_output(0, "[%lu,%lu,%lu] subscribe requested for remote sender [%lu,%lu,%lu] for idtag %d",
                        ORTE_NAME_ARGS(orte_process_info.my_name), ORTE_NAME_ARGS(sender), idtag);
         }
       

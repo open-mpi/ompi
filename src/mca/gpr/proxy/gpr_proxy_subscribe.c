@@ -128,7 +128,7 @@ orte_gpr_proxy_subscribe(orte_gpr_notify_action_t action,
     }
 
     if (orte_gpr_proxy_globals.debug) {
-	    ompi_output(0, "[%d,%d,%d] gpr proxy subscribe: register subscribe for local idtag %d",
+	    ompi_output(0, "[%lu,%lu,%lu] gpr proxy subscribe: register subscribe for local idtag %d",
 				ORTE_NAME_ARGS(orte_process_info.my_name), (int)idtag);
     }
 

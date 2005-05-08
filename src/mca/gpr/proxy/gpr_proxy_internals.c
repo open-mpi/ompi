@@ -76,7 +76,7 @@ orte_gpr_proxy_enter_notify_request(orte_gpr_notify_id_t *local_idtag,
     *local_idtag = idtag;
     
     if (orte_gpr_proxy_globals.debug) {
-        ompi_output(0, "[%d,%d,%d] enter_notify_request: tracker %d created",
+        ompi_output(0, "[%lu,%lu,%lu] enter_notify_request: tracker %d created",
                     ORTE_NAME_ARGS(orte_process_info.my_name), idtag);
     }
     

@@ -105,7 +105,7 @@ int orte_gpr_proxy_exec_compound_cmd(void)
     int rc, response;
     
     if (orte_gpr_proxy_globals.debug) {
-	   ompi_output(0, "[%d,%d,%d] transmitting compound command",
+	   ompi_output(0, "[%lu,%lu,%lu] transmitting compound command",
 		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
