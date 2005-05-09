@@ -37,7 +37,7 @@ typedef struct ompi_lock_t ompi_lock_t;
 
 /**********************************************************************
  *
- * Define constants for UltraSparc 64
+ * Define constants for Sparc
  *
  *********************************************************************/
 #define OMPI_HAVE_ATOMIC_MEM_BARRIER 1

@@ -344,10 +344,6 @@ static inline int ompi_atomic_cmpset_acq_xx(volatile void* addr,
 static inline int ompi_atomic_cmpset_rel_xx(volatile void* addr, 
                                             int64_t oldval, int64_t newval, 
                                             size_t length);
-static inline void ompi_atomic_add_xx(volatile void* addr, 
-                                      int32_t value, size_t length);
-static inline void ompi_atomic_sub_xx(volatile void* addr, 
-                                      int32_t value, size_t length);
 
 static inline int ompi_atomic_cmpset_ptr(volatile void* addr, 
                                          void* oldval, 
@@ -358,10 +354,6 @@ static inline int ompi_atomic_cmpset_acq_ptr(volatile void* addr,
 static inline int ompi_atomic_cmpset_rel_ptr(volatile void* addr, 
                                              void* oldval, 
                                              void* newval);
-static inline int ompi_atomic_add_pt(volatile void* addr, 
-                                            void* delta);
-static inline int ompi_atomic_sub_ptr(volatile void* addr, 
-                                             void* delta);
 
 /**
  * Atomic compare and set of pointer with relaxed semantics. This
@@ -415,6 +407,18 @@ static inline int ompi_atomic_sub_ptr(volatile void* addr,
    ompi_atomic_cmpset_rel_xx( (volatile void*)(ADDR), (int64_t)(OLDVAL), \
                               (int64_t)(NEWVAL), sizeof(*(ADDR)) )
 
+#endif /* (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64) */
+
+#if defined(DOXYGEN) || (OMPI_HAVE_ATOMIC_MATH_32 || OMPI_HAVE_ATOMIC_MATH_64)
+
+static inline void ompi_atomic_add_xx(volatile void* addr, 
+                                      int32_t value, size_t length);
+static inline void ompi_atomic_sub_xx(volatile void* addr, 
+                                      int32_t value, size_t length);
+static inline int ompi_atomic_add_pt(volatile void* addr, 
+                                            void* delta);
+static inline int ompi_atomic_sub_ptr(volatile void* addr, 
+                                             void* delta);
 
 /**
  * Atomically increment the content depending on the type. This

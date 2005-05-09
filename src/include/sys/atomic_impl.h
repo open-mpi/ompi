@@ -175,54 +175,6 @@ ompi_atomic_cmpset_rel_xx(volatile void* addr, int64_t oldval,
 }
 
 
-static inline void
-ompi_atomic_add_xx(volatile void* addr, int32_t value, size_t length)
-{
-   switch( length ) {
-#if OMPI_HAVE_ATOMIC_CMPSET_32
-   case 4:
-      ompi_atomic_add_32( (volatile int32_t*)addr, (int32_t)value );
-      break;
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_32 */
-
-#if OMPI_HAVE_ATOMIC_CMPSET_64
-   case 8:
-      ompi_atomic_add_64( (volatile int64_t*)addr, (int64_t)value );
-      break;
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_64 */
-   default:
-      /* This should never happen, so deliberately cause a seg fault
-         for corefile analysis */
-      *(int*)(0) = 0;
-   }
-}
-
-
-static inline void
-ompi_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
-{
-   switch( length ) {
-#if OMPI_HAVE_ATOMIC_CMPSET_32
-   case 4:
-      ompi_atomic_sub_32( (volatile int32_t*)addr, (int32_t)value );
-      break;
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_32 */
-
-#if OMPI_HAVE_ATOMIC_CMPSET_64 
-   case 8:
-      ompi_atomic_sub_64( (volatile int64_t*)addr, (int64_t)value );
-      break;
-#endif  /* OMPI_HAVE_ATOMIC_CMPSET_64 */
-   default:
-      /* This should never happen, so deliberately cause a seg fault
-         for corefile analysis */
-      *(int*)(0) = 0;
-   }
-}
-
-#endif /* (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64) */
-
-
 static inline int
 ompi_atomic_cmpset_ptr(volatile void* addr, 
                        void* oldval, 
@@ -275,6 +227,55 @@ static inline int ompi_atomic_cmpset_rel_ptr(volatile void* addr,
 #endif
 }
 
+#endif /* (OMPI_HAVE_ATOMIC_CMPSET_32 || OMPI_HAVE_ATOMIC_CMPSET_64) */
+
+#if OMPI_HAVE_ATOMIC_MATH_32 || OMPI_HAVE_ATOMIC_MATH_64
+
+
+static inline void
+ompi_atomic_add_xx(volatile void* addr, int32_t value, size_t length)
+{
+   switch( length ) {
+#if OMPI_HAVE_ATOMIC_CMPSET_32
+   case 4:
+      ompi_atomic_add_32( (volatile int32_t*)addr, (int32_t)value );
+      break;
+#endif  /* OMPI_HAVE_ATOMIC_CMPSET_32 */
+
+#if OMPI_HAVE_ATOMIC_CMPSET_64
+   case 8:
+      ompi_atomic_add_64( (volatile int64_t*)addr, (int64_t)value );
+      break;
+#endif  /* OMPI_HAVE_ATOMIC_CMPSET_64 */
+   default:
+      /* This should never happen, so deliberately cause a seg fault
+         for corefile analysis */
+      *(int*)(0) = 0;
+   }
+}
+
+
+static inline void
+ompi_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
+{
+   switch( length ) {
+#if OMPI_HAVE_ATOMIC_CMPSET_32
+   case 4:
+      ompi_atomic_sub_32( (volatile int32_t*)addr, (int32_t)value );
+      break;
+#endif  /* OMPI_HAVE_ATOMIC_CMPSET_32 */
+
+#if OMPI_HAVE_ATOMIC_CMPSET_64 
+   case 8:
+      ompi_atomic_sub_64( (volatile int64_t*)addr, (int64_t)value );
+      break;
+#endif  /* OMPI_HAVE_ATOMIC_CMPSET_64 */
+   default:
+      /* This should never happen, so deliberately cause a seg fault
+         for corefile analysis */
+      *(int*)(0) = 0;
+   }
+}
 
 static inline int ompi_atomic_add_pt(volatile void* addr, 
                                             void* delta)
@@ -303,6 +304,7 @@ static inline int ompi_atomic_sub_ptr(volatile void* addr,
 #endif
 }
 
+#endif /* OMPI_HAVE_ATOMIC_MATH_32 || OMPI_HAVE_ATOMIC_MATH_64 */
 
 /**********************************************************************
  *
