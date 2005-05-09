@@ -53,7 +53,7 @@ void
 mca_ptl_ib_recv_frag_done (
     mca_ptl_base_header_t *header,
     mca_ptl_base_recv_frag_t* frag,
-    mca_pml_base_recv_request_t *request)
+    mca_ptl_base_recv_request_t *request)
 {
     D_PRINT("");
     frag->frag_base.frag_owner->ptl_recv_progress (
@@ -120,12 +120,12 @@ static void mca_ptl_ib_ctrl_frag(
     mca_ptl_base_header_t *header)
 {
     mca_ptl_ib_send_frag_t *send_frag;
-    mca_pml_base_send_request_t *req;
+    mca_ptl_base_send_request_t *req;
     void *data_ptr;
 
     send_frag = (mca_ptl_ib_send_frag_t *)
         header->hdr_ack.hdr_src_ptr.pval;
-    req = (mca_pml_base_send_request_t *) 
+    req = (mca_ptl_base_send_request_t *) 
         send_frag->frag_send.frag_request;
 
     req->req_peer_match = header->hdr_ack.hdr_dst_match;
@@ -148,12 +148,12 @@ static void mca_ptl_ib_last_frag(mca_ptl_ib_module_t *ib_ptl,
         mca_ptl_base_header_t *hdr)
 {
     mca_ptl_ib_fin_header_t *fin_hdr = (mca_ptl_ib_fin_header_t *)hdr;
-    mca_pml_base_recv_request_t *request;
-    request = (mca_pml_base_recv_request_t*) hdr->hdr_frag.hdr_dst_ptr.pval;
+    mca_ptl_base_recv_request_t *request;
+    request = (mca_ptl_base_recv_request_t*) hdr->hdr_frag.hdr_dst_ptr.pval;
 
     /* deregister memory if this is the last fragment */
     if ((request->req_bytes_received + hdr->hdr_frag.hdr_frag_length) >= 
-        request->req_bytes_packed) {
+        request->req_recv.req_bytes_packed) {
         mca_ptl_ib_deregister_mem_with_registry(ib_ptl,
             fin_hdr->mr_addr.pval, (size_t)fin_hdr->mr_size);
     }

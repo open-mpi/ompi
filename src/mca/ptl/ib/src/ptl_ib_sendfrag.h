@@ -20,7 +20,7 @@
 #define MCA_PTL_IB_SEND_FRAG_H
 
 #include "ompi_config.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 
 #include "ptl_ib_priv.h"
@@ -58,7 +58,7 @@ struct mca_ptl_ib_module_t;
 
 mca_ptl_ib_send_frag_t* mca_ptl_ib_alloc_send_frag(
         struct mca_ptl_ib_module_t* ib_ptl,
-        mca_pml_base_send_request_t* request);
+        mca_ptl_base_send_request_t* request);
 
 int  mca_ptl_ib_send_frag_register(struct mca_ptl_ib_module_t *ptl);
 void mca_ptl_ib_send_frag_send_complete(struct mca_ptl_ib_module_t *ptl, mca_ptl_ib_send_frag_t*);

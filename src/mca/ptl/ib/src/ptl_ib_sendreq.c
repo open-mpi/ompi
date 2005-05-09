@@ -26,7 +26,7 @@ static void mca_ptl_ib_send_request_construct(mca_ptl_ib_send_request_t*);
 static void mca_ptl_ib_send_request_destruct(mca_ptl_ib_send_request_t*);
 
 OBJ_CLASS_INSTANCE(mca_ptl_ib_send_request_t, 
-        mca_pml_base_send_request_t,
+        mca_ptl_base_send_request_t,
         mca_ptl_ib_send_request_construct, 
         mca_ptl_ib_send_request_destruct);
 

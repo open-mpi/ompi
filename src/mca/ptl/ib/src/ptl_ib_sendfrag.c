@@ -55,7 +55,7 @@ static void mca_ptl_ib_send_frag_destruct(mca_ptl_ib_send_frag_t* frag)
  */
 mca_ptl_ib_send_frag_t* mca_ptl_ib_alloc_send_frag(
         mca_ptl_ib_module_t* ib_ptl,
-        mca_pml_base_send_request_t* request)
+        mca_ptl_base_send_request_t* request)
 {
     ompi_free_list_t *flist = &ib_ptl->send_free;
     ompi_list_item_t *item;
@@ -122,13 +122,13 @@ int mca_ptl_ib_send_frag_register(mca_ptl_ib_module_t *ib_ptl)
 void mca_ptl_ib_send_frag_send_complete(mca_ptl_ib_module_t *ib_ptl, mca_ptl_ib_send_frag_t* sendfrag)
 {
     mca_ptl_base_header_t *hdr;
-    mca_pml_base_send_request_t* req = sendfrag->frag_send.frag_request;
+    mca_ptl_base_send_request_t* req = sendfrag->frag_send.frag_request;
     hdr = (mca_ptl_base_header_t *) sendfrag->ib_buf.buf;
 
     switch(hdr->hdr_common.hdr_type) {
         case MCA_PTL_HDR_TYPE_MATCH:
             if (0 == (hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK)
-                || mca_pml_base_send_request_matched(req)) {
+                || mca_ptl_base_send_request_matched(req)) {
 
                 ib_ptl->super.ptl_send_progress(&ib_ptl->super,
                     sendfrag->frag_send.frag_request,

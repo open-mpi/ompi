@@ -129,7 +129,7 @@ int mca_ptl_ib_finalize(struct mca_ptl_base_module_t* ptl)
 }
 
 int mca_ptl_ib_request_init( struct mca_ptl_base_module_t* ptl,
-    struct mca_pml_base_send_request_t* request)
+    struct mca_ptl_base_send_request_t* request)
 {
     mca_ptl_ib_module_t* ib_ptl = (mca_ptl_ib_module_t*)ptl;
     mca_ptl_ib_send_frag_t* sendfrag;
@@ -146,7 +146,7 @@ int mca_ptl_ib_request_init( struct mca_ptl_base_module_t* ptl,
 
 
 void mca_ptl_ib_request_fini( struct mca_ptl_base_module_t* ptl,
-    struct mca_pml_base_send_request_t* request)
+    struct mca_ptl_base_send_request_t* request)
 {
     mca_ptl_ib_module_t* ib_ptl = (mca_ptl_ib_module_t*)ptl;  
     mca_ptl_ib_send_request_t* sendreq = (mca_ptl_ib_send_request_t*)request;
@@ -162,7 +162,7 @@ void mca_ptl_ib_request_fini( struct mca_ptl_base_module_t* ptl,
 
 int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_pml_base_send_request_t* sendreq,
+    struct mca_ptl_base_send_request_t* sendreq,
     size_t offset,
     size_t size,
     int flags)
@@ -196,15 +196,15 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
          * transfer could be in parallel.
          */
         if( offset <= mca_ptl_ib_module.super.ptl_first_frag_size ) {
-            convertor = &sendreq->req_convertor;
+            convertor = &sendreq->req_send.req_convertor;
         } else {
             convertor = &sendfrag->frag_send.frag_base.frag_convertor;
-            ompi_convertor_copy(&sendreq->req_convertor, convertor);
+            ompi_convertor_copy(&sendreq->req_send.req_convertor, convertor);
             ompi_convertor_init_for_send( convertor,
                                           0,
-                                          sendreq->req_base.req_datatype,
-                                          sendreq->req_base.req_count,
-                                          sendreq->req_base.req_addr,
+                                          sendreq->req_send.req_base.req_datatype,
+                                          sendreq->req_send.req_base.req_count,
+                                          sendreq->req_send.req_base.req_addr,
                                           offset,
                                           NULL );
         }
@@ -245,12 +245,12 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
     /* Initialize header */
     hdr = (mca_ptl_base_header_t *) &sendfrag->ib_buf.buf[0];
     hdr->hdr_common.hdr_flags = flags;
-    hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
-    hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
-    hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
-    hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
-    hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-    hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
+    hdr->hdr_match.hdr_contextid = sendreq->req_send.req_base.req_comm->c_contextid;
+    hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
+    hdr->hdr_match.hdr_dst = sendreq->req_send.req_base.req_peer;
+    hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
+    hdr->hdr_match.hdr_msg_length = sendreq->req_send.req_bytes_packed;
+    hdr->hdr_match.hdr_msg_seq = sendreq->req_send.req_base.req_sequence;
     if((flags & MCA_PTL_FLAGS_ACK) == 0) {
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
         hdr_length = sizeof(mca_ptl_base_match_header_t);
@@ -272,8 +272,8 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
     }
 
     /* if this is the entire message - signal request is complete */
-    if(sendreq->req_bytes_packed == size) {
-        ompi_request_complete( &(sendreq->req_base.req_ompi) );
+    if(sendreq->req_send.req_bytes_packed == size) {
+        ompi_request_complete( &(sendreq->req_send.req_base.req_ompi) );
     }
     return OMPI_SUCCESS;
 }
@@ -284,7 +284,7 @@ int mca_ptl_ib_send( struct mca_ptl_base_module_t* ptl,
 
 int mca_ptl_ib_put( struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_pml_base_send_request_t* req, size_t offset,
+    struct mca_ptl_base_send_request_t* req, size_t offset,
     size_t size, int flags)
 {
     return OMPI_ERR_NOT_IMPLEMENTED;
@@ -301,7 +301,7 @@ static void mca_ptl_ib_ack(
     mca_ptl_ib_recv_frag_t *recv_frag)
 {
     mca_ptl_base_header_t *hdr;
-    mca_pml_base_recv_request_t *request;
+    mca_ptl_base_recv_request_t *request;
     mca_ptl_ib_peer_t *ib_peer;
     ib_buffer_t *ib_buf;
     int recv_len;
@@ -333,10 +333,10 @@ static void mca_ptl_ib_ack(
 
     hdr->hdr_ack.hdr_dst_addr.lval = 0;
 
-    addr_to_reg = (void*)((char*)request->req_base.req_addr + recv_len);
+    addr_to_reg = (void*)((char*)request->req_recv.req_base.req_addr + recv_len);
     hdr->hdr_ack.hdr_dst_addr.pval = addr_to_reg;
 
-    len_to_reg = request->req_bytes_packed - recv_len;
+    len_to_reg = request->req_recv.req_bytes_packed - recv_len;
     hdr->hdr_ack.hdr_dst_size = len_to_reg;
 
     A_PRINT("Dest addr : %p, RDMA Len : %d",
@@ -379,7 +379,7 @@ void mca_ptl_ib_matched(
     mca_ptl_base_recv_frag_t* frag)
 {
     mca_ptl_ib_module_t* ib_ptl = (mca_ptl_ib_module_t*)ptl;
-    mca_pml_base_recv_request_t *request;
+    mca_ptl_base_recv_request_t *request;
     mca_ptl_base_header_t *header;
     mca_ptl_ib_recv_frag_t *recv_frag;
 
@@ -419,16 +419,16 @@ void mca_ptl_ib_matched(
         iov.iov_base = frag->frag_base.frag_addr;
         iov.iov_len  = frag->frag_base.frag_size;
 
-        proc = ompi_comm_peer_lookup(request->req_base.req_comm,
-                request->req_base.req_ompi.req_status.MPI_SOURCE);
+        proc = ompi_comm_peer_lookup(request->req_recv.req_base.req_comm,
+                request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
 
         ompi_convertor_copy(proc->proc_convertor, &frag->frag_base.frag_convertor);
 
         ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor,
 				      0,
-				      request->req_base.req_datatype,
-				      request->req_base.req_count,
-				      request->req_base.req_addr,
+				      request->req_recv.req_base.req_datatype,
+				      request->req_recv.req_base.req_count,
+				      request->req_recv.req_base.req_addr,
                       0, /* fragment offset */
 				      NULL );
         ompi_convertor_unpack(&frag->frag_base.frag_convertor, &iov, &iov_count, &max_data, &freeAfter);
