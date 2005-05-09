@@ -23,7 +23,7 @@
 #ifndef MCA_PTL_GM_SEND_FRAG_H
 #define MCA_PTL_GM_SEND_FRAG_H
 
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 
@@ -111,13 +111,13 @@ extern "C" {
 
     mca_ptl_gm_send_frag_t *
     mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t* ptl,
-				struct mca_pml_base_send_request_t* sendreq );
+				struct mca_ptl_base_send_request_t* sendreq );
     
     int
     mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t** sendfrag,
 			      struct mca_ptl_gm_peer_t * ptl_peer,
 			      struct mca_ptl_gm_module_t *ptl,
-			      struct mca_pml_base_send_request_t * sendreq,
+			      struct mca_ptl_base_send_request_t * sendreq,
 			      size_t offset,
 			      size_t* size,
 			      int flags );
@@ -138,18 +138,18 @@ extern "C" {
 
     static inline int
     mca_ptl_gm_init_header_rndv( mca_ptl_base_header_t *hdr,
-                                 struct mca_pml_base_send_request_t * sendreq,
+                                 struct mca_ptl_base_send_request_t * sendreq,
                                  int flags )
     {
         hdr->hdr_common.hdr_flags = flags;
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_RNDV;
         
-        hdr->hdr_rndv.hdr_match.hdr_contextid  = sendreq->req_base.req_comm->c_contextid;
-        hdr->hdr_rndv.hdr_match.hdr_src        = sendreq->req_base.req_comm->c_my_rank;
-        hdr->hdr_rndv.hdr_match.hdr_dst        = sendreq->req_base.req_peer;
-        hdr->hdr_rndv.hdr_match.hdr_tag        = sendreq->req_base.req_tag;
-        hdr->hdr_rndv.hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-        hdr->hdr_rndv.hdr_match.hdr_msg_seq    = sendreq->req_base.req_sequence;
+        hdr->hdr_rndv.hdr_match.hdr_contextid  = sendreq->req_send.req_base.req_comm->c_contextid;
+        hdr->hdr_rndv.hdr_match.hdr_src        = sendreq->req_send.req_base.req_comm->c_my_rank;
+        hdr->hdr_rndv.hdr_match.hdr_dst        = sendreq->req_send.req_base.req_peer;
+        hdr->hdr_rndv.hdr_match.hdr_tag        = sendreq->req_send.req_base.req_tag;
+        hdr->hdr_rndv.hdr_match.hdr_msg_length = sendreq->req_send.req_bytes_packed;
+        hdr->hdr_rndv.hdr_match.hdr_msg_seq    = sendreq->req_send.req_base.req_sequence;
         hdr->hdr_rndv.hdr_src_ptr.lval         = 0L;
         hdr->hdr_rndv.hdr_src_ptr.pval         = sendreq;
 
@@ -159,7 +159,7 @@ extern "C" {
     static inline int
     mca_ptl_gm_init_header_frag( struct mca_ptl_gm_send_frag_t* sendfrag,
                                  struct mca_ptl_gm_peer_t * ptl_peer,
-                                 struct mca_pml_base_send_request_t * sendreq,
+                                 struct mca_ptl_base_send_request_t * sendreq,
                                  size_t offset,
                                  size_t* size,
                                  int flags )

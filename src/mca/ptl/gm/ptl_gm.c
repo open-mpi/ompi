@@ -62,7 +62,7 @@ mca_ptl_gm_module_t mca_ptl_gm_module = {
 };
 
 OBJ_CLASS_INSTANCE (mca_ptl_gm_send_request_t,
-                    mca_pml_base_send_request_t, NULL, NULL);
+                    mca_ptl_base_send_request_t, NULL, NULL);
 OBJ_CLASS_INSTANCE (mca_ptl_gm_peer_t, ompi_list_item_t, NULL, NULL);
 
 int
@@ -235,7 +235,7 @@ mca_ptl_gm_finalize (struct mca_ptl_base_module_t *base_ptl)
 
 int
 mca_ptl_gm_request_init( struct mca_ptl_base_module_t *ptl,
-			 struct mca_pml_base_send_request_t *request )
+			 struct mca_ptl_base_send_request_t *request )
 {
 
 #if 0
@@ -262,7 +262,7 @@ mca_ptl_gm_request_init( struct mca_ptl_base_module_t *ptl,
  */
 void
 mca_ptl_gm_request_fini (struct mca_ptl_base_module_t *ptl,
-                         struct mca_pml_base_send_request_t *request)
+                         struct mca_ptl_base_send_request_t *request)
 {
 
 #if 0
@@ -283,7 +283,7 @@ mca_ptl_gm_request_fini (struct mca_ptl_base_module_t *ptl,
 int
 mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
                 struct mca_ptl_base_peer_t *ptl_peer,
-                struct mca_pml_base_send_request_t *sendreq,
+                struct mca_ptl_base_send_request_t *sendreq,
                 size_t offset, size_t size, int flags)
 {
    int rc;
@@ -305,7 +305,7 @@ mca_ptl_gm_put (struct mca_ptl_base_module_t *ptl,
 int
 mca_ptl_gm_get (struct mca_ptl_base_module_t *ptl,
                 struct mca_ptl_base_peer_t *ptl_base_peer,
-                struct mca_pml_base_recv_request_t *request,
+                struct mca_ptl_base_recv_request_t *request,
                 size_t offset, size_t size, int flags)
 {
     return OMPI_SUCCESS;
@@ -332,7 +332,7 @@ void
 mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
                     mca_ptl_base_recv_frag_t* frag )
 {
-    mca_pml_base_recv_request_t *request;
+    mca_ptl_base_recv_request_t *request;
     mca_ptl_base_header_t *hdr;
     int32_t rc;
     mca_ptl_gm_module_t *gm_ptl;
@@ -366,7 +366,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
 	    hdr->hdr_ack.hdr_dst_match.pval = request;
 	    hdr->hdr_ack.hdr_dst_addr.lval = 0L;
 	    hdr->hdr_ack.hdr_dst_addr.pval = ptl;  /* local use */
-	    hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed;
+	    hdr->hdr_ack.hdr_dst_size = request->req_recv.req_bytes_packed;
 
 	    gm_send_with_callback( ((mca_ptl_gm_module_t*)ptl)->gm_port, hdr,
                                    GM_SIZE, sizeof(mca_ptl_base_ack_header_t),
@@ -392,9 +392,9 @@ mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
         ompi_convertor_copy( peer->peer_proc->proc_ompi->proc_convertor,
                              &frag->frag_base.frag_convertor );
         ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor, 0,
-                                      request->req_base.req_datatype,
-                                      request->req_base.req_count,
-                                      request->req_base.req_addr,
+                                      request->req_recv.req_base.req_datatype,
+                                      request->req_recv.req_base.req_count,
+                                      request->req_recv.req_base.req_addr,
                                       0, NULL );
         out_size = 1;
         max_data = iov.iov_len;

@@ -46,7 +46,7 @@ OBJ_CLASS_INSTANCE(mca_ptl_gm_send_frag_t,
  */
 mca_ptl_gm_send_frag_t*
 mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t* ptl,
-			    struct mca_pml_base_send_request_t* sendreq )
+			    struct mca_ptl_base_send_request_t* sendreq )
 {
     ompi_list_item_t* item;
     mca_ptl_gm_send_frag_t* frag;
@@ -63,7 +63,7 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t* ptl,
 
     frag->frag_send.frag_request         = sendreq;
     frag->frag_send.frag_base.frag_owner = (struct mca_ptl_base_module_t*)ptl;
-    frag->frag_send.frag_base.frag_addr  = sendreq->req_addr;
+    frag->frag_send.frag_base.frag_addr  = sendreq->req_send.req_addr;
     frag->frag_bytes_processed           = 0;
     frag->frag_bytes_validated           = 0;
     frag->status                         = -1;
@@ -76,7 +76,7 @@ mca_ptl_gm_alloc_send_frag( struct mca_ptl_gm_module_t* ptl,
 int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t** putfrag,
 			      struct mca_ptl_gm_peer_t* ptl_peer,
 			      struct mca_ptl_gm_module_t* gm_ptl,
-			      struct mca_pml_base_send_request_t* sendreq,
+			      struct mca_ptl_base_send_request_t* sendreq,
 			      size_t offset, size_t* size, int flags )
 {
     ompi_convertor_t* convertor;
@@ -90,11 +90,11 @@ int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t** putfrag,
 
     if( (*size) > 0 ) {
         convertor = &(frag->frag_send.frag_base.frag_convertor);
-        ompi_convertor_copy( &(sendreq->req_convertor), convertor );
+        ompi_convertor_copy( &(sendreq->req_send.req_convertor), convertor );
         ompi_convertor_init_for_send( convertor, 0,
-                                      sendreq->req_datatype,
-                                      sendreq->req_count,
-                                      sendreq->req_addr,
+                                      sendreq->req_send.req_datatype,
+                                      sendreq->req_send.req_count,
+                                      sendreq->req_send.req_addr,
                                       offset, NULL );
     }
     *putfrag = frag;

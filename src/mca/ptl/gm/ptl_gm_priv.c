@@ -20,14 +20,14 @@
 #include "ompi_config.h"
 
 #include "include/types.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_header.h"
 #include "ptl_gm.h"
 #include "ptl_gm_peer.h"
 #include "ptl_gm_proc.h"
 #include "ptl_gm_sendfrag.h"
 #include "ptl_gm_priv.h"
-#include "mca/pml/teg/src/pml_teg_proc.h"
+#include "mca/pml/teg/pml_teg_proc.h"
 
 static int mca_ptl_gm_send_quick_fin_message( struct mca_ptl_gm_peer_t* ptl_peer,
 					      struct mca_ptl_base_frag_t* frag );
@@ -374,7 +374,7 @@ int mca_ptl_gm_send_burst_data( mca_ptl_gm_peer_t *ptl_peer,
 
 int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
 				   mca_ptl_gm_send_frag_t *fragment, 
-				   struct mca_pml_base_send_request_t *sendreq, 
+				   struct mca_ptl_base_send_request_t *sendreq, 
 				   size_t offset,
 				   size_t *size, 
 				   int flags )
@@ -393,7 +393,7 @@ int mca_ptl_gm_peer_send_continue( mca_ptl_gm_peer_t *ptl_peer,
     /* must update the offset after actual fragment size is determined
      * before attempting to send the fragment
      */
-    mca_pml_base_send_request_offset( fragment->frag_send.frag_request,
+    mca_ptl_base_send_request_offset( fragment->frag_send.frag_request,
                                       fragment->frag_send.frag_base.frag_size );
     DO_DEBUG( ompi_output( 0, "sender %d start new send length %ld offset %ld\n", orte_process_info.my_name->vpid, *size, offset ); )
     /* The first DMA memory buffer has been alocated in same time as the fragment */
@@ -504,7 +504,7 @@ static void send_match_callback( struct gm_port* port, void* context, gm_status_
  */
 int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
                           struct mca_ptl_base_peer_t* ptl_base_peer,
-                          struct mca_pml_base_send_request_t *sendreq, 
+                          struct mca_ptl_base_send_request_t *sendreq, 
                           size_t offset,
                           size_t size,
                           int flags )
@@ -532,7 +532,7 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
     hdr->hdr_rndv.hdr_frag_length = (uint64_t)((long)ptl);
 
     if( size_in > 0 ) {
-        convertor = &sendreq->req_convertor;
+        convertor = &sendreq->req_send.req_convertor;
 
         if( (size_in + header_length) <= mca_ptl_gm_component.gm_segment_size ) 
             iov.iov_len = size_in;
@@ -550,7 +550,7 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
         /* must update the offset after actual fragment size is determined
          * before attempting to send the fragment
          */
-        mca_pml_base_send_request_offset( sendreq, max_data );
+        mca_ptl_base_send_request_offset( sendreq, max_data );
     } else {
         iov.iov_len = 0;  /* no data will be transmitted */
     }
@@ -583,10 +583,10 @@ static mca_ptl_gm_recv_frag_t*
 mca_ptl_gm_ctrl_frag( struct mca_ptl_gm_module_t *ptl,
 		      mca_ptl_base_header_t * header, uint32_t msg_len )
 {
-    mca_pml_base_send_request_t *req;
+    mca_ptl_base_send_request_t *req;
   
     assert( MCA_PTL_FLAGS_ACK & header->hdr_common.hdr_flags );
-    req = (mca_pml_base_send_request_t*)(header->hdr_ack.hdr_src_ptr.pval);
+    req = (mca_ptl_base_send_request_t*)(header->hdr_ack.hdr_src_ptr.pval);
     req->req_peer_match = header->hdr_ack.hdr_dst_match;
     req->req_peer_addr  = header->hdr_ack.hdr_dst_addr;
     req->req_peer_size  = header->hdr_ack.hdr_dst_size;
@@ -699,7 +699,7 @@ static mca_ptl_gm_recv_frag_t*
 mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
                            mca_ptl_gm_frag_header_t* hdr, uint32_t msg_len )
 {
-    mca_pml_base_recv_request_t *request;
+    mca_ptl_base_recv_request_t *request;
     ompi_convertor_t local_convertor, *convertor;
     struct iovec iov;
     uint32_t iov_count, max_data = 0, header_length;
@@ -710,7 +710,7 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
     if( hdr->hdr_frag.hdr_common.hdr_flags & PTL_FLAG_GM_HAS_FRAGMENT ) {
         frag = (mca_ptl_gm_recv_frag_t*)hdr->hdr_frag.hdr_dst_ptr.pval;
         frag->frag_recv.frag_base.frag_header.hdr_frag = hdr->hdr_frag;
-        request = (mca_pml_base_recv_request_t*)frag->frag_recv.frag_request;
+        request = (mca_ptl_base_recv_request_t*)frag->frag_recv.frag_request;
         /* here we can have a synchronisation problem if several threads work in same time
          * with the same request. The only question is if it's possible ?
          */
@@ -719,12 +719,12 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
         if( PTL_FLAG_GM_REQUIRE_LOCK & hdr->hdr_frag.hdr_common.hdr_flags )
             header_length = sizeof(mca_ptl_gm_frag_header_t);
     } else {
-        request = (mca_pml_base_recv_request_t*)hdr->hdr_frag.hdr_dst_ptr.pval;
+        request = (mca_ptl_base_recv_request_t*)hdr->hdr_frag.hdr_dst_ptr.pval;
 
         if( hdr->hdr_frag.hdr_frag_length <= (mca_ptl_gm_component.gm_segment_size -
                                               sizeof(mca_ptl_base_frag_header_t)) ) {
-            ompi_proc_t* proc = ompi_comm_peer_lookup( request->req_base.req_comm,
-                                                       request->req_base.req_ompi.req_status.MPI_SOURCE ); 
+            ompi_proc_t* proc = ompi_comm_peer_lookup( request->req_recv.req_base.req_comm,
+                                                       request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE ); 
             convertor = &local_convertor;
             convertor->stack_size = 0;  /* dont let the convertor free the stack */
             ompi_convertor_copy( proc->proc_convertor, convertor );
@@ -734,11 +734,11 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
             frag->frag_recv.frag_request = request;
             frag->frag_offset = hdr->hdr_frag.hdr_frag_offset;
             frag->matched = true;
-            frag->frag_recv.frag_base.frag_addr = frag->frag_recv.frag_request->req_base.req_addr;
+            frag->frag_recv.frag_base.frag_addr = frag->frag_recv.frag_request->req_recv.req_base.req_addr;
             frag->frag_recv.frag_base.frag_size = hdr->hdr_frag.hdr_frag_length;
             frag->frag_recv.frag_base.frag_peer = (struct mca_ptl_base_peer_t*)
-                mca_pml_teg_proc_lookup_remote_peer( request->req_base.req_comm,
-                                                     request->req_base.req_ompi.req_status.MPI_SOURCE,
+                mca_pml_teg_proc_lookup_remote_peer( request->req_recv.req_base.req_comm,
+                                                     request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE,
                                                      (struct mca_ptl_base_module_t*)ptl );
             /* send an ack message to the sender ... quick hack (TODO) */
             frag->frag_recv.frag_base.frag_header.hdr_frag = hdr->hdr_frag;
@@ -752,9 +752,9 @@ mca_ptl_gm_recv_frag_frag( struct mca_ptl_gm_module_t* ptl,
                                    orte_process_info.my_name->vpid, frag->frag_offset, frag->frag_recv.frag_base.frag_size ); );
         }
         ompi_convertor_init_for_recv( convertor, 0,
-                                      request->req_base.req_datatype,
-                                      request->req_base.req_count,
-                                      request->req_base.req_addr,
+                                      request->req_recv.req_base.req_datatype,
+                                      request->req_recv.req_base.req_count,
+                                      request->req_recv.req_base.req_addr,
                                       hdr->hdr_frag.hdr_frag_offset, NULL );
     }
 
