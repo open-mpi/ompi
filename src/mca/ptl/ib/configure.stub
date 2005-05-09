@@ -61,14 +61,14 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     EXTRA_LDFLAGS=
     if test -n "$with_ptl_ib_libdir"; then
         if test -d "$with_ptl_ib_libdir/lib"; then
-            EXTRA_LDFLAGS="-L$with_ptl_ib_libdir/lib"
+            EXTRA_LDFLAGS="-L$with_ptl_ib_libdir/lib64"
         else
             AC_MSG_WARN([*** Warning: cannot find $with_ptl_ib_libdir/lib])
             AC_MSG_WARN([*** Will still try to configure ib ptl anyway...])
         fi
     elif test -n "$with_ptl_ib"; then
         if test -d "$with_ptl_ib/lib"; then
-            EXTRA_LDFLAGS="-L$with_ptl_ib/lib"
+            EXTRA_LDFLAGS="-L$with_ptl_ib/lib64"
         else
             AC_MSG_WARN([*** Warning: cannot find $with_ptl_ib/lib])
             AC_MSG_WARN([*** Will still try to configure ib ptl anyway...])
@@ -80,18 +80,8 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
 
     LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
     AC_CHECK_LIB([vapi], [EVAPI_list_hcas], [], [vapi_badness=true],
-	 [-lmtl_common -lmpga -lmosal])
-    if test -n "$vapi_badness"; then
-         AC_CHECK_LIB([pthread], [pthread_create], 
-		      [pthread=yes LIBS="$LIBS -lpthread"],
-		      [pthread=no])
-	 if test "$pthread" = "yes"; then
-	     AC_CHECK_LIB([vapi], [EVAPI_open_hca], [],
-                          [AC_MSG_ERROR([*** Cannot find libvapi])],
-                          [-lmtl_common -lmpga -lmosal])
-	fi
-    fi    
-    LIBS="$LIBS -lmtl_common -lmpga"
+	 [-lmpga -lmosal])
+    LIBS="$LIBS -lmpga -lmosal"
 
     #
     # Save extra compiler/linker flags so that they can be added in

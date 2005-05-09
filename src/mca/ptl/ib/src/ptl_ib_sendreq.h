@@ -21,7 +21,7 @@
 
 
 #include "ompi_config.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_ib_sendfrag.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -37,7 +37,7 @@ OBJ_CLASS_DECLARATION(mca_ptl_ib_send_request_t);
  * fragment on every send request.
  */
 struct mca_ptl_ib_send_request_t {
-       mca_pml_base_send_request_t          super;
+       mca_ptl_base_send_request_t          super;
        mca_ptl_ib_send_frag_t              *req_frag; 
        VAPI_rkey_t                          req_key;
 };
