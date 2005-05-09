@@ -21,11 +21,11 @@
 #include "include/constants.h"
 
 ompi_pointer_array_t  ompi_request_f_to_c_table;
-volatile int          ompi_request_waiting = 0;
+OMPI_DECLSPEC volatile int          ompi_request_waiting = 0;
 int                   ompi_request_poll_iterations = 20000;
-ompi_mutex_t          ompi_request_lock;
-ompi_condition_t      ompi_request_cond;
-ompi_request_t        ompi_request_null;
+OMPI_DECLSPEC ompi_mutex_t          ompi_request_lock;
+OMPI_DECLSPEC ompi_condition_t      ompi_request_cond;
+OMPI_DECLSPEC ompi_request_t        ompi_request_null;
 ompi_status_public_t  ompi_status_empty;
 
 

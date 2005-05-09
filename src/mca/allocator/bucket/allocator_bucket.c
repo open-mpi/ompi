@@ -49,7 +49,7 @@ struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
 {
     size_t alloc_size = sizeof(mca_allocator_bucket_t);
     mca_allocator_bucket_t * retval;
-    mca_allocator_bucket_t * allocator = malloc(alloc_size);
+    mca_allocator_bucket_t * allocator = (mca_allocator_bucket_t *) malloc(alloc_size);
     if(NULL == allocator) {
         return(NULL);
     }
