@@ -67,7 +67,7 @@ void mca_ptl_sm_matched(
     mca_ptl_base_module_t* ptl,
     mca_ptl_base_recv_frag_t* frag)
 {
-    mca_pml_base_recv_request_t* recv_desc;
+    mca_ptl_base_recv_request_t* recv_desc;
     mca_ptl_sm_frag_t *sm_frag_desc;
     struct iovec iov; 
     ompi_convertor_t frag_convertor;
@@ -92,7 +92,7 @@ void mca_ptl_sm_matched(
          * Initialize convertor and use it to unpack data  
          */ 
         OBJ_CONSTRUCT(&frag_convertor, ompi_convertor_t);
-        proc = ompi_comm_peer_lookup(recv_desc->req_base.req_comm,
+        proc = ompi_comm_peer_lookup(recv_desc->req_recv.req_base.req_comm,
                     frag->frag_base.frag_header.hdr_match.hdr_src);
         /* write over converter set on the send side */
         ompi_convertor_copy(proc->proc_convertor,
@@ -100,9 +100,9 @@ void mca_ptl_sm_matched(
         ompi_convertor_init_for_recv( 
                 &frag_convertor,                   /* convertor */ 
                 0,                                 /* flags */ 
-                recv_desc->req_base.req_datatype,  /* datatype */ 
-                recv_desc->req_base.req_count,     /* count elements */ 
-                recv_desc->req_base.req_addr,      /* users buffer */ 
+                recv_desc->req_recv.req_base.req_datatype,  /* datatype */ 
+                recv_desc->req_recv.req_base.req_count,     /* count elements */ 
+                recv_desc->req_recv.req_base.req_addr,      /* users buffer */ 
                 sm_frag_desc->send_offset,         /* offset in bytes into packed buffer */ 
                 NULL );                            /* dont allocate memory */
                 

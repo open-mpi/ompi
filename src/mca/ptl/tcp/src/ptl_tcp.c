@@ -22,9 +22,9 @@
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_header.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
-#include "mca/pml/base/pml_base_recvreq.h"
+#include "mca/ptl/base/ptl_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 #include "mca/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
@@ -39,7 +39,7 @@ mca_ptl_tcp_module_t mca_ptl_tcp_module = {
     {
     &mca_ptl_tcp_component.super,
     16, /* max size of request cache */
-    sizeof(mca_ptl_tcp_send_request_t) - sizeof(mca_pml_base_send_request_t), /* bytes required by ptl for a request */
+    sizeof(mca_ptl_tcp_send_request_t) - sizeof(mca_ptl_base_send_request_t), /* bytes required by ptl for a request */
     0, /* max size of first fragment */
     0, /* min fragment size */
     0, /* max fragment size */
@@ -179,7 +179,7 @@ int mca_ptl_tcp_finalize(struct mca_ptl_base_module_t* ptl)
  * along w/ the ptl to cache the first fragment control information.
  */
 
-int mca_ptl_tcp_request_init(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request)
+int mca_ptl_tcp_request_init(struct mca_ptl_base_module_t* ptl, struct mca_ptl_base_send_request_t* request)
 {
     OBJ_CONSTRUCT(request+1, mca_ptl_tcp_send_frag_t);
     return OMPI_SUCCESS;
@@ -190,7 +190,7 @@ int mca_ptl_tcp_request_init(struct mca_ptl_base_module_t* ptl, struct mca_pml_b
  * Cleanup any resources cached along w/ the request.
  */
 
-void mca_ptl_tcp_request_fini(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request)
+void mca_ptl_tcp_request_fini(struct mca_ptl_base_module_t* ptl, struct mca_ptl_base_send_request_t* request)
 {
     OBJ_DESTRUCT(request+1);
 }
@@ -240,7 +240,7 @@ void mca_ptl_tcp_send_frag_return(struct mca_ptl_base_module_t* ptl, struct mca_
 int mca_ptl_tcp_send(
     struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_pml_base_send_request_t* sendreq,
+    struct mca_ptl_base_send_request_t* sendreq,
     size_t offset,
     size_t size,
     int flags)
@@ -261,7 +261,7 @@ int mca_ptl_tcp_send(
     /* must update the offset after actual fragment size is determined -- and very important --
      * before attempting to send the fragment 
      */
-    mca_pml_base_send_request_offset(sendreq, size);
+    mca_ptl_base_send_request_offset(sendreq, size);
     return mca_ptl_tcp_peer_send(ptl_peer, sendfrag, offset);
 }
 

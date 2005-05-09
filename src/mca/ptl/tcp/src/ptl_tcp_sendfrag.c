@@ -78,7 +78,7 @@ void* mca_ptl_tcp_memalloc( size_t* length )
 int mca_ptl_tcp_send_frag_init(
     mca_ptl_tcp_send_frag_t* sendfrag,
     mca_ptl_base_peer_t* ptl_peer,
-    mca_pml_base_send_request_t* sendreq,
+    mca_ptl_base_send_request_t* sendreq,
     size_t offset,
     size_t* size,
     int flags)
@@ -96,13 +96,13 @@ int mca_ptl_tcp_send_frag_init(
        int rc;
 
        convertor = &sendfrag->frag_convertor;
-       ompi_convertor_copy(&sendreq->req_convertor, convertor);
+       ompi_convertor_copy(&sendreq->req_send.req_convertor, convertor);
        ompi_convertor_init_for_send( 
 				    convertor,
 				    0, 
-				    sendreq->req_datatype,
-				    sendreq->req_count,
-				    sendreq->req_addr,
+				    sendreq->req_send.req_datatype,
+				    sendreq->req_send.req_count,
+				    sendreq->req_send.req_addr,
 				    offset,
 				    mca_ptl_tcp_memalloc );
 
@@ -130,12 +130,12 @@ int mca_ptl_tcp_send_frag_init(
     if(offset == 0) {
         hdr->hdr_common.hdr_type = (flags & MCA_PTL_FLAGS_ACK) ? MCA_PTL_HDR_TYPE_MATCH : MCA_PTL_HDR_TYPE_RNDV;
         hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
-        hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
-        hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
-        hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
-        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-        hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
+        hdr->hdr_match.hdr_contextid = sendreq->req_send.req_base.req_comm->c_contextid;
+        hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
+        hdr->hdr_match.hdr_dst = sendreq->req_send.req_base.req_peer;
+        hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
+        hdr->hdr_match.hdr_msg_length = sendreq->req_send.req_bytes_packed;
+        hdr->hdr_match.hdr_msg_seq = sendreq->req_send.req_base.req_sequence;
         hdr->hdr_rndv.hdr_frag_length = size_out;
         hdr->hdr_rndv.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
         hdr->hdr_rndv.hdr_src_ptr.pval = sendfrag;

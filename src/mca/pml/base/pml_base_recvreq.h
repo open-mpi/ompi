@@ -30,8 +30,6 @@ OMPI_DECLSPEC extern ompi_class_t mca_pml_base_recv_request_t_class;
 struct mca_pml_base_recv_request_t {
    mca_pml_base_request_t req_base;  /**< base request */
    size_t req_bytes_packed;          /**< size of message being received */
-   size_t req_bytes_received;        /**< number of bytes received from network */
-   size_t req_bytes_delivered;       /**< number of bytes delivered to user */
 };
 typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;
 

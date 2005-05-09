@@ -21,13 +21,13 @@
 
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
-#include "mca/pml/base/pml_base_recvreq.h"
+#include "mca/ptl/base/ptl_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-typedef mca_pml_base_recv_request_t mca_pml_teg_recv_request_t;
+typedef mca_ptl_base_recv_request_t mca_pml_teg_recv_request_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_teg_recv_request_t);
 

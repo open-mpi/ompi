@@ -105,7 +105,7 @@
  * PTLs.
  *
  * The PML is responsible for managing the state (allocation, initialization, 
- * and release) of send request descriptors (mca_pml_base_send_request_t). 
+ * and release) of send request descriptors (mca_ptl_base_send_request_t). 
  * However, to minimize the latency associated with allocating resources to 
  * a request, the PML provides the capability to cache send requests 
  * descriptors on a per-PTL basis. Each PTL exports two variables 
@@ -117,7 +117,7 @@
  * is grown by the PML up to the specified limit. The PTL variable, 
  * ptl_cache_bytes, can be used to specify that additional memory should be 
  * allocated by the PML in one contigous block along with the base send request 
- * (mca_pml_base_send_request_t) for use by the PTL. The PTLs ptl_request_init() 
+ * (mca_ptl_base_send_request_t) for use by the PTL. The PTLs ptl_request_init() 
  * method is then called to initialize this additional memory and associating 
  * any PTL specific resources with the request.  If a request is removed from 
  * the cache, the ptl_request_fini() method will be called to allow the PTL 
@@ -129,7 +129,7 @@
  * number of bytes. However, this may not be possible due to resource
  * contraints or datatype alignment/offset. The PTL is responsible for
  * updating the number of bytes actually fragmented and queued for delivery 
- * on the send request (mca_pml_base_send_request.req_offset) to reflect 
+ * on the send request (mca_ptl_base_send_request.req_offset) to reflect 
  * the current offset into the send buffer.
  *
  * If the request is larger than ptl_first_frag_size, the remainder of
@@ -258,8 +258,8 @@
 struct mca_ptl_base_module_t;
 struct mca_ptl_base_peer_t;
 struct mca_ptl_base_fragment_t;
-struct mca_pml_base_recv_request_t;
-struct mca_pml_base_send_request_t;
+struct mca_ptl_base_recv_request_t;
+struct mca_ptl_base_send_request_t;
 struct mca_ptl_base_recv_frag_t;
 struct mca_ptl_base_send_frag_t;
 struct mca_ptl_base_match_header_t;
@@ -458,7 +458,7 @@ typedef int (*mca_ptl_base_module_del_procs_fn_t)(
  */
 typedef int (*mca_ptl_base_module_request_init_fn_t)(
     struct mca_ptl_base_module_t* ptl, 
-    struct mca_pml_base_send_request_t* request
+    struct mca_ptl_base_send_request_t* request
 );
 
 
@@ -477,7 +477,7 @@ typedef int (*mca_ptl_base_module_request_init_fn_t)(
 
 typedef void (*mca_ptl_base_module_request_fini_fn_t)(
     struct mca_ptl_base_module_t* ptl, 
-    struct mca_pml_base_send_request_t* request
+    struct mca_ptl_base_send_request_t* request
 );
 
 /**
@@ -506,7 +506,7 @@ typedef void (*mca_ptl_base_module_request_fini_fn_t)(
 typedef int (*mca_ptl_base_module_send_fn_t)(
     struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_base_peer,
-    struct mca_pml_base_send_request_t* request,
+    struct mca_ptl_base_send_request_t* request,
     size_t offset,
     size_t size,
     int flags
@@ -541,7 +541,7 @@ typedef int (*mca_ptl_base_module_send_fn_t)(
 typedef int (*mca_ptl_base_module_put_fn_t)(
     struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_base_peer,
-    struct mca_pml_base_send_request_t* request,
+    struct mca_ptl_base_send_request_t* request,
     size_t offset,
     size_t size,
     int flags
@@ -566,7 +566,7 @@ typedef int (*mca_ptl_base_module_put_fn_t)(
 typedef int (*mca_ptl_base_module_get_fn_t)(
     struct mca_ptl_base_module_t* ptl, 
     struct mca_ptl_base_peer_t* ptl_base_peer, 
-    struct mca_pml_base_recv_request_t* request,
+    struct mca_ptl_base_recv_request_t* request,
     size_t offset,
     size_t size,
     int flags
@@ -637,7 +637,7 @@ typedef void (*mca_ptl_base_module_matched_fn_t)(
  */
 typedef void (*mca_ptl_base_module_recv_progress_fn_t)(
     struct mca_ptl_base_module_t* ptl,
-    struct mca_pml_base_recv_request_t* recv_request,
+    struct mca_ptl_base_recv_request_t* recv_request,
     size_t bytes_received,
     size_t bytes_delivered
 );
@@ -657,7 +657,7 @@ typedef void (*mca_ptl_base_module_recv_progress_fn_t)(
 
 typedef void (*mca_ptl_base_module_send_progress_fn_t)(
     struct mca_ptl_base_module_t* ptl,
-    struct mca_pml_base_send_request_t* send_request,
+    struct mca_ptl_base_send_request_t* send_request,
     size_t bytes_sent
 );
 

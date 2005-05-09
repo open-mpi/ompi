@@ -32,7 +32,7 @@ OMPI_DECLSPEC extern ompi_class_t mca_ptl_base_send_frag_t_class;
  */
 struct mca_ptl_base_send_frag_t {
     mca_ptl_base_frag_t frag_base;  /**< base fragment descriptor */
-    struct mca_pml_base_send_request_t *frag_request;  /**< pointer to send request */
+    struct mca_ptl_base_send_request_t *frag_request;  /**< pointer to send request */
 };
 typedef struct mca_ptl_base_send_frag_t mca_ptl_base_send_frag_t;
 

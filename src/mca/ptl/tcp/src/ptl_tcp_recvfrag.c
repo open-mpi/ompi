@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #endif
 #include "include/ompi_socket_errno.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"
 #include "ptl_tcp_recvfrag.h"
@@ -184,7 +184,7 @@ static bool mca_ptl_tcp_recv_frag_header(mca_ptl_tcp_recv_frag_t* frag, int sd, 
 static bool mca_ptl_tcp_recv_frag_ack(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     mca_ptl_tcp_send_frag_t* sendfrag;
-    mca_pml_base_send_request_t* sendreq;
+    mca_ptl_base_send_request_t* sendreq;
     sendfrag = (mca_ptl_tcp_send_frag_t*)frag->frag_recv.frag_base.frag_header.hdr_ack.hdr_src_ptr.pval;
     sendreq = sendfrag->frag_send.frag_request;
     sendreq->req_peer_match = frag->frag_recv.frag_base.frag_header.hdr_ack.hdr_dst_match;
@@ -227,7 +227,7 @@ static bool mca_ptl_tcp_recv_frag_frag(mca_ptl_tcp_recv_frag_t* frag, int sd)
 {
     /* get request from header */
     if(frag->frag_msg_cnt == 0) {
-        frag->frag_recv.frag_request = (mca_pml_base_recv_request_t *)frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_dst_ptr.pval;
+        frag->frag_recv.frag_request = (mca_ptl_base_recv_request_t *)frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_dst_ptr.pval;
         mca_ptl_tcp_recv_frag_matched(frag, 
             frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_offset,
             frag->frag_recv.frag_base.frag_header.hdr_frag.hdr_frag_length);

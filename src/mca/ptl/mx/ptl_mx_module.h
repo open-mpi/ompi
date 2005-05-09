@@ -110,7 +110,7 @@ do {                                                                            
                 case MCA_PTL_HDR_TYPE_ACK:                                          \
                 {                                                                   \
                     mca_ptl_mx_send_frag_t* sendfrag;                               \
-                    mca_pml_base_send_request_t* sendreq;                           \
+                    mca_ptl_base_send_request_t* sendreq;                           \
                     sendfrag = (mca_ptl_mx_send_frag_t*)                            \
                         hdr->hdr_ack.hdr_src_ptr.pval;                              \
                     sendreq = sendfrag->frag_send.frag_request;                     \

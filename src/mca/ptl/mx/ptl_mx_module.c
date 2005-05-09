@@ -178,7 +178,7 @@ static void* mca_ptl_mx_thread(ompi_object_t *arg)
 static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
 {
     mca_ptl_mx_module_t* ptl = (mca_ptl_mx_module_t*)context;
-	mca_pml_base_recv_request_t* request;
+	mca_ptl_base_recv_request_t* request;
     mca_ptl_mx_recv_frag_t *frag;
     mx_return_t mx_return;
     ompi_ptr_t match;
@@ -193,10 +193,10 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
 
     /* otherwise extract request pointer and offset */
     match.lval = match_value;
-    request = (mca_pml_base_recv_request_t*)match.sval.uval;
+    request = (mca_ptl_base_recv_request_t*)match.sval.uval;
     offset = match.sval.lval;
     proc = ompi_comm_peer_lookup(request->req_base.req_comm,
-    	request->req_base.req_ompi.req_status.MPI_SOURCE);
+    	request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
 
     /* allocate a fragment for receive */
     MCA_PTL_MX_RECV_FRAG_ALLOC(frag, rc); 
@@ -220,15 +220,15 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     ompi_convertor_init_for_recv(
     	convertor,
     	0,                              /* flags */
-    	request->req_base.req_datatype, /* datatype */
-    	request->req_base.req_count,    /* count elements */
-    	request->req_base.req_addr,     /* users buffer */
+    	request->req_recv.req_base.req_datatype, /* datatype */
+    	request->req_recv.req_base.req_count,    /* count elements */
+    	request->req_recv.req_base.req_addr,     /* users buffer */
     	offset,                         /* offset in bytes into packed buffer */
     	mca_ptl_mx_mem_alloc );         /* not allocating memory */
                                                       
     /* non-contiguous - allocate buffer for receive */
     if( 1 == ompi_convertor_need_buffers( convertor )  ||
-    	request->req_bytes_packed < offset + frag->frag_size ) {
+    	request->req_recv.req_bytes_packed < offset + frag->frag_size ) {
 
     	/* TODO - use a fixed fragment size for non-contigous and convert 
     	 * this to a free-list of buffers.
@@ -242,14 +242,14 @@ static void mca_ptl_mx_match(void* context, uint64_t match_value, int size)
     	}
 
     	/* check for sending more than receiving */
-    	if( offset > request->req_bytes_packed ) {
+    	if( offset > request->req_recv.req_bytes_packed ) {
             frag->frag_recv.frag_base.frag_size = 0;
-    	} else if (offset + frag->frag_size > request->req_bytes_packed ) {
-            frag->frag_recv.frag_base.frag_size = request->req_bytes_packed - offset;
+    	} else if (offset + frag->frag_size > request->req_recv.req_bytes_packed ) {
+            frag->frag_recv.frag_base.frag_size = request->req_recv.req_bytes_packed - offset;
     	}
     /* calculate offset into users buffer */
     } else {
-    	frag->frag_recv.frag_base.frag_addr = ((unsigned char*)request->req_base.req_addr) + offset;
+    	frag->frag_recv.frag_base.frag_addr = ((unsigned char*)request->req_recv.req_base.req_addr) + offset;
     	frag->frag_recv.frag_is_buffered = false;
     }
 

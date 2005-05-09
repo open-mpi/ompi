@@ -101,13 +101,13 @@ int mca_ptl_self_finalize(struct mca_ptl_base_module_t* ptl)
     return OMPI_SUCCESS;
 }
 
-int mca_ptl_self_request_init(struct mca_ptl_base_module_t* ptl, mca_pml_base_send_request_t* request)
+int mca_ptl_self_request_init(struct mca_ptl_base_module_t* ptl, mca_ptl_base_send_request_t* request)
 {
     OBJ_CONSTRUCT(request+1, mca_ptl_base_recv_frag_t);
     return OMPI_SUCCESS;
 }
 
-void mca_ptl_self_request_fini(struct mca_ptl_base_module_t* ptl, mca_pml_base_send_request_t* request)
+void mca_ptl_self_request_fini(struct mca_ptl_base_module_t* ptl, mca_ptl_base_send_request_t* request)
 {
     OBJ_DESTRUCT(request+1);
 }
@@ -122,7 +122,7 @@ void mca_ptl_self_request_fini(struct mca_ptl_base_module_t* ptl, mca_pml_base_s
 int mca_ptl_self_send(
                       struct mca_ptl_base_module_t* ptl,
                       struct mca_ptl_base_peer_t* ptl_base_peer,
-                      struct mca_pml_base_send_request_t* request,
+                      struct mca_ptl_base_send_request_t* request,
                       size_t offset,
                       size_t size,
                       int flags )
@@ -133,16 +133,16 @@ int mca_ptl_self_send(
 
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
     hdr->hdr_common.hdr_flags = flags;
-    hdr->hdr_match.hdr_contextid = request->req_base.req_comm->c_contextid;
-    hdr->hdr_match.hdr_src = request->req_base.req_comm->c_my_rank;
-    hdr->hdr_match.hdr_dst = request->req_base.req_peer;
-    hdr->hdr_match.hdr_tag = request->req_base.req_tag;
-    hdr->hdr_match.hdr_msg_length = request->req_bytes_packed;
-    hdr->hdr_match.hdr_msg_seq = request->req_base.req_sequence;
+    hdr->hdr_match.hdr_contextid = request->req_send.req_base.req_comm->c_contextid;
+    hdr->hdr_match.hdr_src = request->req_send.req_base.req_comm->c_my_rank;
+    hdr->hdr_match.hdr_dst = request->req_send.req_base.req_peer;
+    hdr->hdr_match.hdr_tag = request->req_send.req_base.req_tag;
+    hdr->hdr_match.hdr_msg_length = request->req_send.req_bytes_packed;
+    hdr->hdr_match.hdr_msg_seq = request->req_send.req_base.req_sequence;
     hdr->hdr_rndv.hdr_src_ptr.lval = 0;
     hdr->hdr_rndv.hdr_src_ptr.pval = request;
     req->req_frag.frag_base.frag_peer = ptl_base_peer;
-    req->req_frag.frag_base.frag_size = request->req_bytes_packed;
+    req->req_frag.frag_base.frag_size = request->req_send.req_bytes_packed;
     req->req_frag.frag_base.frag_owner = &mca_ptl_self_module;
     req->req_frag.frag_request = NULL;
     req->req_frag.frag_is_buffered = 0;
@@ -169,10 +169,10 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
 {
     mca_ptl_self_send_request_t* sendreq = (mca_ptl_self_send_request_t*)
         frag->frag_base.frag_header.hdr_rndv.hdr_src_ptr.pval;
-    mca_pml_base_recv_request_t* recvreq = frag->frag_request;
+    mca_ptl_base_recv_request_t* recvreq = frag->frag_request;
 
-    if( (recvreq->req_base.req_count != 0) &&
-        (sendreq->req_send.req_base.req_count != 0) ) {
+    if( (recvreq->req_recv.req_base.req_count != 0) &&
+        (sendreq->req_ptl.req_send.req_base.req_count != 0) ) {
         /* Did you have the same datatype or not ? If yes we can use an optimized version
          * for the copy function, if not we have to use a temporary buffer to pack/unpack
          * 
@@ -180,12 +180,12 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
          * a contigous buffer and the convertor on the send request initialized to point
          * into this buffer.
          */
-        if( sendreq->req_send.req_datatype == recvreq->req_base.req_datatype ) {
-            ompi_ddt_copy_content_same_ddt( recvreq->req_base.req_datatype, 
-                                            recvreq->req_base.req_count > sendreq->req_send.req_count ?
-                                            sendreq->req_send.req_count : recvreq->req_base.req_count,
-                                            (char *)recvreq->req_base.req_addr, 
-                                            (const char *)sendreq->req_send.req_addr );
+        if( sendreq->req_ptl.req_send.req_datatype == recvreq->req_recv.req_base.req_datatype ) {
+            ompi_ddt_copy_content_same_ddt( recvreq->req_recv.req_base.req_datatype, 
+                                            recvreq->req_recv.req_base.req_count > sendreq->req_ptl.req_send.req_count ?
+                                            sendreq->req_ptl.req_send.req_count : recvreq->req_recv.req_base.req_count,
+                                            (char *)recvreq->req_recv.req_base.req_addr, 
+                                            (const char *)sendreq->req_ptl.req_send.req_addr );
         } else {
             ompi_convertor_t *pSendConvertor, *pRecvConvertor;
             struct iovec iov[1];
@@ -199,10 +199,10 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
             
             ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor, 
                                           0, 
-                                          recvreq->req_base.req_datatype, 
-                                          recvreq->req_base.req_count, 
-                                          recvreq->req_base.req_addr, 0, NULL );
-            pSendConvertor = &(sendreq->req_send.req_convertor);
+                                          recvreq->req_recv.req_base.req_datatype, 
+                                          recvreq->req_recv.req_base.req_count, 
+                                          recvreq->req_recv.req_base.req_addr, 0, NULL );
+            pSendConvertor = &(sendreq->req_ptl.req_send.req_convertor);
             pRecvConvertor = &(frag->frag_base.frag_convertor);
             completed = 0;
             freeAfter = 0;
@@ -221,8 +221,8 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
             free( buf );
         }
     }
-    ptl->ptl_send_progress( ptl, &sendreq->req_send,
-                            sendreq->req_send.req_bytes_packed );
+    ptl->ptl_send_progress( ptl, &sendreq->req_ptl,
+                            sendreq->req_ptl.req_send.req_bytes_packed );
     ptl->ptl_recv_progress( ptl, 
                             recvreq, 
                             frag->frag_base.frag_header.hdr_match.hdr_msg_length,

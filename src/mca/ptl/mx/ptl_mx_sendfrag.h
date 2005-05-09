@@ -21,7 +21,7 @@
 
 #include "ompi_config.h"
 #include "include/sys/atomic.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_mx.h"
 #include "ptl_mx_peer.h"
@@ -88,7 +88,7 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_send_frag_t);
                                                                                                                   
 #define MCA_PTL_MX_SEND_FRAG_PROGRESS(frag) \
 do { \
-    mca_pml_base_send_request_t* request = frag->frag_send.frag_request; \
+    mca_ptl_base_send_request_t* request = frag->frag_send.frag_request; \
     bool frag_ack; \
     \
     /* if this is an ack - simply return to pool */ \

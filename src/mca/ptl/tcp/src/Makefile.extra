@@ -18,7 +18,7 @@
 sources += \
 	src/ptl_tcp.c \
 	src/ptl_tcp.h \
-        src/ptl_tcp_addr.h \
+    src/ptl_tcp_addr.h \
 	src/ptl_tcp_component.c \
 	src/ptl_tcp_peer.c \
 	src/ptl_tcp_peer.h \

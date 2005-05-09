@@ -14,34 +14,28 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
 include $(top_ompi_srcdir)/config/Makefile.options
 
-sources =
-include src/Makefile.extra
-
-# Make the output library in this directory, and name it either
-# mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
-# (for static builds).
-
-if OMPI_BUILD_pml_teg_DSO
-lib =
-lib_sources = 
-component = mca_pml_teg.la
-component_sources = $(sources)
-else
-lib = libmca_pml_teg.la
-lib_sources = $(sources)
-component =
-component_sources =
-endif
-
-mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component)
-mca_pml_teg_la_SOURCES = $(component_sources)
-mca_pml_teg_la_LDFLAGS = -module -avoid-version
-
-noinst_LTLIBRARIES = $(lib)
-libmca_pml_teg_la_SOURCES = $(lib_sources)
-libmca_pml_teg_la_LDFLAGS = -module -avoid-version
+noinst_LTLIBRARIES = libmca_pml_teg.la
+libmca_pml_teg_la_SOURCES = \
+	pml_teg.c \
+	pml_teg.h \
+	pml_teg_cancel.c \
+	pml_teg_component.c \
+	pml_teg_component.h \
+	pml_teg_iprobe.c \
+	pml_teg_irecv.c \
+	pml_teg_isend.c \
+	pml_teg_ptl.c \
+	pml_teg_ptl.h \
+	pml_teg_proc.c \
+	pml_teg_proc.h \
+	pml_teg_progress.c \
+	pml_teg_recvfrag.c \
+	pml_teg_recvfrag.h \
+	pml_teg_recvreq.c \
+	pml_teg_recvreq.h \
+	pml_teg_sendreq.c \
+	pml_teg_sendreq.h \
+	pml_teg_start.c \
+    pml_ptl_array.c
