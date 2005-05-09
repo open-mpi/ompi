@@ -144,7 +144,7 @@ extern "C" {
      */
     extern int  mca_ptl_gm_put( struct mca_ptl_base_module_t *ptl,
                                 struct mca_ptl_base_peer_t *ptl_peer,
-                                struct mca_pml_base_send_request_t *sendreq,
+                                struct mca_ptl_base_send_request_t *sendreq,
                                 size_t offset, size_t size, int flags);
 
     /**
@@ -152,7 +152,7 @@ extern "C" {
      */
     extern int  mca_ptl_gm_get (struct mca_ptl_base_module_t *ptl,
                                 struct mca_ptl_base_peer_t *ptl_peer,
-                                struct mca_pml_base_recv_request_t *sendreq,
+                                struct mca_ptl_base_recv_request_t *sendreq,
                                 size_t offset, size_t size, int flags);
 
     /**
@@ -196,13 +196,13 @@ extern "C" {
      *
      */
     extern int  mca_ptl_gm_request_init( struct mca_ptl_base_module_t* ptl,
-                                         struct mca_pml_base_send_request_t* req);
+                                         struct mca_ptl_base_send_request_t* req);
 
     /**
      *
      */
     extern void mca_ptl_gm_request_fini( struct mca_ptl_base_module_t *ptl,
-                                         struct mca_pml_base_send_request_t* req);
+                                         struct mca_ptl_base_send_request_t* req);
 
     /**
      * PML->PTL Notification that a receive fragment has been matched.
