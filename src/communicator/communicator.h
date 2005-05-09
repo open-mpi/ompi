@@ -131,8 +131,8 @@ struct ompi_communicator_t {
     ompi_errhandler_type_t             errhandler_type;
 
     /* Hooks for PML to hang things */
-
-    struct mca_pml_comm_t *c_pml_comm;
+    struct mca_pml_comm_t  *c_pml_comm;
+    struct mca_pml_proc_t **c_pml_procs;
 
     mca_coll_base_module_1_0_0_t c_coll;
     /**< Selected collective module, saved by value for speed (instead

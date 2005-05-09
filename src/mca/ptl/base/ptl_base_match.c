@@ -50,7 +50,7 @@
 do { \
     /* local parameters */ \
     ompi_list_t* wild_receives = &pml_comm->c_wild_receives; \
-    mca_pml_base_recv_request_t *wild_recv; \
+    mca_ptl_base_recv_request_t *wild_recv; \
     int frag_tag,recv_tag; \
  \
     /* initialization */ \
@@ -61,14 +61,14 @@ do { \
      * locking is protecting from having other threads trying to \
      * change this list. \
      */ \
-    for(wild_recv = (mca_pml_base_recv_request_t *)  \
+    for(wild_recv = (mca_ptl_base_recv_request_t *)  \
             ompi_list_get_first(wild_receives); \
-            wild_recv != (mca_pml_base_recv_request_t *) \
+            wild_recv != (mca_ptl_base_recv_request_t *) \
             ompi_list_get_end(wild_receives); \
-            wild_recv = (mca_pml_base_recv_request_t *)  \
+            wild_recv = (mca_ptl_base_recv_request_t *)  \
             ((ompi_list_item_t *)wild_recv)->ompi_list_next) { \
  \
-        recv_tag = wild_recv->req_base.req_tag; \
+        recv_tag = wild_recv->req_recv.req_base.req_tag; \
         if (  \
                 /* exact tag match */ \
                 (frag_tag == recv_tag) || \
@@ -112,7 +112,7 @@ do { \
 do { \
     /* local variables */ \
     ompi_list_t* specific_receives = (pml_comm->c_specific_receives)+frag_src; \
-    mca_pml_base_recv_request_t *specific_recv; \
+    mca_ptl_base_recv_request_t *specific_recv; \
     int frag_src,recv_tag,frag_tag; \
  \
     /* initialization */ \
@@ -122,16 +122,16 @@ do { \
     /* \
      * Loop over the specific irecvs. \
      */ \
-    for(specific_recv = (mca_pml_base_recv_request_t *)  \
+    for(specific_recv = (mca_ptl_base_recv_request_t *)  \
             ompi_list_get_first(specific_receives); \
-            specific_recv != (mca_pml_base_recv_request_t *) \
+            specific_recv != (mca_ptl_base_recv_request_t *) \
             ompi_list_get_end(specific_receives); \
-            specific_recv = (mca_pml_base_recv_request_t *)  \
+            specific_recv = (mca_ptl_base_recv_request_t *)  \
             ((ompi_list_item_t *)specific_recv)->ompi_list_next) { \
         /* \
          * Check for a match \
          */ \
-        recv_tag = specific_recv->req_base.req_tag; \
+        recv_tag = specific_recv->req_recv.req_base.req_tag; \
         if ( (frag_tag == recv_tag) || \
              ( (recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) { \
  \
@@ -170,7 +170,7 @@ do { \
     frag_header, pml_comm, return_match) \
 do {  \
     /* local variables */  \
-    mca_pml_base_recv_request_t *specific_recv, *wild_recv; \
+    mca_ptl_base_recv_request_t *specific_recv, *wild_recv; \
     mca_ptl_sequence_t wild_recv_seq, specific_recv_seq;  \
     int frag_src,frag_tag, wild_recv_tag, specific_recv_tag;  \
   \
@@ -182,13 +182,13 @@ do {  \
      * We know that when this is called, both specific and wild irecvs  \
      *  have been posted.  \
      */  \
-    specific_recv = (mca_pml_base_recv_request_t *)   \
+    specific_recv = (mca_ptl_base_recv_request_t *)   \
             ompi_list_get_first((pml_comm->c_specific_receives)+frag_src);  \
-    wild_recv = (mca_pml_base_recv_request_t *)  \
+    wild_recv = (mca_ptl_base_recv_request_t *)  \
             ompi_list_get_first(&(pml_comm->c_wild_receives));  \
   \
-    specific_recv_seq = specific_recv->req_base.req_sequence;  \
-    wild_recv_seq = wild_recv->req_base.req_sequence;  \
+    specific_recv_seq = specific_recv->req_recv.req_base.req_sequence;  \
+    wild_recv_seq = wild_recv->req_recv.req_base.req_sequence;  \
   \
     while (true) {  \
         if (wild_recv_seq < specific_recv_seq) {  \
@@ -198,7 +198,7 @@ do {  \
             /*  \
              * try and match  \
              */  \
-            wild_recv_tag = wild_recv->req_base.req_tag;  \
+            wild_recv_tag = wild_recv->req_recv.req_base.req_tag;  \
             if ( (frag_tag == wild_recv_tag) ||  \
                  ( (wild_recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) {  \
                 /*  \
@@ -215,14 +215,14 @@ do {  \
             /*  \
              * No match, go to the next.  \
              */  \
-            wild_recv=(mca_pml_base_recv_request_t *)  \
+            wild_recv=(mca_ptl_base_recv_request_t *)  \
                 ((ompi_list_item_t *)wild_recv)->ompi_list_next;  \
   \
             /*  \
              * If that was the last wild one, just look at the  \
              * rest of the specific ones.  \
              */  \
-            if (wild_recv == (mca_pml_base_recv_request_t *)  \
+            if (wild_recv == (mca_ptl_base_recv_request_t *)  \
                     ompi_list_get_end(&(pml_comm->c_wild_receives)) )   \
             {   \
                 MCA_PTL_BASE_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(frag_header, pml_comm, return_match);  \
@@ -233,13 +233,13 @@ do {  \
              * Get the sequence number for this recv, and go  \
              * back to the top of the loop.  \
              */  \
-            wild_recv_seq = wild_recv->req_base.req_sequence;  \
+            wild_recv_seq = wild_recv->req_recv.req_base.req_sequence;  \
   \
         } else {  \
             /*  \
              * specific recv is earlier than the wild one.  \
              */  \
-            specific_recv_tag=specific_recv->req_base.req_tag;  \
+            specific_recv_tag=specific_recv->req_recv.req_base.req_tag;  \
             if ( (frag_tag == specific_recv_tag) || \
                  ( (specific_recv_tag == OMPI_ANY_TAG) && (0<=frag_tag)) )   \
             {  \
@@ -256,14 +256,14 @@ do {  \
             /*  \
              * No match, go on to the next specific irecv.  \
              */  \
-            specific_recv = (mca_pml_base_recv_request_t *)  \
+            specific_recv = (mca_ptl_base_recv_request_t *)  \
                 ((ompi_list_item_t *)specific_recv)->ompi_list_next;  \
   \
             /*  \
              * If that was the last specific irecv, process the  \
              * rest of the wild ones.  \
              */  \
-            if (specific_recv == (mca_pml_base_recv_request_t *)  \
+            if (specific_recv == (mca_ptl_base_recv_request_t *)  \
                     ompi_list_get_end((pml_comm->c_specific_receives)+frag_src) )  \
             {  \
                 MCA_PTL_BASE_CHECK_WILD_RECEIVES_FOR_MATCH(frag_header, pml_comm, return_match);  \
@@ -273,7 +273,7 @@ do {  \
              * Get the sequence number for this recv, and go  \
              * back to the top of the loop.  \
              */ \
-            specific_recv_seq = specific_recv->req_base.req_sequence;  \
+            specific_recv_seq = specific_recv->req_recv.req_base.req_sequence;  \
         }  \
     }  \
 } while(0)
@@ -328,7 +328,7 @@ bool mca_ptl_base_match(
     uint16_t next_msg_seq_expected, frag_msg_seq;
 
     ompi_communicator_t *comm_ptr;
-    mca_pml_base_recv_request_t *matched_receive = NULL;
+    mca_ptl_base_recv_request_t *matched_receive = NULL;
     mca_pml_ptl_comm_t *pml_comm;
     int frag_src;
     bool match_made=false;
@@ -398,12 +398,12 @@ bool mca_ptl_base_match(
             frag_desc->frag_request=matched_receive;
 
             /* set lenght of incoming message */
-            matched_receive->req_bytes_packed = frag_header->hdr_msg_length;
+            matched_receive->req_recv.req_bytes_packed = frag_header->hdr_msg_length;
 
             /*
              * update delivered sequence number information, if needed.
              */
-            if( (matched_receive->req_base.req_type == MCA_PML_REQUEST_PROBE) ) {
+            if( (matched_receive->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) ) {
                 /* Match a probe, rollback the next expected sequence number */
                 (pml_comm->c_next_msg_seq[frag_src])--;
             }
@@ -461,7 +461,7 @@ static bool mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_match
     int match_found;
     uint16_t next_msg_seq_expected, frag_seq;
     mca_ptl_base_recv_frag_t *frag_desc;
-    mca_pml_base_recv_request_t *matched_receive = NULL;
+    mca_ptl_base_recv_request_t *matched_receive = NULL;
     bool match_made = false;
 
     /*
@@ -604,7 +604,7 @@ bool mca_ptl_base_match_in_order_network_delivery(
 {
     /* local variables */
     ompi_communicator_t *comm_ptr;
-    mca_pml_base_recv_request_t *matched_receive = NULL;
+    mca_ptl_base_recv_request_t *matched_receive = NULL;
     mca_pml_ptl_comm_t *pml_comm;
     int frag_src;
 
@@ -658,7 +658,7 @@ bool mca_ptl_base_match_in_order_network_delivery(
         frag_desc->frag_request=matched_receive;
 
         /* set lenght of incoming message */
-        matched_receive->req_bytes_packed=frag_header->hdr_msg_length;
+        matched_receive->req_recv.req_bytes_packed=frag_header->hdr_msg_length;
 
     } else {
         /* if no match found, place on unexpected queue */

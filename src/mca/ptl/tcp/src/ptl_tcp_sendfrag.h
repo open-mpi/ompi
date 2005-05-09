@@ -30,7 +30,7 @@
 #include <netinet/in.h>
 #endif
 #include "include/sys/atomic.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_recvfrag.h"
@@ -77,7 +77,7 @@ bool mca_ptl_tcp_send_frag_handler(mca_ptl_tcp_send_frag_t*, int sd);
 int mca_ptl_tcp_send_frag_init(
     mca_ptl_tcp_send_frag_t*, 
     struct mca_ptl_base_peer_t*, 
-    struct mca_pml_base_send_request_t*, 
+    struct mca_ptl_base_send_request_t*, 
     size_t offset,
     size_t* size,
     int flags);
@@ -92,7 +92,7 @@ int mca_ptl_tcp_send_frag_init(
 
 static inline void mca_ptl_tcp_send_frag_progress(mca_ptl_tcp_send_frag_t* frag) 
 { 
-    mca_pml_base_send_request_t* request = frag->frag_send.frag_request; 
+    mca_ptl_base_send_request_t* request = frag->frag_send.frag_request; 
     bool frag_ack;
 
     /* if this is an ack - simply return to pool */ 
@@ -133,15 +133,15 @@ static inline void mca_ptl_tcp_send_frag_init_ack(
     mca_ptl_tcp_recv_frag_t* frag)
 {
     mca_ptl_base_header_t* hdr = &ack->frag_send.frag_base.frag_header;
-    mca_pml_base_recv_request_t* request = frag->frag_recv.frag_request;
+    mca_ptl_base_recv_request_t* request = frag->frag_recv.frag_request;
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_ack.hdr_src_ptr = frag->frag_recv.frag_base.frag_header.hdr_rndv.hdr_src_ptr;
     hdr->hdr_ack.hdr_dst_match.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
     hdr->hdr_ack.hdr_dst_match.pval = request;
     hdr->hdr_ack.hdr_dst_addr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
-    hdr->hdr_ack.hdr_dst_addr.pval = request->req_base.req_addr;
-    hdr->hdr_ack.hdr_dst_size = request->req_bytes_packed;
+    hdr->hdr_ack.hdr_dst_addr.pval = request->req_recv.req_base.req_addr;
+    hdr->hdr_ack.hdr_dst_size = request->req_recv.req_bytes_packed;
     ack->frag_send.frag_request = 0;
     ack->frag_send.frag_base.frag_peer = ptl_peer;
     ack->frag_send.frag_base.frag_owner = ptl;

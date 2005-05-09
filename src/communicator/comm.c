@@ -972,11 +972,6 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
 /********************************************************************************/
 int ompi_comm_dump ( ompi_communicator_t *comm )
 {
-    mca_pml_ptl_comm_t *pml_comm;
-    mca_ptl_sequence_t *seq;
-    ompi_list_t *list;
-    int i;
-
     ompi_output(0, "Dumping information for comm_cid %d\n", comm->c_contextid);
     ompi_output(0,"  f2c index:%d cube_dim: %d\n", comm->c_f_to_c_index,  
            comm->c_cube_dim);
@@ -997,23 +992,6 @@ int ompi_comm_dump ( ompi_communicator_t *comm )
     if (OMPI_COMM_IS_INTER(comm)) {
         ompi_output(0,"  Remote group size:%d\n", comm->c_remote_group->grp_proc_count);
     }
-
-
-    /* Dump the c_pml_comm->c_unexpexted_frags for each process */
-    pml_comm = (mca_pml_ptl_comm_t *)comm->c_pml_comm;
-    seq      = (mca_ptl_sequence_t *) pml_comm->c_frags_cant_match;
-    for ( i = 0; i < comm->c_local_group->grp_proc_count; i++ ){
-        list = (ompi_list_t *)seq+i;
-        ompi_output(0,"%d: head->list_next:%p head->list_prev:%p"
-               "    tail->list_next:%p tail->list_next:%p\n",
-               i,
-               (char*)list->ompi_list_head.ompi_list_next,
-               (char*)list->ompi_list_head.ompi_list_prev, 
-               (char*)list->ompi_list_tail.ompi_list_next, 
-               (char*)list->ompi_list_tail.ompi_list_prev );
-        fflush(stdout);
-    }
-    
     return MPI_SUCCESS;
 }
 /********************************************************************************/

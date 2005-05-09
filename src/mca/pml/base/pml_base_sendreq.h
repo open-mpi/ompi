@@ -35,21 +35,12 @@ OMPI_DECLSPEC extern ompi_class_t mca_pml_base_send_request_t_class;
  */
 struct mca_pml_base_send_request_t {
     mca_pml_base_request_t req_base;         /** base request type - common data structure for use by wait/test */
+    ompi_datatype_t* req_datatype;           /**< pointer to datatype */
     void *req_addr;                          /**< pointer to send buffer - may not be application buffer */
     size_t req_count;                        /**< number of elements in send buffer */
-    ompi_datatype_t* req_datatype;           /**< pointer to datatype */
-    size_t req_offset;                       /**< number of bytes that have already been assigned to a fragment */
     size_t req_bytes_packed;                 /**< packed size of a message given the datatype and count */
-    size_t req_bytes_sent;                   /**< number of bytes that have been sent */
     mca_pml_base_send_mode_t req_send_mode;  /**< type of send */
-    struct mca_ptl_base_module_t* req_ptl;   /**< PTL that is selected for first fragment */
-    struct mca_ptl_base_peer_t* req_peer;    /**< PTL peer instance that will be used for first fragment */
-    ompi_ptr_t req_peer_match;               /**< matched receive at peer */
-    ompi_ptr_t req_peer_addr;                /**< peers remote buffer address */
-    uint64_t req_peer_size;                    /**< size of peers remote buffer */
-    bool req_cached;                         /**< has this request been obtained from the ptls cache */
     ompi_convertor_t req_convertor;          /**< convertor that describes this datatype */
-    volatile int32_t req_lock;               /**< lock used by the scheduler */
 };
 typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
 
@@ -137,32 +128,6 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
         OBJ_RELEASE(request->req_base.req_datatype);                      \
     } while (0)
 
-/**
- * Test to check if an acknowledgment has been received, with the match.
- *
- * @param  request (IN)  Send request.
- * return                TRUE if an ack/match has been received from peer.
- */
-
-static inline bool mca_pml_base_send_request_matched(
-    mca_pml_base_send_request_t* request)
-{
-    return (NULL != request->req_peer_match.pval);
-}
-
-/**
- * Atomically increase the request offset.
- *
- * @param  request (IN)  Send request.
- * @param  offset (IN)   Increment.
- */
-
-static inline void mca_pml_base_send_request_offset(
-    mca_pml_base_send_request_t* request,
-    size_t offset)
-{
-    OMPI_THREAD_ADD32((int32_t*)(&request->req_offset), offset);
-}
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

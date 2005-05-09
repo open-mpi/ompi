@@ -27,8 +27,8 @@
 #include "util/if.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
-#include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/pml/base/pml_base_recvreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_header.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
@@ -55,7 +55,7 @@ mca_ptl_sm_t mca_ptl_sm[2] = {
         &mca_ptl_sm_component.super,
         20, /* number of elements in the send descriptor cache */
         sizeof(mca_ptl_sm_send_request_t) -
-            sizeof(mca_pml_base_send_request_t),  /* size of shared memory send
+            sizeof(mca_ptl_base_send_request_t),  /* size of shared memory send
                                                      descriptor */
         1, /* ptl_first_frag_size */
         0, /* ptl_min_frag_size */
@@ -80,7 +80,7 @@ mca_ptl_sm_t mca_ptl_sm[2] = {
             &mca_ptl_sm_component.super,
             20, /* number of elements in the send descriptor cache */
             sizeof(mca_ptl_sm_send_request_t) -
-                sizeof(mca_pml_base_send_request_t),  /* size of shared memory 
+                sizeof(mca_ptl_base_send_request_t),  /* size of shared memory 
                                                          send descriptor */
             1, /* ptl_first_frag_size */
             0, /* ptl_min_frag_size */
@@ -711,7 +711,7 @@ int mca_ptl_sm_finalize(struct mca_ptl_base_module_t* ptl)
 }
 
 
-int mca_ptl_sm_request_alloc(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request)
+int mca_ptl_sm_request_alloc(struct mca_ptl_base_module_t* ptl, struct mca_ptl_base_send_request_t* request)
 {
     mca_ptl_sm_send_request_t *sm_request;
     ompi_list_item_t* item;
@@ -731,7 +731,7 @@ int mca_ptl_sm_request_alloc(struct mca_ptl_base_module_t* ptl, struct mca_pml_b
 }
 
 
-void mca_ptl_sm_request_return(struct mca_ptl_base_module_t* ptl, struct mca_pml_base_send_request_t* request)
+void mca_ptl_sm_request_return(struct mca_ptl_base_module_t* ptl, struct mca_ptl_base_send_request_t* request)
 {
     mca_ptl_sm_send_request_t *sm_request;
     ompi_list_item_t* item;
@@ -763,7 +763,7 @@ void mca_ptl_sm_request_return(struct mca_ptl_base_module_t* ptl, struct mca_pml
 int mca_ptl_sm_send(
     struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_pml_base_send_request_t* sendreq,
+    struct mca_ptl_base_send_request_t* sendreq,
     size_t offset,
     size_t size,
     int flags)
@@ -794,11 +794,11 @@ int mca_ptl_sm_send(
         int free_after=0;
         struct iovec address;
 
-        convertor = &sendreq->req_convertor;
+        convertor = &sendreq->req_send.req_convertor;
         ompi_convertor_init_for_send( convertor, 0, 
-                sendreq->req_datatype,
-                sendreq->req_count, 
-                sendreq->req_addr,
+                sendreq->req_send.req_datatype,
+                sendreq->req_send.req_count, 
+                sendreq->req_send.req_addr,
                 offset, NULL);
 
         sm_data_ptr=sm_request->req_frag->buff;
@@ -822,11 +822,11 @@ int mca_ptl_sm_send(
     hdr = &(send_frag->super.frag_base.frag_header);
     hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_MATCH;
     hdr->hdr_common.hdr_flags = flags;
-    hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
-    hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
-    hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
-    hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
-    hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
+    hdr->hdr_match.hdr_contextid = sendreq->req_send.req_base.req_comm->c_contextid;
+    hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
+    hdr->hdr_match.hdr_dst = sendreq->req_send.req_base.req_peer;
+    hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
+    hdr->hdr_match.hdr_msg_length = sendreq->req_send.req_bytes_packed;
 
     /* update the offset within the payload */
     sendreq->req_offset += size;
@@ -879,8 +879,8 @@ int mca_ptl_sm_send(
         ompi_atomic_unlock(&send_fifo->head_lock);
 
     /* if this is the entire message - signal request is complete */
-    if(sendreq->req_bytes_packed == size) {
-        ompi_request_complete( &(sendreq->req_base.req_ompi) );
+    if(sendreq->req_send.req_bytes_packed == size) {
+        ompi_request_complete( &(sendreq->req_send.req_base.req_ompi) );
     }
 
     /* return */
@@ -897,7 +897,7 @@ int mca_ptl_sm_send(
 int mca_ptl_sm_send_continue(
     struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_pml_base_send_request_t* sendreq,
+    struct mca_ptl_base_send_request_t* sendreq,
     size_t offset,
     size_t size,
     int flags)
@@ -928,11 +928,11 @@ int mca_ptl_sm_send_continue(
     }
 
     /* pack data in payload buffer */
-    convertor = &sendreq->req_convertor;
+    convertor = &sendreq->req_send.req_convertor;
     ompi_convertor_init_for_send( convertor, 0, 
-            sendreq->req_datatype,
-            sendreq->req_count, 
-            sendreq->req_addr,
+            sendreq->req_send.req_datatype,
+            sendreq->req_send.req_count, 
+            sendreq->req_send.req_addr,
             offset, NULL);
     sm_data_ptr=send_frag->buff;
 

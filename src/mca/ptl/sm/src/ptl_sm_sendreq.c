@@ -30,7 +30,7 @@ static void mca_ptl_sm_send_request_destruct(mca_ptl_sm_send_request_t*);
 
 OBJ_CLASS_INSTANCE(
     mca_ptl_sm_send_request_t,
-    mca_pml_base_send_request_t,
+    mca_ptl_base_send_request_t,
     mca_ptl_sm_send_request_construct,
     mca_ptl_sm_send_request_destruct
 );
@@ -54,7 +54,7 @@ void mca_ptl_sm_send_request_destruct(mca_ptl_sm_send_request_t* request)
  * to allocate fragment descriptor and payload memory
  */
 int mca_ptl_sm_send_request_init(struct mca_ptl_base_module_t* ptl,
-        struct mca_pml_base_send_request_t* request)
+        struct mca_ptl_base_send_request_t* request)
 {
 
     mca_ptl_sm_send_request_t *sm_request;

@@ -272,6 +272,7 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_remote_group = NULL;
     comm->error_handler  = NULL;
     comm->c_pml_comm     = NULL;
+    comm->c_pml_procs    = NULL;
     comm->c_topo         = NULL;
     comm->c_topo_component = NULL;
     comm->c_topo_comm    = NULL; 

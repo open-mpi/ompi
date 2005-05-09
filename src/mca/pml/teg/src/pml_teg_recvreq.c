@@ -81,10 +81,10 @@ static int mca_pml_teg_recv_request_cancel(struct ompi_request_t* request, int c
 
 static void mca_pml_teg_recv_request_construct(mca_pml_base_recv_request_t* request)
 {
-    request->req_base.req_type = MCA_PML_REQUEST_RECV;
-    request->req_base.req_ompi.req_fini = mca_pml_teg_recv_request_fini;
-    request->req_base.req_ompi.req_free = mca_pml_teg_recv_request_free;
-    request->req_base.req_ompi.req_cancel = mca_pml_teg_recv_request_cancel;
+    request->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
+    request->req_recv.req_base.req_ompi.req_fini = mca_pml_teg_recv_request_fini;
+    request->req_recv.req_base.req_ompi.req_free = mca_pml_teg_recv_request_free;
+    request->req_recv.req_base.req_ompi.req_cancel = mca_pml_teg_recv_request_cancel;
 }
 
 static void mca_pml_teg_recv_request_destruct(mca_pml_base_recv_request_t* request)
@@ -93,7 +93,7 @@ static void mca_pml_teg_recv_request_destruct(mca_pml_base_recv_request_t* reque
 
 OBJ_CLASS_INSTANCE(
     mca_pml_teg_recv_request_t,
-    mca_pml_base_recv_request_t,
+    mca_ptl_base_recv_request_t,
     mca_pml_teg_recv_request_construct,
     mca_pml_teg_recv_request_destruct);
                                                                                                                                                      

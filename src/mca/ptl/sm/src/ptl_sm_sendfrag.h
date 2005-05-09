@@ -21,7 +21,7 @@
 
 #include <sys/types.h>
 #include "ompi_config.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "ptl_sm.h"
 
@@ -56,7 +56,7 @@ typedef struct mca_ptl_sm_send_frag_t mca_ptl_sm_send_frag_t;
 int mca_ptl_sm_send_frag_init(
     mca_ptl_sm_send_frag_t*, 
     struct mca_ptl_base_peer_t*, 
-    struct mca_pml_base_send_request_t*, 
+    struct mca_ptl_base_send_request_t*, 
     size_t offset,
     size_t* size,
     int flags);

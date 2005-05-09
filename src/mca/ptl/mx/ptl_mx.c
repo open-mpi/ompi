@@ -89,7 +89,7 @@ static void *mca_ptl_mx_alloc(size_t *size)
  *
  */
 
-int mca_ptl_mx_request_init(struct mca_ptl_base_module_t* ptl, mca_pml_base_send_request_t* request)
+int mca_ptl_mx_request_init(struct mca_ptl_base_module_t* ptl, mca_ptl_base_send_request_t* request)
 {
     OBJ_CONSTRUCT(request+1, mca_ptl_mx_send_frag_t);
     return OMPI_SUCCESS;
@@ -109,7 +109,7 @@ int mca_ptl_mx_request_init(struct mca_ptl_base_module_t* ptl, mca_pml_base_send
  * descriptor by the PTL.
  */
 
-void mca_ptl_mx_request_fini(struct mca_ptl_base_module_t* ptl, mca_pml_base_send_request_t* request)
+void mca_ptl_mx_request_fini(struct mca_ptl_base_module_t* ptl, mca_ptl_base_send_request_t* request)
 {
     OBJ_DESTRUCT(request+1);
 }
@@ -142,7 +142,7 @@ void mca_ptl_mx_request_fini(struct mca_ptl_base_module_t* ptl, mca_pml_base_sen
 int mca_ptl_mx_send(
     struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_pml_base_send_request_t* sendreq,
+    struct mca_ptl_base_send_request_t* sendreq,
     size_t offset,
     size_t size,
     int flags)
@@ -177,13 +177,13 @@ int mca_ptl_mx_send(
        int rc;
 
        convertor = &sendfrag->frag_send.frag_base.frag_convertor;
-       ompi_convertor_copy(&sendreq->req_convertor, convertor);
+       ompi_convertor_copy(&sendreq->req_send.req_convertor, convertor);
        ompi_convertor_init_for_send(
                     convertor,
                     0,
-                    sendreq->req_datatype,
-                    sendreq->req_count,
-                    sendreq->req_addr,
+                    sendreq->req_send.req_datatype,
+                    sendreq->req_send.req_count,
+                    sendreq->req_send.req_addr,
                     offset,
                     mca_ptl_mx_alloc );
                                                                                                                       
@@ -218,12 +218,12 @@ int mca_ptl_mx_send(
     /* first fragment - need to try and match at the receiver */
     if(offset == 0) {
         hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
-        hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
-        hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
-        hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
-        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-        hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
+        hdr->hdr_match.hdr_contextid = sendreq->req_send.req_base.req_comm->c_contextid;
+        hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
+        hdr->hdr_match.hdr_dst = sendreq->req_send.req_base.req_peer;
+        hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
+        hdr->hdr_match.hdr_msg_length = sendreq->req_send.req_bytes_packed;
+        hdr->hdr_match.hdr_msg_seq = sendreq->req_send.req_base.req_sequence;
 
         /* for the first 32K - send header for matching + data */
         segments = sendfrag->frag_segments;
@@ -292,7 +292,7 @@ int mca_ptl_mx_send(
     /* must update the offset after actual fragment size is determined 
      * before attempting to send the fragment
      */
-    mca_pml_base_send_request_offset(sendreq,
+    mca_ptl_base_send_request_offset(sendreq,
         sendfrag->frag_send.frag_base.frag_size);
 
     /* start the fragment */
@@ -329,7 +329,7 @@ int mca_ptl_mx_send(
 int mca_ptl_mx_send_continue(
     struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_pml_base_send_request_t* sendreq,
+    struct mca_ptl_base_send_request_t* sendreq,
     size_t offset,
     size_t size,
     int flags)
@@ -353,13 +353,13 @@ int mca_ptl_mx_send_continue(
 
     /* initialize convertor */
     convertor = &sendfrag->frag_send.frag_base.frag_convertor;
-    ompi_convertor_copy(&sendreq->req_convertor, convertor);
+    ompi_convertor_copy(&sendreq->req_send.req_convertor, convertor);
     ompi_convertor_init_for_send(
         convertor,
         0,
-        sendreq->req_datatype,
-        sendreq->req_count,
-        sendreq->req_addr,
+        sendreq->req_send.req_datatype,
+        sendreq->req_send.req_count,
+        sendreq->req_send.req_addr,
         offset,
         mca_ptl_mx_alloc );
                                                                                                                       
@@ -400,7 +400,7 @@ int mca_ptl_mx_send_continue(
     /* must update the offset after actual fragment size is determined 
      * before attempting to send the fragment
      */
-    mca_pml_base_send_request_offset(sendreq, size);
+    mca_ptl_base_send_request_offset(sendreq, size);
 
     /* start the fragment */
     match.sval.uval = sendreq->req_peer_match.ival;
@@ -446,7 +446,7 @@ void mca_ptl_mx_matched(
     mca_ptl_base_recv_frag_t* frag)
 {
     mca_ptl_base_header_t* hdr = &frag->frag_base.frag_header;
-    mca_pml_base_recv_request_t* request = frag->frag_request;
+    mca_ptl_base_recv_request_t* request = frag->frag_request;
     mca_ptl_mx_module_t* mx_ptl = (mca_ptl_mx_module_t*)ptl;
     mca_ptl_mx_recv_frag_t* mx_frag = (mca_ptl_mx_recv_frag_t*)frag;
     unsigned int bytes_delivered = mx_frag->frag_size;
@@ -493,8 +493,8 @@ void mca_ptl_mx_matched(
         struct iovec iov;
         unsigned int iov_count = 1;
         int free_after = 0;
-        ompi_proc_t *proc = ompi_comm_peer_lookup(request->req_base.req_comm,
-            request->req_base.req_ompi.req_status.MPI_SOURCE);
+        ompi_proc_t *proc = ompi_comm_peer_lookup(request->req_recv.req_base.req_comm,
+            request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
         ompi_convertor_t* convertor = &frag->frag_base.frag_convertor;
 
         /* initialize receive convertor */
@@ -502,9 +502,9 @@ void mca_ptl_mx_matched(
         ompi_convertor_init_for_recv(
             convertor,                      /* convertor */
             0,                              /* flags */
-            request->req_base.req_datatype, /* datatype */
-            request->req_base.req_count,    /* count elements */
-            request->req_base.req_addr,     /* users buffer */
+            request->req_recv.req_base.req_datatype, /* datatype */
+            request->req_recv.req_base.req_count,    /* count elements */
+            request->req_recv.req_base.req_addr,     /* users buffer */
             0,                              /* offset in bytes into packed buffer */
             NULL );                         /* not allocating memory */
         /*ompi_convertor_get_packed_size(convertor, &request->req_bytes_packed); */
