@@ -522,6 +522,7 @@
 
 /* Define to `int' if <sys/types.h> does not define. */
 #define pid_t int
+#define SIZEOF_PID_T  4
 
 /* Define to equivalent of C99 restrict keyword, or to nothing if this is not
    supported. Do not define if restrict is supported directly. */
