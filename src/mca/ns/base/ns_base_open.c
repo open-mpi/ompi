@@ -47,7 +47,7 @@ orte_process_name_t orte_name_all = {ORTE_CELLID_MAX, ORTE_JOBID_MAX, ORTE_VPID_
  * Global variables
  */
 int mca_ns_base_output = -1;
-mca_ns_base_module_t orte_ns = {
+OMPI_DECLSPEC mca_ns_base_module_t orte_ns = {
     orte_ns_base_module_init_not_available,
     orte_ns_base_create_cellid_not_available,
     orte_ns_base_assign_cellid_to_process,

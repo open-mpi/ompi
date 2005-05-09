@@ -377,7 +377,7 @@ ompi_op_t ompi_mpi_op_replace = {
 /*
  * Map from ddt->id to position in op function pointer array
  */
-int ompi_op_ddt_map[DT_MAX_PREDEFINED];
+OMPI_DECLSPEC int ompi_op_ddt_map[DT_MAX_PREDEFINED];
 
 
 /*

@@ -42,7 +42,7 @@ int mca_pml_base_progress(void)
  * Global variables
  */
 int mca_pml_base_output = -1;
-mca_pml_base_module_t mca_pml = {
+OMPI_DECLSPEC mca_pml_base_module_t mca_pml = {
     NULL,                    /* pml_add_procs */
     NULL,                    /* pml_del_procs */
     NULL,                    /* pml_add_ptls */

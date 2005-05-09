@@ -112,7 +112,7 @@ OMPI_DECLSPEC void *ompi_calloc(size_t nmembers, size_t size, const char *file, 
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-void *ompi_realloc(void *ptr, size_t size, const char *file, int line);
+OMPI_DECLSPEC void *ompi_realloc(void *ptr, size_t size, const char *file, int line);
 
   /**
    * \internal

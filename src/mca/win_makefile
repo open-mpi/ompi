@@ -30,7 +30,7 @@ installdir = ${topdir}/src/Debug/lib
 C_SUBDIRS = \
         allocator/bucket \
         coll/basic \
-        topo/unity/src
+        topo/unity
 
 # list of components to build with the cpp compiler
 # (because of the problem with OBJ_CLASS_INSTANCE)
@@ -63,6 +63,7 @@ CFLAGS = \
         /DWIN32 \
         /DHAVE_CONFIG_H \
         /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
+        /DOMPI_BUILDING_WIN_DSO=1 \
         /EHsc \
         /ML \
         /W0 \
@@ -78,6 +79,7 @@ CPPFLAGS = \
         /TP \
         /DHAVE_CONFIG_H \
         /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
+        /DOMPI_BUILDING_WIN_DSO=1 \
         /EHsc \
         /ML \
         /W0 \
@@ -89,7 +91,7 @@ CPPFLAGS = \
 
 # link with ompi.lib to resolve external symbols
 #OMPILIB = \
-        "${topdir}/vcproj/ompi/Debug/libmpi.lib"
+#        "${topdir}/vcproj/ompi/Debug/libmpi.lib"
 
 OMPILIB = \
         "${topdir}/src/libmpi.lib"
@@ -126,7 +128,6 @@ prebuild:
 	@cp '${gen_base}/coll-basic-version.h' '${copy_base}/coll/basic/'
 	@cp '${gen_base}/io-romio-version.h' '${copy_base}/io/romio/'
 	@cp '${gen_base}/topo-unity-version.h' '${copy_base}/topo/unity/'
-            
 
 clibs: ${C_SUBDIRS} prebuild
 	@for dirs in ${C_SUBDIRS}; do \
