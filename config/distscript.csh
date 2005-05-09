@@ -79,8 +79,13 @@ cd config
 set configdir="`pwd`"
 mkdir tmp.$$
 cd tmp.$$
-wget -t 1 -T 10 ftp://ftp.gnu.org/gnu/config/config.guess
-wget -t 1 -T 10 ftp://ftp.gnu.org/gnu/config/config.sub
+#wget -t 1 -T 10 ftp://ftp.gnu.org/gnu/config/config.guess
+#wget -t 1 -T 10 ftp://ftp.gnu.org/gnu/config/config.sub
+# "Temporary" instructions at ftp.gnu.org/gnu/config advise using the 
+# following URLs:
+wget -t 1 -T 10 'http://savannah.gnu.org/cgi-bin/viewcvs/*checkout*/config/config/config.guess'
+wget -t 1 -T 10 'http://savannah.gnu.org/cgi-bin/viewcvs/*checkout*/config/config/config.sub'
+chmod +x config.guess config.sub
 
 # Recently, ftp.gnu.org has had zero-legnth config.guess / config.sub
 # files, which causes the automated nightly SVN snapshot tarball to
