@@ -92,8 +92,6 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
     }
 
     OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
-    frag->frag_owner = endpoint;
-    ompi_list_append(&endpoint->ep_frags, &frag->super);
 
     /* read up to the fragment size */
     rc = read(fd, frag->frag_data, sizeof(frag->frag_data));
@@ -109,6 +107,10 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
         orte_iof_base_endpoint_closed(endpoint);
         rc = 0;
     }
+    /* Do not append the fragment before we know that we have some data (even 0 bytes it's OK) */
+    frag->frag_owner = endpoint;
+    ompi_list_append(&endpoint->ep_frags, &frag->super);
+
     frag->frag_iov[1].iov_len = frag->frag_len = rc;
 
     /* fill in the header */
