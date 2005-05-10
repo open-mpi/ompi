@@ -63,8 +63,6 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
     mca_ptl_portals_send_frag_t* sendfrag;
     mca_ptl_base_header_t* hdr;
     int ret;
-    ptl_md_t md;
-    ptl_handle_md_t md_handle;
 
     ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
                         "mca_ptl_portals_send to %lu, %lu",
@@ -173,41 +171,7 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
     mca_ptl_base_send_request_offset(sendreq,
         sendfrag->frag_send.frag_base.frag_size);
 
-    /* setup the send and go */
-    md.start = sendfrag->frag_vector;
-    md.length = 2; /* header + data */
-    md.threshold = PTL_MD_THRESH_INF; /* unlink based on protocol */
-    md.max_size = 0;
-    md.options = PTL_MD_IOVEC; /* BWB - can we optimize? */
-    md.user_ptr = sendfrag;
-    md.eq_handle = ptl->frag_eq_handle;
-
-    /* make a free-floater */
-    ret = PtlMDBind(ptl->ni_handle,
-                    md,
-                    PTL_UNLINK,
-                    &md_handle);
-    if (ret != PTL_OK) {
-        ompi_output(mca_ptl_portals_component.portals_output,
-                    "PtlMDBind failed with error %d", ret);
-        return OMPI_ERROR;
-    }
-
-    ret = PtlPut(md_handle,
-                 PTL_ACK_REQ,
-                 *((ptl_process_id_t*) ptl_peer),
-                 PTL_PORTALS_FRAG_TABLE_ID,
-                 0, /* ac_index */
-                 0, /* match bits */
-                 0, /* remote offset - not used */
-                 0); /* hdr_data - not used */
-    if (ret != PTL_OK) {
-        ompi_output(mca_ptl_portals_component.portals_output,
-                    "PtlPut failed with error %d", ret);
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
+    return mca_ptl_portals_send_frag(ptl, sendfrag);
 }
 
 
@@ -233,32 +197,42 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
         ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
                             "ACK event for msg %d",
                             (int) hdr->hdr_match.hdr_msg_seq);
-        frag_ack = (hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? true : false;
-        if (frag_ack == false) {
-            /* this frag is done! */
 
-            /* unlink memory descriptor */
-            PtlMDUnlink(ev->md_handle);
-
-            /* let the PML know */
-            frag->frag_send.frag_base.frag_owner->
-                ptl_send_progress(frag->frag_send.frag_base.frag_owner,
-                                  frag->frag_send.frag_request,
-                                  frag->frag_send.frag_base.frag_size);
-
-            /* return frag to freelist if not part of request */
-            if (frag->frag_send.frag_request->req_cached == false) {
-                if (frag->frag_send.frag_base.frag_addr == NULL) {
-                    free(frag->frag_send.frag_base.frag_addr);
-                }
-                OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
-                                      (ompi_list_item_t*) frag);
+        /* discard ACKs for acks */
+        if (frag->frag_send.frag_request == NULL) {
+            if (frag->frag_send.frag_base.frag_addr != NULL) {
+                free(frag->frag_send.frag_base.frag_addr);
             }
+            OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
+                                  (ompi_list_item_t*) frag);
         } else {
-            /* need to wait for the ack... */
-            ompi_list_append(&mca_ptl_portals_component.portals_pending_acks,
-                             (ompi_list_item_t*) frag);
+
+            frag_ack = (hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? true : false;
+            if (frag_ack == false) {
+                /* this frag is done! */
+
+                /* let the PML know */
+                frag->frag_send.frag_base.frag_owner->
+                    ptl_send_progress(frag->frag_send.frag_base.frag_owner,
+                                      frag->frag_send.frag_request,
+                                      frag->frag_send.frag_base.frag_size);
+
+                /* return frag to freelist if not part of request */
+                if (frag->frag_send.frag_request->req_cached == false) {
+                    if (frag->frag_send.frag_base.frag_addr != NULL) {
+                        free(frag->frag_send.frag_base.frag_addr);
+                    }
+                    OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
+                                          (ompi_list_item_t*) frag);
+                }
+            } else {
+                /* need to wait for the ack... */
+                ;
+            }
         }
+
+        /* unlink memory descriptor */
+        PtlMDUnlink(ev->md_handle);
 
     } else {
         ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
