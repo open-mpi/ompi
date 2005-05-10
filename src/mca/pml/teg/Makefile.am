@@ -38,4 +38,5 @@ libmca_pml_teg_la_SOURCES = \
 	pml_teg_sendreq.c \
 	pml_teg_sendreq.h \
 	pml_teg_start.c \
-    pml_ptl_array.c
+        pml_ptl_array.c \
+        pml_ptl_array.h
