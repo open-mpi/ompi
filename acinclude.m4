@@ -47,6 +47,7 @@ sinclude(config/ompi_config_asm.m4)
 
 sinclude(config/ompi_case_sensitive_fs_setup.m4)
 sinclude(config/ompi_check_optflags.m4)
+sinclude(config/ompi_check_icc.m4)
 sinclude(config/ompi_config_subdir.m4)
 sinclude(config/ompi_config_subdir_args.m4)
 sinclude(config/ompi_configure_options.m4)
