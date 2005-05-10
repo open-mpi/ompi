@@ -190,9 +190,9 @@ int orte_ns_base_get_proc_name_string(char **name_string,
 	    return ORTE_ERR_BAD_PARAM;
     }
 
-    if (0 > asprintf(name_string, "%lu.%lu.%lu", name->cellid, name->jobid, name->vpid)) {
+    if (0 > asprintf(name_string, "%lu.%lu.%lu", ORTE_NAME_ARGS(name))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-	   return ORTE_ERR_OUT_OF_RESOURCE;
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     return ORTE_SUCCESS;
