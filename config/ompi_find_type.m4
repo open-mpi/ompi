@@ -24,7 +24,7 @@ target_name="$2"
 types="$3"
 
 # Announce
-AC_MSG_CHECKING([for C type corresopnding to $msg])
+AC_MSG_CHECKING([for C type corresponding to $msg])
 
 # Put a default answer in there
 str="MPI_$target_name='not found'"

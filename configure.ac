@@ -272,6 +272,10 @@ if test "$GCC" = "yes"; then
     CFLAGS="$CFLAGS_save"
 fi
 
+if test "x$CC" = "xicc"; then
+  OMPI_CHECK_ICC_VARARGS
+fi
+
 # If we want the profiling layer:
 # - If the C compiler has weak symbols, use those.
 # - If not, then set to compile the code again with #define's in a
@@ -440,6 +444,19 @@ else
     if test "$OMPI_HAVE_FORTRAN_INTEGER16" = "1"; then
       OMPI_F77_GET_SIZEOF(INTEGER*16, OMPI_SIZEOF_FORTRAN_INTEGER16)
       OMPI_F77_PURGE_UNSUPPORTED_KIND(INTEGER*16)
+    fi
+
+    if test "$OMPI_HAVE_FORTRAN_REAL4" = "1" ; then
+      OMPI_F77_GET_SIZEOF(REAL*4, OMPI_SIZEOF_FORTRAN_REAL4)
+      OMPI_F77_PURGE_UNSUPPORTED_KIND(REAL*4)
+    fi
+    if test "$OMPI_HAVE_FORTRAN_REAL8" = "1" ; then
+      OMPI_F77_GET_SIZEOF(REAL*8, OMPI_SIZEOF_FORTRAN_REAL8)
+      OMPI_F77_PURGE_UNSUPPORTED_KIND(REAL*8)
+    fi
+    if test "$OMPI_HAVE_FORTRAN_REAL16" = "1" ; then
+      OMPI_F77_GET_SIZEOF(REAL*16, OMPI_SIZEOF_FORTRAN_REAL16)
+      OMPI_F77_PURGE_UNSUPPORTED_KIND(REAL*16)
     fi
     OMPI_F77_GET_ALIGNMENT(LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL)
     OMPI_F77_GET_ALIGNMENT(INTEGER, OMPI_ALIGNMENT_FORTRAN_INTEGER)
@@ -1203,21 +1220,21 @@ if test "$OMPI_F77" != "none"; then
             float double long:double)
         if test "$OMPI_HAVE_FORTRAN_REAL4" = "1"; then
             OMPI_SIZEOF_FORTRAN_REAL4=4
-            OMPI_FIND_TYPE(Fortran REAL, FORTRAN_REAL4,
+            OMPI_FIND_TYPE(Fortran REAL4, FORTRAN_REAL4,
                 float double long:double)
         else
             MPI_FORTRAN_REAL4_TYPE=float
         fi
         if test "$OMPI_HAVE_FORTRAN_REAL8" = "1"; then
             OMPI_SIZEOF_FORTRAN_REAL8=8
-            OMPI_FIND_TYPE(Fortran REAL, FORTRAN_REAL8,
+            OMPI_FIND_TYPE(Fortran REAL8, FORTRAN_REAL8,
                 float double long:double)
         else
             MPI_FORTRAN_REAL8_TYPE=float
         fi
         if test "$OMPI_HAVE_FORTRAN_REAL16" = "1"; then
             OMPI_SIZEOF_FORTRAN_REAL16=16
-            OMPI_FIND_TYPE(Fortran REAL, FORTRAN_REAL16,
+            OMPI_FIND_TYPE(Fortran REAL16, FORTRAN_REAL16,
                 float double long:double)
         else
             MPI_FORTRAN_REAL16_TYPE=float
