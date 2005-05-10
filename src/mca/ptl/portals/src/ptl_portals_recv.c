@@ -20,6 +20,8 @@
 #include "ptl_portals.h"
 #include "ptl_portals_compat.h"
 #include "ptl_portals_recv.h"
+#include "ptl_portals_send.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 
 
 OBJ_CLASS_INSTANCE(mca_ptl_portals_recv_frag_t,
@@ -103,20 +105,23 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
                             "message %ld received, start: %p, mlength: %lld, offset: %lld",
                             ev->link, ev->md.start, ev->mlength, ev->offset);
 
-        /* get a fragment header */
-        OMPI_FREE_LIST_GET(&mca_ptl_portals_component.portals_recv_frags, item, ret);
-        recvfrag = (mca_ptl_portals_recv_frag_t*) item;
-        if (OMPI_SUCCESS != ret) {
-            ompi_output(mca_ptl_portals_component.portals_output,
-                        "unable to allocate resources");
-            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
-        }
-
         /* buffer is going to be header followed by data */
         hdr = (mca_ptl_base_header_t*) (((char*) ev->md.start) + ev->offset);
         switch (hdr->hdr_common.hdr_type) {
 
         case MCA_PTL_HDR_TYPE_MATCH:
+            /* get a fragment header */
+            OMPI_FREE_LIST_GET(&mca_ptl_portals_component.portals_recv_frags, item, ret);
+            recvfrag = (mca_ptl_portals_recv_frag_t*) item;
+            if (OMPI_SUCCESS != ret) {
+                ompi_output(mca_ptl_portals_component.portals_output,
+                            "unable to allocate resources");
+                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+            }
+
+            /* save the sender */
+            recvfrag->frag_source = ev->initiator;
+
             recvfrag->frag_data = ((mca_ptl_base_match_header_t*) hdr) + 1;
             recvfrag->frag_size = ev->mlength - sizeof(mca_ptl_base_match_header_t);
             memcpy(&(recvfrag->frag_recv.frag_base.frag_header),
@@ -134,6 +139,18 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
             break;
 
         case MCA_PTL_HDR_TYPE_RNDV:
+            /* get a fragment header */
+            OMPI_FREE_LIST_GET(&mca_ptl_portals_component.portals_recv_frags, item, ret);
+            recvfrag = (mca_ptl_portals_recv_frag_t*) item;
+            if (OMPI_SUCCESS != ret) {
+                ompi_output(mca_ptl_portals_component.portals_output,
+                            "unable to allocate resources");
+                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+            }
+
+            /* save the sender */
+            recvfrag->frag_source = ev->initiator;
+
             recvfrag->frag_data = ((mca_ptl_base_rendezvous_header_t*) hdr) + 1;
             recvfrag->frag_size = ev->mlength - sizeof(mca_ptl_base_rendezvous_header_t);
             memcpy(&(recvfrag->frag_recv.frag_base.frag_header),
@@ -148,6 +165,28 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
 
             ptl->super.ptl_match(&ptl->super, &recvfrag->frag_recv, 
                                  &hdr->hdr_match);
+
+            break;
+
+        case MCA_PTL_HDR_TYPE_ACK:
+            {
+                mca_ptl_portals_send_frag_t *sendfrag;
+                sendfrag = hdr->hdr_ack.hdr_src_ptr.pval;
+
+                sendfrag->frag_send.frag_base.frag_owner->
+                    ptl_send_progress(sendfrag->frag_send.frag_base.frag_owner,
+                                      sendfrag->frag_send.frag_request,
+                                      sendfrag->frag_send.frag_base.frag_size);
+
+                /* return frag to freelist if not part of request */
+                if (sendfrag->frag_send.frag_request->req_cached == false) {
+                    if (sendfrag->frag_send.frag_base.frag_addr == NULL) {
+                        free(sendfrag->frag_send.frag_base.frag_addr);
+                    }
+                    OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
+                                          (ompi_list_item_t*) sendfrag);
+                }
+            }
 
             break;
 
@@ -194,7 +233,7 @@ mca_ptl_portals_matched(struct mca_ptl_base_module_t *ptl_base,
 
     /* generate an acknowledgment if required */
     if(hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) {
-        ;
+        mca_ptl_portals_send_ack(ptl, recvfrag);
     }
 
     /* copy data into users buffer */

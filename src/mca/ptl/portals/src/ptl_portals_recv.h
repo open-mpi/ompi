@@ -29,6 +29,7 @@ struct mca_ptl_portals_recv_frag_t {
     mca_ptl_base_recv_frag_t frag_recv;  /**< base receive fragment descriptor */
     void *frag_data;
     size_t frag_size;
+    ptl_process_id_t frag_source;
 };
 typedef struct mca_ptl_portals_recv_frag_t mca_ptl_portals_recv_frag_t;
 
