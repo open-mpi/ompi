@@ -464,9 +464,18 @@ EOF
 ***   `pwd`
 
 EOF
-        elif test -f .ompi_ignore -a \
-             -s .ompi_unignore -a \
-             -z "`grep -E $USER\$\|$USER@$HOST .ompi_unignore`" ; then
+
+        # Use && instead of -a here for the test conditions because if
+        # you use -a, then "test" will execute *all* condition clauses
+        # (even if the first one is false), meaning that grep will
+        # fail if there is no .ompi_unignore file.  If you use &&,
+        # then the latter tests will not be executed if a prior one
+        # fails (i.e., grep won't run if .ompi_unignore does not
+        # exist).
+
+        elif test -f .ompi_ignore && \
+             test -s .ompi_unignore && \
+             test -z "`grep -E $USER\$\|$USER@$HOST .ompi_unignore`" ; then
 
             # If we have a non-empty .ompi_unignore and our username
             # is in there somewhere, we ignore the .ompi_ignore (and
