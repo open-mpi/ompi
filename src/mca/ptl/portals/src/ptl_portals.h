@@ -283,7 +283,7 @@ extern int mca_ptl_portals_del_procs(
 
 extern int mca_ptl_portals_request_init(
     struct mca_ptl_base_module_t* ptl,
-    struct mca_pml_base_send_request_t*
+    struct mca_ptl_base_send_request_t*
 );
 
 
@@ -302,7 +302,7 @@ extern int mca_ptl_portals_request_init(
                                                                                               
 extern void mca_ptl_portals_request_fini(
     struct mca_ptl_base_module_t* ptl,
-    struct mca_pml_base_send_request_t*
+    struct mca_ptl_base_send_request_t*
 );
 
 
@@ -359,7 +359,7 @@ extern void mca_ptl_portals_matched(
 extern int mca_ptl_portals_send(
     struct mca_ptl_base_module_t* ptl,
     struct mca_ptl_base_peer_t* ptl_peer,
-    struct mca_pml_base_send_request_t*,
+    struct mca_ptl_base_send_request_t*,
     size_t offset,
     size_t size,
     int flags

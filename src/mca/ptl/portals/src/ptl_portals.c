@@ -25,7 +25,7 @@
 #include "include/constants.h"
 #include "util/output.h"
 #include "mca/pml/pml.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 
 #include "ptl_portals.h"
 #include "ptl_portals_compat.h"
@@ -157,7 +157,7 @@ mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
                             ptl->frag_eq_handle);
 
         for (i = 0 ; i < ptl->first_frag_num_entries ; ++i) {
-            ret = ptl_portals_post_recv_md(ptl);
+            ret = ptl_portals_post_recv_md(ptl, NULL);
             if (OMPI_SUCCESS != ret) return ret;
             ptl->frag_queues_created = true;
         }
@@ -187,7 +187,7 @@ mca_ptl_portals_finalize(struct mca_ptl_base_module_t *ptl_base)
 
 int
 mca_ptl_portals_request_init(struct mca_ptl_base_module_t *ptl,
-			     struct mca_pml_base_send_request_t *req)
+			     struct mca_ptl_base_send_request_t *req)
 {
     OBJ_CONSTRUCT(req + 1, mca_ptl_portals_send_frag_t);
     return OMPI_SUCCESS;
@@ -196,7 +196,7 @@ mca_ptl_portals_request_init(struct mca_ptl_base_module_t *ptl,
 
 void
 mca_ptl_portals_request_fini(struct mca_ptl_base_module_t *ptl,
-			     struct mca_pml_base_send_request_t *req)
+			     struct mca_ptl_base_send_request_t *req)
 {
     OBJ_DESTRUCT(req + 1);
 }
