@@ -1183,70 +1183,61 @@ ompi_show_title "System-specific tests"
 #
 
 if test "$OMPI_F77" != "none"; then
+
+        # Helper function to greatly reduce code replication below
+        test_f77_type() {
+            type="$1"
+            size="$2"
+            search_c_types="$3"
+            fallback_c_type="$4"
+            want_abort="$5"
+
+            str="foo=\$OMPI_HAVE_FORTRAN_$type"
+            eval $str
+            if test "$foo" = "1"; then
+                str="OMPI_SIZEOF_FORTRAN_$type=$size"
+                eval $str
+                OMPI_FIND_TYPE([Fortran $type], [FORTRAN_$type],
+                               [$search_c_types], $want_abort)
+                str="foo=$MPI_FORTRAN_{$type}_TYPE"
+                eval $str
+                if test "$str" = ""; then
+                    str="OMPI_HAVE_FORTRAN_$type=0"
+                    eval $str
+                    str="$OMPI_SIZEOF_FORTRAN_$type=0"
+                    eval $str
+                fi
+            else
+                str="MPI_FORTRAN_${type}_TYPE=$fallback_c_type"
+                eval $str
+            fi
+        }
+
+        # Find C types corresponding to the Fortran types.  Note that
+        # it is *not* an error if we don't find a C type for any of
+        # the optional Fortran types (e.g., INTEGER*1).  In this case,
+        # we'll just not support the optional Fortran type.  It *is*
+        # an error, however, if we can't find a C type for the
+        # required Fortran types.
+
         OMPI_FIND_TYPE(Fortran LOGICAL, FORTRAN_LOGICAL,
             char int int32_t)
 
         OMPI_FIND_TYPE(Fortran INTEGER, FORTRAN_INTEGER, 
             int32_t int intr64_t long:long long)
-        if test "$OMPI_HAVE_FORTRAN_INTEGER1" = "1"; then
-            OMPI_SIZEOF_FORTRAN_INTEGER1=1
-            OMPI_FIND_TYPE(Fortran INTEGER1, FORTRAN_INTEGER1, 
-                char int8_t short int int64_t long:long long)
-        else
-            MPI_FORTRAN_INTEGER1_TYPE=int
-        fi
-        if test "$OMPI_HAVE_FORTRAN_INTEGER2" = "1"; then
-            OMPI_SIZEOF_FORTRAN_INTEGER2=2
-            OMPI_FIND_TYPE(Fortran INTEGER2, FORTRAN_INTEGER2, 
-                short int16_t int int64_t long:long long)
-        else
-            MPI_FORTRAN_INTEGER2_TYPE=int
-        fi
-        if test "$OMPI_HAVE_FORTRAN_INTEGER4" = "1"; then
-            OMPI_SIZEOF_FORTRAN_INTEGER4=4
-            OMPI_FIND_TYPE(Fortran INTEGER4, FORTRAN_INTEGER4, 
-                short int int64_t long:long long)
-        else
-            MPI_FORTRAN_INTEGER4_TYPE=int
-        fi
-        if test "$OMPI_HAVE_FORTRAN_INTEGER8" = "1"; then
-            OMPI_SIZEOF_FORTRAN_INTEGER8=8
-            OMPI_FIND_TYPE(Fortran INTEGER8, FORTRAN_INTEGER8, 
-                int int64_t long:long long)
-        else
-            MPI_FORTRAN_INTEGER8_TYPE=int
-        fi
-        if test "$OMPI_HAVE_FORTRAN_INTEGER16" = "1"; then
-            OMPI_SIZEOF_FORTRAN_INTEGER16=16
-            OMPI_FIND_TYPE(Fortran INTEGER16, FORTRAN_INTEGER16, 
-                int int64_t long:long long)
-        else
-            MPI_FORTRAN_INTEGER16_TYPE=int
-        fi
+
+        test_f77_type INTEGER1 1 "char int8_t short int int64_t long:long long" int no
+        test_f77_type INTEGER2 2 "short int16_t int int64_t long:long long" int no
+        test_f77_type INTEGER4 4 "short int int64_t long:long long" int no
+        test_f77_type INTEGER8 8 "int int64_t long:long long" int no
+        test_f77_type INTEGER16 16 "int int64_t long:long long" int no
 
         OMPI_FIND_TYPE(Fortran REAL, FORTRAN_REAL,
             float double long:double)
-        if test "$OMPI_HAVE_FORTRAN_REAL4" = "1"; then
-            OMPI_SIZEOF_FORTRAN_REAL4=4
-            OMPI_FIND_TYPE(Fortran REAL4, FORTRAN_REAL4,
-                float double long:double)
-        else
-            MPI_FORTRAN_REAL4_TYPE=float
-        fi
-        if test "$OMPI_HAVE_FORTRAN_REAL8" = "1"; then
-            OMPI_SIZEOF_FORTRAN_REAL8=8
-            OMPI_FIND_TYPE(Fortran REAL8, FORTRAN_REAL8,
-                float double long:double)
-        else
-            MPI_FORTRAN_REAL8_TYPE=float
-        fi
-        if test "$OMPI_HAVE_FORTRAN_REAL16" = "1"; then
-            OMPI_SIZEOF_FORTRAN_REAL16=16
-            OMPI_FIND_TYPE(Fortran REAL16, FORTRAN_REAL16,
-                float double long:double)
-        else
-            MPI_FORTRAN_REAL16_TYPE=float
-        fi
+
+        test_f77_type REAL4 4 "float double long:double" float no
+        test_f77_type REAL8 8 "float double long:double" float no
+        test_f77_type REAL16 16 "float double long:double" float no
 
         OMPI_FIND_TYPE(Fortran DOUBLE PRECISION, FORTRAN_DBLPREC,
             float double long:double)
