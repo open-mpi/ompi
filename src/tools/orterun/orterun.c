@@ -86,7 +86,7 @@ struct globals_t {
     bool exit;
     bool no_wait_for_job_completion;
     bool debug;
-    int num_procs;
+    size_t num_procs;
     int exit_status;
     char *hostfile;
     char *env_val;
@@ -221,10 +221,17 @@ int main(int argc, char *argv[], char* env[])
        pointers */
 
     num_apps = ompi_pointer_array_get_size(&apps_pa);
+    if (0 == num_apps) {
+        /* This should never happen -- this case should be caught in
+           create_app(), but let's just double check... */
+        ompi_show_help("help-orterun.txt", "orterun:nothing-to-do", 
+                       orterun_basename);
+        exit(1);
+    }
     apps = malloc(sizeof(orte_app_context_t *) * num_apps);
     if (NULL == apps) {
-        /* JMS show_help */
-        ompi_output(0, "%s: malloc failed", orterun_basename);
+        ompi_show_help("help-orterun.txt", "orterun:syscall-failed", 
+                       orterun_basename, "malloc returned NULL", errno);
         exit(1);
     }
     for (j = i = 0; i < num_apps; ++i) {
@@ -234,8 +241,8 @@ int main(int argc, char *argv[], char* env[])
     }
     proc_infos = malloc(sizeof(struct proc_info_t) * j);
     if (NULL == proc_infos) {
-        /* JMS show_help */
-        ompi_output(0, "%s: malloc failed", orterun_basename);
+        ompi_show_help("help-orterun.txt", "orterun:syscall-failed", 
+                       orterun_basename, "malloc returned NULL", errno);
         exit(1);
     }
     for (i = 0; i < j; ++i) {
@@ -511,7 +518,7 @@ static int init_globals(void)
         false,
         false,
         false,
-        -1,
+        0,
         0,
         NULL,
         NULL,
@@ -869,7 +876,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     /* If the user didn't specify a num procs or any map data, then we
        really have no idea what the launch... */
 
-    if (app->num_procs <= 0 && !map_data) {
+    if (app->num_procs == 0 && !map_data) {
         ompi_show_help("help-orterun.txt", "orterun:num-procs-unspecified",
                        true, orterun_basename, app->argv[0]);
         rc = ORTE_ERR_BAD_PARAM;
