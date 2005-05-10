@@ -466,7 +466,7 @@ EOF
 EOF
         elif test -f .ompi_ignore -a \
              -s .ompi_unignore -a \
-             -z "`egrep $USER\$\|$USER@$HOST .ompi_unignore`" ; then
+             -z "`grep -E $USER\$\|$USER@$HOST .ompi_unignore`" ; then
 
             # If we have a non-empty .ompi_unignore and our username
             # is in there somewhere, we ignore the .ompi_ignore (and
