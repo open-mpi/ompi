@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 	   test_finalize();
 	   exit(1);
     } else {
-        fprintf(test_out, "cellid created: %d\n", cell);
+        fprintf(test_out, "cellid created: %lu\n", (unsigned long) cell);
         test_success();
     }
 
@@ -148,7 +148,7 @@ int main(int argc, char **argv)
     	    test_finalize();
     	    exit(1);
     	} else {
-    	    fprintf(test_out, "jobid created: %d\n", job);
+    	    fprintf(test_out, "jobid created: %lu\n", (unsigned long) job);
     	    test_success();
     	}
     
@@ -161,7 +161,8 @@ int main(int argc, char **argv)
     	   	   test_finalize();
     		   exit(1);
     	    } else {
-    		   fprintf(test_out, "range reserved: %d\n", vpid);
+    		   fprintf(test_out, "range reserved: %lu\n", 
+                           (unsigned long) vpid);
     		   test_success();
     	    }
     
@@ -239,8 +240,9 @@ int main(int argc, char **argv)
                test_finalize();
                exit(1);
             }
-    	    fprintf(test_out, "(%d) ints cell %0X(%ld) job %0X(%ld) vpid %0x(%ld)\n\n", 
-    		    i, cell, (long int)cell, job, (long int)job, vpid, (long int)vpid);
+    	    fprintf(test_out, "(%d) ints cell %lu job %lu vpid %lu\n\n", 
+    		    i, (unsigned long) cell, (unsigned long) job, 
+                    (unsigned long) vpid);
             free(test_name);
     	}
     }

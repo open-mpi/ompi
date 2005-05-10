@@ -322,8 +322,9 @@ int test_overwrite(ompi_list_t* nodes)
 {
     ompi_list_item_t* item;
     orte_gpr_value_t **values;
-    int rc, num_values, i, j;
+    int rc;
     test_node_t* node;
+    size_t i, j, num_values;
     
     num_values = ompi_list_get_size(nodes);
     if (0 >= num_values) {

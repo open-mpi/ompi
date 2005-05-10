@@ -33,10 +33,16 @@ int64_t val64 = 0;
 #endif
 int valint = 0;
 
+typedef union {
+    int value;
+    void *ptr;
+} ip_union_t;
+
 
 static void* atomic_math_test(void* arg)
 {
-    int count = (int) (unsigned long) arg;
+    ip_union_t *ip = (ip_union_t*) arg;
+    int count = ip->value;
     int i;
 
     for (i = 0 ; i < count ; ++i) {
@@ -57,12 +63,22 @@ atomic_math_test_th(int count, int thr_count)
 #if OMPI_HAVE_POSIX_THREADS
     pthread_t *th;
     int tid, ret = 0;
+    ip_union_t ip;
 
     th = (pthread_t *) malloc(thr_count * sizeof(pthread_t));
-    if (!th) { perror("malloc"); exit(EXIT_FAILURE); }
+    if (!th) { 
+        perror("malloc"); 
+        exit(EXIT_FAILURE); 
+    }
 
+    /* Ok to use a single instance of ip_union_t from the stack here
+       because a) we're passing the same count to all threads, and b)
+       we're waiting for all the threads to finish before leaving this
+       function, so there's no race condition of the instance
+       disappearing before the threads start. */
+    ip.value = count;
     for (tid = 0; tid < thr_count; tid++) {
-        if (pthread_create(&th[tid], NULL, atomic_math_test, (void*) count) != 0) {
+        if (pthread_create(&th[tid], NULL, atomic_math_test, (void*) &ip) != 0) {
             perror("pthread_create");
             exit(EXIT_FAILURE);
         }
@@ -81,8 +97,10 @@ atomic_math_test_th(int count, int thr_count)
 
     return ret;
 #else
+    ip_union_t ip;
+    ip.value = count;
     if (thr_count == 1) {
-        atomic_math_test((void*) count);
+        atomic_math_test((void*) &ip);
     } else {
         return 77;
     }
@@ -114,8 +132,10 @@ main(int argc, char *argv[])
     }
 #if OMPI_HAVE_ATOMIC_MATH_64
     if (val64 != TEST_REPS * num_threads * 6) {
+        /* Safe to case to (int) here because we know it's going to be
+           a small value */
         printf("ompi_atomic_add32 failed.  Expected %d, got %d.\n",
-               TEST_REPS * num_threads * 6, val64);
+               TEST_REPS * num_threads * 6, (int) val64);
         ret = 1;
     }
 #else

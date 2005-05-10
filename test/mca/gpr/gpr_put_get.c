@@ -195,7 +195,7 @@ int main(int argc, char **argv)
     val->num_tokens = 14;
     val->tokens = (char**)malloc(val->num_tokens * sizeof(char*));
     for (i=0; i < 14; i++) {
-        asprintf(&(val->tokens[i]), "dummy%d", i);
+        asprintf(&(val->tokens[i]), "dummy%lu", (unsigned long) i);
     }
     val->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
     val->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
@@ -221,12 +221,13 @@ int main(int argc, char **argv)
     val->num_tokens = 14;
     val->tokens = (char**)malloc(val->num_tokens * sizeof(char*));
     for (i=0; i < 14; i++) {
-        asprintf(&(val->tokens[i]), "dummy%d", i);
+        asprintf(&(val->tokens[i]), "dummy%lu", (unsigned long) i);
     }
     val->keyvals = (orte_gpr_keyval_t**)malloc(20*sizeof(orte_gpr_keyval_t*));
     for (i=0; i<20; i++) {
         val->keyvals[i] = OBJ_NEW(orte_gpr_keyval_t);
-        asprintf(&((val->keyvals[i])->key), "stupid-test-%d", i);
+        asprintf(&((val->keyvals[i])->key), "stupid-test-%lu", 
+                 (unsigned long) i);
         (val->keyvals[i])->type = ORTE_UINT32;
         (val->keyvals[i])->value.ui32 = (uint32_t)i;
     }
@@ -248,13 +249,14 @@ int main(int argc, char **argv)
     val->num_tokens = 10;
     val->tokens = (char**)malloc(val->num_tokens * sizeof(char*));
     for (i=0; i < val->num_tokens; i++) {
-        asprintf(&(val->tokens[i]), "dummy%d", i);
+        asprintf(&(val->tokens[i]), "dummy%lu", (unsigned long) i);
     }
     val->cnt = 20;
     val->keyvals = (orte_gpr_keyval_t**)malloc(val->cnt * sizeof(orte_gpr_keyval_t*));
     for (i=0; i<val->cnt; i++) {
         val->keyvals[i] = OBJ_NEW(orte_gpr_keyval_t);
-        asprintf(&((val->keyvals[i])->key), "stupid-test-%d", i);
+        asprintf(&((val->keyvals[i])->key), "stupid-test-%lu",
+                 (unsigned long) i);
         (val->keyvals[i])->type = ORTE_UINT32;
         (val->keyvals[i])->value.ui32 = (uint32_t)i;
     }
@@ -301,11 +303,12 @@ int main(int argc, char **argv)
     
     fprintf(stderr, "get results:\n");
     for (j=0; j < cnt; j++) {
-        fprintf(stderr, "value %d: cnt %d\t segment %s num_tokens %d\n", j,
-                            values[j]->cnt,
-                            values[j]->segment, values[j]->num_tokens);
+        fprintf(stderr, "value %lu: cnt %lu\t segment %s num_tokens %lu\n",
+                (unsigned long) j, (unsigned long) values[j]->cnt,
+                values[j]->segment, (unsigned long) values[j]->num_tokens);
         for (i=0; i < values[j]->num_tokens; i++) {
-            fprintf(stderr, "token: %d %s\n", i, values[j]->tokens[i]);
+            fprintf(stderr, "token: %lu %s\n", (unsigned long) i,
+                    values[j]->tokens[i]);
         }
         kvals = values[j]->keyvals;
         for (i=0; i < values[j]->cnt; i++) {
@@ -338,11 +341,12 @@ int main(int argc, char **argv)
     
     fprintf(stderr, "get results:\n");
     for (j=0; j < cnt; j++) {
-        fprintf(stderr, "value %d: cnt %d\t segment %s num_tokens %d\n", j,
-                            values[j]->cnt,
-                            values[j]->segment, values[j]->num_tokens);
+        fprintf(stderr, "value %lu: cnt %lu\t segment %s num_tokens %lu\n", 
+                (unsigned long) j, (unsigned long) values[j]->cnt,
+                values[j]->segment, (unsigned long) values[j]->num_tokens);
         for (i=0; i < values[j]->num_tokens; i++) {
-            fprintf(stderr, "token: %d %s\n", i, values[j]->tokens[i]);
+            fprintf(stderr, "token: %lu %s\n", (unsigned long) i,
+                    values[j]->tokens[i]);
         }
         kvals = values[j]->keyvals;
         for (i=0; i < values[j]->cnt; i++) {
@@ -360,7 +364,7 @@ int main(int argc, char **argv)
     val->num_tokens = 5;
     val->tokens = (char**)malloc(val->num_tokens * sizeof(char*));
     for (i=0; i < 5; i++) {
-        asprintf(&(val->tokens[i]), "multi-dum-dum-%d", i);
+        asprintf(&(val->tokens[i]), "multi-dum-dum-%lu", (unsigned long) i);
     }
     val->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
     val->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
@@ -368,7 +372,7 @@ int main(int argc, char **argv)
     (val->keyvals[0])->type = ORTE_STRING;
     (val->keyvals[0])->value.strptr = strdup("try-string-value");
     for (i = 0; i < 10; i++) {
-        fprintf(stderr, "\tputting copy %d\n", i);
+        fprintf(stderr, "\tputting copy %lu\n", (unsigned long) i);
         if (ORTE_SUCCESS != (rc = gpr_module->put(1, &val))) {
             fprintf(test_out, "gpr_test: put multiple copies of one keyval in a container failed with error code %s\n",
                         ORTE_ERROR_NAME(rc));
