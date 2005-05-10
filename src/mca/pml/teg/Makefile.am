@@ -16,8 +16,7 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = libmca_pml_teg.la
-libmca_pml_teg_la_SOURCES = \
+teg_sources = \
 	pml_teg.c \
 	pml_teg.h \
 	pml_teg_cancel.c \
@@ -40,3 +39,24 @@ libmca_pml_teg_la_SOURCES = \
 	pml_teg_start.c \
         pml_ptl_array.c \
         pml_ptl_array.h
+
+if OMPI_BUILD_pml_teg_DSO
+component_noinst =
+component_install = mca_pml_teg.la
+else
+component_noinst = libmca_pml_teg.la
+component_install =
+endif
+
+
+mcacomponentdir = $(libdir)/openmpi
+mcacomponent_LTLIBRARIES = $(component_install)
+mca_pml_teg_la_SOURCES = $(teg_sources)
+mca_pml_teg_la_LIBADD = 
+mca_pml_teg_la_LDFLAGS = -module -avoid-version
+
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_pml_teg_la_SOURCES = $(teg_sources)
+libmca_pml_teg_la_LIBADD =
+libmca_pml_teg_la_LDFLAGS = -module -avoid-version
+
