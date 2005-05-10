@@ -21,7 +21,7 @@
 #include "ptl_portals_compat.h"
 #include "ptl_portals_send.h"
 #include "mca/pml/pml.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 
 static void mca_ptl_portals_send_frag_construct(mca_ptl_portals_send_frag_t* frag);
 static void mca_ptl_portals_send_frag_destruct(mca_ptl_portals_send_frag_t* frag);
@@ -55,7 +55,7 @@ mca_ptl_portals_alloc(size_t *size)
 int
 mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
 		     struct mca_ptl_base_peer_t *ptl_peer,
-		     struct mca_pml_base_send_request_t *sendreq,
+		     struct mca_ptl_base_send_request_t *sendreq,
 		     size_t offset, size_t size, int flags)
 {
     mca_ptl_portals_module_t* ptl = (mca_ptl_portals_module_t*) ptl_base;
@@ -90,13 +90,13 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
        int rc;
 
        convertor = &sendfrag->frag_send.frag_base.frag_convertor;
-       ompi_convertor_copy(&sendreq->req_convertor, convertor);
+       ompi_convertor_copy(&sendreq->req_send.req_convertor, convertor);
        ompi_convertor_init_for_send(
                     convertor,
                     0,
-                    sendreq->req_datatype,
-                    sendreq->req_count,
-                    sendreq->req_addr,
+                    sendreq->req_send.req_datatype,
+                    sendreq->req_send.req_count,
+                    sendreq->req_send.req_addr,
                     offset,
                     mca_ptl_portals_alloc );
                                                                                                                       
@@ -131,12 +131,12 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
     /* first frag - needs all matching */
     if (offset == 0) {
         hdr->hdr_common.hdr_flags = flags;
-        hdr->hdr_match.hdr_contextid = sendreq->req_base.req_comm->c_contextid;
-        hdr->hdr_match.hdr_src = sendreq->req_base.req_comm->c_my_rank;
-        hdr->hdr_match.hdr_dst = sendreq->req_base.req_peer;
-        hdr->hdr_match.hdr_tag = sendreq->req_base.req_tag;
-        hdr->hdr_match.hdr_msg_length = sendreq->req_bytes_packed;
-        hdr->hdr_match.hdr_msg_seq = sendreq->req_base.req_sequence;
+        hdr->hdr_match.hdr_contextid = sendreq->req_send.req_base.req_comm->c_contextid;
+        hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
+        hdr->hdr_match.hdr_dst = sendreq->req_send.req_base.req_peer;
+        hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
+        hdr->hdr_match.hdr_msg_length = sendreq->req_send.req_bytes_packed;
+        hdr->hdr_match.hdr_msg_seq = sendreq->req_send.req_base.req_sequence;
         
         /* if an acknoweldgment is not required - can get by with a
            shorter header */
@@ -170,7 +170,7 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
     /* must update the offset after actual fragment size is determined 
      * before attempting to send the fragment
      */
-    mca_pml_base_send_request_offset(sendreq,
+    mca_ptl_base_send_request_offset(sendreq,
         sendfrag->frag_send.frag_base.frag_size);
 
     /* setup the send and go */
@@ -254,6 +254,10 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
                 OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
                                       (ompi_list_item_t*) frag);
             }
+        } else {
+            /* need to wait for the ack... */
+            ompi_list_append(&mca_ptl_portals_component.portals_pending_acks,
+                             (ompi_list_item_t*) frag);
         }
 
     } else {

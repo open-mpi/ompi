@@ -21,13 +21,14 @@
 #include "ptl_portals_compat.h"
 #include "ptl_portals_recv.h"
 
+
 OBJ_CLASS_INSTANCE(mca_ptl_portals_recv_frag_t,
                    mca_ptl_base_recv_frag_t,
                    NULL, NULL);
 
 
 int
-ptl_portals_post_recv_md(struct mca_ptl_portals_module_t *ptl)
+ptl_portals_post_recv_md(struct mca_ptl_portals_module_t *ptl, void *data_ptr)
 {
     ptl_handle_me_t me_handle;
     ptl_handle_md_t md_handle;
@@ -47,11 +48,16 @@ ptl_portals_post_recv_md(struct mca_ptl_portals_module_t *ptl)
                       &me_handle);
     if (PTL_OK != ret) return OMPI_ERROR;
 
-    /* and some memory */
-    mem = malloc(ptl->first_frag_entry_size);
-    if (NULL == mem) {
-        PtlMEUnlink(me_handle);
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+    if (NULL == data_ptr) {
+        /* and some memory */
+        mem = malloc(ptl->first_frag_entry_size);
+        if (NULL == mem) {
+            PtlMEUnlink(me_handle);
+            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+        }
+    } else {
+        /* re-use the memory from the (now unlinked) memory descriptor */
+        mem = data_ptr;
     }
 
     /* and the memory descriptor */
@@ -87,16 +93,15 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
 
     if (ev->type == PTL_EVENT_PUT_START) {
         ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                            "PUT_START event received");
+                            "PUT_START event received (%ld)", ev->link);
     } else if (ev->type == PTL_EVENT_PUT_END) {
         ompi_list_item_t *item;
         mca_ptl_portals_recv_frag_t *recvfrag;
         mca_ptl_base_header_t *hdr;
 
         ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                            "PUT_END event received");
-        printf("start: %p, mlength: %lld, offset: %lld\n",
-               ev->md.start, ev->mlength, ev->offset);
+                            "message %ld received, start: %p, mlength: %lld, offset: %lld",
+                            ev->link, ev->md.start, ev->mlength, ev->offset);
 
         /* get a fragment header */
         OMPI_FREE_LIST_GET(&mca_ptl_portals_component.portals_recv_frags, item, ret);
@@ -128,6 +133,24 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
                                  &hdr->hdr_match);
             break;
 
+        case MCA_PTL_HDR_TYPE_RNDV:
+            recvfrag->frag_data = ((mca_ptl_base_rendezvous_header_t*) hdr) + 1;
+            recvfrag->frag_size = ev->mlength - sizeof(mca_ptl_base_rendezvous_header_t);
+            memcpy(&(recvfrag->frag_recv.frag_base.frag_header),
+                   hdr, sizeof(mca_ptl_base_rendezvous_header_t));
+            recvfrag->frag_recv.frag_base.frag_owner =
+                (struct mca_ptl_base_module_t*) ptl;
+            recvfrag->frag_recv.frag_base.frag_peer = NULL; /* BWB - fix me */
+            recvfrag->frag_recv.frag_base.frag_size = 0;
+            recvfrag->frag_recv.frag_base.frag_addr = recvfrag->frag_data;
+            recvfrag->frag_recv.frag_is_buffered = true;
+            recvfrag->frag_recv.frag_request = NULL;
+
+            ptl->super.ptl_match(&ptl->super, &recvfrag->frag_recv, 
+                                 &hdr->hdr_match);
+
+            break;
+
         default:
             ompi_output(mca_ptl_portals_component.portals_output,
                         "unable to deal with header of type %d",
@@ -135,10 +158,24 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
             break;
         }
 
+        /* see if we need to repost an md */
+        if (ev->offset > ev->md.length - ev->md.max_size) {
+            ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                                "must repost event: %lld, %lld, %lld",
+                                ev->offset, ev->md.length, ev->md.max_size);
+            /* use the same memory as the old md - it's not using it anymore */
+            ret = ptl_portals_post_recv_md(ptl, ev->md.start);
+            if (OMPI_SUCCESS != ret) {
+                ompi_output(mca_ptl_portals_component.portals_output,
+                            "failed to allocate receive memory descriptor");
+                /* BWB - ok, what do I do now? */
+            }
+        }
+
     } else {
         ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
-                            "unknown event: %d",
-                            ev->type);
+                            "unknown event: %d (%ld)",
+                            ev->type, ev->link);
     }
 
     return OMPI_SUCCESS;
@@ -150,15 +187,14 @@ mca_ptl_portals_matched(struct mca_ptl_base_module_t *ptl_base,
 			struct mca_ptl_base_recv_frag_t *frag_base)
 {
     mca_ptl_base_header_t* hdr = &frag_base->frag_base.frag_header;
-    mca_pml_base_recv_request_t* request = frag_base->frag_request;
+    mca_ptl_base_recv_request_t* request = frag_base->frag_request;
     mca_ptl_portals_module_t* ptl = (mca_ptl_portals_module_t*) ptl_base;
     mca_ptl_portals_recv_frag_t* recvfrag = (mca_ptl_portals_recv_frag_t*) frag_base;
     unsigned int bytes_delivered = recvfrag->frag_size;
-    bool ack_pending = false;
 
     /* generate an acknowledgment if required */
     if(hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) {
-        fprintf(stderr, "--> you only wish ACKs were implemented\n");
+        ;
     }
 
     /* copy data into users buffer */
@@ -166,8 +202,8 @@ mca_ptl_portals_matched(struct mca_ptl_base_module_t *ptl_base,
         struct iovec iov;
         unsigned int iov_count = 1;
         int free_after = 0;
-        ompi_proc_t *proc = ompi_comm_peer_lookup(request->req_base.req_comm,
-            request->req_base.req_ompi.req_status.MPI_SOURCE);
+        ompi_proc_t *proc = ompi_comm_peer_lookup(request->req_recv.req_base.req_comm,
+            request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
         ompi_convertor_t* convertor = &frag_base->frag_base.frag_convertor;
 
         /* initialize receive convertor */
@@ -175,9 +211,9 @@ mca_ptl_portals_matched(struct mca_ptl_base_module_t *ptl_base,
         ompi_convertor_init_for_recv(
             convertor,                      /* convertor */
             0,                              /* flags */
-            request->req_base.req_datatype, /* datatype */
-            request->req_base.req_count,    /* count elements */
-            request->req_base.req_addr,     /* users buffer */
+            request->req_recv.req_base.req_datatype, /* datatype */
+            request->req_recv.req_base.req_count,    /* count elements */
+            request->req_recv.req_base.req_addr,     /* users buffer */
             0,                              /* offset in bytes into packed buffer */
             NULL );                         /* not allocating memory */
         /*ompi_convertor_get_packed_size(convertor, &request->req_bytes_packed); */
@@ -198,6 +234,5 @@ mca_ptl_portals_matched(struct mca_ptl_base_module_t *ptl_base,
     if(ack_pending == false)
         MCA_PTL_PORTALS_RECV_FRAG_RETURN(recvfrag);
 #endif
-
     return;
 }
