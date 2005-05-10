@@ -257,7 +257,7 @@ int main(int argc, char **argv)
 
     fprintf(stderr, "creating tags\n");
     for (i=0; i<10; i++) {
-        asprintf(&tmp, "test-tag-%d", i);
+        asprintf(&tmp, "test-tag-%lu", (unsigned long) i);
          if (ORTE_SUCCESS != (rc = create_itag_fn(&itag[i], seg, tmp))) {
             fprintf(test_out, "gpr_test: create_itag failed with error code %s\n",
                         ORTE_ERROR_NAME(rc));
@@ -273,7 +273,7 @@ int main(int argc, char **argv)
     
     fprintf(stderr, "lookup tags\n");
     for (i=0; i<10; i++) {
-         asprintf(&tmp, "test-tag-%d", i);
+         asprintf(&tmp, "test-tag-%lu", (unsigned long) i);
          if (ORTE_SUCCESS != (rc = dict_lookup_fn(&itag2, seg, tmp)) ||
              itag2 != itag[i]) {
             fprintf(test_out, "gpr_test: lookup failed with error code %s\n",
@@ -290,7 +290,7 @@ int main(int argc, char **argv)
     
     fprintf(stderr, "reverse lookup tags\n");
     for (i=0; i<10; i++) {
-         asprintf(&tmp2, "test-tag-%d", i);
+         asprintf(&tmp2, "test-tag-%lu", (unsigned long) i);
          if (ORTE_SUCCESS != (rc = dict_reverse_lookup_fn(&tmp, seg, itag[i])) ||
              0 != strcmp(tmp2, tmp)) {
             fprintf(test_out, "gpr_test: reverse lookup failed with error code %s\n",
@@ -308,7 +308,7 @@ int main(int argc, char **argv)
     
     fprintf(stderr, "delete tags\n");
     for (i=0; i<10; i++) {
-         asprintf(&tmp, "test-tag-%d", i);
+         asprintf(&tmp, "test-tag-%lu", (unsigned long) i);
          if (ORTE_SUCCESS != (rc = delete_itag_fn(seg, tmp))) {
             fprintf(test_out, "gpr_test: delete tag failed with error code %s\n",
                         ORTE_ERROR_NAME(rc));
@@ -323,7 +323,7 @@ int main(int argc, char **argv)
     
     fprintf(stderr, "get itag list\n");
     for (i=0; i < 14; i++) {
-        asprintf(&names[i], "dummy%d", i);
+        asprintf(&names[i], "dummy%lu", (unsigned long) i);
     }
     names[14] = NULL;
     num_names = 0;
@@ -338,9 +338,11 @@ int main(int argc, char **argv)
         fprintf(test_out, "gpr_test: get itag list passed\n");
     }
     
-    fprintf(test_out, "number of names found %d\n", num_names);
+    fprintf(test_out, "number of names found %lu\n", 
+            (unsigned long) num_names);
     for (i=0; i < num_names; i++) {
-        fprintf(test_out, "\tname %s itag %d\n", names[i], itaglist[i]);
+        fprintf(test_out, "\tname %s itag %lu\n", names[i], 
+                (unsigned long) itaglist[i]);
     }
     
     fprintf(stderr, "creating container\n");
@@ -359,7 +361,8 @@ int main(int argc, char **argv)
     
     fprintf(test_out, "itags for container\n");
     for (i=0; i < cptr->num_itags; i++) {
-        fprintf(test_out, "\tindex %d itag %d\n", i, cptr->itags[i]);
+        fprintf(test_out, "\tindex %lu itag %lu\n", (unsigned long) i, 
+                (unsigned long) cptr->itags[i]);
     }
 
     fprintf(stderr, "add keyval\n");
@@ -380,8 +383,8 @@ int main(int argc, char **argv)
     
     ivals = (orte_gpr_replica_itagval_t**)((cptr->itagvals)->addr);
     if (NULL != ivals[0]) {
-        fprintf(stderr, "ival[0] %d %d %d\n", ivals[0]->itag,
-                    ivals[0]->type, ivals[0]->value.i16);
+        fprintf(stderr, "ival[0] %lu %d %d\n", (unsigned long) ivals[0]->itag,
+                ivals[0]->type, (int) ivals[0]->value.i16);
     }
     
     fprintf(stderr, "search container for single entry\n");
@@ -393,8 +396,8 @@ int main(int argc, char **argv)
     if (ORTE_SUCCESS != (rc = search_container_fn(&num_found, ORTE_GPR_REPLICA_OR,
                                         &itag2, 1, cptr) ||
         0 >= num_found)) {
-        fprintf(test_out, "gpr_test: search container for single entry failed - returned %s for itag %d\n",
-                            ORTE_ERROR_NAME(rc), itag2);
+        fprintf(test_out, "gpr_test: search container for single entry failed - returned %s for itag %lu\n",
+                            ORTE_ERROR_NAME(rc), (unsigned long) itag2);
         test_failure("gpr_test: search container for single entry failed");
         test_finalize();
         return -1;
@@ -423,11 +426,13 @@ int main(int argc, char **argv)
     for (i=0; i < (cptr->itagvals)->size; i++) {
         if (NULL != ivals[i]) {
             if (ivals[i]->type == ORTE_INT16) {
-                fprintf(stderr, "ival[%d] %d %d %d\n", i, ivals[i]->itag,
-                    ivals[i]->type, ivals[i]->value.i16);
+                fprintf(stderr, "ival[%lu] %lu %d %d\n", (unsigned long) i, 
+                        (unsigned long) ivals[i]->itag,
+                        ivals[i]->type, (int) ivals[i]->value.i16);
             } else if (ivals[i]->type == ORTE_STRING) {
-                fprintf(stderr, "ival[%d] %d %d %s\n", i, ivals[i]->itag,
-                    ivals[i]->type, ivals[i]->value.strptr);
+                fprintf(stderr, "ival[%lu] %lu %d %s\n", (unsigned long) i,
+                        (unsigned long) ivals[i]->itag,
+                        ivals[i]->type, ivals[i]->value.strptr);
             }
         }
     }

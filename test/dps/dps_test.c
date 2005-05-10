@@ -1162,7 +1162,8 @@ static bool test10(void)
         src[i]->keyvals = (orte_gpr_keyval_t**)malloc(src[i]->cnt * sizeof(orte_gpr_keyval_t*));
         for (j=0; j < src[i]->cnt; j++) {
             src[i]->keyvals[j] = OBJ_NEW(orte_gpr_keyval_t);
-            asprintf(&((src[i]->keyvals[j])->key), "%d", j);
+            asprintf(&((src[i]->keyvals[j])->key), "%lu", 
+                     (unsigned long) j);
             (src[i]->keyvals[j])->type = ((j % 2) == 0) ? ORTE_INT16 : ORTE_INT32;
             if (ORTE_INT16 == (src[i]->keyvals[j])->type)
                 (src[i]->keyvals[j])->value.i16 = j;
@@ -1399,7 +1400,7 @@ static bool test12(void)
         rc = orte_dps.unpack(bufA, dst, &count, ORTE_APP_CONTEXT);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
             test_comment ("orte_dps.unpack failed");
-            fprintf(test_out, "orte_unpack_value failed with return code %d (count=%d)\n", rc, count);
+            fprintf(test_out, "orte_unpack_value failed with return code %d (count=%lu)\n", rc, (unsigned long) count);
             return(false);
         }
 
@@ -1521,7 +1522,7 @@ static bool test13(void)
         rc = orte_dps.unpack(bufA, dst, &count, ORTE_GPR_SUBSCRIPTION);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
             test_comment ("orte_dps.unpack failed");
-            fprintf(test_out, "orte_unpack_value (ORTE_GPR_SUBSCRIPTION) failed with return code %d (count=%d)\n", rc, count);
+            fprintf(test_out, "orte_unpack_value (ORTE_GPR_SUBSCRIPTION) failed with return code %d (count=%lu)\n", rc, (unsigned long) count);
             return(false);
         }
 
@@ -1643,7 +1644,7 @@ static bool test14(void)
         rc = orte_dps.unpack(bufA, dst, &count, ORTE_GPR_NOTIFY_DATA);
         if (ORTE_SUCCESS != rc || count != NUM_ELEMS) {
             test_comment ("orte_dps.unpack failed");
-            fprintf(test_out, "orte_unpack_value (ORTE_GPR_NOTIFY_DATA) failed with return code %d (count=%d)\n", rc, count);
+            fprintf(test_out, "orte_unpack_value (ORTE_GPR_NOTIFY_DATA) failed with return code %d (count=%lu)\n", rc, (unsigned long) count);
             return(false);
         }
 
