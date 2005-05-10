@@ -22,6 +22,7 @@ AC_DEFUN([OMPI_FIND_TYPE],[
 msg="$1"
 target_name="$2"
 types="$3"
+abort_on_fail="$4"
 
 # Announce
 AC_MSG_CHECKING([for C type corresponding to $msg])
@@ -59,13 +60,13 @@ done
 if test -z "$real_type"; then
     AC_MSG_RESULT([not found])
     AC_MSG_WARN([*** Did not find corresponding C type])
-    AC_MSG_ERROR([Cannot continue])
+    if test "$abort_on_fail" != ""; then
+        AC_MSG_ERROR([Cannot continue])
+    fi
 else
     str="MPI_${target_name}_TYPE=\$real_type"
     eval $str
     AC_MSG_RESULT([$real_type])
 fi
 
-unset types name done str real_type target_size type_size msg type_varname
-])
-
+unset types name done str real_type target_size type_size msg type_varname])
