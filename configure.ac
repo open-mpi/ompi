@@ -1093,6 +1093,14 @@ AC_DEFINE_UNQUOTED(OMPI_USE_STDBOOL_H, $OMPI_USE_STDBOOL_H,
 AC_MSG_RESULT([$MSG])
 
 
+# Check for socklen_t.  Don't do this with all the other
+# AC_CHECK_TYPES checks, above, because we want this to be after the
+# big AC_CHECK_HEADERS (above) so that the test will automatically
+# include <sys/socket.h>, which is where socklen_t should be defined.
+
+AC_CHECK_TYPES(socklen_t)
+
+
 ##################################
 # Libraries
 ##################################

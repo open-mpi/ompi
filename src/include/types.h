@@ -101,7 +101,7 @@ typedef void* ompi_iov_base_ptr_t;
  * handle differences in socklen_t
  */
 
-#if defined(__linux__) || defined(_AIX)
+#if defined(HAVE_SOCKLEN_T)
 typedef socklen_t ompi_socklen_t;
 #else
 typedef int ompi_socklen_t;
