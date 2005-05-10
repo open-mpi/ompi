@@ -168,10 +168,44 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
 
             break;
 
+        case MCA_PTL_HDR_TYPE_FRAG:
+            /* get a fragment header */
+            OMPI_FREE_LIST_GET(&mca_ptl_portals_component.portals_recv_frags, item, ret);
+            recvfrag = (mca_ptl_portals_recv_frag_t*) item;
+            if (OMPI_SUCCESS != ret) {
+                ompi_output(mca_ptl_portals_component.portals_output,
+                            "unable to allocate resources");
+                return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+            }
+
+            /* save the sender */
+            recvfrag->frag_source = ev->initiator;
+
+            recvfrag->frag_data = ((mca_ptl_base_frag_header_t*) hdr) + 1;
+            recvfrag->frag_size = ev->mlength - sizeof(mca_ptl_base_frag_header_t);
+            memcpy(&(recvfrag->frag_recv.frag_base.frag_header),
+                   hdr, sizeof(mca_ptl_base_frag_header_t));
+            recvfrag->frag_recv.frag_base.frag_owner =
+                (struct mca_ptl_base_module_t*) ptl;
+            recvfrag->frag_recv.frag_base.frag_peer = NULL; /* BWB - fix me */
+            recvfrag->frag_recv.frag_base.frag_size = 0;
+            recvfrag->frag_recv.frag_base.frag_addr = recvfrag->frag_data;
+            recvfrag->frag_recv.frag_is_buffered = true;
+            recvfrag->frag_recv.frag_request = NULL;
+
+            ptl->super.ptl_match(&ptl->super, &recvfrag->frag_recv, 
+                                 &hdr->hdr_match);
+
+            break;
+
         case MCA_PTL_HDR_TYPE_ACK:
             {
                 mca_ptl_portals_send_frag_t *sendfrag;
+                mca_ptl_base_send_request_t *sendreq;
                 sendfrag = hdr->hdr_ack.hdr_src_ptr.pval;
+                sendreq = sendfrag->frag_send.frag_request;
+
+                sendreq->req_peer_match = hdr->hdr_ack.hdr_dst_match;
 
                 sendfrag->frag_send.frag_base.frag_owner->
                     ptl_send_progress(sendfrag->frag_send.frag_base.frag_owner,

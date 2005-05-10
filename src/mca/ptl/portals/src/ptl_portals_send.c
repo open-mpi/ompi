@@ -68,7 +68,7 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
                         "mca_ptl_portals_send to %lu, %lu",
                         peer_id->nid, peer_id->pid);
 
-    if (sendreq->req_cached) {
+    if (sendreq->req_cached && offset == 0) {
         sendfrag = (mca_ptl_portals_send_frag_t*)(sendreq+1);
     } else {
         ompi_list_item_t *item;
@@ -151,19 +151,22 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
 
     } else {
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
+        sendfrag->frag_vector[0].iov_len = sizeof(mca_ptl_base_frag_header_t);
         hdr->hdr_common.hdr_flags = flags;
         hdr->hdr_frag.hdr_frag_offset = offset;
         hdr->hdr_frag.hdr_frag_length = sendfrag->frag_send.frag_base.frag_size;
         hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
         hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
         hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
+
+        sendfrag->frag_send.frag_base.frag_size = size;
     }
 
     /* fragment state */
     sendfrag->frag_send.frag_base.frag_owner = ptl_base;
     sendfrag->frag_send.frag_request = sendreq;
     sendfrag->frag_send.frag_base.frag_peer = ptl_peer;
-
+    
 
     /* must update the offset after actual fragment size is determined 
      * before attempting to send the fragment
@@ -218,7 +221,8 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
                                       frag->frag_send.frag_base.frag_size);
 
                 /* return frag to freelist if not part of request */
-                if (frag->frag_send.frag_request->req_cached == false) {
+                if (frag->frag_send.frag_request->req_cached == false || 
+                    frag->frag_send.frag_base.frag_header.hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FRAG) {
                     if (frag->frag_send.frag_base.frag_addr != NULL) {
                         free(frag->frag_send.frag_base.frag_addr);
                     }

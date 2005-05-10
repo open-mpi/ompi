@@ -366,6 +366,7 @@ extern int mca_ptl_portals_send(
 );
 
 
+
 extern int mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
                                          int value);
 
