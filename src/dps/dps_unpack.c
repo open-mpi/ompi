@@ -35,7 +35,7 @@ int orte_dps_unpack(orte_buffer_t *buffer, void *dst, size_t *num_vals,
     orte_data_type_t local_type;
 
     /* check for error */
-    if (NULL == buffer || NULL == dst || NULL == num_vals || 0 > *num_vals) { 
+    if (NULL == buffer || NULL == dst || NULL == num_vals) { 
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }

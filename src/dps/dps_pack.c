@@ -32,7 +32,7 @@ int orte_dps_pack(orte_buffer_t *buffer, void *src, size_t num_vals,
     int rc;
 
     /* check for error */
-    if (NULL == buffer || NULL == src || num_vals < 0) {
+    if (NULL == buffer || NULL == src) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
