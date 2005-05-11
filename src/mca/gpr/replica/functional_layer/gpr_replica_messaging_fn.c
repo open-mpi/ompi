@@ -273,7 +273,7 @@ int orte_gpr_replica_construct_notify_message(orte_gpr_notify_message_t **msg,
                     }
                 }
                 /* no prior matching data found, so add another data location to the message */
-                (*msg)->data = realloc((*msg)->data, ((*msg)->cnt + 1)*sizeof(orte_gpr_notify_data_t*));
+                (*msg)->data = (orte_gpr_notify_data_t **) realloc((*msg)->data, ((*msg)->cnt + 1)*sizeof(orte_gpr_notify_data_t*));
                 if (NULL == (*msg)->data) {
                     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                     return ORTE_ERR_OUT_OF_RESOURCE;

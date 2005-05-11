@@ -94,10 +94,9 @@ extern "C" {
 #define ORTE_GPR_PACK_SYNCHRO_MODE       ORTE_SYNCHRO_MODE
 #define ORTE_GPR_PACK_NOTIFY_ID          ORTE_UINT32
 
-
-    OMPI_DECLSPEC int orte_gpr_base_open(void);
-    OMPI_DECLSPEC int orte_gpr_base_select(void);
-    OMPI_DECLSPEC int orte_gpr_base_close(void);
+   OMPI_DECLSPEC int orte_gpr_base_open(void);
+   OMPI_DECLSPEC int orte_gpr_base_select(void);
+   OMPI_DECLSPEC int orte_gpr_base_close(void);
 
     /* general usage functions */
     OMPI_DECLSPEC int orte_gpr_base_pack_delete_segment(orte_buffer_t *cmd,
@@ -213,10 +212,6 @@ int orte_gpr_base_unpack_subscription(orte_buffer_t *buffer, void *dest,
 int orte_gpr_base_unpack_notify_data(orte_buffer_t *buffer, void *dest,
                        size_t *num_vals, orte_data_type_t type);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
 /*
  * globals that might be needed inside the gpr
  */
@@ -225,5 +220,8 @@ extern bool orte_gpr_base_selected;
 extern ompi_list_t orte_gpr_base_components_available;
 extern mca_gpr_base_component_t orte_gpr_base_selected_component;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

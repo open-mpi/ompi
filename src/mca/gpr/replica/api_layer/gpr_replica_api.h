@@ -38,6 +38,11 @@
 
 #include "mca/gpr/replica/gpr_replica.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
+
 /*
  * Implemented registry functions - see gpr.h for documentation
  */
@@ -140,5 +145,8 @@ int orte_gpr_replica_dump_value(orte_gpr_value_t *value, int output_id);
  */
 int orte_gpr_replica_preallocate_segment(char *name, size_t num_slots);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

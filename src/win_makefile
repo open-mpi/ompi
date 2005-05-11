@@ -53,6 +53,8 @@ C_SUBDIRS =  \
         mca/coll/base \
         mca/gpr/base \
         mca/gpr/base/data_type_support \
+        mca/gpr/base/pack_api_cmd \
+        mca/gpr/base/unpack_api_response \
         mca/io/base \
         mca/iof/base \
 		  mca/errmgr/base \
@@ -145,8 +147,6 @@ STATIC_LIBS = \
         oob\
         pml\
         schema \
-        ns\
-        gpr \
         iof
 
 CXXFLAGS = $(CFLAGS) $(INCL)

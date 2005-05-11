@@ -29,6 +29,10 @@
 
 #include "mca/gpr/base/base.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * Module open / close
  */
@@ -210,5 +214,9 @@ orte_gpr_proxy_remove_notify_request(orte_gpr_notify_id_t local_idtag,
 
 int orte_gpr_proxy_set_remote_idtag(orte_gpr_notify_id_t local_idtag,
                                      orte_gpr_notify_id_t remote_idtag);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

@@ -39,7 +39,6 @@ CPP_SUBDIRS = \
         ptl/self \
         ptl/tcp/src \
         oob/tcp \
-        pml/teg/src \
         ns/replica/src \
         ns/proxy/src \
         gpr/proxy \
@@ -156,7 +155,7 @@ install: win_makefile
         if test -f ${CURDIR}/$${dirs}/$${exp}; then install -p ${CURDIR}/$${dirs}/$${exp} ${installdir}/$${exp}; fi;); \
 	done
 	@echo "done"
-    
+
 .PHONY: clean
 
 clean:
