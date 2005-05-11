@@ -791,7 +791,9 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
     while( (done1 & done2) != 1 ) {
         /* They are supposed to finish in exactly the same time. */
         if( done1 | done2 ) {
-            printf( "WRONG !!! the send is %d but the receive is %d\n", done1, done2 );
+            printf( "WRONG !!! the send is %s but the receive is %s\n",
+                    (done1 ? "finish" : "not finish"),
+                    (done2 ? "finish" : "not finish") );
         }
 
         max_data = chunk;
@@ -837,7 +839,7 @@ int main( int argc, char* argv[] )
 
     ompi_ddt_init();
 
-    /*    pdt = create_strange_dt();
+    pdt = create_strange_dt();
     local_copy_ddt_count(pdt, 1);
     local_copy_with_convertor(pdt, 1, 4008);
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
@@ -890,19 +892,19 @@ int main( int argc, char* argv[] )
 
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
-    OBJ_RELEASE( pdt3 ); *//*assert( pdt3 == NULL );*/
+    OBJ_RELEASE( pdt3 ); /*assert( pdt3 == NULL );*/
 
-    /*pdt = test_struct_char_double();
+    pdt = test_struct_char_double();
     local_copy_with_convertor( pdt, 4500, 12 );
-    OBJ_RELEASE( pdt ); assert( pdt == NULL );*/
+    OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
-    /*pdt = test_create_twice_two_doubles();
+    pdt = test_create_twice_two_doubles();
     local_copy_with_convertor( pdt, 4500, 12 );
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     pdt = test_create_blacs_type();
     local_copy_with_convertor( pdt, 4500, 1023 );
-    OBJ_RELEASE( pdt ); assert( pdt == NULL );*/
+    OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     pdt1 = test_create_blacs_type1( &ompi_mpi_int );
     pdt2 = test_create_blacs_type2( &ompi_mpi_int );
