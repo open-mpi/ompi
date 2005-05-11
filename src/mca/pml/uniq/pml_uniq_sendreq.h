@@ -16,11 +16,11 @@
 /**
  * @file
  */
-#ifndef OMPI_PML_TEG_SEND_REQUEST_H
-#define OMPI_PML_TEG_SEND_REQUEST_H
+#ifndef OMPI_PML_UNIQ_SEND_REQUEST_H
+#define OMPI_PML_UNIQ_SEND_REQUEST_H
 
 #include "mca/ptl/ptl.h"
-#include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_comm.h"
 #include "pml_uniq_proc.h"
@@ -34,7 +34,7 @@ typedef mca_pml_base_send_request_t mca_pml_uniq_send_request_t;
 OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
 
 
-#define MCA_PML_TEG_SEND_REQUEST_ALLOC(                                    \
+#define MCA_PML_UNIQ_SEND_REQUEST_ALLOC(                                   \
     comm,                                                                  \
     dst,                                                                   \
     sendreq,                                                               \
@@ -53,7 +53,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
     */                                                                     \
     if(NULL != ptl_base) {                                                 \
         OMPI_THREAD_LOCK(&ptl_base->ptl_cache_lock);                       \
-        sendreq = (mca_pml_base_send_request_t*)                           \
+        sendreq = (mca_ptl_base_send_request_t*)                           \
             ompi_list_remove_first(&ptl_base->ptl_cache);                  \
         if(NULL != sendreq) {                                              \
             OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
@@ -65,7 +65,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
             mca_ptl_base_module_t* ptl = ptl_base->ptl;                    \
             ompi_list_item_t* item;                                        \
             OMPI_FREE_LIST_WAIT(&mca_pml_uniq.uniq_send_requests, item, rc); \
-            sendreq = (mca_pml_base_send_request_t*)item;                  \
+            sendreq = (mca_ptl_base_send_request_t*)item;                  \
             sendreq->req_ptl = ptl;                                        \
             if(ptl->ptl_request_init(ptl, sendreq) == OMPI_SUCCESS) {      \
                 sendreq->req_cached = true;                                \
@@ -79,7 +79,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
             ompi_list_item_t* item;                                        \
             OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                 \
             OMPI_FREE_LIST_WAIT(&mca_pml_uniq.uniq_send_requests, item, rc); \
-            sendreq = (mca_pml_base_send_request_t*)item;                  \
+            sendreq = (mca_ptl_base_send_request_t*)item;                  \
             sendreq->req_ptl = proc->proc_ptl_first.ptl;                   \
         }                                                                  \
                                                                            \
@@ -87,21 +87,42 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
     } else {                                                               \
         ompi_list_item_t* item;                                            \
         OMPI_FREE_LIST_WAIT(&mca_pml_uniq.uniq_send_requests, item, rc);   \
-        sendreq = (mca_pml_base_send_request_t*)item;                      \
+        sendreq = (mca_ptl_base_send_request_t*)item;                      \
         sendreq->req_ptl = proc->proc_ptl_first.ptl;                       \
     }                                                                      \
     /* update request to point to current peer */                          \
     sendreq->req_peer = proc->proc_ptl_first.ptl_peer;                     \
 }
 
+#define MCA_PML_UNIQ_SEND_REQUEST_INIT( request,                           \
+                                        addr,                              \
+                                        count,                             \
+                                        datatype,                          \
+                                        peer,                              \
+                                        tag,                               \
+                                        comm,                              \
+                                        mode,                              \
+                                        persistent)                        \
+{                                                                          \
+   MCA_PML_BASE_SEND_REQUEST_INIT((&request->req_send),                    \
+       addr,                                                               \
+       count,                                                              \
+       datatype,                                                           \
+       peer,                                                               \
+       tag,                                                                \
+       comm,                                                               \
+       mode,                                                               \
+       persistent                                                          \
+    );                                                                     \
+}
 
-#define MCA_PML_TEG_SEND_REQUEST_RETURN(sendreq)                           \
+#define MCA_PML_UNIQ_SEND_REQUEST_RETURN(sendreq)                          \
 {                                                                          \
     mca_ptl_base_module_t* ptl = (sendreq)->req_ptl;                       \
     mca_pml_base_ptl_t* ptl_base = ptl->ptl_base;                          \
                                                                            \
     /*  Let the base handle the reference counts */                        \
-    MCA_PML_BASE_SEND_REQUEST_RETURN(sendreq);                             \
+    MCA_PML_BASE_SEND_REQUEST_RETURN( &((sendreq)->req_send) );            \
                                                                            \
     /*                                                                     \
      * If there is a cache associated with the ptl - first attempt         \
@@ -114,7 +135,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
         OMPI_THREAD_UNLOCK(&ptl_base->ptl_cache_lock);                     \
     } else {                                                               \
         OMPI_FREE_LIST_RETURN(                                             \
-            &mca_pml_uniq.uniq_send_requests, (ompi_list_item_t*)sendreq); \
+            &mca_pml_uniq.uniq_send_requests, (ompi_list_item_t*)(sendreq)); \
     }                                                                      \
 }
 
@@ -122,7 +143,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
 /**
  * Start a send request. 
  */
-#define MCA_PML_TEG_SEND_REQUEST_START(req, rc)                            \
+#define MCA_PML_UNIQ_SEND_REQUEST_START(req, rc)                           \
 {                                                                          \
     mca_ptl_base_module_t* ptl = req->req_ptl;                             \
     size_t first_fragment_size = ptl->ptl_first_frag_size;                 \
@@ -134,22 +155,22 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
     req->req_peer_match.lval = 0;                                          \
     req->req_peer_addr.lval = 0;                                           \
     req->req_peer_size = 0;                                                \
-    req->req_base.req_pml_complete = false;                                \
-    req->req_base.req_ompi.req_complete = false;                           \
-    req->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                \
-    req->req_base.req_sequence = mca_pml_ptl_comm_send_sequence(           \
-        req->req_base.req_comm->c_pml_comm, req->req_base.req_peer);       \
+    req->req_send.req_base.req_pml_complete = false;                                \
+    req->req_send.req_base.req_ompi.req_complete = false;                           \
+    req->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                \
+    req->req_send.req_base.req_sequence = mca_pml_ptl_comm_send_sequence(           \
+        req->req_send.req_base.req_comm->c_pml_comm, req->req_send.req_base.req_peer);       \
                                                                            \
     /* handle buffered send */                                             \
-    if(req->req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {                 \
-        mca_pml_base_bsend_request_start(&req->req_base.req_ompi);         \
+    if(req->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {                 \
+        mca_pml_base_bsend_request_start(&req->req_send.req_base.req_ompi);         \
     }                                                                      \
                                                                            \
     /* start the first fragment */                                         \
     if (first_fragment_size == 0 ||                                        \
-        req->req_bytes_packed <= first_fragment_size) {                    \
-        first_fragment_size = req->req_bytes_packed;                       \
-        flags = (req->req_send_mode == MCA_PML_BASE_SEND_SYNCHRONOUS) ?    \
+        req->req_send.req_bytes_packed <= first_fragment_size) {                    \
+        first_fragment_size = req->req_send.req_bytes_packed;                       \
+        flags = (req->req_send.req_send_mode == MCA_PML_BASE_SEND_SYNCHRONOUS) ?    \
                     MCA_PTL_FLAGS_ACK : 0;                                 \
     } else {                                                               \
         /* require match for first fragment of a multi-fragment */         \
@@ -164,7 +185,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
  *  Schedule any data that was not delivered in the first fragment
  *  across the available PTLs.
  */
-int mca_pml_uniq_send_request_schedule(mca_pml_base_send_request_t* req);
+int mca_pml_uniq_send_request_schedule(mca_ptl_base_send_request_t* req);
 
 
 /**
@@ -173,7 +194,7 @@ int mca_pml_uniq_send_request_schedule(mca_pml_base_send_request_t* req);
  */
 void mca_pml_uniq_send_request_progress(
     struct mca_ptl_base_module_t* ptl,
-    mca_pml_base_send_request_t* send_request,
+    mca_ptl_base_send_request_t* send_request,
     size_t bytes_sent
 );
 

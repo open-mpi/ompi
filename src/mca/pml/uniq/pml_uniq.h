@@ -17,8 +17,8 @@
  *  @file 
  */
 
-#ifndef MCA_PML_TEG_H
-#define MCA_PML_TEG_H
+#ifndef MCA_PML_UNIQ_H
+#define MCA_PML_UNIQ_H
 
 #include "threads/thread.h"
 #include "threads/condition.h"
@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 /**
- * TEG PML module
+ * UNIQ PML module
  */
 
 struct mca_pml_uniq_t {
@@ -217,7 +217,7 @@ extern int mca_pml_uniq_start(
 }
 #endif
  
-#define MCA_PML_TEG_FREE(request) \
+#define MCA_PML_UNIQ_FREE(request) \
 { \
     mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)(request); \
     pml_request->req_free_called = true; \
@@ -227,18 +227,18 @@ extern int mca_pml_uniq_start(
         switch(pml_request->req_type) { \
         case MCA_PML_REQUEST_SEND: \
             { \
-                mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)pml_request; \
+                mca_ptl_base_send_request_t* sendreq = (mca_ptl_base_send_request_t*)pml_request; \
                 while(sendreq->req_lock > 0); \
-                if(sendreq->req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
-                    mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq); \
-                } \
-                MCA_PML_TEG_SEND_REQUEST_RETURN(sendreq); \
+                    if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
+                        mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq); \
+                    } \
+                MCA_PML_UNIQ_SEND_REQUEST_RETURN(sendreq); \
                 break; \
             } \
         case MCA_PML_REQUEST_RECV: \
             { \
-                mca_pml_base_recv_request_t* recvreq = (mca_pml_base_recv_request_t*)pml_request; \
-                MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq); \
+                mca_ptl_base_recv_request_t* recvreq = (mca_ptl_base_recv_request_t*)pml_request; \
+                MCA_PML_UNIQ_RECV_REQUEST_RETURN(recvreq); \
                 break; \
             } \
         default: \
@@ -248,13 +248,13 @@ extern int mca_pml_uniq_start(
     *(request) = MPI_REQUEST_NULL; \
 }
 
-#define MCA_PML_TEG_FINI(request) \
+#define MCA_PML_UNIQ_FINI(request) \
 { \
     mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)(request); \
     if( (pml_request->req_persistent) && !(pml_request->req_free_called) ) { \
        pml_request->req_ompi.req_state = OMPI_REQUEST_INACTIVE; \
     } else { \
-        MCA_PML_TEG_FREE(request); \
+        MCA_PML_UNIQ_FREE(request); \
     } \
 }
 

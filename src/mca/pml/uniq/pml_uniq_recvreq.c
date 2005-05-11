@@ -24,18 +24,18 @@
 
                                                                                                                
 static mca_ptl_base_recv_frag_t* mca_pml_uniq_recv_request_match_specific_proc(
-    mca_pml_base_recv_request_t* request, int proc);
+    mca_ptl_base_recv_request_t* request, int proc);
 
 
 static int mca_pml_uniq_recv_request_fini(struct ompi_request_t** request)
 {
-    MCA_PML_TEG_FINI(request);
+    MCA_PML_UNIQ_FINI(request);
     return OMPI_SUCCESS;
 }
 
 static int mca_pml_uniq_recv_request_free(struct ompi_request_t** request)
 {
-    MCA_PML_TEG_FREE(request);
+    MCA_PML_UNIQ_FREE(request);
     return OMPI_SUCCESS;
 }
 
@@ -105,18 +105,18 @@ OBJ_CLASS_INSTANCE(
 
 void mca_pml_uniq_recv_request_progress(
     struct mca_ptl_base_module_t* ptl,
-    mca_pml_base_recv_request_t* req,
+    mca_ptl_base_recv_request_t* req,
     size_t bytes_received,
     size_t bytes_delivered)
 {
     OMPI_THREAD_LOCK(&ompi_request_lock);
     req->req_bytes_received += bytes_received;
     req->req_bytes_delivered += bytes_delivered;
-    if (req->req_bytes_received >= req->req_bytes_packed) {
+    if (req->req_bytes_received >= req->req_recv.req_bytes_packed) {
         /* initialize request status */
-        req->req_base.req_ompi.req_status._count = req->req_bytes_delivered;
-        req->req_base.req_pml_complete = true; 
-        req->req_base.req_ompi.req_complete = true;
+        req->req_recv.req_base.req_ompi.req_status._count = req->req_bytes_delivered;
+        req->req_recv.req_base.req_pml_complete = true; 
+        req->req_recv.req_base.req_ompi.req_complete = true;
         if(ompi_request_waiting) {
             ompi_condition_broadcast(&ompi_request_cond);
         }
@@ -131,18 +131,18 @@ void mca_pml_uniq_recv_request_progress(
  * is specified.
 */
 
-void mca_pml_uniq_recv_request_match_specific(mca_pml_base_recv_request_t* request)
+void mca_pml_uniq_recv_request_match_specific(mca_ptl_base_recv_request_t* request)
 {
-    ompi_communicator_t *comm = request->req_base.req_comm;
+    ompi_communicator_t *comm = request->req_recv.req_base.req_comm;
     mca_pml_ptl_comm_t* pml_comm = comm->c_pml_comm;
-    int req_peer = request->req_base.req_peer;
+    int req_peer = request->req_recv.req_base.req_peer;
     mca_ptl_base_recv_frag_t* frag;
    
     /* check for a specific match */
     OMPI_THREAD_LOCK(&pml_comm->c_matching_lock);
 
     /* assign sequence number */
-    request->req_base.req_sequence = pml_comm->c_recv_seq++;
+    request->req_recv.req_base.req_sequence = pml_comm->c_recv_seq++;
 
     if (ompi_list_get_size(&pml_comm->c_unexpected_frags[req_peer]) > 0 &&
         (frag = mca_pml_uniq_recv_request_match_specific_proc(request, req_peer)) != NULL) {
@@ -151,8 +151,8 @@ void mca_pml_uniq_recv_request_match_specific(mca_pml_base_recv_request_t* reque
         if(NULL == frag->frag_base.frag_peer) 
             frag->frag_base.frag_peer = mca_pml_uniq_proc_lookup_remote_peer(comm,req_peer,ptl);
         OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
-        if( !((MCA_PML_REQUEST_IPROBE == request->req_base.req_type) ||
-              (MCA_PML_REQUEST_PROBE == request->req_base.req_type)) ) {
+        if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
+              (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
             ptl->ptl_matched(ptl, frag);
         }
         return; /* match found */
@@ -161,7 +161,7 @@ void mca_pml_uniq_recv_request_match_specific(mca_pml_base_recv_request_t* reque
     /* We didn't find any matches.  Record this irecv so we can match 
      * it when the message comes in.
     */
-    if(request->req_base.req_type != MCA_PML_REQUEST_IPROBE) { 
+    if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE) { 
         ompi_list_append(pml_comm->c_specific_receives+req_peer, (ompi_list_item_t*)request);
     }
     OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
@@ -173,9 +173,9 @@ void mca_pml_uniq_recv_request_match_specific(mca_pml_base_recv_request_t* reque
  * wild is determined by the value assigned to the source process
 */
 
-void mca_pml_uniq_recv_request_match_wild(mca_pml_base_recv_request_t* request)
+void mca_pml_uniq_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
 {
-    ompi_communicator_t *comm = request->req_base.req_comm;
+    ompi_communicator_t *comm = request->req_recv.req_base.req_comm;
     mca_pml_ptl_comm_t* pml_comm = comm->c_pml_comm;
     int proc_count = comm->c_remote_group->grp_proc_count;
     int proc;
@@ -189,7 +189,7 @@ void mca_pml_uniq_recv_request_match_wild(mca_pml_base_recv_request_t* request)
     OMPI_THREAD_LOCK(&pml_comm->c_matching_lock);
 
     /* assign sequence number */
-    request->req_base.req_sequence = pml_comm->c_recv_seq++;
+    request->req_recv.req_base.req_sequence = pml_comm->c_recv_seq++;
 
     for (proc = 0; proc < proc_count; proc++) {
         mca_ptl_base_recv_frag_t* frag;
@@ -205,8 +205,8 @@ void mca_pml_uniq_recv_request_match_wild(mca_pml_base_recv_request_t* request)
             if(NULL == frag->frag_base.frag_peer) 
                 frag->frag_base.frag_peer = mca_pml_uniq_proc_lookup_remote_peer(comm,proc,ptl);
             OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
-            if( !((MCA_PML_REQUEST_IPROBE == request->req_base.req_type) ||
-                  (MCA_PML_REQUEST_PROBE == request->req_base.req_type)) ) {
+            if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
+                  (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
                 ptl->ptl_matched(ptl, frag);
             }
             return; /* match found */
@@ -217,7 +217,7 @@ void mca_pml_uniq_recv_request_match_wild(mca_pml_base_recv_request_t* request)
      * it when the message comes in.
     */
  
-    if(request->req_base.req_type != MCA_PML_REQUEST_IPROBE)
+    if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE)
         ompi_list_append(&pml_comm->c_wild_receives, (ompi_list_item_t*)request);
     OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
 }
@@ -229,13 +229,13 @@ void mca_pml_uniq_recv_request_match_wild(mca_pml_base_recv_request_t* request)
 */
 
 static mca_ptl_base_recv_frag_t* mca_pml_uniq_recv_request_match_specific_proc(
-    mca_pml_base_recv_request_t* request, int proc)
+    mca_ptl_base_recv_request_t* request, int proc)
 {
-    mca_pml_ptl_comm_t *pml_comm = request->req_base.req_comm->c_pml_comm;
+    mca_pml_ptl_comm_t *pml_comm = request->req_recv.req_base.req_comm->c_pml_comm;
     ompi_list_t* unexpected_frags = pml_comm->c_unexpected_frags+proc;
     mca_ptl_base_recv_frag_t* frag;
     mca_ptl_base_match_header_t* header;
-    int tag = request->req_base.req_tag;
+    int tag = request->req_recv.req_base.req_tag;
 
     if( OMPI_ANY_TAG == tag ) {
         for (frag =  (mca_ptl_base_recv_frag_t*)ompi_list_get_first(unexpected_frags);
@@ -263,12 +263,12 @@ static mca_ptl_base_recv_frag_t* mca_pml_uniq_recv_request_match_specific_proc(
     }
     return NULL;
  find_fragment:
-    request->req_bytes_packed = header->hdr_msg_length;
-    request->req_base.req_ompi.req_status.MPI_TAG = header->hdr_tag;
-    request->req_base.req_ompi.req_status.MPI_SOURCE = header->hdr_src;
+    request->req_recv.req_bytes_packed = header->hdr_msg_length;
+    request->req_recv.req_base.req_ompi.req_status.MPI_TAG = header->hdr_tag;
+    request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = header->hdr_src;
 
-    if( !((MCA_PML_REQUEST_IPROBE == request->req_base.req_type) ||
-          (MCA_PML_REQUEST_PROBE == request->req_base.req_type)) ) {
+    if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
+          (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
         ompi_list_remove_item(unexpected_frags, (ompi_list_item_t*)frag);
         frag->frag_request = request;
     } else {

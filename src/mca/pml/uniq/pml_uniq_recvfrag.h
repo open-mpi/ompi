@@ -17,8 +17,8 @@
  *  @file
  */
                                                                                                                                                  
-#ifndef MCA_PML_TEG_RECVFRAG_H
-#define MCA_PML_TEG_RECVFRAG_H
+#ifndef MCA_PML_UNIQ_RECVFRAG_H
+#define MCA_PML_UNIQ_RECVFRAG_H
 
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_recvreq.h"

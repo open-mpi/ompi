@@ -28,12 +28,12 @@ int mca_pml_uniq_irecv_init(void *addr,
                            struct ompi_request_t **request)
 {
     int rc;
-    mca_pml_base_recv_request_t *recvreq;
-    MCA_PML_TEG_RECV_REQUEST_ALLOC(recvreq, rc);
+    mca_ptl_base_recv_request_t *recvreq;
+    MCA_PML_UNIQ_RECV_REQUEST_ALLOC(recvreq, rc);
     if (NULL == recvreq)
         return rc;
 
-    MCA_PML_BASE_RECV_REQUEST_INIT(recvreq,
+    MCA_PML_UNIQ_RECV_REQUEST_INIT(recvreq,
                                    addr,
                                    count, datatype, src, tag, comm, true);
 
@@ -51,17 +51,17 @@ int mca_pml_uniq_irecv(void *addr,
 {
     int rc;
 
-    mca_pml_base_recv_request_t *recvreq;
-    MCA_PML_TEG_RECV_REQUEST_ALLOC(recvreq, rc);
+    mca_ptl_base_recv_request_t *recvreq;
+    MCA_PML_UNIQ_RECV_REQUEST_ALLOC(recvreq, rc);
     if (NULL == recvreq)
         return rc;
 
-    MCA_PML_BASE_RECV_REQUEST_INIT(recvreq,
+    MCA_PML_UNIQ_RECV_REQUEST_INIT(recvreq,
                                    addr,
                                    count, datatype, src, tag, comm, false);
 
     if ((rc = mca_pml_uniq_recv_request_start(recvreq)) != OMPI_SUCCESS) {
-        MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq);
+        MCA_PML_UNIQ_RECV_REQUEST_RETURN(recvreq);
         return rc;
     }
     *request = (ompi_request_t *) recvreq;
@@ -78,12 +78,12 @@ int mca_pml_uniq_recv(void *addr,
                      ompi_status_public_t * status)
 {
     int rc;
-    mca_pml_base_recv_request_t *recvreq;
-    MCA_PML_TEG_RECV_REQUEST_ALLOC(recvreq, rc);
+    mca_ptl_base_recv_request_t *recvreq;
+    MCA_PML_UNIQ_RECV_REQUEST_ALLOC(recvreq, rc);
     if (NULL == recvreq)
         return rc;
 
-    MCA_PML_BASE_RECV_REQUEST_INIT(recvreq,
+    MCA_PML_UNIQ_RECV_REQUEST_INIT(recvreq,
                                    addr,
                                    count, datatype, src, tag, comm, false);
 
@@ -91,27 +91,27 @@ int mca_pml_uniq_recv(void *addr,
         goto recv_finish;
     }
 
-    if (recvreq->req_base.req_ompi.req_complete == false) {
+    if (recvreq->req_recv.req_base.req_ompi.req_complete == false) {
         /* give up and sleep until completion */
         if (ompi_using_threads()) {
             ompi_mutex_lock(&ompi_request_lock);
             ompi_request_waiting++;
-            while (recvreq->req_base.req_ompi.req_complete == false)
+            while (recvreq->req_recv.req_base.req_ompi.req_complete == false)
                 ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
             ompi_mutex_unlock(&ompi_request_lock);
         } else {
             ompi_request_waiting++;
-            while (recvreq->req_base.req_ompi.req_complete == false)
+            while (recvreq->req_recv.req_base.req_ompi.req_complete == false)
                 ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
         }
     }
  recv_finish:
     if (NULL != status) {  /* return status */
-        *status = recvreq->req_base.req_ompi.req_status;
+        *status = recvreq->req_recv.req_base.req_ompi.req_status;
     }
 
-    MCA_PML_TEG_RECV_REQUEST_RETURN(recvreq);
-    return recvreq->req_base.req_ompi.req_status.MPI_ERROR;
+    MCA_PML_UNIQ_RECV_REQUEST_RETURN(recvreq);
+    return recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
 }
