@@ -141,7 +141,6 @@ int orte_pointer_array_add(size_t *location, orte_pointer_array_t *table, void *
 
     assert(table->addr != NULL);
     assert(table->size > 0);
-    assert(table->lowest_free >= 0);
     assert(table->lowest_free < table->size);
     assert(table->number_free > 0);
     assert(table->number_free <= table->size);
@@ -297,7 +296,6 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
                                            size_t index, void *value)
 {
     assert(table != NULL);
-    assert(index >= 0);
 
 #if 0
     ompi_output(0,"orte_pointer_array_test_and_set_item: IN:  "

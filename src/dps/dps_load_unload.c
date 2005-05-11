@@ -78,7 +78,7 @@ int orte_dps_load(orte_buffer_t *buffer, void *payload,
     }
     
     /* check that the payload is there */
-    if (NULL == payload || bytes_used < 0) {
+    if (NULL == payload) {
         return ORTE_SUCCESS;
     }
     
