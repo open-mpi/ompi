@@ -546,7 +546,9 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr, size
 
     for( i = 0; i < nbElems; i++ ) {
         index += _dump_data_flags( pDesc->elem.common.flags, ptr + index, length );
+        if( length <= index ) break;
         index += snprintf( ptr + index, length - index, "%15s ", ompi_ddt_basicDatatypes[pDesc->elem.common.type]->name );
+        if( length <= index ) break;
         if( DT_LOOP == pDesc->elem.common.type )
             index += snprintf( ptr + index, length - index, "%d times the next %d elements extent %d\n",
                                (int)pDesc->loop.loops, (int)pDesc->loop.items,
@@ -585,10 +587,13 @@ static inline int __dt_contain_basic_datatypes( const ompi_datatype_t* pData, ch
 
 void ompi_ddt_dump( const ompi_datatype_t* pData )
 {
-    size_t length = 10 * 1024;
+    size_t length;
     int index = 0;
-    char buffer[1024*10];
+    char* buffer;
 
+    length = pData->opt_desc.used + pData->desc.used;
+    length = length * 100 + 500;
+    buffer = (char*)malloc( length );
     index += snprintf( buffer, length - index, "Datatype %p size %ld align %d id %d length %d used %d\n\
    true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n \
    nbElems %d loops %d flags %X (",
@@ -617,4 +622,5 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
     }
     buffer[index] = '\0';  /* make sure we end the string with 0 */
     ompi_output( 0, "%s\n", buffer );
+    free(buffer);
 }
