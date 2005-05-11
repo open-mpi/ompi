@@ -129,6 +129,10 @@ mca_ptl_portals_send_ack(struct mca_ptl_portals_module_t *ptl,
     sendfrag->frag_send.frag_base.frag_size = 0;
 
     sendfrag->frag_vector[0].iov_len = sizeof(mca_ptl_base_ack_header_t);
+
+    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                        "sending ack for request %p", request);
+
         
     return mca_ptl_portals_send_frag(ptl, sendfrag);
 }

@@ -155,9 +155,11 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
         hdr->hdr_common.hdr_flags = flags;
         hdr->hdr_frag.hdr_frag_offset = offset;
         hdr->hdr_frag.hdr_frag_length = sendfrag->frag_send.frag_base.frag_size;
-        hdr->hdr_frag.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
-        hdr->hdr_frag.hdr_src_ptr.pval = sendfrag;
         hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
+
+        ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                            "sending frag for request %p",
+                            hdr->hdr_frag.hdr_dst_ptr);
 
         sendfrag->frag_send.frag_base.frag_size = size;
     }
