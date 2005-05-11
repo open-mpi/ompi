@@ -125,8 +125,12 @@ int orte_pls_poe_component_open(void)
     char *param;
 
     mca_pls_poe_component.debug = orte_pls_poe_param_reg_int("debug",0);
+    mca_pls_poe_component.verbose = orte_pls_poe_param_reg_int("verbose",0);
     mca_pls_poe_component.priority = orte_pls_poe_param_reg_int("priority", 100);
     mca_pls_poe_component.orted = orte_pls_poe_param_reg_string("orted","orted"); 
+    mca_pls_poe_component.class = orte_pls_poe_param_reg_string("class","interactive"); 
+    mca_pls_poe_component.retry = orte_pls_poe_param_reg_int("retry", 0); 
+    mca_pls_poe_component.retrycount = orte_pls_poe_param_reg_int("retrycount", 0); 
     param = orte_pls_poe_param_reg_string("progname","poe");
     mca_pls_poe_component.argv = ompi_argv_split(param, ' ');
     mca_pls_poe_component.argc = ompi_argv_count(mca_pls_poe_component.argv);
