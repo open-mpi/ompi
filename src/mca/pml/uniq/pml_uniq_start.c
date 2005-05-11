@@ -100,15 +100,15 @@ int mca_pml_uniq_start(size_t count, ompi_request_t** requests)
         switch(pml_request->req_type) {
             case MCA_PML_REQUEST_SEND: 
             {
-                mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)pml_request;
-                MCA_PML_TEG_SEND_REQUEST_START(sendreq, rc);
+                mca_ptl_base_send_request_t* sendreq = (mca_ptl_base_send_request_t*)pml_request;
+                MCA_PML_UNIQ_SEND_REQUEST_START(sendreq, rc);
                 if(rc != OMPI_SUCCESS)
                     return rc;
                 break;
             }
             case MCA_PML_REQUEST_RECV:
             {
-                mca_pml_base_recv_request_t* recvreq = (mca_pml_base_recv_request_t*)pml_request;
+                mca_ptl_base_recv_request_t* recvreq = (mca_ptl_base_recv_request_t*)pml_request;
                 if((rc = mca_pml_uniq_recv_request_start(recvreq)) != OMPI_SUCCESS)
                     return rc;
                 break;

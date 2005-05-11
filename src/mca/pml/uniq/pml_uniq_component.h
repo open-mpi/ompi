@@ -15,8 +15,8 @@
  *  @file 
  */
 
-#ifndef MCA_PML_TEG_COMPONENT_H
-#define MCA_PML_TEG_COMPONENT_H
+#ifndef MCA_PML_UNIQ_COMPONENT_H
+#define MCA_PML_UNIQ_COMPONENT_H
 
 /*
  * PML module functions.

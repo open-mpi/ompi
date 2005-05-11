@@ -16,12 +16,12 @@
 /**
  * @file
  */
-#ifndef OMPI_PML_TEG_RECV_REQUEST_H
-#define OMPI_PML_TEG_RECV_REQUEST_H
+#ifndef OMPI_PML_UNIQ_RECV_REQUEST_H
+#define OMPI_PML_UNIQ_RECV_REQUEST_H
 
 #include "pml_uniq.h"
 #include "pml_uniq_proc.h"
-#include "mca/pml/base/pml_base_recvreq.h"
+#include "mca/ptl/base/ptl_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -38,22 +38,47 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_recv_request_t);
  *  @param rc (OUT)  OMPI_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
-#define MCA_PML_TEG_RECV_REQUEST_ALLOC(recvreq, rc)                   \
-    do {                                                              \
-        ompi_list_item_t* item;                                       \
+#define MCA_PML_UNIQ_RECV_REQUEST_ALLOC(recvreq, rc)                    \
+    do {                                                                \
+        ompi_list_item_t* item;                                         \
         OMPI_FREE_LIST_GET(&mca_pml_uniq.uniq_recv_requests, item, rc); \
-        recvreq = (mca_pml_base_recv_request_t*)item;                 \
+        recvreq = (mca_ptl_base_recv_request_t*)item;                   \
     } while(0)
+
+/**
+ *  Initialize a recv request.
+ */
+#define MCA_PML_UNIQ_RECV_REQUEST_INIT(                               \
+    request,                                                          \
+    addr,                                                             \
+    count,                                                            \
+    datatype,                                                         \
+    src,                                                              \
+    tag,                                                              \
+    comm,                                                             \
+    persistent)                                                       \
+{                                                                     \
+    MCA_PML_BASE_RECV_REQUEST_INIT(                                   \
+        (&(request)->req_recv),                                       \
+        addr,                                                         \
+        count,                                                        \
+        datatype,                                                     \
+        src,                                                          \
+        tag,                                                          \
+        comm,                                                         \
+        persistent                                                    \
+    );                                                                \
+}
 
 /**
  *  Return a recv request to the modules free list.
  *
  *  @param request (IN)  Receive request.
  */
-#define MCA_PML_TEG_RECV_REQUEST_RETURN(request)                                           \
-    do {                                                                                   \
-        MCA_PML_BASE_RECV_REQUEST_RETURN( request );                                       \
-        OMPI_FREE_LIST_RETURN(&mca_pml_uniq.uniq_recv_requests, (ompi_list_item_t*)request); \
+#define MCA_PML_UNIQ_RECV_REQUEST_RETURN(request)                                             \
+    do {                                                                                     \
+        MCA_PML_BASE_RECV_REQUEST_RETURN( &((request)->req_recv) );                          \
+        OMPI_FREE_LIST_RETURN(&mca_pml_uniq.uniq_recv_requests, (ompi_list_item_t*)(request)); \
     } while(0)
 
 /**
@@ -62,7 +87,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_recv_request_t);
  *
  * @param request (IN)   Request to match.
  */
-void mca_pml_uniq_recv_request_match_wild(mca_pml_base_recv_request_t* request);
+void mca_pml_uniq_recv_request_match_wild(mca_ptl_base_recv_request_t* request);
                                                                                                                                  
 /**
  * Attempt to match the request against the unexpected fragment list
@@ -70,7 +95,7 @@ void mca_pml_uniq_recv_request_match_wild(mca_pml_base_recv_request_t* request);
  *
  * @param request (IN)   Request to match.
  */
-void mca_pml_uniq_recv_request_match_specific(mca_pml_base_recv_request_t* request);
+void mca_pml_uniq_recv_request_match_specific(mca_ptl_base_recv_request_t* request);
                                                                                                                                  
 /**
  * Start an initialized request.
@@ -78,23 +103,23 @@ void mca_pml_uniq_recv_request_match_specific(mca_pml_base_recv_request_t* reque
  * @param request  Receive request.
  * @return         OMPI_SUCESS or error status on failure.
  */
-static inline int mca_pml_uniq_recv_request_start(mca_pml_base_recv_request_t* request)
+static inline int mca_pml_uniq_recv_request_start(mca_ptl_base_recv_request_t* request)
 {
     /* init/re-init the request */
-    request->req_bytes_received = 0;
+    request->req_bytes_received = 0; 
     request->req_bytes_delivered = 0;
-    request->req_base.req_pml_complete = false;
-    request->req_base.req_ompi.req_complete = false;
-    request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;
+    request->req_recv.req_base.req_pml_complete = false;
+    request->req_recv.req_base.req_ompi.req_complete = false;
+    request->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;
     /* always set the req_status.MPI_TAG to ANY_TAG before starting the request. This field
      * is used on the cancel part in order to find out if the request has been matched or not.
      */
-    request->req_base.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;
-    request->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
-    request->req_base.req_ompi.req_status._cancelled = 0;
+    request->req_recv.req_base.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;
+    request->req_recv.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;
+    request->req_recv.req_base.req_ompi.req_status._cancelled = 0;
 
     /* attempt to match posted recv */
-    if(request->req_base.req_peer == OMPI_ANY_SOURCE) {
+    if(request->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
         mca_pml_uniq_recv_request_match_wild(request);
     } else {
         mca_pml_uniq_recv_request_match_specific(request);
@@ -113,7 +138,7 @@ static inline int mca_pml_uniq_recv_request_start(mca_pml_base_recv_request_t* r
  */
 void mca_pml_uniq_recv_request_progress(
     struct mca_ptl_base_module_t* ptl,
-    mca_pml_base_recv_request_t* request,
+    mca_ptl_base_recv_request_t* request,
     size_t bytes_received,
     size_t bytes_delivered
 );
@@ -121,5 +146,5 @@ void mca_pml_uniq_recv_request_progress(
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-#endif
+#endif  /* OMPI_PML_UNIQ_RECV_REQUEST_H */
 

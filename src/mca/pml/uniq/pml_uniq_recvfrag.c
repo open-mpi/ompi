@@ -50,20 +50,20 @@ bool mca_pml_uniq_recv_frag_match(
 
     while(NULL != frag) {
         mca_ptl_base_module_t* ptl = frag->frag_base.frag_owner;
-        mca_pml_base_recv_request_t *request = frag->frag_request;
+        mca_ptl_base_recv_request_t *request = frag->frag_request;
         mca_ptl_base_match_header_t *header = &frag->frag_base.frag_header.hdr_match;
 
         /*
          * Initialize request status.
          */
-        request->req_bytes_packed = header->hdr_msg_length;
-        request->req_base.req_ompi.req_status.MPI_SOURCE = header->hdr_src;
-        request->req_base.req_ompi.req_status.MPI_TAG = header->hdr_tag;
+        request->req_recv.req_bytes_packed = header->hdr_msg_length;
+        request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = header->hdr_src;
+        request->req_recv.req_base.req_ompi.req_status.MPI_TAG = header->hdr_tag;
 
         /*
          * If probe - signal request is complete - but don't notify PTL
          */
-        if(request->req_base.req_type == MCA_PML_REQUEST_PROBE) {
+        if(request->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) {
 
              ptl->ptl_recv_progress( ptl, 
                                      request,
@@ -75,7 +75,7 @@ bool mca_pml_uniq_recv_frag_match(
 
             /* if required - setup pointer to ptls peer */
             if (NULL == frag->frag_base.frag_peer) {
-                frag->frag_base.frag_peer = mca_pml_uniq_proc_lookup_remote_peer(request->req_base.req_comm,header->hdr_src,ptl);
+                frag->frag_base.frag_peer = mca_pml_uniq_proc_lookup_remote_peer(request->req_recv.req_base.req_comm,header->hdr_src,ptl);
             }
 
             /* notify ptl of match */

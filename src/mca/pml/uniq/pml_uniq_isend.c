@@ -33,12 +33,12 @@ int mca_pml_uniq_isend_init(void *buf,
 {
     int rc;
 
-    mca_pml_base_send_request_t *sendreq;
-    MCA_PML_TEG_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
+    mca_ptl_base_send_request_t *sendreq;
+    MCA_PML_UNIQ_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
     if (rc != OMPI_SUCCESS)
         return rc;
 
-    MCA_PML_BASE_SEND_REQUEST_INIT(sendreq,
+    MCA_PML_UNIQ_SEND_REQUEST_INIT(sendreq,
                                    buf,
                                    count,
                                    datatype,
@@ -60,18 +60,18 @@ int mca_pml_uniq_isend(void *buf,
                       ompi_request_t ** request)
 {
     int rc;
-    mca_pml_base_send_request_t *sendreq;
-    MCA_PML_TEG_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
+    mca_ptl_base_send_request_t *sendreq;
+    MCA_PML_UNIQ_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
     if (rc != OMPI_SUCCESS)
         return rc;
-    MCA_PML_BASE_SEND_REQUEST_INIT(sendreq,
+    MCA_PML_UNIQ_SEND_REQUEST_INIT(sendreq,
                                    buf,
                                    count,
                                    datatype,
                                    dst, tag,
                                    comm, sendmode, false);
 
-    MCA_PML_TEG_SEND_REQUEST_START(sendreq, rc);
+    MCA_PML_UNIQ_SEND_REQUEST_START(sendreq, rc);
     *request = (ompi_request_t *) sendreq;
     return rc;
 }
@@ -86,43 +86,43 @@ int mca_pml_uniq_send(void *buf,
                      ompi_communicator_t * comm)
 {
     int rc;
-    mca_pml_base_send_request_t *sendreq;
-    MCA_PML_TEG_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
+    mca_ptl_base_send_request_t *sendreq;
+    MCA_PML_UNIQ_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
     if (rc != OMPI_SUCCESS)
         return rc;
 
-    MCA_PML_BASE_SEND_REQUEST_INIT(sendreq,
+    MCA_PML_UNIQ_SEND_REQUEST_INIT(sendreq,
                                    buf,
                                    count,
                                    datatype,
                                    dst, tag,
                                    comm, sendmode, false);
 
-    MCA_PML_TEG_SEND_REQUEST_START(sendreq, rc);
+    MCA_PML_UNIQ_SEND_REQUEST_START(sendreq, rc);
     if (rc != OMPI_SUCCESS) {
-        MCA_PML_TEG_FREE((ompi_request_t **) & sendreq);
+        MCA_PML_UNIQ_FREE((ompi_request_t **) & sendreq);
         return rc;
     }
 
-    if (sendreq->req_base.req_ompi.req_complete == false) {
+    if (sendreq->req_send.req_base.req_ompi.req_complete == false) {
         /* give up and sleep until completion */
         if (ompi_using_threads()) {
             ompi_mutex_lock(&ompi_request_lock);
             ompi_request_waiting++;
-            while (sendreq->req_base.req_ompi.req_complete == false)
+            while (sendreq->req_send.req_base.req_ompi.req_complete == false)
                 ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
             ompi_mutex_unlock(&ompi_request_lock);
         } else {
             ompi_request_waiting++;
-            while (sendreq->req_base.req_ompi.req_complete == false)
+            while (sendreq->req_send.req_base.req_ompi.req_complete == false)
                 ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
         }
     }
 
     /* return request to pool */
-    MCA_PML_TEG_FREE((ompi_request_t **) & sendreq);
+    MCA_PML_UNIQ_FREE((ompi_request_t **) & sendreq);
     return OMPI_SUCCESS;
 }
 
