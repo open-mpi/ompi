@@ -92,6 +92,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     PTL_PORTALS_UTCP=0
     PTL_PORTALS_REDSTORM=0
     PTL_PORTALS_COMPAT=""
+    PTL_PORTALS_HAVE_EVENT_UNLINK=0
 
     AC_ARG_WITH([ptl-portals-config],
             AC_HELP_STRING([--with-ptl-portals-config],
@@ -105,11 +106,13 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
         "utcp")
             PTL_PORTALS_UTCP=1
             PORTALS_LIBS="-lutcpapi -lutcplib -lp3api -lp3lib -lp3rt"
-            AC_MSG_RESULT([utcp])
+            PTL_PORTALS_HAVE_EVENT_UNLINK=1
+           AC_MSG_RESULT([utcp])
             ;;
         "redstorm")
             PTL_PORTALS_REDSTORM=1
             PORTALS_LIBS="-lp3api -lp3lib -lp3rt"
+            PTL_PORTALS_HAVE_EVENT_UNLINK=0
             AC_MSG_RESULT([red storm])
             ;;
         *)
@@ -135,6 +138,10 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     	           [AC_MSG_RESULT([yes])],
 		   [AC_MSG_RESULT([no])
 		    AC_MSG_ERROR([Can not link with Portals libraries])])
+
+    AC_DEFINE_UNQUOTED([PTL_PORTALS_HAVE_EVENT_UNLINK], 
+                       [$PTL_PORTALS_HAVE_EVENT_UNLINK],
+                       [Does Portals send a PTL_EVENT_UNLINK event])
 
     AC_DEFINE_UNQUOTED([PTL_PORTALS_UTCP], [$PTL_PORTALS_UTCP],
                        [Use the UTCP reference implementation or Portals])

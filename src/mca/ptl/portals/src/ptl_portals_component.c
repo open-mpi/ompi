@@ -334,8 +334,11 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
         }
 
         /* only one place we can have an event */
-        assert(which == 0);        
+        assert(which == 0);
 
+#if PTL_PORTALS_HAVE_EVENT_UNLINK
+        if (PTL_EVENT_UNLINK == ev.type) continue;
+#endif
         if (ev.md.user_ptr == NULL) {
             /* no request associated with it - it's a receive */
             mca_ptl_portals_process_recv_event(module, &ev);
