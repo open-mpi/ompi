@@ -491,7 +491,7 @@ int orte_gpr_replica_xfer_payload(orte_gpr_value_union_t *dest,
             }
             dest->app_context->num_map = src->app_context->num_map;
             if (NULL != src->app_context->map_data) {
-                dest->app_context->map_data = malloc(sizeof(orte_app_context_map_t *) * src->app_context->num_map);
+                dest->app_context->map_data = (orte_app_context_map_t **) malloc(sizeof(orte_app_context_map_t *) * src->app_context->num_map);
                 for (i = 0; i < src->app_context->num_map; ++i) {
                     dest->app_context->map_data[i] = 
                         OBJ_NEW(orte_app_context_map_t);

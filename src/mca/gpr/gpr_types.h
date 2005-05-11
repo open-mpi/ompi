@@ -42,6 +42,10 @@
 #include "mca/rmgr/rmgr_types.h"
 #include "mca/soh/soh_types.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /** Define the notify actions for the subscription system - can be OR'd
  * to create multiple actions
  */
@@ -204,7 +208,7 @@ typedef struct {
     orte_gpr_value_t **values;              /**< Array of value objects returned */
 } orte_gpr_notify_data_t;
 
-OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
 
 /** Return message for notify requests
  */
@@ -245,6 +249,10 @@ typedef struct {
     void *user_tag;                         /**< User-provided tag to be used in cbfunc */
 } orte_gpr_subscription_t;
 
-OBJ_CLASS_DECLARATION(orte_gpr_subscription_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_subscription_t);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* GPR_TYPES_H */

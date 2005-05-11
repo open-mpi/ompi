@@ -381,10 +381,10 @@ struct orte_dps_t {
 };
 typedef struct orte_dps_t orte_dps_t;
 
+OMPI_DECLSPEC extern orte_dps_t orte_dps;  /* holds dps function pointers */
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-
-OMPI_DECLSPEC extern orte_dps_t orte_dps;  /* holds dps function pointers */
 
 #endif /* ORTE_DPS_H */

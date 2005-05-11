@@ -24,6 +24,10 @@
 
 #include "mca/schema/schema_types.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * Convenience functions for accessing ORTE data
  */
@@ -103,5 +107,8 @@ typedef mca_schema_base_component_1_0_0_t mca_schema_base_component_t;
 
 OMPI_DECLSPEC extern orte_schema_base_module_t orte_schema;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

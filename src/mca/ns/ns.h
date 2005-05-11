@@ -41,6 +41,10 @@
 
 #include "ns_types.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 
 /*
  * Component functions - all MUST be provided!
@@ -640,5 +644,9 @@ typedef mca_ns_base_component_1_0_0_t mca_ns_base_component_t;
 /* Global structure for accessing name server functions
  */
 OMPI_DECLSPEC extern mca_ns_base_module_t orte_ns;  /* holds selected module's function pointers */
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

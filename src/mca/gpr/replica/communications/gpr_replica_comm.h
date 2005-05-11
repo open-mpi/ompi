@@ -40,6 +40,10 @@
 
 #include "mca/gpr/replica/gpr_replica.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * GPR Replica Communications Interfaces
  */
@@ -120,5 +124,8 @@ int orte_gpr_replica_recv_increment_value_cmd(orte_buffer_t *input_buffer,
 int orte_gpr_replica_recv_decrement_value_cmd(orte_buffer_t *input_buffer,
                                               orte_buffer_t *output_buffer);
  
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif
