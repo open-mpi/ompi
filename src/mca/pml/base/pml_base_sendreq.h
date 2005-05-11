@@ -124,8 +124,8 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
 
 #define MCA_PML_BASE_SEND_REQUEST_RETURN( request )                       \
     do {                                                                  \
-        OBJ_RELEASE(request->req_base.req_comm);                          \
-        OBJ_RELEASE(request->req_base.req_datatype);                      \
+        OBJ_RELEASE((request)->req_base.req_comm);                        \
+        OBJ_RELEASE((request)->req_base.req_datatype);                    \
     } while (0)
 
 
