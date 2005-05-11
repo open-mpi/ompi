@@ -30,6 +30,16 @@
 #define GET_TIME(TV)   gettimeofday( &(TV), NULL )
 #define ELAPSED_TIME(TSTART, TEND)  (((TEND).tv_sec - (TSTART).tv_sec) * 1000000 + ((TEND).tv_usec - (TSTART).tv_usec))
 
+ompi_datatype_t* create_inversed_vector( ompi_datatype_t* type, int length )
+{
+   ompi_datatype_t* type1;
+
+   ompi_ddt_create_vector( length, 1, 2, type, &type1 );
+
+   ompi_ddt_commit( &type1 );
+   return type1;
+}
+
 int mpich_typeub( void )
 {
    int errs = 0;
@@ -313,12 +323,11 @@ int check_diag_matrix( unsigned int N, double* mat1, double* mat2 )
 
 ompi_datatype_t* upper_matrix( unsigned int mat_size )
 {
-    int *disp, i;
-    unsigned int *blocklen;
+    int *disp, i, *blocklen;
     ompi_datatype_t* upper;
 
     disp = (int*)malloc( sizeof(int) * mat_size );
-    blocklen = (unsigned int*)malloc( sizeof(unsigned int) * mat_size );
+    blocklen = (int*)malloc( sizeof(int) * mat_size );
 
     for( i = 0; i < mat_size; i++ ) {
         disp[i] = i * mat_size + i;
@@ -328,6 +337,7 @@ ompi_datatype_t* upper_matrix( unsigned int mat_size )
     ompi_ddt_create_indexed( mat_size, blocklen, disp, ompi_ddt_basicDatatypes[DT_DOUBLE],
                              &upper );
     ompi_ddt_commit( &upper );
+    ompi_ddt_dump( upper );
     free( disp );
     free( blocklen );
     return upper;
@@ -335,12 +345,11 @@ ompi_datatype_t* upper_matrix( unsigned int mat_size )
 
 ompi_datatype_t* lower_matrix( unsigned int mat_size )
 {
-    int *disp, i;
-    unsigned int *blocklen;
+    int *disp, i, *blocklen;
     ompi_datatype_t* upper;
 
     disp = (int*)malloc( sizeof(int) * mat_size );
-    blocklen = (unsigned int*)malloc( sizeof(unsigned int) * mat_size );
+    blocklen = (int*)malloc( sizeof(int) * mat_size );
 
     for( i = 0; i < mat_size; i++ ) {
         disp[i] = i * mat_size;
@@ -362,8 +371,8 @@ int test_upper( unsigned int length )
     ompi_datatype_t *pdt, *pdt1;
     ompi_convertor_t * pConv;
     char *ptr;
-    int i, j, split_chunk, total_length, rc, iov_count;
-    unsigned int max_data, freeAfter;
+    int i, j, split_chunk, total_length, rc, freeAfter;
+    unsigned int max_data, iov_count;
     struct iovec a;
     TIMER_DATA_TYPE start, end;
     long total_time;
@@ -430,7 +439,7 @@ ompi_datatype_t* test_matrix_borders( unsigned int size, unsigned int width )
 {
    ompi_datatype_t *pdt, *pdt_line;
    int disp[2];
-   unsigned int blocklen[2];
+   int blocklen[2];
    
    disp[0] = 0;
    blocklen[0] = width;
@@ -438,7 +447,7 @@ ompi_datatype_t* test_matrix_borders( unsigned int size, unsigned int width )
    blocklen[1] = width;
 
    ompi_ddt_create_indexed( 2, blocklen, disp, ompi_ddt_basicDatatypes[DT_DOUBLE],
-                      &pdt_line );
+                            &pdt_line );
    ompi_ddt_create_contiguous( size, pdt_line, &pdt );
    OBJ_RELEASE( pdt_line ); /*assert( pdt_line == NULL );*/
    return pdt;
@@ -677,7 +686,6 @@ int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_c
     ptemp = malloc( chunk );
 
     /* fill up the receiver with ZEROS */
-    memset( pdst, recv_count * recv_extent, 0 );
     {
         int i;
         for( i = 0; i < (send_count * send_extent); i++ )
@@ -835,41 +843,56 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
 int main( int argc, char* argv[] )
 {
     ompi_datatype_t *pdt, *pdt1, *pdt2, *pdt3;
-    int rc, length = 500;
+    int rc, length = 500, check_pack_unpack = 0;
 
     ompi_ddt_init();
-
-    pdt = create_strange_dt();
-    local_copy_ddt_count(pdt, 1);
-    local_copy_with_convertor(pdt, 1, 4008);
+#if 0
+    printf( "\n\n/*\n * TEST INVERSED VECTOR\n */\n\n" );
+    pdt = create_inversed_vector( &ompi_mpi_int, 10 );
+    if( 0 != check_diag_matrix ) {
+       local_copy_ddt_count(pdt, 100);
+       local_copy_with_convertor(pdt, 100, 4008);
+    }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
+    printf( "\n\n/*\n * TEST STRANGE DATATYPE\n */\n\n" );
+    pdt = create_strange_dt();
+    if( 0 != check_diag_matrix ) {
+       local_copy_ddt_count(pdt, 1);
+       local_copy_with_convertor(pdt, 1, 4008);
+    }
+    OBJ_RELEASE( pdt ); assert( pdt == NULL );
+#endif
    
+    printf( "\n\n/*\n * TEST UPPER TRIANGULAR MATRIX\n */\n\n" );
     pdt = upper_matrix(100);
-    local_copy_ddt_count(pdt, 1);
-    local_copy_with_convertor(pdt, 1, 4008);
+    if( 0 != check_diag_matrix ) {
+       local_copy_ddt_count(pdt, 1);
+       local_copy_with_convertor(pdt, 1, 4008);
+    }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     mpich_typeub();
     mpich_typeub2();
     mpich_typeub3();
 
+    printf( "\n\n/*\n * TEST UPPER MATRIX\n */\n\n" );
     rc = test_upper( length );
     if( rc == 0 )
         printf( "decode [PASSED]\n" );
     else
         printf( "decode [NOT PASSED]\n" );
 
+    printf( "\n\n/*\n * TEST MATRIX BORDERS\n */\n\n" );
     pdt = test_matrix_borders( length, 100 );
     ompi_ddt_dump( pdt );
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
-    printf( ">>--------------------------------------------<<\n" );
+    printf( "\n\n/*\n * TEST CONTIGUOUS\n */\n\n" );
     pdt = test_contiguous();
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
-    printf( ">>--------------------------------------------<<\n" );
+    printf( "\n\n/*\n * TEST STRUCT\n */\n\n" );
     pdt = test_struct();
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
-    printf( ">>--------------------------------------------<<\n" );
 
     pdt1 = ompi_ddt_create( -1 );
     pdt2 = ompi_ddt_create( -1 );
@@ -895,20 +918,28 @@ int main( int argc, char* argv[] )
     OBJ_RELEASE( pdt3 ); /*assert( pdt3 == NULL );*/
 
     pdt = test_struct_char_double();
-    local_copy_with_convertor( pdt, 4500, 12 );
+    if( 0 != check_diag_matrix ) {
+       local_copy_with_convertor( pdt, 4500, 12 );
+    }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     pdt = test_create_twice_two_doubles();
-    local_copy_with_convertor( pdt, 4500, 12 );
+    if( 0 != check_diag_matrix ) {
+       local_copy_with_convertor( pdt, 4500, 12 );
+    }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     pdt = test_create_blacs_type();
-    local_copy_with_convertor( pdt, 4500, 1023 );
+    if( 0 != check_diag_matrix ) {
+       local_copy_with_convertor( pdt, 4500, 1023 );
+    }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     pdt1 = test_create_blacs_type1( &ompi_mpi_int );
     pdt2 = test_create_blacs_type2( &ompi_mpi_int );
-    local_copy_with_convertor_2datatypes( pdt1, 1, pdt2, 1, 100 );
+    if( 0 != check_diag_matrix ) {
+       local_copy_with_convertor_2datatypes( pdt1, 1, pdt2, 1, 100 );
+    }
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
 
