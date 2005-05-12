@@ -170,8 +170,13 @@ mca_ptl_portals_component_open(void)
     mca_ptl_portals_component.portals_output = 
         ompi_output_open(&portals_output_stream);
 
-    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+    ompi_output_verbose(90, mca_ptl_portals_component.portals_output,
                         "mca_ptl_portals_component_open()");
+
+    /* fill in defaults for module data */
+    mca_ptl_portals_module.frag_eq_handle = PTL_EQ_NONE;
+    mca_ptl_portals_module.ni_handle = PTL_INVALID_HANDLE;
+    mca_ptl_portals_module.dropped = 0;
 
     return OMPI_SUCCESS;
 }
@@ -183,7 +188,7 @@ mca_ptl_portals_component_open(void)
 int
 mca_ptl_portals_component_close(void)
 {
-    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+    ompi_output_verbose(90, mca_ptl_portals_component.portals_output,
                         "mca_ptl_portals_component_close()");
 
     /* finalize interface? */
@@ -219,8 +224,11 @@ mca_ptl_portals_component_init(int *num_ptls,
     mca_ptl_base_module_t** ptls;
     *num_ptls = 0;
 
-    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+    ompi_output_verbose(90, mca_ptl_portals_component.portals_output,
                         "mca_ptl_portals_component_init()");
+
+    /* BWB - no support for threads */
+    if (enable_progress_threads || enable_mpi_threads) return NULL;
 
     ompi_free_list_init(&mca_ptl_portals_component.portals_send_frags, 
         sizeof(mca_ptl_portals_send_frag_t),
@@ -237,9 +245,6 @@ mca_ptl_portals_component_init(int *num_ptls,
         mca_ptl_portals_component.portals_free_list_max_num,
         mca_ptl_portals_component.portals_free_list_inc_num,
         NULL); /* use default allocator */
-
-    /* BWB - no support for progress threads */
-    if (enable_progress_threads) return NULL;
 
     /* initialize portals ptl.  note that this is in the compat code because
        it's fairly non-portable between implementations */
@@ -307,8 +312,20 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
         struct mca_ptl_portals_module_t *module = 
             mca_ptl_portals_component.portals_modules[i];
         ptl_event_t ev;
+        ptl_sr_value_t numdropped;
 
-        if (! module->frag_queues_created) continue;
+        if (module->frag_eq_handle == PTL_EQ_NONE) continue;
+
+        /* BWB - this is going to kill performance */
+        PtlNIStatus(module->ni_handle,
+                    PTL_SR_DROP_COUNT,
+                    &numdropped);
+        if (numdropped != module->dropped) {
+            ompi_output_verbose(30, mca_ptl_portals_component.portals_output,
+                                "*** Dropped message count changed.  %lld, %lld",
+                                module->dropped, numdropped);
+            module->dropped = numdropped;
+        }
 
         ret = PtlEQPoll(&(module->frag_eq_handle),
                         1, /* number of eq handles */
@@ -336,8 +353,8 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
 
 #if PTL_PORTALS_HAVE_EVENT_UNLINK
         if (PTL_EVENT_UNLINK == ev.type) {
-            ompi_output_verbose(2000, mca_ptl_portals_component.portals_output,
-                                "-----> unlink event occurred <-----");
+            ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+                                "unlink event occurred");
             continue;
         }
 #endif

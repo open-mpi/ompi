@@ -156,7 +156,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
                       [Portals table id to use for fragment receive queue])
 
     MCA_PTL_PORTALS_CONFIG_VAL([debug-level],
-                      [PTL_PORTALS_DEFAULT_DEBUG_LEVEL], [1000],
+                      [PTL_PORTALS_DEFAULT_DEBUG_LEVEL], [99],
                       [Default debugging level for portals ptl])
 
     MCA_PTL_PORTALS_CONFIG_VAL([request-cache-size],
@@ -168,11 +168,11 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
                       [Default first frag size for portals ptl])
 
     MCA_PTL_PORTALS_CONFIG_VAL([first-frag-num-entries],
-                      [PTL_PORTALS_DEFAULT_FIRST_FRAG_NUM_ENTRIES], [3],
+                      [PTL_PORTALS_DEFAULT_FIRST_FRAG_NUM_ENTRIES], [5],
                       [Default number of memory descriptors for first fragments])
 
     MCA_PTL_PORTALS_CONFIG_VAL([first-frag-entry-size],
-                      [PTL_PORTALS_DEFAULT_FIRST_FRAG_ENTRY_SIZE], [1048576],
+                      [PTL_PORTALS_DEFAULT_FIRST_FRAG_ENTRY_SIZE], [10485760],
                       [Default size of memory associeted with first fag md])
 
     MCA_PTL_PORTALS_CONFIG_VAL([first-frag-queue-size],

@@ -129,8 +129,8 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_portals_module_t* ptl,
             return ret;
         } else if (sizeof(ptl_process_id_t) != size) {
             ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
-                                "mca_base_modex_recv returned size%d", 
-                                size);
+                                "mca_base_modex_recv returned size %d, expected %d", 
+                                size, sizeof(ptl_process_id_t));
             return OMPI_ERROR;
         }
 

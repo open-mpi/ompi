@@ -233,8 +233,10 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
             }
         }
 
+#if 0
         /* unlink memory descriptor */
         PtlMDUnlink(ev->md_handle);
+#endif
 
     } else {
         ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
