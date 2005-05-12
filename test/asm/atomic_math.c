@@ -33,16 +33,9 @@ int64_t val64 = 0;
 #endif
 int valint = 0;
 
-typedef union {
-    int value;
-    void *ptr;
-} ip_union_t;
-
-
 static void* atomic_math_test(void* arg)
 {
-    ip_union_t *ip = (ip_union_t*) arg;
-    int count = ip->value;
+    int count = *((int*) arg);
     int i;
 
     for (i = 0 ; i < count ; ++i) {
@@ -60,10 +53,10 @@ static void* atomic_math_test(void* arg)
 static int
 atomic_math_test_th(int count, int thr_count)
 {
+    int value;
 #if OMPI_HAVE_POSIX_THREADS
     pthread_t *th;
     int tid, ret = 0;
-    ip_union_t ip;
 
     th = (pthread_t *) malloc(thr_count * sizeof(pthread_t));
     if (!th) { 
@@ -76,9 +69,10 @@ atomic_math_test_th(int count, int thr_count)
        we're waiting for all the threads to finish before leaving this
        function, so there's no race condition of the instance
        disappearing before the threads start. */
-    ip.value = count;
+    value = count;
     for (tid = 0; tid < thr_count; tid++) {
-        if (pthread_create(&th[tid], NULL, atomic_math_test, (void*) &ip) != 0) {
+        if (pthread_create(&th[tid], NULL, atomic_math_test, 
+                           (void*) &value) != 0) {
             perror("pthread_create");
             exit(EXIT_FAILURE);
         }
@@ -97,10 +91,9 @@ atomic_math_test_th(int count, int thr_count)
 
     return ret;
 #else
-    ip_union_t ip;
-    ip.value = count;
+    value = count;
     if (thr_count == 1) {
-        atomic_math_test((void*) &ip);
+        atomic_math_test((void*) &value);
     } else {
         return 77;
     }
