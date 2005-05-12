@@ -99,7 +99,7 @@ mca_ptl_portals_add_procs(struct mca_ptl_base_module_t* ptl,
                         portals_procs[i],
                         &distance);
         if (ret != PTL_OK) {
-            ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
+            ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
                                 "Could not find distance to process %d", i);
             continue;
         }
@@ -139,7 +139,7 @@ mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
         /* BWB - not really sure how - would have to track a lot more data... */
     } else {
         /* only do all the hard stuff if we haven't created the queue */
-        if (ptl->frag_queues_created) return OMPI_SUCCESS;
+        if (ptl->frag_eq_handle != PTL_EQ_NONE) return OMPI_SUCCESS;
 
         /* create an event queue, then the match entries for the match
            entries */
@@ -159,7 +159,6 @@ mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
         for (i = 0 ; i < ptl->first_frag_num_entries ; ++i) {
             ret = ptl_portals_post_recv_md(ptl, NULL);
             if (OMPI_SUCCESS != ret) return ret;
-            ptl->frag_queues_created = true;
         }
     }
 
@@ -176,7 +175,7 @@ mca_ptl_portals_finalize(struct mca_ptl_base_module_t *ptl_base)
 
     ret = PtlNIFini(ptl->ni_handle);
     if (PTL_OK != ret) {
-        ompi_output_verbose(50, mca_ptl_portals_component.portals_output,
+        ompi_output_verbose(90, mca_ptl_portals_component.portals_output,
                             "PtlNIFini returned %d\n", ret);
         return OMPI_ERROR;
     }

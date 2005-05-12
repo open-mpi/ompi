@@ -66,7 +66,7 @@ ptl_portals_post_recv_md(struct mca_ptl_portals_module_t *ptl, void *data_ptr)
     md.start = mem;
     md.length = ptl->first_frag_entry_size;
     md.threshold = PTL_MD_THRESH_INF;
-    md.max_size = md.length - ptl->super.ptl_first_frag_size;
+    md.max_size = ptl->super.ptl_first_frag_size;
     md.options = PTL_MD_OP_PUT | PTL_MD_MAX_SIZE;
     md.user_ptr = NULL;
     md.eq_handle = ptl->frag_eq_handle;
@@ -80,7 +80,7 @@ ptl_portals_post_recv_md(struct mca_ptl_portals_module_t *ptl, void *data_ptr)
         return OMPI_ERROR;
     }
 
-    ompi_output_verbose(50, mca_ptl_portals_component.portals_output,
+    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
                         "new receive buffer posted");
 
     return OMPI_SUCCESS;
@@ -271,10 +271,10 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
         }
 
         /* see if we need to repost an md */
-        if (ev->offset + ev->md.length > ev->md.max_size) {
+        if (ev->md.length - (ev->offset + ev->mlength) < ev->md.max_size) {
             ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
                                 "must repost event: %lld, %lld, %lld",
-                                ev->offset, ev->md.length, ev->md.max_size);
+                                ev->offset, ev->mlength, ev->md.max_size);
             /* use the same memory as the old md - it's not using it anymore */
             ret = ptl_portals_post_recv_md(ptl, ev->md.start);
             if (OMPI_SUCCESS != ret) {

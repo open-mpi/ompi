@@ -45,7 +45,7 @@ struct mca_ptl_portals_component_t {
      *  - 0 : critical user information
      *  - 10: initialization / shutdown diagnostic information
      *  - 20: general execution diagnostic information
-     *  - 99: useful only to developers
+     *  - 90: useful only to developers
      */
     int portals_output;
 
@@ -169,8 +169,6 @@ struct mca_ptl_portals_module_t {
     /* size for event queue */
     int first_frag_queue_size;
 
-    /* frag receive data */
-    bool frag_queues_created;
     /* frag receive event queue */
     ptl_handle_eq_t frag_eq_handle;
 
@@ -178,6 +176,9 @@ struct mca_ptl_portals_module_t {
     ptl_handle_ni_t ni_handle;
     /** the limits returned from PtlNIInit for interface */
     ptl_ni_limits_t limits;
+
+    /** number of dropped messages */
+    ptl_sr_value_t dropped;
 };
 typedef struct mca_ptl_portals_module_t mca_ptl_portals_module_t;
 
