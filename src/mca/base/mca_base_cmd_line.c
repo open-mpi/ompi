@@ -94,7 +94,7 @@ int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd)
  */
 int mca_base_cmd_line_process_arg(const char *param, const char *value)
 {
-  int i, len;
+  int i;
   char *new_str;
 
   /* Look to see if we've already got an -mca argument for the same
@@ -103,9 +103,7 @@ int mca_base_cmd_line_process_arg(const char *param, const char *value)
 
   for (i = 0; NULL != mca_param_argv && NULL != mca_param_argv[i]; ++i) {
     if (0 == strcmp(param, mca_param_argv[i])) {
-      len = strlen(value) + strlen(mca_param_argv[i]);
-      new_str = malloc(len);
-      snprintf(new_str, len, "%s,%s", mca_value_argv[i], value);
+      asprintf(&new_str, "%s,%s", mca_value_argv[i], value);
       free(mca_value_argv[i]);
       mca_value_argv[i] = new_str;
 
