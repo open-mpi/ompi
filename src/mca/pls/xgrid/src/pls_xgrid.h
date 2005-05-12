@@ -27,7 +27,7 @@
  */
 struct orte_pls_xgrid_component_t {
     orte_pls_base_component_t super;
-    PlsXgridClient *client;
+    PlsXGridClient *client;
     NSAutoreleasePool *pool;
 };
 typedef struct orte_pls_xgrid_component_t orte_pls_xgrid_component_t;

@@ -30,6 +30,7 @@
 #import "include/constants.h"
 #import "mca/ns/ns.h"
 #import "mca/ras/base/ras_base_node.h"
+#import "mca/gpr/gpr.h"
 #import "mca/rml/rml.h"
 #import "util/path.h"
 
@@ -37,15 +38,94 @@
 
 char **environ;
 
-@implementation PlsXgridClient
+/**
+ * Set the daemons name in the registry.
+ */
+
+static int
+mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node, 
+			    orte_jobid_t jobid, 
+			    orte_process_name_t* name)
+{
+    orte_gpr_value_t* values[1];
+    orte_gpr_value_t value;
+    orte_gpr_keyval_t kv_name = { { OBJ_CLASS(orte_gpr_keyval_t),0 },
+				  ORTE_NODE_BOOTPROXY_KEY,ORTE_NAME };
+    orte_gpr_keyval_t* keyvals[1];
+    char* jobid_string;
+    size_t i;
+    int rc;
+
+    if (ORTE_SUCCESS != 
+	(rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    if (ORTE_SUCCESS != 
+	(rc = orte_schema.get_node_tokens(&value.tokens, &value.num_tokens, 
+        node->node_cellid, node->node_name))) {
+        ORTE_ERROR_LOG(rc);
+        free(jobid_string);
+        return rc;
+    }
+
+    asprintf(&kv_name.key, "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
+    kv_name.value.proc = *name;
+    keyvals[0] = &kv_name;
+    value.keyvals = keyvals;
+    value.cnt = 1;
+    value.addr_mode = ORTE_GPR_OVERWRITE;
+    value.segment = ORTE_NODE_SEGMENT;
+    values[0] = &value;
+
+    rc = orte_gpr.put(1, values);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+    }
+
+    free(kv_name.key);
+    free(jobid_string);
+    for (i=0; i<value.num_tokens; i++) free(value.tokens[i]);
+    free(value.tokens);
+
+    return rc;
+}
+
+
+@implementation PlsXGridClient
 
 /* init / finalize */
 -(id) init
+{
+    return [self initWithControllerHostname: NULL
+		 AndControllerPassword: NULL
+		 AndOrted: NULL
+		 AndCleanup: 1];
+}
+
+-(id) initWithControllerHostname: (char*) hostname
+	   AndControllerPassword: (char*) password
+			AndOrted: (char*) ortedname
+		      AndCleanup: (int) val
 {
     if (self = [super init]) {
 	/* class-specific initialization goes here */
 	OBJ_CONSTRUCT(&state_cond, ompi_condition_t);
 	OBJ_CONSTRUCT(&state_mutex, ompi_mutex_t);
+
+	if (NULL != password) {
+	    controller_password = [NSString stringWithCString: password];
+	}
+	if (NULL != hostname) {
+	    controller_hostname = [NSString stringWithCString: hostname];
+	}
+	cleanup = val;
+	if (NULL != ortedname) {
+	    orted = [NSString stringWithCString: ortedname];
+	}
+
+	active_jobs = [NSMutableDictionary dictionary];
     }
     return self;
 }
@@ -53,11 +133,37 @@ char **environ;
 
 -(void) dealloc
 {
+    /* if supposed to clean up jobs, do so */
+    if (cleanup) {
+	NSArray *keys = [active_jobs allKeys];
+	NSEnumerator *enumerator = [keys objectEnumerator];
+	NSString *key;
+	XGJob *job;
+	XGActionMonitor *actionMonitor;
+
+        while (key = [enumerator nextObject]) {
+	    job = [grid jobForIdentifier: [active_jobs objectForKey: key]];
+
+	    actionMonitor = [job performDeleteAction];
+	    while (XGActionMonitorOutcomeNone == [actionMonitor outcome]) {
+		ompi_progress();
+	    }
+
+	    /* we should have a result - find out if it worked */
+	    if (XGActionMonitorOutcomeSuccess != [actionMonitor outcome]) {
+		NSError *err = [actionMonitor error];
+		fprintf(stderr, "orte:pls:xgrid: cleanup failed: %s\n", 
+			[[err localizedFailureReason] cString]);
+	    }
+	}
+    }
+
     /* need to shut down connection */
     [connection finalize];
 
     OBJ_DESTRUCT(&state_mutex);
     OBJ_DESTRUCT(&state_cond);
+
     [super dealloc];
 }
 
@@ -84,6 +190,12 @@ char **environ;
 -(void) setControllerHostnameAsCString: (char*) password
 {
     controller_hostname = [NSString stringWithCString: password];
+}
+
+
+-(void) setCleanUp: (int) val
+{
+    cleanup = val;
 }
 
 
@@ -115,8 +227,10 @@ char **environ;
     controller = [[XGController alloc] initWithConnection:connection];
     ompi_progress();
     grid = [controller defaultGrid];
+#if 0 /* gives a warning - need to figure out "right way" */
     ompi_output(orte_pls_base.pls_output,
 		"pls: xgrid: grid name: %s", [[grid name] cString]);
+#endif
 
     return ORTE_SUCCESS;
 }
@@ -186,7 +300,7 @@ char **environ;
 	    [NSArray arrayWithObjects: @"--no-daemonize",
 		     @"--bootproxy", [NSString stringWithFormat: @"%d", jobid],
 		     @"--name", [NSString stringWithCString: name_str],
-		     @"--nodename", [NSString stringWithFormat: @"xgrid-node-%d", i],
+		     @"--nodename", [NSString stringWithCString: node->node_name],
 		     @"--nsreplica", [NSString stringWithCString: nsuri],
 		     @"--gprreplica", [NSString stringWithCString: gpruri],
 		     nil];
@@ -195,8 +309,10 @@ char **environ;
 	[taskSpecifications setObject: task 
 			    forKey: [NSString stringWithFormat: @"%d", i]];
 
-	free(name_str); free(nsuri); free(gpruri);
+	/* add the node name into the registery */
+	mca_pls_xgrid_set_node_name(node, jobid, name);
 	
+	free(name_str); free(nsuri); free(gpruri);
 	vpid++; i++;
     }
 
@@ -215,7 +331,7 @@ char **environ;
     /* Submit the request and get our monitor */
     XGActionMonitor *actionMonitor = 
 	[controller performSubmitJobActionWithJobSpecification: jobSpecification
-		    gridIdentifier: nil];
+		    gridIdentifier: [grid identifier]];
 
     /* wait until we have some idea if job succeeded or not */
     while (XGActionMonitorOutcomeNone == [actionMonitor outcome]) {
@@ -227,9 +343,14 @@ char **environ;
 	ret = OMPI_SUCCESS;
     } else {	
 	NSError *err = [actionMonitor error];
-	printf("launch failed: %s\n", [[err localizedFailureReason] cString]);
+	fprintf(stderr, "orte:pls:xgrid: launch failed: %s\n", 
+		[[err localizedFailureReason] cString]);
 	ret = OMPI_ERROR;
     }
+
+    /* save the XGJob identifier somewhere we can get to it */
+    [active_jobs setObject: [[actionMonitor results] objectForKey: @"jobIdentifier"]
+		 forKey: [NSString stringWithFormat: @"%d", jobid]];
 
 cleanup:
     while(NULL != (item = ompi_list_remove_first(&nodes))) {
@@ -240,13 +361,39 @@ cleanup:
 }
 
 
+-(int) terminateJob: (orte_jobid_t) jobid
+{
+    int ret;
+
+    /* get our grid */
+    XGJob *job = [grid jobForIdentifier: [active_jobs objectForKey:
+			  [NSString stringWithFormat: @"%d", jobid]]];
+
+    XGActionMonitor *actionMonitor = [job performStopAction];
+    while (XGActionMonitorOutcomeNone == [actionMonitor outcome]) {
+	ompi_progress();
+    }
+
+    /* we should have a result - find out if it worked */
+    if (XGActionMonitorOutcomeSuccess == [actionMonitor outcome]) {
+	ret = OMPI_SUCCESS;
+    } else {	
+	NSError *err = [actionMonitor error];
+	fprintf(stderr, "orte:pls:xgrid: terminate failed: %s\n", 
+		[[err localizedFailureReason] cString]);
+	ret = OMPI_ERROR;
+    }
+
+    return ret;
+}
+
+
 /* delegate for changes */
 -(void) connectionDidOpen:(XGConnection*) connection
 {
-    ompi_output(orte_pls_base.pls_output,
-		"pls: xgrid: got connectionDidOpen message");
     ompi_condition_broadcast(&state_cond);
 }
+
 
 -(void) connectionDidNotOpen:(XGConnection*) connection withError: (NSError*) error
 {
@@ -254,6 +401,7 @@ cleanup:
 		"pls: xgrid: got connectionDidNotOpen message");
     ompi_condition_broadcast(&state_cond);
 }
+
 
 -(void) connectionDidClose:(XGConnection*) connection;
 {

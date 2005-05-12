@@ -100,6 +100,7 @@ orte_pls_xgrid_component_open(void)
 {
     mca_base_param_register_string("pls", "xgrid", "orted", NULL, "orted");
     mca_base_param_register_int("pls", "xgrid", "priority", NULL, 20);
+    mca_base_param_register_int("pls", "xgrid", "delete_job", NULL, 1);
 
     return ORTE_SUCCESS;
 }
@@ -115,21 +116,20 @@ orte_pls_xgrid_component_close(void)
 orte_pls_base_module_t *
 orte_pls_xgrid_component_init(int *priority)
 {
-    int param;
     char *string;
-    int ret;
+    int ret, val, param;
 
     if (NULL == getenv("XGRID_CONTROLLER_HOSTNAME") ||
         NULL == getenv("XGRID_CONTROLLER_PASSWORD")) {
 	ompi_output(orte_pls_base.pls_output,
-		    "pls: xgrid: controller info not set");
+		    "orte:pls:xgrid: not available: controller info not set");
         return NULL;
     }
 
     ompi_output(orte_pls_base.pls_output,
-		"pls: xgrid: initializing PlsXgridClient");
+		"orte:pls:xgrid: initializing PlsXGridClient");
     mca_pls_xgrid_component.pool = [[NSAutoreleasePool alloc] init];
-    mca_pls_xgrid_component.client = [[PlsXgridClient alloc] init];
+    mca_pls_xgrid_component.client = [[PlsXGridClient alloc] init];
 
     /* setup daemon name */
     param = mca_base_param_find("pls", "xgrid", "orted");
@@ -147,14 +147,18 @@ orte_pls_xgrid_component_init(int *priority)
     param = mca_base_param_find("pls", "xgrid", "priority");
     mca_base_param_lookup_int(param, priority);
 
+    param = mca_base_param_find("pls", "xgrid", "delete_job");
+    mca_base_param_lookup_int(param, &val);
+    [mca_pls_xgrid_component.client setCleanUp: val];
+
     ompi_progress_register(orte_pls_xgrid_progress);
 
-    ompi_output(orte_pls_base.pls_output, "pls: xgrid: initialized");
+    ompi_output(orte_pls_base.pls_output, "orte:pls:xgrid: initialized");
 
     ret = [mca_pls_xgrid_component.client connect];
     if (ret != ORTE_SUCCESS) {
 	ompi_output(orte_pls_base.pls_output,
-		    "pls: xgrid: connection failed");
+		    "orte:pls:xgrid: connection failed");
 	orte_pls_xgrid_finalize();
     }
 

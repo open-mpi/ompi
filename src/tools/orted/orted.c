@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 
 
     /* detach from controlling terminal */
-    if(orted_globals.debug == false || orted_globals.no_daemonize == true) {
+    if(orted_globals.debug == false && orted_globals.no_daemonize == false) {
         orte_daemon_init(NULL);
     }
 

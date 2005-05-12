@@ -124,7 +124,7 @@ orte_pls_xgrid_terminate_job(orte_jobid_t jobid)
     orte_gpr_value_t** values = NULL;
     size_t i, j, num_values = 0;
     int rc;
-                                                                                                                           
+
     if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -174,7 +174,8 @@ orte_pls_xgrid_terminate_job(orte_jobid_t jobid)
                 continue;
             }
 
-            /* send a terminate message to the bootproxy on each node */
+            /* send a terminate message to the bootproxy on each node
+	       */
             if(0 > (ret = orte_rml.send_buffer_nb(
                 &keyval->value.proc, 
                 cmd, 
@@ -204,7 +205,14 @@ cleanup:
         }
         free(values);
     }
-    return rc;
+
+    if (ORTE_SUCCESS != rc) {
+	/* ok, now that we've given the orted a chance to clean everything
+	   up nicely, kill everything not so nicely */
+	return [mca_pls_xgrid_component.client terminateJob: jobid];
+    } else {
+	return rc;
+    }
 }
 
 
