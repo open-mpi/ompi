@@ -38,20 +38,48 @@ int orte_daemon_init(char *working_dir)
        So, I am guessing that this piece of code is called only by UNIX versions */
 
     pid_t pid;
+    int fd;
 
     if ((pid = fork()) < 0) {
-	return ORTE_ERROR;
+        return ORTE_ERROR;
     } else if (pid != 0) {
-	exit(0);   /* parent goes bye-bye */
+        exit(0);   /* parent goes bye-bye */
     }
+    
     /* child continues */
     setsid();  /* become session leader */
 
     if (NULL != working_dir) {
-	chdir(working_dir);  /* change working directory */
+        chdir(working_dir);  /* change working directory */
     }
 
     umask(0);  /* clear file mode creation mask */
+
+    /* connect input to /dev/null */
+    fd = open("/dev/null", O_RDONLY);
+    if(fd > STDIN_FILENO) {
+        dup2(fd, STDIN_FILENO);
+        close(fd);
+    }
+
+    /* connect outputs to /dev/null */
+    fd = open("/dev/null", O_RDWR|O_CREAT|O_TRUNC, 0666);
+    if (fd >= 0) {
+        dup2(fd, STDOUT_FILENO);
+        dup2(fd, STDERR_FILENO);
+        /* just to be safe, make sure we aren't trying
+         * to close stdout or stderr! since we dup'd both
+         * of them to the same fd, we can't just close it
+         * since one of the two would still be open and
+         * someone could attempt to use it.
+         */
+        if(fd != STDOUT_FILENO && fd != STDERR_FILENO) {
+           close(fd);
+        }
+    } else {
+        return ORTE_ERR_FATAL;
+    }
+
     return ORTE_SUCCESS;
 #else
     printf ("This function has not been implemented in windows yet, file %s line %d\n", __FILE__, __LINE__);

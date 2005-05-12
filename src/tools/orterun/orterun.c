@@ -85,7 +85,6 @@ struct globals_t {
     bool verbose;
     bool exit;
     bool no_wait_for_job_completion;
-    bool debug;
     size_t num_procs;
     int exit_status;
     char *hostfile;
@@ -113,9 +112,6 @@ ompi_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', NULL, "version", 0,
       &orterun_globals.version, OMPI_CMD_LINE_TYPE_BOOL,
       "Show the orterun version" },
-    { "orte", "debug", NULL, 'd', NULL, "debug", 0,
-      &orterun_globals.debug, OMPI_CMD_LINE_TYPE_BOOL,
-      "Enable debugging" },
     { NULL, NULL, NULL, 'v', NULL, "verbose", 0,
       &orterun_globals.verbose, OMPI_CMD_LINE_TYPE_BOOL,
       "Be verbose" },
@@ -177,6 +173,23 @@ ompi_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, 'H', "host", "host", 1,
       NULL, OMPI_CMD_LINE_TYPE_STRING,
       "List of hosts to invoke processes on" },
+
+    /* OpenRTE arguments */
+    { "orte", "debug", NULL, 'd', NULL, "debug", 0,
+      NULL, OMPI_CMD_LINE_TYPE_BOOL,
+      "Enable debugging of OpenRTE" },
+    { "orte", "debug", "daemons", '\0', NULL, "debug-daemons", 0,
+      NULL, OMPI_CMD_LINE_TYPE_INT,
+      "Enable debugging of any OpenRTE daemons used by this application" },
+    { "orte", "debug", "daemons_file", '\0', NULL, "debug-daemons-file", 0,
+      NULL, OMPI_CMD_LINE_TYPE_BOOL,
+      "Enable debugging of any OpenRTE daemons used by this application, storing output in files" },
+    { "universe", NULL, NULL, '\0', NULL, "universe", 1,
+      NULL, OMPI_CMD_LINE_TYPE_STRING,
+      "Set the universe name as username@hostname:universe_name for this application" },
+    { NULL, NULL, NULL, '\0', NULL, "tmpdir", 1,
+      &orte_process_info.tmpdir_base, OMPI_CMD_LINE_TYPE_STRING,
+      "Set the root for the session directory tree for orterun ONLY" },
 
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
@@ -517,7 +530,6 @@ static int init_globals(void)
         false,
         false,
         false,
-        false,
         0,
         0,
         NULL,
@@ -581,11 +593,6 @@ static int parse_globals(int argc, char* argv[])
         wait_for_job_completion = false;
     }
 
-    /* debug */
-    if (orterun_globals.debug) {
-        int id = mca_base_param_register_int("debug",NULL,NULL,NULL,0);
-        mca_base_param_set_int(id,orterun_globals.debug);
-    }
     OBJ_DESTRUCT(&cmd_line);
     return ORTE_SUCCESS;
 }
@@ -815,6 +822,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                     } else {
                         asprintf(&value2, "%s=%s", param, value);
                         ompi_argv_append_nosize(&app->env, value2);
+                        free(value2);
                     }
                 } else {
                     ompi_output(0, "Warning: could not find environment variable \"%s\"\n", param);

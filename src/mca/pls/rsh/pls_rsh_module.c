@@ -33,11 +33,15 @@
 #include "include/orte_constants.h"
 #include "util/argv.h"
 #include "util/output.h"
+#include "util/univ_info.h"
 #include "util/session_dir.h"
 #include "util/if.h"
 #include "util/path.h"
 #include "event/event.h"
 #include "runtime/orte_wait.h"
+
+#include "mca/base/mca_base_param.h"
+
 #include "mca/ns/ns.h"
 #include "mca/pls/pls.h"
 #include "mca/rml/rml.h"
@@ -51,6 +55,8 @@
 #include "pls_rsh.h"
 
 #define NUM_CONCURRENT 128
+
+extern char **environ;
 
 
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
@@ -244,7 +250,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     char** argv;
     int argc;
     int rc;
-
+    int id;
+    
     /* query the list of nodes allocated to the job - don't need the entire
      * mapping - as the daemon/proxy is responsibe for determining the apps
      * to launch on each node.
@@ -272,19 +279,34 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     asprintf(&jobid_string, "%lu", (unsigned long) jobid);
 
     /*
-     * Build argv/env arrays.
+     * Build argv array
      */
     argv = ompi_argv_copy(mca_pls_rsh_component.argv);
     argc = mca_pls_rsh_component.argc;
     node_name_index1 = argc;
     ompi_argv_append(&argc, &argv, "");  /* placeholder for node name */
 
-    /* application */
+    /* add the daemon command (as specified by user) */
     local_exec_index = argc;
     ompi_argv_append(&argc, &argv, mca_pls_rsh_component.orted);
-    if (mca_pls_rsh_component.debug) {
+    
+    /* check for debug flags */
+    id = mca_base_param_register_int("orte","debug",NULL,NULL,0);
+    mca_base_param_lookup_int(id,&rc);
+    if (rc) {
          ompi_argv_append(&argc, &argv, "--debug");
     }
+    id = mca_base_param_register_int("orte","debug","daemons",NULL,0);
+    mca_base_param_lookup_int(id,&rc);
+    if (rc) {
+         ompi_argv_append(&argc, &argv, "--debug-daemons");
+    }
+    id = mca_base_param_register_int("orte","debug","daemons_file",NULL,0);
+    mca_base_param_lookup_int(id,&rc);
+    if (rc) {
+         ompi_argv_append(&argc, &argv, "--debug-daemons-file");
+    }
+
     ompi_argv_append(&argc, &argv, "--bootproxy");
     ompi_argv_append(&argc, &argv, jobid_string);
     ompi_argv_append(&argc, &argv, "--name");
@@ -294,6 +316,13 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     node_name_index2 = argc;
     ompi_argv_append(&argc, &argv, "");
 
+    /* pass along the universe name and location info */
+    ompi_argv_append(&argc, &argv, "--universe");
+    asprintf(&param, "%s@%s:%s", orte_universe_info.uid,
+                orte_universe_info.host, orte_universe_info.name);
+    ompi_argv_append(&argc, &argv, param);
+    free(param);
+    
     /* setup ns contact info */
     ompi_argv_append(&argc, &argv, "--nsreplica");
     if(NULL != orte_process_info.ns_replica_uri) {
@@ -304,6 +333,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     asprintf(&param, "\"%s\"", uri);
     ompi_argv_append(&argc, &argv, param);
     free(uri);
+    free(param);
 
     /* setup gpr contact info */
     ompi_argv_append(&argc, &argv, "--gprreplica");
@@ -315,6 +345,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     asprintf(&param, "\"%s\"", uri);
     ompi_argv_append(&argc, &argv, param);
     free(uri);
+    free(param);
 
     /*
      * Iterate through each of the nodes and spin

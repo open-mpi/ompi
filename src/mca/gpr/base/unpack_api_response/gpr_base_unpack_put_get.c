@@ -97,9 +97,6 @@ int orte_gpr_base_unpack_get(orte_buffer_t *buffer, int *ret, size_t *cnt, orte_
             free(*values);
             return rc;
         }
-        for (n=0; n < num; n++) {
-            orte_gpr.dump_value((*values)[n], 0);
-        }
     }
     
     /* unpack the response code */

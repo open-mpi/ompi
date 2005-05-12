@@ -330,14 +330,18 @@ int orte_dps_unpack_string(orte_buffer_t *buffer, void *dest,
             ORTE_ERROR_LOG(ret);
             return ret;
         }
+        if (0 ==  len) {   /* zero-length string - unpack the NULL */
+            sdest[i] = NULL;
+        } else {
         sdest[i] = malloc(len);
-        if (NULL == sdest[i]) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        if (ORTE_SUCCESS != (ret = orte_dps_unpack_byte(buffer, sdest[i], &len, ORTE_BYTE))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
+            if (NULL == sdest[i]) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            if (ORTE_SUCCESS != (ret = orte_dps_unpack_byte(buffer, sdest[i], &len, ORTE_BYTE))) {
+                ORTE_ERROR_LOG(ret);
+                return ret;
+            }
         }
     }
 

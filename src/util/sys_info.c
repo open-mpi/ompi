@@ -91,7 +91,7 @@ int orte_sys_info(void)
         return ORTE_ERROR;
     } else {
         orte_system_info.sysname = strdup(sys_info.sysname);
-        if(NULL == orte_system_info.nodename) {
+        if (NULL == orte_system_info.nodename) {
             orte_system_info.nodename = strdup(sys_info.nodename);
         }
         orte_system_info.release = strdup(sys_info.release);

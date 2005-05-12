@@ -356,7 +356,7 @@ orte_session_dir_finalize(orte_process_name_t *proc)
     int rc;
     char *tmp;
     char *job, *job_session_dir, *vpid, *proc_session_dir;
-    
+
     /* need to setup the top_session_dir with the prefix */
     tmp = strdup(orte_os_path(false,
             orte_process_info.tmpdir_base,
