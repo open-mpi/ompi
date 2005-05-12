@@ -29,6 +29,7 @@ extern "C" {
     struct mca_ptl_portals_send_frag_t {
         mca_ptl_base_send_frag_t frag_send;
         ptl_md_iovec_t frag_vector[2];
+        int32_t free_data;
     };
     typedef struct mca_ptl_portals_send_frag_t mca_ptl_portals_send_frag_t;
     OBJ_CLASS_DECLARATION (mca_ptl_portals_send_frag_t);

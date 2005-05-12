@@ -271,7 +271,7 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
         }
 
         /* see if we need to repost an md */
-        if (ev->offset > ev->md.length - ev->md.max_size) {
+        if (ev->offset + ev->md.length > ev->md.max_size) {
             ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
                                 "must repost event: %lld, %lld, %lld",
                                 ev->offset, ev->md.length, ev->md.max_size);
