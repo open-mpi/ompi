@@ -84,7 +84,6 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
        struct iovec iov;
        unsigned int iov_count;
        unsigned int max_data;
-       int32_t freeAfter;
        int rc;
 
        convertor = &sendfrag->frag_send.frag_base.frag_convertor;
@@ -111,7 +110,7 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
             &iov,
             &iov_count,
             &max_data,
-            &freeAfter)) < 0) {
+            &(sendfrag->free_data))) < 0) {
             return OMPI_ERROR;
         }
         sendfrag->frag_vector[1].iov_base = iov.iov_base;
@@ -198,19 +197,16 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
                             "SEND_END event for msg %d",
                             (int) hdr->hdr_match.hdr_msg_seq);
     } else if (ev->type == PTL_EVENT_ACK) {
-        bool frag_ack;
         ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
                             "ACK event for msg %d",
                             (int) hdr->hdr_match.hdr_msg_seq);
 
         /* discard ACKs for acks */
         if (frag->frag_send.frag_request == NULL) {
-            if (frag->frag_send.frag_base.frag_addr != NULL) {
-                free(frag->frag_send.frag_base.frag_addr);
-            }
             OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
                                   (ompi_list_item_t*) frag);
         } else {
+            bool frag_ack;
 
             frag_ack = (hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? true : false;
             if (frag_ack == false) {
@@ -225,8 +221,8 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
                 /* return frag to freelist if not part of request */
                 if (frag->frag_send.frag_request->req_cached == false || 
                     frag->frag_send.frag_base.frag_header.hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FRAG) {
-                    if (frag->frag_send.frag_base.frag_addr != NULL) {
-                        free(frag->frag_send.frag_base.frag_addr);
+                    if (frag->free_data) {
+                        free(frag->frag_vector[1].iov_base);
                     }
                     OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
                                           (ompi_list_item_t*) frag);

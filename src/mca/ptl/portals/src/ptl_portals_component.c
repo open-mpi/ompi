@@ -164,8 +164,6 @@ mca_ptl_portals_component_open(void)
         mca_ptl_portals_param_register_int("first_frag_queue_size",
                                            PTL_PORTALS_DEFAULT_FIRST_FRAG_QUEUE_SIZE);
 
-
-
     /* finish with objects */
     asprintf(&(portals_output_stream.lds_prefix), "ptl_portals (%5d): ", getpid());
 
@@ -337,7 +335,11 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
         assert(which == 0);
 
 #if PTL_PORTALS_HAVE_EVENT_UNLINK
-        if (PTL_EVENT_UNLINK == ev.type) continue;
+        if (PTL_EVENT_UNLINK == ev.type) {
+            ompi_output_verbose(2000, mca_ptl_portals_component.portals_output,
+                                "-----> unlink event occurred <-----");
+            continue;
+        }
 #endif
         if (ev.md.user_ptr == NULL) {
             /* no request associated with it - it's a receive */
