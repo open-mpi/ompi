@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef ORTED_H
-#define ORTED_H
+#ifndef ORTEPROBE_H
+#define ORTEPROBE_H
 
 #include "orte_config.h"
 
@@ -49,46 +49,14 @@ typedef uint16_t orte_daemon_cmd_flag_t;
 typedef struct {
     bool help;
     bool version;
-    bool no_daemonize;
-    bool debug_daemons;
-    bool debug_daemons_file;
-    char* name;
-    char* universe;
-    int bootproxy;
+    bool debug;
+    char* name_string;
+    char* requestor_string;
     ompi_mutex_t mutex;
     ompi_condition_t condition;
     bool exit_condition;
-} orted_globals_t;
+} orteprobe_globals_t;
 
-extern orted_globals_t orted_globals;
+extern orteprobe_globals_t orteprobe_globals;
 
-/*
- * Version-related strings and functions
- */
-
-/* extern const char *ver_full; */
-/* extern const char *ver_major; */
-/* extern const char *ver_minor; */
-/* extern const char *ver_release; */
-/* extern const char *ver_alpha; */
-/* extern const char *ver_beta; */
-/* extern const char *ver_svn; */
-
-/* void do_version(bool want_all, ompi_cmd_line_t *cmd_line); */
-/* void show_ompi_version(const char *scope); */
-
-/*
- * Parameter/configuration-related functions
- */
-
-/* extern char *param_all; */
-
-/* extern char *path_prefix; */
-/* extern char *path_bindir; */
-/* extern char *path_libdir; */
-/* extern char *path_incdir; */
-/* extern char *path_pkglibdir; */
-/* extern char *path_sysconfdir; */
-
-
-#endif /* ORTED_H */
+#endif /* ORTEPROBE_H */

@@ -34,8 +34,6 @@
 #include "mca/ns/ns_types.h"
 #include "mca/soh/soh_types.h"
 
-#include "soh_types.h"	/* gpr keys and external datatypes needed for prototyping */
-
 /*
  * Component functions - all MUST be provided!
  */
@@ -136,5 +134,7 @@ typedef orte_soh_base_component_1_0_0_t orte_soh_base_component_t;
   MCA_BASE_VERSION_1_0_0, \
   /* soh v1.0 */ \
   "soh", 1, 0, 0
+
+OMPI_DECLSPEC extern orte_soh_base_module_t orte_soh;  /* holds selected module's function pointers */
 
 #endif /* ORTE_SOH_H */

@@ -156,7 +156,7 @@ OMPI_DECLSPEC   int ompi_rte_init_io(void);
     /**
      * Establish a Head Node Process on a cluster's front end
      */
-OMPI_DECLSPEC   int orte_setup_hnp(char *target_cluster);
+OMPI_DECLSPEC   int orte_setup_hnp(char *target_cluster, char *headnode, char *username);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

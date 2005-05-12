@@ -1798,6 +1798,7 @@ AC_CONFIG_FILES([
     src/tools/console/Makefile
     src/tools/ompi_info/Makefile
     src/tools/orted/Makefile
+    src/tools/orteprobe/Makefile
     src/tools/orterun/Makefile
     src/tools/openmpi/Makefile
     src/tools/wrappers/Makefile

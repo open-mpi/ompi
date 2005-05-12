@@ -76,40 +76,67 @@ ompi_cmd_line_init_t orte_cmd_line_opts[] = {
     { NULL, NULL, NULL, 'h', NULL, "help", 0, 
       &orted_globals.help, OMPI_CMD_LINE_TYPE_BOOL,
       "This help message" },
+
     { NULL, NULL, NULL, '\0', NULL, "version", 0,
       &orted_globals.version, OMPI_CMD_LINE_TYPE_BOOL,
       "Show the orted version" },
 
-    { NULL, NULL, NULL, 'd', NULL, "debug", 0,
-      &orted_globals.debug, OMPI_CMD_LINE_TYPE_BOOL,
-      "Run in debug mode (not generally intended for users)" },
+    { "orte", "debug", NULL, 'd', NULL, "debug", 0,
+      NULL, OMPI_CMD_LINE_TYPE_BOOL,
+      "Debug the OpenRTE" },
+
     { NULL, NULL, NULL, '\0', NULL, "no-daemonize", 0,
       &orted_globals.no_daemonize, OMPI_CMD_LINE_TYPE_BOOL,
       "Don't daemonize into the background" },
+
+    { "orte", "debug", "daemons", '\0', NULL, "debug-daemons", 0,
+      &orted_globals.debug_daemons, OMPI_CMD_LINE_TYPE_BOOL,
+      "Enable debugging of OpenRTE daemons" },
+
+    { "orte", "debug", "daemons_file", '\0', NULL, "debug-daemons-file", 0,
+      &orted_globals.debug_daemons_file, OMPI_CMD_LINE_TYPE_BOOL,
+      "Enable debugging of OpenRTE daemons, storing output in files" },
+
     { "rmgr", "bootproxy", "jobid", '\0', NULL, "bootproxy", 1,
       &orted_globals.bootproxy, OMPI_CMD_LINE_TYPE_INT,
       "Run as boot proxy for <job-id>" },
+
     { NULL, NULL, NULL, '\0', NULL, "name", 1,
       &orted_globals.name, OMPI_CMD_LINE_TYPE_STRING,
       "Set the orte process name"},
+
     { NULL, NULL, NULL, '\0', NULL, "nsreplica", 1,
       &orte_process_info.ns_replica_uri, OMPI_CMD_LINE_TYPE_STRING,
       "Name service contact information."},
+
     { NULL, NULL, NULL, '\0', NULL, "gprreplica", 1,
       &orte_process_info.gpr_replica_uri, OMPI_CMD_LINE_TYPE_STRING,
       "Registry contact information."},
+
     { NULL, NULL, NULL, '\0', NULL, "nodename", 1,
       &orte_system_info.nodename, OMPI_CMD_LINE_TYPE_STRING,
       "Node name as specified by host/resource description." },
+
+    { "universe", NULL, NULL, '\0', NULL, "universe", 1,
+      &orted_globals.universe, OMPI_CMD_LINE_TYPE_STRING,
+      "Set the universe name as username@hostname:universe_name for this application" },
+
+    { "tmpdir", "base", NULL, '\0', NULL, "tmpdir", 1,
+      NULL, OMPI_CMD_LINE_TYPE_STRING,
+      "Set the root for the session directory tree" },
+
     { "seed", NULL, NULL, '\0', NULL, "seed", 0,
-      &orte_process_info.seed, OMPI_CMD_LINE_TYPE_BOOL,
-      "seed"},
+      NULL, OMPI_CMD_LINE_TYPE_BOOL,
+      "Host replicas for the core universe services"},
+
     { "universe", "persistence", NULL, '\0', NULL, "persistent", 0,
-      &orte_universe_info.persistence, OMPI_CMD_LINE_TYPE_BOOL,
-      "persistent"},
+      NULL, OMPI_CMD_LINE_TYPE_BOOL,
+      "Remain alive after the application process completes"},
+
     { "universe", "scope", NULL, '\0', NULL, "scope", 1,
-      &orte_universe_info.scope, OMPI_CMD_LINE_TYPE_STRING,
-      "scope"},
+      NULL, OMPI_CMD_LINE_TYPE_STRING,
+      "Set restrictions on who can connect to this universe"},
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OMPI_CMD_LINE_TYPE_NULL, NULL }
@@ -119,12 +146,15 @@ ompi_cmd_line_init_t orte_cmd_line_opts[] = {
 int main(int argc, char *argv[])
 {
     int ret = 0;
+    int fd;
     ompi_cmd_line_t *cmd_line = NULL;
     char *contact_path = NULL;
     char *log_path = NULL;
-
+    char log_file[PATH_MAX];
+    char *jobidstring;
+    
     /* setup to check common command line options that just report and die */
-    memset(&orted_globals, 0, sizeof(orted_globals));
+    memset(&orted_globals, 0, sizeof(orted_globals_t));
     cmd_line = OBJ_NEW(ompi_cmd_line_t);
     ompi_cmd_line_create(cmd_line, orte_cmd_line_opts);
     if (OMPI_SUCCESS != (ret = ompi_cmd_line_parse(cmd_line, true, 
@@ -161,14 +191,20 @@ int main(int argc, char *argv[])
         ret = orte_ns_base_convert_string_to_process_name(
             &orte_process_info.my_name, orted_globals.name);
         if(ORTE_SUCCESS != ret) {
-            ORTE_ERROR_LOG(ret);
+            fprintf(stderr, "Couldn't convert environmental string to process name\n");
             return 1;
         }
     }
 
+    /* turn on debug if debug_file is requested so output will be generated */
+    if (orted_globals.debug_daemons_file) {
+        orted_globals.debug_daemons = true;
+    }
 
-    /* detach from controlling terminal */
-    if(orted_globals.debug == false && orted_globals.no_daemonize == false) {
+    /* detach from controlling terminal
+     * otherwise, remain attached so output can get to us
+     */
+    if(orted_globals.debug_daemons == false && orted_globals.no_daemonize == false) {
         orte_daemon_init(NULL);
     }
 
@@ -179,20 +215,21 @@ int main(int argc, char *argv[])
     }
 
     /* setup stdin/stdout/stderr */
-    if (orted_globals.debug == false) {
-        int fd;
-        char log_file[PATH_MAX];
-
-        /* connect input to /dev/null */
-        fd = open("/dev/null", O_RDONLY);
-        if(fd > STDIN_FILENO) {
-            dup2(fd, STDIN_FILENO);
-            close(fd);
+    if (orted_globals.debug_daemons_file) {
+        /* if we are debugging to a file, then send stdin/stdout/stderr
+         * to the orted log file
+         */
+        
+        /* get my jobid */
+        if (ORTE_SUCCESS != (ret = orte_ns.get_jobid_string(&jobidstring,
+                                        orte_process_info.my_name))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
         }
-
-        /* connect output to a log file in the session directory */
-        sprintf(log_file, "output-orted-%d-%s.log", 
-                (int)orte_process_info.my_name->jobid, orte_system_info.nodename);
+        
+        /* define a log file name in the session directory */
+        sprintf(log_file, "output-orted-%s-%s.log", 
+                jobidstring, orte_system_info.nodename);
         log_path = orte_os_path(false, 
                                 orte_process_info.tmpdir_base, 
                                 orte_process_info.top_session_dir, 
@@ -200,10 +237,12 @@ int main(int argc, char *argv[])
                                 NULL);
 
         fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0666);
-        if(fd < 0) {
+        if (fd < 0) {
+            /* couldn't open the file for some reason, so
+             * just connect everything to /dev/null
+             */
              fd = open("/dev/null", O_RDWR|O_CREAT|O_TRUNC, 0666);
-        }
-        if(fd >= 0) {
+        } else {
             dup2(fd, STDOUT_FILENO);
             dup2(fd, STDERR_FILENO);
             if(fd != STDOUT_FILENO && fd != STDERR_FILENO) {
@@ -246,19 +285,21 @@ int main(int argc, char *argv[])
 	    orte_universe_info.seed_uri = orte_rml.get_uri();
 	    contact_path = orte_os_path(false, orte_process_info.universe_session_dir,
 				    "universe-setup.txt", NULL);
-	    ompi_output(0, "ompid: contact_file %s", contact_path);
+	    if (orted_globals.debug_daemons) {
+            ompi_output(0, "ompid: contact_file %s", contact_path);
+        }
 
 	    if (OMPI_SUCCESS != (ret = orte_write_universe_setup_file(contact_path, &orte_universe_info))) {
-	        if (orted_globals.debug) {
+	        if (orted_globals.debug_daemons) {
 		        ompi_output(0, "[%lu,%lu,%lu] ompid: couldn't write setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
 	        }
-	    } else if (orted_globals.debug) {
+	    } else if (orted_globals.debug_daemons) {
 	        ompi_output(0, "[%lu,%lu,%lu] ompid: wrote setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
 	    }
     }
 
 
-    if (orted_globals.debug) {
+    if (orted_globals.debug_daemons) {
 	    ompi_output(0, "[%lu,%lu,%lu] ompid: issuing callback", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
@@ -273,7 +314,7 @@ int main(int argc, char *argv[])
      * - could be setup a virtual machine, spawn a console, etc.
      */
 
-    if (orted_globals.debug) {
+    if (orted_globals.debug_daemons) {
 	    ompi_output(0, "[%lu,%lu,%lu] ompid: setting up event monitor", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
@@ -286,7 +327,7 @@ int main(int argc, char *argv[])
 
     OMPI_THREAD_UNLOCK(&orted_globals.mutex);
 
-    if (orted_globals.debug) {
+    if (orted_globals.debug_daemons) {
 	   ompi_output(0, "[%lu,%lu,%lu] ompid: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
@@ -301,7 +342,7 @@ int main(int argc, char *argv[])
     /* finalize the system */
     orte_finalize();
 
-    if (orted_globals.debug) {
+    if (orted_globals.debug_daemons) {
 	   ompi_output(0, "[%lu,%lu,%lu] ompid: done - exiting", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
@@ -320,7 +361,7 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
 
     OMPI_THREAD_LOCK(&orted_globals.mutex);
 
-    if (orted_globals.debug) {
+    if (orted_globals.debug_daemons) {
 	   ompi_output(0, "[%lu,%lu,%lu] ompid: received message", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 

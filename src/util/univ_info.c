@@ -32,6 +32,10 @@
 #include "include/orte_constants.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
+#include "mca/ns/ns_types.h"
+#include "util/output.h"
+#include "util/proc_info.h"
+#include "util/sys_info.h"
 
 #include "util/univ_info.h"
 
@@ -53,19 +57,51 @@ orte_universe_t orte_universe_info = {
 int orte_univ_info(void)
 {
     int id, tmp;
+    char *tmpname=NULL, *tptr, *ptr;
     
     if (!orte_universe_info.init) {
         id = mca_base_param_register_string("universe", "path", NULL, NULL, orte_universe_info.path);
         mca_base_param_lookup_string(id, &(orte_universe_info.path));
     
-        id = mca_base_param_register_string("universe", "name", NULL, NULL, orte_universe_info.name);
-        mca_base_param_lookup_string(id, &(orte_universe_info.name));
-    
-        id = mca_base_param_register_string("universe", "host", NULL, NULL, orte_universe_info.host);
-        mca_base_param_lookup_string(id, &(orte_universe_info.host));
-    
-        /* uid is not set via parameter, but is determined elsewhere */
+        id = mca_base_param_register_string("universe", NULL, NULL, NULL, NULL);
+        mca_base_param_lookup_string(id, &tmpname);
         
+        if (NULL != tmpname) {            
+            /* Universe name info is passed as userid@hostname:univ_name */
+            /* extract the userid from the universe option, if provided */
+            tptr = tmpname;
+            if (NULL != (ptr = strchr(tptr, '@'))) {
+                *ptr = '\0';
+                orte_universe_info.uid = strdup(tptr);
+                ptr++;
+                tptr = ptr;
+            } else {
+                if (NULL == orte_system_info.user) {
+                    orte_sys_info();
+                }
+                orte_universe_info.uid = strdup(orte_system_info.user);
+            }
+            
+            /* extract the hostname, if provided */
+            if (NULL != (ptr = strchr(tptr, ':'))) {
+                *ptr = '\0';
+                orte_universe_info.host = strdup(tptr);
+                ptr++;
+                tptr = ptr;
+            } else {
+                orte_universe_info.host = strdup(orte_system_info.nodename);
+            }
+            
+            /* now copy the universe name into the universe_info structure */
+            orte_universe_info.name = strdup(tptr);
+        } else {
+            /* if nothing was provided, then initialize the user and nodename
+             * to the local values
+             */
+            orte_universe_info.uid = strdup(orte_system_info.user);
+            orte_universe_info.host = strdup(orte_system_info.nodename);
+        }
+
         id = mca_base_param_register_int("universe", "persistence", NULL, NULL, orte_universe_info.persistence);
         mca_base_param_lookup_int(id, &tmp);
         orte_universe_info.persistence = (tmp ? true : false);

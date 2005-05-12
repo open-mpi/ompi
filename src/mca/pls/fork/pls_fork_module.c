@@ -34,6 +34,7 @@
 #include "util/argv.h"
 #include "util/output.h"
 #include "util/sys_info.h"
+#include "util/univ_info.h"
 #include "util/ompi_environ.h"
 #include "util/session_dir.h"
 #include "runtime/orte_wait.h"
@@ -152,6 +153,17 @@ static int orte_pls_fork_proc(
         param = mca_base_param_environ_variable("rmgr","bootproxy","jobid");
         ompi_unsetenv(param, &environ_copy);
 
+        /* setup universe info */
+        if (NULL != orte_universe_info.name) {
+            param = mca_base_param_environ_variable("universe", NULL, NULL);
+            asprintf(&uri, "%s@%s:%s", orte_universe_info.uid,
+                                       orte_universe_info.host,
+                                       orte_universe_info.name);
+            ompi_setenv(param, uri, true, &environ_copy);
+            free(param);
+            free(uri);
+        }
+        
         /* setup ns contact info */
         if(NULL != orte_process_info.ns_replica_uri) {
             uri = strdup(orte_process_info.ns_replica_uri);
@@ -185,7 +197,7 @@ static int orte_pls_fork_proc(
         new_env = ompi_environ_merge(context->env, environ_copy);
         ompi_argv_free(environ_copy);
 
-        if(context->argv == NULL) {
+        if (context->argv == NULL) {
             context->argv = malloc(sizeof(char*)*2);
             context->argv[0] = strdup(context->app);
             context->argv[1] = NULL;

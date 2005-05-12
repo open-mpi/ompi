@@ -300,15 +300,23 @@ int orte_dps_pack_string(orte_buffer_t *buffer, void *src,
     char **ssrc = (char**) src;
 
     for (i = 0; i < num_vals; ++i) {
-        len = strlen(ssrc[i]) + 1;
-        if (ORTE_SUCCESS != (ret = orte_dps_pack_sizet(buffer, &len, 1, ORTE_SIZE))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        if (ORTE_SUCCESS != (ret = 
-            orte_dps_pack_byte(buffer, ssrc[i], len, ORTE_BYTE))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
+        if (NULL == ssrc[i]) {  /* got zero-length string/NULL pointer - store NULL */
+            len = 0;
+            if (ORTE_SUCCESS != (ret = orte_dps_pack_sizet(buffer, &len, 1, ORTE_SIZE))) {
+                ORTE_ERROR_LOG(ret);
+                return ret;
+            }
+        } else {
+            len = strlen(ssrc[i]) + 1;
+            if (ORTE_SUCCESS != (ret = orte_dps_pack_sizet(buffer, &len, 1, ORTE_SIZE))) {
+                ORTE_ERROR_LOG(ret);
+                return ret;
+            }
+            if (ORTE_SUCCESS != (ret = 
+                orte_dps_pack_byte(buffer, ssrc[i], len, ORTE_BYTE))) {
+                ORTE_ERROR_LOG(ret);
+                return ret;
+            }
         }
     }
 

@@ -73,11 +73,6 @@ int orte_init_stage1(void)
     /* For malloc debugging */
     ompi_malloc_init();
 
-    /* Ensure the universe_info structure is instantiated and initialized */
-    if (ORTE_SUCCESS != (ret = orte_univ_info())) {
-        return ret;
-    }
-
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_sys_info())) {
         return ret;
@@ -88,6 +83,11 @@ int orte_init_stage1(void)
         return ret;
     }
     
+    /* Ensure the universe_info structure is instantiated and initialized */
+    if (ORTE_SUCCESS != (ret = orte_univ_info())) {
+        return ret;
+    }
+
     /*
      * Initialize the MCA framework 
      */
