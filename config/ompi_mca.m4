@@ -808,7 +808,7 @@ AC_DEFUN([OMPI_WRITE_DIRECT_CALL_HEADER],[
     cp "src/mca/$1/$1_direct_call.h.template" "src/mca/$1/$1_direct_call.h"
     echo "config.status: regenerating src/mca/$1/$1_direct_call.h"
   else
-    echo "config.state: src/mca/$1/$1_direct_call.h unchanged"
+    echo "config.status: src/mca/$1/$1_direct_call.h unchanged"
   fi
 else
   cp "src/mca/$1/$1_direct_call.h.template" "src/mca/$1/$1_direct_call.h"
