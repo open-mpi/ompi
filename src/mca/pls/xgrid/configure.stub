@@ -35,5 +35,4 @@ fi
 OBJCFLAGS="-F XGridFoundation"
 LDFLAGS="-framework XGridFoundation -framework Foundation"
 
-
 ])dnl

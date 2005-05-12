@@ -26,7 +26,9 @@
 /*
  * Local functions
  */
-static orte_ras_base_module_t *ras_xgrid_init(int*);
+static int orte_ras_xgrid_component_open(void);
+static int orte_ras_xgrid_component_close(void);
+static orte_ras_base_module_t *orte_ras_xgrid_init(int*);
 
 
 orte_ras_base_component_1_0_0_t mca_ras_xgrid_component = {
@@ -48,8 +50,8 @@ orte_ras_base_component_1_0_0_t mca_ras_xgrid_component = {
         
         /* Component open and close functions */
         
-        NULL,
-        NULL
+        orte_ras_xgrid_component_open,
+        orte_ras_xgrid_component_close
     },
     
     /* Next the MCA v1.0.0 component meta data */
@@ -58,14 +60,29 @@ orte_ras_base_component_1_0_0_t mca_ras_xgrid_component = {
         false
     },
     
-    ras_xgrid_init
+    orte_ras_xgrid_init
 };
 
 
-static orte_ras_base_module_t *ras_xgrid_init(int* priority)
+static int
+orte_ras_xgrid_component_open(void)
+{
+    mca_base_param_register_int("ras", "xgrid", "priority", NULL, 100);
+    return ORTE_SUCCESS;
+}
+
+
+static int
+orte_ras_xgrid_component_close(void)
+{
+    return ORTE_SUCCESS;
+}
+
+
+static orte_ras_base_module_t *orte_ras_xgrid_init(int* priority)
 {
     /* Are we running under a xgrid job? */
-    int id = mca_base_param_register_int("ras","xgrid","priority",NULL,100);
+    int id = mca_base_param_find("ras", "xgrid", "priority");
     mca_base_param_lookup_int(id,priority);
 
     if (NULL != getenv("XGRID_CONTROLLER_HOSTNAME") &&
