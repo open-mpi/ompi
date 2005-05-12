@@ -188,6 +188,16 @@ AC_CHECK_TYPES(intptr_t)
 AC_CHECK_TYPES(uintptr_t)
 AC_CHECK_TYPES(mode_t)
 
+# socklen_t needs <sys/socket.h>, which will not be covered by the
+# standard includes for AC_CHECK_TYPES
+
+AC_CHECK_TYPES(socklen_t, [AC_DEFINE(HAVE_SOCKLEN_T, 1, 
+                                     [Whether we have socklen_t or not])],
+               [], [AC_INCLUDES_DEFAULT
+#include <sys/socket.h>])
+
+
+
 #
 # Check for type sizes
 #
@@ -1091,14 +1101,6 @@ fi
 AC_DEFINE_UNQUOTED(OMPI_USE_STDBOOL_H, $OMPI_USE_STDBOOL_H,
     [Whether to use <stdbool.h> or not])
 AC_MSG_RESULT([$MSG])
-
-
-# Check for socklen_t.  Don't do this with all the other
-# AC_CHECK_TYPES checks, above, because we want this to be after the
-# big AC_CHECK_HEADERS (above) so that the test will automatically
-# include <sys/socket.h>, which is where socklen_t should be defined.
-
-AC_CHECK_TYPES(socklen_t)
 
 
 ##################################
