@@ -678,7 +678,7 @@ AC_CONFIG_COMMANDS([${pd_component_type}-${pd_component_name}],
     cp "$pd_ver_header.template" "$pd_ver_header"
     echo "config.status: regenerating $pd_ver_header"
   else
-    echo "config.state: $pd_ver_header unchanged"
+    echo "config.status: $pd_ver_header unchanged"
   fi
 else
   cp "$pd_ver_header.template" "$pd_ver_header"
