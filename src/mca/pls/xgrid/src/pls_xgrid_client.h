@@ -28,7 +28,7 @@
 #import "threads/condition.h"
 #include "mca/ns/ns_types.h"
 
-@interface PlsXgridClient : NSObject
+@interface PlsXGridClient : NSObject
 {
     NSString *orted;
     NSString *controller_hostname;
@@ -45,10 +45,17 @@
     XGTwoWayRandomAuthenticator *authenticator;
     XGController *controller;
     XGGrid *grid;
+    int cleanup;
+
+    NSMutableDictionary *active_jobs;
 }
 
 /* init / finalize */
 -(id) init;
+-(id) initWithControllerHostname: (char*) hostnam
+	   AndControllerPassword: (char*) password
+			AndOrted: (char*) ortedname
+		      AndCleanup: (int) val;
 -(void) dealloc;
 
 /* accessors */
@@ -57,11 +64,12 @@
 -(void) setOrtedAsCString: (char*) name;
 -(void) setControllerPasswordAsCString: (char*) name;
 -(void) setControllerHostnameAsCString: (char*) password;
-
+-(void) setCleanUp: (int) val;
 
 /* interface for launch */
 -(int) connect;
 -(int) launchJob:(orte_jobid_t) jobid;
+-(int) terminateJob: (orte_jobid_t) jobid;
 
 /* delegate for changes */
 -(void) connectionDidOpen:(XGConnection*) connection;
