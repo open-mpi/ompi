@@ -34,6 +34,8 @@
 #include "util/argv.h"
 #include "util/output.h"
 #include "util/session_dir.h"
+#include "util/if.h"
+#include "util/path.h"
 #include "event/event.h"
 #include "runtime/orte_wait.h"
 #include "mca/ns/ns.h"
@@ -236,6 +238,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     int node_name_index1;
     int node_name_index2;
     int proc_name_index;
+    int local_exec_index;
     char *jobid_string;
     char *uri, *param;
     char** argv;
@@ -277,6 +280,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     ompi_argv_append(&argc, &argv, "");  /* placeholder for node name */
 
     /* application */
+    local_exec_index = argc;
     ompi_argv_append(&argc, &argv, mca_pls_rsh_component.orted);
     if (mca_pls_rsh_component.debug) {
          ompi_argv_append(&argc, &argv, "--debug");
@@ -323,6 +327,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
         orte_process_name_t* name;
         pid_t pid;
+        char *exec_path;
+        char **exec_argv;
 
         /* setup node name */
         argv[node_name_index1] = node->node_name;
@@ -346,6 +352,16 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         if(pid == 0) {
             char* name_string;
 
+            /* Is this a local launch? */
+
+            if (ompi_ifislocal(node->node_name)) {
+                exec_argv = &argv[local_exec_index];
+                exec_path = ompi_path_findv(exec_argv[0], 0, environ, NULL);
+            } else {
+                exec_argv = argv;
+                exec_path = strdup(mca_pls_rsh_component.path);
+            }
+        
             /* setup process name */
             rc = orte_ns.get_proc_name_string(&name_string, name);
             if(ORTE_SUCCESS != rc) {
@@ -369,7 +385,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             }
 
             /* exec the daemon */
-            execv(mca_pls_rsh_component.path, argv);
+            execv(exec_path, exec_argv);
             ompi_output(0, "orte_pls_rsh: execv failed with errno=%d\n", errno);
             exit(-1);
 
