@@ -20,6 +20,7 @@
 
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
+#include "mca/ptl/base/ptl_base_sendreq.h"
 #include "ptl_portals_recv.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -37,9 +38,6 @@ extern "C" {
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-
-extern int mca_ptl_portals_process_send_event(ptl_event_t *ev);
-
 
 static inline int
 mca_ptl_portals_send_frag(struct mca_ptl_portals_module_t *ptl,
@@ -80,11 +78,11 @@ mca_ptl_portals_send_frag(struct mca_ptl_portals_module_t *ptl,
     if (ret != PTL_OK) {
         ompi_output(mca_ptl_portals_component.portals_output,
                     "PtlPut failed with error %d", ret);
+        PtlMDUnlink(md_handle);
         return OMPI_ERROR;
     }
 
     return OMPI_SUCCESS;
-    
 }
 
 
@@ -101,12 +99,10 @@ mca_ptl_portals_send_ack(struct mca_ptl_portals_module_t *ptl,
     /* get a fragment */
     OMPI_FREE_LIST_GET(&mca_ptl_portals_component.portals_send_frags,
                        item, ret);
-    if (NULL == item) {
-        /* BWB - fix me */
-        return ret;
-    }
+    if (NULL == item) return ret;
     sendfrag = (mca_ptl_portals_send_frag_t *) item;
 
+    /* no payload */
     sendfrag->frag_vector[1].iov_base = NULL;
     sendfrag->frag_vector[1].iov_len = 0;
 
@@ -116,27 +112,52 @@ mca_ptl_portals_send_ack(struct mca_ptl_portals_module_t *ptl,
     hdr->hdr_ack.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
     hdr->hdr_ack.hdr_common.hdr_flags = 0;
 
-    hdr->hdr_ack.hdr_src_ptr = recvfrag->frag_recv.frag_base.frag_header.hdr_rndv.hdr_src_ptr;
-    hdr->hdr_ack.hdr_dst_match.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
+#if OMPI_ENABLE_MEM_DEBUG
+    hdr->hdr_ack.hdr_dst_match.lval = 0;
+    hdr->hdr_ack.hdr_dst_addr.lval = 0;
+#endif
+
+    hdr->hdr_ack.hdr_src_ptr = 
+        recvfrag->frag_recv.frag_base.frag_header.hdr_rndv.hdr_src_ptr;
     hdr->hdr_ack.hdr_dst_match.pval = request;
-    hdr->hdr_ack.hdr_dst_addr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
     hdr->hdr_ack.hdr_dst_addr.pval = request->req_recv.req_base.req_addr;
     hdr->hdr_ack.hdr_dst_size = request->req_recv.req_bytes_packed;
 
+    /* can ignore most of the fragment, but need to make sure the
+       request is NULL so that process_send_event knows it's an ack
+       completing */
     sendfrag->frag_send.frag_request = NULL;
-    sendfrag->frag_send.frag_base.frag_peer = (struct mca_ptl_base_peer_t*) &(recvfrag->frag_source);
-    sendfrag->frag_send.frag_base.frag_owner = &ptl->super;
-    sendfrag->frag_send.frag_base.frag_addr = NULL;
-    sendfrag->frag_send.frag_base.frag_size = 0;
+    sendfrag->frag_send.frag_base.frag_peer = 
+        (struct mca_ptl_base_peer_t*) &(recvfrag->frag_source);
 
     sendfrag->frag_vector[0].iov_len = sizeof(mca_ptl_base_ack_header_t);
 
-    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "sending ack for request %p", request);
-
+    OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                         "sending ack for request %p", request));
         
     return mca_ptl_portals_send_frag(ptl, sendfrag);
 }
-                         
+
+
+static inline void
+mca_ptl_portals_complete_send_event(mca_ptl_portals_send_frag_t* frag)
+{
+    frag->frag_send.frag_base.frag_owner->
+        ptl_send_progress(frag->frag_send.frag_base.frag_owner,
+                          frag->frag_send.frag_request,
+                          frag->frag_send.frag_base.frag_size);
+
+    /* return frag to freelist if not part of request */
+    if (frag->frag_send.frag_request->req_cached == false || 
+        frag->frag_send.frag_base.frag_header.hdr_common.hdr_type == 
+        MCA_PTL_HDR_TYPE_FRAG) {
+
+        if (frag->free_data) {
+            free(frag->frag_vector[1].iov_base);
+        }
+        OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
+                              (ompi_list_item_t*) frag);
+    }
+}                        
 
 #endif /* MCA_PTL_PORTALS_SENDFRAG_H_ */

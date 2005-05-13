@@ -78,14 +78,15 @@ mca_ptl_portals_add_procs(struct mca_ptl_base_module_t* ptl,
     ptl_process_id_t *portals_procs;
     size_t i;
     unsigned long distance;
-    struct mca_ptl_portals_module_t *myptl = (struct mca_ptl_portals_module_t*) ptl;
+    struct mca_ptl_portals_module_t *myptl = 
+        (struct mca_ptl_portals_module_t*) ptl;
 
     /* make sure our environment is fully initialized.  At end of this
        call, we have a working network handle on our module and
        portals_procs will have the portals process identifier for each
        proc (ordered, in theory) */
-    ret = mca_ptl_portals_add_procs_compat((struct mca_ptl_portals_module_t*) ptl,
-                                           nprocs, procs, &portals_procs);
+    ret = mca_ptl_portals_add_procs_compat(myptl, nprocs, procs, 
+                                           &portals_procs);
     if (OMPI_SUCCESS != ret) return ret;
 
     /* loop through all procs, setting our reachable flag */
@@ -152,9 +153,6 @@ mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
                         "Failed to allocate event queue: %d", ret);
             return OMPI_ERROR;
         }
-        ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                            "allocated event queue: %d",
-                            ptl->frag_eq_handle);
 
         for (i = 0 ; i < ptl->first_frag_num_entries ; ++i) {
             ret = ptl_portals_post_recv_md(ptl, NULL);
@@ -175,7 +173,7 @@ mca_ptl_portals_finalize(struct mca_ptl_base_module_t *ptl_base)
 
     ret = PtlNIFini(ptl->ni_handle);
     if (PTL_OK != ret) {
-        ompi_output_verbose(90, mca_ptl_portals_component.portals_output,
+        ompi_output_verbose(20, mca_ptl_portals_component.portals_output,
                             "PtlNIFini returned %d\n", ret);
         return OMPI_ERROR;
     }
