@@ -140,14 +140,16 @@ mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
         /* BWB - not really sure how - would have to track a lot more data... */
     } else {
         /* only do all the hard stuff if we haven't created the queue */
-        if (ptl->frag_eq_handle != PTL_EQ_NONE) return OMPI_SUCCESS;
+        if (ptl->frag_eq_handles[MCA_PTL_PORTALS_EQ_FRAGS] != PTL_EQ_NONE) {
+            return OMPI_SUCCESS;
+        }
 
         /* create an event queue, then the match entries for the match
            entries */
         ret = PtlEQAlloc(ptl->ni_handle,
                          ptl->event_queue_size,
                          PTL_EQ_HANDLER_NONE,
-                         &(ptl->frag_eq_handle));
+                         &(ptl->frag_eq_handles[MCA_PTL_PORTALS_EQ_FRAGS]));
         if (ret != PTL_OK) {
             ompi_output(mca_ptl_portals_component.portals_output,
                         "Failed to allocate event queue: %d", ret);
