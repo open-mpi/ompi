@@ -468,6 +468,7 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
     switch(state) {
         case ORTE_PROC_STATE_ABORTED:
             dump_aborted_procs(jobid);
+            orte_rmgr.terminate_job(jobid);
             break;
 
         case ORTE_PROC_STATE_TERMINATED:
