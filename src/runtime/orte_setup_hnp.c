@@ -24,12 +24,16 @@
 #include "orte_config.h"
 
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
 #include <fcntl.h>
 
 
@@ -85,6 +89,7 @@ static void orte_setup_hnp_wait(pid_t wpid, int status, void *data);
  */
 int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
 {
+#ifndef WIN32
     char **argv, *param, *uri, *uid, *hn;
     char *path, *name_string, *orteprobe;
     int argc, rc=ORTE_SUCCESS, id;
@@ -213,7 +218,7 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
 
     if (pid == 0) {     /* child */
         /* exec the probe launch */
-ompi_output(0, "exec'ing %s", path);
+       ompi_output(0, "exec'ing %s", path);
         execv(path, argv);
         ORTE_ERROR_LOG(ORTE_ERROR);
         ompi_output(0, "orte_setup_hnp: execv failed with errno=%d\n", errno);
@@ -226,6 +231,12 @@ ompi_output(0, "exec'ing %s", path);
 
 CLEANUP:
     return rc;
+
+#else
+    printf ("This function has not been implemented in windows yet, file %s line %d\n", __FILE__, __LINE__);
+    abort();
+#endif
+
 }
 
 static void orte_setup_hnp_recv(int status, orte_process_name_t* sender,
