@@ -40,7 +40,7 @@ mca_ptl_portals_module_t mca_ptl_portals_module = {
         0,   /* max size of first frag */
         0,   /* min size of frag */
         0,   /* max size of frag */
-        60,   /* exclusivity */
+        60,   /* exclusivity - higher than sm, lower than self */
         0,   /* latency */
         0,   /* bandwidth */
         MCA_PTL_PUT,   /* ptl flags */
@@ -145,7 +145,7 @@ mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
         /* create an event queue, then the match entries for the match
            entries */
         ret = PtlEQAlloc(ptl->ni_handle,
-                         ptl->first_frag_queue_size,
+                         ptl->event_queue_size,
                          PTL_EQ_HANDLER_NONE,
                          &(ptl->frag_eq_handle));
         if (ret != PTL_OK) {

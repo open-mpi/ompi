@@ -157,9 +157,9 @@ mca_ptl_portals_component_open(void)
     mca_ptl_portals_module.first_frag_entry_size = 
         param_register_int("first_frag_entry_size",
                            PTL_PORTALS_DEFAULT_FIRST_FRAG_ENTRY_SIZE);
-    mca_ptl_portals_module.first_frag_queue_size = 
-        param_register_int("first_frag_queue_size",
-                           PTL_PORTALS_DEFAULT_FIRST_FRAG_QUEUE_SIZE);
+    mca_ptl_portals_module.event_queue_size = 
+        param_register_int("event_queue_size",
+                           PTL_PORTALS_DEFAULT_EVENT_QUEUE_SIZE);
 
     /* finish with objects */
     asprintf(&(portals_output_stream.lds_prefix), 
