@@ -34,10 +34,4 @@
 
 #endif
 
-int mca_ptl_portals_init(mca_ptl_portals_component_t *comp);
-
-int mca_ptl_portals_add_procs_compat(mca_ptl_portals_module_t* ptl,
-                                     size_t nprocs, struct ompi_proc_t **procs,
-                                     ptl_process_id_t **portals_procs);
-
 #endif /* PTL_PORTALS_NAL_H */

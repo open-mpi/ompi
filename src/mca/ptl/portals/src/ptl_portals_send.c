@@ -188,56 +188,39 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
         &(frag->frag_send.frag_base.frag_header);
 
     if (ev->type == PTL_EVENT_SEND_START) {
-        ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                            "SEND_START event for msg %d, length: %d",
-                            (int) hdr->hdr_match.hdr_msg_seq,
-                            (int) ev->mlength);
+        OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                             "ptl event send start for msg %d, length: %d",
+                             (int) hdr->hdr_match.hdr_msg_seq,
+                             (int) ev->mlength));
     } else if (ev->type == PTL_EVENT_SEND_END) {
-        ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                            "SEND_END event for msg %d",
-                            (int) hdr->hdr_match.hdr_msg_seq);
+        OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                             "ptl event send end for msg %d",
+                             (int) hdr->hdr_match.hdr_msg_seq));
     } else if (ev->type == PTL_EVENT_ACK) {
-        ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                            "ACK event for msg %d",
-                            (int) hdr->hdr_match.hdr_msg_seq);
+        OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                             "ptl event ack for msg %d",
+                             (int) hdr->hdr_match.hdr_msg_seq));
 
-        /* discard ACKs for acks */
         if (frag->frag_send.frag_request == NULL) {
+            /* if request is NULL, it's an ACK - just return the frag
+               to the pool */
             OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
                                   (ompi_list_item_t*) frag);
         } else {
-            bool frag_ack;
+            /* it's a completion of a data fragment */
+            bool frag_ack = (hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? 
+                true : false;
 
-            frag_ack = (hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? true : false;
             if (frag_ack == false) {
-                /* this frag is done! */
-
-                /* let the PML know */
-                frag->frag_send.frag_base.frag_owner->
-                    ptl_send_progress(frag->frag_send.frag_base.frag_owner,
-                                      frag->frag_send.frag_request,
-                                      frag->frag_send.frag_base.frag_size);
-
-                /* return frag to freelist if not part of request */
-                if (frag->frag_send.frag_request->req_cached == false || 
-                    frag->frag_send.frag_base.frag_header.hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FRAG) {
-                    if (frag->free_data) {
-                        free(frag->frag_vector[1].iov_base);
-                    }
-                    OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
-                                          (ompi_list_item_t*) frag);
-                }
-            } else {
-                /* need to wait for the ack... */
-                ;
+                /* data frag is done and we aren't waiting on an ack.
+                   complete it.  if waiting for an ack, will be
+                   completed when process_recv_event sees an ack */
+                mca_ptl_portals_complete_send_event(frag);
             }
         }
 
-#if 0
         /* unlink memory descriptor */
         PtlMDUnlink(ev->md_handle);
-#endif
-
     } else {
         ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
                             "unknown event for msg %d: %d",

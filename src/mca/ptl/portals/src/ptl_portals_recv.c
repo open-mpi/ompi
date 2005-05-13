@@ -242,23 +242,10 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
 
                 sendreq->req_peer_match = hdr->hdr_ack.hdr_dst_match;
 
-                ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                                    "received ack for request %p",
-                                    hdr->hdr_ack.hdr_dst_match);
-
-                sendfrag->frag_send.frag_base.frag_owner->
-                    ptl_send_progress(sendfrag->frag_send.frag_base.frag_owner,
-                                      sendfrag->frag_send.frag_request,
-                                      sendfrag->frag_send.frag_base.frag_size);
-
-                /* return frag to freelist if not part of request */
-                if (sendfrag->frag_send.frag_request->req_cached == false) {
-                    if (sendfrag->frag_send.frag_base.frag_addr == NULL) {
-                        free(sendfrag->frag_send.frag_base.frag_addr);
-                    }
-                    OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
-                                          (ompi_list_item_t*) sendfrag);
-                }
+                OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                                     "received ack for request %p",
+                                     hdr->hdr_ack.hdr_dst_match));
+                mca_ptl_portals_complete_send_event(sendfrag);
             }
 
             break;
