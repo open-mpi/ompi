@@ -383,6 +383,15 @@ OMPI_DECLSPEC   void ompi_output_set_verbosity(int output_id, int level);
    * @see ompi_output()
    */
 #define OMPI_OUTPUT(a) ompi_output a
+
+    /** 
+     * Macro for use in sending debugging output to the output
+     * streams.  Will be "compiled out" when OMPI is configured
+     * without --enable-debug.
+     *
+     * @see ompi_output_verbose()
+     */
+#define OMPI_OUTPUT_VERBOSE(a) ompi_output_verbose a
 #else
   /**
    * Main macro for use in sending debugging output to output streams;
@@ -392,6 +401,15 @@ OMPI_DECLSPEC   void ompi_output_set_verbosity(int output_id, int level);
    * @see ompi_output()
    */
 #define OMPI_OUTPUT(a)
+
+    /** 
+     * Macro for use in sending debugging output to the output
+     * streams.  Will be "compiled out" when OMPI is configured
+     * without --enable-debug.
+     *
+     * @see ompi_output_verbose()
+     */
+#define OMPI_OUTPUT_VERBOSE(a)
 #endif
 #if defined(c_plusplus) || defined(__cplusplus)
 }
