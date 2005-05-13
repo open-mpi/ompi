@@ -89,7 +89,8 @@ EXCLUDE_FILES = dt_arch.c \
                 misc.c \
                 poll.c \
                 rtsig.c \
-                stacktrace.c
+                stacktrace.c \
+                condition_spinlock.c
 
 #
 # A small function to extract the list of all files in these directories
