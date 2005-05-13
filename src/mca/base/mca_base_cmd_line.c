@@ -22,6 +22,7 @@
 #include "include/constants.h"
 #include "util/cmd_line.h"
 #include "util/argv.h"
+#include "util/ompi_environ.h"
 #include "mca/base/base.h"
 
 
@@ -47,10 +48,20 @@ int mca_base_cmd_line_setup(ompi_cmd_line_t *cmd)
 /*
  * Look for and handle any -mca options on the command line
  */
-int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd)
+int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd,
+                                   char ***env)
 {
   int i, num_insts;
-  char *buf, *name;
+  char *name;
+
+  /* First, wipe out any previous results */
+
+  if (mca_param_argc > 0) {
+      ompi_argv_free(mca_param_argv);
+      ompi_argv_free(mca_value_argv);
+      mca_param_argv = mca_value_argv = NULL;
+      mca_param_argc = mca_value_argc = 0;
+  }
 
   /* If no "-mca" parameters were given, just return */
 
@@ -78,8 +89,7 @@ int mca_base_cmd_line_process_args(ompi_cmd_line_t *cmd)
 
   for (i = 0; NULL != mca_param_argv[i]; ++i) {
       name = mca_base_param_environ_variable(mca_param_argv[i], NULL, NULL);
-      asprintf(&buf, "%s=%s", name, mca_value_argv[i]);
-      putenv(buf);
+      ompi_setenv(name, mca_value_argv[i], true, env);
       free(name);
   }
 

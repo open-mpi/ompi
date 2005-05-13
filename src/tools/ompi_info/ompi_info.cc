@@ -38,6 +38,7 @@
 #include "runtime/runtime.h"
 #include "util/output.h"
 #include "util/cmd_line.h"
+#include "util/argv.h"
 #include "communicator/communicator.h"
 #include "mca/base/base.h"
 #include "tools/ompi_info/ompi_info.h"
@@ -65,6 +66,8 @@ int main(int argc, char *argv[])
   int ret = 0;
   bool acted = false;
   bool want_all = false;
+  char **env = NULL;
+  int i, len;
 
   // Initialize the argv parsing handle
 
@@ -133,7 +136,17 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  mca_base_cmd_line_process_args(cmd_line);
+  mca_base_cmd_line_process_args(cmd_line, &env);
+
+  // putenv() all the stuff that we got back from env (in case the
+  // user specified some --mca params on the command line).  This
+  // creates a memory leak, but that's unfortunately how putenv()
+  // works.  :-(
+
+  len = ompi_argv_count(env);
+  for (i = 0; i < len; ++i) {
+      putenv(env[i]);
+  }
 
   ompi_info::mca_types.push_back("base");
   ompi_info::mca_types.push_back("mpi");
@@ -208,6 +221,9 @@ int main(int argc, char *argv[])
 
   // All done
 
+  if (NULL != env) {
+      ompi_argv_free(env);
+  }
   ompi_info::close_components();
   OBJ_RELEASE(cmd_line);
   mca_base_close();

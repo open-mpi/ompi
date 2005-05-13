@@ -203,11 +203,11 @@ ompi_cmd_line_init_t cmd_line_init[] = {
 static void exit_callback(int fd, short event, void *arg);
 static void signal_callback(int fd, short flags, void *arg);
 static int create_app(int argc, char* argv[], orte_app_context_t **app,
-                      bool *made_app);
+                      bool *made_app, char ***env);
 static int init_globals(void);
 static int parse_globals(int argc, char* argv[]);
 static int parse_locals(int argc, char* argv[]);
-static int parse_appfile(char *filename);
+static int parse_appfile(char *filename, char ***env);
 static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state);
 
 
@@ -605,6 +605,7 @@ static int parse_locals(int argc, char* argv[])
     char **temp_argv;
     orte_app_context_t *app;
     bool made_app;
+    char **env;
 
     /* Make the apps */
 
@@ -612,15 +613,21 @@ static int parse_locals(int argc, char* argv[])
     temp_argv = NULL;
     ompi_argv_append(&temp_argc, &temp_argv, argv[0]);
     OBJ_CONSTRUCT(&apps_pa, ompi_pointer_array_t);
-    
+
+    env = NULL;
     for (app_num = 0, i = 1; i < argc; ++i) {
         if (0 == strcmp(argv[i], ":")) {
             
             /* Make an app with this argv */
 
             if (ompi_argv_count(temp_argv) > 1) {
+                if (NULL != env) {
+                    ompi_argv_free(env);
+                    env = NULL;
+                }
+
                 app = OBJ_NEW(orte_app_context_t);
-                rc = create_app(temp_argc, temp_argv, &app, &made_app);
+                rc = create_app(temp_argc, temp_argv, &app, &made_app, &env);
                 if (ORTE_SUCCESS != rc) {
                     /* Assume that the error message has already been
                        printed; no need to cleanup -- we can just
@@ -646,7 +653,7 @@ static int parse_locals(int argc, char* argv[])
 
     if (ompi_argv_count(temp_argv) > 1) {
         app = OBJ_NEW(orte_app_context_t);
-        rc = create_app(temp_argc, temp_argv, &app, &made_app);
+        rc = create_app(temp_argc, temp_argv, &app, &made_app, &env);
         if (ORTE_SUCCESS != rc) {
             /* Assume that the error message has already been printed;
                no need to cleanup -- we can just exit */
@@ -658,6 +665,9 @@ static int parse_locals(int argc, char* argv[])
             OBJ_RELEASE(app);
         }
     }
+    if (NULL != env) {
+        ompi_argv_free(env);
+    }
     ompi_argv_free(temp_argv);
 
     /* All done */
@@ -667,7 +677,7 @@ static int parse_locals(int argc, char* argv[])
 
 
 static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
-                      bool *made_app)
+                      bool *made_app, char ***env)
 {
     ompi_cmd_line_t cmd_line;
     char cwd[OMPI_PATH_MAX];
@@ -772,13 +782,13 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     if (OMPI_SUCCESS != rc) {
         goto cleanup;
     }
-    mca_base_cmd_line_process_args(&cmd_line);
+    mca_base_cmd_line_process_args(&cmd_line, env);
 
     /* Is there an appfile in here? */
 
     if (NULL != orterun_globals.appfile) {
         OBJ_DESTRUCT(&cmd_line);
-        return parse_appfile(strdup(orterun_globals.appfile));
+        return parse_appfile(strdup(orterun_globals.appfile), env);
     }
 
     /* Setup application context */
@@ -797,8 +807,8 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     /* Grab all OMPI_* environment variables */
 
-    app->env = NULL;
-    app->num_env = 0;
+    app->env = ompi_argv_copy(*env);
+    app->num_env = ompi_argv_count(*env);
     for (i = 0; NULL != environ[i]; ++i) {
         if (0 == strncmp("OMPI_", environ[i], 5)) {
             ompi_argv_append_nosize(&app->env, environ[i]);
@@ -929,7 +939,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 }
 
 
-static int parse_appfile(char *filename)
+static int parse_appfile(char *filename, char ***env)
 {
     size_t i, len;
     FILE *fp;
@@ -939,6 +949,7 @@ static int parse_appfile(char *filename)
     orte_app_context_t *app;
     bool blank, made_app;
     char bogus[] = "bogus ";
+    char **tmp_env;
 
     /* Try to open the file */
 
@@ -1008,11 +1019,28 @@ static int parse_appfile(char *filename)
         argv = ompi_argv_split(line, ' ');
         argc = ompi_argv_count(argv);
         if (argc > 0) {
-            rc = create_app(argc, argv, &app, &made_app);
+
+            /* Create a temporary env to play with in the recursive
+               call -- that is: don't disturb the original env so that
+               we can have a consistent global env */
+
+            if (NULL != *env) {
+                tmp_env = ompi_argv_copy(*env);
+                if (NULL == tmp_env) {
+                    return ORTE_ERR_OUT_OF_RESOURCE;
+                }
+            } else {
+                tmp_env = NULL;
+            }
+
+            rc = create_app(argc, argv, &app, &made_app, &tmp_env);
             if (ORTE_SUCCESS != rc) {
                 /* Assume that the error message has already been
                    printed; no need to cleanup -- we can just exit */
                 exit(1);
+            }
+            if (NULL != tmp_env) {
+                ompi_argv_free(tmp_env);
             }
             if (made_app) {
                 ompi_pointer_array_add(&apps_pa, app);
