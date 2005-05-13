@@ -119,6 +119,12 @@ ompi_evsignal_add(sigset_t *evsigmask, struct ompi_event *ev)
 		errx(1, "%s: OMPI_EV_SIGNAL incompatible use", __func__);
 	evsignal = OMPI_EVENT_SIGNAL(ev);
 
+#if OMPI_ENABLE_PROGRESS_THREADS
+        if (!ompi_using_threads()) ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+#else
+        ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+#endif
+
 #ifndef WIN32
 	sigaddset(evsigmask, evsignal);
 #endif
