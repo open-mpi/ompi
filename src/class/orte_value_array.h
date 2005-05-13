@@ -123,7 +123,7 @@ static inline size_t orte_value_array_get_size(orte_value_array_t* array)
  *  return the new size.
  */
 
-int orte_value_array_set_size(orte_value_array_t* array, size_t size);
+OMPI_DECLSPEC int orte_value_array_set_size(orte_value_array_t* array, size_t size);
 
 
 /** 

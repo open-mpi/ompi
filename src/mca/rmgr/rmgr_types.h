@@ -17,6 +17,10 @@
 #ifndef ORTE_RMGR_TYPES_H
 #define ORTE_RMGR_TYPES_H
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * REGISTRY KEY NAMES FOR COMMON DATA
  */
@@ -64,7 +68,7 @@ typedef struct {
     char *map_data;
 } orte_app_context_map_t;
 
-OBJ_CLASS_DECLARATION(orte_app_context_map_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_map_t);
 
 
 /**
@@ -96,6 +100,10 @@ typedef struct {
     orte_app_context_map_t **map_data;
 } orte_app_context_t;
 
-OBJ_CLASS_DECLARATION(orte_app_context_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

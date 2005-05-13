@@ -28,6 +28,10 @@
 
 #include "mca/gpr/replica/gpr_replica.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * The "fn" layer of the registry API functions - not accessible from outside
  * the replica
@@ -285,5 +289,8 @@ int orte_gpr_replica_purge_subscriptions(orte_process_name_t *proc);
 int orte_gpr_replica_add_values(orte_gpr_notify_data_t **data,
                                 orte_gpr_replica_subscribed_data_t *sptr);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

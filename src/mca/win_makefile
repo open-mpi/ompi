@@ -41,8 +41,7 @@ CPP_SUBDIRS = \
         oob/tcp \
         ns/replica/src \
         ns/proxy/src \
-        gpr/proxy \
-        gpr/replica
+        gpr/proxy
 
 #list of components that are not working as yet
 CPP_EXCLUDE = pcm/wmi
@@ -121,7 +120,8 @@ ADDLIBS = \
 
 all: \
     clibs \
-    cpplibs
+    cpplibs \
+    special
 
 prebuild:
 	@cp '${gen_base}/coll-basic-version.h' '${copy_base}/coll/basic/'
@@ -137,6 +137,13 @@ cpplibs: ${CPP_SUBDIRS} prebuild
 	@for dirs in ${CPP_SUBDIRS}; do \
 	    (libname=`echo mca_$${dirs}.dll | sed 's/\/src[\/]*//g' | sed 's/\//_/g' | sed 's/_\./\./g'` ; cd $$dirs; echo ${CC} ${CPPFLAGS} ${INCL} *.c; ${CC} ${CPPFLAGS} ${INCL} *.c; echo ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:$${libname} *.obj; ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:$${libname} *.obj); \
 	done
+
+special: prebuild
+	(cd gpr/replica/api_layer; echo ${CC} ${CPPFLAGS} ${INCL} *.c; ${CC} ${CPPFLAGS} ${INCL} *.c);
+	(cd gpr/replica/communications; echo ${CC} ${CPPFLAGS} ${INCL} *.c; ${CC} ${CPPFLAGS} ${INCL} *.c);
+	(cd gpr/replica/functional_layer; echo ${CC} ${CPPFLAGS} ${INCL} *.c; ${CC} ${CPPFLAGS} ${INCL} *.c);
+	(cd gpr/replica/transition_layer; echo ${CC} ${CPPFLAGS} ${INCL} *.c; ${CC} ${CPPFLAGS} ${INCL} *.c);
+	(cd gpr/replica; echo ${CC} ${CPPFLAGS} ${INCL} *.c; ${CC} ${CPPFLAGS} ${INCL} *.c; echo ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:$${libname} *.obj; ${LINK} ${LINKFLAGS} ${ADDLIBS} /OUT:mca_gpr_replica *.obj transition_layer/*.obj functional_layer/*.obj communications/*.obj api_layer/*.obj);
 
 install: win_makefile
 	@echo -n "Installing components ......................."
