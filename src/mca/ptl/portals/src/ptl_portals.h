@@ -90,7 +90,7 @@ struct mca_ptl_portals_module_t {
     /* size of each md for first frags */
     int first_frag_entry_size;
     /* size for event queue */
-    int first_frag_queue_size;
+    int event_queue_size;
 
     /* frag receive event queue */
     ptl_handle_eq_t frag_eq_handle;
