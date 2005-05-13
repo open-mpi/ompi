@@ -69,7 +69,7 @@ ptl_portals_post_recv_md(struct mca_ptl_portals_module_t *ptl, void *data_ptr)
     md.max_size = ptl->super.ptl_first_frag_size;
     md.options = PTL_MD_OP_PUT | PTL_MD_MAX_SIZE;
     md.user_ptr = NULL;
-    md.eq_handle = ptl->frag_eq_handle;
+    md.eq_handle = ptl->frag_eq_handles[MCA_PTL_PORTALS_EQ_FRAGS];
 
     ret = PtlMDAttach(me_handle,
                       md,

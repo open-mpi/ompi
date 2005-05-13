@@ -105,6 +105,8 @@ param_register_int(const char* param_name,
 int
 mca_ptl_portals_component_open(void)
 {
+    int i;
+
     /* initialize state */
     mca_ptl_portals_component.portals_num_modules = 0;
     mca_ptl_portals_component.portals_modules = NULL;
@@ -169,7 +171,10 @@ mca_ptl_portals_component_open(void)
         ompi_output_open(&portals_output_stream);
 
     /* fill in remaining defaults for module data */
-    mca_ptl_portals_module.frag_eq_handle = PTL_EQ_NONE;
+    for (i = 0 ; i < MCA_PTL_PORTALS_EQ_SIZE ; ++i) {
+        mca_ptl_portals_module.frag_eq_handles[i] = PTL_EQ_NONE;
+    }
+
     mca_ptl_portals_module.ni_handle = PTL_INVALID_HANDLE;
     mca_ptl_portals_module.dropped = 0;
 
@@ -303,7 +308,8 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
         int which;
         int ret;
 
-        if (module->frag_eq_handle == PTL_EQ_NONE) continue;
+        if (module->frag_eq_handles[MCA_PTL_PORTALS_EQ_SIZE - 1] == 
+            PTL_EQ_NONE) continue; /* they are all initialized at once */
 
 #if OMPI_ENABLE_DEBUG
         /* BWB - this is going to kill performance */
@@ -318,8 +324,8 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
         }
 #endif
 
-        ret = PtlEQPoll(&(module->frag_eq_handle),
-                        1, /* number of eq handles */
+        ret = PtlEQPoll(module->frag_eq_handles,
+                        MCA_PTL_PORTALS_EQ_SIZE, /* number of eq handles */
                         (int) tstamp,
                         &ev,
                         &which);
@@ -337,7 +343,7 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
         }
 
         /* only one place we can have an event */
-        assert(which == 0);
+        assert(which == MCA_PTL_PORTALS_EQ_FRAGS);
 
 #if PTL_PORTALS_HAVE_EVENT_UNLINK
         /* not everyone has UNLINK.  Use it only to print the event,
