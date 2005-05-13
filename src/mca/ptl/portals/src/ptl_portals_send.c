@@ -96,7 +96,7 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
                     sendreq->req_send.req_addr,
                     offset,
                     mca_ptl_portals_alloc );
-                                                                                                                      
+
         /* if data is contigous convertor will return an offset
          * into users buffer - otherwise will return an allocated buffer
          * that holds the packed data
@@ -167,7 +167,6 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
     sendfrag->frag_send.frag_base.frag_owner = ptl_base;
     sendfrag->frag_send.frag_request = sendreq;
     sendfrag->frag_send.frag_base.frag_peer = ptl_peer;
-    
 
     /* must update the offset after actual fragment size is determined 
      * before attempting to send the fragment
