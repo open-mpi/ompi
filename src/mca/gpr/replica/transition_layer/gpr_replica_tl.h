@@ -26,6 +26,10 @@
 
 #include "mca/gpr/replica/gpr_replica.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * DICTIONARY OPERATIONS
  */
@@ -161,5 +165,9 @@ int orte_gpr_replica_find_seg(orte_gpr_replica_segment_t **seg,
 typedef int (*orte_gpr_replica_find_seg_fn_t)
     (orte_gpr_replica_segment_t **seg,
      bool create, char *segment);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

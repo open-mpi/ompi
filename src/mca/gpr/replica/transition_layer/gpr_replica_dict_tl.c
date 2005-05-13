@@ -36,7 +36,7 @@ int
 orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
                              orte_gpr_replica_segment_t *seg, char *name)
 {
-    orte_gpr_replica_dict_t **ptr, *new;
+    orte_gpr_replica_dict_t **ptr, *new_dict;
     size_t i;
     size_t len, len2;
 
@@ -64,19 +64,19 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
     }
 
     /* okay, name is unique - create dictionary entry */
-    new = (orte_gpr_replica_dict_t*)malloc(sizeof(orte_gpr_replica_dict_t));
-    if (NULL == new) {
+    new_dict = (orte_gpr_replica_dict_t*)malloc(sizeof(orte_gpr_replica_dict_t));
+    if (NULL == new_dict) {
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    new->entry = strdup(name);
-    if (0 > orte_pointer_array_add(&i, seg->dict, (void*)new)) {
+    new_dict->entry = strdup(name);
+    if (0 > orte_pointer_array_add(&i, seg->dict, (void*)new_dict)) {
         *itag = ORTE_GPR_REPLICA_ITAG_MAX;
-        free(new);
+        free(new_dict);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
     *itag = (orte_gpr_replica_itag_t)i;
-    new->itag = *itag;
+    new_dict->itag = *itag;
     return ORTE_SUCCESS;
 }
 
