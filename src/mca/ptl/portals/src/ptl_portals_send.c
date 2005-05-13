@@ -64,9 +64,9 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
     mca_ptl_base_header_t* hdr;
     int ret;
 
-    ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                        "mca_ptl_portals_send to %lu, %lu",
-                        peer_id->nid, peer_id->pid);
+    OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                         "mca_ptl_portals_send to %lu, %lu",
+                         peer_id->nid, peer_id->pid));
 
     if (sendreq->req_cached && offset == 0) {
         sendfrag = (mca_ptl_portals_send_frag_t*)(sendreq+1);
