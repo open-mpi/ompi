@@ -48,6 +48,7 @@
 #include "util/printf.h"
 #include "util/daemon_init.h"
 #include "util/universe_setup_file_io.h"
+#include "util/malloc.h"
 
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
