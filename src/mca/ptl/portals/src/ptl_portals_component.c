@@ -62,17 +62,17 @@ mca_ptl_portals_component_t mca_ptl_portals_component = {
 
 
 static ompi_output_stream_t portals_output_stream = {
-    true,
-    0,
-    0,
-    0,
-    NULL,
-    NULL,
-    false,
-    true,
-    false,
-    false,
-    NULL
+    true,  /* is debugging */
+    0,     /* verbose level */
+    0,     /* want syslog */
+    0,     /* syslog priority */
+    NULL,  /* syslog ident */
+    NULL,  /* prefix */
+    false, /* want stdout */
+    false,  /* want stderr */
+    true, /* want file */
+    false, /* file append */
+    "ptl-portals"   /* file suffix */
 };
 
 
@@ -159,9 +159,13 @@ mca_ptl_portals_component_open(void)
     mca_ptl_portals_module.first_frag_entry_size = 
         param_register_int("first_frag_entry_size",
                            PTL_PORTALS_DEFAULT_FIRST_FRAG_ENTRY_SIZE);
-    mca_ptl_portals_module.event_queue_size = 
-        param_register_int("event_queue_size",
-                           PTL_PORTALS_DEFAULT_EVENT_QUEUE_SIZE);
+
+    mca_ptl_portals_module.eq_sizes[MCA_PTL_PORTALS_EQ_RECV] = 
+        param_register_int("recv_queue_size",
+                           PTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE);
+    mca_ptl_portals_module.eq_sizes[MCA_PTL_PORTALS_EQ_SEND] = 
+        (param_register_int("send_queue_size",
+                            PTL_PORTALS_DEFAULT_SEND_QUEUE_SIZE)) * 3;
 
     /* finish with objects */
     asprintf(&(portals_output_stream.lds_prefix), 
@@ -172,7 +176,7 @@ mca_ptl_portals_component_open(void)
 
     /* fill in remaining defaults for module data */
     for (i = 0 ; i < MCA_PTL_PORTALS_EQ_SIZE ; ++i) {
-        mca_ptl_portals_module.frag_eq_handles[i] = PTL_EQ_NONE;
+        mca_ptl_portals_module.eq_handles[i] = PTL_EQ_NONE;
     }
 
     mca_ptl_portals_module.ni_handle = PTL_INVALID_HANDLE;
@@ -299,6 +303,7 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
 {
     int num_progressed = 0;
     size_t i;
+    tstamp = 10;
 
     for (i = 0 ; i < mca_ptl_portals_component.portals_num_modules ; ++i) {
         struct mca_ptl_portals_module_t *module = 
@@ -308,7 +313,7 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
         int which;
         int ret;
 
-        if (module->frag_eq_handles[MCA_PTL_PORTALS_EQ_SIZE - 1] == 
+        if (module->eq_handles[MCA_PTL_PORTALS_EQ_SIZE - 1] == 
             PTL_EQ_NONE) continue; /* they are all initialized at once */
 
 #if OMPI_ENABLE_DEBUG
@@ -324,7 +329,7 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
         }
 #endif
 
-        ret = PtlEQPoll(module->frag_eq_handles,
+        ret = PtlEQPoll(module->eq_handles,
                         MCA_PTL_PORTALS_EQ_SIZE, /* number of eq handles */
                         (int) tstamp,
                         &ev,
@@ -339,25 +344,23 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
             continue;
         } else if (PTL_EQ_DROPPED == ret) {
             ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
-                                "event queue entries were dropped");
+                                "*** Event queue entries were dropped");
         }
-
-        /* only one place we can have an event */
-        assert(which == MCA_PTL_PORTALS_EQ_FRAGS);
 
 #if PTL_PORTALS_HAVE_EVENT_UNLINK
         /* not everyone has UNLINK.  Use it only to print the event,
            so we can make sure we properly re-initialize the ones that
            need to be re-initialized */
         if (PTL_EVENT_UNLINK == ev.type) {
-            ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                                "unlink event occurred");
+            OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                                 "unlink event occurred"));
             continue;
         }
 #endif
 
         if (ev.md.user_ptr == NULL) {
             /* no fragment associated with it - it's a receive */
+            assert(which == MCA_PTL_PORTALS_EQ_RECV);
             mca_ptl_portals_process_recv_event(module, &ev);
         } else {
             /* there's a fragment associated with it - choose based on
@@ -365,8 +368,10 @@ mca_ptl_portals_component_progress(mca_ptl_tstamp_t tstamp)
             mca_ptl_base_frag_t *frag = 
                 (mca_ptl_base_frag_t*) ev.md.user_ptr;
             if (frag->frag_type == MCA_PTL_FRAGMENT_SEND) {
+                assert(which == MCA_PTL_PORTALS_EQ_SEND);
                 mca_ptl_portals_process_send_event(&ev);
             } else {
+                assert(which == MCA_PTL_PORTALS_EQ_RECV);
                 mca_ptl_portals_process_recv_event(module, &ev);
             }
         }

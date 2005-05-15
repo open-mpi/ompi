@@ -81,8 +81,9 @@ struct mca_ptl_portals_component_t {
 typedef struct mca_ptl_portals_component_t mca_ptl_portals_component_t;
 
 
-#define MCA_PTL_PORTALS_EQ_FRAGS 0
-#define MCA_PTL_PORTALS_EQ_SIZE  1
+#define MCA_PTL_PORTALS_EQ_RECV  0
+#define MCA_PTL_PORTALS_EQ_SEND  1
+#define MCA_PTL_PORTALS_EQ_SIZE  2
 
 struct mca_ptl_portals_module_t {
     /* base PTL module interface */
@@ -92,11 +93,11 @@ struct mca_ptl_portals_module_t {
     int first_frag_num_entries;
     /* size of each md for first frags */
     int first_frag_entry_size;
-    /* size for event queue */
-    int event_queue_size;
 
+    /* size for event queue */
+    int eq_sizes[MCA_PTL_PORTALS_EQ_SIZE];
     /* frag receive event queue */
-    ptl_handle_eq_t frag_eq_handles[MCA_PTL_PORTALS_EQ_SIZE];
+    ptl_handle_eq_t eq_handles[MCA_PTL_PORTALS_EQ_SIZE];
 
     /* our portals network interface */
     ptl_handle_ni_t ni_handle;
