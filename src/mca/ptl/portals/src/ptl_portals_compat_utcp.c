@@ -30,6 +30,8 @@
 #include "ptl_portals.h"
 #include "ptl_portals_compat.h"
 
+#include <p3api/debug.h>
+
 /* how's this for source code diving? - find private method for
    getting interface */
 extern unsigned int utcp_my_nid(const char *if_str);
@@ -43,9 +45,20 @@ mca_ptl_portals_init(mca_ptl_portals_component_t *comp)
 {
     ptl_process_id_t info;
     int ret;
+#if 0
+    FILE *output;
+    char *tmp;
 
+    asprintf(&tmp, "portals.%d", getpid());
+    output = fopen(tmp, "w");
+    free(tmp);
+
+    utcp_lib_out = output;
+    utcp_api_out = output;
+#else
     utcp_lib_out = stderr;
     utcp_api_out = stderr;
+#endif
 
     info.nid = htonl(utcp_my_nid(mca_ptl_portals_component.portals_ifname));
     info.pid = htonl((ptl_pid_t) getpid());
@@ -196,6 +209,10 @@ mca_ptl_portals_add_procs_compat(struct mca_ptl_portals_module_t* ptl,
                             "PtlNIInit failed, returning %d\n", ret);
         return OMPI_ERR_FATAL;
     }
+
+#if 0
+    PtlNIDebug(ptl->ni_handle, PTL_DBG_ALL | PTL_DBG_NI_ALL);
+#endif
 
     return OMPI_SUCCESS;
 }

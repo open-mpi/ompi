@@ -140,20 +140,22 @@ mca_ptl_portals_module_enable(struct mca_ptl_portals_module_t *ptl,
         /* BWB - not really sure how - would have to track a lot more data... */
     } else {
         /* only do all the hard stuff if we haven't created the queue */
-        if (ptl->frag_eq_handles[MCA_PTL_PORTALS_EQ_FRAGS] != PTL_EQ_NONE) {
+        if (ptl->eq_handles[MCA_PTL_PORTALS_EQ_SIZE - 1] != PTL_EQ_NONE) {
             return OMPI_SUCCESS;
         }
 
         /* create an event queue, then the match entries for the match
            entries */
-        ret = PtlEQAlloc(ptl->ni_handle,
-                         ptl->event_queue_size,
-                         PTL_EQ_HANDLER_NONE,
-                         &(ptl->frag_eq_handles[MCA_PTL_PORTALS_EQ_FRAGS]));
-        if (ret != PTL_OK) {
-            ompi_output(mca_ptl_portals_component.portals_output,
-                        "Failed to allocate event queue: %d", ret);
-            return OMPI_ERROR;
+        for (i = 0 ; i < MCA_PTL_PORTALS_EQ_SIZE ; ++i) {
+            ret = PtlEQAlloc(ptl->ni_handle,
+                             ptl->eq_sizes[i],
+                             PTL_EQ_HANDLER_NONE,
+                             &(ptl->eq_handles[i]));
+            if (ret != PTL_OK) {
+                ompi_output(mca_ptl_portals_component.portals_output,
+                            "Failed to allocate event queue: %d", ret);
+                return OMPI_ERROR;
+            }
         }
 
         for (i = 0 ; i < ptl->first_frag_num_entries ; ++i) {
@@ -176,9 +178,11 @@ mca_ptl_portals_finalize(struct mca_ptl_base_module_t *ptl_base)
     ret = PtlNIFini(ptl->ni_handle);
     if (PTL_OK != ret) {
         ompi_output_verbose(20, mca_ptl_portals_component.portals_output,
-                            "PtlNIFini returned %d\n", ret);
+                            "PtlNIFini returned %d", ret);
         return OMPI_ERROR;
     }
+    ompi_output_verbose(20, mca_ptl_portals_component.portals_output,
+                        "successfully finalized module");
 
     return OMPI_SUCCESS;
 }

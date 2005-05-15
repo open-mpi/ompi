@@ -89,6 +89,12 @@ mca_ptl_portals_process_first_frag(struct mca_ptl_portals_module_t *ptl,
     recvfrag = mca_ptl_portals_recv_get_frag(ptl, hdr, ev, header_size);
     if (NULL == recvfrag) return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
+    OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                         "recving first frag of size %d for msg %d from %lu",
+                         recvfrag->frag_size,
+                         (int) hdr->hdr_match.hdr_msg_seq,
+                         ev->initiator.pid));
+
     recvfrag->frag_recv.frag_request = NULL;
     ptl->super.ptl_match(&ptl->super, &recvfrag->frag_recv, 
                          &hdr->hdr_match);
@@ -140,6 +146,14 @@ mca_ptl_portals_process_frag_frag(struct mca_ptl_portals_module_t *ptl,
         ompi_convertor_unpack(convertor, &iov, &iov_count, 
                               &bytes_delivered, &free_after );
     }
+
+    OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                         "recving secnd frag of size %d for msg %d, offset %lld from %lu, %p",
+                         recvfrag->frag_size,
+                         (int) hdr->hdr_match.hdr_msg_seq,
+                         hdr->hdr_frag.hdr_frag_offset,
+                         ev->initiator.pid,
+                         request));
 
     /* update request status */
     ptl->super.ptl_recv_progress(&ptl->super,

@@ -64,10 +64,6 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
     mca_ptl_base_header_t* hdr;
     int ret;
 
-    OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
-                         "mca_ptl_portals_send to %lu, %lu",
-                         peer_id->nid, peer_id->pid));
-
     if (sendreq->req_cached && offset == 0) {
         sendfrag = (mca_ptl_portals_send_frag_t*)(sendreq+1);
     } else {
@@ -148,6 +144,12 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
             sendfrag->frag_vector[0].iov_len = sizeof(mca_ptl_base_rendezvous_header_t);
         }
 
+        OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                             "sending first frag of size %d for msg %lld to %lu",
+                             sendfrag->frag_send.frag_base.frag_size,
+                             sendreq->req_send.req_base.req_sequence,
+                             peer_id->pid));
+
     } else {
         hdr->hdr_common.hdr_type = MCA_PTL_HDR_TYPE_FRAG;
         sendfrag->frag_vector[0].iov_len = sizeof(mca_ptl_base_frag_header_t);
@@ -156,9 +158,13 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
         hdr->hdr_frag.hdr_frag_length = sendfrag->frag_send.frag_base.frag_size;
         hdr->hdr_frag.hdr_dst_ptr = sendreq->req_peer_match;
 
-        ompi_output_verbose(100, mca_ptl_portals_component.portals_output,
-                            "sending frag for request %p",
-                            hdr->hdr_frag.hdr_dst_ptr);
+        OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                             "sending secnd frag of size %d for msg %lld, offset %lld to %lu, %p",
+                             sendfrag->frag_send.frag_base.frag_size,
+                             sendreq->req_send.req_base.req_sequence,
+                             hdr->hdr_frag.hdr_frag_offset,
+                             peer_id->pid,
+                             sendreq->req_peer_match));
 
         sendfrag->frag_send.frag_base.frag_size = size;
     }
@@ -188,26 +194,50 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
 
     if (ev->type == PTL_EVENT_SEND_START) {
         OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
-                             "ptl event send start for msg %d, length: %d",
-                             (int) hdr->hdr_match.hdr_msg_seq,
-                             (int) ev->mlength));
+                             "ptl event send start for msg %d",
+                             (int) hdr->hdr_match.hdr_msg_seq));
     } else if (ev->type == PTL_EVENT_SEND_END) {
         OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
                              "ptl event send end for msg %d",
                              (int) hdr->hdr_match.hdr_msg_seq));
     } else if (ev->type == PTL_EVENT_ACK) {
-        OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
-                             "ptl event ack for msg %d",
-                             (int) hdr->hdr_match.hdr_msg_seq));
 
         if (frag->frag_send.frag_request == NULL) {
+            OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                                 "done sending ack for recv request %p to %lu", 
+                                 hdr->hdr_ack.hdr_dst_match.pval,
+                                 ev->initiator.pid));
+            assert(MCA_PTL_HDR_TYPE_ACK == hdr->hdr_common.hdr_type);
+
             /* if request is NULL, it's an ACK - just return the frag
                to the pool */
             OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
                                   (ompi_list_item_t*) frag);
         } else {
+            bool frag_ack;
+
+#if OMPI_ENABLE_DEBUG
+            if (MCA_PTL_HDR_TYPE_MATCH == hdr->hdr_common.hdr_type ||
+                MCA_PTL_HDR_TYPE_RNDV == hdr->hdr_common.hdr_type) {
+                OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                                     "done sending first frag for msg %d to %lu",
+                                     (int) hdr->hdr_match.hdr_msg_seq,
+                                     ev->initiator.pid));
+            } else if (MCA_PTL_HDR_TYPE_FRAG == hdr->hdr_common.hdr_type) {
+                OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+                                     "done sending secnd frag to req %p, offset %lld",
+                                     hdr->hdr_frag.hdr_dst_ptr.pval,
+                                     hdr->hdr_frag.hdr_frag_offset));
+            } else {
+                ompi_output(mca_ptl_portals_component.portals_output,
+                            "unexpected send event hdr type: %d.  aborting",
+                            hdr->hdr_common.hdr_type);
+                abort();
+            }
+#endif
+
             /* it's a completion of a data fragment */
-            bool frag_ack = (hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? 
+            frag_ack = (hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) ? 
                 true : false;
 
             if (frag_ack == false) {
@@ -222,7 +252,7 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
         PtlMDUnlink(ev->md_handle);
     } else {
         ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
-                            "unknown event for msg %d: %d",
+                            "*** Unknown event for msg %d: %d",
                             (int) hdr->hdr_match.hdr_msg_seq, ev->type);
     }
 

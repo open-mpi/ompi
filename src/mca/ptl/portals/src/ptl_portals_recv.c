@@ -69,7 +69,7 @@ ptl_portals_post_recv_md(struct mca_ptl_portals_module_t *ptl, void *data_ptr)
     md.max_size = ptl->super.ptl_first_frag_size;
     md.options = PTL_MD_OP_PUT | PTL_MD_MAX_SIZE;
     md.user_ptr = NULL;
-    md.eq_handle = ptl->frag_eq_handles[MCA_PTL_PORTALS_EQ_FRAGS];
+    md.eq_handle = ptl->eq_handles[MCA_PTL_PORTALS_EQ_RECV];
 
     ret = PtlMDAttach(me_handle,
                       md,
@@ -94,12 +94,12 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
     int ret;
 
     if (ev->type == PTL_EVENT_PUT_START) {
-        OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
-                             "PUT_START event received (%ld)", ev->link));
+        OMPI_OUTPUT_VERBOSE((101, mca_ptl_portals_component.portals_output,
+                             "starting to receive message", ev->link));
     } else if (ev->type == PTL_EVENT_PUT_END) {
         mca_ptl_base_header_t *hdr;
 
-        OMPI_OUTPUT_VERBOSE((100, mca_ptl_portals_component.portals_output,
+        OMPI_OUTPUT_VERBOSE((101, mca_ptl_portals_component.portals_output,
                              "message %ld received, start: %p, mlength: %lld,"
                              " offset: %lld",
                              ev->link, ev->md.start, ev->mlength, ev->offset));
@@ -129,21 +129,24 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
             {
                 mca_ptl_portals_send_frag_t *sendfrag;
                 mca_ptl_base_send_request_t *sendreq;
-                OMPI_OUTPUT_VERBOSE((100, 
-                                     mca_ptl_portals_component.portals_output,
-                                     "received ack for request %p",
-                                     hdr->hdr_ack.hdr_dst_match));
 
                 sendfrag = hdr->hdr_ack.hdr_src_ptr.pval;
                 sendreq = sendfrag->frag_send.frag_request;
                 sendreq->req_peer_match = hdr->hdr_ack.hdr_dst_match;
+
+                OMPI_OUTPUT_VERBOSE((100, 
+                                     mca_ptl_portals_component.portals_output,
+                                     "received ack for recv request %p (msg %d)",
+                                     hdr->hdr_ack.hdr_dst_match,
+                                     sendreq->req_send.req_base.req_sequence));
+
                 mca_ptl_portals_complete_send_event(sendfrag);
             }
             break;
 
         default:
             ompi_output(mca_ptl_portals_component.portals_output,
-                        "unable to deal with header of type %d",
+                        "*** unable to deal with header of type %d",
                         hdr->hdr_common.hdr_type);
             break;
         }
@@ -160,7 +163,7 @@ mca_ptl_portals_process_recv_event(struct mca_ptl_portals_module_t *ptl,
 
     } else {
         ompi_output_verbose(10, mca_ptl_portals_component.portals_output,
-                            "unknown event: %d (%ld)",
+                            "*** unknown event: %d (%ld)",
                             ev->type, ev->link);
     }
 
