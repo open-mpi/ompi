@@ -50,6 +50,7 @@ int mca_ns_base_output = -1;
 OMPI_DECLSPEC mca_ns_base_module_t orte_ns = {
     orte_ns_base_module_init_not_available,
     orte_ns_base_create_cellid_not_available,
+    orte_ns_base_get_cell_info_not_available,
     orte_ns_base_assign_cellid_to_process,
     orte_ns_base_create_jobid_not_available,
     orte_ns_base_create_process_name,

@@ -8,8 +8,11 @@
 		<front-end>
 			<name>pfe1.lanl.gov</name>
 			<tmp-dir>/net/scratch1</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
-		<front-end>pfe2.lanl.gov</front-end>
+		<front-end>
+			<name>pfe2.lanl.gov</name>
+        </front-end>
 		<compute-domains>
 			<num-domains>1</num-domains>
 			<nodes-per-domain>1024</nodes-per-domain>
@@ -34,7 +37,7 @@
 		</filesystem>
 		<allocator>lsf</allocator>
 		<launcher>bproc</launcher>
-		<node-arch>
+		<arch>
 			<cpus-per-node>2</cpus-per-node>
 			<cpu-type>xeon</cpu-type>
 			<cpu-vendor>intel</cpu-vendor>
@@ -43,7 +46,7 @@
 				<type>myrinet</type>
 			</interconnect>
 			<memory-per-node>1.0</memory-per-node>	<!--given in gigabytes-->
-		</node-arch>
+		</arch>
 	</resource>
 	
 	<resource>
@@ -52,26 +55,32 @@
 		<front-end>
 			<name>ll-1.lanl.gov</name>
 			<tmp-dir>/net/scratch1</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
 		<front-end>
 			<name>ll-2.lanl.gov</name>
 			<tmp-dir>/net/scratch1</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
 		<front-end>
 			<name>ll-3.lanl.gov</name>
 			<tmp-dir>/net/scratch1</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
 		<front-end>
 			<name>ll-4.lanl.gov</name>
 			<tmp-dir>/net/scratch1</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
 		<front-end>
 			<name>ll-5.lanl.gov</name>
 			<tmp-dir>/net/scratch1</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
 		<front-end>
 			<name>ll-6.lanl.gov</name>
 			<tmp-dir>/net/scratch1</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
 		<os>
 			<type>linux</type>
@@ -97,7 +106,7 @@
 		</filesystem>
 		<allocator>lsf</allocator>
 		<launcher>bproc</launcher>
-		<node-arch>
+		<arch>
 			<cpus-per-node>2</cpus-per-node>>
 			<cpu-type>opteron</cpu-type>
 			<cpu-vendor>amd</cpu-vendor>
@@ -106,7 +115,7 @@
 				<type>myrinet</type>
 			</interconnect>
 			<memory-per-node>2.0</memory-per-node>  <!--given in gigabytes-->
-		</node-arch>
+		</arch>
 	</resource>
 	
 	<resource>
@@ -115,8 +124,10 @@
 		<front-end>
 			<name>ffe1.lanl.gov</name>
 			<tmp-dir>/net/scratch1</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
-		<front-end><name>ffe2.lanl.gov</name>
+		<front-end>
+			<name>ffe2.lanl.gov</name>
 			<tmp-dir>/net/scratch1</tmp-dir>
 		</front-end>
 		<os>
@@ -160,6 +171,7 @@
 		<type>cluster</type>
 		<front-end>
 			<name>qafe.lanl.gov</name>
+			<ssh>true</ssh>
 		</front-end>
 		<allocator>lsf</allocator>
 		<launcher>rms</launcher>
@@ -200,6 +212,7 @@
 		<type>cluster</type>
 		<front-end>
 			<name>qbfe.lanl.gov</name>
+			<ssh>true</ssh>
 		</front-end>
 		<allocator>lsf</allocator>
 		<launcher>rms</launcher>
@@ -241,6 +254,7 @@
 		<front-end>
 			<name>cfe1.lanl.gov</name>
 			<tmp-dir>/scratch1</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
 		<allocator>lsf</allocator>
 		<launcher>lsf</launcher>
@@ -279,6 +293,7 @@
 		<front-end>
 			<name>cfe1.lanl.gov</name>
 			<tmp-dir>/scratch1</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
 		<allocator>lsf</allocator>
 		<launcher>lsf</launcher>
@@ -317,6 +332,7 @@
 		<front-end>
 			<name>cfe1.lanl.gov</name>
 			<tmp-dir>/scratch1</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
 		<allocator>lsf</allocator>
 		<launcher>lsf</launcher>
@@ -355,6 +371,7 @@
 		<front-end>
 			<name>lambda.lanl.gov</name>
 			<tmp-dir>/scratch</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
 		<allocator>lsf</allocator>
 		<launcher>bproc</launcher>
@@ -388,6 +405,7 @@
 		<type>cluster</type>
 		<front-end>
 			<name>qscfe1.lanl.gov</name>
+			<ssh>true</ssh>
 		</front-end>
 		<allocator>lsf</allocator>
 		<launcher>lsf</launcher>
@@ -425,6 +443,7 @@
 		<front-end>
 			<name>cxfe.lanl.gov</name>
 			<tmp-dir>/scratch1</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
 		<allocator>lsf</allocator>
 		<launcher>lsf</launcher>
@@ -432,14 +451,14 @@
 			<num-nodes>32</num-nodes>
 			<cpus-per-node>4</cpus-per-node>
 			<memory-per-node>4.0</memory-per-node>
-			<node-arch>
+			<arch>
 				<name>cx0</name>
 				<memory-per-node>16.0</memory-per-node>
-			</node-arch>
-			<node-arch>
+			</arch>
+			<arch>
 				<name>cx1</name>
 				<memory-per-node>16.0</memory-per-node>
-			</node-arch>
+			</arch>
 			<interconnect>
 				<type>quadrics</type>
 				<num-rails>1</num-rails>
@@ -470,6 +489,7 @@
 		<front-end>
 			<name>mauve.lanl.gov</name>
 			<tmp-dir>/scratch</tmp-dir>
+			<ssh>true</ssh>
 		</front-end>
 		<allocator>lsf</allocator>
 		<launcher>lsf</launcher>

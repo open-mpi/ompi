@@ -31,6 +31,7 @@
 #include "util/output.h"
 
 #include "mca/gpr/base/base.h"
+#include "mca/ns/base/base.h"
 #include "mca/rds/base/base.h"
 
 /* output files needed by the test */
@@ -45,9 +46,11 @@ main(int argc, char **argv)
     int rc;
     bool allow, have;
     int priority;
-    test_component_handle_t gpr_handle;
+    test_component_handle_t gpr_handle, ns_handle;
     mca_gpr_base_component_t *gpr_component = NULL;
     orte_gpr_base_module_t *gpr_module = NULL;
+    mca_ns_base_component_t *ns_component = NULL;
+    mca_ns_base_module_t *ns_module = NULL;
     test_component_handle_t rds_handle;
     orte_rds_base_component_t *rds_component = NULL;
     orte_rds_base_module_t *rds_module = NULL;
@@ -67,6 +70,9 @@ main(int argc, char **argv)
 
     /* ENSURE THE GPR REPLICA IS ISOLATED */
     setenv("OMPI_MCA_gpr_replica_isolate", "1", 1);
+    
+    /* ensure the NS replica is isolated */
+    setenv("OMPI_MCA_ns_replica_isolate", "1", 1);
     
     /* Open up the output streams */
     if (!ompi_output_init()) {
@@ -107,7 +113,19 @@ main(int argc, char **argv)
         exit (1);
     }
 
-    /* Open the gpr replica component and initialize a module */
+    /* Open the ns replica component and initialize a module */
+    if (OMPI_SUCCESS != 
+        test_component_open("ns", "replica", &ns_handle, 
+                            (mca_base_component_t**) &ns_component) ||
+        NULL == ns_component) {
+        test_fail_stop("Could not open ns replica\n", 1);
+    }
+    ns_module = ns_component->ns_init(&priority);
+    if (NULL == ns_module) {
+        test_fail_stop("NS replica component did not return a module\n", 1);
+    }
+
+     /* Open the gpr replica component and initialize a module */
     if (OMPI_SUCCESS != 
         test_component_open("gpr", "replica", &gpr_handle, 
                             (mca_base_component_t**) &gpr_component) ||
@@ -137,9 +155,33 @@ main(int argc, char **argv)
     if (NULL == rds_module) {
         test_fail_stop("rds hostfile component did not return a module\n", 1);
     }
-    fprintf(test_out, "RDS host component started\n");
     
-    fprintf(stderr, "now finalize and see if all memory cleared\n");
+//    rds_module->query();
+
+    fprintf(test_out, "RDS hostfile component executed\n");
+
+    if (NULL != rds_module->finalize) {
+        rds_module->finalize();
+    }
+    test_component_close(&rds_handle);
+
+    fprintf(stderr, "test the resource file component\n");
+    if (OMPI_SUCCESS != 
+        test_component_open("rds", "resfile", &rds_handle, 
+                            (mca_base_component_t**) &rds_component) ||
+        NULL == rds_component) {
+        test_fail_stop("Could not open rds resource file component\n", 1);
+    }
+    rds_module = rds_component->rds_init();
+    if (NULL == rds_module) {
+        test_fail_stop("rds resource file component did not return a module\n", 1);
+    }
+
+    rds_module->query();
+
+    fprintf(test_out, "RDS resource file component executed\n");
+    
+    gpr_module->dump_segments(0);
 
     if (NULL != rds_module->finalize) {
         rds_module->finalize();

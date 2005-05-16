@@ -409,6 +409,82 @@ int main(int argc, char **argv)
     
     gpr_module->dump_all(0);
 
+    fprintf(stderr, "get with no tokens, KEYS_OR\n");
+    keys[0] = strdup("stupid-test-1");
+    keys[1] = strdup("stupid-test-3");
+    keys[2] = strdup("stupid-test-5");
+    keys[3] = strdup("stupid-test-8");
+    keys[4] = NULL;
+    if (ORTE_SUCCESS != (rc = gpr_module->get(ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
+                                "test-put-segment",
+                                NULL, keys,
+                                &cnt, &values))) {
+        fprintf(test_out, "gpr_test: get failed with error code %s\n",
+                    ORTE_ERROR_NAME(rc));
+        test_failure("gpr_test: get failed");
+        test_finalize();
+        return rc;
+    } else {
+        fprintf(test_out, "gpr_test: get with no tokens, KEYS_OR passed\n");
+    }
+    for (i=0; i < 4; i++) free(keys[i]);
+    free(names[0]);
+    
+    fprintf(stderr, "get results:\n");
+    for (j=0; j < cnt; j++) {
+        fprintf(stderr, "value %lu: cnt %lu\t segment %s num_tokens %lu\n", 
+                (unsigned long) j, (unsigned long) values[j]->cnt,
+                values[j]->segment, (unsigned long) values[j]->num_tokens);
+        for (i=0; i < values[j]->num_tokens; i++) {
+            fprintf(stderr, "token: %lu %s\n", (unsigned long) i,
+                    values[j]->tokens[i]);
+        }
+        kvals = values[j]->keyvals;
+        for (i=0; i < values[j]->cnt; i++) {
+            fprintf(stderr, "\tkey %s type %d\n", kvals[i]->key, kvals[i]->type);
+        }
+        OBJ_RELEASE(values[j]);
+    }
+    free(values);
+    
+    fprintf(stderr, "get with no tokens, KEYS_AND\n");
+    keys[0] = strdup("stupid-test-1");
+    keys[1] = strdup("stupid-test-3");
+    keys[2] = strdup("stupid-test-5");
+    keys[3] = strdup("stupid-test-8");
+    keys[4] = NULL;
+    if (ORTE_SUCCESS != (rc = gpr_module->get(ORTE_GPR_KEYS_AND | ORTE_GPR_TOKENS_OR,
+                                "test-put-segment",
+                                NULL, keys,
+                                &cnt, &values))) {
+        fprintf(test_out, "gpr_test: get failed with error code %s\n",
+                    ORTE_ERROR_NAME(rc));
+        test_failure("gpr_test: get failed");
+        test_finalize();
+        return rc;
+    } else {
+        fprintf(test_out, "gpr_test: get with no tokens, KEYS_AND passed\n");
+    }
+    for (i=0; i < 4; i++) free(keys[i]);
+    free(names[0]);
+    
+    fprintf(stderr, "get results:\n");
+    for (j=0; j < cnt; j++) {
+        fprintf(stderr, "value %lu: cnt %lu\t segment %s num_tokens %lu\n", 
+                (unsigned long) j, (unsigned long) values[j]->cnt,
+                values[j]->segment, (unsigned long) values[j]->num_tokens);
+        for (i=0; i < values[j]->num_tokens; i++) {
+            fprintf(stderr, "token: %lu %s\n", (unsigned long) i,
+                    values[j]->tokens[i]);
+        }
+        kvals = values[j]->keyvals;
+        for (i=0; i < values[j]->cnt; i++) {
+            fprintf(stderr, "\tkey %s type %d\n", kvals[i]->key, kvals[i]->type);
+        }
+        OBJ_RELEASE(values[j]);
+    }
+    free(values);
+    
     fprintf(stderr, "now finalize and see if all memory cleared\n");
     test_component_close(&handle);
     orte_dps_close();

@@ -134,6 +134,7 @@ typedef uint16_t orte_gpr_addr_mode_t;
 typedef union {                             /* shared storage for the value */
     char *strptr;
     size_t size;
+    bool tf_flag;
     pid_t pid;
     uint8_t ui8;
     uint16_t ui16;

@@ -21,6 +21,8 @@
 #include <netinet/in.h>
 #endif
 
+#include "util/output.h"
+
 #include "mca/errmgr/errmgr.h"
 #include "dps/dps_internal.h"
 

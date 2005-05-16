@@ -32,6 +32,7 @@ endif
 
 proxy_SOURCES = \
     rds_resfile.c \
+    rds_resfile_parse_attributes.c \
     rds_resfile.h \
     rds_resfile_component.c
 

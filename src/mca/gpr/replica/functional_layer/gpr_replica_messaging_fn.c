@@ -459,7 +459,7 @@ MOVEON:
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
             kptr[n]->type = (values[i]->keyvals[n])->type;
-            if (ORTE_SUCCESS != (rc = orte_gpr_replica_xfer_payload(
+            if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(
                         &(kptr[n]->value), &((values[i]->keyvals[n])->value),
                         (values[i]->keyvals[n])->type))) {
                 ORTE_ERROR_LOG(rc);

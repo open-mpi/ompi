@@ -30,6 +30,20 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+/* list class for tracking cellid's
+ */
+struct orte_ns_replica_cell_tracker_t {
+    ompi_list_item_t item;
+    orte_cellid_t cell;
+    char *site;
+    char *resource;
+};
+typedef struct orte_ns_replica_cell_tracker_t orte_ns_replica_cell_tracker_t;
+
+OBJ_CLASS_DECLARATION(orte_ns_replica_cell_tracker_t);
+
+
 /*
  * list class for tracking vpids/jobid
  * This structure is used to create a linked list of jobid-max vpid pairs. Basically, we
@@ -67,6 +81,7 @@ OBJ_CLASS_DECLARATION(orte_ns_replica_dti_t);
  */
 extern orte_cellid_t orte_ns_replica_next_cellid;
 extern orte_jobid_t orte_ns_replica_next_jobid;
+extern ompi_list_t orte_ns_replica_cell_tracker;
 extern ompi_list_t orte_ns_replica_name_tracker;
 extern orte_rml_tag_t orte_ns_replica_next_rml_tag;
 extern orte_data_type_t orte_ns_replica_next_dti;
@@ -99,7 +114,13 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
 /*
  * Implementation of create_cellid().
  */
-int orte_ns_replica_create_cellid(orte_cellid_t *cellid);
+int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resource);
+
+/*
+ * Implementation of get_cell_info()
+ */
+int orte_ns_replica_get_cell_info(orte_cellid_t cellid,
+                                char **site, char **resource);
 
 /*
  * Implementation of create_jobid().

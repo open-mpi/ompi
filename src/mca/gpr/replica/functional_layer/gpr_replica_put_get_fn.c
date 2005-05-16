@@ -335,7 +335,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
                     ival_list = OBJ_NEW(orte_gpr_replica_ival_list_t);
                     ival_list->itag = iptr[j]->itag;
                     ival_list->type = iptr[j]->type;
-                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_xfer_payload(
+                    if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(
                                 &(ival_list->value), &(iptr[j]->value), iptr[j]->type))) {
                         ORTE_ERROR_LOG(rc);
                         OBJ_RELEASE(ival_list);
@@ -411,7 +411,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
                 goto CLEANUP;
             }
             kptr[j]->type = ival_list->type;
-            if (ORTE_SUCCESS != (rc = orte_gpr_replica_xfer_payload(
+            if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(
                         &(kptr[j]->value), &(ival_list->value), ival_list->type))) {
                 goto CLEANUP;
             }

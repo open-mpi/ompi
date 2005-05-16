@@ -31,6 +31,16 @@
 extern "C" {
 #endif
 
+struct orte_ns_proxy_cell_info_t {
+    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
+    orte_cellid_t cellid;
+    char *site;
+    char *resource;
+};
+typedef struct orte_ns_proxy_cell_info_t orte_ns_proxy_cell_info_t;
+
+OBJ_CLASS_DECLARATION(orte_ns_proxy_cell_info_t);
+
 struct orte_ns_proxy_tagitem_t {
     ompi_list_item_t item;  /**< Allows this item to be placed on a list */
     orte_rml_tag_t tag;  /**< OOB tag */
@@ -70,6 +80,7 @@ int orte_ns_proxy_finalize(void);
 
 extern orte_process_name_t *orte_ns_my_replica;
 extern int orte_ns_proxy_debug;
+extern ompi_list_t orte_ns_proxy_cell_info_list;
 extern ompi_list_t orte_ns_proxy_taglist;
 extern ompi_list_t orte_ns_proxy_dtlist;
 extern ompi_mutex_t orte_ns_proxy_mutex;
@@ -77,7 +88,9 @@ extern ompi_mutex_t orte_ns_proxy_mutex;
 /*
  * proxy function prototypes
  */
-int orte_ns_proxy_create_cellid(orte_cellid_t *cellid);
+int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resource);
+
+int orte_ns_proxy_get_cell_info(orte_cellid_t cellid, char **site, char **resource);
 
 int orte_ns_proxy_create_jobid(orte_jobid_t *jobid);
 

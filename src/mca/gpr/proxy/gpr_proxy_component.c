@@ -81,6 +81,7 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_proxy_index_nb,
     /* GENERAL OPERATIONS */
     orte_gpr_proxy_preallocate_segment,
+    orte_gpr_base_xfer_payload,
     /* ARITHMETIC OPERATIONS */
     orte_gpr_proxy_increment_value,
     orte_gpr_proxy_decrement_value,

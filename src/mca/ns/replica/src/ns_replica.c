@@ -37,13 +37,26 @@
  * functions
  */
 
-int orte_ns_replica_create_cellid(orte_cellid_t *cellid)
+int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resource)
 {
+    orte_ns_replica_cell_tracker_t *new_cell;
+    
     OMPI_THREAD_LOCK(&orte_ns_replica_mutex);
 
     if (ORTE_CELLID_MAX > orte_ns_replica_next_cellid) {
-       *cellid = orte_ns_replica_next_cellid;
-	   orte_ns_replica_next_cellid++;
+        *cellid = orte_ns_replica_next_cellid;
+	    orte_ns_replica_next_cellid++;
+        new_cell = OBJ_NEW(orte_ns_replica_cell_tracker_t);
+        if (NULL == new_cell) {
+            *cellid = ORTE_CELLID_MAX;
+            OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        new_cell->cell = *cellid;
+        new_cell->site = strdup(site);
+        new_cell->resource = strdup(resource);
+        ompi_list_append(&orte_ns_replica_cell_tracker, &new_cell->item);
 	   OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
 	   return ORTE_SUCCESS;
     }
@@ -53,6 +66,26 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid)
     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
 	return ORTE_ERR_OUT_OF_RESOURCE;
 }
+
+int orte_ns_replica_get_cell_info(orte_cellid_t cellid,
+                                char **site, char **resource)
+{
+    ompi_list_item_t *item;
+    orte_ns_replica_cell_tracker_t *cell;
+    
+    for (item = ompi_list_get_first(&orte_ns_replica_cell_tracker);
+         item != ompi_list_get_end(&orte_ns_replica_cell_tracker);
+         item = ompi_list_get_next(item)) {
+        cell = (orte_ns_replica_cell_tracker_t*)item;
+        if (cellid == cell->cell) {
+            *site = strdup(cell->site);
+            *resource = strdup(cell->resource);
+            return ORTE_SUCCESS;
+        }
+    }
+    return ORTE_ERR_NOT_FOUND;
+}
+                                
 
 int orte_ns_replica_create_jobid(orte_jobid_t *jobid)
 {

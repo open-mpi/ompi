@@ -200,10 +200,6 @@ typedef int (*orte_gpr_replica_update_keyval_fn_t)
      orte_gpr_replica_container_t *cptr,
      orte_gpr_keyval_t *kptr);
 
-int orte_gpr_replica_xfer_payload(orte_gpr_value_union_t *dest,
-                                  orte_gpr_value_union_t *src,
-                                  orte_data_type_t type);
-
 int orte_gpr_replica_compare_values(int *cmp, orte_gpr_replica_itagval_t *ival1,
                                     orte_gpr_replica_itagval_t *ival2);
 

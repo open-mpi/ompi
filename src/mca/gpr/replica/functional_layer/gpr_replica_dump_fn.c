@@ -482,7 +482,7 @@ void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
             break;
             
         case ORTE_BOOL:
-            sprintf(tmp, "\t\tData type: ORTE_BOOL");
+            sprintf(tmp, "\t\tData type: ORTE_BOOL\tValue: %s", iptr->value.tf_flag ? "TRUE" : "FALSE");
             break;
             
         case ORTE_STRING:

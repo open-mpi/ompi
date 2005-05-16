@@ -51,9 +51,19 @@ orte_ns_base_module_init_not_available(void)
 }
 
 int
-orte_ns_base_create_cellid_not_available(orte_cellid_t *cellid)
+orte_ns_base_create_cellid_not_available(orte_cellid_t *cellid, char *site, char *resource)
 {
     *cellid = ORTE_CELLID_MAX;
+    ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+    return ORTE_ERR_UNREACH;
+}
+
+int
+orte_ns_base_get_cell_info_not_available(orte_cellid_t cellid,
+                                    char **site, char **resource)
+{
+    *site = NULL;
+    *resource = NULL;
     ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
     return ORTE_ERR_UNREACH;
 }

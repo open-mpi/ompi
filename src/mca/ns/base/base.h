@@ -128,10 +128,15 @@ OMPI_DECLSPEC    int orte_ns_base_compare(orte_ns_cmp_bitmask_t fields,
 
 OMPI_DECLSPEC    int orte_ns_base_free_name(orte_process_name_t **name);
 
+/* not available functions */
 OMPI_DECLSPEC    int orte_ns_base_module_init_not_available(void);
 
-OMPI_DECLSPEC    int orte_ns_base_create_cellid_not_available(orte_cellid_t *cellid);
+OMPI_DECLSPEC    int orte_ns_base_create_cellid_not_available(orte_cellid_t *cellid,
+                                    char *site, char *resource);
 
+OMPI_DECLSPEC    int orte_ns_base_get_cell_info_not_available(orte_cellid_t cellid,
+                                char **site, char **resource);
+                                
 OMPI_DECLSPEC    int orte_ns_base_create_jobid_not_available(orte_jobid_t *jobid);
 
 OMPI_DECLSPEC    int orte_ns_base_get_vpid_range_not_available(orte_jobid_t job,

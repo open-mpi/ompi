@@ -37,10 +37,11 @@
  * access to at some foreign site).
  * 
  * 2. A hostfile (e.g., etc/openmpi-default-hostfile) describes a set of hosts to
- * which a specific user has access and/or wishes to use to run an application. The
+ * which a specific user has access and may wish to use to run applications. The
  * information in the hostfile is much less detailed than in a resource file - it
- * is primarily intended to allow a user to specify which hosts are to be used for
- * an application, and potentially how the application's processes can/are to be 
+ * is primarily intended to allow a user to specify which hosts are available for
+ * use in an unmanaged environment (e.g, one spawned by rsh/ssh as opposed
+ * to a BProc system), and potentially how the application's processes can/are to be 
  * distributed across them. Thus, one would not expect to find info on memory/node
  * in a hostfile, but would expect to find info on user id for a given host and the
  * maximum number of processes the user wants put on a given host.
@@ -113,7 +114,7 @@
 #include "mca/mca.h"
 #include "mca/ns/ns_types.h"
 
-#include "rds_types.h"
+#include "mca/rds/rds_types.h"
 
 
 /*

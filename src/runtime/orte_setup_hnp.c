@@ -90,11 +90,11 @@ static void orte_setup_hnp_wait(pid_t wpid, int status, void *data);
 int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
 {
 #ifndef WIN32
-    char **argv, *param, *uri, *uid, *hn;
+    char **argv, *param, *uri, *uid, *hn=NULL;
     char *path, *name_string, *orteprobe;
     int argc, rc=ORTE_SUCCESS, id;
     pid_t pid;
-    orte_cellid_t cellid;
+    orte_cellid_t cellid=ORTE_CELLID_MAX;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
     
@@ -140,13 +140,14 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
     orte_setup_hnp_cbdata.headnode = strdup(headnode);
     orte_setup_hnp_cbdata.jobid = jobid;
    
-    /* get rsh/ssh launch mechanism parameters */
-    id = mca_base_param_register_string("pls","rsh","agent",NULL,"/usr/bin/ssh");
-    mca_base_param_lookup_string(id, &param);
-
+    /* get name of probe application - just in case user specified something different */
     id = mca_base_param_register_string("orteprobe",NULL,NULL,NULL,"orteprobe");
     mca_base_param_lookup_string(id, &orteprobe);
     
+    /* get rsh/ssh launch mechanism parameters */
+    id = mca_base_param_register_string("pls","rsh","agent",NULL,"ssh");
+    mca_base_param_lookup_string(id, &param);
+
     /* Initialize the argv array */
     argv = ompi_argv_split(param, ' ');
     argc = ompi_argv_count(argv);
@@ -218,7 +219,6 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
 
     if (pid == 0) {     /* child */
         /* exec the probe launch */
-       ompi_output(0, "exec'ing %s", path);
         execv(path, argv);
         ORTE_ERROR_LOG(ORTE_ERROR);
         ompi_output(0, "orte_setup_hnp: execv failed with errno=%d\n", errno);
