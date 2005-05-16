@@ -428,7 +428,6 @@ int main(int argc, char **argv)
         fprintf(test_out, "gpr_test: get with no tokens, KEYS_OR passed\n");
     }
     for (i=0; i < 4; i++) free(keys[i]);
-    free(names[0]);
     
     fprintf(stderr, "get results:\n");
     for (j=0; j < cnt; j++) {
@@ -466,7 +465,6 @@ int main(int argc, char **argv)
         fprintf(test_out, "gpr_test: get with no tokens, KEYS_AND passed\n");
     }
     for (i=0; i < 4; i++) free(keys[i]);
-    free(names[0]);
     
     fprintf(stderr, "get results:\n");
     for (j=0; j < cnt; j++) {
