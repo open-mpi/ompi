@@ -42,7 +42,7 @@
 orte_universe_t orte_universe_info = {
     /* .init =                */    false,
     /* .path =                */    NULL,
-    /* .name =                */    "default-universe",
+    /* .name =                */    NULL,
     /* .host =                */    NULL,
     /* .uid =                 */    NULL,
     /* .persistence =         */    false,
@@ -100,6 +100,8 @@ int orte_univ_info(void)
              */
             orte_universe_info.uid = strdup(orte_system_info.user);
             orte_universe_info.host = strdup(orte_system_info.nodename);
+            /* and the universe name to default-universe */
+            orte_universe_info.name = strdup("default-universe");
         }
 
         id = mca_base_param_register_int("universe", "persistence", NULL, NULL, orte_universe_info.persistence);
