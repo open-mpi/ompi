@@ -21,7 +21,7 @@
 #include "mca/base/mca_base_param.h"
 #include "mca/ras/xgrid/ras-xgrid-version.h"
 #include "ras_xgrid.h"
-
+#include "util/output.h"
 
 /*
  * Local functions
