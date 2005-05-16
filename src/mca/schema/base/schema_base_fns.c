@@ -82,6 +82,7 @@ int orte_schema_base_get_node_tokens(char ***node_tokens, size_t* num_tokens, or
     int rc;
     char** tokens;
     char* cellid_string;
+    
     tokens = (char**)malloc(3 * sizeof(char*));
     if (NULL == tokens) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -112,9 +113,34 @@ CLEANUP:
     return rc;
 }
 
-int orte_schema_base_get_cell_tokens(char ***tokens, size_t* num_tokens, orte_cellid_t cellid)
+int orte_schema_base_get_cell_tokens(char ***cell_tokens, size_t* num_tokens, orte_cellid_t cellid)
 {
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    int rc;
+    char **tokens;
+    
+    *num_tokens = 0;
+    
+    tokens = (char**)malloc(3 * sizeof(char*));
+    if (NULL == tokens) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_ns.get_cell_info(cellid, &tokens[1], &tokens[2]))) {
+        ORTE_ERROR_LOG(rc);
+        free(*tokens);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_cellid_to_string(&tokens[0], cellid))) {
+        ORTE_ERROR_LOG(rc);
+        free(*tokens);
+        return rc;
+    }
+    
+    *num_tokens = 3;
+    *cell_tokens = tokens;
+    
+    return ORTE_SUCCESS;
 }
 
 int orte_schema_base_get_job_segment_name(char **name, orte_jobid_t jobid)

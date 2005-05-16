@@ -14,8 +14,46 @@
  * $HEADER$
  */
 
+#include "orte_config.h"
+
+#include "class/ompi_list.h"
+#include "mca/gpr/gpr_types.h"
+#include "mca/ns/ns_types.h"
+
 #ifndef ORTE_MCA_RDS_TYPES_H
 #define ORTE_MCA_RDS_TYPES_H
+
+/* resource descriptor object */
+typedef struct {
+    /** Base object */
+    ompi_list_item_t super;
+    /** id of cell in which this resource resides */
+    orte_cellid_t cellid;
+    /** string name of the site */
+    char *site;
+    /** string name of the resource */
+    char *name;
+    /** string type of the resource */
+    char *type;
+    /** list of attributes */
+    ompi_list_t attributes;
+} orte_rds_cell_desc_t;
+
+OBJ_CLASS_DECLARATION(orte_rds_cell_desc_t);
+
+/* resource attribute object */
+typedef struct {
+    /** Base object */
+    ompi_list_item_t super;
+    /** key-value pair describing attribute */
+    orte_gpr_keyval_t keyval;
+} orte_rds_cell_attr_t;
+
+OBJ_CLASS_DECLARATION(orte_rds_cell_attr_t);
+
+
+/* name of resource */
+#define ORTE_RDS_NAME               "orte-rds-name"
 
 /* type of resource (e.g., "cluster") */
 #define ORTE_RDS_TYPE               "orte-rds-type"
@@ -24,7 +62,9 @@
 #define ORTE_RDS_FE_NAME            "orte-rds-fe-name"
 /* location of the temporary directory on the frontend - required because
  * some machines do not allow the frontend to access scratch filesystem space */
-#define ORTE_RDS_FE_TMP             "orte-rds-fe-tmpdir"    
+#define ORTE_RDS_FE_TMP             "orte-rds-fe-tmpdir"
+/* whether or not ssh to the frontend is allowed */
+#define ORTE_RDS_FE_SSH             "orte-rds-fe-ssh"
 
 /* node architecture info */
 #define ORTE_RDS_NUM_NODES          "orte-rds-arch-num-nodes"
@@ -52,12 +92,16 @@
 #define ORTE_RDS_OS_VENDOR          "orte-rds-os-vendor"
 #define ORTE_RDS_OS_VERSION         "orte-rds-os-version"
 
+/* compute domains */
+#define ORTE_RDS_COMP_NUM_DOMAINS   "orte-rds-comp-domains"
+#define ORTE_RDS_COMP_NODES_DOMAIN  "orte-rds-comp-nodes-domain"
+
 /* filesystem type (e.g., "panasys") */
 #define ORTE_RDS_FS_TYPE            "orte-rds-fs-type"
 /* home directory for users */
 #define ORTE_RDS_FS_HOME            "orte-rds-fs-home"
 /* scratch directory */
-#define ORTE_RDS_FS_SCRATCH         "orte-rds-fs-scratch-dir"
+#define ORTE_RDS_FS_SCRATCH_ROOT    "orte-rds-fs-scratch-dir"
 /* size of the scratch filesystem */
 #define ORTE_RDS_FS_SCRATCH_SIZE    "orte-rds-fs-scratch-size"
 /* number of domains in the filesystem */
@@ -70,8 +114,16 @@
 #define ORTE_RDS_FS_GIVE            "orte-rds-fs-give-dir"
 
 /* allocator and launcher info */
-#define ORTE_RDS_ALLOCATOR      "orte-rds-allocator"
-#define ORTE_RDS_LAUNCHER       "orte-rds-launcher"
+/* the allocator used to get resources allocated to me on this resource
+ * (e.g., LSF)
+ */
+#define ORTE_RDS_ALLOCATOR              "orte-rds-allocator"
+/* the type of launch environment on this resource (e.g., BProc, rsh/ssh) */
+#define ORTE_RDS_LAUNCHER               "orte-rds-launcher"
+ /* where in the order this resource should be allocated when looking for resources
+  * with the given type of launcher
+  */
+#define ORTE_RDS_ALLOCATION_SEQUENCE    "orte-rds-allocate-sequence"
 
 /* operational limits */
 #define ORTE_RDS_MAX_PROCS_CPU  "orte-rds-max-procs-per-cpu"

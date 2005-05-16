@@ -78,6 +78,7 @@ static orte_gpr_base_module_t orte_gpr_replica_module = {
     orte_gpr_replica_index_nb,
     /* GENERAL OPERATIONS */
     orte_gpr_replica_preallocate_segment,
+    orte_gpr_base_xfer_payload,
     /* ARITHMETIC OPERATIONS */
     orte_gpr_replica_increment_value,
     orte_gpr_replica_decrement_value,

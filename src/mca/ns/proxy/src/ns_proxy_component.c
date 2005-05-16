@@ -67,6 +67,7 @@ OMPI_COMP_EXPORT mca_ns_base_component_t mca_ns_proxy_component = {
 static mca_ns_base_module_t orte_ns_proxy = {
     orte_ns_proxy_module_init,
     orte_ns_proxy_create_cellid,
+    orte_ns_proxy_get_cell_info,
     orte_ns_base_assign_cellid_to_process,
     orte_ns_proxy_create_jobid,
     orte_ns_base_create_process_name,
@@ -99,6 +100,31 @@ static mca_ns_base_module_t orte_ns_proxy = {
  * Whether or not we allowed this component to be selected
  */
 static bool initialized = false;
+
+/* constructor - used to initialize state of cell info list instance */
+static void orte_ns_proxy_cell_info_construct(orte_ns_proxy_cell_info_t* ptr)
+{
+    ptr->resource = NULL;
+    ptr->site = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void orte_ns_proxy_cell_info_destructor(orte_ns_proxy_cell_info_t* ptr)
+{
+    if (NULL != ptr->resource) {
+       free(ptr->resource);
+    }
+    if (NULL != ptr->site) {
+       free(ptr->site);
+    }
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+        orte_ns_proxy_cell_info_t,  /* type name */
+        ompi_list_item_t, /* parent "class" name */
+        orte_ns_proxy_cell_info_construct, /* constructor */
+        orte_ns_proxy_cell_info_destructor); /* destructor */
 
 /* constructor - used to initialize state of taglist instance */
 static void orte_ns_proxy_tagitem_construct(orte_ns_proxy_tagitem_t* tagitem)
@@ -150,6 +176,7 @@ OBJ_CLASS_INSTANCE(
 
 orte_process_name_t* orte_ns_my_replica=NULL;
 int orte_ns_proxy_debug=0;
+ompi_list_t orte_ns_proxy_cell_info_list;
 ompi_list_t orte_ns_proxy_taglist;
 ompi_list_t orte_ns_proxy_dtlist;
 ompi_mutex_t orte_ns_proxy_mutex;
@@ -206,6 +233,9 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
         	    return NULL;
         	}
         
+        /* initialize the cell info list */
+        OBJ_CONSTRUCT(&orte_ns_proxy_cell_info_list, ompi_list_t);
+    
         /* initialize the taglist */
         OBJ_CONSTRUCT(&orte_ns_proxy_taglist, ompi_list_t);
     
@@ -238,14 +268,19 @@ int orte_ns_proxy_module_init(void)
 int orte_ns_proxy_finalize(void)
 {
     orte_ns_proxy_tagitem_t *tagitem;
+    orte_ns_proxy_cell_info_t *cptr;
     
     if (orte_ns_proxy_debug) {
 	   ompi_output(0, "finalizing ns proxy");
     }
 
-    /* free the taglist storage, but only if this component was initialized */
+    /* free the storage, but only if this component was initialized */
 
     if (initialized) {
+        while (NULL != (cptr = (orte_ns_proxy_cell_info_t*)ompi_list_remove_first(&orte_ns_proxy_cell_info_list))) {
+            OBJ_RELEASE(cptr);
+        }
+        OBJ_DESTRUCT(&orte_ns_proxy_cell_info_list);
         while (NULL != (tagitem = (orte_ns_proxy_tagitem_t*)ompi_list_remove_first(&orte_ns_proxy_taglist))) {
             OBJ_RELEASE(tagitem);
         }

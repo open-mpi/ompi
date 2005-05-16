@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     orte_jobid_t job;
     orte_vpid_t vpid;
     int i, j, rc;
-    char *tmp;
+    char *tmp, *site, *resource;
     test_component_handle_t ns_handle;
     mca_ns_base_component_t *ns_component = NULL;
     mca_ns_base_module_t *ns_module = NULL;
@@ -130,13 +130,24 @@ int main(int argc, char **argv)
     free(test_name);
     
     /* create a cellid */
-    if (ORTE_SUCCESS != (rc = ns_module->create_cellid(&cell))) { /* got error */
+    if (ORTE_SUCCESS != (rc = ns_module->create_cellid(&cell, "dummy-site", "dummy-resource"))) { /* got error */
        test_failure("test_ns_replica orte_ns test create_cellid failed");
 	   fprintf(test_out, "create cellid: error with error %s\n", ORTE_ERROR_NAME(rc));
 	   test_finalize();
 	   exit(1);
     } else {
         fprintf(test_out, "cellid created: %lu\n", (unsigned long) cell);
+        test_success();
+    }
+
+    /* get cellid info */
+    if (ORTE_SUCCESS != (rc = ns_module->get_cell_info(cell, &site, &resource))) { /* got error */
+       test_failure("test_ns_replica orte_ns test get_cell_info failed");
+       fprintf(test_out, "get_cell_info: error with error %s\n", ORTE_ERROR_NAME(rc));
+    test_finalize();
+       exit(1);
+    } else {
+        fprintf(test_out, "get_cell_info: %lu %s %s\n", (unsigned long) cell, site, resource);
         test_success();
     }
 

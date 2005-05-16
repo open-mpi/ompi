@@ -50,7 +50,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_rds_base_selected_t);
 
 
 /*
- * function definitions
+ * API function definitions
  */
 OMPI_DECLSPEC int orte_rds_base_open(void);
 OMPI_DECLSPEC int orte_rds_base_select(void);
@@ -73,6 +73,11 @@ OMPI_DECLSPEC extern orte_rds_base_t orte_rds_base;
 /*
  * external API functions will be documented in the mca/ns/ns.h file
  */
+
+/*
+ * utility functions for use within the RDS
+ */
+int orte_rds_base_store_resource(ompi_list_t *resource_list);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

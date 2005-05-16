@@ -38,16 +38,23 @@
  * functions
  */
 
-int orte_ns_proxy_create_cellid(orte_cellid_t *cellid)
+int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resource)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
     size_t count;
     int rc;
+    orte_ns_proxy_cell_info_t *cptr;
 
     /* set the default value of error */
     *cellid = ORTE_CELLID_MAX;
+    
+    /* check for errors */
+    if (NULL == site || NULL == resource) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
+    }
     
     command = ORTE_NS_CREATE_CELLID_CMD;
 
@@ -57,7 +64,19 @@ int orte_ns_proxy_create_cellid(orte_cellid_t *cellid)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, (void*)&command, 1, ORTE_NS_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_NS_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &site, 1, ORTE_STRING))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &resource, 1, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
         return rc;
@@ -102,10 +121,45 @@ int orte_ns_proxy_create_cellid(orte_cellid_t *cellid)
         return rc;
     }
     OBJ_RELEASE(answer);
+    
+    /* store the info locally for later retrieval */
+    cptr = OBJ_NEW(orte_ns_proxy_cell_info_t);
+    if (NULL == cptr) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    cptr->cellid = *cellid;
+    cptr->site = strdup(site);
+    cptr->resource = strdup(resource);
+    ompi_list_append(&orte_ns_proxy_cell_info_list, &cptr->item);
+    
     return ORTE_SUCCESS;
 }
 
 
+int orte_ns_proxy_get_cell_info(orte_cellid_t cellid,
+                                char **site, char **resource)
+{
+    ompi_list_item_t *item;
+    orte_ns_proxy_cell_info_t *cell;
+    
+    *site = NULL;
+    *resource = NULL;
+    
+    for (item = ompi_list_get_first(&orte_ns_proxy_cell_info_list);
+         item != ompi_list_get_end(&orte_ns_proxy_cell_info_list);
+         item = ompi_list_get_next(item)) {
+        cell = (orte_ns_proxy_cell_info_t*)item;
+        if (cellid == cell->cellid) {
+            *site = strdup(cell->site);
+            *resource = strdup(cell->resource);
+            return ORTE_SUCCESS;
+        }
+    }
+    return ORTE_ERR_NOT_FOUND;
+}
+                                
 int orte_ns_proxy_create_jobid(orte_jobid_t *job)
 {
     orte_buffer_t* cmd;

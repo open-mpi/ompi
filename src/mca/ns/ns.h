@@ -62,19 +62,38 @@ typedef int (*orte_ns_base_module_init_fn_t)(void);
  * 1 to MCA_NS_BASE_CELLID_MAX-1 (zero is reserved for the seed name and cannot therefore be
  * allocated).
  *
- * @param None
- * @retval cellid The numerical value of the allocated cell id. A value of
+ * @param site The name of the site where the cell is located.
+ * @param resource The name of the resource associated with this cell (e.g., the name
+ * of the cluster).
+ * @param cellid The numerical value of the allocated cell id. A value of
  * MCA_NS_BASE_CELLID_MAX indicates
  * that an error occurred - this represents a very unlikely
  * event meaning that the system ran out of cell id's. This probably indicates
  * an error in the calling program as the number of available cell id's is extremely large.
+ * 
+ * @retval ORTE_SUCCESS A cellid was created and returned.
+ * @retval ORTE_ERROR_VALUE An error code indicative of the problem.
  *
  * @code
  * new_cellid = ompi_name_server.create_cellid()
  * @endcode
  */
-typedef int (*orte_ns_base_module_create_cellid_fn_t)(orte_cellid_t *cellid);
+typedef int (*orte_ns_base_module_create_cellid_fn_t)(orte_cellid_t *cellid,
+                                char *site, char *resource);
 
+/**
+ * Get cell info
+ * Retrieve the site and resource info on a cell.
+ * 
+ * @param cellid The id of the cell who's info is being requested.
+ * @param site Returns a pointer to a strdup'd string containing the site name.
+ * @param resource Returns a pointer to a strdup'd string containg the resource name.
+ * @retval ORTE_SUCCESS A cellid was created and returned.
+ * @retval ORTE_ERROR_VALUE An error code indicative of the problem.
+ */
+typedef int (*orte_ns_base_module_get_cell_info_fn_t)(orte_cellid_t cellid,
+                                char **site, char **resource);
+                                
 /**
  * Get the cell id for a process.
  * The cellid designator represents the physical location of the process - it is associated with
@@ -571,6 +590,7 @@ typedef int (*orte_ns_base_module_get_peers_fn_t)(orte_process_name_t **procs,
 struct mca_ns_base_module_1_0_0_t {
     orte_ns_base_module_init_fn_t init;
     orte_ns_base_module_create_cellid_fn_t create_cellid;
+    orte_ns_base_module_get_cell_info_fn_t get_cell_info;
     orte_ns_base_module_assign_cellid_to_process_fn_t assign_cellid_to_process;
     orte_ns_base_module_create_jobid_fn_t create_jobid;
     orte_ns_base_module_create_proc_name_fn_t create_process_name;

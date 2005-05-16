@@ -512,6 +512,21 @@ typedef int (*orte_gpr_base_module_increment_value_fn_t)(orte_gpr_value_t *value
 typedef int (*orte_gpr_base_module_decrement_value_fn_t)(orte_gpr_value_t *value);
 
 
+/* Transfer a payload between keyval values
+ * Because the data type of the value dictates how it must be transferred, it can be
+ * a burden to transfer the payload. This function centralizes that action so it only
+ * need be defined once.
+ * 
+ * @param dest The address of the value union where the data is to be placed.
+ * @param src The address of the value union currently holding the data.
+ * @param type The type of the data
+ * 
+ * @retval ORTE_SUCCESS Operation successfully completed.
+ * @retval ORTE_ERROR(s) Operation failed, returning the provided error code.
+ */
+typedef int (*orte_gpr_base_module_xfer_payload_fn_t)(orte_gpr_value_union_t *dest,
+                                    orte_gpr_value_union_t *src, orte_data_type_t type);
+                                    
 /*
  * Ver 1.0.0
  */
@@ -532,6 +547,7 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_index_nb_fn_t index_nb;
     /* GENERAL OPERATIONS */
     orte_gpr_base_module_preallocate_segment_fn_t preallocate_segment;
+    orte_gpr_base_module_xfer_payload_fn_t xfer_payload;
     /* ARITHMETIC OPERATIONS */
     orte_gpr_base_module_increment_value_fn_t increment_value;
     orte_gpr_base_module_decrement_value_fn_t decrement_value;

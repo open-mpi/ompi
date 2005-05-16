@@ -70,6 +70,7 @@ OMPI_COMP_EXPORT mca_ns_base_component_t mca_ns_replica_component = {
 static mca_ns_base_module_t orte_ns_replica = {
     orte_ns_replica_module_init,
     orte_ns_replica_create_cellid,
+    orte_ns_replica_get_cell_info,
     orte_ns_base_assign_cellid_to_process,
     orte_ns_replica_create_jobid,
     orte_ns_base_create_process_name,
@@ -104,6 +105,29 @@ static mca_ns_base_module_t orte_ns_replica = {
 static bool initialized = false;
 
 
+/* constructor - used to initialize state of cell_tracker instance */
+static void orte_ns_replica_cell_tracker_construct(orte_ns_replica_cell_tracker_t* cell_tracker)
+{
+    cell_tracker->cell = 0;
+    cell_tracker->site = NULL;
+    cell_tracker->resource = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void orte_ns_replica_cell_tracker_destructor(orte_ns_replica_cell_tracker_t* cell_tracker)
+{
+    if (NULL != cell_tracker->site) free(cell_tracker->site);
+    if (NULL != cell_tracker->resource) free(cell_tracker->resource);
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+    orte_ns_replica_cell_tracker_t,  /* type name */
+    ompi_list_item_t, /* parent "class" name */
+    orte_ns_replica_cell_tracker_construct, /* constructor */
+    orte_ns_replica_cell_tracker_destructor); /* destructor */
+
+
 /* constructor - used to initialize state of name_tracker instance */
 static void orte_ns_replica_tracker_construct(orte_ns_replica_name_tracker_t* name_tracker)
 {
@@ -122,6 +146,7 @@ OBJ_CLASS_INSTANCE(
 		   ompi_list_item_t, /* parent "class" name */
 		   orte_ns_replica_tracker_construct, /* constructor */
 		   orte_ns_replica_tracker_destructor); /* destructor */
+
 
 /* constructor - used to initialize state of taglist instance */
 static void orte_ns_replica_tagitem_construct(orte_ns_replica_tagitem_t* tagitem)
@@ -144,6 +169,7 @@ OBJ_CLASS_INSTANCE(
         ompi_list_item_t, /* parent "class" name */
         orte_ns_replica_tagitem_construct, /* constructor */
         orte_ns_replica_tagitem_destructor); /* destructor */
+
 
 /* constructor - used to initialize state of dtilist instance */
 static void orte_ns_replica_dti_construct(orte_ns_replica_dti_t* dti)
@@ -172,6 +198,7 @@ OBJ_CLASS_INSTANCE(
  */
 orte_cellid_t orte_ns_replica_next_cellid;
 orte_jobid_t orte_ns_replica_next_jobid;
+ompi_list_t orte_ns_replica_cell_tracker;
 ompi_list_t orte_ns_replica_name_tracker;
 orte_rml_tag_t orte_ns_replica_next_rml_tag;
 orte_data_type_t orte_ns_replica_next_dti;
@@ -224,6 +251,11 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
          return NULL. */
 
       *priority = 50;
+
+      /* initialize the cell tracker */
+
+      OBJ_CONSTRUCT(&orte_ns_replica_cell_tracker, ompi_list_t);
+      orte_ns_replica_next_cellid = 0;
 
       /* initialize the name tracker */
 
@@ -331,14 +363,14 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
     orte_cellid_t cell;
     orte_jobid_t job;
     orte_vpid_t startvpid, range;
-    char *tagname;
+    char *tagname, *site, *resource;
     orte_rml_tag_t oob_tag;
     orte_data_type_t type;
     size_t count;
     int rc=ORTE_SUCCESS, ret;
 
     count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, (void*)&command, &count, ORTE_NS_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &command, &count, ORTE_NS_CMD))) {
         ORTE_ERROR_LOG(rc);
         rc = ORTE_ERR_BAD_PARAM;
 	    goto RETURN_ERROR;
@@ -348,22 +380,36 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
     
     switch (command) {
         case ORTE_NS_CREATE_CELLID_CMD:
-    	   if (ORTE_SUCCESS != (rc = orte_dps.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {
-               ORTE_ERROR_LOG(rc);
-    	       goto RETURN_ERROR;
-    	   }
-         
-    	   rc = orte_ns_replica_create_cellid(&cell);
-           
-    	   if (ORTE_SUCCESS != (ret = orte_dps.pack(&answer, (void*)&cell, 1, ORTE_CELLID))) {
-               ORTE_ERROR_LOG(ret);
-    	       goto RETURN_ERROR;
-    	   }
-    	   if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
-               ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-               goto RETURN_ERROR;
-    	   }
-           break;
+            if (ORTE_SUCCESS != (rc = orte_dps.pack(&answer, &command, 1, ORTE_NS_CMD))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+            
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &site, &count, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                rc = ORTE_ERR_BAD_PARAM;
+                goto RETURN_ERROR;
+            }
+        
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &resource, &count, ORTE_STRING))) {
+                ORTE_ERROR_LOG(rc);
+                rc = ORTE_ERR_BAD_PARAM;
+                goto RETURN_ERROR;
+            }
+
+        	   rc = orte_ns_replica_create_cellid(&cell, site, resource);
+               
+        	   if (ORTE_SUCCESS != (ret = orte_dps.pack(&answer, &cell, 1, ORTE_CELLID))) {
+                ORTE_ERROR_LOG(ret);
+                goto RETURN_ERROR;
+        	   }
+        	   if (0 > orte_rml.send_buffer(sender, &answer, tag, 0)) {
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                goto RETURN_ERROR;
+            }
+            break;
      
         case ORTE_NS_CREATE_JOBID_CMD:
     	   if (ORTE_SUCCESS != (rc = orte_dps.pack(&answer, (void*)&command, 1, ORTE_NS_CMD))) {

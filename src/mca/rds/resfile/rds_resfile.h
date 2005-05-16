@@ -21,10 +21,18 @@
 #ifndef ORTE_RDS_RESFILE_H
 #define ORTE_RDS_RESFILE_H
 
-#include "mca/rds/rds.h"
+#include "orte_config.h"
+
+#include "threads/mutex.h"
+
+#include "mca/rds/base/base.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+/* resfile internal globals */
+extern ompi_list_t resource_list;
 
 /*
  * RDS Resource file functions
@@ -33,6 +41,23 @@ int orte_rds_resfile_query(void);
 
 int orte_rds_resfile_finalize(void);
 
+/* RDS resource file internal functions */
+char *orte_rds_resfile_getline(FILE *fp);
+
+char *orte_rds_resfile_parse_field(char *input);
+
+/* RDS resource file attribute parsers */
+int orte_rds_resfile_parse_fe(orte_rds_cell_desc_t *cell, FILE *fp);
+
+int orte_rds_resfile_parse_cd(orte_rds_cell_desc_t *cell, FILE *fp);
+
+int orte_rds_resfile_parse_os(orte_rds_cell_desc_t *cell, FILE *fp);
+
+int orte_rds_resfile_parse_fs(orte_rds_cell_desc_t *cell, FILE *fp);
+
+int orte_rds_resfile_parse_se(orte_rds_cell_desc_t *cell, FILE *fp);
+
+int orte_rds_resfile_parse_na(orte_rds_cell_desc_t *cell, FILE *fp);
 
 /**
  * RDS Resource file Component 
@@ -41,6 +66,7 @@ struct orte_rds_resfile_component_t {
     orte_rds_base_component_t super;
     int debug;
     char *filename;
+    ompi_mutex_t lock;
 };
 typedef struct orte_rds_resfile_component_t orte_rds_resfile_component_t;
 
