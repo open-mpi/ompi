@@ -169,20 +169,6 @@ int main(int argc, char *argv[])
         }
     }
     
-    /*
-     * Attempt to parse the requestor's name and contact info
-     */
-    if (orteprobe_globals.requestor_string) {
-        if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(
-                    orteprobe_globals.requestor_string, &requestor, NULL))) {
-            fprintf(stderr, "Couldn't parse environmental string for requestor's contact info\n");
-            return 1;
-        }
-    } else {
-        fprintf(stderr, "No contact info received for requestor\n");
-        return 1;
-    }
-
 fprintf(stderr, "opening output streams\n"); 
     /* Open up the output streams */
     if (!ompi_output_init()) {
@@ -328,6 +314,20 @@ fprintf(stderr, "init and pack buffer\n");
         exit(1);
     }
 fprintf(stderr, "send buffer\n");
+
+    /*
+     * Attempt to parse the requestor's name and contact info
+     */
+    if (orteprobe_globals.requestor_string) {
+        if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(
+                    orteprobe_globals.requestor_string, &requestor, NULL))) {
+            fprintf(stderr, "Couldn't parse environmental string for requestor's contact info\n");
+            return 1;
+        }
+    } else {
+        fprintf(stderr, "No contact info received for requestor\n");
+        return 1;
+    }
 
     if (0 > orte_rml.send_buffer(&requestor, &buffer, ORTE_RML_TAG_PROBE, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
