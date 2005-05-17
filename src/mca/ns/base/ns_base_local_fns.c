@@ -235,7 +235,7 @@ int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
      * in C99, so we have to use unsigned long for backward compatibility - then
      * check to ensure it is within range of cellid_t before casting */
 
-    tmpint = strtoul(token, NULL, 16);
+    tmpint = strtoul(token, NULL, 10);
     if (ORTE_CELLID_MAX >= tmpint) {
 	   cell = (orte_cellid_t)tmpint;
     } else {
@@ -249,7 +249,7 @@ int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
     /* convert to largest possible unsigned int - then
      * check to ensure it is within range of jobid_t before casting */
 
-    tmpint = strtoul(token, NULL, 16);
+    tmpint = strtoul(token, NULL, 10);
     if (ORTE_JOBID_MAX >= tmpint) {
 	   job = (orte_jobid_t)tmpint;
     } else {
@@ -263,7 +263,7 @@ int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
     /* convert to largest possible unsigned int then
      * check to ensure it is within range of vpid_t before casting */
 
-    tmpint = strtoul(token, NULL, 16);
+    tmpint = strtoul(token, NULL, 10);
     if (ORTE_VPID_MAX >= tmpint) {
 	   vpid = (orte_vpid_t)tmpint;
     } else {
@@ -437,7 +437,7 @@ int orte_ns_base_convert_string_to_cellid(orte_cellid_t *cellid, const char *cel
         return ORTE_ERR_BAD_PARAM;
     }
     
-    tmpint = strtoul(cellidstring, NULL, 16);
+    tmpint = strtoul(cellidstring, NULL, 10);
     if (ORTE_CELLID_MAX >= tmpint) {
         *cellid = (orte_cellid_t)tmpint;
     } else {
