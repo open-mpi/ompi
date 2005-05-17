@@ -182,7 +182,8 @@ int main(int argc, char *argv[])
         fprintf(stderr, "No contact info received for requestor\n");
         return 1;
     }
-    
+
+fprintf(stderr, "opening output streams\n"); 
     /* Open up the output streams */
     if (!ompi_output_init()) {
         return OMPI_ERROR;
@@ -196,27 +197,31 @@ int main(int argc, char *argv[])
     /* For malloc debugging */
     ompi_malloc_init();
 
+fprintf(stderr, "init universe info\n");
     /* Ensure the universe_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_univ_info())) {
         return ret;
     }
+fprintf(stderr, "init system info\n");
 
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_sys_info())) {
         return ret;
     }
+fprintf(stderr, "init process info\n");
 
     /* Ensure the process info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_proc_info())) {
         return ret;
     }
-    
+fprintf(stderr, "init mca\n");
     /*
      * Initialize the MCA framework 
      */
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
         return ret;
     }
+fprintf(stderr, "init dps\n");
  
     /*
      * Initialize the data packing service.
@@ -225,21 +230,21 @@ int main(int argc, char *argv[])
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-    
+fprintf(stderr, "init ns\n");
     /*
      * Open the name services to ensure access to local functions 
      */
     if (OMPI_SUCCESS != (ret = orte_ns_base_open())) {
         return ret;
     }
-
+fprintf(stderr, "init errmgr\n");
     /* Open the error manager to activate error logging - needs local name services */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
         return ret;
     }
     
     /*****   ERROR LOGGING NOW AVAILABLE *****/
-    
+fprintf(stderr, "init event\n");
     /*
      * Initialize the event library 
     */
@@ -247,7 +252,7 @@ int main(int argc, char *argv[])
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-
+fprintf(stderr, "init progress\n");
     /*
      * Intialize the general progress engine
      */
@@ -255,7 +260,7 @@ int main(int argc, char *argv[])
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-
+fprintf(stderr, "init wait\n");
     /*
      * Internal startup
      */
@@ -263,7 +268,7 @@ int main(int argc, char *argv[])
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-
+fprintf(stderr, "init rml\n");
     /*
      * Runtime Messaging Layer
      */
@@ -271,7 +276,7 @@ int main(int argc, char *argv[])
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-
+fprintf(stderr, "select rml\n");
     /*
      * Runtime Messaging Layer
      */
@@ -279,7 +284,7 @@ int main(int argc, char *argv[])
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-
+fprintf(stderr, "init gpr\n");
     /*
      * Registry
      */
@@ -287,7 +292,7 @@ int main(int argc, char *argv[])
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-
+fprintf(stderr, "init schema\n");
     /*
      * Initialize schema utilities
      */
@@ -296,7 +301,7 @@ int main(int argc, char *argv[])
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-
+fprintf(stderr, "universe exists\n");
     /* see if a universe already exists on this machine */
     if (ORTE_SUCCESS == (ret = orte_universe_exists(&univ))) {
         /* universe is here! send info back and die */
@@ -316,19 +321,21 @@ int main(int argc, char *argv[])
     if (NULL != log_path) {
         unlink(log_path);
     }
-
+fprintf(stderr, "init and pack buffer\n");
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);
     if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(ret);
         exit(1);
     }
+fprintf(stderr, "send buffer\n");
+
     if (0 > orte_rml.send_buffer(&requestor, &buffer, ORTE_RML_TAG_PROBE, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_DESTRUCT(&buffer);
         return ORTE_ERR_COMM_FAILURE;
     }
     OBJ_DESTRUCT(&buffer);
-    
+fprintf(stderr, "probe complete\n");
     /* finalize the system */
     orte_finalize();
 
