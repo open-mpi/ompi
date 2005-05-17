@@ -78,7 +78,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
     dt_elem_desc_t *pLast, *pLoop = NULL;
     long lb, ub, true_lb, true_ub, epsilon, old_true_ub;
 
-    /* the extent should be always be positive. So a negative
+    /* the extent should always be positive. So a negative
      * value here have a special meaning ie. default extent as
      * computed by ub - lb
      */
