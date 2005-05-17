@@ -238,13 +238,13 @@ int main(int argc, char *argv[], char* env[])
         /* This should never happen -- this case should be caught in
            create_app(), but let's just double check... */
         ompi_show_help("help-orterun.txt", "orterun:nothing-to-do", 
-                       orterun_basename);
+                       true, orterun_basename);
         exit(1);
     }
     apps = malloc(sizeof(orte_app_context_t *) * num_apps);
     if (NULL == apps) {
         ompi_show_help("help-orterun.txt", "orterun:syscall-failed", 
-                       orterun_basename, "malloc returned NULL", errno);
+                       true, orterun_basename, "malloc returned NULL", errno);
         exit(1);
     }
     for (j = i = 0; i < num_apps; ++i) {
@@ -255,7 +255,7 @@ int main(int argc, char *argv[], char* env[])
     proc_infos = malloc(sizeof(struct proc_info_t) * j);
     if (NULL == proc_infos) {
         ompi_show_help("help-orterun.txt", "orterun:syscall-failed", 
-                       orterun_basename, "malloc returned NULL", errno);
+                       true, orterun_basename, "malloc returned NULL", errno);
         exit(1);
     }
     for (i = 0; i < j; ++i) {
