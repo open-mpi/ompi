@@ -169,45 +169,40 @@ int main(int argc, char *argv[])
         }
     }
     
-fprintf(stderr, "opening output streams\n"); 
     /* Open up the output streams */
     if (!ompi_output_init()) {
         return OMPI_ERROR;
     }
-                                                                                                                   
+
     /* 
      * If threads are supported - assume that we are using threads - and reset otherwise. 
      */
     ompi_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
-                                                                                                                   
+
     /* For malloc debugging */
     ompi_malloc_init();
 
-fprintf(stderr, "init universe info\n");
-    /* Ensure the universe_info structure is instantiated and initialized */
-    if (ORTE_SUCCESS != (ret = orte_univ_info())) {
-        return ret;
-    }
-fprintf(stderr, "init system info\n");
-
-    /* Ensure the system_info structure is instantiated and initialized */
-    if (ORTE_SUCCESS != (ret = orte_sys_info())) {
-        return ret;
-    }
-fprintf(stderr, "init process info\n");
-
-    /* Ensure the process info structure is instantiated and initialized */
-    if (ORTE_SUCCESS != (ret = orte_proc_info())) {
-        return ret;
-    }
-fprintf(stderr, "init mca\n");
     /*
      * Initialize the MCA framework 
      */
     if (OMPI_SUCCESS != (ret = mca_base_open())) {
         return ret;
     }
-fprintf(stderr, "init dps\n");
+
+    /* Ensure the system_info structure is instantiated and initialized */
+    if (ORTE_SUCCESS != (ret = orte_sys_info())) {
+        return ret;
+    }
+
+    /* Ensure the process info structure is instantiated and initialized */
+    if (ORTE_SUCCESS != (ret = orte_proc_info())) {
+        return ret;
+    }
+
+    /* Ensure the universe_info structure is instantiated and initialized */
+    if (ORTE_SUCCESS != (ret = orte_univ_info())) {
+        return ret;
+    }
  
     /*
      * Initialize the data packing service.
@@ -216,21 +211,21 @@ fprintf(stderr, "init dps\n");
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-fprintf(stderr, "init ns\n");
+
     /*
      * Open the name services to ensure access to local functions 
      */
     if (OMPI_SUCCESS != (ret = orte_ns_base_open())) {
         return ret;
     }
-fprintf(stderr, "init errmgr\n");
+
     /* Open the error manager to activate error logging - needs local name services */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_open())) {
         return ret;
     }
     
     /*****   ERROR LOGGING NOW AVAILABLE *****/
-fprintf(stderr, "init event\n");
+
     /*
      * Initialize the event library 
     */
@@ -238,7 +233,7 @@ fprintf(stderr, "init event\n");
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-fprintf(stderr, "init progress\n");
+
     /*
      * Intialize the general progress engine
      */
@@ -246,7 +241,7 @@ fprintf(stderr, "init progress\n");
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-fprintf(stderr, "init wait\n");
+
     /*
      * Internal startup
      */
@@ -254,7 +249,7 @@ fprintf(stderr, "init wait\n");
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-fprintf(stderr, "init rml\n");
+
     /*
      * Runtime Messaging Layer
      */
@@ -262,7 +257,7 @@ fprintf(stderr, "init rml\n");
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-fprintf(stderr, "select rml\n");
+
     /*
      * Runtime Messaging Layer
      */
@@ -270,7 +265,7 @@ fprintf(stderr, "select rml\n");
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-fprintf(stderr, "init gpr\n");
+
     /*
      * Registry
      */
@@ -278,7 +273,7 @@ fprintf(stderr, "init gpr\n");
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-fprintf(stderr, "init schema\n");
+
     /*
      * Initialize schema utilities
      */
@@ -287,7 +282,7 @@ fprintf(stderr, "init schema\n");
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-fprintf(stderr, "universe exists\n");
+
     /* see if a universe already exists on this machine */
     if (ORTE_SUCCESS == (ret = orte_universe_exists(&univ))) {
         /* universe is here! send info back and die */
@@ -307,13 +302,11 @@ fprintf(stderr, "universe exists\n");
     if (NULL != log_path) {
         unlink(log_path);
     }
-fprintf(stderr, "init and pack buffer\n");
     OBJ_CONSTRUCT(&buffer, orte_buffer_t);
     if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &ret, 1, ORTE_INT))) {
         ORTE_ERROR_LOG(ret);
         exit(1);
     }
-fprintf(stderr, "send buffer\n");
 
     /*
      * Attempt to parse the requestor's name and contact info
@@ -323,6 +316,11 @@ fprintf(stderr, "send buffer\n");
                     orteprobe_globals.requestor_string, &requestor, NULL))) {
             fprintf(stderr, "Couldn't parse environmental string for requestor's contact info\n");
             return 1;
+        }
+        /* set the contact info */
+        if (ORTE_SUCCESS != (ret = orte_rml.set_uri(orteprobe_globals.requestor_string))) {
+            fprintf(stderr, "Couldn't set contact info for requestor\n");
+            return ret;
         }
     } else {
         fprintf(stderr, "No contact info received for requestor\n");
@@ -335,7 +333,7 @@ fprintf(stderr, "send buffer\n");
         return ORTE_ERR_COMM_FAILURE;
     }
     OBJ_DESTRUCT(&buffer);
-fprintf(stderr, "probe complete\n");
+
     /* finalize the system */
     orte_finalize();
 
