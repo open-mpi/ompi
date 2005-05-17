@@ -218,6 +218,7 @@ struct ompi_convertor_t {
 };
 OBJ_CLASS_DECLARATION( ompi_convertor_t );
 
+#if !OMPI_ENABLE_DEBUG
 /* 
  * Return 0 if everything went OK and if there is still room before the complete
  *          conversion of the data (need additional call with others input buffers )
@@ -273,6 +274,14 @@ static inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
     assert( pConv->bConverted < (pConv->pDesc->size * pConv->count) );
     return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
 }
+#else
+extern int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
+                                    struct iovec* iov, uint32_t* out_size,
+                                    uint32_t* max_data, int32_t* freeAfter );
+extern int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
+                                      struct iovec* iov, uint32_t* out_size,
+                                      uint32_t* max_data, int32_t* freeAfter );
+#endif  /* OMPI_ENABLE_DEBUG */
 
 /* Base convertor for all external32 operations */
 extern ompi_convertor_t* ompi_mpi_external32_convertor;
