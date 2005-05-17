@@ -22,6 +22,8 @@
 #include "orte_config.h"
 #include "include/orte_constants.h"
 
+#include <string.h>
+
 #include "class/ompi_list.h"
 #include "util/output.h"
 #include "mca/errmgr/errmgr.h"
