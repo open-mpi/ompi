@@ -163,7 +163,7 @@ static inline int32_t ompi_ddt_type_ub( const ompi_datatype_t* pData, long* disp
 static inline int32_t ompi_ddt_type_size ( const ompi_datatype_t* pData, int32_t *size )
 { *size = pData->size; return 0; }
 static inline int32_t ompi_ddt_type_extent( const ompi_datatype_t* pData, long* extent )
-{ *extent = (pData->ub - pData->lb); return 0; }
+{ *extent = pData->ub - pData->lb; return 0; }
 
 static inline int32_t ompi_ddt_get_extent( const ompi_datatype_t* pData, long* lb, long* extent)
 { *lb = pData->lb; *extent = pData->ub - pData->lb; return 0; }
@@ -190,7 +190,8 @@ typedef int32_t (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
 typedef void*(*memalloc_fct_t)( size_t* pLength );
 
 typedef struct __dt_stack {
-    int32_t index;    /**< index in the element description */
+    int16_t index;    /**< index in the element description */
+    int16_t type;     /**< the type used for the last pack/unpack (original or DT_BYTE) */
     int32_t count;    /**< number of times we still have to do it */
     int32_t end_loop; /**< for loops the end of the loop, otherwise useless */
     long    disp;     /**< actual displacement depending on the count field */
