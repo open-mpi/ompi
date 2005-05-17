@@ -772,7 +772,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */
-    int stack_pos = 0;
+    int stack_pos = 0, i;
     long lastDisp = 0, lastLength = 0;
     dt_elem_desc_t* pElems;
 
@@ -855,15 +855,35 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
             DDT_DUMP_STACK( pStack, stack_pos, pElems, "advance loops" );
         }
         while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
-            /* now here we have a basic datatype */
             if( (lastDisp + lastLength) != (pStack->disp + pElems[pos_desc].elem.disp) ) {
+                /* If now contiguous with the previous piece of data then first save
+                 * the previous one...
+                 */
                 OMPI_DDT_SAFEGUARD_POINTER( pDestBuf + lastDisp, lastLength,
                                             pDestBuf, datatype, count );
                 MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
                 lastDisp = pStack->disp + pElems[pos_desc].elem.disp;
                 lastLength = 0;
             }
-            lastLength += pElems[pos_desc].elem.count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
+            if( pElems[pos_desc].elem.common.flags & DT_FLAG_CONTIGUOUS ) {
+                /* a contiguous piece of memory. Just add it to the actual one. Notice that if this
+                 * datatype is not contiguous with the previous one, then the old one is already
+                 * copied. Thus we just have to increase the amount ...
+                 */
+                lastLength += pElems[pos_desc].elem.count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
+            } else {
+                /* basic datatype but with an extent different that the size. Try to add the first
+                 * one to the previous piece of memory ...
+                 */
+                lastLength += BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
+                for( i = 0; i < ((int)pElems[pos_desc].elem.count - 1); i++ ) {
+                    OMPI_DDT_SAFEGUARD_POINTER( pDestBuf + lastDisp, lastLength,
+                                                pDestBuf, datatype, count );
+                    MEMCPY( pDestBuf + lastDisp, pSrcBuf + lastDisp, lastLength );
+                    lastDisp += pElems[pos_desc].elem.disp;
+                    lastLength = BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
+                }                    
+            }
             pos_desc++;  /* advance to the next data */
         }
     }
