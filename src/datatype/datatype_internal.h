@@ -130,8 +130,8 @@ typedef struct ddt_elem_desc ddt_elem_desc_t;
 struct ddt_loop_desc {
     ddt_elem_id_description common; /**< basic data description and flags */
     uint32_t                loops;  /**< number of elements */
-    long                    items;  /**< number of items in the loop */
-    uint32_t                extent; /**< extent of the whole loop */
+    long                    extent; /**< extent of the whole loop */
+    uint32_t                items;  /**< number of items in the loop */
 };
 typedef struct ddt_loop_desc ddt_loop_desc_t;
 
@@ -148,6 +148,33 @@ union dt_elem_desc {
     ddt_loop_desc_t    loop;
     ddt_endloop_desc_t end_loop;
 };
+
+#define CREATE_LOOP_START( _place, _count, _items, _extent, _flags ) \
+do { \
+    (_place)->loop.common.type   = DT_LOOP; \
+    (_place)->loop.common.flags  = (_flags) & ~DT_FLAG_DATA; \
+    (_place)->loop.loops         = (_count); \
+    (_place)->loop.items         = (_items); \
+    (_place)->loop.extent        = (_extent); \
+} while(0)
+
+#define CREATE_LOOP_END( _place, _items, _total_extent, _size, _flags ) \
+do { \
+   (_place)->end_loop.common.type = DT_END_LOOP; \
+   (_place)->end_loop.common.flags = (_flags) & ~DT_FLAG_DATA; \
+   (_place)->end_loop.items = (_items); \
+   (_place)->end_loop.total_extent = (_total_extent);  /* the final extent for the loop */ \
+   (_place)->end_loop.size = (_size);                  /* the size inside the loop */ \
+} while(0)
+
+#define CREATE_ELEM( _place, _type, _flags, _count, _disp, _extent ) \
+do { \
+    (_place)->elem.common.flags = (_flags) | DT_FLAG_DATA; \
+    (_place)->elem.common.type  = (_type); \
+    (_place)->elem.count        = (_count); \
+    (_place)->elem.disp         = (_disp); \
+    (_place)->elem.extent       = (_extent); \
+} while(0)
 
 /* keep the last 16 bits free for data flags */
 #define CONVERTOR_USELESS          0x00010000
@@ -201,37 +228,18 @@ do { \
 
 #define MEMCPY( DST, SRC, BLENGTH ) \
 do { \
-    /*printf( "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) );*/ \
+    /*ompi_output( 0, "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) ); */\
     memcpy( (DST), (SRC), (BLENGTH) ); \
 } while (0)
 
 #if OMPI_ENABLE_DEBUG
+void ompi_ddt_safeguard_pointer( const void* actual_ptr, int length, const void* initial_ptr,
+                                 const ompi_datatype_t* pData, int count );
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT ) \
     ompi_ddt_safeguard_pointer( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) )
 #else
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT )
 #endif  /* OMPI_ENABLE_DEBUG */
-
-static inline void ompi_ddt_safeguard_pointer( const void* actual_ptr, int length,
-                                               const void* initial_ptr,
-                                               const ompi_datatype_t* pData,
-                                               int count )
-{
-    char* lower_bound = (char*)initial_ptr;
-    char* upper_bound = (char*)initial_ptr;
-
-    if( (length == 0) || (count == 0) ) return;
-    lower_bound += pData->lb;
-    upper_bound += pData->ub * (count - 1) + pData->true_ub;
-
-    if( (char*)actual_ptr >= lower_bound )
-        /* Im up from the lower bound */
-        if( ((char*)actual_ptr + length) <= upper_bound )
-            return;
-    printf( "Pointer %p size %d is outside [%p,%p] for data \n", actual_ptr, length,
-            lower_bound, upper_bound );
-    ompi_ddt_dump( pData );
-}
 
 #ifdef USELESS
 #define MEMCPY_LIMIT 1
