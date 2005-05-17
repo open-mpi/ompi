@@ -397,11 +397,11 @@ convertor_init_generic( ompi_convertor_t* pConv, const ompi_datatype_t* datatype
                 free( pConv->pStack );
         }
         pConv->pStack = pConv->static_stack;
-	pConv->stack_size = DT_STATIC_STACK_SIZE;
+        pConv->stack_size = DT_STATIC_STACK_SIZE;
     }
     if( required_stack_length > pConv->stack_size ) {
-	pConv->stack_size = required_stack_length;
-	pConv->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) * pConv->stack_size );
+        pConv->stack_size = required_stack_length;
+        pConv->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) * pConv->stack_size );
     }
     
     pConv->pBaseBuf = (void*)pUserBuf;
