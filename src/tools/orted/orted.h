@@ -55,6 +55,7 @@ typedef struct {
     char* name;
     char* universe;
     int bootproxy;
+    int uri_pipe;
     ompi_mutex_t mutex;
     ompi_condition_t condition;
     bool exit_condition;

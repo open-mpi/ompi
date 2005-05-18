@@ -102,7 +102,7 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
 #ifndef WIN32
     char **argv, *param, *uri, *uid, *hn=NULL;
     char *path, *name_string, *orteprobe;
-    int argc, rc=ORTE_SUCCESS, id;
+    int argc, rc=ORTE_SUCCESS, id, intparam;
     pid_t pid;
     bool can_launch=false, on_gpr=false;
     orte_cellid_t cellid=ORTE_CELLID_MAX;
@@ -395,6 +395,21 @@ MOVEON:
     ompi_argv_append(&argc, &argv, param);
     free(param);
     free(uri);
+    
+    /* pass along any parameters for the head node process
+     * in case one needs to be created
+     */
+    id = mca_base_param_register_string("scope",NULL,NULL,NULL,"private");
+    mca_base_param_lookup_string(id, &param);
+    ompi_argv_append(&argc, &argv, "--scope");
+    ompi_argv_append(&argc, &argv, param);
+    free(param);
+    
+    id = mca_base_param_register_int("persistent",NULL,NULL,NULL,(int)false);
+    mca_base_param_lookup_int(id, &intparam);
+    if (intparam) {
+        ompi_argv_append(&argc, &argv, "--persistent");
+    }
     
     /* issue the non-blocking recv to get the probe's findings */
     rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_PROBE,
