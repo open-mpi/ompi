@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     ompi_cmd_line_t *cmd_line = NULL;
     char *contact_path = NULL, *orted=NULL;
     char *log_path = NULL, **ortedargv;
-    char *universe, orted_uri[256], *path, *param;
+    char *universe, orted_uri[256], *orted_uri_ptr, *path, *param;
     orte_universe_t univ;
     orte_buffer_t buffer;
     orte_process_name_t requestor;
@@ -313,15 +313,17 @@ int main(int argc, char *argv[])
      */
     if (ORTE_SUCCESS == (ret = orte_universe_exists(&univ))) {
         /* universe is here! send info back and die */
+fprintf(stderr, "contacted existing universe - sending contact info back\n");
         OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-        if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, univ.seed_uri, 1, ORTE_STRING))) {
-            ORTE_ERROR_LOG(ret);
+        orted_uri_ptr = &univ.seed_uri;
+        if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &orte_uri_ptr, 1, ORTE_STRING))) {
+            fprintf(stderr, "orteprobe: failed to pack contact info for existing universe\n");
             exit(1);
         }
         if (0 > orte_rml.send_buffer(&requestor, &buffer, ORTE_RML_TAG_PROBE, 0)) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            fprintf(stderr, "orteprobe: comm failure when sending contact info for existing univ back to requestor\n");
             OBJ_DESTRUCT(&buffer);
-            return ORTE_ERR_COMM_FAILURE;
+            exit(1);
         }
         OBJ_DESTRUCT(&buffer);
 
@@ -331,7 +333,9 @@ int main(int argc, char *argv[])
          * daemon, and then tell whomever spawned us how to talk to the new
          * daemon
          */
+fprintf(stderr, "could not connect to existing universe\n");
         if (ORTE_ERR_NOT_FOUND != ret) {
+fprintf(stderr, "existing universe did not respond\n");
             /* if it exists but no contact could be established,
              * define unique name based on current one.
              */
@@ -355,6 +359,8 @@ int main(int argc, char *argv[])
         id = mca_base_param_register_string("orted",NULL,NULL,NULL,"orted");
         mca_base_param_lookup_string(id, &orted);
         
+fprintf(stderr, "using %s for orted command\n", orted);
+
         /* Initialize the argv array */
         ortedargv = ompi_argv_split(orted, ' ');
         ortedargc = ompi_argv_count(ortedargv);
@@ -366,6 +372,8 @@ int main(int argc, char *argv[])
         /* setup the path */
         path = ompi_path_findv(ortedargv[0], 0, environ, NULL);
     
+fprintf(stderr, "path setup as %s\n", path);
+
         /* tell the daemon it's the seed */
         ompi_argv_append(&ortedargc, &ortedargv, "--seed");
     
@@ -384,6 +392,8 @@ int main(int argc, char *argv[])
         ompi_argv_append(&ortedargc, &ortedargv, param);
         free(param);
  
+fprintf(stderr, "forking now\n");
+
         /* Create the child process. */
         pid = fork ();
         if (pid == (pid_t) 0) {
@@ -399,19 +409,23 @@ int main(int argc, char *argv[])
         } else {
             /* This is the parent process.
                 Close write end first. */
+
+fprintf(stderr, "attempting to read from daemon\n");
+
             read(orted_pipe[0], orted_uri, 255);
             close(orted_pipe[0]);
             
             /* send back the info */
             OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-            if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &orted_uri, 1, ORTE_STRING))) {
-                ORTE_ERROR_LOG(ret);
+            orted_uri_ptr = &orted_uri;
+            if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &orted_uri_ptr, 1, ORTE_STRING))) {
+                fprintf(stderr, "orteprobe: failed to pack daemon uri\n");
                 exit(1);
             }
             if (0 > orte_rml.send_buffer(&requestor, &buffer, ORTE_RML_TAG_PROBE, 0)) {
-                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                fprintf(stderr, "orteprobe: could not send daemon uri info back to probe\n");
                 OBJ_DESTRUCT(&buffer);
-                return ORTE_ERR_COMM_FAILURE;
+                exit(1);
             }
             OBJ_DESTRUCT(&buffer);
         }
