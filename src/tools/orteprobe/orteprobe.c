@@ -37,6 +37,8 @@
 
 #include "dps/dps.h"
 #include "event/event.h"
+#include "util/argv.h"
+#include "util/path.h"
 #include "util/output.h"
 #include "util/show_help.h"
 #include "util/sys_info.h"
@@ -121,16 +123,20 @@ ompi_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OMPI_CMD_LINE_TYPE_NULL, NULL }
 };
 
+extern char **environ;
 
 int main(int argc, char *argv[])
 {
-    int ret = 0;
+    int ret = 0, ortedargc;
     ompi_cmd_line_t *cmd_line = NULL;
-    char *contact_path = NULL;
-    char *log_path = NULL;
+    char *contact_path = NULL, *orted=NULL;
+    char *log_path = NULL, **ortedargv;
+    char *universe, orted_uri[256], *path, *param;
     orte_universe_t univ;
     orte_buffer_t buffer;
     orte_process_name_t requestor;
+    int id, orted_pipe[2];
+    pid_t pid;
 
     /* setup to check common command line options that just report and die */
     memset(&orteprobe_globals, 0, sizeof(orteprobe_globals));
@@ -283,30 +289,6 @@ int main(int argc, char *argv[])
         return ret;
     }
 
-    /* see if a universe already exists on this machine */
-    if (ORTE_SUCCESS == (ret = orte_universe_exists(&univ))) {
-        /* universe is here! send info back and die */
-    } else {
-        /* existing universe is not here or does not allow contact.
-         * ensure we have a unique universe name, fork/exec an appropriate
-         * daemon, and then tell whomever spawned us how to talk to the new
-         * daemon
-         */
-    }
-     
-    /* cleanup */
-    if (NULL != contact_path) {
-	    unlink(contact_path);
-    }
-    if (NULL != log_path) {
-        unlink(log_path);
-    }
-    OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-    if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &ret, 1, ORTE_INT))) {
-        ORTE_ERROR_LOG(ret);
-        exit(1);
-    }
-
     /*
      * Attempt to parse the requestor's name and contact info
      */
@@ -326,13 +308,122 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (0 > orte_rml.send_buffer(&requestor, &buffer, ORTE_RML_TAG_PROBE, 0)) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+    /* see if a universe already exists on this machine and
+     * will allow contact with us
+     */
+    if (ORTE_SUCCESS == (ret = orte_universe_exists(&univ))) {
+        /* universe is here! send info back and die */
+        OBJ_CONSTRUCT(&buffer, orte_buffer_t);
+        if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, univ.seed_uri, 1, ORTE_STRING))) {
+            ORTE_ERROR_LOG(ret);
+            exit(1);
+        }
+        if (0 > orte_rml.send_buffer(&requestor, &buffer, ORTE_RML_TAG_PROBE, 0)) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            OBJ_DESTRUCT(&buffer);
+            return ORTE_ERR_COMM_FAILURE;
+        }
         OBJ_DESTRUCT(&buffer);
-        return ORTE_ERR_COMM_FAILURE;
-    }
-    OBJ_DESTRUCT(&buffer);
 
+    } else {
+        /* existing universe is not here or does not allow contact.
+         * ensure we have a unique universe name, fork/exec an appropriate
+         * daemon, and then tell whomever spawned us how to talk to the new
+         * daemon
+         */
+        if (ORTE_ERR_NOT_FOUND != ret) {
+            /* if it exists but no contact could be established,
+             * define unique name based on current one.
+             */
+            universe = strdup(orte_universe_info.name);
+            free(orte_universe_info.name);
+            orte_universe_info.name = NULL;
+            pid = getpid();
+            if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, pid)) {
+                fprintf(stderr, "orteprobe: failed to create unique universe name");
+                exit(1);
+            }
+        }
+        /* setup to fork/exec the new universe */
+        /* setup the pipe to get the contact info back */
+        if (pipe(orted_pipe)) {
+            fprintf (stderr, "orteprobe: Pipe failed\n");
+            exit(1);
+        }
+        
+        /* get name of orted application - just in case user specified something different */
+        id = mca_base_param_register_string("orted",NULL,NULL,NULL,"orted");
+        mca_base_param_lookup_string(id, &orted);
+        
+        /* Initialize the argv array */
+        ortedargv = ompi_argv_split(orted, ' ');
+        ortedargc = ompi_argv_count(ortedargv);
+        if (ortedargc <= 0) {
+            fprintf(stderr, "orteprobe: could not initialize argv array for daemon\n");
+            exit(1);
+        }
+        
+        /* setup the path */
+        path = ompi_path_findv(ortedargv[0], 0, environ, NULL);
+    
+        /* tell the daemon it's the seed */
+        ompi_argv_append(&ortedargc, &ortedargv, "--seed");
+    
+        /* tell the daemon it's scope */
+        ompi_argv_append(&ortedargc, &ortedargv, "--scope");
+        ompi_argv_append(&ortedargc, &ortedargv, orte_universe_info.scope);
+        
+        /* tell the daemon if it's to be persistent */
+        if (orte_universe_info.persistence) {
+            ompi_argv_append(&ortedargc, &ortedargv, "--persistent");
+        }
+        
+        /* tell the daemon to report its uri to us */
+        asprintf(&param, "%d", orted_pipe[1]);
+        ompi_argv_append(&ortedargc, &ortedargv, "--report-uri");
+        ompi_argv_append(&ortedargc, &ortedargv, param);
+        free(param);
+ 
+        /* Create the child process. */
+        pid = fork ();
+        if (pid == (pid_t) 0) {
+            /* This is the child process.
+                Close read end first. */
+            execv(path, ortedargv);
+            fprintf(stderr, "orteprobe: execv failed with errno=%d\n", errno);
+            exit(1);
+        } else if (pid < (pid_t) 0) {
+            /* The fork failed. */
+            fprintf (stderr, "orteprobe: Fork failed\n");
+            exit(1);
+        } else {
+            /* This is the parent process.
+                Close write end first. */
+            read(orted_pipe[0], &orted_uri, 255);
+            close(orted_pipe[0]);
+            
+            /* send back the info */
+            OBJ_CONSTRUCT(&buffer, orte_buffer_t);
+            if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, orted_uri, 1, ORTE_STRING))) {
+                ORTE_ERROR_LOG(ret);
+                exit(1);
+            }
+            if (0 > orte_rml.send_buffer(&requestor, &buffer, ORTE_RML_TAG_PROBE, 0)) {
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+                OBJ_DESTRUCT(&buffer);
+                return ORTE_ERR_COMM_FAILURE;
+            }
+            OBJ_DESTRUCT(&buffer);
+        }
+    }
+     
+    /* cleanup */
+    if (NULL != contact_path) {
+	    unlink(contact_path);
+    }
+    if (NULL != log_path) {
+        unlink(log_path);
+    }
     /* finalize the system */
     orte_finalize();
 

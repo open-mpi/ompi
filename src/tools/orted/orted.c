@@ -137,6 +137,10 @@ ompi_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OMPI_CMD_LINE_TYPE_STRING,
       "Set restrictions on who can connect to this universe"},
 
+    { NULL, NULL, NULL, '\0', NULL, "report-uri", 1,
+      &orted_globals.uri_pipe, OMPI_CMD_LINE_TYPE_INT,
+      "Report this process' uri on indicated pipe"},
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OMPI_CMD_LINE_TYPE_NULL, NULL }
@@ -213,6 +217,13 @@ int main(int argc, char *argv[])
         return ret;
     }
 
+    /* if requested, report my uri to the indicated pipe */
+    if (orted_globals.uri_pipe > 0) {
+        write(orted_globals.uri_pipe, orte_universe_info.seed_uri,
+                    strlen(orte_universe_info.seed_uri));
+        close(orted_globals.uri_pipe);
+    }
+    
     /* setup stdin/stdout/stderr */
     if (orted_globals.debug_daemons_file) {
         /* if we are debugging to a file, then send stdin/stdout/stderr
