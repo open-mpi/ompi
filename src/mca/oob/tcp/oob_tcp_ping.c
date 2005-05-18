@@ -151,7 +151,7 @@ int mca_oob_tcp_ping(
         return OMPI_ERR_UNREACH;
     }
     MCA_OOB_TCP_HDR_NTOH(&hdr);
-    if(hdhr.msg_type != MCA_OOB_TCP_PROBE) {
+    if(hdr.msg_type != MCA_OOB_TCP_PROBE) {
         close(sd);
         return OMPI_ERR_UNREACH;
     }
