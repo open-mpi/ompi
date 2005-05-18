@@ -208,23 +208,23 @@ int orte_init_stage1(void)
             orte_process_info.gpr_replica_uri = strdup(univ.seed_uri);
         } else {
             if (ORTE_ERR_NOT_FOUND != ret) {
-                    /* if it exists but no contact could be established,
-                     * define unique name based on current one.
-                     * and start new universe with me as seed
-                     */
-                    universe = strdup(orte_universe_info.name);
-                    free(orte_universe_info.name);
-                    orte_universe_info.name = NULL;
-                    pid = getpid();
-                    if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, pid)) {
-                        ompi_output(0, "orte_init: failed to create unique universe name");
-                        return ret;
-                    }
-            }
-            ompi_output(0, "Could not join an existing universe");
-            ompi_output(0, "Establishing a new one named: %s",
-                            orte_universe_info.name);
+                /* if it exists but no contact could be established,
+                 * define unique name based on current one.
+                 * and start new universe with me as seed
+                 */
+                universe = strdup(orte_universe_info.name);
+                free(orte_universe_info.name);
+                orte_universe_info.name = NULL;
+                pid = getpid();
+                if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, pid)) {
+                    ompi_output(0, "orte_init: failed to create unique universe name");
+                    return ret;
+                }
+                ompi_output(0, "Could not join a running, existing universe");
+                ompi_output(0, "Establishing a new one named: %s",
+                                orte_universe_info.name);
     
+            }
             orte_process_info.seed = true;
             /* since we are seed, ensure that all replica info is NULL'd */
             if (NULL != orte_process_info.ns_replica_uri) {
