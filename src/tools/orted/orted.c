@@ -220,7 +220,7 @@ int main(int argc, char *argv[])
     /* if requested, report my uri to the indicated pipe */
     if (orted_globals.uri_pipe > 0) {
         write(orted_globals.uri_pipe, orte_universe_info.seed_uri,
-                    strlen(orte_universe_info.seed_uri));
+                    strlen(orte_universe_info.seed_uri)+1); /* need to add 1 to get the NULL */
         close(orted_globals.uri_pipe);
     }
     
