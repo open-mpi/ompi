@@ -131,7 +131,8 @@ int mca_oob_tcp_ping(
     }
     hdr.msg_dst = *name;
     hdr.msg_type = MCA_OOB_TCP_PROBE;
- 
+    MCA_OOB_TCP_HDR_HTON(&hdr);
+
     if((rc = write(sd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
         close(sd);
         return OMPI_ERR_UNREACH;
