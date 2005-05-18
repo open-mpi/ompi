@@ -33,6 +33,7 @@
 #include "mca/ns/ns.h"
 #include "mca/rml/rml.h"
 #include "mca/errmgr/errmgr.h"
+#include "mca/soh/soh.h"
 #include "util/univ_info.h"
 
 #include "util/argv.h"
@@ -276,6 +277,61 @@ cleanup:
 }
 
 
+
+
+int orte_pls_poe_wait_proc(pid_t pid, int status, void* cbdata)
+{
+    int i;
+    int rc;
+
+    orte_rmaps_base_proc_t* proc;
+    ompi_list_item_t* item;
+    ompi_list_t *map = (ompi_list_t *)cbdata;
+
+    ompi_output(0, "---- %s BEGIN -----\n", __FUNCTION__);
+
+    for(item =  ompi_list_get_first(map);
+        item != ompi_list_get_end(map);
+        item =  ompi_list_get_next(item)) {
+        orte_rmaps_base_map_t* map2 = (orte_rmaps_base_map_t*)item;
+        size_t i;
+        for(i=0; i<map2->num_procs; i++) {
+           proc=map2->procs[i]; 
+           if(WIFEXITED(status)) {
+              rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_TERMINATED, status);
+           } else {
+              rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_ABORTED, status);
+           }
+        }
+    }
+
+    ompi_output(0, "---- %s END-----\n", __FUNCTION__);
+
+#ifdef XXX
+    orte_rmaps_base_proc_t* proc = (orte_rmaps_base_proc_t*)cbdata;
+    int rc;
+                                                                                                      
+    /* Clean up the session directory as if we were the process
+       itself.  This covers the case where the process died abnormally
+       and didn't cleanup its own session directory. */
+                                                                                                      
+    orte_session_dir_finalize(&proc->proc_name);
+    orte_iof.iof_flush();
+                                                                                                      
+    /* set the state of this process */
+    if(WIFEXITED(status)) {
+        rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_TERMINATED, status);
+    } else {
+        rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_ABORTED, status);
+    }
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+    }
+    OBJ_RELEASE(proc);
+#endif     
+}
+
+
 static int orte_pls_poe_launch_create_cmd_file(
     FILE *cfp,
     orte_app_context_t* context,
@@ -487,15 +543,18 @@ int orte_pls_poe_launch_interactive(orte_jobid_t jobid)
        orte_waitpid(pid,&status,0);
        ompi_output(0, "\n\nAFTER WAIT!!\n\n");
 */
+       orte_wait_cb(pid, orte_pls_poe_wait_proc, &map);
     }
    
 cleanup:
-/*
     while(NULL != (item = ompi_list_remove_first(&map))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&map);
-*/
+    while(NULL != (item = ompi_list_remove_first(&nodes))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&nodes);
     if (mca_pls_poe_component.verbose>10) ompi_output(0, "%s: --- END rc(%d) ---\n", __FUNCTION__, rc);
     return rc;
 }
