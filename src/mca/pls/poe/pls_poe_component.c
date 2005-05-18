@@ -131,7 +131,8 @@ int orte_pls_poe_component_open(void)
     mca_pls_poe_component.class = orte_pls_poe_param_reg_string("class","interactive"); 
     mca_pls_poe_component.retry = orte_pls_poe_param_reg_int("retry", 0); 
     mca_pls_poe_component.retrycount = orte_pls_poe_param_reg_int("retrycount", 0); 
-    param = orte_pls_poe_param_reg_string("progname","poe");
+    mca_pls_poe_component.env = orte_pls_poe_param_reg_string("progenv","env");
+    param = orte_pls_poe_param_reg_string("progpoe","poe");
     mca_pls_poe_component.argv = ompi_argv_split(param, ' ');
     mca_pls_poe_component.argc = ompi_argv_count(mca_pls_poe_component.argv);
     if (mca_pls_poe_component.argc > 0) {
@@ -153,6 +154,10 @@ orte_pls_base_module_t *orte_pls_poe_component_init(int *priority)
     extern char **environ;
     mca_pls_poe_component.path = ompi_path_findv(mca_pls_poe_component.argv[0], 0, environ, NULL);
     if (NULL == mca_pls_poe_component.path) {
+        return NULL;
+    }
+    mca_pls_poe_component.env = ompi_path_findv(mca_pls_poe_component.env, 0, environ, NULL);
+    if (NULL == mca_pls_poe_component.env) {
         return NULL;
     }
     *priority = mca_pls_poe_component.priority;
