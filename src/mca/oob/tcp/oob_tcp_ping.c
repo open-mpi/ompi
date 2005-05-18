@@ -131,8 +131,8 @@ int mca_oob_tcp_ping(
     }
     hdr.msg_dst = *name;
     hdr.msg_type = MCA_OOB_TCP_PROBE;
-    MCA_OOB_TCP_HDR_HTON(&hdr);
 
+    MCA_OOB_TCP_HDR_HTON(&hdr);
     if((rc = write(sd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
         close(sd);
         return OMPI_ERR_UNREACH;
@@ -147,6 +147,11 @@ int mca_oob_tcp_ping(
         return OMPI_ERR_UNREACH;
     }
     if((rc = read(sd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
+        close(sd);
+        return OMPI_ERR_UNREACH;
+    }
+    MCA_OOB_TCP_HDR_NTOH(&hdr);
+    if(hdhr.msg_type != MCA_OOB_TCP_PROBE) {
         close(sd);
         return OMPI_ERR_UNREACH;
     }
