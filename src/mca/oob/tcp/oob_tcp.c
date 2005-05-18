@@ -471,7 +471,8 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
             mca_oob_tcp_recv_connect(sd, &hdr);
             break;
         default:
-            ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: invalid message type: %d\n", hdr.msg_type);
+            ompi_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: invalid message type: %d\n", 
+                ORTE_NAME_ARGS(orte_process_info.my_name), hdr.msg_type);
             close(sd);
             break;
     }
