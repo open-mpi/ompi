@@ -286,14 +286,13 @@ int main(int argc, char *argv[])
     /* see if a universe already exists on this machine */
     if (ORTE_SUCCESS == (ret = orte_universe_exists(&univ))) {
         /* universe is here! send info back and die */
+    } else {
+        /* existing universe is not here or does not allow contact.
+         * ensure we have a unique universe name, fork/exec an appropriate
+         * daemon, and then tell whomever spawned us how to talk to the new
+         * daemon
+         */
     }
-    
-    /* existing universe is not here or does not allow contact.
-     * ensure we have a unique universe name, fork/exec an appropriate
-     * daemon, and then tell whomever spawned us how to talk to the new
-     * daemon
-     */
-     
      
     /* cleanup */
     if (NULL != contact_path) {

@@ -148,7 +148,6 @@ int main(int argc, char *argv[])
     int ret = 0;
     int fd;
     ompi_cmd_line_t *cmd_line = NULL;
-    char *contact_path = NULL;
     char *log_path = NULL;
     char log_file[PATH_MAX];
     char *jobidstring;
@@ -276,29 +275,6 @@ int main(int argc, char *argv[])
         return ret;
     }
 
-    /* if i'm the seed, get my contact info and write my setup file for others to find */
-    if (orte_process_info.seed) {
-	    if (NULL != orte_universe_info.seed_uri) {
-	        free(orte_universe_info.seed_uri);
-	        orte_universe_info.seed_uri = NULL;
-	    }
-	    orte_universe_info.seed_uri = orte_rml.get_uri();
-	    contact_path = orte_os_path(false, orte_process_info.universe_session_dir,
-				    "universe-setup.txt", NULL);
-	    if (orted_globals.debug_daemons) {
-            ompi_output(0, "ompid: contact_file %s", contact_path);
-        }
-
-	    if (OMPI_SUCCESS != (ret = orte_write_universe_setup_file(contact_path, &orte_universe_info))) {
-	        if (orted_globals.debug_daemons) {
-		        ompi_output(0, "[%lu,%lu,%lu] ompid: couldn't write setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
-	        }
-	    } else if (orted_globals.debug_daemons) {
-	        ompi_output(0, "[%lu,%lu,%lu] ompid: wrote setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
-	    }
-    }
-
-
     if (orted_globals.debug_daemons) {
 	    ompi_output(0, "[%lu,%lu,%lu] ompid: issuing callback", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
@@ -332,9 +308,6 @@ int main(int argc, char *argv[])
     }
 
     /* cleanup */
-    if (NULL != contact_path) {
-	    unlink(contact_path);
-    }
     if (NULL != log_path) {
         unlink(log_path);
     }

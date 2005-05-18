@@ -35,6 +35,7 @@
 #include "util/sys_info.h"
 #include "util/proc_info.h"
 #include "util/univ_info.h"
+#include "util/os_path.h"
 
 /**
  * Leave ORTE.
@@ -46,6 +47,16 @@
  */
 int orte_finalize(void)
 {
+    char *contact_path;
+    
+    /* if I'm the seed, remove the universe contact info file */
+    if (orte_process_info.seed) {
+        contact_path = orte_os_path(false, orte_process_info.universe_session_dir,
+                    "universe-setup.txt", NULL);
+        unlink(contact_path);
+        free(contact_path);
+    }
+    
     /* rmgr close depends on wait/iof */
     orte_rmgr_base_close();
     orte_wait_finalize();

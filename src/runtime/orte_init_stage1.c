@@ -46,6 +46,8 @@
 #include "util/session_dir.h"
 #include "util/sys_info.h"
 #include "util/cmd_line.h"
+#include "util/universe_setup_file_io.h"
+#include "util/os_path.h"
 
 #include "runtime/runtime.h"
 #include "runtime/runtime_internal.h"
@@ -57,6 +59,7 @@ int orte_init_stage1(void)
     char *universe;
     char *jobid_str = NULL;
     char *procid_str = NULL;
+    char *contact_path = NULL;
     pid_t pid;
     orte_universe_t univ;
 
@@ -204,9 +207,6 @@ int orte_init_stage1(void)
             orte_process_info.ns_replica_uri = strdup(univ.seed_uri);
             orte_process_info.gpr_replica_uri = strdup(univ.seed_uri);
         } else {
-            if (orte_debug_flag) {
-                    ompi_output(0, "orte_init: could not join existing universe");
-            }
             if (ORTE_ERR_NOT_FOUND != ret) {
                     /* if it exists but no contact could be established,
                      * define unique name based on current one.
@@ -221,6 +221,9 @@ int orte_init_stage1(void)
                         return ret;
                     }
             }
+            ompi_output(0, "Could not join an existing universe");
+            ompi_output(0, "Establishing a new one named: %s",
+                            orte_universe_info.name);
     
             orte_process_info.seed = true;
             /* since we are seed, ensure that all replica info is NULL'd */
@@ -266,6 +269,11 @@ int orte_init_stage1(void)
         return ret;
     }
 
+    /* if I'm the seed, set the seed uri to be me! */
+    if (orte_process_info.seed) {
+        orte_universe_info.seed_uri = orte_rml.get_uri();
+    }
+    
     /* setup my session directory */
     if (ORTE_SUCCESS != (ret = orte_ns.get_jobid_string(&jobid_str, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(ret);
@@ -304,6 +312,33 @@ int orte_init_stage1(void)
     }
     if (NULL != procid_str) {
         free(procid_str);
+    }
+
+    /* if i'm the seed, get my contact info and write my setup file for others to find */
+    if (orte_process_info.seed) {
+        if (NULL != orte_universe_info.seed_uri) {
+            free(orte_universe_info.seed_uri);
+            orte_universe_info.seed_uri = NULL;
+        }
+        if (NULL == (orte_universe_info.seed_uri = orte_rml.get_uri())) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
+        }
+        contact_path = orte_os_path(false, orte_process_info.universe_session_dir,
+                    "universe-setup.txt", NULL);
+        if (orte_debug_flag) {
+            ompi_output(0, "[%lu,%lu,%lu] contact_file %s",
+                        ORTE_NAME_ARGS(orte_process_info.my_name), contact_path);
+        }
+
+        if (OMPI_SUCCESS != (ret = orte_write_universe_setup_file(contact_path, &orte_universe_info))) {
+            if (orte_debug_flag) {
+                ompi_output(0, "[%lu,%lu,%lu] couldn't write setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
+            }
+        } else if (orte_debug_flag) {
+            ompi_output(0, "[%lu,%lu,%lu] wrote setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
+        }
+        free(contact_path);
     }
 
     /* set contact info for ns/gpr */

@@ -455,7 +455,6 @@ static void orte_setup_hnp_recv(int status, orte_process_name_t* sender,
 
 static void orte_setup_hnp_wait(pid_t wpid, int status, void *cbdata)
 {
-    int rc;
     orte_setup_hnp_cb_data_t *data;
     
     OMPI_THREAD_LOCK(&orte_setup_hnp_mutex);
