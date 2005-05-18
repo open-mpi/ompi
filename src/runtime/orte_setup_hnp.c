@@ -38,6 +38,7 @@
 
 
 #include "include/orte_constants.h"
+#include "dps/dps.h"
 #include "event/event.h"
 #include "threads/mutex.h"
 #include "threads/condition.h"
@@ -462,8 +463,16 @@ static void orte_setup_hnp_recv(int status, orte_process_name_t* sender,
                                 orte_buffer_t* buffer, orte_rml_tag_t tag,
                                 void* cbdata)
 {
+    char *orted_uri;
+    size_t n=1;
+    int rc;
+    
     OMPI_THREAD_LOCK(&orte_setup_hnp_mutex);
     ompi_output(0, "HE CALLED HOME!!");
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &orted_uri, &n, ORTE_STRING))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    ompi_output(0, "got a uri of: %s", orted_uri);
     ompi_condition_signal(&orte_setup_hnp_condition);
     OMPI_THREAD_UNLOCK(&orte_setup_hnp_mutex);
 }

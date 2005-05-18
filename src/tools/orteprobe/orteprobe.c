@@ -399,12 +399,12 @@ int main(int argc, char *argv[])
         } else {
             /* This is the parent process.
                 Close write end first. */
-            read(orted_pipe[0], &orted_uri, 255);
+            read(orted_pipe[0], orted_uri, 255);
             close(orted_pipe[0]);
             
             /* send back the info */
             OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-            if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, orted_uri, 1, ORTE_STRING))) {
+            if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &orted_uri, 1, ORTE_STRING))) {
                 ORTE_ERROR_LOG(ret);
                 exit(1);
             }
