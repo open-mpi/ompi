@@ -42,25 +42,25 @@ int ompi_fortran_string_f2c(char *fstr, int len, char **cstr)
     }
 
     if (i >= len) {
-	len = 0;
+        len = 0;
     } else {
-	for (; (end > fstr) && (' ' == *end); --end) {
+        for (; (end > fstr) && (' ' == *end); --end) {
             continue;
         }
 
-	len = end - fstr + 1;
+        len = end - fstr + 1;
     }
 
     /* Allocate space for the C string. */
 
     if (NULL == (*cstr = malloc(len + 1))) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     /* Copy F77 string into C string and NULL terminate it. */
 
     if (len > 0) {
-	strncpy(*cstr, fstr, len);
+        strncpy(*cstr, fstr, len);
     }
     (*cstr)[len] = '\0';
 
@@ -77,7 +77,7 @@ int ompi_fortran_string_c2f(char *cstr, char *fstr, int len)
 
     strncpy(fstr, cstr, len);
     for (i = strlen(cstr); i < len; ++i) {
-	fstr[i] = ' ';
+        fstr[i] = ' ';
     }
 
     return OMPI_SUCCESS;
@@ -136,11 +136,11 @@ int ompi_fortran_multiple_argvs_f2c(int count, char *array, int len,
     argv_array = (char ***) malloc (count * sizeof(char **));
 
     for (i = 0; i < count; ++i) {
-	ret = ompi_fortran_argv_f2c(current_array, len, &argv_array[i]);
-	if (OMPI_SUCCESS != ret) {
-	    return ret;
-	}
-	current_array += len * i;
+        ret = ompi_fortran_argv_f2c(current_array, len, &argv_array[i]);
+        if (OMPI_SUCCESS != ret) {
+            return ret;
+        }
+        current_array += len * i;
     }
     *argv = argv_array;
     return OMPI_SUCCESS;
