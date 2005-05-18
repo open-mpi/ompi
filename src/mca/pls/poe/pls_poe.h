@@ -41,11 +41,14 @@ struct orte_pls_poe_component_t {
     int priority;
     int verbose;
     char* path;
+    char* env;
     char** argv;
     int argc;
     int debug;
     char* orted;
     char* class;
+    char* hostfile;
+    char* cmdfile; 
     int retry;
     int retrycount; 
 };
