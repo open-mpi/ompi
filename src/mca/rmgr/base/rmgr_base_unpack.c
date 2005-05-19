@@ -19,6 +19,7 @@
 #include <string.h>
 
 #include "include/constants.h"
+#include "util/output.h"
 #include "dps/dps.h"
 #include "mca/rmgr/base/base.h"
 #include "mca/errmgr/errmgr.h"
@@ -43,7 +44,7 @@ static int orte_rmgr_base_cmd_create(orte_buffer_t* req, orte_buffer_t* rsp)
     size_t i, cnt, num_context;
 
     cnt = 1;
-    if(ORTE_SUCCESS != (rc = orte_dps.unpack(req, &num_context, &cnt, ORTE_UINT32))) {
+    if(ORTE_SUCCESS != (rc = orte_dps.unpack(req, &num_context, &cnt, ORTE_SIZE))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
