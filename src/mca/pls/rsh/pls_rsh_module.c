@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #include "include/orte_constants.h"
 #include "util/argv.h"
@@ -86,6 +87,7 @@ typedef struct rsh_daemon_info_t rsh_daemon_info_t;
 static OBJ_CLASS_INSTANCE(rsh_daemon_info_t,
                           ompi_object_t,
                           NULL, NULL);
+static void set_handler_default(int sig);
 
 /**
  * Callback on daemon exit.
@@ -251,6 +253,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     int argc;
     int rc;
     int id;
+    sigset_t sigs;
     
     /* query the list of nodes allocated to the job - don't need the entire
      * mapping - as the daemon/proxy is responsibe for determining the apps
@@ -414,6 +417,30 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 dup2(fd, 0);
                 close(fd);
             }
+
+            /* Set signal handlers back to the default.  Do this close
+               to the exev() because the event library may (and likely
+               will) reset them.  If we don't do this, the event
+               library may have left some set that, at least on some
+               OS's, don't get reset via fork() or exec().  Hence, the
+               orted could be unkillable (for example). */
+
+            set_handler_default(SIGTERM);
+            set_handler_default(SIGINT);
+            set_handler_default(SIGHUP);
+            set_handler_default(SIGCHLD);
+            set_handler_default(SIGPIPE);
+
+            /* Unblock all signals, for many of the same reasons that
+               we set the default handlers, above.  This is noticable
+               on Linux where the event library blocks SIGTERM, but we
+               don't want that blocked by the orted (or, more
+               specifically, we don't want it to be blocked by the
+               orted and then inherited by the ORTE processes that it
+               forks, making them unkillable by SIGTERM). */
+
+            sigprocmask(0, 0, &sigs);
+            sigprocmask(SIG_UNBLOCK, &sigs, 0);
 
             /* exec the daemon */
             execv(exec_path, exec_argv);
@@ -684,3 +711,14 @@ static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid)
 
 #endif
 
+
+static void set_handler_default(int sig)
+{
+    struct sigaction act;
+
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset(&act.sa_mask);
+
+    sigaction(sig, &act, (struct sigaction *)0);
+}
