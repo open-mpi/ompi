@@ -52,6 +52,9 @@ OBJ_CLASS_INSTANCE(ompi_op_t, ompi_object_t,
 /*
  * Helpful defines, because there's soooo many names!
  */
+
+/** C integer ***********************************************************/
+
 #define C_INTEGER(name) \
   { ompi_mpi_op_##name##_int },            /* OMPI_OP_TYPE_INT */ \
   { ompi_mpi_op_##name##_long },           /* OMPI_OP_TYPE_LONG */ \
@@ -67,43 +70,186 @@ OBJ_CLASS_INSTANCE(ompi_op_t, ompi_object_t,
   { NULL }, /* OMPI_OP_TYPE_UNSIGNED */ \
   { NULL }  /* OMPI_OP_TYPE_UNSIGNED_LONG */
 
+/** All the Fortran integers ********************************************/
+
+#if OMPI_HAVE_FORTRAN_INTEGER
+#define FORTRAN_INTEGER_PLAIN(name) { ompi_mpi_op_##name##_fortran_integer }
+#else
+#define FORTRAN_INTEGER_PLAIN(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER1
+#define FORTRAN_INTEGER1(name) { ompi_mpi_op_##name##_fortran_integer1 }
+#else
+#define FORTRAN_INTEGER1(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER2
+#define FORTRAN_INTEGER2(name) { ompi_mpi_op_##name##_fortran_integer2 }
+#else
+#define FORTRAN_INTEGER2(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER4
+#define FORTRAN_INTEGER4(name) { ompi_mpi_op_##name##_fortran_integer4 }
+#else
+#define FORTRAN_INTEGER4(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER8
+#define FORTRAN_INTEGER8(name) { ompi_mpi_op_##name##_fortran_integer8 }
+#else
+#define FORTRAN_INTEGER8(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER16
+#define FORTRAN_INTEGER16(name) { ompi_mpi_op_##name##_fortran_integer16 }
+#else
+#define FORTRAN_INTEGER16(name) { NULL }
+#endif
 #define FORTRAN_INTEGER(name) \
-  { ompi_mpi_op_##name##_fortran_integer }  /* OMPI_OP_TYPE_INTEGER */
+  FORTRAN_INTEGER_PLAIN(name),      /* OMPI_OP_TYPE_INTEGER */ \
+  FORTRAN_INTEGER1(name),           /* OMPI_OP_TYPE_INTEGER1 */ \
+  FORTRAN_INTEGER2(name),           /* OMPI_OP_TYPE_INTEGER2 */ \
+  FORTRAN_INTEGER4(name),           /* OMPI_OP_TYPE_INTEGER4 */ \
+  FORTRAN_INTEGER8(name),           /* OMPI_OP_TYPE_INTEGER8 */ \
+  FORTRAN_INTEGER16(name)           /* OMPI_OP_TYPE_INTEGER16 */
 #define FORTRAN_INTEGER_NULL \
-  { NULL }  /* OMPI_OP_TYPE_INTEGER */
+  { NULL },  /* OMPI_OP_TYPE_INTEGER */ \
+  { NULL },  /* OMPI_OP_TYPE_INTEGER1 */ \
+  { NULL },  /* OMPI_OP_TYPE_INTEGER2 */ \
+  { NULL },  /* OMPI_OP_TYPE_INTEGER4 */ \
+  { NULL },  /* OMPI_OP_TYPE_INTEGER8 */ \
+  { NULL }  /* OMPI_OP_TYPE_INTEGER16 */
+
+/** All the Fortran reals ***********************************************/
+
+#if OMPI_HAVE_FORTRAN_REAL
+#define FLOATING_POINT_FORTRAN_REAL_PLAIN(name) { ompi_mpi_op_##name##_fortran_real }
+#else
+#define FLOATING_POINT_FORTRAN_REAL_PLAIN(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_REAL4
+#define FLOATING_POINT_FORTRAN_REAL4(name) { ompi_mpi_op_##name##_fortran_real4 }
+#else
+#define FLOATING_POINT_FORTRAN_REAL4(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_REAL8
+#define FLOATING_POINT_FORTRAN_REAL8(name) { ompi_mpi_op_##name##_fortran_real8 }
+#else
+#define FLOATING_POINT_FORTRAN_REAL8(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_REAL16
+#define FLOATING_POINT_FORTRAN_REAL16(name) { ompi_mpi_op_##name##_fortran_real16 }
+#else
+#define FLOATING_POINT_FORTRAN_REAL16(name) { NULL }
+#endif
+
+#define FLOATING_POINT_FORTRAN_REAL(name) \
+  FLOATING_POINT_FORTRAN_REAL_PLAIN(name),      /* OMPI_OP_TYPE_REAL */ \
+  FLOATING_POINT_FORTRAN_REAL4(name),           /* OMPI_OP_TYPE_REAL4 */ \
+  FLOATING_POINT_FORTRAN_REAL8(name),           /* OMPI_OP_TYPE_REAL8 */ \
+  FLOATING_POINT_FORTRAN_REAL16(name)           /* OMPI_OP_TYPE_REAL16 */
+
+/** Fortran double precision ********************************************/
+
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+#define FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name) \
+    { ompi_mpi_op_##name##_fortran_double_precision }
+#else
+#define FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name) { NULL }
+#endif
+
+/** Floating point, including all the Fortran reals *********************/
 
 #define FLOATING_POINT(name) \
   { ompi_mpi_op_##name##_float },                    /* OMPI_OP_TYPE_FLOAT */\
   { ompi_mpi_op_##name##_double },                   /* OMPI_OP_TYPE_DOUBLE */\
-  { ompi_mpi_op_##name##_fortran_real },             /* OMPI_OP_TYPE_REAL */ \
-  { ompi_mpi_op_##name##_fortran_double_precision }, /* OMPI_OP_TYPE_DOUBLE_PRECISION */ \
+  FLOATING_POINT_FORTRAN_REAL(name),                 /* OMPI_OP_TYPE_REAL */ \
+  FLOATING_POINT_FORTRAN_DOUBLE_PRECISION(name),     /* OMPI_OP_TYPE_DOUBLE_PRECISION */ \
   { ompi_mpi_op_##name##_long_double }               /* OMPI_OP_TYPE_LONG_DOUBLE */
 #define FLOATING_POINT_NULL \
   { NULL }, /* OMPI_OP_TYPE_FLOAT */ \
   { NULL }, /* OMPI_OP_TYPE_DOUBLE */ \
   { NULL }, /* OMPI_OP_TYPE_REAL */ \
+  { NULL }, /* OMPI_OP_TYPE_REAL4 */ \
+  { NULL }, /* OMPI_OP_TYPE_REAL8 */ \
+  { NULL }, /* OMPI_OP_TYPE_REAL16 */ \
   { NULL }, /* OMPI_OP_TYPE_DOUBLE_PRECISION */ \
   { NULL }  /* OMPI_OP_TYPE_LONG_DOUBLE */
 
+/** Fortran logical *****************************************************/
+
+#if OMPI_HAVE_FORTRAN_LOGICAL
 #define LOGICAL(name) \
   { ompi_mpi_op_##name##_fortran_logical }  /* OMPI_OP_TYPE_LOGICAL */
+#else
+#define LOGICAL(name) { NULL }
+#endif
 #define LOGICAL_NULL \
   { NULL }  /* OMPI_OP_TYPE_LOGICAL */
 
+/** Fortran complex *****************************************************/
+
+#if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
+#define COMPLEX_PLAIN(name) { ompi_mpi_op_##name##_fortran_complex }
+#else
+#define COMPLEX_PLAIN(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
+#define COMPLEX8(name) { ompi_mpi_op_##name##_fortran_complex8 }
+#else
+#define COMPLEX8(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
+#define COMPLEX16(name) { ompi_mpi_op_##name##_fortran_complex16 }
+#else
+#define COMPLEX16(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
+#define COMPLEX32(name) { ompi_mpi_op_##name##_fortran_complex32 }
+#else
+#define COMPLEX32(name) { NULL }
+#endif
+
 #define COMPLEX(name) \
-  { ompi_mpi_op_##name##_fortran_complex }  /* OMPI_OP_TYPE_COMPLEX */
+  COMPLEX_PLAIN(name), /* OMPI_OP_TYPE_COMPLEX */ \
+  COMPLEX8(name),      /* OMPI_OP_TYPE_COMPLEX8 */ \
+  COMPLEX16(name),     /* OMPI_OP_TYPE_COMPLEX16 */ \
+  COMPLEX32(name)      /* OMPI_OP_TYPE_COMPLEX32 */
 #define COMPLEX_NULL \
-  { NULL }  /* OMPI_OP_TYPE_COMPLEX */
+  { NULL },  /* OMPI_OP_TYPE_COMPLEX */ \
+  { NULL },  /* OMPI_OP_TYPE_COMPLEX8 */ \
+  { NULL },  /* OMPI_OP_TYPE_COMPLEX16 */ \
+  { NULL }   /* OMPI_OP_TYPE_COMPLEX32 */
+
+/** Byte ****************************************************************/
 
 #define BYTE(name) \
   { ompi_mpi_op_##name##_byte }  /* OMPI_OP_TYPE_BYTE */
 #define BYTE_NULL \
   { NULL }  /* OMPI_OP_TYPE_BYTE */
 
+/** Fortran complex *****************************************************/
+/** Fortran "2" types ***************************************************/
+
+#if OMPI_HAVE_FORTRAN_REAL
+#define TWOLOC_FORTRAN_2REAL(name) { ompi_mpi_op_##name##_2real }
+#else
+#define TWOLOC_FORTRAN_2REAL(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+#define TWOLOC_FORTRAN_2DOUBLE_PRECISION(name) { ompi_mpi_op_##name##_2double_precision }
+#else
+#define TWOLOC_FORTRAN_2DOUBLE_PRECISION(name) { NULL }
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER
+#define TWOLOC_FORTRAN_2INTEGER(name) { ompi_mpi_op_##name##_2integer }
+#else
+#define TWOLOC_FORTRAN_2INTEGER(name) { NULL }
+#endif
+
+/** All "2" types *******************************************************/
+
 #define TWOLOC(name) \
-  { ompi_mpi_op_##name##_2real },             /* OMPI_OP_TYPE_2REAL */ \
-  { ompi_mpi_op_##name##_2double_precision }, /* OMPI_OP_TYPE_2DOUBLE_PRECISION */ \
-  { ompi_mpi_op_##name##_2integer },          /* OMPI_OP_TYPE_2INTEGER */ \
+  TWOLOC_FORTRAN_2REAL(name),                 /* OMPI_OP_TYPE_2REAL */ \
+  TWOLOC_FORTRAN_2DOUBLE_PRECISION(name),     /* OMPI_OP_TYPE_2DOUBLE_PRECISION */ \
+  TWOLOC_FORTRAN_2INTEGER(name),              /* OMPI_OP_TYPE_2INTEGER */ \
   { ompi_mpi_op_##name##_float_int },         /* OMPI_OP_TYPE_FLOAT_INT */ \
   { ompi_mpi_op_##name##_double_int },        /* OMPI_OP_TYPE_DOUBLE_INT */ \
   { ompi_mpi_op_##name##_long_int },          /* OMPI_OP_TYPE_LONG_INT */ \

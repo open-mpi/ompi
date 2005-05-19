@@ -75,16 +75,21 @@
  *
  **********************************************************************/
 
+/* MPI_Fint is the same as ompi_fortran_INTEGER_t */
+#define MPI_Fint ompi_fortran_integer_t
+
 /* Do we have thread support? */
 #define OMPI_HAVE_THREAD_SUPPORT (OMPI_ENABLE_MPI_THREADS || OMPI_ENABLE_PROGRESS_THREADS)
 
+#if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
 /* * C type for Fortran COMPLEX */
 typedef struct {
   ompi_fortran_real_t real;
   ompi_fortran_real_t imag;
 } ompi_fortran_complex_t;
+#endif
 
-#if OMPI_HAVE_FORTRAN_REAL4
+#if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
 /* * C type for Fortran COMPLEX*8 */
 typedef struct {
   ompi_fortran_real4_t real;
@@ -92,7 +97,7 @@ typedef struct {
 } ompi_fortran_complex8_t;
 #endif
 
-#if OMPI_HAVE_FORTRAN_REAL8
+#if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
 /* * C type for Fortran COMPLEX*16 */
 typedef struct {
   ompi_fortran_real8_t real;
@@ -100,7 +105,7 @@ typedef struct {
 } ompi_fortran_complex16_t;
 #endif
 
-#if OMPI_HAVE_FORTRAN_REAL16
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
 /* * C type for Fortran COMPLEX*32 */
 typedef struct {
   ompi_fortran_real16_t real;
@@ -108,11 +113,13 @@ typedef struct {
 } ompi_fortran_complex32_t;
 #endif
 
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 /* * C type for Fortran DOUBLE COMPLEX */
 typedef struct {
-  ompi_fortran_dblprec_t real;
-  ompi_fortran_dblprec_t imag;
-} ompi_fortran_dblcomplex_t;
+  ompi_fortran_double_precision_t real;
+  ompi_fortran_double_precision_t imag;
+} ompi_fortran_double_complex_t;
+#endif
 
 
 /***********************************************************************

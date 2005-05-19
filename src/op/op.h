@@ -89,6 +89,16 @@ enum {
 
   OMPI_OP_TYPE_INTEGER,
   /**< Fortran integer */
+  OMPI_OP_TYPE_INTEGER1,
+  /**< Fortran integer*1 */
+  OMPI_OP_TYPE_INTEGER2,
+  /**< Fortran integer*2 */
+  OMPI_OP_TYPE_INTEGER4,
+  /**< Fortran integer*4 */
+  OMPI_OP_TYPE_INTEGER8,
+  /**< Fortran integer*8 */
+  OMPI_OP_TYPE_INTEGER16,
+  /**< Fortran integer*16 */
 
   OMPI_OP_TYPE_FLOAT,
   /**< Floating point: float */
@@ -96,6 +106,12 @@ enum {
   /**< Floating point: double */
   OMPI_OP_TYPE_REAL,
   /**< Floating point: real */
+  OMPI_OP_TYPE_REAL4,
+  /**< Floating point: real*4 */
+  OMPI_OP_TYPE_REAL8,
+  /**< Floating point: real*8 */
+  OMPI_OP_TYPE_REAL16,
+  /**< Floating point: real*16 */
   OMPI_OP_TYPE_DOUBLE_PRECISION,
   /**< Floating point: double precision */
   OMPI_OP_TYPE_LONG_DOUBLE,
@@ -106,6 +122,12 @@ enum {
 
   OMPI_OP_TYPE_COMPLEX,
   /**< Complex */
+  OMPI_OP_TYPE_COMPLEX8,
+  /**< Complex8 */
+  OMPI_OP_TYPE_COMPLEX16,
+  /**< Complex16 */
+  OMPI_OP_TYPE_COMPLEX32,
+  /**< Complex32 */
 
   OMPI_OP_TYPE_BYTE,
   /**< Byte */

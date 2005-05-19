@@ -370,169 +370,62 @@ OMPI_CONFIG_ASM
 # Fortran
 ##################################
 
-OMPI_HAVE_FORTRAN_INTEGER1=0
-OMPI_HAVE_FORTRAN_INTEGER2=0
-OMPI_HAVE_FORTRAN_INTEGER4=0
-OMPI_HAVE_FORTRAN_INTEGER8=0
-OMPI_HAVE_FORTRAN_INTEGER16=0
-OMPI_HAVE_FORTRAN_REAL4=0
-OMPI_HAVE_FORTRAN_REAL8=0
-OMPI_HAVE_FORTRAN_REAL16=0
-OMPI_HAVE_FORTRAN_COMPLEX8=0
-OMPI_HAVE_FORTRAN_COMPLEX16=0
-OMPI_HAVE_FORTRAN_COMPLEX32=0
-
-OMPI_SIZEOF_FORTRAN_INTEGER=0
-OMPI_SIZEOF_FORTRAN_REAL=0
-OMPI_SIZEOF_FORTRAN_DBLPREC=0
-OMPI_SIZEOF_FORTRAN_COMPLEX=0
-OMPI_SIZEOF_FORTRAN_DBLCOMPLEX=0
-
-OMPI_ALIGNMENT_FORTRAN_INTEGER=0
-OMPI_ALIGNMENT_FORTRAN_REAL=0
-OMPI_ALIGNMENT_FORTRAN_DBLPREC=0
-OMPI_ALIGNMENT_FORTRAN_COMPLEX=0
-OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX=0
-
 OMPI_SETUP_F77
 OMPI_F77_FIND_EXT_SYMBOL_CONVENTION($OMPI_F77)
 
-# Even if we don't want fortran support, we have to have a size for
-# INTEGER because it's needed to define MPI_Fint, which is part of
-# mpi.h.  Hence, if we don't want fortran support, we set the size of
-# Fortran INTEGER's to sizeof(int).
+# This allows us to mark bogus types, but still have them be a valid
+# [sentinel] value
+
+AC_DEFINE([ompi_fortran_bogus_type_t], [int],
+          [A bogus type that allows us to have sentinel type values that are still valid])
+
+# We want to set the #define's for all of these, so invoke the macros
+# regardless of whether we have F77 support or not.
+
+OMPI_F77_CHECK(LOGICAL, LOGICAL, logical, yes, 
+               [char int int32_t], -1)
+
+OMPI_F77_CHECK(INTEGER, INTEGER, integer, yes,
+               [int32_t int int64_r long:long long], -1)
+OMPI_F77_CHECK(INTEGER*1, INTEGER1, integer1, no, 
+               [char int8_t short int int64_t long:long long], 1)
+OMPI_F77_CHECK(INTEGER*2, INTEGER2, integer2, no,
+               [short int16_t int32_t int int64_t long:long long], 2)
+OMPI_F77_CHECK(INTEGER*4, INTEGER4, integer4, no,
+               [int32_t int int64_t long:long long], 4)
+OMPI_F77_CHECK(INTEGER*8, INTEGER8, integer8, no,
+               [int int64_t long:long long], 8)
+OMPI_F77_CHECK(INTEGER*16, INTEGER16, integer16, no,
+               [int int64_t long:long long], 16)
+
+OMPI_F77_CHECK(REAL, REAL, real, yes, 
+               [float double long:double], -1)
+OMPI_F77_CHECK(REAL*4, REAL4, real4, no,
+               [float double long:double], 4)
+OMPI_F77_CHECK(REAL*8, REAL8, real8, no,
+               [float double long:double], 8)
+OMPI_F77_CHECK(REAL*16, REAL16, real16, no,
+               [float double long:double], 16)
+
+OMPI_F77_CHECK(DOUBLE PRECISION, DOUBLE_PRECISION, double_precision, yes,
+               [float double long:double], -1)
+
+OMPI_F77_CHECK(COMPLEX, COMPLEX, [], yes, [], -1)
+
+# The complex*N tests are a bit different (note: the complex tests are
+# the same as all the rest, because complex is a composite of two
+# reals, which we *have* to have.  It's only the complex*N tests that
+# are different).  The fortran complex types are composites of the
+# real*(N/2) types.  So for us to support complex*N, two conditions
+# must be true:
 #
-# Similarly, we need C types for LOGICAL, REAL, and DOUBLE PRECISION
-# for the MPI_Op reduction back-end routines.
+# a) we must support real*(N/2) (i.e., compiler supports it and we
+#    have a back-end C type for it)
+# b) compiler supports complex*N
 
-if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
-    OMPI_SIZEOF_FORTRAN_LOGICAL=$ac_cv_sizeof_int
-    OMPI_SIZEOF_FORTRAN_INTEGER=$ac_cv_sizeof_int
-    OMPI_SIZEOF_FORTRAN_REAL=$ac_cv_sizeof_float
-    OMPI_SIZEOF_FORTRAN_DBLPREC=$ac_cv_sizeof_double
-else
-    # If we want fortran support, then get the sizes and alignments of
-    # all the rest of the fortran types
-
-    OMPI_F77_CHECK_TYPE(INTEGER*1, OMPI_HAVE_FORTRAN_INTEGER1)
-    OMPI_F77_CHECK_TYPE(INTEGER*2, OMPI_HAVE_FORTRAN_INTEGER2)
-    OMPI_F77_CHECK_TYPE(INTEGER*4, OMPI_HAVE_FORTRAN_INTEGER4)
-    OMPI_F77_CHECK_TYPE(INTEGER*8, OMPI_HAVE_FORTRAN_INTEGER8)
-    OMPI_F77_CHECK_TYPE(INTEGER*16, OMPI_HAVE_FORTRAN_INTEGER16)
-
-    OMPI_F77_CHECK_TYPE(REAL*4, OMPI_HAVE_FORTRAN_REAL4)
-    OMPI_F77_CHECK_TYPE(REAL*8, OMPI_HAVE_FORTRAN_REAL8)
-    OMPI_F77_CHECK_TYPE(REAL*16, OMPI_HAVE_FORTRAN_REAL16)
-
-    OMPI_F77_CHECK_TYPE(COMPLEX*8, OMPI_HAVE_FORTRAN_COMPLEX8)
-    OMPI_F77_CHECK_TYPE(COMPLEX*16, OMPI_HAVE_FORTRAN_COMPLEX16)
-    OMPI_F77_CHECK_TYPE(COMPLEX*32, OMPI_HAVE_FORTRAN_COMPLEX32)
-
-    OMPI_F77_GET_SIZEOF(LOGICAL, OMPI_SIZEOF_FORTRAN_LOGICAL)
-    OMPI_F77_GET_SIZEOF(INTEGER, OMPI_SIZEOF_FORTRAN_INTEGER)
-    OMPI_F77_GET_SIZEOF(REAL, OMPI_SIZEOF_FORTRAN_REAL)
-    OMPI_F77_GET_SIZEOF(DOUBLE PRECISION, OMPI_SIZEOF_FORTRAN_DBLPREC)
-    OMPI_F77_GET_SIZEOF(COMPLEX, OMPI_SIZEOF_FORTRAN_COMPLEX)
-    OMPI_F77_GET_SIZEOF(DOUBLE COMPLEX, OMPI_SIZEOF_FORTRAN_DBLCOMPLEX)
-
-    if test "$OMPI_HAVE_FORTRAN_INTEGER1" = "1"; then
-      OMPI_F77_GET_SIZEOF(INTEGER*1, OMPI_SIZEOF_FORTRAN_INTEGER1)
-      OMPI_F77_PURGE_UNSUPPORTED_KIND(INTEGER*1)
-    fi
-    if test "$OMPI_HAVE_FORTRAN_INTEGER2" = "1"; then
-      OMPI_F77_GET_SIZEOF(INTEGER*2, OMPI_SIZEOF_FORTRAN_INTEGER2)
-      OMPI_F77_PURGE_UNSUPPORTED_KIND(INTEGER*2)
-    fi
-    if test "$OMPI_HAVE_FORTRAN_INTEGER4" = "1"; then
-      OMPI_F77_GET_SIZEOF(INTEGER*4, OMPI_SIZEOF_FORTRAN_INTEGER4)
-      OMPI_F77_PURGE_UNSUPPORTED_KIND(INTEGER*4)
-    fi
-    if test "$OMPI_HAVE_FORTRAN_INTEGER8" = "1"; then
-      OMPI_F77_GET_SIZEOF(INTEGER*8, OMPI_SIZEOF_FORTRAN_INTEGER8)
-      OMPI_F77_PURGE_UNSUPPORTED_KIND(INTEGER*8)
-    fi
-    if test "$OMPI_HAVE_FORTRAN_INTEGER16" = "1"; then
-      OMPI_F77_GET_SIZEOF(INTEGER*16, OMPI_SIZEOF_FORTRAN_INTEGER16)
-      OMPI_F77_PURGE_UNSUPPORTED_KIND(INTEGER*16)
-    fi
-
-    if test "$OMPI_HAVE_FORTRAN_REAL4" = "1" ; then
-      OMPI_F77_GET_SIZEOF(REAL*4, OMPI_SIZEOF_FORTRAN_REAL4)
-      OMPI_F77_PURGE_UNSUPPORTED_KIND(REAL*4)
-    fi
-    if test "$OMPI_HAVE_FORTRAN_REAL8" = "1" ; then
-      OMPI_F77_GET_SIZEOF(REAL*8, OMPI_SIZEOF_FORTRAN_REAL8)
-      OMPI_F77_PURGE_UNSUPPORTED_KIND(REAL*8)
-    fi
-    if test "$OMPI_HAVE_FORTRAN_REAL16" = "1" ; then
-      OMPI_F77_GET_SIZEOF(REAL*16, OMPI_SIZEOF_FORTRAN_REAL16)
-      OMPI_F77_PURGE_UNSUPPORTED_KIND(REAL*16)
-    fi
-    OMPI_F77_GET_ALIGNMENT(LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL)
-    OMPI_F77_GET_ALIGNMENT(INTEGER, OMPI_ALIGNMENT_FORTRAN_INTEGER)
-    OMPI_F77_GET_ALIGNMENT(REAL, OMPI_ALIGNMENT_FORTRAN_REAL)
-    OMPI_F77_GET_ALIGNMENT(DOUBLE PRECISION, OMPI_ALIGNMENT_FORTRAN_DBLPREC)
-    OMPI_F77_GET_ALIGNMENT(COMPLEX, OMPI_ALIGNMENT_FORTRAN_COMPLEX)
-    OMPI_F77_GET_ALIGNMENT(DOUBLE COMPLEX, OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX)
-
-fi
-
-AC_DEFINE_UNQUOTED(OMPI_HAVE_FORTRAN_INTEGER1, $OMPI_HAVE_FORTRAN_INTEGER1,
-    [Whether we have FORTRAN INTEGER1 or not])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_FORTRAN_INTEGER2, $OMPI_HAVE_FORTRAN_INTEGER2,
-    [Whether we have FORTRAN INTEGER2 or not])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_FORTRAN_INTEGER4, $OMPI_HAVE_FORTRAN_INTEGER4,
-    [Whether we have FORTRAN INTEGER4 or not])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_FORTRAN_INTEGER8, $OMPI_HAVE_FORTRAN_INTEGER8,
-    [Whether we have FORTRAN INTEGER8 or not])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_FORTRAN_INTEGER16, $OMPI_HAVE_FORTRAN_INTEGER16,
-    [Whether we have FORTRAN INTEGER16 or not])
-
-AC_DEFINE_UNQUOTED(OMPI_HAVE_FORTRAN_REAL4, $OMPI_HAVE_FORTRAN_REAL4,
-    [Whether we have FORTRAN REAL4 or not])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_FORTRAN_REAL8, $OMPI_HAVE_FORTRAN_REAL8,
-    [Whether we have FORTRAN REAL8 or not])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_FORTRAN_REAL16, $OMPI_HAVE_FORTRAN_REAL16,
-    [Whether we have FORTRAN REAL16 or not])
-
-AC_DEFINE_UNQUOTED(OMPI_HAVE_FORTRAN_COMPLEX8, $OMPI_HAVE_FORTRAN_COMPLEX8,
-    [Whether we have FORTRAN COMPLEX8 or not])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_FORTRAN_COMPLEX16, $OMPI_HAVE_FORTRAN_COMPLEX16,
-    [Whether we have FORTRAN COMPLEX16 or not])
-AC_DEFINE_UNQUOTED(OMPI_HAVE_FORTRAN_COMPLEX32, $OMPI_HAVE_FORTRAN_COMPLEX32,
-    [Whether we have FORTRAN COMPLEX32 or not])
-
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_LOGICAL, $OMPI_SIZEOF_FORTRAN_LOGICAL,
-    [Size of fortran logical])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_INTEGER, $OMPI_SIZEOF_FORTRAN_INTEGER,
-    [Size of fortran integer])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_REAL, $OMPI_SIZEOF_FORTRAN_REAL,
-    [Size of fortran real])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_DBLPREC, $OMPI_SIZEOF_FORTRAN_DBLPREC,
-    [Size of fortran double precision])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_COMPLEX, $OMPI_SIZEOF_FORTRAN_COMPLEX,
-    [Size of fortran complex])
-AC_DEFINE_UNQUOTED(OMPI_SIZEOF_FORTRAN_DBLCOMPLEX, 
-    $OMPI_SIZEOF_FORTRAN_DBLCOMPLEX,
-    [Size of fortran double complex])
-
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_LOGICAL, 
-    $OMPI_ALIGNMENT_FORTRAN_LOGICAL,
-    [Alignment of fortran logical])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_INTEGER, 
-    $OMPI_ALIGNMENT_FORTRAN_INTEGER,
-    [Alignment of fortran integer])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_REAL, $OMPI_ALIGNMENT_FORTRAN_REAL,
-    [alignment of fortran real])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_DBLPREC, 
-    $OMPI_ALIGNMENT_FORTRAN_DBLPREC,
-    [Alignment of fortran double precision])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_COMPLEX, 
-    $OMPI_ALIGNMENT_FORTRAN_COMPLEX,
-    [Alignment of fortran complex])
-AC_DEFINE_UNQUOTED(OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX, 
-    $OMPI_ALIGNMENT_FORTRAN_DBLCOMPLEX,
-    [Alignment of fortran double complex])
+OMPI_F77_CHECK(COMPLEX*8, COMPLEX8, [], no, [], 8)
+OMPI_F77_CHECK(COMPLEX*16, COMPLEX16, [], no, [], 16)
+OMPI_F77_CHECK(COMPLEX*32, COMPLEX32, [], no, [], 32)
 
 # Regardless of whether we have fortran bindings, or even a fortran
 # compiler, get the max value for a fortran MPI handle (this macro
@@ -935,7 +828,7 @@ AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_COMPLEX8, $OMPI_HAVE_F90_COMPLEX8,
 AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_COMPLEX16, $OMPI_HAVE_F90_COMPLEX16,
     [support for fortran complex*16])
 AC_DEFINE_UNQUOTED(OMPI_HAVE_F90_COMPLEX32, $OMPI_HAVE_F90_COMPLEX32,
-    [support for fortran complex*21])
+    [support for fortran complex*32])
 
 AC_DEFINE_UNQUOTED(OMPI_SIZEOF_F90_INT1, $OMPI_SIZEOF_F90_INT1,
     [size of fortran integer*1])
@@ -1175,128 +1068,6 @@ AC_CHECK_LIB([m], [ceil])
 ##################################
 
 ompi_show_title "System-specific tests"
-
-#
-# Determine corresponding C types for Fortran: LOGICAL, INTEGER, REAL,
-# DOUBLE PRECISION.  If we don't have a fortran compiler, assume some
-# sensible defaults (although the values don't really matter).  We
-# need these types for the back-end MPI_Op reduction functions,
-# regardless of whether we have a fortran compiler or not.
-#
-
-if test "$OMPI_F77" != "none"; then
-
-        # Helper function to greatly reduce code replication below
-        test_f77_type() {
-            type="$1"
-            size="$2"
-            search_c_types="$3"
-            fallback_c_type="$4"
-            want_abort="$5"
-
-            str="foo=\$OMPI_HAVE_FORTRAN_$type"
-            eval $str
-            if test "$foo" = "1"; then
-                str="OMPI_SIZEOF_FORTRAN_$type=$size"
-                eval $str
-                OMPI_FIND_TYPE([Fortran $type], [FORTRAN_$type],
-                               [$search_c_types], $want_abort)
-                str="foo=$MPI_FORTRAN_{$type}_TYPE"
-                eval $str
-                if test "$str" = ""; then
-                    str="OMPI_HAVE_FORTRAN_$type=0"
-                    eval $str
-                    str="$OMPI_SIZEOF_FORTRAN_$type=0"
-                    eval $str
-                fi
-            else
-                str="MPI_FORTRAN_${type}_TYPE=$fallback_c_type"
-                eval $str
-            fi
-        }
-
-        # Find C types corresponding to the Fortran types.  Note that
-        # it is *not* an error if we don't find a C type for any of
-        # the optional Fortran types (e.g., INTEGER*1).  In this case,
-        # we'll just not support the optional Fortran type.  It *is*
-        # an error, however, if we can't find a C type for the
-        # required Fortran types.
-
-        OMPI_FIND_TYPE(Fortran LOGICAL, FORTRAN_LOGICAL,
-            char int int32_t)
-
-        OMPI_FIND_TYPE(Fortran INTEGER, FORTRAN_INTEGER, 
-            int32_t int intr64_t long:long long)
-
-        test_f77_type INTEGER1 1 "char int8_t short int int64_t long:long long" int no
-        test_f77_type INTEGER2 2 "short int16_t int int64_t long:long long" int no
-        test_f77_type INTEGER4 4 "short int int64_t long:long long" int no
-        test_f77_type INTEGER8 8 "int int64_t long:long long" int no
-        test_f77_type INTEGER16 16 "int int64_t long:long long" int no
-
-        OMPI_FIND_TYPE(Fortran REAL, FORTRAN_REAL,
-            float double long:double)
-
-        test_f77_type REAL4 4 "float double long:double" float no
-        test_f77_type REAL8 8 "float double long:double" float no
-        test_f77_type REAL16 16 "float double long:double" float no
-
-        OMPI_FIND_TYPE(Fortran DOUBLE PRECISION, FORTRAN_DBLPREC,
-            float double long:double)
-else
-        MPI_FORTRAN_LOGICAL_TYPE=char
-	MPI_FORTRAN_INTEGER_TYPE=int
-	MPI_FORTRAN_INTEGER1_TYPE=char
-	MPI_FORTRAN_INTEGER2_TYPE=short
-	MPI_FORTRAN_INTEGER4_TYPE=int
-	MPI_FORTRAN_INTEGER8_TYPE=long
-	MPI_FORTRAN_INTEGER16_TYPE=long
-        MPI_FORTRAN_REAL_TYPE=float
-        MPI_FORTRAN_REAL4_TYPE=float
-        MPI_FORTRAN_REAL8_TYPE=double
-        MPI_FORTRAN_REAL16_TYPE="long double"
-        MPI_FORTRAN_DBLPREC_TYPE=double
-	AC_MSG_WARN([*** Did not detect a f77 compiler.  Assuming default corresponding types])
-        AC_MSG_WARN([*** Fortran LOGICAL = C $MPI_FORTRAN_LOGICAL_TYPE])
-        AC_MSG_WARN([*** Fortran INTEGER = C $MPI_FORTRAN_INTEGER_TYPE])
-        AC_MSG_WARN([*** Fortran INTEGER1 = C $MPI_FORTRAN_INTEGER1_TYPE])
-        AC_MSG_WARN([*** Fortran INTEGER2 = C $MPI_FORTRAN_INTEGER2_TYPE])
-        AC_MSG_WARN([*** Fortran INTEGER4 = C $MPI_FORTRAN_INTEGER4_TYPE])
-        AC_MSG_WARN([*** Fortran INTEGER8 = C $MPI_FORTRAN_INTEGER8_TYPE])
-        AC_MSG_WARN([*** Fortran INTEGER16 = C $MPI_FORTRAN_INTEGER16_TYPE])
-        AC_MSG_WARN([*** Fortran REAL = C $MPI_FORTRAN_REAL_TYPE])
-        AC_MSG_WARN([*** Fortran REAL4 = C $MPI_FORTRAN_REAL4_TYPE])
-        AC_MSG_WARN([*** Fortran REAL8 = C $MPI_FORTRAN_REAL8_TYPE])
-        AC_MSG_WARN([*** Fortran REAL16 = C $MPI_FORTRAN_REAL16_TYPE])
-        AC_MSG_WARN([*** Fortran DOUBLE PRECISION = C $MPI_FORTRAN_DBLPREC_TYPE])
-fi
-AC_DEFINE_UNQUOTED(ompi_fortran_logical_t, $MPI_FORTRAN_LOGICAL_TYPE, 
-    [C type corresponding to Fortran LOGICAL])
-
-AC_DEFINE_UNQUOTED(MPI_Fint, $MPI_FORTRAN_INTEGER_TYPE, 
-    [C type corresponding to Fortran INTEGER])
-AC_DEFINE_UNQUOTED(ompi_fortran_integer_t, $MPI_FORTRAN_INTEGER_TYPE, 
-    [C type corresponding to Fortran LOGICAL])
-AC_DEFINE_UNQUOTED(ompi_fortran_integer1_t, $MPI_FORTRAN_INTEGER1_TYPE, 
-    [C type corresponding to Fortran INTEGER1])
-AC_DEFINE_UNQUOTED(ompi_fortran_integer2_t, $MPI_FORTRAN_INTEGER2_TYPE, 
-    [C type corresponding to Fortran INTEGER2])
-AC_DEFINE_UNQUOTED(ompi_fortran_integer4_t, $MPI_FORTRAN_INTEGER4_TYPE, 
-    [C type corresponding to Fortran INTEGER4])
-AC_DEFINE_UNQUOTED(ompi_fortran_integer8_t, $MPI_FORTRAN_INTEGER8_TYPE, 
-    [C type corresponding to Fortran INTEGER4])
-
-AC_DEFINE_UNQUOTED(ompi_fortran_real_t, $MPI_FORTRAN_REAL_TYPE, 
-    [C type corresponding to Fortran REAL])
-AC_DEFINE_UNQUOTED(ompi_fortran_real4_t, $MPI_FORTRAN_REAL4_TYPE, 
-    [C type corresponding to Fortran REAL4])
-AC_DEFINE_UNQUOTED(ompi_fortran_real8_t, $MPI_FORTRAN_REAL8_TYPE, 
-    [C type corresponding to Fortran REAL8])
-AC_DEFINE_UNQUOTED(ompi_fortran_real16_t, $MPI_FORTRAN_REAL16_TYPE, 
-    [C type corresponding to Fortran REAL16])
-
-AC_DEFINE_UNQUOTED(ompi_fortran_dblprec_t, $MPI_FORTRAN_DBLPREC_TYPE, 
-    [C type corresponding to Fortran DOUBLE PRECISION])
 
 #
 # Test to determine type of MPI_Offset. This is searched in the following order
