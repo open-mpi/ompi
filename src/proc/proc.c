@@ -26,7 +26,7 @@
 #include "mca/oob/oob.h"
 #include "mca/ns/ns.h"
 #include "mca/pml/pml.h"
-
+#include "datatype/datatype.h"
 
 static ompi_list_t  ompi_proc_list;
 static ompi_mutex_t ompi_proc_lock;
