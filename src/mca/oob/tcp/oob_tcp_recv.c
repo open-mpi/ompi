@@ -259,11 +259,15 @@ int mca_oob_tcp_recv_cancel(
 
     /* wait for any previously matched messages to be processed */
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
-    while(mca_oob_tcp_component.tcp_match_count) {
-        ompi_condition_wait(
-            &mca_oob_tcp_component.tcp_match_cond, 
-            &mca_oob_tcp_component.tcp_match_lock);
+#if OMPI_ENABLE_PROGRESS_THREADS
+    if(ompi_progress_thread() == false) {
+        while(mca_oob_tcp_component.tcp_match_count) {
+            ompi_condition_wait(
+                &mca_oob_tcp_component.tcp_match_cond, 
+                &mca_oob_tcp_component.tcp_match_lock);
+        }
     }
+#endif
 
     /* remove any matching posted receives */
     for(item =  ompi_list_get_first(&mca_oob_tcp_component.tcp_msg_post);
