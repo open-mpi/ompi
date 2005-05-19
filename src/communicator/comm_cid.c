@@ -15,8 +15,6 @@
  */
 
 #include "ompi_config.h"
-#include <string.h>
-#include <stdio.h>
 #include "mpi.h"
 
 #include "dps/dps.h"
@@ -24,7 +22,6 @@
 #include "mca/ns/ns_types.h"
 
 #include "communicator/communicator.h"
-#include "op/op.h"
 #include "proc/proc.h"
 #include "include/constants.h"
 #include "class/ompi_pointer_array.h"
@@ -47,14 +44,14 @@ extern "C" {
  */
 
 typedef int ompi_comm_cid_allredfct (int *inbuf, int* outbuf, 
-                                     int count, ompi_op_t *op, 
+                                     int count, struct ompi_op_t *op, 
                                      ompi_communicator_t *comm,
                                      ompi_communicator_t *bridgecomm, 
                                      void* lleader, void* rleader, 
                                      int send_first );
 
 static int ompi_comm_allreduce_intra (int *inbuf, int* outbuf, 
-                                      int count, ompi_op_t *op, 
+                                      int count, struct ompi_op_t *op, 
                                       ompi_communicator_t *intercomm,
                                       ompi_communicator_t *bridgecomm, 
                                       void* local_leader, 
@@ -62,7 +59,7 @@ static int ompi_comm_allreduce_intra (int *inbuf, int* outbuf,
                                       int send_first );
 
 static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf, 
-                                      int count, ompi_op_t *op, 
+                                      int count, struct ompi_op_t *op, 
                                       ompi_communicator_t *intercomm,
                                       ompi_communicator_t *bridgecomm, 
                                       void* local_leader, 
@@ -70,7 +67,7 @@ static int ompi_comm_allreduce_inter (int *inbuf, int *outbuf,
                                       int send_first );
 
 static int ompi_comm_allreduce_intra_bridge(int *inbuf, int* outbuf, 
-                                            int count, ompi_op_t *op, 
+                                            int count, struct ompi_op_t *op, 
                                             ompi_communicator_t *intercomm,
                                             ompi_communicator_t *bridgecomm, 
                                             void* local_leader, 
@@ -78,7 +75,7 @@ static int ompi_comm_allreduce_intra_bridge(int *inbuf, int* outbuf,
                                             int send_first);
 
 static int ompi_comm_allreduce_intra_oob (int *inbuf, int* outbuf, 
-                                          int count, ompi_op_t *op, 
+                                          int count, struct ompi_op_t *op, 
                                           ompi_communicator_t *intercomm,
                                           ompi_communicator_t *bridgecomm, 
                                           void* local_leader, 
@@ -371,7 +368,7 @@ int ompi_comm_activate ( ompi_communicator_t* newcomm,
  *  - send_first
  */
 static int ompi_comm_allreduce_intra ( int *inbuf, int *outbuf, 
-                                       int count, ompi_op_t *op, 
+                                       int count, struct ompi_op_t *op, 
                                        ompi_communicator_t *comm,
                                        ompi_communicator_t *bridgecomm, 
                                        void* local_leader, 
@@ -389,7 +386,7 @@ static int ompi_comm_allreduce_intra ( int *inbuf, int *outbuf,
  *  - send_first
  */
 static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf, 
-                                       int count, ompi_op_t *op, 
+                                       int count, struct ompi_op_t *op, 
                                        ompi_communicator_t *intercomm,
                                        ompi_communicator_t *bridgecomm, 
                                        void* local_leader, 
@@ -508,7 +505,7 @@ static int ompi_comm_allreduce_inter ( int *inbuf, int *outbuf,
  * - send_first
  */
 static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf, 
-                                             int count, ompi_op_t *op, 
+                                             int count, struct ompi_op_t *op, 
                                              ompi_communicator_t *comm,
                                              ompi_communicator_t *bcomm, 
                                              void* lleader, void* rleader,
@@ -603,7 +600,7 @@ static int ompi_comm_allreduce_intra_bridge (int *inbuf, int *outbuf,
  * root processes in the other world.
  */
 static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf, 
-                                          int count, ompi_op_t *op, 
+                                          int count, struct ompi_op_t *op, 
                                           ompi_communicator_t *comm,
                                           ompi_communicator_t *bridgecomm, 
                                           void* lleader, void* rleader,

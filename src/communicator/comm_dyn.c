@@ -24,7 +24,6 @@
 
 #include "dps/dps.h"
 #include "communicator/communicator.h"
-#include "datatype/datatype.h"
 #include "errhandler/errhandler.h"
 #include "group/group.h"
 #include "proc/proc.h"
