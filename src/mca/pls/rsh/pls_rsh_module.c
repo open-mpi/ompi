@@ -396,7 +396,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             sigprocmask(SIG_UNBLOCK, &sigs, 0);
 
             /* exec the daemon */
-            execv(mca_pls_rsh_component.path, argv);
+            execve(mca_pls_rsh_component.path, argv, NULL);
             ompi_output(0, "orte_pls_rsh: execv failed with errno=%d\n", errno);
             exit(-1);
 
