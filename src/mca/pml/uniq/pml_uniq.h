@@ -229,9 +229,9 @@ extern int mca_pml_uniq_start(
             { \
                 mca_ptl_base_send_request_t* sendreq = (mca_ptl_base_send_request_t*)pml_request; \
                 while(sendreq->req_lock > 0); \
-                    if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
-                        mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq); \
-                    } \
+                 if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
+                     mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq); \
+                 } \
                 MCA_PML_UNIQ_SEND_REQUEST_RETURN(sendreq); \
                 break; \
             } \
