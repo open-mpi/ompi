@@ -27,7 +27,7 @@
 /* This define has to move outside of this file. Maybe on some configuration file.
  * Anyway by for, for the debugging purpose, here it's quite a safe place.
  */
-#define PML_UNIQ_ACCEPT_NEXT_PTL 1
+#define PML_UNIQ_ACCEPT_NEXT_PTL 0
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
