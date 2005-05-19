@@ -1,3 +1,4 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -97,6 +98,7 @@ int mca_pml_uniq_add_ptls(ompi_list_t *ptls)
     mca_ptl_base_selected_module_t* selected_ptl;
     size_t num_ptls = ompi_list_get_size(ptls);
     size_t cache_bytes = 0;
+
     mca_pml_uniq.uniq_num_ptl_modules = 0;
     mca_pml_uniq.uniq_num_ptl_progress = 0;
     mca_pml_uniq.uniq_num_ptl_components = 0;
@@ -117,9 +119,9 @@ int mca_pml_uniq_add_ptls(ompi_list_t *ptls)
 
         mca_pml_uniq.uniq_ptl_modules[mca_pml_uniq.uniq_num_ptl_modules++] = ptl;
         for(i=0; i<mca_pml_uniq.uniq_num_ptl_components; i++) {
-          if(mca_pml_uniq.uniq_ptl_components[i] == ptl->ptl_component) {
+            if(mca_pml_uniq.uniq_ptl_components[i] == ptl->ptl_component) {
                 break;
-          }
+            }
         }
         if(i == mca_pml_uniq.uniq_num_ptl_components) {
             mca_pml_uniq.uniq_ptl_components[mca_pml_uniq.uniq_num_ptl_components++] = ptl->ptl_component;
@@ -131,28 +133,28 @@ int mca_pml_uniq_add_ptls(ompi_list_t *ptls)
 
         /* set pointer to fragment matching logic routine, if this
          *   not already set by the ptl */
-       if( NULL == ptl->ptl_match)
-           ptl->ptl_match = mca_pml_uniq_recv_frag_match;
-         ptl->ptl_send_progress = mca_pml_uniq_send_request_progress;
-         ptl->ptl_recv_progress = mca_pml_uniq_recv_request_progress;
-         ptl->ptl_stack = ptl;
-         ptl->ptl_base = NULL;
+        if( NULL == ptl->ptl_match)
+            ptl->ptl_match = mca_pml_uniq_recv_frag_match;
+        ptl->ptl_send_progress = mca_pml_uniq_send_request_progress;
+        ptl->ptl_recv_progress = mca_pml_uniq_recv_request_progress;
+        ptl->ptl_stack = ptl;
+        ptl->ptl_base = NULL;
 
-         /* find maximum required size for cache */
-         if(ptl->ptl_cache_bytes > cache_bytes) {
-             cache_bytes = ptl->ptl_cache_bytes;
-         }
+        /* find maximum required size for cache */
+        if(ptl->ptl_cache_bytes > cache_bytes) {
+            cache_bytes = ptl->ptl_cache_bytes;
+        }
     }
 
     /* setup send fragments based on largest required send request */
     ompi_free_list_init(
-        &mca_pml_uniq.uniq_send_requests,
-        sizeof(mca_pml_uniq_send_request_t) + cache_bytes,
-        OBJ_CLASS(mca_pml_uniq_send_request_t),
-        mca_pml_uniq.uniq_free_list_num,
-        mca_pml_uniq.uniq_free_list_max,
-        mca_pml_uniq.uniq_free_list_inc,
-        NULL);
+                        &mca_pml_uniq.uniq_send_requests,
+                        sizeof(mca_pml_uniq_send_request_t) + cache_bytes,
+                        OBJ_CLASS(mca_pml_uniq_send_request_t),
+                        mca_pml_uniq.uniq_free_list_num,
+                        mca_pml_uniq.uniq_free_list_max,
+                        mca_pml_uniq.uniq_free_list_inc,
+                        NULL);
 
     /* sort ptl list by exclusivity */
     qsort(mca_pml_uniq.uniq_ptl_modules, mca_pml_uniq.uniq_num_ptl_modules, sizeof(struct mca_ptl_t*), ptl_exclusivity_compare);
@@ -165,15 +167,15 @@ int mca_pml_uniq_add_ptls(ompi_list_t *ptls)
 
 int mca_pml_uniq_control(int param, void* value, size_t size)
 {
-   size_t i;
-   for( i = 0; i < mca_pml_uniq.uniq_num_ptl_components; i++ ) {
-      if(NULL != mca_pml_uniq.uniq_ptl_components[i]->ptlm_control) {
-         int rc = mca_pml_uniq.uniq_ptl_components[i]->ptlm_control(param,value,size);
-         if(rc != OMPI_SUCCESS)
-            return rc;
-      }
-   }
-   return OMPI_SUCCESS;
+    size_t i;
+    for( i = 0; i < mca_pml_uniq.uniq_num_ptl_components; i++ ) {
+        if(NULL != mca_pml_uniq.uniq_ptl_components[i]->ptlm_control) {
+            int rc = mca_pml_uniq.uniq_ptl_components[i]->ptlm_control(param,value,size);
+            if(rc != OMPI_SUCCESS)
+                return rc;
+        }
+    }
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -184,128 +186,139 @@ int mca_pml_uniq_control(int param, void* value, size_t size)
 
 int mca_pml_uniq_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
-   size_t p;
-   ompi_bitmap_t reachable;
-   struct mca_ptl_base_peer_t** ptl_peers = NULL;
-   int rc;
-   size_t p_index;
+    size_t p;
+    ompi_bitmap_t reachable;
+    struct mca_ptl_base_peer_t** ptl_peers = NULL;
+    int rc;
+    size_t p_index;
     
-   if( nprocs == 0 )
-      return OMPI_SUCCESS;
+    if( nprocs == 0 )
+        return OMPI_SUCCESS;
 
-   OBJ_CONSTRUCT( &reachable, ompi_bitmap_t );
-   rc = ompi_bitmap_init( &reachable, nprocs );
-   if( OMPI_SUCCESS != rc )
-      return rc;
+    OBJ_CONSTRUCT( &reachable, ompi_bitmap_t );
+    rc = ompi_bitmap_init( &reachable, nprocs );
+    if( OMPI_SUCCESS != rc )
+        return rc;
 
-   /* iterate through each of the procs and set the peers architecture */
-   for( p = 0; p < nprocs; p++ ) {
-      uint32_t* proc_arch;
-      size_t size = sizeof(uint32_t);
-      rc = mca_base_modex_recv(&mca_pml_uniq_component.pmlm_version, procs[p], 
-                               (void**)&proc_arch, &size);
-      if(rc != OMPI_SUCCESS) 
-         return rc;
-      if(size != sizeof(uint32_t))
-         return OMPI_ERROR;
-      procs[p]->proc_arch = ntohl(*proc_arch);
-      free(proc_arch);
-   }
+    /* iterate through each of the procs and set the peers architecture */
+    for( p = 0; p < nprocs; p++ ) {
+        uint32_t* proc_arch;
+        size_t size = sizeof(uint32_t);
+        rc = mca_base_modex_recv(&mca_pml_uniq_component.pmlm_version, procs[p], 
+                                 (void**)&proc_arch, &size);
+        if(rc != OMPI_SUCCESS) 
+            return rc;
+        if(size != sizeof(uint32_t))
+            return OMPI_ERROR;
+        procs[p]->proc_arch = ntohl(*proc_arch);
+        free(proc_arch);
+    }
     
-   /* attempt to add all procs to each ptl */
-   ptl_peers = (struct mca_ptl_base_peer_t **)malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
-   for( p_index = 0; p_index < mca_pml_uniq.uniq_num_ptl_modules; p_index++ ) {
-      mca_ptl_base_module_t* ptl = mca_pml_uniq.uniq_ptl_modules[p_index];
-      int ptl_inuse = 0;
+    /* attempt to add all procs to each ptl */
+    ptl_peers = (struct mca_ptl_base_peer_t **)malloc(nprocs * sizeof(struct mca_ptl_base_peer_t*));
+    for( p_index = 0; p_index < mca_pml_uniq.uniq_num_ptl_modules; p_index++ ) {
+        mca_ptl_base_module_t* ptl = mca_pml_uniq.uniq_ptl_modules[p_index];
+        int ptl_inuse = 0;
 
-      /* if the ptl can reach the destination proc it sets the
-       * corresponding bit (proc index) in the reachable bitmap
-       * and can return addressing information for each proc
-       * that is passed back to the ptl on data transfer calls
-       */
-      ompi_bitmap_clear_all_bits(&reachable);
-      memset(ptl_peers, 0, nprocs * sizeof(struct mca_ptl_base_peer_t*));
-      rc = ptl->ptl_add_procs(ptl, nprocs, procs, ptl_peers, &reachable);
-      if(OMPI_SUCCESS != rc) {
-         free(ptl_peers);
-         return rc;
-      }
+        /* if the ptl can reach the destination proc it sets the
+         * corresponding bit (proc index) in the reachable bitmap
+         * and can return addressing information for each proc
+         * that is passed back to the ptl on data transfer calls
+         */
+        ompi_bitmap_clear_all_bits(&reachable);
+        memset(ptl_peers, 0, nprocs * sizeof(struct mca_ptl_base_peer_t*));
+        rc = ptl->ptl_add_procs(ptl, nprocs, procs, ptl_peers, &reachable);
+        if(OMPI_SUCCESS != rc) {
+            free(ptl_peers);
+            return rc;
+        }
 
-      /* for each proc that is reachable - add the ptl to the procs array(s) */
-      for( p = 0; p < nprocs; p++) {
-         ompi_proc_t *proc;
-         mca_pml_proc_t* proc_pml;
+        /* for each proc that is reachable - add the ptl to the procs array(s) */
+        for( p = 0; p < nprocs; p++) {
+            ompi_proc_t *proc;
+            mca_pml_proc_t* proc_pml;
 
-         if( !ompi_bitmap_is_set_bit(&reachable, p) ) continue;
+            if( !ompi_bitmap_is_set_bit(&reachable, p) ) continue;
 
-         proc = procs[p];
-         proc_pml = proc->proc_pml;
+            proc = procs[p];
+            proc_pml = proc->proc_pml;
 
-         /* this ptl can be used */
-         ptl_inuse++;
+            /* this ptl can be used */
+            ptl_inuse++;
 
-         /* initialize each proc */
-         if(NULL == proc_pml) {
+            /* initialize each proc */
+            if(NULL == proc_pml) {
 
-            /* allocate pml specific proc data */
-            proc_pml = OBJ_NEW(mca_pml_uniq_proc_t);
-            if (NULL == proc_pml) {
-               ompi_output(0, "mca_pml_uniq_add_procs: unable to allocate resources");
-               free(ptl_peers);
-               return OMPI_ERR_OUT_OF_RESOURCE;
+                /* allocate pml specific proc data */
+                proc_pml = OBJ_NEW(mca_pml_uniq_proc_t);
+                if (NULL == proc_pml) {
+                    ompi_output(0, "mca_pml_uniq_add_procs: unable to allocate resources");
+                    free(ptl_peers);
+                    return OMPI_ERR_OUT_OF_RESOURCE;
+                }
+
+                proc_pml->proc_ompi = proc;
+                proc->proc_pml = proc_pml;
+                /* it's the first PTL so add it to both first and next */
+                proc_pml->proc_ptl_flags |= ptl->ptl_flags;
+                if (NULL == ptl->ptl_base &&
+                    ptl->ptl_cache_bytes > 0 &&
+                    NULL != ptl->ptl_request_init &&
+                    NULL != ptl->ptl_request_fini) {
+                    
+                    mca_pml_base_ptl_t* ptl_base = OBJ_NEW(mca_pml_base_ptl_t);
+                    ptl_base->ptl = ptl;
+                    ptl_base->ptl_cache_size = ptl->ptl_cache_size;
+                    ptl->ptl_base = ptl_base;
+                }
+                proc_pml->proc_ptl_first.ptl_base = ptl->ptl_base;
+                proc_pml->proc_ptl_first.ptl_peer = ptl_peers[p];
+                proc_pml->proc_ptl_first.ptl = ptl;
+#if PML_UNIQ_ACCEPT_NEXT_PTL
+                proc_pml->proc_ptl_next.ptl_base = ptl->ptl_base;
+                proc_pml->proc_ptl_next.ptl_peer = ptl_peers[p];
+                proc_pml->proc_ptl_next.ptl = ptl;
+#endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
+            } else {
+                /* choose the best for first and next. For the first look at the latency when
+                 * for the next at the maximum bandwidth.
+                 */
+                ompi_output( 0, "Not yet done dude !!!" );
+#if PML_UNIQ_ACCEPT_NEXT_PTL
+#endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
             }
-
-            proc_pml->proc_ompi = proc;
-            proc->proc_pml = proc_pml;
-            /* it's the first PTL so add it to both first and next */
+            /* dont allow an additional PTL with a lower exclusivity ranking */
+            if( NULL != proc_pml->proc_ptl_first.ptl ) {
+                if( proc_pml->proc_ptl_first.ptl->ptl_exclusivity > ptl->ptl_exclusivity ) {
+                    /* skip this ptl if the exclusivity is less than the previous */
+                    if(ptl_peers[p] != NULL) {
+                        ptl->ptl_del_procs(ptl, 1, &proc, &ptl_peers[p]);
+                    }
+                    continue;
+                }
+            }
             proc_pml->proc_ptl_flags |= ptl->ptl_flags;
-            proc_pml->proc_ptl_first.ptl_peer = ptl_peers[p];
-            proc_pml->proc_ptl_first.ptl_base = NULL;
-            proc_pml->proc_ptl_first.ptl = ptl;
-#if PML_UNIQ_ACCEPT_NEXT_PTL
-            proc_pml->proc_ptl_next.ptl_peer = ptl_peers[p];
-            proc_pml->proc_ptl_next.ptl_base = NULL;
-            proc_pml->proc_ptl_next.ptl = ptl;
-#endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
-         } else {
-            /* choose the best for first and next. For the first look at the latency when
-             * for the next at the maximum bandwidth.
-             */
-#if PML_UNIQ_ACCEPT_NEXT_PTL
-#endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
-         }
-         /* dont allow an additional PTL with a lower exclusivity ranking */
-         if( NULL != proc_pml->proc_ptl_first.ptl ) {
-            if( proc_pml->proc_ptl_first.ptl->ptl_exclusivity > ptl->ptl_exclusivity ) {
-               /* skip this ptl if the exclusivity is less than the previous */
-               if(ptl_peers[p] != NULL) {
-                  ptl->ptl_del_procs(ptl, 1, &proc, &ptl_peers[p]);
-               }
-               continue;
-            }
-         }
-         proc_pml->proc_ptl_flags |= ptl->ptl_flags;
-      }
+        }
 
-      if(ptl_inuse > 0 && NULL != ptl->ptl_component->ptlm_progress) {
-         size_t p;
-         bool found = false;
-         for( p = 0; p < mca_pml_uniq.uniq_num_ptl_progress; p++ ) {
-            if(mca_pml_uniq.uniq_ptl_progress[p] == ptl->ptl_component->ptlm_progress) {
-               found = true;
-               break;
+        if(ptl_inuse > 0 && NULL != ptl->ptl_component->ptlm_progress) {
+            size_t p;
+            bool found = false;
+            for( p = 0; p < mca_pml_uniq.uniq_num_ptl_progress; p++ ) {
+                if(mca_pml_uniq.uniq_ptl_progress[p] == ptl->ptl_component->ptlm_progress) {
+                    found = true;
+                    break;
+                }
             }
-         }
-         if(found == false) {
-            mca_pml_uniq.uniq_ptl_progress[mca_pml_uniq.uniq_num_ptl_progress] = 
-               ptl->ptl_component->ptlm_progress;
-            mca_pml_uniq.uniq_num_ptl_progress++;
-         }
-      }
-   }
-   free(ptl_peers);
+            if(found == false) {
+                mca_pml_uniq.uniq_ptl_progress[mca_pml_uniq.uniq_num_ptl_progress] = 
+                    ptl->ptl_component->ptlm_progress;
+                mca_pml_uniq.uniq_num_ptl_progress++;
+            }
+        }
+    }
+    free(ptl_peers);
 
-   return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 }
 
 /*
@@ -331,16 +344,16 @@ int mca_pml_uniq_del_procs(ompi_proc_t** procs, size_t nprocs)
         ptl = ptl_proc->ptl;
         rc = ptl->ptl_del_procs( ptl, 1, &proc, &ptl_proc->ptl_peer );
         if( OMPI_SUCCESS != rc ) {
-           return rc;
+            return rc;
         }
 #if PML_UNIQ_ACCEPT_NEXT_PTL
         if( proc_pml->proc_ptl_first.ptl != proc_pml->proc_ptl_next.ptl ) {
-           ptl_proc = &(proc_pml->proc_ptl_next);
-           ptl = ptl_proc->ptl;
-           rc = ptl->ptl_del_procs( ptl, 1, &proc, &ptl_proc->ptl_peer );
-           if( OMPI_SUCCESS != rc ) {
-              return rc;
-           }
+            ptl_proc = &(proc_pml->proc_ptl_next);
+            ptl = ptl_proc->ptl;
+            rc = ptl->ptl_del_procs( ptl, 1, &proc, &ptl_proc->ptl_peer );
+            if( OMPI_SUCCESS != rc ) {
+                return rc;
+            }
         }
 #endif  /* PML_UNIQ_ACCEPT_NEXT_PTL */
         
