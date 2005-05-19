@@ -111,6 +111,10 @@ int orte_read_universe_setup_file(char *filename, orte_universe_t *info)
 	   }
     }
 
+    /* initialize info */
+    memset(info, 0, sizeof(orte_universe_t));
+
+    /* fill in universe info */
     info->name = orte_getline(fp);
     if (NULL == info->name) {
 	   goto CLEANUP;
