@@ -28,6 +28,7 @@ sinclude(config/cxx_find_template_repository.m4)
 sinclude(config/cxx_have_exceptions.m4)
 sinclude(config/cxx_find_exception_flags.m4)
 
+sinclude(config/f77_check.m4)
 sinclude(config/f77_check_type.m4)
 sinclude(config/f77_find_ext_symbol_convention.m4)
 sinclude(config/f77_get_alignment.m4)
