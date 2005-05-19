@@ -16,28 +16,17 @@
 
 /** @file **/
 
-#include "orte_config.h"
-
-#include "include/orte_constants.h"
-#include "runtime/opal_finalize.h"
-#include "runtime/runtime.h"
+#ifndef OPAL_FINALIZE_H
+#define OPAL_FINALIZE_H
 
 /**
- * Leave ORTE.
+ * Finalize the OPAL utilities
  *
  * @retval ORTE_SUCCESS Upon success.
  * @retval ORTE_ERROR Upon failure.
  *
  * This function performs 
  */
-int orte_finalize(void)
-{
-    /* finalize the orte system */
-    orte_system_finalize();
-    
-    /* finalize the opal utilities */
-    opal_finalize();
-    
-    return ORTE_SUCCESS;
-}
+int opal_finalize(void);
 
+#endif

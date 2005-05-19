@@ -19,10 +19,10 @@
  *
  * Interface into the Open MPI Run Time Environment
  */
-#ifndef OMPI_RUNTIME_H
-#define OMPI_RUNTIME_H
+#ifndef ORTE_RUNTIME_H
+#define ORTE_RUNTIME_H
 
-#include "ompi_config.h"
+#include "orte_config.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -113,6 +113,7 @@ OMPI_DECLSPEC    int orte_restart(orte_process_name_t* name, const char* uri);
      *
      */
 OMPI_DECLSPEC    int orte_finalize(void);
+OMPI_DECLSPEC    int orte_system_finalize(void);
 
     /*
      * Change state as processes complete registration/unregistration
