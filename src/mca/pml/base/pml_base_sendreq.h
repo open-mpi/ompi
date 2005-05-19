@@ -21,8 +21,8 @@
 
 #include "ompi_config.h"
 #include "mca/pml/pml.h"
-#include "datatype/datatype.h"
 #include "mca/pml/base/pml_base_request.h"
+#include "datatype/datatype.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -35,7 +35,7 @@ OMPI_DECLSPEC extern ompi_class_t mca_pml_base_send_request_t_class;
  */
 struct mca_pml_base_send_request_t {
     mca_pml_base_request_t req_base;         /** base request type - common data structure for use by wait/test */
-    ompi_datatype_t* req_datatype;           /**< pointer to datatype */
+    struct ompi_datatype_t* req_datatype;    /**< pointer to datatype */
     void *req_addr;                          /**< pointer to send buffer - may not be application buffer */
     size_t req_count;                        /**< number of elements in send buffer */
     size_t req_bytes_packed;                 /**< packed size of a message given the datatype and count */
