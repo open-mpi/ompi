@@ -142,7 +142,9 @@ FUNC_FUNC(max, long_long, long long)
 FUNC_FUNC(max, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-FUNC_FUNC(max, fortran_integer, MPI_Fint)
+#if OMPI_HAVE_FORTRAN_INTEGER
+FUNC_FUNC(max, fortran_integer, ompi_fortran_integer_t)
+#endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
 FUNC_FUNC(max, fortran_integer1, ompi_fortran_integer1_t)
 #endif
@@ -161,8 +163,12 @@ FUNC_FUNC(max, fortran_integer16, ompi_fortran_integer16_t)
 /* Floating point */
 FUNC_FUNC(max, float, float)
 FUNC_FUNC(max, double, double)
+#if OMPI_HAVE_FORTRAN_REAL
 FUNC_FUNC(max, fortran_real, ompi_fortran_real_t)
-FUNC_FUNC(max, fortran_double_precision, ompi_fortran_dblprec_t)
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+FUNC_FUNC(max, fortran_double_precision, ompi_fortran_double_precision_t)
+#endif
 FUNC_FUNC(max, long_double, long double)
 #if OMPI_HAVE_FORTRAN_REAL4
 FUNC_FUNC(max, fortran_real4, ompi_fortran_real4_t)
@@ -194,7 +200,9 @@ FUNC_FUNC(min, long_long, long long)
 FUNC_FUNC(min, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-FUNC_FUNC(min, fortran_integer, MPI_Fint)
+#if OMPI_HAVE_FORTRAN_INTEGER
+FUNC_FUNC(min, fortran_integer, ompi_fortran_integer_t)
+#endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
 FUNC_FUNC(min, fortran_integer1, ompi_fortran_integer1_t)
 #endif
@@ -213,8 +221,12 @@ FUNC_FUNC(min, fortran_integer16, ompi_fortran_integer16_t)
 /* Floating point */
 FUNC_FUNC(min, float, float)
 FUNC_FUNC(min, double, double)
+#if OMPI_HAVE_FORTRAN_REAL
 FUNC_FUNC(min, fortran_real, ompi_fortran_real_t)
-FUNC_FUNC(min, fortran_double_precision, ompi_fortran_dblprec_t)
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+FUNC_FUNC(min, fortran_double_precision, ompi_fortran_double_precision_t)
+#endif
 FUNC_FUNC(min, long_double, long double)
 #if OMPI_HAVE_FORTRAN_REAL4
 FUNC_FUNC(min, fortran_real4, ompi_fortran_real4_t)
@@ -243,7 +255,9 @@ OP_FUNC(sum, long_long, long long, +=)
 OP_FUNC(sum, unsigned_long_long, unsigned long long, +=)
 #endif
 /* Fortran integer */
-OP_FUNC(sum, fortran_integer, MPI_Fint, +=)
+#if OMPI_HAVE_FORTRAN_INTEGER
+OP_FUNC(sum, fortran_integer, ompi_fortran_integer_t, +=)
+#endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
 OP_FUNC(sum, fortran_integer1, ompi_fortran_integer1_t, +=)
 #endif
@@ -262,8 +276,12 @@ OP_FUNC(sum, fortran_integer16, ompi_fortran_integer16_t, +=)
 /* Floating point */
 OP_FUNC(sum, float, float, +=)
 OP_FUNC(sum, double, double, +=)
+#if OMPI_HAVE_FORTRAN_REAL
 OP_FUNC(sum, fortran_real, ompi_fortran_real_t, +=)
-OP_FUNC(sum, fortran_double_precision, ompi_fortran_dblprec_t, +=)
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+OP_FUNC(sum, fortran_double_precision, ompi_fortran_double_precision_t, +=)
+#endif
 OP_FUNC(sum, long_double, long double, +=)
 #if OMPI_HAVE_FORTRAN_REAL4
 OP_FUNC(sum, fortran_real4, ompi_fortran_real4_t, +=)
@@ -275,14 +293,16 @@ OP_FUNC(sum, fortran_real8, ompi_fortran_real8_t, +=)
 OP_FUNC(sum, fortran_real16, ompi_fortran_real16_t, +=)
 #endif
 /* Complex */
+#if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
 COMPLEX_OP_FUNC_SUM(fortran_complex, ompi_fortran_complex_t)
-#if OMPI_HAVE_FORTRAN_COMPLEX8
+#endif
+#if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
 COMPLEX_OP_FUNC_SUM(fortran_complex8, ompi_fortran_complex8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_COMPLEX16
+#if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
 COMPLEX_OP_FUNC_SUM(fortran_complex16, ompi_fortran_complex16_t)
 #endif
-#if OMPI_HAVE_FORTRAN_COMPLEX32
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
 COMPLEX_OP_FUNC_SUM(fortran_complex32, ompi_fortran_complex32_t)
 #endif
 
@@ -303,7 +323,9 @@ OP_FUNC(prod, long_long, long long, +=)
 OP_FUNC(prod, unsigned_long_long, unsigned long long, +=)
 #endif
 /* Fortran integer */
-OP_FUNC(prod, fortran_integer, MPI_Fint, *=)
+#if OMPI_HAVE_FORTRAN_INTEGER
+OP_FUNC(prod, fortran_integer, ompi_fortran_integer_t, *=)
+#endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
 OP_FUNC(prod, fortran_integer1, ompi_fortran_integer1_t, +=)
 #endif
@@ -322,8 +344,12 @@ OP_FUNC(prod, fortran_integer16, ompi_fortran_integer16_t, +=)
 /* Floating point */
 OP_FUNC(prod, float, float, *=)
 OP_FUNC(prod, double, double, *=)
+#if OMPI_HAVE_FORTRAN_REAL
 OP_FUNC(prod, fortran_real, ompi_fortran_real_t, *=)
-OP_FUNC(prod, fortran_double_precision, ompi_fortran_dblprec_t, *=)
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+OP_FUNC(prod, fortran_double_precision, ompi_fortran_double_precision_t, *=)
+#endif
 OP_FUNC(prod, long_double, long double, *=)
 #if OMPI_HAVE_FORTRAN_REAL4
 OP_FUNC(prod, fortran_real4, ompi_fortran_real4_t, +=)
@@ -335,14 +361,16 @@ OP_FUNC(prod, fortran_real8, ompi_fortran_real8_t, +=)
 OP_FUNC(prod, fortran_real16, ompi_fortran_real16_t, +=)
 #endif
 /* Complex */
+#if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
 COMPLEX_OP_FUNC_PROD(fortran_complex, ompi_fortran_complex_t)
-#if OMPI_HAVE_FORTRAN_COMPLEX8
+#endif
+#if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
 COMPLEX_OP_FUNC_PROD(fortran_complex8, ompi_fortran_complex8_t)
 #endif
-#if OMPI_HAVE_FORTRAN_COMPLEX16
+#if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
 COMPLEX_OP_FUNC_PROD(fortran_complex16, ompi_fortran_complex16_t)
 #endif
-#if OMPI_HAVE_FORTRAN_COMPLEX32
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
 COMPLEX_OP_FUNC_PROD(fortran_complex32, ompi_fortran_complex32_t)
 #endif
 
@@ -365,7 +393,9 @@ FUNC_FUNC(land, long_long, long long)
 FUNC_FUNC(land, unsigned_long_long, unsigned long long)
 #endif
 /* Logical */
+#if OMPI_HAVE_FORTRAN_LOGICAL
 FUNC_FUNC(land, fortran_logical, ompi_fortran_logical_t)
+#endif
 
 /*************************************************************************
  * Logical OR
@@ -386,7 +416,9 @@ FUNC_FUNC(lor, long_long, long long)
 FUNC_FUNC(lor, unsigned_long_long, unsigned long long)
 #endif
 /* Logical */
+#if OMPI_HAVE_FORTRAN_LOGICAL
 FUNC_FUNC(lor, fortran_logical, ompi_fortran_logical_t)
+#endif
 
 /*************************************************************************
  * Logical XOR
@@ -407,7 +439,9 @@ FUNC_FUNC(lxor, long_long, long long)
 FUNC_FUNC(lxor, unsigned_long_long, unsigned long long)
 #endif
 /* Logical */
+#if OMPI_HAVE_FORTRAN_LOGICAL
 FUNC_FUNC(lxor, fortran_logical, ompi_fortran_logical_t)
+#endif
 
 /*************************************************************************
  * Bitwise AND
@@ -428,7 +462,9 @@ FUNC_FUNC(band, long_long, long long)
 FUNC_FUNC(band, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-FUNC_FUNC(band, fortran_integer, MPI_Fint)
+#if OMPI_HAVE_FORTRAN_INTEGER
+FUNC_FUNC(band, fortran_integer, ompi_fortran_integer_t)
+#endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
 FUNC_FUNC(band, fortran_integer1, ompi_fortran_integer1_t)
 #endif
@@ -466,7 +502,9 @@ FUNC_FUNC(bor, long_long, long long)
 FUNC_FUNC(bor, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-FUNC_FUNC(bor, fortran_integer, MPI_Fint)
+#if OMPI_HAVE_FORTRAN_INTEGER
+FUNC_FUNC(bor, fortran_integer, ompi_fortran_integer_t)
+#endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
 FUNC_FUNC(bor, fortran_integer1, ompi_fortran_integer1_t)
 #endif
@@ -504,7 +542,9 @@ FUNC_FUNC(bxor, long_long, long long)
 FUNC_FUNC(bxor, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
-FUNC_FUNC(bxor, fortran_integer, MPI_Fint)
+#if OMPI_HAVE_FORTRAN_INTEGER
+FUNC_FUNC(bxor, fortran_integer, ompi_fortran_integer_t)
+#endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
 FUNC_FUNC(bxor, fortran_integer1, ompi_fortran_integer1_t)
 #endif
@@ -527,9 +567,15 @@ FUNC_FUNC(bxor, byte, char)
  * Min and max location "pair" datatypes
  *************************************************************************/
 
+#if OMPI_HAVE_FORTRAN_REAL
 LOC_STRUCT(2real, ompi_fortran_real_t, ompi_fortran_real_t)
-LOC_STRUCT(2double_precision, ompi_fortran_dblprec_t, ompi_fortran_dblprec_t)
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+LOC_STRUCT(2double_precision, ompi_fortran_double_precision_t, ompi_fortran_double_precision_t)
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER
 LOC_STRUCT(2integer, ompi_fortran_integer_t, ompi_fortran_integer_t)
+#endif
 LOC_STRUCT(float_int, float, int)
 LOC_STRUCT(double_int, double, int)
 LOC_STRUCT(long_int, long, int)
@@ -541,9 +587,15 @@ LOC_STRUCT(long_double_int, long double, int)
  * Max location
  *************************************************************************/
 
+#if OMPI_HAVE_FORTRAN_REAL
 LOC_FUNC(maxloc, 2real, >)
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 LOC_FUNC(maxloc, 2double_precision, >)
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER
 LOC_FUNC(maxloc, 2integer, >)
+#endif
 LOC_FUNC(maxloc, float_int, >)
 LOC_FUNC(maxloc, double_int, >)
 LOC_FUNC(maxloc, long_int, >)
@@ -555,9 +607,15 @@ LOC_FUNC(maxloc, long_double_int, >)
  * Min location
  *************************************************************************/
 
+#if OMPI_HAVE_FORTRAN_REAL
 LOC_FUNC(minloc, 2real, <)
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
 LOC_FUNC(minloc, 2double_precision, <)
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER
 LOC_FUNC(minloc, 2integer, <)
+#endif
 LOC_FUNC(minloc, float_int, <)
 LOC_FUNC(minloc, double_int, <)
 LOC_FUNC(minloc, long_int, <)
@@ -577,25 +635,59 @@ OP_FUNC(replace, unsigned_short, unsigned short, =)
 OP_FUNC(replace, unsigned, unsigned, =)
 OP_FUNC(replace, unsigned_long, unsigned long, =)
 /* Fortran integer */
-OP_FUNC(replace, fortran_integer, MPI_Fint, =)
+#if OMPI_HAVE_FORTRAN_INTEGER
+OP_FUNC(replace, fortran_integer, ompi_fortran_integer_t, =)
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER1
+OP_FUNC(replace, fortran_integer1, ompi_fortran_integer1_t, =)
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER2
+OP_FUNC(replace, fortran_integer2, ompi_fortran_integer2_t, =)
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER4
+OP_FUNC(replace, fortran_integer4, ompi_fortran_integer4_t, =)
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER8
+OP_FUNC(replace, fortran_integer8, ompi_fortran_integer8_t, =)
+#endif
+#if OMPI_HAVE_FORTRAN_INTEGER16
+OP_FUNC(replace, fortran_integer16, ompi_fortran_integer16_t, =)
+#endif
 /* Floating point */
 OP_FUNC(replace, float, float, =)
 OP_FUNC(replace, double, double, =)
+#if OMPI_HAVE_FORTRAN_REAL
 OP_FUNC(replace, fortran_real, ompi_fortran_real_t, =)
-OP_FUNC(replace, fortran_double_precision, ompi_fortran_dblprec_t, =)
+#endif
+#if OMPI_HAVE_FORTRAN_REAL4
+OP_FUNC(replace, fortran_real4, ompi_fortran_real4_t, =)
+#endif
+#if OMPI_HAVE_FORTRAN_REAL8
+OP_FUNC(replace, fortran_real8, ompi_fortran_real8_t, =)
+#endif
+#if OMPI_HAVE_FORTRAN_REAL16
+OP_FUNC(replace, fortran_real16, ompi_fortran_real16_t, =)
+#endif
+#if OMPI_HAVE_FORTRAN_DOUBLE_PRECISION
+OP_FUNC(replace, fortran_double_precision, ompi_fortran_double_precision_t, =)
+#endif
 OP_FUNC(replace, long_double, long double, =)
 /* Complex */
+#if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
 OP_FUNC(replace, fortran_complex, ompi_fortran_complex_t, =)
-#if OMPI_HAVE_FORTRAN_COMPLEX8
+#endif
+#if OMPI_HAVE_FORTRAN_REAL4 && OMPI_HAVE_FORTRAN_COMPLEX8
 OP_FUNC(replace, fortran_complex8, ompi_fortran_complex8_t, =)
 #endif
-#if OMPI_HAVE_FORTRAN_COMPLEX16
+#if OMPI_HAVE_FORTRAN_REAL8 && OMPI_HAVE_FORTRAN_COMPLEX16
 OP_FUNC(replace, fortran_complex16, ompi_fortran_complex16_t, =)
 #endif
-#if OMPI_HAVE_FORTRAN_COMPLEX32
+#if OMPI_HAVE_FORTRAN_REAL16 && OMPI_HAVE_FORTRAN_COMPLEX32
 OP_FUNC(replace, fortran_complex32, ompi_fortran_complex32_t, =)
 #endif
 /* Byte */
 OP_FUNC(replace, byte, char, =)
-/* Byte */
+/* Logical */
+#if OMPI_HAVE_FORTRAN_LOGICAL
 OP_FUNC(replace, fortran_logical, ompi_fortran_logical_t, =)
+#endif
