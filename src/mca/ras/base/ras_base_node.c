@@ -215,6 +215,7 @@ int orte_ras_base_node_insert(ompi_list_t* nodes)
     
     num_values = ompi_list_get_size(nodes);
     if (0 >= num_values) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
     
