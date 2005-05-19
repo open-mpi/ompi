@@ -64,7 +64,6 @@
 #include "ompi_config.h"
 #include "class/ompi_list.h"
 #include "communicator/communicator.h"
-#include "datatype/datatype.h"
 #include "request/request.h"
 #include "mca/mca.h"
 #include "mpi.h" /* needed for MPI_ANY_TAG */
@@ -241,7 +240,7 @@ typedef int (*mca_pml_base_module_del_comm_fn_t)(struct ompi_communicator_t* com
 typedef int (*mca_pml_base_module_irecv_init_fn_t)(
     void *buf,                           
     size_t count,                         
-    ompi_datatype_t *datatype,              
+    struct ompi_datatype_t *datatype,              
     int src,
     int tag,                                
     struct ompi_communicator_t* comm,
@@ -263,7 +262,7 @@ typedef int (*mca_pml_base_module_irecv_init_fn_t)(
 typedef int (*mca_pml_base_module_irecv_fn_t)(
     void *buf,
     size_t count,
-    ompi_datatype_t *datatype,
+    struct ompi_datatype_t *datatype,
     int src,
     int tag,
     struct ompi_communicator_t* comm,
@@ -285,7 +284,7 @@ typedef int (*mca_pml_base_module_irecv_fn_t)(
 typedef int (*mca_pml_base_module_recv_fn_t)(
     void *buf,
     size_t count,
-    ompi_datatype_t *datatype,
+    struct ompi_datatype_t *datatype,
     int src,
     int tag,
     struct ompi_communicator_t* comm,
@@ -308,7 +307,7 @@ typedef int (*mca_pml_base_module_recv_fn_t)(
 typedef int (*mca_pml_base_module_isend_init_fn_t)(
     void *buf,
     size_t count,
-    ompi_datatype_t *datatype,
+    struct ompi_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
@@ -333,7 +332,7 @@ typedef int (*mca_pml_base_module_isend_init_fn_t)(
 typedef int (*mca_pml_base_module_isend_fn_t)(
     void *buf,
     size_t count,
-    ompi_datatype_t *datatype,
+    struct ompi_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
@@ -357,7 +356,7 @@ typedef int (*mca_pml_base_module_isend_fn_t)(
 typedef int (*mca_pml_base_module_send_fn_t)(
     void *buf,
     size_t count,
-    ompi_datatype_t *datatype,
+    struct ompi_datatype_t *datatype,
     int dst,
     int tag,
     mca_pml_base_send_mode_t mode,
