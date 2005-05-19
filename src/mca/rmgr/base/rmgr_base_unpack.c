@@ -182,28 +182,20 @@ int orte_rmgr_base_cmd_dispatch(orte_buffer_t* req, orte_buffer_t* rsp)
 
     switch(cmd) {
         case ORTE_RMGR_CMD_QUERY:
-            ompi_output(0, "RMGR: query");
             return orte_rmgr_base_cmd_query(req,rsp);
         case ORTE_RMGR_CMD_CREATE:
-            ompi_output(0, "RMGR: create");
             return orte_rmgr_base_cmd_create(req,rsp);
         case ORTE_RMGR_CMD_ALLOCATE:
-            ompi_output(0, "RMGR: allocate");
             return orte_rmgr_base_cmd_allocate(req,rsp);
         case ORTE_RMGR_CMD_DEALLOCATE:
-            ompi_output(0, "RMGR: deallocate");
             return orte_rmgr_base_cmd_deallocate(req,rsp);
         case ORTE_RMGR_CMD_MAP:
-            ompi_output(0, "RMGR: map");
             return orte_rmgr_base_cmd_map(req,rsp);
         case ORTE_RMGR_CMD_LAUNCH:
-            ompi_output(0, "RMGR: launch");
             return orte_rmgr_base_cmd_launch(req,rsp);
         case ORTE_RMGR_CMD_TERM_JOB:
-            ompi_output(0, "RMGR: term job");
             return orte_rmgr_base_cmd_term_job(req,rsp);
         case ORTE_RMGR_CMD_TERM_PROC:
-            ompi_output(0, "RMGR: term proc");
             return orte_rmgr_base_cmd_term_proc(req,rsp);
         default:
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
