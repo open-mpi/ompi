@@ -341,11 +341,14 @@ static int mca_oob_tcp_create_listen(void)
  */
 static void mca_oob_tcp_recv_probe(int sd, mca_oob_tcp_hdr_t* hdr)
 {
-    unsigned char* ptr = (unsigned char*)&hdr;
+    unsigned char* ptr = (unsigned char*)hdr;
     size_t cnt = 0;
 
+    hdr->msg_type = MCA_OOB_TCP_PROBE;
     hdr->msg_dst = hdr->msg_src;
     hdr->msg_src = *orte_process_info.my_name;
+    MCA_OOB_TCP_HDR_HTON(hdr);
+
     while(cnt < sizeof(mca_oob_tcp_hdr_t)) {
         int retval = send(sd, (char *)ptr+cnt, sizeof(mca_oob_tcp_hdr_t)-cnt, 0);
         if(retval < 0) {
