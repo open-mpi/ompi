@@ -196,6 +196,7 @@ int orte_rds_resfile_query(void)
     mca_base_param_lookup_string(fileid, &resfile);
     if (NULL == resfile) {  /* no resource file provided */
         /* DO NOT ORTE_ERROR_LOG OR RETURN AN ERROR - THIS IS NOT AN ERROR CONDITION */
+       OMPI_UNLOCK(&mca_rds_resfile_component.lock);
        return ORTE_SUCCESS;
     }
      
@@ -203,6 +204,7 @@ int orte_rds_resfile_query(void)
     fp = fopen(resfile, "r");
     if (NULL == fp) {
        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+       OMPI_UNLOCK(&mca_rds_resfile_component.lock);
        return ORTE_ERR_NOT_FOUND;
     }
     
