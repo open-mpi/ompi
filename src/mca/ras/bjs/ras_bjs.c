@@ -25,6 +25,7 @@
 #include "util/output.h"
 #include "mca/ras/base/base.h"
 #include "mca/ras/base/ras_base_node.h"
+#include "mca/errmgr/errmgr.h"
 #include "ras_bjs.h"
 
 
@@ -111,8 +112,10 @@ static int orte_ras_bjs_discover(ompi_list_t* nodelist)
 
     /* query the nodelist from the registry */
     OBJ_CONSTRUCT(&new_nodes, ompi_list_t);
-    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query(nodelist)))
+    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query(nodelist))) {
+        ORTE_ERROR_LOG(rc); 
         return rc;
+    }
 
     /* validate that any user supplied nodes actually exist, etc. */
     for(item =  ompi_list_get_first(nodelist);
@@ -195,7 +198,12 @@ static int orte_ras_bjs_discover(ompi_list_t* nodelist)
     }
 
     /* add any newly discovered nodes to the registry */
-    rc = orte_ras_base_node_insert(&new_nodes);
+    if(ompi_list_get_size(&new_nodes)) {
+        rc = orte_ras_base_node_insert(&new_nodes); 
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+        }
+    }
 
     /* append them to the nodelist */
     while(NULL != (item = ompi_list_remove_first(&new_nodes)))
@@ -221,9 +229,13 @@ static int orte_ras_bjs_allocate(orte_jobid_t jobid)
 
     OBJ_CONSTRUCT(&nodes, ompi_list_t);
     if(ORTE_SUCCESS != (rc = orte_ras_bjs_discover(&nodes))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
     rc = orte_ras_base_allocate_nodes(jobid, &nodes);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+    }
 
     while(NULL != (item = ompi_list_remove_first(&nodes)))
         OBJ_RELEASE(item);
