@@ -360,6 +360,7 @@ static int orte_pls_bproc_launch_app(
     int rc, index;
     char* uri;
     char *var;
+    int num_env;
 
     /* convert node names to bproc nodelist */
     if(ORTE_SUCCESS != (rc = orte_pls_bproc_nodelist(map, &node_list, &num_nodes))) {
@@ -372,11 +373,18 @@ static int orte_pls_bproc_launch_app(
     }
 
     /* append mca parameters to our environment */
-    if(ORTE_SUCCESS != (rc = mca_base_param_build_env(&map->app->env, &map->app->num_env, true))) { 
+    num_env = map->app->num_env;
+    if(ORTE_SUCCESS != (rc = mca_base_param_build_env(&map->app->env, &num_env, true))) { 
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
+    map->app->num_env = num_env;
 
+    /* overwrite seed setting */
+    var = mca_base_param_environ_variable("seed",NULL,NULL);
+    ompi_setenv(var, "0", true, &map->app->env);
+
+    /* set name discovery mode */
     var = mca_base_param_environ_variable("ns","nds",NULL);
     ompi_setenv(var, "pipe", true, &map->app->env);
     free(var);
