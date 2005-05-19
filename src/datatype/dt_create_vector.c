@@ -45,8 +45,6 @@ int32_t ompi_ddt_create_vector( int count, int bLength, long stride,
         }
         if( 1 != bLength )
             OBJ_RELEASE( pTempData );
-        /* correct the ub to remove the last stride */
-        pData->ub -= (stride - bLength) * extent;
     }
     *newType = pData;
     return OMPI_SUCCESS;
@@ -73,8 +71,6 @@ int32_t ompi_ddt_create_hvector( int count, int bLength, long stride,
         }
         if( 1 != bLength )
             OBJ_RELEASE( pTempData );
-        /* correct the ub to remove the last stride */
-        pData->ub -= (stride - (bLength * extent));
     }
     *newType = pData;
     return OMPI_SUCCESS;

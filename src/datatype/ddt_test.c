@@ -30,6 +30,11 @@
 #define GET_TIME(TV)   gettimeofday( &(TV), NULL )
 #define ELAPSED_TIME(TSTART, TEND)  (((TEND).tv_sec - (TSTART).tv_sec) * 1000000 + ((TEND).tv_usec - (TSTART).tv_usec))
 
+#define DUMP_DATA_AFTER_COMMIT 0x00000001
+#define CHECK_PACK_UNPACK      0x00000002
+
+static outputFlags = CHECK_PACK_UNPACK;
+
 ompi_datatype_t* create_inversed_vector( ompi_datatype_t* type, int length )
 {
    ompi_datatype_t* type1;
@@ -337,7 +342,9 @@ ompi_datatype_t* upper_matrix( unsigned int mat_size )
     ompi_ddt_create_indexed( mat_size, blocklen, disp, ompi_ddt_basicDatatypes[DT_DOUBLE],
                              &upper );
     ompi_ddt_commit( &upper );
-    ompi_ddt_dump( upper );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( upper );
+    }
     free( disp );
     free( blocklen );
     return upper;
@@ -460,15 +467,23 @@ ompi_datatype_t* test_contiguous( void )
     printf( "test contiguous (alignement)\n" );
     pdt1 = ompi_ddt_create( -1 );
     ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_DOUBLE], 1, 0, -1 );
-    ompi_ddt_dump( pdt1 );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt1 );
+    }
     ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_CHAR], 1, 8, -1 );
-    ompi_ddt_dump( pdt1 );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt1 );
+    }
     ompi_ddt_create_contiguous( 4, pdt1, &pdt2 );
     OBJ_RELEASE( pdt1 ); /*assert( pdt1 == NULL );*/
-    ompi_ddt_dump( pdt2 );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt2 );
+    }
     ompi_ddt_create_contiguous( 2, pdt2, &pdt );
     OBJ_RELEASE( pdt2 ); /*assert( pdt2 == NULL );*/
-    ompi_ddt_dump( pdt );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt );
+    }
     return pdt;
 }
 
@@ -490,7 +505,9 @@ ompi_datatype_t* test_struct_char_double( void )
 
     ompi_ddt_create_struct( 2, lengths, displ, types, &pdt );
     ompi_ddt_commit( &pdt );
-    ompi_ddt_dump( pdt );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt );
+    }
     return pdt;
 }
 
@@ -500,7 +517,9 @@ ompi_datatype_t* test_create_twice_two_doubles( void )
 
     ompi_ddt_create_vector( 2, 2, 5, &ompi_mpi_double, &pdt );
     ompi_ddt_commit( &pdt );
-    ompi_ddt_dump( pdt );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt );
+    }
     return pdt;
 }
 
@@ -538,7 +557,9 @@ ompi_datatype_t* test_create_blacs_type( void )
 
     ompi_ddt_create_indexed( 18, blacs_length, blacs_indices, &ompi_mpi_int, &pdt );
     ompi_ddt_commit( &pdt );
-    ompi_ddt_dump( pdt );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt );
+    }
     return pdt;
 }
 
@@ -548,7 +569,9 @@ ompi_datatype_t* test_create_blacs_type1( ompi_datatype_t* base_type )
 
     ompi_ddt_create_vector( 7, 1, 3, base_type, &pdt );
     ompi_ddt_commit( &pdt );
-    ompi_ddt_dump( pdt );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt );
+    }
     return pdt;
 }
 
@@ -558,7 +581,9 @@ ompi_datatype_t* test_create_blacs_type2( ompi_datatype_t* base_type )
 
     ompi_ddt_create_vector( 7, 1, 2, base_type, &pdt );
     ompi_ddt_commit( &pdt );
-    ompi_ddt_dump( pdt );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt );
+    }
     return pdt;
 }
 
@@ -575,13 +600,17 @@ ompi_datatype_t* test_struct( void )
     pdt1 = ompi_ddt_create( -1 );
     ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_DOUBLE], 1, 0, -1 );
     ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_CHAR], 1, 8, -1 );
-    ompi_ddt_dump( pdt1 );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt1 );
+    }
 
     types[1] = pdt1;
 
     ompi_ddt_create_struct( 3, lengths, disp, types, &pdt );
     OBJ_RELEASE( pdt1 ); /*assert( pdt1 == NULL );*/
-    ompi_ddt_dump( pdt );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt );
+    }
     return pdt;
 }
 
@@ -642,10 +671,14 @@ ompi_datatype_t* create_strange_dt( void )
     OBJ_RELEASE( pdt1 );
     OBJ_RELEASE( pdt2 );
     printf( "\nStrange datatype BEFORE COMMIT\n" );
-    ompi_ddt_dump( pdt );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt );
+    }
     ompi_ddt_commit( &pdt );
     printf( "\nStrange datatype AFTER COMMIT\n" );
-    ompi_ddt_dump( pdt );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt );
+    }
     return pdt;
 }
 
@@ -846,28 +879,27 @@ int main( int argc, char* argv[] )
     int rc, length = 500, check_pack_unpack = 0;
 
     ompi_ddt_init();
-#if 0
+
     printf( "\n\n/*\n * TEST INVERSED VECTOR\n */\n\n" );
     pdt = create_inversed_vector( &ompi_mpi_int, 10 );
-    if( 0 != check_diag_matrix ) {
+    if( outputFlags & CHECK_PACK_UNPACK ) {
        local_copy_ddt_count(pdt, 100);
        local_copy_with_convertor(pdt, 100, 4008);
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
     printf( "\n\n/*\n * TEST STRANGE DATATYPE\n */\n\n" );
     pdt = create_strange_dt();
-    if( 0 != check_diag_matrix ) {
+    if( outputFlags & CHECK_PACK_UNPACK ) {
        local_copy_ddt_count(pdt, 1);
        local_copy_with_convertor(pdt, 1, 4008);
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
-#endif
    
     printf( "\n\n/*\n * TEST UPPER TRIANGULAR MATRIX\n */\n\n" );
     pdt = upper_matrix(100);
-    if( 0 != check_diag_matrix ) {
+    if( outputFlags & CHECK_PACK_UNPACK ) {
        local_copy_ddt_count(pdt, 1);
-       local_copy_with_convertor(pdt, 1, 4008);
+       local_copy_with_convertor(pdt, 1, 48);
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
@@ -884,7 +916,9 @@ int main( int argc, char* argv[] )
 
     printf( "\n\n/*\n * TEST MATRIX BORDERS\n */\n\n" );
     pdt = test_matrix_borders( length, 100 );
-    ompi_ddt_dump( pdt );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt );
+    }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     printf( "\n\n/*\n * TEST CONTIGUOUS\n */\n\n" );
@@ -907,37 +941,43 @@ int main( int argc, char* argv[] )
     ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_LONG_DOUBLE], 2, sizeof(long long) * 5, -1 );
 
     printf( ">>--------------------------------------------<<\n" );
-    ompi_ddt_dump( pdt1 );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt1 );
+    }
     printf( ">>--------------------------------------------<<\n" );
-    ompi_ddt_dump( pdt2 );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt2 );
+    }
     printf( ">>--------------------------------------------<<\n" );
-    ompi_ddt_dump( pdt3 );
+    if( outputFlags & DUMP_DATA_AFTER_COMMIT ) {
+        ompi_ddt_dump( pdt3 );
+    }
 
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
     OBJ_RELEASE( pdt3 ); /*assert( pdt3 == NULL );*/
 
     pdt = test_struct_char_double();
-    if( 0 != check_diag_matrix ) {
+    if( outputFlags & CHECK_PACK_UNPACK ) {
        local_copy_with_convertor( pdt, 4500, 12 );
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     pdt = test_create_twice_two_doubles();
-    if( 0 != check_diag_matrix ) {
+    if( outputFlags & CHECK_PACK_UNPACK ) {
        local_copy_with_convertor( pdt, 4500, 12 );
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     pdt = test_create_blacs_type();
-    if( 0 != check_diag_matrix ) {
+    if( outputFlags & CHECK_PACK_UNPACK ) {
        local_copy_with_convertor( pdt, 4500, 1023 );
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     pdt1 = test_create_blacs_type1( &ompi_mpi_int );
     pdt2 = test_create_blacs_type2( &ompi_mpi_int );
-    if( 0 != check_diag_matrix ) {
+    if( outputFlags & CHECK_PACK_UNPACK ) {
        local_copy_with_convertor_2datatypes( pdt1, 1, pdt2, 1, 100 );
     }
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
