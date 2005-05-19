@@ -19,25 +19,34 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
+#include "class/ompi_object.h"
+#include "util/output.h"
+#include "util/malloc.h"
+#include "mca/base/base.h"
 #include "runtime/opal_finalize.h"
-#include "runtime/runtime.h"
 
 /**
- * Leave ORTE.
+ * Finalize the OPAL utilities
  *
  * @retval ORTE_SUCCESS Upon success.
  * @retval ORTE_ERROR Upon failure.
  *
  * This function performs 
  */
-int orte_finalize(void)
+int opal_finalize(void)
 {
-    /* finalize the orte system */
-    orte_system_finalize();
+
+    /* finalize the mca */
+    mca_base_close();
+
+    /* finalize the output system */
+    ompi_output_finalize();
     
-    /* finalize the opal utilities */
-    opal_finalize();
-    
+    /* finalize the class/object system */
+    ompi_class_finalize();
+
+    /* finalize the memory allocator */
+    ompi_malloc_finalize();
+
     return ORTE_SUCCESS;
 }
-

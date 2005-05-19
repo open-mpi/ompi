@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
     ompi_cmd_line_t *cmd_line = NULL;
     char *contact_path = NULL, *orted=NULL;
     char *log_path = NULL, **ortedargv;
-    char *universe, orted_uri[256], *orted_uri_ptr, *path, *param;
+    char *universe, orted_uri[256], **orted_uri_ptr, *path, *param;
     orte_universe_t univ;
     orte_buffer_t buffer;
     orte_process_name_t requestor;
@@ -315,8 +315,8 @@ int main(int argc, char *argv[])
         /* universe is here! send info back and die */
 fprintf(stderr, "contacted existing universe - sending contact info back\n");
         OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-        orted_uri_ptr = &univ.seed_uri;
-        if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &orte_uri_ptr, 1, ORTE_STRING))) {
+        orted_uri_ptr = &(univ.seed_uri);
+        if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &orted_uri_ptr, 1, ORTE_STRING))) {
             fprintf(stderr, "orteprobe: failed to pack contact info for existing universe\n");
             exit(1);
         }
@@ -417,7 +417,8 @@ fprintf(stderr, "attempting to read from daemon\n");
             
             /* send back the info */
             OBJ_CONSTRUCT(&buffer, orte_buffer_t);
-            orted_uri_ptr = &orted_uri;
+            param = orted_uri;
+            orted_uri_ptr = &param;
             if (ORTE_SUCCESS != (ret = orte_dps.pack(&buffer, &orted_uri_ptr, 1, ORTE_STRING))) {
                 fprintf(stderr, "orteprobe: failed to pack daemon uri\n");
                 exit(1);
