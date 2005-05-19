@@ -19,8 +19,6 @@
 
 #include "mca/mca.h"
 #include "request/request.h"
-#include "datatype/datatype.h"
-
 
 /*
  * Forward declaration for private data on io components and modules.
@@ -31,7 +29,7 @@ struct mca_io_base_delete_t;
 
 
 /*
- * Forward declataion so that we don't create an include file loop.
+ * Forward declaration so that we don't create an include file loop.
  */
 struct mca_io_base_request_t;
 
@@ -239,20 +237,20 @@ typedef int (*mca_io_base_module_file_iwrite_at_fn_t)
      struct mca_io_base_request_t *request);
 
 typedef int (*mca_io_base_module_file_read_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count, ompi_datatype_t *
+    (struct ompi_file_t *fh, void *buf, int count, struct ompi_datatype_t *
      datatype, struct ompi_status_public_t *status); 
 typedef int (*mca_io_base_module_file_read_all_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count, ompi_datatype_t *
+    (struct ompi_file_t *fh, void *buf, int count, struct ompi_datatype_t *
      datatype, struct ompi_status_public_t *status); 
 typedef int (*mca_io_base_module_file_write_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count, ompi_datatype_t *
+    (struct ompi_file_t *fh, void *buf, int count, struct ompi_datatype_t *
      datatype, struct ompi_status_public_t *status);
 typedef int (*mca_io_base_module_file_write_all_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count, ompi_datatype_t *
+    (struct ompi_file_t *fh, void *buf, int count, struct ompi_datatype_t *
      datatype, struct ompi_status_public_t *status);
 
 typedef int (*mca_io_base_module_file_iread_fn_t)
-    (struct ompi_file_t *fh, void *buf, int count, ompi_datatype_t *
+    (struct ompi_file_t *fh, void *buf, int count, struct ompi_datatype_t *
      datatype, struct mca_io_base_request_t *request); 
 typedef int (*mca_io_base_module_file_iwrite_fn_t)
     (struct ompi_file_t *fh, void *buf, int count, 
