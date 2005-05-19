@@ -23,6 +23,7 @@
 #include "mca/ras/base/base.h"
 #include "mca/ras/base/ras_base_node.h"
 #include "mca/rmgr/base/base.h"
+#include "mca/errmgr/errmgr.h"
 
 
 /**
@@ -103,8 +104,12 @@ int orte_ras_base_allocate_nodes(orte_jobid_t jobid, ompi_list_t* nodes)
         }
         item = next;
     }
-                                                                                                                     
+
     rc = orte_ras_base_node_assign(&allocated, jobid);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+    }
+
 cleanup:
 
     while(NULL != (item = ompi_list_remove_first(&allocated))) 
