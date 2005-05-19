@@ -263,6 +263,14 @@ int orte_init_stage1(void)
         return ret;
     }
  
+    /* set contact info for ns/gpr */
+    if(NULL != orte_process_info.ns_replica_uri) {
+        orte_rml.set_uri(orte_process_info.ns_replica_uri);
+    }
+    if(NULL != orte_process_info.gpr_replica_uri) {
+        orte_rml.set_uri(orte_process_info.gpr_replica_uri);
+    }
+
     /*****    SET MY NAME    *****/
     if (ORTE_SUCCESS != (ret = orte_ns.set_my_name())) {
         ORTE_ERROR_LOG(ret);
@@ -339,14 +347,6 @@ int orte_init_stage1(void)
             ompi_output(0, "[%lu,%lu,%lu] wrote setup file", ORTE_NAME_ARGS(orte_process_info.my_name));
         }
         free(contact_path);
-    }
-
-    /* set contact info for ns/gpr */
-    if(NULL != orte_process_info.ns_replica_uri) {
-        orte_rml.set_uri(orte_process_info.ns_replica_uri);
-    }
-    if(NULL != orte_process_info.gpr_replica_uri) {
-        orte_rml.set_uri(orte_process_info.gpr_replica_uri);
     }
 
     /* open/load rmgr/soh */
