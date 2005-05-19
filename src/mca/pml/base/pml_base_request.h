@@ -21,7 +21,6 @@
 
 #include "class/ompi_free_list.h"
 #include "request/request.h"
-#include "datatype/datatype.h"
 #include "communicator/communicator.h"
 #include "mca/ptl/ptl.h"
 
@@ -54,7 +53,7 @@ struct mca_pml_base_request_t {
     ompi_communicator_t *req_comm;        /**< communicator pointer */
     ompi_proc_t* req_proc;                /**< peer process */
     mca_ptl_sequence_t req_sequence;      /**< sequence number for MPI pt-2-pt ordering */
-    ompi_datatype_t *req_datatype;        /**< pointer to data type */
+    struct ompi_datatype_t *req_datatype; /**< pointer to data type */
     mca_pml_base_request_type_t req_type; /**< MPI request type - used for test */
     bool req_persistent;                  /**< flag indicating if the this is a persistent request */
     volatile bool req_pml_complete;       /**< flag indicating if the pt-2-pt layer is done with this request */
