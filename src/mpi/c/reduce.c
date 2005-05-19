@@ -17,6 +17,7 @@
 #include <stdio.h>
 
 #include "mpi.h"
+#include "datatype/datatype.h"
 #include "mpi/c/bindings.h"
 #include "mca/coll/coll.h"
 #include "errhandler/errhandler.h"

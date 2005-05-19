@@ -20,6 +20,7 @@
 #include "mpi/c/bindings.h"
 #include "mca/pml/pml.h"
 #include "errhandler/errhandler.h"
+#include "datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Send = PMPI_Send
