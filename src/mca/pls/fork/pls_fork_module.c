@@ -73,6 +73,8 @@ orte_pls_base_module_1_0_0_t orte_pls_fork_module = {
     orte_pls_fork_finalize
 };
 
+static void set_handler_default(int sig);
+
 
 /*
  *  Wait for a callback indicating the child has completed.
@@ -121,6 +123,7 @@ static int orte_pls_fork_proc(
     pid_t pid;
     orte_iof_base_io_conf_t opts;
     int rc;
+    sigset_t sigs;
 
     /* should pull this information from MPIRUN instead of going with
        default */
@@ -202,6 +205,30 @@ static int orte_pls_fork_proc(
             context->argv[0] = strdup(context->app);
             context->argv[1] = NULL;
         }
+
+        /* Set signal handlers back to the default.  Do this close to
+           the exev() because the event library may (and likely will)
+           reset them.  If we don't do this, the event library may
+           have left some set that, at least on some OS's, don't get
+           reset via fork() or exec().  Hence, the launched process
+           could be unkillable (for example). */
+
+        set_handler_default(SIGTERM);
+        set_handler_default(SIGINT);
+        set_handler_default(SIGHUP);
+        set_handler_default(SIGCHLD);
+        set_handler_default(SIGPIPE);
+        
+        /* Unblock all signals, for many of the same reasons that we
+           set the default handlers, above.  This is noticable on
+           Linux where the event library blocks SIGTERM, but we don't
+           want that blocked by the launched process. */
+
+        sigprocmask(0, 0, &sigs);
+        sigprocmask(SIG_UNBLOCK, &sigs, 0);
+
+        /* Exec the new executable */
+
         execve(context->app, context->argv, new_env);
         ompi_output(0, "orte_pls_fork: %s - %s\n", context->app, 
             ompi_argv_join(context->argv, ' '));
@@ -439,3 +466,15 @@ static int orte_pls_fork_launch_threaded(orte_jobid_t jobid)
 
 #endif
 
+
+
+static void set_handler_default(int sig)
+{
+    struct sigaction act;
+
+    act.sa_handler = SIG_DFL;
+    act.sa_flags = 0;
+    sigemptyset(&act.sa_mask);
+
+    sigaction(sig, &act, (struct sigaction *)0);
+}
