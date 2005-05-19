@@ -471,6 +471,7 @@ static void orte_setup_hnp_recv(int status, orte_process_name_t* sender,
     if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &orted_uri, &n, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
     }
+ompi_output(0, "orteprobe: received uri %s", orted_uri);
     ompi_condition_signal(&orte_setup_hnp_condition);
     OMPI_THREAD_UNLOCK(&orte_setup_hnp_mutex);
 }
