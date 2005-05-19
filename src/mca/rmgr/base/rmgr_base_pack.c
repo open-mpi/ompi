@@ -63,7 +63,7 @@ int orte_rmgr_base_pack_create_cmd(
          return rc;
      }
 
-     rc = orte_dps.pack(buffer, &num_context, 1, ORTE_UINT32);
+     rc = orte_dps.pack(buffer, &num_context, 1, ORTE_SIZE);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
          return rc;
