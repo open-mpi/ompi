@@ -135,7 +135,7 @@ fi
 #################### Early development override ####################
 if test "$WANT_DEBUG" = "0"; then
     CFLAGS="-DNDEBUG $CFLAGS"
-    CXXFLAGS="-DNDEBUG $CFLAGS"
+    CXXFLAGS="-DNDEBUG $CXXFLAGS"
 fi
 AC_DEFINE_UNQUOTED(OMPI_ENABLE_DEBUG, $WANT_DEBUG,
     [Whether we want developer-level debugging code or not])
