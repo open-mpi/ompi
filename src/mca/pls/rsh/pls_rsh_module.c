@@ -387,7 +387,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             char* name_string;
 
             /* Is this a local launch? */
-
             if (ompi_ifislocal(node->node_name)) {
                 exec_argv = &argv[local_exec_index];
                 exec_path = ompi_path_findv(exec_argv[0], 0, environ, NULL);
@@ -443,7 +442,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             sigprocmask(SIG_UNBLOCK, &sigs, 0);
 
             /* exec the daemon */
-            execv(exec_path, exec_argv);
+            execve(exec_path, exec_argv, NULL);
             ompi_output(0, "orte_pls_rsh: execv failed with errno=%d\n", errno);
             exit(-1);
 
