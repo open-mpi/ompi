@@ -67,13 +67,13 @@ int mca_io_base_open(void)
 
     if (0 >
         mca_base_param_register_int("io", "base", "freelist_initial_size",
-                                    "", 16) ||
+                                    NULL, 16) ||
         0 >
         mca_base_param_register_int("io", "base", "freelist_max_size",
-                                    "", 64) ||
+                                    NULL, 64) ||
         0 >
         mca_base_param_register_int("io", "base", "freelist_increment",
-                                    "", 16)) {
+                                    NULL, 16)) {
         return OMPI_ERROR;
     }
 
