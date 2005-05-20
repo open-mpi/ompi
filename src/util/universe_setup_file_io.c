@@ -103,6 +103,9 @@ int orte_read_universe_setup_file(char *filename, orte_universe_t *info)
     char *input;
     FILE *fp;
 
+    /* initialize info */
+    memset(info, 0, sizeof(orte_universe_t));
+
     fp = fopen(filename, "r");
     if (NULL == fp) { /* failed on first read - wait and try again */
 	   fp = fopen(filename, "r");
@@ -110,9 +113,6 @@ int orte_read_universe_setup_file(char *filename, orte_universe_t *info)
 	       return ORTE_ERR_NOT_FOUND;
 	   }
     }
-
-    /* initialize info */
-    memset(info, 0, sizeof(orte_universe_t));
 
     /* fill in universe info */
     info->name = orte_getline(fp);
