@@ -43,7 +43,6 @@ extern "C" {
 
     struct orte_universe_t {
         bool init;
-        char *path;
         char *name;
         char *host;
         char *uid;

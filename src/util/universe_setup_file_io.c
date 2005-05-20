@@ -33,6 +33,7 @@
 
 #include "util/output.h"
 #include "util/univ_info.h"
+#include "mca/errmgr/errmgr.h"
 #include "runtime/runtime.h"
 #include "util/universe_setup_file_io.h"
 
@@ -44,15 +45,20 @@ int orte_write_universe_setup_file(char *filename, orte_universe_t *info)
 {
     FILE *fp;
 
+    /* initialize the universe structure */
+    memset(info, 0, sizeof(orte_universe_t));
+    
     fp = fopen(filename, "w");
     if (NULL == fp) {
-	    return ORTE_ERROR;
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
+	    return ORTE_ERR_FILE_OPEN_FAILURE;
     }
 
     if (NULL == info->name) {
         /* fatal error - must have a name */
+        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
         fclose(fp);
-        return ORTE_ERROR;
+        return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
     } else {
         fprintf(fp, "%s\n", info->name);
     }
@@ -102,27 +108,29 @@ int orte_read_universe_setup_file(char *filename, orte_universe_t *info)
 {
     char *input;
     FILE *fp;
+    int rc;
 
     fp = fopen(filename, "r");
     if (NULL == fp) { /* failed on first read - wait and try again */
 	   fp = fopen(filename, "r");
 	   if (NULL == fp) { /* failed twice - give up */
-	       return ORTE_ERR_NOT_FOUND;
+	       return ORTE_ERR_FILE_OPEN_FAILURE;
 	   }
     }
-
-    /* initialize info */
-    memset(info, 0, sizeof(orte_universe_t));
 
     /* fill in universe info */
     info->name = orte_getline(fp);
     if (NULL == info->name) {
-	   goto CLEANUP;
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_READ_FAILURE);
+        rc = ORTE_ERR_FILE_READ_FAILURE;
+        goto CLEANUP;
     }
 
     info->host = orte_getline(fp);
     if (NULL == info->host) {
-       goto CLEANUP;
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_READ_FAILURE);
+        rc = ORTE_ERR_FILE_READ_FAILURE;
+        goto CLEANUP;
     } else if (0 == strcmp("LOCALHOST", info->host)) {
         free(info->host);
         info->host = NULL;
@@ -130,7 +138,9 @@ int orte_read_universe_setup_file(char *filename, orte_universe_t *info)
 
     info->uid = orte_getline(fp);
     if (NULL == info->uid) {
-       goto CLEANUP;
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_READ_FAILURE);
+        rc = ORTE_ERR_FILE_READ_FAILURE;
+        goto CLEANUP;
     } else if (0 == strcmp("NO-UID", info->uid)) {
         free(info->uid);
         info->uid = NULL;
@@ -138,21 +148,27 @@ int orte_read_universe_setup_file(char *filename, orte_universe_t *info)
 
     input = orte_getline(fp);
     if (NULL == input) {
-       goto CLEANUP;
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_READ_FAILURE);
+        rc = ORTE_ERR_FILE_READ_FAILURE;
+        goto CLEANUP;
     }
     if (0 == strncmp(input, "persistent", strlen("persistent"))) {
 	   info->persistence = true;
     } else if (0 == strncmp(input, "non-persistent", strlen("non-persistent"))) {
 	   info->persistence = false;
     } else {
-	   free(input);
-       goto CLEANUP;
+        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+        rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+        free(input);
+        goto CLEANUP;
     }
     free(input);
 
     info->scope = orte_getline(fp);
     if (NULL == info->scope) {
-       goto CLEANUP;
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_READ_FAILURE);
+        rc = ORTE_ERR_FILE_READ_FAILURE;
+        goto CLEANUP;
     } else if (0 == strcmp("NO-SCOPE", info->scope)) {
         free(info->scope);
         info->scope = strdup("exclusive");
@@ -160,7 +176,9 @@ int orte_read_universe_setup_file(char *filename, orte_universe_t *info)
  
     input = orte_getline(fp);
     if (NULL == input) {
-       goto CLEANUP;
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_READ_FAILURE);
+        rc = ORTE_ERR_FILE_READ_FAILURE;
+        goto CLEANUP;
     }
     if (0 == strncmp(input, "silent", strlen("silent"))) {
 	    info->console = false;
@@ -168,13 +186,17 @@ int orte_read_universe_setup_file(char *filename, orte_universe_t *info)
 	    info->console = true;
     } else {
 	    free(input);
-	    goto CLEANUP;
+        ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+        rc = ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+        goto CLEANUP;
     }
     free(input);
 
     info->seed_uri = orte_getline(fp);
     if (NULL == info->seed_uri) {
-	    goto CLEANUP;
+        ORTE_ERROR_LOG(ORTE_ERR_FILE_READ_FAILURE);
+        rc = ORTE_ERR_FILE_READ_FAILURE;
+        goto CLEANUP;
     } else if (0 == strcmp("NO-SEED-URI", info->seed_uri)) {
         free(info->seed_uri);
         info->seed_uri = NULL;

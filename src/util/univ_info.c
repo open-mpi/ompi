@@ -41,7 +41,6 @@
 
 orte_universe_t orte_universe_info = {
     /* .init =                */    false,
-    /* .path =                */    NULL,
     /* .name =                */    NULL,
     /* .host =                */    NULL,
     /* .uid =                 */    NULL,
@@ -60,9 +59,6 @@ int orte_univ_info(void)
     char *tmpname=NULL, *tptr, *ptr;
     
     if (!orte_universe_info.init) {
-        id = mca_base_param_register_string("universe", "path", NULL, NULL, orte_universe_info.path);
-        mca_base_param_lookup_string(id, &(orte_universe_info.path));
-    
         id = mca_base_param_register_string("universe", NULL, NULL, NULL, NULL);
         mca_base_param_lookup_string(id, &tmpname);
         
@@ -131,8 +127,6 @@ int orte_univ_info(void)
 
 int orte_univ_info_finalize(void)
 {
-    if (NULL != orte_universe_info.path) free(orte_universe_info.path);
-    
     if (NULL != orte_universe_info.name) free(orte_universe_info.name);
     
     if (NULL != orte_universe_info.host) free(orte_universe_info.host);
