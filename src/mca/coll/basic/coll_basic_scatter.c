@@ -19,6 +19,7 @@
 
 #include "mpi.h"
 #include "include/constants.h"
+#include "datatype/datatype.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/coll_tags.h"
 #include "mca/pml/pml.h"

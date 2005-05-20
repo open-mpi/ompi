@@ -20,6 +20,7 @@
 #include "mpi.h"
 #include "include/constants.h"
 #include "communicator/communicator.h"
+#include "datatype/datatype.h"
 #include "mca/coll/coll.h"
 #include "mca/pml/pml.h"
 #include "mca/coll/base/coll_tags.h"
