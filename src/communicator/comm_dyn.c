@@ -20,8 +20,9 @@
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif
-#include "mpi.h"
+#include <unistd.h>
 
+#include "mpi.h"
 #include "dps/dps.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
