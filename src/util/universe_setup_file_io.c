@@ -45,9 +45,6 @@ int orte_write_universe_setup_file(char *filename, orte_universe_t *info)
 {
     FILE *fp;
 
-    /* initialize the universe structure */
-    memset(info, 0, sizeof(orte_universe_t));
-    
     fp = fopen(filename, "w");
     if (NULL == fp) {
         ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
@@ -110,6 +107,9 @@ int orte_read_universe_setup_file(char *filename, orte_universe_t *info)
     FILE *fp;
     int rc;
 
+    /* initialize the universe structure */
+    memset(info, 0, sizeof(orte_universe_t));
+    
     fp = fopen(filename, "r");
     if (NULL == fp) { /* failed on first read - wait and try again */
 	   fp = fopen(filename, "r");
