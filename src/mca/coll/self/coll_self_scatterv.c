@@ -18,6 +18,7 @@
 
 #include "include/constants.h"
 #include "coll_self.h"
+#include "datatype/datatype.h"
 
 
 /*
