@@ -33,10 +33,12 @@
 
 #include "include/orte_constants.h"
 #include "util/argv.h"
+#include "util/ompi_environ.h"
 #include "util/output.h"
 #include "util/session_dir.h"
 #include "event/event.h"
 #include "runtime/orte_wait.h"
+#include "mca/base/mca_base_param.h"
 #include "mca/ns/ns.h"
 #include "mca/pls/pls.h"
 #include "mca/rml/rml.h"
@@ -348,6 +350,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         /* child */
         if(pid == 0) {
             char* name_string;
+            char** env;
+            char* var;
 
             /* setup process name */
             rc = orte_ns.get_proc_name_string(&name_string, name);
@@ -360,7 +364,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             if (mca_pls_rsh_component.debug > 2) {
                 /* debug output */
                 char* cmd = ompi_argv_join(argv, ' ');  
-                ompi_output(0, "orte_pls_rsh: %s\n", cmd);
+                ompi_output(0, "orte_pls_rsh: %s %s\n", 
+                            mca_pls_rsh_component.path, cmd);
                 exit(0);
             } 
 
@@ -395,8 +400,13 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             sigprocmask(0, 0, &sigs);
             sigprocmask(SIG_UNBLOCK, &sigs, 0);
 
+            /* setup environment */
+            env = ompi_argv_copy(environ);
+            var = mca_base_param_environ_variable("seed",NULL,NULL);
+            ompi_setenv(var, "0", true, &env);
+
             /* exec the daemon */
-            execve(mca_pls_rsh_component.path, argv, NULL);
+            execve(mca_pls_rsh_component.path, argv, env);
             ompi_output(0, "orte_pls_rsh: execv failed with errno=%d\n", errno);
             exit(-1);
 
