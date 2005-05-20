@@ -26,7 +26,7 @@ mca_io_romio_file_read_at (ompi_file_t *fh,
                            MPI_Offset offset,
                            void *buf,
                            int count,
-                           ompi_datatype_t *datatype,
+                           struct ompi_datatype_t *datatype,
                            ompi_status_public_t * status)
 {
     int         ret;
@@ -48,7 +48,7 @@ mca_io_romio_file_read_at_all (ompi_file_t *fh,
                                MPI_Offset offset,
                                void *buf,
                                int count,
-                               ompi_datatype_t *datatype,
+                               struct ompi_datatype_t *datatype,
                                ompi_status_public_t * status)
 {
     int         ret;
@@ -70,7 +70,7 @@ mca_io_romio_file_iread_at (ompi_file_t *fh,
                             MPI_Offset offset,
                             void *buf,
                             int count,
-                            ompi_datatype_t *datatype,
+                            struct ompi_datatype_t *datatype,
                             mca_io_base_request_t *request)
 {
     int ret;
@@ -96,7 +96,7 @@ int
 mca_io_romio_file_read (ompi_file_t *fh,
                         void *buf,
                         int count,
-                        ompi_datatype_t *datatype,
+                        struct ompi_datatype_t *datatype,
                         ompi_status_public_t * status)
 {
     int         ret;
@@ -117,7 +117,7 @@ int
 mca_io_romio_file_read_all (ompi_file_t *fh,
                             void *buf,
                             int count,
-                            ompi_datatype_t *datatype,
+                            struct ompi_datatype_t *datatype,
                             ompi_status_public_t * status)
 {
     int         ret;
@@ -138,7 +138,7 @@ int
 mca_io_romio_file_iread (ompi_file_t *fh,
                          void *buf,
                          int count,
-                         ompi_datatype_t *datatype,
+                         struct ompi_datatype_t *datatype,
                          mca_io_base_request_t * request)
 {
     int ret;
@@ -164,7 +164,7 @@ int
 mca_io_romio_file_read_shared (ompi_file_t *fh,
                                void *buf,
                                int count,
-                               ompi_datatype_t *datatype,
+                               struct ompi_datatype_t *datatype,
                                ompi_status_public_t * status)
 {
     int         ret;
@@ -185,7 +185,7 @@ int
 mca_io_romio_file_iread_shared (ompi_file_t *fh,
                                 void *buf,
                                 int count,
-                                ompi_datatype_t *datatype,
+                                struct ompi_datatype_t *datatype,
                                 mca_io_base_request_t * request)
 {
     int ret;
@@ -211,7 +211,7 @@ int
 mca_io_romio_file_read_ordered (ompi_file_t *fh,
                                 void *buf,
                                 int count,
-                                ompi_datatype_t *datatype,
+                                struct ompi_datatype_t *datatype,
                                 ompi_status_public_t * status)
 {
     int         ret;
@@ -233,7 +233,7 @@ mca_io_romio_file_read_at_all_begin (ompi_file_t *fh,
                                      MPI_Offset offset,
                                      void *buf,
                                      int count,
-                                     ompi_datatype_t *datatype)
+                                     struct ompi_datatype_t *datatype)
 {
     int         ret;
     mca_io_romio_data_t *data;
@@ -270,7 +270,7 @@ int
 mca_io_romio_file_read_all_begin (ompi_file_t *fh,
                                   void *buf,
                                   int count,
-                                  ompi_datatype_t *datatype)
+                                  struct ompi_datatype_t *datatype)
 {
     int         ret;
     mca_io_romio_data_t *data;
@@ -307,7 +307,7 @@ int
 mca_io_romio_file_read_ordered_begin (ompi_file_t *fh,
                                       void *buf,
                                       int count,
-                                      ompi_datatype_t *datatype)
+                                      struct ompi_datatype_t *datatype)
 {
     int         ret;
     mca_io_romio_data_t *data;

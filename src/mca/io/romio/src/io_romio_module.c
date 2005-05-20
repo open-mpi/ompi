@@ -26,7 +26,7 @@
  * because ROMIO just expects this function to exist
  */
 int MPIR_Status_set_bytes(ompi_status_public_t *status, 
-                          ompi_datatype_t *datatype, int size);
+                          struct ompi_datatype_t *datatype, int size);
 
 
 /*
@@ -117,7 +117,7 @@ mca_io_base_module_1_0_0_t mca_io_romio_module = {
  * MPI_Status_set_elements (almost like they planned that... hmmm...).
  */
 int MPIR_Status_set_bytes(ompi_status_public_t *status, 
-                          ompi_datatype_t *datatype, int nbytes)
+                          struct ompi_datatype_t *datatype, int nbytes)
 {
     MPI_Status_set_elements(status, datatype, nbytes);
     return MPI_SUCCESS;
