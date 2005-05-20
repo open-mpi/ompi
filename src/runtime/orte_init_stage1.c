@@ -193,7 +193,6 @@ int orte_init_stage1(void)
     if (NULL == orte_process_info.ns_replica_uri || NULL == orte_process_info.gpr_replica_uri) {
         if (ORTE_SUCCESS == (ret = orte_universe_exists(&univ))) {
             /* copy universe info into our universe structure */
-            orte_universe_info.path = univ.path;
             orte_universe_info.name = univ.name;
             orte_universe_info.host = univ.host;
             orte_universe_info.uid = univ.uid;
