@@ -401,29 +401,80 @@ void ompi_info::do_config(bool want_all)
       out("Fort have complex32", "compiler:fortran:have:complex32", 
           OMPI_HAVE_FORTRAN_COMPLEX32 ? "yes" : "no");
 
+      out("Fort integer1 size", "compiler:fortran:sizeof:integer1", 
+          OMPI_HAVE_FORTRAN_INTEGER1 ? OMPI_SIZEOF_FORTRAN_INTEGER1 : -1);
+      out("Fort integer2 size", "compiler:fortran:sizeof:integer2", 
+          OMPI_HAVE_FORTRAN_INTEGER2 ? OMPI_SIZEOF_FORTRAN_INTEGER2 : -1);
+      out("Fort integer4 size", "compiler:fortran:sizeof:integer4", 
+          OMPI_HAVE_FORTRAN_INTEGER4 ? OMPI_SIZEOF_FORTRAN_INTEGER4 : -1);
+      out("Fort integer8 size", "compiler:fortran:sizeof:integer8", 
+          OMPI_HAVE_FORTRAN_INTEGER8 ? OMPI_SIZEOF_FORTRAN_INTEGER8 : -1);
+      out("Fort integer16 size", "compiler:fortran:sizeof:integer17", 
+          OMPI_HAVE_FORTRAN_INTEGER16 ? OMPI_SIZEOF_FORTRAN_INTEGER16 : -1);
+
       out("Fort real size", "compiler:fortran:sizeof:real", 
           OMPI_SIZEOF_FORTRAN_REAL);
+      out("Fort real4 size", "compiler:fortran:sizeof:real4", 
+          OMPI_HAVE_FORTRAN_REAL4 ? OMPI_SIZEOF_FORTRAN_REAL4 : -1);
+      out("Fort real8 size", "compiler:fortran:sizeof:real8", 
+          OMPI_HAVE_FORTRAN_REAL8 ? OMPI_SIZEOF_FORTRAN_REAL8 : -1);
+      out("Fort real16 size", "compiler:fortran:sizeof:real17", 
+          OMPI_HAVE_FORTRAN_REAL16 ? OMPI_SIZEOF_FORTRAN_REAL16 : -1);
+
       out("Fort dbl prec size", 
           "compiler:fortran:sizeof:double_precision",
           OMPI_SIZEOF_FORTRAN_REAL);
+
       out("Fort cplx size", "compiler:fortran:sizeof:complex", 
           OMPI_SIZEOF_FORTRAN_REAL);
       out("Fort dbl cplx size",
           "compiler:fortran:sizeof:double_complex", 
           OMPI_SIZEOF_FORTRAN_REAL);
+      out("Fort cplx8 size", "compiler:fortran:sizeof:complex8", 
+          OMPI_HAVE_FORTRAN_COMPLEX8 ? OMPI_SIZEOF_FORTRAN_COMPLEX8 : -1);
+      out("Fort cplx16 size", "compiler:fortran:sizeof:complex16", 
+          OMPI_HAVE_FORTRAN_COMPLEX16 ? OMPI_SIZEOF_FORTRAN_COMPLEX16 : -1);
+      out("Fort cplx32 size", "compiler:fortran:sizeof:complex32", 
+          OMPI_HAVE_FORTRAN_COMPLEX32 ? OMPI_SIZEOF_FORTRAN_COMPLEX32 : -1);
       
       out("Fort integer align", "compiler:fortran:align:integer", 
           OMPI_ALIGNMENT_FORTRAN_INTEGER);
+      out("Fort integer1 align", "compiler:fortran:align:integer1", 
+          OMPI_HAVE_FORTRAN_INTEGER1 ? OMPI_ALIGNMENT_FORTRAN_INTEGER1 : -1);
+      out("Fort integer2 align", "compiler:fortran:align:integer2", 
+          OMPI_HAVE_FORTRAN_INTEGER2 ? OMPI_ALIGNMENT_FORTRAN_INTEGER2 : -1);
+      out("Fort integer4 align", "compiler:fortran:align:integer4", 
+          OMPI_HAVE_FORTRAN_INTEGER4 ? OMPI_ALIGNMENT_FORTRAN_INTEGER4 : -1);
+      out("Fort integer8 align", "compiler:fortran:align:integer8", 
+          OMPI_HAVE_FORTRAN_INTEGER8 ? OMPI_ALIGNMENT_FORTRAN_INTEGER8 : -1);
+      out("Fort integer16 align", "compiler:fortran:align:integer16", 
+          OMPI_HAVE_FORTRAN_INTEGER16 ? OMPI_ALIGNMENT_FORTRAN_INTEGER16 : -1);
+
       out("Fort real align", "compiler:fortran:align:real", 
           OMPI_ALIGNMENT_FORTRAN_REAL);
+      out("Fort real4 align", "compiler:fortran:align:real4", 
+          OMPI_HAVE_FORTRAN_REAL4 ? OMPI_ALIGNMENT_FORTRAN_REAL4 : -1);
+      out("Fort real8 align", "compiler:fortran:align:real8", 
+          OMPI_HAVE_FORTRAN_REAL8 ? OMPI_ALIGNMENT_FORTRAN_REAL8 : -1);
+      out("Fort real16 align", "compiler:fortran:align:real16", 
+          OMPI_HAVE_FORTRAN_REAL16 ? OMPI_ALIGNMENT_FORTRAN_REAL16 : -1);
+
       out("Fort dbl prec align", 
           "compiler:fortran:align:double_precision",
           OMPI_ALIGNMENT_FORTRAN_REAL);
+
       out("Fort cplx align", "compiler:fortran:align:complex", 
           OMPI_ALIGNMENT_FORTRAN_REAL);
       out("Fort dbl cplx align",
           "compiler:fortran:align:double_complex", 
           OMPI_ALIGNMENT_FORTRAN_REAL);
+      out("Fort cplx8 align", "compiler:fortran:align:complex8", 
+          OMPI_HAVE_FORTRAN_COMPLEX8 ? OMPI_ALIGNMENT_FORTRAN_COMPLEX8 : -1);
+      out("Fort cplx16 align", "compiler:fortran:align:complex16", 
+          OMPI_HAVE_FORTRAN_COMPLEX16 ? OMPI_ALIGNMENT_FORTRAN_COMPLEX16 : -1);
+      out("Fort cplx32 align", "compiler:fortran:align:complex32", 
+          OMPI_HAVE_FORTRAN_COMPLEX32 ? OMPI_ALIGNMENT_FORTRAN_COMPLEX32 : -1);
+
     } else {
       out("Fort real size", "compiler:fortran:sizeof:real", "skipped");
       out("Fort dbl prec size",
