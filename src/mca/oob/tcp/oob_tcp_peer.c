@@ -335,9 +335,11 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
             ompi_event_add(&peer->peer_send_event, 0);
             return OMPI_SUCCESS;
         }
-        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: connect failed with errno=%d",
+        ompi_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: connect to %s:%d failed with errno=%d",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
+            inet_ntoa(inaddr.sin_addr),
+            ntohs(inaddr.sin_port),
             ompi_socket_errno);
         mca_oob_tcp_peer_close(peer);
         return OMPI_ERR_UNREACH;
@@ -350,9 +352,11 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
     } else {
         ompi_output(0, 
             "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_start_connect: "
-            "mca_oob_tcp_peer_send_connect_ack failed with errno=%d",
+            "mca_oob_tcp_peer_send_connect_ack to %s:%d failed with errno=%d",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
+            inet_ntoa(inaddr.sin_addr),
+            ntohs(inaddr.sin_port),
             rc);
         mca_oob_tcp_peer_close(peer);
     }
