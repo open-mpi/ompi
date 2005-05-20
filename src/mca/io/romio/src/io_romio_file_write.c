@@ -26,7 +26,7 @@ mca_io_romio_file_write_at (ompi_file_t *fh,
                             MPI_Offset offset,
                             void *buf,
                             int count,
-                            ompi_datatype_t *datatype,
+                            struct ompi_datatype_t *datatype,
                             ompi_status_public_t * status)
 {
     int         ret;
@@ -49,7 +49,7 @@ mca_io_romio_file_write_at_all (ompi_file_t *fh,
                                 MPI_Offset offset,
                                 void *buf,
                                 int count,
-                                ompi_datatype_t *datatype,
+                                struct ompi_datatype_t *datatype,
                                 ompi_status_public_t * status)
 {
     int         ret;
@@ -72,7 +72,7 @@ mca_io_romio_file_iwrite_at (ompi_file_t *fh,
                              MPI_Offset offset,
                              void *buf,
                              int count,
-                             ompi_datatype_t *datatype,
+                             struct ompi_datatype_t *datatype,
                              mca_io_base_request_t * request)
 {
     int ret;
@@ -101,7 +101,7 @@ int
 mca_io_romio_file_write (ompi_file_t *fh,
                          void *buf,
                          int count,
-                         ompi_datatype_t *datatype,
+                         struct ompi_datatype_t *datatype,
                          ompi_status_public_t * status)
 {
     int         ret;
@@ -121,7 +121,7 @@ int
 mca_io_romio_file_write_all (ompi_file_t *fh,
                              void *buf,
                              int count,
-                             ompi_datatype_t *datatype,
+                             struct ompi_datatype_t *datatype,
                              ompi_status_public_t * status)
 {
     int         ret;
@@ -141,7 +141,7 @@ int
 mca_io_romio_file_iwrite (ompi_file_t *fh,
                           void *buf,
                           int count,
-                          ompi_datatype_t *datatype,
+                          struct ompi_datatype_t *datatype,
                           mca_io_base_request_t * request)
 {
     int ret;
@@ -167,7 +167,7 @@ int
 mca_io_romio_file_write_shared (ompi_file_t *fh,
                                 void *buf,
                                 int count,
-                                ompi_datatype_t *datatype,
+                                struct ompi_datatype_t *datatype,
                                 ompi_status_public_t * status)
 {
     int         ret;
@@ -187,7 +187,7 @@ int
 mca_io_romio_file_iwrite_shared (ompi_file_t *fh,
                                  void *buf,
                                  int count,
-                                 ompi_datatype_t *datatype,
+                                 struct ompi_datatype_t *datatype,
                                  mca_io_base_request_t * request)
 {
     int ret;
@@ -212,7 +212,7 @@ int
 mca_io_romio_file_write_ordered (ompi_file_t *fh,
                                  void *buf,
                                  int count,
-                                 ompi_datatype_t *datatype,
+                                 struct ompi_datatype_t *datatype,
                                  ompi_status_public_t * status)
 {
     int         ret;
@@ -233,7 +233,7 @@ mca_io_romio_file_write_at_all_begin (ompi_file_t *fh,
                                       MPI_Offset offset,
                                       void *buf,
                                       int count,
-                                      ompi_datatype_t *datatype)
+                                      struct ompi_datatype_t *datatype)
 {
     int         ret;
     mca_io_romio_data_t *data;
@@ -268,7 +268,7 @@ int
 mca_io_romio_file_write_all_begin (ompi_file_t *fh,
                                    void *buf,
                                    int count,
-                                   ompi_datatype_t *datatype)
+                                   struct ompi_datatype_t *datatype)
 {
     int         ret;
     mca_io_romio_data_t *data;
@@ -302,7 +302,7 @@ int
 mca_io_romio_file_write_ordered_begin (ompi_file_t *fh,
                                        void *buf,
                                        int count,
-                                       ompi_datatype_t *datatype)
+                                       struct ompi_datatype_t *datatype)
 {
     int         ret;
     mca_io_romio_data_t *data;

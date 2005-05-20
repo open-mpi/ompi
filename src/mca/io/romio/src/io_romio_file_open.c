@@ -157,8 +157,8 @@ mca_io_romio_file_get_info (ompi_file_t *fh,
 int
 mca_io_romio_file_set_view (ompi_file_t *fh,
                             MPI_Offset disp,
-                            ompi_datatype_t *etype,
-                            ompi_datatype_t *filetype,
+                            struct ompi_datatype_t *etype,
+                            struct ompi_datatype_t *filetype,
                             char *datarep,
                             ompi_info_t *info)
 {
@@ -179,8 +179,8 @@ mca_io_romio_file_set_view (ompi_file_t *fh,
 int
 mca_io_romio_file_get_view (ompi_file_t *fh,
                             MPI_Offset * disp,
-                            ompi_datatype_t ** etype,
-                            ompi_datatype_t ** filetype,
+                            struct ompi_datatype_t ** etype,
+                            struct ompi_datatype_t ** filetype,
                             char *datarep)
 {
     int ret;
@@ -200,7 +200,7 @@ mca_io_romio_file_get_view (ompi_file_t *fh,
 
 int
 mca_io_romio_file_get_type_extent (ompi_file_t *fh,
-                                   ompi_datatype_t *datatype,
+                                   struct ompi_datatype_t *datatype,
                                    MPI_Aint * extent)
 {
     int ret;
