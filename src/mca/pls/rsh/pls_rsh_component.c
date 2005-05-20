@@ -128,7 +128,7 @@ int orte_pls_rsh_component_open(void)
     mca_pls_rsh_component.debug = orte_pls_rsh_param_register_int("debug",0);
     mca_pls_rsh_component.num_concurrent = orte_pls_rsh_param_register_int("num_concurrent",128);
     if(mca_pls_rsh_component.debug == 0) {
-        int id = mca_base_param_register_int("debug",NULL,NULL,NULL,0);
+        int id = mca_base_param_register_int("orte","debug",NULL,NULL,0);
         int value;
         mca_base_param_lookup_int(id,&value);
         mca_pls_rsh_component.debug = (value > 0) ? 1 : 0;
@@ -147,8 +147,8 @@ int orte_pls_rsh_component_open(void)
            automatically add "-x" */
 
         bname = ompi_basename(mca_pls_rsh_component.argv[0]);
-        if (NULL != bname && 0 == strcmp(bname, "ssh") && 
-            !mca_pls_rsh_component.debug) {
+        if (NULL != bname && 0 == strcmp(bname, "ssh") &&
+            mca_pls_rsh_component.debug == 0) {
             for (i = 1; NULL != mca_pls_rsh_component.argv[i]; ++i) {
                 if (0 == strcasecmp("-x", mca_pls_rsh_component.argv[i])) {
                     break;
