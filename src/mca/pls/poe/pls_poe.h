@@ -38,6 +38,7 @@ orte_pls_base_module_t* orte_pls_poe_component_init(int *priority);
  */
 struct orte_pls_poe_component_t {
     orte_pls_base_component_t super;
+    orte_jobid_t jobid;
     int priority;
     int verbose;
     char* path;
@@ -49,8 +50,11 @@ struct orte_pls_poe_component_t {
     char* class;
     char* hostfile;
     char* cmdfile; 
-    int retry;
-    int retrycount; 
+    char* mp_stdoutmode;
+    char* mp_labelio;
+    int mp_retry;
+    int mp_retrycount; 
+    int mp_infolevel;
 };
 typedef struct orte_pls_poe_component_t orte_pls_poe_component_t;
 

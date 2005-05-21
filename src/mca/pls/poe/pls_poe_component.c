@@ -124,14 +124,19 @@ int orte_pls_poe_component_open(void)
 {
     char *param;
 
+    mca_pls_poe_component.mp_retry = orte_pls_poe_param_reg_int("mp_retry", 0); 
+    mca_pls_poe_component.mp_retrycount = orte_pls_poe_param_reg_int("mp_retrycount", 0); 
+    mca_pls_poe_component.mp_infolevel = orte_pls_poe_param_reg_int("mp_infolevel", 0); 
+    mca_pls_poe_component.mp_labelio = orte_pls_poe_param_reg_string("mp_labelio","no");
+    mca_pls_poe_component.mp_stdoutmode = orte_pls_poe_param_reg_string("mp_stdoutmode","unordered");
+
     mca_pls_poe_component.debug = orte_pls_poe_param_reg_int("debug",0);
     mca_pls_poe_component.verbose = orte_pls_poe_param_reg_int("verbose",0);
     mca_pls_poe_component.priority = orte_pls_poe_param_reg_int("priority", 100);
     mca_pls_poe_component.orted = orte_pls_poe_param_reg_string("orted","orted"); 
     mca_pls_poe_component.class = orte_pls_poe_param_reg_string("class","interactive"); 
-    mca_pls_poe_component.retry = orte_pls_poe_param_reg_int("retry", 0); 
-    mca_pls_poe_component.retrycount = orte_pls_poe_param_reg_int("retrycount", 0); 
     mca_pls_poe_component.env = orte_pls_poe_param_reg_string("progenv","env");
+
     param = orte_pls_poe_param_reg_string("progpoe","poe");
     mca_pls_poe_component.argv = ompi_argv_split(param, ' ');
     mca_pls_poe_component.argc = ompi_argv_count(mca_pls_poe_component.argv);
