@@ -410,6 +410,8 @@ sub try_build {
 
     # and check it, if the user does not disable it
     if ( $nocheck == 0 ) {
+      $ENV{TMPDIR} = "$installdir/tmp";
+      mkdir($ENV{TMPDIR}, 0777);
       $ret = do_command($merge_output, "make check");
       if ($ret->{status} != 0) {
           $ret->{make_all_stderr} = $make_all_stderr;
