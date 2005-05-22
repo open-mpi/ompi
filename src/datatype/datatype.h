@@ -276,10 +276,10 @@ static inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
     return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
 }
 #else
-extern int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
+OMPI_DECLSPEC int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
                                     struct iovec* iov, uint32_t* out_size,
                                     uint32_t* max_data, int32_t* freeAfter );
-extern int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
+OMPI_DECLSPEC int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
                                       struct iovec* iov, uint32_t* out_size,
                                       uint32_t* max_data, int32_t* freeAfter );
 #endif  /* OMPI_ENABLE_DEBUG */
