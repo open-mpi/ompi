@@ -29,13 +29,14 @@ headers = \
     runtime_internal.h \
     ompi_progress.h \
     orte_wait.h \
-    opal_finalize.h
+    opal.h
 
 libruntime_la_SOURCES = \
 	$(headers) \
     orte_abort.c \
     ompi_progress.c \
     orte_finalize.c \
+    orte_system_init.c \
     orte_system_finalize.c \
     orte_init.c \
     orte_init_stage1.c \
@@ -45,6 +46,7 @@ libruntime_la_SOURCES = \
     orte_universe_exists.c \
     orte_restart.c \
     orte_wait.c \
+    opal_init.c \
     opal_finalize.c
 
 # Conditionally install the header files

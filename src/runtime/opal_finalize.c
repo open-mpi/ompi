@@ -23,7 +23,7 @@
 #include "util/output.h"
 #include "util/malloc.h"
 #include "mca/base/base.h"
-#include "runtime/opal_finalize.h"
+#include "runtime/opal.h"
 
 /**
  * Finalize the OPAL utilities

@@ -16,8 +16,18 @@
 
 /** @file **/
 
-#ifndef OPAL_FINALIZE_H
-#define OPAL_FINALIZE_H
+#ifndef OPAL_H
+#define OPAL_H
+
+/**
+ * Initialize the OPAL utilities
+ *
+ * @retval ORTE_SUCCESS Upon success.
+ * @retval ORTE_ERROR Upon failure.
+ *
+ * This function performs 
+ */
+int opal_init(void);
 
 /**
  * Finalize the OPAL utilities
