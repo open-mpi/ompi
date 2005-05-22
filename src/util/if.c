@@ -387,7 +387,9 @@ int ompi_iffinalize(void)
     while (NULL != (intf_ptr = (ompi_if_t*)ompi_list_remove_first(&ompi_if_list))) {
         OBJ_RELEASE(intf_ptr);
     }
+    OBJ_DESTRUCT(&ompi_if_list);
 #endif
+    already_done = false;
     return OMPI_SUCCESS;
 }
 

@@ -128,32 +128,52 @@ int orte_sys_info(void)
 
 int orte_sys_info_finalize(void)
 {
-    if (NULL != orte_system_info.sysname)
+    if (NULL != orte_system_info.sysname) {
         free(orte_system_info.sysname);
+        orte_system_info.sysname = NULL;
+    }
 
-    if (NULL != orte_system_info.nodename)
+    if (NULL != orte_system_info.nodename) {
         free(orte_system_info.nodename);
+        orte_system_info.nodename = NULL;
+    }
 
-    if (NULL != orte_system_info.release)
+    if (NULL != orte_system_info.release) {
         free(orte_system_info.release);
+        orte_system_info.release = NULL;
+    }
 
-    if (NULL != orte_system_info.version)
+    if (NULL != orte_system_info.version) {
         free(orte_system_info.version);
+        orte_system_info.version = NULL;
+    }
         
-    if (NULL != orte_system_info.machine)
+    if (NULL != orte_system_info.machine) {
         free(orte_system_info.machine);
+        orte_system_info.machine = NULL;
+    }
         
-    if (NULL != orte_system_info.path_sep)
+    if (NULL != orte_system_info.path_sep) {
         free(orte_system_info.path_sep);
+        orte_system_info.path_sep = NULL;
+    }
         
-    if (NULL != orte_system_info.user)
+    if (NULL != orte_system_info.user) {
         free(orte_system_info.user);
+        orte_system_info.user = NULL;
+    }
         
-    if (NULL != orte_system_info.enviro)
+    if (NULL != orte_system_info.enviro) {
         free(orte_system_info.enviro);
+        orte_system_info.enviro = NULL;
+    }
         
-    if (NULL != orte_system_info.suffix)
+    if (NULL != orte_system_info.suffix) {
         free(orte_system_info.suffix);
-        
+        orte_system_info.suffix = NULL;
+    }
+    
+    orte_system_info.init = false;
+    
     return ORTE_SUCCESS;
 }

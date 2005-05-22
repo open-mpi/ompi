@@ -127,17 +127,40 @@ int orte_univ_info(void)
 
 int orte_univ_info_finalize(void)
 {
-    if (NULL != orte_universe_info.name) free(orte_universe_info.name);
+    if (NULL != orte_universe_info.name) {
+        free(orte_universe_info.name);
+        orte_universe_info.name = NULL;
+    }
     
-    if (NULL != orte_universe_info.host) free(orte_universe_info.host);
+    if (NULL != orte_universe_info.host) {
+        free(orte_universe_info.host);
+        orte_universe_info.host = NULL;
+    }
     
-    if (NULL != orte_universe_info.uid) free(orte_universe_info.uid);
+    if (NULL != orte_universe_info.uid) {
+        free(orte_universe_info.uid);
+        orte_universe_info.uid = NULL;
+    }
     
-    if (NULL != orte_universe_info.scope) free(orte_universe_info.scope);
+    if (NULL != orte_universe_info.scope) {
+        free(orte_universe_info.scope);
+        orte_universe_info.scope = NULL;
+    }
     
-    if (NULL != orte_universe_info.seed_uri) free(orte_universe_info.seed_uri);
+    if (NULL != orte_universe_info.seed_uri) {
+        free(orte_universe_info.seed_uri);
+        orte_universe_info.seed_uri = NULL;
+    }
     
-    if (NULL != orte_universe_info.scriptfile) free(orte_universe_info.scriptfile);
+    if (NULL != orte_universe_info.scriptfile) {
+        free(orte_universe_info.scriptfile);
+        orte_universe_info.scriptfile = NULL;
+    }
     
+    orte_universe_info.init = false;
+    orte_universe_info.persistence = false;
+    orte_universe_info.console = false;
+    orte_universe_info.console_connected = false;
+
     return ORTE_SUCCESS;
 }
