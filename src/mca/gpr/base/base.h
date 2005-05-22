@@ -213,7 +213,7 @@ int orte_gpr_base_unpack_notify_data(orte_buffer_t *buffer, void *dest,
                        size_t *num_vals, orte_data_type_t type);
 
 /* general utilities */
-int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
+OMPI_DECLSPEC int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
                                orte_gpr_value_union_t *src,
                                orte_data_type_t type);
 
