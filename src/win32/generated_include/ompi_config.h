@@ -566,6 +566,12 @@
 #define SIZE_MAX ((size_t) 0)
 #define UINT8_MAX 255
 
+/* STDOUT and STDERR defines */
+#define STDOUT_FILENO 1
+#define STDERR_FILENO 2
+
+#define PATH_MAX MAXPATHLEN
+
 #include "ompi_config_bottom.h"
 #endif /* OMPI_CONFIG_H */
 
