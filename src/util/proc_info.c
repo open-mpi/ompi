@@ -49,7 +49,8 @@ OMPI_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .proc_session_dir =     */   NULL,
     /*  .sock_stdin =           */   NULL,
     /*  .sock_stdout =          */   NULL,
-    /*  .sock_stderr =          */   NULL};
+    /*  .sock_stderr =          */   NULL
+};
 
 
 int orte_proc_info(void)
@@ -83,55 +84,71 @@ int orte_proc_info_finalize(void)
 {
     if (NULL != orte_process_info.my_name) {
         free(orte_process_info.my_name);
+        orte_process_info.my_name = NULL;
     }
     
     if (NULL != orte_process_info.ns_replica_uri) {
         free(orte_process_info.ns_replica_uri);
+        orte_process_info.ns_replica_uri = NULL;
     }
     
     if (NULL != orte_process_info.gpr_replica_uri) {
         free(orte_process_info.gpr_replica_uri);
+        orte_process_info.gpr_replica_uri = NULL;
     }
     
     if (NULL != orte_process_info.ns_replica) {
         free(orte_process_info.ns_replica);
+        orte_process_info.ns_replica = NULL;
     }
     
     if (NULL != orte_process_info.gpr_replica) {
         free(orte_process_info.gpr_replica);
+        orte_process_info.gpr_replica = NULL;
     }
  
      if (NULL != orte_process_info.tmpdir_base) {
         free(orte_process_info.tmpdir_base);
+        orte_process_info.tmpdir_base = NULL;
     }
     
     if (NULL != orte_process_info.top_session_dir) {
         free(orte_process_info.top_session_dir);
+        orte_process_info.top_session_dir = NULL;
     }
  
      if (NULL != orte_process_info.universe_session_dir) {
         free(orte_process_info.universe_session_dir);
+        orte_process_info.universe_session_dir = NULL;
     }
     
     if (NULL != orte_process_info.job_session_dir) {
         free(orte_process_info.job_session_dir);
+        orte_process_info.job_session_dir = NULL;
     }
     
     if (NULL != orte_process_info.proc_session_dir) {
         free(orte_process_info.proc_session_dir);
+        orte_process_info.proc_session_dir = NULL;
     }
     
     if (NULL != orte_process_info.sock_stdin) {
         free(orte_process_info.sock_stdin);
+        orte_process_info.sock_stdin = NULL;
     }
     
      if (NULL != orte_process_info.sock_stdout) {
         free(orte_process_info.sock_stdout);
+        orte_process_info.sock_stdout = NULL;
     }
     
    if (NULL != orte_process_info.sock_stderr) {
         free(orte_process_info.sock_stderr);
+        orte_process_info.sock_stderr = NULL;
     }
 
+    orte_process_info.seed = false;
+    orte_process_info.daemon = false;
+    
     return ORTE_SUCCESS;
 }
