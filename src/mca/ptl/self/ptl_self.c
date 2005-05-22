@@ -39,6 +39,7 @@
 #include "event/event.h"
 #include "util/argv.h"
 #include "util/output.h"
+#include "datatype/datatype.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_sendreq.h"
