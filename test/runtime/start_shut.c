@@ -42,19 +42,30 @@ int main (int argc, char* argv[])
     test_init("orte_start_shut");
     test_out = stderr;
     
+    fprintf(test_out, "initialize the system\n");
+    if (ORTE_SUCCESS != (rc = orte_init())) {
+        fprintf(test_out, "couldn't complete init - error code %d\n", rc);
+        exit(1);
+    }
+    
     for (i=0; i < NUM_ITERS; i++) {
-        fprintf(test_out, "test iteration: %d\n", i);
-        if (ORTE_SUCCESS != (rc = orte_init())) {
-            fprintf(test_out, "iter %d: couldn't complete init - error code %d\n", i, rc);
-            exit(1);
-        }
-        fprintf(test_out, "\tinit successful\n");
         if (ORTE_SUCCESS != (rc = orte_system_finalize())) {
-            fprintf(test_out, "iter %d: couldn't complete finalize - error %d\n", i, rc);
+            fprintf(test_out, "iter %d: couldn't complete orte system finalize - error %d\n", i, rc);
             exit(1);
         }
         fprintf(test_out, "\tfinalize successful\n");
+        if (ORTE_SUCCESS != (rc = orte_system_init())) {
+            fprintf(test_out, "iter %d: couldn't complete orte system init - error code %d\n", i, rc);
+            exit(1);
+        }
     }
+    
+    fprintf(test_out, "shut system down\n");
+    if (ORTE_SUCCESS != (rc = orte_finalize())) {
+        fprintf(test_out, "couldn't complete finalize - error code %d\n", rc);
+        exit(1);
+    }
+
     fprintf(test_out, "orte_start_shut: successful\n");
     
     rc = test_finalize();

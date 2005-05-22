@@ -19,24 +19,31 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
+#include "mca/errmgr/errmgr.h"
+
 #include "runtime/opal.h"
 #include "runtime/runtime.h"
 
 /**
- * Leave ORTE.
+ * Initialze and setup a process in the ORTE.
  *
  * @retval ORTE_SUCCESS Upon success.
  * @retval ORTE_ERROR Upon failure.
- *
- * This function performs 
  */
-int orte_finalize(void)
+
+int orte_system_init(void)
 {
-    /* finalize the orte system */
-    orte_system_finalize();
+    int rc;
+
+    if (ORTE_SUCCESS != (rc = orte_init_stage1())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     
-    /* finalize the opal utilities */
-    opal_finalize();
+    if (ORTE_SUCCESS != (rc = orte_init_stage2())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     
     return ORTE_SUCCESS;
 }

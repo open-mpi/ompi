@@ -63,19 +63,6 @@ int orte_init_stage1(void)
     pid_t pid;
     orte_universe_t univ;
 
-    /* Open up the output streams */
-    if (!ompi_output_init()) {
-        return OMPI_ERROR;
-    }
-                                                                                                                   
-    /* 
-     * If threads are supported - assume that we are using threads - and reset otherwise. 
-     */
-    ompi_set_using_threads(OMPI_HAVE_THREAD_SUPPORT);
-                                                                                                                   
-    /* For malloc debugging */
-    ompi_malloc_init();
-
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_sys_info())) {
         return ret;
@@ -91,13 +78,6 @@ int orte_init_stage1(void)
         return ret;
     }
 
-    /*
-     * Initialize the MCA framework 
-     */
-    if (OMPI_SUCCESS != (ret = mca_base_open())) {
-        return ret;
-    }
- 
     /*
      * Initialize the data packing service.
      */
@@ -360,7 +340,7 @@ int orte_init_stage1(void)
         return ret;
     }
 
-     /* setup jobid-0 */
+     /* if we are the seed, setup jobid-0 */
  
     if(orte_process_info.seed) {
          if (ORTE_SUCCESS != (ret = orte_rmgr_base_set_job_slots(0,1))) {

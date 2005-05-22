@@ -21,6 +21,7 @@
 #include "include/orte_constants.h"
 #include "mca/errmgr/errmgr.h"
 
+#include "runtime/opal.h"
 #include "runtime/runtime.h"
 
 /**
@@ -37,12 +38,12 @@ int orte_init(void)
 {
     int rc;
 
-    if (ORTE_SUCCESS != (rc = orte_init_stage1())) {
+    if (ORTE_SUCCESS != (rc = opal_init())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_init_stage2())) {
+    if (ORTE_SUCCESS != (rc = orte_system_init())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
