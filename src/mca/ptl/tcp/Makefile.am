@@ -18,8 +18,21 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-sources =
-include src/Makefile.extra
+sources = \
+	ptl_tcp.c \
+	ptl_tcp.h \
+    ptl_tcp_addr.h \
+	ptl_tcp_component.c \
+	ptl_tcp_peer.c \
+	ptl_tcp_peer.h \
+	ptl_tcp_proc.c \
+	ptl_tcp_proc.h \
+	ptl_tcp_recvfrag.c \
+	ptl_tcp_recvfrag.h \
+	ptl_tcp_sendfrag.c \
+	ptl_tcp_sendfrag.h \
+	ptl_tcp_sendreq.c \
+	ptl_tcp_sendreq.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
@@ -45,3 +58,4 @@ mca_ptl_tcp_la_LDFLAGS = -module -avoid-version
 noinst_LTLIBRARIES = $(lib)
 libmca_ptl_tcp_la_SOURCES = $(lib_sources)
 libmca_ptl_tcp_la_LDFLAGS = -module -avoid-version
+

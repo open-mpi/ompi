@@ -45,7 +45,6 @@ int mca_pml_base_output = -1;
 OMPI_DECLSPEC mca_pml_base_module_t mca_pml = {
     NULL,                    /* pml_add_procs */
     NULL,                    /* pml_del_procs */
-    NULL,                    /* pml_add_ptls */
     NULL,                    /* pml_control */
     mca_pml_base_progress,   /* pml_progress */
     NULL,                    /* pml_add_comm */

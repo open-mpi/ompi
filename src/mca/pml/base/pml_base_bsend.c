@@ -35,6 +35,7 @@ static size_t           mca_pml_bsend_size;       /* size of users buffer */
 static size_t           mca_pml_bsend_count;      /* number of outstanding requests */
 static size_t           mca_pml_bsend_pagesz;     /* mmap page size */
 static int              mca_pml_bsend_pagebits;   /* number of bits in pagesz */
+static int32_t          mca_pml_bsend_init = 0; 
 
 
 
@@ -62,9 +63,13 @@ static void* mca_pml_bsend_alloc_segment(size_t* size_inout)
  */
 int mca_pml_base_bsend_init(bool thread_safe)
 {
+    static int initialized;
     int id = mca_base_param_register_string("pml", "base", "bsend_allocator", NULL, "basic");
     char *name;
     size_t tmp;
+
+    if(OMPI_THREAD_ADD32(&mca_pml_bsend_init, 1) > 0)
+        return OMPI_SUCCESS;
 
     /* initialize static objects */
     OBJ_CONSTRUCT(&mca_pml_bsend_mutex, ompi_mutex_t);
@@ -94,6 +99,9 @@ int mca_pml_base_bsend_init(bool thread_safe)
  */
 int mca_pml_base_bsend_fini()
 {
+    if(OMPI_THREAD_ADD32(&mca_pml_bsend_init,-1) > 0) 
+        return OMPI_SUCCESS;
+
     if(NULL != mca_pml_bsend_allocator)
         mca_pml_bsend_allocator->alc_finalize(mca_pml_bsend_allocator);
     mca_pml_bsend_allocator = NULL;

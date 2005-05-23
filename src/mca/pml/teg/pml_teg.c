@@ -40,8 +40,7 @@ mca_pml_teg_t mca_pml_teg = {
     {
     mca_pml_teg_add_procs,
     mca_pml_teg_del_procs,
-    mca_pml_teg_add_ptls,
-    mca_pml_teg_control,
+    mca_pml_teg_enable,
     mca_pml_teg_progress,
     mca_pml_teg_add_comm,
     mca_pml_teg_del_comm,
@@ -91,11 +90,11 @@ static int ptl_exclusivity_compare(const void* arg1, const void* arg2)
 }
 
 
-int mca_pml_teg_add_ptls(ompi_list_t *ptls)
+int mca_pml_teg_add_ptls(void)
 {
     /* build an array of ptls and ptl modules */
     mca_ptl_base_selected_module_t* selected_ptl;
-    size_t num_ptls = ompi_list_get_size(ptls);
+    size_t num_ptls = ompi_list_get_size(&mca_ptl_base_modules_initialized);
     size_t cache_bytes = 0;
     mca_pml_teg.teg_num_ptl_modules = 0;
     mca_pml_teg.teg_num_ptl_progress = 0;
@@ -109,9 +108,11 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    for(selected_ptl =  (mca_ptl_base_selected_module_t*)ompi_list_get_first(ptls);
-        selected_ptl != (mca_ptl_base_selected_module_t*)ompi_list_get_end(ptls);
-        selected_ptl =  (mca_ptl_base_selected_module_t*)ompi_list_get_next(selected_ptl)) {
+    for(selected_ptl = (mca_ptl_base_selected_module_t*)
+            ompi_list_get_first(&mca_ptl_base_modules_initialized);
+        selected_ptl != (mca_ptl_base_selected_module_t*)
+            ompi_list_get_end(&mca_ptl_base_modules_initialized);
+        selected_ptl = (mca_ptl_base_selected_module_t*)ompi_list_get_next(selected_ptl)) {
         mca_ptl_base_module_t *ptl = selected_ptl->pbsm_module;
         size_t i;
 
@@ -163,12 +164,13 @@ int mca_pml_teg_add_ptls(ompi_list_t *ptls)
  * Pass control information through to all PTL modules.
  */
 
-int mca_pml_teg_control(int param, void* value, size_t size)
+int mca_pml_teg_enable(bool enable) 
 {
     size_t i=0;
+    int value = enable;
     for(i=0; i<mca_pml_teg.teg_num_ptl_components; i++) {
         if(NULL != mca_pml_teg.teg_ptl_components[i]->ptlm_control) {
-            int rc = mca_pml_teg.teg_ptl_components[i]->ptlm_control(param,value,size);
+            int rc = mca_pml_teg.teg_ptl_components[i]->ptlm_control(MCA_PTL_ENABLE,&value,sizeof(value));
             if(rc != OMPI_SUCCESS)
                 return rc;
         }

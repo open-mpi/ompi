@@ -82,7 +82,7 @@ ompi_cmd_line_init_t orte_cmd_line_opts[] = {
       "Show the orted version" },
 
     { "orte", "debug", NULL, 'd', NULL, "debug", 0,
-      NULL, OMPI_CMD_LINE_TYPE_BOOL,
+      &orted_globals.debug, OMPI_CMD_LINE_TYPE_BOOL,
       "Debug the OpenRTE" },
 
     { NULL, NULL, NULL, '\0', NULL, "no-daemonize", 0,
@@ -156,6 +156,8 @@ int main(int argc, char *argv[])
     char log_file[PATH_MAX];
     char *jobidstring;
     
+    fprintf(stderr, "orted\n");
+
     /* setup to check common command line options that just report and die */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
     cmd_line = OBJ_NEW(ompi_cmd_line_t);
@@ -207,7 +209,9 @@ int main(int argc, char *argv[])
     /* detach from controlling terminal
      * otherwise, remain attached so output can get to us
      */
-    if(orted_globals.debug_daemons == false && orted_globals.no_daemonize == false) {
+    if(orted_globals.debug == false &&
+       orted_globals.debug_daemons == false && 
+       orted_globals.no_daemonize == false) {
         orte_daemon_init(NULL);
     }
 

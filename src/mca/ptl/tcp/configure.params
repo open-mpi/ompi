@@ -17,6 +17,6 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=src/ptl_tcp.c
-PARAM_CONFIG_HEADER_FILE="src/tcp_config.h"
+PARAM_INIT_FILE=ptl_tcp.c
+PARAM_CONFIG_HEADER_FILE="tcp_config.h"
 PARAM_CONFIG_FILES="Makefile"

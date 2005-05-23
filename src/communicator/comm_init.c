@@ -84,7 +84,6 @@ int ompi_comm_init(void)
     ompi_mpi_comm_world.c_cube_dim     = ompi_cube_dim(size);
     ompi_mpi_comm_world.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
-    MCA_PML_CALL(add_comm(&ompi_mpi_comm_world));
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world);
     ompi_pointer_array_set_item (&ompi_mpi_communicators, 0, &ompi_mpi_comm_world);
 
@@ -114,7 +113,6 @@ int ompi_comm_init(void)
     ompi_mpi_comm_self.c_remote_group = group;
     ompi_mpi_comm_self.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
-    MCA_PML_CALL(add_comm(&ompi_mpi_comm_self));
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_self);
     ompi_pointer_array_set_item (&ompi_mpi_communicators, 1, &ompi_mpi_comm_self);
 

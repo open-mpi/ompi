@@ -401,7 +401,7 @@ ompi_progress(void)
     ompi_atomic_unlock(&progress_lock);
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
-    if (call_yield && events <= 0) {
+    if (events <= 0) {
         /* If there is nothing to do - yield the processor - otherwise
          * we could consume the processor for the entire time slice. If
          * the processor is oversubscribed - this will result in a best-case

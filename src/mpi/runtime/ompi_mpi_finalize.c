@@ -40,8 +40,6 @@
 #include "mca/base/mca_base_module_exchange.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/base.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/base.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 #include "mca/topo/topo.h"
@@ -119,9 +117,6 @@ int ompi_mpi_finalize(void)
 
     /* Now that all MPI objects dealing with communications are gone,
        shut down MCA types having to do with communications */
-    if (OMPI_SUCCESS != (ret = mca_ptl_base_close())) {
-	return ret;
-    }
     if (OMPI_SUCCESS != (ret = mca_pml_base_close())) {
 	return ret;
     }

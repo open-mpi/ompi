@@ -143,11 +143,6 @@ int mca_ptl_base_select(bool enable_progress_threads,
     orte_abort(1, "No ptl components available.  This shouldn't happen.");
   }
 
-  /* Once we have some modules, tell the PML about them */
-
-  MCA_PML_CALL(add_ptls(&mca_ptl_base_modules_initialized));
-
   /* All done */
-
   return OMPI_SUCCESS;
 }

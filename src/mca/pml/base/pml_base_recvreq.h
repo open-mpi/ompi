@@ -23,7 +23,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC extern ompi_class_t mca_pml_base_recv_request_t_class;
+
 /**
  * Base type for receive requests.
  */
@@ -33,6 +33,7 @@ struct mca_pml_base_recv_request_t {
 };
 typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;
 
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
 
 /**
  * Initialize a receive request with call parameters.
@@ -81,10 +82,11 @@ typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;
  *
  *  @param request (IN)     Receive request.
  */
-#define MCA_PML_BASE_RECV_REQUEST_RETURN( request )      \
-    do {                                                 \
-        OBJ_RELEASE( (request)->req_base.req_comm);      \
-        OBJ_RELEASE( (request)->req_base.req_datatype ); \
+#define MCA_PML_BASE_RECV_REQUEST_FINI( request )         \
+    do {                                                  \
+        OMPI_REQUEST_FINI(&(request)->req_base.req_ompi); \
+        OBJ_RELEASE( (request)->req_base.req_comm);       \
+        OBJ_RELEASE( (request)->req_base.req_datatype );  \
     } while (0)
 
 #if defined(c_plusplus) || defined(__cplusplus)

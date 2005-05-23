@@ -50,6 +50,7 @@ typedef struct {
     bool help;
     bool version;
     bool no_daemonize;
+    bool debug;
     bool debug_daemons;
     bool debug_daemons_file;
     char* name;

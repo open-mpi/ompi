@@ -1513,6 +1513,8 @@ AC_CONFIG_FILES([
 
     src/mca/allocator/Makefile
     src/mca/allocator/base/Makefile
+    src/mca/bmi/Makefile
+    src/mca/bmi/base/Makefile
     src/mca/coll/Makefile
     src/mca/coll/base/Makefile
     src/mca/io/Makefile

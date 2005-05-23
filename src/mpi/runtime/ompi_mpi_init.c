@@ -44,8 +44,6 @@
 #include "mca/mpool/base/base.h"
 #include "mca/mpool/mpool.h"
 #include "mca/pml/pml.h"
-#include "mca/ptl/ptl.h"
-#include "mca/ptl/base/base.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/base.h"
 #include "mca/coll/coll.h"
@@ -81,7 +79,7 @@ ompi_thread_t *ompi_mpi_main_thread = NULL;
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 {
-    int ret, param;
+    int ret;
     ompi_proc_t** procs;
     size_t nprocs;
     char *error = NULL;
@@ -169,10 +167,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "mca_pml_base_open() failed";
         goto error;
     }
-    if (OMPI_SUCCESS != (ret = mca_ptl_base_open())) {
-        error = "mca_ptl_base_open() failed";
-        goto error;
-    }
     if (OMPI_SUCCESS != (ret = mca_coll_base_open())) {
         error = "mca_coll_base_open() failed";
         goto error;
@@ -204,13 +198,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         (ret = mca_pml_base_select(OMPI_ENABLE_PROGRESS_THREADS,
                                    OMPI_ENABLE_MPI_THREADS))) {
         error = "mca_pml_base_select() failed";
-        goto error;
-    }
-
-    if (OMPI_SUCCESS != 
-        (ret = mca_ptl_base_select(OMPI_ENABLE_PROGRESS_THREADS,
-                                   OMPI_ENABLE_MPI_THREADS))) {
-        error = "mca_ptl_base_select() failed";
         goto error;
     }
 
@@ -346,10 +333,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     free(procs);
 
+    MCA_PML_CALL(add_comm(&ompi_mpi_comm_world));
+    MCA_PML_CALL(add_comm(&ompi_mpi_comm_self));
+
     /* start PTL's */
-    param = 1;
-    if (OMPI_SUCCESS != 
-        (ret = mca_pml.pml_control(MCA_PTL_ENABLE, &param, sizeof(param)))) {
+    if (OMPI_SUCCESS != (ret = mca_pml.pml_enable(true))) {
         error = "PML control failed";
         goto error;
     }
