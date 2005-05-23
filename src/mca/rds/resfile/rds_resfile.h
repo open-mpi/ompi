@@ -73,6 +73,7 @@ typedef struct orte_rds_resfile_component_t orte_rds_resfile_component_t;
 OMPI_COMP_EXPORT extern orte_rds_resfile_component_t mca_rds_resfile_component;
 OMPI_COMP_EXPORT extern orte_rds_base_module_t orte_rds_resfile_module;
 
+extern bool orte_rds_resfile_queried;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

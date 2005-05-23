@@ -23,9 +23,10 @@ check_PROGRAMS = \
 	orte_os_path \
 	orte_sys_info \
 	orte_os_create_dirpath \
-        orte_session_dir \
+    orte_session_dir \
 	ompi_argv \
-        ompi_basename
+    ompi_basename \
+    orte_universe_setup_file_io
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -78,4 +79,10 @@ orte_session_dir_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.a 
 orte_session_dir_DEPENDENCIES = $(orte_session_dir_LDADD)
+
+orte_universe_setup_file_io_SOURCES = orte_universe_setup_file_io.c
+orte_universe_setup_file_io_LDADD = \
+        $(top_builddir)/src/libmpi.la \
+        $(top_builddir)/test/support/libsupport.a 
+orte_universe_setup_file_io_DEPENDENCIES = $(orte_universe_setup_file_io_LDADD)
 

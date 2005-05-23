@@ -66,6 +66,11 @@ orte_rds_base_module_t orte_rds_resfile_module = {
     orte_rds_resfile_finalize
 };
 
+/*
+ * Instantiate component variables
+ */
+bool orte_rds_resfile_queried;
+
 /**
  *  Convience functions to lookup MCA parameter values.
  */
@@ -99,6 +104,7 @@ static int orte_rds_resfile_open(void)
     OBJ_CONSTRUCT(&mca_rds_resfile_component.lock, ompi_mutex_t);
     mca_rds_resfile_component.debug = orte_rds_resfile_param_register_int("debug",1);
     mca_rds_resfile_component.filename = orte_rds_resfile_param_register_string("file", NULL);
+    orte_rds_resfile_queried = false;
     
     return ORTE_SUCCESS;
 }

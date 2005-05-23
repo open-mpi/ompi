@@ -32,7 +32,6 @@ static int orte_rds_resfile_parse_site(char *site, FILE *fp);
 
 static int orte_rds_resfile_parse_resource(orte_rds_cell_desc_t *cell, FILE *fp);
 
-
 static int orte_rds_resfile_parse_resource(orte_rds_cell_desc_t *cell, FILE *fp)
 {
     char *line;
@@ -191,6 +190,12 @@ int orte_rds_resfile_query(void)
     
     OMPI_LOCK(&mca_rds_resfile_component.lock);
 
+    if (orte_rds_resfile_queried) {
+       OMPI_UNLOCK(&mca_rds_resfile_component.lock);
+       return ORTE_SUCCESS;
+    }
+    orte_rds_resfile_queried = true;
+    
     /* get the resource filename */
     fileid = mca_base_param_register_string("rds", "resfile", "name", NULL, NULL);
     mca_base_param_lookup_string(fileid, &resfile);
