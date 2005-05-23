@@ -50,10 +50,10 @@ void mca_pml_ob1_recv_callback(
     }
 
     switch(hdr->hdr_common.hdr_type) {
-        case MCA_PML_GEN2_HDR_TYPE_MATCH:
+        case MCA_PML_OB1_HDR_TYPE_MATCH:
             mca_pml_ob1_match(bmi,&hdr->hdr_match,segments,des->des_src_cnt);
             break;
-        case MCA_PML_GEN2_HDR_TYPE_RNDV:
+        case MCA_PML_OB1_HDR_TYPE_RNDV:
             mca_pml_ob1_match(bmi,&hdr->hdr_match,segments,des->des_src_cnt);
             break;
         default:

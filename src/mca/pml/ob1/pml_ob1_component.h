@@ -15,8 +15,8 @@
  *  @file 
  */
 
-#ifndef MCA_PML_GEN2_COMPONENT_H
-#define MCA_PML_GEN2_COMPONENT_H
+#ifndef MCA_PML_OB1_COMPONENT_H
+#define MCA_PML_OB1_COMPONENT_H
 
 /*
  * PML module functions.

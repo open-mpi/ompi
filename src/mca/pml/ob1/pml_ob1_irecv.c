@@ -29,11 +29,11 @@ int mca_pml_ob1_irecv_init(void *addr,
 {
     int rc;
     mca_pml_ob1_recv_request_t *recvreq;
-    MCA_PML_GEN2_RECV_REQUEST_ALLOC(recvreq, rc);
+    MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq, rc);
     if (NULL == recvreq)
         return rc;
 
-    MCA_PML_GEN2_RECV_REQUEST_INIT(recvreq,
+    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
                                    addr,
                                    count, datatype, src, tag, comm, true);
 
@@ -52,15 +52,15 @@ int mca_pml_ob1_irecv(void *addr,
     int rc;
 
     mca_pml_ob1_recv_request_t *recvreq;
-    MCA_PML_GEN2_RECV_REQUEST_ALLOC(recvreq, rc);
+    MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq, rc);
     if (NULL == recvreq)
         return rc;
 
-    MCA_PML_GEN2_RECV_REQUEST_INIT(recvreq,
+    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
                                    addr,
                                    count, datatype, src, tag, comm, false);
 
-    MCA_PML_GEN2_RECV_REQUEST_START(recvreq);
+    MCA_PML_OB1_RECV_REQUEST_START(recvreq);
     *request = (ompi_request_t *) recvreq;
     return OMPI_SUCCESS;
 }
@@ -76,15 +76,15 @@ int mca_pml_ob1_recv(void *addr,
 {
     int rc;
     mca_pml_ob1_recv_request_t *recvreq;
-    MCA_PML_GEN2_RECV_REQUEST_ALLOC(recvreq, rc);
+    MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq, rc);
     if (NULL == recvreq)
         return rc;
 
-    MCA_PML_GEN2_RECV_REQUEST_INIT(recvreq,
+    MCA_PML_OB1_RECV_REQUEST_INIT(recvreq,
                                    addr,
                                    count, datatype, src, tag, comm, false);
 
-    MCA_PML_GEN2_RECV_REQUEST_START(recvreq);
+    MCA_PML_OB1_RECV_REQUEST_START(recvreq);
     if (recvreq->req_recv.req_base.req_ompi.req_complete == false) {
         /* give up and sleep until completion */
         if (ompi_using_threads()) {

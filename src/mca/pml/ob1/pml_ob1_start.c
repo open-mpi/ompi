@@ -101,7 +101,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
             case MCA_PML_REQUEST_SEND: 
             {
                 mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)pml_request;
-                MCA_PML_GEN2_SEND_REQUEST_START(sendreq, rc);
+                MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
                 if(rc != OMPI_SUCCESS)
                     return rc;
                 break;
@@ -109,7 +109,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
             case MCA_PML_REQUEST_RECV:
             {
                 mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)pml_request;
-                MCA_PML_GEN2_RECV_REQUEST_START(recvreq);
+                MCA_PML_OB1_RECV_REQUEST_START(recvreq);
                 break;
             }
             default:

@@ -17,8 +17,8 @@
  *  @file
  */
                                                                                                                                                  
-#ifndef MCA_PML_GEN2_RECVFRAG_H
-#define MCA_PML_GEN2_RECVFRAG_H
+#ifndef MCA_PML_OB1_RECVFRAG_H
+#define MCA_PML_OB1_RECVFRAG_H
 
 #include "mca/bmi/bmi.h"
 #include "pml_ob1_hdr.h"
@@ -34,17 +34,17 @@ struct mca_pml_ob1_recv_frag_t {
 typedef struct mca_pml_ob1_recv_frag_t mca_pml_ob1_recv_frag_t;
 
 
-#define MCA_PML_GEN2_RECV_FRAG_ALLOC(frag,rc)  \
+#define MCA_PML_OB1_RECV_FRAG_ALLOC(frag,rc)  \
 { \
  \
 } 
 
-#define MCA_PML_GEN2_RECV_FRAG_INIT(frag,bmi,hdr,segs,cnt)  \
+#define MCA_PML_OB1_RECV_FRAG_INIT(frag,bmi,hdr,segs,cnt)  \
 { \
  \
 } 
 
-#define MCA_PML_GEN2_RECV_FRAG_RETURN(frag)  \
+#define MCA_PML_OB1_RECV_FRAG_RETURN(frag)  \
 { \
  \
 } 

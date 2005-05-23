@@ -34,11 +34,11 @@ int mca_pml_ob1_isend_init(void *buf,
     int rc;
 
     mca_pml_ob1_send_request_t *sendreq;
-    MCA_PML_GEN2_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
+    MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
     if (rc != OMPI_SUCCESS)
         return rc;
 
-    MCA_PML_GEN2_SEND_REQUEST_INIT(sendreq,
+    MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
                                    buf,
                                    count,
                                    datatype,
@@ -61,18 +61,18 @@ int mca_pml_ob1_isend(void *buf,
 {
     int rc;
     mca_pml_ob1_send_request_t *sendreq;
-    MCA_PML_GEN2_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
+    MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
     if (rc != OMPI_SUCCESS)
         return rc;
 
-    MCA_PML_GEN2_SEND_REQUEST_INIT(sendreq,
+    MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
                                    buf,
                                    count,
                                    datatype,
                                    dst, tag,
                                    comm, sendmode, false);
 
-    MCA_PML_GEN2_SEND_REQUEST_START(sendreq, rc);
+    MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
     *request = (ompi_request_t *) sendreq;
     return rc;
 }
@@ -88,20 +88,20 @@ int mca_pml_ob1_send(void *buf,
 {
     int rc;
     mca_pml_ob1_send_request_t *sendreq;
-    MCA_PML_GEN2_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
+    MCA_PML_OB1_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
     if (rc != OMPI_SUCCESS)
         return rc;
 
-    MCA_PML_GEN2_SEND_REQUEST_INIT(sendreq,
+    MCA_PML_OB1_SEND_REQUEST_INIT(sendreq,
                                    buf,
                                    count,
                                    datatype,
                                    dst, tag,
                                    comm, sendmode, false);
 
-    MCA_PML_GEN2_SEND_REQUEST_START(sendreq, rc);
+    MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
     if (rc != OMPI_SUCCESS) {
-        MCA_PML_GEN2_FREE((ompi_request_t **) & sendreq);
+        MCA_PML_OB1_FREE((ompi_request_t **) & sendreq);
         return rc;
     }
 
@@ -123,7 +123,7 @@ int mca_pml_ob1_send(void *buf,
     }
 
     /* return request to pool */
-    MCA_PML_GEN2_FREE((ompi_request_t **) & sendreq);
+    MCA_PML_OB1_FREE((ompi_request_t **) & sendreq);
     return OMPI_SUCCESS;
 }
 

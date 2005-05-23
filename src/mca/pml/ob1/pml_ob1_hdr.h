@@ -16,8 +16,8 @@
 /**
  * @file
  */
-#ifndef MCA_PML_GEN2_HEADER_H
-#define MCA_PML_GEN2_HEADER_H
+#ifndef MCA_PML_OB1_HEADER_H
+#define MCA_PML_OB1_HEADER_H
 
 #include "ompi_config.h"
 #include "mca/ptl/ptl.h"
@@ -28,17 +28,17 @@
 #include <netinet/in.h>
 #endif
 
-#define MCA_PML_GEN2_HDR_TYPE_MATCH    1
-#define MCA_PML_GEN2_HDR_TYPE_RNDV     2
-#define MCA_PML_GEN2_HDR_TYPE_FRAG     3
-#define MCA_PML_GEN2_HDR_TYPE_ACK      4
-#define MCA_PML_GEN2_HDR_TYPE_NACK     5
-#define MCA_PML_GEN2_HDR_TYPE_GET      6
-#define MCA_PML_GEN2_HDR_TYPE_FIN      7
-#define MCA_PML_GEN2_HDR_TYPE_MAX      8
+#define MCA_PML_OB1_HDR_TYPE_MATCH    1
+#define MCA_PML_OB1_HDR_TYPE_RNDV     2
+#define MCA_PML_OB1_HDR_TYPE_FRAG     3
+#define MCA_PML_OB1_HDR_TYPE_ACK      4
+#define MCA_PML_OB1_HDR_TYPE_NACK     5
+#define MCA_PML_OB1_HDR_TYPE_GET      6
+#define MCA_PML_OB1_HDR_TYPE_FIN      7
+#define MCA_PML_OB1_HDR_TYPE_MAX      8
 
-#define MCA_PML_GEN2_HDR_FLAGS_ACK     1  /* is an ack required */
-#define MCA_PML_GEN2_HDR_FLAGS_NBO     2  /* is the hdr in network byte order */
+#define MCA_PML_OB1_HDR_FLAGS_ACK     1  /* is an ack required */
+#define MCA_PML_OB1_HDR_FLAGS_NBO     2  /* is the hdr in network byte order */
 
 
 /*
@@ -90,9 +90,9 @@ struct mca_pml_ob1_common_hdr_t {
 };
 typedef struct mca_pml_ob1_common_hdr_t mca_pml_ob1_common_hdr_t;
 
-#define MCA_PML_GEN2_COMMON_HDR_NTOH(h) 
+#define MCA_PML_OB1_COMMON_HDR_NTOH(h) 
 
-#define MCA_PML_GEN2_COMMON_HDR_HTON(h) 
+#define MCA_PML_OB1_COMMON_HDR_HTON(h) 
 
 /**
  *  Header definition for the first fragment, contains the 
@@ -109,9 +109,9 @@ struct mca_pml_ob1_match_hdr_t {
 };
 typedef struct mca_pml_ob1_match_hdr_t mca_pml_ob1_match_hdr_t;
 
-#define MCA_PML_GEN2_MATCH_HDR_NTOH(h) \
+#define MCA_PML_OB1_MATCH_HDR_NTOH(h) \
     do { \
-    MCA_PML_GEN2_COMMON_HDR_NTOH((h).hdr_common); \
+    MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
     (h).hdr_contextid = ntohs((h).hdr_contextid); \
     (h).hdr_src = ntohl((h).hdr_src); \
     (h).hdr_dst = ntohl((h).hdr_dst); \
@@ -120,9 +120,9 @@ typedef struct mca_pml_ob1_match_hdr_t mca_pml_ob1_match_hdr_t;
     (h).hdr_msg_seq = ntohs((h).hdr_msg_seq); \
     } while (0)
 
-#define MCA_PML_GEN2_MATCH_HDR_HTON(h) \
+#define MCA_PML_OB1_MATCH_HDR_HTON(h) \
     do { \
-    MCA_PML_GEN2_COMMON_HDR_HTON((h).hdr_common); \
+    MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
     (h).hdr_contextid = htons((h).hdr_contextid); \
     (h).hdr_src = htonl((h).hdr_src); \
     (h).hdr_dst = htonl((h).hdr_dst); \
@@ -143,15 +143,15 @@ struct mca_pml_ob1_rendezvous_hdr_t {
 };
 typedef struct mca_pml_ob1_rendezvous_hdr_t mca_pml_ob1_rendezvous_hdr_t;
 
-#define MCA_PML_GEN2_RNDV_HDR_NTOH(h) \
+#define MCA_PML_OB1_RNDV_HDR_NTOH(h) \
     do { \
-    MCA_PML_GEN2_MATCH_HDR_NTOH((h).hdr_match); \
+    MCA_PML_OB1_MATCH_HDR_NTOH((h).hdr_match); \
     (h).hdr_frag_length = ntoh64((h).hdr_frag_length); \
     } while (0)
 
-#define MCA_PML_GEN2_RNDV_HDR_HTON(h) \
+#define MCA_PML_OB1_RNDV_HDR_HTON(h) \
     do { \
-    MCA_PML_GEN2_MATCH_HDR_HTON((h).hdr_match); \
+    MCA_PML_OB1_MATCH_HDR_HTON((h).hdr_match); \
     (h).hdr_frag_length = hton64((h).hdr_frag_length); \
     } while (0) 
 
@@ -167,16 +167,16 @@ struct mca_pml_ob1_frag_hdr_t {
 };
 typedef struct mca_pml_ob1_frag_hdr_t mca_pml_ob1_frag_hdr_t;
 
-#define MCA_PML_GEN2_FRAG_HDR_NTOH(h) \
+#define MCA_PML_OB1_FRAG_HDR_NTOH(h) \
     do { \
-    MCA_PML_GEN2_COMMON_HDR_NTOH((h).hdr_common); \
+    MCA_PML_OB1_COMMON_HDR_NTOH((h).hdr_common); \
     (h).hdr_frag_length = ntoh64((h).hdr_frag_length); \
     (h).hdr_frag_offset = ntoh64((h).hdr_frag_offset); \
     } while (0)
 
-#define MCA_PML_GEN2_FRAG_HDR_HTON(h) \
+#define MCA_PML_OB1_FRAG_HDR_HTON(h) \
     do { \
-    MCA_PML_GEN2_COMMON_HDR_HTON((h).hdr_common); \
+    MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
     (h).hdr_frag_length = hton64((h).hdr_frag_length); \
     (h).hdr_frag_offset = hton64((h).hdr_frag_offset); \
     } while (0)
@@ -195,15 +195,15 @@ struct mca_pml_ob1_ack_hdr_t {
 };
 typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
 
-#define MCA_PML_GEN2_ACK_HDR_NTOH(h) \
+#define MCA_PML_OB1_ACK_HDR_NTOH(h) \
     do { \
-    MCA_PML_GEN2_COMMON_HDR_NTOH(h.hdr_common); \
+    MCA_PML_OB1_COMMON_HDR_NTOH(h.hdr_common); \
     (h).hdr_dst_size = ntoh64((h).hdr_dst_size); \
     } while (0)
 
-#define MCA_PML_GEN2_ACK_HDR_HTON(h) \
+#define MCA_PML_OB1_ACK_HDR_HTON(h) \
     do { \
-    MCA_PML_GEN2_COMMON_HDR_HTON((h).hdr_common); \
+    MCA_PML_OB1_COMMON_HDR_HTON((h).hdr_common); \
     (h).hdr_dst_size = hton64((h).hdr_dst_size); \
     } while (0) 
 

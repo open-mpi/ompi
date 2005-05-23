@@ -16,8 +16,8 @@
 /**
  * @file
  */
-#ifndef MCA_PML_GEN2_COMM_H
-#define MCA_PML_GEN2_COMM_H
+#ifndef MCA_PML_OB1_COMM_H
+#define MCA_PML_OB1_COMM_H
 
 #include "threads/mutex.h"
 #include "threads/condition.h"

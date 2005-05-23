@@ -16,8 +16,8 @@
 /**
  * @file
  */
-#ifndef OMPI_PML_GEN2_RECV_REQUEST_H
-#define OMPI_PML_GEN2_RECV_REQUEST_H
+#ifndef OMPI_PML_OB1_RECV_REQUEST_H
+#define OMPI_PML_OB1_RECV_REQUEST_H
 
 #include "pml_ob1.h"
 #include "pml_ob1_proc.h"
@@ -44,7 +44,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_request_t);
  *  @param rc (OUT)  OMPI_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
-#define MCA_PML_GEN2_RECV_REQUEST_ALLOC(recvreq, rc)                 \
+#define MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq, rc)                 \
     do {                                                             \
         ompi_list_item_t* item;                                      \
         rc = OMPI_SUCCESS;                                           \
@@ -65,7 +65,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_request_t);
  * @param comm (IN)          Communicator.
  * @param persistent (IN)    Is this a ersistent request.
  */
-#define MCA_PML_GEN2_RECV_REQUEST_INIT(                               \
+#define MCA_PML_OB1_RECV_REQUEST_INIT(                               \
     request,                                                          \
     addr,                                                             \
     count,                                                            \
@@ -91,7 +91,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_request_t);
  *
  *  @param request (IN)  Receive request.
  */
-#define MCA_PML_GEN2_RECV_REQUEST_RETURN(request)                                       \
+#define MCA_PML_OB1_RECV_REQUEST_RETURN(request)                                       \
     do {                                                                                \
         MCA_PML_BASE_RECV_REQUEST_FINI(&request->req_recv);                           \
         OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_requests, (ompi_list_item_t*)request); \
@@ -119,7 +119,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
  * @param request  Receive request.
  * @return         OMPI_SUCESS or error status on failure.
  */
-#define MCA_PML_GEN2_RECV_REQUEST_START(request)                                  \
+#define MCA_PML_OB1_RECV_REQUEST_START(request)                                  \
 {                                                                                 \
     /* init/re-init the request */                                                \
     (request)->req_bytes_received = 0;                                            \

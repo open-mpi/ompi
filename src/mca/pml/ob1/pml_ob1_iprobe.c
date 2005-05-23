@@ -31,8 +31,8 @@ int mca_pml_ob1_iprobe(int src,
     recvreq.req_recv.req_base.req_ompi.req_type = OMPI_REQUEST_PML;
     recvreq.req_recv.req_base.req_type = MCA_PML_REQUEST_IPROBE;
 
-    MCA_PML_GEN2_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char, src, tag, comm, true);
-    MCA_PML_GEN2_RECV_REQUEST_START(&recvreq);
+    MCA_PML_OB1_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char, src, tag, comm, true);
+    MCA_PML_OB1_RECV_REQUEST_START(&recvreq);
 
     if( recvreq.req_recv.req_base.req_ompi.req_complete == true ) {
         if( NULL != status ) {
@@ -59,8 +59,8 @@ int mca_pml_ob1_probe(int src,
     recvreq.req_recv.req_base.req_ompi.req_type = OMPI_REQUEST_PML;
     recvreq.req_recv.req_base.req_type = MCA_PML_REQUEST_PROBE;
 
-    MCA_PML_GEN2_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char, src, tag, comm, true);
-    MCA_PML_GEN2_RECV_REQUEST_START(&recvreq);
+    MCA_PML_OB1_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char, src, tag, comm, true);
+    MCA_PML_OB1_RECV_REQUEST_START(&recvreq);
 
     if (recvreq.req_recv.req_base.req_ompi.req_complete == false) {
         /* give up and sleep until completion */
