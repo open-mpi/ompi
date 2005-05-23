@@ -32,13 +32,13 @@
                                                                                                          
 static int mca_pml_ob1_send_request_fini(struct ompi_request_t** request)
 {
-    MCA_PML_GEN2_FINI(request);
+    MCA_PML_OB1_FINI(request);
     return OMPI_SUCCESS;
 }
 
 static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
 {
-    MCA_PML_GEN2_FREE(request);
+    MCA_PML_OB1_FREE(request);
     return OMPI_SUCCESS;
 }
 
@@ -93,7 +93,7 @@ static void mca_pml_ob1_send_completion(
                 ompi_condition_broadcast(&ompi_request_cond);
             }
         } else if(sendreq->req_send.req_base.req_free_called) {
-            MCA_PML_GEN2_FREE((ompi_request_t**)&sendreq);
+            MCA_PML_OB1_FREE((ompi_request_t**)&sendreq);
         } else if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
             mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
         }
@@ -171,11 +171,11 @@ int mca_pml_ob1_send_copy(
         /* if an acknowledgment is not required - can get by w/ shorter hdr */
         if (sendreq->req_send.req_send_mode != MCA_PML_BASE_SEND_SYNCHRONOUS) {
             hdr->hdr_common.hdr_flags = 0;
-            hdr->hdr_common.hdr_type = MCA_PML_GEN2_HDR_TYPE_MATCH;
+            hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_MATCH;
             segment->seg_len = sizeof(mca_pml_ob1_match_hdr_t);
         } else {
-            hdr->hdr_common.hdr_flags = MCA_PML_GEN2_HDR_FLAGS_ACK;
-            hdr->hdr_common.hdr_type = MCA_PML_GEN2_HDR_TYPE_RNDV;
+            hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_ACK;
+            hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RNDV;
             hdr->hdr_rndv.hdr_frag_length = 0;
             hdr->hdr_rndv.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
             hdr->hdr_rndv.hdr_src_ptr.pval = sendreq;
@@ -214,8 +214,8 @@ int mca_pml_ob1_send_copy(
 
         /* if an acknowledgment is not required - can get by w/ shorter hdr */
         if (sendreq->req_send.req_send_mode != MCA_PML_BASE_SEND_SYNCHRONOUS) {
-            hdr->hdr_common.hdr_flags = MCA_PML_GEN2_HDR_FLAGS_ACK;
-            hdr->hdr_common.hdr_type = MCA_PML_GEN2_HDR_TYPE_MATCH;
+            hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_ACK;
+            hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_MATCH;
 
             /* pack the data into the supplied buffer */
             iov.iov_base = (unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t);
@@ -238,8 +238,8 @@ int mca_pml_ob1_send_copy(
 
         /* rendezvous header is required */
         } else {
-            hdr->hdr_common.hdr_flags = MCA_PML_GEN2_HDR_FLAGS_ACK;
-            hdr->hdr_common.hdr_type = MCA_PML_GEN2_HDR_TYPE_RNDV;
+            hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_ACK;
+            hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RNDV;
             hdr->hdr_rndv.hdr_src_ptr.lval = 0; /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
             hdr->hdr_rndv.hdr_src_ptr.pval = sendreq;
 

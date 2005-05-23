@@ -16,8 +16,8 @@
 /**
  * @file
  */
-#ifndef MCA_PML_GEN2_MATCH_H
-#define MCA_PML_GEN2_MATCH_H
+#ifndef MCA_PML_OB1_MATCH_H
+#define MCA_PML_OB1_MATCH_H
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -45,5 +45,5 @@ OMPI_DECLSPEC int mca_pml_ob1_match(
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-#endif /* MCA_PML_GEN2_MATCH_H */
+#endif /* MCA_PML_OB1_MATCH_H */
 

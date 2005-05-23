@@ -17,8 +17,8 @@
  *  @file 
  */
 
-#ifndef MCA_PML_GEN2_H
-#define MCA_PML_GEN2_H
+#ifndef MCA_PML_OB1_H
+#define MCA_PML_OB1_H
 
 #include "threads/thread.h"
 #include "threads/condition.h"
@@ -36,7 +36,7 @@
 extern "C" {
 #endif
 /**
- * GEN2 PML module
+ * OB1 PML module
  */
 
 struct mca_pml_ob1_t {
@@ -216,22 +216,22 @@ extern int mca_pml_ob1_start(
 }
 #endif
 
-#define MCA_PML_GEN2_FINI(request) \
+#define MCA_PML_OB1_FINI(request) \
 { \
     mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)(request); \
     if(pml_request->req_persistent) { \
        if(pml_request->req_free_called) { \
-           MCA_PML_GEN2_FREE(request); \
+           MCA_PML_OB1_FREE(request); \
        } else { \
            pml_request->req_ompi.req_state = OMPI_REQUEST_INACTIVE; \
        } \
     } else { \
-        MCA_PML_GEN2_FREE(request); \
+        MCA_PML_OB1_FREE(request); \
     } \
 }
 
 
-#define MCA_PML_GEN2_FREE(request) \
+#define MCA_PML_OB1_FREE(request) \
 { \
     mca_pml_base_request_t* pml_request = *(mca_pml_base_request_t**)(request); \
     pml_request->req_free_called = true; \
@@ -244,13 +244,13 @@ extern int mca_pml_ob1_start(
                 if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
                     mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq); \
                 } \
-                MCA_PML_GEN2_SEND_REQUEST_RETURN(sendreq); \
+                MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq); \
                 break; \
             } \
         case MCA_PML_REQUEST_RECV: \
             { \
                 mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)pml_request; \
-                MCA_PML_GEN2_RECV_REQUEST_RETURN(recvreq); \
+                MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq); \
                 break; \
             } \
         default: \

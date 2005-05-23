@@ -30,13 +30,13 @@ static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
 
 static int mca_pml_ob1_recv_request_fini(struct ompi_request_t** request)
 {
-    MCA_PML_GEN2_FINI(request);
+    MCA_PML_OB1_FINI(request);
     return OMPI_SUCCESS;
 }
 
 static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
 {
-    MCA_PML_GEN2_FREE(request);
+    MCA_PML_OB1_FREE(request);
     return OMPI_SUCCESS;
 } 
 
@@ -111,10 +111,10 @@ void mca_pml_ob1_recv_request_progress(
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
 
     switch(hdr->hdr_common.hdr_type) {
-        case MCA_PML_GEN2_HDR_TYPE_MATCH:
+        case MCA_PML_OB1_HDR_TYPE_MATCH:
             bytes_received = hdr->hdr_match.hdr_msg_length;
             break;
-        case MCA_PML_GEN2_HDR_TYPE_RNDV:
+        case MCA_PML_OB1_HDR_TYPE_RNDV:
             bytes_received = hdr->hdr_frag.hdr_frag_length;
             break;
         default:
@@ -162,7 +162,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
         mca_pml_ob1_recv_request_progress(request,frag->bmi,frag->segments,frag->num_segments);
         if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
               (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
-            MCA_PML_GEN2_RECV_FRAG_RETURN(frag);
+            MCA_PML_OB1_RECV_FRAG_RETURN(frag);
         }
         return; /* match found */
     }
@@ -216,7 +216,7 @@ void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request)
             mca_pml_ob1_recv_request_progress(request,frag->bmi,frag->segments,frag->num_segments);
             if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
                   (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
-                MCA_PML_GEN2_RECV_FRAG_RETURN(frag);
+                MCA_PML_OB1_RECV_FRAG_RETURN(frag);
             }
             return; /* match found */
         }

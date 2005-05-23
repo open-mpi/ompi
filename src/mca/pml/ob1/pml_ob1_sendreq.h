@@ -16,8 +16,8 @@
 /**
  * @file
  */
-#ifndef OMPI_PML_GEN2_SEND_REQUEST_H
-#define OMPI_PML_GEN2_SEND_REQUEST_H
+#ifndef OMPI_PML_OB1_SEND_REQUEST_H
+#define OMPI_PML_OB1_SEND_REQUEST_H
 
 #include "mca/bmi/bmi.h"
 #include "mca/pml/base/pml_base_sendreq.h"
@@ -41,7 +41,7 @@ typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 
 
-#define MCA_PML_GEN2_SEND_REQUEST_ALLOC(                                   \
+#define MCA_PML_OB1_SEND_REQUEST_ALLOC(                                   \
     comm,                                                                  \
     dst,                                                                   \
     sendreq,                                                               \
@@ -61,7 +61,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 }
 
 
-#define MCA_PML_GEN2_SEND_REQUEST_INIT(                                    \
+#define MCA_PML_OB1_SEND_REQUEST_INIT(                                    \
     sendreq,                                                               \
     buf,                                                                   \
     count,                                                                 \
@@ -108,7 +108,7 @@ int mca_pml_ob1_send_copy(
  * Start a send request. 
  */
 
-#define MCA_PML_GEN2_SEND_REQUEST_START(sendreq, rc)                                      \
+#define MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc)                                      \
 {                                                                                         \
     mca_pml_ob1_endpoint_t* endpoint;                                                    \
     mca_pml_ob1_proc_t* proc = sendreq->req_proc;                                        \
@@ -134,7 +134,7 @@ int mca_pml_ob1_send_copy(
 }
 
 
-#define MCA_PML_GEN2_SEND_REQUEST_RETURN(sendreq)                    \
+#define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                    \
 {                                                                    \
     /*  Let the base handle the reference counts */                  \
     MCA_PML_BASE_SEND_REQUEST_FINI((&sendreq->req_send));            \

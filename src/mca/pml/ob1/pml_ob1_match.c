@@ -46,7 +46,7 @@
  * set by the upper level routine.
  */
 
-#define MCA_PML_GEN2_CHECK_WILD_RECEIVES_FOR_MATCH(hdr,comm,proc,return_match) \
+#define MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr,comm,proc,return_match) \
 do { \
     /* local parameters */ \
     ompi_list_t* wild_receives = &comm->wild_receives; \
@@ -108,7 +108,7 @@ do { \
  * This routine assumes that the appropriate matching locks are
  * set by the upper level routine.
  */
-#define MCA_PML_GEN2_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr,comm,proc,return_match) \
+#define MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr,comm,proc,return_match) \
 do { \
     /* local variables */ \
     ompi_list_t* specific_receives = &proc->specific_receives; \
@@ -165,7 +165,7 @@ do { \
  * set by the upper level routine.
  */
 
-#define MCA_PML_GEN2_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH( \
+#define MCA_PML_OB1_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH( \
     hdr,comm,proc,return_match) \
 do {  \
     /* local variables */  \
@@ -223,7 +223,7 @@ do {  \
             if (wild_recv == (mca_pml_ob1_recv_request_t *)  \
                     ompi_list_get_end(&comm->wild_receives) )   \
             {   \
-                MCA_PML_GEN2_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, return_match);  \
+                MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, return_match);  \
                 break;  \
             }  \
   \
@@ -264,7 +264,7 @@ do {  \
             if (specific_recv == (mca_pml_ob1_recv_request_t *)  \
                     ompi_list_get_end(&(proc)->specific_receives))  \
             {  \
-                MCA_PML_GEN2_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, return_match);  \
+                MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, return_match);  \
                 break; \
             }  \
             /*  \
@@ -372,18 +372,18 @@ int mca_pml_ob1_match(
             /*
              * There are only wild irecvs, so specialize the algorithm.
              */
-            MCA_PML_GEN2_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, matched_receive);
+            MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, matched_receive);
     
         } else if (ompi_list_get_size(&comm->wild_receives) == 0 ) {
             /*
              * There are only specific irecvs, so specialize the algorithm.
              */
-            MCA_PML_GEN2_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, matched_receive);
+            MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, matched_receive);
         } else {
             /*
              * There are some of each.
              */
-            MCA_PML_GEN2_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, matched_receive);
+            MCA_PML_OB1_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, matched_receive);
         }
 
         /* if match found, process data */
@@ -403,12 +403,12 @@ int mca_pml_ob1_match(
 
             /* if no match found, place on unexpected queue */
             mca_pml_ob1_recv_frag_t* frag;
-            MCA_PML_GEN2_RECV_FRAG_ALLOC(frag, rc);
+            MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
             if(OMPI_SUCCESS != rc) {
                 OMPI_THREAD_UNLOCK(&pml_comm->matching_lock);
                 return rc;
             }
-            MCA_PML_GEN2_RECV_FRAG_INIT(frag,bmi,hdr,segments,num_segments);
+            MCA_PML_OB1_RECV_FRAG_INIT(frag,bmi,hdr,segments,num_segments);
             ompi_list_append( &proc->unexpected_frags, (ompi_list_item_t *)frag );
         }
 
@@ -428,12 +428,12 @@ int mca_pml_ob1_match(
          * is ahead of sequence.  Save it for later.
          */
         mca_pml_ob1_recv_frag_t* frag;
-        MCA_PML_GEN2_RECV_FRAG_ALLOC(frag, rc);
+        MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
         if(OMPI_SUCCESS != rc) {
             OMPI_THREAD_UNLOCK(&pml_comm->matching_lock);
             return rc;
         }
-        MCA_PML_GEN2_RECV_FRAG_INIT(frag,bmi,hdr,segments,num_segments);
+        MCA_PML_OB1_RECV_FRAG_INIT(frag,bmi,hdr,segments,num_segments);
         ompi_list_append(&proc->frags_cant_match, (ompi_list_item_t *)frag);
 
     }
@@ -452,7 +452,7 @@ int mca_pml_ob1_match(
 #if 0
             mca_pml_ob1_recv_frag_t* frag = (mca_pml_ob1_recv_frag_t*)item;
             mca_pml_ob1_recv_request_progress(frag->request,frag->bmi,frag->segments,frag->num_segments);
-            MCA_PML_GEN2_RECV_FRAG_RETURN(frag);
+            MCA_PML_OB1_RECV_FRAG_RETURN(frag);
 #endif
         }
     }
@@ -540,17 +540,17 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
                     /*
                      * There are only wild irecvs, so specialize the algorithm.
                      */
-                    MCA_PML_GEN2_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, matched_receive);
+                    MCA_PML_OB1_CHECK_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, matched_receive);
                 } else if (ompi_list_get_size(&comm->wild_receives) == 0 ) {
                     /*
                      * There are only specific irecvs, so specialize the algorithm.
                      */
-                    MCA_PML_GEN2_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, matched_receive);
+                    MCA_PML_OB1_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(hdr, comm, proc, matched_receive);
                 } else {
                     /*
                      * There are some of each.
                      */
-                    MCA_PML_GEN2_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, matched_receive);
+                    MCA_PML_OB1_CHECK_SPECIFIC_AND_WILD_RECEIVES_FOR_MATCH(hdr, comm, proc, matched_receive);
 
                 }
 

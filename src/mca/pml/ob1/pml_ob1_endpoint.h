@@ -16,8 +16,8 @@
 /**
  * @file
  */
-#ifndef MCA_PML_GEN2_ENDPOINT_H
-#define MCA_PML_GEN2_ENDPOINT_H
+#ifndef MCA_PML_OB1_ENDPOINT_H
+#define MCA_PML_OB1_ENDPOINT_H
 
 #include "util/output.h"
 #include "mca/bmi/bmi.h"
