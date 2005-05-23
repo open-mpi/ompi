@@ -48,9 +48,12 @@ int MPI_Type_get_name(MPI_Datatype type, char *type_name, int *resultlen)
       }
    }
 
-   /* Simple */
+   /* Simple.  Copy over the entire name (including all blanks at the
+      end) because a) the user must have passed us a string of at
+      least length MPI_MAX_OBJECT_LEN, and b) if this is a call from
+      Fortran, the string may require null padding on the right.  */
 
    *resultlen = strlen(type->name);
-   strncpy( type_name, type->name, *resultlen );
+   strncpy(type_name, type->name, MPI_MAX_OBJECT_NAME);
    return MPI_SUCCESS;
 }
