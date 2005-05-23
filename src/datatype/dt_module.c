@@ -281,7 +281,7 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         displ[0] -= base;                                               \
         if( displ[0] != (displ[1] + (long)sizeof(type2)) )              \
             ptype->ub = displ[0];  /* force a new extent for the datatype */ \
-        ptype->flags |= DT_FLAG_FOREVER;                                \
+        ptype->flags |= DT_FLAG_BASIC | DT_FLAG_FOREVER;                \
         ptype->id = MPIDDT;                                             \
         ompi_ddt_commit( &ptype );                                      \
         COPY_DATA_DESC( PDATA, ptype );                                 \
@@ -291,18 +291,18 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );      \
     } while(0)
 
-#define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType ) \
-    do {                                                                \
-        ompi_datatype_t *ptype;						\
+#define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType )      \
+    do {                                                                           \
+        ompi_datatype_t *ptype;                                                    \
         ompi_ddt_create_contiguous( 2, ompi_ddt_basicDatatypes[MPIType], &ptype ); \
-        ptype->flags |= DT_FLAG_FOREVER;                                \
-        ptype->id = (MPIDDT);						\
-        ompi_ddt_commit( &ptype );					\
-        COPY_DATA_DESC( (PDATA), ptype );				\
-        ptype->desc.desc = NULL;                                        \
-        ptype->opt_desc.desc = NULL;                                    \
-        OBJ_RELEASE( ptype );                                           \
-        strncpy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );	\
+        ptype->flags |= DT_FLAG_BASIC | DT_FLAG_FOREVER;                           \
+        ptype->id = (MPIDDT);                                                      \
+        ompi_ddt_commit( &ptype );                                                 \
+        COPY_DATA_DESC( (PDATA), ptype );                                          \
+        ptype->desc.desc = NULL;                                                   \
+        ptype->opt_desc.desc = NULL;                                               \
+        OBJ_RELEASE( ptype );                                                      \
+        strncpy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );               \
     } while(0)
 
 #define DECLARE_MPI_SYNONYM_DDT( PDATA, MPIDDTNAME, PORIGDDT)           \
