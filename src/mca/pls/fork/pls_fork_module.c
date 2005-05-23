@@ -327,7 +327,7 @@ int orte_pls_fork_terminate_job(orte_jobid_t jobid)
     keys[2] = NULL;
                                                                                                     
     rc = orte_gpr.get(
-        ORTE_GPR_KEYS_AND|ORTE_GPR_TOKENS_OR,
+        ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
         segment,
         NULL,
         keys,
