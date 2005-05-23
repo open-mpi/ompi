@@ -44,7 +44,7 @@ int mca_pml_uniq_iprobe(int src,
             ompi_progress();
         }
     }
-    MCA_PML_UNIQ_RECV_REQUEST_RETURN( &recvreq );
+    MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );
     return rc;
 }
 
@@ -63,7 +63,7 @@ int mca_pml_uniq_probe(int src,
     MCA_PML_UNIQ_RECV_REQUEST_INIT(&recvreq, NULL, 0, &ompi_mpi_char, src, tag, comm, true);
 
     if ((rc = mca_pml_uniq_recv_request_start(&recvreq)) != OMPI_SUCCESS) {
-        MCA_PML_UNIQ_RECV_REQUEST_RETURN( &recvreq );
+        MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );
         return rc;
     }
 
@@ -87,7 +87,7 @@ int mca_pml_uniq_probe(int src,
     if (NULL != status) {
         *status = recvreq.req_recv.req_base.req_ompi.req_status;
     }
-    MCA_PML_UNIQ_RECV_REQUEST_RETURN( &recvreq );
+    MCA_PML_BASE_RECV_REQUEST_FINI( &recvreq.req_recv );
     return OMPI_SUCCESS;
 }
 
