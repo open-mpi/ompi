@@ -446,7 +446,11 @@ static inline ompi_object_t *ompi_obj_new(size_t size, ompi_class_t * cls)
  */
 static inline int ompi_obj_update(ompi_object_t *object, int inc)
 {
+#if OMPI_HAVE_THREAD_SUPPORT
     ompi_atomic_add(&(object->obj_reference_count), inc );
+#else
+    object->obj_reference_count += inc;
+#endif
     return object->obj_reference_count;
 }
 

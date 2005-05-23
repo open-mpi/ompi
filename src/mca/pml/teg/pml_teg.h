@@ -113,14 +113,10 @@ extern int mca_pml_teg_del_procs(
     size_t nprocs
 );
 
-extern int mca_pml_teg_add_ptls(
-    ompi_list_t *ptls
-);
+extern int mca_pml_teg_add_ptls(void);
 
-extern int mca_pml_teg_control(
-    int param,
-    void *size,
-    size_t value
+extern int mca_pml_teg_enable(
+    bool enable
 );
 
 extern int mca_pml_teg_progress(void);
@@ -239,7 +235,6 @@ extern int mca_pml_teg_start(
     pml_request->req_free_called = true; \
     if( pml_request->req_pml_complete == true) \
     { \
-        OMPI_REQUEST_FINI(*(request)); \
         switch(pml_request->req_type) { \
         case MCA_PML_REQUEST_SEND: \
             { \

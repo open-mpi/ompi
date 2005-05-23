@@ -22,6 +22,7 @@
 #include "mca/ptl/ptl.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/pml/base/pml_base_bsend.h"
+#include "mca/ptl/base/base.h"
 #include "pml_teg.h"
 #include "pml_teg_proc.h"
 #include "pml_teg_sendreq.h"
@@ -102,14 +103,19 @@ int mca_pml_teg_component_open(void)
     mca_pml_teg.teg_poll_iterations =
         mca_pml_teg_param_register_int("poll_iterations", 100000);
     mca_pml_teg.teg_priority =
-        mca_pml_teg_param_register_int("priority", 0);
+        mca_pml_teg_param_register_int("priority", 1);
 
-    return OMPI_SUCCESS;
+    /* attempt to open all ptls */
+    return mca_ptl_base_open();
 }
 
 
 int mca_pml_teg_component_close(void)
 {
+    int rc;
+    if(OMPI_SUCCESS != (rc = mca_ptl_base_close()))
+        return rc;
+
 #ifdef WIN32
     WSACleanup();
 #endif
@@ -172,6 +178,11 @@ mca_pml_base_module_t* mca_pml_teg_component_init(int* priority,
     if(rc != OMPI_SUCCESS)
         return NULL;
     
+    rc = mca_ptl_base_select(enable_progress_threads,enable_mpi_threads);
+    if(rc != OMPI_SUCCESS)
+        return NULL;
+
+    mca_pml_teg_add_ptls();
     return &mca_pml_teg.super;
 }
 

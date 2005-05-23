@@ -17,6 +17,7 @@
 #include "ompi_config.h"
 
 #include "class/ompi_free_list.h"
+#include "include/sys/cache.h"
 
 
 static void ompi_free_list_construct(ompi_free_list_t* fl);
@@ -73,15 +74,22 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
 {
     unsigned char* ptr;
     size_t i;
+    size_t mod;
+
     if (flist->fl_max_to_alloc > 0 && flist->fl_num_allocated + num_elements > flist->fl_max_to_alloc)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     if (NULL != flist->fl_mpool)
-        ptr = (unsigned char*)flist->fl_mpool->mpool_alloc(num_elements * flist->fl_elem_size, 0);
+        ptr = (unsigned char*)flist->fl_mpool->mpool_alloc((num_elements * flist->fl_elem_size) + CACHE_LINE_SIZE, 0);
     else
-        ptr = (unsigned char *)malloc(num_elements * flist->fl_elem_size);
+        ptr = (unsigned char *)malloc((num_elements * flist->fl_elem_size) + CACHE_LINE_SIZE);
     if(NULL == ptr)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+
+    mod = (unsigned long)ptr % CACHE_LINE_SIZE;
+    if(mod != 0) {
+        ptr += (CACHE_LINE_SIZE - mod);
+    }
 
     for(i=0; i<num_elements; i++) {
         ompi_list_item_t* item = (ompi_list_item_t*)ptr;

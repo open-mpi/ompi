@@ -142,6 +142,7 @@ libmpi_la_LIBADD = \
         info/libinfo.la \
         mca/base/libmca_base.la \
         mca/allocator/base/libmca_allocator_base.la $(MCA_allocator_STATIC_LTLIBS) \
+        mca/bmi/base/libmca_bmi_base.la $(MCA_bmi_STATIC_LTLIBS) \
         mca/coll/base/libmca_coll_base.la $(MCA_coll_STATIC_LTLIBS) \
         $(MCA_common_STATIC_LTLIBS) \
         mca/errmgr/base/libmca_errmgr_base.la \

@@ -146,10 +146,23 @@ static int orte_pls_fork_proc(
         char* uri;
         char **new_env, **environ_copy;
 
+#if 0
+        /* for gperf - setup a new directory for each executable */
+        char path[PATH_MAX];
+
         /* set working directory */
+        sprintf(path, "%s/%d", context->cwd, getpid());
+        if(mkdir(path,0777) != 0) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        }
+        if(chdir(path) != 0) {
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        }
+#else
         if(chdir(context->cwd) != 0) {
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         }
+#endif
 
         /* setup base environment */
         environ_copy = ompi_argv_copy(environ);

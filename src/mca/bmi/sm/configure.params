@@ -1,4 +1,4 @@
-# -*- makefile -*-
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -15,18 +15,8 @@
 # $HEADER$
 #
 
-sources += \
-	src/ptl_tcp.c \
-	src/ptl_tcp.h \
-    src/ptl_tcp_addr.h \
-	src/ptl_tcp_component.c \
-	src/ptl_tcp_peer.c \
-	src/ptl_tcp_peer.h \
-	src/ptl_tcp_proc.c \
-	src/ptl_tcp_proc.h \
-	src/ptl_tcp_recvfrag.c \
-	src/ptl_tcp_recvfrag.h \
-	src/ptl_tcp_sendfrag.c \
-	src/ptl_tcp_sendfrag.h \
-	src/ptl_tcp_sendreq.c \
-	src/ptl_tcp_sendreq.h
+# Specific to this module
+
+PARAM_INIT_FILE=bmi_sm.c
+PARAM_CONFIG_HEADER_FILE="sm_config.h"
+PARAM_CONFIG_FILES="Makefile"

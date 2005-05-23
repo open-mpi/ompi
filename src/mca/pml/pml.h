@@ -39,10 +39,6 @@
  * returning the highest priority and closes/unloads any other PML
  * components that may have been opened.
  *
- * After the PML is selected, the MCA framework loads and initalize
- * all available PTLs. The PML is notified of the selected PTLs via
- * the the mca_pml_base_add_ptls_fn_t downcall from the MCA.
- * 
  * After all of the MCA components are initialized, the MPI/RTE will
  * make downcalls into the PML to provide the initial list of
  * processes (ompi_proc_t instances), and notification of changes
@@ -160,32 +156,14 @@ typedef int (*mca_pml_base_module_add_procs_fn_t)(struct ompi_proc_t **procs, si
  */
 typedef int (*mca_pml_base_module_del_procs_fn_t)(struct ompi_proc_t **procs, size_t nprocs);
 
-
-/**
- * Downcall from MCA layer after all PTLs have been loaded/selected.
- *
- * @param  ptls    List of selected PTLs
- * @return         OMPI_SUCCESS or failure status.
- *
- * Provides a notification to the PML that processes have 
- * gone away, and provides the PML the opportunity to cleanup
- * any data cached on the ompi_proc_t data structure.
- */
-typedef int (*mca_pml_base_module_add_ptls_fn_t)(ompi_list_t *ptls);
-
-
 /**
  * Downcall from MCA layer to enable the PML/PTLs.
  *
- * @param   param   parameter to change
- * @param   value   optional value
- * @param   size    size of value
+ * @param   enable  Enable/Disable PML forwarding
  * @return          OMPI_SUCCESS or failure status.
 */
-typedef int (*mca_pml_base_module_control_fn_t)(
-    int param,
-    void *value,
-    size_t size
+typedef int (*mca_pml_base_module_enable_fn_t)(
+    bool enable
 );
 
 
@@ -468,8 +446,7 @@ struct mca_pml_base_module_1_0_0_t {
     /* downcalls from MCA to PML */
     mca_pml_base_module_add_procs_fn_t    pml_add_procs;
     mca_pml_base_module_del_procs_fn_t    pml_del_procs;
-    mca_pml_base_module_add_ptls_fn_t     pml_add_ptls;
-    mca_pml_base_module_control_fn_t      pml_control;
+    mca_pml_base_module_enable_fn_t       pml_enable;
     mca_pml_base_module_progress_fn_t     pml_progress;
 
     /* downcalls from MPI to PML */
