@@ -44,14 +44,6 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
                             [Disable GM PTL internal cache for registered memory])
     fi
     AM_CONDITIONAL( OMPI_ENABLE_GM_CACHE, test "$enable_gm_cache" = "yes" )
-    #                                                                               
-    # For dist                                                                      
-    #                                                                               
-    AC_DEFUN([MCA_CONFIGURE_DIST_STUB],[
-        AM_CONDITIONAL( OMPI_ENABLE_GM_CACHE, test "yes" = "yes" )
-    ])
-
-
 
     # Add to CPPFLAGS if necessary
 
@@ -193,3 +185,12 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     WRAPPER_EXTRA_LDFLAGS="$EXTRA_LDFLAGS"
     WRAPPER_EXTRA_LIBS="-lgm"
 ])dnl
+
+#                                                                               
+# For dist                                                                      
+#                                                                               
+AC_DEFUN([MCA_CONFIGURE_DIST_STUB],[
+    AM_CONDITIONAL( OMPI_ENABLE_GM_CACHE, test "yes" = "yes" )
+])
+
+
