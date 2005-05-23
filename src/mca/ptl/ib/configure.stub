@@ -26,26 +26,44 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     # Additional --with flags that can be specified
 
     AC_ARG_WITH(ptl-ib, 
-        AC_HELP_STRING([--with-ptl-ib=DIR],
-                       [Specify the installation directory of IB]))
+        AC_HELP_STRING([--with-ptl-ib=IBDIR],
+                       [Specify the installation directory of IB (should enable the correct automatic determination of using the 32 or 64 bit library, if both are present under IBDIR/lib and IBDIR/lib64)]))
     AC_ARG_WITH(ptl-ib-libdir,
-        AC_HELP_STRING([--with-ptl-ib-libdir=DIR],
-                       [directory where the IB library can be found, if it is not in \$IBDIR/lib or \$IBDIR/binary/lib]))
+        AC_HELP_STRING([--with-ptl-ib-libdir=IBLIBDIR],
+                       [directory where the IB library can be found, if it is not in $IBDIR/lib or $IBDIR/lib64]))
+
+    # Quick sanity check
+
+    if test "$with_ptl_ib" = "no"; then
+        AC_MSG_WARN([*** --without-ptl-ib specified -- aborting])
+        AC_MSG_ERROR([Will not continue])
+    fi
+
+    # Find the right IBDIR
+
+    if test "$with_ptl_ib" != "" -a "$with_ptl_ib" != "yes" ; then
+        IBDIR="$with_ptl_ib"
+        IBLIBDIR="$with_ptl_ib"
+    fi
+    if test "$with_ptl_ib_libdir" != "" -a "$with_ptl_ib_libdir" != "yes" -a \
+        "$with_ptl_ib_libdir" != "no"; then
+        IBLIBDIR="$with_ptl_ib_libdir"
+    fi
 
     # Add to CPPFLAGS if necessary
 
     EXTRA_CPPFLAGS=
-    if test -n "$with_ptl_ib"; then
-        if test -d "$with_ptl_ib/include"; then
-            EXTRA_CPPFLAGS="-I$with_ptl_ib/include"
+    if test "$IBDIR" != ""; then
+        if test -d "$IBDIR/include"; then
+            EXTRA_CPPFLAGS="-I$IBDIR/include"
         else
-            AC_MSG_WARN([*** Warning: cannot find $with_ptl_ib/include])
+            AC_MSG_WARN([*** Warning: cannot find $IBDIR/include])
             AC_MSG_WARN([*** Will still try to configure ib ptl anyway...])
         fi
-        if test -d "$with_ptl_ib/wrap"; then
-            EXTRA_CPPFLAGS="-I$with_ptl_ib/wrap $EXTRA_CPPFLAGS"
+        if test "$IBDIR" != "" -a -d "$IBDIR/wrap"; then
+            EXTRA_CPPFLAGS="-I$IBDIR/wrap $EXTRA_CPPFLAGS"
         else
-            AC_MSG_WARN([*** Warning: cannot find $with_ptl_ib/wrap])
+            AC_MSG_WARN([*** Warning: cannot find $IBDIR/wrap])
             AC_MSG_WARN([*** Will still try to configure ib ptl anyway...])
         fi
     fi
@@ -56,41 +74,68 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     AC_CHECK_HEADERS(vapi.h,,
         AC_MSG_ERROR([*** Cannot find working vapi.h]))
 
-    # Add to LDFLAGS if necessary
+    # Note that it is possible to find the library even if -L is not
+    # specified, if the LD_LIBRARY_PATH includes the directory where
+    # the shared ib library is kept.  Hence, we unset LD_LIBRARY_PATH
+    # before running this test.
 
-    EXTRA_LDFLAGS=
-    if test -n "$with_ptl_ib_libdir"; then
-        if test -d "$with_ptl_ib_libdir/lib"; then
-            EXTRA_LDFLAGS="-L$with_ptl_ib_libdir/lib"
-        else
-            AC_MSG_WARN([*** Warning: cannot find $with_ptl_ib_libdir/lib])
-            AC_MSG_WARN([*** Will still try to configure ib ptl anyway...])
-        fi
-    elif test -n "$with_ptl_ib"; then
-        if test -d "$with_ptl_ib/lib"; then
-            EXTRA_LDFLAGS="-L$with_ptl_ib/lib"
-        else
-            AC_MSG_WARN([*** Warning: cannot find $with_ptl_ib/lib])
-            AC_MSG_WARN([*** Will still try to configure ib ptl anyway...])
-        fi
-    fi
+    LD_LIBRARY_PATH_save="$LD_LIBRARY_PATH"
+    unset LD_LIBRARY_PATH
 
-    # Try to find libvapi.  In some versions of Mellanox (v3.1), we
-    # need to expliitly link in the thread libraries.  #$%#@$%@%#$!!!
+    # Helpfer function to try to find libvapi (called from below).  In
+    # some versions of Mellanox (v3.1), we need to expliitly link in
+    # the thread libraries.  #$%#@$%@%#$!!!
+
+mca_ptl_ib_try_find_libvapi() {
+    func1=[$]1
+    func2=[$]2
 
     LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
-    AC_CHECK_LIB([vapi], [EVAPI_list_hcas], [], [vapi_badness=true],
-	 [-lmtl_common -lmpga -lmosal])
-    if test -n "$vapi_badness"; then
+    vapi_badness=
+    AC_CHECK_LIB([vapi], [$func1], [], [vapi_badness=true],
+                 [-lmtl_common -lmpga -lmosal])
+    if test "$vapi_badness" != ""; then
          AC_CHECK_LIB([pthread], [pthread_create], 
 		      [pthread=yes LIBS="$LIBS -lpthread"],
 		      [pthread=no])
 	 if test "$pthread" = "yes"; then
-	     AC_CHECK_LIB([vapi], [EVAPI_open_hca], [],
-                          [AC_MSG_ERROR([*** Cannot find libvapi])],
+	     AC_CHECK_LIB([vapi], [$func2], [], [],
                           [-lmtl_common -lmpga -lmosal])
 	fi
     fi    
+}
+
+    # The libraries may be in $IBDIR/lib or $IBDIR/lib64.  Try them
+    # both.
+
+    LIBS_save="$LIBS"
+    LDFLAGS_save="$LDFLAGS"
+    LIBS="$LIBS -lmosal -lmpga -lmtl_common"
+    LIBS_orig="$LIBS"
+
+    EXTRA_LDFLAGS=
+    if test -d "$IBLIBDIR/lib"; then
+        EXTRA_LDFLAGS="-L$IBLIBDIR/lib"
+        LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
+        mca_ptl_ib_try_find_libvapi VAPI_open_hca VAPI_query_hca_cap
+        if test "$LIBS" != "$LIBS_orig"; then
+            echo "--> found libvapi in $IBLIBDIR/lib"
+        fi
+    fi
+
+    if test "$LIBS" = "$LIBS_orig" -a -d "$IBLIBDIR/lib64"; then
+        EXTRA_LDFLAGS="-L$IBLIBDIR/lib64"
+        LDFLAGS="$LDFLAGS_save $EXTRA_LDFLAGS"
+        mca_ptl_ib_try_find_libvapi EVAPI_list_hcas EVAPI_open_hca
+        if test "$LIBS" != "$LIBS_orig"; then
+            echo "--> found libvapi in $IBLIBDIR/lib64"
+        fi
+    fi
+
+    if test "$LIBS" = "$LIBS_orig"; then
+      AC_MSG_ERROR([*** Cannot find working libvapi.])
+    fi
+    LD_LIBRARY_PATH="$LD_LIBRARY_PATH_save"
     LIBS="$LIBS -lmtl_common -lmpga"
 
     #
