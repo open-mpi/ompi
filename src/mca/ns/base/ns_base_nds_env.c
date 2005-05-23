@@ -160,6 +160,16 @@ int orte_ns_nds_env_put(const orte_process_name_t* name,
     ompi_unsetenv(param, env);
     free(param);
 
+    /* since we want to pass the name as separate components, make sure
+     * that the "name" environmental variable is cleared!
+     */
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds","name"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    ompi_unsetenv(param, env);
+    free(param);
+
     /* setup the name */
     if(NULL == (param = mca_base_param_environ_variable("ns","nds","cellid"))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
