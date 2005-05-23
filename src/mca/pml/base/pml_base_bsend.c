@@ -63,7 +63,6 @@ static void* mca_pml_bsend_alloc_segment(size_t* size_inout)
  */
 int mca_pml_base_bsend_init(bool thread_safe)
 {
-    static int initialized;
     int id = mca_base_param_register_string("pml", "base", "bsend_allocator", NULL, "basic");
     char *name;
     size_t tmp;
