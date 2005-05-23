@@ -53,6 +53,8 @@
 
 #define NUM_CONCURRENT 128
 
+extern char **environ;
+
 
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
 static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid);
