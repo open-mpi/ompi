@@ -75,9 +75,9 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_recv_request_t);
  *
  *  @param request (IN)  Receive request.
  */
-#define MCA_PML_UNIQ_RECV_REQUEST_RETURN(request)                                             \
-    do {                                                                                     \
-        MCA_PML_BASE_RECV_REQUEST_RETURN( &((request)->req_recv) );                          \
+#define MCA_PML_UNIQ_RECV_REQUEST_RETURN(request)                                              \
+    do {                                                                                       \
+        MCA_PML_BASE_RECV_REQUEST_FINI( &((request)->req_recv) );                              \
         OMPI_FREE_LIST_RETURN(&mca_pml_uniq.uniq_recv_requests, (ompi_list_item_t*)(request)); \
     } while(0)
 

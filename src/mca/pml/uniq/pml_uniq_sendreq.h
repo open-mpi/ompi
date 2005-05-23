@@ -122,7 +122,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_send_request_t);
     mca_pml_base_ptl_t* ptl_base = ptl->ptl_base;                          \
                                                                            \
     /*  Let the base handle the reference counts */                        \
-    MCA_PML_BASE_SEND_REQUEST_RETURN( &((sendreq)->req_send) );            \
+    MCA_PML_BASE_SEND_REQUEST_FINI( &((sendreq)->req_send) );              \
                                                                            \
     /*                                                                     \
      * If there is a cache associated with the ptl - first attempt         \

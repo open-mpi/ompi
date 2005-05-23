@@ -180,7 +180,7 @@ mca_pml_base_module_t* mca_pml_uniq_component_init(int* priority,
     if(rc != OMPI_SUCCESS)
         return NULL;
                                                                                                                    
-    mca_pml_teg_add_ptls();
+    mca_pml_uniq_add_ptls();
     return &mca_pml_uniq.super;
 }
 
