@@ -30,7 +30,7 @@ endif
 
 set svn_r=
 if (-d .svn) then
-    set svn_r="`svnversion .`"
+    set svn_r="r`svnversion .`"
 endif
 
 set start=`date`
