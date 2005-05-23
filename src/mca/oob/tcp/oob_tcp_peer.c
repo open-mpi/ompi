@@ -541,7 +541,10 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
     }
 
     /* if we have a wildcard name - use the name returned by the peer */
-    if(orte_ns.compare(ORTE_NS_CMP_ALL, orte_process_info.my_name, &mca_oob_name_any) == 0) {
+    if(orte_process_info.my_name == NULL) {
+        orte_ns.create_process_name(&orte_process_info.my_name, 
+            hdr.msg_dst.cellid, hdr.msg_dst.jobid, hdr.msg_dst.vpid);
+    } else if(orte_ns.compare(ORTE_NS_CMP_ALL, orte_process_info.my_name, &mca_oob_name_any) == 0) {
         *orte_process_info.my_name = hdr.msg_dst;
     }
 
