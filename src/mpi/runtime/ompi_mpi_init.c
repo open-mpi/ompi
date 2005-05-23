@@ -62,6 +62,7 @@
 #include "mca/soh/base/base.h"
 #include "mca/errmgr/errmgr.h"
 
+#include "runtime/opal.h"
 #include "runtime/runtime.h"
 #include "event/event.h"
 
@@ -89,6 +90,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Join the run-time environment - do the things that don't hit
        the registry */
 
+    if (ORTE_SUCCESS != (ret = opal_init())) {
+        error = "ompi_mpi_init: opal_init failed";
+        goto error;
+    }
+    
     if (ORTE_SUCCESS != (ret = orte_init_stage1())) {
         error = "ompi_mpi_init: orte_init_stage1 failed";
 	    goto error;
