@@ -797,6 +797,7 @@ int32_t ompi_convertor_init_for_send( ompi_convertor_t* pConv,
         return ompi_convertor_create_stack_with_pos_contig( pConv, starting_pos, ompi_ddt_local_sizes );
     }
     pConv->fAdvance = ompi_convertor_pack_no_conversion;
+    if( -1 == starting_pos ) return OMPI_SUCCESS;
     if( starting_pos != 0 ) {
         return ompi_convertor_create_stack_with_pos_general( pConv, starting_pos, ompi_ddt_local_sizes );
     }
