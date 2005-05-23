@@ -44,6 +44,7 @@
 #include "threads/condition.h"
 #include "runtime/orte_wait.h"
 #include "util/argv.h"
+#include "util/ompi_environ.h"
 #include "util/output.h"
 #include "util/path.h"
 #include "util/univ_info.h"
@@ -79,6 +80,10 @@ typedef struct {
  */
 static ompi_mutex_t orte_setup_hnp_mutex;
 static ompi_condition_t orte_setup_hnp_condition;
+/* Local return code */
+static int orte_setup_hnp_rc;
+/* Local uri storage */
+static char *orte_setup_hnp_orted_uri;
 
 static orte_setup_hnp_cb_data_t orte_setup_hnp_cbdata = {NULL, NULL, NULL, 0};
 
@@ -421,6 +426,7 @@ MOVEON:
     }
     
     /* fork a child to exec the rsh/ssh session */
+    orte_setup_hnp_rc = ORTE_SUCCESS;
     pid = fork();
     if (pid < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -446,7 +452,44 @@ MOVEON:
         OMPI_THREAD_LOCK(&orte_setup_hnp_mutex);
         ompi_condition_timedwait(&orte_setup_hnp_condition, &orte_setup_hnp_mutex, &ts);
         OMPI_THREAD_UNLOCK(&orte_setup_hnp_mutex);
-        return ORTE_SUCCESS;
+
+        if (ORTE_SUCCESS == orte_setup_hnp_rc) {
+            /* need to restart the local system so it can connect to the remote daemon.
+             * we only want to clear the run-time itself - we cannot close the OPAL
+             * utilities, though, or we will lose all of our MCA parameters
+             */
+            orte_system_finalize();
+            /*
+             * now set the relevant MCA parameters to point us at the remote daemon...
+             */
+            if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_gpr_replica_uri",
+                        orte_setup_hnp_orted_uri, true, &environ))) {
+                fprintf(stderr, "orte_setup_hnp: could not set gpr_replica_uri in environ\n");
+                return rc;
+            }
+            
+            if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_ns_replica_uri",
+                        orte_setup_hnp_orted_uri, true, &environ))) {
+                fprintf(stderr, "orte_setup_hnp: could not set ns_replica_uri in environ\n");
+                return rc;
+            }
+
+            ompi_unsetenv("OMPI_MCA_seed", &environ);
+            
+            /*
+             * ...re-init ourselves...
+             */
+            if (ORTE_SUCCESS != (rc = orte_system_init())) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            /*
+             * ...and we are now ready to go!
+             */
+            return ORTE_SUCCESS;
+        }
+        
+        return orte_setup_hnp_rc;
     }
     
 CLEANUP:
@@ -463,15 +506,19 @@ static void orte_setup_hnp_recv(int status, orte_process_name_t* sender,
                                 orte_buffer_t* buffer, orte_rml_tag_t tag,
                                 void* cbdata)
 {
-    char *orted_uri;
     size_t n=1;
     int rc;
     
     OMPI_THREAD_LOCK(&orte_setup_hnp_mutex);
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &orted_uri, &n, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &orte_setup_hnp_orted_uri, &n, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
+        orte_setup_hnp_rc = rc;
+        ompi_condition_signal(&orte_setup_hnp_condition);
+        OMPI_THREAD_UNLOCK(&orte_setup_hnp_mutex);
+        return;
     }
-ompi_output(0, "orteprobe: received uri %s", orted_uri);
+ompi_output(0, "orteprobe: received uri %s", orte_setup_hnp_orted_uri);
+    orte_setup_hnp_rc = ORTE_SUCCESS;
     ompi_condition_signal(&orte_setup_hnp_condition);
     OMPI_THREAD_UNLOCK(&orte_setup_hnp_mutex);
 }

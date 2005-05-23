@@ -195,7 +195,7 @@ int orte_init_stage1(void)
                 free(orte_universe_info.name);
                 orte_universe_info.name = NULL;
                 pid = getpid();
-                if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, pid)) {
+                if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, (int)pid)) {
                     ompi_output(0, "orte_init: failed to create unique universe name");
                     return ret;
                 }
