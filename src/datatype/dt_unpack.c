@@ -321,33 +321,30 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
 {
     ompi_datatype_t *pData = pConv->pDesc;
     char* pDstBuf = pConv->pBaseBuf, *pSrcBuf;
-    uint32_t bConverted, iov_count, initial_bytes_converted = pConv->bConverted;
+    uint32_t iov_count, initial_bytes_converted = pConv->bConverted;
     long extent = pData->ub - pData->lb;
-    uint32_t length, remaining, i;
+    uint32_t bConverted, length, remaining, i;
     dt_stack_t* stack = &(pConv->pStack[1]);
     
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
-        bConverted = 0;
         pSrcBuf = (char*)iov[iov_count].iov_base;
-        /*if( iov[iov_count].iov_base != NULL ) {*/
+        remaining = pConv->count * pData->size - pConv->bConverted;
+        if( remaining > iov[iov_count].iov_len )
+            remaining = iov[iov_count].iov_len;
+        bConverted = remaining; /* how much will get unpacked this time */
+
         if( (long)pData->size == extent ) {
             pDstBuf += pData->true_lb + pConv->bConverted;
-            length = pConv->count * pData->size - pConv->bConverted;
 
-            if( length > iov[iov_count].iov_len )
-                length = iov[iov_count].iov_len;
             /* contiguous data or basic datatype with count */
-            OMPI_DDT_SAFEGUARD_POINTER( pDstBuf, length,
+            OMPI_DDT_SAFEGUARD_POINTER( pDstBuf, remaining,
                                         pConv->pBaseBuf, pData, pConv->count );
-            MEMCPY( pDstBuf, pSrcBuf, length );
-            bConverted += length;
+            MEMCPY( pDstBuf, pSrcBuf, remaining);
         } else {
             pDstBuf += stack->disp;
 
             length = pConv->bConverted / pData->size;  /* already done */
             length = pConv->bConverted - length * pData->size;  /* still left on the last element */
-            remaining = iov[iov_count].iov_len;
-
             /* complete the last copy */
             if( length != 0 ) {
                 OMPI_DDT_SAFEGUARD_POINTER( pDstBuf, length, pConv->pBaseBuf, pData, pConv->count );
@@ -369,10 +366,8 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
                 MEMCPY( pDstBuf, pSrcBuf, remaining );
                 pDstBuf += remaining;
             }
-            bConverted += iov[iov_count].iov_len;
             stack->disp = pDstBuf - pConv->pBaseBuf;  /* save the position */
         }
-        /*iov[iov_count].iov_len = bConverted;*/
         pConv->bConverted += bConverted;
     }
     *out_size = iov_count;
