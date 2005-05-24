@@ -177,6 +177,18 @@ typedef int (*orte_ns_base_module_create_proc_name_fn_t)(orte_process_name_t **n
                                                          orte_jobid_t job,
                                                          orte_vpid_t vpid);
 
+/*
+ * Create my name
+ * If a process is a singleton, then it needs to create a name for itself. When
+ * a persistent daemon is present, this requires a communication to that daemon.
+ * Since the RML uses process names as its index into the RML communicator table,
+ * the RML automatically assigns a name to each process when it first attempts
+ * to communicate. This function takes advantage of that behavior to ensure that
+ * one, and ONLY one, name gets assigned to the process
+ */
+typedef int (*orte_ns_base_module_create_my_name_fn_t)(void);
+
+
 /**
  * Derive a process vpid.
  * Given a base vpid and an offset, return the computed equivalent vpid. This function
@@ -594,6 +606,7 @@ struct mca_ns_base_module_1_0_0_t {
     orte_ns_base_module_assign_cellid_to_process_fn_t assign_cellid_to_process;
     orte_ns_base_module_create_jobid_fn_t create_jobid;
     orte_ns_base_module_create_proc_name_fn_t create_process_name;
+    orte_ns_base_module_create_my_name_fn_t create_my_name;
     orte_ns_base_module_copy_proc_name_fn_t copy_process_name;
     orte_ns_base_module_convert_string_to_process_name_fn_t convert_string_to_process_name;
     orte_ns_base_module_reserve_range_fn_t reserve_range;

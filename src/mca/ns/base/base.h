@@ -42,16 +42,6 @@ extern "C" {
 /*
  * Internal definitions
  */
-/*
- * define the command names/ids for use in OOB buffers.
- * only needed for remotely executed commands.
- */
-#define ORTE_NS_CREATE_CELLID     0x01
-#define ORTE_NS_CREATE_JOBID      0x02
-#define ORTE_NS_RESERVE_RANGE     0x04
-#define ORTE_NS_FREE_NAME         0x08
-#define ORTE_NS_GET_MY_CELLID     0x10
-
 typedef uint8_t orte_ns_cmd_bitmask_t;
 
 /*
@@ -60,7 +50,7 @@ typedef uint8_t orte_ns_cmd_bitmask_t;
 /* CAUTION - any changes here must also change corresponding
  * typedefs above
  */
-#define ORTE_NS_CMD     ORTE_INT16
+#define ORTE_NS_CMD     ORTE_INT8
 
 /*
  * define flag values for remote commands - only used internally
@@ -70,6 +60,7 @@ typedef uint8_t orte_ns_cmd_bitmask_t;
 #define ORTE_NS_RESERVE_RANGE_CMD       0x04
 #define ORTE_NS_ASSIGN_OOB_TAG_CMD      0x08
 #define ORTE_NS_DEFINE_DATA_TYPE_CMD    0x10
+#define ORTE_NS_CREATE_MY_NAME_CMD      0x20
 
 /*
  * function definitions
@@ -153,6 +144,9 @@ OMPI_DECLSPEC    int orte_ns_base_define_data_type_not_available(
                                   const char *name,
                                   orte_data_type_t *type);
 
+OMPI_DECLSPEC    int orte_ns_base_create_my_name_not_available(void);
+
+/* Base functions used everywhere */
 OMPI_DECLSPEC    int orte_ns_base_set_my_name(void);
 
 OMPI_DECLSPEC    int orte_ns_base_get_peers(orte_process_name_t **procs, 

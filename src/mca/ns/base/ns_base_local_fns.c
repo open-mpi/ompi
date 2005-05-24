@@ -104,6 +104,14 @@ orte_ns_base_define_data_type_not_available(
     return ORTE_ERR_UNREACH;
 }
 
+int
+orte_ns_base_create_my_name_not_available(void)
+{
+    ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
+    return ORTE_ERR_UNREACH;
+}
+
+
 
 /*
  * functions

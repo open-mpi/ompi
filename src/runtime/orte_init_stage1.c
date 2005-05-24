@@ -62,6 +62,7 @@ int orte_init_stage1(void)
     char *contact_path = NULL;
     pid_t pid;
     orte_universe_t univ;
+    orte_jobid_t my_jobid;
 
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_sys_info())) {
@@ -340,18 +341,22 @@ int orte_init_stage1(void)
         return ret;
     }
 
-     /* if we are the seed, setup jobid-0 */
+     /* if we are a singleton, setup the infrastructure for our job */
  
-    if(orte_process_info.seed) {
-         if (ORTE_SUCCESS != (ret = orte_rmgr_base_set_job_slots(0,1))) {
+    if(orte_process_info.singleton) {
+         if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name))) {
              ORTE_ERROR_LOG(ret);
              return ret;
          }
-         if (ORTE_SUCCESS != (ret = orte_rmaps_base_set_vpid_range(0,0,1))) {
+         if (ORTE_SUCCESS != (ret = orte_rmgr_base_set_job_slots(my_jobid,1))) {
              ORTE_ERROR_LOG(ret);
              return ret;
          }
-         if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(0))) {
+         if (ORTE_SUCCESS != (ret = orte_rmaps_base_set_vpid_range(my_jobid,0,1))) {
+             ORTE_ERROR_LOG(ret);
+             return ret;
+         }
+         if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(my_jobid))) {
              ORTE_ERROR_LOG(ret);
              return ret;
          }

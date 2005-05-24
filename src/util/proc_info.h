@@ -46,6 +46,7 @@ extern "C" {
  */
 struct orte_proc_info_t {
     orte_process_name_t *my_name;   /**< My official process name */
+    bool singleton;                 /**< I am a singleton */
     orte_vpid_t vpid_start;         /**< starting vpid for this job */
     size_t num_procs;               /**< number of processes in this job */
     pid_t pid;                      /**< Local process ID for this process */

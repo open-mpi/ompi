@@ -33,6 +33,7 @@
 
 OMPI_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_name =              */   NULL,
+    /*  .singleton =            */   false,
     /*  .vpid_start =           */   0,
     /*  .num_procs =            */   1,
     /*  .pid =                  */   0,
@@ -148,6 +149,7 @@ int orte_proc_info_finalize(void)
     }
 
     orte_process_info.seed = false;
+    orte_process_info.singleton = false;
     orte_process_info.daemon = false;
     
     return ORTE_SUCCESS;

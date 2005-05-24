@@ -74,6 +74,7 @@ static mca_ns_base_module_t orte_ns_replica = {
     orte_ns_base_assign_cellid_to_process,
     orte_ns_replica_create_jobid,
     orte_ns_base_create_process_name,
+    orte_ns_replica_create_my_name,
     orte_ns_base_copy_process_name,
     orte_ns_base_convert_string_to_process_name,
     orte_ns_replica_reserve_range,
@@ -352,6 +353,8 @@ int orte_ns_replica_finalize(void)
 
 /* 
  * handle message from proxies
+ * NOTE: The incoming buffer "buffer" is OBJ_RELEASED by the calling program.
+ * DO NOT RELEASE THIS BUFFER IN THIS CODE
  */
 
 void orte_ns_replica_recv(int status, orte_process_name_t* sender,
@@ -522,6 +525,11 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                    goto RETURN_ERROR;
               }
               break;
+            
+        case ORTE_NS_CREATE_MY_NAME_CMD:
+            /* ignore this command */
+            goto CLEANUP;
+            break;
             
         default:
             goto RETURN_ERROR;

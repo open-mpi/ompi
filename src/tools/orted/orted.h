@@ -54,6 +54,8 @@ typedef struct {
     bool debug_daemons;
     bool debug_daemons_file;
     char* name;
+    char* vpid_start;
+    char* num_procs;
     char* universe;
     int bootproxy;
     int uri_pipe;
