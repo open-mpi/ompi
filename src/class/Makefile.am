@@ -23,8 +23,8 @@ noinst_LTLIBRARIES = liblfc.la
 
 headers = \
 	ompi_bitmap.h \
-        ompi_circular_buffer_fifo.h \
-        ompi_fifo.h \
+    ompi_circular_buffer_fifo.h \
+    ompi_fifo.h \
 	ompi_free_list.h \
 	ompi_hash_table.h \
 	ompi_list.h \
@@ -34,7 +34,8 @@ headers = \
 	ompi_value_array.h \
 	ompi_rb_tree.h \
 	orte_pointer_array.h \
-        orte_value_array.h
+    orte_value_array.h \
+    orte_bitmap.h
 
 liblfc_la_SOURCES = \
 	$(headers) \
@@ -48,7 +49,8 @@ liblfc_la_SOURCES = \
 	ompi_value_array.c \
 	ompi_rb_tree.c \
 	orte_pointer_array.c \
-        orte_value_array.c
+    orte_value_array.c \
+    orte_bitmap.c
 
 # Conditionally install the header files
 
