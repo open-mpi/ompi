@@ -398,6 +398,7 @@ convertor_init_generic( ompi_convertor_t* pConv, const ompi_datatype_t* datatype
         }
         pConv->pStack = pConv->static_stack;
         pConv->stack_size = DT_STATIC_STACK_SIZE;
+        pConv->bConverted = 0;
     }
     if( required_stack_length > pConv->stack_size ) {
         pConv->stack_size = required_stack_length;
