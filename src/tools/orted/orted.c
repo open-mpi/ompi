@@ -86,7 +86,7 @@ ompi_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.debug, OMPI_CMD_LINE_TYPE_BOOL,
       "Debug the OpenRTE" },
 
-    { NULL, NULL, NULL, '\0', NULL, "no-daemonize", 0,
+    { "orte", "no_daemonize", NULL, '\0', NULL, "no-daemonize", 0,
       &orted_globals.no_daemonize, OMPI_CMD_LINE_TYPE_BOOL,
       "Don't daemonize into the background" },
 
@@ -166,7 +166,6 @@ int main(int argc, char *argv[])
     char *log_path = NULL;
     char log_file[PATH_MAX];
     char *jobidstring;
-    int i;
     
     /* setup to check common command line options that just report and die */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
@@ -204,7 +203,7 @@ int main(int argc, char *argv[])
      * proper indicators in the environment so the name discovery service
      * can find it
      */
-    if (orted_globals.name) {
+    if (orted_globals.name) {    
         if (ORTE_SUCCESS != (ret = ompi_setenv("OMPI_MCA_ns_nds",
                                               "env", true, &environ))) {
             fprintf(stderr, "orted: could not set my name in environ\n");
@@ -250,7 +249,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "orted: failed to init rte\n");
         return ret;
     }
-
+   
     /* if requested, report my uri to the indicated pipe */
     if (orted_globals.uri_pipe > 0) {
         write(orted_globals.uri_pipe, orte_universe_info.seed_uri,

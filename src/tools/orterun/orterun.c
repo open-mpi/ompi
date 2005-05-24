@@ -36,6 +36,7 @@
 #include "class/ompi_pointer_array.h"
 #include "util/proc_info.h"
 #include "util/argv.h"
+#include "util/ompi_environ.h"
 #include "util/path.h"
 #include "util/cmd_line.h"
 #include "util/sys_info.h"
@@ -184,6 +185,9 @@ ompi_cmd_line_init_t cmd_line_init[] = {
     { "orte", "debug", "daemons_file", '\0', NULL, "debug-daemons-file", 0,
       NULL, OMPI_CMD_LINE_TYPE_BOOL,
       "Enable debugging of any OpenRTE daemons used by this application, storing output in files" },
+    { "orte", "no_daemonize", NULL, '\0', NULL, "no-daemonize", 0,
+      NULL, OMPI_CMD_LINE_TYPE_BOOL,
+      "Do not detach OpenRTE daemons used by this application" },
     { "universe", NULL, NULL, '\0', NULL, "universe", 1,
       NULL, OMPI_CMD_LINE_TYPE_STRING,
       "Set the universe name as username@hostname:universe_name for this application" },
@@ -215,6 +219,7 @@ int main(int argc, char *argv[])
 {
     orte_app_context_t **apps;
     int rc, i, num_apps, j;
+    int id, iparam;
 
     /* Setup the abort message (for use in the signal handler) */
 
@@ -271,6 +276,46 @@ int main(int argc, char *argv[])
         return rc;
     }
 
+    /* check for daemon flags and push them into the environment
+     * since this isn't being automatically done
+     */
+    id = mca_base_param_register_int("orte","debug","daemons",NULL,0);
+    mca_base_param_lookup_int(id,&iparam);
+    if (iparam) {
+        if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_orte_debug_daemons",
+                                              "1", true, &environ))) {
+            fprintf(stderr, "orterun: could not set orte_debug_daemons in environ\n");
+            return rc;
+        }
+    }
+    id = mca_base_param_register_int("orte","debug",NULL,NULL,0);
+    mca_base_param_lookup_int(id,&iparam);
+    if (iparam) {
+        if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_orte_debug",
+                                              "1", true, &environ))) {
+            fprintf(stderr, "orterun: could not set orte_debug in environ\n");
+            return rc;
+        }
+    }
+    id = mca_base_param_register_int("orte","debug","daemons_file",NULL,0);
+    mca_base_param_lookup_int(id,&iparam);
+    if (iparam) {
+        if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_orte_debug_daemons_file",
+                                              "1", true, &environ))) {
+            fprintf(stderr, "orterun: could not set orte_debug_daemons_file in environ\n");
+            return rc;
+        }
+    }
+    id = mca_base_param_register_int("orte","no_daemonize",NULL,NULL,0);
+    mca_base_param_lookup_int(id,&iparam);
+    if (iparam) {
+        if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_orte_no_daemonize",
+                                              "1", true, &environ))) {
+            fprintf(stderr, "orterun: could not set orte_no_daemonize in environ\n");
+            return rc;
+        }
+    }
+    
      /* Prep to start the application */
 
     ompi_event_set(&term_handler, SIGTERM, OMPI_EV_SIGNAL,
