@@ -25,6 +25,7 @@
  */
 #include "orte_config.h"
 
+#include "class/orte_bitmap.h"
 #include "class/ompi_object.h"
 #include "util/output.h"
 #include "util/proc_info.h"
@@ -520,6 +521,8 @@ int orte_gpr_replica_close(void)
 
 orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bool *have_hidden_threads, int *priority)
 {
+    int rc;
+    
     /* If we are to host a replica, then we want to be selected, so do all the
        setup and return the module */
 
@@ -549,17 +552,19 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
         	orte_gpr_replica_globals.compound_cmd = NULL;
         
         	/* initialize the registry head */
-            if (ORTE_SUCCESS != orte_pointer_array_init(&(orte_gpr_replica.segments),
+            if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica.segments),
                                     orte_gpr_replica_globals.block_size,
                                     orte_gpr_replica_globals.max_size,
-                                    orte_gpr_replica_globals.block_size)) {
+                                    orte_gpr_replica_globals.block_size))) {
+                ORTE_ERROR_LOG(rc);
                 return NULL;
             }
         
-            if (ORTE_SUCCESS != orte_pointer_array_init(&(orte_gpr_replica.triggers),
+            if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica.triggers),
                                     orte_gpr_replica_globals.block_size,
                                     orte_gpr_replica_globals.max_size,
-                                    orte_gpr_replica_globals.block_size)) {
+                                    orte_gpr_replica_globals.block_size))) {
+                ORTE_ERROR_LOG(rc);
                 return NULL;
             }
             
@@ -567,12 +572,19 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
         	OBJ_CONSTRUCT(&orte_gpr_replica.callbacks, ompi_list_t);
         
         /* initialize the search arrays for temporarily storing search results */
-        if (ORTE_SUCCESS != orte_pointer_array_init(&(orte_gpr_replica_globals.srch_cptr),
-                                100, orte_gpr_replica_globals.max_size, 100)) {
+        if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.srch_cptr),
+                                100, orte_gpr_replica_globals.max_size, 100))) {
+            ORTE_ERROR_LOG(rc);
             return NULL;
         }
-        if (ORTE_SUCCESS != orte_pointer_array_init(&(orte_gpr_replica_globals.srch_ival),
-                                100, orte_gpr_replica_globals.max_size, 100)) {
+        if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.srch_ival),
+                                100, orte_gpr_replica_globals.max_size, 100))) {
+            ORTE_ERROR_LOG(rc);
+            return NULL;
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_bitmap_init (&(orte_gpr_replica_globals.srch_itag), 64))) {
+            ORTE_ERROR_LOG(rc);
             return NULL;
         }
         

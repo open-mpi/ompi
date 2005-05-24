@@ -54,6 +54,7 @@ OMPI_DECLSPEC mca_ns_base_module_t orte_ns = {
     orte_ns_base_assign_cellid_to_process,
     orte_ns_base_create_jobid_not_available,
     orte_ns_base_create_process_name,
+    orte_ns_base_create_my_name_not_available,
     orte_ns_base_copy_process_name,
     orte_ns_base_convert_string_to_process_name,
     orte_ns_base_get_vpid_range_not_available,

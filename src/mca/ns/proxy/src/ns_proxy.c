@@ -538,3 +538,41 @@ int orte_ns_proxy_define_data_type(const char *name,
     return rc;
 }
 
+/*
+ * Take advantage of the way the RML uses the process name as its index into
+ * the RML communicator table. Because the RML needs a name right away, it will
+ * automatically assign us one when it receives a message - and it communicates
+ * that assignment back to us automatically. Thus, to get a name for ourselves,
+ * all we have to do is send a message! No response from the replica is required.
+ */
+int orte_ns_proxy_create_my_name(void)
+{
+    orte_buffer_t* cmd;
+    orte_ns_cmd_flag_t command;
+    size_t count;
+    int rc;
+
+    command = ORTE_NS_CREATE_MY_NAME_CMD;
+
+    cmd = OBJ_NEW(orte_buffer_t);
+    if (cmd == NULL) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_NS_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+
+    if (0 > orte_rml.send_buffer(orte_ns_my_replica, cmd, MCA_OOB_TAG_NS, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(cmd);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    OBJ_RELEASE(cmd);
+
+    return ORTE_SUCCESS;
+}
+

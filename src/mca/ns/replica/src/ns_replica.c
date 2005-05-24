@@ -258,3 +258,26 @@ int orte_ns_replica_define_data_type(const char *name,
 
 }
 
+
+int orte_ns_replica_create_my_name(void)
+{
+    orte_jobid_t jobid;
+    orte_vpid_t vpid;
+    int rc;
+    
+    if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(&jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_ns.reserve_range(jobid, 1, &vpid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&(orte_process_info.my_name),
+                                                0, jobid, vpid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    return ORTE_SUCCESS;
+}

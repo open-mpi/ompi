@@ -26,6 +26,7 @@
 
 #include <time.h>
 
+#include "class/orte_bitmap.h"
 #include "class/orte_pointer_array.h"
 #include "class/orte_value_array.h"
 
@@ -92,6 +93,7 @@ typedef struct {
     int compound_cmd_waiting;
     orte_pointer_array_t *srch_cptr;
     orte_pointer_array_t *srch_ival;
+    orte_bitmap_t srch_itag;
 } orte_gpr_replica_globals_t;
 
 

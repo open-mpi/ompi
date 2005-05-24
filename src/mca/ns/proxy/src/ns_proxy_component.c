@@ -71,6 +71,7 @@ static mca_ns_base_module_t orte_ns_proxy = {
     orte_ns_base_assign_cellid_to_process,
     orte_ns_proxy_create_jobid,
     orte_ns_base_create_process_name,
+    orte_ns_proxy_create_my_name,
     orte_ns_base_copy_process_name,
     orte_ns_base_convert_string_to_process_name,
     orte_ns_proxy_reserve_range,

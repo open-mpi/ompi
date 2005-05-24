@@ -34,11 +34,9 @@ int orte_ns_nds_env_get(void)
     int vpid_start;
     int num_procs;
     char* name_string = NULL;
-
     id = mca_base_param_register_string("ns", "nds", "name", NULL, NULL);
     mca_base_param_lookup_string(id, &name_string);
     if(name_string != NULL) {
-
         if (ORTE_SUCCESS != (rc = orte_ns_base_convert_string_to_process_name(
            &(orte_process_info.my_name),
            name_string))) {

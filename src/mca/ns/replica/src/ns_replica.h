@@ -145,6 +145,8 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
 int orte_ns_replica_define_data_type(const char *name,
                                      orte_data_type_t *type);
 
+int orte_ns_replica_create_my_name(void);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

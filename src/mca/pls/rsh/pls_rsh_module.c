@@ -316,6 +316,16 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     ompi_argv_append(&argc, &argv, "--name");
     proc_name_index = argc;
     ompi_argv_append(&argc, &argv, "");
+
+    /* tell the daemon how many procs are in the daemon's job */
+    ompi_argv_append(&argc, &argv, "--num_procs");
+    asprintf(&param, "%lu", (unsigned long)(vpid + num_nodes));
+    ompi_argv_append(&argc, &argv, param);
+    free(param);
+    /* tell the daemon the starting vpid of the daemon's job */
+    ompi_argv_append(&argc, &argv, "--vpid_start");
+    ompi_argv_append(&argc, &argv, "0");
+    
     ompi_argv_append(&argc, &argv, "--nodename");
     node_name_index2 = argc;
     ompi_argv_append(&argc, &argv, "");

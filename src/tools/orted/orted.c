@@ -36,6 +36,7 @@
 #include "threads/condition.h"
 
 #include "dps/dps.h"
+#include "util/ompi_environ.h"
 #include "util/output.h"
 #include "util/show_help.h"
 #include "util/sys_info.h"
@@ -105,6 +106,14 @@ ompi_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.name, OMPI_CMD_LINE_TYPE_STRING,
       "Set the orte process name"},
 
+    { NULL, NULL, NULL, '\0', NULL, "vpid_start", 1,
+      &orted_globals.vpid_start, OMPI_CMD_LINE_TYPE_STRING,
+      "Set the starting vpid for this job"},
+
+    { NULL, NULL, NULL, '\0', NULL, "num_procs", 1,
+      &orted_globals.num_procs, OMPI_CMD_LINE_TYPE_STRING,
+      "Set the number of process in this job"},
+
     { NULL, NULL, NULL, '\0', NULL, "nsreplica", 1,
       &orte_process_info.ns_replica_uri, OMPI_CMD_LINE_TYPE_STRING,
       "Name service contact information."},
@@ -146,6 +155,8 @@ ompi_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OMPI_CMD_LINE_TYPE_NULL, NULL }
 };
 
+extern char **environ;
+
 
 int main(int argc, char *argv[])
 {
@@ -155,9 +166,8 @@ int main(int argc, char *argv[])
     char *log_path = NULL;
     char log_file[PATH_MAX];
     char *jobidstring;
+    int i;
     
-    fprintf(stderr, "orted\n");
-
     /* setup to check common command line options that just report and die */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
     cmd_line = OBJ_NEW(ompi_cmd_line_t);
@@ -190,14 +200,34 @@ int main(int argc, char *argv[])
     orte_process_info.daemon = true;
 
     /*
-     * Attempt to parse the daemon name and save in proc_info
+     * If the daemon was given a name on the command line, need to set the
+     * proper indicators in the environment so the name discovery service
+     * can find it
      */
     if (orted_globals.name) {
-        ret = orte_ns_base_convert_string_to_process_name(
-            &orte_process_info.my_name, orted_globals.name);
-        if(ORTE_SUCCESS != ret) {
-            fprintf(stderr, "Couldn't convert environmental string to process name\n");
-            return 1;
+        if (ORTE_SUCCESS != (ret = ompi_setenv("OMPI_MCA_ns_nds",
+                                              "env", true, &environ))) {
+            fprintf(stderr, "orted: could not set my name in environ\n");
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = ompi_setenv("OMPI_MCA_ns_nds_name",
+                                  orted_globals.name, true, &environ))) {
+            fprintf(stderr, "orted: could not set my name in environ\n");
+            return ret;
+        }
+        /* the following values are meaningless to the daemon, but may have
+         * been passed in anyway. we set them here because the nds_env component
+         * requires that they be set
+         */
+        if (ORTE_SUCCESS != (ret = ompi_setenv("OMPI_MCA_ns_nds_vpid_start",
+                                  orted_globals.vpid_start, true, &environ))) {
+            fprintf(stderr, "orted: could not set vpid_start in environ\n");
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = ompi_setenv("OMPI_MCA_ns_nds_num_procs",
+                                  orted_globals.num_procs, true, &environ))) {
+            fprintf(stderr, "orted: could not set num_procs in environ\n");
+            return ret;
         }
     }
 
