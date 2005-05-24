@@ -607,6 +607,7 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
      */
     pSrc = pConv->pBaseBuf + pStack[0].disp + pStack[1].disp;
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
+        if( 0 == length ) break;
         if( iov[iov_count].iov_len > length )
             iov[iov_count].iov_len = length;
         if( iov[iov_count].iov_base == NULL ) {
@@ -617,11 +618,10 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
                                         pConv->pBaseBuf, pData, pConv->count );
             MEMCPY( iov[iov_count].iov_base, pSrc, iov[iov_count].iov_len);
         }
-	length -= iov[iov_count].iov_len;
+        length -= iov[iov_count].iov_len;
         pConv->bConverted += iov[iov_count].iov_len;
         pStack[0].disp += iov[iov_count].iov_len + pStack[1].disp;
         pSrc = pConv->pBaseBuf + pStack[0].disp;
-        if( 0 == length ) break;
     }
     /* The logic here should be quite simple. As the data is contiguous we will just copy data
      * (we dont have to do any conversion). Then the only thing that is interesting is to
@@ -768,12 +768,12 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
 
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 int32_t ompi_convertor_init_for_send( ompi_convertor_t* pConv,
-				      uint32_t flags,
-				      const ompi_datatype_t* datatype,
-				      int32_t count,
-				      const void* pUserBuf,
-				      int32_t starting_pos,
-				      memalloc_fct_t allocfn )
+                                      uint32_t flags,
+                                      const ompi_datatype_t* datatype,
+                                      int32_t count,
+                                      const void* pUserBuf,
+                                      int32_t starting_pos,
+                                      memalloc_fct_t allocfn )
 {
     if( !(datatype->flags & DT_FLAG_COMMITED) ) {
         /* this datatype is improper for conversion. Commit it first */
