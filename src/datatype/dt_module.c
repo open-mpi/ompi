@@ -627,10 +627,10 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
     length = pData->opt_desc.used + pData->desc.used;
     length = length * 100 + 500;
     buffer = (char*)malloc( length );
-    index += snprintf( buffer, length - index, "Datatype %p size %ld align %d id %d length %d used %d\n\
+    index += snprintf( buffer, length - index, "Datatype %p[%s] size %ld align %d id %d length %d used %d\n\
    true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n \
    nbElems %d loops %d flags %X (",
-                 (void*)pData, pData->size, (int)pData->align, pData->id, (int)pData->desc.length, (int)pData->desc.used,
+                 (void*)pData, pData->name, pData->size, (int)pData->align, pData->id, (int)pData->desc.length, (int)pData->desc.used,
                  pData->true_lb, pData->true_ub, pData->true_ub - pData->true_lb,
                  pData->lb, pData->ub, pData->ub - pData->lb,
                  (int)pData->nbElems, (int)pData->btypes[DT_LOOP], (int)pData->flags );

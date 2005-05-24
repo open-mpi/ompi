@@ -78,7 +78,7 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
 
             if( loop->common.flags & DT_FLAG_CONTIGUOUS ) {
                 /* the loop is contiguous or composed by contiguous elements with a gap */
-                if( loop->extent == end_loop->size ) {
+                if( loop->extent == (long)end_loop->size ) {
                     /* the whole loop is contiguous */
                     if( (lastDisp + lastLength) != (totalDisp + loop_disp) ) {
                         CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, lastLength, lastDisp, lastExtent );

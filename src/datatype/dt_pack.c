@@ -43,8 +43,8 @@ void ompi_ddt_safeguard_pointer( const void* actual_ptr, int length,
         /* Im up from the lower bound */
         if( ((char*)actual_ptr + length) <= upper_bound )
             return;
-    ompi_output( 0, "Pointer %p size %d is outside [%p,%p] for data \n", actual_ptr, length,
-                 lower_bound, upper_bound );
+    ompi_output( 0, "Pointer %p size %d is outside [%p,%p] for %d times the data \n",
+                 actual_ptr, length, lower_bound, upper_bound, count );
     ompi_ddt_dump( pData );
 }
 
