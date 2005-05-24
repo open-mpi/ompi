@@ -193,8 +193,8 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                             pStack->disp + pElems->elem.disp + cnt * pElems->elem.extent,
                             pos_desc );
                 pConvertor->bConverted = starting_point - resting_place;
-                ompi_ddt_dump_stack( pConvertor->pStack, pConvertor->stack_pos,
-                                     pConvertor->pDesc->desc.desc, pConvertor->pDesc->name );
+                DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos,
+                                pConvertor->pDesc->desc.desc, pConvertor->pDesc->name );
                 return OMPI_SUCCESS;
             }
             loop_length += lastLength;
