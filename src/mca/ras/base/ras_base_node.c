@@ -19,6 +19,8 @@
 #include <string.h>
 
 #include "include/orte_constants.h"
+#include "util/output.h"
+
 #include "mca/errmgr/errmgr.h"
 #include "mca/soh/soh_types.h"
 #include "mca/gpr/gpr.h"
@@ -236,7 +238,7 @@ int orte_ras_base_node_insert(ompi_list_t* nodes)
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         
-        value->addr_mode = ORTE_GPR_OVERWRITE;
+        value->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND;
         value->segment = strdup(ORTE_NODE_SEGMENT);
         value->cnt = 6;
         value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt*sizeof(orte_gpr_keyval_t*));
@@ -392,7 +394,7 @@ int orte_ras_base_node_assign(ompi_list_t* nodes, orte_jobid_t jobid)
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         
-        values[i]->addr_mode = ORTE_GPR_OVERWRITE;
+        values[i]->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND;
         values[i]->segment = strdup(ORTE_NODE_SEGMENT);
         values[i]->cnt = 1;
         values[i]->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
