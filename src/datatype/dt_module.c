@@ -281,7 +281,7 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         displ[0] -= base;                                               \
         if( displ[0] != (displ[1] + (long)sizeof(type2)) )              \
             ptype->ub = displ[0];  /* force a new extent for the datatype */ \
-        ptype->flags |= DT_FLAG_DATA | DT_FLAG_BASIC | DT_FLAG_FOREVER; \
+        ptype->flags |= DT_FLAG_INITIAL | DT_FLAG_FOREVER;              \
         ptype->id = MPIDDT;                                             \
         ompi_ddt_commit( &ptype );                                      \
         COPY_DATA_DESC( PDATA, ptype );                                 \
@@ -295,7 +295,7 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
     do {                                                                           \
         ompi_datatype_t *ptype;                                                    \
         ompi_ddt_create_contiguous( 2, ompi_ddt_basicDatatypes[MPIType], &ptype ); \
-        ptype->flags |= DT_FLAG_DATA | DT_FLAG_BASIC | DT_FLAG_FOREVER;            \
+        ptype->flags |= DT_FLAG_INITIAL | DT_FLAG_FOREVER;                         \
         ptype->id = (MPIDDT);                                                      \
         ompi_ddt_commit( &ptype );                                                 \
         COPY_DATA_DESC( (PDATA), ptype );                                          \
