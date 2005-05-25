@@ -119,6 +119,14 @@ mca_io_base_module_1_0_0_t mca_io_romio_module = {
 int MPIR_Status_set_bytes(ompi_status_public_t *status, 
                           struct ompi_datatype_t *datatype, int nbytes)
 {
-    MPI_Status_set_elements(status, datatype, nbytes);
+    /* Note that ROMIO is going to give a number of *bytes* here, but
+       MPI_STATUS_SET_ELEMENTS requires a number of *elements*.  So
+       rather than try to do a conversion up here, just set the number
+       of bytes with MPI_CHAR as the datatype.  If someone does a
+       GET_STATUS later, they have to supply their own datatype, and
+       we do the right calculations there.  This prevents roundoff
+       errors here, potentially "losing" bytes in the process. */
+
+    MPI_Status_set_elements(status, MPI_CHAR, nbytes);
     return MPI_SUCCESS;
 }
