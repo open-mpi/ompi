@@ -68,7 +68,7 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
     found_one = false;
     for (i=0; i < num_itags_entry; i++) {  /* for each container tag */
         match = false;
-        	for (j=0; j < num_itags_search; j++) {  /* check all the search tags and see if it is present */
+        	for (j=0; j < num_itags_search && !match; j++) {  /* check all the search tags and see if it is present */
         	    if (entry_itags[i] == itags[j]) { /* found a match */
             		if (ORTE_SUCCESS != (rc = orte_bitmap_set_bit(&(orte_gpr_replica_globals.srch_itag), itags[j]))) {
                      ORTE_ERROR_LOG(rc);
@@ -76,7 +76,7 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
                  }
             		if (ORTE_GPR_REPLICA_OR & addr_mode) { /* only need one match */
             		    if (not_set) return false;
-                     else return true;
+                        else return true;
             		}
                  match = true;
                  found_one = true;
@@ -96,13 +96,13 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
      * that we would have already returned in the OR case. So, first check the XOR
      * case
      */
-     if (ORTE_GPR_REPLICA_XOR && found_one) {
+     if ((ORTE_GPR_REPLICA_XOR & addr_mode) && found_one) {
         if (not_set) return false;
         else return true;
      }
      
      /* Only thing we have left to check is AND */
-    /* check if all the search tags were found */
+    /* check if any search tag was not found */
     for (i=0; i < num_itags_search; i++) {
         if (1 != orte_bitmap_is_set_bit(&(orte_gpr_replica_globals.srch_itag), itags[i])) {
             /* this tag was NOT found - required to find them all */
@@ -110,7 +110,6 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
             else return false;
         }
     }
-    
     /* okay, all the tags are there, so we now passed the AND test */
     if (not_set) return false;
     else return true;
