@@ -26,6 +26,7 @@
 #include "util/sys_info.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
+#include "mca/ns/ns.h"
 #include "mca/ras/base/ras_base_node.h"
 #include "mca/errmgr/errmgr.h"
 #include "rds_hostfile.h"
@@ -84,6 +85,14 @@ static int orte_rds_hostfile_parse_line(int token, ompi_list_t* existing, ompi_l
             node = OBJ_NEW(orte_ras_base_node_t);
             node->node_name = strdup(node_name);
             node->node_slots = 1;
+            /* get a new cellid for this node */
+#if 0
+            if (ORTE_SUCCESS != (rc = orte_ns.create_cellid(&(node->node_cellid),
+                                        "UNKNOWN-SITE", node->node_name))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+#endif
             update++;
         }
     } else {
@@ -246,6 +255,7 @@ cleanup:
     while(NULL != (item = ompi_list_remove_first(&existing))) {
         OBJ_RELEASE(item);
     }
+
     while(NULL != (item = ompi_list_remove_first(&updates))) {
         OBJ_RELEASE(item);
     }
