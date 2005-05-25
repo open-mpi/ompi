@@ -121,18 +121,15 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
     pos_desc  = 0;
     remoteLength = (int*)alloca( sizeof(int) * (pConvertor->pDesc->btypes[DT_LOOP] + 1));
     remoteLength[0] = 0;  /* initial value set to ZERO */
+    loop_length = 0;
 
     /* The only way to get out of this loop is when we reach the desired position or
      * when we finish the whole datatype.
      */
-  next_loop:
-    loop_length = remoteLength[pConvertor->stack_pos];
-    while( pos_desc < pConvertor->pStack[0].end_loop ) {  /* protect in case when the starting_pos is bigger than the total size */
+    while( pos_desc < pConvertor->pStack[0].end_loop ) {
         if( DT_END_LOOP == pElems->elem.common.type ) { /* end of the current loop */
             ddt_endloop_desc_t* end_loop = (ddt_endloop_desc_t*)pElems;
             long extent;
-
-            pStack->count--;
 
             if( (loop_length * pStack->count) > resting_place ) {
                 /* We will stop somewhere on this loop. To avoid moving inside the loop
@@ -147,38 +144,35 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                     assert( DT_LOOP == (pElems - end_loop->items)->loop.common.type );
                     extent = ((ddt_loop_desc_t*)(pElems - end_loop->items))->extent;
                 }
-                pStack->count -= cnt;
+                pStack->count -= (cnt + 1);
                 resting_place -= cnt * loop_length;
-                pStack->disp += cnt * extent;
+                pStack->disp += (cnt + 1) * extent;
                 /* reset the remoteLength as we act as restarting the last loop */
-                remoteLength[pConvertor->stack_pos] = 0;
                 pos_desc -= (end_loop->items - 1);  /* go back to the first element in the loop */
                 pElems -= (end_loop->items - 1);
-                goto next_loop;
+                remoteLength[pConvertor->stack_pos] = 0;
+		loop_length = 0;
+		continue;
             }
             /* Not in this loop. Cleanup the stack and advance to the
              * next data description.
              */
-            loop_length *= pStack->count;  /* without the initial loop */
-            remoteLength[pConvertor->stack_pos] += loop_length;
-            resting_place -= loop_length;  /* update the resting place */
-            /* if we are embedded in another loop we should update it's length too */
+            resting_place -= (loop_length * (pStack->count - 1));  /* update the resting place */
             pStack--;
             pConvertor->stack_pos--;
-            if( pConvertor->stack_pos > 0 ) {
-                remoteLength[pConvertor->stack_pos] += remoteLength[pConvertor->stack_pos + 1];
-            }
             pos_desc++;
             pElems++;
-            goto next_loop;
+            remoteLength[pConvertor->stack_pos] += (loop_length * pStack->count);
+            loop_length = remoteLength[pConvertor->stack_pos];
+            continue;
         }
         if( DT_LOOP == pElems->elem.common.type ) {
             remoteLength[pConvertor->stack_pos] += loop_length;
             PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElems->loop.loops,
                         pStack->disp, pos_desc + pElems->loop.items );
-            remoteLength[pConvertor->stack_pos] = 0;
             pos_desc++;
             pElems++;
+            remoteLength[pConvertor->stack_pos] = 0;
             loop_length = 0;  /* starting a new loop */
         }
         while( pElems->elem.common.flags & DT_FLAG_DATA ) {
