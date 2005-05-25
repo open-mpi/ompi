@@ -125,7 +125,7 @@ int MPIR_Status_set_bytes(ompi_status_public_t *status,
        of bytes with MPI_CHAR as the datatype.  If someone does a
        GET_STATUS later, they have to supply their own datatype, and
        we do the right calculations there.  This prevents roundoff
-       errors here, potentially "losing" bytes in the process. */
+       errors here, potentially "losing" bytes in the process.  */
 
     MPI_Status_set_elements(status, MPI_CHAR, nbytes);
     return MPI_SUCCESS;
