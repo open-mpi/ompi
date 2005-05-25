@@ -476,6 +476,12 @@ MOVEON:
 
             ompi_unsetenv("OMPI_MCA_seed", &environ);
             
+            if (ORTE_SUCCESS != (rc = ompi_setenv("OMPI_MCA_universe_uri",
+                        orte_setup_hnp_orted_uri, true, &environ))) {
+                fprintf(stderr, "orte_setup_hnp: could not set universe_uri in environ\n");
+                return rc;
+            }
+
             /*
              * ...re-init ourselves...
              */
@@ -517,7 +523,6 @@ static void orte_setup_hnp_recv(int status, orte_process_name_t* sender,
         OMPI_THREAD_UNLOCK(&orte_setup_hnp_mutex);
         return;
     }
-ompi_output(0, "orteprobe: received uri %s", orte_setup_hnp_orted_uri);
     orte_setup_hnp_rc = ORTE_SUCCESS;
     ompi_condition_signal(&orte_setup_hnp_condition);
     OMPI_THREAD_UNLOCK(&orte_setup_hnp_mutex);
