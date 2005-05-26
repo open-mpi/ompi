@@ -17,6 +17,9 @@
 
 /** @file
  *
+ * See ompi_bitmap.h for an explanation of why there is a split
+ * between OMPI and ORTE for this generic class.
+ *
  *  A bitmap implementation. The bits start off with 0, so this bitmap
  *  has bits numbered as bit 0, bit 1, bit 2 and so on. This bitmap
  *  has auto-expansion capabilities, that is once the size is set

@@ -15,12 +15,8 @@
  */
 /** @file
  *
- * Utility functions to manage fortran <-> c opaque object
- * translation.  Note that since MPI defines fortran handles as
- * [signed] int's, we use int everywhere in here where you would
- * normally expect int.  There's some code that makes sure indices
- * don't go above FORTRAN_HANDLE_MAX (which is min(INT_MAX, fortran
- * INTEGER max)), just to be sure.
+ * See ompi_bitmap.h for an explanation of why there is a split
+ * between OMPI and ORTE for this generic class.
  */
 
 #ifndef ORTE_POINTER_ARRAY_H
