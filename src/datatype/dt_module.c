@@ -260,10 +260,10 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
                 DT_MAX_PREDEFINED * sizeof(uint32_t) );                 \
     } while(0)
 
-#define DECLARE_MPI2_COMPOSED_STRUCT_DDT( PDATA, MPIDDT, MPIDDTNAME, type1, type2, MPIType1, MPIType2 ) \
+#define DECLARE_MPI2_COMPOSED_STRUCT_DDT( PDATA, MPIDDT, MPIDDTNAME, type1, type2, MPIType1, MPIType2, FLAGS) \
     do {                                                                \
         struct { type1 v1; type2 v2; } s[2];                            \
-        ompi_datatype_t* types[2];                                \
+        ompi_datatype_t* types[2];                                      \
         ompi_datatype_t* ptype;                                         \
         int bLength[2] = {1, 1};                                        \
         long base, displ[2];                                            \
@@ -281,7 +281,7 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         displ[0] -= base;                                               \
         if( displ[0] != (displ[1] + (long)sizeof(type2)) )              \
             ptype->ub = displ[0];  /* force a new extent for the datatype */ \
-        ptype->flags |= DT_FLAG_INITIAL | DT_FLAG_FOREVER;              \
+        ptype->flags |= DT_FLAG_FOREVER | (FLAGS);                      \
         ptype->id = MPIDDT;                                             \
         ompi_ddt_commit( &ptype );                                      \
         COPY_DATA_DESC( PDATA, ptype );                                 \
@@ -291,18 +291,18 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );      \
     } while(0)
 
-#define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType )      \
-    do {                                                                           \
-        ompi_datatype_t *ptype;                                                    \
-        ompi_ddt_create_contiguous( 2, ompi_ddt_basicDatatypes[MPIType], &ptype ); \
-        ptype->flags |= DT_FLAG_INITIAL | DT_FLAG_FOREVER;                         \
-        ptype->id = (MPIDDT);                                                      \
-        ompi_ddt_commit( &ptype );                                                 \
-        COPY_DATA_DESC( (PDATA), ptype );                                          \
-        ptype->desc.desc = NULL;                                                   \
-        ptype->opt_desc.desc = NULL;                                               \
-        OBJ_RELEASE( ptype );                                                      \
-        strncpy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );               \
+#define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType, FLAGS ) \
+    do {                                                                             \
+        ompi_datatype_t *ptype;                                                      \
+        ompi_ddt_create_contiguous( 2, ompi_ddt_basicDatatypes[MPIType], &ptype );   \
+        ptype->flags |= DT_FLAG_FOREVER | (FLAGS);                                   \
+        ptype->id = (MPIDDT);                                                        \
+        ompi_ddt_commit( &ptype );                                                   \
+        COPY_DATA_DESC( (PDATA), ptype );                                            \
+        ptype->desc.desc = NULL;                                                     \
+        ptype->opt_desc.desc = NULL;                                                 \
+        OBJ_RELEASE( ptype );                                                        \
+        strncpy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );                 \
     } while(0)
 
 #define DECLARE_MPI_SYNONYM_DDT( PDATA, MPIDDTNAME, PORIGDDT)           \
@@ -349,30 +349,42 @@ int32_t ompi_ddt_init( void )
      */
 
     /* the 2 complex datatypes (float and double) */
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_cplex, DT_COMPLEX_FLOAT, "MPI_COMPLEX", float, float, DT_FLOAT, DT_FLOAT );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_dblcplex, DT_COMPLEX_DOUBLE, "MPI_DOUBLE_COMPLEX", double, double, DT_DOUBLE, DT_DOUBLE );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_cplex, DT_COMPLEX_FLOAT, "MPI_COMPLEX",
+				      float, float, DT_FLOAT, DT_FLOAT,
+				      DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_dblcplex, DT_COMPLEX_DOUBLE, "MPI_DOUBLE_COMPLEX",
+				      double, double, DT_DOUBLE, DT_DOUBLE,
+				      DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT );
 #if HAVE_LONG_DOUBLE
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_ldblcplex, DT_COMPLEX_LONG_DOUBLE, "MPI_LONG_DOUBLE_COMPLEX", long double, long double, DT_LONG_DOUBLE, DT_LONG_DOUBLE );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_ldblcplex, DT_COMPLEX_LONG_DOUBLE, "MPI_LONG_DOUBLE_COMPLEX",
+				      long double, long double, DT_LONG_DOUBLE, DT_LONG_DOUBLE,
+				      DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT );
 #endif  /* HAVE_LONG_DOUBLE */
 
     /* Now the predefined MPI2 datatypes (they should last forever!) */
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_float_int, DT_FLOAT_INT, "MPI_FLOAT_INT", float, int, DT_FLOAT, DT_INT );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_double_int, DT_DOUBLE_INT, "MPI_DOUBLE_INT", double, int, DT_DOUBLE, DT_INT );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_long_int, DT_LONG_INT, "MPI_LONG_INT", long, int, DT_LONG, DT_INT );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_short_int, DT_SHORT_INT, "MPI_SHORT_INT", short, int, DT_SHORT, DT_INT );
-    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_longdbl_int, DT_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT", long double, int, DT_LONG_DOUBLE, DT_INT );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_float_int, DT_FLOAT_INT, "MPI_FLOAT_INT",
+				      float, int, DT_FLOAT, DT_INT, DT_FLAG_DATA_C );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_double_int, DT_DOUBLE_INT, "MPI_DOUBLE_INT",
+				      double, int, DT_DOUBLE, DT_INT, DT_FLAG_DATA_C );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_long_int, DT_LONG_INT, "MPI_LONG_INT",
+				      long, int, DT_LONG, DT_INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_short_int, DT_SHORT_INT, "MPI_SHORT_INT",
+				      short, int, DT_SHORT, DT_INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
+    DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_longdbl_int, DT_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT",
+				      long double, int, DT_LONG_DOUBLE, DT_INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 
-    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2int, DT_2INT, "MPI_2INT", DT_INT );
-    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2integer, DT_2INTEGER, "MPI_2INTEGER", DT_INT );
-    ompi_mpi_2integer.flags |= DT_FLAG_DATA_FORTRAN;
-    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2real, DT_2REAL, "MPI_2REAL", DT_FLOAT );
-    ompi_mpi_2real.flags |= DT_FLAG_DATA_FORTRAN;
-    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2dblprec, DT_2DBLPREC, "MPI_2DOUBLE_PRECISION", DT_DOUBLE );
-    ompi_mpi_2dblprec.flags |= DT_FLAG_DATA_FORTRAN;
-    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2cplex, DT_2COMPLEX, "MPI_2COMPLEX", DT_COMPLEX_FLOAT );
-    ompi_mpi_2cplex.flags |= DT_FLAG_DATA_FORTRAN;
-    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2dblcplex, DT_2DOUBLE_COMPLEX, "MPI_2DOUBLE_COMPLEX", DT_COMPLEX_DOUBLE );
-    ompi_mpi_2dblcplex.flags |= DT_FLAG_DATA_FORTRAN;
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2int, DT_2INT, "MPI_2INT", DT_INT,
+				     DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2integer, DT_2INTEGER, "MPI_2INTEGER", DT_INT,
+				     DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT);
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2real, DT_2REAL, "MPI_2REAL", DT_FLOAT,
+				     DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2dblprec, DT_2DBLPREC, "MPI_2DOUBLE_PRECISION", DT_DOUBLE,
+				     DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT );
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2cplex, DT_2COMPLEX, "MPI_2COMPLEX", DT_COMPLEX_FLOAT,
+				     DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT);
+    DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2dblcplex, DT_2DOUBLE_COMPLEX, "MPI_2DOUBLE_COMPLEX", DT_COMPLEX_DOUBLE,
+				     DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_FLOAT );
 
     for( i = 0; i < DT_MAX_PREDEFINED; ++i ) {
         ompi_ddt_local_sizes[i] = ompi_ddt_basicDatatypes[i]->size;

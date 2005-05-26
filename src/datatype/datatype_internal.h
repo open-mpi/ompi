@@ -210,18 +210,19 @@ extern void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
                                  const dt_elem_desc_t* pDesc, const char* name );
 extern void ompi_convertor_dump( ompi_convertor_t* convertor );
 
-#define SAVE_STACK( PSTACK, INDEX, COUNT, DISP, END_LOOP) \
+#define SAVE_STACK( PSTACK, INDEX, TYPE, COUNT, DISP, END_LOOP) \
 do { \
    (PSTACK)->index    = (INDEX); \
+   (PSTACK)->type     = (TYPE); \
    (PSTACK)->count    = (COUNT); \
    (PSTACK)->disp     = (DISP); \
    (PSTACK)->end_loop = (END_LOOP); \
 } while(0)
 
-#define PUSH_STACK( PSTACK, STACK_POS, INDEX, COUNT, DISP, END_LOOP) \
+#define PUSH_STACK( PSTACK, STACK_POS, INDEX, TYPE, COUNT, DISP, END_LOOP) \
 do { \
    dt_stack_t* pTempStack = (PSTACK) + 1; \
-   SAVE_STACK( pTempStack, (INDEX), (COUNT), (DISP), (END_LOOP) );  \
+   SAVE_STACK( pTempStack, (INDEX), (TYPE), (COUNT), (DISP), (END_LOOP) );  \
    (STACK_POS)++; \
    (PSTACK) = pTempStack; \
 } while(0)
@@ -369,15 +370,16 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const
      * should I stop on the first contiguous loop ?
      */
     while( pElems[index].elem.common.type == DT_LOOP ) {
-        PUSH_STACK( pStack, pConvertor->stack_pos, index,
+        PUSH_STACK( pStack, pConvertor->stack_pos, index, DT_LOOP,
                     pElems[index].loop.loops, 0, pElems[index].loop.items );
         index++;
     }
     if( pElems[index].elem.common.flags & DT_FLAG_DATA ) {  /* let's stop here */
-        PUSH_STACK( pStack, pConvertor->stack_pos, index,
+        PUSH_STACK( pStack, pConvertor->stack_pos, index, pElems[index].elem.common.type,
                     pElems[index].elem.count, pElems[index].elem.disp, 0 );
     } else {
         ompi_output( 0, "Here we should have a data in the datatype description\n" );
+	ompi_ddt_dump( pConvertor->pDesc );
     }
     pConvertor->bConverted = 0;
     return OMPI_SUCCESS;

@@ -122,7 +122,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
             if( DT_LOOP == pElem[pos_desc].elem.common.type ) {
                 do {
                     PUSH_STACK( pStack, pConvertor->stack_pos,
-                                pos_desc, pElem[pos_desc].loop.loops,
+                                pos_desc, DT_LOOP, pElem[pos_desc].loop.loops,
                                 pStack->disp, pos_desc + pElem[pos_desc].loop.items + 1);
                     pos_desc++;
                 } while( DT_LOOP == pElem[pos_desc].elem.common.type ); /* let's start another loop */
@@ -169,7 +169,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
     if( pConvertor->pStack[0].count < 0 ) return 1;  /* data succesfully converted */
 
     /* I complete an element, next step I should go to the next one */
-    PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, count_desc,
+    PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, type, count_desc,
 		disp_desc, pos_desc );
 
     return (pConvertor->bConverted == (pData->size * pConvertor->count));
@@ -262,7 +262,7 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
                 last_blength = 0;
                 /* Save the stack with the correct last_count value. */
             }
-            PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_count,
+            PUSH_STACK( pStack, pConv->stack_pos, pos_desc, DT_LOOP, last_count,
                         pStack->disp, pos_desc + pElems[pos_desc].loop.items );
             pos_desc++;
             last_count = pElems[pos_desc].elem.count;
@@ -299,7 +299,8 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
         lastDisp += last_count;
     }
     /* update the current stack position */
-    PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_blength, lastDisp, pos_desc );
+    PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_blength, pElems[pos_desc].elem.common.type,
+		lastDisp, pos_desc );
 
     pConv->bConverted += bConverted;  /* update the byte converted field in the convertor */
     iov[0].iov_len = bConverted;      /* update the length in the iovec */
@@ -467,7 +468,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                 last_blength = 0;
                 /* Save the stack with the correct last_count value. */
             }
-            PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_count,
+            PUSH_STACK( pStack, pConv->stack_pos, pos_desc, DT_LOOP, last_count,
                         pStack->disp, pos_desc + pElems[pos_desc].loop.items );
             pos_desc++;
             lastDisp = pStack->disp + pElems[pos_desc].elem.disp;
@@ -573,7 +574,8 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     }
  end_loop:
     if( pos_desc >= 0 ) {  /* if the pack is not finish add a new entry in the stack */
-        PUSH_STACK( pStack, pConv->stack_pos, pos_desc, saveLength, lastDisp, pos_desc );
+        PUSH_STACK( pStack, pConv->stack_pos, pos_desc, pElems[pos_desc].elem.common.type,
+		    saveLength, lastDisp, pos_desc );
     }
     assert( last_blength == 0 );
     pConv->bConverted += bConverted;  /* update the byte converted field in the convertor */

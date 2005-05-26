@@ -75,10 +75,10 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
      */
     if( pData->opt_desc.desc != NULL ) {
         pElems = pData->opt_desc.desc;
-        pStack->end_loop = pData->opt_desc.used;
+        pStack[0].end_loop = pData->opt_desc.used;
     } else {
         pElems = pData->desc.desc;
-        pStack->end_loop = pData->desc.used;
+        pStack[0].end_loop = pData->desc.used;
     }
 
     if( (pConvertor->flags & CONVERTOR_HOMOGENEOUS) && (pData->flags & DT_FLAG_CONTIGUOUS) ) {
@@ -87,22 +87,22 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
         long extent = pData->ub - pData->lb;
         
         loop_length = GET_FIRST_NON_LOOP( pElems );
-        pStack->disp = pElems[loop_length].elem.disp;
-        
-        pStack->count = pConvertor->count - cnt;
+        pStack[0].disp  = pElems[loop_length].elem.disp;
+        pStack[0].type  = DT_LOOP;
+        pStack[0].count = pConvertor->count - cnt;
         cnt = starting_point - cnt * pData->size;  /* number of bytes after the loop */
         pStack[1].index    = 0;
-        pStack[1].count    = (pElems[loop_length].elem.count * 
-                              ompi_ddt_basicDatatypes[pElems[loop_length].elem.common.type]->size) - cnt;
+	pStack[1].type     = DT_BYTE;
         pStack[1].end_loop = pStack->end_loop;
-        
+        pStack[1].disp     = pStack[0].disp;
+        pStack[1].count    = pData->size - cnt;
+
         if( (long)pData->size == extent ) { /* all elements are contiguous */
-            pStack[1].disp     = pStack->disp + starting_point;
+            pStack[1].disp += starting_point;
         } else {  /* each is contiguous but there are gaps inbetween */
-            pStack[1].disp = pStack->disp /* original place */
-                + pStack->count * extent  /* the completed elements with their extent */ /* TODO check */
-                + pStack[1].count;        /* what we complete from the last begining of the data */
+            pStack[1].disp += (pConvertor->count - pStack[0].count) * extent + cnt;
         }
+
         pConvertor->bConverted = starting_point;
         pConvertor->stack_pos = 1;
         return OMPI_SUCCESS;
@@ -168,7 +168,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
         }
         if( DT_LOOP == pElems->elem.common.type ) {
             remoteLength[pConvertor->stack_pos] += loop_length;
-            PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElems->loop.loops,
+            PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_LOOP, pElems->loop.loops,
                         pStack->disp, pos_desc + pElems->loop.items );
             pos_desc++;
             pElems++;
@@ -183,8 +183,9 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
                 int cnt = resting_place / basic_type->size;
                 loop_length += (cnt * basic_type->size);
                 resting_place -= (cnt * basic_type->size);
-                PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElems->elem.count - cnt,
-                            pStack->disp + pElems->elem.disp + cnt * pElems->elem.extent,
+                PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, pElems->elem.common.type, 
+			    pElems->elem.count - cnt,
+			    pStack->disp + pElems->elem.disp + cnt * pElems->elem.extent,
                             pos_desc );
                 pConvertor->bConverted = starting_point - resting_place;
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos,
