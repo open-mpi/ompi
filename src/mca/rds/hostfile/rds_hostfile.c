@@ -75,7 +75,8 @@ static int orte_rds_hostfile_parse_line(int token, ompi_list_t* existing, ompi_l
 {
     int rc;
     orte_ras_base_node_t* node;
-    int update = 0;
+    bool update = false;
+    bool got_count = false;
 
     if (ORTE_RDS_HOSTFILE_STRING == token) {
         char* node_name = orte_rds_hostfile_value.sval;
@@ -85,36 +86,72 @@ static int orte_rds_hostfile_parse_line(int token, ompi_list_t* existing, ompi_l
          * vaguery of the "nodename" parameter returned by Linux system calls.
          * See the man page for uname for a detailed explanation
          */
-        if (strcmp(node_name, "localhost") == 0) {
-            if (0 < ompi_list_get_size(updates)) {
+        if (0 == strcmp(node_name, "localhost")) {
+
+            /* If the size of the updates list == 1 and it only
+               contains localhost, or if the size of the updates list
+               == 0, we're ok.  Otherwise, this is an error.  The
+               positive logic test was a little clearer than a
+               negative logic check, so even though this results in
+               potentially re-setting localhost_found=true multiple
+               times (if "localhost" is included multiple times in the
+               file), the code is clearer this way. */
+
+            if (0 == ompi_list_get_size(updates) ||
+                (1 == ompi_list_get_size(updates) && localhost_found)) {
+                localhost_found = true;
+            } else {
                 ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
                 return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
             }
-            localhost_found = true;
         } else if (localhost_found) {
-                ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
-                return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+            ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+            return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
         }
+
+        /* Do we need to make a new node object?  First check to see
+           if it's in the existing list. */
         
         if (NULL == (node = orte_rds_hostfile_lookup(existing, node_name))) {
-            node = OBJ_NEW(orte_ras_base_node_t);
-            node->node_name = strdup(node_name);
-            node->node_slots = 1;
-            /* get a new cellid for this node */
+
+            /* If it wasn't, see if it's already in the updates list */
+
+            if (NULL == (node = orte_rds_hostfile_lookup(updates, 
+                                                         node_name))) {
+                node = OBJ_NEW(orte_ras_base_node_t);
+                node->node_name = strdup(node_name);
+                node->node_slots = 0;
+
 #if 0
-            if (ORTE_SUCCESS != (rc = orte_ns.create_cellid(&(node->node_cellid),
-                                        "UNKNOWN-SITE", node->node_name))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
+                /* get a new cellid for this node */
+                /* JMS Temporarily turned off until cell IDs are
+                   properly handled elsewhere in the code */
+                if (ORTE_SUCCESS != 
+                    (rc = orte_ns.create_cellid(&(node->node_cellid),
+                                                "UNKNOWN-SITE",
+                                                node->node_name))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
 #endif
-            update++;
+            }
+
+            /* Note that we need to set update to true regardless of
+               whether the node was found on the updates list or not.
+               If it was found, we just removed it (in
+               orte_rds_hostfile_lookup()), so the update puts it back
+               (potentially after updating it, of course).  If it was
+               not found, then we have a new node instance that needs
+               to be added to the updates list. */
+
+            update = true;
         }
     } else {
         orte_rds_hostfile_parse_error();
         return OMPI_ERROR;
     }
 
+    got_count = false;
     while (!orte_rds_hostfile_done) {
         token = orte_rds_hostfile_lex();
         switch (token) {
@@ -132,10 +169,10 @@ static int orte_rds_hostfile_parse_line(int token, ompi_list_t* existing, ompi_l
                 OBJ_RELEASE(node);
                 return OMPI_ERROR;
             }
-            if (node->node_slots != (size_t)rc) {
-                node->node_slots = rc;
-                update++;
-            }
+            node->node_slots += rc;
+            update = true;
+            got_count = true;
+
             /* Ensure that node_slots_max >= node_slots */
             if (node->node_slots_max != 0 && node->node_slots_max < node->node_slots) {
                 node->node_slots_max = node->node_slots;
@@ -152,7 +189,7 @@ static int orte_rds_hostfile_parse_line(int token, ompi_list_t* existing, ompi_l
             if (((size_t) rc) >= node->node_slots) {
                 if (node->node_slots_max != (size_t)rc) {
                     node->node_slots_max = rc;
-                    update++;
+                    update = true;
                 }
             } else {
                 ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -169,7 +206,10 @@ static int orte_rds_hostfile_parse_line(int token, ompi_list_t* existing, ompi_l
     }
 
 done:
-    if(update) {
+    if (update) {
+        if (!got_count) {
+            ++node->node_slots;
+        }
         ompi_list_append(updates, &node->super);
     } else {
         OBJ_RELEASE(node);
@@ -258,6 +298,8 @@ static int orte_rds_hostfile_query(void)
         } else {
             ompi_output(0, "orte_rds_hostfile: could not open %s\n", mca_rds_hostfile_component.path);
         }
+        goto cleanup;
+    } else if (ORTE_SUCCESS != rc) {
         goto cleanup;
     }
     if(ompi_list_get_size(&updates)) {
