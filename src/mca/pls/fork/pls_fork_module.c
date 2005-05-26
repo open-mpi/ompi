@@ -144,7 +144,7 @@ static int orte_pls_fork_proc(
     if(pid == 0) {
         char* param;
         char* uri;
-        char **new_env, **environ_copy;
+        char **environ_copy;
 
 #if 0
         /* for gperf - setup a new directory for each executable */
@@ -164,8 +164,13 @@ static int orte_pls_fork_proc(
         }
 #endif
 
-        /* setup base environment */
-        environ_copy = ompi_argv_copy(environ);
+        /* setup base environment: copy the current environ and merge
+           in the app context environ */
+        if (NULL != context->env) {
+            environ_copy = ompi_environ_merge(environ, context->env);
+        } else {
+            environ_copy = ompi_argv_copy(environ);
+        }
         param = mca_base_param_environ_variable("rmgr","bootproxy","jobid");
         ompi_unsetenv(param, &environ_copy);
 
@@ -190,7 +195,7 @@ static int orte_pls_fork_proc(
         ompi_setenv(param, uri, true, &environ_copy);
         free(param);
         free(uri);
-                                                                                                    
+
         /* setup gpr contact info */
         if(NULL != orte_process_info.gpr_replica_uri) {
             uri = strdup(orte_process_info.gpr_replica_uri);
@@ -208,10 +213,6 @@ static int orte_pls_fork_proc(
 
         /* setup stdout/stderr */
         orte_iof_base_setup_child(&opts);
-
-        /* execute application */
-        new_env = ompi_environ_merge(context->env, environ_copy);
-        ompi_argv_free(environ_copy);
 
         if (context->argv == NULL) {
             context->argv = malloc(sizeof(char*)*2);
@@ -242,7 +243,7 @@ static int orte_pls_fork_proc(
 
         /* Exec the new executable */
 
-        execve(context->app, context->argv, new_env);
+        execve(context->app, context->argv, environ_copy);
         ompi_output(0, "orte_pls_fork: %s - %s\n", context->app, 
             ompi_argv_join(context->argv, ' '));
         ompi_output(0, "orte_pls_fork: execv failed with errno=%d\n", errno);
