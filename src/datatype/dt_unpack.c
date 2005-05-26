@@ -112,7 +112,7 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
             if( DT_LOOP == pElems[pos_desc].elem.common.type ) {
                 do {
                     PUSH_STACK( pStack, pConvertor->stack_pos,
-                                pos_desc, pElems[pos_desc].loop.loops,
+                                pos_desc, DT_LOOP, pElems[pos_desc].loop.loops,
                                 pStack->disp, pos_desc + pElems[pos_desc].loop.items + 1 );
                     pos_desc++;
                 } while( DT_LOOP == pElems[pos_desc].loop.common.type ); /* let's start another loop */
@@ -159,7 +159,7 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
     if( pConvertor->pStack[0].count < 0 ) return 1;  /* data succesfully converted */
 
     /* I complete an element, next step I should go to the next one */
-    PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc,
+    PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, type,
                 count_desc, disp_desc, pos_desc );
 
     return (pConvertor->bConverted == (pConvertor->count * pConvertor->pDesc->size));
@@ -246,7 +246,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
                 last_blength = 0;
                 /* Save the stack with the correct last_count value. */
             }
-            PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_count,
+            PUSH_STACK( pStack, pConv->stack_pos, pos_desc, DT_LOOP, last_count,
                         pStack->disp, pos_desc + pElems[pos_desc].loop.items );
             pos_desc++;
             lastDisp = pStack->disp + pElems[pos_desc].elem.disp;
@@ -302,8 +302,8 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
         lastDisp += last_blength;
     }
     if( pos_desc < (uint32_t)pStack->end_loop ) {  /* update the stack */
-        PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_count,
-                    lastDisp, pos_desc );
+        PUSH_STACK( pStack, pConv->stack_pos, pos_desc, pElems[pos_desc].elem.common.type,
+		    last_count, lastDisp, pos_desc );
     }
 
     pConv->bConverted += bConverted;  /* update the converted field */
@@ -736,7 +736,7 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSi
         if( DT_LOOP == datatype->desc.desc[pos_desc].elem.common.type ) {
             ddt_loop_desc_t* loop = &(datatype->desc.desc[pos_desc].loop);
             do {
-                PUSH_STACK( pStack, stack_pos, pos_desc, loop->loops,
+                PUSH_STACK( pStack, stack_pos, pos_desc, DT_LOOP, loop->loops,
                             0, pos_desc + loop->items );
                 pos_desc++;
             } while( DT_LOOP == datatype->desc.desc[pos_desc].elem.common.type ); /* let's start another loop */
@@ -844,7 +844,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
         }
         if( DT_LOOP == pElems[pos_desc].elem.common.type ) {
             do {
-                PUSH_STACK( pStack, stack_pos, pos_desc, pElems[pos_desc].loop.loops,
+                PUSH_STACK( pStack, stack_pos, pos_desc, DT_LOOP, pElems[pos_desc].loop.loops,
                             pStack->disp, pos_desc + pElems[pos_desc].loop.items );
                 pos_desc++;
             } while( DT_LOOP == pElems[pos_desc].elem.common.type ); /* let's start another loop */

@@ -121,7 +121,7 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
                 }
                 CREATE_LOOP_START( pElemDesc, loop->loops, loop->items, loop->extent, loop->common.flags );
                 pElemDesc++; nbElems++;
-                PUSH_STACK( pStack, stack_pos, nbElems, loop->loops, totalDisp, pos_desc + loop->extent );
+                PUSH_STACK( pStack, stack_pos, nbElems, DT_LOOP, loop->loops, totalDisp, pos_desc + loop->extent );
                 pos_desc++;
                 DDT_DUMP_STACK( pStack, stack_pos, pData->desc.desc, "advance loops" );
             }
@@ -257,7 +257,7 @@ static int ompi_ddt_unroll( ompi_datatype_t* pData, int count )
                 goto next_loop;
             } else {
                 do {
-                    PUSH_STACK( pStack, stack_pos, pos_desc, pElems[pos_desc].loop.loops,
+                    PUSH_STACK( pStack, stack_pos, pos_desc, DT_LOOP, pElems[pos_desc].loop.loops,
                                 pStack->disp, pos_desc + pElems[pos_desc].loop.items );
                     pos_desc++;
                 } while( pElems[pos_desc].type == DT_LOOP ); /* let's start another loop */
