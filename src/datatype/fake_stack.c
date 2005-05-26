@@ -92,7 +92,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
         pStack[0].count = pConvertor->count - cnt;
         cnt = starting_point - cnt * pData->size;  /* number of bytes after the loop */
         pStack[1].index    = 0;
-	pStack[1].type     = DT_BYTE;
+        pStack[1].type     = DT_BYTE;
         pStack[1].end_loop = pStack->end_loop;
         pStack[1].disp     = pStack[0].disp;
         pStack[1].count    = pData->size - cnt;
