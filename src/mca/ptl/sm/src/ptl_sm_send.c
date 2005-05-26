@@ -94,9 +94,8 @@ void mca_ptl_sm_matched(
         OBJ_CONSTRUCT(&frag_convertor, ompi_convertor_t);
         proc = ompi_comm_peer_lookup(recv_desc->req_recv.req_base.req_comm,
                     frag->frag_base.frag_header.hdr_match.hdr_src);
-        /* write over converter set on the send side */
-        ompi_convertor_copy(proc->proc_convertor,
-                &frag_convertor); 
+        /* write over convertor set on the send side */
+        ompi_convertor_copy(proc->proc_convertor, &frag_convertor); 
         ompi_convertor_init_for_recv( 
                 &frag_convertor,                   /* convertor */ 
                 0,                                 /* flags */ 

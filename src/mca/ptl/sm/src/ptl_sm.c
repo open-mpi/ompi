@@ -827,6 +827,7 @@ int mca_ptl_sm_send(
     hdr->hdr_match.hdr_dst = sendreq->req_send.req_base.req_peer;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_msg_length = sendreq->req_send.req_bytes_packed;
+    hdr->hdr_match.hdr_msg_seq    = sendreq->req_send.req_base.req_sequence;
 
     /* update the offset within the payload */
     sendreq->req_offset += size;
