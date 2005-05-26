@@ -34,6 +34,10 @@
 
 #include "runtime/runtime_types.h"
 
+/*
+ * Local global variable
+ */
+static bool localhost_found;
 
 static void orte_rds_hostfile_parse_error(void)
 {
@@ -76,12 +80,23 @@ static int orte_rds_hostfile_parse_line(int token, ompi_list_t* existing, ompi_l
     if (ORTE_RDS_HOSTFILE_STRING == token) {
         char* node_name = orte_rds_hostfile_value.sval;
 
-        /* convert this into something globally unique */
-        if(strcmp(node_name, "localhost") == 0) {
-            node_name = orte_system_info.nodename;
+        /* If a line for "localhost" was included, we do NOT allow
+         * any other hosts to be specified in the file. This is due to the
+         * vaguery of the "nodename" parameter returned by Linux system calls.
+         * See the man page for uname for a detailed explanation
+         */
+        if (strcmp(node_name, "localhost") == 0) {
+            if (0 < ompi_list_get_size(updates)) {
+                ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+                return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
+            }
+            localhost_found = true;
+        } else if (localhost_found) {
+                ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
+                return ORTE_ERR_VALUE_OUT_OF_BOUNDS;
         }
-
-        if(NULL == (node = orte_rds_hostfile_lookup(existing, node_name))) {
+        
+        if (NULL == (node = orte_rds_hostfile_lookup(existing, node_name))) {
             node = OBJ_NEW(orte_ras_base_node_t);
             node->node_name = strdup(node_name);
             node->node_slots = 1;
@@ -223,6 +238,9 @@ static int orte_rds_hostfile_query(void)
     ompi_list_t updates;
     ompi_list_item_t *item;
     int rc;
+    
+    /* initialize the localhost_found flag */
+    localhost_found = false;
 
     OBJ_CONSTRUCT(&existing, ompi_list_t);
     OBJ_CONSTRUCT(&updates, ompi_list_t);
