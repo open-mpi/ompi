@@ -192,6 +192,8 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
     pos_desc = pStack->index;
     lastDisp = pStack->disp;
     last_count = pStack->count; 
+    /*ompi_output( 0, "ompi_convertor_unpack_homogeneous stack_pos %d index %d count %d lastDisp %ld bConverted %d\n",
+                   pConv->stack_pos, pStack->index, pStack->count, lastDisp, pConv->bConverted );*/
     pStack--;
     pConv->stack_pos--;
 
