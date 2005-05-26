@@ -884,7 +884,6 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                     ompi_output(0, "Warning: could not find environment variable \"%s\"\n", param);
                 }
             }
-            free(param);
         }
     }
     app->num_env = ompi_argv_count(app->env);
