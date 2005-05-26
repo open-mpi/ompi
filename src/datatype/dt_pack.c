@@ -344,14 +344,15 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     pDestBuf = iov[0].iov_base;
     pStack = pConv->pStack + pConv->stack_pos;
 
-    /*ompi_output( 0, "pack_no_conversion stack_pos %d\nindex %d count %d last_blength %ld lastDisp %ld savePos %p\n",
-      pConv->stack_pos, pStack->index, pStack->count, last_blength, lastDisp, savePos );*/
     /* retrieve the context of the last call */
     pos_desc = pStack->index;
     last_count = pStack->count;
     last_blength = last_count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
     lastDisp = pStack->disp;
     savePos = (char*)pConv->pBaseBuf + pStack->disp;
+    DO_DEBUG( ompi_output( 0, "pack_no_conversion stack_pos %d index %d count %d last_blength %ld lastDisp %ld savePos %p bConverted %d\n",
+                           pConv->stack_pos, pStack->index, pStack->count, last_blength, lastDisp, savePos,
+                           pConv->bConverted ); );
     saveLength = 0;
     pStack--;
     pConv->stack_pos--;
@@ -554,6 +555,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                     /* check for the next step */
                     if( ++iov_pos == (*out_size) ) {  /* are there more iovecs to fill ? */
                         if( saveLength == 0 ) {
+                            lastDisp -= space_on_iovec;
                             saveLength = last_blength;
                             last_blength = 0;
                         }
