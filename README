@@ -42,8 +42,25 @@ Thanks for your time.
 This tarball is a beta release of Open MPI.  It is not yet complete,
 mainly in the following areas:
 
+- All MPI point-to-point transports need more performance tuning
+
+- The Open MPI installation must be in your PATH on all nodes (and
+  potentially LD_LIBRARY_PATH, if libmpi is a shared library)
+
+- Non-uniform scheduling of processes per nodes may not always
+  function as expected (e.g., JMS MORE HERE)
+
+- LAM/MPI-like mpirun notation of "C" and "N" is not yet supported.
+
+- Signleton MPI applications (i.e., those run via "./foo" instead of
+  "mpirun -np X foo") that invoke MPI_ABORT or otherwise die
+  unnaturally will print a strange warning message before dying
+  (ERR_NOT_FOUND).
+
 - Support for Infiniband (both mVAPI and OpenIB) is missing
+
 - Support for Quadrics is missing
+
 - Striping MPI messages across multiple networks is supported (and
   happens automatically when multiple networks are available), but
   needs performance tuning
@@ -58,6 +75,7 @@ mainly in the following areas:
 
 - The only systems that have been tested on are:
   - Linux, 32 bit, with gcc
+
 - Other systems have been lightly (but not fully tested):
   - Linux, 64 bit, with gcc
   - OS X (10.3), 32 bit, with gcc  
@@ -346,6 +364,23 @@ These locations are checked in order; for example, a parameter value
 passed on the mpirun command line will override an environment
 variable, and an environment variable will override the system-wide
 defaults.  
+
+===========================================================================
+
+Common Questions
+----------------
+
+1. How do I change the rsh/ssh launcher to use rsh?
+
+   The default remote shell agent for the rsh/ssh launcher is ssh, but
+   you can set an MCA parameter to change it to rsh (or use a specific
+   path for ssh, pass different parameters to rsh/ssh, etc.).  The MCA
+   parameter name is pls_rsh_agent.  You can use any of the methods
+   for setting MCA parameters described above; for example:
+
+   shell$ mpirun --mca pls_rsh_agent rsh -np 4 a.out
+
+.........JMS MORE HERE........
 
 ===========================================================================
 
