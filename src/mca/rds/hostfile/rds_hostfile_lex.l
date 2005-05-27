@@ -55,6 +55,7 @@ count              { orte_rds_hostfile_value.sval = yytext;
                      return ORTE_RDS_HOSTFILE_COUNT; }
 slots              { orte_rds_hostfile_value.sval = yytext; 
                      return ORTE_RDS_HOSTFILE_SLOTS; }
+
 "slots-max"        { orte_rds_hostfile_value.sval = yytext; 
                      return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
 slots_max          { orte_rds_hostfile_value.sval = yytext; 
@@ -62,6 +63,22 @@ slots_max          { orte_rds_hostfile_value.sval = yytext;
 "max-slots"        { orte_rds_hostfile_value.sval = yytext; 
                      return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
 max_slots          { orte_rds_hostfile_value.sval = yytext; 
+                     return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
+"cpu-max"          { orte_rds_hostfile_value.sval = yytext; 
+                     return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
+cpu_max            { orte_rds_hostfile_value.sval = yytext; 
+                     return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
+"max-cpu"          { orte_rds_hostfile_value.sval = yytext; 
+                     return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
+max_cpu            { orte_rds_hostfile_value.sval = yytext; 
+                     return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
+"count-max"        { orte_rds_hostfile_value.sval = yytext; 
+                     return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
+count_max          { orte_rds_hostfile_value.sval = yytext; 
+                     return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
+"max-count"        { orte_rds_hostfile_value.sval = yytext; 
+                     return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
+max_count          { orte_rds_hostfile_value.sval = yytext; 
                      return ORTE_RDS_HOSTFILE_SLOTS_MAX; }
 
 [0-9]+             { orte_rds_hostfile_value.ival = atol(yytext); 
