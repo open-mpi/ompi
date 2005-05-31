@@ -22,11 +22,14 @@
 #include "mca/base/base.h"
 #include "mca/mpool/mpool.h"
 #include "mca/mpool/base/base.h"
-
+#include "class/ompi_rb_tree.h"
+#include "class/ompi_free_list.h"
 
 OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, ompi_list_item_t, NULL, NULL);
 static bool mca_mpool_enable_progress_threads = true;
 static bool mca_mpool_enable_mpi_threads = true;
+         
+OBJ_CLASS_INSTANCE(mca_mpool_base_chunk_t, ompi_list_item_t, NULL, NULL);
 
 /**
  * Function for weeding out mpool modules that don't want to run.
@@ -40,7 +43,11 @@ int mca_mpool_base_init(bool enable_progress_threads, bool enable_mpi_threads)
 {
     mca_mpool_enable_progress_threads = enable_progress_threads;
     mca_mpool_enable_mpi_threads = enable_mpi_threads;
-    return OMPI_SUCCESS;
+    OBJ_CONSTRUCT(&mca_mpool_base_mem_list, ompi_free_list_t);
+    ompi_free_list_init(&mca_mpool_base_mem_list, sizeof(mca_mpool_base_chunk_t),
+                        OBJ_CLASS(mca_mpool_base_chunk_t), 0, -1 , 128, NULL);
+    OBJ_CONSTRUCT(&mca_mpool_base_tree, ompi_rb_tree_t);
+    return ompi_rb_tree_init(&mca_mpool_base_tree, mca_mpool_base_tree_node_compare);
 }
 
 mca_mpool_base_module_t* mca_mpool_base_module_init(const char* name)

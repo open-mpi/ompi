@@ -97,7 +97,7 @@ void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
         /* go past the header */
         chunk += 1; 
         /*release the lock */
-	    OMPI_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
+        OMPI_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock));
         return((void *) chunk);
     }
     /* figure out the size of bucket we need */
@@ -165,7 +165,7 @@ void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem,
      * the requested size plus the alignment and the header size */
     aligned_max_size = size + alignment + sizeof(mca_allocator_bucket_chunk_header_t)
                        + sizeof(mca_allocator_bucket_segment_head_t);  
-    bucket_size = size;
+    bucket_size = size + sizeof(mca_allocator_bucket_chunk_header_t);
     allocated_size = aligned_max_size; 
     /* get some memory */ 
     ptr = mem_options->get_mem_fn(&allocated_size, mem_options->super.user_in, user_out);
@@ -182,8 +182,8 @@ void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem,
     /* figure out how much the alignment is off by */ 
     alignment_off = ((size_t)  aligned_memory) % alignment;
     aligned_memory += (alignment - alignment_off);
-    /* we now have an aligned piece of memory. Now we have to put the chunk header
-     * right before the aligned memory                           */
+    /* we now have an aligned piece of memory. Now we have to put the chunk
+     * header right before the aligned memory                           */
     first_chunk = (mca_allocator_bucket_chunk_header_t *) aligned_memory - 1;
     while(bucket_size > MCA_ALLOCATOR_BUCKET_1_SIZE) {
         bucket_size >>= 1;
@@ -251,6 +251,7 @@ void * mca_allocator_bucket_realloc(mca_allocator_base_module_t * mem,
     /* we need a new space in memory, so let's get it */
     ret_ptr = mca_allocator_bucket_alloc((mca_allocator_base_module_t *) mem_options, size, user_out);
     if(NULL == ret_ptr) {
+        /* we were unable to get a larger area of memory */
         return(NULL);
     }
     /* copy what they have in memory to the new spot */

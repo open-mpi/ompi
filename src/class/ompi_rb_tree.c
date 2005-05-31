@@ -272,7 +272,6 @@ int ompi_rb_tree_destroy(ompi_rb_tree_t *tree)
      * inorder destroy    */
     item = (ompi_list_item_t *) tree->root_ptr;
     OMPI_FREE_LIST_RETURN(&(tree->free_list), item);
-    --tree->tree_size;
 
     /* free the tree->nill node */
     item = (ompi_list_item_t *) tree->nill;
@@ -417,8 +416,6 @@ inorder_destroy(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * node)
     }
 
     inorder_destroy(tree, node->left);
-
-    --tree->tree_size;
 
     if (node->left != tree->nill) {
         item = (ompi_list_item_t *) node->left;
