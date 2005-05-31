@@ -21,7 +21,9 @@
 #include "mca/ras/base/ras_base_node.h"
 #include "ras_host.h"
 
-
+#if HAVE_STRING_H
+#include <string.h>
+#endif  /* HAVE_STRING_H */
 
 /**
  *  Discover available (pre-allocated) nodes. Allocate the
