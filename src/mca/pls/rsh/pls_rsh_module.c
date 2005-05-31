@@ -36,6 +36,8 @@
 #include "util/ompi_environ.h"
 #include "util/output.h"
 #include "util/session_dir.h"
+#include "util/sys_info.h"
+#include "util/if.h"
 #include "event/event.h"
 #include "runtime/orte_wait.h"
 #include "mca/base/mca_base_param.h"
@@ -332,7 +334,26 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         pid_t pid;
 
         /* setup node name */
-        argv[node_name_index1] = node->node_name;
+        /* this is a bit convoluted.  If we are ssh'ing to the
+         * current machine, we normally want to use the current
+         * machine's nodename (aka hostname), so that ssh keys are
+         * found correctly.  In some situations (laptops that have
+         * unresolveable names), we really want to use "localhost"
+         * instead of nodename.  But we don't want to use
+         * "localhost" all the time, as it makes life difficult
+         * with ssh keys on shared filesystems.  Generally, if you
+         * have a shared filesystem, you have a resolveable
+         * nodename, so all should be good. 
+         *
+         * ompi_ifislocal() will return false if the name isn't
+         * resolveable (since it needs to resolve the name).
+         */
+        if (0 == strcmp(node->node_name, orte_system_info.nodename) &&
+            ! ompi_ifislocal(node->node_name)) {
+                argv[node_name_index1] = "localhost";
+        } else {
+            argv[node_name_index1] = node->node_name;
+        }
         argv[node_name_index2] = node->node_name;
 
         /* initialize daemons process name */
