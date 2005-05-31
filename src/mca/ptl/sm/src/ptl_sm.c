@@ -879,7 +879,8 @@ int mca_ptl_sm_send(
         ompi_atomic_unlock(&send_fifo->head_lock);
 
     /* if this is the entire message - signal request is complete */
-    if(sendreq->req_send.req_bytes_packed == size) {
+    if(sendreq->req_send.req_bytes_packed == size && 
+       sendreq->req_send.req_send_mode != MCA_PML_BASE_SEND_SYNCHRONOUS) {
         ompi_request_complete( &(sendreq->req_send.req_base.req_ompi) );
     }
 
