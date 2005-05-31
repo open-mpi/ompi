@@ -54,11 +54,15 @@ mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name)
         mca_mpool_base_selected_module_t *sm = (mca_mpool_base_selected_module_t *) item;
         if(strcmp(sm->mpool_component->mpool_version.mca_component_name,
                   name) == 0) {
-             return sm->mpool_module;
+          return sm->mpool_module;
         }
     }
-
     /* if not create it */
     return mca_mpool_base_module_init(name);;
 }
+
+
+
+
+
 

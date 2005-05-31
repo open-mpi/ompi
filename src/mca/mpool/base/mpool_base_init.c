@@ -70,8 +70,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_init(const char* name)
       ompi_output_verbose(10, mca_mpool_base_output,
                           "select: no init function; ignoring module");
     } else {
-      module = component->mpool_init(mca_mpool_enable_progress_threads,
-                                     mca_mpool_enable_mpi_threads);
+      module = component->mpool_init(NULL);
 
       /* If the module didn't initialize, unload it */
 

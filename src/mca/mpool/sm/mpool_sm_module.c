@@ -21,21 +21,36 @@
 #include "mca/common/sm/common_sm_mmap.h"
 
 
-mca_mpool_base_module_t mca_mpool_sm_module = {
-    &mca_mpool_sm_component.super,
-    mca_mpool_sm_base,
-    mca_mpool_sm_alloc,
-    mca_mpool_sm_realloc,
-    mca_mpool_sm_free,
-    NULL,
-    NULL
-};
+/* 
+ *  Initializes the mpool module.
+ */ 
+void mca_mpool_sm_module_init(mca_mpool_sm_module_t* mpool)
+{
+  mpool->super.mpool_component = &mca_mpool_sm_component.super; 
+  mpool->super.mpool_base = mca_mpool_sm_base; 
+  mpool->super.mpool_alloc = mca_mpool_sm_alloc; 
+  mpool->super.mpool_realloc = mca_mpool_sm_realloc; 
+  mpool->super.mpool_free = mca_mpool_sm_free; 
+  mpool->super.mpool_register = NULL; 
+  mpool->super.mpool_deregister = NULL; 
+  mpool->super.mpool_finalize = NULL; 
+
+}
+/*  mca_mpool_base_module_t mca_mpool_sm_module = { */
+/*      &mca_mpool_sm_component.super, */
+/*      mca_mpool_sm_base, */
+/*      mca_mpool_sm_alloc, */
+/*      mca_mpool_sm_realloc, */
+/*      mca_mpool_sm_free, */
+/*      NULL, */
+/*      NULL */
+/*  }; */
 
 
 /*
  * base address of shared memory mapping
  */
-void* mca_mpool_sm_base(void)
+void* mca_mpool_sm_base(mca_mpool_base_module_t* mpool)
 {
     return (mca_common_sm_mmap != NULL) ? mca_common_sm_mmap->map_addr : NULL;
 }
@@ -43,23 +58,26 @@ void* mca_mpool_sm_base(void)
 /**
   * allocate function 
   */
-void* mca_mpool_sm_alloc(size_t size, size_t align)
+void* mca_mpool_sm_alloc(mca_mpool_base_module_t* mpool, size_t size, size_t align, void* user_out)
 {
-    return mca_mpool_sm_component.sm_allocator->alc_alloc(mca_mpool_sm_component.sm_allocator, size, align);
+  mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
+  return mpool_sm->sm_allocator->alc_alloc(mpool_sm->sm_allocator, size, align, user_out);
 }
 
 /**
   * realloc function 
   */
-void* mca_mpool_sm_realloc(void* addr, size_t size)
+void* mca_mpool_sm_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size, void* user_out)
 {
-    return mca_mpool_sm_component.sm_allocator->alc_realloc(mca_mpool_sm_component.sm_allocator, addr, size);
+  mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
+  return mpool_sm->sm_allocator->alc_realloc(mpool_sm->sm_allocator, addr, size, user_out);
 }
 
 /**
   * free function 
   */
-void mca_mpool_sm_free(void * addr)
+void mca_mpool_sm_free(mca_mpool_base_module_t* mpool, void * addr)
 {
-    mca_mpool_sm_component.sm_allocator->alc_free(mca_mpool_sm_component.sm_allocator, addr);
+  mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
+  mpool_sm->sm_allocator->alc_free(mpool_sm->sm_allocator, addr);
 }

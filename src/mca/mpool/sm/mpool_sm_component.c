@@ -28,9 +28,7 @@
  * Local functions
  */
 static int mca_mpool_sm_open(void);
-static mca_mpool_base_module_t* mca_mpool_sm_init(bool enable_progress_threads,
-                                                  bool enable_mpi_threads);
-
+static mca_mpool_base_module_t* mca_mpool_sm_init(void* user);
 
 mca_mpool_sm_component_t mca_mpool_sm_component = {
     {
@@ -97,13 +95,11 @@ static int mca_mpool_sm_open(void)
 }
 
 
-static mca_mpool_base_module_t* 
-mca_mpool_sm_init(bool enable_progress_threads,
-                  bool enable_mpi_threads)
+static mca_mpool_base_module_t* mca_mpool_sm_init(void * user_in)
 {
     char *file_name;
     int len;
-
+    mca_mpool_sm_module_t* mpool_module; 
     mca_allocator_base_component_t* allocator_component = mca_allocator_component_lookup(
         mca_mpool_sm_component.sm_allocator_name);
 
@@ -121,6 +117,10 @@ mca_mpool_sm_init(bool enable_progress_threads,
             return NULL;
         }
     }
+    
+    
+    mpool_module = (mca_mpool_sm_module_t*)malloc(sizeof(mca_mpool_sm_module_t)); 
+    mca_mpool_sm_module_init(mpool_module); 
     
     /* create initial shared memory mapping */
     len=asprintf(&file_name,"%s/shared_mem_pool.%s",
@@ -145,14 +145,24 @@ mca_mpool_sm_init(bool enable_progress_threads,
     /* setup function pointers */
 
 
-    /* setup allocator */
-    mca_mpool_sm_component.sm_allocator = 
-        allocator_component->allocator_init(enable_mpi_threads,
-                                            mca_common_sm_mmap_alloc, NULL);
-    if(NULL == mca_mpool_sm_component.sm_allocator) {
-        ompi_output(0, "mca_mpool_sm_init: unable to initialize allocator");
+    /* setup allocator  TODO fix up */
+    mpool_module->sm_allocator = 
+      allocator_component->allocator_init(true,
+                                          mca_common_sm_mmap_alloc, NULL, NULL);
+    if(NULL == mpool_module->sm_allocator) {
+      ompi_output(0, "mca_mpool_sm_init: unable to initialize allocator");
         return NULL;
     }
-
-    return &mca_mpool_sm_module;
+   
+    return &mpool_module->super;
 }
+
+
+
+
+
+
+
+
+
+

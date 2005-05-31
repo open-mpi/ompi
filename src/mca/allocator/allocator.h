@@ -30,12 +30,12 @@ struct mca_allocator_base_module_t;
 /**
   * The allocate function typedef for the functrion to be provided by the component.
   */
-typedef void* (*mca_allocator_base_module_alloc_fn_t)(struct mca_allocator_base_module_t*, size_t size, size_t align);
+typedef void* (*mca_allocator_base_module_alloc_fn_t)(struct mca_allocator_base_module_t*, size_t size, size_t align, void* user_out);
  
 /**
   * The realloc function typedef
   */
-typedef void* (*mca_allocator_base_module_realloc_fn_t)(struct mca_allocator_base_module_t*, void*, size_t);
+typedef void* (*mca_allocator_base_module_realloc_fn_t)(struct mca_allocator_base_module_t*, void*, size_t, void* user_out);
 
 /**
   * Free function typedef
@@ -72,8 +72,9 @@ struct mca_allocator_base_module_t {
     /**< Free memory */
     mca_allocator_base_module_compact_fn_t alc_compact;   
     /**< Return memory */
-    mca_allocator_base_module_finalize_fn_t alc_finalize; 
+  mca_allocator_base_module_finalize_fn_t alc_finalize; 
     /**< Finalize and free everything */
+  void* user_in; 
 };
 /**
  * Convenience typedef.
@@ -86,7 +87,7 @@ typedef struct mca_allocator_base_module_t mca_allocator_base_module_t;
   * provided by the module to the allocator framework.
   */
 
-typedef void* (*mca_allocator_base_component_segment_alloc_fn_t)(size_t* size);
+typedef void* (*mca_allocator_base_component_segment_alloc_fn_t)(size_t* size, void* user_in, void* user_out);
 
 /**
   * A function to free memory from the control of the allocator framework 
@@ -103,7 +104,8 @@ typedef struct mca_allocator_base_module_t*
     (*mca_allocator_base_component_init_fn_t)(
     bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
-    mca_allocator_base_component_segment_free_fn_t segment_free
+    mca_allocator_base_component_segment_free_fn_t segment_free, 
+    void* user_in
 );
 
 /**
@@ -141,4 +143,23 @@ OMPI_DECLSPEC extern int mca_allocator_base_output;
 }
 #endif
 #endif /* MCA_ALLOCATOR_H */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

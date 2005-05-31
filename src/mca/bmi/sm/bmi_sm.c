@@ -331,8 +331,8 @@ int mca_bmi_sm_add_procs_same_base_addr(
              * this can be used by other procs */
             mca_bmi_sm_component.sm_ctl_header->fifo=
                 mca_bmi_sm_component.sm_mpool->mpool_alloc
-                (n_to_allocate*sizeof(ompi_fifo_t *),
-                 CACHE_LINE_SIZE);
+                (mca_bmi_sm_component.sm_mpool, n_to_allocate*sizeof(ompi_fifo_t *),
+                 CACHE_LINE_SIZE, NULL);
             if ( NULL == mca_bmi_sm_component.sm_ctl_header->fifo ) {
                 return_code=OMPI_ERR_OUT_OF_RESOURCE;
                 goto CLEANUP;
@@ -347,7 +347,7 @@ int mca_bmi_sm_add_procs_same_base_addr(
             mca_bmi_sm_component.sm_ctl_header->segment_header.
                 base_shared_mem_segment =  ( volatile char **)
                 mca_bmi_sm_component.sm_mpool->mpool_alloc
-                (n_to_allocate*sizeof(char *), CACHE_LINE_SIZE);
+                (mca_bmi_sm_component.sm_mpool, n_to_allocate*sizeof(char *), CACHE_LINE_SIZE, NULL);
             if ( NULL == mca_bmi_sm_component.sm_ctl_header->segment_header.
                     base_shared_mem_segment ) {
                 return_code=OMPI_ERR_OUT_OF_RESOURCE;
@@ -365,7 +365,7 @@ int mca_bmi_sm_add_procs_same_base_addr(
             mca_bmi_sm_component.sm_ctl_header->segment_header.
                 base_shared_mem_flags = ( int *)
                 mca_bmi_sm_component.sm_mpool->mpool_alloc
-                (n_to_allocate*sizeof(int), CACHE_LINE_SIZE);
+                (mca_bmi_sm_component.sm_mpool, n_to_allocate*sizeof(int), CACHE_LINE_SIZE, NULL);
             if ( NULL == mca_bmi_sm_component.sm_ctl_header->segment_header.
                     base_shared_mem_flags ) {
                 return_code=OMPI_ERR_OUT_OF_RESOURCE;
@@ -430,7 +430,7 @@ int mca_bmi_sm_add_procs_same_base_addr(
          */
         my_fifos=( ompi_fifo_t *)
             mca_bmi_sm_component.sm_mpool->mpool_alloc
-            (n_to_allocate*sizeof(ompi_fifo_t), CACHE_LINE_SIZE);
+            (mca_bmi_sm_component.sm_mpool, n_to_allocate*sizeof(ompi_fifo_t), CACHE_LINE_SIZE, NULL);
         if ( NULL == my_fifos ) {
             return_code=OMPI_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;

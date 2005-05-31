@@ -68,7 +68,7 @@ mca_allocator_bucket_t * mca_allocator_bucket_init(mca_allocator_base_module_t *
    *
    */
 void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
-                                  size_t size)
+                                  size_t size, void* user_out)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     /* initialize for the later bit shifts */
@@ -107,7 +107,7 @@ void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
     allocated_size += sizeof(mca_allocator_bucket_segment_head_t);
     /* attempt to get the memory */
     segment_header = (mca_allocator_bucket_segment_head_t *)
-                   mem_options->get_mem_fn(&allocated_size);
+                   mem_options->get_mem_fn(&allocated_size, mem_options->super.user_in, user_out);
     if(NULL == segment_header) {
         /* release the lock */
         OMPI_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock)); 
@@ -148,7 +148,7 @@ void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
   * allocates an aligned region of memory
   */
 void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem, 
-                                        size_t size, size_t alignment)
+                                        size_t size, size_t alignment, void* user_out)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem; 
     int bucket_num = 1;
@@ -168,7 +168,7 @@ void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem,
     bucket_size = size;
     allocated_size = aligned_max_size; 
     /* get some memory */ 
-    ptr = mem_options->get_mem_fn(&allocated_size);
+    ptr = mem_options->get_mem_fn(&allocated_size, mem_options->super.user_in, user_out);
     if(NULL == ptr) {
         return(NULL);
     }
@@ -228,7 +228,7 @@ void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem,
   * function to reallocate the segment of memory
   */
 void * mca_allocator_bucket_realloc(mca_allocator_base_module_t * mem,
-                                    void * ptr, size_t size)
+                                    void * ptr, size_t size, void* user_out)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     /* initialize for later bit shifts */
@@ -249,7 +249,7 @@ void * mca_allocator_bucket_realloc(mca_allocator_base_module_t * mem,
         return(ptr);
     }
     /* we need a new space in memory, so let's get it */
-    ret_ptr = mca_allocator_bucket_alloc((mca_allocator_base_module_t *) mem_options, size);
+    ret_ptr = mca_allocator_bucket_alloc((mca_allocator_base_module_t *) mem_options, size, user_out);
     if(NULL == ret_ptr) {
         return(NULL);
     }
