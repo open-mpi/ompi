@@ -58,7 +58,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name)
         }
     }
     /* if not create it */
-    return mca_mpool_base_module_init(name);;
+    return mca_mpool_base_module_init(name);
 }
 
 

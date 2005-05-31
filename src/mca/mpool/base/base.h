@@ -22,6 +22,7 @@
 #include "ompi_config.h"
 
 #include "class/ompi_list.h"
+#include "class/ompi_rb_tree.h"
 #include "mca/mca.h"
 #include "mca/mpool/mpool.h"
 
@@ -37,6 +38,49 @@ struct mca_mpool_base_selected_module_t {
 typedef struct mca_mpool_base_selected_module_t mca_mpool_base_selected_module_t;
 
 OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
+
+/*
+ * Data structures for the tree of allocated memory
+ */
+
+/**
+ * The maximum number of mpools a chunk of memorry can be registered with
+ */
+#define MCA_MPOOL_BASE_MAX_REG 10
+
+/**
+ * Holds the key for the tree
+ */
+struct mca_mpool_base_key_t
+{
+    void * bottom;          /**< the bottom of the memory range */
+    void * top;             /**< the top of the memory range */
+};
+typedef struct mca_mpool_base_key_t mca_mpool_base_key_t;
+
+/**
+ * Holds a pointer to the mpool the memory is registered with and 
+ * a user pointer for mpool specific information
+ */
+struct mca_mpool_base_reg_mpool_t
+{
+    mca_mpool_base_module_t * mpool; /**< the registered memory pool */
+    void * user;                     /**< user specific information */
+};
+typedef struct mca_mpool_base_reg_mpool_t mca_mpool_base_reg_mpool_t;
+
+/**
+ * Holds all the information about a chunk of registered memory. The whole
+ * structure serves as a value in the tree
+ */
+struct mca_mpool_base_chunk_t
+{
+    ompi_list_item_t super;   /**< the parent class */
+    mca_mpool_base_key_t key; /**< the key which holds the memory pointers */
+    mca_mpool_base_reg_mpool_t mpools[MCA_MPOOL_BASE_MAX_REG]; 
+                              /**< the mpools the memory is registered with */
+};
+typedef struct mca_mpool_base_chunk_t mca_mpool_base_chunk_t;
 
 /*
  * Global functions for MCA: overall mpool open and close
@@ -57,6 +101,8 @@ OMPI_DECLSPEC mca_mpool_base_module_t* mca_mpool_base_module_init(const char* na
 OMPI_DECLSPEC extern int mca_mpool_base_output;
 OMPI_DECLSPEC extern ompi_list_t mca_mpool_base_components;
 OMPI_DECLSPEC extern ompi_list_t mca_mpool_base_modules;
+OMPI_DECLSPEC extern ompi_free_list_t mca_mpool_base_mem_list;
+OMPI_DECLSPEC extern ompi_rb_tree_t mca_mpool_base_tree;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

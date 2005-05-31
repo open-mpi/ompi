@@ -28,7 +28,7 @@ extern "C" {
 struct mca_allocator_base_module_t;
 
 /**
-  * The allocate function typedef for the functrion to be provided by the component.
+  * The allocate function typedef for the function to be provided by the component.
   */
 typedef void* (*mca_allocator_base_module_alloc_fn_t)(struct mca_allocator_base_module_t*, size_t size, size_t align, void* user_out);
  
@@ -130,9 +130,9 @@ typedef struct mca_allocator_base_component_1_0_0_t mca_allocator_base_component
  * Macro for use in components that are of type allocator v1.0.0
  */
 #define MCA_ALLOCATOR_BASE_VERSION_1_0_0 \
-  /* mpool v1.0 is chained to MCA v1.0 */ \
+  /* allocator v1.0 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
-  /* ptl v1.0 */ \
+  /* allocator v1.0 */ \
   "allocator", 1, 0, 0
 
 /**
@@ -143,23 +143,4 @@ OMPI_DECLSPEC extern int mca_allocator_base_output;
 }
 #endif
 #endif /* MCA_ALLOCATOR_H */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -24,6 +24,7 @@
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
 #include "info/info.h"
+#include "mca/mpool/mpool.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Alloc_mem = PMPI_Alloc_mem
@@ -48,10 +49,8 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
                                           FUNC_NAME);
         }
     }
-
-    /* For this release, we're just calling malloc(). */
-
-    *((void **) baseptr) = malloc(size);
+    
+    *((void **) baseptr) = mca_mpool_base_alloc((size_t) size, info);
     if (NULL == *((void **) baseptr)) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_NO_MEM, 
                                       FUNC_NAME);
@@ -61,3 +60,4 @@ int MPI_Alloc_mem(MPI_Aint size, MPI_Info info, void *baseptr)
 
     return MPI_SUCCESS;
 }
+
