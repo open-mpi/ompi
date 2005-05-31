@@ -86,6 +86,8 @@ struct globals_t {
     bool verbose;
     bool exit;
     bool no_wait_for_job_completion;
+    bool by_node;
+    bool by_slot;
     size_t num_procs;
     int exit_status;
     char *hostfile;
@@ -159,6 +161,12 @@ ompi_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', NULL, "map", 1,
       NULL, OMPI_CMD_LINE_TYPE_STRING,
       "Mapping of processes to nodes / CPUs" },
+    { NULL, NULL, NULL, '\0', "bynode", "bynode", 0,
+      &orterun_globals.by_node, OMPI_CMD_LINE_TYPE_BOOL,
+      "Whether to allocate/map processes round-robin by node" },
+    { NULL, NULL, NULL, '\0', "byslot", "byslot", 0,
+      &orterun_globals.by_slot, OMPI_CMD_LINE_TYPE_BOOL,
+      "Whether to allocate/map processes round-robin by slot (the default)" },
 
     /* mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "wdir", "wdir", 1,
@@ -576,6 +584,8 @@ static int init_globals(void)
         false,
         false,
         false,
+        false,
+        true,
         0,
         0,
         NULL,
@@ -606,6 +616,7 @@ static int init_globals(void)
 static int parse_globals(int argc, char* argv[])
 {
     ompi_cmd_line_t cmd_line;
+    int ras, rmaps;
 
     /* Setup and parse the command line */
 
@@ -631,6 +642,23 @@ static int parse_globals(int argc, char* argv[])
 
         /* If someone asks for version, that should be all we do */
         exit(0);
+    }
+
+    /* Allocate and map by node or by slot?  Shortcut for setting 2
+       MCA params. */
+
+    ras = mca_base_param_register_string("ras", "host", "policy", NULL,
+                                         "slot");
+    rmaps = mca_base_param_register_string("rmaps", "round_robin", "policy",
+                                           NULL, "slot");
+    if (orterun_globals.by_node) {
+        orterun_globals.by_slot = false;
+        mca_base_param_set_string(ras, "node");
+        mca_base_param_set_string(rmaps, "node");
+    } else {
+        orterun_globals.by_slot = true;
+        mca_base_param_set_string(ras, "slot");
+        mca_base_param_set_string(rmaps, "slot");
     }
 
     /* If we don't want to wait, we don't want to wait */

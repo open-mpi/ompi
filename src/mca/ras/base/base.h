@@ -61,7 +61,10 @@ ORTE_DECLSPEC int orte_ras_base_close(void);
 ORTE_DECLSPEC orte_ras_base_module_t* orte_ras_base_select(const char*);
 ORTE_DECLSPEC int orte_ras_base_allocate(orte_jobid_t job);
 ORTE_DECLSPEC int orte_ras_base_deallocate(orte_jobid_t job);
-ORTE_DECLSPEC int orte_ras_base_allocate_nodes(orte_jobid_t jobid, ompi_list_t* nodes);
+ORTE_DECLSPEC int orte_ras_base_allocate_nodes_by_node(orte_jobid_t jobid, 
+                                                       ompi_list_t* nodes);
+ORTE_DECLSPEC int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid, 
+                                                       ompi_list_t* nodes);
 
 /*
  * globals that might be needed

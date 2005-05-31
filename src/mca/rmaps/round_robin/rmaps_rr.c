@@ -31,10 +31,75 @@
 
 
 /*
- * Create a default mapping for the application.
+ * Local variable
  */
+static ompi_list_item_t *cur_node_item = NULL;
 
-static int orte_rmaps_rr_map_app(
+
+static int claim_slot(orte_rmaps_base_map_t *map, 
+                      ompi_list_t *nodes,
+                      orte_ras_base_node_t *current_node,
+                      orte_jobid_t jobid, orte_vpid_t vpid, int proc_index)
+{
+    orte_rmaps_base_proc_t *proc;
+    orte_process_name_t *proc_name;
+    orte_rmaps_base_node_t *rmaps_node;
+    int rc;
+    
+    /* create objects */
+    rmaps_node = OBJ_NEW(orte_rmaps_base_node_t);
+    if (NULL == rmaps_node) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    rmaps_node->node_name = strdup(current_node->node_name);
+    
+    proc = OBJ_NEW(orte_rmaps_base_proc_t);
+    if (NULL == proc) {
+        OBJ_RELEASE(rmaps_node);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* create the process name as an offset from the vpid-start */
+    rc = orte_ns.create_process_name(&proc_name, current_node->node_cellid,
+                                     jobid, vpid);
+    if (rc != ORTE_SUCCESS) {
+        OBJ_RELEASE(proc);
+        OBJ_RELEASE(rmaps_node);
+        return rc;
+    }
+    proc->proc_node = rmaps_node;
+    proc->proc_name = *proc_name;
+    proc->proc_rank = vpid;
+    orte_ns.free_name(&proc_name);
+    OBJ_RETAIN(proc); /* bump reference count for the node */
+    ompi_list_append(&rmaps_node->node_procs, &proc->super);
+    map->procs[proc_index] = proc;
+    
+    /* Save this node on the map */
+    ompi_list_append(&map->nodes, &rmaps_node->super);
+    
+    /* Decrease the number of slots available for allocation
+       on this node */
+    --current_node->node_slots_alloc;
+    if (current_node->node_slots_alloc == 0) {
+        ompi_list_remove_item(nodes, (ompi_list_item_t*) current_node);
+        OBJ_RELEASE(current_node);
+    }
+
+    return ORTE_SUCCESS;
+}
+
+
+/*
+ * Create a default mapping for the application, scheduling round
+ * robin by node.
+ *
+ * NOTE: This function assumes that the allocator has already setup
+ * the list of nodes such that the sum of the node_slots_alloc fields
+ * from all entries will be the total number of processes in all the
+ * apps.
+ */
+static int map_app_by_node(
     orte_app_context_t* app, 
     orte_rmaps_base_map_t* map,
     orte_jobid_t jobid,
@@ -42,61 +107,164 @@ static int orte_rmaps_rr_map_app(
     int rank,
     ompi_list_t* nodes)
 {
-    /* build a nodelist and assign process slots in order */
+    int rc;
     size_t num_alloc = 0;
     size_t proc_index = 0;
-    ompi_list_item_t* item;
+    ompi_list_item_t *start, *next;
+    orte_ras_base_node_t *node;
+    bool did_alloc;
 
-    item =  ompi_list_get_first(nodes);
-    while(item != ompi_list_get_end(nodes)) {
-        ompi_list_item_t* next = ompi_list_get_next(item);
-        orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
-        orte_rmaps_base_node_t* rmaps_node = OBJ_NEW(orte_rmaps_base_node_t);
-        size_t i, num_procs;
-        if(NULL == rmaps_node) {
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        rmaps_node->node_name = strdup(node->node_name);
+    /* Note that cur_node_item already points to the Right place in
+       the node list to start looking (i.e., if this is the first time
+       through, it'll point to the first item.  If this is not the
+       first time through -- i.e., we have multiple app contexts --
+       it'll point to where we left off last time.). 
 
-        if(num_alloc + node->node_slots_alloc >= (size_t)app->num_procs) {
-            num_procs = app->num_procs - num_alloc;
-        } else {
-            num_procs = node->node_slots_alloc;
-        }
+       But do a bozo check to ensure that we don't have a empty node
+       list. */
+    if (ompi_list_get_end(nodes) == cur_node_item) {
+        return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+    start = cur_node_item;
 
-        /* assign the next num_procs to this node */
-        for(i=0; i<num_procs; i++) {
-            orte_rmaps_base_proc_t* proc = OBJ_NEW(orte_rmaps_base_proc_t);
-            orte_process_name_t* proc_name;
-            int rc;
+    /* This loop continues until all procs have been mapped or we run
+       out of resources.  There are two definitions of "run out of
+       resources":
 
-            /* create the process name as an offset from the vpid-start */
-            rc = orte_ns.create_process_name(&proc_name, node->node_cellid, jobid, vpid_start+rank);
-            if(rc != ORTE_SUCCESS) {
-                OBJ_RELEASE(proc);
+       1. All nodes have node_slots processes mapped to them
+       2. All nodes have node_slots_max processes mapped to them
+
+       We first map until condition #1 is met.  If there are still
+       processes that haven't been mapped yet, then we continue until
+       condition #2 is met.  If we still have processes that haven't
+       been mapped yet, then it's an "out of resources" error. */
+    did_alloc = false;
+    while (num_alloc < app->num_procs) {
+        node = (orte_ras_base_node_t*) cur_node_item;
+        next = ompi_list_get_next(cur_node_item);
+
+        /* If we have an available slot on this node, claim it */
+        if (node->node_slots_alloc > 0) {
+            fflush(stdout);
+            rc = claim_slot(map, nodes, node, jobid, vpid_start + rank,
+                            proc_index);
+            if (ORTE_SUCCESS != rc) {
                 return rc;
             }
-            proc->proc_node = rmaps_node;
-            proc->proc_name = *proc_name;
-            proc->proc_rank = rank;
-            rank++;
-            orte_ns.free_name(&proc_name);
-            OBJ_RETAIN(proc); /* bump reference count for the node */
-            ompi_list_append(&rmaps_node->node_procs, &proc->super);
-            map->procs[proc_index++] = proc;
+            ++rank;
+            ++proc_index;
+
+            /* Save the fact that we successfully allocated a process
+               to a node in this round */
+            did_alloc = true;
+
+            /* Increase the number of procs allocated and see if we're
+               done */
+            ++num_alloc;
         }
 
-        node->node_slots_alloc -= num_procs;
-        if(node->node_slots_alloc == 0) {
-            ompi_list_remove_item(nodes,item);
-            OBJ_RELEASE(item);
+        /* Move on to the next node */
+
+        cur_node_item = next;
+        if (ompi_list_get_end(nodes) == cur_node_item) {
+            cur_node_item = ompi_list_get_first(nodes);
         }
-        num_alloc += num_procs;
-        if(num_alloc == (size_t)app->num_procs)
+
+        /* Are we done? */
+        if (num_alloc == app->num_procs) {
             break;
-        item = next;
-        ompi_list_append(&map->nodes, &rmaps_node->super);
+        }
+
+        /* Double check that the list is not empty */
+        if (ompi_list_get_end(nodes) == cur_node_item) {
+            return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
+        }
+
+        /* If we looped around without allocating any new processes,
+           then we're full */
+        if (start == cur_node_item) {
+            if (!did_alloc) {
+                return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
+            }
+        }
     } 
+
+    map->num_procs = num_alloc;
+    return ORTE_SUCCESS;
+}
+   
+
+/*
+ * Create a default mapping for the application, scheduling one round
+ * robin by slot.
+ *
+ * NOTE: This function assumes that the allocator has already setup
+ * the list of nodes such that the sum of the node_slots_alloc fields
+ * from all entries will be the total number of processes in all the
+ * apps.
+ */
+static int map_app_by_slot(
+    orte_app_context_t* app, 
+    orte_rmaps_base_map_t* map,
+    orte_jobid_t jobid,
+    orte_vpid_t vpid_start,
+    int rank,
+    ompi_list_t* nodes)
+{
+    int rc;
+    size_t num_alloc = 0;
+    size_t proc_index = 0;
+    ompi_list_item_t *next;
+    orte_ras_base_node_t *node;
+
+    /* Note that cur_node_item already points to the Right place in
+       the node list to start looking (i.e., if this is the first time
+       through, it'll point to the first item.  If this is not the
+       first time through -- i.e., we have multiple app contexts --
+       it'll point to where we left off last time.). 
+
+       But do a bozo check to ensure that we don't have a empty node
+       list. */
+    if (ompi_list_get_end(nodes) == cur_node_item) {
+        return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
+    }
+
+    /* Go through all nodes and take up to node_slots_alloc slots and
+       map it to this job */
+
+    while (ompi_list_get_end(nodes) != cur_node_item &&
+           num_alloc < app->num_procs) {
+        node = (orte_ras_base_node_t*) cur_node_item;
+        next = ompi_list_get_next(cur_node_item);
+
+        /* If we have available slots on this node, claim it */
+        while (node->node_slots_alloc > 0 &&
+               num_alloc < app->num_procs) {
+            fflush(stdout);
+            rc = claim_slot(map, nodes, node, jobid, vpid_start + rank,
+                            proc_index);
+            if (ORTE_SUCCESS != rc) {
+                return rc;
+            }
+            ++rank;
+            ++proc_index;
+
+            /* Increase the number of procs allocated and see if we're
+               done */
+            ++num_alloc;
+        }
+
+        /* Move on to the next node */
+
+        cur_node_item = next;
+    } 
+
+    /* Did we allocate everything? */
+
+    if (num_alloc < app->num_procs) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
     map->num_procs = num_alloc;
     return ORTE_SUCCESS;
 }
@@ -117,10 +285,18 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
     size_t num_procs = 0;
     int rank = 0;
     int rc = ORTE_SUCCESS;
+    bool bynode = true;
 
     /* query for the application context and allocated nodes */
     if(ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(jobid, &context, &num_context))) {
         return rc;
+    }
+
+    /* which policy should we use? */
+    if (0 == strcmp(mca_rmaps_round_robin_component.schedule_policy, "node")) {
+        bynode = true;
+    } else {
+        bynode = false;
     }
 
     /* total number of procs required */
@@ -143,6 +319,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
 
     /* construct a default mapping */
     OBJ_CONSTRUCT(&mapping, ompi_list_t);
+    cur_node_item = ompi_list_get_first(&nodes);
     for(i=0; i<num_context; i++) {
         orte_app_context_t* app = context[i];
         orte_rmaps_base_map_t* map = OBJ_NEW(orte_rmaps_base_map_t);
@@ -153,12 +330,17 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
         ompi_list_append(&mapping, &map->super);
 
         map->app = app;
-        map->procs = malloc(sizeof(orte_rmaps_base_proc_t*)*app->num_procs);
+        map->procs = malloc(sizeof(orte_rmaps_base_proc_t*) * app->num_procs);
         if(NULL == map->procs) {
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto cleanup;
         }
-        if(ORTE_SUCCESS != (rc = orte_rmaps_rr_map_app(app,map,jobid,vpid_start,rank,&nodes))) {
+        if (bynode) {
+            rc = map_app_by_node(app, map, jobid, vpid_start, rank, &nodes);
+        } else {
+            rc = map_app_by_slot(app, map, jobid, vpid_start, rank, &nodes);
+        }
+        if (ORTE_SUCCESS != rc) {
             goto cleanup;
         }
         rank += app->num_procs;
