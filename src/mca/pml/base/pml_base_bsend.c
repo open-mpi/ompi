@@ -129,7 +129,7 @@ int mca_pml_base_bsend_attach(void* addr, int size)
     }
 
     /* try to create an instance of the allocator - to determine thread safety level */
-    mca_pml_bsend_allocator = mca_pml_bsend_allocator_component->allocator_init(thread_safe, mca_pml_bsend_alloc_segment, NULL);
+    mca_pml_bsend_allocator = mca_pml_bsend_allocator_component->allocator_init(thread_safe, mca_pml_bsend_alloc_segment, NULL, NULL);
     if(NULL == mca_pml_bsend_allocator) {
         OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
         return OMPI_ERR_BUFFER;
@@ -204,7 +204,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
 
         /* allocate a buffer to hold packed message */
         sendreq->req_addr = mca_pml_bsend_allocator->alc_alloc(
-            mca_pml_bsend_allocator, sendreq->req_bytes_packed, 0);
+            mca_pml_bsend_allocator, sendreq->req_bytes_packed, 0, NULL);
         if(NULL == sendreq->req_addr) {
             /* release resources when request is freed */
             sendreq->req_base.req_pml_complete = true;

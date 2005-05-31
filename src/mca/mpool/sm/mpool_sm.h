@@ -29,36 +29,50 @@ extern "C" {
 #endif
 
 struct mca_mpool_sm_component_t {
-    mca_mpool_base_component_t super;
-    mca_allocator_base_module_t* sm_allocator;
-    char*  sm_allocator_name;
-    size_t sm_size;
-    struct mca_mpool_sm_mmap_t *sm_mmap;
+  mca_mpool_base_component_t super;
+  /*      mca_allocator_base_module_t* sm_allocator; */
+  char*  sm_allocator_name;
+  size_t sm_size;
+  /*      struct mca_mpool_sm_mmap_t *sm_mmap; */
 };
 typedef struct mca_mpool_sm_component_t mca_mpool_sm_component_t;
 
 OMPI_COMP_EXPORT extern mca_mpool_sm_component_t mca_mpool_sm_component;
-OMPI_COMP_EXPORT extern mca_mpool_base_module_t mca_mpool_sm_module;
+/*  OMPI_COMP_EXPORT extern mca_mpool_base_module_t mca_mpool_sm_module; */
+
+
+
+struct mca_mpool_sm_module_t {
+  mca_mpool_base_module_t super;
+  mca_allocator_base_module_t * sm_allocator; 
+  struct mca_mpool_sm_mmap_t *sm_mmap; 
+}; typedef struct mca_mpool_sm_module_t mca_mpool_sm_module_t; 
+
+/* 
+ *  Initializes the mpool module. 
+ */ 
+void mca_mpool_sm_module_init(mca_mpool_sm_module_t* mpool); 
+
 
 /*
  *  Returns base address of shared memory mapping.
  */
-void* mca_mpool_sm_base(void);
+void* mca_mpool_sm_base(mca_mpool_base_module_t*);
 
 /**
   *  Allocate block of shared memory.
   */
-void* mca_mpool_sm_alloc(size_t size, size_t align);
+void* mca_mpool_sm_alloc( mca_mpool_base_module_t* mpool, size_t size, size_t align, void* user_out);
 
 /**
   * realloc function typedef
   */
-void* mca_mpool_sm_realloc(void* addr, size_t size);
+void* mca_mpool_sm_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size, void* user_out);
 
 /**
   * free function typedef
   */
-void mca_mpool_sm_free(void *);
+void mca_mpool_sm_free(mca_mpool_base_module_t* mpool, void *);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -66,3 +80,18 @@ void mca_mpool_sm_free(void *);
 #endif
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

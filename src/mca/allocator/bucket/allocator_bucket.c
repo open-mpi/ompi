@@ -23,14 +23,16 @@
 struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
-    mca_allocator_base_component_segment_free_fn_t segment_free);
+    mca_allocator_base_component_segment_free_fn_t segment_free, 
+    void* user
+    );
 
 int mca_allocator_bucket_module_open(void);
 
 int mca_allocator_bucket_module_close(void);
 
 void * mca_allocator_bucket_alloc_wrapper(struct mca_allocator_base_module_t* allocator,
-                                          size_t size, size_t align);
+                                          size_t size, size_t align, void* user_out);
 static int mca_allocator_num_buckets;
 
 
@@ -45,7 +47,8 @@ int mca_allocator_bucket_finalize(struct mca_allocator_base_module_t* allocator)
 struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
-    mca_allocator_base_component_segment_free_fn_t segment_free)
+    mca_allocator_base_component_segment_free_fn_t segment_free, 
+    void* user_in)
 {
     size_t alloc_size = sizeof(mca_allocator_bucket_t);
     mca_allocator_bucket_t * retval;
@@ -64,7 +67,7 @@ struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     allocator->super.alc_free =  mca_allocator_bucket_free;
     allocator->super.alc_compact = mca_allocator_bucket_cleanup;
     allocator->super.alc_finalize = mca_allocator_bucket_finalize;
-
+    allocator->super.user_in = user_in; 
     return((mca_allocator_base_module_t *) allocator);
 }
 
@@ -80,12 +83,12 @@ int mca_allocator_bucket_module_close(void) {
 }
 
 void * mca_allocator_bucket_alloc_wrapper(struct mca_allocator_base_module_t* allocator,
-                                          size_t size, size_t align)
+                                          size_t size, size_t align, void* user_out)
 {
     if(0 == align){
-        return(mca_allocator_bucket_alloc(allocator, size));
+        return(mca_allocator_bucket_alloc(allocator, size, user_out));
     }
-    return(mca_allocator_bucket_alloc_align(allocator, size, align));
+    return(mca_allocator_bucket_alloc_align(allocator, size, align, user_out));
 }    
 
 

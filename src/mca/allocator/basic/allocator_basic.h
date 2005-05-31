@@ -73,7 +73,8 @@ int mca_allocator_basic_component_close(void);
 mca_allocator_base_module_t* mca_allocator_basic_component_init(
     bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
-    mca_allocator_base_component_segment_free_fn_t segment_free
+    mca_allocator_base_component_segment_free_fn_t segment_free, 
+    void* user_in
 );
                                                                                                  
 /**
@@ -90,7 +91,8 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
     void * mca_allocator_basic_alloc(
         mca_allocator_base_module_t * mem, 
         size_t size, 
-        size_t align);
+        size_t align, 
+        void* user_out);
 
 /**
    * Attempts to resize the passed region of memory into a larger or a smaller
@@ -109,7 +111,8 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
     void * mca_allocator_basic_realloc(
         mca_allocator_base_module_t * mem, 
         void * ptr, 
-        size_t size);
+        size_t size, 
+        void* user_out);
 
 /**
    * Frees the passed region of memory
@@ -158,3 +161,10 @@ OMPI_COMP_EXPORT extern mca_allocator_base_component_t mca_allocator_basic_compo
 #endif
 
 #endif /* ALLOCATOR_BUCKET_ALLOC_H */
+
+
+
+
+
+
+
