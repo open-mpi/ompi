@@ -69,9 +69,22 @@ static  int orte_rmaps_round_robin_param_register_int(
     const char* param_name,
     int default_value)
 {
-    int id = mca_base_param_register_int("rmaps","round_robin",param_name,NULL,default_value);
+    int id = mca_base_param_register_int("rmaps","round_robin",
+                                         param_name,NULL,default_value);
     int param_value = default_value;
     mca_base_param_lookup_int(id,&param_value);
+    return param_value;
+}
+ 
+
+static char *orte_rmaps_round_robin_param_register_string(
+    const char* param_name,
+    char *default_value)
+{
+    int id = mca_base_param_register_string("rmaps","round_robin",
+                                            param_name,NULL,default_value);
+    char *param_value = default_value;
+    mca_base_param_lookup_string(id,&param_value);
     return param_value;
 }
  
@@ -81,8 +94,12 @@ static  int orte_rmaps_round_robin_param_register_int(
   */
 static int orte_rmaps_round_robin_open(void)
 {
-    mca_rmaps_round_robin_component.debug = orte_rmaps_round_robin_param_register_int("debug",1);
-    mca_rmaps_round_robin_component.priority = orte_rmaps_round_robin_param_register_int("priority",1);
+    mca_rmaps_round_robin_component.debug = 
+        orte_rmaps_round_robin_param_register_int("debug", 1);
+    mca_rmaps_round_robin_component.priority = 
+        orte_rmaps_round_robin_param_register_int("priority", 1);
+    mca_rmaps_round_robin_component.schedule_policy = 
+        orte_rmaps_round_robin_param_register_string("policy", "slot");
     return ORTE_SUCCESS;
 }
 

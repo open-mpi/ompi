@@ -39,8 +39,17 @@ static int orte_ras_host_allocate(orte_jobid_t jobid)
     if(ORTE_SUCCESS != (rc = orte_ras_base_node_query(&nodes))) {
         goto cleanup;
     }
-    if(ORTE_SUCCESS != (rc = orte_ras_base_allocate_nodes(jobid, &nodes))) {
-        goto cleanup;
+
+    if (0 == strcmp(mca_ras_host_component.schedule_policy, "node")) {
+        if (ORTE_SUCCESS != 
+            (rc = orte_ras_base_allocate_nodes_by_node(jobid, &nodes))) {
+            goto cleanup;
+        }
+    } else {
+        if (ORTE_SUCCESS != 
+            (rc = orte_ras_base_allocate_nodes_by_slot(jobid, &nodes))) {
+            goto cleanup;
+        }
     }
 
 cleanup:
