@@ -427,7 +427,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
     for (i = 0; i < num_values; i++) {
         orte_gpr_value_t* value = values[i];
         orte_process_name_t name;
-        size_t pid = 0;
+        pid_t pid = 0;
         size_t rank = 0;
         bool rank_found=false;
         char* node_name = NULL;
@@ -441,7 +441,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_PID_KEY) == 0) {
-                pid = keyval->value.size;
+                pid = keyval->value.pid;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
@@ -462,7 +462,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
         if (rank_found && exit_status_set) {
             proc_infos[rank].exit_status = exit_status;
         }
- 
+
         if (WIFSIGNALED(exit_status) && rank_found && 
             !proc_infos[rank].reported) { 
             proc_infos[rank].reported = true;
