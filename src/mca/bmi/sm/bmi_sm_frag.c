@@ -14,13 +14,13 @@ static inline void mca_bmi_sm_frag_constructor(mca_bmi_sm_frag_t* frag)
 
 static void mca_bmi_sm_frag1_constructor(mca_bmi_sm_frag_t* frag)
 {
-    frag->size = mca_bmi_sm_component.first_fragment_size;
+    frag->size = mca_bmi_sm_component.eager_limit;
     mca_bmi_sm_frag_constructor(frag);
 }
 
 static void mca_bmi_sm_frag2_constructor(mca_bmi_sm_frag_t* frag)
 {
-    frag->size = mca_bmi_sm_component.max_fragment_size;
+    frag->size = mca_bmi_sm_component.max_frag_size;
     mca_bmi_sm_frag_constructor(frag);
 }
 

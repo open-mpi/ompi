@@ -31,7 +31,7 @@ extern "C" {
 
 typedef enum {
     MCA_PML_OB1_SR_INIT,
-    MCA_PML_OB1_SR_WAIT,
+    MCA_PML_OB1_SR_START,
     MCA_PML_OB1_SR_SEND,
     MCA_PML_OB1_SR_PUT,
     MCA_PML_OB1_SR_COMPLETE
@@ -43,7 +43,7 @@ struct mca_pml_ob1_send_request_t {
     mca_pml_ob1_proc_t* req_proc;
     mca_pml_ob1_endpoint_t* req_endpoint;
     mca_pml_ob1_send_request_state_t req_state;
-    ompi_ptr_t req_peer;
+    ompi_ptr_t req_recv;
     int32_t req_lock;
     size_t req_pending;
     size_t req_offset;
@@ -85,6 +85,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     sendmode,                                                              \
     persistent)                                                            \
 {                                                                          \
+    sendreq->req_state = MCA_PML_OB1_SR_INIT;                              \
     MCA_PML_BASE_SEND_REQUEST_INIT(&sendreq->req_send,                     \
         buf,                                                               \
         count,                                                             \
@@ -108,6 +109,8 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     /* select next endpoint */                                                            \
     endpoint = mca_pml_ob1_ep_array_get_next(&proc->bmi_first);                           \
     sendreq->req_offset = 0;                                                              \
+    sendreq->req_pending = 0;                                                             \
+    sendreq->req_state = MCA_PML_OB1_SR_START;                                            \
     sendreq->req_send.req_base.req_ompi.req_complete = false;                             \
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
     sendreq->req_send.req_base.req_sequence = OMPI_THREAD_ADD32(&proc->proc_sequence,1);  \
@@ -128,24 +131,6 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 /*
  * Advance a request
  */
-
-#define MCA_PML_OB1_SEND_REQUEST_ADVANCE(sendreq)
-
-#if 0
-    switch(sendreq->req_state) {                                           
-        case MCA_PML_OB1_SR_WAIT:                                          
-            mca_pml_ob1_send_request_wait(sendreq);                        
-            break;                                                         
-        case MCA_PML_OB1_SR_SEND:                                          
-            mca_pml_ob1_send_request_send(sendreq);                        
-            break;                                                         
-        case MCA_PML_OB1_SR_PUT:                                           
-            mca_pml_ob1_send_request_put(sendreq);                         
-            break;                                                         
-        default:                                                           
-            break;                                                         
-    }                                                                      
-#endif
 
 
 #define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                     \
@@ -176,26 +161,10 @@ int mca_pml_ob1_send_request_start_copy(
     mca_pml_ob1_send_request_t* sendreq,
     mca_pml_ob1_endpoint_t* endpoint);
 
-
-/**
- * 
- */
-
-int mca_pml_ob1_send_request_acked(
-    mca_bmi_base_module_t* bmi,
-    struct mca_pml_ob1_ack_hdr_t* hdr);
-
-
 /**
  *
  */
-int mca_pml_ob1_send_request_send(
-    mca_pml_ob1_send_request_t* sendreq);
-
-/**
- *
- */
-int mca_pml_ob1_send_request_put(
+int mca_pml_ob1_send_request_schedule(
     mca_pml_ob1_send_request_t* sendreq);
 
 #if defined(c_plusplus) || defined(__cplusplus)

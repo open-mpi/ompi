@@ -35,8 +35,8 @@ struct mca_pml_ob1_endpoint_t {
     int    bmi_weight;                            /**< BMI weight for scheduling */
     int    bmi_flags;                             /**< support for put/get? */
     size_t bmi_eager_limit;                       /**< BMI eager limit */
-    size_t bmi_min_seg_size;                      /**< BMI min segment size */
-    size_t bmi_max_seg_size;                      /**< BMI max segment size */
+    size_t bmi_min_frag_size;                     /**< BMI min fragment size */
+    size_t bmi_max_frag_size;                     /**< BMI max fragment size */
     struct mca_bmi_base_module_t *bmi;            /**< BMI module */
     struct mca_bmi_base_endpoint_t* bmi_endpoint; /**< BMI addressing info */
     struct mca_bmi_base_descriptor_t* bmi_cache;

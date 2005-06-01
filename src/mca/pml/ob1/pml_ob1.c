@@ -28,6 +28,7 @@
 #include "pml_ob1_comm.h"
 #include "pml_ob1_proc.h"
 #include "pml_ob1_hdr.h"
+#include "pml_ob1_recvfrag.h"
 
 
 mca_pml_ob1_t mca_pml_ob1 = {
@@ -135,7 +136,7 @@ int mca_pml_ob1_add_bmis()
         }
 
         /* setup callback for receive */
-        rc = bmi->bmi_register(bmi, MCA_BMI_TAG_PML, mca_pml_ob1_recv_callback, NULL);
+        rc = bmi->bmi_register(bmi, MCA_BMI_TAG_PML, mca_pml_ob1_recv_frag_callback, NULL);
         if(OMPI_SUCCESS != rc)
             return rc;
 
@@ -250,14 +251,19 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                     }
                 }
                
-                /* cache the ob1 on the proc */
+                /* cache the endpoint on the proc */
                 endpoint = mca_pml_ob1_ep_array_insert(&proc_pml->bmi_next);
                 endpoint->bmi = bmi;
+                endpoint->bmi_eager_limit = bmi->bmi_eager_limit;
+                endpoint->bmi_min_frag_size = bmi->bmi_min_frag_size;
+                endpoint->bmi_max_frag_size = bmi->bmi_max_frag_size;
                 endpoint->bmi_cache = NULL;
                 endpoint->bmi_endpoint = bmi_endpoints[p];
                 endpoint->bmi_weight = 0;
                 endpoint->bmi_alloc = bmi->bmi_alloc;
                 endpoint->bmi_free = bmi->bmi_free;
+                endpoint->bmi_prepare_src = bmi->bmi_prepare_src;
+                endpoint->bmi_prepare_dst = bmi->bmi_prepare_dst;
                 endpoint->bmi_send = bmi->bmi_send;
                 endpoint->bmi_put = bmi->bmi_put;
                 endpoint->bmi_get = bmi->bmi_get;

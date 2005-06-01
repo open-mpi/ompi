@@ -80,10 +80,8 @@ struct mca_bmi_sm_component_t {
     char* sm_mpool_name;               /**< name of shared memory pool module */
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
     void* sm_mpool_base;               /**< base address of shared memory pool */
-    size_t first_fragment_size;        /**< first fragment size */
-    size_t max_fragment_size;          /**< maximum (second and
-                                             beyone) fragment size */
-    size_t fragment_alignment;         /**< fragment alignment */
+    size_t eager_limit;                /**< first fragment size */
+    size_t max_frag_size;              /**< maximum (second and beyone) fragment size */
     ompi_mutex_t sm_lock;
     char* sm_resouce_ctl_file;         /**< name of shared memory file used 
                                             to coordinate resource usage */

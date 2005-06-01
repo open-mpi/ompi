@@ -123,13 +123,10 @@ int mca_bmi_sm_component_open(void)
         mca_bmi_sm_param_register_int("sm_extra_procs", -1);
     mca_bmi_sm_component.sm_mpool_name =
         mca_bmi_sm_param_register_string("mpool", "sm");
-    mca_bmi_sm_component.first_fragment_size =
-        mca_bmi_sm_param_register_int("first_fragment_size", 1024);
-    mca_bmi_sm_component.max_fragment_size =
-        mca_bmi_sm_param_register_int("max_fragment_size", 8*1024);
-    mca_bmi_sm_component.fragment_alignment =
-        mca_bmi_sm_param_register_int("fragment_alignment",
-                CACHE_LINE_SIZE);
+    mca_bmi_sm_component.eager_limit =
+        mca_bmi_sm_param_register_int("eager_limit", 1024);
+    mca_bmi_sm_component.max_frag_size =
+        mca_bmi_sm_param_register_int("max_frag_size", 8*1024);
     mca_bmi_sm_component.size_of_cb_queue =
         mca_bmi_sm_param_register_int("size_of_cb_queue", 128);
     mca_bmi_sm_component.cb_lazy_free_freq =
@@ -271,9 +268,9 @@ mca_bmi_base_module_t** mca_bmi_sm_component_init(
 
     /* set scheduling parameters */
     for( i=0 ; i < 2 ; i++ ) {
-        mca_bmi_sm[i].super.bmi_first_frag_size=mca_bmi_sm_component.first_fragment_size;
-        mca_bmi_sm[i].super.bmi_min_frag_size=mca_bmi_sm_component.max_fragment_size;
-        mca_bmi_sm[i].super.bmi_max_frag_size=mca_bmi_sm_component.max_fragment_size;
+        mca_bmi_sm[i].super.bmi_eager_limit=mca_bmi_sm_component.eager_limit;
+        mca_bmi_sm[i].super.bmi_min_frag_size=mca_bmi_sm_component.max_frag_size;
+        mca_bmi_sm[i].super.bmi_max_frag_size=mca_bmi_sm_component.max_frag_size;
         mca_bmi_sm[i].super.bmi_exclusivity=100;  /* always use this ptl */
         mca_bmi_sm[i].super.bmi_latency=100;      /* lowest latency */
         mca_bmi_sm[i].super.bmi_bandwidth=900; /* not really used now since exclusivity is set to 100 */
