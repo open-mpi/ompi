@@ -218,6 +218,11 @@ static int orte_pls_fork_proc(
         free(param);
         free(uri);
 
+        /* use same nodename as the starting daemon (us) */
+        param = mca_base_param_environ_variable("orte", "base", "nodename");
+        ompi_setenv(param, orte_system_info.nodename, true, &environ_copy);
+        free(param);
+
         /* push name into environment */
         orte_ns_nds_env_put(&proc->proc_name, vpid_start, vpid_range, 
                             &environ_copy);

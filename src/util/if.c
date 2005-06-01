@@ -622,6 +622,13 @@ ompi_ifislocal(char *hostname)
 {
     char addrname[ADDRLEN - 1];
     int ret;
+    struct hostent *h;
+
+    /* ompi_ifaddrtoname will complain (rightly) if hostname is not
+       resolveable.  check to make sure it's resolveable.  If not,
+       definitely not local... */
+    h = gethostbyname(hostname);
+    if (NULL == h) return false;
 
     ret = ompi_ifaddrtoname(hostname, addrname, ADDRLEN);
     if (OMPI_SUCCESS == ret) return true;
