@@ -33,6 +33,8 @@
 #include "mca/errmgr/errmgr.h"
 #include "util/output.h"
 #include "util/printf.h"
+#include "mca/base/mca_base_param.h"
+
 
 #include "util/sys_info.h"
 
@@ -92,7 +94,10 @@ int orte_sys_info(void)
     } else {
         orte_system_info.sysname = strdup(sys_info.sysname);
         if (NULL == orte_system_info.nodename) {
-            orte_system_info.nodename = strdup(sys_info.nodename);
+            /* make sure we weren't given a nodename by environment */
+            int id = mca_base_param_register_string("orte", "base", "nodename",
+                                                    NULL, sys_info.nodename);
+            mca_base_param_lookup_string(id, &(orte_system_info.nodename));
         }
         orte_system_info.release = strdup(sys_info.release);
         orte_system_info.version = strdup(sys_info.version);
