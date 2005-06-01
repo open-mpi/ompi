@@ -74,7 +74,9 @@ int orte_iof_base_flush(void)
             item != ompi_list_get_end(&orte_iof_base.iof_endpoints);
             item =  ompi_list_get_next(item)) {
             orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
-            if(orte_iof_base_endpoint_pending(endpoint)) {
+            /* BWB - XXX - FIXME - need to remove the ep_mode test -
+               Tim looking at it */
+            if(endpoint->ep_mode == ORTE_IOF_SINK && orte_iof_base_endpoint_pending(endpoint)) {
                 pending++;
             }
         }
