@@ -34,9 +34,10 @@ extern "C" {
  */
 struct mca_pml_proc_t {
    ompi_object_t super;
-   ompi_proc_t *proc_ompi;              /**< back-pointer to ompi_proc_t */
-   ompi_mutex_t proc_lock;              /**< lock to protect against concurrent access */
-   volatile uint32_t proc_sequence;     /**< sequence number for send */
+   ompi_proc_t *proc_ompi;             /**< back-pointer to ompi_proc_t */
+   ompi_mutex_t proc_lock;             /**< lock to protect against concurrent access */
+   int proc_flags;                     /**< prefered method of accessing this peer */
+   volatile uint32_t proc_sequence;    /**< sequence number for send */
    mca_pml_ob1_ep_array_t bmi_first;   /**< array of endpoints to use for first fragments */
    mca_pml_ob1_ep_array_t bmi_next;    /**< array of endpoints to use for remaining fragments */
 };

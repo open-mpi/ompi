@@ -55,7 +55,8 @@ struct mca_pml_ob1_t {
     int free_list_num;   /* initial size of free list */
     int free_list_max;   /* maximum size of free list */
     int free_list_inc;   /* number of elements to grow free list */
-    int poll_iterations; /* number of iterations to poll for completion */
+    size_t send_pipeline_depth;
+    size_t recv_pipeline_depth;
 
     /* lock queue access */
     ompi_mutex_t lock;
@@ -66,6 +67,7 @@ struct mca_pml_ob1_t {
 
     /* list of pending send requests */
     ompi_list_t send_pending;
+    ompi_list_t acks_pending;
 };
 typedef struct mca_pml_ob1_t mca_pml_ob1_t; 
 
@@ -203,7 +205,6 @@ extern void mca_pml_ob1_recv_callback(
     mca_bmi_base_descriptor_t* descriptor,
     void* cbdata
 );
-                                                                                                     
 
 extern int mca_pml_ob1_progress(void);
 

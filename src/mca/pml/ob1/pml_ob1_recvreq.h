@@ -31,6 +31,13 @@ struct  mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
     size_t req_bytes_received;
     size_t req_bytes_delivered;
+
+    /* note that we allocate additional space for the recv
+     * request to increase the array size based on run-time
+     * parameters for the pipeline depth. So... this MUST be
+     * the last element of this struct.
+    */
+    mca_bmi_base_descriptor_t *req_pipeline[1];
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
@@ -119,7 +126,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
  * @param request  Receive request.
  * @return         OMPI_SUCESS or error status on failure.
  */
-#define MCA_PML_OB1_RECV_REQUEST_START(request)                                  \
+#define MCA_PML_OB1_RECV_REQUEST_START(request)                                   \
 {                                                                                 \
     /* init/re-init the request */                                                \
     (request)->req_bytes_received = 0;                                            \
@@ -138,11 +145,27 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
                                                                                   \
     /* attempt to match posted recv */                                            \
     if((request)->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {                \
-        mca_pml_ob1_recv_request_match_wild(request);                            \
+        mca_pml_ob1_recv_request_match_wild(request);                             \
     } else {                                                                      \
-        mca_pml_ob1_recv_request_match_specific(request);                        \
+        mca_pml_ob1_recv_request_match_specific(request);                         \
     }                                                                             \
 }
+
+
+/**
+ *
+ */
+
+#define MCA_PML_OB1_RECV_REQUEST_UNPACK(                                          \
+    request,                                                                      \
+    segments,                                                                     \
+    num_segments,                                                                 \
+    seg_offset,                                                                   \
+    data_offset,                                                                  \
+    bytes_received,                                                               \
+    bytes_delivered)                                                              \
+{                                                                                 \
+} 
 
 
 /**

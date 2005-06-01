@@ -93,8 +93,6 @@ int mca_pml_ob1_component_open(void)
         mca_pml_ob1_param_register_int("free_list_max", -1);
     mca_pml_ob1.free_list_inc =
         mca_pml_ob1_param_register_int("free_list_inc", 256);
-    mca_pml_ob1.poll_iterations =
-        mca_pml_ob1_param_register_int("poll_iterations", 100000);
     mca_pml_ob1.priority =
         mca_pml_ob1_param_register_int("priority", 0);
 

@@ -70,12 +70,12 @@ OBJ_CLASS_DECLARATION(mca_bmi_sm_frag2_t);
 
 #define MCA_BMI_SM_FRAG_RETURN1(frag)                                     \
 {                                                                         \
-    OMPI_FREE_LIST_RETURN(&mca_bmi_sm_component.sm_frags1, &frag->super); \
+    OMPI_FREE_LIST_RETURN(&mca_bmi_sm_component.sm_frags1, (ompi_list_item_t*)(frag)); \
 }
 
 #define MCA_BMI_SM_FRAG_RETURN2(frag)                                     \
 {                                                                         \
-    OMPI_FREE_LIST_RETURN(&mca_bmi_sm_component.sm_frags2, &frag->super); \
+    OMPI_FREE_LIST_RETURN(&mca_bmi_sm_component.sm_frags2, (ompi_list_item_t*)(frag)); \
 }
 
 #endif

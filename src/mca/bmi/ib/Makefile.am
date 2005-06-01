@@ -44,7 +44,7 @@ libmca_bmi_ib_la_SOURCES = \
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_bmi_sm_DSO
+if OMPI_BUILD_bmi_ib_DSO
 component_noinst =
 component_install = mca_bmi_ib.la
 else

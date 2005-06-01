@@ -30,15 +30,17 @@
 
 #define MCA_PML_OB1_HDR_TYPE_MATCH    1
 #define MCA_PML_OB1_HDR_TYPE_RNDV     2
-#define MCA_PML_OB1_HDR_TYPE_FRAG     3
-#define MCA_PML_OB1_HDR_TYPE_ACK      4
-#define MCA_PML_OB1_HDR_TYPE_NACK     5
-#define MCA_PML_OB1_HDR_TYPE_GET      6
-#define MCA_PML_OB1_HDR_TYPE_FIN      7
-#define MCA_PML_OB1_HDR_TYPE_MAX      8
+#define MCA_PML_OB1_HDR_TYPE_ACK      3
+#define MCA_PML_OB1_HDR_TYPE_NACK     4
+#define MCA_PML_OB1_HDR_TYPE_FRAG     5
+#define MCA_PML_OB1_HDR_TYPE_SEG      6
+#define MCA_PML_OB1_HDR_TYPE_GET      7
+#define MCA_PML_OB1_HDR_TYPE_FIN      8
+#define MCA_PML_OB1_HDR_TYPE_MAX      9
 
 #define MCA_PML_OB1_HDR_FLAGS_ACK     1  /* is an ack required */
 #define MCA_PML_OB1_HDR_FLAGS_NBO     2  /* is the hdr in network byte order */
+#define MCA_PML_OB1_HDR_FLAGS_PUT     3
 
 
 /*
@@ -138,8 +140,8 @@ typedef struct mca_pml_ob1_match_hdr_t mca_pml_ob1_match_hdr_t;
  */
 struct mca_pml_ob1_rendezvous_hdr_t {
     mca_pml_ob1_match_hdr_t hdr_match;
-    uint64_t hdr_frag_length;                /**< fragment length */
-    ompi_ptr_t hdr_src_ptr;                  /**< pointer to source fragment - returned in ack */
+    uint64_t hdr_frag_length;           /**< fragment length */
+    ompi_ptr_t hdr_src_req;             /**< pointer to source request - returned in ack */
 };
 typedef struct mca_pml_ob1_rendezvous_hdr_t mca_pml_ob1_rendezvous_hdr_t;
 
@@ -162,8 +164,8 @@ struct mca_pml_ob1_frag_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common; /**< common attributes */
     uint64_t hdr_frag_length;                /**< fragment length */
     uint64_t hdr_frag_offset;                /**< offset into message */
-    ompi_ptr_t hdr_src_ptr;                  /**< pointer to source fragment */
-    ompi_ptr_t hdr_dst_ptr;                  /**< pointer to matched receive */
+    ompi_ptr_t hdr_src_req;                  /**< pointer to source request */
+    ompi_ptr_t hdr_dst_req;                  /**< pointer to matched receive */
 };
 typedef struct mca_pml_ob1_frag_hdr_t mca_pml_ob1_frag_hdr_t;
 
@@ -185,13 +187,12 @@ typedef struct mca_pml_ob1_frag_hdr_t mca_pml_ob1_frag_hdr_t;
 /**
  *  Header used to acknowledgment outstanding fragment(s).
  */
+
 struct mca_pml_ob1_ack_hdr_t {
-    mca_pml_ob1_common_hdr_t hdr_common; /**< common attributes */
-    ompi_ptr_t hdr_src_ptr;                   /**< source fragment */
-    ompi_ptr_t hdr_dst_match;                 /**< matched receive request */
-    ompi_ptr_t hdr_dst_addr;                  /**< posted receive buffer */
-    uint64_t   hdr_dst_size;                  /**< size of posted buffer */
-    /* sequence range? */
+    mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
+    ompi_ptr_t hdr_src_req;                   /**< source request */
+    ompi_ptr_t hdr_dst_req;                   /**< matched receive request */
+    mca_bmi_base_segment_t hdr_seg;           /**< segment */
 };
 typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
 
