@@ -152,8 +152,9 @@ AM_ENABLE_SHARED
 AM_DISABLE_STATIC
 
 WRAPPER_EXTRA_CFLAGS=
-WRAPPER_EXTRA_FFLAGS=
 WRAPPER_EXTRA_CXXFLAGS=
+WRAPPER_EXTRA_FFLAGS=
+WRAPPER_EXTRA_FCFLAGS=
 WRAPPER_EXTRA_LDFLAGS=
 WRAPPER_EXTRA_LIBS=
 
@@ -1547,6 +1548,7 @@ AC_CONFIG_FILES([
 
     src/dynamic-mca/Makefile
     src/dynamic-mca/allocator/Makefile
+    src/dynamic-mca/bmi/Makefile
     src/dynamic-mca/coll/Makefile
     src/dynamic-mca/io/Makefile
     src/dynamic-mca/mpool/Makefile
