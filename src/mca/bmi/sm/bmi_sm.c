@@ -47,7 +47,7 @@ mca_bmi_sm_t mca_bmi_sm[2] = {
     {
         {
         &mca_bmi_sm_component.super,
-        0, /* bmi_first_frag_size */
+        0, /* bmi_eager_limit */
         0, /* bmi_min_frag_size */
         0, /* bmi_max_frag_size */
         0, /* bmi_exclusivity */
@@ -70,7 +70,7 @@ mca_bmi_sm_t mca_bmi_sm[2] = {
     {
         {
         &mca_bmi_sm_component.super,
-        0, /* bmi_first_frag_size */
+        0, /* bmi_eager_limit */
         0, /* bmi_min_frag_size */
         0, /* bmi_max_frag_size */
         0, /* bmi_exclusivity */
@@ -489,17 +489,10 @@ int mca_bmi_sm_add_procs_same_base_addr(
         /* some initialization happens only the first time this routine
          * is called, i.e. when bmi_inited is false */
 
-        /* initialize fragment descriptor free list */
+        /* initialize fragment descriptor free lists */
 
-        /* 
-         * first fragment 
-         */
-
-        /* allocation will be for the fragment descriptor, payload buffer,
-         * and padding to ensure proper alignment can be acheived */
-        length=sizeof(mca_bmi_sm_frag_t)+
-            mca_bmi_sm_component.fragment_alignment+
-            mca_bmi_sm_component.first_fragment_size;
+        /* allocation will be for the fragment descriptor and payload buffer */
+        length=sizeof(mca_bmi_sm_frag_t) + mca_bmi_sm_component.eager_limit;
         ompi_free_list_init(&mca_bmi_sm_component.sm_frags1, length,
                 OBJ_CLASS(mca_bmi_sm_frag1_t),
                 mca_bmi_sm_component.sm_free_list_num,
@@ -507,9 +500,7 @@ int mca_bmi_sm_add_procs_same_base_addr(
                 mca_bmi_sm_component.sm_free_list_inc,
                 mca_bmi_sm_component.sm_mpool); /* use shared-memory pool */
 
-        length=sizeof(mca_bmi_sm_frag_t)+
-            mca_bmi_sm_component.fragment_alignment+
-            mca_bmi_sm_component.max_fragment_size;
+        length=sizeof(mca_bmi_sm_frag_t) + mca_bmi_sm_component.max_frag_size;
         ompi_free_list_init(&mca_bmi_sm_component.sm_frags2, length,
                 OBJ_CLASS(mca_bmi_sm_frag2_t),
                 mca_bmi_sm_component.sm_free_list_num,
@@ -745,7 +736,7 @@ extern mca_bmi_base_descriptor_t* mca_bmi_sm_alloc(
 {
     mca_bmi_sm_frag_t* frag;
     int rc;
-    if(size <= mca_bmi_sm_component.first_fragment_size) {
+    if(size <= mca_bmi_sm_component.eager_limit) {
         MCA_BMI_SM_FRAG_ALLOC1(frag,rc);
     } else {
         MCA_BMI_SM_FRAG_ALLOC2(frag,rc);
@@ -764,7 +755,7 @@ extern int mca_bmi_sm_free(
     mca_bmi_base_descriptor_t* des)
 {
     mca_bmi_sm_frag_t* frag = (mca_bmi_sm_frag_t*)des;
-    if(frag->size <= mca_bmi_sm_component.first_fragment_size) {
+    if(frag->size <= mca_bmi_sm_component.eager_limit) {
         MCA_BMI_SM_FRAG_RETURN1(frag);
     } else {
         MCA_BMI_SM_FRAG_RETURN2(frag);
@@ -790,6 +781,7 @@ struct mca_bmi_base_descriptor_t* mca_bmi_sm_prepare_src(
     struct iovec iov;
     uint32_t iov_count = 1;
     uint32_t max_data = *size;
+    int32_t free_after;
     int rc;
 
     MCA_BMI_SM_FRAG_ALLOC2(frag, rc);
@@ -798,12 +790,12 @@ struct mca_bmi_base_descriptor_t* mca_bmi_sm_prepare_src(
     }
 
     if(max_data + reserve > frag->size) {
-        max_data = *size - reserve;
+        max_data = frag->size - reserve;
     } 
     iov.iov_len = max_data;
     iov.iov_base = (unsigned char*)(frag+1) + reserve;
 
-    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, NULL);
+    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
     if(rc < 0) {
         MCA_BMI_SM_FRAG_RETURN2(frag);
         return NULL;

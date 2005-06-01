@@ -456,7 +456,7 @@ struct mca_bmi_base_module_t {
 
     /* BMI common attributes */
     mca_bmi_base_component_t* bmi_component; /**< pointer back to the BMI component structure */
-    size_t      bmi_first_frag_size;  /**< maximum size of first fragment -- eager send */
+    size_t      bmi_eager_limit;      /**< maximum size of first fragment -- eager send */
     size_t      bmi_min_frag_size;    /**< threshold below which the BMI will not fragment */
     size_t      bmi_max_frag_size;    /**< maximum fragment size supported by the BMI */
     uint32_t    bmi_exclusivity;      /**< indicates this BMI should be used exclusively */

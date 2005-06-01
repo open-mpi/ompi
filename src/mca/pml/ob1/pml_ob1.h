@@ -199,13 +199,6 @@ extern int mca_pml_ob1_recv(
     ompi_status_public_t* status
 );
 
-extern void mca_pml_ob1_recv_callback(
-    mca_bmi_base_module_t* bmi,
-    mca_bmi_base_tag_t tag,
-    mca_bmi_base_descriptor_t* descriptor,
-    void* cbdata
-);
-
 extern int mca_pml_ob1_progress(void);
 
 extern int mca_pml_ob1_start(

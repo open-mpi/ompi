@@ -28,7 +28,6 @@ libmca_pml_ob1_la_SOURCES = \
 	pml_ob1_iprobe.c \
 	pml_ob1_irecv.c \
 	pml_ob1_isend.c \
-	pml_ob1_match.c \
 	pml_ob1_proc.c \
 	pml_ob1_proc.h \
 	pml_ob1_progress.c \

@@ -51,26 +51,35 @@ typedef struct mca_pml_ob1_recv_frag_t mca_pml_ob1_recv_frag_t;
 
 
 /**
- * Called to attempt a match for new fragments.
- *
- * @param bmi (IN)    The PTL pointer
- * @param frag (IN)   Receive fragment descriptor.
- * @param hdr (IN)    Header corresponding to the receive fragment.
- * @return            OMPI_SUCCESS or error status on failure.
+ *  Callback from BMI on receipt of a fragment.
  */
-bool mca_pml_ob1_recv_frag_match( 
-    struct mca_pml_ob1_recv_frag_t* frag
-);
 
-int mca_pml_ob1_recv_frag_matched(
-    struct mca_pml_ob1_recv_frag_t* frag
+OMPI_DECLSPEC void mca_pml_ob1_recv_frag_callback(
+    mca_bmi_base_module_t* bmi,
+    mca_bmi_base_tag_t tag,
+    mca_bmi_base_descriptor_t* descriptor,
+    void* cbdata
 );
+                                                                                                               
+/**
+ * Match incoming fragments against posted receives.  
+ * Supports out of order delivery.
+ * 
+ * @param frag_header (IN)          Header of received fragment.
+ * @param frag_desc (IN)            Received fragment descriptor.
+ * @param match_made (OUT)          Flag indicating wether a match was made.
+ * @param additional_matches (OUT)  List of additional matches 
+ * @return                          OMPI_SUCCESS or error status on failure.
+ */
+OMPI_DECLSPEC int mca_pml_ob1_recv_frag_match(
+    mca_bmi_base_module_t* bmi,
+    mca_pml_ob1_match_hdr_t *hdr,
+    mca_bmi_base_segment_t* segments,
+    size_t num_segments);
 
-int mca_pml_ob1_recv_frag_complete(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_pml_ob1_recv_request_t* req,
-    struct mca_pml_ob1_recv_frag_t* frag
-);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 #endif
 

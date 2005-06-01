@@ -165,6 +165,8 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
     bytes_received,                                                               \
     bytes_delivered)                                                              \
 {                                                                                 \
+    /* FIX */                                                                     \
+    bytes_delivered = bytes_received;                                             \
 } 
 
 
