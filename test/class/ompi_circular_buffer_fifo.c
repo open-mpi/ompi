@@ -20,13 +20,21 @@
 #include "support.h"
 #include "mca/mpool/mpool.h"
 
-static void *malloc_noalign(size_t size, size_t dummy) {
+static void *malloc_noalign(mca_mpool_base_module_t* mpool, size_t size, size_t dummy, void* user_out) {
     return malloc(size);
 }
 
 size_t offset;
-static void *malloc_base_addr(void){
-        return (void *)offset;
+static void *malloc_base_addr(mca_mpool_base_module_t* mpool){
+    return (void *)offset;
+}
+static void my_free(mca_mpool_base_module_t* mpool, void* addr)
+{
+    free(addr); 
+}
+
+static void* my_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size, void* user_out){
+   return  realloc(addr, size);
 }
 
 #include "class/ompi_circular_buffer_fifo.h"
@@ -36,8 +44,8 @@ mca_mpool_base_module_t pool = {
     NULL, /* component structure */
     malloc_base_addr, /* mca_mpool_base_module_address_fn_t */
     malloc_noalign, /* mca_mpool_base_module_alloc_fn_t */
-    realloc, /* ca_mpool_base_module_realloc_fn_t */
-    free, /*mca_mpool_base_module_free_fn_t  */
+    my_realloc, /* ca_mpool_base_module_realloc_fn_t */
+    my_free, /*mca_mpool_base_module_free_fn_t  */
     NULL, /* mca_mpool_base_module_register_fn_t */
     NULL, /* mca_mpool_base_module_deregister_fn_t */
     NULL  /* mca_mpool_base_module_finalize_fn_t */
@@ -86,7 +94,7 @@ int main(int argc, char **argv) {
     for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
         value.ivalue = i + 5;
         return_status=ompi_cb_fifo_write_to_head(value.vvalue, &fifo,
-                                                 (size_t)pool.mpool_base());
+                                                 (size_t)pool.mpool_base(&pool));
         if( OMPI_CB_ERROR == return_status ) {
             test_failure(" ompi_cb_fifo_write_to_head");
             error_cnt++;
@@ -101,7 +109,7 @@ int main(int argc, char **argv) {
     for( i=0 ; i < 3 ; i++ ) {
         value.ivalue = i;
         return_status=ompi_cb_fifo_write_to_head(value.vvalue, &fifo,
-                                                 (size_t)pool.mpool_base());
+                                                 (size_t)pool.mpool_base(&pool));
         if( OMPI_CB_ERROR != return_status ) {
             test_failure(" ompi_cb_fifo_write_to_head :: over-fill queue");
             error_cnt++;
@@ -115,7 +123,7 @@ int main(int argc, char **argv) {
     error_cnt=0;
     for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
         value.vvalue =ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty,
-                                                  (size_t)pool.mpool_base());
+                                                  (size_t)pool.mpool_base(&pool));
         if( (i+5) != value.ivalue ) {
             test_failure(" ompi_cb_fifo_read_from_tail (1)");
             error_cnt++;
@@ -159,7 +167,7 @@ int main(int argc, char **argv) {
     /* populate fifo */
     error_cnt=0;
     for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
-        return_status=ompi_cb_fifo_get_slot(&fifo,(size_t)pool.mpool_base());
+        return_status=ompi_cb_fifo_get_slot(&fifo,(size_t)pool.mpool_base(&pool));
         if( OMPI_CB_ERROR == return_status ) {
             test_failure(" ompi_cb_fifo_get_slot");
             error_cnt++;
@@ -172,7 +180,7 @@ int main(int argc, char **argv) {
     /* try an over-fill the queue */
     error_cnt=0;
     for( i=0 ; i < 3 ; i++ ) {
-        return_status=ompi_cb_fifo_get_slot(&fifo,(size_t)pool.mpool_base());
+        return_status=ompi_cb_fifo_get_slot(&fifo,(size_t)pool.mpool_base(&pool));
         if( OMPI_CB_ERROR != return_status ) {
             test_failure(" ompi_cb_fifo_get_slot :: over-fill queue");
             error_cnt++;
@@ -188,7 +196,7 @@ int main(int argc, char **argv) {
     for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
         value.ivalue = i + 5;
         return_status=ompi_cb_fifo_write_to_slot(i, value.vvalue, &fifo,
-                                                 (size_t)pool.mpool_base());
+                                                 (size_t)pool.mpool_base(&pool));
         if( OMPI_CB_ERROR == return_status ) {
             test_failure(" ompi_cb_fifo_write_to_slot");
             error_cnt++;
@@ -202,7 +210,7 @@ int main(int argc, char **argv) {
     error_cnt=0;
     for( i=0 ; i < ompi_cb_fifo_size(&fifo); i++ ) {
         value.vvalue = ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty,
-                                                   (size_t)pool.mpool_base());
+                                                   (size_t)pool.mpool_base(&pool));
         if( (i+5) != value.ivalue ) {
             test_failure(" ompi_cb_fifo_read_from_tail (2)");
             error_cnt++;
@@ -236,7 +244,7 @@ int main(int argc, char **argv) {
 
         /* populate fifo */
         return_status=ompi_cb_fifo_get_slot(&fifo,
-                                            (size_t)pool.mpool_base());
+                                            (size_t)pool.mpool_base(&pool));
         if( OMPI_CB_ERROR == return_status ) {
             test_failure(" ompi_cb_fifo_get_slot");
             error_cnt++;
@@ -246,7 +254,7 @@ int main(int argc, char **argv) {
         value.ivalue = i + 5;
         return_status=ompi_cb_fifo_write_to_slot(i%(ompi_cb_fifo_size(&fifo)),
                                                  value.vvalue, &fifo,
-                                                 (size_t)pool.mpool_base());
+                                                 (size_t)pool.mpool_base(&pool));
         if( OMPI_CB_ERROR == return_status ) {
             test_failure(" ompi_cb_fifo_write_to_slot");
             error_cnt++;
@@ -257,10 +265,10 @@ int main(int argc, char **argv) {
             ompi_cb_fifo_size(&fifo)/2  ) {
             /* force a flush */
             value.vvalue = ompi_cb_fifo_read_from_tail(&fifo,1,&queue_empty,
-                                                       (size_t)pool.mpool_base());
+                                                       (size_t)pool.mpool_base(&pool));
         } else {
             value.vvalue = ompi_cb_fifo_read_from_tail(&fifo,0,&queue_empty,
-                                                       (size_t)pool.mpool_base());
+                                                       (size_t)pool.mpool_base(&pool));
         }
         if( (i+5) != value.ivalue ) {
             test_failure(" ompi_cb_fifo_read_from_tail (3)");
