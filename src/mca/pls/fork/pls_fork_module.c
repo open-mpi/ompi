@@ -124,10 +124,20 @@ static int orte_pls_fork_proc(
     orte_iof_base_io_conf_t opts;
     int rc;
     sigset_t sigs;
+    orte_vpid_t vpid;
 
     /* should pull this information from MPIRUN instead of going with
        default */
     opts.usepty = OMPI_ENABLE_PTY_SUPPORT;
+
+    /* BWB - Fix post beta.  Should setup stdin in orterun and
+       make part of the app_context */
+    if (ORTE_SUCCESS == orte_ns.get_vpid(&vpid, &proc->proc_name) &&
+        vpid == 0) {
+        opts.connect_stdin = true;
+    } else {
+        opts.connect_stdin = false;
+    }
 
     rc = orte_iof_base_setup_prefork(&opts);
     if (OMPI_SUCCESS != rc) {
@@ -160,6 +170,7 @@ static int orte_pls_fork_proc(
         }
 #else
         if(chdir(context->cwd) != 0) {
+            perror("chdir");
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         }
 #endif
@@ -251,15 +262,15 @@ static int orte_pls_fork_proc(
 
     } else {
 
-        /* save the pid in the registry */
-        if(ORTE_SUCCESS != (rc = orte_pls_base_set_proc_pid(&proc->proc_name, pid))) {
+        /* connect endpoints IOF */
+        rc = orte_iof_base_setup_parent(&proc->proc_name, &opts);
+        if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
-        /* connect read end to IOF */
-        rc = orte_iof_base_setup_parent(&proc->proc_name, &opts);
-        if(ORTE_SUCCESS != rc) {
+        /* save the pid in the registry */
+        if(ORTE_SUCCESS != (rc = orte_pls_base_set_proc_pid(&proc->proc_name, pid))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
