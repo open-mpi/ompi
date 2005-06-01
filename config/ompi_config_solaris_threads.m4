@@ -80,7 +80,7 @@ EOF
 OMPI_LOG_COMMAND(
     [$CC $CFLAGS -I. -c conftest.c],
     OMPI_LOG_COMMAND(
-        [$F77 $FFLAGS conftestf.f conftest.o -o conftest $LIBS],
+        [$F77 $FFLAGS conftestf.f conftest.o -o conftest $LDFLAGS $LIBS],
         [HAPPY=1],
 	[HAPPY=0]),
     [HAPPY=0])
