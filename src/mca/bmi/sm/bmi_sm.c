@@ -60,7 +60,8 @@ mca_bmi_sm_t mca_bmi_sm[2] = {
         mca_bmi_sm_finalize,
         mca_bmi_sm_alloc,
         mca_bmi_sm_free,
-        mca_bmi_sm_pack,
+        mca_bmi_sm_prepare_src,
+        NULL,
         mca_bmi_sm_send, 
         NULL,  /* put */
         NULL   /* get */
@@ -82,7 +83,8 @@ mca_bmi_sm_t mca_bmi_sm[2] = {
         mca_bmi_sm_finalize,
         mca_bmi_sm_alloc,  
         mca_bmi_sm_free,  
-        mca_bmi_sm_pack,
+        mca_bmi_sm_prepare_src,
+        NULL,
         mca_bmi_sm_send,  
         NULL, /* get function */
         NULL  /* put function */
@@ -763,9 +765,9 @@ extern int mca_bmi_sm_free(
 {
     mca_bmi_sm_frag_t* frag = (mca_bmi_sm_frag_t*)des;
     if(frag->size <= mca_bmi_sm_component.first_fragment_size) {
-        MCA_BMI_SM_FRAG_RETURN1(des);
+        MCA_BMI_SM_FRAG_RETURN1(frag);
     } else {
-        MCA_BMI_SM_FRAG_RETURN2(des);
+        MCA_BMI_SM_FRAG_RETURN2(frag);
     }
     return OMPI_SUCCESS;
 }
@@ -777,14 +779,37 @@ extern int mca_bmi_sm_free(
  * @param bmi (IN)      BMI module
  * @param peer (IN)     BMI peer addressing
  */
-struct mca_bmi_base_descriptor_t* mca_bmi_sm_pack(
+struct mca_bmi_base_descriptor_t* mca_bmi_sm_prepare_src(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* peer,
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size)
 {
-    return NULL;
+    mca_bmi_sm_frag_t* frag;
+    struct iovec iov;
+    uint32_t iov_count = 1;
+    uint32_t max_data = *size;
+    int rc;
+
+    MCA_BMI_SM_FRAG_ALLOC2(frag, rc);
+    if(NULL == frag) {
+        return NULL;
+    }
+
+    if(max_data + reserve > frag->size) {
+        max_data = *size - reserve;
+    } 
+    iov.iov_len = max_data;
+    iov.iov_base = (unsigned char*)(frag+1) + reserve;
+
+    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, NULL);
+    if(rc < 0) {
+        MCA_BMI_SM_FRAG_RETURN2(frag);
+        return NULL;
+    }
+    *size = max_data;
+    return &frag->base;
 }
 
  

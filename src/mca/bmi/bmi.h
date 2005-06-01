@@ -154,7 +154,7 @@ typedef struct mca_bmi_base_segment_t mca_bmi_base_segment_t;
 
 /**
  * A descriptor that holds the parameters to a send/put/get
- * operation along w/ a callback function that is called on
+ * operation along w/ a callback routine that is called on
  * completion of the request.
  */
 
@@ -373,13 +373,38 @@ typedef int (*mca_bmi_base_module_free_fn_t)(
  * @param bmi (IN)      BMI module
  * @param peer (IN)     BMI peer addressing
  */
-typedef struct mca_bmi_base_descriptor_t* (*mca_bmi_base_module_pack_fn_t)(
+typedef struct mca_bmi_base_descriptor_t* (*mca_bmi_base_module_prepare_fn_t)(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* peer,
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size
 );
+
+/**
+ * Pack data and return a descriptor that can be
+ * used for send/put.
+ *
+ * @param bmi (IN)      BMI module
+ * @param endpoint (IN)     BMI peer addressing
+ */
+
+typedef struct mca_bmi_base_descriptor_t* (*mca_bmi_base_module_prepare_dst_fn_t)(
+    struct mca_bmi_base_module_t* bmi,
+    struct mca_bmi_base_endpoint_t* endpoint,
+    struct ompi_convertor_t* convertor,
+    size_t reserve,
+    size_t* size
+);
+
+
+typedef int (*mca_bmi_base_module_unpack_fn_t)(
+    struct mca_bmi_base_module_t* bmi,
+    struct mca_bmi_base_endpoint_t* peer,
+    struct ompi_convertor_t* convertor,
+    struct mca_bmi_base_descriptor_t* descriptor
+);
+
 
 
 /**
@@ -405,7 +430,7 @@ typedef int (*mca_bmi_base_module_send_fn_t)(
 
 typedef int (*mca_bmi_base_module_put_fn_t)(
     struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* peer,
+    struct mca_bmi_base_endpoint_t* endpoint,
     struct mca_bmi_base_descriptor_t* descriptor
 );
 
@@ -447,7 +472,8 @@ struct mca_bmi_base_module_t {
 
     mca_bmi_base_module_alloc_fn_t       bmi_alloc;
     mca_bmi_base_module_free_fn_t        bmi_free;
-    mca_bmi_base_module_pack_fn_t        bmi_pack;
+    mca_bmi_base_module_prepare_fn_t     bmi_prepare_src;
+    mca_bmi_base_module_prepare_fn_t     bmi_prepare_dst;
     mca_bmi_base_module_send_fn_t        bmi_send;
     mca_bmi_base_module_put_fn_t         bmi_put;
     mca_bmi_base_module_get_fn_t         bmi_get;

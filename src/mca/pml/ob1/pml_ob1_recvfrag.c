@@ -23,6 +23,7 @@
 #include "mca/pml/pml.h"
 #include "pml_ob1_recvfrag.h"
 #include "pml_ob1_recvreq.h"
+#include "pml_ob1_sendreq.h"
 #include "pml_ob1_proc.h"
 #include "pml_ob1_match.h"
 
@@ -33,7 +34,6 @@ OBJ_CLASS_INSTANCE(
     NULL,
     NULL
 );
-
 
 
 
@@ -55,6 +55,9 @@ void mca_pml_ob1_recv_callback(
             break;
         case MCA_PML_OB1_HDR_TYPE_RNDV:
             mca_pml_ob1_match(bmi,&hdr->hdr_match,segments,des->des_src_cnt);
+            break;
+        case MCA_PML_OB1_HDR_TYPE_ACK:
+            mca_pml_ob1_send_request_acked(bmi,&hdr->hdr_ack);
             break;
         default:
             break;

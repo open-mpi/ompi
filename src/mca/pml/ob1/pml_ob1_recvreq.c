@@ -95,41 +95,143 @@ OBJ_CLASS_INSTANCE(
     mca_pml_ob1_recv_request_construct,
     mca_pml_ob1_recv_request_destruct);
 
+
+/*
+ * Release resources.
+ */
+
+static void mca_pml_ob1_recv_request_acked(
+    mca_bmi_base_module_t* bmi,
+    struct mca_bmi_base_endpoint_t* ep,
+    struct mca_bmi_base_descriptor_t* des,
+    int status)
+{
+    bmi->bmi_free(bmi,des);
+}
+
+
+/*
+ *
+ */
+
+static void mca_pml_ob1_recv_request_ack(
+    mca_pml_ob1_recv_request_t* recvreq,
+    mca_pml_ob1_rendezvous_hdr_t* hdr)
+{
+    mca_pml_ob1_proc_t* proc = mca_pml_ob1_proc_lookup_remote(
+        recvreq->req_recv.req_base.req_comm,
+        hdr->hdr_match.hdr_src);
+    mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_first);
+    mca_bmi_base_descriptor_t* des;
+    mca_pml_ob1_recv_frag_t* frag;
+    mca_pml_ob1_ack_hdr_t* ack;
+    int rc;
+
+    /* allocate descriptor */
+    des = ep->bmi_alloc(ep->bmi, sizeof(mca_pml_ob1_ack_hdr_t));
+    if(NULL == des) {
+        goto retry;
+    }
+
+    /* fill out header */
+    ack = (mca_pml_ob1_ack_hdr_t*)des->des_src->seg_addr.pval;
+    ack->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;
+    ack->hdr_common.hdr_flags = 0;
+    ack->hdr_src_req = hdr->hdr_src_req;
+    ack->hdr_dst_req.pval = recvreq;
+
+    /* initialize descriptor */
+    des->des_cbfunc = mca_pml_ob1_recv_request_acked;
+    des->des_cbdata = recvreq;
+
+    rc = ep->bmi_send(ep->bmi, ep->bmi_endpoint, des, MCA_BMI_TAG_PML);
+    if(rc != OMPI_SUCCESS) {
+        ep->bmi_free(ep->bmi,des);
+        goto retry;
+    }
+    return;
+
+    /* queue request to retry later */
+retry:
+    MCA_PML_OB1_RECV_FRAG_ALLOC(frag,rc);
+    frag->bmi = NULL;
+    frag->hdr.hdr_rndv = *hdr;
+    frag->segments = NULL;
+    frag->num_segments = 0;
+    frag->request = recvreq;
+    ompi_list_append(&mca_pml_ob1.acks_pending, (ompi_list_item_t*)frag);
+}
+
+
 /*
  * Update the recv request status to reflect the number of bytes
  * received and actually delivered to the application. 
  */
 
 void mca_pml_ob1_recv_request_progress(
-    mca_pml_ob1_recv_request_t* req,
+    mca_pml_ob1_recv_request_t* recvreq,
     mca_bmi_base_module_t* bmi,
     mca_bmi_base_segment_t* segments,
     size_t num_segments)
 {
-    size_t bytes_received = 0;
-    size_t bytes_delivered = 0;
+    uint64_t bytes_received = 0;
+    uint64_t bytes_delivered = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
 
     switch(hdr->hdr_common.hdr_type) {
         case MCA_PML_OB1_HDR_TYPE_MATCH:
+
             bytes_received = hdr->hdr_match.hdr_msg_length;
+            MCA_PML_OB1_RECV_REQUEST_UNPACK(
+                recvreq,
+                segments,
+                num_segments,
+                sizeof(mca_pml_ob1_match_hdr_t),
+                0,
+                bytes_received,
+                bytes_delivered);
             break;
+
         case MCA_PML_OB1_HDR_TYPE_RNDV:
-            bytes_received = hdr->hdr_frag.hdr_frag_length;
+
+            mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv);
+            bytes_received = hdr->hdr_rndv.hdr_frag_length;
+            MCA_PML_OB1_RECV_REQUEST_UNPACK(
+                recvreq,
+                segments,
+                num_segments,
+                sizeof(mca_pml_ob1_rendezvous_hdr_t),
+                0,
+                bytes_received,
+                bytes_delivered);
             break;
+
+        case MCA_PML_OB1_HDR_TYPE_FRAG:
+
+            bytes_received = hdr->hdr_frag.hdr_frag_length;
+            MCA_PML_OB1_RECV_REQUEST_UNPACK(
+                recvreq,
+                segments,
+                num_segments,
+                sizeof(mca_pml_ob1_rendezvous_hdr_t),
+                hdr->hdr_frag.frag_offset,
+                bytes_received,
+                bytes_delivered);
+            break;
+
         default:
             break;
     }
-    bytes_delivered = bytes_received;
 
+    /* check completion status */
     OMPI_THREAD_LOCK(&ompi_request_lock);
-    req->req_bytes_received += bytes_received;
-    req->req_bytes_delivered += bytes_delivered;
-    if (req->req_bytes_received >= req->req_recv.req_bytes_packed) {
+    recvreq->req_bytes_received += bytes_received;
+    recvreq->req_bytes_delivered += bytes_delivered;
+    if (recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed) {
         /* initialize request status */
-        req->req_recv.req_base.req_ompi.req_status._count = req->req_bytes_delivered;
-        req->req_recv.req_base.req_pml_complete = true; 
-        req->req_recv.req_base.req_ompi.req_complete = true;
+        recvreq->req_recv.req_base.req_ompi.req_status._count = recvreq->req_bytes_delivered;
+        recvreq->req_recv.req_base.req_pml_complete = true; 
+        recvreq->req_recv.req_base.req_ompi.req_complete = true;
         if(ompi_request_waiting) {
             ompi_condition_broadcast(&ompi_request_cond);
         }

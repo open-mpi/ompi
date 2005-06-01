@@ -27,23 +27,28 @@ extern "C" {
 
 /**
  * A data structure associated with a ompi_proc_t that caches
- * addressing/scheduling attributes for a specific NTL instance
+ * addressing/scheduling attributes for a specific BMI instance
  * that can be used to reach the process.
  */
 
 struct mca_pml_ob1_endpoint_t {
-    int    bmi_weight;                            /**< NTL weight for scheduling */
-    size_t bmi_eager_limit;                       /**< NTL eager limit */
-    struct mca_bmi_base_module_t *bmi;            /**< NTL module */
-    struct mca_bmi_base_endpoint_t* bmi_endpoint; /**< NTL addressing info */
+    int    bmi_weight;                            /**< BMI weight for scheduling */
+    int    bmi_flags;                             /**< support for put/get? */
+    size_t bmi_eager_limit;                       /**< BMI eager limit */
+    size_t bmi_min_seg_size;                      /**< BMI min segment size */
+    size_t bmi_max_seg_size;                      /**< BMI max segment size */
+    struct mca_bmi_base_module_t *bmi;            /**< BMI module */
+    struct mca_bmi_base_endpoint_t* bmi_endpoint; /**< BMI addressing info */
     struct mca_bmi_base_descriptor_t* bmi_cache;
 
-    /* NTL function table */
-    mca_bmi_base_module_alloc_fn_t bmi_alloc;
-    mca_bmi_base_module_free_fn_t  bmi_free;
-    mca_bmi_base_module_send_fn_t  bmi_send;
-    mca_bmi_base_module_put_fn_t   bmi_put;
-    mca_bmi_base_module_get_fn_t   bmi_get;
+    /* BMI function table */
+    mca_bmi_base_module_alloc_fn_t   bmi_alloc;
+    mca_bmi_base_module_free_fn_t    bmi_free;
+    mca_bmi_base_module_send_fn_t    bmi_send;
+    mca_bmi_base_module_prepare_fn_t bmi_prepare_src;
+    mca_bmi_base_module_prepare_fn_t bmi_prepare_dst;
+    mca_bmi_base_module_put_fn_t     bmi_put;
+    mca_bmi_base_module_get_fn_t     bmi_get;
 };
 typedef struct mca_pml_ob1_endpoint_t mca_pml_ob1_endpoint_t;
 

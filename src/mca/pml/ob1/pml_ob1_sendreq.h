@@ -23,16 +23,29 @@
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "pml_ob1_proc.h"
 #include "pml_ob1_comm.h"
+#include "pml_ob1_hdr.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+typedef enum {
+    MCA_PML_OB1_SR_INIT,
+    MCA_PML_OB1_SR_WAIT,
+    MCA_PML_OB1_SR_SEND,
+    MCA_PML_OB1_SR_PUT,
+    MCA_PML_OB1_SR_COMPLETE
+} mca_pml_ob1_send_request_state_t;
 
 
 struct mca_pml_ob1_send_request_t {
     mca_pml_base_send_request_t req_send;
     mca_pml_ob1_proc_t* req_proc;
     mca_pml_ob1_endpoint_t* req_endpoint;
+    mca_pml_ob1_send_request_state_t req_state;
+    ompi_ptr_t req_peer;
+    int32_t req_lock;
+    size_t req_pending;
     size_t req_offset;
 };
 typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
@@ -41,27 +54,27 @@ typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 
 
-#define MCA_PML_OB1_SEND_REQUEST_ALLOC(                                   \
+#define MCA_PML_OB1_SEND_REQUEST_ALLOC(                                    \
     comm,                                                                  \
     dst,                                                                   \
     sendreq,                                                               \
     rc)                                                                    \
 {                                                                          \
-    mca_pml_ob1_proc_t *proc = comm->c_pml_procs[dst];                    \
+    mca_pml_ob1_proc_t *proc = comm->c_pml_procs[dst];                     \
     ompi_list_item_t* item;                                                \
                                                                            \
     if(NULL == proc) {                                                     \
         rc = OMPI_ERR_OUT_OF_RESOURCE;                                     \
     } else {                                                               \
         rc = OMPI_SUCCESS;                                                 \
-        OMPI_FREE_LIST_WAIT(&mca_pml_ob1.send_requests, item, rc);        \
-        sendreq = (mca_pml_ob1_send_request_t*)item;                      \
+        OMPI_FREE_LIST_WAIT(&mca_pml_ob1.send_requests, item, rc);         \
+        sendreq = (mca_pml_ob1_send_request_t*)item;                       \
         sendreq->req_proc = proc;                                          \
     }                                                                      \
 }
 
 
-#define MCA_PML_OB1_SEND_REQUEST_INIT(                                    \
+#define MCA_PML_OB1_SEND_REQUEST_INIT(                                     \
     sendreq,                                                               \
     buf,                                                                   \
     count,                                                                 \
@@ -83,38 +96,17 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
         persistent);                                                       \
 }
 
-
-/**
- *  NTL doesn't require pre-pinned or "specially" allocated memory.
- *  Can try to directly send from the users buffer if contigous.
- */
-
-int mca_pml_ob1_send_user(
-    mca_pml_ob1_send_request_t* sendreq,
-    mca_pml_ob1_endpoint_t* endpoint);
-
-
-/**
- *  NTL requires "specially" allocated memory. Request a segment that
- *  is used for initial hdr and any eager data.
- */
-
-int mca_pml_ob1_send_copy(
-    mca_pml_ob1_send_request_t* sendreq,
-    mca_pml_ob1_endpoint_t* endpoint);
-
-
 /**
  * Start a send request. 
  */
 
-#define MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc)                                      \
+#define MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc)                                       \
 {                                                                                         \
-    mca_pml_ob1_endpoint_t* endpoint;                                                    \
-    mca_pml_ob1_proc_t* proc = sendreq->req_proc;                                        \
+    mca_pml_ob1_endpoint_t* endpoint;                                                     \
+    mca_pml_ob1_proc_t* proc = sendreq->req_proc;                                         \
                                                                                           \
     /* select next endpoint */                                                            \
-    endpoint = mca_pml_ob1_ep_array_get_next(&proc->bmi_first);                          \
+    endpoint = mca_pml_ob1_ep_array_get_next(&proc->bmi_first);                           \
     sendreq->req_offset = 0;                                                              \
     sendreq->req_send.req_base.req_ompi.req_complete = false;                             \
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
@@ -127,22 +119,84 @@ int mca_pml_ob1_send_copy(
     }                                                                                     \
                                                                                           \
     if(NULL != endpoint->bmi_alloc) {                                                     \
-        rc = mca_pml_ob1_send_copy(sendreq, endpoint);                                   \
+        rc = mca_pml_ob1_send_request_start_copy(sendreq, endpoint);                      \
     } else {                                                                              \
-        rc = mca_pml_ob1_send_user(sendreq, endpoint);                                   \
+        rc = mca_pml_ob1_send_request_start_user(sendreq, endpoint);                      \
     }                                                                                     \
 }
 
+/*
+ * Advance a request
+ */
 
-#define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                    \
+#define MCA_PML_OB1_SEND_REQUEST_ADVANCE(sendreq)
+
+#if 0
+    switch(sendreq->req_state) {                                           
+        case MCA_PML_OB1_SR_WAIT:                                          
+            mca_pml_ob1_send_request_wait(sendreq);                        
+            break;                                                         
+        case MCA_PML_OB1_SR_SEND:                                          
+            mca_pml_ob1_send_request_send(sendreq);                        
+            break;                                                         
+        case MCA_PML_OB1_SR_PUT:                                           
+            mca_pml_ob1_send_request_put(sendreq);                         
+            break;                                                         
+        default:                                                           
+            break;                                                         
+    }                                                                      
+#endif
+
+
+#define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                     \
 {                                                                    \
     /*  Let the base handle the reference counts */                  \
     MCA_PML_BASE_SEND_REQUEST_FINI((&sendreq->req_send));            \
     OMPI_FREE_LIST_RETURN(                                           \
-        &mca_pml_ob1.send_requests, (ompi_list_item_t*)sendreq);    \
+        &mca_pml_ob1.send_requests, (ompi_list_item_t*)sendreq);     \
 }
                                                                                                                       
 
+/**
+ *  BMI doesn't require pre-pinned or "specially" allocated memory.
+ *  Can try to directly send from the users buffer if contigous.
+ */
+
+int mca_pml_ob1_send_request_start_user(
+    mca_pml_ob1_send_request_t* sendreq,
+    mca_pml_ob1_endpoint_t* endpoint);
+
+
+/**
+ *  BMI requires "specially" allocated memory. Request a segment that
+ *  is used for initial hdr and any eager data.
+ */
+
+int mca_pml_ob1_send_request_start_copy(
+    mca_pml_ob1_send_request_t* sendreq,
+    mca_pml_ob1_endpoint_t* endpoint);
+
+
+/**
+ * 
+ */
+
+int mca_pml_ob1_send_request_acked(
+    mca_bmi_base_module_t* bmi,
+    struct mca_pml_ob1_ack_hdr_t* hdr);
+
+
+/**
+ *
+ */
+int mca_pml_ob1_send_request_send(
+    mca_pml_ob1_send_request_t* sendreq);
+
+/**
+ *
+ */
+int mca_pml_ob1_send_request_put(
+    mca_pml_ob1_send_request_t* sendreq);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
