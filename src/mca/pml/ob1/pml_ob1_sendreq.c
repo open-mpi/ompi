@@ -79,6 +79,9 @@ static void mca_pml_ob1_send_completion(
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
 
+    /* for now - return the descriptor - may cache these at some point */
+    bmi->bmi_free(bmi,descriptor);
+
     /* check for request completion */
     OMPI_THREAD_LOCK(&ompi_request_lock);
     if (OMPI_THREAD_ADD32(&sendreq->req_pending,-1) == 0 &&
