@@ -42,7 +42,9 @@ Thanks for your time.
 This tarball is a beta release of Open MPI.  It is not yet complete,
 mainly in the following areas:
 
-- All MPI point-to-point transports need more performance tuning
+- All MPI point-to-point transports need more performance tuning.  GM
+  and shared memory in particular have only had a light tuning and
+  consequently do not perform well for large messages.
 
 - The Open MPI installation must be in your PATH on all nodes (and
   potentially LD_LIBRARY_PATH, if libmpi is a shared library)
