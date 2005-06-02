@@ -67,7 +67,7 @@ static int allocate(orte_jobid_t jobid)
                     "ras:xgrid:allocate: discover failed!");
         return ret;
     }
-    ret = orte_ras_base_allocate_nodes(jobid, &nodes);
+    ret = orte_ras_base_allocate_nodes_by_node(jobid, &nodes);
 
     while (NULL != (item = ompi_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
