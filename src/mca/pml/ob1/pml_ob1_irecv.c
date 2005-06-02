@@ -106,7 +106,7 @@ int mca_pml_ob1_recv(void *addr,
         *status = recvreq->req_recv.req_base.req_ompi.req_status;
     }
     rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
-    OBJ_RELEASE(recvreq);
+    MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
     return rc;
 }
 
