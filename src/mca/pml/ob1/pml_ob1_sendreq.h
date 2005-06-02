@@ -108,6 +108,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
                                                                                           \
     /* select next endpoint */                                                            \
     endpoint = mca_pml_ob1_ep_array_get_next(&proc->bmi_first);                           \
+    sendreq->req_lock = 0;                                                                \
     sendreq->req_offset = 0;                                                              \
     sendreq->req_pending = 0;                                                             \
     sendreq->req_state = MCA_PML_OB1_SR_START;                                            \
