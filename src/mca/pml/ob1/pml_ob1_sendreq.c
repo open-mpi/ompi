@@ -333,8 +333,10 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                 }
 
                 /* makes sure that we don't exceed ptl_max_frag_size */
-                if (ep->bmi_max_frag_size != 0 && size > ep->bmi_max_frag_size)
+                if (ep->bmi_max_frag_size != 0 && 
+                    size > ep->bmi_max_frag_size - sizeof(mca_pml_ob1_frag_hdr_t)) {
                     size = ep->bmi_max_frag_size - sizeof(mca_pml_ob1_frag_hdr_t);
+                }
                                                                                                                   
                 /* pack into a descriptor */
                 des = ep->bmi_prepare_src(
@@ -344,7 +346,9 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                     sizeof(mca_pml_ob1_frag_hdr_t),
                     &size);
                 if(des == NULL) {
-                    /* queue for retry? */
+                    OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
+                    ompi_list_append(&mca_pml_ob1.send_pending, (ompi_list_item_t*)sendreq);
+                    OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
                 des->des_cbfunc = mca_pml_ob1_send_completion;
@@ -369,8 +373,10 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                     bytes_remaining = sendreq->req_send.req_bytes_packed - sendreq->req_offset;
                 } else {
                     sendreq->req_offset -= size;
-                    sendreq->req_pending--;
-                    /* queue for retry? */
+                    OMPI_THREAD_ADD32(&sendreq->req_pending,-1);
+                    OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
+                    ompi_list_append(&mca_pml_ob1.send_pending, (ompi_list_item_t*)sendreq);
+                    OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
             }

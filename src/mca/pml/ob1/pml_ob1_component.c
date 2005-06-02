@@ -96,9 +96,9 @@ int mca_pml_ob1_component_open(void)
     mca_pml_ob1.priority =
         mca_pml_ob1_param_register_int("priority", 0);
     mca_pml_ob1.send_pipeline_depth =
-        mca_pml_ob1_param_register_int("send_pipeline_depth", 2);
+        mca_pml_ob1_param_register_int("send_pipeline_depth", 3);
     mca_pml_ob1.recv_pipeline_depth =
-        mca_pml_ob1_param_register_int("recv_pipeline_depth", 2);
+        mca_pml_ob1_param_register_int("recv_pipeline_depth", 3);
 
     return mca_bmi_base_open();
 }
