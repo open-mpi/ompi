@@ -106,6 +106,7 @@ extern "C" {
 	uint32_t     type;
         bool         matched;
         bool         have_allocated_buffer;
+        uint32_t     attached_data_length;
     };
     typedef struct mca_ptl_gm_recv_frag_t mca_ptl_gm_recv_frag_t;
 
