@@ -102,6 +102,12 @@ static inline int ompi_atomic_cmpset_32(volatile int32_t *addr,
 
 #if OMPI_GCC_INLINE_ASSEMBLY
 
+#if 0
+
+/* some versions of GCC won't let you use ebx period (even though they
+   should be able to save / restore for the life of the inline
+   assembly).  For the beta, just use the non-inline version */
+
 #ifndef ll_low /* GLIBC provides these somewhere, so protect */
 #define ll_low(x)       *(((unsigned int*)&(x))+0)
 #define ll_high(x)      *(((unsigned int*)&(x))+1)
@@ -135,6 +141,7 @@ static inline int ompi_atomic_cmpset_64(volatile int64_t *addr,
 		    : "cc", "memory", "ebx");
     return (int) ret;
 }
+#endif /* if 0 */
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
 
