@@ -38,6 +38,9 @@
 #ifdef HAVE_PTY_H
 #include <pty.h>
 #endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
 
 #include "mca/iof/base/iof_base_setup.h"
 
@@ -104,25 +107,60 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
 
     if (! opts->usepty) {
         close(opts->p_stdout[0]);
-        close(opts->p_stdin[0]);
+        close(opts->p_stdin[1]);
     }
     close(opts->p_stderr[0]);
 
     if (opts->usepty) {
-        ret = dup2(opts->p_stdout[1], fileno(stdin)); 
-        if (ret < 0) return OMPI_ERROR;
+        if (opts->connect_stdin) {
+            /* disable echo */
+            struct termios term_attrs;
+            if (tcgetattr(opts->p_stdout[1], &term_attrs) < 0) {
+                return OMPI_ERROR;
+            }
+            term_attrs.c_lflag &= ~ (ECHO | ECHOE | ECHOK | 
+                                     ECHOCTL | ECHOKE | ECHONL);
+            if (tcsetattr(opts->p_stdout[1], TCSANOW, &term_attrs) == -1) {
+                return OMPI_ERROR;
+            }
+
+            /* and connect the pty to stdin */
+            ret = dup2(opts->p_stdout[1], fileno(stdin)); 
+            if (ret < 0) return OMPI_ERROR;
+        } else {
+            int fd;
+            /* connect input to /dev/null */
+            fd = open("/dev/null", O_RDONLY);
+            if(fd > fileno(stdin)) {
+                dup2(fd, fileno(stdin));
+                close(fd);
+            }
+        }
         ret = dup2(opts->p_stdout[1], fileno(stdout));
         if (ret < 0) return OMPI_ERROR;
+
     } else {
         if(opts->p_stdout[1] != fileno(stdout)) {
             ret = dup2(opts->p_stdout[1], fileno(stdout));
             if (ret < 0) return OMPI_ERROR;
             close(opts->p_stdout[1]); 
         }
-        if(opts->p_stdin[1] != fileno(stdin)) {
-            ret = dup2(opts->p_stdin[1], fileno(stdin));
-            if (ret < 0) return OMPI_ERROR;
-            close(opts->p_stdin[1]); 
+        if (opts->connect_stdin) {
+            if(opts->p_stdin[0] != fileno(stdin)) {
+                ret = dup2(opts->p_stdin[1], fileno(stdin));
+                if (ret < 0) return OMPI_ERROR;
+                close(opts->p_stdin[1]); 
+            }
+        } else {
+            int fd;
+
+            close(opts->p_stdin[0]);
+            /* connect input to /dev/null */
+            fd = open("/dev/null", O_RDONLY);
+            if(fd > fileno(stdin)) {
+                dup2(fd, fileno(stdin));
+                close(fd);
+            }
         }
     }
     if(opts->p_stderr[1] != fileno(stderr)) {
@@ -143,9 +181,24 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
 
     if (! opts->usepty) {
         close(opts->p_stdout[1]);
-        close(opts->p_stdin[1]);
+        close(opts->p_stdin[0]);
     }
     close(opts->p_stderr[1]);
+
+    /* connect stdin endpoint */
+    if (opts->connect_stdin) {
+        ret = orte_iof.iof_publish(name, ORTE_IOF_SINK,
+                                   ORTE_IOF_STDIN, opts->usepty ? 
+                                   opts->p_stdout[0] : opts->p_stdin[1]);
+        if(ORTE_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+    } else {
+        if (! opts->usepty) {
+            close(opts->p_stdin[0]);
+        }
+    }
 
     /* connect read end to IOF */
     ret = orte_iof.iof_publish(name, ORTE_IOF_SOURCE,

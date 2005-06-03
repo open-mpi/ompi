@@ -164,6 +164,20 @@ static int orte_rmgr_urm_terminate_proc(const orte_process_name_t* proc_name)
 }
 
 
+static void orte_rmgr_urm_wireup_stdin(orte_jobid_t jobid)
+{
+    int rc;
+    orte_process_name_t* name;
+
+    if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, jobid, 0))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    if (ORTE_SUCCESS != (rc = orte_iof.iof_push(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDIN, 0))) {
+        ORTE_ERROR_LOG(rc);
+    }
+}
+
 
 static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
@@ -187,6 +201,9 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
             orte_gpr_keyval_t* keyval = keyvals[j];
             if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG1) == 0) {
                 (*cbfunc)(jobid,ORTE_PROC_STATE_AT_STG1);
+                /* BWB - XXX - FIX ME: this needs to happen when all
+                   are LAUNCHED, before STG1 */
+                orte_rmgr_urm_wireup_stdin(jobid);
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_NUM_AT_STG2) == 0) {

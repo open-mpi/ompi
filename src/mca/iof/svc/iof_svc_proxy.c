@@ -204,7 +204,8 @@ static void orte_iof_svc_proxy_ack(
             f_item =  ompi_list_get_next(f_item)) {
             orte_iof_svc_fwd_t* fwd = (orte_iof_svc_fwd_t*)f_item;
             orte_iof_svc_pub_t* pub = fwd->fwd_pub;
-            if (orte_ns.compare(pub->pub_mask,&pub->pub_name,src) == 0) {
+            if (orte_ns.compare(pub->pub_mask,&pub->pub_name,src) == 0 ||
+                orte_ns.compare(ORTE_NS_CMP_ALL,&pub->pub_proxy,src) == 0) {
                 value.uval = hdr->msg_seq + hdr->msg_len;
                 ompi_hash_table_set_proc(&fwd->fwd_seq,
                                          &hdr->msg_src, &value.vval);
@@ -219,34 +220,52 @@ static void orte_iof_svc_proxy_ack(
     }
     OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
 
-    /* if all endpoints have acknowledged up to this sequence number 
-     * forward ack on to the source
+    /* if all destination endpoints have acknowledged up to this 
+     * sequence number ack the source
     */
     if(seq_min == hdr->msg_seq+hdr->msg_len) {
-        orte_iof_base_frag_t* frag;
-        int rc;
+ 
+        if(orte_ns.compare(ORTE_NS_CMP_ALL,orte_process_info.my_name,&hdr->msg_src) == 0) {
+            orte_iof_base_endpoint_t* endpoint;
+            /*
+             * Local delivery
+             */
+            endpoint = orte_iof_base_endpoint_match(&hdr->msg_src, ORTE_NS_CMP_ALL, hdr->msg_tag);
+            if(endpoint != NULL) {
+                orte_iof_base_endpoint_ack(endpoint, hdr->msg_seq + hdr->msg_len);
+                OBJ_RELEASE(endpoint);
+            }
 
-        ORTE_IOF_BASE_FRAG_ALLOC(frag,rc);
-        if(NULL == frag) {
-            ORTE_ERROR_LOG(rc);
-            return;
-        }
+        } else {
 
-        frag->frag_hdr.hdr_msg = *hdr;
-        frag->frag_iov[0].iov_base = (void*)&frag->frag_hdr;
-        frag->frag_iov[0].iov_len = sizeof(frag->frag_hdr);
-        ORTE_IOF_BASE_HDR_MSG_HTON(frag->frag_hdr.hdr_msg);
+            /*
+             * forward on to source 
+             */
+            orte_iof_base_frag_t* frag;
+            int rc;
+    
+            ORTE_IOF_BASE_FRAG_ALLOC(frag,rc);
+            if(NULL == frag) {
+                ORTE_ERROR_LOG(rc);
+                return;
+            }
 
-        rc = orte_rml.send_nb(
-            &hdr->msg_proxy,
-            frag->frag_iov,
-            1,
-            ORTE_RML_TAG_IOF_SVC,
-            0,
-            orte_iof_svc_ack_send_cb,
-            frag);
-        if(rc < 0) {
-            ORTE_ERROR_LOG(rc);
+            frag->frag_hdr.hdr_msg = *hdr;
+            frag->frag_iov[0].iov_base = (void*)&frag->frag_hdr;
+            frag->frag_iov[0].iov_len = sizeof(frag->frag_hdr);
+            ORTE_IOF_BASE_HDR_MSG_HTON(frag->frag_hdr.hdr_msg);
+
+            rc = orte_rml.send_nb(
+                &hdr->msg_proxy,
+                frag->frag_iov,
+                    1,
+                ORTE_RML_TAG_IOF_SVC,
+                0,
+                orte_iof_svc_ack_send_cb,
+                frag);
+            if(rc < 0) {
+                ORTE_ERROR_LOG(rc);
+            }
         }
     }
 }
