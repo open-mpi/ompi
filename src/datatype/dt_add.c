@@ -223,7 +223,6 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
             pLast->elem.extent      = extent;
             pdtBase->desc.used++;
             pLast->elem.common.flags  = pdtAdd->flags & ~(DT_FLAG_FOREVER | DT_FLAG_COMMITED);
-            pLast->elem.common.flags |= DT_FLAG_CONTIGUOUS;
         }
     } else {
         /* We handle a user defined datatype. We should make sure that the user will not have the
@@ -241,33 +240,41 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         pdtBase->btypes[DT_UB]       |= pdtAdd->btypes[DT_UB];
         for( i = 4; i < DT_MAX_PREDEFINED; i++ )
             if( pdtAdd->btypes[i] != 0 ) pdtBase->btypes[i] += (count * pdtAdd->btypes[i]);
-        
-        /* if the extent of the datatype if the same as the extent of the loop
-         * description of the datatype then we simply have to update the main loop.
-         */
-        if( count != 1 ) {
-            pLoop = pLast;
-            CREATE_LOOP_START( pLast, count, (long)pdtAdd->desc.used + 1, extent,
-                               (pdtAdd->flags & ~(DT_FLAG_COMMITED | DT_FLAG_FOREVER)) );
-            localFlags = DT_FLAG_IN_LOOP;
-            pdtBase->btypes[DT_LOOP] += 2;
-            pdtBase->desc.used += 2;
-            pLast++;
-        }
-        
-        for( i = 0; i < pdtAdd->desc.used; i++ ) {
-            pLast->elem              = pdtAdd->desc.desc[i].elem;
-            pLast->elem.common.flags = pdtAdd->desc.desc[i].elem.common.flags | localFlags;
-            if( DT_LOOP != pdtAdd->desc.desc[i].elem.common.type )
-                pLast->elem.disp += disp /* + pdtAdd->lb */;
-            pLast++;
-        }
-        pdtBase->desc.used += pdtAdd->desc.used;
-        if( pLoop != NULL ) {
-            CREATE_LOOP_END( pLast, pdtAdd->desc.used + 1, true_ub - true_lb,
-                             pdtAdd->size, pLoop->loop.common.flags );
-        }
-        /* should I add some space until the extent of this datatype ? */
+
+        if( (1 == pdtAdd->desc.used) && (extent == (pdtAdd->ub - pdtAdd->lb)) &&
+	    (extent == pdtAdd->desc.desc[0].elem.extent) ){
+	    pLast->elem        = pdtAdd->desc.desc[0].elem;
+	    pLast->elem.count *= count;
+	    pLast->elem.disp  += disp;
+	    pdtBase->desc.used++;
+	} else {
+	    /* if the extent of the datatype if the same as the extent of the loop
+	     * description of the datatype then we simply have to update the main loop.
+	     */
+	    if( count != 1 ) {
+		pLoop = pLast;
+		CREATE_LOOP_START( pLast, count, (long)pdtAdd->desc.used + 1, extent,
+				   (pdtAdd->flags & ~(DT_FLAG_COMMITED | DT_FLAG_FOREVER)) );
+		localFlags = DT_FLAG_IN_LOOP;
+		pdtBase->btypes[DT_LOOP] += 2;
+		pdtBase->desc.used += 2;
+		pLast++;
+	    }
+	    
+	    for( i = 0; i < pdtAdd->desc.used; i++ ) {
+		pLast->elem               = pdtAdd->desc.desc[i].elem;
+		pLast->elem.common.flags |= localFlags;
+		if( DT_FLAG_DATA & pdtAdd->desc.desc[i].elem.common.flags )
+		    pLast->elem.disp += disp;
+		pLast++;
+	    }
+	    pdtBase->desc.used += pdtAdd->desc.used;
+	    if( pLoop != NULL ) {
+		CREATE_LOOP_END( pLast, pdtAdd->desc.used + 1, true_ub - true_lb,
+				 pdtAdd->size, pLoop->loop.common.flags );
+	    }
+	    /* should I add some space until the extent of this datatype ? */
+	}
     }
 
     /* Is the data still contiguous ?
