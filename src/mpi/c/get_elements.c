@@ -49,7 +49,7 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
       *count = status->_count / size;
       size = status->_count - (*count) * size;
       /* if basic type we should return the same result as MPI_Get_count */
-      if( (datatype->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC ) {
+      if( datatype->flags & DT_FLAG_PREDEFINED ) {
          if( size != 0 ) {
             *count = MPI_UNDEFINED;
          }

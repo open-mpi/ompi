@@ -105,9 +105,10 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
                      */
                     CREATE_LOOP_START( pElemDesc, counter, (long)2, loop->extent, loop->common.flags );
                     pElemDesc++; nbElems++;
-                    CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_CONTIGUOUS, end_loop->size, loop_disp, lastExtent );
+                    CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, end_loop->size, loop_disp, lastExtent );
                     pElemDesc++; nbElems++;
-                    CREATE_LOOP_END( pElemDesc, 2, end_loop->total_extent, end_loop->size, end_loop->common.flags );
+                    CREATE_LOOP_END( pElemDesc, 2, end_loop->total_extent, end_loop->size,
+                                     end_loop->common.flags );
                     pElemDesc++; nbElems++;
                 }
                 pos_desc += pData->desc.desc[pos_desc].loop.items + 1;

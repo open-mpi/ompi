@@ -69,7 +69,7 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
         /* if we have a predefined datatype then we return directly a pointer to
          * the datatype, otherwise we should create a copy and give back the copy.
          */
-        if( DT_FLAG_BASIC != (array_of_datatypes[i]->flags & DT_FLAG_BASIC) ) {
+        if( !(array_of_datatypes[i]->flags & DT_FLAG_PREDEFINED) ) {
             if( (rc = ompi_ddt_duplicate( array_of_datatypes[i], &newtype )) != MPI_SUCCESS ) {
                 ompi_ddt_destroy( &newtype );
                 OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,

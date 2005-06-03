@@ -181,7 +181,7 @@ int32_t ompi_ddt_get_args( const ompi_datatype_t* pData, int32_t which,
 {
    ompi_ddt_args_t* pArgs = pData->args;
 
-   if( (pData->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC ) {
+   if( pData->flags & DT_FLAG_PREDEFINED ) {
       switch(which){
       case 0:
          *ci = 0;
