@@ -128,7 +128,7 @@ void mca_ptl_ib_send_frag_send_complete(mca_ptl_ib_module_t *ib_ptl, mca_ptl_ib_
     switch(hdr->hdr_common.hdr_type) {
         case MCA_PTL_HDR_TYPE_MATCH:
             if (0 == (hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK)
-                || mca_ptl_base_send_request_matched(req)) {
+                || req->req_peer_match.pval != NULL) {
 
                 ib_ptl->super.ptl_send_progress(&ib_ptl->super,
                     sendfrag->frag_send.frag_request,
