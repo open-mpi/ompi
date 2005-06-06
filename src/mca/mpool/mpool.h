@@ -58,7 +58,7 @@ typedef void (*mca_mpool_base_module_free_fn_t)(struct mca_mpool_base_module_t* 
 /**
   * register memory
   */
-typedef int (*mca_mpool_base_module_register_fn_t)(struct mca_mpool_base_module_t* mpool, void * addr, size_t size, void** user_out);
+typedef int (*mca_mpool_base_module_register_fn_t)(struct mca_mpool_base_module_t* mpool, void * addr, size_t size, void* user_out);
 
 /**
   * deregister memory

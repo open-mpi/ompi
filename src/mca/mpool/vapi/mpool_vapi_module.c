@@ -18,7 +18,7 @@
 #include <string.h>
 #include "util/output.h"
 #include "mca/mpool/vapi/mpool_vapi.h"
-#include "mca/common/vapi/common/vapi_mem_reg.h"
+#include "mca/common/vapi/vapi_mem_reg.h"
 
 
 /* 
@@ -43,7 +43,7 @@ void mca_mpool_vapi_module_init(mca_mpool_vapi_module_t* mpool)
 void* mca_mpool_vapi_alloc(mca_mpool_base_module_t* mpool, size_t size, size_t align, void** user_out)
 {
   mca_mpool_vapi_module_t* mpool_vapi = (mca_mpool_vapi_module_t*)mpool; 
-  return mpool_vapi->vapi_allocator->alc_alloc(mpool_vapi->vapi_allocator, size, align);
+  return mpool_vapi->vapi_allocator->alc_alloc(mpool_vapi->vapi_allocator, size, align, user_out);
 }
 
 /**
@@ -52,7 +52,7 @@ void* mca_mpool_vapi_alloc(mca_mpool_base_module_t* mpool, size_t size, size_t a
 void* mca_mpool_vapi_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size, void** user_out)
 {
   mca_mpool_vapi_module_t* mpool_vapi = (mca_mpool_vapi_module_t*)mpool; 
-  return mpool_vapi->vapi_allocator->alc_realloc(mpool_vapi->vapi_allocator, addr, size);
+  return mpool_vapi->vapi_allocator->alc_realloc(mpool_vapi->vapi_allocator, addr, size, user_out);
 }
 
 /**
