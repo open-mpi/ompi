@@ -257,10 +257,10 @@ int main(int argc, char *argv[])
         close(orted_globals.uri_pipe);
     }
     
-    /* setup stdin/stdout/stderr */
+    /* setup stdout/stderr */
     if (orted_globals.debug_daemons_file) {
-        /* if we are debugging to a file, then send stdin/stdout/stderr
-         * to the orted log file
+        /* if we are debugging to a file, then send stdout/stderr to
+         * the orted log file
          */
         
         /* get my jobid */
@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
                                 log_file, 
                                 NULL);
 
-        fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0666);
+        fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0640);
         if (fd < 0) {
             /* couldn't open the file for some reason, so
              * just connect everything to /dev/null
