@@ -241,13 +241,14 @@ mca_ptl_gm_thread_progress( ompi_thread_t* thread )
     pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
 
     while(1) {
-	event = gm_blocking_receive(ptl->gm_port);
-	if( GM_NO_RECV_EVENT != gm_ntohc(event->recv.type) )
-	    mca_ptl_gm_analyze_recv_event( ptl, event );
+        event = gm_blocking_receive(ptl->gm_port);
+        if( GM_NO_RECV_EVENT != gm_ntohc(event->recv.type) )
+            mca_ptl_gm_analyze_recv_event( ptl, event );
     }
     return PTHREAD_CANCELED;
 }
 #endif  /* OMPI_HAVE_POSIX_THREADS */
+
 
 /* Scan all ports on the boards. As it's difficult to find the total number of boards
  * we use a predefined maximum.
@@ -500,9 +501,9 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
     ompi_free_list_init( &(mca_ptl_gm_component.gm_unexpected_frags_data),
                          mca_ptl_gm_component.gm_segment_size,
                          OBJ_CLASS (ompi_list_item_t),
-                         1,   /* keep is small in the begining */
-                         32,  /* maximum number of list allocated elements will be zero */
-                         1,   /* Number of elements to grow by per allocation */
+                         16,   /* keep is small in the begining */
+                         128,  /* maximum number of list elements */
+                         16,   /* Number of elements to grow by per allocation */
                          NULL ); /* not using mpool */
 #if OMPI_MCA_PTL_GM_CACHE_ENABLE
     mca_ptl_gm_regcache_init();
@@ -587,9 +588,10 @@ mca_ptl_gm_component_progress (mca_ptl_tstamp_t tstamp)
         event = gm_receive(ptl->gm_port);
         /* If there are no receive events just skip the function call */
         if( GM_NO_RECV_EVENT != gm_ntohc(event->recv.type) ) {
-            mca_ptl_gm_analyze_recv_event( ptl, event );
-            /* we try to empty the GM event queue */
-            /*continue;*/
+            if( 1 == mca_ptl_gm_analyze_recv_event( ptl, event ) ) {
+                /* we try to empty the GM event queue */
+                continue;
+            }
         }
         i++;
     }

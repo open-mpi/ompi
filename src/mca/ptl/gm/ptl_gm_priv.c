@@ -350,14 +350,15 @@ int mca_ptl_gm_send_burst_data( mca_ptl_gm_peer_t *ptl_peer,
         hdr->hdr_src_ptr.lval     = 0L;  /* for VALGRIND/PURIFY - REPLACE WITH MACRO */
         hdr->hdr_src_ptr.pval     = fragment;
         hdr->hdr_dst_ptr          = fragment->frag_send.frag_request->req_peer_match;
+        assert( hdr->hdr_dst_ptr.pval != NULL );
         hdr->hdr_frag_offset      = fragment->frag_offset + fragment->frag_bytes_processed;
-        hdr->hdr_frag_length      = iov.iov_len;
+        hdr->hdr_frag_length      = max_data;
 
         fragment->frag_bytes_processed += max_data;
         fragment->frag_bytes_validated += max_data;
-        burst_length -= iov.iov_len;
-        if( fragment->frag_send.frag_base.frag_size == fragment->frag_bytes_processed ) {
-            assert( burst_length == 0 );
+        burst_length -= max_data;
+        if( 0 == burst_length ) {
+            assert( fragment->frag_send.frag_base.frag_size == fragment->frag_bytes_processed );
             hdr->hdr_common.hdr_flags |= PTL_FLAG_GM_LAST_FRAGMENT;
         }
         /* for the last piece set the header type to FIN */
@@ -509,13 +510,11 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
                           size_t size,
                           int flags )
 {
-    struct iovec iov;
-    size_t size_in, size_out;
     const int header_length = sizeof(mca_ptl_base_rendezvous_header_t);
     mca_ptl_base_header_t* hdr;
     ompi_convertor_t *convertor = NULL;
     int rc, freeAfter;
-    unsigned int in_size, max_data = 0;
+    unsigned int max_data = 0;
     mca_ptl_gm_peer_t* ptl_peer = (mca_ptl_gm_peer_t*)ptl_base_peer;
     ompi_list_item_t *item;
     char* sendbuf;
@@ -525,43 +524,43 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
     sendbuf = (char*)item;
 
     hdr = (mca_ptl_base_header_t*)item;
-    size_in = size;
 
     /* Populate the header with the match informations */
     (void)mca_ptl_gm_init_header_rndv( hdr, sendreq, flags );
     hdr->hdr_rndv.hdr_frag_length = (uint64_t)((long)ptl);
 
-    if( size_in > 0 ) {
-        convertor = &sendreq->req_send.req_convertor;
+    if( size > 0 ) {
+        struct iovec iov;
+        unsigned int iov_count = 1;
 
-        if( (size_in + header_length) <= mca_ptl_gm_component.gm_segment_size ) 
-            iov.iov_len = size_in;
+        convertor = &sendreq->req_send.req_convertor;
+        /* personalize the convertor */
+        ompi_convertor_init_for_send( convertor, 0, sendreq->req_send.req_base.req_datatype,
+                                      sendreq->req_send.req_base.req_count,
+                                      sendreq->req_send.req_base.req_addr,
+                                      0, NULL );
+
+        if( (size + header_length) <= mca_ptl_gm_component.gm_segment_size ) 
+            iov.iov_len = size;
         else
             iov.iov_len = mca_ptl_gm_component.gm_segment_size - header_length;
 	
         /* copy the data to the registered buffer */
         iov.iov_base = ((char*)hdr) + header_length;
         max_data = iov.iov_len;
-        in_size = 1;
-        if((rc = ompi_convertor_pack(convertor, &(iov), &in_size, &max_data, &freeAfter)) < 0)
+        if((rc = ompi_convertor_pack(convertor, &(iov), &iov_count, &max_data, &freeAfter)) < 0)
             return OMPI_ERROR;
 
-
+        assert( max_data != 0 );
         /* must update the offset after actual fragment size is determined
          * before attempting to send the fragment
          */
         mca_ptl_base_send_request_offset( sendreq, max_data );
-    } else {
-        iov.iov_len = 0;  /* no data will be transmitted */
     }
-    /* adjust size and request offset to reflect actual number of bytes
-     * packed by convertor
-     */
-    size_out = iov.iov_len + header_length;
     
     /* Send the first fragment */
     gm_send_with_callback( ptl_peer->peer_ptl->gm_port, hdr,
-                           GM_SIZE, size_out, GM_LOW_PRIORITY, 
+                           GM_SIZE, max_data + header_length, GM_LOW_PRIORITY,
                            ptl_peer->peer_addr.local_id, ptl_peer->peer_addr.port_id,
                            send_match_callback, (void *)hdr );
     
@@ -569,18 +568,18 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
         ptl_peer->peer_ptl->super.ptl_send_progress( (mca_ptl_base_module_t*)ptl_peer->peer_ptl,
                                                      sendreq, max_data );
         DO_DEBUG( ompi_output( 0, "sender %d complete request %p w/o rndv with %d bytes",
-                               orte_process_info.my_name->vpid, sendreq, iov.iov_len ); );
+                               orte_process_info.my_name->vpid, sendreq, max_data ); );
     } else {
         DO_DEBUG( ompi_output( 0, "sender %d sent request %p for rndv with %d bytes",
-                               orte_process_info.my_name->vpid, sendreq, iov.iov_len ); );
+                               orte_process_info.my_name->vpid, sendreq, max_data ); );
     }
 
     return OMPI_SUCCESS;
 }
 
 static mca_ptl_gm_recv_frag_t*
-mca_ptl_gm_ctrl_frag( struct mca_ptl_gm_module_t *ptl,
-		      mca_ptl_base_header_t * header, uint32_t msg_len )
+mca_ptl_gm_recv_frag_ctrl( struct mca_ptl_gm_module_t *ptl,
+                           mca_ptl_base_header_t * header, uint32_t msg_len )
 {
     mca_ptl_base_send_request_t *req;
   
@@ -888,14 +887,12 @@ void mca_ptl_gm_outstanding_recv( struct mca_ptl_gm_module_t *ptl )
     }
 } 
 
-typedef mca_ptl_gm_recv_frag_t* (frag_management_fct_t)( struct mca_ptl_gm_module_t *ptl,
-							 mca_ptl_base_header_t *hdr, uint32_t msg_len );
 frag_management_fct_t* frag_management_fct[MCA_PTL_HDR_TYPE_MAX] = {
-    NULL,
+    NULL,  /* empty no header type equal to zero */
     NULL,  /* mca_ptl_gm_recv_frag_match, */
     mca_ptl_gm_recv_frag_match,
     (frag_management_fct_t*)mca_ptl_gm_recv_frag_frag,  /* force the conversion to remove a warning */
-    mca_ptl_gm_ctrl_frag,
+    mca_ptl_gm_recv_frag_ctrl,
     NULL,
     NULL,
     mca_ptl_gm_recv_frag_fin,
@@ -903,7 +900,6 @@ frag_management_fct_t* frag_management_fct[MCA_PTL_HDR_TYPE_MAX] = {
 
 int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_event_t* event )
 {
-    mca_ptl_gm_recv_frag_t * frag;
     mca_ptl_base_header_t *header = NULL, *release_buf;
     frag_management_fct_t* function;
     uint32_t priority = GM_HIGH_PRIORITY, msg_len;
@@ -917,34 +913,33 @@ int mca_ptl_gm_analyze_recv_event( struct mca_ptl_gm_module_t* ptl, gm_recv_even
     case GM_FAST_HIGH_RECV_EVENT:
     case GM_FAST_HIGH_PEER_RECV_EVENT:
         header = (mca_ptl_base_header_t *)gm_ntohp(event->recv.message);
-        goto have_event;
+        break;
     case GM_RECV_EVENT:
     case GM_PEER_RECV_EVENT:
         priority = GM_LOW_PRIORITY;
     case GM_HIGH_RECV_EVENT:
     case GM_HIGH_PEER_RECV_EVENT:
         header = release_buf;
-        goto have_event;
+        break;
     case GM_NO_RECV_EVENT:
-	break;
 	
     default:
         gm_unknown(ptl->gm_port, event);
+        return 1;
     }
-    return 0;
 
- have_event:
     assert( header->hdr_common.hdr_type < MCA_PTL_HDR_TYPE_MAX );
     function = frag_management_fct[header->hdr_common.hdr_type];
     assert( NULL != function );
 
     msg_len = gm_ntohl( event->recv.length );
-    frag = function( ptl, header, msg_len );
+    (void)function( ptl, header, msg_len );
 
     gm_provide_receive_buffer( ptl->gm_port, release_buf, GM_SIZE, priority );
 
     return 0;
 }
+
 
 void mca_ptl_gm_dump_header( char* str, mca_ptl_base_header_t* hdr )
 {
