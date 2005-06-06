@@ -32,7 +32,7 @@ int mca_allocator_bucket_module_open(void);
 int mca_allocator_bucket_module_close(void);
 
 void * mca_allocator_bucket_alloc_wrapper(struct mca_allocator_base_module_t* allocator,
-                                          size_t size, size_t align, void* user_out);
+                                          size_t size, size_t align, void** user_out);
 static int mca_allocator_num_buckets;
 
 
@@ -83,7 +83,7 @@ int mca_allocator_bucket_module_close(void) {
 }
 
 void * mca_allocator_bucket_alloc_wrapper(struct mca_allocator_base_module_t* allocator,
-                                          size_t size, size_t align, void* user_out)
+                                          size_t size, size_t align, void** user_out)
 {
     if(0 == align){
         return(mca_allocator_bucket_alloc(allocator, size, user_out));

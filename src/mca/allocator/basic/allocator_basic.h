@@ -92,7 +92,7 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
         mca_allocator_base_module_t * mem, 
         size_t size, 
         size_t align, 
-        void* user_out);
+        void** user_out);
 
 /**
    * Attempts to resize the passed region of memory into a larger or a smaller
@@ -112,7 +112,7 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
         mca_allocator_base_module_t * mem, 
         void * ptr, 
         size_t size, 
-        void* user_out);
+        void** user_out);
 
 /**
    * Frees the passed region of memory
