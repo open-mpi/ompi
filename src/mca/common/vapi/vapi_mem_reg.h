@@ -1,14 +1,38 @@
-#ifndef MCA_COMMON_
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+
+#ifndef MCA_COMMON_VAPI_MEM_REG_H
+#define MCA_COMMON_VAPI_MEM_REG_H
+
 #include <vapi.h> 
 #include <vapi_common.h> 
 
 
-struct mca_common_vapi_mem_reg_t{
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
+
+struct mca_common_vapi_hca_pd_t{
   VAPI_hca_hndl_t hca;   /* the hca (nic) */ 
   VAPI_pd_hndl_t pd_tag; /* the protection domain */ 
-}; typedef struct mca_common_vapi_mem_reg_t mca_common_vapi_mem_reg_t;  
+}; typedef struct mca_common_vapi_hca_pd_t mca_common_vapi_hca_pd_t;  
 
-struct vapi_memhandle_t {
+struct mca_common_vapi_memhandle_t {
   VAPI_mr_hndl_t                  hndl;
   /* Memory region handle */
   
@@ -22,6 +46,11 @@ struct vapi_memhandle_t {
 };
 typedef struct mca_common_vapi_memhandle_t mca_common_vapi_memhandle_t;
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
+#endif
 
 
 
