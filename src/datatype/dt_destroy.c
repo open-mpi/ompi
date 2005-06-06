@@ -21,12 +21,12 @@
 
 int32_t ompi_ddt_destroy( ompi_datatype_t** dt )
 {
-   ompi_datatype_t* pData = *dt;
+    ompi_datatype_t* pData = *dt;
 
-   if( pData->flags & DT_FLAG_FOREVER )
-      return OMPI_ERROR;
+    if( pData->flags & DT_FLAG_PREDEFINED )
+        return OMPI_ERROR;
 
-   OBJ_RELEASE( pData );
-   *dt = NULL;
-   return OMPI_SUCCESS;
+    OBJ_RELEASE( pData );
+    *dt = NULL;
+    return OMPI_SUCCESS;
 }

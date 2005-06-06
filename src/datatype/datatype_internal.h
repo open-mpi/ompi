@@ -55,6 +55,16 @@ static inline void DUMP( char* fmt, ... )
 #  endif  /* ACCEPT_C99 */
 #endif  /* VERBOSE */
 
+/* There 3 types of predefined data types. 
+ * - the basic one composed by just one basic datatype which are definitively contiguous
+ * - the derived ones where the same basic type is used multiple times. They should be most
+ *   of the time contiguous.
+ * - and finally the derived one where multiple basic types are used. Depending on the architecture
+ *   they can be contiguous or not.
+ *
+ * At this level we do not care from which language the datatype came from (C, C++ or FORTRAN),
+ * we only focus on their internal representation in the host memory.
+ */
 #define DT_LOOP                    0x00
 #define DT_END_LOOP                0x01
 #define DT_LB                      0x02
@@ -75,36 +85,46 @@ static inline void DUMP( char* fmt, ... )
 #define DT_FLOAT                   0x11
 #define DT_DOUBLE                  0x12
 #define DT_LONG_DOUBLE             0x13
-#define DT_COMPLEX_FLOAT           0x14
-#define DT_COMPLEX_DOUBLE          0x15
-#define DT_COMPLEX_LONG_DOUBLE     0x16
-#define DT_PACKED                  0x17
-#define DT_LOGIC                   0x18
-#define DT_FLOAT_INT               0x19
-#define DT_DOUBLE_INT              0x1A
-#define DT_LONG_DOUBLE_INT         0x1B
-#define DT_LONG_INT                0x1C
-#define DT_2INT                    0x1D
-#define DT_SHORT_INT               0x1E
-#define DT_INTEGER                 0x1F
-#define DT_REAL                    0x20
-#define DT_DBLPREC                 0x21
-#define DT_2REAL                   0x22
-#define DT_2DBLPREC                0x23
-#define DT_2INTEGER                0x24
-#define DT_WCHAR                   0x25
-#define DT_2COMPLEX                0x26
-#define DT_2DOUBLE_COMPLEX         0x27
-#define DT_CXX_BOOL                0x28
+#define DT_PACKED                  0x14
+#define DT_WCHAR                   0x15
+#define DT_CXX_BOOL                0x16
+#define DT_LOGIC                   0x17
+#define DT_INTEGER                 0x18
+#define DT_REAL                    0x19
+#define DT_DBLPREC                 0x1A
+/*
+ * This is not a datatype. It contain the number of basic datatypes.
+ */
+#define DT_MAX_BASIC               0x1B
+/*
+ * Derived datatypes supposely contiguous
+ */
+#define DT_COMPLEX_FLOAT           0x1B
+#define DT_COMPLEX_DOUBLE          0x1C
+#define DT_COMPLEX_LONG_DOUBLE     0x1D
+#define DT_2INT                    0x1E
+#define DT_2INTEGER                0x1F
+#define DT_2REAL                   0x20
+#define DT_2DBLPREC                0x21
+#define DT_2COMPLEX                0x22
+#define DT_2DOUBLE_COMPLEX         0x23
+/*
+ * Derived datatypes which will definitively be non contiguous on some architectures.
+ */
+#define DT_FLOAT_INT               0x24
+#define DT_DOUBLE_INT              0x25
+#define DT_LONG_DOUBLE_INT         0x26
+#define DT_LONG_INT                0x27
+#define DT_SHORT_INT               0x28
 #define DT_UNAVAILABLE             0x29
 /* If the number of basic datatype should change update
  * DT_MAX_PREDEFINED in datatype.h
  */
 #if DT_MAX_PREDEFINED <= DT_UNAVAILABLE
-#error DT_MAX_PREDEFINED should be updated
+#error DT_MAX_PREDEFINED should be updated to the next value after the DT_UNAVAILABLE define
 #endif  /* safe check for max predefined datatypes. */
 
-#define DT_INCREASE_STACK     32
+#define DT_INCREASE_STACK     8
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
