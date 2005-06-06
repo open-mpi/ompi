@@ -27,26 +27,15 @@
 
 #define DO_DEBUG(INST)
 
-void ompi_ddt_safeguard_pointer( const void* actual_ptr, int length,
-                                 const void* initial_ptr,
-                                 const ompi_datatype_t* pData,
-                                 int count )
+#if OMPI_ENABLE_DEBUG
+int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actual_ptr, int length,
+                                                 const void* initial_ptr,
+                                                 const ompi_datatype_t* pData,
+                                                 int count )
 {
-    char* lower_bound = (char*)initial_ptr;
-    char* upper_bound = (char*)initial_ptr;
-
-    if( (length == 0) || (count == 0) ) return;
-    lower_bound += pData->lb;
-    upper_bound += (pData->ub - pData->lb) * (count - 1) + pData->true_ub;
-
-    if( (char*)actual_ptr >= lower_bound )
-        /* Im up from the lower bound */
-        if( ((char*)actual_ptr + length) <= upper_bound )
-            return;
-    ompi_output( 0, "Pointer %p size %d is outside [%p,%p] for %d times the data \n",
-                 actual_ptr, length, lower_bound, upper_bound, count );
-    ompi_ddt_dump( pData );
+    return 0;
 }
+#endif  /* OMPI_ENABLE_DEBUG */
 
 static
 int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
@@ -195,12 +184,8 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
     dt_elem_desc_t* pElems;
 
     pDestBuf = iov[0].iov_base;
-   
-    if( pData->opt_desc.desc != NULL ) {
-        pElems = pData->opt_desc.desc;
-    } else {
-        pElems = pData->desc.desc;
-    }
+  
+    pElems = pConv->use_desc->desc; 
    
     pStack = pConv->pStack + pConv->stack_pos;
     pos_desc = pStack->index;
@@ -329,27 +314,26 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     uint32_t iov_pos = 0;     /* index in the iovec where we put data inside */
     int bConverted = 0;       /* number of bytes converted/moved this time */
     uint32_t space_on_iovec;  /* amount of free space on the current iovec */
-    long lastDisp = 0, last_count = 0;
+    long lastDisp = 0;
     uint32_t space = *max_data, last_blength = 0, saveLength;
-    char *pDestBuf, *savePos;
+    char *destination, *source;
     ompi_datatype_t* pData = pConv->pDesc;
+    ddt_elem_desc_t pack_elem;
     dt_elem_desc_t* pElems;
 
-    if( pData->opt_desc.desc != NULL ) {
-        pElems = pData->opt_desc.desc;
-    } else {
-        pElems = pData->desc.desc;
-    }
+    pElems = pConv->use_desc->desc;
 
-    pDestBuf = iov[0].iov_base;
     pStack = pConv->pStack + pConv->stack_pos;
+    destination = iov[0].iov_base;
+    source = (char*)pConv->pBaseBuf + pStack->disp;
+   
 
     /* retrieve the context of the last call */
     pos_desc = pStack->index;
-    last_count = pStack->count;
-    last_blength = last_count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
+    pack_elem.count = pStack->count;
+    pack_elem.common.type = pElems[pos_desc].elem.common.type;
+    last_blength = pack_elem.count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
     lastDisp = pStack->disp;
-    savePos = (char*)pConv->pBaseBuf + pStack->disp;
     DO_DEBUG( ompi_output( 0, "pack_no_conversion stack_pos %d index %d count %d last_blength %ld lastDisp %ld savePos %p bConverted %d\n",
                            pConv->stack_pos, pStack->index, pStack->count, last_blength, lastDisp, savePos,
                            pConv->bConverted ); );
@@ -357,7 +341,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     pStack--;
     pConv->stack_pos--;
 
-    *freeAfter = 0;
+    *freeAfter = (*freeAfter) & ~((1 << (*out_size)) - 1);
     space_on_iovec = iov[0].iov_len;
 
     while( pos_desc >= 0 ) {
@@ -372,7 +356,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                         if( iov_pos < (*out_size) ) {  /* still some place in the iovec */
                             if( iov[iov_pos].iov_base == NULL ) {
                                 /* prepare a new iovec */
-                                iov[iov_pos].iov_base = savePos;
+                                iov[iov_pos].iov_base = source;
                                 iov[iov_pos].iov_len = saveLength;
                                 bConverted += saveLength;
                                 saveLength = 0;
@@ -384,13 +368,13 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                                 if( space_on_iovec < saveLength ) {
                                     copy_length = space_on_iovec;
                                 }
-                                OMPI_DDT_SAFEGUARD_POINTER( savePos, copy_length,
+                                OMPI_DDT_SAFEGUARD_POINTER( source, copy_length,
                                                             pConv->pBaseBuf, pData, pConv->count );
-                                DO_DEBUG( ompi_output( 0, "1. memcpy( %p, %p, %d ) bConverted %d space %d pConv->bConverted %d\n", pDestBuf, savePos,
+                                DO_DEBUG( ompi_output( 0, "1. memcpy( %p, %p, %ld ) bConverted %ld space %ld pConv->bConverted %ld\n", destination, source,
                                                        copy_length, bConverted, space_on_iovec, pConv->bConverted ); );
-                                MEMCPY( pDestBuf, savePos, copy_length );
-                                savePos += copy_length;
-                                pDestBuf += copy_length;
+                                MEMCPY( destination, source, copy_length );
+                                source += copy_length;
+                                destination += copy_length;
                                 bConverted += copy_length;
                                 space_on_iovec -= copy_length;
                                 saveLength -= copy_length;
@@ -398,7 +382,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                         }
                     }
                     iov[iov_pos].iov_len -= space_on_iovec;
-                    last_count = 0;
+                    pack_elem.count = 0;
                     pos_desc = -1;
                     last_blength = 0;
                     goto end_loop;
@@ -416,8 +400,8 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
             }
             pos_desc++;  /* go to the next element */
             lastDisp = pStack->disp + pElems[pos_desc].elem.disp;
-            last_count = pElems[pos_desc].elem.count;
-            last_blength = last_count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
+            pack_elem.count = pElems[pos_desc].elem.count;
+            last_blength = pack_elem.count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
             continue;  /* next loop */
         }
         while( DT_LOOP == pElems[pos_desc].elem.common.type ) {
@@ -432,62 +416,63 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                 if( iov[iov_pos].iov_base == NULL ) {
                     iov[iov_pos].iov_base = pConv->memAlloc_fn( &(iov[iov_pos].iov_len) );
                     space_on_iovec = iov[iov_pos].iov_len;
-                    pDestBuf = iov[iov_pos].iov_base;
+                    destination = iov[iov_pos].iov_base;
                     (*freeAfter) |= (1 << iov_pos);
                 }
                 /* compute the maximum amount of data to be packed */
-                if( (end_loop->size * last_count) > space_on_iovec ) {
-                    stop_in_loop = last_count;
-                    last_count = space_on_iovec / end_loop->size;
+                if( (end_loop->size * pack_elem.count) > space_on_iovec ) {
+                    stop_in_loop = pack_elem.count;
+                    pack_elem.count = space_on_iovec / end_loop->size;
                 }
                 /* Now let's do it */
-                for( i = 0; i < last_count; i++ ) {
+                for( i = 0; i < (int)pack_elem.count; i++ ) {
                     OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, end_loop->size,
                                                 pConv->pBaseBuf, pData, pConv->count );
-                    DO_DEBUG (ompi_output( 0, "2. memcpy( %p, %p, %d )\n", pDestBuf, pConv->pBaseBuf + lastDisp,
+                    DO_DEBUG (ompi_output( 0, "2. memcpy( %p, %p, %ld )\n", destination, pConv->pBaseBuf + lastDisp,
                                            end_loop->size ); );
-                    MEMCPY( pDestBuf, pConv->pBaseBuf + lastDisp, end_loop->size );
+                    MEMCPY( destination, pConv->pBaseBuf + lastDisp, end_loop->size );
                     lastDisp += pElems[pos_desc].loop.extent;
-                    pDestBuf += end_loop->size;
+                    destination += end_loop->size;
                 }
                 DO_DEBUG( ompi_output( 0, "\t\tbConverted %d space %d pConv->bConverted %d\n",
                                        bConverted, space_on_iovec, pConv->bConverted ); );
-                i = end_loop->size * last_count;  /* temporary value */
+                i = end_loop->size * pack_elem.count;  /* temporary value */
                 space_on_iovec -= i;
                 space          -= i;
                 bConverted     += i;
                 if( stop_in_loop == 0 ) {  /* did I stop before the end */
                     /* the pElems point to the LOOP struct in the begining */
                     pos_desc += pElems[pos_desc].loop.items + 1;
-                    last_count = pElems[pos_desc].elem.count;
-                    last_blength = last_count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
+                    pack_elem.count = pElems[pos_desc].elem.count;
+                    last_blength = pack_elem.count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
                     lastDisp = pStack->disp + pElems[pos_desc].elem.disp;
                     continue;
                 }
                 /* mark some of the iterations as completed */
-                last_count = stop_in_loop - last_count;
+                pack_elem.count = stop_in_loop - pack_elem.count;
                 last_blength = 0;
-                /* Save the stack with the correct last_count value. */
+                /* Save the stack with the correct count value. */
             }
-            PUSH_STACK( pStack, pConv->stack_pos, pos_desc, DT_LOOP, last_count,
+            PUSH_STACK( pStack, pConv->stack_pos, pos_desc, DT_LOOP, pack_elem.count,
                         pStack->disp, pos_desc + pElems[pos_desc].loop.items );
             pos_desc++;
             lastDisp = pStack->disp + pElems[pos_desc].elem.disp;
-            last_count = pElems[pos_desc].elem.count;
-            last_blength = last_count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
+            pack_elem.count = pElems[pos_desc].elem.count;
+            last_blength = pack_elem.count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
         }
         /* now here we have a basic datatype */
         while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
             /* first let's see if it's contiguous with the previous chunk of memory and
              * we still have enough room in the buffer...
              */
-            if( ((savePos + saveLength) == (pConv->pBaseBuf + lastDisp))
-                && ((saveLength + last_blength) <= space_on_iovec) ) {
+            if( ((source + saveLength) == (pConv->pBaseBuf + lastDisp))
+                && ((saveLength + last_blength) <= space_on_iovec)
+                && (pElems[pos_desc].elem.extent == (long)BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size) ) {
                 /* ok still contiguous and we still have some space on the buffer */
                 saveLength += last_blength;
                 /* nothing else to do, we act the next time */
             } else {
-                /* Now we have 2 piece of non contiguous memory. One start at savePos
+                /* Now we have 2 piece of non contiguous memory. One start at source
                  * with a length of saveLength, the other start at 
                  * pConv->pBaseBuf + lastDisp with a length of last_blength bytes.
                  * First we have to pack the old buffer and then we should decide
@@ -499,54 +484,54 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                             /* If the user didn't provide any memory, then we are free
                              * to handle this case as we want.
                              */
-                            iov[iov_pos].iov_base = savePos;
+                            iov[iov_pos].iov_base = source;
                             iov[iov_pos].iov_len = saveLength;
-                            savePos = pConv->pBaseBuf + lastDisp;
+                            source = pConv->pBaseBuf + lastDisp;
                             /* update the pack counters values */
                             bConverted += saveLength;
                             space -= saveLength;
                             saveLength = last_blength;
                             last_blength = 0;
                             if( ++iov_pos == (*out_size) ) goto end_loop;
-                            pDestBuf = iov[iov_pos].iov_base;
+                            destination = iov[iov_pos].iov_base;
                             space_on_iovec = iov[iov_pos].iov_len;
                             break;
                         }
                         /* Let's allocate some. */
                         iov[iov_pos].iov_base = pConv->memAlloc_fn( &(iov[iov_pos].iov_len) );
                         (*freeAfter) |= (1 << iov_pos);
-                        pDestBuf = iov[iov_pos].iov_base;
+                        destination = iov[iov_pos].iov_base;
                         space_on_iovec = iov[iov_pos].iov_len;
                     }
                     /* In all the others cases we simply copy as much data as possible */
                     if( space_on_iovec > saveLength ) {
-                        OMPI_DDT_SAFEGUARD_POINTER( savePos, saveLength,
+                        OMPI_DDT_SAFEGUARD_POINTER( source, saveLength,
                                                     pConv->pBaseBuf, pData, pConv->count );
-                        DO_DEBUG( ompi_output( 0, "3. memcpy( %p, %p, %d ) bConverted %d space %d pConv->bConverted %d\n", pDestBuf, savePos,
+                        DO_DEBUG( ompi_output( 0, "3. memcpy( %p, %p, %ld ) bConverted %ld space %ld pConv->bConverted %ld\n", destination, source,
                                                saveLength, bConverted, space_on_iovec, pConv->bConverted ); );
-                        MEMCPY( pDestBuf, savePos, saveLength );
-                        pDestBuf += saveLength;
+                        MEMCPY( destination, source, saveLength );
+                        destination += saveLength;
                         /* update the pack counters values */
                         bConverted += saveLength;
                         space -= saveLength;
                         space_on_iovec -= saveLength;
-                        savePos = pConv->pBaseBuf + lastDisp;
+                        source = pConv->pBaseBuf + lastDisp;
                         saveLength = last_blength;
                         last_blength = 0;
                         break;
                     }
-                    OMPI_DDT_SAFEGUARD_POINTER( savePos, space_on_iovec,
+                    OMPI_DDT_SAFEGUARD_POINTER( source, space_on_iovec,
                                                 pConv->pBaseBuf, pData, pConv->count );
-                    DO_DEBUG( ompi_output( 0, "4. memcpy( %p, %p, %d )  bConverted %d space %d pConv->bConverted %d\n", pDestBuf, savePos,
+                    DO_DEBUG( ompi_output( 0, "4. memcpy( %p, %p, %ld )  bConverted %ld space %ld pConv->bConverted %ld\n", destination, source,
                                            space_on_iovec, bConverted, space_on_iovec, pConv->bConverted ); );
-                    MEMCPY( pDestBuf, savePos, space_on_iovec );
+                    MEMCPY( destination, source, space_on_iovec );
                     /* let's prepare for the next round. As I keep trace of the amount that I still
                      * have to pack, the next time when I came here, I'll try to append something.
                      * If I already fill-up the amount of data required by the upper level, I will
                      * simply save all informations in the stack, if not I'll take care of allocating
                      * new memory and packing the data inside.
                      */
-                    savePos += space_on_iovec;
+                    source += space_on_iovec;
                     saveLength -= space_on_iovec;
                     /* update the pack counters values */
                     bConverted += space_on_iovec;
@@ -561,7 +546,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                         }
                         goto end_loop;
                     }
-                    pDestBuf = iov[iov_pos].iov_base;
+                    destination = iov[iov_pos].iov_base;
                     space_on_iovec = iov[iov_pos].iov_len;
                 } while(1);  /* continue forever */
             }
@@ -570,8 +555,8 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                 continue;
             pos_desc++;  /* advance to the next data */
             lastDisp = pStack->disp + pElems[pos_desc].elem.disp;
-            last_count = pElems[pos_desc].elem.count;
-            last_blength = last_count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
+            pack_elem.count = pElems[pos_desc].elem.count;
+            last_blength = pack_elem.count * BASIC_DDT_FROM_ELEM(pElems[pos_desc])->size;
         }
     }
  end_loop:
@@ -637,7 +622,7 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
     /* update the return value */
     *max_data = pConv->bConverted - initial_amount;
     *out_size = iov_count;
-    return (pConv->bConverted == (pData->size * pConv->count));
+    return (0 == length);
 }
 
 static int
@@ -763,7 +748,22 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
     return (pConv->bConverted == length);
 }
 
+/*
+ * Set the starting position for a convertor. This function can be used at any
+ * moment in the life of a convertor to move the position to the desired point.
+ */
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
+inline int32_t ompi_convertor_set_start_position( ompi_convertor_t* convertor,
+                                                  int32_t starting_pos )
+{
+    if( convertor->flags & DT_FLAG_CONTIGUOUS )
+        return ompi_convertor_create_stack_with_pos_contig( convertor, starting_pos, ompi_ddt_local_sizes );
+    if( starting_pos != 0 ) {
+        return ompi_convertor_create_stack_with_pos_general( convertor, starting_pos, ompi_ddt_local_sizes );
+    }
+    return ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
+}
+
 int32_t ompi_convertor_init_for_send( ompi_convertor_t* pConv,
                                       uint32_t flags,
                                       const ompi_datatype_t* datatype,
@@ -776,29 +776,37 @@ int32_t ompi_convertor_init_for_send( ompi_convertor_t* pConv,
         /* this datatype is improper for conversion. Commit it first */
         return OMPI_ERROR;
     }
-    assert( datatype != NULL );
+    pConv->flags = CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS;  /* by default set to homogeneous */
     convertor_init_generic( pConv, datatype, count, pUserBuf );
 
-    pConv->flags = CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS;  /* by default set to homogeneous */
     pConv->pFunctions      = ompi_ddt_copy_functions;
     pConv->memAlloc_fn     = allocfn;
     /* Just to avoid complaint from the compiler */
     pConv->fAdvance = ompi_convertor_pack_general;
     pConv->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
+    pConv->fAdvance = ompi_convertor_pack_no_conversion;
+
     if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
         pConv->flags |= DT_FLAG_CONTIGUOUS;
-        if( ((datatype->ub - datatype->lb) != (long)datatype->size) && (1 < pConv->count) )  /* gaps or no gaps */
-            pConv->fAdvance = ompi_convertor_pack_no_conv_contig_with_gaps;
-        else
+        if( ((datatype->ub - datatype->lb) == (long)datatype->size) || (1 >= pConv->count) )  /* gaps or no gaps */
             pConv->fAdvance = ompi_convertor_pack_no_conv_contig;
-        return ompi_convertor_create_stack_with_pos_contig( pConv, starting_pos, ompi_ddt_local_sizes );
+        else
+            pConv->fAdvance = ompi_convertor_pack_no_conv_contig_with_gaps;
     }
-    pConv->fAdvance = ompi_convertor_pack_no_conversion;
+
     if( -1 == starting_pos ) return OMPI_SUCCESS;
-    if( starting_pos != 0 ) {
-        return ompi_convertor_create_stack_with_pos_general( pConv, starting_pos, ompi_ddt_local_sizes );
+
+    /* dont call any function if the convertor is in the correct position */
+    if( (pConv->bConverted == (unsigned long)starting_pos) &&
+        (0 != starting_pos) ) return OMPI_SUCCESS;
+
+    /* do we start after the end of the data ? */
+    if( starting_pos >= (int)(pConv->count * datatype->size) ) {
+        pConv->bConverted = pConv->count * datatype->size;
+        return OMPI_SUCCESS;
     }
-    return ompi_convertor_create_stack_at_begining( pConv, ompi_ddt_local_sizes );
+
+    return ompi_convertor_set_start_position( pConv, starting_pos );
 }
 
 #if OMPI_ENABLE_DEBUG 
@@ -833,6 +841,7 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
 static void ompi_convertor_construct( ompi_convertor_t* pConv )
 {
     pConv->pDesc       = NULL;
+    pConv->use_desc    = NULL;
     pConv->pStack      = pConv->static_stack;
     pConv->stack_size  = DT_STATIC_STACK_SIZE;
     pConv->fAdvance    = NULL;

@@ -25,38 +25,44 @@
 #include <stdlib.h>
 
 int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count, 
-			         dt_type_desc_t* pTypeDesc )
+                                 dt_type_desc_t* pTypeDesc )
 {
     dt_elem_desc_t* pElemDesc;
-    long lastDisp = 0;
-    dt_stack_t* pStack;   /* pointer to the position on the stack */
-    int32_t pos_desc;         /* actual position in the description of the derived datatype */
-    int32_t stack_pos = 0;
-    int32_t type, lastLength = 0, nbElems = 0, changes = 0, lastExtent = 1;
-    long totalDisp;
+    long last_disp = 0;
+    dt_stack_t* pStack;            /* pointer to the position on the stack */
+    int32_t pos_desc = 0;          /* actual position in the description of the derived datatype */
+    int32_t stack_pos = 0, last_type = DT_BYTE;
+    int32_t type = DT_BYTE, last_length = 0, nbElems = 0, changes = 0, last_extent = 1;
+    uint16_t last_flags = 0xFFFF;  /* keep all for the first datatype */
+    long total_disp;
+    int32_t optimized = 0;
+
+    /* Contiguous datatypes does not have to get optimized */
+    assert( (pData->flags & DT_FLAG_CONTIGUOUS) == 0 );
+
+    /* If there is no datatype description how can we have an optimized description ? */
+    if( (count == 0) || (pData->desc.used == 0) ) {
+        pTypeDesc->length = 0;
+        pTypeDesc->desc = NULL;
+        pTypeDesc->used = 0;
+        return 1;
+    }
+
+    pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
+    total_disp = 0;
 
     pTypeDesc->length = 2 * pData->desc.used + 1 /* for the fake DT_END_LOOP at the end */;
     pTypeDesc->desc = pElemDesc = (dt_elem_desc_t*)malloc( sizeof(dt_elem_desc_t) * pTypeDesc->length );
     pTypeDesc->used = 0;
 
-    if( (count == 0) || (pData->desc.used == 0) ) return 1;
-
-    pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
-    pStack->count = count;
-    pStack->index = -1;
-    pStack->end_loop = pData->desc.used;
-    pStack->disp = 0;
-    pos_desc  = 0;
-    totalDisp = 0;
-   
     while( stack_pos >= 0 ) {
         if( DT_END_LOOP == pData->desc.desc[pos_desc].elem.common.type ) { /* end of the current loop */
             ddt_endloop_desc_t* end_loop = &(pData->desc.desc[pos_desc].end_loop);
-            if( lastLength != 0 ) {
-                CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, lastLength, lastDisp, lastExtent );
+            if( last_length != 0 ) {
+                CREATE_ELEM( pElemDesc, last_type, DT_FLAG_BASIC, last_length, last_disp, last_extent );
                 pElemDesc++; nbElems++;
-                lastDisp += lastLength;
-                lastLength = 0;
+                last_disp += last_length;
+                last_length = 0;
             }
             CREATE_LOOP_END( pElemDesc, nbElems - pStack->index + 1,  /* # of elems in this loop */
                              end_loop->total_extent, end_loop->size, end_loop->common.flags );
@@ -64,7 +70,7 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
             if( --stack_pos >= 0 ) {  /* still something to do ? */
                 ddt_loop_desc_t* pStartLoop = &(pTypeDesc->desc[pStack->index - 1].loop);
                 pStartLoop->items = (pElemDesc - 1)->elem.count;
-                totalDisp = pStack->disp;  /* update the displacement position */
+                total_disp = pStack->disp;  /* update the displacement position */
             }
             pStack--;  /* go down one position on the stack */
             pos_desc++;
@@ -80,77 +86,93 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
                 /* the loop is contiguous or composed by contiguous elements with a gap */
                 if( loop->extent == (long)end_loop->size ) {
                     /* the whole loop is contiguous */
-                    if( (lastDisp + lastLength) != (totalDisp + loop_disp) ) {
-                        CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, lastLength, lastDisp, lastExtent );
+                    if( (last_disp + last_length) != (total_disp + loop_disp) ) {
+                        CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, last_length, last_disp, last_extent );
                         pElemDesc++; nbElems++;
-                        lastLength = 0;
-                        lastDisp = totalDisp + loop_disp;
+                        last_length = 0;
+                        last_disp = total_disp + loop_disp;
                     }
-                    lastLength += loop->loops * end_loop->size;
+                    last_length += loop->loops * end_loop->size;
+                    optimized++;
                 } else {
                     int counter = loop->loops;
                     /* if the previous data is contiguous with this piece and it has a length not ZERO */
-                    if( lastLength != 0 ) {
-                        if( (lastDisp + lastLength) == (totalDisp + loop_disp) ) {
-                            lastLength += end_loop->size;
+                    if( last_length != 0 ) {
+                        if( (last_disp + last_length) == (total_disp + loop_disp) ) {
+                            last_length += end_loop->size;
                             counter--;
                         }
-                        CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, lastLength, lastDisp, lastExtent );
+                        CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, last_length, last_disp, last_extent );
                         pElemDesc++; nbElems++;
-                        lastDisp += lastLength;
-                        lastLength = 0;
+                        last_disp += last_length;
+                        last_length = 0;
                     }                  
                     /* we have a gap in the begining or the end of the loop but the whole
                      * loop can be merged in just one memcpy.
                      */
                     CREATE_LOOP_START( pElemDesc, counter, (long)2, loop->extent, loop->common.flags );
                     pElemDesc++; nbElems++;
-                    CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, end_loop->size, loop_disp, lastExtent );
+                    CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, end_loop->size, loop_disp, last_extent );
                     pElemDesc++; nbElems++;
                     CREATE_LOOP_END( pElemDesc, 2, end_loop->total_extent, end_loop->size,
                                      end_loop->common.flags );
                     pElemDesc++; nbElems++;
+                    if( loop->items > 2 ) optimized++;
                 }
                 pos_desc += pData->desc.desc[pos_desc].loop.items + 1;
                 changes++;
             } else {
-                if( lastLength != 0 ) {
-                    CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, lastLength, lastDisp, lastExtent );
+                if( last_length != 0 ) {
+                    CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, last_length, last_disp, last_extent );
                     pElemDesc++; nbElems++;
-                    lastDisp += lastLength;
-                    lastLength = 0;
+                    last_disp += last_length;
+                    last_length = 0;
                 }
                 CREATE_LOOP_START( pElemDesc, loop->loops, loop->items, loop->extent, loop->common.flags );
                 pElemDesc++; nbElems++;
-                PUSH_STACK( pStack, stack_pos, nbElems, DT_LOOP, loop->loops, totalDisp, pos_desc + loop->extent );
+                PUSH_STACK( pStack, stack_pos, nbElems, DT_LOOP, loop->loops, total_disp, pos_desc + loop->extent );
                 pos_desc++;
                 DDT_DUMP_STACK( pStack, stack_pos, pData->desc.desc, "advance loops" );
             }
-            totalDisp = pStack->disp;  /* update the displacement */
+            total_disp = pStack->disp;  /* update the displacement */
             continue;
         }
         while( pData->desc.desc[pos_desc].elem.common.flags & DT_FLAG_DATA ) {  /* keep doing it until we reach a non datatype element */
             /* now here we have a basic datatype */
             type = pData->desc.desc[pos_desc].elem.common.type;
+            
             if( (pData->desc.desc[pos_desc].elem.common.flags & DT_FLAG_CONTIGUOUS) && 
-                (lastDisp + lastLength) == (totalDisp + pData->desc.desc[pos_desc].elem.disp) ) {
-                lastLength += pData->desc.desc[pos_desc].elem.count * ompi_ddt_basicDatatypes[type]->size;
-                lastExtent = 1;
+                (last_disp + last_length) == (total_disp + pData->desc.desc[pos_desc].elem.disp) &&
+                (pData->desc.desc[pos_desc].elem.extent == (int32_t)ompi_ddt_basicDatatypes[type]->size) ) {
+                if( type == last_type ) {
+                    last_length += pData->desc.desc[pos_desc].elem.count;
+                } else {
+                    if( last_length == 0 ) {
+                        last_type = type;
+                        last_length = pData->desc.desc[pos_desc].elem.count;
+                    } else {
+                        last_length = last_length * ompi_ddt_basicDatatypes[last_type]->size + 
+                            pData->desc.desc[pos_desc].elem.count * ompi_ddt_basicDatatypes[type]->size;
+                        last_type = DT_BYTE;
+                        optimized++;
+                    }
+                }
+                last_flags &= pData->desc.desc[pos_desc].elem.common.flags;
             } else {
-                if( lastLength != 0 ) {
-                    CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, lastLength, lastDisp, lastExtent );
+                if( last_length != 0 ) {
+                    CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, last_length, last_disp, last_extent );
                     pElemDesc++; nbElems++;
                 }
-                lastDisp = totalDisp + pData->desc.desc[pos_desc].elem.disp;
-                lastLength = pData->desc.desc[pos_desc].elem.count * ompi_ddt_basicDatatypes[type]->size;
-                lastExtent = 1;
+                last_disp = total_disp + pData->desc.desc[pos_desc].elem.disp;
+                last_length = pData->desc.desc[pos_desc].elem.count * ompi_ddt_basicDatatypes[type]->size;
+                last_extent = 1;
             }
             pos_desc++;  /* advance to the next data */
         }
     }
     
-    if( lastLength != 0 ) {
-        CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, lastLength, lastDisp, lastExtent );
+    if( last_length != 0 ) {
+        CREATE_ELEM( pElemDesc, DT_BYTE, DT_FLAG_BASIC, last_length, last_disp, last_extent );
         pElemDesc++; nbElems++;
     }
     /* cleanup the stack */
@@ -173,7 +195,7 @@ static int ompi_ddt_unroll( ompi_datatype_t* pData, int count )
     int type;             /* type at current position */
     int i;                /* index for basic elements with extent */
     int stack_pos = 0;    /* position on the stack */
-    long lastDisp = 0, lastLength = 0;
+    long last_disp = 0, last_length = 0;
     char* pDestBuf;
     int bConverted = 0, __index = 0, __sofar = 0;
     dt_elem_desc_t* pElems;
@@ -239,20 +261,20 @@ static int ompi_ddt_unroll( ompi_datatype_t* pData, int count )
         if( DT_LOOP == pElems[pos_desc].type ) {
             if( pElems[pos_desc].flags & DT_FLAG_CONTIGUOUS ) {
                 dt_elem_desc_t* pLast = &( pElems[pos_desc + pElems[pos_desc].disp]);
-                if( (lastDisp + lastLength) == (pStack->disp + pElems[pos_desc+1].disp) ) {
-                    PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength + pLast->extent );
-                    lastDisp = pStack->disp + pElems[pos_desc+1].disp + pLast->extent;
+                if( (last_disp + last_length) == (pStack->disp + pElems[pos_desc+1].disp) ) {
+                    PRINT_MEMCPY( pDestBuf, (char*)last_disp, last_length + pLast->extent );
+                    last_disp = pStack->disp + pElems[pos_desc+1].disp + pLast->extent;
                     i = 1;
                 } else {
-                    PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength );
-                    lastDisp = pStack->disp + pElems[pos_desc + 1].disp;
+                    PRINT_MEMCPY( pDestBuf, (char*)last_disp, last_length );
+                    last_disp = pStack->disp + pElems[pos_desc + 1].disp;
                     i = 0;
                 }
-                lastLength = pLast->extent;
+                last_length = pLast->extent;
                 for( ; i < (pElems[pos_desc].count - 1); i++ ) {
-                    PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength );
+                    PRINT_MEMCPY( pDestBuf, (char*)last_disp, last_length );
                     pDestBuf += pLast->extent;
-                    lastDisp += pElems[pos_desc].extent;
+                    last_disp += pElems[pos_desc].extent;
                 }
                 pos_desc += pElems[pos_desc].disp + 1;
                 goto next_loop;
@@ -266,18 +288,18 @@ static int ompi_ddt_unroll( ompi_datatype_t* pData, int count )
         }
         /* now here we have a basic datatype */
         type = pElems[pos_desc].type;
-        if( (lastDisp + lastLength) == (pStack->disp + pElems[pos_desc].disp) ) {
-            lastLength += pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
+        if( (last_disp + last_length) == (pStack->disp + pElems[pos_desc].disp) ) {
+            last_length += pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
         } else {
-            PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength );
-            pDestBuf += lastLength;
-            bConverted += lastLength;
-            lastDisp = pStack->disp + pElems[pos_desc].disp;
-            lastLength = pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
+            PRINT_MEMCPY( pDestBuf, (char*)last_disp, last_length );
+            pDestBuf += last_length;
+            bConverted += last_length;
+            last_disp = pStack->disp + pElems[pos_desc].disp;
+            last_length = pElems[pos_desc].count * ompi_ddt_basicDatatypes[type]->size;
         }
         pos_desc++;  /* advance to the next data */
     }
-    PRINT_MEMCPY( pDestBuf, (char*)lastDisp, lastLength );
+    PRINT_MEMCPY( pDestBuf, (char*)last_disp, last_length );
     return OMPI_SUCCESS;
 }
 #endif  /* COMPILE_USELSS_CODE */
@@ -302,15 +324,17 @@ int32_t ompi_ddt_commit( ompi_datatype_t** data )
     /* If the data is contiguous is useless to generate an optimized version. */
     if( (long)pData->size != (pData->true_ub - pData->true_lb) ) {
         (void)ompi_ddt_optimize_short( pData, 1, &(pData->opt_desc) );
-        /* let's add a fake element at the end just to avoid useless comparaisons
-         * in pack/unpack functions.
-         */
-        pLast = &(pData->opt_desc.desc[pData->opt_desc.used].end_loop);
-        pLast->common.type  = DT_END_LOOP;
-        pLast->common.flags = 0;
-        pLast->items        = pData->opt_desc.used;
-        pLast->total_extent = pData->ub - pData->lb;
-        pLast->size         = pData->size;
+        if( 0 < pData->opt_desc.used ) {
+            /* let's add a fake element at the end just to avoid useless comparaisons
+             * in pack/unpack functions.
+             */
+            pLast = &(pData->opt_desc.desc[pData->opt_desc.used].end_loop);
+            pLast->common.type  = DT_END_LOOP;
+            pLast->common.flags = 0;
+            pLast->items        = pData->opt_desc.used;
+            pLast->total_extent = pData->ub - pData->lb;
+            pLast->size         = pData->size;
+        }
     }
     return OMPI_SUCCESS;
 }

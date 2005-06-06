@@ -183,11 +183,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
 
     pSrcBuf = iov[0].iov_base;
 
-    if( pData->opt_desc.desc != NULL ) {
-        pElems = pData->opt_desc.desc;
-    } else {
-        pElems = pData->desc.desc;
-    }
+    pElems = pConv->use_desc->desc;
     pStack = pConv->pStack + pConv->stack_pos;
     pos_desc = pStack->index;
     lastDisp = pStack->disp;
@@ -630,31 +626,38 @@ int32_t ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 int32_t ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
 				      const ompi_datatype_t* datatype, int32_t count,
-				      const void* pUserBuf, int32_t starting_point,
+				      const void* pUserBuf, int32_t starting_pos,
 				      memalloc_fct_t allocfn )
 {
     if( !(datatype->flags & DT_FLAG_COMMITED) ) {
         /* this datatype is improper for conversion. Commit it first */
         return OMPI_ERROR;
     }
-    assert( datatype != NULL );
-    convertor_init_generic( pConv, datatype, count, pUserBuf );
-
     pConv->flags = CONVERTOR_RECV | CONVERTOR_HOMOGENEOUS;
+    convertor_init_generic( pConv, datatype, count, pUserBuf );
     pConv->pFunctions  = ompi_ddt_copy_functions;
+    pConv->memAlloc_fn = allocfn;
     pConv->fAdvance    = ompi_convertor_unpack_general;     /* TODO: just stop complaining */
     pConv->fAdvance    = ompi_convertor_unpack_homogeneous; /* default behaviour */
-    pConv->memAlloc_fn = allocfn;
 
     /* TODO: work only on homogeneous architectures */
     if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
         pConv->flags |= DT_FLAG_CONTIGUOUS;
         pConv->fAdvance = ompi_convertor_unpack_homogeneous_contig;
     }
-    if( -1 == starting_point ) return OMPI_SUCCESS;
-    if( starting_point != 0 )
-        return ompi_convertor_create_stack_with_pos_general( pConv, starting_point, ompi_ddt_local_sizes );
-    return ompi_convertor_create_stack_at_begining( pConv, ompi_ddt_local_sizes );
+
+    if( -1 == starting_pos ) return OMPI_SUCCESS;
+
+    /* dont call any function if the convertor is in the correct position */
+    if( (pConv->bConverted == (unsigned long)starting_pos) &&
+        (0 != starting_pos) ) return OMPI_SUCCESS;
+
+    if( starting_pos >= (int)(pConv->count * datatype->size) ) {
+        pConv->bConverted = pConv->count * datatype->size;
+        return OMPI_SUCCESS;
+    }
+
+    return ompi_convertor_set_start_position( pConv, starting_pos );
 }
 
 #if OMPI_ENABLE_DEBUG
@@ -705,6 +708,7 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSi
     uint32_t pos_desc;    /* actual position in the description of the derived datatype */
     int rc, nbElems = 0;
     int stack_pos = 0;
+    dt_elem_desc_t* pElems;
 
     /* Normally the size should be less or equal to the size of the datatype. 
      * This function does not support a iSize bigger than the size of the datatype.
@@ -712,14 +716,15 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSi
     assert( (uint32_t)iSize <= datatype->size );
     DUMP( "dt_count_elements( %p, %d )\n", (void*)datatype, iSize );
     pStack = alloca( sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 2) );
-    pStack->count = 1;
-    pStack->index = -1;
+    pStack->count    = 1;
+    pStack->index    = -1;
+    pStack->disp     = 0;
+    pElems           = datatype->desc.desc;
     pStack->end_loop = datatype->desc.used;
-    pStack->disp = 0;
-    pos_desc  = 0;
+    pos_desc         = 0;
 
     while( 1 ) {  /* loop forever the exit conditionis on the last section */
-        if( DT_END_LOOP == datatype->desc.desc[pos_desc].elem.common.type ) { /* end of the current loop */
+        if( DT_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
             if( --(pStack->count) == 0 ) { /* end of loop */
                 stack_pos--;
                 pStack--;
@@ -729,33 +734,33 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSi
             if( pStack->index == -1 ) {
                 pStack->disp += (datatype->ub - datatype->lb);
             } else {
-                assert( DT_LOOP == datatype->desc.desc[pStack->index].elem.common.type );
-                pStack->disp += datatype->desc.desc[pStack->index].loop.extent;
+                assert( DT_LOOP == pElems[pStack->index].elem.common.type );
+                pStack->disp += pElems[pStack->index].loop.extent;
             }
             pos_desc = pStack->index + 1;
             continue;
         }
-        if( DT_LOOP == datatype->desc.desc[pos_desc].elem.common.type ) {
-            ddt_loop_desc_t* loop = &(datatype->desc.desc[pos_desc].loop);
+        if( DT_LOOP == pElems[pos_desc].elem.common.type ) {
+            ddt_loop_desc_t* loop = &(pElems[pos_desc].loop);
             do {
                 PUSH_STACK( pStack, stack_pos, pos_desc, DT_LOOP, loop->loops,
                             0, pos_desc + loop->items );
                 pos_desc++;
-            } while( DT_LOOP == datatype->desc.desc[pos_desc].elem.common.type ); /* let's start another loop */
-            DDT_DUMP_STACK( pStack, stack_pos, datatype->desc.desc, "advance loops" );
+            } while( DT_LOOP == pElems[pos_desc].elem.common.type ); /* let's start another loop */
+            DDT_DUMP_STACK( pStack, stack_pos, pElems, "advance loops" );
             continue;
         }
-        while( datatype->desc.desc[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
+        while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
             /* now here we have a basic datatype */
-            const ompi_datatype_t* basic_type = BASIC_DDT_FROM_ELEM(datatype->desc.desc[pos_desc]);
-            rc = datatype->desc.desc[pos_desc].elem.count * basic_type->size;
+            const ompi_datatype_t* basic_type = BASIC_DDT_FROM_ELEM(pElems[pos_desc]);
+            rc = pElems[pos_desc].elem.count * basic_type->size;
             if( rc >= iSize ) {
                 rc = iSize / basic_type->size;
                 nbElems += rc;
                 iSize -= rc * basic_type->size;
                 return (iSize == 0 ? nbElems : -1);
             }
-            nbElems += datatype->desc.desc[pos_desc].elem.count;
+            nbElems += pElems[pos_desc].elem.count;
             iSize -= rc;
             pos_desc++;  /* advance to the next data */
         }

@@ -53,17 +53,10 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
     size_t remote_size;
     uint32_t count;
 
-    if( starting_point == 0 ) {
-        return ompi_convertor_create_stack_at_begining( pConvertor, sizes );
-    }
-    /* if the convertor continue from the last position there is nothing to do. */
-    if( pConvertor->bConverted == (unsigned long)starting_point ) return OMPI_SUCCESS;
+    assert( 0 != starting_point );
+    assert( pConvertor->bConverted != (unsigned long)starting_point );
+    assert( starting_point <= (int)(pConvertor->count * pData->size) );
 
-    /* do we start after the end of the data ? */
-    if( starting_point >= (int)(pConvertor->count * pData->size) ) {
-        pConvertor->bConverted = pConvertor->count * pData->size;
-        return OMPI_SUCCESS;
-    }
     /*ompi_output( 0, "Data extent %d size %d count %d total_size %d starting_point %d\n",
                  pData->ub - pData->lb, pData->size, pConvertor->count,
                  pData->size * pConvertor->count, starting_point );*/
@@ -73,13 +66,8 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
      * last fake DT_END_LOOP that we add to the data representation and
      * allow us to move quickly inside the datatype when we have a count.
      */
-    if( pData->opt_desc.desc != NULL ) {
-        pElems = pData->opt_desc.desc;
-        pStack[0].end_loop = pData->opt_desc.used;
-    } else {
-        pElems = pData->desc.desc;
-        pStack[0].end_loop = pData->desc.used;
-    }
+    pElems = pConvertor->use_desc->desc;
+    pStack->end_loop = pConvertor->use_desc->used;
 
     if( (pConvertor->flags & CONVERTOR_HOMOGENEOUS) && (pData->flags & DT_FLAG_CONTIGUOUS) ) {
         /* Special case for contiguous datatypes */

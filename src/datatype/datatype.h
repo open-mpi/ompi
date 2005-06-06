@@ -207,7 +207,7 @@ struct ompi_convertor_t {
     uint32_t                remoteArch;         /**< the remote architecture */
     uint32_t                flags;              /**< the properties of this convertor */
     ompi_datatype_t*        pDesc;              /**< the datatype description associated with the convertor */
-    dt_type_desc_t*         use_desc;           /**< the datatype version used by the convertor (normal or optimized) */
+    const dt_type_desc_t*   use_desc;           /**< the datatype version used by the convertor (normal or optimized) */
     uint32_t                count;              /**< the total number of full datatype elements */
     char*                   pBaseBuf;           /**< initial buffer as supplied by the user */
     dt_stack_t*             pStack;             /**< the local stack for the actual conversion */
@@ -292,6 +292,8 @@ extern ompi_convertor_t* ompi_mpi_external32_convertor;
 
 /* and finally the convertor functions */
 OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode );
+OMPI_DECLSPEC int32_t ompi_convertor_set_start_position( ompi_convertor_t* convertor,
+                                                         int32_t starting_pos );
 OMPI_DECLSPEC int32_t ompi_convertor_init_for_send( ompi_convertor_t* pConv, uint32_t flags,
                                                     const ompi_datatype_t* pData, int32_t count,
                                                     const void* pUserBuf, int32_t local_starting_point,
@@ -316,8 +318,8 @@ static inline int ompi_convertor_copy( const ompi_convertor_t* pSrcConv, ompi_co
     pDestConv->stack_size      = DT_STATIC_STACK_SIZE;
     pDestConv->stack_pos       = 0;
     pDestConv->pFunctions      = pSrcConv->pFunctions;
-
-   return OMPI_SUCCESS;
+    pDestConv->use_desc        = pSrcConv->use_desc;
+    return OMPI_SUCCESS;
 }
 
 static inline ompi_convertor_t* ompi_convertor_get_copy( const ompi_convertor_t* pConvertor )
