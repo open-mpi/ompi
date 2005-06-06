@@ -382,10 +382,7 @@ mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
         unsigned int max_data, out_size;
         int freeAfter;
 
-        iov.iov_len = mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_rendezvous_header_t);
-        if( frag->frag_base.frag_size < iov.iov_len ) {
-            iov.iov_len = frag->frag_base.frag_size;
-        }
+        iov.iov_len = recv_frag->attached_data_length;
         /* Here we expect that frag_addr is the begin of the buffer header included */
         iov.iov_base = frag->frag_base.frag_addr;
     
