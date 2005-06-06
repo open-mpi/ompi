@@ -204,8 +204,10 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
         int32_t free_after = 0;                                                   \
         size_t i;                                                                 \
         for(i=0; i<num_segments; i++) {                                           \
-            iov[i].iov_base = segments[i].seg_addr.pval;                          \
-            iov[i].iov_len = segments[i].seg_len;                                 \
+            if(i == 0) {                                                          \
+                iov[i].iov_base = (unsigned char*)segments[i].seg_addr.pval + seg_offset; \
+                iov[i].iov_len = segments[i].seg_len - seg_offset;                \
+            }                                                                     \
         }                                                                         \
         ompi_convertor_unpack(                                                    \
             &(request)->req_convertor,                                            \
