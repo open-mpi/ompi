@@ -86,37 +86,51 @@ static  int mca_mpool_vapi_param_register_int(
 static int mca_mpool_vapi_open(void)
 {
     /* register VAPI component parameters */
-    mca_mpool_vapi_component.vapi_size =
-        mca_mpool_vapi_param_register_int("size", 512*1024*1024);
+    
     mca_mpool_vapi_component.vapi_allocator_name =
         mca_mpool_vapi_param_register_string("allocator", "bucket");
     return OMPI_SUCCESS;
 }
 
 /* Allocates a segment of memory and registers with IB, user_out returns the memory handle. */ 
-void* mca_common_vapi_segment_alloc(size_t* size, void* user_in, void* user_out){
+void* mca_common_vapi_segment_alloc(size_t* size, void* user_in, void** user_out){
   
   mca_mpool_vapi_module_t * mpool_module = (mca_mpool_vapi_module_t*)user_in; 
-  void* addr = (void*)malloc(size); 
+  void* addr = (void*)malloc((*size)); 
   
   VAPI_mrw_t mr_in, mr_out;
-  mca_common_vapi_memhandle_t* mem_hndl = (mca_common_vapi_memhandle_t*) user_out;  
-  mr_in = *mpool_module->mem_reg.req_mrw_p; 
+  memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
+  memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
+  
+  VAPI_ret_t ret; 
+  mca_common_vapi_memhandle_t* mem_hndl; 
+  *user_out = (void*) malloc(sizeof(mca_common_vapi_memhandle_t)); 
+  
+  mem_hndl = (mca_common_vapi_memhandle_t*) *user_out;  
+  memset(mem_hndl, 0, sizeof(mca_common_vapi_memhandle_t*)); 
+  mem_hndl->hndl = VAPI_INVAL_HNDL; 
+  
+  
   mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
   mr_in.l_key = 0;
   mr_in.r_key = 0;
-  mr_in.pd_hndl = mpool_module->mem_reg.pd_tag;
-  mr_in.size = size;
+  mr_in.pd_hndl = mpool_module->hca_pd.pd_tag;
+  mr_in.size = *size;
   mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) addr;
   mr_in.type = VAPI_MR;
   
 
-  VAPI_register_mr(
-                    mpool_module->mem_reg.hca, 
+  ret = VAPI_register_mr(
+                    mpool_module->hca_pd.hca, 
                     &mr_in, 
-                    &mem_hndl->hdnl, 
+                    &mem_hndl->hndl, 
                     &mr_out
                     ); 
+  
+  if(VAPI_OK != ret){ 
+      ompi_output(0, "error pinning vapi memory\n"); 
+      return NULL; 
+  }
   
   mem_hndl->l_key = mr_out.l_key; 
   mem_hndl->r_key = mr_out.r_key; 
@@ -149,9 +163,10 @@ static mca_mpool_base_module_t* mca_mpool_vapi_init(void * user_in)
     mca_mpool_vapi_module_init(mpool_module); 
     
     /* setup allocator  TODO fix up */
+    mpool_module->hca_pd = *(mca_common_vapi_hca_pd_t*) user_in; 
     mpool_module->vapi_allocator = 
       allocator_component->allocator_init(true,
-                                          mca_common_vapi_segment_alloc, NULL, user_in);
+                                          mca_common_vapi_segment_alloc, NULL, mpool_module);
     if(NULL == mpool_module->vapi_allocator) {
       ompi_output(0, "mca_mpool_vapi_init: unable to initialize allocator");
       return NULL;

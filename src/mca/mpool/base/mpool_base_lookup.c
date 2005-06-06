@@ -62,7 +62,31 @@ mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name)
 }
 
 
+mca_mpool_base_module_t* mca_mpool_base_module_create(const char* name, void* user) 
+{
+    
+    mca_mpool_base_component_t* component = NULL; 
+    mca_mpool_base_module_t* module = NULL; 
+    ompi_list_item_t* item;
+    for (item = ompi_list_get_first(&mca_mpool_base_components);
+         item != ompi_list_get_end(&mca_mpool_base_components);
+         item = ompi_list_get_next(item)) {
+         mca_base_component_list_item_t *cli = 
+           (mca_base_component_list_item_t *) item;
+         component = 
+           (mca_mpool_base_component_t *) cli->cli_component;
+         if(strcmp(component->mpool_version.mca_component_name, name) == 0) {
+             break;
+         }
+    }
 
-
-
-
+    if(NULL == component)  
+        return NULL;
+    module = component->mpool_init(user); 
+    mca_mpool_base_selected_module_t *sm;
+    sm = OBJ_NEW(mca_mpool_base_selected_module_t); 
+    sm->mpool_component = component; 
+    sm->mpool_module = module; 
+    ompi_list_append(&mca_mpool_base_modules, (ompi_list_item_t*) sm); 
+    return module; 
+}

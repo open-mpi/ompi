@@ -42,7 +42,7 @@ OMPI_COMP_EXPORT extern mca_mpool_vapi_component_t mca_mpool_vapi_component;
 struct mca_mpool_vapi_module_t {
   mca_mpool_base_module_t super;
   mca_allocator_base_module_t * vapi_allocator; 
-  mca_common_vapi_mem_reg_t mem_reg;
+  mca_common_vapi_hca_pd_t  hca_pd;
   mca_common_vapi_memhandle_t mem_hndl; 
 }; typedef struct mca_mpool_vapi_module_t mca_mpool_vapi_module_t; 
 

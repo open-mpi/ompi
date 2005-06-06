@@ -58,7 +58,7 @@ void* mca_mpool_sm_base(mca_mpool_base_module_t* mpool)
 /**
   * allocate function 
   */
-void* mca_mpool_sm_alloc(mca_mpool_base_module_t* mpool, size_t size, size_t align, void* user_out)
+void* mca_mpool_sm_alloc(mca_mpool_base_module_t* mpool, size_t size, size_t align, void** user_out)
 {
   mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
   return mpool_sm->sm_allocator->alc_alloc(mpool_sm->sm_allocator, size, align, user_out);
@@ -67,7 +67,7 @@ void* mca_mpool_sm_alloc(mca_mpool_base_module_t* mpool, size_t size, size_t ali
 /**
   * realloc function 
   */
-void* mca_mpool_sm_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size, void* user_out)
+void* mca_mpool_sm_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size, void** user_out)
 {
   mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
   return mpool_sm->sm_allocator->alc_realloc(mpool_sm->sm_allocator, addr, size, user_out);
