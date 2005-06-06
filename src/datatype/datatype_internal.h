@@ -254,10 +254,25 @@ do { \
 } while (0)
 
 #if OMPI_ENABLE_DEBUG
-void ompi_ddt_safeguard_pointer( const void* actual_ptr, int length, const void* initial_ptr,
-                                 const ompi_datatype_t* pData, int count );
+OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actual_ptr, int length,
+                                                               const void* initial_ptr,
+                                                               const ompi_datatype_t* pData,
+                                                               int count );
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT ) \
-    ompi_ddt_safeguard_pointer( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) )
+{ \
+    char *__lower_bound = (char*)(INITPTR), *__upper_bound; \
+    assert( ((LENGTH) != 0) && ((COUNT) != 0) ); \
+    __lower_bound += (PDATA)->true_lb; \
+    __upper_bound = (INITPTR) + ((PDATA)->ub - (PDATA)->lb) * ((COUNT) - 1) + (PDATA)->true_ub; \
+    if( ((ACTPTR) < __lower_bound) || ((ACTPTR) >= __upper_bound) ) { \
+        ompi_output( 0, "%s:%d\n\tPointer %p size %d is outside [%p,%p] for\n\tbase ptr %p count %d and data \n", \
+                     __FILE__, __LINE__, (ACTPTR), (LENGTH), __lower_bound, __upper_bound, \
+                     (INITPTR), (COUNT) ); \
+        ompi_ddt_dump( (PDATA) ); \
+        ompi_ddt_safeguard_pointer_debug_breakpoint( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) ); \
+    } \
+}
+
 #else
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT )
 #endif  /* OMPI_ENABLE_DEBUG */
@@ -322,13 +337,9 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
 
     pStack[0].count    = pConvertor->count;
     pStack[0].index    = -1;
-    if( pData->opt_desc.desc != NULL ) {
-        pElems = pData->opt_desc.desc;
-        pStack[0].end_loop = pData->opt_desc.used;
-    } else {
-        pElems = pData->desc.desc;
-        pStack[0].end_loop = pData->desc.used;
-    }
+
+    pElems = pConvertor->use_desc->desc;
+    pStack[0].end_loop = pConvertor->use_desc->used;
 
     /* Special case for contiguous datatypes */
     if( pData->size == 0 ) {  /* special case for empty datatypes */
@@ -359,7 +370,6 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
 static inline
 int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const int* sizes )
 {
-    ompi_datatype_t* pData = pConvertor->pDesc;
     dt_stack_t* pStack;
     dt_elem_desc_t* pElems;
     int index = 0;
@@ -375,14 +385,9 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const
     pConvertor->pStack[0].disp  = 0;
     /* first here we should select which data representation will be used for
      * this operation: normal one or the optimized version ? */
-    pElems = pData->desc.desc;
-    pStack[0].end_loop = pData->desc.used;
-    if( pConvertor->flags & CONVERTOR_HOMOGENEOUS ) {
-        if( pData->opt_desc.used > 0 ) {
-            pElems = pData->opt_desc.desc;
-            pConvertor->pStack[0].end_loop = pData->opt_desc.used;
-        }
-    }
+    pElems = pConvertor->use_desc->desc;
+    pStack[0].end_loop = pConvertor->use_desc->used;
+
     /* In the case where the datatype start with loops, we should push them on the stack.
      * Otherwise when we reach the end_loop field we will pop too many entries and finish
      * by overriding other places in memory. Now the big question is when to stop creating
@@ -407,7 +412,7 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const
 
 static inline void
 convertor_init_generic( ompi_convertor_t* pConv, const ompi_datatype_t* datatype, int count,
-			const void* pUserBuf )
+                        const void* pUserBuf )
 {
     uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 3;
 
@@ -418,11 +423,17 @@ convertor_init_generic( ompi_convertor_t* pConv, const ompi_datatype_t* datatype
             if( pConv->stack_size > DT_STATIC_STACK_SIZE )
                 free( pConv->pStack );
         }
-        pConv->pStack = pConv->static_stack;
+        pConv->pStack     = pConv->static_stack;
         pConv->stack_size = DT_STATIC_STACK_SIZE;
-        pConv->bConverted = 0;
+        /* Decide which data representation will be used for the conversion. */
+        if( (NULL != datatype->opt_desc.desc) && (pConv->flags & CONVERTOR_HOMOGENEOUS) ) {
+            pConv->use_desc = &(datatype->opt_desc);
+        } else {
+            pConv->use_desc = &(datatype->desc);
+        }
+        pConv->bConverted = 0;  /* reset the convertor */
     }
-    if( required_stack_length > pConv->stack_size ) {
+    if( DT_STATIC_STACK_SIZE < required_stack_length ) {
         pConv->stack_size = required_stack_length;
         pConv->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) * pConv->stack_size );
     }
