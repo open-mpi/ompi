@@ -77,11 +77,11 @@ static  int orte_ras_bjs_param_register_int(
 
 
 static char* orte_ras_bjs_param_register_string(
-    const char* param_name,
+    const char * a, const char *b, const char *c,
     const char* default_value)
 {
     char *param_value;
-    int id = mca_base_param_register_string("ras","bjs",param_name,NULL,default_value);
+    int id = mca_base_param_register_string(a, b, c, NULL, default_value);
     mca_base_param_lookup_string(id, &param_value);
     return param_value;
 }
@@ -94,6 +94,9 @@ static int orte_ras_bjs_open(void)
 {
     mca_ras_bjs_component.debug = orte_ras_bjs_param_register_int("debug",1);
     mca_ras_bjs_component.priority = orte_ras_bjs_param_register_int("priority",75);
+    /* JMS To be changed post-beta to LAM's C/N command line notation */
+    mca_ras_bjs_component.schedule_policy = 
+        orte_ras_bjs_param_register_string("ras", "base", "schedule_policy", "slot");
     return ORTE_SUCCESS;
 }
 

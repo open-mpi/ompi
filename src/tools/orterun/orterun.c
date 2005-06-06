@@ -616,7 +616,7 @@ static int init_globals(void)
 static int parse_globals(int argc, char* argv[])
 {
     ompi_cmd_line_t cmd_line;
-    int ras, rmaps;
+    int ras;
 
     /* Setup and parse the command line */
 
@@ -644,21 +644,18 @@ static int parse_globals(int argc, char* argv[])
         exit(0);
     }
 
-    /* Allocate and map by node or by slot?  Shortcut for setting 2
-       MCA params. */
+    /* Allocate and map by node or by slot?  Shortcut for setting an
+       MCA param. */
 
-    ras = mca_base_param_register_string("ras", "host", "policy", NULL,
-                                         "slot");
-    rmaps = mca_base_param_register_string("rmaps", "round_robin", "policy",
-                                           NULL, "slot");
+    /* JMS To be changed post-beta to LAM's C/N command line notation */
+    ras = mca_base_param_register_string("ras", "base", "schedule_policy",
+                                         NULL, "slot");
     if (orterun_globals.by_node) {
         orterun_globals.by_slot = false;
         mca_base_param_set_string(ras, "node");
-        mca_base_param_set_string(rmaps, "node");
     } else {
         orterun_globals.by_slot = true;
         mca_base_param_set_string(ras, "slot");
-        mca_base_param_set_string(rmaps, "slot");
     }
 
     /* If we don't want to wait, we don't want to wait */

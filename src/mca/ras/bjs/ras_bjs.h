@@ -34,6 +34,7 @@ struct orte_ras_bjs_component_t {
     orte_ras_base_component_t super;
     int debug;
     int priority;
+    char *schedule_policy;
 };
 typedef struct orte_ras_bjs_component_t orte_ras_bjs_component_t;
 
