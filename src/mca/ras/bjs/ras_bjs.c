@@ -223,10 +223,15 @@ static int orte_ras_bjs_allocate(orte_jobid_t jobid)
     if(ORTE_SUCCESS != (rc = orte_ras_bjs_discover(&nodes))) {
         return rc;
     }
-    rc = orte_ras_base_allocate_nodes(jobid, &nodes);
+    if (0 == strcmp(mca_ras_bjs_component.schedule_policy, "node")) {
+        rc = orte_ras_base_allocate_nodes_by_node(jobid, &nodes);
+    } else {
+        rc = orte_ras_base_allocate_nodes_by_slot(jobid, &nodes);
+    }
 
-    while(NULL != (item = ompi_list_remove_first(&nodes)))
+    while(NULL != (item = ompi_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
+    }
     OBJ_DESTRUCT(&nodes);
     return rc;
 }
