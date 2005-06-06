@@ -57,7 +57,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
     dt_stack_t* pStack;    /* pointer to the position on the stack */
     uint32_t pos_desc;     /* actual position in the description of the derived datatype */
     int count_desc;        /* the number of items already done in the actual pos_desc */
-    int type;              /* type at current position */
+    int type = DT_CHAR;    /* type at current position */
     uint32_t advance;      /* number of bytes that we should advance the buffer */
     long disp_desc = 0;    /* compute displacement for truncated data */
     int bConverted = 0;    /* number of bytes converted this time */
@@ -633,14 +633,7 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
      * stack[1].disp to ZERO and keep the stack[1].disp equal to bConverted (by lower bound) .
      */
     pStack[1].disp = 0;
-#if 0
-    /* the number of complete datatypes still to be copied */
-    pStack[0].count = pConv->count - (pConv->bConverted / pData->size);
-    /* the amount of data (in bytes) that still have to be done on the last data */
-    pStack[1].count = pConv->bConverted - pData->size * (pConv->count - pStack[0].count);
-    pStack[1].disp  = pData->size - pStack[1].count;
-    pStack[0].disp -= (pData->size - pStack[1].count);
-#endif
+
     /* update the return value */
     *max_data = pConv->bConverted - initial_amount;
     *out_size = iov_count;
