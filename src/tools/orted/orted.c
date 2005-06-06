@@ -181,7 +181,6 @@ int main(int argc, char *argv[])
     /* setup stdin/stdout/stderr */
     if (orted_globals.debug == false) {
         int fd;
-        char log_file[PATH_MAX];
 
         /* connect input to /dev/null */
         fd = open("/dev/null", O_RDONLY);
@@ -190,23 +189,24 @@ int main(int argc, char *argv[])
             close(fd);
         }
 
-        /* connect output to a log file in the session directory */
-        sprintf(log_file, "output-orted-%d-%s.log", 
-                (int)orte_process_info.my_name->jobid, orte_system_info.nodename);
-        log_path = orte_os_path(false, 
-                                orte_process_info.tmpdir_base, 
-                                orte_process_info.top_session_dir, 
-                                log_file, 
-                                NULL);
-
-        fd = open(log_path, O_RDWR|O_CREAT|O_TRUNC, 0666);
-        if(fd < 0) {
-             fd = open("/dev/null", O_RDWR|O_CREAT|O_TRUNC, 0666);
-        }
-        if(fd >= 0) {
-            dup2(fd, STDOUT_FILENO);
-            dup2(fd, STDERR_FILENO);
-            if(fd != STDOUT_FILENO && fd != STDERR_FILENO) {
+        /* JMS For the beta, just wire up the stdout/stderr to
+           /dev/null -- at this point in the tree, the orted doesn't
+           output much useful info to stdout/stderr, anyway.  More
+           useful stuff is on the trunk already. */
+        fd = open("/dev/null", O_WRONLY, 0666);
+        if (fd >= 0) {
+            bool keep = false;
+            if (fd != STDOUT_FILENO) {
+                dup2(fd, STDOUT_FILENO);
+            } else {
+                keep = true;
+            }
+            if (fd != STDERR_FILENO) {
+                dup2(fd, STDERR_FILENO);
+            } else {
+                keep = true;
+            }
+            if (!keep) {
                close(fd);
             }
         }
