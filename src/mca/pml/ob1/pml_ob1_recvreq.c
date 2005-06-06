@@ -375,10 +375,7 @@ static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
     }
     return NULL;
  find_fragment:
-    request->req_recv.req_bytes_packed = hdr->hdr_msg_length;
-    request->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
-    request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
-
+    MCA_PML_OB1_RECV_REQUEST_MATCHED(request, hdr);
     if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
           (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
         ompi_list_remove_item(unexpected_frags, (ompi_list_item_t*)frag);
