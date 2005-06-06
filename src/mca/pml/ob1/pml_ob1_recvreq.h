@@ -200,13 +200,12 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
     if(request->req_recv.req_base.req_count > 0) {                                \
         struct iovec iov[MCA_BMI_DES_MAX_SEGMENTS];                               \
         uint32_t iov_count = num_segments;                                        \
-        uint32_t max_data = 0;                                                    \
+        uint32_t max_data = bytes_received;                                       \
         int32_t free_after = 0;                                                   \
         size_t i;                                                                 \
         for(i=0; i<num_segments; i++) {                                           \
             iov[i].iov_base = segments[i].seg_addr.pval;                          \
             iov[i].iov_len = segments[i].seg_len;                                 \
-            bytes_received += segments[i].seg_len;                                \
         }                                                                         \
         ompi_convertor_unpack(                                                    \
             &(request)->req_convertor,                                            \
