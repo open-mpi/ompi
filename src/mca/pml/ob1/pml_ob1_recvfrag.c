@@ -499,9 +499,7 @@ int mca_pml_ob1_recv_frag_match(
 
     /* release matching lock before processing fragment */
     if(match != NULL) {
-        match->req_recv.req_bytes_packed = hdr->hdr_msg_length;
-        match->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
-        match->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
+        MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
         mca_pml_ob1_recv_request_progress(match,bmi,segments,num_segments);
     } else {
         ompi_output(0, "match not found\n");
@@ -510,9 +508,7 @@ int mca_pml_ob1_recv_frag_match(
         ompi_list_item_t* item;
         while(NULL != (item = ompi_list_remove_first(&additional_matches))) {
             mca_pml_ob1_recv_frag_t* frag = (mca_pml_ob1_recv_frag_t*)item;
-            frag->request->req_recv.req_bytes_packed = hdr->hdr_msg_length;
-            frag->request->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
-            frag->request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
+            MCA_PML_OB1_RECV_REQUEST_MATCHED(frag->request, hdr);
             mca_pml_ob1_recv_request_progress(frag->request,frag->bmi,frag->segments,frag->num_segments);
             MCA_PML_OB1_RECV_FRAG_RETURN(frag);
         }

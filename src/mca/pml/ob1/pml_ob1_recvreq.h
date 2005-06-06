@@ -38,6 +38,7 @@ struct  mca_pml_ob1_recv_request_t {
      * the last element of this struct.
     */
     mca_bmi_base_descriptor_t *req_pipeline[1];
+    ompi_convertor_t req_convertor;
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
@@ -156,6 +157,37 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
  *
  */
 
+#define MCA_PML_OB1_RECV_REQUEST_MATCHED(                                            \
+    request,                                                                         \
+    hdr)                                                                             \
+{                                                                                    \
+    (request)->req_recv.req_bytes_packed = (hdr)->hdr_msg_length;                    \
+    (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;       \
+    (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src;    \
+                                                                                     \
+    if((request)->req_recv.req_bytes_packed != 0) {                                  \
+        ompi_proc_t *proc =                                                          \
+            ompi_comm_peer_lookup(                                                   \
+                (request)->req_recv.req_base.req_comm, (hdr)->hdr_src);              \
+                                                                                     \
+        ompi_convertor_copy(proc->proc_convertor,                                    \
+            &(request)->req_convertor);                                              \
+        ompi_convertor_init_for_recv(                                                \
+            &(request->req_convertor),                 /* convertor */               \
+            0,                                         /* flags */                   \
+            (request)->req_recv.req_base.req_datatype,   /* datatype */              \
+            (request)->req_recv.req_base.req_count,      /* count elements */        \
+            (request)->req_recv.req_base.req_addr,       /* users buffer */          \
+            0,                              /* offset in bytes into packed buffer */ \
+            NULL );                         /* not allocating memory */              \
+    }                                                                                \
+}
+
+
+/**
+ *
+ */
+
 #define MCA_PML_OB1_RECV_REQUEST_UNPACK(                                          \
     request,                                                                      \
     segments,                                                                     \
@@ -165,8 +197,25 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
     bytes_received,                                                               \
     bytes_delivered)                                                              \
 {                                                                                 \
-    /* FIX */                                                                     \
-    bytes_delivered = bytes_received;                                             \
+    if(request->req_recv.req_base.req_count > 0) {                                \
+        struct iovec iov[MCA_BMI_DES_MAX_SEGMENTS];                               \
+        uint32_t iov_count = num_segments;                                        \
+        uint32_t max_data = 0;                                                    \
+        int32_t free_after = 0;                                                   \
+        size_t i;                                                                 \
+        for(i=0; i<num_segments; i++) {                                           \
+            iov[i].iov_base = segments[i].seg_addr.pval;                          \
+            iov[i].iov_len = segments[i].seg_len;                                 \
+            bytes_received += segments[i].seg_len;                                \
+        }                                                                         \
+        ompi_convertor_unpack(                                                    \
+            &(request)->req_convertor,                                            \
+            iov,                                                                  \
+            &iov_count,                                                           \
+            &max_data,                                                            \
+            &free_after);                                                         \
+        bytes_delivered = max_data;                                               \
+    }                                                                             \
 } 
 
 
