@@ -35,29 +35,29 @@
 
 mca_ptl_gm_module_t mca_ptl_gm_module = {
     {
-	&mca_ptl_gm_component.super,
-	1,  /* max size of request cache */
-	sizeof(mca_ptl_gm_send_frag_t), /* bytes required by ptl for a request */
-	0,  /* max size of first fragment */
-	0,  /* min fragment size */
-	0,  /* max fragment size */
-	0,  /* exclusivity */
-	50, /* latency */
-	0,  /* bandwidth */
-	MCA_PTL_PUT,  /* ptl flags */
-	/* collection of interfaces */
-	mca_ptl_gm_add_procs,
-	mca_ptl_gm_del_procs,
-	mca_ptl_gm_finalize,
-	mca_ptl_gm_peer_send,
-	mca_ptl_gm_put,
-	mca_ptl_gm_get,
-	mca_ptl_gm_matched,
-	mca_ptl_gm_request_init, 
-	mca_ptl_gm_request_fini,
-	NULL,
-	NULL,
-	NULL
+        &mca_ptl_gm_component.super,
+        1,  /* max size of request cache */
+        sizeof(mca_ptl_gm_send_frag_t), /* bytes required by ptl for a request */
+        0,  /* max size of first fragment */
+        0,  /* min fragment size */
+        0,  /* max fragment size */
+        0,  /* exclusivity */
+        50, /* latency */
+        0,  /* bandwidth */
+        MCA_PTL_PUT,  /* ptl flags */
+        /* collection of interfaces */
+        mca_ptl_gm_add_procs,
+        mca_ptl_gm_del_procs,
+        mca_ptl_gm_finalize,
+        mca_ptl_gm_peer_send,
+        mca_ptl_gm_put,
+        mca_ptl_gm_get,
+        mca_ptl_gm_matched,
+        mca_ptl_gm_request_init, 
+        mca_ptl_gm_request_fini,
+        NULL,
+        NULL,
+        NULL
     }
 };
 
