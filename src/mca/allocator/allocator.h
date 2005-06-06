@@ -30,12 +30,12 @@ struct mca_allocator_base_module_t;
 /**
   * The allocate function typedef for the function to be provided by the component.
   */
-typedef void* (*mca_allocator_base_module_alloc_fn_t)(struct mca_allocator_base_module_t*, size_t size, size_t align, void* user_out);
+typedef void* (*mca_allocator_base_module_alloc_fn_t)(struct mca_allocator_base_module_t*, size_t size, size_t align, void** user_out);
  
 /**
   * The realloc function typedef
   */
-typedef void* (*mca_allocator_base_module_realloc_fn_t)(struct mca_allocator_base_module_t*, void*, size_t, void* user_out);
+typedef void* (*mca_allocator_base_module_realloc_fn_t)(struct mca_allocator_base_module_t*, void*, size_t, void** user_out);
 
 /**
   * Free function typedef
@@ -87,7 +87,7 @@ typedef struct mca_allocator_base_module_t mca_allocator_base_module_t;
   * provided by the module to the allocator framework.
   */
 
-typedef void* (*mca_allocator_base_component_segment_alloc_fn_t)(size_t* size, void* user_in, void* user_out);
+typedef void* (*mca_allocator_base_component_segment_alloc_fn_t)(size_t* size, void* user_in, void** user_out);
 
 /**
   * A function to free memory from the control of the allocator framework 

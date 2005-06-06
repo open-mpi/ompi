@@ -122,7 +122,7 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
    * @retval Pointer to the area of memory if the allocation was successful
    * @retval NULL if the allocation was unsuccessful
    */
-    void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem, size_t size, void* user_out);
+    void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem, size_t size, void** user_out);
 
 /**
    * Accepts a request for memory in a specific region defined by the
@@ -140,7 +140,7 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
    *
    */
     void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem,
-                                            size_t size, size_t alignment, void* user_out);
+                                            size_t size, size_t alignment, void** user_out);
 
 /**
    * Attempts to resize the passed region of memory into a larger or a smaller
@@ -157,7 +157,7 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
    *
    */
     void * mca_allocator_bucket_realloc(mca_allocator_base_module_t * mem, 
-                                        void * ptr, size_t size, void* user_out);
+                                        void * ptr, size_t size, void** user_out);
 
 /**
    * Frees the passed region of memory

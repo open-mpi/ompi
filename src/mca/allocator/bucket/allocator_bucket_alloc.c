@@ -68,7 +68,7 @@ mca_allocator_bucket_t * mca_allocator_bucket_init(mca_allocator_base_module_t *
    *
    */
 void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
-                                  size_t size, void* user_out)
+                                  size_t size, void** user_out)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     /* initialize for the later bit shifts */
@@ -148,7 +148,7 @@ void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
   * allocates an aligned region of memory
   */
 void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem, 
-                                        size_t size, size_t alignment, void* user_out)
+                                        size_t size, size_t alignment, void** user_out)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem; 
     int bucket_num = 1;
@@ -228,7 +228,7 @@ void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem,
   * function to reallocate the segment of memory
   */
 void * mca_allocator_bucket_realloc(mca_allocator_base_module_t * mem,
-                                    void * ptr, size_t size, void* user_out)
+                                    void * ptr, size_t size, void** user_out)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     /* initialize for later bit shifts */
