@@ -98,7 +98,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
         if (NULL != flist->fl_elem_class) {
             OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
         }
-        ompi_list_append(&flist->super.super, item);
+        ompi_list_append(&(flist->super), &(item->super));
         ptr += flist->fl_elem_size;
     }
     flist->fl_num_allocated += num_elements;
