@@ -213,7 +213,7 @@ void mca_pml_ob1_recv_request_progress(
                 recvreq,
                 segments,
                 num_segments,
-                sizeof(mca_pml_ob1_rendezvous_hdr_t),
+                sizeof(mca_pml_ob1_frag_hdr_t),
                 hdr->hdr_frag.frag_offset,
                 bytes_received,
                 bytes_delivered);
