@@ -16,15 +16,14 @@
  * $HEADER$
  */
 
-#ifndef MCA_BMI_IB_PEER_H
-#define MCA_BMI_IB_PEER_H
+#ifndef MCA_BMI_IB_ENDPOINT_H
+#define MCA_BMI_IB_ENDPOINT_H
 
 #include "class/ompi_list.h"
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/bmi/bmi.h"
-#include "bmi_ib_recvfrag.h"
-#include "bmi_ib_sendfrag.h"
+#include "bmi_ib_frag.h"
 #include "bmi_ib_priv.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -33,7 +32,7 @@ extern "C" {
 OBJ_CLASS_DECLARATION(mca_bmi_ib_endpoint_t);
 
 /**
- * State of IB peer connection.
+ * State of IB endpoint connection.
  */
 
 typedef enum {
@@ -41,7 +40,7 @@ typedef enum {
      * has started the process of connection */
     MCA_BMI_IB_CONNECTING,
 
-    /* Waiting for ack from peer */
+    /* Waiting for ack from endpoint */
     MCA_BMI_IB_CONNECT_ACK,
 
     /* Connected ... both sender & receiver have
@@ -58,38 +57,38 @@ typedef enum {
 } mca_bmi_ib_endpoint_state_t;
 
 /**
- * An abstraction that represents a connection to a peer process.
+ * An abstraction that represents a connection to a endpoint process.
  * An instance of mca_bmi_base_endpoint_t is associated w/ each process
- * and BMI pair at startup. However, connections to the peer
+ * and BMI pair at startup. However, connections to the endpoint
  * are established dynamically on an as-needed basis:
  */
 
 struct mca_bmi_base_endpoint_t {
     ompi_list_item_t            super;
 
-    struct mca_bmi_ib_module_t* peer_bmi;
+    struct mca_bmi_ib_module_t* endpoint_bmi;
     /**< BMI instance that created this connection */
 
-    struct mca_bmi_ib_proc_t*   peer_proc;
-    /**< proc structure corresponding to peer */
+    struct mca_bmi_ib_proc_t*   endpoint_proc;
+    /**< proc structure corresponding to endpoint */
 
-    mca_bmi_ib_endpoint_state_t     peer_state;
+    mca_bmi_ib_endpoint_state_t     endpoint_state;
     /**< current state of the connection */
 
-    size_t                      peer_retries;
+    size_t                      endpoint_retries;
     /**< number of connection retries attempted */
 
-    double                      peer_tstamp;
+    double                      endpoint_tstamp;
     /**< timestamp of when the first connection was attempted */
 
-    ompi_mutex_t                peer_send_lock;
-    /**< lock for concurrent access to peer state */
+    ompi_mutex_t                endpoint_send_lock;
+    /**< lock for concurrent access to endpoint state */
 
-    ompi_mutex_t                peer_recv_lock;
-    /**< lock for concurrent access to peer state */
+    ompi_mutex_t                endpoint_recv_lock;
+    /**< lock for concurrent access to endpoint state */
 
     ompi_list_t                 pending_send_frags;
-    /**< list of pending send frags for this peer */
+    /**< list of pending send frags for this endpoint */
 
     VAPI_qp_num_t               rem_qp_num;
     /* Remote side QP number */
@@ -102,33 +101,33 @@ struct mca_bmi_base_endpoint_t {
 
     VAPI_qp_prop_t              lcl_qp_prop;
     /* Local QP properties */
-
-    ib_buffer_t                *lcl_recv;
-    /* Remote resources associated with this connection */
 };
 
 typedef struct mca_bmi_base_endpoint_t mca_bmi_base_endpoint_t;
-typedef struct mca_bmi_base_endpoint_t mca_bmi_ib_endpoint_t;
+typedef mca_bmi_base_endpoint_t  mca_bmi_ib_endpoint_t;
 
-int  mca_bmi_ib_peer_send(mca_bmi_base_endpoint_t*, mca_bmi_ib_send_frag_t*);
-int  mca_bmi_ib_peer_connect(mca_bmi_base_endpoint_t*);
+int  mca_bmi_ib_endpoint_send(struct mca_bmi_base_endpoint_t* endpoint, struct mca_bmi_ib_frag_t* frag);
+int  mca_bmi_ib_endpoint_connect(mca_bmi_base_endpoint_t*);
 void mca_bmi_ib_post_recv(void);
+
 
 void mca_bmi_ib_progress_send_frags(mca_bmi_ib_endpoint_t*);
 
-#define DUMP_PEER(peer_ptr) {                                       \
+#define DUMP_ENDPOINT(endpoint_ptr) {                                       \
     ompi_output(0, "[%s:%d] ", __FILE__, __LINE__);                 \
-    ompi_output(0, "Dumping peer %d state",                         \
-            peer->peer_proc->proc_guid.vpid);                       \
+    ompi_output(0, "Dumping endpoint %d state",                         \
+            endpoint->endpoint_proc->proc_guid.vpid);                       \
     ompi_output(0, "Local QP hndl : %d",                            \
-            peer_ptr->peer_conn->lres->qp_hndl);                    \
+            endpoint_ptr->endpoint_conn->lres->qp_hndl);                    \
     ompi_output(0, "Local QP num : %d",                             \
-            peer_ptr->peer_conn->lres->qp_prop.qp_num);             \
+            endpoint_ptr->endpoint_conn->lres->qp_prop.qp_num);             \
     ompi_output(0, "Remote QP num : %d",                            \
-            peer_ptr->peer_conn->rres->qp_num);                     \
+            endpoint_ptr->endpoint_conn->rres->qp_num);                     \
     ompi_output(0, "Remote LID : %d",                               \
-            peer_ptr->peer_conn->rres->lid);                        \
+            endpoint_ptr->endpoint_conn->rres->lid);                        \
 }
+
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

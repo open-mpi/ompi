@@ -245,8 +245,8 @@ int mca_bmi_ib_module_init(mca_bmi_ib_module_t *ib_bmi)
     }
 
     /* initialize memory region registry */
-    OBJ_CONSTRUCT(&ib_bmi->mem_registry, mca_bmi_ib_mem_registry_t);
-    mca_bmi_ib_mem_registry_init(&ib_bmi->mem_registry, ib_bmi);
+    /* OBJ_CONSTRUCT(&ib_bmi->mem_registry, mca_bmi_ib_mem_registry_t); */
+   /*  mca_bmi_ib_mem_registry_init(&ib_bmi->mem_registry, ib_bmi); */
     return OMPI_SUCCESS;
 }
 
@@ -344,131 +344,132 @@ int mca_bmi_ib_qp_init(VAPI_hca_hndl_t nic,
     return OMPI_SUCCESS;
 }
 
-int mca_bmi_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag,
-        void* buf, int len, vapi_memhandle_t* memhandle)
-{
-    VAPI_ret_t ret;
-    VAPI_mrw_t mr_in, mr_out;
-    vapi_memhandle_t mem_handle;
 
-    mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
-    mr_in.l_key = 0;
-    mr_in.r_key = 0;
-    mr_in.pd_hndl = ptag;
-    mr_in.size = len;
-    mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) buf;
-    mr_in.type = VAPI_MR;
+/* int mca_bmi_ib_register_mem(VAPI_hca_hndl_t nic, VAPI_pd_hndl_t ptag, */
+/*         void* buf, int len, vapi_memhandle_t* memhandle) */
+/* { */
+/*     VAPI_ret_t ret; */
+/*     VAPI_mrw_t mr_in, mr_out; */
+/*     vapi_memhandle_t mem_handle; */
 
-    ret = VAPI_register_mr(nic, &mr_in, &mem_handle.hndl, &mr_out);
-    if(VAPI_OK != ret) {
-        MCA_BMI_IB_VAPI_RET(ret, "VAPI_register_mr");
-        return OMPI_ERROR;
-    }
+/*     mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE; */
+/*     mr_in.l_key = 0; */
+/*     mr_in.r_key = 0; */
+/*     mr_in.pd_hndl = ptag; */
+/*     mr_in.size = len; */
+/*     mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) buf; */
+/*     mr_in.type = VAPI_MR; */
 
-    mem_handle.lkey = mr_out.l_key;
-    mem_handle.rkey = mr_out.r_key;
+/*     ret = VAPI_register_mr(nic, &mr_in, &mem_handle.hndl, &mr_out); */
+/*     if(VAPI_OK != ret) { */
+/*         MCA_BMI_IB_VAPI_RET(ret, "VAPI_register_mr"); */
+/*         return OMPI_ERROR; */
+/*     } */
 
-    memhandle->lkey = mem_handle.lkey;
-    memhandle->rkey = mem_handle.rkey;
+/*     mem_handle.lkey = mr_out.l_key; */
+/*     mem_handle.rkey = mr_out.r_key; */
 
-    /* D_PRINT("addr = %p, lkey = %d\n", buf, memhandle->lkey); */
+/*     memhandle->lkey = mem_handle.lkey; */
+/*     memhandle->rkey = mem_handle.rkey; */
 
-    memhandle->hndl = mem_handle.hndl;
+/*     /\* D_PRINT("addr = %p, lkey = %d\n", buf, memhandle->lkey); *\/ */
 
-    return OMPI_SUCCESS;
-}
+/*     memhandle->hndl = mem_handle.hndl; */
 
-
-int mca_bmi_ib_post_send(mca_bmi_ib_module_t *ib_bmi,
-        mca_bmi_ib_endpoint_t *peer, 
-        ib_buffer_t *ib_buf, void* addr)
-{
-    VAPI_ret_t ret;
-    int msg_len = ib_buf->desc.sg_entry.len;
-
-    IB_PREPARE_SEND_DESC(ib_buf, (peer->rem_qp_num),
-                msg_len, addr);
-
-    /* TODO - get this from NIC properties */
-    if(msg_len < 128) {  /* query this information from VAPI_query_qp(property max_inline_data_sq) */ 
-    ret = EVAPI_post_inline_sr(ib_bmi->nic,
-            peer->lcl_qp_hndl,
-            &ib_buf->desc.sr);
-    } else {
-    ret = VAPI_post_sr(ib_bmi->nic,
-            peer->lcl_qp_hndl,
-            &ib_buf->desc.sr);
-    }
-
-    if(VAPI_OK != ret) {
-        MCA_BMI_IB_VAPI_RET(ret, "VAPI_post_sr");
-        return OMPI_ERROR;
-    }
-    return OMPI_SUCCESS;
-}
+/*     return OMPI_SUCCESS; */
+/* } */
 
 
-void mca_bmi_ib_buffer_repost(VAPI_hca_hndl_t nic, void* addr)
-{
-    VAPI_ret_t ret;
-    ib_buffer_t *ib_buf = (ib_buffer_t*)addr;
+/* int mca_bmi_ib_post_send(mca_bmi_ib_module_t *ib_bmi, */
+/*         mca_bmi_ib_endpoint_t *peer,  */
+/*         ib_buffer_t *ib_buf, void* addr) */
+/* { */
+/*     VAPI_ret_t ret; */
+/*     int msg_len = ib_buf->desc.sg_entry.len; */
 
-    IB_PREPARE_RECV_DESC(ib_buf);
+/*     IB_PREPARE_SEND_DESC(ib_buf, (peer->rem_qp_num), */
+/*                 msg_len, addr); */
 
-    ret = VAPI_post_rr(nic, ib_buf->qp_hndl, &(ib_buf->desc.rr));
+/*     /\* TODO - get this from NIC properties *\/ */
+/*     if(msg_len < 128) {  /\* query this information from VAPI_query_qp(property max_inline_data_sq) *\/  */
+/*     ret = EVAPI_post_inline_sr(ib_bmi->nic, */
+/*             peer->lcl_qp_hndl, */
+/*             &ib_buf->desc.sr); */
+/*     } else { */
+/*     ret = VAPI_post_sr(ib_bmi->nic, */
+/*             peer->lcl_qp_hndl, */
+/*             &ib_buf->desc.sr); */
+/*     } */
 
-    if(VAPI_OK != ret) {
-        MCA_BMI_IB_VAPI_RET(ret, "VAPI_post_rr");
-        ompi_output(0, "Error in buffer reposting");
-    }
-}
+/*     if(VAPI_OK != ret) { */
+/*         MCA_BMI_IB_VAPI_RET(ret, "VAPI_post_sr"); */
+/*         return OMPI_ERROR; */
+/*     } */
+/*     return OMPI_SUCCESS; */
+/* } */
 
-void mca_bmi_ib_prepare_ack(mca_bmi_ib_module_t *ib_bmi,
-        void* addr_to_reg, int len_to_reg,
-        void* ack_buf, int* len_added)
-{
-    mca_bmi_ib_mem_registry_info_t *info = 
-        mca_bmi_ib_register_mem_with_registry(ib_bmi, 
-            addr_to_reg, (size_t)len_to_reg);
 
-    if(NULL == info) {
-        ompi_output(0, "Error in registering");
-    }
+/* void mca_bmi_ib_buffer_repost(VAPI_hca_hndl_t nic, void* addr) */
+/* { */
+/*     VAPI_ret_t ret; */
+/*     ib_buffer_t *ib_buf = (ib_buffer_t*)addr; */
 
-    A_PRINT("Sending Remote key : %d", info->reply.r_key);
+/*     IB_PREPARE_RECV_DESC(ib_buf); */
 
-    memcpy(ack_buf,(void*) &(info->reply.r_key), sizeof(VAPI_rkey_t));
+/*     ret = VAPI_post_rr(nic, ib_buf->qp_hndl, &(ib_buf->desc.rr)); */
 
-    *len_added = sizeof(VAPI_rkey_t);
-}
+/*     if(VAPI_OK != ret) { */
+/*         MCA_BMI_IB_VAPI_RET(ret, "VAPI_post_rr"); */
+/*         ompi_output(0, "Error in buffer reposting"); */
+/*     } */
+/* } */
 
-int mca_bmi_ib_rdma_write(mca_bmi_ib_module_t *ib_bmi,
-        mca_bmi_ib_endpoint_t *peer, ib_buffer_t *ib_buf,
-        void* send_buf, size_t send_len, void* remote_buf,
-        VAPI_rkey_t remote_key, void* id_buf)
-{
-    VAPI_ret_t ret;
+/* void mca_bmi_ib_prepare_ack(mca_bmi_ib_module_t *ib_bmi, */
+/*         void* addr_to_reg, int len_to_reg, */
+/*         void* ack_buf, int* len_added) */
+/* { */
+/*     mca_bmi_ib_mem_registry_info_t *info =  */
+/*         mca_bmi_ib_register_mem_with_registry(ib_bmi,  */
+/*             addr_to_reg, (size_t)len_to_reg); */
 
-    mca_bmi_ib_mem_registry_info_t *info = 
-        mca_bmi_ib_register_mem_with_registry(ib_bmi, 
-            send_buf, send_len);
+/*     if(NULL == info) { */
+/*         ompi_output(0, "Error in registering"); */
+/*     } */
 
-    if (NULL == info) {
-        return OMPI_ERROR;
-    }
+/*     A_PRINT("Sending Remote key : %d", info->reply.r_key); */
 
-    /* Prepare descriptor */
-    IB_PREPARE_RDMA_W_DESC(ib_buf, (peer->rem_qp_num),
-            send_len, send_buf, (info->reply.l_key), remote_key, 
-            id_buf, remote_buf);
+/*     memcpy(ack_buf,(void*) &(info->reply.r_key), sizeof(VAPI_rkey_t)); */
 
-    ret = VAPI_post_sr(ib_bmi->nic,
-            peer->lcl_qp_hndl,
-            &ib_buf->desc.sr);
-    if(ret != VAPI_OK) {
-        MCA_BMI_IB_VAPI_RET(ret, "VAPI_post_sr");
-        return OMPI_ERROR;
-    }
+/*     *len_added = sizeof(VAPI_rkey_t); */
+/* } */
 
-    return OMPI_SUCCESS;
-}
+/* int mca_bmi_ib_rdma_write(mca_bmi_ib_module_t *ib_bmi, */
+/*         mca_bmi_ib_endpoint_t *peer, ib_buffer_t *ib_buf, */
+/*         void* send_buf, size_t send_len, void* remote_buf, */
+/*         VAPI_rkey_t remote_key, void* id_buf) */
+/* { */
+/*     VAPI_ret_t ret; */
+
+/*     mca_bmi_ib_mem_registry_info_t *info =  */
+/*         mca_bmi_ib_register_mem_with_registry(ib_bmi,  */
+/*             send_buf, send_len); */
+
+/*     if (NULL == info) { */
+/*         return OMPI_ERROR; */
+/*     } */
+
+/*     /\* Prepare descriptor *\/ */
+/*     IB_PREPARE_RDMA_W_DESC(ib_buf, (peer->rem_qp_num), */
+/*             send_len, send_buf, (info->reply.l_key), remote_key,  */
+/*             id_buf, remote_buf); */
+
+/*     ret = VAPI_post_sr(ib_bmi->nic, */
+/*             peer->lcl_qp_hndl, */
+/*             &ib_buf->desc.sr); */
+/*     if(ret != VAPI_OK) { */
+/*         MCA_BMI_IB_VAPI_RET(ret, "VAPI_post_sr"); */
+/*         return OMPI_ERROR; */
+/*     } */
+
+/*     return OMPI_SUCCESS; */
+/* } */

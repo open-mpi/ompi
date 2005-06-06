@@ -36,8 +36,8 @@ void mca_bmi_ib_proc_construct(mca_bmi_ib_proc_t* proc)
 {
     proc->proc_ompi = 0;
     proc->proc_addr_count = 0;
-    proc->proc_peers = 0;
-    proc->proc_peer_count = 0;
+    proc->proc_endpoints = 0;
+    proc->proc_endpoint_count = 0;
     OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
     /* add to list of all proc instance */
     OMPI_THREAD_LOCK(&mca_bmi_ib_component.ib_lock);
@@ -57,8 +57,8 @@ void mca_bmi_ib_proc_destruct(mca_bmi_ib_proc_t* proc)
     OMPI_THREAD_UNLOCK(&mca_bmi_ib_component.ib_lock);
 
     /* release resources */
-    if(NULL != proc->proc_peers) {
-        free(proc->proc_peers);
+    if(NULL != proc->proc_endpoints) {
+        free(proc->proc_endpoints);
     }
 }
 
@@ -119,7 +119,7 @@ mca_bmi_ib_proc_t* mca_bmi_ib_proc_create(ompi_proc_t* ompi_proc)
     module_proc = OBJ_NEW(mca_bmi_ib_proc_t);
 
     /* Initialize number of peer */
-    module_proc->proc_peer_count = 0;
+    module_proc->proc_endpoint_count = 0;
 
     module_proc->proc_ompi = ompi_proc;
 
@@ -135,12 +135,12 @@ mca_bmi_ib_proc_t* mca_bmi_ib_proc_create(ompi_proc_t* ompi_proc)
     /* XXX: Right now, there can be only 1 peer associated
      * with a proc. Needs a little bit change in 
      * mca_bmi_ib_proc_t to allow on demand increasing of
-     * number of peers for this proc */
+     * number of endpoints for this proc */
 
-    module_proc->proc_peers = (mca_bmi_base_endpoint_t**)
+    module_proc->proc_endpoints = (mca_bmi_base_endpoint_t**)
         malloc(module_proc->proc_addr_count * sizeof(mca_bmi_base_endpoint_t*));
 
-    if(NULL == module_proc->proc_peers) {
+    if(NULL == module_proc->proc_endpoints) {
         OBJ_RELEASE(module_proc);
         return NULL;
     }
@@ -154,11 +154,11 @@ mca_bmi_ib_proc_t* mca_bmi_ib_proc_create(ompi_proc_t* ompi_proc)
  * it an address.
  */
 int mca_bmi_ib_proc_insert(mca_bmi_ib_proc_t* module_proc, 
-        mca_bmi_base_endpoint_t* module_peer)
+        mca_bmi_base_endpoint_t* module_endpoint)
 {
-    /* insert into peer array */
-    module_peer->peer_proc = module_proc;
-    module_proc->proc_peers[module_proc->proc_peer_count++] = module_peer;
+    /* insert into endpoint array */
+    module_endpoint->endpoint_proc = module_proc;
+    module_proc->proc_endpoints[module_proc->proc_endpoint_count++] = module_endpoint;
 
     return OMPI_SUCCESS;
 }

@@ -86,6 +86,12 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
     # some versions of Mellanox (v3.1), we need to expliitly link in
     # the thread libraries.  #$%#@$%@%#$!!!
 
+    # Many vapi.h's have horrid semantics and don't obey ISOC99
+    # standards.  So we have to turn off flags like -pedantic.  Sigh.
+
+    CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
+
+
 mca_ptl_ib_try_find_libvapi() {
     func1=[$]1
     func2=[$]2
