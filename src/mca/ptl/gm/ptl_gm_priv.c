@@ -554,7 +554,6 @@ int mca_ptl_gm_peer_send( struct mca_ptl_base_module_t* ptl,
     } else {
         iov.iov_len = 0;  /* no data will be transmitted */
     }
-    
     /* adjust size and request offset to reflect actual number of bytes
      * packed by convertor
      */
@@ -608,7 +607,6 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
 {
     mca_ptl_gm_recv_frag_t* recv_frag;
     bool matched;
-    uint64_t length;
 
     /* allocate a receive fragment */
     recv_frag = mca_ptl_gm_alloc_recv_frag( (struct mca_ptl_base_module_t*)ptl );
@@ -623,8 +621,9 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
             (char*)hdr + sizeof(mca_ptl_base_rendezvous_header_t);
         recv_frag->frag_recv.frag_base.frag_size = hdr->hdr_rndv.hdr_match.hdr_msg_length;
     }
-    recv_frag->frag_recv.frag_is_buffered = false;
-    recv_frag->have_allocated_buffer = false;
+    recv_frag->frag_recv.frag_is_buffered    = false;
+    recv_frag->have_allocated_buffer         = false;
+    recv_frag->attached_data_length          = msg_len - sizeof(mca_ptl_base_rendezvous_header_t);
     recv_frag->frag_recv.frag_base.frag_peer = NULL;
     recv_frag->frag_recv.frag_base.frag_header.hdr_rndv = hdr->hdr_rndv;
     matched = ptl->super.ptl_match( &(ptl->super),
@@ -632,15 +631,11 @@ mca_ptl_gm_recv_frag_match( struct mca_ptl_gm_module_t *ptl,
                                     &(recv_frag->frag_recv.frag_base.frag_header.hdr_match) );
     if( true == matched ) return NULL;  /* done and fragment already removed */
 
-    length = mca_ptl_gm_component.gm_segment_size - sizeof(mca_ptl_base_rendezvous_header_t);
-    if( recv_frag->frag_recv.frag_base.frag_size < length ) {
-        length = recv_frag->frag_recv.frag_base.frag_size;
-    }
     /* get some memory and copy the data inside. We can then release the receive buffer */
-    if( 0 != length ) {
+    if( 0 != (recv_frag->attached_data_length) ) {
         char* ptr = (char*)gm_get_local_buffer();
         recv_frag->have_allocated_buffer = true;
-        memcpy( ptr, recv_frag->frag_recv.frag_base.frag_addr, length );
+        memcpy( ptr, recv_frag->frag_recv.frag_base.frag_addr, recv_frag->attached_data_length );
         recv_frag->frag_recv.frag_base.frag_addr = ptr;
     } else {
         recv_frag->frag_recv.frag_base.frag_addr = NULL;

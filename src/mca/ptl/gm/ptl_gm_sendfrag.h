@@ -99,13 +99,14 @@ extern "C" {
     struct mca_ptl_gm_recv_frag_t {
         mca_ptl_base_recv_frag_t frag_recv;
         uint64_t     frag_bytes_processed;
-	uint64_t     frag_bytes_validated;  /**< amount of data for which we receive an ack */
-	uint64_t     frag_offset;
-	mca_ptl_gm_pipeline_info_t pipeline;  /**< storing the information about the status of
-					       *   the pipeline for long messages. */
-	uint32_t     type;
+        uint64_t     frag_bytes_validated;  /**< amount of data for which we receive an ack */
+        uint64_t     frag_offset;
+        mca_ptl_gm_pipeline_info_t pipeline;  /**< storing the information about the status of
+                                               *   the pipeline for long messages. */
+        uint32_t     type;
         bool         matched;
         bool         have_allocated_buffer;
+        uint32_t     attached_data_length;
     };
     typedef struct mca_ptl_gm_recv_frag_t mca_ptl_gm_recv_frag_t;
 
