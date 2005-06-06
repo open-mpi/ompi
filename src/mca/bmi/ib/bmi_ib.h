@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -32,30 +33,35 @@
 #include "mca/pml/pml.h"
 #include "mca/bmi/bmi.h"
 #include "util/output.h"
+#include "mca/mpool/mpool.h" 
 
 /* InfiniBand VAPI includes */
+#include "mca/bmi/bmi.h"
 #include "bmi_ib_vapi.h"
 #include "bmi_ib_addr.h"
 #include "bmi_ib_proc.h"
-#include "bmi_ib_peer.h"
+#include "bmi_ib_endpoint.h"
 #include "bmi_ib_priv.h"
+#include "bmi_ib_frag.h"
 
-/* Other IB bmi includes */
-#include "bmi_ib_sendreq.h"
-#include "bmi_ib_recvfrag.h"
-#include "bmi_ib_sendfrag.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
+
+#if 1
+#define D_PRINT(fmt, args...) {                                     \
+    ompi_output(0, "[%s:%d:%s] " fmt, __FILE__, __LINE__, __func__, \
+        ##args);                                                    \
+}
+#else
+#define D_PRINT(fmt, args...)
+#endif
+
+
 /**
  * Infiniband (IB) BMI component.
  */
-
-struct mca_bmi_ib_registration_t { 
-    mca_bmi_base_module_recv_cb_fn_t cbfunc; 
-    void *cbdata; 
-}
 
 struct mca_bmi_ib_component_t {
     mca_bmi_base_component_1_0_0_t          super;  /**< base BMI component */ 
@@ -75,15 +81,6 @@ struct mca_bmi_ib_component_t {
     int ib_free_list_inc;
     /**< number of elements to alloc when growing free lists */
 
-    ompi_free_list_t ib_send_requests;
-    /**< free list of ib send requests -- sendreq + IB */
-
-    ompi_free_list_t ib_send_frags;
-    /**< free list of ib send fragments */
-
-    ompi_free_list_t ib_recv_frags;
-    /**< free list of ib recv fragments */
-
     ompi_list_t                             ib_procs;
     /**< list of ib proc structures */
 
@@ -98,11 +95,19 @@ struct mca_bmi_ib_component_t {
 
     int                                     ib_mem_registry_hints_log_size;
     /**< log2 size of hints hash array used by memory registry */
-};
-typedef struct mca_bmi_ib_component_t mca_bmi_ib_component_t;
-struct mca_bmi_ib_recv_frag_t;
+    
+    char* ib_mpool_name; 
+    /**< name of ib memory pool */ 
+    
+
+    
+}; typedef struct mca_bmi_ib_component_t mca_bmi_ib_component_t;
 
 extern mca_bmi_ib_component_t mca_bmi_ib_component;
+
+typedef mca_bmi_base_registration_t mca_bmi_ib_registration_t; 
+    
+
 
 /**
  * IB PTL Interface
@@ -121,24 +126,15 @@ struct mca_bmi_ib_module_t {
     /**< Async event handler used to detect weird/unknown events */
     
     mca_bmi_ib_mem_registry_t mem_registry; /**< registry of memory regions */
-    ompi_free_list_t ib_frags1;    /**< free list of buffer descriptors */
+    ompi_free_list_t send_free;    /**< free list of buffer descriptors */
+    ompi_free_list_t recv_free;    /**< free list of buffer descriptors */
     ompi_list_t repost;            /**< list of buffers to repost */
-};
-
-typedef struct mca_bmi_ib_module_t mca_bmi_ib_module_t;
-
-extern mca_bmi_ib_module_tmca_bmi_ib_module;
-
-/**
- * IB FIN header
- */
-typedef struct mca_bmi_ib_fin_header_t mca_bmi_ib_fin_header_t;
-
-struct mca_bmi_ib_fin_header_t {
-    mca_bmi_base_frag_header_t frag_hdr;
-    ompi_ptr_t mr_addr;
-    uint64_t mr_size;
-};
+    mca_mpool_base_module_t* ib_pool; 
+    /**< ib memory pool */
+   
+}; typedef struct mca_bmi_ib_module_t mca_bmi_ib_module_t;
+    
+extern mca_bmi_ib_module_t mca_bmi_ib_module;
 
 /**
  * Register IB component parameters with the MCA framework
@@ -169,20 +165,12 @@ extern mca_bmi_base_module_t** mca_bmi_ib_component_init(
     bool have_hidden_threads
 );
 
-/**
- * IB component control.
- */
-extern int mca_bmi_ib_component_control(
-    int param,
-    void* value,
-    size_t size
-);
 
 /**
  * IB component progress.
  */
 extern int mca_bmi_ib_component_progress(
-   mca_bmi_tstamp_t tstamp
+                                         void
 );
 
 
@@ -236,53 +224,6 @@ extern int mca_bmi_ib_del_procs(
     struct mca_bmi_base_endpoint_t** peers
 );
 
-/**
- * PML->BMI Initialize a send request for TCP cache.
- *
- * @param bmi (IN)       BMI instance
- * @param request (IN)   Pointer to allocated request.
- *
- **/
-extern int mca_bmi_ib_request_init(
-        struct mca_bmi_base_module_t* bmi,
-        struct mca_bmi_base_send_request_t*
-        );
-
-/**
- * PML->BMI Cleanup a send request that is being removed from the cache.
- *
- * @param bmi (IN)       BMI instance
- * @param request (IN)   Pointer to allocated request.
- *
- **/
-extern void mca_bmi_ib_request_fini(
-        struct mca_bmi_base_module_t* bmi,
-        struct mca_bmi_base_send_request_t*
-        );
-
-/**
- * PML->BMI Return a send request to the BMI modules free list.
- *
- * @param bmi (IN)       BMI instance
- * @param request (IN)   Pointer to allocated request.
- *
- */
-extern void mca_bmi_ib_request_return(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_send_request_t*
-);
-
-/**
- * PML->BMI Notification that a receive fragment has been matched.
- *
- * @param bmi (IN)          BMI instance
- * @param recv_frag (IN)    Receive fragment
- *
- */
-extern void mca_bmi_ib_matched(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_recv_frag_t* frag
-);
 
 /**
  * PML->BMI Initiate a send of the specified size.
@@ -297,10 +238,8 @@ extern void mca_bmi_ib_matched(
 extern int mca_bmi_ib_send(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* bmi_peer,
-    struct mca_bmi_base_send_request_t*,
-    size_t offset,
-    size_t size,
-    int flags
+    struct mca_bmi_base_descriptor_t* descriptor, 
+    mca_bmi_base_tag_t tag
 );
 
 /**
@@ -316,12 +255,15 @@ extern int mca_bmi_ib_send(
 extern int mca_bmi_ib_put(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* bmi_peer,
-    struct mca_bmi_base_send_request_t*,
-    size_t offset,
-    size_t size,
-    int flags
+    struct mca_bmi_base_descriptor_t* decriptor
 );
 
+extern int mca_bmi_ib_register(
+                        struct mca_bmi_base_module_t* bmi, 
+                        mca_bmi_base_tag_t tag, 
+                        mca_bmi_base_module_recv_cb_fn_t cbfunc, 
+                        void* cbdata); 
+    
 /**
  * Return a recv fragment to the modules free list.
  *
@@ -331,11 +273,62 @@ extern int mca_bmi_ib_put(
  */
 extern void mca_bmi_ib_recv_frag_return(
     struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_ib_recv_frag_t* frag
+    struct mca_bmi_ib_frag_t* frag
 );
+
+/**
+ * Allocate a segment.
+ *
+ * @param bmi (IN)      BMI module
+ * @param size (IN)     Request segment size.
+ */
+extern mca_bmi_base_descriptor_t* mca_bmi_ib_alloc(
+                                                   struct mca_bmi_base_module_t* bmi, 
+                                                   size_t size); 
 
 
 /**
+ * Return a segment allocated by this BMI.
+ *
+ * @param bmi (IN)      BMI module
+ * @param segment (IN)  Allocated segment.
+ */
+extern int mca_bmi_ib_free(
+                           struct mca_bmi_base_module_t* bmi, 
+                           mca_bmi_base_descriptor_t* des); 
+    
+   
+
+
+/**
+ * Pack data and return a descriptor that can be
+ * used for send/put.
+ *
+ * @param bmi (IN)      BMI module
+ * @param peer (IN)     BMI peer addressing
+ */
+mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
+    struct mca_bmi_base_module_t* bmi,
+    struct mca_bmi_base_endpoint_t* peer,
+    struct ompi_convertor_t* convertor,
+    size_t reserve,
+    size_t* size
+);
+
+/**
+ * Pack data and return a descriptor that can be
+ * used for send/put.
+ *
+ * @param bmi (IN)      BMI module
+ * @param peer (IN)     BMI peer addressing
+ */
+extern mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst( 
+                                                         struct mca_bmi_base_module_t* bmi, 
+                                                         struct mca_bmi_base_endpoint_t* peer,
+                                                         struct ompi_convertor_t* convertor,
+                                                         size_t reserve,
+                                                         size_t* size); 
+    /**
  * Return a send fragment to the modules free list.
  *
  * @param bmi (IN)   BMI instance
@@ -344,7 +337,7 @@ extern void mca_bmi_ib_recv_frag_return(
  */
 extern void mca_bmi_ib_send_frag_return(
     struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_ib_send_frag_t*
+    struct mca_bmi_ib_frag_t*
 );
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -60,11 +60,7 @@ extern mca_bmi_sm_module_resource_t mca_bmi_sm_module_resource;
 #define DONE (char)1
 #endif
 
-struct mca_bmi_sm_registration_t {
-    mca_bmi_base_module_recv_cb_fn_t cbfunc;
-    void *cbdata;
-};
-typedef struct mca_bmi_sm_registration_t mca_bmi_sm_registration_t;
+typedef mca_bmi_base_registration_t mca_bmi_sm_registration_t;
 
 
 /**

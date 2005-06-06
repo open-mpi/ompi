@@ -72,22 +72,23 @@ struct vapi_descriptor_t {
 
 typedef struct vapi_descriptor_t vapi_descriptor_t;
 
-struct ib_buffer_t {
-    ompi_list_item_t                super;
-    vapi_descriptor_t               desc;
-    /* Descriptor of the buffer */
 
-    vapi_memhandle_t                hndl;
-    /* Buffer handle */
+/* struct ib_buffer_t { */
+/*     ompi_list_item_t                super; */
+/*     vapi_descriptor_t               desc; */
+/*     /\* Descriptor of the buffer *\/ */
 
-    char                            buf[MCA_BMI_IB_FIRST_FRAG_SIZE];
-    /* Buffer space */
+/*     vapi_memhandle_t                hndl; */
+/*     /\* Buffer handle *\/ */
 
-    VAPI_qp_hndl_t                  qp_hndl;
-    /* Queue pair used for this IB buffer */
-};
+/*     char                            buf[MCA_BMI_IB_FIRST_FRAG_SIZE]; */
+/*     /\* Buffer space *\/ */
 
-typedef struct ib_buffer_t ib_buffer_t;
+/*     VAPI_qp_hndl_t                  qp_hndl; */
+/*     /\* Queue pair used for this IB buffer *\/ */
+/* }; */
+
+/* typedef struct ib_buffer_t ib_buffer_t; */
 
 
 #define DUMP_IB_STATE(ib_bmi) {                               \
@@ -177,28 +178,28 @@ int mca_bmi_ib_register_mem(
     int len, 
     vapi_memhandle_t* memhandle);
 
-int mca_bmi_ib_post_send(
-    struct mca_bmi_ib_module_t *ib_module,
-    struct mca_bmi_base_endpoint_t *peer, 
-    ib_buffer_t *ib_buf, void*);
+/* int mca_bmi_ib_post_send( */
+/*     struct mca_bmi_ib_module_t *ib_module, */
+/*     struct mca_bmi_base_endpoint_t *peer,  */
+/*     ib_buffer_t *ib_buf, void*); */
 
-void mca_bmi_ib_buffer_repost(
-    VAPI_hca_hndl_t nic,
-    void* addr);
+/* void mca_bmi_ib_buffer_repost( */
+/*     VAPI_hca_hndl_t nic, */
+/*     void* addr); */
 
-void mca_bmi_ib_prepare_ack(
-    struct mca_bmi_ib_module_t *ib_module,
-    void* addr_to_reg, int len_to_reg,
-    void* ack_buf, int* len_added);
+/* void mca_bmi_ib_prepare_ack( */
+/*     struct mca_bmi_ib_module_t *ib_module, */
+/*     void* addr_to_reg, int len_to_reg, */
+/*     void* ack_buf, int* len_added); */
 
-int mca_bmi_ib_rdma_write(
-    struct mca_bmi_ib_module_t *ib_module,
-    struct mca_bmi_base_endpoint_t *peer, 
-    ib_buffer_t *ib_buf,
-    void* send_buf, 
-    size_t send_len, 
-    void* remote_buf,
-    VAPI_rkey_t remote_key, void*);
+/* int mca_bmi_ib_rdma_write( */
+/*     struct mca_bmi_ib_module_t *ib_module, */
+/*     struct mca_bmi_base_endpoint_t *peer,  */
+/*     ib_buffer_t *ib_buf, */
+/*     void* send_buf,  */
+/*     size_t send_len,  */
+/*     void* remote_buf, */
+/*     VAPI_rkey_t remote_key, void*); */
 
 int mca_bmi_ib_create_qp(VAPI_hca_hndl_t nic,
     VAPI_pd_hndl_t ptag,

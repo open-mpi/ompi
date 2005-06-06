@@ -20,34 +20,7 @@
 #define MCA_BMI_IB_RECV_FRAG_H
 
 #include "mca/bmi/bmi.h"
-#include "mca/bmi/base/bmi_base_recvfrag.h"
 
-#define MCA_BMI_IB_UNEX_BUF_SIZE    (4096)
+void mca_bmi_ib_process_recv(mca_bmi_ib_module_t*, mca_bmi_ib_recv_frag_t*); 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-OBJ_CLASS_DECLARATION(mca_bmi_ib_recv_frag_t);
-
-/**
- *  IB received fragment derived type.
- */
-struct mca_bmi_ib_recv_frag_t {
-    mca_bmi_base_recv_frag_t        super; 
-    /**< base receive fragment descriptor */
-    char                            unex_buf[MCA_BMI_IB_UNEX_BUF_SIZE];
-    /**< Unexpected buffer */
-};
-typedef struct mca_bmi_ib_recv_frag_t mca_bmi_ib_recv_frag_t;
-
-struct mca_bmi_ib_module_t;
-
-
-void mca_bmi_ib_recv_frag_done (mca_bmi_base_header_t*,
-        mca_bmi_base_recv_frag_t*, mca_bmi_base_recv_request_t*);
-
-void mca_bmi_ib_process_recv(struct mca_bmi_ib_module_t* , void*);
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 #endif

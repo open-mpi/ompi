@@ -110,6 +110,7 @@
 #define MCA_BMI_H
 
 #include "include/types.h"
+#include "class/ompi_free_list.h"
 
 /*
  * BMI types
@@ -159,7 +160,7 @@ typedef struct mca_bmi_base_segment_t mca_bmi_base_segment_t;
  */
 
 struct mca_bmi_base_descriptor_t {
-    ompi_list_item_t super;  
+    ompi_free_list_item_t super;  
     mca_bmi_base_segment_t *des_src;
     size_t des_src_cnt;
     mca_bmi_base_segment_t *des_dst;
@@ -178,6 +179,12 @@ OBJ_CLASS_DECLARATION(mca_bmi_base_descriptor_t);
 #define MCA_BMI_DES_MAX_SEGMENTS 16
 
 
+/* 
+ *  BMI base header, stores the tag at a minimum 
+ */ 
+struct mca_bmi_base_header_t{ 
+    mca_bmi_base_tag_t tag; 
+}; typedef struct mca_bmi_base_header_t mca_bmi_base_header_t; 
 
 /*
  *  BMI component interface functions and datatype.
@@ -324,6 +331,16 @@ typedef void (*mca_bmi_base_module_recv_cb_fn_t)(
     mca_bmi_base_descriptor_t* descriptor,
     void* cbdata
 );
+
+
+/* holds the recv call back function to be called by the bmi on 
+ * a receive. 
+ */ 
+struct mca_bmi_base_registration_t {  
+    mca_bmi_base_module_recv_cb_fn_t cbfunc; 
+    void* cbdata; 
+}; 
+typedef struct mca_bmi_base_registration_t mca_bmi_base_registration_t; 
 
 
 /**

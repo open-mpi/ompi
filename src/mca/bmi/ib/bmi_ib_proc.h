@@ -25,7 +25,7 @@
 #include "bmi_ib.h"
 #include "bmi_ib_vapi.h"
 #include "bmi_ib_addr.h"
-#include "bmi_ib_peer.h"
+#include "bmi_ib_endpoint.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -49,13 +49,13 @@ struct mca_bmi_ib_proc_t {
     /**< globally unique identifier for the process */
 
     size_t proc_addr_count;                  
-    /**< number of addresses published by peer */
+    /**< number of addresses published by endpoint */
 
-    struct mca_bmi_base_endpoint_t **proc_peers; 
-    /**< array of peers that have been created to access this proc */    
+    struct mca_bmi_base_endpoint_t **proc_endpoints; 
+    /**< array of endpoints that have been created to access this proc */    
 
-    size_t proc_peer_count;                  
-    /**< number of peers */
+    size_t proc_endpoint_count;                  
+    /**< number of endpoints */
 
     ompi_mutex_t proc_lock;                  
     /**< lock to protect against concurrent access to proc state */
