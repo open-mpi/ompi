@@ -78,11 +78,10 @@ static  int orte_rmaps_round_robin_param_register_int(
  
 
 static char *orte_rmaps_round_robin_param_register_string(
-    const char* param_name,
+    const char *a, const char *b, const char *c,
     char *default_value)
 {
-    int id = mca_base_param_register_string("rmaps","round_robin",
-                                            param_name,NULL,default_value);
+    int id = mca_base_param_register_string(a, b, c, NULL, default_value);
     char *param_value = default_value;
     mca_base_param_lookup_string(id,&param_value);
     return param_value;
@@ -98,8 +97,9 @@ static int orte_rmaps_round_robin_open(void)
         orte_rmaps_round_robin_param_register_int("debug", 1);
     mca_rmaps_round_robin_component.priority = 
         orte_rmaps_round_robin_param_register_int("priority", 1);
+    /* JMS To be changed post-beta to LAM's C/N command line notation */
     mca_rmaps_round_robin_component.schedule_policy = 
-        orte_rmaps_round_robin_param_register_string("policy", "slot");
+        orte_rmaps_round_robin_param_register_string("ras", "base", "schedule_policy", "slot");
     return ORTE_SUCCESS;
 }
 
