@@ -42,7 +42,7 @@ static int32_t          mca_pml_bsend_init = 0;
 /*
  * Routine to return pages to sub-allocator as needed 
  */
-static void* mca_pml_bsend_alloc_segment(size_t* size_inout)
+static void* mca_pml_bsend_alloc_segment(size_t* size_inout, void* user_in, void** user_out)
 {
     void *addr;
     size_t size = *size_inout;
