@@ -75,12 +75,13 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
     unsigned char* ptr;
     size_t i;
     size_t mod;
+    void* user_out; 
 
     if (flist->fl_max_to_alloc > 0 && flist->fl_num_allocated + num_elements > flist->fl_max_to_alloc)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
     if (NULL != flist->fl_mpool)
-        ptr = (unsigned char*)flist->fl_mpool->mpool_alloc(flist->fl_mpool, (num_elements * flist->fl_elem_size) + CACHE_LINE_SIZE, 0, NULL);
+        ptr = (unsigned char*)flist->fl_mpool->mpool_alloc(flist->fl_mpool, (num_elements * flist->fl_elem_size) + CACHE_LINE_SIZE, 0, &user_out);
     else
         ptr = (unsigned char *)malloc((num_elements * flist->fl_elem_size) + CACHE_LINE_SIZE);
     if(NULL == ptr)
@@ -92,11 +93,12 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
     }
 
     for(i=0; i<num_elements; i++) {
-        ompi_list_item_t* item = (ompi_list_item_t*)ptr;
+        ompi_free_list_item_t* item = (ompi_free_list_item_t*)ptr;
+        item->user_data = user_out; 
         if (NULL != flist->fl_elem_class) {
             OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
         }
-        ompi_list_append(&flist->super, item);
+        ompi_list_append(&flist->super.super, item);
         ptr += flist->fl_elem_size;
     }
     flist->fl_num_allocated += num_elements;

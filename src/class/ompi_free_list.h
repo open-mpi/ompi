@@ -42,10 +42,17 @@ struct ompi_free_list_t
     ompi_class_t* fl_elem_class;
     mca_mpool_base_module_t* fl_mpool;
     ompi_mutex_t fl_lock;
-    ompi_condition_t fl_condition;
+    ompi_condition_t fl_condition; 
+    
 };
 typedef struct ompi_free_list_t ompi_free_list_t;
 
+struct ompi_free_list_item_t
+{ 
+    ompi_list_item_t super; 
+    void* user_data; 
+}; 
+typedef struct ompi_free_list_item_t ompi_free_list_item_t; 
 
 /**
  * Initialize a free list.
