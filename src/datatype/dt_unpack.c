@@ -62,7 +62,7 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
     dt_stack_t* pStack;    /* pointer to the position on the stack */
     uint32_t pos_desc;     /* actual position in the description of the derived datatype */
     int count_desc;        /* the number of items already done in the actual pos_desc */
-    int type;              /* type at current position */
+    int type = DT_CHAR;    /* type at current position */
     uint32_t advance;      /* number of bytes that we should advance the buffer */
     long disp_desc = 0;    /* compute displacement for truncated data */
     int bConverted = 0;    /* number of bytes converted this time */
