@@ -95,6 +95,18 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
         comm,                                                              \
         sendmode,                                                          \
         persistent);                                                       \
+                                                                           \
+    /* init convertor at offset 0 */                                       \
+    if(sendreq->req_send.req_base.req_count != 0) {                        \
+         ompi_convertor_init_for_send(                                     \
+             &(sendreq)->req_send.req_convertor,                           \
+             0,                                                            \
+             (sendreq)->req_send.req_base.req_datatype,                    \
+             (sendreq)->req_send.req_base.req_count,                       \
+             (sendreq)->req_send.req_base.req_addr,                        \
+             0,                                                            \
+             NULL );                                                       \
+    }                                                                      \
 }
 
 /**
