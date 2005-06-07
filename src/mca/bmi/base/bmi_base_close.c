@@ -52,10 +52,10 @@ int mca_bmi_base_close(void)
 
   /* Close all remaining opened components (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
-
+  
   if (0 != ompi_list_get_size(&mca_bmi_base_components_opened)) {
-    mca_base_components_close(mca_bmi_base_output, 
-                              &mca_bmi_base_components_opened, NULL);
+      mca_base_components_close(mca_bmi_base_output, 
+                                &mca_bmi_base_components_opened, NULL);
   }
 
   /* cleanup */

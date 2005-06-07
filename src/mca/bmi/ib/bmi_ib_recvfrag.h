@@ -21,6 +21,6 @@
 
 #include "mca/bmi/bmi.h"
 
-void mca_bmi_ib_process_recv(mca_bmi_ib_module_t*, mca_bmi_ib_recv_frag_t*); 
+void mca_bmi_ib_process_recv(struct mca_bmi_ib_module_t*, struct mca_bmi_ib_recv_frag_t*); 
 
 #endif

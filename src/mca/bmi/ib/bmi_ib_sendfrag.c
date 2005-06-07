@@ -19,7 +19,9 @@
 #include "ompi_config.h"
 #include "include/types.h"
 #include "bmi_ib_sendfrag.h"
-
+#include "bmi_ib_frag.h" 
+#include "mca/bmi/bmi.h" 
+#include "bmi_ib_endpoint.h" 
 
 void mca_bmi_ib_sendfrag_complete( mca_bmi_ib_module_t * ib_bmi, mca_bmi_ib_send_frag_t* frag)
 { 

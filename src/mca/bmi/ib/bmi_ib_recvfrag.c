@@ -18,6 +18,7 @@
 
 #include "ompi_config.h"
 #include "bmi_ib.h"
+#include "bmi_ib_frag.h" 
 #include "bmi_ib_recvfrag.h" 
 
 

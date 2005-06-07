@@ -25,6 +25,11 @@
 
 #include "bmi_ib.h"
 #include "bmi_ib_frag.h" 
+#include "bmi_ib_addr.h"
+#include "bmi_ib_proc.h"
+#include "bmi_ib_endpoint.h"
+#include "bmi_ib_priv.h"
+
 
 mca_bmi_ib_module_t mca_bmi_ib_module = {
     {
@@ -215,7 +220,7 @@ int mca_bmi_ib_send(
 {
     
     mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*)descriptor; 
-
+    frag->endpoint = endpoint; 
         
     frag->hdr->tag = tag; 
     frag->type = MCA_BMI_IB_FRAG_SEND; 
