@@ -156,8 +156,8 @@ int mca_bmi_ib_free(
                            mca_bmi_base_descriptor_t* des) 
 {
     mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*)des; 
-    MCA_BMI_IB_FRAG_RETURN1(bmi, frag); 
-    
+    MCA_BMI_IB_FRAG_RETURN1(bmi, frag);     
+    return frag->rc; 
 }
 
 /**
@@ -215,16 +215,13 @@ int mca_bmi_ib_send(
 {
     
     mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*)descriptor; 
-    int rc; 
-    mca_bmi_ib_module_t* ib_bmi = (mca_bmi_ib_module_t*)bmi;
 
         
     frag->hdr->tag = tag; 
     frag->type = MCA_BMI_IB_FRAG_SEND; 
-    rc = mca_bmi_ib_endpoint_send(endpoint, frag);
-    frag->rc = rc;
-        
-    return rc;
+    frag->rc = mca_bmi_ib_endpoint_send(endpoint, frag);
+           
+    return frag->rc;
 }
 
 /*

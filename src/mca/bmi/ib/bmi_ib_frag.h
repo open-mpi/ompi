@@ -81,14 +81,14 @@ OBJ_CLASS_DECLARATION(mca_bmi_ib_recv_frag_t);
 #define MCA_BMI_IB_FRAG_ALLOC1(bmi, frag, rc)                               \
 {                                                                      \
                                                                        \
-    ompi_list_item_t *item;                                            \     
+    ompi_list_item_t *item;                                            \
     OMPI_FREE_LIST_WAIT(&((mca_bmi_ib_module_t*)bmi)->send_free, item, rc);       \
     frag = (mca_bmi_ib_frag_t*) item;                                  \
 }
 
 #define MCA_BMI_IB_FRAG_RETURN1(bmi, frag)                                  \
 {                                                                      \
-    OMPI_FREE_LIST_RETURN(&((mca_bmi_ib_module_t*)bmi)->send_free, &frag->base.super); \ 
+    OMPI_FREE_LIST_RETURN(&((mca_bmi_ib_module_t*)bmi)->send_free, (ompi_list_item_t*)(frag)); \
 }
 
 

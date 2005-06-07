@@ -38,17 +38,17 @@ typedef void* (*mca_mpool_base_module_address_fn_t)(struct mca_mpool_base_module
 /**
   * allocate function typedef
   */
-typedef void* (*mca_mpool_base_module_alloc_fn_t)(struct mca_mpool_base_module_t* mpool, size_t size, size_t align, void* user_out);
+typedef void* (*mca_mpool_base_module_alloc_fn_t)(struct mca_mpool_base_module_t* mpool, size_t size, size_t align, void** user_out);
 
 /**
   * allocate function typedef
   */
-typedef void* (*mca_mpool_base_module_alloc_and_register_fn_t)(struct mca_mpool_base_module_t* mpool,size_t size, size_t align, void* user_out);
+typedef void* (*mca_mpool_base_module_alloc_and_register_fn_t)(struct mca_mpool_base_module_t* mpool,size_t size, size_t align, void** user_out);
 
 /**
   * realloc function typedef
   */
-typedef void* (*mca_mpool_base_module_realloc_fn_t)(struct mca_mpool_base_module_t* mpool, void* addr, size_t size, void* user_out);
+typedef void* (*mca_mpool_base_module_realloc_fn_t)(struct mca_mpool_base_module_t* mpool, void* addr, size_t size, void** user_out);
 
 /**
   * free function typedef

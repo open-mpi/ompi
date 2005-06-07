@@ -48,17 +48,6 @@
 extern "C" {
 #endif
 
-
-#if 1
-#define D_PRINT(fmt, args...) {                                     \
-    ompi_output(0, "[%s:%d:%s] " fmt, __FILE__, __LINE__, __func__, \
-        ##args);                                                    \
-}
-#else
-#define D_PRINT(fmt, args...)
-#endif
-
-
 /**
  * Infiniband (IB) BMI component.
  */
