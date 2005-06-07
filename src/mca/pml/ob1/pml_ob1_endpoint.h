@@ -153,6 +153,61 @@ static inline mca_pml_ob1_endpoint_t* mca_pml_ob1_ep_array_get_next(mca_pml_ob1_
     return endpoint;
 }
 
+/**
+ * Allocate a descriptor
+ */
+
+#if OMPI_HAVE_THREAD_SUPPORT
+#define MCA_PML_OB1_ENDPOINT_DES_ALLOC(endpoint, descriptor)                             \
+do {                                                                                     \
+    if(NULL != (descriptor = endpoint->bmi_cache)) {                                     \
+        /* atomically acquire the cached descriptor */                                   \
+        if(ompi_atomic_cmpset_ptr(&endpoint->bmi_cache, descriptor, NULL) == 0) {        \
+            endpoint->bmi_cache = NULL;                                                  \
+        } else {                                                                         \
+             descriptor = endpoint->bmi_alloc(endpoint->bmi, sizeof(mca_pml_ob1_hdr_t)); \
+        }                                                                                \
+    } else {                                                                             \
+            descriptor = endpoint->bmi_alloc(endpoint->bmi, sizeof(mca_pml_ob1_hdr_t));  \
+    }                                                                                    \
+} while(0)
+#else
+#define MCA_PML_OB1_ENDPOINT_DES_ALLOC(endpoint, descriptor)                             \
+do {                                                                                     \
+    if(NULL != (descriptor = endpoint->bmi_cache)) {                                     \
+        endpoint->bmi_cache = NULL;                                                      \
+    } else {                                                                             \
+        descriptor = endpoint->bmi_alloc(endpoint->bmi, sizeof(mca_pml_ob1_hdr_t));      \
+    }                                                                                    \
+} while(0)
+#endif
+
+/**
+ * Return a descriptor
+ */
+
+#if OMPI_HAVE_THREAD_SUPPORT
+#define MCA_PML_OB1_ENDPOINT_DES_RETURN(endpoint, descriptor)                            \
+do {                                                                                     \
+    if(NULL == bmi_ep->bmi_cache) {                                                      \
+        if(ompi_atomic_cmpset_ptr(&endpoint->bmi_cache,NULL,descriptor) == 0) {          \
+             bmi->bmi_free(bmi,descriptor);                                              \
+        }                                                                                \
+    } else {                                                                             \
+        bmi->bmi_free(bmi,descriptor);                                                   \
+    }
+} while(0)
+#else
+#define MCA_PML_OB1_ENDPOINT_DES_RETURN(endpoint, descriptor)                            \
+do {                                                                                     \
+    if(NULL == bmi_ep->bmi_cache) {                                                      \
+        bmi_ep->bmi_cache = descriptor;                                                  \
+    } else {                                                                             \
+        bmi->bmi_free(bmi,descriptor);                                                   \
+    }                                                                                    \
+} while(0)
+#endif
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

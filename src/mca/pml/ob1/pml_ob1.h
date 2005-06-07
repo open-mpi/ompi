@@ -55,15 +55,18 @@ struct mca_pml_ob1_t {
     int free_list_num;   /* initial size of free list */
     int free_list_max;   /* maximum size of free list */
     int free_list_inc;   /* number of elements to grow free list */
+    size_t eager_limit;
     size_t send_pipeline_depth;
     size_t recv_pipeline_depth;
 
     /* lock queue access */
     ompi_mutex_t lock;
 
-    /* free list of requests */
+    /* free lists */
     ompi_free_list_t send_requests;
     ompi_free_list_t recv_requests;
+    ompi_free_list_t buffers;
+    ompi_free_list_t fragments;
 
     /* list of pending send requests */
     ompi_list_t send_pending;
