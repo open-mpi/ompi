@@ -63,6 +63,13 @@ mainly in the following areas:
 
 - Support for Quadrics is missing
 
+- Shared memory support will not function properly on machines that
+  have a weak memory consistency mode.  The default if this beta is to
+  disable shared memory support on all Power PC architectures, even
+  though some Power PC platforms have strong memory consistency
+  models.  See the description of the --enable-ptl-sm configure flag,
+  below.
+
 - Striping MPI messages across multiple networks is supported (and
   happens automatically when multiple networks are available), but
   needs performance tuning
@@ -152,6 +159,16 @@ important ones follows:
 --enable-static
   Build libmpi as a static library, and statically link in all
   components.
+
+--enable-ptl-sm
+  This beta does not support shared memory on platforms with weak
+  memory consistency models.  As such, the default in this beta is to
+  disable shared memory support for all Power PC platforms.  However,
+  some Power PC platforms have strong memory consistency models (e.g.,
+  G4 and POWER3).  On these platforms, shared memory support can be
+  enabled with the --enable-ptl-sm flag.  It is strongly discouraged
+  to enable shared memory support on other Power PC platforms (e.g.,
+  G5, POWER4).
 
 There are other options available -- see "./configure --help".
 

@@ -32,6 +32,10 @@ all" as a user with write permissions in the build tree, and a
 separate "make install" as a user with write permissions to the
 install tree.
 
+Compiling support for GM or enabling shared-memory support on selected
+Power PC architectures require additional flags to configure.  See the
+README file for more details.
+
 To compile an MPI program:
 
 C programs:   mpicc your-code.c
