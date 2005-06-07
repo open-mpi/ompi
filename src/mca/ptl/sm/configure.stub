@@ -23,20 +23,34 @@
 #
 AC_DEFUN([MCA_CONFIGURE_STUB],[
 
-    # For the beta, ensure we're not enabled on G5's (i.e., weak
-    # consistency memory models)
+    # For the beta, ensure we're not enabled on all Power PC's (i.e.,
+    # weak consistency memory models)
+
+    AC_ARG_ENABLE(ptl-sm, 
+        AC_HELP_STRING([--enable-ptl-sm],
+                       [Enable the shared memory MPI transport on default-unsupported platforms (e.g., G4, POWER3)]))
 
     AC_MSG_CHECKING([if have strong memory consistency model])
+    happy=
     case "${host}" in
     powerpc*)
+        happy=no
         AC_MSG_RESULT([no])
         AC_MSG_WARN([*** SM PTL not yet supported on machines with weak memory])
         AC_MSG_WARN([*** consistency models.  Future versions will include])
         AC_MSG_WARN([*** proper support for shared memory; stay tuned...])
-        AC_MSG_ERROR([Cannot continue])
         ;;
     *)
+        happy=yes
         AC_MSG_RESULT([yes])
         ;;
     esac
+
+    if test "$happy" = "no"; then
+        if test "$enable_ptl_sm" = "yes"; then
+            AC_MSG_WARN([*** Overridden at user request])
+        else
+            AC_MSG_ERROR([Cannot continue])
+        fi
+    fi
 ])dnl
