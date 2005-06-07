@@ -212,7 +212,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
  * 
  *  @retval addr virtual address
  */
-void* mca_common_sm_mmap_alloc(size_t* size, void* user_in, void* user_out)
+void* mca_common_sm_mmap_alloc(size_t* size, void* user_in, void** user_out)
 {
     mca_common_sm_mmap_t* map = mca_common_sm_mmap;
     mca_common_sm_file_header_t* seg = map->map_seg;

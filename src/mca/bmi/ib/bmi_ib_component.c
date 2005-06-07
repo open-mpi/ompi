@@ -161,7 +161,7 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
     VAPI_ret_t vapi_ret;
     VAPI_hca_id_t* hca_ids;
     mca_bmi_base_module_t** bmis;
-    int i, ret, length;
+    int i, length;
     mca_common_vapi_hca_pd_t hca_pd; 
 
     /* initialization */

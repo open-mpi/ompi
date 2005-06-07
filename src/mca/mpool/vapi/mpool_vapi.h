@@ -72,6 +72,7 @@ void* mca_mpool_vapi_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t 
   */
 void mca_mpool_vapi_free(mca_mpool_base_module_t* mpool, void *);
 
+void* mca_common_vapi_segment_alloc(size_t* size, void* user_in, void** user_out);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

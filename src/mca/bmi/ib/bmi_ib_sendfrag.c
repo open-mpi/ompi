@@ -23,6 +23,6 @@
 
 void mca_bmi_ib_sendfrag_complete( mca_bmi_ib_module_t * ib_bmi, mca_bmi_ib_send_frag_t* frag)
 { 
-    frag->base.des_cbfunc(&ib_bmi->super, &frag->endpoint, &frag->base, frag->rc); 
+    frag->base.des_cbfunc(&ib_bmi->super,(mca_bmi_base_endpoint_t*) &frag->endpoint, &frag->base, frag->rc); 
         
 } 

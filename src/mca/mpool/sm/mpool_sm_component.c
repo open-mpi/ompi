@@ -100,7 +100,8 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(void * user_in)
     char *file_name;
     int len;
     mca_mpool_sm_module_t* mpool_module; 
-    mca_allocator_base_component_t* allocator_component = mca_allocator_component_lookup(
+    mca_allocator_base_component_t* allocator_component; 
+    allocator_component = mca_allocator_component_lookup(
         mca_mpool_sm_component.sm_allocator_name);
 
     /* if specified allocator cannout be loaded - look for an alternative */

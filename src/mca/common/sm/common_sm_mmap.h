@@ -88,7 +88,7 @@ OBJ_CLASS_DECLARATION(mca_common_sm_mmap_t);
 
 mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
                 size_t size_ctl_structure, size_t data_seg_alignment);
-void* mca_common_sm_mmap_alloc(size_t* size, void* user_in, void* user_out);
+void* mca_common_sm_mmap_alloc(size_t* size, void* user_in, void** user_out);
 void  mca_common_sm_mmap_free(void* addr);
 
 /*
