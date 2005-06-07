@@ -31,8 +31,6 @@
 #include "mca/mpool/base/base.h" 
 #include "bmi_ib.h"
 #include "bmi_ib_frag.h"
-#include "bmi_ib_sendfrag.h"
-#include "bmi_ib_recvfrag.h"
 #include "bmi_ib_endpoint.h" 
 
 mca_bmi_ib_component_t mca_bmi_ib_component = {
@@ -343,72 +341,49 @@ int mca_bmi_ib_component_progress()
                 ompi_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
                             VAPI_wc_status_sym(comp.status), 
                             comp.vendor_err_syndrome, comp.id);  
-                comp_type = IB_COMP_ERROR; 
-                comp_addr = NULL; 
-            } else { 
-                if(VAPI_CQE_SQ_SEND_DATA == comp.opcode) { 
-                    comp_type = IB_COMP_SEND; 
-                    comp_addr = (void*) (unsigned long) comp.id; 
-                } else if(VAPI_CQE_RQ_SEND_DATA == comp.opcode) { 
-                    comp_type = IB_COMP_RECV; 
-                    comp_addr = (void*) (unsigned long) comp.id; 
-                } else if(VAPI_CQE_SQ_RDMA_WRITE == comp.opcode) { 
-                    comp_type = IB_COMP_RDMA_W; 
-                    comp_addr = (void*) (unsigned long) comp.id; 
-                } else { 
-                    ompi_output(0, "VAPI_poll_cq: returned unknown opcode : %d\n", 
-                                comp.opcode); 
-                    comp_type = IB_COMP_ERROR; 
-                    comp_addr = NULL; 
-                } 
-            } 
-        } else { 
-            /* No completions from the network */ 
-            comp_type = IB_COMP_NOTHING; 
-            comp_addr = NULL; 
-        } 
+            
+            }
         
-        /* Handle n/w completions */
-        switch(comp_type) {
-            case IB_COMP_SEND :
-
-                /* Process a completed send */
-               
+            /* Handle n/w completions */
+            switch(comp.opcode) {
+            case VAPI_CQE_SQ_SEND_DATA :
                 
-                mca_bmi_ib_sendfrag_complete(ib_bmi, (mca_bmi_ib_frag_t*)comp_addr);
+                /* Process a completed send */
+                frag = (mca_bmi_ib_frag_t*) comp.id; 
+                frag->base.des_cbfunc(&ib_bmi->super,(mca_bmi_base_endpoint_t*) &frag->endpoint, &frag->base, frag->rc); 
+                
                 count++;
                 break;
-
-            case IB_COMP_RECV :
+                
+            case VAPI_CQE_RQ_SEND_DATA:
                 
                 D_PRINT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
-                frag = (mca_bmi_ib_frag_t*) comp_addr; 
+                frag = (mca_bmi_ib_frag_t*) comp.id; 
                 frag->segment.seg_len =  comp.byte_len-sizeof(mca_bmi_ib_header_t); 
                 /* advance the segment address past the header and subtract from the length..*/ 
                 ib_bmi->ib_reg[frag->hdr->tag].cbfunc(&ib_bmi->super, frag->hdr->tag, &frag->base, ib_bmi->ib_reg[frag->hdr->tag].cbdata);         
                 
-                OMPI_FREE_LIST_RETURN(&ib_bmi->recv_free, (ompi_free_list_item_t*)comp_addr); 
+                OMPI_FREE_LIST_RETURN(&ib_bmi->recv_free, (ompi_free_list_item_t*)comp.id); 
                 
                 if(OMPI_THREAD_ADD32(&ib_bmi->rr_posted, -1)  <= mca_bmi_ib_component.ib_rr_buf_min)
                     mca_bmi_ib_endpoint_post_rr(mca_bmi_ib_component.ib_rr_buf_max - ib_bmi->rr_posted, 
-                                                ((mca_bmi_ib_recv_frag_t*)comp_addr)->endpoint); 
+                                                ((mca_bmi_ib_recv_frag_t*)comp.id)->endpoint); 
                 
                 
                 
                 count++; 
                 break;
                 
-            case IB_COMP_RDMA_W :
-
+            case VAPI_CQE_SQ_RDMA_WRITE:
+                
                 ompi_output(0, "%s:%d RDMA not implemented\n", __FILE__,__LINE__);
                 count++;
                 break;
-
-            case IB_COMP_NOTHING:
-                break;
+                
             default:
                 ompi_output(0, "Errorneous network completion");
                 break;
+            }
         }
     }
     return count;

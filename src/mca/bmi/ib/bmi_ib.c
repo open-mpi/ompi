@@ -180,7 +180,8 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     size_t* size
 )
 {
-    return OMPI_SUCCESS; 
+    
+
 }
 
 /**
