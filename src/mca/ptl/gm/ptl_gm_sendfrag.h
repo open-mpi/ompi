@@ -123,6 +123,13 @@ extern "C" {
 			      size_t* size,
 			      int flags );
 
+/*
+ *
+ */
+typedef mca_ptl_gm_recv_frag_t* (frag_management_fct_t)( struct mca_ptl_gm_module_t *ptl,
+							 mca_ptl_base_header_t *hdr,
+                                                         uint32_t msg_len );
+
 #define OMPI_FREE_LIST_TRY_GET(fl, item) \
 { \
     item = NULL; \
@@ -182,15 +189,15 @@ extern "C" {
 
     static inline void ompi_ptl_gm_init_pipeline( mca_ptl_gm_pipeline_info_t* pipeline )
     {
-	int i;
+        int i;
 
-	pipeline->pos_register = 0;
-	pipeline->pos_remote = 0;
-	pipeline->pos_deregister = 0;
-	pipeline->pos_transfert = 0;
-	for( i = 0; i < GM_PIPELINE_DEPTH; i++ )
-	    pipeline->lines[i].flags = 0;
-    }
+        pipeline->pos_register = 0;
+        pipeline->pos_remote = 0;
+        pipeline->pos_deregister = 0;
+        pipeline->pos_transfert = 0;
+        for( i = 0; i < GM_PIPELINE_DEPTH; i++ )
+            pipeline->lines[i].flags = 0;
+        }
 
     static inline mca_ptl_gm_recv_frag_t*
     mca_ptl_gm_alloc_recv_frag( struct mca_ptl_base_module_t *ptl )
