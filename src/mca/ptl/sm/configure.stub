@@ -1,0 +1,42 @@
+# -*- shell-script -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+#                         All rights reserved.
+# Copyright (c) 2004 The Ohio State University.
+#                    All rights reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+
+#
+# Main function.  This will be invoked in the middle of the templated
+# configure script.
+#
+AC_DEFUN([MCA_CONFIGURE_STUB],[
+
+    # For the beta, ensure we're not enabled on G5's (i.e., weak
+    # consistency memory models)
+
+    AC_MSG_CHECKING([if have strong memory consistency model])
+    case "${host}" in
+    powerpc*)
+        AC_MSG_RESULT([no])
+        AC_MSG_WARN([*** SM PTL not yet supported on machines with weak memory])
+        AC_MSG_WARN([*** consistency models.  Future versions will include])
+        AC_MSG_WARN([*** proper support for shared memory; stay tuned...])
+        AC_MSG_ERROR([Cannot continue])
+        ;;
+    *)
+        AC_MSG_RESULT([yes])
+        ;;
+    esac
+])dnl
