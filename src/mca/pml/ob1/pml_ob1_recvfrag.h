@@ -74,11 +74,13 @@ do {                                                            \
         buffers[i] = buff;                                      \
         segments[i].seg_addr.pval = buff->addr;                 \
         segments[i].seg_len = segs[i].seg_len;                  \
-        memcpy(segments[i].seg_addr.pval,                       \
+        memcpy(buff->addr,                                      \
                segs[i].seg_addr.pval,                           \
                segs[i].seg_len);                                \
     }                                                           \
+                                                                \
 } while(0)
+
 
 #define MCA_PML_OB1_FRAG_RETURN(frag)                           \
 do {                                                            \
