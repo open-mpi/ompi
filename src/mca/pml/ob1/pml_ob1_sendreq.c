@@ -81,11 +81,7 @@ static void mca_pml_ob1_send_completion(
     mca_pml_ob1_endpoint_t* bmi_ep = sendreq->req_endpoint;
 
     /* for now - return the descriptor - may cache these at some point */
-    if(NULL == bmi_ep->bmi_cache) {
-        bmi_ep->bmi_cache = descriptor;
-    } else {
-        bmi->bmi_free(bmi,descriptor);
-    }
+    MCA_PML_OB1_ENDPOINT_DES_RETURN(bmi_ep,descriptor);
 
     /* check for request completion */
     OMPI_THREAD_LOCK(&ompi_request_lock);
@@ -158,13 +154,9 @@ int mca_pml_ob1_send_request_start_copy(
     if(size == 0) {
 
         /* allocate a descriptor */
-        if(NULL != (descriptor = endpoint->bmi_cache)) {
-            endpoint->bmi_cache = NULL;
-        } else {
-            descriptor = endpoint->bmi_alloc(endpoint->bmi, sizeof(mca_pml_ob1_hdr_t));
-            if(NULL == descriptor) {
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
+        MCA_PML_OB1_ENDPOINT_DES_ALLOC(endpoint, descriptor);
+        if(NULL == descriptor) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
         } 
         descriptor->des_cbfunc = mca_pml_ob1_send_completion;
         segment = descriptor->des_src;
@@ -208,7 +200,7 @@ int mca_pml_ob1_send_request_start_copy(
         }
 
         /* allocate space for hdr + first fragment */
-        descriptor = endpoint->bmi_alloc(endpoint->bmi, size + sizeof(mca_pml_ob1_hdr_t));
+        MCA_PML_OB1_ENDPOINT_DES_ALLOC(endpoint, descriptor);
         if(NULL == descriptor) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }

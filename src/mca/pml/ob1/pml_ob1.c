@@ -109,12 +109,14 @@ int mca_pml_ob1_add_bmis()
     ompi_list_t* bmis = &mca_bmi_base_modules_initialized;
     mca_bmi_base_selected_module_t* selected_bmi;
     size_t num_bmis = ompi_list_get_size(bmis);
+
     mca_pml_ob1.num_bmi_modules = 0;
     mca_pml_ob1.num_bmi_progress = 0;
     mca_pml_ob1.num_bmi_components = 0;
     mca_pml_ob1.bmi_modules = (mca_bmi_base_module_t **)malloc(sizeof(mca_bmi_base_module_t*) * num_bmis);
     mca_pml_ob1.bmi_progress = (mca_bmi_base_component_progress_fn_t*)malloc(sizeof(mca_bmi_base_component_progress_fn_t) * num_bmis);
     mca_pml_ob1.bmi_components = (mca_bmi_base_component_t **)malloc(sizeof(mca_bmi_base_component_t*) * num_bmis);
+
     if (NULL == mca_pml_ob1.bmi_modules || 
         NULL == mca_pml_ob1.bmi_progress ||
         NULL == mca_pml_ob1.bmi_components) {
@@ -135,6 +137,11 @@ int mca_pml_ob1_add_bmis()
           }
         }
 
+        /* override eager limit larger than our max */
+        if(bmi->bmi_eager_limit > mca_pml_ob1.eager_limit) {
+            bmi->bmi_eager_limit = mca_pml_ob1.eager_limit;
+        }
+
         /* setup callback for receive */
         rc = bmi->bmi_register(bmi, MCA_BMI_TAG_PML, mca_pml_ob1_recv_frag_callback, NULL);
         if(OMPI_SUCCESS != rc)
@@ -144,6 +151,16 @@ int mca_pml_ob1_add_bmis()
             mca_pml_ob1.bmi_components[mca_pml_ob1.num_bmi_components++] = bmi->bmi_component;
         }
     }
+
+    /* initialize free list of receive buffers */
+    ompi_free_list_init(
+        &mca_pml_ob1.buffers,
+        sizeof(mca_pml_ob1_buffer_t) + mca_pml_ob1.eager_limit,
+        OBJ_CLASS(mca_pml_ob1_buffer_t),
+        mca_pml_ob1.free_list_num,
+        mca_pml_ob1.free_list_max,
+        mca_pml_ob1.free_list_inc,
+        NULL);
 
     /* sort ob1 list by exclusivity */
     qsort(mca_pml_ob1.bmi_modules, 

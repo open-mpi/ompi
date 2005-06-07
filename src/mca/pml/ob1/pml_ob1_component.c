@@ -28,6 +28,7 @@
 #include "pml_ob1_hdr.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
+#include "pml_ob1_recvfrag.h"
 
 
 mca_pml_base_component_1_0_0_t mca_pml_ob1_component = {
@@ -76,9 +77,18 @@ static inline int mca_pml_ob1_param_register_int(
 int mca_pml_ob1_component_open(void)
 {
     OBJ_CONSTRUCT(&mca_pml_ob1.lock, ompi_mutex_t);
+
+    /* requests */
     OBJ_CONSTRUCT(&mca_pml_ob1.send_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.recv_requests, ompi_free_list_t);
+
+    /* fragments */
+    OBJ_CONSTRUCT(&mca_pml_ob1.fragments, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.buffers, ompi_free_list_t);
+
+    /* pending operations */
     OBJ_CONSTRUCT(&mca_pml_ob1.send_pending, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.acks_pending, ompi_list_t);
 
     mca_pml_ob1.bmi_components = NULL;
     mca_pml_ob1.num_bmi_components = 0;
@@ -95,6 +105,8 @@ int mca_pml_ob1_component_open(void)
         mca_pml_ob1_param_register_int("free_list_inc", 256);
     mca_pml_ob1.priority =
         mca_pml_ob1_param_register_int("priority", 0);
+    mca_pml_ob1.eager_limit =
+        mca_pml_ob1_param_register_int("eager_limit", 256 * 1024);
     mca_pml_ob1.send_pipeline_depth =
         mca_pml_ob1_param_register_int("send_pipeline_depth", 3);
     mca_pml_ob1.recv_pipeline_depth =
@@ -134,6 +146,7 @@ int mca_pml_ob1_component_close(void)
     if(NULL != mca_pml_ob1.bmi_progress) {
         free(mca_pml_ob1.bmi_progress);
     }
+    OBJ_DESTRUCT(&mca_pml_ob1.acks_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.send_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.send_requests);
     OBJ_DESTRUCT(&mca_pml_ob1.recv_requests);
@@ -164,6 +177,16 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
         &mca_pml_ob1.recv_requests,
         sizeof(mca_pml_ob1_recv_request_t),
         OBJ_CLASS(mca_pml_ob1_recv_request_t), 
+        mca_pml_ob1.free_list_num,
+        mca_pml_ob1.free_list_max,
+        mca_pml_ob1.free_list_inc,
+        NULL);
+
+    /* recv fragments */
+    ompi_free_list_init(
+        &mca_pml_ob1.fragments,
+        sizeof(mca_pml_ob1_fragment_t),
+        OBJ_CLASS(mca_pml_ob1_fragment_t), 
         mca_pml_ob1.free_list_num,
         mca_pml_ob1.free_list_max,
         mca_pml_ob1.free_list_inc,

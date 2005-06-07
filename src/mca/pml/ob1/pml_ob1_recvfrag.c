@@ -35,7 +35,14 @@
 
 
 OBJ_CLASS_INSTANCE(
-    mca_pml_ob1_recv_frag_t,
+    mca_pml_ob1_buffer_t,
+    ompi_list_item_t,
+    NULL,
+    NULL
+);
+
+OBJ_CLASS_INSTANCE(
+    mca_pml_ob1_fragment_t,
     ompi_list_item_t,
     NULL,
     NULL
@@ -348,15 +355,15 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
  * RCS/CTS receive side matching
  *
  * @param hdr list of parameters needed for matching
- *                    This list is also embeded in frag_desc,
+ *                    This list is also embeded in frag,
  *                    but this allows to save a memory copy when
  *                    a match is made in this routine. (IN)
- * @param frag_desc   pointer to receive fragment which we want
+ * @param frag   pointer to receive fragment which we want
  *                    to match (IN/OUT).  If a match is not made,
- *                    hdr is copied to frag_desc.
- * @param match_made  parameter indicating if we matched frag_desc/
+ *                    hdr is copied to frag.
+ * @param match_made  parameter indicating if we matched frag/
  *                    hdr (OUT)
- * @param additional_matches  if a match is made with frag_desc, we
+ * @param additional_matches  if a match is made with frag, we
  *                    may be able to match fragments that previously
  *                    have arrived out-of-order.  If this is the
  *                    case, the associated fragment descriptors are
@@ -459,13 +466,13 @@ int mca_pml_ob1_recv_frag_match(
         } else {
 
             /* if no match found, place on unexpected queue */
-            mca_pml_ob1_recv_frag_t* frag;
-            MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
+            mca_pml_ob1_fragment_t* frag;
+            MCA_PML_OB1_FRAG_ALLOC(frag, rc);
             if(OMPI_SUCCESS != rc) {
                 OMPI_THREAD_UNLOCK(&pml_comm->matching_lock);
                 return rc;
             }
-            MCA_PML_OB1_RECV_FRAG_INIT(frag,bmi,hdr,segments,num_segments);
+            MCA_PML_OB1_FRAG_INIT(frag,bmi,hdr,segments,num_segments);
             ompi_list_append( &proc->unexpected_frags, (ompi_list_item_t *)frag );
         }
 
@@ -484,13 +491,13 @@ int mca_pml_ob1_recv_frag_match(
          * This message comes after the next expected, so it
          * is ahead of sequence.  Save it for later.
          */
-        mca_pml_ob1_recv_frag_t* frag;
-        MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
+        mca_pml_ob1_fragment_t* frag;
+        MCA_PML_OB1_FRAG_ALLOC(frag, rc);
         if(OMPI_SUCCESS != rc) {
             OMPI_THREAD_UNLOCK(&pml_comm->matching_lock);
             return rc;
         }
-        MCA_PML_OB1_RECV_FRAG_INIT(frag,bmi,hdr,segments,num_segments);
+        MCA_PML_OB1_FRAG_INIT(frag,bmi,hdr,segments,num_segments);
         ompi_list_append(&proc->frags_cant_match, (ompi_list_item_t *)frag);
 
     }
@@ -507,10 +514,10 @@ int mca_pml_ob1_recv_frag_match(
     if(additional_match) {
         ompi_list_item_t* item;
         while(NULL != (item = ompi_list_remove_first(&additional_matches))) {
-            mca_pml_ob1_recv_frag_t* frag = (mca_pml_ob1_recv_frag_t*)item;
+            mca_pml_ob1_fragment_t* frag = (mca_pml_ob1_fragment_t*)item;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(frag->request, hdr);
             mca_pml_ob1_recv_request_progress(frag->request,frag->bmi,frag->segments,frag->num_segments);
-            MCA_PML_OB1_RECV_FRAG_RETURN(frag);
+            MCA_PML_OB1_FRAG_RETURN(frag);
         }
     }
     return OMPI_SUCCESS;
@@ -540,7 +547,7 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
     /* local parameters */
     int match_found;
     uint16_t next_msg_seq_expected, frag_seq;
-    mca_pml_ob1_recv_frag_t *frag_desc;
+    mca_pml_ob1_fragment_t *frag;
     mca_pml_ob1_recv_request_t *match = NULL;
     bool match_made = false;
 
@@ -561,19 +568,19 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
         /* search the list for a fragment from the send with sequence
          * number next_msg_seq_expected
          */
-        for(frag_desc = (mca_pml_ob1_recv_frag_t *) 
+        for(frag = (mca_pml_ob1_fragment_t *) 
             ompi_list_get_first(&proc->frags_cant_match);
-            frag_desc != (mca_pml_ob1_recv_frag_t *)
+            frag != (mca_pml_ob1_fragment_t *)
             ompi_list_get_end(&proc->frags_cant_match);
-            frag_desc = (mca_pml_ob1_recv_frag_t *) 
-            ompi_list_get_next(frag_desc))
+            frag = (mca_pml_ob1_fragment_t *) 
+            ompi_list_get_next(frag))
         {
             /*
              * If the message has the next expected seq from that proc...
              */
-            frag_seq=frag_desc->hdr.hdr_match.hdr_msg_seq;
+            frag_seq=frag->hdr.hdr_match.hdr_msg_seq;
             if (frag_seq == next_msg_seq_expected) {
-                mca_pml_ob1_match_hdr_t* hdr = &frag_desc->hdr.hdr_match;
+                mca_pml_ob1_match_hdr_t* hdr = &frag->hdr.hdr_match;
 
                 /* We're now expecting the next sequence number. */
                 (proc->expected_sequence)++;
@@ -582,10 +589,10 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
                 match_found = 1;
 
                 /*
-                 * remove frag_desc from list
+                 * remove frag from list
                  */
                 ompi_list_remove_item(&proc->frags_cant_match,
-                        (ompi_list_item_t *)frag_desc);
+                        (ompi_list_item_t *)frag);
 
                 /*
                  * figure out what sort of matching logic to use, if need to
@@ -616,7 +623,7 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
 
                     /* associate the receive descriptor with the fragment
                      * descriptor */
-                    frag_desc->request=match;
+                    frag->request=match;
 
                     /* add this fragment descriptor to the list of
                      * descriptors to be processed later
@@ -625,12 +632,12 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
                         match_made = true;
                         OBJ_CONSTRUCT(additional_matches, ompi_list_t);
                     }
-                    ompi_list_append(additional_matches, (ompi_list_item_t *)frag_desc);
+                    ompi_list_append(additional_matches, (ompi_list_item_t *)frag);
 
                 } else {
     
                     /* if no match found, place on unexpected queue */
-                    ompi_list_append( &proc->unexpected_frags, (ompi_list_item_t *)frag_desc);
+                    ompi_list_append( &proc->unexpected_frags, (ompi_list_item_t *)frag);
 
                 }
 
@@ -640,7 +647,7 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
 
             } /* end if (frag_seq == next_msg_seq_expected) */
             
-        } /* end for (frag_desc) loop */
+        } /* end for (frag) loop */
         
     } /* end while loop */
 

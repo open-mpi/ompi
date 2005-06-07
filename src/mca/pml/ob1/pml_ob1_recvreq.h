@@ -52,13 +52,13 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_request_t);
  *  @param rc (OUT)  OMPI_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
-#define MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq, rc)                  \
-    do {                                                             \
-        ompi_list_item_t* item;                                      \
-        rc = OMPI_SUCCESS;                                           \
-        OMPI_FREE_LIST_GET(&mca_pml_ob1.recv_requests, item, rc);    \
-        recvreq = (mca_pml_ob1_recv_request_t*)item;                 \
-    } while(0)
+#define MCA_PML_OB1_RECV_REQUEST_ALLOC(recvreq, rc)                \
+do {                                                               \
+   ompi_list_item_t* item;                                         \
+   rc = OMPI_SUCCESS;                                              \
+   OMPI_FREE_LIST_GET(&mca_pml_ob1.recv_requests, item, rc);       \
+   recvreq = (mca_pml_ob1_recv_request_t*)item;                    \
+} while(0)
 
 
 /**
@@ -82,7 +82,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_request_t);
     tag,                                                           \
     comm,                                                          \
     persistent)                                                    \
-{                                                                  \
+do {                                                               \
     MCA_PML_BASE_RECV_REQUEST_INIT(                                \
         &(request)->req_recv,                                      \
         addr,                                                      \
@@ -92,18 +92,18 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_request_t);
         tag,                                                       \
         comm,                                                      \
         persistent);                                               \
-}
+} while(0)
 
 /**
  *  Return a recv request to the modules free list.
  *
  *  @param request (IN)  Receive request.
  */
-#define MCA_PML_OB1_RECV_REQUEST_RETURN(request)                                       \
-    do {                                                                                \
-        MCA_PML_BASE_RECV_REQUEST_FINI(&request->req_recv);                           \
-        OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_requests, (ompi_list_item_t*)request); \
-    } while(0)
+#define MCA_PML_OB1_RECV_REQUEST_RETURN(request)                                  \
+do {                                                                              \
+   MCA_PML_BASE_RECV_REQUEST_FINI(&request->req_recv);                            \
+   OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_requests, (ompi_list_item_t*)request); \
+} while(0)
 
 /**
  * Attempt to match the request against the unexpected fragment list
@@ -160,7 +160,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
 #define MCA_PML_OB1_RECV_REQUEST_MATCHED(                                            \
     request,                                                                         \
     hdr)                                                                             \
-{                                                                                    \
+do {                                                                                 \
     (request)->req_recv.req_bytes_packed = (hdr)->hdr_msg_length;                    \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;       \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src;    \
@@ -181,7 +181,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
             0,                              /* offset in bytes into packed buffer */ \
             NULL );                         /* not allocating memory */              \
     }                                                                                \
-}
+} while (0)
 
 
 /**
@@ -196,17 +196,22 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
     data_offset,                                                                  \
     bytes_received,                                                               \
     bytes_delivered)                                                              \
-{                                                                                 \
+do {                                                                              \
     if(request->req_recv.req_base.req_count > 0) {                                \
         struct iovec iov[MCA_BMI_DES_MAX_SEGMENTS];                               \
-        uint32_t iov_count = num_segments;                                        \
+        uint32_t iov_count = 0;                                                   \
         uint32_t max_data = bytes_received;                                       \
         int32_t free_after = 0;                                                   \
-        size_t i;                                                                 \
-        for(i=0; i<num_segments; i++) {                                           \
-            if(i == 0) {                                                          \
-                iov[i].iov_base = (unsigned char*)segments[i].seg_addr.pval + seg_offset; \
-                iov[i].iov_len = segments[i].seg_len - seg_offset;                \
+        size_t n, offset = seg_offset;                                            \
+                                                                                  \
+        for(n=0; n<num_segments; n++) {                                           \
+            mca_bmi_base_segment_t* segment = segments+n;                         \
+            if(offset >= segment->seg_len) {                                      \
+                offset -= segment->seg_len;                                       \
+            } else {                                                              \
+                iov[iov_count].iov_len = segment->seg_len - seg_offset;           \
+                iov[iov_count].iov_base = (unsigned char*)segment->seg_addr.pval + seg_offset; \
+                iov_count++;                                                      \
             }                                                                     \
         }                                                                         \
         ompi_convertor_unpack(                                                    \
@@ -217,7 +222,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
             &free_after);                                                         \
         bytes_delivered = max_data;                                               \
     }                                                                             \
-} 
+} while (0)
 
 
 /**
