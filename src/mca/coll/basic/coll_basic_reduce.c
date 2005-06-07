@@ -268,6 +268,7 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
    int mask;
    long true_lb, true_extent, lb, extent;
    char *free_buffer = NULL;
+   char *free_rbuf = NULL;
    char *pml_buffer = NULL;
    char *snd_buffer = sbuf;
    char *rcv_buffer = rbuf;
@@ -306,6 +307,18 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
       if( ompi_op_is_commute(op) ) {
         rcv_buffer = pml_buffer;
       }
+
+      if (rank != root && 0 == (vrank & 1)) {
+          /* root is the only one required to provide a valid rbuf.
+             Assume rbuf is invalid for all other ranks, so fix it up
+             here to be valid on all non-leaf ranks */
+          free_rbuf = malloc(true_extent + (count - 1) * extent);
+          if (NULL == free_rbuf) {
+              free(free_buffer);
+              return OMPI_ERR_OUT_OF_RESOURCE;
+          }
+          rbuf = free_rbuf - lb;
+      }
    }
 
    /* Loop over cube dimensions. High processes send to low ones in the
@@ -326,6 +339,9 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
           if (MPI_SUCCESS != err) {
              if (NULL != free_buffer) {
                 free(free_buffer);
+             }
+             if (NULL != free_rbuf) {
+                 free(free_rbuf);
              }
             return err;
           }
@@ -361,6 +377,9 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
             if (NULL != free_buffer) {
               free(free_buffer);
             }
+             if (NULL != free_rbuf) {
+                 free(free_rbuf);
+             }
             return err;
          }
          /* Perform the operation. The target is always the user
@@ -411,6 +430,9 @@ int mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
 
    if (NULL != free_buffer) {
       free(free_buffer);
+   }
+   if (NULL != free_rbuf) {
+       free(free_rbuf);
    }
 
    /* All done */
