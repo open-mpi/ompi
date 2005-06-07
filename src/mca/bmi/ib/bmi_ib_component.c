@@ -33,6 +33,7 @@
 #include "bmi_ib_frag.h"
 #include "bmi_ib_sendfrag.h"
 #include "bmi_ib_recvfrag.h"
+#include "bmi_ib_endpoint.h" 
 
 mca_bmi_ib_component_t mca_bmi_ib_component = {
     {
@@ -119,7 +120,8 @@ int mca_bmi_ib_component_open(void)
         mca_bmi_ib_param_register_int ("hints_log_size", 8);
     mca_bmi_ib_component.ib_mpool_name = 
         mca_bmi_ib_param_register_string("mpool", "ib"); 
-    
+    mca_bmi_ib_component.ib_rr_buf_max = 
+        mca_bmi_ib_param_register_int("rr_buf_max", 16); 
     
     mca_bmi_ib_module.super.bmi_exclusivity =
         mca_bmi_ib_param_register_int ("exclusivity", 0);
@@ -133,7 +135,9 @@ int mca_bmi_ib_component_open(void)
                                         - sizeof(mca_bmi_ib_header_t)));
     mca_bmi_ib_module.super.bmi_max_frag_size =
         mca_bmi_ib_param_register_int ("max_frag_size", 2<<30);
-
+    
+    
+    
     return OMPI_SUCCESS;
 }
 
@@ -255,6 +259,9 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
                              mca_bmi_ib_component.ib_free_list_max,
                              mca_bmi_ib_component.ib_free_list_inc, ib_bmi->ib_pool);
 
+        /* Initialize the rr_desc_post array for posting of rr*/ 
+        ib_bmi->rr_desc_post = (VAPI_rr_desc_t*) malloc((mca_bmi_ib_component.ib_rr_buf_max * sizeof(VAPI_rr_desc_t))); 
+        
         /* This is now done by the memory pool passed to free_list_init.. Initialize the send descriptors */
         /* if(mca_bmi_ib_send_frag_register(ib_bmi) != OMPI_SUCCESS) { */
         /*             free(hca_ids); */
@@ -374,28 +381,23 @@ int mca_bmi_ib_component_progress()
 
             case IB_COMP_RECV :
                 
-                ompi_output(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
+                D_PRINT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
                 frag = (mca_bmi_ib_frag_t*) comp_addr; 
                 frag->segment.seg_len =  comp.byte_len-sizeof(mca_bmi_ib_header_t); 
                 /* advance the segment address past the header and subtract from the length..*/ 
                 ib_bmi->ib_reg[frag->hdr->tag].cbfunc(&ib_bmi->super, frag->hdr->tag, &frag->base, ib_bmi->ib_reg[frag->hdr->tag].cbdata);         
                 
+                OMPI_FREE_LIST_RETURN(&ib_bmi->recv_free, (ompi_free_list_item_t*)comp_addr); 
                 
-                /* Process incoming receives */
-                /* mca_bmi_ib_process_recv(ib_bmi, comp_addr); */
-                /*                 /\* Re post recv buffers *\/ */
-/*                 if(ompi_list_get_size(&ib_bmi->repost) <= 1) { */
-/*                     ompi_list_append(&ib_bmi->repost, (ompi_list_item_t*)comp_addr); */
-/*                 } else { */
-/*                     ompi_list_item_t* item; */
-/*                     while(NULL != (item = ompi_list_remove_first(&ib_bmi->repost))) { */
-/*                          mca_bmi_ib_buffer_repost(ib_bmi->nic, item); */
-/*                     } */
-/*                     mca_bmi_ib_buffer_repost(ib_bmi->nic, comp_addr); */
-/*                 } */
-/*                 count++; */
+                if(OMPI_THREAD_ADD32(&ib_bmi->rr_posted, -1)  <= mca_bmi_ib_component.ib_rr_buf_min)
+                    mca_bmi_ib_endpoint_post_rr(mca_bmi_ib_component.ib_rr_buf_max - ib_bmi->rr_posted, 
+                                                ((mca_bmi_ib_recv_frag_t*)comp_addr)->endpoint); 
+                
+                
+                
+                count++; 
                 break;
-
+                
             case IB_COMP_RDMA_W :
 
                 ompi_output(0, "%s:%d RDMA not implemented\n", __FILE__,__LINE__);

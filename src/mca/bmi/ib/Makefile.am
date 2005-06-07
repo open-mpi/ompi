@@ -27,7 +27,6 @@ libmca_bmi_ib_la_SOURCES = \
     bmi_ib_endpoint.h \
     bmi_ib_frag.c \
     bmi_ib_frag.h \
-    bmi_ib_memory.c \
     bmi_ib_priv.c \
     bmi_ib_priv.h \
     bmi_ib_proc.c \

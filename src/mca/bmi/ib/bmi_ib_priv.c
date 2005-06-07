@@ -20,7 +20,8 @@
 #include "bmi_ib_vapi.h"
 #include "bmi_ib_priv.h"
 #include "bmi_ib.h"
-#include "bmi_ib_memory.h"
+#include "bmi_ib_frag.h" 
+#include "bmi_ib_endpoint.h" 
 
 /*
  * Asynchronous event handler to detect unforseen
@@ -200,7 +201,7 @@ int mca_bmi_ib_create_qp(VAPI_hca_hndl_t nic,
 
     ret = VAPI_create_qp(nic, &qp_init_attr, 
             qp_hndl, qp_prop);
-
+    
     if(VAPI_OK != ret) {
         MCA_BMI_IB_VAPI_RET(ret, "VAPI_create_qp");
         return OMPI_ERROR;
@@ -250,6 +251,26 @@ int mca_bmi_ib_module_init(mca_bmi_ib_module_t *ib_bmi)
     return OMPI_SUCCESS;
 }
 
+
+
+int mca_bmi_ib_qp_query(mca_bmi_ib_module_t* ib_bmi, VAPI_qp_hndl_t qp_hndl, VAPI_qp_num_t  qp_num)                                                                                                
+{                                                          
+    VAPI_hca_hndl_t nic = ib_bmi->nic; 
+    
+    VAPI_qp_attr_t       qp_attr;                                                             
+    VAPI_qp_attr_mask_t  qp_attr_mask;                                                        
+    VAPI_qp_init_attr_t  qp_init_attr;                                                        
+    VAPI_ret_t             ret;             
+                                                                                                  
+    ret = VAPI_query_qp(nic, qp_hndl, &qp_attr, &qp_attr_mask, &qp_init_attr );          
+    if (ret != VAPI_OK) {                                                                     
+        ompi_output(0, "error querying the queue pair"); 
+        return OMPI_ERROR; 
+    }                      
+
+    ib_bmi->ib_inline_max = qp_init_attr.cap.max_inline_data_sq;  
+    return OMPI_SUCCESS; 
+}       
 
 int mca_bmi_ib_qp_init(VAPI_hca_hndl_t nic,
         VAPI_qp_hndl_t qp_hndl,
@@ -341,6 +362,9 @@ int mca_bmi_ib_qp_init(VAPI_hca_hndl_t nic,
     }
     D_PRINT("Modified to RTS..Qp %d", qp_hndl);
 
+    
+
+
     return OMPI_SUCCESS;
 }
 
@@ -409,20 +433,21 @@ int mca_bmi_ib_qp_init(VAPI_hca_hndl_t nic,
 /* } */
 
 
-/* void mca_bmi_ib_buffer_repost(VAPI_hca_hndl_t nic, void* addr) */
-/* { */
-/*     VAPI_ret_t ret; */
-/*     ib_buffer_t *ib_buf = (ib_buffer_t*)addr; */
+void mca_bmi_ib_buffer_repost(VAPI_hca_hndl_t nic, void* addr)
+{
+   
+    mca_bmi_ib_recv_frag_t * frag = (mca_bmi_ib_recv_frag_t*)addr;
 
-/*     IB_PREPARE_RECV_DESC(ib_buf); */
+    frag->sg_entry.len = frag->size; 
+   
 
-/*     ret = VAPI_post_rr(nic, ib_buf->qp_hndl, &(ib_buf->desc.rr)); */
-
-/*     if(VAPI_OK != ret) { */
-/*         MCA_BMI_IB_VAPI_RET(ret, "VAPI_post_rr"); */
-/*         ompi_output(0, "Error in buffer reposting"); */
-/*     } */
-/* } */
+    frag->ret = VAPI_post_rr(nic, frag->endpoint->lcl_qp_hndl, &(frag->rr_desc));
+    
+    if(VAPI_OK != frag->ret) {
+        MCA_BMI_IB_VAPI_RET(frag->ret, "VAPI_post_rr");
+        ompi_output(0, "Error in buffer reposting");
+    }
+}
 
 /* void mca_bmi_ib_prepare_ack(mca_bmi_ib_module_t *ib_bmi, */
 /*         void* addr_to_reg, int len_to_reg, */

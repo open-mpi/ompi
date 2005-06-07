@@ -22,7 +22,7 @@
 #include <stdint.h>
 #include "class/ompi_free_list.h"
 #include "bmi_ib_vapi.h"
-#include "bmi_ib_memory.h"
+#include "bmi_ib.h" 
 
 #define NUM_IB_SEND_BUF             (1)
 #define NUM_IB_RECV_BUF             (4)
@@ -183,9 +183,13 @@ int mca_bmi_ib_register_mem(
 /*     struct mca_bmi_base_endpoint_t *peer,  */
 /*     ib_buffer_t *ib_buf, void*); */
 
-/* void mca_bmi_ib_buffer_repost( */
-/*     VAPI_hca_hndl_t nic, */
-/*     void* addr); */
+void mca_bmi_ib_buffer_repost(
+    VAPI_hca_hndl_t nic,
+    void* addr);
+
+int mca_bmi_ib_qp_query(mca_bmi_ib_module_t* ib_bmi, VAPI_qp_hndl_t qp_hndl, VAPI_qp_num_t  qp_num); 
+     
+
 
 /* void mca_bmi_ib_prepare_ack( */
 /*     struct mca_bmi_ib_module_t *ib_module, */

@@ -25,10 +25,11 @@
 #include "mca/bmi/bmi.h"
 #include "bmi_ib_frag.h"
 #include "bmi_ib_priv.h"
-
+#include "bmi_ib.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+#define MAX_POST_RR (16) 
 OBJ_CLASS_DECLARATION(mca_bmi_ib_endpoint_t);
 
 /**
@@ -106,12 +107,44 @@ struct mca_bmi_base_endpoint_t {
 typedef struct mca_bmi_base_endpoint_t mca_bmi_base_endpoint_t;
 typedef mca_bmi_base_endpoint_t  mca_bmi_ib_endpoint_t;
 
-int  mca_bmi_ib_endpoint_send(struct mca_bmi_base_endpoint_t* endpoint, struct mca_bmi_ib_frag_t* frag);
+int  mca_bmi_ib_endpoint_send(mca_bmi_base_endpoint_t* endpoint, struct mca_bmi_ib_frag_t* frag);
 int  mca_bmi_ib_endpoint_connect(mca_bmi_base_endpoint_t*);
 void mca_bmi_ib_post_recv(void);
 
 
 void mca_bmi_ib_progress_send_frags(mca_bmi_ib_endpoint_t*);
+
+static inline int mca_bmi_ib_endpoint_post_rr(int cnt, mca_bmi_ib_endpoint_t *endpoint)
+{
+    
+    int i, rc; 
+    ompi_list_item_t* item; 
+    mca_bmi_ib_recv_frag_t* frag; 
+    mca_bmi_ib_module_t *ib_bmi = endpoint->endpoint_bmi;
+    VAPI_rr_desc_t* rr_desc_post = ib_bmi->rr_desc_post; 
+    
+    /* prepare frags and post receive requests */
+    for(i = 0; i < cnt; i++) {
+        OMPI_FREE_LIST_WAIT(&ib_bmi->recv_free, item, rc); 
+        frag = (mca_bmi_ib_recv_frag_t*) item; 
+        frag->endpoint = endpoint; 
+        frag->sg_entry.len = frag->size;     
+        rr_desc_post[i] = frag->rr_desc; 
+        
+    }
+    
+    frag->ret = EVAPI_post_rr_list(ib_bmi->nic,
+                                    endpoint->lcl_qp_hndl,
+                                    cnt, 
+                                    rr_desc_post);
+    if(VAPI_OK != frag->ret) {
+        MCA_BMI_IB_VAPI_RET(frag->ret, "EVAPI_post_rr_list");
+        return OMPI_ERROR; 
+    }
+    OMPI_THREAD_ADD32(&ib_bmi->rr_posted, cnt); 
+    return OMPI_SUCCESS; 
+}
+
 
 #define DUMP_ENDPOINT(endpoint_ptr) {                                       \
     ompi_output(0, "[%s:%d] ", __FILE__, __LINE__);                 \

@@ -34,15 +34,11 @@
 #include "mca/bmi/bmi.h"
 #include "util/output.h"
 #include "mca/mpool/mpool.h" 
+#include "bmi_ib_vapi.h"
+
 
 /* InfiniBand VAPI includes */
 #include "mca/bmi/bmi.h"
-#include "bmi_ib_vapi.h"
-#include "bmi_ib_addr.h"
-#include "bmi_ib_proc.h"
-#include "bmi_ib_endpoint.h"
-#include "bmi_ib_priv.h"
-#include "bmi_ib_frag.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -87,8 +83,12 @@ struct mca_bmi_ib_component_t {
     
     char* ib_mpool_name; 
     /**< name of ib memory pool */ 
-    
-
+   
+    int ib_rr_buf_max; 
+    /**< the maximum number of posted rr */  
+   
+    int ib_rr_buf_min; 
+    /**< the minimum number of posted rr */ 
     
 }; typedef struct mca_bmi_ib_component_t mca_bmi_ib_component_t;
 
@@ -114,13 +114,16 @@ struct mca_bmi_ib_module_t {
     EVAPI_async_handler_hndl_t async_handler;
     /**< Async event handler used to detect weird/unknown events */
     
-    mca_bmi_ib_mem_registry_t mem_registry; /**< registry of memory regions */
     ompi_free_list_t send_free;    /**< free list of buffer descriptors */
     ompi_free_list_t recv_free;    /**< free list of buffer descriptors */
     ompi_list_t repost;            /**< list of buffers to repost */
-    mca_mpool_base_module_t* ib_pool; 
-    /**< ib memory pool */
-   
+    mca_mpool_base_module_t* ib_pool;  /**< ib memory pool */
+    
+    uint32_t rr_posted;  /**< number of rr posted to the nic*/ 
+    VAPI_rr_desc_t*                          rr_desc_post;  
+    /**< an array to allow posting of rr in one swoop */ 
+    size_t ib_inline_max; /**< max size of inline send*/ 
+    
 }; typedef struct mca_bmi_ib_module_t mca_bmi_ib_module_t;
     
 extern mca_bmi_ib_module_t mca_bmi_ib_module;
