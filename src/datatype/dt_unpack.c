@@ -17,6 +17,7 @@
 
 #include "ompi_config.h"
 #include "datatype/datatype.h"
+#include "datatype/convertor.h"
 #include "datatype/datatype_internal.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -24,7 +25,8 @@
 #endif
 #include <stdlib.h>
 
-void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos, const dt_elem_desc_t* pDesc, const char* name )
+void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
+                          const union dt_elem_desc* pDesc, const char* name )
 {
     ompi_output( 0, "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
     for( ; stack_pos >= 0; stack_pos-- ) {
@@ -56,7 +58,7 @@ void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos, const dt_elem
 static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
 					  struct iovec* iov,
 					  uint32_t* out_size,
-					  uint32_t* max_data,
+					  size_t* max_data,
 					  int32_t* freeAfter )
 {
     dt_stack_t* pStack;    /* pointer to the position on the stack */
@@ -168,7 +170,7 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
 static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
 					      struct iovec* iov,
 					      uint32_t* out_size,
-					      uint32_t* max_data,
+					      size_t* max_data,
 					      int32_t* freeAfter )
 {
     dt_stack_t* pStack;    /* pointer to the position on the stack */
@@ -178,7 +180,7 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
     long lastDisp = 0;
     size_t space = iov[0].iov_len, last_count = 0, last_blength = 0;
     char* pSrcBuf;
-    ompi_datatype_t* pData = pConv->pDesc;
+    const ompi_datatype_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
 
     pSrcBuf = iov[0].iov_base;
@@ -314,10 +316,10 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
 static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
 						     struct iovec* iov,
 						     uint32_t* out_size,
-						     uint32_t* max_data,
+						     size_t* max_data,
 						     int32_t* freeAfter )
 {
-    ompi_datatype_t *pData = pConv->pDesc;
+    const ompi_datatype_t *pData = pConv->pDesc;
     char* pDstBuf = pConv->pBaseBuf, *pSrcBuf;
     uint32_t iov_count, initial_bytes_converted = pConv->bConverted;
     long extent = pData->ub - pData->lb;
@@ -616,7 +618,7 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
  */
 int32_t ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
 {
-    ompi_datatype_t* pData = pConvertor->pDesc;
+    const ompi_datatype_t* pData = pConvertor->pDesc;
     if( !(pData->flags & DT_FLAG_CONTIGUOUS) ) return 1;
     if( pConvertor->count == 1 ) return 0;  /* only one data ignore the gaps around */
     if( (long)pData->size != (pData->ub - pData->lb) ) return 1;
@@ -624,74 +626,44 @@ int32_t ompi_convertor_need_buffers( ompi_convertor_t* pConvertor )
 }
 
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
-int32_t ompi_convertor_init_for_recv( ompi_convertor_t* pConv, uint32_t flags,
-				      const ompi_datatype_t* datatype, int32_t count,
-				      const void* pUserBuf, int32_t starting_pos,
-				      memalloc_fct_t allocfn )
+
+inline int32_t
+ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
+                                 const struct ompi_datatype_t* datatype,
+                                 int32_t count,
+                                 const void* pUserBuf )
 {
-    if( !(datatype->flags & DT_FLAG_COMMITED) ) {
-        /* this datatype is improper for conversion. Commit it first */
+    /* Here I should check that the data is not overlapping */
+
+    if( OMPI_SUCCESS != ompi_convertor_prepare( convertor, datatype,
+                                                count, pUserBuf ) ) {
         return OMPI_ERROR;
     }
-    pConv->flags = CONVERTOR_RECV | CONVERTOR_HOMOGENEOUS;
-    convertor_init_generic( pConv, datatype, count, pUserBuf );
-    pConv->pFunctions  = ompi_ddt_copy_functions;
-    pConv->memAlloc_fn = allocfn;
-    pConv->fAdvance    = ompi_convertor_unpack_general;     /* TODO: just stop complaining */
-    pConv->fAdvance    = ompi_convertor_unpack_homogeneous; /* default behaviour */
+
+    convertor->memAlloc_fn = NULL;
+    convertor->fAdvance    = ompi_convertor_unpack_general;     /* TODO: just stop complaining */
+    convertor->fAdvance    = ompi_convertor_unpack_homogeneous; /* default behaviour */
 
     /* TODO: work only on homogeneous architectures */
-    if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
-        pConv->flags |= DT_FLAG_CONTIGUOUS;
-        pConv->fAdvance = ompi_convertor_unpack_homogeneous_contig;
+    if( convertor->pDesc->flags & DT_FLAG_CONTIGUOUS ) {
+        convertor->flags |= DT_FLAG_CONTIGUOUS;
+        convertor->fAdvance = ompi_convertor_unpack_homogeneous_contig;
     }
-
-    if( -1 == starting_pos ) return OMPI_SUCCESS;
-
-    /* dont call any function if the convertor is in the correct position */
-    if( (pConv->bConverted == (unsigned long)starting_pos) &&
-        (0 != starting_pos) ) return OMPI_SUCCESS;
-
-    if( starting_pos >= (int)(pConv->count * datatype->size) ) {
-        pConv->bConverted = pConv->count * datatype->size;
-        return OMPI_SUCCESS;
-    }
-
-    return ompi_convertor_set_start_position( pConv, starting_pos );
+    return OMPI_SUCCESS;
 }
 
-#if OMPI_ENABLE_DEBUG
-int32_t ompi_convertor_unpack( ompi_convertor_t* pConv, 
-                               struct iovec* iov, uint32_t* out_size, 
-                               uint32_t* max_data, int32_t* freeAfter ) 
-{ 
-    ompi_datatype_t *pData = pConv->pDesc; 
-    uint32_t length; 
-    
-    /* protect against over unpacking data */ 
-    if( pConv->bConverted == (pData->size * pConv->count) ) { 
-        iov[0].iov_len = 0; 
-        out_size = 0; 
-        *max_data = 0; 
-        return 1;  /* nothing to do */ 
-    } 
- 
-    if( pConv->flags & DT_FLAG_CONTIGUOUS ) { 
-        if( iov[0].iov_base == NULL ) { 
-            length = pConv->count * pData->size - pConv->bConverted; 
-            iov[0].iov_base = pConv->pBaseBuf + pData->true_lb + pConv->bConverted; 
-            if( iov[0].iov_len < length ) 
-                length = iov[0].iov_len; 
-            iov[0].iov_len = length; 
-            *max_data = length; 
-            pConv->bConverted += length; 
-            return (pConv->bConverted == (pData->size * pConv->count)); 
-        } 
-    } 
-    assert( pConv->bConverted < (pConv->pDesc->size * pConv->count) ); 
-    return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter ); 
-} 
-#endif  /* OMPI_ENABLE_DEBUG */ 
+int32_t
+ompi_convertor_copy_and_prepare_for_recv( const ompi_convertor_t* pSrcConv,
+                                          const struct ompi_datatype_t* datatype,
+                                          int32_t count,
+                                          const void* pUserBuf,
+                                          ompi_convertor_t* convertor )
+{
+    convertor->remoteArch      = pSrcConv->remoteArch;
+    convertor->pFunctions      = pSrcConv->pFunctions;
+
+    return ompi_convertor_prepare_for_recv( convertor, datatype, count, pUserBuf );
+}
 
 /* Get the number of elements from the data associated with this convertor that can be
  * retrieved from a recevied buffer with the size iSize.

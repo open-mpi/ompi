@@ -14,8 +14,11 @@
  *
  * $HEADER$
  */
+
 #include "ompi_config.h"
+
 #include "datatype/datatype.h"
+#include "datatype/convertor.h"
 #include "datatype/datatype_internal.h"
 #include "datatype/dt_arch.h"
 

@@ -17,6 +17,7 @@
 #include "ompi_config.h"
 
 #include "datatype/datatype.h"
+#include "datatype/convertor.h"
 #include "request/request.h"
 #include "mca/pml/pml.h"
 
@@ -43,7 +44,8 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
    ompi_convertor_t *send_convertor, *recv_convertor;
    struct iovec iov;
    int length, completed;
-   uint32_t max_data, iov_count;
+   uint32_t iov_count;
+   size_t max_data;
    int32_t freeAfter;
 
    /* First check if we really have something to do */
@@ -65,7 +67,8 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
    /* If receive packed. */
    if (rdtype == MPI_PACKED) {
       send_convertor = OBJ_NEW(ompi_convertor_t);
-      ompi_convertor_init_for_send( send_convertor, 0, sdtype, scount, sbuf, 0, NULL );
+      ompi_convertor_prepare_for_send( send_convertor, sdtype, scount, sbuf );
+      ompi_convertor_personalize( send_convertor, 0, 0, NULL );
 
       iov_count = 1;
       iov.iov_len = rcount;
@@ -80,7 +83,8 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
    /* If send packed. */
    if (sdtype == MPI_PACKED) {
       recv_convertor = OBJ_NEW(ompi_convertor_t);
-      ompi_convertor_init_for_recv( recv_convertor, 0, rdtype, rcount, rbuf, 0, NULL );
+      ompi_convertor_prepare( recv_convertor, rdtype, rcount, rbuf );
+      ompi_convertor_prepare_for_recv( recv_convertor, 0, 0, NULL );
 
       iov_count = 1;
       iov.iov_len = scount;
@@ -99,8 +103,10 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
 
    send_convertor = OBJ_NEW(ompi_convertor_t);
    recv_convertor = OBJ_NEW(ompi_convertor_t);
-   ompi_convertor_init_for_send( send_convertor, 0, sdtype, scount, sbuf, 0, NULL );
-   ompi_convertor_init_for_recv( recv_convertor, 0, rdtype, rcount, rbuf, 0, NULL );
+   ompi_convertor_prepare( send_convertor, sdtype, scount, sbuf );
+   ompi_convertor_prepare( recv_convertor, rdtype, rcount, rbuf );
+   ompi_convertor_prepare_for_send( send_convertor, 0, 0, NULL );
+   ompi_convertor_prepare_for_recv( recv_convertor, 0, 0, NULL );
 
    completed = 0;
    while( !completed ) {

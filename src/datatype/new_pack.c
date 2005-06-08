@@ -18,6 +18,7 @@
 #include "ompi_config.h"
 
 #include "datatype/datatype.h"
+#include "datatype/convertor.h"
 #include "datatype/datatype_internal.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -102,7 +103,7 @@ do { \
 
 int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
                                         struct iovec* iov, uint32_t* out_size,
-                                        uint32_t* max_data,
+                                        size_t* max_data,
                                         int32_t* freeAfter )
 {
     dt_stack_t* pStack;       /* pointer to the position on the stack */
@@ -113,7 +114,7 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
     uint32_t bConverted = 0;  /* number of bytes converted this time */
     dt_elem_desc_t* description;
     dt_elem_desc_t* pElem;
-    ompi_datatype_t *pData = pConvertor->pDesc;
+    const ompi_datatype_t *pData = pConvertor->pDesc;
     char* iov_base_local;
     uint32_t iov_len_local, i, iov_count;
 
