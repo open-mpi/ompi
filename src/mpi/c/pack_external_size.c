@@ -22,6 +22,7 @@
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"
+#include "datatype/convertor.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Pack_external_size = PMPI_Pack_external_size
@@ -38,8 +39,8 @@ int MPI_Pack_external_size(char *datarep, int incount,
                            MPI_Datatype datatype, MPI_Aint *size) 
 {
     int ret;
-    ompi_convertor_t *local_convertor;
-    unsigned int length;
+    ompi_convertor_t local_convertor;
+    size_t length;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -49,13 +50,13 @@ int MPI_Pack_external_size(char *datarep, int incount,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
         }
     }
+    /* the resulting convertor will be set to the position ZERO */
+    ompi_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
+                                              datatype, incount, NULL, &local_convertor );
 
-    local_convertor = ompi_convertor_get_copy( ompi_mpi_external32_convertor );
-    ompi_convertor_init_for_send( local_convertor, 0, datatype, incount,
-                                  NULL, 0, NULL /* never allocate memory */ );
-    ret = ompi_convertor_get_packed_size( local_convertor, &length );
+    ret = ompi_convertor_get_packed_size( &local_convertor, &length );
     *size = (int)length;
-    OBJ_RELEASE( local_convertor );
+    OBJ_DESTRUCT( &local_convertor );
     
     return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
 }

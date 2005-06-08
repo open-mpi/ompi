@@ -19,6 +19,7 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "datatype/datatype.h"
+#include "datatype/convertor.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 #include "class/ompi_object.h"
@@ -39,9 +40,10 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
                       MPI_Aint outsize, MPI_Aint *position) 
 {
     int rc, freeAfter;
-    ompi_convertor_t *local_convertor;
+    ompi_convertor_t local_convertor;
     struct iovec invec;
-    unsigned int size, iov_count;
+    unsigned int iov_count;
+    size_t size;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -56,14 +58,14 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
         }
     }
 
-    local_convertor = ompi_convertor_get_copy( ompi_mpi_external32_convertor );
-    ompi_convertor_init_for_send(local_convertor, 0, datatype, incount,
-                                 inbuf, 0, NULL /*never allocate memory*/);
+    /* The resulting convertor will be set to the position zero */
+    ompi_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
+                                              datatype, incount, inbuf, &local_convertor );
 
     /* Check for truncation */
-    ompi_convertor_get_packed_size( local_convertor, &size );
+    ompi_convertor_get_packed_size( &local_convertor, &size );
     if( (*position + size) > (unsigned int)outsize ) {  /* we can cast as we already checked for < 0 */
-        OBJ_RELEASE( local_convertor );
+        OBJ_DESTRUCT( &local_convertor );
         return OMPI_ERRHANDLER_INVOKE( MPI_COMM_WORLD, MPI_ERR_TRUNCATE, FUNC_NAME );
     }
 
@@ -73,9 +75,9 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
 
     /* Do the actual packing */
     iov_count = 1;
-    rc = ompi_convertor_pack( local_convertor, &invec, &iov_count, &size, &freeAfter );
-    *position += local_convertor->bConverted;
-    OBJ_RELEASE( local_convertor );
+    rc = ompi_convertor_pack( &local_convertor, &invec, &iov_count, &size, &freeAfter );
+    *position += size;
+    OBJ_DESTRUCT( &local_convertor );
 
     /* All done.  Note that the convertor returns 1 upon success, not
        OMPI_SUCCESS. */
