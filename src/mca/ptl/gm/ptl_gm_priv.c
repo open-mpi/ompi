@@ -357,8 +357,8 @@ int mca_ptl_gm_send_burst_data( mca_ptl_gm_peer_t *ptl_peer,
         fragment->frag_bytes_processed += max_data;
         fragment->frag_bytes_validated += max_data;
         burst_length -= max_data;
-        if( 0 == burst_length ) {
-            assert( fragment->frag_send.frag_base.frag_size == fragment->frag_bytes_processed );
+        if( fragment->frag_send.frag_base.frag_size == fragment->frag_bytes_processed ) {
+            assert( 0 == burst_length );
             hdr->hdr_common.hdr_flags |= PTL_FLAG_GM_LAST_FRAGMENT;
         }
         /* for the last piece set the header type to FIN */
