@@ -94,19 +94,10 @@ static inline void mca_ptl_tcp_recv_frag_matched(
     /* if there is data associated with the fragment -- setup to receive */
     if(frag_length > 0) {
         /* initialize receive convertor */
-        ompi_proc_t *proc =
-            ompi_comm_peer_lookup(request->req_recv.req_base.req_comm, 
-                                  request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
-        ompi_convertor_copy(proc->proc_convertor, &frag->frag_recv.frag_base.frag_convertor);
-        ompi_convertor_init_for_recv(
-            &frag->frag_recv.frag_base.frag_convertor,  /* convertor */
-            0,                              /* flags */
-            request->req_recv.req_base.req_datatype, /* datatype */
-            request->req_recv.req_base.req_count,    /* count elements */
-            request->req_recv.req_base.req_addr,     /* users buffer */
-            0,                              /* offset in bytes into packed buffer */
-            mca_ptl_tcp_memalloc );         /* not allocating memory */
-
+        ompi_convertor_clone( &(request->req_recv.req_convertor),
+                              &(frag->frag_recv.frag_base.frag_convertor), 1 );
+        ompi_convertor_personalize( &frag->frag_recv.frag_base.frag_convertor, 0,
+                                    &frag_offset, mca_ptl_tcp_memalloc );
         /* non-contiguous - allocate buffer for receive */
         if( 1 == ompi_convertor_need_buffers( &frag->frag_recv.frag_base.frag_convertor ) ) {
             frag->frag_recv.frag_base.frag_addr = malloc(frag_length);
@@ -137,8 +128,9 @@ static inline void mca_ptl_tcp_recv_frag_matched(
 
 static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag) 
 {
-    unsigned int iov_count, max_data;
-    int freeAfter;
+    uint32_t iov_count;
+    size_t max_data;
+    int32_t freeAfter;
     int32_t frag_progressed = ompi_atomic_add_32(&frag->frag_progressed,1);
 
     /* For a match/rendezvous packet - we need to progress the fragment after
@@ -153,7 +145,7 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
 
         mca_ptl_base_recv_request_t* request = frag->frag_recv.frag_request; 
         if(frag->frag_recv.frag_is_buffered) { 
-	    mca_ptl_base_frag_header_t* header = &(frag)->frag_recv.frag_base.frag_header.hdr_frag; 
+	    mca_ptl_base_frag_header_t* header = &(frag)->frag_recv.frag_base.frag_header.hdr_frag;
 	    size_t offset = (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_FRAG) ?
 	        header->hdr_frag_offset : 0;
 
@@ -161,19 +153,12 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
 	     * Initialize convertor and use it to unpack data  
 	     */ 
 	    struct iovec iov; 
-	    ompi_proc_t *proc = 
-		    ompi_comm_peer_lookup(request->req_recv.req_base.req_comm, 
-				          request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE); 
-	    ompi_convertor_copy(proc->proc_convertor, &frag->frag_recv.frag_base.frag_convertor); 
-	    ompi_convertor_init_for_recv( 
-		    &frag->frag_recv.frag_base.frag_convertor,  /* convertor */ 
-		    0,                                 /* flags */ 
-		    request->req_recv.req_base.req_datatype,    /* datatype */ 
-		    request->req_recv.req_base.req_count,       /* count elements */ 
-		    request->req_recv.req_base.req_addr,        /* users buffer */ 
-		    offset,                            /* offset in bytes into packed buffer */ 
-		NULL );                            /* dont allocate memory */
-	
+
+            ompi_convertor_clone( &(request->req_recv.req_convertor),
+                                  &(frag->frag_recv.frag_base.frag_convertor), 1 );
+            ompi_convertor_personalize( &(frag->frag_recv.frag_base.frag_convertor),
+                                        0, &offset, mca_ptl_tcp_memalloc );
+
 	    iov.iov_base = (ompi_iov_base_ptr_t)frag->frag_recv.frag_base.frag_addr; 
 	    iov.iov_len = frag->frag_recv.frag_base.frag_size;
 	    iov_count = 1;
