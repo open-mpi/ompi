@@ -172,24 +172,20 @@ int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_itagval_t *iptr)
 {
     size_t i;
+    int rc;
     
-    /* see if anyone cares that this value is deleted */
-/*    trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
-
-    for (i=0; i < (orte_gpr_replica.triggers)->size; i++) {
-        if (NULL != trig[i] &&
-            ORTE_GPR_REPLICA_ENTRY_DELETED & trig[i]->action) {
-            sptr = (orte_gpr_replica_subscribed_data_t**)((trig[i]->subscribed_data)->addr);
-            for (k=0; k < (trig[i]->subscribed_data)->size; k++) {
-                if (NULL != sptr[k]) {
-                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_register_callback(trig[i]))) {
-                        ORTE_ERROR_LOG(rc);
-                        return rc;
-                    }
-                }
+    /* record that we are going to do this
+     * NOTE: it is important that we make the record BEFORE doing the release.
+     * The record_action function will do a RETAIN on the object so it
+     * doesn't actually get released until we check subscriptions to see
+     * if someone wanted to be notified if/when this object was released
+     */
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_record_action(seg, cptr, iptr,
+                            ORTE_GPR_REPLICA_ENTRY_DELETED))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     
-*/    
-
     /* release the data storage */
     i = iptr->index;
     OBJ_RELEASE(iptr);
@@ -228,6 +224,13 @@ int orte_gpr_replica_update_keyval(orte_gpr_replica_segment_t *seg,
        ORTE_ERROR_LOG(rc);
        return rc;
    }
+   
+    /* record that we did this */
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_record_action(seg, cptr, iptr, ORTE_GPR_REPLICA_ENTRY_CHANGED))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
    
    /* update any storage locations that were pointing to these items */
    if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_storage_locations(iptr))) {

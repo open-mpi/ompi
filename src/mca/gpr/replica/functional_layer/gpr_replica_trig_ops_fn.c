@@ -112,6 +112,44 @@ orte_gpr_replica_remove_notify_request(orte_gpr_notify_id_t local_idtag,
 }
 
 
+int orte_gpr_replica_record_action(orte_gpr_replica_segment_t *seg,
+                                   orte_gpr_replica_container_t *cptr,
+                                   orte_gpr_replica_itagval_t *iptr,
+                                   orte_gpr_replica_action_t action)
+{
+    orte_gpr_replica_action_taken_t *new;
+    size_t index;
+    int rc;
+    
+    new = OBJ_NEW(orte_gpr_replica_action_taken_t);
+    if (NULL == new) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    new->action = action;
+    
+    /* store pointers to the affected itagval */
+    new->seg = seg;
+    new->cptr = cptr;
+    new->iptr = iptr;
+    
+    /* "retain" ALL of the respective objects so they can't disappear until
+     * after we process the actions
+     */
+    OBJ_RETAIN(seg);
+    OBJ_RETAIN(cptr);
+    OBJ_RETAIN(iptr);
+    
+    /* add the new action record to the array */
+    if (0 > (rc = orte_pointer_array_add(&index, orte_gpr_replica_globals.acted_upon, new))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    return ORTE_SUCCESS;
+}
+
+
 int orte_gpr_replica_update_storage_locations(orte_gpr_replica_itagval_t *new_iptr)
 {
     orte_gpr_replica_triggers_t **trig;
@@ -147,11 +185,11 @@ int orte_gpr_replica_update_storage_locations(orte_gpr_replica_itagval_t *new_ip
 }
 
 
-int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg,
-                                         orte_gpr_replica_action_t action_taken)
+int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg)
 {
     orte_gpr_replica_triggers_t **trig;
-    size_t i;
+    orte_gpr_replica_subscribed_data_t **sub;
+    size_t i, j;
     int rc;
 
     trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
@@ -164,6 +202,28 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg,
                     return rc;
                 }
             }
+            /* check if notifier is on this subscription - if so, check it,
+             * but ONLY if NOTIFY_START is NOT set
+             */
+            if ((ORTE_GPR_NOTIFY_ANY & trig[i]->action) &
+                (ORTE_GPR_TRIG_NOTIFY_START & trig[i]->action)) {
+                /* for notifier subscriptions, the data structures
+                 * in the trigger define the data being monitored. First,
+                 * check to see if the segment that was modified matches
+                 * any of the data being monitored. If so, then we call the
+                 * check_notify function to see if we should fire
+                 */
+                 sub = (orte_gpr_replica_subscribed_data_t**)
+                        (trig[i]->subscribed_data)->addr;
+                 for (j=0; j < (trig[i]->subscribed_data)->size; j++) {
+                    if ((NULL != sub[j]) && (seg == sub[j]->seg)) {
+                        if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_notify(trig[i], sub[j]))) {
+                            ORTE_ERROR_LOG(rc);
+                            return rc;
+                        }
+                    }
+                 }
+            } /* if notify */
         }  /* if trig not NULL */
     }
     return ORTE_SUCCESS;
@@ -254,6 +314,50 @@ FIRED:
         trig->one_shot_fired = true;
     }
     
+    return ORTE_SUCCESS;
+}
+
+/*
+ * When entering this function, we know two things: (a) something was modified
+ * on the segment specified in the subscription, and (b) notifications are
+ * active. What we now need to determine is whether or not any of the data
+ * objects pointed to by the subscription were involved in the change. These
+ * objects could just be a container - e.g., the subscriber might want to know
+ * if anything gets added to a container - or could be a container plus one or
+ * more keys when the subscriber wants to know if a specific value gets changed.
+ */
+int orte_gpr_replica_check_notify(orte_gpr_replica_triggers_t *trig,
+                                  orte_gpr_replica_subscribed_data_t *sub)
+{
+    orte_gpr_replica_action_taken_t **ptr;
+    size_t i;
+    
+    ptr = (orte_gpr_replica_action_taken_t**)((orte_gpr_replica_globals.acted_upon)->addr);
+    for (i=0; i < (orte_gpr_replica_globals.acted_upon)->size; i++) {
+        if (NULL != ptr[i]) {
+            if ((trig->action & ORTE_GPR_NOTIFY_ADD_ENTRY) &&
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_ADDED)) {
+                /* send back the added entry */
+            } else if ((trig->action & ORTE_GPR_NOTIFY_DEL_ENTRY) &
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_DELETED)){
+                /* send back the deleted entry */
+            } else if ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHANGED)) {
+                /* see if the acted_upon data was the target of the subscription */
+                /* send back the new data */
+            } else if ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHG_TO)) {
+                /* ptr contains the "new" data - check to see if it matches
+                 * the subscription. if so, send back the new data
+                 */
+            } else if ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHG_FRM)) {
+                /* ptr contains the "old" data - check to see if it matches
+                 * the subscription. if so, send back the new data
+                 */
+            }
+        }
+    }
     return ORTE_SUCCESS;
 }
 

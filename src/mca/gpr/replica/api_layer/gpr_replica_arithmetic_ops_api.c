@@ -81,7 +81,7 @@ int orte_gpr_replica_increment_value(orte_gpr_value_t *value)
 
     if (ORTE_SUCCESS == rc) {
         if (ORTE_SUCCESS != 
-            (rc = orte_gpr_replica_check_subscriptions(seg, ORTE_GPR_REPLICA_VALUE_INCREMENTED))) {
+            (rc = orte_gpr_replica_check_subscriptions(seg))) {
             ORTE_ERROR_LOG(rc);
             OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;
@@ -143,7 +143,7 @@ int orte_gpr_replica_decrement_value(orte_gpr_value_t *value)
 
     if (ORTE_SUCCESS == rc) {
         if (ORTE_SUCCESS != 
-            (rc = orte_gpr_replica_check_subscriptions(seg, ORTE_GPR_REPLICA_VALUE_DECREMENTED))) {
+            (rc = orte_gpr_replica_check_subscriptions(seg))) {
             ORTE_ERROR_LOG(rc);
             OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;

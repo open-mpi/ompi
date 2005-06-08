@@ -73,9 +73,7 @@ typedef uint8_t orte_gpr_replica_addr_mode_t;
 #define ORTE_GPR_REPLICA_ENTRY_CHANGED     (int8_t) 3
 #define ORTE_GPR_REPLICA_ENTRY_CHG_TO      (int8_t) 4
 #define ORTE_GPR_REPLICA_ENTRY_CHG_FRM     (int8_t) 5
-#define ORTE_GPR_REPLICA_VALUE_INCREMENTED (int8_t) 6
-#define ORTE_GPR_REPLICA_VALUE_DECREMENTED (int8_t) 7
-#define ORTE_GPR_REPLICA_ENTRY_UPDATED     (int8_t) 8
+
 
 typedef int8_t orte_gpr_replica_action_t;
 
@@ -93,6 +91,7 @@ typedef struct {
     int compound_cmd_waiting;
     orte_pointer_array_t *srch_cptr;
     orte_pointer_array_t *srch_ival;
+    orte_pointer_array_t *acted_upon;
     orte_bitmap_t srch_itag;
 } orte_gpr_replica_globals_t;
 
@@ -256,6 +255,24 @@ struct orte_gpr_replica_triggers_t {
 typedef struct orte_gpr_replica_triggers_t orte_gpr_replica_triggers_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_replica_triggers_t);
+
+/*
+ * Action taken object - used to track what action was taken against what
+ * registry object during the course of a registry request. For example, if
+ * a PUT modifies an existing registry entry, then we store a pointer to that
+ * entry and a flag indicating that it was modified. This info is required for
+ * processing notification subscriptions.
+ */
+typedef struct {
+    ompi_object_t super;        /**< Make this an object */
+    orte_gpr_replica_action_t action;
+    orte_gpr_replica_segment_t *seg;
+    orte_gpr_replica_container_t *cptr;
+    orte_gpr_replica_itagval_t *iptr;
+} orte_gpr_replica_action_taken_t;
+
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_replica_action_taken_t);
+
 
 /*
  * Notify message list objects - used to track individual messages going to

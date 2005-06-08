@@ -87,8 +87,7 @@ int orte_gpr_replica_cleanup_proc_fn(orte_process_name_t *proc);
 int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
                 orte_gpr_replica_segment_t *seg,
                 orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
-                size_t cnt, orte_gpr_keyval_t **keyvals,
-                int8_t *action_taken);
+                size_t cnt, orte_gpr_keyval_t **keyvals);
 
 int orte_gpr_replica_put_nb_fn(orte_gpr_addr_mode_t addr_mode,
                 orte_gpr_replica_segment_t *seg,
@@ -257,7 +256,15 @@ void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
 /*
  * Trigger Operations
  */
-int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg, int8_t action_taken);
+int orte_gpr_replica_record_action(orte_gpr_replica_segment_t *seg,
+                                   orte_gpr_replica_container_t *cptr,
+                                   orte_gpr_replica_itagval_t *iptr,
+                                   orte_gpr_replica_action_t action);
+
+int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg);
+
+int orte_gpr_replica_check_notify(orte_gpr_replica_triggers_t *trig,
+                                  orte_gpr_replica_subscribed_data_t *sub);
 
 int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig);
 

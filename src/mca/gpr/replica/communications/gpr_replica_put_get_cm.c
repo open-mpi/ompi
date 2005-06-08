@@ -37,7 +37,6 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *itags=NULL;
     orte_data_type_t type;
-    int8_t action_taken=0;
     int rc, ret;
     size_t i=0, cnt;
 
@@ -92,14 +91,14 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
         }
     
         if (ORTE_SUCCESS != (ret = orte_gpr_replica_put_fn(val->addr_mode, seg, itags,
-                    val->num_tokens, val->cnt, val->keyvals, &action_taken))) {
+                    val->num_tokens, val->cnt, val->keyvals))) {
             ORTE_ERROR_LOG(ret);
             goto RETURN_ERROR;
         }
     
         if (ORTE_SUCCESS == ret) {
             if (ORTE_SUCCESS != 
-                (rc = orte_gpr_replica_check_subscriptions(seg, action_taken))) {
+                (rc = orte_gpr_replica_check_subscriptions(seg))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
