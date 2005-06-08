@@ -81,7 +81,7 @@ OMPI_DECLSPEC int orte_bitmap_init (orte_bitmap_t *bm, size_t size);
  * @return ORTE error code or success
  *
  */
-OMPI_DECLSPEC int orte_bitmap_cover_bit(orte_bitmap_t *bm, size_t bit);
+OMPI_DECLSPEC int orte_bitmap_resize(orte_bitmap_t *bm, size_t bit);
 
 
 /**
