@@ -79,6 +79,7 @@ void mca_pml_ob1_recv_frag_callback(
                 hdr->hdr_ack.hdr_src_req.pval;
             sendreq->req_state = MCA_PML_OB1_SR_SEND;
             sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
+            sendreq->req_rdma_offset = hdr->hdr_ack.hdr_rdma_offset;
             mca_pml_ob1_send_request_schedule(sendreq);
             break;
             }

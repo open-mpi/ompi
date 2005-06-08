@@ -31,6 +31,7 @@ struct  mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
     size_t req_bytes_received;
     size_t req_bytes_delivered;
+    size_t req_rdma_offset;
 
     ompi_convertor_t req_convertor;
     /* note that we allocate additional space for the recv
@@ -39,6 +40,7 @@ struct  mca_pml_ob1_recv_request_t {
      * the last element of this struct.
     */
     mca_bmi_base_descriptor_t *req_pipeline[1];
+    struct mca_pml_proc_t *req_proc;
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
@@ -170,11 +172,14 @@ do {                                                                            
             ompi_comm_peer_lookup(                                                   \
                 (request)->req_recv.req_base.req_comm, (hdr)->hdr_src);              \
                                                                                      \
+        (request)->req_proc = proc->proc_pml;                                        \
         ompi_convertor_copy_and_prepare_for_recv( proc->proc_convertor,              \
                                          (request)->req_recv.req_base.req_datatype,  \
                                          (request)->req_recv.req_base.req_count,     \
                                          (request)->req_recv.req_base.req_addr,      \
                                          &(request)->req_convertor );                \
+    } else {                                                                         \
+        (request)->req_proc = NULL;                                                  \
     }                                                                                \
 } while (0)
 
@@ -209,6 +214,9 @@ do {                                                                            
                 iov_count++;                                                      \
             }                                                                     \
         }                                                                         \
+        ompi_convertor_set_position(                                              \
+            &(request->req_convertor),                                            \
+            &data_offset);                                                        \
         ompi_convertor_unpack(                                                    \
             &(request)->req_convertor,                                            \
             iov,                                                                  \

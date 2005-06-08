@@ -46,8 +46,10 @@ struct mca_pml_ob1_send_request_t {
     mca_pml_ob1_send_request_state_t req_state;
     ompi_ptr_t req_recv;
     int32_t req_lock;
-    size_t req_pending;
-    size_t req_offset;
+    size_t req_bytes_delivered;
+    size_t req_send_pending;
+    size_t req_send_offset;
+    size_t req_rdma_offset;
 };
 typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 
@@ -108,10 +110,11 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     mca_pml_ob1_proc_t* proc = sendreq->req_proc;                                         \
                                                                                           \
     /* select next endpoint */                                                            \
-    endpoint = mca_pml_ob1_ep_array_get_next(&proc->bmi_first);                           \
+    endpoint = mca_pml_ob1_ep_array_get_next(&proc->bmi_eager);                           \
     sendreq->req_lock = 0;                                                                \
-    sendreq->req_offset = 0;                                                              \
-    sendreq->req_pending = 0;                                                             \
+    sendreq->req_bytes_delivered = 0;                                                     \
+    sendreq->req_send_offset = 0;                                                         \
+    sendreq->req_send_pending = 0;                                                        \
     sendreq->req_state = MCA_PML_OB1_SR_START;                                            \
     sendreq->req_send.req_base.req_ompi.req_complete = false;                             \
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
@@ -123,11 +126,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
         mca_pml_base_bsend_request_start(&sendreq->req_send.req_base.req_ompi);           \
     }                                                                                     \
                                                                                           \
-    if(NULL != endpoint->bmi_alloc) {                                                     \
-        rc = mca_pml_ob1_send_request_start_copy(sendreq, endpoint);                      \
-    } else {                                                                              \
-        rc = mca_pml_ob1_send_request_start_user(sendreq, endpoint);                      \
-    }                                                                                     \
+    rc = mca_pml_ob1_send_request_start(sendreq, endpoint);                               \
 }
 
 /*
@@ -143,23 +142,11 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
         &mca_pml_ob1.send_requests, (ompi_list_item_t*)sendreq);     \
 }
                                                                                                                       
-
 /**
- *  BMI doesn't require pre-pinned or "specially" allocated memory.
- *  Can try to directly send from the users buffer if contigous.
+ *  
  */
 
-int mca_pml_ob1_send_request_start_user(
-    mca_pml_ob1_send_request_t* sendreq,
-    mca_pml_ob1_endpoint_t* endpoint);
-
-
-/**
- *  BMI requires "specially" allocated memory. Request a segment that
- *  is used for initial hdr and any eager data.
- */
-
-int mca_pml_ob1_send_request_start_copy(
+int mca_pml_ob1_send_request_start(
     mca_pml_ob1_send_request_t* sendreq,
     mca_pml_ob1_endpoint_t* endpoint);
 

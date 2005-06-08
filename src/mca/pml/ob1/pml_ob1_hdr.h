@@ -33,8 +33,8 @@
 #define MCA_PML_OB1_HDR_TYPE_ACK      3
 #define MCA_PML_OB1_HDR_TYPE_NACK     4
 #define MCA_PML_OB1_HDR_TYPE_FRAG     5
-#define MCA_PML_OB1_HDR_TYPE_SEG      6
-#define MCA_PML_OB1_HDR_TYPE_GET      7
+#define MCA_PML_OB1_HDR_TYPE_GET      6
+#define MCA_PML_OB1_HDR_TYPE_PUT      7
 #define MCA_PML_OB1_HDR_TYPE_FIN      8
 #define MCA_PML_OB1_HDR_TYPE_MAX      9
 
@@ -192,7 +192,7 @@ struct mca_pml_ob1_ack_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
     ompi_ptr_t hdr_src_req;                   /**< source request */
     ompi_ptr_t hdr_dst_req;                   /**< matched receive request */
-    mca_bmi_base_segment_t hdr_seg;           /**< segment */
+    uint64_t hdr_rdma_offset;                 /**< starting point rdma protocol */
 };
 typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
 
@@ -209,6 +209,20 @@ typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
     } while (0) 
 
 /**
+ *  Header used to initiate an RDMA operation.
+ */
+
+struct mca_pml_ob1_rdma_hdr_t {
+    mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
+    ompi_ptr_t hdr_src_req;                   /**< source request */
+    ompi_ptr_t hdr_dst_req;                   /**< matched receive request */
+    uint64_t hdr_offset;                      /**< current offset into user buffer */ 
+    uint32_t hdr_num_segments;                /**< number of segments for rdma */
+    mca_bmi_base_segment_t segments[1];       /**< list of segments for rdma */
+};
+typedef struct mca_pml_ob1_rdma_hdr_t mca_pml_ob1_rdma_hdr_t;
+
+/**
  * Union of defined hdr types.
  */
 union mca_pml_ob1_hdr_t {
@@ -217,6 +231,7 @@ union mca_pml_ob1_hdr_t {
     mca_pml_ob1_rendezvous_hdr_t hdr_rndv;
     mca_pml_ob1_frag_hdr_t hdr_frag;
     mca_pml_ob1_ack_hdr_t hdr_ack;
+    mca_pml_ob1_rdma_hdr_t hdr_rdma;
 };
 typedef union mca_pml_ob1_hdr_t mca_pml_ob1_hdr_t;
 

@@ -38,8 +38,9 @@ struct mca_pml_proc_t {
    ompi_mutex_t proc_lock;             /**< lock to protect against concurrent access */
    int proc_flags;                     /**< prefered method of accessing this peer */
    volatile uint32_t proc_sequence;    /**< sequence number for send */
-   mca_pml_ob1_ep_array_t bmi_first;   /**< array of endpoints to use for first fragments */
-   mca_pml_ob1_ep_array_t bmi_next;    /**< array of endpoints to use for remaining fragments */
+   mca_pml_ob1_ep_array_t bmi_eager;   /**< array of endpoints to use for first fragments */
+   mca_pml_ob1_ep_array_t bmi_send;    /**< array of endpoints to use for remaining fragments */
+   mca_pml_ob1_ep_array_t bmi_rdma;    /**< array of endpoints that support (prefer) rdma */
 };
 typedef struct mca_pml_proc_t mca_pml_ob1_proc_t;
 
@@ -86,8 +87,8 @@ static inline struct mca_bmi_base_endpoint_t* mca_pml_ob1_proc_lookup_remote_end
     struct mca_bmi_base_module_t* bmi)
 {
     mca_pml_ob1_proc_t* proc = comm->c_pml_procs[rank];
-    size_t i, size = mca_pml_ob1_ep_array_get_size(&proc->bmi_first);
-    mca_pml_ob1_endpoint_t* endpoint = proc->bmi_first.arr_endpoints;
+    size_t i, size = mca_pml_ob1_ep_array_get_size(&proc->bmi_eager);
+    mca_pml_ob1_endpoint_t* endpoint = proc->bmi_eager.arr_endpoints;
     for(i = 0; i < size; i++) {
         if(endpoint->bmi == bmi) {
             return endpoint->bmi_endpoint;
