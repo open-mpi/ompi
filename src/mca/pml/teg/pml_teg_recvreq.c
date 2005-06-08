@@ -20,12 +20,11 @@
 #include "mca/ptl/ptl.h"
 #include "mca/ptl/base/ptl_base_comm.h"
 #include "pml_teg_recvreq.h"
+#include "pml_teg_recvfrag.h"
 #include "pml_teg_sendreq.h"
 
-                                                                                                               
 static mca_ptl_base_recv_frag_t* mca_pml_teg_recv_request_match_specific_proc(
     mca_ptl_base_recv_request_t* request, int proc);
-
 
 static int mca_pml_teg_recv_request_fini(struct ompi_request_t** request)
 {
@@ -38,7 +37,6 @@ static int mca_pml_teg_recv_request_free(struct ompi_request_t** request)
     MCA_PML_TEG_FREE(request);
     return OMPI_SUCCESS;
 }
-
 
 static int mca_pml_teg_recv_request_cancel(struct ompi_request_t* request, int complete)
 {
@@ -153,7 +151,7 @@ void mca_pml_teg_recv_request_match_specific(mca_ptl_base_recv_request_t* reques
         OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
         if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
               (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
-            ptl->ptl_matched(ptl, frag);
+            MCA_PML_TEG_RECV_MATCHED( ptl, frag );
         }
         return; /* match found */
     }
@@ -207,7 +205,7 @@ void mca_pml_teg_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
             OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
             if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
                   (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
-                ptl->ptl_matched(ptl, frag);
+                MCA_PML_TEG_RECV_MATCHED( ptl, frag );
             }
             return; /* match found */
         }

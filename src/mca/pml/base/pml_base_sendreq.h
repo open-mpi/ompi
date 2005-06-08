@@ -23,6 +23,7 @@
 #include "mca/pml/pml.h"
 #include "mca/pml/base/pml_base_request.h"
 #include "datatype/datatype.h"
+#include "datatype/convertor.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -96,21 +97,16 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
                                                                           \
       /* initialize datatype convertor for this request */                \
       if(count > 0) {                                                     \
-         ompi_convertor_copy((request)->req_base.req_proc->proc_convertor,\
-                              &(request)->req_convertor);                 \
-         /* We will create a convertor specialized for send       */      \
-         /* just to be able to get the packed size. This size     */      \
-         /* depend on the conversion used sender side or receiver */      \
-         /* size. BEWARE this convertor is not suitable for the   */      \
-         /* sending operation !!                                  */      \
-         ompi_convertor_init_for_send( &(request)->req_convertor,         \
-                                       0,                                 \
-                                       (request)->req_base.req_datatype,  \
-                                       (request)->req_base.req_count,     \
-                                       (request)->req_base.req_addr,      \
-                                       -1, NULL );                        \
+         /* We will create a convertor specialized for the        */      \
+         /* remote architecture and prepared with the datatype.   */      \
+         ompi_convertor_copy_and_prepare_for_send(                        \
+                            (request)->req_base.req_proc->proc_convertor, \
+                            (request)->req_base.req_datatype,             \
+                            (request)->req_base.req_count,                \
+                            (request)->req_base.req_addr,                 \
+                            &(request)->req_convertor );                  \
          ompi_convertor_get_packed_size( &(request)->req_convertor,       \
-                              (uint32_t*)&((request)->req_bytes_packed) );\
+                                         &((request)->req_bytes_packed) );\
       } else {                                                            \
          (request)->req_bytes_packed = 0;                                 \
       }                                                                   \

@@ -188,7 +188,7 @@ int mca_pml_ob1_send_request_start_copy(
 
         struct iovec iov;
         unsigned int iov_count;
-        unsigned int max_data;
+        size_t max_data;
         bool ack = false;
 
         /* determine first fragment size */

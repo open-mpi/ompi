@@ -170,16 +170,11 @@ do {                                                                            
             ompi_comm_peer_lookup(                                                   \
                 (request)->req_recv.req_base.req_comm, (hdr)->hdr_src);              \
                                                                                      \
-        ompi_convertor_copy(proc->proc_convertor,                                    \
-            &(request)->req_convertor);                                              \
-        ompi_convertor_init_for_recv(                                                \
-            &(request->req_convertor),                 /* convertor */               \
-            0,                                         /* flags */                   \
-            (request)->req_recv.req_base.req_datatype,   /* datatype */              \
-            (request)->req_recv.req_base.req_count,      /* count elements */        \
-            (request)->req_recv.req_base.req_addr,       /* users buffer */          \
-            0,                              /* offset in bytes into packed buffer */ \
-            NULL );                         /* not allocating memory */              \
+        ompi_convertor_copy_and_prepare_for_recv( proc->proc_convertor,              \
+                                         (request)->req_recv.req_base.req_datatype,  \
+                                         (request)->req_recv.req_base.req_count,     \
+                                         (request)->req_recv.req_base.req_addr,      \
+                                         &(request)->req_convertor );                \
     }                                                                                \
 } while (0)
 
@@ -200,7 +195,7 @@ do {                                                                            
     if(request->req_recv.req_base.req_count > 0) {                                \
         struct iovec iov[MCA_BMI_DES_MAX_SEGMENTS];                               \
         uint32_t iov_count = 0;                                                   \
-        uint32_t max_data = bytes_received;                                       \
+        size_t max_data = bytes_received;                                         \
         int32_t free_after = 0;                                                   \
         size_t n, offset = seg_offset;                                            \
                                                                                   \
