@@ -188,23 +188,25 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
                                             (char *)recvreq->req_recv.req_base.req_addr, 
                                             (const char *)sendreq->req_ptl.req_send.req_addr );
         } else {
-            ompi_convertor_t *pSendConvertor, *pRecvConvertor;
+            ompi_convertor_t *send_convertor, *recv_convertor;
             struct iovec iov[1];
-            int completed, freeAfter, length;
-            uint32_t max_data, iov_count;
+            int32_t completed, freeAfter, length;
+            uint32_t iov_count;
+            size_t max_data;
             char* buf;
             
             /* We use a temporary buffer as it look to be faster on much architectures */
             length = 64 * 1024;
             buf = (char *)malloc( length * sizeof(char) );
             
-            ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor, 
-                                          0, 
-                                          recvreq->req_recv.req_base.req_datatype, 
-                                          recvreq->req_recv.req_base.req_count, 
-                                          recvreq->req_recv.req_base.req_addr, 0, NULL );
-            pSendConvertor = &(sendreq->req_ptl.req_send.req_convertor);
-            pRecvConvertor = &(frag->frag_base.frag_convertor);
+            recv_convertor = &(frag->frag_base.frag_convertor);
+            send_convertor = &(sendreq->req_ptl.req_send.req_convertor);
+            ompi_convertor_copy_and_prepare_for_recv( send_convertor,
+                                                      recvreq->req_recv.req_base.req_datatype,
+                                                      recvreq->req_recv.req_base.req_count,
+                                                      recvreq->req_recv.req_base.req_addr,
+                                                      recv_convertor );
+
             completed = 0;
             freeAfter = 0;
             while( !completed ) {
@@ -212,10 +214,10 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
                 iov[0].iov_len = length;
                 iov_count = 1;
                 max_data = length;
-                completed |= ompi_convertor_pack( pSendConvertor, iov, &iov_count,
+                completed |= ompi_convertor_pack( send_convertor, iov, &iov_count,
                                                   &max_data, &freeAfter );
                 assert( freeAfter == 0 );
-                completed |= ompi_convertor_unpack( pRecvConvertor, iov, &iov_count,
+                completed |= ompi_convertor_unpack( recv_convertor, iov, &iov_count,
                                                     &max_data, &freeAfter );
                 assert( freeAfter == 0 );
             }
