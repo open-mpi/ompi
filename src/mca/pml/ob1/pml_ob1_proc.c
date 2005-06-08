@@ -26,16 +26,18 @@ static void mca_pml_ob1_proc_construct(mca_pml_ob1_proc_t* proc)
     proc->proc_ompi = NULL;
     proc->proc_sequence = 0;
     OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&proc->bmi_first, mca_pml_ob1_ep_array_t);
-    OBJ_CONSTRUCT(&proc->bmi_next,  mca_pml_ob1_ep_array_t);
+    OBJ_CONSTRUCT(&proc->bmi_eager, mca_pml_ob1_ep_array_t);
+    OBJ_CONSTRUCT(&proc->bmi_send,  mca_pml_ob1_ep_array_t);
+    OBJ_CONSTRUCT(&proc->bmi_rdma,  mca_pml_ob1_ep_array_t);
 }
 
 
 static void mca_pml_ob1_proc_destruct(mca_pml_ob1_proc_t* proc)
 {
     OBJ_DESTRUCT(&proc->proc_lock);
-    OBJ_DESTRUCT(&proc->bmi_first);
-    OBJ_DESTRUCT(&proc->bmi_next);
+    OBJ_DESTRUCT(&proc->bmi_eager);
+    OBJ_DESTRUCT(&proc->bmi_send);
+    OBJ_DESTRUCT(&proc->bmi_rdma);
 }
 
 

@@ -52,10 +52,12 @@ struct mca_pml_ob1_t {
     size_t num_bmi_progress;
 
     int priority;
-    int free_list_num;   /* initial size of free list */
-    int free_list_max;   /* maximum size of free list */
-    int free_list_inc;   /* number of elements to grow free list */
-    size_t eager_limit;
+    int free_list_num;      /* initial size of free list */
+    int free_list_max;      /* maximum size of free list */
+    int free_list_inc;      /* number of elements to grow free list */
+    size_t eager_limit;     /* maximum eager limit size - overrides bmi setting */
+    size_t rdma_offset;     /* offset at which we attempt to initiate rdma */
+    size_t rdma_threshold;  /* message size at which rdma is attempted */
     size_t send_pipeline_depth;
     size_t recv_pipeline_depth;
 

@@ -234,7 +234,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                 mca_pml_ob1_endpoint_t* endpoint;
                 size_t size;
 
-                /* this ob1 can be used */
+                /* this bmi can be used */
                 bmi_inuse++;
 
                 /* initialize each proc */
@@ -249,17 +249,18 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                     }
 
                     /* preallocate space in array for max number of ob1s */
-                    mca_pml_ob1_ep_array_reserve(&proc_pml->bmi_first, mca_pml_ob1.num_bmi_modules);
-                    mca_pml_ob1_ep_array_reserve(&proc_pml->bmi_next,  mca_pml_ob1.num_bmi_modules);
+                    mca_pml_ob1_ep_array_reserve(&proc_pml->bmi_eager, mca_pml_ob1.num_bmi_modules);
+                    mca_pml_ob1_ep_array_reserve(&proc_pml->bmi_send,  mca_pml_ob1.num_bmi_modules);
+                    mca_pml_ob1_ep_array_reserve(&proc_pml->bmi_rdma,  mca_pml_ob1.num_bmi_modules);
                     proc_pml->proc_ompi = proc;
                     proc->proc_pml = proc_pml;
                 }
 
                 /* dont allow an additional PTL with a lower exclusivity ranking */
-                size = mca_pml_ob1_ep_array_get_size(&proc_pml->bmi_next);
+                size = mca_pml_ob1_ep_array_get_size(&proc_pml->bmi_send);
                 if(size > 0) {
-                    endpoint = mca_pml_ob1_ep_array_get_index(&proc_pml->bmi_next, size-1);
-                    /* skip this ob1 if the exclusivity is less than the previous */
+                    endpoint = mca_pml_ob1_ep_array_get_index(&proc_pml->bmi_send, size-1);
+                    /* skip this bmi if the exclusivity is less than the previous */
                     if(endpoint->bmi->bmi_exclusivity > bmi->bmi_exclusivity) {
                         if(bmi_endpoints[p] != NULL) {
                             bmi->bmi_del_procs(bmi, 1, &proc, &bmi_endpoints[p]);
@@ -269,7 +270,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                 }
                
                 /* cache the endpoint on the proc */
-                endpoint = mca_pml_ob1_ep_array_insert(&proc_pml->bmi_next);
+                endpoint = mca_pml_ob1_ep_array_insert(&proc_pml->bmi_send);
                 endpoint->bmi = bmi;
                 endpoint->bmi_eager_limit = bmi->bmi_eager_limit;
                 endpoint->bmi_min_frag_size = bmi->bmi_min_frag_size;
@@ -321,10 +322,10 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
          *     note that we need to do this here, as we may already have ob1s configured
          * (2) determine the highest priority ranking for latency
          */
-        n_size = mca_pml_ob1_ep_array_get_size(&proc_pml->bmi_next); 
+        n_size = mca_pml_ob1_ep_array_get_size(&proc_pml->bmi_send); 
         for(n_index = 0; n_index < n_size; n_index++) {
             mca_pml_ob1_endpoint_t* endpoint = 
-                mca_pml_ob1_ep_array_get_index(&proc_pml->bmi_next, n_index);
+                mca_pml_ob1_ep_array_get_index(&proc_pml->bmi_send, n_index);
             mca_bmi_base_module_t* ob1 = endpoint->bmi;
             total_bandwidth += endpoint->bmi->bmi_bandwidth; 
             if(ob1->bmi_latency > latency)
@@ -338,7 +339,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
 
         for(n_index = 0; n_index < n_size; n_index++) {
             mca_pml_ob1_endpoint_t* endpoint = 
-                mca_pml_ob1_ep_array_get_index(&proc_pml->bmi_next, n_index);
+                mca_pml_ob1_ep_array_get_index(&proc_pml->bmi_send, n_index);
             mca_bmi_base_module_t *ob1 = endpoint->bmi;
             double weight;
 
@@ -354,8 +355,15 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
              */
             if(ob1->bmi_latency == latency) {
                 mca_pml_ob1_endpoint_t* ep_new = 
-                    mca_pml_ob1_ep_array_insert(&proc_pml->bmi_first);
+                    mca_pml_ob1_ep_array_insert(&proc_pml->bmi_eager);
                 *ep_new = *endpoint;
+            }
+
+            /* check flags - is rdma prefered */
+            if(endpoint->bmi->bmi_flags & MCA_BMI_FLAGS_RDMA &&
+               proc->proc_arch == ompi_proc_local_proc->proc_arch) {
+                mca_pml_ob1_endpoint_t* rdma_ep = mca_pml_ob1_ep_array_insert(&proc_pml->bmi_rdma);
+                *rdma_ep = *endpoint;
             }
         }
     }
@@ -378,9 +386,9 @@ int mca_pml_ob1_del_procs(ompi_proc_t** procs, size_t nprocs)
         size_t n_index, n_size;
  
         /* notify each ob1 that the proc is going away */
-        f_size = mca_pml_ob1_ep_array_get_size(&proc_pml->bmi_first);
+        f_size = mca_pml_ob1_ep_array_get_size(&proc_pml->bmi_eager);
         for(f_index = 0; f_index < f_size; f_index++) {
-            mca_pml_ob1_endpoint_t* endpoint = mca_pml_ob1_ep_array_get_index(&proc_pml->bmi_first, f_index);
+            mca_pml_ob1_endpoint_t* endpoint = mca_pml_ob1_ep_array_get_index(&proc_pml->bmi_eager, f_index);
             mca_bmi_base_module_t* ob1 = endpoint->bmi;
             
             rc = ob1->bmi_del_procs(ob1,1,&proc,&endpoint->bmi_endpoint);
@@ -391,9 +399,9 @@ int mca_pml_ob1_del_procs(ompi_proc_t** procs, size_t nprocs)
             /* remove this from next array so that we dont call it twice w/ 
              * the same address pointer
              */
-            n_size = mca_pml_ob1_ep_array_get_size(&proc_pml->bmi_first);
+            n_size = mca_pml_ob1_ep_array_get_size(&proc_pml->bmi_eager);
             for(n_index = 0; n_index < n_size; n_index++) {
-                mca_pml_ob1_endpoint_t* endpoint = mca_pml_ob1_ep_array_get_index(&proc_pml->bmi_next, n_index);
+                mca_pml_ob1_endpoint_t* endpoint = mca_pml_ob1_ep_array_get_index(&proc_pml->bmi_send, n_index);
                 if(endpoint->bmi == ob1) {
                     memset(endpoint, 0, sizeof(mca_pml_ob1_endpoint_t));
                     break;
@@ -402,9 +410,9 @@ int mca_pml_ob1_del_procs(ompi_proc_t** procs, size_t nprocs)
         }
 
         /* notify each ob1 that was not in the array of ob1s for first fragments */
-        n_size = mca_pml_ob1_ep_array_get_size(&proc_pml->bmi_next);
+        n_size = mca_pml_ob1_ep_array_get_size(&proc_pml->bmi_send);
         for(n_index = 0; n_index < n_size; n_index++) {
-            mca_pml_ob1_endpoint_t* endpoint = mca_pml_ob1_ep_array_get_index(&proc_pml->bmi_first, n_index);
+            mca_pml_ob1_endpoint_t* endpoint = mca_pml_ob1_ep_array_get_index(&proc_pml->bmi_eager, n_index);
             mca_bmi_base_module_t* ob1 = endpoint->bmi;
             if (ob1 != 0) {
                 rc = ob1->bmi_del_procs(ob1,1,&proc,&endpoint->bmi_endpoint);

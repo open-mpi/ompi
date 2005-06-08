@@ -118,10 +118,8 @@ static void mca_pml_ob1_recv_request_ack(
     mca_pml_ob1_recv_request_t* recvreq,
     mca_pml_ob1_rendezvous_hdr_t* hdr)
 {
-    mca_pml_ob1_proc_t* proc = mca_pml_ob1_proc_lookup_remote(
-        recvreq->req_recv.req_base.req_comm,
-        hdr->hdr_match.hdr_src);
-    mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_first);
+    mca_pml_ob1_proc_t* proc = recvreq->req_proc;
+    mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_eager);
     mca_bmi_base_descriptor_t* des;
     mca_pml_ob1_fragment_t* frag;
     mca_pml_ob1_ack_hdr_t* ack;
@@ -136,6 +134,25 @@ static void mca_pml_ob1_recv_request_ack(
     /* fill out header */
     ack = (mca_pml_ob1_ack_hdr_t*)des->des_src->seg_addr.pval;
     ack->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;
+
+    /* use the rdma protocol for this request if:
+     * - size is larger than the rdma threshold
+     * - rdma devices are available
+    */
+    if(recvreq->req_recv.req_bytes_packed > mca_pml_ob1.rdma_threshold &&
+       mca_pml_ob1_ep_array_get_size(&proc->bmi_rdma)) {
+
+        /* use convertor to figure out the rdma offset for this request */
+        recvreq->req_rdma_offset = mca_pml_ob1.rdma_offset;
+        ompi_convertor_set_position(
+            &recvreq->req_convertor,                    /* convertor */
+            &recvreq->req_rdma_offset);
+        ack->hdr_rdma_offset = recvreq->req_rdma_offset;
+    } else {
+        recvreq->req_rdma_offset = recvreq->req_recv.req_bytes_packed;
+        ack->hdr_rdma_offset = recvreq->req_recv.req_bytes_packed;
+    }
+    
     ack->hdr_common.hdr_flags = 0;
     ack->hdr_src_req = hdr->hdr_src_req;
     ack->hdr_dst_req.pval = recvreq;
@@ -149,6 +166,7 @@ static void mca_pml_ob1_recv_request_ack(
         ep->bmi_free(ep->bmi,des);
         goto retry;
     }
+
     return;
 
     /* queue request to retry later */
@@ -175,6 +193,7 @@ void mca_pml_ob1_recv_request_progress(
 {
     size_t bytes_received = 0;
     size_t bytes_delivered = 0;
+    size_t data_offset = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
 
     switch(hdr->hdr_common.hdr_type) {
@@ -186,7 +205,7 @@ void mca_pml_ob1_recv_request_progress(
                 segments,
                 num_segments,
                 sizeof(mca_pml_ob1_match_hdr_t),
-                0,
+                data_offset,
                 bytes_received,
                 bytes_delivered);
             break;
@@ -200,7 +219,7 @@ void mca_pml_ob1_recv_request_progress(
                 segments,
                 num_segments,
                 sizeof(mca_pml_ob1_rendezvous_hdr_t),
-                0,
+                data_offset,
                 bytes_received,
                 bytes_delivered);
             break;
@@ -213,7 +232,7 @@ void mca_pml_ob1_recv_request_progress(
                 segments,
                 num_segments,
                 sizeof(mca_pml_ob1_frag_hdr_t),
-                hdr->hdr_frag.frag_offset,
+                hdr->hdr_frag.hdr_frag_offset,
                 bytes_received,
                 bytes_delivered);
             break;
