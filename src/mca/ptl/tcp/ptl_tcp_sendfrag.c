@@ -84,11 +84,10 @@ int mca_ptl_tcp_send_frag_init(
     int flags)
 {
     /* message header */
-    size_t size_in = *size;
-    size_t size_out;
-    unsigned int iov_count, max_data;
-
+    size_t size_in = *size, size_out, max_data;
+    uint32_t iov_count;
     mca_ptl_base_header_t* hdr = &sendfrag->frag_header;
+
     sendfrag->free_after = 0;
     /* initialize convertor */
     if(size_in > 0) {
@@ -96,16 +95,8 @@ int mca_ptl_tcp_send_frag_init(
        int rc;
 
        convertor = &sendfrag->frag_convertor;
-       ompi_convertor_copy(&sendreq->req_send.req_convertor, convertor);
-       ompi_convertor_init_for_send( 
-				    convertor,
-				    0, 
-				    sendreq->req_send.req_datatype,
-				    sendreq->req_send.req_count,
-				    sendreq->req_send.req_addr,
-				    offset,
-				    mca_ptl_tcp_memalloc );
-
+       ompi_convertor_clone( &sendreq->req_send.req_convertor, convertor, 1 );
+       ompi_convertor_personalize( convertor, 0, &offset, mca_ptl_tcp_memalloc );
         /* if data is contigous convertor will return an offset
          * into users buffer - otherwise will return an allocated buffer 
          * that holds the packed data
