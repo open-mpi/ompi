@@ -24,7 +24,7 @@
 #include <errno.h>
 
 #include "threads/mutex.h"
-#include "datatype/datatype.h"
+#include "datatype/convertor.h"
 #include "include/sys/atomic.h"
 #include "util/output.h"
 #include "util/if.h"
@@ -780,7 +780,7 @@ struct mca_bmi_base_descriptor_t* mca_bmi_sm_prepare_src(
     mca_bmi_sm_frag_t* frag;
     struct iovec iov;
     uint32_t iov_count = 1;
-    uint32_t max_data = *size;
+    size_t max_data = *size;
     int32_t free_after;
     int rc;
 
