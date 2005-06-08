@@ -71,6 +71,20 @@ OMPI_DECLSPEC int orte_bitmap_init (orte_bitmap_t *bm, size_t size);
 
 
 /**
+ * Sizes the bitmap to ensure it has at least the specified number of
+ * bits in it. If it already does, then nothing happens. However, if the
+ * bitmap is too small, then it is resized to accommodate the bit, with
+ * all bits in the new space "cleared"
+ *
+ * @param  bitmap The input bitmap (IN)
+ * @param  bit   The bit that must be "covered" by the bitmap (IN)
+ * @return ORTE error code or success
+ *
+ */
+OMPI_DECLSPEC int orte_bitmap_cover_bit(orte_bitmap_t *bm, size_t bit);
+
+
+/**
  * Set a bit of the bitmap. If the bit asked for is beyond the current
  * size of the bitmap, then the bitmap is extended to accomodate the
  * bit

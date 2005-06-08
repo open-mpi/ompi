@@ -40,7 +40,7 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
 {
     size_t i, j;
     bool exclusive, match, found_one, not_set;
-    int rc;
+    int rc, bit_is_set;
 
     /* check for trivial case */
     if (NULL == itags || 0 == num_itags_search) {  /* wildcard case - automatically true */
@@ -68,24 +68,36 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
     found_one = false;
     for (i=0; i < num_itags_entry; i++) {  /* for each container tag */
         match = false;
-        	for (j=0; j < num_itags_search && !match; j++) {  /* check all the search tags and see if it is present */
-        	    if (entry_itags[i] == itags[j]) { /* found a match */
-            		if (ORTE_SUCCESS != (rc = orte_bitmap_set_bit(&(orte_gpr_replica_globals.srch_itag), itags[j]))) {
-                     ORTE_ERROR_LOG(rc);
-                     return rc;
-                 }
-            		if (ORTE_GPR_REPLICA_OR & addr_mode) { /* only need one match */
-            		    if (not_set) return false;
-                        else return true;
-            		}
-                 match = true;
-                 found_one = true;
-        	    }
-        	}
+    	for (j=0; j < num_itags_search; j++) {  /* check each search tag and see if it is present */
+            /* need to explicitly extend the bit array here to ensure
+             * it covers the specified itags. Otherwise, when
+             * we check to see if the bit was set (in the logic down
+             * below), we could potentially go outside the range of
+             * the array
+             */
+            if (orte_gpr_replica_globals.srch_itag.legal_numbits < itags[j]) {
+                if (ORTE_SUCCESS != (rc = orte_bitmap_cover_bit(&(orte_gpr_replica_globals.srch_itag), itags[j]))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
+    	    if (entry_itags[i] == itags[j]) { /* found a match */
+        		if (ORTE_SUCCESS != (rc = orte_bitmap_set_bit(&(orte_gpr_replica_globals.srch_itag), itags[j]))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+        		if (ORTE_GPR_REPLICA_OR & addr_mode) { /* only need one match */
+        		    if (not_set) return false;
+                    else return true;
+        		}
+                match = true;
+                found_one = true;
+    	    }
+    	}
         if (!match && exclusive) {
              /* if it was exclusive, then I'm not allowed to have any tags outside
               * of those in the search list. Since I checked the search list and
-              * didn't find a match, this violates the exclusive requirement.
+              * found at least one that didn't match, this violates the exclusive requirement.
               */
              if (not_set) return true;
              else return false;
@@ -104,7 +116,10 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
      /* Only thing we have left to check is AND */
     /* check if any search tag was not found */
     for (i=0; i < num_itags_search; i++) {
-        if (1 != orte_bitmap_is_set_bit(&(orte_gpr_replica_globals.srch_itag), itags[i])) {
+        if (0 > (bit_is_set = orte_bitmap_is_set_bit(&(orte_gpr_replica_globals.srch_itag), itags[i]))) {
+            ORTE_ERROR_LOG(bit_is_set);
+            return bit_is_set;
+        } else if (1 != bit_is_set) {
             /* this tag was NOT found - required to find them all */
             if (not_set) return true;
             else return false;

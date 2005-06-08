@@ -26,7 +26,8 @@ check_PROGRAMS = \
 	ompi_list \
 	ompi_value_array \
 	ompi_pointer_array \
-	ompi_rb_tree
+	ompi_rb_tree \
+	orte_bitmap
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -78,3 +79,10 @@ ompi_rb_tree_LDADD = \
         $(top_builddir)/src/libmpi.la \
 	$(top_builddir)/test/support/libsupport.a
 ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)
+
+orte_bitmap_SOURCES = orte_bitmap.c 
+orte_bitmap_LDADD = \
+        $(top_builddir)/src/libmpi.la \
+        $(top_builddir)/test/support/libsupport.a
+orte_bitmap_DEPENDENCIES = $(orte_bitmap_LDADD)
+

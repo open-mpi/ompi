@@ -61,7 +61,6 @@ orte_bitmap_init(orte_bitmap_t *bm, size_t size)
 	    return ORTE_ERR_BAD_PARAM;
     }
 
-    bm->legal_numbits = size;
     actual_size = size / SIZE_OF_CHAR;
   
     actual_size += (size % SIZE_OF_CHAR == 0) ? 0 : 1;
@@ -72,51 +71,70 @@ orte_bitmap_init(orte_bitmap_t *bm, size_t size)
     }
 
     bm->array_size = actual_size;
+    bm->legal_numbits = 8*actual_size;
     orte_bitmap_clear_all_bits(bm);
     return ORTE_SUCCESS;
 }
   
 
 int
+orte_bitmap_cover_bit(orte_bitmap_t *bm, size_t bit)
+{
+    size_t index, new_size, i;
+
+    index = bit / SIZE_OF_CHAR; 
+    index += (bit % SIZE_OF_CHAR == 0) ? 0 : 1;
+
+    if (index >= bm->array_size) {
+
+            /* We need to allocate more space for the bitmap, since we are
+               out of range. We dont throw any error here, because this is
+               valid and we simply expand the bitmap */
+        
+            new_size = (index / bm->array_size + 1 ) * bm->array_size;
+
+            /* New size is just a multiple of the original size to fit in
+               the index. */
+        
+            bm->bitmap = (unsigned char *) realloc(bm->bitmap, new_size);
+            if (NULL == bm->bitmap) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+        
+            /* zero out the new elements */
+            for (i = bm->array_size; i < new_size; ++i) {
+                bm->bitmap[i] = 0;
+            }
+        
+            /* Update the array_size */
+            bm->array_size = new_size;
+            bm->legal_numbits = new_size*8;
+    }
+    
+    return ORTE_SUCCESS;
+}
+
+int
 orte_bitmap_set_bit(orte_bitmap_t *bm, size_t bit)
 {
-    size_t index, offset, new_size, i;
+    size_t index, offset;
+    int rc;
 
     if (NULL == bm) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
 
+    /* make sure the bitmap covers the requested bit */
+    if (ORTE_SUCCESS != (rc = orte_bitmap_cover_bit(bm, bit))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     index = bit / SIZE_OF_CHAR; 
     offset = bit % SIZE_OF_CHAR;
 
-    if (index >= bm->array_size) {
-
-        	/* We need to allocate more space for the bitmap, since we are
-        	   out of range. We dont throw any error here, because this is
-        	   valid and we simply expand the bitmap */
-        
-        	new_size = (index / bm->array_size + 1 ) * bm->array_size;
-
-        	/* New size is just a multiple of the original size to fit in
-        	   the index. */
-        
-        	bm->bitmap = (unsigned char *) realloc(bm->bitmap, new_size);
-        	if (NULL == bm->bitmap) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        	    return ORTE_ERR_OUT_OF_RESOURCE;
-        	}
-        
-        	/* zero out the new elements */
-        	for (i = bm->array_size; i < new_size; ++i) {
-        	    bm->bitmap[i] = 0;
-        	}
-        
-        	/* Update the array_size */
-        	bm->array_size = new_size;
-        	bm->legal_numbits = bit + 1;
-    }
-    
     /* Now set the bit */
     bm->bitmap[index] |= (1 << offset);
 
@@ -128,20 +146,23 @@ int
 orte_bitmap_clear_bit(orte_bitmap_t *bm, size_t bit)
 {
     size_t index, offset;
+    int rc;
 
-    if ((bit > bm->legal_numbits - 1) || (NULL == bm)) {
+    if (NULL == bm) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
 	    return ORTE_ERR_BAD_PARAM;
     }
 
+    /* make sure the bitmap covers the requested bit */
+    if (ORTE_SUCCESS != (rc = orte_bitmap_cover_bit(bm, bit))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     index = bit / SIZE_OF_CHAR; 
     offset = bit % SIZE_OF_CHAR;
   
-    if (index >= bm->array_size) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
-    }
-
+    /* now clear the bit */    
     bm->bitmap[index] &= ~(1 << offset);
     return ORTE_SUCCESS;
 }
@@ -210,7 +231,7 @@ orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm, size_t *position)
     unsigned char temp;
     unsigned char all_ones = 0xff;
 
-    if (NULL == bm) {
+    if (NULL == bm || NULL == position) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
