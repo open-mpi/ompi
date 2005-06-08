@@ -23,6 +23,7 @@
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 #include "datatype/datatype.h"
+#include "datatype/convertor.h"
 #include "mca/ptl/base/ptl_base_header.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
