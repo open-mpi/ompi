@@ -166,10 +166,10 @@ mca_ptl_gm_finalize (struct mca_ptl_base_module_t *base_ptl)
     mca_ptl_gm_module_t* ptl = (mca_ptl_gm_module_t*)base_ptl;
 
     for( index = 0; index < mca_ptl_gm_component.gm_num_ptl_modules; index++ ) {
-	if( mca_ptl_gm_component.gm_ptl_modules[index] == ptl ) {
-	    mca_ptl_gm_component.gm_ptl_modules[index] = NULL;
+        if( mca_ptl_gm_component.gm_ptl_modules[index] == ptl ) {
+            mca_ptl_gm_component.gm_ptl_modules[index] = NULL;
             break;
-	}
+        }
     }
 
     if( index == mca_ptl_gm_component.gm_num_ptl_modules ) {
@@ -359,16 +359,16 @@ mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
             assert( gm_ptl->num_send_tokens >= 0 );
             hdr = (mca_ptl_base_header_t*)item;
 
-	    hdr->hdr_ack.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
-	    hdr->hdr_ack.hdr_common.hdr_flags = frag->frag_base.frag_header.hdr_common.hdr_flags;
-	    hdr->hdr_ack.hdr_src_ptr = frag->frag_base.frag_header.hdr_rndv.hdr_src_ptr;
-	    hdr->hdr_ack.hdr_dst_match.lval = 0L;
-	    hdr->hdr_ack.hdr_dst_match.pval = request;
-	    hdr->hdr_ack.hdr_dst_addr.lval = 0L;
-	    hdr->hdr_ack.hdr_dst_addr.pval = ptl;  /* local use */
-	    hdr->hdr_ack.hdr_dst_size = request->req_recv.req_bytes_packed;
+            hdr->hdr_ack.hdr_common.hdr_type = MCA_PTL_HDR_TYPE_ACK;
+            hdr->hdr_ack.hdr_common.hdr_flags = frag->frag_base.frag_header.hdr_common.hdr_flags;
+            hdr->hdr_ack.hdr_src_ptr = frag->frag_base.frag_header.hdr_rndv.hdr_src_ptr;
+            hdr->hdr_ack.hdr_dst_match.lval = 0L;
+            hdr->hdr_ack.hdr_dst_match.pval = request;
+            hdr->hdr_ack.hdr_dst_addr.lval = 0L;
+                hdr->hdr_ack.hdr_dst_addr.pval = ptl;  /* local use */
+            hdr->hdr_ack.hdr_dst_size = request->req_recv.req_bytes_packed;
 
-	    gm_send_with_callback( ((mca_ptl_gm_module_t*)ptl)->gm_port, hdr,
+            gm_send_with_callback( ((mca_ptl_gm_module_t*)ptl)->gm_port, hdr,
                                    GM_SIZE, sizeof(mca_ptl_base_ack_header_t),
                                    GM_LOW_PRIORITY,
                                    peer->peer_addr.local_id,
@@ -379,24 +379,20 @@ mca_ptl_gm_matched( mca_ptl_base_module_t* ptl,
     }
     
     if( frag->frag_base.frag_size > 0 ) {
-        unsigned int max_data, out_size;
-        int freeAfter;
+        ompi_convertor_t* convertor;
+        uint32_t out_size;
+        int32_t freeAfter;
+        size_t max_data;
 
         iov.iov_len = recv_frag->attached_data_length;
         /* Here we expect that frag_addr is the begin of the buffer header included */
         iov.iov_base = frag->frag_base.frag_addr;
-    
-        ompi_convertor_copy( peer->peer_proc->proc_ompi->proc_convertor,
-                             &frag->frag_base.frag_convertor );
-        ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor, 0,
-                                      request->req_recv.req_base.req_datatype,
-                                      request->req_recv.req_base.req_count,
-                                      request->req_recv.req_base.req_addr,
-                                      0, NULL );
+
+        convertor = &(request->req_recv.req_convertor);
+
         out_size = 1;
         max_data = iov.iov_len;
-        rc = ompi_convertor_unpack( &frag->frag_base.frag_convertor, &(iov),
-                                    &out_size, &max_data, &freeAfter );
+        rc = ompi_convertor_unpack( convertor, &(iov), &out_size, &max_data, &freeAfter );
         assert( rc >= 0 );
         recv_frag->frag_bytes_processed += max_data;
     }

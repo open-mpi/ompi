@@ -24,9 +24,6 @@ include $(top_ompi_srcdir)/config/Makefile.options
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include -I$(top_ompi_builddir)/include \
-    -I$(top_ompi_srcdir)/src -I$(top_ompi_srcdir)/src/include
-
 #if OMPI_ENABLE_GM_CACHE
 #  additional_source = ptl_gm_regcache.c
 #else
