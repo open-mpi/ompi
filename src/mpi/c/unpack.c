@@ -19,6 +19,7 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "datatype/datatype.h"
+#include "datatype/convertor.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 #include "class/ompi_object.h"
@@ -39,9 +40,10 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
                MPI_Comm comm) 
 {
     int rc, freeAfter;
-    ompi_convertor_t *local_convertor;
+    ompi_convertor_t local_convertor;
     struct iovec outvec;
-    unsigned int size, iov_count;
+    unsigned int iov_count;
+    size_t size;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -63,27 +65,26 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
         }
     }
 
-    local_convertor = OBJ_NEW(ompi_convertor_t);
-    ompi_convertor_init_for_recv(local_convertor, 0, datatype, outcount, 
-                                 outbuf, 0, NULL /* never allocate memory */);
-    
+    /* the resulting convertor will be set the the position ZERO */
+    ompi_convertor_copy_and_prepare_for_recv( NULL, datatype, outcount, outbuf, &local_convertor );
+
     /* Check for truncation */
-    ompi_convertor_get_packed_size(local_convertor, &size);
+    ompi_convertor_get_packed_size( &local_convertor, &size );
     if( (*position + size) > (unsigned int)insize ) {
-        OBJ_RELEASE(local_convertor);
+        OBJ_DESTRUCT( &local_convertor );
         return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_TRUNCATE, FUNC_NAME);
     }
 
     /* Prepare the iovec with all informations */
     outvec.iov_base = (char*) inbuf + (*position);
     outvec.iov_len = insize - (*position);
-
+    
     /* Do the actual unpacking */
     iov_count = 1;
-    rc = ompi_convertor_unpack( local_convertor, &outvec, &iov_count,
+    rc = ompi_convertor_unpack( &local_convertor, &outvec, &iov_count,
                                 &size, &freeAfter );
-    *position += local_convertor->bConverted;
-    OBJ_RELEASE(local_convertor);
+    *position += size;
+    OBJ_DESTRUCT( &local_convertor );
 
     /* All done.  Note that the convertor returns 1 upon success, not
        OMPI_SUCCESS. */
