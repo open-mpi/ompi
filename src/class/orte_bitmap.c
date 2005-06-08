@@ -71,14 +71,14 @@ orte_bitmap_init(orte_bitmap_t *bm, size_t size)
     }
 
     bm->array_size = actual_size;
-    bm->legal_numbits = 8*actual_size;
+    bm->legal_numbits = SIZE_OF_CHAR*actual_size;
     orte_bitmap_clear_all_bits(bm);
     return ORTE_SUCCESS;
 }
   
 
 int
-orte_bitmap_cover_bit(orte_bitmap_t *bm, size_t bit)
+orte_bitmap_resize(orte_bitmap_t *bm, size_t bit)
 {
     size_t index, new_size, i;
 
@@ -109,7 +109,7 @@ orte_bitmap_cover_bit(orte_bitmap_t *bm, size_t bit)
         
             /* Update the array_size */
             bm->array_size = new_size;
-            bm->legal_numbits = new_size*8;
+            bm->legal_numbits = new_size*SIZE_OF_CHAR;
     }
     
     return ORTE_SUCCESS;
@@ -127,7 +127,7 @@ orte_bitmap_set_bit(orte_bitmap_t *bm, size_t bit)
     }
 
     /* make sure the bitmap covers the requested bit */
-    if (ORTE_SUCCESS != (rc = orte_bitmap_cover_bit(bm, bit))) {
+    if (ORTE_SUCCESS != (rc = orte_bitmap_resize(bm, bit))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -154,7 +154,7 @@ orte_bitmap_clear_bit(orte_bitmap_t *bm, size_t bit)
     }
 
     /* make sure the bitmap covers the requested bit */
-    if (ORTE_SUCCESS != (rc = orte_bitmap_cover_bit(bm, bit))) {
+    if (ORTE_SUCCESS != (rc = orte_bitmap_resize(bm, bit))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -236,7 +236,7 @@ orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm, size_t *position)
         return ORTE_ERR_BAD_PARAM;
     }
 
-    /* Neglect all which dont have an unset bit */
+    /* Neglect all which don't have an unset bit */
     *position = 0;
     while((i < bm->array_size) && (bm->bitmap[i] == all_ones)) {
         ++i;

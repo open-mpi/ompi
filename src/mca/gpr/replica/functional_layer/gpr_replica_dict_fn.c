@@ -75,11 +75,9 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
              * below), we could potentially go outside the range of
              * the array
              */
-            if (orte_gpr_replica_globals.srch_itag.legal_numbits < itags[j]) {
-                if (ORTE_SUCCESS != (rc = orte_bitmap_cover_bit(&(orte_gpr_replica_globals.srch_itag), itags[j]))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
+            if (ORTE_SUCCESS != (rc = orte_bitmap_resize(&(orte_gpr_replica_globals.srch_itag), itags[j]))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
             }
     	    if (entry_itags[i] == itags[j]) { /* found a match */
         		if (ORTE_SUCCESS != (rc = orte_bitmap_set_bit(&(orte_gpr_replica_globals.srch_itag), itags[j]))) {
