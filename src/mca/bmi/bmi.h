@@ -129,6 +129,10 @@ typedef uint8_t mca_bmi_base_tag_t;
 #define MCA_BMI_TAG_PML  1
 #define MCA_BMI_TAG_USR  2
 
+/* prefered protocol */
+#define MCA_BMI_FLAGS_SEND  1
+#define MCA_BMI_FLAGS_RDMA  2
+
 
 typedef void (*mca_bmi_base_completion_fn_t)(
     struct mca_bmi_base_module_t*,

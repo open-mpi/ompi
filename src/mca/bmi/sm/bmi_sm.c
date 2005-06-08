@@ -789,7 +789,7 @@ struct mca_bmi_base_descriptor_t* mca_bmi_sm_prepare_src(
         return NULL;
     }
 
-    if(max_data + reserve > frag->size) {
+    if(reserve + max_data > frag->size) {
         max_data = frag->size - reserve;
     } 
     iov.iov_len = max_data;
@@ -800,6 +800,7 @@ struct mca_bmi_base_descriptor_t* mca_bmi_sm_prepare_src(
         MCA_BMI_SM_FRAG_RETURN2(frag);
         return NULL;
     }
+    frag->segment.seg_len = reserve + max_data;
     *size = max_data;
     return &frag->base;
 }
