@@ -196,16 +196,6 @@ do { \
     (_place)->elem.extent       = (_extent); \
 } while(0)
 
-/* keep the last 16 bits free for data flags */
-#define CONVERTOR_USELESS          0x00010000
-#define CONVERTOR_RECV             0x00020000
-#define CONVERTOR_SEND             0x00040000
-#define CONVERTOR_HOMOGENEOUS      0x00080000
-#define CONVERTOR_STATE_MASK       0xFF000000
-#define CONVERTOR_STATE_START      0x01000000
-#define CONVEROTR_STATE_COMPLETE   0x02000000
-#define CONVERTOR_STATE_ALLOC      0x04000000
-
 typedef struct {
     float r;
     float i;
@@ -224,11 +214,7 @@ typedef struct {
 extern const ompi_datatype_t* ompi_ddt_basicDatatypes[];
 #define BASIC_DDT_FROM_ELEM( ELEM ) (ompi_ddt_basicDatatypes[(ELEM).elem.common.type])
 
-extern conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED];
 extern int32_t ompi_ddt_external32_init( void );
-extern void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
-                                 const dt_elem_desc_t* pDesc, const char* name );
-extern void ompi_convertor_dump( ompi_convertor_t* convertor );
 
 #define SAVE_STACK( PSTACK, INDEX, TYPE, COUNT, DISP, END_LOOP) \
 do { \
@@ -319,127 +305,6 @@ static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
         ++_pElem; index++;
     }
     return index;
-}
-
-int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
-                                                  int starting_point, const int* sizes );
-static inline
-int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
-                                                 int starting_point, const int* sizes )
-{
-    dt_stack_t* pStack;   /* pointer to the position on the stack */
-    ompi_datatype_t* pData = pConvertor->pDesc;
-    dt_elem_desc_t* pElems;
-    uint32_t count;
-    long extent;
-
-    pStack = pConvertor->pStack;
-
-    pStack[0].count    = pConvertor->count;
-    pStack[0].index    = -1;
-
-    pElems = pConvertor->use_desc->desc;
-    pStack[0].end_loop = pConvertor->use_desc->used;
-
-    /* Special case for contiguous datatypes */
-    if( pData->size == 0 ) {  /* special case for empty datatypes */
-        count = pConvertor->count;
-    } else {
-        count = starting_point / pData->size;
-    }
-    extent = pData->ub - pData->lb;
-    
-    pStack[0].disp = count * extent;
-    pStack[0].count -= count;
-
-    /* now compute the number of pending bytes */
-    count = starting_point - count * pData->size;
-    pStack[1].index    = 0;  /* useless */
-    pStack[1].count    = pData->size - count;
-    pStack[1].end_loop = 0;  /* useless */
-    /* we save the current displacement starting from the begining
-     * of this data.
-     */
-    pStack[1].disp     = pData->true_lb + count;
-
-    pConvertor->bConverted = starting_point;
-    pConvertor->stack_pos = 1;
-    return OMPI_SUCCESS;
-}
-
-static inline
-int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const int* sizes )
-{
-    dt_stack_t* pStack;
-    dt_elem_desc_t* pElems;
-    int index = 0;
-
-    pConvertor->stack_pos = 0;
-    pStack = pConvertor->pStack;
-    /* Fill the first position on the stack. This one correspond to the
-     * last fake DT_END_LOOP that we add to the data representation and
-     * allow us to move quickly inside the datatype when we have a count.
-     */
-    pConvertor->pStack[0].index = -1;
-    pConvertor->pStack[0].count = pConvertor->count;
-    pConvertor->pStack[0].disp  = 0;
-    /* first here we should select which data representation will be used for
-     * this operation: normal one or the optimized version ? */
-    pElems = pConvertor->use_desc->desc;
-    pStack[0].end_loop = pConvertor->use_desc->used;
-
-    /* In the case where the datatype start with loops, we should push them on the stack.
-     * Otherwise when we reach the end_loop field we will pop too many entries and finish
-     * by overriding other places in memory. Now the big question is when to stop creating
-     * the entries on the stack ? Should I stop when I reach the first data element or
-     * should I stop on the first contiguous loop ?
-     */
-    while( pElems[index].elem.common.type == DT_LOOP ) {
-        PUSH_STACK( pStack, pConvertor->stack_pos, index, DT_LOOP,
-                    pElems[index].loop.loops, 0, pElems[index].loop.items );
-        index++;
-    }
-    if( pElems[index].elem.common.flags & DT_FLAG_DATA ) {  /* let's stop here */
-        PUSH_STACK( pStack, pConvertor->stack_pos, index, pElems[index].elem.common.type,
-                    pElems[index].elem.count, pElems[index].elem.disp, 0 );
-    } else {
-        ompi_output( 0, "Here we should have a data in the datatype description\n" );
-	ompi_ddt_dump( pConvertor->pDesc );
-    }
-    pConvertor->bConverted = 0;
-    return OMPI_SUCCESS;
-}
-
-static inline void
-convertor_init_generic( ompi_convertor_t* pConv, const ompi_datatype_t* datatype, int count,
-                        const void* pUserBuf )
-{
-    uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 3;
-
-    OBJ_RETAIN( datatype );
-    if( pConv->pDesc != datatype ) {
-        pConv->pDesc = (ompi_datatype_t*)datatype;
-        if( pConv->pStack != NULL ) {
-            if( pConv->stack_size > DT_STATIC_STACK_SIZE )
-                free( pConv->pStack );
-        }
-        pConv->pStack     = pConv->static_stack;
-        pConv->stack_size = DT_STATIC_STACK_SIZE;
-        /* Decide which data representation will be used for the conversion. */
-        if( (NULL != datatype->opt_desc.desc) && (pConv->flags & CONVERTOR_HOMOGENEOUS) ) {
-            pConv->use_desc = &(datatype->opt_desc);
-        } else {
-            pConv->use_desc = &(datatype->desc);
-        }
-        pConv->bConverted = 0;  /* reset the convertor */
-    }
-    if( DT_STATIC_STACK_SIZE < required_stack_length ) {
-        pConv->stack_size = required_stack_length;
-        pConv->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) * pConv->stack_size );
-    }
-    
-    pConv->pBaseBuf = (void*)pUserBuf;
-    pConv->count = count;
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)

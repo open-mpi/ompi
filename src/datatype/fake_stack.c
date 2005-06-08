@@ -18,6 +18,7 @@
 #include "ompi_config.h"
 
 #include "datatype/datatype.h"
+#include "datatype/convertor.h"
 #include "datatype/datatype_internal.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -46,7 +47,7 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     int pos_desc;         /* actual position in the description of the derived datatype */
     int lastLength = 0, loop_length;
-    ompi_datatype_t* pData = pConvertor->pDesc;
+    const ompi_datatype_t* pData = pConvertor->pDesc;
     int* remoteLength;
     int resting_place = starting_point;
     dt_elem_desc_t* pElems;
@@ -194,8 +195,8 @@ int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
 
 void ompi_convertor_dump( ompi_convertor_t* convertor )
 {
-    printf( "Convertor %p count %d stack position %d bConverted %d\n", (void*)convertor,
-            convertor->count, convertor->stack_pos, convertor->bConverted );
+    printf( "Convertor %p count %d stack position %d bConverted %ld\n", (void*)convertor,
+            convertor->count, convertor->stack_pos, (unsigned long)convertor->bConverted );
     ompi_ddt_dump( convertor->pDesc );
     printf( "Actual stack representation\n" );
     ompi_ddt_dump_stack( convertor->pStack, convertor->stack_pos,

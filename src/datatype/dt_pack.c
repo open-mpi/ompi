@@ -18,6 +18,7 @@
 #include "ompi_config.h"
 
 #include "datatype/datatype.h"
+#include "datatype/convertor.h"
 #include "datatype/datatype_internal.h"
 
 #ifdef HAVE_ALLOCA_H
@@ -40,7 +41,7 @@ int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actual_ptr, int len
 static
 int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
 				 struct iovec* iov, uint32_t* out_size,
-				 uint32_t* max_data,
+				 size_t* max_data,
 				 int32_t* freeAfter )
 {
     dt_stack_t* pStack;    /* pointer to the position on the stack */
@@ -50,7 +51,7 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
     uint32_t advance;      /* number of bytes that we should advance the buffer */
     long disp_desc = 0;    /* compute displacement for truncated data */
     int bConverted = 0;    /* number of bytes converted this time */
-    ompi_datatype_t *pData = pConvertor->pDesc;
+    const ompi_datatype_t *pData = pConvertor->pDesc;
     dt_elem_desc_t* pElem;
     char* pOutput = pConvertor->pBaseBuf;
     char* pInput;
@@ -170,7 +171,7 @@ static
 int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
 						 struct iovec* iov,
 						 uint32_t* out_size,
-						 uint32_t* max_data,
+						 size_t* max_data,
 						 int* freeAfter )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
@@ -180,7 +181,7 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
     long lastDisp = 0, last_count = 0;
     uint32_t space = iov[0].iov_len, last_blength = 0;
     char* pDestBuf;
-    ompi_datatype_t* pData = pConv->pDesc;
+    const ompi_datatype_t* pData = pConv->pDesc;
     dt_elem_desc_t* pElems;
 
     pDestBuf = iov[0].iov_base;
@@ -305,7 +306,7 @@ static
 int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                                        struct iovec* iov,
                                        uint32_t *out_size,
-                                       uint32_t* max_data,
+                                       size_t* max_data,
                                        int* freeAfter )
 {
     dt_stack_t* pStack;       /* pointer to the position on the stack */
@@ -317,7 +318,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
     long lastDisp = 0;
     uint32_t space = *max_data, last_blength = 0, saveLength;
     char *destination, *source;
-    ompi_datatype_t* pData = pConv->pDesc;
+    const ompi_datatype_t* pData = pConv->pDesc;
     ddt_elem_desc_t pack_elem;
     dt_elem_desc_t* pElems;
 
@@ -581,10 +582,10 @@ static int
 ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
                                     struct iovec* iov,
                                     uint32_t* out_size,
-                                    uint32_t* max_data,
+                                    size_t* max_data,
                                     int* freeAfter )
 {
-    ompi_datatype_t* pData = pConv->pDesc;
+    const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
     char *pSrc;
     size_t length = pData->size * pConv->count - pConv->bConverted;
@@ -629,10 +630,10 @@ static int
 ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
                                               struct iovec* iov,
                                               uint32_t* out_size,
-                                              uint32_t* max_data,
+                                              size_t* max_data,
                                               int* freeAfter )
 {
-    ompi_datatype_t* pData = pConv->pDesc;
+    const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
     char *pSrc, *pDest;
     size_t length = pData->size * pConv->count;
@@ -748,150 +749,44 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
     return (pConv->bConverted == length);
 }
 
-/*
- * Set the starting position for a convertor. This function can be used at any
- * moment in the life of a convertor to move the position to the desired point.
- */
-extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
-inline int32_t ompi_convertor_set_start_position( ompi_convertor_t* convertor,
-                                                  int32_t starting_pos )
+inline int32_t
+ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
+                                 const struct ompi_datatype_t* datatype,
+                                 int32_t count,
+                                 const void* pUserBuf )
 {
-    if( convertor->flags & DT_FLAG_CONTIGUOUS )
-        return ompi_convertor_create_stack_with_pos_contig( convertor, starting_pos, ompi_ddt_local_sizes );
-    if( starting_pos != 0 ) {
-        return ompi_convertor_create_stack_with_pos_general( convertor, starting_pos, ompi_ddt_local_sizes );
-    }
-    return ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
-}
-
-int32_t ompi_convertor_init_for_send( ompi_convertor_t* pConv,
-                                      uint32_t flags,
-                                      const ompi_datatype_t* datatype,
-                                      int32_t count,
-                                      const void* pUserBuf,
-                                      int32_t starting_pos,
-                                      memalloc_fct_t allocfn )
-{
-    if( !(datatype->flags & DT_FLAG_COMMITED) ) {
-        /* this datatype is improper for conversion. Commit it first */
+    if( OMPI_SUCCESS != ompi_convertor_prepare( convertor, datatype,
+                                                count, pUserBuf ) ) {
         return OMPI_ERROR;
     }
-    pConv->flags = CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS;  /* by default set to homogeneous */
-    convertor_init_generic( pConv, datatype, count, pUserBuf );
 
-    pConv->pFunctions      = ompi_ddt_copy_functions;
-    pConv->memAlloc_fn     = allocfn;
+    convertor->flags |= CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS;
+    convertor->memAlloc_fn = NULL;
     /* Just to avoid complaint from the compiler */
-    pConv->fAdvance = ompi_convertor_pack_general;
-    pConv->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
-    pConv->fAdvance = ompi_convertor_pack_no_conversion;
+    convertor->fAdvance = ompi_convertor_pack_general;
+    convertor->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
+    convertor->fAdvance = ompi_convertor_pack_no_conversion;
 
     if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
-        pConv->flags |= DT_FLAG_CONTIGUOUS;
-        if( ((datatype->ub - datatype->lb) == (long)datatype->size) || (1 >= pConv->count) )  /* gaps or no gaps */
-            pConv->fAdvance = ompi_convertor_pack_no_conv_contig;
+        convertor->flags |= DT_FLAG_CONTIGUOUS;
+        if( ((datatype->ub - datatype->lb) == (long)datatype->size)
+            || (1 >= convertor->count) )  /* gaps or no gaps */
+            convertor->fAdvance = ompi_convertor_pack_no_conv_contig;
         else
-            pConv->fAdvance = ompi_convertor_pack_no_conv_contig_with_gaps;
+            convertor->fAdvance = ompi_convertor_pack_no_conv_contig_with_gaps;
     }
-
-    if( -1 == starting_pos ) return OMPI_SUCCESS;
-
-    /* dont call any function if the convertor is in the correct position */
-    if( (pConv->bConverted == (unsigned long)starting_pos) &&
-        (0 != starting_pos) ) return OMPI_SUCCESS;
-
-    /* do we start after the end of the data ? */
-    if( starting_pos >= (int)(pConv->count * datatype->size) ) {
-        pConv->bConverted = pConv->count * datatype->size;
-        return OMPI_SUCCESS;
-    }
-
-    return ompi_convertor_set_start_position( pConv, starting_pos );
+    return OMPI_SUCCESS;
 }
 
-#if OMPI_ENABLE_DEBUG 
-int32_t ompi_convertor_pack( ompi_convertor_t* pConv, 
-                             struct iovec* iov, uint32_t* out_size, 
-                             uint32_t* max_data, int32_t* freeAfter ) 
-{ 
-    /* protect against over packing data */ 
-    if( pConv->bConverted == (pConv->pDesc->size * pConv->count) ) { 
-        iov[0].iov_len = 0; 
-        *out_size = 0; 
-        *max_data = 0; 
-        return 1;  /* nothing to do */ 
-    } 
-    assert( pConv->bConverted < (pConv->pDesc->size * pConv->count) ); 
-    /* We dont allocate any memory. The packing function should allocate it 
-     * if it need. If it's possible to find iovec in the derived datatype 
-     * description then we dont have to allocate any memory. 
-     */ 
-    return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter ); 
-} 
-#endif  /* OMPI_ENABLE_DEBUG */
-
-ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
+int32_t
+ompi_convertor_copy_and_prepare_for_send( const ompi_convertor_t* pSrcConv,
+                                          const struct ompi_datatype_t* datatype,
+                                          int32_t count,
+                                          const void* pUserBuf,
+                                          ompi_convertor_t* convertor )
 {
-   ompi_convertor_t* pConv = OBJ_NEW(ompi_convertor_t);
+    convertor->remoteArch      = pSrcConv->remoteArch;
+    convertor->pFunctions      = pSrcConv->pFunctions;
 
-   pConv->remoteArch  = remote_arch;
-   return pConv;
-}
-
-static void ompi_convertor_construct( ompi_convertor_t* pConv )
-{
-    pConv->pDesc       = NULL;
-    pConv->use_desc    = NULL;
-    pConv->pStack      = pConv->static_stack;
-    pConv->stack_size  = DT_STATIC_STACK_SIZE;
-    pConv->fAdvance    = NULL;
-    pConv->memAlloc_fn = NULL;
-}
-
-static void ompi_convertor_destruct( ompi_convertor_t* pConv )
-{
-    if( pConv->stack_size > DT_STATIC_STACK_SIZE ) {
-        free( pConv->pStack );
-    }
-
-    if( pConv->pDesc != NULL ) OBJ_RELEASE( pConv->pDesc );
-    pConv->pDesc = NULL;
-}
-
-OBJ_CLASS_INSTANCE(ompi_convertor_t, ompi_object_t, ompi_convertor_construct, ompi_convertor_destruct );
-
-/* Actually we suppose that we can only do receiver side conversion */
-int32_t ompi_convertor_get_packed_size( const ompi_convertor_t* pConv, uint32_t* pSize )
-{
-   int32_t ddt_size = 0;
-
-   if( ompi_ddt_type_size( pConv->pDesc, &ddt_size ) != 0 )
-      return OMPI_ERROR;
-   /* actually *pSize contain the size of one instance of the data */
-   *pSize = ddt_size * pConv->count;
-   return OMPI_SUCCESS;
-}
-
-int32_t ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv, uint32_t* pSize )
-{
-   int i;
-   ompi_datatype_t* pData = pConv->pDesc;
-
-   if( pConv->count == 0 ) {
-      *pSize = 0;
-      return OMPI_SUCCESS;
-   }
-   if( pConv->remoteArch == 0 ) {  /* same architecture */
-      *pSize = pData->size * pConv->count;
-      return OMPI_SUCCESS;
-   }
-   *pSize = 0;
-   for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
-      if( pData->bdt_used & (((unsigned long long)1)<<i) ) {
-         /* TODO replace with the remote size */
-         *pSize += (pData->btypes[i] * ompi_ddt_basicDatatypes[i]->size);
-      }
-   }
-   *pSize *= pConv->count;
-   return OMPI_SUCCESS;
+    return ompi_convertor_prepare_for_send( convertor, datatype, count, pUserBuf );
 }
