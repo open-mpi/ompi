@@ -90,12 +90,12 @@ int mca_ptl_gm_put_frag_init( struct mca_ptl_gm_send_frag_t** putfrag,
 
     if( (*size) > 0 ) {
         convertor = &(frag->frag_send.frag_base.frag_convertor);
-        ompi_convertor_copy( &(sendreq->req_send.req_convertor), convertor );
-        ompi_convertor_init_for_send( convertor, 0,
-                                      sendreq->req_send.req_datatype,
-                                      sendreq->req_send.req_count,
-                                      sendreq->req_send.req_addr,
-                                      offset, NULL );
+        /* GM use the default parameters for the convertor without any special memory
+         * allocation function. We have to call the prepare_for_send in order to
+         * initialize the missing parameters of the convertor.
+         */
+        ompi_convertor_clone_with_position( &(sendreq->req_send.req_convertor), convertor, 1,
+                                            &offset );
     }
     *putfrag = frag;
 
