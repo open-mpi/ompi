@@ -823,6 +823,7 @@ int mca_ptl_sm_send(
     hdr->hdr_match.hdr_dst = sendreq->req_send.req_base.req_peer;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_msg_length = sendreq->req_send.req_bytes_packed;
+    hdr->hdr_match.hdr_msg_seq    = sendreq->req_send.req_base.req_sequence;
 
     /* update the offset within the payload */
     sendreq->req_offset += size;
@@ -927,7 +928,7 @@ int mca_ptl_sm_send_continue(
 
     /* pack data in payload buffer */
     convertor = &sendreq->req_send.req_convertor;
-    ompi_convertor_prepare_for_send( convertor, 0, offset, NULL );
+    ompi_convertor_set_position( convertor, &offset );
     sm_data_ptr = send_frag->buff;
 
     /* set up the shared memory iovec */

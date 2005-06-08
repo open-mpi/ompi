@@ -71,7 +71,6 @@ void mca_ptl_sm_matched(
     mca_ptl_sm_frag_t *sm_frag_desc;
     struct iovec iov; 
     ompi_convertor_t frag_convertor;
-    ompi_proc_t *proc;
     int  free_after,my_local_smp_rank,peer_local_smp_rank, return_status;
     uint32_t iov_count;
     size_t max_data;
@@ -86,23 +85,13 @@ void mca_ptl_sm_matched(
     peer_local_smp_rank=sm_frag_desc->queue_index;
 
     /* copy, only if there is data to copy */
-    max_data=0;
+    max_data = 0;
     if( 0 <  sm_frag_desc->super.frag_base.frag_size ) {
- 
         /* 
          * Initialize convertor and use it to unpack data  
-         */ 
-        OBJ_CONSTRUCT(&frag_convertor, ompi_convertor_t);
-        proc = ompi_comm_peer_lookup(recv_desc->req_recv.req_base.req_comm,
-                    frag->frag_base.frag_header.hdr_match.hdr_src);
-        /* write over converter set on the send side */
-        ompi_convertor_copy_and_prepare_for_recv(
-                       proc->proc_convertor,
-                       recv_desc->req_recv.req_base.req_datatype,  /* datatype */
-                       recv_desc->req_recv.req_base.req_count,     /* count elements */
-                       recv_desc->req_recv.req_base.req_addr,      /* users buffer */
-                       &frag_convertor );
-        ompi_convertor_set_position( &frag_convertor, &(sm_frag_desc->send_offset) );
+         */
+        ompi_convertor_clone_with_position( &(recv_desc->req_recv.req_convertor), &frag_convertor,
+                                            1, &(sm_frag_desc->send_offset) );
         /* convert address from sender's address space to my virtual
          * address space */
 #ifdef SM_COMMON_BASE_ADDR
@@ -115,7 +104,6 @@ void mca_ptl_sm_matched(
         iov_count = 1;
         max_data = iov.iov_len;
         ompi_convertor_unpack( &frag_convertor, &iov, &iov_count, &max_data, &free_after ); 
-        OBJ_DESTRUCT(&frag_convertor);
     }
 
     /* update receive request information */
