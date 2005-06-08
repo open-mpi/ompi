@@ -790,27 +790,23 @@ int mca_ptl_sm_send(
     /* if needed, pack data in payload buffer */
     if( 0 < size ) {
         ompi_convertor_t *convertor;
-        unsigned int iov_count, max_data;
-        int free_after=0;
+        uint32_t iov_count;
+        size_t max_data;
+        int32_t free_after = 0;
         struct iovec address;
 
         convertor = &sendreq->req_send.req_convertor;
-        ompi_convertor_init_for_send( convertor, 0, 
-                sendreq->req_send.req_datatype,
-                sendreq->req_send.req_count, 
-                sendreq->req_send.req_addr,
-                offset, NULL);
 
-        sm_data_ptr=sm_request->req_frag->buff;
+        sm_data_ptr = sm_request->req_frag->buff;
 
         /* set up the shared memory iovec */
-        address.iov_base=sm_data_ptr;
-        address.iov_len= (size < send_frag->buff_length) ? size : send_frag->buff_length;
+        address.iov_base = sm_data_ptr;
+        address.iov_len = (size < send_frag->buff_length) ? size : send_frag->buff_length;
 
-        iov_count=1;
-        max_data=address.iov_len;
-        return_status=ompi_convertor_pack(convertor,&address,&iov_count,
-                &max_data, &free_after);
+        iov_count     = 1;
+        max_data      = address.iov_len;
+        return_status = ompi_convertor_pack( convertor,&address,&iov_count,
+                                             &max_data, &free_after );
         if( 0 > return_status ) {
             return OMPI_ERROR;
         }
@@ -913,7 +909,8 @@ int mca_ptl_sm_send_continue(
     mca_ptl_sm_second_frag_t *send_frag;
     ompi_convertor_t *convertor;
     struct iovec address;
-    unsigned int max_data,iov_count;
+    uint32_t iov_count;
+    size_t max_data;
 
     /* cast to shared memory send descriptor */
     sm_request=(mca_ptl_sm_send_request_t *)sendreq;
@@ -930,21 +927,17 @@ int mca_ptl_sm_send_continue(
 
     /* pack data in payload buffer */
     convertor = &sendreq->req_send.req_convertor;
-    ompi_convertor_init_for_send( convertor, 0, 
-            sendreq->req_send.req_datatype,
-            sendreq->req_send.req_count, 
-            sendreq->req_send.req_addr,
-            offset, NULL);
-    sm_data_ptr=send_frag->buff;
+    ompi_convertor_prepare_for_send( convertor, 0, offset, NULL );
+    sm_data_ptr = send_frag->buff;
 
     /* set up the shared memory iovec */
-    address.iov_base=sm_data_ptr;
-    address.iov_len=(size < send_frag->buff_length) ? size : send_frag->buff_length;
+    address.iov_base = sm_data_ptr;
+    address.iov_len = (size < send_frag->buff_length) ? size : send_frag->buff_length;
 
-    iov_count=1;
-    max_data=address.iov_len;
-    return_status=ompi_convertor_pack(convertor,&address,&iov_count,
-            &max_data, &free_after);
+    iov_count = 1;
+    max_data = address.iov_len;
+    return_status = ompi_convertor_pack( convertor,&address,&iov_count,
+                                         &max_data, &free_after );
     if( 0 > return_status ) {
         return OMPI_ERROR;
     }
