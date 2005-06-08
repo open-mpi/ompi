@@ -32,13 +32,13 @@ struct  mca_pml_ob1_recv_request_t {
     size_t req_bytes_received;
     size_t req_bytes_delivered;
 
+    ompi_convertor_t req_convertor;
     /* note that we allocate additional space for the recv
      * request to increase the array size based on run-time
      * parameters for the pipeline depth. So... this MUST be
      * the last element of this struct.
     */
     mca_bmi_base_descriptor_t *req_pipeline[1];
-    ompi_convertor_t req_convertor;
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
