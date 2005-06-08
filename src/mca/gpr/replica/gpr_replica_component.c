@@ -386,6 +386,35 @@ OBJ_CLASS_INSTANCE(
          orte_gpr_replica_trigger_destructor); /* destructor */
 
 
+/* ACTION_TAKEN */
+/* constructor - used to initialize state of action_take instance */
+static void orte_gpr_replica_action_taken_construct(orte_gpr_replica_action_taken_t* ptr)
+{
+    ptr->action = ORTE_GPR_REPLICA_NO_ACTION;
+    ptr->seg = NULL;
+    ptr->cptr = NULL;
+    ptr->iptr = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void orte_gpr_replica_action_taken_destructor(orte_gpr_replica_action_taken_t* ptr)
+{
+    /* since we did a "RETAIN" on the objects pointed to by this object,
+     * we need to "RELEASE" them to indicate we are done with them
+     */
+    if (NULL != ptr->seg) OBJ_RELEASE(ptr->seg);
+    if (NULL != ptr->cptr) OBJ_RELEASE(ptr->cptr);
+    if (NULL != ptr->iptr) OBJ_RELEASE(ptr->iptr);
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+         orte_gpr_replica_action_taken_t,           /* type name */
+         ompi_object_t,                 /* parent "class" name */
+         orte_gpr_replica_action_taken_construct,   /* constructor */
+         orte_gpr_replica_action_taken_destructor); /* destructor */
+
+
 /* NOTIFY MSG LIST */
 /* constructor - used to initialize state of notify msg list instance */
 static void orte_gpr_replica_notify_msg_list_construct(orte_gpr_replica_notify_msg_list_t* msg)
@@ -582,8 +611,13 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
+        if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.acted_upon),
+                                100, orte_gpr_replica_globals.max_size, 100))) {
+            ORTE_ERROR_LOG(rc);
+            return NULL;
+        }
         
-        if (ORTE_SUCCESS != (rc = orte_bitmap_init (&(orte_gpr_replica_globals.srch_itag), 64))) {
+        if (ORTE_SUCCESS != (rc = orte_bitmap_init(&(orte_gpr_replica_globals.srch_itag), 64))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
@@ -667,6 +701,10 @@ int orte_gpr_replica_finalize(void)
     
     if (NULL != orte_gpr_replica_globals.srch_ival) {
         OBJ_RELEASE(orte_gpr_replica_globals.srch_ival);
+    }
+
+    if (NULL != orte_gpr_replica_globals.acted_upon) {
+        OBJ_RELEASE(orte_gpr_replica_globals.acted_upon);
     }
 
     /* All done */

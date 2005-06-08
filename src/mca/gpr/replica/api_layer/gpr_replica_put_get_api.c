@@ -36,7 +36,6 @@ int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values)
 {
     int rc = ORTE_SUCCESS;
     size_t i, j;
-    int8_t action_taken;
     orte_gpr_value_t *val;
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *itags=NULL;
@@ -63,12 +62,14 @@ int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values)
         for (j=0; j < val->cnt; j++) {
             if (NULL == (val->keyvals[j])->key) {
                 ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
                 return ORTE_ERR_BAD_PARAM;
             }
         }
         
         /* find the segment */
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, val->segment))) {
+            ORTE_ERROR_LOG(rc);
             OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;
         }
@@ -76,16 +77,17 @@ int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values)
         /* convert tokens to array of itags */
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&itags, seg,
                                             val->tokens, &(val->num_tokens)))) {
+            ORTE_ERROR_LOG(rc);
             OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;
         }
     
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_put_fn(val->addr_mode, seg, itags, val->num_tokens,
-    				val->cnt, val->keyvals, &action_taken))) {
+    				val->cnt, val->keyvals))) {
             goto CLEANUP;
         }
     
-        if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_subscriptions(seg, action_taken))) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_subscriptions(seg))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }

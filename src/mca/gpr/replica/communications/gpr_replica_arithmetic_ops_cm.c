@@ -78,7 +78,7 @@ int orte_gpr_replica_recv_increment_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
 
     if (ORTE_SUCCESS == ret) {
         if (ORTE_SUCCESS != 
-            (rc = orte_gpr_replica_check_subscriptions(seg, ORTE_GPR_REPLICA_VALUE_INCREMENTED))) {
+            (rc = orte_gpr_replica_check_subscriptions(seg))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -141,7 +141,7 @@ int orte_gpr_replica_recv_decrement_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
 
     if (ORTE_SUCCESS == ret) {
         if (ORTE_SUCCESS != 
-            (rc = orte_gpr_replica_check_subscriptions(seg, ORTE_GPR_REPLICA_VALUE_DECREMENTED))) {
+            (rc = orte_gpr_replica_check_subscriptions(seg))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

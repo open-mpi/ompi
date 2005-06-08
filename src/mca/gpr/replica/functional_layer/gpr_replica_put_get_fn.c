@@ -124,8 +124,7 @@ OBJ_CLASS_INSTANCE(
 int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
                             orte_gpr_replica_segment_t *seg,
                             orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
-                            size_t cnt, orte_gpr_keyval_t **keyvals,
-                            int8_t *action_taken)
+                            size_t cnt, orte_gpr_keyval_t **keyvals)
 {
     orte_gpr_replica_container_t **cptr, *cptr2;
     orte_gpr_replica_itag_t itag;
@@ -150,8 +149,8 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
         }
     }
 
-    /* initialize action */
-    *action_taken = 0;
+    /* initialize storage for actions taken */
+    orte_pointer_array_clear(orte_gpr_replica_globals.acted_upon);
     
     /* extract the token address mode and overwrite permissions */
     overwrite = false;
@@ -189,14 +188,19 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
+            /* record that we did this */
+            if (ORTE_SUCCESS != (rc = orte_gpr_replica_record_action(seg, cptr2, iptr, ORTE_GPR_REPLICA_ENTRY_ADDED))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
         }
-        *action_taken = ORTE_GPR_REPLICA_ENTRY_ADDED;
+
     } else {  /* otherwise, go through list of containers. For each one,
                  see if entry already exists in container - overwrite if allowed */
         cptr = (orte_gpr_replica_container_t**)(orte_gpr_replica_globals.srch_cptr)->addr;
         for (j=0; j < (orte_gpr_replica_globals.srch_cptr)->size; j++) {
             if (NULL != cptr[j]) {
-                for (i=0; i < cnt; i++) {
+                for (i=0; i < cnt; i++) {  /* for each provided keyval */
                     if (ORTE_SUCCESS == orte_gpr_replica_create_itag(&itag, seg, keyvals[i]->key) &&
                         ORTE_SUCCESS == orte_gpr_replica_search_container(&num_found,
                                                 ORTE_GPR_REPLICA_OR,
@@ -209,18 +213,30 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
                                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_keyval(seg, cptr[j], keyvals[i]))) {
                                     return rc;
                                 }
-                                *action_taken = *action_taken | ORTE_GPR_REPLICA_ENTRY_CHANGED;
+                                /* action is recorded in update function - don't do it here */
+                                /* turn off the overwrite flag so that any subsequent entries are
+                                 * added - otherwise, only the last value provided would be retained!
+                                 */
+                                overwrite = false;
                              } else {
                                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_keyval(&iptr, seg, cptr[j], keyvals[i]))) {
                                     return rc;
                                 }
-                                *action_taken = *action_taken | ORTE_GPR_REPLICA_ENTRY_ADDED;
+                                /* record that we did this */
+                                if (ORTE_SUCCESS != (rc = orte_gpr_replica_record_action(seg, cptr[j], iptr, ORTE_GPR_REPLICA_ENTRY_CHANGED))) {
+                                    ORTE_ERROR_LOG(rc);
+                                    return rc;
+                                }
                              }
                         } else { /* new key - add to container */
                             if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_keyval(&iptr, seg, cptr[j], keyvals[i]))) {
                                 return rc;
                             }
-                            *action_taken = *action_taken | ORTE_GPR_REPLICA_ENTRY_ADDED;
+                            /* record that we did this */
+                            if (ORTE_SUCCESS != (rc = orte_gpr_replica_record_action(seg, cptr[j], iptr, ORTE_GPR_REPLICA_ENTRY_ADDED))) {
+                                ORTE_ERROR_LOG(rc);
+                                return rc;
+                            }
                         }
                     }
                 }

@@ -289,7 +289,7 @@ int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, size_t num_su
             
             /* check the triggers on this segment before leaving to see if they are already fired */
             if (ORTE_SUCCESS != 
-                (rc = orte_gpr_replica_check_subscriptions(seg, ORTE_GPR_REPLICA_NO_ACTION))) {
+                (rc = orte_gpr_replica_check_subscriptions(seg))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
