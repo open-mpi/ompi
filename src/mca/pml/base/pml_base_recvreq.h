@@ -20,6 +20,8 @@
 #define MCA_PML_BASE_RECV_REQUEST_H
 
 #include "mca/pml/base/pml_base_request.h"
+#include "datatype/convertor.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -29,6 +31,7 @@ extern "C" {
  */
 struct mca_pml_base_recv_request_t {
    mca_pml_base_request_t req_base;  /**< base request */
+   ompi_convertor_t req_convertor;   /**< convertor that describes this datatype */
    size_t req_bytes_packed;          /**< size of message being received */
 };
 typedef struct mca_pml_base_recv_request_t mca_pml_base_recv_request_t;

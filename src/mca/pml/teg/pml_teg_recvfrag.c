@@ -56,7 +56,7 @@ bool mca_pml_teg_recv_frag_match(
         /*
          * Initialize request status.
          */
-        request->req_recv.req_bytes_packed = header->hdr_msg_length;
+        /* TODO request->req_recv.req_bytes_packed = header->hdr_msg_length; */
         request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = header->hdr_src;
         request->req_recv.req_base.req_ompi.req_status.MPI_TAG = header->hdr_tag;
 
@@ -79,9 +79,7 @@ bool mca_pml_teg_recv_frag_match(
                     request->req_recv.req_base.req_comm,header->hdr_src,ptl);
             }
 
-            /* notify ptl of match */
-            ptl->ptl_matched(ptl, frag);
-
+            MCA_PML_TEG_RECV_MATCHED( ptl, frag );
         };
 
         /* process any additional fragments that arrived out of order */

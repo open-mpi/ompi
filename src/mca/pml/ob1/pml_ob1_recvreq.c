@@ -173,8 +173,8 @@ void mca_pml_ob1_recv_request_progress(
     mca_bmi_base_segment_t* segments,
     size_t num_segments)
 {
-    uint64_t bytes_received = 0;
-    uint64_t bytes_delivered = 0;
+    size_t bytes_received = 0;
+    size_t bytes_delivered = 0;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
 
     switch(hdr->hdr_common.hdr_type) {

@@ -189,7 +189,8 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
     struct iovec iov;
-    unsigned int max_data, iov_count;
+    unsigned int iov_count;
+    size_t max_data;
     int rc, freeAfter;
 
     if(sendreq->req_count > 0) {
@@ -221,30 +222,24 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
 
         /* setup convertor to point to app buffer */
-        ompi_convertor_init_for_send( &sendreq->req_convertor,
-           0,
-           sendreq->req_base.req_datatype,
-           sendreq->req_base.req_count,
-           sendreq->req_base.req_addr,
-           0, NULL );
+        ompi_convertor_set_position( &sendreq->req_convertor, 0 );
+        /* REMOVE ME ompi_convertor_init_for_send( &sendreq->req_convertor,
+           0, sendreq->req_base.req_datatype, sendreq->req_base.req_count,
+           sendreq->req_base.req_addr, 0, NULL ); */
 
         /* pack */
         iov.iov_base = sendreq->req_addr;
         iov.iov_len = sendreq->req_count;
         iov_count = 1;
         max_data = iov.iov_len;
-        if((rc = ompi_convertor_pack(&sendreq->req_convertor, &iov, &iov_count, 
-				         &max_data, &freeAfter)) <= 0) {
+        if((rc = ompi_convertor_pack( &sendreq->req_convertor, &iov, &iov_count, 
+                                      &max_data, &freeAfter )) <= 0) {
             return OMPI_ERROR;
         }
  
         /* setup convertor to point to packed buffer */
-        ompi_convertor_init_for_send( &sendreq->req_convertor,
-           0,
-           sendreq->req_datatype,
-           sendreq->req_count,
-           sendreq->req_addr,
-           0, NULL );
+        ompi_convertor_prepare_for_send( &sendreq->req_convertor, MPI_PACKED,
+                                         max_data, sendreq->req_addr );
     }
     sendreq->req_base.req_ompi.req_complete = true;
     return OMPI_SUCCESS;;

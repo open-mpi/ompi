@@ -101,10 +101,10 @@ extern "C" {
     * @return       mca_pml_proc_t instance
     */
 
-   static inline struct mca_ptl_base_peer_t* mca_pml_uniq_proc_lookup_remote_peer(
-                                                                                  ompi_communicator_t* comm, 
-                                                                                  int rank, 
-                                                                                  struct mca_ptl_base_module_t* ptl)
+   static inline struct mca_ptl_base_peer_t*
+      mca_pml_uniq_proc_lookup_remote_peer( ompi_communicator_t* comm, 
+                                            int rank, 
+                                            struct mca_ptl_base_module_t* ptl)
    {
       ompi_proc_t* proc = comm->c_remote_group->grp_proc_pointers[rank];
       mca_pml_proc_t* proc_pml = proc->proc_pml;
