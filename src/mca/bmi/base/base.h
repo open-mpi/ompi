@@ -35,6 +35,7 @@ struct mca_bmi_base_selected_module_t {
 };
 typedef struct mca_bmi_base_selected_module_t mca_bmi_base_selected_module_t;
 
+OBJ_CLASS_DECLARATION(mca_bmi_base_selected_module_t); 
 
 /*
  * Global functions for MCA: overall BMI open and close
