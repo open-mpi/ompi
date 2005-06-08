@@ -24,6 +24,12 @@
 #include "mca/bmi/bmi.h"
 #include "mca/bmi/base/base.h"
 
+OBJ_CLASS_INSTANCE(
+   mca_bmi_base_selected_module_t,
+   ompi_list_item_t,
+   NULL,
+   NULL);
+
 /**
  * Function for weeding out bmi components that don't want to run.
  *
@@ -120,11 +126,10 @@ int mca_bmi_base_select(bool enable_progress_threads,
                            "select: init returned success");
 
         for (i = 0; i < num_bmis; ++i) {
-          sm = malloc(sizeof(mca_bmi_base_selected_module_t));
+          sm = OBJ_NEW(mca_bmi_base_selected_module_t);
           if (NULL == sm) {
             return OMPI_ERR_OUT_OF_RESOURCE;
           }
-          OBJ_CONSTRUCT(sm, ompi_list_item_t);
           sm->bmi_component = component;
           sm->bmi_module = modules[i];
           ompi_list_append(&mca_bmi_base_modules_initialized,
