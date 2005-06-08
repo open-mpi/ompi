@@ -47,4 +47,4 @@ int opal_init(void)
 
     return ORTE_SUCCESS;
 }
-    
+
