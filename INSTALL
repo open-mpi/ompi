@@ -13,24 +13,39 @@ Additional copyrights may follow
 $HEADER$
 
 If you have checked out a DEVELOPER'S COPY of Open MPI (i.e., you
-checked out from subversion), you must first run:
+checked out from subversion), you should read the HACKING file before
+attempting to build Open MPI.  You must also first run:
 
 shell$ ./autogen.sh 
 
 You will need very recent versions of GNU Autoconf, Automake, and
 Libtool.  If autogen.sh fails, read the HACKING file.
 
+
 Everyone must run "configure" and "make" to build Open MPI.  Execute
 the following commands to install the Open MPI system from within
 the directory at the top of the tree:
 
 shell$ ./configure --prefix=/where/to/install
+[...lots of output...]
 shell$ make all install
 
 If you need special access to install, then you can execute "make
 all" as a user with write permissions in the build tree, and a
 separate "make install" as a user with write permissions to the
 install tree.
+
+
+Note that VPATH builds are fully supported.  For example:
+
+shell$ gtar zxf openmpi-1.2.3.tar.gz
+shell$ cd openmpi-1.2.3
+shell$ mkdir build
+shell$ cd build
+shell$ ../configure ...
+[...lots of output...]
+shell$ make all install
+
 
 To compile an MPI program:
 
