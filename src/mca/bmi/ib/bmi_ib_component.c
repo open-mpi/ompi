@@ -127,12 +127,12 @@ int mca_bmi_ib_component_open(void)
         mca_bmi_ib_param_register_int ("first_frag_size",
                                        (MCA_BMI_IB_FIRST_FRAG_SIZE
                                         - sizeof(mca_bmi_ib_header_t)));
-    mca_bmi_ib_module.super.bmi_min_frag_size =
-        mca_bmi_ib_param_register_int ("min_frag_size",
+    mca_bmi_ib_module.super.bmi_min_send_size =
+        mca_bmi_ib_param_register_int ("min_send_size",
                                        (MCA_BMI_IB_FIRST_FRAG_SIZE 
                                         - sizeof(mca_bmi_ib_header_t)));
-    mca_bmi_ib_module.super.bmi_max_frag_size =
-        mca_bmi_ib_param_register_int ("max_frag_size", 2<<30);
+    mca_bmi_ib_module.super.bmi_max_send_size =
+        mca_bmi_ib_param_register_int ("max_send_size", 2<<30);
     
     
     

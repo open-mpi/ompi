@@ -405,32 +405,6 @@ typedef struct mca_bmi_base_descriptor_t* (*mca_bmi_base_module_prepare_fn_t)(
 );
 
 /**
- * Pack data and return a descriptor that can be
- * used for send/put.
- *
- * @param bmi (IN)      BMI module
- * @param endpoint (IN)     BMI peer addressing
- */
-
-typedef struct mca_bmi_base_descriptor_t* (*mca_bmi_base_module_prepare_dst_fn_t)(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* endpoint,
-    struct ompi_convertor_t* convertor,
-    size_t reserve,
-    size_t* size
-);
-
-
-typedef int (*mca_bmi_base_module_unpack_fn_t)(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* peer,
-    struct ompi_convertor_t* convertor,
-    struct mca_bmi_base_descriptor_t* descriptor
-);
-
-
-
-/**
  * Initiate a send to the peer.
  *
  * @param bmi (IN)      BMI module
@@ -480,8 +454,10 @@ struct mca_bmi_base_module_t {
     /* BMI common attributes */
     mca_bmi_base_component_t* bmi_component; /**< pointer back to the BMI component structure */
     size_t      bmi_eager_limit;      /**< maximum size of first fragment -- eager send */
-    size_t      bmi_min_frag_size;    /**< threshold below which the BMI will not fragment */
-    size_t      bmi_max_frag_size;    /**< maximum fragment size supported by the BMI */
+    size_t      bmi_min_send_size;    /**< threshold below which the BMI should not fragment */
+    size_t      bmi_max_send_size;    /**< maximum send fragment size supported by the BMI */
+    size_t      bmi_min_rdma_size;    /**< threshold below which the BMI should not fragment */
+    size_t      bmi_max_rdma_size;    /**< maximum rdma fragment size supported by the BMI */
     uint32_t    bmi_exclusivity;      /**< indicates this BMI should be used exclusively */
     uint32_t    bmi_latency;          /**< relative ranking of latency used to prioritize bmis */
     uint32_t    bmi_bandwidth;        /**< bandwidth (Mbytes/sec) supported by each endpoint */

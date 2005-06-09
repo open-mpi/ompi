@@ -149,7 +149,7 @@ static void mca_pml_ob1_send_completion(
     bmi_ep->bmi_free(bmi_ep->bmi, descriptor);
 
     /* check for request completion */
-    if (OMPI_THREAD_ADD32(&sendreq->req_send_pending,-1) == 0 &&
+    if (OMPI_THREAD_ADD32(&sendreq->req_pipeline_depth,-1) == 0 &&
         sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
         sendreq->req_send.req_base.req_pml_complete = true;
         if (sendreq->req_send.req_base.req_ompi.req_complete == false) {
@@ -174,7 +174,7 @@ static void mca_pml_ob1_send_completion(
     /* advance pending requests */
     while(NULL != sendreq) {
         switch(sendreq->req_state) {
-            case MCA_PML_OB1_SR_SEND:
+            case MCA_PML_OB1_SR_ACKED:
                 mca_pml_ob1_send_request_schedule(sendreq);
                 break;
             default:
@@ -342,7 +342,7 @@ int mca_pml_ob1_send_request_start(
         }
     }
     descriptor->des_cbdata = sendreq;
-    OMPI_THREAD_ADD32(&sendreq->req_send_pending,1);
+    OMPI_THREAD_ADD32(&sendreq->req_pipeline_depth,1);
 
     /* send */
     rc = endpoint->bmi_send(
@@ -373,37 +373,34 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
         mca_pml_ob1_proc_t* proc = sendreq->req_proc;
         size_t num_bmi_avail = mca_pml_ob1_ep_array_get_size(&proc->bmi_send);
         do {
-            /* allocate remaining bytes to PTLs */
+            /* allocate remaining bytes to BMIs */
             size_t bytes_remaining = sendreq->req_rdma_offset - sendreq->req_send_offset;
-            while(bytes_remaining > 0 && sendreq->req_send_pending < mca_pml_ob1.send_pipeline_depth) {
+            while(bytes_remaining > 0 && sendreq->req_pipeline_depth < mca_pml_ob1.send_pipeline_depth) {
                 mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_send);
                 mca_pml_ob1_frag_hdr_t* hdr;
                 mca_bmi_base_descriptor_t* des;
                 int rc;
 
-                /* if this is the last PTL that is available to use, or the number of
-                 * bytes remaining in the message is less than the PTLs minimum fragment
-                 * size, then go ahead and give the rest of the message to this PTL.
+                /* if there is only one bmi available or the size is less than
+                 * than the min fragment size, schedule the rest via this bmi
                  */
                 size_t size;
-                if(bytes_remaining < ep->bmi_min_frag_size) {
+                if(num_bmi_avail == 1 || bytes_remaining < ep->bmi_min_send_size) {
                     size = bytes_remaining;
 
-                /* otherwise attempt to give the PTL a percentage of the message
+                /* otherwise attempt to give the BMI a percentage of the message
                  * based on a weighting factor. for simplicity calculate this as
                  * a percentage of the overall message length (regardless of amount
                  * previously assigned)
                  */
-                } else if (num_bmi_avail > 1) {
-                    size = (ep->bmi_weight * bytes_remaining) / 100;
                 } else {
-                    size = ep->bmi_min_frag_size;
-                }
+                    size = (ep->bmi_weight * bytes_remaining) / 100;
+                } 
 
-                /* makes sure that we don't exceed ptl_max_frag_size */
-                if (ep->bmi_max_frag_size != 0 && 
-                    size > ep->bmi_max_frag_size - sizeof(mca_pml_ob1_frag_hdr_t)) {
-                    size = ep->bmi_max_frag_size - sizeof(mca_pml_ob1_frag_hdr_t);
+                /* makes sure that we don't exceed BMI max send size */
+                if (ep->bmi_max_send_size != 0 && 
+                    size > ep->bmi_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t)) {
+                    size = ep->bmi_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t);
                 }
                                                                                                                   
                 /* pack into a descriptor */
@@ -433,7 +430,7 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
 
                 /* update state */
                 sendreq->req_send_offset += size;
-                OMPI_THREAD_ADD32(&sendreq->req_send_pending,1);
+                OMPI_THREAD_ADD32(&sendreq->req_pipeline_depth,1);
 
                 /* initiate send - note that this may complete before the call returns */
                 rc = ep->bmi_send(ep->bmi, ep->bmi_endpoint, des, MCA_BMI_TAG_PML);
@@ -441,7 +438,8 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                     bytes_remaining = sendreq->req_rdma_offset - sendreq->req_send_offset;
                 } else {
                     sendreq->req_send_offset -= size;
-                    OMPI_THREAD_ADD32(&sendreq->req_send_pending,-1);
+                    OMPI_THREAD_ADD32(&sendreq->req_pipeline_depth,-1);
+                    ep->bmi_free(ep->bmi,des);
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
                     ompi_list_append(&mca_pml_ob1.send_pending, (ompi_list_item_t*)sendreq);
                     OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);

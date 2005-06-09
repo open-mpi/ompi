@@ -200,6 +200,7 @@ static int mca_ptl_ib_peer_start_connect(mca_ptl_base_peer_t* peer)
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
+    D_PRINT("mca_ptl_ib_peer_start_connect: qp_num=%d lid=%d", peer->lcl_qp_prop.qp_num, ib_ptl->port.lid);
 
     /* Send connection info over to remote peer */
     peer->peer_state = MCA_PTL_IB_CONNECTING;
@@ -232,6 +233,7 @@ static int mca_ptl_ib_peer_reply_start_connect(mca_ptl_ib_peer_t *peer, orte_buf
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
+    D_PRINT("mca_ptl_ib_peer_reply_start_connect: qp_num=%d lid=%d", peer->lcl_qp_prop.qp_num, ib_ptl->port.lid);
 
     /* Set the remote side info */
     mca_ptl_ib_peer_set_remote_info(peer, buffer);

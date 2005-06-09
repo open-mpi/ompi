@@ -33,8 +33,7 @@ extern "C" {
 typedef enum {
     MCA_PML_OB1_SR_INIT,
     MCA_PML_OB1_SR_START,
-    MCA_PML_OB1_SR_SEND,
-    MCA_PML_OB1_SR_PUT,
+    MCA_PML_OB1_SR_ACKED,
     MCA_PML_OB1_SR_COMPLETE
 } mca_pml_ob1_send_request_state_t;
 
@@ -46,8 +45,8 @@ struct mca_pml_ob1_send_request_t {
     mca_pml_ob1_send_request_state_t req_state;
     ompi_ptr_t req_recv;
     int32_t req_lock;
+    size_t req_pipeline_depth;
     size_t req_bytes_delivered;
-    size_t req_send_pending;
     size_t req_send_offset;
     size_t req_rdma_offset;
 };
@@ -112,9 +111,9 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     /* select next endpoint */                                                            \
     endpoint = mca_pml_ob1_ep_array_get_next(&proc->bmi_eager);                           \
     sendreq->req_lock = 0;                                                                \
+    sendreq->req_pipeline_depth = 0;                                                      \
     sendreq->req_bytes_delivered = 0;                                                     \
     sendreq->req_send_offset = 0;                                                         \
-    sendreq->req_send_pending = 0;                                                        \
     sendreq->req_state = MCA_PML_OB1_SR_START;                                            \
     sendreq->req_send.req_base.req_ompi.req_complete = false;                             \
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
@@ -156,6 +155,16 @@ int mca_pml_ob1_send_request_start(
 int mca_pml_ob1_send_request_schedule(
     mca_pml_ob1_send_request_t* sendreq);
 
+/**
+ *
+ */
+
+int mca_pml_ob1_send_request_put(
+    mca_pml_ob1_send_request_t* sendreq,
+    mca_bmi_base_module_t* bmi,
+    mca_pml_ob1_rdma_hdr_t* hdr);
+
+ 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

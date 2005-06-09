@@ -88,6 +88,7 @@ int mca_pml_ob1_component_open(void)
 
     /* pending operations */
     OBJ_CONSTRUCT(&mca_pml_ob1.send_pending, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, ompi_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.acks_pending, ompi_list_t);
 
     mca_pml_ob1.bmi_components = NULL;
@@ -148,6 +149,7 @@ int mca_pml_ob1_component_close(void)
     }
     OBJ_DESTRUCT(&mca_pml_ob1.acks_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.send_pending);
+    OBJ_DESTRUCT(&mca_pml_ob1.recv_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.send_requests);
     OBJ_DESTRUCT(&mca_pml_ob1.recv_requests);
     OBJ_DESTRUCT(&mca_pml_ob1.lock);

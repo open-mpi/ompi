@@ -48,8 +48,10 @@ mca_bmi_sm_t mca_bmi_sm[2] = {
         {
         &mca_bmi_sm_component.super,
         0, /* bmi_eager_limit */
-        0, /* bmi_min_frag_size */
-        0, /* bmi_max_frag_size */
+        0, /* bmi_min_send_size */
+        0, /* bmi_max_send_size */
+        0, /* bmi_min_rdma_size */
+        0, /* bmi_max_rdma_size */
         0, /* bmi_exclusivity */
         0, /* bmi_latency */
         0, /* bmi_bandwidth */
@@ -71,8 +73,10 @@ mca_bmi_sm_t mca_bmi_sm[2] = {
         {
         &mca_bmi_sm_component.super,
         0, /* bmi_eager_limit */
-        0, /* bmi_min_frag_size */
-        0, /* bmi_max_frag_size */
+        0, /* bmi_min_send_size */
+        0, /* bmi_max_send_size */
+        0, /* bmi_min_rdma_size */
+        0, /* bmi_max_rdma_size */
         0, /* bmi_exclusivity */
         0, /* bmi_latency */
         0, /* bmi_bandwidth */
