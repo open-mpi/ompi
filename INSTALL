@@ -12,6 +12,10 @@ Additional copyrights may follow
 
 $HEADER$
 
+
+Developer Builds
+================
+
 If you have checked out a DEVELOPER'S COPY of Open MPI (i.e., you
 checked out from subversion), you should read the HACKING file before
 attempting to build Open MPI.  You must also first run:
@@ -22,9 +26,12 @@ You will need very recent versions of GNU Autoconf, Automake, and
 Libtool.  If autogen.sh fails, read the HACKING file.
 
 
-Everyone must run "configure" and "make" to build Open MPI.  Execute
-the following commands to install the Open MPI system from within
-the directory at the top of the tree:
+User Builds
+===========
+
+Building Open MPI is typically a combination of running "configure"
+and "make".  Execute the following commands to install the Open MPI
+system from within the directory at the top of the tree:
 
 shell$ ./configure --prefix=/where/to/install
 [...lots of output...]
@@ -35,6 +42,9 @@ all" as a user with write permissions in the build tree, and a
 separate "make install" as a user with write permissions to the
 install tree.
 
+Compiling support for GM or enabling shared-memory support on selected
+Power PC architectures require additional flags to configure.  See the
+README file for more details.
 
 Note that VPATH builds are fully supported.  For example:
 
@@ -47,10 +57,17 @@ shell$ ../configure ...
 shell$ make all install
 
 
-To compile an MPI program:
+Compiling MPI Applications
+==========================
+
+MPI applications should be compiled using the Open MPI "wrapper"
+compilers:
 
 C programs:   mpicc your-code.c
 C++ programs: mpiCC your-code.cc    or
               mpic++ your-code.cc   (for case-insensitive filesystems)
 F77 programs: mpif77 your-code.f
 F90 programs: mpif90 your-code.f90
+
+These compilers simply add various command line flags (such as -lmpi)
+and invoke a back-end compiler; they are not compilers in themselves.
