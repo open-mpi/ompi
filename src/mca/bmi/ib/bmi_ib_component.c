@@ -32,7 +32,10 @@
 #include "bmi_ib.h"
 #include "bmi_ib_frag.h"
 #include "bmi_ib_endpoint.h" 
-
+#include "mca/bmi/base/base.h" 
+#include <vapi.h> 
+#include <vapi_common.h> 
+#include "datatype/convertor.h" 
 mca_bmi_ib_component_t mca_bmi_ib_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -125,16 +128,18 @@ int mca_bmi_ib_component_open(void)
         mca_bmi_ib_param_register_int ("exclusivity", 0);
     mca_bmi_ib_module.super.bmi_eager_limit = 
         mca_bmi_ib_param_register_int ("first_frag_size",
-                                       (MCA_BMI_IB_FIRST_FRAG_SIZE
+                                       (64*1024
                                         - sizeof(mca_bmi_ib_header_t)));
     mca_bmi_ib_module.super.bmi_min_send_size =
         mca_bmi_ib_param_register_int ("min_send_size",
-                                       (MCA_BMI_IB_FIRST_FRAG_SIZE 
+                                       (64*1024 
                                         - sizeof(mca_bmi_ib_header_t)));
     mca_bmi_ib_module.super.bmi_max_send_size =
-        mca_bmi_ib_param_register_int ("max_send_size", 2<<30);
+        mca_bmi_ib_param_register_int ("max_send_size", 128*1024);
     
     
+    mca_bmi_ib_component.max_send_size = mca_bmi_ib_module.super.bmi_max_send_size; 
+    mca_bmi_ib_component.eager_limit = mca_bmi_ib_module.super.bmi_eager_limit; 
     
     return OMPI_SUCCESS;
 }
@@ -162,37 +167,95 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
 {
     VAPI_ret_t vapi_ret;
     VAPI_hca_id_t* hca_ids;
+    VAPI_hca_hndl_t hca_hndl; 
+    VAPI_hca_vendor_t hca_vendor; 
+    VAPI_hca_cap_t hca_cap; 
+    VAPI_hca_port_t hca_port; 
+    uint32_t num_hcas; 
     mca_bmi_base_module_t** bmis;
-    int i, length;
+    int i,j,k, length;
     mca_common_vapi_hca_pd_t hca_pd; 
-
+    ompi_list_t bmi_list; 
+    mca_bmi_ib_module_t * ib_bmi; 
+    mca_bmi_base_selected_module_t* ib_selected; 
+    ompi_list_item_t* item; 
     /* initialization */
     *num_bmi_modules = 0;
 
-    /* Determine the number of hca's available on the host */
-    vapi_ret=EVAPI_list_hcas(0, &(mca_bmi_ib_component.ib_num_bmis), NULL);
-    if( VAPI_EAGAIN != vapi_ret || 0 == mca_bmi_ib_component.ib_num_bmis ) {
+ /* Determine the number of hca's available on the host */
+    vapi_ret=EVAPI_list_hcas(0, &num_hcas, NULL);
+    if( VAPI_EAGAIN != vapi_ret || 0 == num_hcas ) {
         ompi_output(0,"No hca's found on this host \n"); 
         return NULL;
     }
 
     /* Allocate space for the hca's */ 
-    hca_ids = (VAPI_hca_id_t*) malloc(mca_bmi_ib_component.ib_num_bmis * sizeof(VAPI_hca_id_t));
+    hca_ids = (VAPI_hca_id_t*) malloc(num_hcas * sizeof(VAPI_hca_id_t));
     if(NULL == hca_ids) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
     }
 
     /* obtain a list of the hca's on this host */ 
-    vapi_ret=EVAPI_list_hcas(mca_bmi_ib_component.ib_num_bmis, &mca_bmi_ib_component.ib_num_bmis, hca_ids);
+    vapi_ret=EVAPI_list_hcas(num_hcas, &num_hcas, hca_ids);
     if( VAPI_OK != vapi_ret ) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
     }
-                                                                                                                      
+        
+    /** We must loop through all the hca id's, get there handles and 
+        for each hca we query the number of ports on the hca and set up 
+        a distinct bmi module for each hca port */ 
+
+    OBJ_CONSTRUCT(&bmi_list, ompi_list_t); 
+    
+    for(i = 0; i < num_hcas; i++){  
+        vapi_ret = EVAPI_get_hca_hndl(hca_ids[i], &hca_hndl); 
+        if(VAPI_OK != vapi_ret) { 
+            ompi_output(0, "%s:error getting hca handle\n", __func__); 
+            return OMPI_ERROR; 
+        } 
+        
+
+        vapi_ret = VAPI_query_hca_cap(hca_hndl, &hca_vendor, &hca_cap); 
+         if(VAPI_OK != vapi_ret) { 
+            ompi_output(0, "%s:error getting hca properties\n", __func__); 
+            return OMPI_ERROR; 
+        } 
+         
+         
+         /* Note ports are 1 based hence j = 1 */
+         for(j = 1; j <= hca_cap.phys_port_num; j++){ 
+             vapi_ret = VAPI_query_hca_port_prop(hca_hndl, (IB_port_t) j, &hca_port);  
+             if(VAPI_OK != vapi_ret) { 
+                 ompi_output(0, "%s:error getting hca port properties\n", __func__); 
+                 return OMPI_ERROR; 
+             } 
+             
+             if( PORT_ACTIVE == hca_port.state ){ 
+                 
+                 ib_bmi = (mca_bmi_ib_module_t*) malloc(sizeof(mca_bmi_ib_module_t)); 
+                 memcpy(ib_bmi, &mca_bmi_ib_module, sizeof(mca_bmi_ib_module));
+                 
+                 ib_selected = OBJ_NEW(mca_bmi_base_selected_module_t); 
+                 ib_selected->bmi_module = (mca_bmi_base_module_t*) ib_bmi; 
+                 memcpy(ib_bmi->hca_id,   hca_ids[i], sizeof(VAPI_hca_id_t)); 
+                 ib_bmi->nic = hca_hndl; 
+                 ib_bmi->port_id = (IB_port_t) j; 
+                 ib_bmi->port = hca_port; 
+                 ompi_list_append(&bmi_list, (ompi_list_item_t*) ib_selected);
+                 mca_bmi_ib_component.ib_num_bmis ++; 
+                 
+            } 
+        }
+ 
+    }
+    
+    
     /* Allocate space for bmi modules */
     mca_bmi_ib_component.ib_bmis = (mca_bmi_ib_module_t*) malloc(sizeof(mca_bmi_ib_module_t) * 
                                                                  mca_bmi_ib_component.ib_num_bmis);
+    
     if(NULL == mca_bmi_ib_component.ib_bmis) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
@@ -205,23 +268,32 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
     }
 
     
+    
+    for(i = 0; i < mca_bmi_ib_component.ib_num_bmis; i++){
+        item = ompi_list_remove_first(&bmi_list); 
+        ib_selected = (mca_bmi_base_selected_module_t*)item; 
+        ib_bmi = (mca_bmi_ib_module_t*) ib_selected->bmi_module; 
+        memcpy(&(mca_bmi_ib_component.ib_bmis[i]), ib_bmi , sizeof(mca_bmi_ib_module_t)); 
+        free(ib_selected); 
+        free(ib_bmi); 
 
-    /* Initialize each module */
-    for(i = 0; i < mca_bmi_ib_component.ib_num_bmis; i++) {
-        mca_bmi_ib_module_t* ib_bmi = &mca_bmi_ib_component.ib_bmis[i];
+        ib_bmi = &mca_bmi_ib_component.ib_bmis[i];
         
         /* Initialize the modules function pointers */
-        memcpy(ib_bmi, &mca_bmi_ib_module, sizeof(mca_bmi_ib_module));
+        
 
         /* Initialize module state */
-        OBJ_CONSTRUCT(&ib_bmi->send_free, ompi_free_list_t);
+        OBJ_CONSTRUCT(&ib_bmi->send_free_eager, ompi_free_list_t);
+        OBJ_CONSTRUCT(&ib_bmi->send_free_max, ompi_free_list_t);
+        OBJ_CONSTRUCT(&ib_bmi->send_free_frag, ompi_free_list_t);
         OBJ_CONSTRUCT(&ib_bmi->recv_free, ompi_free_list_t);
         
+
         OBJ_CONSTRUCT(&ib_bmi->repost, ompi_list_t);
 
         
       
-        memcpy(ib_bmi->hca_id, hca_ids[i], sizeof(ib_bmi->hca_id));
+
         if(mca_bmi_ib_module_init(ib_bmi) != OMPI_SUCCESS) {
             free(hca_ids);
             return NULL;
@@ -234,19 +306,39 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
         ib_bmi->ib_pool = 
             mca_mpool_base_module_create(mca_bmi_ib_component.ib_mpool_name, &hca_pd); 
         
+        if(NULL == ib_bmi->ib_pool) { 
+            ompi_output(0, "%s: error creating vapi memory pool! aborting ib bmi initialization", __func__); 
+            return NULL; 
+        }
         /* Initialize pool of send fragments */ 
         
         length = sizeof(mca_bmi_ib_frag_t) + 
             sizeof(mca_bmi_ib_header_t) + 
             ib_bmi->super.bmi_eager_limit; 
         
-        ompi_free_list_init(&ib_bmi->send_free,
+        ompi_free_list_init(&ib_bmi->send_free_eager,
                             length, 
-                            OBJ_CLASS(mca_bmi_ib_send_frag_t),
+                            OBJ_CLASS(mca_bmi_ib_send_frag_eager_t),
                             mca_bmi_ib_component.ib_free_list_num,
                             mca_bmi_ib_component.ib_free_list_max,
                             mca_bmi_ib_component.ib_free_list_inc,
                             ib_bmi->ib_pool);
+        
+        
+        
+        length = sizeof(mca_bmi_ib_frag_t) + 
+            sizeof(mca_bmi_ib_header_t) + 
+            ib_bmi->super.bmi_max_send_size; 
+        
+        
+        ompi_free_list_init(&ib_bmi->send_free_max,
+                            length, 
+                            OBJ_CLASS(mca_bmi_ib_send_frag_max_t),
+                            mca_bmi_ib_component.ib_free_list_num,
+                            mca_bmi_ib_component.ib_free_list_max,
+                            mca_bmi_ib_component.ib_free_list_inc,
+                            ib_bmi->ib_pool);
+        
         
         
         /* Initialize pool of receive fragments */
@@ -257,6 +349,22 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
                              mca_bmi_ib_component.ib_free_list_max,
                              mca_bmi_ib_component.ib_free_list_inc, ib_bmi->ib_pool);
 
+        
+        length = sizeof(mca_bmi_ib_frag_t) + 
+            sizeof(mca_bmi_ib_header_t); 
+
+        ib_bmi->super.bmi_max_send_size; 
+        
+        
+        ompi_free_list_init(&ib_bmi->send_free_frag,
+                            length, 
+                            OBJ_CLASS(mca_bmi_ib_send_frag_frag_t),
+                            mca_bmi_ib_component.ib_free_list_num,
+                            mca_bmi_ib_component.ib_free_list_max,
+                            mca_bmi_ib_component.ib_free_list_inc,
+                            ib_bmi->ib_pool);
+        
+        
         /* Initialize the rr_desc_post array for posting of rr*/ 
         ib_bmi->rr_desc_post = (VAPI_rr_desc_t*) malloc((mca_bmi_ib_component.ib_rr_buf_max * sizeof(VAPI_rr_desc_t))); 
         
@@ -351,7 +459,6 @@ int mca_bmi_ib_component_progress()
                 /* Process a completed send */
                 frag = (mca_bmi_ib_frag_t*) comp.id; 
                 frag->base.des_cbfunc(&ib_bmi->super,(mca_bmi_base_endpoint_t*) &frag->endpoint, &frag->base, frag->rc); 
-                
                 count++;
                 break;
                 
@@ -362,15 +469,16 @@ int mca_bmi_ib_component_progress()
                 frag->segment.seg_len =  comp.byte_len-sizeof(mca_bmi_ib_header_t); 
                 /* advance the segment address past the header and subtract from the length..*/ 
                 ib_bmi->ib_reg[frag->hdr->tag].cbfunc(&ib_bmi->super, frag->hdr->tag, &frag->base, ib_bmi->ib_reg[frag->hdr->tag].cbdata);         
+               
                 
-                OMPI_FREE_LIST_RETURN(&ib_bmi->recv_free, (ompi_free_list_item_t*)comp.id); 
+                OMPI_FREE_LIST_RETURN(&ib_bmi->recv_free, (ompi_free_list_item_t*) frag); 
                 
                 if(OMPI_THREAD_ADD32(&ib_bmi->rr_posted, -1)  <= mca_bmi_ib_component.ib_rr_buf_min)
                     mca_bmi_ib_endpoint_post_rr(mca_bmi_ib_component.ib_rr_buf_max - ib_bmi->rr_posted, 
-                                                ((mca_bmi_ib_recv_frag_t*)comp.id)->endpoint); 
+                                                ((mca_bmi_ib_frag_t*)comp.id)->endpoint); 
                 
                 
-                
+                               
                 count++; 
                 break;
                 
