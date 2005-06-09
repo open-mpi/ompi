@@ -27,7 +27,6 @@
 #define NUM_IB_SEND_BUF             (1)
 #define NUM_IB_RECV_BUF             (4)
 
-#define MCA_BMI_IB_FIRST_FRAG_SIZE  (65536)
 
 typedef enum {
     IB_RECV,
@@ -217,6 +216,7 @@ int mca_bmi_ib_qp_init(
     VAPI_hca_hndl_t nic,
     VAPI_qp_hndl_t qp_hndl,
     VAPI_qp_num_t remote_qp,
-    IB_lid_t remote_lid);
+    IB_lid_t remote_lid, 
+    IB_port_t port_id);
 
 #endif  /* MCA_BMI_IB_PRIV_H */

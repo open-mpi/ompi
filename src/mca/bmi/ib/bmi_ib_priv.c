@@ -23,50 +23,6 @@
 #include "bmi_ib_frag.h" 
 #include "bmi_ib_endpoint.h" 
 
-/*
- * Asynchronous event handler to detect unforseen
- * events. Usually, such events are catastrophic.
- * Should have a robust mechanism to handle these
- * events and abort the OMPI application if necessary.
- *
- */
-static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
-        VAPI_event_record_t * event_p,
-        void *priv_data)
-{
-    switch (event_p->type) {
-        case VAPI_QP_PATH_MIGRATED:
-        case VAPI_EEC_PATH_MIGRATED:
-        case VAPI_QP_COMM_ESTABLISHED:
-        case VAPI_EEC_COMM_ESTABLISHED:
-        case VAPI_SEND_QUEUE_DRAINED:
-        case VAPI_PORT_ACTIVE:
-            {
-                D_PRINT("Got an asynchronous event: %s\n",
-                        VAPI_event_record_sym(event_p->type));
-                break;
-            }
-        case VAPI_CQ_ERROR:
-        case VAPI_LOCAL_WQ_INV_REQUEST_ERROR:
-        case VAPI_LOCAL_WQ_ACCESS_VIOL_ERROR:
-        case VAPI_LOCAL_WQ_CATASTROPHIC_ERROR:
-        case VAPI_PATH_MIG_REQ_ERROR:
-        case VAPI_LOCAL_EEC_CATASTROPHIC_ERROR:
-        case VAPI_LOCAL_CATASTROPHIC_ERROR:
-        case VAPI_PORT_ERROR:
-            {
-                ompi_output(0, "Got an asynchronous event: %s (%s)",
-                        VAPI_event_record_sym(event_p->type),
-                        VAPI_event_syndrome_sym(event_p->
-                            syndrome));
-                break;
-            }
-        default:
-            ompi_output(0, "Warning!! Got an undefined "
-                    "asynchronous event\n");
-    }
-
-}
 
 /* 
  * This function returns the hca_id for each BMI
@@ -79,87 +35,50 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
  */
 
 
-static int mca_bmi_ib_get_hca_hndl(VAPI_hca_id_t hca_id,
-        VAPI_hca_hndl_t* hca_hndl) 
-{
-    VAPI_ret_t ret; 
+/* static int mca_bmi_ib_get_hca_hndl(VAPI_hca_id_t hca_id, */
+/*         VAPI_hca_hndl_t* hca_hndl)  */
+/* { */
+/*     VAPI_ret_t ret;  */
 
-    /* Open the HCA */
-    ret = EVAPI_get_hca_hndl(hca_id, hca_hndl);
+/*     /\* Open the HCA *\/ */
+/*     ret = EVAPI_get_hca_hndl(hca_id, hca_hndl); */
 
-    if(VAPI_OK != ret) {
-        MCA_BMI_IB_VAPI_RET(ret, "EVAPI_get_hca_hndl");
-        return OMPI_ERROR;
-    }
+/*     if(VAPI_OK != ret) { */
+/*         MCA_BMI_IB_VAPI_RET(ret, "EVAPI_get_hca_hndl"); */
+/*         return OMPI_ERROR; */
+/*     } */
 
-    return OMPI_SUCCESS;
-}
+/*     return OMPI_SUCCESS; */
+/* } */
 
-static int mca_bmi_ib_query_hca_prop(VAPI_hca_hndl_t nic,
-        VAPI_hca_port_t* port)
-{
-    VAPI_ret_t ret;
 
-    /* Querying for port properties */
-    ret = VAPI_query_hca_port_prop(nic,
-            (IB_port_t)DEFAULT_PORT, 
-            port);
+/* static int mca_bmi_ib_query_hca_prop(VAPI_hca_hndl_t nic)  */
+/* { */
+/*     VAPI_hca_vendor_t hca_vendor;  */
+/*     VAPI_hca_cap_t hca_cap;  */
+/*     VAPI_ret_t ret;  */
+/*     ret = VAPI_query_hca_prop(nic, &hca_vendor, &hca_cap);  */
+/*     hca_cap.phys_port_num; */
+    
+/* } */
+/* static int mca_bmi_ib_query_hca_port_prop(VAPI_hca_hndl_t nic, */
+/*         VAPI_hca_port_t* port) */
+/* { */
+/*     VAPI_ret_t ret; */
 
-    if(VAPI_OK != ret) {
-        MCA_BMI_IB_VAPI_RET(ret, "VAPI_query_hca_port_prop");
-        return OMPI_ERROR;
-    }
+/*     /\* Querying for port properties *\/ */
+/*     ret = VAPI_query_hca_port_prop(nic, */
+/*             (IB_port_t)DEFAULT_PORT,  */
+/*             port); */
 
-    return OMPI_SUCCESS;
-}
+/*     if(VAPI_OK != ret) { */
+/*         MCA_BMI_IB_VAPI_RET(ret, "VAPI_query_hca_port_prop"); */
+/*         return OMPI_ERROR; */
+/*     } */
 
-static int mca_bmi_ib_alloc_pd(VAPI_hca_hndl_t nic,
-        VAPI_pd_hndl_t* ptag)
-{
-    VAPI_ret_t ret;
+/*     return OMPI_SUCCESS; */
+/* } */
 
-    ret = VAPI_alloc_pd(nic, ptag);
-
-    if(ret != VAPI_OK) {
-        MCA_BMI_IB_VAPI_RET(ret, "VAPI_alloc_pd");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-static int mca_bmi_ib_create_cq(VAPI_hca_hndl_t nic,
-                VAPI_cq_hndl_t* cq_hndl)
-{
-    uint32_t act_num_cqe = 0;
-    VAPI_ret_t ret;
-
-    ret = VAPI_create_cq(nic, DEFAULT_CQ_SIZE,
-            cq_hndl, &act_num_cqe);
-
-    if( (VAPI_OK != ret) || (0 == act_num_cqe)) {
-        MCA_BMI_IB_VAPI_RET(ret, "VAPI_create_cq");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-static int mca_bmi_ib_set_async_handler(VAPI_hca_hndl_t nic,
-        EVAPI_async_handler_hndl_t *async_handler)
-{
-    VAPI_ret_t ret;
-
-    ret = EVAPI_set_async_event_handler(nic,
-            async_event_handler, 0, async_handler);
-
-    if(VAPI_OK != ret) {
-        MCA_BMI_IB_VAPI_RET(ret, "EVAPI_set_async_event_handler");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
 
 int mca_bmi_ib_create_qp(VAPI_hca_hndl_t nic,
         VAPI_pd_hndl_t ptag,
@@ -209,49 +128,6 @@ int mca_bmi_ib_create_qp(VAPI_hca_hndl_t nic,
     return OMPI_SUCCESS;
 }
 
-int mca_bmi_ib_module_init(mca_bmi_ib_module_t *ib_bmi)
-{
-    /* Get HCA handle */
-    if(mca_bmi_ib_get_hca_hndl(ib_bmi->hca_id, &ib_bmi->nic)
-            != OMPI_SUCCESS) {
-        return OMPI_ERROR;
-    }
-
-    /* Allocate a protection domain for this NIC */
-    if(mca_bmi_ib_alloc_pd(ib_bmi->nic, &ib_bmi->ptag)
-            != OMPI_SUCCESS) {
-        return OMPI_ERROR;
-    }
-
-    /* Get the properties of the HCA,
-     * LID etc. are part of the properties */
-    if(mca_bmi_ib_query_hca_prop(ib_bmi->nic, &ib_bmi->port)
-            != OMPI_SUCCESS) {
-        return OMPI_ERROR;
-    }
-
-    /* Create Completion Q */
-    /* We use a single completion Q for sends & recvs
-     * This saves us overhead of polling 2 separate Qs */
-    if(mca_bmi_ib_create_cq(ib_bmi->nic, &ib_bmi->cq_hndl)
-            != OMPI_SUCCESS) {
-        return OMPI_ERROR;
-    }
-
-    /* Attach asynchronous handler */
-    if(mca_bmi_ib_set_async_handler(ib_bmi->nic, 
-                &ib_bmi->async_handler) 
-            != OMPI_SUCCESS) {
-        return OMPI_ERROR;
-    }
-
-    /* initialize memory region registry */
-    /* OBJ_CONSTRUCT(&ib_bmi->mem_registry, mca_bmi_ib_mem_registry_t); */
-   /*  mca_bmi_ib_mem_registry_init(&ib_bmi->mem_registry, ib_bmi); */
-    return OMPI_SUCCESS;
-}
-
-
 
 int mca_bmi_ib_qp_query(mca_bmi_ib_module_t* ib_bmi, VAPI_qp_hndl_t qp_hndl, VAPI_qp_num_t  qp_num)                                                                                                
 {                                                          
@@ -273,9 +149,10 @@ int mca_bmi_ib_qp_query(mca_bmi_ib_module_t* ib_bmi, VAPI_qp_hndl_t qp_hndl, VAP
 }       
 
 int mca_bmi_ib_qp_init(VAPI_hca_hndl_t nic,
-        VAPI_qp_hndl_t qp_hndl,
-        VAPI_qp_num_t remote_qp,
-        IB_lid_t      remote_lid)
+                       VAPI_qp_hndl_t qp_hndl,
+                       VAPI_qp_num_t remote_qp,
+                       IB_lid_t      remote_lid, 
+                       IB_port_t port_id) 
 {
     VAPI_ret_t              ret;
     VAPI_qp_attr_t          qp_attr;
@@ -288,7 +165,7 @@ int mca_bmi_ib_qp_init(VAPI_hca_hndl_t nic,
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
     qp_attr.pkey_ix = DEFAULT_PKEY_IX;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PKEY_IX);
-    qp_attr.port = DEFAULT_PORT;
+    qp_attr.port = port_id; 
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PORT);
     qp_attr.remote_atomic_flags = VAPI_EN_REM_WRITE | VAPI_EN_REM_READ;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_REMOTE_ATOMIC_FLAGS);
@@ -433,21 +310,21 @@ int mca_bmi_ib_qp_init(VAPI_hca_hndl_t nic,
 /* } */
 
 
-void mca_bmi_ib_buffer_repost(VAPI_hca_hndl_t nic, void* addr)
-{
+/* void mca_bmi_ib_buffer_repost(VAPI_hca_hndl_t nic, void* addr) */
+/* { */
    
-    mca_bmi_ib_recv_frag_t * frag = (mca_bmi_ib_recv_frag_t*)addr;
+/*     mca_bmi_ib_recv_frag_t * frag = (mca_bmi_ib_recv_frag_t*)addr; */
 
-    frag->sg_entry.len = frag->size; 
+/*     frag->sg_entry.len = frag->size;  */
    
 
-    frag->ret = VAPI_post_rr(nic, frag->endpoint->lcl_qp_hndl, &(frag->rr_desc));
+/*     frag->ret = VAPI_post_rr(nic, frag->endpoint->lcl_qp_hndl, &(frag->rr_desc)); */
     
-    if(VAPI_OK != frag->ret) {
-        MCA_BMI_IB_VAPI_RET(frag->ret, "VAPI_post_rr");
-        ompi_output(0, "Error in buffer reposting");
-    }
-}
+/*     if(VAPI_OK != frag->ret) { */
+/*         MCA_BMI_IB_VAPI_RET(frag->ret, "VAPI_post_rr"); */
+/*         ompi_output(0, "Error in buffer reposting"); */
+/*     } */
+/* } */
 
 /* void mca_bmi_ib_prepare_ack(mca_bmi_ib_module_t *ib_bmi, */
 /*         void* addr_to_reg, int len_to_reg, */

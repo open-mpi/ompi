@@ -96,14 +96,17 @@ static int mca_mpool_vapi_open(void)
 void* mca_common_vapi_segment_alloc(size_t* size, void* user_in, void** user_out){
   
   mca_mpool_vapi_module_t * mpool_module = (mca_mpool_vapi_module_t*)user_in; 
+
   void* addr = (void*)malloc((*size)); 
   
   VAPI_mrw_t mr_in, mr_out;
-  memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
-  memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
   
   VAPI_ret_t ret; 
   mca_common_vapi_memhandle_t* mem_hndl; 
+  memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
+  memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
+  
+
   *user_out = (void*) malloc(sizeof(mca_common_vapi_memhandle_t)); 
   
   mem_hndl = (mca_common_vapi_memhandle_t*) *user_out;  

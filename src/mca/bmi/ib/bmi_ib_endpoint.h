@@ -119,14 +119,14 @@ static inline int mca_bmi_ib_endpoint_post_rr(int cnt, mca_bmi_ib_endpoint_t *en
     
     int i, rc; 
     ompi_list_item_t* item; 
-    mca_bmi_ib_recv_frag_t* frag; 
+    mca_bmi_ib_frag_t* frag; 
     mca_bmi_ib_module_t *ib_bmi = endpoint->endpoint_bmi;
     VAPI_rr_desc_t* rr_desc_post = ib_bmi->rr_desc_post; 
     
     /* prepare frags and post receive requests */
     for(i = 0; i < cnt; i++) {
         OMPI_FREE_LIST_WAIT(&ib_bmi->recv_free, item, rc); 
-        frag = (mca_bmi_ib_recv_frag_t*) item; 
+        frag = (mca_bmi_ib_frag_t*) item; 
         frag->endpoint = endpoint; 
         frag->sg_entry.len = frag->size;     
         rr_desc_post[i] = frag->rr_desc; 

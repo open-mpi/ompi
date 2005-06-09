@@ -39,7 +39,7 @@ static void mca_bmi_ib_endpoint_construct(mca_bmi_base_endpoint_t* endpoint);
 static void mca_bmi_ib_endpoint_destruct(mca_bmi_base_endpoint_t* endpoint);
 
                    
-static inline int mca_bmi_ib_endpoint_post_send(mca_bmi_ib_module_t* ib_bmi, mca_bmi_ib_endpoint_t * endpoint, mca_bmi_ib_send_frag_t * frag)
+static inline int mca_bmi_ib_endpoint_post_send(mca_bmi_ib_module_t* ib_bmi, mca_bmi_ib_endpoint_t * endpoint, mca_bmi_ib_frag_t * frag)
 { 
     
     frag->sr_desc.remote_qkey = 0; 
@@ -483,11 +483,11 @@ int mca_bmi_ib_endpoint_send(
                 
                 rc = mca_bmi_ib_endpoint_post_send(ib_bmi, endpoint, frag); 
                 
+                
                 if(ib_bmi->rr_posted <= mca_bmi_ib_component.ib_rr_buf_min+1)
                     mca_bmi_ib_endpoint_post_rr(mca_bmi_ib_component.ib_rr_buf_max - ib_bmi->rr_posted, 
                                                 endpoint); 
                 
-
                 
 /*                 rc = mca_bmi_ib_post_send(endpoint->endpoint_bmi, endpoint, */
 /*                                           &frag->ib_buf, (void*) frag); */
@@ -511,7 +511,7 @@ int mca_bmi_ib_endpoint_send(
 void mca_bmi_ib_progress_send_frags(mca_bmi_ib_endpoint_t* endpoint)
 {
     ompi_list_item_t *frag_item;
-    mca_bmi_ib_send_frag_t *frag;
+    mca_bmi_ib_frag_t *frag;
     mca_bmi_ib_module_t* ib_bmi; 
     /*Check if endpoint is connected */
     if(endpoint->endpoint_state != MCA_BMI_IB_CONNECTED) {
@@ -524,7 +524,7 @@ void mca_bmi_ib_progress_send_frags(mca_bmi_ib_endpoint_t* endpoint)
 
     while(!ompi_list_is_empty(&(endpoint->pending_send_frags))) {
         frag_item = ompi_list_remove_first(&(endpoint->pending_send_frags));
-        frag = (mca_bmi_ib_send_frag_t *) frag_item;
+        frag = (mca_bmi_ib_frag_t *) frag_item;
         ib_bmi = endpoint->endpoint_bmi;
         /* We need to post this one */
         
@@ -546,9 +546,10 @@ int mca_bmi_ib_endpoint_connect(
     mca_bmi_ib_module_t *ib_bmi = endpoint->endpoint_bmi;
     /* Connection establishment RC */
     rc = mca_bmi_ib_qp_init(ib_bmi->nic,
-                endpoint->lcl_qp_hndl,
-                endpoint->rem_qp_num,
-                endpoint->rem_lid);
+                            endpoint->lcl_qp_hndl,
+                            endpoint->rem_qp_num,
+                            endpoint->rem_lid, 
+                            ib_bmi->port_id);
 
     
     if(rc != OMPI_SUCCESS) {

@@ -90,6 +90,10 @@ struct mca_bmi_ib_component_t {
     int ib_rr_buf_min; 
     /**< the minimum number of posted rr */ 
     
+    size_t eager_limit; 
+    size_t max_send_size; 
+
+    
 }; typedef struct mca_bmi_ib_component_t mca_bmi_ib_component_t;
 
 extern mca_bmi_ib_component_t mca_bmi_ib_component;
@@ -106,6 +110,7 @@ struct mca_bmi_ib_module_t {
     bool bmi_inited; 
     mca_bmi_ib_registration_t ib_reg[256]; 
     VAPI_hca_id_t   hca_id;        /**< ID of HCA */
+    IB_port_t port_id; /**< ID of the PORT */ 
     VAPI_hca_port_t port;          /**< IB port of this PTL */
     VAPI_hca_hndl_t nic;           /**< NIC handle */
     VAPI_pd_hndl_t  ptag;          /**< Protection Domain tag */
@@ -114,15 +119,22 @@ struct mca_bmi_ib_module_t {
     EVAPI_async_handler_hndl_t async_handler;
     /**< Async event handler used to detect weird/unknown events */
     
-    ompi_free_list_t send_free;    /**< free list of buffer descriptors */
+    ompi_free_list_t send_free_eager;    /**< free list of eager buffer descriptors */
+    ompi_free_list_t send_free_max; /**< free list of max buffer descriptors */ 
+    ompi_free_list_t send_free_frag; /**< free list of frags only... used for pining memory */ 
+    
     ompi_free_list_t recv_free;    /**< free list of buffer descriptors */
+    
     ompi_list_t repost;            /**< list of buffers to repost */
     mca_mpool_base_module_t* ib_pool;  /**< ib memory pool */
     
     uint32_t rr_posted;  /**< number of rr posted to the nic*/ 
+    
+    
     VAPI_rr_desc_t*                          rr_desc_post;  
     /**< an array to allow posting of rr in one swoop */ 
     size_t ib_inline_max; /**< max size of inline send*/ 
+    size_t ib_pin_min;  /** < min size to pin memory*/ 
     
 }; typedef struct mca_bmi_ib_module_t mca_bmi_ib_module_t;
     
@@ -331,6 +343,10 @@ extern void mca_bmi_ib_send_frag_return(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_ib_frag_t*
 );
+
+
+int mca_bmi_ib_module_init(mca_bmi_ib_module_t* ib_bmi); 
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

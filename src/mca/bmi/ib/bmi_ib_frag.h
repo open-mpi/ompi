@@ -64,13 +64,24 @@ struct mca_bmi_ib_frag_t {
     mca_bmi_ib_header_t *hdr; 
 }; 
 typedef struct mca_bmi_ib_frag_t mca_bmi_ib_frag_t; 
-typedef struct mca_bmi_ib_frag_t mca_bmi_ib_send_frag_t; 
+OBJ_CLASS_DECLARATION(mca_bmi_ib_frag_t); 
+
+
+typedef struct mca_bmi_ib_frag_t mca_bmi_ib_send_frag_eager_t; 
+    
+OBJ_CLASS_DECLARATION(mca_bmi_ib_send_frag_eager_t); 
+
+typedef struct mca_bmi_ib_frag_t mca_bmi_ib_send_frag_max_t; 
+    
+OBJ_CLASS_DECLARATION(mca_bmi_ib_send_frag_max_t); 
+
+typedef struct mca_bmi_ib_frag_t mca_bmi_ib_send_frag_frag_t; 
+    
+OBJ_CLASS_DECLARATION(mca_bmi_ib_send_frag_frag_t); 
+
 typedef struct mca_bmi_ib_frag_t mca_bmi_ib_recv_frag_t; 
     
-OBJ_CLASS_DECLARATION(mca_bmi_ib_frag_t); 
-OBJ_CLASS_DECLARATION(mca_bmi_ib_send_frag_t); 
 OBJ_CLASS_DECLARATION(mca_bmi_ib_recv_frag_t); 
-
 
     
 
@@ -78,18 +89,48 @@ OBJ_CLASS_DECLARATION(mca_bmi_ib_recv_frag_t);
  * Allocate an IB send descriptor
  *
  */
-#define MCA_BMI_IB_FRAG_ALLOC1(bmi, frag, rc)                               \
+
+#define MCA_BMI_IB_FRAG_ALLOC_EAGER(bmi, frag, rc)                               \
 {                                                                      \
                                                                        \
     ompi_list_item_t *item;                                            \
-    OMPI_FREE_LIST_WAIT(&((mca_bmi_ib_module_t*)bmi)->send_free, item, rc);       \
+    OMPI_FREE_LIST_WAIT(&((mca_bmi_ib_module_t*)bmi)->send_free_eager, item, rc);       \
     frag = (mca_bmi_ib_frag_t*) item;                                  \
 }
 
-#define MCA_BMI_IB_FRAG_RETURN1(bmi, frag)                                  \
+#define MCA_BMI_IB_FRAG_RETURN_EAGER(bmi, frag)                                  \
 {                                                                      \
-    OMPI_FREE_LIST_RETURN(&((mca_bmi_ib_module_t*)bmi)->send_free, (ompi_list_item_t*)(frag)); \
+    OMPI_FREE_LIST_RETURN(&((mca_bmi_ib_module_t*)bmi)->send_free_eager, (ompi_list_item_t*)(frag)); \
 }
+
+
+#define MCA_BMI_IB_FRAG_ALLOC_MAX(bmi, frag, rc)                               \
+{                                                                      \
+                                                                       \
+    ompi_list_item_t *item;                                            \
+    OMPI_FREE_LIST_WAIT(&((mca_bmi_ib_module_t*)bmi)->send_free_max, item, rc);       \
+    frag = (mca_bmi_ib_frag_t*) item;                                  \
+}
+
+#define MCA_BMI_IB_FRAG_RETURN_MAX(bmi, frag)                                  \
+{                                                                      \
+    OMPI_FREE_LIST_RETURN(&((mca_bmi_ib_module_t*)bmi)->send_free_max, (ompi_list_item_t*)(frag)); \
+}
+
+
+#define MCA_BMI_IB_FRAG_ALLOC_FRAG(bmi, frag, rc)                               \
+{                                                                      \
+                                                                       \
+    ompi_list_item_t *item;                                            \
+    OMPI_FREE_LIST_WAIT(&((mca_bmi_ib_module_t*)bmi)->send_free_frag, item, rc);       \
+    frag = (mca_bmi_ib_frag_t*) item;                                  \
+}
+
+#define MCA_BMI_IB_FRAG_RETURN_FRAG(bmi, frag)                                  \
+{                                                                      \
+    OMPI_FREE_LIST_RETURN(&((mca_bmi_ib_module_t*)bmi)->send_free_frag, (ompi_list_item_t*)(frag)); \
+}
+
 
 
 
