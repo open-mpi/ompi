@@ -49,9 +49,6 @@ mainly in the following areas:
 - The Open MPI installation must be in your PATH on all nodes (and
   potentially LD_LIBRARY_PATH, if libmpi is a shared library)
 
-- Non-uniform scheduling of processes per nodes may not always
-  function as expected (e.g., JMS MORE HERE)
-
 - LAM/MPI-like mpirun notation of "C" and "N" is not yet supported.
 
 - Signleton MPI applications (i.e., those run via "./foo" instead of
@@ -59,9 +56,8 @@ mainly in the following areas:
   unnaturally will print a strange warning message before dying
   (ERR_NOT_FOUND).
 
-- Support for Infiniband (both mVAPI and OpenIB) is missing
-
-- Support for Quadrics is missing
+- Support for Quadrics and Infiniband (both mVAPI and OpenIB) is
+  missing
 
 - Shared memory support will not function properly on machines that
   have a weak memory consistency mode.  The default if this beta is to
@@ -74,7 +70,7 @@ mainly in the following areas:
   happens automatically when multiple networks are available), but
   needs performance tuning
 
-- The only run-time systems supported are:
+- The only run-time systems currently supported are:
   - rsh / ssh
   - BProc of the flavor that is used at Los Alamos National Labs (in
     particular, it must be used with the BJS scheduler)
@@ -82,21 +78,25 @@ mainly in the following areas:
 - Complete user and system administrator documentation is missing
   (this file comprises the majority of the current user documentation)
 
-- The only systems that have been tested on are:
-  - Linux, 32 bit, with gcc
-
-- Other systems have been lightly (but not fully tested):
-  - Linux, 64 bit, with gcc
-  - OS X (10.3), 32 bit, with gcc  
-
 - Missing MPI functionality:
   - The Fortran 90 MPI API is disabled (it is not complete).
   - MPI-2 one-sided functionality will not be included in the first
     few releases of Open MPI
 
-- After running MPI applications, the directory
-  /tmp/openmpi-sessions-<username>@<hostname>* will exist (but will
-  likely be empty).  It is safe to remove.
+- The only systems that have been tested on are:
+  - Linux, 32 bit, with gcc
+
+- Other systems have been lightly (but not fully tested):
+  - Linux, 64 bit, with gcc
+  - OS X (10.3), 32 bit, with gcc
+
+- As of 9 June 2005, Open MPI will not function on OS X Tiger (10.4)
+  will not function properly due to an ioctl() bug in OS X.  Apple has
+  been notified of the problem.
+
+- There are some cases where after running MPI applications, the
+  directory /tmp/openmpi-sessions-<username>@<hostname>* will exist
+  (but will likely be empty).  It is safe to remove.
 
 ===========================================================================
 
@@ -183,7 +183,7 @@ clean     - clean out the build tree
 Once Open MPI has been built and installed, it is safe to run "make
 clean" and/or remove the entire build tree.
 
-VPATH builds are supported.
+VPATH builds are fully supported.
 
 Generally speaking, the only thing that users need to do to use Open
 MPI is ensure that <prefix>/bin is in their PATH.  Users may need to
@@ -193,7 +193,7 @@ able to find the Open MPI executables.
 
 Setting LD_LIBRARY_PATH is typically not necessary, but in some cases,
 if libmpi.so cannot be found when MPI applications are run,
-LD_LIBRARY_PATH can be set to <prefix>/lib.
+<prefix>/lib should be added to LD_LIBRARY_PATH.
 
 ===========================================================================
 
@@ -235,10 +235,10 @@ Compiling Open MPI Applications
 Open MPI provides "wrapper" compilers that should be used for
 compiling MPI applications:
 
-mpicc
-mpiCC (or mpic++ if your filesystem is case-insensitive)
-mpif77
-mpif90
+C:          mpicc
+C++:        mpiCC (or mpic++ if your filesystem is case-insensitive)
+Fortran 77: mpif77
+Fortran 90: mpif90
 
 For example:
 
@@ -276,14 +276,14 @@ mpirun-style hostfile (one hostname per line):
 shell$ mpirun -hostfile my_hostfile -np 2 hello_world_mpi
 
 If you intend to run more than one process on a node, the hostfile can
-use the "cpu" attribute.  If "cpu" is not specified, a count of 1 is
-assumed.  For example, using the following hostfile:
+use the "slots" attribute.  If "slots" is not specified, a count of 1
+is assumed.  For example, using the following hostfile:
 
 ---------------------------------------------------------------------------
 node1.example.com
 node2.example.com
-node3.example.com cpu=2
-node4.example.com cpu=4
+node3.example.com slots=2
+node4.example.com slots=4
 ---------------------------------------------------------------------------
 
 shell$ mpirun -hostfile my_hostfile -np 8 hello_world_mpi
@@ -379,10 +379,10 @@ values of parameters:
    Where <name> is the name of the parameter.  For example:
    mpirun --mca ptl_tcp_frag_size 65536 -np 2 hello_world_mpi
 
-These locations are checked in order; for example, a parameter value
+These locations are checked in order.  For example, a parameter value
 passed on the mpirun command line will override an environment
-variable, and an environment variable will override the system-wide
-defaults.  
+variable; an environment variable will override the system-wide
+defaults.
 
 ===========================================================================
 
@@ -411,4 +411,44 @@ sign up on the devel@open-mpi.org mailing list:
 
      http://www.open-mpi.org/mailman/listinfo.cgi/devel
 
-Thanks for your time.
+When submitting bug reports, please include the following information
+in your mail (please compress!):
+
+- the stdout and stderr from Open MPI's configure
+- the top-level config.log file
+- the stdout and stderr from building Open MPI
+- the output from "ompi_info --all" (if possible)
+
+For Bourne-type shells, here's one way to capture this information:
+
+shell$ ./configure ... 2>&1 | tee config.out
+[...lots of configure output...]
+shell$ make 2>&1 | tee make.out
+[...lots of make output...]
+shell$ mkdir ompi-output
+shell$ cp config.out config.log make.out ompi-output
+shell$ ompi_info --all |& tee ompi-output/ompi-info.out
+shell$ tar cvf ompi-output.tar ompi-output
+[...output from tar...]
+shell$ gzip ompi-output.tar
+
+For C shell-type shells, the procedure is only slightly different:
+
+shell% ./configure ... |& tee config.out
+[...lots of configure output...]
+shell% make |& tee make.out
+[...lots of make output...]
+shell% mkdir ompi-output
+shell% cp config.out config.log make.out ompi-output
+shell% ompi_info --all |& tee ompi-output/ompi-info.out
+shell% tar cvf ompi-output.tar ompi-output
+[...output from tar...]
+shell% gzip ompi-output.tar
+
+In either case, attach the resulting ompi-output.tar.gz file to your
+mail.  This provides the Open MPI developers with a lot of information
+about your installation and can greatly assist us in helping with your
+problem.
+
+Be sure to also include any other useful files (in the
+ompi-output.tar.gz), such as output showing specific errors.
