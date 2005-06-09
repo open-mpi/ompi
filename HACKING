@@ -17,7 +17,51 @@ Overview
 
 This file is here for those who are building/exploring OMPI in its
 source code form, most likely through a developer's tree (i.e., a
-subversion checkout).
+Subversion checkout).
+
+
+Debugging vs. Optimized Builds
+==============================
+
+If you are building Open MPI from a Subversion checkout, the default
+build includes a lot of debugging features.  This happens
+automatically when when configure detects the hidden ".svn" Subversion
+meta directory (that is present in all Subversion checkouts) in your
+source tree, and therefore activates a number of developer-only
+debugging features in the Open MPI code base.
+
+By definition, debugging builds will perform slower than optimized
+builds of Open MPI.  You should *NOT* conduct timing tests or try to
+run production performance numbers with debugging builds.
+
+If you wish to build an optimized version of Open MPI from a
+developer's checkout, you have two main options:
+
+1. Use a VPATH build.  This is the preferred (and usually easiest)
+   method.  Simply build Open MPI from a different directory than the
+   source tree -- one where the .svn subdirectory is not present.  For
+   example:
+
+     shell$ svn co https://svn.open-mpi.org/svn/ompi/trunk ompi
+     shell$ cd ompi
+     shell$ ./autogen.sh
+     shell$ mkdir build
+     shell$ cd build
+     shell$ ../configure ...
+     [...lots of output...]
+     shell$ make all install
+
+2. Manually specify configure options to disable all the debugging
+   options.  You'll need to carefully examine the output of
+   "./configure --help" to see which options to disable.  They are all
+   listed, but some are less obvious than others (they are not listed
+   here because it is a changing set of flags; by Murphy's Law,
+   listing them here will pretty much guarnatee that this file will
+   get out of date):
+
+     shell$ ./configure --disable-debug ...
+     [...lots of output...]
+     shell$ make all install
 
 
 Use of GNU Autoconf, Automake, and Libtool
@@ -25,16 +69,20 @@ Use of GNU Autoconf, Automake, and Libtool
 
 This procedure is *ONLY* necessary if you are building from a
 developer's tree.  If you have an Open MPI distribution tarball, this
-procedure is unnecessary -- you can even skip reading this section.
+procedure is unnecessary -- you can (and should) skip reading this
+section.
 
 If you are building Open MPI from a developer's tree, you must first
 install fairly recent versions of the GNU tools Autoconf, Automake,
-and Libtool.  As of this writing, you need at least Autoconf v2.58,
-Automake v1.8.5 (or better), and Libtool v1.5.  More generally, we
-have never found that the most recent versions of these tools cause
-problems with our configure / build process.  When in doubt, it is
-safe to upgrade these tools (at least for Open MPI!).  You can check
-what versions you have installed with the following:
+and Libtool.  As of the initial writing of this document (early 2004),
+you needed *at least* Autoconf v2.58, Automake v1.8.5, and Libtool
+v1.5.  It is possible that since then, the lowest acceptable versions
+of these tools have increased.
+
+More generally, we have never found that the most recent versions of
+these tools cause problems with our configure / build process.  When
+in doubt, it is safe to upgrade these tools (at least for Open MPI!).
+You can check what versions you have installed with the following:
 
 shell$ autoconf --version
 shell$ automake --version
@@ -47,11 +95,18 @@ AUTOMAKE NOTE: It seems that Automake 1.7 (or better) is ok for
                determine the lowest version number where "make dist"
                works).
 
+To strengthen the above point: the core Open MPI developers typically
+use very recent versions of the GNU tools.  Little checking is done to
+ensure that the code base is compatible with older versions of these
+tools.  If you have a problem, try upgrading your GNU tools to the
+latest versions and try again.
+
 If you need newer versions, you are *strongly* encouraged to heed the
 following advice:
 
 NOTE: On MacOS/X, the default "libtool" program is different than the
-      GNU libtool.  You must download and install the GNU version.
+      GNU libtool.  You must download and install the GNU version (via
+      Fink or any other mechanism).
 
 1. Unless your OS distribution has easy-to-use binary installations,
    the sources can be can be downloaded from:
