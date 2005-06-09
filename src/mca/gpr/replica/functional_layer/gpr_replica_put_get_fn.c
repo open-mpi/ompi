@@ -151,6 +151,7 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
 
     /* initialize storage for actions taken */
     orte_pointer_array_clear(orte_gpr_replica_globals.acted_upon);
+    orte_gpr_replica_globals.num_acted_upon = 0;
     
     /* extract the token address mode and overwrite permissions */
     overwrite = false;
@@ -389,6 +390,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;
         }
+        (*values)[i]->addr_mode = addr_mode;
         (*values)[i]->segment = strdup(seg->name);
         (*values)[i]->cnt = ompi_list_get_size(gptr->ival_list);
         cptr2 = gptr->cptr;

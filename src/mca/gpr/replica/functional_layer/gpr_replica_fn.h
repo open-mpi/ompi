@@ -266,12 +266,17 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg);
 int orte_gpr_replica_check_notify(orte_gpr_replica_triggers_t *trig,
                                   orte_gpr_replica_subscribed_data_t *sub);
 
+bool orte_gpr_replica_check_notify_matches(orte_gpr_replica_subscribed_data_t *sub,
+                                           orte_gpr_replica_action_taken_t *ptr);
+
 int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig);
 
 int orte_gpr_replica_update_storage_locations(orte_gpr_replica_itagval_t *new_iptr);
 
-int orte_gpr_replica_construct_notify_message(orte_gpr_notify_message_t **msg,
-                                              orte_gpr_replica_triggers_t *trig);
+int orte_gpr_replica_construct_notify_message(orte_gpr_notify_message_t *msg,
+                                              orte_gpr_replica_triggers_t *trig,
+                                              orte_gpr_replica_subscribed_data_t *sub,
+                                              orte_gpr_value_t *value);
 
 int
 orte_gpr_replica_enter_notify_request(orte_gpr_notify_id_t *local_idtag,
@@ -283,14 +288,20 @@ int
 orte_gpr_replica_remove_notify_request(orte_gpr_notify_id_t local_idtag,
                                        orte_gpr_notify_id_t *remote_idtag);
 
-int orte_gpr_replica_register_callback(orte_gpr_replica_triggers_t *trig);
+int orte_gpr_replica_register_callback(orte_gpr_replica_triggers_t *trig,
+                                       orte_gpr_replica_subscribed_data_t *sub,
+                                       orte_gpr_value_t *value);
 
 int orte_gpr_replica_process_callbacks(void);
 
 int orte_gpr_replica_purge_subscriptions(orte_process_name_t *proc);
 
-int orte_gpr_replica_add_values(orte_gpr_notify_data_t **data,
-                                orte_gpr_replica_subscribed_data_t *sptr);
+int orte_gpr_replica_add_values_from_registry(orte_gpr_notify_message_t *msg,
+                                   orte_gpr_replica_subscribed_data_t *sptr);
+
+int orte_gpr_replica_store_value_in_msg(orte_gpr_notify_id_t cb_num,
+                                        orte_gpr_notify_message_t *msg,
+                                        orte_gpr_value_t *value);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
