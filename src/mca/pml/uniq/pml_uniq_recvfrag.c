@@ -77,9 +77,7 @@ bool mca_pml_uniq_recv_frag_match(
             if (NULL == frag->frag_base.frag_peer) {
                 frag->frag_base.frag_peer = mca_pml_uniq_proc_lookup_remote_peer(request->req_recv.req_base.req_comm,header->hdr_src,ptl);
             }
-
-            /* notify ptl of match */
-            ptl->ptl_matched(ptl, frag);
+            MCA_PML_UNIQ_RECV_MATCHED( ptl, frag );
 
         };
 

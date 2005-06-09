@@ -21,7 +21,7 @@
 #include "mca/ptl/base/ptl_base_comm.h"
 #include "pml_uniq_recvreq.h"
 #include "pml_uniq_sendreq.h"
-
+#include "pml_uniq_recvfrag.h"
                                                                                                                
 static mca_ptl_base_recv_frag_t* mca_pml_uniq_recv_request_match_specific_proc(
     mca_ptl_base_recv_request_t* request, int proc);
@@ -153,7 +153,7 @@ void mca_pml_uniq_recv_request_match_specific(mca_ptl_base_recv_request_t* reque
         OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
         if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
               (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
-            ptl->ptl_matched(ptl, frag);
+            MCA_PML_UNIQ_RECV_MATCHED( ptl, frag );
         }
         return; /* match found */
     }
@@ -207,7 +207,7 @@ void mca_pml_uniq_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
             OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
             if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
                   (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
-                ptl->ptl_matched(ptl, frag);
+                MCA_PML_UNIQ_RECV_MATCHED( ptl, frag );
             }
             return; /* match found */
         }
