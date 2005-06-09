@@ -63,7 +63,7 @@ static void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t* frag)
 
 extern mca_ptl_tcp_component_t mca_ptl_tcp_component;
 
-void* mca_ptl_tcp_memalloc( size_t* length )
+void* mca_ptl_tcp_memalloc( size_t* length, void* data )
 {
    if( (*length) > mca_ptl_tcp_component.tcp_frag_size )
       *length = mca_ptl_tcp_component.tcp_frag_size;
@@ -96,7 +96,7 @@ int mca_ptl_tcp_send_frag_init(
 
        convertor = &sendfrag->frag_convertor;
        ompi_convertor_clone( &sendreq->req_send.req_convertor, convertor, 1 );
-       ompi_convertor_personalize( convertor, 0, &offset, mca_ptl_tcp_memalloc );
+       ompi_convertor_personalize( convertor, 0, &offset, mca_ptl_tcp_memalloc, NULL );
         /* if data is contigous convertor will return an offset
          * into users buffer - otherwise will return an allocated buffer 
          * that holds the packed data

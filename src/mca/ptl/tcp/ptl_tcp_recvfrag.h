@@ -82,7 +82,7 @@ static inline void mca_ptl_tcp_recv_frag_init(mca_ptl_tcp_recv_frag_t* frag, str
                                                                                                                 
 bool mca_ptl_tcp_recv_frag_send_ack(mca_ptl_tcp_recv_frag_t* frag);
 
-extern void* mca_ptl_tcp_memalloc( size_t* length );
+extern void* mca_ptl_tcp_memalloc( size_t* length, void* data );
 
 static inline void mca_ptl_tcp_recv_frag_matched(
     mca_ptl_tcp_recv_frag_t* frag, 
@@ -97,7 +97,7 @@ static inline void mca_ptl_tcp_recv_frag_matched(
         ompi_convertor_clone( &(request->req_recv.req_convertor),
                               &(frag->frag_recv.frag_base.frag_convertor), 1 );
         ompi_convertor_personalize( &frag->frag_recv.frag_base.frag_convertor, 0,
-                                    &frag_offset, mca_ptl_tcp_memalloc );
+                                    &frag_offset, mca_ptl_tcp_memalloc, NULL );
         /* non-contiguous - allocate buffer for receive */
         if( 1 == ompi_convertor_need_buffers( &frag->frag_recv.frag_base.frag_convertor ) ) {
             frag->frag_recv.frag_base.frag_addr = malloc(frag_length);
@@ -157,7 +157,7 @@ static inline void mca_ptl_tcp_recv_frag_progress(mca_ptl_tcp_recv_frag_t* frag)
             ompi_convertor_clone( &(request->req_recv.req_convertor),
                                   &(frag->frag_recv.frag_base.frag_convertor), 1 );
             ompi_convertor_personalize( &(frag->frag_recv.frag_base.frag_convertor),
-                                        0, &offset, mca_ptl_tcp_memalloc );
+                                        0, &offset, mca_ptl_tcp_memalloc, NULL );
 
 	    iov.iov_base = (ompi_iov_base_ptr_t)frag->frag_recv.frag_base.frag_addr; 
 	    iov.iov_len = frag->frag_recv.frag_base.frag_size;
