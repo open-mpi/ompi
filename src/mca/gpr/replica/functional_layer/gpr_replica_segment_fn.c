@@ -212,10 +212,21 @@ int orte_gpr_replica_update_keyval(orte_gpr_replica_segment_t *seg,
     for (i=0; i < ptr->size; i++) {
         if (NULL != ptr->addr[i]) {
             iptr = (orte_gpr_replica_itagval_t*)ptr->addr[i];
-            if (ORTE_SUCCESS != (rc = orte_gpr_replica_delete_itagval(seg, cptr, iptr))) {
+            /* release the data storage */
+            i = iptr->index;
+            if (ORTE_SUCCESS != (rc = orte_gpr_replica_record_action(seg, cptr, iptr,
+                                    ORTE_GPR_REPLICA_ENTRY_CHANGED |
+                                    ORTE_GPR_REPLICA_ENTRY_CHG_FRM))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
+            /* MUST DO THE RELEASE AFTER RECORDING THE ACTION SO THAT
+             * THE OBJECT DOESN'T ACTUALLY LEAVE UNTIL THE ACTION IS PROCESSED
+             */
+            OBJ_RELEASE(iptr);
+            /* remove the entry from the container's itagval array */
+            orte_pointer_array_set_item(cptr->itagvals, i, NULL);
+
         }
     }
     
@@ -226,7 +237,9 @@ int orte_gpr_replica_update_keyval(orte_gpr_replica_segment_t *seg,
    }
    
     /* record that we did this */
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_record_action(seg, cptr, iptr, ORTE_GPR_REPLICA_ENTRY_CHANGED))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_record_action(seg, cptr, iptr,
+                                    ORTE_GPR_REPLICA_ENTRY_CHANGED |
+                                    ORTE_GPR_REPLICA_ENTRY_CHG_TO))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

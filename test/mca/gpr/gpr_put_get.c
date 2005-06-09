@@ -483,6 +483,32 @@ int main(int argc, char **argv)
     }
     free(values);
     
+    fprintf(stderr, "overwrite a bunch of values with one\n");
+    val = OBJ_NEW(orte_gpr_value_t);
+    val->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_XAND;
+    val->cnt = 1;
+    val->segment = strdup("test-put-segment");
+    val->num_tokens = 5;
+    val->tokens = (char**)malloc(val->num_tokens * sizeof(char*));
+    for (i=0; i < 5; i++) {
+        asprintf(&(val->tokens[i]), "multi-dum-dum-%lu", (unsigned long) i);
+    }
+    val->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+    val->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    (val->keyvals[0])->key = strdup("stupid-value-next-one");
+    (val->keyvals[0])->type = ORTE_STRING;
+    (val->keyvals[0])->value.strptr = strdup("try-string-value");
+    if (ORTE_SUCCESS != (rc = gpr_module->put(1, &val))) {
+        fprintf(test_out, "gpr_test: put multiple copies of one keyval in a container failed with error code %s\n",
+                    ORTE_ERROR_NAME(rc));
+        test_failure("gpr_test: put multiple copies of one keyval in a container failed");
+        test_finalize();
+        return rc;
+    }
+    OBJ_RELEASE(val);
+    
+    gpr_module->dump_all(0);
+    
     fprintf(stderr, "now finalize and see if all memory cleared\n");
     test_component_close(&handle);
     orte_dps_close();
