@@ -21,7 +21,7 @@ noinst_LTLIBRARIES = libdatatype.la
 
 # Source code files
 
-headers = datatype.h datatype_internal.h dt_arch.h
+headers = datatype.h datatype_internal.h dt_arch.h convertor.h
 
 libdatatype_la_SOURCES = \
         $(headers) \
