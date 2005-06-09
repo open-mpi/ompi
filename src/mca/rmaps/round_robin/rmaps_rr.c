@@ -37,7 +37,6 @@ static ompi_list_item_t *cur_node_item = NULL;
 
 
 static int claim_slot(orte_rmaps_base_map_t *map, 
-                      ompi_list_t *nodes,
                       orte_ras_base_node_t *current_node,
                       orte_jobid_t jobid, orte_vpid_t vpid, int proc_index)
 {
@@ -81,11 +80,6 @@ static int claim_slot(orte_rmaps_base_map_t *map,
     /* Decrease the number of slots available for allocation
        on this node */
     --current_node->node_slots_alloc;
-    if (current_node->node_slots_alloc == 0) {
-        ompi_list_remove_item(nodes, (ompi_list_item_t*) current_node);
-        OBJ_RELEASE(current_node);
-    }
-
     return ORTE_SUCCESS;
 }
 
@@ -146,11 +140,15 @@ static int map_app_by_node(
         /* If we have an available slot on this node, claim it */
         if (node->node_slots_alloc > 0) {
             fflush(stdout);
-            rc = claim_slot(map, nodes, node, jobid, vpid_start + rank,
-                            proc_index);
+            rc = claim_slot(map, node, jobid, vpid_start + rank, proc_index);
             if (ORTE_SUCCESS != rc) {
                 return rc;
             }
+            if (node->node_slots_alloc == 0) {
+                ompi_list_remove_item(nodes, (ompi_list_item_t*)node);
+                OBJ_RELEASE(node);
+            }
+
             ++rank;
             ++proc_index;
 
@@ -241,8 +239,7 @@ static int map_app_by_slot(
         while (node->node_slots_alloc > 0 &&
                num_alloc < app->num_procs) {
             fflush(stdout);
-            rc = claim_slot(map, nodes, node, jobid, vpid_start + rank,
-                            proc_index);
+            rc = claim_slot(map, node, jobid, vpid_start + rank, proc_index);
             if (ORTE_SUCCESS != rc) {
                 return rc;
             }
@@ -252,6 +249,10 @@ static int map_app_by_slot(
             /* Increase the number of procs allocated and see if we're
                done */
             ++num_alloc;
+        }
+        if (node->node_slots_alloc == 0) {
+            ompi_list_remove_item(nodes, (ompi_list_item_t*)node);
+            OBJ_RELEASE(node);
         }
 
         /* Move on to the next node */
