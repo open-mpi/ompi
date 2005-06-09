@@ -35,8 +35,10 @@ mca_bmi_ib_module_t mca_bmi_ib_module = {
     {
         &mca_bmi_ib_component.super,
         0, /* max size of first fragment */
-        0, /* min fragment size */
-        0, /* max fragment size */
+        0, /* min send fragment size */
+        0, /* max send fragment size */
+        0, /* min rdma fragment size */
+        0, /* max rdma fragment size */
         0, /* exclusivity */
         0, /* latency */
         0, /* bandwidth */

@@ -29,18 +29,13 @@ extern "C" {
 
 struct  mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
-    size_t req_bytes_received;
-    size_t req_bytes_delivered;
-    size_t req_rdma_offset;
-
-    ompi_convertor_t req_convertor;
-    /* note that we allocate additional space for the recv
-     * request to increase the array size based on run-time
-     * parameters for the pipeline depth. So... this MUST be
-     * the last element of this struct.
-    */
-    mca_bmi_base_descriptor_t *req_pipeline[1];
     struct mca_pml_proc_t *req_proc;
+    ompi_ptr_t req_send;
+    int32_t req_lock;
+    size_t  req_pipeline_depth;
+    size_t  req_bytes_received;
+    size_t  req_bytes_delivered;
+    size_t  req_rdma_offset;
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
@@ -134,6 +129,8 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
     /* init/re-init the request */                                                \
     (request)->req_bytes_received = 0;                                            \
     (request)->req_bytes_delivered = 0;                                           \
+    (request)->req_lock = 0;                                                      \
+    (request)->req_pipeline_depth = 0;                                            \
     (request)->req_recv.req_base.req_pml_complete = false;                        \
     (request)->req_recv.req_base.req_ompi.req_complete = false;                   \
     (request)->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;        \
@@ -177,7 +174,7 @@ do {                                                                            
                                          (request)->req_recv.req_base.req_datatype,  \
                                          (request)->req_recv.req_base.req_count,     \
                                          (request)->req_recv.req_base.req_addr,      \
-                                         &(request)->req_convertor );                \
+                                         &(request)->req_recv.req_convertor );       \
     } else {                                                                         \
         (request)->req_proc = NULL;                                                  \
     }                                                                                \
@@ -215,10 +212,10 @@ do {                                                                            
             }                                                                     \
         }                                                                         \
         ompi_convertor_set_position(                                              \
-            &(request->req_convertor),                                            \
+            &(request->req_recv.req_convertor),                                   \
             &data_offset);                                                        \
         ompi_convertor_unpack(                                                    \
-            &(request)->req_convertor,                                            \
+            &(request)->req_recv.req_convertor,                                   \
             iov,                                                                  \
             &iov_count,                                                           \
             &max_data,                                                            \
@@ -237,6 +234,14 @@ void mca_pml_ob1_recv_request_progress(
     mca_bmi_base_module_t* bmi,
     mca_bmi_base_segment_t* segments,
     size_t num_segments);
+
+
+/**
+ *
+ */
+
+void mca_pml_ob1_recv_request_schedule(
+    mca_pml_ob1_recv_request_t* req);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

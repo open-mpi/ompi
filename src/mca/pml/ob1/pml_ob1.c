@@ -273,8 +273,10 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                 endpoint = mca_pml_ob1_ep_array_insert(&proc_pml->bmi_send);
                 endpoint->bmi = bmi;
                 endpoint->bmi_eager_limit = bmi->bmi_eager_limit;
-                endpoint->bmi_min_frag_size = bmi->bmi_min_frag_size;
-                endpoint->bmi_max_frag_size = bmi->bmi_max_frag_size;
+                endpoint->bmi_min_send_size = bmi->bmi_min_send_size;
+                endpoint->bmi_max_send_size = bmi->bmi_max_send_size;
+                endpoint->bmi_min_rdma_size = bmi->bmi_min_rdma_size;
+                endpoint->bmi_max_rdma_size = bmi->bmi_max_rdma_size;
                 endpoint->bmi_cache = NULL;
                 endpoint->bmi_endpoint = bmi_endpoints[p];
                 endpoint->bmi_weight = 0;

@@ -72,6 +72,7 @@ struct mca_pml_ob1_t {
 
     /* list of pending send requests */
     ompi_list_t send_pending;
+    ompi_list_t recv_pending;
     ompi_list_t acks_pending;
 };
 typedef struct mca_pml_ob1_t mca_pml_ob1_t; 

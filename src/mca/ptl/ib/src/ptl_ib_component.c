@@ -327,6 +327,7 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
 
                 /* Process incoming receives */
                 mca_ptl_ib_process_recv(ib_ptl, comp_addr);
+#if 0
                 /* Re post recv buffers */
                 if(ompi_list_get_size(&ib_ptl->repost) <= 1) {
                     ompi_list_append(&ib_ptl->repost, (ompi_list_item_t*)comp_addr);
@@ -337,6 +338,9 @@ int mca_ptl_ib_component_progress(mca_ptl_tstamp_t tstamp)
                     }
                     mca_ptl_ib_buffer_repost(ib_ptl->nic, comp_addr);
                 }
+#else
+                    mca_ptl_ib_buffer_repost(ib_ptl->nic, comp_addr);
+#endif
                 count++;
                 break;
 

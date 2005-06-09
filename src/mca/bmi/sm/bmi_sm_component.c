@@ -269,8 +269,10 @@ mca_bmi_base_module_t** mca_bmi_sm_component_init(
     /* set scheduling parameters */
     for( i=0 ; i < 2 ; i++ ) {
         mca_bmi_sm[i].super.bmi_eager_limit=mca_bmi_sm_component.eager_limit;
-        mca_bmi_sm[i].super.bmi_min_frag_size=mca_bmi_sm_component.max_frag_size;
-        mca_bmi_sm[i].super.bmi_max_frag_size=mca_bmi_sm_component.max_frag_size;
+        mca_bmi_sm[i].super.bmi_min_send_size=mca_bmi_sm_component.max_frag_size;
+        mca_bmi_sm[i].super.bmi_max_send_size=mca_bmi_sm_component.max_frag_size;
+        mca_bmi_sm[i].super.bmi_min_rdma_size=mca_bmi_sm_component.max_frag_size;
+        mca_bmi_sm[i].super.bmi_max_rdma_size=mca_bmi_sm_component.max_frag_size;
         mca_bmi_sm[i].super.bmi_exclusivity=100;  /* always use this ptl */
         mca_bmi_sm[i].super.bmi_latency=100;      /* lowest latency */
         mca_bmi_sm[i].super.bmi_bandwidth=900; /* not really used now since exclusivity is set to 100 */

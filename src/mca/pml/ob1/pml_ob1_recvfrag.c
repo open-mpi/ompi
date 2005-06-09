@@ -77,7 +77,7 @@ void mca_pml_ob1_recv_frag_callback(
             {
             mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)
                 hdr->hdr_ack.hdr_src_req.pval;
-            sendreq->req_state = MCA_PML_OB1_SR_SEND;
+            sendreq->req_state = MCA_PML_OB1_SR_ACKED;
             sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
             sendreq->req_rdma_offset = hdr->hdr_ack.hdr_rdma_offset;
             mca_pml_ob1_send_request_schedule(sendreq);
@@ -88,6 +88,17 @@ void mca_pml_ob1_recv_frag_callback(
             mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)
                 hdr->hdr_frag.hdr_dst_req.pval;
             mca_pml_ob1_recv_request_progress(recvreq,bmi,segments,des->des_src_cnt);
+            break;
+            }
+        case MCA_PML_OB1_HDR_TYPE_PUT:
+            {
+            mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)
+                hdr->hdr_rdma.hdr_src.pval;
+            mca_pml_ob1_send_request_put(sendreq,bmi,&hdr->hdr_rdma);
+            break;
+            }
+        case MCA_PML_OB1_HDR_TYPE_FIN:
+            {
             break;
             }
         default:
