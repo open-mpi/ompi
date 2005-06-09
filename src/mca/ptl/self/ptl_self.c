@@ -120,13 +120,12 @@ void mca_ptl_self_request_fini(struct mca_ptl_base_module_t* ptl, mca_ptl_base_s
  *  on to the peer.
  */
 
-int mca_ptl_self_send(
-                      struct mca_ptl_base_module_t* ptl,
-                      struct mca_ptl_base_peer_t* ptl_base_peer,
-                      struct mca_ptl_base_send_request_t* request,
-                      size_t offset,
-                      size_t size,
-                      int flags )
+int mca_ptl_self_send( struct mca_ptl_base_module_t* ptl,
+                       struct mca_ptl_base_peer_t* ptl_base_peer,
+                       struct mca_ptl_base_send_request_t* request,
+                       size_t offset,
+                       size_t size,
+                       int flags )
 {
     mca_ptl_self_send_request_t* req = (mca_ptl_self_send_request_t*)request;
     mca_ptl_base_header_t* hdr = &(req->req_frag.frag_base.frag_header);
@@ -174,7 +173,7 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
 
     if( (recvreq->req_recv.req_base.req_count != 0) &&
         (sendreq->req_ptl.req_send.req_base.req_count != 0) ) {
-        /* Did you have the same datatype or not ? If yes we can use an optimized version
+        /* Did we have the same datatype or not ? If yes we can use an optimized version
          * for the copy function, if not we have to use a temporary buffer to pack/unpack
          * 
          * Note that if this is a buffered send - the data has already been packed into
@@ -199,13 +198,8 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
             length = 64 * 1024;
             buf = (char *)malloc( length * sizeof(char) );
             
-            recv_convertor = &(frag->frag_base.frag_convertor);
+            recv_convertor = &(recvreq->req_recv.req_convertor);
             send_convertor = &(sendreq->req_ptl.req_send.req_convertor);
-            ompi_convertor_copy_and_prepare_for_recv( send_convertor,
-                                                      recvreq->req_recv.req_base.req_datatype,
-                                                      recvreq->req_recv.req_base.req_count,
-                                                      recvreq->req_recv.req_base.req_addr,
-                                                      recv_convertor );
 
             completed = 0;
             freeAfter = 0;
@@ -226,8 +220,7 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
     }
     ptl->ptl_send_progress( ptl, &sendreq->req_ptl,
                             sendreq->req_ptl.req_send.req_bytes_packed );
-    ptl->ptl_recv_progress( ptl, 
-                            recvreq, 
+    ptl->ptl_recv_progress( ptl, recvreq, 
                             frag->frag_base.frag_header.hdr_match.hdr_msg_length,
                             frag->frag_base.frag_size );
 }
