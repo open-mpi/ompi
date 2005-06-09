@@ -3,8 +3,6 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004 The Ohio State University.
- *                    All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -24,7 +22,6 @@
 #include "mca/pml/pml.h"
 #include "mca/bmi/bmi.h"
 #include "bmi_ib_frag.h"
-#include "bmi_ib_priv.h"
 #include "bmi_ib.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -138,7 +135,7 @@ static inline int mca_bmi_ib_endpoint_post_rr(int cnt, mca_bmi_ib_endpoint_t *en
                                     cnt, 
                                     rr_desc_post);
     if(VAPI_OK != frag->ret) {
-        MCA_BMI_IB_VAPI_RET(frag->ret, "EVAPI_post_rr_list");
+        MCA_BMI_IB_VAPI_ERROR(frag->ret, "EVAPI_post_rr_list");
         return OMPI_ERROR; 
     }
     OMPI_THREAD_ADD32(&ib_bmi->rr_posted, cnt); 

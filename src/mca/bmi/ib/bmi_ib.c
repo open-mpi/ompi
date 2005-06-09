@@ -3,8 +3,6 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004 The Ohio State University.
- *                    All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -25,10 +23,8 @@
 
 #include "bmi_ib.h"
 #include "bmi_ib_frag.h" 
-#include "bmi_ib_addr.h"
 #include "bmi_ib_proc.h"
 #include "bmi_ib_endpoint.h"
-#include "bmi_ib_priv.h"
 #include "datatype/convertor.h" 
 #include "mca/common/vapi/vapi_mem_reg.h" 
 
@@ -119,7 +115,7 @@ int mca_bmi_ib_del_procs(struct mca_bmi_base_module_t* bmi,
         struct mca_bmi_base_endpoint_t ** peers)
 {
     /* Stub */
-    D_PRINT("Stub\n");
+    DEBUG_OUT("Stub\n");
     return OMPI_SUCCESS;
 }
 
@@ -215,8 +211,8 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     mca_bmi_ib_module_t* ib_bmi; 
     mca_bmi_ib_frag_t* frag; 
     struct iovec iov; 
-    uint32_t iov_count = 1; 
-    uint32_t max_data = *size; 
+    int32_t out_size = 0; 
+    size_t max_data = *size; 
     int32_t free_after; 
     int rc; 
     void* user_out; 
@@ -234,7 +230,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         iov.iov_len = max_data; 
         iov.iov_base = frag->segment.seg_addr.pval + reserve; 
         
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
+        rc = ompi_convertor_pack(convertor, &iov, &out_size, &max_data, &free_after); 
         if( rc < 0 ) { 
             MCA_BMI_IB_FRAG_RETURN_EAGER(bmi, frag); 
             return NULL; 
@@ -255,7 +251,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         iov.iov_len = max_data; 
         iov.iov_base = frag->segment.seg_addr.pval + reserve; 
         
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
+        rc = ompi_convertor_pack(convertor, &iov, &out_size, &max_data, &free_after); 
         if( rc < 0 ) { 
             MCA_BMI_IB_FRAG_RETURN_MAX(bmi, frag); 
             return NULL; 
@@ -283,13 +279,13 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
           mr_in.type = VAPI_MR;
           
           
-          frag = (mca_bmi_ib_send_frag_frag_t*) ib_bmi->ib_pool->mpool_alloc(ib_bmi->ib_pool,  sizeof(frag) + sizeof(mca_bmi_ib_header_t) + size ,0, &user_out);
+          frag = (mca_bmi_ib_send_frag_frag_t*) ib_bmi->ib_pool->mpool_alloc(ib_bmi->ib_pool,  sizeof(frag) + sizeof(mca_bmi_ib_header_t) + *size ,0, &user_out);
           frag->base.super.user_data = user_out;
           OBJ_CONSTRUCT(frag, mca_bmi_ib_send_frag_frag_t);
           iov.iov_len = max_data; 
           iov.iov_base = NULL; 
           
-          ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
+          ompi_convertor_pack(convertor, &iov, &out_size, &max_data, &free_after); 
           frag->segment.seg_len = max_data; 
           frag->segment.seg_addr.pval = iov.iov_base; 
   
@@ -378,44 +374,6 @@ int mca_bmi_ib_put( mca_bmi_base_module_t* bmi,
 
 
 
-
-
-
-
-static int mca_bmi_ib_alloc_pd(VAPI_hca_hndl_t nic,
-        VAPI_pd_hndl_t* ptag)
-{
-    VAPI_ret_t ret;
-
-    ret = VAPI_alloc_pd(nic, ptag);
-
-    if(ret != VAPI_OK) {
-        MCA_BMI_IB_VAPI_RET(ret, "VAPI_alloc_pd");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-static int mca_bmi_ib_create_cq(VAPI_hca_hndl_t nic,
-                VAPI_cq_hndl_t* cq_hndl)
-{
-    uint32_t act_num_cqe = 0;
-    VAPI_ret_t ret;
-
-    ret = VAPI_create_cq(nic, DEFAULT_CQ_SIZE,
-            cq_hndl, &act_num_cqe);
-
-    if( (VAPI_OK != ret) || (0 == act_num_cqe)) {
-        MCA_BMI_IB_VAPI_RET(ret, "VAPI_create_cq");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-
 /*
  * Asynchronous event handler to detect unforseen
  * events. Usually, such events are catastrophic.
@@ -435,7 +393,7 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
         case VAPI_SEND_QUEUE_DRAINED:
         case VAPI_PORT_ACTIVE:
             {
-                D_PRINT("Got an asynchronous event: %s\n",
+                DEBUG_OUT("Got an asynchronous event: %s\n",
                         VAPI_event_record_sym(event_p->type));
                 break;
             }
@@ -462,60 +420,41 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
 }
 
 
-static int mca_bmi_ib_set_async_handler(VAPI_hca_hndl_t nic,
-        EVAPI_async_handler_hndl_t *async_handler)
-{
-    VAPI_ret_t ret;
-
-    ret = EVAPI_set_async_event_handler(nic,
-            async_event_handler, 0, async_handler);
-
-    if(VAPI_OK != ret) {
-        MCA_BMI_IB_VAPI_RET(ret, "EVAPI_set_async_event_handler");
-        return OMPI_ERROR;
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
 
 
 int mca_bmi_ib_module_init(mca_bmi_ib_module_t *ib_bmi)
 {
-    /* Get HCA handle */
-/*     if(mca_bmi_ib_get_hca_hndl(ib_bmi->hca_id, &ib_bmi->nic) */
-/*             != OMPI_SUCCESS) { */
-/*         return OMPI_ERROR; */
-/*     } */
 
-    /* Allocate a protection domain for this NIC */
-    if(mca_bmi_ib_alloc_pd(ib_bmi->nic, &ib_bmi->ptag)
-            != OMPI_SUCCESS) {
+    /* Allocate Protection Domain */ 
+    VAPI_ret_t ret;
+    uint32_t cqe_cnt = 0;
+      
+    ret = VAPI_alloc_pd(ib_bmi->nic, &ib_bmi->ptag);
+
+    if(ret != VAPI_OK) {
+        MCA_BMI_IB_VAPI_ERROR(ret, "VAPI_alloc_pd");
         return OMPI_ERROR;
     }
+    
+    ret = VAPI_create_cq(ib_bmi->nic, ib_bmi->ib_cq_size,
+            &ib_bmi->cq_hndl, &cqe_cnt);
 
-    /* Get the properties of the HCA PORT,
-     * LID etc. are part of the properties */
-/*     if(mca_bmi_ib_query_hca_port_prop(ib_bmi->nic, &ib_bmi->port) */
-/*             != OMPI_SUCCESS) { */
-/*         return OMPI_ERROR; */
-/*     } */
-
-    /* Create Completion Q */
-    /* We use a single completion Q for sends & recvs
-     * This saves us overhead of polling 2 separate Qs */
-    if(mca_bmi_ib_create_cq(ib_bmi->nic, &ib_bmi->cq_hndl)
-            != OMPI_SUCCESS) {
+    if( VAPI_OK != ret) {  
+        MCA_BMI_IB_VAPI_ERROR(ret, "VAPI_create_cq");
         return OMPI_ERROR;
     }
+    if(cqe_cnt <= 0) { 
+        ompi_output(0, "%s: error creating completion queue ", __func__); 
+        return OMPI_ERROR; 
+    } 
 
-    /* Attach asynchronous handler */
-    if(mca_bmi_ib_set_async_handler(ib_bmi->nic, 
-                &ib_bmi->async_handler) 
-            != OMPI_SUCCESS) {
+    ret = EVAPI_set_async_event_handler(ib_bmi->nic,
+            async_event_handler, 0, &ib_bmi->async_handler);
+
+    if(VAPI_OK != ret) {
+        MCA_BMI_IB_VAPI_ERROR(ret, "EVAPI_set_async_event_handler");
         return OMPI_ERROR;
     }
-
+    
     return OMPI_SUCCESS;
 }

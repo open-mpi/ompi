@@ -3,8 +3,6 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004 The Ohio State University.
- *                    All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -20,7 +18,6 @@
 #define MCA_BMI_IB_FRAG_H
 
 #include "ompi_config.h"
-#include "bmi_ib_priv.h"
 #include "bmi_ib.h" 
 
 #include <vapi.h> 

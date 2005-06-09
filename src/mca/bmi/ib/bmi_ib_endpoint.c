@@ -3,8 +3,6 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004 The Ohio State University.
- *                    All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -29,14 +27,16 @@
 #include "dps/dps.h"
 #include "bmi_ib.h"
 #include "bmi_ib_endpoint.h" 
-#include "bmi_ib_addr.h"
 #include "bmi_ib_proc.h"
-#include "bmi_ib_priv.h"
 #include "bmi_ib_frag.h"
 #include "class/ompi_free_list.h" 
 
 static void mca_bmi_ib_endpoint_construct(mca_bmi_base_endpoint_t* endpoint);
 static void mca_bmi_ib_endpoint_destruct(mca_bmi_base_endpoint_t* endpoint);
+int mca_bmi_ib_endpoint_create_qp(mca_bmi_ib_endpoint_t* endpoint, 
+                         int transport_type);
+
+int mca_bmi_ib_endpoint_qp_init_query(mca_bmi_ib_endpoint_t* endpoint); 
 
                    
 static inline int mca_bmi_ib_endpoint_post_send(mca_bmi_ib_module_t* ib_bmi, mca_bmi_ib_endpoint_t * endpoint, mca_bmi_ib_frag_t * frag)
@@ -133,7 +133,7 @@ static int mca_bmi_ib_endpoint_send_connect_req(mca_bmi_base_endpoint_t* endpoin
          mca_bmi_ib_endpoint_send_cb, NULL);
     
     
-    D_PRINT("Sending QP num = %d, LID = %d",
+    DEBUG_OUT("Sending QP num = %d, LID = %d",
             endpoint->lcl_qp_prop.qp_num,
             endpoint->endpoint_bmi->port.lid);
 
@@ -200,7 +200,7 @@ static int mca_bmi_ib_endpoint_set_remote_info(mca_bmi_base_endpoint_t* endpoint
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    D_PRINT("Received QP num = %d, LID = %d",
+    DEBUG_OUT("Received QP num = %d, LID = %d",
             endpoint->rem_qp_num,
             endpoint->rem_lid);
     return ORTE_SUCCESS;
@@ -223,24 +223,18 @@ static int mca_bmi_ib_endpoint_init(mca_bmi_ib_endpoint_t *endpoint)
 
 static int mca_bmi_ib_endpoint_start_connect(mca_bmi_base_endpoint_t* endpoint)
 {
-    mca_bmi_ib_module_t* ib_bmi = endpoint->endpoint_bmi;
     int rc;
     
     
     /* Create the Queue Pair */
-    if(OMPI_SUCCESS != (rc = mca_bmi_ib_create_qp(ib_bmi->nic,
-                    ib_bmi->ptag,
-                    ib_bmi->cq_hndl,
-                    ib_bmi->cq_hndl,
-                    &endpoint->lcl_qp_hndl,
-                    &endpoint->lcl_qp_prop,
-                    VAPI_TS_RC))) {
+    if(OMPI_SUCCESS != (rc = mca_bmi_ib_endpoint_create_qp(endpoint, 
+                                                  VAPI_TS_RC))) {
         ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
 
-    D_PRINT("Initialized QP num = %d, LID = %d",
+    DEBUG_OUT("Initialized QP num = %d, LID = %d",
             endpoint->lcl_qp_prop.qp_num,
             ib_bmi->port.lid);
 
@@ -260,23 +254,17 @@ static int mca_bmi_ib_endpoint_start_connect(mca_bmi_base_endpoint_t* endpoint)
  */
 static int mca_bmi_ib_endpoint_reply_start_connect(mca_bmi_ib_endpoint_t *endpoint, orte_buffer_t* buffer)
 {
-    mca_bmi_ib_module_t* ib_bmi = endpoint->endpoint_bmi;
     int rc;
 
     /* Create the Queue Pair */
-    if(OMPI_SUCCESS != (rc = mca_bmi_ib_create_qp(ib_bmi->nic,
-                    ib_bmi->ptag,
-                    ib_bmi->cq_hndl,
-                    ib_bmi->cq_hndl,
-                    &endpoint->lcl_qp_hndl,
-                    &endpoint->lcl_qp_prop,
-                    VAPI_TS_RC))) {
+    if(OMPI_SUCCESS != (rc = mca_bmi_ib_endpoint_create_qp(endpoint, 
+                                                  VAPI_TS_RC))) {
         ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
     }
     
-    D_PRINT("Initialized QP num = %d, LID = %d",
+    DEBUG_OUT("Initialized QP num = %d, LID = %d",
             endpoint->lcl_qp_prop.qp_num,
             ib_bmi->port.lid);
 
@@ -408,7 +396,7 @@ static void mca_bmi_ib_endpoint_recv(
 
 void mca_bmi_ib_post_recv()
 {
-    D_PRINT("");
+    DEBUG_OUT("");
 
     orte_rml.recv_buffer_nb(
         ORTE_RML_NAME_ANY, 
@@ -437,7 +425,7 @@ int mca_bmi_ib_endpoint_send(
     switch(endpoint->endpoint_state) {
         case MCA_BMI_IB_CONNECTING:
 
-            D_PRINT("Queing because state is connecting");
+            DEBUG_OUT("Queing because state is connecting");
 
             ompi_list_append(&endpoint->pending_send_frags,
                     (ompi_list_item_t *)frag);
@@ -447,7 +435,7 @@ int mca_bmi_ib_endpoint_send(
 
         case MCA_BMI_IB_CONNECT_ACK:
 
-            D_PRINT("Queuing because waiting for ack");
+            DEBUG_OUT("Queuing because waiting for ack");
 
             ompi_list_append(&endpoint->pending_send_frags,
                     (ompi_list_item_t *)frag);
@@ -457,7 +445,7 @@ int mca_bmi_ib_endpoint_send(
 
         case MCA_BMI_IB_CLOSED:
 
-            D_PRINT("Connection to endpoint closed ... connecting ...");
+            DEBUG_OUT("Connection to endpoint closed ... connecting ...");
 
             ompi_list_append(&endpoint->pending_send_frags,
                     (ompi_list_item_t *)frag);
@@ -476,7 +464,7 @@ int mca_bmi_ib_endpoint_send(
                 ib_bmi = endpoint->endpoint_bmi;
                 
                 
-                A_PRINT("Send to : %d, len : %d, frag : %p", 
+                DEBUG_OUT("Send to : %d, len : %d, frag : %p", 
                         endpoint->endpoint_proc->proc_guid.vpid,
                         frag->ib_buf.desc.sg_entry.len,
                         frag);
@@ -543,21 +531,10 @@ int mca_bmi_ib_endpoint_connect(
     mca_bmi_ib_endpoint_t *endpoint)
 {
     int rc;
-    mca_bmi_ib_module_t *ib_bmi = endpoint->endpoint_bmi;
     /* Connection establishment RC */
-    rc = mca_bmi_ib_qp_init(ib_bmi->nic,
-                            endpoint->lcl_qp_hndl,
-                            endpoint->rem_qp_num,
-                            endpoint->rem_lid, 
-                            ib_bmi->port_id);
+    rc = mca_bmi_ib_endpoint_qp_init_query(endpoint); 
 
     
-    if(rc != OMPI_SUCCESS) {
-        return rc;
-    }
-    rc = mca_bmi_ib_qp_query(ib_bmi, 
-                            endpoint->lcl_qp_hndl, 
-                            endpoint->rem_qp_num); 
     if(rc != OMPI_SUCCESS) {
         return rc;
     }
@@ -566,3 +543,164 @@ int mca_bmi_ib_endpoint_connect(
     
     return OMPI_SUCCESS;
 }
+
+
+
+int mca_bmi_ib_endpoint_create_qp(mca_bmi_ib_endpoint_t * endpoint,                          
+                         int transport_type)
+{
+    
+    VAPI_ret_t ret;
+    VAPI_qp_init_attr_t qp_init_attr;
+    mca_bmi_ib_module_t* ib_bmi = endpoint->endpoint_bmi; 
+    VAPI_hca_hndl_t nic = ib_bmi->nic; 
+    VAPI_pd_hndl_t ptag = ib_bmi->ptag; 
+    VAPI_cq_hndl_t recv_cq = ib_bmi->cq_hndl; 
+    VAPI_cq_hndl_t send_cq = ib_bmi->cq_hndl;
+    VAPI_qp_hndl_t* qp_hndl =  &endpoint->lcl_qp_hndl; 
+    VAPI_qp_prop_t* qp_prop = &endpoint->lcl_qp_prop; 
+    
+    switch(transport_type) {
+
+        case VAPI_TS_RC: /* Set up RC qp parameters */
+            qp_init_attr.cap.max_oust_wr_rq = ib_bmi->ib_wq_size;
+            qp_init_attr.cap.max_oust_wr_sq = ib_bmi->ib_wq_size;
+            qp_init_attr.cap.max_sg_size_rq = ib_bmi->ib_sg_list_size;
+            qp_init_attr.cap.max_sg_size_sq = ib_bmi->ib_sg_list_size;
+            qp_init_attr.pd_hndl            = ptag;
+            /* We don't have Reliable Datagram Handle right now */
+            qp_init_attr.rdd_hndl           = 0;
+
+            /* Set Send and Recv completion queues */
+            qp_init_attr.rq_cq_hndl         = recv_cq;
+            qp_init_attr.sq_cq_hndl         = send_cq;
+
+            /* Signal all work requests on this queue pair */
+            qp_init_attr.rq_sig_type        = VAPI_SIGNAL_REQ_WR;
+            qp_init_attr.sq_sig_type        = VAPI_SIGNAL_REQ_WR;
+
+            /* Use Unreliable Datagram transport service */
+            qp_init_attr.ts_type            = VAPI_TS_RC;
+            break;
+        case VAPI_TS_UD: /* Set up UD qp parameters */
+        default:
+            return OMPI_ERR_NOT_IMPLEMENTED;
+    }
+
+    ret = VAPI_create_qp(nic, &qp_init_attr, 
+            qp_hndl, qp_prop);
+    
+    if(VAPI_OK != ret) {
+        MCA_BMI_IB_VAPI_ERROR(ret, "VAPI_create_qp");
+        return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
+}
+
+int mca_bmi_ib_endpoint_qp_init_query(mca_bmi_ib_endpoint_t * endpoint)
+{
+    
+    VAPI_ret_t              ret;
+    VAPI_qp_attr_t          qp_attr;
+    VAPI_qp_attr_mask_t     qp_attr_mask;
+    VAPI_qp_init_attr_t     qp_init_attr; 
+    VAPI_qp_cap_t           qp_cap;
+
+    mca_bmi_ib_module_t* ib_bmi = endpoint->endpoint_bmi; 
+    VAPI_hca_hndl_t nic = ib_bmi->nic; 
+    VAPI_qp_hndl_t qp_hndl = endpoint->lcl_qp_hndl; 
+    VAPI_qp_num_t remote_qp = endpoint->rem_qp_num; 
+    IB_lid_t remote_lid = endpoint->rem_lid; 
+    IB_port_t port_id = ib_bmi->port_id; 
+    
+    /* Modifying  QP to INIT */
+    QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
+    qp_attr.qp_state = VAPI_INIT;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
+    qp_attr.pkey_ix = ib_bmi->ib_pkey_ix;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PKEY_IX);
+    qp_attr.port = port_id; 
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PORT);
+    qp_attr.remote_atomic_flags = VAPI_EN_REM_WRITE | VAPI_EN_REM_READ;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_REMOTE_ATOMIC_FLAGS);
+
+    ret = VAPI_modify_qp(nic, qp_hndl,
+            &qp_attr, &qp_attr_mask, &qp_cap);
+
+    if(VAPI_OK != ret) {
+        MCA_BMI_IB_VAPI_ERROR(ret, "VAPI_modify_qp");
+        return OMPI_ERROR;
+    }
+
+    DEBUG_OUT("Modified to init..Qp %d", qp_hndl);
+
+    /**********************  INIT --> RTR  ************************/
+    QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
+    qp_attr.qp_state = VAPI_RTR;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
+    qp_attr.qp_ous_rd_atom = ib_bmi->ib_qp_ous_rd_atom;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_OUS_RD_ATOM);
+    qp_attr.path_mtu = ib_bmi->ib_mtu;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PATH_MTU);
+    qp_attr.rq_psn = ib_bmi->ib_psn;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_RQ_PSN);
+    qp_attr.pkey_ix = ib_bmi->ib_pkey_ix;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PKEY_IX);
+    qp_attr.min_rnr_timer = ib_bmi->ib_min_rnr_timer;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_MIN_RNR_TIMER);
+
+    qp_attr.av.sl = ib_bmi->ib_service_level;
+    qp_attr.av.grh_flag = FALSE;
+    qp_attr.av.static_rate = ib_bmi->ib_static_rate;
+    qp_attr.av.src_path_bits = ib_bmi->ib_src_path_bits;
+
+    qp_attr.dest_qp_num = remote_qp;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_DEST_QP_NUM);
+    qp_attr.av.dlid = remote_lid;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_AV);
+
+    ret = VAPI_modify_qp(nic, qp_hndl,
+            &qp_attr, &qp_attr_mask, &qp_cap);
+
+    if(VAPI_OK != ret) {
+        MCA_BMI_IB_VAPI_ERROR(ret, "VAPI_modify_qp");
+        return OMPI_ERROR;
+    }
+
+    DEBUG_OUT("Modified to RTR..Qp %d", qp_hndl);
+
+    /************** RTS *******************/
+    QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
+    qp_attr.qp_state = VAPI_RTS;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
+    qp_attr.sq_psn = ib_bmi->ib_psn;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_SQ_PSN);
+    qp_attr.timeout = ib_bmi->ib_timeout;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_TIMEOUT);
+    qp_attr.retry_count = ib_bmi->ib_retry_count;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_RETRY_COUNT);
+    qp_attr.rnr_retry = ib_bmi->ib_rnr_retry;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_RNR_RETRY);
+    qp_attr.ous_dst_rd_atom = ib_bmi->ib_max_rdma_dst_ops;
+    QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_OUS_DST_RD_ATOM);
+
+    ret = VAPI_modify_qp(nic, qp_hndl,
+            &qp_attr, &qp_attr_mask, &qp_cap);
+
+    if(VAPI_OK != ret) {
+        MCA_BMI_IB_VAPI_ERROR(ret, "VAPI_modify_qp");
+        return OMPI_ERROR;
+    }
+    DEBUG_OUT("Modified to RTS..Qp %d", qp_hndl);
+    
+    ret = VAPI_query_qp(nic, qp_hndl, &qp_attr, &qp_attr_mask, &qp_init_attr );          
+    if (ret != VAPI_OK) {                                                                     
+        ompi_output(0, "error querying the queue pair"); 
+        return OMPI_ERROR; 
+    }                      
+    
+    ib_bmi->ib_inline_max = qp_init_attr.cap.max_inline_data_sq;  
+    
+    return OMPI_SUCCESS;
+}
+
