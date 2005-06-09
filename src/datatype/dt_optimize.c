@@ -50,6 +50,7 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
     }
 
     pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
+    SAVE_STACK( pStack, 0, 0, 0, 0, 0 );
     total_disp = 0;
 
     pTypeDesc->length = 2 * pData->desc.used + 1 /* for the fake DT_END_LOOP at the end */;
@@ -316,8 +317,8 @@ int32_t ompi_ddt_commit( ompi_datatype_t** data )
     /* let's add a fake element at the end just to avoid useless comparaisons
      * in pack/unpack functions.
      */
-    pLast->common.type         = DT_END_LOOP;
-    pLast->common.flags        = 0;
+    pLast->common.type  = DT_END_LOOP;
+    pLast->common.flags = 0;
     pLast->items        = pData->desc.used;
     pLast->total_extent = pData->ub - pData->lb;
     pLast->size         = pData->size;
