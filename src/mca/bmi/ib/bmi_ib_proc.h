@@ -3,8 +3,6 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004 The Ohio State University.
- *                    All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -23,8 +21,6 @@
 #include "class/ompi_object.h"
 #include "proc/proc.h"
 #include "bmi_ib.h"
-#include "bmi_ib_vapi.h"
-#include "bmi_ib_addr.h"
 #include "bmi_ib_endpoint.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

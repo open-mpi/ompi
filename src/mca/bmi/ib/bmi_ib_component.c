@@ -137,6 +137,60 @@ int mca_bmi_ib_component_open(void)
     mca_bmi_ib_module.super.bmi_max_send_size =
         mca_bmi_ib_param_register_int ("max_send_size", 128*1024);
     
+    mca_bmi_ib_module.ib_cq_size = 
+        mca_bmi_ib_param_register_int("ib_cq_size", 
+                                      40000); 
+    mca_bmi_ib_module.ib_wq_size = 
+        mca_bmi_ib_param_register_int("ib_wq_size", 
+                                      10000); 
+    mca_bmi_ib_module.ib_sg_list_size = 
+        mca_bmi_ib_param_register_int("ib_sg_list_size", 
+                                      1); 
+    mca_bmi_ib_module.ib_pkey_ix = 
+        mca_bmi_ib_param_register_int("ib_pkey_ix", 
+                                      0); 
+    mca_bmi_ib_module.ib_psn = 
+        mca_bmi_ib_param_register_int("ib_psn", 
+                                      0); 
+    mca_bmi_ib_module.ib_qp_ous_rd_atom = 
+        mca_bmi_ib_param_register_int("ib_qp_ous_rd_atom", 
+                                      1); 
+    mca_bmi_ib_module.ib_mtu = 
+        mca_bmi_ib_param_register_int("ib_mtu", 
+                                      MTU1024); 
+    mca_bmi_ib_module.ib_min_rnr_timer = 
+        mca_bmi_ib_param_register_int("ib_min_rnr_timer", 
+                                      5);
+    mca_bmi_ib_module.ib_timeout = 
+        mca_bmi_ib_param_register_int("ib_timeout", 
+                                      10); 
+    mca_bmi_ib_module.ib_retry_count = 
+        mca_bmi_ib_param_register_int("ib_retry_count", 
+                                      7); 
+    mca_bmi_ib_module.ib_rnr_retry = 
+        mca_bmi_ib_param_register_int("ib_rnr_retry", 
+                                      7); 
+    mca_bmi_ib_module.ib_max_rdma_dst_ops = 
+        mca_bmi_ib_param_register_int("ib_max_rdma_dst_ops", 
+                                      16); 
+
+    mca_bmi_ib_module.ib_service_level = 
+        mca_bmi_ib_param_register_int("ib_service_level", 
+                                      0); 
+    mca_bmi_ib_module.ib_static_rate = 
+        mca_bmi_ib_param_register_int("ib_static_rate", 
+                                      0); 
+    mca_bmi_ib_module.ib_src_path_bits = 
+        mca_bmi_ib_param_register_int("ib_src_path_bits", 
+                                      0); 
+    
+    
+    
+
+    
+    
+    
+    
     
     mca_bmi_ib_component.max_send_size = mca_bmi_ib_module.super.bmi_max_send_size; 
     mca_bmi_ib_component.eager_limit = mca_bmi_ib_module.super.bmi_eager_limit; 
@@ -173,7 +227,7 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
     VAPI_hca_port_t hca_port; 
     uint32_t num_hcas; 
     mca_bmi_base_module_t** bmis;
-    int i,j,k, length;
+    int i,j, length;
     mca_common_vapi_hca_pd_t hca_pd; 
     ompi_list_t bmi_list; 
     mca_bmi_ib_module_t * ib_bmi; 
@@ -182,7 +236,7 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
     /* initialization */
     *num_bmi_modules = 0;
 
- /* Determine the number of hca's available on the host */
+    /* Determine the number of hca's available on the host */
     vapi_ret=EVAPI_list_hcas(0, &num_hcas, NULL);
     if( VAPI_EAGAIN != vapi_ret || 0 == num_hcas ) {
         ompi_output(0,"No hca's found on this host \n"); 
@@ -213,14 +267,14 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
         vapi_ret = EVAPI_get_hca_hndl(hca_ids[i], &hca_hndl); 
         if(VAPI_OK != vapi_ret) { 
             ompi_output(0, "%s:error getting hca handle\n", __func__); 
-            return OMPI_ERROR; 
+            return NULL; 
         } 
         
 
         vapi_ret = VAPI_query_hca_cap(hca_hndl, &hca_vendor, &hca_cap); 
          if(VAPI_OK != vapi_ret) { 
             ompi_output(0, "%s:error getting hca properties\n", __func__); 
-            return OMPI_ERROR; 
+            return NULL; 
         } 
          
          
@@ -229,7 +283,7 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
              vapi_ret = VAPI_query_hca_port_prop(hca_hndl, (IB_port_t) j, &hca_port);  
              if(VAPI_OK != vapi_ret) { 
                  ompi_output(0, "%s:error getting hca port properties\n", __func__); 
-                 return OMPI_ERROR; 
+                 return NULL; 
              } 
              
              if( PORT_ACTIVE == hca_port.state ){ 
@@ -353,7 +407,7 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
         length = sizeof(mca_bmi_ib_frag_t) + 
             sizeof(mca_bmi_ib_header_t); 
 
-        ib_bmi->super.bmi_max_send_size; 
+        
         
         
         ompi_free_list_init(&ib_bmi->send_free_frag,
@@ -434,13 +488,9 @@ int mca_bmi_ib_component_progress()
     mca_bmi_ib_frag_t* frag; 
     /* Poll for completions */
     for(i = 0; i < mca_bmi_ib_component.ib_num_bmis; i++) {
-        mca_bmi_ib_module_t* ib_bmi = &mca_bmi_ib_component.ib_bmis[i];
-        int comp_type = IB_COMP_NOTHING;
-        void* comp_addr;
-        
-
         VAPI_ret_t ret; 
         VAPI_wc_desc_t comp; 
+        mca_bmi_ib_module_t* ib_bmi = &mca_bmi_ib_component.ib_bmis[i];
         
         
         ret = VAPI_poll_cq(ib_bmi->nic, ib_bmi->cq_hndl, &comp); 
@@ -464,14 +514,14 @@ int mca_bmi_ib_component_progress()
                 
             case VAPI_CQE_RQ_SEND_DATA:
                 
-                D_PRINT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
+                DEBUG_OUT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
                 frag = (mca_bmi_ib_frag_t*) comp.id; 
                 frag->segment.seg_len =  comp.byte_len-sizeof(mca_bmi_ib_header_t); 
                 /* advance the segment address past the header and subtract from the length..*/ 
                 ib_bmi->ib_reg[frag->hdr->tag].cbfunc(&ib_bmi->super, frag->hdr->tag, &frag->base, ib_bmi->ib_reg[frag->hdr->tag].cbdata);         
                
                 
-                OMPI_FREE_LIST_RETURN(&ib_bmi->recv_free, (ompi_free_list_item_t*) frag); 
+                OMPI_FREE_LIST_RETURN(&(ib_bmi->recv_free), (ompi_list_item_t*) frag); 
                 
                 if(OMPI_THREAD_ADD32(&ib_bmi->rr_posted, -1)  <= mca_bmi_ib_component.ib_rr_buf_min)
                     mca_bmi_ib_endpoint_post_rr(mca_bmi_ib_component.ib_rr_buf_max - ib_bmi->rr_posted, 

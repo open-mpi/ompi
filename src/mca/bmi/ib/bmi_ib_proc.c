@@ -3,8 +3,6 @@
  *                         All rights reserved.
  * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
  *                         All rights reserved.
- * Copyright (c) 2004 The Ohio State University.
- *                    All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -22,7 +20,6 @@
 #include "mca/base/mca_base_module_exchange.h"
 
 #include "bmi_ib.h"
-#include "bmi_ib_vapi.h"
 #include "bmi_ib_proc.h"
 
 static void mca_bmi_ib_proc_construct(mca_bmi_ib_proc_t* proc);

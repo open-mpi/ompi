@@ -21,17 +21,14 @@ include $(top_ompi_srcdir)/config/Makefile.options
 libmca_bmi_ib_la_SOURCES = \
     bmi_ib.c \
     bmi_ib.h \
-    bmi_ib_addr.h \
     bmi_ib_component.c \
     bmi_ib_endpoint.c \
     bmi_ib_endpoint.h \
     bmi_ib_frag.c \
     bmi_ib_frag.h \
-    bmi_ib_priv.c \
-    bmi_ib_priv.h \
     bmi_ib_proc.c \
     bmi_ib_proc.h \
-    bmi_ib_vapi.h
+    bmi_ib_error.h
      
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
