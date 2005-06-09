@@ -20,6 +20,7 @@
 #ifndef MCA_PML_OB1_H
 #define MCA_PML_OB1_H
 
+#include "ompi_config.h"
 #include "threads/thread.h"
 #include "threads/condition.h"
 #include "class/ompi_free_list.h"
@@ -67,13 +68,15 @@ struct mca_pml_ob1_t {
     /* free lists */
     ompi_free_list_t send_requests;
     ompi_free_list_t recv_requests;
+    ompi_free_list_t rdma_frags;
+    ompi_free_list_t recv_frags;
     ompi_free_list_t buffers;
-    ompi_free_list_t fragments;
 
-    /* list of pending send requests */
+    /* list of pending operations */
+    ompi_list_t acks_pending;
     ompi_list_t send_pending;
     ompi_list_t recv_pending;
-    ompi_list_t acks_pending;
+    ompi_list_t rdma_pending;
 };
 typedef struct mca_pml_ob1_t mca_pml_ob1_t; 
 

@@ -772,11 +772,10 @@ extern int mca_bmi_sm_free(
  * Pack data
  *
  * @param bmi (IN)      BMI module
- * @param peer (IN)     BMI peer addressing
  */
 struct mca_bmi_base_descriptor_t* mca_bmi_sm_prepare_src(
     struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* peer,
+    struct mca_bmi_base_endpoint_t* endpoint,
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size)

@@ -398,7 +398,7 @@ typedef int (*mca_bmi_base_module_free_fn_t)(
  */
 typedef struct mca_bmi_base_descriptor_t* (*mca_bmi_base_module_prepare_fn_t)(
     struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* peer,
+    struct mca_bmi_base_endpoint_t* endpoint,
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size
