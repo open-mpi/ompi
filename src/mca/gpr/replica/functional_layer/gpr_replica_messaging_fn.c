@@ -71,7 +71,7 @@ int orte_gpr_replica_process_callbacks(void)
              */
             while (NULL != (msg = (orte_gpr_replica_notify_msg_list_t*)ompi_list_remove_first(&(cb->messages)))) {
                 trig = (orte_gpr_replica_triggers_t*)((orte_gpr_replica.triggers)->addr[(msg->message)->idtag]);
-                if (NULL == trig) {
+                if (NULL == trig || NULL == trig->subscribed_data) {
                     ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
                     goto CLEANUP;
                 }

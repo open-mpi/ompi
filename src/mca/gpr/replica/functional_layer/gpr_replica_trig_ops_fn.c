@@ -202,8 +202,8 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg)
                     return rc;
                 }
             }
-            /* check if notifier is on this subscription - if so, check it,
-             * but ONLY if NOTIFY_START is NOT set
+            /* check if notifier is on this subscription - if so, check to see
+             * if it has fired, but ONLY if NOTIFY_START is NOT set
              */
             if ((ORTE_GPR_NOTIFY_ANY & trig[i]->action) &
                 (ORTE_GPR_TRIG_NOTIFY_START & trig[i]->action)) {

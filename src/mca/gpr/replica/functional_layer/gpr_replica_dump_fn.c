@@ -240,10 +240,10 @@ int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer)
         for (i=0; i < (orte_gpr_replica_globals.acted_upon)->size; i++) {
             if (NULL != action[i]) {
                 if (NULL != action[i]->seg) {
-                    sprintf(tmp_out, "Action Taken on Segment: %s", action[i]->seg->name);
+                    sprintf(tmp_out, "\nAction Taken on Segment: %s", action[i]->seg->name);
                     orte_gpr_replica_dump_load_string(buffer, &tmp_out);
                 } else {
-                    sprintf(tmp_out, "Action Taken on NULL Segment");
+                    sprintf(tmp_out, "\nAction Taken on NULL Segment");
                     orte_gpr_replica_dump_load_string(buffer, &tmp_out);
                 }
                 if (NULL != action[i]->cptr) {
@@ -272,36 +272,40 @@ int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer)
                     orte_gpr_replica_dump_load_string(buffer, &tmp_out);
                 }
                 if (NULL != action[i]->iptr) {
-                     if (ORTE_GPR_REPLICA_ENTRY_ADDED == action[i]->action) {
+                     if (ORTE_GPR_REPLICA_ENTRY_ADDED & action[i]->action) {
                          sprintf(tmp_out, "\n\tKeyval ADDED:");
                          orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-                     } else if (ORTE_GPR_REPLICA_ENTRY_DELETED == action[i]->action) {
+                     }
+                     if (ORTE_GPR_REPLICA_ENTRY_DELETED & action[i]->action) {
                          sprintf(tmp_out, "\n\tKeyval DELETED:");
                          orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-                     } else if (ORTE_GPR_REPLICA_ENTRY_CHANGED == action[i]->action) {
-                         sprintf(tmp_out, "\n\tKeyval CHANGED:");
+                     } 
+                     if (ORTE_GPR_REPLICA_ENTRY_CHANGED & action[i]->action) {
+                         sprintf(tmp_out, "\n\tKeyval CHANGED");
                          orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-                     } else if (ORTE_GPR_REPLICA_ENTRY_CHG_TO == action[i]->action) {
-                         sprintf(tmp_out, "\n\tKeyval CHANGED TO:");
+                     }
+                     if (ORTE_GPR_REPLICA_ENTRY_CHG_TO & action[i]->action) {
+                         sprintf(tmp_out, "\t\tKeyval CHANGED TO:");
                          orte_gpr_replica_dump_load_string(buffer, &tmp_out);
-                     } else if (ORTE_GPR_REPLICA_ENTRY_CHG_FRM == action[i]->action) {
-                         sprintf(tmp_out, "\n\tKeyval CHANGED FROM:");
+                     }
+                     if (ORTE_GPR_REPLICA_ENTRY_CHG_FRM & action[i]->action) {
+                         sprintf(tmp_out, "\t\tKeyval CHANGED FROM:");
                          orte_gpr_replica_dump_load_string(buffer, &tmp_out);
                      }
                      
                      if (ORTE_SUCCESS != orte_gpr_replica_dict_reverse_lookup(
                                                      &token, action[i]->seg, action[i]->iptr->itag)) {
-                         sprintf(tmp_out, "\n\t\tNo entry found for itag %lu",
+                         sprintf(tmp_out, "\t\tNo entry found for itag %lu",
                                  (unsigned long) action[i]->iptr->itag);
                      } else {
-                         sprintf(tmp_out, "\n\t\titag %lu\tKey: %s",
+                         sprintf(tmp_out, "\t\titag %lu\tKey: %s",
                                  (unsigned long) action[i]->iptr->itag, token);
                          free(token);
                      }
                      orte_gpr_replica_dump_load_string(buffer, &tmp_out);
                      orte_gpr_replica_dump_itagval_value(buffer, action[i]->iptr);
                  } else {
-                    sprintf(tmp_out, "\n\tNULL Keyval");
+                    sprintf(tmp_out, "\tNULL Keyval");
                      orte_gpr_replica_dump_load_string(buffer, &tmp_out);
                  }
              }

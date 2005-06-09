@@ -67,12 +67,12 @@ typedef uint8_t orte_gpr_replica_addr_mode_t;
 
 /* define a few action flags for trigger evaluation
  */
-#define ORTE_GPR_REPLICA_NO_ACTION         (int8_t) 0
-#define ORTE_GPR_REPLICA_ENTRY_ADDED       (int8_t) 1
-#define ORTE_GPR_REPLICA_ENTRY_DELETED     (int8_t) 2
-#define ORTE_GPR_REPLICA_ENTRY_CHANGED     (int8_t) 3
-#define ORTE_GPR_REPLICA_ENTRY_CHG_TO      (int8_t) 4
-#define ORTE_GPR_REPLICA_ENTRY_CHG_FRM     (int8_t) 5
+#define ORTE_GPR_REPLICA_NO_ACTION         (int8_t) 0x00
+#define ORTE_GPR_REPLICA_ENTRY_ADDED       (int8_t) 0x01
+#define ORTE_GPR_REPLICA_ENTRY_DELETED     (int8_t) 0x02
+#define ORTE_GPR_REPLICA_ENTRY_CHANGED     (int8_t) 0x04
+#define ORTE_GPR_REPLICA_ENTRY_CHG_TO      (int8_t) 0x08
+#define ORTE_GPR_REPLICA_ENTRY_CHG_FRM     (int8_t) 0x10
 
 
 typedef int8_t orte_gpr_replica_action_t;
