@@ -235,13 +235,20 @@ void mca_pml_ob1_recv_request_progress(
     mca_bmi_base_segment_t* segments,
     size_t num_segments);
 
-
 /**
  *
  */
 
 void mca_pml_ob1_recv_request_schedule(
     mca_pml_ob1_recv_request_t* req);
+
+/**
+ *
+ */
+
+void mca_pml_ob1_recv_request_fin(
+    mca_pml_ob1_recv_request_t* req,
+    size_t rdma_length);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

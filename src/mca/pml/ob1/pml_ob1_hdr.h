@@ -216,11 +216,24 @@ struct mca_pml_ob1_rdma_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
     ompi_ptr_t hdr_src;                       /**< source request/descriptor */
     ompi_ptr_t hdr_dst;                       /**< receive request/descriptor */
-    uint64_t hdr_offset;                      /**< current offset into user buffer */ 
+    uint64_t hdr_rdma_offset;                 /**< current offset into user buffer */ 
     uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
     mca_bmi_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
 };
 typedef struct mca_pml_ob1_rdma_hdr_t mca_pml_ob1_rdma_hdr_t;
+
+/**
+ *  Header used to complete an RDMA operation.
+ */
+
+struct mca_pml_ob1_fin_hdr_t {
+    mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
+    ompi_ptr_t hdr_src;                       /**< source request/descriptor */
+    ompi_ptr_t hdr_dst;                       /**< receive request/descriptor */
+    uint64_t hdr_rdma_offset;                 /**< data offset */
+    uint64_t hdr_rdma_length;                 /**< number of segments for rdma */
+};
+typedef struct mca_pml_ob1_fin_hdr_t mca_pml_ob1_fin_hdr_t;
 
 /**
  * Union of defined hdr types.
@@ -232,6 +245,7 @@ union mca_pml_ob1_hdr_t {
     mca_pml_ob1_frag_hdr_t hdr_frag;
     mca_pml_ob1_ack_hdr_t hdr_ack;
     mca_pml_ob1_rdma_hdr_t hdr_rdma;
+    mca_pml_ob1_fin_hdr_t hdr_fin;
 };
 typedef union mca_pml_ob1_hdr_t mca_pml_ob1_hdr_t;
 

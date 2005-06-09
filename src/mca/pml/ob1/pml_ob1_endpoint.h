@@ -156,6 +156,24 @@ static inline mca_pml_ob1_endpoint_t* mca_pml_ob1_ep_array_get_next(mca_pml_ob1_
 }
 
 /**
+ * Locate an element in the array
+ * 
+ * @param array (IN)
+ * @param index (IN)
+ */
+static inline mca_pml_ob1_endpoint_t* mca_pml_ob1_ep_array_find(
+    mca_pml_ob1_ep_array_t* array, struct mca_bmi_base_module_t* bmi)
+{
+    size_t i=0;   
+    for(i=0; i<array->arr_size; i++) {
+        if(array->arr_endpoints[i].bmi == bmi) {
+            return &array->arr_endpoints[i];
+        }
+    }
+    return NULL;
+}
+
+/**
  * Allocate a descriptor
  */
 

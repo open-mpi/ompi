@@ -28,6 +28,7 @@
 #include "pml_ob1_hdr.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
+#include "pml_ob1_rdmafrag.h"
 #include "pml_ob1_recvfrag.h"
 
 
@@ -83,7 +84,8 @@ int mca_pml_ob1_component_open(void)
     OBJ_CONSTRUCT(&mca_pml_ob1.recv_requests, ompi_free_list_t);
 
     /* fragments */
-    OBJ_CONSTRUCT(&mca_pml_ob1.fragments, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.rdma_frags, ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.recv_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.buffers, ompi_free_list_t);
 
     /* pending operations */
@@ -152,6 +154,9 @@ int mca_pml_ob1_component_close(void)
     OBJ_DESTRUCT(&mca_pml_ob1.recv_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.send_requests);
     OBJ_DESTRUCT(&mca_pml_ob1.recv_requests);
+    OBJ_DESTRUCT(&mca_pml_ob1.rdma_frags);
+    OBJ_DESTRUCT(&mca_pml_ob1.recv_frags);
+    OBJ_DESTRUCT(&mca_pml_ob1.buffers);
     OBJ_DESTRUCT(&mca_pml_ob1.lock);
     return OMPI_SUCCESS;
 }
@@ -184,11 +189,20 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
         mca_pml_ob1.free_list_inc,
         NULL);
 
-    /* recv fragments */
+    /* fragments */
     ompi_free_list_init(
-        &mca_pml_ob1.fragments,
-        sizeof(mca_pml_ob1_fragment_t),
-        OBJ_CLASS(mca_pml_ob1_fragment_t), 
+        &mca_pml_ob1.rdma_frags,
+        sizeof(mca_pml_ob1_rdma_frag_t),
+        OBJ_CLASS(mca_pml_ob1_rdma_frag_t), 
+        mca_pml_ob1.free_list_num,
+        mca_pml_ob1.free_list_max,
+        mca_pml_ob1.free_list_inc,
+        NULL);
+
+    ompi_free_list_init(
+        &mca_pml_ob1.recv_frags,
+        sizeof(mca_pml_ob1_recv_frag_t),
+        OBJ_CLASS(mca_pml_ob1_recv_frag_t), 
         mca_pml_ob1.free_list_num,
         mca_pml_ob1.free_list_max,
         mca_pml_ob1.free_list_inc,

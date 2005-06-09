@@ -129,6 +129,33 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 }
 
 /*
+ * Complete a send request
+ */
+#define MCA_PML_OB1_SEND_REQUEST_COMPLETE(sendreq)                                        \
+{                                                                                         \
+    (sendreq)->req_send.req_base.req_pml_complete = true;                                 \
+    if ((sendreq)->req_send.req_base.req_ompi.req_complete == false) {                    \
+        (sendreq)->req_send.req_base.req_ompi.req_status.MPI_SOURCE =                     \
+            (sendreq)->req_send.req_base.req_comm->c_my_rank;                             \
+        (sendreq)->req_send.req_base.req_ompi.req_status.MPI_TAG =                        \
+            (sendreq)->req_send.req_base.req_tag;                                         \
+        (sendreq)->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;        \
+        (sendreq)->req_send.req_base.req_ompi.req_status._count =                         \
+            (sendreq)->req_send.req_bytes_packed;                                         \
+        (sendreq)->req_send.req_base.req_ompi.req_complete = true;                        \
+        (sendreq)->req_state = MCA_PML_OB1_SR_COMPLETE;                                   \
+        if(ompi_request_waiting) {                                                        \
+            ompi_condition_broadcast(&ompi_request_cond);                                 \
+        }                                                                                 \
+    } else if(sendreq->req_send.req_base.req_free_called) {                               \
+        MCA_PML_OB1_FREE((ompi_request_t**)&sendreq);                                     \
+    } else if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {           \
+        mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);                        \
+        sendreq->req_state = MCA_PML_OB1_SR_COMPLETE;                                     \
+    }                                                                                     \
+}
+
+/*
  * Advance a request
  */
 
@@ -159,10 +186,10 @@ int mca_pml_ob1_send_request_schedule(
  *
  */
 
-int mca_pml_ob1_send_request_put(
-    mca_pml_ob1_send_request_t* sendreq,
-    mca_bmi_base_module_t* bmi,
-    mca_pml_ob1_rdma_hdr_t* hdr);
+void mca_pml_ob1_send_request_put(
+     mca_pml_ob1_send_request_t* sendreq,
+     mca_bmi_base_module_t* bmi,
+     mca_pml_ob1_rdma_hdr_t* hdr);
 
  
 #if defined(c_plusplus) || defined(__cplusplus)

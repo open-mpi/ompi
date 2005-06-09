@@ -31,6 +31,8 @@ libmca_pml_ob1_la_SOURCES = \
 	pml_ob1_proc.c \
 	pml_ob1_proc.h \
 	pml_ob1_progress.c \
+	pml_ob1_rdmafrag.c \
+	pml_ob1_rdmafrag.h \
 	pml_ob1_recvfrag.c \
 	pml_ob1_recvfrag.h \
 	pml_ob1_recvreq.c \
