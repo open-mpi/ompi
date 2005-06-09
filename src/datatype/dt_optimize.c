@@ -35,7 +35,7 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
     int32_t stack_pos = 0, last_type = DT_BYTE;
     int32_t type = DT_BYTE, last_length = 0, nbElems = 0, changes = 0, last_extent = 1;
     uint16_t last_flags = 0xFFFF;  /* keep all for the first datatype */
-    long total_disp;
+    long total_disp = 0;
     int32_t optimized = 0;
 
     /* Contiguous datatypes does not have to get optimized */
@@ -50,8 +50,7 @@ int32_t ompi_ddt_optimize_short( ompi_datatype_t* pData, int32_t count,
     }
 
     pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
-    SAVE_STACK( pStack, 0, 0, 0, 0, 0 );
-    total_disp = 0;
+    SAVE_STACK( pStack, -1, 0, count, 0, pData->desc.used );
 
     pTypeDesc->length = 2 * pData->desc.used + 1 /* for the fake DT_END_LOOP at the end */;
     pTypeDesc->desc = pElemDesc = (dt_elem_desc_t*)malloc( sizeof(dt_elem_desc_t) * pTypeDesc->length );
