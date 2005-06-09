@@ -92,6 +92,7 @@ typedef struct {
     orte_pointer_array_t *srch_cptr;
     orte_pointer_array_t *srch_ival;
     orte_pointer_array_t *acted_upon;
+    size_t num_acted_upon;
     orte_bitmap_t srch_itag;
 } orte_gpr_replica_globals_t;
 
@@ -121,7 +122,9 @@ typedef struct orte_gpr_replica_dict_t orte_gpr_replica_dict_t;
  */
 struct orte_gpr_replica_t {
     orte_pointer_array_t *segments;  /**< Managed array of pointers to segment objects */
+    size_t num_segs;
     orte_pointer_array_t *triggers;     /**< Managed array of pointers to triggers */
+    size_t num_trigs;
     ompi_list_t callbacks;          /**< List of callbacks to be processed */
 };
 typedef struct orte_gpr_replica_t orte_gpr_replica_t;

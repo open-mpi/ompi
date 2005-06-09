@@ -86,6 +86,7 @@ orte_gpr_replica_enter_notify_request(orte_gpr_notify_id_t *local_idtag,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    (orte_gpr_replica.num_trigs)++;
     
     *local_idtag = (orte_gpr_notify_id_t)trig->index;
 
@@ -146,6 +147,9 @@ int orte_gpr_replica_record_action(orte_gpr_replica_segment_t *seg,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
+    /* increment the number acted upon */
+    (orte_gpr_replica_globals.num_acted_upon)++;
+    
     return ORTE_SUCCESS;
 }
 
@@ -189,12 +193,15 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg)
 {
     orte_gpr_replica_triggers_t **trig;
     orte_gpr_replica_subscribed_data_t **sub;
-    size_t i, j;
+    size_t i, j, cntri, cntrj;
     int rc;
 
     trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
-    for (i=0; i < (orte_gpr_replica.triggers)->size; i++) {
+    cntri = 0;
+    for (i=0; cntri < orte_gpr_replica.num_trigs &&
+              i < (orte_gpr_replica.triggers)->size; i++) {
         if (NULL != trig[i]) {
+            cntri++;
             /* check if trigger is on this subscription - if so, check it */
             if (ORTE_GPR_TRIG_ANY & trig[i]->action) {
                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_trig(trig[i]))) {
@@ -205,8 +212,8 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg)
             /* check if notifier is on this subscription - if so, check to see
              * if it has fired, but ONLY if NOTIFY_START is NOT set
              */
-            if ((ORTE_GPR_NOTIFY_ANY & trig[i]->action) &
-                (ORTE_GPR_TRIG_NOTIFY_START & trig[i]->action)) {
+            if ((ORTE_GPR_NOTIFY_ANY & trig[i]->action) &&
+                !(ORTE_GPR_TRIG_NOTIFY_START & trig[i]->action)) {
                 /* for notifier subscriptions, the data structures
                  * in the trigger define the data being monitored. First,
                  * check to see if the segment that was modified matches
@@ -215,11 +222,16 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg)
                  */
                  sub = (orte_gpr_replica_subscribed_data_t**)
                         (trig[i]->subscribed_data)->addr;
-                 for (j=0; j < (trig[i]->subscribed_data)->size; j++) {
-                    if ((NULL != sub[j]) && (seg == sub[j]->seg)) {
-                        if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_notify(trig[i], sub[j]))) {
-                            ORTE_ERROR_LOG(rc);
-                            return rc;
+                 cntrj = 0;
+                 for (j=0; cntrj < trig[i]->num_subscribed_data &&
+                           j < (trig[i]->subscribed_data)->size; j++) {
+                    if (NULL != sub[j]) {
+                        cntrj++;
+                        if (seg == sub[j]->seg) {
+                            if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_notify(trig[i], sub[j]))) {
+                                ORTE_ERROR_LOG(rc);
+                                return rc;
+                            }
                         }
                     }
                  }
@@ -235,7 +247,7 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
     orte_gpr_replica_counter_t **cntr;
     orte_gpr_replica_itagval_t *base_value=NULL;
     bool first, fire;
-    size_t i;
+    size_t i, cntri;
     int cmp;
     int rc;
     
@@ -243,8 +255,11 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
         cntr = (orte_gpr_replica_counter_t**)((trig->counters)->addr);
         first = true;
         fire = true;
-        for (i=0; i < (trig->counters)->size && fire; i++) {
+        cntri = 0;
+        for (i=0; cntri < trig->num_counters &&
+                  i < (trig->counters)->size && fire; i++) {
             if (NULL != cntr[i]) {
+                cntri++;
                 if (first) {
                     base_value = cntr[i]->iptr;
                     first = false;
@@ -265,7 +280,7 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
             if (orte_gpr_replica_globals.debug) {
                 ompi_output(0, "REGISTERING CALLBACK FOR TRIG %d", trig->index);
             }
-            if (ORTE_SUCCESS != (rc = orte_gpr_replica_register_callback(trig))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr_replica_register_callback(trig, NULL, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -276,8 +291,11 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
     } else if (ORTE_GPR_TRIG_AT_LEVEL & trig->action) { /* see if counters are at a level */
         cntr = (orte_gpr_replica_counter_t**)((trig->counters)->addr);
         fire = true;
-        for (i=0; i < (trig->counters)->size && fire; i++) {
+        cntri = 0;
+        for (i=0; cntri < trig->num_counters &&
+                  i < (trig->counters)->size && fire; i++) {
             if (NULL != cntr[i]) {
+                cntri++;
                 if (ORTE_SUCCESS != (rc =
                             orte_gpr_replica_compare_values(&cmp, cntr[i]->iptr,
                                                             &(cntr[i]->trigger_level)))) {
@@ -290,7 +308,7 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
             }
         }
         if (fire) { /* all counters at specified trigger level */
-            if (ORTE_SUCCESS != (rc = orte_gpr_replica_register_callback(trig))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr_replica_register_callback(trig, NULL, NULL))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -321,44 +339,142 @@ FIRED:
  * When entering this function, we know two things: (a) something was modified
  * on the segment specified in the subscription, and (b) notifications are
  * active. What we now need to determine is whether or not any of the data
- * objects pointed to by the subscription were involved in the change. These
- * objects could just be a container - e.g., the subscriber might want to know
+ * objects pointed to by the subscription were involved in the change. The
+ * subscription could describe a container - e.g., the subscriber might want to know
  * if anything gets added to a container - or could be a container plus one or
- * more keys when the subscriber wants to know if a specific value gets changed.
+ * more keys when the subscriber wants to know when a specific value gets changed.
  */
 int orte_gpr_replica_check_notify(orte_gpr_replica_triggers_t *trig,
                                   orte_gpr_replica_subscribed_data_t *sub)
 {
     orte_gpr_replica_action_taken_t **ptr;
-    size_t i;
+    size_t i, cntr;
+    orte_gpr_value_t value;
+    orte_gpr_replica_itag_t *itaglist;
+    int rc=ORTE_SUCCESS;
+    
+    OBJ_CONSTRUCT(&value, orte_gpr_value_t);
+    value.segment = strdup(sub->seg->name);
+    value.addr_mode = sub->addr_mode;
+    value.num_tokens = orte_value_array_get_size(&(sub->tokentags));
+    value.tokens = (char **)malloc(value.num_tokens * sizeof(char*));
+    if (NULL == value.tokens) {
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        goto CLEANUP;
+    }
+    itaglist = ORTE_VALUE_ARRAY_GET_BASE(&(sub->tokentags), orte_gpr_replica_itag_t);
+    for (i=0; i < value.num_tokens; i++) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
+                                    &(value.tokens[i]), sub->seg, itaglist[i]))) {
+            ORTE_ERROR_LOG(rc);
+            goto CLEANUP;
+        }
+    }
+    value.cnt = 1;
+    value.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+    if (NULL == value.keyvals) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    value.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == value.keyvals[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&value);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
     
     ptr = (orte_gpr_replica_action_taken_t**)((orte_gpr_replica_globals.acted_upon)->addr);
-    for (i=0; i < (orte_gpr_replica_globals.acted_upon)->size; i++) {
+    cntr = 0;
+    for (i=0; cntr < orte_gpr_replica_globals.num_acted_upon &&
+              i < (orte_gpr_replica_globals.acted_upon)->size; i++) {
         if (NULL != ptr[i]) {
+            cntr++;
             if ((trig->action & ORTE_GPR_NOTIFY_ADD_ENTRY) &&
-                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_ADDED)) {
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_ADDED) &&
+                orte_gpr_replica_check_notify_matches(sub, ptr[i])) {
                 /* send back the added entry */
+                if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
+                                        &((value.keyvals[0])->key), sub->seg,
+                                        ptr[i]->iptr->itag))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
+                (value.keyvals[0])->type = ptr[i]->iptr->type;
+                if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(
+                            &((value.keyvals[0])->value), &(ptr[i]->iptr->value),
+                            ptr[i]->iptr->type))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
+                if (ORTE_SUCCESS != (rc =
+                            orte_gpr_replica_register_callback(trig, sub, &value))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto CLEANUP;
+                }
             } else if ((trig->action & ORTE_GPR_NOTIFY_DEL_ENTRY) &
-                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_DELETED)){
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_DELETED) &&
+                orte_gpr_replica_check_notify_matches(sub, ptr[i])){
                 /* send back the deleted entry */
             } else if ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
-                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHANGED)) {
-                /* see if the acted_upon data was the target of the subscription */
-                /* send back the new data */
-            } else if ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
-                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHG_TO)) {
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHG_TO) &&
+                orte_gpr_replica_check_notify_matches(sub, ptr[i])) {
                 /* ptr contains the "new" data - check to see if it matches
                  * the subscription. if so, send back the new data
                  */
             } else if ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
-                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHG_FRM)) {
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHG_FRM) &&
+                orte_gpr_replica_check_notify_matches(sub, ptr[i])) {
                 /* ptr contains the "old" data - check to see if it matches
                  * the subscription. if so, send back the new data
                  */
+            } else if ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHANGED) &&
+                orte_gpr_replica_check_notify_matches(sub, ptr[i])) {
+                /* see if the acted_upon data was the target of the subscription */
+                /* send back the new data */
             }
         }
     }
-    return ORTE_SUCCESS;
+    
+CLEANUP:
+    OBJ_DESTRUCT(&value);
+    return rc;
+}
+
+
+bool orte_gpr_replica_check_notify_matches(orte_gpr_replica_subscribed_data_t *sub,
+                                           orte_gpr_replica_action_taken_t *ptr)
+{
+    orte_gpr_replica_addr_mode_t tokmod;
+    
+    /* when we enter this function, we already know that the segments match.
+     * Thus, we need to check that we are looking at a matching container
+     * and matching keyval pattern
+     */
+     
+    /* first, check to see if the containers match */
+    tokmod = 0x004f & sub->addr_mode;
+    if (!orte_gpr_replica_check_itag_list(tokmod,
+                orte_value_array_get_size(&(sub->tokentags)),
+                ORTE_VALUE_ARRAY_GET_BASE(&(sub->tokentags), orte_gpr_replica_itag_t),
+                (ptr->cptr)->num_itags,
+                (ptr->cptr)->itags)) {
+        /* not this container - return false */
+        return false;
+    }
+    /* next, check to see if this keyval was on the list */
+    if (orte_gpr_replica_check_itag_list(ORTE_GPR_REPLICA_OR,
+                orte_value_array_get_size(&(sub->keytags)),
+                ORTE_VALUE_ARRAY_GET_BASE(&(sub->keytags), orte_gpr_replica_itag_t),
+                1,
+                &(ptr->iptr->itag))) {
+        /* keyval is on list - return true */
+        return true;
+    }
+    
+    /* if we get here, then the keyval was NOT on the list */
+    return false;
 }
 
 
