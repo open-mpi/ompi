@@ -68,7 +68,7 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
    if (rdtype == MPI_PACKED) {
       send_convertor = OBJ_NEW(ompi_convertor_t);
       ompi_convertor_prepare_for_send( send_convertor, sdtype, scount, sbuf );
-      ompi_convertor_personalize( send_convertor, 0, 0, NULL );
+      ompi_convertor_personalize( send_convertor, 0, 0, NULL, NULL );
 
       iov_count = 1;
       iov.iov_len = rcount;

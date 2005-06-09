@@ -49,11 +49,12 @@ inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 
 static void ompi_convertor_construct( ompi_convertor_t* convertor )
 {
-    convertor->pDesc       = NULL;
-    convertor->pStack      = convertor->static_stack;
-    convertor->stack_size  = DT_STATIC_STACK_SIZE;
-    convertor->fAdvance    = NULL;
-    convertor->memAlloc_fn = NULL;
+    convertor->pDesc             = NULL;
+    convertor->pStack            = convertor->static_stack;
+    convertor->stack_size        = DT_STATIC_STACK_SIZE;
+    convertor->fAdvance          = NULL;
+    convertor->memAlloc_fn       = NULL;
+    convertor->memAlloc_userdata = NULL;
 }
 
 static void ompi_convertor_destruct( ompi_convertor_t* convertor )
@@ -212,10 +213,12 @@ inline int32_t ompi_convertor_set_position( ompi_convertor_t* convertor, size_t*
 
 int32_t
 ompi_convertor_personalize( ompi_convertor_t* convertor, uint32_t flags,
-                            size_t* position, memalloc_fct_t allocfn )
+                            size_t* position, memalloc_fct_t allocfn, void* userdata )
 {
     convertor->flags |= flags;
     convertor->memAlloc_fn = allocfn;
+    convertor->memAlloc_userdata = userdata;
+
     return ompi_convertor_set_position( convertor, position );
 }
 

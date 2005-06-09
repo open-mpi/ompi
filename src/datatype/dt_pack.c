@@ -84,7 +84,8 @@ int ompi_convertor_pack_general( ompi_convertor_t* pConvertor,
             if( (*max_data) < length )
                 length = *max_data;
             iov[iov_count].iov_len = length;
-            iov[iov_count].iov_base = pConvertor->memAlloc_fn( &(iov[iov_count].iov_len) );
+            iov[iov_count].iov_base = pConvertor->memAlloc_fn( &(iov[iov_count].iov_len),
+                                          pConvertor->memAlloc_userdata );
             *freeAfter = (*freeAfter) | ( 1 << iov_count);
         }
         pInput = iov[iov_count].iov_base;
@@ -415,7 +416,8 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                 /* point to the end of loop element */
                 ddt_endloop_desc_t* end_loop = &(pElems[pos_desc + pElems[pos_desc].loop.items].end_loop);
                 if( iov[iov_pos].iov_base == NULL ) {
-                    iov[iov_pos].iov_base = pConv->memAlloc_fn( &(iov[iov_pos].iov_len) );
+                    iov[iov_pos].iov_base = pConv->memAlloc_fn( &(iov[iov_pos].iov_len),
+                                                   pConv->memAlloc_userdata );
                     space_on_iovec = iov[iov_pos].iov_len;
                     destination = iov[iov_pos].iov_base;
                     (*freeAfter) |= (1 << iov_pos);
@@ -499,7 +501,8 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                             break;
                         }
                         /* Let's allocate some. */
-                        iov[iov_pos].iov_base = pConv->memAlloc_fn( &(iov[iov_pos].iov_len) );
+                        iov[iov_pos].iov_base = pConv->memAlloc_fn( &(iov[iov_pos].iov_len),
+                                                       pConv->memAlloc_userdata );
                         (*freeAfter) |= (1 << iov_pos);
                         destination = iov[iov_pos].iov_base;
                         space_on_iovec = iov[iov_pos].iov_len;
@@ -705,7 +708,8 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
             uint32_t done, counter;
             
             if( iov[iov_count].iov_base == NULL ) {
-                iov[iov_count].iov_base = pConv->memAlloc_fn( &(iov[iov_count].iov_len) );
+                iov[iov_count].iov_base = pConv->memAlloc_fn( &(iov[iov_count].iov_len),
+                                                 pConv->memAlloc_userdata );
                 (*freeAfter) |= (1 << 0);
                 if( max_allowed < iov[iov_count].iov_len )
                     iov[iov_count].iov_len = max_allowed;
@@ -761,7 +765,8 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
     }
 
     convertor->flags |= CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS;
-    convertor->memAlloc_fn = NULL;
+    convertor->memAlloc_fn       = NULL;
+    convertor->memAlloc_userdata = NULL;
     /* Just to avoid complaint from the compiler */
     convertor->fAdvance = ompi_convertor_pack_general;
     convertor->fAdvance = ompi_convertor_pack_homogeneous_with_memcpy;
