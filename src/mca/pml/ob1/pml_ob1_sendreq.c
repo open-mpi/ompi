@@ -452,3 +452,16 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
 } 
 
 
+/**
+ *
+ */
+
+int mca_pml_ob1_send_request_put(
+    mca_pml_ob1_send_request_t* sendreq,
+    mca_bmi_base_module_t* bmi,
+    mca_pml_ob1_rdma_hdr_t* hdr)
+{ 
+    return OMPI_ERR_NOT_IMPLEMENTED;
+}
+
+
