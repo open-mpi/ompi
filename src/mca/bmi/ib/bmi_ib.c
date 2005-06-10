@@ -65,7 +65,7 @@ int mca_bmi_ib_add_procs(
     mca_bmi_ib_module_t* ib_bmi = (mca_bmi_ib_module_t*)bmi;
     int i, rc;
 
-    for(i = 0; i < nprocs; i++) {
+    for(i = 0; i < (int) nprocs; i++) {
 
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_bmi_ib_proc_t* ib_proc;
@@ -146,13 +146,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_alloc(
     mca_bmi_ib_frag_t* frag;
     mca_bmi_ib_module_t* ib_bmi; 
     int rc;
-    void * user_out; 
     ib_bmi = (mca_bmi_ib_module_t*) bmi; 
-    
-   /*  if(size <= ib_bmi->super.bmi_eager_limit){ */
-    
-    
-    
     
     if(size <= mca_bmi_ib_component.eager_limit){ 
         MCA_BMI_IB_FRAG_ALLOC_EAGER(bmi, frag, rc); 
@@ -165,16 +159,6 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_alloc(
             size <= mca_bmi_ib_component.max_send_size ? 
             size: mca_bmi_ib_component.max_send_size ; 
     }
-    
-    
-    /* } else {  */
-        
-    
-    /*   frag = (mca_bmi_ib_frag_t*) ib_bmi->ib_pool->mpool_alloc(ib_bmi->ib_pool,  sizeof(frag) + sizeof(mca_bmi_ib_header_t) + size ,0, &user_out);  */
-        /*         frag->base.super.user_data = user_out;  */
-        /*         OBJ_CONSTRUCT(frag, mca_bmi_ib_frag_t);  */
-    
-    /*  }  */
     
     frag->segment.seg_len = size <= ib_bmi->super.bmi_eager_limit ? size : ib_bmi->super.bmi_eager_limit;  
     return (mca_bmi_base_descriptor_t*)frag;
@@ -218,8 +202,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     size_t max_data = *size; 
     int32_t free_after; 
     int rc; 
-    void* user_out; 
-
+    
     ib_bmi = (mca_bmi_ib_module_t*) bmi; 
     
     if(  max_data+reserve <=  bmi->bmi_eager_limit) { 
@@ -345,8 +328,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     size_t max_data = *size; 
     int32_t free_after; 
     int rc; 
-    void* user_out; 
-
+    
     ib_bmi = (mca_bmi_ib_module_t*) bmi; 
     VAPI_mrw_t mr_in, mr_out;
     VAPI_ret_t ret;   

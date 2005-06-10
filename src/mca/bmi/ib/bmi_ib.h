@@ -81,10 +81,10 @@ struct mca_bmi_ib_component_t {
     char* ib_mpool_name; 
     /**< name of ib memory pool */ 
    
-    int ib_rr_buf_max; 
+    uint32_t ib_rr_buf_max; 
     /**< the maximum number of posted rr */  
    
-    int ib_rr_buf_min; 
+    uint32_t ib_rr_buf_min; 
     /**< the minimum number of posted rr */ 
     
     size_t eager_limit; 
@@ -151,6 +151,8 @@ struct mca_bmi_ib_module_t {
     
 }; typedef struct mca_bmi_ib_module_t mca_bmi_ib_module_t;
     
+
+    struct mca_bmi_ib_frag_t; 
 extern mca_bmi_ib_module_t mca_bmi_ib_module;
 
 /**

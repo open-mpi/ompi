@@ -45,7 +45,7 @@ static inline int mca_bmi_ib_endpoint_post_send(mca_bmi_ib_module_t* ib_bmi, mca
     frag->sr_desc.remote_qkey = 0; 
     frag->sr_desc.remote_qp = endpoint->rem_qp_num; 
     
-    frag->sg_entry.len = frag->segment.seg_len + sizeof(mca_bmi_ib_header_t); 
+    frag->sg_entry.len = frag->segment.seg_len + ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);  /* sizeof(mca_bmi_ib_header_t); */ 
     if(frag->sg_entry.len <= ib_bmi->ib_inline_max) { 
             frag->ret = EVAPI_post_inline_sr(ib_bmi->nic, 
                                  endpoint->lcl_qp_hndl, 
@@ -207,10 +207,6 @@ static int mca_bmi_ib_endpoint_set_remote_info(mca_bmi_base_endpoint_t* endpoint
 }
 
 
-static int mca_bmi_ib_endpoint_init(mca_bmi_ib_endpoint_t *endpoint)
-{
-    return OMPI_SUCCESS;
-}
 
 /*
  * Start to connect to the endpoint. We send our Queue Pair

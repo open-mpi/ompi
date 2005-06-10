@@ -125,7 +125,7 @@ static inline int mca_bmi_ib_endpoint_post_rr(int cnt, mca_bmi_ib_endpoint_t *en
         OMPI_FREE_LIST_WAIT(&ib_bmi->recv_free, item, rc); 
         frag = (mca_bmi_ib_frag_t*) item; 
         frag->endpoint = endpoint; 
-        frag->sg_entry.len = frag->size + sizeof(mca_bmi_ib_header_t);     
+        frag->sg_entry.len = frag->size + ((unsigned char*) frag->segment.seg_addr.pval- (unsigned char*) frag->hdr);  /* sizeof(mca_bmi_ib_header_t);     */ 
         rr_desc_post[i] = frag->rr_desc; 
         
     }
