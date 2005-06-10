@@ -123,7 +123,8 @@ int mca_bmi_ib_component_open(void)
         mca_bmi_ib_param_register_string("mpool", "ib"); 
     mca_bmi_ib_component.ib_rr_buf_max = 
         mca_bmi_ib_param_register_int("rr_buf_max", 16); 
-    
+    mca_bmi_ib_component.ib_rr_buf_min = 
+        mca_bmi_ib_param_register_int("rr_buf_min", 8); 
     mca_bmi_ib_module.super.bmi_exclusivity =
         mca_bmi_ib_param_register_int ("exclusivity", 0);
     mca_bmi_ib_module.super.bmi_eager_limit = 
@@ -135,8 +136,10 @@ int mca_bmi_ib_component_open(void)
                                        (64*1024 
                                         - sizeof(mca_bmi_ib_header_t)));
     mca_bmi_ib_module.super.bmi_max_send_size =
-        mca_bmi_ib_param_register_int ("max_send_size", 128*1024);
-    
+        mca_bmi_ib_param_register_int ("max_send_size", 128*1024 -
+                                       sizeof(mca_bmi_ib_header_t));
+    mca_bmi_ib_module.ib_pin_min = 
+        mca_bmi_ib_param_register_int("ib_pin_min", 128*1024);                                    
     mca_bmi_ib_module.ib_cq_size = 
         mca_bmi_ib_param_register_int("ib_cq_size", 
                                       40000); 
@@ -528,7 +531,6 @@ int mca_bmi_ib_component_progress()
                                                 ((mca_bmi_ib_frag_t*)comp.id)->endpoint); 
                 
                 
-                               
                 count++; 
                 break;
                 

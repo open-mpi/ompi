@@ -211,7 +211,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     mca_bmi_ib_module_t* ib_bmi; 
     mca_bmi_ib_frag_t* frag; 
     struct iovec iov; 
-    int32_t out_size = 0; 
+    int32_t iov_count = 1; 
     size_t max_data = *size; 
     int32_t free_after; 
     int rc; 
@@ -230,7 +230,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         iov.iov_len = max_data; 
         iov.iov_base = frag->segment.seg_addr.pval + reserve; 
         
-        rc = ompi_convertor_pack(convertor, &iov, &out_size, &max_data, &free_after); 
+        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
         if( rc < 0 ) { 
             MCA_BMI_IB_FRAG_RETURN_EAGER(bmi, frag); 
             return NULL; 
@@ -249,9 +249,9 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
             max_data = frag->size - reserve; 
         }
         iov.iov_len = max_data; 
-        iov.iov_base = frag->segment.seg_addr.pval + reserve; 
+        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve; 
         
-        rc = ompi_convertor_pack(convertor, &iov, &out_size, &max_data, &free_after); 
+        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
         if( rc < 0 ) { 
             MCA_BMI_IB_FRAG_RETURN_MAX(bmi, frag); 
             return NULL; 
@@ -277,15 +277,15 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
           mr_in.r_key = 0;
           mr_in.pd_hndl = ib_bmi->ptag; 
           mr_in.type = VAPI_MR;
-          
-          
-          frag = (mca_bmi_ib_send_frag_frag_t*) ib_bmi->ib_pool->mpool_alloc(ib_bmi->ib_pool,  sizeof(frag) + sizeof(mca_bmi_ib_header_t) + *size ,0, &user_out);
-          frag->base.super.user_data = user_out;
-          OBJ_CONSTRUCT(frag, mca_bmi_ib_send_frag_frag_t);
+          MCA_BMI_IB_FRAG_ALLOC_FRAG(bmi, frag, rc); 
+          if(NULL == frag){
+              return NULL; 
+          } 
+                
           iov.iov_len = max_data; 
           iov.iov_base = NULL; 
           
-          ompi_convertor_pack(convertor, &iov, &out_size, &max_data, &free_after); 
+          ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
           frag->segment.seg_len = max_data; 
           frag->segment.seg_addr.pval = iov.iov_base; 
   
@@ -306,6 +306,9 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
           
           mem_hndl.l_key = mr_out.l_key; 
           mem_hndl.r_key = mr_out.r_key; 
+ 
+          frag->mem_hndl = mem_hndl.hndl; 
+          frag->segment.seg_key.key32[1] = (uint32_t) mem_hndl.l_key; 
   
           return &frag->base; 
 
