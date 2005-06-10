@@ -27,12 +27,8 @@ static void mca_bmi_ib_frag_common_constructor( mca_bmi_ib_frag_t* frag)
 #endif 
     
     frag->segment.seg_len = frag->size;
-    frag->base.des_src = &frag->segment;
-    frag->base.des_src_cnt = 1;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
-    frag->base.des_src->seg_key.key32[0] = (uint64_t) mem_hndl->l_key; 
+    frag->segment.seg_key.key32[0] = (uint64_t) mem_hndl->l_key; 
     frag->sg_entry.lkey = mem_hndl->l_key; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
 }
@@ -42,7 +38,11 @@ static void mca_bmi_ib_send_frag_common_constructor(mca_bmi_ib_frag_t* frag)
 { 
     
     mca_bmi_ib_frag_common_constructor(frag); 
-
+    frag->base.des_src = &frag->segment;
+    frag->base.des_src_cnt = 1;
+    frag->base.des_dst = NULL;
+    frag->base.des_dst_cnt = 0;
+    
     frag->sr_desc.comp_type = VAPI_SIGNALED; 
     frag->sr_desc.opcode = VAPI_SEND; 
     frag->sr_desc.remote_qkey = 0; 
@@ -56,7 +56,11 @@ static void mca_bmi_ib_recv_frag_common_constructor(mca_bmi_ib_frag_t* frag)
 { 
     
     mca_bmi_ib_frag_common_constructor(frag); 
-
+    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst_cnt = 1;
+    frag->base.des_src = NULL;
+    frag->base.des_src_cnt = 0;
+    
     frag->rr_desc.comp_type = VAPI_SIGNALED; 
     frag->rr_desc.opcode = VAPI_RECEIVE; 
     frag->rr_desc.sg_lst_len = 1; 

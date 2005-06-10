@@ -588,6 +588,7 @@ void mca_pml_ob1_send_request_put(
     }
     frag->rdma_state = MCA_PML_OB1_RDMA_PUT;
     frag->rdma_length = size;
+    frag->rdma_req = sendreq; 
 
     des->des_dst = frag->rdma_segs;
     des->des_dst_cnt = hdr->hdr_seg_cnt;

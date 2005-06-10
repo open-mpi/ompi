@@ -187,7 +187,7 @@ int mca_bmi_ib_component_open(void)
         mca_bmi_ib_param_register_int("ib_src_path_bits", 
                                       0); 
     
-    
+    mca_bmi_ib_module.super.bmi_flags  = MCA_BMI_FLAGS_RDMA; 
     
 
     
@@ -505,16 +505,17 @@ int mca_bmi_ib_component_progress()
                 ompi_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
                             VAPI_wc_status_sym(comp.status), 
                             comp.vendor_err_syndrome, comp.id);  
-            
+                frag->rc = OMPI_ERROR; 
             }
         
             /* Handle n/w completions */
             switch(comp.opcode) {
+            case VAPI_CQE_SQ_RDMA_WRITE:
             case VAPI_CQE_SQ_SEND_DATA :
                 
                 /* Process a completed send */
                 frag = (mca_bmi_ib_frag_t*) comp.id; 
-                frag->base.des_cbfunc(&ib_bmi->super,(mca_bmi_base_endpoint_t*) &frag->endpoint, &frag->base, frag->rc); 
+                frag->base.des_cbfunc(&ib_bmi->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
                 break;
                 
@@ -522,7 +523,7 @@ int mca_bmi_ib_component_progress()
                 
                 DEBUG_OUT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
                 frag = (mca_bmi_ib_frag_t*) comp.id; 
-                frag->segment.seg_len =  comp.byte_len-sizeof(mca_bmi_ib_header_t); 
+                frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_len  - (unsigned char*) frag->hdr); 
                 /* advance the segment address past the header and subtract from the length..*/ 
                 ib_bmi->ib_reg[frag->hdr->tag].cbfunc(&ib_bmi->super, frag->hdr->tag, &frag->base, ib_bmi->ib_reg[frag->hdr->tag].cbdata);         
                
@@ -535,12 +536,6 @@ int mca_bmi_ib_component_progress()
                 
                 
                 count++; 
-                break;
-                
-            case VAPI_CQE_SQ_RDMA_WRITE:
-                
-                ompi_output(0, "%s:%d RDMA not implemented\n", __FILE__,__LINE__);
-                count++;
                 break;
                 
             default:
