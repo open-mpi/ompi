@@ -41,6 +41,9 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
+#endif
 
 #include "mca/iof/base/iof_base_setup.h"
 
