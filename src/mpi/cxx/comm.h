@@ -62,7 +62,7 @@ public:
   inline Comm_Null(const MPI_Comm& data) : mpi_comm(data) { }
 
   // destruction
-  //JGS virtual inline ~Comm_Null() { }
+  virtual inline ~Comm_Null() { }
 
  // comparison
   // JGS make sure this is right (in other classes too)
