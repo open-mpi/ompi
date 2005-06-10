@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sched.h>
 
 #include "util/output.h"
 #include "util/if.h"
@@ -415,7 +416,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
         {
             /* spin unitl local proc 0 initializes the segment */
             while(!mca_ptl_sm_component.mmap_file->map_seg->seg_inited)
-            { ; }
+            { sched_yield(); }
         }
                 
         /* set the base of the shared memory segment, and flag
