@@ -348,7 +348,7 @@ int orte_gpr_replica_check_notify(orte_gpr_replica_triggers_t *trig,
                                   orte_gpr_replica_subscribed_data_t *sub)
 {
     orte_gpr_replica_action_taken_t **ptr;
-    size_t i, cntr;
+    size_t i, j, cntr;
     orte_gpr_value_t value;
     orte_gpr_replica_itag_t *itaglist;
     int rc=ORTE_SUCCESS;
@@ -356,20 +356,6 @@ int orte_gpr_replica_check_notify(orte_gpr_replica_triggers_t *trig,
     OBJ_CONSTRUCT(&value, orte_gpr_value_t);
     value.segment = strdup(sub->seg->name);
     value.addr_mode = sub->addr_mode;
-    value.num_tokens = orte_value_array_get_size(&(sub->tokentags));
-    value.tokens = (char **)malloc(value.num_tokens * sizeof(char*));
-    if (NULL == value.tokens) {
-        rc = ORTE_ERR_OUT_OF_RESOURCE;
-        goto CLEANUP;
-    }
-    itaglist = ORTE_VALUE_ARRAY_GET_BASE(&(sub->tokentags), orte_gpr_replica_itag_t);
-    for (i=0; i < value.num_tokens; i++) {
-        if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
-                                    &(value.tokens[i]), sub->seg, itaglist[i]))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-    }
     value.cnt = 1;
     value.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
     if (NULL == value.keyvals) {
@@ -393,6 +379,20 @@ int orte_gpr_replica_check_notify(orte_gpr_replica_triggers_t *trig,
             if ((trig->action & ORTE_GPR_NOTIFY_ADD_ENTRY) &&
                 (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_ADDED) &&
                 orte_gpr_replica_check_notify_matches(sub, ptr[i])) {
+                /* need to send back the tokens from the container that is being addressed! */
+                value.num_tokens = ptr[i]->cptr->num_itags;
+                value.tokens = (char **)malloc(value.num_tokens * sizeof(char*));
+                if (NULL == value.tokens) {
+                    rc = ORTE_ERR_OUT_OF_RESOURCE;
+                    goto CLEANUP;
+                }
+                for (j=0; j < value.num_tokens; j++) {
+                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
+                                                &(value.tokens[j]), sub->seg, ptr[i]->cptr->itags[j]))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto CLEANUP;
+                    }
+                }
                 /* send back the added entry */
                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
                                         &((value.keyvals[0])->key), sub->seg,
