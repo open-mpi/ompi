@@ -36,13 +36,14 @@ static void orte_iof_base_endpoint_construct(orte_iof_base_endpoint_t* endpoint)
     endpoint->ep_state = ORTE_IOF_EP_CLOSED;
     endpoint->ep_seq = 0;
     endpoint->ep_ack = 0;
+    endpoint->ep_fd = -1;
     memset(&endpoint->ep_event,0,sizeof(endpoint->ep_event));
     OBJ_CONSTRUCT(&endpoint->ep_frags, ompi_list_t);
 }
 
 static void orte_iof_base_endpoint_destruct(orte_iof_base_endpoint_t* endpoint)
 {
-    if(endpoint->ep_fd > 0) {
+    if(endpoint->ep_fd >= 0) {
         ompi_event_del(&endpoint->ep_event);
     }
     OBJ_DESTRUCT(&endpoint->ep_frags);
