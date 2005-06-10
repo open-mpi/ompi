@@ -114,6 +114,10 @@ int mca_pml_ob1_component_open(void)
         mca_pml_ob1_param_register_int("send_pipeline_depth", 3);
     mca_pml_ob1.recv_pipeline_depth =
         mca_pml_ob1_param_register_int("recv_pipeline_depth", 3);
+    mca_pml_ob1.rdma_threshold = 
+        mca_pml_ob1_param_register_int("rdma_threshold", 512*1024); 
+    mca_pml_ob1.rdma_offset = 
+        mca_pml_ob1_param_register_int("rdma_offset", 256*1024); 
 
     return mca_bmi_base_open();
 }

@@ -169,14 +169,26 @@ int mca_bmi_ib_free(
                            mca_bmi_base_descriptor_t* des) 
 {
     mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*)des; 
-    
+    mca_bmi_ib_module_t * ib_bmi = (mca_bmi_ib_module_t*) bmi; 
+
     if(frag->size == 0) {
         MCA_BMI_IB_FRAG_RETURN_FRAG(bmi, frag); 
+        /* we also need to unregister the associated memory */ 
+        frag->ret = VAPI_deregister_mr(
+                                       ib_bmi->nic, 
+                                       frag->mem_hndl
+                                       ); 
+        if(frag->ret!=VAPI_OK){ 
+            ompi_output(0, "%s:error deregistering memory region", __func__); 
+            return OMPI_ERROR; 
+        } 
+
     } else if(frag->size == mca_bmi_ib_component.max_send_size){ 
         MCA_BMI_IB_FRAG_RETURN_MAX(bmi, frag); 
     } else if(frag->size == mca_bmi_ib_component.eager_limit){ 
         MCA_BMI_IB_FRAG_RETURN_EAGER(bmi, frag); 
     } 
+    
     return frag->rc; 
 }
 
@@ -245,6 +257,14 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         
         frag->segment.seg_len = max_data + reserve; 
         *size  = max_data; 
+        frag->sg_entry.len = max_data;         
+        frag->segment.seg_key.key32[0] = (uint32_t) frag->sg_entry.lkey; 
+        frag->base.des_src = &frag->segment;
+        frag->base.des_src_cnt = 1;
+        frag->base.des_dst = NULL;
+        frag->base.des_dst_cnt = 0;
+        
+
         return &frag->base; 
     } else { 
           VAPI_mrw_t mr_in, mr_out;
@@ -292,7 +312,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
           
           mem_hndl.l_key = mr_out.l_key; 
           mem_hndl.r_key = mr_out.r_key; 
- 
+          
           frag->mem_hndl = mem_hndl.hndl; 
           frag->sg_entry.len = max_data; 
           frag->sg_entry.lkey = mem_hndl.l_key; 
@@ -300,6 +320,12 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
           
           frag->segment.seg_key.key32[0] = (uint32_t) mem_hndl.l_key; 
           
+          frag->base.des_src = &frag->segment;
+          frag->base.des_src_cnt = 1;
+          frag->base.des_dst = NULL;
+          frag->base.des_dst_cnt = 0;
+          
+
           return &frag->base; 
 
     }
@@ -323,10 +349,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
 {
     mca_bmi_ib_module_t* ib_bmi; 
     mca_bmi_ib_frag_t* frag; 
-    struct iovec iov; 
-    int32_t iov_count = 1; 
     size_t max_data = *size; 
-    int32_t free_after; 
     int rc; 
     
     ib_bmi = (mca_bmi_ib_module_t*) bmi; 
@@ -351,15 +374,12 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
         return NULL; 
     } 
     
-    iov.iov_len = max_data; 
-    iov.iov_base = NULL; 
     
-    ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
     frag->segment.seg_len = max_data; 
-    frag->segment.seg_addr.pval = iov.iov_base; 
+    frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted; 
     
     mr_in.size = max_data;
-    mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base;
+    mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->segment.seg_addr.pval; 
     
     ret = VAPI_register_mr(
                            ib_bmi->nic, 
@@ -379,10 +399,14 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     frag->mem_hndl = mem_hndl.hndl; 
     frag->sg_entry.len = max_data; 
     frag->sg_entry.lkey = mem_hndl.l_key; 
-    frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
+    frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->segment.seg_addr.pval; 
     
     frag->segment.seg_key.key32[0] = (uint32_t) mem_hndl.l_key; 
-    
+    frag->base.des_dst = &frag->segment; 
+    frag->base.des_dst_cnt = 1; 
+    frag->base.des_src = NULL; 
+    frag->base.des_src_cnt = 0; 
+
     return &frag->base; 
     
 }
@@ -455,9 +479,11 @@ int mca_bmi_ib_put( mca_bmi_base_module_t* bmi,
 {
     mca_bmi_ib_module_t* ib_bmi = (mca_bmi_ib_module_t*) bmi; 
     mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*) descriptor; 
+    frag->endpoint = endpoint; 
     frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
     frag->sr_desc.remote_qp = endpoint->rem_qp_num; 
     frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
+    frag->sr_desc.r_key = frag->base.des_dst->seg_key.key32[0]; 
     
     frag->ret = VAPI_post_sr(ib_bmi->nic, 
                              endpoint->lcl_qp_hndl, 

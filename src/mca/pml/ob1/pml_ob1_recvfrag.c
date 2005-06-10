@@ -60,7 +60,7 @@ void mca_pml_ob1_recv_frag_callback(
     mca_bmi_base_descriptor_t* des,
     void* cbdata)
 {
-    mca_bmi_base_segment_t* segments = des->des_src;
+    mca_bmi_base_segment_t* segments = des->des_dst;
     mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
     if(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) {
         return;
