@@ -6,16 +6,33 @@
 
 static void mca_bmi_ib_frag_common_constructor( mca_bmi_ib_frag_t* frag) 
 {
+    size_t mod; 
     mca_common_vapi_memhandle_t* mem_hndl = frag->base.super.user_data; 
     frag->hdr = (mca_bmi_ib_header_t*) (frag+1);    /* initialize the bmi header to point to start at end of frag */ 
-    frag->segment.seg_addr.pval = frag->hdr+1;  /* init the segment address to start after the bmi header */ 
+#if 0   
+    mod = (unsigned long) frag->hdr % MCA_BMI_IB_FRAG_ALIGN; 
+    
+    if(mod != 0) {
+        frag->hdr = (unsigned char*) frag->hdr + (MCA_BMI_IB_FRAG_ALIGN - mod);
+    }
+#endif 
+    
+    frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_bmi_ib_header_t);  /* init the segment address to start after the bmi header */ 
+    
+#if 0 
+    mod = (frag->segment.seg_addr.lval) % MCA_BMI_IB_FRAG_ALIGN; 
+    if(mod != 0) {
+        frag->segment.seg_addr.lval += (MCA_BMI_IB_FRAG_ALIGN - mod);
+    }
+#endif 
+    
     frag->segment.seg_len = frag->size;
     frag->base.des_src = &frag->segment;
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
-    frag->base.des_src->seg_key.key64 = (uint64_t) mem_hndl->l_key; 
+    frag->base.des_src->seg_key.key32[0] = (uint64_t) mem_hndl->l_key; 
     frag->sg_entry.lkey = mem_hndl->l_key; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
 }

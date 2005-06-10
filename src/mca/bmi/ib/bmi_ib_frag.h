@@ -17,6 +17,8 @@
 #ifndef MCA_BMI_IB_FRAG_H
 #define MCA_BMI_IB_FRAG_H
 
+
+#define MCA_BMI_IB_FRAG_ALIGN (8)
 #include "ompi_config.h"
 #include "bmi_ib.h" 
 

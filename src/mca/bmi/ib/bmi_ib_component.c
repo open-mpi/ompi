@@ -371,7 +371,8 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
         
         length = sizeof(mca_bmi_ib_frag_t) + 
             sizeof(mca_bmi_ib_header_t) + 
-            ib_bmi->super.bmi_eager_limit; 
+            ib_bmi->super.bmi_eager_limit+ 
+            2*MCA_BMI_IB_FRAG_ALIGN; 
         
         ompi_free_list_init(&ib_bmi->send_free_eager,
                             length, 
@@ -385,7 +386,8 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
         
         length = sizeof(mca_bmi_ib_frag_t) + 
             sizeof(mca_bmi_ib_header_t) + 
-            ib_bmi->super.bmi_max_send_size; 
+            ib_bmi->super.bmi_max_send_size+
+            2*MCA_BMI_IB_FRAG_ALIGN; 
         
         
         ompi_free_list_init(&ib_bmi->send_free_max,
@@ -408,7 +410,8 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
 
         
         length = sizeof(mca_bmi_ib_frag_t) + 
-            sizeof(mca_bmi_ib_header_t); 
+            sizeof(mca_bmi_ib_header_t)+ 
+            2*MCA_BMI_IB_FRAG_ALIGN; 
 
         
         
