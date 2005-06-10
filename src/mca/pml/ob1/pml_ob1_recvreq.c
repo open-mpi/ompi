@@ -141,7 +141,8 @@ static void mca_pml_ob1_recv_request_ack(
      * - rdma devices are available
     */
     if(recvreq->req_recv.req_bytes_packed >= mca_pml_ob1.rdma_threshold &&
-       mca_pml_ob1_ep_array_get_size(&proc->bmi_rdma)) {
+       mca_pml_ob1_ep_array_get_size(&proc->bmi_rdma) &&
+       ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
 
         /* use convertor to figure out the rdma offset for this request */
         recvreq->req_rdma_offset = mca_pml_ob1.rdma_offset;
