@@ -68,7 +68,7 @@ static void mca_bmi_ib_send_frag_max_constructor(mca_bmi_ib_frag_t* frag)
 
 static void mca_bmi_ib_recv_frag_constructor(mca_bmi_ib_frag_t* frag) 
 {
-    frag->size = mca_bmi_ib_component.max_send_size; 
+    frag->size = mca_bmi_ib_component.max_send_size+100; 
     mca_bmi_ib_recv_frag_common_constructor(frag); 
     
 }
