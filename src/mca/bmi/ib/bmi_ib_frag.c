@@ -9,17 +9,17 @@ static void mca_bmi_ib_frag_common_constructor( mca_bmi_ib_frag_t* frag)
     size_t mod; 
     mca_common_vapi_memhandle_t* mem_hndl = frag->base.super.user_data; 
     frag->hdr = (mca_bmi_ib_header_t*) (frag+1);    /* initialize the bmi header to point to start at end of frag */ 
-#if 0   
+#if 1   
     mod = (unsigned long) frag->hdr % MCA_BMI_IB_FRAG_ALIGN; 
     
     if(mod != 0) {
-        frag->hdr = (unsigned char*) frag->hdr + (MCA_BMI_IB_FRAG_ALIGN - mod);
+        frag->hdr = (mca_bmi_ib_header_t*) ((unsigned char*) frag->hdr + (MCA_BMI_IB_FRAG_ALIGN - mod));
     }
 #endif 
     
     frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_bmi_ib_header_t);  /* init the segment address to start after the bmi header */ 
     
-#if 0 
+#if 1 
     mod = (frag->segment.seg_addr.lval) % MCA_BMI_IB_FRAG_ALIGN; 
     if(mod != 0) {
         frag->segment.seg_addr.lval += (MCA_BMI_IB_FRAG_ALIGN - mod);
