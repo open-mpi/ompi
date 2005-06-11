@@ -186,6 +186,14 @@ int mca_bmi_ib_component_open(void)
     mca_bmi_ib_module.ib_src_path_bits = 
         mca_bmi_ib_param_register_int("ib_src_path_bits", 
                                       0); 
+
+    mca_bmi_ib_module.super.bmi_min_rdma_size = 
+        mca_bmi_ib_param_register_int("bmi_min_rdma_size", 
+                                      256*1024); 
+    mca_bmi_ib_module.super.bmi_max_rdma_size = 
+        mca_bmi_ib_param_register_int("bmi_max_rdma_size", 
+                                      512*1024); 
+    
     
     mca_bmi_ib_module.super.bmi_flags  = MCA_BMI_FLAGS_RDMA; 
     
@@ -523,7 +531,7 @@ int mca_bmi_ib_component_progress()
                 
                 DEBUG_OUT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
                 frag = (mca_bmi_ib_frag_t*) comp.id; 
-                frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_len  - (unsigned char*) frag->hdr); 
+                frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
                 /* advance the segment address past the header and subtract from the length..*/ 
                 ib_bmi->ib_reg[frag->hdr->tag].cbfunc(&ib_bmi->super, frag->hdr->tag, &frag->base, ib_bmi->ib_reg[frag->hdr->tag].cbdata);         
                

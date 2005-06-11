@@ -70,7 +70,7 @@ void mca_pml_ob1_recv_frag_callback(
         case MCA_PML_OB1_HDR_TYPE_MATCH:
         case MCA_PML_OB1_HDR_TYPE_RNDV:
             {
-            mca_pml_ob1_recv_frag_match(bmi,&hdr->hdr_match,segments,des->des_src_cnt);
+            mca_pml_ob1_recv_frag_match(bmi,&hdr->hdr_match,segments,des->des_dst_cnt);
             break;
             }
         case MCA_PML_OB1_HDR_TYPE_ACK:
@@ -87,7 +87,7 @@ void mca_pml_ob1_recv_frag_callback(
             {
             mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)
                 hdr->hdr_frag.hdr_dst_req.pval;
-            mca_pml_ob1_recv_request_progress(recvreq,bmi,segments,des->des_src_cnt);
+            mca_pml_ob1_recv_request_progress(recvreq,bmi,segments,des->des_dst_cnt);
             break;
             }
         case MCA_PML_OB1_HDR_TYPE_PUT:
@@ -102,7 +102,7 @@ void mca_pml_ob1_recv_frag_callback(
             mca_bmi_base_descriptor_t* dst = (mca_bmi_base_descriptor_t*)
                 hdr->hdr_fin.hdr_dst.pval;
             mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)dst->des_cbdata;
-            mca_pml_ob1_recv_request_progress(recvreq,bmi,segments,des->des_src_cnt);
+            mca_pml_ob1_recv_request_progress(recvreq,bmi,segments,des->des_dst_cnt);
             bmi->bmi_free(bmi,dst);
             break;
             }
