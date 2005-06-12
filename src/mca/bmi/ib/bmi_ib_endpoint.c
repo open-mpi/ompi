@@ -468,7 +468,7 @@ int mca_bmi_ib_endpoint_send(
                 rc = mca_bmi_ib_endpoint_post_send(ib_bmi, endpoint, frag); 
                 
                 
-                if(ib_bmi->rr_posted <= mca_bmi_ib_component.ib_rr_buf_min+1)
+                if(ib_bmi->rr_posted <= mca_bmi_ib_component.ib_rr_buf_min+1 && ib_bmi->rr_posted < mca_bmi_ib_component.ib_rr_buf_max)
                     mca_bmi_ib_endpoint_post_rr(mca_bmi_ib_component.ib_rr_buf_max - ib_bmi->rr_posted, 
                                                 endpoint); 
                 
