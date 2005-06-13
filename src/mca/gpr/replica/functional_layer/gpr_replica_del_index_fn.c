@@ -41,13 +41,36 @@ int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
 #if 0
     orte_gpr_replica_container_t **ptr;
     orte_gpr_replica_itagval_t  **valptr;
-    int i, j;
+    orte_gpr_replica_addr_mode_t tok_mode;
+    size_t i, j, num_found;
 
     if (orte_gpr_replica_globals.debug) {
 	   ompi_output(0, "[%lu,%lu,%lu] replica_delete_object entered: segment %s",
 		    ORTE_NAME_ARGS(*(orte_process_info.my_name)), seg->name);
     }
 
+    /* initialize storage for actions taken */
+    orte_pointer_array_clear(orte_gpr_replica_globals.acted_upon);
+    orte_gpr_replica_globals.num_acted_upon = 0;
+    
+    /* extract the token address mode */
+    tok_mode = 0x004f & addr_mode;
+    if (0x00 == tok_mode) {  /* default tokens addressing mode to AND */
+        tok_mode = ORTE_GPR_REPLICA_AND;
+    }
+
+    /* find the specified container(s) */
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_containers(&num_found, seg, tok_mode,
+                                    token_itags, num_tokens))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    if (NULL == token_itags && 0 == num_found) { /* wildcard tokens but nothing found */
+        /* no ERROR_LOG entry created as this is not a system failure */
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
     /* if num_tokens == 0 and num_keys == 0, remove segment */
     if (0 == num_tokens && 0 == num_keys) {
         return orte_gpr_replica_release_segment(seg);
