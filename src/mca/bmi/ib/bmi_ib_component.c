@@ -195,7 +195,10 @@ int mca_bmi_ib_component_open(void)
                                       512*1024); 
     
     
-    mca_bmi_ib_module.super.bmi_flags  = MCA_BMI_FLAGS_RDMA; 
+    mca_bmi_ib_module.super.bmi_flags  = 
+        mca_bmi_ib_param_register_int("flags", 
+                                      MCA_BMI_FLAGS_RDMA); 
+
     
 
     

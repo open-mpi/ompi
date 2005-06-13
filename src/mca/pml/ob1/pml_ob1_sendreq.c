@@ -531,7 +531,9 @@ cleanup:
     /* return rdma descriptor - do this after queuing the fin message - as 
      * release rdma resources (unpin memory) can take some time.
      */
-    des->des_dst = NULL;
+    des->des_dst = NULL; 
+    des->des_dst_cnt = 0; 
+    des->des_src = NULL;
     des->des_src_cnt = 0;
     bmi->bmi_free(bmi, des);
 
