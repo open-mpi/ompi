@@ -18,7 +18,7 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-libmca_bmi_ib_la_SOURCES = \
+sources = \
     bmi_ib.c \
     bmi_ib.h \
     bmi_ib_component.c \
@@ -35,16 +35,22 @@ libmca_bmi_ib_la_SOURCES = \
 # (for static builds).
 
 if OMPI_BUILD_bmi_ib_DSO
-component_noinst =
-component_install = mca_bmi_ib.la
+lib =
+lib_sources =
+component = mca_bmi_ib.la
+component_sources = $(sources)
 else
-component_noinst = libmca_bmi_ib.la
-component_install =
+lib = libmca_bmi_ib.la
+lib_sources = $(sources)
+component =
+component_sources =
 endif
 
 mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component_install)
+mcacomponent_LTLIBRARIES = $(component)
+mca_bmi_ib_la_SOURCES = $(component_sources)
 mca_bmi_ib_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = $(component_noinst)
+noinst_LTLIBRARIES = $(lib)
+libmca_bmi_ib_la_SOURCES = $(lib_sources)
 libmca_bmi_ib_la_LDFLAGS = -module -avoid-version
