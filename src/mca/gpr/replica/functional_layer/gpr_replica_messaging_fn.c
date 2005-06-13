@@ -113,12 +113,20 @@ CLEANUP:
     trigs = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
     for (i=0; i < (orte_gpr_replica.triggers)->size; i++) {
         if (NULL != trigs[i] && trigs[i]->one_shot_fired) {
-            k = trigs[i]->index;
-            OBJ_RELEASE(trigs[i]);
-            if (ORTE_SUCCESS != (rc = orte_pointer_array_set_item(orte_gpr_replica.triggers,
-                                            k, NULL))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
+            /* if no notify actions were specified to stick around after
+             * the trigger, then simply remove the trigger. Otherwise,
+             * clear the trigger flags and leave the notify flags alone
+             */
+            if (ORTE_GPR_NOTIFY_ANY & trigs[i]->action) {
+                trigs[i]->action = trigs[i]->action & ORTE_GPR_NOTIFY_ANY;
+            } else {
+                k = trigs[i]->index;
+                OBJ_RELEASE(trigs[i]);
+                if (ORTE_SUCCESS != (rc = orte_pointer_array_set_item(orte_gpr_replica.triggers,
+                                                k, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
             }
         }
     }
@@ -140,12 +148,18 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_triggers_t *trig,
     for (cb = (orte_gpr_replica_callbacks_t*)ompi_list_get_first(&(orte_gpr_replica.callbacks));
          cb != (orte_gpr_replica_callbacks_t*)ompi_list_get_end(&(orte_gpr_replica.callbacks));
          cb = (orte_gpr_replica_callbacks_t*)ompi_list_get_next(cb)) {
-         if (0 == orte_ns.compare(ORTE_NS_CMP_ALL, trig->requestor, cb->requestor)) { /* same requestor - add to existing callback */
+         if ((NULL == trig->requestor && NULL == cb->requestor) /* both local */
+             || ((NULL != trig->requestor && NULL != cb->requestor) &&
+             0 == orte_ns.compare(ORTE_NS_CMP_ALL, trig->requestor, cb->requestor))) { /* same remote requestor - add to existing callback */
              /* check to see if we already have something for this trigger - if so, add to it */
              for (msg = (orte_gpr_replica_notify_msg_list_t*)ompi_list_get_first(&(cb->messages));
                   msg != (orte_gpr_replica_notify_msg_list_t*)ompi_list_get_end(&(cb->messages));
                   msg = (orte_gpr_replica_notify_msg_list_t*)ompi_list_get_next(msg)) {
                   if ((msg->message)->idtag == trig->index) { /* same trigger - add to it */
+                     if (orte_gpr_replica_globals.debug) {
+                        ompi_output(0, "[%lu,%lu,%lu] process_trig: adding message for requestor [%lu,%lu,%lu] for idtag %lu\n",
+                                    ORTE_NAME_ARGS(orte_process_info.my_name), ORTE_NAME_ARGS(cb->requestor), (unsigned long)trig->index);
+                     }
                      if (ORTE_SUCCESS != (rc =
                             orte_gpr_replica_construct_notify_message(msg->message,
                                         trig, sub, value))) {
@@ -194,8 +208,8 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_triggers_t *trig,
     if (NULL == trig->requestor) {  /* local request - queue local callback */
         cb->requestor = NULL;
         if (orte_gpr_replica_globals.debug) {
-           ompi_output(0, "[%lu,%lu,%lu] process_trig: queueing local message\n",
-                        ORTE_NAME_ARGS(orte_process_info.my_name));
+           ompi_output(0, "[%lu,%lu,%lu] process_trig: queueing local callback for idtag %lu\n",
+                        ORTE_NAME_ARGS(orte_process_info.my_name), (unsigned long)trig->index);
         }
   
     } else {  /* remote request - queue remote callback */
@@ -205,14 +219,14 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_triggers_t *trig,
             return rc;
         }
         if (orte_gpr_replica_globals.debug) {
-            ompi_output(0, "[%lu,%lu,%lu] process_trig: queueing message for [%lu,%lu,%lu] using remoteid %d\n",
+            ompi_output(0, "[%lu,%lu,%lu] process_trig: queueing callback for [%lu,%lu,%lu] using remoteid %lu\n",
                    ORTE_NAME_ARGS(orte_process_info.my_name), ORTE_NAME_ARGS(cb->requestor),
-                    (int)trig->remote_idtag);
+                    (unsigned long)trig->remote_idtag);
         }
     }
     ompi_list_append(&orte_gpr_replica.callbacks, &cb->item);
     
-    /* construct the message */
+    /* construct the message list item */
     msg = OBJ_NEW(orte_gpr_replica_notify_msg_list_t);
     if (NULL == msg) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
