@@ -194,7 +194,7 @@ typedef struct {
     orte_gpr_value_union_t value;       /**< Actual stored value */
 } orte_gpr_replica_itagval_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_replica_itagval_t);
+OBJ_CLASS_DECLARATION(orte_gpr_replica_itagval_t);
 
 typedef struct {
     ompi_object_t super;
@@ -258,7 +258,7 @@ struct orte_gpr_replica_triggers_t {
 };
 typedef struct orte_gpr_replica_triggers_t orte_gpr_replica_triggers_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_replica_triggers_t);
+OBJ_CLASS_DECLARATION(orte_gpr_replica_triggers_t);
 
 /*
  * Action taken object - used to track what action was taken against what
@@ -275,7 +275,7 @@ typedef struct {
     orte_gpr_replica_itagval_t *iptr;
 } orte_gpr_replica_action_taken_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_replica_action_taken_t);
+OBJ_CLASS_DECLARATION(orte_gpr_replica_action_taken_t);
 
 
 /*
