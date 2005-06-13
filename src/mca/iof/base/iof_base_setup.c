@@ -43,6 +43,9 @@
 #endif
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
+# ifdef HAVE_TERMIO_H
+#  include <termio.h>
+# endif
 #endif
 
 #include "mca/iof/base/iof_base_setup.h"
@@ -116,6 +119,7 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
 
     if (opts->usepty) {
         if (opts->connect_stdin) {
+#ifndef WIN32
             /* disable echo */
             struct termios term_attrs;
             if (tcgetattr(opts->p_stdout[1], &term_attrs) < 0) {
@@ -130,6 +134,7 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
             /* and connect the pty to stdin */
             ret = dup2(opts->p_stdout[1], fileno(stdin)); 
             if (ret < 0) return OMPI_ERROR;
+#endif
         } else {
             int fd;
             /* connect input to /dev/null */

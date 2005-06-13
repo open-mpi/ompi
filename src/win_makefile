@@ -116,8 +116,6 @@ INCL = \
 
 CFLAGS = \
         /DWIN32 \
-        /DOMPI_BUILDING=1 \
-        /DOMPI_BUILDING_LIBRARY=1 \
         /DOMPI_SYSCONFDIR="\"${sysconfdir}\"" \
         /DOMPI_PKGLIBDIR="\"${pkglibdir}\"" \
         /DOMPI_PKGDATADIR="\"${pkgdatadir}\"" \
