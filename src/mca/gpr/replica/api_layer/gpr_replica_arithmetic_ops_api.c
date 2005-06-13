@@ -86,7 +86,9 @@ int orte_gpr_replica_increment_value(orte_gpr_value_t *value)
             OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;
         }
-        rc = orte_gpr_replica_process_callbacks();
+        if (!orte_gpr_replica.processing_callbacks) {
+            rc = orte_gpr_replica_process_callbacks();
+        }
     }
     
     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
@@ -148,7 +150,9 @@ int orte_gpr_replica_decrement_value(orte_gpr_value_t *value)
             OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;
         }
-        rc = orte_gpr_replica_process_callbacks();
+        if (!orte_gpr_replica.processing_callbacks) {
+            rc = orte_gpr_replica_process_callbacks();
+        }
     }
     
     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);

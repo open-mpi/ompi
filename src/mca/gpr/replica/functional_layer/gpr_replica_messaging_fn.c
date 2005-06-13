@@ -55,6 +55,9 @@ int orte_gpr_replica_process_callbacks(void)
 	   ompi_output(0, "gpr replica: process_callbacks entered");
     }
 
+    /* set flag indicating callbacks being processed */
+    orte_gpr_replica.processing_callbacks = true;
+    
     while (NULL != (cb = (orte_gpr_replica_callbacks_t*)ompi_list_remove_first(&orte_gpr_replica.callbacks))) {
 
 	    if (NULL == cb->requestor) {  /* local callback */
@@ -103,6 +106,9 @@ CLEANUP:
 	    OBJ_RELEASE(cb);
     }
 
+    /* all callbacks processed - indicate list is open */
+    orte_gpr_replica.processing_callbacks = false;
+    
     /* cleanup any one-shot triggers that fired */
     trigs = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
     for (i=0; i < (orte_gpr_replica.triggers)->size; i++) {
@@ -116,6 +122,7 @@ CLEANUP:
             }
         }
     }
+    
     return ORTE_SUCCESS;
 }
 
@@ -183,7 +190,7 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_triggers_t *trig,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-
+    
     if (NULL == trig->requestor) {  /* local request - queue local callback */
         cb->requestor = NULL;
         if (orte_gpr_replica_globals.debug) {

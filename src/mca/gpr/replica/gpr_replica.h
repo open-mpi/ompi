@@ -125,6 +125,7 @@ struct orte_gpr_replica_t {
     size_t num_segs;
     orte_pointer_array_t *triggers;     /**< Managed array of pointers to triggers */
     size_t num_trigs;
+    bool processing_callbacks;
     ompi_list_t callbacks;          /**< List of callbacks to be processed */
 };
 typedef struct orte_gpr_replica_t orte_gpr_replica_t;

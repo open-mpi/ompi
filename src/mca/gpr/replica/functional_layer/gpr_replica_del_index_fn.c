@@ -49,6 +49,13 @@ int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
 		    ORTE_NAME_ARGS(*(orte_process_info.my_name)), seg->name);
     }
 
+    /* if num_tokens == 0 and num_keys == 0, remove segment. We don't record
+     * any actions when doing this so that subscriptions don't fire like mad
+     */
+    if (0 == num_tokens && 0 == num_keys) {
+        return orte_gpr_replica_release_segment(seg);
+    }
+    
     /* initialize storage for actions taken */
     orte_pointer_array_clear(orte_gpr_replica_globals.acted_upon);
     orte_gpr_replica_globals.num_acted_upon = 0;
@@ -69,11 +76,6 @@ int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
     if (NULL == token_itags && 0 == num_found) { /* wildcard tokens but nothing found */
         /* no ERROR_LOG entry created as this is not a system failure */
         return ORTE_ERR_NOT_FOUND;
-    }
-    
-    /* if num_tokens == 0 and num_keys == 0, remove segment */
-    if (0 == num_tokens && 0 == num_keys) {
-        return orte_gpr_replica_release_segment(seg);
     }
     
     /* if num_tokens == 0 and num_keys > 0, check every container */

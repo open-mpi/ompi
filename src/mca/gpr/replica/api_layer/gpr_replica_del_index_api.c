@@ -127,7 +127,7 @@ int orte_gpr_replica_delete_entries(orte_gpr_addr_mode_t addr_mode,
         free(key_itags);
     }
 
-    if (ORTE_SUCCESS == rc) {
+    if (ORTE_SUCCESS == rc && !orte_gpr_replica.processing_callbacks) {
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_process_callbacks())) {
             ORTE_ERROR_LOG(rc);
         }

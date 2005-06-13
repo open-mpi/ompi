@@ -599,6 +599,7 @@ orte_gpr_base_module_t *orte_gpr_replica_init(bool *allow_multi_user_threads, bo
             
         	/* initialize the callback list head */
         	OBJ_CONSTRUCT(&orte_gpr_replica.callbacks, ompi_list_t);
+            orte_gpr_replica.processing_callbacks = false;
         
         /* initialize the search arrays for temporarily storing search results */
         if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_gpr_replica_globals.srch_cptr),
