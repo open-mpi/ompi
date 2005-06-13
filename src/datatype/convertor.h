@@ -27,6 +27,10 @@
 #include <sys/uio.h>
 #endif
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 union dt_elem_desc;
 struct ompi_datatype_t;
 
@@ -162,7 +166,10 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
  * outside. The data preparation should use the specialized prepare_for_send and
  * prepare_for_recv functions.
  */
-OMPI_DECLSPEC int ompi_convertor_prepare( ompi_convertor_t* convertor,
+#ifdef WIN32
+OMPI_DECLSPEC
+#endif
+int ompi_convertor_prepare( ompi_convertor_t* convertor,
                             const struct ompi_datatype_t* datatype, int32_t count,
                             const void* pUserBuf );
 
@@ -215,5 +222,9 @@ ompi_convertor_clone_with_position( const ompi_convertor_t* source,
 OMPI_DECLSPEC void ompi_convertor_dump( ompi_convertor_t* convertor );
 OMPI_DECLSPEC void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
                                         const union dt_elem_desc* pDesc, const char* name );
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif  /* CONVERTOR_H_HAS_BEEN_INCLUDED */

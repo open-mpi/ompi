@@ -68,7 +68,7 @@ struct orte_gpr_proxy_notify_tracker_t {
 };
 typedef struct orte_gpr_proxy_notify_tracker_t orte_gpr_proxy_notify_tracker_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_proxy_notify_tracker_t);
+OBJ_CLASS_DECLARATION(orte_gpr_proxy_notify_tracker_t);
 
 #define ORTE_GPR_PROXY_MAX_SIZE INT32_MAX
 #define ORTE_GPR_PROXY_BLOCK_SIZE 100

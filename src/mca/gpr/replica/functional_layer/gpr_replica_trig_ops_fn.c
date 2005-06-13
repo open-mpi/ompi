@@ -118,21 +118,21 @@ int orte_gpr_replica_record_action(orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_itagval_t *iptr,
                                    orte_gpr_replica_action_t action)
 {
-    orte_gpr_replica_action_taken_t *new;
+    orte_gpr_replica_action_taken_t *new_action;
     size_t index;
     int rc;
     
-    new = OBJ_NEW(orte_gpr_replica_action_taken_t);
-    if (NULL == new) {
+    new_action = OBJ_NEW(orte_gpr_replica_action_taken_t);
+    if (NULL == new_action) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    new->action = action;
+    new_action->action = action;
     
     /* store pointers to the affected itagval */
-    new->seg = seg;
-    new->cptr = cptr;
-    new->iptr = iptr;
+    new_action->seg = seg;
+    new_action->cptr = cptr;
+    new_action->iptr = iptr;
     
     /* "retain" ALL of the respective objects so they can't disappear until
      * after we process the actions
@@ -142,7 +142,7 @@ int orte_gpr_replica_record_action(orte_gpr_replica_segment_t *seg,
     OBJ_RETAIN(iptr);
     
     /* add the new action record to the array */
-    if (0 > (rc = orte_pointer_array_add(&index, orte_gpr_replica_globals.acted_upon, new))) {
+    if (0 > (rc = orte_pointer_array_add(&index, orte_gpr_replica_globals.acted_upon, new_action))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
