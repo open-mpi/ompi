@@ -37,6 +37,7 @@ struct mca_pml_ob1_rdma_frag_t {
     mca_pml_ob1_rdma_state_t rdma_state;
     size_t rdma_length;
     mca_bmi_base_segment_t rdma_segs[MCA_BMI_DES_MAX_SEGMENTS];
+    struct mca_pml_ob1_endpoint_t* rdma_ep;
     struct mca_pml_ob1_send_request_t* rdma_req;
 };
 typedef struct mca_pml_ob1_rdma_frag_t mca_pml_ob1_rdma_frag_t;

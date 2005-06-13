@@ -106,7 +106,8 @@ static void mca_pml_ob1_send_ctl_complete(
     struct mca_bmi_base_descriptor_t* des,
     int status)
 {
-    bmi->bmi_free(bmi,des);
+    mca_pml_ob1_endpoint_t* endpoint = (mca_pml_ob1_endpoint_t*)des->des_cbdata;
+    MCA_PML_OB1_ENDPOINT_DES_RETURN(endpoint, des);
 }
 
 
@@ -127,7 +128,7 @@ static void mca_pml_ob1_recv_request_ack(
     int rc;
 
     /* allocate descriptor */
-    des = ep->bmi_alloc(ep->bmi, sizeof(mca_pml_ob1_ack_hdr_t));
+    MCA_PML_OB1_ENDPOINT_DES_ALLOC(ep, des, sizeof(mca_pml_ob1_ack_hdr_t));
     if(NULL == des) {
         goto retry;
     }
@@ -140,7 +141,8 @@ static void mca_pml_ob1_recv_request_ack(
      * - size is larger than the rdma threshold
      * - rdma devices are available
     */
-    if(recvreq->req_recv.req_bytes_packed >= mca_pml_ob1.rdma_threshold &&
+    if(mca_pml_ob1.rdma_threshold != 0 &&
+       recvreq->req_recv.req_bytes_packed >= mca_pml_ob1.rdma_threshold &&
        mca_pml_ob1_ep_array_get_size(&proc->bmi_rdma) &&
        ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
 
@@ -163,7 +165,7 @@ static void mca_pml_ob1_recv_request_ack(
 
     /* initialize descriptor */
     des->des_cbfunc = mca_pml_ob1_send_ctl_complete;
-    des->des_cbdata = recvreq;
+    des->des_cbdata = ep;
 
     rc = ep->bmi_send(ep->bmi, ep->bmi_endpoint, des, MCA_BMI_TAG_PML);
     if(rc != OMPI_SUCCESS) {
@@ -250,6 +252,7 @@ void mca_pml_ob1_recv_request_progress(
         case MCA_PML_OB1_HDR_TYPE_FIN:
 
             bytes_delivered = bytes_received = hdr->hdr_fin.hdr_rdma_length;
+            OMPI_THREAD_ADD32(&recvreq->req_pipeline_depth,-1);
             break;
 
         default:
@@ -343,7 +346,8 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 if(dst->des_dst_cnt > 1) {
                     hdr_size += (sizeof(mca_bmi_base_segment_t) * (dst->des_dst_cnt-1));
                 }
-                ctl = ep->bmi_alloc(ep->bmi, hdr_size);
+
+                MCA_PML_OB1_ENDPOINT_DES_ALLOC(ep, ctl, hdr_size);
                 if(ctl == NULL) {
                     ep->bmi_free(ep->bmi,dst);
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
@@ -352,7 +356,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     break;
                 }
                 ctl->des_cbfunc = mca_pml_ob1_send_ctl_complete;
-                ctl->des_cbdata = recvreq;
+                ctl->des_cbdata = ep;
                 
                 /* fill in rdma header */
                 hdr = (mca_pml_ob1_rdma_hdr_t*)ctl->des_src->seg_addr.pval;
