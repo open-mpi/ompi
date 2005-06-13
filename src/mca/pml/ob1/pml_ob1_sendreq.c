@@ -189,12 +189,11 @@ int mca_pml_ob1_send_request_start(
     if(size == 0 && sendreq->req_send.req_send_mode != MCA_PML_BASE_SEND_SYNCHRONOUS) {
 
         /* allocate a descriptor */
-        MCA_PML_OB1_ENDPOINT_DES_ALLOC(endpoint, descriptor);
+        MCA_PML_OB1_ENDPOINT_DES_ALLOC(endpoint, descriptor, sizeof(mca_pml_ob1_match_hdr_t));
         if(NULL == descriptor) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         } 
         segment = descriptor->des_src;
-        segment->seg_len = sizeof(mca_pml_ob1_match_hdr_t);
 
         /* build hdr */
         hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
@@ -233,7 +232,7 @@ int mca_pml_ob1_send_request_start(
             int32_t free_after;
 
             /* allocate descriptor */
-            MCA_PML_OB1_ENDPOINT_DES_ALLOC(endpoint, descriptor);
+            descriptor = endpoint->bmi_alloc(endpoint->bmi, sizeof(mca_pml_ob1_match_hdr_t) + size);
             if(NULL == descriptor) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             } 
@@ -281,7 +280,7 @@ int mca_pml_ob1_send_request_start(
             int32_t free_after;
 
             /* allocate space for hdr + first fragment */
-            descriptor = endpoint->bmi_alloc(endpoint->bmi, size);
+            descriptor = endpoint->bmi_alloc(endpoint->bmi, sizeof(mca_pml_ob1_rendezvous_hdr_t) + size);
             if(NULL == descriptor) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
@@ -447,8 +446,9 @@ static void mca_pml_ob1_fin_completion(
 {
     
     mca_pml_ob1_rdma_frag_t* frag = (mca_pml_ob1_rdma_frag_t*)des->des_cbdata;
+    mca_pml_ob1_endpoint_t* endpoint = frag->rdma_ep;
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
-    bmi->bmi_free(bmi,des);
+    MCA_PML_OB1_ENDPOINT_DES_RETURN(endpoint, des);
 }
 
 /**
@@ -489,7 +489,8 @@ static void mca_pml_ob1_put_completion(
      * at the user buffer
      */
     frag->rdma_state = MCA_PML_OB1_RDMA_FIN;
-    fin = bmi->bmi_alloc(bmi,sizeof(mca_pml_ob1_fin_hdr_t));
+
+    MCA_PML_OB1_ENDPOINT_DES_ALLOC(frag->rdma_ep, fin, sizeof(mca_pml_ob1_fin_hdr_t));
     if(NULL == fin) {
         OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
         ompi_list_append(&mca_pml_ob1.rdma_pending, (ompi_list_item_t*)frag);
@@ -573,6 +574,8 @@ void mca_pml_ob1_send_request_put(
         frag->rdma_segs[i] = hdr->hdr_segs[i];
     }
     frag->rdma_hdr.hdr_rdma = *hdr;
+    frag->rdma_req = sendreq; 
+    frag->rdma_ep = ep;
     frag->rdma_state = MCA_PML_OB1_RDMA_PREPARE;
 
     /* setup descriptor */
@@ -590,7 +593,6 @@ void mca_pml_ob1_send_request_put(
     }
     frag->rdma_state = MCA_PML_OB1_RDMA_PUT;
     frag->rdma_length = size;
-    frag->rdma_req = sendreq; 
 
     des->des_dst = frag->rdma_segs;
     des->des_dst_cnt = hdr->hdr_seg_cnt;
