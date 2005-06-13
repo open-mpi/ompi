@@ -133,7 +133,7 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_triggers_t *trig,
     for (cb = (orte_gpr_replica_callbacks_t*)ompi_list_get_first(&(orte_gpr_replica.callbacks));
          cb != (orte_gpr_replica_callbacks_t*)ompi_list_get_end(&(orte_gpr_replica.callbacks));
          cb = (orte_gpr_replica_callbacks_t*)ompi_list_get_next(cb)) {
-         if (trig->requestor == cb->requestor) { /* same requestor - add to existing callback */
+         if (0 == orte_ns.compare(ORTE_NS_CMP_ALL, trig->requestor, cb->requestor)) { /* same requestor - add to existing callback */
              /* check to see if we already have something for this trigger - if so, add to it */
              for (msg = (orte_gpr_replica_notify_msg_list_t*)ompi_list_get_first(&(cb->messages));
                   msg != (orte_gpr_replica_notify_msg_list_t*)ompi_list_get_end(&(cb->messages));

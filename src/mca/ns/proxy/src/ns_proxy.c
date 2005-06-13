@@ -549,7 +549,6 @@ int orte_ns_proxy_create_my_name(void)
 {
     orte_buffer_t* cmd;
     orte_ns_cmd_flag_t command;
-    size_t count;
     int rc;
 
     command = ORTE_NS_CREATE_MY_NAME_CMD;

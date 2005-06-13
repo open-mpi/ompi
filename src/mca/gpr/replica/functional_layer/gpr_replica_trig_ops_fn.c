@@ -213,7 +213,7 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg)
              * if it has fired, but ONLY if NOTIFY_START is NOT set
              */
             if ((ORTE_GPR_NOTIFY_ANY & trig[i]->action) &&
-                !(ORTE_GPR_TRIG_NOTIFY_START & trig[i]->action)) {
+                !(ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG & trig[i]->action)) {
                 /* for notifier subscriptions, the data structures
                  * in the trigger define the data being monitored. First,
                  * check to see if the segment that was modified matches
@@ -321,8 +321,8 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
 
 FIRED:
     /* if notify_at_start set, unset it to indicate that trigger fired */
-    if (ORTE_GPR_TRIG_NOTIFY_START & trig->action) {
-        trig->action = trig->action & ~ORTE_GPR_TRIG_NOTIFY_START;
+    if (ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG & trig->action) {
+        trig->action = trig->action & ~ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG;
     }
 
     /* if one-shot, set flag to indicate it has fired so it can be cleaned
@@ -350,7 +350,6 @@ int orte_gpr_replica_check_notify(orte_gpr_replica_triggers_t *trig,
     orte_gpr_replica_action_taken_t **ptr;
     size_t i, j, cntr;
     orte_gpr_value_t value;
-    orte_gpr_replica_itag_t *itaglist;
     int rc=ORTE_SUCCESS;
     
     OBJ_CONSTRUCT(&value, orte_gpr_value_t);
