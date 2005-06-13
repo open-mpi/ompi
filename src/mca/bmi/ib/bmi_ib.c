@@ -27,6 +27,9 @@
 #include "bmi_ib_endpoint.h"
 #include "datatype/convertor.h" 
 #include "mca/common/vapi/vapi_mem_reg.h" 
+#include "mca/mpool/base/base.h" 
+#include "mca/mpool/mpool.h" 
+
 
 mca_bmi_ib_module_t mca_bmi_ib_module = {
     {
@@ -213,7 +216,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     int32_t iov_count = 1; 
     size_t max_data = *size; 
     int32_t free_after; 
-    int rc; 
+    int i, rc; 
     
     ib_bmi = (mca_bmi_ib_module_t*) bmi; 
     
@@ -267,13 +270,18 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
 
         return &frag->base; 
     } else { 
+        
           VAPI_mrw_t mr_in, mr_out;
           VAPI_ret_t ret;   
           mca_common_vapi_memhandle_t mem_hndl; 
+          mca_mpool_base_chunk_t * mpool_chunk; 
+          
           
           memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
           memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
           memset(&mem_hndl, 0, sizeof(mca_common_vapi_memhandle_t)); 
+
+          mpool_chunk = NULL; 
 
           mem_hndl.hndl = VAPI_INVAL_HNDL; 
           
@@ -292,46 +300,62 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
           iov.iov_base = NULL; 
           
           ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
-          frag->segment.seg_len = max_data; 
-          frag->segment.seg_addr.pval = iov.iov_base; 
-  
-          mr_in.size = max_data;
-          mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base;
           
-          ret = VAPI_register_mr(
-                                 ib_bmi->nic, 
-                                 &mr_in, 
-                                 &mem_hndl.hndl, 
-                                 &mr_out
-                                 ); 
+          /* first we will try to find this address in the memory tree (from MPI_Alloc_mem) */ 
+          mpool_chunk = mca_mpool_base_find((void*) iov.iov_base); 
+
+          if(NULL == mpool_chunk) { 
+              
+              frag->segment.seg_len = max_data; 
+              frag->segment.seg_addr.pval = iov.iov_base; 
+              
           
-          if(VAPI_OK != ret){ 
-              ompi_output(0, "error pinning vapi memory\n"); 
-              return NULL; 
+              mr_in.size = max_data;
+              mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base;
+          
+              ret = VAPI_register_mr(
+                                     ib_bmi->nic, 
+                                     &mr_in, 
+                                     &mem_hndl.hndl, 
+                                     &mr_out
+                                     ); 
+              
+              if(VAPI_OK != ret){ 
+                  ompi_output(0, "error pinning vapi memory\n"); 
+                  return NULL; 
+              }
+              
+              mem_hndl.l_key = mr_out.l_key; 
+              mem_hndl.r_key = mr_out.r_key; 
+          } 
+          else { 
+              for(i = 0; i< MCA_MPOOL_BASE_MAX_REG; i++){ 
+                  if(NULL != mpool_chunk->mpools[i].mpool && mpool_chunk->mpools[i].mpool == ib_bmi->ib_pool){ 
+                      mem_hndl = *(mca_common_vapi_memhandle_t*) mpool_chunk->mpools[i].user; 
+                      break; 
+                  }  
+              }
+              
+          }
+              frag->mem_hndl = mem_hndl.hndl; 
+              frag->sg_entry.len = max_data; 
+              frag->sg_entry.lkey = mem_hndl.l_key; 
+              frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
+          
+              frag->segment.seg_key.key32[0] = (uint32_t) mem_hndl.l_key; 
+          
+              frag->base.des_src = &frag->segment;
+              frag->base.des_src_cnt = 1;
+              frag->base.des_dst = NULL;
+              frag->base.des_dst_cnt = 0;
+          
+              
+              return &frag->base; 
+              
           }
           
-          mem_hndl.l_key = mr_out.l_key; 
-          mem_hndl.r_key = mr_out.r_key; 
-          
-          frag->mem_hndl = mem_hndl.hndl; 
-          frag->sg_entry.len = max_data; 
-          frag->sg_entry.lkey = mem_hndl.l_key; 
-          frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
-          
-          frag->segment.seg_key.key32[0] = (uint32_t) mem_hndl.l_key; 
-          
-          frag->base.des_src = &frag->segment;
-          frag->base.des_src_cnt = 1;
-          frag->base.des_dst = NULL;
-          frag->base.des_dst_cnt = 0;
-          
-
-          return &frag->base; 
-
-    }
     
-    
-    return NULL; 
+          return NULL; 
 }
 
 /**
@@ -349,13 +373,14 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
 {
     mca_bmi_ib_module_t* ib_bmi; 
     mca_bmi_ib_frag_t* frag; 
-    int rc; 
+    int i, rc; 
     
     ib_bmi = (mca_bmi_ib_module_t*) bmi; 
     VAPI_mrw_t mr_in, mr_out;
     VAPI_ret_t ret;   
     mca_common_vapi_memhandle_t mem_hndl; 
-    
+    mca_mpool_base_chunk_t* mpool_chunk; 
+
     memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
     memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
     memset(&mem_hndl, 0, sizeof(mca_common_vapi_memhandle_t)); 
@@ -371,30 +396,41 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     MCA_BMI_IB_FRAG_ALLOC_FRAG(bmi, frag, rc); 
     if(NULL == frag){
         return NULL; 
-    } 
+    }
     
     
     frag->segment.seg_len = *size; 
     frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted; 
+    mpool_chunk = mca_mpool_base_find((void*) frag->segment.seg_addr.pval); 
+    if(NULL == mpool_chunk){ 
+
+        mr_in.size = *size;
+        mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->segment.seg_addr.pval; 
     
-    mr_in.size = *size;
-    mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->segment.seg_addr.pval; 
+        ret = VAPI_register_mr(
+                               ib_bmi->nic, 
+                               &mr_in, 
+                               &mem_hndl.hndl, 
+                               &mr_out
+                               ); 
+        
+        if(VAPI_OK != ret){ 
+            ompi_output(0, "error pinning vapi memory\n"); 
+            return NULL; 
+        }
     
-    ret = VAPI_register_mr(
-                           ib_bmi->nic, 
-                           &mr_in, 
-                           &mem_hndl.hndl, 
-                           &mr_out
-                           ); 
-    
-    if(VAPI_OK != ret){ 
-        ompi_output(0, "error pinning vapi memory\n"); 
-        return NULL; 
+        mem_hndl.l_key = mr_out.l_key; 
+        mem_hndl.r_key = mr_out.r_key; 
+    } 
+    else { 
+        for(i = 0; i< MCA_MPOOL_BASE_MAX_REG; i++){ 
+            if(NULL != mpool_chunk->mpools[i].mpool  && mpool_chunk->mpools[i].mpool == ib_bmi->ib_pool){ 
+                mem_hndl = *(mca_common_vapi_memhandle_t*) mpool_chunk->mpools[i].user; 
+                break; 
+            }  
+        }
     }
     
-    mem_hndl.l_key = mr_out.l_key; 
-    mem_hndl.r_key = mr_out.r_key; 
- 
     frag->mem_hndl = mem_hndl.hndl; 
     frag->sg_entry.len = *size; 
     frag->sg_entry.lkey = mem_hndl.l_key; 
