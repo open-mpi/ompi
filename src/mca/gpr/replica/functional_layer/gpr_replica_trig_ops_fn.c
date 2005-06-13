@@ -375,9 +375,24 @@ int orte_gpr_replica_check_notify(orte_gpr_replica_triggers_t *trig,
               i < (orte_gpr_replica_globals.acted_upon)->size; i++) {
         if (NULL != ptr[i]) {
             cntr++;
-            if ((trig->action & ORTE_GPR_NOTIFY_ADD_ENTRY) &&
-                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_ADDED) &&
-                orte_gpr_replica_check_notify_matches(sub, ptr[i])) {
+            if (
+                (((trig->action & ORTE_GPR_NOTIFY_ADD_ENTRY) &&
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_ADDED)) ||
+                
+                ((trig->action & ORTE_GPR_NOTIFY_DEL_ENTRY) &&
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_DELETED)) ||
+                
+                ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHG_TO)) ||
+                
+                ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHG_FRM)) ||
+                
+                ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
+                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHANGED)))
+                
+                && orte_gpr_replica_check_notify_matches(sub, ptr[i])) {
+                    
                 /* need to send back the tokens from the container that is being addressed! */
                 value.num_tokens = ptr[i]->cptr->num_itags;
                 value.tokens = (char **)malloc(value.num_tokens * sizeof(char*));
@@ -392,7 +407,7 @@ int orte_gpr_replica_check_notify(orte_gpr_replica_triggers_t *trig,
                         goto CLEANUP;
                     }
                 }
-                /* send back the added entry */
+                /* send back the recorded data */
                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
                                         &((value.keyvals[0])->key), sub->seg,
                                         ptr[i]->iptr->itag))) {
@@ -411,27 +426,6 @@ int orte_gpr_replica_check_notify(orte_gpr_replica_triggers_t *trig,
                     ORTE_ERROR_LOG(rc);
                     goto CLEANUP;
                 }
-            } else if ((trig->action & ORTE_GPR_NOTIFY_DEL_ENTRY) &
-                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_DELETED) &&
-                orte_gpr_replica_check_notify_matches(sub, ptr[i])){
-                /* send back the deleted entry */
-            } else if ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
-                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHG_TO) &&
-                orte_gpr_replica_check_notify_matches(sub, ptr[i])) {
-                /* ptr contains the "new" data - check to see if it matches
-                 * the subscription. if so, send back the new data
-                 */
-            } else if ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
-                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHG_FRM) &&
-                orte_gpr_replica_check_notify_matches(sub, ptr[i])) {
-                /* ptr contains the "old" data - check to see if it matches
-                 * the subscription. if so, send back the new data
-                 */
-            } else if ((trig->action & ORTE_GPR_NOTIFY_VALUE_CHG) &&
-                (ptr[i]->action & ORTE_GPR_REPLICA_ENTRY_CHANGED) &&
-                orte_gpr_replica_check_notify_matches(sub, ptr[i])) {
-                /* see if the acted_upon data was the target of the subscription */
-                /* send back the new data */
             }
         }
     }
