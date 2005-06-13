@@ -241,7 +241,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         *size  = max_data; 
         return &frag->base; 
         
-    }else if( max_data + reserve <= ib_bmi->ib_pin_min || 1 == ompi_convertor_need_buffers( convertor) ){ 
+    }else if( max_data + reserve < ib_bmi->super.bmi_min_rdma_size || 1 == ompi_convertor_need_buffers( convertor) ){ 
         MCA_BMI_IB_FRAG_ALLOC_MAX(bmi, frag, rc); 
         if(NULL == frag) { 
             return NULL; 
