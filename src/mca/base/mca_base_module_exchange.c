@@ -480,7 +480,8 @@ static int mca_base_modex_subscribe(orte_process_name_t* name)
     trigs = &trig;
     rc = orte_gpr.subscribe(
         	ORTE_GPR_NOTIFY_ADD_ENTRY | ORTE_GPR_NOTIFY_VALUE_CHG |
-            ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_ONE_SHOT,
+            ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_ONE_SHOT |
+            ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG,
         	1, &subs,
          1, &trigs,
          &rctag);

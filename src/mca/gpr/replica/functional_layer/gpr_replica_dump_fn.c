@@ -418,8 +418,8 @@ static void orte_gpr_replica_dump_trigger(orte_buffer_t *buffer, size_t cnt,
         sprintf(tmp_out, "\t\tORTE_GPR_TRIG_MONITOR_ONLY");
         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
     }
-    if (ORTE_GPR_TRIG_NOTIFY_START & trig->action) {
-        sprintf(tmp_out, "\t\tORTE_GPR_TRIG_NOTIFY_START");
+    if (ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG & trig->action) {
+        sprintf(tmp_out, "\t\tORTE_GPR_NOTIFY_STARTS_AFTER_TRIG");
         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
     }
     if (ORTE_GPR_TRIG_INCLUDE_DATA & trig->action) {
