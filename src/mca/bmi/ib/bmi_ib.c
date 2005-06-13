@@ -349,7 +349,6 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
 {
     mca_bmi_ib_module_t* ib_bmi; 
     mca_bmi_ib_frag_t* frag; 
-    size_t max_data = *size; 
     int rc; 
     
     ib_bmi = (mca_bmi_ib_module_t*) bmi; 
@@ -375,10 +374,10 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     } 
     
     
-    frag->segment.seg_len = max_data; 
+    frag->segment.seg_len = *size; 
     frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted; 
     
-    mr_in.size = max_data;
+    mr_in.size = *size;
     mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->segment.seg_addr.pval; 
     
     ret = VAPI_register_mr(
@@ -397,7 +396,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     mem_hndl.r_key = mr_out.r_key; 
  
     frag->mem_hndl = mem_hndl.hndl; 
-    frag->sg_entry.len = max_data; 
+    frag->sg_entry.len = *size; 
     frag->sg_entry.lkey = mem_hndl.l_key; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->segment.seg_addr.pval; 
     
