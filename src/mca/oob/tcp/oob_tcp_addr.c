@@ -112,17 +112,20 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t* buffer)
     }
 
     if(addr->addr_count != 0) {
+        size_t i;
         addr->addr_inet = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in) * addr->addr_count);
         if(NULL == addr->addr_inet) {
              OBJ_RELEASE(addr);
              return NULL;
         }
         addr->addr_alloc = addr->addr_count;
-        count = addr->addr_count * sizeof(struct sockaddr_in);
-        rc = orte_dps.unpack(buffer, addr->addr_inet, &count, ORTE_BYTE);
-        if(rc != OMPI_SUCCESS) {
-            OBJ_RELEASE(addr);
-            return NULL;
+        for(i=0; i<addr->addr_count; i++) {
+            size_t inaddr_size = sizeof(struct sockaddr_in);
+            rc = orte_dps.unpack(buffer, addr->addr_inet+i, &inaddr_size, ORTE_BYTE);
+            if(rc != OMPI_SUCCESS) {
+                OBJ_RELEASE(addr);
+                return NULL;
+            }
         }
     }
     return addr;
