@@ -534,8 +534,6 @@ cleanup:
      */
     des->des_dst = NULL; 
     des->des_dst_cnt = 0; 
-    des->des_src = NULL;
-    des->des_src_cnt = 0;
     bmi->bmi_free(bmi, des);
 
 }
