@@ -66,8 +66,10 @@ void orte_gpr_replica_recv(int status, orte_process_name_t* sender,
     orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR, 0, orte_gpr_replica_recv, NULL);
 
     /* be sure to process callbacks before returning */
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_process_callbacks())) {
-        ORTE_ERROR_LOG(rc);
+    if (!orte_gpr_replica.processing_callbacks) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_replica_process_callbacks())) {
+            ORTE_ERROR_LOG(rc);
+        }
     }
     
     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);

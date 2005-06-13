@@ -29,6 +29,7 @@
 #include "util/output.h"
 #include "dps/dps.h"
 #include "mca/errmgr/errmgr.h"
+#include "mca/ns/ns_types.h"
 #include "mca/rml/rml.h"
 
 #include "gpr_replica_comm.h"

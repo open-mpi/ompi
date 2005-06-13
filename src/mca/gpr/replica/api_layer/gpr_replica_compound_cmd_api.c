@@ -123,7 +123,7 @@ int orte_gpr_replica_exec_compound_cmd(void)
 	   ompi_condition_signal(&orte_gpr_replica_globals.compound_cmd_condition);
     }
 
-    if (ORTE_SUCCESS == rc) {
+    if (ORTE_SUCCESS == rc && !orte_gpr_replica.processing_callbacks) {
         rc = orte_gpr_replica_process_callbacks();
     }
     
