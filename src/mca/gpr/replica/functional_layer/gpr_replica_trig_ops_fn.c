@@ -445,7 +445,7 @@ bool orte_gpr_replica_check_notify_matches(orte_gpr_replica_subscribed_data_t *s
      * Thus, we need to check that we are looking at a matching container
      * and matching keyval pattern
      */
-     
+        
     /* first, check to see if the containers match */
     tokmod = 0x004f & sub->addr_mode;
     if (!orte_gpr_replica_check_itag_list(tokmod,

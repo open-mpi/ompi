@@ -909,8 +909,9 @@ int test4(void)
         asprintf(&(subscription->tokens[i]), "dummy-sub-%lu", (unsigned long) i);
     }
     /* get notified when anything is added */
-    subscription->num_keys = 0;
-    subscription->keys = NULL;
+    subscription->num_keys = 1;
+    subscription->keys = (char**)malloc(sizeof(char*));
+    subscription->keys[0] = strdup("stupid-test-0");
 
     /* send notification to callback 1 */
     subscription->cbfunc = test_cbfunc1;
@@ -968,9 +969,9 @@ int test4(void)
     gpr_module->dump_all(0);
     OBJ_RELEASE(val);
     
-    fprintf(test_out, "adding something - should NOT trigger\n");
+    fprintf(test_out, "changing something else - should NOT trigger\n");
     val = OBJ_NEW(orte_gpr_value_t);
-    val->addr_mode = ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR;
+    val->addr_mode = ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR;
     val->segment = strdup("test-segment-2");
     val->tokens = (char**)malloc(sizeof(char*));
     if (NULL == val->tokens) {
@@ -978,7 +979,7 @@ int test4(void)
         OBJ_DESTRUCT(&value);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    val->tokens[0] = strdup("dummy-sub-10");
+    val->tokens[0] = strdup("dummy-sub-0");
     val->num_tokens = 1;
     val->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
     if (NULL == val->keyvals) {
@@ -993,8 +994,9 @@ int test4(void)
         OBJ_DESTRUCT(&value);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    val->keyvals[0]->key = strdup("test-notify-add-no-fire");
-    val->keyvals[0]->type = ORTE_NULL;
+    val->keyvals[0]->key = strdup("stupid-test-1");
+    val->keyvals[0]->type = ORTE_UINT32;
+    val->keyvals[0]->value.ui32 = 6789;
     
     if (ORTE_SUCCESS != (rc = gpr_module->put(1, &val))) {
         ORTE_ERROR_LOG(rc);
