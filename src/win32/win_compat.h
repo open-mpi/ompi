@@ -95,4 +95,10 @@ typedef unsigned int uint;
 
 #define sigset_t int
 
+/*
+ * Mask these to Windows equlivants
+ */
+#define bzero(p, l) memset(p, 0, l)
+#define bcopy(s, t, l) memmove(t, s, l)
+
 #endif /* compat */

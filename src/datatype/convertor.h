@@ -41,7 +41,7 @@ struct ompi_datatype_t;
 #define CONVERTOR_CLONE            0x00100000
 #define CONVERTOR_STATE_MASK       0xFF000000
 #define CONVERTOR_STATE_START      0x01000000
-#define CONVEROTR_STATE_COMPLETE   0x02000000
+#define CONVERTOR_STATE_COMPLETE   0x02000000
 #define CONVERTOR_STATE_ALLOC      0x04000000
 
 typedef int32_t (*conversion_fct_t)( uint32_t count,
@@ -162,7 +162,7 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
  * outside. The data preparation should use the specialized prepare_for_send and
  * prepare_for_recv functions.
  */
-int ompi_convertor_prepare( ompi_convertor_t* convertor,
+OMPI_DECLSPEC int ompi_convertor_prepare( ompi_convertor_t* convertor,
                             const struct ompi_datatype_t* datatype, int32_t count,
                             const void* pUserBuf );
 

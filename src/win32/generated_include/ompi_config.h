@@ -240,6 +240,9 @@
 /* Define if realtime signals work on pipes */
 /* #undef HAVE_WORKING_RTSIG */
 
+/* Define if fcntl.h works */
+#define HAVE_FCNTL_H
+
 /* C type corresponding to Fortran INTEGER */
 #define MPI_Fint int
 
