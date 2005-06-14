@@ -123,6 +123,7 @@ typedef struct orte_gpr_replica_dict_t orte_gpr_replica_dict_t;
 struct orte_gpr_replica_t {
     orte_pointer_array_t *segments;  /**< Managed array of pointers to segment objects */
     orte_pointer_array_t *triggers;     /**< Managed array of pointers to triggers */
+    bool processing_callbacks;
     ompi_list_t callbacks;          /**< List of callbacks to be processed */
 };
 typedef struct orte_gpr_replica_t orte_gpr_replica_t;

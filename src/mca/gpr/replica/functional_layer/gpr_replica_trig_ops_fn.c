@@ -117,15 +117,17 @@ int orte_gpr_replica_update_storage_locations(orte_gpr_replica_itagval_t *new_ip
     orte_gpr_replica_triggers_t **trig;
     orte_gpr_replica_counter_t **cntrs;
     orte_gpr_replica_itagval_t **old_iptrs;
-    size_t i, j, k;
+    size_t i, j, k, cnt;
     bool replaced;
     
     trig = (orte_gpr_replica_triggers_t**)((orte_gpr_replica.triggers)->addr);
     for (i=0; i < (orte_gpr_replica.triggers)->size; i++) {
         if (NULL != trig[i]) {
             cntrs = (orte_gpr_replica_counter_t**)((trig[i]->counters)->addr);
-            for (j=0; j < (trig[i]->counters)->size; j++) {
+            cnt = 0;
+            for (j=0; cnt < trig[i]->num_counters && j < (trig[i]->counters)->size; j++) {
                 if (NULL != cntrs[j]) {
+                    cnt++;
                     old_iptrs = (orte_gpr_replica_itagval_t**)((orte_gpr_replica_globals.srch_ival)->addr);
                     for (k=0; k < (orte_gpr_replica_globals.srch_ival)->size; k++) {
                         replaced = false;
@@ -175,7 +177,7 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
     orte_gpr_replica_counter_t **cntr;
     orte_gpr_replica_itagval_t *base_value=NULL;
     bool first, fire;
-    size_t i;
+    size_t i, cnt;
     int cmp;
     int rc;
     
@@ -183,8 +185,10 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
         cntr = (orte_gpr_replica_counter_t**)((trig->counters)->addr);
         first = true;
         fire = true;
-        for (i=0; i < (trig->counters)->size && fire; i++) {
+        cnt = 0;
+        for (i=0; cnt < trig->num_counters && i < (trig->counters)->size && fire; i++) {
             if (NULL != cntr[i]) {
+                cnt++;
                 if (first) {
                     base_value = cntr[i]->iptr;
                     first = false;
@@ -216,8 +220,10 @@ int orte_gpr_replica_check_trig(orte_gpr_replica_triggers_t *trig)
     } else if (ORTE_GPR_TRIG_AT_LEVEL & trig->action) { /* see if counters are at a level */
         cntr = (orte_gpr_replica_counter_t**)((trig->counters)->addr);
         fire = true;
-        for (i=0; i < (trig->counters)->size && fire; i++) {
+        cnt = 0;
+        for (i=0; cnt < trig->num_counters && i < (trig->counters)->size && fire; i++) {
             if (NULL != cntr[i]) {
+                cnt++;
                 if (ORTE_SUCCESS != (rc =
                             orte_gpr_replica_compare_values(&cmp, cntr[i]->iptr,
                                                             &(cntr[i]->trigger_level)))) {

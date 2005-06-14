@@ -55,7 +55,13 @@ int orte_gpr_replica_process_callbacks(void)
 	   ompi_output(0, "gpr replica: process_callbacks entered");
     }
 
-    while (NULL != (cb = (orte_gpr_replica_callbacks_t*)ompi_list_remove_first(&orte_gpr_replica.callbacks))) {
+    /* check and set the processing callbacks flag */
+    if (orte_gpr_replica.processing_callbacks) {
+        return ORTE_SUCCESS;
+    }
+    orte_gpr_replica.processing_callbacks = true;
+    
+    while (NULL != (cb = (orte_gpr_replica_callbacks_t*)ompi_list_remove_last(&orte_gpr_replica.callbacks))) {
 
 	    if (NULL == cb->requestor) {  /* local callback */
 	        if (orte_gpr_replica_globals.debug) {
@@ -116,6 +122,10 @@ CLEANUP:
             }
         }
     }
+    
+    /* release the processing callbacks flag */
+    orte_gpr_replica.processing_callbacks = false;
+    
     return ORTE_SUCCESS;
 }
 
@@ -131,7 +141,9 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_triggers_t *trig)
     for (cb = (orte_gpr_replica_callbacks_t*)ompi_list_get_first(&(orte_gpr_replica.callbacks));
          cb != (orte_gpr_replica_callbacks_t*)ompi_list_get_end(&(orte_gpr_replica.callbacks));
          cb = (orte_gpr_replica_callbacks_t*)ompi_list_get_next(cb)) {
-         if (trig->requestor == cb->requestor) { /* same requestor - add to existing callback */
+         if ((NULL == trig->requestor && NULL == cb->requestor) /* both local */
+             || ((NULL != trig->requestor && NULL != cb->requestor) &&
+             0 == orte_ns.compare(ORTE_NS_CMP_ALL, trig->requestor, cb->requestor))) { /* same remote requestor - add to existing callback */
              /* check to see if we already have something for this trigger - if so, add to it */
              for (msg = (orte_gpr_replica_notify_msg_list_t*)ompi_list_get_first(&(cb->messages));
                   msg != (orte_gpr_replica_notify_msg_list_t*)ompi_list_get_end(&(cb->messages));
@@ -242,7 +254,7 @@ int orte_gpr_replica_construct_notify_message(orte_gpr_notify_message_t **msg,
     int rc=ORTE_SUCCESS;
     orte_gpr_notify_data_t **data;
     orte_gpr_replica_subscribed_data_t **sptr;
-    size_t i, k;
+    size_t i, k, cntr;
     
     /* if we don't have data, just return */
     if (0 >= trig->num_subscribed_data) {
@@ -250,8 +262,10 @@ int orte_gpr_replica_construct_notify_message(orte_gpr_notify_message_t **msg,
     }
     
     sptr = (orte_gpr_replica_subscribed_data_t**)((trig->subscribed_data)->addr);
-    for (i=0; i < (trig->subscribed_data)->size; i++) {
+    cntr = 0;
+    for (i=0; cntr < trig->num_subscribed_data && i < (trig->subscribed_data)->size; i++) {
         if (NULL != sptr[i]) {
+            cntr++;
             if (NULL == (*msg)->data) { /* first data item on the message */
                 (*msg)->data = (orte_gpr_notify_data_t**)malloc(sizeof(orte_gpr_notify_data_t*));
                 if (NULL == (*msg)->data) {
