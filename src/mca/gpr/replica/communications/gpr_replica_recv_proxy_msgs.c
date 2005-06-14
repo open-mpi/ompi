@@ -62,16 +62,16 @@ void orte_gpr_replica_recv(int status, orte_process_name_t* sender,
 	    ompi_output(0, "gpr replica: msg processing complete - processing callbacks");
 	}
 
-    /* reissue the non-blocking receive before processing callbacks */
-    orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR, 0, orte_gpr_replica_recv, NULL);
-
-    /* be sure to process callbacks before returning */
+    /* be sure to process callbacks */
     if (!orte_gpr_replica.processing_callbacks) {
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_process_callbacks())) {
             ORTE_ERROR_LOG(rc);
         }
     }
     
+    /* reissue the non-blocking receive before returning */
+    orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR, 0, orte_gpr_replica_recv, NULL);
+
     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     return;
 }

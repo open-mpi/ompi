@@ -91,6 +91,8 @@ orte_gpr_proxy_subscribe(orte_gpr_notify_action_t action,
             return rc;
         }
         
+        /* done */
+        return ORTE_SUCCESS;
     }
 
     cmd = OBJ_NEW(orte_buffer_t);
