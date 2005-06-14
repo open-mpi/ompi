@@ -58,7 +58,7 @@ int orte_gpr_replica_process_callbacks(void)
     /* set flag indicating callbacks being processed */
     orte_gpr_replica.processing_callbacks = true;
     
-    while (NULL != (cb = (orte_gpr_replica_callbacks_t*)ompi_list_remove_first(&orte_gpr_replica.callbacks))) {
+    while (NULL != (cb = (orte_gpr_replica_callbacks_t*)ompi_list_remove_last(&orte_gpr_replica.callbacks))) {
 
 	    if (NULL == cb->requestor) {  /* local callback */
 	        if (orte_gpr_replica_globals.debug) {

@@ -202,13 +202,6 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg)
               i < (orte_gpr_replica.triggers)->size; i++) {
         if (NULL != trig[i]) {
             cntri++;
-            /* check if trigger is on this subscription - if so, check it */
-            if (ORTE_GPR_TRIG_ANY & trig[i]->action) {
-                if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_trig(trig[i]))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-            }
             /* check if notifier is on this subscription - if so, check to see
              * if it has fired, but ONLY if NOTIFY_START is NOT set
              */
@@ -236,6 +229,18 @@ int orte_gpr_replica_check_subscriptions(orte_gpr_replica_segment_t *seg)
                     }
                  }
             } /* if notify */
+            /* check if trigger is on this subscription - if so, check it.
+             * NOTE: MUST DO THIS *AFTER* THE NOTIFY CHECK. If the trigger was
+             * set to start notifies after firing, then checking notifies
+             * AFTER the triggers were processed causes the notification to
+             * be sent twice.
+             */
+            if (ORTE_GPR_TRIG_ANY & trig[i]->action) {
+                if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_trig(trig[i]))) {
+                    ORTE_ERROR_LOG(rc);
+                    return rc;
+                }
+            }
         }  /* if trig not NULL */
     }
     return ORTE_SUCCESS;
