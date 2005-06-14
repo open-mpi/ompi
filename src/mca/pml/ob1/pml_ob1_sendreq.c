@@ -386,6 +386,8 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                 }
                                                                                                                   
                 /* pack into a descriptor */
+                ompi_convertor_set_position(&sendreq->req_send.req_convertor, 
+                    &sendreq->req_send_offset);
                 des = ep->bmi_prepare_src(
                     ep->bmi,
                     ep->bmi_endpoint,
