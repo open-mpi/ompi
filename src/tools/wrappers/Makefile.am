@@ -69,11 +69,13 @@ install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f hcp; ln -s mpiCC hcp)
 	(cd $(DESTDIR)$(bindir); rm -f hf77; ln -s mpif77 hf77)
 	(cd $(DESTDIR)$(bindir); rm -f mpiCC; ln -s mpic++ mpiCC)
+	(cd $(DESTDIR)$(bindir); rm -f mpicxx; ln -s mpic++ mpicxx)
 else
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f hcc; ln -s mpicc hcc)
 	(cd $(DESTDIR)$(bindir); rm -f hcp; ln -s mpic++ hcp)
 	(cd $(DESTDIR)$(bindir); rm -f hf77; ln -s mpif77 hf77)
+	(cd $(DESTDIR)$(bindir); rm -f mpicxx; ln -s mpic++ mpicxx)
 endif
 
 #
@@ -84,12 +86,14 @@ uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/hcc \
 	$(DESTDIR)$(bindir)/hcp \
 	$(DESTDIR)$(bindir)/hf77 \
-	$(DESTDIR)$(bindir)/mpiCC
+	$(DESTDIR)$(bindir)/mpiCC \
+	$(DESTDIR)$(bindir)/mpicxx
 else
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/hcc \
 	$(DESTDIR)$(bindir)/hcp \
-	$(DESTDIR)$(bindir)/hf77
+	$(DESTDIR)$(bindir)/hf77 \
+	$(DESTDIR)$(bindir)/mpicxx
 endif
 
 else
@@ -102,14 +106,18 @@ else
 if CASE_SENSITIVE_FS
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpiCC; ln -s mpic++ mpiCC)
+	(cd $(DESTDIR)$(bindir); rm -f mpicxx; ln -s mpic++ mpicxx)
 else
 install-exec-hook:
+	(cd $(DESTDIR)$(bindir); rm -f mpicxx; ln -s mpic++ mpicxx)
 endif
 
 if CASE_SENSITIVE_FS
 uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/mpiCC
+	rm -f $(DESTDIR)$(bindir)/mpiCC \
+	$(DESTDIR)$(bindir)/mpicxx
 else
 uninstall-local:
+	rm -f $(DESTDIR)$(bindir)/mpicxx
 endif
 endif
