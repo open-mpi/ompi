@@ -323,6 +323,7 @@ int mca_pml_ob1_send_request_start(
             descriptor->des_cbfunc = mca_pml_ob1_send_completion;
         }
     }
+    descriptor->des_flags |= MCA_BMI_DES_FLAGS_PRIORITY;
     descriptor->des_cbdata = sendreq;
     OMPI_THREAD_ADD32(&sendreq->req_pipeline_depth,1);
 
@@ -499,6 +500,7 @@ static void mca_pml_ob1_put_completion(
         OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
         goto cleanup;
     }
+    fin->des_flags |= MCA_BMI_DES_FLAGS_PRIORITY;
     fin->des_cbfunc = mca_pml_ob1_fin_completion;
     fin->des_cbdata = frag;
 

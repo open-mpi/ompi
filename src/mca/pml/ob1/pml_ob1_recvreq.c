@@ -164,6 +164,7 @@ static void mca_pml_ob1_recv_request_ack(
     ack->hdr_dst_req.pval = recvreq;
 
     /* initialize descriptor */
+    des->des_flags |= MCA_BMI_DES_FLAGS_PRIORITY;
     des->des_cbfunc = mca_pml_ob1_send_ctl_complete;
     des->des_cbdata = ep;
 
@@ -341,6 +342,9 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 }
                 dst->des_cbdata = recvreq;
 
+                /* run progress as the prepare (pinning) can take some time */
+                mca_pml_ob1_progress();
+
                 /* prepare a descriptor for rdma control message */
                 hdr_size = sizeof(mca_pml_ob1_rdma_hdr_t);
                 if(dst->des_dst_cnt > 1) {
@@ -355,6 +359,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
+                ctl->des_flags |= MCA_BMI_DES_FLAGS_PRIORITY;
                 ctl->des_cbfunc = mca_pml_ob1_send_ctl_complete;
                 ctl->des_cbdata = ep;
                 
@@ -386,8 +391,6 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
-                rc = ep->bmi->bmi_component->bmi_progress(); 
-                
             }
         } while(OMPI_THREAD_ADD32(&recvreq->req_lock,-1) > 0);
     }
