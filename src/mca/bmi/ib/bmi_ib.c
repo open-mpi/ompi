@@ -164,6 +164,8 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_alloc(
     }
     
     frag->segment.seg_len = size <= ib_bmi->super.bmi_eager_limit ? size : ib_bmi->super.bmi_eager_limit;  
+    frag->base.des_flags = 0; 
+    
     return (mca_bmi_base_descriptor_t*)frag;
 }
 
@@ -245,6 +247,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         } 
         
         frag->segment.seg_len = max_data + reserve; 
+        frag->base.des_flags = 0; 
         *size  = max_data; 
         return &frag->base; 
        
@@ -273,7 +276,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         frag->base.des_src_cnt = 1;
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
-        
+        frag->base.des_flags=0; 
 
         return &frag->base; 
     } else { 
@@ -355,7 +358,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
           frag->base.des_src_cnt = 1;
           frag->base.des_dst = NULL;
           frag->base.des_dst_cnt = 0;
-          
+          frag->base.des_flags=0; 
           
           return &frag->base; 
           
@@ -448,7 +451,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     frag->base.des_dst_cnt = 1; 
     frag->base.des_src = NULL; 
     frag->base.des_src_cnt = 0; 
-
+    frag->base.des_flags = 0; 
     return &frag->base; 
     
 }
@@ -476,11 +479,19 @@ int mca_bmi_ib_finalize(struct mca_bmi_base_module_t* bmi)
                     ib_bmi->send_free_frag.fl_num_allocated, 
                     ib_bmi->send_free_frag.super.ompi_list_length); 
     }
-    if(ib_bmi->recv_free.fl_num_allocated != 
-       ib_bmi->recv_free.super.ompi_list_length){ 
-        ompi_output(0, "bmi ib recv_free frags: %d allocated %d returned \n", 
-                    ib_bmi->recv_free.fl_num_allocated, 
-                    ib_bmi->recv_free.super.ompi_list_length); 
+    
+    if(ib_bmi->recv_free_eager.fl_num_allocated != 
+       ib_bmi->recv_free_eager.super.ompi_list_length){ 
+        ompi_output(0, "bmi ib recv_free_eager frags: %d allocated %d returned \n", 
+                    ib_bmi->recv_free_eager.fl_num_allocated, 
+                    ib_bmi->recv_free_eager.super.ompi_list_length); 
+    }
+
+    if(ib_bmi->recv_free_max.fl_num_allocated != 
+       ib_bmi->recv_free_max.super.ompi_list_length){ 
+        ompi_output(0, "bmi ib recv_free_max frags: %d allocated %d returned \n", 
+                    ib_bmi->recv_free_max.fl_num_allocated, 
+                    ib_bmi->recv_free_max.super.ompi_list_length); 
     }
 
     return OMPI_SUCCESS;
@@ -523,12 +534,12 @@ int mca_bmi_ib_put( mca_bmi_base_module_t* bmi,
     mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*) descriptor; 
     frag->endpoint = endpoint; 
     frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
-    frag->sr_desc.remote_qp = endpoint->rem_qp_num; 
+    frag->sr_desc.remote_qp = endpoint->rem_qp_num_low; 
     frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
     frag->sr_desc.r_key = frag->base.des_dst->seg_key.key32[0]; 
     
     frag->ret = VAPI_post_sr(ib_bmi->nic, 
-                             endpoint->lcl_qp_hndl, 
+                             endpoint->lcl_qp_hndl_low, 
                              &frag->sr_desc); 
     if(VAPI_OK != frag->ret){ 
         return OMPI_ERROR; 
@@ -596,19 +607,31 @@ int mca_bmi_ib_module_init(mca_bmi_ib_module_t *ib_bmi)
     uint32_t cqe_cnt = 0;
       
     ret = VAPI_alloc_pd(ib_bmi->nic, &ib_bmi->ptag);
-
+    
     if(ret != VAPI_OK) {
         MCA_BMI_IB_VAPI_ERROR(ret, "VAPI_alloc_pd");
         return OMPI_ERROR;
     }
     
     ret = VAPI_create_cq(ib_bmi->nic, ib_bmi->ib_cq_size,
-            &ib_bmi->cq_hndl, &cqe_cnt);
+                         &ib_bmi->cq_hndl_low, &cqe_cnt);
 
+    
     if( VAPI_OK != ret) {  
         MCA_BMI_IB_VAPI_ERROR(ret, "VAPI_create_cq");
         return OMPI_ERROR;
     }
+    
+    ret = VAPI_create_cq(ib_bmi->nic, ib_bmi->ib_cq_size,
+                         &ib_bmi->cq_hndl_high, &cqe_cnt);
+
+    
+    if( VAPI_OK != ret) {  
+        MCA_BMI_IB_VAPI_ERROR(ret, "VAPI_create_cq");
+        return OMPI_ERROR;
+    }
+
+    
     if(cqe_cnt <= 0) { 
         ompi_output(0, "%s: error creating completion queue ", __func__); 
         return OMPI_ERROR; 

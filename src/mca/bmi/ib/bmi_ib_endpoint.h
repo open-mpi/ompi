@@ -88,17 +88,27 @@ struct mca_bmi_base_endpoint_t {
     ompi_list_t                 pending_send_frags;
     /**< list of pending send frags for this endpoint */
 
-    VAPI_qp_num_t               rem_qp_num;
-    /* Remote side QP number */
+    VAPI_qp_num_t               rem_qp_num_high;
+    /* High priority remote side QP number */
+
+    VAPI_qp_num_t               rem_qp_num_low; 
+    /* Low prioirty remote size QP number */ 
 
     IB_lid_t                    rem_lid;
     /* Local identifier of the remote process */
 
-    VAPI_qp_hndl_t              lcl_qp_hndl;
-    /* Local QP handle */
+    VAPI_qp_hndl_t              lcl_qp_hndl_high;
+    /* High priority local QP handle */
+    
+    VAPI_qp_hndl_t              lcl_qp_hndl_low;
+    /* Low priority local QP handle */
 
-    VAPI_qp_prop_t              lcl_qp_prop;
-    /* Local QP properties */
+    VAPI_qp_prop_t              lcl_qp_prop_high;
+    /* High priority local QP properties */
+
+    VAPI_qp_prop_t              lcl_qp_prop_low;
+    /* Low priority local QP properties */
+
 };
 
 typedef struct mca_bmi_base_endpoint_t mca_bmi_base_endpoint_t;
@@ -111,7 +121,13 @@ void mca_bmi_ib_post_recv(void);
 
 void mca_bmi_ib_progress_send_frags(mca_bmi_ib_endpoint_t*);
 
-static inline int mca_bmi_ib_endpoint_post_rr(int cnt, mca_bmi_ib_endpoint_t *endpoint)
+static inline int mca_bmi_ib_endpoint_post_rr_sub(int cnt, 
+                                              mca_bmi_ib_endpoint_t* endpoint, 
+                                              ompi_free_list_t* frag_list, 
+                                              uint32_t* rr_posted, 
+                                              VAPI_hca_hndl_t nic, 
+                                              VAPI_qp_hndl_t qp_hndl
+                                              )
 {
     
     int i, rc; 
@@ -122,7 +138,7 @@ static inline int mca_bmi_ib_endpoint_post_rr(int cnt, mca_bmi_ib_endpoint_t *en
     
     /* prepare frags and post receive requests */
     for(i = 0; i < cnt; i++) {
-        OMPI_FREE_LIST_WAIT(&ib_bmi->recv_free, item, rc); 
+        OMPI_FREE_LIST_WAIT(frag_list, item, rc); 
         frag = (mca_bmi_ib_frag_t*) item; 
         frag->endpoint = endpoint; 
         frag->sg_entry.len = frag->size + ((unsigned char*) frag->segment.seg_addr.pval- (unsigned char*) frag->hdr);  /* sizeof(mca_bmi_ib_header_t);     */ 
@@ -130,18 +146,52 @@ static inline int mca_bmi_ib_endpoint_post_rr(int cnt, mca_bmi_ib_endpoint_t *en
         
     }
     
-    frag->ret = EVAPI_post_rr_list(ib_bmi->nic,
-                                    endpoint->lcl_qp_hndl,
-                                    cnt, 
-                                    rr_desc_post);
+    frag->ret = EVAPI_post_rr_list(nic,
+                                   qp_hndl,
+                                   cnt, 
+                                   rr_desc_post);
     if(VAPI_OK != frag->ret) {
         MCA_BMI_IB_VAPI_ERROR(frag->ret, "EVAPI_post_rr_list");
         return OMPI_ERROR; 
     }
-    OMPI_THREAD_ADD32(&ib_bmi->rr_posted, cnt); 
+    OMPI_THREAD_ADD32(rr_posted, cnt); 
     return OMPI_SUCCESS; 
 }
 
+static inline int mca_bmi_ib_endpoint_post_rr( mca_bmi_ib_endpoint_t * endpoint, int additional){ 
+    mca_bmi_ib_module_t * ib_bmi = endpoint->endpoint_bmi; 
+    int rc; 
+
+    if(ib_bmi->rr_posted_high <= mca_bmi_ib_component.ib_rr_buf_min+additional && ib_bmi->rr_posted_high < mca_bmi_ib_component.ib_rr_buf_max){ 
+        
+        rc = mca_bmi_ib_endpoint_post_rr_sub(mca_bmi_ib_component.ib_rr_buf_max - ib_bmi->rr_posted_high, 
+                                             endpoint, 
+                                             &ib_bmi->recv_free_eager, 
+                                             &ib_bmi->rr_posted_high, 
+                                             ib_bmi->nic, 
+                                             endpoint->lcl_qp_hndl_high
+                                             ); 
+        if(rc != OMPI_SUCCESS) 
+            return rc; 
+
+    }
+    if(ib_bmi->rr_posted_low <= mca_bmi_ib_component.ib_rr_buf_min+additional && ib_bmi->rr_posted_low < mca_bmi_ib_component.ib_rr_buf_max){ 
+        
+        rc = mca_bmi_ib_endpoint_post_rr_sub(mca_bmi_ib_component.ib_rr_buf_max - ib_bmi->rr_posted_low, 
+                                             endpoint, 
+                                             &ib_bmi->recv_free_max, 
+                                             &ib_bmi->rr_posted_low, 
+                                             ib_bmi->nic, 
+                                             endpoint->lcl_qp_hndl_low
+                                             ); 
+        if(rc != OMPI_SUCCESS) 
+            return rc; 
+
+    }
+    return OMPI_SUCCESS; 
+    
+    
+}
 
 #define DUMP_ENDPOINT(endpoint_ptr) {                                       \
     ompi_output(0, "[%s:%d] ", __FILE__, __LINE__);                 \

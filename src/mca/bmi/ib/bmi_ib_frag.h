@@ -78,9 +78,14 @@ typedef struct mca_bmi_ib_frag_t mca_bmi_ib_send_frag_frag_t;
     
 OBJ_CLASS_DECLARATION(mca_bmi_ib_send_frag_frag_t); 
 
-typedef struct mca_bmi_ib_frag_t mca_bmi_ib_recv_frag_t; 
+typedef struct mca_bmi_ib_frag_t mca_bmi_ib_recv_frag_eager_t; 
     
-OBJ_CLASS_DECLARATION(mca_bmi_ib_recv_frag_t); 
+OBJ_CLASS_DECLARATION(mca_bmi_ib_recv_frag_eager_t); 
+
+typedef struct mca_bmi_ib_frag_t mca_bmi_ib_recv_frag_max_t; 
+    
+OBJ_CLASS_DECLARATION(mca_bmi_ib_recv_frag_max_t); 
+
 
     
 

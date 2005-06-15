@@ -111,7 +111,9 @@ struct mca_bmi_ib_module_t {
     VAPI_hca_port_t port;          /**< IB port of this PTL */
     VAPI_hca_hndl_t nic;           /**< NIC handle */
     VAPI_pd_hndl_t  ptag;          /**< Protection Domain tag */
-    VAPI_cq_hndl_t  cq_hndl;       /**< Completion Queue handle */
+    
+    VAPI_cq_hndl_t cq_hndl_high;    /**< High Priority Completion Queue handle */ 
+    VAPI_cq_hndl_t  cq_hndl_low;       /**< Low Priority Completion Queue handle */
     
     EVAPI_async_handler_hndl_t async_handler;
     /**< Async event handler used to detect weird/unknown events */
@@ -120,15 +122,19 @@ struct mca_bmi_ib_module_t {
     ompi_free_list_t send_free_max; /**< free list of max buffer descriptors */ 
     ompi_free_list_t send_free_frag; /**< free list of frags only... used for pining memory */ 
     
-    ompi_free_list_t recv_free;    /**< free list of buffer descriptors */
+    ompi_free_list_t recv_free_eager;    /**< High priority free list of buffer descriptors */
+    ompi_free_list_t recv_free_max;      /**< Low priority free list of buffer descriptors */ 
+
     
     ompi_list_t repost;            /**< list of buffers to repost */
     mca_mpool_base_module_t* ib_pool;  /**< ib memory pool */
     
-    uint32_t rr_posted;  /**< number of rr posted to the nic*/ 
+    uint32_t rr_posted_high;  /**< number of high priority rr posted to the nic*/ 
+    uint32_t rr_posted_low;  /**< number of low priority rr posted to the nic*/ 
     
     
-    VAPI_rr_desc_t*                          rr_desc_post;  
+    VAPI_rr_desc_t*                          rr_desc_post;
+  
     /**< an array to allow posting of rr in one swoop */ 
     size_t ib_inline_max; /**< max size of inline send*/ 
     size_t ib_pin_min;  /**< min size to pin memory*/ 

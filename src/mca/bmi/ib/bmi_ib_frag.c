@@ -31,6 +31,7 @@ static void mca_bmi_ib_frag_common_constructor( mca_bmi_ib_frag_t* frag)
     frag->segment.seg_key.key32[0] = (uint64_t) mem_hndl->l_key; 
     frag->sg_entry.lkey = mem_hndl->l_key; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
+    frag->base.des_flags = 0; 
 }
 
  
@@ -87,13 +88,20 @@ static void mca_bmi_ib_send_frag_max_constructor(mca_bmi_ib_frag_t* frag)
     mca_bmi_ib_send_frag_common_constructor(frag); 
 }
 
-static void mca_bmi_ib_recv_frag_constructor(mca_bmi_ib_frag_t* frag) 
+static void mca_bmi_ib_recv_frag_max_constructor(mca_bmi_ib_frag_t* frag) 
 {
     frag->size = mca_bmi_ib_component.max_send_size+100; 
     mca_bmi_ib_recv_frag_common_constructor(frag); 
     
 }
 
+
+static void mca_bmi_ib_recv_frag_eager_constructor(mca_bmi_ib_frag_t* frag) 
+{
+    frag->size = mca_bmi_ib_component.eager_limit; 
+    mca_bmi_ib_recv_frag_common_constructor(frag); 
+    
+}
 
 static void mca_bmi_ib_send_frag_frag_constructor(mca_bmi_ib_frag_t* frag) 
 { 
@@ -129,9 +137,16 @@ OBJ_CLASS_INSTANCE(
                    NULL); 
 
 OBJ_CLASS_INSTANCE(
-                   mca_bmi_ib_recv_frag_t, 
+                   mca_bmi_ib_recv_frag_eager_t, 
                    mca_bmi_base_descriptor_t, 
-                   mca_bmi_ib_recv_frag_constructor, 
+                   mca_bmi_ib_recv_frag_eager_constructor, 
+                   NULL); 
+
+
+OBJ_CLASS_INSTANCE(
+                   mca_bmi_ib_recv_frag_max_t, 
+                   mca_bmi_base_descriptor_t, 
+                   mca_bmi_ib_recv_frag_max_constructor, 
                    NULL); 
 
 
