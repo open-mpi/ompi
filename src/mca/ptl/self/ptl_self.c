@@ -196,14 +196,17 @@ void mca_ptl_self_matched( mca_ptl_base_module_t* ptl,
             /* We use a temporary buffer as it look to be faster on much architectures */
             length = 64 * 1024;
             buf = (char *)malloc( length * sizeof(char) );
-            
-            ompi_convertor_init_for_recv( &frag->frag_base.frag_convertor, 
-                                          0, 
+
+            pSendConvertor = &(sendreq->req_ptl.req_send.req_convertor);
+            pRecvConvertor = &(frag->frag_base.frag_convertor);
+            ompi_convertor_init_for_send( pSendConvertor, 0,
+                                          sendreq->req_ptl.req_send.req_base.req_datatype,
+                                          sendreq->req_ptl.req_send.req_base.req_count,
+                                          sendreq->req_ptl.req_send.req_base.req_addr, 0, NULL );
+            ompi_convertor_init_for_recv( pRecvConvertor, 0, 
                                           recvreq->req_recv.req_base.req_datatype, 
                                           recvreq->req_recv.req_base.req_count, 
                                           recvreq->req_recv.req_base.req_addr, 0, NULL );
-            pSendConvertor = &(sendreq->req_ptl.req_send.req_convertor);
-            pRecvConvertor = &(frag->frag_base.frag_convertor);
             completed = 0;
             freeAfter = 0;
             while( !completed ) {
