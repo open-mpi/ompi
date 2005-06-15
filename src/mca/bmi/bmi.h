@@ -180,6 +180,7 @@ OBJ_CLASS_DECLARATION(mca_bmi_base_descriptor_t);
                                                                                                                
 #define MCA_BMI_DES_FLAGS_BMI  0x0001
 #define MCA_BMI_DES_FLAGS_PML  0x0002
+#define MCA_BMI_DES_FLAGS_PRIORITY 0x0004
 #define MCA_BMI_DES_MAX_SEGMENTS 16
 
 
