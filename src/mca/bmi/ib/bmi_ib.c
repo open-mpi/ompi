@@ -173,17 +173,24 @@ int mca_bmi_ib_free(
 {
     mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*)des; 
     mca_bmi_ib_module_t * ib_bmi = (mca_bmi_ib_module_t*) bmi; 
+    mca_mpool_base_chunk_t * mpool_chunk; 
 
     if(frag->size == 0) {
         MCA_BMI_IB_FRAG_RETURN_FRAG(bmi, frag); 
-        /* we also need to unregister the associated memory */ 
-        frag->ret = VAPI_deregister_mr(
-                                       ib_bmi->nic, 
-                                       frag->mem_hndl
-                                       ); 
-        if(frag->ret!=VAPI_OK){ 
-            ompi_output(0, "%s:error deregistering memory region", __func__); 
-            return OMPI_ERROR; 
+        
+        /* we also need to unregister the associated memory  iff 
+            the memory wasn't allocated via MPI_Alloc_mem */
+
+        mpool_chunk = mca_mpool_base_find((void*) frag->segment.seg_addr.pval); 
+        if(NULL == mpool_chunk){   
+            frag->ret = VAPI_deregister_mr(
+                                           ib_bmi->nic, 
+                                           frag->mem_hndl
+                                           ); 
+            if(frag->ret!=VAPI_OK){ 
+                ompi_output(0, "%s:error deregistering memory region", __func__); 
+                return OMPI_ERROR; 
+            } 
         } 
 
     } else if(frag->size == mca_bmi_ib_component.max_send_size){ 
@@ -240,8 +247,8 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         frag->segment.seg_len = max_data + reserve; 
         *size  = max_data; 
         return &frag->base; 
-        
-    }else if( max_data + reserve < ib_bmi->super.bmi_min_rdma_size || 1 == ompi_convertor_need_buffers( convertor) ){ 
+       
+    }else if( max_data + reserve <= ib_bmi->super.bmi_max_send_size || 1 == ompi_convertor_need_buffers( convertor) ){ 
         MCA_BMI_IB_FRAG_ALLOC_MAX(bmi, frag, rc); 
         if(NULL == frag) { 
             return NULL; 
@@ -271,6 +278,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         return &frag->base; 
     } else { 
         
+
           VAPI_mrw_t mr_in, mr_out;
           VAPI_ret_t ret;   
           mca_common_vapi_memhandle_t mem_hndl; 
@@ -303,13 +311,11 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
           
           /* first we will try to find this address in the memory tree (from MPI_Alloc_mem) */ 
           mpool_chunk = mca_mpool_base_find((void*) iov.iov_base); 
-
+          frag->segment.seg_len = max_data; 
+          frag->segment.seg_addr.pval = iov.iov_base; 
+          
           if(NULL == mpool_chunk) { 
               
-              frag->segment.seg_len = max_data; 
-              frag->segment.seg_addr.pval = iov.iov_base; 
-              
-          
               mr_in.size = max_data;
               mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base;
           
@@ -337,25 +343,26 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
               }
               
           }
-              frag->mem_hndl = mem_hndl.hndl; 
-              frag->sg_entry.len = max_data; 
-              frag->sg_entry.lkey = mem_hndl.l_key; 
-              frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
-          
-              frag->segment.seg_key.key32[0] = (uint32_t) mem_hndl.l_key; 
-          
-              frag->base.des_src = &frag->segment;
-              frag->base.des_src_cnt = 1;
-              frag->base.des_dst = NULL;
-              frag->base.des_dst_cnt = 0;
-          
               
-              return &frag->base; 
-              
-          }
+          frag->mem_hndl = mem_hndl.hndl; 
+          frag->sg_entry.len = max_data; 
+          frag->sg_entry.lkey = mem_hndl.l_key; 
+          frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
           
+          frag->segment.seg_key.key32[0] = (uint32_t) mem_hndl.l_key; 
+          
+          frag->base.des_src = &frag->segment;
+          frag->base.des_src_cnt = 1;
+          frag->base.des_dst = NULL;
+          frag->base.des_dst_cnt = 0;
+          
+          
+          return &frag->base; 
+          
+    }
     
-          return NULL; 
+    
+    return NULL; 
 }
 
 /**

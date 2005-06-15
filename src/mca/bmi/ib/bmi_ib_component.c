@@ -186,15 +186,12 @@ int mca_bmi_ib_component_open(void)
     mca_bmi_ib_module.ib_src_path_bits = 
         mca_bmi_ib_param_register_int("ib_src_path_bits", 
                                       0); 
-
     mca_bmi_ib_module.super.bmi_min_rdma_size = 
         mca_bmi_ib_param_register_int("min_rdma_size", 
                                       256*1024); 
     mca_bmi_ib_module.super.bmi_max_rdma_size = 
         mca_bmi_ib_param_register_int("max_rdma_size", 
                                       512*1024); 
-    
-    
     mca_bmi_ib_module.super.bmi_flags  = 
         mca_bmi_ib_param_register_int("flags", 
                                       MCA_BMI_FLAGS_RDMA); 
@@ -516,9 +513,9 @@ int mca_bmi_ib_component_progress()
                 ompi_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
                             VAPI_wc_status_sym(comp.status), 
                             comp.vendor_err_syndrome, comp.id);  
-                frag->rc = OMPI_ERROR; 
+                return OMPI_ERROR; 
             }
-        
+            
             /* Handle n/w completions */
             switch(comp.opcode) {
             case VAPI_CQE_SQ_RDMA_WRITE:
@@ -526,6 +523,7 @@ int mca_bmi_ib_component_progress()
                 
                 /* Process a completed send */
                 frag = (mca_bmi_ib_frag_t*) comp.id; 
+                frag->rc = OMPI_SUCCESS; 
                 frag->base.des_cbfunc(&ib_bmi->super, frag->endpoint, &frag->base, frag->rc); 
                 count++;
                 break;
@@ -533,7 +531,8 @@ int mca_bmi_ib_component_progress()
             case VAPI_CQE_RQ_SEND_DATA:
                 
                 DEBUG_OUT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
-                frag = (mca_bmi_ib_frag_t*) comp.id; 
+                frag = (mca_bmi_ib_frag_t*) comp.id;
+                frag->rc=OMPI_SUCCESS; 
                 frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
                 /* advance the segment address past the header and subtract from the length..*/ 
                 ib_bmi->ib_reg[frag->hdr->tag].cbfunc(&ib_bmi->super, frag->hdr->tag, &frag->base, ib_bmi->ib_reg[frag->hdr->tag].cbdata);         
