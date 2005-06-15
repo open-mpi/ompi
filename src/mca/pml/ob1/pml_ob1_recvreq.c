@@ -297,7 +297,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
         do {
             size_t bytes_remaining = recvreq->req_recv.req_bytes_packed - recvreq->req_rdma_offset;
             while(bytes_remaining > 0 && recvreq->req_pipeline_depth < mca_pml_ob1.recv_pipeline_depth) {
-                mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_send); 
+                mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_rdma); 
                 size_t hdr_size;
                 mca_pml_ob1_rdma_hdr_t* hdr;
                 mca_bmi_base_descriptor_t* dst;
@@ -386,7 +386,9 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
-            } 
+                rc = ep->bmi->bmi_component->bmi_progress(); 
+                
+            }
         } while(OMPI_THREAD_ADD32(&recvreq->req_lock,-1) > 0);
     }
 }
