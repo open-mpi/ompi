@@ -14,25 +14,31 @@ $HEADER$
 
 The Open MPI development team is pleased to announce an beta-quality
 release of the current state of our software to the public.  The
-software is "mostly stable", but is definitely not complete and not
-completely debugged.  Our intent with this release is to get the Open
-MPI software onto other people's machines and see what creative ways
-you can come up with to break it, and to send us your comments and
-suggestions.
+software is "mostly stable", but is definitely rough around the edges
+-- it is not complete and not completely debugged.  Our intent with
+this release is to get the Open MPI software onto other people's
+machines and see what creative ways you can come up with to break it,
+and to send us your comments and suggestions.
 
 However, we want to stress the following point: this is an *beta*
 quality release.  We're quite aware that there are several things
 still broken (but report them anyway!).
 
-You have probably downloaded this tarball from
-http://www.open-mpi.org/nightly/.  This directory is updated at least
-once a day around 2am US/Indiana time (assuming that there is new code
-to release).  It may be updated more frequently if a critical bug fix
-is reported and fixed.
-
 The best way to report bugs, send comments, or ask questions is to
-sign up on the devel@open-mpi.org mailing list:
+sign up on the user's and/or developer's mailing list (for user-level
+and developer-level questions; when in doubt, send to the user's
+list):
 
+        users@open-mpi.org
+        devel@open-mpi.org
+
+Because of spam, only subscribers are allowed to post to these lists
+(ensure that you subscribe with and post from exactly the same e-mail
+address -- joe@example.com is considered different than
+joe@mycomputer.example.com!).  Visit these pages to subscribe to the
+lists:
+
+     http://www.open-mpi.org/mailman/listinfo.cgi/users
      http://www.open-mpi.org/mailman/listinfo.cgi/devel
 
 Thanks for your time.
@@ -47,20 +53,15 @@ mainly in the following areas:
   consequently do not perform well for large messages.
 
 - The Open MPI installation must be in your PATH on all nodes (and
-  potentially LD_LIBRARY_PATH, if libmpi is a shared library)
+  potentially LD_LIBRARY_PATH, if libmpi is a shared library).
 
 - LAM/MPI-like mpirun notation of "C" and "N" is not yet supported.
 
-- Signleton MPI applications (i.e., those run via "./foo" instead of
-  "mpirun -np X foo") that invoke MPI_ABORT or otherwise die
-  unnaturally will print a strange warning message before dying
-  (ERR_NOT_FOUND).
-
 - Support for Quadrics and Infiniband (both mVAPI and OpenIB) is
-  missing
+  missing.
 
 - Shared memory support will not function properly on machines that
-  have a weak memory consistency mode.  The default if this beta is to
+  have a weak memory consistency mode.  The default in this beta is to
   disable shared memory support on all Power PC architectures, even
   though some Power PC platforms have strong memory consistency
   models.  See the description of the --enable-ptl-sm configure flag,
@@ -68,7 +69,7 @@ mainly in the following areas:
 
 - Striping MPI messages across multiple networks is supported (and
   happens automatically when multiple networks are available), but
-  needs performance tuning
+  needs performance tuning.
 
 - The only run-time systems currently supported are:
   - rsh / ssh
@@ -76,27 +77,33 @@ mainly in the following areas:
     particular, it must be used with the BJS scheduler)
 
 - Complete user and system administrator documentation is missing
-  (this file comprises the majority of the current user documentation)
+  (this file comprises the majority of the current user
+  documentation).
 
 - Missing MPI functionality:
   - The Fortran 90 MPI API is disabled (it is not complete).
   - MPI-2 one-sided functionality will not be included in the first
-    few releases of Open MPI
+    few releases of Open MPI.
 
 - The only systems that have been tested on are:
   - Linux, 32 bit, with gcc
+  - Linux, 64 bit, with gcc
+  - OS X (10.3), 32 bit with gcc
+  - OS X (10.4), 64 bit, with gcc
 
 - Other systems have been lightly (but not fully tested):
-  - Linux, 64 bit, with gcc
-  - OS X (10.3), 32 bit, with gcc
+  - Other compilers on Linux, both 32 and 64 bit
 
 - As of 9 June 2005, Open MPI will not function on OS X Tiger (10.4)
-  will not function properly due to an ioctl() bug in OS X.  Apple has
-  been notified of the problem.
+  in 64 bit mode due to an ioctl() bug in OS X.  Apple has been
+  notified of the problem.
 
 - There are some cases where after running MPI applications, the
   directory /tmp/openmpi-sessions-<username>@<hostname>* will exist
   (but will likely be empty).  It is safe to remove.
+
+- The MPI and run-time layers do not free all used memory properly
+  during MPI_FINALIZE.
 
 ===========================================================================
 
@@ -399,20 +406,36 @@ Common Questions
 
    shell$ mpirun --mca pls_rsh_agent rsh -np 4 a.out
 
-.........JMS MORE HERE........
+...we'll add more questions here as they are asked by real users.
 
 ===========================================================================
 
 Got more questions?
 -------------------
 
-The best way to report bugs, send comments, or ask questions is to
-sign up on the devel@open-mpi.org mailing list:
+Found a bug?  Got a question?  Want to make a suggestion?  Please let
+us know!
+
+User-level questions and comments should generally be sent to the
+user's mailing list (users@open-mpi.org).  Because of spam, only
+subscribers are allowed to post to this list (ensure that you
+subscribe with and post from exactly the same e-mail address --
+joe@example.com is considered different than
+joe@mycomputer.example.com!).  Visit this page to subscribe to the
+user's list:
+
+     http://www.open-mpi.org/mailman/listinfo.cgi/users
+
+Developer-level bug reports, questions, and comments should generally
+be sent to the developer's mailing list (devel@open-mpi.org; please do
+not post the same question to both lists).  As with the user's list,
+only subscribers are allowed to post to the developer's list.  Visit
+the following web page to subscribe:
 
      http://www.open-mpi.org/mailman/listinfo.cgi/devel
 
-When submitting bug reports, please include the following information
-in your mail (please compress!):
+When submitting bug reports to either list, please include the
+following information in your mail (please compress!):
 
 - the stdout and stderr from Open MPI's configure
 - the top-level config.log file
