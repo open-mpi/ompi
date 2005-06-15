@@ -36,6 +36,10 @@ struct  mca_pml_ob1_recv_request_t {
     size_t  req_bytes_received;
     size_t  req_bytes_delivered;
     size_t  req_rdma_offset;
+
+    unsigned long long ack;
+    unsigned long long fin_first;
+    unsigned long long fin_last;
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
