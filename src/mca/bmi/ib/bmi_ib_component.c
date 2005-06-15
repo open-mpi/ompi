@@ -351,7 +351,9 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
         OBJ_CONSTRUCT(&ib_bmi->send_free_eager, ompi_free_list_t);
         OBJ_CONSTRUCT(&ib_bmi->send_free_max, ompi_free_list_t);
         OBJ_CONSTRUCT(&ib_bmi->send_free_frag, ompi_free_list_t);
-        OBJ_CONSTRUCT(&ib_bmi->recv_free, ompi_free_list_t);
+        
+        OBJ_CONSTRUCT(&ib_bmi->recv_free_eager, ompi_free_list_t);
+        OBJ_CONSTRUCT(&ib_bmi->recv_free_max, ompi_free_list_t);
         
 
         OBJ_CONSTRUCT(&ib_bmi->repost, ompi_list_t);
@@ -390,6 +392,14 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
                             mca_bmi_ib_component.ib_free_list_inc,
                             ib_bmi->ib_pool);
         
+        ompi_free_list_init(&ib_bmi->recv_free_eager,
+                            length, 
+                            OBJ_CLASS(mca_bmi_ib_recv_frag_eager_t),
+                            mca_bmi_ib_component.ib_free_list_num,
+                            mca_bmi_ib_component.ib_free_list_max,
+                            mca_bmi_ib_component.ib_free_list_inc,
+                            ib_bmi->ib_pool);
+        
         
         
         length = sizeof(mca_bmi_ib_frag_t) + 
@@ -409,13 +419,14 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
         
         
         /* Initialize pool of receive fragments */
-        ompi_free_list_init (&ib_bmi->recv_free, 
+        ompi_free_list_init (&ib_bmi->recv_free_max, 
                              length, 
-                             OBJ_CLASS (mca_bmi_ib_recv_frag_t),
+                             OBJ_CLASS (mca_bmi_ib_recv_frag_max_t),
                              mca_bmi_ib_component.ib_free_list_num,
                              mca_bmi_ib_component.ib_free_list_max,
                              mca_bmi_ib_component.ib_free_list_inc, ib_bmi->ib_pool);
 
+        
         
         length = sizeof(mca_bmi_ib_frag_t) + 
             sizeof(mca_bmi_ib_header_t)+ 
@@ -452,47 +463,9 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
     return bmis;
 }
 
-
 /*
  *  IB component progress.
  */
-
-#define MCA_BMI_IB_DRAIN_NETWORK(nic, cq_hndl, comp_type, comp_addr) \
-{ \
-    VAPI_ret_t ret; \
-    VAPI_wc_desc_t comp; \
- \
-    ret = VAPI_poll_cq(nic, cq_hndl, &comp); \
-    if(VAPI_OK == ret) { \
-        if(comp.status != VAPI_SUCCESS) { \
-            ompi_output(0, "Got error : %s, Vendor code : %d Frag : %p", \
-                    VAPI_wc_status_sym(comp.status), \
-                    comp.vendor_err_syndrome, comp.id);  \
-            *comp_type = IB_COMP_ERROR; \
-            *comp_addr = NULL; \
-        } else { \
-            if(VAPI_CQE_SQ_SEND_DATA == comp.opcode) { \
-                *comp_type = IB_COMP_SEND; \
-                *comp_addr = (void*) (unsigned long) comp.id; \
-            } else if(VAPI_CQE_RQ_SEND_DATA == comp.opcode) { \
-                *comp_type = IB_COMP_RECV; \
-                *comp_addr = (void*) (unsigned long) comp.id; \
-            } else if(VAPI_CQE_SQ_RDMA_WRITE == comp.opcode) { \
-                *comp_type = IB_COMP_RDMA_W; \
-                *comp_addr = (void*) (unsigned long) comp.id; \
-            } else { \
-                ompi_output(0, "VAPI_poll_cq: returned unknown opcode : %d\n", \
-                        comp.opcode); \
-                *comp_type = IB_COMP_ERROR; \
-                *comp_addr = NULL; \
-            } \
-        } \
-    } else { \
-        /* No completions from the network */ \
-        *comp_type = IB_COMP_NOTHING; \
-        *comp_addr = NULL; \
-    } \
-}
 
 
 int mca_bmi_ib_component_progress()
@@ -506,8 +479,7 @@ int mca_bmi_ib_component_progress()
         VAPI_wc_desc_t comp; 
         mca_bmi_ib_module_t* ib_bmi = &mca_bmi_ib_component.ib_bmis[i];
         
-        
-        ret = VAPI_poll_cq(ib_bmi->nic, ib_bmi->cq_hndl, &comp); 
+        ret = VAPI_poll_cq(ib_bmi->nic, ib_bmi->cq_hndl_high, &comp); 
         if(VAPI_OK == ret) { 
             if(comp.status != VAPI_SUCCESS) { 
                 ompi_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
@@ -536,14 +508,11 @@ int mca_bmi_ib_component_progress()
                 frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
                 /* advance the segment address past the header and subtract from the length..*/ 
                 ib_bmi->ib_reg[frag->hdr->tag].cbfunc(&ib_bmi->super, frag->hdr->tag, &frag->base, ib_bmi->ib_reg[frag->hdr->tag].cbdata);         
-               
                 
-                OMPI_FREE_LIST_RETURN(&(ib_bmi->recv_free), (ompi_list_item_t*) frag); 
+                OMPI_FREE_LIST_RETURN(&(ib_bmi->recv_free_eager), (ompi_list_item_t*) frag); 
+                OMPI_THREAD_ADD32(&ib_bmi->rr_posted_high, -1); 
                 
-                if(OMPI_THREAD_ADD32(&ib_bmi->rr_posted, -1)  <= mca_bmi_ib_component.ib_rr_buf_min)
-                    mca_bmi_ib_endpoint_post_rr(mca_bmi_ib_component.ib_rr_buf_max - ib_bmi->rr_posted, 
-                                                ((mca_bmi_ib_frag_t*)comp.id)->endpoint); 
-                
+                mca_bmi_ib_endpoint_post_rr(((mca_bmi_ib_frag_t*)comp.id)->endpoint, 0); 
                 
                 count++; 
                 break;
@@ -553,6 +522,50 @@ int mca_bmi_ib_component_progress()
                 break;
             }
         }
+        ret = VAPI_poll_cq(ib_bmi->nic, ib_bmi->cq_hndl_low, &comp); 
+        if(VAPI_OK == ret) { 
+            if(comp.status != VAPI_SUCCESS) { 
+                ompi_output(0, "Got error : %s, Vendor code : %d Frag : %p", 
+                            VAPI_wc_status_sym(comp.status), 
+                            comp.vendor_err_syndrome, comp.id);  
+                return OMPI_ERROR; 
+            }
+            
+            /* Handle n/w completions */
+            switch(comp.opcode) {
+            case VAPI_CQE_SQ_RDMA_WRITE:
+            case VAPI_CQE_SQ_SEND_DATA :
+                
+                /* Process a completed send */
+                frag = (mca_bmi_ib_frag_t*) comp.id; 
+                frag->rc = OMPI_SUCCESS; 
+                frag->base.des_cbfunc(&ib_bmi->super, frag->endpoint, &frag->base, frag->rc); 
+                count++;
+                break;
+                
+            case VAPI_CQE_RQ_SEND_DATA:
+                
+                DEBUG_OUT(0, "%s:%d ib recv under redesign\n", __FILE__, __LINE__); 
+                frag = (mca_bmi_ib_frag_t*) comp.id;
+                frag->rc=OMPI_SUCCESS; 
+                frag->segment.seg_len =  comp.byte_len-((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr); 
+                /* advance the segment address past the header and subtract from the length..*/ 
+                ib_bmi->ib_reg[frag->hdr->tag].cbfunc(&ib_bmi->super, frag->hdr->tag, &frag->base, ib_bmi->ib_reg[frag->hdr->tag].cbdata);         
+                
+                OMPI_FREE_LIST_RETURN(&(ib_bmi->recv_free_max), (ompi_list_item_t*) frag); 
+                OMPI_THREAD_ADD32(&ib_bmi->rr_posted_low, -1); 
+                
+                mca_bmi_ib_endpoint_post_rr(((mca_bmi_ib_frag_t*)comp.id)->endpoint, 0); 
+                
+                count++; 
+                break;
+                
+            default:
+                ompi_output(0, "Errorneous network completion");
+                break;
+            }
+        }
+        
     }
     return count;
 }
