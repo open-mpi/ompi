@@ -141,8 +141,7 @@ static void mca_pml_ob1_recv_request_ack(
      * - size is larger than the rdma threshold
      * - rdma devices are available
     */
-    if(mca_pml_ob1.rdma_threshold != 0 &&
-       recvreq->req_recv.req_bytes_packed >= mca_pml_ob1.rdma_threshold &&
+    if(recvreq->req_recv.req_bytes_packed > mca_pml_ob1.rdma_offset &&
        mca_pml_ob1_ep_array_get_size(&proc->bmi_rdma) &&
        ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
 

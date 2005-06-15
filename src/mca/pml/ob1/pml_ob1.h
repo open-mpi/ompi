@@ -58,7 +58,6 @@ struct mca_pml_ob1_t {
     int free_list_inc;      /* number of elements to grow free list */
     size_t eager_limit;     /* maximum eager limit size - overrides bmi setting */
     size_t rdma_offset;     /* offset at which we attempt to initiate rdma */
-    size_t rdma_threshold;  /* message size at which rdma is attempted */
     size_t send_pipeline_depth;
     size_t recv_pipeline_depth;
 
@@ -264,6 +263,14 @@ extern int mca_pml_ob1_start(
 }
                                                                                                                        
 
+#if defined(__DEBUG__)
+#define get_profiler_timestamp() \
+( { \
+register unsigned long long __res; \
+asm volatile ("rdtsc" : "=A"(__res)); \
+__res; \
+} )
+#endif
 
 #endif
 
