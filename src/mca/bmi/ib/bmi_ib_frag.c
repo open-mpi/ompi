@@ -26,9 +26,10 @@ static void mca_bmi_ib_frag_common_constructor( mca_bmi_ib_frag_t* frag)
     }
 #endif 
     
+    frag->mem_hndl = mem_hndl->hndl; 
     frag->segment.seg_len = frag->size;
     frag->base.des_flags = 0;
-    frag->segment.seg_key.key32[0] = (uint64_t) mem_hndl->l_key; 
+    frag->segment.seg_key.key32[0] = (uint32_t) mem_hndl->l_key; 
     frag->sg_entry.lkey = mem_hndl->l_key; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     frag->base.des_flags = 0; 
@@ -90,7 +91,7 @@ static void mca_bmi_ib_send_frag_max_constructor(mca_bmi_ib_frag_t* frag)
 
 static void mca_bmi_ib_recv_frag_max_constructor(mca_bmi_ib_frag_t* frag) 
 {
-    frag->size = mca_bmi_ib_component.max_send_size+100; 
+    frag->size = mca_bmi_ib_component.max_send_size; 
     mca_bmi_ib_recv_frag_common_constructor(frag); 
     
 }

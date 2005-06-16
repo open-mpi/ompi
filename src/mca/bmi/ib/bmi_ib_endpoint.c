@@ -59,16 +59,17 @@ static inline int mca_bmi_ib_endpoint_post_send(mca_bmi_ib_module_t* ib_bmi, mca
 { 
     
     frag->sr_desc.remote_qkey = 0; 
+    frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     
     VAPI_qp_hndl_t qp_hndl; 
-    if(frag->base.des_flags && MCA_BMI_DES_FLAGS_PRIORITY){ 
+    if(frag->base.des_flags && MCA_BMI_DES_FLAGS_PRIORITY  && frag->size <= ib_bmi->super.bmi_eager_limit){ 
         frag->sr_desc.remote_qp = endpoint->rem_qp_num_high; 
         qp_hndl = endpoint->lcl_qp_hndl_high; 
     } else {
         frag->sr_desc.remote_qp = endpoint->rem_qp_num_low; 
         qp_hndl = endpoint->lcl_qp_hndl_low; 
     } 
-
+    frag->sr_desc.opcode = VAPI_SEND; 
     frag->sg_entry.len = frag->segment.seg_len + ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);  /* sizeof(mca_bmi_ib_header_t); */ 
 
     if(frag->sg_entry.len <= ib_bmi->ib_inline_max) { 
