@@ -130,7 +130,8 @@ static inline int mca_bmi_ib_endpoint_post_rr_sub(int cnt,
                                               )
 {
     
-    int i, rc; 
+    int rc;
+    uint32_t i; 
     ompi_list_item_t* item; 
     mca_bmi_ib_frag_t* frag; 
     mca_bmi_ib_module_t *ib_bmi = endpoint->endpoint_bmi;

@@ -555,6 +555,7 @@ int mca_bmi_ib_component_progress()
                 OMPI_FREE_LIST_RETURN(&(ib_bmi->recv_free_max), (ompi_list_item_t*) frag); 
                 OMPI_THREAD_ADD32(&ib_bmi->rr_posted_low, -1); 
                 
+
                 mca_bmi_ib_endpoint_post_rr(((mca_bmi_ib_frag_t*)comp.id)->endpoint, 0); 
                 
                 count++; 
