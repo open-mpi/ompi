@@ -19,8 +19,7 @@ include $(top_srcdir)/config/Makefile.options
 AM_CPPFLAGS = -I$(top_srcdir)/test/support
 
 check_PROGRAMS = \
-	test_rds \
-        test_rds2
+	test_rds
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -31,8 +30,10 @@ test_rds_LDADD = \
         $(top_builddir)/src/libmpi.la 
 test_rds_DEPENDENCIES = $(test_rds_LDADD)
 
-test_rds2_SOURCES = test_rds2.c
-test_rds2_LDADD = \
-        $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/src/libmpi.la 
-test_rds2_DEPENDENCIES = $(test_rds2_LDADD)
+# JMS Temporarily commented out -- this test only checks the selection
+# logic, which is not [yet] well supported by the unit test infrastructure
+#test_rds2_SOURCES = test_rds2.c
+#test_rds2_LDADD = \
+#        $(top_builddir)/test/support/libsupport.a \
+#        $(top_builddir)/src/libmpi.la 
+#test_rds2_DEPENDENCIES = $(test_rds2_LDADD)
