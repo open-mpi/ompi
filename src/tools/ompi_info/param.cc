@@ -369,10 +369,10 @@ void ompi_info::do_config(bool want_all)
   out("C++ compiler absolute", "compiler:cxx:absolute", OMPI_CXX_ABSOLUTE);
 
   out("Fortran77 compiler", "compiler:f77:command", OMPI_F77);
-  out("Fortran77 compiler absolute", "compiler:f77:absolute", 
+  out("Fortran77 compiler abs", "compiler:f77:absolute", 
       OMPI_F77_ABSOLUTE);
   out("Fortran90 compiler", "compiler:f90:command", OMPI_F90);
-  out("Fortran90 compiler absolute", "compiler:f90:absolute", 
+  out("Fortran90 compiler abs", "compiler:f90:absolute", 
       OMPI_F90_ABSOLUTE);
 
   if (want_all) {
