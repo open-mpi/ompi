@@ -60,7 +60,7 @@ struct mca_bmi_ib_frag_t {
     VAPI_sg_lst_entry_t sg_entry;  
     VAPI_mr_hndl_t mem_hndl; 
     VAPI_ret_t ret;
-    mca_bmi_ib_header_t *hdr; 
+    mca_bmi_ib_header_t *hdr;
 }; 
 typedef struct mca_bmi_ib_frag_t mca_bmi_ib_frag_t; 
 OBJ_CLASS_DECLARATION(mca_bmi_ib_frag_t); 

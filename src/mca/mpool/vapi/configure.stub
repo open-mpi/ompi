@@ -25,29 +25,29 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
 
     # Additional --with flags that can be specified
 
-    AC_ARG_WITH(ptl-ib, 
-        AC_HELP_STRING([--with-ptl-ib=IBDIR],
+    AC_ARG_WITH(bmi-ib, 
+        AC_HELP_STRING([--with-bmi-ib=IBDIR],
                        [Specify the installation directory of IB (should enable the correct automatic determination of using the 32 or 64 bit library, if both are present under IBDIR/lib and IBDIR/lib64)]))
-    AC_ARG_WITH(ptl-ib-libdir,
-        AC_HELP_STRING([--with-ptl-ib-libdir=IBLIBDIR],
+    AC_ARG_WITH(bmi-ib-libdir,
+        AC_HELP_STRING([--with-bmi-ib-libdir=IBLIBDIR],
                        [directory where the IB library can be found, if it is not in $IBDIR/lib or $IBDIR/lib64]))
 
     # Quick sanity check
 
-    if test "$with_ptl_ib" = "no"; then
-        AC_MSG_WARN([*** --without-ptl-ib specified -- aborting])
+    if test "$with_bmi_ib" = "no"; then
+        AC_MSG_WARN([*** --without-bmi-ib specified -- aborting])
         AC_MSG_ERROR([Will not continue])
     fi
 
     # Find the right IBDIR
 
-    if test "$with_ptl_ib" != "" -a "$with_ptl_ib" != "yes" ; then
-        IBDIR="$with_ptl_ib"
-        IBLIBDIR="$with_ptl_ib"
+    if test "$with_bmi_ib" != "" -a "$with_bmi_ib" != "yes" ; then
+        IBDIR="$with_bmi_ib"
+        IBLIBDIR="$with_bmi_ib"
     fi
-    if test "$with_ptl_ib_libdir" != "" -a "$with_ptl_ib_libdir" != "yes" -a \
-        "$with_ptl_ib_libdir" != "no"; then
-        IBLIBDIR="$with_ptl_ib_libdir"
+    if test "$with_bmi_ib_libdir" != "" -a "$with_bmi_ib_libdir" != "yes" -a \
+        "$with_bmi_ib_libdir" != "no"; then
+        IBLIBDIR="$with_bmi_ib_libdir"
     fi
 
     # Add to CPPFLAGS if necessary
@@ -58,13 +58,13 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
             EXTRA_CPPFLAGS="-I$IBDIR/include"
         else
             AC_MSG_WARN([*** Warning: cannot find $IBDIR/include])
-            AC_MSG_WARN([*** Will still try to configure ib ptl anyway...])
+            AC_MSG_WARN([*** Will still try to configure ib bmi anyway...])
         fi
         if test "$IBDIR" != "" -a -d "$IBDIR/wrap"; then
             EXTRA_CPPFLAGS="-I$IBDIR/wrap $EXTRA_CPPFLAGS"
         else
             AC_MSG_WARN([*** Warning: cannot find $IBDIR/wrap])
-            AC_MSG_WARN([*** Will still try to configure ib ptl anyway...])
+            AC_MSG_WARN([*** Will still try to configure ib bmi anyway...])
         fi
     fi
 
@@ -94,7 +94,7 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
 
 
 
-mca_ptl_ib_try_find_libvapi() {
+mca_bmi_ib_try_find_libvapi() {
     func1=[$]1
     func2=[$]2
 
@@ -125,7 +125,7 @@ mca_ptl_ib_try_find_libvapi() {
     if test -d "$IBLIBDIR/lib"; then
         EXTRA_LDFLAGS="-L$IBLIBDIR/lib"
         LDFLAGS="$LDFLAGS $EXTRA_LDFLAGS"
-        mca_ptl_ib_try_find_libvapi VAPI_open_hca VAPI_query_hca_cap
+        mca_bmi_ib_try_find_libvapi VAPI_open_hca VAPI_query_hca_cap
         if test "$LIBS" != "$LIBS_orig"; then
             echo "--> found libvapi in $IBLIBDIR/lib"
         fi
@@ -134,7 +134,7 @@ mca_ptl_ib_try_find_libvapi() {
     if test "$LIBS" = "$LIBS_orig" -a -d "$IBLIBDIR/lib64"; then
         EXTRA_LDFLAGS="-L$IBLIBDIR/lib64"
         LDFLAGS="$LDFLAGS_save $EXTRA_LDFLAGS"
-        mca_ptl_ib_try_find_libvapi EVAPI_list_hcas EVAPI_open_hca
+        mca_bmi_ib_try_find_libvapi EVAPI_list_hcas EVAPI_open_hca
         if test "$LIBS" != "$LIBS_orig"; then
             echo "--> found libvapi in $IBLIBDIR/lib64"
         fi

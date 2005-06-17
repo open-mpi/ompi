@@ -22,6 +22,7 @@
 #include "mpool_vapi.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
+#include <unistd.h> 
 
 /*
  * Local functions
@@ -89,6 +90,8 @@ static int mca_mpool_vapi_open(void)
     
     mca_mpool_vapi_component.vapi_allocator_name =
         mca_mpool_vapi_param_register_string("allocator", "bucket");
+    mca_mpool_vapi_component.page_size = sysconf(_SC_PAGESIZE); 
+
     return OMPI_SUCCESS;
 }
 
@@ -175,6 +178,7 @@ static mca_mpool_base_module_t* mca_mpool_vapi_init(void * user_in)
       return NULL;
     }
    
+    
     return &mpool_module->super;
 }
 

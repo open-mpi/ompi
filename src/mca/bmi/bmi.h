@@ -172,6 +172,7 @@ struct mca_bmi_base_descriptor_t {
     mca_bmi_base_completion_fn_t des_cbfunc;
     void* des_cbdata;
     int32_t des_flags;
+    ompi_ptr_t user_data; 
 };
 typedef struct mca_bmi_base_descriptor_t mca_bmi_base_descriptor_t;
 
