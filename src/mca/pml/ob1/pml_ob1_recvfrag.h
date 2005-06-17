@@ -57,7 +57,7 @@ do {                                                            \
 #define MCA_PML_OB1_RECV_FRAG_INIT(frag,bmi,hdr,segs,cnt)            \
 do {                                                            \
     size_t i;                                                   \
-    mca_bmi_base_segment_t* segments = frag->segments;          \
+    mca_bmi_base_segment_t* macro_segments = frag->segments;          \
     mca_pml_ob1_buffer_t** buffers = frag->buffers;             \
                                                                 \
     /* init recv_frag */                                         \
@@ -72,8 +72,8 @@ do {                                                            \
         OMPI_FREE_LIST_WAIT(&mca_pml_ob1.buffers, item, rc);    \
         buff = (mca_pml_ob1_buffer_t*)item;                     \
         buffers[i] = buff;                                      \
-        segments[i].seg_addr.pval = buff->addr;                 \
-        segments[i].seg_len = segs[i].seg_len;                  \
+        macro_segments[i].seg_addr.pval = buff->addr;                 \
+        macro_segments[i].seg_len = segs[i].seg_len;                  \
         memcpy(buff->addr,                                      \
                segs[i].seg_addr.pval,                           \
                segs[i].seg_len);                                \
