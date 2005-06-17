@@ -51,7 +51,7 @@ mca_bmi_base_module_t mca_bmi_self = {
     0, /* bmi_latency */
     0, /* bmi_bandwidth */
     0, /* bmi flags */
-    mca_bmi_self_add_procs_same_base_addr,
+    mca_bmi_self_add_procs,
     mca_bmi_self_del_procs,
     mca_bmi_self_register,
     mca_bmi_self_finalize,
