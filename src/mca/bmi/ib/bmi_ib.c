@@ -252,7 +252,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->base.des_flags = 0; 
-        
+        frag->base.user_data.pval = NULL; 
         return &frag->base; 
        
     }else if( max_data + reserve <= ib_bmi->super.bmi_max_send_size || 1 == ompi_convertor_need_buffers( convertor) ){ 
@@ -281,7 +281,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->base.des_flags=0; 
-        
+        frag->base.user_data.pval = NULL; 
         return &frag->base; 
     } else { 
         
@@ -363,7 +363,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
           frag->base.des_dst = NULL;
           frag->base.des_dst_cnt = 0;
           frag->base.des_flags=0; 
-          
+          frag->base.user_data.pval = NULL; 
           return &frag->base; 
           
     }
@@ -536,8 +536,12 @@ int mca_bmi_ib_put( mca_bmi_base_module_t* bmi,
 {
     mca_bmi_ib_module_t* ib_bmi = (mca_bmi_ib_module_t*) bmi; 
     mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*) descriptor; 
-    frag->endpoint = endpoint; 
-    frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
+    frag->endpoint = endpoint;
+    if(NULL == frag->base.user_data.pval)
+        frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
+    else 
+        frag->sr_desc.opcode = VAPI_RDMA_WRITE_WITH_IMM; 
+    
     frag->sr_desc.remote_qp = endpoint->rem_qp_num_low; 
     frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
     frag->sr_desc.r_key = frag->base.des_dst->seg_key.key32[0]; 

@@ -479,6 +479,7 @@ int mca_bmi_ib_component_progress()
         VAPI_wc_desc_t comp; 
         mca_bmi_ib_module_t* ib_bmi = &mca_bmi_ib_component.ib_bmis[i];
         
+        do{ 
         ret = VAPI_poll_cq(ib_bmi->nic, ib_bmi->cq_hndl_high, &comp); 
         if(VAPI_OK == ret) { 
             if(comp.status != VAPI_SUCCESS) { 
@@ -490,6 +491,12 @@ int mca_bmi_ib_component_progress()
             
             /* Handle n/w completions */
             switch(comp.opcode) {
+            case VAPI_CQE_RQ_RDMA_WITH_IMM: 
+                if(comp.imm_data_valid){ 
+                    ompi_output(0, "Got an RQ_RDMA_WITH_IMM!\n"); 
+                    
+                }
+                break; 
             case VAPI_CQE_SQ_RDMA_WRITE:
             case VAPI_CQE_SQ_SEND_DATA :
                 
@@ -522,6 +529,9 @@ int mca_bmi_ib_component_progress()
                 break;
             }
         }
+        }
+        while(VAPI_OK == ret); 
+
         ret = VAPI_poll_cq(ib_bmi->nic, ib_bmi->cq_hndl_low, &comp); 
         if(VAPI_OK == ret) { 
             if(comp.status != VAPI_SUCCESS) { 

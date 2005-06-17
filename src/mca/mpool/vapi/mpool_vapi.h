@@ -31,8 +31,9 @@ extern "C" {
 #endif
 
 struct mca_mpool_vapi_component_t {
-  mca_mpool_base_component_t super;
-  char*  vapi_allocator_name;
+    mca_mpool_base_component_t super;
+    char*  vapi_allocator_name;
+    long page_size; 
 };
 
 typedef struct mca_mpool_vapi_component_t mca_mpool_vapi_component_t;
