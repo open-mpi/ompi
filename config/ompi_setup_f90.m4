@@ -43,6 +43,7 @@ if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
     OMPI_WANT_F90_BINDINGS=0
     OMPI_F90="none"
     BASEF90="none"
+    OMPI_F90_ABSOLUTE="none"
     if test "$enable_f90" = "yes"; then
         AC_MSG_WARN([*** but --enable-f90 was explicitly specified])
         AC_MSG_ERROR([Cannot continue])
@@ -52,6 +53,7 @@ elif test "$OMPI_WANT_F90_BINDINGS" = "0" ; then
     OMPI_WANT_F90_BINDINGS=0
     OMPI_F90="none"
     BASEF90="none"
+    OMPI_F90_ABSOLUTE="none"
 else
 
     #
@@ -79,9 +81,11 @@ else
         OMPI_WANT_F90_BINDINGS=0
         OMPI_F90="none"
         BASEF90="none"
+        OMPI_F90_ABSOLUTE="none"
     else
         OMPI_F90="$FC"
         BASEF90="`basename $FC`"
+        OMPI_F90_ABSOLUTE="`which $FC`"
 
         AC_LANG_PUSH(Fortran)
         AC_FC_SRCEXT(f)
@@ -107,6 +111,7 @@ AC_DEFINE_UNQUOTED(OMPI_WANT_F90_BINDINGS, $OMPI_WANT_F90_BINDINGS,
     [Whether we want the MPI f90 bindings or not])
 AC_DEFINE_UNQUOTED(OMPI_F90, "$OMPI_F90", [OMPI underlying F90 compiler])
 AM_CONDITIONAL(OMPI_WANT_F90_BINDINGS, test "$OMPI_WANT_F90_BINDINGS" = "1")
+AC_SUBST(OMPI_F90_ABSOLUTE)
 unset fortran_goodness
 ])
 

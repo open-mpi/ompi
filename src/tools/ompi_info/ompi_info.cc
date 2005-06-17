@@ -39,6 +39,7 @@
 #include "util/output.h"
 #include "util/cmd_line.h"
 #include "util/argv.h"
+#include "util/show_help.h"
 #include "communicator/communicator.h"
 #include "mca/base/base.h"
 #include "tools/ompi_info/ompi_info.h"
@@ -64,6 +65,8 @@ ompi_info::type_vector_t ompi_info::mca_types;
 int main(int argc, char *argv[])
 {
   int ret = 0;
+  bool want_help = false;
+  bool cmd_error = false;
   bool acted = false;
   bool want_all = false;
   char **env = NULL;
@@ -74,9 +77,8 @@ int main(int argc, char *argv[])
   cmd_line = OBJ_NEW(ompi_cmd_line_t);
   if (NULL == cmd_line) {
     ret = errno;
-#if 0
-    show_help(NULL, "lib-call-fail", "ompi_cmd_line_create", NULL);
-#endif
+    ompi_show_help("help-ompi_info.txt", "lib-call-fail", true, 
+                   "ompi_cmd_line_create", __FILE__, __LINE__, NULL);
     exit(ret);
   }
 
@@ -85,7 +87,7 @@ int main(int argc, char *argv[])
   ompi_cmd_line_make_opt(cmd_line, '\0', "param", 2, 
                          "Show MCA parameters");
   ompi_cmd_line_make_opt(cmd_line, '\0', "internal", 0, 
-                         "Show internal MCA parameters (not meant to be modified by users");
+                         "Show internal MCA parameters (not meant to be modified by users)");
   ompi_cmd_line_make_opt(cmd_line, '\0', "path", 1, 
                          "Show paths that Open MPI was configured with");
   ompi_cmd_line_make_opt(cmd_line, '\0', "arch", 0, 
@@ -98,6 +100,8 @@ int main(int argc, char *argv[])
                          "Display output in 'prettyprint' format (default)");
   ompi_cmd_line_make_opt(cmd_line, '\0', "parsable", 0, 
                          "Display output in parsable format");
+  ompi_cmd_line_make_opt(cmd_line, '\0', "parseable", 0, 
+                         "Synonym for --parsable");
   ompi_cmd_line_make_opt(cmd_line, '\0', "hostname", 0, 
                          "Show the hostname that Open MPI was configured "
                          "and built on");
@@ -125,15 +129,18 @@ int main(int argc, char *argv[])
 
   // Do the parsing
 
-  if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, false, argc, argv) ||
-      ompi_cmd_line_is_taken(cmd_line, "help") || 
+  if (OMPI_SUCCESS != ompi_cmd_line_parse(cmd_line, false, argc, argv)) {
+      cmd_error = true;
+  }
+  if (!cmd_error && ompi_cmd_line_is_taken(cmd_line, "help") || 
       ompi_cmd_line_is_taken(cmd_line, "h")) {
-#if 1
-    printf("...showing ompi_info help message...\n");
-#else
-    show_help("ompi_info", "usage", NULL);
-#endif
-    exit(1);
+      want_help = true;
+  }
+  if (cmd_error || want_help) {
+      char *usage = ompi_cmd_line_get_usage_msg(cmd_line);
+      ompi_show_help("help-ompi_info.txt", "usage", true, usage);
+      free(usage);
+      exit(cmd_error ? 1 : 0);
   }
 
   mca_base_cmd_line_process_args(cmd_line, &env);

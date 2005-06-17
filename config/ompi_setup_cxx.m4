@@ -28,6 +28,8 @@ AC_PROG_CXXCPP
 BASECXX="`basename $CXX`"
 CXXFLAGS="$ompi_cxxflags_save"
 AC_DEFINE_UNQUOTED(OMPI_CXX, "$CXX", [OMPI underlying C++ compiler])
+OMPI_CXX_ABSOLUTE="`which $CXX`"
+AC_SUBST(OMPI_CXX_ABSOLUTE)
 
 # Check for compilers that impersonate g++
 

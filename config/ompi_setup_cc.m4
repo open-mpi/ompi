@@ -36,6 +36,8 @@ AC_PROG_CC
 BASECC="`basename $CC`"
 CFLAGS="$ompi_cflags_save"
 AC_DEFINE_UNQUOTED(OMPI_CC, "$CC", [OMPI underlying C compiler])
+OMPI_CC_ABSOLUTE="`which $CC`"
+AC_SUBST(OMPI_CC_ABSOLUTE)
 
 # Check for compilers that impersonate gcc
 
