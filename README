@@ -85,7 +85,7 @@ mainly in the following areas:
   - MPI-2 one-sided functionality will not be included in the first
     few releases of Open MPI.
 
-- The only systems that have been tested on are:
+- Systems that have been tested are:
   - Linux, 32 bit, with gcc
   - Linux, 64 bit, with gcc
   - OS X (10.3), 32 bit with gcc
@@ -94,16 +94,21 @@ mainly in the following areas:
 - Other systems have been lightly (but not fully tested):
   - Other compilers on Linux, both 32 and 64 bit
 
-- As of 9 June 2005, Open MPI will not function on OS X Tiger (10.4)
-  in 64 bit mode due to an ioctl() bug in OS X.  Apple has been
-  notified of the problem.
-
 - There are some cases where after running MPI applications, the
   directory /tmp/openmpi-sessions-<username>@<hostname>* will exist
-  (but will likely be empty).  It is safe to remove.
+  (but will likely be empty).  It is safe to remove after the run is
+  complete.
 
 - The MPI and run-time layers do not free all used memory properly
   during MPI_FINALIZE.
+
+- Running on nodes with different endian and/or different datatype
+  sizes within a single parallel application is not supported in this
+  beta.
+
+- As of 9 June 2005, Open MPI will not function on OS X Tiger (10.4)
+  in 64 bit mode due to an ioctl() bug in OS X.  Apple has been
+  notified of the problem.
 
 ===========================================================================
 
@@ -364,27 +369,32 @@ values of parameters:
 
 1. <prefix>/etc/openmpi-mca-params.conf
 
-   A simple text file with lots of comments explaining its format.
    This file is intended to set any system-wide default MCA parameter
    values -- it will apply, by default, to all users who use this Open
-   MPI installation.
+   MPI installation.  The default file that is installed contains many
+   comments explaining its format.
 
 2. $HOME/.openmpi/mca-params.conf
 
    If this file exists, it should be in the same format as
-   <prefix>/etc/openmpi-pmca-params.conf.  It is intended to provide
+   <prefix>/etc/openmpi-mca-params.conf.  It is intended to provide
    per-user default parameter values.
 
 3. environment variables of the form OMPI_MCA_<name> set equal to a
    <value>
 
    Where <name> is the name of the parameter.  For example, set the
-   variable named OMPI_MCA_ptl_tcp_frag_size to the value 65536.
+   variable named OMPI_MCA_ptl_tcp_frag_size to the value 65536
+   (Bourne-style shells):
+
+   shell$ OMPI_MCA_ptl_tcp_frag_size=65536
+   shell$ export OMPI_MCA_ptl_tcp_frag_size
 
 4. the mpirun command line: --mca <name> <value>
  
    Where <name> is the name of the parameter.  For example:
-   mpirun --mca ptl_tcp_frag_size 65536 -np 2 hello_world_mpi
+
+   shell$ mpirun --mca ptl_tcp_frag_size 65536 -np 2 hello_world_mpi
 
 These locations are checked in order.  For example, a parameter value
 passed on the mpirun command line will override an environment
@@ -413,8 +423,8 @@ Common Questions
 Got more questions?
 -------------------
 
-Found a bug?  Got a question?  Want to make a suggestion?  Please let
-us know!
+Found a bug?  Got a question?  Want to make a suggestion?  Want to
+contribute to Open MPI?  Please let us know!
 
 User-level questions and comments should generally be sent to the
 user's mailing list (users@open-mpi.org).  Because of spam, only
