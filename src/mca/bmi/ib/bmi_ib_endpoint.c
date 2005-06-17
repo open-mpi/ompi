@@ -83,8 +83,13 @@ static inline int mca_bmi_ib_endpoint_post_send(mca_bmi_ib_module_t* ib_bmi, mca
                                  &frag->sr_desc); 
     }
 
+    
+
     if(VAPI_OK != frag->ret)
         return OMPI_ERROR; 
+    
+    mca_bmi_ib_endpoint_post_rr(endpoint, 1); 
+
     return OMPI_SUCCESS; 
 }
 

@@ -550,6 +550,7 @@ int mca_bmi_ib_put( mca_bmi_base_module_t* bmi,
     if(VAPI_OK != frag->ret){ 
         return OMPI_ERROR; 
     }
+    mca_bmi_ib_endpoint_post_rr(endpoint, 1); 
 
     return OMPI_SUCCESS; 
 
