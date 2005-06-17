@@ -188,10 +188,10 @@ int mca_bmi_ib_component_open(void)
                                       0); 
     mca_bmi_ib_module.super.bmi_min_rdma_size = 
         mca_bmi_ib_param_register_int("min_rdma_size", 
-                                      256*1024); 
+                                      1024*1024); 
     mca_bmi_ib_module.super.bmi_max_rdma_size = 
         mca_bmi_ib_param_register_int("max_rdma_size", 
-                                      512*1024); 
+                                      1024*1024); 
     mca_bmi_ib_module.super.bmi_flags  = 
         mca_bmi_ib_param_register_int("flags", 
                                       MCA_BMI_FLAGS_RDMA); 
