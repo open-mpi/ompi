@@ -18,6 +18,7 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include "ompi_config.h"
+#include <sched.h>
 #include "include/constants.h"
 #include "mca/pml/pml.h"
 #include "mca/bmi/bmi.h"
@@ -143,6 +144,12 @@ static void mca_pml_ob1_send_completion(
             break;
     }
 
+#if MCA_PML_OB1_TIMESTAMPS
+    if(sendreq->req_pipeline_depth == 1) {
+        sendreq->t_send2 = get_profiler_timestamp();
+    }
+#endif
+
     /* check for request completion */
     OMPI_THREAD_LOCK(&ompi_request_lock);
     if (OMPI_THREAD_ADD32(&sendreq->req_pipeline_depth,-1) == 0 &&
@@ -150,6 +157,7 @@ static void mca_pml_ob1_send_completion(
         MCA_PML_OB1_SEND_REQUEST_COMPLETE(sendreq);
     } 
     OMPI_THREAD_UNLOCK(&ompi_request_lock);
+
 
     /* return the descriptor */
     bmi_ep->bmi_free(bmi_ep->bmi, descriptor);
@@ -328,6 +336,9 @@ int mca_pml_ob1_send_request_start(
     OMPI_THREAD_ADD32(&sendreq->req_pipeline_depth,1);
 
     /* send */
+#if MCA_PML_OB1_TIMESTAMPS
+    sendreq->t_start = get_profiler_timestamp();
+#endif
     rc = endpoint->bmi_send(
         endpoint->bmi, 
         endpoint->bmi_endpoint, 
@@ -430,6 +441,10 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                     OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
+#if MCA_PML_OB1_TIMESTAMPS
+                if(bytes_remaining == 0)
+                    sendreq->t_scheduled = get_profiler_timestamp();
+#endif
             }
         } while (OMPI_THREAD_ADD32(&sendreq->req_lock,-1) > 0);
     }
@@ -478,6 +493,13 @@ static void mca_pml_ob1_put_completion(
         ORTE_ERROR_LOG(status);
         orte_errmgr.abort();
     }
+
+#if MCA_PML_OB1_TIMESTAMPS
+    /* update statistics */
+    sendreq->t_fin[sendreq->t_fin_index++] = get_profiler_timestamp();
+    if(sendreq->t_fin_index >= MCA_PML_OB1_NUM_TSTAMPS)
+        sendreq->t_fin_index = 0;
+#endif
 
     /* check for request completion */
     OMPI_THREAD_LOCK(&ompi_request_lock);
@@ -580,7 +602,13 @@ void mca_pml_ob1_send_request_put(
     frag->rdma_ep = ep;
     frag->rdma_state = MCA_PML_OB1_RDMA_PREPARE;
 
+#if MCA_PML_OB1_TIMESTAMPS
     /* setup descriptor */
+    sendreq->t_pin[sendreq->t_pin_index++] = get_profiler_timestamp();
+    if(sendreq->t_pin_index >= MCA_PML_OB1_NUM_TSTAMPS)
+        sendreq->t_pin_index = 0;
+#endif
+
     ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset);
     des = bmi->bmi_prepare_src(
         bmi, 
@@ -601,7 +629,13 @@ void mca_pml_ob1_send_request_put(
     des->des_cbfunc = mca_pml_ob1_put_completion;
     des->des_cbdata = frag;
 
+#if MCA_PML_OB1_TIMESTAMPS
     /* queue put */
+    sendreq->t_put[sendreq->t_put_index++] = get_profiler_timestamp();
+    if(sendreq->t_put_index >= MCA_PML_OB1_NUM_TSTAMPS)
+        sendreq->t_put_index = 0;
+#endif
+
     if(OMPI_SUCCESS != (rc = bmi->bmi_put(bmi, ep->bmi_endpoint, des))) {
         if(rc == OMPI_ERR_OUT_OF_RESOURCE) {
             OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
@@ -613,6 +647,7 @@ void mca_pml_ob1_send_request_put(
             orte_errmgr.abort();
         }
     }
+    sched_yield();
 }
 
 
