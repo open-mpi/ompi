@@ -43,7 +43,7 @@ static int destroy_message(ompi_pointer_array_t *lines);
 static const char *default_language = "C";
 #endif
 static const char *default_filename = "help-messages";
-static const char *star_line = "**************************************************************************\n";
+static const char *dash_line = "--------------------------------------------------------------------------\n";
 
 
 int ompi_show_help(const char *filename, const char *topic, 
@@ -142,10 +142,10 @@ static int open_file(const char *base, const char *topic)
     /* If we still couldn't open it, then something is wrong */
 
     if (NULL == ompi_show_help_yyin) {
-        fprintf(stderr, star_line);
+        fprintf(stderr, dash_line);
         fprintf(stderr, "Sorry!  You were supposed to get help about:\n    %s\nfrom the file:\n    %s\n", topic, base);
         fprintf(stderr, "But I couldn't find any file matching that name.  Sorry!\n");
-        fprintf(stderr, star_line);
+        fprintf(stderr, dash_line);
         return OMPI_ERR_NOT_FOUND;
     }
 
@@ -190,10 +190,10 @@ static int find_topic(const char *base, const char *topic)
             break;
 
         case OMPI_SHOW_HELP_PARSE_DONE:
-            fprintf(stderr, star_line);
+            fprintf(stderr, dash_line);
             fprintf(stderr, "Sorry!  You were supposed to get help about:\n    %s\nfrom the file:\n    %s\n", topic, base);
             fprintf(stderr, "But I couldn't find that topic in the file.  Sorry!\n");
-            fprintf(stderr, star_line);
+            fprintf(stderr, dash_line);
             return OMPI_ERR_NOT_FOUND;
             break;
 
@@ -251,7 +251,7 @@ static int output(bool want_error_header, ompi_pointer_array_t *lines,
 
     /* See how much space we need */
 
-    len = want_error_header ? 2 * strlen(star_line) : 0;
+    len = want_error_header ? 2 * strlen(dash_line) : 0;
     for (i = 0; i < ompi_pointer_array_get_size(lines); ++i) {
         tmp = (char*) ompi_pointer_array_get_item(lines, i);
         if (NULL == tmp) {
@@ -264,10 +264,10 @@ static int output(bool want_error_header, ompi_pointer_array_t *lines,
 
     concat = (char*) malloc(len + 1);
     if (NULL == concat) {
-        fprintf(stderr, star_line);
+        fprintf(stderr, dash_line);
         fprintf(stderr, "Sorry!  You were supposed to get help about:\n    %s\nfrom the file:\n    %s\n", topic, base);
         fprintf(stderr, "But memory seems to be exhausted.  Sorry!\n");
-        fprintf(stderr, star_line);
+        fprintf(stderr, dash_line);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
@@ -275,7 +275,7 @@ static int output(bool want_error_header, ompi_pointer_array_t *lines,
 
     *concat = '\0';
     if (want_error_header) {
-        strcat(concat, star_line);
+        strcat(concat, dash_line);
     }
     for (i = 0; i < ompi_pointer_array_get_size(lines); ++i) {
         tmp = (char*) ompi_pointer_array_get_item(lines, i);
@@ -286,7 +286,7 @@ static int output(bool want_error_header, ompi_pointer_array_t *lines,
         strcat(concat, "\n");
     }
     if (want_error_header) {
-        strcat(concat, star_line);
+        strcat(concat, dash_line);
     }
 
     /* Apply formatting */
