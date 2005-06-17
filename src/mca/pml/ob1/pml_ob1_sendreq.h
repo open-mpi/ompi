@@ -49,6 +49,19 @@ struct mca_pml_ob1_send_request_t {
     size_t req_bytes_delivered;
     size_t req_send_offset;
     size_t req_rdma_offset;
+
+#if MCA_PML_OB1_TIMESTAMPS
+    unsigned long long t_start;
+    unsigned long long t_send1;
+    unsigned long long t_send2;
+    unsigned long long t_scheduled;
+    unsigned long long t_pin[MCA_PML_OB1_NUM_TSTAMPS];
+    unsigned long long t_put[MCA_PML_OB1_NUM_TSTAMPS];
+    unsigned long long t_fin[MCA_PML_OB1_NUM_TSTAMPS];
+    int t_pin_index;
+    int t_put_index;
+    int t_fin_index;
+#endif
 };
 typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 
@@ -99,6 +112,53 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
         persistent);                                                       \
 }
 
+
+/**
+ *  Diagnostic output to trace rdma protocol timing
+ */
+
+#if MCA_PML_OB1_TIMESTAMPS
+#define MCA_PML_OB1_SEND_REQUEST_TSTAMPS_DUMP(sendreq) \
+{ \
+ int i; \
+ ompi_output(0, "[%d,%d,%d] src start, %llu\n",  \
+    ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_start); \
+\
+ ompi_output(0, "[%d,%d,%d] src send start, %llu\n",  \
+    ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_send1); \
+\
+ ompi_output(0, "[%d,%d,%d] src scheduled, %llu\n",  \
+    ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_scheduled); \
+\
+ ompi_output(0, "[%d,%d,%d] src send complete, %llu\n",  \
+    ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_send2); \
+\
+ for(i=0; i<(sendreq)->t_pin_index; i++) \
+     ompi_output(0, "[%d,%d,%d] src pin, %llu %llu\n",  \
+        ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_pin[i], \
+        (sendreq)->t_put[i] - (sendreq)->t_pin[i]); \
+ for(i=0; i<(sendreq)->t_put_index; i++) \
+     ompi_output(0, "[%d,%d,%d] src put, %llu %llu\n",  \
+        ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_put[i], \
+        (sendreq)->t_fin[i] - (sendreq)->t_put[i]); \
+ for(i=0; i<(sendreq)->t_fin_index; i++) \
+     ompi_output(0, "[%d,%d,%d] src fin, %llu\n",  \
+        ORTE_NAME_ARGS(orte_process_info.my_name), (sendreq)->t_fin[i]); \
+}
+
+#define MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq) \
+{                                                      \
+    sendreq->t_pin_index = 0;                          \
+    sendreq->t_put_index = 0;                          \
+    sendreq->t_fin_index = 0;                          \
+}
+
+#else
+#define MCA_PML_OB1_SEND_REQUEST_TSTAMPS_DUMP(sendreq)
+#define MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq)
+#endif
+
+
 /**
  * Start a send request. 
  */
@@ -111,6 +171,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     /* select next endpoint */                                                            \
     endpoint = mca_pml_ob1_ep_array_get_next(&proc->bmi_eager);                           \
     sendreq->req_lock = 0;                                                                \
+    MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq);                                       \
     sendreq->req_pipeline_depth = 0;                                                      \
     sendreq->req_bytes_delivered = 0;                                                     \
     sendreq->req_send_offset = 0;                                                         \
@@ -124,9 +185,9 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {                   \
         mca_pml_base_bsend_request_start(&sendreq->req_send.req_base.req_ompi);           \
     }                                                                                     \
-                                                                                          \
     rc = mca_pml_ob1_send_request_start(sendreq, endpoint);                               \
 }
+
 
 /*
  * Complete a send request
@@ -144,12 +205,13 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
             (sendreq)->req_send.req_bytes_packed;                                         \
         (sendreq)->req_send.req_base.req_ompi.req_complete = true;                        \
         (sendreq)->req_state = MCA_PML_OB1_SR_COMPLETE;                                   \
+        MCA_PML_OB1_SEND_REQUEST_TSTAMPS_DUMP(sendreq);                                   \
         if(ompi_request_waiting) {                                                        \
             ompi_condition_broadcast(&ompi_request_cond);                                 \
         }                                                                                 \
-    } else if(sendreq->req_send.req_base.req_free_called) {                               \
+    } else if((sendreq)->req_send.req_base.req_free_called) {                             \
         MCA_PML_OB1_FREE((ompi_request_t**)&sendreq);                                     \
-    } else if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {           \
+    } else if ((sendreq)->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {         \
         mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);                        \
         sendreq->req_state = MCA_PML_OB1_SR_COMPLETE;                                     \
     }                                                                                     \

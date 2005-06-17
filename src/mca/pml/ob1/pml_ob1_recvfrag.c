@@ -80,6 +80,9 @@ void mca_pml_ob1_recv_frag_callback(
             sendreq->req_state = MCA_PML_OB1_SR_ACKED;
             sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
             sendreq->req_rdma_offset = hdr->hdr_ack.hdr_rdma_offset;
+#if MCA_PML_OB1_TIMESTAMPS
+            sendreq->t_send1 = get_profiler_timestamp();
+#endif
             mca_pml_ob1_send_request_schedule(sendreq);
             break;
             }
@@ -102,8 +105,16 @@ void mca_pml_ob1_recv_frag_callback(
             mca_bmi_base_descriptor_t* dst = (mca_bmi_base_descriptor_t*)
                 hdr->hdr_fin.hdr_dst.pval;
             mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)dst->des_cbdata;
+#if MCA_PML_OB1_TIMESTAMPS
+            recvreq->fin1[recvreq->fin_index] = get_profiler_timestamp();
+            bmi->bmi_free(bmi,dst);
+            recvreq->fin2[recvreq->fin_index] = get_profiler_timestamp();
+            recvreq->fin_index++;
+            mca_pml_ob1_recv_request_progress(recvreq,bmi,segments,des->des_dst_cnt);
+#else
             mca_pml_ob1_recv_request_progress(recvreq,bmi,segments,des->des_dst_cnt);
             bmi->bmi_free(bmi,dst);
+#endif
             break;
             }
         default:
@@ -525,9 +536,7 @@ int mca_pml_ob1_recv_frag_match(
     if(match != NULL) {
         MCA_PML_OB1_RECV_REQUEST_MATCHED(match, hdr);
         mca_pml_ob1_recv_request_progress(match,bmi,segments,num_segments);
-    } else {
-        ompi_output(0, "match not found\n");
-    }
+    } 
     if(additional_match) {
         ompi_list_item_t* item;
         while(NULL != (item = ompi_list_remove_first(&additional_matches))) {

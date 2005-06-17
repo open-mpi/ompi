@@ -262,14 +262,15 @@ extern int mca_pml_ob1_start(
     *(request) = MPI_REQUEST_NULL; \
 }
                                                                                                                        
-
-#if defined(__DEBUG__)
-#define get_profiler_timestamp() \
-( { \
-register unsigned long long __res; \
-asm volatile ("rdtsc" : "=A"(__res)); \
-__res; \
-} )
+#define MCA_PML_OB1_TIMESTAMPS 0
+#if MCA_PML_OB1_TIMESTAMPS
+#define MCA_PML_OB1_NUM_TSTAMPS 256
+static inline unsigned long long get_profiler_timestamp(void) 
+{
+register unsigned long long __res; 
+asm volatile ("rdtsc" : "=A"(__res)); 
+return __res; 
+}
 #endif
 
 #endif

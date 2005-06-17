@@ -124,7 +124,6 @@ static void mca_pml_ob1_recv_request_ack(
     mca_bmi_base_descriptor_t* des;
     mca_pml_ob1_recv_frag_t* frag;
     mca_pml_ob1_ack_hdr_t* ack;
-    bool schedule;
     int rc;
 
     /* allocate descriptor */
@@ -151,11 +150,9 @@ static void mca_pml_ob1_recv_request_ack(
             &recvreq->req_recv.req_convertor,
             &recvreq->req_rdma_offset);
         ack->hdr_rdma_offset = recvreq->req_rdma_offset;
-        schedule = true;
     } else {
         recvreq->req_rdma_offset = recvreq->req_recv.req_bytes_packed;
         ack->hdr_rdma_offset = recvreq->req_recv.req_bytes_packed;
-        schedule = false;
     }
     
     ack->hdr_common.hdr_flags = 0;
@@ -172,10 +169,6 @@ static void mca_pml_ob1_recv_request_ack(
         ep->bmi_free(ep->bmi,des);
         goto retry;
     }
-
-    /* after sending ack - attempt to schedule rdma */
-    if(schedule)
-        mca_pml_ob1_recv_request_schedule(recvreq);
     return;
 
     /* queue request to retry later */
@@ -222,6 +215,9 @@ void mca_pml_ob1_recv_request_progress(
 
         case MCA_PML_OB1_HDR_TYPE_RNDV:
 
+#if MCA_PML_OB1_TIMESTAMPS
+            recvreq->ack = get_profiler_timestamp();
+#endif
             recvreq->req_send = hdr->hdr_rndv.hdr_src_req;
             mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv);
             bytes_received = hdr->hdr_rndv.hdr_frag_length;
@@ -251,7 +247,7 @@ void mca_pml_ob1_recv_request_progress(
 
         case MCA_PML_OB1_HDR_TYPE_FIN:
 
-            bytes_delivered = bytes_received = hdr->hdr_fin.hdr_rdma_length;
+            bytes_delivered = bytes_received = hdr->hdr_fin.hdr_rdma_length; 
             OMPI_THREAD_ADD32(&recvreq->req_pipeline_depth,-1);
             break;
 
@@ -264,10 +260,27 @@ void mca_pml_ob1_recv_request_progress(
     recvreq->req_bytes_received += bytes_received;
     recvreq->req_bytes_delivered += bytes_delivered;
     if (recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed) {
+
         /* initialize request status */
         recvreq->req_recv.req_base.req_ompi.req_status._count = recvreq->req_bytes_delivered;
         recvreq->req_recv.req_base.req_pml_complete = true; 
         recvreq->req_recv.req_base.req_ompi.req_complete = true;
+
+#if MCA_PML_OB1_TIMESTAMPS
+        if(recvreq->req_bytes_received > 0) {
+            int i;
+            ompi_output(0, "[%d,%d,%d] dst ack: %llu",
+                    ORTE_NAME_ARGS(orte_process_info.my_name), recvreq->ack);
+            for(i=0; i<recvreq->pin_index; i++) {
+                ompi_output(0, "[%d,%d,%d] dst pin, %llu %llu", 
+                    ORTE_NAME_ARGS(orte_process_info.my_name), recvreq->pin1[i], recvreq->pin2[i] - recvreq->pin1[i]);
+            }
+            for(i=0; i<recvreq->fin_index; i++) {
+                ompi_output(0, "[%d,%d,%d] dst fin: %llu %llu",
+                    ORTE_NAME_ARGS(orte_process_info.my_name), recvreq->fin1[i], recvreq->fin2[i] - recvreq->fin1[i]);
+            }
+        }
+#endif
         if(ompi_request_waiting) {
             ompi_condition_broadcast(&ompi_request_cond);
         }
@@ -327,12 +340,18 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
 
                 /* prepare a descriptor for RDMA */
                 ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &recvreq->req_rdma_offset);
+#if MCA_PML_OB1_TIMESTAMPS
+                recvreq->pin1[recvreq->pin_index] = get_profiler_timestamp();
+#endif
                 dst = ep->bmi_prepare_dst(
                     ep->bmi,
                     ep->bmi_endpoint,
                     &recvreq->req_recv.req_convertor,
                     0,
                     &size);
+#if MCA_PML_OB1_TIMESTAMPS
+                recvreq->pin2[recvreq->pin_index] = get_profiler_timestamp();
+#endif
                 if(dst == NULL) {
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
                     ompi_list_append(&mca_pml_ob1.recv_pending, (ompi_list_item_t*)recvreq);
@@ -340,6 +359,9 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     break;
                 }
                 dst->des_cbdata = recvreq;
+#if MCA_PML_OB1_TIMESTAMPS
+                recvreq->pin_index++;
+#endif
 
                 /* prepare a descriptor for rdma control message */
                 hdr_size = sizeof(mca_pml_ob1_rdma_hdr_t);
