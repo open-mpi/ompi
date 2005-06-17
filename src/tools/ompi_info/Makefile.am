@@ -46,6 +46,8 @@ AM_CPPFLAGS = \
 
 pkgdata_DATA = help-ompi_info.txt
 
+EXTRA_DIST = $(pkgdata_DATA)
+
 libs = $(top_builddir)/src/libmpi.la
 
 bin_PROGRAMS = ompi_info
