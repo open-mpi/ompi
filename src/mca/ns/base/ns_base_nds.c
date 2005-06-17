@@ -30,6 +30,7 @@
 static orte_ns_nds_t orte_ns_nds[] = {
 { "env", orte_ns_nds_env_get },
 { "pipe", orte_ns_nds_pipe_get },
+{ "bproc", orte_ns_nds_bproc_get },
 { NULL, NULL }
 };
 

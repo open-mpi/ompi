@@ -77,6 +77,10 @@ int orte_ns_nds_env_put(const orte_process_name_t* proc,
 int orte_ns_nds_pipe_get(void);
 int orte_ns_nds_pipe_put(const orte_process_name_t* proc, orte_vpid_t vpid_start, size_t num_procs, int fd);
 
+int orte_ns_nds_bproc_get(void);
+int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
+                          orte_vpid_t vpid_start, orte_vpid_t global_vpid_start,
+                          int num_procs, char ***env);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

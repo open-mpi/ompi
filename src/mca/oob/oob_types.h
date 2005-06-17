@@ -44,6 +44,7 @@
 #define MCA_OOB_TAG_PCM_KILL     (orte_rml_tag_t)   9
 #define MCA_OOB_TAG_XCAST        (orte_rml_tag_t)  10
 #define MCA_OOB_TAG_PCM_KILL_ACK (orte_rml_tag_t)  11
+#define MCA_OOB_TAG_BPROC        (orte_rml_tag_t)  12
 #define ORTE_OOB_TAG_START_LIST  (orte_rml_tag_t) 100  /* starting point for tag server assignments */
 
 /**
