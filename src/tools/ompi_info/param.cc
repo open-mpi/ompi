@@ -32,6 +32,7 @@
 
 #include "class/ompi_value_array.h"
 #include "util/printf.h"
+#include "util/show_help.h"
 #include "mca/base/mca_base_param.h"
 #include "tools/ompi_info/ompi_info.h"
 
@@ -103,10 +104,10 @@ void ompi_info::do_params(bool want_all, bool want_internal)
       }
 
       if (!found) {
-#if 0
-        show_help("ompi_info", "usage");
-#endif
-        exit(1);
+          char *usage = ompi_cmd_line_get_usage_msg(cmd_line);
+          ompi_show_help("help-ompi_info.txt", "usage", true, usage);
+          free(usage);
+          exit(1);
       }
 
       show_mca_params(type, component, param_all, want_internal);
@@ -251,10 +252,10 @@ void ompi_info::do_path(bool want_all, ompi_cmd_line_t *cmd_line)
       else if (path_sysconfdir == scope)
         show_path(path_sysconfdir, OMPI_SYSCONFDIR);
       else {
-#if 0
-        show_help("ompi_info", "usage");
-#endif
-        exit(1);
+          char *usage = ompi_cmd_line_get_usage_msg(cmd_line);
+          ompi_show_help("help-ompi_info.txt", "usage", true, usage);
+          free(usage);
+          exit(1);
       }
     }
   }
@@ -346,6 +347,7 @@ void ompi_info::do_config(bool want_all)
   out("Fortran90 bindings", "bindings:f90", f90);
 
   out("C compiler", "compiler:c:command", OMPI_CC);
+  out("C compiler absolute", "compiler:c:absolute", OMPI_CC_ABSOLUTE);
 
   if (want_all) {
     out("C char size", "compiler:c:sizeof:char", sizeof(char));
@@ -364,9 +366,14 @@ void ompi_info::do_config(bool want_all)
   }
 
   out("C++ compiler", "compiler:cxx:command", OMPI_CXX);
+  out("C++ compiler absolute", "compiler:cxx:absolute", OMPI_CXX_ABSOLUTE);
 
   out("Fortran77 compiler", "compiler:f77:command", OMPI_F77);
+  out("Fortran77 compiler absolute", "compiler:f77:absolute", 
+      OMPI_F77_ABSOLUTE);
   out("Fortran90 compiler", "compiler:f90:command", OMPI_F90);
+  out("Fortran90 compiler absolute", "compiler:f90:absolute", 
+      OMPI_F90_ABSOLUTE);
 
   if (want_all) {
 

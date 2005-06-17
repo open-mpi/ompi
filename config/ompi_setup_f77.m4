@@ -53,16 +53,17 @@ if test -z "$F77"; then
     OMPI_WANT_F77_BINDINGS=0
     OMPI_F77="none"
     BASEF77="none"
+    OMPI_F77_ABSOLUTE="none"
 else
+    OMPI_F77="$F77"
+    BASEF77="`basename $OMPI_F77`"
+    OMPI_F77_ABSOLUTE="`which $F77`"
+    
     if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
         AC_MSG_WARN([*** Fortran 77 bindings disabled by user])
         OMPI_WANT_F77_BINDINGS=0
-        OMPI_F77="$F77"
-        BASEF77="`basename $OMPI_F77`"
     else
         OMPI_WANT_F77_BINDINGS=1
-        OMPI_F77="$F77"
-        BASEF77="`basename $OMPI_F77`"
     fi
 fi
 
@@ -70,4 +71,5 @@ AC_DEFINE_UNQUOTED(OMPI_WANT_F77_BINDINGS, $OMPI_WANT_F77_BINDINGS,
     [Whether we want the MPI f77 bindings or not])
 AC_DEFINE_UNQUOTED(OMPI_F77, "$OMPI_F77", [OMPI underlying F77 compiler])
 AM_CONDITIONAL(OMPI_WANT_F77_BINDINGS, test "$OMPI_WANT_F77_BINDINGS" = "1")
+AC_SUBST(OMPI_F77_ABSOLUTE)
 ])
