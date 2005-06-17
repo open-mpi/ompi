@@ -67,7 +67,7 @@ int mca_pml_base_bsend_init(bool thread_safe)
     char *name;
     size_t tmp;
 
-    if(OMPI_THREAD_ADD32(&mca_pml_bsend_init, 1) > 0)
+    if(OMPI_THREAD_ADD32(&mca_pml_bsend_init, 1) > 1)
         return OMPI_SUCCESS;
 
     /* initialize static objects */
