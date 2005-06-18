@@ -112,12 +112,16 @@ static int map_app_by_node(
        the node list to start looking (i.e., if this is the first time
        through, it'll point to the first item.  If this is not the
        first time through -- i.e., we have multiple app contexts --
-       it'll point to where we left off last time.). 
+       it'll point to where we left off last time.).  If we're at the
+       end, bounce back to the front (as would happen in the loop
+       below)
 
        But do a bozo check to ensure that we don't have a empty node
        list. */
-    if (ompi_list_get_end(nodes) == cur_node_item) {
+    if (0 == ompi_list_get_size(nodes)) {
         return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
+    } else if (ompi_list_get_end(nodes) == cur_node_item) {
+        cur_node_item = ompi_list_get_first(nodes);
     }
     start = cur_node_item;
 
@@ -219,12 +223,16 @@ static int map_app_by_slot(
        the node list to start looking (i.e., if this is the first time
        through, it'll point to the first item.  If this is not the
        first time through -- i.e., we have multiple app contexts --
-       it'll point to where we left off last time.). 
+       it'll point to where we left off last time.).   If we're at the
+       end, bounce back to the front (as would happen in the loop
+       below)
 
        But do a bozo check to ensure that we don't have a empty node
        list. */
-    if (ompi_list_get_end(nodes) == cur_node_item) {
+    if (0 == ompi_list_get_size(nodes)) {
         return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
+    } else if (ompi_list_get_end(nodes) == cur_node_item) {
+        cur_node_item = ompi_list_get_first(nodes);
     }
 
     /* Go through all nodes and take up to node_slots_alloc slots and
