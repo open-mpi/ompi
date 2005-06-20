@@ -134,6 +134,10 @@ typedef uint8_t mca_bmi_base_tag_t;
 #define MCA_BMI_FLAGS_RDMA  2
 
 
+/**
+ * Asynchronous callback function on completion of an operation.
+ */
+
 typedef void (*mca_bmi_base_completion_fn_t)(
     struct mca_bmi_base_module_t*,
     struct mca_bmi_base_endpoint_t*,
@@ -182,7 +186,7 @@ OBJ_CLASS_DECLARATION(mca_bmi_base_descriptor_t);
 #define MCA_BMI_DES_FLAGS_PRIORITY 0x0002
 
 /**
- * Maximum number of allowed segments
+ * Maximum number of allowed segments in src/dst fields of a descriptor.
  */
 #define MCA_BMI_DES_MAX_SEGMENTS 16
 
@@ -192,14 +196,15 @@ OBJ_CLASS_DECLARATION(mca_bmi_base_descriptor_t);
  */ 
 struct mca_bmi_base_header_t{ 
     mca_bmi_base_tag_t tag; 
-}; typedef struct mca_bmi_base_header_t mca_bmi_base_header_t; 
+}; 
+typedef struct mca_bmi_base_header_t mca_bmi_base_header_t; 
 
 /*
  *  BMI component interface functions and datatype.
  */
 
 /**
- * MCA->BMI Ibmializes the BMI component and creates specific BMI
+ * MCA->BMI Initializes the BMI component and creates specific BMI
  * module(s).
  *
  * @param num_bmis (OUT) Returns the number of bmi modules created, or 0
@@ -330,7 +335,7 @@ typedef int (*mca_bmi_base_module_del_procs_fn_t)(
 
 /**
  * Callback function that is called asynchronously on receipt
- * of data from the transport layer.
+ * of data by the transport layer.
  */
 
 typedef void (*mca_bmi_base_module_recv_cb_fn_t)(
@@ -371,7 +376,9 @@ typedef int (*mca_bmi_base_module_register_fn_t)(
 
 
 /**
- * Allocate a segment.
+ * Allocate a descriptor with a segment of the requested size. 
+ * Note that the BMI layer may choose to return a smaller size
+ * if it cannot support the request.
  *
  * @param bmi (IN)      BMI module
  * @param size (IN)     Request segment size.
@@ -382,10 +389,10 @@ typedef mca_bmi_base_descriptor_t* (*mca_bmi_base_module_alloc_fn_t)(
 );
 
 /**
- * Return a segment allocated by this BMI.
+ * Return a descriptor allocated from this BMI via alloc/prepare.
  *
  * @param bmi (IN)      BMI module
- * @param segment (IN)  Allocated segment.
+ * @param segment (IN)  Descriptor allocated from the BMI
  */
 typedef int (*mca_bmi_base_module_free_fn_t)(
     struct mca_bmi_base_module_t* bmi,
@@ -394,11 +401,17 @@ typedef int (*mca_bmi_base_module_free_fn_t)(
 
 
 /**
- * Pack data and return a descriptor that can be
- * used for send/put.
+ * Prepare a descriptor for send/rdma using the supplied
+ * convertor. If the convertor references data that is contigous,
+ * the descriptor may simply point to the user buffer. Otherwise,
+ * this routine is responsible for allocating buffer space and
+ * packing if required.
  *
- * @param bmi (IN)      BMI module
- * @param peer (IN)     BMI peer addressing
+ * @param bmi (IN)          BMI module
+ * @param endpoint (IN)     BMI peer addressing
+ * @param convertor (IN)    Data type convertor
+ * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
+ * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT)
  */
 typedef struct mca_bmi_base_descriptor_t* (*mca_bmi_base_module_prepare_fn_t)(
     struct mca_bmi_base_module_t* bmi,
@@ -409,10 +422,12 @@ typedef struct mca_bmi_base_descriptor_t* (*mca_bmi_base_module_prepare_fn_t)(
 );
 
 /**
- * Initiate a send to the peer.
+ * Initiate an asynchronous send.
  *
- * @param bmi (IN)      BMI module
- * @param peer (IN)     BMI peer addressing
+ * @param bmi (IN)         BMI module
+ * @param endpoint (IN)    BMI addressing information
+ * @param descriptor (IN)  Description of the data to be transfered
+ * @param tag (IN)         The tag value used to notify the peer.
  */
 typedef int (*mca_bmi_base_module_send_fn_t)(
     struct mca_bmi_base_module_t* bmi,
@@ -423,10 +438,11 @@ typedef int (*mca_bmi_base_module_send_fn_t)(
 
 
 /**
- * Initiate a put to the peer.
+ * Initiate an asynchronous put. 
  *
- * @param bmi (IN)      BMI module
- * @param peer (IN)     BMI peer addressing
+ * @param bmi (IN)         BMI module
+ * @param endpoint (IN)    BMI addressing information
+ * @param descriptor (IN)  Description of the data to be transferred
  */
 
 typedef int (*mca_bmi_base_module_put_fn_t)(
@@ -436,10 +452,11 @@ typedef int (*mca_bmi_base_module_put_fn_t)(
 );
 
 /**
- * PML->BMI Initiate a get from a peer. 
+ * Initiate an asynchronous get.
  *
- * @param bmi (IN)      BMI module
- * @param peer (IN)     BMI peer addressing
+ * @param bmi (IN)         BMI module
+ * @param endpoint (IN)    BMI addressing information
+ * @param descriptor (IN)  Description of the data to be transferred
  *
  */
 
