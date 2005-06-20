@@ -23,7 +23,7 @@ AC_MSG_CHECKING([if FORTRAN compiler supports $1])
 
 cat > conftestf.f90 <<EOF
 program main
-   if ($1 .lt. 0) stop 1
+   $1 :: x
 end program
 EOF
 
@@ -32,12 +32,10 @@ EOF
 #
 
 OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 -o conftest conftestf.f90],
-	OMPI_LOG_COMMAND([./conftest],
 	                 [HAPPY=1
                           AC_MSG_RESULT([yes])],
                          [HAPPY=0
-                          AC_MSG_RESULT([no])]), [HAPPY=0
-                                                  AC_MSG_RESULT([no])])
+                          AC_MSG_RESULT([no])])
 
 str="$2=$HAPPY"
 eval $str
