@@ -237,6 +237,20 @@ extern int mca_bmi_self_send(
     mca_bmi_base_tag_t tag
 );
 
+/**
+ * Initiate a put to the peer.
+ *
+ * @param bmi (IN)      BMI module
+ * @param peer (IN)     BMI peer addressing
+ */
+                                                                                                            
+extern int mca_bmi_self_rdma(
+    struct mca_bmi_base_module_t* bmi,
+    struct mca_bmi_base_endpoint_t* endpoint,
+    struct mca_bmi_base_descriptor_t* descriptor
+);
+                                                                                                            
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

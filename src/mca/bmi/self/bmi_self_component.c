@@ -109,15 +109,17 @@ int mca_bmi_self_component_open(void)
     mca_bmi_self_component.free_list_inc =
         mca_bmi_self_param_register_int("free_list_inc", 256);
     mca_bmi_self.bmi_eager_limit = 
-        mca_bmi_self_param_register_int("eager_limit", 8*1024);
+        mca_bmi_self_param_register_int("eager_limit", 64*1024);
     mca_bmi_self.bmi_min_send_size = 
     mca_bmi_self.bmi_max_send_size = 
-        mca_bmi_self_param_register_int("max_send_size", 64*1024);
+        mca_bmi_self_param_register_int("max_send_size", 256*1024);
     mca_bmi_self.bmi_min_rdma_size = 
     mca_bmi_self.bmi_max_rdma_size =
-        mca_bmi_self_param_register_int("max_rdma_size", -1);
+        mca_bmi_self_param_register_int("max_rdma_size", INT_MAX);
+    mca_bmi_self.bmi_exclusivity = 
+        mca_bmi_self_param_register_int("exclusivity", 64*1024);
     mca_bmi_self.bmi_flags =
-        mca_bmi_self_param_register_int("flags", 1);
+        mca_bmi_self_param_register_int("flags", MCA_BMI_FLAGS_RDMA);
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_bmi_self_component.self_lock, ompi_mutex_t);
