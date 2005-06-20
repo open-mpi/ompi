@@ -277,10 +277,18 @@ struct mca_bmi_base_descriptor_t* mca_bmi_self_prepare_dst(
 int mca_bmi_self_send(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* endpoint,
-    struct mca_bmi_base_descriptor_t* descriptor,
+    struct mca_bmi_base_descriptor_t* des,
     mca_bmi_base_tag_t tag)
 {
-    mca_bmi_self_component.self_reg[tag].cbfunc(bmi,tag,descriptor,OMPI_SUCCESS);
+    des->des_dst = des->des_src;
+    des->des_dst_cnt = des->des_src_cnt;
+    des->des_src = NULL;
+    des->des_src_cnt = 0;
+    mca_bmi_self_component.self_reg[tag].cbfunc(bmi,tag,des,OMPI_SUCCESS);
+    des->des_src = des->des_dst;
+    des->des_src_cnt = des->des_dst_cnt;
+    des->des_dst = NULL;
+    des->des_dst_cnt = 0;
     return OMPI_SUCCESS;
 }
 
