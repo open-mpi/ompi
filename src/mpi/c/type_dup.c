@@ -21,6 +21,7 @@
 #include "datatype/datatype.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
+#include "attribute/attribute.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Type_dup = PMPI_Type_dup
@@ -55,5 +56,23 @@ int MPI_Type_dup (MPI_Datatype type,
    }
 
    ompi_ddt_set_args( *newtype, 0, NULL, 0, NULL, 1, &type, MPI_COMBINER_DUP );
+
+    /* Copy all the old attributes, if there were any.  This is done
+       here (vs. ompi_ddt_duplicate()) because MPI_TYPE_DUP is the
+       only MPI function that copies attributes.  All other MPI
+       functions that take an old type and generate a newtype do not
+       copy attributes.  Really. */
+    if (NULL != type->d_keyhash) {
+        ompi_attr_hash_init(&(*newtype)->d_keyhash);
+        if (OMPI_SUCCESS != (rc = ompi_attr_copy_all(TYPE_ATTR,
+                                                     type, *newtype,
+                                                     type->d_keyhash,
+                                                     (*newtype)->d_keyhash))) {
+            ompi_ddt_destroy(newtype);
+            OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
+                                    MPI_ERR_INTERN, FUNC_NAME );
+        }                                    
+    }
+
    return MPI_SUCCESS;
 }

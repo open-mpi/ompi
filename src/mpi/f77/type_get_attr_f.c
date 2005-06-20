@@ -81,10 +81,13 @@ void mpi_type_get_attr_f(MPI_Fint *type, MPI_Fint *type_keyval,
 
     /* Note that MPI-2 4.12.7 specifically says that Fortran's
        xxx_GET_ATTR functions will take the address returned from C
-       and "convert it to an integer" (which assumedly means
-       dereference) */
+       and "convert it to an integer".  Since we stored the *value* of
+       the attribute in the corresponding xxx_SET_ATTR function, we
+       simply cast here to get the value back (remember, MPI
+       guarantess that xxx_SET_ATTR fortran parameters are the right
+       size). */
 
     if (MPI_SUCCESS == c_err && 1 == c_flag) {
-        *attribute_val = (MPI_Aint) *c_value;
+        *attribute_val = (MPI_Aint) c_value;
     }
 }

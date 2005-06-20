@@ -45,27 +45,63 @@
 
 /* Not checking for NULL_DELETE_FN here, since according to the
    MPI-standard it should be a valid function that returns
-   MPI_SUCCESS */
+   MPI_SUCCESS. 
 
-#define DELETE_ATTR_OBJECT(type, attribute) \
-    if((key_item->attr_flag & OMPI_KEYVAL_F77)) { \
+   This macro exists because we have to replicate the same code for
+   MPI_Comm, MPI_Datatype, and MPI_Win.  Ick.
+
+   There are 3 possible sets of callbacks:
+
+   1. MPI-1 Fortran-style: attribute and extra state arguments are of
+      type (INTEGER).  This is used if both the OMPI_KEYVAL_F77 and
+      OMPI_KEYVAL_F77_OLD flags are set.
+   2. MPI-2 Fortran-style: attribute and extra state arguments are of
+      type (INTEGER(KIND=MPI_ADDRESS_KIND)).  This is used if the
+      OMPI_KEYVAL_F77 flag is set and the OMPI_KEYVAL_F77_OLD flag is
+      *not* set.
+   3. C-style: attribute arguments are of type (void*).  This is used
+      if OMPI_KEYVAL_F77 is not set.
+   
+   Ick.
+ */
+
+#define DELETE_ATTR_OBJECT(type, attribute, keyval_obj) \
+    if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) { \
         MPI_Fint f_key = OMPI_INT_2_FINT(key); \
         MPI_Fint f_err; \
-        (*((key_item->delete_attr_fn).attr_F_delete_fn)) \
-                            (&(((ompi_##type##_t *)object)->attr_##type##_f), \
-			    &f_key, (MPI_Fint *) &attribute, \
-			    (MPI_Fint *) key_item->extra_state, &f_err); \
-        if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
-            if (need_lock) { \
-                OMPI_THREAD_UNLOCK(&alock); \
+        /* MPI-1 Fortran-style */ \
+        if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_OLD)) { \
+            ompi_attribute_fortran_ptr_t value; \
+            value.c_ptr = attribute; \
+            (*((keyval_obj->delete_attr_fn).attr_mpi1_fortran_delete_fn)) \
+                (&(((ompi_##type##_t *)object)->attr_##type##_f), \
+                 &f_key, &value.f_integer, keyval_obj->extra_state, &f_err); \
+            if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
+                if (need_lock) { \
+                    OMPI_THREAD_UNLOCK(&alock); \
+                } \
+                return OMPI_FINT_2_INT(f_err); \
             } \
-            return OMPI_FINT_2_INT(f_err); \
         } \
-    } else { \
-        if ((err = (*((key_item->delete_attr_fn).attr_##type##_delete_fn)) \
+        /* MPI-2 Fortran-style */ \
+        else { \
+            (*((keyval_obj->delete_attr_fn).attr_mpi2_fortran_delete_fn)) \
+                (&(((ompi_##type##_t *)object)->attr_##type##_f), \
+                 &f_key, &attribute, keyval_obj->extra_state, &f_err); \
+            if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
+                if (need_lock) { \
+                    OMPI_THREAD_UNLOCK(&alock); \
+                } \
+                return OMPI_FINT_2_INT(f_err); \
+            } \
+        } \
+    } \
+    /* C style */ \
+    else { \
+        if ((err = (*((keyval_obj->delete_attr_fn).attr_##type##_delete_fn)) \
                             ((ompi_##type##_t *)object, \
 			    key, attribute, \
-			    key_item->extra_state)) != MPI_SUCCESS) {\
+			    keyval_obj->extra_state)) != MPI_SUCCESS) {\
             if (need_lock) { \
                 OMPI_THREAD_UNLOCK(&alock); \
             } \
@@ -73,28 +109,58 @@
         } \
     }
 
-#define COPY_ATTR_OBJECT(type, old_object, hash_value) \
-    if((hash_value->attr_flag & OMPI_KEYVAL_F77)) { \
+/* See the big, long comment above from DELETE_ATTR_OBJECT -- most of
+   that text applies here, too. */
+
+#define COPY_ATTR_OBJECT(type, old_object, keyval_obj, in_attr, out_attr) \
+    if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) { \
         MPI_Fint f_key = OMPI_INT_2_FINT(key); \
         MPI_Fint f_err; \
         ompi_fortran_logical_t f_flag; \
-        (*((hash_value->copy_attr_fn).attr_F_copy_fn)) \
-                   (&(((ompi_##type##_t *)old_object)->attr_##type##_f),\
-		    &f_key, (MPI_Fint *) hash_value->extra_state, \
-		    (MPI_Fint *) &old_attr, \
-		    (MPI_Fint *) &new_attr, &f_flag, &f_err); \
-        if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
-            OMPI_THREAD_UNLOCK(&alock); \
-            return OMPI_FINT_2_INT(f_err); \
+        /* MPI-1 Fortran-style */ \
+        if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77_OLD)) { \
+            ompi_attribute_fortran_ptr_t in, out; \
+            MPI_Fint tmp = 0; \
+            in.c_ptr = in_attr; \
+            (*((keyval_obj->copy_attr_fn).attr_mpi1_fortran_copy_fn)) \
+                (&(((ompi_##type##_t *)old_object)->attr_##type##_f),\
+                 &f_key, keyval_obj->extra_state, \
+                 &in.f_integer, &tmp, &f_flag, &f_err); \
+            if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
+                OMPI_THREAD_UNLOCK(&alock); \
+                return OMPI_FINT_2_INT(f_err); \
+            } \
+            /* Must do weird sign extension -- see src/mpi/f77/attr_put_f.c for details */ \
+            if (tmp < 0) { \
+                out.c_ptr = (void *) -1; \
+            } else { \
+                out.c_ptr = (void *) 0; \
+            } \
+            out.f_integer = tmp; \
+            out_attr = out.c_ptr; \
+            flag = OMPI_FINT_2_INT(f_flag); \
         } \
-        flag = OMPI_FINT_2_INT(f_flag); \
-    } else { \
-        if ((err = (*((hash_value->copy_attr_fn).attr_##type##_copy_fn)) \
-              ((ompi_##type##_t *)old_object, key, hash_value->extra_state, \
-               old_attr, &new_attr, &flag)) != MPI_SUCCESS) { \
+        /* MPI-2 Fortran-style */ \
+        else { \
+            (*((keyval_obj->copy_attr_fn).attr_mpi2_fortran_copy_fn)) \
+                (&(((ompi_##type##_t *)old_object)->attr_##type##_f), \
+                 &f_key, keyval_obj->extra_state, &in_attr, &out_attr, \
+                 &f_flag, &f_err); \
+            if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
+                OMPI_THREAD_UNLOCK(&alock); \
+                return OMPI_FINT_2_INT(f_err); \
+            } \
+            flag = OMPI_FINT_2_INT(f_flag); \
+        } \
+    } \
+    /* C style */ \
+    else { \
+        if ((err = (*((keyval_obj->copy_attr_fn).attr_##type##_copy_fn)) \
+              ((ompi_##type##_t *)old_object, key, keyval_obj->extra_state, \
+               in_attr, &out_attr, &flag)) != MPI_SUCCESS) { \
             OMPI_THREAD_UNLOCK(&alock); \
             return err; \
-        }\
+        } \
     }
 
 
@@ -342,17 +408,17 @@ ompi_attr_delete(ompi_attribute_type_t type, void *object,
     if ( OMPI_SUCCESS == ret ) {
 	switch(type) {
 	    case COMM_ATTR:
-		DELETE_ATTR_OBJECT(communicator, attr);
+		DELETE_ATTR_OBJECT(communicator, attr, key_item);
 		break;
 		
 #if OMPI_WANT_MPI2_ONE_SIDED
 	    case WIN_ATTR:
-		DELETE_ATTR_OBJECT(win, attr);
+		DELETE_ATTR_OBJECT(win, attr, key_item);
 		break;
 #endif
 		
 	    case TYPE_ATTR:
-		DELETE_ATTR_OBJECT(datatype, attr);
+		DELETE_ATTR_OBJECT(datatype, attr, key_item);
 		break;
 		
 	    default:
@@ -436,17 +502,17 @@ ompi_attr_set(ompi_attribute_type_t type, void *object,
     if ( OMPI_SUCCESS == ret )  {
 	switch(type) {
 	case COMM_ATTR:
-	    DELETE_ATTR_OBJECT(communicator, oldattr);
+	    DELETE_ATTR_OBJECT(communicator, oldattr, key_item);
 	    break;
 
 #if OMPI_WANT_MPI2_ONE_SIDED
 	case WIN_ATTR:
-	    DELETE_ATTR_OBJECT(win, oldattr);
+	    DELETE_ATTR_OBJECT(win, oldattr, key_item);
 	    break;
 #endif
 
 	case TYPE_ATTR:	    
-	    DELETE_ATTR_OBJECT(datatype, oldattr);
+	    DELETE_ATTR_OBJECT(datatype, oldattr, key_item);
 	    break;
 
 	default:
@@ -566,18 +632,18 @@ ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
         switch (type) {
         case COMM_ATTR:
             /* Now call the copy_attr_fn */
-            COPY_ATTR_OBJECT(communicator, old_object, hash_value);
+            COPY_ATTR_OBJECT(communicator, old_object, hash_value, old_attr, new_attr);
             break;
 	    
         case TYPE_ATTR:
             /* Now call the copy_attr_fn */
-            COPY_ATTR_OBJECT(datatype, old_object, hash_value);
+            COPY_ATTR_OBJECT(datatype, old_object, hash_value, old_attr, new_attr);
             break;
 
 #if OMPI_WANT_MPI2_ONE_SIDED
         case WIN_ATTR:
             /* Now call the copy_attr_fn */
-            COPY_ATTR_OBJECT(win, old_object, hash_value);
+            COPY_ATTR_OBJECT(win, old_object, hash_value, old_attr, new_attr);
             break;
 #endif
         }
@@ -588,10 +654,6 @@ ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
            so that no comparison is done for prdefined at all and it
            just falls off the error checking loop in attr_set  */
 
-        /* VPS: we pass the address of new_attr in here, I am assuming
-           that new_attr should have actually been a double pointer in
-           the copy fn, but since its a pointer in that MPI specs, we
-           need to pass *new_attr here  */
         if (1 == flag) {
             ompi_attr_set(type, new_object, &newkeyhash, key, 
                           new_attr, true, false);

@@ -23,9 +23,18 @@ int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** ne
 {
     ompi_datatype_t* pdt = ompi_ddt_create( oldType->desc.used );
     void* temp = pdt->desc.desc; /* temporary copy of the desc pointer */
+    int32_t old_index = pdt->d_f_to_c_index;
 
     memcpy( pdt, oldType, sizeof(ompi_datatype_t) );
     pdt->desc.desc = temp;
+    pdt->flags &= (~DT_FLAG_PREDEFINED);
+    /* ompi_ddt_create() creates a new f_to_c index that was saved
+       before we did the memcpy, above */
+    pdt->d_f_to_c_index = old_index;
+    /* Set the keyhash to NULL -- copying attributes is *only* done at
+       the top level (specifically, MPI_TYPE_DUP). */
+    pdt->d_keyhash = NULL;
+
     memcpy( pdt->desc.desc, oldType->desc.desc, sizeof(dt_elem_desc_t) * oldType->desc.used );
     pdt->id  = 0;
     pdt->args = NULL;

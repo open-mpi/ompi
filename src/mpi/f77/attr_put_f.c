@@ -59,18 +59,31 @@ void mpi_attr_put_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val,
 		    MPI_Fint *ierr)
 {
     MPI_Comm c_comm;
+    ompi_attribute_fortran_ptr_t convert;
 
     c_comm = MPI_Comm_f2c(*comm);
 
     /* This stuff is very confusing.  Be sure to see MPI-2 4.12.7. */
 
     /* Note that this function deals with attribute values that are
-       the size of Fortran INTEGERS; MPI_ATTR_PUT deals with attribute
-       values that are the size of address integers.  Hence, it is
-       possible that the C value is larger than the Fortran value.
-       MPI says that we sign-extend in this case. */
+       the size of Fortran INTEGERS; the C function MPI_Attr_put deals
+       with attribute values that are the size of address integers.
+       Hence, it is possible that the C value is larger than the
+       Fortran value.  MPI says that we sign-extend in this case. */
 
+    /* Fortran attributes are integers.  So we need to save those by
+       value -- not by reference.  Hence, we don't save the pointer to
+       the fortran parameter that came in, but rather its dereferenced
+       value.  Assign to the c_ptr member first, filling out the sign
+       extension. */
+
+    if (OMPI_FINT_2_INT(*attribute_val) >= 0) {
+        convert.c_ptr = (void*) 0;
+    } else {
+        convert.c_ptr = (void*) -1;
+    }
+    convert.f_integer = *attribute_val;
     *ierr = OMPI_INT_2_FINT(MPI_Attr_put(c_comm, 
                                          OMPI_FINT_2_INT(*keyval), 
-                                         attribute_val));
+                                         convert.c_ptr));
 }
