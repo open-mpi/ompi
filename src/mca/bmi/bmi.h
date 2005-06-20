@@ -184,6 +184,7 @@ OBJ_CLASS_DECLARATION(mca_bmi_base_descriptor_t);
                                                                                                                
 #define MCA_BMI_DES_FLAGS_PINNED   0x0001
 #define MCA_BMI_DES_FLAGS_PRIORITY 0x0002
+#define MCA_BMI_DES_FLAGS_LEAVE_PINNED 0x003
 
 /**
  * Maximum number of allowed segments in src/dst fields of a descriptor.

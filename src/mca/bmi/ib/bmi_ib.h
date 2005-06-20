@@ -41,6 +41,8 @@
 extern "C" {
 #endif
 
+#define MCA_BMI_IB_LEAVE_PINNED 1
+
 /**
  * Infiniband (IB) BMI component.
  */
@@ -89,6 +91,8 @@ struct mca_bmi_ib_component_t {
     
     size_t eager_limit; 
     size_t max_send_size; 
+
+    uint32_t leave_pinned; 
 
     
 }; typedef struct mca_bmi_ib_component_t mca_bmi_ib_component_t;

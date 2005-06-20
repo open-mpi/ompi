@@ -196,7 +196,10 @@ int mca_bmi_ib_component_open(void)
         mca_bmi_ib_param_register_int("flags", 
                                       MCA_BMI_FLAGS_RDMA); 
 
-    
+    mca_bmi_ib_component.leave_pinned = 
+        mca_bmi_ib_param_register_int("leave_pinned", 
+                                      0); 
+
 
     
     

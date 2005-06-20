@@ -30,10 +30,21 @@
 extern "C" {
 #endif
 
+
+static inline  void * DOWN_ALIGN_ADDR(void * addr, uint32_t cnt) { 
+    return (MT_virt_addr_t)(addr) & (~((MT_virt_addr_t)0) << (cnt)); 
+}
+
+static inline void*  ALIGN_ADDR(void* addr, uint32_t cnt ) { 
+    DOWN_ALIGN_ADDR(((addr) +  ~(~((MT_virt_addr_t)0) << (cnt))), (cnt)); 
+} 
+
+
 struct mca_mpool_vapi_component_t {
     mca_mpool_base_component_t super;
     char*  vapi_allocator_name;
     long page_size; 
+    long page_size_log; 
 };
 
 typedef struct mca_mpool_vapi_component_t mca_mpool_vapi_component_t;

@@ -55,6 +55,25 @@ int mca_mpool_base_tree_node_compare(void * key1, void * key2)
     }
 }
 
+int mca_mpool_base_insert(void * addr, size_t size, mca_mpool_base_module_t* mpool, void*  user_data)
+{
+    ompi_list_item_t *item; 
+    int rc; 
+    OMPI_FREE_LIST_GET(&mca_mpool_base_mem_list, item, rc);
+    if(rc != OMPI_SUCCESS) 
+        return rc; 
+    ((mca_mpool_base_chunk_t *) item)->key.bottom = addr;
+    ((mca_mpool_base_chunk_t *) item)->key.top = (void *) 
+        ((char *) addr + size - 1);
+    rc = ompi_rb_tree_insert(&mca_mpool_base_tree, 
+                        &((mca_mpool_base_chunk_t *)item)->key, item);
+    if(rc != OMPI_SUCCESS) 
+        return rc; 
+    ((mca_mpool_base_chunk_t *) item)->mpools[0].mpool = mpool; 
+    ((mca_mpool_base_chunk_t *) item)->mpools[0].user = user_data;
+    return OMPI_SUCCESS; 
+}
+
 /**
  * Function to allocate special memory according to what the user requests in
  * the info object.
