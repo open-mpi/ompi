@@ -556,7 +556,7 @@ else
 
     # If we want modern Fortran support, then get supported types and sizes
 
-    OMPI_F90_CHECK_TYPE(selected_int_kind(2),  OMPI_HAVE_F90_INTEGER1)
+    OMPI_F90_CHECK_TYPE(integer(selected_int_kind(2)), OMPI_HAVE_F90_INTEGER1)
     if test "$OMPI_HAVE_F90_INTEGER1" = "1"; then
         OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}1 "
         OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}1 "
@@ -570,7 +570,7 @@ else
                                OMPI_ALIGNMENT_F90_LOGICAL1)
     fi
 
-    OMPI_F90_CHECK_TYPE(selected_int_kind(4),  OMPI_HAVE_F90_INTEGER2)
+    OMPI_F90_CHECK_TYPE(integer(selected_int_kind(4)), OMPI_HAVE_F90_INTEGER2)
     if test "$OMPI_HAVE_F90_INTEGER2" = "1"; then
         OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}2 "
         OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}2 "
@@ -584,7 +584,7 @@ else
                                OMPI_ALIGNMENT_F90_LOGICAL2)
     fi
 
-    OMPI_F90_CHECK_TYPE(selected_int_kind(9),  OMPI_HAVE_F90_INTEGER4)
+    OMPI_F90_CHECK_TYPE(integer(selected_int_kind(9)), OMPI_HAVE_F90_INTEGER4)
     if test "$OMPI_HAVE_F90_INTEGER4" = "1"; then
         OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}4 "
         OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}4 "
@@ -598,7 +598,7 @@ else
                                OMPI_ALIGNMENT_F90_LOGICAL4)
     fi
 
-    OMPI_F90_CHECK_TYPE(selected_int_kind(18), OMPI_HAVE_F90_INTEGER8)
+    OMPI_F90_CHECK_TYPE(integer(selected_int_kind(18)), OMPI_HAVE_F90_INTEGER8)
     if test "$OMPI_HAVE_F90_INTEGER8" = "1"; then
         OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}8 "
         OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}8 "
@@ -612,7 +612,8 @@ else
                                OMPI_ALIGNMENT_F90_LOGICAL8)
     fi
 
-    OMPI_F90_CHECK_TYPE(selected_int_kind(19), OMPI_HAVE_F90_INTEGER16)
+    OMPI_F90_CHECK_TYPE(integer(selected_int_kind(19)),
+                        OMPI_HAVE_F90_INTEGER16)
     if test "$OMPI_HAVE_F90_INTEGER16" = "1"; then
         OMPI_FORTRAN_LKINDS="${OMPI_FORTRAN_LKINDS}16 "
         OMPI_FORTRAN_IKINDS="${OMPI_FORTRAN_IKINDS}16 "
@@ -626,7 +627,7 @@ else
                                OMPI_ALIGNMENT_F90_LOGICAL16)
     fi
 
-    OMPI_F90_CHECK_TYPE(selected_real_kind(6), OMPI_HAVE_F90_REAL4)
+    OMPI_F90_CHECK_TYPE(real(selected_real_kind(6)), OMPI_HAVE_F90_REAL4)
     if test "$OMPI_HAVE_F90_REAL4" = "1"; then
         OMPI_HAVE_F90_COMPLEX8=1
         OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}4 "
@@ -648,7 +649,7 @@ else
                            OMPI_RANGE_F90_COMPLEX8)
     fi
 
-    OMPI_F90_CHECK_TYPE(selected_real_kind(15), OMPI_HAVE_F90_REAL8)
+    OMPI_F90_CHECK_TYPE(real(selected_real_kind(15)), OMPI_HAVE_F90_REAL8)
     if test "$OMPI_HAVE_F90_REAL8" = "1"; then
         OMPI_HAVE_F90_COMPLEX16=1
         OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}8 "
@@ -671,7 +672,7 @@ else
                            OMPI_RANGE_F90_COMPLEX16)
     fi
 
-    OMPI_F90_CHECK_TYPE(selected_real_kind(31), OMPI_HAVE_F90_REAL16)
+    OMPI_F90_CHECK_TYPE(real(selected_real_kind(31)), OMPI_HAVE_F90_REAL16)
     if test "$OMPI_HAVE_F90_REAL16" = "1"; then
         OMPI_HAVE_F90_COMPLEX32=1
         OMPI_FORTRAN_RKINDS="${OMPI_FORTRAN_RKINDS}16 "
