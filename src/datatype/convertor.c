@@ -108,8 +108,6 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
     return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
 }
 
-int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
-                                                  int starting_point, const int* sizes );
 static inline
 int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
                                                  int starting_point, const int* sizes )
@@ -198,6 +196,9 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* pConvertor, const
 }
 
 extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
+extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* pConvertor,
+                                                         int starting_point, const int* sizes );
+
 inline int32_t ompi_convertor_set_position( ompi_convertor_t* convertor, size_t* position )
 {
     if( (*position) == convertor->bConverted ) return OMPI_SUCCESS;
@@ -358,3 +359,12 @@ int32_t ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv, size_t*
     return OMPI_SUCCESS;
 }
 
+void ompi_convertor_dump( ompi_convertor_t* convertor )
+{
+    printf( "Convertor %p count %d stack position %d bConverted %ld\n", (void*)convertor,
+            convertor->count, convertor->stack_pos, (unsigned long)convertor->bConverted );
+    ompi_ddt_dump( convertor->pDesc );
+    printf( "Actual stack representation\n" );
+    ompi_ddt_dump_stack( convertor->pStack, convertor->stack_pos,
+                         convertor->pDesc->desc.desc, convertor->pDesc->name );
+}
