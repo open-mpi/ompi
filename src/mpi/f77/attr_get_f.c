@@ -60,7 +60,7 @@ void mpi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval,
 {
     int c_err, c_flag;
     MPI_Comm c_comm;
-    int *c_value;
+    ompi_attribute_fortran_ptr_t value;
 
     c_comm = MPI_Comm_f2c(*comm);
     
@@ -72,22 +72,26 @@ void mpi_attr_get_f(MPI_Fint *comm, MPI_Fint *keyval,
        high-performance function, was worth it */
 
     /* Note that this function deals with attribute values that are
-       the size of Fortran INTEGERS; MPI_ATTR_GET deals with attribute
-       values that are the size of address integers.  Hence, it is
-       possible that you'll lose some precision upon the cast.  Per
-       MPI-2 4.12.7, use MPI_xxx_get/put_attr when you need lossless
-       conversion. */
+       the size of Fortran INTEGERS; the C function MPI_Attr_get deals
+       with attribute values that are the size of address integers.
+       Hence, it is possible that you'll lose some precision upon the
+       cast.  Per MPI-2 4.12.7, use MPI_xxx_GET/SET_ATTR when you need
+       lossless conversion. */
 
-    c_err = MPI_Attr_get(c_comm, OMPI_FINT_2_INT(*keyval), &c_value, &c_flag);
+    c_err = MPI_Attr_get(c_comm, OMPI_FINT_2_INT(*keyval), 
+                         &value.c_ptr, &c_flag);
     *ierr = OMPI_INT_2_FINT(c_err);
     *flag = OMPI_INT_2_FINT(c_flag);
 
     /* Note that MPI-2 4.12.7 specifically says that Fortran's
        ATTR_GET function will take the address returned from C and
-       "convert it to an integer" (which assumedly means
-       dereference) */
+       "convert it to an integer".  This compliments ATTR_PUT, who,
+       since we need to save Fortran attributes by value, saves only
+       the MPI_Fint (regardless of the size of the back-end attribute
+       storeage).  So here we simply extract that MPI_Fint and get the
+       value back. */
 
     if (MPI_SUCCESS == c_err && 1 == c_flag) {
-        *attribute_val = OMPI_INT_2_FINT(*c_value);
+        *attribute_val = value.f_integer;
     }
 }

@@ -60,7 +60,13 @@ void mpi_win_set_attr_f(MPI_Fint *win, MPI_Fint *win_keyval,
 {
     MPI_Win c_win = MPI_Win_f2c( *win );
 
+    /* We save fortran attributes by value, so dereference
+       attribute_val.  MPI-2 guarantees that xxx_SET_ATTR will be
+       called in fortran with an address-sized integer parameter for
+       the attribute, so there's no need to do any size conversions
+       before calling the back-end C function. */
+
     *ierr = OMPI_INT_2_FINT(MPI_Win_set_attr( c_win, 
 					      OMPI_FINT_2_INT(*win_keyval),
-					      attribute_val ));
+					      (void*) *attribute_val ));
 }
