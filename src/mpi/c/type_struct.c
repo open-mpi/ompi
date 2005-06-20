@@ -29,8 +29,6 @@
 #include "mpi/c/profile/defines.h"
 #endif
 
-static const char FUNC_NAME[] = "MPI_Type_struct";
-
 
 int MPI_Type_struct(int count,
                     int array_of_blocklengths[],
