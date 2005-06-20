@@ -58,10 +58,10 @@ mca_bmi_base_module_t mca_bmi_self = {
     mca_bmi_self_alloc,
     mca_bmi_self_free,
     mca_bmi_self_prepare_src,
-    NULL,
+    mca_bmi_self_prepare_dst,
     mca_bmi_self_send, 
-    NULL,  /* put */
-    NULL   /* get */
+    mca_bmi_self_rdma,  /* put */
+    mca_bmi_self_rdma   /* get */
 };
 
 
@@ -74,7 +74,9 @@ int mca_bmi_self_add_procs(
 {
     size_t i;
     for(i=0; i<nprocs; i++) {
-
+        if(procs[i] == ompi_proc_local_proc) {
+            ompi_bitmap_set_bit(reachability, i);
+        }
     }
     return OMPI_SUCCESS;
 }
@@ -196,7 +198,7 @@ struct mca_bmi_base_descriptor_t* mca_bmi_self_prepare_src(
     int rc;
 
     /* non-contigous data */
-    if(ompi_convertor_need_buffers(convertor)) {
+    if(ompi_convertor_need_buffers(convertor) || max_data < mca_bmi_self.bmi_max_send_size ) {
         MCA_BMI_SELF_FRAG_ALLOC_SEND(frag, rc);
         if(NULL == frag) {
             return NULL;
@@ -231,9 +233,13 @@ struct mca_bmi_base_descriptor_t* mca_bmi_self_prepare_src(
             MCA_BMI_SELF_FRAG_RETURN_RDMA(frag);
             return NULL;
         }
-        frag->base.des_flags = 0;
         frag->segment.seg_addr.pval = iov.iov_base;
         frag->segment.seg_len = reserve + max_data;
+        frag->base.des_src = &frag->segment;
+        frag->base.des_src_cnt = 1;
+        frag->base.des_dst = NULL;
+        frag->base.des_dst_cnt = 0;
+        frag->base.des_flags = 0;
         *size = max_data;
     }
     return &frag->base;
@@ -259,9 +265,13 @@ struct mca_bmi_base_descriptor_t* mca_bmi_self_prepare_dst(
     }
 
     /* setup descriptor to point directly to user buffer */
-    frag->base.des_flags = 0;
     frag->segment.seg_addr.pval = (unsigned char*)convertor->pBaseBuf + convertor->bConverted;
     frag->segment.seg_len = reserve + max_data;
+    frag->base.des_src = NULL;
+    frag->base.des_src_cnt = 0;
+    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst_cnt = 1;
+    frag->base.des_flags = 0;
     return &frag->base;
 }
 
@@ -280,6 +290,7 @@ int mca_bmi_self_send(
     struct mca_bmi_base_descriptor_t* des,
     mca_bmi_base_tag_t tag)
 {
+    /* upcall */
     des->des_dst = des->des_src;
     des->des_dst_cnt = des->des_src_cnt;
     des->des_src = NULL;
@@ -289,6 +300,88 @@ int mca_bmi_self_send(
     des->des_src_cnt = des->des_dst_cnt;
     des->des_dst = NULL;
     des->des_dst_cnt = 0;
+
+    /* send completion */
+    des->des_cbfunc(bmi,endpoint,des,OMPI_SUCCESS);
+    return OMPI_SUCCESS;
+}
+
+/**
+ * Initiate a put to the peer.
+ *
+ * @param bmi (IN)      BMI module
+ * @param peer (IN)     BMI peer addressing
+ */
+                                                                                                                           
+extern int mca_bmi_self_rdma(
+    struct mca_bmi_base_module_t* bmi,
+    struct mca_bmi_base_endpoint_t* endpoint,
+    struct mca_bmi_base_descriptor_t* des)
+{
+    mca_bmi_base_segment_t* src = des->des_src;
+    mca_bmi_base_segment_t* dst = des->des_dst;
+    size_t src_cnt = des->des_src_cnt;
+    size_t dst_cnt = des->des_dst_cnt;
+    unsigned char* src_addr = dst->seg_addr.pval;
+    size_t src_len = src->seg_len;
+    unsigned char* dst_addr = dst->seg_addr.pval;
+    size_t dst_len = dst->seg_len;
+
+    while(src_len && dst_len) {
+
+        if(src_len == dst_len) {
+            memcpy(dst_addr, src_addr, src_len);
+
+            /* advance src */
+            if(--src_cnt != 0) {
+                src++;
+                src_addr = src->seg_addr.pval;
+                src_len = src->seg_len;
+            } else {
+                src_len = 0;
+            }
+
+            /* advance dst */
+            if(--dst_cnt != 0) {
+                dst++;
+                dst_addr = dst->seg_addr.pval;
+                dst_len = dst->seg_len;
+            } else {
+                dst_len = 0;
+            }
+                
+        } else {
+            size_t bytes = src_len < dst_len ? src_len : dst_len;
+            memcpy(dst_addr, src_addr, bytes);
+
+            /* advance src */
+            src_len -= bytes;
+            if(src_len == 0) {
+                if(--src_cnt != 0) {
+                    src++;
+                    src_addr = src->seg_addr.pval;
+                    src_len = src->seg_len;
+                }
+            } else {
+                src_addr += bytes;
+            }
+
+            /* advance dst */
+            dst_len -= bytes;
+            if(dst_len == 0) {
+                if(--dst_cnt != 0) {
+                    dst++;
+                    dst_addr = src->seg_addr.pval;
+                    dst_len = src->seg_len;
+                }
+            } else {
+                dst_addr += bytes;
+            }
+        }
+    }
+
+    /* rdma completion */
+    des->des_cbfunc(bmi,endpoint,des,OMPI_SUCCESS);
     return OMPI_SUCCESS;
 }
 
