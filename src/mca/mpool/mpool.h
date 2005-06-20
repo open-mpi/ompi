@@ -165,6 +165,12 @@ OMPI_DECLSPEC int mca_mpool_base_tree_node_compare(void * key1, void * key2);
  */
 OMPI_DECLSPEC struct mca_mpool_base_chunk_t * mca_mpool_base_find(void * base);
 
+
+OMPI_DECLSPEC int mca_mpool_base_insert(void * addr, 
+                                        size_t size, 
+                                        mca_mpool_base_module_t* mpool, 
+                                        void* user_data); 
+
 /**
  * Macro for use in components that are of type mpool v1.0.0
  */

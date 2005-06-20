@@ -90,6 +90,7 @@ static int mca_mpool_vapi_open(void)
     
     mca_mpool_vapi_component.vapi_allocator_name =
         mca_mpool_vapi_param_register_string("allocator", "bucket");
+    /* get the page size for this architecture*/ 
     mca_mpool_vapi_component.page_size = sysconf(_SC_PAGESIZE); 
 
     return OMPI_SUCCESS;
@@ -97,58 +98,71 @@ static int mca_mpool_vapi_open(void)
 
 /* Allocates a segment of memory and registers with IB, user_out returns the memory handle. */ 
 void* mca_common_vapi_segment_alloc(size_t* size, void* user_in, void** user_out){
-  
-  mca_mpool_vapi_module_t * mpool_module = (mca_mpool_vapi_module_t*)user_in; 
+    size_t mod; 
+    
+    mca_mpool_vapi_module_t * mpool_module = (mca_mpool_vapi_module_t*)user_in; 
+    
+    void* addr = (void*)malloc((*size) + mca_mpool_vapi_component.page_size); 
+    addr = (void*)  ALIGN_ADDR(addr, mca_mpool_vapi_component.page_size_log); 
 
-  void* addr = (void*)malloc((*size)); 
-  
-  VAPI_mrw_t mr_in, mr_out;
-  
-  VAPI_ret_t ret; 
-  mca_common_vapi_memhandle_t* mem_hndl; 
-  memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
-  memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
-  
 
-  *user_out = (void*) malloc(sizeof(mca_common_vapi_memhandle_t)); 
+    VAPI_mrw_t mr_in, mr_out;
   
-  mem_hndl = (mca_common_vapi_memhandle_t*) *user_out;  
-  memset(mem_hndl, 0, sizeof(mca_common_vapi_memhandle_t*)); 
-  mem_hndl->hndl = VAPI_INVAL_HNDL; 
-  
-  
-  mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
-  mr_in.l_key = 0;
-  mr_in.r_key = 0;
-  mr_in.pd_hndl = mpool_module->hca_pd.pd_tag;
-  mr_in.size = *size;
-  mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) addr;
-  mr_in.type = VAPI_MR;
-  
+    VAPI_ret_t ret; 
+    mca_common_vapi_memhandle_t* mem_hndl; 
+    memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
+    memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
+    
 
-  ret = VAPI_register_mr(
-                    mpool_module->hca_pd.hca, 
-                    &mr_in, 
-                    &mem_hndl->hndl, 
-                    &mr_out
-                    ); 
-  
-  if(VAPI_OK != ret){ 
-      ompi_output(0, "error pinning vapi memory\n"); 
-      return NULL; 
-  }
-  
-  mem_hndl->l_key = mr_out.l_key; 
-  mem_hndl->r_key = mr_out.r_key; 
-  return addr; 
+    *user_out = (void*) malloc(sizeof(mca_common_vapi_memhandle_t)); 
+    
+    mem_hndl = (mca_common_vapi_memhandle_t*) *user_out;  
+    memset(mem_hndl, 0, sizeof(mca_common_vapi_memhandle_t*)); 
+    mem_hndl->hndl = VAPI_INVAL_HNDL; 
+    
+    
+    mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
+    mr_in.l_key = 0;
+    mr_in.r_key = 0;
+    mr_in.pd_hndl = mpool_module->hca_pd.pd_tag;
+    mr_in.size = *size;
+    mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) addr;
+    mr_in.type = VAPI_MR;
+    
+
+    ret = VAPI_register_mr(
+                           mpool_module->hca_pd.hca, 
+                           &mr_in, 
+                           &mem_hndl->hndl, 
+                           &mr_out
+                           ); 
+    
+    if(VAPI_OK != ret){ 
+        ompi_output(0, "error pinning vapi memory\n"); 
+        return NULL; 
+    }
+    
+    mem_hndl->l_key = mr_out.l_key; 
+    mem_hndl->r_key = mr_out.r_key; 
+    return addr; 
 }
 
 static mca_mpool_base_module_t* mca_mpool_vapi_init(void * user_in)
 {
-  
-  mca_allocator_base_component_t* allocator_component = mca_allocator_component_lookup( 
-                                           mca_mpool_vapi_component.vapi_allocator_name);
-  
+ 
+   
+    
+    long page_size; 
+    page_size = mca_mpool_vapi_component.page_size; 
+    mca_mpool_vapi_component.page_size_log = 0; 
+    while(page_size > 1){ 
+        page_size = page_size >> 1; 
+        mca_mpool_vapi_component.page_size_log++; 
+    }    
+    mca_allocator_base_component_t* allocator_component = mca_allocator_component_lookup( 
+                                                                                         mca_mpool_vapi_component.vapi_allocator_name);
+    
+    
   /* if specified allocator cannout be loaded - look for an alternative */
     if(NULL == allocator_component) {
         if(ompi_list_get_size(&mca_allocator_base_components) == 0) {
