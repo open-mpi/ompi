@@ -60,7 +60,13 @@ void mpi_comm_set_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval,
 {
     MPI_Comm c_comm = MPI_Comm_f2c(*comm);
     
+    /* We save fortran attributes by value, so dereference
+       attribute_val.  MPI-2 guarantees that xxx_SET_ATTR will be
+       called in fortran with an address-sized integer parameter for
+       the attribute, so there's no need to do any size conversions
+       before calling the back-end C function. */
+
     *ierr = OMPI_INT_2_FINT(MPI_Comm_set_attr(c_comm,
 					      OMPI_FINT_2_INT(*comm_keyval),
-					      attribute_val));
+					      (void*) *attribute_val));
 }

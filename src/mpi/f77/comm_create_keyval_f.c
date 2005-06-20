@@ -30,7 +30,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_CREATE_KEYVAL,
                            pmpi_comm_create_keyval_,
                            pmpi_comm_create_keyval__,
                            pmpi_comm_create_keyval_f,
-                           (MPI_F_copy_function* comm_copy_attr_fn, MPI_F_delete_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Fint *extra_state, MPI_Fint *ierr),
+                           (ompi_mpi2_fortran_copy_attr_function* comm_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Fint *extra_state, MPI_Fint *ierr),
                            (comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state, ierr) )
 #endif
 
@@ -47,7 +47,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_KEYVAL,
                            mpi_comm_create_keyval_,
                            mpi_comm_create_keyval__,
                            mpi_comm_create_keyval_f,
-                           (MPI_F_copy_function* comm_copy_attr_fn, MPI_F_delete_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Fint *extra_state, MPI_Fint *ierr),
+                           (ompi_mpi2_fortran_copy_attr_function* comm_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Fint *extra_state, MPI_Fint *ierr),
                            (comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state, ierr) )
 #endif
 
@@ -58,8 +58,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_CREATE_KEYVAL,
 
      static const char FUNC_NAME[] = "MPI_Comm_create_keyval_f";
 
-void mpi_comm_create_keyval_f(MPI_F_copy_function* comm_copy_attr_fn,
-			      MPI_F_delete_function* comm_delete_attr_fn,
+void mpi_comm_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* comm_copy_attr_fn,
+			      ompi_mpi2_fortran_delete_attr_function* comm_delete_attr_fn,
 			      MPI_Fint *comm_keyval,
 			      MPI_Fint *extra_state, MPI_Fint *ierr)
 {
@@ -67,11 +67,13 @@ void mpi_comm_create_keyval_f(MPI_F_copy_function* comm_copy_attr_fn,
     ompi_attribute_fn_ptr_union_t copy_fn;
     ompi_attribute_fn_ptr_union_t del_fn;
 
-    /* See the note in src/mpi/f77/prototypes_mpi.h about the use of
-       (void*) for function pointers in this function */
+    copy_fn.attr_mpi2_fortran_copy_fn = comm_copy_attr_fn;
+    del_fn.attr_mpi2_fortran_delete_fn = comm_delete_attr_fn;
 
-    copy_fn.attr_F_copy_fn = (MPI_F_copy_function *) comm_copy_attr_fn;
-    del_fn.attr_F_delete_fn = (MPI_F_delete_function *) comm_delete_attr_fn;
+    /* Note that we only set the "F77" bit and exclude the "F77_OLD"
+       bit, indicating that the callbacks should use the new MPI-2
+       INTEGER(KIND=MPI_ADDRESS_KIND)-parameter functions (as opposed
+       to the old MPI-1 INTEGER-parameter functions). */
 
     ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
                                   comm_keyval, extra_state, OMPI_KEYVAL_F77);

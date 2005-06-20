@@ -39,6 +39,7 @@
 
 #define OMPI_KEYVAL_PREDEFINED 1
 #define OMPI_KEYVAL_F77 2
+#define OMPI_KEYVAL_F77_OLD 4
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -55,18 +56,39 @@ enum ompi_attribute_type_t{
 typedef enum ompi_attribute_type_t ompi_attribute_type_t;
 
 
-/* Fortran function pointer declarations for copy and delete. These
-   will only be used here and not in the front end functions */
+/* Old-style MPI-1 Fortran function pointer declarations for copy and
+   delete. These will only be used here and not in the front end
+   functions. */
 
-typedef void (MPI_F_copy_function)(MPI_Fint *oldcomm, MPI_Fint *keyval,
-                                   MPI_Fint *extra_state, 
-                                   MPI_Fint *attr_in, MPI_Fint *attr_out,
-                                   ompi_fortran_logical_t *flag, 
-                                   MPI_Fint *ierr);
-typedef void (MPI_F_delete_function)(MPI_Fint *comm, MPI_Fint *keyval,
-                                     MPI_Fint *attr_in,
-                                     MPI_Fint *extra_state, MPI_Fint *ierr);
+typedef void (ompi_mpi1_fortran_copy_attr_function)(MPI_Fint *oldobj, 
+                                                    MPI_Fint *keyval,
+                                                    MPI_Fint *extra_state, 
+                                                    MPI_Fint *attr_in,
+                                                    MPI_Fint *attr_out,
+                                                    ompi_fortran_logical_t *flag, 
+                                                    MPI_Fint *ierr);
+typedef void (ompi_mpi1_fortran_delete_attr_function)(MPI_Fint *obj, 
+                                                      MPI_Fint *keyval,
+                                                      MPI_Fint *attr_in,
+                                                      MPI_Fint *extra_state, 
+                                                      MPI_Fint *ierr);
 
+/* New-style MPI-2 Fortran function pointer declarations for copy and
+   delete. These will only be used here and not in the front end
+   functions. */
+
+typedef void (ompi_mpi2_fortran_copy_attr_function)(MPI_Fint *oldobj, 
+                                                    MPI_Fint *keyval,
+                                                    void *extra_state, 
+                                                    void *attr_in, 
+                                                    void *attr_out,
+                                                    ompi_fortran_logical_t *flag, 
+                                                    MPI_Fint *ierr);
+typedef void (ompi_mpi2_fortran_delete_attr_function)(MPI_Fint *obj, 
+                                                      MPI_Fint *keyval,
+                                                      void *attr_in,
+                                                      void *extra_state, 
+                                                      MPI_Fint *ierr);
 
 /* Union to take care of proper casting of the function pointers
    passed from the front end functions depending on the type. This
@@ -85,14 +107,33 @@ union ompi_attribute_fn_ptr_union_t {
     MPI_Win_copy_attr_function *attr_win_copy_fn;
 #endif
 
-    /* For Fortran functions */
+    /* For Fortran old MPI-1 callback functions */
     
-    MPI_F_delete_function *attr_F_delete_fn;
-    MPI_F_copy_function *attr_F_copy_fn;
+    ompi_mpi1_fortran_delete_attr_function *attr_mpi1_fortran_delete_fn;
+    ompi_mpi1_fortran_copy_attr_function *attr_mpi1_fortran_copy_fn;
+
+    /* For Fortran new MPI-2 callback functions */
+    
+    ompi_mpi2_fortran_delete_attr_function *attr_mpi2_fortran_delete_fn;
+    ompi_mpi2_fortran_copy_attr_function *attr_mpi2_fortran_copy_fn;
 };
 
 typedef union ompi_attribute_fn_ptr_union_t ompi_attribute_fn_ptr_union_t;
 
+
+/**
+ * Union to help convert between Fortran attributes (which must be
+ * stored by value) and C pointers (which is the back-end storage of
+ * all attributes).
+ */
+union ompi_attribute_fortran_ptr_t {
+    void *c_ptr;
+    MPI_Fint f_integer;
+};
+/**
+ * Convenience typedef
+ */
+typedef union ompi_attribute_fortran_ptr_t ompi_attribute_fortran_ptr_t;
 
 struct ompi_attrkey_item_t {
     ompi_object_t super;
