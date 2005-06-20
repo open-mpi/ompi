@@ -408,7 +408,7 @@ int mca_bmi_sm_component_progress(void)
         rc++;
     }  /* end peer_local_smp_rank loop */
 
-#if 0
+
     /* loop over fifo's - procs with different base shared memory 
      * virtual address as this process */
     for( proc=0 ; proc < mca_bmi_sm_component.num_smp_procs_different_base_addr
@@ -449,9 +449,54 @@ int mca_bmi_sm_component_progress(void)
         frag = (mca_bmi_sm_frag_t *)( (char *)frag+
                 mca_bmi_sm_component.sm_offset[peer_smp_rank]);
 
+        /* dispatch fragment by type */
+        switch(frag->type) {
+            case MCA_BMI_SM_FRAG_ACK:
+            {
+                /* completion callback */
+                frag->base.des_src = 
+                    ((unsigned char*)frag->base.des_dst - mca_bmi_sm_component.sm_offset[peer_smp_rank]);
+                frag->base.des_src->seg_addr.pval =
+                    ((unsigned char*)frag->base.des_src->seg_addr.pval - 
+                     mca_bmi_sm_component.sm_offset[peer_smp_rank]);
+                frag->base.des_src_cnt = frag->base.des_dst_cnt;
+                frag->base.des_dst = NULL;
+                frag->base.des_dst_cnt = 0;
+                frag->base.des_cbfunc(&mca_bmi_sm[0].super, frag->endpoint, &frag->base, frag->rc);
+                break;
+            }
+            case MCA_BMI_SM_FRAG_SEND:
+            {
+                /* recv upcall */
+                mca_bmi_sm_registration_t* reg = mca_bmi_sm[0].sm_reg + frag->tag;
+                frag->base.des_dst = (mca_bmi_base_segment_t*)
+                    ((unsigned char*)frag->base.des_src + mca_bmi_sm_component.sm_offset[peer_smp_rank]);
+                frag->base.des_dst->seg_addr.pval = 
+                    ((unsigned char*)frag->base.des_dst->seg_addr.pval + 
+                    mca_bmi_sm_component.sm_offset[peer_smp_rank]);
+                frag->base.des_dst_cnt = frag->base.des_src_cnt;
+                frag->base.des_src = NULL;
+                frag->base.des_src_cnt = 0;
+                reg->cbfunc(&mca_bmi_sm[0].super,frag->tag,&frag->base,reg->cbdata);
+                frag->type = MCA_BMI_SM_FRAG_ACK;
+                MCA_BMI_SM_FIFO_WRITE(my_smp_rank,peer_smp_rank,frag,rc);
+                if(OMPI_SUCCESS != rc)
+                    return rc;
+                break;
+            }
+            default:
+            {
+                /* unknown */
+                frag->rc = OMPI_ERROR;
+                frag->type = MCA_BMI_SM_FRAG_ACK;
+                MCA_BMI_SM_FIFO_WRITE(my_smp_rank,peer_smp_rank,frag,rc);
+                if(OMPI_SUCCESS != rc)
+                    return rc;
+                break;
+            }
+        }
         rc++;
     }  /* end peer_local_smp_rank loop */
-#endif
     return rc;
 }
 
