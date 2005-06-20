@@ -62,7 +62,7 @@ OMPI_DECLSPEC mca_pml_base_module_t mca_pml = {
 
 ompi_list_t mca_pml_base_components_available;
 mca_pml_base_component_t mca_pml_base_selected_component;
-
+char *mca_pml_base_pml;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -83,6 +83,9 @@ int mca_pml_base_open(void)
      ompi_info) */
 
   mca_pml_base_selected_component.pmlm_finalize = NULL;
+
+  mca_base_param_lookup_string(
+      mca_base_param_register_string("pml",NULL,NULL,NULL,NULL), &mca_pml_base_pml);
 
   /* All done */
 
