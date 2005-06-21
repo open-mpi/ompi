@@ -222,8 +222,8 @@ int mca_bmi_sm_add_procs_same_base_addr(
     /* lookup shared memory pool */
     if(NULL == mca_bmi_sm_component.sm_mpool) {
         mca_bmi_sm_component.sm_mpool =
-            mca_mpool_base_module_lookup(mca_bmi_sm_component.sm_mpool_name);
-                                                                                                                     
+            mca_mpool_base_module_create(mca_bmi_sm_component.sm_mpool_name,bmi,NULL);
+
         /* Sanity check to ensure that we found it */
         if (NULL == mca_bmi_sm_component.sm_mpool) {
            return_code = OMPI_ERR_OUT_OF_RESOURCE;
@@ -776,6 +776,7 @@ extern int mca_bmi_sm_free(
 struct mca_bmi_base_descriptor_t* mca_bmi_sm_prepare_src(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* endpoint,
+    struct mca_bmi_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size)
@@ -796,7 +797,7 @@ struct mca_bmi_base_descriptor_t* mca_bmi_sm_prepare_src(
         max_data = frag->size - reserve;
     } 
     iov.iov_len = max_data;
-    iov.iov_base = (unsigned char*)(frag+1) + reserve;
+    iov.iov_base = (void*)((unsigned char*)(frag+1) + reserve);
 
     rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
     if(rc < 0) {
