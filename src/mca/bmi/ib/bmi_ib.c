@@ -616,7 +616,6 @@ int mca_bmi_ib_put( mca_bmi_base_module_t* bmi,
     frag->endpoint = endpoint;
     frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
     
-    
     frag->sr_desc.remote_qp = endpoint->rem_qp_num_low; 
     frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
     frag->sr_desc.r_key = frag->base.des_dst->seg_key.key32[0]; 

@@ -36,16 +36,6 @@ void mca_mpool_sm_module_init(mca_mpool_sm_module_t* mpool)
   mpool->super.mpool_finalize = NULL; 
 
 }
-/*  mca_mpool_base_module_t mca_mpool_sm_module = { */
-/*      &mca_mpool_sm_component.super, */
-/*      mca_mpool_sm_base, */
-/*      mca_mpool_sm_alloc, */
-/*      mca_mpool_sm_realloc, */
-/*      mca_mpool_sm_free, */
-/*      NULL, */
-/*      NULL */
-/*  }; */
-
 
 /*
  * base address of shared memory mapping
@@ -58,19 +48,27 @@ void* mca_mpool_sm_base(mca_mpool_base_module_t* mpool)
 /**
   * allocate function 
   */
-void* mca_mpool_sm_alloc(mca_mpool_base_module_t* mpool, size_t size, size_t align, void** user_out)
+void* mca_mpool_sm_alloc(
+    mca_mpool_base_module_t* mpool, 
+    size_t size, 
+    size_t align, 
+    struct mca_bmi_base_registration_t** registration)
 {
-  mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
-  return mpool_sm->sm_allocator->alc_alloc(mpool_sm->sm_allocator, size, align, user_out);
+    mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
+    return mpool_sm->sm_allocator->alc_alloc(mpool_sm->sm_allocator, size, align, registration);
 }
 
 /**
   * realloc function 
   */
-void* mca_mpool_sm_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size, void** user_out)
+void* mca_mpool_sm_realloc(
+    mca_mpool_base_module_t* mpool, 
+    void* addr, 
+    size_t size, 
+    struct mca_bmi_base_registration_t** registration)
 {
-  mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
-  return mpool_sm->sm_allocator->alc_realloc(mpool_sm->sm_allocator, addr, size, user_out);
+    mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
+    return mpool_sm->sm_allocator->alc_realloc(mpool_sm->sm_allocator, addr, size, registration);
 }
 
 /**
@@ -78,6 +76,6 @@ void* mca_mpool_sm_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t si
   */
 void mca_mpool_sm_free(mca_mpool_base_module_t* mpool, void * addr)
 {
-  mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
-  mpool_sm->sm_allocator->alc_free(mpool_sm->sm_allocator, addr);
+    mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
+    mpool_sm->sm_allocator->alc_free(mpool_sm->sm_allocator, addr);
 }

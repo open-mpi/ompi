@@ -44,25 +44,10 @@ mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
 }
 
 
-mca_mpool_base_module_t* mca_mpool_base_module_lookup(const char* name)
-{
-    /* does the module already exist? */
-    ompi_list_item_t *item;
-    for(item =  ompi_list_get_first(&mca_mpool_base_modules);
-        item != ompi_list_get_end(&mca_mpool_base_modules);
-        item = ompi_list_get_next(item)) {
-        mca_mpool_base_selected_module_t *sm = (mca_mpool_base_selected_module_t *) item;
-        if(strcmp(sm->mpool_component->mpool_version.mca_component_name,
-                  name) == 0) {
-          return sm->mpool_module;
-        }
-    }
-    /* if not create it */
-    return mca_mpool_base_module_init(name);
-}
-
-
-mca_mpool_base_module_t* mca_mpool_base_module_create(const char* name, void* user) 
+mca_mpool_base_module_t* mca_mpool_base_module_create(
+    const char* name, 
+    struct mca_bmi_base_module_t* bmi,
+    struct mca_bmi_base_resources_t* resources) 
 {
     
     mca_mpool_base_component_t* component = NULL; 
@@ -84,7 +69,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(const char* name, void* us
 
     if(NULL == component)  
         return NULL;
-    module = component->mpool_init(user); 
+    module = component->mpool_init(bmi,resources); 
     sm = OBJ_NEW(mca_mpool_base_selected_module_t); 
     sm->mpool_component = component; 
     sm->mpool_module = module; 

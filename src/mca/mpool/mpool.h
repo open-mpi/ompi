@@ -22,48 +22,63 @@
 #include "mca/mca.h"
 #include "info/info.h"
 struct mca_mpool_t;
-
+struct mca_bmi_base_module_t;
+struct mca_bmi_base_resources_t;
+struct mca_bmi_base_registration_t;
 
 /**
  * component initialize
  */
-typedef struct mca_mpool_base_module_t* (*mca_mpool_base_component_init_fn_t)
-  (void* user_in);
+typedef struct mca_mpool_base_module_t* (*mca_mpool_base_component_init_fn_t)(
+    struct mca_bmi_base_module_t* bmi, 
+    struct mca_bmi_base_resources_t*);
+
+/**
+  * allocate function typedef
+  */
+typedef void* (*mca_mpool_base_module_alloc_fn_t)(
+    struct mca_mpool_base_module_t* mpool,
+    size_t size,
+    size_t align,
+    struct mca_bmi_base_registration_t** registration);
+                                                                                                                                   
+/**
+  * realloc function typedef
+  */
+typedef void* (*mca_mpool_base_module_realloc_fn_t)(
+    struct mca_mpool_base_module_t* mpool,
+    void* addr,
+    size_t size,
+    struct mca_bmi_base_registration_t** registration);
+                                                                                                                                   
+/**
+  * free function typedef
+  */
+typedef void (*mca_mpool_base_module_free_fn_t)(
+    struct mca_mpool_base_module_t* mpool,
+    void *);
+                                                                                                                                   
+/**
+  * register memory
+  */
+typedef int (*mca_mpool_base_module_register_fn_t)(
+    struct mca_mpool_base_module_t* mpool,
+    void * addr,
+    size_t size,
+    struct mca_bmi_base_registration_t** registration);
+                                                                                                                                   
+/**
+  * deregister memory
+  */
+typedef int (*mca_mpool_base_module_deregister_fn_t)(
+    struct mca_mpool_base_module_t* mpool,
+    void * addr,
+    size_t size);
 
 /**
   * if appropriate - returns base address of memory pool
   */
 typedef void* (*mca_mpool_base_module_address_fn_t)(struct mca_mpool_base_module_t* mpool);
-
-/**
-  * allocate function typedef
-  */
-typedef void* (*mca_mpool_base_module_alloc_fn_t)(struct mca_mpool_base_module_t* mpool, size_t size, size_t align, void** user_out);
-
-/**
-  * allocate function typedef
-  */
-typedef void* (*mca_mpool_base_module_alloc_and_register_fn_t)(struct mca_mpool_base_module_t* mpool,size_t size, size_t align, void** user_out);
-
-/**
-  * realloc function typedef
-  */
-typedef void* (*mca_mpool_base_module_realloc_fn_t)(struct mca_mpool_base_module_t* mpool, void* addr, size_t size, void** user_out);
-
-/**
-  * free function typedef
-  */
-typedef void (*mca_mpool_base_module_free_fn_t)(struct mca_mpool_base_module_t* mpool, void *);
-
-/**
-  * register memory
-  */
-typedef int (*mca_mpool_base_module_register_fn_t)(struct mca_mpool_base_module_t* mpool, void * addr, size_t size, void** user_out);
-
-/**
-  * deregister memory
-  */
-typedef int (*mca_mpool_base_module_deregister_fn_t)(struct mca_mpool_base_module_t* mpool, void * addr, size_t size);
 
 /**
   * finalize
@@ -166,10 +181,12 @@ OMPI_DECLSPEC int mca_mpool_base_tree_node_compare(void * key1, void * key2);
 OMPI_DECLSPEC struct mca_mpool_base_chunk_t * mca_mpool_base_find(void * base);
 
 
-OMPI_DECLSPEC int mca_mpool_base_insert(void * addr, 
-                                        size_t size, 
-                                        mca_mpool_base_module_t* mpool, 
-                                        void* user_data); 
+OMPI_DECLSPEC int mca_mpool_base_insert(
+    void * addr, 
+    size_t size, 
+    mca_mpool_base_module_t* mpool, 
+    struct mca_bmi_base_module_t* bmi,
+    struct mca_bmi_base_registration_t* registration); 
 
 OMPI_DECLSPEC int mca_mpool_base_remove(void * base); 
 

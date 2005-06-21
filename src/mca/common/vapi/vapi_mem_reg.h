@@ -27,12 +27,14 @@ extern "C" {
 #endif
 
 
-struct mca_common_vapi_hca_pd_t{
+struct mca_bmi_base_resources_t {
   VAPI_hca_hndl_t hca;   /* the hca (nic) */ 
   VAPI_pd_hndl_t pd_tag; /* the protection domain */ 
-}; typedef struct mca_common_vapi_hca_pd_t mca_common_vapi_hca_pd_t;  
+}; 
+typedef struct mca_bmi_base_resources_t mca_bmi_base_resources_t;  
 
-struct mca_common_vapi_memhandle_t {
+
+struct mca_bmi_base_registration_t {
   VAPI_mr_hndl_t                  hndl;
   /* Memory region handle */
   
@@ -44,7 +46,7 @@ struct mca_common_vapi_memhandle_t {
   /* Remote key to registered memory, need to send this
    * to remote processes for incoming RDMA ops */
 };
-typedef struct mca_common_vapi_memhandle_t mca_common_vapi_memhandle_t;
+typedef struct mca_bmi_base_registration_t mca_bmi_base_registration_t;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

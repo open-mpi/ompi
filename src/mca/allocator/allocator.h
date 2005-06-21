@@ -21,6 +21,10 @@
 #define MCA_ALLOCATOR_H
 #include "mca/mca.h"
 
+struct mca_bmi_base_registration_t;
+struct mca_bmi_base_resources_t;
+
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -30,17 +34,25 @@ struct mca_allocator_base_module_t;
 /**
   * The allocate function typedef for the function to be provided by the component.
   */
-typedef void* (*mca_allocator_base_module_alloc_fn_t)(struct mca_allocator_base_module_t*, size_t size, size_t align, void** user_out);
+typedef void* (*mca_allocator_base_module_alloc_fn_t)(
+    struct mca_allocator_base_module_t*, 
+    size_t size, 
+    size_t align, 
+    struct mca_bmi_base_registration_t** registration);
  
 /**
   * The realloc function typedef
   */
-typedef void* (*mca_allocator_base_module_realloc_fn_t)(struct mca_allocator_base_module_t*, void*, size_t, void** user_out);
+typedef void* (*mca_allocator_base_module_realloc_fn_t)(
+    struct mca_allocator_base_module_t*, 
+    void*, size_t, 
+    struct mca_bmi_base_registration_t** registration);
 
 /**
   * Free function typedef
   */
-typedef void(*mca_allocator_base_module_free_fn_t)(struct mca_allocator_base_module_t*, void *);
+typedef void(*mca_allocator_base_module_free_fn_t)(
+    struct mca_allocator_base_module_t*, void *);
 
 
 /**
@@ -72,9 +84,10 @@ struct mca_allocator_base_module_t {
     /**< Free memory */
     mca_allocator_base_module_compact_fn_t alc_compact;   
     /**< Return memory */
-  mca_allocator_base_module_finalize_fn_t alc_finalize; 
+    mca_allocator_base_module_finalize_fn_t alc_finalize; 
     /**< Finalize and free everything */
-  void* user_in; 
+    /* memory pool and resources */
+    struct mca_mpool_base_module_t* alc_mpool;
 };
 /**
  * Convenience typedef.
@@ -87,14 +100,19 @@ typedef struct mca_allocator_base_module_t mca_allocator_base_module_t;
   * provided by the module to the allocator framework.
   */
 
-typedef void* (*mca_allocator_base_component_segment_alloc_fn_t)(size_t* size, void* user_in, void** user_out);
+typedef void* (*mca_allocator_base_component_segment_alloc_fn_t)(
+    struct mca_mpool_base_module_t* module,
+    size_t* size, 
+    struct mca_bmi_base_registration_t** registration);
 
 /**
   * A function to free memory from the control of the allocator framework 
   * back to the system. This function is to be provided by the module to the
   * allocator frmaework.
   */
-typedef void* (*mca_allocator_base_component_segment_free_fn_t)(void* segment);
+typedef void* (*mca_allocator_base_component_segment_free_fn_t)(
+    struct mca_mpool_base_module_t* module,
+    void* segment);
 
 
 /**
@@ -105,7 +123,7 @@ typedef struct mca_allocator_base_module_t*
     bool enable_mpi_threads,
     mca_allocator_base_component_segment_alloc_fn_t segment_alloc,
     mca_allocator_base_component_segment_free_fn_t segment_free, 
-    void* user_in
+    struct mca_mpool_base_module_t* mpool
 );
 
 /**

@@ -28,7 +28,9 @@
  * Local functions
  */
 static int mca_mpool_vapi_open(void);
-static mca_mpool_base_module_t* mca_mpool_vapi_init(void* user);
+static mca_mpool_base_module_t* mca_mpool_vapi_init(
+    struct mca_bmi_base_module_t* module,
+    struct mca_bmi_base_resources_t* resources);
 
 mca_mpool_vapi_component_t mca_mpool_vapi_component = {
     {
@@ -70,16 +72,6 @@ static char* mca_mpool_vapi_param_register_string(
     return param_value;
 }
 
-static  int mca_mpool_vapi_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("mpool","vapi",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
-
 
 /**
   * component open/close/init function
@@ -97,38 +89,37 @@ static int mca_mpool_vapi_open(void)
 }
 
 /* Allocates a segment of memory and registers with IB, user_out returns the memory handle. */ 
-void* mca_common_vapi_segment_alloc(size_t* size, void* user_in, void** user_out){
-    int rc; 
-    mca_mpool_base_module_t* mpool = (mca_mpool_base_module_t*) user_in; 
-    
-    void* addr = (void*)malloc((*size) + mca_mpool_vapi_component.page_size); 
-    addr = (void*)  ALIGN_ADDR(addr, mca_mpool_vapi_component.page_size_log); 
-    if(OMPI_SUCCESS !=  mpool->mpool_register(mpool, addr, *size, user_out)) { 
+void* mca_common_vapi_segment_alloc(
+    struct mca_mpool_base_module_t* mpool,
+    size_t* size, 
+    struct mca_bmi_base_registration_t** registration)
+{
+    void* addr_malloc = (void*)malloc((*size) + mca_mpool_vapi_component.page_size); 
+    void* addr = (void*)  ALIGN_ADDR(addr_malloc, mca_mpool_vapi_component.page_size_log); 
+    if(OMPI_SUCCESS !=  mpool->mpool_register(mpool, addr, *size, registration)) { 
+        free(addr_malloc);
         return NULL; 
     } 
     return addr; 
 }
 
-
 /* Allocates a segment of memory and registers with IB, user_out returns the memory handle. */ 
-
-static mca_mpool_base_module_t* mca_mpool_vapi_init(void * user_in)
+static mca_mpool_base_module_t* mca_mpool_vapi_init(
+    struct mca_bmi_base_module_t* bmi,
+    struct mca_bmi_base_resources_t* resources)
 {
- 
-   
-    
-    long page_size; 
-    page_size = mca_mpool_vapi_component.page_size; 
+    mca_mpool_vapi_module_t* mpool_module; 
+    mca_allocator_base_component_t* allocator_component;
+    long page_size = mca_mpool_vapi_component.page_size; 
+
     mca_mpool_vapi_component.page_size_log = 0; 
     while(page_size > 1){ 
         page_size = page_size >> 1; 
         mca_mpool_vapi_component.page_size_log++; 
     }    
-    mca_allocator_base_component_t* allocator_component = mca_allocator_component_lookup( 
-                                                                                         mca_mpool_vapi_component.vapi_allocator_name);
     
-    
-  /* if specified allocator cannout be loaded - look for an alternative */
+    /* if specified allocator cannout be loaded - look for an alternative */
+    allocator_component = mca_allocator_component_lookup(mca_mpool_vapi_component.vapi_allocator_name);
     if(NULL == allocator_component) {
         if(ompi_list_get_size(&mca_allocator_base_components) == 0) {
             mca_base_component_list_item_t* item = (mca_base_component_list_item_t*)
@@ -143,34 +134,18 @@ static mca_mpool_base_module_t* mca_mpool_vapi_init(void * user_in)
         }
     }
     
-    mca_mpool_vapi_module_t* mpool_module; 
     mpool_module = (mca_mpool_vapi_module_t*)malloc(sizeof(mca_mpool_vapi_module_t)); 
     mca_mpool_vapi_module_init(mpool_module); 
     
     /* setup allocator  TODO fix up */
-    mpool_module->hca_pd = *(mca_common_vapi_hca_pd_t*) user_in; 
+    mpool_module->hca_pd = *resources;
     mpool_module->vapi_allocator = 
-      allocator_component->allocator_init(true,
-                                          mca_common_vapi_segment_alloc, NULL, mpool_module);
+      allocator_component->allocator_init(true, mca_common_vapi_segment_alloc, NULL, &mpool_module->super);
     if(NULL == mpool_module->vapi_allocator) {
       ompi_output(0, "mca_mpool_vapi_init: unable to initialize allocator");
       return NULL;
     }
-   
-    
     return &mpool_module->super;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 

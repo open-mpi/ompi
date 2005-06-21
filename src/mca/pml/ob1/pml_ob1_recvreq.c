@@ -346,6 +346,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 dst = ep->bmi_prepare_dst(
                     ep->bmi,
                     ep->bmi_endpoint,
+                    NULL,
                     &recvreq->req_recv.req_convertor,
                     0,
                     &size);

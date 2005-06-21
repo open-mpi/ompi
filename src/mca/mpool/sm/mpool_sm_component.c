@@ -28,7 +28,9 @@
  * Local functions
  */
 static int mca_mpool_sm_open(void);
-static mca_mpool_base_module_t* mca_mpool_sm_init(void* user);
+static mca_mpool_base_module_t* mca_mpool_sm_init(
+    struct mca_bmi_base_module_t* bmi,
+    struct mca_bmi_base_resources_t* resources);
 
 mca_mpool_sm_component_t mca_mpool_sm_component = {
     {
@@ -95,7 +97,9 @@ static int mca_mpool_sm_open(void)
 }
 
 
-static mca_mpool_base_module_t* mca_mpool_sm_init(void * user_in)
+static mca_mpool_base_module_t* mca_mpool_sm_init(
+    struct mca_bmi_base_module_t* bmi,
+    struct mca_bmi_base_resources_t* resources)
 {
     char *file_name;
     int len;
@@ -149,7 +153,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(void * user_in)
     /* setup allocator  TODO fix up */
     mpool_module->sm_allocator = 
       allocator_component->allocator_init(true,
-                                          mca_common_sm_mmap_alloc, NULL, NULL);
+                                          mca_common_sm_mmap_seg_alloc, NULL, NULL);
     if(NULL == mpool_module->sm_allocator) {
       ompi_output(0, "mca_mpool_sm_init: unable to initialize allocator");
         return NULL;
