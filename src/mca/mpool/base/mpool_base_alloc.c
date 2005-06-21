@@ -27,7 +27,7 @@
 
 ompi_rb_tree_t mca_mpool_base_tree;
 ompi_free_list_t mca_mpool_base_mem_list;
-static ompi_mutex_t tree_lock; 
+ompi_mutex_t tree_lock; 
 
 
 /**
