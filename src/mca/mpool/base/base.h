@@ -25,6 +25,7 @@
 #include "class/ompi_rb_tree.h"
 #include "mca/mca.h"
 #include "mca/mpool/mpool.h"
+#include "threads/mutex.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -106,6 +107,7 @@ OMPI_DECLSPEC extern ompi_list_t mca_mpool_base_components;
 OMPI_DECLSPEC extern ompi_list_t mca_mpool_base_modules;
 OMPI_DECLSPEC extern ompi_free_list_t mca_mpool_base_mem_list;
 OMPI_DECLSPEC extern ompi_rb_tree_t mca_mpool_base_tree;
+OMPI_DECLSPEC extern ompi_mutex_t tree_lock; 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -29,6 +29,7 @@
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/bmi/bmi.h"
+#include "mca/bmi/base/base.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -47,7 +48,7 @@ struct mca_bmi_self_component_t {
     ompi_free_list_t self_frags_eager;     /**< free list of self first */
     ompi_free_list_t self_frags_send;      /**< free list of self second */
     ompi_free_list_t self_frags_rdma;      /**< free list of self second */
-    mca_bmi_base_registration_t self_reg[256];
+    mca_bmi_base_recv_reg_t self_reg[256];
 };
 typedef struct mca_bmi_self_component_t mca_bmi_self_component_t;
 extern mca_bmi_self_component_t mca_bmi_self_component;

@@ -382,7 +382,7 @@ int mca_bmi_sm_component_progress(void)
             case MCA_BMI_SM_FRAG_SEND:
             {
                 /* recv upcall */
-                mca_bmi_sm_registration_t* reg = mca_bmi_sm[0].sm_reg + frag->tag;
+                mca_bmi_sm_recv_reg_t* reg = mca_bmi_sm[0].sm_reg + frag->tag;
                 frag->base.des_dst = frag->base.des_src;
                 frag->base.des_dst_cnt = frag->base.des_src_cnt;
                 frag->base.des_src = NULL;
@@ -468,7 +468,7 @@ int mca_bmi_sm_component_progress(void)
             case MCA_BMI_SM_FRAG_SEND:
             {
                 /* recv upcall */
-                mca_bmi_sm_registration_t* reg = mca_bmi_sm[0].sm_reg + frag->tag;
+                mca_bmi_sm_recv_reg_t* reg = mca_bmi_sm[0].sm_reg + frag->tag;
                 frag->base.des_dst = (mca_bmi_base_segment_t*)
                     ((unsigned char*)frag->base.des_src + mca_bmi_sm_component.sm_offset[peer_smp_rank]);
                 frag->base.des_dst->seg_addr.pval = 

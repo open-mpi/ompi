@@ -217,6 +217,7 @@ int mca_bmi_ib_free(
 mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* endpoint,
+    struct mca_bmi_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size
@@ -228,7 +229,8 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     int32_t iov_count = 1; 
     size_t max_data = *size; 
     int32_t free_after; 
-    int i, rc; 
+    int rc; 
+    
     
     ib_bmi = (mca_bmi_ib_module_t*) bmi; 
     
@@ -288,123 +290,88 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         return &frag->base; 
     } else { 
         
-
-          VAPI_mrw_t mr_in, mr_out;
-          VAPI_ret_t ret;   
-          mca_common_vapi_memhandle_t mem_hndl;
-          mca_common_vapi_memhandle_t * mem_hndl_p; 
-          mca_mpool_base_chunk_t * mpool_chunk; 
+        
+        VAPI_mrw_t mr_in, mr_out;
+        mca_mpool_base_chunk_t * mpool_chunk; 
           
           
-          
-          memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
-          memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
-          memset(&mem_hndl, 0, sizeof(mca_common_vapi_memhandle_t)); 
+        memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
+        memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
+        
+        mpool_chunk = NULL; 
 
-          mpool_chunk = NULL; 
 
-          mem_hndl.hndl = VAPI_INVAL_HNDL; 
-          
-
-          mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
-          mr_in.l_key = 0;
-          mr_in.r_key = 0;
-          mr_in.pd_hndl = ib_bmi->ptag; 
-          mr_in.type = VAPI_MR;
-          MCA_BMI_IB_FRAG_ALLOC_FRAG(bmi, frag, rc); 
-          if(NULL == frag){
-              return NULL; 
-          } 
+        mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
+        mr_in.l_key = 0;
+        mr_in.r_key = 0;
+        mr_in.pd_hndl = ib_bmi->ptag; 
+        mr_in.type = VAPI_MR;
+        MCA_BMI_IB_FRAG_ALLOC_FRAG(bmi, frag, rc); 
+        if(NULL == frag){
+            return NULL; 
+        } 
+        
+        iov.iov_len = max_data; 
+        iov.iov_base = NULL; 
+        
+        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
+        
+        /* first we will try to find this address in the memory tree (from MPI_Alloc_mem) */ 
+        
+        frag->segment.seg_len = max_data; 
+        frag->segment.seg_addr.pval = iov.iov_base; 
+                        
+        if(NULL != registration) { 
+            size_t reg_len; 
+            reg_len = registration->bound - iov.iov_base + 1; 
+            if(frag->segment.seg_len > reg_len) { 
                 
-          iov.iov_len = max_data; 
-          iov.iov_base = NULL; 
+                frag->ret = VAPI_deregister_mr(
+                                               ib_bmi->nic, 
+                                               registration->hndl
+                                               ); 
+                
+                mca_mpool_base_remove((void*) registration->base); 
+            
+                ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool, 
+                                                registration->base, 
+                                                registration->bound - registration->base + 1 + frag->segment.seg_len - reg_len, 
+                                                &registration); 
+            } 
+     
+            frag->base.des_flags |= MCA_BMI_DES_FLAGS_PINNED; 
+        }
+        else { 
+            ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool,
+                                            iov.iov_base, 
+                                            max_data, 
+                                            &registration); 
+            
+            if(frag->base.des_flags && MCA_BMI_DES_FLAGS_LEAVE_PINNED) { 
+                rc = mca_mpool_base_insert(iov.iov_base, 
+                                           iov.iov_len, 
+                                           ib_bmi->ib_pool, 
+                                           &ib_bmi->super, 
+                                           registration); 
+                if(rc != OMPI_SUCCESS) 
+                    return NULL; 
+                frag->base.des_flags |= MCA_BMI_DES_FLAGS_PINNED; 
+            }
+            
+        }
+        frag->mem_hndl = registration->hndl; 
+        frag->sg_entry.len = max_data; 
+        frag->sg_entry.lkey = registration->l_key; 
+        frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
+        
+        frag->segment.seg_key.key32[0] = (uint32_t) registration->l_key; 
           
-          ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
-          
-          /* first we will try to find this address in the memory tree (from MPI_Alloc_mem) */ 
-          
-          frag->segment.seg_len = max_data; 
-          frag->segment.seg_addr.pval = iov.iov_base; 
-                    
-              
-          
-          mpool_chunk = mca_mpool_base_find((void*) iov.iov_base); 
-          
-          if(NULL != mpool_chunk && frag->segment.seg_len > (mpool_chunk->key.top - mpool_chunk->key.bottom + 1)){ 
-              for(i = 0; i< MCA_MPOOL_BASE_MAX_REG; i++){ 
-                  if(NULL != mpool_chunk->mpools[i].mpool && mpool_chunk->mpools[i].mpool == ib_bmi->ib_pool){ 
-                      mem_hndl = *(mca_common_vapi_memhandle_t*) mpool_chunk->mpools[i].user; 
-                      frag->mem_hndl = mem_hndl.hndl; 
-                      frag->base.des_flags |= MCA_BMI_DES_FLAGS_PINNED; 
-                      break; 
-                  }  
-              }
-
-              frag->ret = VAPI_deregister_mr(
-                                             ib_bmi->nic, 
-                                             frag->mem_hndl
-                                             ); 
-              
-              mca_mpool_base_remove((void*) iov.iov_base); 
-
-              mpool_chunk = NULL; 
-          }
-          
-          if(NULL == mpool_chunk) { 
-              
-              mr_in.size = max_data;
-              mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base;
-              
-              ret = VAPI_register_mr(
-                                     ib_bmi->nic, 
-                                     &mr_in, 
-                                     &mem_hndl.hndl, 
-                                     &mr_out
-                                     ); 
-              
-              if(VAPI_OK != ret){ 
-                  ompi_output(0, "error pinning vapi memory\n"); 
-                  return NULL; 
-              }
-              
-              mem_hndl.l_key = mr_out.l_key; 
-              mem_hndl.r_key = mr_out.r_key; 
-              frag->mem_hndl = mem_hndl.hndl;
-              if(frag->base.des_flags && MCA_BMI_DES_FLAGS_LEAVE_PINNED) { 
-                  mem_hndl_p = (mca_common_vapi_memhandle_t*) malloc(sizeof(mca_common_vapi_memhandle_t)); 
-                  memcpy(mem_hndl_p, &mem_hndl, sizeof(mca_common_vapi_memhandle_t)); 
-                  rc = mca_mpool_base_insert(iov.iov_base, iov.iov_len, ib_bmi->ib_pool, (void*) mem_hndl_p); 
-                  if(rc != OMPI_SUCCESS) 
-                      return NULL; 
-                  frag->base.des_flags |= MCA_BMI_DES_FLAGS_PINNED; 
-                  
-              }
-          } else { 
-          
-
-              for(i = 0; i< MCA_MPOOL_BASE_MAX_REG; i++){ 
-                  if(NULL != mpool_chunk->mpools[i].mpool && mpool_chunk->mpools[i].mpool == ib_bmi->ib_pool){ 
-                      mem_hndl = *(mca_common_vapi_memhandle_t*) mpool_chunk->mpools[i].user; 
-                      frag->mem_hndl = mem_hndl.hndl; 
-                      frag->base.des_flags |= MCA_BMI_DES_FLAGS_PINNED; 
-                      break; 
-                  }  
-              }
-          }
-              
-          
-          frag->sg_entry.len = max_data; 
-          frag->sg_entry.lkey = mem_hndl.l_key; 
-          frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
-          
-          frag->segment.seg_key.key32[0] = (uint32_t) mem_hndl.l_key; 
-          
-          frag->base.des_src = &frag->segment;
-          frag->base.des_src_cnt = 1;
-          frag->base.des_dst = NULL;
-          frag->base.des_dst_cnt = 0;
-          return &frag->base; 
-          
+        frag->base.des_src = &frag->segment;
+        frag->base.des_src_cnt = 1;
+        frag->base.des_dst = NULL;
+        frag->base.des_dst_cnt = 0;
+        return &frag->base; 
+        
     }
     
     
@@ -420,6 +387,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
 mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* endpoint,
+    struct mca_bmi_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size)
@@ -427,26 +395,10 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     mca_bmi_ib_module_t* ib_bmi; 
     mca_bmi_ib_frag_t* frag; 
     int i, rc; 
-    
+    size_t reg_len; 
     ib_bmi = (mca_bmi_ib_module_t*) bmi; 
-    VAPI_mrw_t mr_in, mr_out;
-    VAPI_ret_t ret;   
-    mca_common_vapi_memhandle_t mem_hndl; 
-    mca_common_vapi_memhandle_t *mem_hndl_p; 
-    mca_mpool_base_chunk_t* mpool_chunk; 
+    
 
-    memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
-    memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
-    memset(&mem_hndl, 0, sizeof(mca_common_vapi_memhandle_t)); 
-    
-    mem_hndl.hndl = VAPI_INVAL_HNDL; 
-    
-    
-    mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
-    mr_in.l_key = 0;
-    mr_in.r_key = 0;
-    mr_in.pd_hndl = ib_bmi->ptag; 
-    mr_in.type = VAPI_MR;
     MCA_BMI_IB_FRAG_ALLOC_FRAG(bmi, frag, rc); 
 
     if(NULL == frag){
@@ -456,83 +408,56 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     
     frag->segment.seg_len = *size; 
     frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted; 
-    
-    mpool_chunk = mca_mpool_base_find((void*) frag->segment.seg_addr.pval);
-    if(NULL != mpool_chunk && frag->segment.seg_len > (mpool_chunk->key.top - mpool_chunk->key.bottom + 1)){ 
-        for(i = 0; i< MCA_MPOOL_BASE_MAX_REG; i++){ 
-            if(NULL != mpool_chunk->mpools[i].mpool && mpool_chunk->mpools[i].mpool == ib_bmi->ib_pool){ 
-                mem_hndl = *(mca_common_vapi_memhandle_t*) mpool_chunk->mpools[i].user; 
-                frag->mem_hndl = mem_hndl.hndl; 
-                frag->base.des_flags |= MCA_BMI_DES_FLAGS_PINNED; 
-                break; 
-            }  
-        }
-        
-        frag->ret = VAPI_deregister_mr(
-                                       ib_bmi->nic, 
-                                       frag->mem_hndl
-                                       );
-        mca_mpool_base_remove((void*) frag->segment.seg_addr.pval); 
-
-        mpool_chunk = NULL; 
-    }
-    
-    if(NULL == mpool_chunk){ 
-        
-        mr_in.size = *size;
-        mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->segment.seg_addr.pval; 
-        
-        ret = VAPI_register_mr(
-                               ib_bmi->nic, 
-                               &mr_in, 
-                                   &mem_hndl.hndl, 
-                               &mr_out
-                               ); 
-        
-        if(VAPI_OK != ret){ 
-            ompi_output(0, "error pinning vapi memory\n"); 
-            return NULL; 
-        }
-        
+    if(NULL!= registration){ 
+        if(frag->segment.seg_len > reg_len) { 
             
-        mem_hndl.l_key = mr_out.l_key; 
-        mem_hndl.r_key = mr_out.r_key; 
-        frag->mem_hndl = mem_hndl.hndl; 
+            frag->ret = VAPI_deregister_mr(
+                                           ib_bmi->nic, 
+                                           registration->hndl
+                                           ); 
+            
+            mca_mpool_base_remove((void*) registration->base); 
+            
+            ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool, 
+                                            registration->base, 
+                                            registration->bound - registration->base + 1 + frag->segment.seg_len - reg_len, 
+                                            &registration); 
+        } 
+     
+        frag->base.des_flags |= MCA_BMI_DES_FLAGS_PINNED; 
+        
+    }  else { 
+        ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool,
+                                        frag->segment.seg_addr.pval,
+                                        *size, 
+                                        &registration); 
+        
         if(frag->base.des_flags && MCA_BMI_DES_FLAGS_LEAVE_PINNED) { 
-            mem_hndl_p = (mca_common_vapi_memhandle_t*) malloc(sizeof(mca_common_vapi_memhandle_t)); 
-            memcpy(mem_hndl_p, &mem_hndl, sizeof(mca_common_vapi_memhandle_t)); 
-            rc = mca_mpool_base_insert(frag->segment.seg_addr.pval, frag->segment.seg_len, ib_bmi->ib_pool, (void*) mem_hndl_p); 
-            if(rc!=OMPI_SUCCESS) 
+            rc = mca_mpool_base_insert(frag->segment.seg_addr.pval,  
+                                       *size, 
+                                       ib_bmi->ib_pool, 
+                                       &ib_bmi->super, 
+                                       (void*) registration); 
+            if(rc != OMPI_SUCCESS) 
                 return NULL; 
             frag->base.des_flags |= MCA_BMI_DES_FLAGS_PINNED; 
+        }
             
-        }
-    } 
-    else { 
-        if(frag->segment.seg_len > (mpool_chunk->key.top - mpool_chunk->key.bottom + 1)){ 
-            ompi_output(0, "%s: segment len is larger than that previously pinned", __func__); 
-            return NULL; 
-        }
-
-        for(i = 0; i< MCA_MPOOL_BASE_MAX_REG; i++){ 
-            if(NULL != mpool_chunk->mpools[i].mpool  && mpool_chunk->mpools[i].mpool == ib_bmi->ib_pool){ 
-                mem_hndl = *(mca_common_vapi_memhandle_t*) mpool_chunk->mpools[i].user; 
-                frag->mem_hndl = mem_hndl.hndl; 
-                frag->base.des_flags |= MCA_BMI_DES_FLAGS_PINNED; 
-                break; 
-            }  
-        }
     }
-        
+    
+    frag->mem_hndl = registration->hndl; 
+    
     frag->sg_entry.len = *size; 
-    frag->sg_entry.lkey = mem_hndl.l_key; 
+    frag->sg_entry.lkey = registration->l_key; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->segment.seg_addr.pval; 
     
-    frag->segment.seg_key.key32[0] = (uint32_t) mem_hndl.l_key; 
+    frag->segment.seg_key.key32[0] = (uint32_t) registration->l_key; 
+    
     frag->base.des_dst = &frag->segment; 
     frag->base.des_dst_cnt = 1; 
     frag->base.des_src = NULL; 
     frag->base.des_src_cnt = 0; 
+    
     return &frag->base; 
     
 }

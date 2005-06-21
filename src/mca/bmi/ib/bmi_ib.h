@@ -34,8 +34,8 @@
 #include "mca/mpool/mpool.h" 
 #include "bmi_ib_error.h" 
 
-/* InfiniBand VAPI includes */
 #include "mca/bmi/bmi.h"
+#include "mca/bmi/base/base.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -99,7 +99,7 @@ struct mca_bmi_ib_component_t {
 
 extern mca_bmi_ib_component_t mca_bmi_ib_component;
 
-typedef mca_bmi_base_registration_t mca_bmi_ib_registration_t; 
+typedef mca_bmi_base_recv_reg_t mca_bmi_ib_recv_reg_t; 
     
 
 
@@ -109,7 +109,7 @@ typedef mca_bmi_base_registration_t mca_bmi_ib_registration_t;
 struct mca_bmi_ib_module_t {
     mca_bmi_base_module_t  super;  /**< base PTL interface */
     bool bmi_inited; 
-    mca_bmi_ib_registration_t ib_reg[256]; 
+    mca_bmi_ib_recv_reg_t ib_reg[256]; 
     VAPI_hca_id_t   hca_id;        /**< ID of HCA */
     IB_port_t port_id; /**< ID of the PORT */ 
     VAPI_hca_port_t port;          /**< IB port of this PTL */
@@ -339,6 +339,7 @@ extern int mca_bmi_ib_free(
 mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* peer,
+    struct mca_bmi_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size
@@ -354,6 +355,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
 extern mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst( 
                                                          struct mca_bmi_base_module_t* bmi, 
                                                          struct mca_bmi_base_endpoint_t* peer,
+                                                         struct mca_bmi_base_registration_t* registration, 
                                                          struct ompi_convertor_t* convertor,
                                                          size_t reserve,
                                                          size_t* size); 
