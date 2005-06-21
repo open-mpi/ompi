@@ -242,7 +242,7 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
     uint32_t num_hcas; 
     mca_bmi_base_module_t** bmis;
     uint32_t i,j, length;
-    mca_common_vapi_hca_pd_t hca_pd; 
+    mca_bmi_base_resources_t hca_pd; 
     ompi_list_t bmi_list; 
     mca_bmi_ib_module_t * ib_bmi; 
     mca_bmi_base_selected_module_t* ib_selected; 
@@ -374,7 +374,9 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
         
         /* initialize the memory pool using the hca */ 
         ib_bmi->ib_pool = 
-            mca_mpool_base_module_create(mca_bmi_ib_component.ib_mpool_name, &hca_pd); 
+            mca_mpool_base_module_create(mca_bmi_ib_component.ib_mpool_name,
+                                         &ib_bmi->super, 
+                                         &hca_pd); 
         
         if(NULL == ib_bmi->ib_pool) { 
             ompi_output(0, "%s: error creating vapi memory pool! aborting ib bmi initialization", __func__); 

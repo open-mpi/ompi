@@ -35,6 +35,17 @@ struct mca_bmi_base_selected_module_t {
 };
 typedef struct mca_bmi_base_selected_module_t mca_bmi_base_selected_module_t;
 
+
+/* holds the recv call back function to be called by the bmi on 
+ * a receive. 
+ */ 
+struct mca_bmi_base_recv_reg_t {  
+    mca_bmi_base_module_recv_cb_fn_t cbfunc; 
+    void* cbdata; 
+}; 
+typedef struct mca_bmi_base_recv_reg_t mca_bmi_base_recv_reg_t; 
+
+
 OBJ_CLASS_DECLARATION(mca_bmi_base_selected_module_t); 
 
 /*

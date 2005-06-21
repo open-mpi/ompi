@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
@@ -29,6 +30,8 @@
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/bmi/bmi.h"
+#include "mca/bmi/base/base.h" 
+
 #include "mca/mpool/mpool.h"
 #include "mca/common/sm/common_sm_mmap.h"
 
@@ -60,7 +63,7 @@ extern mca_bmi_sm_module_resource_t mca_bmi_sm_module_resource;
 #define DONE (char)1
 #endif
 
-typedef mca_bmi_base_registration_t mca_bmi_sm_registration_t;
+typedef mca_bmi_base_recv_reg_t mca_bmi_sm_recv_reg_t;
 
 
 /**
@@ -164,7 +167,7 @@ extern int mca_bmi_sm_component_progress(void);
 struct mca_bmi_sm_t {
     mca_bmi_base_module_t  super;       /**< base BMI interface */
     bool bmi_inited;  /**< flag indicating if bmi has been inited */
-    mca_bmi_sm_registration_t sm_reg[256];
+    mca_bmi_sm_recv_reg_t sm_reg[256];
 };
 typedef struct mca_bmi_sm_t mca_bmi_sm_t;
 

@@ -35,16 +35,19 @@ typedef struct mca_bmi_base_resources_t mca_bmi_base_resources_t;
 
 
 struct mca_bmi_base_registration_t {
-  VAPI_mr_hndl_t                  hndl;
-  /* Memory region handle */
-  
-  VAPI_lkey_t                     l_key;
-  /* Local key to registered memory, needed for
-   * posting send/recv requests */
+    VAPI_mr_hndl_t                  hndl;
+    /* Memory region handle */
+    
+    VAPI_lkey_t                     l_key;
+    /* Local key to registered memory, needed for
+     * posting send/recv requests */
+    
+    VAPI_rkey_t                     r_key;
+    /* Remote key to registered memory, need to send this
+     * to remote processes for incoming RDMA ops */
+    void * base; 
+    void * bound; 
 
-  VAPI_rkey_t                     r_key;
-  /* Remote key to registered memory, need to send this
-   * to remote processes for incoming RDMA ops */
 };
 typedef struct mca_bmi_base_registration_t mca_bmi_base_registration_t;
 

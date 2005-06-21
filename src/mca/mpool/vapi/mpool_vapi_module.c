@@ -95,6 +95,9 @@ int mca_mpool_vapi_register(mca_mpool_base_module_t* mpool, void *addr, size_t s
     
     mem_hndl->l_key = mr_out.l_key; 
     mem_hndl->r_key = mr_out.r_key; 
+    mem_hndl->base = addr; 
+    mem_hndl->bound = (void*) ((char*) addr + size - 1); 
+    
     return OMPI_SUCCESS; 
 }
 
