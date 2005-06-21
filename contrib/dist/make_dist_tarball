@@ -1,0 +1,155 @@
+#!/bin/sh
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+#                         All rights reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+
+#
+# Version of auto tools that we want
+#
+
+AM_TARGET_VERSION=1.9.5
+AC_TARGET_VERSION=2.59
+LT_TARGET_VERSION=1.5.18
+
+#
+# First things first -- check that the auto versions that we have are
+# the ones that we want.
+#
+
+check_gnu_version() {
+    prog="$1"
+    target="$2"
+
+    ver="`$prog --version | head -n 1 | cut -d\  -f 4`"
+    if test "$ver" != "$target"; then 
+        cat <<EOF
+ERROR: Program "$prog" does not have the correct/expected version:
+       Found: $ver
+
+Expected versions:
+Automake: $AM_TARGET_VERSION
+Autoconf: $AC_TARGET_VERSION
+Libtool:  $LT_TARGET_VERSION
+
+Either change this script to match the found version, or install
+the correct version of the tools.
+EOF
+        exit 1
+    fi
+}
+
+echo "*** Checking GNU tools versions..."
+check_gnu_version automake $AM_TARGET_VERSION
+check_gnu_version autoconf $AC_TARGET_VERSION
+check_gnu_version libtool $LT_TARGET_VERSION
+
+#
+# Verify that we're in a top trillium dir
+#
+echo "*** Checking to ensure in top-level Open MPI directory..."
+if test -f VERSION -a -f configure.ac -a -f config/ompi_setup_cc.m4; then
+    happy=1
+else
+    echo "Do not appear to be in an Open MPI top directory.  Abort!"
+    exit 1
+fi
+
+#
+# Do svn up and all that
+#
+echo "*** Removing old VERSION files..."
+find . -name VERSION -exec rm -f {} \; -print
+
+echo "*** Running svn up..."
+svn up
+if test ! "$?" = "0"; then
+    echo "SVN update failed.  Aborting"
+    exit 1
+fi
+
+#
+# Ditch "svn" from all version numbers
+#
+echo "*** Removing svn version numbers..."
+svn_r="r`svnversion .`"
+version_files="`find . -name VERSION`"
+for file in $version_files; do
+    echo " - $file"
+    sed -e 's/^want_svn=.*/want_svn=0/' \
+        -e 's/^svn_r=.*/'svn_r=$svn_r/ $file > $file.new
+    cp -f $file.new $file
+    rm $file.new
+done
+
+#
+# Autogen
+#
+echo "*** Running autogen.sh..."
+./autogen.sh 2>&1 | tee auto.out
+if test ! "$?" = "0"; then
+    echo "Autogen failed.  Aborting"
+    exit 1
+fi
+
+#
+# Configure
+#
+echo "*** Running configure..."
+./configure --enable-dist 2>&1 | tee config.out
+if test ! "$?" = "0"; then 
+    echo "Configure failed.  Aborting"
+    exit 1
+fi
+
+#
+# Sanity check
+#
+echo "*** Sanity check..."
+file="src/mca/ptl/gm/ptl_gm_peer.h"
+if test ! -f "$file"; then
+    echo "Configure failed - no file: $file"
+    exit 1
+fi
+
+#
+# Remove autogen.sh 
+#
+
+echo "*** Removing autogen.sh from the tarball before make dist"
+rm -rf autogen.sh
+
+#
+# make tarball
+#
+echo "*** Running make dist..."
+make dist 2>&1 | tee dist.out
+if test ! "$?" = "0"; then
+    echo "Make dist failed.  Aborting"
+    exit 1
+fi
+
+#
+# move
+#
+echo "*** Moving tarballs..."
+mv openmpi-* ..
+
+echo "*** All done"
+
+#
+# bring back autogen.sh
+#
+
+svn up autogen.sh
