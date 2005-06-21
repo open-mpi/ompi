@@ -340,6 +340,11 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 mca_bmi_base_descriptor_t* ctl;
                 int rc;
 
+                /*
+                 * if the memory is already registed - use the NICs that its
+                 * registed with. Otherwise, schedule round-robin across the
+                 * available RDMA nics.
+                */
                 if(recvreq->req_mpool == NULL) {
                     ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_rdma);
 
@@ -379,6 +384,8 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     recvreq->pin2[recvreq->pin_index] = get_profiler_timestamp();
 #endif
                 } else {
+
+                    /* find the endpoint corresponding to this bmi and schedule the entire message */
                     ep = mca_pml_ob1_ep_array_find(&proc->bmi_rdma, recvreq->req_mpool->bmi_module);
                     size = bytes_remaining;
 
