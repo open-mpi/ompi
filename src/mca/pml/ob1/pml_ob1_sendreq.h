@@ -21,6 +21,7 @@
 
 #include "mca/bmi/bmi.h"
 #include "mca/pml/base/pml_base_sendreq.h"
+#include "mca/mpool/base/base.h"
 #include "pml_ob1_proc.h"
 #include "pml_ob1_comm.h"
 #include "pml_ob1_hdr.h"
@@ -43,6 +44,7 @@ struct mca_pml_ob1_send_request_t {
     mca_pml_ob1_proc_t* req_proc;
     mca_pml_ob1_endpoint_t* req_endpoint;
     mca_pml_ob1_send_request_state_t req_state;
+    struct mca_mpool_base_chunk_t* req_chunk;
     ompi_ptr_t req_recv;
     int32_t req_lock;
     size_t req_pipeline_depth;
@@ -174,6 +176,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq);                                       \
     sendreq->req_pipeline_depth = 0;                                                      \
     sendreq->req_bytes_delivered = 0;                                                     \
+    sendreq->req_chunk = NULL;                                                            \
     sendreq->req_send_offset = 0;                                                         \
     sendreq->req_state = MCA_PML_OB1_SR_START;                                            \
     sendreq->req_send.req_base.req_ompi.req_complete = false;                             \
