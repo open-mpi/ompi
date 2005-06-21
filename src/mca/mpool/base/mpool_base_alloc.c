@@ -55,7 +55,10 @@ int mca_mpool_base_tree_node_compare(void * key1, void * key2)
     }
 }
 
-int mca_mpool_base_insert(void * addr, size_t size, mca_mpool_base_module_t* mpool, void*  user_data)
+int mca_mpool_base_insert(void * addr, size_t size, 
+    mca_mpool_base_module_t* mpool, 
+    struct mca_bmi_base_module_t* bmi,
+    struct mca_bmi_base_registration_t* registration)
 {
     ompi_list_item_t *item; 
     int rc; 
@@ -70,7 +73,8 @@ int mca_mpool_base_insert(void * addr, size_t size, mca_mpool_base_module_t* mpo
     if(rc != OMPI_SUCCESS) 
         return rc; 
     ((mca_mpool_base_chunk_t *) item)->mpools[0].mpool = mpool; 
-    ((mca_mpool_base_chunk_t *) item)->mpools[0].user = user_data;
+    ((mca_mpool_base_chunk_t *) item)->mpools[0].bmi_module = bmi;
+    ((mca_mpool_base_chunk_t *) item)->mpools[0].bmi_registration = registration;
     return OMPI_SUCCESS; 
 }
 
@@ -122,12 +126,12 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     int num_modules = ompi_list_get_size(&mca_mpool_base_modules);
     int reg_module_num = 0;
     int i, num_keys;
-    mca_mpool_base_module_t * current;
-    mca_mpool_base_module_t * no_reg_function = NULL;
-    mca_mpool_base_module_t ** has_reg_function = (mca_mpool_base_module_t **) 
+    mca_mpool_base_selected_module_t * current;
+    mca_mpool_base_selected_module_t * no_reg_function = NULL;
+    mca_mpool_base_selected_module_t ** has_reg_function = (mca_mpool_base_selected_module_t **) 
                            malloc(num_modules * sizeof(mca_mpool_base_module_t *));
+    struct mca_bmi_base_registration_t * registration;
     void * mem = NULL;
-    void * user;
     char * key;
     bool match_found;
 
@@ -137,8 +141,8 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
             item != ompi_list_get_end(&mca_mpool_base_modules);
             item = ompi_list_get_next(item)) 
         {
-            current = ((mca_mpool_base_selected_module_t *) item)->mpool_module;
-            if(NULL == current->mpool_register)
+            current = ((mca_mpool_base_selected_module_t *) item);
+            if(NULL == current->mpool_module->mpool_register)
             {
                 no_reg_function = current;
             }
@@ -160,12 +164,12 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
                 item != ompi_list_get_end(&mca_mpool_base_modules);
                 item = ompi_list_get_next(item)) 
             {
-                current = ((mca_mpool_base_selected_module_t *)item)->mpool_module;
+                current = ((mca_mpool_base_selected_module_t *)item);
                 if(0 == strcmp(key, 
-                       current->mpool_component->mpool_version.mca_component_name))
+                       current->mpool_module->mpool_component->mpool_version.mca_component_name))
                 {
                     match_found = true;
-                    if(NULL == current->mpool_register)
+                    if(NULL == current->mpool_module->mpool_register)
                     {
                         if(NULL != no_reg_function)
                         {
@@ -227,29 +231,32 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     num_modules = 0;
     if(NULL != no_reg_function)
     {
-        mem = no_reg_function->mpool_alloc(no_reg_function, size, 0, &user);
+        mca_mpool_base_module_t* mpool = no_reg_function->mpool_module;
+        mem = mpool->mpool_alloc(mpool, size, 0, &registration);
         ((mca_mpool_base_chunk_t *) item)->key.bottom = mem;
-        ((mca_mpool_base_chunk_t *) item)->key.top = (void *) 
-                                                     ((char *) mem + size - 1);
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool = 
-                                                                  no_reg_function;
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules++].user = user;
+        ((mca_mpool_base_chunk_t *) item)->key.top = (void *)((char *) mem + size - 1);
+        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool = mpool;
+        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].bmi_module = no_reg_function->mpool_bmi;
+        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules++].bmi_registration = registration;
         num_modules++;
     }
     else
     {
-        mem = has_reg_function[i]->mpool_alloc(has_reg_function[i], size, 0, &user);
+        mca_mpool_base_module_t* mpool = has_reg_function[i]->mpool_module;
+        mem = mpool->mpool_alloc(mpool, size, 0, &registration);
         ((mca_mpool_base_chunk_t *) item)->key.bottom = mem;
         ((mca_mpool_base_chunk_t *) item)->key.top = (void *) ((char *) mem + size - 1);
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool = has_reg_function[i++];
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules++].user = user;
+        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool = mpool;
+        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].bmi_module = has_reg_function[i]->mpool_bmi;
+        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules++].bmi_registration = registration;
+        i++;
         num_modules++;
     }
     
     while(i < reg_module_num && MCA_MPOOL_BASE_MAX_REG > num_modules)
     {
-        if(OMPI_SUCCESS != has_reg_function[i]->mpool_register(has_reg_function[i],
-                                                               mem, size, &user))
+        mca_mpool_base_module_t* mpool = has_reg_function[i]->mpool_module;
+        if(OMPI_SUCCESS != mpool->mpool_register(mpool, mem, size, &registration))
         {
             if(info == &ompi_mpi_info_null)
             {
@@ -261,8 +268,11 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
             free(has_reg_function);
             return NULL;
         }
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool = has_reg_function[i++];
-        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules++].user = user;
+        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool = mpool;
+        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].bmi_module = has_reg_function[i]->mpool_bmi;
+        ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].bmi_registration = registration;
+        num_modules++;
+        i++;
     }
 
     if(MCA_MPOOL_BASE_MAX_REG > num_modules)

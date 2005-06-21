@@ -32,11 +32,12 @@ extern "C" {
 
 
 static inline  void * DOWN_ALIGN_ADDR(void * addr, uint32_t cnt) { 
-    return (MT_virt_addr_t)(addr) & (~((MT_virt_addr_t)0) << (cnt)); 
+    return (void*)((MT_virt_addr_t)(addr) & (~((MT_virt_addr_t)0) << (cnt))); 
 }
 
 static inline void*  ALIGN_ADDR(void* addr, uint32_t cnt ) { 
     DOWN_ALIGN_ADDR(((addr) +  ~(~((MT_virt_addr_t)0) << (cnt))), (cnt)); 
+    return addr;
 } 
 
 
@@ -54,8 +55,8 @@ OMPI_COMP_EXPORT extern mca_mpool_vapi_component_t mca_mpool_vapi_component;
 struct mca_mpool_vapi_module_t {
   mca_mpool_base_module_t super;
   mca_allocator_base_module_t * vapi_allocator; 
-  mca_common_vapi_hca_pd_t  hca_pd;
-  mca_common_vapi_memhandle_t mem_hndl; 
+  mca_bmi_base_resources_t  hca_pd;
+  mca_bmi_base_registration_t mem_hndl; 
 }; typedef struct mca_mpool_vapi_module_t mca_mpool_vapi_module_t; 
 
 /* 
@@ -72,17 +73,34 @@ void* mca_mpool_vapi_base(mca_mpool_base_module_t*);
 /**
   *  Allocate block of shared memory.
   */
-void* mca_mpool_vapi_alloc( mca_mpool_base_module_t* mpool, size_t size, size_t align, void** user_out);
+void* mca_mpool_vapi_alloc( 
+    mca_mpool_base_module_t* mpool, 
+    size_t size, 
+    size_t align, 
+    struct mca_bmi_base_registration_t** registration);
 
 /**
   * realloc function typedef
   */
-void* mca_mpool_vapi_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size, void** user_out);
+void* mca_mpool_vapi_realloc(
+    mca_mpool_base_module_t* mpool, 
+    void* addr, 
+    size_t size, 
+    struct mca_bmi_base_registration_t** registration);
 
 /**
   * register function typedef
   */
-    int mca_mpool_vapi_register(mca_mpool_base_module_t* mpool, void *addr, size_t size, void** user_out); 
+int mca_mpool_vapi_register(
+    mca_mpool_base_module_t* mpool, 
+    void *addr, 
+    size_t size, 
+    struct mca_bmi_base_registration_t** registration);
+
+int mca_mpool_vapi_deregister(
+    mca_mpool_base_module_t* mpool, 
+    void *addr, 
+    size_t size);
 
 
 /**
@@ -90,7 +108,10 @@ void* mca_mpool_vapi_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t 
   */
 void mca_mpool_vapi_free(mca_mpool_base_module_t* mpool, void *);
 
-void* mca_common_vapi_segment_alloc(size_t* size, void* user_in, void** user_out);
+void* mca_common_vapi_segment_alloc(
+    struct mca_mpool_base_module_t* module, 
+    size_t* size, 
+    struct mca_bmi_base_registration_t** registration);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

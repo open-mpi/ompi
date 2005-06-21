@@ -25,6 +25,10 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+struct mca_mpool_base_module_t;
+struct mca_bmi_base_registration_t;
+
 struct mca_common_sm_file_header_t {
 
     /* lock to control atomic access */
@@ -86,10 +90,16 @@ OBJ_CLASS_DECLARATION(mca_common_sm_mmap_t);
  *  @returnvalue pointer to control structure at head of file.
  */
 
-mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
-                size_t size_ctl_structure, size_t data_seg_alignment);
-void* mca_common_sm_mmap_alloc(size_t* size, void* user_in, void** user_out);
-void  mca_common_sm_mmap_free(void* addr);
+extern mca_common_sm_mmap_t* mca_common_sm_mmap_init(
+    size_t size, 
+    char *file_name,
+    size_t size_ctl_structure, 
+    size_t data_seg_alignment);
+
+extern void* mca_common_sm_mmap_seg_alloc(
+    struct mca_mpool_base_module_t* mpool, 
+    size_t* size, 
+    struct mca_bmi_base_registration_t** registration);
 
 /*
  * Instance that is shared between components that use shared memory

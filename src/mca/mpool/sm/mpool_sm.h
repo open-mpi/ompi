@@ -62,17 +62,27 @@ void* mca_mpool_sm_base(mca_mpool_base_module_t*);
 /**
   *  Allocate block of shared memory.
   */
-void* mca_mpool_sm_alloc( mca_mpool_base_module_t* mpool, size_t size, size_t align, void** user_out);
+void* mca_mpool_sm_alloc( 
+    mca_mpool_base_module_t* mpool, 
+    size_t size, 
+    size_t align, 
+    struct mca_bmi_base_registration_t** registration);
 
 /**
   * realloc function typedef
   */
-void* mca_mpool_sm_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size, void** user_out);
+void* mca_mpool_sm_realloc(
+    mca_mpool_base_module_t* mpool, 
+    void* addr, 
+    size_t size, 
+    struct mca_bmi_base_registration_t** registration);
 
 /**
   * free function typedef
   */
-void mca_mpool_sm_free(mca_mpool_base_module_t* mpool, void *);
+void mca_mpool_sm_free(
+    mca_mpool_base_module_t* mpool, 
+    void *);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

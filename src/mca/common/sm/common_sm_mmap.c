@@ -32,10 +32,10 @@
 #endif
 
 #include "include/constants.h"
+#include "common_sm_mmap.h"
 #include "util/output.h"
 #include "util/sys_info.h"
 #include "util/proc_info.h"
-#include "common_sm_mmap.h"
 
 
 OBJ_CLASS_INSTANCE(
@@ -212,7 +212,11 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
  * 
  *  @retval addr virtual address
  */
-void* mca_common_sm_mmap_alloc(size_t* size, void* user_in, void** user_out)
+
+void* mca_common_sm_mmap_seg_alloc(
+    struct mca_mpool_base_module_t* mpool,
+    size_t* size,
+    struct mca_bmi_base_registration_t** registration)
 {
     mca_common_sm_mmap_t* map = mca_common_sm_mmap;
     mca_common_sm_file_header_t* seg = map->map_seg;
@@ -226,8 +230,8 @@ void* mca_common_sm_mmap_alloc(size_t* size, void* user_in, void** user_out)
         addr = map->data_addr + seg->seg_offset;
         seg->seg_offset += *size;
     }
+    *registration = NULL;
     ompi_atomic_unlock(&seg->seg_lock);
     return addr;
 }
-
 

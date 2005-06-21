@@ -32,10 +32,11 @@
    * Initializes the mca_allocator_bucket_options_t data structure for the passed
    * parameters.
    */
-mca_allocator_bucket_t * mca_allocator_bucket_init(mca_allocator_base_module_t * mem,
-                                   int num_buckets,
-                                   mca_allocator_base_component_segment_alloc_fn_t get_mem_funct,
-                                   mca_allocator_base_component_segment_free_fn_t free_mem_funct)
+mca_allocator_bucket_t * mca_allocator_bucket_init(
+    mca_allocator_base_module_t * mem,
+    int num_buckets,
+    mca_allocator_base_component_segment_alloc_fn_t get_mem_funct,
+    mca_allocator_base_component_segment_free_fn_t free_mem_funct)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     int i;
@@ -67,8 +68,10 @@ mca_allocator_bucket_t * mca_allocator_bucket_init(mca_allocator_base_module_t *
    * region or NULL if there was an error
    *
    */
-void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
-                                  size_t size, void** user_out)
+void * mca_allocator_bucket_alloc(
+    mca_allocator_base_module_t * mem,
+    size_t size, 
+    struct mca_bmi_base_registration_t** registration)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     /* initialize for the later bit shifts */
@@ -107,7 +110,7 @@ void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
     allocated_size += sizeof(mca_allocator_bucket_segment_head_t);
     /* attempt to get the memory */
     segment_header = (mca_allocator_bucket_segment_head_t *)
-                   mem_options->get_mem_fn(&allocated_size, mem_options->super.user_in, user_out);
+                   mem_options->get_mem_fn(mem_options->super.alc_mpool, &allocated_size, registration);
     if(NULL == segment_header) {
         /* release the lock */
         OMPI_THREAD_UNLOCK(&(mem_options->buckets[bucket_num].lock)); 
@@ -147,8 +150,11 @@ void * mca_allocator_bucket_alloc(mca_allocator_base_module_t * mem,
 /*
   * allocates an aligned region of memory
   */
-void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem, 
-                                        size_t size, size_t alignment, void** user_out)
+void * mca_allocator_bucket_alloc_align(
+    mca_allocator_base_module_t * mem, 
+    size_t size, 
+    size_t alignment, 
+    struct mca_bmi_base_registration_t** registration)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem; 
     int bucket_num = 1;
@@ -168,7 +174,7 @@ void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem,
     bucket_size = size + sizeof(mca_allocator_bucket_chunk_header_t);
     allocated_size = aligned_max_size; 
     /* get some memory */ 
-    ptr = mem_options->get_mem_fn(&allocated_size, mem_options->super.user_in, user_out);
+    ptr = mem_options->get_mem_fn(mem_options->super.alc_mpool, &allocated_size, registration);
     if(NULL == ptr) {
         return(NULL);
     }
@@ -227,8 +233,11 @@ void * mca_allocator_bucket_alloc_align(mca_allocator_base_module_t * mem,
 /*
   * function to reallocate the segment of memory
   */
-void * mca_allocator_bucket_realloc(mca_allocator_base_module_t * mem,
-                                    void * ptr, size_t size, void** user_out)
+void * mca_allocator_bucket_realloc(
+    mca_allocator_base_module_t * mem,
+    void * ptr, 
+    size_t size, 
+    struct mca_bmi_base_registration_t** registration)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     /* initialize for later bit shifts */
@@ -249,7 +258,7 @@ void * mca_allocator_bucket_realloc(mca_allocator_base_module_t * mem,
         return(ptr);
     }
     /* we need a new space in memory, so let's get it */
-    ret_ptr = mca_allocator_bucket_alloc((mca_allocator_base_module_t *) mem_options, size, user_out);
+    ret_ptr = mca_allocator_bucket_alloc((mca_allocator_base_module_t *) mem_options, size, registration);
     if(NULL == ret_ptr) {
         /* we were unable to get a larger area of memory */
         return(NULL);
@@ -329,7 +338,7 @@ int mca_allocator_bucket_cleanup(mca_allocator_base_module_t * mem)
                 *segment_header = segment->next_segment;
                 /* free the memory */
                 if(mem_options->free_mem_fn)
-                    mem_options->free_mem_fn(segment);
+                    mem_options->free_mem_fn(mem->alc_mpool, segment);
             } else {
                 /* go to next segment */
                 segment_header = &((*segment_header)->next_segment);
