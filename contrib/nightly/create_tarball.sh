@@ -163,9 +163,15 @@ mkdir "$logdir"
 # checkout a clean version
 do_command "svn co $svnroot ompi"
 
-# lets work on it
+# ensure that we append the SVN number on the official version number
 cd ompi
 svnversion="`svnversion .`"
+version_files="`find . -name VERSION`"
+for file in $version_files; do
+    sed -e 's/^want_svn=.*/want_svn=1/' \
+        's/^svn_r=.*/svn_r='$svnversion/ $file > $file.new
+    mv -f $file.new $file
+done
 
 # lie about our username in $USER so that autogen will skip all
 # .ompi_ignore'ed directories (i.e., so that we won't get 

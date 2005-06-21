@@ -83,11 +83,14 @@ fi
 # Ditch "svn" from all version numbers
 #
 echo "*** Removing svn version numbers..."
+svn_r="r`svnversion .`"
 version_files="`find . -name VERSION`"
 for file in $version_files; do
     echo " - $file"
-    sed -e 's/want_svn=1/want_svn=0/' $file > $file.new
-    mv -f $file.new $file
+    sed -e 's/^want_svn=.*/want_svn=0/' \
+        -e 's/^svn_r=.*/'svn_r=$svn_r/ $file > $file.new
+    cp -f $file.new $file
+    rm $file.new
 done
 
 #
