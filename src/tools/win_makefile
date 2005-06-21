@@ -50,6 +50,7 @@ CFLAGS = \
         /DWIN32 \
         /DHAVE_CONFIG_H \
         /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
+        /DOMPI_BUILDING_WIN_DSO=1 \
         /EHsc \
         /ML \
         /W0 \
@@ -65,6 +66,7 @@ CPPFLAGS = \
         /TP \
         /DHAVE_CONFIG_H \
         /DOMPI_SYSCONFDIR="\"${installdir}/share\"" \
+		  /DOMPI_BUILDING_WIN_DSO=1 \
         /EHsc \
         /ML \
         /W0 \
@@ -75,13 +77,14 @@ CPPFLAGS = \
         /c
 
 ADD_INCL = \
-        /DOMPI_WANT_F90_BINDINGS="\"not implemented\"" \
-        /DOMPI_WANT_F90_BINDINGS="\"not implemented\"" \
+        /DOMPI_BUILD_USER="\"not implemented\"" \
+        /DOMPI_BUILD_DATE="\"not implemented\"" \
+        /DOMPI_BUILD_HOST="\"not implemented\"" \
+        /DOMPI_WANT_SVN="\"not implemented\"" \
+        /DOMPI_SVN_R="\"not implemented\"" \
         /DOMPI_CONFIGURE_USER="\"not implemented\"" \
         /DOMPI_CONFIGURE_DATE="\"not implemented\"" \
         /DOMPI_CONFIGURE_HOST="\"not implemented\"" \
-        /DOMPI_F90="\"not implemented\"" \
-        /DOMPI_WANT_F90_BINDINGS="\"not implemented\"" \
         /DOMPI_BUILD_CFLAGS="\"not implemented\"" \
         /DOMPI_BUILD_CXXFLAGS="\"not implemented\"" \
         /DOMPI_BUILD_FFLAGS="\"not implemented\"" \
@@ -134,12 +137,14 @@ all: \
 
 cexes: ${C_SUBDIRS}
 	@for dirs in ${C_SUBDIRS}; do \
-	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} *.obj;); \
+	    (echo "Entering $$dirs"; cd $$dirs; \
+			${CC} ${CFLAGS} ${INCL} *.c; ${LINK} ${LINKFLAGS} ${ADDLIBS} *.obj;); \
 	done
 
 cppexecs: ${CPP_SUBDIRS}
 	@for dirs in ${CPP_SUBDIRS}; do \
-	    (echo "Entering $$dirs"; cd $$dirs; ${CC} ${CPPFLAGS} ${INCL} ${ADD_INCL} *.cc; ${LINK} ${LINKFLAGS} ${ADDLIBS} *.obj;); \
+	    (echo "Entering $$dirs"; cd $$dirs; \
+			${CC} ${CPPFLAGS} ${INCL} ${ADD_INCL} *.cc; ${LINK} ${LINKFLAGS} ${ADDLIBS} *.obj;); \
 	done
 
 install: win_makefile

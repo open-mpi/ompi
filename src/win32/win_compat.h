@@ -82,8 +82,10 @@ typedef unsigned int uint;
 /* Ugly signal mapping since windows doesn't support the full spectrum
  * just a very small subset... :/
  * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/vclib/html/_crt_raise.asp
+ * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dnucmg/html/UCMGch09.asp
  */
 #define SIGCHLD SIGILL
+#define SIGKILL WM_QUIT
 
 /* Note: 
  *   The two defines below are likely to break the orte_wait

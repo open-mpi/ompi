@@ -25,7 +25,7 @@
 #include "mca/soh/soh_types.h"
 #include "mca/gpr/gpr.h"
 #include "mca/ns/ns.h"
-#include "ras_base_node.h"
+#include "mca/ras/base/ras_base_node.h"
 
 static void orte_ras_base_node_construct(orte_ras_base_node_t* node)
 {

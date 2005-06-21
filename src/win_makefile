@@ -70,6 +70,15 @@ C_SUBDIRS =  \
         mca/oob/base \
         mca/pml/base \
         mca/ptl/base \
+        mca/pls/base \
+        mca/pls/fork \
+        mca/pls/proxy \
+        mca/pls/rsh \
+        mca/ras/base \
+        mca/ras/host \
+        mca/rds/base \
+        mca/rds/hostfile \
+        mca/rds/resfile \
         mca/topo/base \
         mca/schema/base \
         win32/generated_source \
@@ -145,6 +154,9 @@ STATIC_LIBS = \
         ptl\
         oob\
         pml\
+        pls\
+        ras \
+        rds \
         schema \
         iof
 
@@ -184,15 +196,19 @@ prebuild:
 	@echo "Creating mca_base_parse_paramfile_lex.c"
 	@/usr/bin/flex -t -Pmca_base_yy "${topdir}/src/mca/base/mca_base_parse_paramfile_lex.l" \
                 >"${topdir}/src/mca/base/mca_base_parse_paramfile_lex.c" 2>/dev/null
-#	@echo "Creating mca_llm_base_parse_hostfile_lex.c"
-#	@/usr/bin/flex -t -Pmca_llm_base_yy "${topdir}/src/mca/llm/base/llm_base_parse_hostfile_lex.l" \
-#                > "${topdir}/src/mca/llm/base/mca_llm_base_parse_hostfile_lex.c" 2>/dev/null
+	@echo "Creating mca_rds_hostfile_lex.c"
+	@/usr/bin/flex -t -Porte_rds_hostfile_ "${topdir}/src/mca/rds/hostfile/rds_hostfile_lex.l" \
+                > "${topdir}/src/mca/rds/hostfile/rds_hostfile_lex.c" 2>/dev/null
 	@echo "Creating show_help_lex.c"
 	@/usr/bin/flex -t -Pompi_show_help_yy "${topdir}/src/util/show_help_lex.l" \
                 > "${topdir}/src/util/show_help_lex.c" 2>/dev/null
 	@for dirs in ${STATIC_LIBS}; do \
         (dir="mca/$${dirs}/base"; echo "Making Static components in $${dirs}"; comp_name="$${dirs}_static-components.h"; cp "${topdir}/src/win32/generated_include/$${comp_name}" "$${dir}/static-components.h";); \
      done
+	@echo "Creating Version Headers"
+	@cp "${topdir}/src/win32/generated_include/pls-fork-version.h"  "${topdir}/src/mca/pls/fork/pls-fork-version.h";
+	@cp "${topdir}/src/win32/generated_include/pls-proxy-version.h" "${topdir}/src/mca/pls/proxy/pls-proxy-version.h";
+	@cp "${topdir}/src/win32/generated_include/pls-rsh-version.h"   "${topdir}/src/mca/pls/rsh/pls-rsh-version.h";
 	@for dirs in ${C_SUBDIRS}; do \
 	    (echo "Entering $${dirs}"; cd $$dirs; if test -f .compile_files; then (more .compile_files| xargs -i'{}' ln -f '{}' ${topdir}/src/Debug/'{}'); else (ls *.c 2>/dev/null | xargs -i'{}' ln -f '{}' ${topdir}/src/Debug/'{}'); fi); \
 	done

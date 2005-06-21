@@ -1,4 +1,5 @@
 argv.c
+basename.c
 cmd_line.c
 daemon_init.c
 few.c

@@ -22,12 +22,16 @@
 
 #include "orte_config.h"
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
 #include <fcntl.h>
 #include <signal.h>
 
@@ -56,7 +60,7 @@
 #include "mca/rmgr/base/base.h"
 #include "mca/soh/soh.h"
 #include "mca/soh/base/base.h"
-#include "pls_rsh.h"
+#include "mca/pls/rsh/pls_rsh.h"
 
 #define NUM_CONCURRENT 128
 
@@ -111,6 +115,11 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
        This should somehow be pushed up to the calling level, but we
        don't really have a way to do that just yet.
     */
+#ifdef WIN32
+    printf("This is not implemented yet for windows\n");
+    ORTE_ERROR_LOG(ORTE_ERROR);
+    return;
+#else
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
         /* get the mapping for our node so we can cancel the right things */
         OBJ_CONSTRUCT(&map, ompi_list_t);
@@ -154,6 +163,7 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
         			info->node->node_name);
         ompi_output(0, "ERROR: There may be more information available from");
         ompi_output(0, "ERROR: the remote shell (see above).");
+
         if (WIFEXITED(status)) {
             ompi_output(0, "ERROR: The daemon exited unexpectedly with status %d.",
                    WEXITSTATUS(status));
@@ -172,6 +182,7 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             ompi_output(0, "No extra status information is available: %d.", status);
         }
     }
+#endif /* WIN32 */
 
     /* release any waiting threads */
     OMPI_THREAD_LOCK(&mca_pls_rsh_component.lock);
@@ -263,6 +274,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      * to launch on each node.
      */
     OBJ_CONSTRUCT(&nodes, ompi_list_t);
+
     rc = orte_ras_base_node_query_alloc(&nodes, jobid);
     if(ORTE_SUCCESS != rc) {
         goto cleanup;
@@ -389,7 +401,43 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         }
 
         /* rsh a child to exec the rsh/ssh session */
+#ifdef WIN32
+        printf("Unimplemented feature for windows\n");
+        return;
+#if 0
+ {
+    /* Do fork the windows way: see ompi_few() for example */
+    HANDLE new_process;
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    DWORD process_id;
+
+    ZeroMemory (&si, sizeof(si));
+    ZeroMemory (&pi, sizeof(pi));
+
+    GetStartupInfo (&si);
+    if (!CreateProcess (NULL,
+                        "new process",
+                        NULL,
+                        NULL,
+                        TRUE,
+                        0,
+                        NULL,
+                        NULL,
+                        &si,
+                        &pi)){
+       /* actual error can be got by simply calling GetLastError() */
+       return OMPI_ERROR;
+    }
+    /* get child pid */
+    process_id = GetProcessId(&pi);
+    pid = (int) process_id;
+ }
+#endif
+
+#else
         pid = fork();
+#endif
         if(pid < 0) {
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto cleanup;
@@ -449,9 +497,11 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
             set_handler_default(SIGTERM);
             set_handler_default(SIGINT);
+#ifndef WIN32
             set_handler_default(SIGHUP);
-            set_handler_default(SIGCHLD);
             set_handler_default(SIGPIPE);
+#endif
+            set_handler_default(SIGCHLD);
 
             /* Unblock all signals, for many of the same reasons that
                we set the default handlers, above.  This is noticable
@@ -460,9 +510,10 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                specifically, we don't want it to be blocked by the
                orted and then inherited by the ORTE processes that it
                forks, making them unkillable by SIGTERM). */
-
+#ifndef WIN32
             sigprocmask(0, 0, &sigs);
             sigprocmask(SIG_UNBLOCK, &sigs, 0);
+#endif
 
             /* setup environment */
             env = ompi_argv_copy(environ);
@@ -741,6 +792,7 @@ static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid)
 
 static void set_handler_default(int sig)
 {
+#ifndef WIN32
     struct sigaction act;
 
     act.sa_handler = SIG_DFL;
@@ -748,4 +800,5 @@ static void set_handler_default(int sig)
     sigemptyset(&act.sa_mask);
 
     sigaction(sig, &act, (struct sigaction *)0);
+#endif
 }

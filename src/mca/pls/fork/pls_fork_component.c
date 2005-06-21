@@ -22,13 +22,15 @@
 
 #include "ompi_config.h"
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "include/orte_constants.h"
 #include "util/argv.h"
 #include "util/path.h"
 #include "mca/pls/pls.h"
-#include "pls_fork.h"
+#include "mca/pls/fork/pls_fork.h"
 #include "mca/pls/fork/pls-fork-version.h"
 #include "mca/base/mca_base_param.h"
 

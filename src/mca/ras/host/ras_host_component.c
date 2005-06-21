@@ -20,7 +20,7 @@
 #include "mca/base/mca_base_param.h"
 #include "util/proc_info.h"
 #include "util/output.h"
-#include "ras_host.h"
+#include "mca/ras/host/ras_host.h"
 
 /*
  * Local functions

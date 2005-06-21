@@ -21,7 +21,7 @@
 #include "util/proc_info.h"
 #include "util/output.h"
 #include "util/os_path.h"
-#include "rds_hostfile.h"
+#include "mca/rds/hostfile/rds_hostfile.h"
 
 /*
  * Local functions
@@ -93,6 +93,10 @@ static char* orte_rds_hostfile_param_register_string(
   */
 static int orte_rds_hostfile_open(void)
 {
+#ifdef WIN32
+   printf("Unimplemented feature for windows\n");
+   return ORTE_ERROR;
+#else
     char *path = orte_os_path(false, ORTE_SYSCONFDIR, "openmpi-default-hostfile", NULL);
     OBJ_CONSTRUCT(&mca_rds_hostfile_component.lock, ompi_mutex_t);
     mca_rds_hostfile_component.debug = orte_rds_hostfile_param_register_int("debug",1);
@@ -100,6 +104,7 @@ static int orte_rds_hostfile_open(void)
     mca_rds_hostfile_component.default_hostfile = (strcmp(mca_rds_hostfile_component.path,path) == 0);
     free(path);
     return ORTE_SUCCESS;
+#endif
 }
 
 

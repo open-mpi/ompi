@@ -22,7 +22,7 @@
 #include "mca/errmgr/errmgr.h"
 #include "mca/ns/ns.h"
 
-#include "rds_resfile.h"
+#include "mca/rds/resfile/rds_resfile.h"
 
 #define ORTE_RDS_RESFILE_MAX_LINE_LENGTH 512
 

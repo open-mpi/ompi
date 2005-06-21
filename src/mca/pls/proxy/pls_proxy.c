@@ -24,7 +24,7 @@
 
 #include "include/orte_constants.h"
 #include "mca/pls/pls.h"
-#include "pls_proxy.h"
+#include "mca/pls/proxy/pls_proxy.h"
 
 
 /*

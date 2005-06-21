@@ -20,7 +20,7 @@
 #include "mca/base/mca_base_param.h"
 #include "util/proc_info.h"
 #include "util/output.h"
-#include "rds_resfile.h"
+#include "mca/rds/resfile/rds_resfile.h"
 
 /*
  * Local functions

@@ -29,8 +29,8 @@
 #include "mca/ns/ns.h"
 #include "mca/ras/base/ras_base_node.h"
 #include "mca/errmgr/errmgr.h"
-#include "rds_hostfile.h"
-#include "rds_hostfile_lex.h"
+#include "mca/rds/hostfile/rds_hostfile.h"
+#include "mca/rds/hostfile/rds_hostfile_lex.h"
 
 #include "runtime/runtime_types.h"
 
