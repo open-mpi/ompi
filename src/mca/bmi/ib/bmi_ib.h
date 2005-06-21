@@ -131,8 +131,12 @@ struct mca_bmi_ib_module_t {
 
     
     ompi_list_t repost;            /**< list of buffers to repost */
+    ompi_mutex_t ib_lock;          /**< module level lock */ 
+    
+
     mca_mpool_base_module_t* ib_pool;  /**< ib memory pool */
     
+
     uint32_t rr_posted_high;  /**< number of high priority rr posted to the nic*/ 
     uint32_t rr_posted_low;  /**< number of low priority rr posted to the nic*/ 
     

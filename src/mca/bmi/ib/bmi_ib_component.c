@@ -276,7 +276,9 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
         a distinct bmi module for each hca port */ 
 
     OBJ_CONSTRUCT(&bmi_list, ompi_list_t); 
-    
+    OBJ_CONSTRUCT(&mca_bmi_ib_component.ib_lock, ompi_mutex_t);
+
+
     for(i = 0; i < num_hcas; i++){  
         vapi_ret = EVAPI_get_hca_hndl(hca_ids[i], &hca_hndl); 
         if(VAPI_OK != vapi_ret) { 
@@ -351,6 +353,8 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
         
 
         /* Initialize module state */
+
+        OBJ_CONSTRUCT(&ib_bmi->ib_lock, ompi_mutex_t); 
         OBJ_CONSTRUCT(&ib_bmi->send_free_eager, ompi_free_list_t);
         OBJ_CONSTRUCT(&ib_bmi->send_free_max, ompi_free_list_t);
         OBJ_CONSTRUCT(&ib_bmi->send_free_frag, ompi_free_list_t);

@@ -69,7 +69,7 @@ int mca_bmi_ib_add_procs(
     int i, rc;
 
     for(i = 0; i < (int) nprocs; i++) {
-
+        
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_bmi_ib_proc_t* ib_proc;
         mca_bmi_base_endpoint_t* ib_peer;
@@ -130,8 +130,12 @@ int mca_bmi_ib_register(
 {
     /* TODO add register stuff here... */ 
     mca_bmi_ib_module_t* ib_bmi = (mca_bmi_ib_module_t*) bmi; 
+    
+
+    OMPI_THREAD_LOCK(&ib->bmi.ib_lock); 
     ib_bmi->ib_reg[tag].cbfunc = cbfunc; 
     ib_bmi->ib_reg[tag].cbdata = cbdata; 
+    OMPI_THREAD_UNLOCK(&ib->bmi.ib_lock); 
     return OMPI_SUCCESS;
 }
 

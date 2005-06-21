@@ -105,20 +105,22 @@ int mca_mpool_vapi_register(mca_mpool_base_module_t* mpool, void *addr, size_t s
 /* 
  * deregister memory 
  */ 
-int mca_mpool_vapi_deregister(mca_mpool_base_module_t* mpool, void *addr, size_t size){
+int mca_mpool_vapi_deregister(mca_mpool_base_module_t* mpool, void *addr, size_t size, 
+                              struct mca_bmi_base_registration_t* registration){
     
     VAPI_ret_t ret; 
     mca_mpool_vapi_module_t * mpool_vapi = (mca_mpool_vapi_module_t*) mpool; 
 
     ret = VAPI_deregister_mr(
                              mpool_vapi->hca_pd.hca, 
-                             mpool_vapi->mem_hndl.hndl
+                             registration->hndl 
                              ); 
     
     if(VAPI_OK != ret){ 
         ompi_output(0, "%s: error unpinning vapi memory\n", __func__); 
         return OMPI_ERROR; 
     }
+    free(registration); 
     return OMPI_SUCCESS; 
 }
 
@@ -138,11 +140,18 @@ void* mca_mpool_vapi_realloc(
 /**
   * free function 
   */
-void mca_mpool_vapi_free(mca_mpool_base_module_t* mpool, void * addr)
+void mca_mpool_vapi_free(mca_mpool_base_module_t* mpool, void * addr,
+                         struct mca_bmi_base_registration_t* registration)
 {
+    
     mca_mpool_vapi_module_t* mpool_vapi = (mca_mpool_vapi_module_t*)mpool; 
+    mpool_vapi->super.mpool_deregister(mpool, addr, 0, registration); 
     mpool_vapi->vapi_allocator->alc_free(mpool_vapi->vapi_allocator, addr);
+    
+    
 }
+
+
 
 
 

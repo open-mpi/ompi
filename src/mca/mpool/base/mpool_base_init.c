@@ -48,7 +48,7 @@ int mca_mpool_base_init(bool enable_progress_threads, bool enable_mpi_threads)
     ompi_free_list_init(&mca_mpool_base_mem_list, sizeof(mca_mpool_base_chunk_t),
                         OBJ_CLASS(mca_mpool_base_chunk_t), 0, -1 , 128, NULL);
     OBJ_CONSTRUCT(&mca_mpool_base_tree, ompi_rb_tree_t);
-    OBJ_CONSTRUCT(&tree_lock, ompi_mutex_t); 
+    OBJ_CONSTRUCT(&mca_mpool_base_tree_lock, ompi_mutex_t); 
 
     return ompi_rb_tree_init(&mca_mpool_base_tree, mca_mpool_base_tree_node_compare);
 }

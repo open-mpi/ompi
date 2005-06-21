@@ -74,7 +74,8 @@ void* mca_mpool_sm_realloc(
 /**
   * free function 
   */
-void mca_mpool_sm_free(mca_mpool_base_module_t* mpool, void * addr)
+void mca_mpool_sm_free(mca_mpool_base_module_t* mpool, void * addr, 
+                       struct mca_bmi_base_registration_t* registration)
 {
     mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
     mpool_sm->sm_allocator->alc_free(mpool_sm->sm_allocator, addr);

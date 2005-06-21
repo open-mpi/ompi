@@ -227,14 +227,14 @@ static inline int ompi_cb_fifo_free( ompi_cb_fifo_t *fifo,
     /* free fifo array */
     if( OMPI_CB_NULL != fifo->queue ){
         ptr=(char *)(fifo->queue)+(size_t)(memory_allocator->mpool_base(memory_allocator));
-        memory_allocator->mpool_free(memory_allocator, ptr);
+        memory_allocator->mpool_free(memory_allocator, ptr, NULL);
         fifo->queue=OMPI_CB_NULL;
     }
 
     /* free head control structure */
     if( OMPI_CB_NULL != fifo->head) {
         ptr=(char *)(fifo->head)+(size_t)(memory_allocator->mpool_base(memory_allocator));
-        memory_allocator->mpool_free(memory_allocator, ptr);
+        memory_allocator->mpool_free(memory_allocator, ptr, NULL);
         fifo->head=OMPI_CB_NULL;
 
     }
@@ -242,7 +242,7 @@ static inline int ompi_cb_fifo_free( ompi_cb_fifo_t *fifo,
     /* free tail control structure */
     if( OMPI_CB_NULL != fifo->tail) {
         ptr=(char *)(fifo->tail)+(size_t)(memory_allocator->mpool_base(memory_allocator));
-        memory_allocator->mpool_free(memory_allocator, ptr);
+        memory_allocator->mpool_free(memory_allocator, ptr, NULL);
         fifo->tail=OMPI_CB_NULL;
     }
 
@@ -550,14 +550,14 @@ static inline int ompi_cb_fifo_free_same_base_addr( ompi_cb_fifo_t *fifo,
     /* free fifo array */
     if( OMPI_CB_NULL != fifo->head ){
         ptr=(char *)(fifo->queue);
-        memory_allocator->mpool_free(memory_allocator, ptr);
+        memory_allocator->mpool_free(memory_allocator, ptr, NULL);
         fifo->queue=OMPI_CB_NULL;
     }
 
     /* free head control structure */
     if( OMPI_CB_NULL != fifo->head) {
         ptr=(char *)(fifo->head);
-        memory_allocator->mpool_free(memory_allocator, ptr);
+        memory_allocator->mpool_free(memory_allocator, ptr, NULL);
         fifo->head=OMPI_CB_NULL;
 
     }
@@ -565,7 +565,7 @@ static inline int ompi_cb_fifo_free_same_base_addr( ompi_cb_fifo_t *fifo,
     /* free tail control structure */
     if( OMPI_CB_NULL != fifo->tail) {
         ptr=(char *)(fifo->tail);
-        memory_allocator->mpool_free(memory_allocator, ptr);
+        memory_allocator->mpool_free(memory_allocator, ptr, NULL);
         fifo->tail=OMPI_CB_NULL;
     }
 
