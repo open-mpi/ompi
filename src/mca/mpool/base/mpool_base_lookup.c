@@ -73,6 +73,8 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     sm = OBJ_NEW(mca_mpool_base_selected_module_t); 
     sm->mpool_component = component; 
     sm->mpool_module = module; 
+    sm->mpool_bmi = bmi;
+    sm->mpool_resources = resources;
     ompi_list_append(&mca_mpool_base_modules, (ompi_list_item_t*) sm); 
     return module; 
 }
