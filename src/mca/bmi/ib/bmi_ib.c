@@ -327,7 +327,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
                         
         if(NULL != registration) { 
             size_t reg_len; 
-            reg_len = registration->bound - iov.iov_base + 1; 
+            reg_len = (unsigned char*)registration->bound - (unsigned char*)iov.iov_base + 1; 
             if(frag->segment.seg_len > reg_len) { 
                 
                 frag->ret = VAPI_deregister_mr(
