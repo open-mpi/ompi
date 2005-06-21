@@ -80,6 +80,12 @@ void* mca_mpool_vapi_alloc( mca_mpool_base_module_t* mpool, size_t size, size_t 
 void* mca_mpool_vapi_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size, void** user_out);
 
 /**
+  * register function typedef
+  */
+    int mca_mpool_vapi_register(mca_mpool_base_module_t* mpool, void *addr, size_t size, void** user_out); 
+
+
+/**
   * free function typedef
   */
 void mca_mpool_vapi_free(mca_mpool_base_module_t* mpool, void *);

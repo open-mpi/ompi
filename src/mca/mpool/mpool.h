@@ -58,7 +58,7 @@ typedef void (*mca_mpool_base_module_free_fn_t)(struct mca_mpool_base_module_t* 
 /**
   * register memory
   */
-typedef int (*mca_mpool_base_module_register_fn_t)(struct mca_mpool_base_module_t* mpool, void * addr, size_t size, void* user_out);
+typedef int (*mca_mpool_base_module_register_fn_t)(struct mca_mpool_base_module_t* mpool, void * addr, size_t size, void** user_out);
 
 /**
   * deregister memory
@@ -170,6 +170,8 @@ OMPI_DECLSPEC int mca_mpool_base_insert(void * addr,
                                         size_t size, 
                                         mca_mpool_base_module_t* mpool, 
                                         void* user_data); 
+
+OMPI_DECLSPEC int mca_mpool_base_remove(void * base); 
 
 /**
  * Macro for use in components that are of type mpool v1.0.0
