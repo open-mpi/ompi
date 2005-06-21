@@ -75,6 +75,28 @@ int mca_mpool_base_insert(void * addr, size_t size, mca_mpool_base_module_t* mpo
 }
 
 /**
+ * Function to remove previously memory from the tree without freeing it
+ *
+ * @param base pointer to the memory to free
+ *
+ * @retval OMPI_SUCCESS
+ * @retval OMPI_ERR_BAD_PARAM if the passed base pointer was invalid
+ */
+int mca_mpool_base_remove(void * base)
+{
+    mca_mpool_base_chunk_t * chunk = mca_mpool_base_find(base);
+    if(NULL == chunk){
+        return OMPI_ERR_BAD_PARAM;
+    }
+    
+    if(OMPI_SUCCESS ==  ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key))
+        return OMPI_SUCCESS; 
+    else 
+        return OMPI_ERROR;
+    
+}
+
+/**
  * Function to allocate special memory according to what the user requests in
  * the info object.
  *
@@ -265,6 +287,7 @@ int mca_mpool_base_free(void * base)
 {
     mca_mpool_base_chunk_t * chunk = mca_mpool_base_find(base);
     int i = 0;
+    int rc; 
 
     if(NULL == chunk)
     {
@@ -276,7 +299,10 @@ int mca_mpool_base_free(void * base)
     {
         free(chunk->key.bottom);
         OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, (ompi_list_item_t*) chunk);
-        return OMPI_SUCCESS;
+        if(OMPI_SUCCESS ==  ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key))
+            return OMPI_SUCCESS; 
+        else 
+            return OMPI_ERROR;
     }
 
     while(MCA_MPOOL_BASE_MAX_REG > i && NULL != chunk->mpools[i].mpool) { i++; };
@@ -290,8 +316,11 @@ int mca_mpool_base_free(void * base)
     }
     chunk->mpools[i].mpool->mpool_free(chunk->mpools[i].mpool, chunk->key.bottom);
     OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, (ompi_list_item_t *) chunk);
-
-    return OMPI_SUCCESS;
+    if(OMPI_SUCCESS ==  ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key))
+        return OMPI_SUCCESS; 
+    else 
+        return OMPI_ERROR;
+    
 }
 
 /**

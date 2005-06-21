@@ -26,14 +26,14 @@
  */ 
 void mca_mpool_vapi_module_init(mca_mpool_vapi_module_t* mpool)
 {
-  mpool->super.mpool_component = &mca_mpool_vapi_component.super; 
-  mpool->super.mpool_base = NULL; /* no base .. */ 
-  mpool->super.mpool_alloc = mca_mpool_vapi_alloc; 
-  mpool->super.mpool_realloc = mca_mpool_vapi_realloc; 
-  mpool->super.mpool_free = mca_mpool_vapi_free; 
-  mpool->super.mpool_register = NULL; 
-  mpool->super.mpool_deregister = NULL; 
-  mpool->super.mpool_finalize = NULL; 
+    mpool->super.mpool_component = &mca_mpool_vapi_component.super; 
+    mpool->super.mpool_base = NULL; /* no base .. */ 
+    mpool->super.mpool_alloc = mca_mpool_vapi_alloc; 
+    mpool->super.mpool_realloc = mca_mpool_vapi_realloc; 
+    mpool->super.mpool_free = mca_mpool_vapi_free; 
+    mpool->super.mpool_register = mca_mpool_vapi_register; 
+    mpool->super.mpool_deregister = NULL; 
+    mpool->super.mpool_finalize = NULL; 
 }
 
 
@@ -43,7 +43,77 @@ void mca_mpool_vapi_module_init(mca_mpool_vapi_module_t* mpool)
 void* mca_mpool_vapi_alloc(mca_mpool_base_module_t* mpool, size_t size, size_t align, void** user_out)
 {
   mca_mpool_vapi_module_t* mpool_vapi = (mca_mpool_vapi_module_t*)mpool; 
-  return mpool_vapi->vapi_allocator->alc_alloc(mpool_vapi->vapi_allocator, size, align, user_out);
+  return  mpool_vapi->vapi_allocator->alc_alloc(mpool_vapi->vapi_allocator, size, align, user_out);
+  
+}
+
+
+/* 
+ * register memory 
+ */ 
+int mca_mpool_vapi_register(mca_mpool_base_module_t* mpool, void *addr, size_t size, void** user_out){
+    
+    mca_mpool_vapi_module_t * mpool_module = (mca_mpool_vapi_module_t*) mpool; 
+    VAPI_mrw_t mr_in, mr_out;
+  
+    VAPI_ret_t ret; 
+    mca_common_vapi_memhandle_t* mem_hndl; 
+    memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
+    memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
+    
+
+    *user_out = (void*) malloc(sizeof(mca_common_vapi_memhandle_t)); 
+    
+    mem_hndl = (mca_common_vapi_memhandle_t*) *user_out;  
+    memset(mem_hndl, 0, sizeof(mca_common_vapi_memhandle_t*)); 
+    mem_hndl->hndl = VAPI_INVAL_HNDL; 
+    
+    
+    mr_in.acl = VAPI_EN_LOCAL_WRITE | VAPI_EN_REMOTE_WRITE;
+    mr_in.l_key = 0;
+    mr_in.r_key = 0;
+    mr_in.pd_hndl = mpool_module->hca_pd.pd_tag;
+    mr_in.size = size;
+    mr_in.start = (VAPI_virt_addr_t) (MT_virt_addr_t) addr;
+    mr_in.type = VAPI_MR;
+    
+
+    ret = VAPI_register_mr(
+                           mpool_module->hca_pd.hca, 
+                           &mr_in, 
+                           &mem_hndl->hndl, 
+                           &mr_out
+                           ); 
+    
+    if(VAPI_OK != ret){ 
+        ompi_output(0, "error pinning vapi memory\n"); 
+        return OMPI_ERROR; 
+    }
+    
+    mem_hndl->l_key = mr_out.l_key; 
+    mem_hndl->r_key = mr_out.r_key; 
+    return OMPI_SUCCESS; 
+}
+
+
+/* 
+ * deregister memory 
+ */ 
+int mca_mpool_vapi_deregister(mca_mpool_base_module_t* mpool, void *addr, size_t size){
+    
+    VAPI_ret_t ret; 
+    mca_mpool_vapi_module_t * mpool_vapi = (mca_mpool_vapi_module_t*) mpool; 
+
+    ret = VAPI_deregister_mr(
+                             mpool_vapi->hca_pd.hca, 
+                             mpool_vapi->mem_hndl.hndl
+                             ); 
+    
+    if(VAPI_OK != ret){ 
+        ompi_output(0, "%s: error unpinning vapi memory\n", __func__); 
+        return OMPI_ERROR; 
+    }
+    return OMPI_SUCCESS; 
 }
 
 /**
@@ -51,8 +121,8 @@ void* mca_mpool_vapi_alloc(mca_mpool_base_module_t* mpool, size_t size, size_t a
   */
 void* mca_mpool_vapi_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t size, void** user_out)
 {
-  mca_mpool_vapi_module_t* mpool_vapi = (mca_mpool_vapi_module_t*)mpool; 
-  return mpool_vapi->vapi_allocator->alc_realloc(mpool_vapi->vapi_allocator, addr, size, user_out);
+    mca_mpool_vapi_module_t* mpool_vapi = (mca_mpool_vapi_module_t*)mpool; 
+    return mpool_vapi->vapi_allocator->alc_realloc(mpool_vapi->vapi_allocator, addr, size, user_out);
 }
 
 /**
@@ -60,8 +130,8 @@ void* mca_mpool_vapi_realloc(mca_mpool_base_module_t* mpool, void* addr, size_t 
   */
 void mca_mpool_vapi_free(mca_mpool_base_module_t* mpool, void * addr)
 {
-  mca_mpool_vapi_module_t* mpool_vapi = (mca_mpool_vapi_module_t*)mpool; 
-  mpool_vapi->vapi_allocator->alc_free(mpool_vapi->vapi_allocator, addr);
+    mca_mpool_vapi_module_t* mpool_vapi = (mca_mpool_vapi_module_t*)mpool; 
+    mpool_vapi->vapi_allocator->alc_free(mpool_vapi->vapi_allocator, addr);
 }
 
 
