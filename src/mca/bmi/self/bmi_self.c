@@ -186,6 +186,7 @@ extern int mca_bmi_self_free(
 struct mca_bmi_base_descriptor_t* mca_bmi_self_prepare_src(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* endpoint,
+    struct mca_bmi_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size)
@@ -208,7 +209,7 @@ struct mca_bmi_base_descriptor_t* mca_bmi_self_prepare_src(
             max_data = frag->size - reserve;
         } 
         iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*)(frag+1) + reserve;
+        iov.iov_base = (void*)((unsigned char*)(frag+1) + reserve);
 
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
         if(rc < 0) {
@@ -251,6 +252,7 @@ struct mca_bmi_base_descriptor_t* mca_bmi_self_prepare_src(
 struct mca_bmi_base_descriptor_t* mca_bmi_self_prepare_dst(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* endpoint,
+    struct mca_bmi_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size)
