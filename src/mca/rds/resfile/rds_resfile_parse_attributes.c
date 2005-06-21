@@ -23,7 +23,7 @@
 #include "util/output.h"
 #include "mca/errmgr/errmgr.h"
 
-#include "rds_resfile.h"
+#include "mca/rds/resfile/rds_resfile.h"
 
 int orte_rds_resfile_parse_fe(orte_rds_cell_desc_t *cell, FILE *fp)
 {

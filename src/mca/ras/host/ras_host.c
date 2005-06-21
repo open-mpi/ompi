@@ -19,7 +19,7 @@
 
 #include "mca/ras/base/base.h"
 #include "mca/ras/base/ras_base_node.h"
-#include "ras_host.h"
+#include "mca/ras/host/ras_host.h"
 
 #if HAVE_STRING_H
 #include <string.h>

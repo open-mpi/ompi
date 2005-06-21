@@ -23,10 +23,14 @@
 #include "ompi_config.h"
 
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <errno.h>
 #include <sys/types.h>
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
 #include <signal.h>
 
 #include "include/orte_constants.h"
@@ -52,7 +56,7 @@
 #include "mca/rmaps/base/rmaps_base_map.h"
 #include "mca/soh/soh.h"
 #include "mca/soh/base/base.h"
-#include "pls_fork.h"
+#include "mca/pls/fork/pls_fork.h"
 
 
 extern char **environ;
@@ -93,11 +97,16 @@ static void orte_pls_fork_wait_proc(pid_t pid, int status, void* cbdata)
     orte_iof.iof_flush();
 
     /* set the state of this process */
+#ifdef WIN32
+    printf("Unimplemented feature for windows\n");
+    rc = ORTE_ERROR;
+#else
     if(WIFEXITED(status)) {
         rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_TERMINATED, status);
     } else {
         rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_ABORTED, status);
     }
+#endif
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }
@@ -128,7 +137,11 @@ static int orte_pls_fork_proc(
 
     /* should pull this information from MPIRUN instead of going with
        default */
+#if (! defined(HAVE_OPENPTY)) || (OMPI_ENABLE_PTY_SUPPORT == 0)
+    opts.usepty = 0;
+#else
     opts.usepty = OMPI_ENABLE_PTY_SUPPORT;
+#endif
 
     /* BWB - Fix post beta.  Should setup stdin in orterun and
        make part of the app_context */
@@ -145,7 +158,43 @@ static int orte_pls_fork_proc(
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
+#ifdef WIN32
+    printf("Unimplemented feature for windows\n");
+    return ORTE_ERROR;
+#if 0
+ {
+    /* Do fork the windows way: see ompi_few() for example */
+    HANDLE new_process;
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    DWORD process_id;
+
+    ZeroMemory (&si, sizeof(si));
+    ZeroMemory (&pi, sizeof(pi));
+
+    GetStartupInfo (&si);
+    if (!CreateProcess (NULL,
+                        "new process",
+                        NULL,
+                        NULL,
+                        TRUE,
+                        0,
+                        NULL,
+                        NULL,
+                        &si,
+                        &pi)){
+       /* actual error can be got by simply calling GetLastError() */
+       return OMPI_ERROR;
+    }
+    /* get child pid */
+    process_id = GetProcessId(&pi);
+    pid = (int) process_id;
+ }
+#endif
+
+#else
     pid = fork();
+#endif
     if(pid < 0) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -245,17 +294,20 @@ static int orte_pls_fork_proc(
 
         set_handler_default(SIGTERM);
         set_handler_default(SIGINT);
+#ifndef WIN32
         set_handler_default(SIGHUP);
-        set_handler_default(SIGCHLD);
         set_handler_default(SIGPIPE);
+#endif
+        set_handler_default(SIGCHLD);
         
         /* Unblock all signals, for many of the same reasons that we
            set the default handlers, above.  This is noticable on
            Linux where the event library blocks SIGTERM, but we don't
            want that blocked by the launched process. */
-
+#ifndef WIN32
         sigprocmask(0, 0, &sigs);
         sigprocmask(SIG_UNBLOCK, &sigs, 0);
+#endif
 
         /* Exec the new executable */
 
@@ -500,6 +552,7 @@ static int orte_pls_fork_launch_threaded(orte_jobid_t jobid)
 
 static void set_handler_default(int sig)
 {
+#ifndef WIN32 
     struct sigaction act;
 
     act.sa_handler = SIG_DFL;
@@ -507,4 +560,5 @@ static void set_handler_default(int sig)
     sigemptyset(&act.sa_mask);
 
     sigaction(sig, &act, (struct sigaction *)0);
+#endif
 }
