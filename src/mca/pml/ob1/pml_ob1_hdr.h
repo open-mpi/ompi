@@ -40,7 +40,7 @@
 
 #define MCA_PML_OB1_HDR_FLAGS_ACK     1  /* is an ack required */
 #define MCA_PML_OB1_HDR_FLAGS_NBO     2  /* is the hdr in network byte order */
-#define MCA_PML_OB1_HDR_FLAGS_PUT     3
+#define MCA_PML_OB1_HDR_FLAGS_PIN     4  /* is user buffer pinned */
 
 
 /*

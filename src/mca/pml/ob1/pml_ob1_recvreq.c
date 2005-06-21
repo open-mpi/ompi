@@ -135,30 +135,52 @@ static void mca_pml_ob1_recv_request_ack(
     /* fill out header */
     ack = (mca_pml_ob1_ack_hdr_t*)des->des_src->seg_addr.pval;
     ack->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;
-
-    /* use the rdma protocol for this request if:
-     * - size is larger than the rdma threshold
-     * - rdma devices are available
-    */
-    if(recvreq->req_recv.req_bytes_packed > mca_pml_ob1.rdma_offset &&
-       mca_pml_ob1_ep_array_get_size(&proc->bmi_rdma) &&
-       ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
-
-        /* use convertor to figure out the rdma offset for this request */
-        recvreq->req_rdma_offset = mca_pml_ob1.rdma_offset;
-        ompi_convertor_set_position(
-            &recvreq->req_recv.req_convertor,
-            &recvreq->req_rdma_offset);
-        ack->hdr_rdma_offset = recvreq->req_rdma_offset;
-    } else {
-        recvreq->req_rdma_offset = recvreq->req_recv.req_bytes_packed;
-        ack->hdr_rdma_offset = recvreq->req_recv.req_bytes_packed;
-    }
-    
     ack->hdr_common.hdr_flags = 0;
     ack->hdr_src_req = hdr->hdr_src_req;
     ack->hdr_dst_req.pval = recvreq;
 
+    /*
+     * lookup request buffer to determine if the memory is already
+     * registered. if registered on both sides - do one rdma for
+     * the entire message.
+     */
+
+    recvreq->req_chunk = mca_mpool_base_find(recvreq->req_recv.req_base.req_addr);
+    if( NULL != recvreq->req_chunk &&
+        hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN) {
+        struct mca_mpool_base_reg_mpool_t *reg = recvreq->req_chunk->mpools;
+        while(reg->mpool != NULL) {
+            if(NULL != mca_pml_ob1_ep_array_find(&proc->bmi_rdma,reg->bmi_module)) {
+                recvreq->req_rdma_offset = hdr->hdr_frag_length;
+                ack->hdr_rdma_offset = hdr->hdr_frag_length;
+                recvreq->req_mpool = reg;
+                break;
+            }
+            reg++;
+        }
+    } 
+    
+    /* use the longer rdma protocol for this request if:
+     * - size is larger than the rdma threshold
+     * - rdma devices are available
+    */
+    if(recvreq->req_mpool == NULL) {
+        if(recvreq->req_recv.req_bytes_packed > mca_pml_ob1.rdma_offset &&
+           mca_pml_ob1_ep_array_get_size(&proc->bmi_rdma) &&
+           ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
+    
+            /* use convertor to figure out the rdma offset for this request */
+            recvreq->req_rdma_offset = mca_pml_ob1.rdma_offset;
+            ompi_convertor_set_position(
+                &recvreq->req_recv.req_convertor,
+                &recvreq->req_rdma_offset);
+            ack->hdr_rdma_offset = recvreq->req_rdma_offset;
+        } else {
+            recvreq->req_rdma_offset = recvreq->req_recv.req_bytes_packed;
+            ack->hdr_rdma_offset = recvreq->req_recv.req_bytes_packed;
+        }
+    }
+    
     /* initialize descriptor */
     des->des_flags |= MCA_BMI_DES_FLAGS_PRIORITY;
     des->des_cbfunc = mca_pml_ob1_send_ctl_complete;
@@ -310,49 +332,73 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
         do {
             size_t bytes_remaining = recvreq->req_recv.req_bytes_packed - recvreq->req_rdma_offset;
             while(bytes_remaining > 0 && recvreq->req_pipeline_depth < mca_pml_ob1.recv_pipeline_depth) {
-                mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_rdma); 
+                mca_pml_ob1_endpoint_t* ep;
                 size_t hdr_size;
+                size_t size;
                 mca_pml_ob1_rdma_hdr_t* hdr;
                 mca_bmi_base_descriptor_t* dst;
                 mca_bmi_base_descriptor_t* ctl;
                 int rc;
 
-               /* if there is only one bmi available or the size is less than
-                 * than the min fragment size, schedule the rest via this bmi
-                 */
-                size_t size;
-                if(num_bmi_avail == 1 || bytes_remaining < ep->bmi_min_rdma_size) {
+                if(recvreq->req_mpool == NULL) {
+                    ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_rdma);
+
+                    /* if there is only one bmi available or the size is less than
+                     * than the min fragment size, schedule the rest via this bmi
+                     */
+                    if(num_bmi_avail == 1 || bytes_remaining < ep->bmi_min_rdma_size) {
+                        size = bytes_remaining;
+
+                    /* otherwise attempt to give the BMI a percentage of the message
+                     * based on a weighting factor. for simplicity calculate this as
+                     * a percentage of the overall message length (regardless of amount
+                     * previously assigned)
+                     */
+                    } else {
+                        size = (ep->bmi_weight * bytes_remaining) / 100;
+                    }
+    
+                    /* makes sure that we don't exceed BMI max rdma size */
+                    if (ep->bmi_max_rdma_size != 0 && size > ep->bmi_max_rdma_size) {
+                        size = ep->bmi_max_rdma_size;
+                    }
+
+                    /* prepare a descriptor for RDMA */
+                    ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &recvreq->req_rdma_offset);
+#if MCA_PML_OB1_TIMESTAMPS
+                    recvreq->pin1[recvreq->pin_index] = get_profiler_timestamp();
+#endif
+                    dst = ep->bmi_prepare_dst(
+                        ep->bmi,
+                        ep->bmi_endpoint,
+                        NULL,
+                        &recvreq->req_recv.req_convertor,
+                        0,
+                        &size);
+#if MCA_PML_OB1_TIMESTAMPS
+                    recvreq->pin2[recvreq->pin_index] = get_profiler_timestamp();
+#endif
+                } else {
+                    ep = mca_pml_ob1_ep_array_find(&proc->bmi_rdma, recvreq->req_mpool->bmi_module);
                     size = bytes_remaining;
 
-                /* otherwise attempt to give the BMI a percentage of the message
-                 * based on a weighting factor. for simplicity calculate this as
-                 * a percentage of the overall message length (regardless of amount
-                 * previously assigned)
-                 */
-                } else {
-                    size = (ep->bmi_weight * bytes_remaining) / 100;
+                    /* prepare a descriptor for RDMA */
+                    ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &recvreq->req_rdma_offset);
+#if MCA_PML_OB1_TIMESTAMPS
+                    recvreq->pin1[recvreq->pin_index] = get_profiler_timestamp();
+#endif
+                    dst = ep->bmi_prepare_dst(
+                        ep->bmi,
+                        ep->bmi_endpoint,
+                        recvreq->req_mpool->bmi_registration,
+                        &recvreq->req_recv.req_convertor,
+                        0,
+                        &size);
+#if MCA_PML_OB1_TIMESTAMPS
+                    recvreq->pin2[recvreq->pin_index] = get_profiler_timestamp();
+#endif
                 }
 
-                /* makes sure that we don't exceed BMI max rdma size */
-                if (ep->bmi_max_rdma_size != 0 && size > ep->bmi_max_rdma_size) {
-                    size = ep->bmi_max_rdma_size;
-                }
-
-                /* prepare a descriptor for RDMA */
-                ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &recvreq->req_rdma_offset);
-#if MCA_PML_OB1_TIMESTAMPS
-                recvreq->pin1[recvreq->pin_index] = get_profiler_timestamp();
-#endif
-                dst = ep->bmi_prepare_dst(
-                    ep->bmi,
-                    ep->bmi_endpoint,
-                    NULL,
-                    &recvreq->req_recv.req_convertor,
-                    0,
-                    &size);
-#if MCA_PML_OB1_TIMESTAMPS
-                recvreq->pin2[recvreq->pin_index] = get_profiler_timestamp();
-#endif
                 if(dst == NULL) {
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
                     ompi_list_append(&mca_pml_ob1.recv_pending, (ompi_list_item_t*)recvreq);

@@ -21,6 +21,7 @@
 
 #include "pml_ob1.h"
 #include "pml_ob1_proc.h"
+#include "mca/mpool/base/base.h"
 #include "mca/pml/base/pml_base_recvreq.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -31,6 +32,8 @@ extern "C" {
 struct  mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
     struct mca_pml_proc_t *req_proc;
+    struct mca_mpool_base_chunk_t* req_chunk;
+    struct mca_mpool_base_reg_mpool_t* req_mpool;
     ompi_ptr_t req_send;
     int32_t req_lock;
     size_t  req_pipeline_depth;
@@ -152,6 +155,8 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
     (request)->req_bytes_received = 0;                                            \
     (request)->req_bytes_delivered = 0;                                           \
     (request)->req_lock = 0;                                                      \
+    (request)->req_chunk = NULL;                                                  \
+    (request)->req_mpool = NULL;                                                  \
     (request)->req_pipeline_depth = 0;                                            \
     (request)->req_recv.req_base.req_pml_complete = false;                        \
     (request)->req_recv.req_base.req_ompi.req_complete = false;                   \
@@ -230,7 +235,7 @@ do {                                                                            
                 offset -= segment->seg_len;                                       \
             } else {                                                              \
                 iov[iov_count].iov_len = segment->seg_len - seg_offset;           \
-                iov[iov_count].iov_base = (unsigned char*)segment->seg_addr.pval + seg_offset; \
+                iov[iov_count].iov_base = (void*)((unsigned char*)segment->seg_addr.pval + seg_offset); \
                 iov_count++;                                                      \
             }                                                                     \
         }                                                                         \

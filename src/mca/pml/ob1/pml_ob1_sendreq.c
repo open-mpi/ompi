@@ -247,7 +247,7 @@ int mca_pml_ob1_send_request_start(
             segment = descriptor->des_src;
 
             /* pack the data into the supplied buffer */
-            iov.iov_base = (unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t);
+            iov.iov_base = (void*)((unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t));
             iov.iov_len = size;
             iov_count = 1;
             max_data = size;
@@ -294,8 +294,12 @@ int mca_pml_ob1_send_request_start(
             }
             segment = descriptor->des_src;
 
+            /* check to see if memory is registered */
+            sendreq->req_chunk = mca_mpool_base_find(sendreq->req_send.req_addr);
+
             /* pack the data into the supplied buffer */
-            iov.iov_base = (unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_rendezvous_hdr_t);
+            iov.iov_base = (void*)((unsigned char*)segment->seg_addr.pval + 
+                sizeof(mca_pml_ob1_rendezvous_hdr_t));
             iov.iov_len = size;
             iov_count = 1;
             max_data = size;
@@ -311,7 +315,7 @@ int mca_pml_ob1_send_request_start(
 
             /* build hdr */
             hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
-            hdr->hdr_common.hdr_flags = 0;
+            hdr->hdr_common.hdr_flags = (sendreq->req_chunk != NULL ? MCA_PML_OB1_HDR_FLAGS_PIN : 0);
             hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RNDV;
             hdr->hdr_match.hdr_contextid = sendreq->req_send.req_base.req_comm->c_contextid;
             hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
@@ -580,6 +584,7 @@ void mca_pml_ob1_send_request_put(
 { 
     mca_pml_ob1_proc_t* proc = sendreq->req_proc;
     mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_find(&proc->bmi_rdma,bmi);
+    struct mca_bmi_base_registration_t* reg = NULL;
     mca_bmi_base_descriptor_t* des;
     mca_pml_ob1_rdma_frag_t* frag;
     size_t offset = hdr->hdr_rdma_offset;
@@ -603,18 +608,29 @@ void mca_pml_ob1_send_request_put(
     frag->rdma_ep = ep;
     frag->rdma_state = MCA_PML_OB1_RDMA_PREPARE;
 
+    /* look for a prior registration on this interface */
+    if(NULL != sendreq->req_chunk) {
+        mca_mpool_base_reg_mpool_t* mpool = sendreq->req_chunk->mpools;
+        while(mpool->mpool != NULL) {
+            if(mpool->bmi_module == bmi) { 
+                reg = mpool->bmi_registration; 
+                break;
+            }
+        }
+    }
+
 #if MCA_PML_OB1_TIMESTAMPS
-    /* setup descriptor */
     sendreq->t_pin[sendreq->t_pin_index++] = get_profiler_timestamp();
     if(sendreq->t_pin_index >= MCA_PML_OB1_NUM_TSTAMPS)
         sendreq->t_pin_index = 0;
 #endif
 
+    /* setup descriptor */
     ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset);
     des = bmi->bmi_prepare_src(
         bmi, 
         ep->bmi_endpoint,
-        NULL,
+        reg,
         &sendreq->req_send.req_convertor, 
         0,
         &size);
