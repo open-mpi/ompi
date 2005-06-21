@@ -182,7 +182,7 @@ static inline int ompi_fifo_free( ompi_fifo_t *fifo,
         ff_tmp=(ompi_cb_fifo_wrapper_t *)ff->next_fifo_wrapper;
 
         /* free the element */
-        memory_allocator->mpool_free(memory_allocator, ff);
+        memory_allocator->mpool_free(memory_allocator, ff, NULL);
 
         ff=ff_tmp;
 

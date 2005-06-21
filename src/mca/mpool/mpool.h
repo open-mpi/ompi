@@ -56,7 +56,8 @@ typedef void* (*mca_mpool_base_module_realloc_fn_t)(
   */
 typedef void (*mca_mpool_base_module_free_fn_t)(
     struct mca_mpool_base_module_t* mpool,
-    void *);
+    void *, 
+    struct mca_mpool_base_registration_t* registration);
                                                                                                                                    
 /**
   * register memory
@@ -73,7 +74,8 @@ typedef int (*mca_mpool_base_module_register_fn_t)(
 typedef int (*mca_mpool_base_module_deregister_fn_t)(
     struct mca_mpool_base_module_t* mpool,
     void * addr,
-    size_t size);
+    size_t size, 
+    struct mca_bmi_base_registration_t* registration);
 
 /**
   * if appropriate - returns base address of memory pool
@@ -155,7 +157,7 @@ OMPI_DECLSPEC void * mca_mpool_base_alloc(size_t size, ompi_info_t * info);
  * @retval OMPI_SUCCESS
  * @retval OMPI_ERR_BAD_PARAM if the passed base pointer was invalid
  */
-OMPI_DECLSPEC int mca_mpool_base_free(void * base);
+OMPI_DECLSPEC int mca_mpool_base_free(void * base); 
 
 /**
  * Function for the red black tree to compare 2 keys

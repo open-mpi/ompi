@@ -82,7 +82,8 @@ void* mca_mpool_sm_realloc(
   */
 void mca_mpool_sm_free(
     mca_mpool_base_module_t* mpool, 
-    void *);
+    void * addr, 
+    struct mca_bmi_base_registration_t* registration);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

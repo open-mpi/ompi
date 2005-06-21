@@ -162,6 +162,7 @@ static inline int mca_bmi_ib_endpoint_post_rr_sub(int cnt,
 static inline int mca_bmi_ib_endpoint_post_rr( mca_bmi_ib_endpoint_t * endpoint, int additional){ 
     mca_bmi_ib_module_t * ib_bmi = endpoint->endpoint_bmi; 
     int rc; 
+    OMPI_THREAD_LOCK(&ib_bmi->ib_lock); 
 
     if(ib_bmi->rr_posted_high <= mca_bmi_ib_component.ib_rr_buf_min+additional && ib_bmi->rr_posted_high < mca_bmi_ib_component.ib_rr_buf_max){ 
         
@@ -172,9 +173,10 @@ static inline int mca_bmi_ib_endpoint_post_rr( mca_bmi_ib_endpoint_t * endpoint,
                                              ib_bmi->nic, 
                                              endpoint->lcl_qp_hndl_high
                                              ); 
-        if(rc != OMPI_SUCCESS) 
+        if(rc != OMPI_SUCCESS){ 
+            OMPI_THREAD_UNLOCK(&ib_bmi->ib_lock); 
             return rc; 
-
+        }
     }
     if(ib_bmi->rr_posted_low <= mca_bmi_ib_component.ib_rr_buf_min+additional && ib_bmi->rr_posted_low < mca_bmi_ib_component.ib_rr_buf_max){ 
         
@@ -185,10 +187,13 @@ static inline int mca_bmi_ib_endpoint_post_rr( mca_bmi_ib_endpoint_t * endpoint,
                                              ib_bmi->nic, 
                                              endpoint->lcl_qp_hndl_low
                                              ); 
-        if(rc != OMPI_SUCCESS) 
+        if(rc != OMPI_SUCCESS) {
+            OMPI_THREAD_UNLOCK(&ib_bmi->ib_lock); 
             return rc; 
+        }
 
     }
+    OMPI_THREAD_UNLOCK(&ib_bmi->ib_lock); 
     return OMPI_SUCCESS; 
     
     
