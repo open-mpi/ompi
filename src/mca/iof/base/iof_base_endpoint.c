@@ -203,7 +203,6 @@ static orte_iof_base_endpoint_t* orte_iof_base_endpoint_lookup(
         if(orte_ns.compare(ORTE_NS_CMP_ALL,proc,&endpoint->ep_name) == 0 &&
            endpoint->ep_tag == tag && endpoint->ep_mode == mode) {
             OBJ_RETAIN(endpoint);
-            OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
             return endpoint;
         }
     }
