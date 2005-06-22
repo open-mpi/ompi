@@ -37,7 +37,7 @@ AM_CPPFLAGS = \
             -DOMPI_BUILD_FCFLAGS="\"@FCFLAGS@\"" \
             -DOMPI_BUILD_LDFLAGS="\"@LDFLAGS@\"" \
             -DOMPI_BUILD_LIBS="\"@LIBS@\"" \
-            -DOMPI_WANT_SVN=\"@OMPI_WANT_SVN@\" \
+            -DOMPI_WANT_SVN=@OMPI_WANT_SVN@ \
             -DOMPI_SVN_R=\"@OMPI_SVN_R@\"
 
 libs = $(top_builddir)/src/libmpi.la
