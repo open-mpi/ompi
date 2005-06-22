@@ -59,6 +59,12 @@ WIN32_FILES = win32/ompi_declspec.h \
               win32/generated_include/pcmclient-rms-version.h   \
               win32/generated_include/pcm_static-components.h   \
               win32/generated_include/topo-unity-version.h      \
+              win32/generated_include/pls_static-components.h \
+              win32/generated_include/ras_static-components.h \
+              win32/generated_include/rds_static-components.h \
+              win32/generated_include/pls-fork-version.h \
+              win32/generated_include/pls-proxy-version.h \
+              win32/generated_include/pls-rsh-version.h \
               win32/generated_include/libltdl/ltdl.h            \
               win32/generated_source/ltdl.c
 EXTRA_DIST = win_makefile $(WIN32_FILES)
