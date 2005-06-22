@@ -116,15 +116,11 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 
 /*
  * Miscellaneous constants
- * JMS: Some of these may be LAM-specific and should be removed...
  */
 #define MPI_ANY_SOURCE         -1      /* match any source rank */
 #define MPI_PROC_NULL          -2      /* rank of null process */
 #define MPI_ROOT               -4
-#define MPI_CANCEL_SOURCE      -3      /* successful cancel */
 #define MPI_ANY_TAG            -1      /* match any message tag */
-#define MPI_GER_TAG            -2      /* used for GER protocol */
-#define MPI_MERGE_TAG          -3      /* used to merge inter-comm */
 #define MPI_MAX_PROCESSOR_NAME 256     /* max proc. name length */
 #define MPI_MAX_ERROR_STRING   256     /* max error message length */
 #define MPI_MAX_OBJECT_NAME    64      /* max object name length */
@@ -135,8 +131,6 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 
 /*
  * More constants
- * JMS: Copied straight from LAM -- feel free to change
- * JMS: Some of these are probably LAM-specific and should be deleted
  */
 #define MPI_BOTTOM               ((void *) 0)    /* base reference address */
 #define MPI_BSEND_OVERHEAD       128     /* size of bsend header + ptr */
@@ -153,7 +147,7 @@ typedef int (MPI_Grequest_cancel_function)(void *, int);
 #define MPI_DISTRIBUTE_CYCLIC    1       /* cyclic distribution */
 #define MPI_DISTRIBUTE_NONE      2       /* not distributed */
 #define MPI_DISTRIBUTE_DFLT_DARG (-1)    /* default distribution arg */
-#define MPI_TAG_UB_VALUE (0x7fffffff)
+#define MPI_TAG_UB_VALUE         (0x7fffffff)
 
 /*
  * Since these values are arbitrary to Open MPI, we might as well make
