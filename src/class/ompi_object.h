@@ -348,7 +348,7 @@ OMPI_DECLSPEC void ompi_class_initialize(ompi_class_t *);
  * tools like valgrind and purify don't report still-reachable memory
  * upon process termination.
  */
-int ompi_class_finalize(void);
+OMPI_DECLSPEC int ompi_class_finalize(void);
 
 END_C_DECLS
 /**

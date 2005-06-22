@@ -220,10 +220,10 @@ OMPI_DECLSPEC int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
 /*
  * globals that might be needed inside the gpr
  */
-extern int orte_gpr_base_output;
-extern bool orte_gpr_base_selected;
-extern ompi_list_t orte_gpr_base_components_available;
-extern mca_gpr_base_component_t orte_gpr_base_selected_component;
+OMPI_DECLSPEC extern int orte_gpr_base_output;
+OMPI_DECLSPEC extern bool orte_gpr_base_selected;
+OMPI_DECLSPEC extern ompi_list_t orte_gpr_base_components_available;
+OMPI_DECLSPEC extern mca_gpr_base_component_t orte_gpr_base_selected_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
