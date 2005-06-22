@@ -55,7 +55,7 @@
 
 int orte_init_stage1(void)
 {
-    int ret;
+    int ret, rc, exit_if_not_exist;
     char *universe;
     char *jobid_str = NULL;
     char *procid_str = NULL;
@@ -187,6 +187,21 @@ int orte_init_stage1(void)
             orte_process_info.ns_replica_uri = strdup(univ.seed_uri);
             orte_process_info.gpr_replica_uri = strdup(univ.seed_uri);
         } else {
+            /* if an existing universe is not detected, check the
+             * relevant MCA parameter to see if the caller wants
+             * us to abort in this situation
+             */
+            if (0 > (rc =  mca_base_param_register_int("orte", "univ", "exist", NULL, 0))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            if (ORTE_SUCCESS != (rc = mca_base_param_lookup_int(rc, &exit_if_not_exist))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            if (exit_if_not_exist) {
+                return ORTE_ERR_UNREACH;
+            }
             if (ORTE_ERR_NOT_FOUND != ret) {
                 /* if it exists but no contact could be established,
                  * define unique name based on current one.
