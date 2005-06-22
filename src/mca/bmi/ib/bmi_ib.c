@@ -398,7 +398,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
 {
     mca_bmi_ib_module_t* ib_bmi; 
     mca_bmi_ib_frag_t* frag; 
-    int i, rc; 
+    int rc; 
     size_t reg_len; 
     ib_bmi = (mca_bmi_ib_module_t*) bmi; 
     

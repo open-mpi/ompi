@@ -67,7 +67,7 @@ typedef int (*mca_mpool_base_module_register_fn_t)(
     void * addr,
     size_t size,
     struct mca_bmi_base_registration_t** registration);
-                                                                                                                                   
+    
 /**
   * deregister memory
   */
