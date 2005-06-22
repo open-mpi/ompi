@@ -6,7 +6,6 @@
 
 static void mca_bmi_ib_frag_common_constructor( mca_bmi_ib_frag_t* frag) 
 {
-    size_t mod; 
     mca_bmi_base_registration_t* mem_hndl = frag->base.super.user_data; 
     frag->hdr = (mca_bmi_ib_header_t*) (frag+1);    /* initialize the bmi header to point to start at end of frag */ 
 #if 0   

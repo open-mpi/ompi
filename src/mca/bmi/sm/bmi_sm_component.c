@@ -455,7 +455,7 @@ int mca_bmi_sm_component_progress(void)
             {
                 /* completion callback */
                 frag->base.des_src = 
-                    ((unsigned char*)frag->base.des_dst - mca_bmi_sm_component.sm_offset[peer_smp_rank]);
+                    ( mca_bmi_base_segment_t* )((unsigned char*)frag->base.des_dst - mca_bmi_sm_component.sm_offset[peer_smp_rank]);
                 frag->base.des_src->seg_addr.pval =
                     ((unsigned char*)frag->base.des_src->seg_addr.pval - 
                      mca_bmi_sm_component.sm_offset[peer_smp_rank]);
