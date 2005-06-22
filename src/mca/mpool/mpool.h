@@ -56,8 +56,8 @@ typedef void* (*mca_mpool_base_module_realloc_fn_t)(
   */
 typedef void (*mca_mpool_base_module_free_fn_t)(
     struct mca_mpool_base_module_t* mpool,
-    void *, 
-    struct mca_mpool_base_registration_t* registration);
+    void *addr, 
+    struct mca_bmi_base_registration_t* registration);
                                                                                                                                    
 /**
   * register memory
