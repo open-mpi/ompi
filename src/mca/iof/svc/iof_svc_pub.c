@@ -38,9 +38,27 @@ int orte_iof_svc_pub_create(
     orte_ns_cmp_bitmask_t pub_mask,
     orte_iof_base_tag_t pub_tag)
 {
-    orte_iof_svc_pub_t* pub = OBJ_NEW(orte_iof_svc_pub_t);
+    orte_iof_svc_pub_t* pub;
     ompi_list_item_t* item;
 
+    OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+    ompi_list_append(&mca_iof_svc_component.svc_published, &pub->super);
+
+    /* has this endpoint already been published */
+    for(item  = ompi_list_get_first(&mca_iof_svc_component.svc_published);
+        item != ompi_list_get_end(&mca_iof_svc_component.svc_published);
+        item =  ompi_list_get_next(item)) {
+        pub = (orte_iof_svc_pub_t*)item;
+        if(orte_ns.compare(pub_mask,pub_name,&pub->pub_name) == 0 &&
+           orte_ns.compare(ORTE_NS_CMP_ALL,pub_proxy,&pub->pub_proxy) == 0 &&
+           pub_tag == pub->pub_tag) {
+           OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+           return OMPI_SUCCESS;
+        }
+    }
+
+    /* create a new entry for this endponit */
+    pub = OBJ_NEW(orte_iof_svc_pub_t);
     pub->pub_name = *pub_name;
     pub->pub_proxy = *pub_proxy;
     pub->pub_mask = pub_mask;
@@ -48,7 +66,6 @@ int orte_iof_svc_pub_create(
     pub->pub_endpoint = orte_iof_base_endpoint_match(pub_name,pub_mask,pub_tag);
 
     /* append this published endpoint to any matching subscription */
-    OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
     for(item  = ompi_list_get_first(&mca_iof_svc_component.svc_subscribed);
         item != ompi_list_get_end(&mca_iof_svc_component.svc_subscribed);
         item =  ompi_list_get_next(item)) {
