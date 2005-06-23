@@ -481,9 +481,6 @@ int mca_pml_ob1_recv_frag_match(
         /* if match found, process data */
         if (match) {
 
-            /* set length of incoming message */
-            match->req_recv.req_bytes_packed = hdr->hdr_msg_length;
-
             /*
              * update delivered sequence number information, if needed.
              */
