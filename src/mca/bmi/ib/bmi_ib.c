@@ -240,7 +240,17 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     
     ib_bmi = (mca_bmi_ib_module_t*) bmi; 
     
-    if( max_data+reserve <=  bmi->bmi_eager_limit ) { 
+    /** if the data fits in the eager limit and we aren't told to pinn then we 
+        simply pack, if the data fits in the eager limit and the data is non contiguous 
+        then we pack **/ 
+
+    if( (max_data+reserve <=  bmi->bmi_eager_limit  
+         && NULL == registration 
+         && !mca_bmi_ib_component.leave_pinned) 
+        || 
+        (max_data+reserve <= bmi->bmi_eager_limit 
+         && 1 == ompi_convertor_need_buffers( convertor ))) { 
+
         MCA_BMI_IB_FRAG_ALLOC_EAGER(bmi, frag, rc); 
         if(NULL == frag) { 
             return NULL; 
@@ -265,8 +275,16 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         frag->base.des_flags = 0; 
         
         return &frag->base; 
-       
-    }else if( max_data + reserve <= ib_bmi->super.bmi_max_send_size || 1 == ompi_convertor_need_buffers( convertor) ){ 
+        
+    }
+    /** if the data fits in the max limit and we aren't told to pinn then we 
+        simply pack, if the data  is non contiguous then we pack **/ 
+
+    else if((max_data + reserve <= ib_bmi->super.bmi_max_send_size 
+             && NULL == registration 
+               && !mca_bmi_ib_component.leave_pinned)
+              || 1 == ompi_convertor_need_buffers( convertor)){ 
+        
         MCA_BMI_IB_FRAG_ALLOC_MAX(bmi, frag, rc); 
         if(NULL == frag) { 
             return NULL; 

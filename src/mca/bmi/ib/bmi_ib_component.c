@@ -129,13 +129,16 @@ int mca_bmi_ib_component_open(void)
     mca_bmi_ib_module.super.bmi_exclusivity =
         mca_bmi_ib_param_register_int ("exclusivity", 0);
     mca_bmi_ib_module.super.bmi_eager_limit = 
-        mca_bmi_ib_param_register_int ("eager_limit",
-                                       (64*1024)) - sizeof(mca_bmi_ib_header_t); 
+        mca_bmi_ib_param_register_int ("eager_limit", (64*1024)) 
+        - sizeof(mca_bmi_ib_header_t); 
+
     mca_bmi_ib_module.super.bmi_min_send_size =
-        mca_bmi_ib_param_register_int ("min_send_size",
-                                       (64*1024))- sizeof(mca_bmi_ib_header_t);
+        mca_bmi_ib_param_register_int ("min_send_size", (64*1024))
+        - sizeof(mca_bmi_ib_header_t);
+
     mca_bmi_ib_module.super.bmi_max_send_size =
-        mca_bmi_ib_param_register_int ("max_send_size", (128*1024)) - sizeof(mca_bmi_ib_header_t);
+        mca_bmi_ib_param_register_int ("max_send_size", (128*1024)) 
+        - sizeof(mca_bmi_ib_header_t);
 
     mca_bmi_ib_module.ib_pin_min = 
         mca_bmi_ib_param_register_int("ib_pin_min", 128*1024);                                    
