@@ -199,10 +199,10 @@ select_dispatch(void *arg, struct timeval *tv)
 #endif
 
         /* release lock while waiting in kernel */
-        OMPI_THREAD_UNLOCK(&ompi_event_lock);
+        ompi_mutex_unlock(&ompi_event_lock);
 	    res = select(sop->event_fds + 1, sop->event_readset, 
 	        sop->event_writeset, NULL, tv);
-        OMPI_THREAD_LOCK(&ompi_event_lock);
+        ompi_mutex_lock(&ompi_event_lock);
 
 #if OMPI_EVENT_USE_SIGNALS
 	if (ompi_evsignal_recalc(&sop->evsigmask) == -1)
