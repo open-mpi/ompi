@@ -218,13 +218,13 @@ static void* ompi_event_run(ompi_object_t* arg)
 #endif
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-    OMPI_THREAD_LOCK(&ompi_event_lock);
+    ompi_mutex_lock(&ompi_event_lock);
     ompi_event_del_i(&ompi_event_pipe_event);
     close(ompi_event_pipe[0]);
     close(ompi_event_pipe[1]);
     ompi_event_pipe[0] = -1;
     ompi_event_pipe[1] = -1;
-    OMPI_THREAD_UNLOCK(&ompi_event_lock);
+    ompi_mutex_unlock(&ompi_event_lock);
 #endif
     return NULL;
 }
@@ -289,9 +289,9 @@ int ompi_event_disable(void)
 {
 #if OMPI_ENABLE_PROGRESS_THREADS
     if(ompi_using_threads()) {
-        OMPI_THREAD_LOCK(&ompi_event_lock);
+        ompi_mutex_lock(&ompi_event_lock);
         if(ompi_event_inited > 0 && ompi_event_enabled == false) {
-            OMPI_THREAD_UNLOCK(&ompi_event_lock);
+            ompi_mutex_unlock(&ompi_event_lock);
             return OMPI_SUCCESS;
         }
 
@@ -302,7 +302,7 @@ int ompi_event_disable(void)
                 ompi_output(0, "ompi_event_add: write() to ompi_event_pipe[1] failed with errno=%d\n", errno);
             ompi_event_pipe_signalled++;
         }
-        OMPI_THREAD_UNLOCK(&ompi_event_lock);
+        ompi_mutex_unlock(&ompi_event_lock);
         ompi_thread_join(&ompi_event_thread, NULL);
     } else {
         ompi_event_enabled = false;
@@ -319,16 +319,16 @@ int ompi_event_enable(void)
     if(ompi_using_threads()) {
         int rc;
 
-        OMPI_THREAD_LOCK(&ompi_event_lock);
+        ompi_mutex_lock(&ompi_event_lock);
         if(ompi_event_inited > 0 && ompi_event_enabled == true) {
-            OMPI_THREAD_UNLOCK(&ompi_event_lock);
+            ompi_mutex_unlock(&ompi_event_lock);
             return OMPI_SUCCESS;
         }
 
         /* create a pipe to signal the event thread */
         if(pipe(ompi_event_pipe) != 0) {
             ompi_output(0, "ompi_event_init: pipe() failed with errno=%d\n", errno);
-            OMPI_THREAD_UNLOCK(&ompi_event_lock);
+            ompi_mutex_unlock(&ompi_event_lock);
             return OMPI_ERROR;
         }
 
@@ -347,10 +347,10 @@ int ompi_event_enable(void)
         ompi_event_enabled = true;
         ompi_event_thread.t_run = ompi_event_run;
         if((rc = ompi_thread_start(&ompi_event_thread)) != OMPI_SUCCESS) {
-            OMPI_THREAD_UNLOCK(&ompi_event_lock);
+            ompi_mutex_unlock(&ompi_event_lock);
             return rc;
         }
-        OMPI_THREAD_UNLOCK(&ompi_event_lock);
+        ompi_mutex_unlock(&ompi_event_lock);
     } else {
         ompi_event_pipe[0] = -1;
         ompi_event_pipe[1] = -1;
@@ -366,7 +366,7 @@ int ompi_event_restart(void)
 {
     int rc;
 #if OMPI_ENABLE_PROGRESS_THREADS
-    OMPI_THREAD_LOCK(&ompi_event_lock);
+    ompi_mutex_lock(&ompi_event_lock);
     if(ompi_event_pipe[0] >= 0) {
         ompi_event_del_i(&ompi_event_pipe_event); 
         /* do not close pipes - in case of bproc_vrfork they are not open 
@@ -376,7 +376,7 @@ int ompi_event_restart(void)
         ompi_event_pipe[1] = -1;
     }
     ompi_event_enabled = false;
-    OMPI_THREAD_UNLOCK(&ompi_event_lock);
+    ompi_mutex_unlock(&ompi_event_lock);
 #endif
 
     ompi_event_enable();
@@ -436,13 +436,13 @@ ompi_event_loop(int flags)
         return(0);
 
     if(ompi_using_threads()) {
-        OMPI_THREAD_LOCK(&ompi_event_lock);
+        ompi_mutex_lock(&ompi_event_lock);
     } 
 
     /* Calculate the initial events that we are waiting for */
     if (ompi_evsel->recalc && ompi_evsel->recalc(ompi_evbase, 0) == -1) {
         ompi_output(0, "ompi_event_loop: ompi_evsel->recalc() failed.");
-        OMPI_THREAD_UNLOCK(&ompi_event_lock);
+        ompi_mutex_unlock(&ompi_event_lock);
         return (-1);
     }
 
@@ -455,7 +455,7 @@ ompi_event_loop(int flags)
                 if (res == -1) {
                     ompi_output(0, "ompi_event_loop: ompi_event_sigcb() failed.");
                     errno = EINTR;
-                    OMPI_THREAD_UNLOCK(&ompi_event_lock);
+                    ompi_mutex_unlock(&ompi_event_lock);
                     return (-1);
                 }
             }
@@ -476,7 +476,7 @@ ompi_event_loop(int flags)
 #endif
         if (res == -1) {
             ompi_output(0, "ompi_event_loop: ompi_evesel->dispatch() failed.");
-            OMPI_THREAD_UNLOCK(&ompi_event_lock);
+            ompi_mutex_unlock(&ompi_event_lock);
             return (-1);
         }
 
@@ -506,11 +506,11 @@ ompi_event_loop(int flags)
 
         if (ompi_evsel->recalc && ompi_evsel->recalc(ompi_evbase, 0) == -1) {
             ompi_output(0, "ompi_event_loop: ompi_evesel->recalc() failed.");
-            OMPI_THREAD_UNLOCK(&ompi_event_lock);
+            ompi_mutex_unlock(&ompi_event_lock);
             return (-1);
         }
     }
-    OMPI_THREAD_UNLOCK(&ompi_event_lock);
+    ompi_mutex_unlock(&ompi_event_lock);
     return (num_active);
 }
 
