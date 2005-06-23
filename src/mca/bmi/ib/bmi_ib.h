@@ -291,47 +291,27 @@ extern int mca_bmi_ib_put(
     struct mca_bmi_base_descriptor_t* decriptor
 );
 
-extern int mca_bmi_ib_register(
-                        struct mca_bmi_base_module_t* bmi, 
-                        mca_bmi_base_tag_t tag, 
-                        mca_bmi_base_module_recv_cb_fn_t cbfunc, 
-                        void* cbdata); 
-    
 /**
- * Return a recv fragment to the modules free list.
- *
- * @param bmi (IN)   BMI instance
- * @param frag (IN)  IB receive fragment
- *
- */
-extern void mca_bmi_ib_recv_frag_return(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_ib_frag_t* frag
-);
-
-/**
- * Allocate a segment.
+ * Allocate a descriptor.
  *
  * @param bmi (IN)      BMI module
- * @param size (IN)     Request segment size.
+ * @param size (IN)     Requested descriptor size.
  */
 extern mca_bmi_base_descriptor_t* mca_bmi_ib_alloc(
-                                                   struct mca_bmi_base_module_t* bmi, 
-                                                   size_t size); 
+    struct mca_bmi_base_module_t* bmi, 
+    size_t size); 
 
 
 /**
  * Return a segment allocated by this BMI.
  *
- * @param bmi (IN)      BMI module
- * @param segment (IN)  Allocated segment.
+ * @param bmi (IN)         BMI module
+ * @param descriptor (IN)  Allocated descriptor.
  */
 extern int mca_bmi_ib_free(
-                           struct mca_bmi_base_module_t* bmi, 
-                           mca_bmi_base_descriptor_t* des); 
+    struct mca_bmi_base_module_t* bmi, 
+    mca_bmi_base_descriptor_t* des); 
     
-   
-
 
 /**
  * Pack data and return a descriptor that can be
@@ -350,20 +330,20 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
 );
 
 /**
- * Pack data and return a descriptor that can be
- * used for send/put.
+ * Allocate a descriptor initialized for RDMA write.
  *
  * @param bmi (IN)      BMI module
  * @param peer (IN)     BMI peer addressing
  */
 extern mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst( 
-                                                         struct mca_bmi_base_module_t* bmi, 
-                                                         struct mca_bmi_base_endpoint_t* peer,
-                                                         struct mca_mpool_base_registration_t* registration, 
-                                                         struct ompi_convertor_t* convertor,
-                                                         size_t reserve,
-                                                         size_t* size); 
-    /**
+    struct mca_bmi_base_module_t* bmi, 
+    struct mca_bmi_base_endpoint_t* peer,
+    struct mca_mpool_base_registration_t* registration, 
+    struct ompi_convertor_t* convertor,
+    size_t reserve,
+    size_t* size); 
+
+/**
  * Return a send fragment to the modules free list.
  *
  * @param bmi (IN)   BMI instance
