@@ -19,7 +19,6 @@
 
 #include "ompi_config.h"
 #include "threads/condition.h"
-#include "class/ompi_free_list.h"
 #include "util/cmd_line.h"
 #include "request/request.h"
 #include "mca/topo/topo.h"
