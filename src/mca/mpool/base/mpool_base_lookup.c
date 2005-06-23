@@ -46,8 +46,8 @@ mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
 
 mca_mpool_base_module_t* mca_mpool_base_module_create(
     const char* name, 
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_resources_t* resources) 
+    void* user_data,
+    struct mca_mpool_base_resources_t* resources) 
 {
     
     mca_mpool_base_component_t* component = NULL; 
@@ -69,11 +69,11 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
 
     if(NULL == component)  
         return NULL;
-    module = component->mpool_init(bmi,resources); 
+    module = component->mpool_init(resources); 
     sm = OBJ_NEW(mca_mpool_base_selected_module_t); 
     sm->mpool_component = component; 
     sm->mpool_module = module; 
-    sm->mpool_bmi = bmi;
+    sm->user_data = user_data;
     sm->mpool_resources = resources;
     ompi_list_append(&mca_mpool_base_modules, (ompi_list_item_t*) sm); 
     return module; 

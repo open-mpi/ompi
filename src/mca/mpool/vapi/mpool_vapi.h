@@ -55,7 +55,7 @@ OMPI_COMP_EXPORT extern mca_mpool_vapi_component_t mca_mpool_vapi_component;
 struct mca_mpool_vapi_module_t {
     mca_mpool_base_module_t super;
     mca_allocator_base_module_t * vapi_allocator; 
-    mca_bmi_base_resources_t  hca_pd;
+    mca_mpool_base_resources_t  hca_pd;
 }; typedef struct mca_mpool_vapi_module_t mca_mpool_vapi_module_t; 
 
 /* 
@@ -76,7 +76,7 @@ void* mca_mpool_vapi_alloc(
     mca_mpool_base_module_t* mpool, 
     size_t size, 
     size_t align, 
-    struct mca_bmi_base_registration_t** registration);
+    struct mca_mpool_base_registration_t** registration);
 
 /**
   * realloc function typedef
@@ -85,7 +85,7 @@ void* mca_mpool_vapi_realloc(
     mca_mpool_base_module_t* mpool, 
     void* addr, 
     size_t size, 
-    struct mca_bmi_base_registration_t** registration);
+    struct mca_mpool_base_registration_t** registration);
 
 /**
   * register function typedef
@@ -94,13 +94,13 @@ int mca_mpool_vapi_register(
     mca_mpool_base_module_t* mpool, 
     void *addr, 
     size_t size, 
-    struct mca_bmi_base_registration_t** registration);
+    struct mca_mpool_base_registration_t** registration);
 
 int mca_mpool_vapi_deregister(
     mca_mpool_base_module_t* mpool, 
     void *addr, 
     size_t size, 
-    struct mca_bmi_base_registration_t* );
+    struct mca_mpool_base_registration_t* );
 
 
 /**
@@ -108,12 +108,12 @@ int mca_mpool_vapi_deregister(
   */
 void mca_mpool_vapi_free(mca_mpool_base_module_t* mpool, 
     void * addr, 
-    struct mca_bmi_base_registration_t* registration);
+    struct mca_mpool_base_registration_t* registration);
 
 void* mca_common_vapi_segment_alloc(
     struct mca_mpool_base_module_t* module, 
     size_t* size, 
-    struct mca_bmi_base_registration_t** registration);
+    struct mca_mpool_base_registration_t** registration);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

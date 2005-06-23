@@ -44,7 +44,7 @@ void* mca_mpool_vapi_alloc(
     mca_mpool_base_module_t* mpool, 
     size_t size, 
     size_t align, 
-    struct mca_bmi_base_registration_t** registration)
+    struct mca_mpool_base_registration_t** registration)
 {
     mca_mpool_vapi_module_t* mpool_vapi = (mca_mpool_vapi_module_t*)mpool; 
     return mpool_vapi->vapi_allocator->alc_alloc(mpool_vapi->vapi_allocator, size, align, registration);
@@ -55,20 +55,20 @@ void* mca_mpool_vapi_alloc(
  * register memory 
  */ 
 int mca_mpool_vapi_register(mca_mpool_base_module_t* mpool, void *addr, size_t size, 
-    struct mca_bmi_base_registration_t** registration){
+    struct mca_mpool_base_registration_t** registration){
     
     mca_mpool_vapi_module_t * mpool_module = (mca_mpool_vapi_module_t*) mpool; 
     VAPI_mrw_t mr_in, mr_out;
   
     VAPI_ret_t ret; 
-    mca_bmi_base_registration_t* mem_hndl; 
+    mca_mpool_base_registration_t* mem_hndl; 
     memset(&mr_in, 0, sizeof(VAPI_mrw_t)); 
     memset(&mr_out, 0, sizeof(VAPI_mrw_t)); 
     
 
-    *registration = (void*) malloc(sizeof(mca_bmi_base_registration_t)); 
-    mem_hndl = (mca_bmi_base_registration_t*) *registration;  
-    memset(mem_hndl, 0, sizeof(mca_bmi_base_registration_t*)); 
+    *registration = (void*) malloc(sizeof(mca_mpool_base_registration_t)); 
+    mem_hndl = (mca_mpool_base_registration_t*) *registration;  
+    memset(mem_hndl, 0, sizeof(mca_mpool_base_registration_t*)); 
     mem_hndl->hndl = VAPI_INVAL_HNDL; 
     
     
@@ -106,7 +106,7 @@ int mca_mpool_vapi_register(mca_mpool_base_module_t* mpool, void *addr, size_t s
  * deregister memory 
  */ 
 int mca_mpool_vapi_deregister(mca_mpool_base_module_t* mpool, void *addr, size_t size, 
-                              struct mca_bmi_base_registration_t* registration){
+                              struct mca_mpool_base_registration_t* registration){
     
     VAPI_ret_t ret; 
     mca_mpool_vapi_module_t * mpool_vapi = (mca_mpool_vapi_module_t*) mpool; 
@@ -131,7 +131,7 @@ void* mca_mpool_vapi_realloc(
     mca_mpool_base_module_t* mpool, 
     void* addr, 
     size_t size, 
-    struct mca_bmi_base_registration_t** registration)
+    struct mca_mpool_base_registration_t** registration)
 {
     mca_mpool_vapi_module_t* mpool_vapi = (mca_mpool_vapi_module_t*)mpool; 
     return mpool_vapi->vapi_allocator->alc_realloc( mpool_vapi->vapi_allocator, addr, size, registration);
@@ -141,7 +141,7 @@ void* mca_mpool_vapi_realloc(
   * free function 
   */
 void mca_mpool_vapi_free(mca_mpool_base_module_t* mpool, void * addr,
-                         struct mca_bmi_base_registration_t* registration)
+                         struct mca_mpool_base_registration_t* registration)
 {
     
     mca_mpool_vapi_module_t* mpool_vapi = (mca_mpool_vapi_module_t*)mpool; 

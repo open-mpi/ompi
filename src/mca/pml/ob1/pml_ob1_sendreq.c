@@ -584,7 +584,7 @@ void mca_pml_ob1_send_request_put(
 { 
     mca_pml_ob1_proc_t* proc = sendreq->req_proc;
     mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_find(&proc->bmi_rdma,bmi);
-    struct mca_bmi_base_registration_t* reg = NULL;
+    struct mca_mpool_base_registration_t* reg = NULL;
     mca_bmi_base_descriptor_t* des;
     mca_pml_ob1_rdma_frag_t* frag;
     size_t offset = hdr->hdr_rdma_offset;
@@ -612,8 +612,8 @@ void mca_pml_ob1_send_request_put(
     if(NULL != sendreq->req_chunk) {
         mca_mpool_base_reg_mpool_t* mpool = sendreq->req_chunk->mpools;
         while(mpool->mpool != NULL) {
-            if(mpool->bmi_module == bmi) { 
-                reg = mpool->bmi_registration; 
+            if(mpool->user_data == (void*) bmi) { 
+                reg = mpool->mpool_registration; 
                 break;
             }
             mpool++;

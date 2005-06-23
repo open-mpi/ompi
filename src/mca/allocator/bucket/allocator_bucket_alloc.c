@@ -71,7 +71,7 @@ mca_allocator_bucket_t * mca_allocator_bucket_init(
 void * mca_allocator_bucket_alloc(
     mca_allocator_base_module_t * mem,
     size_t size, 
-    struct mca_bmi_base_registration_t** registration)
+    struct mca_mpool_base_registration_t** registration)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     /* initialize for the later bit shifts */
@@ -154,7 +154,7 @@ void * mca_allocator_bucket_alloc_align(
     mca_allocator_base_module_t * mem, 
     size_t size, 
     size_t alignment, 
-    struct mca_bmi_base_registration_t** registration)
+    struct mca_mpool_base_registration_t** registration)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem; 
     int bucket_num = 1;
@@ -237,7 +237,7 @@ void * mca_allocator_bucket_realloc(
     mca_allocator_base_module_t * mem,
     void * ptr, 
     size_t size, 
-    struct mca_bmi_base_registration_t** registration)
+    struct mca_mpool_base_registration_t** registration)
 {
     mca_allocator_bucket_t * mem_options = (mca_allocator_bucket_t *) mem;
     /* initialize for later bit shifts */

@@ -343,7 +343,7 @@ extern int mca_bmi_ib_free(
 mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* peer,
-    struct mca_bmi_base_registration_t* registration, 
+    struct mca_mpool_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size
@@ -359,7 +359,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
 extern mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst( 
                                                          struct mca_bmi_base_module_t* bmi, 
                                                          struct mca_bmi_base_endpoint_t* peer,
-                                                         struct mca_bmi_base_registration_t* registration, 
+                                                         struct mca_mpool_base_registration_t* registration, 
                                                          struct ompi_convertor_t* convertor,
                                                          size_t reserve,
                                                          size_t* size); 

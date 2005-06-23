@@ -45,7 +45,7 @@ static int32_t          mca_pml_bsend_init = 0;
 static void* mca_pml_bsend_alloc_segment(
     struct mca_mpool_base_module_t* module, 
     size_t* size_inout, 
-    struct mca_bmi_base_registration_t** registration)
+    struct mca_mpool_base_registration_t** registration)
 {
     void *addr;
     size_t size = *size_inout;
