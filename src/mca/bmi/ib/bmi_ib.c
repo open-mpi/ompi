@@ -338,11 +338,6 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
                                                   0, 
                                                   registration); 
 
-                /* frag->ret = VAPI_deregister_mr( */
-/*                                                ib_bmi->nic,  */
-/*                                                registration->hndl */
-/*                                                );  */
-                
                 mca_mpool_base_remove((void*) registration->base); 
             
                 ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool, 
@@ -359,7 +354,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
                                             max_data, 
                                             &registration); 
             
-            if(frag->base.des_flags && MCA_BMI_DES_FLAGS_LEAVE_PINNED) { 
+            if(mca_bmi_ib_component.leave_pinned) { 
                 rc = mca_mpool_base_insert(iov.iov_base, 
                                            iov.iov_len, 
                                            ib_bmi->ib_pool, 
@@ -421,6 +416,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     frag->segment.seg_len = *size; 
     frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted; 
     if(NULL!= registration){ 
+        reg_len = (unsigned char*)registration->bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
         if(frag->segment.seg_len > reg_len) { 
             ib_bmi->ib_pool->mpool_deregister(
                                               ib_bmi->ib_pool, 
@@ -428,11 +424,6 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
                                               0, 
                                               registration); 
 
-/*             frag->ret = VAPI_deregister_mr( */
-/*                                            ib_bmi->nic,  */
-/*                                            registration->hndl */
-/*                                            );  */
-            
             mca_mpool_base_remove((void*) registration->base); 
             
             ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool, 
@@ -449,7 +440,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
                                         *size, 
                                         &registration); 
         
-        if(frag->base.des_flags && MCA_BMI_DES_FLAGS_LEAVE_PINNED) { 
+        if(mca_bmi_ib_component.leave_pinned) { 
             rc = mca_mpool_base_insert(frag->segment.seg_addr.pval,  
                                        *size, 
                                        ib_bmi->ib_pool, 

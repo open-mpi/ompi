@@ -77,6 +77,7 @@ static inline int mca_pml_ob1_param_register_int(
 
 int mca_pml_ob1_component_open(void)
 {
+    int param, value; 
     OBJ_CONSTRUCT(&mca_pml_ob1.lock, ompi_mutex_t);
 
     /* requests */
@@ -116,6 +117,11 @@ int mca_pml_ob1_component_open(void)
         mca_pml_ob1_param_register_int("recv_pipeline_depth", 3);
     mca_pml_ob1.rdma_offset = 
         mca_pml_ob1_param_register_int("rdma_offset", 1024*1024); 
+    
+    mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0); 
+    param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
+    mca_base_param_lookup_int(param, &value); 
+    mca_pml_ob1.leave_pinned = value; 
 
     return mca_bmi_base_open();
 }

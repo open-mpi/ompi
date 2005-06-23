@@ -101,6 +101,7 @@ static inline int mca_bmi_ib_param_register_int(
 int mca_bmi_ib_component_open(void)
 {
 
+    int param, value; 
     
     /* initialize state */
     mca_bmi_ib_component.ib_num_bmis=0;
@@ -129,15 +130,13 @@ int mca_bmi_ib_component_open(void)
         mca_bmi_ib_param_register_int ("exclusivity", 0);
     mca_bmi_ib_module.super.bmi_eager_limit = 
         mca_bmi_ib_param_register_int ("eager_limit",
-                                       (64*1024
-                                        - sizeof(mca_bmi_ib_header_t)));
+                                       (64*1024)) - sizeof(mca_bmi_ib_header_t); 
     mca_bmi_ib_module.super.bmi_min_send_size =
         mca_bmi_ib_param_register_int ("min_send_size",
-                                       (64*1024 
-                                        - sizeof(mca_bmi_ib_header_t)));
+                                       (64*1024))- sizeof(mca_bmi_ib_header_t);
     mca_bmi_ib_module.super.bmi_max_send_size =
-        mca_bmi_ib_param_register_int ("max_send_size", 128*1024 -
-                                       sizeof(mca_bmi_ib_header_t));
+        mca_bmi_ib_param_register_int ("max_send_size", (128*1024)) - sizeof(mca_bmi_ib_header_t);
+
     mca_bmi_ib_module.ib_pin_min = 
         mca_bmi_ib_param_register_int("ib_pin_min", 128*1024);                                    
     mca_bmi_ib_module.ib_cq_size = 
@@ -195,10 +194,10 @@ int mca_bmi_ib_component_open(void)
     mca_bmi_ib_module.super.bmi_flags  = 
         mca_bmi_ib_param_register_int("flags", 
                                       MCA_BMI_FLAGS_RDMA); 
-
-    mca_bmi_ib_component.leave_pinned = 
-        mca_bmi_ib_param_register_int("leave_pinned", 
-                                      0); 
+    
+    param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
+    mca_base_param_lookup_int(param, &value); 
+    mca_bmi_ib_component.leave_pinned = value; 
 
 
     

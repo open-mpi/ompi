@@ -60,6 +60,7 @@ struct mca_pml_ob1_t {
     size_t rdma_offset;     /* offset at which we attempt to initiate rdma */
     size_t send_pipeline_depth;
     size_t recv_pipeline_depth;
+    bool leave_pinned; 
 
     /* lock queue access */
     ompi_mutex_t lock;
