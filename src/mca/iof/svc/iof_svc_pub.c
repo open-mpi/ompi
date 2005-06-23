@@ -42,7 +42,6 @@ int orte_iof_svc_pub_create(
     ompi_list_item_t* item;
 
     OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
-    ompi_list_append(&mca_iof_svc_component.svc_published, &pub->super);
 
     /* has this endpoint already been published */
     for(item  = ompi_list_get_first(&mca_iof_svc_component.svc_published);
