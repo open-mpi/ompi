@@ -68,9 +68,9 @@ static ompi_output_stream_t portals_output_stream = {
     0,     /* syslog priority */
     NULL,  /* syslog ident */
     NULL,  /* prefix */
-    false, /* want stdout */
+    true, /* want stdout */
     false,  /* want stderr */
-    true, /* want file */
+    false, /* want file */
     false, /* file append */
     "ptl-portals"   /* file suffix */
 };

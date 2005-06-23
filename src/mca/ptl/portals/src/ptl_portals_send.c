@@ -45,13 +45,6 @@ mca_ptl_portals_send_frag_destruct(mca_ptl_portals_send_frag_t* frag)
 }
 
 
-static void*
-mca_ptl_portals_alloc(size_t *size)
-{
-    return malloc(*size);
-}
-
-
 int
 mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
 		     struct mca_ptl_base_peer_t *ptl_peer,
@@ -79,19 +72,23 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
        ompi_convertor_t *convertor;
        struct iovec iov;
        unsigned int iov_count;
-       unsigned int max_data;
+       size_t max_data;
        int rc;
 
-       convertor = &sendfrag->frag_send.frag_base.frag_convertor;
-       ompi_convertor_copy(&sendreq->req_send.req_convertor, convertor);
-       ompi_convertor_init_for_send(
-                    convertor,
-                    0,
-                    sendreq->req_send.req_datatype,
-                    sendreq->req_send.req_count,
-                    sendreq->req_send.req_addr,
-                    offset,
-                    mca_ptl_portals_alloc );
+       /* BWB - first frag, only need to call pack.  Can call
+          personalize if we want to change options.  On second frag,
+          need to clone with ompi_convertor_clone_with_position(),
+          then repersonalize.  In either case, no need to free the
+          convertors or anything like that. Look in base_fragment -
+          there's a convertor in there.*/
+
+       if (offset == 0) {
+           convertor = &sendreq->req_send.req_convertor;
+       } else {
+           convertor = &sendfrag->frag_send.frag_base.frag_convertor;
+           ompi_convertor_clone_with_position(&sendreq->req_send.req_convertor,
+                                              convertor, 1, &offset);
+       }
 
         /* if data is contigous convertor will return an offset
          * into users buffer - otherwise will return an allocated buffer
