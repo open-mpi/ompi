@@ -328,8 +328,8 @@ int mca_ptl_sm_add_procs_same_base_addr(
          * for any access to these queues to ensure data consistancy when
          * the array is grown */
    
-        if(0 == mca_ptl_sm_component.my_smp_rank ) {  /* show TIM */ 
-          /* allocate ompi_fifo_t strucutes for each fifo of the queue
+        if(0 == mca_ptl_sm_component.my_smp_rank ) {
+            /* allocate ompi_fifo_t strucutes for each fifo of the queue
              * pairs - one per pair of local processes */
             /* check to make sure number of local procs is within the
              * specified limits */
@@ -344,7 +344,8 @@ int mca_ptl_sm_add_procs_same_base_addr(
              * this can be used by other procs */
             mca_ptl_sm_component.sm_ctl_header->fifo=
                 mca_ptl_sm_component.sm_mpool->mpool_alloc
-                (mca_ptl_sm_component.sm_mpool, n_to_allocate*sizeof(ompi_fifo_t *),
+                (mca_ptl_sm_component.sm_mpool,
+                 n_to_allocate*sizeof(ompi_fifo_t *),
                  CACHE_LINE_SIZE, NULL);
             if ( NULL == mca_ptl_sm_component.sm_ctl_header->fifo ) {
                 return_code=OMPI_ERR_OUT_OF_RESOURCE;
@@ -360,7 +361,8 @@ int mca_ptl_sm_add_procs_same_base_addr(
             mca_ptl_sm_component.sm_ctl_header->segment_header.
                 base_shared_mem_segment =  ( volatile char **)
                 mca_ptl_sm_component.sm_mpool->mpool_alloc
-                (mca_ptl_sm_component.sm_mpool, n_to_allocate*sizeof(char *), CACHE_LINE_SIZE, NULL);
+                (mca_ptl_sm_component.sm_mpool,
+                 n_to_allocate*sizeof(char *), CACHE_LINE_SIZE, NULL);
             if ( NULL == mca_ptl_sm_component.sm_ctl_header->segment_header.
                     base_shared_mem_segment ) {
                 return_code=OMPI_ERR_OUT_OF_RESOURCE;
@@ -378,7 +380,8 @@ int mca_ptl_sm_add_procs_same_base_addr(
             mca_ptl_sm_component.sm_ctl_header->segment_header.
                 base_shared_mem_flags = ( int *)
                 mca_ptl_sm_component.sm_mpool->mpool_alloc
-                (mca_ptl_sm_component.sm_mpool, n_to_allocate*sizeof(int), CACHE_LINE_SIZE, NULL);
+                (mca_ptl_sm_component.sm_mpool,
+                 n_to_allocate*sizeof(int), CACHE_LINE_SIZE, NULL);
             if ( NULL == mca_ptl_sm_component.sm_ctl_header->segment_header.
                     base_shared_mem_flags ) {
                 return_code=OMPI_ERR_OUT_OF_RESOURCE;
@@ -403,7 +406,7 @@ int mca_ptl_sm_add_procs_same_base_addr(
                       (char *)(mca_ptl_sm_component.sm_mpool->mpool_base(mca_ptl_sm_component.sm_mpool)) );
 
             /* allow other procs to use this shared memory map */
-                mca_ptl_sm_component.mmap_file->map_seg->seg_inited=true;
+            mca_ptl_sm_component.mmap_file->map_seg->seg_inited=true;
 
             /* memory barrier to ensure this flag is set before other
              *  flags are set */
@@ -443,7 +446,8 @@ int mca_ptl_sm_add_procs_same_base_addr(
          */
         my_fifos=( ompi_fifo_t *)
             mca_ptl_sm_component.sm_mpool->mpool_alloc
-            (mca_ptl_sm_component.sm_mpool, n_to_allocate*sizeof(ompi_fifo_t), CACHE_LINE_SIZE, NULL);
+            (mca_ptl_sm_component.sm_mpool,
+             n_to_allocate*sizeof(ompi_fifo_t), CACHE_LINE_SIZE, NULL);
         if ( NULL == my_fifos ) {
             return_code=OMPI_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;
@@ -791,23 +795,21 @@ int mca_ptl_sm_send(
     /* if needed, pack data in payload buffer */
     if( 0 < size ) {
         ompi_convertor_t *convertor;
-        uint32_t iov_count;
-        size_t max_data;
-        int32_t free_after = 0;
+        unsigned int iov_count, max_data;
+        int free_after=0;
         struct iovec address;
 
         convertor = &sendreq->req_send.req_convertor;
-
-        sm_data_ptr = sm_request->req_frag->buff;
+        sm_data_ptr=sm_request->req_frag->buff;
 
         /* set up the shared memory iovec */
-        address.iov_base = sm_data_ptr;
-        address.iov_len = (size < send_frag->buff_length) ? size : send_frag->buff_length;
+        address.iov_base=sm_data_ptr;
+        address.iov_len= (size < send_frag->buff_length) ? size : send_frag->buff_length;
 
-        iov_count     = 1;
-        max_data      = address.iov_len;
-        return_status = ompi_convertor_pack( convertor,&address,&iov_count,
-                                             &max_data, &free_after );
+        iov_count=1;
+        max_data=address.iov_len;
+        return_status=ompi_convertor_pack(convertor,&address,&iov_count,
+                &max_data, &free_after);
         if( 0 > return_status ) {
             return OMPI_ERROR;
         }
@@ -911,8 +913,7 @@ int mca_ptl_sm_send_continue(
     mca_ptl_sm_second_frag_t *send_frag;
     ompi_convertor_t *convertor;
     struct iovec address;
-    uint32_t iov_count;
-    size_t max_data;
+    unsigned int max_data,iov_count;
 
     /* cast to shared memory send descriptor */
     sm_request=(mca_ptl_sm_send_request_t *)sendreq;
@@ -929,17 +930,16 @@ int mca_ptl_sm_send_continue(
 
     /* pack data in payload buffer */
     convertor = &sendreq->req_send.req_convertor;
-    ompi_convertor_set_position( convertor, &offset );
-    sm_data_ptr = send_frag->buff;
+    sm_data_ptr=send_frag->buff;
 
     /* set up the shared memory iovec */
-    address.iov_base = sm_data_ptr;
-    address.iov_len = (size < send_frag->buff_length) ? size : send_frag->buff_length;
+    address.iov_base=sm_data_ptr;
+    address.iov_len=(size < send_frag->buff_length) ? size : send_frag->buff_length;
 
-    iov_count = 1;
-    max_data = address.iov_len;
-    return_status = ompi_convertor_pack( convertor,&address,&iov_count,
-                                         &max_data, &free_after );
+    iov_count=1;
+    max_data=address.iov_len;
+    return_status=ompi_convertor_pack(convertor,&address,&iov_count,
+            &max_data, &free_after);
     if( 0 > return_status ) {
         return OMPI_ERROR;
     }

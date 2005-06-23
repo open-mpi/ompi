@@ -42,7 +42,7 @@
 #include "class/ompi_fifo.h"
 #include "class/ompi_free_list.h"
 #include "threads/mutex.h"
-#include "datatype/convertor.h"
+#include "datatype/datatype.h"
 
 
 /*
@@ -71,9 +71,9 @@ void mca_ptl_sm_matched(
     mca_ptl_sm_frag_t *sm_frag_desc;
     struct iovec iov; 
     ompi_convertor_t frag_convertor;
+    ompi_proc_t *proc;
     int  free_after,my_local_smp_rank,peer_local_smp_rank, return_status;
-    uint32_t iov_count;
-    size_t max_data;
+    unsigned int iov_count, max_data;
     ompi_fifo_t *send_fifo;
 
     /* copy data from shared memory buffer to user buffer */
@@ -85,13 +85,15 @@ void mca_ptl_sm_matched(
     peer_local_smp_rank=sm_frag_desc->queue_index;
 
     /* copy, only if there is data to copy */
-    max_data = 0;
+    max_data=0;
     if( 0 <  sm_frag_desc->super.frag_base.frag_size ) {
+ 
         /* 
          * Initialize convertor and use it to unpack data  
-         */
+         */ 
         ompi_convertor_clone_with_position( &(recv_desc->req_recv.req_convertor), &frag_convertor,
                                             1, &(sm_frag_desc->send_offset) );
+
         /* convert address from sender's address space to my virtual
          * address space */
 #ifdef SM_COMMON_BASE_ADDR
@@ -104,6 +106,7 @@ void mca_ptl_sm_matched(
         iov_count = 1;
         max_data = iov.iov_len;
         ompi_convertor_unpack( &frag_convertor, &iov, &iov_count, &max_data, &free_after ); 
+        OBJ_DESTRUCT(&frag_convertor);
     }
 
     /* update receive request information */

@@ -424,30 +424,18 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                 case MCA_PTL_HDR_TYPE_MATCH:
                     /* set the owning ptl */
                     header_ptr->super.frag_base.frag_owner=
-                        (mca_ptl_base_module_t *) (&mca_ptl_sm);
+                        (mca_ptl_base_module_t *) (&mca_ptl_sm[0]);
                     /* attempt match */
-                    matching_header= &(header_ptr->super.frag_base.
-                            frag_header.hdr_match);
-                    frag_matched=mca_ptl_base_match_in_order_network_delivery(
-                            matching_header,
-                            (mca_ptl_base_recv_frag_t *)header_ptr);
-                    if( frag_matched ) {
-                        /* deliver data, and ack */
-                        mca_ptl_base_match_header_t *hdr = &header_ptr->super.frag_base.frag_header.hdr_match;
-                        mca_ptl_base_recv_request_t *request = header_ptr->super.frag_request;
-                        request->req_recv.req_bytes_packed = hdr->hdr_msg_length;
-                        request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
-                        request->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
-                        mca_ptl_sm_matched_same_base_addr(
-                                (mca_ptl_base_module_t *)&mca_ptl_sm,
-                                (mca_ptl_base_recv_frag_t *)header_ptr);
-                    }
+                    matching_header= &(header_ptr->super.frag_base.frag_header.hdr_match);
+                    frag_matched = header_ptr->super.frag_base.frag_owner->ptl_match(
+                        header_ptr->super.frag_base.frag_owner, &(header_ptr->super),
+                        matching_header );
                     break;
 
                 case MCA_PTL_HDR_TYPE_FRAG:
                     /* set the owning ptl */
                     header_ptr->super.frag_base.frag_owner=
-                        (mca_ptl_base_module_t *) (&mca_ptl_sm);
+                        (mca_ptl_base_module_t *) (&mca_ptl_sm[0]);
                     /* second and beyond fragment - just need to deliver
                      * the data, and ack */
                     mca_ptl_sm_matched_same_base_addr(
@@ -538,29 +526,18 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                 case MCA_PTL_HDR_TYPE_MATCH:
                     /* set the owning ptl */
                     header_ptr->super.frag_base.frag_owner=
-                        (mca_ptl_base_module_t *) (&mca_ptl_sm);
+                        (mca_ptl_base_module_t *) (&mca_ptl_sm[1]);
                     /* attempt match */
-                    matching_header= &(header_ptr->super.frag_base.
-                            frag_header.hdr_match);
-                    frag_matched=mca_ptl_base_match_in_order_network_delivery(
-                            matching_header,
-                            (mca_ptl_base_recv_frag_t *)header_ptr);
-                    if( frag_matched ) {
-                        /* deliver data, and ack */
-                        mca_ptl_base_match_header_t *hdr = &header_ptr->super.frag_base.frag_header.hdr_match;
-                        mca_ptl_base_recv_request_t *request = header_ptr->super.frag_request;
-                        request->req_recv.req_bytes_packed = hdr->hdr_msg_length;
-                        request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_src;
-                        request->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_tag;
-                        mca_ptl_sm_matched((mca_ptl_base_module_t *)&mca_ptl_sm,
-                                (mca_ptl_base_recv_frag_t *)header_ptr);
-                    }
+                    matching_header= &(header_ptr->super.frag_base.frag_header.hdr_match);
+                    frag_matched = header_ptr->super.frag_base.frag_owner->ptl_match(
+                        header_ptr->super.frag_base.frag_owner, &(header_ptr->super),
+                        matching_header );
                     break;
 
                 case MCA_PTL_HDR_TYPE_FRAG:
                     /* set the owning ptl */
                     header_ptr->super.frag_base.frag_owner=
-                        (mca_ptl_base_module_t *) (&mca_ptl_sm);
+                        (mca_ptl_base_module_t *) (&mca_ptl_sm[1]);
                     /* second and beyond fragment - just need to deliver
                      * the data, and ack */
                     mca_ptl_sm_matched((mca_ptl_base_module_t *)&mca_ptl_sm,
