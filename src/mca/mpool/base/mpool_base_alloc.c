@@ -378,41 +378,6 @@ int mca_mpool_base_free(void * base)
 struct mca_mpool_base_chunk_t * mca_mpool_base_find(void * base)
 {
     return (mca_mpool_base_chunk_t *) 
-            ompi_rb_tree_find(&mca_mpool_base_tree, &base);
+        ompi_rb_tree_find(&mca_mpool_base_tree, &base);
 }
-
-
-/* int mca_bmi_ib_tree_node_compare_range(void * key1, void * key2) */
-/* { */
-/*     if(((mca_mpool_base_key_t *) key1)->bottom < */
-/*        ((mca_mpool_base_key_t *) key2)->bottom) */
-/*     { */
-/*         return -1; */
-/*     } */
-/*     else if((((mca_mpool_base_key_t *) key1)->bottom + ((mca_mpool_base_key_t *) key1)->length) > */
-/*             ((mca_mpool_base_key_t *) key2)->top) */
-/*     { */
-/*         return 1; */
-/*     } */
-/*     else */
-/*     { */
-/*         return 0; */
-/*     } */
-/* } */
-
-
-/* /\** */
-/*  * Searches the mpool to see if it has allocated the memory that is passed in. */
-/*  * If so it returns an array of mpools the memory is registered with. */
-/*  * */
-/*  * @param base pointer to the memory to lookup */
-/*  * */
-/*  * @retval NULL if the memory is not in any mpool */
-/*  * @retval pointer to an array of type mca_mpool_base_reg_mpool_t */
-/*  *\/ */
-/* struct mca_mpool_base_chunk_t * mca_mpool_base_find_range(void * base) */
-/* { */
-/*     return (mca_mpool_base_chunk_t *)  */
-/*             ompi_rb_tree_find(&mca_mpool_base_tree, &base); */
-/* } */
 

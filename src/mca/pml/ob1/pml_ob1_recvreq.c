@@ -164,7 +164,7 @@ static void mca_pml_ob1_recv_request_ack(
      * - size is larger than the rdma threshold
      * - rdma devices are available
     */
-    if(recvreq->req_mpool == NULL) {
+    if(NULL == recvreq->req_mpool && !mca_pml_ob1.leave_pinned) {
         if(recvreq->req_recv.req_bytes_packed > mca_pml_ob1.rdma_offset &&
            mca_pml_ob1_ep_array_get_size(&proc->bmi_rdma) &&
            ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
@@ -180,7 +180,11 @@ static void mca_pml_ob1_recv_request_ack(
             ack->hdr_rdma_offset = recvreq->req_recv.req_bytes_packed;
         }
     }
-    
+    else{ 
+        recvreq->req_rdma_offset = hdr->hdr_frag_length;
+        ack->hdr_rdma_offset = hdr->hdr_frag_length;
+    }
+
     /* initialize descriptor */
     des->des_flags |= MCA_BMI_DES_FLAGS_PRIORITY;
     des->des_cbfunc = mca_pml_ob1_send_ctl_complete;
@@ -345,7 +349,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                  * registed with. Otherwise, schedule round-robin across the
                  * available RDMA nics.
                 */
-                if(recvreq->req_mpool == NULL) {
+                if(recvreq->req_mpool == NULL &&  !mca_pml_ob1.leave_pinned) {
                     ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_rdma);
 
                     /* if there is only one bmi available or the size is less than
@@ -384,23 +388,34 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     recvreq->pin2[recvreq->pin_index] = get_profiler_timestamp();
 #endif
                 } else {
-
-                    /* find the endpoint corresponding to this bmi and schedule the entire message */
-                    ep = mca_pml_ob1_ep_array_find(&proc->bmi_rdma, (mca_bmi_base_module_t*) recvreq->req_mpool->user_data);
+                    struct mca_mpool_base_registration_t * reg; 
                     size = bytes_remaining;
 
                     /* prepare a descriptor for RDMA */
                     ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &recvreq->req_rdma_offset);
+
+                    if(NULL != recvreq->req_mpool){ 
+                        /* find the endpoint corresponding to this bmi and schedule the entire message */
+                        ep = mca_pml_ob1_ep_array_find(&proc->bmi_rdma, (mca_bmi_base_module_t*) recvreq->req_mpool->user_data);
+                        reg = recvreq->req_mpool->mpool_registration; 
+                        
+
+                    }
+                    else{ 
+                        ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_rdma);
+                        reg = NULL; 
+                    }
+                    
 #if MCA_PML_OB1_TIMESTAMPS
                     recvreq->pin1[recvreq->pin_index] = get_profiler_timestamp();
 #endif
                     dst = ep->bmi_prepare_dst(
-                        ep->bmi,
-                        ep->bmi_endpoint,
-                        recvreq->req_mpool->mpool_registration,
-                        &recvreq->req_recv.req_convertor,
-                        0,
-                        &size);
+                                              ep->bmi,
+                                              ep->bmi_endpoint,
+                                              reg,
+                                              &recvreq->req_recv.req_convertor,
+                                              0,
+                                              &size);
 #if MCA_PML_OB1_TIMESTAMPS
                     recvreq->pin2[recvreq->pin_index] = get_profiler_timestamp();
 #endif

@@ -297,22 +297,31 @@ int mca_pml_ob1_send_request_start(
             /* check to see if memory is registered */
             sendreq->req_chunk = mca_mpool_base_find(sendreq->req_send.req_addr);
 
-            /* pack the data into the supplied buffer */
-            iov.iov_base = (void*)((unsigned char*)segment->seg_addr.pval + 
-                sizeof(mca_pml_ob1_rendezvous_hdr_t));
-            iov.iov_len = size;
-            iov_count = 1;
-            max_data = size;
-            if((rc = ompi_convertor_pack(
-                &sendreq->req_send.req_convertor,
-                &iov,
-                &iov_count,
-                &max_data,
-                &free_after)) < 0) {
-                endpoint->bmi_free(endpoint->bmi, descriptor);
-                return rc;
-            }
 
+            /* if the buffer is not pinned and leave pinned is false we eagerly send
+               data to cover the cost of pinning the recv buffers on the peer */ 
+            if(NULL == sendreq->req_chunk && !mca_pml_ob1.leave_pinned){ 
+                /* pack the data into the supplied buffer */
+                iov.iov_base = (void*)((unsigned char*)segment->seg_addr.pval + 
+                                       sizeof(mca_pml_ob1_rendezvous_hdr_t));
+                iov.iov_len = size;
+                iov_count = 1;
+                max_data = size;
+                if((rc = ompi_convertor_pack(
+                                             &sendreq->req_send.req_convertor,
+                                             &iov,
+                                             &iov_count,
+                                             &max_data,
+                                             &free_after)) < 0) {
+                    endpoint->bmi_free(endpoint->bmi, descriptor);
+                    return rc;
+                }
+            }
+            /* if the buffer is pinned or leave pinned is true we do not eagerly send 
+               any data */ 
+            else { 
+                max_data = 0; 
+            }
             /* build hdr */
             hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
             hdr->hdr_common.hdr_flags = (sendreq->req_chunk != NULL ? MCA_PML_OB1_HDR_FLAGS_PIN : 0);
