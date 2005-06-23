@@ -537,6 +537,7 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_MINLOC (&ompi_mpi_op_minloc)
 #define MPI_REPLACE (&ompi_mpi_op_replace)
 
+/* C datatypes */
 #define MPI_DATATYPE_NULL (&ompi_mpi_datatype_null)
 #define MPI_BYTE (&ompi_mpi_byte)
 #define MPI_PACKED (&ompi_mpi_packed)
@@ -567,6 +568,8 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #endif  /* HAVE_LONG_LONG */
 
 /* Fortran datatype bindings */
+#define MPI_CHARACTER (&ompi_mpi_character)
+#define MPI_LOGICAL (&ompi_mpi_logic)
 #define MPI_INTEGER (&ompi_mpi_integer)
 #if OMPI_HAVE_FORTRAN_INTEGER1
 #define MPI_INTEGER1 (&ompi_mpi_integer1)
@@ -593,6 +596,8 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #if OMPI_HAVE_FORTRAN_REAL16
 #define MPI_REAL16 (&ompi_mpi_real16)
 #endif
+#define MPI_DOUBLE_PRECISION (&ompi_mpi_dblprec)
+#define MPI_COMPLEX (&ompi_mpi_cplex)
 #if OMPI_HAVE_FORTRAN_REAL4
 #define MPI_COMPLEX8 (&ompi_mpi_complex8)
 #endif
@@ -602,6 +607,10 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #if OMPI_HAVE_FORTRAN_REAL16
 #define MPI_COMPLEX32 (&ompi_mpi_complex32)
 #endif
+#define MPI_DOUBLE_COMPLEX (&ompi_mpi_dblcplex)
+#define MPI_2REAL (&ompi_mpi_2real)
+#define MPI_2DOUBLE_PRECISION (&ompi_mpi_2dblprec)
+#define MPI_2INTEGER (&ompi_mpi_2integer)
 
 #define MPI_ERRORS_ARE_FATAL (&ompi_mpi_errors_are_fatal)
 #define MPI_ERRORS_RETURN (&ompi_mpi_errors_return)
