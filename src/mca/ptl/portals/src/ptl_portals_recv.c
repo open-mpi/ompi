@@ -179,33 +179,22 @@ mca_ptl_portals_matched(struct mca_ptl_base_module_t *ptl_base,
     mca_ptl_base_recv_request_t* request = frag_base->frag_request;
     mca_ptl_portals_module_t* ptl = (mca_ptl_portals_module_t*) ptl_base;
     mca_ptl_portals_recv_frag_t* recvfrag = (mca_ptl_portals_recv_frag_t*) frag_base;
-    unsigned int bytes_delivered = recvfrag->frag_size;
+    size_t bytes_delivered = recvfrag->frag_size;
 
     /* generate an acknowledgment if required */
     if(hdr->hdr_common.hdr_flags & MCA_PTL_FLAGS_ACK) {
         mca_ptl_portals_send_ack(ptl, recvfrag);
     }
 
+    /* can just use the convertor straight from the request - no need
+       to initialize.  Might want to personalize, if required */
+
     /* copy data into users buffer */
     if(recvfrag->frag_size > 0) {
         struct iovec iov;
         unsigned int iov_count = 1;
         int free_after = 0;
-        ompi_proc_t *proc = ompi_comm_peer_lookup(request->req_recv.req_base.req_comm,
-            request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
-        ompi_convertor_t* convertor = &frag_base->frag_base.frag_convertor;
-
-        /* initialize receive convertor */
-        ompi_convertor_copy(proc->proc_convertor, convertor);
-        ompi_convertor_init_for_recv(
-            convertor,                      /* convertor */
-            0,                              /* flags */
-            request->req_recv.req_base.req_datatype, /* datatype */
-            request->req_recv.req_base.req_count,    /* count elements */
-            request->req_recv.req_base.req_addr,     /* users buffer */
-            0,                              /* offset in bytes into packed buffer */
-            NULL );                         /* not allocating memory */
-        /*ompi_convertor_get_packed_size(convertor, &request->req_bytes_packed); */
+        ompi_convertor_t *convertor = &(request->req_recv.req_convertor);
 
         iov.iov_base = recvfrag->frag_data;
         iov.iov_len = recvfrag->frag_size;

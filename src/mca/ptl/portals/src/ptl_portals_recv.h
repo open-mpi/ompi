@@ -107,7 +107,7 @@ mca_ptl_portals_process_frag_frag(struct mca_ptl_portals_module_t *ptl,
                                   mca_ptl_base_header_t *hdr, 
                                   ptl_event_t *ev)
 {
-    unsigned int bytes_delivered;
+    size_t bytes_delivered;
     mca_ptl_base_recv_request_t* request;
     mca_ptl_portals_recv_frag_t *recvfrag;
 
@@ -124,22 +124,13 @@ mca_ptl_portals_process_frag_frag(struct mca_ptl_portals_module_t *ptl,
         struct iovec iov;
         unsigned int iov_count = 1;
         int free_after = 0;
-        ompi_proc_t *proc = ompi_comm_peer_lookup(
-                    request->req_recv.req_base.req_comm,
-                    request->req_recv.req_base.req_ompi.req_status.MPI_SOURCE);
         ompi_convertor_t* convertor = 
                     &(recvfrag->frag_recv.frag_base.frag_convertor);
 
-        /* initialize receive convertor */
-        ompi_convertor_copy(proc->proc_convertor, convertor);
-        ompi_convertor_init_for_recv(
-                        convertor,                      /* convertor */
-                        0,                              /* flags */
-                        request->req_recv.req_base.req_datatype, /* datatype */
-                   request->req_recv.req_base.req_count,    /* count elements */
-                   request->req_recv.req_base.req_addr,     /* users buffer */
-                   hdr->hdr_frag.hdr_frag_offset,  /* offset in bytes into packed buffer */
-                   NULL );                         /* not allocating memory */
+        /* clone receive convertor and set to correct position */
+        ompi_convertor_clone_with_position(&(request->req_recv.req_convertor),
+                                            convertor, 1,
+                                            &(hdr->hdr_frag.hdr_frag_offset));
 
         iov.iov_base = recvfrag->frag_data;
         iov.iov_len = recvfrag->frag_size;
