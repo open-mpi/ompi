@@ -67,6 +67,7 @@
 #if OMPI_ENABLE_DEBUG
 /* Need atomics for debugging (reference counting) */
 #include "include/sys/atomic.h"
+#include "threads/mutex.h"
 #endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -377,7 +378,7 @@ static inline ompi_list_item_t *ompi_list_remove_item
 #if OMPI_ENABLE_DEBUG
     /* Spot check: ensure that this item is still only on one list */
 
-    ompi_atomic_sub( &(item->ompi_list_item_refcount), 1 );
+    OMPI_THREAD_ADD32( &(item->ompi_list_item_refcount), -1 );
     assert(0 == item->ompi_list_item_refcount);
     item->ompi_list_item_belong_to = NULL;
 #endif
@@ -442,7 +443,7 @@ static inline void _ompi_list_append(ompi_list_t *list, ompi_list_item_t *item
   /* Spot check: ensure this item is only on the list that we just
      appended it to */
 
-  ompi_atomic_add( &(item->ompi_list_item_refcount), 1 );
+  OMPI_THREAD_ADD32( &(item->ompi_list_item_refcount), 1 );
   assert(1 == item->ompi_list_item_refcount);
   item->ompi_list_item_belong_to = list;
 #endif
@@ -491,7 +492,7 @@ static inline void ompi_list_prepend(ompi_list_t *list,
   /* Spot check: ensure this item is only on the list that we just
      prepended it to */
 
-  ompi_atomic_add( &(item->ompi_list_item_refcount), 1 );
+  OMPI_THREAD_ADD32( &(item->ompi_list_item_refcount), 1 );
   assert(1 == item->ompi_list_item_refcount);
   item->ompi_list_item_belong_to = list;
 #endif
@@ -552,7 +553,7 @@ static inline ompi_list_item_t *ompi_list_remove_first(ompi_list_t *list)
   /* Spot check: ensure that the item we're returning is now on no
      lists */
 
-  ompi_atomic_sub( &(item->ompi_list_item_refcount), 1 );
+  OMPI_THREAD_ADD32( &(item->ompi_list_item_refcount), -1 );
   assert(0 == item->ompi_list_item_refcount);
 #endif
 
@@ -612,7 +613,7 @@ static inline ompi_list_item_t *ompi_list_remove_last(ompi_list_t *list)
   /* Spot check: ensure that the item we're returning is now on no
      lists */
 
-  ompi_atomic_sub( &(item->ompi_list_item_refcount), 1 );
+  OMPI_THREAD_ADD32( &(item->ompi_list_item_refcount), -1 );
   assert(0 == item->ompi_list_item_refcount);
   item->ompi_list_item_belong_to = NULL;
 #endif
@@ -655,7 +656,7 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
     /* Spot check: double check that this item is only on the list
        that we just added it to */
 
-    ompi_atomic_add( &(item->ompi_list_item_refcount), 1 );
+    OMPI_THREAD_ADD32( &(item->ompi_list_item_refcount), 1 );
     assert(1 == item->ompi_list_item_refcount);
     item->ompi_list_item_belong_to = list;
 #endif
