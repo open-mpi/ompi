@@ -225,6 +225,7 @@ int orte_iof_base_endpoint_create(
  
     OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
     if((endpoint = orte_iof_base_endpoint_lookup(proc,mode,tag)) != NULL) {
+        OBJ_RELEASE(endpoint);
         OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
         return OMPI_SUCCESS;
     }
