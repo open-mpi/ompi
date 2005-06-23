@@ -150,7 +150,7 @@ static void mca_pml_ob1_recv_request_ack(
         hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN) {
         struct mca_mpool_base_reg_mpool_t *reg = recvreq->req_chunk->mpools;
         while(reg->mpool != NULL) {
-            if(NULL != mca_pml_ob1_ep_array_find(&proc->bmi_rdma,reg->bmi_module)) {
+            if(NULL != mca_pml_ob1_ep_array_find(&proc->bmi_rdma,(mca_bmi_base_module_t*) reg->user_data)) {
                 recvreq->req_rdma_offset = hdr->hdr_frag_length;
                 ack->hdr_rdma_offset = hdr->hdr_frag_length;
                 recvreq->req_mpool = reg;
@@ -386,7 +386,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 } else {
 
                     /* find the endpoint corresponding to this bmi and schedule the entire message */
-                    ep = mca_pml_ob1_ep_array_find(&proc->bmi_rdma, recvreq->req_mpool->bmi_module);
+                    ep = mca_pml_ob1_ep_array_find(&proc->bmi_rdma, (mca_bmi_base_module_t*) recvreq->req_mpool->user_data);
                     size = bytes_remaining;
 
                     /* prepare a descriptor for RDMA */
@@ -397,7 +397,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     dst = ep->bmi_prepare_dst(
                         ep->bmi,
                         ep->bmi_endpoint,
-                        recvreq->req_mpool->bmi_registration,
+                        recvreq->req_mpool->mpool_registration,
                         &recvreq->req_recv.req_convertor,
                         0,
                         &size);

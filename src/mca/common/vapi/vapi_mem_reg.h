@@ -27,14 +27,14 @@ extern "C" {
 #endif
 
 
-struct mca_bmi_base_resources_t {
+struct mca_mpool_base_resources_t {
   VAPI_hca_hndl_t hca;   /* the hca (nic) */ 
   VAPI_pd_hndl_t pd_tag; /* the protection domain */ 
 }; 
-typedef struct mca_bmi_base_resources_t mca_bmi_base_resources_t;  
+typedef struct mca_mpool_base_resources_t mca_mpool_base_resources_t;  
 
 
-struct mca_bmi_base_registration_t {
+struct mca_mpool_base_registration_t {
     VAPI_mr_hndl_t                  hndl;
     /* Memory region handle */
     
@@ -49,7 +49,7 @@ struct mca_bmi_base_registration_t {
     void * bound; 
 
 };
-typedef struct mca_bmi_base_registration_t mca_bmi_base_registration_t;
+typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -242,7 +242,7 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
     uint32_t num_hcas; 
     mca_bmi_base_module_t** bmis;
     uint32_t i,j, length;
-    mca_bmi_base_resources_t hca_pd; 
+    mca_mpool_base_resources_t hca_pd; 
     ompi_list_t bmi_list; 
     mca_bmi_ib_module_t * ib_bmi; 
     mca_bmi_base_selected_module_t* ib_selected; 

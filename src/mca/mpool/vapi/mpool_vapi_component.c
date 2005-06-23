@@ -29,8 +29,7 @@
  */
 static int mca_mpool_vapi_open(void);
 static mca_mpool_base_module_t* mca_mpool_vapi_init(
-    struct mca_bmi_base_module_t* module,
-    struct mca_bmi_base_resources_t* resources);
+    struct mca_mpool_base_resources_t* resources);
 
 mca_mpool_vapi_component_t mca_mpool_vapi_component = {
     {
@@ -92,7 +91,7 @@ static int mca_mpool_vapi_open(void)
 void* mca_common_vapi_segment_alloc(
     struct mca_mpool_base_module_t* mpool,
     size_t* size, 
-    struct mca_bmi_base_registration_t** registration)
+    struct mca_mpool_base_registration_t** registration)
 {
     void* addr_malloc = (void*)malloc((*size) + mca_mpool_vapi_component.page_size); 
     void* addr = (void*)  ALIGN_ADDR(addr_malloc, mca_mpool_vapi_component.page_size_log); 
@@ -105,8 +104,7 @@ void* mca_common_vapi_segment_alloc(
 
 /* Allocates a segment of memory and registers with IB, user_out returns the memory handle. */ 
 static mca_mpool_base_module_t* mca_mpool_vapi_init(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_resources_t* resources)
+     struct mca_mpool_base_resources_t* resources)
 {
     mca_mpool_vapi_module_t* mpool_module; 
     mca_allocator_base_component_t* allocator_component;

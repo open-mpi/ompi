@@ -188,6 +188,27 @@ void * ompi_rb_tree_find(ompi_rb_tree_t *tree, void *key)
     return(NULL);
 }
 
+/* Finds the node in the tree based on the key */
+void * ompi_rb_tree_find_with_cmp(ompi_rb_tree_t *tree, 
+                                  void *key, 
+                                  ompi_rb_tree_comp_fn_t* comp)
+{
+    ompi_rb_tree_node_t * node;
+    int compvalue;
+
+    node = tree->root_ptr->left;
+    while (node != tree->nill) {
+        compvalue = (*comp)(key, node->key);
+        /* if the result of the comparison function is 0, we found it */
+        if (compvalue == 0) {
+            return(node->value);
+        }
+        /* else if it is less than 0, go left, else right */
+        (compvalue < 0) ? (node = node->left) : (node = node->right);
+    }
+    /* if we didn't find anything, return NULL */
+    return(NULL);
+}
 /* Finds the node in the tree based on the key and returns a pointer
  * to the node. This is a bit a code duplication, but this has to be fast
  * so we go ahead with the duplication */

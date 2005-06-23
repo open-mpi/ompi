@@ -52,7 +52,7 @@ void* mca_mpool_sm_alloc(
     mca_mpool_base_module_t* mpool, 
     size_t size, 
     size_t align, 
-    struct mca_bmi_base_registration_t** registration)
+    struct mca_mpool_base_registration_t** registration)
 {
     mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
     return mpool_sm->sm_allocator->alc_alloc(mpool_sm->sm_allocator, size, align, registration);
@@ -65,7 +65,7 @@ void* mca_mpool_sm_realloc(
     mca_mpool_base_module_t* mpool, 
     void* addr, 
     size_t size, 
-    struct mca_bmi_base_registration_t** registration)
+    struct mca_mpool_base_registration_t** registration)
 {
     mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
     return mpool_sm->sm_allocator->alc_realloc(mpool_sm->sm_allocator, addr, size, registration);
@@ -75,7 +75,7 @@ void* mca_mpool_sm_realloc(
   * free function 
   */
 void mca_mpool_sm_free(mca_mpool_base_module_t* mpool, void * addr, 
-                       struct mca_bmi_base_registration_t* registration)
+                       struct mca_mpool_base_registration_t* registration)
 {
     mca_mpool_sm_module_t* mpool_sm = (mca_mpool_sm_module_t*)mpool; 
     mpool_sm->sm_allocator->alc_free(mpool_sm->sm_allocator, addr);

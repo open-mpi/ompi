@@ -32,11 +32,11 @@ extern "C" {
 #endif
 
 struct mca_mpool_base_selected_module_t {
-  ompi_list_item_t super;
-  mca_mpool_base_component_t *mpool_component;
-  mca_mpool_base_module_t *mpool_module;
-  struct mca_bmi_base_module_t *mpool_bmi;
-  struct mca_bmi_base_resources_t *mpool_resources;
+    ompi_list_item_t super;
+    mca_mpool_base_component_t *mpool_component;
+    mca_mpool_base_module_t *mpool_module;
+    void* user_data; 
+    struct mca_mpool_base_resources_t *mpool_resources;
 };
 typedef struct mca_mpool_base_selected_module_t mca_mpool_base_selected_module_t;
 
@@ -68,8 +68,8 @@ typedef struct mca_mpool_base_key_t mca_mpool_base_key_t;
 struct mca_mpool_base_reg_mpool_t
 {
     mca_mpool_base_module_t * mpool; /**< the registered memory pool */
-    struct mca_bmi_base_module_t *bmi_module; /**< bmi that registered the memory */
-    struct mca_bmi_base_registration_t* bmi_registration; /**< bmi specific info associated w/ registration */
+    void* user_data; /**< user data */
+    struct mca_mpool_base_registration_t* mpool_registration; /**< mpool specific info associated w/ registration */
 };
 typedef struct mca_mpool_base_reg_mpool_t mca_mpool_base_reg_mpool_t;
 
@@ -96,8 +96,8 @@ OMPI_DECLSPEC int mca_mpool_base_close(void);
 OMPI_DECLSPEC mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name);
 OMPI_DECLSPEC mca_mpool_base_module_t* mca_mpool_base_module_create(
     const char* name, 
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_resources_t* bmi_resources);
+    void* user_data,
+    struct mca_mpool_base_resources_t* mpool_resources);
  
 /*
  * Globals

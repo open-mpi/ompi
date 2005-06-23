@@ -125,7 +125,7 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
     void * mca_allocator_bucket_alloc(
         mca_allocator_base_module_t * mem, 
         size_t size, 
-        struct mca_bmi_base_registration_t** registration);
+        struct mca_mpool_base_registration_t** registration);
 
 /**
    * Accepts a request for memory in a specific region defined by the
@@ -146,7 +146,7 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
         mca_allocator_base_module_t * mem,
         size_t size, 
         size_t alignment, 
-        struct mca_bmi_base_registration_t** registration);
+        struct mca_mpool_base_registration_t** registration);
 
 /**
    * Attempts to resize the passed region of memory into a larger or a smaller
@@ -166,7 +166,7 @@ typedef struct mca_allocator_bucket_t mca_allocator_bucket_t;
         mca_allocator_base_module_t * mem, 
         void * ptr, 
         size_t size, 
-        struct mca_bmi_base_registration_t** registration);
+        struct mca_mpool_base_registration_t** registration);
 
 /**
    * Frees the passed region of memory

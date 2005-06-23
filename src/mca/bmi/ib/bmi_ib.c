@@ -58,6 +58,8 @@ mca_bmi_ib_module_t mca_bmi_ib_module = {
     }
 };
 
+
+
 int mca_bmi_ib_add_procs(
     struct mca_bmi_base_module_t* bmi, 
     size_t nprocs, 
@@ -221,7 +223,7 @@ int mca_bmi_ib_free(
 mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* endpoint,
-    struct mca_bmi_base_registration_t* registration, 
+    struct mca_mpool_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size
@@ -330,10 +332,16 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
             reg_len = (unsigned char*)registration->bound - (unsigned char*)iov.iov_base + 1; 
             if(frag->segment.seg_len > reg_len) { 
                 
-                frag->ret = VAPI_deregister_mr(
-                                               ib_bmi->nic, 
-                                               registration->hndl
-                                               ); 
+                ib_bmi->ib_pool->mpool_deregister(
+                                                  ib_bmi->ib_pool, 
+                                                  registration->base, 
+                                                  0, 
+                                                  registration); 
+
+                /* frag->ret = VAPI_deregister_mr( */
+/*                                                ib_bmi->nic,  */
+/*                                                registration->hndl */
+/*                                                );  */
                 
                 mca_mpool_base_remove((void*) registration->base); 
             
@@ -355,7 +363,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
                 rc = mca_mpool_base_insert(iov.iov_base, 
                                            iov.iov_len, 
                                            ib_bmi->ib_pool, 
-                                           &ib_bmi->super, 
+                                           (void*) (&ib_bmi->super), 
                                            registration); 
                 if(rc != OMPI_SUCCESS) 
                     return NULL; 
@@ -391,7 +399,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
 mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* endpoint,
-    struct mca_bmi_base_registration_t* registration, 
+    struct mca_mpool_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size)
@@ -414,11 +422,16 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     frag->segment.seg_addr.pval = convertor->pBaseBuf + convertor->bConverted; 
     if(NULL!= registration){ 
         if(frag->segment.seg_len > reg_len) { 
-            
-            frag->ret = VAPI_deregister_mr(
-                                           ib_bmi->nic, 
-                                           registration->hndl
-                                           ); 
+            ib_bmi->ib_pool->mpool_deregister(
+                                              ib_bmi->ib_pool, 
+                                              registration->base, 
+                                              0, 
+                                              registration); 
+
+/*             frag->ret = VAPI_deregister_mr( */
+/*                                            ib_bmi->nic,  */
+/*                                            registration->hndl */
+/*                                            );  */
             
             mca_mpool_base_remove((void*) registration->base); 
             
@@ -440,7 +453,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
             rc = mca_mpool_base_insert(frag->segment.seg_addr.pval,  
                                        *size, 
                                        ib_bmi->ib_pool, 
-                                       &ib_bmi->super, 
+                                       (void*) (&ib_bmi->super), 
                                        (void*) registration); 
             if(rc != OMPI_SUCCESS) 
                 return NULL; 

@@ -75,7 +75,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
     unsigned char* ptr;
     size_t i;
     size_t mod;
-    struct mca_bmi_base_registration_t* user_out; 
+    struct mca_mpool_base_registration_t* user_out; 
 
     if (flist->fl_max_to_alloc > 0 && flist->fl_num_allocated + num_elements > flist->fl_max_to_alloc)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;

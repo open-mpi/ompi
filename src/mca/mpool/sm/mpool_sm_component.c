@@ -29,8 +29,7 @@
  */
 static int mca_mpool_sm_open(void);
 static mca_mpool_base_module_t* mca_mpool_sm_init(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_resources_t* resources);
+    struct mca_mpool_base_resources_t* resources);
 
 mca_mpool_sm_component_t mca_mpool_sm_component = {
     {
@@ -98,8 +97,7 @@ static int mca_mpool_sm_open(void)
 
 
 static mca_mpool_base_module_t* mca_mpool_sm_init(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_resources_t* resources)
+    struct mca_mpool_base_resources_t* resources)
 {
     char *file_name;
     int len;

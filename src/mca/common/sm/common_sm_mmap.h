@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 struct mca_mpool_base_module_t;
-struct mca_bmi_base_registration_t;
+struct mca_mpool_base_registration_t;
 
 struct mca_common_sm_file_header_t {
 
@@ -99,7 +99,7 @@ extern mca_common_sm_mmap_t* mca_common_sm_mmap_init(
 extern void* mca_common_sm_mmap_seg_alloc(
     struct mca_mpool_base_module_t* mpool, 
     size_t* size, 
-    struct mca_bmi_base_registration_t** registration);
+    struct mca_mpool_base_registration_t** registration);
 
 /*
  * Instance that is shared between components that use shared memory

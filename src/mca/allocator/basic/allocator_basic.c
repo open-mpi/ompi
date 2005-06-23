@@ -161,7 +161,7 @@ void *mca_allocator_basic_alloc(
     mca_allocator_base_module_t * base, 
     size_t size,
     size_t align, 
-    struct mca_bmi_base_registration_t** registration)
+    struct mca_mpool_base_registration_t** registration)
 {
     mca_allocator_basic_module_t* module = (mca_allocator_basic_module_t*)base;
     mca_allocator_basic_segment_t* seg;
@@ -241,7 +241,7 @@ void * mca_allocator_basic_realloc(
     mca_allocator_base_module_t * base, 
     void * ptr, 
     size_t size, 
-    struct mca_bmi_base_registration_t** registration)
+    struct mca_mpool_base_registration_t** registration)
 {
     unsigned char* addr = ((unsigned char*)ptr) - sizeof(size_t);
     size_t alloc_size = *(size_t*)addr;
