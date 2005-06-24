@@ -88,7 +88,7 @@ extern "C" {
     OMPI_DECLSPEC int orte_pls_base_finalize(void);
     OMPI_DECLSPEC int orte_pls_base_close(void);
     /**
-     * Utility routine to get/set proces pid
+     * Utility routine to get/set procesS pid
      */
     OMPI_DECLSPEC int orte_pls_base_set_proc_pid(const orte_process_name_t*, pid_t);
     OMPI_DECLSPEC int orte_pls_base_get_proc_pid(const orte_process_name_t*, pid_t*);
@@ -102,6 +102,11 @@ extern "C" {
     OMPI_DECLSPEC int orte_pls_base_set_node_pid(orte_cellid_t cellid, char* node_name, orte_jobid_t jobid, pid_t pid);
     OMPI_DECLSPEC int orte_pls_base_get_node_pids(orte_jobid_t jobid, pid_t** pids, size_t* num_pids);
   
+    /**
+     * Utility routine to set progress engine schedule
+     */
+    OMPI_DECLSPEC int orte_pls_base_set_progress_sched(int sched);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

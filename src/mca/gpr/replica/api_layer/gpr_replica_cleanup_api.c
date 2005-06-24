@@ -46,6 +46,12 @@ int orte_gpr_replica_cleanup_job(orte_jobid_t jobid)
         return rc;
     }
     
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_events())) {
+        ORTE_ERROR_LOG(rc);
+        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        return rc;
+    }
+
     rc = orte_gpr_replica_process_callbacks();
     
     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
@@ -67,6 +73,12 @@ int orte_gpr_replica_cleanup_proc(orte_process_name_t *proc)
         return rc;
     }
     
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_events())) {
+        ORTE_ERROR_LOG(rc);
+        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        return rc;
+    }
+
     rc = orte_gpr_replica_process_callbacks();
     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     

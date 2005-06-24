@@ -77,22 +77,36 @@ typedef uint8_t orte_gpr_replica_addr_mode_t;
 
 typedef int8_t orte_gpr_replica_action_t;
 
+/*
+ * Local subscription tracker for use by processes
+ * that are operating on the same node as the replica
+ */
+typedef struct {
+     ompi_object_t super;                   /**< Allows this to be an object */
+     orte_gpr_subscription_id_t id;         /**< id of this subscription */
+     orte_gpr_notify_cb_fn_t callback;      /**< Function to be called for notificaiton */
+     void *user_tag;                        /**< User-provided tag for callback function */
+} orte_gpr_replica_local_subscriber_t;
+
+OBJ_CLASS_DECLARATION(orte_gpr_replica_local_subscriber_t);
+
+
 typedef struct {
     int debug;
     int isolate;
     size_t block_size;
     size_t max_size;
     ompi_mutex_t mutex;
-    bool compound_cmd_mode;
-    bool exec_compound_cmd_mode;
-    orte_buffer_t *compound_cmd;
-    ompi_mutex_t wait_for_compound_mutex;
-    ompi_condition_t compound_cmd_condition;
-    int compound_cmd_waiting;
+    size_t num_local_subs;
+    orte_pointer_array_t *local_subscriptions;
+    size_t trig_cntr;
+    size_t num_srch_cptr;
     orte_pointer_array_t *srch_cptr;
+    orte_pointer_array_t *sub_ptrs;
+    size_t num_srch_ival;
     orte_pointer_array_t *srch_ival;
-    orte_pointer_array_t *acted_upon;
     size_t num_acted_upon;
+    orte_pointer_array_t *acted_upon;
     orte_bitmap_t srch_itag;
 } orte_gpr_replica_globals_t;
 
@@ -125,6 +139,8 @@ struct orte_gpr_replica_t {
     size_t num_segs;
     orte_pointer_array_t *triggers;     /**< Managed array of pointers to triggers */
     size_t num_trigs;
+    orte_pointer_array_t *subscriptions; /**< Managed array of pointers to subscriptions */
+    size_t num_subs;
     bool processing_callbacks;
     ompi_list_t callbacks;          /**< List of callbacks to be processed */
 };
@@ -144,7 +160,9 @@ struct orte_gpr_replica_segment_t {
     ompi_object_t super;                /**< Make this an object */
     char *name;                         /**< Name of the segment */
     orte_gpr_replica_itag_t itag;       /**< itag of this segment */
+    size_t num_dict_entries;
     orte_pointer_array_t *dict;         /**< Managed array of dict structs */
+    size_t num_containers;
     orte_pointer_array_t *containers;   /**< Managed array of pointers to containers on this segment */
 };
 typedef struct orte_gpr_replica_segment_t orte_gpr_replica_segment_t;
@@ -177,6 +195,7 @@ struct orte_gpr_replica_container_t {
     orte_gpr_replica_itag_t *itags;   /**< Array of itags that define this container */
     size_t num_itags;                    /**< Number of itags in array */
     orte_pointer_array_t *itagvals;   /**< Array of itagval pointers */
+    size_t num_itagvals;                /**< Number of itagvals in container */
     orte_value_array_t itaglist;      /**< Array of itags from all itagvals - used for rapid search */
 };
 typedef struct orte_gpr_replica_container_t orte_gpr_replica_container_t;
@@ -196,6 +215,23 @@ typedef struct {
 
 OBJ_CLASS_DECLARATION(orte_gpr_replica_itagval_t);
 
+/* The equivalent of the value structure, only using internal
+ * itags for the tokens/keys and pointers to internal structures
+ */
+typedef struct {
+    ompi_object_t super;    /**< Makes this an object */
+    size_t index;
+    /* the segment upon which this data is located */
+    orte_gpr_replica_segment_t *seg;
+    /* describe the data */
+    orte_gpr_addr_mode_t addr_mode; /**< Tokens/keys addressing mode */
+    orte_value_array_t tokentags;   /**< Array of tokens defining which containers are affected */
+    orte_value_array_t keytags;     /**< Array of keys defining which key-value pairs are affected */
+} orte_gpr_replica_ivalue_t;
+
+OBJ_CLASS_DECLARATION(orte_gpr_replica_ivalue_t);
+
+
 typedef struct {
     ompi_object_t super;
     orte_gpr_replica_segment_t *seg;
@@ -207,58 +243,101 @@ typedef struct {
 OBJ_CLASS_DECLARATION(orte_gpr_replica_counter_t);
 
 typedef struct {
-    ompi_object_t super;                    /**< Makes this an object */
-    size_t index;                              /**< Index of this entry in original subscription */
-    /* the segment upon which this data is located */
-    orte_gpr_replica_segment_t *seg;
-    /* describe the data to be returned with the message -
-     * for triggers that are counting themselves (i.e., not monitoring a separate
-     * counter), this also describes the data to be included in the count
-     */
-    orte_gpr_addr_mode_t addr_mode;                 /**< Tokens/keys addressing mode */
-    orte_value_array_t tokentags;                   /**< Array of tokens defining which containers are affected */
-    orte_value_array_t keytags;                     /**< Array of keys defining which key-value pairs are affected */
-    /* where this block of data goes */
-    orte_gpr_notify_cb_fn_t callback;               /**< Function to be called for notification */
-    void *user_tag;                                 /**< User-provided tag for callback function */
-} orte_gpr_replica_subscribed_data_t;
-
-OBJ_CLASS_DECLARATION(orte_gpr_replica_subscribed_data_t);
-
-struct orte_gpr_replica_triggers_t {
-    ompi_object_t super;                            /**< Make this an object */
-    /* index of this trigger in the triggers array */
+    ompi_object_t super;
+    /* index of this entry in requestor array */
     size_t index;
+    /* process name of the recipient - set to NULL if local */
+    orte_process_name_t *requestor;
+    /* idtag associated with this subscription */
+    orte_gpr_subscription_id_t idtag;
+    /* for a local subscription, where this block of data goes */
+    orte_gpr_notify_cb_fn_t callback;  /**< Function to be called for notification */
+    void *user_tag;                    /**< User-provided tag for callback function */
+} orte_gpr_replica_requestor_t;
+
+OBJ_CLASS_DECLARATION(orte_gpr_replica_requestor_t);
+
+typedef struct {
+    ompi_object_t super;                    /**< Makes this an object */
+    /* index of this entry in subscription array - corresponds to local idtag */
+    size_t index;
+    /* name of this subscription, if provided */
+    char *name;
+    /* boolean indicating if this subscription is active or not */
+    bool active;
+    /* boolean indicating that this subscription
+     * should be removed after processing
+     * is completed
+     */
+    bool cleanup;
+    /* action flags describing when the subscription should
+     * generate a notification message. This can be NULL if
+     * the subscription only operates in conjunction
+     * with a trigger
+     */
+    orte_gpr_notify_action_t action;
+    /* Array of ivalues that describe the data to be
+     * returned when this subscription is "fired"
+     */
+    size_t num_values;
+    orte_pointer_array_t *values;
+    /*
+     * Array of requestors that are "attached" to this subscription
+     */
+    size_t num_requestors;
+    orte_pointer_array_t *requestors;
+} orte_gpr_replica_subscription_t;
+
+OBJ_CLASS_DECLARATION(orte_gpr_replica_subscription_t);
+
+
+typedef struct {
+    ompi_object_t super;
+    /* index of this entry in array */
+    size_t index;
+    /* process name of the requestor - set to NULL if local */
+    orte_process_name_t *requestor;
+    /* requestor's id for this trigger */
+    orte_gpr_trigger_id_t idtag;
+} orte_gpr_replica_trigger_requestor_t;
+
+OBJ_CLASS_DECLARATION(orte_gpr_replica_trigger_requestor_t);
+
+
+struct orte_gpr_replica_trigger_t {
+    ompi_object_t super;                            /**< Make this an object */
+    /* name of this trigger, if provided */
+    char *name;
+    /* index of this trigger in the triggers array - corresponds to local idtag */
+    size_t index;
+    /* array of requestors that have "attached" themselves to this trigger */
+    size_t num_attached;
+    orte_pointer_array_t *attached;
+    /* the action that causes the trigger to be fired */
+    orte_gpr_notify_action_t action;
     /* flag that indicates this trigger is a one-shot, has fired and
      * now should be cleaned up
      */
     bool one_shot_fired;
-    /* the action that causes a notification message to be sent out */
-    orte_gpr_notify_action_t action;
-    /* to whom the notification messages go - set to NULL if local */
-    orte_process_name_t *requestor;                 /**< Name of requesting process */
-    /* remote idtag associated with this subscription -
-     * set to ORTE_GPR_NOTIFY_ID_MAX if local
-     */
-    orte_gpr_notify_id_t remote_idtag;              /**< Remote ID tag of subscription */
-    /* a pointer to the data belonging to this subscription. Each subscribed data
-     * object describes a set of data to be returned whenever this subscription
-     * fires. for subscriptions that do not involve trigger events, these objects
-     * describe the data being monitored
-     */
-    size_t num_subscribed_data;
-    orte_pointer_array_t *subscribed_data;
-    /* for triggers, store a pointer to the counters being monitored. This could
+    /* pointers to the counters being monitored. This could
      * be counters we are using ourselves, or could be counters being run by someone
-     * else. Store the trigger level for each counter that we are monitoring until they reach
-     * a specified level (as opposed to comparing values in two or more counters).
+     * else. For those triggers that fire at a specified level (as opposed to
+     * comparing values in two or more counters), store the trigger level for
+     * each counter that we are monitoring until they reach a specified level.
      */
     size_t num_counters;
     orte_pointer_array_t *counters;
+    /* a pointer to the subscriptions associated with this trigger. These
+     * describe the data that will be returned when the trigger fires, and to
+     * whom and where it goes.
+     */
+    size_t num_subscriptions;
+    orte_pointer_array_t *subscriptions;
 };
-typedef struct orte_gpr_replica_triggers_t orte_gpr_replica_triggers_t;
+typedef struct orte_gpr_replica_trigger_t orte_gpr_replica_trigger_t;
 
-OBJ_CLASS_DECLARATION(orte_gpr_replica_triggers_t);
+OBJ_CLASS_DECLARATION(orte_gpr_replica_trigger_t);
+
 
 /*
  * Action taken object - used to track what action was taken against what
@@ -277,25 +356,13 @@ typedef struct {
 
 OBJ_CLASS_DECLARATION(orte_gpr_replica_action_taken_t);
 
-
-/*
- * Notify message list objects - used to track individual messages going to
- * the same recipient
- */
-typedef struct {
-    ompi_list_item_t item;
-    orte_gpr_notify_message_t *message;
-} orte_gpr_replica_notify_msg_list_t;
-
-OBJ_CLASS_DECLARATION(orte_gpr_replica_notify_msg_list_t);
-
 /*
  * Callback list objects
  */
 struct orte_gpr_replica_callbacks_t {
     ompi_list_item_t item;
-    ompi_list_t messages;
     orte_process_name_t *requestor;
+    orte_gpr_notify_message_t *message;
 };
 typedef struct orte_gpr_replica_callbacks_t orte_gpr_replica_callbacks_t;
 

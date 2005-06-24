@@ -33,10 +33,10 @@
 #include "mca/gpr/base/base.h"
 
 int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
-				orte_gpr_notify_action_t action, size_t num_subs,
+				size_t num_subs,
                  orte_gpr_subscription_t **subscriptions,
                  size_t num_trigs,
-                 orte_gpr_value_t **trigs)
+                 orte_gpr_trigger_t **trigs)
 {
     orte_gpr_cmd_flag_t command;
     int rc;
@@ -48,17 +48,12 @@ int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
 	    return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &action, 1, ORTE_NOTIFY_ACTION))) {
-        ORTE_ERROR_LOG(rc);
-	    return rc;
-    }
-
     if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, subscriptions, num_subs, ORTE_GPR_SUBSCRIPTION))) {
         ORTE_ERROR_LOG(rc);
 	    return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, trigs, num_trigs, ORTE_GPR_VALUE))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, trigs, num_trigs, ORTE_GPR_TRIGGER))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -68,19 +63,37 @@ int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
 
 
 int orte_gpr_base_pack_unsubscribe(orte_buffer_t *cmd,
-				  orte_gpr_notify_id_t remote_idtag)
+				  orte_gpr_subscription_id_t id)
 {
     orte_gpr_cmd_flag_t command;
     int rc;
 
     command = ORTE_GPR_UNSUBSCRIBE_CMD;
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_PACK_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
 	   return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &remote_idtag, 1, ORTE_GPR_PACK_NOTIFY_ID))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &id, 1, ORTE_GPR_SUBSCRIPTION_ID))) {
 	   return rc;
+    }
+
+    return ORTE_SUCCESS;
+}
+
+int orte_gpr_base_pack_cancel_trigger(orte_buffer_t *cmd, orte_gpr_trigger_id_t id)
+{
+    orte_gpr_cmd_flag_t command;
+    int rc;
+
+    command = ORTE_GPR_CANCEL_TRIGGER_CMD;
+
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
+     return rc;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &id, 1, ORTE_GPR_TRIGGER_ID))) {
+       return rc;
     }
 
     return ORTE_SUCCESS;

@@ -39,7 +39,7 @@ int orte_gpr_base_pack_increment_value(orte_buffer_t *cmd, orte_gpr_value_t *val
 
     command = ORTE_GPR_INCREMENT_VALUE_CMD;
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_PACK_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -60,7 +60,7 @@ int orte_gpr_base_pack_decrement_value(orte_buffer_t *cmd, orte_gpr_value_t *val
 
     command = ORTE_GPR_DECREMENT_VALUE_CMD;
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_PACK_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

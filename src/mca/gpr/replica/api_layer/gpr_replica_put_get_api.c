@@ -49,10 +49,6 @@ int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values)
         	return ORTE_ERROR;
     }
 
-    if (orte_gpr_replica_globals.compound_cmd_mode) {
-	   return orte_gpr_base_pack_put(orte_gpr_replica_globals.compound_cmd, cnt, values);
-    }
-
     OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     for (i=0; i < cnt; i++) {
@@ -87,7 +83,7 @@ int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values)
             goto CLEANUP;
         }
     
-        if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_subscriptions(seg))) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_events())) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
@@ -104,7 +100,7 @@ CLEANUP:
 	   free(itags);
     }
   
-    if (ORTE_SUCCESS == rc && !orte_gpr_replica.processing_callbacks) {
+    if (ORTE_SUCCESS == rc) {
         rc = orte_gpr_replica_process_callbacks();
     }
 
@@ -137,11 +133,6 @@ int orte_gpr_replica_get(orte_gpr_addr_mode_t addr_mode,
     /* protect against errors */
     if (NULL == segment) {
 	   return ORTE_ERR_BAD_PARAM;
-    }
-
-    if (orte_gpr_replica_globals.compound_cmd_mode) {
-	   return orte_gpr_base_pack_get(orte_gpr_replica_globals.compound_cmd,
-                                        addr_mode, segment, tokens, keys);
     }
 
     OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);

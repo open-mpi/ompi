@@ -35,6 +35,7 @@ endif
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_gpr_replica_la_SOURCES = gpr_replica.h \
+                             gpr_replica_class_instances.h \
                              gpr_replica_component.c
 
 mca_gpr_replica_la_LIBADD = \
@@ -46,6 +47,7 @@ mca_gpr_replica_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_gpr_replica_la_SOURCES = gpr_replica.h \
+                                gpr_replica_class_instances.h \
                                 gpr_replica_component.c
 libmca_gpr_replica_la_LIBADD = \
 	api_layer/libmca_gpr_replica_api.la \

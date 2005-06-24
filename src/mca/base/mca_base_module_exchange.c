@@ -26,6 +26,7 @@
 #include "mca/base/base.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/rml/rml.h"
+#include "mca/schema/schema.h"
 #include "mca/gpr/gpr.h"
 #include "mca/gpr/base/base.h"
 #include "mca/ns/ns.h"
@@ -373,8 +374,7 @@ ompi_output(0, "[%lu,%lu,%lu] mca_base_modex_registry_callback: %s-%s-%d-%d rece
 
 static int mca_base_modex_subscribe(orte_process_name_t* name)
 {
-    orte_gpr_notify_id_t rctag;
-    orte_gpr_value_t trig, *trigs;
+    orte_gpr_trigger_t trig, *trigs;
     orte_gpr_subscription_t sub, *subs;
     orte_jobid_t jobid;
     ompi_list_item_t* item;
@@ -404,90 +404,96 @@ static int mca_base_modex_subscribe(orte_process_name_t* name)
     
     /* setup the subscription definition */
     OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(sub.segment), jobid))) {
+    /* indicate that this is a standard subscription. This indicates that the
+     * subscription will be common to all processes. Thus, the resulting data
+     * can be consolidated into a process-independent message and broadcast
+     * to all processes
+     */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&(sub.name),
+                                OMPI_MODEX_SUBSCRIPTION, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* send data when trigger fires, continue to monitor. The default
+     * action for any subscription that includes a trigger condition is
+     * to send the specified data when the trigger fires. This set of flags
+     * indicates that - AFTER the trigger fires - the subscription should
+     * continue to send data any time an entry is added or changed.
+     */
+    sub.action = ORTE_GPR_NOTIFY_ADD_ENTRY |
+                 ORTE_GPR_NOTIFY_VALUE_CHG |
+                 ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG;
+    
+    /* setup the value structures that describe the data to
+     * be monitored and returned by this subscription
+     */
+    sub.cnt = 1;
+    sub.values = (orte_gpr_value_t**)malloc(sizeof(orte_gpr_value_t*));
+    if (NULL == sub.values) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    sub.values[0] = OBJ_NEW(orte_gpr_value_t);
+    if (NULL == sub.values[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    sub.cnt = 1;
+    /* define the segment */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(
+                                &(sub.values[0]->segment), jobid))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&sub);
         return rc;
     }
-    sub.addr_mode = ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR;
-    sub.tokens = NULL;
-    sub.num_tokens = 0;
-    sub.num_keys = 1;
-    sub.keys = (char**)malloc(sizeof(char*));
-    if (NULL == sub.keys) {
+    sub.values[0]->addr_mode = ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR;
+    /* look at all containers on this segment */
+    sub.values[0]->tokens = NULL;
+    sub.values[0]->num_tokens = 0;
+    /* look for any keyval with "modex" key */
+    sub.values[0]->cnt = 1;
+    sub.values[0]->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+    if (NULL == sub.values[0]->keyvals) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OBJ_DESTRUCT(&sub);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    sub.keys[0] = strdup("modex");
-    if (NULL == sub.keys[0]) {
+    sub.values[0]->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == sub.values[0]->keyvals[0]) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OBJ_DESTRUCT(&sub);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    sub.values[0]->keyvals[0]->key = strdup("modex");
+    if (NULL == sub.values[0]->keyvals[0]->key) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    /* define the callback function */
     sub.cbfunc = mca_base_modex_registry_callback;
     sub.user_tag = NULL;
     
     /* setup the trigger definition */
-    OBJ_CONSTRUCT(&trig, orte_gpr_value_t);
-    trig.addr_mode = ORTE_GPR_TOKENS_XAND;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(trig.segment), jobid))) {
+    OBJ_CONSTRUCT(&trig, orte_gpr_trigger_t);
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(trig.name),
+                                    ORTE_STG1_TRIGGER, jobid))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&sub);
-        OBJ_DESTRUCT(&trig);
         return rc;
     }
-    trig.tokens = (char**)malloc(sizeof(char*));
-    if (NULL == trig.tokens) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        OBJ_DESTRUCT(&trig);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.tokens[0] = strdup(ORTE_JOB_GLOBALS);
-    trig.num_tokens = 1;
 
-    trig.cnt = 2;
-    trig.keyvals = (orte_gpr_keyval_t**)malloc(2*sizeof(orte_gpr_keyval_t*));
-    if (NULL == trig.keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        OBJ_DESTRUCT(&trig);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == trig.keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        OBJ_DESTRUCT(&trig);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.keyvals[0]->key = strdup(ORTE_JOB_SLOTS_KEY);
-    trig.keyvals[0]->type = ORTE_NULL;
-    
-    trig.keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == trig.keyvals[1]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_DESTRUCT(&sub);
-        OBJ_DESTRUCT(&trig);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.keyvals[1]->key = strdup(ORTE_PROC_NUM_AT_STG1);
-    trig.keyvals[1]->type = ORTE_NULL;
-
+    /* this is an ORTE-standard trigger that is defined by the ORTE resource manager
+     * when the job was launched - therefore, we don't need to provide any additional
+     * info
+     */
+         
     /* register the subscription */
     subs = &sub;
     trigs = &trig;
-    rc = orte_gpr.subscribe(
-        	ORTE_GPR_NOTIFY_ADD_ENTRY | ORTE_GPR_NOTIFY_VALUE_CHG |
-            ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_ONE_SHOT |
-            ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG,
-        	1, &subs,
-         1, &trigs,
-         &rctag);
+    rc = orte_gpr.subscribe(1, &subs, 1, &trigs);
     if(ORTE_SUCCESS != rc) {
         ompi_output(0, "mca_base_modex_exchange: "
-		    "ompi_gpr.subscribe failed with return code %d\n", rc);
+		    "orte_gpr.subscribe failed with return code %d\n", rc);
         OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
 	    return OMPI_ERROR;

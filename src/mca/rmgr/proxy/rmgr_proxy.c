@@ -235,16 +235,21 @@ static int orte_rmgr_proxy_terminate_proc(const orte_process_name_t* proc_name)
 static void orte_rmgr_proxy_callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
     orte_rmgr_cb_fn_t cbfunc = (orte_rmgr_cb_fn_t)cbdata;
+    orte_gpr_value_t **values;
     orte_gpr_keyval_t** keyvals;
     orte_jobid_t jobid;
     size_t i, j;
     int rc;
 
-    /* get the jobid from the segment name */
-    if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_segment_name(&jobid, data->segment))) {
+    /* we made sure in the subscriptions that at least one
+     * value is always returned
+     * get the jobid from the segment name in the first value
+     */
+    values = data->values;
+    if (ORTE_SUCCESS != (rc =
+            orte_schema.extract_jobid_from_segment_name(&jobid,
+                        values[0]->segment))) {
         ORTE_ERROR_LOG(rc);
-        ompi_output(0, "[%lu,%lu,%lu] orte_rmgr_proxy_callback: %s\n", 
-            ORTE_NAME_ARGS(orte_process_info.my_name), data->segment);
         return;
     }
 

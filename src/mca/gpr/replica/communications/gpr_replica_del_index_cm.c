@@ -157,7 +157,7 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
                                             key_itags, num_keys);
 
     if (ORTE_SUCCESS == ret) {
-        orte_gpr_replica_check_subscriptions(seg);
+        orte_gpr_replica_check_events();
     }
     
 

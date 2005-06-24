@@ -177,27 +177,23 @@ int main(int argc, char **argv)
         exit (1);
     }
 
-    /* Open the gpr replica component and initialize a module */
-    if (OMPI_SUCCESS != 
-        test_component_open("gpr", "replica", &handle, 
-                            (mca_base_component_t**) &gpr_component) ||
-        NULL == gpr_component) {
-        fprintf(test_out, "Could not open replica\n");
-        exit(1);
-    }
-    gpr_module = gpr_component->gpr_init(&allow, &have, &priority);
-    if (NULL == gpr_module) {
-        fprintf(test_out, "replica component did not return a module\n");
-        exit(1);
-    }
-                  
-    if (ORTE_SUCCESS == orte_dps_open()) {
-        fprintf(test_out, "DPS started\n");
+    /* startup the registry */
+    if (OMPI_SUCCESS == orte_gpr_base_open()) {
+        fprintf(test_out, "GPR started\n");
     } else {
-        fprintf(test_out, "DPS could not start\n");
+        fprintf(test_out, "GPR could not start\n");
         exit (1);
     }
-    
+
+    /* do a select on the registry components */
+    if (OMPI_SUCCESS == orte_gpr_base_select()) {
+        fprintf(test_out, "GPR selected\n");
+    } else {
+        fprintf(test_out, "GPR could not select\n");
+        exit (1);
+    }
+
+
     if (ORTE_SUCCESS == orte_errmgr_base_open()) {
         fprintf(test_out, "error mgr started\n");
     } else {
@@ -205,22 +201,22 @@ int main(int argc, char **argv)
         exit (1);
     }
     
-//    /* test triggers that compare two counters to each other */
-//    if (ORTE_SUCCESS == test1()) {
-//        fprintf(test_out, "triggers: compare two counters successful\n");
-//    } else {
-//        fprintf(test_out, "triggers: compare two counters failed\n");
-//        rc = 1;
-//    }
-//    
-//    /* test triggers that fire at a level */
-//    if (ORTE_SUCCESS == test2()) {
-//        fprintf(test_out, "triggers: trigger at level successful\n");
-//    } else {
-//        fprintf(test_out, "triggers: trigger at level failed\n");
-//        rc = 1;
-//    }
-//    
+    /* test triggers that compare two counters to each other */
+    if (ORTE_SUCCESS == test1()) {
+        fprintf(test_out, "triggers: compare two counters successful\n");
+    } else {
+        fprintf(test_out, "triggers: compare two counters failed\n");
+        rc = 1;
+    }
+    
+    /* test triggers that fire at a level */
+    if (ORTE_SUCCESS == test2()) {
+        fprintf(test_out, "triggers: trigger at level successful\n");
+    } else {
+        fprintf(test_out, "triggers: trigger at level failed\n");
+        rc = 1;
+    }
+    
     /* test notification on value added */
     if (ORTE_SUCCESS == test3()) {
         fprintf(test_out, "triggers: notify upon value added successful\n");

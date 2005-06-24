@@ -246,3 +246,46 @@ int orte_schema_base_store_my_info(void)
     return rc;
 }
 
+int orte_schema_base_get_std_trigger_name(char **name,
+                    char *trigger,
+                    orte_jobid_t jobid)
+{
+    char *jobidstring;
+    int rc;
+    
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobidstring, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    if (0 > asprintf(name, "%s-%s", trigger, jobidstring)) {
+        free(jobidstring);
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    free(jobidstring);
+    return ORTE_SUCCESS;
+}
+
+int orte_schema_base_get_std_subscription_name(char **name,
+                    char *subscription,
+                    orte_jobid_t jobid)
+{
+    char *jobidstring;
+    int rc;
+    
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobidstring, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    if (0 > asprintf(name, "%s-%s", subscription, jobidstring)) {
+        free(jobidstring);
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    free(jobidstring);
+    return ORTE_SUCCESS;
+}

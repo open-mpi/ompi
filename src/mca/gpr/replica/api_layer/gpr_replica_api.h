@@ -113,15 +113,14 @@ int orte_gpr_replica_get_nb(orte_gpr_addr_mode_t addr_mode,
 /*
  * Subscribe functions
  */
-int orte_gpr_replica_subscribe(orte_gpr_notify_action_t action,
-                               size_t num_subs,
+int orte_gpr_replica_subscribe(size_t num_subs,
                                orte_gpr_subscription_t **subscriptions,
                                size_t num_trigs,
-                               orte_gpr_value_t **trigs,
-                               orte_gpr_notify_id_t *sub_number);
+                               orte_gpr_trigger_t **trigs);
 
-int orte_gpr_replica_unsubscribe(orte_gpr_notify_id_t sub_number);
+int orte_gpr_replica_unsubscribe(orte_gpr_subscription_id_t sub_number);
 
+int orte_gpr_replica_cancel_trigger(orte_gpr_trigger_id_t trig);
 
 /*
  * Diagnostic functions
@@ -131,6 +130,8 @@ int orte_gpr_replica_dump_all(int output_id);
 int orte_gpr_replica_dump_segments(int output_id);
 
 int orte_gpr_replica_dump_triggers(int output_id);
+
+int orte_gpr_replica_dump_subscriptions(int output_id);
 
 int orte_gpr_replica_dump_callbacks(int output_id);
 

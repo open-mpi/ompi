@@ -42,14 +42,29 @@ int orte_gpr_base_unpack_cmd(orte_buffer_t *buffer, void *dest,
 }
 
 /*
- * NOTIFY ID
+ * SUBSCRIPTION ID
  */
-int orte_gpr_base_unpack_notify_id(orte_buffer_t *buffer, void *dest,
+int orte_gpr_base_unpack_subscription_id(orte_buffer_t *buffer, void *dest,
                        size_t *num_vals, orte_data_type_t type)
 {
     int rc;
 
-    if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, dest, num_vals, ORTE_GPR_NOTIFY_ID_T))) {
+    if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, dest, num_vals, ORTE_GPR_SUBSCRIPTION_ID_T))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    return rc;
+}
+
+/*
+ * TRIGGER ID
+ */
+int orte_gpr_base_unpack_trigger_id(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type)
+{
+    int rc;
+
+    if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, dest, num_vals, ORTE_GPR_TRIGGER_ID_T))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -65,6 +80,21 @@ int orte_gpr_base_unpack_notify_action(orte_buffer_t *buffer, void *dest,
     int rc;
 
     if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, dest, num_vals, ORTE_GPR_NOTIFY_ACTION_T))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    return rc;
+}
+
+/*
+ * TRIGGER ACTION
+ */
+int orte_gpr_base_unpack_trigger_action(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type)
+{
+    int rc;
+
+    if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, dest, num_vals, ORTE_GPR_TRIGGER_ACTION_T))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -235,61 +265,45 @@ int orte_gpr_base_unpack_subscription(orte_buffer_t *buffer, void *dest,
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
 
-        /* unpack the address mode */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(subs[i]->addr_mode),
-                    &max_n, ORTE_GPR_ADDR_MODE))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* unpack the segment name */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(subs[i]->segment),
+        /* unpack the subscription name */
+        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(subs[i]->name),
                     &max_n, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
-        /* get the number of tokens */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(subs[i]->num_tokens),
+        /* unpack the subscription id */
+        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(subs[i]->id),
+                    &max_n, ORTE_GPR_SUBSCRIPTION_ID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* unpack the subscription action */
+        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(subs[i]->action),
+                    &max_n, ORTE_GPR_NOTIFY_ACTION))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* get the number of values */
+        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(subs[i]->cnt),
                     &max_n, DPS_TYPE_SIZE_T))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
-        /* if there are tokens, allocate the required space for the char * pointers */
-        if (0 < subs[i]->num_tokens) {
-            subs[i]->tokens = (char **)malloc(subs[i]->num_tokens * sizeof(char*));
-            if (NULL == subs[i]->tokens) {
+        /* if there are values, allocate the required space for the value pointers */
+        if (0 < subs[i]->cnt) {
+            subs[i]->values = (orte_gpr_value_t**)malloc(subs[i]->cnt * sizeof(orte_gpr_value_t*));
+            if (NULL == subs[i]->values) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
 
             /* and unpack them */
-            if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, subs[i]->tokens,
-                        &(subs[i]->num_tokens), ORTE_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-        
-        /* get the number of keys */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(subs[i]->num_keys),
-                    &max_n, DPS_TYPE_SIZE_T))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* if there are keys, allocate the required space for the char * pointers */
-        if (0 < subs[i]->num_keys) {
-            subs[i]->keys = (char **)malloc(subs[i]->num_keys * sizeof(char*));
-            if (NULL == subs[i]->keys) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                return ORTE_ERR_OUT_OF_RESOURCE;
-            }
-
-            /* and unpack them */
-            if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, subs[i]->keys,
-                        &(subs[i]->num_keys), ORTE_STRING))) {
+            if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, subs[i]->values,
+                        &(subs[i]->cnt), ORTE_GPR_VALUE))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -298,6 +312,74 @@ int orte_gpr_base_unpack_subscription(orte_buffer_t *buffer, void *dest,
         /* the pointer fields for cb_func and user_tag were NOT packed
          * so ignore them here as well
          */
+    }
+
+    return ORTE_SUCCESS;
+}
+
+/*
+ * TRIGGER
+ */
+int orte_gpr_base_unpack_trigger(orte_buffer_t *buffer, void *dest,
+                       size_t *num_vals, orte_data_type_t type)
+{
+    int rc;
+    orte_gpr_trigger_t **trigs;
+    size_t i, max_n=1;
+
+    /* unpack into array of trigger objects */
+    trigs = (orte_gpr_trigger_t**) dest;
+    for (i=0; i < *num_vals; i++) {
+        /* create the trigger object */
+        trigs[i] = OBJ_NEW(orte_gpr_trigger_t);
+        if (NULL == trigs[i]) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+
+        /* unpack the trigger name */
+        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(trigs[i]->name),
+                    &max_n, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* unpack the trigger id */
+        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(trigs[i]->id),
+                    &max_n, ORTE_GPR_TRIGGER_ID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* unpack the trigger action */
+        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(trigs[i]->action),
+                    &max_n, ORTE_GPR_TRIGGER_ACTION))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* get the number of values */
+        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(trigs[i]->cnt),
+                    &max_n, DPS_TYPE_SIZE_T))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* if there are values, allocate the required space for the value pointers */
+        if (0 < trigs[i]->cnt) {
+            trigs[i]->values = (orte_gpr_value_t**)malloc(trigs[i]->cnt * sizeof(orte_gpr_value_t*));
+            if (NULL == trigs[i]->values) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+
+            /* and unpack them */
+            if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, trigs[i]->values,
+                        &(trigs[i]->cnt), ORTE_GPR_VALUE))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
     }
 
     return ORTE_SUCCESS;
@@ -324,23 +406,9 @@ int orte_gpr_base_unpack_notify_data(orte_buffer_t *buffer, void *dest,
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
 
-        /* unpack the callback number */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(data[i]->cb_num),
-                    &max_n, DPS_TYPE_SIZE_T))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* unpack the address mode */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(data[i]->addr_mode),
-                    &max_n, ORTE_GPR_ADDR_MODE))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* unpack the segment name */
-        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(data[i]->segment),
-                    &max_n, ORTE_STRING))) {
+        /* unpack the subscription number */
+        if (ORTE_SUCCESS != (rc = orte_dps_unpack_buffer(buffer, &(data[i]->id),
+                    &max_n, ORTE_GPR_SUBSCRIPTION_ID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

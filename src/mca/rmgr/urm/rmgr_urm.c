@@ -182,13 +182,20 @@ static void orte_rmgr_urm_wireup_stdin(orte_jobid_t jobid)
 static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
     orte_rmgr_cb_fn_t cbfunc = (orte_rmgr_cb_fn_t)cbdata;
+    orte_gpr_value_t **values;
     orte_gpr_keyval_t** keyvals;
     orte_jobid_t jobid;
     size_t i, j;
     int rc;
 
-    /* get the jobid from the segment name */
-    if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_segment_name(&jobid, data->segment))) {
+    /* we made sure in the subscriptions that at least one
+     * value is always returned
+     * get the jobid from the segment name in the first value
+     */
+    values = data->values;
+    if (ORTE_SUCCESS != (rc =
+            orte_schema.extract_jobid_from_segment_name(&jobid,
+                        values[0]->segment))) {
         ORTE_ERROR_LOG(rc);
         return;
     }

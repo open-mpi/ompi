@@ -34,7 +34,7 @@ int orte_gpr_base_unpack_delete_segment(orte_buffer_t *buffer, int *ret)
     size_t n;
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &command, &n, ORTE_GPR_PACK_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -60,7 +60,7 @@ int orte_gpr_base_unpack_delete_entries(orte_buffer_t *buffer, int *ret)
     size_t n;
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &command, &n, ORTE_GPR_PACK_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -89,7 +89,7 @@ int orte_gpr_base_unpack_index(orte_buffer_t *buffer, int *ret, size_t *cnt, cha
     *cnt = 0;
     
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &command, &n, ORTE_GPR_PACK_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &command, &n, ORTE_GPR_CMD))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

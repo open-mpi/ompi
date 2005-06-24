@@ -44,7 +44,7 @@
 static void orte_gpr_keyval_construct(orte_gpr_keyval_t* keyval)
 {
     keyval->key = NULL;
-    keyval->type = 0;
+    keyval->type = ORTE_NULL;
     keyval->value.i32 = 0;
 }
 
@@ -88,7 +88,7 @@ static void orte_gpr_value_construct(orte_gpr_value_t* reg_val)
     reg_val->cnt = 0;
     reg_val->keyvals = NULL;
     reg_val->num_tokens = 0;
-    reg_val->tokens = 0;
+    reg_val->tokens = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -129,9 +129,7 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize state of registry value instance */
 static void orte_gpr_notify_data_construct(orte_gpr_notify_data_t* ptr)
 {
-    ptr->cb_num = 0;
-    ptr->addr_mode = 0;
-    ptr->segment = NULL;
+    ptr->id = ORTE_GPR_SUBSCRIPTION_ID_MAX;
     ptr->cnt = 0;
     ptr->values = NULL;
 }
@@ -141,8 +139,6 @@ static void orte_gpr_notify_data_destructor(orte_gpr_notify_data_t* ptr)
 {
     size_t i;
 
-    if (NULL != ptr->segment) free(ptr->segment);
-    
     if (0 < ptr->cnt && NULL != ptr->values) {
         for (i=0; i < ptr->cnt; i++) {
             if (NULL != ptr->values[i])
@@ -164,12 +160,11 @@ OBJ_CLASS_INSTANCE(
 /* constructor - used to initialize state of registry subscription instance */
 static void orte_gpr_subscription_construct(orte_gpr_subscription_t* sub)
 {
-    sub->addr_mode = 0;
-    sub->segment = NULL;
-    sub->num_tokens = 0;
-    sub->tokens = NULL;
-    sub->num_keys = 0;
-    sub->keys = NULL;
+    sub->name = NULL;
+    sub->id = ORTE_GPR_SUBSCRIPTION_ID_MAX;
+    sub->action = 0;
+    sub->cnt = 0;
+    sub->values = NULL;
     sub->cbfunc = NULL;
     sub->user_tag = NULL;
 }
@@ -177,29 +172,16 @@ static void orte_gpr_subscription_construct(orte_gpr_subscription_t* sub)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_subscription_destructor(orte_gpr_subscription_t* sub)
 {
-    char **tokens;
     size_t i;
 
-    if (NULL != sub->segment) free(sub->segment);
+    if (NULL != sub->name) free(sub->name);
     
-    if (0 < sub->num_tokens && NULL != sub->tokens) {
-        tokens = sub->tokens;
-        for (i=0; i < sub->num_tokens; i++) {
-            if(NULL != tokens[i])
-                free(tokens[i]);
+    if (0 < sub->cnt && NULL != sub->values) {
+        for (i=0; i < sub->cnt; i++) {
+            OBJ_RELEASE(sub->values[i]);
         }
-        free(sub->tokens);
+        free(sub->values);
     }
-    
-    if (0 < sub->num_keys && NULL != sub->keys) {
-        tokens = sub->keys;
-        for (i=0; i < sub->num_keys; i++) {
-            if(NULL != tokens[i])
-                free(tokens[i]);
-        }
-        free(sub->keys);
-    }
-    
 }
 
 /* define instance of ompi_class_t */
@@ -210,11 +192,43 @@ OBJ_CLASS_INSTANCE(
          orte_gpr_subscription_destructor); /* destructor */
 
 
+/** TRIGGER **/
+/* constructor - used to initialize state of registry subscription instance */
+static void orte_gpr_trigger_construct(orte_gpr_trigger_t* trig)
+{
+    trig->name = NULL;
+    trig->id = ORTE_GPR_TRIGGER_ID_MAX;
+    trig->action = 0;
+    trig->cnt = 0;
+    trig->values = NULL;
+}
+
+/* destructor - used to free any resources held by instance */
+static void orte_gpr_trigger_destructor(orte_gpr_trigger_t* trig)
+{
+    size_t i;
+
+    if (NULL != trig->name) free(trig->name);
+
+    if (0 < trig->cnt && NULL != trig->values) {
+        for (i=0; i < trig->cnt; i++) OBJ_RELEASE(trig->values[i]);
+        free(trig->values);
+    }
+    
+}
+
+/* define instance of ompi_class_t */
+OBJ_CLASS_INSTANCE(
+         orte_gpr_trigger_t,  /* type name */
+         ompi_object_t, /* parent "class" name */
+         orte_gpr_trigger_construct, /* constructor */
+         orte_gpr_trigger_destructor); /* destructor */
+
+
 /** NOTIFY MESSAGE */
 /* constructor - used to initialize notify message instance */
 static void orte_gpr_notify_message_construct(orte_gpr_notify_message_t* msg)
 {
-    msg->idtag = 0;
     msg->cnt = 0;
     msg->data = NULL;
 }
@@ -281,18 +295,34 @@ int orte_gpr_base_open(void)
         return rc;
     }
     
-    tmp = ORTE_GPR_NOTIFY_ID;
-    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_notify_id,
-                                          orte_gpr_base_unpack_notify_id,
-                                          "ORTE_GPR_NOTIFY_ID", &tmp))) {
+    tmp = ORTE_GPR_SUBSCRIPTION_ID;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_subscription_id,
+                                          orte_gpr_base_unpack_subscription_id,
+                                          "ORTE_GPR_SUBSCRIPTION_ID", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    tmp = ORTE_NOTIFY_ACTION;
+    tmp = ORTE_GPR_TRIGGER_ID;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_trigger_id,
+                                          orte_gpr_base_unpack_trigger_id,
+                                          "ORTE_GPR_TRIGGER_ID", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_GPR_NOTIFY_ACTION;
     if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_notify_action,
                                           orte_gpr_base_unpack_notify_action,
-                                          "ORTE_NOTIFY_ACTION", &tmp))) {
+                                          "ORTE_GPR_NOTIFY_ACTION", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_GPR_TRIGGER_ACTION;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_trigger_action,
+                                          orte_gpr_base_unpack_trigger_action,
+                                          "ORTE_GPR_TRIGGER_ACTION", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -325,6 +355,14 @@ int orte_gpr_base_open(void)
     if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_subscription,
                                           orte_gpr_base_unpack_subscription,
                                           "ORTE_GPR_SUBSCRIPTION", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    tmp = ORTE_GPR_TRIGGER;
+    if (ORTE_SUCCESS != (rc = orte_dps.register_type(orte_gpr_base_pack_trigger,
+                                          orte_gpr_base_unpack_trigger,
+                                          "ORTE_GPR_TRIGGER", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

@@ -51,13 +51,13 @@ int orte_gpr_base_dump_notify_msg(orte_buffer_t *buffer,
         return ORTE_SUCCESS;
     }
     
-    asprintf(&tmp_out, "%lu Notify data structures in message going to trigger %lu",
-             (unsigned long) msg->cnt, (unsigned long) msg->idtag);
+    asprintf(&tmp_out, "%lu Notify data structures in message",
+             (unsigned long) msg->cnt);
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
     
     if (0 < msg->cnt && NULL != msg->data) {
         for (i=0; i < msg->cnt; i++) {
-            asprintf(&tmp_out, "\nDump of data structure %lu", 
+            asprintf(&tmp_out, "\nDump of notify data structure number %lu", 
                      (unsigned long) i);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             orte_gpr_base_dump_data(buffer, msg->data[i]);
@@ -92,15 +92,14 @@ static void orte_gpr_base_dump_data(orte_buffer_t *buffer,
     orte_gpr_value_t **values;
     size_t i;
 
-    asprintf(&tmp_out, "%lu Values from segment %s", 
-             (unsigned long) data->cnt, data->segment);
+    asprintf(&tmp_out, "%lu values going to subscription num %lu", 
+             (unsigned long) data->cnt, (unsigned long) data->id);
     orte_gpr_base_dump_load_string(buffer, &tmp_out);
     
     if (0 < data->cnt && NULL != data->values) {
         values = data->values;
         for (i=0; i < data->cnt; i++) {
-            asprintf(&tmp_out, "\nData for value %lu going to callback num %lu",
-                     (unsigned long) i, (unsigned long) data->cb_num);
+            asprintf(&tmp_out, "\nData for value %lu", (unsigned long) i);
             orte_gpr_base_dump_load_string(buffer, &tmp_out);
             if (NULL == values[i]) {
                 asprintf(&tmp_out, "\tError encountered: NULL value pointer");

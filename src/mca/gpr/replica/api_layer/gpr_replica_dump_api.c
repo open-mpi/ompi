@@ -46,14 +46,6 @@ int orte_gpr_replica_dump_all(int output_id)
 
     OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
-    if (orte_gpr_replica_globals.compound_cmd_mode) {
-	    if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_dump_all(orte_gpr_replica_globals.compound_cmd))) {
-            ORTE_ERROR_LOG(rc);
-        }
-	    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-	    return rc;
-    }
-
     buffer = OBJ_NEW(orte_buffer_t);
     if (NULL == buffer) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -85,14 +77,6 @@ int orte_gpr_replica_dump_segments(int output_id)
     }
 
     OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
-
-    if (orte_gpr_replica_globals.compound_cmd_mode) {
-        if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_dump_segments(orte_gpr_replica_globals.compound_cmd))) {
-            ORTE_ERROR_LOG(rc);
-        }
-     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-       return rc;
-    }
 
     buffer = OBJ_NEW(orte_buffer_t);
     if (NULL == buffer) {
@@ -126,14 +110,6 @@ int orte_gpr_replica_dump_triggers(int output_id)
 
     OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
-    if (orte_gpr_replica_globals.compound_cmd_mode) {
-        if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_dump_triggers(orte_gpr_replica_globals.compound_cmd))) {
-            ORTE_ERROR_LOG(rc);
-        }
-     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-       return rc;
-    }
-
     buffer = OBJ_NEW(orte_buffer_t);
     if (NULL == buffer) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -141,6 +117,33 @@ int orte_gpr_replica_dump_triggers(int output_id)
     }
 
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_triggers_fn(buffer))) {
+        ORTE_ERROR_LOG(rc);
+    }
+
+    if (ORTE_SUCCESS == rc) {
+        orte_gpr_base_print_dump(buffer, output_id);
+    }
+    OBJ_RELEASE(buffer);
+
+    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+
+    return rc;
+}
+
+int orte_gpr_replica_dump_subscriptions(int output_id)
+{
+    orte_buffer_t *buffer;
+    int rc;
+
+    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+
+    buffer = OBJ_NEW(orte_buffer_t);
+    if (NULL == buffer) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dump_subscriptions_fn(buffer))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -165,14 +168,6 @@ int orte_gpr_replica_dump_callbacks(int output_id)
     }
 
     OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
-
-    if (orte_gpr_replica_globals.compound_cmd_mode) {
-        if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_dump_callbacks(orte_gpr_replica_globals.compound_cmd))) {
-            ORTE_ERROR_LOG(rc);
-        }
-     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-       return rc;
-    }
 
     buffer = OBJ_NEW(orte_buffer_t);
     if (NULL == buffer) {

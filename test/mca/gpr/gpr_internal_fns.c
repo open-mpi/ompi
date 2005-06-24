@@ -35,7 +35,6 @@
 #include "mca/rmgr/base/base.h"
 
 #include "support.h"
-#include "components.h"
 
 #include "class/orte_pointer_array.h"
 #include "dps/dps.h"
@@ -57,17 +56,11 @@ static FILE *test_out=NULL;
 
 static char *cmd_str="diff ./test_gpr_replica_out ./test_gpr_replica_out_std";
 
-/*
- * Local functions
- */
-static void find(const char *name, test_component_handle_t *handle, 
-                 test_component_fn_t *ptr);
-
 
 int main(int argc, char **argv)
 {
     int rc;
-    size_t num_names, num_found;
+    size_t num_names;
     size_t i;
     char *tmp=NULL, *tmp2=NULL, *names[15], *keys[5];
     orte_gpr_replica_segment_t *seg=NULL;
@@ -75,25 +68,7 @@ int main(int argc, char **argv)
     orte_gpr_replica_container_t *cptr=NULL;
     orte_gpr_keyval_t *kptr=NULL;
     orte_gpr_replica_itagval_t **ivals=NULL, *iptr;
-    bool allow, have;
-    int priority;
 
-    test_component_handle_t handle;
-    mca_gpr_base_component_t *gpr_component = NULL;
-    orte_gpr_base_module_t *gpr_module = NULL;
-    orte_gpr_replica_find_seg_fn_t find_seg_fn;
-    orte_gpr_replica_create_itag_fn_t create_itag_fn;
-    orte_gpr_replica_dict_lookup_fn_t dict_lookup_fn;
-    orte_gpr_replica_dict_reverse_lookup_fn_t dict_reverse_lookup_fn;
-    orte_gpr_replica_delete_itag_fn_t delete_itag_fn;
-    orte_gpr_replica_get_itag_list_fn_t get_itag_list_fn;
-    orte_gpr_replica_create_container_fn_t create_container_fn;
-    orte_gpr_replica_add_keyval_fn_t add_keyval_fn;
-    orte_gpr_replica_search_container_fn_t search_container_fn;
-    orte_gpr_replica_update_keyval_fn_t update_keyval_fn;
-    orte_gpr_replica_check_itag_list_fn_t check_itag_list_fn;
-    orte_gpr_replica_release_segment_fn_t release_segment_fn;
-    
     test_init("test_gpr_replica");
 
    /*  test_out = fopen( "test_gpr_replica_out", "w+" ); */
@@ -190,59 +165,27 @@ int main(int argc, char **argv)
         exit (1);
     }
 
-    /* Open the gpr replica component and initialize a module */
-    if (OMPI_SUCCESS != 
-        test_component_open("gpr", "replica", &handle, 
-                            (mca_base_component_t**) &gpr_component) ||
-        NULL == gpr_component) {
-        fprintf(test_out, "Could not open replica\n");
-        exit(1);
-    }
-    gpr_module = gpr_component->gpr_init(&allow, &have, &priority);
-    if (NULL == gpr_module) {
-        fprintf(test_out, "replica component did not return a module\n");
-        exit(1);
-    }
-
-    if (ORTE_SUCCESS == orte_dps_open()) {
-        fprintf(test_out, "DPS started\n");
+    /* startup the registry */
+    if (OMPI_SUCCESS == orte_gpr_base_open()) {
+        fprintf(test_out, "GPR started\n");
     } else {
-        fprintf(test_out, "DPS could not start\n");
+        fprintf(test_out, "GPR could not start\n");
         exit (1);
     }
 
-    /* Find a bunch of function pointers */
+    /* do a select on the registry components */
+    if (OMPI_SUCCESS == orte_gpr_base_select()) {
+        fprintf(test_out, "GPR selected\n");
+    } else {
+        fprintf(test_out, "GPR could not select\n");
+        exit (1);
+    }
 
-    fprintf(stderr, "finding relevant function pointers in component\n");
-    find("orte_gpr_replica_find_seg", &handle, 
-         (test_component_fn_t*) &find_seg_fn);
-    find("orte_gpr_replica_create_itag", &handle, 
-         (test_component_fn_t*) &create_itag_fn);
-    find("orte_gpr_replica_dict_lookup", &handle, 
-         (test_component_fn_t*) &dict_lookup_fn);
-    find("orte_gpr_replica_dict_reverse_lookup", &handle, 
-         (test_component_fn_t*) &dict_reverse_lookup_fn);
-    find("orte_gpr_replica_delete_itag", &handle, 
-         (test_component_fn_t*) &delete_itag_fn);
-    find("orte_gpr_replica_get_itag_list", &handle, 
-         (test_component_fn_t*) &get_itag_list_fn);
-    find("orte_gpr_replica_check_itag_list", &handle, 
-         (test_component_fn_t*) &check_itag_list_fn);
-    find("orte_gpr_replica_create_container", &handle, 
-         (test_component_fn_t*) &create_container_fn);
-    find("orte_gpr_replica_add_keyval", &handle, 
-         (test_component_fn_t*) &add_keyval_fn);
-    find("orte_gpr_replica_search_container", &handle, 
-         (test_component_fn_t*) &search_container_fn);
-    find("orte_gpr_replica_update_keyval", &handle, 
-         (test_component_fn_t*) &update_keyval_fn);
-    find("orte_gpr_replica_release_segment", &handle, 
-         (test_component_fn_t*) &release_segment_fn);
 
     /* Now do the tests */
     
     fprintf(stderr, "going to find seg\n");
-    if (ORTE_SUCCESS != (rc = find_seg_fn(&seg, true, "test-segment"))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, "test-segment"))) {
         fprintf(test_out, "gpr_test: find_seg failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
         test_failure("gpr_test: find_seg failed");
@@ -253,12 +196,12 @@ int main(int argc, char **argv)
         fprintf(test_out, "gpr_test: find_seg passed\n");
     }
 
-    gpr_module->dump_all(0);
+    orte_gpr.dump_all(0);
 
     fprintf(stderr, "creating tags\n");
     for (i=0; i<10; i++) {
         asprintf(&tmp, "test-tag-%lu", (unsigned long) i);
-         if (ORTE_SUCCESS != (rc = create_itag_fn(&itag[i], seg, tmp))) {
+         if (ORTE_SUCCESS != (rc = orte_gpr_replica_create_itag(&itag[i], seg, tmp))) {
             fprintf(test_out, "gpr_test: create_itag failed with error code %s\n",
                         ORTE_ERROR_NAME(rc));
             test_failure("gpr_test: create_itag failed");
@@ -274,7 +217,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "lookup tags\n");
     for (i=0; i<10; i++) {
          asprintf(&tmp, "test-tag-%lu", (unsigned long) i);
-         if (ORTE_SUCCESS != (rc = dict_lookup_fn(&itag2, seg, tmp)) ||
+         if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_lookup(&itag2, seg, tmp)) ||
              itag2 != itag[i]) {
             fprintf(test_out, "gpr_test: lookup failed with error code %s\n",
                         ORTE_ERROR_NAME(rc));
@@ -291,7 +234,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "reverse lookup tags\n");
     for (i=0; i<10; i++) {
          asprintf(&tmp2, "test-tag-%lu", (unsigned long) i);
-         if (ORTE_SUCCESS != (rc = dict_reverse_lookup_fn(&tmp, seg, itag[i])) ||
+         if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(&tmp, seg, itag[i])) ||
              0 != strcmp(tmp2, tmp)) {
             fprintf(test_out, "gpr_test: reverse lookup failed with error code %s\n",
                         ORTE_ERROR_NAME(rc));
@@ -309,7 +252,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "delete tags\n");
     for (i=0; i<10; i++) {
          asprintf(&tmp, "test-tag-%lu", (unsigned long) i);
-         if (ORTE_SUCCESS != (rc = delete_itag_fn(seg, tmp))) {
+         if (ORTE_SUCCESS != (rc = orte_gpr_replica_delete_itag(seg, tmp))) {
             fprintf(test_out, "gpr_test: delete tag failed with error code %s\n",
                         ORTE_ERROR_NAME(rc));
             test_failure("gpr_test: delete tag failed");
@@ -327,7 +270,7 @@ int main(int argc, char **argv)
     }
     names[14] = NULL;
     num_names = 0;
-    if (ORTE_SUCCESS != (rc = get_itag_list_fn(&itaglist, seg,
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&itaglist, seg,
                                                 names, &num_names))) {
         fprintf(test_out, "gpr_test: get itag list failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
@@ -346,7 +289,7 @@ int main(int argc, char **argv)
     }
     
     fprintf(stderr, "creating container\n");
-    if (ORTE_SUCCESS != (rc = create_container_fn(&cptr, seg,
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_create_container(&cptr, seg,
                                 3, itaglist))) {
         fprintf(test_out, "gpr_test: create_container failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
@@ -357,7 +300,7 @@ int main(int argc, char **argv)
         fprintf(test_out, "gpr_test: create_container passed\n");
     }
 
-    gpr_module->dump_all(0);
+    orte_gpr.dump_all(0);
     
     fprintf(test_out, "itags for container\n");
     for (i=0; i < cptr->num_itags; i++) {
@@ -370,7 +313,7 @@ int main(int argc, char **argv)
     kptr->key = strdup("stupid-value");
     kptr->type = ORTE_INT16;
     kptr->value.i16 = 21;
-    if (ORTE_SUCCESS != (rc = add_keyval_fn(&iptr, seg, cptr, kptr))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_keyval(&iptr, seg, cptr, kptr))) {
         fprintf(test_out, "gpr_test: add keyval failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
         test_failure("gpr_test: add keyval failed");
@@ -392,10 +335,10 @@ int main(int argc, char **argv)
     kptr->key = strdup("stupid-value");
     kptr->type = ORTE_STRING;
     kptr->value.strptr = strdup("try-string-value");
-    create_itag_fn(&itag2, seg, kptr->key);
-    if (ORTE_SUCCESS != (rc = search_container_fn(&num_found, ORTE_GPR_REPLICA_OR,
+    orte_gpr_replica_create_itag(&itag2, seg, kptr->key);
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_search_container(ORTE_GPR_REPLICA_OR,
                                         &itag2, 1, cptr) ||
-        0 >= num_found)) {
+        0 >= orte_gpr_replica_globals.num_srch_ival)) {
         fprintf(test_out, "gpr_test: search container for single entry failed - returned %s for itag %lu\n",
                             ORTE_ERROR_NAME(rc), (unsigned long) itag2);
         test_failure("gpr_test: search container for single entry failed");
@@ -411,7 +354,7 @@ int main(int argc, char **argv)
     kptr->key = strdup("stupid-value");
     kptr->type = ORTE_STRING;
     kptr->value.strptr = strdup("try-string-value");
-    if (ORTE_SUCCESS != (rc = update_keyval_fn(seg, cptr, kptr))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_keyval(seg, cptr, kptr))) {
         fprintf(test_out, "gpr_test: update single keyval failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
         test_failure("gpr_test: update single keyval failed");
@@ -443,7 +386,7 @@ int main(int argc, char **argv)
         kptr->key = strdup("stupid-value");
         kptr->type = ORTE_INT16;
         kptr->value.i16 = i * 100;
-        if (ORTE_SUCCESS != (rc = add_keyval_fn(&iptr, seg, cptr, kptr))) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_keyval(&iptr, seg, cptr, kptr))) {
             fprintf(test_out, "gpr_test: add keyval failed with error code %s\n",
                         ORTE_ERROR_NAME(rc));
             test_failure("gpr_test: add keyval failed");
@@ -455,26 +398,20 @@ int main(int argc, char **argv)
         OBJ_RELEASE(kptr);
     }
     
-    fprintf(stderr, "update multiple keyvals in a container\n");
-    if(ORTE_SUCCESS != find_seg_fn(&seg, false, "test-segment")) {
-        fprintf(test_out, "Failure in orte_gpr_replica_find_seg\n");
-        return -1;
-    }
-    
-    gpr_module->dump_all(0);
+    orte_gpr.dump_all(0);
 
     kptr = OBJ_NEW(orte_gpr_keyval_t);
     kptr->key = strdup("stupid-value");
     kptr->type = ORTE_INT32;
     kptr->value.i32 = 123456;
-    if (ORTE_SUCCESS != (rc = create_itag_fn(&itag2, seg, kptr->key))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_create_itag(&itag2, seg, kptr->key))) {
         fprintf(test_out, "gpr_internal_fns: update multiple keyvals - failed to get itag with error %s\n",
                     ORTE_ERROR_NAME(rc));
         test_failure("gpr_test: update multiple keyvals failed");
         test_finalize();
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = search_container_fn(&num_found, ORTE_GPR_REPLICA_OR,
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_search_container(ORTE_GPR_REPLICA_OR,
                                                 &itag2, 1, cptr))) {
         fprintf(test_out, "gpr_internal_fns: update multiple keyvals - failed to find itag with error %s\n",
                     ORTE_ERROR_NAME(rc));
@@ -482,7 +419,7 @@ int main(int argc, char **argv)
         test_finalize();
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = update_keyval_fn(seg, cptr, kptr))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_update_keyval(seg, cptr, kptr))) {
         fprintf(test_out, "gpr_test: update multiple keyvals failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
         test_failure("gpr_test: update multiple keyvals failed");
@@ -493,47 +430,50 @@ int main(int argc, char **argv)
     }
     OBJ_RELEASE(kptr);
     
-    gpr_module->dump_all(0);
+    orte_gpr.dump_all(0);
     
     fprintf(stderr, "check itag list\n");
-    if (check_itag_list_fn(ORTE_GPR_REPLICA_XAND, 0, NULL, 15, itaglist)) {
+    if (orte_gpr_replica_check_itag_list(ORTE_GPR_REPLICA_XAND, 0, NULL, 15, itaglist)) {
         fprintf(test_out, "check_itag_list: trivial NULL case passed\n");
     } else {
         fprintf(test_out, "check_itag_list: trivial NULL case failed\n");
     }
-    if (!check_itag_list_fn(ORTE_GPR_REPLICA_XAND, 5, itaglist, 15, itaglist)) {
+    if (!orte_gpr_replica_check_itag_list(ORTE_GPR_REPLICA_XAND, 5, itaglist, 15, itaglist)) {
         fprintf(test_out, "check_itag_list: trivial mismatched xand case passed\n");
     } else {
         fprintf(test_out, "check_itag_list: trivial mismatched xand case failed\n");
     }
-    if (!check_itag_list_fn(ORTE_GPR_REPLICA_AND, 15, itaglist, 5, itaglist)) {
+    if (!orte_gpr_replica_check_itag_list(ORTE_GPR_REPLICA_AND, 15, itaglist, 5, itaglist)) {
         fprintf(test_out, "check_itag_list: trivial mismatched and case passed\n");
     } else {
         fprintf(test_out, "check_itag_list: trivial mismatched and case failed\n");
     }
-    if (check_itag_list_fn(ORTE_GPR_REPLICA_XAND, 10, itaglist, 10, itaglist)) {
+    if (orte_gpr_replica_check_itag_list(ORTE_GPR_REPLICA_XAND, 10, itaglist, 10, itaglist)) {
         fprintf(test_out, "check_itag_list: non-trivial xand case passed\n");
     } else {
         fprintf(test_out, "check_itag_list: non-trivial xand case failed\n");
     }
-    if (check_itag_list_fn(ORTE_GPR_REPLICA_AND, 5, itaglist, 10, itaglist)) {
+    if (orte_gpr_replica_check_itag_list(ORTE_GPR_REPLICA_AND, 5, itaglist, 10, itaglist)) {
         fprintf(test_out, "check_itag_list: non-trivial and case passed\n");
     } else {
         fprintf(test_out, "check_itag_list: non-trivial and case failed\n");
     }
-    if (check_itag_list_fn(ORTE_GPR_REPLICA_OR, 5, itaglist, 10, itaglist)) {
+    if (orte_gpr_replica_check_itag_list(ORTE_GPR_REPLICA_OR, 5, itaglist, 10, itaglist)) {
         fprintf(test_out, "check_itag_list: non-trivial or case passed\n");
     } else {
         fprintf(test_out, "check_itag_list: non-trivial or case failed\n");
     }
-    if (check_itag_list_fn(ORTE_GPR_REPLICA_XOR, 10, itaglist, 5, itaglist)) {
+    if (orte_gpr_replica_check_itag_list(ORTE_GPR_REPLICA_XOR, 10, itaglist, 5, itaglist)) {
         fprintf(test_out, "check_itag_list: non-trivial or case passed\n");
     } else {
         fprintf(test_out, "check_itag_list: non-trivial or case failed\n");
     }
 
+    fprintf(stderr, "\ncheck events prior to releasing segment to clear action records\n");
+    orte_gpr_replica_check_events();
+    
     fprintf(stderr, "\nreleasing segment\n");
-    if (ORTE_SUCCESS != (rc = release_segment_fn(&seg)) ||
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_release_segment(&seg)) ||
         NULL != seg) {
         fprintf(test_out, "gpr_test: release segment failed with error code %s\n",
                     ORTE_ERROR_NAME(rc));
@@ -554,10 +494,8 @@ int main(int argc, char **argv)
     free(itaglist);
 
     /* finalize the gpr component */
-    if (NULL != gpr_component->gpr_finalize) {
-        gpr_component->gpr_finalize();
-    }
-    test_component_close(&handle);
+    orte_gpr_base_close();
+    
     orte_dps_close();
 
     orte_sys_info_finalize();
@@ -581,17 +519,3 @@ int main(int argc, char **argv)
     return 0;
 }
 
-
-static void find(const char *name, test_component_handle_t *handle, 
-                 test_component_fn_t *ptr)
-{
-    test_component_sym_t sym;
-
-    if (OMPI_SUCCESS != 
-        test_component_find_symbol(name, handle, &sym)) {
-        fprintf(test_out, "Unable to find symbol: %s\n", name);
-        exit(1);
-    }
-    fprintf(test_out, "Found symbol: %s\n", name);
-    *ptr = sym.tcs_function;
-}

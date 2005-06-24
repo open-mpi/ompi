@@ -88,6 +88,7 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     /* SUBSCRIBE OPERATIONS */
     orte_gpr_proxy_subscribe,
     orte_gpr_proxy_unsubscribe,
+    orte_gpr_proxy_cancel_trigger,
     /* COMPOUND COMMANDS */
     orte_gpr_proxy_begin_compound_cmd,
     orte_gpr_proxy_stop_compound_cmd,
@@ -96,6 +97,7 @@ static orte_gpr_base_module_t orte_gpr_proxy = {
     orte_gpr_proxy_dump_all,
     orte_gpr_proxy_dump_segments,
     orte_gpr_proxy_dump_triggers,
+    orte_gpr_proxy_dump_subscriptions,
     orte_gpr_proxy_dump_callbacks,
     orte_gpr_proxy_dump_notify_msg,
     orte_gpr_proxy_dump_notify_data,
@@ -122,7 +124,7 @@ static void orte_gpr_proxy_subscriber_construct(orte_gpr_proxy_subscriber_t* req
 {
     req->callback = NULL;
     req->user_tag = NULL;
-    req->index = 0;
+    req->id = 0;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -136,31 +138,6 @@ OBJ_CLASS_INSTANCE(
             ompi_object_t,                          /* parent "class" name */
             orte_gpr_proxy_subscriber_construct,    /* constructor */
             orte_gpr_proxy_subscriber_destructor);  /* destructor */
-
-
-/* NOTIFY TRACKER */
-/* constructor - used to initialize notify message instance */
-static void orte_gpr_proxy_notify_tracker_construct(orte_gpr_proxy_notify_tracker_t* req)
-{
-    req->remote_idtag = ORTE_GPR_NOTIFY_ID_MAX;
-    
-    orte_pointer_array_init(&(req->callbacks), orte_gpr_proxy_globals.block_size,
-                        orte_gpr_proxy_globals.max_size,
-                        orte_gpr_proxy_globals.block_size);
-
-}
-
-/* destructor - used to free any resources held by instance */
-static void orte_gpr_proxy_notify_tracker_destructor(orte_gpr_proxy_notify_tracker_t* req)
-{
-}
-
-/* define instance of ompi_class_t */
-OBJ_CLASS_INSTANCE(
-		   orte_gpr_proxy_notify_tracker_t,            /* type name */
-		   ompi_object_t,                          /* parent "class" name */
-		   orte_gpr_proxy_notify_tracker_construct,    /* constructor */
-		   orte_gpr_proxy_notify_tracker_destructor);  /* destructor */
 
 
 /*
@@ -214,49 +191,53 @@ orte_gpr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidden_
        the setup and return the module */
     if (NULL != orte_process_info.gpr_replica_uri) {
 
-	if (orte_gpr_proxy_globals.debug) {
-	    ompi_output(0, "gpr_proxy_init: proxy selected");
-	}
-
-    /* setup the replica location */
-   if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(orte_process_info.gpr_replica_uri, &name, NULL))) {
-       ORTE_ERROR_LOG(ret);
-       return NULL;
-   }
-   if(ORTE_SUCCESS != (ret = orte_ns.copy_process_name(&orte_process_info.gpr_replica, &name))) {
-       ORTE_ERROR_LOG(ret);
-       return NULL;
-    }
+    	if (orte_gpr_proxy_globals.debug) {
+    	    ompi_output(0, "gpr_proxy_init: proxy selected");
+    	}
     
-	/* Return a module (choose an arbitrary, positive priority --
-	   it's only relevant compared to other ns components).  If
-	   we're not the seed, then we don't want to be selected, so
-	   return NULL. */
-
-	*priority = 10;
-
-	/* We allow multi user threads but don't have any hidden threads */
-
-	*allow_multi_user_threads = true;
-	*have_hidden_threads = false;
-
-	/* setup thread locks and condition variable */
-	OBJ_CONSTRUCT(&orte_gpr_proxy_globals.mutex, ompi_mutex_t);
-	OBJ_CONSTRUCT(&orte_gpr_proxy_globals.wait_for_compound_mutex, ompi_mutex_t);
-	OBJ_CONSTRUCT(&orte_gpr_proxy_globals.compound_cmd_condition, ompi_condition_t);
-
-	/* initialize the registry compound mode */
-	orte_gpr_proxy_globals.compound_cmd_mode = false;
-	orte_gpr_proxy_globals.compound_cmd_waiting = 0;
-	orte_gpr_proxy_globals.compound_cmd = NULL;
-
-	/* initialize the notify request tracker */
-        if (ORTE_SUCCESS != orte_pointer_array_init(&(orte_gpr_proxy_globals.notify_tracker),
+        /* setup the replica location */
+       if(ORTE_SUCCESS != (ret = orte_rml.parse_uris(orte_process_info.gpr_replica_uri, &name, NULL))) {
+           ORTE_ERROR_LOG(ret);
+           return NULL;
+       }
+       if(ORTE_SUCCESS != (ret = orte_ns.copy_process_name(&orte_process_info.gpr_replica, &name))) {
+           ORTE_ERROR_LOG(ret);
+           return NULL;
+        }
+        
+    	/* Return a module (choose an arbitrary, positive priority --
+    	   it's only relevant compared to other ns components).  If
+    	   we're not the seed, then we don't want to be selected, so
+    	   return NULL. */
+    
+    	*priority = 10;
+    
+    	/* We allow multi user threads but don't have any hidden threads */
+    
+    	*allow_multi_user_threads = true;
+    	*have_hidden_threads = false;
+    
+    	/* setup thread locks and condition variable */
+    	OBJ_CONSTRUCT(&orte_gpr_proxy_globals.mutex, ompi_mutex_t);
+    	OBJ_CONSTRUCT(&orte_gpr_proxy_globals.wait_for_compound_mutex, ompi_mutex_t);
+    	OBJ_CONSTRUCT(&orte_gpr_proxy_globals.compound_cmd_condition, ompi_condition_t);
+    
+    	/* initialize the registry compound mode */
+    	orte_gpr_proxy_globals.compound_cmd_mode = false;
+    	orte_gpr_proxy_globals.compound_cmd_waiting = 0;
+    	orte_gpr_proxy_globals.compound_cmd = NULL;
+    
+    	/* initialize the subscription tracker */
+        if (ORTE_SUCCESS != orte_pointer_array_init(&(orte_gpr_proxy_globals.subscriptions),
                                 orte_gpr_proxy_globals.block_size,
                                 orte_gpr_proxy_globals.max_size,
                                 orte_gpr_proxy_globals.block_size)) {
             return NULL;
         }
+        
+        /* initialize the trigger counter */
+        orte_gpr_proxy_globals.trig_cntr = 0;
+        
         initialized = true;
         return &orte_gpr_proxy;
     } else {
@@ -305,13 +286,11 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
 			       void* cbdata)
 {
     orte_gpr_cmd_flag_t command;
-    orte_gpr_notify_id_t id_tag;
     orte_gpr_notify_data_t **data;
-    orte_gpr_proxy_notify_tracker_t *trackptr;
-    orte_gpr_proxy_subscriber_t **subs;
+    orte_gpr_proxy_subscriber_t *sub;
     size_t n;
     int rc;
-    size_t num_msgs, cnt, i, j, k;
+    size_t cnt, i;
 
     if (orte_gpr_proxy_globals.debug) {
 	    ompi_output(0, "[%lu,%lu,%lu] gpr proxy: received trigger message",
@@ -330,60 +309,46 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &num_msgs, &n, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &cnt, &n, ORTE_SIZE))) {
         ORTE_ERROR_LOG(rc);
         goto RETURN_ERROR;
     }
 
-    for (k=0; k < num_msgs; k++) {
-        n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &id_tag, &n, ORTE_GPR_NOTIFY_ID))) {
-            ORTE_ERROR_LOG(rc);
-    	    goto RETURN_ERROR;
-        }
-    	
-        /* locate request corresponding to this message */
-        trackptr = (orte_gpr_proxy_notify_tracker_t*)((orte_gpr_proxy_globals.notify_tracker)->addr[id_tag]);
-        if (NULL == trackptr) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+    if (cnt > 0) {
+        /* allocate space for the array */
+        data = (orte_gpr_notify_data_t**)malloc(cnt * sizeof(orte_gpr_notify_data_t*));
+        if (NULL == data) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             goto RETURN_ERROR;
         }
-        
-        n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, &cnt, &n, ORTE_SIZE))) {
+
+        if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, data, &cnt, ORTE_GPR_NOTIFY_DATA))) {
             ORTE_ERROR_LOG(rc);
             goto RETURN_ERROR;
         }
     
-        if(cnt > 0) {
-            /* allocate space for the array */
-            data = (orte_gpr_notify_data_t**)malloc(cnt * sizeof(orte_gpr_notify_data_t*));
-            if (NULL == data) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                goto RETURN_ERROR;
-            }
-    
-            if (ORTE_SUCCESS != (rc = orte_dps.unpack(buffer, data, &cnt, ORTE_GPR_NOTIFY_DATA))) {
-                ORTE_ERROR_LOG(rc);
-                goto RETURN_ERROR;
-            }
-        
-    
-            for (i=0; i < cnt; i++) {
-               /* locate the data callback */
-               subs = (orte_gpr_proxy_subscriber_t**)((trackptr->callbacks)->addr);
-               for (j=0; j < (trackptr->callbacks)->size; j++) {
-                   if (NULL != subs[j] && subs[j]->index == data[i]->cb_num) {
-                       /* process request */
-                       subs[j]->callback(data[i], subs[j]->user_tag);
-                       break;
-                   }
-               }
+
+        for (i=0; i < cnt; i++) {
+           /* process request */
+           if (data[i]->id > orte_gpr_proxy_globals.num_subs) {
+               ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
+               OBJ_RELEASE(data[i]);
+               continue;
            }
+           sub = (orte_gpr_proxy_globals.subscriptions)->addr[data[i]->id];
+           if (NULL == sub) {
+                ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
+           } else {
+                sub->callback(data[i], sub->user_tag);
+           }
+           OBJ_RELEASE(data[i]);
         }
+        
+        /* release data */
+        free(data);
     }
 
- RETURN_ERROR:
+RETURN_ERROR:
 
     /* reissue non-blocking receive */
     orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY, 0, orte_gpr_proxy_notify_recv, NULL);

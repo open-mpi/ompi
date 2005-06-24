@@ -72,16 +72,19 @@ typedef uint8_t orte_data_type_t ;
 #define    ORTE_EXIT_CODE           (orte_data_type_t)   32 /**< process exit code */
     /* GPR types */
 #define    ORTE_KEYVAL              (orte_data_type_t)   33 /**< registry key-value pair */
-#define    ORTE_NOTIFY_ACTION       (orte_data_type_t)   34 /**< registry notify action */
-#define    ORTE_GPR_CMD             (orte_data_type_t)   35 /**< registry command */
-#define    ORTE_GPR_NOTIFY_ID       (orte_data_type_t)   36 /**< registry notify id tag */
-#define    ORTE_GPR_VALUE           (orte_data_type_t)   37 /**< registry return value */
-#define    ORTE_GPR_ADDR_MODE       (orte_data_type_t)   38 /**< Addressing mode for registry cmds */
-#define    ORTE_GPR_SUBSCRIPTION    (orte_data_type_t)   39 /**< describes data returned by subscription */
-#define    ORTE_GPR_NOTIFY_DATA     (orte_data_type_t)   40 /**< data returned from a subscription */
+#define    ORTE_GPR_NOTIFY_ACTION   (orte_data_type_t)   34 /**< registry notify action */
+#define    ORTE_GPR_TRIGGER_ACTION  (orte_data_type_t)   35 /**< registry trigger action */
+#define    ORTE_GPR_CMD             (orte_data_type_t)   36 /**< registry command */
+#define    ORTE_GPR_SUBSCRIPTION_ID (orte_data_type_t)   37 /**< registry notify id tag */
+#define    ORTE_GPR_TRIGGER_ID      (orte_data_type_t)   38 /**< registry notify id tag */
+#define    ORTE_GPR_VALUE           (orte_data_type_t)   39 /**< registry return value */
+#define    ORTE_GPR_ADDR_MODE       (orte_data_type_t)   40 /**< Addressing mode for registry cmds */
+#define    ORTE_GPR_SUBSCRIPTION    (orte_data_type_t)   41 /**< describes data returned by subscription */
+#define    ORTE_GPR_TRIGGER         (orte_data_type_t)   42 /**< describes trigger conditions */
+#define    ORTE_GPR_NOTIFY_DATA     (orte_data_type_t)   43 /**< data returned from a subscription */
     /* Resource Manager types */
-#define    ORTE_APP_CONTEXT         (orte_data_type_t)   41 /**< argv and enviro arrays */
-#define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   42 /**< application context mapping array */
+#define    ORTE_APP_CONTEXT         (orte_data_type_t)   44 /**< argv and enviro arrays */
+#define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   45 /**< application context mapping array */
 
 /* define the starting point for dynamically assigning data types */
 #define ORTE_DPS_ID_DYNAMIC 50
