@@ -658,7 +658,7 @@ case "${host}" in
         OMPI_GCC_INLINE_ASSIGN='"or %0,[$]0,[$]0" : "=&r"(ret)'
     ;;
 
-    powerpc-*)
+    powerpc-*|powerpc64-*)
         OMPI_CHECK_POWERPC_REG
         if test "$ac_cv_sizeof_long" = "4" ; then
             ompi_cv_asm_arch="POWERPC32"
