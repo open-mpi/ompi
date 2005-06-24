@@ -237,7 +237,7 @@ int orte_rmgr_base_get_job_slots(orte_jobid_t jobid, size_t* proc_slots)
         free(segment);
         return ORTE_ERR_NOT_FOUND;
     }
-    *proc_slots = values[0]->keyvals[0]->value.ui32;
+    *proc_slots = values[0]->keyvals[0]->value.size;
 
     for(i=0; i<num_values; i++)
         OBJ_RELEASE(values[i]);
