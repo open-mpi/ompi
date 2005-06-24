@@ -795,7 +795,8 @@ int mca_ptl_sm_send(
     /* if needed, pack data in payload buffer */
     if( 0 < size ) {
         ompi_convertor_t *convertor;
-        unsigned int iov_count, max_data;
+        unsigned int iov_count;
+        size_t max_data; 
         int free_after=0;
         struct iovec address;
 
@@ -809,7 +810,7 @@ int mca_ptl_sm_send(
         iov_count=1;
         max_data=address.iov_len;
         return_status=ompi_convertor_pack(convertor,&address,&iov_count,
-                &max_data, &free_after);
+                                          &max_data, &free_after);
         if( 0 > return_status ) {
             return OMPI_ERROR;
         }
@@ -913,7 +914,8 @@ int mca_ptl_sm_send_continue(
     mca_ptl_sm_second_frag_t *send_frag;
     ompi_convertor_t *convertor;
     struct iovec address;
-    unsigned int max_data,iov_count;
+    unsigned int iov_count;
+    size_t max_data; 
 
     /* cast to shared memory send descriptor */
     sm_request=(mca_ptl_sm_send_request_t *)sendreq;

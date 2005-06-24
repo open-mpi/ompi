@@ -119,7 +119,6 @@
 struct mca_bmi_base_module_t;
 struct mca_bmi_base_endpoint_t;
 struct mca_bmi_base_descriptor_t;
-struct mca_mpool_base_registration_t;
 struct mca_mpool_base_resources_t;
 
 
@@ -184,9 +183,8 @@ typedef struct mca_bmi_base_descriptor_t mca_bmi_base_descriptor_t;
 OBJ_CLASS_DECLARATION(mca_bmi_base_descriptor_t);
 
                                                                                                                
-#define MCA_BMI_DES_FLAGS_PINNED   0x0001
+#define MCA_BMI_DES_FLAGS_DEREGISTER   0x0001
 #define MCA_BMI_DES_FLAGS_PRIORITY 0x0002
-#define MCA_BMI_DES_FLAGS_LEAVE_PINNED 0x003
 
 /**
  * Maximum number of allowed segments in src/dst fields of a descriptor.
@@ -410,7 +408,7 @@ typedef int (*mca_bmi_base_module_free_fn_t)(
 typedef struct mca_bmi_base_descriptor_t* (*mca_bmi_base_module_prepare_fn_t)(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* endpoint,
-    struct mca_mpool_base_registration_t* registration,
+    mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size

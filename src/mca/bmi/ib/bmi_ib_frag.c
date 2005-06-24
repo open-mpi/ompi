@@ -1,12 +1,12 @@
 #include "bmi_ib_frag.h" 
 #include "mca/common/vapi/vapi_mem_reg.h"
-
+#include "mca/mpool/vapi/mpool_vapi.h" 
 
 
 
 static void mca_bmi_ib_frag_common_constructor( mca_bmi_ib_frag_t* frag) 
 {
-    mca_mpool_base_registration_t* mem_hndl = frag->base.super.user_data; 
+    mca_mpool_vapi_registration_t* mem_hndl = (mca_mpool_vapi_registration_t*) frag->base.super.user_data; 
     frag->hdr = (mca_bmi_ib_header_t*) (frag+1);    /* initialize the bmi header to point to start at end of frag */ 
 #if 0   
     mod = (unsigned long) frag->hdr % MCA_BMI_IB_FRAG_ALIGN; 
@@ -31,9 +31,6 @@ static void mca_bmi_ib_frag_common_constructor( mca_bmi_ib_frag_t* frag)
     frag->sg_entry.lkey = mem_hndl->l_key; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     frag->base.des_flags = 0; 
-    if(mca_bmi_ib_component.leave_pinned == MCA_BMI_IB_LEAVE_PINNED) { 
-        frag->base.des_flags |= MCA_BMI_DES_FLAGS_LEAVE_PINNED; 
-    } 
 
 }
 

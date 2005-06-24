@@ -18,6 +18,7 @@
 
 #include "mca/pml/pml.h"
 #include "mca/bmi/bmi.h"
+#include "mca/mpool/mpool.h" 
 #include "pml_ob1_comm.h"
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_recvfrag.h"
@@ -388,7 +389,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     recvreq->pin2[recvreq->pin_index] = get_profiler_timestamp();
 #endif
                 } else {
-                    struct mca_mpool_base_registration_t * reg; 
+                    mca_mpool_base_registration_t * reg; 
                     size = bytes_remaining;
 
                     /* prepare a descriptor for RDMA */

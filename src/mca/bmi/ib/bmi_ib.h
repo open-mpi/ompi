@@ -93,7 +93,8 @@ struct mca_bmi_ib_component_t {
     size_t max_send_size; 
 
     uint32_t leave_pinned; 
-
+    uint32_t reg_mru_len; 
+    
     
 }; typedef struct mca_bmi_ib_component_t mca_bmi_ib_component_t;
 
@@ -129,6 +130,8 @@ struct mca_bmi_ib_module_t {
     ompi_free_list_t recv_free_eager;    /**< High priority free list of buffer descriptors */
     ompi_free_list_t recv_free_max;      /**< Low priority free list of buffer descriptors */ 
 
+    ompi_list_t reg_mru_list;   /**< a most recently used list of mca_mpool_vapi_registration_t 
+                                       entries, this allows us to keep a working set of memory pinned */ 
     
     ompi_list_t repost;            /**< list of buffers to repost */
     ompi_mutex_t ib_lock;          /**< module level lock */ 
@@ -342,7 +345,7 @@ extern int mca_bmi_ib_free(
 mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     struct mca_bmi_base_module_t* bmi,
     struct mca_bmi_base_endpoint_t* peer,
-    struct mca_mpool_base_registration_t* registration, 
+    mca_mpool_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size
@@ -355,13 +358,12 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
  * @param peer (IN)     BMI peer addressing
  */
 extern mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst( 
-    struct mca_bmi_base_module_t* bmi, 
-    struct mca_bmi_base_endpoint_t* peer,
-    struct mca_mpool_base_registration_t* registration, 
-    struct ompi_convertor_t* convertor,
-    size_t reserve,
-    size_t* size); 
-
+                                                         struct mca_bmi_base_module_t* bmi, 
+                                                         struct mca_bmi_base_endpoint_t* peer,
+                                                         mca_mpool_base_registration_t* registration, 
+                                                         struct ompi_convertor_t* convertor,
+                                                         size_t reserve,
+                                                         size_t* size); 
 /**
  * Return a send fragment to the modules free list.
  *

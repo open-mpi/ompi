@@ -61,6 +61,38 @@ mca_mpool_vapi_component_t mca_mpool_vapi_component = {
     }
 };
 
+
+
+static void mca_mpool_vapi_registration_constructor( mca_mpool_vapi_registration_t * registration ) 
+{ 
+    memset(registration, 0, sizeof(mca_mpool_base_registration_t)); 
+}
+
+static void mca_mpool_vapi_registration_destructor( mca_mpool_vapi_registration_t * registration ) 
+{ 
+    mca_mpool_base_remove((void*) registration); 
+    registration->base_reg.mpool->mpool_deregister(
+                                                   registration->base_reg.mpool, 
+                                                   registration->base, 
+                                                   0, 
+                                                   (mca_mpool_base_registration_t*) registration); 
+    
+    registration->base = NULL; 
+    registration->bound = NULL; 
+
+} 
+
+
+OBJ_CLASS_INSTANCE( 
+                   mca_mpool_vapi_registration_t, 
+                   mca_mpool_base_registration_t, 
+                   mca_mpool_vapi_registration_constructor, 
+                   mca_mpool_vapi_registration_destructor
+                   ); 
+
+
+
+
 static char* mca_mpool_vapi_param_register_string(
     const char* param_name,
     const char* default_value)
@@ -91,7 +123,7 @@ static int mca_mpool_vapi_open(void)
 void* mca_common_vapi_segment_alloc(
     struct mca_mpool_base_module_t* mpool,
     size_t* size, 
-    struct mca_mpool_base_registration_t** registration)
+    mca_mpool_base_registration_t** registration)
 {
     void* addr_malloc = (void*)malloc((*size) + mca_mpool_vapi_component.page_size); 
     void* addr = (void*)  ALIGN_ADDR(addr_malloc, mca_mpool_vapi_component.page_size_log); 
