@@ -224,9 +224,12 @@ void ompi_attr_create_predefined_callback(
             if (0 < value[i]->cnt) {  /* make sure some data was returned here */
                 keyval = value[i]->keyvals;
                 for (j=0; j < value[i]->cnt; j++) {
-                    if (ORTE_UINT32 == keyval[j]->type) { /* make sure we don't get confused */
+                    /* make sure we don't get confused - all slot counts
+                     * are in size_t fields
+                     */
+                    if (ORTE_SIZE == keyval[j]->type) {
                         /* Process slot count */
-                        attr_universe_size += keyval[j]->value.ui32;
+                        attr_universe_size += keyval[j]->value.size;
                     }
                 }
             }
