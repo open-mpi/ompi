@@ -72,8 +72,9 @@ POWERPC32	aix-.csect .text[PR]-.globl-:-.-L--0-1-0-0	powerpc32-aix
 # compiler chain with the -mcpu=970 option.
 POWERPC32	default-.text-.globl-:-_-L--0-1-1-1	powerpc32-64-osx
 
-# PowerPC / POWER 64bit machines.  sizeof(void*) == 9.
+# PowerPC / POWER 64bit machines.  sizeof(void*) == 8.
 POWERPC64	default-.text-.globl-:-_-L--0-1-1-1	powerpc64-osx
+POWERPC64	default-.text-.globl-:-.-.L-@-1-1-0-1	powerpc64-linux
 POWERPC64	aix-.csect .text[PR]-.globl-:-.-L--0-1-0-1	powerpc64-aix
 
 
