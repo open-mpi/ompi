@@ -127,10 +127,10 @@ ompi_cmd_line_init_t cmd_line_init[] = {
     /* Number of processes; -c, -n, --n, -np, and --np are all
        synonyms */
     { NULL, NULL, NULL, 'c', "np", "np", 1,
-      &orterun_globals.num_procs, OMPI_CMD_LINE_TYPE_INT,
+      &orterun_globals.num_procs, OMPI_CMD_LINE_TYPE_SIZE_T,
       "Number of processes to run" },
     { NULL, NULL, NULL, '\0', "n", "n", 1,
-      &orterun_globals.num_procs, OMPI_CMD_LINE_TYPE_INT,
+      &orterun_globals.num_procs, OMPI_CMD_LINE_TYPE_SIZE_T,
       "Number of processes to run" },
 
     /* Set a hostfile */
