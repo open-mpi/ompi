@@ -207,6 +207,25 @@ extern int mca_bmi_ib_component_progress(
 );
 
 
+/**
+ * Register a callback function that is called on receipt
+ * of a fragment.
+ *
+ * @param bmi (IN)     BMI module
+ * @return             Status indicating if cleanup was successful
+ *
+ * When the process list changes, the PML notifies the BMI of the
+ * change, to provide the opportunity to cleanup or release any
+ * resources associated with the peer.
+ */
+
+int mca_bmi_ib_register(
+    struct mca_bmi_base_module_t* bmi,
+    mca_bmi_base_tag_t tag,
+    mca_bmi_base_module_recv_cb_fn_t cbfunc,
+    void* cbdata
+);
+                                                                                                                     
 
 /**
  * Cleanup any resources held by the BMI.
