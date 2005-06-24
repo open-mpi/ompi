@@ -44,7 +44,7 @@ int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_replica_addr_mode_t tok_mode;
     orte_gpr_replica_itagval_t **ival;
     int rc;
-    size_t i, j, k, num_found;
+    size_t i, j, k, m, n;
 
     /* extract the token address mode */
     tok_mode = 0x004f & addr_mode;
@@ -53,13 +53,13 @@ int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
     }
 
     /* find the specified container(s) */
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_containers(&num_found, seg, tok_mode,
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_containers(seg, tok_mode,
                                     tokentags, num_tokens))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    if (0 == num_found) { /* nothing found */
+    if (0 == orte_gpr_replica_globals.num_srch_cptr) { /* nothing found */
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
@@ -67,16 +67,20 @@ int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
     /* otherwise, go through list of containers. For each one,
        find the entry and then add one to its value */
     cptr = (orte_gpr_replica_container_t**)(orte_gpr_replica_globals.srch_cptr)->addr;
-    for (j=0; j < (orte_gpr_replica_globals.srch_cptr)->size; j++) { /* for each container */
+    for (j=0, m=0; m < orte_gpr_replica_globals.num_srch_cptr &&
+                   j < (orte_gpr_replica_globals.srch_cptr)->size; j++) { /* for each container */
         if (NULL != cptr[j]) {
+            m++;
             for (i=0; i < cnt; i++) { /* for each provided keyval to be incremented */
                 if (ORTE_SUCCESS == orte_gpr_replica_dict_lookup(&itag, seg, keyvals[i]->key) &&
-                    ORTE_SUCCESS == orte_gpr_replica_search_container(&num_found,
+                    ORTE_SUCCESS == orte_gpr_replica_search_container(
                                             ORTE_GPR_REPLICA_OR, &itag, 1, cptr[j]) &&
-                    0 < num_found) {
+                    0 < orte_gpr_replica_globals.num_srch_ival) {
                     ival = (orte_gpr_replica_itagval_t**)((orte_gpr_replica_globals.srch_ival)->addr);
-                    for (k=0; k < (orte_gpr_replica_globals.srch_ival)->size; k++) { /* for each found keyval */
+                    for (k=0, n=0; n < orte_gpr_replica_globals.num_srch_ival &&
+                                   k < (orte_gpr_replica_globals.srch_ival)->size; k++) { /* for each found keyval */
                         if (NULL != ival[k]) {
+                            n++;
                             switch (ival[k]->type) {
                                 case ORTE_SIZE:
                                     ival[k]->value.size++;
@@ -138,7 +142,7 @@ int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_replica_addr_mode_t tok_mode;
     orte_gpr_replica_itagval_t **ival;
     int rc;
-    size_t i, j, k, num_found;
+    size_t i, j, k, m, n;
 
     /* extract the token address mode */
     tok_mode = 0x004f & addr_mode;
@@ -147,30 +151,34 @@ int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
     }
 
     /* find the specified container(s) */
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_containers(&num_found, seg, tok_mode,
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_containers(seg, tok_mode,
                                     tokentags, num_tokens))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    if (0 == num_found) { /* nothing found */
-        /* no ERROR_LOG entry created as this is not a system failure */
+    if (0 == orte_gpr_replica_globals.num_srch_cptr) { /* nothing found */
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
     
     /* otherwise, go through list of containers. For each one,
        find the entry and then add one to its value */
     cptr = (orte_gpr_replica_container_t**)(orte_gpr_replica_globals.srch_cptr)->addr;
-    for (j=0; j < (orte_gpr_replica_globals.srch_cptr)->size; j++) { /* for each container */
+    for (j=0, m=0; m < orte_gpr_replica_globals.num_srch_cptr &&
+                   j < (orte_gpr_replica_globals.srch_cptr)->size; j++) { /* for each container */
         if (NULL != cptr[j]) {
-            for (i=0; i < cnt; i++) { /* for each provided keyval to be decremented */
+            m++;
+            for (i=0; i < cnt; i++) { /* for each provided keyval to be incremented */
                 if (ORTE_SUCCESS == orte_gpr_replica_dict_lookup(&itag, seg, keyvals[i]->key) &&
-                    ORTE_SUCCESS == orte_gpr_replica_search_container(&num_found,
+                    ORTE_SUCCESS == orte_gpr_replica_search_container(
                                             ORTE_GPR_REPLICA_OR, &itag, 1, cptr[j]) &&
-                    0 < num_found) {
+                    0 < orte_gpr_replica_globals.num_srch_ival) {
                     ival = (orte_gpr_replica_itagval_t**)((orte_gpr_replica_globals.srch_ival)->addr);
-                    for (k=0; k < (orte_gpr_replica_globals.srch_ival)->size; k++) { /* for each found keyval */
+                    for (k=0, n=0; n < orte_gpr_replica_globals.num_srch_ival &&
+                                   k < (orte_gpr_replica_globals.srch_ival)->size; k++) { /* for each found keyval */
                         if (NULL != ival[k]) {
+                            n++;
                             switch (ival[k]->type) {
                                 case ORTE_SIZE:
                                     ival[k]->value.size--;

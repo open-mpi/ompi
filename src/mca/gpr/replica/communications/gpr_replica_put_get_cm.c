@@ -98,7 +98,7 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
     
         if (ORTE_SUCCESS == ret) {
             if (ORTE_SUCCESS != 
-                (rc = orte_gpr_replica_check_subscriptions(seg))) {
+                (rc = orte_gpr_replica_check_events())) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }

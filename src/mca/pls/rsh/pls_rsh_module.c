@@ -520,6 +520,20 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             var = mca_base_param_environ_variable("seed",NULL,NULL);
             ompi_setenv(var, "0", true, &env);
 
+            /* set the progress engine schedule for this node.
+             * if node_slots is set to zero, then we default to
+             * NOT being oversubscribed
+             */
+            if (node->node_slots > 0 &&
+                node->node_slots_inuse > node->node_slots) {
+                var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
+                ompi_setenv(var, "1", true, &env);
+            } else {
+                var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
+                ompi_setenv(var, "0", true, &env);
+            }
+            free(var);
+    
             /* exec the daemon */
             execve(exec_path, exec_argv, env);
             ompi_output(0, "orte_pls_rsh: execv failed with errno=%d\n", errno);

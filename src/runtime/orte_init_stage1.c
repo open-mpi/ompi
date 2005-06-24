@@ -63,6 +63,8 @@ int orte_init_stage1(void)
     pid_t pid;
     orte_universe_t univ;
     orte_jobid_t my_jobid;
+    orte_cellid_t my_cellid;
+    orte_gpr_value_t value, *values;
 
     /* Ensure the system_info structure is instantiated and initialized */
     if (ORTE_SUCCESS != (ret = orte_sys_info())) {
@@ -356,25 +358,87 @@ int orte_init_stage1(void)
         return ret;
     }
 
-     /* if we are a singleton, setup the infrastructure for our job */
+     /* if we are a singleton or the seed, setup the infrastructure for our job */
  
-    if(orte_process_info.singleton) {
-         if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name))) {
-             ORTE_ERROR_LOG(ret);
-             return ret;
-         }
-         if (ORTE_SUCCESS != (ret = orte_rmgr_base_set_job_slots(my_jobid,1))) {
-             ORTE_ERROR_LOG(ret);
-             return ret;
-         }
-         if (ORTE_SUCCESS != (ret = orte_rmaps_base_set_vpid_range(my_jobid,0,1))) {
-             ORTE_ERROR_LOG(ret);
-             return ret;
-         }
-         if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(my_jobid))) {
-             ORTE_ERROR_LOG(ret);
-             return ret;
-         }
+    if(orte_process_info.singleton || orte_process_info.seed) {
+        if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = orte_ns.get_cellid(&my_cellid, orte_process_info.my_name))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (orte_process_info.singleton) {
+            /* setup a fake node structure - this is required to support
+             * the MPI attributes function that is sitting on a trigger
+             * waiting for info on available node slots. since we can't
+             * really know that info for a singleton, we make the assumption
+             * that the allocation is unity and place a structure on the
+             * registry for it
+             * 
+             * THIS ONLY SHOULD BE DONE FOR SINGLETONS - DO NOT DO IT
+             * FOR ANY OTHER CASE
+             */
+            OBJ_CONSTRUCT(&value, orte_gpr_value_t);
+            values = &value;
+            /* define the addressing mode and segment */
+            value.addr_mode = ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR;
+            value.segment = strdup(ORTE_NODE_SEGMENT);
+            if (NULL == value.segment) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                OBJ_DESTRUCT(&value);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&(value.tokens),
+                    &(value.num_tokens), my_cellid, orte_system_info.nodename))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+            value.cnt = 1;
+            value.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+            if (NULL == value.keyvals) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                OBJ_DESTRUCT(&value);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            value.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+            if (NULL == value.keyvals[0]) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                OBJ_DESTRUCT(&value);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            value.keyvals[0]->key = strdup(ORTE_NODE_SLOTS_KEY);
+            if (NULL == value.keyvals[0]->key) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                OBJ_DESTRUCT(&value);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            value.keyvals[0]->type = ORTE_UINT32;
+            value.keyvals[0]->value.ui32 = 1;
+            /* put the value on the registry */
+            if (ORTE_SUCCESS != (ret = orte_gpr.put(1, &values))) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_DESTRUCT(&value);
+                return ret;
+            }
+            /* cleanup the mess */
+            OBJ_DESTRUCT(&value);
+        }
+        
+        /* set the rest of the infrastructure */
+        if (ORTE_SUCCESS != (ret = orte_rmgr_base_set_job_slots(my_jobid,1))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = orte_rmaps_base_set_vpid_range(my_jobid,0,1))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(my_jobid))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
     }
 
     return ORTE_SUCCESS;

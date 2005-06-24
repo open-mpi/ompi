@@ -33,15 +33,12 @@
 #include "gpr_replica_api.h"
 
 int
-orte_gpr_replica_subscribe(orte_gpr_notify_action_t action,
-			               size_t num_subs,
+orte_gpr_replica_subscribe(size_t num_subs,
                            orte_gpr_subscription_t **subscriptions,
                            size_t num_trigs,
-                           orte_gpr_value_t **trigs,
-                           orte_gpr_notify_id_t *sub_number)
+                           orte_gpr_trigger_t **trigs)
 {
     int rc;
-    orte_gpr_notify_id_t idtag;
 
     /* protect against errors */
     if (NULL == subscriptions) {
@@ -49,58 +46,40 @@ orte_gpr_replica_subscribe(orte_gpr_notify_action_t action,
 	    return ORTE_ERR_BAD_PARAM;
     }
 
-    /* if this has a trigger in it, must specify the trigger condition */
-    if (ORTE_GPR_TRIG_ANY & action && NULL == trigs) {
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            return ORTE_ERR_BAD_PARAM;
-    }
-    
     OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
-    if (orte_gpr_replica_globals.compound_cmd_mode) {
-
-        	if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_subscribe(orte_gpr_replica_globals.compound_cmd,
-        				    action, num_subs, subscriptions, num_trigs, trigs))) {
-            ORTE_ERROR_LOG(rc);
-            OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-            return rc;
-        }
-        
-        /* enter request on notify tracking system */
-        if (ORTE_SUCCESS != (rc = orte_gpr_replica_enter_notify_request(&idtag,
-                                    NULL, ORTE_GPR_NOTIFY_ID_MAX,
-                                    num_subs, subscriptions))) {
-            ORTE_ERROR_LOG(rc);
-            OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-            return rc;
-        }
-        *sub_number = idtag;
-        
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(orte_gpr_replica_globals.compound_cmd,
-                                &idtag, 1, ORTE_GPR_NOTIFY_ID))) {
-            ORTE_ERROR_LOG(rc);
-            OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-            return rc;
-        }
-
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-
-        return ORTE_SUCCESS;
-    }
-    
-    /* enter request on notify tracking system */
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_enter_notify_request(&idtag,
-                                NULL, ORTE_GPR_NOTIFY_ID_MAX,
-                                num_subs, subscriptions))) {
+    /* store callback function and user_tag in local list for lookup
+     * generate id_tag to put in registry to identify lookup entry
+     * for each subscription - the subscription id is returned
+     * inside the subscription objects
+     */
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_enter_local_subscription(
+                                        num_subs, subscriptions))) {
         ORTE_ERROR_LOG(rc);
         OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
-    *sub_number = idtag;
-        
+
+    /* if any triggers were provided, get id tags for them - the
+     * idtags are returned inside the trigger objects
+     */
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_enter_local_trigger(
+                                        num_trigs, trigs))) {
+        ORTE_ERROR_LOG(rc);
+        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        return rc;
+    }
+
     /* register subscriptions */
-    if (ORTE_SUCCESS != (rc = orte_gpr_replica_subscribe_fn(action, num_subs,
-                                        subscriptions, num_trigs, trigs, idtag))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_subscribe_fn(NULL,
+                                        num_subs, subscriptions,
+                                        num_trigs, trigs))) {
+        ORTE_ERROR_LOG(rc);
+        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        return rc;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_events())) {
         ORTE_ERROR_LOG(rc);
         OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
@@ -114,18 +93,27 @@ orte_gpr_replica_subscribe(orte_gpr_notify_action_t action,
 }
 
 
-int orte_gpr_replica_unsubscribe(orte_gpr_notify_id_t sub_number)
+int orte_gpr_replica_unsubscribe(orte_gpr_subscription_id_t sub_number)
 {
     int rc;
 
-    if (orte_gpr_replica_globals.compound_cmd_mode) {
-	   return orte_gpr_base_pack_unsubscribe(orte_gpr_replica_globals.compound_cmd,
-                        sub_number);
-    }
+    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+
+    rc = orte_gpr_replica_remove_subscription(NULL, sub_number);
+
+    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+
+    return rc;
+}
+
+
+int orte_gpr_replica_cancel_trigger(orte_gpr_trigger_id_t trig)
+{
+    int rc;
 
     OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
-    rc = orte_gpr_replica_unsubscribe_fn(sub_number);
+    rc = orte_gpr_replica_remove_trigger(NULL, trig);
 
     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 

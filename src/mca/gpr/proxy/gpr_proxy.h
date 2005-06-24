@@ -53,26 +53,17 @@ int orte_gpr_proxy_finalize(void);
  * proxy-local types
  */
 typedef struct {
-     ompi_object_t super;                    /**< Allows this to be an object */
-     size_t index;                           /**< Index of this callback */
-     orte_gpr_notify_cb_fn_t callback;       /**< Function to be called for notificaiton */
-     void *user_tag;                         /**< User-provided tag for callback function */
+     ompi_object_t super;                   /**< Allows this to be an object */
+     orte_gpr_subscription_id_t id;         /**< id of this subscription */
+     orte_gpr_notify_cb_fn_t callback;      /**< Function to be called for notificaiton */
+     void *user_tag;                        /**< User-provided tag for callback function */
 } orte_gpr_proxy_subscriber_t;
 
 OBJ_CLASS_DECLARATION(orte_gpr_proxy_subscriber_t);
 
-struct orte_gpr_proxy_notify_tracker_t {
-    ompi_object_t super;                    /**< Allows this to be an object */
-    orte_gpr_notify_id_t remote_idtag;      /**< Remote ID tag of subscription */
-    orte_pointer_array_t *callbacks;        /**< Array of registered callbacks for this subscription */
-};
-typedef struct orte_gpr_proxy_notify_tracker_t orte_gpr_proxy_notify_tracker_t;
-
-OBJ_CLASS_DECLARATION(orte_gpr_proxy_notify_tracker_t);
 
 #define ORTE_GPR_PROXY_MAX_SIZE INT32_MAX
 #define ORTE_GPR_PROXY_BLOCK_SIZE 100
-
 
 
 /*
@@ -82,7 +73,9 @@ typedef struct {
     int debug;
     size_t block_size;
     size_t max_size;
-    orte_pointer_array_t *notify_tracker;
+    orte_gpr_subscription_id_t num_subs;
+    orte_pointer_array_t *subscriptions;
+    orte_gpr_trigger_id_t trig_cntr;
     ompi_mutex_t mutex;
     bool compound_cmd_mode;
     orte_buffer_t *compound_cmd;
@@ -160,14 +153,14 @@ int orte_gpr_proxy_get_nb(orte_gpr_addr_mode_t addr_mode,
 /*
  * Subscribe functions
  */
-int orte_gpr_proxy_subscribe(orte_gpr_notify_action_t action,
-                             size_t num_subs,
+int orte_gpr_proxy_subscribe(size_t num_subs,
                              orte_gpr_subscription_t **subscriptions,
                              size_t num_trigs,
-                             orte_gpr_value_t **trigs,
-                             orte_gpr_notify_id_t *sub_number);
+                             orte_gpr_trigger_t **trigs);
 
-int orte_gpr_proxy_unsubscribe(orte_gpr_notify_id_t sub_number);
+int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number);
+
+int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig);
 
 
 /*
@@ -178,6 +171,8 @@ int orte_gpr_proxy_dump_all(int output_id);
 int orte_gpr_proxy_dump_segments(int output_id);
 
 int orte_gpr_proxy_dump_triggers(int output_id);
+
+int orte_gpr_proxy_dump_subscriptions(int output_id);
 
 int orte_gpr_proxy_dump_callbacks(int output_id);
 
@@ -205,15 +200,14 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
  */
 
 int
-orte_gpr_proxy_enter_notify_request(orte_gpr_notify_id_t *local_idtag,
-                    size_t cnt, orte_gpr_subscription_t **subscriptions);
+orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscriptions);
 
 int
-orte_gpr_proxy_remove_notify_request(orte_gpr_notify_id_t local_idtag,
-                                     orte_gpr_notify_id_t *remote_idtag);
+orte_gpr_proxy_remove_subscription(orte_gpr_subscription_id_t id);
 
-int orte_gpr_proxy_set_remote_idtag(orte_gpr_notify_id_t local_idtag,
-                                     orte_gpr_notify_id_t remote_idtag);
+int
+orte_gpr_proxy_enter_trigger(size_t cnt, orte_gpr_trigger_t **triggers);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

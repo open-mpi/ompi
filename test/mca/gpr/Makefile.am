@@ -28,8 +28,7 @@ check_PROGRAMS = \
     gpr_threads \
     gpr_triggers
 
-TESTS = \
-	$(check_PROGRAMS)
+TESTS = 
 
 gpr_internal_fns_SOURCES = gpr_internal_fns.c
 gpr_internal_fns_LDADD = \

@@ -277,7 +277,15 @@ int main(int argc, char *argv[])
     }
 
     /* Intialize our Open RTE environment */
+    /* first, set the flag telling orte_init that I am NOT a
+     * singleton, but am "infrastructure" - prevents setting
+     * up incorrect infrastructure that only a singleton would
+     * require
+     */
+    id = mca_base_param_register_int("orte", "base", "infrastructure", NULL, 0);
+    mca_base_param_set_int(id, 1);
 
+    /* now call orte_init and setup the RTE */
     if (ORTE_SUCCESS != (rc = orte_init())) {
         ompi_show_help("help-orterun.txt", "orterun:init-failure", true,
                        "orte_init()", rc);

@@ -85,6 +85,24 @@ int orte_gpr_replica_recv_dump_triggers_cmd(orte_buffer_t *answer)
     return rc;
 }
 
+int orte_gpr_replica_recv_dump_subscriptions_cmd(orte_buffer_t *answer)
+{
+    orte_gpr_cmd_flag_t command=ORTE_GPR_DUMP_SUBSCRIPTIONS_CMD;
+    int rc;
+    
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(answer, &command, 1, ORTE_GPR_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    rc = orte_gpr_replica_dump_subscriptions_fn(answer);
+
+    if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+    }
+    return rc;
+}
+
 int orte_gpr_replica_recv_dump_callbacks_cmd(orte_buffer_t *answer)
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_DUMP_CALLBACKS_CMD;

@@ -37,7 +37,7 @@ static orte_ns_nds_t orte_ns_nds[] = {
 
 int orte_ns_base_set_my_name(void)
 {
-    int rc, id;
+    int rc, id, flag;
     char *mode;
     orte_vpid_t vpid;
     
@@ -50,9 +50,14 @@ int orte_ns_base_set_my_name(void)
     
     /* first check if we are seed or singleton that couldn't
      * join an existing universe - if so, name is mandated, and we need
-     * to set the singleton flag so that our job infrastructure gets built */
+     * to set the singleton flag so that our job infrastructure gets built
+     */
     if (orte_process_info.seed || NULL == orte_process_info.ns_replica) {
-        orte_process_info.singleton = true;
+        id = mca_base_param_register_int("orte", "base", "infrastructure", NULL, (int)false);
+        mca_base_param_lookup_int(id, &flag);
+        if (!flag) {
+            orte_process_info.singleton = true;
+        }
         return orte_ns_base_create_process_name(
                                 &(orte_process_info.my_name), 0, 0, 0);
     }

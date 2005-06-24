@@ -34,13 +34,11 @@
 
 #include "gpr_replica_comm.h"
 
-int orte_gpr_replica_remote_notify(orte_process_name_t *recipient, ompi_list_t *messages)
+int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,
+                orte_gpr_notify_message_t *message)
 {
     orte_buffer_t buffer;
-    orte_gpr_replica_notify_msg_list_t *msg;
-    orte_gpr_notify_message_t *message;
     orte_gpr_cmd_flag_t command;
-    size_t count;
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
@@ -56,36 +54,20 @@ int orte_gpr_replica_remote_notify(orte_process_name_t *recipient, ompi_list_t *
         return rc;
     }
 
-    count = (size_t)ompi_list_get_size(messages);
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &count, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &(message->cnt), 1, ORTE_SIZE))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    
-    while (NULL != (msg = (orte_gpr_replica_notify_msg_list_t*)ompi_list_remove_first(messages))) {
-        
-        message = msg->message;
-        
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &(message->idtag), 1, ORTE_GPR_NOTIFY_ID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    
-        if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, &(message->cnt), 1, ORTE_SIZE))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    
-        if(message->cnt > 0) {
-            if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, message->data, message->cnt, ORTE_GPR_NOTIFY_DATA))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }
-        
-        OBJ_RELEASE(msg);
-    }
 
+    if(message->cnt > 0) {
+        if (ORTE_SUCCESS != (rc = orte_dps.pack(&buffer, message->data,
+                                    message->cnt, ORTE_GPR_NOTIFY_DATA))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    OBJ_RELEASE(message);
+    
     OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     
     if (0 > orte_rml.send_buffer(recipient, &buffer, ORTE_RML_TAG_GPR_NOTIFY, 0)) {

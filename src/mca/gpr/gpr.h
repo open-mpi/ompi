@@ -420,7 +420,7 @@ typedef int (*orte_gpr_base_module_index_nb_fn_t)(char *segment,
  * 
  * @param num_trigs (IN) The number of trigger objects being provided
  * 
- * @param **trig_value (IN) A pointer to an array of orte_gpr_value_t objects that describe the
+ * @param **triggers (IN) A pointer to an array of orte_gpr_trigger_t objects that describe the
  * conditions (as described above) which will generate a trigger message to be sent
  * to the callback function. Trigger messages include all data specified in the
  * subscription objects, but do NOT include the trigger counters themselves unless
@@ -444,19 +444,17 @@ typedef int (*orte_gpr_base_module_index_nb_fn_t)(char *segment,
  * @endcode
  */
 typedef int (*orte_gpr_base_module_subscribe_fn_t)(
-                            orte_gpr_notify_action_t actions,
                             size_t num_subs,
                             orte_gpr_subscription_t **subscriptions,
                             size_t num_trigs,
-                            orte_gpr_value_t **trig_value,
-                            orte_gpr_notify_id_t *sub_number);
+                            orte_gpr_trigger_t **triggers);
 
 /*
  * Cancel a subscription.
  * Once a subscription has been entered on the registry, a caller may choose to permanently
  * remove it at a later time. This function supports that request.
  *
- * @param sub_number The orte_gpr_notify_id_t value returned by the original subscribe
+ * @param sub_number The orte_gpr_subscription_id_t value returned by the original subscribe
  * command.
  *
  * @retval ORTE_SUCCESS The subscription was removed.
@@ -467,7 +465,26 @@ typedef int (*orte_gpr_base_module_subscribe_fn_t)(
  * status_code = orte_gpr.unsubscribe(sub_number);
  * @endcode
  */
-typedef int (*orte_gpr_base_module_unsubscribe_fn_t)(orte_gpr_notify_id_t sub_number);
+typedef int (*orte_gpr_base_module_unsubscribe_fn_t)(orte_gpr_subscription_id_t sub_number);
+
+/*
+ * Cancel a trigger.
+ * Once a trigger has been entered on the registry, a caller may choose to permanently
+ * remove it at a later time. This function supports that request.
+ *
+ * @param trig_number The orte_gpr_trigger_id_t value returned by the original subscribe
+ * command.
+ *
+ * @retval ORTE_SUCCESS The trigger was removed.
+ * @retval ORTE_ERROR The trigger could not be removed - most likely caused by specifying
+ * a non-existent (or previously removed) trigger number.
+ *
+ * @code
+ * status_code = orte_gpr.cancel_trigger(trig_number);
+ * @endcode
+ */
+typedef int (*orte_gpr_base_module_cancel_trigger_fn_t)(orte_gpr_trigger_id_t trig_number);
+
 
 /* Output the registry's contents to an output stream
  * For debugging purposes, it is helpful to be able to obtain a complete formatted printout
@@ -488,6 +505,8 @@ typedef int (*orte_gpr_base_module_dump_all_fn_t)(int output_id);
 typedef int (*orte_gpr_base_module_dump_segments_fn_t)(int output_id);
 
 typedef int (*orte_gpr_base_module_dump_triggers_fn_t)(int output_id);
+
+typedef int (*orte_gpr_base_module_dump_subscriptions_fn_t)(int output_id);
 
 typedef int (*orte_gpr_base_module_dump_callbacks_fn_t) (int output_id);
 
@@ -554,6 +573,7 @@ struct orte_gpr_base_module_1_0_0_t {
     /* SUBSCRIBE OPERATIONS */
     orte_gpr_base_module_subscribe_fn_t subscribe;
     orte_gpr_base_module_unsubscribe_fn_t unsubscribe;
+    orte_gpr_base_module_cancel_trigger_fn_t cancel_trigger;
     /* COMPOUND COMMANDS */
     orte_gpr_base_module_begin_compound_cmd_fn_t begin_compound_cmd;
     orte_gpr_base_module_stop_compound_cmd_fn_t stop_compound_cmd;
@@ -562,6 +582,7 @@ struct orte_gpr_base_module_1_0_0_t {
     orte_gpr_base_module_dump_all_fn_t dump_all;
     orte_gpr_base_module_dump_segments_fn_t dump_segments;
     orte_gpr_base_module_dump_triggers_fn_t dump_triggers;
+    orte_gpr_base_module_dump_subscriptions_fn_t dump_subscriptions;
     orte_gpr_base_module_dump_callbacks_fn_t dump_callbacks;
     orte_gpr_base_module_dump_notify_msg_fn_t dump_notify_msg;
     orte_gpr_base_module_dump_notify_data_fn_t dump_notify_data;

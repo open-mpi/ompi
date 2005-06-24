@@ -72,7 +72,8 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
 /*
  * Messaging functions
  */
-int orte_gpr_replica_remote_notify(orte_process_name_t *recipient,  ompi_list_t *messages);
+int orte_gpr_replica_remote_notify(orte_process_name_t *recipient, 
+                            orte_gpr_notify_message_t *msg);
 
 /*
  * define the local functions for processing commands
@@ -98,14 +99,21 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
                                         orte_buffer_t *input_buffer,
                                         orte_buffer_t *output_buffer);
 
-int orte_gpr_replica_recv_unsubscribe_cmd(orte_buffer_t *input_buffer,
+int orte_gpr_replica_recv_unsubscribe_cmd(orte_process_name_t* sender,
+                                          orte_buffer_t *input_buffer,
                                           orte_buffer_t *output_buffer);
+
+int orte_gpr_replica_recv_cancel_trigger_cmd(orte_process_name_t* sender,
+                                             orte_buffer_t *input_buffer,
+                                             orte_buffer_t *output_buffer);
 
 int orte_gpr_replica_recv_dump_all_cmd(orte_buffer_t *answer);
 
 int orte_gpr_replica_recv_dump_segments_cmd(orte_buffer_t *answer);
 
 int orte_gpr_replica_recv_dump_triggers_cmd(orte_buffer_t *answer);
+
+int orte_gpr_replica_recv_dump_subscriptions_cmd(orte_buffer_t *answer);
 
 int orte_gpr_replica_recv_dump_callbacks_cmd(orte_buffer_t *answer);
 

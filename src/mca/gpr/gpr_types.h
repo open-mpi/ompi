@@ -49,59 +49,42 @@ extern "C" {
 /** Define the notify actions for the subscription system - can be OR'd
  * to create multiple actions
  */
-#define ORTE_GPR_NOTIFY_NONE                (uint16_t)0x0000   /**< No trigger action */
-#define ORTE_GPR_NOTIFY_VALUE_CHG_TO        (uint16_t)0x0001   /**< Notifies subscriber when value changes to specified value */
-#define ORTE_GPR_NOTIFY_VALUE_CHG_FRM       (uint16_t)0x0002   /**< Notifies subscriber when value changes away from specified value */
-#define ORTE_GPR_NOTIFY_VALUE_CHG           (uint16_t)0x0003   /**< Notifies subscriber when value changes */
-#define ORTE_GPR_NOTIFY_ADD_ENTRY           (uint16_t)0x0004   /**< Notifies subscriber when entry added */
-#define ORTE_GPR_NOTIFY_DEL_ENTRY           (uint16_t)0x0008   /**< Notifies subscriber when entry deleted */
-#define ORTE_GPR_NOTIFY_ALL                 (uint16_t)0x000f   /**< Notifies subscriber upon any action */
-#define ORTE_GPR_NOTIFY_PRE_EXISTING        (uint16_t)0x0010   /**< Provide list of all pre-existing data */
-#define ORTE_GPR_NOTIFY_ANY                 (uint16_t)0x00ff   /**< Used to test if any action flags set */
+#define ORTE_GPR_NOTIFY_NONE                (uint8_t)0x00   /**< No trigger action */
+#define ORTE_GPR_NOTIFY_VALUE_CHG_TO        (uint8_t)0x01   /**< Notifies subscriber when value changes to specified value */
+#define ORTE_GPR_NOTIFY_VALUE_CHG_FRM       (uint8_t)0x02   /**< Notifies subscriber when value changes away from specified value */
+#define ORTE_GPR_NOTIFY_VALUE_CHG           (uint8_t)0x03   /**< Notifies subscriber when value changes */
+#define ORTE_GPR_NOTIFY_ADD_ENTRY           (uint8_t)0x04   /**< Notifies subscriber when entry added */
+#define ORTE_GPR_NOTIFY_DEL_ENTRY           (uint8_t)0x08   /**< Notifies subscriber when entry deleted */
+#define ORTE_GPR_NOTIFY_ALL                 (uint8_t)0x0f   /**< Notifies subscriber upon any action */
+#define ORTE_GPR_NOTIFY_PRE_EXISTING        (uint8_t)0x10   /**< Provide list of all pre-existing data */
+#define ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG   (uint8_t)0x20   /**< Notifies are off when subscription entered - turned on when trigger fires */
+#define ORTE_GPR_NOTIFY_NO_DATA_WITH_TRIG   (uint8_t)0x40   /**< Do not include subscription data when initial trigger fires */
+#define ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG   (uint8_t)0x80
+#define ORTE_GPR_NOTIFY_ANY                 (uint8_t)0xff   /**< Used to test if any action flags set */
 
-#define ORTE_GPR_TRIG_ONE_SHOT              (uint16_t)0x0100   /**< Only trigger once - then delete subscription */
-#define ORTE_GPR_TRIG_AT_LEVEL              (uint16_t)0x0200   /**< Trigger whenever count reaches specified level */
-#define ORTE_GPR_TRIG_CMP_LEVELS            (uint16_t)0x0400   /**< Trigger when all the specified values are equal */
-#define ORTE_GPR_TRIG_MONITOR_ONLY          (uint16_t)0x0800   /**< Monitor the provided trigger keyval - counting done by someone else */
-#define ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG   (uint16_t)0x1000   /**< Notifies are off when subscription entered - turned on when trigger fires */
-#define ORTE_GPR_TRIG_INCLUDE_DATA          (uint16_t)0x2000   /**< Include the trigger data in the trigger msg */
-#define ORTE_GPR_TRIG_ALL_AT                (uint16_t)0xdb00   /**< Use all trig defs except include trig data with AT - a typical situation */
-#define ORTE_GPR_TRIG_ALL_CMP               (uint16_t)0xdd00   /**< Use all trig defs except include trig data with CMP */
-#define ORTE_GPR_TRIG_ANY                   (uint16_t)0xff00   /**< Used to test if any trigs are set */
+typedef uint8_t orte_gpr_notify_action_t;
+#define ORTE_GPR_NOTIFY_ACTION_T ORTE_UINT8
 
-typedef uint16_t orte_gpr_notify_action_t;
-#define ORTE_GPR_NOTIFY_ACTION_T ORTE_UINT16
+typedef size_t orte_gpr_subscription_id_t;
+#define ORTE_GPR_SUBSCRIPTION_ID_T DPS_TYPE_SIZE_T
+#define ORTE_GPR_SUBSCRIPTION_ID_MAX SIZE_MAX
 
-typedef size_t orte_gpr_notify_id_t;
-#define ORTE_GPR_NOTIFY_ID_T DPS_TYPE_SIZE_T
-#define ORTE_GPR_NOTIFY_ID_MAX SIZE_MAX
 
-/*
- * Define flag values for remote commands - normally used internally, but required
- * here to allow for decoding of notify messages
- */
-#define ORTE_GPR_DELETE_SEGMENT_CMD     (uint16_t)0x0001
-#define ORTE_GPR_PUT_CMD                (uint16_t)0x0002
-#define ORTE_GPR_DELETE_ENTRIES_CMD     (uint16_t)0x0004
-#define ORTE_GPR_INDEX_CMD              (uint16_t)0x0008
-#define ORTE_GPR_SUBSCRIBE_CMD          (uint16_t)0x0010
-#define ORTE_GPR_UNSUBSCRIBE_CMD        (uint16_t)0x0020
-#define ORTE_GPR_GET_CMD                (uint16_t)0x0100
-#define ORTE_GPR_TEST_INTERNALS_CMD     (uint16_t)0x0200
-#define ORTE_GPR_NOTIFY_CMD             (uint16_t)0x0400
-#define ORTE_GPR_DUMP_ALL_CMD           (uint16_t)0x0800
-#define ORTE_GPR_DUMP_SEGMENTS_CMD      (uint16_t)0x0810
-#define ORTE_GPR_DUMP_TRIGGERS_CMD      (uint16_t)0x0820
-#define ORTE_GPR_DUMP_CALLBACKS_CMD     (uint16_t)0x0830
-#define ORTE_GPR_INCREMENT_VALUE_CMD    (uint16_t)0x2000
-#define ORTE_GPR_DECREMENT_VALUE_CMD    (uint16_t)0x4000
-#define ORTE_GPR_COMPOUND_CMD           (uint16_t)0x8000
-#define ORTE_GPR_CLEANUP_JOB_CMD        (uint16_t)0x8200
-#define ORTE_GPR_CLEANUP_PROC_CMD       (uint16_t)0x8400
-#define ORTE_GPR_ERROR                  (uint16_t)0xffff
+#define ORTE_GPR_TRIG_ONE_SHOT              (uint8_t)0x01   /**< Only trigger once - then delete subscription */
+#define ORTE_GPR_TRIG_INCLUDE_DATA          (uint8_t)0x02   /**< Include the trigger data in the notification msg */
+#define ORTE_GPR_TRIG_AT_LEVEL              (uint8_t)0x08   /**< Trigger whenever count reaches specified level */
+#define ORTE_GPR_TRIG_CMP_LEVELS            (uint8_t)0x80   /**< Trigger when all the specified values are equal */
+#define ORTE_GPR_TRIG_ALL_AT                (uint8_t)0x7f   /**< Use all trig defs except include trig data with AT - a typical situation */
+#define ORTE_GPR_TRIG_ALL_CMP               (uint8_t)0xf7   /**< Use all trig defs except include trig data with CMP */
+#define ORTE_GPR_TRIG_ANY                   (uint8_t)0xff   /**< Used to test if any trigs are set */
 
-typedef uint16_t orte_gpr_cmd_flag_t;
-#define ORTE_GPR_CMD_T ORTE_UINT16
+typedef uint8_t orte_gpr_trigger_action_t;
+#define ORTE_GPR_TRIGGER_ACTION_T ORTE_UINT8
+
+typedef size_t orte_gpr_trigger_id_t;
+#define ORTE_GPR_TRIGGER_ID_T DPS_TYPE_SIZE_T
+#define ORTE_GPR_TRIGGER_ID_MAX SIZE_MAX
+
 
 /** Define the addressing mode bit-masks for registry operations.
  *
@@ -201,12 +184,10 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
  * data from a single segment, one or more containers with one or more keyvals/container.
  */
 typedef struct {
-    ompi_object_t super;                    /**< Makes this an object */
-    size_t cb_num;                          /**< Number of the subscribed data - indicates which callback to use */
-    orte_gpr_addr_mode_t addr_mode;         /**< Address mode that was used for combining keys/tokens */
-    char *segment;                          /**< Name of the segment this came from */
-    size_t cnt;                             /**< Number of value objects returned, one per container */
-    orte_gpr_value_t **values;              /**< Array of value objects returned */
+    ompi_object_t super;            /**< Makes this an object */
+    orte_gpr_subscription_id_t id;  /**< Number of the associated subscription */
+    size_t cnt;                     /**< Number of value objects returned, one per container */
+    orte_gpr_value_t **values;      /**< Array of value objects returned */
 } orte_gpr_notify_data_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
@@ -215,7 +196,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
  */
 typedef struct {
     ompi_object_t super;                        /**< Make this an object */
-    orte_gpr_notify_id_t idtag;                 /**< Referenced notify request */
     size_t cnt;                                 /**< number of data objects */
     orte_gpr_notify_data_t **data;              /**< Contiguous array of pointers to data objects */
 } orte_gpr_notify_message_t;
@@ -240,17 +220,35 @@ typedef void (*orte_gpr_notify_cb_fn_t)(orte_gpr_notify_data_t *notify_data, voi
  */
 typedef struct {
     ompi_object_t super;                    /**< Makes this an object */
-    orte_gpr_addr_mode_t addr_mode;         /**< Address mode for combining keys/tokens */
-    char *segment;                          /**< Name of the segment where the data is located */
-    size_t num_tokens;                      /**< Number of tokens used to describe data */
-    char **tokens;                          /**< List of tokens that describe the data */
-    size_t num_keys;                        /**< Number of keys describing data */
-    char **keys;                            /**< Contiguous array of keys */
+    char *name;                             /**< A unique name for this subscription - can be NULL */
+    orte_gpr_subscription_id_t id;          /**< id number of this subscription, as assigned by system */
+    orte_gpr_notify_action_t action;        /**< what causes subscription to fire */
+    size_t cnt;                             /**< Number of values included */
+    orte_gpr_value_t **values;              /**< Contiguous array of pointers to value objects
+                                                 describing the data to be returned */
     orte_gpr_notify_cb_fn_t cbfunc;         /**< Function to be called with this data */
     void *user_tag;                         /**< User-provided tag to be used in cbfunc */
 } orte_gpr_subscription_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_subscription_t);
+
+/** Structure for registering triggers
+ * A trigger causes the associated subscriptions to be executed at a specified event,
+ * such as when counters reach specified values. The data provided here specifies
+ * which objects on the registry are to be monitored, and what conditions must
+ * exist between those objects for the trigger to be "fired".
+ */
+typedef struct {
+    ompi_object_t super;                    /**< Makes this an object */
+    char *name;                             /**< A unique name for this trigger - can be NULL */
+    orte_gpr_trigger_id_t id;               /**< id number of this trigger, as assigned by system */
+    orte_gpr_trigger_action_t action;       /**< trigger characteristics */
+    size_t cnt;                             /**< Number of values included */
+    orte_gpr_value_t **values;              /**< Contiguous array of pointers to value objects
+                                                 describing the objects to be monitored */
+} orte_gpr_trigger_t;
+
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_trigger_t);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

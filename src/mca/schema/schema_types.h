@@ -82,5 +82,14 @@ extern char *orte_error_strings[];
 #define ORTE_PROC_NUM_FINALIZED     "orte-proc-num-finalized"
 #define ORTE_PROC_NUM_TERMINATED    "orte-proc-num-terminated"
 
+/*
+ * ORTE-wide names for specific system triggers and subscriptions
+ */
+#define ORTE_STG1_TRIGGER           "orte-stage1"
+#define ORTE_STG2_TRIGGER           "orte-stage2"
+#define ORTE_STG3_TRIGGER           "orte-stage3"
+#define ORTE_NUM_FINALIZED_TRIGGER  "orte-num-finalized"
+#define ORTE_NUM_ABORTED_TRIGGER    "orte-num-aborted"
+#define ORTE_NUM_TERMINATED_TRIGGER "orte-num-terminated"
 
 #endif

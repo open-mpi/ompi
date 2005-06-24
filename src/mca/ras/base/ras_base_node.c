@@ -75,8 +75,10 @@ int orte_ras_base_node_query(ompi_list_t* nodes)
         NULL,
         &cnt,
         &values);
-    if(ORTE_SUCCESS != rc)
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
         return rc;
+    }
 
     /* parse the response */
     for(i=0; i<cnt; i++) {
@@ -140,8 +142,10 @@ int orte_ras_base_node_query_alloc(ompi_list_t* nodes, orte_jobid_t jobid)
     char* jobid_str;
     int rc;
 
-    if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_str, jobid)))
+    if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_str, jobid))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
+    }
     asprintf(&keys[4], "%s-%s", ORTE_NODE_SLOTS_ALLOC_KEY, jobid_str);
     free(jobid_str);
 
@@ -153,8 +157,10 @@ int orte_ras_base_node_query_alloc(ompi_list_t* nodes, orte_jobid_t jobid)
         keys,
         &cnt,
         &values);
-    if(ORTE_SUCCESS != rc)
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
         return rc;
+    }
 
     /* parse the response */
     for(i=0; i<cnt; i++) {
@@ -307,6 +313,7 @@ int orte_ras_base_node_insert(ompi_list_t* nodes)
         /* setup index/keys for this node */
         rc = orte_schema.get_node_tokens(&value->tokens, &value->num_tokens, node->node_cellid, node->node_name);
         if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
             for (j=0; j <= i; j++) {
                 OBJ_RELEASE(values[j]);
             }
@@ -316,7 +323,9 @@ int orte_ras_base_node_insert(ompi_list_t* nodes)
     }
     
     /* try the insert */
-    rc = orte_gpr.put(num_values, values);
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(num_values, values))) {
+        ORTE_ERROR_LOG(rc);
+    }
 
     for (j=0; j < num_values; j++) {
           OBJ_RELEASE(values[j]);
@@ -340,8 +349,10 @@ int orte_ras_base_node_delete(ompi_list_t* nodes)
         char* cellid;
         char* tokens[3];
 
-        if(ORTE_SUCCESS != (rc = orte_ns.convert_cellid_to_string(&cellid, node->node_cellid)))
+        if(ORTE_SUCCESS != (rc = orte_ns.convert_cellid_to_string(&cellid, node->node_cellid))) {
+            ORTE_ERROR_LOG(rc);
             return rc;
+        }
 
         /* setup index/keys for this node */
         tokens[0] = node->node_name;
@@ -353,8 +364,10 @@ int orte_ras_base_node_delete(ompi_list_t* nodes)
             ORTE_NODE_SEGMENT,
             tokens,
             NULL);
-        if(ORTE_SUCCESS != rc)
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
             return rc;
+        }
     }
     return ORTE_SUCCESS;
 }
@@ -374,6 +387,7 @@ int orte_ras_base_node_assign(ompi_list_t* nodes, orte_jobid_t jobid)
     
     num_values = ompi_list_get_size(nodes);
     if (0 >= num_values) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
     
@@ -426,12 +440,15 @@ int orte_ras_base_node_assign(ompi_list_t* nodes, orte_jobid_t jobid)
 
         if(node->node_slots_alloc == 0)
             continue;
-        if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_str, jobid)))
+        if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_str, jobid))) {
+            ORTE_ERROR_LOG(rc);
             return rc;
+        }
 
         /* setup index/keys for this node */
         rc = orte_schema.get_node_tokens(&values[i]->tokens, &values[i]->num_tokens, node->node_cellid, node->node_name);
         if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
            for (j=0; j < num_values; j++) {
                 OBJ_RELEASE(values[j]);
             }
@@ -448,7 +465,9 @@ int orte_ras_base_node_assign(ompi_list_t* nodes, orte_jobid_t jobid)
     }
     
     /* try the insert */
-    rc = orte_gpr.put(num_values, values);
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(num_values, values))) {
+        ORTE_ERROR_LOG(rc);
+    }
     
     for (j=0; j < num_values; j++) {
         OBJ_RELEASE(values[j]);

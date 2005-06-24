@@ -1466,33 +1466,47 @@ static bool test13(void)
 {
     orte_buffer_t *bufA;
     int rc;
-    size_t i, j, k;
+    size_t i, j, k, m;
     orte_gpr_subscription_t *src[NUM_ELEMS];
     orte_gpr_subscription_t *dst[NUM_ELEMS];
 
     for(i=0; i<NUM_ELEMS; i++) {
         src[i] = OBJ_NEW(orte_gpr_subscription_t);
-		src[i]->addr_mode = (uint16_t) i; 
-        src[i]->segment = strdup("test-segment-name");
+        if (i % 2) {
+            src[i]->name = strdup("dummy-name");
+        }
+        src[i]->id = (orte_gpr_subscription_id_t)i;
+        
+        /* test value counts of 1 to NUM_ELEMS+1 */
+        src[i]->cnt = i + 1;
+        src[i]->values = (orte_gpr_value_t**)malloc(src[i]->cnt * sizeof(orte_gpr_value_t*));
+        
+        for (k=0; k < src[i]->cnt; k++) {
+            src[i]->values[k] = OBJ_NEW(orte_gpr_value_t);
+            src[i]->values[k]->addr_mode = (uint16_t) i;
+            src[i]->values[k]->segment = strdup("test-segment");
+            
+    		/* test token counts of 0! to NUM_ELEMS */
+    		src[i]->values[k]->num_tokens = i;
+    		if (src[i]->values[k]->num_tokens) { /* if to allow testing of token count of zero */
+            	src[i]->values[k]->tokens = (char**)malloc(src[i]->values[k]->num_tokens * sizeof(char*));
+            	for (j=0; j < src[i]->values[k]->num_tokens; j++) {
+                	src[i]->values[k]->tokens[j] = strdup("test-token");
+            	}
+    		}
 
-		/* test token counts of 0! to NUM_ELEMS */
-		src[i]->num_tokens = i;
-		if (src[i]->num_tokens) { /* if to allow testing of token count of zero */
-        	src[i]->tokens = (char**)malloc(src[i]->num_tokens * sizeof(char*));
-        	for (j=0; j < src[i]->num_tokens; j++) {
-            	src[i]->tokens[j] = strdup("test-token");
-        	}
-		}
-
-		/* test key counts of 0 to NUM_ELEMS */
-		src[i]->num_keys = i;
-		if (src[i]->num_keys) { /* if to allow testing of num_keys count of zero */
-        	src[i]->keys = (char**)malloc(src[i]->num_keys * sizeof(char*));
-        	for (j=0; j < src[i]->num_keys; j++) {
-            	src[i]->keys[j] = strdup("test-key");
-        	}
-		}
+    		/* test key counts of 0 to NUM_ELEMS */
+    		src[i]->values[k]->cnt = i;
+    		if (src[i]->values[k]->cnt) { /* if to allow testing of num_keys count of zero */
+            	src[i]->values[k]->keyvals = (orte_gpr_keyval_t**)malloc(
+                            src[i]->values[k]->cnt * sizeof(orte_gpr_keyval_t*));
+            	for (j=0; j < src[i]->values[k]->cnt; j++) {
+                    src[i]->values[k]->keyvals[j] = OBJ_NEW(orte_gpr_keyval_t);
+                	src[i]->values[k]->keyvals[j]->key = strdup("test-key");
+            	}
+    		}
                 /* skip the pointers for cb_func and user_tag */
+        }
 	}
 
 	/* source data set, now create buffer and pack source data */
@@ -1528,28 +1542,47 @@ static bool test13(void)
 
         for(j=0; j<NUM_ELEMS; j++) {
 
-            if ( 
-				src[j]->addr_mode != dst[j]->addr_mode ||
-				0 != strcmp(src[j]->segment, dst[j]->segment) ||
-                src[j]->num_tokens != dst[j]->num_tokens ||
-                src[j]->num_keys != dst[j]->num_keys
+            if ((NULL == src[j]->name && NULL != dst[j]->name) ||
+                (NULL != src[j]->name && NULL == dst[j]->name)
+                ) {
+                test_comment ("test13: invalid results from unpack");
+                return(false);
+            }
+            
+            if ((NULL != src[j]->name &&
+                0 != strcmp(src[j]->name, dst[j]->name)) ||
+                src[j]->id != dst[j]->id ||
+                src[j]->cnt != dst[j]->cnt
 				) {
                 test_comment ("test13: invalid results from unpack");
                 return(false);
             }
 
-			/* now compare each of the size/cnt depedant values */
-            for (k=0; k<src[j]->num_tokens; k++) {
-                if (0 != strcmp(src[j]->tokens[k], dst[j]->tokens[k])) {
-                   test_comment ("test13: invalid results (tokens) from unpack");
+			/* now compare each of the size/cnt dependent values */
+            for (k=0; k<src[j]->cnt; k++) {
+                if (src[j]->values[k]->num_tokens != dst[j]->values[k]->num_tokens) {
+                   test_comment ("test13: invalid results (value num_tokens) from unpack");
                     return(false);
                 }
-            }
+                
+                for (m=0; m < src[j]->values[k]->num_tokens; m++) {
+                    if (0 != strcmp(src[j]->values[k]->tokens[m], dst[j]->values[k]->tokens[m])) {
+                       test_comment ("test13: invalid results (tokens) from unpack");
+                        return(false);
+                    }
+                }
 
-            for (k=0; k< src[j]->num_keys; k++) {
-                if (0 != strcmp(src[j]->keys[k], dst[j]->keys[k])) {
-                    test_comment ("test13: invalid results (keys) from unpack");
+                if (src[j]->values[k]->cnt != dst[j]->values[k]->cnt) {
+                   test_comment ("test13: invalid results (value cnt) from unpack");
                     return(false);
+                }
+                
+                for (m=0; m < src[j]->values[k]->cnt; m++) {
+                    if (0 != strcmp(src[j]->values[k]->keyvals[m]->key,
+                                    dst[j]->values[k]->keyvals[m]->key)) {
+                        test_comment ("test13: invalid results (keys) from unpack");
+                        return(false);
+                    }
                 }
             }
         }
@@ -1576,9 +1609,7 @@ static bool test14(void)
 
     for(i=0; i<NUM_ELEMS; i++) {
         src[i] = OBJ_NEW(orte_gpr_notify_data_t);
-		src[i]->cb_num = i; 
-		src[i]->addr_mode = (orte_gpr_addr_mode_t) i; 
-        src[i]->segment = strdup("test-segment-name");
+		src[i]->id = i; 
 
 		/* test value counts of 0 to NUM_ELEMS-1 */
 		src[i]->cnt = i; /* value count */
@@ -1651,9 +1682,7 @@ static bool test14(void)
         for(j=0; j<NUM_ELEMS; j++) {
 
             if ( 
-                src[j]->cb_num != dst[j]->cb_num ||
-				src[j]->addr_mode != dst[j]->addr_mode ||
-				0 != strcmp(src[j]->segment, dst[j]->segment) ||
+                src[j]->id != dst[j]->id ||
                 src[j]->cnt != dst[j]->cnt 
 				) {
                 test_comment ("test14: invalid results from unpack");

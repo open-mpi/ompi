@@ -88,7 +88,7 @@ static void mca_oob_tcp_accept(void);
 struct mca_oob_tcp_subscription_t {
     ompi_list_item_t item;
     orte_jobid_t jobid;
-    orte_gpr_notify_id_t subid;
+    orte_gpr_subscription_id_t subid;
 };
 typedef struct mca_oob_tcp_subscription_t mca_oob_tcp_subscription_t;
 
@@ -611,7 +611,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
 {
     mca_oob_tcp_addr_t* addr;
     mca_oob_tcp_subscription_t* subscription;
-    orte_gpr_value_t trig, *trigs;
+    orte_gpr_trigger_t trig, *trigs;
     orte_gpr_subscription_t sub, *subs;
     ompi_list_item_t* item;
     int rc;
@@ -638,87 +638,110 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
     }
                                                                                                         
     OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
-    sub.addr_mode = ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(sub.segment), peer->peer_name.jobid))) {
+    /* indicate that this is a standard subscription. This indicates that the
+     * subscription will be common to all processes. Thus, the resulting data
+     * can be consolidated into a process-independent message and broadcast
+     * to all processes
+     */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&(sub.name),
+                                OMPI_OOB_SUBSCRIPTION, peer->peer_name.jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    sub.num_tokens= 0;
-    sub.tokens = NULL;
-    sub.num_keys = 1;
-    sub.keys = (char**)malloc(sizeof(char*));
-    if(NULL == sub.keys) {
+    /* send data when trigger fires, continue to monitor. The default
+     * action for any subscription that includes a trigger condition is
+     * to send the specified data when the trigger fires. This set of flags
+     * indicates that - AFTER the trigger fires - the subscription should
+     * continue to send data any time an entry is added or changed.
+     */
+    sub.action = ORTE_GPR_NOTIFY_ADD_ENTRY |
+                 ORTE_GPR_NOTIFY_VALUE_CHG |
+                 ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG;
+    
+    /* setup the value structures that describe the data to
+     * be monitored and returned by this subscription
+     */
+    sub.cnt = 1;
+    sub.values = (orte_gpr_value_t**)malloc(sizeof(orte_gpr_value_t*));
+    if (NULL == sub.values) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    sub.keys[0] = strdup("oob-tcp");
-    if (NULL == sub.keys[0]) {
+    sub.values[0] = OBJ_NEW(orte_gpr_value_t);
+    if (NULL == sub.values[0]) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    sub.cnt = 1;
+    /* define the segment */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(
+                                &(sub.values[0]->segment),
+                                peer->peer_name.jobid))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&sub);
+        return rc;
+    }
+    sub.values[0]->addr_mode = ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR;
+    /* look at all containers on this segment */
+    sub.values[0]->tokens = NULL;
+    sub.values[0]->num_tokens = 0;
+    /* look for any keyval with "modex" key */
+    sub.values[0]->cnt = 1;
+    sub.values[0]->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+    if (NULL == sub.values[0]->keyvals) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    sub.values[0]->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == sub.values[0]->keyvals[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    sub.values[0]->keyvals[0]->key = strdup("oob-tcp");
+    if (NULL == sub.values[0]->keyvals[0]->key) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    /* define the callback function */
     sub.cbfunc = mca_oob_tcp_registry_callback;
     sub.user_tag = NULL;
 
     /* setup the trigger value */
-    OBJ_CONSTRUCT(&trig, orte_gpr_value_t);
-    trig.addr_mode = ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(trig.segment), peer->peer_name.jobid))) {
+    OBJ_CONSTRUCT(&trig, orte_gpr_trigger_t);
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(trig.name),
+                                    ORTE_STG1_TRIGGER, peer->peer_name.jobid))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&trig);
         return rc;
     }
-    trig.num_tokens = 1;
-    trig.tokens = (char**)malloc(sizeof(char*));
-    if (NULL == trig.tokens) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.tokens[0] = strdup(ORTE_JOB_GLOBALS);
-    if (NULL == trig.tokens[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.keyvals = (orte_gpr_keyval_t**)malloc(2*sizeof(orte_gpr_keyval_t*));
-    if(NULL == trig.keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.cnt = 2;
-    trig.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if(NULL == trig.keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.keyvals[0]->key = strdup(ORTE_JOB_SLOTS_KEY);
-    trig.keyvals[0]->type = ORTE_NULL;
-    
-    trig.keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
-    if(NULL == trig.keyvals[1]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.keyvals[1]->key = strdup(ORTE_PROC_NUM_AT_STG1);
-    trig.keyvals[1]->type = ORTE_NULL;
+
+    /* this is an ORTE-standard trigger that is defined by the ORTE resource manager
+     * when the job was launched - therefore, we don't need to provide any additional
+     * info
+     */
+         
     
     trigs = &trig;
     subs = &sub;
     subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
     subscription->jobid = peer->peer_name.jobid;
-    rc = orte_gpr.subscribe(
-        ORTE_GPR_NOTIFY_ADD_ENTRY | ORTE_GPR_NOTIFY_VALUE_CHG |
-        ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_ONE_SHOT |
-        ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG, /* DON'T START NOTIFYING ME ON CHANGES UNTIL AFTER TRIG FIRES */
-        1, &subs,
-        1, &trigs,
-        &subscription->subid);
+    rc = orte_gpr.subscribe(1, &subs, 1, &trigs);
     if(rc != OMPI_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
         return rc;
     }
+    /* the id of each subscription is stored by the system in the corresponding
+     * subscription object we passed into orte_gpr.subscribe. We record it
+     * here so we can (if desired) cancel that subscription later
+     */
+    subscription->subid = sub.id;
+    /* done with these, so release any memory */
     OBJ_DESTRUCT(&sub);
-    OBJ_DESTRUCT(&trig);  /* done with these */
+    OBJ_DESTRUCT(&trig);
 
     ompi_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
@@ -733,7 +756,8 @@ int mca_oob_tcp_init(void)
 {
     orte_jobid_t jobid;
     orte_buffer_t *buffer;
-    orte_gpr_value_t trig, *trigs, *value;
+    orte_gpr_trigger_t trig, *trigs;
+    orte_gpr_value_t *value;
     mca_oob_tcp_subscription_t *subscription;
     orte_gpr_subscription_t sub, *subs;
     int rc;
@@ -779,90 +803,110 @@ int mca_oob_tcp_init(void)
 
     /* setup the subscription description value */
     OBJ_CONSTRUCT(&sub, orte_gpr_subscription_t);
-    sub.addr_mode = ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR;
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, orte_process_info.my_name))) {
+    /* indicate that this is a standard subscription. This indicates that the
+     * subscription will be common to all processes. Thus, the resulting data
+     * can be consolidated into a process-independent message and broadcast
+     * to all processes
+     */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&(sub.name),
+                                OMPI_OOB_SUBSCRIPTION, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(sub.segment), jobid))) {
+    /* send data when trigger fires, continue to monitor. The default
+     * action for any subscription that includes a trigger condition is
+     * to send the specified data when the trigger fires. This set of flags
+     * indicates that - AFTER the trigger fires - the subscription should
+     * continue to send data any time an entry is added or changed.
+     */
+    sub.action = ORTE_GPR_NOTIFY_ADD_ENTRY |
+                 ORTE_GPR_NOTIFY_VALUE_CHG |
+                 ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG;
+    
+    /* setup the value structures that describe the data to
+     * be monitored and returned by this subscription
+     */
+    sub.cnt = 1;
+    sub.values = (orte_gpr_value_t**)malloc(sizeof(orte_gpr_value_t*));
+    if (NULL == sub.values) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    sub.values[0] = OBJ_NEW(orte_gpr_value_t);
+    if (NULL == sub.values[0]) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* define the segment */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(
+                                &(sub.values[0]->segment),
+                                jobid))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&sub);
         return rc;
     }
-    sub.num_tokens= 0;
-    sub.tokens = NULL;
-    sub.num_keys = 1;
-    sub.keys = (char**)malloc(sizeof(char*));
-    if(NULL == sub.keys) {
+    sub.values[0]->addr_mode = ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR;
+    /* look at all containers on this segment */
+    sub.values[0]->tokens = NULL;
+    sub.values[0]->num_tokens = 0;
+    /* look for any keyval with "modex" key */
+    sub.values[0]->cnt = 1;
+    sub.values[0]->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+    if (NULL == sub.values[0]->keyvals) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    sub.keys[0] = strdup("oob-tcp");
-    if (NULL == sub.keys[0]) {
+    sub.values[0]->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
+    if (NULL == sub.values[0]->keyvals[0]) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    sub.values[0]->keyvals[0]->key = strdup("oob-tcp");
+    if (NULL == sub.values[0]->keyvals[0]->key) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_DESTRUCT(&sub);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    /* define the callback function */
     sub.cbfunc = mca_oob_tcp_registry_callback;
     sub.user_tag = NULL;
 
     /* setup the trigger value */
-    OBJ_CONSTRUCT(&trig, orte_gpr_value_t);
-    trig.addr_mode = ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR;
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&(trig.segment), jobid))) {
+    OBJ_CONSTRUCT(&trig, orte_gpr_trigger_t);
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(trig.name),
+                                    ORTE_STG1_TRIGGER, jobid))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&value);
-        OBJ_DESTRUCT(&trig);
         return rc;
     }
-    trig.num_tokens = 1;
-    trig.tokens = (char**)malloc(sizeof(char*));
-    if (NULL == trig.tokens) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.tokens[0] = strdup(ORTE_JOB_GLOBALS);
-    if (NULL == trig.tokens[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.keyvals = (orte_gpr_keyval_t**)malloc(2*sizeof(orte_gpr_keyval_t*));
-    if(NULL == trig.keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.cnt = 2;
-    trig.keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if(NULL == trig.keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.keyvals[0]->key = strdup(ORTE_JOB_SLOTS_KEY);
-    trig.keyvals[0]->type = ORTE_NULL;
-    
-    trig.keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
-    if(NULL == trig.keyvals[1]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    trig.keyvals[1]->key = strdup(ORTE_PROC_NUM_AT_STG1);
-    trig.keyvals[1]->type = ORTE_NULL;
+
+    /* this is an ORTE-standard trigger that is defined by the ORTE resource manager
+     * when the job was launched - therefore, we don't need to provide any additional
+     * info
+     */
+         
     
     trigs = &trig;
     subs = &sub;
-    rc = orte_gpr.subscribe(
-        ORTE_GPR_NOTIFY_ADD_ENTRY | ORTE_GPR_NOTIFY_VALUE_CHG |
-        ORTE_GPR_TRIG_CMP_LEVELS | ORTE_GPR_TRIG_ONE_SHOT |
-        ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG,
-        1, &subs,
-        1, &trigs,
-        &subscription->subid);
+    subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
+    subscription->jobid = jobid;
+    rc = orte_gpr.subscribe(1, &subs, 1, &trigs);
     if(rc != OMPI_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&sub);
         OBJ_DESTRUCT(&trig);
         return rc;
     }
+    /* the id of each subscription is stored by the system in the corresponding
+     * subscription object we passed into orte_gpr.subscribe. We record it
+     * here so we can (if desired) cancel that subscription later
+     */
+    subscription->subid = sub.id;
+    /* done with these, so release any memory */
     OBJ_DESTRUCT(&sub);
-    OBJ_DESTRUCT(&trig);  /* done with these */
+    OBJ_DESTRUCT(&trig);
 
     buffer = OBJ_NEW(orte_buffer_t);
     if(buffer == NULL) {

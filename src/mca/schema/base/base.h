@@ -60,6 +60,12 @@ int orte_schema_base_get_cell_tokens(char ***tokens, size_t* num_tokens, orte_ce
 int orte_schema_base_get_job_segment_name(char **name, orte_jobid_t jobid);
 int orte_schema_base_extract_jobid_from_segment_name(orte_jobid_t *jobid, char *name);
 int orte_schema_base_store_my_info(void);
+int orte_schema_base_get_std_trigger_name(char **name,
+                                          char *trigger,
+                                          orte_jobid_t jobid);
+int orte_schema_base_get_std_subscription_name(char **name,
+                                               char *subscription,
+                                               orte_jobid_t jobid);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

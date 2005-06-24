@@ -161,18 +161,33 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             	    }
             
             	    if (ORTE_SUCCESS != (ret =
-                        orte_gpr_replica_recv_unsubscribe_cmd(input_buffer, answer))) {
-                     ORTE_ERROR_LOG(ret);
+                        orte_gpr_replica_recv_unsubscribe_cmd(sender, input_buffer, answer))) {
+                        ORTE_ERROR_LOG(ret);
             		    goto RETURN_ERROR;
             	    }
             	    break;
             
             
             	    
+                case ORTE_GPR_CANCEL_TRIGGER_CMD:  /*****     CANCEL_TRIGGER     *****/
+            
+                    if (orte_gpr_replica_globals.debug) {
+                        ompi_output(0, "\tcancel trigger cmd");
+                    }
+            
+                    if (ORTE_SUCCESS != (ret =
+                        orte_gpr_replica_recv_cancel_trigger_cmd(sender, input_buffer, answer))) {
+                        ORTE_ERROR_LOG(ret);
+                        goto RETURN_ERROR;
+                    }
+                    break;
+            
+            
+                    
             	case ORTE_GPR_DUMP_ALL_CMD:  /*****     DUMP     *****/
             
             	    if (orte_gpr_replica_globals.debug) {
-            		    ompi_output(0, "\tdump cmd");
+            		    ompi_output(0, "\tdump all cmd");
             	    }
             
             	    if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_all_cmd(answer))) {
@@ -186,7 +201,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
                 case ORTE_GPR_DUMP_SEGMENTS_CMD:  /*****     DUMP     *****/
             
                    if (orte_gpr_replica_globals.debug) {
-                      ompi_output(0, "\tdump cmd");
+                      ompi_output(0, "\tdump segments cmd");
                   }
             
                  if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_segments_cmd(answer))) {
@@ -200,7 +215,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
                 case ORTE_GPR_DUMP_TRIGGERS_CMD:  /*****     DUMP     *****/
             
                    if (orte_gpr_replica_globals.debug) {
-                      ompi_output(0, "\tdump cmd");
+                      ompi_output(0, "\tdump triggers cmd");
                   }
             
                  if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_triggers_cmd(answer))) {
@@ -211,10 +226,24 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
             
             
                    
+                case ORTE_GPR_DUMP_SUBSCRIPTIONS_CMD:  /*****     DUMP     *****/
+            
+                   if (orte_gpr_replica_globals.debug) {
+                      ompi_output(0, "\tdump subscriptions cmd");
+                  }
+            
+                 if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_subscriptions_cmd(answer))) {
+                     ORTE_ERROR_LOG(ret);
+                     goto RETURN_ERROR;
+                 }
+                 break;
+            
+            
+                   
                 case ORTE_GPR_DUMP_CALLBACKS_CMD:  /*****     DUMP     *****/
             
                    if (orte_gpr_replica_globals.debug) {
-                      ompi_output(0, "\tdump cmd");
+                      ompi_output(0, "\tdump callbacks cmd");
                   }
             
                  if (ORTE_SUCCESS != (ret = orte_gpr_replica_recv_dump_callbacks_cmd(answer))) {

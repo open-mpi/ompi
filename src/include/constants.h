@@ -74,5 +74,13 @@ enum {
 
 #define OMPI_NAMESPACE_SEGMENT        "ompi-namespace"
 
+/*
+ * OMPI-specific names for triggers and subscriptions used across processes
+ */
+#define OMPI_ATTRIBUTE_SUBSCRIPTION     "ompi-attribute-sub"
+#define OMPI_OOB_SUBSCRIPTION           "ompi-oob-sub"
+#define OMPI_MODEX_SUBSCRIPTION         "ompi-modex-sub"
+
+
 #endif /* OMPI_CONSTANTS_H */
 

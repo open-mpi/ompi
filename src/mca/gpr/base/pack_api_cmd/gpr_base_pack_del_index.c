@@ -33,7 +33,7 @@ int orte_gpr_base_pack_delete_segment(orte_buffer_t *cmd, char *segment)
 
     command = ORTE_GPR_DELETE_SEGMENT_CMD;
 
-    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_PACK_CMD))) {
+    if (ORTE_SUCCESS != (rc = orte_dps.pack(cmd, &command, 1, ORTE_GPR_CMD))) {
 	   return rc;
     }
 

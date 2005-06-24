@@ -33,296 +33,65 @@
 #include "mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 #include "gpr_replica_fn.h"
 
-int orte_gpr_replica_subscribe_fn(orte_gpr_notify_action_t action, size_t num_subs,
+int orte_gpr_replica_subscribe_fn(orte_process_name_t *requestor,
+                                  size_t num_subs,
                                   orte_gpr_subscription_t **subscriptions,
                                   size_t num_trigs,
-                                  orte_gpr_value_t **trigs,
-                                  orte_gpr_notify_id_t idtag)
+                                  orte_gpr_trigger_t **trigs)
 {
-    orte_gpr_replica_triggers_t *trig=NULL;
-    orte_gpr_replica_subscribed_data_t *data=NULL, **data2=NULL;
-    orte_gpr_replica_counter_t *cntr;
-    orte_gpr_replica_segment_t *seg=NULL;
-    orte_gpr_replica_container_t **cptr=NULL, *cptr2=NULL;
-    orte_gpr_replica_itag_t itag, *tokentags=NULL, *keytags=NULL;
-    orte_gpr_replica_itagval_t *iptr=NULL;
-    orte_gpr_replica_addr_mode_t tok_mode, key_mode;
-    size_t i, j, k, index, num_tokens, num_keys, num_found;
+    orte_gpr_replica_subscription_t *sub=NULL, **subs;
+    orte_gpr_replica_trigger_t *trig=NULL;
+    size_t i, j, k, index;
     int rc=ORTE_SUCCESS;
-    bool found;
 
     if (orte_gpr_replica_globals.debug) {
-	   ompi_output(0, "[%lu,%lu,%lu] gpr replica: subscribe entered - registering idtag %d",
-		    ORTE_NAME_ARGS(orte_process_info.my_name), idtag);
-        ompi_output(0, "Received %d subscriptions", num_subs);
-        for (i=0; i < num_subs; i++) {
-            ompi_output(0, "Subscription %d on segment %s with %d tokens, %d keys",
-                    i, subscriptions[i]->segment, subscriptions[i]->num_tokens,
-                    subscriptions[i]->num_keys);
-            for (j=0; j < subscriptions[i]->num_tokens; j++) {
-                ompi_output(0, "\tToken num: %d\tToken: %s", j, subscriptions[i]->tokens[j]);
-            }
-            for (j=0; j < subscriptions[i]->num_keys; j++) {
-                ompi_output(0, "\tKey num: %d\tKey: %s", j, subscriptions[i]->keys[j]);
-            }
-        }
-        for (i=0; i < num_trigs; i++) {
-            ompi_output(0, "Trigger %d on segment %s with %d tokens, %d keyvals",
-                    i, trigs[i]->segment, trigs[i]->num_tokens, trigs[i]->cnt);
-            for (j=0; j < trigs[i]->num_tokens; j++) {
-                ompi_output(0, "\tToken num: %d\tToken: %s", j, trigs[i]->tokens[j]);
-            }
-            for (j=0; j < trigs[i]->cnt; j++) {
-                ompi_output(0, "\tKey num: %d\tKey: %s", j, (trigs[i]->keyvals[j])->key);
-            }
-        }
+	   ompi_output(0, "[%lu,%lu,%lu] gpr replica: subscribe entered",
+		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
-    trig = (orte_gpr_replica_triggers_t*)((orte_gpr_replica.triggers)->addr[idtag]);
-    if (NULL == trig) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        return ORTE_ERR_BAD_PARAM;
-    }
-    trig->action = action;
-
+    /* ensure one of the search arrays is clear - in this case, we
+     * use the sub_ptrs array to temporarily store the subscription pointers so we
+     * can properly link them to the triggers
+     */
+    orte_pointer_array_clear(orte_gpr_replica_globals.sub_ptrs);
+    subs = (orte_gpr_replica_subscription_t**)(orte_gpr_replica_globals.sub_ptrs)->addr;
+    
     for (i=0; i < num_subs; i++) {
-        /* find the subscribed_data entry in the trigger pointer array - placed
-         * there initially by the enter_notify_request function so we could store
-         * the callback function and user_tag pointers
-         */
-        data2 = (orte_gpr_replica_subscribed_data_t**)((trig->subscribed_data)->addr);
-        for (j=0, data=NULL; j < (trig->subscribed_data)->size && NULL == data; j++) {
-            if (NULL != data2[j] && i == data2[j]->index) {
-                data = data2[j];
-            }
-        }
-        if (NULL == data) { /* if not found, then something very wrong */
-            ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
-            return ORTE_ERR_GPR_DATA_CORRUPT;
-        }
-        
-        /* find and store the segment */
-        if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&(data->seg), true,
-                                                    subscriptions[i]->segment))) {
+        if (ORTE_SUCCESS != (rc =
+            orte_gpr_replica_register_subscription(&sub, requestor, subscriptions[i]))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        tok_mode = 0x004f & subscriptions[i]->addr_mode;
-        if (0x00 == tok_mode) {  /* default token address mode to AND */
-            tok_mode = ORTE_GPR_REPLICA_AND;
-        }
-        key_mode = ((0x4f00 & subscriptions[i]->addr_mode) >> 8) & 0x004f;
-        if (0x00 == key_mode) {  /* default key address mode to OR */
-            key_mode = ORTE_GPR_REPLICA_OR;
-        }
-        data->addr_mode = ((orte_gpr_addr_mode_t)(key_mode) << 8) | (orte_gpr_addr_mode_t)tok_mode;
-        
-        if (NULL != subscriptions[i]->tokens && 0 < subscriptions[i]->num_tokens) {
-            num_tokens = subscriptions[i]->num_tokens; /* indicates non-NULL terminated list */
-            if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&tokentags, data->seg,
-                                    subscriptions[i]->tokens, &num_tokens))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            
-            }
-            if (ORTE_SUCCESS != (rc = orte_value_array_set_size(&(data->tokentags), (size_t)num_tokens))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            for (j=0; j < num_tokens; j++) {
-                ORTE_VALUE_ARRAY_SET_ITEM(&(data->tokentags), orte_gpr_replica_itag_t,
-                                                j, tokentags[j]);
-            }
-            free(tokentags);
-            tokentags = NULL;
-        }
-        
-        if (NULL != subscriptions[i]->keys && 0 < subscriptions[i]->num_keys) {
-            num_keys = subscriptions[i]->num_keys; /* indicates non-NULL terminated list */
-            if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&keytags, data->seg,
-                                    subscriptions[i]->keys, &num_keys))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            
-            }
-            if (ORTE_SUCCESS != (rc = orte_value_array_set_size(&(data->keytags), (size_t)num_keys))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-            for (j=0; j < num_keys; j++) {
-                ORTE_VALUE_ARRAY_SET_ITEM(&(data->keytags), orte_gpr_replica_itag_t,
-                                                j, keytags[j]);
-            }
-            free(keytags);
-            keytags = NULL;
+        /* add the new subscription so we can link
+         * it to the triggers later
+         */
+        if (0 > orte_pointer_array_add(&index, orte_gpr_replica_globals.sub_ptrs, sub)) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
         }
     }
     
-    /* if this has a trigger in it, need to setup the counters */
-    if (ORTE_GPR_TRIG_ANY & action) {
-        trig->num_counters = 0;
-        for (j=0; j < num_trigs; j++) {
-            /* get this counter's addressing modes */
-            tok_mode = 0x004f & trigs[j]->addr_mode;
-            if (0x00 == tok_mode) {  /* default token address mode to AND */
-                tok_mode = ORTE_GPR_REPLICA_AND;
-            }
-            key_mode = ((0x4f00 & trigs[j]->addr_mode) >> 8) & 0x004f;
-            if (0x00 == key_mode) {  /* default key address mode to OR */
-                key_mode = ORTE_GPR_REPLICA_OR;
-            }
-        
-            /* locate this counter's segment - this is where the counter will be */
-            if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, trigs[j]->segment))) {
-                ORTE_ERROR_LOG(rc);
-                OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
-                return rc;
-            }
-        
-            /* convert the counter's tokens to an itaglist */
-            if (NULL != trigs[j]->tokens && 0 < trigs[j]->num_tokens) {
-                num_tokens = trigs[j]->num_tokens; /* indicates non-NULL terminated list */
-                if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&tokentags, seg,
-                                    trigs[j]->tokens, &num_tokens))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto CLEANUP;
+    /* now register any triggers */
+    for (i=0; i < num_trigs; i++) {
+        if (ORTE_SUCCESS != (rc =
+            orte_gpr_replica_register_trigger(&trig, requestor, trigs[i]))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        /* link the subscriptions to the new trigger
+         */
+        for (j=0, k=0; k < num_subs &&
+                       j < (orte_gpr_replica_globals.sub_ptrs)->size; j++) {
+            if (NULL != subs[j]) {
+                k++;
+                if (0 > orte_pointer_array_add(&index, trig->subscriptions, subs[j])) {
+                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                    return ORTE_ERR_OUT_OF_RESOURCE;
                 }
             }
-        
-            /* find the specified container(s) */
-            if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_containers(&num_found, seg, tok_mode,
-                                            tokentags, num_tokens))) {
-                ORTE_ERROR_LOG(rc);
-                goto CLEANUP;
-            }
-        
-            if (0 == num_found) {  /* no existing container found - create one using all the tokens */
-                if (ORTE_SUCCESS != (rc = orte_gpr_replica_create_container(&cptr2, seg,
-                                                    num_tokens, tokentags))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto CLEANUP;
-                }
-         
-                /* ok, store all of this counters values in the new container, adding a pointer to each
-                 * one in the trigger's counter array
-                 */
-                for (i=0; i < trigs[j]->cnt; i++) {
-                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_add_keyval(&iptr, seg, cptr2, trigs[j]->keyvals[i]))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto CLEANUP;
-                    }
-                    cntr = OBJ_NEW(orte_gpr_replica_counter_t);
-                    if (NULL == cntr) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        return ORTE_ERR_OUT_OF_RESOURCE;
-                    }
-                    cntr->seg = seg;
-                    cntr->cptr = cptr2;
-                    cntr->iptr = iptr;
-                    cntr->trigger_level.type = (trigs[j]->keyvals[i])->type;
-                    if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(&(cntr->trigger_level.value),
-                            &((trigs[j]->keyvals[i])->value), (trigs[j]->keyvals[i])->type))) {
-                        ORTE_ERROR_LOG(rc);
-                        goto CLEANUP;
-                    }
-                    if (0 > orte_pointer_array_add(&index, trig->counters, cntr)) {
-                        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                        rc = ORTE_ERR_OUT_OF_RESOURCE;
-                        goto CLEANUP;
-                    }
-                }
-                trig->num_counters += trigs[j]->cnt;
-            } else {  /* For each counter, go through the list of containers and
-                         see if it already exists in container. Only allow each
-                         counter to be identified once - error if either a counter is never
-                         found or already existing in more than one place. */
-                cptr = (orte_gpr_replica_container_t**)(orte_gpr_replica_globals.srch_cptr)->addr;
-                for (i=0; i < trigs[j]->cnt; i++) {
-                    found = false;
-                    for (k=0; k < (orte_gpr_replica_globals.srch_cptr)->size; k++) {
-                        if (NULL != cptr[k]) {
-                            if (ORTE_SUCCESS == orte_gpr_replica_dict_lookup(&itag, seg, trigs[j]->keyvals[i]->key) &&
-                                ORTE_SUCCESS == orte_gpr_replica_search_container(&num_found,
-                                                        ORTE_GPR_REPLICA_OR,
-                                                        &itag, 1, cptr[k]) &&
-                                0 < num_found) {
-                                /* this key already exists - make sure it's unique
-                                 */
-                                if (1 < num_found || found) { /* not unique - error out */
-                                    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-                                    rc = ORTE_ERR_BAD_PARAM;
-                                    goto CLEANUP;
-                                }
-                                /* okay, add to trigger's counter array */
-                                found = true;
-                                iptr = (orte_gpr_replica_itagval_t*)((orte_gpr_replica_globals.srch_ival)->addr[0]);
-                                cntr = OBJ_NEW(orte_gpr_replica_counter_t);
-                                if (NULL == cntr) {
-                                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                                    return ORTE_ERR_OUT_OF_RESOURCE;
-                                }
-                                cntr->seg = seg;
-                                cntr->cptr = cptr[k];
-                                cntr->iptr = iptr;
-                                cntr->trigger_level.type = (trigs[j]->keyvals[i])->type;
-                                if (ORTE_SUCCESS != (rc = orte_gpr_base_xfer_payload(&(cntr->trigger_level.value),
-                                        &((trigs[j]->keyvals[i])->value), (trigs[j]->keyvals[i])->type))) {
-                                    ORTE_ERROR_LOG(rc);
-                                    goto CLEANUP;
-                                }
-                                if (0 > orte_pointer_array_add(&index, trig->counters, cntr)) {
-                                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                                    rc = ORTE_ERR_OUT_OF_RESOURCE;
-                                    goto CLEANUP;
-                                }
-                                (trig->num_counters)++;
-                            }  /* end if found */
-                        }  /* end if cptr NULL */
-                    }  /* end for j */
-                    if (!found) {  /* specified counter never found - error */
-                        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-                        rc = ORTE_ERR_BAD_PARAM;
-                        goto CLEANUP;
-                    } /* end if found */
-                }  /* end for i */
-            }  /* end if/else container found */
-            
-            /* check the triggers on this segment before leaving to see if they are already fired */
-            if (ORTE_SUCCESS != 
-                (rc = orte_gpr_replica_check_subscriptions(seg))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        }  /* end for j */
-    }  /* end if trigger */
-    
-CLEANUP:
-    if (NULL != tokentags) {
-        free(tokentags);
+        }
+        trig->num_subscriptions += num_subs;
     }
-    
-    if (ORTE_SUCCESS != rc) OBJ_RELEASE(trig);
     
     return rc;
-}
-
-
-int orte_gpr_replica_unsubscribe_fn(orte_gpr_notify_id_t sub_number)
-{
-    orte_gpr_replica_triggers_t *trig;
-
-    if (orte_gpr_replica_globals.debug) {
-	   ompi_output(0, "[%lu,%lu,%lu] gpr replica: unsubscribe entered for sub number %d",
-		    ORTE_NAME_ARGS(orte_process_info.my_name), sub_number);
-    }
-
-    /* release trigger on replica and remove it */
-    trig = (orte_gpr_replica_triggers_t*)((orte_gpr_replica.triggers)->addr[sub_number]);
-    if (NULL == trig) {
-        return ORTE_ERR_BAD_PARAM;
-    }
-    OBJ_RELEASE(trig);
-    
-    orte_pointer_array_set_item(orte_gpr_replica.triggers, sub_number, NULL);
-    return ORTE_SUCCESS;
 }
