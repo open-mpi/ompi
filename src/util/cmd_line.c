@@ -1087,6 +1087,7 @@ static cmd_line_option_t *find_option(ompi_cmd_line_t *cmd,
 static void set_dest(cmd_line_option_t *option, char *sval)
 {
     int ival = atoi(sval);
+    long lval = strtol(sval, NULL, 10);
     char *str;
 
     /* Set MCA param.  We do this in the environment because the MCA
@@ -1103,6 +1104,7 @@ static void set_dest(cmd_line_option_t *option, char *sval)
         switch(option->clo_type) {
         case OMPI_CMD_LINE_TYPE_STRING:
         case OMPI_CMD_LINE_TYPE_INT:
+        case OMPI_CMD_LINE_TYPE_SIZE_T:
             asprintf(&str, "%s=%s", option->clo_mca_param_env_var, sval);
             break;
         case OMPI_CMD_LINE_TYPE_BOOL:
@@ -1125,6 +1127,9 @@ static void set_dest(cmd_line_option_t *option, char *sval)
             break;
         case OMPI_CMD_LINE_TYPE_INT:
             *((int*) option->clo_variable_dest) = ival;
+            break;
+        case OMPI_CMD_LINE_TYPE_SIZE_T:
+            *((size_t*) option->clo_variable_dest) = lval;
             break;
         case OMPI_CMD_LINE_TYPE_BOOL:
             *((bool*) option->clo_variable_dest) = 1;
