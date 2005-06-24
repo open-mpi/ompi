@@ -38,7 +38,7 @@
 
 int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 {
-    size_t i, num_counters=6;
+    size_t i, num_counters=6, num_named_trigs=5;
     int rc;
     orte_gpr_value_t *values, value, trigvalue, *trigvals;
     orte_gpr_trigger_t trig, *trigs;
@@ -49,14 +49,16 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
         ORTE_PROC_NUM_AT_STG2,
         ORTE_PROC_NUM_AT_STG3,
         ORTE_PROC_NUM_FINALIZED,
-        ORTE_PROC_NUM_ABORTED,
-        ORTE_PROC_NUM_TERMINATED
+        ORTE_PROC_NUM_TERMINATED,
+        ORTE_PROC_NUM_ABORTED
     };
     char* trig_names[] = {
         /* changes to this ordering need to be reflected in code below */
         ORTE_STG1_TRIGGER,
         ORTE_STG2_TRIGGER,
-        ORTE_STG3_TRIGGER
+        ORTE_STG3_TRIGGER,
+        ORTE_NUM_FINALIZED_TRIGGER,
+        ORTE_NUM_TERMINATED_TRIGGER
     };
 
     /* setup the counters */
@@ -260,9 +262,10 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
      */
      
      
-    /* do the three stage gate subscriptions.
+    /* do the three stage gate subscriptions, plus the named triggers
+     * that compare their values to the JOB_SLOTS_KEY
      */
-    for (i=0; i < 3; i++) {
+    for (i=0; i < num_named_trigs; i++) {
         /*
          * NOTE: we do NOT name the subscriptions here as these are not
          * standard subscriptions that multiple processes should attach
@@ -398,6 +401,18 @@ void orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_data_t *data,
     bool found_slots=false, found_start=false;
     orte_buffer_t msg;
     orte_jobid_t job;
+    
+    /* check to see if this came from one of the stage gates as opposed
+     * to either terminate or finalize - if the latter, we ignore it
+     */
+    values = data->values;
+    kvals = values[0]->keyvals;
+    for (i=0; i < values[0]->cnt; i++) {
+        if (0 == strcmp(kvals[i]->key, ORTE_PROC_NUM_FINALIZED) ||
+            0 == strcmp(kvals[i]->key, ORTE_PROC_NUM_TERMINATED)) {
+            return;
+        }
+    }
     
     /* get the jobid from the segment name
      * we setup the stage gate triggers to return at least one value
