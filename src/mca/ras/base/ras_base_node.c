@@ -101,15 +101,15 @@ int orte_ras_base_node_query(ompi_list_t* nodes)
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_SLOTS_KEY) == 0) {
-                node->node_slots = keyval->value.ui32;
+                node->node_slots = keyval->value.size;
                 continue;
             }
             if(strncmp(keyval->key, ORTE_NODE_SLOTS_ALLOC_KEY, strlen(ORTE_NODE_SLOTS_ALLOC_KEY)) == 0) {
-                node->node_slots_inuse += keyval->value.ui32;
+                node->node_slots_inuse += keyval->value.size;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_SLOTS_MAX_KEY) == 0) {
-                node->node_slots_max = keyval->value.ui32;
+                node->node_slots_max = keyval->value.size;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
@@ -183,16 +183,16 @@ int orte_ras_base_node_query_alloc(ompi_list_t* nodes, orte_jobid_t jobid)
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_SLOTS_KEY) == 0) {
-                node->node_slots = keyval->value.ui32;
+                node->node_slots = keyval->value.size;
                 continue;
             }
             if(strncmp(keyval->key, ORTE_NODE_SLOTS_ALLOC_KEY, strlen(ORTE_NODE_SLOTS_ALLOC_KEY)) == 0) {
-                node->node_slots_inuse += keyval->value.ui32;
-                node->node_slots_alloc += keyval->value.ui32;
+                node->node_slots_inuse += keyval->value.size;
+                node->node_slots_alloc += keyval->value.size;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_NODE_SLOTS_MAX_KEY) == 0) {
-                node->node_slots_max = keyval->value.ui32;
+                node->node_slots_max = keyval->value.size;
                 continue;
             }
             if(strcmp(keyval->key, ORTE_CELLID_KEY) == 0) {
@@ -302,13 +302,13 @@ int orte_ras_base_node_insert(ompi_list_t* nodes)
         
         ++j;
         (value->keyvals[j])->key = strdup(ORTE_NODE_SLOTS_KEY);
-        (value->keyvals[j])->type = ORTE_UINT32;
-        (value->keyvals[j])->value.ui32 = node->node_slots;
+        (value->keyvals[j])->type = ORTE_SIZE;
+        (value->keyvals[j])->value.size = node->node_slots;
         
         ++j;
         (value->keyvals[j])->key = strdup(ORTE_NODE_SLOTS_MAX_KEY);
-        (value->keyvals[j])->type = ORTE_UINT32;
-        (value->keyvals[j])->value.ui32 = node->node_slots_max;
+        (value->keyvals[j])->type = ORTE_SIZE;
+        (value->keyvals[j])->value.size = node->node_slots_max;
 
         /* setup index/keys for this node */
         rc = orte_schema.get_node_tokens(&value->tokens, &value->num_tokens, node->node_cellid, node->node_name);
@@ -460,8 +460,8 @@ int orte_ras_base_node_assign(ompi_list_t* nodes, orte_jobid_t jobid)
         asprintf(&((values[i]->keyvals[0])->key), "%s-%s", ORTE_NODE_SLOTS_ALLOC_KEY, jobid_str);
         free(jobid_str);
         
-        (values[i]->keyvals[0])->type = ORTE_UINT32; 
-        (values[i]->keyvals[0])->value.ui32 = node->node_slots_alloc;
+        (values[i]->keyvals[0])->type = ORTE_SIZE; 
+        (values[i]->keyvals[0])->value.size = node->node_slots_alloc;
     }
     
     /* try the insert */

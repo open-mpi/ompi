@@ -414,8 +414,8 @@ int orte_init_stage1(void)
                 OBJ_DESTRUCT(&value);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
-            value.keyvals[0]->type = ORTE_UINT32;
-            value.keyvals[0]->value.ui32 = 1;
+            value.keyvals[0]->type = ORTE_SIZE;
+            value.keyvals[0]->value.size = 1;
             /* put the value on the registry */
             if (ORTE_SUCCESS != (ret = orte_gpr.put(1, &values))) {
                 ORTE_ERROR_LOG(ret);
