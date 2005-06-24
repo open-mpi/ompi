@@ -36,6 +36,8 @@
 #include <vapi.h> 
 #include <vapi_common.h> 
 #include "datatype/convertor.h" 
+#include "mca/mpool/vapi/mpool_vapi.h" 
+
 mca_bmi_ib_component_t mca_bmi_ib_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
@@ -126,6 +128,9 @@ int mca_bmi_ib_component_open(void)
         mca_bmi_ib_param_register_int("rr_buf_max", 16); 
     mca_bmi_ib_component.ib_rr_buf_min = 
         mca_bmi_ib_param_register_int("rr_buf_min", 8); 
+    mca_bmi_ib_component.reg_mru_len = 
+        mca_bmi_ib_param_register_int("reg_mru_len",  16); 
+    
     mca_bmi_ib_module.super.bmi_exclusivity =
         mca_bmi_ib_param_register_int ("exclusivity", 0);
     mca_bmi_ib_module.super.bmi_eager_limit = 
@@ -198,6 +203,7 @@ int mca_bmi_ib_component_open(void)
         mca_bmi_ib_param_register_int("flags", 
                                       MCA_BMI_FLAGS_RDMA); 
     
+    
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
     mca_base_param_lookup_int(param, &value); 
     mca_bmi_ib_component.leave_pinned = value; 
@@ -244,7 +250,7 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
     uint32_t num_hcas; 
     mca_bmi_base_module_t** bmis;
     uint32_t i,j, length;
-    mca_mpool_base_resources_t hca_pd; 
+    struct mca_mpool_base_resources_t hca_pd; 
     ompi_list_t bmi_list; 
     mca_bmi_ib_module_t * ib_bmi; 
     mca_bmi_base_selected_module_t* ib_selected; 
@@ -366,7 +372,7 @@ mca_bmi_base_module_t** mca_bmi_ib_component_init(int *num_bmi_modules,
         
 
         OBJ_CONSTRUCT(&ib_bmi->repost, ompi_list_t);
-
+        OBJ_CONSTRUCT(&ib_bmi->reg_mru_list, ompi_list_t); 
         
       
 

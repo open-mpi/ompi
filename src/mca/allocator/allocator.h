@@ -20,8 +20,8 @@
 #ifndef MCA_ALLOCATOR_H
 #define MCA_ALLOCATOR_H
 #include "mca/mca.h"
+#include "mca/mpool/mpool.h" 
 
-struct mca_mpool_base_registration_t;
 struct mca_mpool_base_resources_t;
 
 
@@ -38,7 +38,7 @@ typedef void* (*mca_allocator_base_module_alloc_fn_t)(
     struct mca_allocator_base_module_t*, 
     size_t size, 
     size_t align, 
-    struct mca_mpool_base_registration_t** registration);
+    mca_mpool_base_registration_t** registration);
  
 /**
   * The realloc function typedef
@@ -46,7 +46,7 @@ typedef void* (*mca_allocator_base_module_alloc_fn_t)(
 typedef void* (*mca_allocator_base_module_realloc_fn_t)(
     struct mca_allocator_base_module_t*, 
     void*, size_t, 
-    struct mca_mpool_base_registration_t** registration);
+    mca_mpool_base_registration_t** registration);
 
 /**
   * Free function typedef
@@ -103,7 +103,7 @@ typedef struct mca_allocator_base_module_t mca_allocator_base_module_t;
 typedef void* (*mca_allocator_base_component_segment_alloc_fn_t)(
     struct mca_mpool_base_module_t* module,
     size_t* size, 
-    struct mca_mpool_base_registration_t** registration);
+    mca_mpool_base_registration_t** registration);
 
 /**
   * A function to free memory from the control of the allocator framework 

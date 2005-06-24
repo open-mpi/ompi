@@ -92,7 +92,7 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
         mca_allocator_base_module_t * mem, 
         size_t size, 
         size_t align, 
-        struct mca_mpool_base_registration_t** registration);
+        mca_mpool_base_registration_t** registration);
 
 /**
    * Attempts to resize the passed region of memory into a larger or a smaller
@@ -112,7 +112,7 @@ mca_allocator_base_module_t* mca_allocator_basic_component_init(
         mca_allocator_base_module_t * mem, 
         void * ptr, 
         size_t size, 
-        struct mca_mpool_base_registration_t** registration);
+        mca_mpool_base_registration_t** registration);
 
 /**
    * Frees the passed region of memory

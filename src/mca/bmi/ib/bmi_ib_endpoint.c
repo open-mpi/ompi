@@ -561,15 +561,6 @@ int mca_bmi_ib_endpoint_send(
                 
                 rc = mca_bmi_ib_endpoint_post_send(ib_bmi, endpoint, frag); 
                 
-                
-                
-/*                 rc = mca_bmi_ib_post_send(endpoint->endpoint_bmi, endpoint, */
-/*                                           &frag->ib_buf, (void*) frag); */
-/*                 while(NULL != (item = ompi_list_remove_first(&ib_bmi->repost))) { */
-/*                     mca_bmi_ib_buffer_repost(ib_bmi->nic, item); */
-/*                 } */
-/*                 break; */
-
                 break; 
             }
 

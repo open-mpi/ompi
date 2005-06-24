@@ -19,6 +19,7 @@
 #include "include/constants.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/allocator/bucket/allocator_bucket_alloc.h"
+#include "mca/mpool/mpool.h" 
 
 struct mca_allocator_base_module_t* mca_allocator_bucket_module_init(
     bool enable_mpi_threads,
@@ -34,7 +35,7 @@ int mca_allocator_bucket_module_close(void);
 void * mca_allocator_bucket_alloc_wrapper(
     struct mca_allocator_base_module_t* allocator,
     size_t size, size_t align, 
-    struct mca_mpool_base_registration_t** registration);
+    mca_mpool_base_registration_t** registration);
 
 static int mca_allocator_num_buckets;
 
@@ -91,7 +92,7 @@ void * mca_allocator_bucket_alloc_wrapper(
     struct mca_allocator_base_module_t* allocator,
     size_t size, 
     size_t align, 
-    struct mca_mpool_base_registration_t** registration)
+    mca_mpool_base_registration_t** registration)
 {
     if(0 == align){
         return(mca_allocator_bucket_alloc(allocator, size, registration));

@@ -216,7 +216,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
 void* mca_common_sm_mmap_seg_alloc(
     struct mca_mpool_base_module_t* mpool,
     size_t* size,
-    struct mca_mpool_base_registration_t** registration)
+    mca_mpool_base_registration_t** registration)
 {
     mca_common_sm_mmap_t* map = mca_common_sm_mmap;
     mca_common_sm_file_header_t* seg = map->map_seg;

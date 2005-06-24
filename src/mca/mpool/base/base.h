@@ -69,7 +69,7 @@ struct mca_mpool_base_reg_mpool_t
 {
     mca_mpool_base_module_t * mpool; /**< the registered memory pool */
     void* user_data; /**< user data */
-    struct mca_mpool_base_registration_t* mpool_registration; /**< mpool specific info associated w/ registration */
+    mca_mpool_base_registration_t* mpool_registration; /**< mpool specific info associated w/ registration */
 };
 typedef struct mca_mpool_base_reg_mpool_t mca_mpool_base_reg_mpool_t;
 

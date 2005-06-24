@@ -24,7 +24,9 @@
 #include "mca/pml/base/pml_base_request.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/pml/base/pml_base_bsend.h"
- 
+#include "mca/mpool/mpool.h" 
+
+
 static ompi_mutex_t     mca_pml_bsend_mutex;      /* lock for thread safety */
 static ompi_condition_t mca_pml_bsend_condition;  /* condition variable to block on detach */
 static mca_allocator_base_component_t* mca_pml_bsend_allocator_component;  
@@ -45,7 +47,7 @@ static int32_t          mca_pml_bsend_init = 0;
 static void* mca_pml_bsend_alloc_segment(
     struct mca_mpool_base_module_t* module, 
     size_t* size_inout, 
-    struct mca_mpool_base_registration_t** registration)
+    mca_mpool_base_registration_t** registration)
 {
     void *addr;
     size_t size = *size_inout;

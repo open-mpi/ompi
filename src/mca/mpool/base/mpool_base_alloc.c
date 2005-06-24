@@ -29,6 +29,10 @@ ompi_rb_tree_t mca_mpool_base_tree;
 ompi_free_list_t mca_mpool_base_mem_list;
 ompi_mutex_t mca_mpool_base_tree_lock; 
 
+OBJ_CLASS_INSTANCE(mca_mpool_base_registration_t, 
+                   ompi_list_item_t, 
+                   NULL, 
+                   NULL); 
 
 /**
  * Function for the red black tree to compare 2 keys
@@ -59,9 +63,9 @@ int mca_mpool_base_tree_node_compare(void * key1, void * key2)
 }
 
 int mca_mpool_base_insert(void * addr, size_t size, 
-    mca_mpool_base_module_t* mpool, 
-    void* user_data,
-    struct mca_mpool_base_registration_t* registration)
+                          mca_mpool_base_module_t* mpool, 
+                          void* user_data,
+                          mca_mpool_base_registration_t* registration)
 {
     ompi_list_item_t *item; 
     int rc; 
@@ -143,7 +147,7 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     mca_mpool_base_selected_module_t * no_reg_function = NULL;
     mca_mpool_base_selected_module_t ** has_reg_function = (mca_mpool_base_selected_module_t **) 
                            malloc(num_modules * sizeof(mca_mpool_base_module_t *));
-    struct mca_mpool_base_registration_t * registration;
+    mca_mpool_base_registration_t * registration;
     void * mem = NULL;
     char * key;
     bool match_found;

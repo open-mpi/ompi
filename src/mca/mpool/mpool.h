@@ -21,9 +21,16 @@
 #define MCA_MPOOL_H
 #include "mca/mca.h"
 #include "info/info.h"
+#include "class/ompi_list.h" 
 
 struct mca_mpool_base_resources_t;
-struct mca_mpool_base_registration_t;
+
+struct mca_mpool_base_registration_t{ 
+    ompi_list_item_t super; 
+    struct mca_mpool_base_module_t *mpool; 
+};  
+typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t; 
+OBJ_CLASS_DECLARATION(mca_mpool_base_registration_t); 
 
 /**
  * component initialize
@@ -38,7 +45,7 @@ typedef void* (*mca_mpool_base_module_alloc_fn_t)(
     struct mca_mpool_base_module_t* mpool,
     size_t size,
     size_t align,
-    struct mca_mpool_base_registration_t** registration);
+    mca_mpool_base_registration_t** registration);
                                                                                                                                    
 /**
   * realloc function typedef
@@ -47,7 +54,7 @@ typedef void* (*mca_mpool_base_module_realloc_fn_t)(
     struct mca_mpool_base_module_t* mpool,
     void* addr,
     size_t size,
-    struct mca_mpool_base_registration_t** registration);
+    mca_mpool_base_registration_t** registration);
                                                                                                                                    
 /**
   * free function typedef
@@ -55,7 +62,7 @@ typedef void* (*mca_mpool_base_module_realloc_fn_t)(
 typedef void (*mca_mpool_base_module_free_fn_t)(
     struct mca_mpool_base_module_t* mpool,
     void *addr, 
-    struct mca_mpool_base_registration_t* registration);
+    mca_mpool_base_registration_t* registration);
                                                                                                                                    
 /**
   * register memory
@@ -64,7 +71,7 @@ typedef int (*mca_mpool_base_module_register_fn_t)(
     struct mca_mpool_base_module_t* mpool,
     void * addr,
     size_t size,
-    struct mca_mpool_base_registration_t** registration);
+    mca_mpool_base_registration_t** registration);
     
 /**
   * deregister memory
@@ -73,7 +80,7 @@ typedef int (*mca_mpool_base_module_deregister_fn_t)(
     struct mca_mpool_base_module_t* mpool,
     void * addr,
     size_t size, 
-    struct mca_mpool_base_registration_t* registration);
+    mca_mpool_base_registration_t* registration);
 
 /**
   * if appropriate - returns base address of memory pool
@@ -125,6 +132,7 @@ struct mca_mpool_base_module_t {
  */
 typedef struct mca_mpool_base_module_t mca_mpool_base_module_t;
 
+
 /**
  * Function to allocate special memory according to what the user requests in
  * the info object.
@@ -145,7 +153,7 @@ typedef struct mca_mpool_base_module_t mca_mpool_base_module_t;
  * @retval pointer to the allocated memory
  * @retval NULL on failure
  */
-OMPI_DECLSPEC void * mca_mpool_base_alloc(size_t size, ompi_info_t * info);
+OMPI_DECLSPEC void * mca_mpool_base_alloc(size_t size, struct ompi_info_t * info);
 
 /**
  * Function to free memory previously allocated by mca_mpool_base_alloc
@@ -186,7 +194,7 @@ OMPI_DECLSPEC int mca_mpool_base_insert(
     size_t size, 
     mca_mpool_base_module_t* mpool, 
     void* user_in, 
-    struct mca_mpool_base_registration_t* registration); 
+    mca_mpool_base_registration_t* registration); 
 
 OMPI_DECLSPEC int mca_mpool_base_remove(void * base); 
 

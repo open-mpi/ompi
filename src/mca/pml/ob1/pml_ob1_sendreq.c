@@ -23,6 +23,7 @@
 #include "mca/pml/pml.h"
 #include "mca/bmi/bmi.h"
 #include "mca/errmgr/errmgr.h"
+#include "mca/mpool/mpool.h" 
 #include "pml_ob1.h"
 #include "pml_ob1_hdr.h"
 #include "pml_ob1_proc.h"
@@ -593,7 +594,7 @@ void mca_pml_ob1_send_request_put(
 { 
     mca_pml_ob1_proc_t* proc = sendreq->req_proc;
     mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_find(&proc->bmi_rdma,bmi);
-    struct mca_mpool_base_registration_t* reg = NULL;
+    mca_mpool_base_registration_t* reg = NULL;
     mca_bmi_base_descriptor_t* des;
     mca_pml_ob1_rdma_frag_t* frag;
     size_t offset = hdr->hdr_rdma_offset;

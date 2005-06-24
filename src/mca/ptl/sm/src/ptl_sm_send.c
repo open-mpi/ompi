@@ -71,9 +71,9 @@ void mca_ptl_sm_matched(
     mca_ptl_sm_frag_t *sm_frag_desc;
     struct iovec iov; 
     ompi_convertor_t frag_convertor;
-    ompi_proc_t *proc;
     int  free_after,my_local_smp_rank,peer_local_smp_rank, return_status;
-    unsigned int iov_count, max_data;
+    unsigned int iov_count; 
+    size_t max_data;
     ompi_fifo_t *send_fifo;
 
     /* copy data from shared memory buffer to user buffer */
@@ -106,7 +106,6 @@ void mca_ptl_sm_matched(
         iov_count = 1;
         max_data = iov.iov_len;
         ompi_convertor_unpack( &frag_convertor, &iov, &iov_count, &max_data, &free_after ); 
-        OBJ_DESTRUCT(&frag_convertor);
     }
 
     /* update receive request information */
