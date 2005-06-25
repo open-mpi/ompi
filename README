@@ -88,11 +88,15 @@ mainly in the following areas:
 - Systems that have been tested are:
   - Linux, 32 bit, with gcc
   - Linux, 64 bit, with gcc
-  - OS X (10.3), 32 bit with gcc
-  - OS X (10.4), 64 bit, with gcc
+  - OS X (10.3), 32 bit, with gcc
+  - OS X (10.4), 32 bit, with gcc
 
 - Other systems have been lightly (but not fully tested):
   - Other compilers on Linux, both 32 and 64 bit
+
+- As of 9 June 2005, Open MPI will not function on OS X Tiger (10.4)
+  in 64 bit mode due to an ioctl() bug in OS X.  Apple has been
+  notified of the problem.
 
 - There are some cases where after running MPI applications, the
   directory /tmp/openmpi-sessions-<username>@<hostname>* will exist
@@ -106,9 +110,6 @@ mainly in the following areas:
   sizes within a single parallel application is not supported in this
   beta.
 
-- As of 9 June 2005, Open MPI will not function on OS X Tiger (10.4)
-  in 64 bit mode due to an ioctl() bug in OS X.  Apple has been
-  notified of the problem.
 
 ===========================================================================
 
