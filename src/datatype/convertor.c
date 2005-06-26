@@ -17,6 +17,10 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
+
 #include "datatype/datatype.h"
 #include "datatype/convertor.h"
 #include "datatype/datatype_internal.h"

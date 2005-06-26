@@ -1131,6 +1131,8 @@ AC_WORDS_BIGENDIAN
 
 AC_CHECK_SIZEOF(pid_t)
 
+OMPI_CHECK_BROKEN_QSORT
+
 # all: SYSV semaphores
 # all: SYSV shared memory
 # all: size of FD_SET

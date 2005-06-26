@@ -257,7 +257,7 @@ ompi_progress_register(ompi_progress_callback_t cb)
     /* see if we need to allocate more space */
     if (callbacks_len + 1 > callbacks_size) {
         ompi_progress_callback_t *tmp;
-        tmp = realloc(callbacks, callbacks_size + 4);
+        tmp = realloc(callbacks, sizeof(ompi_progress_callback_t) * (callbacks_size + 4));
         if (tmp == NULL) {
             ret = OMPI_ERR_TEMP_OUT_OF_RESOURCE;
             goto cleanup;
