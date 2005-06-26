@@ -277,6 +277,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
             if(rc != OMPI_SUCCESS) 
                 return NULL; 
         
+            OBJ_RETAIN(vapi_reg); 
             /* ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);  */
             
         }   
@@ -295,6 +296,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         frag->base.des_flags = 0; 
         frag->vapi_reg = vapi_reg; 
         OBJ_RETAIN(vapi_reg); 
+
         return &frag->base;
         
     } else if((mca_bmi_ib_component.leave_pinned || max_data > bmi->bmi_max_send_size) && 
@@ -466,8 +468,10 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
                                        ib_bmi->ib_pool, 
                                        (void*) (&ib_bmi->super), 
                                        (mca_mpool_base_registration_t*) vapi_reg); 
+            if(rc != OMPI_SUCCESS) 
+                return NULL;
             
-            
+            OBJ_RETAIN(vapi_reg); 
         } 
                 
     }  else { 
@@ -484,10 +488,12 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
                                        (mca_mpool_base_registration_t*)  vapi_reg); 
             if(rc != OMPI_SUCCESS) 
                 return NULL;
+            
             OBJ_RETAIN(vapi_reg); 
         }
     }
 
+    
     frag->mem_hndl = vapi_reg->hndl; 
     
     frag->sg_entry.len = *size; 
