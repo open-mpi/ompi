@@ -49,7 +49,8 @@ headers = \
     stacktrace.h \
     daemon_init.h \
     universe_setup_file_io.h \
-    strncpy.h
+    strncpy.h \
+    qsort.h
 
 libompiutil_la_SOURCES = \
     $(headers) \
@@ -76,7 +77,8 @@ libompiutil_la_SOURCES = \
     stacktrace.c \
     daemon_init.c \
     universe_setup_file_io.c \
-    strncpy.c
+    strncpy.c \
+    qsort.c
 
 # Conditionally install the header files
 

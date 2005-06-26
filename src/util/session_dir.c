@@ -68,6 +68,7 @@ static bool orte_is_empty(char *pathname);
 #define OMPI_DEFAULT_TMPDIR "/tmp"
 #endif
 
+#define OMPI_PRINTF_FIX_STRING(a) ((NULL == a) ? "(null)" : a)
 
 static int orte_check_dir(bool create, char *directory)
 {
@@ -313,11 +314,16 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
     }
 
     if (orte_debug_flag) {
-    	ompi_output(0, "procdir: %s", orte_process_info.proc_session_dir);
-    	ompi_output(0, "jobdir: %s", orte_process_info.job_session_dir);
-    	ompi_output(0, "unidir: %s", orte_process_info.universe_session_dir);
-    	ompi_output(0, "top: %s", orte_process_info.top_session_dir);
-    	ompi_output(0, "tmp: %s", orte_process_info.tmpdir_base);
+    	ompi_output(0, "procdir: %s", 
+                    OMPI_PRINTF_FIX_STRING(orte_process_info.proc_session_dir));
+    	ompi_output(0, "jobdir: %s", 
+                    OMPI_PRINTF_FIX_STRING(orte_process_info.job_session_dir));
+    	ompi_output(0, "unidir: %s", 
+                    OMPI_PRINTF_FIX_STRING(orte_process_info.universe_session_dir));
+    	ompi_output(0, "top: %s", 
+                    OMPI_PRINTF_FIX_STRING(orte_process_info.top_session_dir));
+    	ompi_output(0, "tmp: %s", 
+                    OMPI_PRINTF_FIX_STRING(orte_process_info.tmpdir_base));
     }
 
  CLEANUP:
