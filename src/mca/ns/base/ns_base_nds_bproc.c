@@ -229,7 +229,8 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
 
     /* we have to set this environmental variable so bproc will give us our rank
      * after the launch */
-    setenv("BPROC_RANK", "XXXXXXX", 1);
+    
+    putenv("BPROC_RANK=XXXXXXX");
     ompi_setenv("BPROC_RANK", "XXXXXXX", true, env);
     
     return ORTE_SUCCESS;
