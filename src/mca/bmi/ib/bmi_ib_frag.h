@@ -25,6 +25,7 @@
 #include <vapi.h> 
 #include <mtl_common.h> 
 #include <vapi_common.h> 
+#include "mca/mpool/vapi/mpool_vapi.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -61,6 +62,7 @@ struct mca_bmi_ib_frag_t {
     VAPI_mr_hndl_t mem_hndl; 
     VAPI_ret_t ret;
     mca_bmi_ib_header_t *hdr;
+    mca_mpool_vapi_registration_t * vapi_reg; 
 }; 
 typedef struct mca_bmi_ib_frag_t mca_bmi_ib_frag_t; 
 OBJ_CLASS_DECLARATION(mca_bmi_ib_frag_t); 

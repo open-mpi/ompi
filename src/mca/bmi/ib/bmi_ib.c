@@ -184,26 +184,12 @@ int mca_bmi_ib_free(
                     mca_bmi_base_descriptor_t* des) 
 {
     mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*)des; 
-    mca_bmi_ib_module_t * ib_bmi = (mca_bmi_ib_module_t*) bmi; 
 
     if(frag->size == 0) {
         MCA_BMI_IB_FRAG_RETURN_FRAG(bmi, frag); 
-        
-        /* we also need to unregister the associated memory  iff 
-            the memory wasn't allocated via MPI_Alloc_mem */
-
-        if(frag->base.des_flags & MCA_BMI_DES_FLAGS_DEREGISTER){ 
-            frag->ret = VAPI_deregister_mr(
-                                           ib_bmi->nic, 
-                                           frag->mem_hndl
-                                           ); 
-            if(frag->ret!=VAPI_OK){ 
-                ompi_output(0, "%s:error deregistering memory region", __func__); 
-                return OMPI_ERROR; 
-            } 
-        } 
-
-    } else if(frag->size == mca_bmi_ib_component.max_send_size){ 
+        OBJ_RELEASE(frag->vapi_reg); 
+    } 
+    else if(frag->size == mca_bmi_ib_component.max_send_size){ 
         MCA_BMI_IB_FRAG_RETURN_MAX(bmi, frag); 
     } else if(frag->size == mca_bmi_ib_component.eager_limit){ 
         MCA_BMI_IB_FRAG_RETURN_EAGER(bmi, frag); 
@@ -267,18 +253,17 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         size_t reg_len; 
         reg_len = (unsigned char*)vapi_reg->bound - (unsigned char*)iov.iov_base + 1; 
         if(frag->segment.seg_len > reg_len) { 
-            
+            size_t new_len = vapi_reg->bound - vapi_reg->base + 1 
+                + frag->segment.seg_len - reg_len; 
+            void * base_addr = vapi_reg->base; 
+
             mca_mpool_base_remove((void*) vapi_reg->base); 
-            ompi_list_remove_item(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg); 
-            ib_bmi->ib_pool->mpool_deregister(
-                                              ib_bmi->ib_pool, 
-                                              vapi_reg->base, 
-                                              0, 
-                                              (mca_mpool_base_registration_t*) vapi_reg); 
+            /* ompi_list_remove_item(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg); */
+            OBJ_RELEASE(vapi_reg); 
             
             ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool, 
-                                            vapi_reg->base, 
-                                            vapi_reg->bound - vapi_reg->base + 1 + frag->segment.seg_len - reg_len, 
+                                            base_addr, 
+                                            new_len, 
                                             (mca_mpool_base_registration_t**) &vapi_reg);
                 
             rc = mca_mpool_base_insert(iov.iov_base, 
@@ -287,10 +272,12 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
                                        (void*) (&ib_bmi->super), 
                                        (mca_mpool_base_registration_t*) vapi_reg); 
             
+            
+
             if(rc != OMPI_SUCCESS) 
                 return NULL; 
         
-            ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg); 
+            /* ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);  */
             
         }   
         
@@ -306,7 +293,8 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->base.des_flags = 0; 
-
+        frag->vapi_reg = vapi_reg; 
+        OBJ_RETAIN(vapi_reg); 
         return &frag->base;
         
     } else if((mca_bmi_ib_component.leave_pinned || max_data > bmi->bmi_max_send_size) && 
@@ -342,9 +330,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
                                        (mca_mpool_base_registration_t*) vapi_reg); 
             if(rc != OMPI_SUCCESS) 
                 return NULL; 
-            
-        } else { 
-            frag->base.des_flags |= MCA_BMI_DES_FLAGS_DEREGISTER; 
+            OBJ_RETAIN(vapi_reg); 
         } 
         frag->mem_hndl = vapi_reg->hndl; 
         frag->sg_entry.len = max_data; 
@@ -357,8 +343,10 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         frag->base.des_src_cnt = 1;
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
-
+        frag->vapi_reg = vapi_reg; 
+        OBJ_RETAIN(vapi_reg); 
         return &frag->base;
+
     } else if (max_data+reserve <=  bmi->bmi_eager_limit) { 
            
         MCA_BMI_IB_FRAG_ALLOC_EAGER(bmi, frag, rc); 
@@ -460,17 +448,16 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     if(NULL!= vapi_reg){ 
         reg_len = (unsigned char*)vapi_reg->bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
         if(frag->segment.seg_len > reg_len) { 
-            ib_bmi->ib_pool->mpool_deregister(
-                                              ib_bmi->ib_pool, 
-                                              vapi_reg->base, 
-                                              0, 
-                                              (mca_mpool_base_registration_t*) vapi_reg); 
-            
+            size_t new_len = vapi_reg->bound - vapi_reg->base + 1 
+                + frag->segment.seg_len - reg_len; 
+            void * base_addr = vapi_reg->base; 
+
             mca_mpool_base_remove((void*) vapi_reg->base); 
+            OBJ_RELEASE(vapi_reg); 
             
             ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool, 
-                                            vapi_reg->base, 
-                                            vapi_reg->bound - vapi_reg->base + 1 + frag->segment.seg_len - reg_len, 
+                                            base_addr, 
+                                            new_len,
                                             (mca_mpool_base_registration_t**) &vapi_reg);
             
         
@@ -479,6 +466,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
                                        ib_bmi->ib_pool, 
                                        (void*) (&ib_bmi->super), 
                                        (mca_mpool_base_registration_t*) vapi_reg); 
+            
             
         } 
                 
@@ -495,10 +483,8 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
                                        (void*) (&ib_bmi->super), 
                                        (mca_mpool_base_registration_t*)  vapi_reg); 
             if(rc != OMPI_SUCCESS) 
-                return NULL; 
-        }
-        else { 
-            frag->base.des_flags |= MCA_BMI_DES_FLAGS_DEREGISTER; 
+                return NULL;
+            OBJ_RETAIN(vapi_reg); 
         }
     }
 
@@ -514,7 +500,8 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     frag->base.des_dst_cnt = 1; 
     frag->base.des_src = NULL; 
     frag->base.des_src_cnt = 0; 
-    
+    frag->vapi_reg = vapi_reg; 
+    OBJ_RETAIN(vapi_reg); 
     return &frag->base; 
     
 }

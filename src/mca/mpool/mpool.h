@@ -23,6 +23,7 @@
 #include "info/info.h"
 #include "class/ompi_list.h" 
 
+
 struct mca_mpool_base_resources_t;
 
 struct mca_mpool_base_registration_t{ 
@@ -30,7 +31,8 @@ struct mca_mpool_base_registration_t{
     struct mca_mpool_base_module_t *mpool; 
 };  
 typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t; 
-OBJ_CLASS_DECLARATION(mca_mpool_base_registration_t); 
+
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_base_registration_t); 
 
 /**
  * component initialize
