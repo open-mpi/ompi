@@ -29,10 +29,10 @@ ompi_rb_tree_t mca_mpool_base_tree;
 ompi_free_list_t mca_mpool_base_mem_list;
 ompi_mutex_t mca_mpool_base_tree_lock; 
 
-OBJ_CLASS_INSTANCE(mca_mpool_base_registration_t, 
-                   ompi_list_item_t, 
-                   NULL, 
-                   NULL); 
+OBJ_CLASS_INSTANCE(mca_mpool_base_registration_t,
+                   ompi_list_item_t,
+                   NULL,
+                   NULL);
 
 /**
  * Function for the red black tree to compare 2 keys

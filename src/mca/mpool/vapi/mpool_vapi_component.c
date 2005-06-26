@@ -65,7 +65,7 @@ mca_mpool_vapi_component_t mca_mpool_vapi_component = {
 
 static void mca_mpool_vapi_registration_constructor( mca_mpool_vapi_registration_t * registration ) 
 { 
-    memset(registration, 0, sizeof(mca_mpool_base_registration_t)); 
+    
 }
 
 static void mca_mpool_vapi_registration_destructor( mca_mpool_vapi_registration_t * registration ) 

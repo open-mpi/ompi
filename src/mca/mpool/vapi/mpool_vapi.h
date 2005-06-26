@@ -86,7 +86,7 @@ struct mca_mpool_vapi_registration_t {
 
 };
 typedef struct mca_mpool_vapi_registration_t mca_mpool_vapi_registration_t;
-OBJ_CLASS_DECLARATION(mca_mpool_vapi_registration_t); 
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_vapi_registration_t); 
 
 
 
