@@ -17,6 +17,10 @@
 #ifndef OMPI_QSORT_H
 #define OMPI_QSORT_H
 
+#ifdef HAV_SYS_TYPES_H
+#include <sys/types.h> /* for size_t */
+#endif
+
 void ompi_qsort(void *a, size_t n, size_t es, int (*cmp)(const void *, const void*));
 
 #endif

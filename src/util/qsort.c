@@ -32,9 +32,10 @@
  */
 
 #include "ompi_config.h"
-#include "util/qsort.h"
 
 #include <stdlib.h>
+
+#include "util/qsort.h"
 
 typedef int		 cmp_t(const void *, const void *);
 static inline char	*med3(char *, char *, char *, cmp_t *, void *);
