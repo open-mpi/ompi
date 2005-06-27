@@ -14,6 +14,66 @@
  * $HEADER$
  */
 
+/**
+ * @file
+ *
+ * Setup the predefined attributes in MPI.
+ *
+ * A number of pre-defined attributes are created here, most of which
+ * are exactly what one would expect, but there are a few exceptions
+ * -- so they're documented here.
+ *
+ * Predefined attributes are integer-valued or address-valued (per
+ * MPI-2; see section 4.12.7, keeping in mind that Example 4.13 is
+ * totally wrong -- see src/attribute/attribute.h for a lengthy
+ * explanation of this).  
+ *
+ * The only address-valued attribute is MPI_WIN_BASE.  We treat it as
+ * if it were set from C.  All other attributes are integer-valued.
+ * We treat them as if they were set from Fortran MPI-1 (i.e.,
+ * MPI_ATTR_PUT) or Fortran MPI-2 (i.e., MPI_xxx_ATTR_SET).  Most
+ * attributes are MPI-1 integer-valued, meaning that they are the size
+ * of MPI_Fint (INTEGER).  But MPI_WIN_SIZE and MPI_WIN_DISP_UNIT are
+ * MPI-2 integer-valued, meaning that they are the size of MPI_Aint
+ * (INTEGER(KIND=MPI_ADDRESS_KIND)).
+ *
+ * MPI_TAG_UB is set to a fixed upper limit.
+ *
+ * MPI_HOST is set to MPI_PROC_NULL (per MPI-1, see 7.1.1, p192).
+ *
+ * MPI_IO is set to 1 because OMPI provides IO forwarding.
+ *
+ * MPI_WTIME_IS_GLOBAL is set to 0 (a conservative answer).
+ *
+ * MPI_APPNUM is set as the result of a GPR subscription.
+ *
+ * MPI_LASTUSEDCODE is set to an initial value and is reset every time
+ * MPI_ADD_ERROR_CLASS is invoked.  Its copy function is set to
+ * MPI_COMM_NULL_COPY_FN, meaning that *only* MPI_COMM_WORLD will have
+ * this attribute value.  As such, we only have to update
+ * MPI_COMM_WORLD when this value changes (i.e., since this is an
+ * integer-valued attribute, we have to update this attribute on every
+ * communicator -- using NULL_COPY_FN ensures that only MPI_COMM_WORLD
+ * has this attribute value set).
+ *
+ * MPI_UNIVERSE_SIZE is set as the result of a GPR subscription.
+ *
+ * MPI_WIN_BASE is an address-valued attribute, and is set directly
+ * from MPI_WIN_CREATE.  MPI_WIN_SIZE and MPI_WIN_DISP_UNIT are both
+ * integer-valued attributes, *BUT* at least the MPI_WIN_SIZE is an
+ * MPI_Aint, so in terms of consistency, both should be the same --
+ * hence, we treat them as MPI-2 Fortran integer-valued attributes.
+ * All three of these atrributes have NULL_COPY_FN copy functions; it
+ * doesn't make sense to copy them to new windows (because they're
+ * values specific and unique to each window) -- especially when
+ * WIN_CREATE will explicitly set them on new windows anyway.
+ *
+ * These are not supported yet, but are included here for consistency:
+ *
+ * MPI_IMPI_CLIENT_SIZE, MPI_IMPI_CLIENT_COLOR, MPI_IMPI_HOST_SIZE,
+ * and MPI_IMPI_HOST_COLOR are integer-valued attributes.
+ */
+
 #include "ompi_config.h"
 
 #include "mpi.h"
@@ -23,6 +83,7 @@
 #include "errhandler/errclass.h"
 #include "communicator/communicator.h"
 #include "util/proc_info.h"
+#include "util/sys_info.h"
 #include "mca/ns/ns.h"
 #include "mca/gpr/gpr.h"
 #include "mca/errmgr/errmgr.h"
@@ -32,46 +93,80 @@
 /*
  * Private functions
  */
-static int set(int keyval, void *value);
-
-
-/*
- * Back-end for attribute values
- */
-static int attr_tag_ub = MPI_TAG_UB_VALUE;
-static char *attr_host = NULL;
-static int attr_io = 1;
-static int attr_wtime_is_global = 0;
-
-/* Filled in at run-time, below */
-static int attr_appnum = -1;
-/* Filled in at run-time, below */
-static int attr_universe_size = -1;
-
-#if 0
+static int create_comm(int target_keyval, bool want_inherit);
+#if OMPI_WANT_MPI2_ONE_SIDED
 /* JMS for when we implement windows */
-static int attr_win_base = 0;
-static int attr_win_size = 0;
-static int attr_win_disp_unit = 0;
+static int create_win(int target_keyval);
 #endif
-
-#if 0
-/* JMS for when we implement IMPI */
-static int attr_impi_client_size = 0;
-static int attr_impi_client_color = 0;
-static int attr_impi_host_size = 0;
-static int attr_impi_host_color = 0;
-#endif
+static int set_f(int keyval, MPI_Fint value);
 
 
 int ompi_attr_create_predefined(void)
 {
-    int rc;
+    int rc, ret;
     orte_gpr_trigger_t trig, *trig1;
     orte_gpr_value_t value, *values;
     orte_gpr_subscription_t sub, *sub1;
     orte_jobid_t job;
     
+    /* Create all the keyvals */
+
+    /* DO NOT CHANGE THE ORDER OF CREATING THESE KEYVALS!  This order
+       strictly adheres to the order in mpi.h.  If you change the
+       order here, you must change the order in mpi.h as well! */
+    
+    if (OMPI_SUCCESS != (ret = create_comm(MPI_TAG_UB, true)) ||
+        OMPI_SUCCESS != (ret = create_comm(MPI_HOST, true)) ||
+        OMPI_SUCCESS != (ret = create_comm(MPI_IO, true)) ||
+        OMPI_SUCCESS != (ret = create_comm(MPI_WTIME_IS_GLOBAL, true)) ||
+        OMPI_SUCCESS != (ret = create_comm(MPI_APPNUM, true)) ||
+        OMPI_SUCCESS != (ret = create_comm(MPI_LASTUSEDCODE, false)) ||
+        OMPI_SUCCESS != (ret = create_comm(MPI_UNIVERSE_SIZE, true)) ||
+#if OMPI_WANT_MPI2_ONE_SIDED
+        /* JMS for when we implement windows */
+        OMPI_SUCCESS != (ret = create_win(MPI_WIN_BASE)) ||
+        OMPI_SUCCESS != (ret = create_win(MPI_WIN_SIZE)) ||
+        OMPI_SUCCESS != (ret = create_win(MPI_WIN_DISP_UNIT)) ||
+#endif
+#if 0
+        /* JMS For when we implement IMPI */
+        OMPI_SUCCESS != (ret = create_comm(MPI_IMPI_CLIENT_SIZE, true)) ||
+        OMPI_SUCCESS != (ret = create_comm(MPI_IMPI_CLIENT_COLOR, true)) ||
+        OMPI_SUCCESS != (ret = create_comm(MPI_IMPI_HOST_SIZE, true)) ||
+        OMPI_SUCCESS != (ret = create_comm(MPI_IMPI_HOST_COLOR, true)) ||
+#endif
+        0) {
+        return ret;
+    }
+
+    /* Set default values for everything except UNIVERSE_SIZE and
+       APPNUM. */
+
+    if (OMPI_SUCCESS != (ret = set_f(MPI_TAG_UB, MPI_TAG_UB_VALUE)) ||
+        OMPI_SUCCESS != (ret = set_f(MPI_HOST, MPI_PROC_NULL)) ||
+        OMPI_SUCCESS != (ret = set_f(MPI_IO, 1)) ||
+        OMPI_SUCCESS != (ret = set_f(MPI_WTIME_IS_GLOBAL, 0)) ||
+        OMPI_SUCCESS != (ret = set_f(MPI_LASTUSEDCODE, 
+                                     ompi_errclass_lastused)) ||
+#if 0
+        /* JMS For when we implement IMPI */
+        OMPI_SUCCESS != (ret = set(MPI_IMPI_CLIENT_SIZE,
+                                   &attr_impi_client_size)) ||
+        OMPI_SUCCESS != (ret = set(MPI_IMPI_CLIENT_COLOR, 
+                                   &attr_impi_client_color)) ||
+        OMPI_SUCCESS != (ret = set(MPI_IMPI_HOST_SIZE,
+                                   &attr_impi_host_size)) ||
+        OMPI_SUCCESS != (ret = set(MPI_IMPI_HOST_COLOR, 
+                                   &attr_impi_host_color)) ||
+#endif
+        0) {
+        return ret;
+    }
+
+    /* Now that those are all created, setup the trigger to get the
+       UNIVERSE_SIZE and APPNUM values once everyone has passed
+       stg1. */
+
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&job, orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -177,11 +272,11 @@ void ompi_attr_create_predefined_callback(
     orte_gpr_notify_data_t *data,
     void *cbdata)
 {
-    int err;
     size_t i, j;
     orte_gpr_keyval_t **keyval;
     orte_gpr_value_t **value;
     orte_jobid_t job;
+    unsigned int universe_size = 0;
 
     /* Set some default values */
 
@@ -189,11 +284,13 @@ void ompi_attr_create_predefined_callback(
         return;
     }
 
-    /* Per conversation between Jeff, Edgar, and Ralph - this needs
-     * to be fixed to properly determine the appnum
+    /* Per conversation between Jeff, Edgar, and Ralph - this needs to
+     * be fixed to properly determine the appnum.  Ignore errors here;
+     * there's no way to propagate the error up, so just try to keep
+     * going.
      */
-    attr_appnum = (int)job;
-    
+    set_f(MPI_APPNUM, (MPI_Fint) job);
+
     /* Query the gpr to find out how many CPUs there will be.
        This will only return a non-empty list in a persistent
        universe.  If we don't have a persistent universe, then just
@@ -215,9 +312,8 @@ void ompi_attr_create_predefined_callback(
      * happens in-between anyway, so this shouldn't cause a problem.
      */
 
-    attr_universe_size = 0;
     if (0 == data->cnt) {  /* no data returned */
-        attr_universe_size = ompi_comm_size(MPI_COMM_WORLD);
+        universe_size = ompi_comm_size(MPI_COMM_WORLD);
     } else {
         value = data->values;
         for (i=0; i < data->cnt; i++) {
@@ -229,54 +325,22 @@ void ompi_attr_create_predefined_callback(
                      */
                     if (ORTE_SIZE == keyval[j]->type) {
                         /* Process slot count */
-                        attr_universe_size += keyval[j]->value.size;
+                        universe_size += keyval[j]->value.size;
                     }
                 }
             }
         }
     }
 
-    /* DO NOT CHANGE THE ORDER OF CREATING THESE KEYVALS!  This order
-       strictly adheres to the order in mpi.h.  If you change the
-       order here, you must change the order in mpi.h as well! */
+    /* Same as above -- ignore errors here because there's nothing we
+       can do if there's any error anyway */
 
-    if (OMPI_SUCCESS != (err = set(MPI_TAG_UB, &attr_tag_ub)) ||
-        OMPI_SUCCESS != (err = set(MPI_HOST, &attr_host)) ||
-        OMPI_SUCCESS != (err = set(MPI_IO, &attr_io)) ||
-        OMPI_SUCCESS != (err = set(MPI_WTIME_IS_GLOBAL,
-                                   &attr_wtime_is_global)) ||
-        OMPI_SUCCESS != (err = set(MPI_APPNUM, &attr_appnum)) ||
-        OMPI_SUCCESS != (err = set(MPI_LASTUSEDCODE,
-                                   &ompi_errclass_lastused)) ||
-        OMPI_SUCCESS != (err = set(MPI_UNIVERSE_SIZE, &attr_universe_size)) ||
-#if 0
-        /* JMS for when we implement windows */
-        /* JMS BE SURE TO READ ALL OF MPI-2 4.12.7 BEFORE IMPLEMENTING
-           THESE ADDRESS-VALUED ATTRIBUTES! */
-        OMPI_SUCCESS != (err = set(MPI_WIN_BASE, &attr_win_base)) ||
-        OMPI_SUCCESS != (err = set(MPI_WIN_SIZE, &attr_win_size)) ||
-        OMPI_SUCCESS != (err = set(MPI_WIN_DISP_UNIT, &attr_win_disp_unit)) ||
-#endif
-#if 0
-        /* JMS For when we implement IMPI */
-        OMPI_SUCCESS != (err = set(MPI_IMPI_CLIENT_SIZE,
-                                   &attr_impi_client_size)) ||
-        OMPI_SUCCESS != (err = set(MPI_IMPI_CLIENT_COLOR, 
-                                   &attr_impi_client_color)) ||
-        OMPI_SUCCESS != (err = set(MPI_IMPI_HOST_SIZE,
-                                   &attr_impi_host_size)) ||
-        OMPI_SUCCESS != (err = set(MPI_IMPI_HOST_COLOR, 
-                                   &attr_impi_host_color)) ||
-#endif
-        0) {
-        return;
-    }
-
+    set_f(MPI_UNIVERSE_SIZE, universe_size);
     return;
 }
 
 
-static int set(int target_keyval, void *value)
+static int create_comm(int target_keyval, bool want_inherit)
 {
     int err;
     int keyval;
@@ -284,18 +348,50 @@ static int set(int target_keyval, void *value)
     ompi_attribute_fn_ptr_union_t del;
 
     keyval = -1;
-    copy.attr_communicator_copy_fn = MPI_COMM_DUP_FN;
+    copy.attr_communicator_copy_fn = 
+        want_inherit ? MPI_COMM_DUP_FN : MPI_COMM_NULL_COPY_FN;
     del.attr_communicator_delete_fn = MPI_COMM_NULL_DELETE_FN;
     err = ompi_attr_create_keyval(COMM_ATTR, copy, del,
                                   &keyval, NULL, OMPI_KEYVAL_PREDEFINED);
-    if (keyval != target_keyval || OMPI_SUCCESS != err) {
+    if (MPI_SUCCESS != err) {
         return err;
     }
-    err = ompi_attr_set(COMM_ATTR, MPI_COMM_WORLD,
-                        &MPI_COMM_WORLD->c_keyhash, keyval, value, true, true);
-    if (OMPI_SUCCESS != err) {
-        return err;
+    if (target_keyval != keyval) {
+        return OMPI_ERR_BAD_PARAM;
     }
-
     return OMPI_SUCCESS;
+}
+
+
+#if OMPI_WANT_MPI2_ONE_SIDED
+/* JMS for when we implement windows */
+static int create_win(int target_keyval)
+{
+    int err;
+    int keyval;
+    ompi_attribute_fn_ptr_union_t copy;
+    ompi_attribute_fn_ptr_union_t del;
+
+    keyval = -1;
+    copy.attr_win_copy_fn = MPI_WIN_NULL_COPY_FN;
+    del.attr_win_delete_fn = MPI_WIN_NULL_DELETE_FN;
+    err = ompi_attr_create_keyval(WIN_ATTR, copy, del,
+                                  &keyval, NULL, OMPI_KEYVAL_PREDEFINED);
+    if (MPI_SUCCESS != err) {
+        return err;
+    }
+    if (target_keyval != keyval) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+    return OMPI_SUCCESS;
+}
+#endif
+
+
+static int set_f(int keyval, MPI_Fint value)
+{
+    return ompi_attr_set_fortran_mpi1(COMM_ATTR, MPI_COMM_WORLD,
+                                      &MPI_COMM_WORLD->c_keyhash, 
+                                      keyval, value, 
+                                      true, true);
 }

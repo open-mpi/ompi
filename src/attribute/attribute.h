@@ -35,16 +35,19 @@
 
 #define ATTR_HASH_SIZE 10
 
-/* Flags for attribute will contain these */
 
-#define OMPI_KEYVAL_PREDEFINED 1
-#define OMPI_KEYVAL_F77 2
-#define OMPI_KEYVAL_F77_OLD 4
+/* 
+ * Flags for keyvals 
+ */
+#define OMPI_KEYVAL_PREDEFINED     0x0001
+#define OMPI_KEYVAL_F77            0x0002
+#define OMPI_KEYVAL_F77_MPI1       0x0004
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-enum ompi_attribute_type_t{
+enum ompi_attribute_type_t {
     COMM_ATTR = 1, /**< The attribute belongs to a comm object. Starts
 		      with 1 so that we can have it initialized to 0
 		      using memset in the constructor */
@@ -239,7 +242,8 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
                           bool predefined);
 
 /**
- * Set an attribute on the comm/win/datatype
+ * Set an attribute on the comm/win/datatype in a form valid for C.
+ *
  * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
  * @param object         The actual Comm/Win/Datatype object (IN)
  * @param keyhash        The attribute hash table hanging on the object(IN/OUT)
@@ -257,14 +261,101 @@ int ompi_attr_free_keyval(ompi_attribute_type_t type, int *key,
  * function is invoked internally (i.e., when we already hold the
  * relevant locks, and we don't want to try to lock them again,
  * recursively).
+ *
+ * All three of these functions (ompi_attr_set_c(),
+ * ompi_attr_set_fortran_mpi1(), and ompi_attr_set_fortran_mpi2())
+ * could have been combined into one function that took some kind of
+ * (void*) and an enum to indicate which way to translate the final
+ * representation, but that just seemed to make an already complicated
+ * situation more complicated through yet another layer of
+ * indirection.  
+ *
+ * So yes, this is more code, but it's clearer and less error-prone
+ * (read: better) this way.
  */
-
-int ompi_attr_set(ompi_attribute_type_t type, void *object, 
-                  ompi_hash_table_t **keyhash,
-                  int key, void *attribute, bool predefined, bool need_lock);
+int ompi_attr_set_c(ompi_attribute_type_t type, void *object, 
+                    ompi_hash_table_t **keyhash,
+                    int key, void *attribute, bool predefined, bool need_lock);
 
 /**
- * Get an attribute on the comm/win/datatype
+ * Set an attribute on the comm/win/datatype in a form valid for
+ * Fortran MPI-1.
+ *
+ * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
+ * @param object         The actual Comm/Win/Datatype object (IN)
+ * @param keyhash        The attribute hash table hanging on the object(IN/OUT)
+ * @param key            Key val for the attribute (IN)
+ * @param attribute      The actual attribute pointer (IN)
+ * @param predefined     Whether the key is predefined or not 0/1 (IN)
+ * @param need_lock      Whether we need to need to lock the keyval_lock or not
+ * @return OMPI error code
+ *
+ * If (*keyhash) == NULL, a new keyhash will be created and
+ * initialized.
+ *
+ * Note that need_lock should *always* be true when this function is
+ * invoked from an top-level MPI function.  It is only false when this
+ * function is invoked internally (i.e., when we already hold the
+ * relevant locks, and we don't want to try to lock them again,
+ * recursively).
+ *
+ * All three of these functions (ompi_attr_set_c(),
+ * ompi_attr_set_fortran_mpi1(), and ompi_attr_set_fortran_mpi2())
+ * could have been combined into one function that took some kind of
+ * (void*) and an enum to indicate which way to translate the final
+ * representation, but that just seemed to make an already complicated
+ * situation more complicated through yet another layer of
+ * indirection.  
+ *
+ * So yes, this is more code, but it's clearer and less error-prone
+ * (read: better) this way.
+ */
+int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object, 
+                               ompi_hash_table_t **keyhash,
+                               int key, MPI_Fint attribute, 
+                               bool predefined, bool need_lock);
+
+/**
+ * Set an attribute on the comm/win/datatype in a form valid for
+ * Fortran MPI-2.
+ *
+ * @param type           Type of attribute (COMM/WIN/DTYPE) (IN)
+ * @param object         The actual Comm/Win/Datatype object (IN)
+ * @param keyhash        The attribute hash table hanging on the object(IN/OUT)
+ * @param key            Key val for the attribute (IN)
+ * @param attribute      The actual attribute pointer (IN)
+ * @param predefined     Whether the key is predefined or not 0/1 (IN)
+ * @param need_lock      Whether we need to need to lock the keyval_lock or not
+ * @return OMPI error code
+ *
+ * If (*keyhash) == NULL, a new keyhash will be created and
+ * initialized.
+ *
+ * Note that need_lock should *always* be true when this function is
+ * invoked from an top-level MPI function.  It is only false when this
+ * function is invoked internally (i.e., when we already hold the
+ * relevant locks, and we don't want to try to lock them again,
+ * recursively).
+ *
+ * All three of these functions (ompi_attr_set_c(),
+ * ompi_attr_set_fortran_mpi1(), and ompi_attr_set_fortran_mpi2())
+ * could have been combined into one function that took some kind of
+ * (void*) and an enum to indicate which way to translate the final
+ * representation, but that just seemed to make an already complicated
+ * situation more complicated through yet another layer of
+ * indirection.  
+ *
+ * So yes, this is more code, but it's clearer and less error-prone
+ * (read: better) this way.
+ */
+int ompi_attr_set_fortran_mpi2(ompi_attribute_type_t type, void *object, 
+                               ompi_hash_table_t **keyhash,
+                               int key, MPI_Aint attribute, 
+                               bool predefined, bool need_lock);
+
+/**
+ * Get an attribute on the comm/win/datatype in a form valid for C.
+ *
  * @param keyhash        The attribute hash table hanging on the object(IN)
  * @param key            Key val for the attribute (IN)
  * @param attribute      The actual attribute pointer (OUT)
@@ -272,10 +363,74 @@ int ompi_attr_set(ompi_attribute_type_t type, void *object,
  *                       with the key (OUT)
  * @return OMPI error code
  *
+ * All three of these functions (ompi_attr_get_c(),
+ * ompi_attr_get_fortran_mpi1(), and ompi_attr_get_fortran_mpi2())
+ * could have been combined into one function that took some kind of
+ * (void*) and an enum to indicate which way to translate the final
+ * representation, but that just seemed to make an already complicated
+ * situation more complicated through yet another layer of
+ * indirection.  
+ *
+ * So yes, this is more code, but it's clearer and less error-prone
+ * (read: better) this way.
  */
 
-int ompi_attr_get(ompi_hash_table_t *keyhash, int key, 
-		 void *attribute, int *flag);
+int ompi_attr_get_c(ompi_hash_table_t *keyhash, int key, 
+                    void **attribute, int *flag);
+
+
+/**
+ * Get an attribute on the comm/win/datatype in a form valid for
+ * Fortran MPI-1.
+ *
+ * @param keyhash        The attribute hash table hanging on the object(IN)
+ * @param key            Key val for the attribute (IN)
+ * @param attribute      The actual attribute pointer (OUT)
+ * @param flag           Flag whether an attribute is associated 
+ *                       with the key (OUT)
+ * @return OMPI error code
+ *
+ * All three of these functions (ompi_attr_get_c(),
+ * ompi_attr_get_fortran_mpi1(), and ompi_attr_get_fortran_mpi2())
+ * could have been combined into one function that took some kind of
+ * (void*) and an enum to indicate which way to translate the final
+ * representation, but that just seemed to make an already complicated
+ * situation more complicated through yet another layer of
+ * indirection.  
+ *
+ * So yes, this is more code, but it's clearer and less error-prone
+ * (read: better) this way.
+ */
+
+int ompi_attr_get_fortran_mpi1(ompi_hash_table_t *keyhash, int key, 
+                               MPI_Fint *attribute, int *flag);
+
+
+/**
+ * Get an attribute on the comm/win/datatype in a form valid for
+ * Fortran MPI-2.
+ *
+ * @param keyhash        The attribute hash table hanging on the object(IN)
+ * @param key            Key val for the attribute (IN)
+ * @param attribute      The actual attribute pointer (OUT)
+ * @param flag           Flag whether an attribute is associated 
+ *                       with the key (OUT)
+ * @return OMPI error code
+ *
+ * All three of these functions (ompi_attr_get_c(),
+ * ompi_attr_get_fortran_mpi1(), and ompi_attr_get_fortran_mpi2())
+ * could have been combined into one function that took some kind of
+ * (void*) and an enum to indicate which way to translate the final
+ * representation, but that just seemed to make an already complicated
+ * situation more complicated through yet another layer of
+ * indirection.  
+ *
+ * So yes, this is more code, but it's clearer and less error-prone
+ * (read: better) this way.
+ */
+
+int ompi_attr_get_fortran_mpi2(ompi_hash_table_t *keyhash, int key, 
+                               MPI_Aint *attribute, int *flag);
 
 
 /**

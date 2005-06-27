@@ -44,8 +44,11 @@ int MPI_Comm_get_attr(MPI_Comm comm, int comm_keyval,
 	}
     }
 
-    ret = ompi_attr_get(comm->c_keyhash, comm_keyval, 
-                        attribute_val, flag);
+    /* This stuff is very confusing.  Be sure to see
+       src/attribute/attribute.c for a lengthy comment explaining Open
+       MPI attribute behavior. */
 
+    ret = ompi_attr_get_c(comm->c_keyhash, comm_keyval, 
+                          attribute_val, flag);
     OMPI_ERRHANDLER_RETURN(ret, comm, MPI_ERR_OTHER, FUNC_NAME);  
 }

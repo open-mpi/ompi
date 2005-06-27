@@ -17,6 +17,8 @@
 #include "ompi_config.h"
 
 #include "mpi/f77/bindings.h"
+#include "attribute/attribute.h"
+#include "datatype/datatype.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_TYPE_SET_ATTR = mpi_type_set_attr_f
@@ -55,17 +57,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_SET_ATTR,
 #include "mpi/f77/profile/defines.h"
 #endif
 
-void mpi_type_set_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attr_val, MPI_Fint *ierr)
+void mpi_type_set_attr_f(MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr)
 {
-    MPI_Datatype c_type = MPI_Type_f2c( *type );
+    int c_err;
+    MPI_Datatype c_type = MPI_Type_f2c(*type);
 
-    /* We save fortran attributes by value, so dereference
-       attribute_val.  MPI-2 guarantees that xxx_SET_ATTR will be
-       called in fortran with an address-sized integer parameter for
-       the attribute, so there's no need to do any size conversions
-       before calling the back-end C function. */
+    /* This stuff is very confusing.  Be sure to see the comment at
+       the top of src/attributes/attributes.c. */
 
-    *ierr = OMPI_INT_2_FINT(MPI_Type_set_attr( c_type, 
-					       OMPI_FINT_2_INT(*type_keyval),
-					       (void*) *attr_val ));
+    c_err = ompi_attr_set_fortran_mpi2(TYPE_ATTR,
+                                       c_type,
+                                       &c_type->d_keyhash,
+                                       OMPI_FINT_2_INT(*type_keyval), 
+                                       *attribute_val,
+                                       false, true);
+    *ierr = OMPI_INT_2_FINT(c_err);
 }

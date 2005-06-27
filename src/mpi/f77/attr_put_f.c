@@ -17,6 +17,8 @@
 #include "ompi_config.h"
 
 #include "mpi/f77/bindings.h"
+#include "attribute/attribute.h"
+#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_ATTR_PUT = mpi_attr_put_f
@@ -58,32 +60,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ATTR_PUT,
 void mpi_attr_put_f(MPI_Fint *comm, MPI_Fint *keyval, MPI_Fint *attribute_val, 
 		    MPI_Fint *ierr)
 {
-    MPI_Comm c_comm;
-    ompi_attribute_fortran_ptr_t convert;
+    int c_err;
+    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    /* This stuff is very confusing.  Be sure to see the comment at
+       the top of src/attributes/attributes.c. */
 
-    /* This stuff is very confusing.  Be sure to see MPI-2 4.12.7. */
-
-    /* Note that this function deals with attribute values that are
-       the size of Fortran INTEGERS; the C function MPI_Attr_put deals
-       with attribute values that are the size of address integers.
-       Hence, it is possible that the C value is larger than the
-       Fortran value.  MPI says that we sign-extend in this case. */
-
-    /* Fortran attributes are integers.  So we need to save those by
-       value -- not by reference.  Hence, we don't save the pointer to
-       the fortran parameter that came in, but rather its dereferenced
-       value.  Assign to the c_ptr member first, filling out the sign
-       extension. */
-
-    if (OMPI_FINT_2_INT(*attribute_val) >= 0) {
-        convert.c_ptr = (void*) 0;
-    } else {
-        convert.c_ptr = (void*) -1;
-    }
-    convert.f_integer = *attribute_val;
-    *ierr = OMPI_INT_2_FINT(MPI_Attr_put(c_comm, 
-                                         OMPI_FINT_2_INT(*keyval), 
-                                         convert.c_ptr));
+    c_err = ompi_attr_set_fortran_mpi1(COMM_ATTR,
+                                       c_comm,
+                                       &c_comm->c_keyhash,
+                                       OMPI_FINT_2_INT(*keyval), 
+                                       *attribute_val,
+                                       false, true);
+    *ierr = OMPI_INT_2_FINT(c_err);
 }
