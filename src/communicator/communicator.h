@@ -270,6 +270,17 @@ struct ompi_communicator_t {
     int ompi_comm_split ( ompi_communicator_t *comm, int color, int key, 
                          ompi_communicator_t** newcomm, bool pass_on_topo);
     
+    /** 
+     * dup a communicator. Parameter are identical to the MPI-counterpart 
+     * of the function. It has been extracted, since we need to be able 
+     * to dup a communicator internally as well.
+     *
+     * @param comm: input communicator
+     *
+     */
+    int ompi_comm_dup ( ompi_communicator_t *comm, ompi_communicator_t **newcomm);
+
+
     /**
      * free a communicator 
      */
