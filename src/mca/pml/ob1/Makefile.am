@@ -16,8 +16,7 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = libmca_pml_ob1.la
-libmca_pml_ob1_la_SOURCES = \
+ob1_sources  = \
 	pml_ob1.c \
 	pml_ob1.h \
 	pml_ob1_comm.c \
@@ -40,3 +39,23 @@ libmca_pml_ob1_la_SOURCES = \
 	pml_ob1_sendreq.c \
 	pml_ob1_sendreq.h \
 	pml_ob1_start.c 
+
+if OMPI_BUILD_pml_ob1_DSO
+component_noinst =
+component_install = mca_pml_ob1.la
+else
+component_noinst = libmca_pml_ob1.la
+component_install =
+endif
+
+
+mcacomponentdir = $(libdir)/openmpi
+mcacomponent_LTLIBRARIES = $(component_install)
+mca_pml_ob1_la_SOURCES = $(ob1_sources)
+mca_pml_ob1_la_LIBADD = 
+mca_pml_ob1_la_LDFLAGS = -module -avoid-version
+
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_pml_ob1_la_SOURCES = $(ob1_sources)
+libmca_pml_ob1_la_LIBADD =
+libmca_pml_ob1_la_LDFLAGS = -module -avoid-version
