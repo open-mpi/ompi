@@ -45,7 +45,11 @@ int MPI_Win_get_attr(MPI_Win win, int win_keyval,
 	}
     }
     
-    ret = ompi_attr_get(win->w_keyhash, win_keyval, 
-		       attribute_val, flag);
+    /* This stuff is very confusing.  Be sure to see
+       src/attribute/attribute.c for a lengthy comment explaining Open
+       MPI attribute behavior. */
+
+    ret = ompi_attr_get_c(win->w_keyhash, win_keyval, 
+                          attribute_val, flag);
     OMPI_ERRHANDLER_RETURN(ret, win, MPI_ERR_OTHER, FUNC_NAME);  
 }

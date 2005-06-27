@@ -17,6 +17,8 @@
 #include "ompi_config.h"
 
 #include "mpi/f77/bindings.h"
+#include "attribute/attribute.h"
+#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_SET_ATTR = mpi_comm_set_attr_f
@@ -58,15 +60,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_SET_ATTR,
 void mpi_comm_set_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval,
 			 MPI_Aint *attribute_val, MPI_Fint *ierr)
 {
+    int c_err;
     MPI_Comm c_comm = MPI_Comm_f2c(*comm);
     
-    /* We save fortran attributes by value, so dereference
-       attribute_val.  MPI-2 guarantees that xxx_SET_ATTR will be
-       called in fortran with an address-sized integer parameter for
-       the attribute, so there's no need to do any size conversions
-       before calling the back-end C function. */
+    /* This stuff is very confusing.  Be sure to see the comment at
+       the top of src/attributes/attributes.c. */
 
-    *ierr = OMPI_INT_2_FINT(MPI_Comm_set_attr(c_comm,
-					      OMPI_FINT_2_INT(*comm_keyval),
-					      (void*) *attribute_val));
+    c_err = ompi_attr_set_fortran_mpi2(COMM_ATTR,
+                                       c_comm,
+                                       &c_comm->c_keyhash,
+                                       OMPI_FINT_2_INT(*comm_keyval), 
+                                       *attribute_val,
+                                       false, true);
+    *ierr = OMPI_INT_2_FINT(c_err);
 }

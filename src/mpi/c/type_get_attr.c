@@ -52,8 +52,12 @@ int MPI_Type_get_attr (MPI_Datatype type,
 	}
     }
 
-    ret = ompi_attr_get(type->d_keyhash, type_keyval, 
-                        attribute_val, flag);
+    /* This stuff is very confusing.  Be sure to see
+       src/attribute/attribute.c for a lengthy comment explaining Open
+       MPI attribute behavior. */
+
+    ret = ompi_attr_get_c(type->d_keyhash, type_keyval, 
+                          attribute_val, flag);
     OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
                            MPI_ERR_OTHER, FUNC_NAME);  
 }

@@ -17,6 +17,8 @@
 #include "ompi_config.h"
 
 #include "mpi/f77/bindings.h"
+#include "attribute/attribute.h"
+#include "communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_GET_ATTR = mpi_comm_get_attr_f
@@ -56,38 +58,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_GET_ATTR,
 #endif
 
 void mpi_comm_get_attr_f(MPI_Fint *comm, MPI_Fint *comm_keyval,
-                         MPI_Aint *attribute_val, MPI_Fint *flag, MPI_Fint *ierr)
+                         MPI_Aint *attribute_val, MPI_Fint *flag, 
+                         MPI_Fint *ierr)
 {
     int c_err, c_flag;
-    MPI_Comm c_comm;
-    int *c_value;
+    MPI_Comm c_comm = MPI_Comm_f2c(*comm);
 
-    c_comm = MPI_Comm_f2c(*comm);
+    /* This stuff is very confusing.  Be sure to see the comment at
+       the top of src/attributes/attributes.c. */
 
-    /* This stuff is very confusing.  Be sure to see MPI-2 4.12.7. */
-
-    /* Didn't use all the FINT macros that could have prevented a few
-       extra variables in this function, but I figured that the
-       clarity of code, and the fact that this is not expected to be a
-       high-performance function, was worth it */
-
-    /* Note that there is no conversion on attribute_val -- MPI-2 says
-       that it is supposed to be the right size already */
-
-    c_err = MPI_Comm_get_attr(c_comm, OMPI_FINT_2_INT(*comm_keyval),
-                              &c_value, &c_flag);
+    c_err = ompi_attr_get_fortran_mpi2(c_comm->c_keyhash,
+                                       OMPI_FINT_2_INT(*comm_keyval),
+                                       attribute_val,
+                                       &c_flag);
     *ierr = OMPI_INT_2_FINT(c_err);
     *flag = OMPI_INT_2_FINT(c_flag);
-
-    /* Note that MPI-2 4.12.7 specifically says that Fortran's
-       xxx_GET_ATTR functions will take the address returned from C
-       and "convert it to an integer".  Since we stored the *value* of
-       the attribute in the corresponding xxx_SET_ATTR function, we
-       simply cast here to get the value back (remember, MPI
-       guarantess that xxx_SET_ATTR fortran parameters are the right
-       size). */
-
-    if (MPI_SUCCESS == c_err && 1 == c_flag) {
-        *attribute_val = (MPI_Aint) c_value;
-    }
 }

@@ -58,15 +58,17 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_SET_ATTR,
 void mpi_win_set_attr_f(MPI_Fint *win, MPI_Fint *win_keyval,
 			MPI_Aint *attribute_val, MPI_Fint *ierr)
 {
-    MPI_Win c_win = MPI_Win_f2c( *win );
+    int c_err;
+    MPI_Win c_win = MPI_Win_f2c(*win);
 
-    /* We save fortran attributes by value, so dereference
-       attribute_val.  MPI-2 guarantees that xxx_SET_ATTR will be
-       called in fortran with an address-sized integer parameter for
-       the attribute, so there's no need to do any size conversions
-       before calling the back-end C function. */
+    /* This stuff is very confusing.  Be sure to see the comment at
+       the top of src/attributes/attributes.c. */
 
-    *ierr = OMPI_INT_2_FINT(MPI_Win_set_attr( c_win, 
-					      OMPI_FINT_2_INT(*win_keyval),
-					      (void*) *attribute_val ));
+    c_err = ompi_attr_set_fortran_mpi2(WIN_ATTR,
+                                       c_win,
+                                       &c_win->w_keyhash,
+                                       OMPI_FINT_2_INT(*win_keyval), 
+                                       *attribute_val,
+                                       false, true);
+    *ierr = OMPI_INT_2_FINT(c_err);
 }

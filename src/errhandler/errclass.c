@@ -402,6 +402,11 @@ int ompi_errclass_add(void)
     newerrclass = OBJ_NEW(ompi_errclass_t);
     newerrclass->cls = ompi_errclass_lastused;
     ompi_errclass_lastused++;
+
+    /* Now need to reset the MPI_LASTUSEDCODE attribute on
+       MPI_COMM_WORLD */
+
+    
     
     ompi_pointer_array_set_item(&ompi_errclasses, newerrclass->cls, newerrclass);
     return OMPI_SUCCESS;
