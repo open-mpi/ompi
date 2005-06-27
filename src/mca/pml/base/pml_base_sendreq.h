@@ -96,6 +96,7 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
                                                                           \
       /* initialize datatype convertor for this request */                \
       if(count > 0) {                                                     \
+         uint32_t tmp;                                                    \
          ompi_convertor_copy( request->req_base.req_proc->proc_convertor, \
                               &request->req_convertor);                   \
          /* We will create a convertor specialized for send       */      \
@@ -110,7 +111,8 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
                                        request->req_base.req_addr,        \
                                        -1, NULL );                        \
          ompi_convertor_get_packed_size( &request->req_convertor,         \
-                              (uint32_t*)&(request->req_bytes_packed) );  \
+                                         &tmp );                          \
+         request->req_bytes_packed = (size_t) tmp;                        \
       } else {                                                            \
          request->req_bytes_packed = 0;                                   \
       }                                                                   \

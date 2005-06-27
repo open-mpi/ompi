@@ -308,6 +308,11 @@ typedef long long bool;
 # define vsnprintf ompi_vsnprintf
 #endif
 
+#if OMPI_HAVE_BROKEN_QSORT
+#include "util/qsort.h"
+#define qsort ompi_qsort
+#endif
+
 /*
  * Define __func__-preprocessor directive if the compiler does not
  * already define it.  Define it to __FILE__ so that we at least have
