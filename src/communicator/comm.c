@@ -648,6 +648,7 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm)
         return rc;
     }
 
+    *newcomm = newcomp;
     return MPI_SUCCESS;
 }
 /**********************************************************************/
