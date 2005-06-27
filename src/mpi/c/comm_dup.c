@@ -30,13 +30,9 @@
 
 static const char FUNC_NAME[] = "MPI_Comm_dup";
 
-
 int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm) 
 {
-    /* local variables */
-    ompi_communicator_t *comp, *newcomp;
-    int rsize, mode, rc=MPI_SUCCESS;
-    ompi_proc_t **rprocs;
+    int rc=MPI_SUCCESS;
     
     /* argument checking */
     if ( MPI_PARAM_CHECK ) {
@@ -51,65 +47,7 @@ int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
                                           FUNC_NAME);
     }
 
-    comp = (ompi_communicator_t *) comm;
-    if ( OMPI_COMM_IS_INTER ( comp ) ){
-        rsize  = comp->c_remote_group->grp_proc_count;
-        rprocs = comp->c_remote_group->grp_proc_pointers;
-        mode   = OMPI_COMM_CID_INTER;
-    }
-    else {
-        rsize  = 0;
-        rprocs = NULL;
-        mode   = OMPI_COMM_CID_INTRA;
-    }
-
-    *newcomm = MPI_COMM_NULL;
-    newcomp = ompi_comm_allocate (comp->c_local_group->grp_proc_count, rsize );
-    if ( NULL == newcomp ) {
-        return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_INTERN, FUNC_NAME);
-    }
-
-    /* Determine context id. It is identical to f_2_c_handle */
-    rc = ompi_comm_nextcid ( newcomp,  /* new communicator */ 
-                             comp,     /* old comm */
-                             NULL,     /* bridge comm */
-                             NULL,     /* local leader */
-                             NULL,     /* remote_leader */
-                             mode,     /* mode */
-                             -1 );     /* send_first */
-    if ( MPI_SUCCESS != rc ) {
-        return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
-    }
-
-    rc =  ompi_comm_set ( newcomp,                                /* new comm */
-                          comp,                                   /* old comm */
-                          comp->c_local_group->grp_proc_count,    /* local_size */
-                          comp->c_local_group->grp_proc_pointers, /* local_procs*/
-                          rsize,                                  /* remote_size */
-                          rprocs,                                 /* remote_procs */
-                          comp->c_keyhash,                        /* attrs */
-                          comp->error_handler,                    /* error handler */
-                          (mca_base_component_t *) comp->c_topo_component                  /* topo component */
-                          );
-    if ( MPI_SUCCESS != rc) { 
-        return OMPI_ERRHANDLER_INVOKE (comm, rc, FUNC_NAME);
-    }
-
-    /* activate communicator and init coll-module */
-    rc = ompi_comm_activate (newcomp,  /* new communicator */ 
-                             comp,     /* old comm */
-                             NULL,     /* bridge comm */
-                             NULL,     /* local leader */
-                             NULL,     /* remote_leader */
-                             mode,     /* mode */
-                             -1,      /* send_first */
-                             (mca_base_component_t *) comp->c_coll_selected_component /* coll component */
-                             );
-    if ( MPI_SUCCESS != rc ) {
-        return OMPI_ERRHANDLER_INVOKE(comm, rc, FUNC_NAME);
-    }
     
-    
-    *newcomm = newcomp;
-    return ( MPI_SUCCESS );
+    rc = ompi_comm_dup ( comm, newcomm);
+    OMPI_ERRHANDLER_RETURN ( rc, comm, rc, FUNC_NAME);
 }

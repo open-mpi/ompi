@@ -583,6 +583,76 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
 /**********************************************************************/
 /**********************************************************************/
 /**********************************************************************/
+int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm)
+{
+    ompi_communicator_t *comp=NULL;
+    ompi_communicator_t *newcomp=NULL;
+    int rsize, mode, rc=MPI_SUCCESS;
+    ompi_proc_t **rprocs;
+
+    comp = (ompi_communicator_t *) comm;
+    if ( OMPI_COMM_IS_INTER ( comp ) ){
+        rsize  = comp->c_remote_group->grp_proc_count;
+        rprocs = comp->c_remote_group->grp_proc_pointers;
+        mode   = OMPI_COMM_CID_INTER;
+    }
+    else {
+        rsize  = 0;
+        rprocs = NULL;
+        mode   = OMPI_COMM_CID_INTRA;
+    }
+    
+    *newcomm = MPI_COMM_NULL;
+    newcomp = ompi_comm_allocate (comp->c_local_group->grp_proc_count, rsize );
+    if ( NULL == newcomp ) {
+        return MPI_ERR_INTERN;
+    }
+
+    /* Determine context id. It is identical to f_2_c_handle */
+    rc = ompi_comm_nextcid ( newcomp,  /* new communicator */ 
+                             comp,     /* old comm */
+                             NULL,     /* bridge comm */
+                             NULL,     /* local leader */
+                             NULL,     /* remote_leader */
+                             mode,     /* mode */
+                             -1 );     /* send_first */
+    if ( MPI_SUCCESS != rc ) {
+        return rc;
+    }
+
+    rc =  ompi_comm_set ( newcomp,                                /* new comm */
+                          comp,                                   /* old comm */
+                          comp->c_local_group->grp_proc_count,    /* local_size */
+                          comp->c_local_group->grp_proc_pointers, /* local_procs*/
+                          rsize,                                  /* remote_size */
+                          rprocs,                                 /* remote_procs */
+                          comp->c_keyhash,                        /* attrs */
+                          comp->error_handler,                    /* error handler */
+                          (mca_base_component_t *) comp->c_topo_component                  /* topo component */
+                          );
+    if ( MPI_SUCCESS != rc) { 
+        return rc;
+    }
+
+    /* activate communicator and init coll-module */
+    rc = ompi_comm_activate (newcomp,  /* new communicator */ 
+                             comp,     /* old comm */
+                             NULL,     /* bridge comm */
+                             NULL,     /* local leader */
+                             NULL,     /* remote_leader */
+                             mode,     /* mode */
+                             -1,      /* send_first */
+                             (mca_base_component_t *) comp->c_coll_selected_component /* coll component */
+                             );
+    if ( MPI_SUCCESS != rc ) {
+        return rc;
+    }
+
+    return MPI_SUCCESS;
+}
+/**********************************************************************/
+/**********************************************************************/
+/**********************************************************************/
 int ompi_comm_set_name (ompi_communicator_t *comm, char *name )
 {
 
