@@ -77,7 +77,7 @@ void mpi_keyval_create_f(ompi_mpi1_fortran_copy_attr_function* copy_attr_fn,
 
     ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
                                   keyval, extra_state,
-                                  OMPI_KEYVAL_F77 | OMPI_KEYVAL_F77_OLD);
+                                  OMPI_KEYVAL_F77 | OMPI_KEYVAL_F77_MPI1);
 
     if (MPI_SUCCESS != ret) {
         c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
