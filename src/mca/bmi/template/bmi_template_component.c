@@ -1,0 +1,168 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ *                         All rights reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+
+#include "ompi_config.h"
+#include "include/constants.h"
+#include "event/event.h"
+#include "util/if.h"
+#include "util/argv.h"
+#include "util/output.h"
+#include "mca/pml/pml.h"
+#include "mca/bmi/bmi.h"
+
+#include "mca/base/mca_base_param.h"
+#include "mca/base/mca_base_module_exchange.h"
+#include "mca/errmgr/errmgr.h"
+#include "mca/mpool/base/base.h" 
+#include "bmi_template.h"
+#include "bmi_template_frag.h"
+#include "bmi_template_endpoint.h" 
+#include "mca/bmi/base/base.h" 
+#include "datatype/convertor.h" 
+mca_bmi_template_component_t mca_bmi_template_component = {
+    {
+        /* First, the mca_base_component_t struct containing meta information
+           about the component itself */
+
+        {
+            /* Indicate that we are a pml v1.0.0 component (which also implies a
+               specific MCA version) */
+
+            MCA_BMI_BASE_VERSION_1_0_0,
+
+            "ib", /* MCA component name */
+            1,  /* MCA component major version */
+            0,  /* MCA component minor version */
+            0,  /* MCA component release version */
+            mca_bmi_template_component_open,  /* component open */
+            mca_bmi_template_component_close  /* component close */
+        },
+
+        /* Next the MCA v1.0.0 component meta data */
+
+        {
+            /* Whether the component is checkpointable or not */
+
+            false
+        },
+
+        mca_bmi_template_component_init,  
+        mca_bmi_template_component_progress,
+    }
+};
+
+
+/*
+ * utility routines for parameter registration
+ */
+
+static inline char* mca_bmi_template_param_register_string(
+                                                     const char* param_name, 
+                                                     const char* default_value)
+{
+    char *param_value;
+    int id = mca_base_param_register_string("bmi","ib",param_name,NULL,default_value);
+    mca_base_param_lookup_string(id, &param_value);
+    return param_value;
+}
+
+static inline int mca_bmi_template_param_register_int(
+        const char* param_name, 
+        int default_value)
+{
+    int id = mca_base_param_register_int("bmi","ib",param_name,NULL,default_value);
+    int param_value = default_value;
+    mca_base_param_lookup_int(id,&param_value);
+    return param_value;
+}
+
+/*
+ *  Called by MCA framework to open the component, registers
+ *  component parameters.
+ */
+
+int mca_bmi_template_component_open(void)
+{
+
+    
+    /* initialize state */
+    mca_bmi_template_component.template_num_bmis=0;
+    mca_bmi_template_component.template_bmis=NULL;
+    
+    /* initialize objects */ 
+    OBJ_CONSTRUCT(&mca_bmi_template_component.template_procs, ompi_list_t);
+
+    /* register TEMPLATE component parameters */
+    mca_bmi_template_component.template_free_list_num =
+        mca_bmi_template_param_register_int ("free_list_num", 8);
+    mca_bmi_template_component.template_free_list_max =
+        mca_bmi_template_param_register_int ("free_list_max", 1024);
+    mca_bmi_template_component.template_free_list_inc =
+        mca_bmi_template_param_register_int ("free_list_inc", 32);
+    mca_bmi_template_component.template_mpool_name = 
+        mca_bmi_template_param_register_string("mpool", "ib"); 
+    mca_bmi_template_module.super.bmi_exclusivity =
+        mca_bmi_template_param_register_int ("exclusivity", 0);
+    mca_bmi_template_module.super.bmi_eager_limit = 
+        mca_bmi_template_param_register_int ("first_frag_size", 64*1024) - sizeof(mca_bmi_base_header_t);
+    mca_bmi_template_module.super.bmi_min_send_size =
+        mca_bmi_template_param_register_int ("min_send_size", 64*1024) - sizeof(mca_bmi_base_header_t);
+    mca_bmi_template_module.super.bmi_max_send_size =
+        mca_bmi_template_param_register_int ("max_send_size", 128*1024) - sizeof(mca_bmi_base_header_t);
+    mca_bmi_template_module.super.bmi_min_rdma_size = 
+        mca_bmi_template_param_register_int("min_rdma_size", 1024*1024); 
+    mca_bmi_template_module.super.bmi_max_rdma_size = 
+        mca_bmi_template_param_register_int("max_rdma_size", 1024*1024); 
+    mca_bmi_template_module.super.bmi_flags  = 
+        mca_bmi_template_param_register_int("flags", MCA_BMI_FLAGS_RDMA); 
+    return OMPI_SUCCESS;
+}
+
+/*
+ * component cleanup - sanity checking of queue lengths
+ */
+
+int mca_bmi_template_component_close(void)
+{
+    return OMPI_SUCCESS;
+}
+
+/*
+ *  TEMPLATE component initialization:
+ *  (1) read interface list from kernel and compare against component parameters
+ *      then create a BMI instance for selected interfaces
+ *  (2) setup TEMPLATE listen socket for incoming connection attempts
+ *  (3) register BMI parameters with the MCA
+ */
+
+mca_bmi_base_module_t** mca_bmi_template_component_init(int *num_bmi_modules, 
+                                                  bool enable_progress_threads,
+                                                  bool enable_mpi_threads)
+{
+    return NULL;
+}
+
+/*
+ *  TEMPLATE component progress.
+ */
+
+
+int mca_bmi_template_component_progress()
+{
+    return 0;
+}
+
