@@ -303,7 +303,8 @@
                 OMPI_THREAD_UNLOCK(&alock); \
                 return OMPI_FINT_2_INT(f_err); \
             } \
-            out_attr->av_value = (void *) out; \
+            out_attr->av_value = (void*) 0; \
+            *out_attr->av_integer_pointer = out; \
             flag = OMPI_FINT_2_INT(f_flag); \
         } \
         /* MPI-2 Fortran-style */ \
@@ -352,8 +353,8 @@ typedef enum ompi_attribute_translate_t {
 typedef struct attribute_value_t {
     ompi_object_t super;
     void *av_value;
-    void *av_address_kind_pointer;
-    void *av_integer_pointer;
+    MPI_Aint *av_address_kind_pointer;
+    MPI_Fint *av_integer_pointer;
     int av_set_from;
 } attribute_value_t;
 
@@ -419,7 +420,7 @@ static ompi_mutex_t alock;
  */
 static void attribute_value_construct(attribute_value_t *item)
 {
-    item->av_address_kind_pointer = &item->av_value;
+    item->av_address_kind_pointer = (MPI_Aint*) &item->av_value;
     item->av_integer_pointer = &(((MPI_Fint*) &item->av_value)[int_pos]);
     item->av_set_from = 0;
 }
@@ -712,7 +713,8 @@ int ompi_attr_set_fortran_mpi1(ompi_attribute_type_t type, void *object,
         return MPI_ERR_SYSRESOURCE;
     }
 
-    new_attr->av_value = (void *) attribute;
+    new_attr->av_value = (void *) 0;
+    *new_attr->av_integer_pointer = attribute;
     new_attr->av_set_from = OMPI_ATTRIBUTE_FORTRAN_MPI1;
     return set_value(type, object, keyhash, key, new_attr,
                      predefined, need_lock);
@@ -1122,12 +1124,12 @@ static void *translate_to_c(attribute_value_t *val)
 
     case OMPI_ATTRIBUTE_FORTRAN_MPI1:
         /* Case 4: written in Fortran MPI-1, read in C */
-        return val->av_integer_pointer;
+        return (void *) val->av_integer_pointer;
         break;
 
     case OMPI_ATTRIBUTE_FORTRAN_MPI2:
         /* Case 7: written in Fortran MPI-2, read in C */
-        return val->av_address_kind_pointer;
+        return (void *) val->av_address_kind_pointer;
         break;
 
     default:
@@ -1149,18 +1151,18 @@ static MPI_Fint translate_to_fortran_mpi1(attribute_value_t *val)
     switch (val->av_set_from) {
     case OMPI_ATTRIBUTE_C:
         /* Case 2: written in C, read in Fortran MPI-1 */
-        return ((MPI_Fint *) &val->av_value)[int_pos];
+        return *val->av_integer_pointer;
         break;
 
     case OMPI_ATTRIBUTE_FORTRAN_MPI1:
         /* Case 5: written in Fortran MPI-1, read in Fortran MPI-1
            (unity) */
-        return *((MPI_Fint *) val->av_integer_pointer);
+        return *val->av_integer_pointer;
         break;
 
     case OMPI_ATTRIBUTE_FORTRAN_MPI2:
         /* Case 8: written in Fortran MPI-2, read in Fortran MPI-1 */
-        return *((MPI_Fint *) val->av_integer_pointer);
+        return *val->av_integer_pointer;
         break;
 
     default:
@@ -1187,7 +1189,7 @@ static MPI_Aint translate_to_fortran_mpi2(attribute_value_t *val)
 
     case OMPI_ATTRIBUTE_FORTRAN_MPI1:
         /* Case 6: written in Fortran MPI-1, read in Fortran MPI-2 */
-        return (MPI_Aint) *((MPI_Fint *) val->av_integer_pointer);
+        return (MPI_Aint) *val->av_integer_pointer;
         break;
 
     case OMPI_ATTRIBUTE_FORTRAN_MPI2:
