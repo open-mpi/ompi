@@ -77,7 +77,7 @@ void mpi_graph_create_f(MPI_Fint *comm_old, MPI_Fint *nnodes,
 					     OMPI_ARRAY_NAME_CONVERT(edges),
 					     OMPI_FINT_2_INT(*reorder),
 					     &c_comm_graph));
-    if (OMPI_FINT_2_INT(*ierr)) {
+    if (OMPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         *comm_graph = MPI_Comm_c2f(c_comm_graph);
     }
 
