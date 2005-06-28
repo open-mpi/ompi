@@ -227,13 +227,9 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         mca_pml_bsend_count++;
         OMPI_THREAD_UNLOCK(&mca_pml_bsend_mutex);
 
-        /* setup convertor to point to app buffer */
-        ompi_convertor_set_position( &sendreq->req_convertor, 0 );
-        /* REMOVE ME ompi_convertor_init_for_send( &sendreq->req_convertor,
-           0, sendreq->req_base.req_datatype, sendreq->req_base.req_count,
-           sendreq->req_base.req_addr, 0, NULL ); */
-
-        /* pack */
+        /* The convertor is already initialized in the begining so we just have to
+         * pack the data in the newly allocated buffer.
+         */
         iov.iov_base = sendreq->req_addr;
         iov.iov_len = sendreq->req_count;
         iov_count = 1;
@@ -243,7 +239,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
             return OMPI_ERROR;
         }
  
-        /* setup convertor to point to packed buffer */
+        /* setup convertor to point to packed buffer (at position zero) */
         ompi_convertor_prepare_for_send( &sendreq->req_convertor, MPI_PACKED,
                                          max_data, sendreq->req_addr );
     }
