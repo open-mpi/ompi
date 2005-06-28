@@ -248,7 +248,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
                                          max_data, sendreq->req_addr );
     }
     sendreq->req_base.req_ompi.req_complete = true;
-    return OMPI_SUCCESS;;
+    return OMPI_SUCCESS;
 }
 
 
