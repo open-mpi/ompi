@@ -258,9 +258,23 @@ static inline bool ompi_set_using_threads(bool have)
 #if OMPI_HAVE_THREAD_SUPPORT
 #define OMPI_THREAD_ADD64(x,y) \
    ((OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) ? \
-    ompi_atomic_add_32(x,y) : (*x += y))
+    ompi_atomic_add_64(x,y) : (*x += y))
 #else
 #define OMPI_THREAD_ADD64(x,y) (*x += y)
+#endif
+
+#if OMPI_HAVE_THREAD_SUPPORT
+#if OMPI_SIZEOF_SIZE_T == 4
+#define OMPI_THREAD_ADD_SIZE_T(x,y) \
+    ((OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) ?       \
+     ompi_atomic_add_32(x,y) : (*x += y))
+#elif OMPI_SIZEOF_SIZE_T == 8
+#define OMPI_THREAD_ADD_SIZE_T(x,y) \
+    ((OMPI_HAVE_THREAD_SUPPORT && ompi_using_threads()) ?       \
+     ompi_atomic_add_64(x,y) : (*x += y))
+#endif
+#else
+#define OMPI_THREAD_ADD_SIZE_T(x,y) (*x += y)
 #endif
 
 
