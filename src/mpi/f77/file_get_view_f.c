@@ -65,8 +65,9 @@ void mpi_file_get_view_f(MPI_Fint *fh, MPI_Offset *disp,
 
     *ierr = OMPI_INT_2_FINT(MPI_File_get_view(c_fh, &c_disp, &c_etype, 
 					      &c_filetype, datarep));
-
-    *disp = (MPI_Fint) c_disp;
-    *etype = MPI_Type_c2f(c_etype);
-    *filetype = MPI_Type_c2f(c_filetype);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *disp = (MPI_Fint) c_disp;
+        *etype = MPI_Type_c2f(c_etype);
+        *filetype = MPI_Type_c2f(c_filetype);
+    }
 }

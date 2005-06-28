@@ -64,6 +64,7 @@ void mpi_file_get_amode_f(MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr)
     *ierr = OMPI_INT_2_FINT(MPI_File_get_amode(c_fh,
 					       OMPI_SINGLE_NAME_CONVERT(amode)
 					       ));
-
-    OMPI_SINGLE_INT_2_FINT(amode);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(amode);
+    }
 }

@@ -77,7 +77,8 @@ void mpi_group_translate_ranks_f(MPI_Fint *group1, MPI_Fint *n,
 						    c_group2, 
 						    OMPI_ARRAY_NAME_CONVERT(ranks2)
 						    ));
-
+  if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+      OMPI_ARRAY_INT_2_FINT(ranks2, *n);
+  }
   OMPI_ARRAY_FINT_2_INT_CLEANUP(ranks1);
-  OMPI_ARRAY_INT_2_FINT(ranks2, *n);
 }

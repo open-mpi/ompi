@@ -71,7 +71,7 @@ void mpi_send_init_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
                                          OMPI_FINT_2_INT(*tag), 
                                          c_comm, &c_req));
    
-   if (MPI_SUCCESS == *ierr) {
+   if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
       *request = MPI_Request_c2f(c_req);
    }
 }

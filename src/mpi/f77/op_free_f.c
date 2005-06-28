@@ -62,6 +62,7 @@ void mpi_op_free_f(MPI_Fint *op, MPI_Fint *ierr)
     c_op = MPI_Op_f2c(*op);
 
     *ierr = OMPI_INT_2_FINT(MPI_Op_free(&c_op));
-
-    *op = MPI_Op_c2f(c_op);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *op = MPI_Op_c2f(c_op);
+    }
 }

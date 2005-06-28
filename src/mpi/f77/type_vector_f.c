@@ -69,8 +69,7 @@ void mpi_type_vector_f(MPI_Fint *count, MPI_Fint *blocklength,
 					    OMPI_FINT_2_INT(*stride),
 					    c_old, &c_new));
 
-    if (MPI_SUCCESS != *ierr) {
-       c_new = MPI_DATATYPE_NULL;
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *newtype = MPI_Type_c2f(c_new);
     }
-    *newtype = MPI_Type_c2f(c_new);
 }

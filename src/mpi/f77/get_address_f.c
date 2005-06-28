@@ -60,5 +60,7 @@ void mpi_get_address_f(char *location, MPI_Fint *address, MPI_Fint *ierr)
     MPI_Aint c_address;
 
     *ierr = OMPI_INT_2_FINT(MPI_Get_address(location, &c_address));
-    *address = (MPI_Fint) c_address;
+    if (OMPI_FINT_2_INT(*ierr)) {
+        *address = (MPI_Fint) c_address;
+    }
 }

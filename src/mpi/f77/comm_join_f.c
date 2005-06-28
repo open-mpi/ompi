@@ -61,5 +61,7 @@ void mpi_comm_join_f(MPI_Fint *fd, MPI_Fint *intercomm, MPI_Fint *ierr)
 
     *ierr = OMPI_INT_2_FINT(MPI_Comm_join(OMPI_FINT_2_INT(*fd),
 					  &c_intercomm));
-    *intercomm = MPI_Comm_c2f(c_intercomm);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *intercomm = MPI_Comm_c2f(c_intercomm);
+    }
 }

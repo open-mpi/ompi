@@ -58,8 +58,9 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_FREE_KEYVAL,
 void mpi_win_free_keyval_f(MPI_Fint *win_keyval, MPI_Fint *ierr)
 {
     OMPI_SINGLE_NAME_DECL(win_keyval);
-
+    
     *ierr = OMPI_INT_2_FINT(MPI_Win_free_keyval(OMPI_SINGLE_NAME_CONVERT(win_keyval)));
-
-    OMPI_SINGLE_INT_2_FINT(win_keyval);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(win_keyval);
+    }
 }

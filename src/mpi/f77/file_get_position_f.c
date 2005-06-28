@@ -62,5 +62,7 @@ void mpi_file_get_position_f(MPI_Fint *fh, MPI_Offset *offset, MPI_Fint *ierr)
 
     *ierr = OMPI_INT_2_FINT(MPI_File_get_position(c_fh, 
 						  &c_offset));
-    *offset = (MPI_Fint) c_offset;
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *offset = (MPI_Fint) c_offset;
+    }
 }

@@ -65,6 +65,7 @@ void mpi_file_open_f(MPI_Fint *comm, char *filename, MPI_Fint *amode,
     *ierr = OMPI_INT_2_FINT(MPI_File_open(c_comm, filename, 
 					  OMPI_FINT_2_INT(*amode),
 					  c_info, &c_fh));
-    
-    *fh = MPI_File_c2f(c_fh);
+   if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+       *fh = MPI_File_c2f(c_fh);
+   }
 }

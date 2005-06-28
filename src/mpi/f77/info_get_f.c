@@ -67,6 +67,7 @@ void mpi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
 					 OMPI_FINT_2_INT(*valuelen),
 					 value,
 					 OMPI_SINGLE_NAME_CONVERT(flag)));
-
-    OMPI_SINGLE_INT_2_FINT(flag);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(flag);
+    }
 }

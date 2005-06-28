@@ -78,7 +78,8 @@ void mpi_sendrecv_f(char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype,
                                         OMPI_FINT_2_INT(*recvtag),
                                         c_comm, &c_status));
 
-   if (!OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
-      MPI_Status_c2f(&c_status, status);
+   if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr) &&
+       !OMPI_IS_FORTRAN_STATUS_IGNORE(status)) {
+       MPI_Status_c2f(&c_status, status);
    }
 }

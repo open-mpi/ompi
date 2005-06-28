@@ -62,5 +62,7 @@ void mpi_comm_test_inter_f(MPI_Fint *comm, MPI_Fint *flag, MPI_Fint *ierr)
 
     *ierr = OMPI_INT_2_FINT(MPI_Comm_test_inter(c_comm, 
 					OMPI_SINGLE_NAME_CONVERT(flag)));
-    OMPI_SINGLE_INT_2_FINT(flag);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(flag);
+    }
 }

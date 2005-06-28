@@ -62,5 +62,7 @@ void mpi_file_get_size_f(MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr)
 
     *ierr = OMPI_INT_2_FINT(MPI_File_get_size(c_fh, 
 					      &c_size));
-    *size = (MPI_Fint) c_size;
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *size = (MPI_Fint) c_size;
+    }
 }

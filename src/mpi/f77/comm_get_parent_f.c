@@ -60,6 +60,7 @@ void mpi_comm_get_parent_f(MPI_Fint *parent, MPI_Fint *ierr)
     MPI_Comm c_parent;
 
     *ierr = OMPI_INT_2_FINT(MPI_Comm_get_parent(&c_parent));
-
-    *parent = MPI_Comm_c2f(c_parent);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *parent = MPI_Comm_c2f(c_parent);
+    }
 }

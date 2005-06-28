@@ -64,7 +64,7 @@ void mpi_type_create_f90_complex_f(MPI_Fint *p, MPI_Fint *r,
 							OMPI_FINT_2_INT(*r),
 							&c_newtype));
 
-    if (MPI_SUCCESS == *ierr) {
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
       *newtype = MPI_Type_c2f (c_newtype); 
     }
 }

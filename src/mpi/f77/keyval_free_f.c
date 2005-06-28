@@ -63,6 +63,7 @@ void mpi_keyval_free_f(MPI_Fint *keyval, MPI_Fint *ierr)
 
     *ierr = 
 	OMPI_INT_2_FINT(MPI_Keyval_free(OMPI_SINGLE_NAME_CONVERT(keyval)));
-
-    OMPI_SINGLE_INT_2_FINT(keyval);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(keyval);
+    }
 }

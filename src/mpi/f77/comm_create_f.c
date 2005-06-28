@@ -62,6 +62,7 @@ void mpi_comm_create_f(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, MPI_F
     MPI_Group c_group = MPI_Group_f2c(*group);
 
     *ierr = OMPI_INT_2_FINT(MPI_Comm_create (c_comm, c_group, &c_newcomm));
-
-    *newcomm = MPI_Comm_c2f (c_newcomm);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *newcomm = MPI_Comm_c2f (c_newcomm);
+    }
 }

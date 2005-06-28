@@ -63,6 +63,7 @@ void mpi_error_class_f(MPI_Fint *errorcode, MPI_Fint *errorclass,
     *ierr = 
 	OMPI_INT_2_FINT(MPI_Error_class(OMPI_FINT_2_INT(*errorcode),
 					OMPI_SINGLE_NAME_CONVERT(errorclass)));
-    
-    OMPI_SINGLE_INT_2_FINT(errorclass);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(errorclass);
+    }
 }

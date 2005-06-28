@@ -61,6 +61,7 @@ void mpi_file_get_group_f(MPI_Fint *fh, MPI_Fint *group, MPI_Fint *ierr)
     MPI_Group c_grp;
 
     *ierr = OMPI_INT_2_FINT(MPI_File_get_group(c_fh, &c_grp));
-
-    *group = MPI_Group_c2f(c_grp);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *group = MPI_Group_c2f(c_grp);
+    }
 }

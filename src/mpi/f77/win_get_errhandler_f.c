@@ -62,6 +62,7 @@ void mpi_win_get_errhandler_f(MPI_Fint *win, MPI_Fint *errhandler,
     MPI_Win c_win = MPI_Win_f2c(*win);
 
     *ierr = OMPI_INT_2_FINT(MPI_Win_get_errhandler(c_win, &c_err));
-
-    *errhandler = MPI_Errhandler_c2f(c_err);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *errhandler = MPI_Errhandler_c2f(c_err);
+    }
 }

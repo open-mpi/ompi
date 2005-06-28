@@ -76,8 +76,9 @@ void mpi_cart_create_f(MPI_Fint *old_comm, MPI_Fint *ndims, MPI_Fint *dims,
 					    OMPI_ARRAY_NAME_CONVERT(periods), 
 					    OMPI_FINT_2_INT(*reorder),
 					    &c_comm2));
-
-    *comm_cart = MPI_Comm_c2f(c_comm2);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *comm_cart = MPI_Comm_c2f(c_comm2);
+    }
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(dims);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(periods);

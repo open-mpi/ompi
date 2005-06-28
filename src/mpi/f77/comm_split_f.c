@@ -65,5 +65,7 @@ void mpi_comm_split_f(MPI_Fint *comm, MPI_Fint *color, MPI_Fint *key,
 					   OMPI_FINT_2_INT(*color),
 					   OMPI_FINT_2_INT(*key),
 					   &c_newcomm ));
-    *newcomm = MPI_Comm_c2f (c_newcomm);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *newcomm = MPI_Comm_c2f (c_newcomm);
+    }
 }

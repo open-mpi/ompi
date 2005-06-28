@@ -70,7 +70,7 @@ void mpi_status_set_cancelled_f(MPI_Fint *status, MPI_Fint *flag, MPI_Fint *ierr
         *ierr = OMPI_INT_2_FINT(MPI_Status_set_cancelled(&c_status, 
                                                          OMPI_FINT_2_INT(*flag)));
 
-        if (MPI_SUCCESS == *ierr) {
+        if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
             MPI_Status_c2f(&c_status, status);
         }
     }

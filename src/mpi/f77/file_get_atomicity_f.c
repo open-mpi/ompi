@@ -63,6 +63,7 @@ void mpi_file_get_atomicity_f(MPI_Fint *fh, MPI_Fint *flag, MPI_Fint *ierr)
     c_fh = MPI_File_f2c(*fh);
     *ierr = OMPI_INT_2_FINT(MPI_File_get_atomicity(c_fh, 
 					   OMPI_SINGLE_NAME_CONVERT(flag)));
-
-    OMPI_SINGLE_INT_2_FINT(flag);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(flag);
+    }
 }

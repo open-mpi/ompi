@@ -63,7 +63,7 @@ void mpi_file_set_errhandler_f(MPI_Fint *fh, MPI_Fint *errhandler,
     MPI_Errhandler c_err = MPI_Errhandler_f2c(*errhandler);
 
     *ierr = OMPI_INT_2_FINT(MPI_File_set_errhandler(c_fh, c_err));
-    if ( MPI_SUCCESS == *ierr &&
+    if ( MPI_SUCCESS == OMPI_FINT_2_INT(*ierr) &&
 	 OMPI_ERRHANDLER_TYPE_PREDEFINED != c_err->eh_mpi_object_type ) {
 	c_err->eh_fortran_function = true ;
     }

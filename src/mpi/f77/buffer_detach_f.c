@@ -60,5 +60,7 @@ void mpi_buffer_detach_f(char *buffer, MPI_Fint *size, MPI_Fint *ierr)
     OMPI_SINGLE_NAME_DECL(size);
     *ierr = OMPI_INT_2_FINT(MPI_Buffer_detach(buffer, 
 					      OMPI_SINGLE_NAME_CONVERT(size)));
-    OMPI_SINGLE_INT_2_FINT(size);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(size);
+    }
 }

@@ -66,6 +66,7 @@ void mpi_file_create_errhandler_f(ompi_errhandler_fortran_handler_fn_t* function
     *ierr = OMPI_INT_2_FINT(MPI_File_create_errhandler(
                      (MPI_File_errhandler_fn *) function,
                      &c_errhandler));
-
-    *errhandler = MPI_Errhandler_c2f(c_errhandler);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *errhandler = MPI_Errhandler_c2f(c_errhandler);
+    }
 }

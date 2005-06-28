@@ -68,7 +68,7 @@ void mpi_file_iwrite_at_f(MPI_Fint *fh, MPI_Offset *offset, char *buf,
                                               OMPI_ADDR(buf),
                                               OMPI_FINT_2_INT(*count),
                                               c_type, &c_request));
-   if (MPI_SUCCESS == *ierr) {
+   if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
       *request = MPI_Request_c2f(c_request);
    }
 }

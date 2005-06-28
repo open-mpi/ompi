@@ -91,8 +91,8 @@ void mpi_type_create_hindexed_f(MPI_Fint *count,
 			     c_disp_array, c_old,
 			     &c_new));
     
-    if (MPI_SUCCESS == *ierr) {
-      *newtype = MPI_Type_c2f(c_new);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *newtype = MPI_Type_c2f(c_new);
     }
     
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_blocklengths);

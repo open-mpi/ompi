@@ -98,8 +98,9 @@ void mpi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
 					   c_info,
 					   OMPI_FINT_2_INT(*root),
 					   c_comm, &c_new_comm, c_errs));
-    
-    *intercomm = MPI_Comm_c2f(c_new_comm);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *intercomm = MPI_Comm_c2f(c_new_comm);
+    }
     free(c_command);
     if (MPI_ARGV_NULL != c_argv && NULL != c_argv) {
         ompi_argv_free(c_argv);

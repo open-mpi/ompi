@@ -79,7 +79,7 @@ void mpi_type_create_subarray_f(MPI_Fint *ndims, MPI_Fint *size_array,
                                      OMPI_ARRAY_NAME_CONVERT(start_array),
                                      *order, c_old, &c_new));
 
-    if (MPI_SUCCESS == *ierr) {
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         *newtype = MPI_Type_c2f(c_new);
     }
 

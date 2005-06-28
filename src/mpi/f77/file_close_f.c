@@ -62,5 +62,7 @@ void mpi_file_close_f(MPI_Fint *fh, MPI_Fint *ierr)
     c_fh = MPI_File_f2c(*fh);
 
     *ierr = OMPI_INT_2_FINT(MPI_File_close(&c_fh));
-    *fh = MPI_File_c2f(c_fh);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *fh = MPI_File_c2f(c_fh);
+    }
 }

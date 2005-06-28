@@ -71,5 +71,7 @@ void mpi_cart_rank_f(MPI_Fint *comm, MPI_Fint *coords, MPI_Fint *rank,
     *ierr = OMPI_INT_2_FINT(MPI_Cart_rank(c_comm, 
 					  OMPI_ARRAY_NAME_CONVERT(coords),
 					  OMPI_SINGLE_NAME_CONVERT(rank)));
-    OMPI_SINGLE_INT_2_FINT(rank);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(rank);
+    }
 }

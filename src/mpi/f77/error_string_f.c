@@ -65,6 +65,7 @@ void mpi_error_string_f(MPI_Fint *errorcode, char *string,
 					 string,
 					 OMPI_SINGLE_NAME_CONVERT(resultlen)
 					 ));
-    
-    OMPI_SINGLE_INT_2_FINT(resultlen);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(resultlen);
+    }
 }
