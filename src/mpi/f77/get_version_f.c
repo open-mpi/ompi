@@ -62,6 +62,8 @@ void mpi_get_version_f(MPI_Fint *version, MPI_Fint *subversion, MPI_Fint *ierr)
 
     *ierr = OMPI_INT_2_FINT(MPI_Get_version(OMPI_SINGLE_NAME_CONVERT(version),
 				    OMPI_SINGLE_NAME_CONVERT(subversion)));
-    OMPI_SINGLE_INT_2_FINT(version);
-    OMPI_SINGLE_INT_2_FINT(subversion);
+    if (OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(version);
+        OMPI_SINGLE_INT_2_FINT(subversion);
+    }
 }

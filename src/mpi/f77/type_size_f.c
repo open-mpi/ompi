@@ -62,6 +62,7 @@ void mpi_type_size_f(MPI_Fint *type, MPI_Fint *size, MPI_Fint *ierr)
 
     *ierr = OMPI_INT_2_FINT(MPI_Type_size(c_type, 
 					  OMPI_SINGLE_NAME_CONVERT(size)));
-
-    OMPI_SINGLE_INT_2_FINT(size);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(size);
+    }
 }

@@ -70,7 +70,7 @@ void mpi_irecv_f(char *buf, MPI_Fint *count, MPI_Fint *datatype,
                                      c_type, OMPI_FINT_2_INT(*source),
                                      OMPI_FINT_2_INT(*tag), c_comm, &c_req));
 
-   if (MPI_SUCCESS == *ierr) {
+   if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
       *request = MPI_Request_c2f(c_req);
    }
 }

@@ -62,6 +62,7 @@ void mpi_comm_disconnect_f(MPI_Fint *comm, MPI_Fint *ierr)
     c_comm = MPI_Comm_f2c(*comm);
     
     *ierr = OMPI_INT_2_FINT(MPI_Comm_disconnect(&c_comm));
-
-    *comm = MPI_Comm_c2f(c_comm);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *comm = MPI_Comm_c2f(c_comm);
+    }
 }

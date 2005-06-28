@@ -59,7 +59,12 @@ void mpi_init_thread_f( MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr )
 {
     int argc = 0;
     char** argv = NULL;
+    OMPI_SINGLE_NAME_DECL(provided);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Init_thread( &argc, &argv, 
-                                             *required, provided ));
+    *ierr = OMPI_INT_2_FINT(MPI_Init_thread(&argc, &argv, 
+                                            OMPI_FINT_2_INT(*required),
+                                            OMPI_SINGLE_NAME_CONVERT(provided)));
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(provided);
+    }
 }

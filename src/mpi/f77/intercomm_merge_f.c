@@ -64,5 +64,7 @@ void mpi_intercomm_merge_f(MPI_Fint *intercomm, MPI_Fint *high,
 
     *ierr = MPI_Intercomm_merge (c_intercomm, OMPI_FINT_2_INT(*high),
 				 &c_newcomm );
-    *newintracomm = MPI_Comm_c2f (c_newcomm);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *newintracomm = MPI_Comm_c2f (c_newcomm);
+    }
 }

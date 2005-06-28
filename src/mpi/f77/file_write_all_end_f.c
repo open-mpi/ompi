@@ -87,7 +87,8 @@ void mpi_file_write_all_end_f(MPI_Fint *fh, char *buf, MPI_Fint *status,
     *ierr = OMPI_INT_2_FINT(MPI_File_write_all_end(c_fh, buf, c_status));
 
 #if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
-    if (MPI_STATUS_IGNORE != c_status) {
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr) &&
+        MPI_STATUS_IGNORE != c_status) {
         MPI_Status_c2f(c_status, status);
     }
 #endif

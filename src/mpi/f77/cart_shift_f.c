@@ -70,7 +70,8 @@ void mpi_cart_shift_f(MPI_Fint *comm, MPI_Fint *direction, MPI_Fint *disp,
 					   OMPI_FINT_2_INT(*disp),
 					   OMPI_SINGLE_NAME_CONVERT(rank_source),
 					   OMPI_SINGLE_NAME_CONVERT(rank_dest)));
-
-    OMPI_SINGLE_INT_2_FINT(rank_source);
-    OMPI_SINGLE_INT_2_FINT(rank_dest);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(rank_source);
+        OMPI_SINGLE_INT_2_FINT(rank_dest);
+    }
 }

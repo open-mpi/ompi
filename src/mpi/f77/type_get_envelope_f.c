@@ -72,9 +72,10 @@ void mpi_type_get_envelope_f(MPI_Fint *type, MPI_Fint *num_integers,
 				 OMPI_SINGLE_NAME_CONVERT(num_datatypes), 
 				 OMPI_SINGLE_NAME_CONVERT(combiner)));
 
-    OMPI_SINGLE_INT_2_FINT(num_integers);
-    OMPI_SINGLE_INT_2_FINT(num_addresses);
-    OMPI_SINGLE_INT_2_FINT(num_datatypes);
-    OMPI_SINGLE_INT_2_FINT(combiner);
-
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(num_integers);
+        OMPI_SINGLE_INT_2_FINT(num_addresses);
+        OMPI_SINGLE_INT_2_FINT(num_datatypes);
+        OMPI_SINGLE_INT_2_FINT(combiner);
+    }
 }

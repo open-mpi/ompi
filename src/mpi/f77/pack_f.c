@@ -74,5 +74,7 @@ void mpi_pack_f(char *inbuf, MPI_Fint *incount, MPI_Fint *datatype,
                                     OMPI_SINGLE_NAME_CONVERT(position),
                                     c_comm));
 				     
-   OMPI_SINGLE_INT_2_FINT(position);			     
+   if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+       OMPI_SINGLE_INT_2_FINT(position);			     
+   }
 }

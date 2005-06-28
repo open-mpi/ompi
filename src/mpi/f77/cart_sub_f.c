@@ -64,7 +64,7 @@ void mpi_cart_sub_f(MPI_Fint *comm, MPI_Fint *remain_dims,
     c_new_comm = MPI_Comm_f2c(*new_comm);
 
     *ierr = OMPI_INT_2_FINT(MPI_Cart_sub(c_comm, remain_dims, &c_new_comm));
-
-    *new_comm = MPI_Comm_c2f(c_new_comm);
-
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *new_comm = MPI_Comm_c2f(c_new_comm);
+    }
 }

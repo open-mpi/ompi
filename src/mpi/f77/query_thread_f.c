@@ -60,5 +60,7 @@ void mpi_query_thread_f(MPI_Fint *provided, MPI_Fint *ierr)
     OMPI_SINGLE_NAME_DECL(provided);
 
     *ierr = OMPI_INT_2_FINT(MPI_Query_thread(OMPI_SINGLE_NAME_CONVERT(provided)));
-    OMPI_SINGLE_INT_2_FINT(provided);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(provided);
+    }
 }

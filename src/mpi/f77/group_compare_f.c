@@ -73,5 +73,7 @@ void mpi_group_compare_f(MPI_Fint *group1, MPI_Fint *group2,
     *ierr = OMPI_INT_2_FINT(MPI_Group_compare(c_group1, c_group2, 
 					      OMPI_SINGLE_NAME_CONVERT(result)
 					      ));
-    OMPI_SINGLE_INT_2_FINT(result);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(result);
+    }
 }

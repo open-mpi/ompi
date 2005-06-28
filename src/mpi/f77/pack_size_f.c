@@ -69,5 +69,7 @@ void mpi_pack_size_f(MPI_Fint *incount, MPI_Fint *datatype,
 					  c_type, c_comm, 
 					  OMPI_SINGLE_NAME_CONVERT(size)));
 
-    OMPI_SINGLE_INT_2_FINT(size);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(size);
+    }
 }

@@ -61,5 +61,7 @@ void mpi_comm_remote_group_f(MPI_Fint *comm, MPI_Fint *group, MPI_Fint *ierr)
     MPI_Comm c_comm = MPI_Comm_f2c ( *comm );
 
     *ierr = OMPI_INT_2_FINT(MPI_Comm_remote_group ( c_comm, &c_group ));
-    *group = MPI_Group_c2f (c_group);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *group = MPI_Group_c2f (c_group);
+    }
 }

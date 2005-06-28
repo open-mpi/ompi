@@ -65,6 +65,7 @@ void mpi_info_get_nkeys_f(MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr)
     *ierr = OMPI_INT_2_FINT(MPI_Info_get_nkeys(c_info, 
 					       OMPI_SINGLE_NAME_CONVERT(nkeys)
 					       ));
-    
-    OMPI_SINGLE_INT_2_FINT(nkeys);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(nkeys);
+    }
 }

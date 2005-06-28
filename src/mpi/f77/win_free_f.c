@@ -60,6 +60,7 @@ void mpi_win_free_f(MPI_Fint *win, MPI_Fint *ierr)
     MPI_Win c_win = MPI_Win_f2c(*win);
 
     *ierr = OMPI_INT_2_FINT(MPI_Win_free(&c_win));
-
-    *win = MPI_Win_c2f(c_win);
+   if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+       *win = MPI_Win_c2f(c_win);
+   }
 }

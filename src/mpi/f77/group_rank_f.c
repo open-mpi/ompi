@@ -66,5 +66,7 @@ void mpi_group_rank_f(MPI_Fint *group, MPI_Fint *rank, MPI_Fint *ierr)
   
   *ierr = OMPI_INT_2_FINT(MPI_Group_rank(c_group, 
 					 OMPI_SINGLE_NAME_CONVERT(rank)));
-  OMPI_SINGLE_INT_2_FINT(rank);
+  if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+      OMPI_SINGLE_INT_2_FINT(rank);
+  }
 }

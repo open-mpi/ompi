@@ -67,6 +67,7 @@ void mpi_comm_accept_f(char *port_name, MPI_Fint *info, MPI_Fint *root,
     *ierr = OMPI_INT_2_FINT(MPI_Comm_accept(port_name, c_info, 
 					    OMPI_FINT_2_INT(*root), 
 					    c_comm, &c_new_comm));
-    
-    *newcomm = MPI_Comm_c2f(c_new_comm);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *newcomm = MPI_Comm_c2f(c_new_comm);
+    }
 }

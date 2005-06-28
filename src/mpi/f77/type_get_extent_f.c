@@ -64,9 +64,8 @@ void mpi_type_get_extent_f(MPI_Fint *type, MPI_Fint *lb,
 
     *ierr = OMPI_INT_2_FINT(MPI_Type_get_extent(c_type, &c_lb, &c_extent));
 
-    if (MPI_SUCCESS == *ierr){
-      *lb = (MPI_Fint) c_lb;
-      *extent = (MPI_Fint) c_extent;
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)){
+      *lb = OMPI_FINT_2_INT(c_lb);
+      *extent = OMPI_FINT_2_INT(c_extent);
     }
-
 }

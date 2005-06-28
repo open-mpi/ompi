@@ -91,13 +91,12 @@ void mpi_iprobe_f(MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm,
 				       OMPI_FINT_2_INT(*tag),
 				       c_comm, OMPI_SINGLE_NAME_CONVERT(flag), 
 				       c_status));
-
-    OMPI_SINGLE_INT_2_FINT(flag);
-
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(flag);
 #if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
-    if (MPI_STATUS_IGNORE != c_status) {
-        MPI_Status_c2f(c_status, status);
-    }
+        if (MPI_STATUS_IGNORE != c_status) {
+            MPI_Status_c2f(c_status, status);
+        }
 #endif
-
+    }
 }

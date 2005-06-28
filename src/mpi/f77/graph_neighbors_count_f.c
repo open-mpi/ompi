@@ -66,6 +66,7 @@ void mpi_graph_neighbors_count_f(MPI_Fint *comm, MPI_Fint *rank,
     *ierr = OMPI_INT_2_FINT(MPI_Graph_neighbors_count(c_comm,
 				      OMPI_FINT_2_INT(*rank),
 				      OMPI_SINGLE_NAME_CONVERT(nneighbors)));
-
-    OMPI_SINGLE_INT_2_FINT(nneighbors);
+    if (OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(nneighbors);
+    }
 }

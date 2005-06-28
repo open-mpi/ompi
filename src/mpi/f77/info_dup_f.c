@@ -62,7 +62,7 @@ void mpi_info_dup_f(MPI_Fint *info, MPI_Fint *newinfo, MPI_Fint *ierr)
     c_info = MPI_Info_f2c(*info);
 
     *ierr = OMPI_INT_2_FINT(MPI_Info_dup(c_info, &c_new_info));
-
-    *newinfo = MPI_Info_c2f(c_new_info);
-    
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *newinfo = MPI_Info_c2f(c_new_info);
+    }
 }

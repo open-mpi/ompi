@@ -118,8 +118,9 @@ void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 				       OMPI_FINT_2_INT(*root),
 				       c_comm, &c_new_comm,
 				       c_errs));
-    
-    *intercomm = MPI_Comm_c2f(c_new_comm);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *intercomm = MPI_Comm_c2f(c_new_comm);
+    }
 
     if (!OMPI_IS_FORTRAN_ERRCODES_IGNORE(array_errcds)) {
 	OMPI_ARRAY_INT_2_FINT(array_errcds, size);

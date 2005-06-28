@@ -60,6 +60,7 @@ void mpi_address_f(char *location, MPI_Fint *address, MPI_Fint *ierr)
     MPI_Aint addr;
 
     *ierr = OMPI_INT_2_FINT(MPI_Address(location, &addr));
-
-    *address = (MPI_Fint) addr;
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *address = (MPI_Fint) addr;
+    }
 }

@@ -72,7 +72,8 @@ void mpi_graph_get_f(MPI_Fint *comm, MPI_Fint *maxindex,
 					  OMPI_FINT_2_INT(*maxedges),
 					  OMPI_ARRAY_NAME_CONVERT(index),
 					  OMPI_ARRAY_NAME_CONVERT(edges)));
-
-    OMPI_ARRAY_INT_2_FINT(index, *maxindex);
-    OMPI_ARRAY_INT_2_FINT(edges, *maxedges);
+    if (OMPI_FINT_2_INT(*ierr)) {
+        OMPI_ARRAY_INT_2_FINT(index, *maxindex);
+        OMPI_ARRAY_INT_2_FINT(edges, *maxedges);
+    }
 }

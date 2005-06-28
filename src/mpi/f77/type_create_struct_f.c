@@ -94,7 +94,7 @@ void mpi_type_create_struct_f(MPI_Fint *count,
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_block_lengths);
 
-    if (MPI_SUCCESS == *ierr) {
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         *newtype = MPI_Type_c2f(c_new);
     }
 }

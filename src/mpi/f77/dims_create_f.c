@@ -65,6 +65,7 @@ void mpi_dims_create_f(MPI_Fint *nnodes, MPI_Fint *ndims,
     *ierr = OMPI_INT_2_FINT(MPI_Dims_create(OMPI_FINT_2_INT(*nnodes),
 					    OMPI_FINT_2_INT(*ndims),
 					    OMPI_ARRAY_NAME_CONVERT(dims)));
-
-    OMPI_ARRAY_INT_2_FINT(dims, *ndims);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_ARRAY_INT_2_FINT(dims, *ndims);
+    }
 }

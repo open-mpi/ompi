@@ -72,8 +72,8 @@ void mpi_type_create_indexed_block_f(MPI_Fint *count, MPI_Fint *blocklength,
 			OMPI_ARRAY_NAME_CONVERT(array_of_displacements),
                         c_old, &c_new));
     
-    if (MPI_SUCCESS == *ierr) {
-      *newtype = MPI_Type_c2f(c_new);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *newtype = MPI_Type_c2f(c_new);
     }
 
     OMPI_ARRAY_FINT_2_INT_CLEANUP(array_of_displacements);

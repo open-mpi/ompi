@@ -59,5 +59,7 @@ void mpi_finalized_f(MPI_Fint *flag, MPI_Fint *ierr)
 {
     OMPI_SINGLE_NAME_DECL(flag);
     *ierr = OMPI_INT_2_FINT(MPI_Finalized(OMPI_SINGLE_NAME_CONVERT(flag)));
-    OMPI_SINGLE_INT_2_FINT(flag);
+    if (OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(flag);
+    }
 }

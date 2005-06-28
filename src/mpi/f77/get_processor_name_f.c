@@ -61,6 +61,7 @@ void mpi_get_processor_name_f(char *name, MPI_Fint *resultlen, MPI_Fint *ierr)
 
     *ierr = OMPI_INT_2_FINT(MPI_Get_processor_name(name, 
 				   OMPI_SINGLE_NAME_CONVERT(resultlen)));
-    
-    OMPI_SINGLE_INT_2_FINT(resultlen);
+    if (OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(resultlen);
+    }
 }

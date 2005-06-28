@@ -68,7 +68,8 @@ void mpi_graphdims_get_f(MPI_Fint *comm, MPI_Fint *nnodes,
 					      OMPI_SINGLE_NAME_CONVERT(nnodes),
 					      OMPI_SINGLE_NAME_CONVERT(nedges)
 					      ));
-
-    OMPI_SINGLE_INT_2_FINT(nnodes);
-    OMPI_SINGLE_INT_2_FINT(nedges);
+    if (OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(nnodes);
+        OMPI_SINGLE_INT_2_FINT(nedges);
+    }
 }

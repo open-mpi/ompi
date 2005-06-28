@@ -63,6 +63,7 @@ void mpi_comm_compare_f(MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_
 
     *ierr = OMPI_INT_2_FINT(MPI_Comm_compare(c_comm1, c_comm2, 
 				     OMPI_SINGLE_NAME_CONVERT(result)));
-
-    OMPI_SINGLE_INT_2_FINT(result);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(result);
+    }
 }

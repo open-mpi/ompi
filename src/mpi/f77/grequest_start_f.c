@@ -67,9 +67,7 @@ void mpi_grequest_start_f(MPI_F_Grequest_query_function* query_fn,
 			       (MPI_Grequest_free_function *) free_fn,
 			       (MPI_Grequest_cancel_function *) cancel_fn, 
 			       extra_state, &c_req));
-
-    if (MPI_SUCCESS == *ierr) {
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         *request = MPI_Request_c2f(c_req);
     }
-
 }

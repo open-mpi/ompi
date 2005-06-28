@@ -69,6 +69,7 @@ void mpi_win_create_f(char *base, MPI_Fint *size, MPI_Fint *disp_unit,
     *ierr = OMPI_INT_2_FINT(MPI_Win_create(base, (MPI_Aint)(*size),
 					   OMPI_FINT_2_INT(*disp_unit),
 					   c_info, c_comm, &c_win));
-
-    *win = MPI_Win_c2f(c_win);
+   if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+       *win = MPI_Win_c2f(c_win);
+   }
 }

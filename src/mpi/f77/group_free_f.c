@@ -68,5 +68,7 @@ void mpi_group_free_f(MPI_Fint *group, MPI_Fint *ierr)
   /* This value comes from the MPI_GROUP_NULL value in mpif.h.  Do not
      change without consulting mpif.h! */
 
-  *group = 0;
+  if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+      *group = 0;
+  }
 }

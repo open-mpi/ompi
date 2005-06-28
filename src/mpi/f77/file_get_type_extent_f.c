@@ -65,6 +65,7 @@ void mpi_file_get_type_extent_f(MPI_Fint *fh, MPI_Fint *datatype,
     c_type = MPI_Type_f2c(*datatype);
 
     *ierr = OMPI_INT_2_FINT(MPI_File_get_type_extent(c_fh, c_type, &c_extent));
-    
-    *extent = (MPI_Fint) c_extent;
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *extent = (MPI_Fint) c_extent;
+    }
 }

@@ -103,7 +103,7 @@ void mpi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers,
 				  OMPI_ARRAY_NAME_CONVERT(array_of_integers), 
                                   c_address_array, c_datatype_array));
 
-    if (MPI_SUCCESS == *ierr) {
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         for (i = 0; i < *max_addresses; i++) {
             array_of_addresses[i] = (MPI_Fint)c_address_array[i];
         }

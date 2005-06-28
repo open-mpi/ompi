@@ -66,7 +66,8 @@ void mpi_op_create_f(ompi_op_fortran_handler_fn_t* function, MPI_Fint *commute,
     *ierr = OMPI_INT_2_FINT(MPI_Op_create((MPI_User_function *) function,
 					  OMPI_FINT_2_INT(*commute),
 					  &c_op));
-    c_op->o_flags |= OMPI_OP_FLAGS_FORTRAN_FUNC;
-
-    *op = MPI_Op_c2f(c_op);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        c_op->o_flags |= OMPI_OP_FLAGS_FORTRAN_FUNC;
+        *op = MPI_Op_c2f(c_op);
+    }
 }

@@ -70,6 +70,7 @@ void mpi_cart_coords_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *maxdims,
 					    OMPI_FINT_2_INT(*rank),
 					    OMPI_FINT_2_INT(*maxdims),
 					    OMPI_ARRAY_NAME_CONVERT(coords)));
-    
-    OMPI_ARRAY_INT_2_FINT(coords, size);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_ARRAY_INT_2_FINT(coords, size);
+    }
 }

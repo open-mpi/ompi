@@ -88,7 +88,7 @@ void mpi_type_create_darray_f(MPI_Fint *size, MPI_Fint *rank,
     OMPI_ARRAY_FINT_2_INT_CLEANUP(darg_array);
     OMPI_ARRAY_FINT_2_INT_CLEANUP(psize_array);
 
-    if (MPI_SUCCESS == *ierr) {
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
       *newtype = MPI_Type_c2f(c_new);
     }
 }

@@ -64,6 +64,7 @@ void mpi_cartdim_get_f(MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *ierr)
 
     *ierr = OMPI_INT_2_FINT(MPI_Cartdim_get(c_comm,
 					    OMPI_SINGLE_NAME_CONVERT(ndims)));
-
-    OMPI_SINGLE_INT_2_FINT(ndims);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(ndims);
+    }
 }

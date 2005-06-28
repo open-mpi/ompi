@@ -66,7 +66,7 @@ void mpi_type_create_resized_f(MPI_Fint *oldtype, MPI_Fint *lb,
 						    (MPI_Aint)(*extent), 
 						    &c_new));
 
-    if (MPI_SUCCESS == *ierr) {
-      *newtype = MPI_Type_c2f(c_new);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *newtype = MPI_Type_c2f(c_new);
     }
 }

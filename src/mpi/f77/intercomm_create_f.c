@@ -71,6 +71,7 @@ void mpi_intercomm_create_f(MPI_Fint *local_comm, MPI_Fint *local_leader,
 					 OMPI_FINT_2_INT(*remote_leader),
 					 OMPI_FINT_2_INT(*tag),
 					 &c_newcomm));
-
-    *newintercomm = MPI_Comm_c2f (c_newcomm);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *newintercomm = MPI_Comm_c2f (c_newcomm);
+    }
 }

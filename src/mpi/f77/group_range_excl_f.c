@@ -71,7 +71,9 @@ void mpi_group_range_excl_f(MPI_Fint *group, MPI_Fint *n, MPI_Fint ranges[][3], 
 					       &c_newgroup));
 
   /* translate the results from c to fortran */
-  *newgroup = c_newgroup->grp_f_to_c_index;
+  if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+      *newgroup = c_newgroup->grp_f_to_c_index;
+  }
 
   OMPI_ARRAY_FINT_2_INT_CLEANUP(ranges);
 }

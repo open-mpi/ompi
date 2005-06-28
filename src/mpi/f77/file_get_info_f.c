@@ -61,6 +61,7 @@ void mpi_file_get_info_f(MPI_Fint *fh, MPI_Fint *info_used, MPI_Fint *ierr)
     MPI_Info c_info;
 
     *ierr = OMPI_INT_2_FINT(MPI_File_get_info(c_fh, &c_info));
-
-    *info_used = MPI_Info_c2f(c_info);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *info_used = MPI_Info_c2f(c_info);
+    }
 }

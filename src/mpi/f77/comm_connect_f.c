@@ -68,6 +68,8 @@ void mpi_comm_connect_f(char *port_name, MPI_Fint *info,
     *ierr = OMPI_INT_2_FINT(MPI_Comm_connect(port_name, c_info, 
 					     OMPI_FINT_2_INT(*root),
 					     c_comm, &c_new_comm));
-    *newcomm = MPI_Comm_c2f(c_new_comm);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        *newcomm = MPI_Comm_c2f(c_new_comm);
+    }
 }
 

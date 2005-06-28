@@ -71,6 +71,7 @@ void mpi_graph_neighbors_f(MPI_Fint *comm, MPI_Fint *rank,
 					OMPI_FINT_2_INT(*maxneighbors),
 					OMPI_ARRAY_NAME_CONVERT(neighbors)
 					));
-
-    OMPI_ARRAY_INT_2_FINT(neighbors, *maxneighbors);
+    if (OMPI_FINT_2_INT(*ierr)) {
+        OMPI_ARRAY_INT_2_FINT(neighbors, *maxneighbors);
+    }
 }

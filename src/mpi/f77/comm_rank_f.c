@@ -62,5 +62,7 @@ void mpi_comm_rank_f(MPI_Fint *comm, MPI_Fint *rank, MPI_Fint *ierr)
 
     *ierr = OMPI_INT_2_FINT(MPI_Comm_rank( c_comm,
 					   OMPI_SINGLE_NAME_CONVERT(rank)));
-    OMPI_SINGLE_INT_2_FINT(rank);
+    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        OMPI_SINGLE_INT_2_FINT(rank);
+    }
 }
