@@ -40,7 +40,76 @@
 #include <strings.h>
 
 #include "util/output.h"
+#include "class/ompi_list.h"
+#include "mca/errmgr/errmgr.h"
+#include "mca/schema/schema.h"
+#include "mca/ns/ns.h"
+#include "mca/gpr/gpr.h"
 
+
+/*
+ * Local objects for use in getting daemon and app process data
+ */
+
+/*
+ * Per process data object
+ */
+typedef struct {
+    ompi_list_item_t *item;
+    char *nodename;
+    char *IP_address;
+    char *executable;
+    pid_t pid;
+} orte_totalview_proc_data_t;
+
+/* constructor */
+static void orte_totalview_proc_data_construct(orte_totalview_proc_data_t* ptr)
+{
+    ptr->nodename = NULL;
+    ptr->IP_address = NULL;
+    ptr->executable = NULL;
+}
+
+/* destructor */
+static void orte_totalview_proc_data_destructor(orte_totalview_proc_data* ptr)
+{
+    if (NULL != ptr->nodename) {
+        free(ptr->nodename);
+    }
+
+    if (NULL != ptr->IP_address) {
+        free(ptr->IP_address);
+    }
+
+    if (NULL != ptr->executable) {
+        free(ptr->executable);
+    }
+
+}
+
+/* define instance of orte_gpr_replica_segment_t */
+OBJ_CLASS_INSTANCE(
+          orte_totalview_proc_data_t,  /* type name */
+          ompi_list_item_t, /* parent "class" name */
+          orte_totalview_proc_data_construct, /* constructor */
+          orte_totalview_proc_data_destructor); /* destructor */
+
+
+/*
+ * Local functions for retrieving daemon and app process info
+ */
+static int orte_totalview_get_job_info(size_t *num_procs,
+                                ompi_list_t *ptr,
+                                orte_jobid_t jobid,
+                                orte_jobgrp_t job_grp);
+
+static int orte_totalview_get_daemon_info(size_t *num_procs,
+                                ompi_list_t *ptr,
+                                orte_jobgrp_t job_grp);
+
+static int orte_totalview_get_app_info(size_t *num_procs,
+                                ompi_list_t *ptr,
+                                orte_jobgrp_t job_grp);
 
 /* +++ begin MPICH/TotalView interface definitions */
 
@@ -96,8 +165,12 @@ static void dump(void)
  * Initialization of data structures for running under a debugger
  * using the MPICH/TotalView parallel debugger interface.
  */
-void orte_totalview_init(size_t job_grp)
+void orte_totalview_init(orte_jobgrp_t job_grp)
 {
+    ompi_list_t proc_info;
+    
+    OBJ_CONSTRUCT(&proc_info, ompi_list_t);
+    
     /* 
      * fill in proc table
      */
@@ -108,11 +181,18 @@ void orte_totalview_init(size_t job_grp)
          * Debugging daemons
          */
 
-        int h;
+        int h, rc;
+        size_t num_daemons;
 
         ompi_output_verbose(10, 0, "Info: Setting up debugger "
                             "process table for daemons\n");
 
+        /* get the daemon process data */
+        if (ORTE_SUCCESS != (rc = orte_totalview_get_daemon_info(&num_daemons, &proc_info, job_grp))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        
         /* allocate memory for process table */
         MPIR_proctable_size = RunParams.NHosts;
         MPIR_proctable = (MPIR_PROCDESC *) malloc(sizeof(MPIR_PROCDESC) *
@@ -131,6 +211,7 @@ void orte_totalview_init(size_t job_grp)
         }
 
     } else {
+        size_t num_procs;
         
         /*
          * Debugging applications or not being debugged.
@@ -142,6 +223,11 @@ void orte_totalview_init(size_t job_grp)
         ompi_output_verbose(10, 0, "Info: Setting up debugger "
                             "process table for applications\n");
 
+        /* get the application process data */
+        if (ORTE_SUCCESS != (rc = orte_totalview_get_app_info(&num_procs, &proc_info, job_grp))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
         /* allocate memory for process table */
         MPIR_proctable_size = RunParams.TotalProcessCount;
         MPIR_proctable = (MPIR_PROCDESC *) malloc(sizeof(MPIR_PROCDESC) *
@@ -168,6 +254,9 @@ void orte_totalview_init(size_t job_grp)
         }
     }
 
+    /* cleanup */
+    OBJ_DESTRUCT(&proc_info);
+    
     if (1 /* verbose */) {
         dump();
     }
@@ -198,3 +287,180 @@ void *MPIR_Breakpoint(void)
 {
     return NULL;
 }
+
+
+/**
+ * Get daemon info required for Totalview
+ */
+int orte_totalview_get_daemon_info(size_t *num_procs,
+                                ompi_list_t *ptr,
+                                orte_jobgrp_t job_grp)
+{
+    /* the daemons for a job group are ALWAYS located on jobid zero
+     * within that group. Therefore, we can create the appropriate
+     * registry requests using that knowledge
+     */
+    if (ORTE_SUCCESS != (rc = orte_totalview_get_job_info(num_procs, ptr, job_grp, 0))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    return rc;
+}
+
+static int orte_totalview_get_job_info(size_t *num_procs,
+                                ompi_list_t *ptr,
+                                orte_jobid_t jobid,
+                                orte_jobgrp_t job_grp)
+{
+    size_t i, j, k, cnt;
+    orte_totalview_proc_data_t *pdat;
+    char *segment=NULL, *save_exec=NULL;
+    char *keys[] = {
+        ORTE_JOB_SLOTS_KEY,
+        ORTE_NODE_NAME_KEY,
+        ORTE_JOB_APP_CONTEXT_KEY,
+        ORTE_PROC_LOCAL_PID_KEY,
+        ORTE_PROC_APP_CONTEXT_KEY,
+        ORTE_PROC_RML_IP_ADDRESS_KEY,
+        NULL
+    };
+    orte_gpr_value_t **values, *value;
+    orte_gpr_keyval_t *keyval;
+    int rc;
+    
+    *num_procs = 0;
+    
+    /* get the segment name */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job_grp, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* query all proc entries. We specify no tokens here since we want
+     * all the process entries off of the segments.
+     */
+    if (ORTE_SUCCESS != (rc = orte_gpr.get(ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+                                           segment, NULL, keys,
+                                           &cnt, &values))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* parse the response */
+    for(i=0; i < cnt; i++) {
+        value = values[i];
+        pdat = OBJ_NEW(orte_totalview_proc_data_t);
+        if (NULL == pdat) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
+            for (j=i; j < cnt; j++) OBJ_RELEASE(values[j]);
+            goto CLEANUP;
+        }
+        for(k=0; k<value->cnt; k++) {
+            keyval = value->keyvals[k];
+            /* these values come from the ORTE_JOB_GLOBALS
+             * container
+             */
+            if(strcmp(keyval->key, ORTE_JOB_SLOTS_KEY) == 0) {
+                *num_procs = keyval->value.size;
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_JOB_APP_CONTEXT_KEY) == 0) {
+                save_exec = strdup((keyval->value.app_context)->app);
+                continue;
+            }
+            /* these values come from the containers that
+             * each correspond to a specific process
+             */
+            if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
+                pdat->nodename = strdup(keyval->value.strptr);
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_PROC_LOCAL_PID_KEY) == 0) {
+                pdat->pid = keyval->value.pid;
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_PROC_RML_IP_ADDRESS_KEY) == 0) {
+                pdat->IP_address = strdup(keyval->value.strptr);
+                continue;
+            }
+            if(strcmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
+                pdat->executable = strdup((keyval->value.app_context)->app);
+                continue;
+            }
+        }
+        ompi_list_append(ptr, pdat->item);
+        
+        OBJ_RELEASE(value);
+    }
+    
+    /* we had to get the default executable path from the ORTE_JOB_GLOBALS
+     * container. If we didn't, then something is very wrong - abort
+     */
+    if (NULL == save_exec) {
+        ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
+        rc = ORTE_ERR_GPR_DATA_CORRUPT;
+        goto CLEANUP;
+    }
+    
+    /* check all daemon info to find where the executable path
+     * hasn't been entered - i.e., those daemons that used the
+     * default path that was stored in the ORTE_JOB_GLOBALS
+     * container - and store the default path in them
+     */
+    for (pdat = (orte_totalview_proc_data_t*)ompi_list_get_first(ptr);
+         pdat != (orte_totalview_proc_data_t*)ompi_list_get_end(ptr);
+         pdat = (orte_totalview_proc_data_t*)ompi_list_get_next(pdat)) {
+         if (NULL == pdat->executable)
+            pdat->executable = strdup(save_exec);
+    }
+    
+    /* cleanup */
+    if (NULL != values) free(values);
+    if (NULL != segment) free(segment);
+    if (NULL != save_exec) free(save_exec);
+    
+    return ORTE_SUCCESS;
+}
+
+
+/**
+ * Get application process info required for Totalview
+ */
+int orte_totalview_get_app_info(size_t *num_procs,
+                                ompi_list_t *ptr,
+                                orte_jobgrp_t job_grp)
+{
+    /* need to find all the jobid's that are part of this jobgrp.
+     * Only the "0" jobid belongs to the daemons - all other jobids
+     * have application processes running on them
+     */
+    orte_jobid_t *jobids=NULL;
+    size_t i, n;
+    int rc=ORTE_SUCCESS;
+    
+    *num_procs = 0;
+    
+    if (ORTE_SUCCESS != (rc = orte_ns.get_jobgrp_members(&jobids, job_grp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* now get job info for all non-zero jobids, adding up all
+     * the procs each call brings back
+     */
+    for (i=0; i < num_jobids; i++) {
+        if (0 != jobids[i]) {
+            if (ORTE_SUCCESS != (rc = orte_totalview_get_job_info(&n, ptr, job_grp, jobids[i]))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+            *num_procs = *num_procs + n;
+        }
+    }
+
+CLEANUP:
+    if (NULL != jobids) free(jobids);
+    
+    return rc;
+}
+
