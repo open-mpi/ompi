@@ -223,6 +223,14 @@ OMPI_DECLSPEC void ompi_convertor_dump( ompi_convertor_t* convertor );
 OMPI_DECLSPEC void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
                                         const union dt_elem_desc* pDesc, const char* name );
 
+/*
+ *
+ */
+extern int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
+                                               struct iovec* iov, uint32_t* out_size,
+                                               size_t* max_data,
+                                               int32_t* freeAfter );
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
