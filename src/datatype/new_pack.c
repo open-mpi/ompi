@@ -32,8 +32,8 @@
  * But first let's make some global assumptions:
  * - a datatype (with the flag DT_DATA set) will have the contiguous flags set if and only if
  *   the data is really contiguous (extent equal with size)
- * - for the DT_LOOP type the DT_CONTIGUOUS flag set means that the content of the loop is contiguous
- *   but with a gap in the begining or at the end.
+ * - for the DT_LOOP type the DT_CONTIGUOUS flag set means that the content of the loop is
+ *   contiguous but with a gap in the begining or at the end.
  * - the DT_CONTIGUOUS flag for the type DT_END_LOOP is meaningless.
  */
 
@@ -121,12 +121,7 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
     DUMP( "ompi_convertor_generic_simple_pack( %p, {%p, %d}, %d )\n", (void*)pConvertor,
           iov[0].iov_base, iov[0].iov_len, *out_size );
 
-    if( pConvertor->pDesc->opt_desc.used != 0 ) {
-        description = pConvertor->pDesc->opt_desc.desc;
-    } else {
-        description = pConvertor->pDesc->desc.desc;
-    }
-    /*description = pConvertor->use_desc->desc;*/
+    description = pConvertor->use_desc->desc;
 
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc   = pStack->index;
