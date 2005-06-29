@@ -19,6 +19,7 @@
 #include <stdbool.h>
 #include "datatype.h"
 #include "datatype/datatype_internal.h"
+#include "datatype/convertor.h"
 #include <time.h>
 #include <stdlib.h>
 #ifdef HAVE_SYS_TIME_H
@@ -379,7 +380,8 @@ int test_upper( unsigned int length )
     ompi_convertor_t * pConv;
     char *ptr;
     int i, j, split_chunk, total_length, rc, freeAfter;
-    unsigned int max_data, iov_count;
+    unsigned int iov_count;
+    size_t max_data;
     struct iovec a;
     TIMER_DATA_TYPE start, end;
     long total_time;
@@ -404,7 +406,7 @@ int test_upper( unsigned int length )
         }
     inbuf = (double*)ptr;
     pConv = ompi_convertor_create( 0, 0 );
-    if( OMPI_SUCCESS != ompi_convertor_init_for_recv( pConv, 0, pdt, 1, mat2, 0, NULL ) ) {
+    if( OMPI_SUCCESS != ompi_convertor_prepare_for_recv( pConv, pdt, 1, mat2 ) ) {
         printf( "Cannot attach the datatype to a convertor\n" );
         return OMPI_ERROR;
     }
@@ -708,7 +710,8 @@ int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_c
     void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
     ompi_convertor_t *pSendConvertor = NULL, *pRecvConvertor = NULL;
     struct iovec iov;
-    uint32_t iov_count, max_data;
+    uint32_t iov_count;
+    size_t max_data;
     int32_t free_after = 0, length = 0, done1 = 0, done2 = 0;
 
     ompi_ddt_type_extent( send_type, &send_extent );
@@ -727,12 +730,12 @@ int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_c
     memset( pdst, 0, recv_count * recv_extent );
 
     pSendConvertor = ompi_convertor_create( 0, 0 );
-    if( OMPI_SUCCESS != ompi_convertor_init_for_send( pSendConvertor, 0, send_type, send_count, psrc, 0, NULL ) ) {
+    if( OMPI_SUCCESS != ompi_convertor_prepare_for_send( pSendConvertor, send_type, send_count, psrc ) ) {
         printf( "Unable to create the send convertor. Is the datatype committed ?\n" );
         goto clean_and_return;
     }
     pRecvConvertor = ompi_convertor_create( 0, 0 );
-    if( OMPI_SUCCESS != ompi_convertor_init_for_recv( pRecvConvertor, 0, recv_type, recv_count, pdst, 0, NULL ) ) {
+    if( OMPI_SUCCESS != ompi_convertor_prepare_for_recv( pRecvConvertor, recv_type, recv_count, pdst ) ) {
         printf( "Unable to create the recv convertor. Is the datatype committed ?\n" );
         goto clean_and_return;
     }
@@ -807,9 +810,10 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
 {
     long extent;
     void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
-    ompi_convertor_t *pSendConvertor = NULL, *pRecvConvertor = NULL;
+    ompi_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
     struct iovec iov;
-    uint32_t iov_count, max_data;
+    uint32_t iov_count;
+    size_t max_data;
     int32_t free_after = 0, length = 0, done1 = 0, done2 = 0;
 
     ompi_ddt_type_extent( pdt, &extent );
@@ -818,13 +822,15 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
     psrc  = malloc( extent * count );
     ptemp = malloc( chunk );
 
-    pSendConvertor = ompi_convertor_create( 0, 0 );
-    if( OMPI_SUCCESS != ompi_convertor_init_for_send( pSendConvertor, 0, pdt, count, psrc, 0, NULL ) ) {
+    send_convertor = ompi_convertor_create( 0, 0 );
+    recv_convertor = ompi_convertor_create( 0, 0 );
+
+    if( OMPI_SUCCESS != ompi_convertor_prepare_for_send( send_convertor, pdt, count, psrc ) ) {
         printf( "Unable to create the send convertor. Is the datatype committed ?\n" );
         goto clean_and_return;
     }
-    pRecvConvertor = ompi_convertor_create( 0, 0 );
-    if( OMPI_SUCCESS != ompi_convertor_init_for_recv( pRecvConvertor, 0, pdt, count, pdst, 0, NULL ) ) {
+
+    if( OMPI_SUCCESS != ompi_convertor_prepare_for_recv( recv_convertor, pdt, count, pdst ) ) {
         printf( "Unable to create the recv convertor. Is the datatype committed ?\n" );
         goto clean_and_return;
     }
@@ -843,7 +849,7 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
         iov.iov_len = chunk;
 
         if( done1 == 0 ) {
-            done1 = ompi_convertor_pack( pSendConvertor, &iov, &iov_count, &max_data, &free_after );
+            done1 = ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data, &free_after );
             assert( free_after == 0 );
             if( 1 == done1 ) {
                 printf( "pack finished\n" );
@@ -851,7 +857,7 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
         }
 
         if( done2 == 0 ) {
-            done2 = ompi_convertor_unpack( pRecvConvertor, &iov, &iov_count, &max_data, &free_after );
+            done2 = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data, &free_after );
             assert( free_after == 0 );
             if( 1 == done2 ) {
                 printf( "unpack finished\n" );
@@ -861,12 +867,9 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
         length += max_data;
     }
  clean_and_return:
-    if( pSendConvertor != NULL ) {
-        OBJ_RELEASE( pSendConvertor ); assert( pSendConvertor == NULL );
-    }
-    if( pRecvConvertor != NULL ) {
-        OBJ_RELEASE( pRecvConvertor ); assert( pRecvConvertor == NULL );
-    }
+    if( NULL != send_convertor ) OBJ_RELEASE( send_convertor );
+    if( NULL != recv_convertor ) OBJ_RELEASE( recv_convertor );
+
     if( NULL != pdst ) free( pdst );
     if( NULL != psrc ) free( psrc );
     if( NULL != ptemp ) free( ptemp );
