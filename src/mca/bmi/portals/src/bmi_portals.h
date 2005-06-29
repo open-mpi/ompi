@@ -58,7 +58,7 @@ struct mca_bmi_portals_component_t {
        locked */
     uint32_t portals_num_modules;
     /* List of currently available modules */
-    struct mca_bmi_portals_module_t **portals_modules;
+    struct mca_bmi_portals_module_t *portals_modules;
 
     /* initial size of free lists */
     int portals_free_list_init_num;
@@ -75,34 +75,39 @@ typedef struct mca_bmi_portals_component_t mca_bmi_portals_component_t;
 
 #define MCA_BMI_PORTALS_EQ_RECV  0
 #define MCA_BMI_PORTALS_EQ_SEND  1
-#define MCA_BMI_PORTALS_EQ_SIZE  2
+#define MCA_BMI_PORTALS_EQ_RDMA  2
+#define MCA_BMI_PORTALS_EQ_SIZE  3
 
 struct mca_bmi_portals_module_t {
     /* base BMI module interface */
     mca_bmi_base_module_t super;
 
-    /* number of mds for first frags */
-    int first_frag_num_entries;
+    /* registered callbacks */
+    mca_bmi_base_recv_reg_t portals_reg[MCA_BMI_TAG_MAX];
+
+    ompi_free_list_t portals_frag_eager;
+    ompi_free_list_t portals_frag_max;
+    ompi_free_list_t portals_frag_user;
+
+    /* number of mds for recv frags */
+    int portals_recv_mds_num;
     /* size of each md for first frags */
-    int first_frag_entry_size;
+    int portals_recv_mds_size;
 
     /* size for event queue */
-    int eq_sizes[MCA_BMI_PORTALS_EQ_SIZE];
+    int portals_eq_sizes[MCA_BMI_PORTALS_EQ_SIZE];
     /* frag receive event queue */
-    ptl_handle_eq_t eq_handles[MCA_BMI_PORTALS_EQ_SIZE];
+    ptl_handle_eq_t portals_eq_handles[MCA_BMI_PORTALS_EQ_SIZE];
 
     /* our portals network interface */
-    ptl_handle_ni_t ni_handle;
+    ptl_handle_ni_t portals_ni_h;
     /* the limits returned from PtlNIInit for interface */
-    ptl_ni_limits_t limits;
+    ptl_ni_limits_t portals_ni_limits;
 
     /* number of dropped messages */
-    ptl_sr_value_t dropped;
+    ptl_sr_value_t portals_sr_dropped;
 };
 typedef struct mca_bmi_portals_module_t mca_bmi_portals_module_t;
-
-struct mca_bmi_portals_recv_frag_t;
-struct mca_bmi_portals_send_frag_t;
 
 /*
  * Component functions (bmi_portals_component.c)

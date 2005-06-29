@@ -107,84 +107,77 @@ mca_bmi_portals_component_open(void)
 {
     int i;
 
-    /* initialize state */
+    /* initialize component state */
     mca_bmi_portals_component.portals_num_modules = 0;
     mca_bmi_portals_component.portals_modules = NULL;
 
-    /* initialize objects */
-#if 0
-    OBJ_CONSTRUCT(&mca_bmi_portals_component.portals_send_frags, 
-                  ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_bmi_portals_component.portals_recv_frags, 
-                  ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_bmi_portals_component.portals_pending_acks, 
-                  ompi_list_t);
-#endif
-    OBJ_CONSTRUCT(&mca_bmi_portals_component.portals_lock, 
+    /* initalize component objects */
+    OBJ_CONSTRUCT(&mca_bmi_portals_component.portals_lock,
                   ompi_mutex_t);
 
-    /* register portals module parameters */
-#if BMI_PORTALS_UTCP
-    mca_bmi_portals_component.portals_ifname = 
+    /* get configured state for component */
+#if PTL_PORTALS_UTCP
+    mca_ptl_portals_component.portals_ifname = 
         param_register_string("ifname", "eth0");
 #endif
     portals_output_stream.lds_verbose_level = 
         param_register_int("debug_level",
-                           BMI_PORTALS_DEFAULT_DEBUG_LEVEL);
+                           PTL_PORTALS_DEFAULT_DEBUG_LEVEL);
 
-    mca_bmi_portals_component.portals_free_list_init_num = 
+    mca_ptl_portals_component.portals_free_list_init_num = 
         param_register_int("free_list_init_num",
-                           BMI_PORTALS_DEFAULT_FREE_LIST_INIT_NUM);
-    mca_bmi_portals_component.portals_free_list_max_num = 
+                           PTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM);
+    mca_ptl_portals_component.portals_free_list_max_num = 
         param_register_int("free_list_max_num",
-                           BMI_PORTALS_DEFAULT_FREE_LIST_MAX_NUM);
-    mca_bmi_portals_component.portals_free_list_inc_num = 
+                           PTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM);
+    mca_ptl_portals_component.portals_free_list_inc_num = 
         param_register_int("free_list_inc_num",
-                           BMI_PORTALS_DEFAULT_FREE_LIST_inc_NUM);
+                           PTL_PORTALS_DEFAULT_FREE_LIST_INC_NUM);
 
-#if 0
-    mca_bmi_portals_module.super.bmi_cache_size =
-        param_register_int("request_cache_size",
-                           BMI_PORTALS_DEFAULT_REQUEST_CACHE_SIZE);
-    mca_bmi_portals_module.super.bmi_first_frag_size =
-        param_register_int("first_frag_size",
-                           BMI_PORTALS_DEFAULT_FIRST_FRAG_SIZE);
-    mca_bmi_portals_module.super.bmi_min_frag_size =
-        param_register_int("rndv_frag_min_size",
-                           BMI_PORTALS_DEFAULT_RNDV_FRAG_MIN_SIZE);
-    mca_bmi_portals_module.super.bmi_max_frag_size =
-        param_register_int("rndv_frag_max_size",
-                           BMI_PORTALS_DEFAULT_RNDV_FRAG_MAX_SIZE);
-#endif
-
-    mca_bmi_portals_module.first_frag_num_entries = 
-        param_register_int("first_frag_num_entries",
-                           BMI_PORTALS_DEFAULT_FIRST_FRAG_NUM_ENTRIES);
-    mca_bmi_portals_module.first_frag_entry_size = 
-        param_register_int("first_frag_entry_size",
-                           BMI_PORTALS_DEFAULT_FIRST_FRAG_ENTRY_SIZE);
-
-    mca_bmi_portals_module.eq_sizes[MCA_BMI_PORTALS_EQ_RECV] = 
-        param_register_int("recv_queue_size",
-                           BMI_PORTALS_DEFAULT_RECV_QUEUE_SIZE);
-    mca_bmi_portals_module.eq_sizes[MCA_BMI_PORTALS_EQ_SEND] = 
-        (param_register_int("send_queue_size",
-                            BMI_PORTALS_DEFAULT_SEND_QUEUE_SIZE)) * 3;
-
-    /* finish with objects */
+    /* start up debugging output */
     asprintf(&(portals_output_stream.lds_prefix), 
              "bmi: portals (%5d): ", getpid());
 
     mca_bmi_portals_component.portals_output = 
         ompi_output_open(&portals_output_stream);
 
-    /* fill in remaining defaults for module data */
-    for (i = 0 ; i < MCA_BMI_PORTALS_EQ_SIZE ; ++i) {
-        mca_bmi_portals_module.eq_handles[i] = PTL_EQ_NONE;
+    /* fill default module state */
+    mca_ptl_portals_module.super.bmi_flags = MCA_BMI_FLAGS_RDMA;
+
+    for (i = 0 ; i < MCA_BMI_TAG_MAX ; ++i) {
+        mca_bmi_portals_module.portals_reg = NULL;
     }
 
-    mca_bmi_portals_module.ni_handle = PTL_INVALID_HANDLE;
-    mca_bmi_portals_module.dropped = 0;
+    for (i = 0 ; i < MCA_BMI_PORTALS_EQ_SIZE ; ++i) {
+        mca_bmi_portals_module.portals_eq_sizes[i] = 0;
+        mca_bmi_portals_module.portals_eq_handles[i] = PTL_EQ_NONE;
+    }
+
+    mca_bmi_portals_module.portals_ni_h = PTL_INVALID_HANDLE;
+    mca_bmi_portals_module.portals_sr_dropped = 0;
+
+    /* get configured state for default module */
+    mca_ptl_portals_module.super.bmi_eager_limit = 
+        param_register_int("eager_limit",
+                           PTL_PORTALS_DEFAULT_EAGER_LIMIT);
+    mca_ptl_portals_module.super.bmi_min_send_size = 
+        param_register_int("min_send_size",
+                           PTL_PORTALS_DEFAULT_MIN_SEND_SIZE);
+    mca_ptl_portals_module.super.bmi_max_send_size = 
+        param_register_int("max_send_size",
+                           PTL_PORTALS_DEFAULT_MAX_SEND_SIZE);
+    mca_ptl_portals_module.super.bmi_min_rdma_size = 
+        param_register_int("min_rdma_size",
+                           PTL_PORTALS_DEFAULT_MIN_RDMA_SIZE);
+    mca_ptl_portals_module.super.bmi_max_rdma_size = 
+        param_register_int("max_rdma_size",
+                           PTL_PORTALS_DEFAULT_MAX_RDMA_SIZE);
+    mca_ptl_portals_module.super.bmi_exclusivity = 
+        param_register_int("exclusivity", 60);
+    mca_ptl_portals_module.super.bmi_latency = 
+        param_register_int("latency", 0);
+    mca_ptl_portals_module.super.bmi_bandwidth = 
+        param_register_int("bandwidth", 1000);
 
     return OMPI_SUCCESS;
 }
@@ -193,16 +186,12 @@ mca_bmi_portals_component_open(void)
 int
 mca_bmi_portals_component_close(void)
 {
-    /* print out debugging if anything is pending */
-    /* BWB - implement me, if possible */
-
     /* release resources */
     OBJ_DESTRUCT(&mca_bmi_portals_component.portals_lock);
-#if 0
-    OBJ_DESTRUCT(&mca_bmi_portals_component.portals_recv_frags);
-    OBJ_DESTRUCT(&mca_bmi_portals_component.portals_pending_acks);
-    OBJ_DESTRUCT(&mca_bmi_portals_component.portals_lock);
-#endif
+
+    if (NULL != mca_bmi_portals_component.portals_modules) {
+        free(mca_bmi_portals_component.portals_modules);
+    }
 
     if (NULL != mca_bmi_portals_component.portals_ifname) {
         free(mca_bmi_portals_component.portals_ifname);
@@ -226,30 +215,14 @@ mca_bmi_portals_component_init(int *num_bmis,
 {
     mca_bmi_base_module_t** bmis;
     *num_bmis = 0;
+    int i;
+    uint32_t length;
 
     if (enable_progress_threads) {
         ompi_output_verbose(20, mca_bmi_portals_component.portals_output,
                             "disabled because progress threads enabled");
         return NULL;
     }
-
-#if 0
-    ompi_free_list_init(&mca_bmi_portals_component.portals_send_frags, 
-        sizeof(mca_bmi_portals_send_frag_t),
-        OBJ_CLASS(mca_bmi_portals_send_frag_t),
-        mca_bmi_portals_component.portals_free_list_init_num,
-        mca_bmi_portals_component.portals_free_list_max_num,
-        mca_bmi_portals_component.portals_free_list_inc_num,
-        NULL); /* use default allocator */
-
-    ompi_free_list_init(&mca_bmi_portals_component.portals_recv_frags, 
-        sizeof(mca_bmi_portals_recv_frag_t),
-        OBJ_CLASS(mca_bmi_portals_recv_frag_t),
-        mca_bmi_portals_component.portals_free_list_init_num,
-        mca_bmi_portals_component.portals_free_list_max_num,
-        mca_bmi_portals_component.portals_free_list_inc_num,
-        NULL); /* use default allocator */
-#endif
 
     /* initialize portals bmi.  note that this is in the compat code because
        it's fairly non-portable between implementations */
@@ -259,15 +232,42 @@ mca_bmi_portals_component_init(int *num_bmis,
         return NULL;
     }
 
-    /* return array of bmis */
-    bmis = malloc(mca_bmi_portals_component.portals_num_modules * 
-                  sizeof(mca_bmi_base_module_t*));
-    if (NULL == bmis) return NULL;
+    bmis = malloc(mca_bmi_portals_component.portals_num_modules *
+                  sizeof(mca_bmi_portals_module_t*));
+    for (i = 0 ; i < mca_bmi_portals_component.portals_num_modules ; ++i) {
+        bmis[i] = (mca_bmi_base_module_t*) 
+            (mca_bmi_portals_component.portals_modules + i);
 
-    memcpy(bmis, 
-           mca_bmi_portals_component.portals_modules, 
-           mca_bmi_portals_component.portals_num_modules * 
-           sizeof(mca_bmi_base_module_t*));
+        OBJ_CONSTRUCT(&bmis[i]->portals_frag_eager, ompi_free_list_t);
+        OBJ_CONSTRUCT(&bmis[i]->portals_frag_max, ompi_free_list_t);
+        OBJ_CONSTRUCT(&bmis[i]->portals_frag_user, ompi_free_list_t);
+
+        /* eager frags */
+        ompi_free_list_init(&(bmis[i].send_free_eager),
+                            sizeof(mca_bmi_portals_bmis[i].super.bmi_eager_limit,
+                            OBJ_CLASS(mca_bmi_portals_send_frag_eager_t),
+                            mca_bmi_portals_component.portals_free_list_init_num,
+                            mca_bmi_portals_component.portals_free_list_max_num,
+                            mca_bmi_portals_component.portals_free_list_inc_num);
+
+        /* send frags */
+        ompi_free_list_init(&(bmis[i].send_free_eager),
+                            bmis[i].super.bmi_max_sender_size,
+                            OBJ_CLASS(mca_bmi_portals_send_frag_eager_t),
+                            mca_bmi_portals_component.portals_free_list_init_num,
+                            mca_bmi_portals_component.portals_free_list_max_num,
+                            mca_bmi_portals_component.portals_free_list_inc_num);
+
+        /* user frags */
+        ompi_free_list_init(&(bmis[i].send_free_eager),
+                            bmis[i].super.bmi_max_sender_size,
+                            OBJ_CLASS(mca_bmi_portals_send_frag_eager_t),
+                            mca_bmi_portals_component.portals_free_list_init_num,
+                            mca_bmi_portals_component.portals_free_list_max_num,
+                            mca_bmi_portals_component.portals_free_list_inc_num);
+                            
+
+    }
     *num_bmis = mca_bmi_portals_component.portals_num_modules;
 
     ompi_output_verbose(20, mca_bmi_portals_component.portals_output,

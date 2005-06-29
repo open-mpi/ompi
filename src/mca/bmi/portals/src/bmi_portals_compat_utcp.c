@@ -44,7 +44,7 @@ int
 mca_bmi_portals_init(mca_bmi_portals_component_t *comp)
 {
     ptl_process_id_t info;
-    int ret;
+    int ret, i;
 #if 0
     FILE *output;
     char *tmp;
@@ -77,19 +77,23 @@ mca_bmi_portals_init(mca_bmi_portals_component_t *comp)
     /* with the utcp interface, only ever one "NIC" */
     comp->portals_num_modules = 1;
     comp->portals_modules = calloc(comp->portals_num_modules,
-                                   sizeof(mca_bmi_portals_module_t *));
+                                   sizeof(mca_bmi_portals_module_t));
     if (NULL == comp->portals_modules) {
         ompi_output_verbose(10, mca_bmi_portals_component.portals_output,
                             "malloc failed in mca_bmi_portals_init");
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
     }
-    comp->portals_modules[0] = malloc(sizeof(mca_bmi_portals_module_t));
-    if (NULL == comp->portals_modules) {
-        ompi_output_verbose(10, mca_bmi_portals_component.portals_output,
-                            "malloc failed in mca_bmi_portals_init");
-        return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+
+    /* compat code is responsible for copying over the "template" onto
+       each module instance.  The calling code will create the free
+       lists and the like - we're only responsible for the
+       Portals-specific entries */
+    for (i = 0 ; i < comp->portals_num_modules ; ++i) {
+        memcpy(&(comp->portals_modules[i]), 
+               mca_bmi_portals_module,
+               sizeof(mca_bmi_portals_module_t));
+        /* the defaults are good enough for the rest */
     }
-    *(comp->portals_modules[0]) = mca_bmi_portals_module;
 
     return OMPI_SUCCESS;
 }
@@ -201,8 +205,8 @@ mca_bmi_portals_add_procs_compat(struct mca_bmi_portals_module_t* bmi,
     ret = PtlNIInit(PTL_IFACE_DEFAULT, /* interface to initialize */
                     PTL_PID_ANY,       /* let library assign our pid */
                     NULL,              /* no desired limits */
-                    &(bmi->limits),    /* save our limits somewhere */
-                    &(bmi->ni_handle)  /* our interface handle */
+                    &(bmi->portals_limits),    /* save our limits somewhere */
+                    &(bmi->portals_ni_h)  /* our interface handle */
                     );
     if (PTL_OK != ret) {
         ompi_output_verbose(10, mca_bmi_portals_component.portals_output,
@@ -211,7 +215,7 @@ mca_bmi_portals_add_procs_compat(struct mca_bmi_portals_module_t* bmi,
     }
 
 #if 0
-    PtlNIDebug(bmi->ni_handle, PTL_DBG_ALL | PTL_DBG_NI_ALL);
+    PtlNIDebug(bmi->portals_ni_h, PTL_DBG_ALL | PTL_DBG_NI_ALL);
 #endif
 
     return OMPI_SUCCESS;
