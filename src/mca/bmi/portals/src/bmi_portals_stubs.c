@@ -36,6 +36,7 @@ mca_bmi_portals_register(struct mca_bmi_base_module_t* bmi,
                          mca_bmi_base_module_recv_cb_fn_t cbfunc,
                          void* cbdata)
 {
+    printf("bmi register\n");
     return OMPI_SUCCESS;
 }
 
@@ -44,6 +45,8 @@ mca_bmi_base_descriptor_t*
 mca_bmi_portals_alloc(struct mca_bmi_base_module_t* bmi, 
                       size_t size)
 {
+    printf("bmi alloc: %d\n", size);
+    
     return NULL;
 }
 
@@ -51,6 +54,7 @@ int
 mca_bmi_portals_free(struct mca_bmi_base_module_t* bmi, 
                      mca_bmi_base_descriptor_t* des)
 {
+    printf("bmi free\n");
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
@@ -63,6 +67,7 @@ mca_bmi_portals_prepare_src(struct mca_bmi_base_module_t* bmi,
                             size_t reserve,
                             size_t* size)
 {
+    printf("bmi prepare src\n");
     return NULL;
 }
 
@@ -75,6 +80,7 @@ mca_bmi_portals_prepare_dst(struct mca_bmi_base_module_t* bmi,
                             size_t reserve,
                             size_t* size)
 {
+    printf("bmi prepare dst\n");
     return NULL;
 }
 
@@ -85,6 +91,7 @@ mca_bmi_portals_send(struct mca_bmi_base_module_t* bmi,
                      struct mca_bmi_base_descriptor_t* descriptor, 
                      mca_bmi_base_tag_t tag)
 {
+    printf("bmi send\n");
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
@@ -94,6 +101,7 @@ mca_bmi_portals_put(struct mca_bmi_base_module_t* bmi,
                     struct mca_bmi_base_endpoint_t* bmi_peer,
                     struct mca_bmi_base_descriptor_t* decriptor)
 {
+    printf("bmi put\n");
     return OMPI_ERR_NOT_IMPLEMENTED;
 }
 
@@ -103,5 +111,6 @@ mca_bmi_portals_get(struct mca_bmi_base_module_t* bmi,
                     struct mca_bmi_base_endpoint_t* bmi_peer,
                     struct mca_bmi_base_descriptor_t* decriptor)
 {
+    printf("bmi get\n");
     return OMPI_ERR_NOT_IMPLEMENTED;
 }

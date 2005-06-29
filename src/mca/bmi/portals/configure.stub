@@ -151,58 +151,54 @@ AC_DEFUN([MCA_CONFIGURE_STUB],[
                        [Use the Red Storm implementation or Portals])
     AM_CONDITIONAL([BMI_PORTALS_REDSTORM], [test "$BMI_PORTALS_REDSTORM" = "1"])
 
-    MCA_BMI_PORTALS_CONFIG_VAL([frag-table-id],
-                      [BMI_PORTALS_FRAG_TABLE_ID], [1],
-                      [Portals table id to use for fragment receive queue])
+    #
+    # User configuration options
+    #
+    MCA_BMI_PORTALS_CONFIG_VAL([send-table-id],
+                      [BMI_PORTALS_SEND_TABLE_ID], [1],
+                      [Portals table id to use for send/recv ])
 
-    MCA_BMI_PORTALS_CONFIG_VAL([retrans-table-id],
-                      [BMI_PORTALS_RETRANS_TABLE_ID], [2],
-                      [Portals table id to use for retransmit request queue])
+    MCA_BMI_PORTALS_CONFIG_VAL([rdma-table-id],
+                      [BMI_PORTALS_RDMA_TABLE_ID], [2],
+                      [Portals table id to use for RDMA request])
 
     MCA_BMI_PORTALS_CONFIG_VAL([debug-level],
                       [BMI_PORTALS_DEFAULT_DEBUG_LEVEL], [100],
                       [debugging level for portals bmi])
 
-    MCA_BMI_PORTALS_CONFIG_VAL([request-cache-size],
-                      [BMI_PORTALS_DEFAULT_REQUEST_CACHE_SIZE], [1],
-                      [request cache size for portals bmi])
+    MCA_BMI_PORTALS_CONFIG_VAL([eager-limit],
+                      [BMI_PORTALS_DEFAULT_EAGER_LIMIT], [16384],
+                      [max size for eager sends])
 
-    MCA_BMI_PORTALS_CONFIG_VAL([first-frag-size],
-                      [BMI_PORTALS_DEFAULT_FIRST_FRAG_SIZE], [16384],
-                      [first frag size for portals bmi])
+    MCA_BMI_PORTALS_CONFIG_VAL([min-send-size],
+                      [BMI_PORTALS_DEFAULT_MIN_SEND_SIZE], [0],
+                      [min size for send fragments])
+    MCA_BMI_PORTALS_CONFIG_VAL([max-send-size],
+                      [BMI_PORTALS_DEFAULT_MAX_SEND_SIZE], [0],
+                      [max size for send fragments])
 
-    MCA_BMI_PORTALS_CONFIG_VAL([first-frag-num-entries],
-                      [BMI_PORTALS_DEFAULT_FIRST_FRAG_NUM_ENTRIES], [3],
-                      [number of memory descriptors for first fragments])
+    MCA_BMI_PORTALS_CONFIG_VAL([min-rdma-size],
+                      [BMI_PORTALS_DEFAULT_MIN_RDMA_SIZE], [0],
+                      [min size for rdma fragments])
+    MCA_BMI_PORTALS_CONFIG_VAL([max-rdma-size],
+                      [BMI_PORTALS_DEFAULT_MAX_RDMA_SIZE], [0],
+                      [max size for rdma fragments])
 
-    MCA_BMI_PORTALS_CONFIG_VAL([first-frag-entry-size],
-                      [BMI_PORTALS_DEFAULT_FIRST_FRAG_ENTRY_SIZE], [2098152],
-                      [size of memory associeted with first fag md])
-
+    MCA_BMI_PORTALS_CONFIG_VAL([max-sends-pending],
+                      [BMI_PORTALS_MAX_SENDS_PENDING], [0],
+                      [max number of sends pending at any time])
     MCA_BMI_PORTALS_CONFIG_VAL([recv-queue-size],
                       [BMI_PORTALS_DEFAULT_RECV_QUEUE_SIZE], [512],
                       [size of event queue for receiving frags])
 
-    MCA_BMI_PORTALS_CONFIG_VAL([send-queue-size],
-                      [BMI_PORTALS_DEFAULT_SEND_QUEUE_SIZE], [128],
-                      [Max number of send fragmenst pending])
-
-    MCA_BMI_PORTALS_CONFIG_VAL([rndv-frag-min-size],
-                      [BMI_PORTALS_DEFAULT_RNDV_FRAG_MIN_SIZE], [0],
-                      [minimum size of rndv fragments])
-
-    MCA_BMI_PORTALS_CONFIG_VAL([rndv-frag-max-size],
-                      [BMI_PORTALS_DEFAULT_RNDV_FRAG_MAX_SIZE], [16384],
-                      [maximum size of rndv fragments])
-
     MCA_BMI_PORTALS_CONFIG_VAL([free-list-init-num],
-                      [BMI_PORTALS_DEFAULT_FREE_LIST_INIT_NUM], [256],
+                      [BMI_PORTALS_DEFAULT_FREE_LIST_INIT_NUM], [8],
                       [starting size of free lists])
     MCA_BMI_PORTALS_CONFIG_VAL([free-list-max-num],
-                      [BMI_PORTALS_DEFAULT_FREE_LIST_MAX_NUM], [-1],
+                      [BMI_PORTALS_DEFAULT_FREE_LIST_MAX_NUM], [1024],
                       [maximum size of free lists])
     MCA_BMI_PORTALS_CONFIG_VAL([free-list-inc-num],
-                      [BMI_PORTALS_DEFAULT_FREE_LIST_inc_NUM], [256],
+                      [BMI_PORTALS_DEFAULT_FREE_LIST_INC_NUM], [32],
                       [grow size for freelists])
 
     #

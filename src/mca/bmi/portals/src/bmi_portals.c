@@ -33,12 +33,16 @@
 mca_bmi_portals_module_t mca_bmi_portals_module = {
     {
         &mca_bmi_portals_component.super,
+
+        /* NOTE: All these default values are set in
+           component_open() */
+
         0,   /* max size of first frag */
         0,   /* min send size */
         0,   /* max send size */
         0,   /* min rdma size */
         0,   /* max rdma size */
-        60,   /* exclusivity - higher than sm, lower than self */
+        0,   /* exclusivity - higher than sm, lower than self */
         0,   /* latency */
         0,   /* bandwidth */
         0,   /* bmi flags */
@@ -130,11 +134,13 @@ mca_bmi_portals_finalize(struct mca_bmi_base_module_t *bmi_base)
         (struct mca_bmi_portals_module_t *) bmi_base;
     int ret;
 
-    ret = PtlNIFini(bmi->ni_handle);
-    if (PTL_OK != ret) {
-        ompi_output_verbose(20, mca_bmi_portals_component.portals_output,
-                            "PtlNIFini returned %d", ret);
-        return OMPI_ERROR;
+    if (PTL_INVALID_HANDLE != bmi->ni_handle) {
+        ret = PtlNIFini(bmi->ni_handle);
+        if (PTL_OK != ret) {
+            ompi_output_verbose(20, mca_bmi_portals_component.portals_output,
+                                "PtlNIFini returned %d", ret);
+            return OMPI_ERROR;
+        }
     }
     ompi_output_verbose(20, mca_bmi_portals_component.portals_output,
                         "successfully finalized module");
