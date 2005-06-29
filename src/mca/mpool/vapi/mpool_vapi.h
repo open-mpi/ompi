@@ -83,6 +83,7 @@ struct mca_mpool_vapi_registration_t {
      * to remote processes for incoming RDMA ops */
     void * base; 
     void * bound; 
+    bool is_leave_pinned; 
 
 };
 typedef struct mca_mpool_vapi_registration_t mca_mpool_vapi_registration_t;

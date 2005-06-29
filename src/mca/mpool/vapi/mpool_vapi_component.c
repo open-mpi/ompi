@@ -65,7 +65,7 @@ mca_mpool_vapi_component_t mca_mpool_vapi_component = {
 
 static void mca_mpool_vapi_registration_constructor( mca_mpool_vapi_registration_t * registration ) 
 { 
-    
+    registration->is_leave_pinned = false; 
 }
 
 static void mca_mpool_vapi_registration_destructor( mca_mpool_vapi_registration_t * registration ) 
@@ -79,6 +79,7 @@ static void mca_mpool_vapi_registration_destructor( mca_mpool_vapi_registration_
     
     registration->base = NULL; 
     registration->bound = NULL; 
+    registration->is_leave_pinned=false; 
 
 } 
 
@@ -170,7 +171,7 @@ static mca_mpool_base_module_t* mca_mpool_vapi_init(
     /* setup allocator  TODO fix up */
     mpool_module->hca_pd = *resources;
     mpool_module->vapi_allocator = 
-      allocator_component->allocator_init(true, mca_common_vapi_segment_alloc, NULL, &mpool_module->super);
+        allocator_component->allocator_init(true, mca_common_vapi_segment_alloc, NULL, &mpool_module->super);
     if(NULL == mpool_module->vapi_allocator) {
       ompi_output(0, "mca_mpool_vapi_init: unable to initialize allocator");
       return NULL;
