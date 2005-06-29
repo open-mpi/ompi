@@ -148,7 +148,8 @@ static void mca_pml_ob1_recv_request_ack(
 
     recvreq->req_chunk = mca_mpool_base_find(recvreq->req_recv.req_base.req_addr);
     if( NULL != recvreq->req_chunk &&
-        hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN) {
+        ((hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_PIN)
+         || mca_pml_ob1.leave_pinned)) {  /* BUG here! hdr_flags are 0! */ 
         struct mca_mpool_base_reg_mpool_t *reg = recvreq->req_chunk->mpools;
         while(reg->mpool != NULL) {
             if(NULL != mca_pml_ob1_ep_array_find(&proc->bmi_rdma,(mca_bmi_base_module_t*) reg->user_data)) {

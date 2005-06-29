@@ -186,8 +186,11 @@ int mca_bmi_ib_free(
     mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*)des; 
 
     if(frag->size == 0) {
-        MCA_BMI_IB_FRAG_RETURN_FRAG(bmi, frag); 
+        MCA_BMI_IB_FRAG_RETURN_FRAG(bmi, frag);
+     
         OBJ_RELEASE(frag->vapi_reg); 
+        
+            
     } 
     else if(frag->size == mca_bmi_ib_component.max_send_size){ 
         MCA_BMI_IB_FRAG_RETURN_MAX(bmi, frag); 
@@ -234,7 +237,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
 
     
     if(NULL != vapi_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
-        
+        bool is_leave_pinned = vapi_reg->is_leave_pinned; 
         MCA_BMI_IB_FRAG_ALLOC_FRAG(bmi, frag, rc); 
         if(NULL == frag){
             return NULL; 
@@ -256,31 +259,53 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
             size_t new_len = vapi_reg->bound - vapi_reg->base + 1 
                 + frag->segment.seg_len - reg_len; 
             void * base_addr = vapi_reg->base; 
+            
+            rc = mca_mpool_base_remove((void*) vapi_reg->base); 
+            if(OMPI_SUCCESS != rc) { 
+                ompi_output(0, "%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
+                return NULL; 
+            } 
 
-            mca_mpool_base_remove((void*) vapi_reg->base); 
-            /* ompi_list_remove_item(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg); */
+            if(is_leave_pinned) { 
+                if(NULL == ompi_list_remove_item(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg)){ 
+                    ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                    return NULL; 
+                }
+            } 
             OBJ_RELEASE(vapi_reg); 
             
             ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool, 
                                             base_addr, 
                                             new_len, 
                                             (mca_mpool_base_registration_t**) &vapi_reg);
-                
-            rc = mca_mpool_base_insert(iov.iov_base, 
-                                       iov.iov_len, 
+            
+            
+            
+            rc = mca_mpool_base_insert(vapi_reg->base, 
+                                       vapi_reg->bound - vapi_reg->base + 1, 
                                        ib_bmi->ib_pool, 
                                        (void*) (&ib_bmi->super), 
                                        (mca_mpool_base_registration_t*) vapi_reg); 
             
             
-
-            if(rc != OMPI_SUCCESS) 
+            if(rc != OMPI_SUCCESS) { 
+                ompi_output(0,"%s:%d:%s error inserting memory region into memory pool tree", __FILE__, __LINE__,  __func__); 
                 return NULL; 
-        
+            } 
+
             OBJ_RETAIN(vapi_reg); 
-            /* ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);  */
-            
+            if(is_leave_pinned) {
+                vapi_reg->is_leave_pinned = is_leave_pinned; 
+                ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+            } 
         }   
+        else if(is_leave_pinned) { 
+            if(NULL == ompi_list_remove_item(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg)) { 
+                ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                return NULL; 
+            }
+            ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+        }
         
         frag->mem_hndl = vapi_reg->hndl; 
         frag->sg_entry.len = max_data; 
@@ -318,21 +343,55 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         frag->segment.seg_addr.pval = iov.iov_base; 
         frag->base.des_flags = 0; 
 
-        ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool,
-                                        iov.iov_base, 
-                                        max_data, 
-                                        (mca_mpool_base_registration_t**) &vapi_reg); 
-        
         
         if(mca_bmi_ib_component.leave_pinned) { 
-            rc = mca_mpool_base_insert(iov.iov_base, 
-                                       iov.iov_len, 
+            if(mca_bmi_ib_component.reg_mru_len <= ib_bmi->reg_mru_list.ompi_list_length  ) {
+                
+                mca_mpool_vapi_registration_t* old_reg =
+                    (mca_mpool_vapi_registration_t*)
+                    ompi_list_remove_last(&ib_bmi->reg_mru_list);
+                
+                if( NULL == old_reg) { 
+                    ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                    return NULL; 
+                }
+
+                                
+                rc = mca_mpool_base_remove((void*) old_reg->base); 
+                
+                if(OMPI_SUCCESS != rc) { 
+                    ompi_output(0,"%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
+                    return NULL; 
+                }
+                
+                               
+                OBJ_RELEASE(old_reg);
+            }
+            ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool,
+                                            iov.iov_base, 
+                                            max_data, 
+                                            (mca_mpool_base_registration_t**) &vapi_reg); 
+            
+            rc = mca_mpool_base_insert(vapi_reg->base, 
+                                       vapi_reg->bound - vapi_reg->base + 1, 
                                        ib_bmi->ib_pool, 
                                        (void*) (&ib_bmi->super), 
                                        (mca_mpool_base_registration_t*) vapi_reg); 
             if(rc != OMPI_SUCCESS) 
                 return NULL; 
             OBJ_RETAIN(vapi_reg); 
+            
+            vapi_reg->is_leave_pinned = true; 
+                    
+            ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+            
+        } else { 
+            ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool,
+                                            iov.iov_base, 
+                                            max_data, 
+                                            (mca_mpool_base_registration_t**) &vapi_reg); 
+            
+            vapi_reg->is_leave_pinned = false; 
         } 
         frag->mem_hndl = vapi_reg->hndl; 
         frag->sg_entry.len = max_data; 
@@ -449,12 +508,25 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
 
     if(NULL!= vapi_reg){ 
         reg_len = (unsigned char*)vapi_reg->bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
-        if(frag->segment.seg_len > reg_len) { 
+        bool is_leave_pinned = vapi_reg->is_leave_pinned; 
+
+        if(frag->segment.seg_len > reg_len ) { 
             size_t new_len = vapi_reg->bound - vapi_reg->base + 1 
                 + frag->segment.seg_len - reg_len; 
             void * base_addr = vapi_reg->base; 
 
-            mca_mpool_base_remove((void*) vapi_reg->base); 
+            rc = mca_mpool_base_remove((void*) vapi_reg->base); 
+            if(OMPI_SUCCESS != rc) { 
+                ompi_output(0,"%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
+                return NULL; 
+            } 
+
+            if(is_leave_pinned) { 
+                if(NULL == ompi_list_remove_item(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg)) { 
+                    ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                    return NULL; 
+                }
+            }
             OBJ_RELEASE(vapi_reg); 
             
             ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool, 
@@ -463,34 +535,85 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
                                             (mca_mpool_base_registration_t**) &vapi_reg);
             
         
-            rc = mca_mpool_base_insert(frag->segment.seg_addr.pval, 
-                                       frag->segment.seg_len, 
+            rc = mca_mpool_base_insert(vapi_reg->base, 
+                                       vapi_reg->bound - vapi_reg->base + 1, 
                                        ib_bmi->ib_pool, 
                                        (void*) (&ib_bmi->super), 
                                        (mca_mpool_base_registration_t*) vapi_reg); 
-            if(rc != OMPI_SUCCESS) 
-                return NULL;
             
+            if(OMPI_SUCCESS != rc) {
+                ompi_output(0,"%s:%d:%s error inserting memory region into memory pool tree", __FILE__, __LINE__,  __func__); 
+                return NULL;
+            }
             OBJ_RETAIN(vapi_reg); 
+            
+            if(is_leave_pinned) { 
+                vapi_reg->is_leave_pinned = is_leave_pinned; 
+                ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+            } 
+
         } 
-                
+        else if(is_leave_pinned){ 
+            if(NULL == ompi_list_remove_item(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg)) { 
+                ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                return NULL; 
+            }    
+            ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg); 
+        }
     }  else { 
-        ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool,
+           
+        if(mca_bmi_ib_component.leave_pinned) { 
+            
+        
+            if( mca_bmi_ib_component.reg_mru_len <= ib_bmi->reg_mru_list.ompi_list_length  ) {
+               
+                mca_mpool_vapi_registration_t* old_reg =
+                    (mca_mpool_vapi_registration_t*)
+                    ompi_list_remove_last(&ib_bmi->reg_mru_list);
+                
+                if( NULL == old_reg) { 
+                    ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
+                    return NULL; 
+                }
+                
+                rc = mca_mpool_base_remove((void*) old_reg->base); 
+                if(OMPI_SUCCESS !=rc ) { 
+                    ompi_output(0,"%s:%d:%s error removing memory region from memory pool tree", __FILE__, __LINE__,  __func__); 
+                    return NULL; 
+                } 
+                
+                OBJ_RELEASE(old_reg);
+                
+            }
+            ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool,
                                         frag->segment.seg_addr.pval,
                                         *size, 
                                         (mca_mpool_base_registration_t**) &vapi_reg);
             
-        if(mca_bmi_ib_component.leave_pinned) { 
-            rc = mca_mpool_base_insert(frag->segment.seg_addr.pval,  
-                                       *size, 
+            vapi_reg->is_leave_pinned = true;
+            
+            rc = mca_mpool_base_insert(vapi_reg->base,  
+                                       vapi_reg->bound - vapi_reg->base + 1, 
                                        ib_bmi->ib_pool, 
                                        (void*) (&ib_bmi->super), 
                                        (mca_mpool_base_registration_t*)  vapi_reg); 
-            if(rc != OMPI_SUCCESS) 
+            if(OMPI_SUCCESS != rc){ 
+                ompi_output(0,"%s:%d:%s error inserting memory region into memory pool", __FILE__, __LINE__,  __func__); 
                 return NULL;
-            
+            } 
+
             OBJ_RETAIN(vapi_reg); 
+            ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+            
+        } else { 
+            ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool,
+                                            frag->segment.seg_addr.pval,
+                                            *size, 
+                                            (mca_mpool_base_registration_t**) &vapi_reg);
+            vapi_reg->is_leave_pinned=false; 
         }
+        
+        
     }
 
     
