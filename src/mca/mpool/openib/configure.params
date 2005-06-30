@@ -17,6 +17,6 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=btl_mvapi.c
-PARAM_CONFIG_HEADER_FILE="mvapi_config.h"
+PARAM_INIT_FILE=mpool_openib_component.c
+PARAM_CONFIG_HEADER_FILE="openib_config.h"
 PARAM_CONFIG_FILES="Makefile"

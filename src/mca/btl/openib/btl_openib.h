@@ -32,7 +32,7 @@
 #include "mca/btl/btl.h"
 #include "util/output.h"
 #include "mca/mpool/mpool.h" 
-#include "btl_mvapi_error.h" 
+#include "btl_openib_error.h" 
 
 #include "mca/btl/btl.h"
 #include "mca/btl/base/base.h" 
@@ -47,13 +47,13 @@ extern "C" {
  * Infiniband (IB) BTL component.
  */
 
-struct mca_btl_mvapi_component_t {
+struct mca_btl_openib_component_t {
     mca_btl_base_component_1_0_0_t          super;  /**< base BTL component */ 
     
     uint32_t                                ib_num_btls;
     /**< number of hcas available to the IB component */
 
-    struct mca_btl_mvapi_module_t             *mvapi_btls;
+    struct mca_btl_openib_module_t             *mvapi_btls;
     /**< array of available PTLs */
 
     int ib_free_list_num;
@@ -96,24 +96,26 @@ struct mca_btl_mvapi_component_t {
     uint32_t reg_mru_len; 
     
     
-}; typedef struct mca_btl_mvapi_component_t mca_btl_mvapi_component_t;
+}; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
-extern mca_btl_mvapi_component_t mca_btl_mvapi_component;
+extern mca_btl_openib_component_t mca_btl_openib_component;
 
-typedef mca_btl_base_recv_reg_t mca_btl_mvapi_recv_reg_t; 
+typedef mca_btl_base_recv_reg_t mca_btl_openib_recv_reg_t; 
     
 
 
 /**
  * IB PTL Interface
  */
-struct mca_btl_mvapi_module_t {
+struct mca_btl_openib_module_t {
     mca_btl_base_module_t  super;  /**< base PTL interface */
     bool btl_inited; 
-    mca_btl_mvapi_recv_reg_t ib_reg[256]; 
+    mca_btl_openib_recv_reg_t ib_reg[256]; 
     VAPI_hca_id_t   hca_id;        /**< ID of HCA */
-    IB_port_t port_id; /**< ID of the PORT */ 
-    VAPI_hca_port_t port;          /**< IB port of this PTL */
+    
+    int port;           /**< ID of the PORT */ 
+    struct ibv_device;  /* the ib device */ 
+    
     VAPI_hca_hndl_t nic;           /**< NIC handle */
     VAPI_pd_hndl_t  ptag;          /**< Protection Domain tag */
     
@@ -166,21 +168,21 @@ struct mca_btl_mvapi_module_t {
     uint32_t ib_src_path_bits; 
 
     
-}; typedef struct mca_btl_mvapi_module_t mca_btl_mvapi_module_t;
+}; typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
     
 
-    struct mca_btl_mvapi_frag_t; 
-extern mca_btl_mvapi_module_t mca_btl_mvapi_module;
+    struct mca_btl_openib_frag_t; 
+extern mca_btl_openib_module_t mca_btl_openib_module;
 
 /**
  * Register IB component parameters with the MCA framework
  */
-extern int mca_btl_mvapi_component_open(void);
+extern int mca_btl_openib_component_open(void);
 
 /**
  * Any final cleanup before being unloaded.
  */
-extern int mca_btl_mvapi_component_close(void);
+extern int mca_btl_openib_component_close(void);
 
 /**
  * IB component initialization.
@@ -195,7 +197,7 @@ extern int mca_btl_mvapi_component_close(void);
  *  (3) publish BTL addressing info 
  *
  */
-extern mca_btl_base_module_t** mca_btl_mvapi_component_init(
+extern mca_btl_base_module_t** mca_btl_openib_component_init(
     int *num_btl_modules, 
     bool allow_multi_user_threads,
     bool have_hidden_threads
@@ -205,7 +207,7 @@ extern mca_btl_base_module_t** mca_btl_mvapi_component_init(
 /**
  * IB component progress.
  */
-extern int mca_btl_mvapi_component_progress(
+extern int mca_btl_openib_component_progress(
                                          void
 );
 
@@ -222,7 +224,7 @@ extern int mca_btl_mvapi_component_progress(
  * resources associated with the peer.
  */
 
-int mca_btl_mvapi_register(
+int mca_btl_openib_register(
     struct mca_btl_base_module_t* btl,
     mca_btl_base_tag_t tag,
     mca_btl_base_module_recv_cb_fn_t cbfunc,
@@ -237,7 +239,7 @@ int mca_btl_mvapi_register(
  * @return     OMPI_SUCCESS or error status on failure.
  */
 
-extern int mca_btl_mvapi_finalize(
+extern int mca_btl_openib_finalize(
     struct mca_btl_base_module_t* btl
 );
 
@@ -254,7 +256,7 @@ extern int mca_btl_mvapi_finalize(
  * 
  */
 
-extern int mca_btl_mvapi_add_procs(
+extern int mca_btl_openib_add_procs(
     struct mca_btl_base_module_t* btl,
     size_t nprocs,
     struct ompi_proc_t **procs,
@@ -272,7 +274,7 @@ extern int mca_btl_mvapi_add_procs(
  * @return             Status indicating if cleanup was successful
  *
  */
-extern int mca_btl_mvapi_del_procs(
+extern int mca_btl_openib_del_procs(
     struct mca_btl_base_module_t* btl,
     size_t nprocs,
     struct ompi_proc_t **procs,
@@ -290,7 +292,7 @@ extern int mca_btl_mvapi_del_procs(
  * @param flags (IN)             Flags that should be passed to the peer via the message header.
  * @param request (OUT)          OMPI_SUCCESS if the BTL was able to queue one or more fragments
  */
-extern int mca_btl_mvapi_send(
+extern int mca_btl_openib_send(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
     struct mca_btl_base_descriptor_t* descriptor, 
@@ -307,7 +309,7 @@ extern int mca_btl_mvapi_send(
  * @param flags (IN)             Flags that should be passed to the peer via the message header.
  * @param request (OUT)          OMPI_SUCCESS if the BTL was able to queue one or more fragments
  */
-extern int mca_btl_mvapi_put(
+extern int mca_btl_openib_put(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* btl_peer,
     struct mca_btl_base_descriptor_t* decriptor
@@ -319,7 +321,7 @@ extern int mca_btl_mvapi_put(
  * @param btl (IN)      BTL module
  * @param size (IN)     Requested descriptor size.
  */
-extern mca_btl_base_descriptor_t* mca_btl_mvapi_alloc(
+extern mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     struct mca_btl_base_module_t* btl, 
     size_t size); 
 
@@ -330,7 +332,7 @@ extern mca_btl_base_descriptor_t* mca_btl_mvapi_alloc(
  * @param btl (IN)         BTL module
  * @param descriptor (IN)  Allocated descriptor.
  */
-extern int mca_btl_mvapi_free(
+extern int mca_btl_openib_free(
     struct mca_btl_base_module_t* btl, 
     mca_btl_base_descriptor_t* des); 
     
@@ -342,7 +344,7 @@ extern int mca_btl_mvapi_free(
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
+mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* peer,
     mca_mpool_base_registration_t* registration, 
@@ -357,7 +359,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-extern mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst( 
+extern mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst( 
                                                          struct mca_btl_base_module_t* btl, 
                                                          struct mca_btl_base_endpoint_t* peer,
                                                          mca_mpool_base_registration_t* registration, 
@@ -371,13 +373,13 @@ extern mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
  * @param frag (IN)  IB send fragment
  *
  */
-extern void mca_btl_mvapi_send_frag_return(
+extern void mca_btl_openib_send_frag_return(
     struct mca_btl_base_module_t* btl,
-    struct mca_btl_mvapi_frag_t*
+    struct mca_btl_openib_frag_t*
 );
 
 
-int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t* mvapi_btl); 
+int mca_btl_openib_module_init(mca_btl_openib_module_t* mvapi_btl); 
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
