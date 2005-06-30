@@ -540,7 +540,7 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
             /* drop all sends to this destination port */
             gm_drop_sends(
                 btl->gm_port,
-                frag->priority,
+                (frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY) ? GM_HIGH_PRIORITY : GM_LOW_PRIORITY,
                 frag->endpoint->endpoint_addr.local_id,
                 frag->endpoint->endpoint_addr.port_id,
                 mca_btl_gm_drop_callback,

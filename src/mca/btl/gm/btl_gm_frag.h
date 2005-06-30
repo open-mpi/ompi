@@ -37,10 +37,9 @@ struct mca_btl_gm_frag_t {
     mca_btl_base_segment_t segment; 
     struct mca_btl_gm_module_t* btl;
     struct mca_btl_base_endpoint_t *endpoint; 
+    struct mca_mpool_base_registration_t* registration;
     mca_btl_base_header_t *hdr;
     size_t size; 
-    enum gm_priority priority;
-    struct mca_mpool_base_registration_t* registration;
 }; 
 typedef struct mca_btl_gm_frag_t mca_btl_gm_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_gm_frag_t); 
