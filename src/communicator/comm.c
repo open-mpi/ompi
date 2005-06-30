@@ -25,6 +25,7 @@
 #include "threads/mutex.h"
 #include "util/bit_ops.h"
 #include "util/output.h"
+#include "util/convert.h"
 #include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
 #include "mca/ns/ns.h"
@@ -829,7 +830,8 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     int local_rank, local_size;
     ompi_proc_t **rprocs=NULL;
     char *rnamebuf=NULL;
-    int len, rlen;
+    size_t size_len;
+    int int_len, rlen;
     orte_buffer_t *sbuf=NULL, *rbuf=NULL;
     void *sendbuf;
     char *recvbuf;
@@ -849,18 +851,22 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-	   if (ORTE_SUCCESS != (rc = orte_dps.unload(sbuf, &sendbuf, (size_t*)&len))) {
+        if (ORTE_SUCCESS != (rc = orte_dps.unload(sbuf, &sendbuf, &size_len))) {
             goto err_exit;
-       }
+        }
 	
         /* send the remote_leader the length of the buffer */
         rc = MCA_PML_CALL(irecv (&rlen, 1, MPI_INT, remote_leader, tag,
-                                bridge_comm, &req ));
+                                 bridge_comm, &req ));
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        rc = MCA_PML_CALL(send (&len, 1, MPI_INT, remote_leader, tag, 
-                               MCA_PML_BASE_SEND_STANDARD, bridge_comm ));
+        if (OMPI_SUCCESS != (rc = ompi_sizet2int(size_len, &int_len, true))) {
+            goto err_exit;
+        }
+        printf("Got sizet len: %ld, int %d\n", size_len, int_len);
+        rc = MCA_PML_CALL(send (&int_len, 1, MPI_INT, remote_leader, tag, 
+                                MCA_PML_BASE_SEND_STANDARD, bridge_comm ));
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
@@ -901,7 +907,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        rc = MCA_PML_CALL(send(sendbuf, len, MPI_BYTE, remote_leader, tag, 
+        rc = MCA_PML_CALL(send(sendbuf, int_len, MPI_BYTE, remote_leader, tag, 
                                MCA_PML_BASE_SEND_STANDARD, bridge_comm ));
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
