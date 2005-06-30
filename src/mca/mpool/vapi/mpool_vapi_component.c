@@ -73,12 +73,12 @@ static void mca_mpool_vapi_registration_destructor( mca_mpool_vapi_registration_
     mca_mpool_base_remove((void*) registration); 
     registration->base_reg.mpool->mpool_deregister(
                                                    registration->base_reg.mpool, 
-                                                   registration->base, 
+                                                   registration->base_reg.base, 
                                                    0, 
                                                    (mca_mpool_base_registration_t*) registration); 
     
-    registration->base = NULL; 
-    registration->bound = NULL; 
+    registration->base_reg.base = NULL; 
+    registration->base_reg.bound = NULL; 
     registration->is_leave_pinned=false; 
 
 } 

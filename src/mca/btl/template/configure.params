@@ -17,6 +17,6 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=bmi_template.c
+PARAM_INIT_FILE=btl_template.c
 PARAM_CONFIG_HEADER_FILE="template_config.h"
 PARAM_CONFIG_FILES="Makefile"

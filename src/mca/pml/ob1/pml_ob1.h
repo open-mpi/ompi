@@ -30,7 +30,7 @@
 #include "mca/pml/base/pml_base_request.h"
 #include "mca/pml/base/pml_base_bsend.h"
 #include "mca/pml/base/pml_base_sendreq.h"
-#include "mca/bmi/bmi.h"
+#include "mca/btl/btl.h"
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -43,20 +43,20 @@ extern "C" {
 struct mca_pml_ob1_t {
     mca_pml_base_module_t super; 
 
-    mca_bmi_base_component_t **bmi_components;
-    size_t num_bmi_components;
+    mca_btl_base_component_t **btl_components;
+    size_t num_btl_components;
 
-    mca_bmi_base_module_t** bmi_modules;
-    size_t num_bmi_modules;
+    mca_btl_base_module_t** btl_modules;
+    size_t num_btl_modules;
 
-    mca_bmi_base_component_progress_fn_t* bmi_progress;
-    size_t num_bmi_progress;
+    mca_btl_base_component_progress_fn_t* btl_progress;
+    size_t num_btl_progress;
 
     int priority;
     int free_list_num;      /* initial size of free list */
     int free_list_max;      /* maximum size of free list */
     int free_list_inc;      /* number of elements to grow free list */
-    size_t eager_limit;     /* maximum eager limit size - overrides bmi setting */
+    size_t eager_limit;     /* maximum eager limit size - overrides btl setting */
     size_t rdma_offset;     /* offset at which we attempt to initiate rdma */
     size_t send_pipeline_depth;
     size_t recv_pipeline_depth;
@@ -123,7 +123,7 @@ extern int mca_pml_ob1_del_procs(
     size_t nprocs
 );
 
-extern int mca_pml_ob1_add_bmis(void);
+extern int mca_pml_ob1_add_btls(void);
 
 extern int mca_pml_ob1_enable(
     bool enable

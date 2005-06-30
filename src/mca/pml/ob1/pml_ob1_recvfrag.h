@@ -20,7 +20,7 @@
 #ifndef MCA_PML_OB1_RECVFRAG_H
 #define MCA_PML_OB1_RECVFRAG_H
 
-#include "mca/bmi/bmi.h"
+#include "mca/btl/btl.h"
 #include "pml_ob1_hdr.h"
 
 struct mca_pml_ob1_buffer_t {
@@ -34,12 +34,12 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_buffer_t);
 
 struct mca_pml_ob1_recv_frag_t {
     ompi_list_item_t super;
-    mca_bmi_base_module_t* bmi;
+    mca_btl_base_module_t* btl;
     mca_pml_ob1_hdr_t hdr;
     struct mca_pml_ob1_recv_request_t* request;
     size_t num_segments;
-    mca_bmi_base_segment_t segments[MCA_BMI_DES_MAX_SEGMENTS];
-    mca_pml_ob1_buffer_t* buffers[MCA_BMI_DES_MAX_SEGMENTS];
+    mca_btl_base_segment_t segments[MCA_BTL_DES_MAX_SEGMENTS];
+    mca_pml_ob1_buffer_t* buffers[MCA_BTL_DES_MAX_SEGMENTS];
 };
 typedef struct mca_pml_ob1_recv_frag_t mca_pml_ob1_recv_frag_t;
 
@@ -54,14 +54,14 @@ do {                                                            \
 } while(0)
 
 
-#define MCA_PML_OB1_RECV_FRAG_INIT(frag,bmi,hdr,segs,cnt)            \
+#define MCA_PML_OB1_RECV_FRAG_INIT(frag,btl,hdr,segs,cnt)            \
 do {                                                            \
     size_t i;                                                   \
-    mca_bmi_base_segment_t* macro_segments = frag->segments;          \
+    mca_btl_base_segment_t* macro_segments = frag->segments;          \
     mca_pml_ob1_buffer_t** buffers = frag->buffers;             \
                                                                 \
     /* init recv_frag */                                         \
-    frag->bmi = bmi;                                            \
+    frag->btl = btl;                                            \
     frag->hdr = *(mca_pml_ob1_hdr_t*)hdr;                       \
     frag->num_segments = cnt;                                   \
                                                                 \
@@ -100,13 +100,13 @@ do {                                                            \
 
 
 /**
- *  Callback from BMI on receipt of a recv_frag.
+ *  Callback from BTL on receipt of a recv_frag.
  */
 
 OMPI_DECLSPEC void mca_pml_ob1_recv_frag_callback(
-    mca_bmi_base_module_t* bmi,
-    mca_bmi_base_tag_t tag,
-    mca_bmi_base_descriptor_t* descriptor,
+    mca_btl_base_module_t* btl,
+    mca_btl_base_tag_t tag,
+    mca_btl_base_descriptor_t* descriptor,
     void* cbdata
 );
                                                                                                                
@@ -121,9 +121,9 @@ OMPI_DECLSPEC void mca_pml_ob1_recv_frag_callback(
  * @return                          OMPI_SUCCESS or error status on failure.
  */
 OMPI_DECLSPEC int mca_pml_ob1_recv_frag_match(
-    mca_bmi_base_module_t* bmi,
+    mca_btl_base_module_t* btl,
     mca_pml_ob1_match_hdr_t *hdr,
-    mca_bmi_base_segment_t* segments,
+    mca_btl_base_segment_t* segments,
     size_t num_segments);
 
 

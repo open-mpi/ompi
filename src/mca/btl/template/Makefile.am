@@ -19,38 +19,38 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 sources = \
-    bmi_template.c \
-    bmi_template.h \
-    bmi_template_component.c \
-    bmi_template_endpoint.c \
-    bmi_template_endpoint.h \
-    bmi_template_frag.c \
-    bmi_template_frag.h \
-    bmi_template_proc.c \
-    bmi_template_proc.h \
-    bmi_template_error.h
+    btl_template.c \
+    btl_template.h \
+    btl_template_component.c \
+    btl_template_endpoint.c \
+    btl_template_endpoint.h \
+    btl_template_frag.c \
+    btl_template_frag.h \
+    btl_template_proc.c \
+    btl_template_proc.h \
+    btl_template_error.h
      
-# Make the output lgmrary in this directory, and name it either
-# mca_<type>_<name>.la (for DSO builds) or lgmmca_<type>_<name>.la
+# Make the output library in this directory, and name it either
+# mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_bmi_template_DSO
-lgm =
-lgm_sources =
-component = mca_bmi_template.la
+if OMPI_BUILD_btl_template_DSO
+lib =
+lib_sources =
+component = mca_btl_template.la
 component_sources = $(sources)
 else
-lgm = lgmmca_bmi_template.la
-lgm_sources = $(sources)
+lib = libmca_btl_template.la
+lib_sources = $(sources)
 component =
 component_sources =
 endif
 
-mcacomponentdir = $(lgmdir)/openmpi
+mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component)
-mca_bmi_template_la_SOURCES = $(component_sources)
-mca_bmi_template_la_LDFLAGS = -module -avoid-version
+mca_btl_template_la_SOURCES = $(component_sources)
+mca_btl_template_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = $(lgm)
-lgmmca_bmi_template_la_SOURCES = $(lgm_sources)
-lgmmca_bmi_template_la_LDFLAGS = -module -avoid-version
+noinst_LTLIBRARIES = $(lib)
+libmca_btl_template_la_SOURCES = $(lib_sources)
+libmca_btl_template_la_LDFLAGS = -module -avoid-version

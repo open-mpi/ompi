@@ -100,8 +100,8 @@ int mca_mpool_vapi_register(mca_mpool_base_module_t* mpool,
     
     vapi_reg->l_key = mr_out.l_key; 
     vapi_reg->r_key = mr_out.r_key; 
-    vapi_reg->base = addr; 
-    vapi_reg->bound = (void*) ((char*) addr + size - 1); 
+    vapi_reg->base_reg.base = addr; 
+    vapi_reg->base_reg.bound = (void*) ((char*) addr + size - 1); 
     
     return OMPI_SUCCESS; 
 }

@@ -17,6 +17,6 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=bmi_sm.c
+PARAM_INIT_FILE=btl_sm.c
 PARAM_CONFIG_HEADER_FILE="sm_config.h"
 PARAM_CONFIG_FILES="Makefile"

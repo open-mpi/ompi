@@ -18,32 +18,32 @@
 
 include $(top_ompi_srcdir)/config/Makefile.options
 
-libmca_bmi_sm_la_sources = \
-    bmi_sm.c \
-    bmi_sm.h \
-    bmi_sm_component.c \
-    bmi_sm_frag.c \
-    bmi_sm_frag.h 
+libmca_btl_sm_la_sources = \
+    btl_sm.c \
+    btl_sm.h \
+    btl_sm_component.c \
+    btl_sm_frag.c \
+    btl_sm_frag.h 
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_bmi_sm_DSO
+if OMPI_BUILD_btl_sm_DSO
 component_noinst =
-component_install = mca_bmi_sm.la
+component_install = mca_btl_sm.la
 else
-component_noinst = libmca_bmi_sm.la
+component_noinst = libmca_btl_sm.la
 component_install =
 endif
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_bmi_sm_la_SOURCES = $(libmca_bmi_sm_la_sources)
-mca_bmi_sm_la_LDFLAGS = -module -avoid-version
-mca_bmi_sm_la_LIBADD = 
+mca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
+mca_btl_sm_la_LDFLAGS = -module -avoid-version
+mca_btl_sm_la_LIBADD = 
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_bmi_sm_la_SOURCES = $(libmca_bmi_sm_la_sources)
-libmca_bmi_sm_la_LDFLAGS = -module -avoid-version
-libmca_bmi_sm_la_LIBADD = 
+libmca_btl_sm_la_SOURCES = $(libmca_btl_sm_la_sources)
+libmca_btl_sm_la_LDFLAGS = -module -avoid-version
+libmca_btl_sm_la_LIBADD = 

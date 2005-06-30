@@ -21,7 +21,7 @@
 #include <sched.h>
 #include "include/constants.h"
 #include "mca/pml/pml.h"
-#include "mca/bmi/bmi.h"
+#include "mca/btl/btl.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/mpool/mpool.h" 
 #include "pml_ob1.h"
@@ -76,13 +76,13 @@ OBJ_CLASS_INSTANCE(
  */
 
 static void mca_pml_ob1_short_completion(
-    mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* ep,
-    struct mca_bmi_base_descriptor_t* descriptor,
+    mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
-    mca_pml_ob1_endpoint_t* bmi_ep = sendreq->req_endpoint;
+    mca_pml_ob1_endpoint_t* btl_ep = sendreq->req_endpoint;
 
     /* check completion status */
     if(OMPI_SUCCESS != status) {
@@ -92,7 +92,7 @@ static void mca_pml_ob1_short_completion(
     }
 
     /* attempt to cache the descriptor */
-    MCA_PML_OB1_ENDPOINT_DES_RETURN(bmi_ep,descriptor);
+    MCA_PML_OB1_ENDPOINT_DES_RETURN(btl_ep,descriptor);
 
     /* signal request completion */
     OMPI_THREAD_LOCK(&ompi_request_lock);
@@ -107,14 +107,14 @@ static void mca_pml_ob1_short_completion(
  */
 
 static void mca_pml_ob1_send_completion(
-    mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* ep,
-    struct mca_bmi_base_descriptor_t* descriptor,
+    mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
-    mca_pml_ob1_endpoint_t* bmi_ep = sendreq->req_endpoint;
-    mca_bmi_base_segment_t* segments = descriptor->des_src;
+    mca_pml_ob1_endpoint_t* btl_ep = sendreq->req_endpoint;
+    mca_btl_base_segment_t* segments = descriptor->des_src;
     size_t i;
 
     /* check completion status */
@@ -161,7 +161,7 @@ static void mca_pml_ob1_send_completion(
 
 
     /* return the descriptor */
-    bmi_ep->bmi_free(bmi_ep->bmi, descriptor);
+    btl_ep->btl_free(btl_ep->btl, descriptor);
 
     /* advance pending requests */
     while(NULL != sendreq) {
@@ -180,7 +180,7 @@ static void mca_pml_ob1_send_completion(
 
 
 /**
- *  BMI requires "specially" allocated memory. Request a segment that
+ *  BTL requires "specially" allocated memory. Request a segment that
  *  is used for initial hdr and any eager data.
  */
 
@@ -188,8 +188,8 @@ int mca_pml_ob1_send_request_start(
     mca_pml_ob1_send_request_t* sendreq,
     mca_pml_ob1_endpoint_t* endpoint)
 {
-    mca_bmi_base_descriptor_t* descriptor;
-    mca_bmi_base_segment_t* segment;
+    mca_btl_base_descriptor_t* descriptor;
+    mca_btl_base_segment_t* segment;
     mca_pml_ob1_hdr_t* hdr;
     size_t size = sendreq->req_send.req_bytes_packed;
     int rc;
@@ -229,8 +229,8 @@ int mca_pml_ob1_send_request_start(
         bool ack = false;
 
         /* determine first fragment size */
-        if(size > endpoint->bmi_eager_limit - sizeof(mca_pml_ob1_hdr_t)) {
-            size = endpoint->bmi_eager_limit - sizeof(mca_pml_ob1_hdr_t);
+        if(size > endpoint->btl_eager_limit - sizeof(mca_pml_ob1_hdr_t)) {
+            size = endpoint->btl_eager_limit - sizeof(mca_pml_ob1_hdr_t);
             ack = true;
         } else if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_SYNCHRONOUS) {
             ack = true;
@@ -241,7 +241,7 @@ int mca_pml_ob1_send_request_start(
             int32_t free_after;
 
             /* allocate descriptor */
-            descriptor = endpoint->bmi_alloc(endpoint->bmi, sizeof(mca_pml_ob1_match_hdr_t) + size);
+            descriptor = endpoint->btl_alloc(endpoint->btl, sizeof(mca_pml_ob1_match_hdr_t) + size);
             if(NULL == descriptor) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             } 
@@ -258,7 +258,7 @@ int mca_pml_ob1_send_request_start(
                 &iov_count,
                 &max_data,
                 &free_after)) < 0) {
-                endpoint->bmi_free(endpoint->bmi, descriptor);
+                endpoint->btl_free(endpoint->btl, descriptor);
                 return rc;
             }
 
@@ -289,7 +289,7 @@ int mca_pml_ob1_send_request_start(
             int32_t free_after;
 
             /* allocate space for hdr + first fragment */
-            descriptor = endpoint->bmi_alloc(endpoint->bmi, sizeof(mca_pml_ob1_rendezvous_hdr_t) + size);
+            descriptor = endpoint->btl_alloc(endpoint->btl, sizeof(mca_pml_ob1_rendezvous_hdr_t) + size);
             if(NULL == descriptor) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
@@ -314,7 +314,7 @@ int mca_pml_ob1_send_request_start(
                                              &iov_count,
                                              &max_data,
                                              &free_after)) < 0) {
-                    endpoint->bmi_free(endpoint->bmi, descriptor);
+                    endpoint->btl_free(endpoint->btl, descriptor);
                     return rc;
                 }
             }
@@ -345,7 +345,7 @@ int mca_pml_ob1_send_request_start(
             descriptor->des_cbfunc = mca_pml_ob1_send_completion;
         }
     }
-    descriptor->des_flags |= MCA_BMI_DES_FLAGS_PRIORITY;
+    descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     descriptor->des_cbdata = sendreq;
     OMPI_THREAD_ADD32(&sendreq->req_pipeline_depth,1);
 
@@ -353,13 +353,13 @@ int mca_pml_ob1_send_request_start(
 #if MCA_PML_OB1_TIMESTAMPS
     sendreq->t_start = get_profiler_timestamp();
 #endif
-    rc = endpoint->bmi_send(
-        endpoint->bmi, 
-        endpoint->bmi_endpoint, 
+    rc = endpoint->btl_send(
+        endpoint->btl, 
+        endpoint->btl_endpoint, 
         descriptor,
-        MCA_BMI_TAG_PML);
+        MCA_BTL_TAG_PML);
     if(OMPI_SUCCESS != rc) {
-        endpoint->bmi_free(endpoint->bmi,descriptor);
+        endpoint->btl_free(endpoint->btl,descriptor);
     }
     return rc;
 }
@@ -379,44 +379,44 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
     */
     if(OMPI_THREAD_ADD32(&sendreq->req_lock,1) == 1) {
         mca_pml_ob1_proc_t* proc = sendreq->req_proc;
-        size_t num_bmi_avail = mca_pml_ob1_ep_array_get_size(&proc->bmi_send);
+        size_t num_btl_avail = mca_pml_ob1_ep_array_get_size(&proc->btl_send);
         do {
-            /* allocate remaining bytes to BMIs */
+            /* allocate remaining bytes to BTLs */
             size_t bytes_remaining = sendreq->req_rdma_offset - sendreq->req_send_offset;
             while(bytes_remaining > 0 && sendreq->req_pipeline_depth < mca_pml_ob1.send_pipeline_depth) {
-                mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_send);
+                mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->btl_send);
                 mca_pml_ob1_frag_hdr_t* hdr;
-                mca_bmi_base_descriptor_t* des;
+                mca_btl_base_descriptor_t* des;
                 int rc;
 
-                /* if there is only one bmi available or the size is less than
-                 * than the min fragment size, schedule the rest via this bmi
+                /* if there is only one btl available or the size is less than
+                 * than the min fragment size, schedule the rest via this btl
                  */
                 size_t size;
-                if(num_bmi_avail == 1 || bytes_remaining < ep->bmi_min_send_size) {
+                if(num_btl_avail == 1 || bytes_remaining < ep->btl_min_send_size) {
                     size = bytes_remaining;
 
-                /* otherwise attempt to give the BMI a percentage of the message
+                /* otherwise attempt to give the BTL a percentage of the message
                  * based on a weighting factor. for simplicity calculate this as
                  * a percentage of the overall message length (regardless of amount
                  * previously assigned)
                  */
                 } else {
-                    size = (ep->bmi_weight * bytes_remaining) / 100;
+                    size = (ep->btl_weight * bytes_remaining) / 100;
                 } 
 
-                /* makes sure that we don't exceed BMI max send size */
-                if (ep->bmi_max_send_size != 0 && 
-                    size > ep->bmi_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t)) {
-                    size = ep->bmi_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t);
+                /* makes sure that we don't exceed BTL max send size */
+                if (ep->btl_max_send_size != 0 && 
+                    size > ep->btl_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t)) {
+                    size = ep->btl_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t);
                 }
                                                                                                                   
                 /* pack into a descriptor */
                 ompi_convertor_set_position(&sendreq->req_send.req_convertor, 
                     &sendreq->req_send_offset);
-                des = ep->bmi_prepare_src(
-                    ep->bmi,
-                    ep->bmi_endpoint,
+                des = ep->btl_prepare_src(
+                    ep->btl,
+                    ep->btl_endpoint,
                     NULL,
                     &sendreq->req_send.req_convertor,
                     sizeof(mca_pml_ob1_frag_hdr_t),
@@ -444,13 +444,13 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                 OMPI_THREAD_ADD32(&sendreq->req_pipeline_depth,1);
 
                 /* initiate send - note that this may complete before the call returns */
-                rc = ep->bmi_send(ep->bmi, ep->bmi_endpoint, des, MCA_BMI_TAG_PML);
+                rc = ep->btl_send(ep->btl, ep->btl_endpoint, des, MCA_BTL_TAG_PML);
                 if(rc == OMPI_SUCCESS) {
                     bytes_remaining -= size;
                 } else {
                     sendreq->req_send_offset -= size;
                     OMPI_THREAD_ADD32(&sendreq->req_pipeline_depth,-1);
-                    ep->bmi_free(ep->bmi,des);
+                    ep->btl_free(ep->btl,des);
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
                     ompi_list_append(&mca_pml_ob1.send_pending, (ompi_list_item_t*)sendreq);
                     OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
@@ -472,9 +472,9 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
  */
 
 static void mca_pml_ob1_fin_completion(
-    mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* ep,
-    struct mca_bmi_base_descriptor_t* des,
+    mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* des,
     int status)
 {
     
@@ -491,14 +491,14 @@ static void mca_pml_ob1_fin_completion(
  */
 
 static void mca_pml_ob1_put_completion(
-    mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* ep,
-    struct mca_bmi_base_descriptor_t* des,
+    mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* des,
     int status)
 {
     mca_pml_ob1_rdma_frag_t* frag = (mca_pml_ob1_rdma_frag_t*)des->des_cbdata;
     mca_pml_ob1_send_request_t* sendreq = frag->rdma_req;
-    mca_bmi_base_descriptor_t* fin;
+    mca_btl_base_descriptor_t* fin;
     mca_pml_ob1_fin_hdr_t* hdr;
     int rc;
 
@@ -537,7 +537,7 @@ static void mca_pml_ob1_put_completion(
         OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
         goto cleanup;
     }
-    fin->des_flags |= MCA_BMI_DES_FLAGS_PRIORITY;
+    fin->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     fin->des_cbfunc = mca_pml_ob1_fin_completion;
     fin->des_cbdata = frag;
 
@@ -551,13 +551,13 @@ static void mca_pml_ob1_put_completion(
     hdr->hdr_rdma_length = frag->rdma_length;
 
     /* queue request */
-    rc = bmi->bmi_send(
-        bmi,
+    rc = btl->btl_send(
+        btl,
         ep,
         fin,
-        MCA_BMI_TAG_PML);
+        MCA_BTL_TAG_PML);
     if(OMPI_SUCCESS != rc) {
-        bmi->bmi_free(bmi, fin);
+        btl->btl_free(btl, fin);
         if(rc == OMPI_ERR_OUT_OF_RESOURCE) {
             OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
             ompi_list_append(&mca_pml_ob1.rdma_pending, (ompi_list_item_t*)frag);
@@ -575,7 +575,7 @@ cleanup:
      */
     des->des_dst = NULL; 
     des->des_dst_cnt = 0; 
-    bmi->bmi_free(bmi, des);
+    btl->btl_free(btl, des);
 
 }
 
@@ -583,19 +583,19 @@ cleanup:
 /**
  *  Receiver has scheduled an RDMA operation:
  *  (1) Allocate an RDMA fragment to maintain the state of the operation
- *  (2) Call BMI prepare_src to pin/prepare source buffers
+ *  (2) Call BTL prepare_src to pin/prepare source buffers
  *  (3) Queue the RDMA put 
  */
 
 void mca_pml_ob1_send_request_put(
     mca_pml_ob1_send_request_t* sendreq,
-    mca_bmi_base_module_t* bmi,
+    mca_btl_base_module_t* btl,
     mca_pml_ob1_rdma_hdr_t* hdr)
 { 
     mca_pml_ob1_proc_t* proc = sendreq->req_proc;
-    mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_find(&proc->bmi_rdma,bmi);
+    mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_find(&proc->btl_rdma,btl);
     mca_mpool_base_registration_t* reg = NULL;
-    mca_bmi_base_descriptor_t* des;
+    mca_btl_base_descriptor_t* des;
     mca_pml_ob1_rdma_frag_t* frag;
     size_t offset = hdr->hdr_rdma_offset;
     size_t i, size = 0;
@@ -622,7 +622,7 @@ void mca_pml_ob1_send_request_put(
     if(NULL != sendreq->req_chunk) {
         mca_mpool_base_reg_mpool_t* mpool = sendreq->req_chunk->mpools;
         while(mpool->mpool != NULL) {
-            if(mpool->user_data == (void*) bmi) { 
+            if(mpool->user_data == (void*) btl) { 
                 reg = mpool->mpool_registration; 
                 break;
             }
@@ -638,9 +638,9 @@ void mca_pml_ob1_send_request_put(
 
     /* setup descriptor */
     ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset);
-    des = bmi->bmi_prepare_src(
-        bmi, 
-        ep->bmi_endpoint,
+    des = btl->btl_prepare_src(
+        btl, 
+        ep->btl_endpoint,
         reg,
         &sendreq->req_send.req_convertor, 
         0,
@@ -665,7 +665,7 @@ void mca_pml_ob1_send_request_put(
         sendreq->t_put_index = 0;
 #endif
 
-    if(OMPI_SUCCESS != (rc = bmi->bmi_put(bmi, ep->bmi_endpoint, des))) {
+    if(OMPI_SUCCESS != (rc = btl->btl_put(btl, ep->btl_endpoint, des))) {
         if(rc == OMPI_ERR_OUT_OF_RESOURCE) {
             OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
             ompi_list_append(&mca_pml_ob1.rdma_pending, (ompi_list_item_t*)frag);

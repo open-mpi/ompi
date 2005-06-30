@@ -16,8 +16,8 @@
 /**
  * @file
  */
-#ifndef MCA_BMI_BASE_H
-#define MCA_BMI_BASE_H
+#ifndef MCA_BTL_BASE_H
+#define MCA_BTL_BASE_H
 
 #include "ompi_config.h"
 #include "class/ompi_list.h"
@@ -49,7 +49,7 @@ typedef struct mca_btl_base_recv_reg_t mca_btl_base_recv_reg_t;
 OBJ_CLASS_DECLARATION(mca_btl_base_selected_module_t); 
 
 /*
- * Global functions for MCA: overall BMI open and close
+ * Global functions for MCA: overall BTL open and close
  */
 
 OMPI_DECLSPEC  int mca_btl_base_open(void);
@@ -69,4 +69,4 @@ OMPI_DECLSPEC extern ompi_list_t mca_btl_base_modules_initialized;
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-#endif /* MCA_BMI_BASE_H */
+#endif /* MCA_BTL_BASE_H */

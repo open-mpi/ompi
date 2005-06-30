@@ -19,8 +19,8 @@
 #include "event/event.h"
 #include "mpi.h"
 #include "mca/pml/pml.h"
-#include "mca/bmi/bmi.h"
-#include "mca/bmi/base/base.h"
+#include "mca/btl/btl.h"
+#include "mca/btl/base/base.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/pml/base/pml_base_bsend.h"
 #include "pml_ob1.h"
@@ -94,12 +94,12 @@ int mca_pml_ob1_component_open(void)
     OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, ompi_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.acks_pending, ompi_list_t);
 
-    mca_pml_ob1.bmi_components = NULL;
-    mca_pml_ob1.num_bmi_components = 0;
-    mca_pml_ob1.bmi_modules = NULL;
-    mca_pml_ob1.num_bmi_modules = 0;
-    mca_pml_ob1.bmi_progress = NULL;
-    mca_pml_ob1.num_bmi_progress = 0;
+    mca_pml_ob1.btl_components = NULL;
+    mca_pml_ob1.num_btl_components = 0;
+    mca_pml_ob1.btl_modules = NULL;
+    mca_pml_ob1.num_btl_modules = 0;
+    mca_pml_ob1.btl_progress = NULL;
+    mca_pml_ob1.num_btl_progress = 0;
 
     mca_pml_ob1.free_list_num =
         mca_pml_ob1_param_register_int("free_list_num", 256);
@@ -123,14 +123,14 @@ int mca_pml_ob1_component_open(void)
     mca_base_param_lookup_int(param, &value); 
     mca_pml_ob1.leave_pinned = value; 
 
-    return mca_bmi_base_open();
+    return mca_btl_base_open();
 }
 
 
 int mca_pml_ob1_component_close(void)
 {
     int rc;
-    if(OMPI_SUCCESS != (rc = mca_bmi_base_close()))
+    if(OMPI_SUCCESS != (rc = mca_btl_base_close()))
         return rc;
 
 #if OMPI_ENABLE_DEBUG
@@ -148,14 +148,14 @@ int mca_pml_ob1_component_close(void)
     }
 #endif
 
-    if(NULL != mca_pml_ob1.bmi_components) {
-        free(mca_pml_ob1.bmi_components);
+    if(NULL != mca_pml_ob1.btl_components) {
+        free(mca_pml_ob1.btl_components);
     }
-    if(NULL != mca_pml_ob1.bmi_modules) {
-        free(mca_pml_ob1.bmi_modules);
+    if(NULL != mca_pml_ob1.btl_modules) {
+        free(mca_pml_ob1.btl_modules);
     }
-    if(NULL != mca_pml_ob1.bmi_progress) {
-        free(mca_pml_ob1.bmi_progress);
+    if(NULL != mca_pml_ob1.btl_progress) {
+        free(mca_pml_ob1.btl_progress);
     }
     OBJ_DESTRUCT(&mca_pml_ob1.acks_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.send_pending);
@@ -230,9 +230,9 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
         return NULL;
     
     /* initialize NTLs */
-    if(OMPI_SUCCESS != mca_bmi_base_select(enable_progress_threads,enable_mpi_threads))
+    if(OMPI_SUCCESS != mca_btl_base_select(enable_progress_threads,enable_mpi_threads))
          return NULL;
-    if(OMPI_SUCCESS != mca_pml_ob1_add_bmis())
+    if(OMPI_SUCCESS != mca_pml_ob1_add_btls())
         return NULL;
 
     return &mca_pml_ob1.super;
