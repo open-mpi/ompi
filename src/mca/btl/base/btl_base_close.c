@@ -23,46 +23,46 @@
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/pml/pml.h"
-#include "mca/bmi/bmi.h"
-#include "mca/bmi/base/base.h"
+#include "mca/btl/btl.h"
+#include "mca/btl/base/base.h"
 
 
-int mca_bmi_base_close(void)
+int mca_btl_base_close(void)
 {
   ompi_list_item_t *item;
-  mca_bmi_base_selected_module_t *sm;
+  mca_btl_base_selected_module_t *sm;
 
-  /* disable event processing while cleaning up bmis */
+  /* disable event processing while cleaning up btls */
   ompi_event_disable();
 
-  /* Finalize all the bmi components and free their list items */
+  /* Finalize all the btl components and free their list items */
 
-  for (item = ompi_list_remove_first(&mca_bmi_base_modules_initialized);
+  for (item = ompi_list_remove_first(&mca_btl_base_modules_initialized);
        NULL != item; 
-       item = ompi_list_remove_first(&mca_bmi_base_modules_initialized)) {
-    sm = (mca_bmi_base_selected_module_t *) item;
+       item = ompi_list_remove_first(&mca_btl_base_modules_initialized)) {
+    sm = (mca_btl_base_selected_module_t *) item;
 
-    /* Blatebmiy ignore the return code (what would we do to recover,
+    /* Blatebtly ignore the return code (what would we do to recover,
        anyway?  This component is going away, so errors don't matter
        anymore) */
 
-    sm->bmi_module->bmi_finalize(sm->bmi_module);
+    sm->btl_module->btl_finalize(sm->btl_module);
     free(sm);
   }
 
   /* Close all remaining opened components (may be one if this is a
      OMPI RTE program, or [possibly] multiple if this is ompi_info) */
   
-  if (0 != ompi_list_get_size(&mca_bmi_base_components_opened)) {
-      mca_base_components_close(mca_bmi_base_output, 
-                                &mca_bmi_base_components_opened, NULL);
+  if (0 != ompi_list_get_size(&mca_btl_base_components_opened)) {
+      mca_base_components_close(mca_btl_base_output, 
+                                &mca_btl_base_components_opened, NULL);
   }
 
   /* cleanup */
-  if(NULL != mca_bmi_base_include)
-     free(mca_bmi_base_include);
-  if(NULL != mca_bmi_base_exclude)
-     free(mca_bmi_base_exclude);
+  if(NULL != mca_btl_base_include)
+     free(mca_btl_base_include);
+  if(NULL != mca_btl_base_exclude)
+     free(mca_btl_base_exclude);
 
   /* restore event processing */
   ompi_event_enable();
