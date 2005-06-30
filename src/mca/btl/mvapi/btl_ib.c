@@ -19,21 +19,21 @@
 #include "util/output.h"
 #include "util/if.h"
 #include "mca/pml/pml.h"
-#include "mca/bmi/bmi.h"
+#include "mca/btl/btl.h"
 
-#include "bmi_ib.h"
-#include "bmi_ib_frag.h" 
-#include "bmi_ib_proc.h"
-#include "bmi_ib_endpoint.h"
+#include "btl_ib.h"
+#include "btl_ib_frag.h" 
+#include "btl_ib_proc.h"
+#include "btl_ib_endpoint.h"
 #include "datatype/convertor.h" 
 #include "mca/common/vapi/vapi_mem_reg.h" 
 #include "mca/mpool/base/base.h" 
 #include "mca/mpool/mpool.h" 
 #include "mca/mpool/vapi/mpool_vapi.h" 
 
-mca_bmi_ib_module_t mca_bmi_ib_module = {
+mca_btl_ib_module_t mca_btl_ib_module = {
     {
-        &mca_bmi_ib_component.super,
+        &mca_btl_ib_component.super,
         0, /* max size of first fragment */
         0, /* min send fragment size */
         0, /* max send fragment size */
@@ -42,41 +42,41 @@ mca_bmi_ib_module_t mca_bmi_ib_module = {
         0, /* exclusivity */
         0, /* latency */
         0, /* bandwidth */
-        0,  /* TODO this should be PUT bmi flags */
-        mca_bmi_ib_add_procs,
-        mca_bmi_ib_del_procs,
-        mca_bmi_ib_register, 
-        mca_bmi_ib_finalize,
+        0,  /* TODO this should be PUT btl flags */
+        mca_btl_ib_add_procs,
+        mca_btl_ib_del_procs,
+        mca_btl_ib_register, 
+        mca_btl_ib_finalize,
         /* we need alloc free, pack */ 
-        mca_bmi_ib_alloc, 
-        mca_bmi_ib_free, 
-        mca_bmi_ib_prepare_src,
-        mca_bmi_ib_prepare_dst,
-        mca_bmi_ib_send,
-        mca_bmi_ib_put,
+        mca_btl_ib_alloc, 
+        mca_btl_ib_free, 
+        mca_btl_ib_prepare_src,
+        mca_btl_ib_prepare_dst,
+        mca_btl_ib_send,
+        mca_btl_ib_put,
         NULL /* get */ 
     }
 };
 
 
 
-int mca_bmi_ib_add_procs(
-    struct mca_bmi_base_module_t* bmi, 
+int mca_btl_ib_add_procs(
+    struct mca_btl_base_module_t* btl, 
     size_t nprocs, 
     struct ompi_proc_t **ompi_procs, 
-    struct mca_bmi_base_endpoint_t** peers, 
+    struct mca_btl_base_endpoint_t** peers, 
     ompi_bitmap_t* reachable)
 {
-    mca_bmi_ib_module_t* ib_bmi = (mca_bmi_ib_module_t*)bmi;
+    mca_btl_ib_module_t* ib_btl = (mca_btl_ib_module_t*)btl;
     int i, rc;
 
     for(i = 0; i < (int) nprocs; i++) {
         
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
-        mca_bmi_ib_proc_t* ib_proc;
-        mca_bmi_base_endpoint_t* ib_peer;
+        mca_btl_ib_proc_t* ib_proc;
+        mca_btl_base_endpoint_t* ib_peer;
 
-        if(NULL == (ib_proc = mca_bmi_ib_proc_create(ompi_proc))) {
+        if(NULL == (ib_proc = mca_btl_ib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -88,18 +88,18 @@ int mca_bmi_ib_add_procs(
 
         OMPI_THREAD_LOCK(&ib_proc->proc_lock);
 
-        /* The bmi_proc datastructure is shared by all IB PTL
+        /* The btl_proc datastructure is shared by all IB PTL
          * instances that are trying to reach this destination. 
-         * Cache the peer instance on the bmi_proc.
+         * Cache the peer instance on the btl_proc.
          */
-        ib_peer = OBJ_NEW(mca_bmi_ib_endpoint_t);
+        ib_peer = OBJ_NEW(mca_btl_ib_endpoint_t);
         if(NULL == ib_peer) {
             OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        ib_peer->endpoint_bmi = ib_bmi;
-        rc = mca_bmi_ib_proc_insert(ib_proc, ib_peer);
+        ib_peer->endpoint_btl = ib_btl;
+        rc = mca_btl_ib_proc_insert(ib_proc, ib_peer);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(ib_peer);
             OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
@@ -114,30 +114,30 @@ int mca_bmi_ib_add_procs(
     return OMPI_SUCCESS;
 }
 
-int mca_bmi_ib_del_procs(struct mca_bmi_base_module_t* bmi, 
+int mca_btl_ib_del_procs(struct mca_btl_base_module_t* btl, 
         size_t nprocs, 
         struct ompi_proc_t **procs, 
-        struct mca_bmi_base_endpoint_t ** peers)
+        struct mca_btl_base_endpoint_t ** peers)
 {
     /* Stub */
     DEBUG_OUT("Stub\n");
     return OMPI_SUCCESS;
 }
 
-int mca_bmi_ib_register(
-                        struct mca_bmi_base_module_t* bmi, 
-                        mca_bmi_base_tag_t tag, 
-                        mca_bmi_base_module_recv_cb_fn_t cbfunc, 
+int mca_btl_ib_register(
+                        struct mca_btl_base_module_t* btl, 
+                        mca_btl_base_tag_t tag, 
+                        mca_btl_base_module_recv_cb_fn_t cbfunc, 
                         void* cbdata)
 {
     /* TODO add register stuff here... */ 
-    mca_bmi_ib_module_t* ib_bmi = (mca_bmi_ib_module_t*) bmi; 
+    mca_btl_ib_module_t* ib_btl = (mca_btl_ib_module_t*) btl; 
     
 
-    OMPI_THREAD_LOCK(&ib->bmi.ib_lock); 
-    ib_bmi->ib_reg[tag].cbfunc = cbfunc; 
-    ib_bmi->ib_reg[tag].cbdata = cbdata; 
-    OMPI_THREAD_UNLOCK(&ib->bmi.ib_lock); 
+    OMPI_THREAD_LOCK(&ib->btl.ib_lock); 
+    ib_btl->ib_reg[tag].cbfunc = cbfunc; 
+    ib_btl->ib_reg[tag].cbdata = cbdata; 
+    OMPI_THREAD_UNLOCK(&ib->btl.ib_lock); 
     return OMPI_SUCCESS;
 }
 
@@ -145,57 +145,57 @@ int mca_bmi_ib_register(
 /**
  * Allocate a segment.
  *
- * @param bmi (IN)      BMI module
+ * @param btl (IN)      BMI module
  * @param size (IN)     Request segment size.
  */
-mca_bmi_base_descriptor_t* mca_bmi_ib_alloc(
-    struct mca_bmi_base_module_t* bmi,
+mca_btl_base_descriptor_t* mca_btl_ib_alloc(
+    struct mca_btl_base_module_t* btl,
     size_t size)
 {
-    mca_bmi_ib_frag_t* frag;
-    mca_bmi_ib_module_t* ib_bmi; 
+    mca_btl_ib_frag_t* frag;
+    mca_btl_ib_module_t* ib_btl; 
     int rc;
-    ib_bmi = (mca_bmi_ib_module_t*) bmi; 
+    ib_btl = (mca_btl_ib_module_t*) btl; 
     
-    if(size <= mca_bmi_ib_component.eager_limit){ 
-        MCA_BMI_IB_FRAG_ALLOC_EAGER(bmi, frag, rc); 
+    if(size <= mca_btl_ib_component.eager_limit){ 
+        MCA_BMI_IB_FRAG_ALLOC_EAGER(btl, frag, rc); 
         frag->segment.seg_len = 
-            size <= mca_bmi_ib_component.eager_limit ? 
-            size: mca_bmi_ib_component.eager_limit ; 
+            size <= mca_btl_ib_component.eager_limit ? 
+            size: mca_btl_ib_component.eager_limit ; 
     } else { 
-        MCA_BMI_IB_FRAG_ALLOC_MAX(bmi, frag, rc); 
+        MCA_BMI_IB_FRAG_ALLOC_MAX(btl, frag, rc); 
         frag->segment.seg_len = 
-            size <= mca_bmi_ib_component.max_send_size ? 
-            size: mca_bmi_ib_component.max_send_size ; 
+            size <= mca_btl_ib_component.max_send_size ? 
+            size: mca_btl_ib_component.max_send_size ; 
     }
     
-    frag->segment.seg_len = size <= ib_bmi->super.bmi_eager_limit ? size : ib_bmi->super.bmi_eager_limit;  
+    frag->segment.seg_len = size <= ib_btl->super.btl_eager_limit ? size : ib_btl->super.btl_eager_limit;  
     frag->base.des_flags = 0; 
     
-    return (mca_bmi_base_descriptor_t*)frag;
+    return (mca_btl_base_descriptor_t*)frag;
 }
 
 /** 
  * 
  * 
  */ 
-int mca_bmi_ib_free(
-                    struct mca_bmi_base_module_t* bmi, 
-                    mca_bmi_base_descriptor_t* des) 
+int mca_btl_ib_free(
+                    struct mca_btl_base_module_t* btl, 
+                    mca_btl_base_descriptor_t* des) 
 {
-    mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*)des; 
+    mca_btl_ib_frag_t* frag = (mca_btl_ib_frag_t*)des; 
 
     if(frag->size == 0) {
-        MCA_BMI_IB_FRAG_RETURN_FRAG(bmi, frag);
+        MCA_BMI_IB_FRAG_RETURN_FRAG(btl, frag);
      
         OBJ_RELEASE(frag->vapi_reg); 
         
             
     } 
-    else if(frag->size == mca_bmi_ib_component.max_send_size){ 
-        MCA_BMI_IB_FRAG_RETURN_MAX(bmi, frag); 
-    } else if(frag->size == mca_bmi_ib_component.eager_limit){ 
-        MCA_BMI_IB_FRAG_RETURN_EAGER(bmi, frag); 
+    else if(frag->size == mca_btl_ib_component.max_send_size){ 
+        MCA_BMI_IB_FRAG_RETURN_MAX(btl, frag); 
+    } else if(frag->size == mca_btl_ib_component.eager_limit){ 
+        MCA_BMI_IB_FRAG_RETURN_EAGER(btl, frag); 
     } 
     
     return OMPI_SUCCESS; 
@@ -206,20 +206,20 @@ int mca_bmi_ib_free(
  * Pack data and return a descriptor that can be
  * used for send/put.
  *
- * @param bmi (IN)      BMI module
+ * @param btl (IN)      BMI module
  * @param peer (IN)     BMI peer addressing
  */
-mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* endpoint,
+mca_btl_base_descriptor_t* mca_btl_ib_prepare_src(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size
 )
 {
-    mca_bmi_ib_module_t* ib_bmi; 
-    mca_bmi_ib_frag_t* frag; 
+    mca_btl_ib_module_t* ib_btl; 
+    mca_btl_ib_frag_t* frag; 
     mca_mpool_vapi_registration_t * vapi_reg; 
     struct iovec iov; 
     int32_t iov_count = 1; 
@@ -228,7 +228,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     int rc; 
     
     
-    ib_bmi = (mca_bmi_ib_module_t*) bmi; 
+    ib_btl = (mca_btl_ib_module_t*) btl; 
     vapi_reg = (mca_mpool_vapi_registration_t*) registration; 
 
     /** if the data fits in the eager limit and we aren't told to pinn then we 
@@ -238,7 +238,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
     
     if(NULL != vapi_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
         bool is_leave_pinned = vapi_reg->is_leave_pinned; 
-        MCA_BMI_IB_FRAG_ALLOC_FRAG(bmi, frag, rc); 
+        MCA_BMI_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
             return NULL; 
         } 
@@ -267,14 +267,14 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
             } 
 
             if(is_leave_pinned) { 
-                if(NULL == ompi_list_remove_item(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg)){ 
+                if(NULL == ompi_list_remove_item(&ib_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg)){ 
                     ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                     return NULL; 
                 }
             } 
             OBJ_RELEASE(vapi_reg); 
             
-            ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool, 
+            ib_btl->ib_pool->mpool_register(ib_btl->ib_pool, 
                                             base_addr, 
                                             new_len, 
                                             (mca_mpool_base_registration_t**) &vapi_reg);
@@ -283,8 +283,8 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
             
             rc = mca_mpool_base_insert(vapi_reg->base, 
                                        vapi_reg->bound - vapi_reg->base + 1, 
-                                       ib_bmi->ib_pool, 
-                                       (void*) (&ib_bmi->super), 
+                                       ib_btl->ib_pool, 
+                                       (void*) (&ib_btl->super), 
                                        (mca_mpool_base_registration_t*) vapi_reg); 
             
             
@@ -296,15 +296,15 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
             OBJ_RETAIN(vapi_reg); 
             if(is_leave_pinned) {
                 vapi_reg->is_leave_pinned = is_leave_pinned; 
-                ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+                ompi_list_append(&ib_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg);
             } 
         }   
         else if(is_leave_pinned) { 
-            if(NULL == ompi_list_remove_item(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg)) { 
+            if(NULL == ompi_list_remove_item(&ib_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg)) { 
                 ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                 return NULL; 
             }
-            ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+            ompi_list_append(&ib_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg);
         }
         
         frag->mem_hndl = vapi_reg->hndl; 
@@ -324,11 +324,11 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
 
         return &frag->base;
         
-    } else if((mca_bmi_ib_component.leave_pinned || max_data > bmi->bmi_max_send_size) && 
+    } else if((mca_btl_ib_component.leave_pinned || max_data > btl->btl_max_send_size) && 
                ompi_convertor_need_buffers(convertor) == 0 && 
                reserve == 0)
     {
-        MCA_BMI_IB_FRAG_ALLOC_FRAG(bmi, frag, rc); 
+        MCA_BMI_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
         if(NULL == frag){
             return NULL; 
         } 
@@ -344,12 +344,12 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         frag->base.des_flags = 0; 
 
         
-        if(mca_bmi_ib_component.leave_pinned) { 
-            if(mca_bmi_ib_component.reg_mru_len <= ib_bmi->reg_mru_list.ompi_list_length  ) {
+        if(mca_btl_ib_component.leave_pinned) { 
+            if(mca_btl_ib_component.reg_mru_len <= ib_btl->reg_mru_list.ompi_list_length  ) {
                 
                 mca_mpool_vapi_registration_t* old_reg =
                     (mca_mpool_vapi_registration_t*)
-                    ompi_list_remove_last(&ib_bmi->reg_mru_list);
+                    ompi_list_remove_last(&ib_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
                     ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
@@ -367,15 +367,15 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
                                
                 OBJ_RELEASE(old_reg);
             }
-            ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool,
+            ib_btl->ib_pool->mpool_register(ib_btl->ib_pool,
                                             iov.iov_base, 
                                             max_data, 
                                             (mca_mpool_base_registration_t**) &vapi_reg); 
             
             rc = mca_mpool_base_insert(vapi_reg->base, 
                                        vapi_reg->bound - vapi_reg->base + 1, 
-                                       ib_bmi->ib_pool, 
-                                       (void*) (&ib_bmi->super), 
+                                       ib_btl->ib_pool, 
+                                       (void*) (&ib_btl->super), 
                                        (mca_mpool_base_registration_t*) vapi_reg); 
             if(rc != OMPI_SUCCESS) 
                 return NULL; 
@@ -383,10 +383,10 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
             
             vapi_reg->is_leave_pinned = true; 
                     
-            ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+            ompi_list_append(&ib_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg);
             
         } else { 
-            ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool,
+            ib_btl->ib_pool->mpool_register(ib_btl->ib_pool,
                                             iov.iov_base, 
                                             max_data, 
                                             (mca_mpool_base_registration_t**) &vapi_reg); 
@@ -408,9 +408,9 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         OBJ_RETAIN(vapi_reg); 
         return &frag->base;
 
-    } else if (max_data+reserve <=  bmi->bmi_eager_limit) { 
+    } else if (max_data+reserve <=  btl->btl_eager_limit) { 
            
-        MCA_BMI_IB_FRAG_ALLOC_EAGER(bmi, frag, rc); 
+        MCA_BMI_IB_FRAG_ALLOC_EAGER(btl, frag, rc); 
         if(NULL == frag) { 
             return NULL; 
         } 
@@ -421,7 +421,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
         *size  = max_data; 
         if( rc < 0 ) { 
-            MCA_BMI_IB_FRAG_RETURN_EAGER(bmi, frag); 
+            MCA_BMI_IB_FRAG_RETURN_EAGER(btl, frag); 
             return NULL; 
         } 
         
@@ -439,9 +439,9 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
        /** if the data fits in the max limit and we aren't told to pinn then we 
            simply pack, if the data  is non contiguous then we pack **/ 
        
-       else if(max_data + reserve <= ib_bmi->super.bmi_max_send_size) { 
+       else if(max_data + reserve <= ib_btl->super.btl_max_send_size) { 
            
-        MCA_BMI_IB_FRAG_ALLOC_MAX(bmi, frag, rc); 
+        MCA_BMI_IB_FRAG_ALLOC_MAX(btl, frag, rc); 
         if(NULL == frag) { 
             return NULL; 
         } 
@@ -455,7 +455,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
         *size  = max_data; 
 
         if( rc < 0 ) { 
-            MCA_BMI_IB_FRAG_RETURN_MAX(bmi, frag); 
+            MCA_BMI_IB_FRAG_RETURN_MAX(btl, frag); 
             return NULL; 
         } 
         
@@ -475,27 +475,27 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
 /**
  * Pack data
  *
- * @param bmi (IN)      BMI module
+ * @param btl (IN)      BMI module
  * @param peer (IN)     BMI peer addressing
  */
-mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* endpoint,
+mca_btl_base_descriptor_t* mca_btl_ib_prepare_dst(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size)
 {
-    mca_bmi_ib_module_t* ib_bmi; 
-    mca_bmi_ib_frag_t* frag; 
+    mca_btl_ib_module_t* ib_btl; 
+    mca_btl_ib_frag_t* frag; 
     mca_mpool_vapi_registration_t * vapi_reg; 
     int rc; 
     size_t reg_len; 
 
-    ib_bmi = (mca_bmi_ib_module_t*) bmi; 
+    ib_btl = (mca_btl_ib_module_t*) btl; 
     vapi_reg = (mca_mpool_vapi_registration_t*) registration; 
     
-    MCA_BMI_IB_FRAG_ALLOC_FRAG(bmi, frag, rc); 
+    MCA_BMI_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
 
     if(NULL == frag){
         return NULL; 
@@ -522,14 +522,14 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
             } 
 
             if(is_leave_pinned) { 
-                if(NULL == ompi_list_remove_item(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg)) { 
+                if(NULL == ompi_list_remove_item(&ib_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg)) { 
                     ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                     return NULL; 
                 }
             }
             OBJ_RELEASE(vapi_reg); 
             
-            ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool, 
+            ib_btl->ib_pool->mpool_register(ib_btl->ib_pool, 
                                             base_addr, 
                                             new_len,
                                             (mca_mpool_base_registration_t**) &vapi_reg);
@@ -537,8 +537,8 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
         
             rc = mca_mpool_base_insert(vapi_reg->base, 
                                        vapi_reg->bound - vapi_reg->base + 1, 
-                                       ib_bmi->ib_pool, 
-                                       (void*) (&ib_bmi->super), 
+                                       ib_btl->ib_pool, 
+                                       (void*) (&ib_btl->super), 
                                        (mca_mpool_base_registration_t*) vapi_reg); 
             
             if(OMPI_SUCCESS != rc) {
@@ -549,27 +549,27 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
             
             if(is_leave_pinned) { 
                 vapi_reg->is_leave_pinned = is_leave_pinned; 
-                ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+                ompi_list_append(&ib_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg);
             } 
 
         } 
         else if(is_leave_pinned){ 
-            if(NULL == ompi_list_remove_item(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg)) { 
+            if(NULL == ompi_list_remove_item(&ib_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg)) { 
                 ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
                 return NULL; 
             }    
-            ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg); 
+            ompi_list_append(&ib_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg); 
         }
     }  else { 
            
-        if(mca_bmi_ib_component.leave_pinned) { 
+        if(mca_btl_ib_component.leave_pinned) { 
             
         
-            if( mca_bmi_ib_component.reg_mru_len <= ib_bmi->reg_mru_list.ompi_list_length  ) {
+            if( mca_btl_ib_component.reg_mru_len <= ib_btl->reg_mru_list.ompi_list_length  ) {
                
                 mca_mpool_vapi_registration_t* old_reg =
                     (mca_mpool_vapi_registration_t*)
-                    ompi_list_remove_last(&ib_bmi->reg_mru_list);
+                    ompi_list_remove_last(&ib_btl->reg_mru_list);
                 
                 if( NULL == old_reg) { 
                     ompi_output(0,"%s:%d:%s error removing item from reg_mru_list", __FILE__, __LINE__,  __func__); 
@@ -585,7 +585,7 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
                 OBJ_RELEASE(old_reg);
                 
             }
-            ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool,
+            ib_btl->ib_pool->mpool_register(ib_btl->ib_pool,
                                         frag->segment.seg_addr.pval,
                                         *size, 
                                         (mca_mpool_base_registration_t**) &vapi_reg);
@@ -594,8 +594,8 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
             
             rc = mca_mpool_base_insert(vapi_reg->base,  
                                        vapi_reg->bound - vapi_reg->base + 1, 
-                                       ib_bmi->ib_pool, 
-                                       (void*) (&ib_bmi->super), 
+                                       ib_btl->ib_pool, 
+                                       (void*) (&ib_btl->super), 
                                        (mca_mpool_base_registration_t*)  vapi_reg); 
             if(OMPI_SUCCESS != rc){ 
                 ompi_output(0,"%s:%d:%s error inserting memory region into memory pool", __FILE__, __LINE__,  __func__); 
@@ -603,10 +603,10 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
             } 
 
             OBJ_RETAIN(vapi_reg); 
-            ompi_list_append(&ib_bmi->reg_mru_list, (ompi_list_item_t*) vapi_reg);
+            ompi_list_append(&ib_btl->reg_mru_list, (ompi_list_item_t*) vapi_reg);
             
         } else { 
-            ib_bmi->ib_pool->mpool_register(ib_bmi->ib_pool,
+            ib_btl->ib_pool->mpool_register(ib_btl->ib_pool,
                                             frag->segment.seg_addr.pval,
                                             *size, 
                                             (mca_mpool_base_registration_t**) &vapi_reg);
@@ -635,42 +635,42 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
     
 }
 
-int mca_bmi_ib_finalize(struct mca_bmi_base_module_t* bmi)
+int mca_btl_ib_finalize(struct mca_btl_base_module_t* btl)
 {
-    mca_bmi_ib_module_t* ib_bmi; 
-    ib_bmi = (mca_bmi_ib_module_t*) bmi; 
+    mca_btl_ib_module_t* ib_btl; 
+    ib_btl = (mca_btl_ib_module_t*) btl; 
     
-    if(ib_bmi->send_free_eager.fl_num_allocated != 
-       ib_bmi->send_free_eager.super.ompi_list_length){ 
-        ompi_output(0, "bmi ib send_free_eager frags: %d allocated %d returned \n", 
-                    ib_bmi->send_free_eager.fl_num_allocated, 
-                    ib_bmi->send_free_eager.super.ompi_list_length); 
+    if(ib_btl->send_free_eager.fl_num_allocated != 
+       ib_btl->send_free_eager.super.ompi_list_length){ 
+        ompi_output(0, "btl ib send_free_eager frags: %d allocated %d returned \n", 
+                    ib_btl->send_free_eager.fl_num_allocated, 
+                    ib_btl->send_free_eager.super.ompi_list_length); 
     }
-    if(ib_bmi->send_free_max.fl_num_allocated != 
-      ib_bmi->send_free_max.super.ompi_list_length){ 
-        ompi_output(0, "bmi ib send_free_max frags: %d allocated %d returned \n", 
-                    ib_bmi->send_free_max.fl_num_allocated, 
-                    ib_bmi->send_free_max.super.ompi_list_length); 
+    if(ib_btl->send_free_max.fl_num_allocated != 
+      ib_btl->send_free_max.super.ompi_list_length){ 
+        ompi_output(0, "btl ib send_free_max frags: %d allocated %d returned \n", 
+                    ib_btl->send_free_max.fl_num_allocated, 
+                    ib_btl->send_free_max.super.ompi_list_length); 
     }
-    if(ib_bmi->send_free_frag.fl_num_allocated != 
-       ib_bmi->send_free_frag.super.ompi_list_length){ 
-        ompi_output(0, "bmi ib send_free_frag frags: %d allocated %d returned \n", 
-                    ib_bmi->send_free_frag.fl_num_allocated, 
-                    ib_bmi->send_free_frag.super.ompi_list_length); 
+    if(ib_btl->send_free_frag.fl_num_allocated != 
+       ib_btl->send_free_frag.super.ompi_list_length){ 
+        ompi_output(0, "btl ib send_free_frag frags: %d allocated %d returned \n", 
+                    ib_btl->send_free_frag.fl_num_allocated, 
+                    ib_btl->send_free_frag.super.ompi_list_length); 
     }
     
-    if(ib_bmi->recv_free_eager.fl_num_allocated != 
-       ib_bmi->recv_free_eager.super.ompi_list_length){ 
-        ompi_output(0, "bmi ib recv_free_eager frags: %d allocated %d returned \n", 
-                    ib_bmi->recv_free_eager.fl_num_allocated, 
-                    ib_bmi->recv_free_eager.super.ompi_list_length); 
+    if(ib_btl->recv_free_eager.fl_num_allocated != 
+       ib_btl->recv_free_eager.super.ompi_list_length){ 
+        ompi_output(0, "btl ib recv_free_eager frags: %d allocated %d returned \n", 
+                    ib_btl->recv_free_eager.fl_num_allocated, 
+                    ib_btl->recv_free_eager.super.ompi_list_length); 
     }
 
-    if(ib_bmi->recv_free_max.fl_num_allocated != 
-       ib_bmi->recv_free_max.super.ompi_list_length){ 
-        ompi_output(0, "bmi ib recv_free_max frags: %d allocated %d returned \n", 
-                    ib_bmi->recv_free_max.fl_num_allocated, 
-                    ib_bmi->recv_free_max.super.ompi_list_length); 
+    if(ib_btl->recv_free_max.fl_num_allocated != 
+       ib_btl->recv_free_max.super.ompi_list_length){ 
+        ompi_output(0, "btl ib recv_free_max frags: %d allocated %d returned \n", 
+                    ib_btl->recv_free_max.fl_num_allocated, 
+                    ib_btl->recv_free_max.super.ompi_list_length); 
     }
 
     return OMPI_SUCCESS;
@@ -683,20 +683,20 @@ int mca_bmi_ib_finalize(struct mca_bmi_base_module_t* bmi)
  *  on to the peer.
  */
 
-int mca_bmi_ib_send( 
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* endpoint,
-    struct mca_bmi_base_descriptor_t* descriptor, 
-    mca_bmi_base_tag_t tag)
+int mca_btl_ib_send( 
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
+    struct mca_btl_base_descriptor_t* descriptor, 
+    mca_btl_base_tag_t tag)
    
 {
     
-    mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*)descriptor; 
+    mca_btl_ib_frag_t* frag = (mca_btl_ib_frag_t*)descriptor; 
     frag->endpoint = endpoint; 
         
     frag->hdr->tag = tag; 
     frag->type = MCA_BMI_IB_FRAG_SEND; 
-    frag->rc = mca_bmi_ib_endpoint_send(endpoint, frag);
+    frag->rc = mca_btl_ib_endpoint_send(endpoint, frag);
            
     return frag->rc;
 }
@@ -705,12 +705,12 @@ int mca_bmi_ib_send(
  * RDMA local buffer to remote buffer address.
  */
 
-int mca_bmi_ib_put( mca_bmi_base_module_t* bmi,
-                    mca_bmi_base_endpoint_t* endpoint,
-                    mca_bmi_base_descriptor_t* descriptor)
+int mca_btl_ib_put( mca_btl_base_module_t* btl,
+                    mca_btl_base_endpoint_t* endpoint,
+                    mca_btl_base_descriptor_t* descriptor)
 {
-    mca_bmi_ib_module_t* ib_bmi = (mca_bmi_ib_module_t*) bmi; 
-    mca_bmi_ib_frag_t* frag = (mca_bmi_ib_frag_t*) descriptor; 
+    mca_btl_ib_module_t* ib_btl = (mca_btl_ib_module_t*) btl; 
+    mca_btl_ib_frag_t* frag = (mca_btl_ib_frag_t*) descriptor; 
     frag->endpoint = endpoint;
     frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
     
@@ -720,13 +720,13 @@ int mca_bmi_ib_put( mca_bmi_base_module_t* bmi,
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
     frag->sg_entry.len  = frag->base.des_src->seg_len; 
 
-    frag->ret = VAPI_post_sr(ib_bmi->nic, 
+    frag->ret = VAPI_post_sr(ib_btl->nic, 
                              endpoint->lcl_qp_hndl_low, 
                              &frag->sr_desc); 
     if(VAPI_OK != frag->ret){ 
         return OMPI_ERROR; 
     }
-    mca_bmi_ib_endpoint_post_rr(endpoint, 1); 
+    mca_btl_ib_endpoint_post_rr(endpoint, 1); 
 
     return OMPI_SUCCESS; 
 
@@ -782,22 +782,22 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
 
 
 
-int mca_bmi_ib_module_init(mca_bmi_ib_module_t *ib_bmi)
+int mca_btl_ib_module_init(mca_btl_ib_module_t *ib_btl)
 {
 
     /* Allocate Protection Domain */ 
     VAPI_ret_t ret;
     uint32_t cqe_cnt = 0;
       
-    ret = VAPI_alloc_pd(ib_bmi->nic, &ib_bmi->ptag);
+    ret = VAPI_alloc_pd(ib_btl->nic, &ib_btl->ptag);
     
     if(ret != VAPI_OK) {
         MCA_BMI_IB_VAPI_ERROR(ret, "VAPI_alloc_pd");
         return OMPI_ERROR;
     }
     
-    ret = VAPI_create_cq(ib_bmi->nic, ib_bmi->ib_cq_size,
-                         &ib_bmi->cq_hndl_low, &cqe_cnt);
+    ret = VAPI_create_cq(ib_btl->nic, ib_btl->ib_cq_size,
+                         &ib_btl->cq_hndl_low, &cqe_cnt);
 
     
     if( VAPI_OK != ret) {  
@@ -805,8 +805,8 @@ int mca_bmi_ib_module_init(mca_bmi_ib_module_t *ib_bmi)
         return OMPI_ERROR;
     }
     
-    ret = VAPI_create_cq(ib_bmi->nic, ib_bmi->ib_cq_size,
-                         &ib_bmi->cq_hndl_high, &cqe_cnt);
+    ret = VAPI_create_cq(ib_btl->nic, ib_btl->ib_cq_size,
+                         &ib_btl->cq_hndl_high, &cqe_cnt);
 
     
     if( VAPI_OK != ret) {  
@@ -820,8 +820,8 @@ int mca_bmi_ib_module_init(mca_bmi_ib_module_t *ib_bmi)
         return OMPI_ERROR; 
     } 
 
-    ret = EVAPI_set_async_event_handler(ib_bmi->nic,
-            async_event_handler, 0, &ib_bmi->async_handler);
+    ret = EVAPI_set_async_event_handler(ib_btl->nic,
+            async_event_handler, 0, &ib_btl->async_handler);
 
     if(VAPI_OK != ret) {
         MCA_BMI_IB_VAPI_ERROR(ret, "EVAPI_set_async_event_handler");

@@ -29,13 +29,13 @@
 #include "class/ompi_bitmap.h"
 #include "event/event.h"
 #include "mca/pml/pml.h"
-#include "mca/bmi/bmi.h"
+#include "mca/btl/btl.h"
 #include "util/output.h"
 #include "mca/mpool/mpool.h" 
-#include "bmi_ib_error.h" 
+#include "btl_ib_error.h" 
 
-#include "mca/bmi/bmi.h"
-#include "mca/bmi/base/base.h" 
+#include "mca/btl/btl.h"
+#include "mca/btl/base/base.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -47,13 +47,13 @@ extern "C" {
  * Infiniband (IB) BMI component.
  */
 
-struct mca_bmi_ib_component_t {
-    mca_bmi_base_component_1_0_0_t          super;  /**< base BMI component */ 
+struct mca_btl_ib_component_t {
+    mca_btl_base_component_1_0_0_t          super;  /**< base BMI component */ 
     
-    uint32_t                                ib_num_bmis;
+    uint32_t                                ib_num_btls;
     /**< number of hcas available to the IB component */
 
-    struct mca_bmi_ib_module_t             *ib_bmis;
+    struct mca_btl_ib_module_t             *ib_btls;
     /**< array of available PTLs */
 
     int ib_free_list_num;
@@ -96,21 +96,21 @@ struct mca_bmi_ib_component_t {
     uint32_t reg_mru_len; 
     
     
-}; typedef struct mca_bmi_ib_component_t mca_bmi_ib_component_t;
+}; typedef struct mca_btl_ib_component_t mca_btl_ib_component_t;
 
-extern mca_bmi_ib_component_t mca_bmi_ib_component;
+extern mca_btl_ib_component_t mca_btl_ib_component;
 
-typedef mca_bmi_base_recv_reg_t mca_bmi_ib_recv_reg_t; 
+typedef mca_btl_base_recv_reg_t mca_btl_ib_recv_reg_t; 
     
 
 
 /**
  * IB PTL Interface
  */
-struct mca_bmi_ib_module_t {
-    mca_bmi_base_module_t  super;  /**< base PTL interface */
-    bool bmi_inited; 
-    mca_bmi_ib_recv_reg_t ib_reg[256]; 
+struct mca_btl_ib_module_t {
+    mca_btl_base_module_t  super;  /**< base PTL interface */
+    bool btl_inited; 
+    mca_btl_ib_recv_reg_t ib_reg[256]; 
     VAPI_hca_id_t   hca_id;        /**< ID of HCA */
     IB_port_t port_id; /**< ID of the PORT */ 
     VAPI_hca_port_t port;          /**< IB port of this PTL */
@@ -166,26 +166,26 @@ struct mca_bmi_ib_module_t {
     uint32_t ib_src_path_bits; 
 
     
-}; typedef struct mca_bmi_ib_module_t mca_bmi_ib_module_t;
+}; typedef struct mca_btl_ib_module_t mca_btl_ib_module_t;
     
 
-    struct mca_bmi_ib_frag_t; 
-extern mca_bmi_ib_module_t mca_bmi_ib_module;
+    struct mca_btl_ib_frag_t; 
+extern mca_btl_ib_module_t mca_btl_ib_module;
 
 /**
  * Register IB component parameters with the MCA framework
  */
-extern int mca_bmi_ib_component_open(void);
+extern int mca_btl_ib_component_open(void);
 
 /**
  * Any final cleanup before being unloaded.
  */
-extern int mca_bmi_ib_component_close(void);
+extern int mca_btl_ib_component_close(void);
 
 /**
  * IB component initialization.
  * 
- * @param num_bmi_modules (OUT)                  Number of BMIs returned in BMI array.
+ * @param num_btl_modules (OUT)                  Number of BMIs returned in BMI array.
  * @param allow_multi_user_threads (OUT)  Flag indicating wether BMI supports user threads (TRUE)
  * @param have_hidden_threads (OUT)       Flag indicating wether BMI uses threads (TRUE)
  *
@@ -195,8 +195,8 @@ extern int mca_bmi_ib_component_close(void);
  *  (3) publish BMI addressing info 
  *
  */
-extern mca_bmi_base_module_t** mca_bmi_ib_component_init(
-    int *num_bmi_modules, 
+extern mca_btl_base_module_t** mca_btl_ib_component_init(
+    int *num_btl_modules, 
     bool allow_multi_user_threads,
     bool have_hidden_threads
 );
@@ -205,7 +205,7 @@ extern mca_bmi_base_module_t** mca_bmi_ib_component_init(
 /**
  * IB component progress.
  */
-extern int mca_bmi_ib_component_progress(
+extern int mca_btl_ib_component_progress(
                                          void
 );
 
@@ -214,7 +214,7 @@ extern int mca_bmi_ib_component_progress(
  * Register a callback function that is called on receipt
  * of a fragment.
  *
- * @param bmi (IN)     BMI module
+ * @param btl (IN)     BMI module
  * @return             Status indicating if cleanup was successful
  *
  * When the process list changes, the PML notifies the BMI of the
@@ -222,10 +222,10 @@ extern int mca_bmi_ib_component_progress(
  * resources associated with the peer.
  */
 
-int mca_bmi_ib_register(
-    struct mca_bmi_base_module_t* bmi,
-    mca_bmi_base_tag_t tag,
-    mca_bmi_base_module_recv_cb_fn_t cbfunc,
+int mca_btl_ib_register(
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_tag_t tag,
+    mca_btl_base_module_recv_cb_fn_t cbfunc,
     void* cbdata
 );
                                                                                                                      
@@ -233,19 +233,19 @@ int mca_bmi_ib_register(
 /**
  * Cleanup any resources held by the BMI.
  * 
- * @param bmi  BMI instance.
+ * @param btl  BMI instance.
  * @return     OMPI_SUCCESS or error status on failure.
  */
 
-extern int mca_bmi_ib_finalize(
-    struct mca_bmi_base_module_t* bmi
+extern int mca_btl_ib_finalize(
+    struct mca_btl_base_module_t* btl
 );
 
 
 /**
  * PML->BMI notification of change in the process list.
  * 
- * @param bmi (IN)
+ * @param btl (IN)
  * @param nprocs (IN)     Number of processes
  * @param procs (IN)      Set of processes
  * @param peers (OUT)     Set of (optional) peer addressing info.
@@ -254,97 +254,97 @@ extern int mca_bmi_ib_finalize(
  * 
  */
 
-extern int mca_bmi_ib_add_procs(
-    struct mca_bmi_base_module_t* bmi,
+extern int mca_btl_ib_add_procs(
+    struct mca_btl_base_module_t* btl,
     size_t nprocs,
     struct ompi_proc_t **procs,
-    struct mca_bmi_base_endpoint_t** peers,
+    struct mca_btl_base_endpoint_t** peers,
     ompi_bitmap_t* reachable
 );
 
 /**
  * PML->BMI notification of change in the process list.
  *
- * @param bmi (IN)     BMI instance
+ * @param btl (IN)     BMI instance
  * @param nproc (IN)   Number of processes.
  * @param procs (IN)   Set of processes.
  * @param peers (IN)   Set of peer data structures.
  * @return             Status indicating if cleanup was successful
  *
  */
-extern int mca_bmi_ib_del_procs(
-    struct mca_bmi_base_module_t* bmi,
+extern int mca_btl_ib_del_procs(
+    struct mca_btl_base_module_t* btl,
     size_t nprocs,
     struct ompi_proc_t **procs,
-    struct mca_bmi_base_endpoint_t** peers
+    struct mca_btl_base_endpoint_t** peers
 );
 
 
 /**
  * PML->BMI Initiate a send of the specified size.
  *
- * @param bmi (IN)               BMI instance
- * @param bmi_base_peer (IN)     BMI peer addressing
- * @param send_request (IN/OUT)  Send request (allocated by PML via mca_bmi_base_request_alloc_fn_t)
+ * @param btl (IN)               BMI instance
+ * @param btl_base_peer (IN)     BMI peer addressing
+ * @param send_request (IN/OUT)  Send request (allocated by PML via mca_btl_base_request_alloc_fn_t)
  * @param size (IN)              Number of bytes PML is requesting BMI to deliver
  * @param flags (IN)             Flags that should be passed to the peer via the message header.
  * @param request (OUT)          OMPI_SUCCESS if the BMI was able to queue one or more fragments
  */
-extern int mca_bmi_ib_send(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* bmi_peer,
-    struct mca_bmi_base_descriptor_t* descriptor, 
-    mca_bmi_base_tag_t tag
+extern int mca_btl_ib_send(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* btl_peer,
+    struct mca_btl_base_descriptor_t* descriptor, 
+    mca_btl_base_tag_t tag
 );
 
 /**
  * PML->BMI Initiate a put of the specified size.
  *
- * @param bmi (IN)               BMI instance
- * @param bmi_base_peer (IN)     BMI peer addressing
- * @param send_request (IN/OUT)  Send request (allocated by PML via mca_bmi_base_request_alloc_fn_t)
+ * @param btl (IN)               BMI instance
+ * @param btl_base_peer (IN)     BMI peer addressing
+ * @param send_request (IN/OUT)  Send request (allocated by PML via mca_btl_base_request_alloc_fn_t)
  * @param size (IN)              Number of bytes PML is requesting BMI to deliver
  * @param flags (IN)             Flags that should be passed to the peer via the message header.
  * @param request (OUT)          OMPI_SUCCESS if the BMI was able to queue one or more fragments
  */
-extern int mca_bmi_ib_put(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* bmi_peer,
-    struct mca_bmi_base_descriptor_t* decriptor
+extern int mca_btl_ib_put(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* btl_peer,
+    struct mca_btl_base_descriptor_t* decriptor
 );
 
 /**
  * Allocate a descriptor.
  *
- * @param bmi (IN)      BMI module
+ * @param btl (IN)      BMI module
  * @param size (IN)     Requested descriptor size.
  */
-extern mca_bmi_base_descriptor_t* mca_bmi_ib_alloc(
-    struct mca_bmi_base_module_t* bmi, 
+extern mca_btl_base_descriptor_t* mca_btl_ib_alloc(
+    struct mca_btl_base_module_t* btl, 
     size_t size); 
 
 
 /**
  * Return a segment allocated by this BMI.
  *
- * @param bmi (IN)         BMI module
+ * @param btl (IN)         BMI module
  * @param descriptor (IN)  Allocated descriptor.
  */
-extern int mca_bmi_ib_free(
-    struct mca_bmi_base_module_t* bmi, 
-    mca_bmi_base_descriptor_t* des); 
+extern int mca_btl_ib_free(
+    struct mca_btl_base_module_t* btl, 
+    mca_btl_base_descriptor_t* des); 
     
 
 /**
  * Pack data and return a descriptor that can be
  * used for send/put.
  *
- * @param bmi (IN)      BMI module
+ * @param btl (IN)      BMI module
  * @param peer (IN)     BMI peer addressing
  */
-mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* peer,
+mca_btl_base_descriptor_t* mca_btl_ib_prepare_src(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* peer,
     mca_mpool_base_registration_t* registration, 
     struct ompi_convertor_t* convertor,
     size_t reserve,
@@ -354,12 +354,12 @@ mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_src(
 /**
  * Allocate a descriptor initialized for RDMA write.
  *
- * @param bmi (IN)      BMI module
+ * @param btl (IN)      BMI module
  * @param peer (IN)     BMI peer addressing
  */
-extern mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst( 
-                                                         struct mca_bmi_base_module_t* bmi, 
-                                                         struct mca_bmi_base_endpoint_t* peer,
+extern mca_btl_base_descriptor_t* mca_btl_ib_prepare_dst( 
+                                                         struct mca_btl_base_module_t* btl, 
+                                                         struct mca_btl_base_endpoint_t* peer,
                                                          mca_mpool_base_registration_t* registration, 
                                                          struct ompi_convertor_t* convertor,
                                                          size_t reserve,
@@ -367,17 +367,17 @@ extern mca_bmi_base_descriptor_t* mca_bmi_ib_prepare_dst(
 /**
  * Return a send fragment to the modules free list.
  *
- * @param bmi (IN)   BMI instance
+ * @param btl (IN)   BMI instance
  * @param frag (IN)  IB send fragment
  *
  */
-extern void mca_bmi_ib_send_frag_return(
-    struct mca_bmi_base_module_t* bmi,
-    struct mca_bmi_ib_frag_t*
+extern void mca_btl_ib_send_frag_return(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_ib_frag_t*
 );
 
 
-int mca_bmi_ib_module_init(mca_bmi_ib_module_t* ib_bmi); 
+int mca_btl_ib_module_init(mca_btl_ib_module_t* ib_btl); 
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
