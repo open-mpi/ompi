@@ -20,14 +20,14 @@
 #include "class/ompi_list.h"
 #include "event/event.h"
 #include "mca/pml/pml.h"
-#include "mca/bmi/bmi.h"
-#include "bmi_ib_frag.h"
-#include "bmi_ib.h"
+#include "mca/btl/btl.h"
+#include "btl_ib_frag.h"
+#include "btl_ib.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 #define MAX_POST_RR (16) 
-OBJ_CLASS_DECLARATION(mca_bmi_ib_endpoint_t);
+OBJ_CLASS_DECLARATION(mca_btl_ib_endpoint_t);
 
 /**
  * State of IB endpoint connection.
@@ -52,25 +52,25 @@ typedef enum {
     /* Maximum number of retries have been used.
      * Report failure on send to upper layer */
     MCA_BMI_IB_FAILED
-} mca_bmi_ib_endpoint_state_t;
+} mca_btl_ib_endpoint_state_t;
 
 /**
  * An abstraction that represents a connection to a endpoint process.
- * An instance of mca_bmi_base_endpoint_t is associated w/ each process
+ * An instance of mca_btl_base_endpoint_t is associated w/ each process
  * and BMI pair at startup. However, connections to the endpoint
  * are established dynamically on an as-needed basis:
  */
 
-struct mca_bmi_base_endpoint_t {
+struct mca_btl_base_endpoint_t {
     ompi_list_item_t            super;
 
-    struct mca_bmi_ib_module_t* endpoint_bmi;
+    struct mca_btl_ib_module_t* endpoint_btl;
     /**< BMI instance that created this connection */
 
-    struct mca_bmi_ib_proc_t*   endpoint_proc;
+    struct mca_btl_ib_proc_t*   endpoint_proc;
     /**< proc structure corresponding to endpoint */
 
-    mca_bmi_ib_endpoint_state_t     endpoint_state;
+    mca_btl_ib_endpoint_state_t     endpoint_state;
     /**< current state of the connection */
 
     size_t                      endpoint_retries;
@@ -111,18 +111,18 @@ struct mca_bmi_base_endpoint_t {
 
 };
 
-typedef struct mca_bmi_base_endpoint_t mca_bmi_base_endpoint_t;
-typedef mca_bmi_base_endpoint_t  mca_bmi_ib_endpoint_t;
+typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
+typedef mca_btl_base_endpoint_t  mca_btl_ib_endpoint_t;
 
-int  mca_bmi_ib_endpoint_send(mca_bmi_base_endpoint_t* endpoint, struct mca_bmi_ib_frag_t* frag);
-int  mca_bmi_ib_endpoint_connect(mca_bmi_base_endpoint_t*);
-void mca_bmi_ib_post_recv(void);
+int  mca_btl_ib_endpoint_send(mca_btl_base_endpoint_t* endpoint, struct mca_btl_ib_frag_t* frag);
+int  mca_btl_ib_endpoint_connect(mca_btl_base_endpoint_t*);
+void mca_btl_ib_post_recv(void);
 
 
-void mca_bmi_ib_progress_send_frags(mca_bmi_ib_endpoint_t*);
+void mca_btl_ib_progress_send_frags(mca_btl_ib_endpoint_t*);
 
-static inline int mca_bmi_ib_endpoint_post_rr_sub(int cnt, 
-                                              mca_bmi_ib_endpoint_t* endpoint, 
+static inline int mca_btl_ib_endpoint_post_rr_sub(int cnt, 
+                                              mca_btl_ib_endpoint_t* endpoint, 
                                               ompi_free_list_t* frag_list, 
                                               uint32_t* rr_posted, 
                                               VAPI_hca_hndl_t nic, 
@@ -132,16 +132,16 @@ static inline int mca_bmi_ib_endpoint_post_rr_sub(int cnt,
     
     int rc, i; 
     ompi_list_item_t* item; 
-    mca_bmi_ib_frag_t* frag; 
-    mca_bmi_ib_module_t *ib_bmi = endpoint->endpoint_bmi;
-    VAPI_rr_desc_t* rr_desc_post = ib_bmi->rr_desc_post; 
+    mca_btl_ib_frag_t* frag; 
+    mca_btl_ib_module_t *ib_btl = endpoint->endpoint_btl;
+    VAPI_rr_desc_t* rr_desc_post = ib_btl->rr_desc_post; 
     
     /* prepare frags and post receive requests */
     for(i = 0; i < cnt; i++) {
         OMPI_FREE_LIST_WAIT(frag_list, item, rc); 
-        frag = (mca_bmi_ib_frag_t*) item; 
+        frag = (mca_btl_ib_frag_t*) item; 
         frag->endpoint = endpoint; 
-        frag->sg_entry.len = frag->size + ((unsigned char*) frag->segment.seg_addr.pval- (unsigned char*) frag->hdr);  /* sizeof(mca_bmi_ib_header_t);     */ 
+        frag->sg_entry.len = frag->size + ((unsigned char*) frag->segment.seg_addr.pval- (unsigned char*) frag->hdr);  /* sizeof(mca_btl_ib_header_t);     */ 
         rr_desc_post[i] = frag->rr_desc; 
         
     }
@@ -158,41 +158,41 @@ static inline int mca_bmi_ib_endpoint_post_rr_sub(int cnt,
     return OMPI_SUCCESS; 
 }
 
-static inline int mca_bmi_ib_endpoint_post_rr( mca_bmi_ib_endpoint_t * endpoint, int additional){ 
-    mca_bmi_ib_module_t * ib_bmi = endpoint->endpoint_bmi; 
+static inline int mca_btl_ib_endpoint_post_rr( mca_btl_ib_endpoint_t * endpoint, int additional){ 
+    mca_btl_ib_module_t * ib_btl = endpoint->endpoint_btl; 
     int rc; 
-    OMPI_THREAD_LOCK(&ib_bmi->ib_lock); 
+    OMPI_THREAD_LOCK(&ib_btl->ib_lock); 
 
-    if(ib_bmi->rr_posted_high <= mca_bmi_ib_component.ib_rr_buf_min+additional && ib_bmi->rr_posted_high < mca_bmi_ib_component.ib_rr_buf_max){ 
+    if(ib_btl->rr_posted_high <= mca_btl_ib_component.ib_rr_buf_min+additional && ib_btl->rr_posted_high < mca_btl_ib_component.ib_rr_buf_max){ 
         
-        rc = mca_bmi_ib_endpoint_post_rr_sub(mca_bmi_ib_component.ib_rr_buf_max - ib_bmi->rr_posted_high, 
+        rc = mca_btl_ib_endpoint_post_rr_sub(mca_btl_ib_component.ib_rr_buf_max - ib_btl->rr_posted_high, 
                                              endpoint, 
-                                             &ib_bmi->recv_free_eager, 
-                                             &ib_bmi->rr_posted_high, 
-                                             ib_bmi->nic, 
+                                             &ib_btl->recv_free_eager, 
+                                             &ib_btl->rr_posted_high, 
+                                             ib_btl->nic, 
                                              endpoint->lcl_qp_hndl_high
                                              ); 
         if(rc != OMPI_SUCCESS){ 
-            OMPI_THREAD_UNLOCK(&ib_bmi->ib_lock); 
+            OMPI_THREAD_UNLOCK(&ib_btl->ib_lock); 
             return rc; 
         }
     }
-    if(ib_bmi->rr_posted_low <= mca_bmi_ib_component.ib_rr_buf_min+additional && ib_bmi->rr_posted_low < mca_bmi_ib_component.ib_rr_buf_max){ 
+    if(ib_btl->rr_posted_low <= mca_btl_ib_component.ib_rr_buf_min+additional && ib_btl->rr_posted_low < mca_btl_ib_component.ib_rr_buf_max){ 
         
-        rc = mca_bmi_ib_endpoint_post_rr_sub(mca_bmi_ib_component.ib_rr_buf_max - ib_bmi->rr_posted_low, 
+        rc = mca_btl_ib_endpoint_post_rr_sub(mca_btl_ib_component.ib_rr_buf_max - ib_btl->rr_posted_low, 
                                              endpoint, 
-                                             &ib_bmi->recv_free_max, 
-                                             &ib_bmi->rr_posted_low, 
-                                             ib_bmi->nic, 
+                                             &ib_btl->recv_free_max, 
+                                             &ib_btl->rr_posted_low, 
+                                             ib_btl->nic, 
                                              endpoint->lcl_qp_hndl_low
                                              ); 
         if(rc != OMPI_SUCCESS) {
-            OMPI_THREAD_UNLOCK(&ib_bmi->ib_lock); 
+            OMPI_THREAD_UNLOCK(&ib_btl->ib_lock); 
             return rc; 
         }
 
     }
-    OMPI_THREAD_UNLOCK(&ib_bmi->ib_lock); 
+    OMPI_THREAD_UNLOCK(&ib_btl->ib_lock); 
     return OMPI_SUCCESS; 
     
     

@@ -19,28 +19,28 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 sources = \
-    bmi_ib.c \
-    bmi_ib.h \
-    bmi_ib_component.c \
-    bmi_ib_endpoint.c \
-    bmi_ib_endpoint.h \
-    bmi_ib_frag.c \
-    bmi_ib_frag.h \
-    bmi_ib_proc.c \
-    bmi_ib_proc.h \
-    bmi_ib_error.h
+    btl_ib.c \
+    btl_ib.h \
+    btl_ib_component.c \
+    btl_ib_endpoint.c \
+    btl_ib_endpoint.h \
+    btl_ib_frag.c \
+    btl_ib_frag.h \
+    btl_ib_proc.c \
+    btl_ib_proc.h \
+    btl_ib_error.h
      
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_bmi_ib_DSO
+if OMPI_BUILD_btl_ib_DSO
 lib =
 lib_sources =
-component = mca_bmi_ib.la
+component = mca_btl_ib.la
 component_sources = $(sources)
 else
-lib = libmca_bmi_ib.la
+lib = libmca_btl_ib.la
 lib_sources = $(sources)
 component =
 component_sources =
@@ -48,9 +48,9 @@ endif
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component)
-mca_bmi_ib_la_SOURCES = $(component_sources)
-mca_bmi_ib_la_LDFLAGS = -module -avoid-version
+mca_btl_ib_la_SOURCES = $(component_sources)
+mca_btl_ib_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(lib)
-libmca_bmi_ib_la_SOURCES = $(lib_sources)
-libmca_bmi_ib_la_LDFLAGS = -module -avoid-version
+libmca_btl_ib_la_SOURCES = $(lib_sources)
+libmca_btl_ib_la_LDFLAGS = -module -avoid-version

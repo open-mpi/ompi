@@ -25,17 +25,17 @@
 #include "mca/rml/rml.h"
 #include "mca/errmgr/errmgr.h"
 #include "dps/dps.h"
-#include "bmi_ib.h"
-#include "bmi_ib_endpoint.h" 
-#include "bmi_ib_proc.h"
-#include "bmi_ib_frag.h"
+#include "btl_ib.h"
+#include "btl_ib_endpoint.h" 
+#include "btl_ib_proc.h"
+#include "btl_ib_frag.h"
 #include "class/ompi_free_list.h" 
 
-static void mca_bmi_ib_endpoint_construct(mca_bmi_base_endpoint_t* endpoint);
-static void mca_bmi_ib_endpoint_destruct(mca_bmi_base_endpoint_t* endpoint);
+static void mca_btl_ib_endpoint_construct(mca_btl_base_endpoint_t* endpoint);
+static void mca_btl_ib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint);
 
-int mca_bmi_ib_endpoint_create_qp(
-                                  mca_bmi_ib_module_t* ib_bmi, 
+int mca_btl_ib_endpoint_create_qp(
+                                  mca_btl_ib_module_t* ib_btl, 
                                   VAPI_hca_hndl_t nic,
                                   VAPI_pd_hndl_t ptag, 
                                   VAPI_cq_hndl_t cq_hndl, 
@@ -44,9 +44,9 @@ int mca_bmi_ib_endpoint_create_qp(
                                   int transport_type); 
 
 
-int mca_bmi_ib_endpoint_qp_init_query(
+int mca_btl_ib_endpoint_qp_init_query(
 
-                                      mca_bmi_ib_module_t* ib_bmi, 
+                                      mca_btl_ib_module_t* ib_btl, 
                                       VAPI_hca_hndl_t nic, 
                                       VAPI_qp_hndl_t qp_hndl, 
                                       VAPI_qp_num_t remote_qp_num, 
@@ -55,14 +55,14 @@ int mca_bmi_ib_endpoint_qp_init_query(
                                       ); 
 
                    
-static inline int mca_bmi_ib_endpoint_post_send(mca_bmi_ib_module_t* ib_bmi, mca_bmi_ib_endpoint_t * endpoint, mca_bmi_ib_frag_t * frag)
+static inline int mca_btl_ib_endpoint_post_send(mca_btl_ib_module_t* ib_btl, mca_btl_ib_endpoint_t * endpoint, mca_btl_ib_frag_t * frag)
 { 
     
     frag->sr_desc.remote_qkey = 0; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     
     VAPI_qp_hndl_t qp_hndl; 
-    if(frag->base.des_flags && MCA_BMI_DES_FLAGS_PRIORITY  && frag->size <= ib_bmi->super.bmi_eager_limit){ 
+    if(frag->base.des_flags && MCA_BMI_DES_FLAGS_PRIORITY  && frag->size <= ib_btl->super.btl_eager_limit){ 
         frag->sr_desc.remote_qp = endpoint->rem_qp_num_high; 
         qp_hndl = endpoint->lcl_qp_hndl_high; 
     } else {
@@ -70,15 +70,15 @@ static inline int mca_bmi_ib_endpoint_post_send(mca_bmi_ib_module_t* ib_bmi, mca
         qp_hndl = endpoint->lcl_qp_hndl_low; 
     } 
     frag->sr_desc.opcode = VAPI_SEND; 
-    frag->sg_entry.len = frag->segment.seg_len + ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);  /* sizeof(mca_bmi_ib_header_t); */ 
+    frag->sg_entry.len = frag->segment.seg_len + ((unsigned char*) frag->segment.seg_addr.pval - (unsigned char*) frag->hdr);  /* sizeof(mca_btl_ib_header_t); */ 
 
-    if(frag->sg_entry.len <= ib_bmi->ib_inline_max) { 
-            frag->ret = EVAPI_post_inline_sr(ib_bmi->nic, 
+    if(frag->sg_entry.len <= ib_btl->ib_inline_max) { 
+            frag->ret = EVAPI_post_inline_sr(ib_btl->nic, 
                                  qp_hndl, 
                                  &frag->sr_desc); 
         
     }else { 
-        frag->ret = VAPI_post_sr(ib_bmi->nic, 
+        frag->ret = VAPI_post_sr(ib_btl->nic, 
                                  qp_hndl,
                                  &frag->sr_desc); 
     }
@@ -88,25 +88,25 @@ static inline int mca_bmi_ib_endpoint_post_send(mca_bmi_ib_module_t* ib_bmi, mca
     if(VAPI_OK != frag->ret)
         return OMPI_ERROR; 
     
-    mca_bmi_ib_endpoint_post_rr(endpoint, 1); 
+    mca_btl_ib_endpoint_post_rr(endpoint, 1); 
 
     return OMPI_SUCCESS; 
 }
 
 
 
-OBJ_CLASS_INSTANCE(mca_bmi_ib_endpoint_t, 
-                   ompi_list_item_t, mca_bmi_ib_endpoint_construct, 
-                   mca_bmi_ib_endpoint_destruct);
+OBJ_CLASS_INSTANCE(mca_btl_ib_endpoint_t, 
+                   ompi_list_item_t, mca_btl_ib_endpoint_construct, 
+                   mca_btl_ib_endpoint_destruct);
 
 /*
  * Initialize state of the endpoint instance.
  *
  */
 
-static void mca_bmi_ib_endpoint_construct(mca_bmi_base_endpoint_t* endpoint)
+static void mca_btl_ib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 {
-    endpoint->endpoint_bmi = 0;
+    endpoint->endpoint_btl = 0;
     endpoint->endpoint_proc = 0;
     endpoint->endpoint_tstamp = 0.0;
     endpoint->endpoint_state = MCA_BMI_IB_CLOSED;
@@ -121,7 +121,7 @@ static void mca_bmi_ib_endpoint_construct(mca_bmi_base_endpoint_t* endpoint)
  *
  */
 
-static void mca_bmi_ib_endpoint_destruct(mca_bmi_base_endpoint_t* endpoint)
+static void mca_btl_ib_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 {
 }
 
@@ -130,7 +130,7 @@ static void mca_bmi_ib_endpoint_destruct(mca_bmi_base_endpoint_t* endpoint)
  *
  */
 
-static void mca_bmi_ib_endpoint_send_cb(
+static void mca_btl_ib_endpoint_send_cb(
     int status,
     orte_process_name_t* endpoint, 
     orte_buffer_t* buffer,
@@ -141,7 +141,7 @@ static void mca_bmi_ib_endpoint_send_cb(
 }
 
 
-static int mca_bmi_ib_endpoint_send_connect_req(mca_bmi_base_endpoint_t* endpoint)
+static int mca_btl_ib_endpoint_send_connect_req(mca_btl_base_endpoint_t* endpoint)
 {
     orte_buffer_t* buffer = OBJ_NEW(orte_buffer_t);
     int rc;
@@ -163,7 +163,7 @@ static int mca_bmi_ib_endpoint_send_connect_req(mca_bmi_base_endpoint_t* endpoin
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    rc = orte_dps.pack(buffer, &endpoint->endpoint_bmi->port.lid, 1, ORTE_UINT32);
+    rc = orte_dps.pack(buffer, &endpoint->endpoint_btl->port.lid, 1, ORTE_UINT32);
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -171,13 +171,13 @@ static int mca_bmi_ib_endpoint_send_connect_req(mca_bmi_base_endpoint_t* endpoin
 
     /* send to endpoint */
     rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buffer, ORTE_RML_TAG_DYNAMIC-1, 0,
-         mca_bmi_ib_endpoint_send_cb, NULL);
+         mca_btl_ib_endpoint_send_cb, NULL);
     
     
     DEBUG_OUT("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
               endpoint->lcl_qp_prop_high.qp_num,
               endpoint->lcl_qp_prop_low.qp_num,
-              endpoint->endpoint_bmi->port.lid);
+              endpoint->endpoint_btl->port.lid);
     
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
@@ -191,7 +191,7 @@ static int mca_bmi_ib_endpoint_send_connect_req(mca_bmi_base_endpoint_t* endpoin
  *
  */
 
-static int mca_bmi_ib_endpoint_send_connect_ack(mca_bmi_base_endpoint_t* endpoint)
+static int mca_btl_ib_endpoint_send_connect_ack(mca_btl_base_endpoint_t* endpoint)
 {
     orte_buffer_t* buffer = OBJ_NEW(orte_buffer_t);
     int rc;
@@ -213,7 +213,7 @@ static int mca_bmi_ib_endpoint_send_connect_ack(mca_bmi_base_endpoint_t* endpoin
 
     /* send to endpoint */
     rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buffer, ORTE_RML_TAG_DYNAMIC-1, 0,
-         mca_bmi_ib_endpoint_send_cb, NULL);
+         mca_btl_ib_endpoint_send_cb, NULL);
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
     }
@@ -228,7 +228,7 @@ static int mca_bmi_ib_endpoint_send_connect_ack(mca_bmi_base_endpoint_t* endpoin
  * setup.
  *
  */
-static int mca_bmi_ib_endpoint_set_remote_info(mca_bmi_base_endpoint_t* endpoint, orte_buffer_t* buffer)
+static int mca_btl_ib_endpoint_set_remote_info(mca_btl_base_endpoint_t* endpoint, orte_buffer_t* buffer)
 {
     int rc;
 
@@ -269,16 +269,16 @@ static int mca_bmi_ib_endpoint_set_remote_info(mca_bmi_base_endpoint_t* endpoint
  *
  */
 
-static int mca_bmi_ib_endpoint_start_connect(mca_bmi_base_endpoint_t* endpoint)
+static int mca_btl_ib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoint)
 {
     int rc;
     
     
     /* Create the High Priority Queue Pair */
-    if(OMPI_SUCCESS != (rc = mca_bmi_ib_endpoint_create_qp(endpoint->endpoint_bmi, 
-                                                           endpoint->endpoint_bmi->nic, 
-                                                           endpoint->endpoint_bmi->ptag, 
-                                                           endpoint->endpoint_bmi->cq_hndl_high, 
+    if(OMPI_SUCCESS != (rc = mca_btl_ib_endpoint_create_qp(endpoint->endpoint_btl, 
+                                                           endpoint->endpoint_btl->nic, 
+                                                           endpoint->endpoint_btl->ptag, 
+                                                           endpoint->endpoint_btl->cq_hndl_high, 
                                                            &endpoint->lcl_qp_hndl_high, 
                                                            &endpoint->lcl_qp_prop_high, 
                                                            VAPI_TS_RC))) {
@@ -289,10 +289,10 @@ static int mca_bmi_ib_endpoint_start_connect(mca_bmi_base_endpoint_t* endpoint)
 
 
     /* Create the Low Priority Queue Pair */
-    if(OMPI_SUCCESS != (rc = mca_bmi_ib_endpoint_create_qp(endpoint->endpoint_bmi, 
-                                                           endpoint->endpoint_bmi->nic, 
-                                                           endpoint->endpoint_bmi->ptag, 
-                                                           endpoint->endpoint_bmi->cq_hndl_low, 
+    if(OMPI_SUCCESS != (rc = mca_btl_ib_endpoint_create_qp(endpoint->endpoint_btl, 
+                                                           endpoint->endpoint_btl->nic, 
+                                                           endpoint->endpoint_btl->ptag, 
+                                                           endpoint->endpoint_btl->cq_hndl_low, 
                                                            &endpoint->lcl_qp_hndl_low, 
                                                            &endpoint->lcl_qp_prop_low, 
                                                            VAPI_TS_RC))) {
@@ -304,11 +304,11 @@ static int mca_bmi_ib_endpoint_start_connect(mca_bmi_base_endpoint_t* endpoint)
     DEBUG_OUT("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_prop_high.qp_num,
               endpoint->lcl_qp_prop_low.qp_num,
-              ib_bmi->port.lid);
+              ib_btl->port.lid);
 
     /* Send connection info over to remote endpoint */
     endpoint->endpoint_state = MCA_BMI_IB_CONNECTING;
-    if(OMPI_SUCCESS != (rc = mca_bmi_ib_endpoint_send_connect_req(endpoint))) {
+    if(OMPI_SUCCESS != (rc = mca_btl_ib_endpoint_send_connect_req(endpoint))) {
         ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
@@ -320,16 +320,16 @@ static int mca_bmi_ib_endpoint_start_connect(mca_bmi_base_endpoint_t* endpoint)
  * Reply to a `start - connect' message
  *
  */
-static int mca_bmi_ib_endpoint_reply_start_connect(mca_bmi_ib_endpoint_t *endpoint, orte_buffer_t* buffer)
+static int mca_btl_ib_endpoint_reply_start_connect(mca_btl_ib_endpoint_t *endpoint, orte_buffer_t* buffer)
 {
     int rc;
 
     
     /* Create the High Priority Queue Pair */
-    if(OMPI_SUCCESS != (rc = mca_bmi_ib_endpoint_create_qp(endpoint->endpoint_bmi, 
-                                                           endpoint->endpoint_bmi->nic, 
-                                                           endpoint->endpoint_bmi->ptag, 
-                                                           endpoint->endpoint_bmi->cq_hndl_high, 
+    if(OMPI_SUCCESS != (rc = mca_btl_ib_endpoint_create_qp(endpoint->endpoint_btl, 
+                                                           endpoint->endpoint_btl->nic, 
+                                                           endpoint->endpoint_btl->ptag, 
+                                                           endpoint->endpoint_btl->cq_hndl_high, 
                                                            &endpoint->lcl_qp_hndl_high, 
                                                            &endpoint->lcl_qp_prop_high, 
                                                            VAPI_TS_RC))) {
@@ -340,10 +340,10 @@ static int mca_bmi_ib_endpoint_reply_start_connect(mca_bmi_ib_endpoint_t *endpoi
 
 
     /* Create the Low Priority Queue Pair */
-    if(OMPI_SUCCESS != (rc = mca_bmi_ib_endpoint_create_qp(endpoint->endpoint_bmi, 
-                                                           endpoint->endpoint_bmi->nic, 
-                                                           endpoint->endpoint_bmi->ptag, 
-                                                           endpoint->endpoint_bmi->cq_hndl_low, 
+    if(OMPI_SUCCESS != (rc = mca_btl_ib_endpoint_create_qp(endpoint->endpoint_btl, 
+                                                           endpoint->endpoint_btl->nic, 
+                                                           endpoint->endpoint_btl->ptag, 
+                                                           endpoint->endpoint_btl->cq_hndl_low, 
                                                            &endpoint->lcl_qp_hndl_low, 
                                                            &endpoint->lcl_qp_prop_low, 
                                                            VAPI_TS_RC))) {
@@ -355,17 +355,17 @@ static int mca_bmi_ib_endpoint_reply_start_connect(mca_bmi_ib_endpoint_t *endpoi
     DEBUG_OUT("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_prop_high.qp_num,
               endpoint->lcl_qp_prop_low.qp_num,
-              ib_bmi->port.lid);
+              ib_btl->port.lid);
 
 
 
 
     /* Set the remote side info */
-    mca_bmi_ib_endpoint_set_remote_info(endpoint, buffer);
+    mca_btl_ib_endpoint_set_remote_info(endpoint, buffer);
 
     /* Connect to endpoint */
 
-    rc = mca_bmi_ib_endpoint_connect(endpoint);
+    rc = mca_btl_ib_endpoint_connect(endpoint);
     if(rc != OMPI_SUCCESS) {
         ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
@@ -373,7 +373,7 @@ static int mca_bmi_ib_endpoint_reply_start_connect(mca_bmi_ib_endpoint_t *endpoi
     }
 
     /* Send connection info over to remote endpoint */
-    if(OMPI_SUCCESS != (rc = mca_bmi_ib_endpoint_send_connect_req(endpoint))) {
+    if(OMPI_SUCCESS != (rc = mca_btl_ib_endpoint_send_connect_req(endpoint))) {
         ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
         return rc;
@@ -385,10 +385,10 @@ static int mca_bmi_ib_endpoint_reply_start_connect(mca_bmi_ib_endpoint_t *endpoi
  *
  */
 
-static void mca_bmi_ib_endpoint_connected(mca_bmi_ib_endpoint_t *endpoint)
+static void mca_btl_ib_endpoint_connected(mca_btl_ib_endpoint_t *endpoint)
 {
     endpoint->endpoint_state = MCA_BMI_IB_CONNECTED;
-    mca_bmi_ib_progress_send_frags(endpoint);
+    mca_btl_ib_progress_send_frags(endpoint);
 }
 
 /*
@@ -400,23 +400,23 @@ static void mca_bmi_ib_endpoint_connected(mca_bmi_ib_endpoint_t *endpoint)
  *
  */
 
-static void mca_bmi_ib_endpoint_recv(
+static void mca_btl_ib_endpoint_recv(
     int status,
     orte_process_name_t* endpoint, 
     orte_buffer_t* buffer,
     orte_rml_tag_t tag, 
     void* cbdata)
 {
-    mca_bmi_ib_proc_t *ib_proc;
-    mca_bmi_ib_endpoint_t *ib_endpoint;
+    mca_btl_ib_proc_t *ib_proc;
+    mca_btl_ib_endpoint_t *ib_endpoint;
     int endpoint_state;
     int rc;
 
-    for(ib_proc = (mca_bmi_ib_proc_t*)
-            ompi_list_get_first(&mca_bmi_ib_component.ib_procs);
-            ib_proc != (mca_bmi_ib_proc_t*)
-            ompi_list_get_end(&mca_bmi_ib_component.ib_procs);
-            ib_proc  = (mca_bmi_ib_proc_t*)ompi_list_get_next(ib_proc)) {
+    for(ib_proc = (mca_btl_ib_proc_t*)
+            ompi_list_get_first(&mca_btl_ib_component.ib_procs);
+            ib_proc != (mca_btl_ib_proc_t*)
+            ompi_list_get_end(&mca_btl_ib_component.ib_procs);
+            ib_proc  = (mca_btl_ib_proc_t*)ompi_list_get_next(ib_proc)) {
 
         if(ib_proc->proc_guid.vpid == endpoint->vpid) {
 
@@ -437,7 +437,7 @@ static void mca_bmi_ib_endpoint_recv(
                      * status of this connection to CONNECTING,
                      * and then reply with our QP information */
 
-                    if(OMPI_SUCCESS != (rc = mca_bmi_ib_endpoint_reply_start_connect(ib_endpoint, buffer))) {
+                    if(OMPI_SUCCESS != (rc = mca_btl_ib_endpoint_reply_start_connect(ib_endpoint, buffer))) {
                         ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
                             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
                         break;
@@ -449,23 +449,23 @@ static void mca_bmi_ib_endpoint_recv(
 
                 case MCA_BMI_IB_CONNECTING :
 
-                    mca_bmi_ib_endpoint_set_remote_info(ib_endpoint, buffer);
-                    if(OMPI_SUCCESS != (rc = mca_bmi_ib_endpoint_connect(ib_endpoint))) {
+                    mca_btl_ib_endpoint_set_remote_info(ib_endpoint, buffer);
+                    if(OMPI_SUCCESS != (rc = mca_btl_ib_endpoint_connect(ib_endpoint))) {
                         ompi_output(0, "[%lu,%lu,%lu] %s:%d errcode %d\n", 
                             ORTE_NAME_ARGS(orte_process_info.my_name), __FILE__,__LINE__,rc);
                         break;
                     }
 
                     /* Setup state as connected */
-                    mca_bmi_ib_endpoint_connected(ib_endpoint);
+                    mca_btl_ib_endpoint_connected(ib_endpoint);
 
                     /* Send him an ack */
-                    mca_bmi_ib_endpoint_send_connect_ack(ib_endpoint);
+                    mca_btl_ib_endpoint_send_connect_ack(ib_endpoint);
                     break;
 
                 case MCA_BMI_IB_CONNECT_ACK:
 
-                    mca_bmi_ib_endpoint_connected(ib_endpoint);
+                    mca_btl_ib_endpoint_connected(ib_endpoint);
 
                     break;
 
@@ -481,10 +481,10 @@ static void mca_bmi_ib_endpoint_recv(
 
     /* Okay, now that we are done receiving,
      * re-post the buffer */
-    mca_bmi_ib_post_recv();
+    mca_btl_ib_post_recv();
 }
 
-void mca_bmi_ib_post_recv()
+void mca_btl_ib_post_recv()
 {
     DEBUG_OUT("");
 
@@ -492,7 +492,7 @@ void mca_bmi_ib_post_recv()
         ORTE_RML_NAME_ANY, 
         ORTE_RML_TAG_DYNAMIC-1, 
         0,
-        mca_bmi_ib_endpoint_recv,
+        mca_btl_ib_endpoint_recv,
         NULL);
 }
 
@@ -502,13 +502,13 @@ void mca_bmi_ib_post_recv()
  * connected, queue the fragment and start the connection as required.
  */
 
-int mca_bmi_ib_endpoint_send(
-                             mca_bmi_base_endpoint_t* endpoint,
-                             mca_bmi_ib_frag_t* frag
+int mca_btl_ib_endpoint_send(
+                             mca_btl_base_endpoint_t* endpoint,
+                             mca_btl_ib_frag_t* frag
                              )
 {
     int rc;
-    mca_bmi_ib_module_t *ib_bmi; 
+    mca_btl_ib_module_t *ib_btl; 
     
     OMPI_THREAD_LOCK(&endpoint->endpoint_send_lock);
     
@@ -540,7 +540,7 @@ int mca_bmi_ib_endpoint_send(
             ompi_list_append(&endpoint->pending_send_frags,
                     (ompi_list_item_t *)frag);
 
-            rc = mca_bmi_ib_endpoint_start_connect(endpoint);
+            rc = mca_btl_ib_endpoint_start_connect(endpoint);
             
             break;
 
@@ -551,7 +551,7 @@ int mca_bmi_ib_endpoint_send(
 
         case MCA_BMI_IB_CONNECTED:
             {
-                ib_bmi = endpoint->endpoint_bmi;
+                ib_btl = endpoint->endpoint_btl;
                 
                 
                 DEBUG_OUT("Send to : %d, len : %d, frag : %p", 
@@ -559,7 +559,7 @@ int mca_bmi_ib_endpoint_send(
                         frag->ib_buf.desc.sg_entry.len,
                         frag);
                 
-                rc = mca_bmi_ib_endpoint_post_send(ib_bmi, endpoint, frag); 
+                rc = mca_btl_ib_endpoint_post_send(ib_btl, endpoint, frag); 
                 
                 break; 
             }
@@ -573,11 +573,11 @@ int mca_bmi_ib_endpoint_send(
     return rc;
 }
 
-void mca_bmi_ib_progress_send_frags(mca_bmi_ib_endpoint_t* endpoint)
+void mca_btl_ib_progress_send_frags(mca_btl_ib_endpoint_t* endpoint)
 {
     ompi_list_item_t *frag_item;
-    mca_bmi_ib_frag_t *frag;
-    mca_bmi_ib_module_t* ib_bmi; 
+    mca_btl_ib_frag_t *frag;
+    mca_btl_ib_module_t* ib_btl; 
     /*Check if endpoint is connected */
     if(endpoint->endpoint_state != MCA_BMI_IB_CONNECTED) {
 
@@ -589,12 +589,12 @@ void mca_bmi_ib_progress_send_frags(mca_bmi_ib_endpoint_t* endpoint)
 
     while(!ompi_list_is_empty(&(endpoint->pending_send_frags))) {
         frag_item = ompi_list_remove_first(&(endpoint->pending_send_frags));
-        frag = (mca_bmi_ib_frag_t *) frag_item;
-        ib_bmi = endpoint->endpoint_bmi;
+        frag = (mca_btl_ib_frag_t *) frag_item;
+        ib_btl = endpoint->endpoint_btl;
         /* We need to post this one */
         
-        if(OMPI_SUCCESS !=  mca_bmi_ib_endpoint_post_send(ib_bmi, endpoint, frag))
-            ompi_output(0, "error in mca_bmi_ib_endpoint_send");
+        if(OMPI_SUCCESS !=  mca_btl_ib_endpoint_post_send(ib_btl, endpoint, frag))
+            ompi_output(0, "error in mca_btl_ib_endpoint_send");
     }
 }
 
@@ -604,39 +604,39 @@ void mca_bmi_ib_progress_send_frags(mca_bmi_ib_endpoint_t* endpoint)
  * Complete connection to endpoint.
  */
 
-int mca_bmi_ib_endpoint_connect(
-    mca_bmi_ib_endpoint_t *endpoint)
+int mca_btl_ib_endpoint_connect(
+    mca_btl_ib_endpoint_t *endpoint)
 {
     int rc;
     /* Connection establishment RC */
-    rc = mca_bmi_ib_endpoint_qp_init_query(endpoint->endpoint_bmi, 
-                                           endpoint->endpoint_bmi->nic, 
+    rc = mca_btl_ib_endpoint_qp_init_query(endpoint->endpoint_btl, 
+                                           endpoint->endpoint_btl->nic, 
                                            endpoint->lcl_qp_hndl_high, 
                                            endpoint->rem_qp_num_high, 
                                            endpoint->rem_lid,                                            
-                                           endpoint->endpoint_bmi->port_id); 
+                                           endpoint->endpoint_btl->port_id); 
     
-    rc = mca_bmi_ib_endpoint_qp_init_query(endpoint->endpoint_bmi, 
-                                           endpoint->endpoint_bmi->nic, 
+    rc = mca_btl_ib_endpoint_qp_init_query(endpoint->endpoint_btl, 
+                                           endpoint->endpoint_btl->nic, 
                                            endpoint->lcl_qp_hndl_low, 
                                            endpoint->rem_qp_num_low, 
                                            endpoint->rem_lid,                                            
-                                           endpoint->endpoint_bmi->port_id); 
+                                           endpoint->endpoint_btl->port_id); 
     
     
     if(rc != OMPI_SUCCESS) {
         return rc;
     }
 
-    mca_bmi_ib_endpoint_post_rr(endpoint, 0); 
+    mca_btl_ib_endpoint_post_rr(endpoint, 0); 
     
     return OMPI_SUCCESS;
 }
 
 
 
-int mca_bmi_ib_endpoint_create_qp(
-                                  mca_bmi_ib_module_t* ib_bmi, 
+int mca_btl_ib_endpoint_create_qp(
+                                  mca_btl_ib_module_t* ib_btl, 
                                   VAPI_hca_hndl_t nic,
                                   VAPI_pd_hndl_t ptag, 
                                   VAPI_cq_hndl_t cq_hndl, 
@@ -651,10 +651,10 @@ int mca_bmi_ib_endpoint_create_qp(
     switch(transport_type) {
 
     case VAPI_TS_RC: /* Set up RC qp parameters */
-        qp_init_attr.cap.max_oust_wr_rq = ib_bmi->ib_wq_size;
-        qp_init_attr.cap.max_oust_wr_sq = ib_bmi->ib_wq_size;
-        qp_init_attr.cap.max_sg_size_rq = ib_bmi->ib_sg_list_size;
-        qp_init_attr.cap.max_sg_size_sq = ib_bmi->ib_sg_list_size;
+        qp_init_attr.cap.max_oust_wr_rq = ib_btl->ib_wq_size;
+        qp_init_attr.cap.max_oust_wr_sq = ib_btl->ib_wq_size;
+        qp_init_attr.cap.max_sg_size_rq = ib_btl->ib_sg_list_size;
+        qp_init_attr.cap.max_sg_size_sq = ib_btl->ib_sg_list_size;
         qp_init_attr.pd_hndl            = ptag;
         /* We don't have Reliable Datagram Handle right now */
         qp_init_attr.rdd_hndl           = 0;
@@ -688,9 +688,9 @@ int mca_bmi_ib_endpoint_create_qp(
     return OMPI_SUCCESS;
 }
 
-int mca_bmi_ib_endpoint_qp_init_query(
+int mca_btl_ib_endpoint_qp_init_query(
 
-                                      mca_bmi_ib_module_t* ib_bmi, 
+                                      mca_btl_ib_module_t* ib_btl, 
                                       VAPI_hca_hndl_t nic, 
                                       VAPI_qp_hndl_t qp_hndl, 
                                       VAPI_qp_num_t remote_qp_num, 
@@ -712,7 +712,7 @@ int mca_bmi_ib_endpoint_qp_init_query(
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
     qp_attr.qp_state = VAPI_INIT;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
-    qp_attr.pkey_ix = ib_bmi->ib_pkey_ix;
+    qp_attr.pkey_ix = ib_btl->ib_pkey_ix;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PKEY_IX);
     qp_attr.port = port_id; 
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PORT);
@@ -733,21 +733,21 @@ int mca_bmi_ib_endpoint_qp_init_query(
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
     qp_attr.qp_state = VAPI_RTR;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
-    qp_attr.qp_ous_rd_atom = ib_bmi->ib_qp_ous_rd_atom;
+    qp_attr.qp_ous_rd_atom = ib_btl->ib_qp_ous_rd_atom;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_OUS_RD_ATOM);
-    qp_attr.path_mtu = ib_bmi->ib_mtu;
+    qp_attr.path_mtu = ib_btl->ib_mtu;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PATH_MTU);
-    qp_attr.rq_psn = ib_bmi->ib_psn;
+    qp_attr.rq_psn = ib_btl->ib_psn;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_RQ_PSN);
-    qp_attr.pkey_ix = ib_bmi->ib_pkey_ix;
+    qp_attr.pkey_ix = ib_btl->ib_pkey_ix;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_PKEY_IX);
-    qp_attr.min_rnr_timer = ib_bmi->ib_min_rnr_timer;
+    qp_attr.min_rnr_timer = ib_btl->ib_min_rnr_timer;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_MIN_RNR_TIMER);
 
-    qp_attr.av.sl = ib_bmi->ib_service_level;
+    qp_attr.av.sl = ib_btl->ib_service_level;
     qp_attr.av.grh_flag = FALSE;
-    qp_attr.av.static_rate = ib_bmi->ib_static_rate;
-    qp_attr.av.src_path_bits = ib_bmi->ib_src_path_bits;
+    qp_attr.av.static_rate = ib_btl->ib_static_rate;
+    qp_attr.av.src_path_bits = ib_btl->ib_src_path_bits;
 
     qp_attr.dest_qp_num = remote_qp_num;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_DEST_QP_NUM);
@@ -768,15 +768,15 @@ int mca_bmi_ib_endpoint_qp_init_query(
     QP_ATTR_MASK_CLR_ALL(qp_attr_mask);
     qp_attr.qp_state = VAPI_RTS;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_QP_STATE);
-    qp_attr.sq_psn = ib_bmi->ib_psn;
+    qp_attr.sq_psn = ib_btl->ib_psn;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_SQ_PSN);
-    qp_attr.timeout = ib_bmi->ib_timeout;
+    qp_attr.timeout = ib_btl->ib_timeout;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_TIMEOUT);
-    qp_attr.retry_count = ib_bmi->ib_retry_count;
+    qp_attr.retry_count = ib_btl->ib_retry_count;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_RETRY_COUNT);
-    qp_attr.rnr_retry = ib_bmi->ib_rnr_retry;
+    qp_attr.rnr_retry = ib_btl->ib_rnr_retry;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_RNR_RETRY);
-    qp_attr.ous_dst_rd_atom = ib_bmi->ib_max_rdma_dst_ops;
+    qp_attr.ous_dst_rd_atom = ib_btl->ib_max_rdma_dst_ops;
     QP_ATTR_MASK_SET(qp_attr_mask, QP_ATTR_OUS_DST_RD_ATOM);
 
     ret = VAPI_modify_qp(nic, qp_hndl,
@@ -794,7 +794,7 @@ int mca_bmi_ib_endpoint_qp_init_query(
         return OMPI_ERROR; 
     }                      
     
-    ib_bmi->ib_inline_max = qp_init_attr.cap.max_inline_data_sq;  
+    ib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data_sq;  
     
     return OMPI_SUCCESS;
 }
