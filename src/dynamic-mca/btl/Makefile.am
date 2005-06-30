@@ -16,7 +16,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS			= $(MCA_bmi_DSO_SUBDIRS)
+SUBDIRS			= $(MCA_btl_DSO_SUBDIRS)
 DISTCLEANFILES		= $(SUBDIRS)
 
 # Every directory under here is a sym link to something in the main

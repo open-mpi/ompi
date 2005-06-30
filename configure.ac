@@ -1517,8 +1517,8 @@ AC_CONFIG_FILES([
 
     src/mca/allocator/Makefile
     src/mca/allocator/base/Makefile
-    src/mca/bmi/Makefile
-    src/mca/bmi/base/Makefile
+    src/mca/btl/Makefile
+    src/mca/btl/base/Makefile
     src/mca/coll/Makefile
     src/mca/coll/base/Makefile
     src/mca/io/Makefile
@@ -1551,7 +1551,7 @@ AC_CONFIG_FILES([
 
     src/dynamic-mca/Makefile
     src/dynamic-mca/allocator/Makefile
-    src/dynamic-mca/bmi/Makefile
+    src/dynamic-mca/btl/Makefile
     src/dynamic-mca/coll/Makefile
     src/dynamic-mca/io/Makefile
     src/dynamic-mca/mpool/Makefile

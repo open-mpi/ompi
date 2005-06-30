@@ -29,7 +29,7 @@ SUBDIRS = \
 	gpr \
 	mpool \
 	ns \
-	bmi \
+	btl \
 	oob \
 	pls \
 	pml \
