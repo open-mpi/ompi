@@ -29,6 +29,7 @@ headers = \
     basename.h \
     bit_ops.h \
     cmd_line.h \
+    convert.h \
     ompi_environ.h \
     few.h \
     if.h \
@@ -57,6 +58,7 @@ libompiutil_la_SOURCES = \
     argv.c \
     basename.c \
     cmd_line.c \
+    convert.c \
     few.c \
     if.c \
     malloc.c \
