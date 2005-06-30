@@ -22,6 +22,21 @@
 #include "include/constants.h"
 #include "util/convert.h"
 
+#if SIZEOF_SIZE_T <= SIZEOF_INT
+/*
+ * This is the [short] case where we can just cast and we're all good
+ */
+int ompi_sizet2int(size_t in, int *out, bool want_check)
+{
+    *out = in;
+    return OMPI_SUCCESS;
+}
+
+#else
+/*
+ * The rest of the file handles the case where
+ * sizeof(size_t)>sizeof(int).
+ */
 
 static bool init_done = false;
 static unsigned int int_pos = -1;
@@ -33,10 +48,6 @@ static void warn(void);
 
 int ompi_sizet2int(size_t in, int *out, bool want_check)
 {
-#if SIZEOF_SIZE_T <= SIZEOF_INT
-    *out = in;
-    return OMPI_SUCCESS;
-#else
     int *pos = (int *) &in;
     unsigned int i;
 
@@ -60,7 +71,6 @@ int ompi_sizet2int(size_t in, int *out, bool want_check)
     }
 
     return OMPI_SUCCESS;
-#endif
 }
 
 
@@ -96,3 +106,5 @@ static void warn(void)
     }
 #endif
 }
+
+#endif
