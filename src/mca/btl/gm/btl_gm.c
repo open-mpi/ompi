@@ -15,6 +15,7 @@
  */
 
 #include "ompi_config.h"
+#include "gm_config.h"
 #include <string.h>
 #include "util/output.h"
 #include "util/if.h"
@@ -576,13 +577,29 @@ int mca_btl_gm_send(
 int mca_btl_gm_put( 
     mca_btl_base_module_t* btl,
     mca_btl_base_endpoint_t* endpoint,
-    mca_btl_base_descriptor_t* descriptor)
+    mca_btl_base_descriptor_t* des)
 {
-    /* mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl; */
-    mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*) descriptor; 
+#if OMPI_MCA_BTL_GM_HAVE_RDMA_PUT
+    mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl;
+    mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*) des; 
+
+    frag->btl = gm_btl;
     frag->endpoint = endpoint;
-    /* TODO */
-    return OMPI_ERR_NOT_IMPLEMENTED; 
+
+    assert(OMPI_THREAD_ADD32( &gm_btl->gm_num_send_tokens, -1 ) >= 0);
+    gm_put(gm_btl->gm_port,
+        des->des_src->seg_addr.pval,
+        des->des_dst->seg_addr.lval,
+        des->des_src->seg_len,
+        GM_LOW_PRIORITY,
+        endpoint->endpoint_addr.local_id,
+        endpoint->endpoint_addr.port_id,
+        mca_btl_gm_send_callback,
+        frag);
+    return OMPI_SUCCESS; 
+#else
+    return OMPI_ERR_NOT_IMPLEMENTED;
+#endif
 }
 
 
@@ -598,13 +615,29 @@ int mca_btl_gm_put(
 int mca_btl_gm_get( 
     mca_btl_base_module_t* btl,
     mca_btl_base_endpoint_t* endpoint,
-    mca_btl_base_descriptor_t* descriptor)
+    mca_btl_base_descriptor_t* des)
 {
-    /* mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl; */
-    mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*) descriptor; 
+#if OMPI_MCA_BTL_GM_HAVE_RDMA_GET
+    mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl;
+    mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*) des; 
+
+    frag->btl = gm_btl;
     frag->endpoint = endpoint;
-    /* TODO */
-    return OMPI_ERR_NOT_IMPLEMENTED; 
+
+    assert(OMPI_THREAD_ADD32( &gm_btl->gm_num_send_tokens, -1 ) >= 0);
+    gm_put(gm_btl->gm_port,
+        des->des_src->seg_addr.pval,
+        des->des_dst->seg_addr.lval,
+        des->des_src->seg_len,
+        GM_LOW_PRIORITY,
+        endpoint->endpoint_addr.local_id,
+        endpoint->endpoint_addr.port_id,
+        mca_btl_gm_send_callback,
+        frag);
+    return OMPI_SUCCESS; 
+#else
+    return OMPI_ERR_NOT_IMPLEMENTED;
+#endif
 }
 
 
