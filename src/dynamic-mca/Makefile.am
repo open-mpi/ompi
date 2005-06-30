@@ -19,7 +19,7 @@ include $(top_srcdir)/config/Makefile.options
 SUBDIRS = \
         common \
         allocator \
-        bmi \
+        btl \
         coll \
         errmgr \
         gpr \
