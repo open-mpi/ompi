@@ -29,10 +29,33 @@ ompi_rb_tree_t mca_mpool_base_tree;
 ompi_free_list_t mca_mpool_base_mem_list;
 ompi_mutex_t mca_mpool_base_tree_lock; 
 
-OBJ_CLASS_INSTANCE(mca_mpool_base_registration_t,
-                   ompi_list_item_t,
-                   NULL,
-                   NULL);
+/**
+ * Memory Pool Registration
+ */
+
+static void mca_mpool_base_registration_constructor( mca_mpool_base_registration_t * reg )
+{
+    reg->mpool = NULL;
+    reg->base = NULL;
+    reg->bound = NULL;
+}
+
+static void mca_mpool_base_registration_destructor( mca_mpool_base_registration_t * reg )
+{
+    if(NULL != reg->mpool) {
+        reg->mpool->mpool_deregister(
+            reg->mpool,
+            reg->base,
+            reg->bound - reg->base + 1,
+            reg);
+    }
+}
+
+OBJ_CLASS_INSTANCE(
+    mca_mpool_base_registration_t,
+    ompi_list_item_t,
+    mca_mpool_base_registration_constructor,
+    mca_mpool_base_registration_destructor);
 
 /**
  * Function for the red black tree to compare 2 keys
