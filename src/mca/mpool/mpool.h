@@ -26,11 +26,11 @@
 
 struct mca_mpool_base_resources_t;
 
-struct mca_mpool_base_registration_t{ 
+struct mca_mpool_base_registration_t { 
     ompi_list_item_t super; 
     struct mca_mpool_base_module_t *mpool; 
-    void* base;
-    void* bound; 
+    unsigned char* base;
+    unsigned char* bound; 
 };  
 typedef struct mca_mpool_base_registration_t mca_mpool_base_registration_t; 
 
