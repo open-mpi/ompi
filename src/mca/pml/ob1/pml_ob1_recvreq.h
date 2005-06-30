@@ -223,14 +223,14 @@ do {                                                                            
     bytes_delivered)                                                              \
 do {                                                                              \
     if(request->req_recv.req_base.req_count > 0) {                                \
-        struct iovec iov[MCA_BMI_DES_MAX_SEGMENTS];                               \
+        struct iovec iov[MCA_BTL_DES_MAX_SEGMENTS];                               \
         uint32_t iov_count = 0;                                                   \
         size_t max_data = bytes_received;                                         \
         int32_t free_after = 0;                                                   \
         size_t n, offset = seg_offset;                                            \
                                                                                   \
         for(n=0; n<num_segments; n++) {                                           \
-            mca_bmi_base_segment_t* segment = segments+n;                         \
+            mca_btl_base_segment_t* segment = segments+n;                         \
             if(offset >= segment->seg_len) {                                      \
                 offset -= segment->seg_len;                                       \
             } else {                                                              \
@@ -259,8 +259,8 @@ do {                                                                            
 
 void mca_pml_ob1_recv_request_progress(
     mca_pml_ob1_recv_request_t* req,
-    mca_bmi_base_module_t* bmi,
-    mca_bmi_base_segment_t* segments,
+    mca_btl_base_module_t* btl,
+    mca_btl_base_segment_t* segments,
     size_t num_segments);
 
 /**

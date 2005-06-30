@@ -81,8 +81,6 @@ struct mca_mpool_vapi_registration_t {
     VAPI_rkey_t                     r_key;
     /* Remote key to registered memory, need to send this
      * to remote processes for incoming RDMA ops */
-    void * base; 
-    void * bound; 
     bool is_leave_pinned; 
 
 };

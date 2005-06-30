@@ -218,7 +218,7 @@ struct mca_pml_ob1_rdma_hdr_t {
     ompi_ptr_t hdr_dst;                       /**< receive request/descriptor */
     uint64_t hdr_rdma_offset;                 /**< current offset into user buffer */ 
     uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
-    mca_bmi_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
+    mca_btl_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
 };
 typedef struct mca_pml_ob1_rdma_hdr_t mca_pml_ob1_rdma_hdr_t;
 

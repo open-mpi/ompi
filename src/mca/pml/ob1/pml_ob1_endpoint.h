@@ -20,37 +20,37 @@
 #define MCA_PML_OB1_ENDPOINT_H
 
 #include "util/output.h"
-#include "mca/bmi/bmi.h"
+#include "mca/btl/btl.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
 /**
  * A data structure associated with a ompi_proc_t that caches
- * addressing/scheduling attributes for a specific BMI instance
+ * addressing/scheduling attributes for a specific BTL instance
  * that can be used to reach the process.
  */
 
 struct mca_pml_ob1_endpoint_t {
-    int    bmi_weight;                            /**< BMI weight for scheduling */
-    int    bmi_flags;                             /**< support for put/get? */
-    size_t bmi_eager_limit;                       /**< BMI eager limit */
-    size_t bmi_min_send_size;                     /**< BMI min send size */
-    size_t bmi_max_send_size;                     /**< BMI max send size */
-    size_t bmi_min_rdma_size;                     /**< BMI min rdma size */
-    size_t bmi_max_rdma_size;                     /**< BMI max rdma size */
-    struct mca_bmi_base_module_t *bmi;            /**< BMI module */
-    struct mca_bmi_base_endpoint_t* bmi_endpoint; /**< BMI addressing info */
-    struct mca_bmi_base_descriptor_t* bmi_cache;
+    int    btl_weight;                            /**< BTL weight for scheduling */
+    int    btl_flags;                             /**< support for put/get? */
+    size_t btl_eager_limit;                       /**< BTL eager limit */
+    size_t btl_min_send_size;                     /**< BTL min send size */
+    size_t btl_max_send_size;                     /**< BTL max send size */
+    size_t btl_min_rdma_size;                     /**< BTL min rdma size */
+    size_t btl_max_rdma_size;                     /**< BTL max rdma size */
+    struct mca_btl_base_module_t *btl;            /**< BTL module */
+    struct mca_btl_base_endpoint_t* btl_endpoint; /**< BTL addressing info */
+    struct mca_btl_base_descriptor_t* btl_cache;
 
-    /* BMI function table */
-    mca_bmi_base_module_alloc_fn_t   bmi_alloc;
-    mca_bmi_base_module_free_fn_t    bmi_free;
-    mca_bmi_base_module_send_fn_t    bmi_send;
-    mca_bmi_base_module_prepare_fn_t bmi_prepare_src;
-    mca_bmi_base_module_prepare_fn_t bmi_prepare_dst;
-    mca_bmi_base_module_put_fn_t     bmi_put;
-    mca_bmi_base_module_get_fn_t     bmi_get;
+    /* BTL function table */
+    mca_btl_base_module_alloc_fn_t   btl_alloc;
+    mca_btl_base_module_free_fn_t    btl_free;
+    mca_btl_base_module_send_fn_t    btl_send;
+    mca_btl_base_module_prepare_fn_t btl_prepare_src;
+    mca_btl_base_module_prepare_fn_t btl_prepare_dst;
+    mca_btl_base_module_put_fn_t     btl_put;
+    mca_btl_base_module_get_fn_t     btl_get;
 };
 typedef struct mca_pml_ob1_endpoint_t mca_pml_ob1_endpoint_t;
 
@@ -62,9 +62,9 @@ typedef struct mca_pml_ob1_endpoint_t mca_pml_ob1_endpoint_t;
 struct mca_pml_ob1_ep_array_t {
     ompi_object_t super;
     size_t arr_size;    /**< number available */
-    size_t arr_reserve; /**< size of allocated bmi_proc array */
+    size_t arr_reserve; /**< size of allocated btl_proc array */
     size_t arr_index;   /**< last used index*/
-    mca_pml_ob1_endpoint_t* arr_endpoints;   /**< array of bmi endpoints */
+    mca_pml_ob1_endpoint_t* arr_endpoints;   /**< array of btl endpoints */
 };
 typedef struct mca_pml_ob1_ep_array_t mca_pml_ob1_ep_array_t;
 
@@ -162,11 +162,11 @@ static inline mca_pml_ob1_endpoint_t* mca_pml_ob1_ep_array_get_next(mca_pml_ob1_
  * @param index (IN)
  */
 static inline mca_pml_ob1_endpoint_t* mca_pml_ob1_ep_array_find(
-    mca_pml_ob1_ep_array_t* array, struct mca_bmi_base_module_t* bmi)
+    mca_pml_ob1_ep_array_t* array, struct mca_btl_base_module_t* btl)
 {
     size_t i=0;   
     for(i=0; i<array->arr_size; i++) {
-        if(array->arr_endpoints[i].bmi == bmi) {
+        if(array->arr_endpoints[i].btl == btl) {
             return &array->arr_endpoints[i];
         }
     }
@@ -180,28 +180,28 @@ static inline mca_pml_ob1_endpoint_t* mca_pml_ob1_ep_array_find(
 #if OMPI_HAVE_THREAD_SUPPORT
 #define MCA_PML_OB1_ENDPOINT_DES_ALLOC(endpoint, descriptor, size)                       \
 do {                                                                                     \
-    if(NULL != (descriptor = endpoint->bmi_cache)) {                                     \
+    if(NULL != (descriptor = endpoint->btl_cache)) {                                     \
         /* atomically acquire the cached descriptor */                                   \
-        if(ompi_atomic_cmpset_ptr(&endpoint->bmi_cache, descriptor, NULL) == 0) {        \
-            endpoint->bmi_cache = NULL;                                                  \
+        if(ompi_atomic_cmpset_ptr(&endpoint->btl_cache, descriptor, NULL) == 0) {        \
+            endpoint->btl_cache = NULL;                                                  \
         } else {                                                                         \
-            descriptor = endpoint->bmi_alloc(endpoint->bmi, sizeof(mca_pml_ob1_hdr_t) +  \
-               MCA_BMI_DES_MAX_SEGMENTS * sizeof(mca_bmi_base_segment_t));               \
+            descriptor = endpoint->btl_alloc(endpoint->btl, sizeof(mca_pml_ob1_hdr_t) +  \
+               MCA_BTL_DES_MAX_SEGMENTS * sizeof(mca_btl_base_segment_t));               \
         }                                                                                \
     } else {                                                                             \
-            descriptor = endpoint->bmi_alloc(endpoint->bmi, sizeof(mca_pml_ob1_hdr_t) +  \
-                MCA_BMI_DES_MAX_SEGMENTS * sizeof(mca_bmi_base_segment_t));              \
+            descriptor = endpoint->btl_alloc(endpoint->btl, sizeof(mca_pml_ob1_hdr_t) +  \
+                MCA_BTL_DES_MAX_SEGMENTS * sizeof(mca_btl_base_segment_t));              \
     }                                                                                    \
     descriptor->des_src->seg_len = size;                                                 \
 } while(0)
 #else
 #define MCA_PML_OB1_ENDPOINT_DES_ALLOC(endpoint, descriptor, size)                       \
 do {                                                                                     \
-    if(NULL != (descriptor = endpoint->bmi_cache)) {                                     \
-        endpoint->bmi_cache = NULL;                                                      \
+    if(NULL != (descriptor = endpoint->btl_cache)) {                                     \
+        endpoint->btl_cache = NULL;                                                      \
     } else {                                                                             \
-        descriptor = endpoint->bmi_alloc(endpoint->bmi, sizeof(mca_pml_ob1_hdr_t) +      \
-            MCA_BMI_DES_MAX_SEGMENTS * sizeof(mca_bmi_base_segment_t));                  \
+        descriptor = endpoint->btl_alloc(endpoint->btl, sizeof(mca_pml_ob1_hdr_t) +      \
+            MCA_BTL_DES_MAX_SEGMENTS * sizeof(mca_btl_base_segment_t));                  \
     }                                                                                    \
     descriptor->des_src->seg_len = size;                                                 \
 } while(0)
@@ -214,21 +214,21 @@ do {                                                                            
 #if OMPI_HAVE_THREAD_SUPPORT
 #define MCA_PML_OB1_ENDPOINT_DES_RETURN(endpoint, descriptor)                            \
 do {                                                                                     \
-    if(NULL == endpoint->bmi_cache) {                                                    \
-        if(ompi_atomic_cmpset_ptr(&endpoint->bmi_cache,NULL,descriptor) == 0) {          \
-             endpoint->bmi_free(endpoint->bmi,descriptor);                               \
+    if(NULL == endpoint->btl_cache) {                                                    \
+        if(ompi_atomic_cmpset_ptr(&endpoint->btl_cache,NULL,descriptor) == 0) {          \
+             endpoint->btl_free(endpoint->btl,descriptor);                               \
         }                                                                                \
     } else {                                                                             \
-        endpoint->bmi_free(endpoint->bmi,descriptor);                                    \
+        endpoint->btl_free(endpoint->btl,descriptor);                                    \
     }
 } while(0)
 #else
 #define MCA_PML_OB1_ENDPOINT_DES_RETURN(endpoint, descriptor)                            \
 do {                                                                                     \
-    if(NULL == endpoint->bmi_cache) {                                                    \
-        endpoint->bmi_cache = descriptor;                                                \
+    if(NULL == endpoint->btl_cache) {                                                    \
+        endpoint->btl_cache = descriptor;                                                \
     } else {                                                                             \
-        endpoint->bmi_free(endpoint->bmi,descriptor);                                    \
+        endpoint->btl_free(endpoint->btl,descriptor);                                    \
     }                                                                                    \
 } while(0)
 #endif

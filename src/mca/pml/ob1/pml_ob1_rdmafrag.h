@@ -20,7 +20,7 @@
 #ifndef MCA_PML_OB1_RDMAFRAG_H
 #define MCA_PML_OB1_RDMAFRAG_H
 
-#include "mca/bmi/bmi.h"
+#include "mca/btl/btl.h"
 #include "pml_ob1_hdr.h"
 
 typedef enum {
@@ -32,11 +32,11 @@ typedef enum {
 
 struct mca_pml_ob1_rdma_frag_t {
     ompi_list_item_t super;
-    mca_bmi_base_module_t* rdma_bmi;
+    mca_btl_base_module_t* rdma_btl;
     mca_pml_ob1_hdr_t rdma_hdr;
     mca_pml_ob1_rdma_state_t rdma_state;
     size_t rdma_length;
-    mca_bmi_base_segment_t rdma_segs[MCA_BMI_DES_MAX_SEGMENTS];
+    mca_btl_base_segment_t rdma_segs[MCA_BTL_DES_MAX_SEGMENTS];
     struct mca_pml_ob1_endpoint_t* rdma_ep;
     struct mca_pml_ob1_send_request_t* rdma_req;
 };

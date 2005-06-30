@@ -38,9 +38,9 @@ struct mca_pml_proc_t {
    ompi_mutex_t proc_lock;             /**< lock to protect against concurrent access */
    int proc_flags;                     /**< prefered method of accessing this peer */
    volatile uint32_t proc_sequence;    /**< sequence number for send */
-   mca_pml_ob1_ep_array_t bmi_eager;   /**< array of endpoints to use for first fragments */
-   mca_pml_ob1_ep_array_t bmi_send;    /**< array of endpoints to use for remaining fragments */
-   mca_pml_ob1_ep_array_t bmi_rdma;    /**< array of endpoints that support (prefer) rdma */
+   mca_pml_ob1_ep_array_t btl_eager;   /**< array of endpoints to use for first fragments */
+   mca_pml_ob1_ep_array_t btl_send;    /**< array of endpoints to use for remaining fragments */
+   mca_pml_ob1_ep_array_t btl_rdma;    /**< array of endpoints that support (prefer) rdma */
 };
 typedef struct mca_pml_proc_t mca_pml_ob1_proc_t;
 
@@ -74,24 +74,24 @@ static inline mca_pml_ob1_proc_t* mca_pml_ob1_proc_lookup_remote(ompi_communicat
 }
 
 /**
- * Return the mca_bmi_peer_t instance corresponding to the process/bmi combination.
+ * Return the mca_btl_peer_t instance corresponding to the process/btl combination.
  * 
  * @param comm   Communicator
  * @param rank   Peer rank
  * @return       mca_pml_proc_t instance
  */
 
-static inline struct mca_bmi_base_endpoint_t* mca_pml_ob1_proc_lookup_remote_endpoint(
+static inline struct mca_btl_base_endpoint_t* mca_pml_ob1_proc_lookup_remote_endpoint(
     ompi_communicator_t* comm, 
     int rank, 
-    struct mca_bmi_base_module_t* bmi)
+    struct mca_btl_base_module_t* btl)
 {
     mca_pml_ob1_proc_t* proc = comm->c_pml_procs[rank];
-    size_t i, size = mca_pml_ob1_ep_array_get_size(&proc->bmi_eager);
-    mca_pml_ob1_endpoint_t* endpoint = proc->bmi_eager.arr_endpoints;
+    size_t i, size = mca_pml_ob1_ep_array_get_size(&proc->btl_eager);
+    mca_pml_ob1_endpoint_t* endpoint = proc->btl_eager.arr_endpoints;
     for(i = 0; i < size; i++) {
-        if(endpoint->bmi == bmi) {
-            return endpoint->bmi_endpoint;
+        if(endpoint->btl == btl) {
+            return endpoint->btl_endpoint;
         }
         endpoint++;
     }

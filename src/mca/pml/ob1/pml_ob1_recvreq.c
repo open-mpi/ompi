@@ -17,7 +17,7 @@
 #include "ompi_config.h"
 
 #include "mca/pml/pml.h"
-#include "mca/bmi/bmi.h"
+#include "mca/btl/btl.h"
 #include "mca/mpool/mpool.h" 
 #include "pml_ob1_comm.h"
 #include "pml_ob1_recvreq.h"
@@ -102,9 +102,9 @@ OBJ_CLASS_INSTANCE(
  */
 
 static void mca_pml_ob1_send_ctl_complete(
-    mca_bmi_base_module_t* bmi,
-    struct mca_bmi_base_endpoint_t* ep,
-    struct mca_bmi_base_descriptor_t* des,
+    mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* des,
     int status)
 {
     mca_pml_ob1_endpoint_t* endpoint = (mca_pml_ob1_endpoint_t*)des->des_cbdata;
@@ -121,8 +121,8 @@ static void mca_pml_ob1_recv_request_ack(
     mca_pml_ob1_rendezvous_hdr_t* hdr)
 {
     mca_pml_ob1_proc_t* proc = recvreq->req_proc;
-    mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_eager);
-    mca_bmi_base_descriptor_t* des;
+    mca_pml_ob1_endpoint_t* ep = mca_pml_ob1_ep_array_get_next(&proc->btl_eager);
+    mca_btl_base_descriptor_t* des;
     mca_pml_ob1_recv_frag_t* frag;
     mca_pml_ob1_ack_hdr_t* ack;
     int rc;
@@ -152,7 +152,7 @@ static void mca_pml_ob1_recv_request_ack(
          || mca_pml_ob1.leave_pinned)) {  /* BUG here! hdr_flags are 0! */ 
         struct mca_mpool_base_reg_mpool_t *reg = recvreq->req_chunk->mpools;
         while(reg->mpool != NULL) {
-            if(NULL != mca_pml_ob1_ep_array_find(&proc->bmi_rdma,(mca_bmi_base_module_t*) reg->user_data)) {
+            if(NULL != mca_pml_ob1_ep_array_find(&proc->btl_rdma,(mca_btl_base_module_t*) reg->user_data)) {
                 recvreq->req_rdma_offset = hdr->hdr_frag_length;
                 ack->hdr_rdma_offset = hdr->hdr_frag_length;
                 recvreq->req_mpool = reg;
@@ -168,7 +168,7 @@ static void mca_pml_ob1_recv_request_ack(
     */
     if(NULL == recvreq->req_mpool && !mca_pml_ob1.leave_pinned) {
         if(recvreq->req_recv.req_bytes_packed > mca_pml_ob1.rdma_offset &&
-           mca_pml_ob1_ep_array_get_size(&proc->bmi_rdma) &&
+           mca_pml_ob1_ep_array_get_size(&proc->btl_rdma) &&
            ompi_convertor_need_buffers(&recvreq->req_recv.req_convertor) == 0) {
     
             /* use convertor to figure out the rdma offset for this request */
@@ -188,13 +188,13 @@ static void mca_pml_ob1_recv_request_ack(
     }
 
     /* initialize descriptor */
-    des->des_flags |= MCA_BMI_DES_FLAGS_PRIORITY;
+    des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     des->des_cbfunc = mca_pml_ob1_send_ctl_complete;
     des->des_cbdata = ep;
 
-    rc = ep->bmi_send(ep->bmi, ep->bmi_endpoint, des, MCA_BMI_TAG_PML);
+    rc = ep->btl_send(ep->btl, ep->btl_endpoint, des, MCA_BTL_TAG_PML);
     if(rc != OMPI_SUCCESS) {
-        ep->bmi_free(ep->bmi,des);
+        ep->btl_free(ep->btl,des);
         goto retry;
     }
     return;
@@ -202,7 +202,7 @@ static void mca_pml_ob1_recv_request_ack(
     /* queue request to retry later */
 retry:
     MCA_PML_OB1_RECV_FRAG_ALLOC(frag,rc);
-    frag->bmi = NULL;
+    frag->btl = NULL;
     frag->hdr.hdr_rndv = *hdr;
     frag->num_segments = 0;
     frag->request = recvreq;
@@ -217,8 +217,8 @@ retry:
 
 void mca_pml_ob1_recv_request_progress(
     mca_pml_ob1_recv_request_t* recvreq,
-    mca_bmi_base_module_t* bmi,
-    mca_bmi_base_segment_t* segments,
+    mca_btl_base_module_t* btl,
+    mca_btl_base_segment_t* segments,
     size_t num_segments)
 {
     size_t bytes_received = 0;
@@ -334,7 +334,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
 {
     if(OMPI_THREAD_ADD32(&recvreq->req_lock,1) == 1) {
         mca_pml_ob1_proc_t* proc = recvreq->req_proc;
-        size_t num_bmi_avail = mca_pml_ob1_ep_array_get_size(&proc->bmi_rdma);
+        size_t num_btl_avail = mca_pml_ob1_ep_array_get_size(&proc->btl_rdma);
         do {
             size_t bytes_remaining = recvreq->req_recv.req_bytes_packed - recvreq->req_rdma_offset;
             while(bytes_remaining > 0 && recvreq->req_pipeline_depth < mca_pml_ob1.recv_pipeline_depth) {
@@ -342,8 +342,8 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 size_t hdr_size;
                 size_t size;
                 mca_pml_ob1_rdma_hdr_t* hdr;
-                mca_bmi_base_descriptor_t* dst;
-                mca_bmi_base_descriptor_t* ctl;
+                mca_btl_base_descriptor_t* dst;
+                mca_btl_base_descriptor_t* ctl;
                 int rc;
 
                 /*
@@ -352,26 +352,26 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                  * available RDMA nics.
                 */
                 if(recvreq->req_mpool == NULL &&  !mca_pml_ob1.leave_pinned) {
-                    ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_rdma);
+                    ep = mca_pml_ob1_ep_array_get_next(&proc->btl_rdma);
 
-                    /* if there is only one bmi available or the size is less than
-                     * than the min fragment size, schedule the rest via this bmi
+                    /* if there is only one btl available or the size is less than
+                     * than the min fragment size, schedule the rest via this btl
                      */
-                    if(num_bmi_avail == 1 || bytes_remaining < ep->bmi_min_rdma_size) {
+                    if(num_btl_avail == 1 || bytes_remaining < ep->btl_min_rdma_size) {
                         size = bytes_remaining;
 
-                    /* otherwise attempt to give the BMI a percentage of the message
+                    /* otherwise attempt to give the BTL a percentage of the message
                      * based on a weighting factor. for simplicity calculate this as
                      * a percentage of the overall message length (regardless of amount
                      * previously assigned)
                      */
                     } else {
-                        size = (ep->bmi_weight * bytes_remaining) / 100;
+                        size = (ep->btl_weight * bytes_remaining) / 100;
                     }
     
-                    /* makes sure that we don't exceed BMI max rdma size */
-                    if (ep->bmi_max_rdma_size != 0 && size > ep->bmi_max_rdma_size) {
-                        size = ep->bmi_max_rdma_size;
+                    /* makes sure that we don't exceed BTL max rdma size */
+                    if (ep->btl_max_rdma_size != 0 && size > ep->btl_max_rdma_size) {
+                        size = ep->btl_max_rdma_size;
                     }
 
                     /* prepare a descriptor for RDMA */
@@ -379,9 +379,9 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
 #if MCA_PML_OB1_TIMESTAMPS
                     recvreq->pin1[recvreq->pin_index] = get_profiler_timestamp();
 #endif
-                    dst = ep->bmi_prepare_dst(
-                        ep->bmi,
-                        ep->bmi_endpoint,
+                    dst = ep->btl_prepare_dst(
+                        ep->btl,
+                        ep->btl_endpoint,
                         NULL,
                         &recvreq->req_recv.req_convertor,
                         0,
@@ -397,23 +397,23 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &recvreq->req_rdma_offset);
 
                     if(NULL != recvreq->req_mpool){ 
-                        /* find the endpoint corresponding to this bmi and schedule the entire message */
-                        ep = mca_pml_ob1_ep_array_find(&proc->bmi_rdma, (mca_bmi_base_module_t*) recvreq->req_mpool->user_data);
+                        /* find the endpoint corresponding to this btl and schedule the entire message */
+                        ep = mca_pml_ob1_ep_array_find(&proc->btl_rdma, (mca_btl_base_module_t*) recvreq->req_mpool->user_data);
                         reg = recvreq->req_mpool->mpool_registration; 
                         
 
                     }
                     else{ 
-                        ep = mca_pml_ob1_ep_array_get_next(&proc->bmi_rdma);
+                        ep = mca_pml_ob1_ep_array_get_next(&proc->btl_rdma);
                         reg = NULL; 
                     }
                     
 #if MCA_PML_OB1_TIMESTAMPS
                     recvreq->pin1[recvreq->pin_index] = get_profiler_timestamp();
 #endif
-                    dst = ep->bmi_prepare_dst(
-                                              ep->bmi,
-                                              ep->bmi_endpoint,
+                    dst = ep->btl_prepare_dst(
+                                              ep->btl,
+                                              ep->btl_endpoint,
                                               reg,
                                               &recvreq->req_recv.req_convertor,
                                               0,
@@ -437,18 +437,18 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 /* prepare a descriptor for rdma control message */
                 hdr_size = sizeof(mca_pml_ob1_rdma_hdr_t);
                 if(dst->des_dst_cnt > 1) {
-                    hdr_size += (sizeof(mca_bmi_base_segment_t) * (dst->des_dst_cnt-1));
+                    hdr_size += (sizeof(mca_btl_base_segment_t) * (dst->des_dst_cnt-1));
                 }
 
                 MCA_PML_OB1_ENDPOINT_DES_ALLOC(ep, ctl, hdr_size);
                 if(ctl == NULL) {
-                    ep->bmi_free(ep->bmi,dst);
+                    ep->btl_free(ep->btl,dst);
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
                     ompi_list_append(&mca_pml_ob1.recv_pending, (ompi_list_item_t*)recvreq);
                     OMPI_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
-                ctl->des_flags |= MCA_BMI_DES_FLAGS_PRIORITY;
+                ctl->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
                 ctl->des_cbfunc = mca_pml_ob1_send_ctl_complete;
                 ctl->des_cbdata = ep;
                 
@@ -460,19 +460,19 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 hdr->hdr_dst.pval = dst;
                 hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
                 hdr->hdr_seg_cnt = dst->des_dst_cnt;
-                memcpy(hdr->hdr_segs, dst->des_dst, dst->des_dst_cnt * sizeof(mca_bmi_base_segment_t));
+                memcpy(hdr->hdr_segs, dst->des_dst, dst->des_dst_cnt * sizeof(mca_btl_base_segment_t));
 
                 /* update request state */
                 recvreq->req_rdma_offset += size;
                 OMPI_THREAD_ADD32(&recvreq->req_pipeline_depth,1);
 
                 /* send rdma request to peer */
-                rc = ep->bmi_send(ep->bmi, ep->bmi_endpoint, ctl, MCA_BMI_TAG_PML);
+                rc = ep->btl_send(ep->btl, ep->btl_endpoint, ctl, MCA_BTL_TAG_PML);
                 if(rc == OMPI_SUCCESS) {
                     bytes_remaining -= size;
                 } else {
-                    ep->bmi_free(ep->bmi,ctl);
-                    ep->bmi_free(ep->bmi,dst);
+                    ep->btl_free(ep->btl,ctl);
+                    ep->btl_free(ep->btl,dst);
                     recvreq->req_rdma_offset -= size;
                     OMPI_THREAD_ADD32(&recvreq->req_pipeline_depth,-1);
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
@@ -509,7 +509,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
         (frag = mca_pml_ob1_recv_request_match_specific_proc(request, proc)) != NULL) {
         OMPI_THREAD_UNLOCK(&comm->matching_lock);
         
-        mca_pml_ob1_recv_request_progress(request,frag->bmi,frag->segments,frag->num_segments);
+        mca_pml_ob1_recv_request_progress(request,frag->btl,frag->segments,frag->num_segments);
         if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
               (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
             MCA_PML_OB1_RECV_FRAG_RETURN(frag);
@@ -563,7 +563,7 @@ void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request)
         if ((frag = mca_pml_ob1_recv_request_match_specific_proc(request, proc)) != NULL) {
             OMPI_THREAD_UNLOCK(&comm->matching_lock);
 
-            mca_pml_ob1_recv_request_progress(request,frag->bmi,frag->segments,frag->num_segments);
+            mca_pml_ob1_recv_request_progress(request,frag->btl,frag->segments,frag->num_segments);
             if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
                   (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
                 MCA_PML_OB1_RECV_FRAG_RETURN(frag);

@@ -19,7 +19,7 @@
 #ifndef OMPI_PML_OB1_SEND_REQUEST_H
 #define OMPI_PML_OB1_SEND_REQUEST_H
 
-#include "mca/bmi/bmi.h"
+#include "mca/btl/btl.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/mpool/base/base.h"
 #include "pml_ob1_proc.h"
@@ -171,7 +171,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     mca_pml_ob1_proc_t* proc = sendreq->req_proc;                                         \
                                                                                           \
     /* select next endpoint */                                                            \
-    endpoint = mca_pml_ob1_ep_array_get_next(&proc->bmi_eager);                           \
+    endpoint = mca_pml_ob1_ep_array_get_next(&proc->btl_eager);                           \
     sendreq->req_lock = 0;                                                                \
     MCA_PML_OB1_SEND_REQUEST_TSTAMPS_INIT(sendreq);                                       \
     sendreq->req_pipeline_depth = 0;                                                      \
@@ -253,7 +253,7 @@ int mca_pml_ob1_send_request_schedule(
 
 void mca_pml_ob1_send_request_put(
      mca_pml_ob1_send_request_t* sendreq,
-     mca_bmi_base_module_t* bmi,
+     mca_btl_base_module_t* btl,
      mca_pml_ob1_rdma_hdr_t* hdr);
 
  

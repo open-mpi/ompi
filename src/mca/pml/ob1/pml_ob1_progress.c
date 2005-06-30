@@ -28,8 +28,8 @@ int mca_pml_ob1_progress(void)
     /*
      * Progress each of the PTL modules
      */
-    for(i=0; i<mca_pml_ob1.num_bmi_progress; i++) {
-        int rc = mca_pml_ob1.bmi_progress[i]();
+    for(i=0; i<mca_pml_ob1.num_btl_progress; i++) {
+        int rc = mca_pml_ob1.btl_progress[i]();
         if(rc > 0) {
             count += rc;
         }
