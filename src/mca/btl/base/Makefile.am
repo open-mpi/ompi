@@ -16,7 +16,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = libmca_bmi_base.la
+noinst_LTLIBRARIES = libmca_btl_base.la
 
 # For VPATH builds, have to specify where static-modules.h will be found
 
@@ -27,16 +27,16 @@ AM_CPPFLAGS = -I$(top_builddir)/src
 headers = \
     base.h
 
-libmca_bmi_base_la_SOURCES = \
+libmca_btl_base_la_SOURCES = \
     $(headers) \
-    bmi_base_close.c \
-    bmi_base_open.c \
-    bmi_base_select.c
+    btl_base_close.c \
+    btl_base_open.c \
+    btl_base_select.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/bmi/base
+ompidir = $(includedir)/openmpi/mca/btl/base
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

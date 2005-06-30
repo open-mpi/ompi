@@ -22,14 +22,14 @@
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
 #include "mca/pml/pml.h"
-#include "mca/bmi/bmi.h"
-#include "mca/bmi/base/base.h"
+#include "mca/btl/btl.h"
+#include "mca/btl/base/base.h"
 
 /*
- *  mca_bmi_base_descriptor_t
+ *  mca_btl_base_descriptor_t
  */
 
-static void mca_bmi_base_descriptor_constructor(mca_bmi_base_descriptor_t* des)
+static void mca_btl_base_descriptor_constructor(mca_btl_base_descriptor_t* des)
 {
     des->des_src = NULL;
     des->des_src_cnt = 0;
@@ -40,15 +40,15 @@ static void mca_bmi_base_descriptor_constructor(mca_bmi_base_descriptor_t* des)
     des->des_flags = 0;
 }
 
-static void mca_bmi_base_descriptor_destructor(mca_bmi_base_descriptor_t* des)
+static void mca_btl_base_descriptor_destructor(mca_btl_base_descriptor_t* des)
 {
 }
 
 OBJ_CLASS_INSTANCE(
-    mca_bmi_base_descriptor_t,
+    mca_btl_base_descriptor_t,
     ompi_list_item_t,
-    mca_bmi_base_descriptor_constructor,
-    mca_bmi_base_descriptor_destructor);
+    mca_btl_base_descriptor_constructor,
+    mca_btl_base_descriptor_destructor);
 
 
 /*
@@ -57,44 +57,44 @@ OBJ_CLASS_INSTANCE(
  * component's public mca_base_component_t struct.
  */
 
-#include "mca/bmi/base/static-components.h"
+#include "mca/btl/base/static-components.h"
 
 
 /*
  * Global variables
  */
-int mca_bmi_base_output = -1;
-char* mca_bmi_base_include = NULL;
-char* mca_bmi_base_exclude = NULL;
-ompi_list_t mca_bmi_base_components_opened;
-ompi_list_t mca_bmi_base_modules_initialized;
+int mca_btl_base_output = -1;
+char* mca_btl_base_include = NULL;
+char* mca_btl_base_exclude = NULL;
+ompi_list_t mca_btl_base_components_opened;
+ompi_list_t mca_btl_base_modules_initialized;
 
 
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
  */
-int mca_bmi_base_open(void)
+int mca_btl_base_open(void)
 {
   /* Open up all available components */
 
   if (OMPI_SUCCESS != 
-      mca_base_components_open("bmi", 0, mca_bmi_base_static_components, 
-                               &mca_bmi_base_components_opened, true)) {
+      mca_base_components_open("btl", 0, mca_btl_base_static_components, 
+                               &mca_btl_base_components_opened, true)) {
     return OMPI_ERROR;
   }
 
-  /* Initialize the list so that in mca_bmi_base_close(), we can
+  /* Initialize the list so that in mca_btl_base_close(), we can
      iterate over it (even if it's empty, as in the case of
      ompi_info) */
 
-  OBJ_CONSTRUCT(&mca_bmi_base_modules_initialized, ompi_list_t);
+  OBJ_CONSTRUCT(&mca_btl_base_modules_initialized, ompi_list_t);
 
   /* register parameters */
   mca_base_param_lookup_string(
-      mca_base_param_register_string("bmi","base","include",NULL,NULL), &mca_bmi_base_include);
+      mca_base_param_register_string("btl","base","include",NULL,NULL), &mca_btl_base_include);
   mca_base_param_lookup_string(
-      mca_base_param_register_string("bmi","base","exclude",NULL,NULL), &mca_bmi_base_exclude);
+      mca_base_param_register_string("btl","base","exclude",NULL,NULL), &mca_btl_base_exclude);
 
   /* All done */
   return OMPI_SUCCESS;
