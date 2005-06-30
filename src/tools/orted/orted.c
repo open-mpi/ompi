@@ -245,6 +245,14 @@ int main(int argc, char *argv[])
     }
 
     /* Intialize the Open RTE */
+    /* first, set the flag telling orte_init that I am NOT a
+     * singleton, but am "infrastructure" - prevents setting
+     * up incorrect infrastructure that only a singleton would
+     * require
+     */
+    ret = mca_base_param_register_int("orte", "base", "infrastructure", NULL, 0);
+    mca_base_param_set_int(ret, 1);
+
     if (ORTE_SUCCESS != (ret = orte_init())) {
         fprintf(stderr, "orted: failed to init rte\n");
         return ret;
