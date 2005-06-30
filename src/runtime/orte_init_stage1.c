@@ -395,8 +395,9 @@ int orte_init_stage1(void)
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            value.cnt = 1;
-            value.keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
+            value.cnt = 2;
+
+            value.keyvals = (orte_gpr_keyval_t**)malloc(2*sizeof(orte_gpr_keyval_t*));
             if (NULL == value.keyvals) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 OBJ_DESTRUCT(&value);
@@ -416,6 +417,21 @@ int orte_init_stage1(void)
             }
             value.keyvals[0]->type = ORTE_SIZE;
             value.keyvals[0]->value.size = 1;
+
+            value.keyvals[1] = OBJ_NEW(orte_gpr_keyval_t);
+            if (NULL == value.keyvals[1]) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                OBJ_DESTRUCT(&value);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            value.keyvals[1]->key = strdup(ORTE_NODE_NAME_KEY);
+            if (NULL == value.keyvals[1]->key) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                OBJ_DESTRUCT(&value);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            value.keyvals[1]->type = ORTE_STRING;
+            value.keyvals[1]->value.strptr = strdup(orte_system_info.nodename);
             /* put the value on the registry */
             if (ORTE_SUCCESS != (ret = orte_gpr.put(1, &values))) {
                 ORTE_ERROR_LOG(ret);
