@@ -41,7 +41,7 @@
  *
  * MPI_HOST is set to MPI_PROC_NULL (per MPI-1, see 7.1.1, p192).
  *
- * MPI_IO is set to 1 because OMPI provides IO forwarding.
+ * MPI_IO is set to MPI_ANY_SOURCE.  We may need to revist this.
  *
  * MPI_WTIME_IS_GLOBAL is set to 0 (a conservative answer).
  *
@@ -144,7 +144,7 @@ int ompi_attr_create_predefined(void)
 
     if (OMPI_SUCCESS != (ret = set_f(MPI_TAG_UB, MPI_TAG_UB_VALUE)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_HOST, MPI_PROC_NULL)) ||
-        OMPI_SUCCESS != (ret = set_f(MPI_IO, 1)) ||
+        OMPI_SUCCESS != (ret = set_f(MPI_IO, MPI_ANY_SOURCE)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_WTIME_IS_GLOBAL, 0)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_LASTUSEDCODE, 
                                      ompi_errclass_lastused)) ||
