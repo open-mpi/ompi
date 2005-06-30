@@ -218,7 +218,8 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
     size_t max_data = *size;
     int32_t free_after;
     int rc;
-                                                                                                    
+
+#if OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT
     /*
      * If the data has already been pinned and is contigous than we can
      * use it in place.
@@ -338,7 +339,9 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
      * if we aren't pinning the data and the requested size is less
      * than the eager limit pack into a fragment from the eager pool
     */
-    else if (max_data+reserve <= btl->btl_eager_limit) {
+    else 
+#endif
+    if (max_data+reserve <= btl->btl_eager_limit) {
                                                                                                     
         MCA_BTL_GM_FRAG_ALLOC_EAGER(btl, frag, rc);
         if(NULL == frag) {
@@ -414,6 +417,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     size_t reserve,
     size_t* size)
 {
+#if OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT
     mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl; 
     mca_btl_gm_frag_t* frag;
     int rc;
@@ -508,6 +512,9 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
         frag->registration = registration;
     }
     return &frag->base;
+#else
+    return NULL;
+#endif
 }
 
 
@@ -515,16 +522,78 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
  *
  */
 
+static void mca_btl_gm_drop_callback( struct gm_port* port, void* context, gm_status_t status )
+{
+    mca_btl_gm_module_t* btl = (mca_btl_gm_module_t*)context;
+    OMPI_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
+}
+
 static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_status_t status )
 {
     mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)context;
     mca_btl_gm_module_t* btl = frag->btl;
 
-    /* release the send token */
-    OMPI_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
+    switch(status) {
+        case GM_TRY_AGAIN:
+        case GM_SEND_TIMED_OUT:
+        case GM_TIMED_OUT:
+            /* drop all sends to this destination port */
+            gm_drop_sends(
+                btl->gm_port,
+                frag->priority,
+                frag->endpoint->endpoint_addr.local_id,
+                frag->endpoint->endpoint_addr.port_id,
+                mca_btl_gm_drop_callback,
+                btl
+            );
+
+            /* retry the request */
+            mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
+            break;
+        case GM_SEND_DROPPED:
+            /* release the send token */
+            OMPI_THREAD_ADD32(&btl->gm_num_send_tokens, 1);
+
+            /* retry the request */
+            mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
+            break;
+        case GM_SUCCESS:
+            /* release the send token */
+            OMPI_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
+
+            /* call the completion callback */
+            frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
+            break;
+ 
+        default:
+            /* error condition can't deal with */
+            ompi_output(0, "[%s:%d] send completed with unhandled gm error %d\n", __FILE__,__LINE__,status);
+
+            /* release the send token */
+            OMPI_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
+
+            /* call the completion callback */
+            frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
+            break;
+    }
+}
+
+
+static void mca_btl_gm_rdma_callback( struct gm_port* port, void* context, gm_status_t status )
+{
+    mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)context;
+    mca_btl_gm_module_t* btl = frag->btl;
 
     /* call the completion callback */
-    frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
+    switch(status) {
+        case GM_SUCCESS:
+            frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
+            break;
+        default:
+            ompi_output(0, "[%s:%d] gm rdma operation failed with status %d\n", __FILE__, __LINE__, status);
+            frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
+            break;
+    }
 }
 
 
@@ -594,7 +663,7 @@ int mca_btl_gm_put(
         GM_LOW_PRIORITY,
         endpoint->endpoint_addr.local_id,
         endpoint->endpoint_addr.port_id,
-        mca_btl_gm_send_callback,
+        mca_btl_gm_rdma_callback,
         frag);
     return OMPI_SUCCESS; 
 #else
@@ -632,7 +701,7 @@ int mca_btl_gm_get(
         GM_LOW_PRIORITY,
         endpoint->endpoint_addr.local_id,
         endpoint->endpoint_addr.port_id,
-        mca_btl_gm_send_callback,
+        mca_btl_gm_rdma_callback,
         frag);
     return OMPI_SUCCESS; 
 #else
