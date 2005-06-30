@@ -56,13 +56,13 @@ struct mca_btl_gm_component_t {
     size_t gm_num_high_priority; /**< number of receive descriptors at high priority */
     char* gm_port_name; 
 
-    int gm_free_list_num; /**< initial size of free lists */
-    int gm_free_list_max; /**< maximum size of free lists */
-    int gm_free_list_inc; /**< number of elements to alloc when growing free lists */
+    int gm_free_list_num;   /**< initial size of free lists */
+    int gm_free_list_max;   /**< maximum size of free lists */
+    int gm_free_list_inc;   /**< number of elements to alloc when growing free lists */
 
-    ompi_list_t gm_procs; /**< list of gm proc structures */
-    ompi_mutex_t gm_lock; /**< lock for accessing module state */
-    char* gm_mpool_name;  /**< name of memory pool */ 
+    ompi_list_t gm_procs;   /**< list of gm proc structures */
+    ompi_mutex_t gm_lock;   /**< lock for accessing module state */
+    char* gm_mpool_name;    /**< name of memory pool */ 
 
     bool leave_pinned;
     /**< pin memory on first use and leave pinned */
@@ -96,6 +96,7 @@ struct mca_btl_gm_module_t {
     unsigned int gm_max_recv_tokens;
 
     /* lock for accessing module state */
+    ompi_list_t gm_pending; /**< list of pending send descriptors */
     ompi_mutex_t gm_lock;
     struct mca_mpool_base_module_t* gm_mpool;
 }; 

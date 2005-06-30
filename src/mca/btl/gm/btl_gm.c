@@ -547,14 +547,14 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
                 btl
             );
 
-            /* retry the request */
+            /* retry the failed fragment */
             mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
             break;
         case GM_SEND_DROPPED:
             /* release the send token */
             OMPI_THREAD_ADD32(&btl->gm_num_send_tokens, 1);
 
-            /* retry the request */
+            /* retry the dropped fragment */
             mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
             break;
         case GM_SUCCESS:
@@ -563,6 +563,14 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
 
             /* call the completion callback */
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
+
+            /* check for pending fragments */
+            if(ompi_list_get_size(&btl->gm_pending)) {
+                OMPI_THREAD_LOCK(&btl->gm_lock);
+                frag = (mca_btl_gm_frag_t*)ompi_list_remove_first(&btl->gm_pending);
+                OMPI_THREAD_UNLOCK(&btl->gm_lock);
+                mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
+            }
             break;
  
         default:
@@ -619,8 +627,16 @@ int mca_btl_gm_send(
     frag->btl = gm_btl;
     frag->endpoint = endpoint; 
 
-    /* TODO - queue the descriptor if there are no send tokens */
-    assert(OMPI_THREAD_ADD32( &gm_btl->gm_num_send_tokens, -1 ) >= 0);
+    /* queue the descriptor if there are no send tokens */
+    if(OMPI_THREAD_ADD32(&gm_btl->gm_num_send_tokens, -1) < 0) {
+        OMPI_THREAD_LOCK(&gm_btl->gm_lock);
+        ompi_list_append(&gm_btl->gm_pending, (ompi_list_item_t*)frag);
+        OMPI_THREAD_UNLOCK(&gm_btl->gm_lock);
+        OMPI_THREAD_ADD32(&gm_btl->gm_num_send_tokens, 1);
+        return OMPI_SUCCESS;
+    }
+    
+    /* initiate the send */
     gm_send_with_callback(
         gm_btl->gm_port,
         frag->hdr,
@@ -655,7 +671,6 @@ int mca_btl_gm_put(
     frag->btl = gm_btl;
     frag->endpoint = endpoint;
 
-    assert(OMPI_THREAD_ADD32( &gm_btl->gm_num_send_tokens, -1 ) >= 0);
     gm_put(gm_btl->gm_port,
         des->des_src->seg_addr.pval,
         des->des_dst->seg_addr.lval,
@@ -693,7 +708,6 @@ int mca_btl_gm_get(
     frag->btl = gm_btl;
     frag->endpoint = endpoint;
 
-    assert(OMPI_THREAD_ADD32( &gm_btl->gm_num_send_tokens, -1 ) >= 0);
     gm_put(gm_btl->gm_port,
         des->des_src->seg_addr.pval,
         des->des_dst->seg_addr.lval,
