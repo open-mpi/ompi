@@ -19,32 +19,38 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 sources = \
-	mpool_mvapi.h \
-	mpool_mvapi_module.c \
-	mpool_mvapi_component.c
-
+    btl_openib.c \
+    btl_openib.h \
+    btl_openib_component.c \
+    btl_openib_endpoint.c \
+    btl_openib_endpoint.h \
+    btl_openib_frag.c \
+    btl_openib_frag.h \
+    btl_openib_proc.c \
+    btl_openib_proc.h \
+    btl_openib_error.h
+     
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_mpool_mvapi_DSO
-component_noinst =
-component_install = mca_mpool_mvapi.la
+if OMPI_BUILD_btl_openib_DSO
+lib =
+lib_sources =
+component = mca_btl_openib.la
+component_sources = $(sources)
 else
-component_noinst = libmca_mpool_mvapi.la
-component_install =
+lib = libmca_btl_openib.la
+lib_sources = $(sources)
+component =
+component_sources =
 endif
 
-# See src/mca/ptl/mvapi/Makefile.am for an explanation of
-# libmca_common_mvapi.la.
-
 mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component_install)
-mca_mpool_mvapi_la_SOURCES = $(sources)
-mca_mpool_mvapi_la_LDFLAGS = -module -avoid-version
+mcacomponent_LTLIBRARIES = $(component)
+mca_btl_openib_la_SOURCES = $(component_sources)
+mca_btl_openib_la_LDFLAGS = -module -avoid-version
 
-noinst_LTLIBRARIES = $(component_noinst)
-libmca_mpool_mvapi_la_SOURCES = $(sources)
-libmca_mpool_mvapi_la_LDFLAGS = -module -avoid-version
-
-
+noinst_LTLIBRARIES = $(lib)
+libmca_btl_openib_la_SOURCES = $(lib_sources)
+libmca_btl_openib_la_LDFLAGS = -module -avoid-version

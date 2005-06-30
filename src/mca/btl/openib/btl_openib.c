@@ -21,19 +21,19 @@
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 
-#include "btl_mvapi.h"
-#include "btl_mvapi_frag.h" 
-#include "btl_mvapi_proc.h"
-#include "btl_mvapi_endpoint.h"
+#include "btl_openib.h"
+#include "btl_openib_frag.h" 
+#include "btl_openib_proc.h"
+#include "btl_openib_endpoint.h"
 #include "datatype/convertor.h" 
 #include "mca/common/vapi/vapi_mem_reg.h" 
 #include "mca/mpool/base/base.h" 
 #include "mca/mpool/mpool.h" 
 #include "mca/mpool/mvapi/mpool_mvapi.h" 
 
-mca_btl_mvapi_module_t mca_btl_mvapi_module = {
+mca_btl_openib_module_t mca_btl_openib_module = {
     {
-        &mca_btl_mvapi_component.super,
+        &mca_btl_openib_component.super,
         0, /* max size of first fragment */
         0, /* min send fragment size */
         0, /* max send fragment size */
@@ -43,40 +43,40 @@ mca_btl_mvapi_module_t mca_btl_mvapi_module = {
         0, /* latency */
         0, /* bandwidth */
         0,  /* TODO this should be PUT btl flags */
-        mca_btl_mvapi_add_procs,
-        mca_btl_mvapi_del_procs,
-        mca_btl_mvapi_register, 
-        mca_btl_mvapi_finalize,
+        mca_btl_openib_add_procs,
+        mca_btl_openib_del_procs,
+        mca_btl_openib_register, 
+        mca_btl_openib_finalize,
         /* we need alloc free, pack */ 
-        mca_btl_mvapi_alloc, 
-        mca_btl_mvapi_free, 
-        mca_btl_mvapi_prepare_src,
-        mca_btl_mvapi_prepare_dst,
-        mca_btl_mvapi_send,
-        mca_btl_mvapi_put,
+        mca_btl_openib_alloc, 
+        mca_btl_openib_free, 
+        mca_btl_openib_prepare_src,
+        mca_btl_openib_prepare_dst,
+        mca_btl_openib_send,
+        mca_btl_openib_put,
         NULL /* get */ 
     }
 };
 
 
 
-int mca_btl_mvapi_add_procs(
+int mca_btl_openib_add_procs(
     struct mca_btl_base_module_t* btl, 
     size_t nprocs, 
     struct ompi_proc_t **ompi_procs, 
     struct mca_btl_base_endpoint_t** peers, 
     ompi_bitmap_t* reachable)
 {
-    mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*)btl;
+    mca_btl_openib_module_t* mvapi_btl = (mca_btl_openib_module_t*)btl;
     int i, rc;
 
     for(i = 0; i < (int) nprocs; i++) {
         
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
-        mca_btl_mvapi_proc_t* ib_proc;
+        mca_btl_openib_proc_t* ib_proc;
         mca_btl_base_endpoint_t* ib_peer;
 
-        if(NULL == (ib_proc = mca_btl_mvapi_proc_create(ompi_proc))) {
+        if(NULL == (ib_proc = mca_btl_openib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -92,14 +92,14 @@ int mca_btl_mvapi_add_procs(
          * instances that are trying to reach this destination. 
          * Cache the peer instance on the btl_proc.
          */
-        ib_peer = OBJ_NEW(mca_btl_mvapi_endpoint_t);
+        ib_peer = OBJ_NEW(mca_btl_openib_endpoint_t);
         if(NULL == ib_peer) {
             OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         ib_peer->endpoint_btl = mvapi_btl;
-        rc = mca_btl_mvapi_proc_insert(ib_proc, ib_peer);
+        rc = mca_btl_openib_proc_insert(ib_proc, ib_peer);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(ib_peer);
             OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
@@ -114,7 +114,7 @@ int mca_btl_mvapi_add_procs(
     return OMPI_SUCCESS;
 }
 
-int mca_btl_mvapi_del_procs(struct mca_btl_base_module_t* btl, 
+int mca_btl_openib_del_procs(struct mca_btl_base_module_t* btl, 
         size_t nprocs, 
         struct ompi_proc_t **procs, 
         struct mca_btl_base_endpoint_t ** peers)
@@ -124,14 +124,14 @@ int mca_btl_mvapi_del_procs(struct mca_btl_base_module_t* btl,
     return OMPI_SUCCESS;
 }
 
-int mca_btl_mvapi_register(
+int mca_btl_openib_register(
                         struct mca_btl_base_module_t* btl, 
                         mca_btl_base_tag_t tag, 
                         mca_btl_base_module_recv_cb_fn_t cbfunc, 
                         void* cbdata)
 {
     /* TODO add register stuff here... */ 
-    mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
+    mca_btl_openib_module_t* mvapi_btl = (mca_btl_openib_module_t*) btl; 
     
 
     OMPI_THREAD_LOCK(&ib->btl.ib_lock); 
@@ -148,25 +148,25 @@ int mca_btl_mvapi_register(
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
  */
-mca_btl_base_descriptor_t* mca_btl_mvapi_alloc(
+mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     struct mca_btl_base_module_t* btl,
     size_t size)
 {
-    mca_btl_mvapi_frag_t* frag;
-    mca_btl_mvapi_module_t* mvapi_btl; 
+    mca_btl_openib_frag_t* frag;
+    mca_btl_openib_module_t* mvapi_btl; 
     int rc;
-    mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
+    mvapi_btl = (mca_btl_openib_module_t*) btl; 
     
-    if(size <= mca_btl_mvapi_component.eager_limit){ 
+    if(size <= mca_btl_openib_component.eager_limit){ 
         MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc); 
         frag->segment.seg_len = 
-            size <= mca_btl_mvapi_component.eager_limit ? 
-            size: mca_btl_mvapi_component.eager_limit ; 
+            size <= mca_btl_openib_component.eager_limit ? 
+            size: mca_btl_openib_component.eager_limit ; 
     } else { 
         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc); 
         frag->segment.seg_len = 
-            size <= mca_btl_mvapi_component.max_send_size ? 
-            size: mca_btl_mvapi_component.max_send_size ; 
+            size <= mca_btl_openib_component.max_send_size ? 
+            size: mca_btl_openib_component.max_send_size ; 
     }
     
     frag->segment.seg_len = size <= mvapi_btl->super.btl_eager_limit ? size : mvapi_btl->super.btl_eager_limit;  
@@ -179,11 +179,11 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_alloc(
  * 
  * 
  */ 
-int mca_btl_mvapi_free(
+int mca_btl_openib_free(
                     struct mca_btl_base_module_t* btl, 
                     mca_btl_base_descriptor_t* des) 
 {
-    mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)des; 
+    mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*)des; 
 
     if(frag->size == 0) {
         MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
@@ -192,9 +192,9 @@ int mca_btl_mvapi_free(
         
             
     } 
-    else if(frag->size == mca_btl_mvapi_component.max_send_size){ 
+    else if(frag->size == mca_btl_openib_component.max_send_size){ 
         MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag); 
-    } else if(frag->size == mca_btl_mvapi_component.eager_limit){ 
+    } else if(frag->size == mca_btl_openib_component.eager_limit){ 
         MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag); 
     } 
     
@@ -209,7 +209,7 @@ int mca_btl_mvapi_free(
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
+mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration, 
@@ -218,8 +218,8 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
     size_t* size
 )
 {
-    mca_btl_mvapi_module_t* mvapi_btl; 
-    mca_btl_mvapi_frag_t* frag; 
+    mca_btl_openib_module_t* mvapi_btl; 
+    mca_btl_openib_frag_t* frag; 
     mca_mpool_mvapi_registration_t * vapi_reg; 
     struct iovec iov; 
     int32_t iov_count = 1; 
@@ -228,7 +228,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
     int rc; 
     
     
-    mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
+    mvapi_btl = (mca_btl_openib_module_t*) btl; 
     vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
 
     /** if the data fits in the eager limit and we aren't told to pinn then we 
@@ -324,7 +324,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
 
         return &frag->base;
         
-    } else if((mca_btl_mvapi_component.leave_pinned || max_data > btl->btl_max_send_size) && 
+    } else if((mca_btl_openib_component.leave_pinned || max_data > btl->btl_max_send_size) && 
                ompi_convertor_need_buffers(convertor) == 0 && 
                reserve == 0)
     {
@@ -344,8 +344,8 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         frag->base.des_flags = 0; 
 
         
-        if(mca_btl_mvapi_component.leave_pinned) { 
-            if(mca_btl_mvapi_component.reg_mru_len <= mvapi_btl->reg_mru_list.ompi_list_length  ) {
+        if(mca_btl_openib_component.leave_pinned) { 
+            if(mca_btl_openib_component.reg_mru_len <= mvapi_btl->reg_mru_list.ompi_list_length  ) {
                 
                 mca_mpool_mvapi_registration_t* old_reg =
                     (mca_mpool_mvapi_registration_t*)
@@ -478,7 +478,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
+mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     mca_mpool_base_registration_t* registration, 
@@ -486,13 +486,13 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     size_t reserve,
     size_t* size)
 {
-    mca_btl_mvapi_module_t* mvapi_btl; 
-    mca_btl_mvapi_frag_t* frag; 
+    mca_btl_openib_module_t* mvapi_btl; 
+    mca_btl_openib_frag_t* frag; 
     mca_mpool_mvapi_registration_t * vapi_reg; 
     int rc; 
     size_t reg_len; 
 
-    mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
+    mvapi_btl = (mca_btl_openib_module_t*) btl; 
     vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
     
     MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
@@ -562,10 +562,10 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
         }
     }  else { 
            
-        if(mca_btl_mvapi_component.leave_pinned) { 
+        if(mca_btl_openib_component.leave_pinned) { 
             
         
-            if( mca_btl_mvapi_component.reg_mru_len <= mvapi_btl->reg_mru_list.ompi_list_length  ) {
+            if( mca_btl_openib_component.reg_mru_len <= mvapi_btl->reg_mru_list.ompi_list_length  ) {
                
                 mca_mpool_mvapi_registration_t* old_reg =
                     (mca_mpool_mvapi_registration_t*)
@@ -635,10 +635,10 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     
 }
 
-int mca_btl_mvapi_finalize(struct mca_btl_base_module_t* btl)
+int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
 {
-    mca_btl_mvapi_module_t* mvapi_btl; 
-    mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
+    mca_btl_openib_module_t* mvapi_btl; 
+    mvapi_btl = (mca_btl_openib_module_t*) btl; 
     
     if(mvapi_btl->send_free_eager.fl_num_allocated != 
        mvapi_btl->send_free_eager.super.ompi_list_length){ 
@@ -683,7 +683,7 @@ int mca_btl_mvapi_finalize(struct mca_btl_base_module_t* btl)
  *  on to the peer.
  */
 
-int mca_btl_mvapi_send( 
+int mca_btl_openib_send( 
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_btl_base_descriptor_t* descriptor, 
@@ -691,12 +691,12 @@ int mca_btl_mvapi_send(
    
 {
     
-    mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)descriptor; 
+    mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*)descriptor; 
     frag->endpoint = endpoint; 
         
     frag->hdr->tag = tag; 
     frag->type = MCA_BTL_IB_FRAG_SEND; 
-    frag->rc = mca_btl_mvapi_endpoint_send(endpoint, frag);
+    frag->rc = mca_btl_openib_endpoint_send(endpoint, frag);
            
     return frag->rc;
 }
@@ -705,12 +705,12 @@ int mca_btl_mvapi_send(
  * RDMA local buffer to remote buffer address.
  */
 
-int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
+int mca_btl_openib_put( mca_btl_base_module_t* btl,
                     mca_btl_base_endpoint_t* endpoint,
                     mca_btl_base_descriptor_t* descriptor)
 {
-    mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
-    mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*) descriptor; 
+    mca_btl_openib_module_t* mvapi_btl = (mca_btl_openib_module_t*) btl; 
+    mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*) descriptor; 
     frag->endpoint = endpoint;
     frag->sr_desc.opcode = VAPI_RDMA_WRITE; 
     
@@ -726,7 +726,7 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
     if(VAPI_OK != frag->ret){ 
         return OMPI_ERROR; 
     }
-    mca_btl_mvapi_endpoint_post_rr(endpoint, 1); 
+    mca_btl_openib_endpoint_post_rr(endpoint, 1); 
 
     return OMPI_SUCCESS; 
 
@@ -782,7 +782,7 @@ static void async_event_handler(VAPI_hca_hndl_t hca_hndl,
 
 
 
-int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
+int mca_btl_openib_module_init(mca_btl_openib_module_t *mvapi_btl)
 {
 
     /* Allocate Protection Domain */ 

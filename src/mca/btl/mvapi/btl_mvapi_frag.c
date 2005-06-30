@@ -1,12 +1,12 @@
 #include "btl_mvapi_frag.h" 
 #include "mca/common/vapi/vapi_mem_reg.h"
-#include "mca/mpool/vapi/mpool_vapi.h" 
+#include "mca/mpool/mvapi/mpool_mvapi.h" 
 
 
 
 static void mca_btl_mvapi_frag_common_constructor( mca_btl_mvapi_frag_t* frag) 
 {
-    mca_mpool_vapi_registration_t* mem_hndl = (mca_mpool_vapi_registration_t*) frag->base.super.user_data; 
+    mca_mpool_mvapi_registration_t* mem_hndl = (mca_mpool_mvapi_registration_t*) frag->base.super.user_data; 
     frag->hdr = (mca_btl_mvapi_header_t*) (frag+1);    /* initialize the btl header to point to start at end of frag */ 
 #if 0   
     mod = (unsigned long) frag->hdr % MCA_BTL_IB_FRAG_ALIGN; 
