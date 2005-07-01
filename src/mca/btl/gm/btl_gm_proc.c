@@ -156,7 +156,7 @@ int mca_btl_gm_proc_insert(mca_btl_gm_proc_t* gm_proc,
         mca_btl_base_endpoint_t* gm_endpoint)
 {
     /* insert into endpoint array */
-    if(gm_proc->proc_addr_count >= gm_proc->proc_endpoint_count)
+    if(gm_proc->proc_addr_count <= gm_proc->proc_endpoint_count)
         return OMPI_ERR_OUT_OF_RESOURCE;
     gm_endpoint->endpoint_proc = gm_proc;
     gm_endpoint->endpoint_addr = gm_proc->proc_addrs[gm_proc->proc_endpoint_count];

@@ -105,6 +105,7 @@ int mca_btl_gm_component_open(void)
     /* initialize state */
     mca_btl_gm_component.gm_num_btls=0;
     mca_btl_gm_component.gm_btls=NULL;
+    mca_btl_gm_component.gm_port_name=NULL;
     
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_gm_component.gm_procs, ompi_list_t);
@@ -119,6 +120,14 @@ int mca_btl_gm_component_open(void)
         mca_btl_gm_param_register_int ("free_list_inc", 32);
     mca_btl_gm_component.gm_mpool_name = 
         mca_btl_gm_param_register_string("mpool", "gm"); 
+    mca_btl_gm_component.gm_max_ports = 
+        mca_btl_gm_param_register_int("max_ports", 16); 
+    mca_btl_gm_component.gm_max_boards = 
+        mca_btl_gm_param_register_int("max_boards", 4); 
+    mca_btl_gm_component.gm_max_btls = 
+        mca_btl_gm_param_register_int("max_modules", 4); 
+    mca_btl_gm_component.gm_num_high_priority = 
+        mca_btl_gm_param_register_int("num_high_priority", 8); 
 
     /* register gm module parameters */
     mca_btl_gm_module.super.btl_exclusivity =
@@ -162,6 +171,7 @@ static int
 mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
 {
     mca_mpool_base_resources_t resources;
+    size_t num_high_priority;
     size_t i;
     int rc;
 
@@ -177,6 +187,13 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
     btl->gm_max_send_tokens = btl->gm_num_send_tokens;
     btl->gm_num_recv_tokens = gm_num_receive_tokens (btl->gm_port);
     btl->gm_max_recv_tokens = btl->gm_num_recv_tokens;
+
+    /* dont allow high priority to exceed 1/2 of available send tokens */
+    
+    num_high_priority = mca_btl_gm_component.gm_num_high_priority;
+    if(num_high_priority > (btl->gm_num_send_tokens >> 1)) {
+        num_high_priority = btl->gm_num_send_tokens >> 1;
+    }
                                                                                                   
     /* initialize memory pool */
     resources.gm_port = btl->gm_port;
@@ -215,7 +232,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
                          btl->gm_mpool ); 
 
     /* post receive buffers */
-    for(i=0; i<mca_btl_gm_component.gm_num_high_priority; i++) {
+    for(i=0; i<num_high_priority; i++) {
         mca_btl_gm_frag_t* frag;
         MCA_BTL_GM_FRAG_ALLOC_EAGER(btl, frag, rc);
         if(NULL == frag) {
@@ -300,8 +317,8 @@ static int mca_btl_gm_discover( void )
             ompi_output( 0, "[%s:%d] out of resources", __FILE__, __LINE__);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-        /* copy the basic informations in the new PTL */
-        memcpy (btl, &mca_btl_gm_module, sizeof(mca_btl_gm_module_t) );
+        /* copy the basic informations into the new BTL */
+        memcpy (btl, &mca_btl_gm_module, sizeof(mca_btl_gm_module_t));
 
         /* setup local address */
         btl->gm_port           = gm_port;
@@ -319,7 +336,7 @@ static int mca_btl_gm_discover( void )
         }
 
         /* everything is OK let's mark it as usable and go to the next one */
-        mca_btl_gm_component.gm_btls[mca_btl_gm_component.gm_num_btls++];
+        mca_btl_gm_component.gm_btls[mca_btl_gm_component.gm_num_btls++] = btl;
         if(mca_btl_gm_component.gm_num_btls >= mca_btl_gm_component.gm_max_btls ) {
             break;
         }
@@ -384,10 +401,11 @@ mca_btl_gm_component_init (int *num_btl_modules,
         return NULL;
     }
 
-    mca_btl_gm_component.gm_num_btls = mca_btl_gm_discover( );
-
     /* initialize gm */
     if (OMPI_SUCCESS != mca_btl_gm_discover()) {
+        return NULL;
+    }
+    if (mca_btl_gm_component.gm_num_btls == 0) {
         return NULL;
     }
 
@@ -440,6 +458,7 @@ int mca_btl_gm_component_progress()
                 hdr = (mca_btl_base_header_t *)gm_ntohp(event->recv.message);
                 reg = &btl->gm_reg[hdr->tag];
                 reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
+                gm_provide_receive_buffer(btl->gm_port, buffer, frag->size, priority);
                 count++;
                 break;
                 }
@@ -453,6 +472,7 @@ int mca_btl_gm_component_progress()
                 hdr = (mca_btl_base_header_t*)buffer;
                 reg = &btl->gm_reg[hdr->tag];
                 reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
+                gm_provide_receive_buffer(btl->gm_port, buffer, frag->size, priority);
                 count++;
                 break;
                 }
@@ -463,7 +483,6 @@ int mca_btl_gm_component_progress()
                 gm_unknown(btl->gm_port, event);
                 break;
         }
-        gm_provide_receive_buffer(btl->gm_port, buffer, frag->size, priority);
     }
     return count;
 }

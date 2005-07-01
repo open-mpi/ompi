@@ -156,7 +156,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_alloc(
     mca_btl_gm_frag_t* frag;
     int rc;
     
-    if(size <= btl->btl_eager_limit){ 
+    if(size <= btl->btl_eager_limit) { 
         MCA_BTL_GM_FRAG_ALLOC_EAGER(gm_btl, frag, rc); 
         frag->segment.seg_len = 
             size <= btl->btl_eager_limit ? 
@@ -168,8 +168,12 @@ mca_btl_base_descriptor_t* mca_btl_gm_alloc(
             size : btl->btl_max_send_size ; 
     }
     
+    frag->base.des_src = &frag->segment;
+    frag->base.des_src_cnt = 1;
+    frag->base.des_dst = NULL;
+    frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0; 
-    return (mca_btl_base_descriptor_t*)frag;
+    return &frag->base;
 }
 
 
