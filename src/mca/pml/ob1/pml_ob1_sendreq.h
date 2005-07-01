@@ -225,12 +225,20 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
  */
 
 
-#define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                     \
-{                                                                    \
-    /*  Let the base handle the reference counts */                  \
-    MCA_PML_BASE_SEND_REQUEST_FINI((&sendreq->req_send));            \
-    OMPI_FREE_LIST_RETURN(                                           \
-        &mca_pml_ob1.send_requests, (ompi_list_item_t*)sendreq);     \
+#define MCA_PML_OB1_SEND_REQUEST_RETURN(sendreq)                            \
+{                                                                           \
+    if(NULL != (sendreq)->req_chunk) {                                      \
+        mca_mpool_base_reg_mpool_t* reg = (sendreq)->req_chunk->mpools;     \
+        while(NULL != reg->mpool) {                                         \
+            OBJ_RELEASE(reg->mpool_registration);                           \
+        }                                                                   \
+        OBJ_RELEASE((sendreq)->req_chunk);                                  \
+    }                                                                       \
+                                                                            \
+    /*  Let the base handle the reference counts */                         \
+    MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));                 \
+    OMPI_FREE_LIST_RETURN(                                                  \
+        &mca_pml_ob1.send_requests, (ompi_list_item_t*)sendreq);            \
 }
                                                                                                                       
 /**

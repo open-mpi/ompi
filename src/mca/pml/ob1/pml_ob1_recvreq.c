@@ -153,8 +153,6 @@ static void mca_pml_ob1_recv_request_ack(
         struct mca_mpool_base_reg_mpool_t *reg = recvreq->req_chunk->mpools;
         while(reg->mpool != NULL) {
             if(NULL != mca_pml_ob1_ep_array_find(&proc->btl_rdma,(mca_btl_base_module_t*) reg->user_data)) {
-                recvreq->req_rdma_offset = hdr->hdr_frag_length;
-                ack->hdr_rdma_offset = hdr->hdr_frag_length;
                 recvreq->req_mpool = reg;
                 break;
             }
@@ -344,6 +342,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 mca_pml_ob1_rdma_hdr_t* hdr;
                 mca_btl_base_descriptor_t* dst;
                 mca_btl_base_descriptor_t* ctl;
+                mca_mpool_base_registration_t * reg = NULL;
                 int rc;
 
                 /*
@@ -374,55 +373,38 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                         size = ep->btl_max_rdma_size;
                     }
 
-                    /* prepare a descriptor for RDMA */
-                    ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &recvreq->req_rdma_offset);
-#if MCA_PML_OB1_TIMESTAMPS
-                    recvreq->pin1[recvreq->pin_index] = get_profiler_timestamp();
-#endif
-                    dst = ep->btl_prepare_dst(
-                        ep->btl,
-                        ep->btl_endpoint,
-                        NULL,
-                        &recvreq->req_recv.req_convertor,
-                        0,
-                        &size);
-#if MCA_PML_OB1_TIMESTAMPS
-                    recvreq->pin2[recvreq->pin_index] = get_profiler_timestamp();
-#endif
+                /*
+                 * For now schedule entire message across a single NIC - need to FIX
+                 */
                 } else {
-                    mca_mpool_base_registration_t * reg; 
                     size = bytes_remaining;
-
-                    /* prepare a descriptor for RDMA */
-                    ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &recvreq->req_rdma_offset);
-
                     if(NULL != recvreq->req_mpool){ 
                         /* find the endpoint corresponding to this btl and schedule the entire message */
-                        ep = mca_pml_ob1_ep_array_find(&proc->btl_rdma, (mca_btl_base_module_t*) recvreq->req_mpool->user_data);
+                        ep = mca_pml_ob1_ep_array_find(&proc->btl_rdma, 
+                            (mca_btl_base_module_t*) recvreq->req_mpool->user_data);
                         reg = recvreq->req_mpool->mpool_registration; 
-                        
-
                     }
                     else{ 
                         ep = mca_pml_ob1_ep_array_get_next(&proc->btl_rdma);
-                        reg = NULL; 
                     }
-                    
-#if MCA_PML_OB1_TIMESTAMPS
-                    recvreq->pin1[recvreq->pin_index] = get_profiler_timestamp();
-#endif
-                    dst = ep->btl_prepare_dst(
-                                              ep->btl,
-                                              ep->btl_endpoint,
-                                              reg,
-                                              &recvreq->req_recv.req_convertor,
-                                              0,
-                                              &size);
-#if MCA_PML_OB1_TIMESTAMPS
-                    recvreq->pin2[recvreq->pin_index] = get_profiler_timestamp();
-#endif
                 }
 
+                /* prepare a descriptor for RDMA */
+                ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &recvreq->req_rdma_offset);
+#if MCA_PML_OB1_TIMESTAMPS
+                recvreq->pin1[recvreq->pin_index] = get_profiler_timestamp();
+#endif
+                dst = ep->btl_prepare_dst(
+                    ep->btl,
+                    ep->btl_endpoint,
+                    reg,
+                    &recvreq->req_recv.req_convertor,
+                    0,
+                    &size);
+#if MCA_PML_OB1_TIMESTAMPS
+                recvreq->pin2[recvreq->pin_index] = get_profiler_timestamp();
+                recvreq->pin_index++;
+#endif
                 if(dst == NULL) {
                     OMPI_THREAD_LOCK(&mca_pml_ob1.lock);
                     ompi_list_append(&mca_pml_ob1.recv_pending, (ompi_list_item_t*)recvreq);
@@ -430,9 +412,6 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     break;
                 }
                 dst->des_cbdata = recvreq;
-#if MCA_PML_OB1_TIMESTAMPS
-                recvreq->pin_index++;
-#endif
 
                 /* prepare a descriptor for rdma control message */
                 hdr_size = sizeof(mca_pml_ob1_rdma_hdr_t);
