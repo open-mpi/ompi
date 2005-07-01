@@ -212,7 +212,7 @@ int ompi_comm_finalize(void)
     OBJ_DESTRUCT( &ompi_mpi_comm_world );
 
     if( ompi_mpi_comm_parent != &ompi_mpi_comm_null ) {
-       OBJ_DESTRUCT (&ompi_mpi_comm_parent);
+       OBJ_DESTRUCT (ompi_mpi_comm_parent);
     }
 
     OBJ_DESTRUCT( &ompi_mpi_comm_null );
