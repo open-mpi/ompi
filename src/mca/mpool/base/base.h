@@ -49,7 +49,7 @@ OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
 /**
  * The maximum number of mpools a chunk of memorry can be registered with
  */
-#define MCA_MPOOL_BASE_MAX_REG 10
+#define MCA_MPOOL_BASE_MAX_REG 8
 
 /**
  * Holds the key for the tree
