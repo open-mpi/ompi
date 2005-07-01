@@ -28,6 +28,12 @@
 extern "C" {
 #endif
 
+struct mca_pml_ob1_registration_t {
+    struct mca_pml_ob1_endpoint_t* endpoint;
+    struct mca_mpool_base_registration_t* registration;
+};
+typedef struct mca_pml_ob1_registration_t mca_pml_ob1_registration_t;
+
 
 struct  mca_pml_ob1_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
@@ -40,6 +46,8 @@ struct  mca_pml_ob1_recv_request_t {
     size_t  req_bytes_received;
     size_t  req_bytes_delivered;
     size_t  req_rdma_offset;
+    mca_pml_ob1_registration_t req_reg[MCA_MPOOL_BASE_MAX_REG];
+    size_t req_num_reg;
 
 #if MCA_PML_OB1_TIMESTAMPS
     unsigned long long ack;
@@ -110,10 +118,18 @@ do {                                                               \
  *
  *  @param request (IN)  Receive request.
  */
-#define MCA_PML_OB1_RECV_REQUEST_RETURN(request)                                  \
-do {                                                                              \
-   MCA_PML_BASE_RECV_REQUEST_FINI(&request->req_recv);                            \
-   OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_requests, (ompi_list_item_t*)request); \
+#define MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq)                                     \
+do {                                                                                 \
+    if(NULL != (recvreq)->req_chunk) {                                               \
+        mca_mpool_base_reg_mpool_t* reg = (recvreq)->req_chunk->mpools;              \
+        while(NULL != reg->mpool) {                                                  \
+            OBJ_RELEASE(reg->mpool_registration);                                    \
+        }                                                                            \
+        OBJ_RELEASE((recvreq)->req_chunk);                                           \
+    }                                                                                \
+                                                                                     \
+    MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);                            \
+    OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_requests, (ompi_list_item_t*)(recvreq)); \
 } while(0)
 
 /**
@@ -150,7 +166,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
  * @return         OMPI_SUCESS or error status on failure.
  */
 #define MCA_PML_OB1_RECV_REQUEST_START(request)                                   \
-{                                                                                 \
+do {                                                                              \
     /* init/re-init the request */                                                \
     (request)->req_bytes_received = 0;                                            \
     (request)->req_bytes_delivered = 0;                                           \
@@ -177,7 +193,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
     } else {                                                                      \
         mca_pml_ob1_recv_request_match_specific(request);                         \
     }                                                                             \
-}
+} while (0)
 
 
 /**
