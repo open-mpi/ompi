@@ -181,17 +181,6 @@ OMPI_DECLSPEC int mca_mpool_base_free(void * base);
  */
 OMPI_DECLSPEC int mca_mpool_base_tree_node_compare(void * key1, void * key2);
 
-/**
- * Searches the mpool to see if it has allocated the memory that is passed in.
- * If so it returns an array of mpools the memory is registered with.
- *
- * @param base pointer to the memory to lookup
- *
- * @retval NULL if the memory is not in any mpool
- * @retval pointer to an array of type mca_mpool_base_reg_mpool_t
- */
-OMPI_DECLSPEC struct mca_mpool_base_chunk_t * mca_mpool_base_find(void * base);
-
 
 OMPI_DECLSPEC int mca_mpool_base_insert(
     void * addr, 
