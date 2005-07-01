@@ -86,6 +86,14 @@ struct mca_mpool_base_chunk_t
 };
 typedef struct mca_mpool_base_chunk_t mca_mpool_base_chunk_t;
 
+OBJ_CLASS_DECLARATION(mca_mpool_base_chunk_t);
+
+
+/**
+ *  Returns a copy of the chunk.
+ */
+mca_mpool_base_chunk_t* mca_mpool_base_find(void* base);
+
 /*
  * Global functions for MCA: overall mpool open and close
  */

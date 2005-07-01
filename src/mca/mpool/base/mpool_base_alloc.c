@@ -29,6 +29,55 @@ ompi_rb_tree_t mca_mpool_base_tree;
 ompi_free_list_t mca_mpool_base_mem_list;
 ompi_mutex_t mca_mpool_base_tree_lock; 
 
+
+/**
+ * Searches the mpool to see if it has allocated the memory that is passed in.
+ * If so it returns an array of mpools the memory is registered with.
+ *
+ * @param base pointer to the memory to lookup
+ *
+ * @retval NULL if the memory is not in any mpool
+ * @retval pointer to an array of type mca_mpool_base_reg_mpool_t
+ */
+static inline struct mca_mpool_base_chunk_t * mca_mpool_base_find_nl(void * base)
+{
+    mca_mpool_base_key_t key;
+    key.bottom = base;
+    key.top = base;
+    return (mca_mpool_base_chunk_t *)ompi_rb_tree_find(&mca_mpool_base_tree, &key);
+}
+
+/**
+ * Searches the mpool to see if it has allocated the memory that is passed in.
+ * If so it returns an array of mpools the memory is registered with.
+ *
+ * @param base pointer to the memory to lookup
+ *
+ * @retval NULL if the memory is not in any mpool
+ * @retval pointer to an array of type mca_mpool_base_reg_mpool_t
+ */
+struct mca_mpool_base_chunk_t * mca_mpool_base_find(void * base)
+{
+    mca_mpool_base_chunk_t* found;
+    mca_mpool_base_chunk_t* copy;
+
+    OMPI_THREAD_LOCK(&mca_mpool_base_tree_lock);
+    if(NULL != (found = mca_mpool_base_find(base))) {
+        mca_mpool_base_reg_mpool_t* reg;
+        copy = OBJ_NEW(mca_mpool_base_chunk_t);
+        *copy = *found;
+        reg = copy->mpools;
+        while(NULL != reg->mpool) {
+            OBJ_RETAIN(reg->mpool_registration);
+            reg++;
+        }
+    } else {
+        copy = NULL;
+    }
+    OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock);
+    return copy;
+}
+
 /**
  * Memory Pool Registration
  */
@@ -95,20 +144,22 @@ int mca_mpool_base_insert(void * addr, size_t size,
     OMPI_FREE_LIST_GET(&mca_mpool_base_mem_list, item, rc);
     if(rc != OMPI_SUCCESS) 
         return rc; 
+
     ((mca_mpool_base_chunk_t *) item)->key.bottom = addr;
     ((mca_mpool_base_chunk_t *) item)->key.top = (void *) 
         ((char *) addr + size - 1);
-
-    OMPI_THREAD_LOCK(mca_mpool_base_tree_lock); 
-    rc = ompi_rb_tree_insert(&mca_mpool_base_tree, 
-                        &((mca_mpool_base_chunk_t *)item)->key, item);
-    OMPI_THREAD_UNLOCK(mca_mpool_base_tree_lock); 
-
-    if(rc != OMPI_SUCCESS) 
-        return rc; 
     ((mca_mpool_base_chunk_t *) item)->mpools[0].mpool = mpool; 
     ((mca_mpool_base_chunk_t *) item)->mpools[0].user_data = user_data;
     ((mca_mpool_base_chunk_t *) item)->mpools[0].mpool_registration = registration;
+
+    OMPI_THREAD_LOCK(&mca_mpool_base_tree_lock); 
+    rc = ompi_rb_tree_insert(&mca_mpool_base_tree, 
+                        &((mca_mpool_base_chunk_t *)item)->key, item);
+    OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
+    if(OMPI_SUCCESS != rc) {
+        OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, item);
+        return rc; 
+    }
     return OMPI_SUCCESS; 
 }
 
@@ -123,21 +174,16 @@ int mca_mpool_base_insert(void * addr, size_t size,
 int mca_mpool_base_remove(void * base)
 {
     int rc; 
-    mca_mpool_base_chunk_t * chunk = mca_mpool_base_find(base);
-    if(NULL == chunk){
+    mca_mpool_base_chunk_t *chunk;
+
+    OMPI_THREAD_LOCK(&mca_mpool_base_tree_lock); 
+    if(NULL == (chunk = mca_mpool_base_find_nl(base))) {
+        OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
         return OMPI_ERR_BAD_PARAM;
     }
-
-    OMPI_THREAD_LOCK(mca_mpool_base_tree_lock); 
     rc =  ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key); 
-    OMPI_THREAD_UNLOCK(mca_mpool_base_tree_lock);
-
-    if(OMPI_SUCCESS == rc)
-        return OMPI_SUCCESS; 
-    else
-        return OMPI_ERROR;
-    
-
+    OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock);
+    return rc;
 }
 
 /**
@@ -240,7 +286,6 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     }
     
     OMPI_FREE_LIST_GET(&mca_mpool_base_mem_list, item, i);
-    
     if(NULL == no_reg_function && 0 == reg_module_num)
     {
         free(has_reg_function);
@@ -255,12 +300,11 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
                 ((mca_mpool_base_chunk_t *) item)->key.bottom = mem;
                 ((mca_mpool_base_chunk_t *) item)->key.top = (void *) 
                                                      ((char *) mem + size - 1);
-                OMPI_THREAD_LOCK(mca_mpool_base_tree_lock); 
+                OMPI_THREAD_LOCK(&mca_mpool_base_tree_lock); 
 
                 ompi_rb_tree_insert(&mca_mpool_base_tree, 
                                     &((mca_mpool_base_chunk_t *)item)->key, item);
-                OMPI_THREAD_UNLOCK(mca_mpool_base_tree_lock); 
-
+                OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
                 return mem;
             }
         }
@@ -323,12 +367,10 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     {
         ((mca_mpool_base_chunk_t *) item)->mpools[num_modules].mpool = NULL;
     }
-    OMPI_THREAD_LOCK(mca_mpool_base_tree_lock); 
-
+    OMPI_THREAD_LOCK(&mca_mpool_base_tree_lock); 
     ompi_rb_tree_insert(&mca_mpool_base_tree, 
                         &((mca_mpool_base_chunk_t *)item)->key, item);
-    OMPI_THREAD_UNLOCK(mca_mpool_base_tree_lock); 
-
+    OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
     free(has_reg_function);
     return mem;
 }
@@ -343,12 +385,14 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
  */
 int mca_mpool_base_free(void * base)
 {
-    mca_mpool_base_chunk_t * chunk = mca_mpool_base_find(base);
+    mca_mpool_base_chunk_t * chunk;
     int i = 0;
     int rc; 
 
-    if(NULL == chunk)
+    OMPI_THREAD_LOCK(&mca_mpool_base_tree_lock); 
+    if(NULL == (chunk = mca_mpool_base_find_nl(base)))
     {
+        OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
         return OMPI_ERR_BAD_PARAM;
     }
 
@@ -357,15 +401,9 @@ int mca_mpool_base_free(void * base)
     {
         free(chunk->key.bottom);
         OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, (ompi_list_item_t*) chunk);
-
-        OMPI_THREAD_LOCK(mca_mpool_base_tree_lock); 
         rc = ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key); 
-        OMPI_THREAD_UNLOCK(mca_mpool_base_tree_lock); 
-
-        if(OMPI_SUCCESS == rc)
-            return OMPI_SUCCESS; 
-        else 
-            return OMPI_ERROR;
+        OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
+        return rc;
     }
 
     while(MCA_MPOOL_BASE_MAX_REG > i && NULL != chunk->mpools[i].mpool) { i++; };
@@ -382,29 +420,8 @@ int mca_mpool_base_free(void * base)
     chunk->mpools[i].mpool->mpool_free(chunk->mpools[i].mpool, chunk->key.bottom, chunk->mpools[i].mpool_registration);
     OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, (ompi_list_item_t *) chunk);
 
-    OMPI_THREAD_LOCK(mca_mpool_base_tree_lock); 
     rc = ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key); 
-    OMPI_THREAD_UNLOCK(mca_mpool_base_tree_lock); 
-
-    if(OMPI_SUCCESS ==  rc)
-        return OMPI_SUCCESS; 
-    else 
-        return OMPI_ERROR;
-    
-}
-
-/**
- * Searches the mpool to see if it has allocated the memory that is passed in.
- * If so it returns an array of mpools the memory is registered with.
- *
- * @param base pointer to the memory to lookup
- *
- * @retval NULL if the memory is not in any mpool
- * @retval pointer to an array of type mca_mpool_base_reg_mpool_t
- */
-struct mca_mpool_base_chunk_t * mca_mpool_base_find(void * base)
-{
-    return (mca_mpool_base_chunk_t *) 
-        ompi_rb_tree_find(&mca_mpool_base_tree, &base);
+    OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
+    return rc;
 }
 
