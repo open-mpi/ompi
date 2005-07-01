@@ -33,6 +33,7 @@
 #include "util/proc_info.h"
 #include "util/bit_ops.h"
 #include "util/argv.h"
+#include "util/convert.h"
 #include "include/constants.h"
 #include "mca/pml/pml.h"
 #include "mca/ns/ns.h"
@@ -53,7 +54,8 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
 {
     int size, rsize, rank, rc;
     size_t num_vals;
-    size_t rnamebuflen;
+    size_t size_rnamebuflen;
+    int int_rnamebuflen;
     void *rnamebuf=NULL;
 
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
@@ -110,20 +112,23 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
 	    rc = orte_rml.send_buffer(rport, nbuf, tag, 0);
 	}
 	
-	if (ORTE_SUCCESS != (rc = orte_dps.unload(nrbuf, &rnamebuf, &rnamebuflen))) {
+	if (ORTE_SUCCESS != (rc = orte_dps.unload(nrbuf, &rnamebuf, &size_rnamebuflen))) {
 	    goto exit;
 	}
+        if (ORTE_SUCCESS != (rc = ompi_sizet2int(size_rnamebuflen, &int_rnamebuflen, true))) {
+            goto exit;
+        }
     }
     
     /* bcast the buffer-length to all processes in the local comm */
-    rc = comm->c_coll.coll_bcast (&rnamebuflen, 1, MPI_INT, root, comm );
+    rc = comm->c_coll.coll_bcast (&int_rnamebuflen, 1, MPI_INT, root, comm );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
 
     if ( rank != root ) {
 	/* non root processes need to allocate the buffer manually */
-	rnamebuf = (char *) malloc(rnamebuflen);
+	rnamebuf = (char *) malloc(int_rnamebuflen);
 	if ( NULL == rnamebuf ) {
 	    rc = OMPI_ERR_OUT_OF_RESOURCE;
 	    goto exit;
@@ -135,7 +140,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
        adds processes, which were not known yet to our
        process pool.
     */
-    rc = comm->c_coll.coll_bcast (rnamebuf, rnamebuflen, MPI_BYTE, root, comm );
+    rc = comm->c_coll.coll_bcast (rnamebuf, int_rnamebuflen, MPI_BYTE, root, comm );
     if ( OMPI_SUCCESS != rc ) {
 	goto exit;
     }
@@ -144,7 +149,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     if (NULL == nrbuf) {
 	goto exit;
     }
-    if ( ORTE_SUCCESS != ( rc = orte_dps.load(nrbuf, rnamebuf, rnamebuflen))) {
+    if ( ORTE_SUCCESS != ( rc = orte_dps.load(nrbuf, rnamebuf, int_rnamebuflen))) {
 	goto exit;
     }
 
