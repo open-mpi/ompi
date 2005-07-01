@@ -18,9 +18,8 @@
 #include "mpi.h"
 
 #include "dps/dps.h"
-
+#include "util/convert.h"
 #include "mca/ns/ns_types.h"
-
 #include "communicator/communicator.h"
 #include "proc/proc.h"
 #include "include/constants.h"
@@ -611,6 +610,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     int rc;
     int local_leader, local_rank;
     orte_process_name_t *remote_leader=NULL;
+    size_t size_count;
     
     local_leader  = (*((int*)lleader));
     remote_leader = (orte_process_name_t*)rleader;
@@ -653,11 +653,14 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
             rc = orte_rml.send_buffer(remote_leader, sbuf, 0, 0);
         }
 
-        if (ORTE_SUCCESS != (rc = orte_dps.unpack(rbuf, outbuf, (size_t*)&count, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = orte_dps.unpack(rbuf, outbuf, &size_count, ORTE_INT))) {
             goto exit;
         }
         OBJ_RELEASE(sbuf);
         OBJ_RELEASE(rbuf);
+        if (ORTE_SUCCESS != (rc = ompi_sizet2int(size_count, &count, true))) {
+            goto exit;
+        }
 
         if ( &ompi_mpi_op_max == op ) {
             for ( i = 0 ; i < count; i++ ) {
