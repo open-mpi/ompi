@@ -214,7 +214,13 @@ int ompi_comm_finalize(void)
     OBJ_DESTRUCT( &ompi_mpi_comm_world );
 
     if( ompi_mpi_comm_parent != &ompi_mpi_comm_null ) {
-       OBJ_DESTRUCT (&ompi_mpi_comm_parent);
+        /* Note that we pass ompi_mpi_comm_parent here
+           (vs. &ompi_mpi_comm_parent) because it is of type
+           (ompi_communicator_t*), *NOT* (ompi_communicator_t).  This
+           is because a parent communicator is created dynamically
+           during init, and we just set this pointer to it.  Hence, we
+           just pass in the pointer here. */
+        OBJ_DESTRUCT (ompi_mpi_comm_parent);
     }
 
     OBJ_DESTRUCT( &ompi_mpi_comm_null );
