@@ -124,7 +124,7 @@ int mca_btl_gm_component_open(void)
     mca_btl_gm_module.super.btl_exclusivity =
         mca_btl_gm_param_register_int ("exclusivity", 0);
     mca_btl_gm_module.super.btl_eager_limit = 
-        mca_btl_gm_param_register_int ("first_frag_size", 64*1024) - sizeof(mca_btl_base_header_t);
+        mca_btl_gm_param_register_int ("eager_limit", 64*1024) - sizeof(mca_btl_base_header_t);
     mca_btl_gm_module.super.btl_min_send_size =
         mca_btl_gm_param_register_int ("min_send_size", 64*1024) - sizeof(mca_btl_base_header_t);
     mca_btl_gm_module.super.btl_max_send_size =
