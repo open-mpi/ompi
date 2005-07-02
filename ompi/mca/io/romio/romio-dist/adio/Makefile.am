@@ -17,9 +17,18 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 AM_CPPFLAGS = -DHAVE_MPI_INFO \
-        -I$(top_ompi_builddir)/src/include \
-        -I$(top_ompi_srcdir)/src \
-        -I$(top_ompi_srcdir)/src/include
+        -I$(top_ompi_builddir)/opal \
+        -I$(top_ompi_builddir)/opal/include \
+        -I$(top_ompi_srcdir)/opal \
+        -I$(top_ompi_srcdir)/opal/include \
+        -I$(top_ompi_builddir)/orte \
+        -I$(top_ompi_builddir)/orte/include \
+        -I$(top_ompi_srcdir)/orte \
+        -I$(top_ompi_srcdir)/orte/include \
+        -I$(top_ompi_builddir)/ompi \
+        -I$(top_ompi_builddir)/ompi/include \
+        -I$(top_ompi_srcdir)/ompi \
+        -I$(top_ompi_srcdir)/ompi/include
 
 # Conditionals whether to build each subdir or not
 
