@@ -113,7 +113,6 @@ int orte_sys_info(void)
 	    orte_system_info.user = strdup(pwdent->pw_name);
     } else {
 	     if (0 > asprintf(&(orte_system_info.user), "%d", uid)) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
          }
     }
