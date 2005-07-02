@@ -21,7 +21,7 @@ include $(top_srcdir)/config/Makefile.options
 # of the header files in this directory get included elsewhere in OMPI.
 # #@%@#$...
 AM_CPPFLAGS = \
-        -I$(top_srcdir)/src/event/compat
+        -I$(top_srcdir)/opal/event/compat
 
 # OMPI: No need to build the sample or test
 #SUBDIRS = . sample test
@@ -63,7 +63,7 @@ libevent_la_DEPENDENCIES = $(objects)
 
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/event
+ompidir = $(includedir)/openmpi/opal/event
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

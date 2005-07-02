@@ -26,7 +26,7 @@ headers = mpool.h
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/mpool
+ompidir = $(includedir)/openmpi/opal/mca/mpool
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

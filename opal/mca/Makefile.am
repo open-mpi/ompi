@@ -1,4 +1,3 @@
-# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University.
 #                         All rights reserved.
@@ -17,33 +16,18 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = liblfc.la
+SUBDIRS = \
+        allocator \
+	mpool \
 
 # Source code files
 
-headers = \
-        ompi_circular_buffer_fifo.h \
-        ompi_fifo.h \
-        ompi_free_list.h \
-        ompi_hash_table.h \
-        ompi_list.h \
-        ompi_object.h \
-        ompi_rb_tree.h \
-        ompi_value_array.h
-
-liblfc_la_SOURCES = \
-	$(headers) \
-        ompi_free_list.c \
-        ompi_hash_table.c \
-        ompi_list.c \
-        ompi_object.c \
-        ompi_rb_tree.c \
-        ompi_value_array.c
+headers = mca.h
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/class
+ompidir = $(includedir)/openmpi/opal/mca
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

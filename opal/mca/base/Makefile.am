@@ -35,7 +35,6 @@ pkgdata_DATA = help-mca-base.txt
 
 headers = \
         base.h \
-        mca_base_module_exchange.h \
         mca_base_msgbuf.h \
         mca_base_msgbuf_internal.h \
         mca_base_param.h \
@@ -54,18 +53,16 @@ libmca_base_la_SOURCES = \
         mca_base_components_open.c \
         mca_base_components_close.c \
         mca_base_list.c \
-        mca_base_module_exchange.c \
         mca_base_msgbuf.c \
         mca_base_open.c \
         mca_base_param.c \
         mca_base_parse_paramfile.c \
         mca_base_parse_paramfile_lex.l
 
-
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/base
+ompidir = $(includedir)/openmpi/opal/mca/base
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
