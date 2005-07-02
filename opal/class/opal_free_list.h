@@ -22,16 +22,14 @@
 #include "threads/thread.h"
 #include "threads/condition.h"
 #include "include/constants.h"
-#include "mca/mpool/mpool.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC extern ompi_class_t ompi_free_list_t_class;
-struct mca_mem_pool_t;
+OMPI_DECLSPEC extern ompi_class_t opal_free_list_t_class;
 
 
-struct ompi_free_list_t
+struct opal_free_list_t
 {
     ompi_list_t super;
     size_t fl_max_to_alloc;
@@ -40,19 +38,17 @@ struct ompi_free_list_t
     size_t fl_num_waiting;
     size_t fl_elem_size;
     ompi_class_t* fl_elem_class;
-    mca_mpool_base_module_t* fl_mpool;
     ompi_mutex_t fl_lock;
     ompi_condition_t fl_condition; 
-    
 };
-typedef struct ompi_free_list_t ompi_free_list_t;
+typedef struct opal_free_list_t opal_free_list_t;
 
-struct ompi_free_list_item_t
+struct opal_free_list_item_t
 { 
     ompi_list_item_t super; 
     void* user_data; 
 }; 
-typedef struct ompi_free_list_item_t ompi_free_list_item_t; 
+typedef struct opal_free_list_item_t opal_free_list_item_t; 
 
 /**
  * Initialize a free list.
@@ -63,19 +59,17 @@ typedef struct ompi_free_list_item_t ompi_free_list_item_t;
  * @param num_elements_to_alloc    Initial number of elements to allocate.
  * @param max_elements_to_alloc    Maximum number of elements to allocate.
  * @param num_elements_per_alloc   Number of elements to grow by per allocation.
- * @param mpool                    Optional memory pool for allocation.s
  */
  
-OMPI_DECLSPEC int ompi_free_list_init(
+OMPI_DECLSPEC int opal_free_list_init(
     ompi_free_list_t *free_list, 
     size_t element_size,
     ompi_class_t* element_class,
     int num_elements_to_alloc,
     int max_elements_to_alloc,
-    int num_elements_per_alloc,
-    mca_mpool_base_module_t*);
+    int num_elements_per_alloc);
 
-OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements);
+OMPI_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements);
     
 /**
  * Attemp to obtain an item from a free list. 
@@ -90,20 +84,20 @@ OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elemen
  * returned to the caller.
  */
  
-#define OMPI_FREE_LIST_GET(fl, item, rc) \
+#define OPAL_FREE_LIST_GET(fl, item, rc) \
 { \
     if(ompi_using_threads()) { \
         ompi_mutex_lock(&((fl)->fl_lock)); \
         item = ompi_list_remove_first(&((fl)->super)); \
         if(NULL == item) { \
-            ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
+            opal_free_list_grow((fl), (fl)->fl_num_per_alloc); \
             item = ompi_list_remove_first(&((fl)->super)); \
         } \
         ompi_mutex_unlock(&((fl)->fl_lock)); \
     } else { \
         item = ompi_list_remove_first(&((fl)->super)); \
         if(NULL == item) { \
-            ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
+            opal_free_list_grow((fl), (fl)->fl_num_per_alloc); \
             item = ompi_list_remove_first(&((fl)->super)); \
         } \
     }  \
@@ -124,7 +118,7 @@ OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elemen
  */
  
 
-#define OMPI_FREE_LIST_WAIT(fl, item, rc)                                  \
+#define OPAL_FREE_LIST_WAIT(fl, item, rc)                                  \
 {                                                                          \
     OMPI_THREAD_LOCK(&((fl)->fl_lock));                                    \
     item = ompi_list_remove_first(&((fl)->super));                         \
@@ -134,7 +128,7 @@ OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elemen
             ompi_condition_wait(&((fl)->fl_condition), &((fl)->fl_lock));  \
             (fl)->fl_num_waiting--;                                        \
         } else {                                                           \
-            ompi_free_list_grow((fl), (fl)->fl_num_per_alloc);             \
+            opal_free_list_grow((fl), (fl)->fl_num_per_alloc);             \
         }                                                                  \
         item = ompi_list_remove_first(&((fl)->super));                     \
     }                                                                      \
@@ -151,7 +145,7 @@ OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elemen
  *
  */
  
-#define OMPI_FREE_LIST_RETURN(fl, item)                                    \
+#define OPAL_FREE_LIST_RETURN(fl, item)                                    \
 {                                                                          \
     OMPI_THREAD_LOCK(&(fl)->fl_lock);                                      \
     ompi_list_prepend(&((fl)->super), (item));                            \
