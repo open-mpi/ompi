@@ -41,8 +41,8 @@ libmca_rds_base_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/rds/base
-ompi_HEADERS = $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/rds/base
+orte_HEADERS = $(headers)
 else
-ompidir = $(includedir)
+ortedir = $(includedir)
 endif

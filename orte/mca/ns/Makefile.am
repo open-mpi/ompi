@@ -28,8 +28,8 @@ headers = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/ns
-ompi_HEADERS = $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/ns
+orte_HEADERS = $(headers)
 else
-ompidir = $(includedir)
+ortedir = $(includedir)
 endif

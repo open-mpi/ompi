@@ -27,8 +27,8 @@ headers = gpr.h \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/gpr
-ompi_HEADERS = $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/gpr
+orte_HEADERS = $(headers)
 else
-ompidir = $(includedir)
+ortedir = $(includedir)
 endif

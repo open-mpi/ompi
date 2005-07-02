@@ -27,8 +27,8 @@ headers = schema.h \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/schema
-ompi_HEADERS = $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/schema
+orte_HEADERS = $(headers)
 else
-ompidir = $(includedir)
+ortedir = $(includedir)
 endif
