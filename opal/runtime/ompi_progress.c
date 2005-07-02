@@ -20,10 +20,10 @@
 #include <sched.h>
 #endif
 
-#include "event/event.h"
-#include "mca/pml/pml.h"
 #include "runtime/ompi_progress.h"
+#include "event/event.h"
 #include "include/constants.h"
+#include "mca/base/mca_base_param.h"
 
 /* 
  * default parameters 
