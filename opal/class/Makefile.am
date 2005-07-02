@@ -22,8 +22,6 @@ noinst_LTLIBRARIES = libclass.la
 # Source code files
 
 headers = \
-        ompi_circular_buffer_fifo.h \
-        ompi_fifo.h \
         ompi_free_list.h \
         ompi_hash_table.h \
         ompi_list.h \
