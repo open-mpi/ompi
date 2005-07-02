@@ -18,9 +18,10 @@
 #define OMPI_FREE_LIST_H
 
 #include "ompi_config.h"
-#include "class/ompi_list.h"
-#include "threads/thread.h"
-#include "threads/condition.h"
+
+#include "opal/class/ompi_list.h"
+#include "opal/threads/thread.h"
+#include "opal/threads/condition.h"
 #include "include/constants.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

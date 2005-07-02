@@ -77,7 +77,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
 #define MCA_OOB_TCP_MSG_ALLOC(msg, rc) \
     { \
     ompi_list_item_t* item; \
-    OMPI_FREE_LIST_GET(&mca_oob_tcp_component.tcp_msgs, item, rc); \
+    OPAL_FREE_LIST_GET(&mca_oob_tcp_component.tcp_msgs, item, rc); \
     msg = (mca_oob_tcp_msg_t*)item; \
     }
 
@@ -91,7 +91,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
         mca_oob_tcp_msg_iov_return(msg,msg->msg_rwiov); \
     if(NULL != msg->msg_rwbuf) \
         free(msg->msg_rwbuf); \
-    OMPI_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_msgs, (ompi_list_item_t*)msg); \
+    OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_msgs, (ompi_list_item_t*)msg); \
     }
 
 /**

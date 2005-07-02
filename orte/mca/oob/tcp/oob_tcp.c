@@ -179,8 +179,8 @@ int mca_oob_tcp_component_open(void)
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     ompi_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,     ompi_hash_table_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_names,    ompi_hash_table_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,     ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msgs,          ompi_free_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,     opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msgs,          opal_free_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_lock,          ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_events,        ompi_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_post,      ompi_list_t);
@@ -499,21 +499,19 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
     ompi_hash_table_init(&mca_oob_tcp_component.tcp_peers, 128);
     ompi_hash_table_init(&mca_oob_tcp_component.tcp_peer_names, 128);
 
-    ompi_free_list_init(&mca_oob_tcp_component.tcp_peer_free,
+    opal_free_list_init(&mca_oob_tcp_component.tcp_peer_free,
         sizeof(mca_oob_tcp_peer_t),
         OBJ_CLASS(mca_oob_tcp_peer_t),
         8,  /* initial number */
         mca_oob_tcp_component.tcp_peer_limit, /* maximum number */
-        8,  /* increment to grow by */
-        NULL); /* use default allocator */
+        8);  /* increment to grow by */
 
-    ompi_free_list_init(&mca_oob_tcp_component.tcp_msgs,
+    opal_free_list_init(&mca_oob_tcp_component.tcp_msgs,
         sizeof(mca_oob_tcp_msg_t),
         OBJ_CLASS(mca_oob_tcp_msg_t),
         8,  /* initial number */
        -1,  /* maximum number */
-        8,  /* increment to grow by */
-        NULL); /* use default allocator */
+        8);  /* increment to grow by */
 
     /* intialize event library */
     memset(&mca_oob_tcp_component.tcp_recv_event, 0, sizeof(ompi_event_t));

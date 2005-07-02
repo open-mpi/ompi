@@ -81,7 +81,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
 #define MCA_OOB_TCP_PEER_ALLOC(peer, rc) \
     { \
     ompi_list_item_t* item; \
-    OMPI_FREE_LIST_GET(&mca_oob_tcp_component.tcp_peer_free, item, rc); \
+    OPAL_FREE_LIST_GET(&mca_oob_tcp_component.tcp_peer_free, item, rc); \
     peer = (mca_oob_tcp_peer_t*)item; \
     }
 
@@ -92,7 +92,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
     { \
     mca_oob_tcp_peer_shutdown(peer); \
     ompi_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name); \
-    OMPI_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_peer_free, (ompi_list_item_t*)peer); \
+    OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_peer_free, (ompi_list_item_t*)peer); \
     }
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -33,7 +33,7 @@
 #include <unistd.h>
 #endif
 
-#include "class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "threads/condition.h"
 #include "mca/mca.h"
 #include "mca/iof/iof.h"
@@ -51,7 +51,7 @@ struct orte_iof_base_t {
    ompi_mutex_t         iof_lock;
    ompi_condition_t     iof_condition;
    size_t               iof_waiting;
-   ompi_free_list_t     iof_fragments;
+   opal_free_list_t     iof_fragments;
    size_t               iof_window_size;
    orte_process_name_t* iof_service;
 };
