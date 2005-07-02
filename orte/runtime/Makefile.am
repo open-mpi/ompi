@@ -17,42 +17,37 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-AM_CPPFLAGS = -I$(top_builddir)/src/event
+AM_CPPFLAGS = -I$(top_builddir)/src/opal/event
 
 noinst_LTLIBRARIES = libruntime.la
 
 # Source code files
 
 headers = \
-    runtime.h \
-    runtime_types.h \
-    runtime_internal.h \
-    ompi_progress.h \
-    orte_wait.h \
-    opal.h
+        orte_wait.h \
+        runtime.h \
+        runtime_internal.h \
+        runtime_types.h
 
 libruntime_la_SOURCES = \
 	$(headers) \
-    orte_abort.c \
-    ompi_progress.c \
-    orte_finalize.c \
-    orte_system_init.c \
-    orte_system_finalize.c \
-    orte_init.c \
-    orte_init_stage1.c \
-    orte_init_stage2.c \
-    orte_monitor.c \
-    orte_setup_hnp.c \
-    orte_universe_exists.c \
-    orte_restart.c \
-    orte_wait.c \
-    opal_init.c \
-    opal_finalize.c
+        orte_abort.c \
+        orte_finalize.c \
+        orte_init.c \
+        orte_init_stage1.c \
+        orte_init_stage2.c \
+        orte_monitor.c \
+        orte_restart.c \
+        orte_setup_hnp.c \
+        orte_system_finalize.c \
+        orte_system_init.c \
+        orte_universe_exists.c \
+        orte_wait.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/runtime
+ompidir = $(includedir)/openmpi/orte/runtime
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
