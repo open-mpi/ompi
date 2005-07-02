@@ -43,7 +43,7 @@ libopal_la_LIBADD = \
         mca/mpool/base/libmca_mpool_base.la $(MCA_mpool_STATIC_LTLIBS) \
         runtime/libruntime.la \
         threads/libthreads.la \
-        util/libompiutil.la
+        util/libopalutil.la
 libopal_la_DEPENDENCIES = $(libopal_la_LIBADD)
 
 # Conditionally install the header files
