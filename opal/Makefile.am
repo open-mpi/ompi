@@ -25,9 +25,7 @@ SUBDIRS = \
         mca \
         runtime \
         threads \
-        util \
-        . \
-        dynamic-mca
+        util
 
 # Build the main OPAL library
 
