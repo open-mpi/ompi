@@ -1328,8 +1328,8 @@ ompi_show_subtitle "Wrapper compiler flags"
 # purely aesthetic.
 #
 
-CPPFLAGS='-I$(top_srcdir)/include -I$(top_srcdir)/opal -I$(top_builddir)/opal -I$(top_srcdir)/orte -I$(top_builddir)/orte -I$(top_srcdir)/ompi -I$(top_builddir)/ompi'" $CPPFLAGS"
-CXXCPPFLAGS='-I$(top_srcdir)/include -I$(top_srcdir)/opal -I$(top_builddir)/opal -I$(top_srcdir)/orte -I$(top_builddir)/orte -I$(top_srcdir)/ompi -I$(top_builddir)/ompi'" $CXXCPPFLAGS"
+CPPFLAGS='-I$(top_srcdir)/include -I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal -I$(top_builddir)/opal -I$(top_srcdir)/orte -I$(top_builddir)/orte -I$(top_srcdir)/ompi -I$(top_builddir)/ompi'" $CPPFLAGS"
+CXXCPPFLAGS='-I$(top_srcdir)/include -I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal -I$(top_builddir)/opal -I$(top_srcdir)/orte -I$(top_builddir)/orte -I$(top_srcdir)/ompi -I$(top_builddir)/ompi'" $CXXCPPFLAGS"
 
 #
 # Adding WRAPPER_* flags so that extra flags needed for wrappper compilers

@@ -33,7 +33,7 @@
 #include "include/orte_constants.h"
 
 #include "event/event.h"
-#include "class/ompi_pointer_array.h"
+#include "class/orte_pointer_array.h"
 #include "util/proc_info.h"
 #include "util/argv.h"
 #include "util/ompi_environ.h"
@@ -68,7 +68,7 @@ extern char** environ;
 static struct ompi_event term_handler;
 static struct ompi_event int_handler;
 static orte_jobid_t jobid = ORTE_JOBID_MAX;
-static ompi_pointer_array_t apps_pa;
+static orte_pointer_array_t apps_pa;
 static bool wait_for_job_completion = true;
 static char *abort_msg = NULL;
 static size_t abort_msg_len = -1;
@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
     /* Convert the list of apps to an array of orte_app_context_t
        pointers */
 
-    num_apps = ompi_pointer_array_get_size(&apps_pa);
+    num_apps = orte_pointer_array_get_size(&apps_pa);
     if (0 == num_apps) {
         /* This should never happen -- this case should be caught in
            create_app(), but let's just double check... */
@@ -262,7 +262,7 @@ int main(int argc, char *argv[])
     }
     for (j = i = 0; i < num_apps; ++i) {
         apps[i] = (orte_app_context_t *) 
-            ompi_pointer_array_get_item(&apps_pa, i);
+            orte_pointer_array_get_item(&apps_pa, i);
         j += apps[i]->num_procs;
     }
     proc_infos = malloc(sizeof(struct proc_info_t) * j);
@@ -691,7 +691,7 @@ static int parse_locals(int argc, char* argv[])
     temp_argc = 0;
     temp_argv = NULL;
     ompi_argv_append(&temp_argc, &temp_argv, argv[0]);
-    OBJ_CONSTRUCT(&apps_pa, ompi_pointer_array_t);
+    OBJ_CONSTRUCT(&apps_pa, orte_pointer_array_t);
 
     env = NULL;
     for (app_num = 0, i = 1; i < argc; ++i) {
@@ -714,7 +714,8 @@ static int parse_locals(int argc, char* argv[])
                     exit(1);
                 }
                 if (made_app) {
-                    ompi_pointer_array_add(&apps_pa, app);
+                    size_t dummy;
+                    orte_pointer_array_add(&dummy, &apps_pa, app);
                 } else {
                     OBJ_RELEASE(app);
                 }
@@ -739,7 +740,8 @@ static int parse_locals(int argc, char* argv[])
             exit(1);
         }
         if (made_app) {
-            ompi_pointer_array_add(&apps_pa, app);
+            size_t dummy;
+            orte_pointer_array_add(&dummy, &apps_pa, app);
         } else {
             OBJ_RELEASE(app);
         }
@@ -1121,7 +1123,8 @@ static int parse_appfile(char *filename, char ***env)
                 ompi_argv_free(tmp_env);
             }
             if (made_app) {
-                ompi_pointer_array_add(&apps_pa, app);
+                size_t dummy;
+                orte_pointer_array_add(&dummy, &apps_pa, app);
             }
         }
     } while (!feof(fp));

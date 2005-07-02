@@ -25,7 +25,7 @@
 #include "mca/oob/base/base.h"
 #include "mca/base/base.h"
 #include "mca/ns/ns_types.h"
-#include "class/ompi_free_list.h"
+#include "opal/class/opal_free_list.h"
 #include "class/ompi_hash_table.h"
 #include "event/event.h"
 #include "threads/mutex.h"
@@ -251,10 +251,10 @@ struct mca_oob_tcp_component_t {
     ompi_list_t        tcp_peer_list;        /**< list of peers sorted in mru order */
     ompi_hash_table_t  tcp_peers;            /**< peers sorted by name */
     ompi_hash_table_t  tcp_peer_names;       /**< cache of peer contact info sorted by name */
-    ompi_free_list_t   tcp_peer_free;        /**< free list of peers */
+    opal_free_list_t   tcp_peer_free;        /**< free list of peers */
     int                tcp_peer_limit;       /**< max size of tcp peer cache */
     int                tcp_peer_retries;     /**< max number of retries before declaring peer gone */
-    ompi_free_list_t   tcp_msgs;             /**< free list of messages */
+    opal_free_list_t   tcp_msgs;             /**< free list of messages */
     ompi_event_t       tcp_send_event;       /**< event structure for sends */
     ompi_event_t       tcp_recv_event;       /**< event structure for recvs */
     ompi_mutex_t       tcp_lock;             /**< lock for accessing module state */

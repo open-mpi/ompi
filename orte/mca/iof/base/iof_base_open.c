@@ -58,7 +58,7 @@ int orte_iof_base_open(void)
     OBJ_CONSTRUCT(&orte_iof_base.iof_endpoints, ompi_list_t);
     OBJ_CONSTRUCT(&orte_iof_base.iof_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&orte_iof_base.iof_condition, ompi_condition_t);
-    OBJ_CONSTRUCT(&orte_iof_base.iof_fragments, ompi_free_list_t);
+    OBJ_CONSTRUCT(&orte_iof_base.iof_fragments, opal_free_list_t);
     orte_iof_base.iof_waiting = 0;
     orte_iof_base.iof_flush = false;
 
@@ -82,15 +82,13 @@ int orte_iof_base_open(void)
     }
 
     /* initialize free list */
-    ompi_free_list_init(
+    opal_free_list_init(
         &orte_iof_base.iof_fragments,
         sizeof(orte_iof_base_frag_t),
         OBJ_CLASS(orte_iof_base_frag_t),
         0,   /* number to initially allocate */
         -1,  /* maximum elements to allocate */
-        32,  /* number per allocation */
-        NULL); /* optional memory pool */
-
+        32);  /* number per allocation */
 
     /* Open up all available components */
     if (OMPI_SUCCESS != 

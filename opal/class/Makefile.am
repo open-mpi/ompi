@@ -26,7 +26,6 @@ headers = \
         ompi_hash_table.h \
         ompi_list.h \
         ompi_object.h \
-        ompi_rb_tree.h \
         ompi_value_array.h
 
 libclass_la_SOURCES = \
@@ -35,7 +34,6 @@ libclass_la_SOURCES = \
         ompi_hash_table.c \
         ompi_list.c \
         ompi_object.c \
-        ompi_rb_tree.c \
         ompi_value_array.c
 
 # Conditionally install the header files

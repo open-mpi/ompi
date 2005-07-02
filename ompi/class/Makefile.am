@@ -26,13 +26,15 @@ headers = \
         ompi_fifo.h \
         ompi_free_list.h \
         ompi_bitmap.h \
-        ompi_pointer_array.h
+        ompi_pointer_array.h \
+	ompi_rb_tree.h
 
 libclass_la_SOURCES = \
 	$(headers) \
         ompi_bitmap.c \
         ompi_free_list.c \
-        ompi_pointer_array.c
+        ompi_pointer_array.c \
+	ompi_rb_tree.h
 
 # Conditionally install the header files
 

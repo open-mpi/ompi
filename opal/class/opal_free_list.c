@@ -16,8 +16,8 @@
 
 #include "ompi_config.h"
 
-#include "class/opal_free_list.h"
-#include "include/sys/cache.h"
+#include "opal/class/opal_free_list.h"
+#include "opal/include/sys/cache.h"
 
 
 static void opal_free_list_construct(opal_free_list_t* fl);
