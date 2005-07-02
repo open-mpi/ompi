@@ -23,7 +23,6 @@ noinst_LTLIBRARIES = liborteutil.la
 # Source code files
 
 headers = \
-        orte_module_exchange.h \
         proc_info.h \
         session_dir.h \
         universe_setup_file_io.h \
@@ -31,7 +30,6 @@ headers = \
 
 liborteutil_la_SOURCES = \
         $(headers) \
-        orte_module_exchange.c \
         proc_info.c \
         session_dir.c \
         universe_setup_file_io.c \

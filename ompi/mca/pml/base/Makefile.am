@@ -27,6 +27,7 @@ AM_CPPFLAGS = -I$(top_builddir)/src
 headers = \
         base.h \
         pml_base_bsend.h \
+        pml_base_module_exchange.h \
         pml_base_request.h \
         pml_base_recvreq.h \
         pml_base_sendreq.h
@@ -35,10 +36,11 @@ libmca_pml_base_la_SOURCES = \
         $(headers) \
         pml_base_bsend.c \
         pml_base_close.c \
-        pml_base_request.c \
+        pml_base_module_exchange.h \
         pml_base_open.c \
-        pml_base_select.c \
         pml_base_recvreq.c \
+        pml_base_request.c \
+        pml_base_select.c \
         pml_base_sendreq.c
 
 # Conditionally install the header files
