@@ -1534,6 +1534,7 @@ AC_CONFIG_FILES([
     orte/dynamic-mca/soh/Makefile
 
     ompi/Makefile
+    ompi/include/Makefile
     ompi/class/Makefile
 
     ompi/attribute/Makefile

@@ -44,7 +44,7 @@
 #include "mca/mpool/base/base.h"
 #include "mca/mpool/mpool.h"
 #include "mca/pml/pml.h"
-#include "mca/pml/pml.h"
+#include "mca/pml/base/pml_base_module_exchange.h"
 #include "mca/pml/base/base.h"
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
