@@ -1478,12 +1478,21 @@ AC_CONFIG_FILES([
     opal/dynamic-mca/mpool/Makefile
     opal/dynamic-mca/allocator/Makefile
 
-    orte/runtime/Makefile
+    orte/Makefile
+    orte/include/Makefile
+    orte/class/Makefile
     orte/dps/Makefile
+    orte/runtime/Makefile
+    orte/util/Makefile
+
+    orte/tools/Makefile
     orte/tools/console/Makefile
     orte/tools/orted/Makefile
     orte/tools/orteprobe/Makefile
     orte/tools/orterun/Makefile
+
+    orte/mca/Makefile
+    orte/dynamic-mca/Makefile
 
     orte/mca/errmgr/Makefile
     orte/mca/errmgr/base/Makefile
@@ -1532,6 +1541,7 @@ AC_CONFIG_FILES([
     orte/dynamic-mca/schema/Makefile
     orte/dynamic-mca/soh/Makefile
 
+    ompi/class/Makefile
 
     ompi/attribute/Makefile
     ompi/communicator/Makefile
