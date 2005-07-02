@@ -1468,15 +1468,6 @@ AC_CONFIG_FILES([
 
     opal/mca/Makefile
     opal/mca/base/Makefile
-    opal/dynamic-mca/Makefile
-
-    opal/mca/allocator/Makefile
-    opal/mca/allocator/base/Makefile
-    opal/mca/mpool/Makefile
-    opal/mca/mpool/base/Makefile
-
-    opal/dynamic-mca/mpool/Makefile
-    opal/dynamic-mca/allocator/Makefile
 
     orte/Makefile
     orte/include/Makefile
@@ -1490,6 +1481,7 @@ AC_CONFIG_FILES([
     orte/tools/orted/Makefile
     orte/tools/orteprobe/Makefile
     orte/tools/orterun/Makefile
+    orte/tools/openmpi/Makefile
 
     orte/mca/Makefile
     orte/dynamic-mca/Makefile
@@ -1541,6 +1533,7 @@ AC_CONFIG_FILES([
     orte/dynamic-mca/schema/Makefile
     orte/dynamic-mca/soh/Makefile
 
+    ompi/Makefile
     ompi/class/Makefile
 
     ompi/attribute/Makefile
@@ -1569,17 +1562,21 @@ AC_CONFIG_FILES([
 
     ompi/tools/Makefile
     ompi/tools/ompi_info/Makefile
-    ompi/tools/openmpi/Makefile
     ompi/tools/wrappers/Makefile
 
+    ompi/mca/Makefile
     ompi/mca/common/Makefile
 
+    ompi/mca/allocator/Makefile
+    ompi/mca/allocator/base/Makefile
     ompi/mca/btl/Makefile
     ompi/mca/btl/base/Makefile
     ompi/mca/coll/Makefile
     ompi/mca/coll/base/Makefile
     ompi/mca/io/Makefile
     ompi/mca/io/base/Makefile
+    ompi/mca/mpool/Makefile
+    ompi/mca/mpool/base/Makefile
     ompi/mca/pml/Makefile
     ompi/mca/pml/base/Makefile
     ompi/mca/ptl/Makefile
@@ -1587,11 +1584,15 @@ AC_CONFIG_FILES([
     ompi/mca/topo/Makefile
     ompi/mca/topo/base/Makefile
 
+    ompi/dynamic-mca/Makefile
     ompi/dynamic-mca/common/Makefile
 
+
+    ompi/dynamic-mca/allocator/Makefile
     ompi/dynamic-mca/btl/Makefile
     ompi/dynamic-mca/coll/Makefile
     ompi/dynamic-mca/io/Makefile
+    ompi/dynamic-mca/mpool/Makefile
     ompi/dynamic-mca/pml/Makefile
     ompi/dynamic-mca/ptl/Makefile
     ompi/dynamic-mca/topo/Makefile
