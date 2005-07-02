@@ -22,6 +22,7 @@
 #include "mpi.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
+#include "proc/proc.h"
 
 /*
  * ******************************************************************
