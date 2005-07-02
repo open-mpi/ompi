@@ -19,7 +19,7 @@
 include $(top_ompi_srcdir)/config/Makefile.options
 
 sources =
-include src/Makefile.am
+include src/Makefile.extra
 
 EXTRA_DIST = VERSION
 
