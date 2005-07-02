@@ -54,5 +54,5 @@ liborte_la_LIBADD = \
         mca/soh/base/libmca_soh_base.la $(MCA_soh_STATIC_LTLIBS) \
         mca/soh/base/data_type_support/libmca_soh_base_data_type.la \
         runtime/libruntime.la \
-        util/libompiutil.la
+        util/liborteutil.la
 liborte_la_DEPENDENCIES = $(liborte_la_LIBADD)
