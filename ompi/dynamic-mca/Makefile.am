@@ -17,10 +17,12 @@
 include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = \
+        allocator \
         common \
         btl \
         coll \
         io \
+        mpool \
         pml \
         ptl \
         topo
