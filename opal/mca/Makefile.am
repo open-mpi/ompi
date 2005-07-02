@@ -16,6 +16,8 @@
 
 include $(top_srcdir)/config/Makefile.options
 
+SUBDIRS = base
+
 # Source code files
 
 headers = mca.h
