@@ -22,6 +22,21 @@
 #include "include/constants.h"
 #include "util/convert.h"
 
+#if SIZEOF_SIZE_T <= SIZEOF_INT
+/*
+ * This is the [short] case where we can just cast and we're all good
+ */
+int ompi_sizet2int(size_t in, int *out, bool want_check)
+{
+    *out = in;
+    return OMPI_SUCCESS;
+}
+
+#else
+/*
+ * The rest of the file handles the case where
+ * sizeof(size_t)>sizeof(int).
+ */
 
 static bool init_done = false;
 static unsigned int int_pos = -1;
@@ -33,10 +48,6 @@ static void warn(void);
 
 int ompi_sizet2int(size_t in, int *out, bool want_check)
 {
-#if SIZEOF_SIZE_T <= SIZEOF_INT
-    *out = in;
-    return OMPI_SUCCESS;
-#else
     int *pos = (int *) &in;
     unsigned int i;
 
@@ -60,7 +71,6 @@ int ompi_sizet2int(size_t in, int *out, bool want_check)
     }
 
     return OMPI_SUCCESS;
-#endif
 }
 
 
@@ -83,7 +93,7 @@ static void warn(void)
 {
 #if OMPI_ENABLE_DEBUG
     /* Developer builds */
-    fprintf(stderr, "WARNING: A size_t value was attempted to be cast to an int (sizeof(size_t) == %ld, sizeof(int) == %ld), but data was lost in the conversion.  This should never happen (i.e., we should never try to convert a value that will be 'too big').  Since this is a developer build, I'm going to abort, and you can check the corefile.  Enjoy.\n", sizeof(size_t), sizeof(int));
+    fprintf(stderr, "WARNING: A size_t value was attempted to be cast to an int (sizeof(size_t) == %ld, sizeof(int) == %ld), but data was lost in the conversion.  This should never happen (i.e., we should never try to convert a value that will be 'too big').  Since this is a developer build, I'm going to abort, and you can check the corefile.  Enjoy.\n", (long) sizeof(size_t), (long) sizeof(int));
     abort();
 #else
     static bool warned = false;
@@ -96,3 +106,5 @@ static void warn(void)
     }
 #endif
 }
+
+#endif
