@@ -17,33 +17,26 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = liblfc.la
+AM_CPPFLAGS = -I$(top_builddir)/src/event
+
+noinst_LTLIBRARIES = libruntime.la
 
 # Source code files
 
 headers = \
-        ompi_circular_buffer_fifo.h \
-        ompi_fifo.h \
-        ompi_free_list.h \
-        ompi_hash_table.h \
-        ompi_list.h \
-        ompi_object.h \
-        ompi_rb_tree.h \
-        ompi_value_array.h
+        ompi_progress.h \
+        opal.h
 
-liblfc_la_SOURCES = \
-	$(headers) \
-        ompi_free_list.c \
-        ompi_hash_table.c \
-        ompi_list.c \
-        ompi_object.c \
-        ompi_rb_tree.c \
-        ompi_value_array.c
+libruntime_la_SOURCES = \
+        $(headers) \
+        ompi_progress.c \
+        orte_finalize.c \
+        orte_init.c \
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/opal/class
+ompidir = $(includedir)/openmpi/opal/runtime
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

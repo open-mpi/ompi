@@ -26,7 +26,7 @@ headers = allocator.h
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/allocator
+ompidir = $(includedir)/openmpi/opal/mca/allocator
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
