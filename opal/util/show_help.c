@@ -24,15 +24,15 @@
 #include "util/show_help.h"
 #include "util/show_help_lex.h"
 #include "util/printf.h"
-#include "class/ompi_pointer_array.h"
+#include "util/argv.h"
 
 static int open_file(const char *base, const char *topic);
 static int find_topic(const char *base, const char *topic);
-static int read_message(ompi_pointer_array_t *lines);
-static int output(bool want_error_header, ompi_pointer_array_t *lines,
+static int read_message(char ***lines);
+static int output(bool want_error_header, char **lines,
                   const char *base, const char *topic,
                   va_list arglist);
-static int destroy_message(ompi_pointer_array_t *lines);
+static int destroy_message(char **lines);
 
 
 /*
@@ -51,7 +51,7 @@ int ompi_show_help(const char *filename, const char *topic,
 {
     int ret;
     va_list arglist;
-    ompi_pointer_array_t array;
+    char **array;
 
     if (OMPI_SUCCESS != (ret = open_file(filename, topic))) {
         return ret;
@@ -61,7 +61,6 @@ int ompi_show_help(const char *filename, const char *topic,
         return ret;
     }
 
-    OBJ_CONSTRUCT(&array, ompi_pointer_array_t);
     ret = read_message(&array);
     ompi_show_help_finish_parsing();
     fclose(ompi_show_help_yyin);
@@ -210,7 +209,7 @@ static int find_topic(const char *base, const char *topic)
  * We have an open file, and we're pointed at the right topic.  So
  * read in all the lines in the topic and make a list of them.
  */
-static int read_message(ompi_pointer_array_t *array)
+static int read_message(char ***array)
 {
     char *tmp;
     int token;
@@ -223,7 +222,7 @@ static int read_message(ompi_pointer_array_t *array)
             if (NULL == tmp) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
-            ompi_pointer_array_add(array, tmp);
+            ompi_argv_append_nosize(array, tmp);
             break;
 
         default:
@@ -241,23 +240,23 @@ static int read_message(ompi_pointer_array_t *array)
  * efficient method in the world, but we're going for clarity here --
  * not optimization.  :-)
  */
-static int output(bool want_error_header, ompi_pointer_array_t *lines,
+static int output(bool want_error_header, char **lines,
                   const char *base, const char *topic,
                   va_list arglist)
 {
-    int i;
+    int i, count;
     size_t len;
-    char *tmp, *concat, *formatted;
+    char *concat, *formatted;
 
     /* See how much space we need */
 
     len = want_error_header ? 2 * strlen(dash_line) : 0;
-    for (i = 0; i < ompi_pointer_array_get_size(lines); ++i) {
-        tmp = (char*) ompi_pointer_array_get_item(lines, i);
-        if (NULL == tmp) {
+    count = ompi_argv_count(lines);
+    for (i = 0; i < count; ++i) {
+        if (NULL == lines[i]) {
             break;
         }
-        len += strlen(tmp) + 1;
+        len += strlen(lines[i]) + 1;
     }
 
     /* Malloc it out */
@@ -277,12 +276,11 @@ static int output(bool want_error_header, ompi_pointer_array_t *lines,
     if (want_error_header) {
         strcat(concat, dash_line);
     }
-    for (i = 0; i < ompi_pointer_array_get_size(lines); ++i) {
-        tmp = (char*) ompi_pointer_array_get_item(lines, i);
-        if (NULL == tmp) {
+    for (i = 0; i < count; ++i) {
+        if (NULL == lines[i]) {
             break;
         }
-        strcat(concat, tmp);
+        strcat(concat, lines[i]);
         strcat(concat, "\n");
     }
     if (want_error_header) {
@@ -308,19 +306,17 @@ static int output(bool want_error_header, ompi_pointer_array_t *lines,
 /*
  * Free all the strings in the array and destruct the array 
  */
-static int destroy_message(ompi_pointer_array_t *lines)
+static int destroy_message(char **lines)
 {
-    int i;
-    char *tmp;
+    int i, count;
 
-    for (i = 0; i < ompi_pointer_array_get_size(lines); ++i) {
-        tmp = (char*) ompi_pointer_array_get_item(lines, i);
-        if (NULL == tmp) {
+    count = ompi_argv_count(lines);
+    for (i = 0; i < count; ++i) {
+        if (NULL == lines[i]) {
             break;
         }
-        free(tmp);
+        free(lines[i]);
     }
-    OBJ_DESTRUCT(lines);
 
     return OMPI_SUCCESS;
 }
