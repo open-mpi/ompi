@@ -18,7 +18,7 @@ include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = \
         allocator \
-	mpool \
+	mpool
 
 # Source code files
 
