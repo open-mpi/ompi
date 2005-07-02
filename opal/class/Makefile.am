@@ -22,7 +22,7 @@ noinst_LTLIBRARIES = libclass.la
 # Source code files
 
 headers = \
-        ompi_free_list.h \
+        opal_free_list.h \
         ompi_hash_table.h \
         ompi_list.h \
         ompi_object.h \
@@ -31,7 +31,7 @@ headers = \
 
 libclass_la_SOURCES = \
 	$(headers) \
-        ompi_free_list.c \
+        opal_free_list.c \
         ompi_hash_table.c \
         ompi_list.c \
         ompi_object.c \

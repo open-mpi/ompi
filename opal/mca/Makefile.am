@@ -16,10 +16,6 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = \
-        allocator \
-	mpool
-
 # Source code files
 
 headers = mca.h

@@ -19,10 +19,12 @@ include $(top_srcdir)/config/Makefile.options
 EXTRA_DIST = win_makefile
 
 SUBDIRS = \
+        allocator \
         btl \
         coll \
         common \
         io \
+        mpool \
         pml \
         ptl \
         topo
