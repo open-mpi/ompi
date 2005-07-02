@@ -65,15 +65,15 @@ int ompi_show_help(const char *filename, const char *topic,
     ompi_show_help_finish_parsing();
     fclose(ompi_show_help_yyin);
     if (OMPI_SUCCESS != ret) {
-        destroy_message(&array);
+        destroy_message(array);
         return ret;
     }
 
     va_start(arglist, want_error_header);
-    output(want_error_header, &array, filename, topic, arglist);
+    output(want_error_header, array, filename, topic, arglist);
     va_end(arglist);
 
-    destroy_message(&array);
+    destroy_message(array);
     return ret;
 }
 
