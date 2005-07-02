@@ -16,20 +16,16 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = sys
-
 noinst_HEADERS = \
         constants.h \
-        orte_constants.h \
-        orte_types.h \
+        ompi_socket_errno.h \
         totalview.h \
-        types.h \
-        ompi_socket_errno.h
+        types.h
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/include
+ompidir = $(includedir)/openmpi/ompi/include
 ompi_HEADERS = $(noinst_HEADERS)
 else
 ompidir = $(includedir)

@@ -17,4 +17,4 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-SUBDIRS = console orted orteprobe orterun
+SUBDIRS = console openmpi orted orteprobe orterun

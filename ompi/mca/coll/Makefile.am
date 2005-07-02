@@ -26,7 +26,7 @@ headers = coll.h
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/coll
+ompidir = $(includedir)/openmpi/ompi/mca/coll
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

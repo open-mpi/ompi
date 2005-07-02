@@ -26,7 +26,7 @@ headers = ptl.h
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/ptl
+ompidir = $(includedir)/openmpi/ompi/mca/ptl
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

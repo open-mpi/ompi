@@ -26,12 +26,12 @@ headers = \
 
 libwin_la_SOURCES = \
         $(headers) \
-	win.c
+        win.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/win
+ompidir = $(includedir)/openmpi/ompi/win
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

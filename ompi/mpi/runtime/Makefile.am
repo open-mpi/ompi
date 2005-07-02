@@ -27,20 +27,20 @@ pkgdata_DATA = help-mpi-runtime.txt
 # Source code files
 
 headers = \
-	mpiruntime.h \
+        mpiruntime.h \
         params.h
 
 libmpiruntime_la_SOURCES = \
-	$(headers) \
-	ompi_mpi_abort.c \
-    ompi_mpi_init.c \
-    ompi_mpi_finalize.c \
-    ompi_mpi_params.c
+        $(headers) \
+        ompi_mpi_abort.c \
+        ompi_mpi_init.c \
+        ompi_mpi_finalize.c \
+        ompi_mpi_params.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mpi/runtime
+ompidir = $(includedir)/openmpi/ompi/mpi/runtime
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

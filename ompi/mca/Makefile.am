@@ -19,39 +19,10 @@ include $(top_srcdir)/config/Makefile.options
 EXTRA_DIST = win_makefile
 
 SUBDIRS = \
-        allocator \
-	base \
-	coll \
-	common \
-	errmgr \
-	io \
-	iof \
-	gpr \
-	mpool \
-	ns \
-	btl \
-	oob \
-	pls \
-	pml \
-	ptl \
-	rml \
-	ras \
-	rds \
-	rmaps \
-	rmgr \
-	schema \
-	soh \
-	topo
-
-# Source code files
-
-headers = mca.h
-
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca
-ompi_HEADERS = $(headers)
-else
-ompidir = $(includedir)
-endif
+        btl \
+        coll \
+        common \
+        io \
+        pml \
+        ptl \
+        topo

@@ -215,7 +215,7 @@ ompi_wrap_build_xppflags(const ompi_sv_t & env_list,
     }
 
 #if OMPI_WANT_CXX_BINDINGS
-    xppflags.push_back("-I" + incdir + "/openmpi");
+    xppflags.push_back("-I" + incdir + "/openmpi/ompi");
 #endif
 
 #if defined(WIN32) && WIN32

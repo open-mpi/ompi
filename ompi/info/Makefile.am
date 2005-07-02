@@ -31,7 +31,7 @@ libinfo_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/info
+ompidir = $(includedir)/openmpi/ompi/info
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

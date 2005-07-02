@@ -27,7 +27,7 @@ nodist_headers = pml_direct_call.h
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/pml
+ompidir = $(includedir)/openmpi/ompi/mca/pml
 dist_ompi_HEADERS = $(headers)
 nodist_ompi_HEADERS = $(nodist_headers)
 else

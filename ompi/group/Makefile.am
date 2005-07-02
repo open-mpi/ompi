@@ -25,15 +25,15 @@ headers = \
         group.h
 
 libgroup_la_SOURCES = \
-	$(headers) \
-	group.c    \
-        mpi_group_init.c \
-        mpi_set_group_rank.c
+        $(headers) \
+        group.c \
+        group_init.c \
+        group_rank.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/group
+ompidir = $(includedir)/openmpi/ompi/group
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
