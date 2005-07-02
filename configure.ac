@@ -22,7 +22,7 @@
 
 # Init autoconf
 
-AC_INIT(./src/mpi/c/init.c)
+AC_INIT(./ompi/mpi/c/init.c)
 AC_PREREQ(2.58)
 AC_CONFIG_AUX_DIR(./config)
 
@@ -1180,7 +1180,7 @@ AM_PROG_LEX
 
 if test -z "$LEX" -o -n "`echo $LEX | grep missing`" -o \
     "`basename $LEX`" != "flex"; then
-    if test ! -f "$srcdir/src/util/show_help_lex.c"; then
+    if test ! -f "$srcdir/ompi/util/show_help_lex.c"; then
         AC_MSG_WARN([*** Could not find GNU Flex on your system.])
         AC_MSG_WARN([*** GNU Flex required for developer builds of Open MPI.])
         AC_MSG_WARN([*** Other versions of Lex are not supported.])
@@ -1249,7 +1249,7 @@ ompi_show_subtitle "Libtool configuration"
 # 1.5) because it has support for a lot more things than older
 # versions of libtool (which are generally installed by default).
 
-AC_LIBLTDL_CONVENIENCE(src/libltdl)
+AC_LIBLTDL_CONVENIENCE(opal/libltdl)
 AC_SUBST(LTDLINCL)
 AC_SUBST(LIBLTDL)
 AC_LIBTOOL_DLOPEN
@@ -1288,7 +1288,7 @@ fi
 
 CFLAGS_save="$CFLAGS"
 CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY"
-OMPI_CONFIG_SUBDIR(src/libltdl, [$ompi_subdir_args], [HAPPY=1], [HAPPY=0])
+OMPI_CONFIG_SUBDIR(opal/libltdl, [$ompi_subdir_args], [HAPPY=1], [HAPPY=0])
 if test "$HAPPY" = "1"; then
     LIBLTDL_SUBDIR=libltdl
     LIBLTDL_LTLIB=libltdl/libltdlc.la
@@ -1297,8 +1297,8 @@ if test "$HAPPY" = "1"; then
     # Arrgh.  This is gross.  But I can't think of any other way to do
     # it.  :-(
 
-    flags="`egrep ^LIBADD_DL src/libltdl/Makefile | cut -d= -f2-`"
-    OMPI_CHECK_LINKER_FLAGS([src/libltdl/libtool], [-export-dynamic $flags])
+    flags="`egrep ^LIBADD_DL opal/libltdl/Makefile | cut -d= -f2-`"
+    OMPI_CHECK_LINKER_FLAGS([opal/libltdl/libtool], [-export-dynamic $flags])
     WRAPPER_EXTRA_LIBS="$WRAPPER_EXTRA_LIBS $extra_ldflags"
     LDFLAGS="-export-dynamic $LDFLAGS"
 else
@@ -1328,8 +1328,8 @@ ompi_show_subtitle "Wrapper compiler flags"
 # purely aesthetic.
 #
 
-CPPFLAGS='-I$(top_srcdir)/src -I$(top_srcdir)/include -I$(top_builddir)/src'" $CPPFLAGS"
-CXXCPPFLAGS='-I$(top_srcdir)/src  -I$(top_srcdir)/include -I$(top_builddir)/src'" $CXXCPPFLAGS"
+CPPFLAGS='-I$(top_srcdir)/include -I$(top_srcdir)/opal -I$(top_builddir)/opal -I$(top_srcdir)/orte -I$(top_builddir)/orte -I$(top_srcdir)/ompi -I$(top_builddir)/ompi'" $CPPFLAGS"
+CXXCPPFLAGS='-I$(top_srcdir)/include -I$(top_srcdir)/opal -I$(top_builddir)/opal -I$(top_srcdir)/orte -I$(top_builddir)/orte -I$(top_srcdir)/ompi -I$(top_builddir)/ompi'" $CXXCPPFLAGS"
 
 #
 # Adding WRAPPER_* flags so that extra flags needed for wrappper compilers
@@ -1444,142 +1444,147 @@ AC_CONFIG_FILES([
 
     etc/Makefile
 
-    src/Makefile
-    src/include/Makefile
-    src/include/sys/Makefile
-    src/include/sys/alpha/Makefile
-    src/include/sys/amd64/Makefile
-    src/include/sys/ia32/Makefile
-    src/include/sys/ia64/Makefile
-    src/include/sys/mips/Makefile
-    src/include/sys/powerpc/Makefile
-    src/include/sys/sparc/Makefile
-    src/include/sys/sparcv9/Makefile
-    src/include/sys/win32/Makefile
+    opal/Makefile
+    opal/include/Makefile
+    opal/include/sys/Makefile
+    opal/include/sys/alpha/Makefile
+    opal/include/sys/amd64/Makefile
+    opal/include/sys/ia32/Makefile
+    opal/include/sys/ia64/Makefile
+    opal/include/sys/mips/Makefile
+    opal/include/sys/powerpc/Makefile
+    opal/include/sys/sparc/Makefile
+    opal/include/sys/sparcv9/Makefile
+    opal/include/sys/win32/Makefile
 
-    src/class/Makefile
-    src/runtime/Makefile
-    src/threads/Makefile
-    src/util/Makefile
+    opal/asm/Makefile
+    opal/class/Makefile
+    opal/event/Makefile
+    opal/event/compat/Makefile
+    opal/event/compat/sys/Makefile
+    opal/runtime/Makefile
+    opal/threads/Makefile
+    opal/util/Makefile
 
-    src/event/Makefile
-    src/event/compat/Makefile
-    src/event/compat/sys/Makefile
+    opal/mca/Makefile
+    opal/mca/base/Makefile
+    opal/dynamic-mca/Makefile
 
-    src/attribute/Makefile
-    src/asm/Makefile
-    src/communicator/Makefile
-    src/datatype/Makefile
-    src/dps/Makefile
-    src/errhandler/Makefile
-    src/file/Makefile
-    src/group/Makefile
-    src/info/Makefile
-    src/op/Makefile
-    src/proc/Makefile
-    src/request/Makefile
-    src/win/Makefile
+    opal/mca/allocator/Makefile
+    opal/mca/allocator/base/Makefile
+    opal/mca/mpool/Makefile
+    opal/mca/mpool/base/Makefile
 
-    src/mca/Makefile
-    src/mca/base/Makefile
-    src/mca/common/Makefile
+    opal/dynamic-mca/mpool/Makefile
+    opal/dynamic-mca/allocator/Makefile
 
-    src/mca/errmgr/Makefile
-    src/mca/errmgr/base/Makefile
-    src/mca/iof/Makefile
-    src/mca/iof/base/Makefile
-    src/mca/gpr/Makefile
-    src/mca/gpr/base/Makefile
-    src/mca/gpr/base/data_type_support/Makefile
-    src/mca/gpr/base/pack_api_cmd/Makefile
-    src/mca/gpr/base/unpack_api_response/Makefile
-    src/mca/ns/Makefile
-    src/mca/ns/base/Makefile
-    src/mca/ns/base/data_type_support/Makefile
-    src/mca/oob/Makefile
-    src/mca/oob/base/Makefile
-    src/mca/pls/Makefile
-    src/mca/pls/base/Makefile
-    src/mca/ras/Makefile
-    src/mca/ras/base/Makefile
-    src/mca/rds/Makefile
-    src/mca/rds/base/Makefile
-    src/mca/rmaps/Makefile
-    src/mca/rmaps/base/Makefile
-    src/mca/rmgr/Makefile
-    src/mca/rmgr/base/Makefile
-    src/mca/rmgr/base/data_type_support/Makefile
-    src/mca/schema/Makefile
-    src/mca/schema/base/Makefile
-    src/mca/soh/Makefile
-    src/mca/soh/base/Makefile
-    src/mca/soh/base/data_type_support/Makefile
+    orte/runtime/Makefile
+    orte/dps/Makefile
+    orte/tools/console/Makefile
+    orte/tools/orted/Makefile
+    orte/tools/orteprobe/Makefile
+    orte/tools/orterun/Makefile
 
-    src/mca/allocator/Makefile
-    src/mca/allocator/base/Makefile
-    src/mca/btl/Makefile
-    src/mca/btl/base/Makefile
-    src/mca/coll/Makefile
-    src/mca/coll/base/Makefile
-    src/mca/io/Makefile
-    src/mca/io/base/Makefile
-    src/mca/mpool/Makefile
-    src/mca/mpool/base/Makefile
-    src/mca/pml/Makefile
-    src/mca/pml/base/Makefile
-    src/mca/ptl/Makefile
-    src/mca/ptl/base/Makefile
-    src/mca/rml/Makefile
-    src/mca/rml/base/Makefile
-    src/mca/topo/Makefile
-    src/mca/topo/base/Makefile
+    orte/mca/errmgr/Makefile
+    orte/mca/errmgr/base/Makefile
+    orte/mca/iof/Makefile
+    orte/mca/iof/base/Makefile
+    orte/mca/gpr/Makefile
+    orte/mca/gpr/base/Makefile
+    orte/mca/gpr/base/data_type_support/Makefile
+    orte/mca/gpr/base/pack_api_cmd/Makefile
+    orte/mca/gpr/base/unpack_api_response/Makefile
+    orte/mca/ns/Makefile
+    orte/mca/ns/base/Makefile
+    orte/mca/ns/base/data_type_support/Makefile
+    orte/mca/oob/Makefile
+    orte/mca/oob/base/Makefile
+    orte/mca/pls/Makefile
+    orte/mca/pls/base/Makefile
+    orte/mca/ras/Makefile
+    orte/mca/ras/base/Makefile
+    orte/mca/rds/Makefile
+    orte/mca/rds/base/Makefile
+    orte/mca/rmaps/Makefile
+    orte/mca/rmaps/base/Makefile
+    orte/mca/rmgr/Makefile
+    orte/mca/rmgr/base/Makefile
+    orte/mca/rmgr/base/data_type_support/Makefile
+    orte/mca/rml/Makefile
+    orte/mca/rml/base/Makefile
+    orte/mca/schema/Makefile
+    orte/mca/schema/base/Makefile
+    orte/mca/soh/Makefile
+    orte/mca/soh/base/Makefile
+    orte/mca/soh/base/data_type_support/Makefile
 
-    src/dynamic-mca/common/Makefile
+    orte/dynamic-mca/errmgr/Makefile
+    orte/dynamic-mca/iof/Makefile
+    orte/dynamic-mca/gpr/Makefile
+    orte/dynamic-mca/ns/Makefile
+    orte/dynamic-mca/oob/Makefile
+    orte/dynamic-mca/pls/Makefile
+    orte/dynamic-mca/ras/Makefile
+    orte/dynamic-mca/rds/Makefile
+    orte/dynamic-mca/rmaps/Makefile
+    orte/dynamic-mca/rmgr/Makefile
+    orte/dynamic-mca/rml/Makefile
+    orte/dynamic-mca/schema/Makefile
+    orte/dynamic-mca/soh/Makefile
 
-    src/dynamic-mca/errmgr/Makefile
-    src/dynamic-mca/iof/Makefile
-    src/dynamic-mca/gpr/Makefile
-    src/dynamic-mca/ns/Makefile
-    src/dynamic-mca/oob/Makefile
-    src/dynamic-mca/pls/Makefile
-    src/dynamic-mca/ras/Makefile
-    src/dynamic-mca/rds/Makefile
-    src/dynamic-mca/rmaps/Makefile
-    src/dynamic-mca/rmgr/Makefile
-    src/dynamic-mca/schema/Makefile
-    src/dynamic-mca/soh/Makefile
 
-    src/dynamic-mca/Makefile
-    src/dynamic-mca/allocator/Makefile
-    src/dynamic-mca/btl/Makefile
-    src/dynamic-mca/coll/Makefile
-    src/dynamic-mca/io/Makefile
-    src/dynamic-mca/mpool/Makefile
-    src/dynamic-mca/pml/Makefile
-    src/dynamic-mca/ptl/Makefile
-    src/dynamic-mca/rml/Makefile
-    src/dynamic-mca/topo/Makefile
+    ompi/attribute/Makefile
+    ompi/communicator/Makefile
+    ompi/datatype/Makefile
+    ompi/errhandler/Makefile
+    ompi/file/Makefile
+    ompi/group/Makefile
+    ompi/info/Makefile
+    ompi/op/Makefile
+    ompi/proc/Makefile
+    ompi/request/Makefile
+    ompi/win/Makefile
 
-    src/mpi/Makefile
-    src/mpi/c/Makefile
-    src/mpi/c/profile/Makefile
-    src/mpi/cxx/Makefile
-    src/mpi/f77/Makefile
-    src/mpi/f77/profile/Makefile
-    src/mpi/f90/Makefile
-    src/mpi/f90/fortran_kinds.sh
-    src/mpi/f90/fortran_sizes.h
-    src/mpi/f90/scripts/Makefile
-    src/mpi/runtime/Makefile
+    ompi/mpi/Makefile
+    ompi/mpi/c/Makefile
+    ompi/mpi/c/profile/Makefile
+    ompi/mpi/cxx/Makefile
+    ompi/mpi/f77/Makefile
+    ompi/mpi/f77/profile/Makefile
+    ompi/mpi/f90/Makefile
+    ompi/mpi/f90/fortran_kinds.sh
+    ompi/mpi/f90/fortran_sizes.h
+    ompi/mpi/f90/scripts/Makefile
+    ompi/mpi/runtime/Makefile
 
-    src/tools/Makefile
-    src/tools/console/Makefile
-    src/tools/ompi_info/Makefile
-    src/tools/orted/Makefile
-    src/tools/orteprobe/Makefile
-    src/tools/orterun/Makefile
-    src/tools/openmpi/Makefile
-    src/tools/wrappers/Makefile
+    ompi/tools/Makefile
+    ompi/tools/ompi_info/Makefile
+    ompi/tools/openmpi/Makefile
+    ompi/tools/wrappers/Makefile
+
+    ompi/mca/common/Makefile
+
+    ompi/mca/btl/Makefile
+    ompi/mca/btl/base/Makefile
+    ompi/mca/coll/Makefile
+    ompi/mca/coll/base/Makefile
+    ompi/mca/io/Makefile
+    ompi/mca/io/base/Makefile
+    ompi/mca/pml/Makefile
+    ompi/mca/pml/base/Makefile
+    ompi/mca/ptl/Makefile
+    ompi/mca/ptl/base/Makefile
+    ompi/mca/topo/Makefile
+    ompi/mca/topo/base/Makefile
+
+    ompi/dynamic-mca/common/Makefile
+
+    ompi/dynamic-mca/btl/Makefile
+    ompi/dynamic-mca/coll/Makefile
+    ompi/dynamic-mca/io/Makefile
+    ompi/dynamic-mca/pml/Makefile
+    ompi/dynamic-mca/ptl/Makefile
+    ompi/dynamic-mca/topo/Makefile
 
     test/Makefile
     test/asm/Makefile

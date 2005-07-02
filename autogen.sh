@@ -58,6 +58,8 @@ mca_no_config_list_file="mca_no_config_list"
 mca_no_config_amc_file="mca_no_config_amc"
 autogen_subdir_file="autogen.subdirs"
 
+# locations to look for mca modules
+mca_locations="opal orte ompi"
 
 ############################################################################
 #
@@ -361,14 +363,14 @@ EOF
     # configure, not any of the MCA components.
 
     if test -f include/mpi.h; then
-	rm -rf libltdl src/libltdl src/ltdl.h
+	rm -rf libltdl opal/libltdl opal/ltdl.h
 	run_and_check $ompi_libtoolize --automake --copy --ltdl
-	mv libltdl src
+	mv libltdl opal
 
 	echo "Adjusting libltdl for OMPI :-("
 
 	echo "  -- patching for argz bugfix in libtool 1.5"
-	cd src/libltdl
+	cd opal/libltdl
         if test "`grep 'while ((before >= *pargz) && (before[-1] != LT_EOS_CHAR))' ltdl.c`" != ""; then
             patch -N -p0 <<EOF
 --- ltdl.c.old  2003-11-26 16:42:17.000000000 -0500
@@ -831,23 +833,25 @@ run_global() {
     touch "$mca_no_configure_components_file" "$mca_no_config_list_file" \
         "$mca_no_config_amc_file"
 
-    # Now run the config in every directory in src/mca/*/*
+    # Now run the config in every directory in <location>/mca/*/*
     # that has a configure.in or configure.ac script
 
     rg_cwd="`pwd`"
     echo $rg_cwd
-    for type in src/mca/*; do
-	if test -d "$type"; then
-	    for component in "$type"/*; do
-		if test -d "$component"; then
-		    if test -f "$component/configure.in" -o \
-			-f "$component/configure.params" -o \
-			-f "$component/configure.ac"; then
-			process_dir "$component" "$rg_cwd"
+    for project in $mca_locations; do 
+        for type in $project/mca/*; do
+	    if test -d "$type"; then
+	        for component in "$type"/*; do
+		    if test -d "$component"; then
+		        if test -f "$component/configure.in" -o \
+			    -f "$component/configure.params" -o \
+			    -f "$component/configure.ac"; then
+			    process_dir "$component" "$rg_cwd"
+		        fi
 		    fi
-		fi
-	    done
-	fi
+	        done
+	    fi
+        done
     done
 
     # Fill in the final m4 file

@@ -31,7 +31,7 @@ libruntime_la_SOURCES = \
         $(headers) \
         ompi_progress.c \
         orte_finalize.c \
-        orte_init.c \
+        orte_init.c
 
 # Conditionally install the header files
 
