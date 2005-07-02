@@ -62,7 +62,7 @@ typedef struct opal_free_list_item_t opal_free_list_item_t;
  */
  
 OMPI_DECLSPEC int opal_free_list_init(
-    ompi_free_list_t *free_list, 
+    opal_free_list_t *free_list, 
     size_t element_size,
     ompi_class_t* element_class,
     int num_elements_to_alloc,

@@ -41,7 +41,6 @@ static void opal_free_list_construct(opal_free_list_t* fl)
     fl->fl_num_waiting = 0;
     fl->fl_elem_size = 0;
     fl->fl_elem_class = 0;
-    fl->fl_mpool = 0;
 }
 
 static void opal_free_list_destruct(opal_free_list_t* fl)
