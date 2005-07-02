@@ -48,7 +48,10 @@ pkgdata_DATA = help-ompi_info.txt
 
 EXTRA_DIST = $(pkgdata_DATA)
 
-libs = $(top_builddir)/src/libmpi.la
+libs = \
+        $(top_builddir)/ompi/libmpi.la \
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la
 
 bin_PROGRAMS = ompi_info
 ompi_info_SOURCES = \

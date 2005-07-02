@@ -18,24 +18,9 @@ include $(top_srcdir)/config/Makefile.options
 
 SUBDIRS = \
         common \
-        allocator \
         btl \
         coll \
-        errmgr \
-        gpr \
         io \
-        iof \
-        mpool \
-        ns \
-        oob \
-	pls \
         pml \
         ptl \
-        rml \
-	ras \
-	rds \
-	rmaps \
-	rmgr \
-	schema \
-        soh \
         topo

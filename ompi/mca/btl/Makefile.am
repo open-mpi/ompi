@@ -26,7 +26,7 @@ headers = btl.h
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/btl
+ompidir = $(includedir)/openmpi/ompi/mca/btl
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

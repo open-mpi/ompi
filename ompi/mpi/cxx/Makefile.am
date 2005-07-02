@@ -60,9 +60,9 @@ headers = \
         errhandler_inln.h \
         status_inln.h
 
-ompidir = $(includedir)/openmpi/mpi/cxx
+ompidir = $(includedir)/openmpi/ompi/mpi/cxx
 ompi_HEADERS = \
-	$(headers)
+        $(headers)
 else
 ompidir = $(includedir)
 endif

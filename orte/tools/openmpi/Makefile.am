@@ -28,12 +28,14 @@ AM_CPPFLAGS = \
             -DOMPI_CONFIGURE_HOST="\"@OMPI_CONFIGURE_HOST@\"" \
             -DOMPI_CONFIGURE_DATE="\"@OMPI_CONFIGURE_DATE@\""
 
-libs = $(top_builddir)/src/libmpi.la
+libs = \
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la
 
 bin_PROGRAMS = openmpi
 
 openmpi_SOURCES = openmpi.h openmpi.c
-openmpi_LDADD = $(libs) $(LIBMPI_EXTRA_LIBS) $(top_builddir)/src/libmpi.la
+openmpi_LDADD = $(LIBMPI_EXTRA_LIBS) $(libs)
 openmpi_DFLAGS = $(LIBMPI_EXTRA_LDFLAGS)
 openmpi_DEPENDENCIES = $(libs)
 

@@ -32,7 +32,8 @@ pkgdata_DATA = help-wrapper.txt
 
 bin_PROGRAMS = mpicc mpic++ mpif77 mpif90
 
-libs = $(top_builddir)/src/libmpi.la
+libs = \
+        $(top_builddir)/opal/libopal.la
 
 wrap_sources = wrap.cc wrap_engine.cc ompi_wrap.h
 

@@ -366,7 +366,7 @@ endif
 #
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mpi/f77
+ompidir = $(includedir)/openmpi/ompi/mpi/f77
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

@@ -82,7 +82,7 @@ libmca_common_sm_noinst_la_SOURCES = $(libmca_common_sm_la_SOURCES)
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/common/sm
+ompidir = $(includedir)/openmpi/ompi/mca/common/sm
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

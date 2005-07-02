@@ -25,18 +25,18 @@ AM_CPPFLAGS = -I$(top_builddir)/src
 # Source code files
 
 headers = \
-    base.h
+        base.h
 
 libmca_btl_base_la_SOURCES = \
-    $(headers) \
-    btl_base_close.c \
-    btl_base_open.c \
-    btl_base_select.c
+        $(headers) \
+        btl_base_close.c \
+        btl_base_open.c \
+        btl_base_select.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/btl/base
+ompidir = $(includedir)/openmpi/ompi/mca/btl/base
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

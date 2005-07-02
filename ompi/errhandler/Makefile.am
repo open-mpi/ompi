@@ -29,18 +29,18 @@ headers = \
         errhandler_predefined.h
 
 liberrhandler_la_SOURCES = \
-	$(headers) \
+        $(headers) \
         errhandler.c \
         errhandler_invoke.c \
         errhandler_predefined.c \
-	errcode.c \
-	errclass.c  \
-	errcode-internal.c
+        errcode.c \
+        errclass.c  \
+        errcode-internal.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/errhandler
+ompidir = $(includedir)/openmpi/ompi/errhandler
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

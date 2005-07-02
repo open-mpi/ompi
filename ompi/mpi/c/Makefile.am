@@ -370,7 +370,7 @@ endif
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mpi/c
+ompidir = $(includedir)/openmpi/ompi/mpi/c
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

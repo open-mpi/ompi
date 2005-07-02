@@ -341,7 +341,7 @@ $(nodist_libmpi_f77_pmpi_la_SOURCES):
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mpi/f77/profile
+ompidir = $(includedir)/openmpi/ompi/mpi/f77/profile
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)

@@ -35,7 +35,9 @@ AM_CPPFLAGS = \
             -DOMPI_BUILD_LDFLAGS="\"@LDFLAGS@\"" \
             -DOMPI_BUILD_LIBS="\"@LIBS@\""
 
-libs = $(top_builddir)/src/libmpi.la
+libs = \
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la
 
 bin_PROGRAMS = orteprobe
 orteprobe_SOURCES = \

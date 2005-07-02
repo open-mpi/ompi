@@ -16,7 +16,9 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-libs = $(top_builddir)/src/libmpi.la
+libs = \
+        $(top_builddir)/orte/liborte.la \
+        $(top_builddir)/opal/libopal.la
 
 bin_PROGRAMS = \
         orteconsole

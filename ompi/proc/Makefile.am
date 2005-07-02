@@ -25,13 +25,13 @@ headers = \
         proc.h
 
 libproc_la_SOURCES = \
-	$(headers) \
-	proc.c
+        $(headers) \
+        proc.c
 
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/proc
+ompidir = $(includedir)/openmpi/ompi/proc
 ompi_HEADERS = $(headers)
 else
 ompidir = $(includedir)
