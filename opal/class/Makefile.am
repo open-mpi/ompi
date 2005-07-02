@@ -17,7 +17,7 @@
 
 include $(top_srcdir)/config/Makefile.options
 
-noinst_LTLIBRARIES = liblfc.la
+noinst_LTLIBRARIES = libclass.la
 
 # Source code files
 
@@ -31,7 +31,7 @@ headers = \
         ompi_rb_tree.h \
         ompi_value_array.h
 
-liblfc_la_SOURCES = \
+libclass_la_SOURCES = \
 	$(headers) \
         ompi_free_list.c \
         ompi_hash_table.c \
