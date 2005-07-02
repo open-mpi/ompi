@@ -109,18 +109,18 @@ int orte_sys_info(void)
 	/* get the name of the user */
 #ifndef WIN32
     uid = getuid();
-	if ((pwdent = getpwuid(uid)) != 0) {
-	    orte_system_info.user = strdup(pwdent->pw_name);
+    if ((pwdent = getpwuid(uid)) != 0) {
+        orte_system_info.user = strdup(pwdent->pw_name);
     } else {
-	     if (0 > asprintf(&(orte_system_info.user), "%d", uid)) {
+        if (0 > asprintf(&(orte_system_info.user), "%d", uid)) {
             return ORTE_ERR_OUT_OF_RESOURCE;
-         }
+        }
     }
 #else 
     if (!GetUserName(info_buf, &info_buf_length)) {
-	    orte_system_info.user = strdup("unknown");
+        orte_system_info.user = strdup("unknown");
     } else {
-	    orte_system_info.user = strdup(info_buf);
+        orte_system_info.user = strdup(info_buf);
     }
 #endif
 
