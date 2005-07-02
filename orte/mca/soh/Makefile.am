@@ -27,8 +27,8 @@ headers = soh.h \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/soh
-ompi_HEADERS = $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/soh
+orte_HEADERS = $(headers)
 else
-ompidir = $(includedir)
+ortedir = $(includedir)
 endif

@@ -30,9 +30,9 @@ libmca_rmgr_base_data_type_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/rmgr/base/data_type_support
-ompi_HEADERS = $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/rmgr/base/data_type_support
+orte_HEADERS = $(headers)
 else
-ompidir = $(includedir)
+ortedir = $(includedir)
 endif
 

@@ -39,8 +39,8 @@ libdps_la_SOURCES = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/orte/dps
-ompi_HEADERS = $(headers)
+ortedir = $(includedir)/openmpi/orte/dps
+orte_HEADERS = $(headers)
 else
-ompidir = $(includedir)
+ortedir = $(includedir)
 endif

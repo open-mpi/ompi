@@ -23,8 +23,8 @@ noinst_HEADERS = \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/orte/include
-ompi_HEADERS = $(noinst_HEADERS)
+ortedir = $(includedir)/openmpi/orte/include
+orte_HEADERS = $(noinst_HEADERS)
 else
-ompidir = $(includedir)
+ortedir = $(includedir)
 endif

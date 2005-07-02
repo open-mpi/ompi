@@ -28,8 +28,8 @@ headers = oob.h \
 # Conditionally install the header files
 
 if WANT_INSTALL_HEADERS
-ompidir = $(includedir)/openmpi/mca/oob
-ompi_HEADERS = $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/oob
+orte_HEADERS = $(headers)
 else
-ompidir = $(includedir)
+ortedir = $(includedir)
 endif
