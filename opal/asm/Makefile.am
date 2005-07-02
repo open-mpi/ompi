@@ -25,16 +25,16 @@ include $(top_srcdir)/config/Makefile.options
 #
 ######################################################################
 generated/@OMPI_ASM_FILE@: base/@OMPI_ASSEMBLY_ARCH@.asm
-	$(PERL) "$(top_srcdir)/src/asm/generate-asm.pl" "@OMPI_ASSEMBLY_ARCH@" "@OMPI_ASSEMBLY_FORMAT@" "$(top_srcdir)/src/asm/base" "$(top_builddir)/src/asm/generated/@OMPI_ASM_FILE@"
+	$(PERL) "$(top_srcdir)/opal/asm/generate-asm.pl" "@OMPI_ASSEMBLY_ARCH@" "@OMPI_ASSEMBLY_FORMAT@" "$(top_srcdir)/opal/asm/base" "$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@"
 
 atomic-asm.s: generated/@OMPI_ASM_FILE@
 	rm -f atomic-asm.s
-	@ if test -f "$(top_srcdir)/src/asm/generated/@OMPI_ASM_FILE@" ; then \
-	    cmd="ln -s \"$(top_srcdir)/src/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
+	@ if test -f "$(top_srcdir)/opal/asm/generated/@OMPI_ASM_FILE@" ; then \
+	    cmd="ln -s \"$(top_srcdir)/opal/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
 	    echo "$$cmd" ; \
 	    eval $$cmd ; \
 	else \
-	    cmd="ln -s \"$(top_builddir)/src/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
+	    cmd="ln -s \"$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@\" atomic-asm.s" ; \
 	    echo "$$cmd" ; \
 	    eval $$cmd ; \
 	fi
@@ -80,4 +80,4 @@ maintainer-clean-local:
 #
 dist-hook:
 	mkdir "${distdir}/generated"
-	$(PERL) "$(top_srcdir)/src/asm/generate-all-asm.pl" "$(PERL)" "$(srcdir)" "$(distdir)"
+	$(PERL) "$(top_srcdir)/opal/asm/generate-all-asm.pl" "$(PERL)" "$(srcdir)" "$(distdir)"

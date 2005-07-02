@@ -787,11 +787,11 @@ AC_DEFUN([OMPI_ASM_FIND_FILE], [
     # see if we have a pre-built one already
     AC_MSG_CHECKING([for pre-built assembly file])
     ompi_cv_asm_file=""
-    if grep "$ompi_cv_asm_arch" "${top_ompi_srcdir}/src/asm/asm-data.txt" | $FGREP "$ompi_cv_asm_format" >conftest.out 2>&1 ; then
+    if grep "$ompi_cv_asm_arch" "${top_ompi_srcdir}/opal/asm/asm-data.txt" | $FGREP "$ompi_cv_asm_format" >conftest.out 2>&1 ; then
         ompi_cv_asm_file="`cut -f3 conftest.out`"
         if test ! "$ompi_cv_asm_file" = "" ; then
             ompi_cv_asm_file="atomic-${ompi_cv_asm_file}.s"
-            if test -f "${top_ompi_srcdir}/src/asm/generated/${ompi_cv_asm_file}" ; then
+            if test -f "${top_ompi_srcdir}/opal/asm/generated/${ompi_cv_asm_file}" ; then
                 AC_MSG_RESULT([yes ($ompi_cv_asm_file)])
             else
                 AC_MSG_RESULT([no ($ompi_cv_asm_file not found)])
@@ -807,9 +807,9 @@ AC_DEFUN([OMPI_ASM_FIND_FILE], [
         if test ! "$PERL" = "" ; then
             # we have perl...  Can we generate a file?
             AC_MSG_CHECKING([whether possible to generate assembly file])
-            mkdir -p src/asm/generated
+            mkdir -p opal/asm/generated
             ompi_cv_asm_file="atomic-local.s"
-            ompi_try="$PERL \"$top_ompi_srcdir/src/asm/generate-asm.pl\" \"$ompi_cv_asm_arch\" \"$ompi_cv_asm_format\" \"$top_ompi_srcdir/src/asm/base\" \"$top_ompi_builddir/src/asm/generated/$ompi_cv_asm_file\" >conftest.out 2>&1"
+            ompi_try="$PERL \"$top_ompi_srcdir/opal/asm/generate-asm.pl\" \"$ompi_cv_asm_arch\" \"$ompi_cv_asm_format\" \"$top_ompi_srcdir/opal/asm/base\" \"$top_ompi_builddir/opal/asm/generated/$ompi_cv_asm_file\" >conftest.out 2>&1"
             if AC_TRY_EVAL(ompi_try) ; then
                 # save the warnings
                 cat conftest.out >&AC_FD_CC
