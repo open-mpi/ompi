@@ -37,8 +37,6 @@ libopal_la_LIBADD = \
         class/libclass.la \
         event/libevent.la \
         mca/base/libmca_base.la \
-        mca/allocator/base/libmca_allocator_base.la $(MCA_allocator_STATIC_LTLIBS) \
-        mca/mpool/base/libmca_mpool_base.la $(MCA_mpool_STATIC_LTLIBS) \
         runtime/libruntime.la \
         threads/libthreads.la \
         util/libopalutil.la
