@@ -335,7 +335,7 @@ endif
 $(nodist_libmpi_f77_pmpi_la_SOURCES):
 	if test ! -r $@ ; then \
 	    pname=`echo $@ | cut -b '2-'` ; \
-	    ln -s $(top_srcdir)/src/mpi/f77/$$pname $@ ; \
+	    ln -s $(top_srcdir)/ompi/mpi/f77/$$pname $@ ; \
 	fi
 
 # Conditionally install the header files

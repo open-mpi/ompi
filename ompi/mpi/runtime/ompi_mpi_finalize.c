@@ -37,7 +37,7 @@
 #include "attribute/attribute.h"
 
 #include "mca/base/base.h"
-#include "mca/base/mca_base_module_exchange.h"
+#include "mca/pml/base/pml_base_module_exchange.h"
 #include "mca/pml/pml.h"
 #include "mca/pml/base/base.h"
 #include "mca/coll/coll.h"
