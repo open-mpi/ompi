@@ -135,10 +135,12 @@ libmpi_la_LIBADD = \
         file/libfile.la \
         group/libgroup.la \
         info/libinfo.la \
+        mca/allocator/base/libmca_btl_base.la $(MCA_allocator_STATIC_LTLIBS) \
         mca/btl/base/libmca_btl_base.la $(MCA_btl_STATIC_LTLIBS) \
         mca/coll/base/libmca_coll_base.la $(MCA_coll_STATIC_LTLIBS) \
         $(MCA_common_STATIC_LTLIBS) \
         mca/io/base/libmca_io_base.la $(MCA_io_STATIC_LTLIBS) \
+        mca/mpool/base/libmca_btl_base.la $(MCA_mpool_STATIC_LTLIBS) \
         mca/pml/base/libmca_pml_base.la $(MCA_pml_STATIC_LTLIBS) \
         mca/ptl/base/libmca_ptl_base.la $(MCA_ptl_STATIC_LTLIBS) \
         mca/topo/base/libmca_topo_base.la $(MCA_topo_STATIC_LTLIBS) \
