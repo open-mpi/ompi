@@ -17,7 +17,7 @@
 #include "ompi_config.h"
 
 #include "class/ompi_hash_table.h"
-#include "mca/base/mca_base_module_exchange.h"
+#include "mca/pml/base/pml_base_module_exchange.h"
 
 #include "btl_openib.h"
 #include "btl_openib_proc.h"

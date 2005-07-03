@@ -26,7 +26,6 @@
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_recvreq.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
-#include "mca/base/mca_base_module_exchange.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_addr.h"
 #include "ptl_tcp_peer.h"

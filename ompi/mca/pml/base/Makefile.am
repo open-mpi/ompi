@@ -36,7 +36,7 @@ libmca_pml_base_la_SOURCES = \
         $(headers) \
         pml_base_bsend.c \
         pml_base_close.c \
-        pml_base_module_exchange.h \
+        pml_base_module_exchange.c \
         pml_base_open.c \
         pml_base_recvreq.c \
         pml_base_request.c \

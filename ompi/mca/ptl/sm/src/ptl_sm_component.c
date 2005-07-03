@@ -34,7 +34,6 @@
 #include "mca/ptl/ptl.h"
 #include "mca/pml/base/pml_base_sendreq.h"
 #include "mca/base/mca_base_param.h"
-#include "mca/base/mca_base_module_exchange.h"
 #include "mca/ptl/sm/src/ptl_sm.h"
 #include "mca/mpool/base/base.h"
 #include "mca/oob/base/base.h"

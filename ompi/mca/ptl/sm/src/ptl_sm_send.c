@@ -30,7 +30,6 @@
 #include "mca/ptl/base/ptl_base_header.h"
 #include "mca/ptl/base/ptl_base_sendfrag.h"
 #include "mca/ptl/base/ptl_base_recvfrag.h"
-#include "mca/base/mca_base_module_exchange.h"
 #include "mca/common/sm/common_sm_mmap.h"
 #include "ptl_sm.h"
 #include "util/sys_info.h"
