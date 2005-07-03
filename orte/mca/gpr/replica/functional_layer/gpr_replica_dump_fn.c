@@ -190,7 +190,7 @@ int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer)
     sprintf(tmp_out, "\nDUMP OF GPR REGISTERED CALLBACKS\n");
     orte_gpr_replica_dump_load_string(buffer, &tmp_out);
 
-    if (0 >= (k= ompi_list_get_size(&(orte_gpr_replica.callbacks)))) {
+    if (0 >= (k= opal_list_get_size(&(orte_gpr_replica.callbacks)))) {
         sprintf(tmp_out, "--- None registered at this time ---");
         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
     } else {
@@ -199,9 +199,9 @@ int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer)
         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
         
         i=0;
-        for (cb = (orte_gpr_replica_callbacks_t*)ompi_list_get_first(&(orte_gpr_replica.callbacks));
-             cb != (orte_gpr_replica_callbacks_t*)ompi_list_get_end(&(orte_gpr_replica.callbacks));
-             cb = (orte_gpr_replica_callbacks_t*)ompi_list_get_next(cb)) {
+        for (cb = (orte_gpr_replica_callbacks_t*)opal_list_get_first(&(orte_gpr_replica.callbacks));
+             cb != (orte_gpr_replica_callbacks_t*)opal_list_get_end(&(orte_gpr_replica.callbacks));
+             cb = (orte_gpr_replica_callbacks_t*)opal_list_get_next(cb)) {
              if (NULL == cb) {
                 sprintf(tmp_out, "\n\t---  BAD CALLBACK POINTER %lu ---", 
                         (unsigned long) i);

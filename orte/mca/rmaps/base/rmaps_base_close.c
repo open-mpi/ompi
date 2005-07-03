@@ -28,12 +28,12 @@
 
 int orte_rmaps_base_finalize(void)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
 
     /* Finalize all available modules */
 
     while (NULL != 
-           (item = ompi_list_remove_first(&orte_rmaps_base.rmaps_available))) {
+           (item = opal_list_remove_first(&orte_rmaps_base.rmaps_available))) {
         orte_rmaps_base_cmp_t* cmp = (orte_rmaps_base_cmp_t*) item;
         ompi_output(orte_rmaps_base.rmaps_output,
                     "orte:base:close: finalizing module %s",

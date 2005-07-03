@@ -37,7 +37,7 @@ static int allocate(orte_jobid_t jobid);
 static int deallocate(orte_jobid_t jobid);
 static int finalize(void);
 
-static int discover(ompi_list_t* nodelist);
+static int discover(opal_list_t* nodelist);
 static int get_tm_hostname(tm_node_id node, char **hostname, char **arch);
 
 
@@ -60,8 +60,8 @@ orte_ras_base_module_t orte_ras_tm_module = {
 static int allocate(orte_jobid_t jobid)
 {
     int ret;
-    ompi_list_t nodes;
-    ompi_list_item_t* item;
+    opal_list_t nodes;
+    opal_list_item_t* item;
     struct tm_roots root;
 
     /* Open up our connection to tm */
@@ -74,7 +74,7 @@ static int allocate(orte_jobid_t jobid)
         return ORTE_ERR_RESOURCE_BUSY;
     }
 
-    OBJ_CONSTRUCT(&nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
     if (ORTE_SUCCESS != (ret = discover(&nodes))) {
         /* JMS May change...? */
         ompi_output(orte_ras_base.ras_output,
@@ -84,7 +84,7 @@ static int allocate(orte_jobid_t jobid)
     }
     ret = orte_ras_base_allocate_nodes(jobid, &nodes);
 
-    while (NULL != (item = ompi_list_remove_first(&nodes))) {
+    while (NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
@@ -134,12 +134,12 @@ static int finalize(void)
  *  - check for additional nodes that have already been allocated
  */
 
-static int discover(ompi_list_t* nodelist)
+static int discover(opal_list_t* nodelist)
 {
     int i, ret, num_node_ids;
     orte_ras_base_node_t *node;
-    ompi_list_item_t* item;
-    ompi_list_t new_nodes;
+    opal_list_item_t* item;
+    opal_list_t new_nodes;
     tm_node_id *tm_node_ids;
     char *hostname, *arch;
 
@@ -162,7 +162,7 @@ static int discover(ompi_list_t* nodelist)
 
     /* Iterate through all the nodes and make an entry for each */
 
-    OBJ_CONSTRUCT(&new_nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     for (i = 0; i < num_node_ids; ++i) {
         get_tm_hostname(tm_node_ids[i], &hostname, &arch);
         ompi_output(orte_ras_base.ras_output, 
@@ -171,9 +171,9 @@ static int discover(ompi_list_t* nodelist)
         /* Remember that TM may list the same node more than once.  So
            we have to check for duplicates. */
 
-        for (item = ompi_list_get_first(&new_nodes);
-             ompi_list_get_end(&new_nodes) != item;
-             item = ompi_list_get_next(item)) {
+        for (item = opal_list_get_first(&new_nodes);
+             opal_list_get_end(&new_nodes) != item;
+             item = opal_list_get_next(item)) {
             node = (orte_ras_base_node_t*) item;
             if (0 == strcmp(node->node_name, hostname)) {
                 ++node->node_slots_max;
@@ -187,7 +187,7 @@ static int discover(ompi_list_t* nodelist)
 
         /* Did we find it? */
 
-        if (ompi_list_get_end(&new_nodes) == item) {
+        if (opal_list_get_end(&new_nodes) == item) {
 
             /* Nope -- didn't find it, so add a new item to the list */
 
@@ -201,7 +201,7 @@ static int discover(ompi_list_t* nodelist)
             node->node_slots_inuse = 0;
             node->node_slots_max = 1;
             node->node_slots = 1;
-            ompi_list_append(&new_nodes, &node->super);
+            opal_list_append(&new_nodes, &node->super);
         } else {
 
             /* Yes, so we need to free the hostname that came back
@@ -216,10 +216,10 @@ static int discover(ompi_list_t* nodelist)
     ompi_output(orte_ras_base.ras_output, 
                 "ras:tm:allocate:discover: done -- adding to registry");
     ret = orte_ras_base_node_insert(&new_nodes);
-    for (item = ompi_list_remove_first(&new_nodes);
-         NULL != item; item = ompi_list_remove_first(&new_nodes)) {
+    for (item = opal_list_remove_first(&new_nodes);
+         NULL != item; item = opal_list_remove_first(&new_nodes)) {
         if (ORTE_SUCCESS == ret) {
-            ompi_list_append(nodelist, item);
+            opal_list_append(nodelist, item);
         } else {
             OBJ_RELEASE(item);
         }

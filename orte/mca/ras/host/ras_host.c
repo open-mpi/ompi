@@ -33,11 +33,11 @@
 
 static int orte_ras_host_allocate(orte_jobid_t jobid)
 {
-    ompi_list_t nodes;
-    ompi_list_item_t* item;
+    opal_list_t nodes;
+    opal_list_item_t* item;
     int rc;
 
-    OBJ_CONSTRUCT(&nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_ras_base_node_query(&nodes))) {
         goto cleanup;
     }
@@ -55,7 +55,7 @@ static int orte_ras_host_allocate(orte_jobid_t jobid)
     }
 
 cleanup:
-    while(NULL != (item = ompi_list_remove_first(&nodes))) {
+    while(NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);

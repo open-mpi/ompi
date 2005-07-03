@@ -45,7 +45,7 @@ typedef enum {RED, BLACK} ompi_rb_tree_nodecolor_t;
   */
 struct ompi_rb_tree_node_t
 {
-    ompi_list_item_t super;             /**< the parent class */
+    opal_list_item_t super;             /**< the parent class */
     ompi_rb_tree_nodecolor_t color;     /**< the node color */
     struct ompi_rb_tree_node_t * parent;/**< the parent node, can be NULL */
     struct ompi_rb_tree_node_t * left;  /**< the left child - can be nill */

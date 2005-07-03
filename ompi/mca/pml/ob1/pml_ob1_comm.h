@@ -22,7 +22,7 @@
 #include "threads/mutex.h"
 #include "threads/condition.h"
 #include "mca/ptl/ptl.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -31,9 +31,9 @@ extern "C" {
 struct mca_pml_ob1_comm_proc_t {
      opal_object_t super;
      uint16_t expected_sequence;    /**< send message sequence number - receiver side */
-     ompi_list_t frags_cant_match;  /**< out-of-order fragment queues */
-     ompi_list_t specific_receives; /**< queues of unmatched specific receives */
-     ompi_list_t unexpected_frags;  /**< unexpected fragment queues */
+     opal_list_t frags_cant_match;  /**< out-of-order fragment queues */
+     opal_list_t specific_receives; /**< queues of unmatched specific receives */
+     opal_list_t unexpected_frags;  /**< unexpected fragment queues */
 };
 typedef struct mca_pml_ob1_comm_proc_t mca_pml_ob1_comm_proc_t;
 
@@ -46,7 +46,7 @@ struct mca_pml_comm_t {
     opal_object_t super;
     mca_ptl_sequence_t recv_sequence;  /**< recv request sequence number - receiver side */
     ompi_mutex_t matching_lock;   /**< matching lock */
-    ompi_list_t wild_receives;    /**< queue of unmatched wild (source process not specified) receives */
+    opal_list_t wild_receives;    /**< queue of unmatched wild (source process not specified) receives */
     mca_pml_ob1_comm_proc_t* procs;
     size_t num_procs;
 };

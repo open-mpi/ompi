@@ -67,8 +67,8 @@ orte_pls_base_module_t orte_pls_bproc_seed_module = {
 
 static int orte_pls_bproc_nodelist(orte_rmaps_base_map_t* map, int** nodelist, size_t* num_nodes)
 {
-    ompi_list_item_t* item;
-    size_t count = ompi_list_get_size(&map->nodes);
+    opal_list_item_t* item;
+    size_t count = opal_list_get_size(&map->nodes);
     size_t index = 0;
 
     /* build the node list */
@@ -76,9 +76,9 @@ static int orte_pls_bproc_nodelist(orte_rmaps_base_map_t* map, int** nodelist, s
     if(NULL == *nodelist)
         return OMPI_ERR_OUT_OF_RESOURCE;
 
-    for(item =  ompi_list_get_first(&map->nodes);
-        item != ompi_list_get_end(&map->nodes);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&map->nodes);
+        item != opal_list_get_end(&map->nodes);
+        item =  opal_list_get_next(item)) {
         orte_rmaps_base_node_t* node = (orte_rmaps_base_node_t*)item;
         (*nodelist)[index++] = atol(node->node_name);
     }
@@ -315,12 +315,12 @@ static void orte_pls_bproc_wait_proc(pid_t pid, int status, void* cbdata)
 static void orte_pls_bproc_wait_node(pid_t pid, int status, void* cbdata)
 {
     orte_rmaps_base_node_t* node = (orte_rmaps_base_node_t*)cbdata;
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
 
     /* set state of all processes associated with the daemon as terminated */
-    for(item =  ompi_list_get_first(&node->node_procs);
-        item != ompi_list_get_end(&node->node_procs);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&node->node_procs);
+        item != opal_list_get_end(&node->node_procs);
+        item =  opal_list_get_next(item)) {
         orte_rmaps_base_proc_t* proc = (orte_rmaps_base_proc_t*)item; 
 
         int rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_TERMINATED, 0);
@@ -446,7 +446,7 @@ static int orte_pls_bproc_launch_app(
     /* return is the rank of the child or number of nodes in the parent */
     if(rc < (int)num_nodes) {
  
-        ompi_list_item_t* item;
+        opal_list_item_t* item;
         orte_rmaps_base_node_t* node = NULL;
         orte_process_name_t* daemon_name;
         int fd;
@@ -483,9 +483,9 @@ static int orte_pls_bproc_launch_app(
 
         /* find this node */
         index = 0;
-        for(item =  ompi_list_get_first(&map->nodes);
-            item != ompi_list_get_end(&map->nodes);
-            item =  ompi_list_get_next(item)) {
+        for(item =  opal_list_get_first(&map->nodes);
+            item != opal_list_get_end(&map->nodes);
+            item =  opal_list_get_next(item)) {
             if(index++ == rank) {
                 node = (orte_rmaps_base_node_t*)item;
                 break;
@@ -509,7 +509,7 @@ static int orte_pls_bproc_launch_app(
                 node->node_name, 
                 orte_process_info.my_name->cellid, 0, 
                 daemon_vpid_start+rank,
-                ompi_list_get_size(&node->node_procs));
+                opal_list_get_size(&node->node_procs));
         }
 
         /* restart the daemon w/ the new process name */
@@ -528,9 +528,9 @@ static int orte_pls_bproc_launch_app(
 
         /* start the required number of copies of the application */
         index = 0;
-        for(item =  ompi_list_get_first(&node->node_procs);
-            item != ompi_list_get_end(&node->node_procs);
-            item =  ompi_list_get_next(item)) {
+        for(item =  opal_list_get_first(&node->node_procs);
+            item != opal_list_get_end(&node->node_procs);
+            item =  opal_list_get_next(item)) {
             orte_rmaps_base_proc_t* proc = (orte_rmaps_base_proc_t*)item;
             pid_t pid;
 
@@ -574,11 +574,11 @@ static int orte_pls_bproc_launch_app(
         _exit(0);
 
     } else {
-        ompi_list_item_t* item;
+        opal_list_item_t* item;
 
         /* post wait callback the daemons to complete */
         index = 0;
-        while(NULL != (item = ompi_list_remove_first(&map->nodes))) {
+        while(NULL != (item = opal_list_remove_first(&map->nodes))) {
             orte_rmaps_base_node_t* node = (orte_rmaps_base_node_t*)item;
 
             OMPI_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
@@ -609,14 +609,14 @@ cleanup:
 
 int orte_pls_bproc_seed_launch(orte_jobid_t jobid)
 {
-    ompi_list_item_t* item;
-    ompi_list_t mapping;
+    opal_list_item_t* item;
+    opal_list_t mapping;
     orte_vpid_t vpid_start;
     orte_vpid_t vpid_range;
     int rc;
 
     /* query for the application context and allocated nodes */
-    OBJ_CONSTRUCT(&mapping, ompi_list_t);
+    OBJ_CONSTRUCT(&mapping, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_map(jobid, &mapping))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -627,9 +627,9 @@ int orte_pls_bproc_seed_launch(orte_jobid_t jobid)
     }
 
     /* for each application context - launch across the first n nodes required */
-    for(item =  ompi_list_get_first(&mapping);
-        item != ompi_list_get_end(&mapping);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&mapping);
+        item != opal_list_get_end(&mapping);
+        item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
         rc = orte_pls_bproc_launch_app(jobid, map, vpid_start, vpid_range); 
         if(rc != ORTE_SUCCESS) {
@@ -639,7 +639,7 @@ int orte_pls_bproc_seed_launch(orte_jobid_t jobid)
     }
   
 cleanup:
-    while(NULL != (item = ompi_list_remove_first(&mapping)))
+    while(NULL != (item = opal_list_remove_first(&mapping)))
         OBJ_RELEASE(item);
     OBJ_DESTRUCT(&mapping);
     return rc;

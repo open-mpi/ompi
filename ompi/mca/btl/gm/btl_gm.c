@@ -569,9 +569,9 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
 
             /* check for pending fragments */
-            if(ompi_list_get_size(&btl->gm_pending)) {
+            if(opal_list_get_size(&btl->gm_pending)) {
                 OMPI_THREAD_LOCK(&btl->gm_lock);
-                frag = (mca_btl_gm_frag_t*)ompi_list_remove_first(&btl->gm_pending);
+                frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&btl->gm_pending);
                 OMPI_THREAD_UNLOCK(&btl->gm_lock);
                 mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
             }
@@ -634,7 +634,7 @@ int mca_btl_gm_send(
     /* queue the descriptor if there are no send tokens */
     if(OMPI_THREAD_ADD32(&gm_btl->gm_num_send_tokens, -1) < 0) {
         OMPI_THREAD_LOCK(&gm_btl->gm_lock);
-        ompi_list_append(&gm_btl->gm_pending, (ompi_list_item_t*)frag);
+        opal_list_append(&gm_btl->gm_pending, (opal_list_item_t*)frag);
         OMPI_THREAD_UNLOCK(&gm_btl->gm_lock);
         OMPI_THREAD_ADD32(&gm_btl->gm_num_send_tokens, 1);
         return OMPI_SUCCESS;
@@ -737,22 +737,22 @@ int mca_btl_gm_finalize(struct mca_btl_base_module_t* btl)
     mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl; 
     
     if(gm_btl->gm_frag_eager.fl_num_allocated != 
-       gm_btl->gm_frag_eager.super.ompi_list_length){ 
+       gm_btl->gm_frag_eager.super.opal_list_length){ 
         ompi_output(0, "btl gm_frag_eager: %d allocated %d returned \n", 
                     gm_btl->gm_frag_eager.fl_num_allocated, 
-                    gm_btl->gm_frag_eager.super.ompi_list_length); 
+                    gm_btl->gm_frag_eager.super.opal_list_length); 
     }
     if(gm_btl->gm_frag_max.fl_num_allocated != 
-      gm_btl->gm_frag_max.super.ompi_list_length) { 
+      gm_btl->gm_frag_max.super.opal_list_length) { 
         ompi_output(0, "btl gm_frag_max: %d allocated %d returned \n", 
                     gm_btl->gm_frag_max.fl_num_allocated, 
-                    gm_btl->gm_frag_max.super.ompi_list_length); 
+                    gm_btl->gm_frag_max.super.opal_list_length); 
     }
     if(gm_btl->gm_frag_user.fl_num_allocated != 
-       gm_btl->gm_frag_user.super.ompi_list_length){ 
+       gm_btl->gm_frag_user.super.opal_list_length){ 
         ompi_output(0, "btl gm_frag_user: %d allocated %d returned \n", 
                     gm_btl->gm_frag_user.fl_num_allocated, 
-                    gm_btl->gm_frag_user.super.ompi_list_length); 
+                    gm_btl->gm_frag_user.super.opal_list_length); 
     }
 
     OBJ_DESTRUCT(&gm_btl->gm_lock);

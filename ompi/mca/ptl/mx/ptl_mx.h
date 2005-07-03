@@ -46,7 +46,7 @@ struct mca_ptl_mx_component_t {
     ompi_free_list_t mx_send_frags;        /**< free list of mx send fragments */
     ompi_free_list_t mx_recv_frags;        /**< free list of mx recv fragments */
     ompi_hash_table_t mx_procs;            /**< hash table of procs */
-    ompi_list_t mx_pending_acks;           /**< queue of pending sends */
+    opal_list_t mx_pending_acks;           /**< queue of pending sends */
     ompi_mutex_t mx_lock;                  /**< lock for accessing module state */
 };
 
@@ -133,7 +133,7 @@ extern int mca_ptl_mx_component_progress(
  */
 struct mca_ptl_mx_module_t {
     mca_ptl_base_module_t super;         /**< base PTL module interface */
-    ompi_list_t mx_peers;                /**< list of peers */
+    opal_list_t mx_peers;                /**< list of peers */
     uint64_t mx_nic_addr;                /**< NIC MAC address */
     uint32_t mx_filter;                  /**< endpoint filter */
     uint32_t mx_endpoint_id;             /**< endpoint ID */

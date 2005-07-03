@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 /* resfile internal globals */
-extern ompi_list_t resource_list;
+extern opal_list_t resource_list;
 
 /*
  * RDS Resource file functions

@@ -132,7 +132,7 @@ int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resourc
     cptr->cellid = *cellid;
     cptr->site = strdup(site);
     cptr->resource = strdup(resource);
-    ompi_list_append(&orte_ns_proxy_cell_info_list, &cptr->item);
+    opal_list_append(&orte_ns_proxy_cell_info_list, &cptr->item);
     
     return ORTE_SUCCESS;
 }
@@ -141,15 +141,15 @@ int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resourc
 int orte_ns_proxy_get_cell_info(orte_cellid_t cellid,
                                 char **site, char **resource)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     orte_ns_proxy_cell_info_t *cell;
     
     *site = NULL;
     *resource = NULL;
     
-    for (item = ompi_list_get_first(&orte_ns_proxy_cell_info_list);
-         item != ompi_list_get_end(&orte_ns_proxy_cell_info_list);
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&orte_ns_proxy_cell_info_list);
+         item != opal_list_get_end(&orte_ns_proxy_cell_info_list);
+         item = opal_list_get_next(item)) {
         cell = (orte_ns_proxy_cell_info_t*)item;
         if (cellid == cell->cellid) {
             *site = strdup(cell->site);
@@ -315,9 +315,9 @@ int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag,
         /* first, check to see if name is already on local list
          * if so, return tag
          */
-        for (tagitem = (orte_ns_proxy_tagitem_t*)ompi_list_get_first(&orte_ns_proxy_taglist);
-             tagitem != (orte_ns_proxy_tagitem_t*)ompi_list_get_end(&orte_ns_proxy_taglist);
-             tagitem = (orte_ns_proxy_tagitem_t*)ompi_list_get_next(tagitem)) {
+        for (tagitem = (orte_ns_proxy_tagitem_t*)opal_list_get_first(&orte_ns_proxy_taglist);
+             tagitem != (orte_ns_proxy_tagitem_t*)opal_list_get_end(&orte_ns_proxy_taglist);
+             tagitem = (orte_ns_proxy_tagitem_t*)opal_list_get_next(tagitem)) {
             if (0 == strcmp(name, tagitem->name)) { /* found name on list */
                 *tag = tagitem->tag;
                 OMPI_THREAD_UNLOCK(&orte_ns_proxy_mutex);
@@ -414,7 +414,7 @@ int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag,
     } else {
         tagitem->name = NULL;
     }
-    ompi_list_append(&orte_ns_proxy_taglist, &tagitem->item);
+    opal_list_append(&orte_ns_proxy_taglist, &tagitem->item);
     OMPI_THREAD_UNLOCK(&orte_ns_proxy_mutex);
     
     /* all done */
@@ -442,9 +442,9 @@ int orte_ns_proxy_define_data_type(const char *name,
     /* first, check to see if name is already on local list
      * if so, return id, ensure registered with dps
      */
-    for (dti = (orte_ns_proxy_dti_t*)ompi_list_get_first(&orte_ns_proxy_dtlist);
-         dti != (orte_ns_proxy_dti_t*)ompi_list_get_end(&orte_ns_proxy_dtlist);
-         dti = (orte_ns_proxy_dti_t*)ompi_list_get_next(dti)) {
+    for (dti = (orte_ns_proxy_dti_t*)opal_list_get_first(&orte_ns_proxy_dtlist);
+         dti != (orte_ns_proxy_dti_t*)opal_list_get_end(&orte_ns_proxy_dtlist);
+         dti = (orte_ns_proxy_dti_t*)opal_list_get_next(dti)) {
         if (0 == strcmp(name, dti->name)) { /* found name on list */
             *type = dti->id;
             OMPI_THREAD_UNLOCK(&orte_ns_proxy_mutex);
@@ -531,7 +531,7 @@ int orte_ns_proxy_define_data_type(const char *name,
     }
     dti->id = *type;
     dti->name = strdup(name);
-    ompi_list_append(&orte_ns_proxy_taglist, &dti->item);
+    opal_list_append(&orte_ns_proxy_taglist, &dti->item);
     OMPI_THREAD_UNLOCK(&orte_ns_proxy_mutex);
     
     /* all done */

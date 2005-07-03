@@ -117,26 +117,26 @@ int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
                 }
             } 
     count = 0;
-    for (reg = (orte_gpr_replica_core_t*)ompi_list_get_first(&seg->registry_entries);
-	 reg != (orte_gpr_replica_core_t*)ompi_list_get_end(&seg->registry_entries);
+    for (reg = (orte_gpr_replica_core_t*)opal_list_get_first(&seg->registry_entries);
+	 reg != (orte_gpr_replica_core_t*)opal_list_get_end(&seg->registry_entries);
 	 ) {
 
-	next = (orte_gpr_replica_core_t*)ompi_list_get_next(reg);
+	next = (orte_gpr_replica_core_t*)opal_list_get_next(reg);
 
 	/* for each registry entry, check the key list */
 	if (orte_gpr_replica_check_key_list(addr_mode, num_keys, keys,
 				       reg->num_keys, reg->keys)) { /* found the key(s) on the list */
 	    count++;
-	    ompi_list_remove_item(&seg->registry_entries, &reg->item);
+	    opal_list_remove_item(&seg->registry_entries, &reg->item);
 	}
 	reg = next;
     }
 
 
     /* update trigger counters */
-    for (trig = (orte_gpr_replica_trigger_list_t*)ompi_list_get_first(&seg->triggers);
-	 trig != (orte_gpr_replica_trigger_list_t*)ompi_list_get_end(&seg->triggers);
-	 trig = (orte_gpr_replica_trigger_list_t*)ompi_list_get_next(trig)) {
+    for (trig = (orte_gpr_replica_trigger_list_t*)opal_list_get_first(&seg->triggers);
+	 trig != (orte_gpr_replica_trigger_list_t*)opal_list_get_end(&seg->triggers);
+	 trig = (orte_gpr_replica_trigger_list_t*)opal_list_get_next(trig)) {
 	if (orte_gpr_replica_check_key_list(trig->addr_mode, trig->num_keys, trig->keys,
 				       num_keys, keys)) {
 	    trig->count = trig->count - count;
@@ -161,7 +161,7 @@ int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
                             size_t *cnt, char **index)
 {
 #if 0
-    ompi_list_t *answer;
+    opal_list_t *answer;
     orte_gpr_replica_keytable_t *ptr;
     ompi_registry_index_value_t *ans;
 
@@ -170,23 +170,23 @@ int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
 		    ORTE_NAME_ARGS(*ompi_rte_get_self()), seg->name);
     }
 
-    answer = OBJ_NEW(ompi_list_t);
+    answer = OBJ_NEW(opal_list_t);
 
     if (NULL == seg) { /* looking for index of global registry */
-	for (ptr = (orte_gpr_replica_keytable_t*)ompi_list_get_first(&orte_gpr_replica_head.segment_dict);
-	     ptr != (orte_gpr_replica_keytable_t*)ompi_list_get_end(&orte_gpr_replica_head.segment_dict);
-	     ptr = (orte_gpr_replica_keytable_t*)ompi_list_get_next(ptr)) {
+	for (ptr = (orte_gpr_replica_keytable_t*)opal_list_get_first(&orte_gpr_replica_head.segment_dict);
+	     ptr != (orte_gpr_replica_keytable_t*)opal_list_get_end(&orte_gpr_replica_head.segment_dict);
+	     ptr = (orte_gpr_replica_keytable_t*)opal_list_get_next(ptr)) {
 	    ans = OBJ_NEW(ompi_registry_index_value_t);
 	    ans->token = strdup(ptr->token);
-	    ompi_list_append(answer, &ans->item);
+	    opal_list_append(answer, &ans->item);
 	}
     } else {  /* want index of specific segment */
-	for (ptr = (orte_gpr_replica_keytable_t*)ompi_list_get_first(&seg->keytable);
-	     ptr != (orte_gpr_replica_keytable_t*)ompi_list_get_end(&seg->keytable);
-	     ptr = (orte_gpr_replica_keytable_t*)ompi_list_get_next(ptr)) {
+	for (ptr = (orte_gpr_replica_keytable_t*)opal_list_get_first(&seg->keytable);
+	     ptr != (orte_gpr_replica_keytable_t*)opal_list_get_end(&seg->keytable);
+	     ptr = (orte_gpr_replica_keytable_t*)opal_list_get_next(ptr)) {
 	    ans = OBJ_NEW(ompi_registry_index_value_t);
 	    ans->token = strdup(ptr->token);
-	    ompi_list_append(answer, &ans->item);
+	    opal_list_append(answer, &ans->item);
 	}
 
     }

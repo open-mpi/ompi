@@ -25,7 +25,7 @@
 #include "orte_config.h"
 #include "include/orte_constants.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 
 #include "mca/mca.h"
 #include "mca/ns/ns_types.h"
@@ -73,7 +73,7 @@ OMPI_DECLSPEC    void orte_errmgr_base_abort(void);
 OMPI_DECLSPEC extern int orte_errmgr_base_output;
 OMPI_DECLSPEC extern bool orte_errmgr_base_selected;
 OMPI_DECLSPEC extern bool orte_errmgr_initialized;
-OMPI_DECLSPEC extern ompi_list_t orte_errmgr_base_components_available;
+OMPI_DECLSPEC extern opal_list_t orte_errmgr_base_components_available;
 OMPI_DECLSPEC extern mca_errmgr_base_component_t orte_errmgr_base_selected_component;
 
 /*

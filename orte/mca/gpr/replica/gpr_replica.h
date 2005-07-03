@@ -142,7 +142,7 @@ struct orte_gpr_replica_t {
     orte_pointer_array_t *subscriptions; /**< Managed array of pointers to subscriptions */
     size_t num_subs;
     bool processing_callbacks;
-    ompi_list_t callbacks;          /**< List of callbacks to be processed */
+    opal_list_t callbacks;          /**< List of callbacks to be processed */
 };
 typedef struct orte_gpr_replica_t orte_gpr_replica_t;
 
@@ -360,7 +360,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_action_taken_t);
  * Callback list objects
  */
 struct orte_gpr_replica_callbacks_t {
-    ompi_list_item_t item;
+    opal_list_item_t item;
     orte_process_name_t *requestor;
     orte_gpr_notify_message_t *message;
 };
@@ -377,7 +377,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_callbacks_t);
  * THIS IS NOT IMPLEMENTED YET
  */
 struct orte_gpr_replica_list_t {
-    ompi_list_item_t item;         /**< Allows this item to be placed on a list */
+    opal_list_item_t item;         /**< Allows this item to be placed on a list */
     orte_process_name_t *replica;  /**< Name of the replica */
 };
 typedef struct orte_gpr_replica_list_t orte_gpr_replica_list_t;

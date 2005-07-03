@@ -24,7 +24,7 @@
 #include "pml_ob1_hdr.h"
 
 struct mca_pml_ob1_buffer_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     unsigned char addr[1];
 };
 typedef struct mca_pml_ob1_buffer_t mca_pml_ob1_buffer_t;
@@ -33,7 +33,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_buffer_t);
 
 
 struct mca_pml_ob1_recv_frag_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     mca_btl_base_module_t* btl;
     mca_pml_ob1_hdr_t hdr;
     struct mca_pml_ob1_recv_request_t* request;
@@ -48,7 +48,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_frag_t);
 
 #define MCA_PML_OB1_RECV_FRAG_ALLOC(frag,rc)                         \
 do {                                                            \
-    ompi_list_item_t* item;                                     \
+    opal_list_item_t* item;                                     \
     OMPI_FREE_LIST_WAIT(&mca_pml_ob1.recv_frags, item, rc);      \
     frag = (mca_pml_ob1_recv_frag_t*)item;                       \
 } while(0)
@@ -67,7 +67,7 @@ do {                                                            \
                                                                 \
     /* copy over data */                                        \
     for(i=0; i<cnt; i++) {                                      \
-        ompi_list_item_t* item;                                 \
+        opal_list_item_t* item;                                 \
         mca_pml_ob1_buffer_t* buff;                             \
         OMPI_FREE_LIST_WAIT(&mca_pml_ob1.buffers, item, rc);    \
         buff = (mca_pml_ob1_buffer_t*)item;                     \
@@ -89,13 +89,13 @@ do {                                                            \
     /* return buffers */                                        \
     for(i=0; i<frag->num_segments; i++) {                       \
         OMPI_FREE_LIST_RETURN(&mca_pml_ob1.buffers,             \
-           (ompi_list_item_t*)frag->buffers[i]);                \
+           (opal_list_item_t*)frag->buffers[i]);                \
     }                                                           \
     frag->num_segments = 0;                                     \
                                                                 \
     /* return recv_frag */                                       \
     OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_frags,               \
-        (ompi_list_item_t*)frag);                               \
+        (opal_list_item_t*)frag);                               \
 } while(0)
 
 

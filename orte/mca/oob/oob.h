@@ -257,7 +257,7 @@ OMPI_DECLSPEC extern mca_oob_t mca_oob;
  * associate a component and a module that belongs to it
  */
 struct mca_oob_base_info_t {
-  ompi_list_item_t super;
+  opal_list_item_t super;
   mca_oob_base_component_t *oob_component;
   mca_oob_t *oob_module;
 };
@@ -287,8 +287,8 @@ OMPI_DECLSPEC int mca_oob_base_close(void);
 OMPI_DECLSPEC extern int mca_oob_base_output;
 OMPI_DECLSPEC extern char* mca_oob_base_include;
 OMPI_DECLSPEC extern char* mca_oob_base_exclude;
-OMPI_DECLSPEC extern ompi_list_t mca_oob_base_components;
-OMPI_DECLSPEC extern ompi_list_t mca_oob_base_modules;
+OMPI_DECLSPEC extern opal_list_t mca_oob_base_components;
+OMPI_DECLSPEC extern opal_list_t mca_oob_base_modules;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

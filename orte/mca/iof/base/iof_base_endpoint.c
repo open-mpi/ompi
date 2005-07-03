@@ -38,7 +38,7 @@ static void orte_iof_base_endpoint_construct(orte_iof_base_endpoint_t* endpoint)
     endpoint->ep_ack = 0;
     endpoint->ep_fd = -1;
     memset(&endpoint->ep_event,0,sizeof(endpoint->ep_event));
-    OBJ_CONSTRUCT(&endpoint->ep_frags, ompi_list_t);
+    OBJ_CONSTRUCT(&endpoint->ep_frags, opal_list_t);
 }
 
 static void orte_iof_base_endpoint_destruct(orte_iof_base_endpoint_t* endpoint)
@@ -51,7 +51,7 @@ static void orte_iof_base_endpoint_destruct(orte_iof_base_endpoint_t* endpoint)
 
 OBJ_CLASS_INSTANCE(
     orte_iof_base_endpoint_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     orte_iof_base_endpoint_construct,
     orte_iof_base_endpoint_destruct);
 
@@ -70,7 +70,7 @@ static void orte_iof_base_endpoint_send_cb(
 {
     orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)cbdata;
     orte_iof_base_endpoint_t* endpoint = frag->frag_owner;
-    ompi_list_remove_item(&endpoint->ep_frags, &frag->super);
+    opal_list_remove_item(&endpoint->ep_frags, &frag->super);
     ORTE_IOF_BASE_FRAG_RETURN(frag);
 }
 
@@ -110,7 +110,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
     }
     /* Do not append the fragment before we know that we have some data (even 0 bytes it's OK) */
     frag->frag_owner = endpoint;
-    ompi_list_append(&endpoint->ep_frags, &frag->super);
+    opal_list_append(&endpoint->ep_frags, &frag->super);
 
     frag->frag_iov[1].iov_len = frag->frag_len = rc;
 
@@ -156,8 +156,8 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
      * until the output descriptor would block
     */
     OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
-    while(ompi_list_get_size(&endpoint->ep_frags)) {
-        orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)ompi_list_get_first(&endpoint->ep_frags);
+    while(opal_list_get_size(&endpoint->ep_frags)) {
+        orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)opal_list_get_first(&endpoint->ep_frags);
         int rc = write(endpoint->ep_fd, frag->frag_ptr, frag->frag_len);
         if(rc < 0) {
             if(errno == EAGAIN)
@@ -171,12 +171,12 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
         if(frag->frag_len > 0) {
             break;
         }
-        ompi_list_remove_item(&endpoint->ep_frags, &frag->super);
+        opal_list_remove_item(&endpoint->ep_frags, &frag->super);
         orte_iof_base_frag_ack(frag);
     }
 
     /* is there anything left to write? */
-    if(ompi_list_get_size(&endpoint->ep_frags) == 0) {
+    if(opal_list_get_size(&endpoint->ep_frags) == 0) {
         ompi_event_del(&endpoint->ep_event);
         if(orte_iof_base.iof_waiting) {
             ompi_condition_signal(&orte_iof_base.iof_condition);
@@ -195,10 +195,10 @@ static orte_iof_base_endpoint_t* orte_iof_base_endpoint_lookup(
     orte_iof_base_mode_t mode,
     int tag)
 {
-    ompi_list_item_t* item;
-    for(item =  ompi_list_get_first(&orte_iof_base.iof_endpoints);
-        item != ompi_list_get_end(&orte_iof_base.iof_endpoints);
-        item =  ompi_list_get_next(item)) {
+    opal_list_item_t* item;
+    for(item =  opal_list_get_first(&orte_iof_base.iof_endpoints);
+        item != opal_list_get_end(&orte_iof_base.iof_endpoints);
+        item =  opal_list_get_next(item)) {
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
         if(orte_ns.compare(ORTE_NS_CMP_ALL,proc,&endpoint->ep_name) == 0 &&
            endpoint->ep_tag == tag && endpoint->ep_mode == mode) {
@@ -271,7 +271,7 @@ int orte_iof_base_endpoint_create(
             return OMPI_ERR_BAD_PARAM;
     }
 
-    ompi_list_append(&orte_iof_base.iof_endpoints, &endpoint->super);
+    opal_list_append(&orte_iof_base.iof_endpoints, &endpoint->super);
     OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return ORTE_SUCCESS;
 }
@@ -286,16 +286,16 @@ int orte_iof_base_endpoint_delete(
     orte_ns_cmp_bitmask_t mask,
     int tag)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
-    item =  ompi_list_get_first(&orte_iof_base.iof_endpoints);
-    while(item != ompi_list_get_end(&orte_iof_base.iof_endpoints)) {
-        ompi_list_item_t* next =  ompi_list_get_next(item);
+    item =  opal_list_get_first(&orte_iof_base.iof_endpoints);
+    while(item != opal_list_get_end(&orte_iof_base.iof_endpoints)) {
+        opal_list_item_t* next =  opal_list_get_next(item);
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
         if(orte_ns.compare(mask,proc,&endpoint->ep_name) == 0 &&
            endpoint->ep_tag == tag) {
             OBJ_RELEASE(endpoint);
-            ompi_list_remove_item(&orte_iof_base.iof_endpoints,&endpoint->super);
+            opal_list_remove_item(&orte_iof_base.iof_endpoints,&endpoint->super);
         }
         item = next;
     }
@@ -318,7 +318,7 @@ int orte_iof_base_endpoint_close(orte_iof_base_endpoint_t* endpoint)
         }
         break;
     case ORTE_IOF_SINK:
-        if(ompi_list_get_size(&endpoint->ep_frags) == 0) {
+        if(opal_list_get_size(&endpoint->ep_frags) == 0) {
             endpoint->ep_state = ORTE_IOF_EP_CLOSED;
         }
         break;
@@ -344,11 +344,11 @@ orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
     orte_ns_cmp_bitmask_t dst_mask,
     int dst_tag)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
-    for(item =  ompi_list_get_first(&orte_iof_base.iof_endpoints);
-        item != ompi_list_get_end(&orte_iof_base.iof_endpoints);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&orte_iof_base.iof_endpoints);
+        item != opal_list_get_end(&orte_iof_base.iof_endpoints);
+        item =  opal_list_get_next(item)) {
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
         if(orte_ns.compare(dst_mask,dst_name,&endpoint->ep_name) == 0) {
             if(endpoint->ep_tag == dst_tag || endpoint->ep_tag == ORTE_IOF_ANY || dst_tag == ORTE_IOF_ANY) {
@@ -395,7 +395,7 @@ int orte_iof_base_endpoint_forward(
     frag->frag_hdr.hdr_msg = *hdr;
 
     /* try to write w/out copying data */
-    if(ompi_list_get_size(&endpoint->ep_frags) == 0) {
+    if(opal_list_get_size(&endpoint->ep_frags) == 0) {
         rc = write(endpoint->ep_fd,data,len);
         if(rc < 0) {
             orte_iof_base_endpoint_closed(endpoint);
@@ -409,8 +409,8 @@ int orte_iof_base_endpoint_forward(
         /* handle incomplete write */
         frag->frag_ptr = frag->frag_data;
         memcpy(frag->frag_ptr, data+rc, frag->frag_len);
-        ompi_list_append(&endpoint->ep_frags, &frag->super);
-        if(ompi_list_get_size(&endpoint->ep_frags) == 1) {
+        opal_list_append(&endpoint->ep_frags, &frag->super);
+        if(opal_list_get_size(&endpoint->ep_frags) == 1) {
             ompi_event_add(&endpoint->ep_event,0);
         }
         OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);

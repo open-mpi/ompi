@@ -28,7 +28,7 @@
 #include "mca/coll/coll.h"
 #include "mca/coll/base/base.h"
 
-extern ompi_list_t mca_coll_base_available;
+extern opal_list_t mca_coll_base_available;
 
 
 /*

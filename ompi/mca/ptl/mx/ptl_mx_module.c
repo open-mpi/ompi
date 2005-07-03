@@ -287,7 +287,7 @@ static mca_ptl_mx_module_t* mca_ptl_mx_create(uint64_t addr)
 
     /* copy over default settings */
     memcpy(ptl, &mca_ptl_mx_module, sizeof(mca_ptl_mx_module_t));
-    OBJ_CONSTRUCT(&ptl->mx_peers, ompi_list_t);
+    OBJ_CONSTRUCT(&ptl->mx_peers, opal_list_t);
                         	    
     /* open local endpoint */
     status = mx_open_endpoint(
@@ -455,7 +455,7 @@ int mca_ptl_mx_add_procs(
         ompi_bitmap_set_bit(reachable, n);
         OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
         peers[n] = ptl_peer;
-        ompi_list_append(&ptl_mx->mx_peers, (ompi_list_item_t*)ptl_peer);
+        opal_list_append(&ptl_mx->mx_peers, (opal_list_item_t*)ptl_peer);
     }
     return OMPI_SUCCESS;
 }

@@ -44,7 +44,7 @@ int mca_pml_example_del_comm(ompi_communicator_t* comm)
     return OMPI_SUCCESS;
 }
 
-int mca_pml_example_add_ptls(ompi_list_t *ptls)
+int mca_pml_example_add_ptls(opal_list_t *ptls)
 {
     return OMPI_SUCCESS;
 }

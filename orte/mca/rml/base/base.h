@@ -39,7 +39,7 @@ OMPI_DECLSPEC int orte_rml_base_close(void);
 struct orte_rml_base_t {
     int rml_output;
     int rml_debug;
-    ompi_list_t rml_components;
+    opal_list_t rml_components;
 };
 typedef struct orte_rml_base_t orte_rml_base_t;
 

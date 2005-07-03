@@ -111,16 +111,16 @@ static void orte_iof_svc_proxy_msg(
     orte_iof_base_msg_header_t* hdr, 
     unsigned char* data)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     if(mca_iof_svc_component.svc_debug > 1) {
         ompi_output(0, "orte_iof_svc_proxy_msg: tag %d seq %d\n",hdr->msg_tag,hdr->msg_seq);
     }
 
     /* dispatch based on subscription list */
     OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
-    for(item  = ompi_list_get_first(&mca_iof_svc_component.svc_subscribed);
-        item != ompi_list_get_end(&mca_iof_svc_component.svc_subscribed);
-        item =  ompi_list_get_next(item)) {
+    for(item  = opal_list_get_first(&mca_iof_svc_component.svc_subscribed);
+        item != opal_list_get_end(&mca_iof_svc_component.svc_subscribed);
+        item =  opal_list_get_next(item)) {
         orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)item;
 
         /* tags match */
@@ -168,7 +168,7 @@ static void orte_iof_svc_proxy_ack(
     const orte_process_name_t* src,
     orte_iof_base_msg_header_t* hdr)
 {
-    ompi_list_item_t *s_item;
+    opal_list_item_t *s_item;
     uint32_t seq_min = hdr->msg_seq + hdr->msg_len;
     union {
         uint32_t uval;
@@ -186,12 +186,12 @@ static void orte_iof_svc_proxy_ack(
     */
      
     OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
-    for(s_item =  ompi_list_get_first(&mca_iof_svc_component.svc_subscribed);
-        s_item != ompi_list_get_end(&mca_iof_svc_component.svc_subscribed);
-        s_item =  ompi_list_get_next(s_item)) {
+    for(s_item =  opal_list_get_first(&mca_iof_svc_component.svc_subscribed);
+        s_item != opal_list_get_end(&mca_iof_svc_component.svc_subscribed);
+        s_item =  opal_list_get_next(s_item)) {
 
         orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)s_item;
-        ompi_list_item_t *f_item;
+        opal_list_item_t *f_item;
 
         if (orte_ns.compare(sub->src_mask,&sub->src_name,&hdr->msg_src) != 0 ||
             sub->src_tag != hdr->msg_tag) {
@@ -199,9 +199,9 @@ static void orte_iof_svc_proxy_ack(
         }
 
         /* look for this endpoint in the forwarding table */
-        for(f_item =  ompi_list_get_first(&sub->sub_forward);
-            f_item != ompi_list_get_end(&sub->sub_forward);
-            f_item =  ompi_list_get_next(f_item)) {
+        for(f_item =  opal_list_get_first(&sub->sub_forward);
+            f_item != opal_list_get_end(&sub->sub_forward);
+            f_item =  opal_list_get_next(f_item)) {
             orte_iof_svc_fwd_t* fwd = (orte_iof_svc_fwd_t*)f_item;
             orte_iof_svc_pub_t* pub = fwd->fwd_pub;
             if (orte_ns.compare(pub->pub_mask,&pub->pub_name,src) == 0 ||

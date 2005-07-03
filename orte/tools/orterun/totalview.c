@@ -40,7 +40,7 @@
 #include <strings.h>
 
 #include "util/output.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/schema/schema.h"
 #include "mca/ns/ns.h"
@@ -55,7 +55,7 @@
  * Per process data object
  */
 typedef struct {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     char *nodename;
     char *IP_address;
     char *executable;
@@ -90,7 +90,7 @@ static void orte_totalview_proc_data_destructor(orte_totalview_proc_data* ptr)
 /* define instance of orte_gpr_replica_segment_t */
 OBJ_CLASS_INSTANCE(
           orte_totalview_proc_data_t,  /* type name */
-          ompi_list_item_t, /* parent "class" name */
+          opal_list_item_t, /* parent "class" name */
           orte_totalview_proc_data_construct, /* constructor */
           orte_totalview_proc_data_destructor); /* destructor */
 
@@ -99,16 +99,16 @@ OBJ_CLASS_INSTANCE(
  * Local functions for retrieving daemon and app process info
  */
 static int orte_totalview_get_job_info(size_t *num_procs,
-                                ompi_list_t *ptr,
+                                opal_list_t *ptr,
                                 orte_jobid_t jobid,
                                 orte_jobgrp_t job_grp);
 
 static int orte_totalview_get_daemon_info(size_t *num_procs,
-                                ompi_list_t *ptr,
+                                opal_list_t *ptr,
                                 orte_jobgrp_t job_grp);
 
 static int orte_totalview_get_app_info(size_t *num_procs,
-                                ompi_list_t *ptr,
+                                opal_list_t *ptr,
                                 orte_jobgrp_t job_grp);
 
 /* +++ begin MPICH/TotalView interface definitions */
@@ -167,9 +167,9 @@ static void dump(void)
  */
 void orte_totalview_init(orte_jobgrp_t job_grp)
 {
-    ompi_list_t proc_info;
+    opal_list_t proc_info;
     
-    OBJ_CONSTRUCT(&proc_info, ompi_list_t);
+    OBJ_CONSTRUCT(&proc_info, opal_list_t);
     
     /* 
      * fill in proc table
@@ -293,7 +293,7 @@ void *MPIR_Breakpoint(void)
  * Get daemon info required for Totalview
  */
 int orte_totalview_get_daemon_info(size_t *num_procs,
-                                ompi_list_t *ptr,
+                                opal_list_t *ptr,
                                 orte_jobgrp_t job_grp)
 {
     /* the daemons for a job group are ALWAYS located on jobid zero
@@ -307,7 +307,7 @@ int orte_totalview_get_daemon_info(size_t *num_procs,
 }
 
 static int orte_totalview_get_job_info(size_t *num_procs,
-                                ompi_list_t *ptr,
+                                opal_list_t *ptr,
                                 orte_jobid_t jobid,
                                 orte_jobgrp_t job_grp)
 {
@@ -388,7 +388,7 @@ static int orte_totalview_get_job_info(size_t *num_procs,
                 continue;
             }
         }
-        ompi_list_append(ptr, pdat->item);
+        opal_list_append(ptr, pdat->item);
         
         OBJ_RELEASE(value);
     }
@@ -407,9 +407,9 @@ static int orte_totalview_get_job_info(size_t *num_procs,
      * default path that was stored in the ORTE_JOB_GLOBALS
      * container - and store the default path in them
      */
-    for (pdat = (orte_totalview_proc_data_t*)ompi_list_get_first(ptr);
-         pdat != (orte_totalview_proc_data_t*)ompi_list_get_end(ptr);
-         pdat = (orte_totalview_proc_data_t*)ompi_list_get_next(pdat)) {
+    for (pdat = (orte_totalview_proc_data_t*)opal_list_get_first(ptr);
+         pdat != (orte_totalview_proc_data_t*)opal_list_get_end(ptr);
+         pdat = (orte_totalview_proc_data_t*)opal_list_get_next(pdat)) {
          if (NULL == pdat->executable)
             pdat->executable = strdup(save_exec);
     }
@@ -427,7 +427,7 @@ static int orte_totalview_get_job_info(size_t *num_procs,
  * Get application process info required for Totalview
  */
 int orte_totalview_get_app_info(size_t *num_procs,
-                                ompi_list_t *ptr,
+                                opal_list_t *ptr,
                                 orte_jobgrp_t job_grp)
 {
     /* need to find all the jobid's that are part of this jobgrp.

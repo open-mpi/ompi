@@ -2,7 +2,7 @@
 #define _IOF_BASE_ENDPOINT_
 
 #include "ompi_config.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "event/event.h"
 #include "mca/iof/iof.h"
 #include "mca/iof/base/iof_base_header.h"
@@ -18,7 +18,7 @@ enum {
  */
 
 struct orte_iof_base_endpoint_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     orte_iof_base_mode_t ep_mode;
     orte_process_name_t ep_name;
     int ep_tag;
@@ -27,7 +27,7 @@ struct orte_iof_base_endpoint_t {
     uint32_t ep_seq;
     uint32_t ep_ack;
     ompi_event_t ep_event;
-    ompi_list_t ep_frags;
+    opal_list_t ep_frags;
 };
 typedef struct orte_iof_base_endpoint_t orte_iof_base_endpoint_t;
 
@@ -120,7 +120,7 @@ int orte_iof_base_endpoint_ack(
 static inline bool orte_iof_base_endpoint_pending(
     orte_iof_base_endpoint_t* endpoint)
 {
-    return ompi_list_get_size(&endpoint->ep_frags) || (endpoint->ep_seq != endpoint->ep_ack);
+    return opal_list_get_size(&endpoint->ep_frags) || (endpoint->ep_seq != endpoint->ep_ack);
 }
 
 #endif

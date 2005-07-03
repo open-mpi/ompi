@@ -65,8 +65,8 @@ extern "C" {
         char*       gm_port_name;            /**< the name used to get the port */
 
         struct mca_ptl_gm_proc_t* gm_local;
-        ompi_list_t gm_procs;
-        ompi_list_t gm_send_req;
+        opal_list_t gm_procs;
+        opal_list_t gm_send_req;
         ompi_free_list_t gm_unexpected_frags_data;
 
         ompi_mutex_t gm_lock;                 /**< lock for accessing module state */
@@ -94,9 +94,9 @@ extern "C" {
         ompi_free_list_t gm_send_frags;
         ompi_free_list_t gm_send_dma_frags;
         ompi_free_list_t gm_recv_frags_free;
-        ompi_list_t gm_send_frags_queue;
-        ompi_list_t gm_pending_acks;
-        ompi_list_t gm_recv_outstanding_queue;
+        opal_list_t gm_send_frags_queue;
+        opal_list_t gm_pending_acks;
+        opal_list_t gm_recv_outstanding_queue;
 
         ompi_thread_t thread;
 #if MCA_PTL_GM_STATISTICS
@@ -230,12 +230,12 @@ extern "C" {
     void mca_ptl_gm_dump_header( char* str, union mca_ptl_base_header_t* hdr );
 
 #if OMPI_ENABLE_DEBUG
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 /* If debug is enabled we have to work around the item validity checks. */
 #define OMPI_GM_FREE_LIST_RETURN( LIST, ITEM )    \
 do {                                              \
-    (ITEM)->ompi_list_item_refcount = 0;          \
-    (ITEM)->ompi_list_item_belong_to = NULL;      \
+    (ITEM)->opal_list_item_refcount = 0;          \
+    (ITEM)->opal_list_item_belong_to = NULL;      \
     (ITEM)->super.cls_init_file_name = __FILE__;  \
     (ITEM)->super.cls_init_lineno = __LINE__;     \
     OMPI_FREE_LIST_RETURN( (LIST), (ITEM) );      \

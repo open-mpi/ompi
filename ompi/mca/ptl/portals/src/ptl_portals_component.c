@@ -117,7 +117,7 @@ mca_ptl_portals_component_open(void)
     OBJ_CONSTRUCT(&mca_ptl_portals_component.portals_recv_frags, 
                   ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_portals_component.portals_pending_acks, 
-                  ompi_list_t);
+                  opal_list_t);
     OBJ_CONSTRUCT(&mca_ptl_portals_component.portals_lock, 
                   ompi_mutex_t);
 

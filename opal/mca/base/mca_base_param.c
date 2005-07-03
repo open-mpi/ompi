@@ -42,7 +42,7 @@
  * This variable is public, but not advertised in mca_base_param.h.
  * It's only public so that the file parser can see it.
  */
-ompi_list_t mca_base_param_file_values;
+opal_list_t mca_base_param_file_values;
 
 
 /*
@@ -96,9 +96,9 @@ static void info_destructor(mca_base_param_info_t *p);
  */
 OBJ_CLASS_INSTANCE(mca_base_param_t, opal_object_t, 
                    param_constructor, param_destructor);
-OBJ_CLASS_INSTANCE(mca_base_param_file_value_t, ompi_list_item_t,
+OBJ_CLASS_INSTANCE(mca_base_param_file_value_t, opal_list_item_t,
                    fv_constructor, fv_destructor);
-OBJ_CLASS_INSTANCE(mca_base_param_info_t, ompi_list_item_t,
+OBJ_CLASS_INSTANCE(mca_base_param_info_t, opal_list_item_t,
                    info_constructor, info_destructor);
 
 
@@ -120,7 +120,7 @@ int mca_base_param_init(void)
 
         /* Init the file param value list */
 
-        OBJ_CONSTRUCT(&mca_base_param_file_values, ompi_list_t);
+        OBJ_CONSTRUCT(&mca_base_param_file_values, opal_list_t);
 
         /* Set this before we register the parameter, below */
 
@@ -470,7 +470,7 @@ int mca_base_param_set_internal(int index, bool internal)
 /*
  * Return a list of info of all currently registered parameters
  */
-int mca_base_param_dump(ompi_list_t **info, bool internal)
+int mca_base_param_dump(opal_list_t **info, bool internal)
 {
     size_t i, len;
     mca_base_param_info_t *p;
@@ -485,7 +485,7 @@ int mca_base_param_dump(ompi_list_t **info, bool internal)
     if (NULL == info) {
         return OMPI_ERROR;
     }
-    *info = OBJ_NEW(ompi_list_t);
+    *info = OBJ_NEW(opal_list_t);
 
     /* Iterate through all the registered parameters */
 
@@ -504,7 +504,7 @@ int mca_base_param_dump(ompi_list_t **info, bool internal)
             p->mbpp_env_var_name = array[i].mbp_env_var_name;
             p->mbpp_full_name = array[i].mbp_full_name;
             
-            ompi_list_append(*info, (ompi_list_item_t*) p);
+            opal_list_append(*info, (opal_list_item_t*) p);
         }
     }
 
@@ -579,12 +579,12 @@ int mca_base_param_build_env(char ***env, int *num_env, bool internal)
  * Free a list -- and all associated memory -- that was previously
  * returned from mca_base_param_dump()
  */
-int mca_base_param_dump_release(ompi_list_t *info)
+int mca_base_param_dump_release(opal_list_t *info)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
 
-    for (item = ompi_list_remove_first(info); NULL != item;
-         item = ompi_list_remove_first(info)) {
+    for (item = opal_list_remove_first(info); NULL != item;
+         item = opal_list_remove_first(info)) {
         OBJ_RELEASE(item);
     }
     OBJ_RELEASE(info);
@@ -599,7 +599,7 @@ int mca_base_param_dump_release(ompi_list_t *info)
  */
 int mca_base_param_finalize(void)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     mca_base_param_t *array;
 
     if (initialized) {
@@ -613,9 +613,9 @@ int mca_base_param_finalize(void)
         }
         OBJ_DESTRUCT(&mca_base_params);
 
-        for (item = ompi_list_remove_first(&mca_base_param_file_values);
+        for (item = opal_list_remove_first(&mca_base_param_file_values);
              NULL != item;
-             item = ompi_list_remove_first(&mca_base_param_file_values)) {
+             item = opal_list_remove_first(&mca_base_param_file_values)) {
             OBJ_RELEASE(item);
         }
         OBJ_DESTRUCT(&mca_base_param_file_values);
@@ -1154,7 +1154,7 @@ static bool lookup_env(mca_base_param_t *param,
 static bool lookup_file(mca_base_param_t *param,
                         mca_base_param_storage_t *storage)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     mca_base_param_file_value_t *fv;
 
     /* See if we previously found a match from a file.  If so, just
@@ -1168,9 +1168,9 @@ static bool lookup_file(mca_base_param_t *param,
        find a match.  If we do, cache it on the param (for future
        lookups) and save it in the storage. */
 
-    for (item = ompi_list_get_first(&mca_base_param_file_values);
-         ompi_list_get_end(&mca_base_param_file_values) != item;
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&mca_base_param_file_values);
+         opal_list_get_end(&mca_base_param_file_values) != item;
+         item = opal_list_get_next(item)) {
         fv = (mca_base_param_file_value_t *) item;
         if (0 == strcmp(fv->mbpfv_param, param->mbp_full_name)) {
             if (MCA_BASE_PARAM_TYPE_INT == param->mbp_type) {
@@ -1189,8 +1189,8 @@ static bool lookup_file(mca_base_param_t *param,
                remove it from the list and make future file lookups
                faster */
 
-            ompi_list_remove_item(&mca_base_param_file_values, 
-                                  (ompi_list_item_t *) fv);
+            opal_list_remove_item(&mca_base_param_file_values, 
+                                  (opal_list_item_t *) fv);
             OBJ_RELEASE(fv);
 
             return set(param->mbp_type, storage, &param->mbp_file_value);

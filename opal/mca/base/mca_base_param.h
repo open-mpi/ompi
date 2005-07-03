@@ -59,7 +59,7 @@
 #include "ompi_config.h"
 
 #include "class/ompi_value_array.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "class/ompi_hash_table.h"
 
 /**
@@ -82,7 +82,7 @@ typedef enum {
  */
 struct mca_base_param_info_t {
     /** So that we can be in a list */
-    ompi_list_item_t super;
+    opal_list_item_t super;
 
     /** Index of this parameter */
     int mbpp_index;
@@ -448,7 +448,7 @@ extern "C" {
      * Obtain a list of all the MCA parameters currently defined as
      * well as their types.  
      *
-     * @param info[out] An ompi_list_t of mca_base_param_info_t
+     * @param info[out] An opal_list_t of mca_base_param_info_t
      * instances.
      * @param internal[in] Whether to include the internal parameters
      * or not.
@@ -468,7 +468,7 @@ extern "C" {
      * mca_base_param_dump_release() when finished with the returned
      * info list to release all associated memory.
      */
-    OMPI_DECLSPEC int mca_base_param_dump(ompi_list_t **info, bool internal);
+    OMPI_DECLSPEC int mca_base_param_dump(opal_list_t **info, bool internal);
 
     /**
      * Obtain a list of all the MCA parameters currently defined as
@@ -494,7 +494,7 @@ extern "C" {
      * Release the memory associated with the info list returned from
      * mca_base_param_dump().
      *
-     * @param info[in/out] An ompi_list_t previously returned from
+     * @param info[in/out] An opal_list_t previously returned from
      * mca_base_param_dump().
      *
      * @retval OMPI_SUCCESS Upon success.
@@ -507,7 +507,7 @@ extern "C" {
      * the caller is finished with the info list, invoke this
      * function and all memory associated with the list will be freed.
      */
-    OMPI_DECLSPEC int mca_base_param_dump_release(ompi_list_t *info);
+    OMPI_DECLSPEC int mca_base_param_dump_release(opal_list_t *info);
 
     /**
      * Shut down the MCA parameter system (normally only invoked by the

@@ -21,7 +21,7 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "class/ompi_rb_tree.h"
 #include "mca/mca.h"
 #include "mca/mpool/mpool.h"
@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 struct mca_mpool_base_selected_module_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     mca_mpool_base_component_t *mpool_component;
     mca_mpool_base_module_t *mpool_module;
     void* user_data; 
@@ -79,7 +79,7 @@ typedef struct mca_mpool_base_reg_mpool_t mca_mpool_base_reg_mpool_t;
  */
 struct mca_mpool_base_chunk_t
 {
-    ompi_list_item_t super;   /**< the parent class */
+    opal_list_item_t super;   /**< the parent class */
     mca_mpool_base_key_t key; /**< the key which holds the memory pointers */
     mca_mpool_base_reg_mpool_t mpools[MCA_MPOOL_BASE_MAX_REG]; 
                               /**< the mpools the memory is registered with */
@@ -111,8 +111,8 @@ OMPI_DECLSPEC mca_mpool_base_module_t* mca_mpool_base_module_create(
  * Globals
  */
 OMPI_DECLSPEC extern int mca_mpool_base_output;
-OMPI_DECLSPEC extern ompi_list_t mca_mpool_base_components;
-OMPI_DECLSPEC extern ompi_list_t mca_mpool_base_modules;
+OMPI_DECLSPEC extern opal_list_t mca_mpool_base_components;
+OMPI_DECLSPEC extern opal_list_t mca_mpool_base_modules;
 OMPI_DECLSPEC extern ompi_free_list_t mca_mpool_base_mem_list;
 OMPI_DECLSPEC extern ompi_rb_tree_t mca_mpool_base_tree;
 OMPI_DECLSPEC extern ompi_mutex_t mca_mpool_base_tree_lock; 

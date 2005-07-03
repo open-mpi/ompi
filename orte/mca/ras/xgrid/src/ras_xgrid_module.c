@@ -36,7 +36,7 @@ static int allocate(orte_jobid_t jobid);
 static int deallocate(orte_jobid_t jobid);
 static int finalize(void);
 
-static int discover(orte_jobid_t jobid, ompi_list_t* nodelist);
+static int discover(orte_jobid_t jobid, opal_list_t* nodelist);
 
 
 /*
@@ -58,10 +58,10 @@ orte_ras_base_module_t orte_ras_xgrid_module = {
 static int allocate(orte_jobid_t jobid)
 {
     int ret;
-    ompi_list_t nodes;
-    ompi_list_item_t* item;
+    opal_list_t nodes;
+    opal_list_item_t* item;
 
-    OBJ_CONSTRUCT(&nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
     if (ORTE_SUCCESS != (ret = discover(jobid, &nodes))) {
         ompi_output(orte_ras_base.ras_output,
                     "ras:xgrid:allocate: discover failed!");
@@ -69,7 +69,7 @@ static int allocate(orte_jobid_t jobid)
     }
     ret = orte_ras_base_allocate_nodes_by_node(jobid, &nodes);
 
-    while (NULL != (item = ompi_list_remove_first(&nodes))) {
+    while (NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&nodes);
@@ -111,12 +111,12 @@ static int finalize(void)
 
 
 /* discover number of available resouces.  Always exactly what asked for (surprise...) */
-static int discover(orte_jobid_t jobid, ompi_list_t* nodelist)
+static int discover(orte_jobid_t jobid, opal_list_t* nodelist)
 {
     int ret;
     orte_ras_base_node_t *node;
-    ompi_list_item_t* item;
-    ompi_list_t new_nodes;
+    opal_list_item_t* item;
+    opal_list_t new_nodes;
     size_t num_requested = 0;
     size_t i;
     char *hostname;
@@ -127,7 +127,7 @@ static int discover(orte_jobid_t jobid, ompi_list_t* nodelist)
     }
 
     /* create a "node" for each slot */
-    OBJ_CONSTRUCT(&new_nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     for (i = 0 ; i < num_requested ; ++i) {
         asprintf(&hostname, "xgrid-node-%d", (int) i);
         node = OBJ_NEW(orte_ras_base_node_t);
@@ -138,17 +138,17 @@ static int discover(orte_jobid_t jobid, ompi_list_t* nodelist)
         node->node_slots_inuse = 0;
         node->node_slots_max = 1;
         node->node_slots = 1;
-        ompi_list_append(&new_nodes, &node->super);
+        opal_list_append(&new_nodes, &node->super);
     }
 
     /* Add these nodes to the registry, and return all the values */
     ompi_output(orte_ras_base.ras_output, 
                 "ras:xgrid:allocate:discover: done -- adding to registry");
     ret = orte_ras_base_node_insert(&new_nodes);
-    for (item = ompi_list_remove_first(&new_nodes);
-         NULL != item; item = ompi_list_remove_first(&new_nodes)) {
+    for (item = opal_list_remove_first(&new_nodes);
+         NULL != item; item = opal_list_remove_first(&new_nodes)) {
         if (ORTE_SUCCESS == ret) {
-            ompi_list_append(nodelist, item);
+            opal_list_append(nodelist, item);
         } else {
             OBJ_RELEASE(item);
         }

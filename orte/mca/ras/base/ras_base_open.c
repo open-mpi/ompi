@@ -53,7 +53,7 @@ static void orte_ras_base_cmp_destructor(orte_ras_base_cmp_t *cmp)
  * so that we get the highest priority first (i.e., so the sort is
  * highest->lowest, not lowest->highest)
  */
-static int compare(ompi_list_item_t **a, ompi_list_item_t **b)
+static int compare(opal_list_item_t **a, opal_list_item_t **b)
 {
     orte_ras_base_cmp_t *aa = *((orte_ras_base_cmp_t **) a);
     orte_ras_base_cmp_t *bb = *((orte_ras_base_cmp_t **) b);
@@ -74,7 +74,7 @@ static int compare(ompi_list_item_t **a, ompi_list_item_t **b)
 orte_ras_base_t orte_ras_base;
 OBJ_CLASS_INSTANCE(
     orte_ras_base_cmp_t, 
-    ompi_list_item_t,
+    opal_list_item_t,
     orte_ras_base_cmp_constructor, 
     orte_ras_base_cmp_destructor);
 
@@ -85,7 +85,7 @@ OBJ_CLASS_INSTANCE(
  */
 int orte_ras_base_open(void)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
     orte_ras_base_component_t *component;
     orte_ras_base_module_t *module;
@@ -110,11 +110,11 @@ int orte_ras_base_open(void)
                                  &orte_ras_base.ras_opened, true)) {
         return ORTE_ERROR;
     }
-    OBJ_CONSTRUCT(&orte_ras_base.ras_available, ompi_list_t);
+    OBJ_CONSTRUCT(&orte_ras_base.ras_available, opal_list_t);
 
-    for (item = ompi_list_get_first(&orte_ras_base.ras_opened);
-         ompi_list_get_end(&orte_ras_base.ras_opened) != item;
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&orte_ras_base.ras_opened);
+         opal_list_get_end(&orte_ras_base.ras_opened) != item;
+         item = opal_list_get_next(item)) {
         cli = (mca_base_component_list_item_t *) item;
         component = (orte_ras_base_component_t *) cli->cli_component;
         ompi_output(orte_ras_base.ras_output,
@@ -140,7 +140,7 @@ int orte_ras_base_open(void)
             cmp->module = module;
             cmp->priority = priority;
 
-            ompi_list_append(&orte_ras_base.ras_available, &cmp->super);
+            opal_list_append(&orte_ras_base.ras_available, &cmp->super);
         } else {
             ompi_output(orte_ras_base.ras_output,
                         "orte:base:open: component %s does NOT want to be considered for selection",
@@ -149,7 +149,7 @@ int orte_ras_base_open(void)
     }
 
     /* Sort the resulting available list in priority order */
-    ompi_list_sort(&orte_ras_base.ras_available, compare);
+    opal_list_sort(&orte_ras_base.ras_available, compare);
 
     /* All done */
     return ORTE_SUCCESS;

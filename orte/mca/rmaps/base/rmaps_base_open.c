@@ -39,13 +39,13 @@
  */
 static void cmp_constructor(orte_rmaps_base_cmp_t *cmp);
 static void cmp_destructor(orte_rmaps_base_cmp_t *cmp);
-static int compare(ompi_list_item_t **a, ompi_list_item_t **b);
+static int compare(opal_list_item_t **a, opal_list_item_t **b);
 
 /*
  * Global variables
  */
 orte_rmaps_base_t orte_rmaps_base;
-OBJ_CLASS_INSTANCE(orte_rmaps_base_cmp_t, ompi_list_item_t,
+OBJ_CLASS_INSTANCE(orte_rmaps_base_cmp_t, opal_list_item_t,
                    cmp_constructor, cmp_destructor);
 
 
@@ -55,7 +55,7 @@ OBJ_CLASS_INSTANCE(orte_rmaps_base_cmp_t, ompi_list_item_t,
  */
 int orte_rmaps_base_open(void)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     mca_base_component_list_item_t *cli;
     orte_rmaps_base_component_t *component;
     orte_rmaps_base_module_t *module;
@@ -82,10 +82,10 @@ int orte_rmaps_base_open(void)
 
     /* Query all the opened components and see if they want to run */
 
-    OBJ_CONSTRUCT(&orte_rmaps_base.rmaps_available, ompi_list_t);
-    for (item = ompi_list_get_first(&orte_rmaps_base.rmaps_opened); 
-         ompi_list_get_end(&orte_rmaps_base.rmaps_opened) != item; 
-         item = ompi_list_get_next(item)) {
+    OBJ_CONSTRUCT(&orte_rmaps_base.rmaps_available, opal_list_t);
+    for (item = opal_list_get_first(&orte_rmaps_base.rmaps_opened); 
+         opal_list_get_end(&orte_rmaps_base.rmaps_opened) != item; 
+         item = opal_list_get_next(item)) {
         cli = (mca_base_component_list_item_t *) item;
         component = (orte_rmaps_base_component_t *) cli->cli_component;
         ompi_output(orte_rmaps_base.rmaps_output,
@@ -111,7 +111,7 @@ int orte_rmaps_base_open(void)
             cmp->module = module;
             cmp->priority = priority;
 
-            ompi_list_append(&orte_rmaps_base.rmaps_available, &cmp->super);
+            opal_list_append(&orte_rmaps_base.rmaps_available, &cmp->super);
         } else {
             ompi_output(orte_rmaps_base.rmaps_output,
                         "orte:base:open: component %s does NOT want to be considered for selection", 
@@ -121,7 +121,7 @@ int orte_rmaps_base_open(void)
 
     /* Sort the resulting available list in priority order */
 
-    ompi_list_sort(&orte_rmaps_base.rmaps_available, compare);
+    opal_list_sort(&orte_rmaps_base.rmaps_available, compare);
 
     /* All done */
 
@@ -143,7 +143,7 @@ static void cmp_destructor(orte_rmaps_base_cmp_t *cmp)
 }
 
 
-static int compare(ompi_list_item_t **a, ompi_list_item_t **b)
+static int compare(opal_list_item_t **a, opal_list_item_t **b)
 {
     orte_rmaps_base_cmp_t *aa = *((orte_rmaps_base_cmp_t **) a);
     orte_rmaps_base_cmp_t *bb = *((orte_rmaps_base_cmp_t **) b);

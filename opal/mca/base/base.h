@@ -38,7 +38,7 @@ extern "C" {
  * Structure for making plain lists of components
  */
 struct mca_base_component_list_item_t {
-  ompi_list_item_t super;
+  opal_list_item_t super;
   const mca_base_component_t *cli_component;
 };
 typedef struct mca_base_component_list_item_t mca_base_component_list_item_t;
@@ -119,7 +119,7 @@ OMPI_DECLSPEC  int mca_base_component_compare(const mca_base_component_t *a,
 
 OMPI_DECLSPEC  int mca_base_component_find(const char *directory, const char *type,
                            const mca_base_component_t *static_components[],
-                           ompi_list_t *found_components,
+                           opal_list_t *found_components,
                            bool open_dso_components);
 
   /* mca_base_component_register.c */
@@ -141,12 +141,12 @@ OMPI_DECLSPEC  void mca_base_component_repository_finalize(void);
 
 OMPI_DECLSPEC  int mca_base_components_open(const char *type_name, int output_id,
                             const mca_base_component_t **static_components,
-                            ompi_list_t *components_available,
+                            opal_list_t *components_available,
                             bool open_dso_components);
 
   /* mca_base_components_close.c */
   
-OMPI_DECLSPEC  int mca_base_components_close(int output_id, ompi_list_t *components_available, 
+OMPI_DECLSPEC  int mca_base_components_close(int output_id, opal_list_t *components_available, 
                              const mca_base_component_t *skip);
 
 #if 0

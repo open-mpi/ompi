@@ -136,7 +136,7 @@ mca_ptl_elan_component_open (void)
     elan_mp->free_list_inc = 32;
 
     /* initialize objects*/
-    OBJ_CONSTRUCT (&elan_mp->elan_procs, ompi_list_t);
+    OBJ_CONSTRUCT (&elan_mp->elan_procs, opal_list_t);
     OBJ_CONSTRUCT (&elan_mp->elan_recv_frags_free, ompi_free_list_t);
     OBJ_CONSTRUCT (&elan_mp->elan_lock, ompi_mutex_t);
 
@@ -176,12 +176,12 @@ mca_ptl_elan_component_close (void)
      * We need free all the memory allocated for this list
      * before desctructing this free_list */
     if (elan_mp->elan_recv_frags_free.fl_num_allocated !=
-        elan_mp->elan_recv_frags_free.super.ompi_list_length) {
+        elan_mp->elan_recv_frags_free.super.opal_list_length) {
         ompi_output (0, 
 		     "[%s:%d] recv_frags : %d allocated %d returned\n",
 		     __FILE__, __LINE__,
                      elan_mp->elan_recv_frags_free.fl_num_allocated,
-                     elan_mp->elan_recv_frags_free.super.ompi_list_length);
+                     elan_mp->elan_recv_frags_free.super.opal_list_length);
     }
     OBJ_DESTRUCT (&(elan_mp->elan_recv_frags_free));
 

@@ -18,7 +18,7 @@
 #define OMPI_PROC
 
 #include "include/types.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "dps/dps_types.h"
 #include "threads/mutex.h"
 
@@ -30,7 +30,7 @@ extern "C" {
 OMPI_DECLSPEC extern opal_class_t ompi_proc_t_class;
 
 struct ompi_proc_t {
-    ompi_list_item_t          super;       /* allow proc to be placed on a list */
+    opal_list_item_t          super;       /* allow proc to be placed on a list */
     orte_process_name_t       proc_name;
     struct mca_pml_proc_t*    proc_pml;    /* PML specific proc data */
     opal_object_t*            proc_modex;  /* MCA module exchange data */

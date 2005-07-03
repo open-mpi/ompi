@@ -196,14 +196,14 @@ typedef struct ompi_test_rb_key_t ompi_test_rb_key_t;
 
 struct ompi_test_rb_value_t
 {
-    ompi_list_item_t super; /* the parent class */
+    opal_list_item_t super; /* the parent class */
     ompi_test_rb_key_t key; /* the key which holds the memory pointers */
     mca_mpool_base_module_t* registered_mpools[MAX_REGISTRATIONS]; 
                             /* the mpools the memory is registered with */
 };
 typedef struct ompi_test_rb_value_t ompi_test_rb_value_t;
 
-OBJ_CLASS_INSTANCE(ompi_test_rb_value_t, ompi_list_item_t, NULL, NULL);
+OBJ_CLASS_INSTANCE(ompi_test_rb_value_t, opal_list_item_t, NULL, NULL);
 
 int mem_node_compare(void * key1, void * key2)
 {
@@ -223,12 +223,12 @@ int mem_node_compare(void * key1, void * key2)
 void test2(void)
 {
     ompi_free_list_t key_list;
-    ompi_list_item_t * new_value;
+    opal_list_item_t * new_value;
     ompi_rb_tree_t tree;
     int rc, i, size;
     void * result, * lookup;
     void * mem[NUM_ALLOCATIONS];
-    ompi_list_item_t * key_array[NUM_ALLOCATIONS];
+    opal_list_item_t * key_array[NUM_ALLOCATIONS];
     struct timeval start, end;
     
     OBJ_CONSTRUCT(&key_list, ompi_free_list_t);

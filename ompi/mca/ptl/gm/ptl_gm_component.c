@@ -96,8 +96,8 @@ mca_ptl_gm_component_open(void)
 
     /* initialize objects */
     OBJ_CONSTRUCT (&mca_ptl_gm_component.gm_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT (&mca_ptl_gm_component.gm_procs, ompi_list_t);
-    OBJ_CONSTRUCT (&mca_ptl_gm_component.gm_send_req, ompi_list_t);
+    OBJ_CONSTRUCT (&mca_ptl_gm_component.gm_procs, opal_list_t);
+    OBJ_CONSTRUCT (&mca_ptl_gm_component.gm_send_req, opal_list_t);
 
     /* register GM component parameters */
     mca_ptl_gm_component.gm_port_name =
@@ -344,7 +344,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     /* construct a list of send fragments */
     OBJ_CONSTRUCT (&(ptl->gm_send_frags), ompi_free_list_t);
     OBJ_CONSTRUCT (&(ptl->gm_send_dma_frags), ompi_free_list_t);
-    OBJ_CONSTRUCT (&(ptl->gm_send_frags_queue), ompi_list_t);
+    OBJ_CONSTRUCT (&(ptl->gm_send_frags_queue), opal_list_t);
 
     /* We need a free list just to handle the send fragment that we provide.
      * Just to make sure that we dont waste memory, we dont allow this list to
@@ -363,7 +363,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
      */
     ompi_free_list_init( &(ptl->gm_send_dma_frags),
                          mca_ptl_gm_component.gm_segment_size,
-                         OBJ_CLASS (ompi_list_item_t),
+                         OBJ_CLASS (opal_list_item_t),
                          0,  /* do not allocate any items I'll provide them */
                          0,  /* maximum number of list allocated elements will be zero */
                          0,
@@ -381,9 +381,9 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     }
     for (i = 0; i < ptl->num_send_tokens; i++) {
         sfragment->send_buf = NULL;
-        OMPI_GM_FREE_LIST_RETURN( &(ptl->gm_send_frags), (ompi_list_item_t*)sfragment );
+        OMPI_GM_FREE_LIST_RETURN( &(ptl->gm_send_frags), (opal_list_item_t*)sfragment );
         OMPI_GM_FREE_LIST_RETURN( &(ptl->gm_send_dma_frags),
-				  (ompi_list_item_t*)((char*)ptl->gm_send_dma_memory +
+				  (opal_list_item_t*)((char*)ptl->gm_send_dma_memory +
 						      i * mca_ptl_gm_component.gm_segment_size) );
         sfragment++;
     }
@@ -394,7 +394,7 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
         ompi_output (0, "unable to allow remote memory access\n");
     }
 
-    OBJ_CONSTRUCT (&(ptl->gm_recv_outstanding_queue), ompi_list_t);
+    OBJ_CONSTRUCT (&(ptl->gm_recv_outstanding_queue), opal_list_t);
 
     /* construct the list of recv fragments free */
     OBJ_CONSTRUCT (&(ptl->gm_recv_frags_free), ompi_free_list_t);  
@@ -420,21 +420,21 @@ mca_ptl_gm_init_sendrecv (mca_ptl_gm_module_t * ptl)
     }
 
     for( i = 0; i < 2; i++ ) {
-        OMPI_GM_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
+        OMPI_GM_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (opal_list_item_t *)free_rfragment );
         free_rfragment++;
 
         gm_provide_receive_buffer( ptl->gm_port, (char*)ptl->gm_recv_dma_memory + i * mca_ptl_gm_component.gm_segment_size,
                                    GM_SIZE, GM_HIGH_PRIORITY );
     }
     for( i = 2; i < ptl->num_recv_tokens; i++ ) {
-        OMPI_GM_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (ompi_list_item_t *)free_rfragment );
+        OMPI_GM_FREE_LIST_RETURN( &(ptl->gm_recv_frags_free), (opal_list_item_t *)free_rfragment );
         free_rfragment++;
 
         gm_provide_receive_buffer( ptl->gm_port, (char*)ptl->gm_recv_dma_memory + i * mca_ptl_gm_component.gm_segment_size,
                                    GM_SIZE, GM_LOW_PRIORITY );
     }
 
-    OBJ_CONSTRUCT( &(ptl->gm_pending_acks), ompi_list_t );
+    OBJ_CONSTRUCT( &(ptl->gm_pending_acks), opal_list_t );
 
     return OMPI_SUCCESS;
 }
@@ -500,7 +500,7 @@ mca_ptl_gm_init( mca_ptl_gm_component_t * gm )
     OBJ_CONSTRUCT( &(mca_ptl_gm_component.gm_unexpected_frags_data), ompi_free_list_t );
     ompi_free_list_init( &(mca_ptl_gm_component.gm_unexpected_frags_data),
                          mca_ptl_gm_component.gm_segment_size,
-                         OBJ_CLASS (ompi_list_item_t),
+                         OBJ_CLASS (opal_list_item_t),
                          16,   /* keep is small in the begining */
                          128,  /* maximum number of list elements */
                          16,   /* Number of elements to grow by per allocation */
@@ -560,7 +560,7 @@ mca_ptl_gm_component_control (int param, void *value, size_t size)
 
 char* gm_get_local_buffer( void )
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     int rc;
 
     OMPI_FREE_LIST_WAIT( &(mca_ptl_gm_component.gm_unexpected_frags_data), item, rc );
@@ -569,7 +569,7 @@ char* gm_get_local_buffer( void )
 
 void gm_release_local_buffer( char* ptr )
 {
-    OMPI_GM_FREE_LIST_RETURN( &(mca_ptl_gm_component.gm_unexpected_frags_data), (ompi_list_item_t*)ptr );
+    OMPI_GM_FREE_LIST_RETURN( &(mca_ptl_gm_component.gm_unexpected_frags_data), (opal_list_item_t*)ptr );
 }
 
 /*

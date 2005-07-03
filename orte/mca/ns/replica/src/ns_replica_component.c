@@ -124,7 +124,7 @@ static void orte_ns_replica_cell_tracker_destructor(orte_ns_replica_cell_tracker
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
     orte_ns_replica_cell_tracker_t,  /* type name */
-    ompi_list_item_t, /* parent "class" name */
+    opal_list_item_t, /* parent "class" name */
     orte_ns_replica_cell_tracker_construct, /* constructor */
     orte_ns_replica_cell_tracker_destructor); /* destructor */
 
@@ -144,7 +144,7 @@ static void orte_ns_replica_tracker_destructor(orte_ns_replica_name_tracker_t* n
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
 		   orte_ns_replica_name_tracker_t,  /* type name */
-		   ompi_list_item_t, /* parent "class" name */
+		   opal_list_item_t, /* parent "class" name */
 		   orte_ns_replica_tracker_construct, /* constructor */
 		   orte_ns_replica_tracker_destructor); /* destructor */
 
@@ -167,7 +167,7 @@ static void orte_ns_replica_tagitem_destructor(orte_ns_replica_tagitem_t* tagite
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_replica_tagitem_t,  /* type name */
-        ompi_list_item_t, /* parent "class" name */
+        opal_list_item_t, /* parent "class" name */
         orte_ns_replica_tagitem_construct, /* constructor */
         orte_ns_replica_tagitem_destructor); /* destructor */
 
@@ -190,7 +190,7 @@ static void orte_ns_replica_dti_destructor(orte_ns_replica_dti_t* dti)
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_replica_dti_t,  /* type name */
-        ompi_list_item_t, /* parent "class" name */
+        opal_list_item_t, /* parent "class" name */
         orte_ns_replica_dti_construct, /* constructor */
         orte_ns_replica_dti_destructor); /* destructor */
 
@@ -199,12 +199,12 @@ OBJ_CLASS_INSTANCE(
  */
 orte_cellid_t orte_ns_replica_next_cellid;
 orte_jobid_t orte_ns_replica_next_jobid;
-ompi_list_t orte_ns_replica_cell_tracker;
-ompi_list_t orte_ns_replica_name_tracker;
+opal_list_t orte_ns_replica_cell_tracker;
+opal_list_t orte_ns_replica_name_tracker;
 orte_rml_tag_t orte_ns_replica_next_rml_tag;
 orte_data_type_t orte_ns_replica_next_dti;
-ompi_list_t orte_ns_replica_taglist;
-ompi_list_t orte_ns_replica_dtlist;
+opal_list_t orte_ns_replica_taglist;
+opal_list_t orte_ns_replica_dtlist;
 int orte_ns_replica_debug;
 ompi_mutex_t orte_ns_replica_mutex;
 int orte_ns_replica_isolate;
@@ -255,21 +255,21 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
 
       /* initialize the cell tracker */
 
-      OBJ_CONSTRUCT(&orte_ns_replica_cell_tracker, ompi_list_t);
+      OBJ_CONSTRUCT(&orte_ns_replica_cell_tracker, opal_list_t);
       orte_ns_replica_next_cellid = 0;
 
       /* initialize the name tracker */
 
-      OBJ_CONSTRUCT(&orte_ns_replica_name_tracker, ompi_list_t);
+      OBJ_CONSTRUCT(&orte_ns_replica_name_tracker, opal_list_t);
 
       /* initialize the taglist */
 
-      OBJ_CONSTRUCT(&orte_ns_replica_taglist, ompi_list_t);
+      OBJ_CONSTRUCT(&orte_ns_replica_taglist, opal_list_t);
       orte_ns_replica_next_rml_tag = ORTE_RML_TAG_DYNAMIC;
 
       /* initialize the dtlist */
 
-      OBJ_CONSTRUCT(&orte_ns_replica_dtlist, ompi_list_t);
+      OBJ_CONSTRUCT(&orte_ns_replica_dtlist, opal_list_t);
       orte_ns_replica_next_dti = ORTE_DPS_ID_DYNAMIC;
 
       /* setup the thread lock */
@@ -284,7 +284,7 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
        }
        new_nt->job = 0;
        new_nt->last_used_vpid = 0;
-       ompi_list_append(&orte_ns_replica_name_tracker, &new_nt->item);
+       opal_list_append(&orte_ns_replica_name_tracker, &new_nt->item);
     
      /* Return the module */
 
@@ -328,11 +328,11 @@ int orte_ns_replica_finalize(void)
 
     if (initialized) {
 /*     OBJ_DESTRUCT(&orte_ns_replica_name_tracker); */
-        while (NULL != (tagitem = (orte_ns_replica_tagitem_t*)ompi_list_remove_first(&orte_ns_replica_taglist))) {
+        while (NULL != (tagitem = (orte_ns_replica_tagitem_t*)opal_list_remove_first(&orte_ns_replica_taglist))) {
             OBJ_RELEASE(tagitem);
         }
         OBJ_DESTRUCT(&orte_ns_replica_taglist);
-        while (NULL != (dti = (orte_ns_replica_dti_t*)ompi_list_remove_first(&orte_ns_replica_dtlist))) {
+        while (NULL != (dti = (orte_ns_replica_dti_t*)opal_list_remove_first(&orte_ns_replica_dtlist))) {
             OBJ_RELEASE(dti);
         }
         OBJ_DESTRUCT(&orte_ns_replica_dtlist);

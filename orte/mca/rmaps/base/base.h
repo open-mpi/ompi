@@ -26,7 +26,7 @@
 #include "orte_config.h"
 #include "include/orte_constants.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/mca.h"
 #include "mca/ns/ns_types.h"
 
@@ -48,9 +48,9 @@ extern "C" {
         /** Verbose/debug output stream */
         int rmaps_output;
         /** List of opened components */
-        ompi_list_t rmaps_opened;
+        opal_list_t rmaps_opened;
         /** Sorted list of available components (highest priority first) */
-        ompi_list_t rmaps_available;
+        opal_list_t rmaps_available;
     } orte_rmaps_base_t;
 
     /**
@@ -63,7 +63,7 @@ extern "C" {
      */
     struct orte_rmaps_base_cmp_t {
         /** Base object */
-        ompi_list_item_t super;
+        opal_list_item_t super;
         /** rmaps component */
         orte_rmaps_base_component_t *component;
         /** rmaps module */

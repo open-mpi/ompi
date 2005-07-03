@@ -55,7 +55,7 @@ OMPI_DECLSPEC orte_schema_base_module_t orte_schema = {
 int orte_schema_base_output;
 orte_schema_base_module_t orte_schema;
 bool orte_schema_base_selected = false;
-ompi_list_t orte_schema_base_components_available;
+opal_list_t orte_schema_base_components_available;
 mca_schema_base_component_t orte_schema_base_selected_component;
 bool orte_schema_initialized = false;
 

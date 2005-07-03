@@ -32,7 +32,7 @@ struct mca_pml_example_t {
     mca_ptl_base_module_t** example_ptl_modules;
     size_t example_num_ptl_modules;
 
-    ompi_list_t  example_procs;
+    opal_list_t  example_procs;
     ompi_mutex_t example_lock;
 
     /* free list of requests */
@@ -40,7 +40,7 @@ struct mca_pml_example_t {
     ompi_free_list_t example_recv_requests;
 
     /* list of pending send requests */
-    ompi_list_t example_send_pending;
+    opal_list_t example_send_pending;
 };
 typedef struct mca_pml_example_t mca_pml_example_t;
 
@@ -55,7 +55,7 @@ extern int mca_pml_example_del_comm( struct ompi_communicator_t* comm );
 extern int mca_pml_example_add_procs( struct ompi_proc_t **procs, size_t nprocs );
 extern int mca_pml_example_del_procs( struct ompi_proc_t **procs, size_t nprocs );
 
-extern int mca_pml_example_add_ptls( ompi_list_t *ptls );
+extern int mca_pml_example_add_ptls( opal_list_t *ptls );
 
 extern int mca_pml_example_control( int param, void *size, size_t value );
 

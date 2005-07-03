@@ -30,7 +30,7 @@
                                                                             
 struct ompi_proc_hash_node_t
 {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     orte_process_name_t hn_key;
     void *hn_value;
 };
@@ -38,7 +38,7 @@ typedef struct ompi_proc_hash_node_t ompi_proc_hash_node_t;
                                                                             
 static OBJ_CLASS_INSTANCE(
     ompi_proc_hash_node_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     NULL, 
     NULL);
 
@@ -47,7 +47,7 @@ void* ompi_hash_table_get_proc(ompi_hash_table_t* ht,
     const orte_process_name_t* proc)
 {
     uint32_t key = (proc->cellid << 24) + (proc->jobid << 16) + proc->vpid;
-    ompi_list_t* list = ht->ht_table + (key & ht->ht_mask);
+    opal_list_t* list = ht->ht_table + (key & ht->ht_mask);
     ompi_proc_hash_node_t *node;
 
 #if OMPI_ENABLE_DEBUG
@@ -57,9 +57,9 @@ void* ompi_hash_table_get_proc(ompi_hash_table_t* ht,
         return NULL;
     }
 #endif
-    for(node =  (ompi_proc_hash_node_t*)ompi_list_get_first(list);
-        node != (ompi_proc_hash_node_t*)ompi_list_get_end(list);
-        node =  (ompi_proc_hash_node_t*)ompi_list_get_next(node)) {
+    for(node =  (ompi_proc_hash_node_t*)opal_list_get_first(list);
+        node != (ompi_proc_hash_node_t*)opal_list_get_end(list);
+        node =  (ompi_proc_hash_node_t*)opal_list_get_next(node)) {
         if (memcmp(&node->hn_key,proc,sizeof(orte_process_name_t)) == 0) {
             return node->hn_value;
         }
@@ -74,7 +74,7 @@ int ompi_hash_table_set_proc(
     void* value)
 {
     uint32_t key = (proc->cellid << 24) + (proc->jobid << 16) + proc->vpid;
-    ompi_list_t* list = ht->ht_table + (key & ht->ht_mask);
+    opal_list_t* list = ht->ht_table + (key & ht->ht_mask);
     ompi_proc_hash_node_t *node;
 
 #if OMPI_ENABLE_DEBUG
@@ -84,16 +84,16 @@ int ompi_hash_table_set_proc(
         return OMPI_ERR_BAD_PARAM;
     }
 #endif
-    for(node =  (ompi_proc_hash_node_t*)ompi_list_get_first(list);
-        node != (ompi_proc_hash_node_t*)ompi_list_get_end(list);
-        node =  (ompi_proc_hash_node_t*)ompi_list_get_next(node)) {
+    for(node =  (ompi_proc_hash_node_t*)opal_list_get_first(list);
+        node != (ompi_proc_hash_node_t*)opal_list_get_end(list);
+        node =  (ompi_proc_hash_node_t*)opal_list_get_next(node)) {
         if (memcmp(&node->hn_key,proc,sizeof(orte_process_name_t)) == 0) {
             node->hn_value = value;
             return OMPI_SUCCESS;
         }
     } 
 
-    node = (ompi_proc_hash_node_t*)ompi_list_remove_first(&ht->ht_nodes); 
+    node = (ompi_proc_hash_node_t*)opal_list_remove_first(&ht->ht_nodes); 
     if(NULL == node) {
         node = OBJ_NEW(ompi_proc_hash_node_t);
         if(NULL == node)
@@ -101,7 +101,7 @@ int ompi_hash_table_set_proc(
     }
     node->hn_key = *proc;
     node->hn_value = value;
-    ompi_list_append(list, (ompi_list_item_t*)node);
+    opal_list_append(list, (opal_list_item_t*)node);
     ht->ht_size++;
     return OMPI_SUCCESS;
 }
@@ -112,7 +112,7 @@ int ompi_hash_table_remove_proc(
     const orte_process_name_t* proc)
 {
     uint32_t key = (proc->cellid << 24) + (proc->jobid << 16) + proc->vpid;
-    ompi_list_t* list = ht->ht_table + (key & ht->ht_mask);
+    opal_list_t* list = ht->ht_table + (key & ht->ht_mask);
     ompi_proc_hash_node_t *node;
 
 #if OMPI_ENABLE_DEBUG
@@ -122,12 +122,12 @@ int ompi_hash_table_remove_proc(
         return OMPI_ERR_BAD_PARAM;
     }
 #endif
-    for(node =  (ompi_proc_hash_node_t*)ompi_list_get_first(list);
-        node != (ompi_proc_hash_node_t*)ompi_list_get_end(list);
-        node =  (ompi_proc_hash_node_t*)ompi_list_get_next(node)) {
+    for(node =  (ompi_proc_hash_node_t*)opal_list_get_first(list);
+        node != (ompi_proc_hash_node_t*)opal_list_get_end(list);
+        node =  (ompi_proc_hash_node_t*)opal_list_get_next(node)) {
         if (memcmp(&node->hn_key,proc,sizeof(orte_process_name_t)) == 0) {
-            ompi_list_remove_item(list, (ompi_list_item_t*)node);
-            ompi_list_append(&ht->ht_nodes, (ompi_list_item_t*)node);
+            opal_list_remove_item(list, (opal_list_item_t*)node);
+            opal_list_append(&ht->ht_nodes, (opal_list_item_t*)node);
             ht->ht_size--;
             return OMPI_SUCCESS;
         }

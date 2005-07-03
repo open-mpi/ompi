@@ -26,7 +26,7 @@
 
 OBJ_CLASS_INSTANCE(
    mca_btl_base_selected_module_t,
-   ompi_list_item_t,
+   opal_list_item_t,
    NULL,
    NULL);
 
@@ -36,13 +36,13 @@ OBJ_CLASS_INSTANCE(
  * Call the init function on all available components to find out if
  * they want to run.  Select all components that don't fail.  Failing
  * components will be closed and unloaded.  The selected modules will
- * be returned to the caller in a ompi_list_t.
+ * be returned to the caller in a opal_list_t.
  */
 int mca_btl_base_select(bool enable_progress_threads,
                         bool enable_mpi_threads)
 {
   int i, num_btls;
-  ompi_list_item_t *item;
+  opal_list_item_t *item;
   mca_base_component_list_item_t *cli;
   mca_btl_base_component_t *component;
   mca_btl_base_module_t **modules;
@@ -54,9 +54,9 @@ int mca_btl_base_select(bool enable_progress_threads,
   /* Traverse the list of opened modules; call their init
      functions. */
 
-  item  = ompi_list_get_first(&mca_btl_base_components_opened);
-  while(item != ompi_list_get_end(&mca_btl_base_components_opened)) {
-    ompi_list_item_t *next = ompi_list_get_next(item);
+  item  = opal_list_get_first(&mca_btl_base_components_opened);
+  while(item != opal_list_get_end(&mca_btl_base_components_opened)) {
+    opal_list_item_t *next = opal_list_get_next(item);
     cli = (mca_base_component_list_item_t *) item;
 
     component = (mca_btl_base_component_t *) cli->cli_component;
@@ -116,7 +116,7 @@ int mca_btl_base_select(bool enable_progress_threads,
                             component->btl_version.mca_component_name);
 
         mca_base_component_repository_release((mca_base_component_t *) component);
-        ompi_list_remove_item(&mca_btl_base_components_opened, item);
+        opal_list_remove_item(&mca_btl_base_components_opened, item);
       } 
 
       /* Otherwise, it initialized properly.  Save it. */
@@ -132,8 +132,8 @@ int mca_btl_base_select(bool enable_progress_threads,
           }
           sm->btl_component = component;
           sm->btl_module = modules[i];
-          ompi_list_append(&mca_btl_base_modules_initialized,
-                          (ompi_list_item_t*) sm);
+          opal_list_append(&mca_btl_base_modules_initialized,
+                          (opal_list_item_t*) sm);
         }
         free(modules);
       }
@@ -143,7 +143,7 @@ int mca_btl_base_select(bool enable_progress_threads,
 
   /* Finished querying all components.  Check for the bozo case. */
 
-  if (0 == ompi_list_get_size(&mca_btl_base_modules_initialized)) {
+  if (0 == opal_list_get_size(&mca_btl_base_modules_initialized)) {
     /* JMS Replace with show_help */
     orte_abort(1, "No btl components available.  This shouldn't happen.");
   }

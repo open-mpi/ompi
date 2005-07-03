@@ -51,7 +51,7 @@
  */
                                                                                                       
 struct mca_oob_tcp_event_t {
-    ompi_list_item_t item;
+    opal_list_item_t item;
     ompi_event_t event;
 };
 typedef struct mca_oob_tcp_event_t mca_oob_tcp_event_t;
@@ -59,20 +59,20 @@ typedef struct mca_oob_tcp_event_t mca_oob_tcp_event_t;
 static void mca_oob_tcp_event_construct(mca_oob_tcp_event_t* event)
 {
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    ompi_list_append(&mca_oob_tcp_component.tcp_events, &event->item);
+    opal_list_append(&mca_oob_tcp_component.tcp_events, &event->item);
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 }
                                                                                                       
 static void mca_oob_tcp_event_destruct(mca_oob_tcp_event_t* event)
 {
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    ompi_list_remove_item(&mca_oob_tcp_component.tcp_events, &event->item);
+    opal_list_remove_item(&mca_oob_tcp_component.tcp_events, &event->item);
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 }
                                                                                                       
 OBJ_CLASS_INSTANCE(
     mca_oob_tcp_event_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     mca_oob_tcp_event_construct,
     mca_oob_tcp_event_destruct);
                                                                                                       
@@ -86,7 +86,7 @@ static void mca_oob_tcp_accept(void);
 
 
 struct mca_oob_tcp_subscription_t {
-    ompi_list_item_t item;
+    opal_list_item_t item;
     orte_jobid_t jobid;
     orte_gpr_subscription_id_t subid;
 };
@@ -94,7 +94,7 @@ typedef struct mca_oob_tcp_subscription_t mca_oob_tcp_subscription_t;
 
 OBJ_CLASS_INSTANCE(
     mca_oob_tcp_subscription_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     NULL,
     NULL);
 
@@ -175,16 +175,16 @@ int mca_oob_tcp_component_open(void)
     }
 #endif
     
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_subscriptions, ompi_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     ompi_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_subscriptions, opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_list,     opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peers,     ompi_hash_table_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_names,    ompi_hash_table_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_peer_free,     opal_free_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msgs,          opal_free_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_lock,          ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_events,        ompi_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_post,      ompi_list_t);
-    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_recv,      ompi_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_events,        opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_post,      opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_recv,      opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_lock,    ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_cond,    ompi_condition_t);
 
@@ -611,7 +611,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
     mca_oob_tcp_subscription_t* subscription;
     orte_gpr_trigger_t trig, *trigs;
     orte_gpr_subscription_t sub, *subs;
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     int rc;
   
     /* if the address is already cached - simply return it */
@@ -625,9 +625,9 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
     }
 
     /* check to see if we have subscribed to this registry segment */
-    for( item =  ompi_list_get_first(&mca_oob_tcp_component.tcp_subscriptions);
-         item != ompi_list_get_end(&mca_oob_tcp_component.tcp_subscriptions);
-         item =  ompi_list_get_next(item)) {
+    for( item =  opal_list_get_first(&mca_oob_tcp_component.tcp_subscriptions);
+         item != opal_list_get_end(&mca_oob_tcp_component.tcp_subscriptions);
+         item =  opal_list_get_next(item)) {
         subscription = (mca_oob_tcp_subscription_t*)item;
         if(subscription->jobid == peer->peer_name.jobid) {
             OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
@@ -741,7 +741,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
     OBJ_DESTRUCT(&sub);
     OBJ_DESTRUCT(&trig);
 
-    ompi_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
+    opal_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
     return rc;
 }
@@ -759,7 +759,7 @@ int mca_oob_tcp_init(void)
     mca_oob_tcp_subscription_t *subscription;
     orte_gpr_subscription_t sub, *subs;
     int rc;
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
 
     /* random delay to stagger connections back to seed */
 #if defined(WIN32)
@@ -781,9 +781,9 @@ int mca_oob_tcp_init(void)
      * to the peer.
     */
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    for(item =  ompi_list_get_first(&mca_oob_tcp_component.tcp_peer_list);
-        item != ompi_list_get_end(&mca_oob_tcp_component.tcp_peer_list);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&mca_oob_tcp_component.tcp_peer_list);
+        item != opal_list_get_end(&mca_oob_tcp_component.tcp_peer_list);
+        item =  opal_list_get_next(item)) {
         mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)item;
         mca_oob_tcp_peer_send_ident(peer);
     }
@@ -791,7 +791,7 @@ int mca_oob_tcp_init(void)
     /* register subscribe callback to receive notification when all processes have registered */
     subscription = OBJ_NEW(mca_oob_tcp_subscription_t);
     subscription->jobid = jobid;
-    ompi_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
+    opal_list_append(&mca_oob_tcp_component.tcp_subscriptions, &subscription->item);
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 
     if(mca_oob_tcp_component.tcp_debug > 2) {
@@ -987,7 +987,7 @@ int mca_oob_tcp_init(void)
  */
 int mca_oob_tcp_fini(void)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     ompi_event_disable(); /* disable event processing */
 
@@ -999,17 +999,17 @@ int mca_oob_tcp_fini(void)
     }
 
     /* cleanup all peers */
-    for(item = ompi_list_remove_first(&mca_oob_tcp_component.tcp_peer_list);
+    for(item = opal_list_remove_first(&mca_oob_tcp_component.tcp_peer_list);
         item != NULL;
-        item = ompi_list_remove_first(&mca_oob_tcp_component.tcp_peer_list)) {
+        item = opal_list_remove_first(&mca_oob_tcp_component.tcp_peer_list)) {
         mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)item;
         MCA_OOB_TCP_PEER_RETURN(peer);
     }
 
     /* delete any pending events */
-    for(item =  ompi_list_remove_first(&mca_oob_tcp_component.tcp_events);
+    for(item =  opal_list_remove_first(&mca_oob_tcp_component.tcp_events);
         item != NULL;
-        item =  ompi_list_remove_first(&mca_oob_tcp_component.tcp_events)) {
+        item =  opal_list_remove_first(&mca_oob_tcp_component.tcp_events)) {
         mca_oob_tcp_event_t* event = (mca_oob_tcp_event_t*)item;
         ompi_event_del(&event->event);
         OBJ_RELEASE(event);

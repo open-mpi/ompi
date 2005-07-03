@@ -185,7 +185,7 @@
 
 #include "mca/mca.h"
 #include "mca/ns/ns_types.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 
 /*
  * pls module functions

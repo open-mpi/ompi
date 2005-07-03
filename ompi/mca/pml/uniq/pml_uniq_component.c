@@ -84,8 +84,8 @@ int mca_pml_uniq_component_open(void)
     OBJ_CONSTRUCT(&mca_pml_uniq.uniq_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&mca_pml_uniq.uniq_send_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_uniq.uniq_recv_requests, ompi_free_list_t);
-    OBJ_CONSTRUCT(&mca_pml_uniq.uniq_procs, ompi_list_t);
-    OBJ_CONSTRUCT(&mca_pml_uniq.uniq_send_pending, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_pml_uniq.uniq_procs, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_uniq.uniq_send_pending, opal_list_t);
 
     mca_pml_uniq.uniq_ptl_components = NULL;
     mca_pml_uniq.uniq_num_ptl_components = 0;
@@ -120,10 +120,10 @@ int mca_pml_uniq_component_close(void)
 
 #if OMPI_ENABLE_DEBUG
     if (mca_pml_uniq.uniq_recv_requests.fl_num_allocated !=
-        mca_pml_uniq.uniq_recv_requests.super.ompi_list_length) {
+        mca_pml_uniq.uniq_recv_requests.super.opal_list_length) {
         ompi_output(0, "uniq recv requests: %d allocated %d returned\n",
             mca_pml_uniq.uniq_recv_requests.fl_num_allocated,
-            mca_pml_uniq.uniq_recv_requests.super.ompi_list_length);
+            mca_pml_uniq.uniq_recv_requests.super.opal_list_length);
     }
 #endif
 

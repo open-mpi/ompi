@@ -27,7 +27,7 @@
 #endif
 #include <string.h>
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "threads/mutex.h"
 #include "mca/ns/ns_types.h"
 #include "oob_tcp_msg.h"
@@ -50,7 +50,7 @@ typedef enum {
  * This structure describes a peer
  */
 struct mca_oob_tcp_peer_t {
-    ompi_list_item_t super;           /**< allow this to be on a list */
+    opal_list_item_t super;           /**< allow this to be on a list */
     orte_process_name_t peer_name;    /**< the name of the peer */
     mca_oob_tcp_state_t peer_state;   /**< the state of the connection */
     int peer_retries;                 /**< number of times connection attempt has failed */
@@ -60,7 +60,7 @@ struct mca_oob_tcp_peer_t {
     ompi_event_t peer_recv_event;     /**< registration with event thread for recv events */
     ompi_event_t peer_timer_event;    /**< timer for retrying connection failures */
     ompi_mutex_t peer_lock;           /**< protect critical data structures */
-    ompi_list_t peer_send_queue;      /**< list of messages to send */
+    opal_list_t peer_send_queue;      /**< list of messages to send */
     mca_oob_tcp_msg_t *peer_send_msg; /**< current send in progress */
     mca_oob_tcp_msg_t *peer_recv_msg; /**< current recv in progress */
 };
@@ -80,7 +80,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
  */ 
 #define MCA_OOB_TCP_PEER_ALLOC(peer, rc) \
     { \
-    ompi_list_item_t* item; \
+    opal_list_item_t* item; \
     OPAL_FREE_LIST_GET(&mca_oob_tcp_component.tcp_peer_free, item, rc); \
     peer = (mca_oob_tcp_peer_t*)item; \
     }
@@ -92,7 +92,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
     { \
     mca_oob_tcp_peer_shutdown(peer); \
     ompi_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name); \
-    OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_peer_free, (ompi_list_item_t*)peer); \
+    OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_peer_free, (opal_list_item_t*)peer); \
     }
 
 #if defined(c_plusplus) || defined(__cplusplus)

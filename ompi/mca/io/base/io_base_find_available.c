@@ -21,7 +21,7 @@
 
 #include "mpi.h"
 #include "include/constants.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -61,20 +61,20 @@ int mca_io_base_find_available(bool enable_progress_threads,
 {
     int err;
     mca_base_component_priority_list_item_t *entry;
-    ompi_list_item_t *p;
+    opal_list_item_t *p;
     const mca_base_component_t *component;
 
     /* Initialize the list */
 
-    OBJ_CONSTRUCT(&mca_io_base_components_available, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_io_base_components_available, opal_list_t);
     mca_io_base_components_available_valid = true;
 
     /* The list of components that we should check has already been
        established in mca_io_base_open. */
   
-    for (p = ompi_list_remove_first(&mca_io_base_components_opened);
+    for (p = opal_list_remove_first(&mca_io_base_components_opened);
          p != NULL;
-         p = ompi_list_remove_first(&mca_io_base_components_opened)) {
+         p = opal_list_remove_first(&mca_io_base_components_opened)) {
         component = ((mca_base_component_list_item_t *) p)->cli_component;
         
         /* Call a subroutine to do the work, because the component may
@@ -94,8 +94,8 @@ int mca_io_base_find_available(bool enable_progress_threads,
                the initial selection algorithm can negotiate the
                overall thread level for this process. */
       
-            ompi_list_append(&mca_io_base_components_available, 
-                             (ompi_list_item_t *) entry);
+            opal_list_append(&mca_io_base_components_available, 
+                             (opal_list_item_t *) entry);
         } else {
       
             /* If the component doesn't want to run, then close it.

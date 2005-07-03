@@ -48,16 +48,16 @@ orte_rmaps_base_module_t* orte_rmaps_base_select(char *preferred)
 
 static orte_rmaps_base_module_t *select_preferred(char *name)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     orte_rmaps_base_cmp_t *cmp;
 
     /* Look for a matching selected name */
 
     ompi_output(orte_rmaps_base.rmaps_output,
                 "orte:base:select: looking for component %s", name);
-    for (item = ompi_list_get_first(&orte_rmaps_base.rmaps_available);
-         item != ompi_list_get_end(&orte_rmaps_base.rmaps_available);
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&orte_rmaps_base.rmaps_available);
+         item != opal_list_get_end(&orte_rmaps_base.rmaps_available);
+         item = opal_list_get_next(item)) {
         cmp = (orte_rmaps_base_cmp_t *) item;
 
         if (0 == strcmp(name, 
@@ -78,12 +78,12 @@ static orte_rmaps_base_module_t *select_preferred(char *name)
 
 static orte_rmaps_base_module_t *select_any(void)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     orte_rmaps_base_cmp_t *cmp;
 
     /* If the list is empty, return NULL */
 
-    if (ompi_list_is_empty(&orte_rmaps_base.rmaps_available) > 0) {
+    if (opal_list_is_empty(&orte_rmaps_base.rmaps_available) > 0) {
         ompi_output(orte_rmaps_base.rmaps_output,
                     "orte:base:select: no components available!");
         return NULL;
@@ -92,7 +92,7 @@ static orte_rmaps_base_module_t *select_any(void)
     /* Otherwise, return the first item (it's already sorted in
        priority order) */
 
-    item = ompi_list_get_first(&orte_rmaps_base.rmaps_available);
+    item = opal_list_get_first(&orte_rmaps_base.rmaps_available);
     cmp = (orte_rmaps_base_cmp_t *) item;
     ompi_output(orte_rmaps_base.rmaps_output,
                 "orte:base:select: highest priority component: %s",

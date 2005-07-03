@@ -48,7 +48,7 @@ mca_ptl_portals_recv_get_frag(struct mca_ptl_portals_module_t *ptl,
                                size_t header_size)
 {
     mca_ptl_portals_recv_frag_t * recvfrag;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     int ret;
 
     /* get a fragment header */

@@ -69,7 +69,7 @@ int orte_rds_resfile_parse_fe(orte_rds_cell_desc_t *cell, FILE *fp)
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
             return ORTE_ERR_BAD_PARAM;
         }
-        ompi_list_append(&(cell->attributes), &na->super);
+        opal_list_append(&(cell->attributes), &na->super);
     }
     
     return ORTE_SUCCESS;
@@ -114,7 +114,7 @@ int orte_rds_resfile_parse_cd(orte_rds_cell_desc_t *cell, FILE *fp)
             free(line);
             return ORTE_ERR_BAD_PARAM;
         }
-        ompi_list_append(&(cell->attributes), &na->super);
+        opal_list_append(&(cell->attributes), &na->super);
         free(line);
     }
     
@@ -166,7 +166,7 @@ int orte_rds_resfile_parse_os(orte_rds_cell_desc_t *cell, FILE *fp)
             free(line);
             return ORTE_ERR_BAD_PARAM;
         }
-        ompi_list_append(&(cell->attributes), &na->super);
+        opal_list_append(&(cell->attributes), &na->super);
         free(line);
     }
     
@@ -236,7 +236,7 @@ int orte_rds_resfile_parse_fs(orte_rds_cell_desc_t *cell, FILE *fp)
             free(line);
             return ORTE_ERR_BAD_PARAM;
         }
-        ompi_list_append(&(cell->attributes), &na->super);
+        opal_list_append(&(cell->attributes), &na->super);
 #endif
         free(line);
     }

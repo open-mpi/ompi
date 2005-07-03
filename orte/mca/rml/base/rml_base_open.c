@@ -55,7 +55,7 @@ int orte_rml_base_open(void)
     int rc;
 
     /* Initialize globals */
-    OBJ_CONSTRUCT(&orte_rml_base.rml_components, ompi_list_t);
+    OBJ_CONSTRUCT(&orte_rml_base.rml_components, opal_list_t);
     
     /* lookup common parameters */
     id = mca_base_param_register_int("rml","base","debug",NULL,1);

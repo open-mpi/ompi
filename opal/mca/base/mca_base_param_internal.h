@@ -33,7 +33,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_object.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "class/ompi_hash_table.h"
 #include "mca/base/mca_base_param.h"
 
@@ -116,7 +116,7 @@ OBJ_CLASS_DECLARATION(mca_base_param_t);
  */
 struct mca_base_param_file_value_t {
     /** Allow this to be an OMPI OBJ */
-    ompi_list_item_t super;
+    opal_list_item_t super;
     
     /** Parameter name */
     char *mbpfv_param;
@@ -141,7 +141,7 @@ OBJ_CLASS_DECLARATION(mca_base_param_file_value_t);
  *
  * Global list of params and values read in from MCA parameter files
  */
-OMPI_DECLSPEC extern ompi_list_t mca_base_param_file_values;
+OMPI_DECLSPEC extern opal_list_t mca_base_param_file_values;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

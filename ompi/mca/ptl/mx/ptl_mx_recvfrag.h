@@ -42,7 +42,7 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_recv_frag_t);
 
 #define MCA_PTL_MX_RECV_FRAG_ALLOC(frag, rc) \
     { \
-    ompi_list_item_t* item; \
+    opal_list_item_t* item; \
     OMPI_FREE_LIST_GET(&mca_ptl_mx_component.mx_recv_frags, item, rc); \
     frag = (mca_ptl_mx_recv_frag_t*)item; \
     }
@@ -53,7 +53,7 @@ OBJ_CLASS_DECLARATION(mca_ptl_mx_recv_frag_t);
        frag->frag_data != frag->frag_recv.frag_base.frag_addr) { \
         free(frag->frag_recv.frag_base.frag_addr); \
     } \
-    OMPI_FREE_LIST_RETURN(&mca_ptl_mx_component.mx_recv_frags, (ompi_list_item_t*)frag); \
+    OMPI_FREE_LIST_RETURN(&mca_ptl_mx_component.mx_recv_frags, (opal_list_item_t*)frag); \
 }
     
 

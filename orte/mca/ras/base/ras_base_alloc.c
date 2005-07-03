@@ -31,10 +31,10 @@
  * around to the beginning as necessary
  */
 int orte_ras_base_allocate_nodes_by_node(orte_jobid_t jobid, 
-                                         ompi_list_t* nodes)
+                                         opal_list_t* nodes)
 {
-    ompi_list_t allocated;
-    ompi_list_item_t* item;
+    opal_list_t allocated;
+    opal_list_item_t* item;
     size_t num_requested = 0;
     size_t num_allocated = 0;
     size_t num_constrained = 0;
@@ -48,7 +48,7 @@ int orte_ras_base_allocate_nodes_by_node(orte_jobid_t jobid,
         return rc;
     }
 
-    OBJ_CONSTRUCT(&allocated, ompi_list_t);
+    OBJ_CONSTRUCT(&allocated, opal_list_t);
     num_allocated = 0;
 
     /* This loop continues until all procs have been allocated or we run
@@ -68,9 +68,9 @@ int orte_ras_base_allocate_nodes_by_node(orte_jobid_t jobid,
 
         /* loop over all nodes until either all processes are
            allocated or they all become constrained */
-        for (item = ompi_list_get_first(nodes);
-             item != ompi_list_get_end(nodes) && num_allocated < num_requested;
-             item = ompi_list_get_next(item)) {
+        for (item = opal_list_get_first(nodes);
+             item != opal_list_get_end(nodes) && num_allocated < num_requested;
+             item = opal_list_get_next(item)) {
             orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
             
             /* are any slots available? */
@@ -92,7 +92,7 @@ int orte_ras_base_allocate_nodes_by_node(orte_jobid_t jobid,
            - if this is the second time through the loop, then all
              nodes are full to the max, and therefore we can't do
              anything more -- we're out of resources */
-        if (ompi_list_get_size(nodes) == num_constrained) {
+        if (opal_list_get_size(nodes) == num_constrained) {
             if (oversubscribe) {
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 goto cleanup;
@@ -103,13 +103,13 @@ int orte_ras_base_allocate_nodes_by_node(orte_jobid_t jobid,
     }
 
     /* move all nodes w/ allocations to the allocated list */
-    item = ompi_list_get_first(nodes);
-    while(item != ompi_list_get_end(nodes)) {
+    item = opal_list_get_first(nodes);
+    while(item != opal_list_get_end(nodes)) {
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
-        ompi_list_item_t* next = ompi_list_get_next(item);
+        opal_list_item_t* next = opal_list_get_next(item);
         if(node->node_slots_alloc) {
-            ompi_list_remove_item(nodes, item);
-            ompi_list_append(&allocated, item);
+            opal_list_remove_item(nodes, item);
+            opal_list_append(&allocated, item);
         }
         item = next;
     }
@@ -120,8 +120,8 @@ int orte_ras_base_allocate_nodes_by_node(orte_jobid_t jobid,
     }
 cleanup:
 
-    while(NULL != (item = ompi_list_remove_first(&allocated))) 
-        ompi_list_append(nodes, item);
+    while(NULL != (item = opal_list_remove_first(&allocated))) 
+        opal_list_append(nodes, item);
     OBJ_DESTRUCT(&allocated);
     return rc;
 }
@@ -131,10 +131,10 @@ cleanup:
  * Allocate processes to nodes, using all available slots on a node.
  */
 int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid, 
-                                         ompi_list_t* nodes)
+                                         opal_list_t* nodes)
 {
-    ompi_list_t allocated;
-    ompi_list_item_t* item;
+    opal_list_t allocated;
+    opal_list_item_t* item;
     size_t num_requested = 0;
     size_t num_allocated = 0;
     size_t num_constrained = 0;
@@ -147,14 +147,14 @@ int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid,
         return rc;
     }
 
-    OBJ_CONSTRUCT(&allocated, ompi_list_t);
+    OBJ_CONSTRUCT(&allocated, opal_list_t);
     num_allocated = 0;
 
     /* In the first pass, just grab all available slots (i.e., stay <=
        node_slots) greedily off each node */
-    for (item = ompi_list_get_first(nodes);
-         item != ompi_list_get_end(nodes) && num_allocated < num_requested;
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(nodes);
+         item != opal_list_get_end(nodes) && num_allocated < num_requested;
+         item = opal_list_get_next(item)) {
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
         
         /* are any slots available? */
@@ -183,9 +183,9 @@ int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid,
 
         /* loop over all nodes until either all processes are
            allocated or they all become constrained */
-        for (item = ompi_list_get_first(nodes);
-             item != ompi_list_get_end(nodes) && num_allocated < num_requested;
-             item = ompi_list_get_next(item)) {
+        for (item = opal_list_get_first(nodes);
+             item != opal_list_get_end(nodes) && num_allocated < num_requested;
+             item = opal_list_get_next(item)) {
             orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
             
             /* are any slots available? */
@@ -201,20 +201,20 @@ int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid,
 
         /* if all nodes are constrained, then we're out of resources
            -- thanks for playing */
-        if (ompi_list_get_size(nodes) == num_constrained) {
+        if (opal_list_get_size(nodes) == num_constrained) {
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto cleanup;
         }
     }
 
     /* move all nodes w/ allocations to the allocated list */
-    item = ompi_list_get_first(nodes);
-    while(item != ompi_list_get_end(nodes)) {
+    item = opal_list_get_first(nodes);
+    while(item != opal_list_get_end(nodes)) {
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
-        ompi_list_item_t* next = ompi_list_get_next(item);
+        opal_list_item_t* next = opal_list_get_next(item);
         if(node->node_slots_alloc) {
-            ompi_list_remove_item(nodes, item);
-            ompi_list_append(&allocated, item);
+            opal_list_remove_item(nodes, item);
+            opal_list_append(&allocated, item);
         }
         item = next;
     }
@@ -226,8 +226,8 @@ int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid,
 
 cleanup:
 
-    while(NULL != (item = ompi_list_remove_first(&allocated))) 
-        ompi_list_append(nodes, item);
+    while(NULL != (item = opal_list_remove_first(&allocated))) 
+        opal_list_append(nodes, item);
     OBJ_DESTRUCT(&allocated);
     return rc;
 }

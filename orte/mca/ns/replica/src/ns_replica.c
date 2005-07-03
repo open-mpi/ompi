@@ -56,7 +56,7 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resou
         new_cell->cell = *cellid;
         new_cell->site = strdup(site);
         new_cell->resource = strdup(resource);
-        ompi_list_append(&orte_ns_replica_cell_tracker, &new_cell->item);
+        opal_list_append(&orte_ns_replica_cell_tracker, &new_cell->item);
 	   OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
 	   return ORTE_SUCCESS;
     }
@@ -70,12 +70,12 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resou
 int orte_ns_replica_get_cell_info(orte_cellid_t cellid,
                                 char **site, char **resource)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     orte_ns_replica_cell_tracker_t *cell;
     
-    for (item = ompi_list_get_first(&orte_ns_replica_cell_tracker);
-         item != ompi_list_get_end(&orte_ns_replica_cell_tracker);
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&orte_ns_replica_cell_tracker);
+         item != opal_list_get_end(&orte_ns_replica_cell_tracker);
+         item = opal_list_get_next(item)) {
         cell = (orte_ns_replica_cell_tracker_t*)item;
         if (cellid == cell->cell) {
             *site = strdup(cell->site);
@@ -105,7 +105,7 @@ int orte_ns_replica_create_jobid(orte_jobid_t *jobid)
         }
 	    new_nt->job = *jobid;
 	    new_nt->last_used_vpid = 0;
-	    ompi_list_append(&orte_ns_replica_name_tracker, &new_nt->item);
+	    opal_list_append(&orte_ns_replica_name_tracker, &new_nt->item);
 	    OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
 	    return ORTE_SUCCESS;
     }
@@ -123,9 +123,9 @@ int orte_ns_replica_reserve_range(orte_jobid_t job, orte_vpid_t range, orte_vpid
 
     OMPI_THREAD_LOCK(&orte_ns_replica_mutex);
 
-    for (ptr = (orte_ns_replica_name_tracker_t*)ompi_list_get_first(&orte_ns_replica_name_tracker);
-	   ptr != (orte_ns_replica_name_tracker_t*)ompi_list_get_end(&orte_ns_replica_name_tracker);
-	   ptr = (orte_ns_replica_name_tracker_t*)ompi_list_get_next(ptr)) {
+    for (ptr = (orte_ns_replica_name_tracker_t*)opal_list_get_first(&orte_ns_replica_name_tracker);
+	   ptr != (orte_ns_replica_name_tracker_t*)opal_list_get_end(&orte_ns_replica_name_tracker);
+	   ptr = (orte_ns_replica_name_tracker_t*)opal_list_get_next(ptr)) {
 	   if (job == ptr->job) { /* found the specified job */
 	       if ((ORTE_VPID_MAX-range) >= ptr->last_used_vpid) {  /* requested range available */
 		      *start = ptr->last_used_vpid;
@@ -159,9 +159,9 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
 
     if (NULL != name) {
         /* see if this name is already in list - if so, return tag */
-        for (tagitem = (orte_ns_replica_tagitem_t*)ompi_list_get_first(&orte_ns_replica_taglist);
-             tagitem != (orte_ns_replica_tagitem_t*)ompi_list_get_end(&orte_ns_replica_taglist);
-             tagitem = (orte_ns_replica_tagitem_t*)ompi_list_get_next(tagitem)) {
+        for (tagitem = (orte_ns_replica_tagitem_t*)opal_list_get_first(&orte_ns_replica_taglist);
+             tagitem != (orte_ns_replica_tagitem_t*)opal_list_get_end(&orte_ns_replica_taglist);
+             tagitem = (orte_ns_replica_tagitem_t*)opal_list_get_next(tagitem)) {
             if (tagitem->name != NULL && 0 == strcmp(name, tagitem->name)) { /* found name on list */
                 *tag = tagitem->tag;
                 OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
@@ -189,7 +189,7 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
             tagitem->name = NULL;
         }
         orte_ns_replica_next_rml_tag++;
-        ompi_list_append(&orte_ns_replica_taglist, &tagitem->item);
+        opal_list_append(&orte_ns_replica_taglist, &tagitem->item);
     
         *tag = tagitem->tag;
         OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
@@ -218,9 +218,9 @@ int orte_ns_replica_define_data_type(const char *name,
     OMPI_THREAD_LOCK(&orte_ns_replica_mutex);
 
     /* see if this name is already in list - if so, return id */
-    for (dti = (orte_ns_replica_dti_t*)ompi_list_get_first(&orte_ns_replica_dtlist);
-         dti != (orte_ns_replica_dti_t*)ompi_list_get_end(&orte_ns_replica_dtlist);
-         dti = (orte_ns_replica_dti_t*)ompi_list_get_next(dti)) {
+    for (dti = (orte_ns_replica_dti_t*)opal_list_get_first(&orte_ns_replica_dtlist);
+         dti != (orte_ns_replica_dti_t*)opal_list_get_end(&orte_ns_replica_dtlist);
+         dti = (orte_ns_replica_dti_t*)opal_list_get_next(dti)) {
         if (dti->name != NULL && 0 == strcmp(name, dti->name)) { /* found name on list */
             *type = dti->id;
             OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);
@@ -243,7 +243,7 @@ int orte_ns_replica_define_data_type(const char *name,
         dti->id = orte_ns_replica_next_dti;
         dti->name = strdup(name);
         orte_ns_replica_next_dti++;
-        ompi_list_append(&orte_ns_replica_dtlist, &dti->item);
+        opal_list_append(&orte_ns_replica_dtlist, &dti->item);
     
         *type = dti->id;
         OMPI_THREAD_UNLOCK(&orte_ns_replica_mutex);

@@ -60,7 +60,7 @@ mca_ptl_portals_send(struct mca_ptl_base_module_t *ptl_base,
     if (sendreq->req_cached && offset == 0) {
         sendfrag = (mca_ptl_portals_send_frag_t*)(sendreq+1);
     } else {
-        ompi_list_item_t *item;
+        opal_list_item_t *item;
         OMPI_FREE_LIST_GET(&mca_ptl_portals_component.portals_send_frags,
                            item, ret);
         if (NULL == item) return ret;
@@ -209,7 +209,7 @@ mca_ptl_portals_process_send_event(ptl_event_t *ev)
             /* if request is NULL, it's an ACK - just return the frag
                to the pool */
             OMPI_FREE_LIST_RETURN(&mca_ptl_portals_component.portals_send_frags,
-                                  (ompi_list_item_t*) frag);
+                                  (opal_list_item_t*) frag);
         } else {
             bool frag_ack;
 

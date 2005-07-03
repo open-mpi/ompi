@@ -170,7 +170,7 @@ int mca_ptl_sm_component_open(void)
     OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_first_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_second_frags, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_pending_ack_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_pending_ack, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_ptl_sm_component.sm_pending_ack, opal_list_t);
 
     return OMPI_SUCCESS;
 }
@@ -363,7 +363,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
     bool frag_matched;
     mca_ptl_base_match_header_t *matching_header;
     mca_ptl_base_send_request_t *base_send_req;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     int return_status = 0;
 
     my_local_smp_rank=mca_ptl_sm_component.my_smp_rank;
@@ -460,7 +460,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                      * the PML */
                     if( 0 < header_ptr->send_offset ) {
                         OMPI_FREE_LIST_RETURN(&mca_ptl_sm_component.sm_second_frags,
-                                (ompi_list_item_t *)header_ptr);
+                                (opal_list_item_t *)header_ptr);
                     } 
                     break;
 
@@ -563,7 +563,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
                      * the PML */
                     if( 0 < header_ptr->send_offset ) {
                         OMPI_FREE_LIST_RETURN(&mca_ptl_sm_component.sm_second_frags,
-                                (ompi_list_item_t *)header_ptr);
+                                (opal_list_item_t *)header_ptr);
                     } 
                     break;
 
@@ -577,7 +577,7 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
 
 
     /* progress acks */
-    if( !ompi_list_is_empty(&(mca_ptl_sm_component.sm_pending_ack)) ) {
+    if( !opal_list_is_empty(&(mca_ptl_sm_component.sm_pending_ack)) ) {
 
         OMPI_THREAD_LOCK(&(mca_ptl_sm_component.sm_pending_ack_lock));
 
@@ -585,8 +585,8 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
          *   sending the ack, so that when the ack is recieved,
          *   manipulated, and put on a new list, it is not also
          *   on a different list */
-        item = ompi_list_remove_first(&(mca_ptl_sm_component.sm_pending_ack));
-        while ( item != ompi_list_get_end(&(mca_ptl_sm_component.sm_pending_ack)) ) {
+        item = opal_list_remove_first(&(mca_ptl_sm_component.sm_pending_ack));
+        while ( item != opal_list_get_end(&(mca_ptl_sm_component.sm_pending_ack)) ) {
             int rc;
             /* get fragment pointer */
             header_ptr = (mca_ptl_sm_frag_t *)item;
@@ -603,13 +603,13 @@ int mca_ptl_sm_component_progress(mca_ptl_tstamp_t tstamp)
             /* if ack failed, break */
             if( 0 > rc ) {
                 /* put the descriptor back on the list */
-                ompi_list_prepend(&(mca_ptl_sm_component.sm_pending_ack),item);
+                opal_list_prepend(&(mca_ptl_sm_component.sm_pending_ack),item);
                 break;
             }
             MCA_PTL_SM_SIGNAL_PEER(mca_ptl_sm_component.sm_peers[header_ptr->queue_index]);
 
             /* get next fragment to ack */
-            item = ompi_list_remove_first(&(mca_ptl_sm_component.sm_pending_ack));
+            item = opal_list_remove_first(&(mca_ptl_sm_component.sm_pending_ack));
 
         }
 

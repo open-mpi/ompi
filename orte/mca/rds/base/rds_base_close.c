@@ -27,10 +27,10 @@
 
 int orte_rds_base_finalize(void)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
 
     /* Finalize all selected modules */
-    while((item = ompi_list_remove_first(&orte_rds_base.rds_selected)) != NULL) {
+    while((item = opal_list_remove_first(&orte_rds_base.rds_selected)) != NULL) {
         orte_rds_base_selected_t* selected = (orte_rds_base_selected_t*)item;
         selected->module->finalize();
         OBJ_RELEASE(selected);

@@ -102,25 +102,25 @@ static int orte_ras_bjs_node_resolve(char* node_name, int* node_num)
  *  - check for additional nodes that have already been allocated
  */
 
-static int orte_ras_bjs_discover(ompi_list_t* nodelist)
+static int orte_ras_bjs_discover(opal_list_t* nodelist)
 {
     char* nodes;
     char* ptr;
-    ompi_list_item_t* item;
-    ompi_list_t new_nodes;
+    opal_list_item_t* item;
+    opal_list_t new_nodes;
     int rc;
 
     /* query the nodelist from the registry */
-    OBJ_CONSTRUCT(&new_nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_ras_base_node_query(nodelist))) {
         ORTE_ERROR_LOG(rc); 
         return rc;
     }
 
     /* validate that any user supplied nodes actually exist, etc. */
-    for(item =  ompi_list_get_first(nodelist);
-        item != ompi_list_get_end(nodelist);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(nodelist);
+        item != opal_list_get_end(nodelist);
+        item =  opal_list_get_next(item)) {
         int node_num;
 
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
@@ -152,24 +152,24 @@ static int orte_ras_bjs_discover(ompi_list_t* nodelist)
     /* parse the node list and check node status/access */
     nodes = getenv("NODES");
     if(NULL == nodes) {
-        return ompi_list_get_size(nodelist) ? ORTE_SUCCESS : ORTE_ERR_NOT_AVAILABLE;
+        return opal_list_get_size(nodelist) ? ORTE_SUCCESS : ORTE_ERR_NOT_AVAILABLE;
     }
 
-    OBJ_CONSTRUCT(&new_nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     while(NULL != (ptr = strsep(&nodes,","))) {
         orte_ras_base_node_t *node;
         orte_node_state_t node_state;
         int node_num;
 
         /* is this node already in the list */
-        for(item =  ompi_list_get_first(nodelist);
-            item != ompi_list_get_end(nodelist);
-            item =  ompi_list_get_next(item)) {
+        for(item =  opal_list_get_first(nodelist);
+            item != opal_list_get_end(nodelist);
+            item =  opal_list_get_next(item)) {
             node = (orte_ras_base_node_t*)item;
             if(strcmp(node->node_name, ptr) == 0)
                 break;
         }
-        if(item != ompi_list_get_end(nodelist))
+        if(item != opal_list_get_end(nodelist))
             continue;
         if(sscanf(ptr, "%d", &node_num) != 1) {
             continue;
@@ -194,11 +194,11 @@ static int orte_ras_bjs_discover(ompi_list_t* nodelist)
         node->node_slots_inuse = 0;
         node->node_slots_max = 0;
         node->node_slots = orte_ras_bjs_node_slots(node->node_name);
-        ompi_list_append(&new_nodes, &node->super);
+        opal_list_append(&new_nodes, &node->super);
     }
 
     /* add any newly discovered nodes to the registry */
-    if(ompi_list_get_size(&new_nodes)) {
+    if(opal_list_get_size(&new_nodes)) {
         rc = orte_ras_base_node_insert(&new_nodes); 
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
@@ -206,8 +206,8 @@ static int orte_ras_bjs_discover(ompi_list_t* nodelist)
     }
 
     /* append them to the nodelist */
-    while(NULL != (item = ompi_list_remove_first(&new_nodes)))
-        ompi_list_append(nodelist, item);
+    while(NULL != (item = opal_list_remove_first(&new_nodes)))
+        opal_list_append(nodelist, item);
 
 cleanup:
     OBJ_DESTRUCT(&new_nodes);
@@ -223,11 +223,11 @@ cleanup:
 
 static int orte_ras_bjs_allocate(orte_jobid_t jobid)
 {
-    ompi_list_t nodes;
-    ompi_list_item_t* item;
+    opal_list_t nodes;
+    opal_list_item_t* item;
     int rc;
 
-    OBJ_CONSTRUCT(&nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_ras_bjs_discover(&nodes))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -241,7 +241,7 @@ static int orte_ras_bjs_allocate(orte_jobid_t jobid)
         ORTE_ERROR_LOG(rc);
     }
 
-    while(NULL != (item = ompi_list_remove_first(&nodes)))
+    while(NULL != (item = opal_list_remove_first(&nodes)))
         OBJ_RELEASE(item);
     OBJ_DESTRUCT(&nodes);
     return rc;

@@ -12,7 +12,7 @@
 
 
 struct orte_iof_svc_fwd_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     orte_iof_svc_pub_t* fwd_pub;
     ompi_hash_table_t fwd_seq;
 };
@@ -22,7 +22,7 @@ typedef struct orte_iof_svc_fwd_t orte_iof_svc_fwd_t;
 OBJ_CLASS_DECLARATION(orte_iof_svc_fwd_t);
 
 struct orte_iof_svc_sub_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     orte_process_name_t           src_name;
     orte_ns_cmp_bitmask_t         src_mask;
     orte_iof_base_tag_t           src_tag;
@@ -30,7 +30,7 @@ struct orte_iof_svc_sub_t {
     orte_ns_cmp_bitmask_t         dst_mask;
     orte_iof_base_tag_t           dst_tag;
     orte_iof_base_endpoint_t*     sub_endpoint;
-    ompi_list_t                   sub_forward;
+    opal_list_t                   sub_forward;
 };
 typedef struct orte_iof_svc_sub_t orte_iof_svc_sub_t;
 

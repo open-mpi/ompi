@@ -123,7 +123,7 @@ static void orte_ns_proxy_cell_info_destructor(orte_ns_proxy_cell_info_t* ptr)
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_proxy_cell_info_t,  /* type name */
-        ompi_list_item_t, /* parent "class" name */
+        opal_list_item_t, /* parent "class" name */
         orte_ns_proxy_cell_info_construct, /* constructor */
         orte_ns_proxy_cell_info_destructor); /* destructor */
 
@@ -145,7 +145,7 @@ static void orte_ns_proxy_tagitem_destructor(orte_ns_proxy_tagitem_t* tagitem)
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_proxy_tagitem_t,  /* type name */
-        ompi_list_item_t, /* parent "class" name */
+        opal_list_item_t, /* parent "class" name */
         orte_ns_proxy_tagitem_construct, /* constructor */
         orte_ns_proxy_tagitem_destructor); /* destructor */
 
@@ -167,7 +167,7 @@ static void orte_ns_proxy_dti_destructor(orte_ns_proxy_dti_t* dti)
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_proxy_dti_t,  /* type name */
-        ompi_list_item_t, /* parent "class" name */
+        opal_list_item_t, /* parent "class" name */
         orte_ns_proxy_dti_construct, /* constructor */
         orte_ns_proxy_dti_destructor); /* destructor */
 
@@ -177,9 +177,9 @@ OBJ_CLASS_INSTANCE(
 
 orte_process_name_t* orte_ns_my_replica=NULL;
 int orte_ns_proxy_debug=0;
-ompi_list_t orte_ns_proxy_cell_info_list;
-ompi_list_t orte_ns_proxy_taglist;
-ompi_list_t orte_ns_proxy_dtlist;
+opal_list_t orte_ns_proxy_cell_info_list;
+opal_list_t orte_ns_proxy_taglist;
+opal_list_t orte_ns_proxy_dtlist;
 ompi_mutex_t orte_ns_proxy_mutex;
 
 /*
@@ -235,13 +235,13 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
         	}
         
         /* initialize the cell info list */
-        OBJ_CONSTRUCT(&orte_ns_proxy_cell_info_list, ompi_list_t);
+        OBJ_CONSTRUCT(&orte_ns_proxy_cell_info_list, opal_list_t);
     
         /* initialize the taglist */
-        OBJ_CONSTRUCT(&orte_ns_proxy_taglist, ompi_list_t);
+        OBJ_CONSTRUCT(&orte_ns_proxy_taglist, opal_list_t);
     
         /* initialize the dtlist */
-        OBJ_CONSTRUCT(&orte_ns_proxy_dtlist, ompi_list_t);
+        OBJ_CONSTRUCT(&orte_ns_proxy_dtlist, opal_list_t);
     
     	    /* Return the module */
     
@@ -278,11 +278,11 @@ int orte_ns_proxy_finalize(void)
     /* free the storage, but only if this component was initialized */
 
     if (initialized) {
-        while (NULL != (cptr = (orte_ns_proxy_cell_info_t*)ompi_list_remove_first(&orte_ns_proxy_cell_info_list))) {
+        while (NULL != (cptr = (orte_ns_proxy_cell_info_t*)opal_list_remove_first(&orte_ns_proxy_cell_info_list))) {
             OBJ_RELEASE(cptr);
         }
         OBJ_DESTRUCT(&orte_ns_proxy_cell_info_list);
-        while (NULL != (tagitem = (orte_ns_proxy_tagitem_t*)ompi_list_remove_first(&orte_ns_proxy_taglist))) {
+        while (NULL != (tagitem = (orte_ns_proxy_tagitem_t*)opal_list_remove_first(&orte_ns_proxy_taglist))) {
             OBJ_RELEASE(tagitem);
         }
         OBJ_DESTRUCT(&orte_ns_proxy_taglist);

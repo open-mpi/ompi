@@ -25,7 +25,7 @@
 #include "orte_config.h"
 #include "include/orte_constants.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/mca.h"
 #include "mca/rds/rds.h"
 
@@ -41,7 +41,7 @@ extern "C" {
  * Internal definitions
  */
 struct orte_rds_base_selected_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     orte_rds_base_component_t *component;
     orte_rds_base_module_t* module;
 };
@@ -64,8 +64,8 @@ OMPI_DECLSPEC int orte_rds_base_query(void);
 
 typedef struct orte_rds_base_t {
     int rds_output;
-    ompi_list_t rds_components;
-    ompi_list_t rds_selected;
+    opal_list_t rds_components;
+    opal_list_t rds_selected;
 } orte_rds_base_t;
 
 OMPI_DECLSPEC extern orte_rds_base_t orte_rds_base;
@@ -77,7 +77,7 @@ OMPI_DECLSPEC extern orte_rds_base_t orte_rds_base;
 /*
  * utility functions for use within the RDS
  */
-int orte_rds_base_store_resource(ompi_list_t *resource_list);
+int orte_rds_base_store_resource(opal_list_t *resource_list);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

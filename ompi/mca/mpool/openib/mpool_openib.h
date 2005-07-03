@@ -19,7 +19,7 @@
 #ifndef MCA_MPOOL_VAPI_H
 #define MCA_MPOOL_VAPI_H
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "class/ompi_free_list.h"
 #include "event/event.h"
 #include "mca/mpool/mpool.h"

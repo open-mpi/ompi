@@ -22,7 +22,7 @@
 #include "include/types.h"
 #include "include/orte_constants.h"
 #include "threads/mutex.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "dps/dps.h"
 #include "mca/oob/oob_types.h"
 #include "mca/ns/base/base.h"
@@ -34,7 +34,7 @@ extern "C" {
 /* list class for tracking cellid's
  */
 struct orte_ns_replica_cell_tracker_t {
-    ompi_list_item_t item;
+    opal_list_item_t item;
     orte_cellid_t cell;
     char *site;
     char *resource;
@@ -50,7 +50,7 @@ OBJ_CLASS_DECLARATION(orte_ns_replica_cell_tracker_t);
  * are tracking the max used vpid for each jobid that has been created.
  */
 struct orte_ns_replica_name_tracker_t {
-    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
+    opal_list_item_t item;  /**< Allows this item to be placed on a list */
     orte_jobid_t job;  /**< Job id */
     orte_vpid_t last_used_vpid;      /**< Tracks the vpid last given out */
 };
@@ -59,7 +59,7 @@ typedef struct orte_ns_replica_name_tracker_t orte_ns_replica_name_tracker_t;
 OBJ_CLASS_DECLARATION(orte_ns_replica_name_tracker_t);
 
 struct orte_ns_replica_tagitem_t {
-    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
+    opal_list_item_t item;  /**< Allows this item to be placed on a list */
     orte_rml_tag_t tag;  /**< OOB tag */
     char *name;      /**< Name associated with tag */
 };
@@ -68,7 +68,7 @@ typedef struct orte_ns_replica_tagitem_t orte_ns_replica_tagitem_t;
 OBJ_CLASS_DECLARATION(orte_ns_replica_tagitem_t);
 
 struct orte_ns_replica_dti_t {
-    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
+    opal_list_item_t item;  /**< Allows this item to be placed on a list */
     orte_data_type_t id;  /**< data type id */
     char *name;      /**< Name associated with data type */
 };
@@ -81,12 +81,12 @@ OBJ_CLASS_DECLARATION(orte_ns_replica_dti_t);
  */
 extern orte_cellid_t orte_ns_replica_next_cellid;
 extern orte_jobid_t orte_ns_replica_next_jobid;
-extern ompi_list_t orte_ns_replica_cell_tracker;
-extern ompi_list_t orte_ns_replica_name_tracker;
+extern opal_list_t orte_ns_replica_cell_tracker;
+extern opal_list_t orte_ns_replica_name_tracker;
 extern orte_rml_tag_t orte_ns_replica_next_rml_tag;
 extern orte_data_type_t orte_ns_replica_next_dti;
-extern ompi_list_t orte_ns_replica_taglist;
-extern ompi_list_t orte_ns_replica_dtlist;
+extern opal_list_t orte_ns_replica_taglist;
+extern opal_list_t orte_ns_replica_dtlist;
 extern int orte_ns_replica_debug;
 extern ompi_mutex_t orte_ns_replica_mutex;
 

@@ -26,7 +26,7 @@
 
 #define ORTE_RDS_RESFILE_MAX_LINE_LENGTH 512
 
-static ompi_list_t orte_rds_resfile_resource_list;
+static opal_list_t orte_rds_resfile_resource_list;
 
 static int orte_rds_resfile_parse_site(char *site, FILE *fp);
 
@@ -69,7 +69,7 @@ static int orte_rds_resfile_parse_resource(orte_rds_cell_desc_t *cell, FILE *fp)
             na->keyval.key = strdup(ORTE_RDS_NAME);
             na->keyval.type = ORTE_STRING;
             na->keyval.value.strptr = strdup(cell->name);
-            ompi_list_append(&(cell->attributes), &na->super);
+            opal_list_append(&(cell->attributes), &na->super);
             na = OBJ_NEW(orte_rds_cell_attr_t);
             if (NULL == na) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -78,7 +78,7 @@ static int orte_rds_resfile_parse_resource(orte_rds_cell_desc_t *cell, FILE *fp)
             na->keyval.key = strdup(ORTE_CELLID_KEY);
             na->keyval.type = ORTE_CELLID;
             na->keyval.value.cellid = cell->cellid;
-            ompi_list_append(&(cell->attributes), &na->super);
+            opal_list_append(&(cell->attributes), &na->super);
         } else if (0 == strncmp(line, "<type", strlen("<type"))) {
             if (NULL == (cell->type = orte_rds_resfile_parse_field(line))) {
                 ORTE_ERROR_LOG(ORTE_ERR_FILE_READ_FAILURE);
@@ -92,7 +92,7 @@ static int orte_rds_resfile_parse_resource(orte_rds_cell_desc_t *cell, FILE *fp)
             na->keyval.key = strdup(ORTE_RDS_TYPE);
             na->keyval.type = ORTE_STRING;
             na->keyval.value.strptr = strdup(cell->type);
-            ompi_list_append(&(cell->attributes), &na->super);
+            opal_list_append(&(cell->attributes), &na->super);
         } else if (0 == strncmp(line, "<front-end", strlen("<front-end"))) {
             if (ORTE_SUCCESS != (rc = orte_rds_resfile_parse_fe(cell, fp))) {
                 ORTE_ERROR_LOG(rc);
@@ -125,7 +125,7 @@ static int orte_rds_resfile_parse_resource(orte_rds_cell_desc_t *cell, FILE *fp)
                 ORTE_ERROR_LOG(ORTE_ERR_FILE_READ_FAILURE);
                 return ORTE_ERR_FILE_READ_FAILURE;
             }
-            ompi_list_append(&(cell->attributes), &na->super);
+            opal_list_append(&(cell->attributes), &na->super);
         } else if (0 == strncmp(line, "<launcher", strlen("<launcher"))) {
             na = OBJ_NEW(orte_rds_cell_attr_t);
             if (NULL == na) {
@@ -138,7 +138,7 @@ static int orte_rds_resfile_parse_resource(orte_rds_cell_desc_t *cell, FILE *fp)
                 ORTE_ERROR_LOG(ORTE_ERR_FILE_READ_FAILURE);
                 return ORTE_ERR_FILE_READ_FAILURE;
             }
-            ompi_list_append(&(cell->attributes), &na->super);
+            opal_list_append(&(cell->attributes), &na->super);
         } else if (0 == strncmp(line, "<sequence", strlen("<sequence"))) {
             if (ORTE_SUCCESS != (rc = orte_rds_resfile_parse_se(cell, fp))) {
                 ORTE_ERROR_LOG(rc);
@@ -175,7 +175,7 @@ static int orte_rds_resfile_parse_site(char *site, FILE *fp)
                 return rc;
             }
             
-            ompi_list_append(&orte_rds_resfile_resource_list, &cell->super);
+            opal_list_append(&orte_rds_resfile_resource_list, &cell->super);
         }
     }
     return ORTE_SUCCESS;
@@ -214,7 +214,7 @@ int orte_rds_resfile_query(void)
     }
     
     /* setup the resource list */
-    OBJ_CONSTRUCT(&orte_rds_resfile_resource_list, ompi_list_t);
+    OBJ_CONSTRUCT(&orte_rds_resfile_resource_list, opal_list_t);
     
     /* dump the initial line containing the DOM */
     input_line = orte_rds_resfile_getline(fp);

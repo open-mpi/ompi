@@ -65,7 +65,7 @@
 #include "threads/mutex.h"
 #include "threads/condition.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "dps/dps_types.h"
 
 #include "mca/mca.h"
@@ -260,7 +260,7 @@ OMPI_DECLSPEC int orte_gpr_base_xfer_payload(orte_gpr_value_union_t *dest,
  */
 OMPI_DECLSPEC extern int orte_gpr_base_output;
 OMPI_DECLSPEC extern bool orte_gpr_base_selected;
-OMPI_DECLSPEC extern ompi_list_t orte_gpr_base_components_available;
+OMPI_DECLSPEC extern opal_list_t orte_gpr_base_components_available;
 OMPI_DECLSPEC extern mca_gpr_base_component_t orte_gpr_base_selected_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)

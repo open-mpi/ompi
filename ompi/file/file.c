@@ -17,7 +17,7 @@
 #include "ompi_config.h"
 
 #include "file/file.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "ompi/runtime/params.h"
 #include "mca/io/base/base.h"
 #include "info/info.h"
@@ -243,7 +243,7 @@ static void file_constructor(ompi_file_t *file)
     file->f_io_selected_data = NULL;
 
     /* Construct the io request freelist */
-    OBJ_CONSTRUCT(&file->f_io_requests, ompi_list_t);
+    OBJ_CONSTRUCT(&file->f_io_requests, opal_list_t);
 
     /* If the user doesn't want us to ever free it, then add an extra
        RETAIN here */

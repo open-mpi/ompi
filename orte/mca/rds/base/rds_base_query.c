@@ -28,12 +28,12 @@
  */
 int orte_rds_base_query(void)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
                                                                                                             
     /* Query all selected modules */
-    for(item =  ompi_list_get_first(&orte_rds_base.rds_selected);
-        item != ompi_list_get_end(&orte_rds_base.rds_selected);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&orte_rds_base.rds_selected);
+        item != opal_list_get_end(&orte_rds_base.rds_selected);
+        item =  opal_list_get_next(item)) {
         orte_rds_base_selected_t* selected = (orte_rds_base_selected_t*)item;
         int rc = selected->module->query();
         if(rc != ORTE_SUCCESS)

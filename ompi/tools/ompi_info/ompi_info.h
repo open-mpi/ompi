@@ -21,7 +21,7 @@
 #include <vector>
 #include <map>
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/cmd_line.h"
 #include "mca/mca.h"
 
@@ -99,7 +99,7 @@ namespace ompi_info {
   // Component-related functions
   //
 
-  typedef std::map<std::string, ompi_list_t *> component_map_t;
+  typedef std::map<std::string, opal_list_t *> component_map_t;
 
   extern component_map_t component_map;
 

@@ -104,7 +104,7 @@ int mca_btl_template_component_open(void)
     mca_btl_template_component.template_btls=NULL;
     
     /* initialize objects */ 
-    OBJ_CONSTRUCT(&mca_btl_template_component.template_procs, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_btl_template_component.template_procs, opal_list_t);
 
     /* register TEMPLATE component parameters */
     mca_btl_template_component.template_free_list_num =

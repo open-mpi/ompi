@@ -33,7 +33,7 @@ static void mca_oob_tcp_msg_ping(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
 
 OBJ_CLASS_INSTANCE(
     mca_oob_tcp_msg_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     mca_oob_tcp_msg_construct,
     mca_oob_tcp_msg_destruct);
 
@@ -417,7 +417,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                                                                                                                           
         if(post->msg_flags & MCA_OOB_PEEK) {
             /* will need message for actual receive */
-            ompi_list_append(&mca_oob_tcp_component.tcp_msg_recv, &msg->super);
+            opal_list_append(&mca_oob_tcp_component.tcp_msg_recv, &msg->super);
         } else {
             MCA_OOB_TCP_MSG_RETURN(msg);
         }
@@ -432,7 +432,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     } else {
-        ompi_list_append(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t*)msg);
+        opal_list_append(&mca_oob_tcp_component.tcp_msg_recv, (opal_list_item_t*)msg);
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
     }
 }
@@ -491,9 +491,9 @@ int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, struct iovec* iov, int count)
 mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(orte_process_name_t* name, int tag)
 {
     mca_oob_tcp_msg_t* msg;
-    for(msg =  (mca_oob_tcp_msg_t*) ompi_list_get_first(&mca_oob_tcp_component.tcp_msg_recv);
-        msg != (mca_oob_tcp_msg_t*) ompi_list_get_end(&mca_oob_tcp_component.tcp_msg_recv);
-        msg =  (mca_oob_tcp_msg_t*) ompi_list_get_next(msg)) {
+    for(msg =  (mca_oob_tcp_msg_t*) opal_list_get_first(&mca_oob_tcp_component.tcp_msg_recv);
+        msg != (mca_oob_tcp_msg_t*) opal_list_get_end(&mca_oob_tcp_component.tcp_msg_recv);
+        msg =  (mca_oob_tcp_msg_t*) opal_list_get_next(msg)) {
 
         int cmpval1 = orte_ns.compare(ORTE_NS_CMP_ALL, name, MCA_OOB_NAME_ANY);
         int cmpval2 = orte_ns.compare(ORTE_NS_CMP_ALL, name, &msg->msg_peer);
@@ -518,9 +518,9 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(orte_process_name_t* name, int tag
 mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag)
 {
     mca_oob_tcp_msg_t* msg;
-    for(msg =  (mca_oob_tcp_msg_t*) ompi_list_get_first(&mca_oob_tcp_component.tcp_msg_post);
-        msg != (mca_oob_tcp_msg_t*) ompi_list_get_end(&mca_oob_tcp_component.tcp_msg_post);
-        msg =  (mca_oob_tcp_msg_t*) ompi_list_get_next(msg)) {
+    for(msg =  (mca_oob_tcp_msg_t*) opal_list_get_first(&mca_oob_tcp_component.tcp_msg_post);
+        msg != (mca_oob_tcp_msg_t*) opal_list_get_end(&mca_oob_tcp_component.tcp_msg_post);
+        msg =  (mca_oob_tcp_msg_t*) opal_list_get_next(msg)) {
 
         int cmpval1 = orte_ns.compare(ORTE_NS_CMP_ALL, &msg->msg_peer, MCA_OOB_NAME_ANY);
         int cmpval2 = orte_ns.compare(ORTE_NS_CMP_ALL, name, &msg->msg_peer);
@@ -528,7 +528,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag
         if((0 == cmpval1) || (0 == cmpval2)) {
             if (msg->msg_hdr.msg_tag == tag) {
                 if((msg->msg_flags & MCA_OOB_PEEK) == 0) {
-                    ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);
+                    opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);
                     return msg;
                 } else {
                     return NULL;

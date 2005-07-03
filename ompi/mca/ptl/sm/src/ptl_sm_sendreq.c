@@ -72,7 +72,7 @@ int mca_ptl_sm_send_request_init(struct mca_ptl_base_module_t* ptl,
      * returned is valid only in this process, since different
      * processes may have different base addresses 
      */
-    sm_request->req_frag=(mca_ptl_sm_frag_t *)ompi_list_get_first(
+    sm_request->req_frag=(mca_ptl_sm_frag_t *)opal_list_get_first(
             (void *)&(mca_ptl_sm_component.sm_first_frags));
     if(NULL == sm_request->req_frag){
         return_value=OMPI_ERR_OUT_OF_RESOURCE;

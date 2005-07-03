@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 #include "mpi.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "threads/mutex.h"
 #include "mca/base/base.h"
 #include "mca/io/io.h"
@@ -61,7 +61,7 @@ ompi_mutex_t mca_io_romio_mutex;
 /*
  * Global list of requests for this component
  */
-ompi_list_t mca_io_romio_pending_requests;
+opal_list_t mca_io_romio_pending_requests;
 
 
 /*
@@ -129,7 +129,7 @@ static int open_component(void)
 
     /* Create the list of pending requests */
 
-    OBJ_CONSTRUCT(&mca_io_romio_pending_requests, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_io_romio_pending_requests, opal_list_t);
 
     return OMPI_SUCCESS;
 }
@@ -236,7 +236,7 @@ static int delete_select(char *filename, struct ompi_info_t *info,
 
 static int progress()
 {
-    ompi_list_item_t *item, *next;
+    opal_list_item_t *item, *next;
     int ret, flag, count;
     ROMIO_PREFIX(MPIO_Request) romio_rq;
     mca_io_base_request_t *ioreq;
@@ -246,10 +246,10 @@ static int progress()
 
     count = 0;
     OMPI_THREAD_LOCK (&mca_io_romio_mutex);
-    for (item = ompi_list_get_first(&mca_io_romio_pending_requests);
-         item != ompi_list_get_end(&mca_io_romio_pending_requests); 
+    for (item = opal_list_get_first(&mca_io_romio_pending_requests);
+         item != opal_list_get_end(&mca_io_romio_pending_requests); 
          item = next) {
-        next = ompi_list_get_next(item);
+        next = opal_list_get_next(item);
 
         ioreq = (mca_io_base_request_t*) item;
         romio_rq = ((mca_io_romio_request_t *) item)->romio_rq;
@@ -263,7 +263,7 @@ static int progress()
             /* mark as complete (and make sure to wake up any waiters */
             ompi_request_complete((ompi_request_t*) item);
             /* we're done, so remove us from the pending list */
-            ompi_list_remove_item(&mca_io_romio_pending_requests, item);
+            opal_list_remove_item(&mca_io_romio_pending_requests, item);
             mca_io_base_request_progress_del();
             /* if the request has been freed already, the user isn't
              * going to call test or wait on us, so we need to do it

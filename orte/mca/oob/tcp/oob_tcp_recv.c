@@ -88,7 +88,7 @@ int mca_oob_tcp_recv(
         }
 
         /* otherwise dequeue the message and return to free list */
-        ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t *) msg);
+        opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv, (opal_list_item_t *) msg);
         MCA_OOB_TCP_MSG_RETURN(msg);
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
         return rc;
@@ -127,7 +127,7 @@ int mca_oob_tcp_recv(
     msg->msg_peer = *peer;
     msg->msg_rwbuf = NULL;
     msg->msg_rwiov = NULL;
-    ompi_list_append(&mca_oob_tcp_component.tcp_msg_post, (ompi_list_item_t *) msg);
+    opal_list_append(&mca_oob_tcp_component.tcp_msg_post, (opal_list_item_t *) msg);
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     /* wait for the receive to complete */
@@ -201,7 +201,7 @@ int mca_oob_tcp_recv_nb(
         }
 
         /* otherwise dequeue the message and return to free list */
-        ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv, (ompi_list_item_t *) msg);
+        opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_recv, (opal_list_item_t *) msg);
         OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
         cbfunc(rc, &msg->msg_peer, iov, count, msg->msg_hdr.msg_tag, cbdata);
         MCA_OOB_TCP_MSG_RETURN(msg);
@@ -236,7 +236,7 @@ int mca_oob_tcp_recv_nb(
     msg->msg_peer = *peer;
     msg->msg_rwbuf = NULL;
     msg->msg_rwiov = NULL;
-    ompi_list_append(&mca_oob_tcp_component.tcp_msg_post, (ompi_list_item_t *) msg);
+    opal_list_append(&mca_oob_tcp_component.tcp_msg_post, (opal_list_item_t *) msg);
     OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
     return 0;
 }
@@ -255,7 +255,7 @@ int mca_oob_tcp_recv_cancel(
     int tag)
 {
     int matched = 0, cmpval1, cmpval2;
-    ompi_list_item_t *item, *next;
+    opal_list_item_t *item, *next;
 
     /* wait for any previously matched messages to be processed */
     OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
@@ -270,17 +270,17 @@ int mca_oob_tcp_recv_cancel(
 #endif
 
     /* remove any matching posted receives */
-    for(item =  ompi_list_get_first(&mca_oob_tcp_component.tcp_msg_post);
-        item != ompi_list_get_end(&mca_oob_tcp_component.tcp_msg_post);
+    for(item =  opal_list_get_first(&mca_oob_tcp_component.tcp_msg_post);
+        item != opal_list_get_end(&mca_oob_tcp_component.tcp_msg_post);
         item =  next) {
         mca_oob_tcp_msg_t* msg = (mca_oob_tcp_msg_t*)item;
-        next = ompi_list_get_next(item);
+        next = opal_list_get_next(item);
 
         cmpval1 = orte_ns.compare(ORTE_NS_CMP_ALL, name, MCA_OOB_NAME_ANY);
         cmpval2 = orte_ns.compare(ORTE_NS_CMP_ALL, &msg->msg_peer, name);
         if ((0 == cmpval1) || (0 == cmpval2)) {
             if (msg->msg_hdr.msg_tag == tag) {
-                ompi_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);
+                opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);
                 MCA_OOB_TCP_MSG_RETURN(msg);
                 matched++;
             }

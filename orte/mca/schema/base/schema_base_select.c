@@ -27,7 +27,7 @@
  */
 int orte_schema_base_select(void)
 {
-  ompi_list_item_t *item;
+  opal_list_item_t *item;
   mca_base_component_list_item_t *cli;
   mca_schema_base_component_t *component, *best_component = NULL;
   orte_schema_base_module_t *module, *best_module = NULL;
@@ -36,9 +36,9 @@ int orte_schema_base_select(void)
 
   /* Iterate through all the available components */
 
-  for (item = ompi_list_get_first(&orte_schema_base_components_available);
-       item != ompi_list_get_end(&orte_schema_base_components_available);
-       item = ompi_list_get_next(item)) {
+  for (item = opal_list_get_first(&orte_schema_base_components_available);
+       item != opal_list_get_end(&orte_schema_base_components_available);
+       item = opal_list_get_next(item)) {
     cli = (mca_base_component_list_item_t *) item;
     component = (mca_schema_base_component_t *) cli->cli_component;
 

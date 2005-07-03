@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 #include <stdio.h>
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "threads/mutex.h"
 #include "include/constants.h"
 #include "communicator/communicator.h"
@@ -49,7 +49,7 @@
 #define MCA_PTL_BASE_CHECK_WILD_RECEIVES_FOR_MATCH(frag_header,pml_comm,return_match) \
 do { \
     /* local parameters */ \
-    ompi_list_t* wild_receives = &pml_comm->c_wild_receives; \
+    opal_list_t* wild_receives = &pml_comm->c_wild_receives; \
     mca_ptl_base_recv_request_t *wild_recv; \
     int frag_tag,recv_tag; \
  \
@@ -62,11 +62,11 @@ do { \
      * change this list. \
      */ \
     for(wild_recv = (mca_ptl_base_recv_request_t *)  \
-            ompi_list_get_first(wild_receives); \
+            opal_list_get_first(wild_receives); \
             wild_recv != (mca_ptl_base_recv_request_t *) \
-            ompi_list_get_end(wild_receives); \
+            opal_list_get_end(wild_receives); \
             wild_recv = (mca_ptl_base_recv_request_t *)  \
-            ((ompi_list_item_t *)wild_recv)->ompi_list_next) { \
+            ((opal_list_item_t *)wild_recv)->opal_list_next) { \
  \
         recv_tag = wild_recv->req_recv.req_base.req_tag; \
         if (  \
@@ -84,8 +84,8 @@ do { \
             return_match = wild_recv; \
  \
             /* remove this irecv from the postd wild ireceive list */ \
-            ompi_list_remove_item(wild_receives, \
-                    (ompi_list_item_t *)wild_recv); \
+            opal_list_remove_item(wild_receives, \
+                    (opal_list_item_t *)wild_recv); \
 \
             /* found match - no need to continue */ \
             break; \
@@ -111,7 +111,7 @@ do { \
 #define MCA_PTL_BASE_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(frag_header, pml_comm, return_match) \
 do { \
     /* local variables */ \
-    ompi_list_t* specific_receives = (pml_comm->c_specific_receives)+frag_src; \
+    opal_list_t* specific_receives = (pml_comm->c_specific_receives)+frag_src; \
     mca_ptl_base_recv_request_t *specific_recv; \
     int frag_src,recv_tag,frag_tag; \
  \
@@ -123,11 +123,11 @@ do { \
      * Loop over the specific irecvs. \
      */ \
     for(specific_recv = (mca_ptl_base_recv_request_t *)  \
-            ompi_list_get_first(specific_receives); \
+            opal_list_get_first(specific_receives); \
             specific_recv != (mca_ptl_base_recv_request_t *) \
-            ompi_list_get_end(specific_receives); \
+            opal_list_get_end(specific_receives); \
             specific_recv = (mca_ptl_base_recv_request_t *)  \
-            ((ompi_list_item_t *)specific_recv)->ompi_list_next) { \
+            ((opal_list_item_t *)specific_recv)->opal_list_next) { \
         /* \
          * Check for a match \
          */ \
@@ -141,8 +141,8 @@ do { \
             return_match = specific_recv; \
  \
             /* remove descriptor from posted specific ireceive list */ \
-            ompi_list_remove_item(specific_receives, \
-                    (ompi_list_item_t *)specific_recv); \
+            opal_list_remove_item(specific_receives, \
+                    (opal_list_item_t *)specific_recv); \
  \
             break; \
         } \
@@ -183,9 +183,9 @@ do {  \
      *  have been posted.  \
      */  \
     specific_recv = (mca_ptl_base_recv_request_t *)   \
-            ompi_list_get_first((pml_comm->c_specific_receives)+frag_src);  \
+            opal_list_get_first((pml_comm->c_specific_receives)+frag_src);  \
     wild_recv = (mca_ptl_base_recv_request_t *)  \
-            ompi_list_get_first(&(pml_comm->c_wild_receives));  \
+            opal_list_get_first(&(pml_comm->c_wild_receives));  \
   \
     specific_recv_seq = specific_recv->req_recv.req_base.req_sequence;  \
     wild_recv_seq = wild_recv->req_recv.req_base.req_sequence;  \
@@ -207,8 +207,8 @@ do {  \
                 return_match=wild_recv;  \
   \
                 /* remove this recv from the wild receive queue */  \
-                ompi_list_remove_item(&(pml_comm->c_wild_receives),  \
-                        (ompi_list_item_t *)wild_recv);  \
+                opal_list_remove_item(&(pml_comm->c_wild_receives),  \
+                        (opal_list_item_t *)wild_recv);  \
                 break;  \
             }  \
   \
@@ -216,14 +216,14 @@ do {  \
              * No match, go to the next.  \
              */  \
             wild_recv=(mca_ptl_base_recv_request_t *)  \
-                ((ompi_list_item_t *)wild_recv)->ompi_list_next;  \
+                ((opal_list_item_t *)wild_recv)->opal_list_next;  \
   \
             /*  \
              * If that was the last wild one, just look at the  \
              * rest of the specific ones.  \
              */  \
             if (wild_recv == (mca_ptl_base_recv_request_t *)  \
-                    ompi_list_get_end(&(pml_comm->c_wild_receives)) )   \
+                    opal_list_get_end(&(pml_comm->c_wild_receives)) )   \
             {   \
                 MCA_PTL_BASE_CHECK_SPECIFIC_RECEIVES_FOR_MATCH(frag_header, pml_comm, return_match);  \
                 break;  \
@@ -248,8 +248,8 @@ do {  \
                  */  \
                 return_match = specific_recv;  \
                 /* remove descriptor from specific receive list */  \
-                ompi_list_remove_item((pml_comm->c_specific_receives)+frag_src,  \
-                    (ompi_list_item_t *)specific_recv);  \
+                opal_list_remove_item((pml_comm->c_specific_receives)+frag_src,  \
+                    (opal_list_item_t *)specific_recv);  \
                 break; \
             }  \
   \
@@ -257,14 +257,14 @@ do {  \
              * No match, go on to the next specific irecv.  \
              */  \
             specific_recv = (mca_ptl_base_recv_request_t *)  \
-                ((ompi_list_item_t *)specific_recv)->ompi_list_next;  \
+                ((opal_list_item_t *)specific_recv)->opal_list_next;  \
   \
             /*  \
              * If that was the last specific irecv, process the  \
              * rest of the wild ones.  \
              */  \
             if (specific_recv == (mca_ptl_base_recv_request_t *)  \
-                    ompi_list_get_end((pml_comm->c_specific_receives)+frag_src) )  \
+                    opal_list_get_end((pml_comm->c_specific_receives)+frag_src) )  \
             {  \
                 MCA_PTL_BASE_CHECK_WILD_RECEIVES_FOR_MATCH(frag_header, pml_comm, return_match);  \
                 break; \
@@ -284,7 +284,7 @@ do {  \
  */
 
 static bool mca_ptl_base_check_cantmatch_for_match(
-    ompi_list_t *additional_matches,
+    opal_list_t *additional_matches,
     mca_pml_ptl_comm_t *pml_comm, int frag_src);
 
 
@@ -321,7 +321,7 @@ static bool mca_ptl_base_check_cantmatch_for_match(
 bool mca_ptl_base_match(
     mca_ptl_base_match_header_t *frag_header,
     mca_ptl_base_recv_frag_t *frag_desc, 
-    ompi_list_t *additional_matches,
+    opal_list_t *additional_matches,
     bool* additional_match)
 {
     /* local variables */
@@ -370,13 +370,13 @@ bool mca_ptl_base_match(
          *   look only at "specific" receives, or "wild" receives,
          *   or if we need to traverse both sets at the same time.
          */
-        if (ompi_list_get_size((pml_comm->c_specific_receives)+frag_src) == 0 ){
+        if (opal_list_get_size((pml_comm->c_specific_receives)+frag_src) == 0 ){
             /*
              * There are only wild irecvs, so specialize the algorithm.
              */
             MCA_PTL_BASE_CHECK_WILD_RECEIVES_FOR_MATCH(frag_header, pml_comm, matched_receive);
     
-        } else if (ompi_list_get_size(&(pml_comm->c_wild_receives)) == 0 ) {
+        } else if (opal_list_get_size(&(pml_comm->c_wild_receives)) == 0 ) {
             /*
              * There are only specific irecvs, so specialize the algorithm.
              */
@@ -409,8 +409,8 @@ bool mca_ptl_base_match(
             }
         } else {
             /* if no match found, place on unexpected queue */
-            ompi_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
-                              (ompi_list_item_t *)frag_desc );
+            opal_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
+                              (opal_list_item_t *)frag_desc );
         }
 
         /* 
@@ -418,7 +418,7 @@ bool mca_ptl_base_match(
          *   any fragments on the c_c_frags_cant_match list
          *   may now be used to form new matchs
          */
-        if (0 < ompi_list_get_size((pml_comm->c_frags_cant_match)+frag_src)) {
+        if (0 < opal_list_get_size((pml_comm->c_frags_cant_match)+frag_src)) {
 
             *additional_match = mca_ptl_base_check_cantmatch_for_match(additional_matches,pml_comm,frag_src);
 
@@ -430,8 +430,8 @@ bool mca_ptl_base_match(
          * This message comes after the next expected, so it
          * is ahead of sequence.  Save it for later.
          */
-        ompi_list_append( ((pml_comm->c_frags_cant_match)+frag_src),
-                    (ompi_list_item_t *)frag_desc);
+        opal_list_append( ((pml_comm->c_frags_cant_match)+frag_src),
+                    (opal_list_item_t *)frag_desc);
     }
 
     OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
@@ -454,7 +454,7 @@ bool mca_ptl_base_match(
  * set by the upper level routine.
  */
 
-static bool mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_matches,
+static bool mca_ptl_base_check_cantmatch_for_match(opal_list_t *additional_matches,
     mca_pml_ptl_comm_t *pml_comm, int frag_src)
 {
     /* local parameters */
@@ -470,7 +470,7 @@ static bool mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_match
      */
 
     match_found = 1;
-    while ((0 < ompi_list_get_size((pml_comm->c_frags_cant_match)+frag_src)) &&
+    while ((0 < opal_list_get_size((pml_comm->c_frags_cant_match)+frag_src)) &&
             match_found) {
 
         /* initialize match flag for this search */
@@ -483,11 +483,11 @@ static bool mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_match
          * number next_msg_seq_expected
          */
         for(frag_desc = (mca_ptl_base_recv_frag_t *) 
-            ompi_list_get_first((pml_comm->c_frags_cant_match)+frag_src);
+            opal_list_get_first((pml_comm->c_frags_cant_match)+frag_src);
             frag_desc != (mca_ptl_base_recv_frag_t *)
-            ompi_list_get_end((pml_comm->c_frags_cant_match)+frag_src);
+            opal_list_get_end((pml_comm->c_frags_cant_match)+frag_src);
             frag_desc = (mca_ptl_base_recv_frag_t *) 
-            ompi_list_get_next(frag_desc))
+            opal_list_get_next(frag_desc))
         {
             /*
              * If the message has the next expected seq from that proc...
@@ -506,8 +506,8 @@ static bool mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_match
                 /*
                  * remove frag_desc from list
                  */
-                ompi_list_remove_item((pml_comm->c_frags_cant_match)+frag_src,
-                        (ompi_list_item_t *)frag_desc);
+                opal_list_remove_item((pml_comm->c_frags_cant_match)+frag_src,
+                        (opal_list_item_t *)frag_desc);
 
                 /*
                  * figure out what sort of matching logic to use, if need to
@@ -515,12 +515,12 @@ static bool mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_match
                  *   or if we need to traverse both sets at the same time.
                  */
                 frag_src = frag_header->hdr_src;
-                if (ompi_list_get_size((pml_comm->c_specific_receives)+frag_src) == 0 ) {
+                if (opal_list_get_size((pml_comm->c_specific_receives)+frag_src) == 0 ) {
                     /*
                      * There are only wild irecvs, so specialize the algorithm.
                      */
                     MCA_PTL_BASE_CHECK_WILD_RECEIVES_FOR_MATCH(frag_header, pml_comm, matched_receive);
-                } else if (ompi_list_get_size(&(pml_comm->c_wild_receives)) == 0 ) {
+                } else if (opal_list_get_size(&(pml_comm->c_wild_receives)) == 0 ) {
                     /*
                      * There are only specific irecvs, so specialize the algorithm.
                      */
@@ -544,15 +544,15 @@ static bool mca_ptl_base_check_cantmatch_for_match(ompi_list_t *additional_match
                      */
                     if(match_made == false) {
                         match_made = true;
-                        OBJ_CONSTRUCT(additional_matches, ompi_list_t);
+                        OBJ_CONSTRUCT(additional_matches, opal_list_t);
                     }
-                    ompi_list_append(additional_matches, (ompi_list_item_t *)frag_desc);
+                    opal_list_append(additional_matches, (opal_list_item_t *)frag_desc);
 
                 } else {
     
                     /* if no match found, place on unexpected queue */
-                    ompi_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
-                            (ompi_list_item_t *)frag_desc);
+                    opal_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
+                            (opal_list_item_t *)frag_desc);
 
                 }
 
@@ -631,13 +631,13 @@ bool mca_ptl_base_match_in_order_network_delivery(
      *   look only at "specific" receives, or "wild" receives,
      *   or if we need to traverse both sets at the same time.
      */
-    if (ompi_list_get_size((pml_comm->c_specific_receives)+frag_src) == 0 ){
+    if (opal_list_get_size((pml_comm->c_specific_receives)+frag_src) == 0 ){
         /*
          * There are only wild irecvs, so specialize the algorithm.
          */
         MCA_PTL_BASE_CHECK_WILD_RECEIVES_FOR_MATCH(frag_header, pml_comm, matched_receive);
 
-    } else if (ompi_list_get_size(&(pml_comm->c_wild_receives)) == 0 ) {
+    } else if (opal_list_get_size(&(pml_comm->c_wild_receives)) == 0 ) {
         /*
          * There are only specific irecvs, so specialize the algorithm.
          */
@@ -662,8 +662,8 @@ bool mca_ptl_base_match_in_order_network_delivery(
 
     } else {
         /* if no match found, place on unexpected queue */
-        ompi_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
-                (ompi_list_item_t *)frag_desc);
+        opal_list_append( ((pml_comm->c_unexpected_frags)+frag_src),
+                (opal_list_item_t *)frag_desc);
     }
 
 

@@ -48,7 +48,7 @@ static void orte_iof_base_frag_destruct(orte_iof_base_frag_t* frag)
 
 OBJ_CLASS_INSTANCE(
     orte_iof_base_frag_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     orte_iof_base_frag_construct,
     orte_iof_base_frag_destruct);
 

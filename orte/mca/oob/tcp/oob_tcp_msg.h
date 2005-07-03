@@ -21,7 +21,7 @@
 #ifndef _MCA_OOB_TCP_MESSAGE_H_
 #define _MCA_OOB_TCP_MESSAGE_H_
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/oob/oob.h"
 #include "oob_tcp_peer.h"
 #include "oob_tcp_hdr.h"
@@ -43,7 +43,7 @@ typedef enum { MCA_OOB_TCP_POSTED, MCA_OOB_TCP_UNEXPECTED } mca_oob_tcp_type_t;
  * describes each message being progressed.
  */
 struct mca_oob_tcp_msg_t {
-    ompi_list_item_t      super;         /**< allow this item to be put on a list */
+    opal_list_item_t      super;         /**< allow this item to be put on a list */
     mca_oob_tcp_type_t    msg_type;      /**< posted receive or unexpected */
     int                   msg_flags;     /**< flags to send/recv */
     int                   msg_rc;        /**< the return code for the send/recv (amount sent/recvd or errno) */
@@ -76,7 +76,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
  */
 #define MCA_OOB_TCP_MSG_ALLOC(msg, rc) \
     { \
-    ompi_list_item_t* item; \
+    opal_list_item_t* item; \
     OPAL_FREE_LIST_GET(&mca_oob_tcp_component.tcp_msgs, item, rc); \
     msg = (mca_oob_tcp_msg_t*)item; \
     }
@@ -91,7 +91,7 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
         mca_oob_tcp_msg_iov_return(msg,msg->msg_rwiov); \
     if(NULL != msg->msg_rwbuf) \
         free(msg->msg_rwbuf); \
-    OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_msgs, (ompi_list_item_t*)msg); \
+    OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_msgs, (opal_list_item_t*)msg); \
     }
 
 /**

@@ -38,7 +38,7 @@ extern "C" {
  */
 struct orte_ras_base_node_t {
     /** Base object */
-    ompi_list_item_t super;
+    opal_list_item_t super;
     /** String node name */
     char *node_name;
     /** String of the architecture for the node.  This is permitted to
@@ -88,28 +88,28 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_ras_base_node_t);
 /*
  * Query the registry for all available nodes 
  */
-int orte_ras_base_node_query(ompi_list_t*);
+int orte_ras_base_node_query(opal_list_t*);
 
 /*
  * Query the registry for all nodes allocated to a specific job
  */
-int orte_ras_base_node_query_alloc(ompi_list_t*, orte_jobid_t);
+int orte_ras_base_node_query_alloc(opal_list_t*, orte_jobid_t);
 
 /*
  * Add the specified node definitions to the registry
  */
-int orte_ras_base_node_insert(ompi_list_t*);
+int orte_ras_base_node_insert(opal_list_t*);
 
 /*
  * Delete the specified nodes from the registry
  */
-int orte_ras_base_node_delete(ompi_list_t*);
+int orte_ras_base_node_delete(opal_list_t*);
 
 /*
  * Assign the allocated slots on the specified nodes to the  
  * indicated jobid.
  */
-int orte_ras_base_node_assign(ompi_list_t*, orte_jobid_t);
+int orte_ras_base_node_assign(opal_list_t*, orte_jobid_t);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

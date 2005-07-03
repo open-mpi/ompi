@@ -22,7 +22,7 @@
 
 #include "mpi.h"
 #include "file/file.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/argv.h"
 #include "util/output.h"
 #include "mca/mca.h"
@@ -34,7 +34,7 @@
  * Local types
  */
 struct avail_io_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
 
     mca_io_base_version_t ai_version;
 
@@ -47,7 +47,7 @@ typedef struct avail_io_t avail_io_t;
 /*
  * Local functions
  */
-static ompi_list_t *check_components(ompi_list_t *components, 
+static opal_list_t *check_components(opal_list_t *components, 
                                      char *filename, struct ompi_info_t *info,
                                      char **names, int num_names);
 static avail_io_t *check_one_component(const mca_base_component_t *component,
@@ -66,7 +66,7 @@ static int delete_file(avail_io_t *avail, char *filename, struct ompi_info_t *in
 /*
  * Stuff for the OBJ interface
  */
-static OBJ_CLASS_INSTANCE(avail_io_t, ompi_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(avail_io_t, opal_list_item_t, NULL, NULL);
 
 
 /*
@@ -75,8 +75,8 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
 {
     int err, num_names;
     char *names, **name_array;
-    ompi_list_t *selectable;
-    ompi_list_item_t *item;
+    opal_list_t *selectable;
+    opal_list_item_t *item;
     avail_io_t *avail, selected;
 
     /* Announce */
@@ -138,7 +138,7 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
 #if 1
     /* For the moment, just take the top module off the list */
 
-    item = ompi_list_remove_first(selectable);
+    item = opal_list_remove_first(selectable);
     avail = (avail_io_t *) item;
     selected = *avail;
     OBJ_RELEASE(avail);
@@ -151,8 +151,8 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
        query() invoked, but will never have init() invoked in this
        scope). */
 
-    for (item = ompi_list_remove_first(selectable); item != NULL;
-         item = ompi_list_remove_first(selectable)) {
+    for (item = opal_list_remove_first(selectable); item != NULL;
+         item = opal_list_remove_first(selectable)) {
         avail = (avail_io_t *) item;
         unquery(avail, filename, info);
         OBJ_RELEASE(item);
@@ -182,28 +182,28 @@ int mca_io_base_delete(char *filename, struct ompi_info_t *info)
  * be only those who returned that they want to run, and put them in
  * priority order.
  */
-static ompi_list_t *check_components(ompi_list_t *components, 
+static opal_list_t *check_components(opal_list_t *components, 
                                      char *filename, struct ompi_info_t *info,
                                      char **names, int num_names)
 {
     int i;
     const mca_base_component_t *component;
-    ompi_list_item_t *item, *item2;
+    opal_list_item_t *item, *item2;
     bool want_to_check;
-    ompi_list_t *selectable;
+    opal_list_t *selectable;
     avail_io_t *avail, *avail2;
 
     /* Make a list of the components that query successfully */
 
-    selectable = OBJ_NEW(ompi_list_t);
+    selectable = OBJ_NEW(opal_list_t);
 
     /* Scan through the list of components.  This nested loop is
        O(N^2), but we should never have too many components and/or
        names, so this *hopefully* shouldn't matter... */
   
-    for (item = ompi_list_get_first(components); 
-         item != ompi_list_get_end(components); 
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(components); 
+         item != opal_list_get_end(components); 
+         item = opal_list_get_next(item)) {
         component = ((mca_base_component_priority_list_item_t *) 
                      item)->super.cli_component;
 
@@ -230,18 +230,18 @@ static ompi_list_t *check_components(ompi_list_t *components,
                 /* Put this item on the list in priority order
                    (highest priority first).  Should it go first? */
 
-                item2 = ompi_list_get_first(selectable); 
+                item2 = opal_list_get_first(selectable); 
                 avail2 = (avail_io_t *) item2;
-                if (ompi_list_get_end(selectable) == item2 ||
+                if (opal_list_get_end(selectable) == item2 ||
                     avail->ai_priority > avail2->ai_priority) {
-                    ompi_list_prepend(selectable, (ompi_list_item_t*) avail);
+                    opal_list_prepend(selectable, (opal_list_item_t*) avail);
                 } else {
-                    for (i = 1; item2 != ompi_list_get_end(selectable); 
-                         item2 = ompi_list_get_next(selectable), ++i) {
+                    for (i = 1; item2 != opal_list_get_end(selectable); 
+                         item2 = opal_list_get_next(selectable), ++i) {
                         avail2 = (avail_io_t *) item2;
                         if (avail->ai_priority > avail2->ai_priority) {
-                            ompi_list_insert(selectable,
-                                             (ompi_list_item_t *) avail, i);
+                            opal_list_insert(selectable,
+                                             (opal_list_item_t *) avail, i);
                             break;
                         }
                     }
@@ -250,9 +250,9 @@ static ompi_list_t *check_components(ompi_list_t *components,
                        list, then append it (because it has the lowest
                        priority found so far) */
 
-                    if (ompi_list_get_end(selectable) == item2) {
-                        ompi_list_append(selectable, 
-                                         (ompi_list_item_t *) avail);
+                    if (opal_list_get_end(selectable) == item2) {
+                        opal_list_append(selectable, 
+                                         (opal_list_item_t *) avail);
                     }
                 }
             }
@@ -261,7 +261,7 @@ static ompi_list_t *check_components(ompi_list_t *components,
     
     /* If we didn't find any available components, return an error */
     
-    if (0 == ompi_list_get_size(selectable)) {
+    if (0 == opal_list_get_size(selectable)) {
         OBJ_RELEASE(selectable);
         return NULL;
     }

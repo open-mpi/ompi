@@ -68,7 +68,7 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg);
 
 OBJ_CLASS_INSTANCE(
     mca_oob_tcp_peer_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     mca_oob_tcp_peer_construct,
     mca_oob_tcp_peer_destruct);
 
@@ -83,7 +83,7 @@ OBJ_CLASS_INSTANCE(
  */
 static void mca_oob_tcp_peer_construct(mca_oob_tcp_peer_t* peer) 
 { 
-    OBJ_CONSTRUCT(&(peer->peer_send_queue), ompi_list_t);
+    OBJ_CONSTRUCT(&(peer->peer_send_queue), opal_list_t);
     OBJ_CONSTRUCT(&(peer->peer_lock), ompi_mutex_t);
     memset(&peer->peer_send_event, 0, sizeof(peer->peer_send_event));
     memset(&peer->peer_recv_event, 0, sizeof(peer->peer_recv_event));
@@ -145,7 +145,7 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
         /*
          * queue the message and attempt to resolve the peer address
          */
-        ompi_list_append(&peer->peer_send_queue, (ompi_list_item_t*)msg);
+        opal_list_append(&peer->peer_send_queue, (opal_list_item_t*)msg);
         if(peer->peer_state == MCA_OOB_TCP_CLOSED) {
             peer->peer_state = MCA_OOB_TCP_RESOLVE;
             OMPI_THREAD_UNLOCK(&peer->peer_lock);
@@ -160,7 +160,7 @@ int mca_oob_tcp_peer_send(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
          * start the message and queue if not completed 
          */
         if (NULL != peer->peer_send_msg) {
-            ompi_list_append(&peer->peer_send_queue, (ompi_list_item_t*)msg);
+            opal_list_append(&peer->peer_send_queue, (opal_list_item_t*)msg);
         } else {
             /*if the send does not complete */
             if(!mca_oob_tcp_msg_send_handler(msg, peer)) {
@@ -185,7 +185,7 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
 {
     int rc;
     mca_oob_tcp_peer_t * peer, *old;
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
 
     if (NULL == name) { /* can't look this one up */
         return NULL;
@@ -200,9 +200,9 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
     }
 
     /* search the peer list - if we find it here this is a bug in the tree */
-    for(item =  ompi_list_get_first(&mca_oob_tcp_component.tcp_peer_list);
-        item != ompi_list_get_end(&mca_oob_tcp_component.tcp_peer_list);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(&mca_oob_tcp_component.tcp_peer_list);
+        item != opal_list_get_end(&mca_oob_tcp_component.tcp_peer_list);
+        item =  opal_list_get_next(item)) {
         peer = (mca_oob_tcp_peer_t*)item;
         if (memcmp(&peer->peer_name, name, sizeof(peer->peer_name)) == 0) {
             OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
@@ -235,22 +235,22 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
     }
 
     /* if the peer list is over the maximum size, remove one unsed peer */
-    ompi_list_prepend(&mca_oob_tcp_component.tcp_peer_list, (ompi_list_item_t *) peer);
+    opal_list_prepend(&mca_oob_tcp_component.tcp_peer_list, (opal_list_item_t *) peer);
     if(mca_oob_tcp_component.tcp_peer_limit > 0 &&
-       (int)ompi_list_get_size(&mca_oob_tcp_component.tcp_peer_list) > 
+       (int)opal_list_get_size(&mca_oob_tcp_component.tcp_peer_list) > 
        mca_oob_tcp_component.tcp_peer_limit) {
         old = (mca_oob_tcp_peer_t *) 
-              ompi_list_get_last(&mca_oob_tcp_component.tcp_peer_list);
+              opal_list_get_last(&mca_oob_tcp_component.tcp_peer_list);
         while(1) {
-            if(0 == ompi_list_get_size(&(old->peer_send_queue)) &&
+            if(0 == opal_list_get_size(&(old->peer_send_queue)) &&
                NULL == peer->peer_recv_msg) { 
-                ompi_list_remove_item(&mca_oob_tcp_component.tcp_peer_list, 
-                                      (ompi_list_item_t *) old);
+                opal_list_remove_item(&mca_oob_tcp_component.tcp_peer_list, 
+                                      (opal_list_item_t *) old);
                 MCA_OOB_TCP_PEER_RETURN(old);
                 break;
             } else {
-                old = (mca_oob_tcp_peer_t *) ompi_list_get_prev(old);
-                if(ompi_list_get_begin(&mca_oob_tcp_component.tcp_peer_list) == (ompi_list_item_t*)old) {
+                old = (mca_oob_tcp_peer_t *) opal_list_get_prev(old);
+                if(opal_list_get_begin(&mca_oob_tcp_component.tcp_peer_list) == (opal_list_item_t*)old) {
                     /* we tried, but we couldn't find one that was valid to get rid
                      * of. Oh well. */
                     break;
@@ -428,10 +428,10 @@ static void mca_oob_tcp_peer_connected(mca_oob_tcp_peer_t* peer)
     ompi_event_del(&peer->peer_timer_event);
     peer->peer_state = MCA_OOB_TCP_CONNECTED;
     peer->peer_retries = 0;
-    if(ompi_list_get_size(&peer->peer_send_queue) > 0) {
+    if(opal_list_get_size(&peer->peer_send_queue) > 0) {
         if(NULL == peer->peer_send_msg)
             peer->peer_send_msg = (mca_oob_tcp_msg_t*)
-                ompi_list_remove_first(&peer->peer_send_queue);
+                opal_list_remove_first(&peer->peer_send_queue);
         ompi_event_add(&peer->peer_send_event, 0);
     }
 }
@@ -468,7 +468,7 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
         while(msg != NULL) {
             msg->msg_rc = OMPI_ERR_UNREACH;
             mca_oob_tcp_msg_complete(msg, &peer->peer_name);
-            msg = (mca_oob_tcp_msg_t*)ompi_list_remove_first(&peer->peer_send_queue);
+            msg = (mca_oob_tcp_msg_t*)opal_list_remove_first(&peer->peer_send_queue);
         }
         peer->peer_send_msg = NULL;
     }
@@ -746,7 +746,7 @@ static void mca_oob_tcp_peer_send_handler(int sd, short flags, void* user)
 
             /* if current completed - progress any pending sends */
             peer->peer_send_msg = (mca_oob_tcp_msg_t*)
-                ompi_list_remove_first(&peer->peer_send_queue);
+                opal_list_remove_first(&peer->peer_send_queue);
         }
         
         /* if nothing else to do unregister for send event notifications */
@@ -874,7 +874,7 @@ void mca_oob_tcp_peer_resolved(mca_oob_tcp_peer_t* peer, mca_oob_tcp_addr_t* add
     OMPI_THREAD_LOCK(&peer->peer_lock);
     peer->peer_addr = addr;
     if((peer->peer_state == MCA_OOB_TCP_RESOLVE) ||
-       (peer->peer_state == MCA_OOB_TCP_CLOSED && ompi_list_get_size(&peer->peer_send_queue))) {
+       (peer->peer_state == MCA_OOB_TCP_CLOSED && opal_list_get_size(&peer->peer_send_queue))) {
         mca_oob_tcp_peer_start_connect(peer);
     }
     OMPI_THREAD_UNLOCK(&peer->peer_lock);
@@ -901,18 +901,18 @@ static void mca_oob_tcp_peer_timer_handler(int sd, short flags, void* user)
 
 void mca_oob_tcp_peer_dequeue_msg(mca_oob_tcp_peer_t* peer, mca_oob_tcp_msg_t* msg)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     OMPI_THREAD_LOCK(&peer->peer_lock);
     if (peer->peer_send_msg == msg)
         peer->peer_send_msg = NULL;
     if (peer->peer_recv_msg == msg)
         peer->peer_recv_msg = NULL;
 
-    for( item =  ompi_list_get_first(&peer->peer_send_queue);
-         item != ompi_list_get_end(&peer->peer_send_queue);
-         item = ompi_list_get_next(item)) {
-        if(item == (ompi_list_item_t*)msg) {
-            ompi_list_remove_item(&peer->peer_send_queue, item);
+    for( item =  opal_list_get_first(&peer->peer_send_queue);
+         item != opal_list_get_end(&peer->peer_send_queue);
+         item = opal_list_get_next(item)) {
+        if(item == (opal_list_item_t*)msg) {
+            opal_list_remove_item(&peer->peer_send_queue, item);
             break;
         }
     }

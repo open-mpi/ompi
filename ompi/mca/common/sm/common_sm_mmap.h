@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_object.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "include/sys/atomic.h"
 #include "mca/mpool/mpool.h" 
 
@@ -55,7 +55,7 @@ typedef struct mca_common_sm_file_header_t mca_common_sm_file_header_t;
 
 struct mca_common_sm_mmap_t {
     /* double link list element */
-    ompi_list_item_t map_item;
+    opal_list_item_t map_item;
     /* pointer to header imbeded in the shared memory file */
     mca_common_sm_file_header_t* map_seg;
     /* base address of the mmap'ed file */

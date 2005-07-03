@@ -266,7 +266,7 @@ struct mca_ptl_base_match_header_t;
 
 typedef uint64_t mca_ptl_sequence_t;
 typedef uint64_t mca_ptl_tstamp_t;
-typedef struct ompi_list_t mca_ptl_queue_t;
+typedef struct opal_list_t mca_ptl_queue_t;
 
 typedef enum { 
     MCA_PTL_ENABLE 

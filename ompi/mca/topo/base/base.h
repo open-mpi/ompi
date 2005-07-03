@@ -20,7 +20,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/topo/topo.h"
 #include "proc/proc.h"
 
@@ -126,8 +126,8 @@ OMPI_DECLSPEC    int mca_topo_base_graph_neighbors_count (struct ompi_communicat
 OMPI_DECLSPEC extern int mca_topo_base_output;
 OMPI_DECLSPEC extern int mca_topo_base_param;
 
-OMPI_DECLSPEC extern ompi_list_t mca_topo_base_components_available;
-OMPI_DECLSPEC extern ompi_list_t mca_topo_base_components_opened;
+OMPI_DECLSPEC extern opal_list_t mca_topo_base_components_available;
+OMPI_DECLSPEC extern opal_list_t mca_topo_base_components_opened;
 
 OMPI_DECLSPEC extern bool mca_topo_base_components_opened_valid;
 OMPI_DECLSPEC extern bool mca_topo_base_components_available_valid;

@@ -29,9 +29,9 @@ int orte_pls_base_finalize(void)
 {
     /* Finalize all available modules */
     if (orte_pls_base.pls_available_valid) {
-        ompi_list_item_t* item;
+        opal_list_item_t* item;
         while (NULL != 
-               (item = ompi_list_remove_first(&orte_pls_base.pls_available))) {
+               (item = opal_list_remove_first(&orte_pls_base.pls_available))) {
             orte_pls_base_cmp_t* cmp = (orte_pls_base_cmp_t*) item;
             ompi_output(orte_pls_base.pls_output,
                         "orte:base:close: finalizing module %s",

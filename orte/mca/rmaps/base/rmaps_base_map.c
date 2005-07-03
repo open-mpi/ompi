@@ -38,15 +38,15 @@
 static void orte_rmaps_base_node_construct(orte_rmaps_base_node_t* node)
 {
     node->node_name = NULL;
-    OBJ_CONSTRUCT(&node->node_procs, ompi_list_t);
+    OBJ_CONSTRUCT(&node->node_procs, opal_list_t);
 }
 
 static void orte_rmaps_base_node_destruct(orte_rmaps_base_node_t* node)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     if(NULL != node->node_name)
         free(node->node_name);
-    while(NULL != (item = ompi_list_remove_first(&node->node_procs))) {
+    while(NULL != (item = opal_list_remove_first(&node->node_procs))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&node->node_procs);
@@ -54,7 +54,7 @@ static void orte_rmaps_base_node_destruct(orte_rmaps_base_node_t* node)
 
 OBJ_CLASS_INSTANCE(
     orte_rmaps_base_node_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     orte_rmaps_base_node_construct,
     orte_rmaps_base_node_destruct);
 
@@ -77,7 +77,7 @@ static void orte_rmaps_base_proc_destruct(orte_rmaps_base_proc_t* proc)
 
 OBJ_CLASS_INSTANCE(
     orte_rmaps_base_proc_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     orte_rmaps_base_proc_construct,
     orte_rmaps_base_proc_destruct);
 
@@ -91,17 +91,17 @@ static void orte_rmaps_base_map_construct(orte_rmaps_base_map_t* map)
     map->app = NULL;
     map->procs = NULL;
     map->num_procs = 0;
-    OBJ_CONSTRUCT(&map->nodes, ompi_list_t);
+    OBJ_CONSTRUCT(&map->nodes, opal_list_t);
 }
 
 static void orte_rmaps_base_map_destruct(orte_rmaps_base_map_t* map)
 {
     size_t i=0;
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     for(i=0; i<map->num_procs; i++) {
         OBJ_RELEASE(map->procs[i]);
     }
-    while(NULL != (item = ompi_list_remove_first(&map->nodes)))
+    while(NULL != (item = opal_list_remove_first(&map->nodes)))
         OBJ_RELEASE(item);
     if(NULL != map->procs) {
         free(map->procs);
@@ -114,7 +114,7 @@ static void orte_rmaps_base_map_destruct(orte_rmaps_base_map_t* map)
 
 OBJ_CLASS_INSTANCE(
     orte_rmaps_base_map_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     orte_rmaps_base_map_construct,
     orte_rmaps_base_map_destruct);
 
@@ -172,17 +172,17 @@ static int orte_rmaps_value_compare(orte_gpr_value_t** val1, orte_gpr_value_t** 
  */
 
 static orte_rmaps_base_node_t* 
-orte_rmaps_lookup_node(ompi_list_t* nodes, char* node_name, orte_rmaps_base_proc_t* proc)
+orte_rmaps_lookup_node(opal_list_t* nodes, char* node_name, orte_rmaps_base_proc_t* proc)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     orte_rmaps_base_node_t *node;
-    for(item =  ompi_list_get_first(nodes);
-        item != ompi_list_get_end(nodes);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(nodes);
+        item != opal_list_get_end(nodes);
+        item =  opal_list_get_next(item)) {
         node = (orte_rmaps_base_node_t*)item;
         if(strcmp(node->node_name, node_name) == 0) {
             OBJ_RETAIN(proc);
-            ompi_list_append(&node->node_procs, &proc->super);
+            opal_list_append(&node->node_procs, &proc->super);
             return node;
         }
     }
@@ -190,8 +190,8 @@ orte_rmaps_lookup_node(ompi_list_t* nodes, char* node_name, orte_rmaps_base_proc
     node->node_cellid = proc->proc_name.cellid;
     node->node_name = strdup(node_name);
     OBJ_RETAIN(proc);
-    ompi_list_append(&node->node_procs, &proc->super);
-    ompi_list_prepend(nodes, &node->super);
+    opal_list_append(&node->node_procs, &proc->super);
+    opal_list_prepend(nodes, &node->super);
     return node;
 }
 
@@ -200,7 +200,7 @@ orte_rmaps_lookup_node(ompi_list_t* nodes, char* node_name, orte_rmaps_base_proc
  *  Query the process mapping from the registry.
  */
 
-int orte_rmaps_base_get_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
+int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
 {
     orte_app_context_t** app_context = NULL;
     orte_rmaps_base_map_t** mapping = NULL;
@@ -329,7 +329,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
 
     /* release temporary variables */
     for(i=0; i<num_context; i++) {
-        ompi_list_append(mapping_list, &mapping[i]->super);
+        opal_list_append(mapping_list, &mapping[i]->super);
     }
     free(segment);
     free(jobid_str);
@@ -366,7 +366,7 @@ int orte_rmaps_base_get_node_map(
     orte_cellid_t cellid, 
     orte_jobid_t jobid, 
     const char* hostname,
-    ompi_list_t* mapping_list)
+    opal_list_t* mapping_list)
 {
     orte_app_context_t** app_context = NULL;
     orte_rmaps_base_map_t** mapping = NULL;
@@ -501,7 +501,7 @@ int orte_rmaps_base_get_node_map(
     for(i=0; i<num_context; i++) {
         orte_rmaps_base_map_t* map = mapping[i];
         if(map->num_procs) {
-            ompi_list_append(mapping_list, &map->super);
+            opal_list_append(mapping_list, &map->super);
         } else {
             OBJ_RELEASE(map);
         }
@@ -544,19 +544,19 @@ cleanup:
  * Set the process mapping in the registry.
  */
 
-int orte_rmaps_base_set_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
+int orte_rmaps_base_set_map(orte_jobid_t jobid, opal_list_t* mapping_list)
 {
     size_t i;
     size_t index=0;
     size_t num_procs = 0;
     size_t size;
     int rc = ORTE_SUCCESS;
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     orte_gpr_value_t** values;
 
-    for(item =  ompi_list_get_first(mapping_list);
-        item != ompi_list_get_end(mapping_list);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(mapping_list);
+        item != opal_list_get_end(mapping_list);
+        item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
         num_procs += map->num_procs;
     }
@@ -587,9 +587,9 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, ompi_list_t* mapping_list)
 
 
     /* iterate through all processes and initialize value array */
-    for(item =  ompi_list_get_first(mapping_list);
-        item != ompi_list_get_end(mapping_list);
-        item =  ompi_list_get_next(item)) {
+    for(item =  opal_list_get_first(mapping_list);
+        item != opal_list_get_end(mapping_list);
+        item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
         size_t p;
         for(p=0; p<map->num_procs; p++) {

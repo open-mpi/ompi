@@ -67,7 +67,7 @@ OBJ_CLASS_DECLARATION(mca_btl_template_frag_user_t);
 #define MCA_BTL_TEMPLATE_FRAG_ALLOC_EAGER(btl, frag, rc)           \
 {                                                                  \
                                                                    \
-    ompi_list_item_t *item;                                        \
+    opal_list_item_t *item;                                        \
     OMPI_FREE_LIST_WAIT(&((mca_btl_template_module_t*)btl)->template_frag_eager, item, rc); \
     frag = (mca_btl_template_frag_t*) item;                        \
 }
@@ -75,13 +75,13 @@ OBJ_CLASS_DECLARATION(mca_btl_template_frag_user_t);
 #define MCA_BTL_TEMPLATE_FRAG_RETURN_EAGER(btl, frag)              \
 {                                                                  \
     OMPI_FREE_LIST_RETURN(&((mca_btl_template_module_t*)btl)->template_frag_eager, \
-        (ompi_list_item_t*)(frag));                                \
+        (opal_list_item_t*)(frag));                                \
 }
 
 #define MCA_BTL_TEMPLATE_FRAG_ALLOC_MAX(btl, frag, rc)             \
 {                                                                  \
                                                                    \
-    ompi_list_item_t *item;                                        \
+    opal_list_item_t *item;                                        \
     OMPI_FREE_LIST_WAIT(&((mca_btl_template_module_t*)btl)->template_frag_max, item, rc); \
     frag = (mca_btl_template_frag_t*) item;                        \
 }
@@ -89,13 +89,13 @@ OBJ_CLASS_DECLARATION(mca_btl_template_frag_user_t);
 #define MCA_BTL_TEMPLATE_FRAG_RETURN_MAX(btl, frag)                \
 {                                                                  \
     OMPI_FREE_LIST_RETURN(&((mca_btl_template_module_t*)btl)->template_frag_max, \
-        (ompi_list_item_t*)(frag));                                \
+        (opal_list_item_t*)(frag));                                \
 }
 
 
 #define MCA_BTL_TEMPLATE_FRAG_ALLOC_USER(btl, frag, rc)            \
 {                                                                  \
-    ompi_list_item_t *item;                                        \
+    opal_list_item_t *item;                                        \
     OMPI_FREE_LIST_WAIT(&((mca_btl_template_module_t*)btl)->template_frag_user, item, rc); \
     frag = (mca_btl_template_frag_t*) item;                        \
 }
@@ -103,7 +103,7 @@ OBJ_CLASS_DECLARATION(mca_btl_template_frag_user_t);
 #define MCA_BTL_TEMPLATE_FRAG_RETURN_USER(btl, frag)               \
 {                                                                  \
     OMPI_FREE_LIST_RETURN(&((mca_btl_template_module_t*)btl)->template_frag_user, \
-        (ompi_list_item_t*)(frag)); \
+        (opal_list_item_t*)(frag)); \
 }
 
 

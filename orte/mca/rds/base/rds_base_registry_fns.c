@@ -24,7 +24,7 @@
 
 #include <string.h>
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/output.h"
 #include "mca/errmgr/errmgr.h"
 #include "mca/gpr/gpr.h"
@@ -32,10 +32,10 @@
 
 #include "mca/rds/base/base.h"
 
-int orte_rds_base_store_resource(ompi_list_t *resources)
+int orte_rds_base_store_resource(opal_list_t *resources)
 {
     orte_rds_cell_desc_t *cell;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     orte_gpr_value_t **values;
     orte_rds_cell_attr_t *attr;
     size_t i, j, num_vals;
@@ -46,7 +46,7 @@ int orte_rds_base_store_resource(ompi_list_t *resources)
         return ORTE_ERR_BAD_PARAM;
     }
     
-    num_vals = ompi_list_get_size(resources);
+    num_vals = opal_list_get_size(resources);
     if (0 == num_vals) {  /* nothing to do */
         return ORTE_SUCCESS;
     }
@@ -57,7 +57,7 @@ int orte_rds_base_store_resource(ompi_list_t *resources)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    for (i=0; i < num_vals && NULL != (cell = (orte_rds_cell_desc_t*)ompi_list_remove_first(resources)); i++) {
+    for (i=0; i < num_vals && NULL != (cell = (orte_rds_cell_desc_t*)opal_list_remove_first(resources)); i++) {
         values[i] = OBJ_NEW(orte_gpr_value_t);
         if (NULL == values[i]) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -74,7 +74,7 @@ int orte_rds_base_store_resource(ompi_list_t *resources)
             goto CLEANUP;
         }
 
-        values[i]->cnt = ompi_list_get_size(&cell->attributes);
+        values[i]->cnt = opal_list_get_size(&cell->attributes);
         values[i]->keyvals = (orte_gpr_keyval_t**)malloc(values[i]->cnt * sizeof(orte_gpr_keyval_t*));
         if (NULL == values[i]->keyvals) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -82,9 +82,9 @@ int orte_rds_base_store_resource(ompi_list_t *resources)
             goto CLEANUP;
         }
     
-        for (j=0, item = ompi_list_get_first(&cell->attributes);
-             j < values[i]->cnt && item != ompi_list_get_end(&cell->attributes);
-             j++, item = ompi_list_get_next(item)) {
+        for (j=0, item = opal_list_get_first(&cell->attributes);
+             j < values[i]->cnt && item != opal_list_get_end(&cell->attributes);
+             j++, item = opal_list_get_next(item)) {
             attr = (orte_rds_cell_attr_t*)item;
             
             values[i]->keyvals[j] = OBJ_NEW(orte_gpr_keyval_t);

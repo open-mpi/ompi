@@ -29,7 +29,7 @@
 
 int orte_iof_base_close(void)
 {
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
 
     /* We only need to flush if an iof component was successfully
        selected */
@@ -40,14 +40,14 @@ int orte_iof_base_close(void)
     }
 
     /* shutdown any remaining opened components */
-    if (0 != ompi_list_get_size(&orte_iof_base.iof_components_opened)) {
+    if (0 != opal_list_get_size(&orte_iof_base.iof_components_opened)) {
         mca_base_components_close(orte_iof_base.iof_output, 
                               &orte_iof_base.iof_components_opened, NULL);
     }
 
     /* final cleanup of resources */
     OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
-    while((item = ompi_list_remove_first(&orte_iof_base.iof_endpoints)) != NULL) {
+    while((item = opal_list_remove_first(&orte_iof_base.iof_endpoints)) != NULL) {
         OBJ_RELEASE(item);
     }
     OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);

@@ -28,10 +28,10 @@
 mca_mpool_base_component_t* mca_mpool_base_component_lookup(const char* name)
 {
     /* Traverse the list of available modules; call their init functions. */
-    ompi_list_item_t* item;
-    for (item = ompi_list_get_first(&mca_mpool_base_components);
-         item != ompi_list_get_end(&mca_mpool_base_components);
-         item = ompi_list_get_next(item)) {
+    opal_list_item_t* item;
+    for (item = opal_list_get_first(&mca_mpool_base_components);
+         item != opal_list_get_end(&mca_mpool_base_components);
+         item = opal_list_get_next(item)) {
          mca_base_component_list_item_t *cli = 
            (mca_base_component_list_item_t *) item;
          mca_mpool_base_component_t* component = 
@@ -52,12 +52,12 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     
     mca_mpool_base_component_t* component = NULL; 
     mca_mpool_base_module_t* module = NULL; 
-    ompi_list_item_t* item;
+    opal_list_item_t* item;
     mca_mpool_base_selected_module_t *sm;
 
-    for (item = ompi_list_get_first(&mca_mpool_base_components);
-         item != ompi_list_get_end(&mca_mpool_base_components);
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&mca_mpool_base_components);
+         item != opal_list_get_end(&mca_mpool_base_components);
+         item = opal_list_get_next(item)) {
          mca_base_component_list_item_t *cli = 
            (mca_base_component_list_item_t *) item;
          component = 
@@ -75,6 +75,6 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     sm->mpool_module = module; 
     sm->user_data = user_data;
     sm->mpool_resources = resources;
-    ompi_list_append(&mca_mpool_base_modules, (ompi_list_item_t*) sm); 
+    opal_list_append(&mca_mpool_base_modules, (opal_list_item_t*) sm); 
     return module; 
 }

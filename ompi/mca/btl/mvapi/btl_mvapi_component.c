@@ -109,7 +109,7 @@ int mca_btl_mvapi_component_open(void)
     mca_btl_mvapi_component.mvapi_btls=NULL;
     
     /* initialize objects */ 
-    OBJ_CONSTRUCT(&mca_btl_mvapi_component.ib_procs, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_btl_mvapi_component.ib_procs, opal_list_t);
     /* OBJ_CONSTRUCT (&mca_btl_mvapi_component.ib_recv_frags, ompi_free_list_t); */
 
     /* register IB component parameters */
@@ -250,10 +250,10 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     mca_btl_base_module_t** btls;
     uint32_t i,j, length;
     struct mca_mpool_base_resources_t hca_pd; 
-    ompi_list_t btl_list; 
+    opal_list_t btl_list; 
     mca_btl_mvapi_module_t * mvapi_btl; 
     mca_btl_base_selected_module_t* ib_selected; 
-    ompi_list_item_t* item; 
+    opal_list_item_t* item; 
     /* initialization */
     *num_btl_modules = 0;
 
@@ -282,7 +282,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         for each hca we query the number of ports on the hca and set up 
         a distinct btl module for each hca port */ 
 
-    OBJ_CONSTRUCT(&btl_list, ompi_list_t); 
+    OBJ_CONSTRUCT(&btl_list, opal_list_t); 
     OBJ_CONSTRUCT(&mca_btl_mvapi_component.ib_lock, ompi_mutex_t);
 
 
@@ -320,7 +320,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
                  mvapi_btl->nic = hca_hndl; 
                  mvapi_btl->port_id = (IB_port_t) j; 
                  mvapi_btl->port = hca_port; 
-                 ompi_list_append(&btl_list, (ompi_list_item_t*) ib_selected);
+                 opal_list_append(&btl_list, (opal_list_item_t*) ib_selected);
                  mca_btl_mvapi_component.ib_num_btls ++; 
                  
             } 
@@ -347,7 +347,7 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     
     
     for(i = 0; i < mca_btl_mvapi_component.ib_num_btls; i++){
-        item = ompi_list_remove_first(&btl_list); 
+        item = opal_list_remove_first(&btl_list); 
         ib_selected = (mca_btl_base_selected_module_t*)item; 
         mvapi_btl = (mca_btl_mvapi_module_t*) ib_selected->btl_module; 
         memcpy(&(mca_btl_mvapi_component.mvapi_btls[i]), mvapi_btl , sizeof(mca_btl_mvapi_module_t)); 
@@ -370,8 +370,8 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
         OBJ_CONSTRUCT(&mvapi_btl->recv_free_max, ompi_free_list_t);
         
 
-        OBJ_CONSTRUCT(&mvapi_btl->repost, ompi_list_t);
-        OBJ_CONSTRUCT(&mvapi_btl->reg_mru_list, ompi_list_t); 
+        OBJ_CONSTRUCT(&mvapi_btl->repost, opal_list_t);
+        OBJ_CONSTRUCT(&mvapi_btl->reg_mru_list, opal_list_t); 
         
       
 
@@ -532,7 +532,7 @@ int mca_btl_mvapi_component_progress()
                 /* advance the segment address past the header and subtract from the length..*/ 
                 mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super, frag->hdr->tag, &frag->base, mvapi_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
-                OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_eager), (ompi_list_item_t*) frag); 
+                OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_eager), (opal_list_item_t*) frag); 
                 OMPI_THREAD_ADD32(&mvapi_btl->rr_posted_high, -1); 
                 
                 mca_btl_mvapi_endpoint_post_rr(((mca_btl_mvapi_frag_t*)comp.id)->endpoint, 0); 
@@ -578,7 +578,7 @@ int mca_btl_mvapi_component_progress()
                 /* advance the segment address past the header and subtract from the length..*/ 
                 mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super, frag->hdr->tag, &frag->base, mvapi_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
-                OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_max), (ompi_list_item_t*) frag); 
+                OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_max), (opal_list_item_t*) frag); 
                 OMPI_THREAD_ADD32(&mvapi_btl->rr_posted_low, -1); 
                 
 

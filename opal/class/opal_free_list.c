@@ -26,7 +26,7 @@ static void opal_free_list_destruct(opal_free_list_t* fl);
 
 opal_class_t opal_free_list_t_class = {
     "opal_free_list_t", 
-    OBJ_CLASS(ompi_list_t),
+    OBJ_CLASS(opal_list_t),
     (opal_construct_t)opal_free_list_construct, 
     (opal_destruct_t)opal_free_list_destruct
 };
@@ -91,7 +91,7 @@ int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements)
         if (NULL != flist->fl_elem_class) {
             OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
         }
-        ompi_list_append(&(flist->super), &(item->super));
+        opal_list_append(&(flist->super), &(item->super));
         ptr += flist->fl_elem_size;
     }
     flist->fl_num_allocated += num_elements;

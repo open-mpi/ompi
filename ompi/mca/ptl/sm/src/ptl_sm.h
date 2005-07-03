@@ -124,7 +124,7 @@ struct mca_ptl_sm_component_t {
                                                     fragments that are
                                                     awaiting resources */
     ompi_mutex_t sm_pending_ack_lock;
-    ompi_list_t sm_pending_ack; /**< list of fragmnent that need to be
+    opal_list_t sm_pending_ack; /**< list of fragmnent that need to be
                                    acked */
 
     struct mca_ptl_base_peer_t **sm_peers;

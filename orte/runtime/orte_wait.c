@@ -32,7 +32,7 @@
 #include "runtime/orte_wait.h"
 #include "util/output.h"
 #include "opal/class/opal_object.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "event/event.h"
 #include "include/constants.h"
 #include "threads/mutex.h"
@@ -54,14 +54,14 @@ struct blk_waitpid_data_t {
 typedef struct blk_waitpid_data_t blk_waitpid_data_t;
 
 struct pending_pids_item_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     pid_t pid;
     int status;
 };
 typedef struct pending_pids_item_t pending_pids_item_t;
 
 struct registered_cb_item_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     pid_t pid;
     orte_wait_fn_t callback;
     void *data;
@@ -110,9 +110,9 @@ static OBJ_CLASS_INSTANCE(blk_waitpid_data_t, opal_object_t,
                           blk_waitpid_data_construct, 
                           blk_waitpid_data_destruct);
 
-static OBJ_CLASS_INSTANCE(pending_pids_item_t, ompi_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(pending_pids_item_t, opal_list_item_t, NULL, NULL);
 
-static OBJ_CLASS_INSTANCE(registered_cb_item_t, ompi_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(registered_cb_item_t, opal_list_item_t, NULL, NULL);
 
 
 /*********************************************************************
@@ -122,8 +122,8 @@ static OBJ_CLASS_INSTANCE(registered_cb_item_t, ompi_list_item_t, NULL, NULL);
  ********************************************************************/
 static volatile int cb_enabled = true;
 static ompi_mutex_t mutex;
-static ompi_list_t pending_pids;
-static ompi_list_t registered_cb;
+static opal_list_t pending_pids;
+static opal_list_t registered_cb;
 static struct ompi_event handler;
 
 
@@ -156,8 +156,8 @@ int
 orte_wait_init(void)
 {
     OBJ_CONSTRUCT(&mutex, ompi_mutex_t);
-    OBJ_CONSTRUCT(&pending_pids, ompi_list_t);
-    OBJ_CONSTRUCT(&registered_cb, ompi_list_t);
+    OBJ_CONSTRUCT(&pending_pids, opal_list_t);
+    OBJ_CONSTRUCT(&registered_cb, opal_list_t);
 
     ompi_event_set(&handler, SIGCHLD, OMPI_EV_SIGNAL|OMPI_EV_PERSIST,
                    orte_wait_signal_callback,
@@ -171,16 +171,16 @@ orte_wait_init(void)
 int
 orte_wait_finalize(void)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
 
     OMPI_THREAD_LOCK(&mutex);
     ompi_event_del(&handler);
 
     /* clear out the lists */
-    while (NULL != (item = ompi_list_remove_first(&pending_pids))) {
+    while (NULL != (item = opal_list_remove_first(&pending_pids))) {
         OBJ_RELEASE(item);
     }
-    while (NULL != (item = ompi_list_remove_first(&registered_cb))) {
+    while (NULL != (item = opal_list_remove_first(&registered_cb))) {
         OBJ_RELEASE(item);
     }
     OMPI_THREAD_UNLOCK(&mutex);
@@ -195,13 +195,13 @@ orte_wait_finalize(void)
 int 
 orte_wait_kill(int sig)
 {
-    ompi_list_t children;
-    ompi_list_item_t* item;
+    opal_list_t children;
+    opal_list_item_t* item;
 
-    OBJ_CONSTRUCT(&children, ompi_list_t);
+    OBJ_CONSTRUCT(&children, opal_list_t);
     OMPI_THREAD_LOCK(&mutex);
     do_waitall(0);
-    while (NULL != (item = ompi_list_remove_first(&registered_cb))) {
+    while (NULL != (item = opal_list_remove_first(&registered_cb))) {
         registered_cb_item_t *cb = (registered_cb_item_t*)item;
         pending_pids_item_t *pending = find_pending_pid(cb->pid,false);
         if(NULL == pending) {
@@ -238,7 +238,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
     if (NULL != pending) {
         *status = pending->status;
         ret = pending->pid;
-        ompi_list_remove_item(&pending_pids, (ompi_list_item_t*) pending);
+        opal_list_remove_item(&pending_pids, (opal_list_item_t*) pending);
         OBJ_RELEASE(pending);
         goto cleanup;
     }
@@ -413,12 +413,12 @@ blk_waitpid_cb(pid_t wpid, int status, void *data)
 static pending_pids_item_t *
 find_pending_pid(pid_t pid, bool create)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     pending_pids_item_t *pending;
 
-    for (item = ompi_list_get_first(&pending_pids) ;
-         item != ompi_list_get_end(&pending_pids) ;
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&pending_pids) ;
+         item != opal_list_get_end(&pending_pids) ;
+         item = opal_list_get_next(item)) {
         pending = (pending_pids_item_t*) item;
 
         if (pending->pid == pid || -1 == pid) {
@@ -432,7 +432,7 @@ find_pending_pid(pid_t pid, bool create)
 
         pending->pid = pid;
         pending->status = 0;
-        ompi_list_append(&pending_pids, (ompi_list_item_t*) pending);
+        opal_list_append(&pending_pids, (opal_list_item_t*) pending);
         return pending;
     } 
 
@@ -444,12 +444,12 @@ find_pending_pid(pid_t pid, bool create)
 static registered_cb_item_t *
 find_waiting_cb(pid_t pid, bool create)
 {
-    ompi_list_item_t *item = NULL;
+    opal_list_item_t *item = NULL;
     registered_cb_item_t *reg_cb = NULL;
 
-    for (item = ompi_list_get_first(&registered_cb) ;
-         item != ompi_list_get_end(&registered_cb) ;
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&registered_cb) ;
+         item != opal_list_get_end(&registered_cb) ;
+         item = opal_list_get_next(item)) {
         reg_cb = (registered_cb_item_t*) item;
 
         if (reg_cb->pid == pid) {
@@ -464,7 +464,7 @@ find_waiting_cb(pid_t pid, bool create)
         reg_cb->pid = pid;
         reg_cb->callback = NULL;
         reg_cb->data = NULL;
-        ompi_list_append(&registered_cb, (ompi_list_item_t*) reg_cb);
+        opal_list_append(&registered_cb, (opal_list_item_t*) reg_cb);
         return reg_cb;
     }
 
@@ -490,9 +490,9 @@ do_waitall(int options)
             pending = OBJ_NEW(pending_pids_item_t);
             pending->pid = ret;
             pending->status = status;
-            ompi_list_append(&pending_pids, &pending->super);
+            opal_list_append(&pending_pids, &pending->super);
         } else {
-            ompi_list_remove_item(&registered_cb, &cb->super);
+            opal_list_remove_item(&registered_cb, &cb->super);
             OMPI_THREAD_UNLOCK(&mutex);
             cb->callback(cb->pid, status, cb->data);
             OMPI_THREAD_LOCK(&mutex);
@@ -508,8 +508,8 @@ trigger_callback(registered_cb_item_t *cb, pending_pids_item_t *pending)
     assert(cb->pid == pending->pid);
 
     cb->callback(cb->pid, pending->status, cb->data);
-    ompi_list_remove_item(&pending_pids, (ompi_list_item_t*) pending);
-    ompi_list_remove_item(&registered_cb, (ompi_list_item_t*) cb);
+    opal_list_remove_item(&pending_pids, (opal_list_item_t*) pending);
+    opal_list_remove_item(&registered_cb, (opal_list_item_t*) cb);
 }
 
 
@@ -546,7 +546,7 @@ unregister_callback(pid_t pid)
     reg_cb = find_waiting_cb(pid, false);
     if (NULL == reg_cb) return OMPI_ERR_BAD_PARAM;
 
-    ompi_list_remove_item(&registered_cb, (ompi_list_item_t*) reg_cb);
+    opal_list_remove_item(&registered_cb, (opal_list_item_t*) reg_cb);
 
     return OMPI_SUCCESS;
 }

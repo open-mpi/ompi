@@ -24,7 +24,7 @@
  */
 #include "orte_config.h"
 #include "include/orte_constants.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/ras/ras.h"
 
 
@@ -41,7 +41,7 @@ extern "C" {
 
 struct orte_ras_base_cmp_t {
     /** Base object */
-    ompi_list_item_t super;
+    opal_list_item_t super;
     /** ras component */
     orte_ras_base_component_t *component;
     /** ras module */
@@ -62,9 +62,9 @@ ORTE_DECLSPEC orte_ras_base_module_t* orte_ras_base_select(const char*);
 ORTE_DECLSPEC int orte_ras_base_allocate(orte_jobid_t job);
 ORTE_DECLSPEC int orte_ras_base_deallocate(orte_jobid_t job);
 ORTE_DECLSPEC int orte_ras_base_allocate_nodes_by_node(orte_jobid_t jobid, 
-                                                       ompi_list_t* nodes);
+                                                       opal_list_t* nodes);
 ORTE_DECLSPEC int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid, 
-                                                       ompi_list_t* nodes);
+                                                       opal_list_t* nodes);
 
 /*
  * globals that might be needed
@@ -73,8 +73,8 @@ ORTE_DECLSPEC int orte_ras_base_allocate_nodes_by_slot(orte_jobid_t jobid,
 
 typedef struct orte_ras_base_t {
     int ras_output;
-    ompi_list_t ras_opened;
-    ompi_list_t ras_available;
+    opal_list_t ras_opened;
+    opal_list_t ras_available;
     size_t ras_num_nodes;
 } orte_ras_base_t;
  

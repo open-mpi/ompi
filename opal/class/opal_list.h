@@ -16,33 +16,33 @@
 /**
  * @file 
  *
- * The ompi_list_t interface is used to provide a generic
+ * The opal_list_t interface is used to provide a generic
  * doubly-linked list container for Open MPI.  It was inspired by (but
  * is slightly different than) the Stantard Template Library (STL)
  * std::list class.  One notable difference from std::list is that
- * when an ompi_list_t is destroyed, all of the ompi_list_item_t
+ * when an opal_list_t is destroyed, all of the opal_list_item_t
  * objects that it contains are orphaned -- they are \em not
  * destroyed.
  *
- * The general idea is that ompi_list_item_t objects can be put on an
- * ompi_list_t.  Hence, you create a new type that derives from
- * ompi_list_item_t; this new type can then be used with ompi_list_t
+ * The general idea is that opal_list_item_t objects can be put on an
+ * opal_list_t.  Hence, you create a new type that derives from
+ * opal_list_item_t; this new type can then be used with opal_list_t
  * containers.
  *
- * NOTE: ompi_list_item_t instances can only be on \em one list at a
- * time.  Specifically, if you add an ompi_list_item_t to one list,
+ * NOTE: opal_list_item_t instances can only be on \em one list at a
+ * time.  Specifically, if you add an opal_list_item_t to one list,
  * and then add it to another list (without first removing it from the
  * first list), you will effectively be hosing the first list.  You
  * have been warned.
  *
  * If OMPI_ENABLE_DEBUG is true, a bunch of checks occur, including
  * some spot checks for a debugging reference count in an attempt to
- * ensure that an ompi_list_item_t is only one *one* list at a time.
+ * ensure that an opal_list_item_t is only one *one* list at a time.
  * Given the highly concurrent nature of this class, these spot checks
  * cannot guarantee that an item is only one list at a time.
  * Specifically, since it is a desirable attribute of this class to
  * not use locks for normal operations, it is possible that two
- * threads may [erroneously] modify an ompi_list_item_t concurrently.
+ * threads may [erroneously] modify an opal_list_item_t concurrently.
  *
  * The only way to guarantee that a debugging reference count is valid
  * for the duration of an operation is to lock the item_t during the
@@ -57,8 +57,8 @@
  * cases happening.
  */
 
-#ifndef OMPI_LIST_H
-#define OMPI_LIST_H
+#ifndef OPAL_LIST_H
+#define OPAL_LIST_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,40 +78,40 @@ extern "C" {
  *
  * The class for the list container.
  */
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_list_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_list_t);
 /**
  * \internal
  *
- * Base class for items that are put in list (ompi_list_t) containers.
+ * Base class for items that are put in list (opal_list_t) containers.
  */
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_list_item_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_list_item_t);
 
 
 /**
  * \internal
  * 
- * Struct of an ompi_list_item_t
+ * Struct of an opal_list_item_t
  */
-struct ompi_list_item_t
+struct opal_list_item_t
 {
     opal_object_t super;
     /**< Generic parent class for all Open MPI objects */
-    volatile struct ompi_list_item_t *ompi_list_next;
+    volatile struct opal_list_item_t *opal_list_next;
     /**< Pointer to next list item */
-    volatile struct ompi_list_item_t *ompi_list_prev;
+    volatile struct opal_list_item_t *opal_list_prev;
     /**< Pointer to previous list item */
 
 #if OMPI_ENABLE_DEBUG
     /** Atomic reference count for debugging */
-    volatile int32_t ompi_list_item_refcount;
+    volatile int32_t opal_list_item_refcount;
     /** The list this item belong to */
-    volatile struct ompi_list_t* ompi_list_item_belong_to;
+    volatile struct opal_list_t* opal_list_item_belong_to;
 #endif
 };
 /**
- * Base type for items that are put in a list (ompi_list_t) containers.
+ * Base type for items that are put in a list (opal_list_t) containers.
  */
-typedef struct ompi_list_item_t ompi_list_item_t;
+typedef struct opal_list_item_t opal_list_item_t;
 
 
 /**
@@ -121,8 +121,8 @@ typedef struct ompi_list_item_t ompi_list_item_t;
  *
  * @returns The next item in the list
  */
-#define ompi_list_get_next(item) \
-    ((item) ? ((ompi_list_item_t*) ((ompi_list_item_t*)(item))->ompi_list_next) : NULL)
+#define opal_list_get_next(item) \
+    ((item) ? ((opal_list_item_t*) ((opal_list_item_t*)(item))->opal_list_next) : NULL)
 
 /**
  * Get the next item in a list.
@@ -131,30 +131,30 @@ typedef struct ompi_list_item_t ompi_list_item_t;
  *
  * @returns The next item in the list
  */
-#define ompi_list_get_prev(item) \
-    ((item) ? ((ompi_list_item_t*) ((ompi_list_item_t*)(item))->ompi_list_prev) : NULL)
+#define opal_list_get_prev(item) \
+    ((item) ? ((opal_list_item_t*) ((opal_list_item_t*)(item))->opal_list_prev) : NULL)
 
 
 /**
  * \internal
  *
- * Struct of an ompi_list_t
+ * Struct of an opal_list_t
  */
-struct ompi_list_t
+struct opal_list_t
 {
     opal_object_t       super;
     /**< Generic parent class for all Open MPI objects */
-    ompi_list_item_t    ompi_list_head;
+    opal_list_item_t    opal_list_head;
     /**< Head item of the list */
-    ompi_list_item_t    ompi_list_tail;
+    opal_list_item_t    opal_list_tail;
     /**< Tail item of the list */
-    volatile size_t     ompi_list_length;
+    volatile size_t     opal_list_length;
     /**< Quick reference to the number of items in the list */
 };
 /**
  * List container type.
  */
-typedef struct ompi_list_t ompi_list_t;
+typedef struct opal_list_t opal_list_t;
 
 
 /**
@@ -169,10 +169,10 @@ typedef struct ompi_list_t ompi_list_t;
  * This is an inlined function in compilers that support inlining,
  * so it's usually a cheap operation.
  */
-static inline bool ompi_list_is_empty(ompi_list_t* list)
+static inline bool opal_list_is_empty(opal_list_t* list)
 {
-    return (list->ompi_list_head.ompi_list_next == 
-            &(list->ompi_list_tail));
+    return (list->opal_list_head.opal_list_next == 
+            &(list->opal_list_tail));
 }
 
 
@@ -185,19 +185,19 @@ static inline bool ompi_list_is_empty(ompi_list_t* list)
  *
  * This is an O(1) operation to return the first item on the list.  It
  * should be compared against the returned value from
- * ompi_list_get_end() to ensure that the list is not empty.
+ * opal_list_get_end() to ensure that the list is not empty.
  *
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
  */
-static inline ompi_list_item_t* ompi_list_get_first(ompi_list_t* list)
+static inline opal_list_item_t* opal_list_get_first(opal_list_t* list)
 {
-    ompi_list_item_t* item = (ompi_list_item_t *)list->ompi_list_head.ompi_list_next;
+    opal_list_item_t* item = (opal_list_item_t *)list->opal_list_head.opal_list_next;
 #if OMPI_ENABLE_DEBUG
     /* Spot check: ensure that the first item is only on one list */
 
-    assert(1 == item->ompi_list_item_refcount);
-    assert( list == item->ompi_list_item_belong_to );
+    assert(1 == item->opal_list_item_refcount);
+    assert( list == item->opal_list_item_belong_to );
 #endif
 
     return item;
@@ -212,19 +212,19 @@ static inline ompi_list_item_t* ompi_list_get_first(ompi_list_t* list)
  *
  * This is an O(1) operation to return the last item on the list.  It
  * should be compared against the returned value from
- * ompi_list_get_begin() to ensure that the list is not empty.
+ * opal_list_get_begin() to ensure that the list is not empty.
  *
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
  */
-static inline ompi_list_item_t* ompi_list_get_last(ompi_list_t* list)
+static inline opal_list_item_t* opal_list_get_last(opal_list_t* list)
 {
-    ompi_list_item_t* item = (ompi_list_item_t *)list->ompi_list_tail.ompi_list_prev;
+    opal_list_item_t* item = (opal_list_item_t *)list->opal_list_tail.opal_list_prev;
 #if OMPI_ENABLE_DEBUG
     /* Spot check: ensure that the last item is only on one list */
 
-    assert( 1 == item->ompi_list_item_refcount );
-    assert( list == item->ompi_list_item_belong_to );
+    assert( 1 == item->opal_list_item_refcount );
+    assert( list == item->opal_list_item_belong_to );
 #endif
 
     return item;
@@ -247,9 +247,9 @@ static inline ompi_list_item_t* ompi_list_get_last(ompi_list_t* list)
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
  */
-static inline ompi_list_item_t* ompi_list_get_begin(ompi_list_t* list)
+static inline opal_list_item_t* opal_list_get_begin(opal_list_t* list)
 {
-    return &(list->ompi_list_head);
+    return &(list->opal_list_head);
 }
 
 /**
@@ -269,9 +269,9 @@ static inline ompi_list_item_t* ompi_list_get_begin(ompi_list_t* list)
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
  */
-static inline ompi_list_item_t* ompi_list_get_end(ompi_list_t* list)
+static inline opal_list_item_t* opal_list_get_end(opal_list_t* list)
 {
-    return &(list->ompi_list_tail);
+    return &(list->opal_list_tail);
 }
 
 
@@ -288,13 +288,13 @@ static inline ompi_list_item_t* ompi_list_get_end(ompi_list_t* list)
  * it's usually a cheap operation.
  *
  * \warning The size of the list is cached as part of the list.  In
- * the future, calling \c ompi_list_splice or \c ompi_list_join may
+ * the future, calling \c opal_list_splice or \c opal_list_join may
  * result in this function recomputing the list size, which would be
- * an O(N) operation.  If \c ompi_list_splice or \c ompi_list_join is
+ * an O(N) operation.  If \c opal_list_splice or \c opal_list_join is
  * never called on the specified list, this function will always be
  * O(1).
  */
-static inline size_t ompi_list_get_size(ompi_list_t* list)
+static inline size_t opal_list_get_size(opal_list_t* list)
 {
 #if OMPI_ENABLE_DEBUG && 0
     /* not sure if we really want this running in devel, as it does
@@ -302,22 +302,22 @@ static inline size_t ompi_list_get_size(ompi_list_t* list)
      * make sure length was reset properly 
      */
     size_t check_len = 0;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
 
-    for (item = ompi_list_get_first(list) ;
-         item != ompi_list_get_end(list) ;
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(list) ;
+         item != opal_list_get_end(list) ;
+         item = opal_list_get_next(item)) {
         check_len++;
     }
 
-    if (check_len != list->ompi_list_length) {
-        fprintf(stderr," Error :: ompi_list_get_size - ompi_list_length does not match actual list length\n");
+    if (check_len != list->opal_list_length) {
+        fprintf(stderr," Error :: opal_list_get_size - opal_list_length does not match actual list length\n");
         fflush(stderr);
         abort();
     }
 #endif
 
-    return list->ompi_list_length;
+    return list->opal_list_length;
 }
 
 
@@ -342,48 +342,48 @@ static inline size_t ompi_list_get_size(ompi_list_t* list)
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
  */
-static inline ompi_list_item_t *ompi_list_remove_item
-  (ompi_list_t *list, ompi_list_item_t *item)
+static inline opal_list_item_t *opal_list_remove_item
+  (opal_list_t *list, opal_list_item_t *item)
 {
 #if OMPI_ENABLE_DEBUG
-    ompi_list_item_t *item_ptr;
+    opal_list_item_t *item_ptr;
     bool found = false;
 
     /* check to see that the item is in the list */
-    for (item_ptr = ompi_list_get_first(list);
-            item_ptr != ompi_list_get_end(list);
-            item_ptr = (ompi_list_item_t *)(item_ptr->ompi_list_next)) {
-        if (item_ptr == (ompi_list_item_t *) item) {
+    for (item_ptr = opal_list_get_first(list);
+            item_ptr != opal_list_get_end(list);
+            item_ptr = (opal_list_item_t *)(item_ptr->opal_list_next)) {
+        if (item_ptr == (opal_list_item_t *) item) {
             found = true;
             break;
         }
     }
     if (!found) {
-        fprintf(stderr," Warning :: ompi_list_remove_item - the item %p is not on the list %p \n",(void*) item, (void*) list);
+        fprintf(stderr," Warning :: opal_list_remove_item - the item %p is not on the list %p \n",(void*) item, (void*) list);
         fflush(stderr);
-        return (ompi_list_item_t *)NULL;
+        return (opal_list_item_t *)NULL;
     }
 
-    assert( list == item->ompi_list_item_belong_to );
+    assert( list == item->opal_list_item_belong_to );
 #endif
 
     /* reset next pointer of previous element */
-    item->ompi_list_prev->ompi_list_next=item->ompi_list_next;
+    item->opal_list_prev->opal_list_next=item->opal_list_next;
 
     /* reset previous pointer of next element */
-    item->ompi_list_next->ompi_list_prev=item->ompi_list_prev;
+    item->opal_list_next->opal_list_prev=item->opal_list_prev;
 
-    list->ompi_list_length--;
+    list->opal_list_length--;
 
 #if OMPI_ENABLE_DEBUG
     /* Spot check: ensure that this item is still only on one list */
 
-    OMPI_THREAD_ADD32( &(item->ompi_list_item_refcount), -1 );
-    assert(0 == item->ompi_list_item_refcount);
-    item->ompi_list_item_belong_to = NULL;
+    OMPI_THREAD_ADD32( &(item->opal_list_item_refcount), -1 );
+    assert(0 == item->opal_list_item_refcount);
+    item->opal_list_item_belong_to = NULL;
 #endif
 
-    return (ompi_list_item_t *)item->ompi_list_prev;
+    return (opal_list_item_t *)item->opal_list_prev;
 }
 
 
@@ -394,7 +394,7 @@ static inline ompi_list_item_t *ompi_list_remove_item
  * @param item The item to append
  *
  * This is an O(1) operation to append an item to the end of a list.
- * The ompi_list_item_t is not OBJ_RETAIN()'ed; it is assumed that
+ * The opal_list_item_t is not OBJ_RETAIN()'ed; it is assumed that
  * "ownership" of the item is passed from the caller to the list.
  *
  * This is an inlined function in compilers that support inlining, so
@@ -402,14 +402,14 @@ static inline ompi_list_item_t *ompi_list_remove_item
  */
 
 #if OMPI_ENABLE_DEBUG
-#define ompi_list_append(l,i) \
-_ompi_list_append(l,i,__FILE__,__LINE__)
+#define opal_list_append(l,i) \
+_opal_list_append(l,i,__FILE__,__LINE__)
 #else
-#define ompi_list_append(l,i) \
-_ompi_list_append(l,i)
+#define opal_list_append(l,i) \
+_opal_list_append(l,i)
 #endif  /* OMPI_ENABLE_DEBUG */
 
-static inline void _ompi_list_append(ompi_list_t *list, ompi_list_item_t *item
+static inline void _opal_list_append(opal_list_t *list, opal_list_item_t *item
 #if OMPI_ENABLE_DEBUG
                                      , char* FILE, int LINENO
 #endif  /* OMPI_ENABLE_DEBUG */
@@ -418,34 +418,34 @@ static inline void _ompi_list_append(ompi_list_t *list, ompi_list_item_t *item
 #if OMPI_ENABLE_DEBUG
   /* Spot check: ensure that this item is previously on no lists */
 
-  assert(0 == item->ompi_list_item_refcount);
-  assert( NULL == item->ompi_list_item_belong_to );
+  assert(0 == item->opal_list_item_refcount);
+  assert( NULL == item->opal_list_item_belong_to );
   item->super.cls_init_file_name = FILE;
   item->super.cls_init_lineno    = LINENO;
 #endif
 
   /* set new element's previous pointer */
-  item->ompi_list_prev=list->ompi_list_tail.ompi_list_prev;
+  item->opal_list_prev=list->opal_list_tail.opal_list_prev;
 
   /* reset previous pointer on current last element */
-  list->ompi_list_tail.ompi_list_prev->ompi_list_next=item;
+  list->opal_list_tail.opal_list_prev->opal_list_next=item;
 
   /* reset new element's next pointer */
-  item->ompi_list_next=&(list->ompi_list_tail);
+  item->opal_list_next=&(list->opal_list_tail);
 
   /* reset the list's tail element previous pointer */
-  list->ompi_list_tail.ompi_list_prev = item;
+  list->opal_list_tail.opal_list_prev = item;
 
   /* increment list element counter */
-  list->ompi_list_length++;
+  list->opal_list_length++;
 
 #if OMPI_ENABLE_DEBUG
   /* Spot check: ensure this item is only on the list that we just
      appended it to */
 
-  OMPI_THREAD_ADD32( &(item->ompi_list_item_refcount), 1 );
-  assert(1 == item->ompi_list_item_refcount);
-  item->ompi_list_item_belong_to = list;
+  OMPI_THREAD_ADD32( &(item->opal_list_item_refcount), 1 );
+  assert(1 == item->opal_list_item_refcount);
+  item->opal_list_item_belong_to = list;
 #endif
 }
 
@@ -457,44 +457,44 @@ static inline void _ompi_list_append(ompi_list_t *list, ompi_list_item_t *item
  * @param item The item to prepend
  *
  * This is an O(1) operation to prepend an item to the beginning of a
- * list.  The ompi_list_item_t is not OBJ_RETAIN()'ed; it is assumed
+ * list.  The opal_list_item_t is not OBJ_RETAIN()'ed; it is assumed
  * that "ownership" of the item is passed from the caller to the list.
  *
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
  */
-static inline void ompi_list_prepend(ompi_list_t *list, 
-                                     ompi_list_item_t *item) 
+static inline void opal_list_prepend(opal_list_t *list, 
+                                     opal_list_item_t *item) 
 {
 #if OMPI_ENABLE_DEBUG
   /* Spot check: ensure that this item is previously on no lists */
 
-  assert(0 == item->ompi_list_item_refcount);
-  assert( NULL == item->ompi_list_item_belong_to );
+  assert(0 == item->opal_list_item_refcount);
+  assert( NULL == item->opal_list_item_belong_to );
 #endif
 
   /* reset item's next pointer */
-  item->ompi_list_next = list->ompi_list_head.ompi_list_next;
+  item->opal_list_next = list->opal_list_head.opal_list_next;
   
   /* reset item's previous pointer */
-  item->ompi_list_prev = &(list->ompi_list_head);
+  item->opal_list_prev = &(list->opal_list_head);
   
   /* reset previous first element's previous poiner */
-  list->ompi_list_head.ompi_list_next->ompi_list_prev = item;
+  list->opal_list_head.opal_list_next->opal_list_prev = item;
   
   /* reset head's next pointer */
-  list->ompi_list_head.ompi_list_next = item;
+  list->opal_list_head.opal_list_next = item;
   
   /* increment list element counter */
-  list->ompi_list_length++;
+  list->opal_list_length++;
 
 #if OMPI_ENABLE_DEBUG
   /* Spot check: ensure this item is only on the list that we just
      prepended it to */
 
-  OMPI_THREAD_ADD32( &(item->ompi_list_item_refcount), 1 );
-  assert(1 == item->ompi_list_item_refcount);
-  item->ompi_list_item_belong_to = list;
+  OMPI_THREAD_ADD32( &(item->opal_list_item_refcount), 1 );
+  assert(1 == item->opal_list_item_refcount);
+  item->opal_list_item_belong_to = list;
 #endif
 }
 
@@ -515,49 +515,49 @@ static inline void ompi_list_prepend(ompi_list_t *list,
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
  */
-static inline ompi_list_item_t *ompi_list_remove_first(ompi_list_t *list)
+static inline opal_list_item_t *opal_list_remove_first(opal_list_t *list)
 {
   /*  Removes and returns first item on list.
       Caller now owns the item and should release the item
       when caller is done with it.
   */
-  volatile ompi_list_item_t *item;
-  if ( 0 == list->ompi_list_length ) {
-    return (ompi_list_item_t *)NULL;
+  volatile opal_list_item_t *item;
+  if ( 0 == list->opal_list_length ) {
+    return (opal_list_item_t *)NULL;
   }
   
 #if OMPI_ENABLE_DEBUG
   /* Spot check: ensure that the first item is only on this list */
 
-  assert(1 == list->ompi_list_head.ompi_list_next->ompi_list_item_refcount);
+  assert(1 == list->opal_list_head.opal_list_next->opal_list_item_refcount);
 #endif
 
   /* reset list length counter */
-  list->ompi_list_length--;
+  list->opal_list_length--;
   
   /* get pointer to first element on the list */
-  item = list->ompi_list_head.ompi_list_next;
+  item = list->opal_list_head.opal_list_next;
   
   /* reset previous pointer of next item on the list */
-  item->ompi_list_next->ompi_list_prev=item->ompi_list_prev;
+  item->opal_list_next->opal_list_prev=item->opal_list_prev;
   
   /* reset the head next pointer */
-  list->ompi_list_head.ompi_list_next=item->ompi_list_next;
+  list->opal_list_head.opal_list_next=item->opal_list_next;
   
 #if OMPI_ENABLE_DEBUG
-  assert( list == item->ompi_list_item_belong_to );
-  item->ompi_list_item_belong_to = NULL;
-  item->ompi_list_prev=(ompi_list_item_t *)NULL;
-  item->ompi_list_next=(ompi_list_item_t *)NULL;
+  assert( list == item->opal_list_item_belong_to );
+  item->opal_list_item_belong_to = NULL;
+  item->opal_list_prev=(opal_list_item_t *)NULL;
+  item->opal_list_next=(opal_list_item_t *)NULL;
 
   /* Spot check: ensure that the item we're returning is now on no
      lists */
 
-  OMPI_THREAD_ADD32( &(item->ompi_list_item_refcount), -1 );
-  assert(0 == item->ompi_list_item_refcount);
+  OMPI_THREAD_ADD32( &(item->opal_list_item_refcount), -1 );
+  assert(0 == item->opal_list_item_refcount);
 #endif
 
-  return (ompi_list_item_t *) item;
+  return (opal_list_item_t *) item;
 }
 
 
@@ -577,48 +577,48 @@ static inline ompi_list_item_t *ompi_list_remove_first(ompi_list_t *list)
  * This is an inlined function in compilers that support inlining, so
  * it's usually a cheap operation.
  */
-static inline ompi_list_item_t *ompi_list_remove_last(ompi_list_t *list)
+static inline opal_list_item_t *opal_list_remove_last(opal_list_t *list)
 {
   /*  Removes, releases and returns last item on list.
       Caller now owns the item and should release the item
       when caller is done with it.
   */
-  volatile ompi_list_item_t  *item;
-  if ( 0 == list->ompi_list_length ) {
-    return (ompi_list_item_t *)NULL;
+  volatile opal_list_item_t  *item;
+  if ( 0 == list->opal_list_length ) {
+    return (opal_list_item_t *)NULL;
   }
   
 #if OMPI_ENABLE_DEBUG
   /* Spot check: ensure that the first item is only on this list */
 
-  assert(1 == list->ompi_list_tail.ompi_list_prev->ompi_list_item_refcount);
+  assert(1 == list->opal_list_tail.opal_list_prev->opal_list_item_refcount);
 #endif
 
   /* reset list length counter */
-  list->ompi_list_length--;
+  list->opal_list_length--;
   
   /* get item */
-  item = list->ompi_list_tail.ompi_list_prev;
+  item = list->opal_list_tail.opal_list_prev;
   
   /* reset previous pointer on next to last pointer */
-  item->ompi_list_prev->ompi_list_next=item->ompi_list_next;
+  item->opal_list_prev->opal_list_next=item->opal_list_next;
   
   /* reset tail's previous pointer */
-  list->ompi_list_tail.ompi_list_prev=item->ompi_list_prev;
+  list->opal_list_tail.opal_list_prev=item->opal_list_prev;
   
 #if OMPI_ENABLE_DEBUG
-  assert( list == item->ompi_list_item_belong_to );
-  item->ompi_list_next = item->ompi_list_prev = (ompi_list_item_t *)NULL;
+  assert( list == item->opal_list_item_belong_to );
+  item->opal_list_next = item->opal_list_prev = (opal_list_item_t *)NULL;
 
   /* Spot check: ensure that the item we're returning is now on no
      lists */
 
-  OMPI_THREAD_ADD32( &(item->ompi_list_item_refcount), -1 );
-  assert(0 == item->ompi_list_item_refcount);
-  item->ompi_list_item_belong_to = NULL;
+  OMPI_THREAD_ADD32( &(item->opal_list_item_refcount), -1 );
+  assert(0 == item->opal_list_item_refcount);
+  item->opal_list_item_belong_to = NULL;
 #endif
 
-  return (ompi_list_item_t *) item;
+  return (opal_list_item_t *) item;
 }
 
   /**
@@ -630,35 +630,35 @@ static inline ompi_list_item_t *ompi_list_remove_last(ompi_list_t *list)
    *
    * Inserts \c item before \c pos.  This is an O(1) operation.
    */
-static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos,
-                                        ompi_list_item_t *item)
+static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos,
+                                        opal_list_item_t *item)
 {
 #if OMPI_ENABLE_DEBUG
     /* Spot check: ensure that the item we're insertting is currently
        not on any list */
 
-    assert(0 == item->ompi_list_item_refcount);
-    assert( NULL == item->ompi_list_item_belong_to );
+    assert(0 == item->opal_list_item_refcount);
+    assert( NULL == item->opal_list_item_belong_to );
 #endif
 
     /* point item at the existing elements */
-    item->ompi_list_next = pos;
-    item->ompi_list_prev = pos->ompi_list_prev;
+    item->opal_list_next = pos;
+    item->opal_list_prev = pos->opal_list_prev;
 
     /* splice into the list */
-    pos->ompi_list_prev->ompi_list_next = item;
-    pos->ompi_list_prev = item;
+    pos->opal_list_prev->opal_list_next = item;
+    pos->opal_list_prev = item;
 
     /* reset list length counter */
-    list->ompi_list_length++;
+    list->opal_list_length++;
 
 #if OMPI_ENABLE_DEBUG
     /* Spot check: double check that this item is only on the list
        that we just added it to */
 
-    OMPI_THREAD_ADD32( &(item->ompi_list_item_refcount), 1 );
-    assert(1 == item->ompi_list_item_refcount);
-    item->ompi_list_item_belong_to = list;
+    OMPI_THREAD_ADD32( &(item->opal_list_item_refcount), 1 );
+    assert(1 == item->opal_list_item_refcount);
+    item->opal_list_item_belong_to = list;
 #endif
 }
 
@@ -680,7 +680,7 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
    * If index is greater than the length of the list, no action is
    * performed and false is returned.
    */
-  bool ompi_list_insert(ompi_list_t *list, ompi_list_item_t *item, 
+  bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, 
                         long long idx);
 
 
@@ -697,12 +697,12 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
      *
      * This operation is an O(1) operation.  Both \c thislist and \c
      * xlist must be valid list containsers.  \c xlist will be empty
-     * but valid after the call.  All pointers to \c ompi_list_item_t
+     * but valid after the call.  All pointers to \c opal_list_item_t
      * containers remain valid, including those that point to elements
      * in \c xlist.
      */
-    void ompi_list_join(ompi_list_t *thislist, ompi_list_item_t *pos, 
-                        ompi_list_t *xlist);
+    void opal_list_join(opal_list_t *thislist, opal_list_item_t *pos, 
+                        opal_list_t *xlist);
 
 
     /**
@@ -728,24 +728,24 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
      * This is an O(N) operation because the length of both lists must
      * be recomputed.
      */
-    void ompi_list_splice(ompi_list_t *thislist, ompi_list_item_t *pos,
-                          ompi_list_t *xlist, ompi_list_item_t *first,
-                          ompi_list_item_t *last);
+    void opal_list_splice(opal_list_t *thislist, opal_list_item_t *pos,
+                          opal_list_t *xlist, opal_list_item_t *first,
+                          opal_list_item_t *last);
 
     /**
-     * Comparison function for ompi_list_sort(), below.
+     * Comparison function for opal_list_sort(), below.
      *
-     * @param a Pointer to a pointer to an ompi_list_item_t.
+     * @param a Pointer to a pointer to an opal_list_item_t.
      * Explanation below.
-     * @param b Pointer to a pointer to an ompi_list_item_t.
+     * @param b Pointer to a pointer to an opal_list_item_t.
      * Explanation below.
      * @retval 1 if \em a is greater than \em b
      * @retval 0 if \em a is equal to \em b
      * @retval 11 if \em a is less than \em b
      *
      * This function is invoked by qsort(3) from within
-     * ompi_list_sort().  It is important to understand what
-     * ompi_list_sort() does before invoking qsort, so go read that
+     * opal_list_sort().  It is important to understand what
+     * opal_list_sort() does before invoking qsort, so go read that
      * documentation first.
      *
      * The important thing to realize here is that a and b will be \em
@@ -753,7 +753,7 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
      * a sample compare function to illustrate this point:
      *
      * \verb
-     * static int compare(ompi_list_item_t **a, ompi_list_item_t **b)
+     * static int compare(opal_list_item_t **a, opal_list_item_t **b)
      * {
      *     orte_pls_base_cmp_t *aa = *((orte_pls_base_cmp_t **) a);
      *     orte_pls_base_cmp_t *bb = *((orte_pls_base_cmp_t **) b);
@@ -768,8 +768,8 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
      * }
      * \endverb
      */
-    typedef int (*ompi_list_item_compare_fn_t)(ompi_list_item_t **a,
-                                               ompi_list_item_t **b);
+    typedef int (*opal_list_item_compare_fn_t)(opal_list_item_t **a,
+                                               opal_list_item_t **b);
 
     /**
      * Sort a list with a provided compare function.
@@ -781,17 +781,17 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
      * Its algorithm is:
      *
      * - remove every item from the list and put the corresponding
-     *    (ompi_list_item_t*)'s in an array
+     *    (opal_list_item_t*)'s in an array
      * - call qsort(3) with that array and your compare function
      * - re-add every element of the now-sorted array to the list
      *
      * The resulting list is now ordered.  Note, however, that since
      * an array of pointers is sorted, the comparison function must do
-     * a double de-reference to get to the actual ompi_list_item_t (or
+     * a double de-reference to get to the actual opal_list_item_t (or
      * whatever the underlying type is).  See the documentation of
-     * ompi_list_item_compare_fn_t for an example).
+     * opal_list_item_compare_fn_t for an example).
      */
-    int ompi_list_sort(ompi_list_t* list, ompi_list_item_compare_fn_t compare);
+    int opal_list_sort(opal_list_t* list, opal_list_item_compare_fn_t compare);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
@@ -799,4 +799,4 @@ static inline void ompi_list_insert_pos(ompi_list_t *list, ompi_list_item_t *pos
 
 
 
-#endif /* OMPI_LIST_H */
+#endif /* OPAL_LIST_H */

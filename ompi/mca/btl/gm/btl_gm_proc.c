@@ -26,7 +26,7 @@ static void mca_btl_gm_proc_construct(mca_btl_gm_proc_t* proc);
 static void mca_btl_gm_proc_destruct(mca_btl_gm_proc_t* proc);
 
 OBJ_CLASS_INSTANCE(mca_btl_gm_proc_t, 
-        ompi_list_item_t, mca_btl_gm_proc_construct, 
+        opal_list_item_t, mca_btl_gm_proc_construct, 
         mca_btl_gm_proc_destruct);
 
 void mca_btl_gm_proc_construct(mca_btl_gm_proc_t* proc)
@@ -38,7 +38,7 @@ void mca_btl_gm_proc_construct(mca_btl_gm_proc_t* proc)
     OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
     /* add to list of all proc instance */
     OMPI_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
-    ompi_list_append(&mca_btl_gm_component.gm_procs, &proc->super);
+    opal_list_append(&mca_btl_gm_component.gm_procs, &proc->super);
     OMPI_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
 }
 
@@ -50,7 +50,7 @@ void mca_btl_gm_proc_destruct(mca_btl_gm_proc_t* proc)
 {
     /* remove from list of all proc instances */
     OMPI_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
-    ompi_list_remove_item(&mca_btl_gm_component.gm_procs, &proc->super);
+    opal_list_remove_item(&mca_btl_gm_component.gm_procs, &proc->super);
     OMPI_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
 
     /* release resources */
@@ -71,10 +71,10 @@ static mca_btl_gm_proc_t* mca_btl_gm_proc_lookup_ompi(ompi_proc_t* ompi_proc)
     OMPI_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
 
     for(gm_proc = (mca_btl_gm_proc_t*)
-            ompi_list_get_first(&mca_btl_gm_component.gm_procs);
+            opal_list_get_first(&mca_btl_gm_component.gm_procs);
             gm_proc != (mca_btl_gm_proc_t*)
-            ompi_list_get_end(&mca_btl_gm_component.gm_procs);
-            gm_proc  = (mca_btl_gm_proc_t*)ompi_list_get_next(gm_proc)) {
+            opal_list_get_end(&mca_btl_gm_component.gm_procs);
+            gm_proc  = (mca_btl_gm_proc_t*)opal_list_get_next(gm_proc)) {
 
         if(gm_proc->proc_ompi == ompi_proc) {
             OMPI_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);

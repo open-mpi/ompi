@@ -32,7 +32,7 @@
 #include "threads/mutex.h"
 #include "threads/condition.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -77,7 +77,7 @@ int orte_schema_base_get_std_subscription_name(char **name,
  */
 extern int orte_schema_base_output;
 extern bool orte_schema_base_selected;
-extern ompi_list_t orte_schema_base_components_available;
+extern opal_list_t orte_schema_base_components_available;
 extern mca_schema_base_component_t orte_schema_base_selected_component;
 extern bool orte_schema_initialized;
 

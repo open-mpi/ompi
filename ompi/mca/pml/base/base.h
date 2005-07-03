@@ -41,7 +41,7 @@ OMPI_DECLSPEC int mca_pml_base_close(void);
  * Globals
  */
 OMPI_DECLSPEC extern int mca_pml_base_output;
-OMPI_DECLSPEC extern ompi_list_t mca_pml_base_components_available;
+OMPI_DECLSPEC extern opal_list_t mca_pml_base_components_available;
 OMPI_DECLSPEC extern mca_pml_base_component_t mca_pml_base_selected_component;
 OMPI_DECLSPEC extern mca_pml_base_module_t mca_pml;
 OMPI_DECLSPEC extern char* mca_pml_base_pml;

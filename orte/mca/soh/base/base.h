@@ -26,7 +26,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "dps/dps_types.h"
 #include "mca/mca.h"
 /* #include "mca/ns/ns_types.h" */
@@ -99,7 +99,7 @@ OMPI_DECLSPEC extern bool orte_soh_base_selected;
 
 typedef struct orte_soh_base_t {
     int soh_output;
-    ompi_list_t soh_components;
+    opal_list_t soh_components;
 } orte_soh_base_t;
 
 OMPI_DECLSPEC extern orte_soh_base_t orte_soh_base;

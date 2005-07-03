@@ -26,7 +26,7 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "dps/dps.h"
 #include "mca/mca.h"
 #include "mca/gpr/gpr_types.h"
@@ -153,7 +153,7 @@ int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
 
 typedef struct orte_rmgr_base_t {
     int rmgr_output;
-    ompi_list_t rmgr_components;
+    opal_list_t rmgr_components;
 } orte_rmgr_base_t;
 
 OMPI_DECLSPEC extern orte_rmgr_base_t orte_rmgr_base;

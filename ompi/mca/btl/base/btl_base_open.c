@@ -46,7 +46,7 @@ static void mca_btl_base_descriptor_destructor(mca_btl_base_descriptor_t* des)
 
 OBJ_CLASS_INSTANCE(
     mca_btl_base_descriptor_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     mca_btl_base_descriptor_constructor,
     mca_btl_base_descriptor_destructor);
 
@@ -66,8 +66,8 @@ OBJ_CLASS_INSTANCE(
 int mca_btl_base_output = -1;
 char* mca_btl_base_include = NULL;
 char* mca_btl_base_exclude = NULL;
-ompi_list_t mca_btl_base_components_opened;
-ompi_list_t mca_btl_base_modules_initialized;
+opal_list_t mca_btl_base_components_opened;
+opal_list_t mca_btl_base_modules_initialized;
 
 
 /**
@@ -88,7 +88,7 @@ int mca_btl_base_open(void)
      iterate over it (even if it's empty, as in the case of
      ompi_info) */
 
-  OBJ_CONSTRUCT(&mca_btl_base_modules_initialized, ompi_list_t);
+  OBJ_CONSTRUCT(&mca_btl_base_modules_initialized, opal_list_t);
 
   /* register parameters */
   mca_base_param_lookup_string(

@@ -21,7 +21,7 @@
 #include <string.h>
 
 #include "include/orte_constants.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/output.h"
 #include "util/sys_info.h"
 #include "mca/mca.h"
@@ -52,22 +52,22 @@ static int orte_rds_hostfile_parse_int(void)
 }
 
 
-static orte_ras_base_node_t* orte_rds_hostfile_lookup(ompi_list_t* nodes, const char* name)
+static orte_ras_base_node_t* orte_rds_hostfile_lookup(opal_list_t* nodes, const char* name)
 {
-    ompi_list_item_t* item;
-    for(item =  ompi_list_get_first(nodes);
-        item != ompi_list_get_end(nodes);
-        item =  ompi_list_get_next(item)) {
+    opal_list_item_t* item;
+    for(item =  opal_list_get_first(nodes);
+        item != opal_list_get_end(nodes);
+        item =  opal_list_get_next(item)) {
         orte_ras_base_node_t* node = (orte_ras_base_node_t*)item;
         if(strcmp(node->node_name, name) == 0) {
-            ompi_list_remove_item(nodes, item);
+            opal_list_remove_item(nodes, item);
             return node;
         }
     }
     return NULL;
 }
 
-static int orte_rds_hostfile_parse_line(int token, ompi_list_t* existing, ompi_list_t* updates)
+static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_list_t* updates)
 {
     int rc;
     orte_ras_base_node_t* node;
@@ -183,7 +183,7 @@ done:
         if (!got_count) {
             ++node->node_slots;
         }
-        ompi_list_append(updates, &node->super);
+        opal_list_append(updates, &node->super);
     } else {
         OBJ_RELEASE(node);
     }
@@ -195,7 +195,7 @@ done:
  * Parse the specified file into a node list.
  */
 
-static int orte_rds_hostfile_parse(const char *hostfile, ompi_list_t* existing, ompi_list_t* updates)
+static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, opal_list_t* updates)
 {
     int token;
     int rc = ORTE_SUCCESS;
@@ -247,13 +247,13 @@ unlock:
 
 static int orte_rds_hostfile_query(void)
 {
-    ompi_list_t existing;
-    ompi_list_t updates;
-    ompi_list_item_t *item;
+    opal_list_t existing;
+    opal_list_t updates;
+    opal_list_item_t *item;
     int rc;
     
-    OBJ_CONSTRUCT(&existing, ompi_list_t);
-    OBJ_CONSTRUCT(&updates, ompi_list_t);
+    OBJ_CONSTRUCT(&existing, opal_list_t);
+    OBJ_CONSTRUCT(&updates, opal_list_t);
     rc = orte_ras_base_node_query(&existing);
     if(ORTE_SUCCESS != rc) {
         goto cleanup;
@@ -272,7 +272,7 @@ static int orte_rds_hostfile_query(void)
     } else if (ORTE_SUCCESS != rc) {
         goto cleanup;
     }
-    if(ompi_list_get_size(&updates)) {
+    if(opal_list_get_size(&updates)) {
         rc = orte_ras_base_node_insert(&updates);
     }
    
@@ -282,11 +282,11 @@ cleanup:
         mca_rds_hostfile_component.path = NULL;
     }
     
-    while(NULL != (item = ompi_list_remove_first(&existing))) {
+    while(NULL != (item = opal_list_remove_first(&existing))) {
         OBJ_RELEASE(item);
     }
 
-    while(NULL != (item = ompi_list_remove_first(&updates))) {
+    while(NULL != (item = opal_list_remove_first(&updates))) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&existing);

@@ -28,7 +28,7 @@
 
 #include "ompi_config.h"
 #include "include/types.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -40,8 +40,8 @@ OMPI_DECLSPEC extern opal_class_t ompi_hash_table_t_class;
 struct ompi_hash_table_t
 {
     opal_object_t        super;          /**< subclass of opal_object_t */
-    ompi_list_t          ht_nodes;       /**< free list of hash nodes */
-    ompi_list_t         *ht_table;       /**< each item is an array of ompi_fhnode_t nodes */
+    opal_list_t          ht_nodes;       /**< free list of hash nodes */
+    opal_list_t         *ht_table;       /**< each item is an array of ompi_fhnode_t nodes */
     size_t              ht_table_size;  /**< size of table */
     size_t              ht_size;        /**< number of values on table */
     size_t              ht_mask;

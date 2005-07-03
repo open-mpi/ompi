@@ -45,7 +45,7 @@ extern "C" {
  *  PTL instance that attempts to open a connection to the process.
  */
 struct mca_ptl_tcp_proc_t {
-    ompi_list_item_t super;                  /**< allow proc to be placed on a list */
+    opal_list_item_t super;                  /**< allow proc to be placed on a list */
     ompi_proc_t *proc_ompi;                  /**< pointer to corresponding ompi_proc_t */
     orte_process_name_t proc_name;           /**< globally unique identifier for the process */
     struct mca_ptl_tcp_addr_t *proc_addrs;   /**< array of addresses published by peer */

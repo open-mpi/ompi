@@ -102,7 +102,7 @@ static void mca_mpool_base_registration_destructor( mca_mpool_base_registration_
 
 OBJ_CLASS_INSTANCE(
     mca_mpool_base_registration_t,
-    ompi_list_item_t,
+    opal_list_item_t,
     mca_mpool_base_registration_constructor,
     mca_mpool_base_registration_destructor);
 
@@ -139,7 +139,7 @@ int mca_mpool_base_insert(void * addr, size_t size,
                           void* user_data,
                           mca_mpool_base_registration_t* registration)
 {
-    ompi_list_item_t *item; 
+    opal_list_item_t *item; 
     int rc; 
     OMPI_FREE_LIST_GET(&mca_mpool_base_mem_list, item, rc);
     if(rc != OMPI_SUCCESS) 
@@ -208,8 +208,8 @@ int mca_mpool_base_remove(void * base)
  */
 void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
 {
-    ompi_list_item_t * item;
-    int num_modules = ompi_list_get_size(&mca_mpool_base_modules);
+    opal_list_item_t * item;
+    int num_modules = opal_list_get_size(&mca_mpool_base_modules);
     int reg_module_num = 0;
     int i, num_keys;
     mca_mpool_base_selected_module_t * current;
@@ -223,9 +223,9 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
 
     if(&ompi_mpi_info_null == info)
     {
-        for(item = ompi_list_get_first(&mca_mpool_base_modules);
-            item != ompi_list_get_end(&mca_mpool_base_modules);
-            item = ompi_list_get_next(item)) 
+        for(item = opal_list_get_first(&mca_mpool_base_modules);
+            item != opal_list_get_end(&mca_mpool_base_modules);
+            item = opal_list_get_next(item)) 
         {
             current = ((mca_mpool_base_selected_module_t *) item);
             if(NULL == current->mpool_module->mpool_register)
@@ -246,9 +246,9 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
         {
             match_found = false;
             ompi_info_get_nthkey(info, i, key);
-            for(item = ompi_list_get_first(&mca_mpool_base_modules);
-                item != ompi_list_get_end(&mca_mpool_base_modules);
-                item = ompi_list_get_next(item)) 
+            for(item = opal_list_get_first(&mca_mpool_base_modules);
+                item != opal_list_get_end(&mca_mpool_base_modules);
+                item = opal_list_get_next(item)) 
             {
                 current = ((mca_mpool_base_selected_module_t *)item);
                 if(0 == strcmp(key, 
@@ -400,7 +400,7 @@ int mca_mpool_base_free(void * base)
     if(chunk->mpools[0].mpool == NULL)
     {
         free(chunk->key.bottom);
-        OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, (ompi_list_item_t*) chunk);
+        OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, (opal_list_item_t*) chunk);
         rc = ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key); 
         OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 
         return rc;
@@ -418,7 +418,7 @@ int mca_mpool_base_free(void * base)
                                                  );
     }
     chunk->mpools[i].mpool->mpool_free(chunk->mpools[i].mpool, chunk->key.bottom, chunk->mpools[i].mpool_registration);
-    OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, (ompi_list_item_t *) chunk);
+    OMPI_FREE_LIST_RETURN(&mca_mpool_base_mem_list, (opal_list_item_t *) chunk);
 
     rc = ompi_rb_tree_delete(&mca_mpool_base_tree, &chunk->key); 
     OMPI_THREAD_UNLOCK(&mca_mpool_base_tree_lock); 

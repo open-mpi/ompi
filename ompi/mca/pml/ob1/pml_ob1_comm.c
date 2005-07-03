@@ -25,9 +25,9 @@
 static void mca_pml_ob1_comm_proc_construct(mca_pml_ob1_comm_proc_t* proc)
 {
     proc->expected_sequence = 1;
-    OBJ_CONSTRUCT(&proc->frags_cant_match, ompi_list_t);
-    OBJ_CONSTRUCT(&proc->specific_receives, ompi_list_t);
-    OBJ_CONSTRUCT(&proc->unexpected_frags, ompi_list_t);
+    OBJ_CONSTRUCT(&proc->frags_cant_match, opal_list_t);
+    OBJ_CONSTRUCT(&proc->specific_receives, opal_list_t);
+    OBJ_CONSTRUCT(&proc->unexpected_frags, opal_list_t);
 }
 
 
@@ -48,7 +48,7 @@ static OBJ_CLASS_INSTANCE(
 
 static void mca_pml_ob1_comm_construct(mca_pml_ob1_comm_t* comm)
 {
-    OBJ_CONSTRUCT(&comm->wild_receives, ompi_list_t);
+    OBJ_CONSTRUCT(&comm->wild_receives, opal_list_t);
     OBJ_CONSTRUCT(&comm->matching_lock, ompi_mutex_t);
     comm->recv_sequence = 0;
     comm->procs = NULL;

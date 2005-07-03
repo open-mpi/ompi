@@ -25,7 +25,7 @@
 #include "orte_config.h"
 #include "include/orte_constants.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/mca.h"
 #include "dps/dps_types.h"
 
@@ -181,7 +181,7 @@ OMPI_DECLSPEC    int orte_ns_base_unpack_vpid(orte_buffer_t *buffer, void *dest,
 
 OMPI_DECLSPEC extern int mca_ns_base_output;
 OMPI_DECLSPEC extern bool mca_ns_base_selected;
-OMPI_DECLSPEC extern ompi_list_t mca_ns_base_components_available;
+OMPI_DECLSPEC extern opal_list_t mca_ns_base_components_available;
 OMPI_DECLSPEC extern mca_ns_base_component_t mca_ns_base_selected_component;
 
 /*

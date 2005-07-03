@@ -22,7 +22,7 @@
 #include "orte_config.h"
 #include "include/types.h"
 #include "include/orte_constants.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "dps/dps.h"
 
 #include "mca/ns/base/base.h"
@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 struct orte_ns_proxy_cell_info_t {
-    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
+    opal_list_item_t item;  /**< Allows this item to be placed on a list */
     orte_cellid_t cellid;
     char *site;
     char *resource;
@@ -42,7 +42,7 @@ typedef struct orte_ns_proxy_cell_info_t orte_ns_proxy_cell_info_t;
 OBJ_CLASS_DECLARATION(orte_ns_proxy_cell_info_t);
 
 struct orte_ns_proxy_tagitem_t {
-    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
+    opal_list_item_t item;  /**< Allows this item to be placed on a list */
     orte_rml_tag_t tag;  /**< OOB tag */
     char *name;      /**< Name associated with tag */
 };
@@ -51,7 +51,7 @@ typedef struct orte_ns_proxy_tagitem_t orte_ns_proxy_tagitem_t;
 OBJ_CLASS_DECLARATION(orte_ns_proxy_tagitem_t);
 
 struct orte_ns_proxy_dti_t {
-    ompi_list_item_t item;  /**< Allows this item to be placed on a list */
+    opal_list_item_t item;  /**< Allows this item to be placed on a list */
     orte_data_type_t id;  /**< data type id */
     char *name;      /**< Name associated with data type */
 };
@@ -80,9 +80,9 @@ int orte_ns_proxy_finalize(void);
 
 extern orte_process_name_t *orte_ns_my_replica;
 extern int orte_ns_proxy_debug;
-extern ompi_list_t orte_ns_proxy_cell_info_list;
-extern ompi_list_t orte_ns_proxy_taglist;
-extern ompi_list_t orte_ns_proxy_dtlist;
+extern opal_list_t orte_ns_proxy_cell_info_list;
+extern opal_list_t orte_ns_proxy_taglist;
+extern opal_list_t orte_ns_proxy_dtlist;
 extern ompi_mutex_t orte_ns_proxy_mutex;
 
 /*

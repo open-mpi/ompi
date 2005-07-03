@@ -16,7 +16,7 @@
 
 #include "ompi_config.h"
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "threads/mutex.h"
 #include "mca/base/base.h"
 #include "mca/io/io.h"
@@ -27,19 +27,19 @@
  * Private variables
  */
 static bool initialized = false;
-static ompi_list_t components_in_use;
+static opal_list_t components_in_use;
 #if OMPI_HAVE_THREAD_SUPPORT
 static ompi_mutex_t mutex;
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 struct component_item_t {
-    ompi_list_item_t super;
+    opal_list_item_t super;
     int refcount;
     mca_io_base_version_t version;
     mca_io_base_components_t component;
 };
 typedef struct component_item_t component_item_t;
-static OBJ_CLASS_INSTANCE(component_item_t, ompi_list_item_t, NULL, NULL);
+static OBJ_CLASS_INSTANCE(component_item_t, opal_list_item_t, NULL, NULL);
 
 
 /*
@@ -47,7 +47,7 @@ static OBJ_CLASS_INSTANCE(component_item_t, ompi_list_item_t, NULL, NULL);
  */
 int mca_io_base_component_init(void)
 {
-    OBJ_CONSTRUCT(&components_in_use, ompi_list_t);
+    OBJ_CONSTRUCT(&components_in_use, opal_list_t);
 
     initialized = true;
 
@@ -63,7 +63,7 @@ int mca_io_base_component_init(void)
  */
 int mca_io_base_component_add(mca_io_base_components_t *comp)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     component_item_t *citem;
     mca_base_component_t *c;
 
@@ -75,9 +75,9 @@ int mca_io_base_component_add(mca_io_base_components_t *comp)
        refcount.  Otherwise, add it to the list with a refcount of
        1. */
 
-    for (item = ompi_list_get_first(&components_in_use);
-         item != ompi_list_get_end(&components_in_use);
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&components_in_use);
+         item != opal_list_get_end(&components_in_use);
+         item = opal_list_get_next(item)) {
         citem = (component_item_t *) item;
 
         /* Note the memory / pointer trickery here: we don't care what
@@ -98,7 +98,7 @@ int mca_io_base_component_add(mca_io_base_components_t *comp)
 
     /* If we didn't find it, save it */
 
-    if (ompi_list_get_end(&components_in_use) == item) {
+    if (opal_list_get_end(&components_in_use) == item) {
         citem = OBJ_NEW(component_item_t);
         citem->refcount = 1;
         citem->component = *comp;
@@ -111,7 +111,7 @@ int mca_io_base_component_add(mca_io_base_components_t *comp)
         } else {
             citem->version = MCA_IO_BASE_V_NONE;
         }
-        ompi_list_append(&components_in_use, (ompi_list_item_t *) citem);
+        opal_list_append(&components_in_use, (opal_list_item_t *) citem);
     }
 
     OMPI_THREAD_UNLOCK(&mutex);
@@ -128,16 +128,16 @@ int mca_io_base_component_add(mca_io_base_components_t *comp)
  */
 int mca_io_base_component_del(mca_io_base_components_t *comp)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     component_item_t *citem;
 
     OMPI_THREAD_LOCK(&mutex);
 
     /* Find the component in the list */
 
-    for (item = ompi_list_get_first(&components_in_use);
-         item != ompi_list_get_end(&components_in_use);
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&components_in_use);
+         item != opal_list_get_end(&components_in_use);
+         item = opal_list_get_next(item)) {
         citem = (component_item_t *) item;
 
         /* Note the memory / pointer trickery here: we don't care what
@@ -150,8 +150,8 @@ int mca_io_base_component_del(mca_io_base_components_t *comp)
                 (const mca_base_component_t *) comp) == 0) {
             --citem->refcount;
             if (0 == citem->refcount) {
-                ompi_list_remove_item(&components_in_use, 
-                                      (ompi_list_item_t *) citem);
+                opal_list_remove_item(&components_in_use, 
+                                      (opal_list_item_t *) citem);
             }
             OBJ_RELEASE(citem);
             break;
@@ -170,7 +170,7 @@ int mca_io_base_component_del(mca_io_base_components_t *comp)
 int mca_io_base_component_run_progress(void)
 {
     int ret, count = 0;
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     component_item_t *citem;
 
     if (! initialized) return 0;
@@ -180,9 +180,9 @@ int mca_io_base_component_run_progress(void)
     /* Go through all the components and call their progress
        function */
 
-    for (item = ompi_list_get_first(&components_in_use);
-         item != ompi_list_get_end(&components_in_use);
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&components_in_use);
+         item != opal_list_get_end(&components_in_use);
+         item = opal_list_get_next(item)) {
         citem = (component_item_t *) item;
 
         switch (citem->version) {

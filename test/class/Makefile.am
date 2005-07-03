@@ -23,7 +23,7 @@ check_PROGRAMS = \
 	ompi_circular_buffer_fifo \
 	ompi_fifo \
 	ompi_hash_table \
-	ompi_list \
+	opal_list \
 	ompi_value_array \
 	ompi_pointer_array \
 	ompi_rb_tree \
@@ -50,11 +50,11 @@ ompi_fifo_LDADD = \
         $(top_builddir)/test/support/libsupport.a
 ompi_fifo_DEPENDENCIES = $(ompi_fifo_LDADD)
 
-ompi_list_SOURCES = ompi_list.c 
-ompi_list_LDADD = \
+opal_list_SOURCES = opal_list.c 
+opal_list_LDADD = \
         $(top_builddir)/src/libmpi.la \
         $(top_builddir)/test/support/libsupport.a
-ompi_list_DEPENDENCIES = $(ompi_list_LDADD)
+opal_list_DEPENDENCIES = $(opal_list_LDADD)
 
 ompi_hash_table_SOURCES = ompi_hash_table.c
 ompi_hash_table_LDADD = \

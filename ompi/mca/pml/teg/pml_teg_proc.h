@@ -33,7 +33,7 @@ extern "C" {
  *  to the PML. Note that this name is not PML specific.
  */
 struct mca_pml_proc_t {
-   ompi_list_item_t super;
+   opal_list_item_t super;
    ompi_proc_t *proc_ompi;           /**< back-pointer to ompi_proc_t */
    ompi_mutex_t proc_lock;           /**< lock to protect against concurrent access */
    mca_ptl_array_t proc_ptl_first;   /**< array of ptls to use for first fragments */

@@ -17,7 +17,7 @@
 #ifndef MCA_BTL_IB_ENDPOINT_H
 #define MCA_BTL_IB_ENDPOINT_H
 
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
@@ -62,7 +62,7 @@ typedef enum {
  */
 
 struct mca_btl_base_endpoint_t {
-    ompi_list_item_t            super;
+    opal_list_item_t            super;
 
     struct mca_btl_openib_module_t* endpoint_btl;
     /**< BTL instance that created this connection */
@@ -85,7 +85,7 @@ struct mca_btl_base_endpoint_t {
     ompi_mutex_t                endpoint_recv_lock;
     /**< lock for concurrent access to endpoint state */
 
-    ompi_list_t                 pending_send_frags;
+    opal_list_t                 pending_send_frags;
     /**< list of pending send frags for this endpoint */
 
     VAPI_qp_num_t               rem_qp_num_high;
@@ -131,7 +131,7 @@ static inline int mca_btl_openib_endpoint_post_rr_sub(int cnt,
 {
     
     int rc, i; 
-    ompi_list_item_t* item; 
+    opal_list_item_t* item; 
     mca_btl_openib_frag_t* frag; 
     mca_btl_openib_module_t *mvapi_btl = endpoint->endpoint_btl;
     VAPI_rr_desc_t* rr_desc_post = mvapi_btl->rr_desc_post; 

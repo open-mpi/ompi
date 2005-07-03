@@ -16,7 +16,7 @@
 /*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
 
 #include "ompi_config.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "mca/ptl/base/ptl_base_fragment.h"
 
 static void mca_ptl_base_frag_construct(mca_ptl_base_frag_t* frag);
@@ -25,7 +25,7 @@ static void mca_ptl_base_frag_destruct(mca_ptl_base_frag_t* frag);
 
 opal_class_t mca_ptl_base_frag_t_class = { 
     "mca_ptl_base_frag_t", 
-    OBJ_CLASS(ompi_list_item_t),
+    OBJ_CLASS(opal_list_item_t),
     (opal_construct_t) mca_ptl_base_frag_construct, 
     (opal_destruct_t) mca_ptl_base_frag_destruct 
 };

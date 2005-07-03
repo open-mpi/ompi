@@ -21,14 +21,14 @@
 
 #include "mpi.h"
 #include "include/constants.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/topo/topo.h"
 #include "mca/topo/base/base.h"
 
-ompi_list_t mca_topo_base_modules_available;
+opal_list_t mca_topo_base_modules_available;
 bool mca_topo_base_modules_available_valid = false;
 
 static int init_query(const mca_base_component_t *m,
@@ -45,11 +45,11 @@ int mca_topo_base_find_available(bool enable_progress_threads,
 {
     bool found = false;
     mca_base_component_priority_list_item_t *entry;
-    ompi_list_item_t *p;
+    opal_list_item_t *p;
 
     /* Initialize the list */
 
-    OBJ_CONSTRUCT(&mca_topo_base_components_available, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_topo_base_components_available, opal_list_t);
     mca_topo_base_components_available_valid = true;
 
     /* The list of components which we should check is already present 
@@ -57,9 +57,9 @@ int mca_topo_base_find_available(bool enable_progress_threads,
        mca_topo_base_open */
 
      for (found = false, 
-            p = ompi_list_remove_first (&mca_topo_base_components_opened);
+            p = opal_list_remove_first (&mca_topo_base_components_opened);
           NULL != p;
-          p = ompi_list_remove_first (&mca_topo_base_components_opened)) {
+          p = opal_list_remove_first (&mca_topo_base_components_opened)) {
          entry = OBJ_NEW(mca_base_component_priority_list_item_t);
          entry->super.cli_component =
            ((mca_base_component_list_item_t *)p)->cli_component;
@@ -75,8 +75,8 @@ int mca_topo_base_find_available(bool enable_progress_threads,
                 the initial selection algorithm can negotiate overall thread
                 level for this process */
              entry->cpli_priority = 0;
-             ompi_list_append (&mca_topo_base_components_available,
-                               (ompi_list_item_t *) entry);
+             opal_list_append (&mca_topo_base_components_available,
+                               (opal_list_item_t *) entry);
              found = true;
          } else {
              /* The component does not want to run, so close it. Its close()

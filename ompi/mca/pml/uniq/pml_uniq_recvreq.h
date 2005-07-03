@@ -40,7 +40,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_recv_request_t);
  */
 #define MCA_PML_UNIQ_RECV_REQUEST_ALLOC(recvreq, rc)                    \
     do {                                                                \
-        ompi_list_item_t* item;                                         \
+        opal_list_item_t* item;                                         \
         OMPI_FREE_LIST_GET(&mca_pml_uniq.uniq_recv_requests, item, rc); \
         recvreq = (mca_ptl_base_recv_request_t*)item;                   \
     } while(0)
@@ -78,7 +78,7 @@ OBJ_CLASS_DECLARATION(mca_pml_uniq_recv_request_t);
 #define MCA_PML_UNIQ_RECV_REQUEST_RETURN(request)                                              \
     do {                                                                                       \
         MCA_PML_BASE_RECV_REQUEST_FINI( &((request)->req_recv) );                              \
-        OMPI_FREE_LIST_RETURN(&mca_pml_uniq.uniq_recv_requests, (ompi_list_item_t*)(request)); \
+        OMPI_FREE_LIST_RETURN(&mca_pml_uniq.uniq_recv_requests, (opal_list_item_t*)(request)); \
     } while(0)
 
 /**

@@ -22,7 +22,7 @@
 #include "threads/mutex.h"
 #include "threads/condition.h"
 #include "mca/ptl/ptl.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -38,10 +38,10 @@ struct mca_pml_comm_t {
     uint16_t *c_next_msg_seq;          /**< send message sequence number - receiver side */
     mca_ptl_sequence_t c_recv_seq;     /**< recv request sequence number - receiver side */
     ompi_mutex_t c_matching_lock;      /**< matching lock */
-    ompi_list_t *c_unexpected_frags;   /**< unexpected fragment queues */
-    ompi_list_t *c_frags_cant_match;   /**< out-of-order fragment queues */
-    ompi_list_t *c_specific_receives;  /**< queues of unmatched specific (source process specified) receives */
-    ompi_list_t c_wild_receives;       /**< queue of unmatched wild (source process not specified) receives */
+    opal_list_t *c_unexpected_frags;   /**< unexpected fragment queues */
+    opal_list_t *c_frags_cant_match;   /**< out-of-order fragment queues */
+    opal_list_t *c_specific_receives;  /**< queues of unmatched specific (source process specified) receives */
+    opal_list_t c_wild_receives;       /**< queue of unmatched wild (source process not specified) receives */
 };
 typedef struct mca_pml_comm_t mca_pml_ptl_comm_t;
 

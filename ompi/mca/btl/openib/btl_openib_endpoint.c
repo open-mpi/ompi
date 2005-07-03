@@ -96,7 +96,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* mva
 
 
 OBJ_CLASS_INSTANCE(mca_btl_openib_endpoint_t, 
-                   ompi_list_item_t, mca_btl_openib_endpoint_construct, 
+                   opal_list_item_t, mca_btl_openib_endpoint_construct, 
                    mca_btl_openib_endpoint_destruct);
 
 /*
@@ -113,7 +113,7 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_retries = 0;
     OBJ_CONSTRUCT(&endpoint->endpoint_send_lock, ompi_mutex_t);
     OBJ_CONSTRUCT(&endpoint->endpoint_recv_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&endpoint->pending_send_frags, ompi_list_t);
+    OBJ_CONSTRUCT(&endpoint->pending_send_frags, opal_list_t);
 }
 
 /*
@@ -413,10 +413,10 @@ static void mca_btl_openib_endpoint_recv(
     int rc;
 
     for(ib_proc = (mca_btl_openib_proc_t*)
-            ompi_list_get_first(&mca_btl_openib_component.ib_procs);
+            opal_list_get_first(&mca_btl_openib_component.ib_procs);
             ib_proc != (mca_btl_openib_proc_t*)
-            ompi_list_get_end(&mca_btl_openib_component.ib_procs);
-            ib_proc  = (mca_btl_openib_proc_t*)ompi_list_get_next(ib_proc)) {
+            opal_list_get_end(&mca_btl_openib_component.ib_procs);
+            ib_proc  = (mca_btl_openib_proc_t*)opal_list_get_next(ib_proc)) {
 
         if(ib_proc->proc_guid.vpid == endpoint->vpid) {
 
@@ -517,8 +517,8 @@ int mca_btl_openib_endpoint_send(
 
             DEBUG_OUT("Queing because state is connecting");
 
-            ompi_list_append(&endpoint->pending_send_frags,
-                    (ompi_list_item_t *)frag);
+            opal_list_append(&endpoint->pending_send_frags,
+                    (opal_list_item_t *)frag);
 
             rc = OMPI_SUCCESS;
             break;
@@ -527,8 +527,8 @@ int mca_btl_openib_endpoint_send(
 
             DEBUG_OUT("Queuing because waiting for ack");
 
-            ompi_list_append(&endpoint->pending_send_frags,
-                    (ompi_list_item_t *)frag);
+            opal_list_append(&endpoint->pending_send_frags,
+                    (opal_list_item_t *)frag);
 
             rc = OMPI_SUCCESS;
             break;
@@ -537,8 +537,8 @@ int mca_btl_openib_endpoint_send(
 
             DEBUG_OUT("Connection to endpoint closed ... connecting ...");
 
-            ompi_list_append(&endpoint->pending_send_frags,
-                    (ompi_list_item_t *)frag);
+            opal_list_append(&endpoint->pending_send_frags,
+                    (opal_list_item_t *)frag);
 
             rc = mca_btl_openib_endpoint_start_connect(endpoint);
             
@@ -575,7 +575,7 @@ int mca_btl_openib_endpoint_send(
 
 void mca_btl_openib_progress_send_frags(mca_btl_openib_endpoint_t* endpoint)
 {
-    ompi_list_item_t *frag_item;
+    opal_list_item_t *frag_item;
     mca_btl_openib_frag_t *frag;
     mca_btl_openib_module_t* mvapi_btl; 
     /*Check if endpoint is connected */
@@ -587,8 +587,8 @@ void mca_btl_openib_progress_send_frags(mca_btl_openib_endpoint_t* endpoint)
     /* While there are frags in the list,
      * process them */
 
-    while(!ompi_list_is_empty(&(endpoint->pending_send_frags))) {
-        frag_item = ompi_list_remove_first(&(endpoint->pending_send_frags));
+    while(!opal_list_is_empty(&(endpoint->pending_send_frags))) {
+        frag_item = opal_list_remove_first(&(endpoint->pending_send_frags));
         frag = (mca_btl_openib_frag_t *) frag_item;
         mvapi_btl = endpoint->endpoint_btl;
         /* We need to post this one */

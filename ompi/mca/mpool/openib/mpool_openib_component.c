@@ -152,9 +152,9 @@ static mca_mpool_base_module_t* mca_mpool_openib_init(
     /* if specified allocator cannout be loaded - look for an alternative */
     allocator_component = mca_allocator_component_lookup(mca_mpool_openib_component.vapi_allocator_name);
     if(NULL == allocator_component) {
-        if(ompi_list_get_size(&mca_allocator_base_components) == 0) {
+        if(opal_list_get_size(&mca_allocator_base_components) == 0) {
             mca_base_component_list_item_t* item = (mca_base_component_list_item_t*)
-                ompi_list_get_first(&mca_allocator_base_components);
+                opal_list_get_first(&mca_allocator_base_components);
             allocator_component = (mca_allocator_base_component_t*)item->cli_component;
             ompi_output(0, "mca_mpool_openib_init: unable to locate allocator: %s - using %s\n",
                 mca_mpool_openib_component.vapi_allocator_name, allocator_component->allocator_version.mca_component_name);

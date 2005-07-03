@@ -45,16 +45,16 @@ orte_ras_base_module_t* orte_ras_base_select(const char *preferred)
 
 static orte_ras_base_module_t *select_preferred(const char *name)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     orte_ras_base_cmp_t *cmp;
 
     /* Look for a matching selected name */
 
     ompi_output(orte_ras_base.ras_output,
                 "orte:base:select: looking for component %s", name);
-    for (item = ompi_list_get_first(&orte_ras_base.ras_available);
-         item != ompi_list_get_end(&orte_ras_base.ras_available);
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&orte_ras_base.ras_available);
+         item != opal_list_get_end(&orte_ras_base.ras_available);
+         item = opal_list_get_next(item)) {
         cmp = (orte_ras_base_cmp_t *) item;
 
         if (0 == strcmp(name,
@@ -75,12 +75,12 @@ static orte_ras_base_module_t *select_preferred(const char *name)
                                                                                                                              
 static orte_ras_base_module_t *select_any(void)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     orte_ras_base_cmp_t *cmp;
 
     /* If the list is empty, return NULL */
 
-    if (ompi_list_is_empty(&orte_ras_base.ras_available)) {
+    if (opal_list_is_empty(&orte_ras_base.ras_available)) {
         ompi_output(orte_ras_base.ras_output,
                     "orte:base:select: no components available!");
         return NULL;
@@ -89,7 +89,7 @@ static orte_ras_base_module_t *select_any(void)
     /* Otherwise, return the first item (it's already sorted in
        priority order) */
 
-    item = ompi_list_get_first(&orte_ras_base.ras_available);
+    item = opal_list_get_first(&orte_ras_base.ras_available);
     cmp = (orte_ras_base_cmp_t *) item;
     ompi_output(orte_ras_base.ras_output,
                 "orte:base:select: highest priority component: %s",

@@ -20,7 +20,7 @@
 #include <string.h>
 
 #include "include/constants.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "util/output.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
@@ -130,16 +130,16 @@ static int parse_line(void)
 
 static void save_value(char *name, char *value)
 {
-    ompi_list_item_t *item;
+    opal_list_item_t *item;
     mca_base_param_file_value_t *fv;
 
     /* First traverse through the list and ensure that we don't
        already have a param of this name.  If we do, just replace the
        value. */
 
-    for (item = ompi_list_get_first(&mca_base_param_file_values);
-         ompi_list_get_end(&mca_base_param_file_values) != item;
-         item = ompi_list_get_next(item)) {
+    for (item = opal_list_get_first(&mca_base_param_file_values);
+         opal_list_get_end(&mca_base_param_file_values) != item;
+         item = opal_list_get_next(item)) {
         fv = (mca_base_param_file_value_t *) item;
         if (0 == strcmp(name, fv->mbpfv_param)) {
             free(name);
@@ -159,7 +159,7 @@ static void save_value(char *name, char *value)
         } else {
             fv->mbpfv_value = NULL;
         }
-        ompi_list_append(&mca_base_param_file_values, (ompi_list_item_t*) fv);
+        opal_list_append(&mca_base_param_file_values, (opal_list_item_t*) fv);
     }
 }
 

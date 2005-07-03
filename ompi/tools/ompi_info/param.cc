@@ -119,16 +119,16 @@ void ompi_info::do_params(bool want_all, bool want_internal)
 void ompi_info::show_mca_params(const string& type, const string& component, 
                                 const string& param, bool want_internal)
 {
-    ompi_list_t *info;
-    ompi_list_item_t *i;
+    opal_list_t *info;
+    opal_list_item_t *i;
     mca_base_param_info_t *p;
     char *value_string, empty[] = "\0";
     string message, content;
     int value_int;
 
     mca_base_param_dump(&info, want_internal);
-    for (i = ompi_list_get_first(info); i != ompi_list_get_last(info);
-         i = ompi_list_get_next(i)) {
+    for (i = opal_list_get_first(info); i != opal_list_get_last(info);
+         i = opal_list_get_next(i)) {
         p = (mca_base_param_info_t*) i;
         
         if (type == p->mbpp_type_name) {

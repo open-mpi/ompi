@@ -34,7 +34,7 @@ extern "C" {
  */
 extern ompi_mutex_t mca_io_romio_mutex;
 extern mca_io_base_module_1_0_0_t mca_io_romio_module;
-extern ompi_list_t mca_io_romio_pending_requests;
+extern opal_list_t mca_io_romio_pending_requests;
 
 
 /* 
@@ -73,7 +73,7 @@ int mca_io_romio_request_cancel(ompi_request_t *req, int flag);
  */
 #define MCA_IO_ROMIO_REQUEST_ADD(request)              \
     ((ompi_request_t*) request)->req_state = OMPI_REQUEST_ACTIVE; \
-    ompi_list_append(&mca_io_romio_pending_requests, (ompi_list_item_t *) request); \
+    opal_list_append(&mca_io_romio_pending_requests, (opal_list_item_t *) request); \
     mca_io_base_request_progress_add();
 
 

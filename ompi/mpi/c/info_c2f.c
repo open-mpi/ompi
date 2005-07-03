@@ -19,7 +19,7 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "mpi/f77/fint_2_int.h"
-#include "class/ompi_list.h"
+#include "opal/class/opal_list.h"
 #include "info/info.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"

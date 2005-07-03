@@ -90,9 +90,9 @@ int mca_pml_ob1_component_open(void)
     OBJ_CONSTRUCT(&mca_pml_ob1.buffers, ompi_free_list_t);
 
     /* pending operations */
-    OBJ_CONSTRUCT(&mca_pml_ob1.send_pending, ompi_list_t);
-    OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, ompi_list_t);
-    OBJ_CONSTRUCT(&mca_pml_ob1.acks_pending, ompi_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.send_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.acks_pending, opal_list_t);
 
     mca_pml_ob1.btl_components = NULL;
     mca_pml_ob1.num_btl_components = 0;
@@ -135,16 +135,16 @@ int mca_pml_ob1_component_close(void)
 
 #if OMPI_ENABLE_DEBUG
     if (mca_pml_ob1.send_requests.fl_num_allocated !=
-        mca_pml_ob1.send_requests.super.ompi_list_length) {
+        mca_pml_ob1.send_requests.super.opal_list_length) {
         ompi_output(0, "ob1 send requests: %d allocated %d returned\n",
             mca_pml_ob1.send_requests.fl_num_allocated,
-            mca_pml_ob1.send_requests.super.ompi_list_length);
+            mca_pml_ob1.send_requests.super.opal_list_length);
     }
     if (mca_pml_ob1.recv_requests.fl_num_allocated !=
-        mca_pml_ob1.recv_requests.super.ompi_list_length) {
+        mca_pml_ob1.recv_requests.super.opal_list_length) {
         ompi_output(0, "ob1 recv requests: %d allocated %d returned\n",
             mca_pml_ob1.recv_requests.fl_num_allocated,
-            mca_pml_ob1.recv_requests.super.ompi_list_length);
+            mca_pml_ob1.recv_requests.super.opal_list_length);
     }
 #endif
 

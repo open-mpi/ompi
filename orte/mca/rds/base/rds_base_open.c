@@ -45,7 +45,7 @@ static void orte_rds_base_cell_desc_constructor(orte_rds_cell_desc_t *cell)
     cell->name = NULL;
     cell->type = NULL;
     
-    OBJ_CONSTRUCT(&cell->attributes, ompi_list_t);
+    OBJ_CONSTRUCT(&cell->attributes, opal_list_t);
 }
 
 static void orte_rds_base_cell_desc_destructor(orte_rds_cell_desc_t *cell)
@@ -59,7 +59,7 @@ static void orte_rds_base_cell_desc_destructor(orte_rds_cell_desc_t *cell)
 
 OBJ_CLASS_INSTANCE(
     orte_rds_cell_desc_t, 
-    ompi_list_item_t,
+    opal_list_item_t,
     orte_rds_base_cell_desc_constructor, 
     orte_rds_base_cell_desc_destructor);
 
@@ -76,7 +76,7 @@ static void orte_rds_base_cell_attr_destructor(orte_rds_cell_attr_t *cell)
 
 OBJ_CLASS_INSTANCE(
     orte_rds_cell_attr_t, 
-    ompi_list_item_t,
+    opal_list_item_t,
     orte_rds_base_cell_attr_constructor, 
     orte_rds_base_cell_attr_destructor);
 
@@ -113,7 +113,7 @@ int orte_rds_base_open(void)
                                  &orte_rds_base.rds_components, true)) {
         return ORTE_ERROR;
     }
-    OBJ_CONSTRUCT(&orte_rds_base.rds_selected, ompi_list_t);
+    OBJ_CONSTRUCT(&orte_rds_base.rds_selected, opal_list_t);
 
     /* All done */
 
