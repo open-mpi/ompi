@@ -34,7 +34,7 @@
 #import "util/argv.h"
 #import "util/output.h"
 #import "util/session_dir.h"
-#import "event/event.h"
+#import "opal/event/event.h"
 #import "runtime/orte_wait.h"
 #import "mca/ns/ns.h"
 #import "mca/pls/pls.h"

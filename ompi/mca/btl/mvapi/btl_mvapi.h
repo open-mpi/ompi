@@ -27,7 +27,7 @@
 /* Open MPI includes */
 #include "class/ompi_free_list.h"
 #include "class/ompi_bitmap.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/btl/btl.h"
 #include "util/output.h"
@@ -68,10 +68,10 @@ struct mca_btl_mvapi_component_t {
     opal_list_t                             ib_procs;
     /**< list of ib proc structures */
 
-    ompi_event_t                            ib_send_event;
+    opal_event_t                            ib_send_event;
     /**< event structure for sends */
 
-    ompi_event_t                            ib_recv_event;
+    opal_event_t                            ib_recv_event;
     /**< event structure for recvs */
 
     opal_mutex_t                            ib_lock;

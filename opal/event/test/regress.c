@@ -75,7 +75,7 @@ simple_read_cb(int fd, short event, void *arg)
 
 	if (len) {
 		if (!called)
-			ompi_event_add(arg, NULL);
+			opal_event_add(arg, NULL);
 	} else if (called == 1)
 		test_ok = 1;
 
@@ -97,7 +97,7 @@ simple_write_cb(int fd, short event, void *arg)
 void
 multiple_write_cb(int fd, short event, void *arg)
 {
-	struct ompi_event *ev = arg;
+	struct opal_event *ev = arg;
 	int len;
 
 	len = 128;
@@ -108,7 +108,7 @@ multiple_write_cb(int fd, short event, void *arg)
 	if (len == -1) {
 		fprintf(stderr, "%s: write\n", __func__);
 		if (usepersist)
-			ompi_event_del(ev);
+			opal_event_del(ev);
 		return;
 	}
 
@@ -117,18 +117,18 @@ multiple_write_cb(int fd, short event, void *arg)
 	if (woff >= sizeof(wbuf)) {
 		shutdown(fd, SHUT_WR);
 		if (usepersist)
-			ompi_event_del(ev);
+			opal_event_del(ev);
 		return;
 	}
 
 	if (!usepersist)
-		ompi_event_add(ev, NULL);
+		opal_event_add(ev, NULL);
 }
 
 void
 multiple_read_cb(int fd, short event, void *arg)
 {
-	struct ompi_event *ev = arg;
+	struct opal_event *ev = arg;
 	int len;
 
 	len = read(fd, rbuf + roff, sizeof(rbuf) - roff);
@@ -136,13 +136,13 @@ multiple_read_cb(int fd, short event, void *arg)
 		fprintf(stderr, "%s: read\n", __func__);
 	if (len <= 0) {
 		if (usepersist)
-			ompi_event_del(ev);
+			opal_event_del(ev);
 		return;
 	}
 
 	roff += len;
 	if (!usepersist)
-		ompi_event_add(ev, NULL);
+		opal_event_add(ev, NULL);
 }
 
 void
@@ -168,14 +168,14 @@ timeout_cb(int fd, short event, void *arg)
 void
 signal_cb(int fd, short event, void *arg)
 {
-	struct ompi_event *ev = arg;
+	struct opal_event *ev = arg;
 
-	ompi_signal_del(ev);
+	opal_signal_del(ev);
 	test_ok = 1;
 }
 
 struct both {
-	struct ompi_event ev;
+	struct opal_event ev;
 	int nread;
 };
 
@@ -193,7 +193,7 @@ combined_read_cb(int fd, short event, void *arg)
 		return;
 
 	both->nread += len;
-	ompi_event_add(&both->ev, NULL);
+	opal_event_add(&both->ev, NULL);
 }
 
 void
@@ -216,7 +216,7 @@ combined_write_cb(int fd, short event, void *arg)
 	}
 
 	both->nread -= len;
-	ompi_event_add(&both->ev, NULL);
+	opal_event_add(&both->ev, NULL);
 }
 
 /* Test infrastructure */
@@ -256,7 +256,7 @@ cleanup_test(void)
 int
 main (int argc, char **argv)
 {
-	struct ompi_event ev, ev2;
+	struct opal_event ev, ev2;
 	struct timeval tv;
 	struct itimerval itv;
 	struct both r1, r2, w1, w2;
@@ -265,7 +265,7 @@ main (int argc, char **argv)
 	setvbuf(stdout, NULL, _IONBF, 0);
 
 	/* Initalize the event library */
-	ompi_event_init();
+	opal_event_init();
 
 	/* Very simple read test */
 	setup_test("Simple read: ");
@@ -273,18 +273,18 @@ main (int argc, char **argv)
 	write(pair[0], TEST1, strlen(TEST1)+1);
 	shutdown(pair[0], SHUT_WR);
 
-	ompi_event_set(&ev, pair[1], OMPI_EV_READ, simple_read_cb, &ev);
-	ompi_event_add(&ev, NULL);
-	ompi_event_dispatch();
+	opal_event_set(&ev, pair[1], OPAL_EV_READ, simple_read_cb, &ev);
+	opal_event_add(&ev, NULL);
+	opal_event_dispatch();
 
 	cleanup_test();
 
 	/* Very simple write test */
 	setup_test("Simple write: ");
 	
-	ompi_event_set(&ev, pair[0], OMPI_EV_WRITE, simple_write_cb, &ev);
-	ompi_event_add(&ev, NULL);
-	ompi_event_dispatch();
+	opal_event_set(&ev, pair[0], OPAL_EV_WRITE, simple_write_cb, &ev);
+	opal_event_add(&ev, NULL);
+	opal_event_dispatch();
 
 	cleanup_test();
 
@@ -297,11 +297,11 @@ main (int argc, char **argv)
 	roff = woff = 0;
 	usepersist = 0;
 
-	ompi_event_set(&ev, pair[0], OMPI_EV_WRITE, multiple_write_cb, &ev);
-	ompi_event_add(&ev, NULL);
-	ompi_event_set(&ev2, pair[1], OMPI_EV_READ, multiple_read_cb, &ev2);
-	ompi_event_add(&ev2, NULL);
-	ompi_event_dispatch();
+	opal_event_set(&ev, pair[0], OPAL_EV_WRITE, multiple_write_cb, &ev);
+	opal_event_add(&ev, NULL);
+	opal_event_set(&ev2, pair[1], OPAL_EV_READ, multiple_read_cb, &ev2);
+	opal_event_add(&ev2, NULL);
+	opal_event_dispatch();
 
 	if (roff == woff)
 		test_ok = memcmp(rbuf, wbuf, sizeof(wbuf)) == 0;
@@ -317,11 +317,11 @@ main (int argc, char **argv)
 	roff = woff = 0;
 	usepersist = 1;
 
-	ompi_event_set(&ev, pair[0], OMPI_EV_WRITE|OMPI_EV_PERSIST, multiple_write_cb, &ev);
-	ompi_event_add(&ev, NULL);
-	ompi_event_set(&ev2, pair[1], OMPI_EV_READ|OMPI_EV_PERSIST, multiple_read_cb, &ev2);
-	ompi_event_add(&ev2, NULL);
-	ompi_event_dispatch();
+	opal_event_set(&ev, pair[0], OPAL_EV_WRITE|OPAL_EV_PERSIST, multiple_write_cb, &ev);
+	opal_event_add(&ev, NULL);
+	opal_event_set(&ev2, pair[1], OPAL_EV_READ|OPAL_EV_PERSIST, multiple_read_cb, &ev2);
+	opal_event_add(&ev2, NULL);
+	opal_event_dispatch();
 
 	if (roff == woff)
 		test_ok = memcmp(rbuf, wbuf, sizeof(wbuf)) == 0;
@@ -337,16 +337,16 @@ main (int argc, char **argv)
 	w1.nread = 4096;
 	w2.nread = 8192;
 
-	ompi_event_set(&r1.ev, pair[0], OMPI_EV_READ, combined_read_cb, &r1);
-	ompi_event_set(&w1.ev, pair[0], OMPI_EV_WRITE, combined_write_cb, &w1);
-	ompi_event_set(&r2.ev, pair[1], OMPI_EV_READ, combined_read_cb, &r2);
-	ompi_event_set(&w2.ev, pair[1], OMPI_EV_WRITE, combined_write_cb, &w2);
-	ompi_event_add(&r1.ev, NULL);
-	ompi_event_add(&w1.ev, NULL);
-	ompi_event_add(&r2.ev, NULL);
-	ompi_event_add(&w2.ev, NULL);
+	opal_event_set(&r1.ev, pair[0], OPAL_EV_READ, combined_read_cb, &r1);
+	opal_event_set(&w1.ev, pair[0], OPAL_EV_WRITE, combined_write_cb, &w1);
+	opal_event_set(&r2.ev, pair[1], OPAL_EV_READ, combined_read_cb, &r2);
+	opal_event_set(&w2.ev, pair[1], OPAL_EV_WRITE, combined_write_cb, &w2);
+	opal_event_add(&r1.ev, NULL);
+	opal_event_add(&w1.ev, NULL);
+	opal_event_add(&r2.ev, NULL);
+	opal_event_add(&w2.ev, NULL);
 
-	ompi_event_dispatch();
+	opal_event_dispatch();
 
 	if (r1.nread == 8192 && r2.nread == 4096)
 		test_ok = 1;
@@ -358,26 +358,26 @@ main (int argc, char **argv)
 
 	tv.tv_usec = 0;
 	tv.tv_sec = SECONDS;
-	ompi_evtimer_set(&ev, timeout_cb, NULL);
-	ompi_evtimer_add(&ev, &tv);
+	opal_evtimer_set(&ev, timeout_cb, NULL);
+	opal_evtimer_add(&ev, &tv);
 
 	gettimeofday(&tset, NULL);
-	ompi_event_dispatch();
+	opal_event_dispatch();
 
 	cleanup_test();
 
 	setup_test("Simple signal: ");
-	ompi_signal_set(&ev, SIGALRM, signal_cb, &ev);
-	ompi_signal_add(&ev, NULL);
+	opal_signal_set(&ev, SIGALRM, signal_cb, &ev);
+	opal_signal_add(&ev, NULL);
 
 	memset(&itv, 0, sizeof(itv));
 	itv.it_value.tv_sec = 1;
 	if (setitimer(ITIMER_REAL, &itv, NULL) == -1)
 		goto skip_simplesignal;
 
-	ompi_event_dispatch();
+	opal_event_dispatch();
  skip_simplesignal:
-	ompi_signal_del(&ev);
+	opal_signal_del(&ev);
 
 	cleanup_test();
 

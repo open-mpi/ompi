@@ -21,14 +21,14 @@
 #endif
 
 #include "opal/runtime/opal_progress.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "include/constants.h"
 #include "mca/base/mca_base_param.h"
 
 /* 
  * default parameters 
  */
-static int opal_progress_event_flag = OMPI_EVLOOP_ONCE;
+static int opal_progress_event_flag = OPAL_EVLOOP_ONCE;
 static const int opal_progress_default_tick_rate = 100;
 
 /*
@@ -208,7 +208,7 @@ opal_progress(void)
     if (event_progress_counter-- <= 0 && opal_progress_event_flag != 0) {
         event_progress_counter = 
             (event_num_mpi_users > 0) ? 1 : event_progress_counter_reset;
-        events += ompi_event_loop(opal_progress_event_flag);
+        events += opal_event_loop(opal_progress_event_flag);
     }
 #endif
 

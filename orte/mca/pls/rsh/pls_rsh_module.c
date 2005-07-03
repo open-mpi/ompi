@@ -43,7 +43,7 @@
 #include "util/session_dir.h"
 #include "util/if.h"
 #include "util/path.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "runtime/orte_wait.h"
 
 #include "mca/base/mca_base_param.h"
@@ -784,14 +784,14 @@ static void orte_pls_rsh_launch_cb(int fd, short event, void* args)
 static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid)
 {
     struct timeval tv = { 0, 0 };
-    struct ompi_event event;
+    struct opal_event event;
     struct orte_pls_rsh_stack_t stack;
 
     OBJ_CONSTRUCT(&stack, orte_pls_rsh_stack_t);
 
     stack.jobid = jobid;
-    ompi_evtimer_set(&event, orte_pls_rsh_launch_cb, &stack);
-    ompi_evtimer_add(&event, &tv);
+    opal_evtimer_set(&event, orte_pls_rsh_launch_cb, &stack);
+    opal_evtimer_add(&event, &tv);
 
     OPAL_THREAD_LOCK(&stack.mutex);
     while(stack.complete == false)

@@ -23,7 +23,7 @@
 #include "util/sys_info.h"
 #include "runtime/runtime.h"
 #include "util/output.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "mca/ns/ns_types.h"

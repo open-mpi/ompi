@@ -29,7 +29,7 @@
 #include "util/output.h"
 #include "util/ompi_environ.h"
 #include "util/proc_info.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "runtime/orte_wait.h"
 #include "runtime/runtime.h"
 #include "mca/ns/base/base.h"

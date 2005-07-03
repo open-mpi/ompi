@@ -36,7 +36,7 @@
 #include "opal/threads/condition.h"
 
 #include "dps/dps.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "util/argv.h"
 #include "util/path.h"
 #include "util/output.h"
@@ -235,7 +235,7 @@ int main(int argc, char *argv[])
     /*
      * Initialize the event library 
     */
-    if (OMPI_SUCCESS != (ret = ompi_event_init())) {
+    if (OMPI_SUCCESS != (ret = opal_event_init())) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }

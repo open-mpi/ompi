@@ -169,16 +169,16 @@ static void mca_ptl_tcp_peer_dump(mca_ptl_base_peer_t* ptl_peer, const char* msg
 
 static inline void mca_ptl_tcp_peer_event_init(mca_ptl_base_peer_t* ptl_peer, int sd)
 {
-    ompi_event_set(
+    opal_event_set(
         &ptl_peer->peer_recv_event, 
         ptl_peer->peer_sd, 
-        OMPI_EV_READ|OMPI_EV_PERSIST, 
+        OPAL_EV_READ|OPAL_EV_PERSIST, 
         mca_ptl_tcp_peer_recv_handler,
         ptl_peer);
-    ompi_event_set(
+    opal_event_set(
         &ptl_peer->peer_send_event, 
         ptl_peer->peer_sd, 
-        OMPI_EV_WRITE|OMPI_EV_PERSIST, 
+        OPAL_EV_WRITE|OPAL_EV_PERSIST, 
         mca_ptl_tcp_peer_send_handler,
         ptl_peer);
 }
@@ -214,14 +214,14 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
                 return rc;
             } else {
                 ptl_peer->peer_send_frag = frag;
-                ompi_event_add(&ptl_peer->peer_send_event, 0);
+                opal_event_add(&ptl_peer->peer_send_event, 0);
             }
         } else {
             /* after the first fragment - delay sending subsequent fragments to
              * enable better overlap by the scheduler
             */
             ptl_peer->peer_send_frag = frag;
-            ompi_event_add(&ptl_peer->peer_send_event, 0);
+            opal_event_add(&ptl_peer->peer_send_event, 0);
         }
         break;
     case MCA_PTL_TCP_SHUTDOWN:
@@ -310,7 +310,7 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
                  return false;
             }
             mca_ptl_tcp_peer_event_init(ptl_peer, sd);
-            ompi_event_add(&ptl_peer->peer_recv_event, 0);
+            opal_event_add(&ptl_peer->peer_recv_event, 0);
             mca_ptl_tcp_peer_connected(ptl_peer);
 #if OMPI_ENABLE_DEBUG && WANT_PEER_DUMP
             mca_ptl_tcp_peer_dump(ptl_peer, "accepted");
@@ -335,8 +335,8 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
 void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
 {
     if(ptl_peer->peer_sd >= 0) {
-        ompi_event_del(&ptl_peer->peer_recv_event);
-        ompi_event_del(&ptl_peer->peer_send_event);
+        opal_event_del(&ptl_peer->peer_recv_event);
+        opal_event_del(&ptl_peer->peer_send_event);
         close(ptl_peer->peer_sd);
         ptl_peer->peer_sd = -1;
     }
@@ -369,7 +369,7 @@ static void mca_ptl_tcp_peer_connected(mca_ptl_base_peer_t* ptl_peer)
         if(NULL == ptl_peer->peer_send_frag)
             ptl_peer->peer_send_frag = (mca_ptl_tcp_send_frag_t*)
                 opal_list_remove_first(&ptl_peer->peer_frags);
-        ompi_event_add(&ptl_peer->peer_send_event, 0);
+        opal_event_add(&ptl_peer->peer_send_event, 0);
     }
 }
 
@@ -515,7 +515,7 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
         IMPORTANT_WINDOWS_COMMENT();
         if(ompi_socket_errno == EINPROGRESS || ompi_socket_errno == EWOULDBLOCK) {
             ptl_peer->peer_state = MCA_PTL_TCP_CONNECTING;
-            ompi_event_add(&ptl_peer->peer_send_event, 0);
+            opal_event_add(&ptl_peer->peer_send_event, 0);
             return OMPI_SUCCESS;
         }
         mca_ptl_tcp_peer_close(ptl_peer);
@@ -526,7 +526,7 @@ static int mca_ptl_tcp_peer_start_connect(mca_ptl_base_peer_t* ptl_peer)
     /* send our globally unique process identifier to the peer */
     if((rc = mca_ptl_tcp_peer_send_connect_ack(ptl_peer)) == OMPI_SUCCESS) {
         ptl_peer->peer_state = MCA_PTL_TCP_CONNECT_ACK;
-        ompi_event_add(&ptl_peer->peer_recv_event, 0);
+        opal_event_add(&ptl_peer->peer_recv_event, 0);
     } else {
         mca_ptl_tcp_peer_close(ptl_peer);
     }
@@ -546,7 +546,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
     ompi_socklen_t so_length = sizeof(so_error);
 
     /* unregister from receiving event notifications */
-    ompi_event_del(&ptl_peer->peer_send_event);
+    opal_event_del(&ptl_peer->peer_send_event);
 
     /* check connect completion status */
     if(getsockopt(ptl_peer->peer_sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
@@ -556,7 +556,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
     }
     IMPORTANT_WINDOWS_COMMENT();
     if(so_error == EINPROGRESS || so_error == EWOULDBLOCK) {
-        ompi_event_add(&ptl_peer->peer_send_event, 0);
+        opal_event_add(&ptl_peer->peer_send_event, 0);
         return;
     }
     if(so_error != 0) {
@@ -567,7 +567,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
 
     if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) == OMPI_SUCCESS) {
         ptl_peer->peer_state = MCA_PTL_TCP_CONNECT_ACK;
-        ompi_event_add(&ptl_peer->peer_recv_event, 0);
+        opal_event_add(&ptl_peer->peer_recv_event, 0);
     } else {
         mca_ptl_tcp_peer_close(ptl_peer);
     }
@@ -658,14 +658,14 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
 
         /* if nothing else to do unregister for send event notifications */
         if(NULL == ptl_peer->peer_send_frag) {
-            ompi_event_del(&ptl_peer->peer_send_event);
+            opal_event_del(&ptl_peer->peer_send_event);
         }
         break;
         }
     default:
         ompi_output(0, "mca_ptl_tcp_peer_send_handler: invalid connection state (%d)", 
             ptl_peer->peer_state);
-        ompi_event_del(&ptl_peer->peer_send_event);
+        opal_event_del(&ptl_peer->peer_send_event);
         break;
     }
     OPAL_THREAD_UNLOCK(&ptl_peer->peer_send_lock);

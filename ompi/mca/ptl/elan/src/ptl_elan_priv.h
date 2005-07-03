@@ -26,7 +26,7 @@
 #include <arpa/inet.h>
 
 #include "constants.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "util/if.h"
 #include "util/argv.h"
 #include "util/output.h"

@@ -25,7 +25,7 @@ int called = 0;
 
 #define NEVENT	20000
 
-struct ompi_event *ev[NEVENT];
+struct opal_event *ev[NEVENT];
 
 void
 time_cb(int fd, short event, void *arg)
@@ -41,9 +41,9 @@ time_cb(int fd, short event, void *arg)
 			tv.tv_sec = 0;
 			tv.tv_usec = random() % 50000L;
 			if (tv.tv_usec % 2)
-				ompi_evtimer_add(ev[j], &tv);
+				opal_evtimer_add(ev[j], &tv);
 			else
-				ompi_evtimer_del(ev[j]);
+				opal_evtimer_del(ev[j]);
 		}
 	}
 }
@@ -55,19 +55,19 @@ main (int argc, char **argv)
 	int i;
 
 	/* Initalize the event library */
-	ompi_event_init();
+	opal_event_init();
 
 	for (i = 0; i < NEVENT; i++) {
-		ev[i] = malloc(sizeof(struct ompi_event));
+		ev[i] = malloc(sizeof(struct opal_event));
 
 		/* Initalize one event */
-		ompi_evtimer_set(ev[i], time_cb, ev[i]);
+		opal_evtimer_set(ev[i], time_cb, ev[i]);
 		tv.tv_sec = 0;
 		tv.tv_usec = random() % 50000L;
-		ompi_evtimer_add(ev[i], &tv);
+		opal_evtimer_add(ev[i], &tv);
 	}
 
-	ompi_event_dispatch();
+	opal_event_dispatch();
 
 	return (called < NEVENT);
 }

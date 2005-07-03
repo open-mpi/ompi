@@ -27,7 +27,7 @@
 #include "mca/ns/ns_types.h"
 #include "opal/class/opal_free_list.h"
 #include "class/opal_hash_table.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "mca/oob/tcp/oob_tcp_peer.h"
@@ -255,8 +255,8 @@ struct mca_oob_tcp_component_t {
     int                tcp_peer_limit;       /**< max size of tcp peer cache */
     int                tcp_peer_retries;     /**< max number of retries before declaring peer gone */
     opal_free_list_t   tcp_msgs;             /**< free list of messages */
-    ompi_event_t       tcp_send_event;       /**< event structure for sends */
-    ompi_event_t       tcp_recv_event;       /**< event structure for recvs */
+    opal_event_t       tcp_send_event;       /**< event structure for sends */
+    opal_event_t       tcp_recv_event;       /**< event structure for recvs */
     opal_mutex_t       tcp_lock;             /**< lock for accessing module state */
     opal_list_t        tcp_events;           /**< list of pending events (accepts) */
     opal_list_t        tcp_msg_post;         /**< list of recieves user has posted */

@@ -64,10 +64,10 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
 #if OMPI_ENABLE_PROGRESS_THREADS
     OPAL_THREAD_LOCK(&msg->msg_lock);
     while(msg->msg_complete == false) {
-        if(ompi_event_progress_thread()) {
+        if(opal_event_progress_thread()) {
             int rc;
             OPAL_THREAD_UNLOCK(&msg->msg_lock);
-            rc = ompi_event_loop(OMPI_EVLOOP_ONCE);
+            rc = opal_event_loop(OPAL_EVLOOP_ONCE);
             assert(rc >= 0);
             OPAL_THREAD_LOCK(&msg->msg_lock);
         } else {
@@ -79,7 +79,7 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
 #else
     /* wait for message to complete */
     while(msg->msg_complete == false)
-        ompi_event_loop(OMPI_EVLOOP_ONCE);
+        opal_event_loop(OPAL_EVLOOP_ONCE);
 #endif
 
     /* return status */
@@ -108,10 +108,10 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
     while(msg->msg_complete == false && 
           ((uint32_t)tv.tv_sec <= secs ||
 	   ((uint32_t)tv.tv_sec == secs && (uint32_t)tv.tv_usec < usecs))) {
-        if(ompi_event_progress_thread()) {
+        if(opal_event_progress_thread()) {
             int rc;
             OPAL_THREAD_UNLOCK(&msg->msg_lock);
-            rc = ompi_event_loop(OMPI_EVLOOP_ONCE);
+            rc = opal_event_loop(OPAL_EVLOOP_ONCE);
             assert(rc >= 0);
             OPAL_THREAD_LOCK(&msg->msg_lock);
         } else {
@@ -125,7 +125,7 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
     while(msg->msg_complete == false &&
           ((uint32_t)tv.tv_sec <= secs ||
 	   ((uint32_t)tv.tv_sec == secs && (uint32_t)tv.tv_usec < usecs))) {
-        ompi_event_loop(OMPI_EVLOOP_ONCE);
+        opal_event_loop(OPAL_EVLOOP_ONCE);
         gettimeofday(&tv,NULL);
     }
 #endif

@@ -57,20 +57,20 @@
 #endif
 
 #include "event.h"
-#if OMPI_EVENT_USE_SIGNALS
+#if OPAL_EVENT_USE_SIGNALS
 #include "evsignal.h"
 #endif
 #include "opal/threads/mutex.h"
 
-extern struct ompi_event_list ompi_eventqueue;
-extern opal_mutex_t ompi_event_lock;
+extern struct opal_event_list opal_eventqueue;
+extern opal_mutex_t opal_event_lock;
 
 #ifndef howmany
 #define        howmany(x, y)   (((x)+((y)-1))/(y))
 #endif
 
-#if OMPI_EVENT_USE_SIGNALS
-extern volatile sig_atomic_t ompi_evsignal_caught;
+#if OPAL_EVENT_USE_SIGNALS
+extern volatile sig_atomic_t opal_evsignal_caught;
 #endif
 
 static struct selectop {
@@ -78,18 +78,18 @@ static struct selectop {
 	int event_fdsz;
 	fd_set *event_readset;
 	fd_set *event_writeset;
-#if OMPI_EVENT_USE_SIGNALS
+#if OPAL_EVENT_USE_SIGNALS
 	sigset_t evsigmask;
 #endif
 } sop;
 
 static void *select_init	(void);
-static int select_add		(void *, struct ompi_event *);
-static int select_del		(void *, struct ompi_event *);
+static int select_add		(void *, struct opal_event *);
+static int select_del		(void *, struct opal_event *);
 static int select_recalc	(void *, int);
 static int select_dispatch	(void *, struct timeval *);
 
-const struct ompi_eventop ompi_selectops = {
+const struct opal_eventop opal_selectops = {
 	"select",
 	select_init,
 	select_add,
@@ -115,8 +115,8 @@ select_init(void)
    sop.event_readset = malloc (sizeof(fd_set));
    sop.event_writeset = malloc (sizeof(fd_set));
 #endif
-#if OMPI_EVENT_USE_SIGNALS
-	ompi_evsignal_init(&sop.evsigmask);
+#if OPAL_EVENT_USE_SIGNALS
+	opal_evsignal_init(&sop.evsigmask);
 #endif
 	return (&sop);
 }
@@ -132,14 +132,14 @@ select_recalc(void *arg, int max)
 {
 	struct selectop *sop = arg;
 	fd_set *readset, *writeset;
-	struct ompi_event *ev;
+	struct opal_event *ev;
 	int fdsz;
 
 	if (sop->event_fds < max)
 		sop->event_fds = max;
 
 	if (!sop->event_fds) {
-		TAILQ_FOREACH(ev, &ompi_eventqueue, ev_next)
+		TAILQ_FOREACH(ev, &opal_eventqueue, ev_next)
 			if (ev->ev_fd > sop->event_fds)
 				sop->event_fds = ev->ev_fd;
 	}
@@ -166,8 +166,8 @@ select_recalc(void *arg, int max)
 		sop->event_writeset = writeset;
 		sop->event_fdsz = fdsz;
 	}
-#if OMPI_EVENT_USE_SIGNALS
-	return (ompi_evsignal_recalc(&sop->evsigmask));
+#if OPAL_EVENT_USE_SIGNALS
+	return (opal_evsignal_recalc(&sop->evsigmask));
 #else
 	return (0);
 #endif
@@ -178,7 +178,7 @@ static int
 select_dispatch(void *arg, struct timeval *tv)
 {
 	int maxfd, res;
-	struct ompi_event *ev, *next;
+	struct opal_event *ev, *next;
 	struct selectop *sop = arg;
 
 #ifndef WIN32
@@ -186,26 +186,26 @@ select_dispatch(void *arg, struct timeval *tv)
 	memset(sop->event_writeset, 0, sop->event_fdsz);
 #endif
 
-	TAILQ_FOREACH(ev, &ompi_eventqueue, ev_next) {
-		if (ev->ev_events & OMPI_EV_WRITE)
+	TAILQ_FOREACH(ev, &opal_eventqueue, ev_next) {
+		if (ev->ev_events & OPAL_EV_WRITE)
 			FD_SET(ev->ev_fd, sop->event_writeset);
-		if (ev->ev_events & OMPI_EV_READ)
+		if (ev->ev_events & OPAL_EV_READ)
 			FD_SET(ev->ev_fd, sop->event_readset);
 	}
 
-#if OMPI_EVENT_USE_SIGNALS
-	if (ompi_evsignal_deliver(&sop->evsigmask) == -1)
+#if OPAL_EVENT_USE_SIGNALS
+	if (opal_evsignal_deliver(&sop->evsigmask) == -1)
 		return (-1);
 #endif
 
         /* release lock while waiting in kernel */
-        opal_mutex_unlock(&ompi_event_lock);
+        opal_mutex_unlock(&opal_event_lock);
 	    res = select(sop->event_fds + 1, sop->event_readset, 
 	        sop->event_writeset, NULL, tv);
-        opal_mutex_lock(&ompi_event_lock);
+        opal_mutex_lock(&opal_event_lock);
 
-#if OMPI_EVENT_USE_SIGNALS
-	if (ompi_evsignal_recalc(&sop->evsigmask) == -1)
+#if OPAL_EVENT_USE_SIGNALS
+	if (opal_evsignal_recalc(&sop->evsigmask) == -1)
 		return (-1);
 #endif
 
@@ -214,22 +214,22 @@ select_dispatch(void *arg, struct timeval *tv)
             /* poll each of the file descriptors individually to determine  
              * which is bad 
             */
-            for (ev = TAILQ_FIRST(&ompi_eventqueue); ev != NULL; ev = next) {
+            for (ev = TAILQ_FIRST(&opal_eventqueue); ev != NULL; ev = next) {
                 next = TAILQ_NEXT(ev, ev_next);
 
                 tv->tv_sec = 0;
                 tv->tv_usec = 0;
 	            memset(sop->event_readset, 0, sop->event_fdsz);
 	            memset(sop->event_writeset, 0, sop->event_fdsz);
-		        if (ev->ev_events & OMPI_EV_WRITE)
+		        if (ev->ev_events & OPAL_EV_WRITE)
 			        FD_SET(ev->ev_fd, sop->event_writeset);
-		        if (ev->ev_events & OMPI_EV_READ)
+		        if (ev->ev_events & OPAL_EV_READ)
 			        FD_SET(ev->ev_fd, sop->event_readset);
 	            res = select(sop->event_fds + 1, sop->event_readset, 
 	                  sop->event_writeset, NULL, tv);
                 if(res < 0) {
                     ompi_output(0, "bad file descriptor: %d\n", ev->ev_fd);
-                    ompi_event_del_i(ev);
+                    opal_event_del_i(ev);
                 }
             }
         }
@@ -238,32 +238,32 @@ select_dispatch(void *arg, struct timeval *tv)
 		    return (-1);
 		}
 
-#if OMPI_EVENT_USE_SIGNALS
-		ompi_evsignal_process();
+#if OPAL_EVENT_USE_SIGNALS
+		opal_evsignal_process();
 #endif
 		return (0);
 	} 
-#if OMPI_EVENT_USE_SIGNALS
-	else if (ompi_evsignal_caught)
-		ompi_evsignal_process();
+#if OPAL_EVENT_USE_SIGNALS
+	else if (opal_evsignal_caught)
+		opal_evsignal_process();
 #endif
 	maxfd = 0;
-	for (ev = TAILQ_FIRST(&ompi_eventqueue); ev != NULL; ev = next) {
+	for (ev = TAILQ_FIRST(&opal_eventqueue); ev != NULL; ev = next) {
 		next = TAILQ_NEXT(ev, ev_next);
 
 		res = 0;
 		if (FD_ISSET(ev->ev_fd, sop->event_readset))
-			res |= OMPI_EV_READ;
+			res |= OPAL_EV_READ;
 		if (FD_ISSET(ev->ev_fd, sop->event_writeset))
-			res |= OMPI_EV_WRITE;
+			res |= OPAL_EV_WRITE;
 		res &= ev->ev_events;
 
 		if (res) {
-			if (!(ev->ev_events & OMPI_EV_PERSIST))
-				ompi_event_del_i(ev);
-			ompi_event_active_i(ev, res, 1);
+			if (!(ev->ev_events & OPAL_EV_PERSIST))
+				opal_event_del_i(ev);
+			opal_event_active_i(ev, res, 1);
 		} 
-        if ((ev->ev_flags & ~OMPI_EVLIST_ACTIVE) == 0 && ev->ev_fd > maxfd)
+        if ((ev->ev_flags & ~OPAL_EVLIST_ACTIVE) == 0 && ev->ev_fd > maxfd)
             maxfd = ev->ev_fd;
 	}
 
@@ -272,13 +272,13 @@ select_dispatch(void *arg, struct timeval *tv)
 }
 
 static int
-select_add(void *arg, struct ompi_event *ev)
+select_add(void *arg, struct opal_event *ev)
 {
 	struct selectop *sop = arg;
 
-#if OMPI_EVENT_USE_SIGNALS
-	if (ev->ev_events & OMPI_EV_SIGNAL)
-		return (ompi_evsignal_add(&sop->evsigmask, ev));
+#if OPAL_EVENT_USE_SIGNALS
+	if (ev->ev_events & OPAL_EV_SIGNAL)
+		return (opal_evsignal_add(&sop->evsigmask, ev));
 #endif
 
 	/* 
@@ -296,15 +296,15 @@ select_add(void *arg, struct ompi_event *ev)
  */
 
 static int
-select_del(void *arg, struct ompi_event *ev)
+select_del(void *arg, struct opal_event *ev)
 {
-#if OMPI_EVENT_USE_SIGNALS
+#if OPAL_EVENT_USE_SIGNALS
 	struct selectop *sop = arg;
 
-	if (!(ev->ev_events & OMPI_EV_SIGNAL))
+	if (!(ev->ev_events & OPAL_EV_SIGNAL))
 		return (0);
 
-	return (ompi_evsignal_del(&sop->evsigmask, ev));
+	return (opal_evsignal_del(&sop->evsigmask, ev));
 #else
 	return (0);
 #endif

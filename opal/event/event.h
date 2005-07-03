@@ -49,23 +49,23 @@ extern "C" {
 #include <windows.h>
 #endif
 
-#define OMPI_EVLIST_TIMEOUT	0x01
-#define OMPI_EVLIST_INSERTED	0x02
-#define OMPI_EVLIST_SIGNAL	0x04
-#define OMPI_EVLIST_ACTIVE	0x08
-#define OMPI_EVLIST_INIT		0x80
+#define OPAL_EVLIST_TIMEOUT	0x01
+#define OPAL_EVLIST_INSERTED	0x02
+#define OPAL_EVLIST_SIGNAL	0x04
+#define OPAL_EVLIST_ACTIVE	0x08
+#define OPAL_EVLIST_INIT		0x80
 
 /* EVLIST_X_ Private space: 0x1000-0xf000 */
-#define OMPI_EVLIST_ALL	(0xf000 | 0x8f)
+#define OPAL_EVLIST_ALL	(0xf000 | 0x8f)
 
-#define OMPI_EV_TIMEOUT	0x01
-#define OMPI_EV_READ	0x02
-#define OMPI_EV_WRITE	0x04
-#define OMPI_EV_SIGNAL	0x08
-#define OMPI_EV_PERSIST	0x10	/* Persistant event */
+#define OPAL_EV_TIMEOUT	0x01
+#define OPAL_EV_READ	0x02
+#define OPAL_EV_WRITE	0x04
+#define OPAL_EV_SIGNAL	0x08
+#define OPAL_EV_PERSIST	0x10	/* Persistant event */
 
-#ifdef OMPI_EVENT_USE_SIGNALS
-#undef OMPI_EVENT_USE_SIGNALS
+#ifdef OPAL_EVENT_USE_SIGNALS
+#undef OPAL_EVENT_USE_SIGNALS
 #endif
 #ifdef WIN32
 /* We do not have the required framework for EVENT_SIGNALS to work on windows.
@@ -77,9 +77,9 @@ extern "C" {
    2. Since the EVENT_SIGNALS are disabled, instances of code which rely on 
       this mechanism will NOT work under windows
 */
-#define OMPI_EVENT_USE_SIGNALS 0
+#define OPAL_EVENT_USE_SIGNALS 0
 #else
-#define OMPI_EVENT_USE_SIGNALS 1
+#define OPAL_EVENT_USE_SIGNALS 1
 #endif
 
 /* Fix so that ppl dont have to run with <sys/queue.h> */
@@ -102,11 +102,11 @@ struct {								\
 }
 #endif /* !RB_ENTRY */
 
-struct ompi_event {
-	TAILQ_ENTRY (ompi_event) ev_next;
-	TAILQ_ENTRY (ompi_event) ev_active_next;
-	TAILQ_ENTRY (ompi_event) ev_signal_next;
-	RB_ENTRY (ompi_event) ev_timeout_node;
+struct opal_event {
+	TAILQ_ENTRY (opal_event) ev_next;
+	TAILQ_ENTRY (opal_event) ev_active_next;
+	TAILQ_ENTRY (opal_event) ev_signal_next;
+	RB_ENTRY (opal_event) ev_timeout_node;
 
 #ifdef WIN32
 	HANDLE ev_fd;
@@ -126,74 +126,74 @@ struct ompi_event {
 	int ev_res;		/* result passed to event callback */
 	int ev_flags;
 };
-typedef struct ompi_event ompi_event_t;
+typedef struct opal_event opal_event_t;
 
-#define OMPI_EVENT_SIGNAL(ev)	(int)ev->ev_fd
-#define OMPI_EVENT_FD(ev)	(int)ev->ev_fd
+#define OPAL_EVENT_SIGNAL(ev)	(int)ev->ev_fd
+#define OPAL_EVENT_FD(ev)	(int)ev->ev_fd
 
 #ifdef _EVENT_DEFINED_TQENTRY
 #undef TAILQ_ENTRY
 #undef _EVENT_DEFINED_TQENTRY
 #else
-TAILQ_HEAD (ompi_event_list, ompi_event);
+TAILQ_HEAD (opal_event_list, opal_event);
 #endif /* _EVENT_DEFINED_TQENTRY */
 #ifdef _EVENT_DEFINED_RBENTRY
 #undef RB_ENTRY
 #undef _EVENT_DEFINED_RBENTRY
 #endif /* _EVENT_DEFINED_RBENTRY */
 
-struct ompi_eventop {
+struct opal_eventop {
 	char *name;
 	void *(*init)(void);
-	int (*add)(void *, struct ompi_event *);
-	int (*del)(void *, struct ompi_event *);
+	int (*add)(void *, struct opal_event *);
+	int (*del)(void *, struct opal_event *);
 	int (*recalc)(void *, int);
 	int (*dispatch)(void *, struct timeval *);
 };
 
-#define OMPI_TIMEOUT_DEFAULT	{1, 0}
-#define OMPI_EVLOOP_ONCE	0x01
-#define OMPI_EVLOOP_NONBLOCK	0x02
+#define OPAL_TIMEOUT_DEFAULT	{1, 0}
+#define OPAL_EVLOOP_ONCE	0x01
+#define OPAL_EVLOOP_NONBLOCK	0x02
 
 
-OMPI_DECLSPEC int ompi_event_init(void);
-OMPI_DECLSPEC int ompi_event_fini(void);
-OMPI_DECLSPEC int ompi_event_dispatch(void);
-OMPI_DECLSPEC int ompi_event_loop(int);
-OMPI_DECLSPEC int ompi_event_enable(void);
-OMPI_DECLSPEC int ompi_event_disable(void);
-OMPI_DECLSPEC bool ompi_event_progress_thread(void);
-OMPI_DECLSPEC int ompi_event_restart(void);
+OMPI_DECLSPEC int opal_event_init(void);
+OMPI_DECLSPEC int opal_event_fini(void);
+OMPI_DECLSPEC int opal_event_dispatch(void);
+OMPI_DECLSPEC int opal_event_loop(int);
+OMPI_DECLSPEC int opal_event_enable(void);
+OMPI_DECLSPEC int opal_event_disable(void);
+OMPI_DECLSPEC bool opal_event_progress_thread(void);
+OMPI_DECLSPEC int opal_event_restart(void);
 
-#define ompi_evtimer_add(ev, tv)		ompi_event_add(ev, tv)
-#define ompi_evtimer_set(ev, cb, arg)	ompi_event_set(ev, -1, 0, cb, arg)
-#define ompi_evtimer_del(ev)		ompi_event_del(ev)
-#define ompi_evtimer_pending(ev, tv)	ompi_event_pending(ev, OMPI_EV_TIMEOUT, tv)
-#define ompi_evtimer_initialized(ev)	(ev)->ev_flags & OMPI_EVLIST_INIT)
+#define opal_evtimer_add(ev, tv)		opal_event_add(ev, tv)
+#define opal_evtimer_set(ev, cb, arg)	opal_event_set(ev, -1, 0, cb, arg)
+#define opal_evtimer_del(ev)		opal_event_del(ev)
+#define opal_evtimer_pending(ev, tv)	opal_event_pending(ev, OPAL_EV_TIMEOUT, tv)
+#define opal_evtimer_initialized(ev)	(ev)->ev_flags & OPAL_EVLIST_INIT)
 
-#define ompi_timeout_add(ev, tv)		ompi_event_add(ev, tv)
-#define ompi_timeout_set(ev, cb, arg)	ompi_event_set(ev, -1, 0, cb, arg)
-#define ompi_timeout_del(ev)		ompi_event_del(ev)
-#define ompi_timeout_pending(ev, tv)	ompi_event_pending(ev, OMPI_EV_TIMEOUT, tv)
-#define ompi_timeout_initialized(ev)	((ev)->ev_flags & OMPI_EVLIST_INIT)
+#define opal_timeout_add(ev, tv)		opal_event_add(ev, tv)
+#define opal_timeout_set(ev, cb, arg)	opal_event_set(ev, -1, 0, cb, arg)
+#define opal_timeout_del(ev)		opal_event_del(ev)
+#define opal_timeout_pending(ev, tv)	opal_event_pending(ev, OPAL_EV_TIMEOUT, tv)
+#define opal_timeout_initialized(ev)	((ev)->ev_flags & OPAL_EVLIST_INIT)
 
-#define ompi_signal_add(ev, tv)		ompi_event_add(ev, tv)
-#define ompi_signal_set(ev, x, cb, arg)	\
-	ompi_event_set(ev, x, OMPI_EV_SIGNAL|OMPI_EV_PERSIST, cb, arg)
-#define ompi_signal_del(ev)		ompi_event_del(ev)
-#define ompi_signal_pending(ev, tv)	ompi_event_pending(ev, OMPI_EV_SIGNAL, tv)
-#define ompi_signal_initialized(ev)	((ev)->ev_flags & OMPI_EVLIST_INIT)
+#define opal_signal_add(ev, tv)		opal_event_add(ev, tv)
+#define opal_signal_set(ev, x, cb, arg)	\
+	opal_event_set(ev, x, OPAL_EV_SIGNAL|OPAL_EV_PERSIST, cb, arg)
+#define opal_signal_del(ev)		opal_event_del(ev)
+#define opal_signal_pending(ev, tv)	opal_event_pending(ev, OPAL_EV_SIGNAL, tv)
+#define opal_signal_initialized(ev)	((ev)->ev_flags & OPAL_EVLIST_INIT)
 
 /* for internal use only */
-OMPI_DECLSPEC int   ompi_event_add_i(struct ompi_event *, struct timeval *);
-OMPI_DECLSPEC int   ompi_event_del_i(struct ompi_event *);
-OMPI_DECLSPEC void  ompi_event_active_i(struct ompi_event*, int, short);
-OMPI_DECLSPEC extern opal_mutex_t ompi_event_lock;
-OMPI_DECLSPEC extern int ompi_evsignal_restart(void);
+OMPI_DECLSPEC int   opal_event_add_i(struct opal_event *, struct timeval *);
+OMPI_DECLSPEC int   opal_event_del_i(struct opal_event *);
+OMPI_DECLSPEC void  opal_event_active_i(struct opal_event*, int, short);
+OMPI_DECLSPEC extern opal_mutex_t opal_event_lock;
+OMPI_DECLSPEC extern int opal_evsignal_restart(void);
 
 /* public functions */
 static inline void
-ompi_event_set(struct ompi_event *ev, int fd, short events,
+opal_event_set(struct opal_event *ev, int fd, short events,
       void (*callback)(int, short, void *), void *arg)
 {
     ev->ev_callback = callback;
@@ -205,69 +205,69 @@ ompi_event_set(struct ompi_event *ev, int fd, short events,
     ev->ev_fd = fd;
 #endif
     ev->ev_events = events;
-    ev->ev_flags = OMPI_EVLIST_INIT;
+    ev->ev_flags = OPAL_EVLIST_INIT;
     ev->ev_ncalls = 0;
     ev->ev_pncalls = NULL;
 }
 
 static inline int
-ompi_event_add(struct ompi_event *ev, struct timeval *tv)
+opal_event_add(struct opal_event *ev, struct timeval *tv)
 {
-    extern opal_mutex_t ompi_event_lock;
+    extern opal_mutex_t opal_event_lock;
     int rc;
     if(opal_using_threads()) {
-        opal_mutex_lock(&ompi_event_lock);
-        rc = ompi_event_add_i(ev, tv);
-        opal_mutex_unlock(&ompi_event_lock);
+        opal_mutex_lock(&opal_event_lock);
+        rc = opal_event_add_i(ev, tv);
+        opal_mutex_unlock(&opal_event_lock);
     } else {
-        rc = ompi_event_add_i(ev, tv);
+        rc = opal_event_add_i(ev, tv);
     }
     return rc;
 }
 
 static inline int 
-ompi_event_del(struct ompi_event *ev)
+opal_event_del(struct opal_event *ev)
 {
-    extern opal_mutex_t ompi_event_lock;
+    extern opal_mutex_t opal_event_lock;
     int rc;
     if(opal_using_threads()) {
-        opal_mutex_lock(&ompi_event_lock);
-        rc = ompi_event_del_i(ev);
-        opal_mutex_unlock(&ompi_event_lock);
+        opal_mutex_lock(&opal_event_lock);
+        rc = opal_event_del_i(ev);
+        opal_mutex_unlock(&opal_event_lock);
     } else {
-        rc = ompi_event_del_i(ev);
+        rc = opal_event_del_i(ev);
     }
     return rc;
 }
                                                                                           
 static inline void 
-ompi_event_active(struct ompi_event* ev, int res, short ncalls)
+opal_event_active(struct opal_event* ev, int res, short ncalls)
 {
     if(opal_using_threads()) {
-        opal_mutex_lock(&ompi_event_lock);
-        ompi_event_active_i(ev, res, ncalls);
-        opal_mutex_unlock(&ompi_event_lock);
+        opal_mutex_lock(&opal_event_lock);
+        opal_event_active_i(ev, res, ncalls);
+        opal_mutex_unlock(&opal_event_lock);
     } else {
-        ompi_event_active_i(ev, res, ncalls);
+        opal_event_active_i(ev, res, ncalls);
     }
 }
                                                                                           
 static inline int
-ompi_event_pending(struct ompi_event *ev, short event, struct timeval *tv)
+opal_event_pending(struct opal_event *ev, short event, struct timeval *tv)
 {
     int flags = 0;
                                                                                           
-    if (ev->ev_flags & OMPI_EVLIST_INSERTED)
-        flags |= (ev->ev_events & (OMPI_EV_READ|OMPI_EV_WRITE));
-    if (ev->ev_flags & OMPI_EVLIST_ACTIVE)
+    if (ev->ev_flags & OPAL_EVLIST_INSERTED)
+        flags |= (ev->ev_events & (OPAL_EV_READ|OPAL_EV_WRITE));
+    if (ev->ev_flags & OPAL_EVLIST_ACTIVE)
         flags |= ev->ev_res;
-    if (ev->ev_flags & OMPI_EVLIST_TIMEOUT)
-        flags |= OMPI_EV_TIMEOUT;
+    if (ev->ev_flags & OPAL_EVLIST_TIMEOUT)
+        flags |= OPAL_EV_TIMEOUT;
                                                                                           
-    event &= (OMPI_EV_TIMEOUT|OMPI_EV_READ|OMPI_EV_WRITE);
+    event &= (OPAL_EV_TIMEOUT|OPAL_EV_READ|OPAL_EV_WRITE);
                                                                                           
     /* See if there is a timeout that we should report */
-    if (tv != NULL && (flags & event & OMPI_EV_TIMEOUT))
+    if (tv != NULL && (flags & event & OPAL_EV_TIMEOUT))
         *tv = ev->ev_timeout;
                                                                                           
     return (flags & event);
@@ -275,9 +275,9 @@ ompi_event_pending(struct ompi_event *ev, short event, struct timeval *tv)
 
 
 #ifdef WIN32
-#define ompi_event_initialized(ev)	((ev)->ev_flags & OMPI_EVLIST_INIT && (ev)->ev_fd != INVALID_HANDLE_VALUE)
+#define opal_event_initialized(ev)	((ev)->ev_flags & OPAL_EVLIST_INIT && (ev)->ev_fd != INVALID_HANDLE_VALUE)
 #else
-#define ompi_event_initialized(ev)	((ev)->ev_flags & OMPI_EVLIST_INIT)
+#define opal_event_initialized(ev)	((ev)->ev_flags & OPAL_EVLIST_INIT)
 #endif
 
 #if defined(c_plusplus) || defined(__cplusplus)

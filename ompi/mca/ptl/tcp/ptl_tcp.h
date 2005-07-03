@@ -30,7 +30,7 @@
 #include <netinet/in.h>
 #endif
 #include "class/ompi_free_list.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "mca/pml/pml.h"
 #include "mca/ptl/ptl.h"
 
@@ -63,8 +63,8 @@ struct mca_ptl_tcp_component_t {
     opal_list_t tcp_pending_acks;          /**< list of pending acks - retry as sends complete */
     opal_list_t tcp_events;                /**< list of pending events */
     struct mca_ptl_tcp_proc_t* tcp_local;  /**< the tcp proc instance corresponding to the local process */
-    ompi_event_t tcp_send_event;           /**< event structure for sends */
-    ompi_event_t tcp_recv_event;           /**< event structure for recvs */
+    opal_event_t tcp_send_event;           /**< event structure for sends */
+    opal_event_t tcp_recv_event;           /**< event structure for recvs */
     opal_mutex_t tcp_lock;                 /**< lock for accessing module state */
 };
 typedef struct mca_ptl_tcp_component_t mca_ptl_tcp_component_t;

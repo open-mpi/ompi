@@ -40,7 +40,7 @@ read_cb(int fd, short event, void *arg)
 
 	if (len) {
 		if (!called)
-			ompi_event_add(arg, NULL);
+			opal_event_add(arg, NULL);
 	} else if (called == 1)
 		test_okay = 0;
 
@@ -50,7 +50,7 @@ read_cb(int fd, short event, void *arg)
 int
 main (int argc, char **argv)
 {
-	struct ompi_event ev;
+	struct opal_event ev;
 	char *test = "test string";
 	int pair[2];
 
@@ -62,14 +62,14 @@ main (int argc, char **argv)
 	shutdown(pair[0], SHUT_WR);
 
 	/* Initalize the event library */
-	ompi_event_init();
+	opal_event_init();
 
 	/* Initalize one event */
-	ompi_event_set(&ev, pair[1], OMPI_EV_READ, read_cb, &ev);
+	opal_event_set(&ev, pair[1], OPAL_EV_READ, read_cb, &ev);
 
-	ompi_event_add(&ev, NULL);
+	opal_event_add(&ev, NULL);
 
-	ompi_event_dispatch();
+	opal_event_dispatch();
 
 	return (test_okay);
 }

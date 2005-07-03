@@ -19,7 +19,7 @@
 #include <stdio.h>
 
 #include "include/constants.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/pml/pml.h"
@@ -33,7 +33,7 @@ int mca_ptl_base_close(void)
   mca_ptl_base_selected_module_t *sm;
 
   /* disable event processing while cleaning up ptls */
-  ompi_event_disable();
+  opal_event_disable();
 
   /* Finalize all the ptl components and free their list items */
 
@@ -65,7 +65,7 @@ int mca_ptl_base_close(void)
      free(mca_ptl_base_exclude);
 
   /* restore event processing */
-  ompi_event_enable();
+  opal_event_enable();
 
   /* All done */
   return OMPI_SUCCESS;

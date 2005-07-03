@@ -28,7 +28,7 @@ int
 main(int argc, char **argv)
 {
 	/* Initalize the event library */
-	ompi_event_init();
+	opal_event_init();
 
 	return (0);
 }

@@ -20,7 +20,7 @@
 #define MCA_BTL_SELF_ENDPOINT_H
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-#include "event/event.h"
+#include "opal/event/event.h"
 #endif
 
 /**

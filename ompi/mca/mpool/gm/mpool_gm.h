@@ -23,7 +23,7 @@
 #include <gm.h>
 #include "opal/class/opal_list.h"
 #include "class/ompi_free_list.h"
-#include "event/event.h"
+#include "opal/event/event.h"
 #include "mca/mpool/mpool.h"
 #include "mca/allocator/allocator.h"
 
