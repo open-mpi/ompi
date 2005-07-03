@@ -43,6 +43,7 @@ sub replace {
     # to the processed directory, so we want to open / close $_.
     $process_file = $_;
     print "--> $File::Find::name\n";
+    my $replace = 0;
 
     open(INFILE, $process_file) || 
         die "Could not open " . $File::Find::name . ": $!\n";
@@ -50,13 +51,17 @@ sub replace {
         die "Could not open " . $File::Find::name . ".tmp: $!\n";
 
     while (<INFILE>) {
-        s/$search_string/$replace_string/g;
+        $replace += s/$search_string/$replace_string/g;
         print OUTFILE $_;
     }
 
     close(OUTFILE);
     close(INFILE);
 
-    rename($process_file . ".tmp", $process_file);
+    if ($replace) {
+        rename($process_file . ".tmp", $process_file);
+    } else {
+        unlink($process_file . ".tmp");
+    }
 }
 find(\&replace, ".");
