@@ -59,8 +59,8 @@ struct mca_oob_tcp_msg_t {
     void *                msg_cbdata;    /**< the data for the callback fnuction */
     bool                  msg_complete;  /**< whether the message is done sending or not */
     orte_process_name_t   msg_peer;      /**< the name of the peer */
-    ompi_mutex_t          msg_lock;      /**< lock for the condition variable */
-    ompi_condition_t      msg_condition; /**< condition variable for completion */
+    opal_mutex_t          msg_lock;      /**< lock for the condition variable */
+    opal_condition_t      msg_condition; /**< condition variable for completion */
     struct iovec          msg_iov[MCA_OOB_TCP_IOV_MAX];  /** preallocate space for iovec array */
 };
 

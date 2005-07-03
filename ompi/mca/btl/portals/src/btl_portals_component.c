@@ -23,7 +23,7 @@
 #include "include/constants.h"
 
 #include "util/output.h"
-#include "threads/thread.h"
+#include "opal/threads/thread.h"
 
 #include "btl_portals.h"
 #include "btl_portals_compat.h"
@@ -113,7 +113,7 @@ mca_btl_portals_component_open(void)
 
     /* initalize component objects */
     OBJ_CONSTRUCT(&mca_btl_portals_component.portals_lock,
-                  ompi_mutex_t);
+                  opal_mutex_t);
 
     /* get configured state for component */
 #if PTL_PORTALS_UTCP

@@ -23,7 +23,7 @@
 #include "include/constants.h"
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "util/argv.h"
 #include "util/cmd_line.h"
 #include "util/strncpy.h"
@@ -252,7 +252,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
 
     /* Thread serialization */
 
-    ompi_mutex_lock(&cmd->lcl_mutex);
+    opal_mutex_lock(&cmd->lcl_mutex);
 
     /* Free any parsed results that are already on this handle */
 
@@ -362,7 +362,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
 
                 param = OBJ_NEW(cmd_line_param_t);
                 if (NULL == param) {
-                    ompi_mutex_unlock(&cmd->lcl_mutex);
+                    opal_mutex_unlock(&cmd->lcl_mutex);
                     return OMPI_ERR_OUT_OF_RESOURCE;
                 }
                 param->clp_arg = cmd->lcl_argv[i];
@@ -455,7 +455,7 @@ int ompi_cmd_line_parse(ompi_cmd_line_t *cmd, bool ignore_unknown,
 
     /* Thread serialization */
 
-    ompi_mutex_unlock(&cmd->lcl_mutex);
+    opal_mutex_unlock(&cmd->lcl_mutex);
 
     /* All done */
 
@@ -479,7 +479,7 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
 
     /* Thread serialization */
 
-    ompi_mutex_lock(&cmd->lcl_mutex);
+    opal_mutex_lock(&cmd->lcl_mutex);
 
     /* Make an argv of all the usage strings */
 
@@ -648,7 +648,7 @@ char *ompi_cmd_line_get_usage_msg(ompi_cmd_line_t *cmd)
 
     /* Thread serialization */
 
-    ompi_mutex_unlock(&cmd->lcl_mutex);
+    opal_mutex_unlock(&cmd->lcl_mutex);
 
     /* All done */
  
@@ -677,7 +677,7 @@ int ompi_cmd_line_get_ninsts(ompi_cmd_line_t *cmd, const char *opt)
 
     /* Thread serialization */
 
-    ompi_mutex_lock(&cmd->lcl_mutex);
+    opal_mutex_lock(&cmd->lcl_mutex);
 
     /* Find the corresponding option.  If we find it, look through all
        the parsed params and see if we have any matches. */
@@ -697,7 +697,7 @@ int ompi_cmd_line_get_ninsts(ompi_cmd_line_t *cmd, const char *opt)
 
     /* Thread serialization */
 
-    ompi_mutex_unlock(&cmd->lcl_mutex);
+    opal_mutex_unlock(&cmd->lcl_mutex);
 
     /* All done */
 
@@ -719,7 +719,7 @@ char *ompi_cmd_line_get_param(ompi_cmd_line_t *cmd, const char *opt, int inst,
 
     /* Thread serialization */
 
-    ompi_mutex_lock(&cmd->lcl_mutex);
+    opal_mutex_lock(&cmd->lcl_mutex);
 
     /* Find the corresponding option.  If we find it, look through all
        the parsed params and see if we have any matches. */
@@ -738,7 +738,7 @@ char *ompi_cmd_line_get_param(ompi_cmd_line_t *cmd, const char *opt, int inst,
                 param = (cmd_line_param_t *) item;
                 if (param->clp_option == option) {
                     if (num_found == inst) {
-                        ompi_mutex_unlock(&cmd->lcl_mutex);
+                        opal_mutex_unlock(&cmd->lcl_mutex);
                         return param->clp_argv[idx];
                     }
                     ++num_found;
@@ -749,7 +749,7 @@ char *ompi_cmd_line_get_param(ompi_cmd_line_t *cmd, const char *opt, int inst,
     
     /* Thread serialization */
     
-    ompi_mutex_unlock(&cmd->lcl_mutex);
+    opal_mutex_unlock(&cmd->lcl_mutex);
     
     /* All done */
 
@@ -783,10 +783,10 @@ char *ompi_cmd_line_get_argv(ompi_cmd_line_t *cmd, int index)
 int ompi_cmd_line_get_tail(ompi_cmd_line_t *cmd, int *tailc, char ***tailv)
 {
     if (NULL != cmd) {
-        ompi_mutex_lock(&cmd->lcl_mutex);
+        opal_mutex_lock(&cmd->lcl_mutex);
         *tailc = cmd->lcl_tail_argc;
         *tailv = ompi_argv_copy(cmd->lcl_tail_argv);
-        ompi_mutex_unlock(&cmd->lcl_mutex);
+        opal_mutex_unlock(&cmd->lcl_mutex);
         return OMPI_SUCCESS;
     } else {
         return OMPI_ERROR;
@@ -853,7 +853,7 @@ static void cmd_line_constructor(ompi_cmd_line_t *cmd)
        only thread that has this instance), there's no need to lock it
        right now. */
 
-    OBJ_CONSTRUCT(&cmd->lcl_mutex, ompi_mutex_t);
+    OBJ_CONSTRUCT(&cmd->lcl_mutex, opal_mutex_t);
 
     /* Initialize the lists */
 
@@ -943,9 +943,9 @@ static int make_opt(ompi_cmd_line_t *cmd, ompi_cmd_line_init_t *e)
 
     /* Append the item, serializing thread access */
 
-    ompi_mutex_lock(&cmd->lcl_mutex);
+    opal_mutex_lock(&cmd->lcl_mutex);
     opal_list_append(&cmd->lcl_options, &option->super);
-    ompi_mutex_unlock(&cmd->lcl_mutex);
+    opal_mutex_unlock(&cmd->lcl_mutex);
 
     /* All done */
 

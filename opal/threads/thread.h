@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_THREAD_H
-#define OMPI_THREAD_H 1
+#ifndef OPAL_THREAD_H
+#define OPAL_THREAD_H 1
 
 #ifdef WIN32
 #include <windows.h>
@@ -30,12 +30,12 @@
 extern "C" {
 #endif
 
-typedef void *(*ompi_thread_fn_t) (opal_object_t *);
+typedef void *(*opal_thread_fn_t) (opal_object_t *);
 
 
-struct ompi_thread_t {
+struct opal_thread_t {
     opal_object_t super;
-    ompi_thread_fn_t t_run;
+    opal_thread_fn_t t_run;
     void* t_arg;
 #ifdef WIN32
     HANDLE t_handle;
@@ -46,18 +46,18 @@ struct ompi_thread_t {
 #endif
 };
 
-typedef struct ompi_thread_t ompi_thread_t;
+typedef struct opal_thread_t opal_thread_t;
 
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_thread_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_thread_t);
 
 
-int  ompi_thread_start(ompi_thread_t *);
-int  ompi_thread_join(ompi_thread_t *, void **thread_return);
-bool ompi_thread_self_compare(ompi_thread_t*);
-ompi_thread_t *ompi_thread_get_self(void);
+int  opal_thread_start(opal_thread_t *);
+int  opal_thread_join(opal_thread_t *, void **thread_return);
+bool opal_thread_self_compare(opal_thread_t*);
+opal_thread_t *opal_thread_get_self(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 
-#endif /* OMPI_THREAD_H */
+#endif /* OPAL_THREAD_H */

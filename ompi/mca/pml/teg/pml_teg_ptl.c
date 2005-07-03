@@ -22,7 +22,7 @@
 static void mca_pml_base_ptl_construct(mca_pml_base_ptl_t* ptl)
 {
     OBJ_CONSTRUCT(&ptl->ptl_cache, opal_list_t);
-    OBJ_CONSTRUCT(&ptl->ptl_cache_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&ptl->ptl_cache_lock, opal_mutex_t);
     ptl->ptl = NULL;
     ptl->ptl_cache_size = 0;
     ptl->ptl_cache_alloc = 0;

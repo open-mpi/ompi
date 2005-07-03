@@ -46,11 +46,11 @@ int orte_iof_base_close(void)
     }
 
     /* final cleanup of resources */
-    OMPI_THREAD_LOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     while((item = opal_list_remove_first(&orte_iof_base.iof_endpoints)) != NULL) {
         OBJ_RELEASE(item);
     }
-    OMPI_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
     return OMPI_SUCCESS;
 }
 

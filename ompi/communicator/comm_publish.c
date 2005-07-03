@@ -29,7 +29,7 @@
 #include "mca/rml/rml_types.h"
 
 #if OMPI_HAVE_THREAD_SUPPORT
-static ompi_mutex_t ompi_port_lock;
+static opal_mutex_t ompi_port_lock;
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 #define OMPI_COMM_PORT_KEY  "ompi-port-name"
@@ -54,11 +54,11 @@ int ompi_open_port(char *port_name)
         return rc;
     }
 
-    OMPI_THREAD_LOCK(&ompi_port_lock);
+    OPAL_THREAD_LOCK(&ompi_port_lock);
     if (ORTE_SUCCESS != (rc = orte_ns.assign_rml_tag(&lport_id, NULL))) {
         return rc;
     }
-    OMPI_THREAD_UNLOCK(&ompi_port_lock);
+    OPAL_THREAD_UNLOCK(&ompi_port_lock);
 
     sprintf (port_name, "%s:%d", name, lport_id);
     free ( myproc );

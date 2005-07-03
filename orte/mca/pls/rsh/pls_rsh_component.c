@@ -122,8 +122,8 @@ int orte_pls_rsh_component_open(void)
     size_t i;
 
     /* initialize globals */
-    OBJ_CONSTRUCT(&mca_pls_rsh_component.lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_pls_rsh_component.cond, ompi_condition_t);
+    OBJ_CONSTRUCT(&mca_pls_rsh_component.lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_pls_rsh_component.cond, opal_condition_t);
     mca_pls_rsh_component.num_children = 0;
 
     /* lookup parameters */

@@ -11,7 +11,7 @@ do { \
     fifo=&(mca_btl_sm_component.fifo[my_smp_rank][peer_smp_rank]); \
  \
     /* thread lock */ \
-    if(ompi_using_threads()) \
+    if(opal_using_threads()) \
         opal_atomic_lock(&fifo->head_lock); \
     if(OMPI_CB_FREE == fifo->head) { \
         /* no queues have been allocated - allocate now */ \
@@ -23,7 +23,7 @@ do { \
             0,0,0, \
             fifo, mca_btl_sm_component.sm_mpool); \
         if( rc != OMPI_SUCCESS ) { \
-            if(ompi_using_threads()) \
+            if(opal_using_threads()) \
                 opal_atomic_unlock(&(fifo->head_lock)); \
             break; \
         } \
@@ -36,7 +36,7 @@ do { \
         MCA_BTL_SM_SIGNAL_PEER(btl_peer); \
         rc=OMPI_SUCCESS; \
     } \
-    if(ompi_using_threads()) \
+    if(opal_using_threads()) \
         opal_atomic_unlock(&fifo->head_lock); \
 } while(0) 
 

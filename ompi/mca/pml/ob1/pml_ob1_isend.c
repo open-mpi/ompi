@@ -107,17 +107,17 @@ int mca_pml_ob1_send(void *buf,
 
     if (sendreq->req_send.req_base.req_ompi.req_complete == false) {
         /* give up and sleep until completion */
-        if (ompi_using_threads()) {
-            ompi_mutex_lock(&ompi_request_lock);
+        if (opal_using_threads()) {
+            opal_mutex_lock(&ompi_request_lock);
             ompi_request_waiting++;
             while (sendreq->req_send.req_base.req_ompi.req_complete == false)
-                ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
-            ompi_mutex_unlock(&ompi_request_lock);
+            opal_mutex_unlock(&ompi_request_lock);
         } else {
             ompi_request_waiting++;
             while (sendreq->req_send.req_base.req_ompi.req_complete == false)
-                ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
         }
     }

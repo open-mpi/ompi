@@ -88,7 +88,7 @@ struct mca_ptl_elan_component_t {
     struct ompi_ptl_elan_thread_t **recv_threads; /**< send-related threads */
     struct ompi_ptl_elan_thread_t **send_threads; /**< recv-related threads*/
 
-    ompi_mutex_t elan_lock;                  /**< lock for module state */
+    opal_mutex_t elan_lock;                  /**< lock for module state */
     opal_list_t  elan_procs;                 /**< elan proc's */
     ompi_free_list_t elan_recv_frags_free;
 };

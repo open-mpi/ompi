@@ -20,7 +20,7 @@
 #include "include/constants.h"
 
 #include "util/output.h"
-#include "threads/thread.h"
+#include "opal/threads/thread.h"
 
 #include "ptl_portals.h"
 #include "ptl_portals_compat.h"
@@ -119,7 +119,7 @@ mca_ptl_portals_component_open(void)
     OBJ_CONSTRUCT(&mca_ptl_portals_component.portals_pending_acks, 
                   opal_list_t);
     OBJ_CONSTRUCT(&mca_ptl_portals_component.portals_lock, 
-                  ompi_mutex_t);
+                  opal_mutex_t);
 
     /* register portals module parameters */
 #if PTL_PORTALS_UTCP

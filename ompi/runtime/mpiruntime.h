@@ -31,7 +31,7 @@ extern "C" {
     /** forward type declaration */
     struct ompi_communicator_t;
     /** forward type declaration */
-    struct ompi_thread_t;
+    struct opal_thread_t;
 
     /* Global variables and symbols for the MPI layer */
 
@@ -47,7 +47,7 @@ extern "C" {
     /** Thread level provided by Open MPI */
     OMPI_DECLSPEC extern int ompi_mpi_thread_provided;
     /** Identifier of the main thread */
-    OMPI_DECLSPEC extern struct ompi_thread_t *ompi_mpi_main_thread;
+    OMPI_DECLSPEC extern struct opal_thread_t *ompi_mpi_main_thread;
 
 
   /**

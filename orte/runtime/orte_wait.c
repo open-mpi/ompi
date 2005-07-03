@@ -35,8 +35,8 @@
 #include "opal/class/opal_list.h"
 #include "event/event.h"
 #include "include/constants.h"
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 
 /*********************************************************************
@@ -46,7 +46,7 @@
  ********************************************************************/
 struct blk_waitpid_data_t {
     opal_object_t super;
-    ompi_condition_t *cond;
+    opal_condition_t *cond;
     volatile int done;
     volatile int status;
     volatile int free;
@@ -73,8 +73,8 @@ struct waitpid_callback_data_t {
     int status;
     int options;
     pid_t ret;
-    ompi_mutex_t mutex;
-    ompi_condition_t cond;
+    opal_mutex_t mutex;
+    opal_condition_t cond;
     volatile bool done;
 };
 typedef struct waitpid_callback_data_t waitpid_callback_data_t;
@@ -90,7 +90,7 @@ blk_waitpid_data_construct(opal_object_t *obj)
 {
     blk_waitpid_data_t *data = (blk_waitpid_data_t*) obj;
 
-    data->cond = OBJ_NEW(ompi_condition_t);
+    data->cond = OBJ_NEW(opal_condition_t);
     data->done = 0;
     data->status = 0;
     data->free = 0;
@@ -121,7 +121,7 @@ static OBJ_CLASS_INSTANCE(registered_cb_item_t, opal_list_item_t, NULL, NULL);
  *
  ********************************************************************/
 static volatile int cb_enabled = true;
-static ompi_mutex_t mutex;
+static opal_mutex_t mutex;
 static opal_list_t pending_pids;
 static opal_list_t registered_cb;
 static struct ompi_event handler;
@@ -155,7 +155,7 @@ static void internal_waitpid_callback(int fd, short event, void *arg);
 int
 orte_wait_init(void)
 {
-    OBJ_CONSTRUCT(&mutex, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&pending_pids, opal_list_t);
     OBJ_CONSTRUCT(&registered_cb, opal_list_t);
 
@@ -173,7 +173,7 @@ orte_wait_finalize(void)
 {
     opal_list_item_t *item;
 
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
     ompi_event_del(&handler);
 
     /* clear out the lists */
@@ -183,7 +183,7 @@ orte_wait_finalize(void)
     while (NULL != (item = opal_list_remove_first(&registered_cb))) {
         OBJ_RELEASE(item);
     }
-    OMPI_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
 
     OBJ_DESTRUCT(&mutex);
     OBJ_DESTRUCT(&pending_pids);
@@ -199,7 +199,7 @@ orte_wait_kill(int sig)
     opal_list_item_t* item;
 
     OBJ_CONSTRUCT(&children, opal_list_t);
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
     do_waitall(0);
     while (NULL != (item = opal_list_remove_first(&registered_cb))) {
         registered_cb_item_t *cb = (registered_cb_item_t*)item;
@@ -213,7 +213,7 @@ orte_wait_kill(int sig)
         }
         OBJ_RELEASE(item);
     } 
-    OMPI_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
     return OMPI_SUCCESS;
 }
 
@@ -231,7 +231,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
         return (pid_t) -1;
     }
 
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
 
     do_waitall(options);
     pending = find_pending_pid(wpid, false);
@@ -262,18 +262,18 @@ orte_waitpid(pid_t wpid, int *status, int options)
         while (0 == data->done) {
             spintime.tv_sec = 0;
             spintime.tv_nsec = 1 * 1000 * 1000; /* 1 milliseconds */
-            ompi_condition_timedwait(data->cond, 
+            opal_condition_timedwait(data->cond, 
                                      &mutex, 
                                      &spintime);
 
             /* if we have pthreads and progress threads and we are the
-               event thread, ompi_condition_timedwait won't progress
+               event thread, opal_condition_timedwait won't progress
                anything, so we need to do it. */
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
-            if (ompi_using_threads()) {
-                ompi_mutex_unlock(&mutex);
+            if (opal_using_threads()) {
+                opal_mutex_unlock(&mutex);
                 ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
-                ompi_mutex_lock(&mutex);
+                opal_mutex_lock(&mutex);
             }
 #endif            
 	    do_waitall(0);
@@ -287,7 +287,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
            problems with thread badness, so it's ok to be here without
            the thread locked.  Wich is also the reason we go to done
            instead of cleanup. */
-        OMPI_THREAD_UNLOCK(&mutex);
+        OPAL_THREAD_UNLOCK(&mutex);
 
         while (0 == data->free) {
             /* don't free the condition variable until we are positive
@@ -311,7 +311,7 @@ orte_waitpid(pid_t wpid, int *status, int options)
     }
 
  cleanup:
-    OMPI_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
 
  done:
     return ret;
@@ -326,10 +326,10 @@ orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data)
     if (wpid <= 0) return OMPI_ERR_NOT_IMPLEMENTED;
     if (NULL == callback) return OMPI_ERR_BAD_PARAM;
 
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
     ret = register_callback(wpid, callback, data);
     do_waitall(0);
-    OMPI_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
 
     return ret;
 }
@@ -342,10 +342,10 @@ orte_wait_cb_cancel(pid_t wpid)
 
     if (wpid <= 0) return OMPI_ERR_BAD_PARAM;
 
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
     do_waitall(0);
     ret = unregister_callback(wpid);
-    OMPI_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
 
     return ret;
 }
@@ -359,19 +359,19 @@ orte_wait_signal_callback(int fd, short event, void *arg)
 
     if (SIGCHLD != OMPI_EVENT_SIGNAL(signal)) return;
 
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
     do_waitall(0);
-    OMPI_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
 }
 
 
 int
 orte_wait_cb_disable()
 {
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
     do_waitall(0);
     cb_enabled = false;
-    OMPI_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
 
     return OMPI_SUCCESS;
 }
@@ -380,10 +380,10 @@ orte_wait_cb_disable()
 int
 orte_wait_cb_enable()
 {
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
     cb_enabled = true;
     do_waitall(0);
-    OMPI_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
 
     return OMPI_SUCCESS;
 }
@@ -404,7 +404,7 @@ blk_waitpid_cb(pid_t wpid, int status, void *data)
 
     wp_data->status = status;
     wp_data->done = 1;
-    ompi_condition_signal(wp_data->cond);
+    opal_condition_signal(wp_data->cond);
     wp_data->free = 1;
 }
 
@@ -493,9 +493,9 @@ do_waitall(int options)
             opal_list_append(&pending_pids, &pending->super);
         } else {
             opal_list_remove_item(&registered_cb, &cb->super);
-            OMPI_THREAD_UNLOCK(&mutex);
+            OPAL_THREAD_UNLOCK(&mutex);
             cb->callback(cb->pid, status, cb->data);
-            OMPI_THREAD_LOCK(&mutex);
+            OPAL_THREAD_LOCK(&mutex);
             OBJ_RELEASE(cb);
         }
     }
@@ -569,10 +569,10 @@ internal_waitpid(pid_t pid, int *status, int options)
     data.done = false;
     data.pid = pid;
     data.options = options;
-    OBJ_CONSTRUCT(&(data.mutex), ompi_mutex_t);
-    OBJ_CONSTRUCT(&(data.cond), ompi_condition_t);
+    OBJ_CONSTRUCT(&(data.mutex), opal_mutex_t);
+    OBJ_CONSTRUCT(&(data.cond), opal_condition_t);
 
-    OMPI_THREAD_LOCK(&(data.mutex));
+    OPAL_THREAD_LOCK(&(data.mutex));
 
     tv.tv_sec = 0;
     tv.tv_usec = 0;
@@ -581,10 +581,10 @@ internal_waitpid(pid_t pid, int *status, int options)
     ompi_evtimer_add(&ev, &tv);
 
     while (data.done == false) {
-        ompi_condition_wait(&(data.cond), &(data.mutex));
+        opal_condition_wait(&(data.cond), &(data.mutex));
     }
 
-    OMPI_THREAD_UNLOCK(&(data.mutex));
+    OPAL_THREAD_UNLOCK(&(data.mutex));
 
     OBJ_DESTRUCT(&(data.cond));
     OBJ_DESTRUCT(&(data.mutex));
@@ -607,6 +607,6 @@ internal_waitpid_callback(int fd, short event, void *arg)
     data->ret = waitpid(data->pid, &(data->status), data->options);
 
     data->done = true;
-    ompi_condition_signal(&(data->cond));
+    opal_condition_signal(&(data->cond));
 }
 #endif

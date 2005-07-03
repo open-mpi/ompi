@@ -30,8 +30,8 @@
 #include "class/orte_pointer_array.h"
 #include "class/orte_value_array.h"
 
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #include "mca/ns/ns_types.h"
 
@@ -96,7 +96,7 @@ typedef struct {
     int isolate;
     size_t block_size;
     size_t max_size;
-    ompi_mutex_t mutex;
+    opal_mutex_t mutex;
     size_t num_local_subs;
     orte_pointer_array_t *local_subscriptions;
     size_t trig_cntr;

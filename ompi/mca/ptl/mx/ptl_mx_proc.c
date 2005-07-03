@@ -48,7 +48,7 @@ void mca_ptl_mx_proc_construct(mca_ptl_mx_proc_t* proc)
     proc->proc_addr_count = 0;
     proc->proc_peers = NULL;
     proc->proc_peer_count = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
 }
 
 
@@ -59,9 +59,9 @@ void mca_ptl_mx_proc_construct(mca_ptl_mx_proc_t* proc)
 void mca_ptl_mx_proc_destruct(mca_ptl_mx_proc_t* proc)
 {
     /* remove from list of all proc instances */
-    OMPI_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
+    OPAL_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
     opal_hash_table_remove_proc(&mca_ptl_mx_component.mx_procs, &proc->proc_name);
-    OMPI_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
+    OPAL_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
 
     /* release resources */
     if(NULL != proc->proc_peers) 
@@ -82,11 +82,11 @@ mca_ptl_mx_proc_t* mca_ptl_mx_proc_create(ompi_proc_t* ompi_proc)
     size_t size;
     mca_ptl_mx_proc_t* ptl_proc;
 
-    OMPI_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
+    OPAL_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
     ptl_proc = (mca_ptl_mx_proc_t*)opal_hash_table_get_proc(
          &mca_ptl_mx_component.mx_procs, &ompi_proc->proc_name);
     if(NULL != ptl_proc) {
-        OMPI_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
+        OPAL_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
         return ptl_proc;
     }
 
@@ -101,7 +101,7 @@ mca_ptl_mx_proc_t* mca_ptl_mx_proc_create(ompi_proc_t* ompi_proc)
         &mca_ptl_mx_component.mx_procs, 
         &ptl_proc->proc_name, 
          ptl_proc);
-    OMPI_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
+    OPAL_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
 
     /* lookup mx parameters exported by this proc */
     rc = mca_base_modex_recv(
@@ -138,10 +138,10 @@ mca_ptl_mx_proc_t* mca_ptl_mx_proc_create(ompi_proc_t* ompi_proc)
 mca_ptl_mx_proc_t* mca_ptl_mx_proc_lookup(const ompi_process_name_t *name)
 {
     mca_ptl_mx_proc_t* proc;
-    OMPI_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
+    OPAL_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
     proc = (mca_ptl_mx_proc_t*)opal_hash_table_get_proc(
          &mca_ptl_mx_component.mx_procs, name);
-    OMPI_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
+    OPAL_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
     return proc;
 }
 
@@ -187,7 +187,7 @@ int mca_ptl_mx_proc_insert(mca_ptl_mx_proc_t* ptl_proc, mca_ptl_base_peer_t* ptl
 int mca_ptl_mx_proc_remove(mca_ptl_mx_proc_t* ptl_proc, mca_ptl_base_peer_t* ptl_peer)
 {
     size_t i;
-    OMPI_THREAD_LOCK(&ptl_proc->proc_lock);
+    OPAL_THREAD_LOCK(&ptl_proc->proc_lock);
     for(i=0; i<ptl_proc->proc_peer_count; i++) {
         if(ptl_proc->proc_peers[i] == ptl_peer) {
             memmove(ptl_proc->proc_peers+i, ptl_proc->proc_peers+i+1,
@@ -196,7 +196,7 @@ int mca_ptl_mx_proc_remove(mca_ptl_mx_proc_t* ptl_proc, mca_ptl_base_peer_t* ptl
             break;
         }
     }
-    OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+    OPAL_THREAD_UNLOCK(&ptl_proc->proc_lock);
     return OMPI_SUCCESS;
 }
 

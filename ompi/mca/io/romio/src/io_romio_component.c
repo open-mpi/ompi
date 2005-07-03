@@ -17,7 +17,7 @@
 #include "ompi_config.h"
 #include "mpi.h"
 #include "opal/class/opal_list.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "mca/base/base.h"
 #include "mca/io/io.h"
 #include "io_romio.h"
@@ -55,7 +55,7 @@ static int delete_priority_param = -1;
 /*
  * Global, component-wide ROMIO mutex because ROMIO is not thread safe
  */
-ompi_mutex_t mca_io_romio_mutex;
+opal_mutex_t mca_io_romio_mutex;
 
 
 /*
@@ -226,9 +226,9 @@ static int delete_select(char *filename, struct ompi_info_t *info,
 {
     int ret;
 
-    OMPI_THREAD_LOCK (&mca_io_romio_mutex);
+    OPAL_THREAD_LOCK (&mca_io_romio_mutex);
     ret = ROMIO_PREFIX(MPI_File_delete)(filename, info);
-    OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
+    OPAL_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     return ret;
 }
@@ -245,7 +245,7 @@ static int progress()
        If a request finishes, remove it from the list. */
 
     count = 0;
-    OMPI_THREAD_LOCK (&mca_io_romio_mutex);
+    OPAL_THREAD_LOCK (&mca_io_romio_mutex);
     for (item = opal_list_get_first(&mca_io_romio_pending_requests);
          item != opal_list_get_end(&mca_io_romio_pending_requests); 
          item = next) {
@@ -256,7 +256,7 @@ static int progress()
         ret = ROMIO_PREFIX(MPIO_Test)(&romio_rq, &flag, 
                                       &(((ompi_request_t *) item)->req_status));
         if (ret < 0) {
-            OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
+            OPAL_THREAD_UNLOCK (&mca_io_romio_mutex);
             return ret;
         } else if (1 == flag) {
             ++count;
@@ -272,13 +272,13 @@ static int progress()
             if (ioreq->free_called) {
                 ret = ioreq->super.req_fini((ompi_request_t**) &ioreq);
                 if (OMPI_SUCCESS != ret) {
-                    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+                    OPAL_THREAD_UNLOCK(&mca_io_romio_mutex);
                     return ret;
                 }
             }
         }
     }
-    OMPI_THREAD_UNLOCK (&mca_io_romio_mutex);
+    OPAL_THREAD_UNLOCK (&mca_io_romio_mutex);
 
     /* Return how many requests completed */
 

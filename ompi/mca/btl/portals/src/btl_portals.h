@@ -68,7 +68,7 @@ struct mca_btl_portals_component_t {
     int portals_free_list_inc_num;
 
     /* lock for accessing component */
-    ompi_mutex_t portals_lock;
+    opal_mutex_t portals_lock;
 };
 typedef struct mca_btl_portals_component_t mca_btl_portals_component_t;
 

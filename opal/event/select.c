@@ -60,10 +60,10 @@
 #if OMPI_EVENT_USE_SIGNALS
 #include "evsignal.h"
 #endif
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 extern struct ompi_event_list ompi_eventqueue;
-extern ompi_mutex_t ompi_event_lock;
+extern opal_mutex_t ompi_event_lock;
 
 #ifndef howmany
 #define        howmany(x, y)   (((x)+((y)-1))/(y))
@@ -199,10 +199,10 @@ select_dispatch(void *arg, struct timeval *tv)
 #endif
 
         /* release lock while waiting in kernel */
-        ompi_mutex_unlock(&ompi_event_lock);
+        opal_mutex_unlock(&ompi_event_lock);
 	    res = select(sop->event_fds + 1, sop->event_readset, 
 	        sop->event_writeset, NULL, tv);
-        ompi_mutex_lock(&ompi_event_lock);
+        opal_mutex_lock(&ompi_event_lock);
 
 #if OMPI_EVENT_USE_SIGNALS
 	if (ompi_evsignal_recalc(&sop->evsigmask) == -1)

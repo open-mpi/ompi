@@ -96,13 +96,13 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
                                         num_subs, subscriptions,
                                         num_trigs, trigs))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
 
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_events())) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
 

@@ -86,7 +86,7 @@ int mca_btl_template_add_procs(
          * don't bind this PTL instance to the proc.
          */
 
-        OMPI_THREAD_LOCK(&template_proc->proc_lock);
+        OPAL_THREAD_LOCK(&template_proc->proc_lock);
 
         /* The btl_proc datastructure is shared by all TEMPLATE PTL
          * instances that are trying to reach this destination. 
@@ -94,7 +94,7 @@ int mca_btl_template_add_procs(
          */
         template_endpoint = OBJ_NEW(mca_btl_template_endpoint_t);
         if(NULL == template_endpoint) {
-            OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -102,12 +102,12 @@ int mca_btl_template_add_procs(
         rc = mca_btl_template_proc_insert(template_proc, template_endpoint);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(template_endpoint);
-            OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
             continue;
         }
 
         ompi_bitmap_set_bit(reachable, i);
-        OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
+        OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
         peers[i] = template_endpoint;
     }
 

@@ -111,8 +111,8 @@ mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node,
 {
     if (self = [super init]) {
 	/* class-specific initialization goes here */
-	OBJ_CONSTRUCT(&state_cond, ompi_condition_t);
-	OBJ_CONSTRUCT(&state_mutex, ompi_mutex_t);
+	OBJ_CONSTRUCT(&state_cond, opal_condition_t);
+	OBJ_CONSTRUCT(&state_mutex, opal_mutex_t);
 
 	if (NULL != password) {
 	    controller_password = [NSString stringWithCString: password];
@@ -214,12 +214,12 @@ mca_pls_xgrid_set_node_name(orte_ras_base_node_t* node,
     [connection setDelegate: self];
     
     /* get us connected */
-    ompi_mutex_lock(&state_mutex);
+    opal_mutex_lock(&state_mutex);
     [connection open];
     while ([connection state] == XGConnectionStateOpening) {
-	ompi_condition_wait(&state_cond, &state_mutex);
+	opal_condition_wait(&state_cond, &state_mutex);
     }
-    ompi_mutex_unlock(&state_mutex);
+    opal_mutex_unlock(&state_mutex);
 
     ompi_output(orte_pls_base.pls_output,
 		"pls: xgrid: connection name: %s", [[connection name] cString]);
@@ -391,7 +391,7 @@ cleanup:
 /* delegate for changes */
 -(void) connectionDidOpen:(XGConnection*) connection
 {
-    ompi_condition_broadcast(&state_cond);
+    opal_condition_broadcast(&state_cond);
 }
 
 
@@ -399,7 +399,7 @@ cleanup:
 {
     ompi_output(orte_pls_base.pls_output,
 		"pls: xgrid: got connectionDidNotOpen message");
-    ompi_condition_broadcast(&state_cond);
+    opal_condition_broadcast(&state_cond);
 }
 
 
@@ -407,7 +407,7 @@ cleanup:
 {
     ompi_output(orte_pls_base.pls_output,
 		"pls: xgrid: got connectionDidClose message");
-    ompi_condition_broadcast(&state_cond);
+    opal_condition_broadcast(&state_cond);
 }
 
 @end

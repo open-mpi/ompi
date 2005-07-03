@@ -294,7 +294,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         a distinct btl module for each hca port */ 
 
     OBJ_CONSTRUCT(&btl_list, opal_list_t); 
-    OBJ_CONSTRUCT(&mca_btl_openib_component.ib_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_btl_openib_component.ib_lock, opal_mutex_t);
 
 
     for(i = 0; i < num_devs; i++){  
@@ -370,7 +370,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
 
         /* Initialize module state */
 
-        OBJ_CONSTRUCT(&mvapi_btl->ib_lock, ompi_mutex_t); 
+        OBJ_CONSTRUCT(&mvapi_btl->ib_lock, opal_mutex_t); 
         OBJ_CONSTRUCT(&mvapi_btl->send_free_eager, ompi_free_list_t);
         OBJ_CONSTRUCT(&mvapi_btl->send_free_max, ompi_free_list_t);
         OBJ_CONSTRUCT(&mvapi_btl->send_free_frag, ompi_free_list_t);
@@ -542,7 +542,7 @@ int mca_btl_openib_component_progress()
                 mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super, frag->hdr->tag, &frag->base, mvapi_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
                 OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_eager), (opal_list_item_t*) frag); 
-                OMPI_THREAD_ADD32(&mvapi_btl->rr_posted_high, -1); 
+                OPAL_THREAD_ADD32(&mvapi_btl->rr_posted_high, -1); 
                 
                 mca_btl_openib_endpoint_post_rr(((mca_btl_openib_frag_t*)comp.id)->endpoint, 0); 
                 
@@ -588,7 +588,7 @@ int mca_btl_openib_component_progress()
                 mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super, frag->hdr->tag, &frag->base, mvapi_btl->ib_reg[frag->hdr->tag].cbdata);         
                 
                 OMPI_FREE_LIST_RETURN(&(mvapi_btl->recv_free_max), (opal_list_item_t*) frag); 
-                OMPI_THREAD_ADD32(&mvapi_btl->rr_posted_low, -1); 
+                OPAL_THREAD_ADD32(&mvapi_btl->rr_posted_low, -1); 
                 
 
                 mca_btl_openib_endpoint_post_rr(((mca_btl_openib_frag_t*)comp.id)->endpoint, 0); 

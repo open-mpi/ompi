@@ -21,7 +21,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_list.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "include/constants.h"
 #include "communicator/communicator.h"
 #include "mca/pml/pml.h"
@@ -440,7 +440,7 @@ int mca_pml_ob1_recv_frag_match(
      * end points) from being processed, and potentially "loosing"
      * the fragment.
      */
-    OMPI_THREAD_LOCK(&comm->matching_lock);
+    OPAL_THREAD_LOCK(&comm->matching_lock);
 
     /* get sequence number of next message that can be processed */
     next_msg_seq_expected = (uint16_t)proc->expected_sequence;
@@ -494,7 +494,7 @@ int mca_pml_ob1_recv_frag_match(
             mca_pml_ob1_recv_frag_t* frag;
             MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
             if(OMPI_SUCCESS != rc) {
-                OMPI_THREAD_UNLOCK(&pml_comm->matching_lock);
+                OPAL_THREAD_UNLOCK(&pml_comm->matching_lock);
                 return rc;
             }
             MCA_PML_OB1_RECV_FRAG_INIT(frag,btl,hdr,segments,num_segments);
@@ -519,14 +519,14 @@ int mca_pml_ob1_recv_frag_match(
         mca_pml_ob1_recv_frag_t* frag;
         MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
         if(OMPI_SUCCESS != rc) {
-            OMPI_THREAD_UNLOCK(&pml_comm->matching_lock);
+            OPAL_THREAD_UNLOCK(&pml_comm->matching_lock);
             return rc;
         }
         MCA_PML_OB1_RECV_FRAG_INIT(frag,btl,hdr,segments,num_segments);
         opal_list_append(&proc->frags_cant_match, (opal_list_item_t *)frag);
 
     }
-    OMPI_THREAD_UNLOCK(&pml_comm->matching_lock);
+    OPAL_THREAD_UNLOCK(&pml_comm->matching_lock);
 
 
     /* release matching lock before processing fragment */

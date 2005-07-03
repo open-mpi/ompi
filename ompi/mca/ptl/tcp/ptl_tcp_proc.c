@@ -50,7 +50,7 @@ void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
     proc->proc_addr_count = 0;
     proc->proc_peers = 0;
     proc->proc_peer_count = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
 }
 
 
@@ -61,9 +61,9 @@ void mca_ptl_tcp_proc_construct(mca_ptl_tcp_proc_t* proc)
 void mca_ptl_tcp_proc_destruct(mca_ptl_tcp_proc_t* proc)
 {
     /* remove from list of all proc instances */
-    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    OPAL_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
     opal_hash_table_remove_proc(&mca_ptl_tcp_component.tcp_procs, &proc->proc_name);
-    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
+    OPAL_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 
     /* release resources */
     if(NULL != proc->proc_peers) 
@@ -85,11 +85,11 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
     size_t size;
     mca_ptl_tcp_proc_t* ptl_proc;
 
-    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    OPAL_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
     ptl_proc = (mca_ptl_tcp_proc_t*)opal_hash_table_get_proc(
          &mca_ptl_tcp_component.tcp_procs, &ompi_proc->proc_name);
     if(NULL != ptl_proc) {
-        OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
+        OPAL_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
         return ptl_proc;
      }
 
@@ -104,7 +104,7 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
         &mca_ptl_tcp_component.tcp_procs, 
         &ptl_proc->proc_name, 
          ptl_proc);
-    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
+    OPAL_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 
     /* lookup tcp parameters exported by this proc */
     rc = mca_base_modex_recv( &mca_ptl_tcp_component.super.ptlm_version, 
@@ -142,10 +142,10 @@ mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_create(ompi_proc_t* ompi_proc)
 mca_ptl_tcp_proc_t* mca_ptl_tcp_proc_lookup(const orte_process_name_t *name)
 {
     mca_ptl_tcp_proc_t* proc;
-    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    OPAL_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
     proc = (mca_ptl_tcp_proc_t*)opal_hash_table_get_proc(
          &mca_ptl_tcp_component.tcp_procs, name);
-    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
+    OPAL_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
     return proc;
 }
 
@@ -203,13 +203,13 @@ int mca_ptl_tcp_proc_insert(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
 int mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* ptl_peer)
 {
     size_t i;
-    OMPI_THREAD_LOCK(&ptl_proc->proc_lock);
+    OPAL_THREAD_LOCK(&ptl_proc->proc_lock);
     for(i=0; i<ptl_proc->proc_peer_count; i++) {
         if(ptl_proc->proc_peers[i] == ptl_peer) {
             memmove(ptl_proc->proc_peers+i, ptl_proc->proc_peers+i+1,
                 (ptl_proc->proc_peer_count-i-1)*sizeof(mca_ptl_base_peer_t*));
             if(--ptl_proc->proc_peer_count == 0) {
-                OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+                OPAL_THREAD_UNLOCK(&ptl_proc->proc_lock);
                 OBJ_RELEASE(ptl_proc);
                 return OMPI_SUCCESS;
             }
@@ -217,7 +217,7 @@ int mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
             break;
         }
     }
-    OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+    OPAL_THREAD_UNLOCK(&ptl_proc->proc_lock);
     return OMPI_SUCCESS;
 }
 
@@ -229,15 +229,15 @@ int mca_ptl_tcp_proc_remove(mca_ptl_tcp_proc_t* ptl_proc, mca_ptl_base_peer_t* p
 bool mca_ptl_tcp_proc_accept(mca_ptl_tcp_proc_t* ptl_proc, struct sockaddr_in* addr, int sd)
 {
     size_t i;
-    OMPI_THREAD_LOCK(&ptl_proc->proc_lock);
+    OPAL_THREAD_LOCK(&ptl_proc->proc_lock);
     for(i=0; i<ptl_proc->proc_peer_count; i++) {
         mca_ptl_base_peer_t* ptl_peer = ptl_proc->proc_peers[i];
         if(mca_ptl_tcp_peer_accept(ptl_peer, addr, sd)) {
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&ptl_proc->proc_lock);
             return true;
         }
     }
-    OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+    OPAL_THREAD_UNLOCK(&ptl_proc->proc_lock);
     return false;
 }
 

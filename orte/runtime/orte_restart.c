@@ -27,7 +27,7 @@
 #include "event/event.h"
 #include "util/output.h"
 #include "event/event.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "mca/mca.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"

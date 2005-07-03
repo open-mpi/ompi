@@ -43,7 +43,7 @@
 #include "communicator/communicator.h"
 #include "mca/base/base.h"
 #include "tools/ompi_info/ompi_info.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 using namespace std;
 using namespace ompi_info;
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
   }
 
   // set our threading level
-  ompi_set_using_threads(false);
+  opal_set_using_threads(false);
 
   // Get MCA parameters, if any */
   

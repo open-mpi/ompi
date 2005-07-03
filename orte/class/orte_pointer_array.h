@@ -24,7 +24,7 @@
 
 #include "orte_config.h"
 
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "opal/class/opal_object.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -38,7 +38,7 @@ struct orte_pointer_array_t {
     /** base class */
     opal_object_t super;
     /** synchronization object */
-    ompi_mutex_t lock;
+    opal_mutex_t lock;
     /** Index of lowest free element.  NOTE: This is only an
         optimization to know where to search for the first free slot.
         It does \em not necessarily imply indices all above this index
@@ -118,9 +118,9 @@ static inline void *orte_pointer_array_get_item(orte_pointer_array_t *table,
                                                 size_t index)
 {
     void *p;
-    OMPI_THREAD_LOCK(&(table->lock));
+    OPAL_THREAD_LOCK(&(table->lock));
     p = table->addr[index];
-    OMPI_THREAD_UNLOCK(&(table->lock));
+    OPAL_THREAD_UNLOCK(&(table->lock));
     return p;
 }
 
@@ -154,13 +154,13 @@ static inline size_t orte_pointer_array_get_size(orte_pointer_array_t *array)
 static inline void orte_pointer_array_clear(orte_pointer_array_t *array)
 {
     size_t i;
-    OMPI_THREAD_LOCK(&(array->lock));
+    OPAL_THREAD_LOCK(&(array->lock));
     for (i=0; i < array->size; i++) {
         array->addr[i] = NULL;
     }
     array->lowest_free = 0;
     array->number_free = array->size;
-    OMPI_THREAD_UNLOCK(&(array->lock));
+    OPAL_THREAD_UNLOCK(&(array->lock));
 }
 
 
@@ -177,14 +177,14 @@ static inline void orte_pointer_array_clear(orte_pointer_array_t *array)
 static inline void orte_pointer_array_free_clear(orte_pointer_array_t *array)
 {
     size_t i;
-    OMPI_THREAD_LOCK(&(array->lock));
+    OPAL_THREAD_LOCK(&(array->lock));
     for (i=0; i < array->size; i++) {
         if (NULL != array->addr[i]) free(array->addr[i]);
         array->addr[i] = NULL;
     }
     array->lowest_free = 0;
     array->number_free = array->size;
-    OMPI_THREAD_UNLOCK(&(array->lock));
+    OPAL_THREAD_UNLOCK(&(array->lock));
 }
 
 

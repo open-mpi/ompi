@@ -101,7 +101,7 @@ OBJ_CLASS_INSTANCE (ompi_comm_reg_t,
 		    ompi_comm_reg_destructor );
 
 #if OMPI_HAVE_THREAD_SUPPORT
-static ompi_mutex_t ompi_cid_lock;
+static opal_mutex_t ompi_cid_lock;
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 static opal_list_t ompi_registered_comms;
 
@@ -148,22 +148,22 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
         }
 
 
-    OMPI_THREAD_LOCK(&ompi_cid_lock);
+    OPAL_THREAD_LOCK(&ompi_cid_lock);
     ompi_comm_register_cid (comm->c_contextid);
-    OMPI_THREAD_UNLOCK(&ompi_cid_lock);
+    OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
     while (!done) {
 	/**
 	 * This is the real algorithm described in the doc 
 	 */
 
-	OMPI_THREAD_LOCK(&ompi_cid_lock);
+	OPAL_THREAD_LOCK(&ompi_cid_lock);
 	if (comm->c_contextid != ompi_comm_lowest_cid() ) {
 	    /* if not lowest cid, we do not continue, but sleep and try again */
-	    OMPI_THREAD_UNLOCK(&ompi_cid_lock);
+	    OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 	    continue;
 	}
-	OMPI_THREAD_UNLOCK(&ompi_cid_lock);
+	OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
 
 	for (i=start; i<OMPI_MAX_COMM ;i++) {
@@ -214,9 +214,9 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
     newcomm->c_f_to_c_index = newcomm->c_contextid;
     ompi_pointer_array_set_item (&ompi_mpi_communicators, nextcid, newcomm);
 
-    OMPI_THREAD_LOCK(&ompi_cid_lock);
+    OPAL_THREAD_LOCK(&ompi_cid_lock);
     ompi_comm_unregister_cid (comm->c_contextid);
-    OMPI_THREAD_UNLOCK(&ompi_cid_lock);
+    OPAL_THREAD_UNLOCK(&ompi_cid_lock);
 
     return (MPI_SUCCESS);
 }

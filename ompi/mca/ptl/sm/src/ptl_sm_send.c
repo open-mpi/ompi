@@ -40,7 +40,7 @@
 #include "mca/ptl/sm/src/ptl_sm_sendreq.h"
 #include "class/ompi_fifo.h"
 #include "class/ompi_free_list.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "datatype/datatype.h"
 
 
@@ -121,7 +121,7 @@ void mca_ptl_sm_matched(
             [my_local_smp_rank][peer_local_smp_rank]);
 
     /* lock as multiple processes can attempt to init the head */
-    if(ompi_using_threads())
+    if(opal_using_threads())
         opal_atomic_lock(&send_fifo->head_lock);
 
     /* check to see if fifo is allocated */
@@ -135,7 +135,7 @@ void mca_ptl_sm_matched(
                 0,0,0,
                 send_fifo, mca_ptl_sm_component.sm_mpool);
         if( return_status != OMPI_SUCCESS ) {
-            if(ompi_using_threads())
+            if(opal_using_threads())
                 opal_atomic_unlock(&send_fifo->head_lock);
             return;
         }
@@ -151,15 +151,15 @@ void mca_ptl_sm_matched(
     return_status=ompi_fifo_write_to_head_same_base_addr(sm_frag_desc,
             send_fifo, mca_ptl_sm_component.sm_mpool);
 
-    if(ompi_using_threads())
+    if(opal_using_threads())
         opal_atomic_unlock(&send_fifo->head_lock);
 
     /* if can't ack, put on list for later delivery */
     if( 0 > return_status ) {
-        OMPI_THREAD_LOCK(&(mca_ptl_sm_component.sm_pending_ack_lock));
+        OPAL_THREAD_LOCK(&(mca_ptl_sm_component.sm_pending_ack_lock));
         opal_list_append(&(mca_ptl_sm_component.sm_pending_ack),
                 (opal_list_item_t *)sm_frag_desc);
-        OMPI_THREAD_UNLOCK(&(mca_ptl_sm_component.sm_pending_ack_lock));
+        OPAL_THREAD_UNLOCK(&(mca_ptl_sm_component.sm_pending_ack_lock));
     } else {
         MCA_PTL_SM_SIGNAL_PEER(mca_ptl_sm_component.sm_peers[peer_local_smp_rank]);
     }

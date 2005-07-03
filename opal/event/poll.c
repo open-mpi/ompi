@@ -62,12 +62,12 @@
 #if OMPI_EVENT_USE_SIGNALS
 #include "evsignal.h"
 #endif
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 
 extern struct ompi_event_list ompi_eventqueue;
 extern volatile sig_atomic_t ompi_evsignal_caught;
-extern ompi_mutex_t ompi_event_lock;
+extern opal_mutex_t ompi_event_lock;
 
 /* Open MPI: make this struct instance be static */
 static struct pollop {
@@ -192,9 +192,9 @@ poll_dispatch(void *arg, struct timeval *tv)
 #endif
 
 	sec = tv->tv_sec * 1000 + tv->tv_usec / 1000;
-        ompi_mutex_unlock(&ompi_event_lock);
+        opal_mutex_unlock(&ompi_event_lock);
 	    res = poll(pop->event_set, nfds, sec);
-        ompi_mutex_lock(&ompi_event_lock);
+        opal_mutex_lock(&ompi_event_lock);
 
 #if OMPI_EVENT_USE_SIGNALS
 	if (ompi_evsignal_recalc(&pop->evsigmask) == -1)

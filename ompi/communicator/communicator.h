@@ -20,7 +20,7 @@
 #include "opal/class/opal_object.h"
 #include "class/opal_hash_table.h"
 #include "errhandler/errhandler.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 #include "util/output.h"
 #include "mpi.h"
@@ -90,7 +90,7 @@ OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_communicators;
 
 struct ompi_communicator_t {
     opal_object_t              c_base; 
-    ompi_mutex_t               c_lock; /* mutex for name and potentially 
+    opal_mutex_t               c_lock; /* mutex for name and potentially 
                                           attributes */
     char  c_name[MPI_MAX_OBJECT_NAME];
     uint32_t              c_contextid;

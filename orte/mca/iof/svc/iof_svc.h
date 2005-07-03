@@ -139,7 +139,7 @@ struct orte_iof_svc_component_t {
     int svc_debug;
     opal_list_t svc_published;
     opal_list_t svc_subscribed;
-    ompi_mutex_t svc_lock;
+    opal_mutex_t svc_lock;
     struct iovec svc_iov[1];
 };
 typedef struct orte_iof_svc_component_t orte_iof_svc_component_t;

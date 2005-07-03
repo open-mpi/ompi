@@ -76,11 +76,11 @@ typedef struct {
     orte_gpr_subscription_id_t num_subs;
     orte_pointer_array_t *subscriptions;
     orte_gpr_trigger_id_t trig_cntr;
-    ompi_mutex_t mutex;
+    opal_mutex_t mutex;
     bool compound_cmd_mode;
     orte_buffer_t *compound_cmd;
-    ompi_mutex_t wait_for_compound_mutex;
-    ompi_condition_t compound_cmd_condition;
+    opal_mutex_t wait_for_compound_mutex;
+    opal_condition_t compound_cmd_condition;
     int compound_cmd_waiting;
 } orte_gpr_proxy_globals_t;
 

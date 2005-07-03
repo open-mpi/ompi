@@ -37,7 +37,7 @@
 
 #include "ompi_config.h"
 #include "mca/pls/base/base.h"
-#include "threads/condition.h"
+#include "opal/threads/condition.h"
 #include <sys/bproc.h>
 
 #if defined(c_plusplus) || defined(__cplusplus)

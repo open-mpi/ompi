@@ -120,7 +120,7 @@ ompi_evsignal_add(sigset_t *evsigmask, struct ompi_event *ev)
 	evsignal = OMPI_EVENT_SIGNAL(ev);
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-        if (!ompi_using_threads()) ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
+        if (!opal_using_threads()) ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
 #else
         ompi_event_loop(OMPI_EVLOOP_NONBLOCK);
 #endif

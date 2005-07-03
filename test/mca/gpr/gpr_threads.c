@@ -25,7 +25,7 @@
 #include "support.h"
 
 #include "runtime/runtime.h"
-#include "threads/thread.h"
+#include "opal/threads/thread.h"
 #include "util/proc_info.h"
 #include "util/sys_info.h"
 #include "util/malloc.h"
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 int main(int argc, char **argv)
 {
     int i, rc, num_threads;
-    ompi_thread_t **threads;
+    opal_thread_t **threads;
     union {
         int ivalue;
         void *vvalue;
@@ -104,13 +104,13 @@ int main(int argc, char **argv)
     }
     
     /* setup the threads */
-    threads = (ompi_thread_t**)malloc(num_threads * sizeof(ompi_thread_t*));
+    threads = (opal_thread_t**)malloc(num_threads * sizeof(opal_thread_t*));
     if (NULL == threads) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     for (i=0; i < num_threads; i++) {
-        threads[i] = OBJ_NEW(ompi_thread_t);
+        threads[i] = OBJ_NEW(opal_thread_t);
         if (NULL == threads[i]) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
     
     /* run the threads */
     for (i=0; i < num_threads; i++) {
-        if (OMPI_SUCCESS != (rc = ompi_thread_start(threads[i]))) {
+        if (OMPI_SUCCESS != (rc = opal_thread_start(threads[i]))) {
             ORTE_ERROR_LOG(rc);
             exit(rc);
         }

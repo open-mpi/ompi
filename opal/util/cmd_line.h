@@ -112,7 +112,7 @@
 
 #include "opal/class/opal_object.h"
 #include "opal/class/opal_list.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -127,7 +127,7 @@ extern "C" {
         opal_object_t super;
         
         /** Thread safety */
-        ompi_mutex_t lcl_mutex;
+        opal_mutex_t lcl_mutex;
         
         /** List of cmd_line_option_t's (defined internally) */
         opal_list_t lcl_options;

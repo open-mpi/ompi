@@ -70,16 +70,16 @@ typedef struct mca_ptl_tcp_event_t mca_ptl_tcp_event_t;
 
 static void mca_ptl_tcp_event_construct(mca_ptl_tcp_event_t* event)
 {
-    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    OPAL_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
     opal_list_append(&mca_ptl_tcp_component.tcp_events, &event->item);
-    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
+    OPAL_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 }
 
 static void mca_ptl_tcp_event_destruct(mca_ptl_tcp_event_t* event)
 {
-    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    OPAL_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
     opal_list_remove_item(&mca_ptl_tcp_component.tcp_events, &event->item);
-    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
+    OPAL_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 }
 
 OBJ_CLASS_INSTANCE(
@@ -177,7 +177,7 @@ int mca_ptl_tcp_component_open(void)
     mca_ptl_tcp_component.tcp_num_ptl_modules = 0;
 
     /* initialize objects */
-    OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_procs, opal_hash_table_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_pending_acks, opal_list_t);
     OBJ_CONSTRUCT(&mca_ptl_tcp_component.tcp_events, opal_list_t);
@@ -258,7 +258,7 @@ int mca_ptl_tcp_component_close(void)
     }
 
     /* cleanup any pending events */
-    OMPI_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
+    OPAL_THREAD_LOCK(&mca_ptl_tcp_component.tcp_lock);
     for(item =  opal_list_remove_first(&mca_ptl_tcp_component.tcp_events);
         item != NULL; 
         item =  opal_list_remove_first(&mca_ptl_tcp_component.tcp_events)) {
@@ -266,7 +266,7 @@ int mca_ptl_tcp_component_close(void)
         ompi_event_del(&event->event);
         OBJ_RELEASE(event);
     }
-    OMPI_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
+    OPAL_THREAD_UNLOCK(&mca_ptl_tcp_component.tcp_lock);
 
     /* release resources */
     OBJ_DESTRUCT(&mca_ptl_tcp_component.tcp_procs);

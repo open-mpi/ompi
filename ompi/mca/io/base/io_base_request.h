@@ -120,7 +120,7 @@ extern "C" {
 
     /*
      * count of number of pending requests in the IO subsystem.  Should
-     * only be modified with OMPI_THREAD_ADD32.  Probably should not be
+     * only be modified with OPAL_THREAD_ADD32.  Probably should not be
      * used outside of IO components.  Here only for the progress check
      * optimzation.
      */

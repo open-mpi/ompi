@@ -20,8 +20,8 @@
 #ifndef MCA_PML_TEG_H
 #define MCA_PML_TEG_H
 
-#include "threads/thread.h"
-#include "threads/condition.h"
+#include "opal/threads/thread.h"
+#include "opal/threads/condition.h"
 #include "class/ompi_free_list.h"
 #include "util/cmd_line.h"
 #include "request/request.h"
@@ -52,7 +52,7 @@ struct mca_pml_teg_t {
     size_t teg_num_ptl_progress;
 
     opal_list_t  teg_procs;
-    ompi_mutex_t teg_lock;
+    opal_mutex_t teg_lock;
 
     int teg_priority;
 

@@ -81,7 +81,7 @@ int mca_pml_uniq_component_open(void)
          return OMPI_ERROR;
       }
 #endif
-    OBJ_CONSTRUCT(&mca_pml_uniq.uniq_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_pml_uniq.uniq_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_pml_uniq.uniq_send_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_uniq.uniq_recv_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_uniq.uniq_procs, opal_list_t);

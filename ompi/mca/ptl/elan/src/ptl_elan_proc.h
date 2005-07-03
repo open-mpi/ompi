@@ -47,7 +47,7 @@ struct mca_ptl_elan_proc_t {
     size_t proc_addr_count;        
     struct mca_ptl_elan_peer_t **proc_peers; /**< array of peers */
     size_t proc_peer_count;                  /**< number of peers */
-    ompi_mutex_t proc_lock;   /**< lock to for proc state */
+    opal_mutex_t proc_lock;   /**< lock to for proc state */
 };
 typedef struct mca_ptl_elan_proc_t mca_ptl_elan_proc_t;
 

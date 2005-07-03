@@ -22,7 +22,7 @@
 #define ORTE_RDS_HOSTFILE_H
 
 #include "orte_config.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "mca/rds/rds.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -37,7 +37,7 @@ struct orte_rds_hostfile_component_t {
     int debug;
     char* path;
     bool default_hostfile;
-    ompi_mutex_t lock;
+    opal_mutex_t lock;
 };
 typedef struct orte_rds_hostfile_component_t orte_rds_hostfile_component_t;
 

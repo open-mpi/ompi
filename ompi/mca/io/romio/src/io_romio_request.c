@@ -27,14 +27,14 @@ int mca_io_romio_request_fini(ompi_request_t **req)
     mca_io_base_request_t *ioreq = *((mca_io_base_request_t**) req);
     int ret = OMPI_SUCCESS;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    OPAL_THREAD_LOCK(&mca_io_romio_mutex);
 
     /* clean up the fortran stuff, mark us as invalid */
     OMPI_REQUEST_FINI(*req);
     /* and shove us back in the free list */
     mca_io_base_request_free(ioreq->req_file, ioreq);
 
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    OPAL_THREAD_UNLOCK(&mca_io_romio_mutex);
 
     *req = MPI_REQUEST_NULL;
     return ret;
@@ -46,7 +46,7 @@ int mca_io_romio_request_free(ompi_request_t **req)
     mca_io_base_request_t *ioreq = *((mca_io_base_request_t**) req);
     int ret = OMPI_SUCCESS;
 
-    OMPI_THREAD_LOCK(&mca_io_romio_mutex);
+    OPAL_THREAD_LOCK(&mca_io_romio_mutex);
 
     ioreq->free_called = true;
 
@@ -55,7 +55,7 @@ int mca_io_romio_request_free(ompi_request_t **req)
         ret = ioreq->super.req_fini(req);
     }
 
-    OMPI_THREAD_UNLOCK(&mca_io_romio_mutex);
+    OPAL_THREAD_UNLOCK(&mca_io_romio_mutex);
 
     *req = MPI_REQUEST_NULL;
     return ret;

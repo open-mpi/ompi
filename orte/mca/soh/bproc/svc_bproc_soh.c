@@ -139,7 +139,7 @@ mca_svc_bproc_soh_check_node_info(char *segment, char *cell,
 
 #if OMPI_HAVE_POSIX_THREADS
 static void *
-mca_svc_bproc_soh_status_thread(ompi_thread_t *thread)
+mca_svc_bproc_soh_status_thread(opal_thread_t *thread)
 {
     struct pollfd pfd;
     struct bproc_node_set_t ns = BPROC_EMPTY_NODESET;
@@ -204,12 +204,12 @@ int mca_svc_bproc_soh_module_init(mca_svc_base_module_t* base)
     if (ompi_using_thread()) {
 #if OMPI_HAVE_POSIX_THREADS
     module->thread.t_handle = 0;
-    module->thread.t_run = (ompi_thread_fn_t)mca_bproc_status_thread;
+    module->thread.t_run = (opal_thread_fn_t)mca_bproc_status_thread;
     module->thread.t_arg = (void *)module;
 #endif  /* OMPI_HAVE_POSIX_THREADS */
     }
 
-    return ompi_thread_start(&module->thread);
+    return opal_thread_start(&module->thread);
 }
 
 /**
@@ -224,7 +224,7 @@ int mca_svc_bproc_soh_module_fini(mca_svc_base_module_t* base)
     if (module->thread.t_handle != 0) {
         void *thread_return;
         pthread_cancel(ptl->thread.t_handle);
-        ompi_thread_join(&(module->thread), &thread_return);
+        opal_thread_join(&(module->thread), &thread_return);
     }
 #endif  /* OMPI_HAVE_POSIX_THREADS */
     return OMPI_SUCCESS;

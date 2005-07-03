@@ -92,9 +92,9 @@ int orte_gpr_replica_process_callbacks(void)
                     ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
                     goto CLEANUP;
                 }
-                OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+                OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
                 local_sub->callback(data[i], local_sub->user_tag);
-                OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+                OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
             }
             
         	} else {  /* remote request - send messages back */

@@ -23,7 +23,7 @@
 #include "util/strncpy.h"
 #include "opal/class/opal_list.h"
 #include "class/ompi_pointer_array.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 
 /**
@@ -37,7 +37,7 @@ struct ompi_info_t {
   int i_f_to_c_index; 
   /**< fortran handle for info. This is needed for translation from
        fortran to C and vice versa */
-  ompi_mutex_t *i_lock;
+  opal_mutex_t *i_lock;
   /**< Mutex for thread safety */
   bool i_freed;
   /**< Whether this info has been freed or not */

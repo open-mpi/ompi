@@ -122,7 +122,7 @@ int mca_ptl_mx_module_init(void)
 
 static void* mca_ptl_mx_thread(opal_object_t *arg)
 {
-    ompi_thread_t* thr = (ompi_thread_t*)arg;
+    opal_thread_t* thr = (opal_thread_t*)arg;
     mca_ptl_mx_module_t* ptl = thr->t_arg;
     while(ptl->mx_enabled) {
         mx_request_t mx_request;
@@ -161,7 +161,7 @@ static void* mca_ptl_mx_thread(opal_object_t *arg)
 
         /* pre-post receive */
         if(ptl->mx_recvs_posted == 0) {
-            OMPI_THREAD_ADD32(&ptl->mx_recvs_posted,1);
+            OPAL_THREAD_ADD32(&ptl->mx_recvs_posted,1);
             MCA_PTL_MX_POST(ptl,MCA_PTL_HDR_TYPE_MATCH,sizeof(mca_ptl_base_match_header_t));
         }
     }
@@ -350,10 +350,10 @@ void mca_ptl_mx_enable()
         ptl->mx_enabled = true;
 #if OMPI_ENABLE_PROGRESS_THREADS
         /* create a thread to progress requests */
-        OBJ_CONSTRUCT(&ptl->mx_thread, ompi_thread_t);
+        OBJ_CONSTRUCT(&ptl->mx_thread, opal_thread_t);
         ptl->mx_thread.t_run = mca_ptl_mx_thread;
         ptl->mx_thread.t_arg = ptl; 
-        if(ompi_thread_start(&ptl->mx_thread) != OMPI_SUCCESS) {
+        if(opal_thread_start(&ptl->mx_thread) != OMPI_SUCCESS) {
             ompi_output(0, "mca_ptl_mx_create: unable to start progress thread.\n");
             return;
         }
@@ -369,7 +369,7 @@ void mca_ptl_mx_disable(void)
         ptl->mx_enabled = false;
 #if OMPI_ENABLE_PROGRESS_THREADS
         mx_wakeup(ptl->mx_endpoint);
-        ompi_thread_join(&ptl->mx_thread, NULL);
+        opal_thread_join(&ptl->mx_thread, NULL);
 #endif
     }
 }
@@ -384,7 +384,7 @@ int mca_ptl_mx_finalize(struct mca_ptl_base_module_t* ptl)
     mx_ptl->mx_enabled = false;
 #if OMPI_ENABLE_PROGRESS_THREADS
     mx_wakeup(mx_ptl->mx_endpoint);
-    ompi_thread_join(&mx_ptl->mx_thread, NULL);
+    opal_thread_join(&mx_ptl->mx_thread, NULL);
 #endif
     mx_close_endpoint(mx_ptl->mx_endpoint);
     free(mx_ptl);
@@ -425,9 +425,9 @@ int mca_ptl_mx_add_procs(
             return OMPI_ERR_OUT_OF_RESOURCE;
 
         /* peer doesn't export enough addresses */
-        OMPI_THREAD_LOCK(&ptl_proc->proc_lock);
+        OPAL_THREAD_LOCK(&ptl_proc->proc_lock);
         if(ptl_proc->proc_peer_count == ptl_proc->proc_addr_count) {
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&ptl_proc->proc_lock);
             continue;
         }
 
@@ -436,14 +436,14 @@ int mca_ptl_mx_add_procs(
          */
         ptl_peer = OBJ_NEW(mca_ptl_mx_peer_t);
         if(NULL == ptl_peer) {
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&ptl_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         ptl_peer->peer_ptl = ptl_mx;
         rc = mca_ptl_mx_proc_insert(ptl_proc, ptl_peer);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(ptl_peer);
-            OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&ptl_proc->proc_lock);
             return rc;
         }
         /* do we need to convert to/from network byte order */
@@ -453,7 +453,7 @@ int mca_ptl_mx_add_procs(
 
         /* set peer as reachable */
         ompi_bitmap_set_bit(reachable, n);
-        OMPI_THREAD_UNLOCK(&ptl_proc->proc_lock);
+        OPAL_THREAD_UNLOCK(&ptl_proc->proc_lock);
         peers[n] = ptl_peer;
         opal_list_append(&ptl_mx->mx_peers, (opal_list_item_t*)ptl_peer);
     }

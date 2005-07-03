@@ -22,8 +22,8 @@
 #include <string.h>
 
 #include "opal/class/opal_list.h"
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #include "util/cmd_line.h"
 #include "mca/mca.h"
@@ -52,8 +52,8 @@ typedef struct {
     bool debug;
     char* name_string;
     char* requestor_string;
-    ompi_mutex_t mutex;
-    ompi_condition_t condition;
+    opal_mutex_t mutex;
+    opal_condition_t condition;
     bool exit_condition;
 } orteprobe_globals_t;
 

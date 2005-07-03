@@ -760,12 +760,12 @@ mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
     /* XXXX Temporary Elan4 blocking wait code */
     {
 	ELAN_SLEEP     *es;
-	OMPI_LOCK(&mca_ptl_elan_component.elan_lock);
+	OPAL_LOCK(&mca_ptl_elan_component.elan_lock);
 	if ((es = rail->r_sleepDescs) == NULL)
 	    es = ompi_init_elan_sleepdesc (&mca_ptl_elan_global_state, rail);
 	else
 	    rail->r_sleepDescs = es->es_next;
-	OMPI_UNLOCK(&mca_ptl_elan_component.elan_lock);
+	OPAL_UNLOCK(&mca_ptl_elan_component.elan_lock);
 
 	LOG_PRINT(PTL_ELAN_DEBUG_NONE,
 		"eventWord(%p): es %p cookie %x cmdq %p ecmdq %p\n",
@@ -773,10 +773,10 @@ mca_ptl_elan_wait_queue(mca_ptl_elan_module_t * ptl,
 	WAITEVENT_WORD(ctx, es->es_cmdq, es->es_ecmdq, es->es_cmdBlk, 
 		es->es_cookie, ready, readyWord, usecs);
 
-	OMPI_LOCK(&mca_ptl_elan_component.elan_lock);
+	OPAL_LOCK(&mca_ptl_elan_component.elan_lock);
 	es->es_next = rail->r_sleepDescs;
 	rail->r_sleepDescs = es;
-	OMPI_UNLOCK(&mca_ptl_elan_component.elan_lock);
+	OPAL_UNLOCK(&mca_ptl_elan_component.elan_lock);
     }
     return 0xdeadbeef;
 }
@@ -1077,7 +1077,7 @@ mca_ptl_elan_drain_recv (struct mca_ptl_elan_module_t *ptl)
     ctx   = ptl->ptl_elan_ctx;
 
 ptl_elan_recv_comp:
-    OMPI_LOCK (&queue->rx_lock);
+    OPAL_LOCK (&queue->rx_lock);
 #if OMPI_PTL_ELAN_THREADING
     rc = mca_ptl_elan_wait_queue(ptl, rxq, 1);
 #else
@@ -1091,7 +1091,7 @@ ptl_elan_recv_comp:
 #if OMPI_PTL_ELAN_THREADING
 	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
 	    /* XXX: release the lock and quit the thread */
-	    OMPI_UNLOCK (&queue->rx_lock);
+	    OPAL_UNLOCK (&queue->rx_lock);
 	    return OMPI_SUCCESS;
 	} 
 #endif
@@ -1145,7 +1145,7 @@ ptl_elan_recv_comp:
 		0xfeedfacedeadbeefLL);
 	elan4_flush_cmdq_reorder (rxq->qr_cmdq);
     }
-    OMPI_UNLOCK (&queue->rx_lock);
+    OPAL_UNLOCK (&queue->rx_lock);
 
 #if OMPI_PTL_ELAN_THREADING
     goto ptl_elan_recv_comp;
@@ -1169,7 +1169,7 @@ mca_ptl_elan_update_desc (struct mca_ptl_elan_module_t *ptl)
     ctx  = ptl->ptl_elan_ctx;
     rxq  = comp->rxq;
 ptl_elan_send_comp:
-    OMPI_LOCK (&comp->rx_lock);
+    OPAL_LOCK (&comp->rx_lock);
 #if OMPI_PTL_ELAN_THREADING
     /* XXX: block on the recv queue without holding a lock */
     rc = mca_ptl_elan_wait_queue(ptl, rxq, 1);
@@ -1188,7 +1188,7 @@ ptl_elan_send_comp:
 #if OMPI_PTL_ELAN_THREADING
 	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
 	    /* XXX: release the lock and quit the thread */
-	    OMPI_UNLOCK (&comp->rx_lock);
+	    OPAL_UNLOCK (&comp->rx_lock);
 	    return OMPI_SUCCESS;
 	}
 #endif
@@ -1237,7 +1237,7 @@ ptl_elan_send_comp:
 		0xfeedfacedeadbeefLL);
 	elan4_flush_cmdq_reorder (rxq->qr_cmdq);
     }
-    OMPI_UNLOCK (&comp->rx_lock);
+    OPAL_UNLOCK (&comp->rx_lock);
 
 #if OMPI_PTL_ELAN_THREADING
     goto ptl_elan_send_comp;
@@ -1289,7 +1289,7 @@ mca_ptl_elan_lookup(struct mca_ptl_elan_module_t *ptl)
     ctx   = ptl->ptl_elan_ctx;
 
 ptl_elan_recv_comp:
-    OMPI_LOCK (&queue->rx_lock);
+    OPAL_LOCK (&queue->rx_lock);
 #if OMPI_PTL_ELAN_THREADING
     rc = mca_ptl_elan_wait_queue(ptl, rxq, 1);
 #else
@@ -1309,7 +1309,7 @@ ptl_elan_recv_comp:
 #if OMPI_PTL_ELAN_THREADING
 	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
 	    /* XXX: release the lock and quit the thread */
-	    OMPI_UNLOCK (&queue->rx_lock);
+	    OPAL_UNLOCK (&queue->rx_lock);
 	    return OMPI_SUCCESS;
 	}
 #endif
@@ -1337,7 +1337,7 @@ ptl_elan_recv_comp:
 #if OMPI_PTL_ELAN_THREADING
 	if (header->hdr_common.hdr_type == MCA_PTL_HDR_TYPE_STOP) {
 	    /* XXX: release the lock and quit the thread */
-	    OMPI_UNLOCK (&queue->rx_lock);
+	    OPAL_UNLOCK (&queue->rx_lock);
 	    return OMPI_SUCCESS;
 	} 
 #endif
@@ -1393,7 +1393,7 @@ ptl_elan_recv_comp:
 		0xfeedfacedeadbeefLL);
 	elan4_flush_cmdq_reorder (rxq->qr_cmdq);
     }
-    OMPI_UNLOCK (&queue->rx_lock);
+    OPAL_UNLOCK (&queue->rx_lock);
 
 #if OMPI_PTL_ELAN_THREADING
     goto ptl_elan_recv_comp;

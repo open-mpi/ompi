@@ -61,11 +61,11 @@
 
 #include "event.h"
 #include "evsignal.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 extern struct ompi_event_list ompi_eventqueue;
 extern volatile sig_atomic_t ompi_evsignal_caught;
-extern ompi_mutex_t ompi_event_lock;
+extern opal_mutex_t ompi_event_lock;
 
 /* due to limitations in the epoll interface, we need to keep track of
  * all file descriptors outself.
@@ -182,10 +182,10 @@ epoll_dispatch(void *arg, struct timeval *tv)
 		return (-1);
 
 	timeout = tv->tv_sec * 1000 + tv->tv_usec / 1000;
-        if(ompi_using_threads()) {
-            ompi_mutex_unlock(&ompi_event_lock);
+        if(opal_using_threads()) {
+            opal_mutex_unlock(&ompi_event_lock);
 	    res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
-            ompi_mutex_lock(&ompi_event_lock);
+            opal_mutex_lock(&ompi_event_lock);
         } else {
 	    res = epoll_wait(epollop->epfd, events, epollop->nevents, timeout);
         }

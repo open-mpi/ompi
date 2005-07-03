@@ -20,7 +20,7 @@
 #include "include/types.h"
 #include "opal/class/opal_list.h"
 #include "dps/dps_types.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 #include "mca/ns/ns_types.h"
 
@@ -36,7 +36,7 @@ struct ompi_proc_t {
     opal_object_t*            proc_modex;  /* MCA module exchange data */
     uint32_t                  proc_arch;
     struct ompi_convertor_t*  proc_convertor;
-    ompi_mutex_t              proc_lock;
+    opal_mutex_t              proc_lock;
 
   /* JMS: need to have the following information:
      - how am i [mpi] connected (bitmap): spawn (parent/child), 

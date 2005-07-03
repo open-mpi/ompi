@@ -76,8 +76,8 @@ static int orte_pls_bproc_orted_param_register_int(const char* param_name,
 int orte_pls_bproc_orted_component_open(void)
 {
     /* initialize globals */
-    OBJ_CONSTRUCT(&mca_pls_bproc_orted_component.lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_pls_bproc_orted_component.condition, ompi_condition_t);
+    OBJ_CONSTRUCT(&mca_pls_bproc_orted_component.lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_pls_bproc_orted_component.condition, opal_condition_t);
 
     /* lookup parameters */
     mca_pls_bproc_orted_component.priority = 

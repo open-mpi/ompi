@@ -451,10 +451,10 @@ ompi_elan_device_init (mca_ptl_elan_component_t * emp,
 
         /* Allocate a Sleep Desc */
         es = ompi_init_elan_sleepdesc (ems, rail);
-	OMPI_LOCK(&mca_ptl_elan_component.elan_lock);
+	OPAL_LOCK(&mca_ptl_elan_component.elan_lock);
         es->es_next = rail->r_sleepDescs;
         rail->r_sleepDescs = es;
-	OMPI_UNLOCK(&mca_ptl_elan_component.elan_lock);
+	OPAL_UNLOCK(&mca_ptl_elan_component.elan_lock);
 
         estate->alloc = rail->r_alloc;
         estate->vp = ems->elan_vp;
@@ -652,8 +652,8 @@ mca_ptl_elan_thread_init (mca_ptl_elan_component_t * emp)
 	ompi_ptl_elan_thread_t * t;
 	t = (struct ompi_ptl_elan_thread_t *)
 	    malloc (sizeof(struct ompi_ptl_elan_thread_t));
-	OBJ_CONSTRUCT(&t->thread, ompi_thread_t);
-	t->thread.t_run = (ompi_thread_fn_t) mca_ptl_elan_lookup;
+	OBJ_CONSTRUCT(&t->thread, opal_thread_t);
+	t->thread.t_run = (opal_thread_fn_t) mca_ptl_elan_lookup;
 	t->ptl = emp->modules[i];
 	pthread_create(&t->thread.t_handle, NULL, 
 			(void *)t->thread.t_run, (void*)t->ptl);
@@ -674,8 +674,8 @@ mca_ptl_elan_thread_init (mca_ptl_elan_component_t * emp)
 	 * Later to be combined with the receiving thread */
 	t = (struct ompi_ptl_elan_thread_t *)
 	    malloc (sizeof(struct ompi_ptl_elan_thread_t));
-	OBJ_CONSTRUCT(&t->thread, ompi_thread_t);
-	t->thread.t_run = (ompi_thread_fn_t) mca_ptl_elan_update_desc;
+	OBJ_CONSTRUCT(&t->thread, opal_thread_t);
+	t->thread.t_run = (opal_thread_fn_t) mca_ptl_elan_update_desc;
 	t->ptl = emp->modules[i];
 	pthread_create(&t->thread.t_handle, NULL, 
 			(void *)t->thread.t_run, (void*)t->ptl);
@@ -683,8 +683,8 @@ mca_ptl_elan_thread_init (mca_ptl_elan_component_t * emp)
 
 	t = (struct ompi_ptl_elan_thread_t *)
 	    malloc (sizeof(struct ompi_ptl_elan_thread_t));
-	OBJ_CONSTRUCT(&t->thread, ompi_thread_t);
-	t->thread.t_run = (ompi_thread_fn_t) mca_ptl_elan_drain_recv;
+	OBJ_CONSTRUCT(&t->thread, opal_thread_t);
+	t->thread.t_run = (opal_thread_fn_t) mca_ptl_elan_drain_recv;
 	t->ptl = emp->modules[i];
 	pthread_create(&t->thread.t_handle, NULL, 
 			(void *)t->thread.t_run, (void*)t->ptl);
@@ -769,9 +769,9 @@ mca_ptl_elan_thread_close (mca_ptl_elan_component_t * emp)
 	trecv = emp->recv_threads[i];
 #if !OMPI_PTL_ELAN_ONE_QUEUE
 	tsend = emp->send_threads[i];
-        ompi_thread_join(&tsend->thread, &ptr);
+        opal_thread_join(&tsend->thread, &ptr);
 #endif
-        ompi_thread_join(&trecv->thread, &ptr);
+        opal_thread_join(&trecv->thread, &ptr);
     }
 
     return (OMPI_SUCCESS);

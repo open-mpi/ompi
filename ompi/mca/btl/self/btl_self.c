@@ -23,7 +23,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "datatype/convertor.h"
 #include "include/sys/atomic.h"
 #include "util/output.h"

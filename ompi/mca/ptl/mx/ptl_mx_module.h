@@ -91,7 +91,7 @@ do {                                                                            
                 {                                                                   \
                     recvfrag->frag_size = hdr->hdr_match.hdr_msg_length;            \
                     MCA_PTL_MX_RECV_FRAG_MATCH(recvfrag,hdr);                       \
-                    OMPI_THREAD_ADD32(&ptl->mx_recvs_posted, -1);                   \
+                    OPAL_THREAD_ADD32(&ptl->mx_recvs_posted, -1);                   \
                     break;                                                          \
                 }                                                                   \
                 case MCA_PTL_HDR_TYPE_RNDV:                                         \

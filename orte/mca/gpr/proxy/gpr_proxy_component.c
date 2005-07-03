@@ -218,9 +218,9 @@ orte_gpr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidden_
     	*have_hidden_threads = false;
     
     	/* setup thread locks and condition variable */
-    	OBJ_CONSTRUCT(&orte_gpr_proxy_globals.mutex, ompi_mutex_t);
-    	OBJ_CONSTRUCT(&orte_gpr_proxy_globals.wait_for_compound_mutex, ompi_mutex_t);
-    	OBJ_CONSTRUCT(&orte_gpr_proxy_globals.compound_cmd_condition, ompi_condition_t);
+    	OBJ_CONSTRUCT(&orte_gpr_proxy_globals.mutex, opal_mutex_t);
+    	OBJ_CONSTRUCT(&orte_gpr_proxy_globals.wait_for_compound_mutex, opal_mutex_t);
+    	OBJ_CONSTRUCT(&orte_gpr_proxy_globals.compound_cmd_condition, opal_condition_t);
     
     	/* initialize the registry compound mode */
     	orte_gpr_proxy_globals.compound_cmd_mode = false;

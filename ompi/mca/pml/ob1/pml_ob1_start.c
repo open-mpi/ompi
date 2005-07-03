@@ -45,13 +45,13 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
             case OMPI_REQUEST_ACTIVE: {
             
                 ompi_request_t *request;
-                OMPI_THREAD_LOCK(&ompi_request_lock);
+                OPAL_THREAD_LOCK(&ompi_request_lock);
                 if (pml_request->req_pml_complete == false) {
                     /* free request after it completes */
                     pml_request->req_free_called = true;
                 } else {
                     /* can reuse the existing request */
-                    OMPI_THREAD_UNLOCK(&ompi_request_lock);
+                    OPAL_THREAD_UNLOCK(&ompi_request_lock);
                     break;
                 }
 
@@ -85,7 +85,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
                          rc = OMPI_ERR_REQUEST;
                          break;
                 }
-                OMPI_THREAD_UNLOCK(&ompi_request_lock);
+                OPAL_THREAD_UNLOCK(&ompi_request_lock);
                 if(OMPI_SUCCESS != rc)
                     return rc;
                 pml_request = (mca_pml_base_request_t*)request;

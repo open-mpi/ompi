@@ -69,17 +69,17 @@ int mca_pml_uniq_probe(int src,
 
     if (recvreq.req_recv.req_base.req_ompi.req_complete == false) {
         /* give up and sleep until completion */
-        if (ompi_using_threads()) {
-            ompi_mutex_lock(&ompi_request_lock);
+        if (opal_using_threads()) {
+            opal_mutex_lock(&ompi_request_lock);
             ompi_request_waiting++;
             while (recvreq.req_recv.req_base.req_ompi.req_complete == false)
-                ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
-            ompi_mutex_unlock(&ompi_request_lock);
+            opal_mutex_unlock(&ompi_request_lock);
         } else {
             ompi_request_waiting++;
             while (recvreq.req_recv.req_base.req_ompi.req_complete == false)
-                ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+                opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
         }
     }

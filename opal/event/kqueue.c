@@ -65,12 +65,12 @@
 #endif
 
 #include "event.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 extern struct event_list timequeue;
 extern struct event_list eventqueue;
 extern struct event_list addqueue;
-extern ompi_mutex_t ompi_event_lock;
+extern opal_mutex_t ompi_event_lock;
 
 #define EVLIST_X_KQINKERNEL	0x1000
 
@@ -204,11 +204,11 @@ kq_dispatch(void *arg, struct timeval *tv)
 	TIMEVAL_TO_TIMESPEC(tv, &ts);
 
         /* release lock while waiting in kernel */
-        if(ompi_using_threads()) {
-	    ompi_mutex_unlock(&ompi_event_lock);
+        if(opal_using_threads()) {
+	    opal_mutex_unlock(&ompi_event_lock);
 	    res = kevent(kqop->kq, changes, kqop->nchanges,
 	        events, kqop->nevents, &ts);
-	    ompi_mutex_lock(&ompi_event_lock);
+	    opal_mutex_lock(&ompi_event_lock);
         } else {
 	    res = kevent(kqop->kq, changes, kqop->nchanges,
 	        events, kqop->nevents, &ts);

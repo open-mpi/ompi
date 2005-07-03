@@ -66,7 +66,7 @@ struct mca_btl_template_component_t {
     opal_list_t template_procs;
     /**< list of template proc structures */
 
-    ompi_mutex_t template_lock;
+    opal_mutex_t template_lock;
     /**< lock for accessing module state */
 
     char* template_mpool_name; 
@@ -94,7 +94,7 @@ struct mca_btl_template_module_t {
     ompi_free_list_t template_frag_user;
 
     /* lock for accessing module state */
-    ompi_mutex_t template_lock;
+    opal_mutex_t template_lock;
 
 #if MCA_BTL_HAS_MPOOL
     struct mca_mpool_base_module_t* template_mpool;

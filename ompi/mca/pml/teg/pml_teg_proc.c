@@ -26,21 +26,21 @@ static void mca_pml_teg_proc_construct(mca_pml_proc_t* proc)
 {
     proc->proc_ompi = NULL;
     proc->proc_ptl_flags = 0;
-    OBJ_CONSTRUCT(&proc->proc_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&proc->proc_ptl_first, mca_pml_teg_ptl_array_t);
     OBJ_CONSTRUCT(&proc->proc_ptl_next,  mca_pml_teg_ptl_array_t);
 
-    OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock);
+    OPAL_THREAD_LOCK(&mca_pml_teg.teg_lock);
     opal_list_append(&mca_pml_teg.teg_procs, (opal_list_item_t*)proc);
-    OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
+    OPAL_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
 }
 
 
 static void mca_pml_teg_proc_destruct(mca_pml_proc_t* proc)
 {
-    OMPI_THREAD_LOCK(&mca_pml_teg.teg_lock);
+    OPAL_THREAD_LOCK(&mca_pml_teg.teg_lock);
     opal_list_remove_item(&mca_pml_teg.teg_procs, (opal_list_item_t*)proc);
-    OMPI_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
+    OPAL_THREAD_UNLOCK(&mca_pml_teg.teg_lock);
 
     OBJ_DESTRUCT(&proc->proc_lock);
     OBJ_DESTRUCT(&proc->proc_ptl_first);

@@ -121,15 +121,15 @@ mca_ptl_elan_alloc_desc (struct mca_ptl_base_module_t *ptl_ptr,
 
     LOG_PRINT(PTL_ELAN_DEBUG_SEND, "flist %p length %d type %d\n", 
 	    flist, flist->super.opal_list_length, desc_type);
-    if (ompi_using_threads ()) {
-	ompi_mutex_lock(&flist->fl_lock);
+    if (opal_using_threads ()) {
+	opal_mutex_lock(&flist->fl_lock);
 	item = opal_list_remove_first (&((flist)->super));
 	while (NULL == item) {
 	    mca_ptl_tstamp_t tstamp = 0;
 	    ptl_ptr->ptl_component->ptlm_progress (tstamp);
 	    item = opal_list_remove_first (&((flist)->super));
 	}
-	ompi_mutex_unlock(&flist->fl_lock);
+	opal_mutex_unlock(&flist->fl_lock);
     } else {
 	item = opal_list_remove_first (&((flist)->super));
 	/* XXX: 

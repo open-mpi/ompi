@@ -183,7 +183,7 @@ typedef struct ompi_ptl_elan_cmdq_space_t ompi_ptl_elan_cmdq_space_t;
 
 struct ompi_ptl_elan_thread_t
 {
-    ompi_thread_t thread;
+    opal_thread_t thread;
     mca_ptl_elan_module_t *ptl;
 };
 typedef struct ompi_ptl_elan_thread_t ompi_ptl_elan_thread_t;
@@ -221,7 +221,7 @@ typedef struct ompi_ptl_elan_recv_queue_t ompi_ptl_elan_recv_queue_t;
 struct ompi_ptl_elan_comp_queue_t {
     /** <Elan located INPUT_QUEUE_ALIGN'ed with INPUT_QUEUE_SIZE */
     E4_InputQueue    *input;
-    ompi_mutex_t      rx_lock;
+    opal_mutex_t      rx_lock;
     int               rx_buffsize;
     int               rx_slotsize;
     int               rx_nslots;
@@ -297,7 +297,7 @@ struct ompi_ptl_elan_queue_ctrl_t {
     ompi_free_list_t  tx_desc_free;
 
     /* User progression */
-    ompi_mutex_t      rx_lock;
+    opal_mutex_t      rx_lock;
     int               rx_buffsize;
     int               rx_slotsize;
     int               rx_nslots;
@@ -334,7 +334,7 @@ struct ompi_ptl_elan_putget_ctrl_t {
     int               pg_evictCache;
     int32_t           pg_waitType;
     ELAN_FLAGS        pg_flags;
-    ompi_mutex_t      pg_lock;
+    opal_mutex_t      pg_lock;
 
     E4_CmdQ          *put_cmdq;
     E4_CmdQ          *get_cmdq;

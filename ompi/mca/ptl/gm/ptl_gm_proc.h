@@ -35,7 +35,7 @@ struct mca_ptl_gm_proc_t {
     opal_list_item_t super;                 /**< allow proc to be placed on a list */
     struct ompi_proc_t *proc_ompi;          /**< pointer to corresponding orte_process_name_t */
     struct mca_ptl_gm_addr_t *proc_addrs;   /**< array of addresses published by peer */
-    ompi_mutex_t proc_lock;                 /**< lock to protect against concurrent access to proc state */
+    opal_mutex_t proc_lock;                 /**< lock to protect against concurrent access to proc state */
     size_t      proc_peer_count;
     size_t      proc_addr_count;
     struct mca_ptl_gm_peer_t **peer_arr;

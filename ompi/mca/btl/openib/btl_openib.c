@@ -86,7 +86,7 @@ int mca_btl_openib_add_procs(
          * don't bind this PTL instance to the proc.
          */
 
-        OMPI_THREAD_LOCK(&ib_proc->proc_lock);
+        OPAL_THREAD_LOCK(&ib_proc->proc_lock);
 
         /* The btl_proc datastructure is shared by all IB PTL
          * instances that are trying to reach this destination. 
@@ -94,7 +94,7 @@ int mca_btl_openib_add_procs(
          */
         ib_peer = OBJ_NEW(mca_btl_openib_endpoint_t);
         if(NULL == ib_peer) {
-            OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -102,12 +102,12 @@ int mca_btl_openib_add_procs(
         rc = mca_btl_openib_proc_insert(ib_proc, ib_peer);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(ib_peer);
-            OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
             continue;
         }
 
         ompi_bitmap_set_bit(reachable, i);
-        OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
+        OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
         peers[i] = ib_peer;
     }
 
@@ -134,10 +134,10 @@ int mca_btl_openib_register(
     mca_btl_openib_module_t* mvapi_btl = (mca_btl_openib_module_t*) btl; 
     
 
-    OMPI_THREAD_LOCK(&ib->btl.ib_lock); 
+    OPAL_THREAD_LOCK(&ib->btl.ib_lock); 
     mvapi_btl->ib_reg[tag].cbfunc = cbfunc; 
     mvapi_btl->ib_reg[tag].cbdata = cbdata; 
-    OMPI_THREAD_UNLOCK(&ib->btl.ib_lock); 
+    OPAL_THREAD_UNLOCK(&ib->btl.ib_lock); 
     return OMPI_SUCCESS;
 }
 

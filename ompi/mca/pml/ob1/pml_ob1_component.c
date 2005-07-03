@@ -78,7 +78,7 @@ static inline int mca_pml_ob1_param_register_int(
 int mca_pml_ob1_component_open(void)
 {
     int param, value; 
-    OBJ_CONSTRUCT(&mca_pml_ob1.lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.lock, opal_mutex_t);
 
     /* requests */
     OBJ_CONSTRUCT(&mca_pml_ob1.send_requests, ompi_free_list_t);

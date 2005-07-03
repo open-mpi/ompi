@@ -40,8 +40,8 @@ OBJ_CLASS_INSTANCE(
 
 static void mca_oob_tcp_msg_construct(mca_oob_tcp_msg_t* msg)
 {
-    OBJ_CONSTRUCT(&msg->msg_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&msg->msg_condition, ompi_condition_t);
+    OBJ_CONSTRUCT(&msg->msg_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&msg->msg_condition, opal_condition_t);
 }
 
 
@@ -62,19 +62,19 @@ static void mca_oob_tcp_msg_destruct(mca_oob_tcp_msg_t* msg)
 int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
 {
 #if OMPI_ENABLE_PROGRESS_THREADS
-    OMPI_THREAD_LOCK(&msg->msg_lock);
+    OPAL_THREAD_LOCK(&msg->msg_lock);
     while(msg->msg_complete == false) {
         if(ompi_event_progress_thread()) {
             int rc;
-            OMPI_THREAD_UNLOCK(&msg->msg_lock);
+            OPAL_THREAD_UNLOCK(&msg->msg_lock);
             rc = ompi_event_loop(OMPI_EVLOOP_ONCE);
             assert(rc >= 0);
-            OMPI_THREAD_LOCK(&msg->msg_lock);
+            OPAL_THREAD_LOCK(&msg->msg_lock);
         } else {
-           ompi_condition_wait(&msg->msg_condition, &msg->msg_lock);
+           opal_condition_wait(&msg->msg_condition, &msg->msg_lock);
         }
     }
-    OMPI_THREAD_UNLOCK(&msg->msg_lock);
+    OPAL_THREAD_UNLOCK(&msg->msg_lock);
 
 #else
     /* wait for message to complete */
@@ -104,22 +104,22 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
     gettimeofday(&tv,NULL);
 
 #if OMPI_ENABLE_PROGRESS_THREADS
-    OMPI_THREAD_LOCK(&msg->msg_lock);
+    OPAL_THREAD_LOCK(&msg->msg_lock);
     while(msg->msg_complete == false && 
           ((uint32_t)tv.tv_sec <= secs ||
 	   ((uint32_t)tv.tv_sec == secs && (uint32_t)tv.tv_usec < usecs))) {
         if(ompi_event_progress_thread()) {
             int rc;
-            OMPI_THREAD_UNLOCK(&msg->msg_lock);
+            OPAL_THREAD_UNLOCK(&msg->msg_lock);
             rc = ompi_event_loop(OMPI_EVLOOP_ONCE);
             assert(rc >= 0);
-            OMPI_THREAD_LOCK(&msg->msg_lock);
+            OPAL_THREAD_LOCK(&msg->msg_lock);
         } else {
-           ompi_condition_timedwait(&msg->msg_condition, &msg->msg_lock, abstime);
+           opal_condition_timedwait(&msg->msg_condition, &msg->msg_lock, abstime);
         }
         gettimeofday(&tv,NULL);
     }
-    OMPI_THREAD_UNLOCK(&msg->msg_lock);
+    OPAL_THREAD_UNLOCK(&msg->msg_lock);
 #else
     /* wait for message to complete */
     while(msg->msg_complete == false &&
@@ -147,15 +147,15 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
  */
 int mca_oob_tcp_msg_complete(mca_oob_tcp_msg_t* msg, orte_process_name_t * peer)
 {
-    ompi_mutex_lock(&msg->msg_lock);
+    opal_mutex_lock(&msg->msg_lock);
     msg->msg_complete = true;
     if(NULL != msg->msg_cbfunc) {
         msg->msg_cbfunc(msg->msg_rc, peer, msg->msg_uiov, msg->msg_ucnt, msg->msg_hdr.msg_tag, msg->msg_cbdata);
-        ompi_mutex_unlock(&msg->msg_lock);
+        opal_mutex_unlock(&msg->msg_lock);
         MCA_OOB_TCP_MSG_RETURN(msg);
     } else {
-        ompi_condition_broadcast(&msg->msg_condition);
-        ompi_mutex_unlock(&msg->msg_lock);
+        opal_condition_broadcast(&msg->msg_condition);
+        opal_mutex_unlock(&msg->msg_lock);
     }
     return OMPI_SUCCESS;
 }
@@ -349,13 +349,13 @@ static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pe
 {
     orte_process_name_t src = msg->msg_hdr.msg_src;
     
-    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
+    OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
     if (orte_ns.compare(ORTE_NS_CMP_ALL, &peer->peer_name, &src) != 0) {
         opal_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name);
         peer->peer_name = src;
         opal_hash_table_set_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name, peer);
     }
-    OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
+    OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
 }
 
 
@@ -379,7 +379,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
 {
     /* attempt to match unexpected message to a posted recv */
     mca_oob_tcp_msg_t* post;
-    OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
+    OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     /* queue of posted receives is stored in network byte order - 
      * the message header has already been converted back to host -
@@ -422,18 +422,18 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
             MCA_OOB_TCP_MSG_RETURN(msg);
         }
         mca_oob_tcp_component.tcp_match_count++;
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
 
         mca_oob_tcp_msg_complete(post, &peer->peer_name);
 
-        OMPI_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
+        OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_match_lock);
         if(--mca_oob_tcp_component.tcp_match_count == 0)
-            ompi_condition_signal(&mca_oob_tcp_component.tcp_match_cond);
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+            opal_condition_signal(&mca_oob_tcp_component.tcp_match_cond);
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
 
     } else {
         opal_list_append(&mca_oob_tcp_component.tcp_msg_recv, (opal_list_item_t*)msg);
-        OMPI_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
+        OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_match_lock);
     }
 }
                                                                                                                               

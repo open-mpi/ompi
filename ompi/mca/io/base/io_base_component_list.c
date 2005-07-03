@@ -17,7 +17,7 @@
 #include "ompi_config.h"
 
 #include "opal/class/opal_list.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "mca/base/base.h"
 #include "mca/io/io.h"
 #include "mca/io/base/base.h"
@@ -29,7 +29,7 @@
 static bool initialized = false;
 static opal_list_t components_in_use;
 #if OMPI_HAVE_THREAD_SUPPORT
-static ompi_mutex_t mutex;
+static opal_mutex_t mutex;
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 struct component_item_t {
@@ -67,7 +67,7 @@ int mca_io_base_component_add(mca_io_base_components_t *comp)
     component_item_t *citem;
     mca_base_component_t *c;
 
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
 
     /* Save the component in ref-counted list of compoonents in use.
        This is used for the progression of non-blocking IO requests.
@@ -114,7 +114,7 @@ int mca_io_base_component_add(mca_io_base_components_t *comp)
         opal_list_append(&components_in_use, (opal_list_item_t *) citem);
     }
 
-    OMPI_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
 
     /* All done */
 
@@ -131,7 +131,7 @@ int mca_io_base_component_del(mca_io_base_components_t *comp)
     opal_list_item_t *item;
     component_item_t *citem;
 
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
 
     /* Find the component in the list */
 
@@ -158,7 +158,7 @@ int mca_io_base_component_del(mca_io_base_components_t *comp)
         }
     }
 
-    OMPI_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
 
     /* All done */
 
@@ -175,7 +175,7 @@ int mca_io_base_component_run_progress(void)
 
     if (! initialized) return 0;
 
-    OMPI_THREAD_LOCK(&mutex);
+    OPAL_THREAD_LOCK(&mutex);
 
     /* Go through all the components and call their progress
        function */
@@ -198,7 +198,7 @@ int mca_io_base_component_run_progress(void)
         }
     }
 
-    OMPI_THREAD_UNLOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
 
     return count;
 }

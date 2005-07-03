@@ -180,7 +180,7 @@ int orte_ns_proxy_debug=0;
 opal_list_t orte_ns_proxy_cell_info_list;
 opal_list_t orte_ns_proxy_taglist;
 opal_list_t orte_ns_proxy_dtlist;
-ompi_mutex_t orte_ns_proxy_mutex;
+opal_mutex_t orte_ns_proxy_mutex;
 
 /*
  * Open the proxy component and obtain the name of my replica.

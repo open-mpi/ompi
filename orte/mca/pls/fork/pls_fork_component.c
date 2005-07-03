@@ -105,8 +105,8 @@ static  int orte_pls_fork_param_register_int(
 int orte_pls_fork_component_open(void)
 {
     /* initialize globals */
-    OBJ_CONSTRUCT(&mca_pls_fork_component.lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_pls_fork_component.cond, ompi_condition_t);
+    OBJ_CONSTRUCT(&mca_pls_fork_component.lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_pls_fork_component.cond, opal_condition_t);
 
     /* lookup parameters */
     mca_pls_fork_component.reap = orte_pls_fork_param_register_int("reap",1);

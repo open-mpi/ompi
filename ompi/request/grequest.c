@@ -86,13 +86,13 @@ int ompi_grequest_start(
 int ompi_grequest_complete(ompi_grequest_t* grequest)
 {
     int rc = OMPI_SUCCESS;
-    OMPI_THREAD_LOCK(&ompi_request_lock);
+    OPAL_THREAD_LOCK(&ompi_request_lock);
     grequest->greq_base.req_complete = true;
     if(grequest->greq_query.c_query != NULL)
         rc = grequest->greq_query.c_query(grequest->greq_state, &grequest->greq_base.req_status);
     if(ompi_request_waiting)
-        ompi_condition_signal(&ompi_request_cond);
-    OMPI_THREAD_UNLOCK(&ompi_request_lock);
+        opal_condition_signal(&ompi_request_cond);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
     return rc;
 }
 

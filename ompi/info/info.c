@@ -90,18 +90,18 @@ int ompi_info_dup (ompi_info_t *info, ompi_info_t **newinfo)
     opal_list_item_t *item;
     ompi_info_entry_t *iterator;
 
-    OMPI_THREAD_LOCK(info->i_lock);
+    OPAL_THREAD_LOCK(info->i_lock);
     for (item = opal_list_get_first(&(info->super));
          item != opal_list_get_end(&(info->super));
          item = opal_list_get_next(iterator)) {
          iterator = (ompi_info_entry_t *) item;
          err = ompi_info_set(*newinfo, iterator->ie_key, iterator->ie_value);
          if (MPI_SUCCESS != err) {
-            OMPI_THREAD_UNLOCK(info->i_lock);
+            OPAL_THREAD_UNLOCK(info->i_lock);
             return err;
          }
      }
-    OMPI_THREAD_UNLOCK(info->i_lock);
+    OPAL_THREAD_UNLOCK(info->i_lock);
      return MPI_SUCCESS;
 }
 
@@ -120,7 +120,7 @@ int ompi_info_set (ompi_info_t *info, char *key, char *value)
       return MPI_ERR_NO_MEM;
     }
 
-    OMPI_THREAD_LOCK(info->i_lock);
+    OPAL_THREAD_LOCK(info->i_lock);
     old_info = info_find_key (info, key);
     if (NULL != old_info) {
         /*
@@ -131,14 +131,14 @@ int ompi_info_set (ompi_info_t *info, char *key, char *value)
     } else {
          new_info = OBJ_NEW(ompi_info_entry_t);
          if (NULL == new_info) {
-            OMPI_THREAD_UNLOCK(info->i_lock);
+            OPAL_THREAD_UNLOCK(info->i_lock);
             return MPI_ERR_NO_MEM;
          }
         strcpy (new_info->ie_key, key);
         new_info->ie_value = new_value;
         opal_list_append (&(info->super), (opal_list_item_t *) new_info);
     }
-    OMPI_THREAD_UNLOCK(info->i_lock);
+    OPAL_THREAD_UNLOCK(info->i_lock);
     return MPI_SUCCESS;
 }
 
@@ -164,7 +164,7 @@ int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
     ompi_info_entry_t *search;
     int value_length;
 
-    OMPI_THREAD_LOCK(info->i_lock);
+    OPAL_THREAD_LOCK(info->i_lock);
     search = info_find_key (info, key);
     if (NULL == search){
         *flag = 0;
@@ -187,7 +187,7 @@ int ompi_info_get (ompi_info_t *info, char *key, int valuelen,
                value[valuelen] = 0;
           }
     }
-    OMPI_THREAD_UNLOCK(info->i_lock);
+    OPAL_THREAD_UNLOCK(info->i_lock);
     return MPI_SUCCESS;
 }
 
@@ -200,10 +200,10 @@ int ompi_info_delete (ompi_info_t *info, char *key)
     ompi_info_entry_t *search;
     ompi_info_entry_t *found;
 
-    OMPI_THREAD_LOCK(info->i_lock);
+    OPAL_THREAD_LOCK(info->i_lock);
     search = info_find_key (info, key);
     if (NULL == search){
-         OMPI_THREAD_UNLOCK(info->i_lock);
+         OPAL_THREAD_UNLOCK(info->i_lock);
          return MPI_ERR_INFO_NOKEY;
     } else {
          /*
@@ -215,7 +215,7 @@ int ompi_info_delete (ompi_info_t *info, char *key)
                                    (opal_list_item_t *)search);
           OBJ_RELEASE(search);
     }
-    OMPI_THREAD_UNLOCK(info->i_lock);
+    OPAL_THREAD_UNLOCK(info->i_lock);
     return MPI_SUCCESS;
 }
 
@@ -228,7 +228,7 @@ int ompi_info_get_valuelen (ompi_info_t *info, char *key, int *valuelen,
 {
     ompi_info_entry_t *search;
 
-    OMPI_THREAD_LOCK(info->i_lock);
+    OPAL_THREAD_LOCK(info->i_lock);
     search = info_find_key (info, key);
     if (NULL == search){
         *flag = 0;
@@ -240,7 +240,7 @@ int ompi_info_get_valuelen (ompi_info_t *info, char *key, int *valuelen,
          *flag = 1;
          *valuelen = strlen(search->ie_value);
     }
-    OMPI_THREAD_UNLOCK(info->i_lock);
+    OPAL_THREAD_UNLOCK(info->i_lock);
     return MPI_SUCCESS;
 }
 
@@ -255,14 +255,14 @@ int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key)
     /*
      * Iterate over and over till we get to the nth key
      */
-    OMPI_THREAD_LOCK(info->i_lock);
+    OPAL_THREAD_LOCK(info->i_lock);
     for (iterator = (ompi_info_entry_t *)opal_list_get_first(&(info->super));
          n > 0;
          --n) {
          iterator = (ompi_info_entry_t *)opal_list_get_next(iterator);
          if (opal_list_get_end(&(info->super)) == 
              (opal_list_item_t *) iterator) {
-             OMPI_THREAD_UNLOCK(info->i_lock);
+             OPAL_THREAD_UNLOCK(info->i_lock);
              return MPI_ERR_ARG;
          }
     }
@@ -272,7 +272,7 @@ int ompi_info_get_nthkey (ompi_info_t *info, int n, char *key)
      * access the value
      */
     strcpy(key, iterator->ie_key);
-    OMPI_THREAD_UNLOCK(info->i_lock);
+    OPAL_THREAD_UNLOCK(info->i_lock);
     return MPI_SUCCESS;
 }
 
@@ -361,7 +361,7 @@ static void info_constructor(ompi_info_t *info)
 {
     info->i_f_to_c_index = ompi_pointer_array_add(&ompi_info_f_to_c_table, 
                                                   info);
-    info->i_lock = OBJ_NEW(ompi_mutex_t);
+    info->i_lock = OBJ_NEW(opal_mutex_t);
     info->i_freed = false;
 
     /* If the user doesn't want us to ever free it, then add an extra

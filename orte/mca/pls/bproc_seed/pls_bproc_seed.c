@@ -302,10 +302,10 @@ static void orte_pls_bproc_wait_proc(pid_t pid, int status, void* cbdata)
     }
 
     /* release any waiting threads */
-    OMPI_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
+    OPAL_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
     mca_pls_bproc_seed_component.num_children--;
-    ompi_condition_signal(&mca_pls_bproc_seed_component.condition);
-    OMPI_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
+    opal_condition_signal(&mca_pls_bproc_seed_component.condition);
+    OPAL_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
 }
 
 
@@ -331,10 +331,10 @@ static void orte_pls_bproc_wait_node(pid_t pid, int status, void* cbdata)
     OBJ_RELEASE(node);
 
     /* release any waiting threads */
-    OMPI_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
+    OPAL_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
     mca_pls_bproc_seed_component.num_children--;
-    ompi_condition_signal(&mca_pls_bproc_seed_component.condition);
-    OMPI_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
+    opal_condition_signal(&mca_pls_bproc_seed_component.condition);
+    OPAL_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
 }
 
 
@@ -543,9 +543,9 @@ static int orte_pls_bproc_launch_app(
                 _exit(1);
             }
 
-            OMPI_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
+            OPAL_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
             mca_pls_bproc_seed_component.num_children++;
-            OMPI_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
+            OPAL_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
             OBJ_RETAIN(proc);
             orte_wait_cb(pid, orte_pls_bproc_wait_proc, proc);
 
@@ -561,13 +561,13 @@ static int orte_pls_bproc_launch_app(
         if(mca_pls_bproc_seed_component.debug) {
             ompi_output(0, "orte_pls_bproc: waiting for %d children",  mca_pls_bproc_seed_component.num_children);
         }
-        OMPI_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
+        OPAL_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
         while(mca_pls_bproc_seed_component.num_children > 0) {
-            ompi_condition_wait(
+            opal_condition_wait(
                 &mca_pls_bproc_seed_component.condition,
                 &mca_pls_bproc_seed_component.lock);
         }
-        OMPI_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
+        OPAL_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
 
         /* daemon is done when all children have completed */
         orte_finalize();
@@ -581,9 +581,9 @@ static int orte_pls_bproc_launch_app(
         while(NULL != (item = opal_list_remove_first(&map->nodes))) {
             orte_rmaps_base_node_t* node = (orte_rmaps_base_node_t*)item;
 
-            OMPI_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
+            OPAL_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
             mca_pls_bproc_seed_component.num_children++;
-            OMPI_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
+            OPAL_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
             orte_wait_cb(daemon_pids[index++], orte_pls_bproc_wait_node, node);
         }
 
@@ -724,8 +724,8 @@ int orte_pls_bproc_seed_finalize(void)
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
 
 struct orte_pls_bproc_stack_t {
-    ompi_condition_t cond;
-    ompi_mutex_t mutex;
+    opal_condition_t cond;
+    opal_mutex_t mutex;
     bool complete;
     orte_jobid_t jobid;
     int rc;
@@ -734,8 +734,8 @@ typedef struct orte_pls_bproc_stack_t orte_pls_bproc_stack_t;
 
 static void orte_pls_bproc_stack_construct(orte_pls_bproc_stack_t* stack)
 {
-    OBJ_CONSTRUCT(&stack->mutex, ompi_mutex_t);
-    OBJ_CONSTRUCT(&stack->cond, ompi_condition_t);
+    OBJ_CONSTRUCT(&stack->mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&stack->cond, opal_condition_t);
     stack->rc = 0;
     stack->complete = false;
 }
@@ -789,7 +789,7 @@ static void orte_pls_bproc_seed_launch_cb(int fd, short event, void* args)
     } else if (pid == 0) {
 
         pthread_kill_other_threads_np();
-        ompi_set_using_threads(false);
+        opal_set_using_threads(false);
         if(NULL == orte_process_info.ns_replica) {
             rc = orte_ns.copy_process_name(&orte_process_info.ns_replica,orte_process_info.my_name);
             if(ORTE_SUCCESS != rc) {
@@ -825,19 +825,19 @@ static void orte_pls_bproc_seed_launch_cb(int fd, short event, void* args)
 
     } else {
 
-        OMPI_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
+        OPAL_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
         mca_pls_bproc_seed_component.num_children++;
-        OMPI_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
+        OPAL_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
         orte_wait_cb(pid, orte_pls_bproc_wait_proc, NULL);
 
         stack->rc = ORTE_SUCCESS;
     }
 
 complete:
-    OMPI_THREAD_LOCK(&stack->mutex);
+    OPAL_THREAD_LOCK(&stack->mutex);
     stack->complete = true;
-    ompi_condition_signal(&stack->cond);
-    OMPI_THREAD_UNLOCK(&stack->mutex);
+    opal_condition_signal(&stack->cond);
+    OPAL_THREAD_UNLOCK(&stack->mutex);
 }
 
 int orte_pls_bproc_seed_launch_threaded(orte_jobid_t jobid)
@@ -852,10 +852,10 @@ int orte_pls_bproc_seed_launch_threaded(orte_jobid_t jobid)
     ompi_evtimer_set(&event, orte_pls_bproc_seed_launch_cb, &stack);
     ompi_evtimer_add(&event, &tv);
    
-    OMPI_THREAD_LOCK(&stack.mutex);
+    OPAL_THREAD_LOCK(&stack.mutex);
     while(stack.complete == false)
-         ompi_condition_wait(&stack.cond, &stack.mutex);
-    OMPI_THREAD_UNLOCK(&stack.mutex);
+         opal_condition_wait(&stack.cond, &stack.mutex);
+    OPAL_THREAD_UNLOCK(&stack.mutex);
     OBJ_DESTRUCT(&stack);
     return stack.rc;
 }

@@ -87,7 +87,7 @@ int mca_btl_gm_add_procs(
          * don't bind this PTL instance to the proc.
          */
 
-        OMPI_THREAD_LOCK(&gm_proc->proc_lock);
+        OPAL_THREAD_LOCK(&gm_proc->proc_lock);
 
         /* The btl_proc datastructure is shared by all GM PTL
          * instances that are trying to reach this destination. 
@@ -95,7 +95,7 @@ int mca_btl_gm_add_procs(
          */
         gm_endpoint = OBJ_NEW(mca_btl_gm_endpoint_t);
         if(NULL == gm_endpoint) {
-            OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
@@ -103,12 +103,12 @@ int mca_btl_gm_add_procs(
         rc = mca_btl_gm_proc_insert(gm_proc, gm_endpoint);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(gm_endpoint);
-            OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
+            OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
             continue;
         }
 
         ompi_bitmap_set_bit(reachable, i);
-        OMPI_THREAD_UNLOCK(&module_proc->proc_lock);
+        OPAL_THREAD_UNLOCK(&module_proc->proc_lock);
         peers[i] = gm_endpoint;
     }
     return OMPI_SUCCESS;
@@ -529,7 +529,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
 static void mca_btl_gm_drop_callback( struct gm_port* port, void* context, gm_status_t status )
 {
     mca_btl_gm_module_t* btl = (mca_btl_gm_module_t*)context;
-    OMPI_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
+    OPAL_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
 }
 
 static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_status_t status )
@@ -556,23 +556,23 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
             break;
         case GM_SEND_DROPPED:
             /* release the send token */
-            OMPI_THREAD_ADD32(&btl->gm_num_send_tokens, 1);
+            OPAL_THREAD_ADD32(&btl->gm_num_send_tokens, 1);
 
             /* retry the dropped fragment */
             mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
             break;
         case GM_SUCCESS:
             /* release the send token */
-            OMPI_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
+            OPAL_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
 
             /* call the completion callback */
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
 
             /* check for pending fragments */
             if(opal_list_get_size(&btl->gm_pending)) {
-                OMPI_THREAD_LOCK(&btl->gm_lock);
+                OPAL_THREAD_LOCK(&btl->gm_lock);
                 frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&btl->gm_pending);
-                OMPI_THREAD_UNLOCK(&btl->gm_lock);
+                OPAL_THREAD_UNLOCK(&btl->gm_lock);
                 mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
             }
             break;
@@ -582,7 +582,7 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
             ompi_output(0, "[%s:%d] send completed with unhandled gm error %d\n", __FILE__,__LINE__,status);
 
             /* release the send token */
-            OMPI_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
+            OPAL_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
 
             /* call the completion callback */
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
@@ -632,11 +632,11 @@ int mca_btl_gm_send(
     frag->endpoint = endpoint; 
 
     /* queue the descriptor if there are no send tokens */
-    if(OMPI_THREAD_ADD32(&gm_btl->gm_num_send_tokens, -1) < 0) {
-        OMPI_THREAD_LOCK(&gm_btl->gm_lock);
+    if(OPAL_THREAD_ADD32(&gm_btl->gm_num_send_tokens, -1) < 0) {
+        OPAL_THREAD_LOCK(&gm_btl->gm_lock);
         opal_list_append(&gm_btl->gm_pending, (opal_list_item_t*)frag);
-        OMPI_THREAD_UNLOCK(&gm_btl->gm_lock);
-        OMPI_THREAD_ADD32(&gm_btl->gm_num_send_tokens, 1);
+        OPAL_THREAD_UNLOCK(&gm_btl->gm_lock);
+        OPAL_THREAD_ADD32(&gm_btl->gm_num_send_tokens, 1);
         return OMPI_SUCCESS;
     }
     

@@ -79,10 +79,10 @@ struct mca_btl_base_endpoint_t {
     double                      endpoint_tstamp;
     /**< timestamp of when the first connection was attempted */
 
-    ompi_mutex_t                endpoint_send_lock;
+    opal_mutex_t                endpoint_send_lock;
     /**< lock for concurrent access to endpoint state */
 
-    ompi_mutex_t                endpoint_recv_lock;
+    opal_mutex_t                endpoint_recv_lock;
     /**< lock for concurrent access to endpoint state */
 
     opal_list_t                 pending_send_frags;
@@ -154,14 +154,14 @@ static inline int mca_btl_openib_endpoint_post_rr_sub(int cnt,
         MCA_BTL_IB_VAPI_ERROR(frag->ret, "EVAPI_post_rr_list");
         return OMPI_ERROR; 
     }
-    OMPI_THREAD_ADD32(rr_posted, cnt); 
+    OPAL_THREAD_ADD32(rr_posted, cnt); 
     return OMPI_SUCCESS; 
 }
 
 static inline int mca_btl_openib_endpoint_post_rr( mca_btl_openib_endpoint_t * endpoint, int additional){ 
     mca_btl_openib_module_t * mvapi_btl = endpoint->endpoint_btl; 
     int rc; 
-    OMPI_THREAD_LOCK(&mvapi_btl->ib_lock); 
+    OPAL_THREAD_LOCK(&mvapi_btl->ib_lock); 
 
     if(mvapi_btl->rr_posted_high <= mca_btl_openib_component.ib_rr_buf_min+additional && mvapi_btl->rr_posted_high < mca_btl_openib_component.ib_rr_buf_max){ 
         
@@ -173,7 +173,7 @@ static inline int mca_btl_openib_endpoint_post_rr( mca_btl_openib_endpoint_t * e
                                              endpoint->lcl_qp_hndl_high
                                              ); 
         if(rc != OMPI_SUCCESS){ 
-            OMPI_THREAD_UNLOCK(&mvapi_btl->ib_lock); 
+            OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); 
             return rc; 
         }
     }
@@ -187,12 +187,12 @@ static inline int mca_btl_openib_endpoint_post_rr( mca_btl_openib_endpoint_t * e
                                              endpoint->lcl_qp_hndl_low
                                              ); 
         if(rc != OMPI_SUCCESS) {
-            OMPI_THREAD_UNLOCK(&mvapi_btl->ib_lock); 
+            OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); 
             return rc; 
         }
 
     }
-    OMPI_THREAD_UNLOCK(&mvapi_btl->ib_lock); 
+    OPAL_THREAD_UNLOCK(&mvapi_btl->ib_lock); 
     return OMPI_SUCCESS; 
     
     

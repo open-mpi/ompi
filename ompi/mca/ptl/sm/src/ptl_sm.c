@@ -45,7 +45,7 @@
 #include "mca/ptl/sm/src/ptl_sm_sendreq.h"
 #include "class/ompi_fifo.h"
 #include "class/ompi_free_list.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "datatype/datatype.h"
 #include "include/sys/atomic.h"
 
@@ -850,7 +850,7 @@ int mca_ptl_sm_send(
             [my_local_smp_rank][peer_local_smp_rank]);
 
     /* thread lock */
-    if(ompi_using_threads()) 
+    if(opal_using_threads()) 
         opal_atomic_lock(&send_fifo->head_lock);
     if(OMPI_CB_FREE == send_fifo->head) {
         /* no queues have been allocated - allocate now */
@@ -862,7 +862,7 @@ int mca_ptl_sm_send(
             0,0,0,
             send_fifo, mca_ptl_sm_component.sm_mpool);
         if( return_status != OMPI_SUCCESS ) {
-            if(ompi_using_threads())
+            if(opal_using_threads())
                 opal_atomic_unlock(&(send_fifo->head_lock));
             return return_status;
         }
@@ -875,7 +875,7 @@ int mca_ptl_sm_send(
         MCA_PTL_SM_SIGNAL_PEER(ptl_peer);
         return_status=OMPI_SUCCESS;
     }
-    if(ompi_using_threads())
+    if(opal_using_threads())
         opal_atomic_unlock(&send_fifo->head_lock);
 
     /* if this is the entire message - signal request is complete */
@@ -984,7 +984,7 @@ int mca_ptl_sm_send_continue(
     /* lock for thread safety - using atomic lock, not mutex, since
      * we need shared memory access to these lock, and in some pthread
      * implementation, such mutex's don't work correctly */
-    if(ompi_using_threads())
+    if(opal_using_threads())
         opal_atomic_lock(&send_fifo->head_lock);
 
     /* post descriptor */
@@ -996,7 +996,7 @@ int mca_ptl_sm_send_continue(
     } 
 
     /* release thread lock */
-    if(ompi_using_threads())
+    if(opal_using_threads())
         opal_atomic_unlock(&send_fifo->head_lock);
     return return_status;
 }

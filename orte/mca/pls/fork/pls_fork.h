@@ -19,7 +19,7 @@
 
 #include "ompi_config.h"
 
-#include "threads/condition.h"
+#include "opal/threads/condition.h"
 #include "mca/mca.h"
 #include "mca/pls/pls.h"
 
@@ -56,8 +56,8 @@ struct orte_pls_fork_component_t {
     int priority;
     int reap;
     size_t num_children;
-    ompi_mutex_t lock;
-    ompi_condition_t cond;
+    opal_mutex_t lock;
+    opal_condition_t cond;
 };
 typedef struct orte_pls_fork_component_t orte_pls_fork_component_t;
                                                                                   

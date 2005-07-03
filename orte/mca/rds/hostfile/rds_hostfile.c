@@ -200,7 +200,7 @@ static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, 
     int token;
     int rc = ORTE_SUCCESS;
 
-    OMPI_LOCK(&mca_rds_hostfile_component.lock);
+    OPAL_LOCK(&mca_rds_hostfile_component.lock);
 
     orte_rds_hostfile_done = false;
     orte_rds_hostfile_in = fopen(hostfile, "r");
@@ -235,7 +235,7 @@ static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, 
     orte_rds_hostfile_in = NULL;
 
 unlock:
-    OMPI_UNLOCK(&mca_rds_hostfile_component.lock);
+    OPAL_UNLOCK(&mca_rds_hostfile_component.lock);
     return rc;
 }
 

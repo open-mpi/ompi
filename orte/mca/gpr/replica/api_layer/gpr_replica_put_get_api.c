@@ -49,7 +49,7 @@ int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values)
         	return ORTE_ERROR;
     }
 
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     for (i=0; i < cnt; i++) {
         val = values[i];
@@ -58,7 +58,7 @@ int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values)
         for (j=0; j < val->cnt; j++) {
             if (NULL == (val->keyvals[j])->key) {
                 ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-                OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+                OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
                 return ORTE_ERR_BAD_PARAM;
             }
         }
@@ -66,7 +66,7 @@ int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values)
         /* find the segment */
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, val->segment))) {
             ORTE_ERROR_LOG(rc);
-            OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;
         }
     
@@ -74,7 +74,7 @@ int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values)
         if (ORTE_SUCCESS != (rc = orte_gpr_replica_get_itag_list(&itags, seg,
                                             val->tokens, &(val->num_tokens)))) {
             ORTE_ERROR_LOG(rc);
-            OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+            OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
             return rc;
         }
     
@@ -104,7 +104,7 @@ CLEANUP:
         rc = orte_gpr_replica_process_callbacks();
     }
 
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     return rc;
 
@@ -135,11 +135,11 @@ int orte_gpr_replica_get(orte_gpr_addr_mode_t addr_mode,
 	   return ORTE_ERR_BAD_PARAM;
     }
 
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     /* find the segment */
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_find_seg(&seg, true, segment))) {
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
 
@@ -171,7 +171,7 @@ CLEANUP:
       free(keytags);
     }
 
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
     return rc;
 
 }

@@ -49,7 +49,7 @@ static int mca_pml_teg_recv_request_cancel(struct ompi_request_t* request, int c
     }
     
     /* The rest should be protected behind the match logic lock */
-    OMPI_THREAD_LOCK(&pml_comm->c_matching_lock);
+    OPAL_THREAD_LOCK(&pml_comm->c_matching_lock);
     
     if( OMPI_ANY_TAG == request->req_status.MPI_TAG ) { /* the match have not been already done */
        
@@ -62,7 +62,7 @@ static int mca_pml_teg_recv_request_cancel(struct ompi_request_t* request, int c
        }
     }
     
-    OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
+    OPAL_THREAD_UNLOCK(&pml_comm->c_matching_lock);
     
     request->req_status._cancelled = true;
     request->req_complete = true;  /* mark it as completed so all the test/wait  functions
@@ -72,7 +72,7 @@ static int mca_pml_teg_recv_request_cancel(struct ompi_request_t* request, int c
      * to complete their test/wait functions.
      */
     if(ompi_request_waiting) {
-       ompi_condition_broadcast(&ompi_request_cond);
+       opal_condition_broadcast(&ompi_request_cond);
     }
     return OMPI_SUCCESS;
 }
@@ -107,7 +107,7 @@ void mca_pml_teg_recv_request_progress(
     size_t bytes_received,
     size_t bytes_delivered)
 {
-    OMPI_THREAD_LOCK(&ompi_request_lock);
+    OPAL_THREAD_LOCK(&ompi_request_lock);
     req->req_bytes_received += bytes_received;
     req->req_bytes_delivered += bytes_delivered;
     if (req->req_bytes_received >= req->req_recv.req_bytes_packed) {
@@ -116,10 +116,10 @@ void mca_pml_teg_recv_request_progress(
         req->req_recv.req_base.req_pml_complete = true; 
         req->req_recv.req_base.req_ompi.req_complete = true;
         if(ompi_request_waiting) {
-            ompi_condition_broadcast(&ompi_request_cond);
+            opal_condition_broadcast(&ompi_request_cond);
         }
     }
-    OMPI_THREAD_UNLOCK(&ompi_request_lock);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 
@@ -137,7 +137,7 @@ void mca_pml_teg_recv_request_match_specific(mca_ptl_base_recv_request_t* reques
     mca_ptl_base_recv_frag_t* frag;
    
     /* check for a specific match */
-    OMPI_THREAD_LOCK(&pml_comm->c_matching_lock);
+    OPAL_THREAD_LOCK(&pml_comm->c_matching_lock);
 
     /* assign sequence number */
     request->req_recv.req_base.req_sequence = pml_comm->c_recv_seq++;
@@ -148,7 +148,7 @@ void mca_pml_teg_recv_request_match_specific(mca_ptl_base_recv_request_t* reques
         /* setup pointer to ptls peer */
         if(NULL == frag->frag_base.frag_peer) 
             frag->frag_base.frag_peer = mca_pml_teg_proc_lookup_remote_peer(comm,req_peer,ptl);
-        OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
+        OPAL_THREAD_UNLOCK(&pml_comm->c_matching_lock);
         if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
               (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
             MCA_PML_TEG_RECV_MATCHED( ptl, frag );
@@ -162,7 +162,7 @@ void mca_pml_teg_recv_request_match_specific(mca_ptl_base_recv_request_t* reques
     if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE) { 
         opal_list_append(pml_comm->c_specific_receives+req_peer, (opal_list_item_t*)request);
     }
-    OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
+    OPAL_THREAD_UNLOCK(&pml_comm->c_matching_lock);
 }
 
 
@@ -184,7 +184,7 @@ void mca_pml_teg_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
      * process, then an inner loop over the messages from the
      * process.
     */
-    OMPI_THREAD_LOCK(&pml_comm->c_matching_lock);
+    OPAL_THREAD_LOCK(&pml_comm->c_matching_lock);
 
     /* assign sequence number */
     request->req_recv.req_base.req_sequence = pml_comm->c_recv_seq++;
@@ -202,7 +202,7 @@ void mca_pml_teg_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
             /* if required - setup pointer to ptls peer */
             if(NULL == frag->frag_base.frag_peer) 
                 frag->frag_base.frag_peer = mca_pml_teg_proc_lookup_remote_peer(comm,proc,ptl);
-            OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
+            OPAL_THREAD_UNLOCK(&pml_comm->c_matching_lock);
             if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
                   (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
                 MCA_PML_TEG_RECV_MATCHED( ptl, frag );
@@ -217,7 +217,7 @@ void mca_pml_teg_recv_request_match_wild(mca_ptl_base_recv_request_t* request)
  
     if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE)
         opal_list_append(&pml_comm->c_wild_receives, (opal_list_item_t*)request);
-    OMPI_THREAD_UNLOCK(&pml_comm->c_matching_lock);
+    OPAL_THREAD_UNLOCK(&pml_comm->c_matching_lock);
 }
 
 

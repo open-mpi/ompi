@@ -458,10 +458,10 @@ void mca_ptl_mx_matched(
         mca_ptl_mx_send_frag_t* ack;
         MCA_PTL_MX_SEND_FRAG_ALLOC(ack, rc);
         if(NULL == ack) {
-            OMPI_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
+            OPAL_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
             ack_pending = true;
             opal_list_append(&mca_ptl_mx_component.mx_pending_acks, (opal_list_item_t*)frag);
-            OMPI_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
+            OPAL_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
         } else {
             mx_return_t mx_return;
             MCA_PTL_MX_SEND_FRAG_INIT_ACK(ack, ptl, mx_frag);
@@ -480,10 +480,10 @@ void mca_ptl_mx_matched(
                 &ack->frag_request);
             if(mx_return != MX_SUCCESS) {
                 ompi_output(0, "mca_ptl_mx_matched: mx_isend() failed with return value=%d\n", mx_return);
-                OMPI_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
+                OPAL_THREAD_LOCK(&mca_ptl_mx_component.mx_lock);
                 ack_pending = true;
                 opal_list_append(&mca_ptl_mx_component.mx_pending_acks, (opal_list_item_t*)frag);
-                OMPI_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
+                OPAL_THREAD_UNLOCK(&mca_ptl_mx_component.mx_lock);
             }
         }
     }

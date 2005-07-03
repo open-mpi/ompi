@@ -150,7 +150,7 @@ int mca_btl_sm_component_open(void)
         mca_btl_sm_param_register_int("sm_extra_procs", 2);
 
     /* initialize objects */
-    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags1, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_btl_sm_component.sm_frags2, ompi_free_list_t);
     return OMPI_SUCCESS;
@@ -198,7 +198,7 @@ int mca_btl_sm_component_close(void)
             ompi_output(0, "mca_btl_sm_component_close: write fifo failed: errno=%d\n",
                     errno);
         }
-        ompi_thread_join(&mca_btl_sm_component.sm_fifo_thread, NULL);
+        opal_thread_join(&mca_btl_sm_component.sm_fifo_thread, NULL);
         close(mca_btl_sm_component.sm_fifo_fd);
         unlink(mca_btl_sm_component.sm_fifo_path);
     }
@@ -250,9 +250,9 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
         return NULL;
     }
 
-    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_fifo_thread, ompi_thread_t);
-    mca_btl_sm_component.sm_fifo_thread.t_run = (ompi_thread_fn_t) mca_btl_sm_component_event_thread;
-    ompi_thread_start(&mca_btl_sm_component.sm_fifo_thread);
+    OBJ_CONSTRUCT(&mca_btl_sm_component.sm_fifo_thread, opal_thread_t);
+    mca_btl_sm_component.sm_fifo_thread.t_run = (opal_thread_fn_t) mca_btl_sm_component_event_thread;
+    opal_thread_start(&mca_btl_sm_component.sm_fifo_thread);
 #endif
 
     /* allocate the Shared Memory PTL */
@@ -346,7 +346,7 @@ int mca_btl_sm_component_progress(void)
         }
 
         /* aquire thread lock */
-        if( ompi_using_threads() ) {
+        if( opal_using_threads() ) {
             opal_atomic_lock( &(fifo->tail_lock) );
         }
 
@@ -356,14 +356,14 @@ int mca_btl_sm_component_progress(void)
 	    ompi_fifo_read_from_tail_same_base_addr( fifo );
         if( OMPI_CB_FREE == frag ) {
             /* release thread lock */
-            if( ompi_using_threads() ) {
+            if( opal_using_threads() ) {
                 opal_atomic_unlock(&(fifo->tail_lock));
             }
             continue;
         }
 
         /* release thread lock */
-        if( ompi_using_threads() ) {
+        if( opal_using_threads() ) {
             opal_atomic_unlock(&(fifo->tail_lock));
         }
 
@@ -423,7 +423,7 @@ int mca_btl_sm_component_progress(void)
         }
 
         /* aquire thread lock */
-        if( ompi_using_threads() ) {
+        if( opal_using_threads() ) {
             opal_atomic_lock(&(fifo->tail_lock));
         }
 
@@ -433,14 +433,14 @@ int mca_btl_sm_component_progress(void)
                 mca_btl_sm_component.sm_offset[peer_smp_rank]);
         if( OMPI_CB_FREE == frag ) {
             /* release thread lock */
-            if( ompi_using_threads() ) {
+            if( opal_using_threads() ) {
                 opal_atomic_unlock(&(fifo->tail_lock));
             }
             continue;
         }
 
         /* release thread lock */
-        if( ompi_using_threads() ) {
+        if( opal_using_threads() ) {
             opal_atomic_unlock(&(fifo->tail_lock));
         }
 

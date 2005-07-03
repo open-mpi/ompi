@@ -23,7 +23,7 @@
 #include "mpi.h"
 #include "mpi/c/bindings.h"
 #include "communicator/communicator.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Comm_get_name = PMPI_Comm_get_name
@@ -51,7 +51,7 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)
                                             FUNC_NAME);
     }
 #ifdef USE_MUTEX_FOR_COMMS
-    OMPI_THREAD_LOCK(&(comm->c_lock));
+    OPAL_THREAD_LOCK(&(comm->c_lock));
 #endif
     if ( comm->c_flags & OMPI_COMM_NAMEISSET ) {
         strncpy ( name, comm->c_name, MPI_MAX_OBJECT_NAME );
@@ -62,7 +62,7 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)
         *length = 0;
     }
 #ifdef USE_MUTEX_FOR_COMMS
-    OMPI_THREAD_UNLOCK(&(comm->c_lock));
+    OPAL_THREAD_UNLOCK(&(comm->c_lock));
 #endif
 
     return MPI_SUCCESS;

@@ -21,7 +21,7 @@
 #include "ompi/runtime/mpiruntime.h"
 #include "communicator/communicator.h"
 #include "errhandler/errhandler.h"
-#include "threads/thread.h"
+#include "opal/threads/thread.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Is_thread_main = PMPI_Is_thread_main
@@ -46,7 +46,7 @@ int MPI_Is_thread_main(int *flag)
     /* Compare this thread ID to the main thread ID */
 
 #if OMPI_ENABLE_MPI_THREADS
-    *flag = (int) ompi_thread_self_compare(ompi_mpi_main_thread);
+    *flag = (int) opal_thread_self_compare(ompi_mpi_main_thread);
 #else
     *flag = 1;
 #endif

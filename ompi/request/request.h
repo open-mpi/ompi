@@ -27,8 +27,8 @@
 #include "class/ompi_pointer_array.h"
 #include "errhandler/errhandler.h"
 #include "opal/runtime/opal_progress.h"
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
                                                                                                                             
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -138,8 +138,8 @@ typedef struct ompi_request_t ompi_request_t;
  */
 OMPI_DECLSPEC extern ompi_pointer_array_t  ompi_request_f_to_c_table;
 OMPI_DECLSPEC extern volatile int          ompi_request_waiting;
-OMPI_DECLSPEC extern ompi_mutex_t          ompi_request_lock;
-OMPI_DECLSPEC extern ompi_condition_t      ompi_request_cond;
+OMPI_DECLSPEC extern opal_mutex_t          ompi_request_lock;
+OMPI_DECLSPEC extern opal_condition_t      ompi_request_cond;
 OMPI_DECLSPEC extern int                   ompi_request_poll_iterations;
 OMPI_DECLSPEC extern ompi_request_t        ompi_request_null;
 OMPI_DECLSPEC extern ompi_status_public_t  ompi_status_empty;
@@ -291,13 +291,13 @@ static inline int ompi_request_wait(
     ompi_request_t *req = *req_ptr;
     if(req->req_complete == false) {
         /* give up and sleep until completion */
-        OMPI_THREAD_LOCK(&ompi_request_lock);
+        OPAL_THREAD_LOCK(&ompi_request_lock);
         ompi_request_waiting++;
         while (req->req_complete == false) {
-            ompi_condition_wait(&ompi_request_cond, &ompi_request_lock);
+            opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
         }
         ompi_request_waiting--;
-        OMPI_THREAD_UNLOCK(&ompi_request_lock);
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
 
     /* return status */

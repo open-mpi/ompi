@@ -72,8 +72,8 @@ int orte_pls_bproc_seed_component_open(void)
     int id;
 
     /* init globals */
-    OBJ_CONSTRUCT(&mca_pls_bproc_seed_component.lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&mca_pls_bproc_seed_component.condition, ompi_condition_t);
+    OBJ_CONSTRUCT(&mca_pls_bproc_seed_component.lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&mca_pls_bproc_seed_component.condition, opal_condition_t);
     mca_pls_bproc_seed_component.num_children = 0;
 
     /* init parameters */
@@ -96,13 +96,13 @@ int orte_pls_bproc_seed_component_open(void)
 int orte_pls_bproc_seed_component_close(void)
 {
     if(mca_pls_bproc_seed_component.reap) {
-        OMPI_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
+        OPAL_THREAD_LOCK(&mca_pls_bproc_seed_component.lock);
         while(mca_pls_bproc_seed_component.num_children > 0) {
-            ompi_condition_wait(&mca_pls_bproc_seed_component.condition, 
+            opal_condition_wait(&mca_pls_bproc_seed_component.condition, 
                 &mca_pls_bproc_seed_component.lock);
         }
     }
-    OMPI_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
+    OPAL_THREAD_UNLOCK(&mca_pls_bproc_seed_component.lock);
     return ORTE_SUCCESS;
 }
 

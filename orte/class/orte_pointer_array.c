@@ -38,7 +38,7 @@ OBJ_CLASS_INSTANCE(orte_pointer_array_t, opal_object_t,
  */
 void orte_pointer_array_construct(orte_pointer_array_t *array)
 {
-    OBJ_CONSTRUCT(&array->lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&array->lock, opal_mutex_t);
     array->lowest_free = 0;
     array->number_free = 0;
     array->size = 0;
@@ -127,14 +127,14 @@ int orte_pointer_array_add(size_t *location, orte_pointer_array_t *table, void *
 
     assert(table != NULL);
 
-    OMPI_THREAD_LOCK(&(table->lock));
+    OPAL_THREAD_LOCK(&(table->lock));
 
     if (table->number_free == 0) {
 
         /* need to grow table */
 
         if (!grow_table(table)) {
-            OMPI_THREAD_UNLOCK(&(table->lock));
+            OPAL_THREAD_UNLOCK(&(table->lock));
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
     }
@@ -173,7 +173,7 @@ int orte_pointer_array_add(size_t *location, orte_pointer_array_t *table, void *
                 index, ptr);
     }
 
-    OMPI_THREAD_UNLOCK(&(table->lock));
+    OPAL_THREAD_UNLOCK(&(table->lock));
     *location = index;
     return ORTE_SUCCESS;
 }
@@ -204,10 +204,10 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, size_t index,
 
     /* expand table if required to set a specific index */
 
-    OMPI_THREAD_LOCK(&(table->lock));
+    OPAL_THREAD_LOCK(&(table->lock));
     if (table->size <= index) {
         if (!grow_table(table)) {
-            OMPI_THREAD_UNLOCK(&(table->lock));
+            OPAL_THREAD_UNLOCK(&(table->lock));
 	        return ORTE_ERROR;
         }
     }
@@ -274,7 +274,7 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, size_t index,
                 index, table->addr[index]);
 #endif
 
-    OMPI_THREAD_UNLOCK(&(table->lock));
+    OPAL_THREAD_UNLOCK(&(table->lock));
     return ORTE_SUCCESS;
 }
 
@@ -306,10 +306,10 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
 #endif
 
     /* expand table if required to set a specific index */
-    OMPI_THREAD_LOCK(&(table->lock));
+    OPAL_THREAD_LOCK(&(table->lock));
     if ( index < table->size && table->addr[index] != NULL ) {
         /* This element is already in use */
-        OMPI_THREAD_UNLOCK(&(table->lock));
+        OPAL_THREAD_UNLOCK(&(table->lock));
         return false;
     }
 
@@ -317,7 +317,7 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
 
     if (table->size <= index) {
         if (!grow_table(table)) {
-            OMPI_THREAD_UNLOCK(&(table->lock));
+            OPAL_THREAD_UNLOCK(&(table->lock));
             return false;
         }
     }
@@ -348,7 +348,7 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
                index, table->addr[index]);
 #endif
 
-    OMPI_THREAD_UNLOCK(&(table->lock));
+    OPAL_THREAD_UNLOCK(&(table->lock));
     return true;
 }
 

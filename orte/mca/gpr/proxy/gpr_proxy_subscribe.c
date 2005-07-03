@@ -54,7 +54,7 @@ orte_gpr_proxy_subscribe(size_t num_subs,
 	    return ORTE_ERR_BAD_PARAM;
     }
 
-    OMPI_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
 
     /* store callback function and user_tag in local list for lookup
      * generate id_tag to send to replica to identify lookup entry
@@ -63,7 +63,7 @@ orte_gpr_proxy_subscribe(size_t num_subs,
     if (ORTE_SUCCESS != (rc = orte_gpr_proxy_enter_subscription(
                                         num_subs, subscriptions))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return rc;
     }
 
@@ -71,7 +71,7 @@ orte_gpr_proxy_subscribe(size_t num_subs,
     if (ORTE_SUCCESS != (rc = orte_gpr_proxy_enter_trigger(
                                         num_trigs, trigs))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return rc;
     }
 
@@ -87,7 +87,7 @@ orte_gpr_proxy_subscribe(size_t num_subs,
         }
 
         /* done */
-	    OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+	    OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_SUCCESS;
     }
 
@@ -146,7 +146,7 @@ orte_gpr_proxy_subscribe(size_t num_subs,
     }
 
     OBJ_RELEASE(answer);
-    OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
     return ORTE_SUCCESS;
     
     /* if an error was encountered during processing this request, we need to
@@ -161,12 +161,12 @@ ERROR:
     for (i=0; i < num_subs; i++) {
         if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_subscription(subscriptions[i]->id))) {
             ORTE_ERROR_LOG(rc);
-            OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+            OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
             return rc;
         }
     }
     
-    OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
     return rc;
 }
 
@@ -177,12 +177,12 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
     orte_buffer_t *answer;
     int rc, ret;
 
-    OMPI_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
 
     /* remove the specified subscription from the local tracker */
     if (ORTE_SUCCESS != (rc = orte_gpr_proxy_remove_subscription(sub_number))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return rc;
     }
     
@@ -195,7 +195,7 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
             ORTE_ERROR_LOG(rc);
         }
            
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return rc;
     }
 
@@ -205,7 +205,7 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
     cmd = OBJ_NEW(orte_buffer_t);
     if (NULL == cmd) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
@@ -213,14 +213,14 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
     if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_unsubscribe(cmd, sub_number))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return rc;
     }
 
     if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
 	    return ORTE_ERR_COMM_FAILURE;
     }
     OBJ_RELEASE(cmd);
@@ -229,14 +229,14 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
     answer = OBJ_NEW(orte_buffer_t);
     if (NULL == answer) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
     if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
 	    OBJ_RELEASE(answer);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_COMM_FAILURE;
     }
 
@@ -249,12 +249,12 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
     if (ORTE_SUCCESS != (rc = orte_gpr_base_unpack_unsubscribe(answer, &ret))) {
         ORTE_ERROR_LOG(rc);
 	    OBJ_RELEASE(answer);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return rc;
     }
     
     OBJ_RELEASE(answer);
-    OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
 	return ret;
 
 }
@@ -265,7 +265,7 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
     orte_buffer_t *answer;
     int rc, ret;
 
-    OMPI_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);
 
     /* if the compound cmd mode is on, pack the command into that buffer
      * and return
@@ -276,7 +276,7 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
             ORTE_ERROR_LOG(rc);
         }
            
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return rc;
     }
 
@@ -286,7 +286,7 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
     cmd = OBJ_NEW(orte_buffer_t);
     if (NULL == cmd) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
@@ -294,14 +294,14 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
     if (ORTE_SUCCESS != (rc = orte_gpr_base_pack_cancel_trigger(cmd, trig))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return rc;
     }
 
     if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, cmd, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_COMM_FAILURE;
     }
     OBJ_RELEASE(cmd);
@@ -310,14 +310,14 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
     answer = OBJ_NEW(orte_buffer_t);
     if (NULL == answer) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
     if (0 > orte_rml.recv_buffer(orte_process_info.gpr_replica, answer, ORTE_RML_TAG_GPR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return ORTE_ERR_COMM_FAILURE;
     }
 
@@ -330,12 +330,12 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
     if (ORTE_SUCCESS != (rc = orte_gpr_base_unpack_unsubscribe(answer, &ret))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
-        OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
         return rc;
     }
 
     OBJ_RELEASE(answer);
-    OMPI_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_proxy_globals.mutex);
     return ret;
 
 }

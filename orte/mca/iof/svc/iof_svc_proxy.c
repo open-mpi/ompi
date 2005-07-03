@@ -117,7 +117,7 @@ static void orte_iof_svc_proxy_msg(
     }
 
     /* dispatch based on subscription list */
-    OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+    OPAL_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
     for(item  = opal_list_get_first(&mca_iof_svc_component.svc_subscribed);
         item != opal_list_get_end(&mca_iof_svc_component.svc_subscribed);
         item =  opal_list_get_next(item)) {
@@ -136,7 +136,7 @@ static void orte_iof_svc_proxy_msg(
             orte_iof_svc_sub_forward(sub,src,hdr,data);
         }
     }
-    OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+    OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
 }
 
 /**
@@ -185,7 +185,7 @@ static void orte_iof_svc_proxy_ack(
      * (3) find the minimum sequence number across all endpoints 
     */
      
-    OMPI_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
+    OPAL_THREAD_LOCK(&mca_iof_svc_component.svc_lock);
     for(s_item =  opal_list_get_first(&mca_iof_svc_component.svc_subscribed);
         s_item != opal_list_get_end(&mca_iof_svc_component.svc_subscribed);
         s_item =  opal_list_get_next(s_item)) {
@@ -218,7 +218,7 @@ static void orte_iof_svc_proxy_ack(
             }
         }
     }
-    OMPI_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
+    OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
 
     /* if all destination endpoints have acknowledged up to this 
      * sequence number ack the source

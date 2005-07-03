@@ -185,12 +185,12 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 #endif /* WIN32 */
 
     /* release any waiting threads */
-    OMPI_THREAD_LOCK(&mca_pls_rsh_component.lock);
+    OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
     if(mca_pls_rsh_component.num_children-- >= NUM_CONCURRENT ||
        mca_pls_rsh_component.num_children == 0) {
-        ompi_condition_signal(&mca_pls_rsh_component.cond);
+        opal_condition_signal(&mca_pls_rsh_component.cond);
     }
-    OMPI_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
+    OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
 
     /* cleanup */
     OBJ_RELEASE(info->node);
@@ -542,10 +542,10 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         } else {
             rsh_daemon_info_t *daemon_info;
 
-            OMPI_THREAD_LOCK(&mca_pls_rsh_component.lock);
+            OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
             if(mca_pls_rsh_component.num_children++ >= NUM_CONCURRENT)
-                 ompi_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
-            OMPI_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
+                 opal_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
+            OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
 
             /* save the daemons name on the node */
             if (ORTE_SUCCESS != (rc = orte_pls_rsh_set_node_name(node,jobid,name))) {
@@ -723,11 +723,11 @@ int orte_pls_rsh_terminate_proc(const orte_process_name_t* proc)
 int orte_pls_rsh_finalize(void)
 {
     if(mca_pls_rsh_component.reap) {
-        OMPI_THREAD_LOCK(&mca_pls_rsh_component.lock);
+        OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
         while(mca_pls_rsh_component.num_children > 0) {
-            ompi_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
+            opal_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
         }
-        OMPI_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
+        OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
     }
                                                                                                                           
     /* cleanup any pending recvs */
@@ -743,8 +743,8 @@ int orte_pls_rsh_finalize(void)
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
 
 struct orte_pls_rsh_stack_t {
-    ompi_condition_t cond;
-    ompi_mutex_t mutex;
+    opal_condition_t cond;
+    opal_mutex_t mutex;
     bool complete;
     orte_jobid_t jobid;
     int rc;
@@ -753,8 +753,8 @@ typedef struct orte_pls_rsh_stack_t orte_pls_rsh_stack_t;
 
 static void orte_pls_rsh_stack_construct(orte_pls_rsh_stack_t* stack)
 {
-    OBJ_CONSTRUCT(&stack->mutex, ompi_mutex_t);
-    OBJ_CONSTRUCT(&stack->cond, ompi_condition_t);
+    OBJ_CONSTRUCT(&stack->mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&stack->cond, opal_condition_t);
     stack->rc = 0;
     stack->complete = false;
 }
@@ -774,11 +774,11 @@ static OBJ_CLASS_INSTANCE(
 static void orte_pls_rsh_launch_cb(int fd, short event, void* args)
 {
     orte_pls_rsh_stack_t *stack = (orte_pls_rsh_stack_t*)args;
-    OMPI_THREAD_LOCK(&stack->mutex);
+    OPAL_THREAD_LOCK(&stack->mutex);
     stack->rc = orte_pls_rsh_launch(stack->jobid);
     stack->complete = true;
-    ompi_condition_signal(&stack->cond);
-    OMPI_THREAD_UNLOCK(&stack->mutex);
+    opal_condition_signal(&stack->cond);
+    OPAL_THREAD_UNLOCK(&stack->mutex);
 }
 
 static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid)
@@ -793,10 +793,10 @@ static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid)
     ompi_evtimer_set(&event, orte_pls_rsh_launch_cb, &stack);
     ompi_evtimer_add(&event, &tv);
 
-    OMPI_THREAD_LOCK(&stack.mutex);
+    OPAL_THREAD_LOCK(&stack.mutex);
     while(stack.complete == false)
-         ompi_condition_wait(&stack.cond, &stack.mutex);
-    OMPI_THREAD_UNLOCK(&stack.mutex);
+         opal_condition_wait(&stack.cond, &stack.mutex);
+    OPAL_THREAD_UNLOCK(&stack.mutex);
     OBJ_DESTRUCT(&stack);
     return stack.rc;
 }

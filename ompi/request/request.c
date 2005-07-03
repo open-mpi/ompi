@@ -23,8 +23,8 @@
 ompi_pointer_array_t  ompi_request_f_to_c_table;
 OMPI_DECLSPEC volatile int          ompi_request_waiting = 0;
 int                   ompi_request_poll_iterations = 20000;
-OMPI_DECLSPEC ompi_mutex_t          ompi_request_lock;
-OMPI_DECLSPEC ompi_condition_t      ompi_request_cond;
+OMPI_DECLSPEC opal_mutex_t          ompi_request_lock;
+OMPI_DECLSPEC opal_condition_t      ompi_request_cond;
 OMPI_DECLSPEC ompi_request_t        ompi_request_null;
 ompi_status_public_t  ompi_status_empty;
 
@@ -64,8 +64,8 @@ OBJ_CLASS_INSTANCE(
 int ompi_request_init(void)
 {
     OBJ_CONSTRUCT(&ompi_request_f_to_c_table, ompi_pointer_array_t);
-    OBJ_CONSTRUCT(&ompi_request_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&ompi_request_cond, ompi_condition_t);
+    OBJ_CONSTRUCT(&ompi_request_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ompi_request_cond, opal_condition_t);
     OBJ_CONSTRUCT(&ompi_request_null, ompi_request_t);
 
     ompi_request_null.req_status.MPI_SOURCE = MPI_PROC_NULL;
@@ -109,11 +109,11 @@ int ompi_request_finalize(void)
 
 int ompi_request_complete(ompi_request_t* request)
 {
-    OMPI_THREAD_LOCK(&ompi_request_lock);
+    OPAL_THREAD_LOCK(&ompi_request_lock);
     request->req_complete = true;
     if(ompi_request_waiting)
-        ompi_condition_signal(&ompi_request_cond);
-    OMPI_THREAD_UNLOCK(&ompi_request_lock);
+        opal_condition_signal(&ompi_request_cond);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
     return OMPI_SUCCESS;
 }
 

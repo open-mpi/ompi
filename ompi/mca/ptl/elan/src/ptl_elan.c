@@ -93,10 +93,10 @@ mca_ptl_elan_add_procs (struct mca_ptl_base_module_t *ptl,
          * interface addresses exported as we are trying to use. 
          * If not, then don't bind this PTL instance to the proc.
          */
-        OMPI_THREAD_LOCK (&ptl_proc->proc_lock);
+        OPAL_THREAD_LOCK (&ptl_proc->proc_lock);
 
         if (ptl_proc->proc_addr_count == ptl_proc->proc_peer_count) {
-            OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+            OPAL_THREAD_UNLOCK (&ptl_proc->proc_lock);
             ompi_output (0, "all peers are taken already\n");
             return OMPI_ERR_UNREACH;
         }
@@ -107,7 +107,7 @@ mca_ptl_elan_add_procs (struct mca_ptl_base_module_t *ptl,
          */
 	ptl_peer = OBJ_NEW (mca_ptl_elan_peer_t);
 	if (NULL == ptl_peer) {
-	    OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+	    OPAL_THREAD_UNLOCK (&ptl_proc->proc_lock);
 	    ompi_output (0, "[%s:%d] unabled to allocate ptl_peer \n",
 		    __FILE__, __LINE__);
 	    return OMPI_ERR_OUT_OF_RESOURCE;
@@ -138,7 +138,7 @@ mca_ptl_elan_add_procs (struct mca_ptl_base_module_t *ptl,
 	/* There is only one peer per elan_peer_proc_t */
 	ptl_proc->proc_peer_count = 1;
         ompi_bitmap_set_bit (reachable, i);
-        OMPI_THREAD_UNLOCK (&ptl_proc->proc_lock);
+        OPAL_THREAD_UNLOCK (&ptl_proc->proc_lock);
         peers[i] = (struct mca_ptl_base_peer_t *) ptl_peer;
     }
     return OMPI_SUCCESS;
@@ -423,11 +423,11 @@ mca_ptl_elan_matched (mca_ptl_base_module_t * ptl,
 	    ompi_output(0,
 		    "[%s:%d] Unable to allocate an elan send descriptors \n", 
 		    __FILE__, __LINE__);
-            OMPI_THREAD_LOCK(&mca_ptl_elan_component.elan_lock);
+            OPAL_THREAD_LOCK(&mca_ptl_elan_component.elan_lock);
 	    recv_frag->frag_ack_pending = true;
             opal_list_append(&((mca_ptl_elan_module_t * )ptl)->pending_acks, 
 		    (opal_list_item_t*)frag);
-            OMPI_THREAD_UNLOCK(&mca_ptl_elan_component.elan_lock);
+            OPAL_THREAD_UNLOCK(&mca_ptl_elan_component.elan_lock);
 	} else {
 	    /* XXX: recv_frag is released a few lines below,
 	     *      pay more attention to timing of the release */ 

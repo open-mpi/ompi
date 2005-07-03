@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "opal/class/opal_list.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "mca/ns/ns_types.h"
 #include "oob_tcp_msg.h"
 #include "oob_tcp_addr.h"
@@ -59,7 +59,7 @@ struct mca_oob_tcp_peer_t {
     ompi_event_t peer_send_event;     /**< registration with event thread for send events */
     ompi_event_t peer_recv_event;     /**< registration with event thread for recv events */
     ompi_event_t peer_timer_event;    /**< timer for retrying connection failures */
-    ompi_mutex_t peer_lock;           /**< protect critical data structures */
+    opal_mutex_t peer_lock;           /**< protect critical data structures */
     opal_list_t peer_send_queue;      /**< list of messages to send */
     mca_oob_tcp_msg_t *peer_send_msg; /**< current send in progress */
     mca_oob_tcp_msg_t *peer_recv_msg; /**< current recv in progress */

@@ -49,7 +49,7 @@ static OBJ_CLASS_INSTANCE(
 static void mca_pml_ob1_comm_construct(mca_pml_ob1_comm_t* comm)
 {
     OBJ_CONSTRUCT(&comm->wild_receives, opal_list_t);
-    OBJ_CONSTRUCT(&comm->matching_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&comm->matching_lock, opal_mutex_t);
     comm->recv_sequence = 0;
     comm->procs = NULL;
     comm->num_procs = 0;

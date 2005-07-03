@@ -46,7 +46,7 @@ orte_gpr_replica_subscribe(size_t num_subs,
 	    return ORTE_ERR_BAD_PARAM;
     }
 
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     /* store callback function and user_tag in local list for lookup
      * generate id_tag to put in registry to identify lookup entry
@@ -56,7 +56,7 @@ orte_gpr_replica_subscribe(size_t num_subs,
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_enter_local_subscription(
                                         num_subs, subscriptions))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
 
@@ -66,7 +66,7 @@ orte_gpr_replica_subscribe(size_t num_subs,
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_enter_local_trigger(
                                         num_trigs, trigs))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
 
@@ -75,19 +75,19 @@ orte_gpr_replica_subscribe(size_t num_subs,
                                         num_subs, subscriptions,
                                         num_trigs, trigs))) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
 
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_check_events())) {
         ORTE_ERROR_LOG(rc);
-        OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+        OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
         return rc;
     }
 
     rc = orte_gpr_replica_process_callbacks();
     
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     return rc;
 }
@@ -97,11 +97,11 @@ int orte_gpr_replica_unsubscribe(orte_gpr_subscription_id_t sub_number)
 {
     int rc;
 
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     rc = orte_gpr_replica_remove_subscription(NULL, sub_number);
 
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     return rc;
 }
@@ -111,11 +111,11 @@ int orte_gpr_replica_cancel_trigger(orte_gpr_trigger_id_t trig)
 {
     int rc;
 
-    OMPI_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
 
     rc = orte_gpr_replica_remove_trigger(NULL, trig);
 
-    OMPI_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orte_gpr_replica_globals.mutex);
 
     return rc;
 }

@@ -91,8 +91,8 @@ static void mca_ptl_tcp_peer_construct(mca_ptl_base_peer_t* ptl_peer)
     ptl_peer->peer_retries = 0;
     ptl_peer->peer_nbo = false;
     OBJ_CONSTRUCT(&ptl_peer->peer_frags, opal_list_t);
-    OBJ_CONSTRUCT(&ptl_peer->peer_send_lock, ompi_mutex_t);
-    OBJ_CONSTRUCT(&ptl_peer->peer_recv_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&ptl_peer->peer_send_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ptl_peer->peer_recv_lock, opal_mutex_t);
 }
 
 /*
@@ -192,7 +192,7 @@ static inline void mca_ptl_tcp_peer_event_init(mca_ptl_base_peer_t* ptl_peer, in
 int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t* frag, int offset)
 {
     int rc = OMPI_SUCCESS;
-    OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
+    OPAL_THREAD_LOCK(&ptl_peer->peer_send_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECTING:
     case MCA_PTL_TCP_CONNECT_ACK:
@@ -209,7 +209,7 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
             opal_list_append(&ptl_peer->peer_frags, (opal_list_item_t*)frag);
         } else if (offset == 0) {
             if(mca_ptl_tcp_send_frag_handler(frag, ptl_peer->peer_sd)) {
-                OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+                OPAL_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
                 mca_ptl_tcp_send_frag_progress(frag);
                 return rc;
             } else {
@@ -228,7 +228,7 @@ int mca_ptl_tcp_peer_send(mca_ptl_base_peer_t* ptl_peer, mca_ptl_tcp_send_frag_t
         rc = OMPI_ERROR;
         break;
     }
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+    OPAL_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
     return rc;
 }
 
@@ -290,8 +290,8 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
     orte_ns_cmp_bitmask_t mask = ORTE_NS_CMP_ALL;
     int cmpval;
 
-    OMPI_THREAD_LOCK(&ptl_peer->peer_recv_lock);
-    OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
+    OPAL_THREAD_LOCK(&ptl_peer->peer_recv_lock);
+    OPAL_THREAD_LOCK(&ptl_peer->peer_send_lock);
     if((ptl_addr = ptl_peer->peer_addr) != NULL  &&
         ptl_addr->addr_inet.s_addr == addr->sin_addr.s_addr) {
         mca_ptl_tcp_proc_t *peer_proc = ptl_peer->peer_proc;
@@ -305,8 +305,8 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
             ptl_peer->peer_sd = sd;
             if(mca_ptl_tcp_peer_send_connect_ack(ptl_peer) != OMPI_SUCCESS) {
                  mca_ptl_tcp_peer_close(ptl_peer);
-                 OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-                 OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+                 OPAL_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+                 OPAL_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
                  return false;
             }
             mca_ptl_tcp_peer_event_init(ptl_peer, sd);
@@ -315,13 +315,13 @@ bool mca_ptl_tcp_peer_accept(mca_ptl_base_peer_t* ptl_peer, struct sockaddr_in* 
 #if OMPI_ENABLE_DEBUG && WANT_PEER_DUMP
             mca_ptl_tcp_peer_dump(ptl_peer, "accepted");
 #endif
-            OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-            OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+            OPAL_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+            OPAL_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
             return true;
         }
     }
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+    OPAL_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+    OPAL_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
     return false;
 }
 
@@ -346,12 +346,12 @@ void mca_ptl_tcp_peer_close(mca_ptl_base_peer_t* ptl_peer)
 
 void mca_ptl_tcp_peer_shutdown(mca_ptl_base_peer_t* ptl_peer)
 {
-    OMPI_THREAD_LOCK(&ptl_peer->peer_recv_lock);
-    OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
+    OPAL_THREAD_LOCK(&ptl_peer->peer_recv_lock);
+    OPAL_THREAD_LOCK(&ptl_peer->peer_send_lock);
     mca_ptl_tcp_peer_close(ptl_peer);
     ptl_peer->peer_state = MCA_PTL_TCP_SHUTDOWN;
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+    OPAL_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+    OPAL_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
 }
 
 
@@ -582,7 +582,7 @@ static void mca_ptl_tcp_peer_complete_connect(mca_ptl_base_peer_t* ptl_peer)
 static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
 {
     mca_ptl_base_peer_t* ptl_peer = (mca_ptl_base_peer_t *)user;
-    OMPI_THREAD_LOCK(&ptl_peer->peer_recv_lock);
+    OPAL_THREAD_LOCK(&ptl_peer->peer_recv_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECT_ACK:
         {
@@ -596,7 +596,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
             int rc;
             MCA_PTL_TCP_RECV_FRAG_ALLOC(recv_frag, rc);
             if(NULL == recv_frag) {
-                OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+                OPAL_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
                 return;
             }
             mca_ptl_tcp_recv_frag_init(recv_frag, ptl_peer);
@@ -620,7 +620,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
         break;
         }
     }
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
+    OPAL_THREAD_UNLOCK(&ptl_peer->peer_recv_lock);
 }
 
 
@@ -632,7 +632,7 @@ static void mca_ptl_tcp_peer_recv_handler(int sd, short flags, void* user)
 static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
 {
     mca_ptl_tcp_peer_t* ptl_peer = (mca_ptl_tcp_peer_t *)user;
-    OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
+    OPAL_THREAD_LOCK(&ptl_peer->peer_send_lock);
     switch(ptl_peer->peer_state) {
     case MCA_PTL_TCP_CONNECTING:
         mca_ptl_tcp_peer_complete_connect(ptl_peer);
@@ -647,9 +647,9 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
             }
 
             /* if required - update request status and release fragment */
-            OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+            OPAL_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
             mca_ptl_tcp_send_frag_progress(frag);
-            OMPI_THREAD_LOCK(&ptl_peer->peer_send_lock);
+            OPAL_THREAD_LOCK(&ptl_peer->peer_send_lock);
 
             /* progress any pending sends */
             ptl_peer->peer_send_frag = (mca_ptl_tcp_send_frag_t*)
@@ -668,7 +668,7 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user)
         ompi_event_del(&ptl_peer->peer_send_event);
         break;
     }
-    OMPI_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
+    OPAL_THREAD_UNLOCK(&ptl_peer->peer_send_lock);
 }
 
 

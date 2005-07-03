@@ -69,7 +69,7 @@ extern "C" {
         opal_list_t gm_send_req;
         ompi_free_list_t gm_unexpected_frags_data;
 
-        ompi_mutex_t gm_lock;                 /**< lock for accessing module state */
+        opal_mutex_t gm_lock;                 /**< lock for accessing module state */
     };
 
     typedef struct mca_ptl_gm_component_t mca_ptl_gm_component_t;
@@ -98,7 +98,7 @@ extern "C" {
         opal_list_t gm_pending_acks;
         opal_list_t gm_recv_outstanding_queue;
 
-        ompi_thread_t thread;
+        opal_thread_t thread;
 #if MCA_PTL_GM_STATISTICS
         size_t      ptl_bytes_sent;
         size_t      ptl_bytes_recv;

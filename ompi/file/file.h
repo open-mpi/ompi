@@ -20,7 +20,7 @@
 #include "mpi.h"
 #include "opal/class/opal_list.h"
 #include "errhandler/errhandler.h"
-#include "threads/mutex.h"
+#include "opal/threads/mutex.h"
 #include "mca/io/io.h"
 
 /*
@@ -87,7 +87,7 @@ struct ompi_file_t {
     opal_list_t f_io_requests;
 
     /** Lock for the per-module io request freelist */
-    ompi_mutex_t f_io_requests_lock;
+    opal_mutex_t f_io_requests_lock;
 };
 /**
  * Convenience typedef

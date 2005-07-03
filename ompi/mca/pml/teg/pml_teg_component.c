@@ -81,7 +81,7 @@ int mca_pml_teg_component_open(void)
          return OMPI_ERROR;
       }
 #endif
-    OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, ompi_mutex_t);
+    OBJ_CONSTRUCT(&mca_pml_teg.teg_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_send_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_recv_requests, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_teg.teg_procs, opal_list_t);

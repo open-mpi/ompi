@@ -481,10 +481,10 @@ int orte_pls_bproc_orted_terminate_proc(const orte_process_name_t* proc)
 
 int orte_pls_bproc_orted_finalize(void)
 {
-    OMPI_THREAD_LOCK(&mca_pls_bproc_orted_component.lock);
-    ompi_condition_wait(&mca_pls_bproc_orted_component.condition, 
+    OPAL_THREAD_LOCK(&mca_pls_bproc_orted_component.lock);
+    opal_condition_wait(&mca_pls_bproc_orted_component.condition, 
                         &mca_pls_bproc_orted_component.lock);
-    OMPI_THREAD_UNLOCK(&mca_pls_bproc_orted_component.lock);
+    OPAL_THREAD_UNLOCK(&mca_pls_bproc_orted_component.lock);
 
     pls_bproc_orted_remove_dir();
     return ORTE_SUCCESS;

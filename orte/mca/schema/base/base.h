@@ -29,8 +29,8 @@
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
 
-#include "threads/mutex.h"
-#include "threads/condition.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
 #include "opal/class/opal_list.h"
 

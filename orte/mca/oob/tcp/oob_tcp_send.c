@@ -48,7 +48,7 @@ static int mca_oob_tcp_send_self(
      * Copied original buffer - so local send completion.
     */
                                                                                                      
-    ompi_mutex_lock(&msg->msg_lock);
+    opal_mutex_lock(&msg->msg_lock);
     msg->msg_complete = true;
     if(NULL != msg->msg_cbfunc) {
         msg->msg_cbfunc(
@@ -59,9 +59,9 @@ static int mca_oob_tcp_send_self(
             msg->msg_hdr.msg_tag, 
             msg->msg_cbdata);
     } else {
-        ompi_condition_broadcast(&msg->msg_condition);
+        opal_condition_broadcast(&msg->msg_condition);
     }
-    ompi_mutex_unlock(&msg->msg_lock);
+    opal_mutex_unlock(&msg->msg_lock);
 
     /*
      * Attempt to match against posted receive

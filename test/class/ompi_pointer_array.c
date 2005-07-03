@@ -44,7 +44,7 @@ static void test(bool thread_usage){
     value_t value;
 
     /* initialize thread levels */
-    use_threads=(int)ompi_set_using_threads(thread_usage);
+    use_threads=(int)opal_set_using_threads(thread_usage);
     
     array=OBJ_NEW(ompi_pointer_array_t);
     assert(array);
