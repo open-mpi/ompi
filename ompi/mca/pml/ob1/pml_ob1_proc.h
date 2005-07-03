@@ -33,7 +33,7 @@ extern "C" {
  *  to the PML.
  */
 struct mca_pml_proc_t {
-   ompi_object_t super;
+   opal_object_t super;
    ompi_proc_t *proc_ompi;             /**< back-pointer to ompi_proc_t */
    ompi_mutex_t proc_lock;             /**< lock to protect against concurrent access */
    int proc_flags;                     /**< prefered method of accessing this peer */

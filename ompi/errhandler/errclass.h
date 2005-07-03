@@ -21,7 +21,7 @@
 #include "ompi_config.h"
 
 #include "mpi.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_pointer_array.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -33,7 +33,7 @@ extern "C" {
  * to trivial.
  */
 struct ompi_errclass_t {
-    ompi_object_t                      super;
+    opal_object_t                      super;
     int                                cls;
 };
 typedef struct ompi_errclass_t ompi_errclass_t;

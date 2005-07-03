@@ -66,11 +66,11 @@ static void mca_ptl_tcp_peer_send_handler(int sd, short flags, void* user);
 #define WANT_PEER_DUMP 0
 
 
-ompi_class_t  mca_ptl_tcp_peer_t_class = {
+opal_class_t  mca_ptl_tcp_peer_t_class = {
     "mca_tcp_ptl_peer_t", 
     OBJ_CLASS(ompi_list_item_t),
-    (ompi_construct_t)mca_ptl_tcp_peer_construct, 
-    (ompi_destruct_t)mca_ptl_tcp_peer_destruct
+    (opal_construct_t)mca_ptl_tcp_peer_construct, 
+    (opal_destruct_t)mca_ptl_tcp_peer_destruct
 };
 
 /*

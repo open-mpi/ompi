@@ -23,8 +23,8 @@
 /* 
  * Local functions
  */
-static void cl_constructor(ompi_object_t *obj);
-static void cpl_constructor(ompi_object_t *obj);
+static void cl_constructor(opal_object_t *obj);
+static void cpl_constructor(opal_object_t *obj);
 
 
 /*
@@ -44,7 +44,7 @@ OBJ_CLASS_INSTANCE(mca_base_component_priority_list_item_t,
 /*
  * Just do basic sentinel intialization
  */
-static void cl_constructor(ompi_object_t *obj)
+static void cl_constructor(opal_object_t *obj)
 {
   mca_base_component_list_item_t *cli = (mca_base_component_list_item_t *) obj;
   cli->cli_component = NULL;
@@ -54,7 +54,7 @@ static void cl_constructor(ompi_object_t *obj)
 /*
  * Just do basic sentinel intialization
  */
-static void cpl_constructor(ompi_object_t *obj)
+static void cpl_constructor(opal_object_t *obj)
 {
   mca_base_component_priority_list_item_t *cpli = 
     (mca_base_component_priority_list_item_t *) obj;

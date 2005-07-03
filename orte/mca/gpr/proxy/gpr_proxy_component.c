@@ -132,10 +132,10 @@ static void orte_gpr_proxy_subscriber_destructor(orte_gpr_proxy_subscriber_t* re
 {
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
             orte_gpr_proxy_subscriber_t,            /* type name */
-            ompi_object_t,                          /* parent "class" name */
+            opal_object_t,                          /* parent "class" name */
             orte_gpr_proxy_subscriber_construct,    /* constructor */
             orte_gpr_proxy_subscriber_destructor);  /* destructor */
 

@@ -26,7 +26,7 @@
 
 #include "mpi.h"
 #include "datatype/datatype.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_pointer_array.h"
 #include "mpi/f77/fint_2_int.h"
 
@@ -195,7 +195,7 @@ typedef void (ompi_op_fortran_handler_fn_t)(void *, void *,
  * Back-end type of MPI_Op
  */
 struct ompi_op_t {
-  ompi_object_t super;
+  opal_object_t super;
   /**< Parent class, for reference counting */
 
   char o_name[MPI_MAX_OBJECT_NAME];

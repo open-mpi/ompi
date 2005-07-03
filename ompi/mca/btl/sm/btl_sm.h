@@ -330,7 +330,7 @@ typedef struct mca_btl_sm_exchange{
 }mca_btl_sm_exchange_t;
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-void mca_btl_sm_component_event_thread(ompi_object_t*);
+void mca_btl_sm_component_event_thread(opal_object_t*);
 #endif
                                                                                                               
 #if OMPI_ENABLE_PROGRESS_THREADS == 1 

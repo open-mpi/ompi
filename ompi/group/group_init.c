@@ -24,7 +24,7 @@ static void ompi_group_construct(ompi_group_t *);
 static void ompi_group_destruct(ompi_group_t *);
 
 OBJ_CLASS_INSTANCE(ompi_group_t,
-                   ompi_object_t,
+                   opal_object_t,
                    ompi_group_construct,
                    ompi_group_destruct);
 

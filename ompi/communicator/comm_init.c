@@ -47,7 +47,7 @@ ompi_communicator_t  *ompi_mpi_comm_parent;
 static void ompi_comm_construct(ompi_communicator_t* comm);
 static void ompi_comm_destruct(ompi_communicator_t* comm);
 
-OBJ_CLASS_INSTANCE(ompi_communicator_t,ompi_object_t,ompi_comm_construct,ompi_comm_destruct);
+OBJ_CLASS_INSTANCE(ompi_communicator_t,opal_object_t,ompi_comm_construct,ompi_comm_destruct);
 
 /* This is the counter for the number of communicators, which contain
    process with more than one jobid. This counter is a usefull 

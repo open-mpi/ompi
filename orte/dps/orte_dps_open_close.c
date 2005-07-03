@@ -69,7 +69,7 @@ static void orte_buffer_destruct (orte_buffer_t* buffer)
 }
 
 OBJ_CLASS_INSTANCE(orte_buffer_t,
-                   ompi_object_t,
+                   opal_object_t,
                    orte_buffer_construct,
                    orte_buffer_destruct);
 

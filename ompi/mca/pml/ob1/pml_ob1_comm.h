@@ -29,7 +29,7 @@ extern "C" {
 
 
 struct mca_pml_ob1_comm_proc_t {
-     ompi_object_t super;
+     opal_object_t super;
      uint16_t expected_sequence;    /**< send message sequence number - receiver side */
      ompi_list_t frags_cant_match;  /**< out-of-order fragment queues */
      ompi_list_t specific_receives; /**< queues of unmatched specific receives */
@@ -43,7 +43,7 @@ typedef struct mca_pml_ob1_comm_proc_t mca_pml_ob1_comm_proc_t;
  *  used by the PML<->PTL interface for matching logic. 
  */
 struct mca_pml_comm_t {
-    ompi_object_t super;
+    opal_object_t super;
     mca_ptl_sequence_t recv_sequence;  /**< recv request sequence number - receiver side */
     ompi_mutex_t matching_lock;   /**< matching lock */
     ompi_list_t wild_receives;    /**< queue of unmatched wild (source process not specified) receives */

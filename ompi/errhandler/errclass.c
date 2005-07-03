@@ -86,7 +86,7 @@ ompi_errclass_t ompi_errclass_win;
 static void ompi_errclass_construct(ompi_errclass_t* errcode);
 static void ompi_errclass_destruct(ompi_errclass_t* errcode);
 
-OBJ_CLASS_INSTANCE(ompi_errclass_t,ompi_object_t,ompi_errclass_construct, ompi_errclass_destruct);
+OBJ_CLASS_INSTANCE(ompi_errclass_t,opal_object_t,ompi_errclass_construct, ompi_errclass_destruct);
 
 int ompi_errclass_init (void)
 {

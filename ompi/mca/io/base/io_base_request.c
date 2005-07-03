@@ -20,7 +20,7 @@
 #include <sys/time.h>
 #endif
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "file/file.h"
 #include "mca/base/base.h"
 #include "mca/base/mca_base_param.h"
@@ -238,7 +238,7 @@ static ompi_mutex_t progress_mutex;
 static ompi_condition_t progress_cond;
 
 static void*
-request_progress_thread(ompi_object_t *arg)
+request_progress_thread(opal_object_t *arg)
 {
     struct timespec abstime;
     struct timeval tv;

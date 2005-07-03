@@ -28,7 +28,7 @@
 
 #include "ompi_config.h"
 #include "include/constants.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_bitmap.h"
 #include "class/ompi_hash_table.h"
 #include "mca/gpr/gpr_types.h"
@@ -139,7 +139,7 @@ union ompi_attribute_fortran_ptr_t {
 typedef union ompi_attribute_fortran_ptr_t ompi_attribute_fortran_ptr_t;
 
 struct ompi_attrkey_item_t {
-    ompi_object_t super;
+    opal_object_t super;
     ompi_attribute_type_t attr_type; /**< One of COMM/WIN/DTYPE. This
 				       will be used to cast the
 				       copy/delete attribute functions

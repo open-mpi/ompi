@@ -21,7 +21,7 @@
 
 #include "libltdl/ltdl.h"
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 
 /*
  * These units are large enough to warrant their own .h files

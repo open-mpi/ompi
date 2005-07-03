@@ -21,7 +21,7 @@
 #include "orte_config.h"
 #include "include/orte_constants.h"
 #include "include/orte_types.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #if OMPI_ENABLE_DEBUG
 #include "util/output.h"
 #endif
@@ -36,12 +36,12 @@
 extern "C" {
 #endif
 
-OMPI_DECLSPEC extern ompi_class_t orte_value_array_t_class;
+OMPI_DECLSPEC extern opal_class_t orte_value_array_t_class;
 
 
 struct orte_value_array_t
 {
-    ompi_object_t    super;
+    opal_object_t    super;
     unsigned char*  array_items;
     size_t          array_item_sizeof;
     size_t          array_size;

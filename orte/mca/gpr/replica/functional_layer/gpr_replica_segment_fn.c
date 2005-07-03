@@ -25,7 +25,7 @@
 
 #include "orte_config.h"
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "util/output.h"
 #include "util/argv.h"
 #include "mca/errmgr/errmgr.h"

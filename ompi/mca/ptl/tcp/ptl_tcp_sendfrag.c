@@ -39,11 +39,11 @@ static void mca_ptl_tcp_send_frag_construct(mca_ptl_tcp_send_frag_t* frag);
 static void mca_ptl_tcp_send_frag_destruct(mca_ptl_tcp_send_frag_t* frag);
 
 
-ompi_class_t  mca_ptl_tcp_send_frag_t_class = {
+opal_class_t  mca_ptl_tcp_send_frag_t_class = {
     "mca_ptl_tcp_send_frag_t",
     OBJ_CLASS(mca_ptl_base_send_frag_t),
-    (ompi_construct_t)mca_ptl_tcp_send_frag_construct,
-    (ompi_destruct_t)mca_ptl_tcp_send_frag_destruct
+    (opal_construct_t)mca_ptl_tcp_send_frag_construct,
+    (opal_destruct_t)mca_ptl_tcp_send_frag_destruct
 };
                                                                                                            
 /*

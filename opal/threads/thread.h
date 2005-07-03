@@ -25,16 +25,16 @@
 #include <thread.h>
 #endif
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
-typedef void *(*ompi_thread_fn_t) (ompi_object_t *);
+typedef void *(*ompi_thread_fn_t) (opal_object_t *);
 
 
 struct ompi_thread_t {
-    ompi_object_t super;
+    opal_object_t super;
     ompi_thread_fn_t t_run;
     void* t_arg;
 #ifdef WIN32

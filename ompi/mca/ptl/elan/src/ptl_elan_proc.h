@@ -22,14 +22,14 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "proc/proc.h"
 #include "ptl_elan.h"
 #include "ptl_elan_peer.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-extern ompi_class_t mca_ptl_elan_proc_t_class;
+extern opal_class_t mca_ptl_elan_proc_t_class;
 
 /**
  *  Represents the state of a remote process. Also cache an instance 

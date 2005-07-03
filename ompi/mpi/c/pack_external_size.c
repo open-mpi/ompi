@@ -18,7 +18,7 @@
 
 #include "mpi.h"
 #include "mpi/c/bindings.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "errhandler/errhandler.h"
 #include "communicator/communicator.h"
 #include "datatype/datatype.h"

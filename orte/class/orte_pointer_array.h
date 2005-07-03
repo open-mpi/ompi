@@ -25,7 +25,7 @@
 #include "orte_config.h"
 
 #include "threads/mutex.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -36,7 +36,7 @@ extern "C" {
  */
 struct orte_pointer_array_t {
     /** base class */
-    ompi_object_t super;
+    opal_object_t super;
     /** synchronization object */
     ompi_mutex_t lock;
     /** Index of lowest free element.  NOTE: This is only an

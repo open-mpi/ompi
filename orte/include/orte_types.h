@@ -17,7 +17,7 @@
 
 #ifndef ORTE_TYPES_H
 #define ORTE_TYPES_H
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 
 /**
  * Supported datatypes for messaging and storage operations.

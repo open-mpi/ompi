@@ -686,8 +686,8 @@ int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid, orte_vpid_t start, orte_v
 {
     orte_gpr_value_t value;
     orte_gpr_value_t* values;
-    orte_gpr_keyval_t vpid_start = { {OBJ_CLASS(ompi_object_t),0}, ORTE_JOB_VPID_START_KEY, ORTE_VPID };
-    orte_gpr_keyval_t vpid_range = { {OBJ_CLASS(ompi_object_t),0}, ORTE_JOB_VPID_RANGE_KEY, ORTE_VPID };
+    orte_gpr_keyval_t vpid_start = { {OBJ_CLASS(opal_object_t),0}, ORTE_JOB_VPID_START_KEY, ORTE_VPID };
+    orte_gpr_keyval_t vpid_range = { {OBJ_CLASS(opal_object_t),0}, ORTE_JOB_VPID_RANGE_KEY, ORTE_VPID };
     orte_gpr_keyval_t* keyvals[2];
     char* tokens[2] = { ORTE_JOB_GLOBALS, NULL };
     int rc;

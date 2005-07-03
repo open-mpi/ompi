@@ -23,13 +23,13 @@ int main(int argc, char *argv[])
 static volatile int count = 0;
 
 
-static void* thr1_run(ompi_object_t* obj)
+static void* thr1_run(opal_object_t* obj)
 {
     ompi_atomic_add(&count, 1);
     return NULL;
 }
 
-static void* thr2_run(ompi_object_t* obj)
+static void* thr2_run(opal_object_t* obj)
 {
     ompi_atomic_add(&count, 2);
     return NULL;

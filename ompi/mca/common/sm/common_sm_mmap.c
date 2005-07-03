@@ -40,7 +40,7 @@
 
 OBJ_CLASS_INSTANCE(
     mca_common_sm_mmap_t,
-    ompi_object_t,
+    opal_object_t,
     NULL,
     NULL
 );

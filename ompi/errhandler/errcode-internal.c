@@ -49,7 +49,7 @@ static ompi_errcode_intern_t ompi_err_buffer;
 static void ompi_errcode_intern_construct(ompi_errcode_intern_t* errcode);
 static void ompi_errcode_intern_destruct(ompi_errcode_intern_t* errcode);
 
-OBJ_CLASS_INSTANCE(ompi_errcode_intern_t,ompi_object_t,ompi_errcode_intern_construct, ompi_errcode_intern_destruct);
+OBJ_CLASS_INSTANCE(ompi_errcode_intern_t,opal_object_t,ompi_errcode_intern_construct, ompi_errcode_intern_destruct);
 
 int ompi_errcode_intern_init (void)
 {

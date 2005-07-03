@@ -15,7 +15,7 @@
  */
 
 #include "include/constants.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 
 typedef int     affinity_t;
 

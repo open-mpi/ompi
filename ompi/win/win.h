@@ -20,7 +20,7 @@
 
 #include "mpi.h"
 #include "errhandler/errhandler.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_hash_table.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -31,7 +31,7 @@ extern "C" {
 struct ompi_win_t {
   char w_name[MPI_MAX_OBJECT_NAME];
 
-  ompi_object_t w_base;
+  opal_object_t w_base;
 
   /* Attributes */
 

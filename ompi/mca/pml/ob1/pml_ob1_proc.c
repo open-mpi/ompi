@@ -43,7 +43,7 @@ static void mca_pml_ob1_proc_destruct(mca_pml_ob1_proc_t* proc)
 
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_proc_t,
-    ompi_object_t,
+    opal_object_t,
     mca_pml_ob1_proc_construct, 
     mca_pml_ob1_proc_destruct 
 );

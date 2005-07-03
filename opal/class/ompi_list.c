@@ -26,11 +26,11 @@
 static void ompi_list_item_construct(ompi_list_item_t*);
 static void ompi_list_item_destruct(ompi_list_item_t*);
 
-ompi_class_t  ompi_list_item_t_class = {
+opal_class_t  ompi_list_item_t_class = {
     "ompi_list_item_t",
-    OBJ_CLASS(ompi_object_t), 
-    (ompi_construct_t) ompi_list_item_construct,
-    (ompi_destruct_t) ompi_list_item_destruct
+    OBJ_CLASS(opal_object_t), 
+    (opal_construct_t) ompi_list_item_construct,
+    (opal_destruct_t) ompi_list_item_destruct
 };
 
 static void ompi_list_construct(ompi_list_t*);
@@ -38,7 +38,7 @@ static void ompi_list_destruct(ompi_list_t*);
 
 OBJ_CLASS_INSTANCE(
     ompi_list_t,
-    ompi_object_t,
+    opal_object_t,
     ompi_list_construct,
     ompi_list_destruct
 );

@@ -179,10 +179,10 @@
 						RelativePath="..\..\src\class\ompi_list.h">
 					</File>
 					<File
-						RelativePath="..\..\src\class\ompi_object.c">
+						RelativePath="..\..\src\class\opal_object.c">
 					</File>
 					<File
-						RelativePath="..\..\src\class\ompi_object.h">
+						RelativePath="..\..\src\class\opal_object.h">
 					</File>
 					<File
 						RelativePath="..\..\src\class\ompi_pointer_array.c">

@@ -38,7 +38,7 @@ extern "C" {
  */
 struct ompi_file_t {
     /** Base of OBJ_* interface */
-    ompi_object_t super;
+    opal_object_t super;
 
     /** Communicator that this file was created with */
     struct ompi_communicator_t *f_comm;

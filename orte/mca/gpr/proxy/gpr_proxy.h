@@ -22,7 +22,7 @@
 #include "orte_config.h"
 
 #include "include/orte_types.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/orte_pointer_array.h"
 #include "dps/dps_types.h"
 #include "util/proc_info.h"
@@ -53,7 +53,7 @@ int orte_gpr_proxy_finalize(void);
  * proxy-local types
  */
 typedef struct {
-     ompi_object_t super;                   /**< Allows this to be an object */
+     opal_object_t super;                   /**< Allows this to be an object */
      orte_gpr_subscription_id_t id;         /**< id of this subscription */
      orte_gpr_notify_cb_fn_t callback;      /**< Function to be called for notificaiton */
      void *user_tag;                        /**< User-provided tag for callback function */

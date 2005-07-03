@@ -34,11 +34,11 @@ static void orte_value_array_destruct(orte_value_array_t* array)
         free(array->array_items);
 }
 
-ompi_class_t orte_value_array_t_class = {
+opal_class_t orte_value_array_t_class = {
     "orte_value_array_t",
-     OBJ_CLASS(ompi_object_t),
-     (ompi_construct_t)orte_value_array_construct,
-     (ompi_destruct_t)orte_value_array_destruct
+     OBJ_CLASS(opal_object_t),
+     (opal_construct_t)orte_value_array_construct,
+     (opal_destruct_t)orte_value_array_destruct
 };
 
 

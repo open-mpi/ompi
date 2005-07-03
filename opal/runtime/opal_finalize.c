@@ -19,7 +19,7 @@
 #include "orte_config.h"
 
 #include "include/orte_constants.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "util/output.h"
 #include "util/malloc.h"
 #include "mca/base/base.h"
@@ -43,7 +43,7 @@ int opal_finalize(void)
     ompi_output_finalize();
     
     /* finalize the class/object system */
-    ompi_class_finalize();
+    opal_class_finalize();
 
     /* finalize the memory allocator */
     ompi_malloc_finalize();

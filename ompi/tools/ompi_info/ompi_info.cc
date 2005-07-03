@@ -34,7 +34,7 @@
 #endif
 #include <errno.h>
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "runtime/runtime.h"
 #include "util/output.h"
 #include "util/cmd_line.h"
@@ -234,6 +234,6 @@ int main(int argc, char *argv[])
   ompi_info::close_components();
   OBJ_RELEASE(cmd_line);
   mca_base_close();
-  ompi_class_finalize();
+  opal_class_finalize();
   return 0;
 }

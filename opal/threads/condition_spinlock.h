@@ -30,7 +30,7 @@ extern "C" {
 
 
 struct ompi_condition_t {
-    ompi_object_t super;
+    opal_object_t super;
     volatile int c_waiting;
     volatile int c_signaled;
 };

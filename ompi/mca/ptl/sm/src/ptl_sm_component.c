@@ -335,7 +335,7 @@ int mca_ptl_sm_component_control(int param, void* value, size_t size)
  */
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-void mca_ptl_sm_component_event_thread(ompi_object_t* thread)
+void mca_ptl_sm_component_event_thread(opal_object_t* thread)
 {
     while(1) {
         unsigned char cmd;

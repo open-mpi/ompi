@@ -25,7 +25,7 @@
 
 #include "orte_config.h"
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -37,7 +37,7 @@ extern "C" {
      */
     struct orte_buffer_t {
         /** First member must be the object's parent */
-        ompi_object_t parent;
+        opal_object_t parent;
         
         /** Start of my memory */
         char *base_ptr;

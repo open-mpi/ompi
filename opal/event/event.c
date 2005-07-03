@@ -61,7 +61,7 @@
 #include "event.h"
 #include "include/types.h"
 #include "include/constants.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "threads/mutex.h"
 #include "threads/thread.h"
 #include "util/output.h"
@@ -207,7 +207,7 @@ static int ompi_timeout_next(struct timeval *tv)
 
 #if OMPI_ENABLE_PROGRESS_THREADS
 /* run loop for dispatch thread */
-static void* ompi_event_run(ompi_object_t* arg)
+static void* ompi_event_run(opal_object_t* arg)
 {
     /* Open MPI: Prevent compiler warnings about unused variables */
 #if defined(NDEBUG)

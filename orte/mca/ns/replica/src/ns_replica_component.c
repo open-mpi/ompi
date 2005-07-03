@@ -121,7 +121,7 @@ static void orte_ns_replica_cell_tracker_destructor(orte_ns_replica_cell_tracker
     if (NULL != cell_tracker->resource) free(cell_tracker->resource);
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
     orte_ns_replica_cell_tracker_t,  /* type name */
     ompi_list_item_t, /* parent "class" name */
@@ -141,7 +141,7 @@ static void orte_ns_replica_tracker_destructor(orte_ns_replica_name_tracker_t* n
 {
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
 		   orte_ns_replica_name_tracker_t,  /* type name */
 		   ompi_list_item_t, /* parent "class" name */
@@ -164,7 +164,7 @@ static void orte_ns_replica_tagitem_destructor(orte_ns_replica_tagitem_t* tagite
     }
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_replica_tagitem_t,  /* type name */
         ompi_list_item_t, /* parent "class" name */
@@ -187,7 +187,7 @@ static void orte_ns_replica_dti_destructor(orte_ns_replica_dti_t* dti)
     }
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
         orte_ns_replica_dti_t,  /* type name */
         ompi_list_item_t, /* parent "class" name */

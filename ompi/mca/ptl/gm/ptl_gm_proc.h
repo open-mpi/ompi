@@ -23,13 +23,13 @@
 #ifndef MCA_PTL_GM_PROC_H
 #define MCA_PTL_GM_PROC_H
 
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "ptl_gm.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
-extern ompi_class_t mca_ptl_gm_proc_t_class;
+extern opal_class_t mca_ptl_gm_proc_t_class;
 
 struct mca_ptl_gm_proc_t {
     ompi_list_item_t super;                 /**< allow proc to be placed on a list */

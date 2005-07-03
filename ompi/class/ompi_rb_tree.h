@@ -25,7 +25,7 @@
 
 #include <stdlib.h>
 #include "include/constants.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_free_list.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -64,7 +64,7 @@ typedef int (*ompi_rb_tree_comp_fn_t)(void *key1, void *key2);
   * the data structure that holds all the needed information about the tree.
   */
 struct ompi_rb_tree_t {
-    ompi_object_t parent;           /**< the parent class */
+    opal_object_t parent;           /**< the parent class */
     /* this root pointer doesn't actually point to the root of the tree.
      * rather, it points to a sentinal node who's left branch is the real
      * root of the tree. This is done to eliminate special cases */
@@ -107,14 +107,14 @@ typedef void (*ompi_rb_tree_action_fn_t)(void *, void *);
   *
   * @retval NONE
   */
-OMPI_DECLSPEC void ompi_rb_tree_construct(ompi_object_t * object);
+OMPI_DECLSPEC void ompi_rb_tree_construct(opal_object_t * object);
 
 /**
   * the destruct function. tries to free the tree and destroys the free list
   *
   * @param object the tree object
   */
-OMPI_DECLSPEC void ompi_rb_tree_destruct(ompi_object_t * object);
+OMPI_DECLSPEC void ompi_rb_tree_destruct(opal_object_t * object);
 
 /**
   * the function creates a new tree

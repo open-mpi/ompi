@@ -21,7 +21,7 @@
 #include <ctype.h>
 
 #include "include/constants.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_list.h"
 #include "threads/mutex.h"
 #include "util/argv.h"
@@ -105,7 +105,7 @@ static OBJ_CLASS_INSTANCE(cmd_line_param_t,
 static void cmd_line_constructor(ompi_cmd_line_t *cmd);
 static void cmd_line_destructor(ompi_cmd_line_t *cmd);
 OBJ_CLASS_INSTANCE(ompi_cmd_line_t,
-                   ompi_object_t,
+                   opal_object_t,
                    cmd_line_constructor,
                    cmd_line_destructor);
 

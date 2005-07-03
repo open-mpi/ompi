@@ -424,7 +424,7 @@ typedef struct mca_ptl_sm_exchange{
 }mca_ptl_sm_exchange_t;
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-void mca_ptl_sm_component_event_thread(ompi_object_t*);
+void mca_ptl_sm_component_event_thread(opal_object_t*);
 #endif
                                                                                                               
 #if OMPI_ENABLE_PROGRESS_THREADS == 1 

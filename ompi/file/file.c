@@ -45,7 +45,7 @@ static void file_destructor(ompi_file_t *obj);
  * Class instance for ompi_file_t
  */
 OBJ_CLASS_INSTANCE(ompi_file_t,
-                   ompi_object_t,
+                   opal_object_t,
                    file_constructor,
                    file_destructor);
 

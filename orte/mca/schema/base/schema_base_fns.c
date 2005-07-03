@@ -194,8 +194,8 @@ int orte_schema_base_store_my_info(void)
 {
     int rc = ORTE_SUCCESS;
     orte_gpr_value_t value, *values;
-    orte_gpr_keyval_t local_pid = { {OBJ_CLASS(ompi_object_t),0}, ORTE_PROC_LOCAL_PID_KEY, ORTE_PID };
-    orte_gpr_keyval_t nodename = { {OBJ_CLASS(ompi_object_t),0}, ORTE_NODE_NAME_KEY, ORTE_STRING };
+    orte_gpr_keyval_t local_pid = { {OBJ_CLASS(opal_object_t),0}, ORTE_PROC_LOCAL_PID_KEY, ORTE_PID };
+    orte_gpr_keyval_t nodename = { {OBJ_CLASS(opal_object_t),0}, ORTE_NODE_NAME_KEY, ORTE_STRING };
     orte_gpr_keyval_t* keyvals[2];
     size_t i;
     orte_jobid_t jobid;

@@ -35,7 +35,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-extern ompi_class_t mca_ptl_tcp_send_request_t_class;
+extern opal_class_t mca_ptl_tcp_send_request_t_class;
 /**
  * TCP send request derived type. The send request contains both the
  * base send request, and space for the first TCP send fragment descriptor.

@@ -24,11 +24,11 @@ static void ompi_free_list_construct(ompi_free_list_t* fl);
 static void ompi_free_list_destruct(ompi_free_list_t* fl);
 
 
-ompi_class_t ompi_free_list_t_class = {
+opal_class_t ompi_free_list_t_class = {
     "ompi_free_list_t", 
     OBJ_CLASS(ompi_list_t),
-    (ompi_construct_t)ompi_free_list_construct, 
-    (ompi_destruct_t)ompi_free_list_destruct
+    (opal_construct_t)ompi_free_list_construct, 
+    (opal_destruct_t)ompi_free_list_destruct
 };
 
 
@@ -52,7 +52,7 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl)
 int ompi_free_list_init(
     ompi_free_list_t *flist,
     size_t elem_size,
-    ompi_class_t* elem_class,
+    opal_class_t* elem_class,
     int num_elements_to_alloc,
     int max_elements_to_alloc,
     int num_elements_per_alloc,

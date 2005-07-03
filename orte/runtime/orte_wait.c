@@ -31,7 +31,7 @@
 
 #include "runtime/orte_wait.h"
 #include "util/output.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_list.h"
 #include "event/event.h"
 #include "include/constants.h"
@@ -45,7 +45,7 @@
  *
  ********************************************************************/
 struct blk_waitpid_data_t {
-    ompi_object_t super;
+    opal_object_t super;
     ompi_condition_t *cond;
     volatile int done;
     volatile int status;
@@ -86,7 +86,7 @@ typedef struct waitpid_callback_data_t waitpid_callback_data_t;
  *
  ********************************************************************/
 static void
-blk_waitpid_data_construct(ompi_object_t *obj)
+blk_waitpid_data_construct(opal_object_t *obj)
 {
     blk_waitpid_data_t *data = (blk_waitpid_data_t*) obj;
 
@@ -98,7 +98,7 @@ blk_waitpid_data_construct(ompi_object_t *obj)
 
 
 static void
-blk_waitpid_data_destruct(ompi_object_t *obj)
+blk_waitpid_data_destruct(opal_object_t *obj)
 {
     blk_waitpid_data_t *data = (blk_waitpid_data_t*) obj;
 
@@ -106,7 +106,7 @@ blk_waitpid_data_destruct(ompi_object_t *obj)
 }
 
 
-static OBJ_CLASS_INSTANCE(blk_waitpid_data_t, ompi_object_t,
+static OBJ_CLASS_INSTANCE(blk_waitpid_data_t, opal_object_t,
                           blk_waitpid_data_construct, 
                           blk_waitpid_data_destruct);
 

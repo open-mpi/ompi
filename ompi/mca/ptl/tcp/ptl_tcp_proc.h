@@ -29,7 +29,7 @@
 #include <netinet/in.h>
 #endif
 #include "mca/ns/ns_types.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "proc/proc.h"
 #include "ptl_tcp.h"
 #include "ptl_tcp_peer.h"

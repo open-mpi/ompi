@@ -35,7 +35,7 @@
 #endif
 #include <string.h>
 #include "include/constants.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_hash_table.h"
 #include "class/ompi_pointer_array.h"
 #include "mpi.h"
@@ -87,7 +87,7 @@ typedef struct dt_type_desc {
 /* the data description.
  */
 typedef struct ompi_datatype_t {
-   ompi_object_t      super;    /**< basic superclass */
+   opal_object_t      super;    /**< basic superclass */
    unsigned long      size;     /**< total size in bytes of the memory used by the data if
                                  * the data is put on a contiguous buffer */
    uint32_t           align;    /**< data should be aligned to */

@@ -29,7 +29,7 @@
 static void orte_bitmap_construct(orte_bitmap_t *bm);
 static void orte_bitmap_destruct(orte_bitmap_t *bm);
 
-OBJ_CLASS_INSTANCE(orte_bitmap_t, ompi_object_t, 
+OBJ_CLASS_INSTANCE(orte_bitmap_t, opal_object_t, 
                    orte_bitmap_construct, orte_bitmap_destruct);
 
 

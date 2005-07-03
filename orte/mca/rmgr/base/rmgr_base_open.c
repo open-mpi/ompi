@@ -112,10 +112,10 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
     }
 }
 
-/* define instance of ompi_class_t */
+/* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
            orte_app_context_t,  /* type name */
-           ompi_object_t, /* parent "class" name */
+           opal_object_t, /* parent "class" name */
            orte_app_context_construct, /* constructor */
            orte_app_context_destructor); /* destructor */
 
@@ -135,7 +135,7 @@ static void orte_app_context_map_destruct(orte_app_context_map_t *a)
 
 
 OBJ_CLASS_INSTANCE(orte_app_context_map_t, 
-                   ompi_object_t,
+                   opal_object_t,
                    orte_app_context_map_construct,
                    orte_app_context_map_destruct);
 

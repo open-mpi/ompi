@@ -70,7 +70,7 @@ static void __destroy_ddt_struct( ompi_datatype_t* pData )
 
 }
 
-OBJ_CLASS_INSTANCE(ompi_datatype_t, ompi_object_t, __get_free_dt_struct, __destroy_ddt_struct );
+OBJ_CLASS_INSTANCE(ompi_datatype_t, opal_object_t, __get_free_dt_struct, __destroy_ddt_struct );
 
 ompi_datatype_t* ompi_ddt_create( int32_t expectedSize )
 {

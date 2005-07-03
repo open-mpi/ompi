@@ -86,13 +86,13 @@ orte_pls_base_module_1_0_0_t orte_pls_rsh_module = {
 /* struct used to have enough information to clean up the state of the
    universe if a daemon aborts */
 struct rsh_daemon_info_t {
-    ompi_object_t super;
+    opal_object_t super;
     orte_ras_base_node_t* node;
     orte_jobid_t jobid;
 };
 typedef struct rsh_daemon_info_t rsh_daemon_info_t;
 static OBJ_CLASS_INSTANCE(rsh_daemon_info_t,
-                          ompi_object_t,
+                          opal_object_t,
                           NULL, NULL);
 static void set_handler_default(int sig);
 
@@ -767,7 +767,7 @@ static void orte_pls_rsh_stack_destruct(orte_pls_rsh_stack_t* stack)
 
 static OBJ_CLASS_INSTANCE(
     orte_pls_rsh_stack_t,
-    ompi_object_t,
+    opal_object_t,
     orte_pls_rsh_stack_construct,
     orte_pls_rsh_stack_destruct);
 

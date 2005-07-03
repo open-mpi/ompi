@@ -82,7 +82,7 @@ OBJ_CLASS_INSTANCE(
  * received from peers.
  */
 struct mca_base_modex_t {
-    ompi_object_t super;
+    opal_object_t super;
     ompi_list_t modex_modules;
 };
 typedef struct mca_base_modex_t mca_base_modex_t;
@@ -99,7 +99,7 @@ static void mca_base_modex_destruct(mca_base_modex_t* modex)
 
 OBJ_CLASS_INSTANCE(
     mca_base_modex_t, 
-    ompi_object_t, 
+    opal_object_t, 
     mca_base_modex_construct, 
     mca_base_modex_destruct
 );

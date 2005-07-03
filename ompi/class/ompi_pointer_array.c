@@ -30,7 +30,7 @@ static void ompi_pointer_array_construct(ompi_pointer_array_t *);
 static void ompi_pointer_array_destruct(ompi_pointer_array_t *);
 static bool grow_table(ompi_pointer_array_t *table, size_t soft, size_t hard);
 
-OBJ_CLASS_INSTANCE(ompi_pointer_array_t, ompi_object_t,
+OBJ_CLASS_INSTANCE(ompi_pointer_array_t, opal_object_t,
                    ompi_pointer_array_construct,
                    ompi_pointer_array_destruct);
 

@@ -82,7 +82,7 @@ typedef int8_t orte_gpr_replica_action_t;
  * that are operating on the same node as the replica
  */
 typedef struct {
-     ompi_object_t super;                   /**< Allows this to be an object */
+     opal_object_t super;                   /**< Allows this to be an object */
      orte_gpr_subscription_id_t id;         /**< id of this subscription */
      orte_gpr_notify_cb_fn_t callback;      /**< Function to be called for notificaiton */
      void *user_tag;                        /**< User-provided tag for callback function */
@@ -157,7 +157,7 @@ typedef struct orte_gpr_replica_t orte_gpr_replica_t;
  * to avoid naming conflicts between tokens from CommWorlds sharing a given universe.
  */
 struct orte_gpr_replica_segment_t {
-    ompi_object_t super;                /**< Make this an object */
+    opal_object_t super;                /**< Make this an object */
     char *name;                         /**< Name of the segment */
     orte_gpr_replica_itag_t itag;       /**< itag of this segment */
     size_t num_dict_entries;
@@ -190,7 +190,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_segment_t);
  * "authorization" linked list of ID's and their access rights to this structure.
  */
 struct orte_gpr_replica_container_t {
-    ompi_object_t super;              /**< Make this an object */
+    opal_object_t super;              /**< Make this an object */
     size_t index;                        /**< Location in the pointer array */
     orte_gpr_replica_itag_t *itags;   /**< Array of itags that define this container */
     size_t num_itags;                    /**< Number of itags in array */
@@ -206,7 +206,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_container_t);
 /* The itag-value pair for storing data entries in the registry
  */
 typedef struct {
-    ompi_object_t super;                /**< required for this to be an object */
+    opal_object_t super;                /**< required for this to be an object */
     size_t index;                          /**< index of this itagval on the container array */
     orte_gpr_replica_itag_t itag;       /**< itag for this value's key */
     orte_data_type_t type;              /**< the type of value stored */
@@ -219,7 +219,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_itagval_t);
  * itags for the tokens/keys and pointers to internal structures
  */
 typedef struct {
-    ompi_object_t super;    /**< Makes this an object */
+    opal_object_t super;    /**< Makes this an object */
     size_t index;
     /* the segment upon which this data is located */
     orte_gpr_replica_segment_t *seg;
@@ -233,7 +233,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_ivalue_t);
 
 
 typedef struct {
-    ompi_object_t super;
+    opal_object_t super;
     orte_gpr_replica_segment_t *seg;
     orte_gpr_replica_container_t *cptr;
     orte_gpr_replica_itagval_t *iptr;
@@ -243,7 +243,7 @@ typedef struct {
 OBJ_CLASS_DECLARATION(orte_gpr_replica_counter_t);
 
 typedef struct {
-    ompi_object_t super;
+    opal_object_t super;
     /* index of this entry in requestor array */
     size_t index;
     /* process name of the recipient - set to NULL if local */
@@ -258,7 +258,7 @@ typedef struct {
 OBJ_CLASS_DECLARATION(orte_gpr_replica_requestor_t);
 
 typedef struct {
-    ompi_object_t super;                    /**< Makes this an object */
+    opal_object_t super;                    /**< Makes this an object */
     /* index of this entry in subscription array - corresponds to local idtag */
     size_t index;
     /* name of this subscription, if provided */
@@ -292,7 +292,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_subscription_t);
 
 
 typedef struct {
-    ompi_object_t super;
+    opal_object_t super;
     /* index of this entry in array */
     size_t index;
     /* process name of the requestor - set to NULL if local */
@@ -305,7 +305,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_trigger_requestor_t);
 
 
 struct orte_gpr_replica_trigger_t {
-    ompi_object_t super;                            /**< Make this an object */
+    opal_object_t super;                            /**< Make this an object */
     /* name of this trigger, if provided */
     char *name;
     /* index of this trigger in the triggers array - corresponds to local idtag */
@@ -347,7 +347,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_trigger_t);
  * processing notification subscriptions.
  */
 typedef struct {
-    ompi_object_t super;        /**< Make this an object */
+    opal_object_t super;        /**< Make this an object */
     orte_gpr_replica_action_t action;
     orte_gpr_replica_segment_t *seg;
     orte_gpr_replica_container_t *cptr;

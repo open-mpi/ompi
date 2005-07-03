@@ -36,7 +36,7 @@
 #endif
 
 #include "mca/schema/schema.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "dps/dps_types.h"
 #include "mca/ns/ns_types.h"
 #include "mca/rmgr/rmgr_types.h"
@@ -146,7 +146,7 @@ typedef union {                             /* shared storage for the value */
   * Key-value pairs for registry operations
   */
 typedef struct {
-    ompi_object_t super;                /* required for this to be an object */
+    opal_object_t super;                /* required for this to be an object */
     char *key;                          /* string key for this value */
     orte_data_type_t type;              /* the type of value stored */
     orte_gpr_value_union_t value;
@@ -167,7 +167,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_keyval_t);
  * the structure can be re-used by the put command.
  */
 typedef struct {
-    ompi_object_t super;                    /**< Makes this an object */
+    opal_object_t super;                    /**< Makes this an object */
     orte_gpr_addr_mode_t addr_mode;         /**< Address mode that was used for combining keys/tokens */
     char *segment;                          /**< Name of the segment this came from */
     size_t cnt;                             /**< Number of keyval objects returned */
@@ -184,7 +184,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
  * data from a single segment, one or more containers with one or more keyvals/container.
  */
 typedef struct {
-    ompi_object_t super;            /**< Makes this an object */
+    opal_object_t super;            /**< Makes this an object */
     orte_gpr_subscription_id_t id;  /**< Number of the associated subscription */
     size_t cnt;                     /**< Number of value objects returned, one per container */
     orte_gpr_value_t **values;      /**< Array of value objects returned */
@@ -195,7 +195,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
 /** Return message for notify requests
  */
 typedef struct {
-    ompi_object_t super;                        /**< Make this an object */
+    opal_object_t super;                        /**< Make this an object */
     size_t cnt;                                 /**< number of data objects */
     orte_gpr_notify_data_t **data;              /**< Contiguous array of pointers to data objects */
 } orte_gpr_notify_message_t;
@@ -219,7 +219,7 @@ typedef void (*orte_gpr_notify_cb_fn_t)(orte_gpr_notify_data_t *notify_data, voi
  * addr_mode to locate and return the data.
  */
 typedef struct {
-    ompi_object_t super;                    /**< Makes this an object */
+    opal_object_t super;                    /**< Makes this an object */
     char *name;                             /**< A unique name for this subscription - can be NULL */
     orte_gpr_subscription_id_t id;          /**< id number of this subscription, as assigned by system */
     orte_gpr_notify_action_t action;        /**< what causes subscription to fire */
@@ -239,7 +239,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_subscription_t);
  * exist between those objects for the trigger to be "fired".
  */
 typedef struct {
-    ompi_object_t super;                    /**< Makes this an object */
+    opal_object_t super;                    /**< Makes this an object */
     char *name;                             /**< A unique name for this trigger - can be NULL */
     orte_gpr_trigger_id_t id;               /**< id number of this trigger, as assigned by system */
     orte_gpr_trigger_action_t action;       /**< trigger characteristics */

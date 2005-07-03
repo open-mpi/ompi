@@ -63,8 +63,8 @@ struct mca_ptl_elan_recv_frag_t {
 };
 typedef struct mca_ptl_elan_recv_frag_t mca_ptl_elan_recv_frag_t;
 
-extern ompi_class_t mca_ptl_elan_send_frag_t_class;
-extern ompi_class_t mca_ptl_elan_recv_frag_t_class;
+extern opal_class_t mca_ptl_elan_send_frag_t_class;
+extern opal_class_t mca_ptl_elan_recv_frag_t_class;
 
 mca_ptl_elan_send_frag_t *
 mca_ptl_elan_alloc_desc(struct mca_ptl_base_module_t *ptl,

@@ -38,7 +38,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-extern ompi_class_t mca_ptl_tcp_recv_frag_t_class;
+extern opal_class_t mca_ptl_tcp_recv_frag_t_class;
 
 /**
  *  TCP received fragment derived type.

@@ -60,7 +60,7 @@ typedef struct mca_pml_ob1_endpoint_t mca_pml_ob1_endpoint_t;
  * scheduling across contents.
  */
 struct mca_pml_ob1_ep_array_t {
-    ompi_object_t super;
+    opal_object_t super;
     size_t arr_size;    /**< number available */
     size_t arr_reserve; /**< size of allocated btl_proc array */
     size_t arr_index;   /**< last used index*/

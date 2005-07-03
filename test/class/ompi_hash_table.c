@@ -20,7 +20,7 @@
 #endif
 #include <string.h>
 #include "support.h"
-#include "class/ompi_object.h"
+#include "opal/class/opal_object.h"
 #include "class/ompi_hash_table.h"
 
 static FILE *error_out=NULL;

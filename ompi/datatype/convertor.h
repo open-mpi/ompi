@@ -71,7 +71,7 @@ typedef struct dt_stack {
 #define DT_STATIC_STACK_SIZE   5
 
 struct ompi_convertor_t {
-    ompi_object_t                 super;        /**< basic superclass */
+    opal_object_t                 super;        /**< basic superclass */
     uint32_t                      remoteArch;   /**< the remote architecture */
     uint32_t                      flags;        /**< the properties of this convertor */
     const struct ompi_datatype_t* pDesc;        /**< the datatype description associated with the convertor */
